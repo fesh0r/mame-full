@@ -10,9 +10,9 @@
 
 	References :
 	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
-	(Buttersworth Scientific Publications, 1956)
+	(Buttersworth Scientific Publications, 1956)  (referred to as 'Booth&Booth')
 	* Kathleen H. V. Booth : Programming for an Automatic Digital Calculator
-	(Buttersworth Scientific Publications, 1958)
+	(Buttersworth Scientific Publications, 1958)  (referred to as 'Booth')
 */
 
 /*
@@ -25,7 +25,7 @@
 	  be accessed at a time (the 16 first ones, plus 16 others chosen by the programmer),
 	  and the rotation rate is 3750rpm (62.5 rotations per second).
 	* two I/O units : tape reader and tape puncher.  A teletyper was designed to read
-	  specially-encoded punched tapes and print decoded text.
+	  specially-encoded punched tapes and print decoded text.  (See /systems/apexc.c)
 	* machine code has 15 instructions (!), including add, substract, shift, multiply (!),
 	  test and branch, input and punch.  A so-called vector mode allow to repeat the same
 	  operation 32 times with 32 successive memory locations.  Note the lack of bitwise
@@ -34,6 +34,7 @@
 	  time : 16ms, which would allow about 60IPS when no optimization is made)
 	* there is no indirect addressing whatever, although dynamic modification of opcodes (!)
 	  allow to simulate it...
+	* a control panel allows operation and debugging of the machine.  (See /systems/apexc.c)
 
 	Conventions :
 	Bits are numbered in big-endian order, starting with 1 (!) : bit #1 is the MSB,
@@ -121,12 +122,13 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	Note2 : Short-hand notations : X stands for X  , A for A    , and R for R    .
 	                                             32         1-32             1-32
 
-	Note3 : Vectors instruction are distinguished from ordinary one by placing a subscript v
-	  after the mnemonic.  For instance :
+	Note3 : Vectors instruction are notated with a subscript 'v' following the basic
+	  mnemonic.  For instance :
 
 		A (x)(y), + (x)(y)
 		 v         v
 
+	  are the vector counterparts of A(x)(y) and +(x)(y).
 */
 
 /*
@@ -172,17 +174,17 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 
 	B							0
 
-	l							1 if n>=32 (i.e. C6>=32)
+	l							1 if n>=32 (i.e. C6>=32) (see 4.)
 	 n							2 if n<32  (i.e. C6<32)
 
-	r							1 if n<=32 (i.e. C6>=32)
+	r							1 if n<=32 (i.e. C6>=32) (see 4.)
 	 n							2 if n>32  (i.e. C6<32)
 
 	X							32
 
 	+c, -c, +, -, T				0
 
-	R    , R    , A   , A		1 (see 1.)
+	R    , R    , A   , A		1 (see 1. & 4.)
 	  1-n   n-32   1-n   n-32
 
 	track switch				6 (see 2.)
@@ -220,17 +222,23 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	    * 1 cycle for fetch
 	    * 6-cycle delay (at most) before write starts (-> track switch)
 	    * 32 memory cycles
-	    * 6-cycle dalay (at most) after write completion (-> track switch)
+	    * 6-cycle delay (at most) after write completion (-> track switch)
 	  It appears that the delay associated with the vector mode is not distinguishable from
 	  the delay caused by track switch and even the delay associated to the Av instruction.
 	    Is there really a specific delay associated with the vector mode ? To know this, we
 	  would need to see a vector instruction on the same track as its operands, which is
 	  unlikely to be seen (the only reasonnable application I can see is running a '+_v'
 	  to compute the checksum of the current track).
-	    Also, does a similar delay merge happen when running a cross-track store ? Example
-	  in Booth p. 76 (20/4 A (27/27) (21/2)) seems to imply it does, since there is lots of
-	  room on track 21, and if the delay merge did not happen, it should have been easy
-	  to move the instruction ahead one step to speed up loop execution time.
+
+	4.  Example in Booth p. 76 ("20/4 A (27/27) (21/2)") seems to imply that
+	  when doing a store with a destination on a track other than the track where next
+	  instruction is located, the 1-cycle post-store delay is merged with the 6-cycle track
+	  switch delay.  (I assume this because there is lots of room on track 21, and if
+	  the delays were not merged, it should be easy to move the instruction forward
+	  to speed up loop execution time.
+	    Similarly, example in Booth p. 49-50 ("4/24 l 32 (5/31)") seems to show that
+	  a similar delay merge occurs when doing a shift with the next instruction located on
+	  another track.
 */
 
 #include "driver.h"
@@ -248,29 +256,16 @@ typedef struct
 	int working_store;	/* current working store (group of 16 tracks) (1-15) */
 	int current_word;	/* current word position within track (0-31) */
 
-	int flags;	/* 2 flags : */
+	int running;	/* 1 flag : */
 				/* running : flag implied by the existence of the stop instruction */
 } apexc_regs;
 
-/* masks for flags */
-enum
-{
-	flag_running_bit = 0,
-
-	flag_running = 1<<flag_running_bit
-};
+static apexc_regs apexc;
 
 int apexc_ICount;
 
-static apexc_regs apexc;
-
 /* decrement ICount by n */
 #define DELAY(n)	{apexc_ICount -= (n); apexc.current_word = (apexc.current_word + (n)) & 0x1f;}
-
-/* set/clear/get running flag */
-#define set_running_flag apexc.flags |= flag_running
-#define clear_running_flag apexc.flags &= ~flag_running
-#define get_running_flag (apexc.flags & flag_running)
 
 
 /*
@@ -343,17 +338,8 @@ static UINT32 word_read(int address, int special)
 	result = cpu_readmem(address);
 #endif
 
-	/* remember new head position */
-#if 0	/* this code is actually equivalent to the code below */
-	if (special)
-	{
-		apexc.current_word = (apexc.current_word + 1) & 0x1f;
-	}
-	else
-#endif
-	{
-		apexc.current_word = ((address /*& 0x1f*/) + 1) & 0x1f;
-	}
+	/* read takes one memory cycle */
+	DELAY(1);
 
 	return result;
 }
@@ -379,8 +365,9 @@ static void word_write(int address, UINT32 data, UINT32 mask)
 	cpu_writemem_masked(address, data, mask);
 #endif
 
-	/* remember new head position */
-	apexc.current_word = ((address /*& 0x1f*/) + 1) & 0x1f;
+	/* write takes one memory cycle (2, actually, but the 2nd cycle is taken into
+	account in execute) */
+	DELAY(1);
 }
 
 /*
@@ -480,7 +467,7 @@ static void execute(void)
 		case 0:
 			/* stop */
 
-			clear_running_flag;
+			apexc.running = FALSE;
 
 			/* BTW, I don't know whether stop loads y into ml or not, and whether
 			subsequent fetch is done */
@@ -492,14 +479,14 @@ static void execute(void)
 			the 5 bits must be cleared initially, an OR kind of makes sense */
 			apexc.r |= papertape_read() << 27;
 			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
-						or as a term in delay2 */
+						or as a value in delay2 */
 			break;
 
 		case 4:
 			/* P */
 			papertape_punch((apexc.r >> 27) & 0x1f);
 			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
-						or as a term in delay2 */
+						or as a value in delay2 */
 			break;
 
 		case 6:
@@ -522,7 +509,7 @@ static void execute(void)
 
 		case 8:
 			/* l_n */
-			DELAY((c6 & 0x20) ? 1 : 2);	/* if more than 32 shifts, it takes more time */
+			delay2 = (c6 & 0x20) ? 1 : 2;	/* if more than 32 shifts, it takes more time */
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
 			while (c6 != 0)
@@ -545,7 +532,7 @@ static void execute(void)
 
 		case 10:
 			/* r_n */
-			DELAY((c6 & 0x20) ? 1 : 2);	/* if more than 32 shifts, it takes more time */
+			delay2 = (c6 & 0x20) ? 1 : 2;	/* if more than 32 shifts, it takes more time */
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
 			while (c6 != 0)
@@ -583,7 +570,7 @@ static void execute(void)
 				else if ((! shifted_bit) && (apexc.r & 1))
 					apexc.a -= word_read(x, 1);
 				else
-					/* Even if we do not read anything, the loop still takes 1 cycle on
+					/* Even if we do not read anything, the loop still takes 1 cycle of
 					the memory word clock. */
 					/* Anyway, maybe we still read the data even if we do not use it. */
 					DELAY(1);
@@ -682,6 +669,7 @@ static void execute(void)
 			/* increment word position in vector operations */
 			apexc.ml = (apexc.ml & 0x3E0) | ((apexc.ml + 1) & 0x1F);
 	} while (vector && has_operand && (++i < 32));	/* iterate 32 times if vector bit is set */
+													/* the has_operand is a mere guess */
 
 	/* load ml with Y */
 	delay3 = load_ml(y, 0);
@@ -714,7 +702,7 @@ void apexc_reset(void *param)
 	apexc.ml = 0;	/* no idea whether this is true or not */
 	apexc.working_store = 1;	/* mere guess */
 	apexc.current_word = 0;		/* well, we do have to start somewhere */
-	apexc.flags = 0;			/* who cares ? */
+	apexc.running = FALSE;		/* who cares ? */
 }
 
 void apexc_exit(void)
@@ -736,8 +724,8 @@ void apexc_set_context(void *src)
 	}
 }
 
-/* no PC - return memory location register instead, this should be equivalent unless not
-executed on instruction boundary */
+/* no PC - return memory location register instead, this should be equivalent unless
+executed in the midst of an instruction */
 unsigned apexc_get_pc(void)
 {
 	return apexc.ml;
@@ -792,7 +780,7 @@ unsigned apexc_get_reg(int regnum)
 		case APEXC_WS:
 			return apexc.working_store;
 		case APEXC_STATE:
-			return apexc.flags;
+			return apexc.running ? TRUE : FALSE;
 	}
 	return 0;
 }
@@ -817,7 +805,7 @@ void apexc_set_reg(int regnum, unsigned val)
 			apexc.working_store = val;
 			break;
 		case APEXC_STATE:
-			apexc.flags = val;
+			apexc.running = val ? TRUE : FALSE;
 	}
 }
 
@@ -868,10 +856,10 @@ const char *apexc_info(void *context, int regnum)
 		sprintf(buffer[which], "WS:%01X", r->working_store);
 		break;
 	case CPU_INFO_REG + APEXC_STATE:
-		sprintf(buffer[which], "CPU state:%01X", r->flags);
+		sprintf(buffer[which], "CPU state:%01X", r->running ? TRUE : FALSE);
 		break;
 	case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c", (r->flags & flag_running) ? 'R' : 'S');
+		sprintf(buffer[which], "%c", (r->running) ? 'R' : 'S');
 		break;
 	case CPU_INFO_NAME:
 		return "APEXC";
@@ -909,7 +897,7 @@ int apexc_execute(int cycles)
 	{
 		CALL_MAME_DEBUG;
 
-		if (get_running_flag)
+		if (apexc.running)
 			execute();
 		else
 		{
