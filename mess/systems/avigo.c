@@ -149,7 +149,7 @@ static void avigo_refresh_ints(void)
 	}
 }
 
-
+#if 0
 static void avigo_1hz_int(int state)
 {
         logerror("1hz int\r\n");
@@ -170,11 +170,11 @@ static void avigo_16hz_int(int state)
         avigo_refresh_ints();
 
 }
+#endif
 
 static struct tc8521_interface avigo_tc8521_interface = 
 {
-	avigo_1hz_int,
-	avigo_16hz_int
+	NULL,	//avigo_alarm_int
 };
 
 static void avigo_refresh_memory(void)
