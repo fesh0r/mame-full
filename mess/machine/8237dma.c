@@ -73,7 +73,7 @@ int dma8237_init(int count)
 	for (which = 0; which < dma_count; which++)
 	{
 		dma[which].status = 0x0F;
-		dma[which].timer = timer_alloc(dma8237_timerproc);
+		dma[which].timer = mame_timer_alloc(dma8237_timerproc);
 		dma[which].eop = 1;
 	}
 	return 0;
@@ -185,15 +185,15 @@ static void dma8237_update_status(int which)
 			dma[which].status |= 0x10 << channel;
 			dma[which].status &= ~(0x01 << channel);
 
-			timer_adjust(dma[which].timer,
-				0,
+			mame_timer_adjust(dma[which].timer,
+				time_zero,
 				which * 4 + channel,
-				dma[which].intf->bus_speed);
+				double_to_mame_time(dma[which].intf->bus_speed));
 		}
 		else
 		{
 			/* no transfers active right now */
-			timer_reset(dma[which].timer, TIME_NEVER);
+			mame_timer_reset(dma[which].timer, time_never);
 		}
 
 		/* set the halt line */

@@ -345,6 +345,7 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(DIRENTOBJS) \
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
+		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\

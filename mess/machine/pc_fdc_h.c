@@ -42,6 +42,9 @@ void pc_fdc_init(pc_fdc_hw_interface *iface)
 	int i;
 	mess_image *img;
 
+	/* clear out globals */
+	memset(&fdc, 0, sizeof(fdc));
+
 	/* copy specified interface */
 	memcpy(&fdc.fdc_interface, iface, sizeof(pc_fdc_hw_interface));
 
