@@ -76,6 +76,9 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_I8X41)
 #include "cpu/i8x41/i8x41.h"
 #endif
+#if (HAS_I8051 || HAS_I8052 || HAS_I8751 || HAS_I8751 )
+#include "cpu/i8051/i8051.h"
+#endif
 #if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
 #include "cpu/m6800/m6800.h"
 #endif
@@ -445,6 +448,18 @@ const struct
 #endif
 #if (HAS_I8X41)
 	{ CPU_I8X41, i8x41_get_info },
+#endif
+#if (HAS_I8051)
+	{ CPU_I8051, i8051_get_info },
+#endif
+#if (HAS_I8052)
+	{ CPU_I8052, i8052_get_info },
+#endif
+#if (HAS_I8751)
+	{ CPU_I8751, i8751_get_info },
+#endif
+#if (HAS_I8751)
+	{ CPU_I8752, i8752_get_info },
 #endif
 #if (HAS_M6800)
 	{ CPU_M6800, m6800_get_info },

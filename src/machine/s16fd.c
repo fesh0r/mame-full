@@ -113,6 +113,10 @@ void fd1094_kludge_reset_values(void)
 /* function, to be called from MACHINE_INIT (every reset) */
 void fd1094_machine_init(void)
 {
+	/* punt if no key; this allows us to be called even for non-FD1094 games */
+	if (!fd1094_key)
+		return;
+
 	fd1904_setstate_and_decrypt(FD1094_STATE_RESET);
 	fd1094_kludge_reset_values();
 
@@ -129,6 +133,10 @@ void fd1094_driver_init(void)
 	fd1094_cpuregion = (data16_t*)memory_region(REGION_CPU1);
 	fd1094_cpuregionsize = memory_region_length(REGION_CPU1);
 	fd1094_key = memory_region(REGION_USER1);
+
+	/* punt if no key; this allows us to be called even for non-FD1094 games */
+	if (!fd1094_key)
+		return;
 
 	for (i=0;i<S16_NUMCACHE;i++)
 	{

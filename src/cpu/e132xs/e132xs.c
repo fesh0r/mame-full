@@ -199,6 +199,15 @@
 #include "mamedbg.h"
 #include "e132xs.h"
 
+data8_t  (*hyp_cpu_read_byte)(offs_t address);
+data16_t (*hyp_cpu_read_half_word)(offs_t address);
+data32_t (*hyp_cpu_read_word)(offs_t address);
+data32_t (*hyp_cpu_read_io_word)(offs_t address);
+void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
+void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
+void (*hyp_cpu_write_word)(offs_t address, data32_t data);
+void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
+
 // set C in adds/addsi/subs/sums
 #define SETCARRYS 0
 #define MISSIONCRAFT_FLAGS 1
@@ -783,6 +792,7 @@ void set_global_register(UINT8 code, UINT32 val)
 	if( code == PC_REGISTER )
 	{
 		SET_PC(val);
+		change_pc(PC);
 	}
 	else if( code == SR_REGISTER )
 	{
@@ -1379,6 +1389,7 @@ void execute_br(INT32 rel)
 {
 	PPC = PC;
 	PC += rel;
+	change_pc(PC);
 	SET_M(0);
 
 	hyperstone_ICount -= 2;
@@ -1425,6 +1436,7 @@ void execute_trap(UINT32 addr)
 
 	PPC = PC;
 	PC = addr;
+	change_pc(PC);
 
 	hyperstone_ICount -= 2;
 }
@@ -1454,6 +1466,7 @@ void execute_int(UINT32 addr)
 
 	PPC = PC;
 	PC = addr;
+	change_pc(PC);
 
 	hyperstone_ICount -= 2;
 }
@@ -1482,6 +1495,7 @@ void execute_exception(UINT32 addr)
 
 	PPC = PC;
 	PC = addr;
+	change_pc(PC);
 
 	printf("EXCEPTION! PPC = %08X PC = %08X\n",PPC-2,PC-2);
 	hyperstone_ICount -= 2;
@@ -1521,6 +1535,7 @@ void execute_software(void)
 
 	PPC = PC;
 	PC = addr;
+	change_pc(PC);
 }
 
 static void hyperstone_init(void)
@@ -1551,6 +1566,8 @@ static void e116_init(void)
 	hyp_cpu_write_word      = program_write_dword_16be;
 	hyp_cpu_write_io_word   = io_write_dword_16be;
 
+	hyp_type_16bit = 1;
+
 	hyperstone_init();
 }
 
@@ -1565,6 +1582,8 @@ static void e132_init(void)
 	hyp_cpu_write_half_word = program_write_word_32be;
 	hyp_cpu_write_word      = program_write_dword_32be;
 	hyp_cpu_write_io_word   = io_write_dword_32be;
+
+	hyp_type_16bit = 0;
 
 	hyperstone_init();
 }
@@ -1589,6 +1608,7 @@ static void hyperstone_reset(void *param)
 	TPR = 0x8000000;
 
 	PC = get_trap_addr(RESET);
+	change_pc(PC);
 
 	SET_FP(0);
 	SET_FL(2);
@@ -1811,6 +1831,7 @@ void hyperstone_movd(void)
 			PPC = PC;
 
 			PC = SET_PC(SREG);
+			change_pc(PC);
 			SR = (SREGF & 0xffe00000) | ((SREG & 0x01) << 18 ) | (SREGF & 0x3ffff);
 
 			hyperstone.instruction_length = 0; // undefined
@@ -4608,6 +4629,7 @@ void hyperstone_call(void)
 
 	PPC = PC;
 	PC = const_val;
+	change_pc(PC);
 
 	hyperstone.intblock = 2;
 
@@ -4830,7 +4852,7 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + E132XS_PC:			PC = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_PC:			PC = info->i; change_pc(PC);			break;
 		case CPUINFO_INT_REGISTER + E132XS_SR:			SR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FER:			FER = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_G3:			hyperstone.global_regs[3] = info->i;		break;

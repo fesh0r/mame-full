@@ -187,7 +187,7 @@ int hexdigit(char c);
 /* Endian macros */
 #define FLIPENDIAN_INT16(x)	(((((UINT16) (x)) >> 8) | ((x) << 8)) & 0xffff) 
 #define FLIPENDIAN_INT32(x)	((((UINT32) (x)) << 24) | (((UINT32) (x)) >> 24) | \
-	(( ((UINT32) (x)) & 0x0000ff00) << 8) | (( ((UINT32) (x)) & 0x00ff0000) >> 8)))
+	(( ((UINT32) (x)) & 0x0000ff00) << 8) | (( ((UINT32) (x)) & 0x00ff0000) >> 8))
 #define FLIPENDIAN_INT64(x)	\
 	(												\
 		(((((UINT64) (x)) >> 56) & ((UINT64) 0xFF)) <<  0)	|	\

@@ -101,6 +101,12 @@ extern WRITE16_HANDLER( segac2_vdp_w );
 data16_t sys18_ddcrew_bankregs[0x20];
 
 
+#define SHOW_BANKS	0
+#if SHOW_BANKS
+extern UINT8 sprite_banks_used[];
+#endif
+
+
 /*
 static void debug_draw( struct mame_bitmap *bitmap, int x, int y, unsigned int data ){
 	int digit;
@@ -251,7 +257,6 @@ static void draw_sprite( //*
 	unsigned pen, data;
 
 	priority = 1<<priority;
-	if (!strcmp(Machine->gamedrv->name,"sonicbom")) flipy^=0x80; // temp hack until we fix drawing
 
 	if( flipy ){
 		dy = -1;
@@ -851,7 +856,8 @@ VIDEO_START( system16 ){
 		0x8,0x9,0xa,0xb,
 		0xc,0xd,0xe,0xf
 	};
-	sys16_obj_bank = bank_default;
+	if (!sys16_obj_bank)
+		sys16_obj_bank = bank_default;
 
 	/* Normal colors */
 	compute_resistor_weights(0, 255, -1.0,
@@ -924,10 +930,9 @@ VIDEO_START( system16 ){
 		sys16_refreshenable = 1;
 
 		/* common defaults */
-		sys16_update_proc = 0;
 		sys16_spritesystem = sys16_sprite_shinobi;
-		sys16_sprxoffset = -0xb8;
-		sys16_textmode = 0;
+		if (!sys16_sprxoffset)
+			sys16_sprxoffset = -0xb8;
 		sys16_bgxoffset = 0;
 		sys16_bg_priority_mode=0;
 		sys16_fg_priority_mode=0;
@@ -1203,7 +1208,15 @@ static void sys18_vh_screenrefresh_helper( void ){
 }
 
 VIDEO_UPDATE( system16 ){
-	if (!sys16_refreshenable) return;
+	if (!sys16_refreshenable)
+	{
+		fillbitmap(bitmap, 0, cliprect);
+		return;
+	}
+
+#if SHOW_BANKS
+	memset(sprite_banks_used, 0, 16);
+#endif
 
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
@@ -1225,6 +1238,26 @@ VIDEO_UPDATE( system16 ){
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	draw_sprites( bitmap,cliprect,0 );
+
+#if SHOW_BANKS
+	usrintf_showmessage("Banks: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+		sprite_banks_used[0] ? '0' : ' ',
+		sprite_banks_used[1] ? '1' : ' ',
+		sprite_banks_used[2] ? '2' : ' ',
+		sprite_banks_used[3] ? '3' : ' ',
+		sprite_banks_used[4] ? '4' : ' ',
+		sprite_banks_used[5] ? '5' : ' ',
+		sprite_banks_used[6] ? '6' : ' ',
+		sprite_banks_used[7] ? '7' : ' ',
+		sprite_banks_used[8] ? '8' : ' ',
+		sprite_banks_used[9] ? '9' : ' ',
+		sprite_banks_used[10] ? 'A' : ' ',
+		sprite_banks_used[11] ? 'B' : ' ',
+		sprite_banks_used[12] ? 'C' : ' ',
+		sprite_banks_used[13] ? 'D' : ' ',
+		sprite_banks_used[14] ? 'E' : ' ',
+		sprite_banks_used[15] ? 'F' : ' ');
+#endif
 }
 
 static struct GfxLayout decodecharlayout =
@@ -1329,6 +1362,7 @@ VIDEO_UPDATE( system18 ){
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	if (!strcmp(Machine->gamedrv->name,"cltchitr"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
+	if (!strcmp(Machine->gamedrv->name,"cltchtrj"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
 //	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
 
 	draw_sprites( bitmap,cliprect, 0 );
@@ -2062,6 +2096,35 @@ VIDEO_UPDATE( aburner ){
 	/* hand, scores */
 	tilemap_draw( bitmap,cliprect, foreground, 0, 7 );
 	tilemap_draw( bitmap,cliprect, foreground, 1, 7 );
+
+	tilemap_draw( bitmap,cliprect, text_layer, 0, 7 );
+	draw_sprites( bitmap,cliprect, 2 );
+
+//	debug_draw( bitmap,cliprect, 8,8,sys16_roadram[0x1000] );
+}
+
+VIDEO_UPDATE( gprider ){
+	sys16_aburner_vh_screenrefresh_helper();
+	update_page();
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	aburner_draw_road( bitmap,cliprect );
+
+//	tilemap_draw( bitmap,cliprect, background2, 0, 7 );
+//	tilemap_draw( bitmap,cliprect, background2, 1, 7 );
+
+	/* speed indicator, high score header */
+	tilemap_draw( bitmap,cliprect, background, 0, 0 );
+	tilemap_draw( bitmap,cliprect, background, 1, 0 );
+
+	/* radar view */
+	tilemap_draw( bitmap,cliprect, foreground2, 0, 0 );
+	tilemap_draw( bitmap,cliprect, foreground2, 1, 0 );
+
+	/* hand, scores */
+	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
+	tilemap_draw( bitmap,cliprect, foreground, 1, 0 );
 
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 7 );
 	draw_sprites( bitmap,cliprect, 2 );

@@ -71,19 +71,19 @@ There is still some uncertainty about the exact assignment of global key bits.
 
 key[1]
 ------
-key_0c invert;	\ bits 7,5 always 1 for now (but they are 0 in the dead Alien Storm CPU)
+key_0b invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
 global_xor0;	/
-key_5b invert;	\ bits 6, 4 always the same for now
-key_2b invert;	/
-key_1b invert;	bit 3 always 1 for now
+key_5b invert;	bit 6 always same as bit 4 for now (but not in a bad CPU)
+key_2b invert;	bit 4 always same as bit 6 for now (but not in a bad CPU)
+key_1b invert;	bit 3 always 1 for now (but 0 in a bad CPU)
 global_xor1;	bit 2
-key_0b invert;	bit 1
+key_0c invert;	bit 1
 global_swap2;	bit 0
 
 key[2]
 ------
-key_6b invert;	\ bits 7,6 always 1 for now (but they are 0 in the dead Alien Storm CPU)
-key_1a invert;	/
+key_1a invert;	bit 7 always 1 for now (but 0 in a bad CPU)
+key_6b invert;	bit 6 always 1 for now (but 0 in a bad CPU)
 global_swap0a;	bit 5
 key_7a invert;	bit 4
 key_4a invert;	bit 3
@@ -93,38 +93,54 @@ key_3a invert;	bit 0
 
 key[3]
 ------
-global_swap3;	\
-key_2a invert;	 |bits 7,6,5 always 1 for now (but they are 0 in the dead Alien Storm CPU)
+key_2a invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
 key_5a_invert;	/
+global_swap3;	bit 6 always 1 for now (but 0 in a bad CPU)
 global_swap1;	bit 4
 key_3b invert;	bit 3
 global_swap4;	bit 2
 key_0a invert;	bit 1
 key_4b invert;	bit 0
 
+
 summary of global keys:
 -----------------------
 0049      10101000 11110101 11100011
 0053      11111111 11111111 11111111
+0056      10101111 11111110 11101000
+0058-02C  10101111 11110101 11111000
 0058-05C  10101110 11111001 11110010
+0068      10101111 11111001 11110101
+0084      10101111 11110101 11100000
 0085      10101111 11110100 11110111
 0089      10101111 11110100 11100010
 0091      10101111 11110100 11100100
 0092      10101111 11110100 11100011
 0093      10101111 11110100 11100010
 0096      10101111 11110100 11101010
+0118      10101110 11111100 11111000
+0120      10101110 11111100 11100010
 0122      10101110 11111011 11111011
+0124A     11111001 11101010 11110100
+0125A     11111001 11110000 11101111
 0127A     10101110 11111000 11111001
 0129      11111111 11100011 11101011
 0130      11111111 11100011 11101100
+0143      11111101 11111101 11101101
 0146      11111011 11100101 11101110
 0157      11111000 11101011 11110101
+0158      11111000 11110000 11110000
 0159      11111000 11101011 11110101
+0162      11111110 11110001 11110000
 0163      11111110 11110010 11110000
+0165      10101101 11110100 11100110
+0166      10101101 11110100 11101110
 0176      10101100 11111100 11110001
 0181A     11111001 11001000 11101110
 0186      10101100 11111000 11111110
+unknown   11111111 11110110 10111110 (Shinobi 16A, part no. unreadable, could be dead)
 dead      00001111 00001111 00001111 (Alien Storm CPU with no battery)
+bad       11100000 10101011 10111001 (flaky 317-0049)
 
 *****************************************************************************/
 
@@ -132,6 +148,18 @@ dead      00001111 00001111 00001111 (Alien Storm CPU with no battery)
 #include "fd1094.h"
 
 
+/*
+317-0162 CPU also needs to mask:
+0x107a,
+0x127a,
+0x147a,
+0x167a,
+0x187a,
+0x1a7a,
+0x1c7a,
+0x1e7a,
+this only happens with 317-0162 so far; I assume it is a fault in the CPU.
+*/
 static int masked_opcodes[] =
 {
 	0x013a,0x033a,0x053a,0x073a,0x083a,0x093a,0x0b3a,0x0d3a,0x0f3a,
@@ -252,7 +280,7 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 {
 	int mainkey,key_F,key_6a,key_7a,key_6b;
 	int key_0a,key_0b,key_0c;
-	int key_1a,key_1b,key_2a,key_2b,key_3a,key_3b,key_3c,key_4a,key_4b,key_5a,key_5b;
+	int key_1a,key_1b,key_2a,key_2b,key_3a,key_3b,key_4a,key_4b,key_5a,key_5b;
 	int global_xor0,global_xor1;
 	int global_swap0a,global_swap1,global_swap2,global_swap3,global_swap4;
 	int global_swap0b;
@@ -264,10 +292,8 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	else
 		mainkey = main_key[address & 0x1fff];
 
-	key_6a = BIT(mainkey,6);
-	key_7a = BIT(mainkey,7);
-	if (address & 0x1000)	key_F = key_7a;
-	else					key_F = key_6a;
+	if (address & 0x1000)	key_F = BIT(mainkey,7);
+	else					key_F = BIT(mainkey,6);
 
 	/* the CPU has been verified to produce different results when fetching opcodes
 	   from 0000-0006 than when fetching the inital SP and PC on reset. */
@@ -286,33 +312,33 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	global_swap0a       = 1^BIT(gkey2,5);
 	global_swap0b       = 1^BIT(gkey2,2);
 
-	global_swap3        = 1^BIT(gkey3,7);	// could be bit 6 or 5
+	global_swap3        = 1^BIT(gkey3,6);
 	global_swap1        = 1^BIT(gkey3,4);
 	global_swap4        = 1^BIT(gkey3,2);
 
-	key_6b = key_6a ^ BIT(gkey2,7);	// could be bit 6
-	key_6a ^= BIT(gkey2,1);
-	key_7a ^= BIT(gkey2,4);
-
 	key_0a = BIT(mainkey,0) ^ BIT(gkey3,1);
-	key_0b = BIT(mainkey,0) ^ BIT(gkey1,1);;
-	key_0c = BIT(mainkey,0) ^ BIT(gkey1,7);	// could be bit 5
+	key_0b = BIT(mainkey,0) ^ BIT(gkey1,7);	// could be bit 5
+	key_0c = BIT(mainkey,0) ^ BIT(gkey1,1);
 
-	key_1a = BIT(mainkey,1) ^ BIT(gkey2,6);	// could be bit 7;
+	key_1a = BIT(mainkey,1) ^ BIT(gkey2,7);
 	key_1b = BIT(mainkey,1) ^ BIT(gkey1,3);
 
-	key_2a = BIT(mainkey,2) ^ BIT(gkey3,6);	// could be bit 7 or 5;
-	key_2b = BIT(mainkey,2) ^ BIT(gkey1,4);	// could be bit 6;
+	key_2a = BIT(mainkey,2) ^ BIT(gkey3,7);	// could be bit 5
+	key_2b = BIT(mainkey,2) ^ BIT(gkey1,4);
 
 	key_3a = BIT(mainkey,3) ^ BIT(gkey2,0);
 	key_3b = BIT(mainkey,3) ^ BIT(gkey3,3);
-	key_3c = key_3b         ^ 1^global_swap0a;
 
 	key_4a = BIT(mainkey,4) ^ BIT(gkey2,3);
 	key_4b = BIT(mainkey,4) ^ BIT(gkey3,0);
 
-	key_5a = BIT(mainkey,5) ^ BIT(gkey3,5);	// could be bit 7 or 6;
-	key_5b = BIT(mainkey,5) ^ BIT(gkey1,6);	// could be bit 4;
+	key_5a = BIT(mainkey,5) ^ BIT(gkey3,5);	// could be bit 7
+	key_5b = BIT(mainkey,5) ^ BIT(gkey1,6);
+
+	key_6a = BIT(mainkey,6) ^ BIT(gkey2,1);
+	key_6b = BIT(mainkey,6) ^ BIT(gkey2,6);
+
+	key_7a = BIT(mainkey,7) ^ BIT(gkey2,4);
 
 
 	if ((val & 0xe000) == 0x0000)
@@ -321,50 +347,47 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	{
 		if (val & 0x8000)
 		{
-			if (!global_xor1)				if (~val & 0x0008) val ^= 0x2410;
-											if (~val & 0x0004) val ^= 0x0022;
-			if (!key_1b)					if (~val & 0x1000) val ^= 0x0848;
-			if (!key_0b && !global_swap2)	val ^= 0x4101;
-			val ^= 0x56a4;
-			if (!key_2b)	val = BITSWAP16(val, 15,12,10,13, 3, 9, 0,14, 6, 5, 7,11, 8, 1, 4, 2);
-			else			val = BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
+			if (!global_xor1)	if (~val & 0x0008)	val ^= 0x2410;										// 13,10,4
+								if (~val & 0x0004)	val ^= 0x0022;										// 5,1
+			if (!key_1b)		if (~val & 0x1000)	val ^= 0x0848;										// 11,6,3
+			if (!global_swap2)	if (!key_0c)		val ^= 0x4101;										// 14,8,0
+			if (!key_2b)		val = BITSWAP16(val, 15,14,13, 9,11,10,12, 8, 2, 6, 5, 4, 3, 7, 1, 0);	// 12,9,7,2
+
+			val = 0x6561 ^ BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
 		}
 		if (val & 0x4000)
 		{
-			if (!global_xor0)		if (val & 0x0800) val ^= 0x9048;
-			if (!key_3a)			if (val & 0x0004) val ^= 0x0202;
-			if (!key_6a)			if (val & 0x0400) val ^= 0x0004;
-			if (!key_0c && !key_5b)	val ^= 0x08a1;
-			val ^= 0x02ed;
-			if (!global_swap0b)	val = BITSWAP16(val, 10,14, 7, 0, 4, 6, 8, 2, 1,15, 3,11,12,13, 5, 9);
-			else				val = BITSWAP16(val, 13,14, 7, 0, 8, 6, 4, 2, 1,15, 3,11,12,10, 5, 9);
+			if (!global_xor0)	if (val & 0x0800)	val ^= 0x9048;										// 15,12,6,3
+			if (!key_3a)		if (val & 0x0004)	val ^= 0x0202;										// 9,1
+			if (!key_6a)		if (val & 0x0400)	val ^= 0x0004;										// 2
+			if (!key_5b)		if (!key_0b)		val ^= 0x08a1;										// 11,7,5,0
+			if (!global_swap0b)	val = BITSWAP16(val, 15,14,10,12,11,13, 9, 4, 7, 6, 5, 8, 3, 2, 1, 0);	// 13,10,8,4
+
+			val = 0x3523 ^ BITSWAP16(val, 13,14, 7, 0, 8, 6, 4, 2, 1,15, 3,11,12,10, 5, 9);
 		}
 		if (val & 0x2000)
 		{
-			if (!key_4a)				if (val & 0x0100) val ^= 0x4210;
-			if (!key_1a)				if (val & 0x0040) val ^= 0x0080;
-			if (!key_7a)				if (val & 0x0001) val ^= 0x110a;
-			if (!key_0a && !key_4b)		val ^= 0x0040;
-			if (!global_swap0a && !key_6b)	val ^= 0x0404;
-			val ^= 0x55d2;
-			if (!key_5b)	val = BITSWAP16(val, 10, 2,13, 7, 8, 5, 3,14, 6, 0, 1,15, 9, 4,11,12);
-			else			val = BITSWAP16(val, 10, 2,13, 7, 8, 0, 3,14, 6,15, 1,11, 9, 4, 5,12);
+			if (!key_4a)		if (val & 0x0100)	val ^= 0x4210;										// 14,9,4
+			if (!key_1a)		if (val & 0x0040)	val ^= 0x0080;										// 7
+			if (!key_7a)		if (val & 0x0001)	val ^= 0x110a;										// 12,8,3,1
+			if (!key_4b)		if (!key_0a)		val ^= 0x0040;										// 6
+			if (!global_swap0a)	if (!key_6b)		val ^= 0x0404;										// 10,2
+			if (!key_5b)		val = BITSWAP16(val,  0,14,13,12,15,10, 9, 8, 7, 6,11, 4, 3, 2, 1, 5);	// 15,11,5,0
+
+			val = 0x99a5 ^ BITSWAP16(val, 10, 2,13, 7, 8, 0, 3,14, 6,15, 1,11, 9, 4, 5,12);
 		}
 
-		val ^= 0x1fbf;
+		val = 0x87ff ^ BITSWAP16(val,  5,15,13,14, 6, 0, 9,10, 4,11, 1, 2,12, 3, 7, 8);
 
-		if (!key_3b)		val = BITSWAP16(val, 15,14,13,12,11,10, 2, 8, 7, 6, 5, 4, 3, 9, 1, 0);	// 9-2
-		if (!global_swap4)	val = BITSWAP16(val, 15,14,13,12, 5, 1, 9, 8, 7, 6,11, 4, 3, 2,10, 0);	// 10-1, 11-5
-		if (!key_3c)		val = BITSWAP16(val, 15,14,13, 7,11,10, 9, 8,12, 6, 5, 4, 3, 2, 1, 0);	// 12-7
-		if (!global_swap3)	val = BITSWAP16(val, 14,13,15,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 13...15
-		if (!key_2a)		val = BITSWAP16(val, 14,15,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// (current) 14-15
+		if (!global_swap4)	val = BITSWAP16(val,  6,14,13,12,11,10, 9, 5, 7,15, 8, 4, 3, 2, 1, 0);	// 15-6, 8-5
+		if (!global_swap3)	val = BITSWAP16(val, 15,12,14,13,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 12-13-14
+		if (!global_swap2)	val = BITSWAP16(val, 15,14,13,12,11, 2, 9, 8,10, 6, 5, 4, 3, 0, 1, 7);	// 10-2-0-7
+		if (!key_3b)		val = BITSWAP16(val, 15,14,13,12,11,10, 4, 8, 7, 6, 5, 9, 1, 2, 3, 0);	// 9-4, 3-1
 
-		if (!global_swap2)	val = BITSWAP16(val,  5,15,13,14, 6, 3, 9,10, 0,11, 1, 2,12, 8, 7, 4);
-		else				val = BITSWAP16(val,  5,15,13,14, 6, 0, 9,10, 4,11, 1, 2,12, 3, 7, 8);
-
-		if (!global_swap1)	val = BITSWAP16(val, 15,14,13,12, 9, 8,11,10, 7, 6, 5, 4, 3, 2, 1, 0);	// (current) 11...8
-		if (!key_5a)		val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 4, 5, 7, 6, 3, 2, 1, 0);	// (current) 7...4
-		if (!global_swap0a)	val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 0, 1, 2, 3);	// (current) 3...0
+		if (!key_2a)		val = BITSWAP16(val, 15,12,13,14,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 14-12
+		if (!global_swap1)	val = BITSWAP16(val, 15,14,13,12, 9, 8,11,10, 7, 6, 5, 4, 3, 2, 1, 0);	// 11...8
+		if (!key_5a)		val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 4, 5, 7, 6, 3, 2, 1, 0);	// 7...4
+		if (!global_swap0a)	val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 0, 3, 2, 1);	// 3...0
 	}
 
 	return final_decrypt(val,key_F);
@@ -418,8 +441,8 @@ int fd1094_set_state(unsigned char *key,int state)
 	if (state & 0x0001)
 	{
 		global_key1 ^= 0x04;	// global_xor1
-		global_key2 ^= 0x40;	// key_1a invert - could be 0x80
-		global_key3 ^= 0x40;	// key_2a invert - could be 0x80, 0x20
+		global_key2 ^= 0x80;	// key_1a invert
+		global_key3 ^= 0x80;	// key_2a invert - could be 0x20
 	}
 	if (state & 0x0002)
 	{
@@ -429,20 +452,20 @@ int fd1094_set_state(unsigned char *key,int state)
 	}
 	if (state & 0x0004)
 	{
-		global_key1 ^= 0x80;	// key_0c invert - could be 0x80
-		global_key2 ^= 0x80;	// key_6b invert - could be 0x40
+		global_key1 ^= 0x80;	// key_0b invert - could be 0x20
+		global_key2 ^= 0x40;	// key_6b invert
 		global_key3 ^= 0x04;	// global_swap4
 	}
 	if (state & 0x0008)
 	{
-		global_key1 ^= 0x20;	// global_xor0   - could be 0x20
+		global_key1 ^= 0x20;	// global_xor0   - could be 0x80
 		global_key2 ^= 0x02;	// key_6a invert
-		global_key3 ^= 0x20;	// key_5a invert - could be 0x80, 0x40
+		global_key3 ^= 0x20;	// key_5a invert - could be 0x80
 	}
 	if (state & 0x0010)
 	{
-		global_key1 ^= 0x02;	// key_0b invert
-		global_key1 ^= 0x40;	// key_5b invert - could be 0x10
+		global_key1 ^= 0x02;	// key_0c invert
+		global_key1 ^= 0x40;	// key_5b invert
 		global_key2 ^= 0x08;	// key_4a invert
 	}
 	if (state & 0x0020)
@@ -453,7 +476,7 @@ int fd1094_set_state(unsigned char *key,int state)
 	}
 	if (state & 0x0040)
 	{
-		global_key1 ^= 0x10;	// key_2b invert - could be 0x40
+		global_key1 ^= 0x10;	// key_2b invert
 		global_key2 ^= 0x20;	// global_swap0a
 		global_key2 ^= 0x04;	// global_swap0b
 	}
@@ -461,7 +484,7 @@ int fd1094_set_state(unsigned char *key,int state)
 	{
 		global_key2 ^= 0x01;	// key_3a invert
 		global_key3 ^= 0x02;	// key_0a invert
-		global_key3 ^= 0x80;	// global_swap3  - could be 0x40, 0x20
+		global_key3 ^= 0x40;	// global_swap3
 	}
 
 	return state & 0xff;

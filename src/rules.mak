@@ -362,6 +362,50 @@ else
 CPUDEFS += -DHAS_I8X41=0
 endif
 
+CPU=$(strip $(findstring I8051@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8051=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8051=0
+endif
+
+CPU=$(strip $(findstring I8052@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8052=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8052=0
+endif
+
+CPU=$(strip $(findstring I8751@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8751=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8751=0
+endif
+
+CPU=$(strip $(findstring I8752@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8752=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8752=0
+endif
+
 CPU=$(strip $(findstring M6800@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m6800

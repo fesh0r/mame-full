@@ -63,15 +63,15 @@ void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
 extern unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private_fp);
 #endif
 
-data8_t  (*hyp_cpu_read_byte)(offs_t address);
-data16_t (*hyp_cpu_read_half_word)(offs_t address);
-data32_t (*hyp_cpu_read_word)(offs_t address);
-data32_t (*hyp_cpu_read_io_word)(offs_t address);
-void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
-void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
-void (*hyp_cpu_write_word)(offs_t address, data32_t data);
-void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
-
+extern data8_t  (*hyp_cpu_read_byte)(offs_t address);
+extern data16_t (*hyp_cpu_read_half_word)(offs_t address);
+extern data32_t (*hyp_cpu_read_word)(offs_t address);
+extern data32_t (*hyp_cpu_read_io_word)(offs_t address);
+extern void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
+extern void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
+extern void (*hyp_cpu_write_word)(offs_t address, data32_t data);
+extern void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
+int hyp_type_16bit;
 
 /* Memory access */
 /* read byte */
@@ -96,7 +96,7 @@ void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
 #define IO_WRITE_W(addr, data) ((*hyp_cpu_write_io_word)(((addr) >> 11) & 0x7ffc, data))
 
 
-#define READ_OP(addr)	       READ_HW(addr)
+#define READ_OP(addr)	       (cpu_readop16(hyp_type_16bit ? addr: WORD_XOR_BE(addr)))
 
 
 /* Registers Number	*/

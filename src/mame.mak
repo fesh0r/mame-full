@@ -31,6 +31,10 @@ CPUS+=I8039@
 CPUS+=I8048@
 CPUS+=N7751@
 CPUS+=I8X41@
+CPUS+=I8051@
+CPUS+=I8052@
+CPUS+=I8751@
+CPUS+=I8752@
 CPUS+=M6800@
 CPUS+=M6801@
 CPUS+=M6802@
@@ -504,8 +508,8 @@ $(OBJ)/sega.a: \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/vidhrdw/sys16spr.o \
 	$(OBJ)/sndhrdw/system16.o \
 	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
-	$(OBJ)/drivers/system16.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
-	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
+	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
+	$(OBJ)/vidhrdw/segas16.o $(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/vidhrdw/segaic24.o \

@@ -749,13 +749,12 @@ static void debug_view_set_bounds(struct debugview_info *info, HWND parent, cons
 static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 {
 	struct debug_view_char *viewdata;
-	COLORREF oldfgcolor, oldbgcolor;
 	HGDIOBJ oldfont, oldbitmap;
 	UINT32 visrows, viscols;
-	int last_attrib = -1;
+	COLORREF oldfgcolor;
 	UINT32 col, row;
-	HBRUSH bgbrush;
 	HBITMAP bitmap;
+	int oldbkmode;
 	RECT client;
 	HDC dc;
 
@@ -782,73 +781,104 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 	// set the font
 	oldfont = SelectObject(dc, debug_font);
 	oldfgcolor = GetTextColor(dc);
-	oldbgcolor = GetBkColor(dc);
+	oldbkmode = GetBkMode(dc);
+	SetBkMode(dc, TRANSPARENT);
 
 	// iterate over rows and columns
 	for (row = 0; row < visrows; row++)
 	{
-		TCHAR buffer[256];
-		int count = 0;
-		RECT bounds;
+		int iter;
 
-		// initialize the text bounds
-		bounds.left = 0;
-		bounds.top = row * debug_font_height;
-		bounds.bottom = bounds.top + debug_font_height;
-
-		// iterate over columns
-		for (col = 0; col < viscols; col++)
+		// loop twice; once to fill the background and once to draw the text
+		for (iter = 0; iter < 2; iter++)
 		{
-			// if the attribute changed, adjust the colors
-			if (viewdata->attrib != last_attrib)
+			COLORREF fgcolor = RGB(0x00,0x00,0x00);
+			COLORREF bgcolor = RGB(0xff,0xff,0xff);
+			HBRUSH bgbrush = NULL;
+			int last_attrib = -1;
+			TCHAR buffer[256];
+			int count = 0;
+			RECT bounds;
+
+			// initialize the text bounds
+			bounds.left = 0;
+			bounds.top = row * debug_font_height;
+			bounds.bottom = bounds.top + debug_font_height;
+
+			// start with a brush on iteration #0
+			if (iter == 0)
+				bgbrush = CreateSolidBrush(bgcolor);
+
+			// iterate over columns
+			for (col = 0; col < viscols; col++)
 			{
-				COLORREF fgcolor = RGB(0x00,0x00,0x00);
-				COLORREF bgcolor = RGB(0xff,0xff,0xff);
-
-				// pick new fg/bg colors
-				if (viewdata->attrib & DCA_ANCILLARY) bgcolor = RGB(0xe0,0xe0,0xe0);
-				if (viewdata->attrib & DCA_SELECTED) bgcolor = RGB(0xff,0x80,0x80);
-				if (viewdata->attrib & DCA_CURRENT) bgcolor = RGB(0xff,0xff,0x00);
-				if (viewdata->attrib & DCA_CHANGED) fgcolor = RGB(0xff,0x00,0x00);
-				if (viewdata->attrib & DCA_INVALID) fgcolor = RGB(0x00,0x00,0xff);
-				if (viewdata->attrib & DCA_DISABLED) fgcolor = RGB((GetRValue(fgcolor) + GetRValue(bgcolor)) / 2, (GetGValue(fgcolor) + GetGValue(bgcolor)) / 2, (GetBValue(fgcolor) + GetBValue(bgcolor)) / 2);
-
-				// flush any pending text
-				if (count > 0)
+				// if the attribute changed, adjust the colors
+				if (viewdata[col].attrib != last_attrib)
 				{
-					bounds.right = bounds.left + count * debug_font_width;
-					ExtTextOut(dc, bounds.left, bounds.top, ETO_OPAQUE, &bounds, buffer, count, NULL);
-					bounds.left = bounds.right;
-					count = 0;
+//					COLORREF oldfg = fgcolor;
+					COLORREF oldbg = bgcolor;
+
+					// reset to standard colors
+					fgcolor = RGB(0x00,0x00,0x00);
+					bgcolor = RGB(0xff,0xff,0xff);
+
+					// pick new fg/bg colors
+					if (viewdata[col].attrib & DCA_ANCILLARY) bgcolor = RGB(0xe0,0xe0,0xe0);
+					if (viewdata[col].attrib & DCA_SELECTED) bgcolor = RGB(0xff,0x80,0x80);
+					if (viewdata[col].attrib & DCA_CURRENT) bgcolor = RGB(0xff,0xff,0x00);
+					if (viewdata[col].attrib & DCA_CHANGED) fgcolor = RGB(0xff,0x00,0x00);
+					if (viewdata[col].attrib & DCA_INVALID) fgcolor = RGB(0x00,0x00,0xff);
+					if (viewdata[col].attrib & DCA_DISABLED) fgcolor = RGB((GetRValue(fgcolor) + GetRValue(bgcolor)) / 2, (GetGValue(fgcolor) + GetGValue(bgcolor)) / 2, (GetBValue(fgcolor) + GetBValue(bgcolor)) / 2);
+
+					// flush any pending drawing
+					if (count > 0)
+					{
+						bounds.right = bounds.left + count * debug_font_width;
+						if (iter == 0)
+							FillRect(dc, &bounds, bgbrush);
+						else
+							ExtTextOut(dc, bounds.left, bounds.top, 0, NULL, buffer, count, NULL);
+						bounds.left = bounds.right;
+						count = 0;
+					}
+
+					// set the new colors
+					if (iter == 0 && oldbg != bgcolor)
+					{
+						DeleteObject(bgbrush);
+						bgbrush = CreateSolidBrush(bgcolor);
+					}
+					else if (iter == 1)
+						SetTextColor(dc, fgcolor);
+					last_attrib = viewdata[col].attrib;
 				}
 
-				// set the new colors
-				SetTextColor(dc, fgcolor);
-				SetBkColor(dc, bgcolor);
-				last_attrib = viewdata->attrib;
+				// add this character to the buffer
+				buffer[count++] = viewdata[col].byte;
 			}
 
-			// add this character to the buffer
-			buffer[count++] = viewdata->byte;
-			viewdata++;
+			// flush any remaining stuff
+			if (count > 0)
+			{
+				bounds.right = bounds.left + count * debug_font_width;
+				if (iter == 0)
+					FillRect(dc, &bounds, bgbrush);
+				else
+					ExtTextOut(dc, bounds.left, bounds.top, 0, NULL, buffer, count, NULL);
+			}
+
+			// erase to the end of the line
+			if (iter == 0)
+			{
+				bounds.left = bounds.right;
+				bounds.right = client.right;
+				FillRect(dc, &bounds, bgbrush);
+				DeleteObject(bgbrush);
+			}
 		}
 
-		// flush any remaining stuff
-		if (count > 0)
-		{
-			bounds.right = bounds.left + count * debug_font_width;
-			ExtTextOut(dc, bounds.left, bounds.top, ETO_OPAQUE, &bounds, buffer, count, NULL);
-		}
-
-		// erase to the end of the line
-		bounds.left = bounds.right;
-		bounds.right = client.right;
-		bgbrush = CreateSolidBrush(GetBkColor(dc));
-		if (bgbrush != NULL)
-		{
-			FillRect(dc, &bounds, bgbrush);
-			DeleteObject(bgbrush);
-		}
+		// advance viewdata
+		viewdata += viscols;
 	}
 
 	// erase anything beyond the bottom with white
@@ -857,8 +887,8 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 	FillRect(dc, &client, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
 	// reset the font
+	SetBkMode(dc, oldbkmode);
 	SetTextColor(dc, oldfgcolor);
-	SetTextColor(dc, oldbgcolor);
 	SelectObject(dc, oldfont);
 
 	// blit the final results

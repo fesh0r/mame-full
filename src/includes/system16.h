@@ -1,3 +1,30 @@
+/******************** NEW STUFF *******************/
+
+
+/* from vidhrdw/segas16.c */
+extern data16_t *system16_tileram;
+extern data16_t *system16_textram;
+extern data16_t *system16_spriteram;
+
+VIDEO_START( system16b );
+VIDEO_START( timscanr );
+VIDEO_UPDATE( system16b );
+
+void system16_set_draw_enable(int enable);
+void system16_set_screen_flip(int flip);
+void system16_configure_sprite_banks(int use_default);
+void system16_set_tile_bank(int which, int bank);
+
+WRITE16_HANDLER( system16_paletteram_w );
+READ16_HANDLER( system16_textram_r );
+WRITE16_HANDLER( system16_textram_w );
+READ16_HANDLER( system16_tileram_r );
+WRITE16_HANDLER( system16_tileram_w );
+
+
+
+/******************** OLD STUFF *******************/
+
 #define SYS16_SPR_FLIPX						0x01
 #define SYS16_SPR_VISIBLE					0x04
 #define SYS16_SPR_DRAW_TO_LEFT				0x08

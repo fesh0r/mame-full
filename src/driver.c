@@ -1597,6 +1597,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( fhawk )		/* B70 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( fhawkj )	/* B70 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( plotting )	/* B96 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( plottina )	/* B96 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwr )	/* C01 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwru )	/* C01 (c) 1989 Taito America Corporation (US) */
 	DRIVER( champwrj )	/* C01 (c) 1989 Taito Corporation (Japan) */
@@ -2109,6 +2110,7 @@ V-V                           TP-027
 	DRIVER( sfp )		/*  8/1987 (c) 1987 */
 	DRIVER( tigeroad )	/* 11/1987 (c) 1987 + Romstar (US) */
 	DRIVER( toramich )	/* 11/1987 (c) 1987 (Japan) */
+	DRIVER( tigerodb )	/* bootleg */
 	DRIVER( f1dream )	/*  4/1988 (c) 1988 + Romstar */
 	DRIVER( f1dreamb )	/* bootleg */
 	DRIVER( 1943kai )	/*  6/1988 (c) 1987 (Japan) */
@@ -2855,11 +2857,13 @@ DokiDoki Penguin Land *not confirmed
 	/* System 16 */
 	DRIVER( aceattac )	/* (protected) */
 	DRIVER( afighter )	/* (protected) */
+	DRIVER( bullet )	/* (protected) */
 	DRIVER( cotton )	/* (protected) */
 	DRIVER( cottona )	/* (protected) */
 	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( exctleag )  /* (protected) */
 	DRIVER( mvp )		/* (protected) */
+	DRIVER( mvpj )		/* (protected) */
 	DRIVER( ryukyu )	/* (protected) */
 	DRIVER( suprleag )  /* (protected) */
 	DRIVER( alexkidd )	/* (c) 1986 (protected) */
@@ -2870,9 +2874,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
 	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
-	DRIVER( altb8571 )	/* (c) 1988 */
+	DRIVER( altb8751 )	/* (c) 1988 */
 	DRIVER( jyuohki )	/* (c) 1988 (protected. Altered Beast Japan) */
-	DRIVER( jyuo8571 )	/* (c) 1988 */
+	DRIVER( jyuohki2 )
+	DRIVER( jyuo8751 )	/* (c) 1988 */
 	DRIVER( atomicp )	/* (c) 1990 Philko - korean clone board */
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
 	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
@@ -2902,6 +2907,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( goldnabl )	/* BOOTLEG  */
 	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxj )	/* (c) 1989 (protected. Japan) */
+	DRIVER( goldnxj2 )
 	DRIVER( hwchamp )	/* (c) 1987 */
 	DRIVER( mjleague )	/* (c) 1985 */
 	DRIVER( passsht )	/* (protected) */
@@ -2949,7 +2955,6 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( mwalkbl )	/* BOOTLEG */
 	DRIVER( lghost )	/* (protected) */
 	DRIVER( lghosta )   /* (protected) */
-	DRIVER( lghostb )	/* (protected) */
 	DRIVER( wwally )	/* (protected) */
 
 	/* Outrun Hardware */
@@ -2959,6 +2964,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( outrundx )	/* (c) 1986 Deluxe? */
 	DRIVER( toutrun )	/* (protected) */
 	DRIVER( toutruna )	/* (protected) */
+	DRIVER( toutrunk )	/* (protected) */
 	DRIVER( shangon )	/* (c) 1992 (protected) */
 	DRIVER( shangona )	/* (c) 198? */
 	DRIVER( shangnle )	/* (c) 198? */
@@ -2970,6 +2976,13 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( thndrbld )	/* (protected) */
 	DRIVER( thndrbdj )  /*  */
 	DRIVER( loffire )	/* (protected) */
+
+	DRIVER( gprider )
+	DRIVER( gpridera )
+	DRIVER( smgp )
+	DRIVER( smgpa )
+	DRIVER( smgpb )
+	DRIVER( smgpc )
 
 	/* Y-Board */
 	DRIVER( gforce2 )
@@ -4616,6 +4629,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ddrago3b )	/* bootleg */
 	DRIVER( wwfwfest )	/* TA-0031 (c) 1991 (US) */
 	DRIVER( wwfwfsta )	/* TA-0031 (c) 1991 + Tecmo license (US) */
+	DRIVER( wwfwfstb )	/* bootleg */
 	DRIVER( wwfwfstj )	/* TA-0031 (c) 1991 (Japan) */
 	DRIVER( shadfrce )	/* TA-0032 (c) 1993 (US) */
 
@@ -5873,6 +5887,7 @@ Other Sun games
 	DRIVER( histryma )	/* bootleg of Fighter's History */
 	DRIVER( bbprot )
 	DRIVER( flower )	/* (c) 1986 Komax */
+	DRIVER( flowerbl )
 	DRIVER( beaminv )	/* Tekunon Kougyou */
 	DRIVER( mcatadv )	/* (c) 1993 Wintechno */
 	DRIVER( mcatadvj )	/* (c) 1993 Wintechno */

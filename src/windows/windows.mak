@@ -41,8 +41,11 @@ endif
 
 RESFILE=$(OBJ)/mess/windows/mess.res
 
-# uncomment this line to enable guard pages on all memory allocations
+# enable guard pages on all memory allocations in the debug build
+ifdef DEBUG
 #OSOBJS += $(OBJ)/windows/winalloc.o
+#LDFLAGS += -Wl,--allow-multiple-definition
+endif
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm

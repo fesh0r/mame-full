@@ -59,6 +59,10 @@ enum
 	CPU_I8048,
 	CPU_N7751,
 	CPU_I8X41,
+	CPU_I8051,
+	CPU_I8052,
+	CPU_I8751,
+	CPU_I8752,
 	CPU_M6800,
 	CPU_M6801,
 	CPU_M6802,
@@ -204,11 +208,11 @@ enum
 	INPUT_LINE_IRQ8 = 8,
 	INPUT_LINE_IRQ9 = 9,
 	INPUT_LINE_NMI = MAX_INPUT_LINES - 3,
-	
+
 	/* special input lines that are implemented in the core */
 	INPUT_LINE_RESET = MAX_INPUT_LINES - 2,
 	INPUT_LINE_HALT = MAX_INPUT_LINES - 1,
-	
+
 	/* output lines */
 	MAX_OUTPUT_LINES = 32
 };
