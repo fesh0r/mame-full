@@ -35,6 +35,11 @@ int dummy_function(void)
 	return ((int) construct_forgottn) | ((int) construct_sf2) | ((int) construct_qsound);
 }
 
+void wof_decode(void)      { }
+void dino_decode(void)     { }
+void punisher_decode(void) { }
+void slammast_decode(void) { }
+
 /***************************************************************************
 
   Game driver(s)

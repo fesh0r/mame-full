@@ -34,6 +34,7 @@ struct tape_dialog
 	UINT_PTR timer;
 };
 
+#if HAS_WAVE
 //============================================================
 //	LOCAL VARIABLES
 //============================================================
@@ -136,5 +137,5 @@ void tapedialog_show(int id)
 			win_video_window, tapedialog_dlgproc, id);
 	}
 }
-
+#endif /* HAS_WAVE */
 

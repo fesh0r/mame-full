@@ -27,22 +27,22 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
 	static int id = 0;
 	char timepos[32];
-    const char *menu_item[40];
-    const char *menu_subitem[40];
+	const char *menu_item[40];
+	const char *menu_subitem[40];
 	char flag[40];
 
-    int sel;
-    int total;
-    int arrowize;
+	int sel;
+	int total;
+	int arrowize;
 	int status;
 
 	if (!device_find(Machine->gamedrv, IO_CASSETTE))
 		return 0;
 
-    total = 0;
-    sel = selected - 1;
+	total = 0;
+	sel = selected - 1;
 
-    menu_item[total] = device_typename_id(IO_CASSETTE,id);
+	menu_item[total] = device_typename_id(IO_CASSETTE,id);
 	menu_subitem[total] = image_filename(IO_CASSETTE,id) ? image_filename(IO_CASSETTE,id) : "---";
 	flag[total] = 0;
 	total++;
@@ -56,66 +56,66 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 								: ((status & WAVE_STATUS_WRITE_ONLY) ? UI_recording : UI_playing)
 							: UI_stopped);
 	menu_subitem[total] = timepos;
-    flag[total] = 0;
+	flag[total] = 0;
 	total++;
 
-    menu_item[total] = ui_getstring(UI_pauseorstop);
+	menu_item[total] = ui_getstring(UI_pauseorstop);
 	menu_subitem[total] = 0;
-    flag[total] = 0;
+	flag[total] = 0;
 	total++;
 
 	menu_item[total] = ui_getstring((status & WAVE_STATUS_WRITE_ONLY) ? UI_record : UI_play);
 	menu_subitem[total] = 0;
-    flag[total] = 0;
+	flag[total] = 0;
 	total++;
 
 	menu_item[total] = ui_getstring(UI_rewind);
 	menu_subitem[total] = 0;
 	flag[total] = 0;
-    total++;
+	total++;
 
 	menu_item[total] = ui_getstring(UI_fastforward);
 	menu_subitem[total] = 0;
 	flag[total] = 0;
-    total++;
+	total++;
 
-    menu_item[total] = ui_getstring(UI_returntomain);
-    menu_subitem[total] = 0;
-    flag[total] = 0;
-    total++;
+	menu_item[total] = ui_getstring(UI_returntomain);
+	menu_subitem[total] = 0;
+	flag[total] = 0;
+	total++;
 
-    menu_item[total] = 0;   /* terminate array */
-    menu_subitem[total] = 0;
-    flag[total] = 0;
+	menu_item[total] = 0;   /* terminate array */
+	menu_subitem[total] = 0;
+	flag[total] = 0;
 
-    arrowize = 0;
-    if (sel < total - 1)
-        arrowize = 2;
+	arrowize = 0;
+	if (sel < total - 1)
+		arrowize = 2;
 
-    if (sel > 255)  /* are we waiting for a new key? */
-    {
-        /* display the menu */
+	if (sel > 255)  /* are we waiting for a new key? */
+	{
+		/* display the menu */
 		ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel & 0xff,3);
-        return sel + 1;
-    }
+		return sel + 1;
+	}
 
 	ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel,arrowize);
 
-    if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-    {
-        if (sel < total - 1) sel++;
-        else sel = 0;
-    }
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
 
-    if (input_ui_pressed_repeat(IPT_UI_UP,8))
-    {
-        if (sel > 0) sel--;
-        else sel = total - 1;
-    }
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
 
 
 	if (input_ui_pressed(IPT_UI_LEFT))
-    {
+	{
 		switch (sel)
 		{
 		case 0:
@@ -125,10 +125,10 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
 		schedule_full_refresh();
-    }
+	}
 
 	if (input_ui_pressed(IPT_UI_RIGHT))
-    {
+	{
 		switch (sel)
 		{
 		case 0:
@@ -138,19 +138,19 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
 		schedule_full_refresh();
-    }
+	}
 
-    if (input_ui_pressed(IPT_UI_SELECT))
-    {
-        if (sel == total - 1)
-            sel = -1;
-        else
-        {
+	if (input_ui_pressed(IPT_UI_SELECT))
+	{
+		if (sel == total - 1)
+			sel = -1;
+		else
+		{
 			status = device_status(IO_CASSETTE,id,-1);
 			switch (sel)
 			{
 			case 0:
-                id = (id + 1) % device_count(IO_CASSETTE);
+				id = (id + 1) % device_count(IO_CASSETTE);
 				break;
 			case 2:
 				/* Pause/stop */
@@ -161,7 +161,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			case 3:
 				/* Play/Record */
 				device_status(IO_CASSETTE,id,status | WAVE_STATUS_MOTOR_ENABLE);
-                break;
+				break;
 			case 4:
 				/* Rewind */
 				device_seek(IO_CASSETTE,id,-11025,SEEK_CUR);
@@ -170,25 +170,25 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 				/* Fast forward */
 				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
 				break;
-            }
-            /* tell updatescreen() to clean after us (in case the window changes size) */
-            schedule_full_refresh();
-        }
-    }
+			}
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			schedule_full_refresh();
+		}
+	}
 
-    if (input_ui_pressed(IPT_UI_CANCEL))
-        sel = -1;
+	if (input_ui_pressed(IPT_UI_CANCEL))
+		sel = -1;
 
-    if (input_ui_pressed(IPT_UI_CONFIGURE))
-        sel = -2;
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
+		sel = -2;
 
-    if (sel == -1 || sel == -2)
-    {
-        /* tell updatescreen() to clean after us */
-        schedule_full_refresh();
-    }
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		schedule_full_refresh();
+	}
 
-    return sel + 1;
+	return sel + 1;
 }
 
 #endif /* HAS_WAVE */

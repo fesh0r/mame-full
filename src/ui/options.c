@@ -252,6 +252,8 @@ static REG_OPTION regGameOpts[] =
 	{ "norotate",           "norotate",               RO_BOOL,    &gOpts.norotate,          0, 0},
 	{ "ror",                "ror",                    RO_BOOL,    &gOpts.ror,               0, 0},
 	{ "rol",                "rol",                    RO_BOOL,    &gOpts.rol,               0, 0},
+	{ "auto_ror",           "auto_ror",               RO_BOOL,    &gOpts.auto_ror,          0, 0},
+	{ "auto_rol",           "auto_rol",               RO_BOOL,    &gOpts.auto_rol,          0, 0},
 	{ "flipx",              "flipx",                  RO_BOOL,    &gOpts.flipx,             0, 0},
 	{ "flipy",              "flipy",                  RO_BOOL,    &gOpts.flipy,             0, 0},
 	{ "debug_resolution",   "debug_resolution",       RO_STRING,  &gOpts.debugres,          0, 0}, 
@@ -525,6 +527,8 @@ void OptionsInit()
 	global.norotate          = FALSE;
 	global.ror               = FALSE;
 	global.rol               = FALSE;
+	global.auto_ror          = FALSE;
+	global.auto_rol          = FALSE;
 	global.flipx             = FALSE;
 	global.flipy             = FALSE;
 	global.debugres          = strdup("auto");
@@ -2485,11 +2489,14 @@ static void LoadRegGameOptions(HKEY hKey, options_type *o, int driver_index)
 	DWORD	value;
 	DWORD	size;
 
+	assert(driver_index < num_games);
+
 	/* look for window.  If it's not there, then use default options for this game */
 	if (RegQueryValueEx(hKey, "window", 0, &value, NULL, &size) != ERROR_SUCCESS)
 	   return;
 
-	game_variables[driver_index].use_default = FALSE;
+	if (driver_index >= 0)
+		game_variables[driver_index].use_default = FALSE;
 
 	/* copy passed in options to our struct */
 	gOpts = *o;

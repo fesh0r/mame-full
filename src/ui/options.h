@@ -151,6 +151,8 @@ typedef struct
 	BOOL   norotate;
 	BOOL   ror;
 	BOOL   rol;
+	BOOL   auto_ror;
+	BOOL   auto_rol;
 	BOOL   flipx;
 	BOOL   flipy;
 	char *debugres;
@@ -203,6 +205,7 @@ typedef struct
 
 	BOOL options_loaded; // whether or not we've loaded the game options yet
 	BOOL use_default; // whether or not we should just use default options
+
 } game_variables_type;
 
 typedef struct
