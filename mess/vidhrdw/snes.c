@@ -152,15 +152,15 @@ static struct LAYER layers[5];
 				g = ((colour & 0x3e0) >> 5) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);	\
 				b = ((colour & 0x7c00) >> 10) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);	\
 			}																							\
-			if( r > 0x1f ) r = 0x1f;																	\
-			if( g > 0x1f ) g = 0x1f;																	\
-			if( b > 0x1f ) b = 0x1f;																	\
 			if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */			\
 			{																							\
 				r >>= 1;																				\
 				g >>= 1;																				\
 				b >>= 1;																				\
 			}																							\
+			if( r > 0x1f ) r = 0x1f;																	\
+			if( g > 0x1f ) g = 0x1f;																	\
+			if( b > 0x1f ) b = 0x1f;																	\
 			colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));								\
 		}																								\
 		else if( mode == SNES_BLEND_SUB )																\
@@ -242,27 +242,30 @@ VIDEO_UPDATE( snes )
  *****************************************/
 INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT16 pal, UINT8 blend, UINT8 clip )
 {
-	UINT8 ii;
+	UINT8 ii, mask;
 	UINT8 plane[2];
 	UINT16 c;
 
 	plane[0] = snes_vram[tileaddr];
 	plane[1] = snes_vram[tileaddr + 1];
 
+	if( flip )
+		mask = 0x1;
+	else
+		mask = 0x80;
+
 	for( ii = 0; ii < 8; ii++ )
 	{
 		register UINT8 colour;
 		if( flip )
 		{
-			colour = (plane[0] & 0x1 ? 1 : 0) | (plane[1] & 0x1 ? 2 : 0);
-			plane[0] >>= 1;
-			plane[1] >>= 1;
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0);
+			mask <<= 1;
 		}
 		else
 		{
-			colour = (plane[0] & 0x80 ? 1 : 0) | (plane[1] & 0x80 ? 2 : 0);
-			plane[0] <<= 1;
-			plane[1] <<= 1;
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0);
+			mask >>= 1;
 		}
 		/* Clip to the windows */
 /*		SNES_DRAW_CLIP( x + ii, colour, clip );*/
@@ -288,7 +291,7 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
  *****************************************/
 INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT16 pal, UINT8 blend, UINT8 clip )
 {
-	UINT8 ii;
+	UINT8 ii, mask;
 	UINT8 plane[4];
 	UINT16 c;
 
@@ -297,26 +300,25 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 	plane[2] = snes_vram[tileaddr + 16];
 	plane[3] = snes_vram[tileaddr + 17];
 
+	if( flip )
+		mask = 0x1;
+	else
+		mask = 0x80;
+
 	for( ii = 0; ii < 8; ii++ )
 	{
 		register UINT8 colour;
 		if( flip )
 		{
-			colour = (plane[0] & 0x1 ? 1 : 0) | (plane[1] & 0x1 ? 2 : 0) |
-					 (plane[2] & 0x1 ? 4 : 0) | (plane[3] & 0x1 ? 8 : 0);
-			plane[0] >>= 1;
-			plane[1] >>= 1;
-			plane[2] >>= 1;
-			plane[3] >>= 1;
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0) |
+					 (plane[2] & mask ? 4 : 0) | (plane[3] & mask ? 8 : 0);
+			mask <<= 1;
 		}
 		else
 		{
-			colour = (plane[0] & 0x80 ? 1 : 0) | (plane[1] & 0x80 ? 2 : 0) |
-					 (plane[2] & 0x80 ? 4 : 0) | (plane[3] & 0x80 ? 8 : 0);
-			plane[0] <<= 1;
-			plane[1] <<= 1;
-			plane[2] <<= 1;
-			plane[3] <<= 1;
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0) |
+					 (plane[2] & mask ? 4 : 0) | (plane[3] & mask ? 8 : 0);
+			mask >>= 1;
 		}
 		/* Clip to the windows */
 /*		SNES_DRAW_CLIP( x + ii, colour, clip );*/
@@ -342,7 +344,7 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
  *****************************************/
 INLINE void snes_draw_tile_8( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT8 blend, UINT8 clip )
 {
-	UINT8 ii;
+	UINT8 ii, mask;
 	UINT8 plane[8];
 	UINT16 c;
 
@@ -355,38 +357,29 @@ INLINE void snes_draw_tile_8( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 	plane[6] = snes_vram[tileaddr + 48];
 	plane[7] = snes_vram[tileaddr + 49];
 
+	if( flip )
+		mask = 0x1;
+	else
+		mask = 0x80;
+
 	for( ii = 0; ii < 8; ii++ )
 	{
 		register UINT8 colour;
 		if( flip )
 		{
-			colour = (plane[0] & 0x1 ? 1 : 0)  | (plane[1] & 0x1 ? 2 : 0)  |
-					 (plane[2] & 0x1 ? 4 : 0)  | (plane[3] & 0x1 ? 8 : 0)  |
-					 (plane[4] & 0x1 ? 16 : 0) | (plane[5] & 0x1 ? 32 : 0) |
-					 (plane[6] & 0x1 ? 64 : 0) | (plane[7] & 0x1 ? 128 : 0);
-			plane[0] >>= 1;
-			plane[1] >>= 1;
-			plane[2] >>= 1;
-			plane[3] >>= 1;
-			plane[4] >>= 1;
-			plane[5] >>= 1;
-			plane[6] >>= 1;
-			plane[7] >>= 1;
+			colour = (plane[0] & mask ? 1 : 0)  | (plane[1] & mask ? 2 : 0)  |
+					 (plane[2] & mask ? 4 : 0)  | (plane[3] & mask ? 8 : 0)  |
+					 (plane[4] & mask ? 16 : 0) | (plane[5] & mask ? 32 : 0) |
+					 (plane[6] & mask ? 64 : 0) | (plane[7] & mask ? 128 : 0);
+			mask <<= 1;
 		}
 		else
 		{
-			colour = (plane[0] & 0x80 ? 1 : 0)  | (plane[1] & 0x80 ? 2 : 0)  |
-					 (plane[2] & 0x80 ? 4 : 0)  | (plane[3] & 0x80 ? 8 : 0)  |
-					 (plane[4] & 0x80 ? 16 : 0) | (plane[5] & 0x80 ? 32 : 0) |
-					 (plane[6] & 0x80 ? 64 : 0) | (plane[7] & 0x80 ? 128 : 0);
-			plane[0] <<= 1;
-			plane[1] <<= 1;
-			plane[2] <<= 1;
-			plane[3] <<= 1;
-			plane[4] <<= 1;
-			plane[5] <<= 1;
-			plane[6] <<= 1;
-			plane[7] <<= 1;
+			colour = (plane[0] & mask ? 1 : 0)  | (plane[1] & mask ? 2 : 0)  |
+					 (plane[2] & mask ? 4 : 0)  | (plane[3] & mask ? 8 : 0)  |
+					 (plane[4] & mask ? 16 : 0) | (plane[5] & mask ? 32 : 0) |
+					 (plane[6] & mask ? 64 : 0) | (plane[7] & mask ? 128 : 0);
+			mask >>= 1;
 		}
 		/* Clip to the windows */
 /*		SNES_DRAW_CLIP( x + ii, colour, clip );*/
@@ -716,7 +709,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
  *********************************************/
 static void snes_update_line_mode7( UINT16 curline )
 {
-	UINT32 tilen, tiled;
+	UINT32 tiled;
 	INT16 ma,mb,mc,md;
 	INT16 xc, yc, tx, ty, sx, sy, hs, vs, xpos, xdir;
 	register UINT8 colour = 0;
@@ -775,30 +768,30 @@ static void snes_update_line_mode7( UINT16 curline )
 			case 0x00:	/* Repeat if outside screen area */
 				tx &= 0x3ff;
 				ty &= 0x3ff;
-				tilen = snes_vram[((tx >> 3) * 2) + ((ty >> 3) * 128 * 2)];
-				tiled = tilen * 128;
+				tiled = snes_vram[((tx >> 3) * 2) + ((ty >> 3) * 128 * 2)] << 7;
 				colour = snes_vram[tiled + ((tx & 0x7) * 2) + ((ty & 0x7) * 16) + 1];
 				break;
-			case 0x80:	/* Character 0x00 repeat if outside screen area */
-				tilen = snes_vram[(((tx & 0x3ff) >> 3) * 2) + (((ty & 0x3ff) >> 3) * 128 * 2)];
-				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
-					tiled = tilen * 128;
-				else
-					tiled = 0;
-				colour = snes_vram[tiled + ((tx & 0x7) * 2) + ((ty & 0x7) * 16) + 1];
-				break;
-			case 0xC0:	/* Single colour backdrop screen if outside screen area */
+			case 0x80:	/* Single colour backdrop screen if outside screen area */
 				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
 				{
-					tilen = snes_vram[((tx >> 3) * 2) + ((ty >> 3) * 128 * 2)];
-					tiled = tilen * 128;
+					tiled = snes_vram[((tx >> 3) * 2) + ((ty >> 3) * 128 * 2)] << 7;
 					colour = snes_vram[tiled + ((tx & 0x7) * 2) + ((ty & 0x7) * 16) + 1];
 				}
 				else
 				{
-					tilen = 0;
-					tiled = 0;
 					colour = 0;
+				}
+				break;
+			case 0xC0:	/* Character 0x00 repeat if outside screen area */
+				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
+				{
+					tiled = snes_vram[(((tx & 0x3ff) >> 3) * 2) + (((ty & 0x3ff) >> 3) * 128 * 2)] << 7;
+					colour = snes_vram[tiled + ((tx & 0x7) * 2) + ((ty & 0x7) * 16) + 1];
+				}
+				else
+				{
+					/* FIXME: should we be rotating this? */
+					colour = snes_vram[((tx & 0x7) * 2) + ((ty & 0x7) * 16) + 1];
 				}
 				break;
 		}
@@ -922,7 +915,7 @@ static void snes_update_backplane(void)
 
 	if( snes_ram[CGADSUB] & 0x20 )
 	{
-		for( ii = 0; ii < 256; ii++ )
+		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
 		{
 			SNES_DRAW_BLEND( ii, scanlines[MAINSCREEN].buffer[ii], (snes_ram[CGADSUB] & 0x80)?SNES_BLEND_SUB:SNES_BLEND_ADD );
 		}
@@ -1075,18 +1068,6 @@ void snes_refresh_scanline( UINT16 curline )
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
 		sprintf( t, "Flags: %s%s%s%s", (snes_ram[CGWSEL] & 0x2)?"S":"F", (snes_ram[CGADSUB] & 0x80)?"-":"+", (snes_ram[CGADSUB] & 0x40)?" 50%":"100%",(snes_ram[CGWSEL] & 0x1)?"D":"P" );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-/*		sprintf( t, "a %d", mode7_data[0] );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "b %d", mode7_data[1] );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "c %d", mode7_data[2] );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "d %d", mode7_data[3] );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "flip X: %s  flip y: %s", snes_ram[M7SEL] & 0x1 ? "yes" : "no", snes_ram[M7SEL] & 0x2 ? "yes" : "no" );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "hscroll: %d  vscroll: %d", bg_hoffset[0], bg_voffset[0] );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );*/
 	}
 	/* Just for testing, draw as many tiles as possible */
 	{
