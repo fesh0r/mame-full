@@ -148,6 +148,29 @@ struct rc_option display_opts[] = {
      NULL }
 };
 
+static Cursor create_invisible_cursor (Display * display, Window win)
+{
+	Pixmap cursormask;
+	XGCValues xgc;
+	XColor dummycolour;
+	Cursor cursor;
+	GC gc;
+
+	cursormask = XCreatePixmap (display, win, 1, 1, 1 /*depth */ );
+	xgc.function = GXclear;
+	gc = XCreateGC (display, cursormask, GCFunction, &xgc);
+	XFillRectangle (display, cursormask, gc, 0, 0, 1, 1);
+	dummycolour.pixel = 0;
+	dummycolour.red = 0;
+	dummycolour.flags = 04;
+	cursor = XCreatePixmapCursor (display, cursormask, cursormask,
+			&dummycolour, &dummycolour, 0, 0);
+	XFreeGC (display, gc);
+	XFreePixmap (display, cursormask);
+	return cursor;
+}
+
+
 int sysdep_init(void)
 {
    /* Open the display. */
@@ -335,7 +358,7 @@ int sysdep_create_display(int depth)
   XStoreName(display,window,title);
   
   if(fullscreen) 
-	  XDefineCursor(display,window,None);
+	  XDefineCursor(display,window,create_invisible_cursor (display, window));
   else
 	  XDefineCursor(display,window,cursor);
 
