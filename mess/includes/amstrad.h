@@ -81,3 +81,12 @@ void amstrad_vh_update_mode(int);
 void amstrad_interrupt_timer_update(void);
 /* if start of vsync sound, wait to reset interrupt counter 2 hsyncs later */
 void amstrad_interrupt_timer_trigger_reset_by_vsync(void);
+
+
+/* initialise palette for CPC464, CPC664 and CPC6128 */
+void amstrad_cpc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+/* initialise palette for KC Compact */
+void kccomp_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+/* initialise palette for 464plus, 6128plus */
+void amstrad_plus_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+
