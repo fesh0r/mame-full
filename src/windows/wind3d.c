@@ -26,6 +26,7 @@
 #include "video.h"
 #include "blit.h"
 #include "wind3dfx.h"
+#include "winddraw.h"
 
 // maximum prescale level
 #define MAX_PRESCALE			4
@@ -1885,7 +1886,7 @@ static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bo
 	int blit_width, blit_height;
 	struct win_blit_params params;
 	HRESULT result;
-	RECT src, dst;
+	RECT src, dst, margins;
 	int dstxoffs;
 
 	if (blit_swapxy)
@@ -2005,6 +2006,16 @@ tryagain:
 		dst.top += (primary_desc.dwHeight - (dst.bottom - dst.top)) / 2;
 		dst.right += dst.left;
 		dst.bottom += dst.top;
+
+		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &margins);
+		if (dst.left < margins.left)
+			dst.left = margins.left;
+		if (dst.top < margins.top)
+			dst.top = margins.top;
+		if (dst.right > margins.right)
+			dst.right = margins.right;
+		if (dst.bottom > margins.bottom)
+			dst.bottom = margins.bottom;
    }
 
 	// render and flip
@@ -2040,6 +2051,7 @@ static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock
 	LPDIRECTDRAWSURFACE7 texture;
 	D3DVIEWPORT7 viewport;
 	HRESULT result;
+	RECT margins;
 
 	// determine the current zoom level
 	win_d3d_current_zoom = win_d3d_effects_swapxy ? (dst->right - dst->left) / win_visible_width :
@@ -2182,10 +2194,11 @@ tryagain:
 	result = IDirect3DDevice7_SetRenderTarget(d3d_device7, back_surface, 0);
 
 	// set up the viewport
-	viewport.dwX = 0;
-	viewport.dwY = 0;
-	viewport.dwWidth = primary_desc.dwWidth;
-	viewport.dwHeight = primary_desc.dwHeight;
+	win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &margins);
+	viewport.dwX = margins.left;
+	viewport.dwY = margins.top;
+	viewport.dwWidth = margins.right - margins.left;
+	viewport.dwHeight = margins.bottom - margins.top;
 
 	result = IDirect3DDevice7_SetViewport(d3d_device7, &viewport);
 
@@ -2310,9 +2323,7 @@ tryagain:
 	if (update)
 	{
 		RECT outer;
-		outer.top = outer.left = 0;
-		outer.right = primary_desc.dwWidth;
-		outer.bottom = primary_desc.dwHeight;
+		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &outer);
 		erase_outer_rect(&outer, dst, win_window_mode ? primary_surface : back_surface);
 	}
 
