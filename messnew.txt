@@ -33,4 +33,5 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-(none)
+- Fixed a bug in the code that chooses artwork files for software images (bug
+  #112). [Nate Woods]

@@ -109,7 +109,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( lynx )		/* Atari Lynx Handheld								*/
 	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
 	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
-TESTDRIVER( jaguar )	/* Atari Jaguar										*/
+	DRIVER( jaguar )	/* Atari Jaguar										*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System					*/

@@ -1989,7 +1989,7 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 	const char *ext;
 	int len = -1;
 
-	fname = image_filename(img);
+	fname = image_basename(img);
 	if (fname)
 	{
 		ext = strrchr(fname, '.');

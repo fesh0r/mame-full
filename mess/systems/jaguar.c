@@ -91,17 +91,22 @@ static MACHINE_INIT( jaguar )
 {
 	cpu_set_irq_callback(0, jaguar_irq_callback);
 
+	*((UINT32 *) jaguar_gpu_ram) = 0x3d0dead;
+
 	memset(jaguar_shared_ram, 0, 0x400000);
 	memcpy(jaguar_shared_ram, rom_base, 0x10);
 
 	/* set up main CPU RAM/ROM banks */
 	cpu_setbank(3, jaguar_gpu_ram);
+	cpu_setbank(4, jaguar_shared_ram);
 
 	/* set up DSP RAM/ROM banks */
 	cpu_setbank(10, jaguar_shared_ram);
 	cpu_setbank(11, jaguar_gpu_clut);
 	cpu_setbank(12, jaguar_gpu_ram);
 	cpu_setbank(13, jaguar_dsp_ram);
+	cpu_setbank(14, jaguar_shared_ram);
+	cpu_setbank(15, rom_base);
 
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
@@ -204,24 +209,77 @@ static WRITE32_HANDLER( dspctrl_w )
  *
  *	Input ports
  *
+ *	Information from "The Jaguar Underground Documentation"
+ *	by Klaus and Nat!
+ *
  *************************************/
 
-static READ32_HANDLER( jamma_r )
+static READ32_HANDLER( joystick_r )
 {
-	return readinputport(0) | (readinputport(1) << 16);
+	/*
+	 *   16        12        8         4         0
+	 *   +---------+---------+---------^---------+
+	 *   |  pad 1  |  pad 0  |      unused       |
+	 *   +---------+---------+-------------------+
+	 *     15...12   11...8          7...0
+	 *
+	 *   Reading this register gives you the output of the selected columns
+	 *   of the pads.
+	 *   The buttons pressed will appear as cleared bits. 
+	 *   See the description of the column addressing to map the bits 
+	 *   to the buttons.
+	 */
+	return 0;
 }
 
-
-static READ32_HANDLER( status_r )
+static WRITE32_HANDLER( joystick_w )
 {
-	// D23-20 = /SER-4-1
-	// D19-16 = COINR4-1
-	// D7     = /VSYNCNEQ
-	// D6     = /S-TEST
-	// D5     = /VOLUMEUP
-	// D4     = /VOLUMEDOWN
-	// D3-D0  = ACTC4-1
-	return readinputport(2) | (readinputport(2) << 16);
+	/*
+	 *   16        12         8         4         0
+	 *   +-+-------^------+--+---------+---------+
+	 *   |r|    unused    |mu|  col 1  |  col 0  |  
+	 *   +-+--------------+--+---------+---------+
+	 *    15                8   7...4     3...0
+	 *
+	 *   col 0:   column control of joypad 0 
+	 *
+	 *      Here you select which column of the joypad to poll. 
+	 *      The columns are:
+	 *
+	 *                Joystick       Joybut 
+	 *      col_bit|11 10  9  8     1    0  
+	 *      -------+--+--+--+--    ---+------
+	 *         0   | R  L  D  U     A  PAUSE       (RLDU = Joypad directions)
+	 *         1   | *  7  4  1     B       
+	 *         2   | 2  5  8  0     C       
+	 *         3   | 3  6  9  #   OPTION
+	 *
+	 *      You select a column my clearing the appropriate bit and setting
+	 *      all the other "column" bits. 
+	 *
+	 *
+	 *   col1:    column control of joypad 1
+	 *
+	 *      This is pretty much the same as for joypad EXCEPT that the
+	 *      column addressing is reversed (strange!!)
+	 *            
+	 *                Joystick      Joybut 
+	 *      col_bit|15 14 13 12     3    2
+	 *      -------+--+--+--+--    ---+------
+	 *         4   | 3  6  9  #   OPTION
+	 *         5   | 2  5  8  0     C
+	 *         6   | *  7  4  1     B
+	 *         7   | R  L  D  U     A  PAUSE     (RLDU = Joypad directions)
+	 *
+	 *   mute (mu):   sound control
+	 *
+	 *      You can turn off the sound by clearing this bit.
+	 *
+	 *   read enable (r):  
+	 *
+	 *      Set this bit to read from the joysticks, clear it to write
+	 *      to them.
+	 */
 }
 
 
@@ -347,7 +405,8 @@ static READ32_HANDLER( gpu_jump_r )
 
 
 static MEMORY_READ32_START( jaguar_readmem )
-	{ 0x000000, 0x3fffff, MRA32_RAM },
+	{ 0x000000, 0x1fffff, MRA32_RAM },
+	{ 0x200000, 0x3fffff, MRA32_BANK4 },		/* mirror */
 	{ 0x800000, 0xdfffff, MRA32_ROM },
 	{ 0xe00000, 0xe1ffff, MRA32_ROM },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_r },
@@ -356,9 +415,8 @@ static MEMORY_READ32_START( jaguar_readmem )
 	{ 0xf02200, 0xf022ff, jaguar_blitter_r },
 	{ 0xf03000, 0xf03fff, MRA32_RAM },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_r },
-	{ 0xf16000, 0xf1600b, cojag_gun_input_r },	// GPI02
-	{ 0xf17000, 0xf17003, status_r },			// GPI03
-	{ 0xf17c00, 0xf17c03, jamma_r },			// GPI05
+	{ 0xf14000, 0xf14003, joystick_r },
+	{ 0xf16000, 0xf1600b, cojag_gun_input_r },
 	{ 0xf1a100, 0xf1a13f, dspctrl_r },
 	{ 0xf1a140, 0xf1a17f, jaguar_serial_r },
 	{ 0xf1b000, 0xf1cfff, MRA32_RAM },
@@ -366,11 +424,13 @@ MEMORY_END
 
 
 static MEMORY_WRITE32_START( jaguar_writemem )
-	{ 0x000000, 0x3fffff, MWA32_RAM, &jaguar_shared_ram },
+	{ 0x000000, 0x1fffff, MWA32_RAM, &jaguar_shared_ram },
+	{ 0x200000, 0x3fffff, MWA32_BANK4 },		/* mirror */
 	{ 0x800000, 0xdfffff, MWA32_ROM },
 	{ 0xe00000, 0xe1ffff, MWA32_ROM, &rom_base, &rom_size },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_w },
 	{ 0xf00400, 0xf007ff, MWA32_RAM, &jaguar_gpu_clut },
+	{ 0xf01400, 0xf01403, joystick_w },
 	{ 0xf02100, 0xf021ff, gpuctrl_w },
 	{ 0xf02200, 0xf022ff, jaguar_blitter_w },
 	{ 0xf03000, 0xf03fff, MWA32_RAM, &jaguar_gpu_ram },
@@ -391,7 +451,9 @@ MEMORY_END
  *************************************/
 
 static MEMORY_READ32_START( gpu_readmem )
-	{ 0x000000, 0x7fffff, MRA32_BANK10 },
+	{ 0x000000, 0x1fffff, MRA32_BANK10 },
+	{ 0x200000, 0x3fffff, MRA32_BANK14 },
+	{ 0x800000, 0xdfffff, MRA32_BANK15 },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_r },
 	{ 0xf00400, 0xf007ff, MRA32_BANK11 },
 	{ 0xf02100, 0xf021ff, gpuctrl_r },
@@ -402,7 +464,9 @@ MEMORY_END
 
 
 static MEMORY_WRITE32_START( gpu_writemem )
-	{ 0x000000, 0x7fffff, MWA32_BANK10 },
+	{ 0x000000, 0x1fffff, MWA32_BANK10 },
+	{ 0x200000, 0x3fffff, MWA32_BANK14 },
+	{ 0x800000, 0xdfffff, MWA32_ROM },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_w },
 	{ 0xf00400, 0xf007ff, MWA32_BANK11 },
 	{ 0xf02100, 0xf021ff, gpuctrl_w },
@@ -420,7 +484,9 @@ MEMORY_END
  *************************************/
 
 static MEMORY_READ32_START( dsp_readmem )
-	{ 0x000000, 0x7fffff, MRA32_BANK10 },
+	{ 0x000000, 0x1fffff, MRA32_BANK10 },
+	{ 0x200000, 0x3fffff, MRA32_BANK14 },
+	{ 0x800000, 0xdfffff, MRA32_BANK15 },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_r },
 	{ 0xf1a100, 0xf1a13f, dspctrl_r },
 	{ 0xf1a140, 0xf1a17f, jaguar_serial_r },
@@ -430,7 +496,9 @@ MEMORY_END
 
 
 static MEMORY_WRITE32_START( dsp_writemem )
-	{ 0x000000, 0x7fffff, MWA32_BANK10 },
+	{ 0x000000, 0x1fffff, MWA32_BANK10 },
+	{ 0x200000, 0x3fffff, MWA32_BANK14 },
+	{ 0x800000, 0xdfffff, MWA32_ROM },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_w },
 	{ 0xf1a100, 0xf1a13f, dspctrl_w },
 	{ 0xf1a140, 0xf1a17f, jaguar_serial_w },
@@ -544,8 +612,8 @@ static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
 	cojag_draw_crosshair = crosshair;
 
 	/* install synchronization hooks for GPU */
-	install_mem_write32_handler(0, 0xf0b000 + gpu_jump_offs, 0xf0b003 + gpu_jump_offs, gpu_jump_w);
-	install_mem_read32_handler(1, 0xf03000 + gpu_jump_offs, 0xf03003 + gpu_jump_offs, gpu_jump_r);
+	//install_mem_write32_handler(0, 0xf0b000 + gpu_jump_offs, 0xf0b003 + gpu_jump_offs, gpu_jump_w);
+	//install_mem_read32_handler(1, 0xf03000 + gpu_jump_offs, 0xf03003 + gpu_jump_offs, gpu_jump_r);
 	gpu_jump_address = &jaguar_gpu_ram[gpu_jump_offs/4];
 	gpu_spin_pc = 0xf03000 + spin_pc;
 
@@ -560,7 +628,7 @@ static DRIVER_INIT( jaguar )
 
 static DEVICE_LOAD( jaguar_cart )
 {
-	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, CARTLOAD_16BIT_BE);
+	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, CARTLOAD_32BIT_BE);
 }
 
 SYSTEM_CONFIG_START(jaguar)
