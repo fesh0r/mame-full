@@ -121,8 +121,8 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "Visit the web page at http://mess.emuverse.com to see a list of contributers\n"
 			   "If you have comments, suggestions or bug reports about an existing driver, check\n"
 			   "the page contacts section to find who has worked on it, and send comments to that \n"
-			   "person. If you are not sure who to contact, write to Lee (lee@the-mothershp.fsnet.co.uk)\n"
-			   "who is the current coordinator of the MESS project [Win Console][DOS]. \n\n"
+			   "person. If you are not sure who to contact, write to Ben (ben@mame.net)\n"
+			   "who is the current coordinator of the MESS project [Win Console]. \n\n"
 
 			   "PLEASE DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST! \n"
 
