@@ -347,23 +347,20 @@ WWW.SPIES.COM contains DIP switch settings.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
-extern unsigned char *c1942_foreground_videoram;
-extern unsigned char *c1942_foreground_colorram;
-extern unsigned char *c1942_background_videoram;
-extern unsigned char *c1942_spriteram;
-extern size_t c1942_spriteram_size;
-extern unsigned char *c1942_scroll;
+extern unsigned char *c1942_fgvideoram;
+extern unsigned char *c1942_bgvideoram;
 
-int c1942_vh_start(void);
-void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( c1942_foreground_videoram_w );
-WRITE_HANDLER( c1942_foreground_colorram_w );
-WRITE_HANDLER( c1942_background_videoram_w );
+WRITE_HANDLER( c1942_fgvideoram_w );
+WRITE_HANDLER( c1942_bgvideoram_w );
+WRITE_HANDLER( c1942_scrollx_w );
 WRITE_HANDLER( c1942_c804_w );
 WRITE_HANDLER( c1942_palette_bank_w );
+int c1942_vh_start(void);
+void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -406,14 +403,13 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xc802, 0xc803, MWA_RAM, &c1942_scroll },
+	{ 0xc802, 0xc803, c1942_scrollx_w },
 	{ 0xc804, 0xc804, c1942_c804_w },
 	{ 0xc805, 0xc805, c1942_palette_bank_w },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &c1942_spriteram, &c1942_spriteram_size },
-	{ 0xd000, 0xd3ff, c1942_foreground_videoram_w, &c1942_foreground_videoram },
-	{ 0xd400, 0xd7ff, c1942_foreground_colorram_w, &c1942_foreground_colorram },
-	{ 0xd800, 0xdbff, c1942_background_videoram_w, &c1942_background_videoram },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd000, 0xd7ff, c1942_fgvideoram_w, &c1942_fgvideoram },
+	{ 0xd800, 0xdbff, c1942_bgvideoram_w, &c1942_bgvideoram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };

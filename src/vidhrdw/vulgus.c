@@ -7,18 +7,18 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-unsigned char *vulgus_foreground_videoram;
-unsigned char *vulgus_foreground_colorram;
-unsigned char *vulgus_background_videoram;
-unsigned char *vulgus_background_colorram;
-unsigned char *vulgus_spriteram;
-size_t vulgus_spriteram_size;
+
+unsigned char *vulgus_fg_videoram;
+unsigned char *vulgus_bg_videoram;
+
 unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
 static data_t vulgus_palette_bank;
-static struct tilemap *foreground_tilemap, *background_tilemap;
+static struct tilemap *fg_tilemap, *bg_tilemap;
+
 
 
 /***************************************************************************
@@ -26,6 +26,7 @@ static struct tilemap *foreground_tilemap, *background_tilemap;
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
+
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -89,79 +90,83 @@ void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 ***************************************************************************/
 
-static void get_foreground_tile_info(int tile_index)
+static void get_fg_tile_info(int tile_index)
 {
 	int code, color;
 
-	code = vulgus_foreground_videoram[tile_index];
-	color = vulgus_foreground_colorram[tile_index];
+	code = vulgus_fg_videoram[tile_index];
+	color = vulgus_fg_videoram[tile_index + 0x400];
 	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f);
 }
 
-static void get_background_tile_info(int tile_index)
+static void get_bg_tile_info(int tile_index)
 {
 	int code, color;
 
-	code = vulgus_background_videoram[tile_index];
-	color = vulgus_background_colorram[tile_index];
+	code = vulgus_bg_videoram[tile_index];
+	color = vulgus_bg_videoram[tile_index + 0x400];
 	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * vulgus_palette_bank));
 	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
 }
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int vulgus_vh_start(void)
 {
-	foreground_tilemap = tilemap_create(get_foreground_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
-	background_tilemap = tilemap_create(get_background_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE           ,16,16,32,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,           16,16,32,32);
 
-	if (!foreground_tilemap || !background_tilemap)
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	foreground_tilemap->transparent_pen = 47;
+	fg_tilemap->transparent_pen = 47;
 
 	return 0;
 }
 
 
+/***************************************************************************
 
-WRITE_HANDLER( vulgus_foreground_videoram_w )
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( vulgus_fg_videoram_w )
 {
-	vulgus_foreground_videoram[offset] = data;
-	tilemap_mark_tile_dirty(foreground_tilemap,offset);
+	vulgus_fg_videoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( vulgus_foreground_colorram_w )
+WRITE_HANDLER( vulgus_bg_videoram_w )
 {
-	vulgus_foreground_colorram[offset] = data;
-	tilemap_mark_tile_dirty(foreground_tilemap,offset);
-}
-
-WRITE_HANDLER( vulgus_background_videoram_w )
-{
-	vulgus_background_videoram[offset] = data;
-	tilemap_mark_tile_dirty(background_tilemap,offset);
-}
-
-WRITE_HANDLER( vulgus_background_colorram_w )
-{
-	vulgus_background_colorram[offset] = data;
-	tilemap_mark_tile_dirty(background_tilemap,offset);
+	vulgus_bg_videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 
-extern struct GameDriver driver_vulgus;
+WRITE_HANDLER( vulgus_palette_bank_w )
+{
+	if (vulgus_palette_bank != data)
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+	vulgus_palette_bank = data;
+}
+
 
 WRITE_HANDLER( vulgus_c804_w )
 {
+	extern struct GameDriver driver_vulgus;
+
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
-	/* bit 7 flips screen, but it's reversed in set 1 */
+	/* bit 7 flips screen, but it's active LO in set 1 */
 	if (Machine->gamedrv == &driver_vulgus)
 		data ^= 0x80;
 
@@ -169,29 +174,26 @@ WRITE_HANDLER( vulgus_c804_w )
 }
 
 
-WRITE_HANDLER( vulgus_palette_bank_w )
-{
-	if (vulgus_palette_bank != data)
-		tilemap_mark_all_tiles_dirty(background_tilemap);
+/***************************************************************************
 
-	vulgus_palette_bank = data;
-}
+  Display refresh
 
+***************************************************************************/
 
-static draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	for (offs = vulgus_spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int code,i,col,sx,sy,dir;
 
 
-		code = vulgus_spriteram[offs];
-		col = vulgus_spriteram[offs + 1] & 0x0f;
-		sx = vulgus_spriteram[offs + 3];
-		sy = vulgus_spriteram[offs + 2];
+		code = spriteram[offs];
+		col = spriteram[offs + 1] & 0x0f;
+		sx = spriteram[offs + 3];
+		sy = spriteram[offs + 2];
 		dir = 1;
 		if (flip_screen)
 		{
@@ -200,7 +202,7 @@ static draw_sprites(struct osd_bitmap *bitmap)
 			dir = -1;
 		}
 
-		i = (vulgus_spriteram[offs + 1] & 0xc0) >> 6;
+		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do
@@ -224,22 +226,15 @@ static draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_set_scrollx(background_tilemap, 0, vulgus_scroll_low[1] + 256 * vulgus_scroll_high[1]);
-	tilemap_set_scrolly(background_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
+	tilemap_set_scrollx(bg_tilemap, 0, vulgus_scroll_low[1] + 256 * vulgus_scroll_high[1]);
+	tilemap_set_scrolly(bg_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
 
 	tilemap_update(ALL_TILEMAPS);
 	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,background_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,foreground_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }

@@ -40,22 +40,16 @@ c001      YM2203 #2 write
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-int c1942_interrupt(void);
 
-extern unsigned char *vulgus_foreground_videoram;
-extern unsigned char *vulgus_foreground_colorram;
-extern unsigned char *vulgus_background_videoram;
-extern unsigned char *vulgus_background_colorram;
-extern unsigned char *vulgus_spriteram;
-extern size_t vulgus_spriteram_size;
+extern unsigned char *vulgus_fg_videoram;
+extern unsigned char *vulgus_bg_videoram;
 extern unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
-WRITE_HANDLER( vulgus_foreground_videoram_w );
-WRITE_HANDLER( vulgus_foreground_colorram_w );
-WRITE_HANDLER( vulgus_background_videoram_w );
-WRITE_HANDLER( vulgus_background_colorram_w );
+WRITE_HANDLER( vulgus_fg_videoram_w );
+WRITE_HANDLER( vulgus_bg_videoram_w );
 WRITE_HANDLER( vulgus_c804_w );
 WRITE_HANDLER( vulgus_palette_bank_w );
 int vulgus_vh_start(void);
@@ -92,11 +86,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc804, 0xc804, vulgus_c804_w },
 	{ 0xc805, 0xc805, vulgus_palette_bank_w },
 	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scroll_high },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &vulgus_spriteram, &vulgus_spriteram_size },
-	{ 0xd000, 0xd3ff, vulgus_foreground_videoram_w, &vulgus_foreground_videoram },
-	{ 0xd400, 0xd7ff, vulgus_foreground_colorram_w, &vulgus_foreground_colorram },
-	{ 0xd800, 0xdbff, vulgus_background_videoram_w, &vulgus_background_videoram },
-	{ 0xdc00, 0xdfff, vulgus_background_colorram_w, &vulgus_background_colorram },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd000, 0xd7ff, vulgus_fg_videoram_w, &vulgus_fg_videoram },
+	{ 0xd800, 0xdfff, vulgus_bg_videoram_w, &vulgus_bg_videoram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };

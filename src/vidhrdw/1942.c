@@ -7,18 +7,15 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
-unsigned char *c1942_foreground_videoram;
-unsigned char *c1942_foreground_colorram;
-unsigned char *c1942_background_videoram;
-unsigned char *c1942_spriteram;
-size_t c1942_spriteram_size;
-unsigned char *c1942_scroll;
+unsigned char *c1942_fgvideoram,*c1942_bgvideoram;
 
 static data_t c1942_palette_bank;
-static struct tilemap *foreground_tilemap, *background_tilemap;
+static struct tilemap *fg_tilemap, *bg_tilemap;
+
 
 
 
@@ -36,6 +33,7 @@ static struct tilemap *foreground_tilemap, *background_tilemap;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
+
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -100,70 +98,81 @@ void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 ***************************************************************************/
 
-static void get_foreground_tile_info(int tile_index)
+static void get_fg_tile_info(int tile_index)
 {
 	int code, color;
 
-	code = c1942_foreground_videoram[tile_index];
-	color = c1942_foreground_colorram[tile_index];
+	code = c1942_fgvideoram[tile_index];
+	color = c1942_fgvideoram[tile_index + 0x400];
 	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f)
 }
 
-static void get_background_tile_info(int tile_index)
+static void get_bg_tile_info(int tile_index)
 {
 	int code, color;
 
 	tile_index = (tile_index & 0x0f) | ((tile_index & 0x01f0) << 1);
 
-	code = c1942_background_videoram[tile_index];
-	color = c1942_background_videoram[tile_index + 0x10];
+	code = c1942_bgvideoram[tile_index];
+	color = c1942_bgvideoram[tile_index + 0x10];
 	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * c1942_palette_bank));
 	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
 }
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int c1942_vh_start(void)
 {
-	foreground_tilemap = tilemap_create(get_foreground_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
-	background_tilemap = tilemap_create(get_background_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE     ,16,16,32,16);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE     ,16,16,32,16);
 
-	if (!foreground_tilemap || !background_tilemap)
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	foreground_tilemap->transparent_pen = 0;
+	fg_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
 
-WRITE_HANDLER( c1942_foreground_videoram_w )
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( c1942_fgvideoram_w )
 {
-	c1942_foreground_videoram[offset] = data;
-	tilemap_mark_tile_dirty(foreground_tilemap,offset);
+	c1942_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( c1942_foreground_colorram_w )
+WRITE_HANDLER( c1942_bgvideoram_w )
 {
-	c1942_foreground_colorram[offset] = data;
-	tilemap_mark_tile_dirty(foreground_tilemap,offset);
+	c1942_bgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,(offset & 0x0f) | ((offset >> 1) & 0x01f0));
 }
 
-WRITE_HANDLER( c1942_background_videoram_w )
-{
-	c1942_background_videoram[offset] = data;
-	tilemap_mark_tile_dirty(background_tilemap,(offset & 0x0f) | ((offset >> 1) & 0x01f0));
-}
 
+
+WRITE_HANDLER( c1942_scrollx_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
 
 
 WRITE_HANDLER( c1942_palette_bank_w )
 {
 	if (c1942_palette_bank != data)
-		tilemap_mark_all_tiles_dirty(background_tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 
 	c1942_palette_bank = data;
 }
@@ -183,21 +192,27 @@ WRITE_HANDLER( c1942_c804_w )
 }
 
 
-static draw_sprites(struct osd_bitmap *bitmap)
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	for (offs = c1942_spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int i,code,col,sx,sy,dir;
 
 
-		code = (c1942_spriteram[offs] & 0x7f) + 4*(c1942_spriteram[offs + 1] & 0x20)
-				+ 2*(c1942_spriteram[offs] & 0x80);
-		col = c1942_spriteram[offs + 1] & 0x0f;
-		sx = c1942_spriteram[offs + 3] - 0x10 * (c1942_spriteram[offs + 1] & 0x10);
-		sy = c1942_spriteram[offs + 2];
+		code = (spriteram[offs] & 0x7f) + 4*(spriteram[offs + 1] & 0x20)
+				+ 2*(spriteram[offs] & 0x80);
+		col = spriteram[offs + 1] & 0x0f;
+		sx = spriteram[offs + 3] - 0x10 * (spriteram[offs + 1] & 0x10);
+		sy = spriteram[offs + 2];
 		dir = 1;
 		if (flip_screen)
 		{
@@ -207,7 +222,7 @@ static draw_sprites(struct osd_bitmap *bitmap)
 		}
 
 		/* handle double / quadruple height (actually width because this is a rotated game) */
-		i = (c1942_spriteram[offs + 1] & 0xc0) >> 6;
+		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do
@@ -224,21 +239,14 @@ static draw_sprites(struct osd_bitmap *bitmap)
 
 
 }
-/***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_set_scrollx(background_tilemap, 0, c1942_scroll[0] + 256 * c1942_scroll[1]);
-
 	tilemap_update(ALL_TILEMAPS);
 	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,background_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,foreground_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }
+
