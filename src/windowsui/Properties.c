@@ -139,22 +139,29 @@ static char   historyBuf[MAX_HISTORY_LEN];
 static char   tempHistoryBuf[MAX_HISTORY_LEN];
 
 /* Property sheets */
-static DWORD dwDlgId[] =
+struct PropertySheetInfo
 {
-	IDD_PROP_GAME,
-	IDD_PROP_AUDIT,
-	IDD_PROP_DISPLAY,
-	IDD_PROP_ADVANCED,
-	IDD_PROP_SOUND,
-	IDD_PROP_INPUT,
-	IDD_PROP_MISC,
-#ifdef MESS
-	IDD_PROP_SOFTWARE,
-#endif
-	IDD_PROP_VECTOR
+	DWORD dwDlgID;
+	DLGPROC pfnDlgProc;
 };
 
-#define NUM_PROPSHEETS (sizeof(dwDlgId) / sizeof(dwDlgId[0]))
+static struct PropertySheetInfo s_propSheets[] =
+{
+	{ IDD_PROP_GAME,			GamePropertiesDialogProc },
+	{ IDD_PROP_AUDIT,			GameAuditDialogProc },
+	{ IDD_PROP_DISPLAY,			GameDisplayOptionsProc },
+	{ IDD_PROP_ADVANCED,		GameOptionsProc },
+	{ IDD_PROP_SOUND,			GameOptionsProc },
+	{ IDD_PROP_INPUT,			GameOptionsProc },
+	{ IDD_PROP_MISC,			GameOptionsProc },
+#ifdef MESS
+	{ IDD_PROP_SOFTWARE,		GameOptionsProc },
+	{ IDD_PROP_CONFIGURATION,	GameOptionsProc },
+#endif
+	{ IDD_PROP_VECTOR,			GameOptionsProc }
+};
+
+#define NUM_PROPSHEETS (sizeof(s_propSheets) / sizeof(s_propSheets[0]))
 
 #if HAS_HELP
 /* Help IDs */
@@ -487,7 +494,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
-		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i + 2]);
+		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(s_propSheets[i + 2].dwDlgID);
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
 		pspage[i].pfnDlgProc                 = GameOptionsProc;
@@ -520,6 +527,15 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 
 	InitGameAudit(game_num);
 	g_nGame = game_num;
+
+#ifdef MESS
+	if (ram_option_count(drivers[game_num]) == 0)
+	{
+		assert((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0);
+		maxPropSheets = NUM_PROPSHEETS - 2;
+	}
+	else
+#endif
 	maxPropSheets = (drv.video_attributes & VIDEO_TYPE_VECTOR) ? NUM_PROPSHEETS : NUM_PROPSHEETS - 1;
 
 	/* Get Game options to populate property sheets */
@@ -550,28 +566,10 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
-		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i]);
+		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(s_propSheets[i].dwDlgID);
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
-	}
-
-	pspage[0].pfnDlgProc = GamePropertiesDialogProc;
-	pspage[1].pfnDlgProc = GameAuditDialogProc;
-
-	pspage[2].pfnDlgProc = GameDisplayOptionsProc;
-	pspage[3].pfnDlgProc = GameOptionsProc;
-	pspage[4].pfnDlgProc = GameOptionsProc;
-	pspage[5].pfnDlgProc = GameOptionsProc;
-	pspage[6].pfnDlgProc = GameOptionsProc;
-
-#ifdef MESS
-    pspage[7].pfnDlgProc = GameOptionsProc;
-#endif
-
-	/* If this is a vector game, add the vector prop sheet */
-	if (maxPropSheets == NUM_PROPSHEETS)
-	{
-		pspage[NUM_PROPSHEETS - 1].pfnDlgProc = GameOptionsProc;
+		pspage[i].pfnDlgProc				 = s_propSheets[i].pfnDlgProc;
 	}
 
 	/* Create the Property sheet and display it */

@@ -313,7 +313,8 @@
 #define ID_MESS_CREATE_SOFTWARE         2201
 #define ID_MESS_RUN_TESTS				2299
 #define IDD_PROP_SOFTWARE               2202
-#define IDD_FILEMGR                     2203
+#define IDD_PROP_CONFIGURATION          2203
+#define IDD_FILEMGR                     2204
 #endif
 
 // Next default values for new objects

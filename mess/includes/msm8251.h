@@ -77,8 +77,6 @@ WRITE_HANDLER(msm8251_control_w);
 void msm8251_init(struct msm8251_interface *);
 /* reset the chip */
 void msm8251_reset(void);
-/* stop the emulation and clean up */
-void msm8251_stop(void);
 
 
 /* The 8251 has seperate transmit and receive clocks */

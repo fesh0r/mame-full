@@ -40,10 +40,8 @@ extern WRITE_HANDLER( ti86_port_0005_w);
 extern WRITE_HANDLER( ti86_port_0006_w);
 
 /* vidhrdw/ti85.c */
-
-extern int ti85_vh_start (void);
-extern void ti85_vh_stop (void);
-extern void ti85_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( ti85 );
+extern VIDEO_UPDATE( ti85 );
 extern unsigned char ti85_palette[32*7][3];
 extern unsigned short ti85_colortable[32][7];
 extern void ti85_init_palette (unsigned char *, unsigned short *, const unsigned char *);

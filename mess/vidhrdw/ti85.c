@@ -114,22 +114,18 @@ unsigned short ti85_colortable[32][7] =
  
 void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-	char *backdrop_name;
+	char backdrop_name[8+4+1];
 	int used = sizeof (ti85_palette) / 3;
 
 	memcpy (sys_palette, ti85_palette, sizeof (ti85_palette));
 	memcpy (sys_colortable, ti85_colortable, sizeof (ti85_colortable));
 
 	/* try to load a backdrop for the machine */
-	backdrop_name = malloc(4+4+1);
-
 	strncpy(backdrop_name, Machine->gamedrv->name, 4);
 	backdrop_name[4] = '\0';
 	strcat(backdrop_name, ".png");
 
 	backdrop_load (backdrop_name, used);
-        free(backdrop_name);
-	backdrop_name = NULL;
 
 	if (!strncmp(Machine->gamedrv->name, "ti81", 4))
 	{
@@ -159,23 +155,15 @@ void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortab
 		ti_number_of_frames = TI86_NUMBER_OF_FRAMES;
 	}
 
-	ti85_frames = (UINT8 *) malloc(ti_number_of_frames*ti_video_memory_size*sizeof (UINT8));
+	ti85_frames = (UINT8 *) auto_malloc(ti_number_of_frames*ti_video_memory_size*sizeof (UINT8));
 	memset (ti85_frames, 0, sizeof(UINT8)*ti_number_of_frames*ti_video_memory_size);
 }
 
-
-int ti85_vh_start (void)
+VIDEO_START( ti85 )
 {
-	return 0;
 }
 
-void ti85_vh_stop (void)
-{
-	free (ti85_frames);
-}
-
-
-void ti85_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ti85 )
 {
 	int x,y,b;
 	int brightnes;

@@ -95,18 +95,14 @@
 #define EINSTEIN_ADC_INT		(1<<1)
 #define EINSTEIN_FIRE_INT		(1<<2)
 
-static unsigned char *einstein_ram = NULL;
-
 static int einstein_rom_enabled = 1;
 
 static int einstein_int = 0;
 static int einstein_int_mask = 0;
 
-static void *einstein_ctc_trigger_timer = NULL;
 static int einstein_ctc_trigger = 0;
 
 /* KEYBOARD */
-static void *einstein_keyboard_timer = NULL;
 static int einstein_keyboard_line = 0;
 static int einstein_keyboard_data = 0x0ff;
 
@@ -122,7 +118,7 @@ void einstein_dump_ram(void)
  
 	if (file)
 	{
-		osd_fwrite(file, einstein_ram, 0x10000);
+		osd_fwrite(file, mess_ram, 0x10000);
 
 		/* close file */
 		osd_fclose(file);
@@ -241,22 +237,12 @@ einstein_crtc6845_interface= {
 void	einstein_80col_init(void)
 {
 	/* 2K RAM */
-	einstein_80col_ram = malloc(2048);
+	einstein_80col_ram = auto_malloc(2048);
 
 	/* initialise 6845 */
 	crtc6845_config(&einstein_crtc6845_interface);
 
 	einstein_80col_state=(1<<2)|(1<<1);
-}
-
-/* 80 column card exit */
-void	einstein_80col_exit(void)
-{
-	if (einstein_80col_ram!=NULL)
-	{
-		free(einstein_80col_ram);
-		einstein_80col_ram = NULL;
-	}
 }
 
 READ_HANDLER(einstein_80col_r)
@@ -335,31 +321,20 @@ void einstein_scan_keyboard(void)
 static void einstein_update_interrupts(void)
 {
 	if (einstein_int & einstein_int_mask & EINSTEIN_KEY_INT)
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(0,Z80_INT_REQ));
-	}
+		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(0,Z80_INT_IEO));
-	}
+		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
 
 	if (einstein_int & einstein_int_mask & EINSTEIN_ADC_INT)
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(2,Z80_INT_REQ));
-	}
+		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(2,Z80_INT_IEO));
-	}
+		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
+
 /*
 	if (einstein_int & einstein_int_mask & EINSTEIN_FIRE_INT)
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(4,Z80_INT_REQ);
-	}
+		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-	{
-		cpu_cause_interrupt(0, Z80_VECTOR(4,Z80_INT_IEO);
-	}
+		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
 */
 }
 
@@ -405,15 +380,13 @@ int einstein_floppy_init(int id)
 static void einstein_ctc_interrupt(int state)
 {
 	logerror("ctc irq state: %02x\n",state);
-
-	cpu_cause_interrupt(0, Z80_VECTOR(1,state));
+	cpu_set_irq_line(0, 1, state);
 }
 
 static void einstein_pio_interrupt(int state)
 {
 	logerror("pio irq state: %02x\n",state);
-
-	cpu_cause_interrupt(0, Z80_VECTOR(3,state));
+	cpu_set_irq_line(0, 3, state);
 }
 
 WRITE_HANDLER(einstein_serial_transmit_clock)
@@ -532,7 +505,7 @@ static Z80_DaisyChain einstein_daisy_chain[] =
     {0,0,0,-1}
 };
 
-int einstein_vh_init(void)
+VIDEO_START( einstein )
 {
 	return TMS9928A_start(TMS99x8A, 0x4000);
 }
@@ -812,7 +785,7 @@ static void einstein_page_rom(void)
 #ifdef EINSTEIN_DUMP_RAM
 		einstein_dump_ram();
 #endif
-		cpu_setbank(1, einstein_ram);
+		cpu_setbank(1, mess_ram);
 	}
 }
 
@@ -1425,13 +1398,11 @@ static int einstein_cpu_acknowledge_int(int cpu)
 	return (vector<<1);
 }
 
-void einstein_init_machine(void)
+MACHINE_INIT( einstein )
 {
-	einstein_ram = malloc(65536);
-	memset(einstein_ram, 0x0aa, 65536);
-	cpu_setbank(2,einstein_ram+0x02000);
-	cpu_setbank(3,einstein_ram);
-	cpu_setbank(4,einstein_ram+0x02000);
+	cpu_setbank(2, mess_ram+0x02000);
+	cpu_setbank(3, mess_ram);
+	cpu_setbank(4, mess_ram+0x02000);
 
 	z80ctc_init(&einstein_ctc_intf);
 	z80pio_init(&einstein_pio_intf);
@@ -1460,11 +1431,11 @@ void einstein_init_machine(void)
 	/* the einstein keyboard can generate a interrupt */
 	/* the int is actually clocked at the system clock 4Mhz, but this would be too fast for our
 	driver. So we update at 50Hz and hope this is good enough. */
-	einstein_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, einstein_keyboard_timer_callback);
+	timer_pulse(TIME_IN_HZ(50), 0, einstein_keyboard_timer_callback);
 
 	/* the input to channel 0 and 1 of the ctc is a 2mhz clock */
 	einstein_ctc_trigger = 0;
-	einstein_ctc_trigger_timer = timer_pulse(TIME_IN_HZ(2000000), 0, einstein_ctc_trigger_callback);
+	timer_pulse(TIME_IN_HZ(2000000), 0, einstein_ctc_trigger_callback);
 
 	centronics_config(0, einstein_cent_config);
 	/* assumption: select is tied low */
@@ -1472,46 +1443,10 @@ void einstein_init_machine(void)
 
 }
 
-void einstein2_init_machine(void)
+MACHINE_INIT( einstein2 )
 {
-	einstein_init_machine();
-	
+	machine_init_einstein();
 	einstein_80col_init();
-}
-
-
-void einstein_shutdown_machine(void)
-{
-#ifdef EINSTEIN_DUMP_RAM
-//	einstein_dump_ram();
-#endif
-	if (einstein_ram)
-	{
-		free(einstein_ram);
-		einstein_ram = NULL;
-	}
-
-	if (einstein_ctc_trigger_timer)
-	{
-		timer_remove(einstein_ctc_trigger_timer);
-		einstein_ctc_trigger_timer = NULL;
-	}
-
-	if (einstein_keyboard_timer)
-	{
-		timer_remove(einstein_keyboard_timer);
-		einstein_keyboard_timer = NULL;
-	}
-	
-	centronics_exit(0);
-	msm8251_stop();
-}
-
-void einstein2_shutdown_machine(void)
-{
-	einstein_shutdown_machine();
-
-	einstein_80col_exit();
 }
 
 INPUT_PORTS_START(einstein)
@@ -1717,7 +1652,7 @@ void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
 
 }
 
-void einstein_80col_refresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( einstein_80col )
 {
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 
@@ -1759,99 +1694,44 @@ void einstein_80col_refresh(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void einstein2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( einstein2 )
 {
-	TMS9928A_refresh(bitmap,full_refresh);
-	einstein_80col_refresh(bitmap,full_refresh);
+	video_update_tms9928a(bitmap, cliprect);
+	video_update_einstein_80col(bitmap, cliprect);
 }
 
-static struct MachineDriver machine_driver_einstein =
-{
+static MACHINE_DRIVER_START( einstein )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-			EINSTEIN_SYSTEM_CLOCK,
-			readmem_einstein,		   /* MemoryReadAddress */
-			writemem_einstein,		   /* MemoryWriteAddress */
-			readport_einstein,		   /* IOReadPort */
-			writeport_einstein,		   /* IOWritePort */
-            0, 0,
-			0, 0,	
-			einstein_daisy_chain
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	einstein_init_machine,			   /* init machine */
-	einstein_shutdown_machine,
-	/* video hardware */
-	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	0,								
-	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-	tms9928A_init_palette,
-	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-	0,								   /* MachineLayer */
-	einstein_vh_init,
-	TMS9928A_stop,
-	TMS9928A_refresh,
+	MDRV_CPU_ADD_TAG("main", Z80, EINSTEIN_SYSTEM_CLOCK)
+	MDRV_CPU_MEMORY(readmem_einstein,writemem_einstein)
+	MDRV_CPU_PORTS(readport_einstein,writeport_einstein)
+	MDRV_CPU_CONFIG(einstein_daisy_chain)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&einstein_ay_interface
-		},
-	}
-};
+	MDRV_MACHINE_INIT( einstein )
 
-static struct MachineDriver machine_driver_einstei2 =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-			EINSTEIN_SYSTEM_CLOCK,
-			readmem_einstein,		   /* MemoryReadAddress */
-			writemem_einstein,		   /* MemoryWriteAddress */
-			readport_einstein2,		   /* IOReadPort */
-			writeport_einstein2,		   /* IOWritePort */
-            0, 0,
-			0, 0,	
-			einstein_daisy_chain
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	einstein2_init_machine,			   /* init machine */
-	einstein2_shutdown_machine,
-	/* video hardware */
-//	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	640,400, {0,640-1, 0, 400-1},
-	0,								
-	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-	tms9928A_init_palette,
-	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-	0,								   /* MachineLayer */
-	einstein_vh_init,
-	TMS9928A_stop,
-	einstein2_vh_screenrefresh,
+    /* video hardware */
+	MDRV_TMS9928A( einstein )
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&einstein_ay_interface
-		},
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, einstein_ay_interface)
+MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( einstei2 )
+	MDRV_IMPORT_FROM( einstein )
+
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_PORTS(readport_einstein2,writeport_einstein2)
+	MDRV_MACHINE_INIT( einstein2 )
+
+    /* video hardware */
+	MDRV_SCREEN_SIZE(640, 400)
+	MDRV_VISIBLE_AREA(0,640-1, 0, 400-1)
+	MDRV_VIDEO_UPDATE( einstein2 )
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1898,7 +1778,11 @@ static const struct IODevice io_einstein[] =
 
 #define io_einstei2 io_einstein
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 1984, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
-COMP( 1984, einstei2,      0,            einstei2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device")
+COMPUTER_CONFIG_START(einstein)
+	CONFIG_RAM_DEFAULT(65536)
+COMPUTER_CONFIG_END
+
+/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */
+COMPC( 1984, einstein,  0,      einstein,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01")
+COMPC( 1984, einstei2,  0,      einstei2,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01 + 80 column device")
 

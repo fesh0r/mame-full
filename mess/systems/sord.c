@@ -42,8 +42,7 @@
 
 #include "includes/nec765.h"
 
-static void sord_m5_init_machine(void);
-static void sord_m5_shutdown_machine(void);
+static MACHINE_INIT( sord_m5 );
 
 static unsigned char fd5_databus;
 
@@ -187,30 +186,15 @@ static void sord_fd5_init(void)
 	nec765_init(&sord_fd5_nec765_interface,NEC765A);
 }
 
-static void sord_fd5_exit(void)
-{
-	nec765_stop();
-}
-
-static void sord_m5_fd5_init_machine(void)
+static MACHINE_INIT( sord_m5_fd5 )
 {
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
-	sord_m5_init_machine();
+	machine_init_sord_m5();
 	ppi8255_set_input_acka(0,1);
 	ppi8255_set_input_stba(0,1);
-}
-
-static void sord_m5_fd5_shutdown_machine(void)
-{
-#ifdef SORD_DUMP_RAM
-	sordfd5_dump_ram();
-#endif
-
-	sord_fd5_exit();
-	sord_m5_shutdown_machine();
 }
 
 
@@ -421,7 +405,7 @@ void sord_cassette_exit(int id)
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-    cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line(0, 0, state);
 }
 
 static z80ctc_interface	sord_m5_ctc_intf =
@@ -435,7 +419,7 @@ static z80ctc_interface	sord_m5_ctc_intf =
     {0}
 };
 
-int sord_m5_vh_init(void)
+VIDEO_START( sord_m5 )
 {
 	return TMS9928A_start(TMS99x8A, 0x4000);
 }
@@ -624,15 +608,7 @@ static void sordm5_video_interrupt_callback(int state)
 	}
 }
 
-
-int sordm5_interrupt(void)
-{
-	TMS9928A_interrupt();
-
-	return ignore_interrupt();
-}
-
-void sord_m5_init_machine(void)
+static MACHINE_INIT( sord_m5 )
 {
 	z80ctc_init(&sord_m5_ctc_intf);
 
@@ -707,22 +683,6 @@ void sordfd5_dump_ram(void)
 	}
 }
 #endif
-
-
-void sord_m5_shutdown_machine(void)
-{
-#ifdef SORD_DUMP_RAM
-	sord_dump_ram();
-#endif
-
-//	if (cassette_timer)
-//	{
-//		timer_remove(cassette_timer);
-//		cassette_timer = NULL;
-//	}
-
-	centronics_exit(0);
-}
 
 INPUT_PORTS_START(sord_m5)
 	/* line 0 */
@@ -857,103 +817,46 @@ static struct SN76496interface sn76496_interface =
     { 100 }
 };
 
-static struct MachineDriver machine_driver_sord_m5 =
+static INTERRUPT_GEN( sord_interrupt )
 {
+	if (TMS9928A_interrupt())
+		cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
+static MACHINE_DRIVER_START( sord_m5 )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80,  /* type */
-			3800000,
-			readmem_sord_m5,		   /* MemoryReadAddress */
-			writemem_sord_m5,		   /* MemoryWriteAddress */
-			readport_sord_m5,		   /* IOReadPort */
-			writeport_sord_m5,		   /* IOWritePort */
-            sordm5_interrupt, 1,
-			0, 0,	
-			sord_m5_daisy_chain
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	sord_m5_init_machine,			   /* init machine */
-	sord_m5_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3800000)
+	MDRV_CPU_MEMORY(readmem_sord_m5,writemem_sord_m5)
+	MDRV_CPU_PORTS(readport_sord_m5,writeport_sord_m5)
+	MDRV_CPU_VBLANK_INT(sord_interrupt, 1)
+	MDRV_CPU_CONFIG( sord_m5_daisy_chain )
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( sord_m5 )
+
 	/* video hardware */
-	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	0,								
-	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-	tms9928A_init_palette,
-	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-	0,								   /* MachineLayer */
-	sord_m5_vh_init,
-	TMS9928A_stop,
-	TMS9928A_refresh,
+	MDRV_TMS9928A( sord_m5 )
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_sord_m5_fd5 =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80_MSX,  /* type */
-			3800000,
-			readmem_sord_m5,		   /* MemoryReadAddress */
-			writemem_sord_m5,		   /* MemoryWriteAddress */
-			readport_srdm5fd5,		   /* IOReadPort */
-			writeport_srdm5fd5,		   /* IOWritePort */
-            sordm5_interrupt, 1,
-			0, 0,	
-			sord_m5_daisy_chain
-		},
-		{
-			CPU_Z80_MSX,
-			3800000,
-			readmem_sord_fd5,
-			writemem_sord_fd5,
-			readport_sord_fd5,
-			writeport_sord_fd5,
-			0,0,
-			0,0,
-			NULL
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	20,								   /* cpu slices per frame */
-	sord_m5_fd5_init_machine,			   /* init machine */
-	sord_m5_fd5_shutdown_machine,
-	/* video hardware */
-	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	0,								
-	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-	tms9928A_init_palette,
-	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-	0,								   /* MachineLayer */
-	sord_m5_vh_init,
-	TMS9928A_stop,
-	TMS9928A_refresh,
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( sord_m5_fd5 )
+	MDRV_IMPORT_FROM( sord_m5 )
 
+	MDRV_CPU_REPLACE("main", Z80_MSX, 3800000)
+	MDRV_CPU_PORTS(readport_srdm5fd5,writeport_srdm5fd5)
+
+	MDRV_CPU_ADD(Z80, 3800000)
+	MDRV_CPU_MEMORY(readmem_sord_fd5,writemem_sord_fd5)
+	MDRV_CPU_PORTS(readport_sord_fd5,writeport_sord_fd5)
+
+	MDRV_INTERLEAVE(20)
+	MDRV_MACHINE_INIT( sord_m5_fd5 )
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

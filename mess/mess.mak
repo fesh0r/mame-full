@@ -169,6 +169,8 @@ DRVLIBS = \
 	$(OBJ)/ascii.a	  \
 	$(OBJ)/nascom1.a  \
 	$(OBJ)/samcoupe.a \
+	$(OBJ)/tatung.a   \
+	$(OBJ)/sord.a     \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/coleco.a   \
@@ -188,8 +190,6 @@ DRVLIBS = \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/apf.a      \
-#	$(OBJ)/sord.a     \
-#	$(OBJ)/tatung.a   \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
@@ -454,7 +454,6 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/systems/nc.o	 \
 	  $(OBJ)/mess/machine/nc.o	 \
 	  $(OBJ)/mess/systems/pcw16.o	 \
-	  $(OBJ)/mess/machine/msm8251.o  \
 	  $(OBJ)/mess/vidhrdw/pcw16.o	 \
 	  $(OBJ)/mess/vidhrdw/pcw.o	 \
 	  $(OBJ)/mess/systems/pcw.o	 \
@@ -707,6 +706,7 @@ COREOBJS += \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \
+	$(OBJ)/mess/machine/msm8251.o  \
 	$(OBJ)/mess/machine/tc8521.o   \
 	$(OBJ)/mess/vidhrdw/v9938.o    \
 	$(OBJ)/mess/vidhrdw/crtc6845.o \

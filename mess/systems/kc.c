@@ -17,14 +17,13 @@
 #include "includes/kc.h"
 
 /* pio is last in chain and therefore has highest priority */
-/*
+
 static Z80_DaisyChain kc85_daisy_chain[] =
 {
         {z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
         {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
         {0,0,0,-1}
 };
-*/
 
 static READ_HANDLER(kc85_4_port_r)
 {
@@ -373,7 +372,6 @@ static struct Wave_interface kc_wave_interface=
 
 };
 
-/* kc85_daisy_chain? */
 
 static MACHINE_DRIVER_START( kc85_3 )
 	/* basic machine hardware */
@@ -381,6 +379,7 @@ static MACHINE_DRIVER_START( kc85_3 )
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
 	MDRV_CPU_MEMORY(readmem_kc85_3, writemem_kc85_3)
 	MDRV_CPU_PORTS(readport_kc85_3, writeport_kc85_3)
+	MDRV_CPU_CONFIG(kc85_daisy_chain)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

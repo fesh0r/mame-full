@@ -906,3 +906,17 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
         tms.StatusReg |= 0x40 + illegalsprite;
     }
 }
+
+void mdrv_tms9928a(struct InternalMachineDriver *machine, int (*video_start_proc)(void))
+{
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 24*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_PALETTE_LENGTH(TMS9928A_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(TMS9928A_COLORTABLE_SIZE)
+	MDRV_PALETTE_INIT(tms9928a)
+
+	MDRV_VIDEO_START(proc)
+	MDRV_VIDEO_UPDATE(tms9928a)
+}

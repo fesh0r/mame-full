@@ -57,4 +57,10 @@ void TMS9928A_set_spriteslimit (int);
 */
 void TMS9928A_post_load (void);
 
+/*
+** MachineDriver video declarations for the TMS9928A chip
+*/
+extern void mdrv_tms9928a(struct InternalMachineDriver *machine, int (*video_start_proc)(void));
+
+#define MDRV_TMS9928A(video_start_proc)		mdrv_tms9928a(machine, (video_start_##video_start_proc));
 

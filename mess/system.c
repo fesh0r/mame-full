@@ -584,14 +584,15 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
 	/* SORD */
-//	DRIVER( sordm5 )
+	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
 //	DRIVER( apfm1000 )
 //	DRIVER( apfimag )
 
 	/* Tatung */
-//	DRIVER( einstein )
+	DRIVER( einstein )
+TESTDRIVER( einstein2 )
 
 	/* INTELLIGENT SOFTWARE */
 //	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */

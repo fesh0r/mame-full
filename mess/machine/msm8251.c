@@ -56,11 +56,6 @@ void	msm8251_init(struct msm8251_interface *iface)
 
 }
 
-/* stop */
-void	msm8251_stop(void)
-{
-}
-
 static void msm8251_update_rx_ready(void)
 {
 	int state;

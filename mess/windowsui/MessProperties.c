@@ -330,8 +330,10 @@ static void RamSize_InitList(HWND hDlg, UINT32 default_ram)
 			}
 		}
 		
-		if (sel < 0) {
-			assert(default_index > 0);
+		if (sel < 0)
+		{
+			/* there doesn't seem to be a default RAM option */
+			assert(default_index >= 0);
 			sel = default_index;
 		}
 		ComboBox_SetCurSel(hRamComboBox, sel);

@@ -281,14 +281,12 @@ static struct Wave_interface wave_interface = {
     { 25 }      /* mixing levels */
 };
 
-
-/* &mbee_daisy_chain? */
-
 static MACHINE_DRIVER_START( mbee )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3375000)         /* 3.37500 Mhz */
 	MDRV_CPU_MEMORY(readmem_mbee,writemem_mbee)
 	MDRV_CPU_PORTS(readport_mbee,writeport_mbee)
+	/* MDRV_CPU_CONFIG(mbee_daisy_chain) */
 	MDRV_CPU_VBLANK_INT(mbee_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
