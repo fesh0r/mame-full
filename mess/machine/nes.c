@@ -18,8 +18,6 @@
 char battery_name[1024];
 UINT8 battery_data[BATTERY_SIZE];
 
-void nes_vh_renderscanline (int scanline);
-
 struct ppu_struct ppu;
 struct nes_struct nes;
 struct fds_struct nes_fds;
@@ -58,11 +56,11 @@ static UINT32 in_1[3];
 static UINT32 in_0_shift;
 static UINT32 in_1_shift;
 
-void nes_ppu_w (int offset, int data);
+//void nes_ppu_w (int offset, int data);
 
 /* local prototypes */
 static void init_nes_core (void);
-void ppu_reset (struct ppu_struct *ppu_);
+static void ppu_reset (struct ppu_struct *ppu_);
 static void Write_PPU (int data);
 
 static void init_nes_core (void)
@@ -199,7 +197,7 @@ void nes_stop_machine (void)
 	}
 }
 
-void ppu_reset (struct ppu_struct *_ppu)
+static void ppu_reset (struct ppu_struct *_ppu)
 {
 	/* Reset PPU variables */
 	PPU_Control0 = PPU_Control1 = PPU_Status = 0;
@@ -231,7 +229,7 @@ void ppu_reset (struct ppu_struct *_ppu)
 	}
 }
 
-int nes_IN0_r (int offset)
+READ_HANDLER ( nes_IN0_r )
 {
 	int dip;
 	int retVal;
@@ -278,7 +276,7 @@ int nes_IN0_r (int offset)
 	return retVal;
 }
 
-int nes_IN1_r (int offset)
+READ_HANDLER ( nes_IN1_r )
 {
 	int dip;
 	int retVal;
@@ -514,7 +512,7 @@ int nes_interrupt (void)
 	return ret;
 }
 
-int nes_ppu_r (int offset)
+READ_HANDLER ( nes_ppu_r )
 {
 	UINT8 retVal=0;
 /*
@@ -584,7 +582,7 @@ int nes_ppu_r (int offset)
 	return retVal;
 }
 
-void nes_ppu_w (int offset, int data)
+WRITE_HANDLER ( nes_ppu_w )
 {
 
 	switch (offset & 0x07)
@@ -1076,8 +1074,6 @@ static void Write_PPU (int data)
 end:
 	PPU_address += PPU_add;
 }
-
-extern struct GfxLayout nes_charlayout;
 
 int nes_load_rom (int id)
 {

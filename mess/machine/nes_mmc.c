@@ -606,7 +606,7 @@ static void mapper4_set_chr (void)
 	nes_vram [chr_page ^ 7] = MMC3_chr[5];
 }
 
-int mapper4_irq (int scanline)
+static int mapper4_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -831,7 +831,7 @@ static WRITE_HANDLER( mapper118_w )
 	}
 }
 
-int mapper5_irq (int scanline)
+static int mapper5_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -853,7 +853,7 @@ int mapper5_irq (int scanline)
 	return ret;
 }
 
-READ_HANDLER( mapper5_l_r )
+static READ_HANDLER( mapper5_l_r )
 {
 	int retVal;
 
@@ -900,7 +900,7 @@ static void mapper5_sync_vrom (int mode)
 		nes_vram[i] = vrom_bank[0 + (mode * 8)] * 64;
 }
 
-WRITE_HANDLER( mapper5_l_w )
+static WRITE_HANDLER( mapper5_l_w )
 {
 //	static int vrom_next[4];
 	static int vrom_page_a;
@@ -1354,12 +1354,12 @@ WRITE_HANDLER( mapper5_l_w )
 	}
 }
 
-WRITE_HANDLER( mapper5_w )
+static WRITE_HANDLER( mapper5_w )
 {
 	logerror("MMC5 uncaught high mapper w, %04x: %02x\n", offset, data);
 }
 
-WRITE_HANDLER( mapper7_w )
+static WRITE_HANDLER( mapper7_w )
 {
 	if (data & 0x10)
 		ppu_mirror_high ();
@@ -1438,7 +1438,7 @@ static WRITE_HANDLER( mapper9_w )
 }
 #endif
 
-void mapper10_latch (offs_t offset)
+static void mapper10_latch (offs_t offset)
 {
 	if ((offset & 0x3ff0) == 0x0fd0)
 	{
@@ -1466,7 +1466,7 @@ void mapper10_latch (offs_t offset)
 	}
 }
 
-WRITE_HANDLER( mapper10_w )
+static WRITE_HANDLER( mapper10_w )
 {
 	switch (offset & 0x7000)
 	{
@@ -1563,7 +1563,7 @@ static WRITE_HANDLER( mapper15_w )
 	}
 }
 
-int bandai_irq (int scanline)
+static int bandai_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -1673,7 +1673,7 @@ static WRITE_HANDLER( mapper17_l_w )
 	}
 }
 
-int jaleco_irq (int scanline)
+static int jaleco_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -1920,7 +1920,7 @@ static WRITE_HANDLER( mapper18_w )
 	}
 }
 
-int namcot_irq (int scanline)
+static int namcot_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -2004,7 +2004,7 @@ static WRITE_HANDLER( mapper19_w )
 	}
 }
 
-int fds_irq (int scanline)
+static int fds_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -2121,7 +2121,7 @@ WRITE_HANDLER ( fds_w )
 
 }
 
-int konami_irq (int scanline)
+static int konami_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -2834,7 +2834,7 @@ static WRITE_HANDLER( mapper34_w )
 	prg32 (data);
 }
 
-int mapper40_irq (int scanline)
+static int mapper40_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -3067,7 +3067,7 @@ static WRITE_HANDLER( mapper64_w )
 	}
 }
 
-int irem_irq (int scanline)
+static int irem_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 
@@ -3174,7 +3174,7 @@ static WRITE_HANDLER( mapper66_w )
 	chr8 (data & 0x03);
 }
 
-int sunsoft_irq (int scanline)
+static int sunsoft_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
 

@@ -760,7 +760,7 @@ WRITE_HANDLER(nes_vh_sprite_dma_w)
 #endif
 }
 
-void draw_sight(int playerNum, int x_center, int y_center)
+static void draw_sight(int playerNum, int x_center, int y_center)
 {
 	int x,y;
 	UINT16 color;
