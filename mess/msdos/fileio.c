@@ -160,59 +160,71 @@ static void cache_allocate(unsigned entries)
 
 #endif
 
+/* KT - seperated it out - the same code was used over and over again, and added some error checking */
+void	decompose(char *dest_path, int *pathc, char *new_path, char ***ppathv)
+{
+	char *path;
+	int path_count;
+	char *token;
+	char **pathv = *ppathv;
+
+	path_count = 0;
+	
+	/* if path passed in is invalid, make it valid! */
+	if (new_path==0)
+	{
+		/* no path specified, use current directory for path */
+		path = ".";
+		LOG(("using default path\n"));
+	}
+	else
+	{
+		LOG(("path specified: %s\n",new_path));
+		path = new_path;
+	}
+
+	if (dest_path)
+	{
+		dest_path = realloc(dest_path, strlen(path)+1);
+	}
+	else
+	{
+		dest_path = malloc(strlen(path)+1);
+	}
+
+	if (!dest_path)
+	{
+		logerror("decompose: failed to malloc!\n");
+		*pathc = 0;
+		raise(SIGABRT);
+	}
+
+	strcpy(dest_path, path);
+
+	token = strtok (dest_path, ";");
+	while( token )
+	{
+		if( path_count )
+			pathv = realloc (pathv, (path_count + 1) * sizeof(char *));
+		else
+			pathv = malloc (sizeof(char *));
+		if( !pathv )
+			break;
+		pathv[path_count++] = token;
+		token = strtok (NULL, ";");
+	}
+
+	*pathc = path_count;
+	*ppathv = pathv;
+	LOG(("path count: %d\n",path_count));
+}
+
 /* This function can be called several times with different parameters,
  * for example by "mame -verifyroms *". */
 void decompose_rom_sample_path(char *rompath, char *samplepath)
 {
-	char *token;
-
-	/* start with zero path components */
-	rompathc = samplepathc = 0;
-
-	if (!roms)
-		roms = malloc(strlen(rompath) + 1);
-	else
-		roms = realloc(roms, strlen(rompath) + 1);
-
-	if (!samples)
-		samples = malloc(strlen(samplepath) + 1);
-	else
-		samples = realloc(samples, strlen(samplepath) + 1);
-
-	if (!roms)
-	{
-		logerror("decompose_rom_sample_path: failed to malloc!\n");
-		raise(SIGABRT);
-	}
-
-	strcpy(roms, rompath);
-	token = strtok(roms, ";");
-	while (token)
-	{
-		if (rompathc)
-			rompathv = realloc(rompathv, (rompathc + 1) * sizeof (char *));
-		else
-			rompathv = malloc(sizeof (char *));
-
-		if (!rompathv)
-			break;
-		rompathv[rompathc++] = token;
-		token = strtok(NULL, ";");
-	}
-
-	strcpy (samples, samplepath);
-	token = strtok (samples, ";");
-	while( token )
-	{
-		if( samplepathc )
-			samplepathv = realloc (samplepathv, (samplepathc + 1) * sizeof(char *));
-		else
-			samplepathv = malloc (sizeof(char *));
-		if( !samplepathv )
-			break;
-		samplepathv[samplepathc++] = token;
-		token = strtok (NULL, ";");
-	}
+	decompose(roms, &rompathc, rompath, &rompathv);
+	decompose(samples, &samplepathc, samplepath, &samplepathv);
 
 #if FILE_CACHE
 	/* AM 980919 */
@@ -231,36 +243,7 @@ void decompose_rom_sample_path(char *rompath, char *samplepath)
 
 void decompose_software_path(char *softwarepath)
 {
-	char *token;
-
-	/* start with zero path components */
-	softpathc = 0;
-
-	if (!soft)
-		soft = malloc(strlen(softwarepath) + 1);
-	else
-		soft = realloc(soft, strlen(softwarepath) + 1);
-
-	if (!soft)
-	{
-		logerror("decompose_software_path: failed to malloc!\n");
-		raise(SIGABRT);
-	}
-
-	strcpy(soft, softwarepath);
-	token = strtok(soft, ";");
-	while (token)
-	{
-		if (softpathc)
-			softpathv = realloc(softpathv, (softpathc + 1) * sizeof (char *));
-		else
-			softpathv = malloc(sizeof (char *));
-
-		if (!softpathv)
-			break;
-		softpathv[softpathc++] = token;
-		token = strtok(NULL, ";");
-	}
+	decompose(soft, &softpathc, softwarepath, &softpathv);
 
 	LOG(("Number of software paths is %d\n", softpathc));
 }
