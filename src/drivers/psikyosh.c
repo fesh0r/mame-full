@@ -139,8 +139,7 @@ static data8_t gnbarich_eeprom[16] = { 0x00,0x0f,0x42,0x40,0x08,0x0a,0x00,0x00,0
 
 int use_factory_eeprom, use_fake_pri;
 
-data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs;
-static data32_t *psh_ram;
+data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
 
 static struct GfxLayout layout_16x16x4 =
 {

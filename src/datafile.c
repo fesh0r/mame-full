@@ -442,21 +442,21 @@ static int index_datafile (struct tDatafileIndex **_index)
         /* loop through datafile */
         while ((count < (MAX_DATAFILE_ENTRIES - 1)) && TOKEN_INVALID != token)
         {
-                long tell_;
+                long tell;
                 char *s;
 
-                token = GetNextToken ((UINT8 **)&s, &tell_);
+                token = GetNextToken ((UINT8 **)&s, &tell);
                 if (TOKEN_SYMBOL != token) continue;
 
                 /* DATAFILE_TAG_KEY identifies the driver */
                 if (!ci_strncmp (DATAFILE_TAG_KEY, s, strlen (DATAFILE_TAG_KEY)))
                 {
-                        token = GetNextToken ((UINT8 **)&s, &tell_);
+                        token = GetNextToken ((UINT8 **)&s, &tell);
                         if (TOKEN_EQUALS == token)
                         {
                                 int done = 0;
 
-                                token = GetNextToken ((UINT8 **)&s, &tell_);
+                                token = GetNextToken ((UINT8 **)&s, &tell);
                                 while (!done && TOKEN_SYMBOL == token)
                                 {
 									int game_index;
@@ -468,7 +468,7 @@ static int index_datafile (struct tDatafileIndex **_index)
 									if (game_index >= 0)
 									{
 										idx->driver = drivers[game_index];
-										idx->offset = tell_;
+										idx->offset = tell;
 										idx++;
 										count++;
 										/* done = 1;  Not done, as we must process other clones in list */
@@ -476,10 +476,10 @@ static int index_datafile (struct tDatafileIndex **_index)
 									}
 									if (!done)
 									{
-										token = GetNextToken ((UINT8 **)&s, &tell_);
+										token = GetNextToken ((UINT8 **)&s, &tell);
 
 										if (TOKEN_COMMA == token)
-											token = GetNextToken ((UINT8 **)&s, &tell_);
+											token = GetNextToken ((UINT8 **)&s, &tell);
 										else
 											done = 1; /* end of key field */
 									}
@@ -532,9 +532,9 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
         {
                 char *s;
                 int len;
-                long tell_;
+                long tell;
 
-                token = GetNextToken ((UINT8 **)&s, &tell_);
+                token = GetNextToken ((UINT8 **)&s, &tell);
                 if (TOKEN_INVALID == token) continue;
 
                 if (found)

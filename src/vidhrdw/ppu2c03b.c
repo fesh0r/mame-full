@@ -106,6 +106,7 @@ static void scanline_callback( int num );
 
 void (*ppu_latch)( offs_t offset );
 
+
 /*************************************
  *
  *	PPU Palette Initialization

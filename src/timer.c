@@ -187,7 +187,7 @@ INLINE void timer_list_insert(timer_entry *timer)
 	double expire = timer->enabled ? timer->expire : TIME_NEVER;
 	timer_entry *t, *lt = NULL;
 
-#ifdef MAME_DEBUG /* LBO - new code in this block */
+#ifdef MAME_DEBUG // LBO - new code in this block
 {
 	int tnum = 0;
 	/* loop over the timer list */
@@ -245,7 +245,7 @@ INLINE void timer_list_insert(timer_entry *timer)
 
 INLINE void timer_list_remove(timer_entry *timer)
 {
-#ifdef MAME_DEBUG /* LBO - new code in this block */
+#ifdef MAME_DEBUG // LBO - new code in this block
 {
 	int tnum = 0;
 	timer_entry *t;
@@ -1000,6 +1000,11 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 	for (cpu = cpudata; cpu <= lastcpu; cpu++)
 		if (cpu->suspended && !cpu->nocount)
 		{
+			/* account for the cycles eaten */
+			int cycles_to_eat = (int)((double)(end - cpu->time) * cpu->sec_to_cycles);
+			cpu_add_to_totalcycles(cpu->index, cycles_to_eat);
+
+			/* bump forward */
 			cpu->time = end;
 			cpu->lost = 0;
 		}

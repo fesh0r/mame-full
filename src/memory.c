@@ -23,8 +23,8 @@
 #include <stdarg.h>
 
 
-/* #define MEM_DUMP */
-/* #define CHECK_MASKS */
+//#define MEM_DUMP
+//#define CHECK_MASKS
 
 
 
@@ -746,6 +746,60 @@ void *memory_find_base(int cpunum, offs_t offset)
 	}
 
 	return (UINT8 *)cpudata[cpunum].rambase + offset;
+}
+
+
+/*-------------------------------------------------
+	memory_get_read_ptr - return a pointer to the
+	base of RAM associated with the given CPU
+	and offset
+-------------------------------------------------*/
+
+void *memory_get_read_ptr(int cpunum, offs_t offset)
+{
+	struct memport_data *memport = &cpudata[cpunum].mem;
+	struct handler_data *handlist = (memport->dbits == 32) ? rmemhandler32 : (memport->dbits == 16) ? rmemhandler16 : rmemhandler8;
+	UINT8 minbits = memport->abits - memport->ebits;
+	UINT8 entry;
+
+	/* perform the lookup */
+	offset &= memport->mask;
+	entry = memport->read.table[LEVEL1_INDEX(offset, memport->abits, minbits)];
+	if (entry >= SUBTABLE_BASE)
+		entry = memport->read.table[LEVEL2_INDEX(entry, offset, memport->abits, minbits)];
+
+	/* 8-bit case: RAM/ROM/RAMROM */
+	if (entry > STATIC_RAM || (minbits == 0 && entry != STATIC_RAM))
+		return NULL;
+	offset -= handlist[entry].offset;
+	return &cpu_bankbase[entry][offset];
+}
+
+
+/*-------------------------------------------------
+	memory_get_write_ptr - return a pointer to the
+	base of RAM associated with the given CPU
+	and offset
+-------------------------------------------------*/
+
+void *memory_get_write_ptr(int cpunum, offs_t offset)
+{
+	struct memport_data *memport = &cpudata[cpunum].mem;
+	struct handler_data *handlist = (memport->dbits == 32) ? wmemhandler32 : (memport->dbits == 16) ? wmemhandler16 : wmemhandler8;
+	UINT8 minbits = memport->abits - memport->ebits;
+	UINT8 entry;
+
+	/* perform the lookup */
+	offset &= memport->mask;
+	entry = memport->write.table[LEVEL1_INDEX(offset, memport->abits, minbits)];
+	if (entry >= SUBTABLE_BASE)
+		entry = memport->write.table[LEVEL2_INDEX(entry, offset, memport->abits, minbits)];
+
+	/* 8-bit case: RAM/ROM/RAMROM */
+	if (entry > STATIC_RAM || (minbits == 0 && entry != STATIC_RAM))
+		return NULL;
+	offset -= handlist[entry].offset;
+	return &cpu_bankbase[entry][offset];
 }
 
 
@@ -1581,7 +1635,7 @@ void register_banks(void)
 		const struct Memory_ReadAddress *mra, *mra_start = Machine->drv->cpu[cpunum].memory_read;
 		const struct Memory_WriteAddress *mwa, *mwa_start = Machine->drv->cpu[cpunum].memory_write;
 		int bits = cpudata[cpunum].mem.abits;
-		/* int width = cpunum_databus_width(cpunum); */
+//		int width = cpunum_databus_width(cpunum);
 
 		if (!IS_SPARSE(bits))
 		{

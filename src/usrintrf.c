@@ -1339,7 +1339,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			{
 				bank = next_bank;
 				mode = next_mode;
-				/* firstdrawn = 0; */
+//				firstdrawn = 0;
 				changed = 1;
 			}
 		}
@@ -1375,7 +1375,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			{
 				bank = next_bank;
 				mode = next_mode;
-				/* firstdrawn = 0; */
+//				firstdrawn = 0;
 				changed = 1;
 			}
 		}
@@ -2294,7 +2294,7 @@ int showcopyright(struct mame_bitmap *bitmap)
 	strcat (buf, "\n\n");
 	strcat (buf, ui_getstring(UI_copyright3));
 
-	setup_selected = -1;
+	setup_selected = -1;////
 	done = 0;
 
 	do
@@ -2306,7 +2306,7 @@ int showcopyright(struct mame_bitmap *bitmap)
 		update_video_and_audio();
 		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
-			setup_selected = 0;
+			setup_selected = 0;////
 			return 1;
 		}
 		if (keyboard_pressed_memory(KEYCODE_O) ||
@@ -2317,7 +2317,7 @@ int showcopyright(struct mame_bitmap *bitmap)
 			done = 2;
 	} while (done < 2);
 
-	setup_selected = 0;
+	setup_selected = 0;////
 	erase_screen(bitmap);
 	update_video_and_audio();
 
@@ -4163,6 +4163,9 @@ void init_user_interface(void)
 	extern int snapno;	/* in common.c */
 
 	snapno = 0; /* reset snapshot counter */
+
+	/* clear the input memory */
+	while (code_read_async() != CODE_NONE) {};
 
 	setup_menu_init();
 	setup_selected = 0;

@@ -80,6 +80,12 @@ CPUS+=R4600@
 CPUS+=R5000@
 CPUS+=SH2@
 CPUS+=DSP32C@
+#CPUS+=PIC16C54@
+CPUS+=PIC16C55@
+#CPUS+=PIC16C56@
+CPUS+=PIC16C57@
+#CPUS+=PIC16C58@
+
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@

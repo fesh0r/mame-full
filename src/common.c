@@ -13,7 +13,7 @@
 #include <ctype.h>
 
 
-/* #define LOG_LOAD */
+//#define LOG_LOAD
 
 
 
@@ -23,9 +23,9 @@
 
 ***************************************************************************/
 
-/* VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels wide all
-   around the bitmap. This is required because, for performance reasons, some graphic
-   routines don't clip at boundaries of the bitmap. */
+// VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels wide all
+// around the bitmap. This is required because, for performance reasons, some graphic
+// routines don't clip at boundaries of the bitmap.
 #define BITMAP_SAFETY			16
 
 #define MAX_MALLOCS				4096

@@ -55,7 +55,7 @@
 #include "cpu/mips/r3000.h"
 #include "cpu/jaguar/jaguar.h"
 #include "machine/idectrl.h"
-#include "includes/jaguar.h"
+#include "jaguar.h"
 
 
 

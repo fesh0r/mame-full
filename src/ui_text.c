@@ -272,6 +272,7 @@ int uistring_init (mame_file *langfile)
 		/* Ignore commented and blank lines */
 		if (curline[0] == ';') continue;
 		if (curline[0] == '\n') continue;
+		if (curline[0] == '\r') continue;
 
 		if (curline[0] == '[')
 		{
@@ -289,22 +290,22 @@ int uistring_init (mame_file *langfile)
 			ptr = strtok (curline, "=");
 			if (strcmp (ptr, "Version") == 0)
 			{
-				ptr = strtok (NULL, "\n");
+				ptr = strtok (NULL, "\n\r");
 				sscanf (ptr, "%d", &lang.version);
 			}
 			else if (strcmp (ptr, "Language") == 0)
 			{
-				ptr = strtok (NULL, "\n");
+				ptr = strtok (NULL, "\n\r");
 				strcpy (lang.langname, ptr);
 			}
 			else if (strcmp (ptr, "Author") == 0)
 			{
-				ptr = strtok (NULL, "\n");
+				ptr = strtok (NULL, "\n\r");
 				strcpy (lang.author, ptr);
 			}
 			else if (strcmp (ptr, "Font") == 0)
 			{
-				ptr = strtok (NULL, "\n");
+				ptr = strtok (NULL, "\n\r");
 				strcpy (lang.fontname, ptr);
 			}
 		}
@@ -313,7 +314,7 @@ int uistring_init (mame_file *langfile)
 		if (strcmp (section, "Strings") == 0)
 		{
 			/* Get all text up to the first line ending */
-			ptr = strtok (curline, "\n");
+			ptr = strtok (curline, "\n\r");
 
 			/* Find a matching default string */
 			for (i = 0; i < UI_last_entry; i ++)
@@ -326,7 +327,7 @@ int uistring_init (mame_file *langfile)
 					mame_fgets (transline, 255, langfile);
 
 					/* Get all text up to the first line ending */
-					ptr = strtok (transline, "\n");
+					ptr = strtok (transline, "\n\r");
 
 					/* Allocate storage and copy the string */
 					trans_text[i] = malloc (strlen(transline)+1);
