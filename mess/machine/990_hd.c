@@ -31,7 +31,7 @@ than one controller is used */
 #define MAX_SECTOR_SIZE 512
 
 /* disk image header */
-/* I had rather I used MAME's harddisk.c image handler, but this format only support
+/* I had rather I used MAME's harddisk.c image handler, but this format only supports
 512-byte-long sectors (whereas TI990 generally uses 256- or 288-byte-long sectors). */
 typedef struct disk_image_header
 {
@@ -49,8 +49,8 @@ enum
 /* disk drive unit descriptor */
 typedef struct hd_unit_t
 {
-	void *fd;		/* file descriptor */
-	unsigned int wp : 1;	/* TRUE if tape is write-protected */
+	void *fd;			/* file descriptor */
+	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;	/* TRUE when a disk has just been connected */
 
 	/* disk geometry */
@@ -131,24 +131,15 @@ static const UINT16 w_mask[8] =
 static hdc_t hdc;
 
 
-/*
-	Image encoding:
-
-
-	2 bytes: record len - little-endian
-	2 bytes: always 0s (length MSBs?)
-	len bytes: data
-	2 bytes: record len - little-endian
-	2 bytes: always 0s (length MSBs?)
-
-	4 0s: EOF mark?
-*/
 
 INLINE UINT32 get_bigendian_uint32(UINT8 *base)
 {
 	return (base[0] << 24) | (base[1] << 16) | (base[2] << 8) | base[3];
 }
 
+/*
+	Initialize hard disk unit and open a hard disk image
+*/
 int ti990_hd_init(int id)
 {
 	hd_unit_t *d;
@@ -205,6 +196,9 @@ error:
 	return INIT_FAIL;
 }
 
+/*
+	close a hard disk image
+*/
 void ti990_hd_exit(int id)
 {
 	hd_unit_t *d;
