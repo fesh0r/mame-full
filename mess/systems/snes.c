@@ -58,7 +58,7 @@ int paletteChanged=1;                                           // Force some fo
 
 int brightnessValue[16]={0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x13,0x15,0x17,0x19,0x1B,0x1D,0x1F};
 
-int snes_line_interrupt(void)
+static INTERRUPT_GEN( snes_line_interrupt )
 {
     struct mame_bitmap *bitmap = Machine->scrbitmap;
     unsigned short pal,bri;
@@ -100,7 +100,7 @@ int snes_line_interrupt(void)
     if (CURLINE == maxLines)
     {
         if (port42xx[0x00]&0x80)                        // NMI only signalled by hardware if this bit set!
-            cpu_cause_interrupt(0, G65816_LINE_NMI);
+            cpu_set_irq_line(0, G65816_LINE_NMI, PULSE_LINE);
         port42xx[0x12]|=0x80;           // set in vblank bit
         port42xx[0x10]|=0x80;           // set nmi occurred
         port21xx[0x3E]&=0x3F;           // Clear Time Over and Range Over bits - done every nmi (presumably because no sprites drawn here)
@@ -116,7 +116,7 @@ int snes_line_interrupt(void)
     {
         if (CURLINE == (((port42xx[0x0A]<<8)|port42xx[0x09])&0x01FF))
         {
-            cpu_cause_interrupt(0, G65816_LINE_IRQ);
+			cpu_set_irq_line(0, G65816_LINE_IRQ, PULSE_LINE);
             port42xx[0x11]=0x80;                        // set "timeup"
         }
     }
@@ -128,8 +128,6 @@ int snes_line_interrupt(void)
         port42xx[0x12]&=0x7F;           // clear blanking bit
         port42xx[0x10]&=0x7F;           // clear nmi occurred bit
     }
-
-    return ignore_interrupt();
 }
 
 #ifndef EMULATE_SPC700
@@ -145,22 +143,22 @@ unsigned char SPCSkipper(void)
     switch (retType)
     {
         case 0:
-            retVal=cpu_get_reg(4) & 0xFF;
+            retVal=activecpu_get_reg(4) & 0xFF;
             break;
         case 1:
-            retVal=(cpu_get_reg(4) >> 8) & 0xFF;
+            retVal=(activecpu_get_reg(4) >> 8) & 0xFF;
             break;
         case 2:
-            retVal=cpu_get_reg(5) & 0xFF;
+            retVal=activecpu_get_reg(5) & 0xFF;
             break;
         case 3:
-            retVal=(cpu_get_reg(5) >> 8) & 0xFF;
+            retVal=(activecpu_get_reg(5) >> 8) & 0xFF;
             break;
         case 4:
-            retVal=cpu_get_reg(6) & 0xFF;
+            retVal=activecpu_get_reg(6) & 0xFF;
             break;
         case 5:
-            retVal=(cpu_get_reg(6) >> 8) & 0xFF;
+            retVal=(activecpu_get_reg(6) >> 8) & 0xFF;
             break;
         case 6:
             retVal=0xAA;

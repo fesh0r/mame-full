@@ -5,16 +5,17 @@ void pc1350_outc(int data);
 bool pc1350_brk(void);
 int pc1350_ina(void);
 int pc1350_inb(void);
-void init_pc1350(void);
-void pc1350_machine_init(void);
-void pc1350_machine_stop(void);
+
+extern DRIVER_INIT( pc1350 );
+extern MACHINE_INIT( pc1350 );
+extern MACHINE_STOP( pc1350 );
 
 /* in vidhrdw/pocketc.c */
 extern READ_HANDLER(pc1350_lcd_read);
 extern WRITE_HANDLER(pc1350_lcd_write);
+extern VIDEO_UPDATE( pc1350 );
 
 int pc1350_keyboard_line_r(void);
-void pc1350_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 /* in systems/pocketc.c */
 #define PC1350_KEY_OFF input_port_0_r(0)&0x80

@@ -588,51 +588,42 @@ static SC61860_CONFIG config={
     pc1401_outc
 };
 
-static struct MachineDriver machine_driver_pc1401 =
-{
+static MACHINE_DRIVER_START( pc1401 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_SC61860,
-			192000,
-			pc1401_readmem,pc1401_writemem,0,0,
-			pocketc_frame_int, 1,
-			0,0,
-			&config
-        }
-	},
-	/* frames per second, VBL duration */
-	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
-	1,				/* single CPU */
-	pc1401_machine_init,
-	pc1401_machine_stop,
+	MDRV_CPU_ADD_TAG("main", SC61860, 192000)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(pc1401_readmem,pc1401_writemem)
+	MDRV_CPU_CONFIG(config)
+
+	MDRV_FRAMES_PER_SECOND(20)	/* very early and slow lcd */
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( pc1401 )
+	MDRV_MACHINE_STOP( pc1401 )
 
 	/*
 	   aim: show sharp with keyboard
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x3 pixel)
 	   it seams to have 3/4 ratio in the real pc1401 */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(594, 273)
+	MDRV_VISIBLE_AREA(0, 594-1, 0, 273-1)
+//	MDRV_SCREEN_SIZE(640, 273)
+//	MDRV_VISIBLE_AREA(0, 640-1, 0, 273-1)
+	MDRV_GFXDECODE( pc1401_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(248 + 32768)
+	MDRV_COLORTABLE_LENGTH( 16 )
+	MDRV_PALETTE_INIT( pocketc )
 
-	594, 273, { 0, 594 - 1, 0, 273 - 1},
-//	640, 273, { 0, 640 - 1, 0, 273 - 1},
-	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768,
-	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
-	pocketc_init_colors,		/* convert color prom */
-
-	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-    pocketc_vh_start,
-	pocketc_vh_stop,
-	pc1401_vh_screenrefresh,
+	MDRV_VIDEO_START( pocketc )
+	MDRV_VIDEO_UPDATE( pc1401 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-//		{SOUND_DAC, &pocketc_sound_interface},
-        { 0 }
-    }
-};
+	/*MDRV_SOUND_ADD(DAC, pocketc_sound_interface)*/
+MACHINE_DRIVER_END
+
 
 static SC61860_CONFIG pc1251_config={
     NULL, pc1251_brk, NULL,
@@ -641,49 +632,25 @@ static SC61860_CONFIG pc1251_config={
     pc1251_outc
 };
 
-static struct MachineDriver machine_driver_pc1251 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_SC61860,
-			192000,
-			pc1251_readmem,pc1251_writemem,0,0,
-			pocketc_frame_int, 1,
-			0,0,
-			&pc1251_config
-        }
-	},
-	/* frames per second, VBL duration */
-	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
-	1,				/* single CPU */
-	pc1251_machine_init,
-	pc1251_machine_stop,
+static MACHINE_DRIVER_START( pc1251 )
+	MDRV_IMPORT_FROM( pc1401 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( pc1251_readmem,pc1251_writemem )
+	MDRV_CPU_CONFIG( pc1251_config )
 
-	/*
-	   aim: show sharp with keyboard
-	   resolution depends on the dots of the lcd
-	   (lcd dot displayed as 3x3 pixel) */
+	MDRV_MACHINE_INIT( pc1251 )
+	MDRV_MACHINE_STOP( pc1251 )
 
-	608, 300, { 0, 608 - 1, 0, 300 - 1},
-//	640, 334, { 0, 640 - 1, 0, 334 - 1},
-	pc1251_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768 ,
-	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
-	pocketc_init_colors,		/* convert color prom */
+	/* video hardware */
+	MDRV_SCREEN_SIZE(608, 300)
+	MDRV_VISIBLE_AREA(0, 608-1, 0, 300-1)
+//	MDRV_SCREEN_SIZE(640, 334)
+//	MDRV_VISIBLE_AREA(0, 640-1, 0, 334-1)
+	MDRV_GFXDECODE( pc1251_gfxdecodeinfo )
 
-	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-    pocketc_vh_start,
-	pocketc_vh_stop,
-	pc1251_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE( pc1251 )
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-        { 0 }
-    }
-};
 
 static SC61860_CONFIG pc1350_config={
     NULL, pc1350_brk,NULL,
@@ -692,49 +659,30 @@ static SC61860_CONFIG pc1350_config={
     pc1350_outc
 };
 
-static struct MachineDriver machine_driver_pc1350 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_SC61860,
-			192000,
-			pc1350_readmem,pc1350_writemem,0,0,
-			pocketc_frame_int, 1,
-			0,0,
-			&pc1350_config
-        }
-	},
-	/* frames per second, VBL duration */
-	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
-	1,				/* single CPU */
-	pc1350_machine_init,
-	pc1350_machine_stop,
+static MACHINE_DRIVER_START( pc1350 )
+	MDRV_IMPORT_FROM( pc1401 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( pc1350_readmem,pc1350_writemem )
+	MDRV_CPU_CONFIG( pc1350_config )
+
+	MDRV_MACHINE_INIT( pc1350 )
+	MDRV_MACHINE_STOP( pc1350 )
 
 	/*
 	   aim: show sharp with keyboard
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x2 pixel) */
+	/* video hardware */
+	MDRV_SCREEN_SIZE(640, 252)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 252-1)
+//	MDRV_SCREEN_SIZE(640, 255)
+//	MDRV_VISIBLE_AREA(0, 640-1, 0, 255-1)
+	MDRV_GFXDECODE( pc1350_gfxdecodeinfo )
 
-	640, 252, { 0, 640 - 1, 0, 252 - 1},
-//	640, 255, { 0, 640 - 1, 0, 255 - 1},
-	pc1350_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768,
-	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
-	pocketc_init_colors,		/* convert color prom */
+	MDRV_VIDEO_UPDATE( pc1350 )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-    pocketc_vh_start,
-	pocketc_vh_stop,
-	pc1350_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-        { 0 }
-    }
-};
 static SC61860_CONFIG pc1403_config={
     NULL, pc1403_brk, NULL,
     pc1403_ina, pc1403_outa,
@@ -742,49 +690,29 @@ static SC61860_CONFIG pc1403_config={
     pc1403_outc
 };
 
-static struct MachineDriver machine_driver_pc1403 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_SC61860,
-			256000,
-			pc1403_readmem,pc1403_writemem,0,0,
-			pocketc_frame_int, 1,
-			0,0,
-			&pc1403_config
-        }
-	},
-	/* frames per second, VBL duration */
-	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
-	1,				/* single CPU */
-	pc1403_machine_init,
-	pc1403_machine_stop,
+static MACHINE_DRIVER_START( pc1403 )
+	MDRV_IMPORT_FROM( pc1401 )
+	MDRV_CPU_REPLACE( "main", SC61860, 256000 )
+	MDRV_CPU_MEMORY( pc1403_readmem,pc1403_writemem )
+	MDRV_CPU_CONFIG( pc1403_config )
+
+	MDRV_MACHINE_INIT( pc1403 )
+	MDRV_MACHINE_STOP( pc1403 )
 
 	/*
 	   aim: show sharp with keyboard
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x2 pixel) */
+	/* video hardware */
+	MDRV_SCREEN_SIZE(848, 320)
+	MDRV_VISIBLE_AREA(0, 848-1, 0, 320-1)
+//	MDRV_SCREEN_SIZE(848, 361)
+//	MDRV_VISIBLE_AREA(0, 848-1, 0, 361-1)
 
-	848, 320, { 0, 848 - 1, 0, 320 - 1},
-//	848, 361, { 0, 848 - 1, 0, 361 - 1},
-	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0])  + 32768,
-	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
-	pocketc_init_colors,		/* convert color prom */
+	MDRV_VIDEO_START( pc1403 )
+	MDRV_VIDEO_UPDATE( pc1403 )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-    pc1403_vh_start,
-	pocketc_vh_stop,
-	pc1403_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-        { 0 }
-    }
-};
 
 ROM_START(pc1401)
 	ROM_REGION(0x10000,REGION_CPU1,0)

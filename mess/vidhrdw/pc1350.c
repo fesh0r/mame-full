@@ -131,18 +131,14 @@ static int pc1350_addr[4]={ 0, 0x40, 0x1e, 0x5e };
 
 #define DOWN 45
 #define RIGHT 76
-void pc1350_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+
+VIDEO_UPDATE( pc1350 )
 {
 	int x, y, i, j, k;
 	int color[2];
 	/* HJB: we cannot initialize array with values from other arrays, thus... */
     color[0] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][0]];
 	color[1] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][1]];
-
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
 
 	for (k=0, y=DOWN; k<4; y+=16,k++) {
 		for (x=RIGHT, i=pc1350_addr[k]; i<0xa00; i+=0x200) {

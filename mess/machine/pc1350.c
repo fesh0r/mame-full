@@ -166,7 +166,7 @@ static void pc1350_power_up(int param)
 	power=0;
 }
 
-void init_pc1350(void)
+DRIVER_INIT( pc1350 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -177,7 +177,7 @@ void init_pc1350(void)
 	timer_set(1,0,pc1350_power_up);
 }
 
-void pc1350_machine_init(void)
+MACHINE_INIT( pc1350 )
 {
 	if (PC1350_RAM20K) {
 		install_mem_write_handler (0, 0x2000, 0x5fff, MWA_RAM);
@@ -189,7 +189,7 @@ void pc1350_machine_init(void)
 	}
 }
 
-void pc1350_machine_stop(void)
+MACHINE_STOP( pc1350 )
 {
 	pc1350_save();
 }

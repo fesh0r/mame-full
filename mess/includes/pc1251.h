@@ -6,15 +6,15 @@ bool pc1251_reset(void);
 bool pc1251_brk(void);
 int pc1251_ina(void);
 int pc1251_inb(void);
-void init_pc1251(void);
-void pc1251_machine_init(void);
-void pc1251_machine_stop(void);
+
+extern DRIVER_INIT( pc1251 );
+extern MACHINE_INIT( pc1251 );
+extern MACHINE_STOP( pc1251 );
 
 /* in vidhrdw/pocketc.c */
 extern READ_HANDLER(pc1251_lcd_read);
 extern WRITE_HANDLER(pc1251_lcd_write);
-
-void pc1251_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( pc1251 );
 
 /* in systems/pocketc.c */
 #define PC1251_SWITCH_MODE (input_port_0_r(0)&7)

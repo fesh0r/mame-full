@@ -305,7 +305,7 @@ void init_pc1401(void)
 	timer_set(1,0,pc1401_power_up);
 }
 
-void pc1401_machine_init(void)
+MACHINE_INIT( pc1401 )
 {
 	if (RAM10K) {
 		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
@@ -317,7 +317,7 @@ void pc1401_machine_init(void)
 	}
 }
 
-void pc1401_machine_stop(void)
+MACHINE_STOP( pc1401 )
 {
 	pc1401_save();
 }

@@ -11,19 +11,14 @@
   203d: 0 BUSY, 1 PRINT, 3 JAPAN, 4 SMALL, 5 SHIFT, 6 DEF
   207c: 1 DEF 1 RAD 2 GRAD 5 ERROR 6 FLAG */
 
-unsigned char pocketc_palette[248][3] =
+static unsigned char pocketc_palette[] =
 {
-	{ 99,107,99 },
-
-	{ 94,111,103 },
-
-	{ 255,255,255 },
-	{ 255,255,255 },
-
-	{ 60, 66, 60 },
-
-
-	{ 0, 0, 0 }
+	99,107,99,
+	94,111,103,
+	255,255,255,
+	255,255,255,
+	60, 66, 60,
+	0, 0, 0
 };
 
 unsigned short pocketc_colortable[8][2] = {
@@ -37,34 +32,29 @@ unsigned short pocketc_colortable[8][2] = {
 	{ 1, 5 }
 };
 
-void pocketc_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+PALETTE_INIT( pocketc )
 {
-	memcpy (sys_palette, pocketc_palette, sizeof (pocketc_palette));
-	memcpy(sys_colortable,pocketc_colortable,sizeof(pocketc_colortable));
+	palette_set_colors(0, pocketc_palette, sizeof(pocketc_palette) / 3);
+	memcpy(colortable,pocketc_colortable,sizeof(pocketc_colortable));
 }
 
-
-int pocketc_vh_start(void)
+VIDEO_START( pocketc )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
+#if 0
 	{
 		char backdrop_name[200];
 	    /* try to load a backdrop for the machine */
 		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
 		backdrop_load(backdrop_name, 8);
 	}
+#endif
 
 	return video_start_generic();
-}
-
-void pocketc_vh_stop(void)
-{
 }
 
 void pocketc_draw_special(struct mame_bitmap *bitmap,

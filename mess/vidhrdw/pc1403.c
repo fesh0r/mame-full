@@ -48,13 +48,13 @@ const struct { int x, y; } pos[]={
 
 static int DOWN=67, RIGHT=152;
 
-int pc1403_vh_start(void)
+VIDEO_START( pc1403 )
 {
-    if (strcmp(Machine->gamedrv->name,"pc1403h")==0) {
-	DOWN=pos[1].y;
-	RIGHT=pos[1].x;
-    }
-    return pocketc_vh_start();
+	if (strcmp(Machine->gamedrv->name,"pc1403h")==0) {
+		DOWN=pos[1].y;
+		RIGHT=pos[1].x;
+	}
+    return video_start_pocketc();
 }
 
 
@@ -154,62 +154,56 @@ static const POCKETC_FIGURE busy={
 	"11  1 1 111e" 
 };
 
-
-void pc1403_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc1403 )
 {
-    int x, y, i, j;
-    int color[3];
-    /* HJB: we cannot initialize array with values from other arrays, thus... */
-    color[0] = Machine->pens[pocketc_colortable[CONTRAST][0]];
-    color[2] = Machine->pens[pocketc_colortable[CONTRAST][1]];
-    color[1] = (pc1403_portc&1) ? color[2] : color[0];
-    
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
-    
-    if (pc1403_portc&1) {
-	for (x=RIGHT,y=DOWN,i=0; i<6*5;x+=2) {
-	    for (j=0; j<5;j++,i++,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=9*5; i<12*5;x+=2) {
-	    for (j=0; j<5;j++,i++,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=6*5; i<9*5;x+=2) {
-	    for (j=0; j<5;j++,i++,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=0x7b-3*5; i>0x7b-6*5;x+=2) {
-	    for (j=0; j<5;j++,i--,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=0x7b; i>0x7b-3*5;x+=2) {
-	    for (j=0; j<5;j++,i--,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=0x7b-6*5; i>0x7b-12*5;x+=2) {
-	    for (j=0; j<5;j++,i--,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-    } else {
+	int x, y, i, j;
+	int color[3];
+	/* HJB: we cannot initialize array with values from other arrays, thus... */
+	color[0] = Machine->pens[pocketc_colortable[CONTRAST][0]];
+	color[2] = Machine->pens[pocketc_colortable[CONTRAST][1]];
+	color[1] = (pc1403_portc&1) ? color[2] : color[0];
+
+	if (pc1403_portc&1) {
+		for (x=RIGHT,y=DOWN,i=0; i<6*5;x+=2) {
+			for (j=0; j<5;j++,i++,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=9*5; i<12*5;x+=2) {
+			for (j=0; j<5;j++,i++,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=6*5; i<9*5;x+=2) {
+			for (j=0; j<5;j++,i++,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=0x7b-3*5; i>0x7b-6*5;x+=2) {
+			for (j=0; j<5;j++,i--,x+=2)
+				drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=0x7b; i>0x7b-3*5;x+=2) {
+			for (j=0; j<5;j++,i--,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=0x7b-6*5; i>0x7b-12*5;x+=2) {
+			for (j=0; j<5;j++,i--,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+	} else {
 	osd_mark_dirty(RIGHT, DOWN, RIGHT+(24*(5+1)-1)*2-1, DOWN+7*3-1);
 
-    }
+	}
     /* if display is off, busy is always visible? it seems to behave like 
 that. */
     /* But if computer is off, busy is hidden. */

@@ -158,7 +158,7 @@ static void pc1251_power_up(int param)
 	power=0;
 }
 
-void init_pc1251(void)
+DRIVER_INIT( pc1251 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -169,8 +169,7 @@ void init_pc1251(void)
 	timer_set(1,0,pc1251_power_up);
 }
 
-
-void pc1251_machine_init(void)
+MACHINE_INIT( pc1251 )
 {
 	// c600 b800 b000 a000 8000 tested	
 	// 4 kb memory feedback 512 bytes too few???
@@ -199,7 +198,7 @@ void pc1251_machine_init(void)
 #endif
 }
 
-void pc1251_machine_stop(void)
+MACHINE_STOP( pc1251 )
 {
 	pc1251_save();
 }

@@ -451,9 +451,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* sinclair pc200 professional series ibmxt compatible*/
 
 	/* SHARP */
-//TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
-//TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
-//TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
+TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
+TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
+TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*//	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
 	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
 TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/

@@ -134,34 +134,30 @@ static const POCKETC_FIGURE busy={
 
 #define DOWN 57
 #define RIGHT 114
-void pc1401_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+
+VIDEO_UPDATE( pc1401 )
 {
 	int x, y, i, j;
 	int color[2];
 	/* HJB: we cannot initialize array with values from other arrays, thus... */
     color[0] = Machine->pens[pocketc_colortable[CONTRAST][0]];
 	color[1] = Machine->pens[pocketc_colortable[CONTRAST][1]];
-
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
     
     if (pc1401_portc&1) {
-	for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {
-	    for (j=0; j<5;j++,i++,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
-	for (i=0x67; i>=0x40;x+=2) {
-	    for (j=0; j<5;j++,i--,x+=2)
-		drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
-			x,y,
-			0, TRANSPARENCY_NONE,0);
-	}
+		for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {
+			for (j=0; j<5;j++,i++,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
+		for (i=0x67; i>=0x40;x+=2) {
+			for (j=0; j<5;j++,i--,x+=2)
+			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
+				x,y,
+				0, TRANSPARENCY_NONE,0);
+		}
     } else {
-	osd_mark_dirty(RIGHT, DOWN, RIGHT+(16*(5+1)-1)*2-1, DOWN+7*3-1);
+		osd_mark_dirty(RIGHT, DOWN, RIGHT+(16*(5+1)-1)*2-1, DOWN+7*3-1);
     }
     pocketc_draw_special(bitmap,RIGHT+149,DOWN+24,line,
 			 pc1401_lcd.reg[0x3c]&8?color[1]:color[0]);

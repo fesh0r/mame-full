@@ -249,7 +249,7 @@ void init_pc1403(void)
 	timer_set(1,0,pc1403_power_up);
 }
 
-void pc1403_machine_init(void)
+MACHINE_INIT( pc1403 )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
 	if (RAM32K) {
@@ -261,7 +261,7 @@ void pc1403_machine_init(void)
 	}
 }
 
-void pc1403_machine_stop(void)
+MACHINE_STOP( pc1403 )
 {
 	pc1403_save();
 }

@@ -117,18 +117,14 @@ WRITE_HANDLER(pc1251_lcd_write)
 
 #define DOWN 62
 #define RIGHT 68
-void pc1251_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+
+VIDEO_UPDATE( pc1251 )
 {
 	int x, y, i, j;
 	int color[2];
 	/* HJB: we cannot initialize array with values from other arrays, thus... */
     color[0] = Machine->pens[pocketc_colortable[PC1251_CONTRAST][0]];
 	color[1] = Machine->pens[pocketc_colortable[PC1251_CONTRAST][1]];
-
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
 
 	for (x=RIGHT,y=DOWN,i=0; i<60;x+=3) {
 		for (j=0; j<5;j++,i++,x+=3)

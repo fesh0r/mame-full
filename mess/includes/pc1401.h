@@ -6,15 +6,15 @@ void pc1401_outb(int data);
 void pc1401_outc(int data);
 int pc1401_ina(void);
 int pc1401_inb(void);
-void init_pc1401(void);
-void pc1401_machine_init(void);
-void pc1401_machine_stop(void);
+
+extern DRIVER_INIT( pc1401 );
+extern MACHINE_INIT( pc1401 );
+extern MACHINE_STOP( pc1401 );
 
 /* in vidhrdw/pocketc.c */
 extern READ_HANDLER(pc1401_lcd_read);
 extern WRITE_HANDLER(pc1401_lcd_write);
-
-void pc1401_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( pc1401 );
 
 /* in systems/pocketc.c */
 #define KEY_OFF input_port_0_r(0)&0x80
