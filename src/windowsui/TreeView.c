@@ -344,7 +344,9 @@ void InitGames(UINT nGames)
 	UINT	tmpNumFolders;
 	BOOL*	done = NULL;
 	UINT	nFolderId = FOLDER_END;
+#ifndef NEOFREE
 	game_data_type* gameData = GetGameData();
+#endif
 #ifdef BUILD_LIST
 	FILE *fp = fopen("manufac.txt","wt");
 	int once = 1;
@@ -644,8 +646,9 @@ void Tree_Initialize(HWND hWnd)
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
 	BOOL vector;
+#ifndef NEOFREE
 	game_data_type *gameData = GetGameData();
-
+#endif
 	/* Filter games */
 	if (g_FilterText[0] != '\0')
 	{
