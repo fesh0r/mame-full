@@ -1,6 +1,11 @@
-/*
-	sonydriv.h : interface file for sonydriv.c
-*/
+/*********************************************************************
+
+	sonydriv.h
+	
+	Apple/Sony 3.5" floppy drive emulation (to be interfaced with iwm.c)
+
+*********************************************************************/
+
 #ifndef SONYDRIV_H
 #define SONYDRIV_H
 

@@ -1,5 +1,8 @@
-/*
-	Apple/Sony 3.5'' floppy drive emulation (to be interfaced with iwm.c)
+/*********************************************************************
+
+	sonydriv.c
+
+	Apple/Sony 3.5" floppy drive emulation (to be interfaced with iwm.c)
 
 	Nate Woods, Raphael Nabet
 
@@ -30,7 +33,8 @@
 	* support for other image formats?
 	* should we support more than 2 floppy disk units? (Mac SE *MAY* have
 	  supported 3 drives)
-*/
+
+*********************************************************************/
 
 #include "sonydriv.h"
 #include "mame.h"
@@ -1528,4 +1532,38 @@ void sony_set_speed(int speed)
 {
 	return sony_sel_line;
 }*/
+
+
+
+/***************************************************************************/
+
+static DEVICE_LOAD( sonydriv_floppy )
+{
+	int allowablesizes;
+	allowablesizes = (int) image_device(image)->user1;
+	return sony_floppy_load(image, file, allowablesizes);
+}
+
+
+
+static DEVICE_UNLOAD( sonydriv_floppy )
+{
+	sony_floppy_unload(image);
+}
+
+
+
+void sonydriv_device_getinfo(struct IODevice *dev, int allowablesizes)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "dsk\0dc\0img\0image\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->load = device_load_sonydriv_floppy;
+	dev->unload = device_unload_sonydriv_floppy;
+	dev->user1 = (void *) allowablesizes;
+}
 
