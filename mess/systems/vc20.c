@@ -501,6 +501,8 @@ static void vc20_init_palette (unsigned char *sys_palette,
 	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
 	/* basic */
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	/* kernel ntsc-m of vic1001? */
+	ROM_LOAD ("901486.02", 0xe000, 0x2000, 0x336900d7)
 	/* kernel ntsc */
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
 	/* kernel pal */
@@ -520,6 +522,13 @@ ROM_START (vic20)
 	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
+ROM_END
+
+ROM_START (vic1001)
+	ROM_REGION (0x10000, REGION_CPU1,0)
+	ROM_LOAD ("chargen.80", 0x8000, 0x1000, 0x0)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.02", 0xe000, 0x2000, 0x336900d7)
 ROM_END
 
 ROM_START (vic20swe)
@@ -863,8 +872,10 @@ static const struct IODevice io_vc20i[] =
 
 #define init_vc20		vc20_driver_init
 #define init_vic20		vic20_driver_init
+#define init_vic1001		vic20_driver_init
 #define init_vic20i 	vic20ieee_driver_init
 #define io_vic20		io_vc20
+#define io_vic1001		io_vc20
 #define io_vic20swe 	io_vc20
 #define io_vic20v		io_vc20v
 /*#define io_vic20i 	io_vc20i */
@@ -874,6 +885,7 @@ static const struct IODevice io_vc20i[] =
 
 COMPX ( 1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vic20i, 	vic20,	vic20i, vic20i, 	vic20i, "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic1001,	vic20,	vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
@@ -887,6 +899,7 @@ extern void vc20_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"vic20")==0) drivers[i]=&driver_vic20;
+		if ( strcmp(drivers[i]->name,"vic1001")==0) drivers[i]=&driver_vic1001;
 		if ( strcmp(drivers[i]->name,"vic20i")==0) drivers[i]=&driver_vic20i;
 		if ( strcmp(drivers[i]->name,"vc20")==0) drivers[i]=&driver_vc20;
 		if ( strcmp(drivers[i]->name,"vic20swe")==0) drivers[i]=&driver_vic20swe;
