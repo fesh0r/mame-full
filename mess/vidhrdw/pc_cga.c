@@ -488,7 +488,11 @@ WRITE8_HANDLER( pc_cga8_w )
 	switch(offset) {
 	case 0: case 2: case 4: case 6:
 	case 1: case 3: case 5: case 7:
-		crtc6845_port_w(crtc6845, offset, data);
+		if (crtc6845_port_w(crtc6845, offset, data))
+		{
+			schedule_full_refresh();
+			if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
+		}
 		break;
 	case 8:
 		pc_cga_mode_control_w(data);
@@ -539,6 +543,8 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
+		if (r.min_y >= Machine->scrbitmap->height)
+			break;
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
 		{
@@ -546,6 +552,14 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 			{
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], videoram[offs+1], 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if (height > 16)
+				{
+					r.min_y+=16;
+					drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], videoram[offs+1],
+					0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+					r.min_y-=16;
+				}
+
 				if (cursor.on && cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
@@ -559,11 +573,11 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					}
 				}
 
-				if (dirtybuffer)
-					dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
 			}
 		}
 	}
+	if (dirtybuffer)
+		memset(dirtybuffer, 0, videoram_size);
 }
 
 
@@ -665,6 +679,13 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], attr, 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if (height>16)
+				{
+					r.min_y+=16;
+					drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], videoram[offs+1],
+						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+ 					r.min_y-=16;
+				}
 
 				if (cursor.on && cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
@@ -679,11 +700,11 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					}
 				}
 
-				if (dirtybuffer)
-					dirtybuffer[offs]=dirtybuffer[offs+1]=0;
 			}
 		}
 	}
+	if (dirtybuffer)
+		memset(dirtybuffer, 0, videoram_size);
 }
 
 
@@ -1055,8 +1076,10 @@ static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) 
 	{
-		for (sh=0; sh<height; sh++, offs|=0x2000) 
+		for (sh=0; sh<height; sh++)
 		{ 
+ 			if (sy*height+sh >= bitmap->height)
+				break;
 			// char line 0 used as a12 line in graphic mode
 			if (!(sh & 1))
 			{
@@ -1065,8 +1088,6 @@ static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					if (!dirtybuffer || dirtybuffer[i]) 
 					{
 						pc1512_plot_unit(bitmap, sx*8, sy*height+sh, i);
-						if (dirtybuffer)
-							dirtybuffer[i]=0;
 					}
 				}
 			}
@@ -1077,13 +1098,15 @@ static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					if (!dirtybuffer || dirtybuffer[i]) 
 					{
 						pc1512_plot_unit(bitmap, sx*8, sy*height+sh, i);
-						if (dirtybuffer)
-							dirtybuffer[i]=0;
 					}
 				}
 			}
 		}
+		if (sy*height >= bitmap->height)
+			break;
 	}
+	if (dirtybuffer)
+		memset(dirtybuffer, 0, videoram_size);
 }
 
 
@@ -1146,15 +1169,15 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
-		/* 0x10 - 0x1f */
+		/* 0x18 - 0x1f */
 		cga_text_inten_alt,	cga_text_inten_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 		cga_text_inten_alt,	cga_text_inten_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 
-		/* 0x20 - 0x2f */
+		/* 0x28 - 0x2f */
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
-		/* 0x30 - 0x3f */
+		/* 0x38 - 0x3f */
 		cga_text_blink_alt,	cga_text_blink_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 		cga_text_blink_alt,	cga_text_blink_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 	};
@@ -1165,15 +1188,15 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
-		/* 0x10 - 0x1f */
+		/* 0x18 - 0x1f */
 		cga_text_inten,		cga_text_inten,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
 		cga_text_inten,		cga_text_inten,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
 
-		/* 0x20 - 0x2f */
+		/* 0x28 - 0x2f */
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
-		/* 0x30 - 0x3f */
+		/* 0x38 - 0x3f */
 		cga_text_blink,		cga_text_blink,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
 		cga_text_blink,		cga_text_blink,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp
 	};
@@ -1249,7 +1272,7 @@ WRITE_HANDLER ( pc1512_w )
 				crtc6845_set_char_columns(crtc6845, 40);
 			}
 		}
-		crtc6845_set_char_lines(crtc6845, 200 / char_height);
+		crtc6845_set_char_lines(crtc6845, 200 );
 		pc_cga8_w(offset, data);
 		break;
 

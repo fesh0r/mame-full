@@ -1,3 +1,32 @@
+0.83.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [AMSTRAD] Refined video display and Z80 timings; the Yao demos work
+  better now.  [Yoann Courtois]
+ 
+- [PC1512] Video fixes [Andrew Jenner]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+(none)
+
+
+
 0.83
 
 New System Drivers Supported (in no particular order):
