@@ -2944,7 +2944,7 @@ TESTDRIVER( msgundam )
 
 	/* NMK games */
 	DRIVER( hachamf )	/* (c) 1991 NMK */
-	DRIVER( macross )	/* (c) 1992 Banpresto */
+TESTDRIVER( macross )	/* (c) 1992 Banpresto */
 	DRIVER( macross2 )	/* (c) 1993 Banpresto */
 	DRIVER( bjtwin )	/* (c) 1993 NMK */
 	DRIVER( nouryoku )	/* (c) 1995 Tecmo */
