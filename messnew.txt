@@ -23,6 +23,9 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
+- The core is based on MAME 0.73.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Added some bounds checking to opcode fetches (bug #352).  [Nate Woods]
 
 - Made some debugger fixes when dealing with 8 or 16 bit numbers.  [Nate
