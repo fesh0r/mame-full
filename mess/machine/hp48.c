@@ -14,6 +14,9 @@
    26fd copies 0x36 nibbles from 701c to 700a !
     c192 ram address into d0
 	11fc
+   2494
+   1929
+    13437
  */
 
 
