@@ -149,100 +149,162 @@ static QUICKLOAD_LOAD( psxexe_load )
 	return INIT_PASS;
 }
 
+#define PAD_STATE_IDLE ( 0 )
+#define PAD_STATE_LISTEN ( 1 )
+#define PAD_STATE_ACTIVE ( 2 )
+#define PAD_STATE_READ ( 3 )
+#define PAD_STATE_UNLISTEN ( 4 )
+
+#define PAD_TYPE_STANDARD ( 4 )
+#define PAD_READ_STANDARD ( 2 )
+
+#define PAD_CMD_START ( 0x01 )
+#define PAD_CMD_READ ( 0x42 )
+#define PAD_DATA_READ ( 0x5a )
+#define PAD_DATA_IDLE ( 0xff )
+
 static struct
 {
 	int n_shiftin;
 	int n_shiftout;
-	int n_bit;
-	int n_input;
-} m_sio[ 2 ];
+	int n_bits;
+	int n_state;
+	int n_read;
+	int b_lastclock;
+} m_pad[ 2 ];
 
-static void psx_controller_ack( int b_ack )
+static void psx_pad_ack( int b_ack )
 {
 	psx_sio_input( 0, PSX_SIO_IN_DSR, b_ack * PSX_SIO_IN_DSR );
-	if( b_ack )
+	if( !b_ack )
 	{
-		timer_set( TIME_IN_USEC( 2 ), 0, psx_controller_ack );
+		timer_set( TIME_IN_USEC( 2 ), 1, psx_pad_ack );
 	}
 }
 
-static void psx_controller( int n_port, int n_data )
+static void psx_pad( int n_port, int n_data )
 {
-	int b_ack;
 	int b_sel;
 	int b_clock;
 	int b_data;
+	int b_ack;
+	int b_ready;
 
 	b_sel = ( n_data & PSX_SIO_OUT_DTR ) / PSX_SIO_OUT_DTR;
 	b_clock = ( n_data & PSX_SIO_OUT_CLOCK ) / PSX_SIO_OUT_CLOCK;
 	b_data = ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA;
+	b_ready = 0;
+	b_ack = 0;
 
 	if( b_sel )
 	{
-		m_sio[ n_port ].n_bit = 0;
-		m_sio[ n_port ].n_shiftin = 0xff;
-		m_sio[ n_port ].n_shiftout = 0xff;
+		m_pad[ n_port ].n_state = PAD_STATE_IDLE;
 	}
-	else if( b_clock )
+
+	switch( m_pad[ n_port ].n_state )
 	{
-		psx_sio_input( 0, PSX_SIO_IN_DSR, 0 );
-
-		m_sio[ n_port ].n_shiftin >>= 1;
-		m_sio[ n_port ].n_shiftin |= b_data << 7;
-		psx_sio_input( 0, PSX_SIO_IN_DATA, ( m_sio[ n_port ].n_shiftout & 1 ) * PSX_SIO_IN_DATA );
-		m_sio[ n_port ].n_shiftout >>= 1;
-		m_sio[ n_port ].n_bit++;
-
-		if( m_sio[ n_port ].n_bit == 8 )
+	case PAD_STATE_LISTEN:
+	case PAD_STATE_ACTIVE:
+	case PAD_STATE_READ:
+		if( m_pad[ n_port ].b_lastclock && !b_clock )
 		{
-			b_ack = 0;
-			switch( m_sio[ n_port ].n_shiftin )
-			{
-			case 0x01:
-				m_sio[ n_port ].n_shiftout = 0x41;
-				b_ack = 1;
-				break;
-			case 0x42:
-				m_sio[ n_port ].n_shiftout = 0x5a;
-				m_sio[ n_port ].n_input = 0;
-				b_ack = 1;
-				break;
-			case 0x00:
-				switch( m_sio[ n_port ].n_input )
-				{
-				case 0:
-					m_sio[ n_port ].n_shiftout = readinputport( 0 + ( 2 * n_port ) );
-					m_sio[ n_port ].n_input = 1;
-					b_ack = 1;
-					break;
-				case 1:
-					m_sio[ n_port ].n_shiftout = readinputport( 1 + ( 2 * n_port ) );
-					m_sio[ n_port ].n_input = 2;
-					b_ack = 1;
-					break;
-				}
-				break;
-			}
-			if( b_ack )
-			{
-				timer_set( TIME_IN_USEC( 10 ), 1, psx_controller_ack );
-			}
-			m_sio[ n_port ].n_bit = 0;
+			psx_sio_input( 0, PSX_SIO_IN_DATA, ( m_pad[ n_port ].n_shiftout & 1 ) * PSX_SIO_IN_DATA );
+			m_pad[ n_port ].n_shiftout >>= 1;
 		}
+		if( !m_pad[ n_port ].b_lastclock && b_clock )
+		{
+			m_pad[ n_port ].n_shiftin >>= 1;
+			m_pad[ n_port ].n_shiftin |= b_data << 7;
+			m_pad[ n_port ].n_bits++;
+
+			if( m_pad[ n_port ].n_bits == 8 )
+			{
+				m_pad[ n_port ].n_bits = 0;
+				b_ready = 1;
+			}
+		}
+		break;
+	}
+
+	m_pad[ n_port ].b_lastclock = b_clock;
+
+	switch( m_pad[ n_port ].n_state )
+	{
+	case PAD_STATE_IDLE:
+		if( !b_sel )
+		{
+			m_pad[ n_port ].n_state = PAD_STATE_LISTEN;
+			m_pad[ n_port ].n_shiftout = PAD_DATA_IDLE;
+			m_pad[ n_port ].n_bits = 0;
+		}
+		break;
+	case PAD_STATE_LISTEN:
+		if( b_ready )
+		{
+			if( m_pad[ n_port ].n_shiftin == PAD_CMD_START )
+			{
+				m_pad[ n_port ].n_state = PAD_STATE_ACTIVE;
+				m_pad[ n_port ].n_shiftout = ( PAD_TYPE_STANDARD << 4 ) | ( PAD_READ_STANDARD >> 1 );
+				b_ack = 1;
+			}
+			else
+			{
+				m_pad[ n_port ].n_state = PAD_STATE_UNLISTEN;
+			}
+		}
+		break;
+	case PAD_STATE_ACTIVE:
+		if( b_ready )
+		{
+			if( m_pad[ n_port ].n_shiftin == PAD_CMD_READ )
+			{
+				m_pad[ n_port ].n_state = PAD_STATE_READ;
+				m_pad[ n_port ].n_shiftout = PAD_DATA_READ;
+				m_pad[ n_port ].n_read = 0;
+				b_ack = 1;
+			}
+			else
+			{
+				logerror( "unknown pad command %02x\n", m_pad[ n_port ].n_shiftin );
+				m_pad[ n_port ].n_state = PAD_STATE_UNLISTEN;
+			}
+		}
+		break;
+	case PAD_STATE_READ:
+		if( b_ready )
+		{
+			if( m_pad[ n_port ].n_read < PAD_READ_STANDARD )
+			{
+				m_pad[ n_port ].n_shiftout = readinputport( m_pad[ n_port ].n_read + ( n_port * PAD_READ_STANDARD ) );
+				m_pad[ n_port ].n_read++;
+				b_ack = 1;
+			}
+			else
+			{
+				m_pad[ n_port ].n_state = PAD_STATE_ACTIVE;
+			}
+		}
+		break;
+	}
+
+	if( b_ack )
+	{
+		timer_set( TIME_IN_USEC( 10 ), 0, psx_pad_ack );
 	}
 }
 
-static void psx_memcard( int n_port, int n_data )
+static void psx_mcd( int n_port, int n_data )
 {
 	/* todo */
 }
 
 static void psx_sio0( int n_data )
 {
-	psx_controller( 0, n_data );
-	psx_memcard( 0, n_data );
-	psx_controller( 1, n_data ^ PSX_SIO_OUT_DTR );
-	psx_memcard( 1, n_data ^ PSX_SIO_OUT_DTR );
+	/* todo: raise data & ack when nothing is driving it low */
+	psx_pad( 0, n_data );
+	psx_mcd( 0, n_data );
+	psx_pad( 1, n_data ^ PSX_SIO_OUT_DTR );
+	psx_mcd( 1, n_data ^ PSX_SIO_OUT_DTR );
 }
 
 /* -----------------------------------------------------------------------
