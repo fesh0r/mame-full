@@ -12,7 +12,51 @@ the data will be accessed correctly */
 #define basicdsk_MAX_DRIVES 4
 #define VERBOSE 1
 
-static basicdsk     basicdsk_drives[basicdsk_MAX_DRIVES];
+
+typedef struct
+{
+	UINT8	 track;
+	UINT8	 sector;
+	UINT8	 status;
+}	SECMAP;
+
+typedef struct
+{
+	const char *image_name; 		/* file name for disc image */
+	void	*image_file;			/* file handle for disc image */
+	int 	mode;					/* open mode == 0 read only, != 0 read/write */
+	unsigned long image_size;		/* size of image file */
+
+	SECMAP	*secmap;
+
+	UINT8	unit;					/* unit number if image_file == REAL_FDD */
+
+	UINT8	tracks; 				/* maximum # of tracks */
+	UINT8	heads;					/* maximum # of heads */
+
+	UINT16	offset; 				/* track 0 offset */
+	UINT8	first_sector_id;		/* id of first sector */
+	UINT8	sec_per_track;			/* sectors per track */
+
+	UINT8	head;					/* current head # */
+	UINT8	track;					/* current track # */
+
+    UINT8   N;
+	UINT16	sector_length;			/* sector length (byte) */
+
+	int		track_divider;			/* 2 if using a 40-track image in a 80-track drive, 1 otherwise */
+
+	/* a bit for each sector in the image. If the bit is set, this sector
+	has a deleted data address mark. If the bit is not set, this sector
+	has a data address mark */
+	UINT8	*ddam_map;
+	unsigned long ddam_map_size;
+
+	unsigned long (*calcoffset)(UINT8 t, UINT8 h, UINT8 s,
+		UINT8 heads, UINT16 offset, UINT8 first_sector_id, UINT8 sec_per_track, UINT16 sector_length);
+} basicdsk;
+
+static basicdsk basicdsk_drives[basicdsk_MAX_DRIVES];
 
 static void basicdsk_seek_callback(mess_image *img, int);
 static int basicdsk_get_sectors_per_track(mess_image *img, int);
@@ -134,6 +178,13 @@ static int basicdsk_get_ddam(mess_image *img, UINT8 physical_track, UINT8 physic
 }
 
 
+void basicdsk_set_calcoffset(mess_image *img, unsigned long (*calcoffset)(UINT8 t, UINT8 h, UINT8 s,
+	UINT8 heads, UINT16 offset, UINT8 first_sector_id, UINT8 sec_per_track, UINT16 sector_length))
+{
+	basicdsk *pDisk = get_basicdsk(img);
+	pDisk->calcoffset = calcoffset;
+}
+
 /* dir_sector is a relative offset from the start of the disc,
 dir_length is a relative offset from the start of the disc */
 void basicdsk_set_geometry(mess_image *img, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero, int track_skipping)
@@ -220,14 +271,21 @@ static int basicdsk_seek(basicdsk * w, UINT8 t, UINT8 h, UINT8 s)
 		return 0;
 	}
 
-	offset = 0;
-	offset += t;
-	offset *= w->heads;
-	offset += h;
-	offset *= w->sec_per_track;
-	offset += (s-w->first_sector_id);
-	offset *= w->sector_length;
-	offset += w->offset;
+	if (w->calcoffset)
+	{
+		offset = w->calcoffset(t, h, s, w->heads, w->sec_per_track, w->first_sector_id, w->sector_length, w->offset);
+	}
+	else
+	{
+		offset = 0;
+		offset += t;
+		offset *= w->heads;
+		offset += h;
+		offset *= w->sec_per_track;
+		offset += (s-w->first_sector_id);
+		offset *= w->sector_length;
+		offset += w->offset;
+	}
 
 
 #if VERBOSE

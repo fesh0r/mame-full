@@ -218,7 +218,7 @@ static READ_HANDLER(apf_imagination_pia_in_b_func)
 
 	data = 0x000;
 
-	if (device_input(IO_CASSETTE,0) > 255)
+	if (device_input(image_instance(IO_CASSETTE,0)) > 255)
 		data =(1<<7);
 
 	return data;
@@ -275,9 +275,9 @@ static WRITE_HANDLER(apf_imagination_pia_out_b_func)
 	keyboard_data = readinputport(keyboard_line+4);
 
 	/* bit 4: cassette motor control */
-	device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
+	device_status(image_instance(IO_CASSETTE,0), ((data>>4) & 0x01));
 	/* bit 6: cassette write */
-	device_output(IO_CASSETTE, 0, (data & (1<<6)) ? -32768 : 32767);
+	device_output(image_instance(IO_CASSETTE,0), (data & (1<<6)) ? -32768 : 32767);
 
 
 	logerror("pia 1 b w: %04x %02x\n",offset,data);
@@ -779,8 +779,8 @@ ROM_START(apfm1000)
 ROM_END
 
 SYSTEM_CONFIG_START( apfimag )
-	CONFIG_DEVICE_CASSETTE			(1, "apt\0", apf_cassette_init)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", apfimag_floppy_init)
+	CONFIG_DEVICE_CASSETTE			(1, "apt\0", device_load_apf_cassette)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", device_load_apfimag_floppy)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -104,9 +104,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( a5200 ) 	/* Atari 5200										*/
 	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
 	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
-//	DRIVER( lynx )		/* Atari Lynx Handheld								*/
-//	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
-//	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
+	DRIVER( lynx )		/* Atari Lynx Handheld								*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System					*/
@@ -147,15 +147,15 @@ const struct GameDriver *test_drivers[] =
 //	DRIVER( astrocde )	/* Bally Astrocade									*/
 
 	/* RCA */
-//TESTDRIVER( vip )		/* Cosmac VIP										*/
-//TESTDRIVER( studio2 )	/* Studio II										*/
+TESTDRIVER( vip )		/* Cosmac VIP										*/
+TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
-//	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
-//	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
+	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
+	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
 
 	/* NEC */
 //	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
@@ -169,8 +169,8 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
 
 	/* MATTEL */
-//	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
-//	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??				*/
+	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
+	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??				*/
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision									*/
@@ -182,7 +182,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
-//	DRIVER( svision )	/* Super Vision	Handheld							*/
+	DRIVER( svision )	/* Super Vision	Handheld							*/
 
 	/* INTERON */
 TESTDRIVER( vc4000 )	/* Interton vc4000									*/
@@ -354,8 +354,8 @@ TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)					*/
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 							*/
 TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 
-//TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
-//TESTDRIVER( cdtv )
+TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
+TESTDRIVER( cdtv )
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)			*/
 	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)			*/
@@ -394,41 +394,41 @@ TESTDRIVER( atvga ) 	/*													*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 
 	/* SINCLAIR */
-//TESTDRIVER( zx80 )		/* Sinclair ZX-80									*/
-//TESTDRIVER( zx81 )		/* Sinclair ZX-81									*/
-//TESTDRIVER( zx81a )
-//TESTDRIVER( zx81b )
-//TESTDRIVER( ts1000 )	/* Timex Sinclair 1000								*/
-//TESTDRIVER( aszmic )	/* ASZMIC ZX-81 ROM swap							*/
-//TESTDRIVER( pc8300 )	/* Your Computer - PC8300							*/
-//TESTDRIVER( pow3000 )	/* Creon Enterprises - Power 3000					*/
-//TESTDRIVER( lambda )	/* Lambda 8300										*/
+TESTDRIVER( zx80 )		/* Sinclair ZX-80									*/
+TESTDRIVER( zx81 )		/* Sinclair ZX-81									*/
+TESTDRIVER( zx81a )
+TESTDRIVER( zx81b )
+TESTDRIVER( ts1000 )	/* Timex Sinclair 1000								*/
+TESTDRIVER( aszmic )	/* ASZMIC ZX-81 ROM swap							*/
+TESTDRIVER( pc8300 )	/* Your Computer - PC8300							*/
+TESTDRIVER( pow3000 )	/* Creon Enterprises - Power 3000					*/
+TESTDRIVER( lambda )	/* Lambda 8300										*/
 
-//	DRIVER( spectrum )	/* 1982 ZX Spectrum 								*/
-//	DRIVER( specpls4 )	/* 2000 ZX Spectrum +4								*/
-//	DRIVER( specbusy )	/* 1994 ZX Spectrum (BusySoft Upgrade v1.18)		*/
-//	DRIVER( specpsch )	/* 19?? ZX Spectrum (Maly's Psycho Upgrade)			*/
-//	DRIVER( specgrot )	/* ???? ZX Spectrum (De Groot's Upgrade)			*/
-//	DRIVER( specimc )	/* 1985 ZX Spectrum (Collier's Upgrade)				*/
-//	DRIVER( speclec )	/* 1987 ZX Spectrum (LEC Upgrade)					*/
-//	DRIVER( inves ) 	/* 1986 Inves Spectrum 48K+ 						*/
-//	DRIVER( tk90x ) 	/* 1985 TK90x Color Computer						*/
-//	DRIVER( tk95 )		/* 1986 TK95 Color Computer 						*/
-//	DRIVER( tc2048 )	/* 198? TC2048										*/
-//	DRIVER( ts2068 )	/* 1983 TS2068										*/
-//	DRIVER( uk2086 )	/* 1986 UK2086										*/
+	DRIVER( spectrum )	/* 1982 ZX Spectrum 								*/
+	DRIVER( specpls4 )	/* 2000 ZX Spectrum +4								*/
+	DRIVER( specbusy )	/* 1994 ZX Spectrum (BusySoft Upgrade v1.18)		*/
+	DRIVER( specpsch )	/* 19?? ZX Spectrum (Maly's Psycho Upgrade)			*/
+	DRIVER( specgrot )	/* ???? ZX Spectrum (De Groot's Upgrade)			*/
+	DRIVER( specimc )	/* 1985 ZX Spectrum (Collier's Upgrade)				*/
+	DRIVER( speclec )	/* 1987 ZX Spectrum (LEC Upgrade)					*/
+	DRIVER( inves ) 	/* 1986 Inves Spectrum 48K+ 						*/
+	DRIVER( tk90x ) 	/* 1985 TK90x Color Computer						*/
+	DRIVER( tk95 )		/* 1986 TK95 Color Computer 						*/
+	DRIVER( tc2048 )	/* 198? TC2048										*/
+	DRIVER( ts2068 )	/* 1983 TS2068										*/
+	DRIVER( uk2086 )	/* 1986 UK2086										*/
 
-//	DRIVER( spec128 )	/* 1986 ZX Spectrum 128								*/
-//	DRIVER( spec128s )	/* 1985 ZX Spectrum 128 (Spain)						*/
-//	DRIVER( specpls2 )	/* 1986 ZX Spectrum +2								*/
-//	DRIVER( specpl2a )	/* 1987 ZX Spectrum +2a 							*/
-//	DRIVER( specpls3 )	/* 1987 ZX Spectrum +3								*/
+	DRIVER( spec128 )	/* 1986 ZX Spectrum 128								*/
+	DRIVER( spec128s )	/* 1985 ZX Spectrum 128 (Spain)						*/
+	DRIVER( specpls2 )	/* 1986 ZX Spectrum +2								*/
+	DRIVER( specpl2a )	/* 1987 ZX Spectrum +2a 							*/
+	DRIVER( specpls3 )	/* 1987 ZX Spectrum +3								*/
 
-//	DRIVER( specp2fr )	/* 1986 ZX Spectrum +2 (France) 					*/
-//	DRIVER( specp2sp )	/* 1986 ZX Spectrum +2 (Spain)						*/
-//	DRIVER( specp3sp )	/* 1987 ZX Spectrum +3 (Spain)						*/
-//	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 							*/
-//	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
+	DRIVER( specp2fr )	/* 1986 ZX Spectrum +2 (France) 					*/
+	DRIVER( specp2sp )	/* 1986 ZX Spectrum +2 (Spain)						*/
+	DRIVER( specp3sp )	/* 1987 ZX Spectrum +3 (Spain)						*/
+	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 							*/
+	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
 
 	/* SHARP */
 //	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
@@ -496,8 +496,8 @@ TESTDRIVER( ti86v15 )	/* TI 86 rom ver. 1.5								*/
 	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
-//	DRIVER( apfm1000 )
-//	DRIVER( apfimag )
+	DRIVER( apfm1000 )
+	DRIVER( apfimag )
 
 	/* Tatung */
 	DRIVER( einstein )
@@ -616,7 +616,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
 
 	/* MATTEL */
-//	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
+	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
 						/* (Test marketed, later recalled )					*/
 	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
@@ -636,16 +636,16 @@ TESTDRIVER( pmd85 )	/* PMD-85.1											*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
-//TESTDRIVER( comquest )	/* Comquest Plus German								*/
+TESTDRIVER( comquest )	/* Comquest Plus German								*/
 
 	/* Hewlett Packard */
 //TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
 //TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
-//	DRIVER( svi318 ) 	/* SVI-318											*/
-//	DRIVER( svi328 ) 	/* SVI-328											*/
-//	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
+	DRIVER( svi318 ) 	/* SVI-318											*/
+	DRIVER( svi328 ) 	/* SVI-328											*/
+	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Booth (this is the builder, not a company) */
 //	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */

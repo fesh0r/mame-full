@@ -5,8 +5,8 @@ extern MACHINE_INIT( zx81 );
 extern MACHINE_INIT( pc8300 );
 extern MACHINE_INIT( pow3000 );
 
-extern int zx_cassette_load(mess_image *img, mame_file *fp, int open_mode);
-extern void zx_cassette_unload(int id);
+DEVICE_LOAD( zx_cassette );
+DEVICE_UNLOAD( zx_cassette );
 
 extern READ_HANDLER ( zx_io_r );
 extern WRITE_HANDLER ( zx_io_w );

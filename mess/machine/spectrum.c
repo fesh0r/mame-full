@@ -1079,18 +1079,18 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
 
-int spectrum_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( spectrum_cassette )
 {
 	struct cassette_args args;
 
 	TapePosition = 0;
-	if (fp && !is_effective_mode_create(open_mode) && !strcmpi(image_filetype(IO_CASSETTE, id), "tap"))
+	if (!is_effective_mode_create(open_mode) && !strcmpi(image_filetype(image), "tap"))
 	{
-		cassette_snapshot_size = mame_fsize(fp);
-		cassette_snapshot = image_malloc(IO_CASSETTE, id, cassette_snapshot_size);
+		cassette_snapshot_size = mame_fsize(file);
+		cassette_snapshot = image_malloc(image, cassette_snapshot_size);
 		if (!cassette_snapshot)
 			return INIT_FAIL;
-		mame_fread(fp, cassette_snapshot, cassette_snapshot_size);
+		mame_fread(file, cassette_snapshot, cassette_snapshot_size);
 		return INIT_PASS;
 	}
 	else
@@ -1099,13 +1099,13 @@ int spectrum_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 		cassette_snapshot_size = 0;
 		memset(&args, 0, sizeof(args));
 		args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-		return cassette_init(id, fp, open_mode, &args);
+		return cassette_init(image, file, open_mode, &args);
 	}
 }
 
-void spectrum_cassette_exit(int id)
+DEVICE_UNLOAD( spectrum_cassette )
 {
-	cassette_exit(id);
+	cassette_exit(image);
 	cassette_snapshot = NULL;
 	cassette_snapshot_size = 0;
 }
@@ -1145,13 +1145,13 @@ QUICKLOAD_LOAD(spectrum)
 	return INIT_PASS;
 }
 
-int spectrum_cart_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( spectrum_cart )
 {
 	/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
 	return cartslot_load_generic(file, REGION_CPU1, 0, 0x4000, 0x4000, 0);
 }
 
-int timex_cart_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( timex_cart )
 {
 	int file_size;
 	UINT8 * file_data;
@@ -1159,9 +1159,6 @@ int timex_cart_load(int id, mame_file *file, int open_mode)
 	int chunks_in_file = 0;
 
 	int i;
-
-	if (file==NULL)
-		return INIT_PASS;
 
 	logerror ("Trying to load cart\n");
 
@@ -1235,7 +1232,7 @@ int timex_cart_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-void timex_cart_unload(int id)
+DEVICE_UNLOAD( timex_cart )
 {
 	if (timex_cart_data)
 	{

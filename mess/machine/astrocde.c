@@ -22,7 +22,7 @@ static int screen_interrupt_mode;
 static int lightpen_interrupts_enabled;
 static int lightpen_interrupt_mode;
 
-int astrocade_load_rom(int id, mame_file *file, int open_mode)
+int astrocade_load_rom(mess_image *image, mame_file *file, int open_mode)
 {
 	int size = 0;
 

@@ -15,7 +15,7 @@
 #include "image.h"
 
 #if 0
-int apf_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( apf_cassette )
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -24,18 +24,13 @@ int apf_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 }
 #endif
 
-int apf_cassette_init(int id, mame_file *file, int effective_mode)
+DEVICE_LOAD( apf_cassette )
 {
 	struct wave_args_legacy wa;
 
-
-	if (file == NULL)
-		return INIT_PASS;
-
-
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			int apf_apt_size;
 
@@ -90,7 +85,7 @@ int apf_cassette_init(int id, mame_file *file, int effective_mode)
 					wa.fill_wave = apf_cassette_fill_wave;
 					wa.header_samples = 0;
 					wa.trailer_samples = 0;
-					if( device_open(IO_CASSETTE,id,0,&wa) )
+					if( device_open(image,0,&wa) )
 						return INIT_FAIL;
 
 					return INIT_PASS;
@@ -104,7 +99,7 @@ int apf_cassette_init(int id, mame_file *file, int effective_mode)
 			memset(&wa, 0, sizeof(&wa));
 			wa.file = file;
 			wa.smpfreq = 22050;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
+			if( device_open(image,1,&wa) )
 				return INIT_FAIL;
 
 			return INIT_PASS;
@@ -115,14 +110,11 @@ int apf_cassette_init(int id, mame_file *file, int effective_mode)
 }
 
 /* 256 bytes per sector, single sided, single density, 40 track  */
-int apfimag_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( apfimag_floppy )
 {
-	if (fp == NULL)
-		return INIT_PASS;
-
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 40, 1, 8, 256, 1, 0, FALSE);
+		basicdsk_set_geometry(image, 40, 1, 8, 256, 1, 0, FALSE);
 		return INIT_PASS;
 	}
 

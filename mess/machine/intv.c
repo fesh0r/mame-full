@@ -334,7 +334,7 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-static int intv_load_rom_file(int id, mame_file *romfile, int required)
+static int intv_load_rom_file(mess_image *image, mame_file *romfile, int required)
 {
     int i;
 
@@ -404,7 +404,7 @@ static int intv_load_rom_file(int id, mame_file *romfile, int required)
 	return INIT_PASS;
 }
 
-int intv_cart_init(int id)
+DEVICE_INIT( intv_cart )
 {
 	/* First, initialize these as empty so that the intellivision
 	 * will think that the playcable and keyboard are not attached */
@@ -420,7 +420,7 @@ int intv_cart_init(int id)
 	return INIT_PASS;
 }
 
-int intv_cart_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( intv_cart )
 {
 	/* First, initialize these as empty so that the intellivision
 	 * will think that the playcable and keyboard are not attached */
@@ -434,7 +434,7 @@ int intv_cart_load(mess_image *img, mame_file *fp, int open_mode)
 	memory[0x7000<<1] = 0xff;
 	memory[(0x7000<<1)+1] = 0xff;
 
-	return intv_load_rom_file(id, fp, 1);
+	return intv_load_rom_file(image, file, 1);
 }
 
 /* Set Reset and INTR/INTRM Vector */
@@ -517,8 +517,9 @@ void init_intvkbd(void)
 {
 }
 
-int intvkbd_cart_load(int id, mame_file *romfile, int open_mode)
+DEVICE_LOAD( intvkbd_cart )
 {
+	int id = image_index(image);
 	if (id == 0) /* Legacy cartridge slot */
 	{
 		/* First, initialize these as empty so that the intellivision
@@ -529,21 +530,21 @@ int intvkbd_cart_load(int id, mame_file *romfile, int open_mode)
 		memory[0x4800<<1] = 0xff;
 		memory[(0x4800<<1)+1] = 0xff;
 
-		intv_load_rom_file(id, romfile, 0);
+		intv_load_rom_file(image, file, 0);
 	}
 
 	if (id == 1) /* Keyboard component cartridge slot */
 	{
 		UINT8 *memory = memory_region(REGION_CPU2);
 
-		if (romfile == NULL)
+		if (file == NULL)
 		{
-			printf("intvkbd cartridge slot empty - ok\n");
+			logerror("intvkbd cartridge slot empty - ok\n");
 			return INIT_PASS;
 		}
 
 		/* Assume an 8K cart, like BASIC */
-		mame_fread(romfile,&memory[0xe000],0x2000);
+		mame_fread(file,&memory[0xe000],0x2000);
 	}
 
 	return INIT_PASS;

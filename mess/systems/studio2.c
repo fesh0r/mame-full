@@ -271,16 +271,16 @@ ROM_START(vip)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int studio2_cart_load(int id, mame_file *cartfile, int open_mode)
+static DEVICE_LOAD( studio2_cart )
 {
-	return cartslot_load_generic(cartfile, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
+	return cartslot_load_generic(file, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
 }
 
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", NULL, NULL, studio2_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", NULL, NULL, device_load_studio2_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -381,22 +381,25 @@ ROM_END
  dd6a clear 0x2000 at ($57/58) (0x4000)
  */
 
-static int svision_cart_load(int id, mame_file *cartfile, int open_mode)
+static DEVICE_LOAD( svision_cart )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	size = mame_fsize(cartfile);
-	if (size>0x10000) {
-	    logerror("%s: size %d not yet supported\n",image_filename(IO_CARTSLOT,id), size);
+	size = mame_fsize(file);
+	if (size>0x10000)
+	{
+	    logerror("%s: size %d not yet supported\n",image_filename(image), size);
 	    return 1;
 	}
 
-	if (mame_fread(cartfile, rom+0x20000-size, size)!=size) {
-		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
+	if (mame_fread(file, rom+0x20000-size, size)!=size)
+	{
+		logerror("%s load error\n",image_filename(image));
 		return 1;
 	}
-	if (size==0x8000) {
+	if (size==0x8000)
+	{
 	    memcpy(rom+0x10000, rom+0x20000-size, size);
 	}
 	memcpy(rom+0xc000, rom+0x1c000, 0x10000-0xc000);
@@ -404,7 +407,7 @@ static int svision_cart_load(int id, mame_file *cartfile, int open_mode)
 }
 
 SYSTEM_CONFIG_START(svision)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, svision_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, device_load_svision_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -202,7 +202,7 @@ static WRITE_HANDLER(spectrum_port_fe_w)
 	if ((Changed & (1<<3))!=0)
 	{
 		/* write cassette data */
-		device_output(IO_CASSETTE, 0, (data & (1<<3)) ? -32768: 32767);
+		device_output(image_instance(IO_CASSETTE, 0), (data & (1<<3)) ? -32768: 32767);
 	}
 
 	PreviousFE = data;
@@ -283,7 +283,7 @@ static READ_HANDLER(spectrum_port_fe_r)
 	data |= (0xe0); /* Set bits 5-7 - as reset above */
 
 	/* cassette input from wav */
-	if (device_input(IO_CASSETTE, 0)>255 )
+	if (device_input(image_instance(IO_CASSETTE, 0))>255 )
 	{
 		data &= ~0x40;
 	}
@@ -734,10 +734,10 @@ static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
 		/* D3 - Disk motor on/off */
 		/* D4 - parallel port strobe */
 
-		floppy_drive_set_motor_state(0, data & (1<<3));
-		floppy_drive_set_motor_state(1, data & (1<<3));
-		floppy_drive_set_ready_state(0, 1, 1);
-		floppy_drive_set_ready_state(1, 1, 1);
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), data & (1<<3));
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), data & (1<<3));
+		floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1, 1);
+		floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1, 1);
 
 		spectrum_plus3_port_1ffd_data = data;
 
@@ -888,8 +888,8 @@ static MACHINE_INIT( spectrum_plus3 )
 
 		nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
 
-		floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
-		floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
+		floppy_drive_set_geometry(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
+		floppy_drive_set_geometry(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 
 		/* Initial configuration */
 		spectrum_128_port_7ffd_data = 0;
@@ -2432,14 +2432,14 @@ ROM_START(pentagon)
 ROM_END
 
 SYSTEM_CONFIG_START(spectrum_common)
-	CONFIG_DEVICE_CASSETTEX(1,	"wav\0tap\0blk\0",	spectrum_cassette_init, spectrum_cassette_exit)
+	CONFIG_DEVICE_CASSETTEX(1,	"wav\0tap\0blk\0",	device_load_spectrum_cassette, device_unload_spectrum_cassette)
 	CONFIG_DEVICE_SNAPSHOT(		"sna\0z80\0sp\0",	spectrum)
 	CONFIG_DEVICE_QUICKLOAD(	"scr\0",			spectrum)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(spectrum)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, spectrum_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_spectrum_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(specpls3)
@@ -2449,7 +2449,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ts2068)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "dck\0", NULL, NULL, timex_cart_load, timex_cart_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "dck\0", NULL, NULL, device_load_timex_cart, device_unload_timex_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */

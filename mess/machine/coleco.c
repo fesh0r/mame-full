@@ -29,9 +29,9 @@ int coleco_cart_verify(const UINT8 *cartdata, size_t size)
 	return retval;
 }
 
-int coleco_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( coleco_cart )
 {
-	return cartslot_load_generic(cartfile, REGION_CPU1, 0x8000, 0x0001, 0x8000, 0);
+	return cartslot_load_generic(file, REGION_CPU1, 0x8000, 0x0001, 0x8000, 0);
 }
 
 

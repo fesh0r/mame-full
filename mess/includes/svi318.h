@@ -18,8 +18,8 @@ DRIVER_INIT( svi318 );
 MACHINE_INIT( svi318 );
 MACHINE_STOP( svi318 );
 
-int svi318_cart_load(mess_image *img, mame_file *fp, int open_mode);
-void svi318_cart_unload(int id);
+DEVICE_LOAD( svi318_cart );
+DEVICE_UNLOAD( svi318_cart );
 
 INTERRUPT_GEN( svi318_interrupt );
 void svi318_vdp_interrupt (int i);
@@ -37,7 +37,7 @@ WRITE_HANDLER (svi318_psg_port_b_w);
 READ_HANDLER (svi318_psg_port_a_r);
 
 /* cassette functions */
-int svi318_cassette_init (mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( svi318_cassette );
 int svi318_cassette_present (int id);
 
 /* floppy functions */
@@ -47,5 +47,5 @@ WRITE_HANDLER (fdc_density_side_w);
 READ_HANDLER (svi318_fdc_status_r);
 #endif
 
-int svi318_floppy_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( svi318_floppy );
 

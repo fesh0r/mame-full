@@ -215,7 +215,7 @@ ROM_END
 //ROM_END
 
 SYSTEM_CONFIG_START(coleco)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "rom\0col\0bin\0", NULL, NULL, coleco_cart_load, NULL, coleco_cart_verify, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 1, "rom\0col\0bin\0", NULL, NULL, device_load_coleco_cart, NULL, coleco_cart_verify, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

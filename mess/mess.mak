@@ -211,20 +211,20 @@ DRVLIBS = \
 	$(OBJ)/vc4000.a   \
 	$(OBJ)/lviv.a     \
 	$(OBJ)/pmd85.a    \
+	$(OBJ)/sinclair.a \
+	$(OBJ)/lynx.a     \
+	$(OBJ)/intv.a     \
+	$(OBJ)/svision.a  \
+	$(OBJ)/coleco.a   \
+	$(OBJ)/apf.a      \
+	$(OBJ)/bally.a	  \
+	$(OBJ)/rca.a	  \
+	$(OBJ)/teamconc.a \
+	$(OBJ)/amiga.a    \
+	$(OBJ)/svi.a      \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/sinclair.a \
-#	$(OBJ)/lynx.a     \
-#	$(OBJ)/intv.a     \
-#	$(OBJ)/bally.a	  \
-#	$(OBJ)/svision.a  \
-#	$(OBJ)/coleco.a   \
-#	$(OBJ)/apf.a      \
-#	$(OBJ)/rca.a	  \
-#	$(OBJ)/teamconc.a \
-#	$(OBJ)/amiga.a    \
-#	$(OBJ)/svi.a      \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/avigo.a    \
@@ -700,7 +700,6 @@ $(OBJ)/motorola.a: \
 $(OBJ)/svi.a:      \
 	  $(OBJ)/mess/machine/svi318.o   \
 	  $(OBJ)/mess/systems/svi318.o   \
-	  $(OBJ)/mess/machine/svi318dk.o \
 	  $(OBJ)/mess/formats/svi_cas.o
 
 $(OBJ)/exidy.a:    \

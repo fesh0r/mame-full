@@ -14,11 +14,11 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
-#include "includes/svi318dk.h"
 #include "includes/svi318.h"
 #include "formats/svi_cas.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
+#include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "image.h"
 
@@ -41,25 +41,24 @@ static int svi318_verify_cart (UINT8 magic[2])
 }
 
 
-
-int svi318_cart_load(int id, mame_file *f, int open_mode)
+DEVICE_LOAD( svi318_cart )
 {
 	UINT8 *p;
 	int size;
 
-	p = image_malloc(IO_CARTSLOT, id, 0x8000);
+	p = image_malloc(image, 0x8000);
 	if (!p)
 		return INIT_FAIL;
 
-	memset (p, 0xff, 0x8000);
-	size = mame_fsize (f);
-	if (mame_fread (f, p, size) != size)
+	memset(p, 0xff, 0x8000);
+	size = mame_fsize(file);
+	if (mame_fread(file, p, size) != size)
 	{
-		logerror ("can't read file %s\n", image_filename (IO_CASSETTE, id) );
+		logerror ("can't read file %s\n", image_filename(image) );
 		return INIT_FAIL;
 	}
 
-	if(svi318_verify_cart(p)==IMAGE_VERIFY_FAIL)
+	if (svi318_verify_cart(p)==IMAGE_VERIFY_FAIL)
 		return INIT_FAIL;
 	pcart = p;
 	svi.banks[0][1] = p;
@@ -67,7 +66,7 @@ int svi318_cart_load(int id, mame_file *f, int open_mode)
 	return INIT_PASS;
 }
 
-void svi318_cart_unload(int id)
+DEVICE_UNLOAD( svi318_cart )
 {
 	pcart = svi.banks[0][1] = NULL;
 }
@@ -91,15 +90,17 @@ Bit 0: Joystick 1: /SENSE
 
 */
 static READ_HANDLER ( svi318_ppi_port_a_r )
-	{
+{
     int data = 0x0f;
 
-	if (device_input (IO_CASSETTE, 0) > 255) data |= 0x80;
-	if (!svi318_cassette_present (0) ) data |= 0x40;
+	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+		data |= 0x80;
+	if (!svi318_cassette_present (0) )
+		data |= 0x40;
 	data |= readinputport (12) & 0x30;
 
 	return data;
-	}
+}
 
 /*
 
@@ -138,7 +139,7 @@ Bit 0: Keyboard: Line select 0
 
 */
 static WRITE_HANDLER ( svi318_ppi_port_c_w )
-	{
+{
 	static int old_val = 0xff;
 	int val;
 
@@ -151,15 +152,16 @@ static WRITE_HANDLER ( svi318_ppi_port_c_w )
 		}
     /* cassette motor on/off */
     if (svi318_cassette_present (0) )
-        device_status (IO_CASSETTE, 0, (data & 0x10) ? 0 : 1);
+        device_status(image_instance(IO_CASSETTE, 0), (data & 0x10) ? 0 : 1);
     /* cassette signal write */
     if ( (old_val ^ data) & 0x20)
-        device_output (IO_CASSETTE, 0, (data & 0x20) ? -32767 : 32767);
+        device_output(image_instance(IO_CASSETTE, 0), (data & 0x20) ? -32767 : 32767);
 
 	old_val = data;
-	}
+}
 
-static ppi8255_interface svi318_ppi8255_interface = {
+static ppi8255_interface svi318_ppi8255_interface =
+{
     1,
     {svi318_ppi_port_a_r},
     {svi318_ppi_port_b_r},
@@ -170,39 +172,39 @@ static ppi8255_interface svi318_ppi8255_interface = {
 };
 
 READ_HANDLER (svi318_ppi_r)
-	{
+{
 	return ppi8255_0_r (offset);
-	}
+}
 
 WRITE_HANDLER (svi318_ppi_w)
-	{
+{
 	ppi8255_0_w (offset + 2, data);
-	}
+}
 
 /*
 ** Printer ports
 */
 
 WRITE_HANDLER (svi318_printer_w)
-	{
+{
     if (!offset)
 		svi.prn_data = data;
 	else
-		{
+	{
 		if ( (svi.prn_strobe & 1) && !(data & 1) )
-            device_output (IO_PRINTER, 0, svi.prn_data);
+            device_output(image_instance(IO_PRINTER, 0), svi.prn_data);
 
         svi.prn_strobe = data;
-		}
 	}
+}
 
 READ_HANDLER (svi318_printer_r)
-	{
-	if (device_status (IO_PRINTER, 0, 0) )
+{
+	if (device_status(image_instance(IO_PRINTER, 0), 0) )
         return 0xfe;
 
     return 0xff;
-	}
+}
 
 /*
 ** PSG port A and B
@@ -330,22 +332,18 @@ WRITE_HANDLER (fdc_density_side_w)
 
     if (data & 1)
     {
-	wd179x_set_density (DEN_FM_LO);
-	sec_per_track =  18;
-	sector_size = 128;
+		wd179x_set_density (DEN_FM_LO);
+		sec_per_track =  18;
+		sector_size = 128;
     }
     else
     {
-	wd179x_set_density (DEN_MFM_LO);
-	sec_per_track =  17;
-	sector_size = 256;
+		wd179x_set_density (DEN_MFM_LO);
+		sec_per_track =  17;
+		sector_size = 256;
     }
     
-//  svi318dsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
-    svi318dsk_set_geometry(svi318_fdc_status.seldrive, 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0);
-
-//wd179x_set_geometry(UINT8 density, UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length, UINT8 first_sector_id);
-//	wd179x_set_geometry(svi801_FDC.Density, svi801_FDC.DriveSelect, TRACKS_DISK, svi801_DiskImage[svi801_FDC.DriveSelect].Heads, bytSectorsTrack, sector_size, 0, 0, 1);
+    basicdsk_set_geometry(image_instance(IO_FLOPPY, svi318_fdc_status.seldrive), 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
 }
 
 READ_HANDLER (svi318_fdc_status_r)
@@ -353,17 +351,27 @@ READ_HANDLER (svi318_fdc_status_r)
 	return svi318_fdc_status.irq_drq;
 }
 
+static unsigned long svi318_calcoffset(UINT8 t, UINT8 h, UINT8 s,
+	UINT8 heads, UINT16 offset, UINT8 first_sector_id, UINT8 sec_per_track, UINT16 sector_length)
+{
+	unsigned long o;
 
-int svi318_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+	if ((t==0) && (h==0)) 
+     		o = (s-first_sector_id)*128; 
+   	else
+     		o = ((t*heads+h)*17+s-first_sector_id)*256-2048; // (17*256)-(18*128)=2048
+
+	return o;
+}
+
+DEVICE_LOAD( svi318_floppy )
 {
 	int size;
+	int id = image_index(image);
 
-	if (fp == NULL)
-		return INIT_PASS;
-
-	if (fp && ! is_effective_mode_create(open_mode))
-		{
-		size = mame_fsize (fp);
+	if (file && ! is_effective_mode_create(open_mode))
+	{
+		size = mame_fsize (file);
 
 		switch (size)
 			{
@@ -380,10 +388,11 @@ int svi318_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 	else
 		return INIT_FAIL;
 
-	if (svi318dsk_floppy_init (id) != INIT_PASS)
+	if (basicdsk_floppy_init (image) != INIT_PASS)
 		return INIT_FAIL;
 
-	svi318dsk_set_geometry (id, 40, svi318_dsk_heads[id], 17, 256, 1, 0);
+	basicdsk_set_geometry(image, 40, svi318_dsk_heads[id], 17, 256, 1, 0, 0);
+	basicdsk_set_calcoffset(image, svi318_calcoffset);
 
 	return INIT_PASS;
 }
@@ -646,59 +655,48 @@ static int check_svi_cas (mame_file *f)
     free (casdata);
 
     return ret;
-	}
+}
 
-int svi318_cassette_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( svi318_cassette )
 {
 	int ret;
 
-   	/* A cassette isn't mandatory */
-	if (file == NULL)
+	if (! is_effective_mode_create(open_mode))
 	{
-		logerror("SVI318 - warning: no cassette specified!\n");
-		return INIT_PASS;
-	}
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		/* for cas files */
+		cas_samples = NULL;
+		cas_len = -1;
+		if (!check_svi_cas (file) )
+		{
+			wa.smpfreq = 22050;
+			wa.fill_wave = svi318_cassette_fill_wave;
+			wa.header_samples = cas_len;
+			wa.trailer_samples = 0;
+			wa.chunk_size = cas_len;
+			wa.chunk_samples = 0;
+		}
+		ret = device_open(image, 0,&wa);
+		free (cas_samples);
+		cas_samples = NULL;
+		cas_len = -1;
 
-	if( file )
+		return (ret ? INIT_FAIL : INIT_PASS);
+	}
+	else
 	{
-		if (! is_effective_mode_create(open_mode))
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			/* for cas files */
-			cas_samples = NULL;
-			cas_len = -1;
-			if (!check_svi_cas (file) )
-			{
-				wa.smpfreq = 22050;
-				wa.fill_wave = svi318_cassette_fill_wave;
-				wa.header_samples = cas_len;
-				wa.trailer_samples = 0;
-				wa.chunk_size = cas_len;
-				wa.chunk_samples = 0;
-			}
-			ret = device_open(IO_CASSETTE,id,0,&wa);
-			free (cas_samples);
-			cas_samples = NULL;
-			cas_len = -1;
-
-			return (ret ? INIT_FAIL : INIT_PASS);
-		}
-		else
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.smpfreq = 44100;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.smpfreq = 44100;
+		if( device_open(image, 1,&wa) )
+			return INIT_FAIL;
 	}
-    return INIT_FAIL;
+	return INIT_PASS;
 }
 
 int svi318_cassette_present (int id)
 {
-	return image_exists(IO_CASSETTE, id);
+	return image_exists(image_instance(IO_CASSETTE, id));
 }
 
