@@ -484,7 +484,7 @@ int gl_open_display (int reopen)
     y = sysdep_display_params.height;
   }
     
-  if(!reopen || ((maxtexnumx*text_width) > x) || ((maxtexnumy*text_height) > y))
+  if(!reopen || ((maxtexnumx*text_width) < x) || ((maxtexnumy*text_height) < y))
   {
     if (reopen)
       gl_free_textures();

@@ -1031,6 +1031,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 				/* oops this sorta sucks */
 				fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
 				sysdep_display_close();
+				sysdep_display_exit();
 				exit(1);
 			}
 			update_palette(display, 1);
