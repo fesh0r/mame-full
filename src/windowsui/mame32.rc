@@ -280,6 +280,10 @@ IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mame32.ico"
 #endif
 IDI_WIN_ROMS            ICON    DISCARDABLE     "res/win_roms.ico"
 IDI_WIN_NOROMS          ICON    DISCARDABLE     "res/win_noro.ico"
+#ifdef MESS
+IDI_WIN_NOROMSNEEDED    ICON    DISCARDABLE     "res/win_nrnd.ico"
+IDI_WIN_MISSINGOPTROM	ICON	DISCARDABLE		"res/win_noor.ico"
+#endif
 IDI_WIN_UNKNOWN         ICON    DISCARDABLE     "res/win_unkn.ico"
 IDI_WIN_REDX            ICON    DISCARDABLE     "res/win_redx.ico"
 IDI_FOLDER_AVAILABLE    ICON    DISCARDABLE     "res\\foldavail.ico"

@@ -746,58 +746,6 @@ int device_filename_change(int type, int id, const char *name)
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-#ifdef MAME_DEBUG
-
-int messvaliditychecks(void)
-{
-	int i;
-	int error = 0;
-
-	/* Check the device struct array */
-	i=0;
-	while (devices[i].id != IO_COUNT)
-	{
-		if (devices[i].id != i)
-		{
-			mess_printf("MESS Validity Error - Device struct array order mismatch\n");
-			error = 1;
-		}
-		i++;
-	}
-	if (i < IO_COUNT)
-	{
-		mess_printf("MESS Validity Error - Device struct entry missing\n");
-		error = 1;
-	}
-	return error;
-}
-
-void messtestdriver(const void *gamedrv)
-{
-#if 0
-	const struct GameDriver *gamedrv = game;
-	Machine->gamedrv = gamedrv;
-	Machine->drv = gamedrv->drv;
-	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));
-	if (readroms() != 0)
-		return;
-	if (init_devices(gamedrv) != 0)
-		continue;
-	exit_devices();
-#endif
-}
-
-#endif
-
-
 int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 {
 	char buf[2048], *dst = buf;
@@ -917,3 +865,43 @@ void showmessinfo(void)
 
 }
 
+#ifdef MAME_DEBUG
+
+int messvaliditychecks(void)
+{
+	int i;
+	int error = 0;
+
+	/* Check the device struct array */
+	i=0;
+	while (devices[i].id != IO_COUNT)
+	{
+		if (devices[i].id != i)
+		{
+			mess_printf("MESS Validity Error - Device struct array order mismatch\n");
+			error = 1;
+		}
+		i++;
+	}
+	if (i < IO_COUNT)
+	{
+		mess_printf("MESS Validity Error - Device struct entry missing\n");
+		error = 1;
+	}
+	return error;
+}
+
+void messtestdriver(const void *game)
+{
+	const struct GameDriver *gamedrv = game;
+	Machine->gamedrv = gamedrv;
+	Machine->drv = gamedrv->drv;
+	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));
+	if (readroms() != 0)
+		return;
+	if (init_devices(gamedrv) != 0)
+		return;
+	exit_devices();
+}
+
+#endif /* MAME_DEBUG */

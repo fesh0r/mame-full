@@ -111,17 +111,17 @@ struct deviceentry {
 static struct deviceentry s_devices[] =
 {
 	{ 1, "Cartridge images" },		/* IO_CARTSLOT */
-	{ 4, "Floppy disk images" },	/* IO_FLOPPY */
-	{ 9, "Hard disk images" },		/* IO_HARDDISK */
+	{ 6, "Floppy disk images" },	/* IO_FLOPPY */
+	{ 11, "Hard disk images" },		/* IO_HARDDISK */
 	{ 2, "Cylinders" },				/* IO_CYLINDER */
-	{ 5, "Cassette images" },		/* IO_CASSETTE */
+	{ 7, "Cassette images" },		/* IO_CASSETTE */
 	{ 2, "Punchcard images" },		/* IO_PUNCHCARD */
 	{ 2, "Punchtape images" },		/* IO_PUNCHTAPE */
-	{ 8, "Printer Output" },		/* IO_PRINTER */
-	{ 6, "Serial Output" },			/* IO_SERIAL */
+	{ 10, "Printer Output" },		/* IO_PRINTER */
+	{ 8, "Serial Output" },			/* IO_SERIAL */
 	{ 2, "Parallel Output" },		/* IO_PARALLEL */
-	{ 7, "Snapshots" },				/* IO_SNAPSHOT */
-	{ 7, "Quickloads" }				/* IO_QUICKLOAD */
+	{ 9, "Snapshots" },				/* IO_SNAPSHOT */
+	{ 9, "Quickloads" }				/* IO_QUICKLOAD */
 };
 
 static void AssertValidDevice(int d)
