@@ -59,7 +59,6 @@ char* g_version = "3.1";
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include <dir.h>
 
 
 
@@ -77,6 +76,9 @@ char* g_version = "3.1";
 #define EA_ALLOWED_LENGTH                11	/* Max length of ea allowed str */
 #define MAX_OPCODE_INPUT_TABLE_LENGTH  1000	/* Max length of opcode handler tbl */
 #define MAX_OPCODE_OUTPUT_TABLE_LENGTH 3000	/* Max length of opcode handler tbl */
+
+#define MAX_PATH 1024
+#define MAX_DIR 1024
 
 /* Default filenames */
 #define FILENAME_INPUT      "m68k_in.c"
@@ -236,7 +238,7 @@ void read_insert(char* insert);
 /* ======================================================================== */
 
 /* Name of the input file */
-char g_input_filename[MAXPATH] = FILENAME_INPUT;
+char g_input_filename[MAX_PATH] = FILENAME_INPUT;
 
 /* File handles */
 FILE* g_input_file = NULL;
@@ -948,11 +950,13 @@ void process_opcode_handlers(void)
 	int  oper_size;
 	char oper_mode[MAX_LINE_LENGTH+1];
 	opcode_struct* opinfo;
-	replace_struct replace;
-	body_struct body;
-
+	replace_struct *replace;
+	body_struct *body;
 
 	output_file = g_ops_ac_file;
+
+	replace = malloc (sizeof (replace_struct));
+	body = malloc (sizeof (body_struct));
 
 	for(;;)
 	{
@@ -966,17 +970,17 @@ void process_opcode_handlers(void)
 				error_exit("Premature end of file");
 		}
 		/* Get the rest of the function */
-		for(body.length=0;;body.length++)
+		for(body->length=0;;body->length++)
 		{
-			if(body.length > MAX_BODY_LENGTH)
+			if(body->length > MAX_BODY_LENGTH)
 				error_exit("Function too long");
 
-			if(fgetline(body.body[body.length], MAX_LINE_LENGTH, input_file) < 0)
+			if(fgetline(body->body[body->length], MAX_LINE_LENGTH, input_file) < 0)
 				error_exit("Premature end of file");
 
-			if(body.body[body.length][0] == '}')
+			if(body->body[body->length][0] == '}')
 			{
-				body.length++;
+				body->length++;
 				break;
 			}
 		}
@@ -998,18 +1002,21 @@ void process_opcode_handlers(void)
 		else if(output_file == g_ops_dm_file && oper_name[0] > 'm')
 			output_file = g_ops_nz_file;
 
-		replace.length = 0;
+		replace->length = 0;
 
 		/* Generate opcode variants */
 		if(strcmp(opinfo->name, "bcc") == 0 || strcmp(opinfo->name, "scc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 1);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 1);
 		else if(strcmp(opinfo->name, "dbcc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 2);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 2);
 		else if(strcmp(opinfo->name, "trapcc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 4);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 4);
 		else
-			generate_opcode_ea_variants(output_file, &body, &replace, opinfo);
+			generate_opcode_ea_variants(output_file, body, replace, opinfo);
 	}
+	
+	free (replace);
+	free (body);
 }
 
 
@@ -1157,8 +1164,8 @@ void read_insert(char* insert)
 int main(int argc, char **argv)
 {
 	/* File stuff */
-	char output_path[MAXDIR] = "";
-	char filename[MAXPATH];
+	char output_path[MAX_DIR] = "";
+	char filename[MAX_PATH];
 	/* Section identifier */
 	char section_id[MAX_LINE_LENGTH+1];
 	/* Inserts */
