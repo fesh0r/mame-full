@@ -351,23 +351,23 @@ endif
 
 $(OBJ)/xml2info/%.o: src/xml2info/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 $(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 $(OBJ)/mess/tools/messtest/%.o: mess/tools/messtest/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 $(OBJ)/%.o: src/%.c

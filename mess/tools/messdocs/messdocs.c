@@ -31,7 +31,7 @@ struct messdocs_state
 static void process_error(struct messdocs_state *state, const char *tag, const char *msgfmt, ...)
 {
 	/*va_list va;*/
-	char buf[512];
+	/*char buf[512];*/
 	const char *msg;
 
 	if (msgfmt)
@@ -211,7 +211,6 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	int sys_count;
 	char buf[512];
 	const char *sysname;
-	const char *sysdesc;
 	char sysfilename[512];
 	char *datfile_path = NULL;
 	char *s;

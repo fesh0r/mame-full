@@ -129,7 +129,6 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	const XML_Char *s2;
 	const XML_Char *s3;
 	const char *attr_name;
-	struct messtest_command cmd;
 	int region;
 	int device_type;
 	int preload;
@@ -304,7 +303,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		state->phase = STATE_SUBCOMMAND;
 		break;
 
-	case STATE_SUBCOMMAND:
+	default:
 		goto unknowntag;
 	}
 
@@ -361,6 +360,9 @@ static void end_handler(void *data, const XML_Char *name)
 					+ command->u.verify_args.verify_data_size - 1;
 			}
 			break;
+
+		default:
+			break;
 		};
 
 		if (!append_command(state))
@@ -370,6 +372,9 @@ static void end_handler(void *data, const XML_Char *name)
 
 	case STATE_SUBCOMMAND:
 		state->phase = STATE_COMMAND;
+		break;
+
+	default:
 		break;
 	}
 	return;
@@ -516,7 +521,6 @@ static void data_handler(void *data, const XML_Char *s, int len)
 	struct messtest_state *state = (struct messtest_state *) data;
 	struct messtest_command *command = &state->current_command;
 	char *str;
-	int i, line_begin;
 	int old_len;
 
 	switch(state->phase) {
@@ -539,7 +543,13 @@ static void data_handler(void *data, const XML_Char *s, int len)
 				(void **) &command->u.verify_args.verify_data,
 				&command->u.verify_args.verify_data_size);
 			break;
+
+		default:
+			break;
 		}
+
+	default:
+		break;
 	}
 	return;
 
