@@ -215,7 +215,7 @@ static struct MemoryReadAddress c16_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*  { 0x10000, 0x3ffff, MRA_ROM }, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c16_writemem[] =
@@ -251,7 +251,7 @@ static struct MemoryWriteAddress c16_writemem[] =
 	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
 	{0x10000, 0x3ffff, MWA_ROM},
 #endif
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress plus4_readmem[] =
@@ -272,7 +272,7 @@ static struct MemoryReadAddress plus4_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*  { 0x10000, 0x3ffff, MRA_ROM }, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress plus4_writemem[] =
@@ -296,7 +296,7 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
 	{0x10000, 0x3ffff, MWA_ROM},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress c364_readmem[] =
@@ -318,7 +318,7 @@ static struct MemoryReadAddress c364_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*  { 0x10000, 0x3ffff, MRA_ROM }, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c364_writemem[] =
@@ -343,7 +343,7 @@ static struct MemoryWriteAddress c364_writemem[] =
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
 	{0x10000, 0x3ffff, MWA_ROM},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -488,7 +488,7 @@ INPUT_PORTS_START (c16)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -509,7 +509,7 @@ INPUT_PORTS_START (c16c)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -530,7 +530,7 @@ INPUT_PORTS_START (c16v)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -557,7 +557,7 @@ INPUT_PORTS_START (plus4)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -575,7 +575,7 @@ INPUT_PORTS_START (plus4c)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -593,7 +593,7 @@ INPUT_PORTS_START (plus4v)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -618,7 +618,7 @@ INPUT_PORTS_START (c364)
 	PORT_START
 	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f/$d400 write only" )
 	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
@@ -672,6 +672,12 @@ ROM_START (c16)
 	 ROM_REGION (0x40000, REGION_CPU1)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
+ROM_END
+
+ROM_START (c16hun)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD("hungary.bin",    0x14000, 0x4000, 0x775f60c5)
 ROM_END
 
 ROM_START (c16c)
@@ -1112,12 +1118,14 @@ static const struct IODevice io_c16v[] =
 	{IO_END}
 };
 
+#define io_c16hun		io_c16
 #define io_plus4		io_c16
 #define io_plus4c		io_c16c
 #define io_plus4v		io_c16v
 #define io_c364			io_c16
 
 #define init_c16		c16_driver_init
+#define init_c16hun		c16_driver_init
 #define init_c16c		c16_driver_init
 #define init_c16v		c16_driver_init
 #define init_plus4		c16_driver_init
@@ -1127,6 +1135,7 @@ static const struct IODevice io_c16v[] =
 
 /*		YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY									FULLNAME */
 COMPX (	1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore 16/116/232/264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (	1984,	c16hun,	c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore 16 (PAL), Hungarian Character Set Hack", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX (	1984,	c16c,	c16,   	c16c,	c16c,	c16,	"Commodore Business Machines Co.",		"Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX (	1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX (	1984,	plus4c,	c16,	plus4c,	plus4c,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
