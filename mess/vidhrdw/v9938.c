@@ -42,7 +42,7 @@ typedef struct {
     /* sprites */
     int sprite_limit;
 } V9938;
-	
+
 static V9938 vdp;
 
 static UINT16 pal_ind16[16], pal_ind256[256], *pal_indYJK;
@@ -65,7 +65,7 @@ static const char *v9938_modes[] = {
 	"UNKNOWN" };
 
 static void v9938_register_write (int reg, int data);
-static void v9938_update_command ();
+static void v9938_update_command (void);
 static void v9938_cpu_to_vdp (UINT8 V);
 static UINT8 v9938_command_unit_w (UINT8 Op);
 static UINT8 v9938_vdp_to_cpu (void);
@@ -78,7 +78,7 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line);
 
 ***************************************************************************/
 
-/* 
+/*
 About the colour burst registers:
 
 The color burst registers will only have effect on the composite video outputfrom
@@ -112,15 +112,15 @@ void v9938_init_palette (unsigned char *palette, unsigned short *colortable,cons
 
 	if (Machine->scrbitmap->depth == 8)
 		{
-		/* create 256 colour palette -- this is actually the graphic 7 
-		   palette, with duplicate entries so the core fill shrink it to 
+		/* create 256 colour palette -- this is actually the graphic 7
+		   palette, with duplicate entries so the core fill shrink it to
 		   256 colours */
 		for (i=0;i<512;i++)
 			{
 			(*palette++) = (unsigned char)(((i >> 6) & 7) * 36); /* red */
-			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */ 
+			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */
 			red = (i & 6); if (red == 6) red++;
-			(*palette++) = (unsigned char)red * 36; /* blue */ 
+			(*palette++) = (unsigned char)red * 36; /* blue */
 			}
 		}
 	else
@@ -129,8 +129,8 @@ void v9938_init_palette (unsigned char *palette, unsigned short *colortable,cons
 		for (i=0;i<512;i++)
 			{
 			(*palette++) = (unsigned char)(((i >> 6) & 7) * 36); /* red */
-			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */ 
-			(*palette++) = (unsigned char)((i & 7) * 36); /* blue */ 
+			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */
+			(*palette++) = (unsigned char)((i & 7) * 36); /* blue */
 			}
 		}
 	}
@@ -153,7 +153,7 @@ void v9958_init_palette (unsigned char *palette, unsigned short *colortable,cons
 
 	pal = palette + 512*3;
 	v9938_init_palette (palette, colortable, color_prom);
-	
+
 	/* set up YJK table */
 	if (!pal_indYJK)
 		{
@@ -178,7 +178,7 @@ void v9958_init_palette (unsigned char *palette, unsigned short *colortable,cons
 		if (r < 0) r = 0; else if (r > 31) r = 31;
 		if (g < 0) g = 0; else if (g > 31) g = 31;
 		if (b < 0) b = 0; else if (b > 31) b = 31;
-		
+
 		if (Machine->scrbitmap->depth == 8)
 			{
 			/* we don't have the space for more entries, so map it to the
@@ -204,7 +204,7 @@ void v9958_init_palette (unsigned char *palette, unsigned short *colortable,cons
 				}
 
 			if (i == n)
-				{	
+				{
 				/* so we haven't; add it */
 				pal[i*3+0] = r;
 				pal[i*3+1] = g;
@@ -219,20 +219,20 @@ void v9958_init_palette (unsigned char *palette, unsigned short *colortable,cons
 		logerror ("Table creation failed - %d colours out of 19286 created\n", i);
 	}
 
-/* 
+/*
 
- so lookups for screen 12 will look like: 
+ so lookups for screen 12 will look like:
 
  int ind;
 
- ind = (*data & 7) << 11 | (*(data + 1) & 7) << 14 | 
+ ind = (*data & 7) << 11 | (*(data + 1) & 7) << 14 |
 	   (*(data + 2) & 7) << 5 | (*(data + 3) & 7) << 8;
 
  pixel0 = pal_indYJK[ind | (*data >> 3) & 31];
  pixel1 = pal_indYJK[ind | (*(data + 1) >> 3) & 31];
  pixel2 = pal_indYJK[ind | (*(data + 2) >> 3) & 31];
  pixel3 = pal_indYJK[ind | (*(data + 3) >> 3) & 31];
- 
+
 and for screen 11:
 
 pixel0 = (*data) & 8 ? pal_ind16[(*data) >> 4] : pal_indYJK[ind | (*data >> 3) & 30];
@@ -244,19 +244,19 @@ pixel3 = *(data+3) & 8 ? pal_ind16[*(data+3) >> 4] : pal_indYJK[ind | *(data+3) 
 
 WRITE_HANDLER (v9938_palette_w)
 	{
-	int index;
+	int indexp;
 
 	if (vdp.pal_write_first)
 		{
 		/* store in register */
-		index = vdp.contReg[0x10] & 15;
-		vdp.palReg[index*2] = vdp.pal_write & 0x77;
-		vdp.palReg[index*2+1] = data & 0x07;
+		indexp = vdp.contReg[0x10] & 15;
+		vdp.palReg[indexp*2] = vdp.pal_write & 0x77;
+		vdp.palReg[indexp*2+1] = data & 0x07;
 		/* update palette */
-		pal_ind16[index] = (((int)vdp.pal_write << 2) & 0x01c0)  | 
-							   (((int)data << 3) & 0x0038)  | 
-								((int)vdp.pal_write & 0x0007);
-		
+		pal_ind16[indexp] = (((int)vdp.pal_write << 2) & 0x01c0)  |
+						 	   (((int)data << 3) & 0x0038)  |
+						 		((int)vdp.pal_write & 0x0007);
+
 		vdp.contReg[0x10] = (vdp.contReg[0x10] + 1) & 15;
 		vdp.pal_write_first = 0;
 		}
@@ -270,7 +270,7 @@ WRITE_HANDLER (v9938_palette_w)
 static void v9938_reset_palette (void)
 	{
 	/* taken from V9938 Technical Data book, page 148. it's in G-R-B format */
-	static const UINT8 pal16[16*3] = { 
+	static const UINT8 pal16[16*3] = {
 		0, 0, 0, /* 0: black/transparent */
 		0, 0, 0, /* 1: black */
 		6, 1, 1, /* 2: medium green */
@@ -351,17 +351,17 @@ WRITE_HANDLER (v9938_vram_w)
 	vdp.cmd_write_first = 0;
 
     address = ((int)vdp.contReg[14] << 14) | vdp.address_latch;
-        
+
     if (vdp.contReg[47] & 0x20)
         {
         if (vdp.vram_exp && address < 0x10000)
             vdp.vram_exp[address] = data;
-        }   
-    else    
-        {   
+        }
+    else
+        {
 		v9938_vram_write (address, data);
         }
-	
+
 	vdp.address_latch = (vdp.address_latch + 1) & 0x3fff;
 	if (!vdp.address_latch && (vdp.contReg[0] & 0x0c) ) /* correct ??? */
 		{
@@ -379,7 +379,7 @@ READ_HANDLER (v9938_vram_r)
 	vdp.cmd_write_first = 0;
 
 	ret = vdp.read_ahead;
-	
+
 	if (vdp.contReg[47] & 0x20)
 		{
 		/* correct? */
@@ -410,7 +410,7 @@ WRITE_HANDLER (v9938_command_w)
 			v9938_register_write (data & 0x3f, vdp.cmd_write);
 		else
 			{
-			vdp.address_latch = 
+			vdp.address_latch =
 				(((UINT16)data << 8) | vdp.cmd_write) & 0x3fff;
 			if ( !(data & 0x40) ) v9938_vram_r (0); /* read ahead! */
 			}
@@ -442,10 +442,10 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	vdp.bmp = osd_alloc_bitmap (512 + 32, (212 + 16) * 2, Machine->scrbitmap->depth);
 	if (!vdp.bmp)
 		{
-		logerror ("V9938: Unable to allocate back-buffer bitmap\n");	
+		logerror ("V9938: Unable to allocate back-buffer bitmap\n");
 		return 1;
 		}
- 
+
 	/* allocate VRAM */
 	vdp.vram = malloc (0x20000);
 	if (!vdp.vram) return 1;
@@ -487,7 +487,7 @@ void v9938_reset (void)
 	if (vdp.model == MODEL_V9958) vdp.statReg[1] |= 4;
 	for (i=0;i<48;i++) vdp.contReg[i] = 0;
 	vdp.cmd_write_first = vdp.pal_write_first = 0;
-	vdp.INT = 0; 
+	vdp.INT = 0;
 	vdp.read_ahead = 0; vdp.address_latch = 0; /* ??? */
 	vdp.scanline = 0;
 	}
@@ -496,7 +496,7 @@ void v9938_exit (void)
 	{
 	free (vdp.vram);
 	if (vdp.vram_exp) free (vdp.vram_exp);
-	if (pal_indYJK) 
+	if (pal_indYJK)
 		{ free (pal_indYJK); pal_indYJK = NULL; }
 	}
 
@@ -504,12 +504,12 @@ static void v9938_check_int (void)
 	{
 	UINT8 n;
 
-	n = ( (vdp.contReg[1] & 0x20) && (vdp.statReg[0] & 0x80) ) || 
+	n = ( (vdp.contReg[1] & 0x20) && (vdp.statReg[0] & 0x80) ) ||
 		( (vdp.statReg[1] & 0x01) && (vdp.contReg[0] & 0x10) );
 
 	if (n != vdp.INT)
 		{
-		vdp.INT = n;	
+		vdp.INT = n;
 		vdp.INTCallback (n);
 		logerror ("V9938: IRQ line %s\n", n ? "up" : "down");
 		}
@@ -541,10 +541,10 @@ static void v9938_register_write (int reg, int data)
 	static UINT8 const reg_mask[] = {
 		0x7e, 0x7b, 0x7f, 0xff, 0x3f, 0xff, 0x3f, 0xff,
 		0xfb, 0xbf, 0x07, 0x03, 0xff, 0xff, 0x07, 0x0f,
-		0x0f, 0xbf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+		0x0f, 0xbf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		0x00, 0x7f, 0x3f, 0x07 };
 
-	if (reg <= 27) 
+	if (reg <= 27)
 		{
 		data &= reg_mask[reg];
 		if (vdp.contReg[reg] == data) return;
@@ -601,15 +601,15 @@ static void v9938_register_write (int reg, int data)
 				data = 0;
 				}
 			break;
-		case 44: 
-			v9938_cpu_to_vdp (data); 
+		case 44:
+			v9938_cpu_to_vdp (data);
 			break;
 		case 46:
 			v9938_command_unit_w (data);
 			break;
 		}
 
-	if (reg != 15) 
+	if (reg != 15)
 		logerror ("V9938: Write %02x to R#%d\n", data, reg);
 
 	vdp.contReg[reg] = data;
@@ -697,7 +697,7 @@ static void v9938_graphic7_border_16 (UINT16 *ln)
 	int i;
 
 	pen = Machine->pens[pal_ind256[vdp.contReg[7]]];
-	i = 512 + 32; 
+	i = 512 + 32;
 	while (i--) *ln++ = pen;
 	}
 
@@ -719,10 +719,10 @@ static void v9938_graphic5_border_16 (UINT16 *ln)
 
 	pen1 = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
 	pen0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
-	i = (512 + 32) / 2; 
+	i = (512 + 32) / 2;
 	while (i--) { *ln++ = pen0; *ln++ = pen1; }
 	}
-	
+
 #define TEXT1(fnname,pen_type) \
 \
 static void fnname (int line, pen_type *ln)	\
@@ -1104,7 +1104,7 @@ static void v9938_mode_graphic7_yjk (struct osd_bitmap *bmp, int line)
 		data1 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
 		data2 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
 		data3 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) | 
+		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) |
 			((data2 & 7) << 5) | ((data3 & 7) << 8);
 		pen = Machine->pens[pal_indYJK[jk | ((data0 >> 3) & 31)]];
         plot_pixel (bmp, xx++, line, pen);
@@ -1151,7 +1151,7 @@ static void v9938_mode_graphic7_yae (struct osd_bitmap *bmp, int line)
 		data2 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
 		data3 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
 		/* extract jk information */
-		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) | 
+		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) |
 			((data2 & 7) << 5) | ((data3 & 7) << 8);
 		/* first pixel */
 		if (data0 & 0x08)
@@ -1312,7 +1312,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 
 			/* get colour */
 			c = attrtbl[3] & 0x0f;
-		
+
 			/* draw left part */
 			n = 0;
 			while (1)
@@ -1320,7 +1320,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 				if (n == 0) pattern = patternptr[0];
 				else if ( (n == 1) && (vdp.contReg[1] & 2) ) pattern = patternptr[16];
 				else break;
-				
+
 				n++;
 
 				for (i=0;i<8;i++)
@@ -1340,7 +1340,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 								if (c || (vdp.contReg[8] & 0x20) )
 									col[x] |= 0xc0 | c;
 								else
-									col[x] |= 0x40;	
+									col[x] |= 0x40;
 								}
 
 							/* if zoomed, draw another pixel */
@@ -1428,12 +1428,12 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 				pattern &= 0xfc;
 			n = line - y; if (vdp.contReg[1] & 1) n /= 2;
 			patternptr = patterntbl + pattern * 8 + n;
-			pattern = (v9938_vram_read (patternptr) << 8) | 
+			pattern = (v9938_vram_read (patternptr) << 8) |
 				v9938_vram_read (patternptr + 16);
 
 			/* get colour */
 			c = v9938_vram_read (colourtbl + (((p&colourmask)*16) + n));
-		
+
 			/* get x */
 			x = v9938_vram_read (attrtbl + 1);
 			if (c & 0x80) x -= 32;
@@ -1448,7 +1448,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 						{
 						if ( (x >= 0) && (x < 256) )
 							{
-							/* the bits in col[x] are: 
+							/* the bits in col[x] are:
 								7 = non-transparent colour drawn (1)
 								6 = priority enable (1)
 								5 = colission (1)
@@ -1477,7 +1477,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 /*
 					if ( (x >= 0) && (x < 256) )
 						{
-						if ( (c & 0x40) && ( (col[x] & 0xc0) == 0x40) ) 
+						if ( (c & 0x40) && ( (col[x] & 0xc0) == 0x40) )
 							col[x] |= 0x80;
 						}
 */
@@ -1526,7 +1526,7 @@ static void v9938_default_draw_sprite_16 (UINT16 *ln, UINT8 *col)
 
 	for (i=0;i<256;i++)
 		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) ) 
+		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
 			{
 			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
 			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
@@ -1590,49 +1590,49 @@ typedef struct {
 } V9938_MODE;
 
 static const V9938_MODE modes[] = {
-	{ 0x02, 
-		v9938_mode_text1, v9938_mode_text1_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x02,
+		v9938_mode_text1, v9938_mode_text1_16,
+		v9938_default_border_8, v9938_default_border_16,
 		NULL, NULL, NULL },
-	{ 0x01, 
-		v9938_mode_multi, v9938_mode_multi_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x01,
+		v9938_mode_multi, v9938_mode_multi_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x00, 
-		v9938_mode_graphic1, v9938_mode_graphic1_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x00,
+		v9938_mode_graphic1, v9938_mode_graphic1_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x04, 
-		v9938_mode_graphic23, v9938_mode_graphic23_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x04,
+		v9938_mode_graphic23, v9938_mode_graphic23_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x08, 
-		v9938_mode_graphic23, v9938_mode_graphic23_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x08,
+		v9938_mode_graphic23, v9938_mode_graphic23_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x0c, 
-		v9938_mode_graphic4, v9938_mode_graphic4_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x0c,
+		v9938_mode_graphic4, v9938_mode_graphic4_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x10, 
-		v9938_mode_graphic5, v9938_mode_graphic5_16, 
-		v9938_graphic5_border_8, v9938_graphic5_border_16, 
+	{ 0x10,
+		v9938_mode_graphic5, v9938_mode_graphic5_16,
+		v9938_graphic5_border_8, v9938_graphic5_border_16,
 		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x14, 
-		v9938_mode_graphic6, v9938_mode_graphic6_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x14,
+		v9938_mode_graphic6, v9938_mode_graphic6_16,
+		v9938_default_border_8, v9938_default_border_16,
 		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
-	{ 0x1c, 
-		v9938_mode_graphic7, v9938_mode_graphic7_16, 
-		v9938_graphic7_border_8, v9938_graphic7_border_16, 
+	{ 0x1c,
+		v9938_mode_graphic7, v9938_mode_graphic7_16,
+		v9938_graphic7_border_8, v9938_graphic7_border_16,
 		v9938_sprite_mode2, v9938_graphic7_draw_sprite_8, v9938_graphic7_draw_sprite_16 },
-	{ 0x0a, 
-		v9938_mode_text2, v9938_mode_text2_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0x0a,
+		v9938_mode_text2, v9938_mode_text2_16,
+		v9938_default_border_8, v9938_default_border_16,
 		NULL, NULL, NULL },
-	{ 0xff, 
-		v9938_mode_unknown, v9938_mode_unknown_16, 
-		v9938_default_border_8, v9938_default_border_16, 
+	{ 0xff,
+		v9938_mode_unknown, v9938_mode_unknown_16,
+		v9938_default_border_8, v9938_default_border_16,
 		NULL, NULL, NULL },
 };
 
@@ -1663,11 +1663,11 @@ static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 	else
 		{
 		i = (line - vdp.offset_y) & 255;
-		modes[vdp.mode].visible_8 (i, ln); 
-		if (modes[vdp.mode].sprites) 
+		modes[vdp.mode].visible_8 (i, ln);
+		if (modes[vdp.mode].sprites)
 			{
-			modes[vdp.mode].sprites (i, col); 
-			modes[vdp.mode].draw_sprite_8(ln, col); 
+			modes[vdp.mode].sprites (i, col);
+			modes[vdp.mode].draw_sprite_8(ln, col);
 			}
 		}
 
@@ -1690,11 +1690,11 @@ static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 	else
 		{
 		i = (line - vdp.offset_y) & 255;
-		modes[vdp.mode].visible_16 (i, ln); 
-		if (modes[vdp.mode].sprites) 
+		modes[vdp.mode].visible_16 (i, ln);
+		if (modes[vdp.mode].sprites)
 			{
-			modes[vdp.mode].sprites (i, col); 
-			modes[vdp.mode].draw_sprite_16 (ln, col); 
+			modes[vdp.mode].sprites (i, col);
+			modes[vdp.mode].draw_sprite_16 (ln, col);
 			}
 		}
 
@@ -1856,7 +1856,7 @@ static void v9938_interrupt_bottom (void)
 	for (i=0;i<24;i++) printf ("R#%d = %02x\n", i, vdp.contReg[i]);
 		}
 #endif
-	
+
 	/* at every interrupt, vdp switches fields */
 	vdp.statReg[2] = (vdp.statReg[2] & 0xfd) | (~vdp.statReg[2] & 2);
 
@@ -1917,7 +1917,7 @@ int v9938_interrupt (void)
 		vdp.statReg[1] |= 1;
 		logerror ("V9938: scanline interrupt (%d)\n", scanline);
 		}
-	else 
+	else
 		if ( !(vdp.contReg[0] & 0x10) ) vdp.statReg[1] &= 0xfe;
 
 	if (vdp.scanline == (212 + 32) ) /* check this!! */
@@ -1993,7 +1993,7 @@ int v9938_interrupt (void)
 /* re-used here so that they have to be entered only once    */
 /*************************************************************/
 #define pre_loop \
-    while ((cnt-=delta) > 0) { 
+    while ((cnt-=delta) > 0) {
 
 
 /* Loop over DX, DY */
@@ -2056,7 +2056,7 @@ static UINT8 VDPpoint6(register int SX, register int SY);
 static UINT8 VDPpoint7(register int SX, register int SY);
 static UINT8 VDPpoint8(register int SX, register int SY);
 
-static UINT8 VDPpoint(register UINT8 SM, 
+static UINT8 VDPpoint(register UINT8 SM,
                      register int SX, register int SY);
 
 static void VDPpsetlowlevel(register UINT8 *P, register UINT8 CL,
@@ -2113,7 +2113,7 @@ static int ymmm_timing[8]={ 586,  952,  586,  610,
                             488,  720,  488,  500 };
 static int hmmm_timing[8]={ 818,  1111, 818,  854,
                             684,  879,  684,  708 };
-static int lmmm_timing[8]={ 1160, 1599, 1160, 1172, 
+static int lmmm_timing[8]={ 1160, 1599, 1160, 1172,
                             964,  1257, 964,  977 };
 
 
@@ -2283,7 +2283,7 @@ void SrchEngine(void)
   register UINT8 CL=MMC.CL;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(srch_timing);
   cnt = VdpOpsCnt;
 
@@ -2299,7 +2299,7 @@ void SrchEngine(void)
       VDPStatus[2]&=0xEF; /* Border not detected */ \
       break; \
     } \
-  } 
+  }
 
   switch (ScrMode) {
     case 5: pre_srch VDPpoint5(SX, SY) post_srch(256)
@@ -2342,7 +2342,7 @@ void LineEngine(void)
   register UINT8 LO=MMC.LO;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(line_timing);
   cnt = VdpOpsCnt;
 
@@ -2477,7 +2477,7 @@ void LmmmEngine(void)
   register UINT8 LO=MMC.LO;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(lmmm_timing);
   cnt = VdpOpsCnt;
 
@@ -2598,7 +2598,7 @@ void HmmvEngine(void)
   register UINT8 CL=MMC.CL;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(hmmv_timing);
   cnt = VdpOpsCnt;
 
@@ -2650,7 +2650,7 @@ void HmmmEngine(void)
   register int ANX=MMC.ANX;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(hmmm_timing);
   cnt = VdpOpsCnt;
 
@@ -2707,7 +2707,7 @@ void YmmmEngine(void)
   register int ADX=MMC.ADX;
   register int cnt;
   register int delta;
- 
+
   delta = GetVdpTimingValue(ymmm_timing);
   cnt = VdpOpsCnt;
 
@@ -2859,19 +2859,19 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
   switch(Op>>4) {
     case CM_ABRT:
       VDPStatus[2]&=0xFE;
-      VdpEngine=0;  
+      VdpEngine=0;
       return 1;
     case CM_POINT:
       VDPStatus[2]&=0xFE;
-      VdpEngine=0;  
+      VdpEngine=0;
       VDPStatus[7]=VDP[44]=
                    VDP_POINT(SM, VDP[32]+((int)VDP[33]<<8),
                                  VDP[34]+((int)VDP[35]<<8));
       return 1;
     case CM_PSET:
       VDPStatus[2]&=0xFE;
-      VdpEngine=0;  
-      VDP_PSET(SM, 
+      VdpEngine=0;
+      VDP_PSET(SM,
                VDP[36]+((int)VDP[37]<<8),
                VDP[38]+((int)VDP[39]<<8),
                VDP[44],
@@ -2905,7 +2905,7 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
       VdpEngine=YmmmEngine;
       break;
     case CM_HMMC:
-      VdpEngine=HmmcEngine;  
+      VdpEngine=HmmcEngine;
       break;
     default:
       logerror("V9938: Unrecognized opcode %02Xh\n",Op);
@@ -2919,7 +2919,7 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
   MMC.DY = (VDP[38]+((int)VDP[39]<<8)) & 1023;
   MMC.NY = (VDP[42]+((int)VDP[43]<<8)) & 1023;
   MMC.TY = VDP[45]&0x08? -1:1;
-  MMC.MX = PPL[SM]; 
+  MMC.MX = PPL[SM];
   MMC.CL = VDP[44];
   MMC.LO = Op&0x0F;
 
@@ -2941,7 +2941,7 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
   else {
     MMC.ASX = MMC.SX;
     MMC.ADX = MMC.DX;
-  }    
+  }
 
   /* NX loop variable is treated specially for SRCH command */
   if (MMC.CM == CM_SRCH)
