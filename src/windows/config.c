@@ -581,9 +581,9 @@ static int config_handle_arg(char *arg)
 			fprintf(stderr, "error: too many image names specified!\n");
 			return -1;
 		}
-		options.image_files[options.image_count].type = iodevice_type;
-		options.image_files[options.image_count].name = arg;
-		options.image_count++;
+		//options.image_files[options.image_count].type = iodevice_type;
+		//options.image_files[options.image_count].name = arg;
+		//options.image_count++;
 	}
 #else
 	{
