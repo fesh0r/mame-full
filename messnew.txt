@@ -13,10 +13,11 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
-- [BBC] Much improved SAA5050 teletext support (mode 7), There is still a
+- [BBC] Added a new BBC clone (BBCB1770) to use the WD1770 disc controller.
+  Much improved SAA5050 teletext support (mode 7), There is still a
   problem with the Mode 7 cursor [Gordon Jefferyes]
 
-- [GameBoy] Finally fixed the interrupt problem, which in turn helped alot of carts 
+- [GameBoy] Finally fixed the interrupt problem, which in turn helped a lot of carts 
   actually run now. [Lee Ward] 
 
 - [Vectrex] Loading carts should work again. [Mathis Rosenhauer]
@@ -68,7 +69,7 @@ System Driver Changes:
 
 - [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). [Kev Thacker]
 
-- [COCO] Updated CoCo and CoCo 3 drivers with new romsets to match the actual chips 
+- [COCO] Updated CoCo and CoCo 3 drivers with new rom sets to match the actual chips 
   in the system.  coco.rom split into bas12.rom, extbas11.rom and disk11.rom, and 
   coco3.rom now must be of length 32768.  This requires a dump from an EPROM reader.  
   Fixed a bug in cassette writing.  Cassette tape controls and CoCo motor signal now 
