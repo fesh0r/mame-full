@@ -53,3 +53,9 @@ void TMS9928A_int_callback (void (*callback)(int));
 */
 void TMS9928A_set_spriteslimit (int);
 
+/*
+** After loading a state, call this function 
+*/
+void TMS9928A_post_load (void);
+
+

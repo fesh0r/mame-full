@@ -46,6 +46,7 @@
 */
 
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "tms9928a.h"
 
@@ -137,7 +138,7 @@ static void _TMS9928A_mode3 (struct osd_bitmap*);
 static void _TMS9928A_mode23 (struct osd_bitmap*);
 static void _TMS9928A_modebogus (struct osd_bitmap*);
 static void _TMS9928A_sprites (struct osd_bitmap*);
-static void _TMS9928A_change_register (int, UINT8);
+static void _TMS9928A_change_register (int reg, UINT8 data);
 static void _TMS9928A_set_dirty (char);
 
 static void (*ModeHandlers[])(struct osd_bitmap*) = {
@@ -153,8 +154,8 @@ static void (*ModeHandlers[])(struct osd_bitmap*) = {
 
 typedef struct {
     /* TMS9928A internal settings */
-    UINT8 ReadAhead,Regs[8],StatusReg,oldStatusReg;
-    int Addr,FirstByte,INT,BackColour,Change,mode;
+    UINT8 ReadAhead,Regs[8],StatusReg,oldStatusReg,FirstByte,latch,INT;
+    int Addr,BackColour,Change,mode;
     int colour,pattern,nametbl,spriteattribute,spritepattern;
     int colourmask,patternmask;
     void (*INTCallback)(int);
@@ -194,7 +195,8 @@ void TMS9928A_reset () {
     tms.Addr = tms.ReadAhead = tms.INT = 0;
     tms.mode = tms.BackColour = 0;
     tms.Change = 1;
-    tms.FirstByte = -1;
+    tms.FirstByte = 0;
+	tms.latch = 0;
     _TMS9928A_set_dirty (1);
 }
 
@@ -257,7 +259,39 @@ int TMS9928A_start (int model, unsigned int vram) {
     TMS9928A_reset ();
     tms.LimitSprites = 1;
 
+	state_save_register_UINT8 ("tms9928a", 0, "R0", &tms.Regs[0], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R1", &tms.Regs[1], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R2", &tms.Regs[2], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R3", &tms.Regs[3], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R4", &tms.Regs[4], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R5", &tms.Regs[5], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R6", &tms.Regs[6], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "R7", &tms.Regs[7], 1);
+	state_save_register_UINT8 ("tms9928a", 0, "S", &tms.StatusReg, 1);
+	state_save_register_UINT8 ("tms9928a", 0, "read_ahead", &tms.ReadAhead, 1);
+	state_save_register_UINT8 ("tms9928a", 0, "first_byte", &tms.FirstByte, 1);
+	state_save_register_UINT8 ("tms9928a", 0, "latch", &tms.latch, 1);
+	state_save_register_UINT8 ("tms9928a", 0, "interrupt_line", &tms.INT, 1);
+	state_save_register_UINT8 ("tms9928a", 0, "VRAM", tms.vMem, vram);
+
     return 0;
+}
+
+void TMS9928A_post_load (void) {
+	int i;
+
+	/* mark the screen as dirty */
+	_TMS9928A_set_dirty (1);
+
+	/* all registers need to be re-written, so tables are recalculated */
+	for (i=0;i<8;i++)
+		_TMS9928A_change_register (i, tms.Regs[i]);
+
+	/* make sure the back ground colour is reset */
+	tms.BackColour = -1;
+
+	/* make sure the interrupt request is set properly */
+	if (tms.INTCallback) tms.INTCallback (tms.INT);
 }
 
 void TMS9928A_stop () {
@@ -287,7 +321,7 @@ READ_HANDLER (TMS9928A_vram_r) {
     b = tms.ReadAhead;
     tms.ReadAhead = tms.vMem[tms.Addr];
     tms.Addr = (tms.Addr + 1) & (tms.vramsize - 1);
-    tms.FirstByte = -1;
+    tms.latch = 0;
     return b;
 }
 
@@ -318,26 +352,30 @@ WRITE_HANDLER (TMS9928A_vram_w) {
     }
     tms.Addr = (tms.Addr + 1) & (tms.vramsize - 1);
     tms.ReadAhead = data;
-    tms.FirstByte = -1;
+    tms.latch = 0;
 }
 
 READ_HANDLER (TMS9928A_register_r) {
     UINT8 b;
     b = tms.StatusReg;
-    tms.StatusReg &= 0x5f;
+    tms.StatusReg = 0x1f;
     if (tms.INT) {
         tms.INT = 0;
         if (tms.INTCallback) tms.INTCallback (tms.INT);
     }
-    tms.FirstByte = -1;
+    tms.latch = 0;
     return b;
 }
 
 WRITE_HANDLER (TMS9928A_register_w) {
-    if (tms.FirstByte >= 0) {
+	int reg;
+
+    if (tms.latch) {
         if (data & 0x80) {
             /* register write */
-            _TMS9928A_change_register ((int)(data & 7), (UINT8)tms.FirstByte);
+			reg = data & 7;
+			if (tms.FirstByte != tms.Regs[reg])
+	            _TMS9928A_change_register (reg, tms.FirstByte);
         } else {
             /* set read/write address */
             tms.Addr = ((UINT16)data << 8 | tms.FirstByte) & (tms.vramsize - 1);
@@ -346,9 +384,10 @@ WRITE_HANDLER (TMS9928A_register_w) {
 				TMS9928A_vram_r	(0);
             }
         }
-        tms.FirstByte = -1;
+        tms.latch = 0;
     } else {
         tms.FirstByte = data;
+		tms.latch = 1;
     }
 }
 
@@ -360,26 +399,24 @@ static void _TMS9928A_change_register (int reg, UINT8 val) {
         "Mode 1+2 (TEXT 1 variation)", "Mode 3 (MULTICOLOR)",
         "Mode 1+3 (BOGUS)", "Mode 2+3 (MULTICOLOR variation)",
         "Mode 1+2+3 (BOGUS)" };
-    UINT8 b,oldval;
+    UINT8 b;
     int mode;
 
     val &= Mask[reg];
-    oldval = tms.Regs[reg];
-    if (oldval == val) return;
     tms.Regs[reg] = val;
 
     logerror("TMS9928A: Reg %d = %02xh\n", reg, (int)val);
     tms.Change = 1;
     switch (reg) {
     case 0:
-        if ( (val ^ oldval) & 2) {
+        if (val & 2) {
             /* re-calculate masks and pattern generator & colour */
             if (val & 2) {
                 tms.colour = ((tms.Regs[3] & 0x80) * 64) & (tms.vramsize - 1);
                 tms.colourmask = (tms.Regs[3] & 0x7f) * 8 | 7;
                 tms.pattern = ((tms.Regs[4] & 4) * 2048) & (tms.vramsize - 1);
                 tms.patternmask = (tms.Regs[4] & 3) * 256 |
-		    (tms.colourmask & 255);
+				    (tms.colourmask & 255);
             } else {
                 tms.colour = (tms.Regs[3] * 64) & (tms.vramsize - 1);
                 tms.pattern = (tms.Regs[4] * 2048) & (tms.vramsize - 1);
