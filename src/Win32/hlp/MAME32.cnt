@@ -1,0 +1,44 @@
+:Base MAME32.HLP
+:Title MAME32 Contents
+1 What's New In This Help File?=MAME32_Help_File_Changes
+1 Getting Started
+2 Overview=IDH_MAME32_GettingStarted_Overview
+2 System Requirements=MAME32_GettingStarted_Requirements
+2 What's New=IDH_MAME32_GettingStarted_What'sNew
+1 Obtaining MAME32
+2 Where to get MAME32=MAME32_Obtaining_Where
+1 Installation and Setup
+2 Windows 95/98/NT/2000=IDH_MAME32_Install_Win95_98_NT_2000
+1 Running MAME32
+2 From the command line=MAME32_Running_CommandLine
+2 From the MAME32 icon=MAME32_Running_Icon
+2 Keyboard commands=MAME32_Running_Keyboard
+1 Menus, toolbar, lists, and tabs
+2 MAME32 Menus
+3 Menu Overview=MAME32_Menu_Overview
+3 File Menu=MAME32_Menu_File
+3 View Menu=MAME32_Menu_View
+3 Options Menu=MAME32_Menu_Options
+3 Help Menu=MAME32_Menu_Help
+2 MAME32 Toolbar, Status bar, and Screen Shot
+3 Toolbar Overview=MAME32_Toolbar_Overview
+3 Status bar Overview=MAME32_StatusBar_Overview
+3 Screen Shot=MAME32_Screen_Shot
+2 MAME32 Lists
+3 Folder List=MAME32_Folder_List
+3 Game List=MAME32_Game_List
+2 MAME32 Properties Tabs
+3 General Tab=MAME32_Tab_Properties_General
+3 Audit Tab=MAME32_Tab_Properties_Audit
+3 Display Tab=MAME32_Tab_Properties_Display
+3 Sound Tab=MAME32_Tab_Properties_Sound
+3 Controllers Tab=MAME32_Tab_Properties_Controllers
+3 Advanced Tab=MAME32_Tab_Properties_Advanced
+3 Miscellaneous Tab=MAME32_Tab_Properties_Misc
+3 Vector Tab=MAME32_Tab_Properties_Vector
+1 List of Games
+2 Game List A-Z=MAME32_Game_A-Z
+1 Troubleshooting
+2 Troubleshooting MAME32 problems=MAME32_Trouble
+1 Credits/Acknowledgements
+2 MAME32 Credits/Acknowledgements=MAME32_Credits
