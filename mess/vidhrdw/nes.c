@@ -38,7 +38,7 @@ unsigned char *dirtybuffer2;
 unsigned char *dirtybuffer3;
 unsigned char *dirtybuffer4;
 #endif
-unsigned char line_priority[0x100];
+unsigned char line_priority[0x108];
 
 /* Changed at runtime */
 static unsigned short nes_colortable[] =
