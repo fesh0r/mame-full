@@ -5,17 +5,17 @@
  * by writing into a 32 byte address space; odd bytes set bits and even bytes
  * clear bits.  Here is the layout
  *
- *	31	Set		TY	Map Type
+ *	31	Set		TY	Map Type			0: RAM/ROM	1: All RAM
  *	30	Clear	TY	Map Type
- *	29	Set		M1	Memory Size
- *	28	Clear	M1	Memory Size
+ *	29	Set		M1	Memory Size			00: 4K		10: 64K Dynamic
+ *	28	Clear	M1	Memory Size			01: 16K		11: 64K Static
  *	27	Set		M0	Memory Size
  *	26	Clear	M0	Memory Size
- *	25	Set		R1	MPU Rate
- *	24	Clear	R1	MPU Rate
+ *	25	Set		R1	MPU Rate			00: Slow	10: Fast
+ *	24	Clear	R1	MPU Rate			01: Dual	11: Fast
  *	23	Set		R0	MPU Rate
  *	22	Clear	R0	MPU Rate
- *	21	Set		P1	Page #1
+ *	21	Set		P1	Page #1				0: Low		1: High
  *	20	Clear	P1	Page #1
  *	19	Set		F6	Display Offset
  *	18	Clear	F6	Display Offset
