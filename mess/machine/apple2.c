@@ -50,6 +50,7 @@ static WRITE8_HANDLER ( apple2_mainram0400_w );
 static WRITE8_HANDLER ( apple2_mainram2000_w );
 static WRITE8_HANDLER ( apple2_auxram0400_w );
 static WRITE8_HANDLER ( apple2_auxram2000_w );
+static data8_t apple2_getfloatingbusvalue(void);
 
 static double joystick_x1_time;
 static double joystick_y1_time;
@@ -83,7 +84,7 @@ static UINT8 *apple2_slotrom(int slot)
 	if ((slot >= 0) && (slot < slot_count))
 		slotrom = &rom[slot_rom_pos + (slot * slot_rom_size)];
 	else
-		slotrom = dummy_memory;
+		slotrom = NULL;
 	return slotrom;
 }
 
@@ -168,6 +169,43 @@ static const struct apple2_bankmap_entry apple2_bankmap[] =
 	apple2_setvar
 	sets the 'a2' var, and adjusts banking accordingly
 ***************************************************************************/
+
+static READ8_HANDLER(read_floatingbus)
+{
+	return apple2_getfloatingbusvalue();
+}
+
+static void apple2_install_slot_memory(int slot, void *memory)
+{
+	int bank;
+	offs_t start, end;
+	read8_handler rh;
+	write8_handler wh;
+
+	switch(slot)
+	{
+		case 1:	start = 0xc100; end = 0xc2ff; bank = A2BANK_C100; rh = MRA8_A2BANK_C100; wh = MWA8_A2BANK_C100; break;
+		case 3:	start = 0xc300; end = 0xc3ff; bank = A2BANK_C300; rh = MRA8_A2BANK_C300; wh = MWA8_A2BANK_C300; break;
+		case 4:	start = 0xc400; end = 0xc4ff; bank = A2BANK_C400; rh = MRA8_A2BANK_C400; wh = MWA8_A2BANK_C400; break;
+		case 5:	start = 0xc500; end = 0xc5ff; bank = A2BANK_C500; rh = MRA8_A2BANK_C500; wh = MWA8_A2BANK_C500; break;
+		case 6:	start = 0xc600; end = 0xc6ff; bank = A2BANK_C600; rh = MRA8_A2BANK_C600; wh = MWA8_A2BANK_C600; break;
+		case 7:	start = 0xc700; end = 0xc7ff; bank = A2BANK_C700; rh = MRA8_A2BANK_C700; wh = MWA8_A2BANK_C700; break;
+		default:
+			return;
+	}
+
+	if (!memory)
+	{
+		rh = read_floatingbus;
+		wh = MWA8_ROM;
+	}
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, wh);
+	if (memory)
+		cpu_setbank(bank, memory);
+
+}
 
 void apple2_setvar(UINT32 val, UINT32 mask)
 {
@@ -257,16 +295,17 @@ void apple2_setvar(UINT32 val, UINT32 mask)
 
 	if (mask & (VAR_INTCXROM|VAR_ROMSWITCH))
 	{
-		cpu_setbank(A2BANK_C100, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x100] : apple2_slotrom(1));
-		cpu_setbank(A2BANK_C400, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 4))) ? &apple_rom[0x400] : apple2_slotrom(4));
-		cpu_setbank(A2BANK_C500, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 5))) ? &apple_rom[0x500] : apple2_slotrom(5));
-		cpu_setbank(A2BANK_C600, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 6))) ? &apple_rom[0x600] : apple2_slotrom(6));
-		cpu_setbank(A2BANK_C700, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 7))) ? &apple_rom[0x700] : apple2_slotrom(7));
+		apple2_install_slot_memory(1, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x100] : apple2_slotrom(1));
+		apple2_install_slot_memory(2, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x200] : apple2_slotrom(2));
+		apple2_install_slot_memory(4, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 4))) ? &apple_rom[0x400] : apple2_slotrom(4));
+		apple2_install_slot_memory(5, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 5))) ? &apple_rom[0x500] : apple2_slotrom(5));
+		apple2_install_slot_memory(6, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 6))) ? &apple_rom[0x600] : apple2_slotrom(6));
+		apple2_install_slot_memory(7, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 7))) ? &apple_rom[0x700] : apple2_slotrom(7));
 	}
 
 	if (mask & (VAR_INTCXROM|VAR_SLOTC3ROM|VAR_ROMSWITCH))
 	{
-		cpu_setbank(A2BANK_C300, ((a2 & (VAR_INTCXROM|VAR_SLOTC3ROM)) == VAR_SLOTC3ROM) ? apple2_slotrom(3) : &apple_rom[0x300]);
+		apple2_install_slot_memory(3, ((a2 & (VAR_INTCXROM|VAR_SLOTC3ROM)) == VAR_SLOTC3ROM) ? apple2_slotrom(3) : &apple_rom[0x300]);
 	}
 }
 
@@ -468,15 +507,6 @@ MACHINE_INIT( apple2 )
 	/* disable VAR_ROMSWITCH if the ROM is only 16k */
 	if (memory_region_length(REGION_CPU1) < 0x8000)
 		a2_mask &= ~VAR_ROMSWITCH;
-
-	/* always internal ROM if no slots exist */
-	if (!apple2_hasslots())
-	{
-		a2_mask &= ~VAR_SLOTC3ROM;
-
-		if (memory_region_length(REGION_CPU1) < 0x8000)
-			a2_set |= VAR_INTCXROM;
-	}
 
 	if (mess_ram_size <= 64*1024)
 		a2_mask &= ~(VAR_RAMRD | VAR_RAMWRT | VAR_80STORE | VAR_ALTZP | VAR_80COL);
