@@ -40,13 +40,13 @@ int cgenie_vh_start(void)
 	if( !dlybitmap )
 		return 1;
 
-    cleanbuffer = malloc(64 * 32 * 8);
+    cleanbuffer = (UINT8*)malloc(64 * 32 * 8);
 	if( !cleanbuffer )
 		return 1;
 	memset(cleanbuffer, 0, 64 * 32 * 8);
 
 
-	colorbuffer = malloc(64 * 32 * 8);
+	colorbuffer = (UINT8*)malloc(64 * 32 * 8);
 	if( !colorbuffer )
 		return 1;
 	memset(colorbuffer, 0, 64 * 32 * 8);

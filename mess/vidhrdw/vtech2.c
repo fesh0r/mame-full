@@ -51,7 +51,7 @@ static int laser_two_color = 0;
 int laser_vh_start(void)
 {
 	videoram_size = 0x04000;
-	dirtybuffer = malloc(videoram_size);
+	dirtybuffer = (UINT8*)malloc(videoram_size);
 	if (!dirtybuffer)
 		return 1;
 	return 0;

@@ -30,7 +30,7 @@
  *********************************************************************/
 static WRITE_HANDLER ( v_via_pa_w );
 static WRITE_HANDLER( v_via_pb_w );
-static void vectrex_screen_update (double time);
+static void vectrex_screen_update (double time_);
 static void vectrex_shift_reg_w (int via_sr);
 static WRITE_HANDLER ( v_via_ca2_w );
 
@@ -72,10 +72,10 @@ void (*vector_add_point_function) (int, int, int, int) = vector_add_point;
 /*********************************************************************
   Screen updating
  *********************************************************************/
-static void vectrex_screen_update (double time)
+static void vectrex_screen_update (double time_)
 {
 	if (vectrex_imager_status)
-		vectrex_imager_left_eye(time);
+		vectrex_imager_left_eye(time_);
 
 	if (vectrex_refresh_with_T2)
 	{
@@ -112,16 +112,16 @@ void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 void vector_add_point_stereo (int x, int y, int color, int intensity)
 {
 	if (vectrex_imager_status == 1) /* left = 2, right = 1 */
-		vector_add_point (y*M_SQRT1_2, ((x_max-x)*M_SQRT1_2)+y_center, color, intensity);
+		vector_add_point ((int)(y*M_SQRT1_2), (int)(((x_max-x)*M_SQRT1_2)+y_center), color, intensity);
 	else
-		vector_add_point (y*M_SQRT1_2, (x_max-x)*M_SQRT1_2, color, intensity);
+		vector_add_point ((int)(y*M_SQRT1_2), (int)((x_max-x)*M_SQRT1_2), color, intensity);
 }
 
 INLINE void vectrex_zero_integrators(void)
 {
 	if (last_point)
 		vector_add_point_function (last_point_x, last_point_y, vectrex_beam_color,
-					   MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
+					   MIN((int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
 	last_point = 0;
 
 	x_int=x_center-(analog_sig[2]*INT_PER_CLOCK);
@@ -133,7 +133,7 @@ INLINE void vectrex_dot(void)
 {
 	last_point_x = x_int;
 	last_point_y = y_int;
-	last_point_z = analog_sig[3] > 0? analog_sig[3] * z_factor: 0;
+	last_point_z = analog_sig[3] > 0? (int)(analog_sig[3] * z_factor): 0;
 	last_point_starttime = timer_get_time();
 	last_point = 1;
 }
@@ -142,11 +142,11 @@ INLINE void vectrex_shift_out(int shift, int pattern)
 {
 	int x = (analog_sig[0] - analog_sig[2]) * INT_PER_CLOCK * 2;
 	int y = (analog_sig[1] + analog_sig[2]) * INT_PER_CLOCK * 2;
-	int z = analog_sig[3] > 0? analog_sig[3] * z_factor: 0;
+	int z = analog_sig[3] > 0? (int)(analog_sig[3] * z_factor): 0;
 
 	if (last_point && (!(pattern & 0x80) || !z))
 		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
-				  MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
+				  MIN( (int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
 	last_point = 0;
 
 	while (shift)
@@ -172,10 +172,10 @@ INLINE void vectrex_shift_out(int shift, int pattern)
 	}
 }
 
-INLINE void vectrex_solid_line(double time, int pattern)
+INLINE void vectrex_solid_line(double time_, int pattern)
 {
-	int z = analog_sig[3] > 0? analog_sig[3]*z_factor: 0;
-    int length = VECTREX_CLOCK * INT_PER_CLOCK * time;
+	int z = analog_sig[3] > 0? (int)(analog_sig[3]*z_factor): 0;
+    int length = (int)(VECTREX_CLOCK * INT_PER_CLOCK * time_);
 
 	/* The BIOS draws lines as follows: First put a pattern in the VIA SR (this causes a dot). Then
 	 * turn on RAMP and let the integrators do their job (this causes a line to be drawn).
@@ -184,7 +184,7 @@ INLINE void vectrex_solid_line(double time, int pattern)
 	 * black (a move). */
 	if (last_point && (!(pattern & 0x80) || !z))
 		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
-				  MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
+				  MIN((int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
 	last_point = 0;
 
 	x_int += (int)(length * (analog_sig[0] - analog_sig[2]));
@@ -382,9 +382,9 @@ static WRITE_HANDLER ( v_via_pb_w )
 			/* MUX has been enabled */
 			/* This is a rare case used by some new games */
 		{
-			double time = timer_get_time()+SH_DELAY;
-			vectrex_solid_line(time-start_time, old_via_sr);
-			start_time = time;
+			double time_ = timer_get_time()+SH_DELAY;
+			vectrex_solid_line(time_-start_time, old_via_sr);
+			start_time = time_;
 		}
 	}
 	else
@@ -415,7 +415,7 @@ static WRITE_HANDLER ( v_via_pb_w )
 
 static WRITE_HANDLER ( v_via_pa_w )
 {
-	double time;
+	double time_;
 
 	if (!(vectrex_via_out[PORTB] & 0x80))  /* RAMP active (low) ? */
 	{
@@ -424,9 +424,9 @@ static WRITE_HANDLER ( v_via_pa_w )
 		 * Draw the vector with the current settings
 		 * before updating the signals.
 		 */
-		time = timer_get_time() + SH_DELAY;
-		vectrex_solid_line(time - start_time, old_via_sr);
-		start_time = time;
+		time_ = timer_get_time() + SH_DELAY;
+		vectrex_solid_line(time_ - start_time, old_via_sr);
+		start_time = time_;
 	}
 	/* DAC output always goes into X integrator */
 	vectrex_via_out[PORTA] = analog_sig[0] = (signed char)data;
@@ -439,7 +439,7 @@ static WRITE_HANDLER ( v_via_pa_w )
 
 static void vectrex_shift_reg_w (int via_sr)
 {
-	double time;
+	double time_;
 
 	if (vectrex_via_out[PORTB] & 0x80)
 	{
@@ -451,10 +451,10 @@ static void vectrex_shift_reg_w (int via_sr)
 	else
 	{
 		/* RAMP active */
-		time = timer_get_time() + BLANK_DELAY;
-		vectrex_solid_line(time - start_time, old_via_sr);
+		time_ = timer_get_time() + BLANK_DELAY;
+		vectrex_solid_line(time_ - start_time, old_via_sr);
 		vectrex_shift_out(8, via_sr);
-		start_time = time + TIME_IN_CYCLES(16, 0);
+		start_time = time_ + TIME_IN_CYCLES(16, 0);
 	}
 	old_via_sr = via_sr;
 }
@@ -505,13 +505,15 @@ void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,con
 	/* artwork */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->height * 0.1151961, Machine->scrbitmap->height);
+		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, 
+						  (int)(Machine->scrbitmap->height * 0.1151961), Machine->scrbitmap->height);
 		if (buttons)
 			artwork_load_size(&led, "led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width, buttons->artwork->height / 8);
 	}
 	else
 	{
-		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->width, Machine->scrbitmap->width * 0.1151961);
+		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, 
+						  Machine->scrbitmap->width, (int)(Machine->scrbitmap->width * 0.1151961));
 		if (buttons)
 			artwork_load_size(&led, "led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width / 8, buttons->artwork->height);
 	}

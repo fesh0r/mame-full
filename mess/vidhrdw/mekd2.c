@@ -89,7 +89,7 @@ void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, cons
 int mekd2_vh_start (void)
 {
     videoram_size = 6 * 2 + 24;
-    videoram = malloc (videoram_size);
+    videoram = (UINT8*)malloc (videoram_size);
 	if (!videoram)
         return 1;
     if (generic_vh_start () != 0)
