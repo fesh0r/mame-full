@@ -291,8 +291,9 @@ VIDEO_UPDATE( sraider )
 	//if (gridline[0xd8] != 0)
 	if (gridline[0xd8] != 0)
 	{
+		int i;
 		tilemap_draw(bitmap, &Machine->visible_area, grid_tilemap, 0, 0);
-		for(int i=0;i<256;i++)
+		for(i=0;i<256;i++)
 		{
 			if (gridline[i] != 0)
 			{
