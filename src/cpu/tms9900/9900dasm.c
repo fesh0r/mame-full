@@ -1,9 +1,10 @@
 /*****************************************************************************
  *
  *	 9900dasm.c
- *	 TMS 9900 disassembler
+ *	 TMS 9900 family disassembler
  *
- *	 Copyright (c) 1998 John Butler, all rights reserved.
+ *	 Raphael Nabet 2003
+ *	 Based on previous work Copyright (c) 1998 John Butler.
  *	 Based on 6502dasm.c 6502/65c02/6510 disassembler by Juergen Buchmueller
  *
  *	 - This source code is released as freeware for non-commercial purposes.
@@ -24,20 +25,6 @@
 #include "memory.h"
 
 #include "tms9900.h"
-
-#define RDOP(A) (cpu_readop(A) << 8) + (cpu_readop((A+1) & 0xffff))
-#define RDWORD(A) (cpu_readop_arg(A) << 8) + (cpu_readop_arg((A+1) & 0xffff))
-
-#define BITS_0to3	((OP>>12) & 0xf)
-#define BITS_2to5	((OP>>10) & 0xf)
-#define BITS_5to9	((OP>>6) & 0x1f)
-#define BITS_3to7	((OP>>8) & 0x1f)
-#define BITS_6to10	((OP>>5) & 0x1f)
-
-#define BITS_0to1	((OP>>14) & 0x3)
-#define BITS_0to4	((OP>>11) & 0x1f)
-#define BITS_0to2	((OP>>13) & 0x7)
-#define BITS_0to5	((OP>>10) & 0x3f)
 
 #define	MASK	0x0000ffff
 #define BITS(val,n1,n2)	((val>>(15-(n2))) & (MASK>>(15-((n2)-(n1)))))
@@ -64,6 +51,7 @@ typedef enum
 	format_16,	/* field instructions */
 	format_17,	/* alter register and jump instructions */
 	format_18,	/* single register operand instructions */
+	format_liim,/* format for liim (looks like format 18) */
 	format_19,	/* move address instruction */
 	format_20,	/* list search instructions */
 	format_21,	/* extend precision instruction */
@@ -84,7 +72,7 @@ enum
 
 	/* additional flags for special decoding */
 	sd_11		= 0x100,	/* bit 11 should be cleared in li, ai, andi, ori, ci, stwp, stst */
-	sd_11_15	= 0x300		/* bits 11-15 should be cleared in lwpi, limi, idle, rset, rtwp, ckon, ckof, lrex */
+	sd_11_15	= 0x200		/* bits 11-15 should be cleared in lwpi, limi, idle, rset, rtwp, ckon, ckof, lrex */
 };
 
 typedef struct description_t
@@ -124,11 +112,14 @@ enum opcodes {
 	_sr,	_mr,	_dr,	_lr,	_str,	_iof,	_sneb,	_crc,	_ts,	_ad,
 	_cid,	_sd,	_md,	_dd,	_ld,	_std,	_ep,
 
+	/* tms9940-only instruction set */
+	_liim,	_dca,	_dcs,
+
 	_ill
 };
 
 
-static const description_t descriptions[144+1] =
+static const description_t descriptions[144+3+1] =
 {
 	/* basic instruction set */
 	{ "a",		format_1,	ps_any },			{ "ab",		format_1,	ps_any },
@@ -160,12 +151,12 @@ static const description_t descriptions[144+1] =
 	{ "src",	format_5,	ps_any },			{ "srl",	format_5,	ps_any },
 	{ "ai",		format_8a,	ps_any|sd_11 },		{ "andi",	format_8a,	ps_any|sd_11 },
 	{ "ci",		format_8a,	ps_any|sd_11 },		{ "li",		format_8a,	ps_any|sd_11 },
-	{ "ori",	format_8a,	ps_any|sd_11 },		{ "lwpi",	format_8b,	ps_any|sd_11_15 },
-	{ "limi",	format_8b,	ps_any|sd_11_15 },	{ "stst",	format_18,	ps_any|sd_11 },
-	{ "stwp",	format_18,	ps_any|sd_11 },		{ "rtwp",	format_7,	ps_any|sd_11_15 },
-	{ "idle",	format_7,	ps_any|sd_11_15 },	{ "rset",	format_7,	ps_any|sd_11_15 },
-	{ "ckof",	format_7,	ps_any|sd_11_15 },	{ "ckon",	format_7,	ps_any|sd_11_15 },
-	{ "lrex",	format_7,	ps_any|sd_11_15 },	
+	{ "ori",	format_8a,	ps_any|sd_11 },		{ "lwpi",	format_8b,	ps_any|sd_11|sd_11_15 },
+	{ "limi",	format_8b,	ps_any|sd_11|sd_11_15 },	{ "stst",	format_18,	ps_any|sd_11 },
+	{ "stwp",	format_18,	ps_any|sd_11 },		{ "rtwp",	format_7,	ps_any|sd_11|sd_11_15 },
+	{ "idle",	format_7,	ps_any|sd_11|sd_11_15 },	{ "rset",	format_7,	ps_any|sd_11|sd_11_15 },
+	{ "ckof",	format_7,	ps_any|sd_11|sd_11_15 },	{ "ckon",	format_7,	ps_any|sd_11|sd_11_15 },
+	{ "lrex",	format_7,	ps_any|sd_11|sd_11_15 },	
 
 	/* mapper instruction set */
 	{ "lds",	format_6,	ps_mapper },		{ "ldd",	format_6,	ps_mapper },
@@ -213,6 +204,14 @@ static const description_t descriptions[144+1] =
 	{ "md",		format_6,	ps_ti990_12 },		{ "dd",		format_6,	ps_ti990_12 },
 	{ "ld",		format_6,	ps_ti990_12 },		{ "std",	format_6,	ps_ti990_12 },
 	{ "ep",		format_21,	ps_ti990_12 },
+
+	/* tms9940-only instruction set */
+	/* these instructions are said to be format 9 (xop), but since the xop
+	level is interpreted as part of the opcode, dca and dcs should be handled
+	like format 6.  liim looks like format 18, but slightly different,
+	therefore it is handled like a special format. */
+	{ "liim",	format_liim,/*ps_tms9940*/0	},	{ "dca",	format_6,	/*ps_tms9940*/0 },
+	{ "dcs",	format_6,	/*ps_tms9940*/0 },
 
 	{ NULL,		illegal,	ps_any }
 };
@@ -315,7 +314,7 @@ static const enum opcodes ops_001c_002f_s0[20]=
 static int PC;
 
 
-static int print_arg (char *dest, int mode, int arg)
+static int print_arg (char *dest, int mode, int arg, data16_t (*readop_arg)(offs_t address))
 {
 	int	base;
 
@@ -328,7 +327,7 @@ static int print_arg (char *dest, int mode, int arg)
 			return sprintf (dest, "*R%d", arg);
 			break;
 		case 0x2:	/* symbolic|indexed */
-			base = RDWORD(PC); PC+=2;
+			base = readop_arg(PC); PC+=2;
 			if (arg) 	/* indexed */
 				return sprintf (dest, "@>%04x(R%d)", base, arg);
 			else		/* symbolic (direct) */
@@ -346,7 +345,7 @@ static int print_arg (char *dest, int mode, int arg)
 /*****************************************************************************
  *	Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address))
 {
 	int	OP, OP2, opc;
 	int sarg, darg, smode, dmode;
@@ -362,7 +361,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		Under tms9900, opcodes >0400->07FF are incompletely decoded: bits 11 is ignored, and so are
 		bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
 		generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
-		Additionnally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
+		Additionally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
 		non-zero.
 	*/
 	#define BETTER_0200_DECODING (model_id == TI990_10_ID)
@@ -383,7 +382,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		processor_mask |= ps_ti990_12;*/	/* ti990/12, tms99000, and later */
 
 	PC = pc;
- 	OP = RDOP(PC); PC+=2;
+ 	OP = (*readop)(PC); PC+=2;
 
 	/* let's identify the opcode */
 	if (OP >= 0x4000)
@@ -442,6 +441,41 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		flags = descriptions[opc].flags;	/* read new flags */
 	}
 
+	/* tms9940 replace a few xops with custom instructions */
+	if ((opc == _xop) && ((model_id == TMS9940_ID) || (model_id == TMS9985_ID)))
+	{
+		switch (BITS(OP,6,9))
+		{
+		case 0:
+			/* opcode is dca */
+			opc = _dca;
+			break;
+
+		case 1:
+			/* opcode is dcs */
+			opc = _dcs;
+			break;
+
+		case 2:
+		case 3:	/* should be 2, but instruction decoding is incomplete */
+			/* opcode is liim */
+			if (BITS(OP,12,15) == 0)
+				/* ts must be == 0 */
+				opc = _liim;
+			else
+				/* I don't know what happens when ts != 0.  Maybe the CPU does
+				the complete address decoding, and liim gets a bogus value
+				instead of the immediate.  Since I do not know, I handle this
+				as an illegal instruction. */
+				opc = _ill;
+			break;
+
+		default:
+			/* this is still a software xop */
+			break;
+		}
+	}
+
 	mnemonic = descriptions[opc].mnemonic;
 	format = descriptions[opc].format;
 
@@ -454,9 +488,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		darg = BITS(OP,6,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		break;
 
 	case format_2a:		/* jump instructions */
@@ -476,19 +510,19 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		sarg = BITS(OP,12,15);
 		darg = BITS(OP,6,9);
 
-		if (darg==0 && (format == format_4))
+		if ((darg == 0) && (format == format_4))
 			darg = 16;
 
 		if (format == format_3_9)
 		{
 			buffer += sprintf (buffer, "%-4s ", mnemonic);
-			buffer += print_arg (buffer, smode, sarg);
+			buffer += print_arg (buffer, smode, sarg, readop_arg);
 			buffer += sprintf (buffer, ",R%d", darg);
 		}
 		else
 		{
 			buffer += sprintf (buffer, "%-4s ", mnemonic);
-			buffer += print_arg (buffer, smode, sarg);
+			buffer += print_arg (buffer, smode, sarg, readop_arg);
 			buffer += sprintf (buffer, ",%d", darg);
 		}
 		break;
@@ -505,7 +539,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		sarg = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		break;
 
 	case format_7:		/* instructions without operands */
@@ -514,13 +548,13 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 
 	case format_8a:		/* immediate instructions (destination register) */
 		darg = BITS(OP,12,15);
-		sarg = RDWORD(PC); PC+=2;
+		sarg = readop_arg(PC); PC+=2;
 
 		sprintf (buffer, "%-4s R%d,>%04x", mnemonic, darg, sarg);
 		break;
 
 	case format_8b:		/* immediate instructions (no destination register) */
-		sarg = RDWORD(PC); PC+=2;
+		sarg = readop_arg(PC); PC+=2;
 
 		sprintf (buffer, "%-4s >%04x", mnemonic, sarg);
 		break;
@@ -533,7 +567,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		break;
 
 	case format_11:		/* multiple precision instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -542,14 +576,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		byte_count = BITS(OP2,0,3);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		break;
 
 	case format_12:		/* string instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -559,14 +593,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		checkpoint = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		buffer += sprintf (buffer, byte_count ? ",%d,R%d" : ",R%d,R%d", byte_count, checkpoint);
 		break;
 
 	case format_13:		/* multiple precision shift instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -574,20 +608,20 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		byte_count = BITS(OP2,0,3);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		buffer += sprintf (buffer, darg ? ",%d" : ",R%d", darg);
 		break;
 
 	case format_14:		/* bit testing instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
 		darg = BITS(OP2,0,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		if (darg == 0x3ff)
 			buffer += sprintf (buffer, ",R0");
 		else
@@ -595,7 +629,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		break;
 
 	case format_15:		/* invert order of field instruction */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -603,13 +637,13 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		bit_width = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, bit_position ? ",(%d," : ",(R%d,", bit_position);
 		buffer += sprintf (buffer, bit_width ? "%d)" : "R%d)", bit_width);
 		break;
 
 	case format_16:		/* field instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -619,15 +653,15 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		bit_width = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		buffer += sprintf (buffer, bit_position ? ",(%d," : ",(%d,", bit_position);
 		buffer += sprintf (buffer, bit_width ? "%d)" : "R%d)", bit_width);
 		break;
 
 	case format_17:		/* alter register and jump instructions */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		displacement = (signed char)BITS(OP2,8,15);
 		sarg = BITS(OP2,4,7);
@@ -643,8 +677,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		sprintf (buffer, "%-4s R%d", mnemonic, sarg);
 		break;
 
+	case format_liim:	/* liim instruction */
+		sarg = BITS(OP,14,15);
+
+		sprintf (buffer, "%-4s %d", mnemonic, sarg);
+		break;
+
 	case format_19:		/* move address instruction */
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -652,16 +692,16 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		darg = BITS(OP2,6,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		break;
 
 	case format_20:		/* list search instructions */
 		{
 			const char *condition_code;
 
-			OP2 = RDOP(PC); PC+=2;
+			OP2 = readop_arg(PC); PC+=2;
 
 			smode = BITS(OP2,10,11);
 			sarg = BITS(OP2,12,15);
@@ -706,9 +746,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 			}
 
 			buffer += sprintf (buffer, "%-4s %s,", mnemonic, condition_code);
-			buffer += print_arg (buffer, smode, sarg);
+			buffer += print_arg (buffer, smode, sarg, readop_arg);
 			buffer += sprintf (buffer, ",");
-			buffer += print_arg (buffer, dmode, darg);
+			buffer += print_arg (buffer, dmode, darg, readop_arg);
 			break;
 		}
 
@@ -716,7 +756,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 	{
 		int dest_byte_count;
 
-		OP2 = RDOP(PC); PC+=2;
+		OP2 = readop_arg(PC); PC+=2;
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -726,9 +766,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 		dest_byte_count = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg);
+		buffer += print_arg (buffer, smode, sarg, readop_arg);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg);
+		buffer += print_arg (buffer, dmode, darg, readop_arg);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		buffer += sprintf (buffer, dest_byte_count ? ",%d" : ",R%d", dest_byte_count);
 		break;
