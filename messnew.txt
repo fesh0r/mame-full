@@ -164,6 +164,8 @@ Other Changes:
 
 - Added new endian macros [Nate Woods]
 
+- DeviceIO bug fixed for most drivers [Juergen Buchmueller]
+
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
