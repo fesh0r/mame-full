@@ -595,6 +595,28 @@ static void I386OP(imul_r32_rm32)(void)		// Opcode 0x0f af
 	I.CF = I.OF = !(result == (INT64)(INT32)result);
 }
 
+static void I386OP(imul_r32_rm32_i32)(void)	// Opcode 0x69
+{
+	UINT8 modrm = FETCH();
+	INT64 result;
+	INT64 src, dst;
+	if( modrm >= 0xc0 ) {
+		dst = (INT64)(INT32)LOAD_RM32(modrm);
+		CYCLES(12);		/* TODO: Correct multiply timing */
+	} else {
+		UINT32 ea = GetEA(modrm);
+		dst = (INT64)(INT32)READ32(ea);
+		CYCLES(15);		/* TODO: Correct multiply timing */
+	}
+
+	src = (INT64)(INT32)FETCH32();
+	result = src * dst;
+
+	STORE_REG32(modrm, (UINT32)result);
+
+	I.CF = I.OF = !(result == (INT64)(INT32)result);
+}
+
 static void I386OP(imul_r32_rm32_i8)(void)	// Opcode 0x6b
 {
 	UINT8 modrm = FETCH();
@@ -2637,4 +2659,29 @@ static void I386OP(group0FBA_32)(void)		// Opcode 0x0f ba
 			osd_die("i386: group0FBA_32 /%d unknown\n", (modrm >> 3) & 0x7);
 			break;
 	}
+}
+
+static void I386OP(bound_r32_m32_m32)(void)	// Opcode 0x62
+{
+	UINT8 modrm;
+	INT32 val, low, high;
+
+	modrm = FETCH();
+
+	if (modrm >= 0xc0)
+	{
+		low = high = LOAD_RM32(modrm);
+	}
+	else
+	{
+		UINT32 ea = GetEA(modrm);
+		low = READ32(ea + 0);
+		high = READ32(ea + 4);
+	}
+	val = LOAD_REG32(modrm);
+
+	if ((val < low) || (val > high))
+		i386_interrupt(5);
+
+	CYCLES(1);	// TODO: Find out correct cycle count
 }

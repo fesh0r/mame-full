@@ -26,11 +26,15 @@ int pit8253_init(int count);
 void pit8253_config(int which, struct pit8253_config *config);
 void pit8253_reset(int which);
 
-READ_HANDLER ( pit8253_0_r );
-READ_HANDLER ( pit8253_1_r );
+READ8_HANDLER ( pit8253_0_r );
+READ8_HANDLER ( pit8253_1_r );
+WRITE8_HANDLER ( pit8253_0_w );
+WRITE8_HANDLER ( pit8253_1_w );
 
-WRITE_HANDLER ( pit8253_0_w );
-WRITE_HANDLER ( pit8253_1_w );
+READ32_HANDLER ( pit8253_32_0_r );
+READ32_HANDLER ( pit8253_32_1_r );
+WRITE32_HANDLER ( pit8253_32_0_w );
+WRITE32_HANDLER ( pit8253_32_1_w );
 
 WRITE_HANDLER ( pit8253_0_gate_w );
 WRITE_HANDLER ( pit8253_1_gate_w );

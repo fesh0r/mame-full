@@ -38,8 +38,8 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(and_r32_rm32),		/* 0x23 */
 	I386OP(and_al_i8),			/* 0x24 */
 	I386OP(and_eax_i32),		/* 0x25 */
-	I386OP(invalid),			/* 0x26 */		/* TODO: Segment override = ES */
-	I386OP(invalid),			/* 0x27 */		/* TODO: DAA */
+	I386OP(segment_ES),			/* 0x26 */
+	I386OP(daa),				/* 0x27 */
 	I386OP(sub_rm8_r8),			/* 0x28 */
 	I386OP(sub_rm32_r32),		/* 0x29 */
 	I386OP(sub_r8_rm8),			/* 0x2a */
@@ -47,7 +47,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(sub_al_i8),			/* 0x2c */
 	I386OP(sub_eax_i32),		/* 0x2d */
 	I386OP(segment_CS),			/* 0x2e */
-	I386OP(invalid),			/* 0x2f */		/* TODO: DAS */
+	I386OP(das),				/* 0x2f */
 	I386OP(xor_rm8_r8),			/* 0x30 */
 	I386OP(xor_rm32_r32),		/* 0x31 */
 	I386OP(xor_r8_rm8),			/* 0x32 */
@@ -63,7 +63,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(cmp_al_i8),			/* 0x3c */
 	I386OP(cmp_eax_i32),		/* 0x3d */
 	I386OP(invalid),			/* 0x3e */		/* TODO: Segment override = DS */
-	I386OP(invalid),			/* 0x3f */		/* TODO: AAS */
+	I386OP(aas),				/* 0x3f */
 	I386OP(inc_eax),			/* 0x40 */
 	I386OP(inc_ecx),			/* 0x41 */
 	I386OP(inc_edx),			/* 0x42 */
@@ -98,20 +98,20 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(pop_edi),			/* 0x5f */
 	I386OP(pushad),				/* 0x60 */
 	I386OP(popad),				/* 0x61 */
-	I386OP(invalid),			/* 0x62 */		/* TODO: BOUND */
+	I386OP(bound_r32_m32_m32),	/* 0x62 */
 	I386OP(invalid),			/* 0x63 */		/* TODO: ARPL */
-	I386OP(invalid),			/* 0x64 */		/* TODO: Segment override = FS */
-	I386OP(invalid),			/* 0x65 */		/* TODO: Segment override = GS */
+	I386OP(fs),					/* 0x64 */
+	I386OP(gs),					/* 0x65 */
 	I386OP(operand_size),		/* 0x66 */
 	I386OP(address_size),		/* 0x67 */
 	I386OP(push_i32),			/* 0x68 */
-	I386OP(invalid),			/* 0x69 */		/* TODO: IMUL */
+	I386OP(imul_r32_rm32_i32),	/* 0x69 */
 	I386OP(push_i8),			/* 0x6a */
 	I386OP(imul_r32_rm32_i8),	/* 0x6b */
-	I386OP(invalid),			/* 0x6c */		/* TODO: INSB */
-	I386OP(invalid),			/* 0x6d */		/* TODO: INSD */
-	I386OP(invalid),			/* 0x6e */		/* TODO: OUTSB */
-	I386OP(invalid),			/* 0x6f */		/* TODO: OUTSD */
+	I386OP(insb),				/* 0x6c */
+	I386OP(insd),				/* 0x6d */
+	I386OP(outsb),				/* 0x6e */
+	I386OP(outsd),				/* 0x6f */
 	I386OP(jo_rel8),			/* 0x70 */
 	I386OP(jno_rel8),			/* 0x71 */
 	I386OP(jc_rel8),			/* 0x72 */
@@ -196,8 +196,8 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(groupC1_32),			/* 0xc1 */
 	I386OP(ret_near32_i16),		/* 0xc2 */
 	I386OP(ret_near32),			/* 0xc3 */
-	I386OP(invalid),			/* 0xc4 */		/* TODO: LES */
-	I386OP(invalid),			/* 0xc5 */		/* TODO: LDS */
+	I386OP(les),				/* 0xc4 */
+	I386OP(lds),				/* 0xc5 */
 	I386OP(mov_rm8_i8),			/* 0xc6 */
 	I386OP(mov_rm32_i32),		/* 0xc7 */
 	I386OP(invalid),			/* 0xc8 */		/* TODO: ENTER */
@@ -244,7 +244,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(invalid),			/* 0xf1 */		
 	I386OP(repne),				/* 0xf2 */
 	I386OP(rep),				/* 0xf3 */
-	I386OP(invalid),			/* 0xf4 */		/* TODO: HLT */
+	I386OP(hlt),				/* 0xf4 */		/* TODO: HLT */
 	I386OP(invalid),			/* 0xf5 */		/* TODO: CMC */
 	I386OP(groupF6_8),			/* 0xf6 */		
 	I386OP(groupF7_32),			/* 0xf7 */
@@ -440,10 +440,10 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(imul_r32_rm32),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
 	I386OP(invalid),			/* 0xb1 */		/* CMPXCHG (486) */
-	I386OP(invalid),			/* 0xb2 */		/* TODO: LSS */
+	I386OP(lss),				/* 0xb2 */
 	I386OP(btr_rm32_r32),		/* 0xb3 */
-	I386OP(invalid),			/* 0xb4 */		/* TODO: LFS */
-	I386OP(invalid),			/* 0xb5 */		/* TODO: LGS */
+	I386OP(lfs),				/* 0xb4 */
+	I386OP(lgs),				/* 0xb5 */
 	I386OP(movzx_r32_rm8),		/* 0xb6 */
 	I386OP(movzx_r32_rm16),		/* 0xb7 */
 	I386OP(invalid),			/* 0xb8 */

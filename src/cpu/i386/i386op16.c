@@ -2537,11 +2537,27 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 	}
 }
 
-static void I386OP(es)(void)			// Opcode 0x26
+static void I386OP(bound_r16_m16_m16)(void)	// Opcode 0x62
 {
-	I.segment_prefix = 1;
-	I.segment_override = ES;
-	CYCLES(0);	// TODO: Specify cycle count
-	I386OP(decode_opcode)();
-}
+	UINT8 modrm;
+	INT16 val, low, high;
 
+	modrm = FETCH();
+
+	if (modrm >= 0xc0)
+	{
+		low = high = LOAD_RM16(modrm);
+	}
+	else
+	{
+		UINT32 ea = GetEA(modrm);
+		low = READ16(ea + 0);
+		high = READ16(ea + 2);
+	}
+	val = LOAD_REG16(modrm);
+
+	if ((val < low) || (val > high))
+		i386_interrupt(5);
+
+	CYCLES(1);	// TODO: Find out correct cycle count
+}

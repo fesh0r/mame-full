@@ -24,6 +24,7 @@ struct dma8237
 {
 	const struct dma8237_interface *intf;
 	mame_timer *timer;
+	mame_timer *msbflip_timer;
 
 	struct
 	{
@@ -56,6 +57,7 @@ static int dma_count;
 
 
 static void dma8237_timerproc(int param);
+static void dma8237_msbflip_timerproc(int param);
 static void dma8237_update_status(int which);
 
 /* ----------------------------------------------------------------------- */
@@ -74,6 +76,7 @@ int dma8237_init(int count)
 	{
 		dma[which].status = 0x0F;
 		dma[which].timer = mame_timer_alloc(dma8237_timerproc);
+		dma[which].msbflip_timer = mame_timer_alloc(dma8237_msbflip_timerproc);
 		dma[which].eop = 1;
 	}
 	return 0;
@@ -165,6 +168,13 @@ static void dma8237_timerproc(int param)
 
 
 
+static void dma8237_msbflip_timerproc(int which)
+{
+	dma[which].msb ^= 1;
+}
+
+
+
 static void dma8237_update_status(int which)
 {
 	UINT16 pending_transfer;
@@ -226,6 +236,13 @@ static void dma8237_verify(int which)
 
 
 
+static void prepare_msb_flip(int which)
+{
+	mame_timer_adjust(dma[which].msbflip_timer, time_zero, which, time_zero);
+}
+
+
+
 static data8_t dma8237_read(int which, offs_t offset)
 {
 	data8_t data = 0xFF;
@@ -241,7 +258,7 @@ static data8_t dma8237_read(int which, offs_t offset)
 	case 6:
 		/* DMA address register */
 		data = dma[which].chan[offset / 2].address >> (dma[which].msb ? 8 : 0);
-		dma[which].msb ^= 1;
+		prepare_msb_flip(which);
 
 		/* hack simulating refresh activity for 'ibmxt' BIOS; I do not know
 		 * why this is needed; but in any case, the ibmxt driver does not load
@@ -260,7 +277,7 @@ static data8_t dma8237_read(int which, offs_t offset)
 	case 7:
 		/* DMA count register */
 		data = dma[which].chan[offset / 2].count >> (dma[which].msb ? 8 : 0);
-		dma[which].msb ^= 1;
+		prepare_msb_flip(which);
 		break;
 
 	case 8:
@@ -308,7 +325,7 @@ static void dma8237_write(int which, offs_t offset, data8_t data)
 			dma[which].chan[offset / 2].address |= ((UINT16) data) << 8;
 		else
 			dma[which].chan[offset / 2].address = data;
-		dma[which].msb ^= 1;
+		prepare_msb_flip(which);
 		break;
 
 	case 1:
@@ -320,7 +337,7 @@ static void dma8237_write(int which, offs_t offset, data8_t data)
 			dma[which].chan[offset / 2].count |= ((UINT16) data) << 8;
 		else
 			dma[which].chan[offset / 2].count = data;
-		dma[which].msb ^= 1;
+		prepare_msb_flip(which);
 		break;
 
 	case 8:
@@ -417,6 +434,32 @@ void dma8237_run_transfer(int which, int channel)
 
 
 
+static data32_t dma8237_read32(int which, offs_t offset)
+{
+	data32_t result = 0;
+	result |= (((data32_t) dma8237_read(which, offset * 4 + 0)) << 0);
+	result |= (((data32_t) dma8237_read(which, offset * 4 + 1)) << 8);
+	result |= (((data32_t) dma8237_read(which, offset * 4 + 2)) << 16);
+	result |= (((data32_t) dma8237_read(which, offset * 4 + 3)) << 24);
+	return result;
+}
+
+
+
+static void dma8237_write32(int which, offs_t offset, data32_t data, data32_t mem_mask)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		dma8237_write(which, offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		dma8237_write(which, offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		dma8237_write(which, offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		dma8237_write(which, offset * 4 + 3, data >> 24);
+}
+
+
+
 /******************* Standard 8-bit CPU interfaces *******************/
 
 READ_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
@@ -424,3 +467,8 @@ READ_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
 
 WRITE_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
 WRITE_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
+
+READ32_HANDLER( dma8237_32_0_r ) { return dma8237_read32(0, offset); }
+READ32_HANDLER( dma8237_32_1_r ) { return dma8237_read32(1, offset); }
+WRITE32_HANDLER( dma8237_32_0_w ) { dma8237_write32(0, offset, data, mem_mask); }
+WRITE32_HANDLER( dma8237_32_1_w ) { dma8237_write32(1, offset, data, mem_mask); }

@@ -40,10 +40,14 @@ void dma8237_drq_write(int which, int channel, int state);
 /* unfortunate hack for the interim for PC HDC */
 void dma8237_run_transfer(int which, int channel);
 
-READ_HANDLER( dma8237_0_r );
-READ_HANDLER( dma8237_1_r );
+READ8_HANDLER( dma8237_0_r );
+READ8_HANDLER( dma8237_1_r );
+WRITE8_HANDLER( dma8237_0_w );
+WRITE8_HANDLER( dma8237_1_w );
 
-WRITE_HANDLER( dma8237_0_w );
-WRITE_HANDLER( dma8237_1_w );
+READ32_HANDLER( dma8237_32_0_r );
+READ32_HANDLER( dma8237_32_1_r );
+WRITE32_HANDLER( dma8237_32_0_w );
+WRITE32_HANDLER( dma8237_32_1_w );
 
 #endif /* DMA8237_H */

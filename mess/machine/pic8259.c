@@ -179,7 +179,7 @@ static data8_t pic8259_read(int which, offs_t offset)
 static void pic8259_write(int which, offs_t offset, data8_t data )
 {
 	struct pic8259 *this = &pic[which];
-	switch( offset )
+	switch( offset & 0x01 )
 	{
     case 0:    /* PIC acknowledge IRQ */
 		if( data & 0x10 )	/* write ICW1 ? */
@@ -346,7 +346,7 @@ WRITE8_HANDLER ( pic8259_1_w )	{ pic8259_write(1, offset, data); }
 
 /* ----------------------------------------------------------------------- */
 
-static data8_t pic8259_read32(int which, offs_t offset)
+static data32_t pic8259_read32(int which, offs_t offset)
 {
 	return (((data32_t) pic8259_read(which, offset * 4 + 0)) << 0)
 		|  (((data32_t) pic8259_read(which, offset * 4 + 1)) << 8)

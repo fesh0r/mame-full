@@ -32,19 +32,20 @@ UINT32 i386_translate(int segment, UINT32 ip)
 void i386_load_segment_descriptor( int segment )
 {
 	UINT32 v1,v2;
-	UINT32 base;
+	UINT32 base, limit;
 	int entry;
 
 	if( I.sreg[segment].selector & 0x4 ) {
-		if( I.ldtr.limit == 0 )
-			return;
 		base = I.ldtr.base;
+		limit = I.ldtr.limit;
 	} else {
-		if( I.gdtr.limit == 0 )
-			return;
 		base = I.gdtr.base;
+		limit = I.gdtr.limit;
 	}
-	entry = I.sreg[segment].selector & ~0x7;
+
+	if (limit == 0)
+		return;
+	entry = (I.sreg[segment].selector % limit) & ~0x7;
 
 	v1 = READ32( base + entry );
 	v2 = READ32( base + entry + 4 );
@@ -229,7 +230,7 @@ static void i386_interrupt(int irq)
 	UINT32 v1, v2;
 	UINT32 offset;
 	UINT16 segment;
-	int entry = irq * 8;
+	int entry = irq * (I.sreg[CS].d ? 8 : 4);
 
 	/* Check if the interrupts are enabled */
 	if( I.IF ) {
@@ -239,21 +240,32 @@ static void i386_interrupt(int irq)
 			osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
 		}
 
-		if( !I.sreg[CS].d ) {
-			osd_die("I386: 16-bit interrupts are not supported !\n");
+		if( !I.sreg[CS].d )
+		{
+			/* 16-bit */
+			PUSH16( get_flags() & 0xffff );
+			PUSH16( I.sreg[CS].selector );
+			PUSH16( I.eip );
+
+			I.sreg[CS].selector = READ16( I.idtr.base + entry + 2 );
+			I.eip = READ32( I.idtr.base + entry );
 		}
+		else
+		{
+			/* 32-bit */
+			PUSH32( get_flags() & 0x00fcffff );
+			PUSH32( I.sreg[CS].selector );
+			PUSH32( I.eip );
 
-		PUSH32( get_flags() & 0x00fcffff );
-		PUSH32( I.sreg[CS].selector );
-		PUSH32( I.eip );
+			v1 = READ32( I.idtr.base + entry );
+			v2 = READ32( I.idtr.base + entry + 4 );
+			offset = (v2 & 0xffff0000) | (v1 & 0xffff);
+			segment = (v1 >> 16) & 0xffff;
 
-		v1 = READ32( I.idtr.base + entry );
-		v2 = READ32( I.idtr.base + entry + 4 );
-		offset = (v2 & 0xffff0000) | (v1 & 0xffff);
-		segment = (v1 >> 16) & 0xffff;
-
-		I.sreg[CS].selector = segment;
-		I.eip = offset;
+			I.sreg[CS].selector = segment;
+			I.eip = offset;
+		}
+		i386_load_segment_descriptor(CS);
 		CHANGE_PC(I.eip);
 	}
 }
@@ -452,7 +464,7 @@ int i386_execute(int num_cycles)
 		I386OP(decode_opcode)();
 	}
 
-	return num_cycles;
+	return num_cycles - I.cycles;
 }
 
 /*************************************************************************/
@@ -509,7 +521,7 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_PC:							I.pc = info->i;break;
-		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip); break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_ECX:			REG32(ECX) = info->i; break;

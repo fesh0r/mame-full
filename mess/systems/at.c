@@ -98,15 +98,36 @@ ADDRESS_MAP_END
 
 
 
-static READ_HANDLER(at_dma8237_1_r)
+static READ8_HANDLER(at_dma8237_1_r)
 {
 	return dma8237_1_r(offset / 2);
 }
 
-static WRITE_HANDLER(at_dma8237_1_w)
+static WRITE8_HANDLER(at_dma8237_1_w)
 {
 	dma8237_1_w(offset / 2, data);
 }
+
+static READ32_HANDLER(at32_dma8237_1_r)
+{
+	return (((data32_t) at_dma8237_1_r(offset * 4 + 0)) << 0)
+		|  (((data32_t) at_dma8237_1_r(offset * 4 + 1)) << 8)
+		|  (((data32_t) at_dma8237_1_r(offset * 4 + 2)) << 16)
+		|  (((data32_t) at_dma8237_1_r(offset * 4 + 3)) << 24);
+}
+
+static WRITE32_HANDLER(at32_dma8237_1_w)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		at_dma8237_1_w(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		at_dma8237_1_w(offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		at_dma8237_1_w(offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		at_dma8237_1_w(offset * 4 + 3, data >> 24);
+}
+
 
 
 static ADDRESS_MAP_START(at_io, ADDRESS_SPACE_IO, 8)
@@ -140,11 +161,14 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_32_0_r,			dma8237_32_0_w)
 	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_32_0_r,			pic8259_32_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_32_0_r,			pit8253_32_0_w)
 	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_32_r,				at_8042_32_w)
-	AM_RANGE(0x0070, 0x0073) AM_READWRITE(mc146818_port32_r,		mc146818_port32_w)
+	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port32_r,		mc146818_port32_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page32_r,				at_page32_w)
 	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_32_1_r,			pic8259_32_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(at32_dma8237_1_r,			at32_dma8237_1_w)
 ADDRESS_MAP_END
 
 
