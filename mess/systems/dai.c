@@ -188,6 +188,12 @@ static struct Wave_interface dai_wave_interface = {
 	{ 50 }		/* mixing levels in percent */
 };
 
+static struct CassetteOptions dai_cassette_options = {
+	1,		/* channels */
+	16,		/* bits per sample */
+	44100		/* sample frequency */
+};
+
 /* machine definition */
 static MACHINE_DRIVER_START( dai )
 	/* basic machine hardware */
@@ -232,7 +238,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(dai)
 	CONFIG_RAM_DEFAULT(48 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
+	CONFIG_DEVICE_CASSETTEX(1, NULL, &dai_cassette_options, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED )
 SYSTEM_CONFIG_END
 
 

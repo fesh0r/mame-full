@@ -474,7 +474,7 @@ ROM_END
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	/* 9-Oct-2003 - Changed to lvt because lv? is an invalid file extension */
-	CONFIG_DEVICE_CASSETTE(1, lviv_lvt_format )
+	CONFIG_DEVICE_CASSETTEX(1, lviv_lvt_format, NULL, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", lviv )
 SYSTEM_CONFIG_END
 
