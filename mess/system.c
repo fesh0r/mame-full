@@ -393,7 +393,7 @@ const struct GameDriver *drivers[] =
 
 
     //DRIVER( odyssey )     /* Magnavox Odyssey - analogue (1972)             */
-    //DRIVER( odyssey2 )    /* Magnavox Odyssey² - 1978-1983                  */
+    //DRIVER( odyssey2 )    /* Magnavox Odyssey 2 - 1978-1983                  */
 
 
     //DRIVER( trs80_m2 )    /* TRS-80 Model II -                              */
