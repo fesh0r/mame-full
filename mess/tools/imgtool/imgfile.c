@@ -144,7 +144,7 @@ imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len)
 
 
 
-static imgtoolerr_t cannonicalize_path(imgtool_image *image,
+static imgtoolerr_t cannonicalize_path(imgtool_image *image, int mandate_dir_path,
 	const char **path, char **alloc_path)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -158,7 +158,7 @@ static imgtoolerr_t cannonicalize_path(imgtool_image *image,
 	if (path_separator == '\0')
 	{
 		/* do we specify a path when paths are not supported? */
-		if (path && *path)
+		if (mandate_dir_path && path && *path)
 		{
 			err = IMGTOOLERR_CANNOTUSEPATH | IMGTOOLERR_SRC_FUNCTIONALITY;
 			goto done;
@@ -222,7 +222,7 @@ imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageen
 		goto done;
 	}
 
-	err = cannonicalize_path(img, &path, &alloc_path);
+	err = cannonicalize_path(img, TRUE, &path, &alloc_path);
 	if (err)
 		goto done;
 
@@ -430,6 +430,7 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
 {
 	imgtoolerr_t err;
 	imgtool_stream *newstream = NULL;
+	char *alloc_path = NULL;
 
 	if (!img->module->read_file)
 	{
@@ -439,6 +440,10 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
 
 	/* Custom filter? */
 	err = process_filter(&destf, &newstream, img->module, filter, PURPOSE_READ);
+	if (err)
+		goto done;
+
+	err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
 	if (err)
 		goto done;
 
@@ -452,7 +457,9 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
 done:
 	if (newstream)
 		stream_close(newstream);
-	return IMGTOOLERR_SUCCESS;
+	if (alloc_path)
+		free(alloc_path);
+	return err;
 }
 
 

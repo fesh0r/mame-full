@@ -76,12 +76,6 @@ int imgtool_validitychecks(void)
 
 		if (features.supports_directories)
 		{
-			if (module->read_file)
-			{
-				printf("imgtool module %s supports directories and read_file without core support\n", module->name);
-				error = 1;
-			}
-
 			if (module->write_file)
 			{
 				printf("imgtool module %s supports directories and write_file without core support\n", module->name);

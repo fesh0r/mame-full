@@ -265,25 +265,25 @@ static int os9_interpret_dirent(void *entry, char **filename, UINT32 *lsn, int *
 
 
 static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinfo *disk_info,
-	const char *path, UINT32 *lsn)
+	const char *path, UINT32 *lsn, struct os9_fileinfo *file_info)
 {
 	imgtoolerr_t err;
 	struct os9_fileinfo dir_info;
-	UINT32 index, entry_index, entry_lsn;
+	UINT32 index, entry_index, entry_lsn, current_lsn;
 	UINT8 entry[32];
 	char *filename;
 
-	*lsn = disk_info->root_dir_lsn;
+	current_lsn = disk_info->root_dir_lsn;
 
 	while(*path)
 	{
-		err = os9_decode_file_header(img, disk_info, *lsn, &dir_info);
+		err = os9_decode_file_header(img, disk_info, current_lsn, &dir_info);
 		if (err)
 			return err;
 
 		/* sanity check directory */
 		if (!dir_info.directory)
-			return (*lsn == disk_info->root_dir_lsn) ? IMGTOOLERR_CORRUPTIMAGE : IMGTOOLERR_INVALIDPATH;
+			return (current_lsn == disk_info->root_dir_lsn) ? IMGTOOLERR_CORRUPTIMAGE : IMGTOOLERR_INVALIDPATH;
 
 		for (index = 0; index < dir_info.file_size; index += 32)
 		{
@@ -294,7 +294,7 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinf
 			if (err)
 				return err;
 
-			if (os9_interpret_dirent(entry, &filename, lsn, NULL))
+			if (os9_interpret_dirent(entry, &filename, &current_lsn, NULL))
 			{
 				if (!strcmp(path, filename))
 					break;
@@ -305,6 +305,16 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinf
 			return IMGTOOLERR_PATHNOTFOUND;
 		path += strlen(path) + 1;
 	}
+
+	if (lsn)
+		*lsn = current_lsn;
+
+	if (file_info)
+	{
+		err = os9_decode_file_header(img, disk_info, current_lsn, file_info);
+		if (err)
+			return err;
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -314,7 +324,6 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct os9_direnum *os9enum = NULL;
-	UINT32 lsn;
 
 	os9enum = (struct os9_direnum *) malloc(sizeof(struct os9_direnum));
 	if (!os9enum)
@@ -328,12 +337,7 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path
 	if (err)
 		goto done;
 
-	err = os9_lookup_path(img, &os9enum->disk_info, path, &lsn);
-	if (err)
-		goto done;
-
-	err = os9_decode_file_header(img, &os9enum->disk_info,
-		lsn, &os9enum->dir_info);
+	err = os9_lookup_path(img, &os9enum->disk_info, path, NULL, &os9enum->dir_info);
 	if (err)
 		goto done;
 
@@ -436,7 +440,39 @@ static void os9_diskimage_closeenum(imgtool_imageenum *enumeration)
 
 static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	imgtoolerr_t err;
+	struct os9_diskinfo disk_info;
+	struct os9_fileinfo file_info;
+	UINT8 buffer[256];
+	int i, j;
+	UINT32 file_size;
+	UINT32 used_size;
+
+	err = os9_decode_disk_header(img, &disk_info);
+	if (err)
+		return err;
+
+	err = os9_lookup_path(img, &disk_info, filename, NULL, &file_info);
+	if (err)
+		return err;
+	if (file_info.directory)
+		return IMGTOOLERR_FILENOTFOUND;
+	file_size = file_info.file_size;
+
+	for (i = 0; file_info.sector_map[i].count > 0; i++)
+	{
+		for (j = 0; j < file_info.sector_map[i].count; j++)
+		{
+			used_size = MIN(file_size, disk_info.sector_size);
+			err = os9_read_lsn(img, &disk_info, file_info.sector_map[i].lsn + j, 0,
+				buffer, used_size);
+			if (err)
+				return err;
+			stream_write(destf, buffer, used_size);
+			file_size -= used_size;
+		}
+	}
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -449,7 +485,7 @@ static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct Im
 	module->begin_enum				= os9_diskimage_beginenum;
 	module->next_enum				= os9_diskimage_nextenum;
 	module->close_enum				= os9_diskimage_closeenum;
-//	module->read_file				= os9_diskimage_readfile;
+	module->read_file				= os9_diskimage_readfile;
 	return IMGTOOLERR_SUCCESS;
 }
 

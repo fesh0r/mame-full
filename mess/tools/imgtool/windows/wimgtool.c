@@ -704,6 +704,8 @@ static void menu_extract(HWND window)
 	TCHAR host_filename[MAX_PATH];
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
+	char *s;
+	const char *filename;
 
 	info = get_wimgtool_info(window);
 
@@ -713,6 +715,7 @@ static void menu_extract(HWND window)
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;
+	filename = entry.filename;
 
 	strcpy(host_filename, image_filename);
 
@@ -724,7 +727,15 @@ static void menu_extract(HWND window)
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
-	err = img_getfile(info->image, entry.filename, ofn.lpstrFile, NULL);
+	if (info->current_directory)
+	{
+		s = alloca(strlen(info->current_directory) + strlen(entry.filename) + 1);
+		strcpy(s, info->current_directory);
+		strcat(s, entry.filename);
+		filename = s;
+	}
+
+	err = img_getfile(info->image, filename, ofn.lpstrFile, NULL);
 	if (err)
 		goto done;
 
