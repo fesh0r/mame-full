@@ -289,8 +289,13 @@ void pc_cga_cursor(struct crtc6845_cursor *cursor)
 
 static struct crtc6845_config config= { 14318180 /*?*/, pc_cga_cursor };
 
-VIDEO_START( pc_cga )
+
+
+static int internal_pc_cga_video_start(int personality)
 {
+	memset(&cga, 0, sizeof(cga));
+
+	config.personality = personality;
 	if (!pc_video_start(&config, pc_cga_choosevideomode, 0x8000))
 		return 1;
 
@@ -300,6 +305,15 @@ VIDEO_START( pc_cga )
 	state_save_register_UINT8("pccga", 0, "plantronics",	&cga.plantronics, 1);
 	return 0;
 }
+
+
+
+static VIDEO_START( pc_cga )
+{
+	return internal_pc_cga_video_start(M6845_PERSONALITY_GENUINE);
+}
+
+
 
 static void pc_cga_check_palette(void)
 {
@@ -1227,6 +1241,8 @@ WRITE_HANDLER ( pc1512_videoram_w )
 		dirtybuffer[offset] = 1;
 }
 
+
+
 VIDEO_START( pc1512 )
 {
 	videoram = (UINT8*) auto_malloc(0x10000);
@@ -1237,6 +1253,7 @@ VIDEO_START( pc1512 )
 	cpu_setbank(1,videoram + videoram_offset[0]);
 	pc1512.write = 0xf;
 	pc1512.read = 0;
-	config.personality = M6845_PERSONALITY_PC1512;	/* PC1512 cut-down 6845 */
-	return video_start_pc_cga();
+	
+	/* PC1512 cut-down 6845 */
+	return internal_pc_cga_video_start(M6845_PERSONALITY_PC1512);
 }
