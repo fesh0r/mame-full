@@ -58,7 +58,6 @@ static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
 
 #ifdef MAME_DEBUG
 static void MessTestsBegin(void);
-static void MessTestsDoneIdle(void);
 #endif /* MAME_DEBUG */
 
 #ifdef bool

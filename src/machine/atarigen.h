@@ -173,7 +173,6 @@ READ8_HANDLER( atarigen_6502_sound_r );
 	SOUND HELPERS
 ---------------------------------------------------------------*/
 
-void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2);
 void atarigen_set_ym2151_vol(int volume);
 void atarigen_set_ym2413_vol(int volume);
 void atarigen_set_pokey_vol(int volume);

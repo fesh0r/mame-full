@@ -1071,9 +1071,6 @@ void MessTestsFlex(HWND hwndSoftware, const struct GameDriver *gamedrv)
 	 * and add them again to test item adding with MessIntroduceItem()
 	 */
 	int i;
-	int nItem;
-	int nItemsToAdd = 5;		/* Arbitrary constant */
-	int nItemsToAddSkip = 10;	/* Arbitrary constant */
 	ImageData *img;
 	mess_image_type imagetypes[64];
 

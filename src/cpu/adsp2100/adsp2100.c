@@ -216,6 +216,18 @@ INLINE void WWORD_DATA(UINT32 addr, UINT32 data)
 	ADSP2100_WRMEM_WORD(addr, data);
 }
 
+INLINE UINT32 RWORD_IO(UINT32 addr)
+{
+	addr <<= 1;
+	return io_read_word_16le(addr);
+}
+
+INLINE void WWORD_IO(UINT32 addr, UINT32 data)
+{
+	addr <<= 1;
+	io_write_word_16le(addr, data);
+}
+
 INLINE UINT32 RWORD_PGM(UINT32 addr)
 {
 	addr <<= 2;
@@ -718,6 +730,18 @@ static int adsp2100_execute(int cycles)
 			case 0x00:
 				/* 00000000 00000000 00000000  NOP */
 				break;
+			case 0x01:
+				/* 00000000 0xxxxxxx xxxxxxxx  dst = IO(x) */
+				/* 00000000 1xxxxxxx xxxxxxxx  IO(x) = dst */
+				/* ADSP-218x only */
+				if (chip_type >= CHIP_TYPE_ADSP2181)
+				{
+					if ((op & 0x008000) == 0x000000)
+						WRITE_REG(0, op & 15, RWORD_IO((op >> 4) & 0x7ff));
+					else
+						WWORD_IO((op >> 4) & 0x7ff, READ_REG(0, op & 15));
+				}
+				break;
 			case 0x02:
 				/* 00000010 0000xxxx xxxxxxxx  modify flag out */
 				/* 00000010 10000000 00000000  idle */
@@ -959,19 +983,43 @@ static int adsp2100_execute(int cycles)
 				break;
 			case 0x20: case 0x21:
 				/* 0010000x xxxxxxxx xxxxxxxx  conditional MAC to MR */
-				if (CONDITION(op & 15)) mac_op_mr(op);
+				if (CONDITION(op & 15))
+				{
+					if (chip_type >= CHIP_TYPE_ADSP2181 && (op & 0x0018f0) == 0x000010)
+						mac_op_mr_xop(op);
+					else
+						mac_op_mr(op);
+				} 
 				break;
 			case 0x22: case 0x23:
 				/* 0010001x xxxxxxxx xxxxxxxx  conditional ALU to AR */
-				if (CONDITION(op & 15)) alu_op_ar(op);
+				if (CONDITION(op & 15))
+				{
+					if (chip_type >= CHIP_TYPE_ADSP2181 && (op & 0x000010) == 0x000010)
+						alu_op_ar_const(op);
+					else
+						alu_op_ar(op);
+				} 
 				break;
 			case 0x24: case 0x25:
 				/* 0010010x xxxxxxxx xxxxxxxx  conditional MAC to MF */
-				if (CONDITION(op & 15)) mac_op_mf(op);
+				if (CONDITION(op & 15))
+				{
+					if (chip_type >= CHIP_TYPE_ADSP2181 && (op & 0x0018f0) == 0x000010)
+						mac_op_mf_xop(op);
+					else
+						mac_op_mf(op);
+				}
 				break;
 			case 0x26: case 0x27:
 				/* 0010011x xxxxxxxx xxxxxxxx  conditional ALU to AF */
-				if (CONDITION(op & 15)) alu_op_af(op);
+				if (CONDITION(op & 15))
+				{
+					if (chip_type >= CHIP_TYPE_ADSP2181 && (op & 0x000010) == 0x000010)
+						alu_op_af_const(op);
+					else
+						alu_op_af(op);
+				} 
 				break;
 			case 0x28: case 0x29:
 				/* 0010100x xxxxxxxx xxxxxxxx  MAC to MR with internal data register move */
@@ -981,9 +1029,14 @@ static int adsp2100_execute(int cycles)
 				break;
 			case 0x2a: case 0x2b:
 				/* 0010101x xxxxxxxx xxxxxxxx  ALU to AR with internal data register move */
-				temp = READ_REG(0, op & 15);
-				alu_op_ar(op);
-				WRITE_REG(0, (op >> 4) & 15, temp);
+				if (chip_type >= CHIP_TYPE_ADSP2181 && (op & 0x0000ff) == 0x0000aa)
+					alu_op_none(op);
+				else
+				{
+					temp = READ_REG(0, op & 15);
+					alu_op_ar(op);
+					WRITE_REG(0, (op >> 4) & 15, temp);
+				}
 				break;
 			case 0x2c: case 0x2d:
 				/* 0010110x xxxxxxxx xxxxxxxx  MAC to MF with internal data register move */
@@ -2243,6 +2296,10 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ2:	info->i = adsp2100.irq_state[ADSP2181_IRQ2]; break;
 		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_RX:info->i = adsp2100.irq_state[ADSP2181_SPORT0_RX]; break;
 		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_TX:info->i = adsp2100.irq_state[ADSP2181_SPORT0_TX]; break;
+
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 11;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 1;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = adsp2181_set_info;		break;

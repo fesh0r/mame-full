@@ -783,38 +783,6 @@ static void delayed_6502_sound_w(int param)
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_init_6502_speedup: Installs a special read handler
-	to catch the main spin loop in the 6502 sound code. The
-	addresses accessed seem to be the same across a large
-	number of games, though the PC shifts.
----------------------------------------------------------------*/
-
-void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
-{
-	UINT8 *memory = memory_region(REGION_CPU1+cpunum);
-	int address_low, address_high;
-
-	/* determine the pointer to the first speed check location */
-	address_low = memory[compare_pc1 + 1] | (memory[compare_pc1 + 2] << 8);
-	address_high = memory[compare_pc1 + 4] | (memory[compare_pc1 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc1);
-	speed_a = &memory[address_low];
-
-	/* determine the pointer to the second speed check location */
-	address_low = memory[compare_pc2 + 1] | (memory[compare_pc2 + 2] << 8);
-	address_high = memory[compare_pc2 + 4] | (memory[compare_pc2 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc2);
-	speed_b = &memory[address_low];
-
-	/* install a handler on the second address */
-	speed_pc = compare_pc2;
-	memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, address_low, address_low, 0, 0, m6502_speedup_r);
-}
-
-
-/*---------------------------------------------------------------
 	atarigen_set_vol: Scans for a particular sound chip and
 	changes the volume on all channels associated with it.
 ---------------------------------------------------------------*/

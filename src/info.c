@@ -18,54 +18,36 @@
 #define XML_TOP "game"
 #endif
 
-/* Indentation */
-#define INDENT "\t"
-
-/* Output format configuration
-	L1 first level
-	L2 second level
-	B begin a list of items
-	E end a list of items
-	P begin an item
-	N end an item
-*/
-
-/* Output unformatted */
-/*
-#define L1B "("
-#define L1P " "
-#define L1N ""
-#define L1E ")"
-#define L2B "("
-#define L2P " "
-#define L2N ""
-#define L2E ")"
-*/
-
-/* Output on one level */
-#define L1B " (\n"
-#define L1P INDENT
-#define L1N "\n"
-#define L1E ")\n\n"
-#define L2B " ("
-#define L2P " "
-#define L2N ""
-#define L2E " )"
-
-/* Output on two levels */
-/*
-#define L1B " (\n"
-#define L1P INDENT
-#define L1N "\n"
-#define L1E ")\n\n"
-#define L2B " (\n"
-#define L2P INDENT INDENT
-#define L2N "\n"
-#define L2E INDENT ")"
-*/
-
 /* Print a free format string */
-static void print_free_string(FILE* out, const char* s)
+static const char *normalize_string(const char* s)
+{
+	static char buffer[1024];
+	char *d = &buffer[0];
+
+	if (s)
+	{
+		while (*s)
+		{
+			switch (*s)
+			{
+				case '\"' : d += sprintf(d, "&quot;"); break;
+				case '&'  : d += sprintf(d, "&amp;"); break;
+				case '<'  : d += sprintf(d, "&lt;"); break;
+				case '>'  : d += sprintf(d, "&gt;"); break;
+				default:
+					if (*s>=' ' && *s<='~')
+						*d++ = *s;
+					else
+						d += sprintf(d, "&#%d;", (unsigned)(unsigned char)*s);
+			}
+			++s;
+		}
+	}
+	*d++ = 0;
+	return buffer;
+}
+
+static void print_free_string(FILE *out, const char* s)
 {
 	if (s)
 	{
@@ -88,12 +70,6 @@ static void print_free_string(FILE* out, const char* s)
 	}
 }
 
-/* Print a statement string */
-static void print_statement_string(FILE* out, const char* s)
-{
-	print_free_string(out, s);
-}
-
 static void print_game_switch(FILE* out, const struct GameDriver* game)
 {
 	const struct InputPort* input;
@@ -110,23 +86,19 @@ static void print_game_switch(FILE* out, const struct GameDriver* game)
 
 			fprintf(out, "\t\t<dipswitch");
 
-			fprintf(out, " name=\"");
-			print_free_string(out, input->name);
-			fprintf(out, "%s", "\"");
+			fprintf(out, " name=\"%s\"", normalize_string(input->name));
 			++input;
 
-			fprintf(out, "%s", ">\n");
+			fprintf(out, ">\n");
 
 			while (input->type==IPT_DIPSWITCH_SETTING)
 			{
 				fprintf(out, "\t\t\t<dipvalue");
-				fprintf(out, "%s", " name=\"");
-				print_free_string(out, input->name);
-				fprintf(out, "%s", "\"");
+				fprintf(out, " name=\"%s\"", normalize_string(input->name));
 				if (def == input->default_value)
 					fprintf(out, " default=\"yes\"");
 
-				fprintf(out, "%s", "/>\n");
+				fprintf(out, "/>\n");
 
 				++input;
 			}
@@ -268,15 +240,15 @@ static void print_game_input(FILE* out, const struct GameDriver* game)
 	fprintf(out, "\t\t<input");
 	fprintf(out, " players=\"%d\"", nplayer );
 	if (control)
-		fprintf(out, " control=\"%s\"", control );
+		fprintf(out, " control=\"%s\"", normalize_string(control) );
 	if (nbutton)
 		fprintf(out, " buttons=\"%d\"", nbutton );
 	if (ncoin)
 		fprintf(out, " coins=\"%d\"", ncoin );
 	if (service)
-		fprintf(out, " service=\"%s\"", service );
+		fprintf(out, " service=\"%s\"", normalize_string(service) );
 	if (tilt)
-		fprintf(out, " tilt=\"%s\"", tilt );
+		fprintf(out, " tilt=\"%s\"", normalize_string(tilt) );
 	fprintf(out, "/>\n");
 
 	end_resource_tracking();
@@ -297,9 +269,9 @@ static void print_game_bios(FILE* out, const struct GameDriver* game)
 		fprintf(out, "\t\t<biosset");
 
 		if (thisbios->_name)
-			fprintf(out, " name=\"%s\"", thisbios->_name);
+			fprintf(out, " name=\"%s\"", normalize_string(thisbios->_name));
 		if (thisbios->_description)
-			fprintf(out, " description=\"%s\"", thisbios->_description);
+			fprintf(out, " description=\"%s\"", normalize_string(thisbios->_description));
 		if (thisbios->value == 0)
 			fprintf(out, " default=\"yes\"");
 
@@ -372,11 +344,11 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				fprintf(out, "\t\t<disk");
 
 			if (*name)
-				fprintf(out, " name=\"%s\"", name);
+				fprintf(out, " name=\"%s\"", normalize_string(name));
 			if (!is_disk && in_parent)
-				fprintf(out, " merge=\"%s\"", ROM_GETNAME(fprom));
+				fprintf(out, " merge=\"%s\"", normalize_string(ROM_GETNAME(fprom)));
 			if (!is_disk && found_bios)
-				fprintf(out, " bios=\"%s\"", bios_name);
+				fprintf(out, " bios=\"%s\"", normalize_string(bios_name));
 			if (!is_disk)
 				fprintf(out, " size=\"%d\"", length);
 
@@ -476,7 +448,7 @@ static void print_game_sampleof(FILE* out, const struct GameDriver* game)
 			{
 				/* output sampleof only if different from game name */
 				if (strcmp(samplenames[k] + 1, game->name)!=0)
-					fprintf(out, " sampleof=\"%s\"", samplenames[k] + 1);
+					fprintf(out, " sampleof=\"%s\"", normalize_string(samplenames[k] + 1));
 				++k;
 			}
 		}
@@ -511,7 +483,7 @@ static void print_game_sample(FILE* out, const struct GameDriver* game)
 					while (l<k && strcmp(samplenames[k],samplenames[l])!=0)
 						++l;
 					if (l==k)
-						fprintf(out, "\t\t<sample name=\"%s\"/>\n", samplenames[k]);
+						fprintf(out, "\t\t<sample name=\"%s\"/>\n", normalize_string(samplenames[k]));
 				}
 				++k;
 			}
@@ -541,9 +513,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			else
 				fprintf(out, " type=\"cpu\"");
 
-			fprintf(out, " name=\"");
-			print_statement_string(out, cputype_name(cpu[j].cpu_type));
-			fprintf(out, "%s", "\"");
+			fprintf(out, " name=\"%s\"", normalize_string(cputype_name(cpu[j].cpu_type)));
 
 			fprintf(out, " clock=\"%d\"", cpu[j].cpu_clock);
 			fprintf(out, "/>\n");
@@ -563,9 +533,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			{
 				fprintf(out, "\t\t<chip");
 				fprintf(out, " type=\"audio\"");
-				fprintf(out, " name=\"");
-				print_statement_string(out, sound_name(&sound[j]));
-				fprintf(out, "%s", "\"");
+				fprintf(out, " name=\"%s\"", normalize_string(sound_name(&sound[j])));
 				if (sound_clock(&sound[j]))
 					fprintf(out, " clock=\"%d\"", sound_clock(&sound[j]));
 				fprintf(out, "/>\n");
@@ -735,19 +703,15 @@ static void print_game_device(FILE* out, const struct GameDriver* game)
 
 	while (dev) {
 		fprintf(out, "\t\t<device");
-		fprintf(out, " name=\"");
-		print_statement_string(out, device_typename(dev->type));
-		fprintf(out, "%s", "\"");
-		fprintf(out, "%s", ">\n");
+		fprintf(out, " name=\"%s\"", normalize_string(device_typename(dev->type)));
+		fprintf(out, ">\n");
 
 		if (dev->file_extensions) {
 			const char* ext = dev->file_extensions;
 			while (*ext) {
 				fprintf(out, "\t\t\t<extension");
-				fprintf(out, "%s", " name=\"");
-				print_free_string(out, ext);
-				fprintf(out, "%s", "\"");
-				fprintf(out, "%s", "/>\n");
+				fprintf(out, " name=\"%s\"", normalize_string(ext));
+				fprintf(out, "/>\n");
 				ext += strlen(ext) + 1;
 			}
 		}
@@ -766,35 +730,27 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 
 	fprintf(out, "\t<" XML_TOP);
 
-	fprintf(out, " name=\"%s\"", game->name );
+	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
 
 	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER))
-		fprintf(out, " cloneof=\"%s\"", game->clone_of->name);
+		fprintf(out, " cloneof=\"%s\"", normalize_string(game->clone_of->name));
 
 	if (game->clone_of && game->clone_of != &driver_0)
-		fprintf(out, " romof=\"%s\"", game->clone_of->name);
+		fprintf(out, " romof=\"%s\"", normalize_string(game->clone_of->name));
 
 	print_game_sampleof(out, game);
 
-	fprintf(out, "%s", ">\n");
+	fprintf(out, ">\n");
 
 	if (game->description)
-	{
-		fprintf(out, "\t\t<description>");
-		print_free_string(out, game->description);
-		fprintf(out, "</description>\n");
-	}
+		fprintf(out, "\t\t<description>%s</description>\n", normalize_string(game->description));
 
 	/* print the year only if is a number */
 	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
-		fprintf(out, "\t\t<year>%s</year>\n", game->year );
+		fprintf(out, "\t\t<year>%s</year>\n", normalize_string(game->year) );
 
 	if (game->manufacturer)
-	{
-		fprintf(out, "\t\t<manufacturer>");
-		print_free_string(out, game->manufacturer);
-		fprintf(out, "</manufacturer>\n");
-	}
+		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", normalize_string(game->manufacturer));
 
 	print_game_history(out, game);
 	print_game_bios(out, game);
@@ -819,27 +775,19 @@ static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
 	fprintf(out, "\t<" XML_TOP " runnable=\"no\"");
 
-	fprintf(out, " name=\"%s\"", game->name );
+	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
 
-	fprintf(out, "%s", ">\n");
+	fprintf(out, ">\n");
 
 	if (game->description)
-	{
-		fprintf(out, "\t\t<description>");
-		print_free_string(out, game->description);
-		fprintf(out, "</description>\n");
-	}
+		fprintf(out, "\t\t<description>%s</description>\n", normalize_string(game->description));
 
 	/* print the year only if it's a number */
 	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
-		fprintf(out, "\t\t<year>%s</year>\n", game->year );
+		fprintf(out, "\t\t<year>%s</year>\n", normalize_string(game->year) );
 
 	if (game->manufacturer)
-	{
-		fprintf(out, "\t\t<manufacturer>");
-		print_free_string(out, game->manufacturer);
-		fprintf(out, "</manufacturer>\n");
-	}
+		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", normalize_string(game->manufacturer));
 
 	print_game_bios(out, game);
 	print_game_rom(out, game);

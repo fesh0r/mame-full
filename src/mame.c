@@ -1709,6 +1709,7 @@ static int validitychecks(void)
 	UINT8 a,b;
 	int error = 0;
 	const struct InputPort *inp;
+	const char *s;
 
 
 	a = 0xff;
@@ -1755,6 +1756,17 @@ static int validitychecks(void)
 			error = 1;
 		}
 #endif
+
+		s = drivers[i]->year;
+		for (j = 0; s[j]; j++)
+		{
+			if (!isdigit(s[j]) && s[j] != '?' && s[j] != '+')
+			{
+				printf("%s: %s has an invalid year '%s'\n", drivers[i]->source_file,drivers[i]->name,s);
+				error = 1;
+				break;
+			}
+		}
 
 		for (j = i+1;drivers[j];j++)
 		{
