@@ -21,8 +21,6 @@
 #endif
 
 
-#define bool int
-
 /*
 at post
 -------
@@ -191,17 +189,17 @@ static struct {
 	UINT8 inport, outport, data;
 
 	struct {
-		bool received;
-		bool on;
+		int received;
+		int on;
 	} keyboard;
 	struct {
-		bool received;
-		bool on;
+		int received;
+		int on;
 	} mouse;
 
-	bool last_write_to_control;
-	bool sending;
-	bool send_to_mouse;
+	int last_write_to_control;
+	int sending;
+	int send_to_mouse;
 
 	int operation_write_state;
 	int status_read_mode;

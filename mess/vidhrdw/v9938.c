@@ -511,94 +511,104 @@ void v9938_set_resolution (int i)
 ***************************************************************************/
 
 WRITE_HANDLER (v9938_register_w)
-	{
+{
 	int reg;
 
 	reg = vdp.contReg[17] & 0x3f;
-	if (reg != 17) v9938_register_write (reg, data); /* true ? */
-	if ( !(vdp.contReg[17] & 0x80) )
+	if (reg != 17)
+		v9938_register_write (reg, data); /* true ? */
+
+	if (!(vdp.contReg[17] & 0x80))
 		vdp.contReg[17] = (vdp.contReg[17] + 1) & 0x3f;
-	}
+}
 
 static void v9938_register_write (int reg, int data)
+{
+	static UINT8 const reg_mask[] =
 	{
-	static UINT8 const reg_mask[] = {
 		0x7e, 0x7b, 0x7f, 0xff, 0x3f, 0xff, 0x3f, 0xff,
 		0xfb, 0xbf, 0x07, 0x03, 0xff, 0xff, 0x07, 0x0f,
 		0x0f, 0xbf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0x00, 0x7f, 0x3f, 0x07 };
+		0x00, 0x7f, 0x3f, 0x07
+	};
 
 	if (reg <= 27)
-		{
+	{
 		data &= reg_mask[reg];
-		if (vdp.contReg[reg] == data) return;
-		}
+		if (vdp.contReg[reg] == data)
+			return;
+	}
 
 	if (reg > 46)
-		{
+	{
 		logerror ("V9938: Attempted to write to non-existant R#%d\n", reg);
 		return;
-		}
+	}
 
 	/*v9938_update_command (); */
 
-	switch (reg)
-		{
-		/* registers that affect interrupt and display mode */
-		case 0:
-		case 1:
-			vdp.contReg[reg] = data;
-			v9938_set_mode ();
-			v9938_check_int ();
-			logerror ("V9938: mode = %s\n", v9938_modes[vdp.mode]);
-			break;
-		case 18:
-		case 9:
-			vdp.contReg[reg] = data;
-			/* recalc offset */
-			vdp.offset_x = ( (~vdp.contReg[18] - 8) & 0x0f);
-			vdp.offset_y = (~(vdp.contReg[18]>>4) - 8) & 0x0f;
-			if (vdp.contReg[9] & 0x80)
-				vdp.visible_y = 212;
-			else
-				{
-				vdp.visible_y = 192;
-				vdp.offset_y += 10;
-				}
+	switch (reg) {
+	/* registers that affect interrupt and display mode */
+	case 0:
+	case 1:
+		vdp.contReg[reg] = data;
+		v9938_set_mode ();
+		v9938_check_int ();
+		logerror ("V9938: mode = %s\n", v9938_modes[vdp.mode]);
+		break;
 
-			break;
-		case 15:
-			vdp.pal_write_first = 0;
-			break;
-		/* color burst registers aren't emulated */
-		case 20:
-		case 21:
-		case 22:
-			logerror ("V9938: Write %02xh to R#%d; color burst not emulated\n",
-				data, reg);
-			break;
-		case 25:
-		case 26:
-		case 27:
-			if (vdp.model != MODEL_V9958)
-				{
-				logerror ("V9938: Attempting to write %02xh to V9958 R#%d\n");
-				data = 0;
-				}
-			break;
-		case 44:
-			v9938_cpu_to_vdp (data);
-			break;
-		case 46:
-			v9938_command_unit_w (data);
-			break;
+	case 18:
+	case 9:
+		vdp.contReg[reg] = data;
+		/* recalc offset */
+		vdp.offset_x = ( (~vdp.contReg[18] - 8) & 0x0f);
+		vdp.offset_y = (~(vdp.contReg[18]>>4) - 8) & 0x0f;
+		if (vdp.contReg[9] & 0x80)
+		{
+			vdp.visible_y = 212;
 		}
+		else
+		{
+			vdp.visible_y = 192;
+			vdp.offset_y += 10;
+		}
+		break;
+
+	case 15:
+		vdp.pal_write_first = 0;
+		break;
+
+	/* color burst registers aren't emulated */
+	case 20:
+	case 21:
+	case 22:
+		logerror ("V9938: Write %02xh to R#%d; color burst not emulated\n",
+			data, reg);
+		break;
+	case 25:
+	case 26:
+	case 27:
+		if (vdp.model != MODEL_V9958)
+		{
+			logerror ("V9938: Attempting to write %02xh to V9958 R#%d\n", data, reg);
+			data = 0;
+		}
+		break;
+
+	case 44:
+		v9938_cpu_to_vdp (data);
+		break;
+
+	case 46:
+		v9938_command_unit_w (data);
+		break;
+	}
 
 	if (reg != 15)
-		logerror ("V9938: Write %02x to R#%d\n", data, reg);
+		logerror("V9938: Write %02x to R#%d\n", data, reg);
 
 	vdp.contReg[reg] = data;
-	}
+}
 
 READ_HANDLER (v9938_status_r)
 	{
@@ -2222,36 +2232,37 @@ static UINT8 v9938_vdp_to_cpu (void)
 /*************************************************************/
 static void ReportVdpCommand(register UINT8 Op)
 {
-  static char *Ops[16] =
-  {
-    "SET ","AND ","OR  ","XOR ","NOT ","NOP ","NOP ","NOP ",
-    "TSET","TAND","TOR ","TXOR","TNOT","NOP ","NOP ","NOP "
-  };
-  static char *Commands[16] =
-  {
-    " ABRT"," ????"," ????"," ????","POINT"," PSET"," SRCH"," LINE",
-    " LMMV"," LMMM"," LMCM"," LMMC"," HMMV"," HMMM"," YMMM"," HMMC"
-  };
-  register UINT8 CL, CM, LO;
-  register int SX,SY, DX,DY, NX,NY;
+	static const char *Ops[16] =
+	{
+		"SET ","AND ","OR  ","XOR ","NOT ","NOP ","NOP ","NOP ",
+		"TSET","TAND","TOR ","TXOR","TNOT","NOP ","NOP ","NOP "
+	};
+	static const char *Commands[16] =
+	{
+		" ABRT"," ????"," ????"," ????","POINT"," PSET"," SRCH"," LINE",
+		" LMMV"," LMMM"," LMCM"," LMMC"," HMMV"," HMMM"," YMMM"," HMMC"
+	};
 
-  /* Fetch arguments */
-  CL = VDP[44];
-  SX = (VDP[32]+((int)VDP[33]<<8)) & 511;
-  SY = (VDP[34]+((int)VDP[35]<<8)) & 1023;
-  DX = (VDP[36]+((int)VDP[37]<<8)) & 511;
-  DY = (VDP[38]+((int)VDP[39]<<8)) & 1023;
-  NX = (VDP[40]+((int)VDP[41]<<8)) & 1023;
-  NY = (VDP[42]+((int)VDP[43]<<8)) & 1023;
-  CM = Op>>4;
-  LO = Op&0x0F;
+	register UINT8 CL, CM, LO;
+	register int SX,SY, DX,DY, NX,NY;
 
-  logerror ("V9938: Opcode %02Xh %s-%s (%d,%d)->(%d,%d),%d [%d,%d]%s\n",
-         Op, Commands[CM], Ops[LO],
-         SX,SY, DX,DY, CL, VDP[45]&0x04? -NX:NX,
-         VDP[45]&0x08? -NY:NY,
-         VDP[45]&0x70? " on ExtVRAM":""
-        );
+	/* Fetch arguments */
+	CL = VDP[44];
+	SX = (VDP[32]+((int)VDP[33]<<8)) & 511;
+	SY = (VDP[34]+((int)VDP[35]<<8)) & 1023;
+	DX = (VDP[36]+((int)VDP[37]<<8)) & 511;
+	DY = (VDP[38]+((int)VDP[39]<<8)) & 1023;
+	NX = (VDP[40]+((int)VDP[41]<<8)) & 1023;
+	NY = (VDP[42]+((int)VDP[43]<<8)) & 1023;
+	CM = Op>>4;
+	LO = Op&0x0F;
+
+	logerror ("V9938: Opcode %02Xh %s-%s (%d,%d)->(%d,%d),%d [%d,%d]%s\n",
+			Op, Commands[CM], Ops[LO],
+			SX,SY, DX,DY, CL, VDP[45]&0x04? -NX:NX,
+			VDP[45]&0x08? -NY:NY,
+			VDP[45]&0x70? " on ExtVRAM":""
+		);
 }
 
 /** VDPDraw() ************************************************/

@@ -227,12 +227,15 @@ typedef struct _PC_SETUP {
 	int def, mask; 
 } PC_SETUP;
 
-
-PC_SETUP pc_setup_at[]= {
+static PC_SETUP pc_setup_at_[]=
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_END }
-}, pc_setup_t1000hx[]= {
+};
+
+static PC_SETUP pc_setup_t1000hx_[] =
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_GRAPHIC0,			4, 16 },
@@ -258,7 +261,8 @@ PC_SETUP pc_setup_at[]= {
 	{ SETUP_END }
 };
 
-PC_SETUP pc_setup_pc1512[]={
+static PC_SETUP pc_setup_pc1512_[]=
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_GRAPHIC0,			6, 64 },
@@ -282,7 +286,8 @@ PC_SETUP pc_setup_pc1512[]={
 	{ SETUP_END }
 };
 
-PC_SETUP pc_setup_pc1640[]={
+static PC_SETUP pc_setup_pc1640_[] = 
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_GRAPHIC0,			5, 32 },
@@ -306,17 +311,26 @@ PC_SETUP pc_setup_pc1640[]={
 	{ SETUP_END }
 };
 
-PC_SETUP pc_setup[]={
+static PC_SETUP pc_setup_[] =
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_END }
 };
 
-PC_SETUP pc_setup_europc[]={
+static PC_SETUP pc_setup_europc_[] = 
+{
 	{ SETUP_HEADER },
 	{ SETUP_COMMENT },
 	{ SETUP_END }
 };
+
+PC_SETUP *pc_setup_at		= pc_setup_at_;
+PC_SETUP *pc_setup_t1000hx	= pc_setup_t1000hx_;
+PC_SETUP *pc_setup_pc1512	= pc_setup_pc1512_;
+PC_SETUP *pc_setup_pc1640	= pc_setup_pc1640_;
+PC_SETUP *pc_setup			= pc_setup_;
+PC_SETUP *pc_setup_europc	= pc_setup_europc_;
 
 #ifdef MESS_MENU
 /* must be reentrant! */

@@ -247,7 +247,7 @@ int lviv_tape_init(int id, void *file, int open_mode)
 		{
 			int lviv_lvt_size;
 
-			lviv_lvt_size = osd_fsize(file);
+			lviv_lvt_size = mame_fsize(file);
 
 			logerror("Lviv .lvt size: %04x\n",lviv_lvt_size);
 
@@ -261,7 +261,7 @@ int lviv_tape_init(int id, void *file, int open_mode)
 				{
 					int size_in_samples;
 
-					osd_fread(file, lviv_lvt_data, lviv_lvt_size);
+					mame_fread(file, lviv_lvt_data, lviv_lvt_size);
 					if (strncmp ((char *)lviv_lvt_data, "LVOV/2.0/", 9))
 					{
 						free(lviv_lvt_data);

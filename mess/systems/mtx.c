@@ -555,10 +555,10 @@ static WRITE_HANDLER ( mtx_trap_write )
 
 				filename[i + 1] = '\0';
 				logerror("%s\n", filename);
-				if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
+				if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,1)) != 0)
 				{
-					osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
-					osd_fclose(f);
+					mame_fwrite(f,mtx_savebuffer,mtx_saveindex);
+					mame_fclose(f);
 				}
 			}
 		}
@@ -576,16 +576,16 @@ static WRITE_HANDLER ( mtx_trap_write )
 					}
 					for(i=15; i>0 && filename[i] == 0x20;i--)
 						filename[i+1] = '\0';
-					if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
+					if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,0)) != 0)
 					{
-						filesize=osd_fsize(f);
+						filesize=mame_fsize(f);
 						mtx_loadindex = filesize;
 						// check for buffer overflow....
 						if(filesize<65536)
 						{
-							osd_fread(f,mtx_tapebuffer,filesize);
+							mame_fread(f,mtx_tapebuffer,filesize);
 						}
-						osd_fclose(f);
+						mame_fclose(f);
 					}
 				}
 

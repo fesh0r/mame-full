@@ -331,7 +331,7 @@ unsigned long offset;
         return;
     }
 	else
-	if (osd_fread(w->image_file, w->buffer, w->sector_length) != w->sector_length)
+	if (mame_fread(w->image_file, w->buffer, w->sector_length) != w->sector_length)
 	{
 		w->status = STA_2_LOST_DAT;
 		return;
@@ -359,7 +359,7 @@ static void basicdsk_write_sector(basicdsk *w)
 	}
 
         seek(w, w->track, w->head, w->sector);
-        osd_fwrite(w->image_file, w->buffer, w->data_offset)
+        mame_fwrite(w->image_file, w->buffer, w->data_offset)
 }
 
 
@@ -465,7 +465,7 @@ int cnt;
 			w->status = seek(w, w->track, w->head, w->dam_list[cnt][2]);
 			if (w->status == 0)
 			{
-				if (osd_fwrite(w->image_file, &w->buffer[w->dam_data[cnt]], w->sector_length) != w->sector_length)
+				if (mame_fwrite(w->image_file, &w->buffer[w->dam_data[cnt]], w->sector_length) != w->sector_length)
 				{
 					w->status = STA_2_LOST_DAT;
 					return;
@@ -546,7 +546,7 @@ void basicdsk_write_sector_data_from_buffer(int drive, int side, int index1, cha
 
 	if (basicdsk_seek(w, w->track, side, index1)&&w->mode)
 	{
-		osd_fwrite(w->image_file, ptr, length);
+		mame_fwrite(w->image_file, ptr, length);
 	}
 
 	basicdsk_set_ddam(drive, w->track, side, index1, ddam);
@@ -558,7 +558,7 @@ void basicdsk_read_sector_data_into_buffer(int drive, int side, int index1, char
 
 	if (basicdsk_seek(w, w->track, side, index1))
 	{
-		osd_fread(w->image_file, ptr, length);
+		mame_fread(w->image_file, ptr, length);
 	}
 }
 

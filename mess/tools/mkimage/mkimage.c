@@ -58,9 +58,9 @@ typedef struct {
 } cpm_dpb;
 
 typedef struct {
-	char	*id;			/* short name */
-	char	*name;			/* long name */
-	char	*ref;			/* id reference */
+	const char	*id;			/* short name */
+	const char	*name;			/* long name */
+	const char	*ref;			/* id reference */
 	DENSITY density;		/* fdd density */
 	word	cylinders;		/* number of cylinders */
 	byte	sides;			/* number of sides */
@@ -70,7 +70,7 @@ typedef struct {
 	byte	side1[32];		/* side number, sector numbers */
 	byte	side2[32];		/* side number, sector numbers */
 	ORDER	order;			/* sector ordering */
-	char	*label; 		/* disk label */
+	const char	*label; 		/* disk label */
 	cpm_dpb dpb;			/* associated dpb */
 } dsk_fmt;
 

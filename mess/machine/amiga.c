@@ -849,7 +849,7 @@ static void setup_fdc_buffer( int drive )
 		fdc_status[drive].disk_changed = 1;
 	}
 
-	osd_fread( fdc_status[drive].f, temp_cyl, len );
+	mame_fread( fdc_status[drive].f, temp_cyl, len );
 
 	for ( sector = 0; sector < 11; sector++ ) {
 		unsigned char secbuf[544];

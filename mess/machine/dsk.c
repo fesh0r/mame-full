@@ -53,7 +53,7 @@ static int dsk_load(void *file, int id, unsigned char **ptr)
 	unsigned char *data;
 
 	/* get file size */
-	datasize = osd_fsize(file);
+	datasize = mame_fsize(file);
 
 	if (datasize!=0)
 	{
@@ -63,7 +63,7 @@ static int dsk_load(void *file, int id, unsigned char **ptr)
 		if (data!=NULL)
 		{
 			/* read whole file */
-			osd_fread(file, data, datasize);
+			mame_fread(file, data, datasize);
 
 			*ptr = data;
 
@@ -121,14 +121,14 @@ static int dsk_save(int id, unsigned char **ptr)
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
 			data = *ptr;
 			if (data!=NULL)
 			{
-				osd_fwrite(file, data, datasize);
+				mame_fwrite(file, data, datasize);
 
 				/* ok! */
 				return 1;

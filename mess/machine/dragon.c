@@ -299,7 +299,7 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 			if (seglen > *paklen)
 				seglen = *paklen;
 
-			if (osd_fread(fp, mem, seglen) < seglen) {
+			if (mame_fread(fp, mem, seglen) < seglen) {
 #if LOG_PAK
 				logerror("Could not fully read PAK.\n");
 #endif
@@ -385,7 +385,7 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 		return INIT_FAIL;
 	}
 
-	if (osd_fread(fp, &header, sizeof(header)) < sizeof(header))
+	if (mame_fread(fp, &header, sizeof(header)) < sizeof(header))
 	{
 #if LOG_PAK
 		logerror("Could not fully read PAK.\n");
@@ -406,7 +406,7 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 		return INIT_FAIL;
 	}
 
-	trailerlen = osd_fread(fp, trailerraw, sizeof(trailerraw));
+	trailerlen = mame_fread(fp, trailerraw, sizeof(trailerraw));
 	if (trailerlen)
 	{
 		if (pak_decode_trailer(trailerraw, trailerlen, &trailer))
@@ -481,7 +481,7 @@ static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 
 	if (fp) {
 
-		romsize = osd_fsize(fp);
+		romsize = mame_fsize(fp);
 
 		/* The following hack is for Arkanoid running on the CoCo2.
 		   The issuse is the CoCo2 hardware only allows the cartridge
@@ -502,7 +502,7 @@ static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 		if (romsize > destlength)
 			romsize = destlength;
 
-		osd_fread(fp, dest, romsize);
+		mame_fread(fp, dest, romsize);
 
 		cart_inserted = 1;
 
@@ -1913,7 +1913,7 @@ static void autocenter_init(int dipport, int dipmask)
 static void coco_cassette_calcchunkinfo(void *file, int *chunk_size,
 	int *chunk_samples)
 {
-	coco_wave_size = osd_fsize(file);
+	coco_wave_size = mame_fsize(file);
 	*chunk_size = coco_wave_size;
 	*chunk_samples = 8*8 * coco_wave_size;	/* 8 bits * 4 samples */
 }
@@ -2041,12 +2041,12 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 	if (count_bank() > 0) {
 		/* Pin variable to proper bit width */
 		bank &= count_bank();
-		fp = image_fopen_custom(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		fp = image_fopen_custom(IO_CARTSLOT, 0, FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fp) {
 			if (bank)
 				osd_fseek(fp, 0x4000 * bank, SEEK_SET);
-			osd_fread(fp, cartpos, 0x4000);
-			osd_fclose(fp);
+			mame_fread(fp, cartpos, 0x4000);
+			mame_fclose(fp);
 		}
 	}
 }

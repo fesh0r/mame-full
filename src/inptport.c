@@ -796,7 +796,7 @@ int num_ik = sizeof(input_keywords)/sizeof(struct ik);
 /***************************************************************************/
 /* Generic IO */
 
-static int readint(void *f,UINT32 *num)
+static int readint(mame_file *f,UINT32 *num)
 {
 	unsigned i;
 
@@ -807,7 +807,7 @@ static int readint(void *f,UINT32 *num)
 
 
 		*num <<= 8;
-		if (osd_fread(f,&c,1) != 1)
+		if (mame_fread(f,&c,1) != 1)
 			return -1;
 		*num |= c;
 	}
@@ -815,7 +815,7 @@ static int readint(void *f,UINT32 *num)
 	return 0;
 }
 
-static void writeint(void *f,UINT32 num)
+static void writeint(mame_file *f,UINT32 num)
 {
 	unsigned i;
 
@@ -825,12 +825,12 @@ static void writeint(void *f,UINT32 num)
 
 
 		c = (num >> 8 * (sizeof(UINT32)-1)) & 0xff;
-		osd_fwrite(f,&c,1);
+		mame_fwrite(f,&c,1);
 		num <<= 8;
 	}
 }
 
-static int readword(void *f,UINT16 *num)
+static int readword(mame_file *f,UINT16 *num)
 {
 	unsigned i;
 	int res;
@@ -842,7 +842,7 @@ static int readword(void *f,UINT16 *num)
 
 
 		res <<= 8;
-		if (osd_fread(f,&c,1) != 1)
+		if (mame_fread(f,&c,1) != 1)
 			return -1;
 		res |= c;
 	}
@@ -851,7 +851,7 @@ static int readword(void *f,UINT16 *num)
 	return 0;
 }
 
-static void writeword(void *f,UINT16 num)
+static void writeword(mame_file *f,UINT16 num)
 {
 	unsigned i;
 
@@ -861,7 +861,7 @@ static void writeword(void *f,UINT16 num)
 
 
 		c = (num >> 8 * (sizeof(UINT16)-1)) & 0xff;
-		osd_fwrite(f,&c,1);
+		mame_fwrite(f,&c,1);
 		num <<= 8;
 	}
 }
@@ -923,19 +923,19 @@ static void seq_write(void* f, InputSeq* seq)
 
 static void load_default_keys(void)
 {
-	void *f;
+	mame_file *f;
 
 
 	osd_customize_inputport_defaults(inputport_defaults);
 	memcpy(inputport_defaults_backup,inputport_defaults,sizeof(inputport_defaults));
 
-	if ((f = osd_fopen("default",0,OSD_FILETYPE_CONFIG,0)) != 0)
+	if ((f = mame_fopen("default",0,FILETYPE_CONFIG,0)) != 0)
 	{
 		char buf[8];
 		int version;
 
 		/* read header */
-		if (osd_fread(f,buf,8) != 8)
+		if (mame_fread(f,buf,8) != 8)
 			goto getout;
 
 		if (memcmp(buf,MAMEDEFSTRING_V5,8) == 0)
@@ -979,22 +979,22 @@ static void load_default_keys(void)
 		}
 
 getout:
-		osd_fclose(f);
+		mame_fclose(f);
 	}
 }
 
 static void save_default_keys(void)
 {
-	void *f;
+	mame_file *f;
 
 
-	if ((f = osd_fopen("default",0,OSD_FILETYPE_CONFIG,1)) != 0)
+	if ((f = mame_fopen("default",0,FILETYPE_CONFIG,1)) != 0)
 	{
 		int i;
 
 
 		/* write header */
-		osd_fwrite(f,MAMEDEFSTRING_V8,8);
+		mame_fwrite(f,MAMEDEFSTRING_V8,8);
 
 		i = 0;
 		while (inputport_defaults[i].type != IPT_END)
@@ -1010,7 +1010,7 @@ static void save_default_keys(void)
 			i++;
 		}
 
-		osd_fclose(f);
+		mame_fclose(f);
 	}
 	memcpy(inputport_defaults,inputport_defaults_backup,sizeof(inputport_defaults_backup));
 }
@@ -1064,7 +1064,7 @@ static void input_port_write(void *f,struct InputPort *in)
 
 int load_input_port_settings(void)
 {
-	void *f;
+	mame_file *f;
 #ifdef MAME_NET
     struct InputPort *in;
     int port, player;
@@ -1073,7 +1073,7 @@ int load_input_port_settings(void)
 
 	load_default_keys();
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,0)) != 0)
+	if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_CONFIG,0)) != 0)
 	{
 #ifndef MAME_NET
 		struct InputPort *in;
@@ -1094,7 +1094,7 @@ int load_input_port_settings(void)
 		}
 
 		/* read header */
-		if (osd_fread(f,buf,8) != 8)
+		if (mame_fread(f,buf,8) != 8)
 			goto getout;
 
 		if (memcmp(buf,MAMECFGSTRING_V5,8) == 0)
@@ -1158,7 +1158,7 @@ int load_input_port_settings(void)
 		mixer_read_config(f);
 
 getout:
-		osd_fclose(f);
+		mame_fclose(f);
 	}
 
 	/* All analog ports need initialization */
@@ -1303,7 +1303,7 @@ getout:
 
 void save_input_port_settings(void)
 {
-	void *f;
+	mame_file *f;
 #ifdef MAME_NET
 	struct InputPort *in;
 	int port, player;
@@ -1428,7 +1428,7 @@ void save_input_port_settings(void)
 
 	save_default_keys();
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,1)) != 0)
+	if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_CONFIG,1)) != 0)
 	{
 #ifndef MAME_NET
 		struct InputPort *in;
@@ -1448,7 +1448,7 @@ void save_input_port_settings(void)
 		}
 
 		/* write header */
-		osd_fwrite(f,MAMECFGSTRING_V8,8);
+		mame_fwrite(f,MAMECFGSTRING_V8,8);
 		/* write array size */
 		writeint(f,total);
 		/* write the original settings as defined in the driver */
@@ -1473,7 +1473,7 @@ void save_input_port_settings(void)
 
 		mixer_write_config(f);
 
-		osd_fclose(f);
+		mame_fclose(f);
 	}
 }
 

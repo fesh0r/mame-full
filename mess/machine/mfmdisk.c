@@ -178,7 +178,7 @@ static void mfm_info_cache_sector_info(int id,unsigned char *pTrackPtr, unsigned
 	while ((pTrackPtr-pStart)<Length);
 
 	mfm_disk->NumSectors = SectorCount;
-	logerror("mfm disk: Num Sectors %02x\n,",SectorCount);
+	logerror("mfm disk: Num Sectors %02x\n,", (int) SectorCount);
 
 }
 
@@ -235,7 +235,7 @@ int	mfm_disk_floppy_id(int id)
 	int result = 0;
 
 	/* open file and determine image geometry */
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -243,12 +243,12 @@ int	mfm_disk_floppy_id(int id)
 		unsigned long FileLength;
 
 		/* get length of file */
-		FileLength = osd_fsize(file);
+		FileLength = mame_fsize(file);
 
 		if (FileLength!=0)
 		{
 			/* load header */
-			if (osd_fread(file, header, mfm_disk_header_size))
+			if (mame_fread(file, header, mfm_disk_header_size))
 			{
 				/* check for text ident */
 				if (memcmp(header, MFM_ID, 8)==0)
@@ -285,7 +285,7 @@ int	mfm_disk_floppy_id(int id)
 			}
 		}
 
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 
 	return result;
@@ -302,7 +302,7 @@ static int mfm_disk_load(int type, int id, void *file, unsigned char **ptr)
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
@@ -312,7 +312,7 @@ static int mfm_disk_load(int type, int id, void *file, unsigned char **ptr)
 			if (data!=NULL)
 			{
 				/* read whole file */
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 
 				*ptr = data;
 

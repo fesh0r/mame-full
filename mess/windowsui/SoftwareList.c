@@ -179,7 +179,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
         /* Are we a ZIP file? */
         if (!stricmp(lpExt, ".ZIP")) {
             if (bReadZip) {
-                pZip = openzip(filename);
+                pZip = openzip(0, 0, filename);
                 if (pZip) {
                     pZipEnt = readzip(pZip);
                     if (pZipEnt) {

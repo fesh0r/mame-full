@@ -346,7 +346,7 @@ static void read_track(WD179X * w)
 				pdst--; 	   /* go back one byte */
 				if (seek(w, t, h, s) == 0)
 				{
-					if (osd_fread(w->image_file, pdst, l) != l)
+					if (mame_fread(w->image_file, pdst, l) != l)
 					{
 						w->status = STA_2_CRC_ERR;
 						return;

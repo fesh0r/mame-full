@@ -124,11 +124,11 @@ static int d64_open (int id, void *in)
 
 	cbm_drive[id].d.d64.image_type = IO_FLOPPY;
 	cbm_drive[id].d.d64.image_id = id;
-	size = osd_fsize (in);
+	size = mame_fsize (in);
 	if (!(cbm_drive[id].d.d64.image = (UINT8*)malloc (size)))
 		return 1;
 
-	if (size != osd_fread (in, cbm_drive[id].d.d64.image, size))
+	if (size != mame_fread (in, cbm_drive[id].d.d64.image, size))
 	{
 		free (cbm_drive[id].d.d64.image);
 		return 1;

@@ -88,9 +88,9 @@ int	uk101_init_cassette(int id, void *file, int open_mode)
 
 	if (file)
 	{
-		uk101_tape_size = osd_fsize(file);
+		uk101_tape_size = mame_fsize(file);
 		uk101_tape_image = (UINT8 *) image_malloc(IO_CASSETTE, id, uk101_tape_size);
-		if (!uk101_tape_image || (osd_fread(file, uk101_tape_image, uk101_tape_size) != uk101_tape_size))
+		if (!uk101_tape_image || (mame_fread(file, uk101_tape_image, uk101_tape_size) != uk101_tape_size))
 		{
 			return (1);
 		}

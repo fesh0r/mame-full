@@ -705,9 +705,8 @@ static WRITE_HANDLER(avigo_ram_bank_h_w)
 
 static READ_HANDLER(avigo_ad_control_status_r)
 {
-	logerror("avigo ad control read %02x\n",avigo_ad_control_status);
-
-        return avigo_ad_control_status;
+	logerror("avigo ad control read %02x\n", (int) avigo_ad_control_status);
+	return avigo_ad_control_status;
 }
 
 static unsigned int avigo_ad_value;
@@ -902,8 +901,7 @@ static WRITE_HANDLER(avigo_speaker_w)
 
 static READ_HANDLER(avigo_unmapped_r)
 {
-	logerror("read unmapped port\n",offset);
-
+	logerror("read unmapped port\n");
 	return 0x0ff;
 }
 

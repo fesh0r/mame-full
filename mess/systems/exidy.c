@@ -296,7 +296,7 @@ static READ_HANDLER(exidy_unmapped_r)
 
 static WRITE_HANDLER(exidy_unmapped_w)
 {
-	logerror("unmapped r: %04x\r\n",offset,data);
+	logerror("unmapped r: %04x %d\r\n", offset, data);
 }
 
 

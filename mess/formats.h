@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include "osd_cpu.h"
 
 struct disk_geometry
@@ -133,10 +134,10 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 struct bdf_procs
 {
 	void (*closeproc)(void *file);
-	int (*seekproc)(void *file, int offset, int whence);
-	int (*readproc)(void *file, void *buffer, int length);
-	int (*writeproc)(void *file, const void *buffer, int length);
-	int (*filesizeproc)(void *file);
+	int (*seekproc)(void *file, INT64 offset, int whence);
+	UINT32 (*readproc)(void *file, void *buffer, UINT32 length);
+	UINT32 (*writeproc)(void *file, const void *buffer, UINT32 length);
+	UINT64 (*filesizeproc)(void *file);
 };
 
 enum

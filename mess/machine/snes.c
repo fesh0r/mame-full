@@ -1073,13 +1073,13 @@ int snes_load_rom(int id, void *file, int open_mode)
 
 	/* Check for a header (512 bytes) */
 	offset = 512;
-	osd_fread( file, header, 512 );
+	mame_fread( file, header, 512 );
 	if( (header[8] == 0xaa) && (header[9] == 0xbb) && (header[10] == 0x04) )
 	{
 		/* Found an SWC identifier */
 		logerror( "Found header(SWC) - Skipped\n" );
 	}
-	else if( (header[0] | (header[1] << 8)) == (((osd_fsize(file) - 512) / 1024) / 8) )
+	else if( (header[0] | (header[1] << 8)) == (((mame_fsize(file) - 512) / 1024) / 8) )
 	{
 		/* Some headers have the rom size at the start, if this matches with the
 		 * actual rom size, we probably have a header */
@@ -1100,7 +1100,7 @@ int snes_load_rom(int id, void *file, int open_mode)
 	}
 
 	/* We need to take a sample of 128kb to test what mode we need to be in */
-	osd_fread( file, sample, 0xffff );
+	mame_fread( file, sample, 0xffff );
 	osd_fseek( file, offset, SEEK_SET );	/* Rewind */
 	/* Now to determine if this is a lo-ROM or a hi-ROM */
 	valid_mode20 = snes_validate_infoblock( sample, 0x7fc0 );
@@ -1125,7 +1125,7 @@ int snes_load_rom(int id, void *file, int open_mode)
 	}
 
 	/* Find the number of blocks in this ROM */
-	totalblocks = ((osd_fsize(file) - offset) >> (cart.mode == MODE_20 ? 15 : 16));
+	totalblocks = ((mame_fsize(file) - offset) >> (cart.mode == MODE_20 ? 15 : 16));
 
 	/* FIXME: Insert crc check here */
 
@@ -1144,7 +1144,7 @@ int snes_load_rom(int id, void *file, int open_mode)
 		i = 0;
 		while( i < 96 && readblocks <= totalblocks )
 		{
-			osd_fread( file, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
+			mame_fread( file, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
 			readblocks++;
 		}
 	}
@@ -1161,14 +1161,14 @@ int snes_load_rom(int id, void *file, int open_mode)
 		i = 0;
 		while( i < 64 && readblocks <= totalblocks )
 		{
-			osd_fread( file, &snes_ram[0xc00000 + (i++ * 0x10000)], 0x10000);
+			mame_fread( file, &snes_ram[0xc00000 + (i++ * 0x10000)], 0x10000);
 			readblocks++;
 		}
 		/* read the next 48 blocks */
 		i = 0;
 		while( i < 48 && readblocks <= totalblocks )
 		{
-			osd_fread( file, &snes_ram[0x400000 + (i++ * 0x10000)], 0x10000);
+			mame_fread( file, &snes_ram[0x400000 + (i++ * 0x10000)], 0x10000);
 			readblocks++;
 		}
 	}

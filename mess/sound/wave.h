@@ -60,7 +60,7 @@ extern void wave_specify(struct IODevice *iodev, int count, char *actualext, con
 /*****************************************************************************
  * Use this structure for the "void *args" argument of device_open()
  * file
- *	  file handle returned by osd_fopen() (mandatory)
+ *	  file handle returned by mame_fopen() (mandatory)
  * display
  *	  display cassette icon, playing time and total time on screen
  * fill_wave

@@ -150,9 +150,12 @@ int tms5220_ready_r(void)
 
 double tms5220_time_to_ready(void)
 {
-    /* bring up to date first */
-    stream_update(stream, -1);
-	return (double) tms5220_cycles_to_ready() * 80 / intf->baseclock;
+	double cycles;
+
+	/* bring up to date first */
+	stream_update(stream, -1);
+	cycles = tms5220_cycles_to_ready();
+	return cycles * 80.0 / intf->baseclock;
 }
 
 

@@ -70,6 +70,9 @@ enum
 #if (HAS_N2A03)
 	CPU_N2A03,
 #endif
+#if (HAS_DECO16)
+	CPU_DECO16,
+#endif
 #if (HAS_M4510)
 	CPU_M4510,
 #endif
@@ -217,6 +220,12 @@ enum
 #if (HAS_TMS32010)
 	CPU_TMS32010,
 #endif
+#if (HAS_TMS32025)
+	CPU_TMS32025,
+#endif
+#if (HAS_TMS32031)
+	CPU_TMS32031,
+#endif
 #if (HAS_CCPU)
 	CPU_CCPU,
 #endif
@@ -229,6 +238,9 @@ enum
 #if (HAS_ADSP2105)
 	CPU_ADSP2105,
 #endif
+#if (HAS_ADSP2115)
+	CPU_ADSP2115,
+#endif
 #if (HAS_PSXCPU)
 	CPU_PSXCPU,
 #endif
@@ -238,6 +250,9 @@ enum
 #if (HAS_UPD7810)
 	CPU_UPD7810,
 #endif
+#if (HAS_UPD7807)
+	CPU_UPD7807,
+#endif
 #if (HAS_JAGUAR)
 	CPU_JAGUARGPU,
 	CPU_JAGUARDSP,
@@ -246,8 +261,13 @@ enum
 	CPU_R3000BE,
 	CPU_R3000LE,
 #endif
-#if (HAS_TMS32031)
-	CPU_TMS32031,
+#if (HAS_R4600)
+	CPU_R4600BE,
+	CPU_R4600LE,
+#endif
+#if (HAS_R5000)
+	CPU_R5000BE,
+	CPU_R5000LE,
 #endif
 #if (HAS_ARM)
 	CPU_ARM,

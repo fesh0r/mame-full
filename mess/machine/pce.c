@@ -30,7 +30,7 @@ int pce_load_rom(int id, void *fp, int open_mode)
 	if( new_memory_region(REGION_CPU1,PCE_ROM_MAXSIZE,0) )
 		return 1;
 	ROM = memory_region(REGION_CPU1);
-    size = osd_fread(fp, ROM, PCE_ROM_MAXSIZE);
+    size = mame_fread(fp, ROM, PCE_ROM_MAXSIZE);
 
     /* position back at start of file */
     osd_fseek(fp, 0, SEEK_SET);
@@ -42,7 +42,7 @@ int pce_load_rom(int id, void *fp, int open_mode)
         size -= 512;
         osd_fseek(fp, 512, SEEK_SET);
     }
-    size = osd_fread(fp, ROM, size);
+    size = mame_fread(fp, ROM, size);
 return 0;
 }
 
@@ -54,14 +54,14 @@ NVRAM_HANDLER( pce )
 {
 	if (read_or_write)
 	{
-		osd_fwrite(file, pce_save_ram, 0x2000);
+		mame_fwrite(file, pce_save_ram, 0x2000);
 	}
 	else
 	{
 	    /* load battery backed memory from disk */
 		memset(pce_save_ram, 0, 0x2000);
 		if (file)
-			osd_fread(file, pce_save_ram, 0x2000);
+			mame_fread(file, pce_save_ram, 0x2000);
 	}
 }
 

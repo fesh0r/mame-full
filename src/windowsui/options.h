@@ -52,6 +52,7 @@ enum
 	VIEW_SMALL_ICONS,
 	VIEW_INLIST,
 	VIEW_REPORT,
+	VIEW_GROUPED,
 	VIEW_MAX
 };
 
@@ -162,6 +163,7 @@ typedef struct
 
 	/* Core video */
 	double f_bright_correct; /* "1.0", 0.5, 2.0 */
+	double f_pause_bright; /* "0.65", 0.5, 2.0 */
 	BOOL   norotate;
 	BOOL   ror;
 	BOOL   rol;
@@ -199,6 +201,7 @@ typedef struct
 	char*  recordname; // ?
 	BOOL   errorlog;
 	BOOL   sleep;
+        BOOL   old_timing;
 	BOOL   leds;
 
 #ifdef MESS
@@ -232,9 +235,9 @@ typedef struct
 	int      column_order[COLUMN_MAX];
 	int      column_shown[COLUMN_MAX];
 #ifdef MESS
-    int      mess_column_width[MESS_COLUMN_MAX];
-    int      mess_column_order[MESS_COLUMN_MAX];
-    int      mess_column_shown[MESS_COLUMN_MAX];
+	int      mess_column_width[MESS_COLUMN_MAX];
+	int      mess_column_order[MESS_COLUMN_MAX];
+	int      mess_column_shown[MESS_COLUMN_MAX];
 #endif
 	int      sort_column;
 	BOOL     sort_reverse;
@@ -243,6 +246,9 @@ typedef struct
 	int      splitter[SPLITTER_MAX];
 	LOGFONT  list_font;
 	COLORREF list_font_color;
+    COLORREF list_clone_color;
+    BOOL show_disclaimer;
+    BOOL show_gameinfo;
 
 	char*    language;
 	char*    flyerdir;
@@ -277,7 +283,7 @@ typedef struct
 
 } settings_type; /* global settings for the UI only */
 
-void OptionsInit(int total_games);
+void OptionsInit(void);
 void OptionsExit(void);
 
 options_type* GetDefaultOptions(void);
@@ -302,8 +308,14 @@ BOOL GetJoyGUI(void);
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
 
-void SetRandomBg(BOOL random_bg);
-BOOL GetRandomBg(void);
+void SetShowDisclaimer(BOOL show_disclaimer);
+BOOL GetShowDisclaimer(void);
+
+void SetShowGameInfo(BOOL show_gameinfo);
+BOOL GetShowGameInfo(void);
+
+void SetRandomBackground(BOOL random_bg);
+BOOL GetRandomBackground(void);
 
 void SetSavedFolderID(UINT val);
 UINT GetSavedFolderID(void);
@@ -330,8 +342,6 @@ void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
 
 #ifdef MESS
-BOOL GetUseNewFileMgr(int num_game);
-
 void SetDefaultSoftware(const char *name);
 const char *GetDefaultSoftware(void);
 
@@ -377,8 +387,14 @@ void  SetFolderFlags(const char *folderName, DWORD dwFlags);
 void SetListFontColor(COLORREF uColor);
 COLORREF GetListFontColor(void);
 
+void SetListCloneColor(COLORREF uColor);
+COLORREF GetListCloneColor(void);
+
 void SetSortColumn(int column);
 int  GetSortColumn(void);
+
+void SetSortReverse(BOOL reverse);
+BOOL GetSortReverse(void);
 
 const char* GetLanguage(void);
 void SetLanguage(const char* lang);
@@ -467,9 +483,6 @@ void SetHasRoms(int num_game, int has_roms);
 
 int  GetHasSamples(int num_game);
 void SetHasSamples(int num_game, int has_samples);
-
-int  GetIsFavorite(int num_game);
-void SetIsFavorite(int num_game, BOOL is_favorite);
 
 void IncrementPlayCount(int num_game);
 int  GetPlayCount(int num_game);

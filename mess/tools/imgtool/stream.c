@@ -61,7 +61,7 @@ static STREAM *stream_open_zip(const char *zipname, const char *subname, int rea
 	imgfile->write_protect = 1;
 	imgfile->u.m.pos = 0;
 
-	z = openzip(zipname);
+	z = openzip(0, 0, zipname);
 	if (!z)
 		goto error;
 
@@ -100,7 +100,7 @@ STREAM *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
 	struct stream_internal *imgfile = NULL;
-	static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+	static const char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
 	FILE *f = NULL;
 	char *buf = NULL;
 	int len, i;

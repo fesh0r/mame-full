@@ -324,12 +324,12 @@ WRITE_HANDLER( europc_rtc_w )
 
 static void europc_rtc_load_stream(void *file)
 {
-	osd_fread(file, europc_rtc.data, sizeof(europc_rtc.data));
+	mame_fread(file, europc_rtc.data, sizeof(europc_rtc.data));
 }
 
 static void europc_rtc_save_stream(void *file)
 {
-	osd_fwrite(file, europc_rtc.data, sizeof(europc_rtc.data));
+	mame_fwrite(file, europc_rtc.data, sizeof(europc_rtc.data));
 }
 
 NVRAM_HANDLER( europc_rtc )

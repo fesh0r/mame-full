@@ -708,7 +708,7 @@ static int c16_rom_id (int id, void *romfile)
 	retval = 0;
 
 	osd_fseek (romfile, 7, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
+	mame_fread (romfile, buffer, sizeof (magic));
 
 	if (memcmp (magic, buffer, sizeof (magic)) == 0)
 	{
@@ -754,7 +754,7 @@ int c16_rom_load (int id)
 	if (!c16_rom_id (id, fp))
 		return 1;
 
-	size = osd_fsize (fp);
+	size = mame_fsize (fp);
 
 	if ((cp = strrchr (name, '.')) != NULL)
 	{
@@ -762,7 +762,7 @@ int c16_rom_load (int id)
 		{
 			unsigned short in;
 
-			osd_fread_lsbfirst (fp, &in, 2);
+			mame_fread_lsbfirst (fp, &in, 2);
 			logerror("rom prg %.4x\n", in);
 			addr = in+0x20000;
 			size -= 2;
@@ -773,7 +773,7 @@ int c16_rom_load (int id)
 		addr = 0x20000;
 	}
 	logerror("loading rom %s at %.5x size:%.4x\n", name, addr, size);
-	read = osd_fread (fp, mem + addr, size);
+	read = mame_fread (fp, mem + addr, size);
 	addr += size;
 	if (read != size)
 		return 1;

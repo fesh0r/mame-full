@@ -4,6 +4,6 @@ extern VIDEO_START( pocketc );
 
 extern unsigned short pocketc_colortable[8][2];
 
-typedef char *POCKETC_FIGURE[];
+typedef const char *POCKETC_FIGURE[];
 void pocketc_draw_special(struct mame_bitmap *bitmap,
 						  int x, int y, const POCKETC_FIGURE fig, int color);

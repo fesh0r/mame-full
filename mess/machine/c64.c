@@ -951,8 +951,8 @@ int c64_rom_id (int id)
 	}
 
 	osd_fseek (romfile, 3, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
-	osd_fclose (romfile);
+	mame_fread (romfile, buffer, sizeof (magic));
+	mame_fclose (romfile);
 
 	if (memcmp (magic, buffer, sizeof (magic)) == 0)
 	{

@@ -65,11 +65,11 @@ static void common_init_machine(void)
 
 		memset(vtech1_fdc_data, 0, TRKSIZE_FM);
 
-        dos = osd_fopen(Machine->gamedrv->name, "vzdos.rom", OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+        dos = mame_fopen(Machine->gamedrv->name, "vzdos.rom", FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if( dos )
         {
-			osd_fread(dos, &ROM[0x4000], 0x2000);
-			osd_fclose(dos);
+			mame_fread(dos, &ROM[0x4000], 0x2000);
+			mame_fclose(dos);
         }
     }
 }
@@ -128,12 +128,12 @@ int vtech1_cassette_id(int id)
 	UINT8 buff[256];
     void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
 		int i;
 
-        osd_fread(file, buff, sizeof(buff));
+        mame_fread(file, buff, sizeof(buff));
 
         for( i = 0; i < 128; i++ )
 			if( buff[i] != 0x80 )
@@ -323,8 +323,8 @@ int vtech1_snapshot_id(int id)
     file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if( file )
     {
-        osd_fread(file, buff, sizeof(buff));
-		osd_fclose(file);
+        mame_fread(file, buff, sizeof(buff));
+		mame_fclose(file);
 		if( memcmp(buff, "  \0\0", 4) == 0 && buff[21] == 0xf1 )
         {
 			logerror("vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4);
@@ -350,7 +350,7 @@ SNAPSHOT_LOAD(vtech1)
 	if (!snapshot_data)
 		return INIT_FAIL;
 
-	osd_fread(fp, snapshot_data, snapshot_size);
+	mame_fread(fp, snapshot_data, snapshot_size);
 	vtech1_snapshot_copy(snapshot_data, snapshot_size);
 	free(snapshot_data);
 	return INIT_PASS;
@@ -364,11 +364,11 @@ int vtech1_floppy_id(int id)
     void *file;
     UINT8 buff[32];
 
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
-        osd_fread(file, buff, sizeof(buff));
-        osd_fclose(file);
+        mame_fread(file, buff, sizeof(buff));
+        mame_fclose(file);
         if( memcmp(buff, "\x80\x80\x80\x80\x80\x80\x00\xfe\0xe7\0x18\0xc3\x00\x00\x00\x80\x80", 16) == 0 )
             return 1;
     }
@@ -403,7 +403,7 @@ static void vtech1_get_track(void)
 		size = TRKSIZE_VZ;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		osd_fseek(vtech1_fdc_file[vtech1_drive], offs, SEEK_SET);
-		size = osd_fread(vtech1_fdc_file[vtech1_drive], vtech1_fdc_data, size);
+		size = mame_fread(vtech1_fdc_file[vtech1_drive], vtech1_fdc_data, size);
 		logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
 	vtech1_fdc_offs = 0;
@@ -418,7 +418,7 @@ static void vtech1_put_track(void)
 		int size, offs;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		osd_fseek(vtech1_fdc_file[vtech1_drive], offs + vtech1_fdc_start, SEEK_SET);
-		size = osd_fwrite(vtech1_fdc_file[vtech1_drive], &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
+		size = mame_fwrite(vtech1_fdc_file[vtech1_drive], &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
 		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }
 }

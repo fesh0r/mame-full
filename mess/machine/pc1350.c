@@ -137,14 +137,14 @@ static void pc1350_load(void)
 	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 0))==NULL) {
+	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0))==NULL) {
 		power=0;
 		return;
 	}
 
-	osd_fread(file, cpu, 96);
-	osd_fread(file, ram, 0x5000);
-	osd_fclose(file);
+	mame_fread(file, cpu, 96);
+	mame_fread(file, ram, 0x5000);
+	mame_fclose(file);
 }
 
 static void pc1350_save(void)
@@ -153,12 +153,12 @@ static void pc1350_save(void)
 	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 1))==NULL)
+	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1))==NULL)
 		return;
 
-	osd_fwrite(file, cpu, 96);
-	osd_fwrite(file, ram, 0x5000);
-	osd_fclose(file);
+	mame_fwrite(file, cpu, 96);
+	mame_fwrite(file, ram, 0x5000);
+	mame_fclose(file);
 }
 
 static void pc1350_power_up(int param)

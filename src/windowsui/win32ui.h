@@ -17,8 +17,6 @@
 #include "options.h"
 #include "ScreenShot.h"
 
-#define GAME_BROKEN (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-
 enum
 {
 	TAB_PICKER = 0,
@@ -30,13 +28,14 @@ enum
 /* global variables */
 extern const char *column_names[COLUMN_MAX];
 
-extern HWND  GetMainWindow(void);
-extern int   GetNumGames(void);
-extern void  GetRealColumnOrder(int order[]);
+extern HWND GetMainWindow(void);
+extern HWND GetTreeView(void);
+extern int GetNumGames(void);
+extern void GetRealColumnOrder(int order[]);
 extern HICON LoadIconFromFile(char *iconname);
-extern BOOL  GameUsesTrackball(int game);
-extern void  UpdateScreenShot(void);
-extern void  ResizePickerControls(HWND hWnd);
+extern BOOL GameUsesTrackball(int game);
+extern void UpdateScreenShot(void);
+extern void ResizePickerControls(HWND hWnd);
 
 // Move The in "The Title (notes)" to "Title, The (notes)"
 extern char *ModifyThe(const char *str);
@@ -44,9 +43,16 @@ extern char *ModifyThe(const char *str);
 // Convert Ampersand so it can display in a static control
 extern char* ConvertAmpersandString(const char *s);
 
-/* globalized for painting tree control */
-extern HBITMAP      hBitmap;
-extern HPALETTE     hPALbg;
-extern MYBITMAPINFO bmDesc;
+// globalized for painting tree control
+extern HBITMAP GetBackgroundBitmap(void);
+extern HPALETTE GetBackgroundPalette(void);
+extern MYBITMAPINFO * GetBackgroundInfo(void);
+
+int GetMinimumScreenShotWindowWidth(void);
+
+// we maintain an array of drivers sorted by name, useful all around
+int GetDriverIndex(const struct GameDriver *driver);
+int GetGameNameIndex(const char *name);
+
 
 #endif

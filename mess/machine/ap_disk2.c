@@ -129,7 +129,7 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 				return INIT_FAIL;
 			}
 
-			if (osd_fread(f,data,256)<256)
+			if (mame_fread(f,data,256)<256)
 			{
 				LOG(("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos));
 				return INIT_FAIL;

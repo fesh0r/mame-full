@@ -5,7 +5,7 @@
 	merged, combined, modified sets */
 
 static struct {
-	int crc32; int size; char *text;
+	int crc32; int size; const char *text;
 } roms[]= {
 	{ 0x5be0a51f,  0x200, "VIP monitor" },
 	{ 0x3e0f50f0,  0x200, "VIP chip8 interpreter" },

@@ -566,8 +566,8 @@ int pet_rom_id (int id)
 	}
 
 	osd_fseek (romfile, 3, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
-	osd_fclose (romfile);
+	mame_fread (romfile, buffer, sizeof (magic));
+	mame_fclose (romfile);
 #endif
 	return 1;
 }

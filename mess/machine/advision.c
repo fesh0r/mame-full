@@ -37,7 +37,7 @@ int advision_load_rom(int id, void *cartfile, int open_mode)
     }
 
     ROM = memory_region(REGION_CPU1);
-	osd_fread (cartfile, &ROM[0x0000], 4096);
+	mame_fread (cartfile, &ROM[0x0000], 4096);
 	return 0;
 }
 

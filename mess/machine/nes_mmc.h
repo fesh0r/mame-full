@@ -4,7 +4,7 @@
 typedef struct __mmc
 {
 	int iNesMapper; /* iNES Mapper # */
-	char *desc;     /* Mapper description */
+	const char *desc;     /* Mapper description */
 	mem_write_handler mmc_write_low; /* $4100-$5fff write routine */
 	mem_read_handler mmc_read_low; /* $4100-$5fff read routine */
 	mem_write_handler mmc_write_mid; /* $6000-$7fff write routine */

@@ -174,7 +174,7 @@ READ_HANDLER ( intvkbd_dualport8_msb_r )
 static int tape_interrupts_enabled;
 static int tape_unknown_write[6];
 static int tape_motor_mode;
-static char *tape_motor_mode_desc[8] =
+static const char *tape_motor_mode_desc[8] =
 {
 	"IDLE", "IDLE", "IDLE", "IDLE",
 	"EJECT", "PLAY/RECORD", "REWIND", "FF"
@@ -218,16 +218,16 @@ WRITE_HANDLER ( intvkbd_dualport8_msb_w )
 				break;
 			case 0x041:
 				if (data & 1)
-					logerror("TAPE: Tape Interrupts Enabled\n",data,offset);
+					logerror("TAPE: Tape Interrupts Enabled\n");
 				else
-					logerror("TAPE: Tape Interrupts Disabled\n",data,offset);
+					logerror("TAPE: Tape Interrupts Disabled\n");
 				tape_interrupts_enabled = (data & 1);
 				break;
 			case 0x042:
 				if (data & 1)
-					logerror("TAPE: Cart Bus Interrupts Disabled\n",data,offset);
+					logerror("TAPE: Cart Bus Interrupts Disabled\n");
 				else
-					logerror("TAPE: Cart Bus Interrupts Enabled\n",data,offset);
+					logerror("TAPE: Cart Bus Interrupts Enabled\n");
 				break;
 			case 0x043:
 				if (data & 0x01)
@@ -362,15 +362,15 @@ static int intv_load_rom_file(int id, void *romfile, int required)
 			printf("intvkbd legacy cartridge slot empty - ok\n");
 	}
 
-	osd_fread(romfile,&temp,1);			/* header */
+	mame_fread(romfile,&temp,1);			/* header */
 	if (temp != 0xa8)
 	{
 		return INIT_FAIL;
 	}
 
-	osd_fread(romfile,&num_segments,1);
+	mame_fread(romfile,&num_segments,1);
 
-	osd_fread(romfile,&temp,1);
+	mame_fread(romfile,&temp,1);
 	if (temp != (num_segments ^ 0xff))
 	{
 		return INIT_FAIL;
@@ -378,28 +378,28 @@ static int intv_load_rom_file(int id, void *romfile, int required)
 
 	for(i=0;i<num_segments;i++)
 	{
-		osd_fread(romfile,&start_seg,1);
+		mame_fread(romfile,&start_seg,1);
 		current_address = start_seg*0x100;
 
-		osd_fread(romfile,&end_seg,1);
+		mame_fread(romfile,&end_seg,1);
 		end_address = end_seg*0x100 + 0xff;
 
 		while(current_address <= end_address)
 		{
-			osd_fread(romfile,&low_byte,1);
+			mame_fread(romfile,&low_byte,1);
 			memory[(current_address<<1)+1] = low_byte;
-			osd_fread(romfile,&high_byte,1);
+			mame_fread(romfile,&high_byte,1);
 			memory[current_address<<1] = high_byte;
 			current_address++;
 		}
 
-		osd_fread(romfile,&temp,1);
-		osd_fread(romfile,&temp,1);
+		mame_fread(romfile,&temp,1);
+		mame_fread(romfile,&temp,1);
 	}
 
 	for(i=0;i<(16+32+2);i++)
 	{
-		osd_fread(romfile,&temp,1);
+		mame_fread(romfile,&temp,1);
 	}
 	return INIT_PASS;
 }
@@ -527,7 +527,7 @@ int intvkbd_load_rom (int id, void *romfile, int open_mode)
 		}
 
 		/* Assume an 8K cart, like BASIC */
-		osd_fread(romfile,&memory[0xe000],0x2000);
+		mame_fread(romfile,&memory[0xe000],0x2000);
 	}
 
 	return INIT_PASS;

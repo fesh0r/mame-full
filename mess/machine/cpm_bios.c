@@ -264,7 +264,7 @@ int cpm_init(int n, const char *ids[])
 	}
 
 	/* create a file to receive list output (ie. PIP LST:=FILE.EXT) */
-	lp = osd_fopen(Machine->gamedrv->name, "cpm.lst", OSD_FILETYPE_IMAGE, 1);
+	lp = mame_fopen(Machine->gamedrv->name, "cpm.lst", FILETYPE_IMAGE, 1);
 
 	cpm_jumptable();
 
@@ -282,7 +282,7 @@ void cpm_exit(void)
 	/* if a list file is still open close it now */
 	if (lp)
 	{
-		osd_fclose(lp);
+		mame_fclose(lp);
 		lp = NULL;
 	}
 
@@ -309,7 +309,7 @@ static void cpm_conout_chr(int data)
  * cpm_conout_str
  * send a zero terminated string to the console
  *****************************************************************************/
-static void cpm_conout_str(char *src)
+static void cpm_conout_str(const char *src)
 {
 	while (*src)
 		cpm_conout_chr(*src++);
@@ -550,7 +550,7 @@ int cpm_disk_read_sector(void)
 			if (fp[curdisk])
 			{
 				cpm_disk_image_seek();
-				if (osd_fread(fp[curdisk], &RAM[dma], RECL) == RECL)
+				if (mame_fread(fp[curdisk], &RAM[dma], RECL) == RECL)
 					result = 0;
 			}
 		}
@@ -580,7 +580,7 @@ int cpm_disk_write_sector(void)
 			if (fp[curdisk])
 			{
 				cpm_disk_image_seek();
-				if (osd_fwrite(fp[curdisk], &RAM[dma], RECL) == RECL)
+				if (mame_fwrite(fp[curdisk], &RAM[dma], RECL) == RECL)
 					result = 0;
 			}
 		}
@@ -697,7 +697,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 #endif
 		/* If the line printer file is created */
 		if (lp)
-			osd_fwrite(lp, &tmp, 1);
+			mame_fwrite(lp, &tmp, 1);
 		break;
 
 

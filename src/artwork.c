@@ -433,7 +433,7 @@ static int load_bitmap(const char *gamename, struct artwork_piece *piece);
 static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original);
 static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight);
 static void trim_bitmap(struct artwork_piece *piece);
-static int parse_art_file(void *file);
+static int parse_art_file(mame_file *file);
 static int validate_pieces(void);
 static void sort_pieces(void);
 static void update_palette_lookup(struct mame_display *display);
@@ -627,7 +627,6 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 	/* reset UI */
 	uioverlay = NULL;
 	uioverlayhint = NULL;
-	gamescale = 0;
 
 	/* first load the artwork; if none, quit now */
 	artwork_list = NULL;
@@ -756,7 +755,7 @@ void artwork_update_video_and_audio(struct mame_display *display)
 	int artwork_changed = 0, ui_visible = 0;
 
 	/* do nothing if no artwork */
-	if (!artwork_list && !gamescale)
+	if (!artwork_list)
 	{
 		osd_update_video_and_audio(display);
 		return;
@@ -1987,17 +1986,28 @@ static char *override_artfile;
 void artwork_use_device_art(int device_type, int device_id, const char *defaultartfile)
 {
 	const char *fname;
+	const char *ext;
+	int len = -1;
+
 	fname = image_filename(device_type, device_id);
 	if (fname)
 	{
-		override_artfile = osd_strip_extension(osd_basename((char *) fname));
+		ext = strrchr(fname, '.');
+		if (ext)
+			len = ext - fname;
 	}
 	else
 	{
-		override_artfile = malloc(strlen(defaultartfile)+1);
-		if (override_artfile)
-			strcpy(override_artfile, defaultartfile);
+		fname = defaultartfile;
 	}
+	if (len == -1)
+		len = strlen(fname);
+
+	override_artfile = malloc(len + 1);
+	if (!override_artfile)
+		return;
+	memcpy(override_artfile, fname, len);
+	override_artfile[len] = 0;
 }
 #endif
 
@@ -2018,7 +2028,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 	const struct overlay_piece *list = overlay_list;
 	struct artwork_piece *piece;
 	char filename[100];
-	void *artfile = NULL;
+	mame_file *artfile = NULL;
 	int result;
 
 	/* reset the list of artwork */
@@ -2051,7 +2061,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 			else	/* else do it the MAME way... */
 #endif /* MESS */
 			sprintf(filename, "%s.art", driver->name);
-			artfile = osd_fopen(driver->name, filename, OSD_FILETYPE_ARTWORK, 0);
+			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
 			if (artfile)
 				break;
 		}
@@ -2064,7 +2074,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 	if (artfile)
 	{
 		result = parse_art_file(artfile);
-		osd_fclose(artfile);
+		mame_fclose(artfile);
 		if (!result)
 			return 0;
 	}
@@ -2114,16 +2124,16 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 static int open_and_read_png(const char *gamename, const char *filename, struct png_info *png)
 {
 	int result;
-	void *file;
+	mame_file *file;
 
 	/* open the file */
-	file = osd_fopen(gamename, filename, OSD_FILETYPE_ARTWORK, 0);
+	file = mame_fopen(gamename, filename, FILETYPE_ARTWORK, 0);
 	if (!file)
 		return 0;
 
 	/* read the PNG data */
 	result = png_read_file(file, png);
-	osd_fclose(file);
+	mame_fclose(file);
 	if (!result)
 		return 0;
 
@@ -2651,8 +2661,7 @@ static struct artwork_piece *create_new_piece(const char *tag)
 	newpiece->priority = 0;
 	newpiece->alpha = 1.0;
 	newpiece->brightness = 1.0;
-	newpiece->tag = "";
-	newpiece->filename = "";
+	newpiece->filename = NULL;
 	newpiece->alpha_filename = NULL;
 	newpiece->intersects_game = 0;
 	newpiece->visible = 1;
@@ -2737,18 +2746,13 @@ static void sort_pieces(void)
 		qsort(array, num_pieces, sizeof(array[0]), artwork_sort_compare);
 
 	/* now reassemble the list */
-	if (num_pieces == 0)
-		artwork_list = NULL;
-	else
+	artwork_list = piece = array[0];
+	for (i = 1; i < num_pieces; i++)
 	{
-		artwork_list = piece = array[0];
-		for (i = 1; i < num_pieces; i++)
-		{
-			piece->next = array[i];
-			piece = piece->next;
-		}
-		piece->next = NULL;
+		piece->next = array[i];
+		piece = piece->next;
 	}
+	piece->next = NULL;
 }
 
 
@@ -2942,7 +2946,7 @@ static int generate_overlay(const struct overlay_piece *list, int width, int hei
 	while (list->type != OVERLAY_TYPE_END)
 	{
 		/* first create a new piece to use */
-		piece = create_new_piece("internal");
+		piece = create_new_piece(OVERLAY_TAG);
 		if (!piece)
 			return 0;
 
@@ -2950,7 +2954,6 @@ static int generate_overlay(const struct overlay_piece *list, int width, int hei
 		piece->has_alpha = 1;
 		piece->layer = LAYER_OVERLAY;
 		piece->priority = priority++;
-		piece->tag = OVERLAY_TAG;
 		piece->blendflags = list->type & OVERLAY_FLAG_MASK;
 
 		/* switch off the type */
@@ -3069,14 +3072,14 @@ static int parse_tag_value(struct artwork_piece *piece, const char *tag, const c
 	parse_art_file - parse a .art file
 -------------------------------------------------*/
 
-static int parse_art_file(void *file)
+static int parse_art_file(mame_file *file)
 {
 	struct artwork_piece *current = NULL;
 	char *tag, *value, *p;
 	char buffer[1000];
 
 	/* loop until we run out of lines */
-	while (osd_fgets(buffer, sizeof(buffer), file))
+	while (mame_fgets(buffer, sizeof(buffer), file))
 	{
 		/* strip off any comments */
 		p = strstr(buffer, "//");

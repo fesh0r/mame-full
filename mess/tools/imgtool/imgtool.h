@@ -78,7 +78,7 @@ typedef struct {
 	int dummy;
 } STREAM;
 
-STREAM *stream_open(const char *fname, int read_or_write);	/* similar params to osd_fopen */
+STREAM *stream_open(const char *fname, int read_or_write);	/* similar params to mame_fopen */
 STREAM *stream_open_write_stream(int filesize);
 STREAM *stream_open_mem(void *buf, size_t sz);
 void stream_close(STREAM *f);

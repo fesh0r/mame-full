@@ -281,9 +281,9 @@ static int arcadia_init_cart(int id, void *cartfile, int open_mode)
 	}
 
 	memset(rom, 0, 0x8000);
-	size=osd_fsize(cartfile);
+	size=mame_fsize(cartfile);
 
-	if (osd_fread(cartfile, rom, size)!=size) {
+	if (mame_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		return INIT_FAIL;
 	}

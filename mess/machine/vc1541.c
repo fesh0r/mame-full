@@ -647,11 +647,11 @@ int vc1541_init (int id, void *in, int open_mode)
 	if (!in)
 		return INIT_FAIL;
 
-	size = osd_fsize (in);
+	size = mame_fsize (in);
 	if (!(vc1541->d64.data = (UINT8*) image_malloc(IO_FLOPPY, id, size)))
 		return INIT_FAIL;
 
-	if (size != osd_fread (in, vc1541->d64.data, size))
+	if (size != mame_fread (in, vc1541->d64.data, size))
 		return INIT_FAIL;
 
 	logerror("floppy image %s loaded\n", image_filename(IO_FLOPPY, id));

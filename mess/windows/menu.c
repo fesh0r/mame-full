@@ -262,7 +262,7 @@ static void loadsave(int type)
 	int result = 0;
 
 	if (filename[0])
-		dir = osd_dirname(filename);
+		dir = osd_mess_dirname(filename);
 	else
 	{
 		sprintf(filename, "machinestate.sta");
@@ -1039,30 +1039,6 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 	case WM_CHAR:
 		if (win_use_natural_keyboard)
 			inputx_postc(wparam);
-		break;
-
-	// suspend sound and timer if we are resizing or a menu is coming up
-	case WM_ENTERMENULOOP:
-#ifndef UNDER_CE
-	case WM_ENTERSIZEMOVE:
-#endif
-		osd_sound_enable(0);
-		win_timer_enable(0);
-#ifdef UNDER_CE
-		gx_suspend();
-#endif
-		break;
-
-	// resume sound and timer if we dome with resizing or a menu
-	case WM_EXITMENULOOP:
-#ifndef UNDER_CE
-	case WM_EXITSIZEMOVE:
-#endif
-		osd_sound_enable(1);
-		win_timer_enable(1);
-#ifdef UNDER_CE
-		gx_resume();
-#endif
 		break;
 
 	case WM_COMMAND:

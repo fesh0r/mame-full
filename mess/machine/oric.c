@@ -117,7 +117,7 @@ static void oric_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "oricram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "oricram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
 	if (file)
 	{
@@ -128,12 +128,12 @@ static void oric_dump_ram(void)
 
 			data = cpu_readmem16(i);
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 
@@ -857,8 +857,8 @@ static READ_HANDLER (oric_jasmin_r)
 			data = wd179x_data_r(0);
 			break;
 		default:
-			logerror("unhandled io read: %04x %02x\n",offset);
 			data = via_0_r(offset & 0x0f);
+			logerror("unhandled io read: %04x %02x\n", offset, data);
 			break;
 
 	}
@@ -1468,7 +1468,7 @@ int oric_cassette_init(int id, void *file, int open_mode)
 			int oric_tap_size;
 
 			/* get size of .tap file */
-			oric_tap_size = osd_fsize(file);
+			oric_tap_size = mame_fsize(file);
 
 			logerror("oric .tap size: %04x\n",oric_tap_size);
 
@@ -1487,7 +1487,7 @@ int oric_cassette_init(int id, void *file, int open_mode)
 					int size_in_samples;
 
 					/* read data into temporary buffer */
-					osd_fread(file, oric_tap_data, oric_tap_size);
+					mame_fread(file, oric_tap_data, oric_tap_size);
 
 					/* calculate size in samples */
 					size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
@@ -1508,7 +1508,7 @@ int oric_cassette_init(int id, void *file, int open_mode)
 
 					length =
 						wa->header_samples +
-						((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+						((mame_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
 						wa->trailer_samples;
 					*/
 

@@ -257,7 +257,7 @@ UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
 
 	if (size < 65) return 0;
 	crc = (UINT32) crc32(0L,&buf[64],size-64);
-	logerror("Lynx Partial CRC: %08lx %ld\n",crc,size);
+	logerror("Lynx Partial CRC: %08lx %ld\n", (long) crc, (long) size);
 	/* printf("Lynx Partial CRC: %08x %d\n",crc,size); */
 	return (UINT32)crc;
 }
@@ -303,8 +303,8 @@ static int lynx_init_cart(int id, void *cartfile, int open_mode)
 	if (cartfile == NULL)
 		return 0;
 
-	size=osd_fsize(cartfile);
-	if (osd_fread(cartfile, header, 0x40)!=0x40) {
+	size=mame_fsize(cartfile);
+	if (mame_fread(cartfile, header, 0x40)!=0x40) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
@@ -321,7 +321,7 @@ static int lynx_init_cart(int id, void *cartfile, int open_mode)
 	logerror ("%s %dkb cartridge with %dbyte granularity from %s\n",
 			  header+10,size/1024,lynx_granularity, header+42);
 
-	if (osd_fread(cartfile, rom, size)!=size) {
+	if (mame_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
@@ -338,13 +338,13 @@ static QUICKLOAD_LOAD( lynx )
 	// maybe the first 2 bytes must be used to identify the endianess of the file
 	UINT16 start;
 
-	if (osd_fread(fp, header, sizeof(header)) != sizeof(header))
+	if (mame_fread(fp, header, sizeof(header)) != sizeof(header))
 		return INIT_FAIL;
 
 	quickload_size -= sizeof(header);
 	start = header[3] | (header[2]<<8); //! big endian format in file format for little endian cpu
 
-	if (osd_fread(fp, rom+start, quickload_size) != quickload_size)
+	if (mame_fread(fp, rom+start, quickload_size) != quickload_size)
 		return INIT_FAIL;
 
 	rom[0xfffc+0x200] = start&0xff;

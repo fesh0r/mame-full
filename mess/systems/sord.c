@@ -346,12 +346,12 @@ static int sord_cartslot_init(int id, void *file, int open_mode)
 		int datasize;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
 			/* read whole file */
-			osd_fread(file, cart_data, datasize);
+			mame_fread(file, cart_data, datasize);
 		}
 		return INIT_PASS;
 
@@ -615,7 +615,7 @@ static void sord_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "sord.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "sord.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -627,11 +627,11 @@ static void sord_dump_ram(void)
 
 			data[0] = cpunum_read_byte(0,i);
 
-			osd_fwrite(file, data, 1);
+			mame_fwrite(file, data, 1);
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 
@@ -639,7 +639,7 @@ static void sordfd5_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "sordfd5.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "sordfd5.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -651,11 +651,11 @@ static void sordfd5_dump_ram(void)
 
 			data[0] = cpunum_read_byte(1,i);
 			
-			osd_fwrite(file, data, 1);
+			mame_fwrite(file, data, 1);
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 #endif

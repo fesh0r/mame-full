@@ -129,14 +129,14 @@ UINT32 a7800_partialcrc(const unsigned char *buf,unsigned int size)
 
 	crc =(UINT32) crc32(0L,&buf[128],size-128);
 
-	logerror("A7800 Partial CRC: %08lx %d [%s]\n",crc,size,&buf[1]);
+	logerror("A7800 Partial CRC: %08lx %d [%s]\n", (long) crc, size, &buf[1]);
 
 	return crc;
 }
 
 static int a7800_verify_cart(char header[128])
 {
-	char* tag = "ATARI7800";
+	const char* tag = "ATARI7800";
 
 	if( strncmp( tag, header + 1, 9 ) )
 	{
@@ -199,7 +199,7 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 	if( cartfile != NULL )
 	{
 		/* Load and decode the header */
-		osd_fread( cartfile, header, 128 );
+		mame_fread( cartfile, header, 128 );
 
 		/* Check the cart */
 		if( a7800_verify_cart((char *)header) == IMAGE_VERIFY_FAIL)
@@ -222,7 +222,7 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 
 			start = 0x10000 - len;
 			a7800_cartridge_rom = ROM + start;
-			osd_fread(cartfile, a7800_cartridge_rom, len);
+			mame_fread(cartfile, a7800_cartridge_rom, len);
 		}
 		else if( a7800_cart_type & 0x02 )
 		{
@@ -231,12 +231,12 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 			/* Extra ROM at $4000 */
 			if( a7800_cart_type & 0x08 )
 			{
-				osd_fread(cartfile, ROM + 0x4000, 0x4000 );
+				mame_fread(cartfile, ROM + 0x4000, 0x4000 );
 				len -= 0x4000;
 			}
 
 			a7800_cartridge_rom = ROM + 0x10000;
-			osd_fread(cartfile, a7800_cartridge_rom, len);
+			mame_fread(cartfile, a7800_cartridge_rom, len);
 
 			/* bank 0 */
 			memcpy( ROM + 0x8000, ROM + 0x10000, 0x4000);
@@ -262,7 +262,7 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 			logerror( "Cart type: %x Absolute\n",a7800_cart_type );
 
 			a7800_cartridge_rom = ROM + 0x10000;
-			osd_fread(cartfile, a7800_cartridge_rom, len );
+			mame_fread(cartfile, a7800_cartridge_rom, len );
 
 			/* bank 0 */
 			memcpy( ROM + 0x4000, ROM + 0x10000, 0x4000 );
@@ -277,7 +277,7 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 			logerror( "Cart type: %x Activision\n",a7800_cart_type );
 
 			a7800_cartridge_rom = ROM + 0x10000;
-			osd_fread( cartfile, a7800_cartridge_rom, len );
+			mame_fread( cartfile, a7800_cartridge_rom, len );
 
 			/* bank 0 */
 			memcpy( ROM + 0xA000, ROM + 0x10000, 0x4000 );

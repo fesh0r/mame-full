@@ -26,25 +26,25 @@ int cbm_quick_init (int id, void *fp, int open_mode)
 
 	quick.specified = 1;
 
-	quick.length = osd_fsize (fp);
+	quick.length = mame_fsize (fp);
 
 	cp = image_filetype(IO_QUICKLOAD, id);
 	if (cp)
 	{
 		if (stricmp (cp, "prg") == 0)
 		{
-			osd_fread_lsbfirst (fp, &quick.addr, 2);
+			mame_fread_lsbfirst (fp, &quick.addr, 2);
 			quick.length -= 2;
 		}
 		else if (stricmp (cp, "p00") == 0)
 		{
 			char buffer[7];
 
-			osd_fread (fp, buffer, sizeof (buffer));
+			mame_fread (fp, buffer, sizeof (buffer));
 			if (strncmp (buffer, "C64File", sizeof (buffer)) == 0)
 			{
 				osd_fseek (fp, 26, SEEK_SET);
-				osd_fread_lsbfirst (fp, &quick.addr, 2);
+				mame_fread_lsbfirst (fp, &quick.addr, 2);
 				quick.length -= 28;
 			}
 		}
@@ -55,7 +55,7 @@ int cbm_quick_init (int id, void *fp, int open_mode)
 	if ((quick.data = (UINT8*) image_malloc (IO_QUICKLOAD, id, quick.length)) == NULL)
 		return INIT_FAIL;
 
-	read = osd_fread (fp, quick.data, quick.length);
+	read = mame_fread (fp, quick.data, quick.length);
 	return read != quick.length;
 }
 
@@ -211,7 +211,7 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 
 	dev=cbm_rom_find_device();
 
-	size = osd_fsize (fp);
+	size = mame_fsize (fp);
 
 	cp = image_filetype(IO_CARTSLOT, id);
 	if (cp)
@@ -220,7 +220,7 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 		{
 			unsigned short in;
 
-			osd_fread_lsbfirst (fp, &in, 2);
+			mame_fread_lsbfirst (fp, &in, 2);
 			logerror("rom prg %.4x\n", in);
 			size -= 2;
 			logerror("loading rom %s at %.4x size:%.4x\n",
@@ -229,7 +229,7 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 				return INIT_FAIL;
 			cbm_rom[i].addr=in;
 			cbm_rom[i].size=size;
-			read = osd_fread (fp, cbm_rom[i].chip, size);
+			read = mame_fread (fp, cbm_rom[i].chip, size);
 			if (read != size)
 				return INIT_FAIL;
 		}
@@ -237,8 +237,8 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 		{
 			unsigned short in;
 			osd_fseek (fp, 0x18, SEEK_SET);
-			osd_fread( fp, &cbm_c64_exrom, 1);
-			osd_fread( fp, &cbm_c64_game, 1);
+			mame_fread( fp, &cbm_c64_exrom, 1);
+			mame_fread( fp, &cbm_c64_game, 1);
 			osd_fseek (fp, 64, SEEK_SET);
 			j = 64;
 			logerror("loading rom %s size:%.4x\n",
@@ -248,12 +248,12 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 				unsigned short segsize;
 				unsigned char buffer[10], number;
 
-				osd_fread (fp, buffer, 6);
-				osd_fread_msbfirst (fp, &segsize, 2);
-				osd_fread (fp, buffer + 6, 3);
-				osd_fread (fp, &number, 1);
-				osd_fread_msbfirst (fp, &adr, 2);
-				osd_fread_msbfirst (fp, &in, 2);
+				mame_fread (fp, buffer, 6);
+				mame_fread_msbfirst (fp, &segsize, 2);
+				mame_fread (fp, buffer + 6, 3);
+				mame_fread (fp, &number, 1);
+				mame_fread_msbfirst (fp, &adr, 2);
+				mame_fread_msbfirst (fp, &in, 2);
 				logerror("%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
 							 buffer, buffer[4], buffer[5], segsize,
 							 buffer[6], buffer[7], buffer[8], number,
@@ -266,7 +266,7 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 
 				cbm_rom[i].addr=adr;
 				cbm_rom[i].size=in;
-				read = osd_fread (fp, cbm_rom[i].chip, in);
+				read = mame_fread (fp, cbm_rom[i].chip, in);
 				i++;
 				if (read != in)
 					return INIT_FAIL;
@@ -316,7 +316,7 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=size;
-			read = osd_fread (fp, cbm_rom[i].chip, size);
+			read = mame_fread (fp, cbm_rom[i].chip, size);
 
 			if (read != size)
 				return INIT_FAIL;

@@ -440,12 +440,12 @@ WRITE_HANDLER ( ti86_port_0006_w )
 NVRAM_HANDLER( ti81 )
 {
 	if (read_or_write)
-		osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+		mame_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
 	else
 	{
 		if (file)
 		{
-			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+			mame_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
 			cpunum_set_reg(0, Z80_PC,0x0239);
 		}
 		else
@@ -456,12 +456,12 @@ NVRAM_HANDLER( ti81 )
 NVRAM_HANDLER( ti85 )
 {
 	if (read_or_write)
-		osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+		mame_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
 	else
 	{
 		if (file)
 		{
-			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+			mame_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
 			cpunum_set_reg(0, Z80_PC,0x0b5f);
 		}
 		else
@@ -475,7 +475,7 @@ NVRAM_HANDLER( ti86 )
 	{
 		if (ti86_ram)
 		{
-			osd_fwrite(file, ti86_ram, sizeof(unsigned char)*128*1024);
+			mame_fwrite(file, ti86_ram, sizeof(unsigned char)*128*1024);
 			free (ti86_ram);
 			ti86_ram = NULL;
 		}
@@ -487,7 +487,7 @@ NVRAM_HANDLER( ti86 )
 		{
 			if (file)
 			{
-				osd_fread(file, ti86_ram, sizeof(unsigned char)*128*1024);
+				mame_fread(file, ti86_ram, sizeof(unsigned char)*128*1024);
 				cpunum_set_reg(0, Z80_PC,0x0c59);
 			}
 			else
@@ -656,7 +656,7 @@ SNAPSHOT_LOAD( ti8x )
 	if (!(ti8x_snapshot_data = malloc(snapshot_size)))
 		return INIT_FAIL;
 
-	osd_fread(fp, ti8x_snapshot_data, snapshot_size);
+	mame_fread(fp, ti8x_snapshot_data, snapshot_size);
 
 	switch (ti_calculator_model)
 	{
@@ -683,13 +683,13 @@ int ti85_serial_init (int id, void *file, int open_mode)
 
 	if (file)
 	{
-		file_size = osd_fsize(file);
+		file_size = mame_fsize(file);
 
 		if (file_size != 0)
 		{
 			if ((file_data = (UINT8*) auto_malloc(file_size)))
 			{
-				osd_fread(file, file_data, file_size);
+				mame_fread(file, file_data, file_size);
 
 				if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
 				{
@@ -1255,11 +1255,11 @@ static void ti85_receive_variables (void)
 				variable_number = 0;
 				ti85_serial_status =  TI85_SEND_STOP;
 				sprintf (var_file_name, "%08d.85g", var_file_number);
-				var_file = osd_fopen(Machine->gamedrv->name, var_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				var_file = mame_fopen(Machine->gamedrv->name, var_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				if( var_file )
 				{
-					osd_fwrite(var_file, var_file_data, var_file_size);
-					osd_fclose(var_file);
+					mame_fwrite(var_file, var_file_data, var_file_size);
+					mame_fclose(var_file);
 					free (var_file_data);
 					var_file_data = NULL;
 					var_file_size = 0;
@@ -1410,11 +1410,11 @@ static void ti85_receive_backup (void)
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]] = ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0x00ff;
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x01] = (ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0xff00)>>8;
 					sprintf (backup_file_name, "%08d.85b", backup_file_number);
-					backup_file = osd_fopen(Machine->gamedrv->name, backup_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+					backup_file = mame_fopen(Machine->gamedrv->name, backup_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 					if( backup_file )
 					{
-						osd_fwrite(backup_file, backup_file_data, 0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x02);
-						osd_fclose(backup_file);
+						mame_fwrite(backup_file, backup_file_data, 0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x02);
+						mame_fclose(backup_file);
 						backup_file_number++;
 					}
 					free(backup_file_data); backup_file_data = NULL;
@@ -1480,7 +1480,7 @@ static void ti85_receive_screen (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 1030*8, ti85_receive_data);
 				sprintf (image_file_name, "%08d.85i", image_file_number);
-				image_file = osd_fopen(Machine->gamedrv->name, image_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				image_file = mame_fopen(Machine->gamedrv->name, image_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				if( image_file )
 				{
 					image_file_data = malloc (0x49+1008);
@@ -1509,8 +1509,8 @@ static void ti85_receive_screen (void)
 					memcpy(image_file_data+0x47, ti85_receive_data+4, 1008);
 					image_file_data[1008+0x49-2] = ti85_calculate_checksum(image_file_data+0x37, 1008+0x10)&0x00ff;
 					image_file_data[1008+0x49-1] = (ti85_calculate_checksum(image_file_data+0x37, 1008+0x10)&0xff00)>>8;
-					osd_fwrite(image_file, image_file_data, 1008+0x49);
-					osd_fclose(image_file);
+					mame_fwrite(image_file, image_file_data, 1008+0x49);
+					mame_fclose(image_file);
 					free(image_file_data);
 					image_file_number++;
 				}

@@ -310,7 +310,7 @@ static void cdp1802_instruction(void)
 				cpu_writemem16(cdp1802.reg[2].w.l, cdp1802.t);
 				cdp1802.x=cdp1802.p;
 				cdp1802.reg[2].w.l--;
-				logerror("cpu cdp1802 unsure mark(0x79) at %.4x\n",oper, PC-1);
+				logerror("cpu cdp1802 unsure mark(0x79) at %.4x PC=%x\n",oper, PC-1);
 				break;
 			case 0x7a: cdp1802_q(0);break;
 			case 0x7b: cdp1802_q(1);break;

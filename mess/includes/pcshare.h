@@ -1,9 +1,11 @@
 #include "driver.h"
 
 struct _PC_SETUP;
-extern struct _PC_SETUP pc_setup[], pc_setup_pc1512[], pc_setup_pc1640[], 
-	pc_setup_europc[], pc_setup_t1000hx[];
-extern struct _PC_SETUP pc_setup_at[];
+
+extern struct _PC_SETUP *pc_setup, *pc_setup_pc1512, *pc_setup_pc1640, 
+	*pc_setup_europc, *pc_setup_t1000hx;
+extern struct _PC_SETUP *pc_setup_at;
+
 void pc_init_setup(struct _PC_SETUP *setup);
 
 void init_pc_common(void);

@@ -69,7 +69,7 @@ char *image_strdup(int type, int id, const char *src)
 static void image_free_resources(struct image_info *img)
 {
 	if (img->fp)
-		osd_fclose(img->fp);
+		mame_fclose(img->fp);
 	pool_exit(&img->memory_pool);
 }
 
@@ -148,7 +148,7 @@ int image_load(int type, int id, const char *name)
 		if (err != INIT_PASS)
 		{
 			if (fp)
-				osd_fclose(fp);
+				mame_fclose(fp);
 			return err;
 		}
 	}
@@ -251,14 +251,14 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 
 	sysname = Machine->gamedrv->name;
 	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-	file = osd_fopen(sysname, img->name, filetype, read_or_write);
+	file = mame_fopen(sysname, img->name, filetype, read_or_write);
 
 	if (file)
 	{
 		void *config;
 		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
 
-		/* did osd_fopen() rename the image? (yes, I know this is a hack) */
+		/* did mame_fopen() rename the image? (yes, I know this is a hack) */
 		if (renamed_image)
 		{
 			img->name = image_strdup(type, id, renamed_image);
@@ -268,19 +268,19 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 		}
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
-		img->length = osd_fsize(file);
+		img->length = mame_fsize(file);
 /* Cowering, partial crcs for NES/A7800/others */
 		img->crc = 0;
 		while( pc_dev && pc_dev->count && !img->crc)
 		{
-			logerror("partialcrc() -> %08lx\n",pc_dev->partialcrc);
+			logerror("partialcrc() -> %08lx\n", (long) pc_dev->partialcrc);
 			if( type == pc_dev->type && pc_dev->partialcrc )
 			{
 				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
 				if( pc_buf )
 				{
 					osd_fseek(file,0,SEEK_SET);
-					osd_fread(file,pc_buf,img->length);
+					mame_fread(file,pc_buf,img->length);
 					osd_fseek(file,0,SEEK_SET);
 					logerror("Calling partialcrc()\n");
 					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
@@ -294,11 +294,11 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 			pc_dev = device_next(Machine->gamedrv, pc_dev);
 		}
 
-		if (!img->crc) img->crc = osd_fcrc(file);
+		if (!img->crc) img->crc = mame_fcrc(file);
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
-			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
-			osd_fchecksum(sysname, img->name, &img->length, &img->crc);
+			logerror("image_fopen: calling mame_fchecksum() for %d bytes\n", img->length);
+			mame_fchecksum(sysname, img->name, &img->length, &img->crc);
 			logerror("image_fopen: CRC is %08x\n", img->crc);
 		}
 
@@ -335,35 +335,35 @@ static void *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_RW:
 	case OSD_FOPEN_RW_CREATE:
 		/* supported modes */
-		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, dev->open_mode);
+		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, dev->open_mode);
 		effective_mode_local = dev->open_mode;
 		break;
 
 	case OSD_FOPEN_RW_OR_READ:
 		/* R/W or read-only: emulated mode */
-		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
 			effective_mode_local = OSD_FOPEN_READ;
 		}
 		break;
 
 	case OSD_FOPEN_RW_CREATE_OR_READ:
 		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if (fref)
 				effective_mode_local = OSD_FOPEN_READ;
 			else
 			{
-				fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				effective_mode_local = OSD_FOPEN_RW_CREATE;
 			}
 		}
@@ -371,12 +371,12 @@ static void *image_fopen_new(int type, int id, int *effective_mode)
 
 	case OSD_FOPEN_READ_OR_WRITE:
 		/* read or write: emulated mode */
-		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_READ;
 		else
 		{
-			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
+			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
 			effective_mode_local = OSD_FOPEN_WRITE;
 		}
 		break;
@@ -411,16 +411,23 @@ const char *image_filetype(int type, int id)
 const char *image_filedir(int type, int id)
 {
 	struct image_info *info;
-	char *dirname;
+	char *s;
 
 	info = get_image(type, id);
 	if (!info->dir)
 	{
-		dirname = osd_dirname(info->name);
-		if (dirname)
+		info->dir = image_strdup(type, id, info->name);
+		if (info->dir)
 		{
-			info->dir = image_strdup(type, id, dirname);
-			free(dirname);
+			s = info->dir + strlen(info->dir);
+			while(--s > info->dir)
+			{
+				if (!strchr("\\/:", *s))
+				{
+					*s = '\0';
+					break;
+				}
+			}
 		}
 	}
 	return info->dir;

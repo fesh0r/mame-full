@@ -412,19 +412,19 @@ int ti99_load_rom(int id, void *cartfile, int open_mode)
 			break;
 
 		case SLOT_GROM:
-			osd_fread(cartfile, memory_region(region_grom) + 0x6000, 0xA000);
+			mame_fread(cartfile, memory_region(region_grom) + 0x6000, 0xA000);
 			break;
 
 		case SLOT_MINIMEM:
 			cartridge_minimemory = TRUE;
 		case SLOT_CROM:
-			osd_fread_msbfirst(cartfile, cartridge_pages[0], 0x2000);
+			mame_fread_msbfirst(cartfile, cartridge_pages[0], 0x2000);
 			current_page_ptr = cartridge_pages[0];
 			break;
 
 		case SLOT_DROM:
 			cartridge_paged = TRUE;
-			osd_fread_msbfirst(cartfile, cartridge_pages[1], 0x2000);
+			mame_fread_msbfirst(cartfile, cartridge_pages[1], 0x2000);
 			current_page_ptr = cartridge_pages[0];
 			break;
 		}
@@ -836,9 +836,10 @@ static WRITE16_HANDLER ( ti99_ww_wspeech )
 	if (! tms5220_ready_r())
 	{
 		double time_to_ready = tms5220_time_to_ready();
-		logerror("time to ready: %f -> %d\n", time_to_ready, (int) ceil(3000000*time_to_ready));
+		double time_to_ready_i = ceil(3000000*time_to_ready);
+		logerror("time to ready: %f -> %d\n", time_to_ready, (int) time_to_ready_i);
 
-		tms9900_ICount -= (int) ceil(3000000*time_to_ready);
+		tms9900_ICount -= time_to_ready_i;
 		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
 	}
 #endif

@@ -1,6 +1,6 @@
 /* this file could be generated with mess later */
 static struct {
-	char *text;
+	const char *text;
 	int crc32[0x20];
 } computer[]={
 	{ "studio2", { 0xa494b339 } },

@@ -11,6 +11,15 @@
 #include "main.h"
 
 /* ---------------------------------------------------------------------- */
+/* HACK */
+
+const struct GameDriver *drivers[1];
+int rompath_extra;
+int cheatfile;
+int history_filename;
+int mameinfo_filename;
+
+/* ---------------------------------------------------------------------- */
 
 
 static void writeusage(FILE *f, int write_word_usage, struct command *c, char *argv[])

@@ -41,7 +41,7 @@ static int channelf_load_rom(int id, void *file, int open_mode)
 
     if (file == NULL)
 		return INIT_PASS;
-	size = osd_fread(file, &mem[0x0800], 0x0800);
+	size = mame_fread(file, &mem[0x0800], 0x0800);
 
     if (size == 0x800)
 		return INIT_PASS;

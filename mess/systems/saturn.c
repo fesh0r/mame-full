@@ -271,37 +271,36 @@ static READ32_HANDLER( saturn_fb1_ram_r )
 
 static WRITE32_HANDLER( saturn_fb1_ram_w )
 {
-  logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
-  fb1_ram_base[offset] = (fb1_ram_base[offset] & mem_mask) | data;
+	logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
+	fb1_ram_base[offset] = (fb1_ram_base[offset] & mem_mask) | data;
 }
 
 /* FB2 not mapped directly */
 static READ32_HANDLER( saturn_fb2_ram_r )
 {
-  offs_t ea;
+	offs_t ea;
 
-  logerror("fb2_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
+	logerror("fb2_r offset=%08lX mem_mask=%08lX\n", (long) offset, (long) mem_mask);
 
-  ea = (SATURN_FB2_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+	ea = (SATURN_FB2_RAM_BASE / 4) + offset;
+	return mem[ea] & (~mem_mask);
 }
 
 static WRITE32_HANDLER( saturn_fb2_ram_w )
-
 {
-  offs_t ea;
+	offs_t ea;
 
-  logerror("fb2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
+	logerror("fb2_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
 
-  ea = (SATURN_FB2_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+	ea = (SATURN_FB2_RAM_BASE / 4) + offset;
+	mem[ea] = (mem[ea] & mem_mask) | data;
 }
 /* END FB2 */
 
 static READ32_HANDLER( saturn_color_ram_r )
 
 {
-  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
+  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n", (long) offset, (long) mem_mask, (long) activecpu_get_reg(SH2_PC));
 
   return color_ram_base[offset] & (~mem_mask);
 }
@@ -479,36 +478,36 @@ static READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 
 	  if((ea >= IREG(0)) && (ea <= IREG(7)))
 	    {
-	      logerror("smpc_r IREG%01d -> %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,activecpu_get_reg(SH2_PC));
+	      logerror("smpc_r IREG%01d -> %02lX - PC=%08lX\n", (int) (ea-IREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
 	    }
 	  else
 	    if((ea >= OREG(0)) && (ea <= OREG(31)))
 		{
-		  logerror("smpc_r OREG%01d -> %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,activecpu_get_reg(SH2_PC));
+		  logerror("smpc_r OREG%01d -> %02lX - PC=%08lX\n", (int) (ea-OREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
 		}
 	    else
 	      {
 		switch(ea) /* See if the write is significant */
 		  {
-		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n",ea,d,activecpu_get_reg(SH2_PC));
+		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n", (long) ea, (long) d, (long) activecpu_get_reg(SH2_PC));
 		  }
 	      }
 	}
@@ -549,34 +548,34 @@ static WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 
 	  if((ea >= IREG(0)) && (ea <= IREG(7)))
 	    {
-	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,activecpu_get_reg(SH2_PC));
+	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n", (int) (ea-IREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
 	    }
 	  else
 	    if((ea >= OREG(0)) && (ea <= OREG(31)))
 		{
-		  logerror("smpc_w OREG%01d <- %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,activecpu_get_reg(SH2_PC));
+		  logerror("smpc_w OREG%01d <- %02lX - PC=%08lX\n", (int) (ea-OREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
 		}
 	    else
 	      {
 		switch(ea) /* See if the write is significant */
 		  {
-		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
 		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d,activecpu_get_reg(SH2_PC));
 		  }
@@ -588,9 +587,9 @@ static WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 
 static READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
 {
-  logerror("cs0_r offset=%08lX mem_mask=%08lX\n",offset*4,mem_mask);
+	logerror("cs0_r offset=%08lX mem_mask=%08lX\n", (long) offset*4, (long) mem_mask);
 
-  return 0xa5a5a5a5 & ~mem_mask;
+	return 0xa5a5a5a5 & ~mem_mask;
 }
 
 static WRITE32_HANDLER( saturn_cs0_w )   /* CS0 */
@@ -764,9 +763,9 @@ static void scu_pulse_interrupt(int irq)
 
 static WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-  logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,activecpu_get_reg(SH2_PC));
-  scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
-  if (offset == 0x28) scu_set_imask();
+	logerror("scu_w %s - data = %08lX - PC=%08lX\n", scu_regnames[offset], (long) data, (long) activecpu_get_reg(SH2_PC));
+	scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
+	if (offset == 0x28) scu_set_imask();
 }
 
 static const char *cd_regnames[0xA] = {"X0",
@@ -829,46 +828,51 @@ static void cd_execcomm(void)
 }
 
 static READ32_HANDLER( saturn_cd_r )	 /* CD */
-
 {
-  if(offset < 0xA)
-    {
-      logerror("cd_r %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],cd_regs[offset] >> 16,activecpu_get_reg(SH2_PC));
-    }
-  else
-    {
-      logerror("cd_r offset=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,mem_mask,activecpu_get_reg(SH2_PC));
-    }
-
-  if(offset < 0xA)
-    {
-      if(offset == CD_CR1)
+	if(offset < 0xA)
 	{
-	  if(periodic) /* Hack to indicate periodic response while cd system not finished */
-	    {
-	      periodic = 0;
-	      return (cd_regs[offset] & ~mem_mask) | 0x10000000;
-	    }
-	  else
-	    {
-	      periodic = 1;
-	    }
+		logerror("cd_r %s - data = %04lX - PC=%08lX\n",
+			cd_regnames[offset],
+			(long) cd_regs[offset] >> 16,
+			(long) activecpu_get_reg(SH2_PC));
 	}
-      return cd_regs[offset] & ~mem_mask;
-    }
-  else
-    return 0xa5a5a5a5 & ~mem_mask;
+	else
+	{
+		logerror("cd_r offset=%08lX mem_mask=%08lX - PC=%08lX\n",
+			(long) offset*4,
+			(long) mem_mask,
+			(long) activecpu_get_reg(SH2_PC));
+	}
+
+	if(offset < 0xA)
+	{
+		if(offset == CD_CR1)
+		{
+			if(periodic) /* Hack to indicate periodic response while cd system not finished */
+			{
+				periodic = 0;
+				return (cd_regs[offset] & ~mem_mask) | 0x10000000;
+			}
+			else
+			{
+				periodic = 1;
+			}
+		}
+		return cd_regs[offset] & ~mem_mask;
+	}
+	else
+		return 0xa5a5a5a5 & ~mem_mask;
 }
 
 static WRITE32_HANDLER( saturn_cd_w )	 /* CD */
 {
   if(offset < 0xA)
     {
-      logerror("cd_w %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],data >> 16,activecpu_get_reg(SH2_PC));
+      logerror("cd_w %s - data = %04lX - PC=%08lX\n",cd_regnames[offset], (long) data >> 16, (long) activecpu_get_reg(SH2_PC));
     }
   else
     {
-      logerror("cd_w offset=%08lX data=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,data,mem_mask,activecpu_get_reg(SH2_PC));
+      logerror("cd_w offset=%08lX data=%08lX mem_mask=%08lX - PC=%08lX\n", (long) offset*4, (long) data, (long) mem_mask, (long) activecpu_get_reg(SH2_PC));
     }
 
   if(offset < 0xA)
@@ -894,12 +898,12 @@ static WRITE32_HANDLER( saturn_cd_w )	 /* CD */
 
 static READ32_HANDLER( saturn_minit_r )  /* MINIT */
 {
-  return 0xa5a5a5a5 & ~mem_mask;
+	return 0xa5a5a5a5 & ~mem_mask;
 }
 
 static WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
 {
-  logerror("minit_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
+	logerror("minit_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
 }
 
 /********************************************************
@@ -912,7 +916,10 @@ static READ32_HANDLER( saturn_sinit_r )  /* SINIT */
 
 static WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
 {
-  logerror("sinit_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
+	logerror("sinit_w offset=%08lX data=%08lX mem_mask=%08lX\n",
+		(long) offset,
+		(long) data,
+		(long) mem_mask);
 }
 
 /********************************************************
@@ -920,14 +927,16 @@ static WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
  ********************************************************/
 static READ32_HANDLER( saturn_dsp_r )	 /* DSP */
 {
-  logerror("dsp_r offset=%08lX mem_mask=%08lX\n",offset*4,mem_mask);
+	logerror("dsp_r offset=%08lX mem_mask=%08lX\n",
+		(long) offset*4,
+		(long) mem_mask);
 
-  return 0xa5a5a5a5 & ~mem_mask;
+	return 0xa5a5a5a5 & ~mem_mask;
 }
 
 static WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
 {
-  logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
+	logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset*4, (long) data, (long) mem_mask);
 }
 
 /********************************************************
@@ -988,10 +997,10 @@ static void cmd0(UINT32 comm, unsigned short *fb)
 	x = (short) (vram[comm + 3] >> 16); /* Cast as short to preserve sign */
 	y = (short) (vram[comm + 3] & 0xFFFF);
 
-	logerror("Colour Mode  = %d\n",color_mode);
-	logerror("Colour Bank  = %08lX\n",color_bank);
-	logerror("Char Addr    = %08lX\n",char_addr);
-	logerror("Width,Height = %ld,%ld\n",width,height);
+	logerror("Colour Mode  = %d\n", color_mode);
+	logerror("Colour Bank  = %08lX\n", (long) color_bank);
+	logerror("Char Addr    = %08lX\n", (long) char_addr);
+	logerror("Width,Height = %ld,%ld\n", (long) width, (long) height);
 	logerror("X,Y = %d,%d\n",x,y);
 
 	vram = vram + (char_addr / 4);
@@ -1038,28 +1047,28 @@ static void execute_vdp1(void)
 	{
 		switch((*base >> 16) & 0xF) /* Select command code */
 	{
-	case 0 : logerror("%08lX - Normal Sprite Draw\n",command);
+	case 0 : logerror("%08lX - Normal Sprite Draw\n", (long) command);
 		cmd0(command,fb);
 		break;
-	case 1 : logerror("%08lX - Scaled Sprite Draw\n",command);
+	case 1 : logerror("%08lX - Scaled Sprite Draw\n", (long) command);
 		break;
-	case 2 : logerror("%08lX - Distorted Sprite Draw\n",command);
+	case 2 : logerror("%08lX - Distorted Sprite Draw\n", (long) command);
 		break;
-	case 4 : logerror("%08lX - Polygon Draw\n",command);
+	case 4 : logerror("%08lX - Polygon Draw\n", (long) command);
 		break;
-	case 5 : logerror("%08lX - Polyline Draw\n",command);
+	case 5 : logerror("%08lX - Polyline Draw\n", (long) command);
 		break;
-	case 6 : logerror("%08lX - Line Draw\n",command);
+	case 6 : logerror("%08lX - Line Draw\n", (long) command);
 		break;
-	case 8 : logerror("%08lX - Set User Clip\n",command);
+	case 8 : logerror("%08lX - Set User Clip\n", (long) command);
 		break;
 	case 9 :
 		temp = *(base + 5);
-		logerror("%08lX - Set System Clip (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+		logerror("%08lX - Set System Clip (%ld,%ld)\n", (long) command, (long) temp>>16, (long) temp&0xFFFF);
 		break;
 	case 10:
 		temp = *(base + 3);
-		logerror("%08lX - Local Coordinates (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+		logerror("%08lX - Local Coordinates (%ld,%ld)\n", (long) command, (long) temp>>16, (long) temp&0xFFFF);
 		vdp1_state.localx = temp >> 16;
 		vdp1_state.localy = temp & 0xFFFF;
 		break;
@@ -1080,11 +1089,11 @@ static READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
   /* logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
   if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
     {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],ret_val & 0xFFFF,activecpu_get_reg(SH2_PC));
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n", vdp1_regnames[offset<<1], (long) ret_val & 0xFFFF, (long) activecpu_get_reg(SH2_PC));
     }
   if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
     {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],ret_val >> 16,activecpu_get_reg(SH2_PC));
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n", vdp1_regnames[(offset<<1)+1], (long) ret_val >> 16, (long) activecpu_get_reg(SH2_PC));
     }
 
   return SWAP_WORDS(ret_val);
@@ -1092,23 +1101,29 @@ static READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 
 static WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 {
-  UINT32 olddata;
+	UINT32 olddata;
 
-  /*  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
-  if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
-    {
-      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],data >> 16,activecpu_get_reg(SH2_PC));
-    }
-  if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
-    {
-      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],data & 0xFFFF,activecpu_get_reg(SH2_PC));
-    }
+	/*  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
+	if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
+	{
+		logerror("vdp1_w %s data=%04lX : PC=%08lX\n",
+			vdp1_regnames[offset<<1],
+			(long) data >> 16,
+			(long) activecpu_get_reg(SH2_PC));
+	}
+	if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
+	{
+		logerror("vdp1_w %s data=%04lX : PC=%08lX\n",
+			vdp1_regnames[(offset<<1)+1],
+			(long) data & 0xFFFF,
+			(long) activecpu_get_reg(SH2_PC));
+	}
 
-  olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
-  olddata &= SWAP_WORDS(mem_mask);
-  olddata |= SWAP_WORDS(data);
+	olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
+	olddata &= SWAP_WORDS(mem_mask);
+	olddata |= SWAP_WORDS(data);
 
-  *(((UINT32 *) vdp1_state.vdp1_regs) + offset) = olddata;
+	*(((UINT32 *) vdp1_state.vdp1_regs) + offset) = olddata;
 }
 
 /********************************************************
@@ -1386,7 +1401,11 @@ static void draw_nbg3(void)
   planec_addr <<= 14;
   planed_addr <<= 14;
 
-  logerror("NBG3 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
+  logerror("NBG3 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",
+	  (long) planea_addr,
+	  (long) planeb_addr,
+	  (long) planec_addr,
+	  (long) planed_addr);
 
   pattern = &vdp2_ram_base[planea_addr/4];
 
@@ -1440,7 +1459,11 @@ static void draw_nbg2(void)
   planec_addr <<= 14;
   planed_addr <<= 14;
 
-  logerror("NBG2 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
+  logerror("NBG2 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",
+	  (long) planea_addr,
+	  (long) planeb_addr,
+	  (long) planec_addr,
+	  (long) planed_addr);
 
   pattern = &vdp2_ram_base[planea_addr/4];
 
@@ -1601,58 +1624,69 @@ static READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
     }
 #endif
 
-  ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
+	ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
 
-  /*  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
-  if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
-    {
-      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],ret_val & 0xFFFF,activecpu_get_reg(SH2_PC));
-    }
-  if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
-    {
-      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],ret_val >> 16,activecpu_get_reg(SH2_PC));
-    }
-
-  return SWAP_WORDS(ret_val);
+	/*  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
+	if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
+	{
+		logerror("vdp2_r %s data=%04lX : PC=%08lX\n",
+			vdp2_regnames[offset<<1],
+			(long) ret_val & 0xFFFF,
+			(long) activecpu_get_reg(SH2_PC));
+	}
+	if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
+	{
+		logerror("vdp2_r %s data=%04lX : PC=%08lX\n",
+			vdp2_regnames[(offset<<1)+1],
+			(long) ret_val >> 16,
+			(long) activecpu_get_reg(SH2_PC));
+	}
+	return SWAP_WORDS(ret_val);
 }
 
 static WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 {
-  UINT32 olddata;
+	UINT32 olddata;
 
-  /* logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
-  if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
-    {
-      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],data >> 16,activecpu_get_reg(SH2_PC));
-    }
-  if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
-    {
-      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],data & 0xFFFF,activecpu_get_reg(SH2_PC));
-    }
-
-  olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
-  olddata &= SWAP_WORDS(mem_mask);
-  olddata |= SWAP_WORDS(data);
-
-  *(((UINT32 *) vdp2_state.vdp2_regs) + offset) = olddata;
-
-  if(offset == 0)
-    {
-      if(data & 0x80000000)
+	/* logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
+	if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
 	{
-	  logerror("vdp_w Screen Enabled\n");
-	  /*	  dump_vdp2();
-	  video_w = 0;
-	  draw_nbg3();
-	  draw_nbg2();
-	  execute_vdp1();
-	  video_w = 1;
-	  draw_nbg3();
-	  draw_nbg2();
-	  execute_vdp1();*/
-	  //draw_pal();
+		logerror("vdp2_w %s data=%04lX : PC=%08lX\n",
+			vdp2_regnames[offset<<1],
+			(long) data >> 16,
+			(long) activecpu_get_reg(SH2_PC));
 	}
-    }
+	if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
+	{
+		logerror("vdp2_w %s data=%04lX : PC=%08lX\n",
+			vdp2_regnames[(offset<<1)+1],
+			(long) data & 0xFFFF,
+			(long) activecpu_get_reg(SH2_PC));
+	}
+
+	olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
+	olddata &= SWAP_WORDS(mem_mask);
+	olddata |= SWAP_WORDS(data);
+
+	*(((UINT32 *) vdp2_state.vdp2_regs) + offset) = olddata;
+
+	if(offset == 0)
+	{
+		if(data & 0x80000000)
+		{
+			logerror("vdp_w Screen Enabled\n");
+			/*	  dump_vdp2();
+			video_w = 0;
+			draw_nbg3();
+			draw_nbg2();
+			execute_vdp1();
+			video_w = 1;
+			draw_nbg3();
+			draw_nbg2();
+			execute_vdp1();*/
+			//draw_pal();
+		}
+	}
 }
 
 /* 68k handlers */

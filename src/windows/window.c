@@ -667,6 +667,8 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	extern void win_timer_enable(int enabled);
+
 	// handle a few messages
 	switch (message)
 	{
@@ -678,6 +680,21 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			break;
 #endif
 	
+
+		// suspend sound and timer if we are resizing or a menu is coming up
+		case WM_ENTERMENULOOP:
+		case WM_ENTERSIZEMOVE:
+			osd_sound_enable(0);
+			win_timer_enable(0);
+			break;
+
+		// resume sound and timer if we dome with resizing or a menu
+		case WM_EXITMENULOOP:
+		case WM_EXITSIZEMOVE:
+			osd_sound_enable(1);
+			win_timer_enable(1);
+			break;
+
 		// paint: redraw the last bitmap
 		case WM_PAINT:
 		{

@@ -24,7 +24,7 @@ extern int strwildcmp(const char *sp1, const char *sp2);
 /*   -listdevices       */
 /*   -listtext       	*/
 
-void list_mess_info(char *gamename, char *arg, int listclones)
+void list_mess_info(const char *gamename, const char *arg, int listclones)
 {
 
 	int i, j;
@@ -357,7 +357,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 	{
 	/***************************************************/
 	/* To create the SOFTWARE directories */
-		char* sys_rom_path  = "SOFTWARE";
+		const char *sys_rom_path  = "SOFTWARE";
 		char buf[128];
 		int d=0;
 

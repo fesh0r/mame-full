@@ -28,34 +28,34 @@ DRIVER_INIT( mekd2 )
 	UINT8 *dst;
 	int x, y, i;
 
-	static char *seg7 =
-	"....aaaaaaaaaaaaa." \
-	"...f.aaaaaaaaaaa.b" \
-	"...ff.aaaaaaaaa.bb" \
-	"...fff.........bbb" \
-	"...fff.........bbb" \
-	"...fff.........bbb" \
-	"..fff.........bbb." \
-	"..fff.........bbb." \
-	"..fff.........bbb." \
-	"..ff...........bb." \
-	"..f.ggggggggggg.b." \
-	"..gggggggggggggg.." \
-	".e.ggggggggggg.c.." \
-	".ee...........cc.." \
-	".eee.........ccc.." \
-	".eee.........ccc.." \
-	".eee.........ccc.." \
-	"eee.........ccc..." \
-	"eee.........ccc..." \
-	"eee.........ccc..." \
-	"ee.ddddddddd.cc..." \
-	"e.ddddddddddd.c..." \
-	".ddddddddddddd...." \
-	"..................";
+	static const char *seg7 =
+		"....aaaaaaaaaaaaa." \
+		"...f.aaaaaaaaaaa.b" \
+		"...ff.aaaaaaaaa.bb" \
+		"...fff.........bbb" \
+		"...fff.........bbb" \
+		"...fff.........bbb" \
+		"..fff.........bbb." \
+		"..fff.........bbb." \
+		"..fff.........bbb." \
+		"..ff...........bb." \
+		"..f.ggggggggggg.b." \
+		"..gggggggggggggg.." \
+		".e.ggggggggggg.c.." \
+		".ee...........cc.." \
+		".eee.........ccc.." \
+		".eee.........ccc.." \
+		".eee.........ccc.." \
+		"eee.........ccc..." \
+		"eee.........ccc..." \
+		"eee.........ccc..." \
+		"ee.ddddddddd.cc..." \
+		"e.ddddddddddd.c..." \
+		".ddddddddddddd...." \
+		"..................";
 
 
-	static char *keys[24] =
+	static const char *keys[24] =
 	{
 		"........................" \
 		"........................" \
@@ -577,18 +577,18 @@ int mekd2_rom_load(int id, void *file, int open_mode)
 			UINT16 addr, size;
 			UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-			osd_fread(file, buff, sizeof (buff));
+			mame_fread(file, buff, sizeof (buff));
 			if (memcmp(buff, magic, sizeof (buff)))
 			{
 				logerror( "mekd2_rom_load: magic '%s' not found\n", magic);
 				return 1;
 			}
-			osd_fread_lsbfirst(file, &addr, 2);
-			osd_fread_lsbfirst(file, &size, 2);
-			osd_fread(file, &ident, 1);
+			mame_fread_lsbfirst(file, &addr, 2);
+			mame_fread_lsbfirst(file, &size, 2);
+			mame_fread(file, &ident, 1);
 /*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
 			while (size-- > 0)
-				osd_fread(file, &RAM[addr++], 1);
+				mame_fread(file, &RAM[addr++], 1);
 		}
 
 	return 0;

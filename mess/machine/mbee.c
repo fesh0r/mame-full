@@ -163,11 +163,11 @@ int mbee_rom_load(int id, void *file, int open_mode)
 {
 	if( file )
 	{
-		int size = osd_fsize(file);
+		int size = mame_fsize(file);
 		UINT8 *mem = malloc(size);
 		if( mem )
 		{
-			if( osd_fread(file, mem, size) == size )
+			if( mame_fread(file, mem, size) == size )
 			{
 				memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
 			}

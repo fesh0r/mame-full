@@ -106,7 +106,7 @@ int genesis_init_cart (int id, void *romfile, int open_mode)
         return INIT_FAIL;
     }
 
-    length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
+    length = mame_fread(romfile, rawROM + 0x2000, 0x400200);
 	logerror("image length = 0x%x\n", length);
 
 	if (length < 1024 + 512)
@@ -413,7 +413,7 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 			crc = (UINT32) crc32(0L, buf, len);
 		}
 	}
-	logerror("Genesis Partial CRC: %08lx %d\n", crc, len);
+	logerror("Genesis Partial CRC: %08lx %d\n", (long) crc, (int) len);
 	return crc;
 }
 

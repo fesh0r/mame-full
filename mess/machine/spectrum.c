@@ -102,7 +102,7 @@ SNAPSHOT_LOAD(spectrum)
 	if (!snapshot_data)
 		goto error;
 
-	osd_fread(fp, snapshot_data, snapshot_size);
+	mame_fread(fp, snapshot_data, snapshot_size);
 
 	if (!strcmpi(file_type, "sna"))
 	{
@@ -1085,11 +1085,11 @@ int spectrum_cassette_init(int id, void *fp, int open_mode)
 	TapePosition = 0;
 	if (fp && !is_effective_mode_create(open_mode) && !strcmpi(image_filetype(IO_CASSETTE, id), "tap"))
 	{
-		cassette_snapshot_size = osd_fsize(fp);
+		cassette_snapshot_size = mame_fsize(fp);
 		cassette_snapshot = image_malloc(IO_CASSETTE, id, cassette_snapshot_size);
 		if (!cassette_snapshot)
 			return INIT_FAIL;
-		osd_fread(fp, cassette_snapshot, cassette_snapshot_size);
+		mame_fread(fp, cassette_snapshot, cassette_snapshot_size);
 		return INIT_PASS;
 	}
 	else
@@ -1128,12 +1128,12 @@ QUICKLOAD_LOAD(spectrum)
 	UINT8 *quick_data;
 	int read_;
 
-	quick_length = osd_fsize(fp);
+	quick_length = mame_fsize(fp);
 	quick_data = malloc(quick_length);
 	if (!quick_data)
 		return INIT_FAIL;
 
-	read_ = osd_fread(fp, quick_data, quick_length);
+	read_ = mame_fread(fp, quick_data, quick_length);
 	if (read_ != quick_length)
 		return INIT_FAIL;
 
@@ -1152,7 +1152,7 @@ int spectrum_cart_load(int id, void *file, int open_mode)
 		int datasize;
 		unsigned char *data, *ROM = memory_region(REGION_CPU1);
 
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
 		if (datasize == 0x4000)
@@ -1160,7 +1160,7 @@ int spectrum_cart_load(int id, void *file, int open_mode)
 			data = malloc(datasize);
 			if (data != NULL)
 			{
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 				memcpy(ROM, data, 0x4000);
 				free(data);
 				logerror("Cart loaded!\n");
@@ -1186,7 +1186,7 @@ int timex_cart_load(int id, void *file, int open_mode)
 
 	logerror ("Trying to load cart\n");
 
-	file_size = osd_fsize(file);
+	file_size = mame_fsize(file);
 
 	if (file_size < 0x09)
 	{
@@ -1201,7 +1201,7 @@ int timex_cart_load(int id, void *file, int open_mode)
 		return INIT_FAIL;
 	}
 
-	osd_fread(file, file_data, file_size);
+	mame_fread(file, file_data, file_size);
 
 	for (i=0; i<8; i++)
 		if(file_data[i+1]&0x02)	chunks_in_file++;

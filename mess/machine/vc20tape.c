@@ -11,7 +11,6 @@
 
 #include "driver.h"
 #include "image.h"
-#include "unzip.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
@@ -28,6 +27,9 @@ struct DACinterface vc20tape_sound_interface =
 /* write line high active, */
 /* read line low active!? */
 
+#define TAPE_WAV 1
+#define TAPE_PRG 2
+
 static struct
 {
 	int on, noise;
@@ -37,9 +39,6 @@ static struct
 	int motor;
 	void (*read_callback) (UINT32, UINT8);
 
-#define TAPE_WAV 1
-#define TAPE_PRG 2
-#define TAPE_ZIP 3
 	int type;						   /* 0 nothing */
 }
 tape;
@@ -59,10 +58,7 @@ struct
 struct
 {
 	int state;
-
-	/* these values are shared with the zip driver */
 	void *prg_timer;
-	void *zip_timer;
 	void *timer;
 	int image_type;
     int image_id;
@@ -87,16 +83,6 @@ struct
 	double lasttime;
 } prg;
 
-/* these are values for zip files */
-struct
-{
-	int image_type;
-    int image_id;
-	int state;
-	ZIP *zip;
-	struct zipent *zipentry;
-} zip;
-
 /* from sound/samples.c no changes (static declared) */
 /* readsamples not useable (loads files only from sample or game directory) */
 /* and doesn't search the rompath */
@@ -109,20 +95,20 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	struct GameSample *result;
 
 	/* read the core header and make sure it's a WAVE file */
-	offset += osd_fread (f, buf, 4);
+	offset += mame_fread (f, buf, 4);
 	if (offset < 4)
 		return NULL;
 	if (memcmp (&buf[0], "RIFF", 4) != 0)
 		return NULL;
 
 	/* get the total size */
-	offset += osd_fread (f, &filesize, 4);
+	offset += mame_fread (f, &filesize, 4);
 	if (offset < 8)
 		return NULL;
 	filesize = LITTLE_ENDIANIZE_INT32 (filesize);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
-	offset += osd_fread (f, buf, 4);
+	offset += mame_fread (f, buf, 4);
 	if (offset < 12)
 		return NULL;
 	if (memcmp (&buf[0], "WAVE", 4) != 0)
@@ -131,8 +117,8 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	/* seek until we find a format tag */
 	while (1)
 	{
-		offset += osd_fread (f, buf, 4);
-		offset += osd_fread (f, &length, 4);
+		offset += mame_fread (f, buf, 4);
+		offset += mame_fread (f, &length, 4);
 		length = LITTLE_ENDIANIZE_INT32 (length);
 		if (memcmp (&buf[0], "fmt ", 4) == 0)
 			break;
@@ -145,24 +131,24 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	}
 
 	/* read the format -- make sure it is PCM */
-	offset += osd_fread_lsbfirst (f, &temp16, 2);
+	offset += mame_fread_lsbfirst (f, &temp16, 2);
 	if (temp16 != 1)
 		return NULL;
 
 	/* number of channels -- only mono is supported */
-	offset += osd_fread_lsbfirst (f, &temp16, 2);
+	offset += mame_fread_lsbfirst (f, &temp16, 2);
 	if (temp16 != 1)
 		return NULL;
 
 	/* sample rate */
-	offset += osd_fread (f, &rate, 4);
+	offset += mame_fread (f, &rate, 4);
 	rate = LITTLE_ENDIANIZE_INT32 (rate);
 
 	/* bytes/second and block alignment are ignored */
-	offset += osd_fread (f, buf, 6);
+	offset += mame_fread (f, buf, 6);
 
 	/* bits/sample */
-	offset += osd_fread_lsbfirst (f, &bits, 2);
+	offset += mame_fread_lsbfirst (f, &bits, 2);
 	if (bits != 8 && bits != 16)
 		return NULL;
 
@@ -173,8 +159,8 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	/* seek until we find a data tag */
 	while (1)
 	{
-		offset += osd_fread (f, buf, 4);
-		offset += osd_fread (f, &length, 4);
+		offset += mame_fread (f, buf, 4);
+		offset += mame_fread (f, &length, 4);
 		length = LITTLE_ENDIANIZE_INT32 (length);
 		if (memcmp (&buf[0], "data", 4) == 0)
 			break;
@@ -200,7 +186,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	/* read the data in */
 	if (bits == 8)
 	{
-		osd_fread (f, result->data, length);
+		mame_fread (f, result->data, length);
 
 		/* convert 8-bit data to signed samples */
 		for (temp32 = 0; temp32 < length; temp32++)
@@ -209,7 +195,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	else
 	{
 		/* 16-bit data is fine as-is */
-		osd_fread_lsbfirst (f, result->data, length);
+		mame_fread_lsbfirst (f, result->data, length);
 	}
 
 	return result;
@@ -291,7 +277,7 @@ static void vc20_wav_open (int image_type, int image_id)
 {
 	void *fp;
 
-	fp = osd_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
+	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", image_filename(image_type,image_id));
@@ -300,11 +286,11 @@ static void vc20_wav_open (int image_type, int image_id)
 	if ((wav.sample = vc20_read_wav_sample (fp)) == NULL)
 	{
 		logerror("tape %s could not be loaded\n", image_filename(image_type,image_id));
-		osd_fclose (fp);
+		mame_fclose (fp);
 		return;
 	}
 	logerror("tape %s loaded\n", image_filename(image_type,image_id));
-	osd_fclose (fp);
+	mame_fclose (fp);
 
 	wav.image_type = image_type;
     wav.image_id = image_id;
@@ -427,22 +413,22 @@ static void vc20_prg_open (int image_type, int image_id)
     void *fp;
 	int i;
 
-	fp = osd_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
+	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", image_filename(image_type,image_id));
 		return;
 	}
-	prg.length = osd_fsize (fp);
+	prg.length = mame_fsize (fp);
 	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
 	{
 		logerror("tape %s could not be loaded\n", image_filename(image_type,image_id));
-		osd_fclose (fp);
+		mame_fclose (fp);
 		return;
 	}
-	osd_fread (fp, prg.prg, prg.length);
+	mame_fread (fp, prg.prg, prg.length);
 	logerror("tape %s loaded\n", image_filename(image_type,image_id));
-	osd_fclose (fp);
+	mame_fclose (fp);
 
 	name = image_filename(image_type,image_id);
     for (i = 0; name[i] != 0; i++)
@@ -914,186 +900,6 @@ static void vc20_prg_timer (int data)
 	vc20_prg_state ();
 }
 
-static void vc20_zip_timer (int data);
-static void vc20_zip_state (void)
-{
-	switch (zip.state)
-	{
-	case 0:
-		break;						   /* not inited */
-	case 1:						   /* off */
-		if (tape.on)
-		{
-			zip.state = 2;
-			break;
-		}
-		break;
-	case 2:						   /* on */
-		if (!tape.on)
-		{
-			zip.state = 1;
-			tape.play = 0;
-			tape.record = 0;
-			DAC_data_w (0, 0);
-			break;
-		}
-		if (tape.motor && tape.play)
-		{
-			zip.state = 3;
-			timer_reset(prg.timer, 0.0);
-			break;
-		}
-		if (tape.motor && tape.record)
-		{
-			zip.state = 4;
-			break;
-		}
-		break;
-	case 3:						   /* reading */
-		if (!tape.on)
-		{
-			zip.state = 1;
-			tape.play = 0;
-			tape.record = 0;
-			DAC_data_w (0, 0);
-			timer_reset(prg.timer, TIME_NEVER);
-			break;
-		}
-		if (!tape.motor || !tape.play)
-		{
-			zip.state = 2;
-			timer_reset(prg.timer, TIME_NEVER);
-			DAC_data_w (0, 0);
-			break;
-		}
-		break;
-	case 4:						   /* saving */
-		if (!tape.on)
-		{
-			zip.state = 1;
-			tape.play = 0;
-			tape.record = 0;
-			DAC_data_w (0, 0);
-			timer_reset(prg.timer, TIME_NEVER);
-			break;
-		}
-		if (!tape.motor || !tape.record)
-		{
-			zip.state = 2;
-			timer_reset(prg.timer, TIME_NEVER);
-			DAC_data_w (0, 0);
-			break;
-		}
-		break;
-	}
-}
-
-static void vc20_zip_readfile (void)
-{
-	int i;
-	char *cp;
-
-	for (i = 0; i < 2; i++)
-	{
-		zip.zipentry = readzip (zip.zip);
-		if (zip.zipentry == NULL)
-		{
-			i++;
-			rewindzip (zip.zip);
-			continue;
-		}
-		if ((cp = strrchr (zip.zipentry->name, '.')) == NULL)
-			continue;
-		if (stricmp (cp, ".prg") == 0)
-			break;
-	}
-
-	if (i == 2)
-	{
-		zip.state = 0;
-		return;
-	}
-	for (i = 0; zip.zipentry->name[i] != 0; i++)
-		prg.name[i] = toupper (zip.zipentry->name[i]);
-	for (; i < 16; i++)
-		prg.name[i] = ' ';
-
-	prg.length = zip.zipentry->uncompressed_size;
-	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
-	{
-		logerror("out of memory\n");
-		zip.state = 0;
-	}
-	readuncompresszip (zip.zip, zip.zipentry, (char *) prg.prg);
-}
-
-static void vc20_zip_open (int image_type, int image_id)
-{
-	if (!(zip.zip = openzip (image_filename(image_type,image_id))))
-	{
-		logerror("tape %s not found\n", image_filename(image_type,image_id));
-		return;
-	}
-
-	logerror("tape %s linked\n", image_filename(image_type,image_id));
-
-	tape.type = TAPE_ZIP;
-	tape.on = 1;
-	zip.image_type = image_type;
-    zip.image_id = image_id;
-	zip.state = 2;
-	prg.stateblock = 0;
-	prg.stateheader = 0;
-	prg.statebyte = 0;
-	prg.statebit = 0;
-	prg.pos = 0;
-	prg.timer = prg.zip_timer;
-	vc20_zip_readfile ();
-}
-
-static void vc20_zip_timer (int data)
-{
-	if (!tape.data)
-	{								   /* send the same low phase */
-		if (tape.noise)
-			DAC_data_w (0, 0);
-		tape.data = 1;
-		timer_reset (prg.timer, prg.lasttime);
-	}
-	else
-	{
-		if (tape.noise)
-			DAC_data_w (0, TONE_ON_VALUE);
-		tape.data = 0;
-		if (prg.statebit)
-		{
-			vc20_tape_bit (0);
-		}
-		else if (prg.statebyte)
-		{							   /* send the rest of the byte */
-			vc20_tape_byte ();
-		}
-		else if (prg.stateheader)
-		{
-			vc20_tape_prgheader ();
-		}
-		else
-		{
-			vc20_tape_program ();
-			if (!prg.stateblock)
-			{
-				/* loading next file of zip */
-				timer_reset (prg.timer, 0.0);
-				free (prg.prg);
-				vc20_zip_readfile ();
-			}
-		}
-	}
-	if (tape.read_callback)
-		tape.read_callback (0, tape.data);
-	vc20_prg_state ();
-}
-
 void vc20_tape_open (void (*read_callback) (UINT32, UINT8))
 {
 	tape.read_callback = read_callback;
@@ -1108,7 +914,6 @@ void vc20_tape_open (void (*read_callback) (UINT32, UINT8))
 #endif
 	prg.c16 = 0;
 	wav.timer = timer_alloc(vc20_wav_timer);
-	prg.zip_timer = timer_alloc(vc20_zip_timer);
 	prg.prg_timer = timer_alloc(vc20_prg_timer);
 }
 
@@ -1141,8 +946,6 @@ int vc20_tape_attach_image (int id, void *fp, int open_mode)
 		vc20_wav_open(IO_CASSETTE,id);
 	else if (stricmp (cp, "prg") == 0)
 		vc20_prg_open(IO_CASSETTE,id);
-	else if (stricmp (cp, "zip") == 0)
-		vc20_zip_open(IO_CASSETTE,id);
 	else
 		return INIT_FAIL;
 	return INIT_PASS;
@@ -1163,10 +966,6 @@ void vc20_tape_close (void)
 	case TAPE_PRG:
 		free (prg.prg);
 		break;
-	case TAPE_ZIP:
-		free (prg.prg);
-		closezip (zip.zip);
-		break;
 	}
 	/* HJB reset so vc20_tape_close() can be called multiple times!? */
     tape.type = 0;
@@ -1181,9 +980,6 @@ static void vc20_state (void)
 		break;
 	case TAPE_PRG:
 		vc20_prg_state ();
-		break;
-	case TAPE_ZIP:
-		vc20_zip_state ();
 		break;
 	}
 }
@@ -1200,9 +996,6 @@ int vc20_tape_switch (void)
 	case TAPE_PRG:
 		data = !((prg.state > 1) && (tape.play || tape.record));
 		break;
-	case TAPE_ZIP:
-		data = !((zip.state > 1) && (tape.play || tape.record));
-		break;
 	}
 	return data;
 }
@@ -1217,10 +1010,6 @@ int vc20_tape_read (void)
 		break;
 	case TAPE_PRG:
 		if (prg.state == 3)
-			return tape.data;
-		break;
-	case TAPE_ZIP:
-		if (zip.state == 3)
 			return tape.data;
 		break;
 	}
@@ -1240,10 +1029,6 @@ void vc20_tape_write (int data)
 		if (prg.state == 4)
 			vc20_prg_write (data);
 		break;
-	case TAPE_ZIP:
-		if (zip.state == 4)
-			vc20_prg_write (data);
-		break;
 	}
 }
 
@@ -1256,9 +1041,6 @@ void vc20_tape_config (int on, int noise)
 		break;
 	case TAPE_PRG:
 		tape.on = (prg.state != 0) && on;
-		break;
-	case TAPE_ZIP:
-		tape.on = (zip.state != 0) && on;
 		break;
 	}
 	tape.noise = tape.on && noise;
@@ -1316,18 +1098,6 @@ void vc20_tape_status (char *text, int size)
 		case 3:
 			snprintf (text, size, "Tape (%s) loading %d",
 				image_filename(prg.image_type, prg.image_id), prg.pos);
-			break;
-		}
-		break;
-	case TAPE_ZIP:
-		switch (zip.state)
-		{
-		case 4:
-			snprintf (text, size, "Tape saving");
-			break;
-		case 3:
-			snprintf (text, size, "Tape (%s) File %s loading %d",
-				image_filename(zip.image_type,zip.image_id), zip.zipentry->name, prg.pos);
 			break;
 		}
 		break;

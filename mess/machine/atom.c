@@ -288,7 +288,7 @@ QUICKLOAD_LOAD(atom)
 	if (!quickload_data)
 		return INIT_FAIL;
 
-	if (osd_fread(fp, quickload_data, quickload_size) != quickload_size)
+	if (mame_fread(fp, quickload_data, quickload_size) != quickload_size)
 	{
 		free(quickload_data);
 		return INIT_FAIL;

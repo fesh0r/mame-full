@@ -31,9 +31,9 @@ NVRAM_HANDLER( tandy1000 )
 	if (file==NULL) {
 		// init only 
 	} else if (read_or_write) {
-		osd_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
+		mame_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
 	} else {
-		osd_fread(file, eeprom.ee, sizeof(eeprom.ee));
+		mame_fread(file, eeprom.ee, sizeof(eeprom.ee));
 	}
 }
 

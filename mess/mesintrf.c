@@ -1,7 +1,7 @@
 #include "mesintrf.h"
+#include "mame.h"
 #include "ui_text.h"
 #include "input.h"
-#include "mame.h"
 
 extern void display_fps(struct mame_bitmap *bitmap);
 

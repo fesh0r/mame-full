@@ -22,14 +22,14 @@ static void apf_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "apfram.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "apfram.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
 
 	if (file)
 	{
-		osd_fwrite(file, apf_video_ram, 0x0400);
+		mame_fwrite(file, apf_video_ram, 0x0400);
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 #endif

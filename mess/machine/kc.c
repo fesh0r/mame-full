@@ -44,7 +44,7 @@ static void kc_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "kcram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "kcram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
 	if (file)
 	{
@@ -55,12 +55,12 @@ static void kc_dump_ram(void)
 
 			data = kc85_ram[i];
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 
@@ -73,7 +73,7 @@ static int kc_load(void *file, unsigned char **ptr)
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
@@ -83,7 +83,7 @@ static int kc_load(void *file, unsigned char **ptr)
 			if (data!=NULL)
 			{
 				/* read whole file */
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 
 				*ptr = data;
 
@@ -321,9 +321,9 @@ struct kc85_module
 	/* id of module */
 	int id;
 	/* name */
-	char *module_name;
+	const char *module_name;
 	/* description */
-	char *module_description;
+	const char *module_description;
 	/* enable module */
 	void	(*enable)(int state);
 };

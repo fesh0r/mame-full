@@ -129,7 +129,7 @@ void pcw_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "pcwram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "pcwram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
 	if (file)
 	{
@@ -140,12 +140,12 @@ void pcw_dump_ram(void)
 
 			data = cpu_readmem16(i);
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 #endif
@@ -799,7 +799,7 @@ static READ_HANDLER(pcw9512_parallel_r)
 		return 0xff^0x020;
 	}
 
-	logerror("pcw9512 parallel r: offs: %04x %02x\n",offset);
+	logerror("pcw9512 parallel r: offs: %04x\n", (int) offset);
 	return 0x00;
 }
 

@@ -514,10 +514,10 @@ static int sony_get_track(void)
 		return 1;
 	}
 
-	if (osd_fread(f->fd, buf, len * 512) != (len * 512))
+	if (mame_fread(f->fd, buf, len * 512) != (len * 512))
 	{
 		#if LOG_SONY
-			logerror("sony_get_track(): osd_fread() failed!\n");
+			logerror("sony_get_track(): mame_fread() failed!\n");
 		#endif
 		return 1;
 	}
@@ -554,10 +554,10 @@ static int sony_get_track(void)
 			return 1;
 		}
 
-		if (osd_fread(f->fd, tagbuf, len * 12) != (len * 12))
+		if (mame_fread(f->fd, tagbuf, len * 12) != (len * 12))
 		{
 			#if LOG_SONY
-				logerror("sony_get_track(): osd_fread() failed!\n");
+				logerror("sony_get_track(): mame_fread() failed!\n");
 			#endif
 			return 1;
 		}
@@ -922,10 +922,10 @@ static int sony_put_track(void)
 		}
 
 #if 1
-		if (osd_fwrite(f->fd, tagbuf, len * 12) != (len * 12))
+		if (mame_fwrite(f->fd, tagbuf, len * 12) != (len * 12))
 		{
 			#if LOG_SONY
-				logerror("sony_put_track(): osd_fwrite() failed!\n");
+				logerror("sony_put_track(): mame_fwrite() failed!\n");
 			#endif
 			return 1;
 		}
@@ -934,10 +934,10 @@ static int sony_put_track(void)
 		{
 			unsigned char tagbuf2[12 * 2 * 12];
 
-			if (osd_fread(f->fd, tagbuf2, len * 12) != (len * 12))
+			if (mame_fread(f->fd, tagbuf2, len * 12) != (len * 12))
 			{
 				#if LOG_SONY
-					logerror("sony_put_track(): osd_fread() failed!\n");
+					logerror("sony_put_track(): mame_fread() failed!\n");
 				#endif
 				return 1;
 			}
@@ -985,10 +985,10 @@ static int sony_put_track(void)
 	}
 
 #if 1
-	if (osd_fwrite(f->fd, buf, len * 512) != (len * 512))
+	if (mame_fwrite(f->fd, buf, len * 512) != (len * 512))
 	{
 		#if LOG_SONY
-			logerror("sony_put_track(): osd_fwrite() failed!\n");
+			logerror("sony_put_track(): mame_fwrite() failed!\n");
 		#endif
 		return 1;
 	}
@@ -997,10 +997,10 @@ static int sony_put_track(void)
 	{
 		unsigned char buf2[12 * 2 * 524];
 
-		if (osd_fread(f->fd, buf2, len * 512) != (len * 512))
+		if (mame_fread(f->fd, buf2, len * 512) != (len * 512))
 		{
 			#if LOG_SONY
-				logerror("sony_put_track(): osd_fread() failed!\n");
+				logerror("sony_put_track(): mame_fread() failed!\n");
 			#endif
 			return 1;
 		}
@@ -1295,7 +1295,7 @@ static void sony_doaction(void)
 				memset(f, 0, sizeof(*f));
 			}*/
 			/* somewhat hackish, but better method (?) */
-			osd_device_eject(IO_FLOPPY, sony_floppy_select);
+			image_unload(IO_FLOPPY, sony_floppy_select);
 			break;
 		default:
 			#if LOG_SONY
@@ -1341,7 +1341,7 @@ int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
 		f->image_format = bare;	/* default */
 
 		/* read image header */
-		if (osd_fread(f->fd, & header, sizeof(header)) == sizeof(header))
+		if (mame_fread(f->fd, & header, sizeof(header)) == sizeof(header))
 		{
 
 #ifdef LSB_FIRST
@@ -1365,7 +1365,7 @@ int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
 								| ((header.private >> 8) & 0x00ff);
 #endif
 			/* various checks : */
-			if ((header.diskName[0] <= 63) && (osd_fsize(f->fd) == (header.dataSize + header.tagSize + 84))
+			if ((header.diskName[0] <= 63) && (mame_fsize(f->fd) == (header.dataSize + header.tagSize + 84))
 					&& (header.private == 0x0100))
 			{
 				f->image_format = apple_diskcopy;
@@ -1380,7 +1380,7 @@ int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
 
 	if (f->image_format == bare)
 	{
-		image_len = osd_fsize(f->fd);
+		image_len = mame_fsize(f->fd);
 	}
 
 	switch(image_len) {
@@ -1449,9 +1449,9 @@ void sony_floppy_exit(int id)
 							| ((tagChecksum >> 24) & 0x000000ff);
 #endif
 
-			if (osd_fwrite(f->fd, & dataChecksum, 4) == 4)
+			if (mame_fwrite(f->fd, & dataChecksum, 4) == 4)
 			{
-				osd_fwrite(f->fd, & tagChecksum, 4);
+				mame_fwrite(f->fd, & tagChecksum, 4);
 			}
 		}
 

@@ -34,7 +34,7 @@ const char * default_text[] =
 	"Press Any Key",
 	"On",
 	"Off",
-	"N/A",
+	"NA",
 	"OK",
 	"INVALID",
 	"(none)",
@@ -261,7 +261,7 @@ const char * default_text[] =
 	NULL
 };
 
-int uistring_init (void *langfile)
+int uistring_init (mame_file *langfile)
 {
 	/*
 		TODO: This routine needs to do several things:
@@ -286,7 +286,7 @@ int uistring_init (void *langfile)
 
 	if (!langfile) return 0;
 
-	while (osd_fgets (curline, 255, langfile) != NULL)
+	while (mame_fgets (curline, 255, langfile) != NULL)
 	{
 		/* Ignore commented and blank lines */
 		if (curline[0] == ';') continue;
@@ -342,7 +342,7 @@ int uistring_init (void *langfile)
 					char transline[255];
 
 					/* Found a match, read next line as the translation */
-					osd_fgets (transline, 255, langfile);
+					mame_fgets (transline, 255, langfile);
 
 					/* Get all text up to the first line ending */
 					ptr = strtok (transline, "\n");

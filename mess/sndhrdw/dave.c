@@ -43,7 +43,7 @@ static void dave_refresh_ints(void)
 {
 	int int_wanted;
 
-	logerror("int latch: %02x enable: %02x input: %02x\n",dave.int_latch, dave.int_enable, dave.int_input);
+	logerror("int latch: %02x enable: %02x input: %02x\n", (int) dave.int_latch, (int) dave.int_enable, (int) dave.int_input);
 	
 	int_wanted = (((dave.int_enable<<1) & dave.int_latch)!=0);
 

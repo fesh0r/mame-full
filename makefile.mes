@@ -2,7 +2,7 @@
 # TARGET = mess
 # example for a tiny compile
 # TARGET = tinyms
-ifndef TARGET
+ifeq ($(TARGET),)
 TARGET = mess
 endif
 
@@ -14,9 +14,6 @@ endif
 
 # uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
-
-# command to invoke UPX (Ultimate Packer for eXecutables)
-UPX = upx.exe -9 --compress-icons=0
 
 # uncomment next line to use Assembler 68000 engine
 X86_ASM_68000 = 1
@@ -40,8 +37,7 @@ VPATH=src $(wildcard src/cpu/*)
 AR = @ar
 CC = @gcc
 LD = @gcc
-#ASM = @nasm
-ASM = @nasmw
+ASM = @nasm
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
@@ -83,19 +79,24 @@ EMULATORGUI = $(GUINAME)$(EXE)
 EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 EMULATOR    = $(EMULATORCLI)
 
-DEFS = -Dindex=__index -Dalloca=__builtin_alloca -Drestrict=restrict__ -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS += -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
+
+CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/includes -Imess/$(MAMEOS) -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
-CFLAGS = -Imess -Imess/includes -Imess/$(MAMEOS) -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
-	-O0 -Wall -Werror -Wno-unused -g
+CFLAGS += -O0 -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Imess -Imess/includes -Imess/$(MAMEOS) -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
-	-DNDEBUG \
+CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
 	-Wshadow -Wstrict-prototypes -Wundef \
-#	try with gcc 3.0 -Wpadded -Wunreachable-code -Wdisabled-optimization
+	-Wformat-security -Wwrite-strings \
+	-Wdisabled-optimization \
+#	-Wredundant-decls
+#	-Wfloat-equal
+#	-Wunreachable-code -Wpadded
 #	-W had to remove because of the "missing initializer" warning
 #	-Wlarger-than-262144  \
 #	-Wcast-qual \
@@ -134,7 +135,7 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
 		$(OBJ)/windowsui $(OBJ)/mess/windowsui
 
-PLATFORM_IMGTOOL_OBJS = $(OBJ)/mess/windows/glob.o
+PLATFORM_IMGTOOL_OBJS = $(OBJ)/mess/windows/glob.o $(OBJ)/windows/fileio.o
 
 #MESS CPU's
 OBJDIRS += $(OBJ)/mess/cpu
@@ -171,31 +172,16 @@ $(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE)
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
 	@dllwrap --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) $(RESFILE)
-ifndef DEBUG
-ifdef UPX
-	$(UPX) $@
-endif
-endif
 
 # gui target
 $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/windowsui/guimain.o $(GUIRESFILE)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $^ -o $@
-ifndef DEBUG
-ifdef UPX
-	$(UPX) $@
-endif
-endif
 
 # cli target
 $(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -o $@
-ifndef DEBUG
-ifdef UPX
-	$(UPX) $@
-endif
-endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...

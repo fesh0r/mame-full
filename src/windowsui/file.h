@@ -13,14 +13,15 @@
 #ifndef FILE_H
 #define FILE_H
 
+// from windows fileio.c
+extern void set_pathlist(int file_type,const char *new_rawpath);
+
 extern int   File_Init(void);
 extern void  File_Exit(void);
 extern BOOL  File_ExistZip(const char* gamename, int filetype);
 extern BOOL  File_Status(const char* gamename, const char* filename, int filetype);
 extern void  File_UpdatePaths(void);
 
-extern void* osd_fopen2(const char* gamename, const char* filename, int filetype, int openforwrite);
-
-#define OSD_FILETYPE_FLYER 1001
+#define OSD_FILETYPE_ICON 1001
 
 #endif

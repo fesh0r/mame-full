@@ -72,6 +72,8 @@ static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
 
+static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
+
 #ifdef MAME_DEBUG
 static void MessTestsBegin(void);
 static void MessTestsDoneIdle(void);
@@ -80,8 +82,6 @@ static void MessTestsDoneIdle(void);
 /*
 #define MAME32HELP "mess32.hlp"
 */
-
-#define IsValidListControl(hwnd)    (((hwnd) == hwndList) || ((hwnd) == (s_pSoftwareListView->hwndListView)))
 
 #ifdef bool
 #undef bool
@@ -279,9 +279,9 @@ static void InitMessPicker(void)
 
 	memset(&opts, 0, sizeof(opts));
 	opts.pClass = &s_softwareListClass;
-	opts.hwndParent = hPicker;
+	opts.hwndParent = hMain;
 	opts.nIDDlgItem = IDC_LIST2;
-	opts.hBackground = hBitmap;
+	opts.hBackground = hBackground;
 	opts.hPALbg = hPALbg;
 	opts.bmDesc = bmDesc;
 	opts.hSmall = hSmall;
@@ -292,7 +292,9 @@ static void InitMessPicker(void)
 
 	SmartListView_SetTotalItems(s_pSoftwareListView, MessImageCount());
 	SmartListView_SetSorting(s_pSoftwareListView, MESS_COLUMN_IMAGES, FALSE);
-	Header_Initialize(s_pSoftwareListView->hwndListView);
+
+	/* subclass the list view */
+	SetWindowLong(s_pSoftwareListView->hwndListView, GWL_WNDPROC, (LONG)ListViewWndProc);
 
 	default_software = strdup(GetDefaultSoftware());
 
@@ -523,11 +525,11 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 			*s = '\0';
 
 		bNewScreenShot = LoadScreenShotEx(GetSelectedPickItem(), newname, nPictType);
-		if (bNewScreenShot || bScreenShotAvailable)
+		if (bNewScreenShot)
         {
             HWND hWnd;
 
-            if (GetShowScreenShot() &&  (hWnd = GetDlgItem(hPicker, IDC_SSFRAME)))
+            if (GetShowScreenShot() &&  (hWnd = GetDlgItem(hMain, IDC_SSFRAME)))
             {
                 RECT    rect;
                 HWND    hParent;
@@ -542,9 +544,28 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
                 UpdateWindow(hParent);
             }
         }
-        bScreenShotAvailable = bNewScreenShot;
     }
 	return bResult;
+}
+
+static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
+{
+	switch (id) {
+	case ID_MESS_OPEN_SOFTWARE:
+		MessOpenOtherSoftware(IO_END);
+		break;
+
+	case ID_MESS_CREATE_SOFTWARE:
+		MessCreateDevice(IO_END);
+		break;
+
+#ifdef MAME_DEBUG
+	case ID_MESS_RUN_TESTS:
+		MessTestsBegin();
+		break;
+#endif /* MAME_DEBUG */
+	}
+	return FALSE;
 }
 
 /* ------------------------------------------------------------------------ *
@@ -789,7 +810,7 @@ static void MessTestsCompleted(void)
 	/* We are done */
 	SetSelectedPick(s_nOriginalPick);
 	s_bRunningTests = FALSE;
-	MessageBoxA(hPicker, "Tests successfully completed!", MAME32NAME, MB_OK);
+	MessageBoxA(hMain, "Tests successfully completed!", MAME32NAME, MB_OK);
 }
 
 static void MessTestsDoneIdle(void)

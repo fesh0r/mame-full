@@ -955,7 +955,7 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 		{
 			if (address & 0x008000)
 			{	/* MMU register : BUS error ??? */
-				logerror("illegal opbase address%lX\n", address);
+				logerror("illegal opbase address%lX\n", (long) address);
 			}
 			else
 			{	/* system ROMs */
@@ -983,7 +983,7 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 			if (seg_offset > mmu_regs[the_seg][segment].slim)
 			{
 				/* out of segment limits : bus error */
-				logerror("illegal opbase address%lX\n", address);
+				logerror("illegal opbase address%lX\n", (long) address);
 			}
 			OP_ROM = OP_RAM = lisa_ram_ptr + mapped_address - address;
 			/*logerror("RAM\n");*/
@@ -994,7 +994,7 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 		case IO:			/* I/O : bus error ??? */
 		case invalid:		/* unmapped segment */
 			/* bus error */
-			logerror("illegal opbase address%lX\n", address);
+			logerror("illegal opbase address%lX\n", (long) address);
 			break;
 
 		case special_IO:
@@ -1050,7 +1050,7 @@ NVRAM_HANDLER(lisa)
 #if 0
 			logerror("Writing PRAM to file\n");
 #endif
-			osd_fwrite(file, l_fdc_ram, 1024);
+			mame_fwrite(file, l_fdc_ram, 1024);
 		}
 	}
 	else
@@ -1060,7 +1060,7 @@ NVRAM_HANDLER(lisa)
 #if 0
 			logerror("Reading PRAM from file\n");
 #endif
-			osd_fread(file, l_fdc_ram, 1024);
+			mame_fread(file, l_fdc_ram, 1024);
 		}
 		else
 		{

@@ -56,7 +56,7 @@ static int apexc_cylinder_init(int id, void *fp, int open_mode)
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
 
-		osd_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
+		mame_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
 			UINT32 *RAM;
@@ -94,7 +94,7 @@ static void apexc_cylinder_exit(int id)
 		}
 #endif
 		/* write */
-		osd_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
+		mame_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 	}
 }
 
@@ -160,7 +160,7 @@ static int apexc_tape_init(int id, void *fp, int open_mode)
 
 	/* open file */
 	/* unit 0 is read-only, unit 1 is write-only */
-	t->fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
+	t->fd = image_fopen_custom(IO_PUNCHTAPE, id, FILETYPE_IMAGE,
 								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	return INIT_PASS;
@@ -170,7 +170,7 @@ static READ32_HANDLER(tape_read)
 {
 	UINT8 reply;
 
-	if (apexc_tapes[0].fd && (osd_fread(apexc_tapes[0].fd, & reply, 1) == 1))
+	if (apexc_tapes[0].fd && (mame_fread(apexc_tapes[0].fd, & reply, 1) == 1))
 		return reply & 0x1f;
 	else
 		return 0;	/* unit not ready - I don't know what we should do */
@@ -181,7 +181,7 @@ static WRITE32_HANDLER(tape_write)
 	UINT8 data5 = (data & 0x1f);
 
 	if (apexc_tapes[1].fd)
-		osd_fwrite(apexc_tapes[1].fd, & data5, 1);
+		mame_fwrite(apexc_tapes[1].fd, & data5, 1);
 
 	apexc_teletyper_putchar(data & 0x1f);	/* display on screen */
 }

@@ -609,7 +609,7 @@ static int parse_zillion_hex(UINT8 *snapshot_buff, char *src)
 
                     row++;
                     line[column] = '\0';
-                    n = sscanf(line, "G%x", &addr);
+                    n = sscanf(line, "G%x", (unsigned int *) &addr);
                     if (n == 1 && !snapshot_buff[8192+64+1] && !snapshot_buff[8192+64+1])
                     {
                         LOG(("microtan_hexfile_init: go addr %04X\n", addr));
@@ -868,7 +868,7 @@ SNAPSHOT_LOAD( microtan )
 	UINT8 *snapshot_buff;
 
 	snapshot_buff = malloc(snapshot_size);
-	osd_fread(fp, snapshot_buff, snapshot_size);
+	mame_fread(fp, snapshot_buff, snapshot_size);
 
 	if (microtan_varify_snapshot(snapshot_buff, snapshot_size)==IMAGE_VERIFY_FAIL)
 	{
@@ -903,7 +903,7 @@ QUICKLOAD_LOAD( microtan_hexfile )
 		LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", quickload_size));
 		return INIT_FAIL;
 	}
-	osd_fread(fp, buff, quickload_size);
+	mame_fread(fp, buff, quickload_size);
 
     buff[quickload_size] = '\0';
 

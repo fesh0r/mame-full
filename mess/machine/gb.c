@@ -1227,7 +1227,7 @@ READ_HANDLER ( gb_r_io )
 
 int gb_load_rom (int id, void *F, int open_mode)
 {
-	static char *CartTypes[] =
+	static const char *CartTypes[] =
 	{
 		"ROM ONLY",
 		"ROM+MBC1",
@@ -1271,7 +1271,7 @@ int gb_load_rom (int id, void *F, int open_mode)
 	static struct
 	{
 		UINT16 Code;
-		char *Name;
+		const char *Name;
 	}
 	Companies[] =
 	{
@@ -1354,7 +1354,8 @@ int gb_load_rom (int id, void *F, int open_mode)
 	};
 
 	int Checksum, I, J;
-	char *P, S[50];
+	const char *P;
+	char S[50];
 	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
@@ -1380,10 +1381,10 @@ int gb_load_rom (int id, void *F, int open_mode)
 	if (J == 512)
 	{
 		logerror("ROM-header found skipping\n");
-		osd_fread (F, gb_ram, 512);
+		mame_fread (F, gb_ram, 512);
 	}
 
-	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
+	if (mame_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
 		logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
 		return INIT_FAIL;
@@ -1528,7 +1529,7 @@ int gb_load_rom (int id, void *F, int open_mode)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
 		{
-			if (osd_fread (F, ROMMap[I], 0x4000) == 0x4000)
+			if (mame_fread (F, ROMMap[I], 0x4000) == 0x4000)
 			{
 				for (J = 0; J < 0x4000; J++)
 					Checksum -= ROMMap[I][J];

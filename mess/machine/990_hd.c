@@ -173,7 +173,7 @@ int ti990_hd_init(int id, void *fp, int open_mode)
 	/* set geometry: use new headered disk image format. */
 	/* to convert old images to new format, insert a 16-byte header as follow:
 	00 00 03 8f  00 00 00 05  00 00 00 21  00 00 01 00 */
-	bytes_read = osd_fread(d->fd, &header, sizeof(header));
+	bytes_read = mame_fread(d->fd, &header, sizeof(header));
 	if (bytes_read != sizeof(header))
 	{
 		ti990_hd_exit(id);
@@ -443,7 +443,7 @@ static void write_format(void)
 
 	for (sector=0; sector<hdc.d[dsk_sel].sectors_per_track; sector++)
 	{
-		bytes_written = osd_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
+		bytes_written = mame_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
 
 		if (bytes_written != hdc.d[dsk_sel].bytes_per_sector)
 		{
@@ -519,7 +519,7 @@ static void read_data(void)
 		}
 
 		bytes_to_read = (byte_count < hdc.d[dsk_sel].bytes_per_sector) ? byte_count : hdc.d[dsk_sel].bytes_per_sector;
-		bytes_read = osd_fread(hdc.d[dsk_sel].fd, buffer, bytes_to_read);
+		bytes_read = mame_fread(hdc.d[dsk_sel].fd, buffer, bytes_to_read);
 
 		if (bytes_read != bytes_to_read)
 		{	/* behave as if the controller could not found the sector ID mark */
@@ -636,7 +636,7 @@ static void write_data(void)
 		for (; i<hdc.d[dsk_sel].bytes_per_sector; i+=2)
 			buffer[i] = buffer[i+1] = 0;
 
-		bytes_written = osd_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
+		bytes_written = mame_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
 
 		if (bytes_written != hdc.d[dsk_sel].bytes_per_sector)
 		{

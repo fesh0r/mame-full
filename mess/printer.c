@@ -19,7 +19,7 @@ void printer_exit (int id)
 {
 	if (prn_ports[id])
 	{
-		osd_fclose (prn_ports[id]);
+		mame_fclose (prn_ports[id]);
 		prn_ports[id] = NULL;
 	}
 }
@@ -40,7 +40,7 @@ void printer_output (int id, int data)
 		return;
 	}
 
-	if (1 != osd_fwrite (prn_ports[id], &d, 1) )
+	if (1 != mame_fwrite (prn_ports[id], &d, 1) )
 	{
 		logerror ("Printer port %d# failed to write data\n",id );
 		return;
@@ -60,13 +60,12 @@ int printer_output_chunk (int id, void *src, int chunks)
 		return 0;
 	}
 
-	chunks_written = osd_fwrite (prn_ports[id], src, chunks);
+	chunks_written = mame_fwrite (prn_ports[id], src, chunks);
 	if (chunks != chunks_written)
 	{
-		logerror ("Printer port %d# failed to write data\n");
-		return chunks_written;
+		logerror ("Printer port %d# failed to write data\n", id);
 	}
 
-	return chunks;
+	return chunks_written;
 }
 

@@ -103,7 +103,7 @@ int msx_load_rom (int id, void *F, int open_mode)
     const char *pext;
 	char *pext2;
 	char buf[PAC_HEADER_LEN + 2];
-    static char *mapper_types[] = { "none", "MSX-DOS 2", "konami5 with SCC",
+    static const char *mapper_types[] = { "none", "MSX-DOS 2", "konami5 with SCC",
         "konami4 without SCC", "ASCII/8kB", "ASCII//16kB",
         "Konami Game Master 2", "ASCII/8kB with 8kB SRAM",
         "ASCII/16kB with 2kB SRAM", "R-Type", "Konami Majutsushi",
@@ -115,7 +115,7 @@ int msx_load_rom (int id, void *F, int open_mode)
 		return INIT_PASS;
 
     /* try to load it */
-    size = osd_fsize (F);
+    size = mame_fsize (F);
     if (size < 0x2000)
     {
         logerror("%s: file to small\n",
@@ -150,7 +150,7 @@ int msx_load_rom (int id, void *F, int open_mode)
         return 1;
     }
     memset (pmem, 0xff, size_aligned);
-    if (osd_fread (F, pmem, size) != size)
+    if (mame_fread (F, pmem, size) != size)
     {
         logerror("%s: can't read file\n",
             image_filename (IO_CARTSLOT, id));
@@ -201,10 +201,8 @@ int msx_load_rom (int id, void *F, int open_mode)
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-	/* the cast to (char*) is there to make sure the argument for 
-	   osd_basename is OK. Note that IMHO osd_basename should take
-	   and return const */
-    strcpy (msx1.cart[id].sramfile, osd_basename ((char*)image_filename (IO_CARTSLOT, id) ) );
+
+	strcpy(msx1.cart[id].sramfile, image_basename(IO_CARTSLOT, id));
     pext2 = strrchr (msx1.cart[id].sramfile, '.');
     if (pext2)
 		*pext2 = 0;
@@ -289,14 +287,14 @@ int msx_load_rom (int id, void *F, int open_mode)
         }
 
 		i = 0;
-        F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                OSD_FILETYPE_MEMCARD, 0);
+        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+                FILETYPE_MEMCARD, 0);
 		if (F)
 			{
-			n = osd_fsize (F);
+			n = mame_fsize (F);
 			if (n == 0x2000)
 				{
-	        	if (osd_fread (F, pmem + 0x21000, 0x2000) == 0x2000)
+	        	if (mame_fread (F, pmem + 0x21000, 0x2000) == 0x2000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
@@ -307,7 +305,7 @@ int msx_load_rom (int id, void *F, int open_mode)
 			/* if it's an Virtual MSX Game Master 2 file, convert */
 			if (n == 0x4000)
 				{
-	        	if (osd_fread (F, pmem + 0x20000, 0x4000) == 0x4000)
+	        	if (mame_fread (F, pmem + 0x20000, 0x4000) == 0x4000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x22000, pmem + 0x23000, 0x1000);
@@ -316,7 +314,7 @@ int msx_load_rom (int id, void *F, int open_mode)
 				}
 			}
 
-        if (F) osd_fclose (F);
+        if (F) mame_fclose (F);
 
 		if (i) logerror ("Cart #%d SRAM loaded\n", id);
 		else
@@ -351,16 +349,16 @@ int msx_load_rom (int id, void *F, int open_mode)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
-        F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                OSD_FILETYPE_MEMCARD, 0);
-        if (F && (osd_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
+        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+                FILETYPE_MEMCARD, 0);
+        if (F && (mame_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
         {
             logerror("Cart #%d SRAM loaded\n", id);
         } else {
             memset (pmem + size_aligned, 0, 0x2000);
             logerror("Cart #%d Failed to load SRAM\n", id);
         }
-        if (F) osd_fclose (F);
+        if (F) mame_fclose (F);
 
         msx1.cart[id].mem = pmem;
         break;
@@ -371,9 +369,9 @@ int msx_load_rom (int id, void *F, int open_mode)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
-        F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                OSD_FILETYPE_MEMCARD, 0);
-        if (F && (osd_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
+        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+                FILETYPE_MEMCARD, 0);
+        if (F && (mame_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
         {
             for (i=1;i<8;i++)
             {
@@ -385,7 +383,7 @@ int msx_load_rom (int id, void *F, int open_mode)
             memset (pmem + size_aligned, 0, 0x4000);
             logerror("Cart #%d Failed to load SRAM\n", id);
         }
-        if (F) osd_fclose (F);
+        if (F) mame_fclose (F);
 
         msx1.cart[id].mem = pmem;
         break;
@@ -408,19 +406,19 @@ int msx_load_rom (int id, void *F, int open_mode)
         pmem[0x13ff7] = 0;
         if (msx1.cart[id].pacsram)
         {
-            F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                OSD_FILETYPE_MEMCARD, 0);
+            F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+                FILETYPE_MEMCARD, 0);
             if (F &&
-                (osd_fread (F, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
+                (mame_fread (F, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
                 !strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
-                (osd_fread (F, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
+                (mame_fread (F, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
             {
                logerror("Cart #%d SRAM loaded\n", id);
             } else {
                memset (pmem + 0x10000, 0, 0x2000);
                logerror("Cart #%d Failed to load SRAM\n", id);
             }
-            if (F) osd_fclose (F);
+            if (F) mame_fclose (F);
         }
         msx1.cart[id].banks[2] = (0x14000/0x2000);
         msx1.cart[id].banks[3] = (0x16000/0x2000);
@@ -461,9 +459,9 @@ static int save_sram (int id, char *filename, UINT8* pmem, int size)
     void *F;
     int res;
 
-    F = osd_fopen (Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, 1);
-    res = F && (osd_fwrite (F, pmem, size) == size);
-    if (F) osd_fclose (F);
+    F = mame_fopen (Machine->gamedrv->name, filename, FILETYPE_MEMCARD, 1);
+    res = F && (mame_fwrite (F, pmem, size) == size);
+    if (F) mame_fclose (F);
     return res;
 }
 
@@ -492,15 +490,15 @@ void msx_exit_rom (int id)
             break;
         case 11: /* fm-pac */
             res = 1;
-            F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                OSD_FILETYPE_MEMCARD, 1);
+            F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+                FILETYPE_MEMCARD, 1);
             if (!F) break;
             size = strlen (PAC_HEADER);
-            if (osd_fwrite (F, PAC_HEADER, size) != size)
-                { osd_fclose (F); break; }
-            if (osd_fwrite (F, msx1.cart[id].mem + 0x10000, 0x1ffe) != 0x1ffe)
-                { osd_fclose (F); break; }
-            osd_fclose (F);
+            if (mame_fwrite (F, PAC_HEADER, size) != size)
+                { mame_fclose (F); break; }
+            if (mame_fwrite (F, msx1.cart[id].mem + 0x10000, 0x1ffe) != 0x1ffe)
+                { mame_fclose (F); break; }
+            mame_fclose (F);
             res = 0;
             break;
         default:
@@ -922,7 +920,7 @@ int msx_floppy_init (int id, void *fp, int open_mode)
 
 	if (fp && ! is_effective_mode_create(open_mode))
 		{
-		size = osd_fsize (fp);
+		size = mame_fsize (fp);
 
 		switch (size)
 			{
@@ -1542,7 +1540,7 @@ static int check_fmsx_cas (void *f)
 	UINT8* casdata;
 	int caslen, ret;
 
-    caslen = osd_fsize (f);
+    caslen = mame_fsize (f);
 	if (caslen < 9) return -1;
 
     casdata = (UINT8*)malloc (caslen);
@@ -1553,7 +1551,7 @@ static int check_fmsx_cas (void *f)
    	}
 
     osd_fseek (f, 0, SEEK_SET);
- 	if (caslen != osd_fread (f, casdata, caslen) ) return -1;
+ 	if (caslen != mame_fread (f, casdata, caslen) ) return -1;
    	osd_fseek (f, 0, SEEK_SET);
 
     ret = fmsx_cas_to_wav (casdata, caslen, &cas_samples, &cas_len);

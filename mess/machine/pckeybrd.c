@@ -179,8 +179,8 @@ static at_keyboard keyboard;
 
 typedef struct extended_keyboard_code
 {
-	char* pressed;
-	char* released;
+	const char *pressed;
+	const char *released;
 } extended_keyboard_code;
 
 

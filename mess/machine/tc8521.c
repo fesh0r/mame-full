@@ -132,9 +132,9 @@ void	tc8521_load_stream(void *file)
 {
 	if (file)
 	{
-		osd_fread(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
-		osd_fread(file, &rtc.alarm_outputs, sizeof(unsigned long));
-		osd_fread(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
+		mame_fread(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
+		mame_fread(file, &rtc.alarm_outputs, sizeof(unsigned long));
+		mame_fread(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
 	}
 }
 
@@ -143,9 +143,9 @@ void	tc8521_save_stream(void *file)
 {
 	if (file)
 	{
-		osd_fwrite(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
-		osd_fwrite(file, &rtc.alarm_outputs, sizeof(unsigned long));
-		osd_fwrite(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
+		mame_fwrite(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
+		mame_fwrite(file, &rtc.alarm_outputs, sizeof(unsigned long));
+		mame_fwrite(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
 	}
 }
 

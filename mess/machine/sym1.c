@@ -143,18 +143,18 @@ int kim1_cassette_init(int id, void *file, int open_mode)
 		UINT16 addr, size;
 		UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-		osd_fread(file, buff, sizeof (buff));
+		mame_fread(file, buff, sizeof (buff));
 		if (memcmp(buff, magic, sizeof (buff)))
 		{
 			logerror("kim1_rom_load: magic '%s' not found\n", magic);
 			return INIT_FAIL;
 		}
-		osd_fread_lsbfirst(file, &addr, 2);
-		osd_fread_lsbfirst(file, &size, 2);
-		osd_fread(file, &ident, 1);
+		mame_fread_lsbfirst(file, &addr, 2);
+		mame_fread_lsbfirst(file, &size, 2);
+		mame_fread(file, &ident, 1);
 		logerror("kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident);
 		while (size-- > 0)
-			osd_fread(file, &RAM[addr++], 1);
+			mame_fread(file, &RAM[addr++], 1);
 	}
 	return INIT_PASS;
 }

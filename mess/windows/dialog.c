@@ -490,8 +490,10 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	HWND dlgwnd;
 	HWND dlgitemwnd;
 	InputCode code;
+	LONG_PTR lp;
 
-	stuff = (struct seqselect_stuff *) GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	stuff = (struct seqselect_stuff *) lp;
 
 	switch(msg) {
 	case WM_KEYDOWN:
@@ -577,11 +579,13 @@ static LRESULT seqselect_setup(HWND editwnd, UINT message, WPARAM wparam, LPARAM
 {
 	char buf[256];
 	struct seqselect_stuff *stuff = (struct seqselect_stuff *) lparam;
+	LONG_PTR lp;
 
 	memcpy(stuff->newcode, *(stuff->code), sizeof(stuff->newcode));
 	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
 	SetWindowText(editwnd, A2T(buf));
-	stuff->oldwndproc = (WNDPROC) SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG) seqselect_wndproc);
+	lp = SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG_PTR) seqselect_wndproc);
+	stuff->oldwndproc = (WNDPROC) lp;
 	SetWindowLongPtr(editwnd, GWLP_USERDATA, lparam);
 	return 0;
 }
@@ -593,7 +597,10 @@ static LRESULT seqselect_setup(HWND editwnd, UINT message, WPARAM wparam, LPARAM
 static LRESULT seqselect_apply(HWND editwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct seqselect_stuff *stuff;
-	stuff = (struct seqselect_stuff *) GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	LONG_PTR lp;
+
+	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	stuff = (struct seqselect_stuff *) lp;
 	memcpy(*(stuff->code), stuff->newcode, sizeof(*(stuff->code)));
 	return 0;
 }

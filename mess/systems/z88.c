@@ -38,7 +38,7 @@ static void z88_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "z88.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "z88.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -49,15 +49,15 @@ static void z88_dump_ram(void)
 
 			data = cpu_readmem16(i);
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 
-	file = osd_fopen(Machine->gamedrv->name, "z88b.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "z88b.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -69,7 +69,7 @@ static void z88_dump_ram(void)
 
 			data = memory_region(REGION_CPU1)[0x010000+i];
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 		}
 
 		for (i=0; i<((32-8)*16384); i++)
@@ -78,7 +78,7 @@ static void z88_dump_ram(void)
 
 			data = 0;
 			
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 		}
 */
 		for (i=0; i<(2048*1024); i++)
@@ -87,11 +87,11 @@ static void z88_dump_ram(void)
 
 			data = z88_memory[i];
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 
 

@@ -204,13 +204,13 @@ void	flash_store(int index1, char *flash_name)
 
 	if (flash[index1].base!=NULL)
 	{
-		file = osd_fopen(Machine->gamedrv->name, flash_name, OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
 		if (file)
 		{
-			osd_fwrite(file, flash[index1].base, (1024*1024));
+			mame_fwrite(file, flash[index1].base, (1024*1024));
 	
-			osd_fclose(file);
+			mame_fclose(file);
 		}
 	}
 }
@@ -223,13 +223,13 @@ void	flash_restore(int index1, char *flash_name)
 
 	if (flash[index1].base!=NULL)
 	{
-		file = osd_fopen(Machine->gamedrv->name, flash_name, OSD_FILETYPE_MEMCARD,OSD_FOPEN_READ);
+		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_READ);
 
 		if (file)
 		{
-			osd_fread(file, flash[index1].base, (1024*1024));
+			mame_fread(file, flash[index1].base, (1024*1024));
 	
-			osd_fclose(file);
+			mame_fclose(file);
 		}
 	}
 }

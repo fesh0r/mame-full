@@ -161,7 +161,7 @@ static void execute_read(void)
 						HDC_LOG(2,"hdc_PIO_read next",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n",
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
 					}
-					read = osd_fread(f, data, 512);
+					read = mame_fread(f, data, 512);
                     size -= 512;
 					offset_[idx] += read;
 					src = data;
@@ -202,7 +202,7 @@ static void execute_read(void)
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx],
 							pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
 					}
-					read = osd_fread(f, data, 512);
+					read = mame_fread(f, data, 512);
                     size -= 512;
 					offset_[idx] += read;
 					src = data;
@@ -267,7 +267,7 @@ static void execute_write(void)
 				if( --write == 0 )
 				{
 					osd_fseek(f, offset_[idx], SEEK_SET);
-					write = osd_fwrite(f, data, 512);
+					write = mame_fwrite(f, data, 512);
                     offset_[idx] += write;
 					size -= write;
 					if (size <= 0) write = 0;
@@ -306,7 +306,7 @@ static void execute_write(void)
 				if( --write == 0 )
 				{
 					osd_fseek(f, offset_[idx], SEEK_SET);
-					write = osd_fwrite(f, data, 512);
+					write = mame_fwrite(f, data, 512);
                     size -= 512;
 					offset_[idx] += write;
                     /* end of cylinder ? */
@@ -482,7 +482,7 @@ static void pc_hdc_command(int n)
 				buffer[15] = 0x00;
 				buffer[16] = dip[idx];					/* a non zero value is expected */
 				osd_fseek(pc_hdc_file[idx], 0x1ad, SEEK_SET);
-				osd_fwrite(pc_hdc_file[idx], buffer, 16);
+				mame_fwrite(pc_hdc_file[idx], buffer, 16);
             }
 #endif
             break;

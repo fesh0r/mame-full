@@ -36,7 +36,7 @@ static int snapquick_init(int type, int id, void *fp, int open_mode)
 
 	if (fp)
 	{
-		file_size = osd_fsize(fp);
+		file_size = mame_fsize(fp);
 		if (file_size <= 0)
 			return INIT_FAIL;
 

@@ -452,7 +452,7 @@ static void nc_common_restore_memory_from_stream(void)
 	logerror("restoring nc memory\n");
 #endif
 	/* get size of memory data stored */
-	osd_fread(file, &stored_size, sizeof(unsigned long));
+	mame_fread(file, &stored_size, sizeof(unsigned long));
 
 	if (stored_size > mess_ram_size)
 		restore_size = mess_ram_size;
@@ -460,7 +460,7 @@ static void nc_common_restore_memory_from_stream(void)
 		restore_size = stored_size;
 
 	/* read as much as will fit into memory */
-	osd_fread(file, mess_ram, restore_size);
+	mame_fread(file, mess_ram, restore_size);
 	/* seek over remaining data */
 	osd_fseek(file, SEEK_CUR,stored_size - restore_size);
 }
@@ -475,10 +475,10 @@ static void nc_common_store_memory_to_stream(void)
 	logerror("storing nc memory\n");
 #endif
 	/* write size of memory data */
-	osd_fwrite(file, &mess_ram_size, sizeof(unsigned long));
+	mame_fwrite(file, &mess_ram_size, sizeof(unsigned long));
 
 	/* write data block */
-	osd_fwrite(file, mess_ram, mess_ram_size);
+	mame_fwrite(file, mess_ram, mess_ram_size);
 }
 
 static void nc_common_open_stream_for_reading(void)
@@ -487,7 +487,7 @@ static void nc_common_open_stream_for_reading(void)
 
 	sprintf(filename,"%s.nv", Machine->gamedrv->name);
 
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
+	file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_MEMCARD, OSD_FOPEN_READ);
 }
 
 static void nc_common_open_stream_for_writing(void)
@@ -496,14 +496,14 @@ static void nc_common_open_stream_for_writing(void)
 
     sprintf(filename,"%s.nv", Machine->gamedrv->name);
 
-    file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+    file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 }
 
 
 static void	nc_common_close_stream(void)
 {
 	if (file)
-		osd_fclose(file);
+		mame_fclose(file);
 }
 
 
@@ -861,15 +861,15 @@ static int previous_alarm_state;
 
 static WRITE_HANDLER(nc100_display_memory_start_w)
 {
-        /* bit 7: A15 */
-        /* bit 6: A14 */
-        /* bit 5: A13 */
-        /* bit 4: A12 */
-        /* bit 3-0: not used */
-        nc_display_memory_start = (data & 0x0f0)<<(12-4);
+	/* bit 7: A15 */
+	/* bit 6: A14 */
+	/* bit 5: A13 */
+	/* bit 4: A12 */
+	/* bit 3-0: not used */
+	nc_display_memory_start = (data & 0x0f0)<<(12-4);
 
 #ifdef VERBOSE
-        logerror("disp memory w: %04x\n", nc_display_memory_start);
+	logerror("disp memory w: %04x\n", (int) nc_display_memory_start);
 #endif
 
 }
@@ -1263,14 +1263,14 @@ void nc150_init_machine(void)
 
 static WRITE_HANDLER(nc200_display_memory_start_w)
 {
-        /* bit 7: A15 */
-        /* bit 6: A14 */
-        /* bit 5: A13 */
-        /* bit 4-0: not used */
-        nc_display_memory_start = (data & 0x0e0)<<(12-4);
+	/* bit 7: A15 */
+	/* bit 6: A14 */
+	/* bit 5: A13 */
+	/* bit 4-0: not used */
+	nc_display_memory_start = (data & 0x0e0)<<(12-4);
 
 #ifdef VERBOSE
-        logerror("disp memory w: %04x\n", nc_display_memory_start);
+	logerror("disp memory w: %04x\n", (int) nc_display_memory_start);
 #endif
 
 }

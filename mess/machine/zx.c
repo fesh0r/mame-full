@@ -135,11 +135,11 @@ int zx_cassette_init(int id, void *file, int open_mode)
 {
 	if (file)
 	{
-		tape_size = osd_fsize(file);
+		tape_size = mame_fsize(file);
 		tape_image = image_malloc(IO_CASSETTE, id, tape_size);
 		if (tape_image)
 		{
-			if (osd_fread(file, tape_image, tape_size) != tape_size)
+			if (mame_fread(file, tape_image, tape_size) != tape_size)
 				return 1;
 		}
 		else
@@ -211,7 +211,7 @@ static void tape_bit_shift(int param)
 			zx_frame_time = 15;
 			sprintf(zx_frame_message, "Tape name %04X:%02X", tape_name_offs, tape_data);
 		}
-		else if (osd_fread(tape_file, &tape_data, 1) == 1)
+		else if (mame_fread(tape_file, &tape_data, 1) == 1)
 		{
 			logerror("TAPE data @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_data_offs, tape_data,
 						tape_mask, activecpu_get_reg(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
@@ -222,7 +222,7 @@ static void tape_bit_shift(int param)
 		}
 		else if (tape_file)
 		{
-			osd_fclose(tape_file);
+			mame_fclose(tape_file);
 			tape_file = NULL;
 			tape_trailer = 256 * 8;
 			timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
@@ -318,21 +318,21 @@ static int zx_tape_get_bit(void)
 					char *ext = tape_name + strlen(tape_name);
 
 					strcpy(ext, ".P");
-					tape_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_ROM, 0);
+					tape_file = mame_fopen(Machine->gamedrv->name, tape_name, FILETYPE_ROM, 0);
 					if (!tape_file)
 					{
 						strcpy(ext, ".81");
-						tape_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_ROM, 0);
+						tape_file = mame_fopen(Machine->gamedrv->name, tape_name, FILETYPE_ROM, 0);
 					}
 					if (!tape_file && Machine->gamedrv->clone_of)
 					{
 						strcpy(ext, ".P");
-						tape_file = osd_fopen(Machine->gamedrv->clone_of->name, tape_name, OSD_FILETYPE_ROM, 0);
+						tape_file = mame_fopen(Machine->gamedrv->clone_of->name, tape_name, FILETYPE_ROM, 0);
 					}
 					if (!tape_file && Machine->gamedrv->clone_of)
 					{
 						strcpy(ext, ".81");
-						tape_file = osd_fopen(Machine->gamedrv->clone_of->name, tape_name, OSD_FILETYPE_ROM, 0);
+						tape_file = mame_fopen(Machine->gamedrv->clone_of->name, tape_name, FILETYPE_ROM, 0);
 					}
 					if (tape_file)
 					{

@@ -36,46 +36,42 @@
 /* fix wrong return type */
 #undef  TreeView_Select
 #define TreeView_Select(w,i,c) (BOOL)(int)SendMessage((w),TVM_SELECTITEM,c,(LPARAM)(HTREEITEM)(i))
+
+#undef TreeView_EditLabel
+#define TreeView_EditLabel(w, i) \
+    SNDMSG(w,TVM_EDITLABEL,0,(LPARAM)(i))
+
 #endif /* defined(__GNUC__) */
 
 /* TreeView structures */
 enum FolderIds
 {
-	FOLDER_NONE = 0,
-	FOLDER_ALLGAMES,
-	FOLDER_AVAILABLE,
-	FOLDER_UNAVAILABLE,
-	FOLDER_TYPES,
+    FOLDER_NONE = 0,
+    FOLDER_ALLGAMES,
+    FOLDER_AVAILABLE,
+    FOLDER_UNAVAILABLE,
 #ifdef MESS
 	FOLDER_CONSOLE,
 	FOLDER_COMPUTER,
 	FOLDER_MODIFIED,
 #endif
-	FOLDER_MANUFACTURER,
-	FOLDER_YEAR,
-#ifdef CPUSND_FOLDER
-	FOLDER_CPU,
-	FOLDER_SND,
-#endif /* CPUSND_FOLDER */
-	FOLDER_WORKING,
-	FOLDER_NONWORKING,
-	FOLDER_CUSTOM,
-	FOLDER_PLAYED,
-	FOLDER_FAVORITE,
-	FOLDER_ORIGINAL,
-	FOLDER_CLONES,
-	FOLDER_RASTER,
-	FOLDER_VECTOR,
-	FOLDER_TRACKBALL,
-	FOLDER_STEREO,
-	FOLDER_END
+    FOLDER_MANUFACTURER,
+    FOLDER_YEAR,
+    FOLDER_SOURCE,
+    FOLDER_CPU,
+    FOLDER_SND,
+    FOLDER_WORKING,
+    FOLDER_NONWORKING,
+    FOLDER_CUSTOM,
+    FOLDER_ORIGINAL,
+    FOLDER_CLONES,
+    FOLDER_RASTER,
+    FOLDER_VECTOR,
+    FOLDER_TRACKBALL,
+    FOLDER_STEREO,
+    FOLDER_HARDDISK,
+    FOLDER_END
 };
-
-typedef enum
-{
-	IS_ROOT = 1,
-	IS_FOLDER
-} FOLDERTYPE;
 
 typedef enum
 {
@@ -102,28 +98,24 @@ typedef enum
 
 typedef struct
 {
-	LPSTR       m_lpTitle;          /* String contains the folder name */
-	FOLDERTYPE  m_nFolderType;      /* Contains enum FolderTypes */
-	UINT        m_nFolderId;        /* Index / Folder ID number */
-	UINT        m_nParent;          /* Parent folder ID */
-	UINT        m_nIconId;          /* Icon to use with this folder */
-	DWORD       m_dwFlags;          /* Misc flags */
-	LPBITS      m_lpGameBits;       /* Game bits, represent game indices */
+    LPSTR       m_lpTitle;          /* String contains the folder name */
+    UINT        m_nFolderId;        /* Index / Folder ID number */
+    int         m_nParent;          /* Parent folder index in treeFolders[] */
+    UINT        m_nIconId;          /* Icon to use with this folder */
+    DWORD       m_dwFlags;          /* Misc flags */
+    LPBITS      m_lpGameBits;       /* Game bits, represent game indices */
 } TREEFOLDER, *LPTREEFOLDER;
 
-#ifdef EXTRA_FOLDER
-typedef struct {
-	char        m_szTitle[64];  /* Folder Title */
-	FOLDERTYPE  m_nFolderType;  /* Folder Type */
-	UINT        m_nFolderId;    /* ID */
-	UINT        m_nParent;      /* Parent Folder ID */
-	DWORD       m_dwFlags;      /* Flags - Customizable and Filters */
-	UINT        m_nIconId;      /* Icon index into the ImageList */
-	UINT        m_nSubIconId;   /* Sub folder's Icon index into the ImageList */
+typedef struct
+{
+    char        m_szTitle[64];  /* Folder Title */
+    UINT        m_nFolderId;    /* ID */
+    int         m_nParent;      /* Parent Folder index in treeFolders[] */
+    DWORD       m_dwFlags;      /* Flags - Customizable and Filters */
+    UINT        m_nIconId;      /* Icon index into the ImageList */
+    UINT        m_nSubIconId;   /* Sub folder's Icon index into the ImageList */
 } EXFOLDERDATA, *LPEXFOLDERDATA;
-#endif
 
-extern BOOL InitFolders(UINT nGames);
 extern void FreeFolders(void);
 
 extern void SetCurrentFolder(LPTREEFOLDER lpFolder);
@@ -137,20 +129,20 @@ extern void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern int  FindGame(LPTREEFOLDER lpFolder, int nGame);
 
-extern void InitTree(HWND hWnd, UINT nGames);
-extern void InitGames(UINT nGames);
+extern void InitTree(void);
+extern void ResetWhichGamesInFolders(void);
 
-extern void Tree_Initialize(HWND hWnd);
 extern BOOL GameFiltered(int nGame, DWORD dwFlags);
 
 INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 extern void SetTreeIconSize(HWND hWnd, BOOL bLarge);
 extern BOOL GetTreeIconSize(void);
 
 extern void GetFolders(TREEFOLDER ***folders,int *num_folders);
+extern BOOL TryRenameCustomFolder(LPTREEFOLDER lpFolder,const char *new_name);
 extern void AddToCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
 extern void RemoveFromCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
 

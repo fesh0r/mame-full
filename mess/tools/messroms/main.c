@@ -177,7 +177,7 @@ int ident_zip(char *fn, int mode)
    ZIP* zip;
    struct zipent* zipf;
    printf("Zip file to ident = '%s'\n", fn);
-   if ((zip = openzip(fn)) == 0) {
+   if ((zip = openzip(0, 0, fn)) == 0) {
       printf("Error, cannot open zip file '%s' !\n", fn);
       return 1;
    }

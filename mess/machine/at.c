@@ -1,14 +1,7 @@
 #include "driver.h"
 
-#ifndef RUNTIME_LOADER
 // support for old i86 core, until new one is in mame
 #include "cpu/i86/i286.h"
-#else
-# include "cpu/i86/i286intf.h"
-# ifdef HAS_I386
-# include "cpu/i86/i386intf.h"
-# endif
-#endif
 
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"

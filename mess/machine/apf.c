@@ -40,7 +40,7 @@ int apf_cassette_init(int id, void *file, int effective_mode)
 			int apf_apt_size;
 
 			/* get size of .tap file */
-			apf_apt_size = osd_fsize(file);
+			apf_apt_size = mame_fsize(file);
 
 			logerror("apf .apt size: %04x\n",apf_apt_size);
 
@@ -59,7 +59,7 @@ int apf_cassette_init(int id, void *file, int effective_mode)
 					int size_in_samples;
 
 					/* read data into temporary buffer */
-					osd_fread(file, apf_apt_data, apf_apt_size);
+					mame_fread(file, apf_apt_data, apf_apt_size);
 
 					/* calculate size in samples */
 					size_in_samples = apf_cassette_calculate_size_in_samples(apf_apt_size, apf_apt_data);
@@ -77,7 +77,7 @@ int apf_cassette_init(int id, void *file, int effective_mode)
 
 					length =
 						wa->header_samples +
-						((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+						((mame_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
 						wa->trailer_samples;
 					*/
 

@@ -127,9 +127,9 @@ int	nascom1_init_cassette(int id, void *file, int open_mode)
 
 	if (file)
 	{
-		nascom1_tape_size = osd_fsize(file);
+		nascom1_tape_size = mame_fsize(file);
 		nascom1_tape_image = (UINT8 *)malloc(nascom1_tape_size);
-		if (!nascom1_tape_image || (osd_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
+		if (!nascom1_tape_image || (mame_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
 			return (1);
 
 		nascom1_tape_index = 0;
@@ -179,7 +179,7 @@ int	nascom1_init_cartridge(int id, void *file)
 		fileaddr[4] = 0;
 		while (!done)
 		{
-			osd_fread(file, (void *)fileaddr, 4);
+			mame_fread(file, (void *)fileaddr, 4);
 			printf ("%4.4s\n", fileaddr);
 			if (fileaddr[0] == '.')
 			{

@@ -38,6 +38,7 @@ enum
 #if HASDIR_SOFTWARE
 	SOFTWARE,
 #endif
+	INI,
 #ifdef MESS
 	CRC,
 #endif
@@ -51,10 +52,12 @@ enum
 	FLYER,
 	CABINET,
 	MARQUEE,
+	TITLES,
 	NVRAM,
 	CTRLR,
 	DIFF,
 	ICONS,
+	BKGROUND,
 	LASTDIR
 };
 
@@ -62,7 +65,7 @@ enum
 #define NUMPATHS 2
 #define NUMDIRS  (LASTDIR - NUMPATHS)
 
-char *dir_names[LASTDIR] =
+const char *dir_names[LASTDIR] =
 {
 #ifdef MESS
 	"BIOSes",  /* path */
@@ -72,6 +75,7 @@ char *dir_names[LASTDIR] =
 #if HASDIR_SAMPLE
 	"Samples", /* path */
 #endif
+	"Ini Files",	/* path */
 #if HASDIR_SOFTWARE
     "Software",/* path */
 #endif
@@ -88,10 +92,12 @@ char *dir_names[LASTDIR] =
 	"Flyers",
 	"Cabinets",
 	"Marquees",
+	"Titles",
 	"NVRAM",
 	"Controller Files",
 	"Hard Drive Difference",
-	"Icons"
+	"Icons",
+	"Background Images"
 };
 
 /***************************************************************************
@@ -271,7 +277,7 @@ static void UpdateDirectoryList(HWND hDlg)
 	nType = ComboBox_GetCurSel(hCombo);
 	if (IsMultiDir(nType))
 	{
-		Item.pszText = "<               >";
+		Item.pszText = (char *)"<               >";
 		ListView_InsertItem(hList, &Item);
 		for (i = DirInfo_NumDir(pDirInfo, nType) - 1; 0 <= i; i--)
 		{
@@ -609,7 +615,7 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 			if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
 				return TRUE; /* don't edit */
 
-			hEdit = (HWND)(LRESULT)SendMessage(GetDlgItem(hDlg, IDC_DIR_LIST), LVM_GETEDITCONTROL, 0, 0);
+			hEdit = (HWND)(LRESULT)(int)SendMessage(GetDlgItem(hDlg, IDC_DIR_LIST), LVM_GETEDITCONTROL, 0, 0);
 			Edit_SetText(hEdit, "");
 		}
 	}

@@ -44,7 +44,7 @@ int coleco_init_cart (int id, void *cartfile, int open_mode)
 
 	/* All seems OK */
 	cartdata = memory_region(REGION_CPU1) + 0x8000;
-	osd_fread (cartfile, cartdata, 0x8000);
+	mame_fread (cartfile, cartdata, 0x8000);
 
 	/* Verify the cartridge image */
 	if (coleco_verify_cart(cartdata) == IMAGE_VERIFY_FAIL)

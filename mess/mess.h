@@ -68,7 +68,7 @@ extern "C" {
 #define DECL_SPEC
 #endif
 
-int mess_printf(char *fmt, ...);
+int mess_printf(const char *fmt, ...);
 
 extern void showmessinfo(void);
 extern int displayimageinfo(struct mame_bitmap *bitmap, int selected);
@@ -90,7 +90,7 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
 #define IMAGE_VERIFY_PASS 0
 #define IMAGE_VERIFY_FAIL 1
 
-/* possible values for osd_fopen() last argument:
+/* possible values for mame_fopen() last argument:
  * OSD_FOPEN_READ
  *	open existing file in read only mode.
  *	ZIP images can be opened only in this mode, unless
@@ -111,7 +111,7 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
  *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ modes, failed.
  *
  * extra values for IODevice openmode field (modes are not supported by
- * osd_fopen() yet, image_fopen_new emulates them):
+ * mame_fopen() yet, image_fopen_new emulates them):
  * OSD_FOPEN_RW_OR_READ
  *  open existing file in read/write mode.  If it fails, try to open it as
  *  read-only.

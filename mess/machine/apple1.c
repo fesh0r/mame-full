@@ -122,7 +122,7 @@ SNAPSHOT_LOAD(apple1)
 	/* Load the specified Snapshot */
 
 	/* Read the snapshot data into a temporary array */
-	if (osd_fread(fp, snapdata, 0x1000) != 0x1000)
+	if (mame_fread(fp, snapdata, 0x1000) != 0x1000)
 		return INIT_FAIL;
 
 	/* Verify the snapshot header */

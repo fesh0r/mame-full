@@ -87,7 +87,7 @@ static	int	jupiter_ramsize = 2;
 MACHINE_INIT( jupiter )
 {
 	logerror("jupiter_init\r\n");
-	logerror("data: %08X\n", jupiter_data);
+	logerror("data: %08lX\n", (long) jupiter_data);
 
 	if (readinputport(8) != jupiter_ramsize)
 	{
@@ -118,8 +118,8 @@ MACHINE_INIT( jupiter )
 	}
 	if (jupiter_data)
 	{
-		logerror("data: %08X. type: %d.\n", jupiter_data,
-											jupiter_data_type);
+		logerror("data: %08X. type: %d.\n", (int) jupiter_data,
+											(int) jupiter_data_type);
 		memory_set_opbase_handler(0, jupiter_opbaseoverride);
 	}
 }
@@ -169,10 +169,10 @@ int jupiter_load_ace(int id, void *file, int open_mode)
 			logerror("Loading file %s.\r\n", image_filename(IO_CARTSLOT,id));
 			while (!done && (jupiter_index < 0x6001))
 			{
-				osd_fread(file, &jupiter_byte, 1);
+				mame_fread(file, &jupiter_byte, 1);
 				if (jupiter_byte == 0xed)
 				{
-					osd_fread(file, &jupiter_byte, 1);
+					mame_fread(file, &jupiter_byte, 1);
 					switch (jupiter_byte)
 					{
 					case 0x00:
@@ -180,14 +180,14 @@ int jupiter_load_ace(int id, void *file, int open_mode)
 						done = 1;
 						break;
 					case 0x01:
-						osd_fread(file, &jupiter_byte, 1);
+						mame_fread(file, &jupiter_byte, 1);
 						jupiter_data[jupiter_index++] = jupiter_byte;
 						break;
 					case 0x02:
 						logerror("Sequence 0xED 0x02 found in .ace file\r\n");
 						break;
 					default:
-						osd_fread(file, &jupiter_repeat, 1);
+						mame_fread(file, &jupiter_repeat, 1);
 						for (loop = 0; loop < jupiter_byte; loop++)
 							jupiter_data[jupiter_index++] = jupiter_repeat;
 						break;
@@ -207,7 +207,7 @@ int jupiter_load_ace(int id, void *file, int open_mode)
 	logerror("Decoded %d bytes.\r\n", jupiter_index);
 	jupiter_data_type = JUPITER_ACE;
 
-	logerror("data: %08X\n", jupiter_data);
+	logerror("data: %08X\n", (int) jupiter_data);
 	return (0);
 }
 
@@ -242,40 +242,40 @@ int jupiter_load_tap(int id, void *file, int open_mode)
 	{
 		logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));
 
-        osd_fread(file, &inpbyt, 1);
+        mame_fread(file, &inpbyt, 1);
 		hdr_len = inpbyt;
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		hdr_len += (inpbyt * 256);
 
 		/* Read header block */
 
-		osd_fread(file, &jupiter_tape.hdr_type, 1);
-		osd_fread(file, jupiter_tape.hdr_name, 10);
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &jupiter_tape.hdr_type, 1);
+		mame_fread(file, jupiter_tape.hdr_name, 10);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.hdr_len = inpbyt;
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.hdr_len += (inpbyt * 256);
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.hdr_addr = inpbyt;
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.hdr_addr += (inpbyt * 256);
-		osd_fread(file, &jupiter_tape.hdr_3c4c, 1);
-		osd_fread(file, &jupiter_tape.hdr_3c4d, 1);
-		osd_fread(file, jupiter_tape.hdr_vars, 8);
+		mame_fread(file, &jupiter_tape.hdr_3c4c, 1);
+		mame_fread(file, &jupiter_tape.hdr_3c4d, 1);
+		mame_fread(file, jupiter_tape.hdr_vars, 8);
 		if (hdr_len > 0x19)
 			for (loop = 0x19; loop < hdr_len; loop++)
-				osd_fread(file, &inpbyt, 1);
+				mame_fread(file, &inpbyt, 1);
 
 		/* Read data block */
 
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.dat_len = inpbyt;
-		osd_fread(file, &inpbyt, 1);
+		mame_fread(file, &inpbyt, 1);
 		jupiter_tape.dat_len += (inpbyt * 256);
 
 		if ((jupiter_data = malloc(jupiter_tape.dat_len)))
 		{
-			osd_fread(file, jupiter_data, jupiter_tape.dat_len);
+			mame_fread(file, jupiter_data, jupiter_tape.dat_len);
 			jupiter_data_type = JUPITER_TAP;
 			logerror("File loaded\r\n");
 		}

@@ -615,7 +615,7 @@ void coco_vhd_readwrite( UINT8 data )
 	switch( data )
 	{
 		case 0: /* Read sector */
-			result = osd_fread(vhdFile, &(mess_ram[phyOffset]), 256);
+			result = mame_fread(vhdFile, &(mess_ram[phyOffset]), 256);
 
 			if( result != 256 )
 			{
@@ -627,7 +627,7 @@ void coco_vhd_readwrite( UINT8 data )
 			break;
 
 		case 1: /* Write Sector */
-			result = osd_fwrite(vhdFile, &(mess_ram[phyOffset]), 256);
+			result = mame_fwrite(vhdFile, &(mess_ram[phyOffset]), 256);
 
 			if( result != 256 )
 			{

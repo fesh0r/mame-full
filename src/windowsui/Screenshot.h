@@ -13,17 +13,6 @@
 #ifndef SCREENSHOT_H
 #define SCREENSHOT_H
 
-enum
-{
-	FORMAT_PNG = 0,
-	FORMAT_BMP,
-	FORMAT_UNKNOWN,
-	FORMAT_MAX = FORMAT_UNKNOWN
-};
-
-/* Located in ScreenShot.c */
-extern char pic_format[FORMAT_MAX][4];
-
 typedef struct _mybitmapinfo
 {
 	int bmWidth;
@@ -35,9 +24,11 @@ typedef struct _mybitmapinfo
 extern BOOL LoadScreenShotEx(int nGame, LPCSTR lpSoftwareName, int nType);
 #endif /* MESS */
 extern BOOL LoadScreenShot(int nGame, int nType);
-extern BOOL DrawScreenShot(HWND hWnd);
+extern HANDLE GetScreenShotHandle(void);
+extern int GetScreenShotWidth(void);
+extern int GetScreenShotHeight(void);
+
 extern void FreeScreenShot(void);
-extern BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict);
 extern BOOL ScreenShotLoaded(void);
 
 extern BOOL    LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, BOOL flyer);

@@ -31,24 +31,24 @@ static void imgtool_bdf_closeproc(void *file)
 	stream_close((STREAM *) file);
 }
 
-static int imgtool_bdf_seekproc(void *file, int offset, int whence)
+static int imgtool_bdf_seekproc(void *file, INT64 offset, int whence)
 {
 	stream_seek((STREAM *) file, offset, whence);
 	return 0;
 }
 
-static int imgtool_bdf_readproc(void *file, void *buffer, int length)
+static UINT32 imgtool_bdf_readproc(void *file, void *buffer, UINT32 length)
 {
 	return stream_read((STREAM *) file, buffer, length);
 }
 
-static int imgtool_bdf_writeproc(void *file, const void *buffer, int length)
+static UINT32 imgtool_bdf_writeproc(void *file, const void *buffer, UINT32 length)
 {
 	stream_write((STREAM *) file, buffer, length);
 	return length;
 }
 
-static int imgtool_bdf_filesizeproc(void *file)
+static UINT64 imgtool_bdf_filesizeproc(void *file)
 {
 	return stream_size((STREAM *) file);
 }

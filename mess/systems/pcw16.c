@@ -146,7 +146,7 @@ void pcw16_dump_cpu_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "pcwcpuram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, "pcwcpuram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
 	if (file)
 	{
@@ -157,12 +157,12 @@ void pcw16_dump_cpu_ram(void)
 
 			data = cpu_readmem16(i);
 
-			osd_fwrite(file, &data, 1);
+			mame_fwrite(file, &data, 1);
 
 		}
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 #endif

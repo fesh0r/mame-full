@@ -31,7 +31,7 @@
 #include "ScreenShot.h"
 #include "file.h"
 #include "rc.h"
-#include "snprintf.h"
+#include "m32util.h"
 
 /* Verbose outputs to error.log ? */
 #define VERBOSE 0
@@ -116,6 +116,7 @@ int File_Init(void)
 {
 	memset(&RomDirPath,    0, sizeof(RomDirPath));
 	memset(&SampleDirPath, 0, sizeof(SampleDirPath));
+	memset(&IniDirPath, 0, sizeof(IniDirPath));
 #ifdef MESS
 	memset(&SoftwareDirPath, 0, sizeof(SampleDirPath));
 #endif
@@ -157,13 +158,16 @@ BOOL File_ExistZip(const char* gamename, int filetype)
 
 	switch (filetype)
 	{
-	case OSD_FILETYPE_ROM:
-	case OSD_FILETYPE_SAMPLE:
+	case FILETYPE_ROM:
+	case FILETYPE_SAMPLE:
+	case FILETYPE_INI:
 
-		if (filetype == OSD_FILETYPE_ROM)
+		if (filetype == FILETYPE_ROM)
 			pDirPaths = &RomDirPath;
-		if (filetype == OSD_FILETYPE_SAMPLE)
+		if (filetype == FILETYPE_SAMPLE)
 			pDirPaths = &SampleDirPath;
+		if (filetype == FILETYPE_INI)
+			pDirPaths = &IniDirPath;
 
 		for (the_index = 0; the_index < pDirPaths->m_NumPaths; the_index++)
 		{
@@ -175,9 +179,9 @@ BOOL File_ExistZip(const char* gamename, int filetype)
 		}
 		break;
 
-	case OSD_FILETYPE_HIGHSCORE:
-	case OSD_FILETYPE_CONFIG:
-	case OSD_FILETYPE_INPUTLOG:
+	case FILETYPE_HIGHSCORE:
+	case FILETYPE_CONFIG:
+	case FILETYPE_INPUTLOG:
 		return FALSE;
 	}
 
@@ -195,13 +199,13 @@ BOOL File_Status(const char* gamename, const char* filename, int filetype)
 	BOOL		 found = FALSE;
 	tDirPaths*	 pDirPaths;
 
-	if (filetype == OSD_FILETYPE_ROM)
+	if (filetype == FILETYPE_ROM)
 		pDirPaths = &RomDirPath;
 	else
-	if (filetype == OSD_FILETYPE_SAMPLE)
+	if (filetype == FILETYPE_SAMPLE)
 		pDirPaths = &SampleDirPath;
 	else
-	if (filetype == OSD_FILETYPE_INI)
+	if (filetype == FILETYPE_INI)
 		pDirPaths = &IniDirPath;
 	else
 		return FALSE; /* Only used for ROMS and Samples */
@@ -221,7 +225,7 @@ BOOL File_Status(const char* gamename, const char* filename, int filetype)
 
 		/* zip file. */
 		sprintf(name, "%s/%s.zip", dirname, gamename);
-		found = (checksum_zipped_file(name, filename, &len, &crc) == 0);
+		found = (checksum_zipped_file(filetype,0,name, filename, &len, &crc) == 0);
 		if (found)
 			break;
 
@@ -257,8 +261,8 @@ void File_UpdatePaths(void)
 #else
 	rc_set_option2(fileio_opts, "rompath",			  GetRomDirs(), 		 MAXINT_PTR);
 #endif
-	rc_set_option2(fileio_opts, "inipath",			  GetIniDirs(),			 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "samplepath",		  GetSampleDirs(),		 MAXINT_PTR);
+	rc_set_option2(fileio_opts, "inipath",			  GetIniDirs(),			 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "cfg_directory",	  GetCfgDir(),			 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "nvram_directory",	  GetNvramDir(),		 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "memcard_directory",  GetMemcardDir(),		 MAXINT_PTR);
@@ -272,144 +276,6 @@ void File_UpdatePaths(void)
 	rc_set_option2(fileio_opts, "history_file", 	  GetHistoryFileName(),  MAXINT_PTR);
 	rc_set_option2(fileio_opts, "mameinfo_file",	  GetMAMEInfoFileName(), MAXINT_PTR);
 	rc_set_option2(fileio_opts, "ctrlr_directory",    GetCtrlrDir(),         MAXINT_PTR);
-}
-
-void* osd_fopen2(const char *gamename, const char *filename, int filetype, int openforwrite)
-{
-	FakeFileHandle* f;
-	char			name[FILENAME_MAX];
-	int 			found = 0;
-	int 			use_flyers = FALSE;
-	int 			imgType = PICT_SCREENSHOT;
-	const char* 	dirname = NULL;
-	struct stat 	stat_buffer;
-	int 			i;
-
-	f = (FakeFileHandle *)malloc(sizeof(FakeFileHandle));
-	if (!f)
-	{
-		logerror("osd_fopen: failed to malloc FakeFileHandle!\n");
-		return 0;
-	}
-	memset(f, 0, sizeof(FakeFileHandle));
-
-	switch (filetype)
-	{
-	case OSD_FILETYPE_FLYER:
-		use_flyers = TRUE;
-		imgType    = GetShowPictType();
-		/* Fallthrough to OSD_FILETYPE_SCREENSHOT */
-
-	case OSD_FILETYPE_SCREENSHOT:
-
-		LOG(("osd_fopen: attempting to %s screenshot '%s' with name '%s'\n", openforwrite ? "write" : "read", filename, gamename));
-
-		if (openforwrite && imgType != PICT_SCREENSHOT)
-			return 0;
-
-		switch (imgType)
-		{
-		case PICT_SCREENSHOT:	dirname = GetImgDir();		break;
-		case PICT_FLYER:		dirname = GetFlyerDir();	break;
-		case PICT_CABINET:		dirname = GetCabinetDir();	break;
-		case PICT_MARQUEE:		dirname = GetMarqueeDir();	break;
-		default:
-			return 0;
-		}
-
-		{
-			struct stat s;
-
-			if (stat(dirname, &s) != 0)
-				mkdir(dirname);
-		}
-
-		for (i = 0; i < FORMAT_MAX; i++)
-		{
-			/* Try Normal file */
-			sprintf(name, "%s/%s.%s", dirname, gamename, pic_format[i]);
-			f->file = fopen(name, "rb");
-			if (f->file != NULL)
-			{
-				f->type = kPlainFile;
-				found = 1;
-				break;
-			}
-		}
-		if (found)
-			break;
-
-		for (i = 0; i < FORMAT_MAX; i++)
-		{
-			char imagename[1024];
-
-			/* then zip file. */
-			f->type = kZippedFile;
-			snprintf(imagename, sizeof(imagename) / sizeof(imagename[0]), "%s.%s", gamename, pic_format[i]);
-
-			if (use_flyers)
-			{
-				switch (GetShowPictType())
-				{
-				case PICT_FLYER:	sprintf(name, "%s/flyers.zip",	 dirname); break;
-				case PICT_CABINET:	sprintf(name, "%s/cabinets.zip", dirname); break;
-				case PICT_MARQUEE:	sprintf(name, "%s/marquees.zip", dirname); break;
-				case PICT_TITLES:	sprintf(name, "%s/titles.zip", dirname); break;
-				default:
-					assert(FALSE);
-				}
-			}
-			else
-				sprintf(name, "%s/snap.zip", dirname);
-
-			if (stat(name, &stat_buffer) == 0)
-			{
-				if (load_zipped_file(name, imagename, &f->data, &f->length) == 0)
-				{
-					found = 1;
-					break;
-				}
-			}
-		}
-
-		if (found)
-			break;
-
-		for (i = 0; i < FORMAT_MAX; i++)
-		{
-			/* Try ZipMagic in subfolder */
-			if (use_flyers)
-			{
-				switch (GetShowPictType())
-				{
-				case PICT_FLYER:	sprintf(name, "%s/flyers.zip/%s.%s",   dirname, gamename, pic_format[i]); break;
-				case PICT_CABINET:	sprintf(name, "%s/cabinets.zip/%s.%s", dirname, gamename, pic_format[i]); break;
-				case PICT_MARQUEE:	sprintf(name, "%s/marquees.zip/%s.%s", dirname, gamename, pic_format[i]); break;
-				case PICT_TITLES:	sprintf(name, "%s/titles.zip/%s.%s",   dirname, gamename, pic_format[i]); break;
-				default:
-					assert(FALSE);
-				}
-			}
-			else
-				sprintf(name, "%s/snap.zip/%s.%s", dirname, gamename, pic_format[i]);
-
-			f->file = fopen(name, "rb");
-			f->type = kPlainFile;
-			if ((found = f->file != 0) != 0)
-				break;
-		}
-
-	default:
-		logerror("osd_fopen(): unknown filetype %02x\n", filetype);
-	}
-
-	if (!found)
-	{
-		free(f);
-		return 0;
-	}
-
-	return f;
 }
 
 /***************************************************************************

@@ -1079,7 +1079,7 @@ int bbcb_load_rom(int id, void *fp, int open_mode)
 	if (fp == NULL)
 		return INIT_PASS;
 
-	size = osd_fsize (fp);
+	size = mame_fsize (fp);
 
     addr= 0x8000+(0x4000*id);
 
@@ -1089,11 +1089,11 @@ int bbcb_load_rom(int id, void *fp, int open_mode)
 
 	switch (size) {
 	case 0x2000:
-		read = osd_fread (fp, mem + addr, size);
-		read = osd_fread (fp, mem + addr + 0x2000, size);
+		read = mame_fread (fp, mem + addr, size);
+		read = mame_fread (fp, mem + addr + 0x2000, size);
 		break;
 	case 0x4000:
-		read = osd_fread (fp, mem + addr, size);
+		read = mame_fread (fp, mem + addr, size);
 		break;
 	default:
 		read=0;

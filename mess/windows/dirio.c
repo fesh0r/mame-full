@@ -277,3 +277,65 @@ const char *osd_get_cwd(void)
 	checkinit_curdir();
 	return szCurrentDirectory;
 }
+
+//============================================================
+//	osd_mess_dirname
+//============================================================
+
+char *osd_mess_dirname(const char *filename)
+{
+	char *dirname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	dirname = malloc(strlen(filename) + 1);
+	if (!dirname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		return NULL;
+	}
+
+	// copy in the name
+	strcpy(dirname, filename);
+
+	// search backward for a slash or a colon
+	for (c = dirname + strlen(dirname) - 1; c >= dirname; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+		{
+			// found it: NULL terminate and return
+			*(c + 1) = 0;
+			return dirname;
+		}
+
+	// otherwise, return an empty string
+	dirname[0] = 0;
+	return dirname;
+}
+
+//============================================================
+//	osd_basename
+//============================================================
+
+char *osd_basename(char *filename)
+{
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// start at the end and return when we hit a slash or colon
+	for (c = filename + strlen(filename) - 1; c >= filename; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return c + 1;
+
+	// otherwise, return the whole thing
+	return filename;
+}
+
+
+

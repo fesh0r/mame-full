@@ -50,7 +50,7 @@ struct via6522_interface
 
     /* kludges for the Vectrex */
 	void (*out_shift_func)(int val);
-	void (*obsolete)(double tme);
+	void (*t2_callback)(double tme);
     /* kludges for the Mac Plus (and 128k, 512k, 512ke) keyboard interface */
 	void (*out_shift_func2)(int val);	/* called when some data is shifted out in EXT sync mode */
 	void (*si_ready_func)(void);		/* called when the shift-in is enabled (EXT sync mode) */

@@ -1,8 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd">
 <html>
 	<head>
-		<link rel=StyleSheet href="style.css" type="text/css"/>
 		<title>How to compile MESS (Win32)</title>
+		<link rel="StyleSheet" href="style.css" type="text/css">
 	</head>
 	<body>
 		<h1>How to compile MESS (Win32)</h1>
@@ -22,7 +22,7 @@
 				GCC</a> and its libraries.
 		</p>
 		<p>
-			This particular how-to is written for MESS 0.61, but with a bit of luck you can 
+			This particular how-to is written for MESS 0.63, but with a bit of luck you can 
 			compile other versions with the help of this page. This how-to tells how to 
 			compile the Win32 version of MESS, which includes both the command line and GUI 
 			versions.
@@ -94,9 +94,14 @@
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><span><A href="http://www.mame.net/zips/compile/mingw_for_mame.zip">mingw_for_mame.zip</A></span></td>
-					<td><span>5517 kB</span></td>
-					<td><span>This is the MinGW compile environment for use in Windows.</span></td>
+					<td><span><A href="http://prdownloads.sourceforge.net/mingw/MinGW-2.0.0-3.exe?download">MinGW-2.0.0-3.exe</A></span></td>
+					<td><span>12525 kB</span></td>
+					<td><span>MinGW 2.0.0 compile environment for use in Windows.</span></td>
+				</TR>
+				<TR>
+					<td><span><A href="http://www.mame.net/zips/mingw-over.zip">mingw-over.zip</A></span></td>
+					<td><span>549 kB</span></td>
+					<td><span>Other files needed to compile MAME in the MinGW compile environment. Uncompress this over the MinGW directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
 				</TR>
 			</Table>
 		<p>
@@ -149,11 +154,11 @@
 			(again, there might be something extra in there, leave them as they are). Take 
 			note that if you have added
 			<span class="filename">C:\DJGPP\BIN</span>
-			into that line, you should remove it. Now you can save the file (<span style="key">ALT-F</span>
+			into that line, you should remove it. Now you can save the file (<span>ALT-F</span>
 			then
-			<span style="key">S</span>) and quit (<span style="key">ALT-F</span>
+			<span>S</span>) and quit (<span>ALT-F</span>
 			then
-			<span style="key">X</span>
+			<span>X</span>
 		) (These might differ depending on your language version of Windows). Then you 
 		will need to reboot your computer, to make the changes effective.
 		<p>
@@ -182,10 +187,10 @@
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><a href="http://www.retrogames.com/mess/mess061s.zip"><b>mess061s.zip</b></a><br>
+					<td><a href="http://www.retrogames.com/mess/mess063s.zip"><b>mess063s.zip</b></a><br>
 					</td>
 					<td>2717 kB</td>
-					<td>This is the source archive of MESS 0.61.</td>
+					<td>This is the source archive of MESS 0.63.</td>
 				</TR>
 			</Table>
 		<p>
@@ -212,8 +217,7 @@
 		<p>
 			When the compilation is done, you can type
 			<span class="command">
-					dir</span>. You should see a brand 
-			new
+					dir</span>. You should see a brand new
 			<span class="filename">
 					MESS.EXE</span>
 		in there.
@@ -266,9 +270,8 @@
 		<p>
 			To include the debugger functionality in your MESS executable, edit
 			<span class="filename">
-					makefile.mes</span>. Near the top 
-			you will see a text like "uncomment next line to include the debugger". Remove 
-			the
+					makefile.mes</span>. Near the top you will see a text like "uncomment 
+			next line to include the debugger". Remove the
 			<span class="command">
 					#</span>
 			character from the next line, so that it only has
@@ -287,8 +290,8 @@
 					debug = no</span>. Change it to
 			<span class="filename">
 					debug = </span><span class="command">yes</span>
-			and save the file. In MESS, hit tilde (&nbsp;<span style="key">~</span>&nbsp;) 
-			or key to the left of the key &nbsp;<span style="key">1</span>
-		&nbsp; to enter the debugger.
+			and save the file. In MESS, hit tilde (&nbsp;<span>~</span>&nbsp;) or key to 
+			the left of the key &nbsp;<span>1</span>
+			&nbsp; to enter the debugger.</p>
 	</body>
 </html>

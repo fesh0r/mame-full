@@ -609,7 +609,7 @@ static int serial_device_load(int type, int id, void *file, unsigned char **ptr,
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
@@ -619,13 +619,13 @@ static int serial_device_load(int type, int id, void *file, unsigned char **ptr,
 			if (data!=NULL)
 			{
 				/* read whole file */
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 
 				*ptr = data;
 				*pDataSize = datasize;
 
 				/* close file */
-				osd_fclose(file);
+				mame_fclose(file);
 
 				logerror("File loaded!\r\n");
 

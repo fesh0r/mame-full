@@ -36,15 +36,15 @@ static void	nc_card_save(int id)
 	logerror("attempting card save\n");
 
 	/* open file for writing */
-	file = image_fopen_custom(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+	file = image_fopen_custom(IO_CARTSLOT, id, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 
 	if (file)
 	{
 		/* write data */
-		osd_fwrite(file, nc_card_ram, nc_card_size);
+		mame_fwrite(file, nc_card_ram, nc_card_size);
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 
 		logerror("write succeeded!\r\n");
 	}
@@ -79,7 +79,7 @@ static int nc_card_load(int id, void *file, unsigned char **ptr)
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
@@ -91,7 +91,7 @@ static int nc_card_load(int id, void *file, unsigned char **ptr)
 				nc_card_size = datasize;
 
 				/* read whole file */
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 
 				*ptr = data;
 

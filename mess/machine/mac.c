@@ -1389,7 +1389,7 @@ static void rtc_execute_cmd(int data)
 			break;
 
 		default:
-			logerror("Unknown RTC write command : %X, data = \n", (int) rtc_cmd, (int) rtc_data_byte);
+			logerror("Unknown RTC write command : %X, data = %d\n", (int) rtc_cmd, (int) rtc_data_byte);
 			break;
 		}
 		//rtc_write_cmd_in_progress = FALSE;
@@ -1464,7 +1464,7 @@ NVRAM_HANDLER( mac )
 #if LOG_RTC
 		logerror("Writing PRAM to file\n");
 #endif
-		osd_fwrite(file, rtc_ram, sizeof(rtc_ram));
+		mame_fwrite(file, rtc_ram, sizeof(rtc_ram));
 	}
 	else
 	{
@@ -1473,7 +1473,7 @@ NVRAM_HANDLER( mac )
 #if LOG_RTC
 			logerror("Reading PRAM from file\n");
 #endif
-			osd_fread(file, rtc_ram, sizeof(rtc_ram));
+			mame_fread(file, rtc_ram, sizeof(rtc_ram));
 		}
 		else
 		{

@@ -37,8 +37,8 @@ int odyssey2_load_rom (int id, void *cartfile, int open_mode)
     }
 
     logerror("ODYSSEY2 - Loading Image\n");
-    size=osd_fsize(cartfile);
-    osd_fread (cartfile, memory_region(REGION_USER1), size);	 /* non banked carts */
+    size=mame_fsize(cartfile);
+    mame_fread (cartfile, memory_region(REGION_USER1), size);	 /* non banked carts */
 
     if (size<=0x800)
 		memcpy(memory_region(REGION_USER1)+0x800, memory_region(REGION_USER1), 0x800);

@@ -33,6 +33,7 @@
 #include "mame32.h"
 #include "m32util.h"
 #include "resource.h"
+#include "file.h"
 
 /***************************************************************************
     Internal function prototypes
@@ -138,6 +139,9 @@ static REG_OPTIONS regSettings[] =
 	{"Height",             RO_INT,     &settings.area.height,      0, 0},
 	{"State",              RO_INT,     &settings.windowstate,      0, 0},
 
+	{"ShowDisclaimer",     RO_BOOL,    &settings.show_disclaimer,  0, 0},
+	{"ShowGameInfo",       RO_BOOL,    &settings.show_gameinfo,    0, 0},
+
 	{"Language",           RO_PSTRING, &settings.language,         0, 0},
 	{"FlyerDir",           RO_PSTRING, &settings.flyerdir,         0, 0},
 	{"CabinetDir",         RO_PSTRING, &settings.cabinetdir,       0, 0},
@@ -215,12 +219,14 @@ static REG_OPTIONS regGameOpts[] =
 	{ "hotrodse",               RO_BOOL,    &gOpts.hotrodse,          0, 0},
 	{ "mouse",                  RO_BOOL,    &gOpts.use_mouse,         0, 0},
 	{ "joystick",               RO_BOOL,    &gOpts.use_joystick,      0, 0},
+	{ "a2d",                    RO_DOUBLE,  &gOpts.f_a2d,             0, 0},
 	{ "steadykey",              RO_BOOL,    &gOpts.steadykey,         0, 0},
 	{ "lightgun",               RO_BOOL,    &gOpts.lightgun,          0, 0},
 	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,             0, 0},
 
 	/* core video */
 	{ "brightness",             RO_DOUBLE,  &gOpts.f_bright_correct,  0, 0}, 
+	{ "pause_brightness",       RO_DOUBLE,  &gOpts.f_pause_bright    ,0, 0}, 
 	{ "norotate",               RO_BOOL,    &gOpts.norotate,          0, 0},
 	{ "ror",                    RO_BOOL,    &gOpts.ror,               0, 0},
 	{ "rol",                    RO_BOOL,    &gOpts.rol,               0, 0},
@@ -258,6 +264,7 @@ static REG_OPTIONS regGameOpts[] =
 /*	{ "record",                 RO_STRING,  &gOpts.recordname,        0, 0},*/
 	{ "log",                    RO_BOOL,    &gOpts.errorlog,          0, 0},
 	{ "sleep",                  RO_BOOL,    &gOpts.sleep,             0, 0},
+	{ "old_timing",             RO_BOOL,    &gOpts.old_timing,        0, 0},
 	{ "leds",                   RO_BOOL,    &gOpts.leds,              0, 0}
 
 #ifdef MESS
@@ -278,7 +285,7 @@ static BOOL bResetGUI      = FALSE;
 static BOOL bResetGameDefs = FALSE;
 
 /* Default sizes based on 8pt font w/sort arrow in that column */
-static int default_column_width[] = { 189, 68, 84, 84, 64, 88, 74,108, 60,144, 84 };
+static int default_column_width[] = { 187, 68, 84, 84, 64, 88, 74,108, 60,144, 84 };
 static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  0 };
 /* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
@@ -302,18 +309,18 @@ Would you like to use the new configuration?";
     External functions  
  ***************************************************************************/
 
-void OptionsInit(int total_games)
+void OptionsInit()
 {
 	int i;
 
-	num_games = total_games;
+	num_games = GetNumGames();
 
 	strcpy(settings.default_game, DEFAULT_GAME);
 #ifdef MESS
 	settings.default_software = NULL;
 #endif
 	settings.folder_id       = 0;
-	settings.view            = VIEW_REPORT;
+	settings.view            = VIEW_GROUPED;
 	settings.show_folderlist = TRUE;
 	settings.show_toolbar    = TRUE;
 	settings.show_statusbar  = TRUE;
@@ -371,7 +378,7 @@ void OptionsInit(int total_games)
 #endif
 	settings.sampledirs        = strdup("samples");
 #ifdef MESS
-    settings.softwaredirs      = strdup("software");
+	settings.softwaredirs      = strdup("software");
 	settings.crcdir            = strdup("crc");
 #endif
 	settings.inidirs		   = strdup("ini");
@@ -415,13 +422,16 @@ void OptionsInit(int total_games)
 	strcpy(settings.list_font.lfFaceName, "MS Sans Serif");
 
 	settings.list_font_color = (COLORREF)-1;
+	settings.list_clone_color = (COLORREF)-1;
+
+	settings.show_disclaimer = TRUE;
+	settings.show_gameinfo = TRUE;
 
 	global.use_default = FALSE;
 
 	global.play_count   = 0;
 	global.has_roms     = UNKNOWN;
 	global.has_samples  = UNKNOWN;
-	global.is_favorite  = FALSE;
 
 	/* video */
 	global.autoframeskip     = TRUE;
@@ -458,6 +468,7 @@ void OptionsInit(int total_games)
 
 	/* Core video */
 	global.f_bright_correct  = 1.0;
+	global.f_pause_bright    = 0.65;
 	global.norotate          = FALSE;
 	global.ror               = FALSE;
 	global.rol               = FALSE;
@@ -495,11 +506,11 @@ void OptionsInit(int total_games)
 	global.recordname        = NULL;
 	global.errorlog          = FALSE;
 	global.sleep             = FALSE;
+	global.old_timing        = FALSE;
 	global.leds				 = TRUE;
 
 
 #ifdef MESS
-	global.use_new_ui = TRUE;
 	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
 #endif
 
@@ -557,14 +568,12 @@ options_type * GetGameOptions(int num_game)
 	int play_count;
 	int has_roms;
 	int has_samples;
-	BOOL is_favorite;
 
 	assert(0 <= num_game && num_game < num_games);
 
 	play_count	= game[num_game].play_count;
 	has_roms	= game[num_game].has_roms;
 	has_samples = game[num_game].has_samples;
-	is_favorite = game[num_game].is_favorite;
 
 	if (game[num_game].use_default)
 	{
@@ -573,7 +582,6 @@ options_type * GetGameOptions(int num_game)
 		game[num_game].play_count	= play_count;
 		game[num_game].has_roms 	= has_roms;
 		game[num_game].has_samples	= has_samples;
-		game[num_game].is_favorite	= is_favorite;
 
 	}
 	return &game[num_game];
@@ -634,12 +642,32 @@ BOOL GetBroadcast(void)
 	return settings.broadcast;
 }
 
-void SetRandomBg (BOOL random_bg)
+void SetShowDisclaimer(BOOL show_disclaimer)
+{
+	settings.show_disclaimer = show_disclaimer;
+}
+
+BOOL GetShowDisclaimer(void)
+{
+	return settings.show_disclaimer;
+}
+
+void SetShowGameInfo(BOOL show_gameinfo)
+{
+	settings.show_gameinfo = show_gameinfo;
+}
+
+BOOL GetShowGameInfo(void)
+{
+	return settings.show_gameinfo;
+}
+
+void SetRandomBackground(BOOL random_bg)
 {
 	settings.random_bg = random_bg;
 }
 
-BOOL GetRandomBg (void)
+BOOL GetRandomBackground(void)
 {
 	return settings.random_bg;
 }
@@ -770,6 +798,23 @@ COLORREF GetListFontColor(void)
 	return settings.list_font_color;
 }
 
+void SetListCloneColor(COLORREF uColor)
+{
+	if (settings.list_clone_color == GetSysColor(COLOR_WINDOWTEXT))
+		settings.list_clone_color = (COLORREF)-1;
+	else
+		settings.list_clone_color = uColor;
+}
+
+COLORREF GetListCloneColor(void)
+{
+	if (settings.list_clone_color == (COLORREF)-1)
+		return (GetSysColor(COLOR_WINDOWTEXT));
+
+	return settings.list_clone_color;
+
+}
+
 void SetColumnWidths(int width[])
 {
 	int i;
@@ -834,18 +879,22 @@ void GetColumnShown(int shown[])
 
 void SetSortColumn(int column)
 {
-	settings.sort_reverse = (column < 0) ? TRUE : FALSE;
-	settings.sort_column  = abs(column) - 1;
+	settings.sort_column = column;
 }
 
 int GetSortColumn(void)
 {
-	int column = settings.sort_column + 1;
+	return settings.sort_column;
+}
 
-	if (settings.sort_reverse)
-		column = -(column);
+void SetSortReverse(BOOL reverse)
+{
+	settings.sort_reverse = reverse;
+}
 
-	return column;
+BOOL GetSortReverse(void)
+{
+	return settings.sort_reverse;
 }
 
 const char* GetLanguage(void)
@@ -880,6 +929,9 @@ void SetRomDirs(const char* paths)
 
 	if (paths != NULL)
 		settings.romdirs = strdup(paths);
+
+	// have our mame core (file code) know about it
+	set_pathlist(FILETYPE_ROM,settings.romdirs);
 }
 
 const char* GetSampleDirs(void)
@@ -1330,20 +1382,6 @@ void SetHasSamples(int num_game, int has_samples)
 	game[num_game].has_samples = has_samples;
 }
 
-int  GetIsFavorite(int num_game)
-{
-	assert(0 <= num_game && num_game < num_games);
-
-	return game[num_game].is_favorite;
-}
-
-void SetIsFavorite(int num_game, int is_favorite)
-{
-	assert(0 <= num_game && num_game < num_games);
-
-	game[num_game].is_favorite = is_favorite;
-}
-
 void IncrementPlayCount(int num_game)
 {
 	assert(0 <= num_game && num_game < num_games);
@@ -1424,7 +1462,7 @@ static void ColumnDecodeString(const char* str, void* data)
 
 static void ColumnDecodeWidths(const char* str, void* data)
 {
-	if (settings.view == VIEW_REPORT)
+	if (settings.view == VIEW_REPORT || settings.view == VIEW_GROUPED)
 		ColumnDecodeString(str, data);
 }
 
@@ -1476,7 +1514,7 @@ static void ListDecodeString(const char* str, void* data)
 	int* value = (int*)data;
 	int i;
 
-	*value = VIEW_REPORT;
+	*value = VIEW_GROUPED;
 
 	for (i = VIEW_LARGE_ICONS; i < VIEW_MAX; i++)
 	{
@@ -1623,6 +1661,14 @@ static void LoadOptions(void)
 				settings.list_font_color = (COLORREF)-1;
 			else
 				settings.list_font_color = value;
+		}
+
+		if ((value = GetRegOption(hKey, "CloneColor")) != -1)
+		{
+			if (value == GetSysColor(COLOR_WINDOWTEXT))
+				settings.list_clone_color = (COLORREF)-1;
+			else
+				settings.list_clone_color = value;
 		}
 
         /* read settings */
@@ -1945,6 +1991,11 @@ static void SaveGlobalOptions(BOOL bBackup)
 		else
 			RegDeleteValue(hKey, "FontColor");
 
+		if (settings.list_clone_color != (COLORREF)-1 )
+			PutRegOption(hKey, "CloneColor", settings.list_clone_color);
+		else
+			RegDeleteValue(hKey, "CloneColor");
+
 		for (i = 0; i < NUM_SETTINGS; i++)
 			PutRegObj(hKey, &regSettings[i]);
 	}
@@ -1987,7 +2038,6 @@ static BOOL SaveRegGameOptions(HKEY hKey, options_type *o)
 	PutRegOption(hKey,	   "PlayCount", o->play_count);
 	PutRegOption(hKey,	   "ROMS",		o->has_roms);
 	PutRegOption(hKey,	   "Samples",	o->has_samples);
-	PutRegBoolOption(hKey, "Favorite",	o->is_favorite);
 
 	if (o->use_default == TRUE)
 	{
@@ -2027,8 +2077,6 @@ static void LoadRegGameOptions(HKEY hKey, options_type *o)
 	value = GetRegOption(hKey, "Samples");
 	if (value != -1)
 		o->has_samples = value;
-
-	GetRegBoolOption(hKey, "Favorite", &o->is_favorite);
 
 	/* look for window.  If it's not there, then use default options for this game */
 	if (RegQueryValueEx(hKey, "window", 0, &value, NULL, &size) != ERROR_SUCCESS)

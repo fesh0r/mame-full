@@ -1,4 +1,4 @@
-0.62.2
+0.63
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -14,6 +14,10 @@ System Driver Changes:
 - [SNESPAL] Now informs carts that it's a PAL system. Corrected maximum line
   count. [Anthony Kruize]
 
+Source Changes:
+---------------
+- The core is based on MAME 0.63.  This incorporates all features of the 
+  update to this core.  [MAME team]
 
 0.62.1
 

@@ -1167,7 +1167,7 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 				str_ptr=get_hdc_string(HDC_PARAM0);
 				logerror("Asked to open %s (mode %04x)\n",str_ptr,READ_WORD(&atarist_fakehdc_ram[HDC_PARAM2]));
 				if (ok_to_go) {
-					file0=osd_fopen_native(str_ptr,0);
+					file0=mame_fopen_native(str_ptr,0);
 					if (file0) {
 						logerror("Opened OK\n");
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0);
@@ -1201,9 +1201,9 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 
 						do {
 							if (todo<16384)
-								len=osd_fread(file0,buf,todo);
+								len=mame_fread(file0,buf,todo);
 							else
-								len=osd_fread(file0,buf,16384);
+								len=mame_fread(file0,buf,16384);
 
 							for (i=0; i<len; i+=2)
 								WRITE_WORD(&buf2[i+count],(buf[i]<<8)|buf[i+1]);
@@ -1231,7 +1231,7 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 					if (file0) {
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0);
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0);
-						osd_fclose(file0);
+						mame_fclose(file0);
 					} else {
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0xffff); /* Error (Negative) */
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0xffff);
@@ -1258,8 +1258,8 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_TRAP],0xffff);
 						ok_to_go=0;
 						if (file0) /* TODO */
-							osd_fclose(file0);
-						file0=osd_fopen_native(str_ptr,0);
+							mame_fclose(file0);
+						file0=mame_fopen_native(str_ptr,0);
 						return;
 					}
 				}
@@ -1278,14 +1278,14 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 					logerror("Exec address is %06x\n",addr);
 
 					/* Load the header */
-					len=osd_fread(file0,buf,0x1c);
+					len=mame_fread(file0,buf,0x1c);
 					buf2=atarist_ram+(addr&0x3fffff);
 					for (i=0; i<len; i+=2)
 						WRITE_WORD(&buf2[i+228],(buf[i]<<8)|buf[i+1]);
 
 					/* Load the main program */
 					do {
-						len=osd_fread(file0,buf,65536);
+						len=mame_fread(file0,buf,65536);
 						for (i=0; i<len; i+=2)
 							WRITE_WORD(&buf2[i+256+count],(buf[i]<<8)|buf[i+1]);
 						count+=len;
@@ -1293,7 +1293,7 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 
 					free(buf);
 				}
-				osd_fclose(file0);
+				mame_fclose(file0);
 
 				return;
 			}
@@ -1835,7 +1835,7 @@ static int atarist_basic_floppy_init(int id, void *file, int open_mode)
 	{
 		/* Figure out correct disk format, try standard formats first */
 		if (file) {
-			int s=osd_fsize(file),i,f=0;
+			int s=mame_fsize(file),i,f=0;
 			int table[][4]={
 				{ 808960, 10, 2, 79 }, /* 79 tracks, 2 sides, 10 sectors */
 				{ 819200, 10, 2, 80 }, /* 80 tracks, 2 sides, 10 sectors */
@@ -1862,7 +1862,7 @@ static int atarist_basic_floppy_init(int id, void *file, int open_mode)
 
 				osd_fseek(file, 0, SEEK_SET);
 
-				if (osd_fread(file, bootsector, 512))
+				if (mame_fread(file, bootsector, 512))
 				{
 					int sectors, head, tracks;
 
@@ -1899,7 +1899,7 @@ int atarist_load(void *file, unsigned char **ptr)
 		unsigned char *data;
 
 		/* get file size */
-		datasize = osd_fsize(file);
+		datasize = mame_fsize(file);
 
 		if (datasize!=0)
 		{
@@ -1909,7 +1909,7 @@ int atarist_load(void *file, unsigned char **ptr)
 			if (data!=NULL)
 			{
 				/* read whole file */
-				osd_fread(file, data, datasize);
+				mame_fread(file, data, datasize);
 
 				*ptr = data;
 

@@ -193,7 +193,7 @@ SNAPSHOT_LOAD(amstrad)
 		return INIT_FAIL;
 
 	/* read whole file */
-	osd_fread(fp, snapshot, snapshot_size);
+	mame_fread(fp, snapshot, snapshot_size);
 
     if (memcmp(snapshot, "MV - SNA", 8))
 	{

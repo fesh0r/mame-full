@@ -124,7 +124,7 @@ static int kbd_tail = 0;
 
 static struct terminal *kaypro_terminal;
 
-static void kaypro_putstr(char * src)
+static void kaypro_putstr(const char * src)
 {
 	while (*src)
 		kaypro_conout_w(0, *src++);

@@ -126,12 +126,12 @@ int a800_rom_init(int id, void *fp, int open_mode)
 
 	/* load an optional monitor.rom */
 	filename = "monitor.rom";
-	monitor_fp = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
+	monitor_fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, 0);
 	if (monitor_fp)
 	{
 		logerror("%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename);
-		size = osd_fread(monitor_fp, &mem[0xc000], 0x1000);
-		osd_fclose(monitor_fp);
+		size = mame_fread(monitor_fp, &mem[0xc000], 0x1000);
+		mame_fclose(monitor_fp);
 	}
 	else
 	{
@@ -144,15 +144,15 @@ int a800_rom_init(int id, void *fp, int open_mode)
 		{
 			if( id > 0 )
 			{
-				size = osd_fread(fp, &mem[0x12000], 0x2000);
+				size = mame_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = (size == 0x2000);
 				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 			}
 			else
 			{
-				size = osd_fread(fp, &mem[0x10000], 0x2000);
+				size = mame_fread(fp, &mem[0x10000], 0x2000);
 				a800_cart_loaded = size > 0x0000;
-				size = osd_fread(fp, &mem[0x12000], 0x2000);
+				size = mame_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = size > 0x2000;
 				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 			}
@@ -198,10 +198,10 @@ int a800xl_load_rom(int id, void *fp, int open_mode)
 	unsigned size;
 
 	filename = "basic.rom";
-	basic_fp = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
+	basic_fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_ROM, 0);
 	if (basic_fp)
 	{
-		size = osd_fread(basic_fp, &mem[0x14000], 0x2000);
+		size = mame_fread(basic_fp, &mem[0x14000], 0x2000);
 		if( size < 0x2000 )
 		{
 			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename);
@@ -213,9 +213,9 @@ int a800xl_load_rom(int id, void *fp, int open_mode)
 	if (fp)
 	{
 		{
-			size = osd_fread(fp, &mem[0x14000], 0x2000);
+			size = mame_fread(fp, &mem[0x14000], 0x2000);
 			a800_cart_loaded = size / 0x2000;
-			size = osd_fread(fp, &mem[0x16000], 0x2000);
+			size = mame_fread(fp, &mem[0x16000], 0x2000);
 			a800_cart_is_16k = size / 0x2000;
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
@@ -250,7 +250,7 @@ int a5200_rom_init(int id, void *file, int open_mode)
 	if (file)
 	{
 		{
-			size = osd_fread(file, &mem[0x4000], 0x8000);
+			size = mame_fread(file, &mem[0x4000], 0x8000);
 			if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
 			// mirroring of smaller cartridges
 			if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);
@@ -380,11 +380,11 @@ int a800_floppy_init(int id, void *file, int effective_mode)
 			memset(buff, 0, 256);
 			/* default to 720 sectors */
 			for( sector = 0; sector < 720; sector++ )
-				osd_fwrite(file, buff, 256);
+				mame_fwrite(file, buff, 256);
 			osd_fseek(file, 0, SEEK_SET);
 		}
 
-		size = osd_fread(file, drv[id].image, MAXSIZE);
+		size = mame_fread(file, drv[id].image, MAXSIZE);
 		if( size <= 0 )
 		{
 			drv[id].image = NULL;

@@ -21,7 +21,7 @@ const char *mess_path;
 UINT32 mess_ram_size;
 UINT8 *mess_ram;
 
-int DECL_SPEC mess_printf(char *fmt, ...)
+int DECL_SPEC mess_printf(const char *fmt, ...)
 {
 	va_list arg;
 	int length = 0;
@@ -289,6 +289,50 @@ void exit_devices(void)
 
 
 
+//============================================================
+//	osd_strip_extension
+//============================================================
+
+static char *osd_strip_extension(const char *filename)
+{
+	char *newname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	newname = malloc(strlen(filename) + 1);
+	if (!newname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_newname\n");
+		return NULL;
+	}
+
+	// copy in the name
+	strcpy(newname, filename);
+
+	// search backward for a period, failing if we hit a slash or a colon
+	for (c = newname + strlen(newname) - 1; c >= newname; c--)
+	{
+		// if we hit a period, NULL terminate and break
+		if (*c == '.')
+		{
+			*c = 0;
+			break;
+		}
+
+		// if we hit a slash or colon just stop
+		if (*c == '\\' || *c == '/' || *c == ':')
+			break;
+	}
+
+	return newname;
+}
+
+
+
 int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 {
 	char buf[2048], *dst = buf;
@@ -452,11 +496,11 @@ int battery_load(const char *filename, void *buffer, int length)
 		nvram_filename = battery_nvramfilename(filename);
 		if (nvram_filename)
 		{
-			f = osd_fopen(Machine->gamedrv->name, nvram_filename, OSD_FILETYPE_NVRAM, 0);
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
 			if (f)
 			{
-				bytes_read = osd_fread(f, buffer, length);
-				osd_fclose(f);
+				bytes_read = mame_fread(f, buffer, length);
+				mame_fclose(f);
 				result = TRUE;
 			}
 			free(nvram_filename);
@@ -480,11 +524,11 @@ int battery_save(const char *filename, void *buffer, int length)
 		nvram_filename = battery_nvramfilename(filename);
 		if (nvram_filename)
 		{
-			f = osd_fopen(Machine->gamedrv->name, nvram_filename, OSD_FILETYPE_NVRAM, 1);
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
 			if (f)
 			{
-				osd_fwrite(f, buffer, length);
-				osd_fclose(f);
+				mame_fwrite(f, buffer, length);
+				mame_fclose(f);
 				return TRUE;
 			}
 			free(nvram_filename);
@@ -509,13 +553,13 @@ void ram_dump(const char *filename)
 	if (!filename)
 		filename = "ram.bin";
 
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_NVRAM, OSD_FOPEN_WRITE);
+	file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_NVRAM, OSD_FOPEN_WRITE);
 	if (file)
 	{
-		osd_fwrite(file, mess_ram, mess_ram_size);
+		mame_fwrite(file, mess_ram, mess_ram_size);
 
 		/* close file */
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 }
 

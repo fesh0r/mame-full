@@ -613,7 +613,7 @@ static int vc20_rom_id (int id, void *romfile)
 	retval = 0;
 
 	osd_fseek (romfile, 4, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
+	mame_fread (romfile, buffer, sizeof (magic));
 
 	if (!memcmp (buffer, magic, sizeof (magic)))
 		retval = 1;
@@ -656,7 +656,7 @@ int vc20_rom_load (int id, void *fp, int open_mode)
 		return 1;
 	osd_fseek (fp, 0, SEEK_SET);
 
-	size = osd_fsize (fp);
+	size = mame_fsize (fp);
 
 	cp = image_filetype(IO_CARTSLOT, id);
 	if (cp)
@@ -685,7 +685,7 @@ int vc20_rom_load (int id, void *fp, int open_mode)
 			{
 				unsigned short in;
 
-				osd_fread_lsbfirst (fp, &in, 2);
+				mame_fread_lsbfirst (fp, &in, 2);
 				logerror("rom prg %.4x\n", in);
 				addr = in;
 				size -= 2;
@@ -705,7 +705,7 @@ int vc20_rom_load (int id, void *fp, int open_mode)
 	}
 
 	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
-	read = osd_fread (fp, mem + addr, size);
+	read = mame_fread (fp, mem + addr, size);
 	if (read != size)
 		return 1;
 	return 0;
