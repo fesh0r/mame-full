@@ -64,7 +64,7 @@ int channelf_load_rom(int id)
 
 READ_HANDLER( channelf_port_0_r )
 {
-	data_t data = readinputport(0);
+	int data = readinputport(0);
 	data = (data ^ 0xff) | latch[0];
     LOG(("port_0_r: $%02x\n",data));
 	return data;
@@ -72,7 +72,7 @@ READ_HANDLER( channelf_port_0_r )
 
 READ_HANDLER( channelf_port_1_r )
 {
-	data_t data = readinputport(1);
+	int data = readinputport(1);
 	data = (data ^ 0xff) | latch[1];
     LOG(("port_1_r: $%02x\n",data));
 	return data;
@@ -80,7 +80,7 @@ READ_HANDLER( channelf_port_1_r )
 
 READ_HANDLER( channelf_port_4_r )
 {
-	data_t data = readinputport(2);
+	int data = readinputport(2);
 	data = (data ^ 0xff) | latch[2];
     LOG(("port_4_r: $%02x\n",data));
 	return data;
@@ -88,7 +88,7 @@ READ_HANDLER( channelf_port_4_r )
 
 READ_HANDLER( channelf_port_5_r )
 {
-	data_t data = 0xff;
+	int data = 0xff;
 	data = (data ^ 0xff) | latch[3];
     LOG(("port_5_r: $%02x\n",data));
 	return data;
@@ -118,12 +118,12 @@ WRITE_HANDLER( channelf_port_0_w )
 			}
 			else if (channelf_col_reg == 0x7e)
 			{
-				osd_mark_dirty(0,channelf_row_reg,127,channelf_row_reg,0);
+				osd_mark_dirty(0,channelf_row_reg,127,channelf_row_reg);
 			}
 			if (channelf_col_reg < 0x76)
 			{
 				osd_mark_dirty(channelf_col_reg,channelf_row_reg,
-				               channelf_col_reg,channelf_row_reg,0);
+				               channelf_col_reg,channelf_row_reg);
 			}
 		}
 	}
