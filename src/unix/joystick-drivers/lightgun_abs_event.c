@@ -210,14 +210,18 @@ void lightgun_event_abs_poll(void)
 				lg_devices[i].last[LG_X_AXIS] = ev->value;
 			} else if (ev->type == EV_ABS && ev->code == ABS_Y) {
 				lg_devices[i].last[LG_Y_AXIS] = ev->value;
-			} else if (ev->type == EV_KEY && ev->code == BTN_MIDDLE) {
+			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE
+						|| ev->code == BTN_MOUSE)) {
 				joy_data[i].buttons[0] = ev->value;
-			} else if (ev->type == EV_KEY && ev->code == BTN_SIDE) {
+				if (!ev->value) {
+					lg_devices[i].last[LG_X_AXIS] =
+						lg_devices[i].min[LG_X_AXIS];
+					lg_devices[i].last[LG_Y_AXIS] =
+						lg_devices[i].min[LG_Y_AXIS];
+				}
+			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE
+						|| ev->code == BTN_RIGHT)) {
 				joy_data[i].buttons[0] = ev->value;
-				lg_devices[i].last[LG_X_AXIS] =
-					lg_devices[i].min[LG_X_AXIS];
-				lg_devices[i].last[LG_Y_AXIS] =
-					lg_devices[i].min[LG_Y_AXIS];
 			}
 		}
 	}

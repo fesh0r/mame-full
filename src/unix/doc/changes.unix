@@ -22,10 +22,14 @@ Release 0.79.1
 	  configured, the mouse is treated as a trackball.  (Gerd Sussner)
 	- Added SYSCONFDIR to the makefile to specify a path for systemwide 
 	  configuration files.  (Nicos Panayides)
-	- Hacked support for .chd files into the mame-cd script in the contrib 
+	- Hacked support for CHD files into the mame-cd script in the contrib 
 	  tools directory.  Also fixed a few small bugs.
 	- The Xv YUV code should now work on big-endian platforms.  (Maciej J. 
 	  Woloszyk)
+	- Removed "neomame" and "cpsmame" as targets from the makefile since the
+	  core no longer supports them.
+	- The trigger for the ACT LABS TV light gun now works; reloading now 
+	  requires only one offscreen shot instead of two.  (Joe)
 
 Release 0.78.1, 13 January 2004
 	- Everything from MAME 0.78 and MESS 0.78.
@@ -65,8 +69,8 @@ Release 0.77.1, 18 November 2003
 Release 0.76.1, 25 October 2003
 	- Everything from MAME 0.76 and MESS CVS.
 	- The I/O section of the xmess manpage should be more up-to-date.
-	- Linux input devices that support absolute X/Y events -- lightguns, 
-	  tablets, and touchpads -- can now be treated as lightguns.  See 
+	- Linux input devices that support absolute X/Y events -- light guns, 
+	  tablets, and touchpads -- can now be treated as light guns.  See 
 	  LIGHTGUN_ABS_EVENT in the makefile.  (Ben Collins)
 	- Added Opteron/Athlon64 as a CPU option in the makefile.  (Caleb Shay)
 	- Added a LOW_MEM option to the makefile that prevents a memory 
