@@ -24,6 +24,8 @@ Release 0.79.1
 	  configuration files.  (Nicos Panayides)
 	- Hacked support for .chd files into the mame-cd script in the contrib 
 	  tools directory.  Also fixed a few small bugs.
+	- The Xv YUV code should now work on big-endian platforms.  (Maciej J. 
+	  Woloszyk)
 
 Release 0.78.1, 13 January 2004
 	- Everything from MAME 0.78 and MESS 0.78.

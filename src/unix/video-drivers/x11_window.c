@@ -1476,7 +1476,11 @@ static void x11_window_make_yuv_lookup()
 
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */
+#ifdef LSB_FIRST
         hwscale_yuvlookup[i]=(y<<0) | (u<<8) | (y<<16) | (v<<24);
+#else
+        hwscale_yuvlookup[i]=(y<<24) | (u<<16) | (y<<8) | (v<<0);
+#endif
       }
    }
 }

@@ -72,6 +72,7 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
    }\
       }
 #elif defined BLIT_HWSCALE_YUY2
+#ifdef LSB_FIRST /* x86 etc */
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
@@ -89,6 +90,25 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
          *dst++=y|y2|((uv1+uv2)&0xff00ff00);\
       } \
    }
+#else /* ppc etc */
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int r,y,y2,uv1,uv2; \
+      for(;src<end;) \
+      { \
+         r=INDIRECT[*src++]; \
+         y=r&0xff000000 ; \
+         uv1=(r&0x00ff00ff); \
+         r=INDIRECT[*src++]; \
+         uv2=(uv1+(r&0x00ff00ff))>>1; \
+         y2=r&0xff00; \
+         *dst++=y|y2|(uv2&0x00ff00ff); \
+      } \
+   }
+#endif
 #else /* normal indirect */
 #define COPY_LINE2(SRC, END, DST) \
       {\
@@ -428,24 +448,43 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
    }
 #elif defined BLIT_HWSCALE_YUY2
+#ifdef LSB_FIRST /* x86 etc */
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
       unsigned long *dst = (unsigned long *)DST; \
-      unsigned int r,r2,y,y2,uv1,uv2; \
+      unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
          r=INDIRECT[*src++]; \
-         r2=INDIRECT[*src++]; \
-         y=r&0xff; \
-         y2=r2&0xff0000; \
+         y=r&255; \
          uv1=(r&0xff00ff00)>>1; \
-         uv2=(r2&0xff00ff00)>>1; \
-         uv1=(uv1+uv2)&0xff00ff00; \
-         *dst++=y|y2|uv1; \
+         r=INDIRECT[*src++]; \
+         uv2=(r&0xff00ff00)>>1; \
+         y2=r&0xff0000; \
+         *dst++=y|y2|((uv1+uv2)&0xff00ff00);\
       } \
    }
+#else /* ppc etc */
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int r,y,y2,uv1,uv2; \
+      for(;src<end;) \
+      { \
+         r=INDIRECT[*src++]; \
+         y=r&0xff000000 ; \
+         uv1=(r&0x00ff00ff); \
+         r=INDIRECT[*src++]; \
+         uv2=(uv1+(r&0x00ff00ff))>>1; \
+         y2=r&0xff00; \
+         *dst++=y|y2|(uv2&0x00ff00ff); \
+      } \
+   }
+#endif
 #else /* normal indirect */
 #define COPY_LINE2(SRC, END, DST) \
    SRC_PIXEL  *src = SRC; \
