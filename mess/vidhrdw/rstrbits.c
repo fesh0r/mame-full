@@ -718,7 +718,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 	int loopbackpos;
 	int visualbytes;
 	int y, r, i;
-	void (*build_scanline)(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens);
+	void (*build_scanline)(UINT8 *, UINT8 *, int , int , UINT16 *) = NULL;
 
 	scanline = malloc(mode->width * scalex);
 	if (!scanline)
@@ -1116,11 +1116,11 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		 *   +---------------------+
 		 *   |          1          |
 		 *   +-----+---------+-----+
-		 *   |     |         |     | 
-		 *   |     |         |     | 
-		 *   |  3  |         |  4  | 
-		 *   |     |         |     | 
-		 *   |     |         |     | 
+		 *   |     |         |     |
+		 *   |     |         |     |
+		 *   |  3  |         |  4  |
+		 *   |     |         |     |
+		 *   |     |         |     |
 		 *   +-----+---------+-----+
 		 *   |          2          |
 		 *   +---------------------+
