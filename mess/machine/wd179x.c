@@ -69,9 +69,10 @@ static void wd179x_complete_command(WD179X *);
 static void wd179x_clear_data_request(void);
 static void wd179x_set_data_request(void);
 static void wd179x_timed_data_request(void);
+static void wd179x_set_irq(WD179X *);
 
 /* one wd controlling multiple drives */
-WD179X wd;
+static WD179X wd;
 /* this is the drive currently selected */
 static UINT8 drv = 0;
 /* this is the head currently selected */
@@ -80,17 +81,17 @@ static UINT8 hd = 0;
 /* use this to determine which drive is controlled by WD */
 void wd179x_set_drive(UINT8 drive)
 {
-#if VERBOSE
+//#if VERBOSE
 	logerror("wd179x_set_drive: $%02x\n", drive);
-#endif
+//#endif
 	drv = drive;
 }
 
 void wd179x_set_side(UINT8 head)
 {
-#if VERBOSE
+//#if VERBOSE
 	logerror("wd179x_set_side: $%02x\n", head);
-#endif
+//#endif
 	hd = head;
 }
 
@@ -98,11 +99,54 @@ void wd179x_set_density(DENSITY density)
 {
 	WD179X *w = &wd;
 
-#if VERBOSE
-	logerror("wd179x_set_density: $%02x\n", density);
-#endif
+//#if VERBOSE
+//	logerror("wd179x_set_density: $%02x\n", density);
+//#endif
 
 	w->density = density;
+}
+
+/* BUSY COUNT DOESN'T WORK PROPERLY! */
+
+static void wd179x_restore(WD179X *w)
+{
+		UINT8 step_counter = 255;
+		
+		w->status |= STA_1_BUSY;
+
+		/* setup step direction */
+		w->direction = -1;
+
+#if VERBOSE
+		logerror("wd179x_command_w $%02X RESTORE\n", w->data);
+#endif
+		w->command_type = TYPE_I;
+
+		/* reset busy count */
+		w->busy_count = 0;
+
+		/* keep stepping until track 0 is received or 255 steps have been done */
+		while ((!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))) && (step_counter!=0))
+		{
+			/* update time to simulate seek time busy signal */
+			w->busy_count++;
+			floppy_drive_seek(drv, w->direction);
+			step_counter--;
+		}
+
+		/* update track reg */
+		w->track_reg = 0;
+
+		/* simulate seek time busy signal */
+		w->busy_count = w->busy_count * ((w->data & FDC_STEP_RATE) + 1);
+	
+		/* when command completes set irq */
+		wd179x_set_irq(w);
+}
+
+void	wd179x_reset(void)
+{
+	wd179x_restore(&wd);
 }
 
 
@@ -112,8 +156,10 @@ void wd179x_init(void (*callback)(int))
 	wd.status = STA_1_TRACK0;
 
 	wd.callback = callback;
-	wd.status_ipl = STA_1_IPL;
+//	wd.status_ipl = STA_1_IPL;
 	wd.density = DEN_MFM_LO;
+
+	wd179x_reset();
 
 #if 0
 
@@ -348,7 +394,6 @@ static void calc_crc(UINT16 * crc, UINT8 value)
 /* read the next data address mark */
 static void wd179x_read_id(WD179X * w)
 {
-	UINT16 crc = 0xffff;
 	chrn_id id;
 
 	w->status &= ~STA_2_REC_N_FND;
@@ -356,9 +401,17 @@ static void wd179x_read_id(WD179X * w)
 	/* get next id from disc */
 	if (floppy_drive_get_next_id(drv, hd, &id))
 	{
+		UINT16 crc = 0xffff;
+
 		w->data_offset = 0;
 		w->data_count = 6;
 
+		/* for MFM */
+		/* crc includes 3x0x0a1, and 1x0x0fe (id mark) */
+		calc_crc(&crc,0x0a1);
+		calc_crc(&crc,0x0a1);
+		calc_crc(&crc,0x0a1);
+		calc_crc(&crc,0x0fe);
 
 		w->buffer[0] = id.C;
 		w->buffer[1] = id.H;
@@ -368,11 +421,13 @@ static void wd179x_read_id(WD179X * w)
 		calc_crc(&crc, w->buffer[1]);
 		calc_crc(&crc, w->buffer[2]);
 		calc_crc(&crc, w->buffer[3]);
-		w->buffer[4] = crc & 255;
-		w->buffer[5] = crc / 256;
-
+		/* crc is stored hi-byte followed by lo-byte */
+		w->buffer[4] = crc>>8;
+		w->buffer[5] = crc & 255;
+		
 		wd179x_set_data_request();
 
+		w->sector = id.C;
 		w->status |= STA_2_BUSY;
 		w->busy_count = 50;
 	}
@@ -449,7 +504,7 @@ static void wd179x_read_sector(WD179X *w)
 		/* read data */
 		floppy_drive_read_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length);
 
-		wd179x_set_data_request();
+		wd179x_timed_data_request();
 
 		w->status |= STA_2_BUSY;
 		w->busy_count = 0;
@@ -463,15 +518,41 @@ static void	wd179x_set_irq(WD179X *w)
 		(*w->callback) (WD179X_IRQ_SET);
 }
 
+static void wd179x_complete_command_callback(int dummy)
+{
+	WD179X *w = &wd;
+
+	wd179x_set_irq(w);
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(w->timer, TIME_NEVER); 
+}
+
 /* called on error, or when command is actually completed */
+/* KT - I have used a timer for systems that use interrupt driven transfers.
+A interrupt occurs after the last byte has been read. If it occurs at the time
+when the last byte has been read it causes problems - same byte read again
+or bytes missed */
 static void wd179x_complete_command(WD179X *w)
 {
+	int usecs;
+
+	w->data_count = 0;
+
 	/* clear busy bit */
 	w->status &= ~STA_2_BUSY;
 
-	wd179x_clear_data_request();
+	usecs = floppy_drive_get_datarate_in_us(w->density);
 
-	wd179x_set_irq(w);
+	/* remove old timer if it exists */
+	if (w->timer!=NULL)
+	{
+		timer_remove(w->timer);
+		w->timer = NULL;
+	}
+
+	/* set new timer */
+	w->timer = timer_set(TIME_IN_USEC(usecs), 0, wd179x_complete_command_callback);
 }
 
 static void wd179x_write_sector(WD179X *w)
@@ -507,6 +588,7 @@ static void wd179x_verify_seek(WD179X *w)
 	{
 		if (floppy_drive_get_next_id(drv, hd, &id))
 		{
+			logerror("%02x\n",id.C);
 			/* compare track */
 			if (id.C == w->track_reg)
 			{
@@ -603,8 +685,31 @@ READ_HANDLER ( wd179x_status_r )
 		if (!--w->busy_count)
 			w->status &= ~STA_1_BUSY;
 	}
-	/* eventually toggle index pulse bit */
-	w->status ^= w->status_ipl;
+
+	/* type 1 command or force int command? */
+	if ((w->command_type==TYPE_I) || (w->command_type==TYPE_IV))
+	{
+
+		/* if disc present toggle index pulse */
+		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_DISK_INSERTED))
+		{
+			/* eventually toggle index pulse bit */
+			w->status ^= STA_1_IPL;
+		}
+
+		/* set track 0 state */
+		w->status &=~STA_1_TRACK0;
+		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			w->status |= STA_1_TRACK0;
+
+		floppy_drive_set_ready_state(drv, 1,1);
+	//	w->status &= ~STA_1_NOT_READY;
+	//	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+	//		w->status |= STA_1_NOT_READY;
+
+	}
+	
+	
 	/* eventually set data request bit */
 	w->status |= w->status_drq;
 
@@ -613,10 +718,6 @@ READ_HANDLER ( wd179x_status_r )
 		logerror("wd179x_status_r: $%02X (data_count %d)\n", result, w->data_count);
 #endif
 
-	w->status &= ~STA_1_NOT_READY;
-
-	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
-		w->status |= STA_1_NOT_READY;
 
 	return result;
 }
@@ -653,6 +754,9 @@ READ_HANDLER ( wd179x_data_r )
 		/* clear data request */
 		wd179x_clear_data_request();
 
+		/* yes */
+		w->data = w->buffer[w->data_offset++];
+
 		/* any bytes remaining? */
 		if (--w->data_count <= 0)
 		{
@@ -668,22 +772,21 @@ READ_HANDLER ( wd179x_data_r )
 				w->status |= STA_2_REC_TYPE;
 			}
 
+			w->sector++;
 			wd179x_complete_command(w);
 		}
 		else
 		{
-			/* yes */
-			w->data = w->buffer[w->data_offset++];
 			/* issue a timed data request */
 			wd179x_timed_data_request();		
 		}
 	}
-#if VERBOSE
-	else
+//#if VERBOSE
+//	else
 	{
 		logerror("wd179x_data_r: $%02X (data_count 0)\n", w->data);
 	}
-#endif
+//#endif
 	return w->data;
 }
 
@@ -693,8 +796,10 @@ WRITE_HANDLER ( wd179x_command_w )
 	WD179X *w = &wd;
 
 	floppy_drive_set_motor_state(drv, 1);
-	floppy_drive_set_ready_state(drv, 1,1);
 
+	/* also cleared by writing command */
+	if (w->callback)
+			(*w->callback) (WD179X_IRQ_CLR);
 
 	/* clear write protected. On read sector, read track and read dam, write protected bit is clear */
 	w->status &= ~((1<<6) | (1<<5) | (1<<4));
@@ -710,10 +815,17 @@ WRITE_HANDLER ( wd179x_command_w )
 		
 		wd179x_clear_data_request();
 
-		w->status_ipl = STA_1_IPL;
+		if (data & 0x0f)
+		{
+
+
+
+		}
+
+
+//		w->status_ipl = STA_1_IPL;
 /*		w->status_ipl = 0; */
-		if (w->callback)
-			(*w->callback) (WD179X_IRQ_CLR);
+		
 		w->busy_count = 0;
 		w->command_type = TYPE_IV;
         return;
@@ -721,7 +833,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 	if (data & 0x80)
 	{
-		w->status_ipl = 0;
+		/*w->status_ipl = 0;*/
 
 		if ((data & ~FDC_MASK_TYPE_II) == FDC_READ_SEC)
 		{
@@ -873,39 +985,11 @@ WRITE_HANDLER ( wd179x_command_w )
 		return;
 	}
 
+	w->status |= STA_1_BUSY;
 
 	if ((data & ~FDC_MASK_TYPE_I) == FDC_RESTORE)
 	{
-		UINT8 step_counter = 255;
-
-		/* setup step direction */
-		w->direction = -1;
-
-#if VERBOSE
-		logerror("wd179x_command_w $%02X RESTORE\n", data);
-#endif
-		w->command_type = TYPE_I;
-
-		/* reset busy count */
-		w->busy_count = 0;
-
-		/* keep stepping until track 0 is received or 255 steps have been done */
-		while ((!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))) && (step_counter!=0))
-		{
-			/* update time to simulate seek time busy signal */
-			w->busy_count++;
-			floppy_drive_seek(drv, w->direction);
-			step_counter--;
-		}
-
-		/* update track reg */
-		w->track_reg = 0;
-
-		/* simulate seek time busy signal */
-		w->busy_count = w->busy_count * ((data & FDC_STEP_RATE) + 1);
-	
-		/* when command completes set irq */
-		wd179x_set_irq(w);
+		wd179x_restore(w);
 	}
 
 	if ((data & ~FDC_MASK_TYPE_I) == FDC_SEEK)
@@ -944,6 +1028,8 @@ WRITE_HANDLER ( wd179x_command_w )
 
 			/* update track reg */
 			w->track_reg += w->direction;
+
+			logerror("%02x\r\n",w->track_reg);
 
 			floppy_drive_seek(drv, w->direction);
 		}
@@ -1009,14 +1095,11 @@ WRITE_HANDLER ( wd179x_command_w )
 		wd179x_set_irq(w);
 	}
 
-	if (w->busy_count)
-		w->status = STA_1_BUSY;
+	if (w->busy_count==0)
+		w->status &= ~STA_1_BUSY;
 
-	/* toggle index pulse at read */
-	w->status_ipl = STA_1_IPL;
-
-	if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
-		w->status |= STA_1_TRACK0;
+//	/* toggle index pulse at read */
+//	w->status_ipl = STA_1_IPL;
 
 
 	if (data & FDC_STEP_HDLOAD)
