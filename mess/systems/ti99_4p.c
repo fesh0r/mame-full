@@ -7,16 +7,17 @@
 	documentation to refer to either (or both) TI99/5 and TI99/8 projects),
 	is a reimplementation of the old ti99/4a console.
 
-	It was designed by Michael Becker for the hardware part and Harald Glaab for
-	the software part.  It has no relationship with TI.
+	It was designed by Michael Becker for the hardware part and Harald Glaab
+	for the software part.  It has no relationship with TI.
 
-	The card is architectured around a 16-bit bus (vs. an 8-bit bus in every other
-	TI99 system).  It includes 64kb of ROM, including a GPL interpreter, an internal
-	DSR ROM which contains system-specific code, and part of the TI extended Basic
-	interpreter, and up to 1Mbyte of RAM.  It still includes a 16-bit to 8-bit multiplexer
-	in order to support extension cards designed for TI99/4a, but it can support 16-bit
-	cards, too.  It does not include GROMs, video or sound: instead, it relies on the HSGPL
-	and EVPC cards to do the job.
+	The card is architectured around a 16-bit bus (vs. an 8-bit bus in every
+	other TI99 system).  It includes 64kb of ROM, including a GPL interpreter,
+	an internal DSR ROM which contains system-specific code, part of the TI
+	extended Basic interpreter, and up to 1Mbyte of RAM.  It still includes a
+	16-bit to 8-bit multiplexer in order to support extension cards designed
+	for TI99/4a, but it can support 16-bit cards, too.  It does not include
+	GROMs, video or sound: instead, it relies on the HSGPL and EVPC cards to
+	do the job.
 
 	TODO:
 	* write support for HSGPL, as it is actually required.
@@ -307,22 +308,22 @@ MACHINE_DRIVER_END
 ROM_START(ti99_4p)
 	/*CPU memory space*/
 	ROM_REGION16_BE(region_cpu1_len_4p, REGION_CPU1, 0)
-	ROM_LOAD16_BYTE("sgcpu_hb.bin", 0x0000, 0x8000,CRC( 0xaa100730)) /* system ROMs */
-	ROM_LOAD16_BYTE("sgcpu_lb.bin", 0x0001, 0x8000,CRC( 0x2a5dc818)) /* system ROMs */
+	ROM_LOAD16_BYTE("sgcpu_hb.bin", 0x0000, 0x8000, CRC(aa100730)) /* system ROMs */
+	ROM_LOAD16_BYTE("sgcpu_lb.bin", 0x0001, 0x8000, CRC(2a5dc818)) /* system ROMs */
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("grom0.grm", 0x0000, /*0x6000*/0x2000,CRC( 0xc56b86a5)) /* system GROMs */
+	ROM_LOAD("grom0.grm", 0x0000, /*0x6000*/0x2000, CRC(c56b86a5)) /* system GROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC( 0x8f7df93f)) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC( 0x06f1ec89)) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC( 0xeab382fb)) /* TI rs232 DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, CRC(8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, CRC(06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, CRC(eab382fb)) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD("spchrom.bin", 0x0000, 0x8000,CRC( 0x58b155f7)) /* system speech ROM */
+	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
 ROM_END
 
 SYSTEM_CONFIG_START(ti99_4p)
