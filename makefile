@@ -12,8 +12,7 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-# currently the Psikyo games don't work with it
-# X86_ASM_68K = 1
+X86_ASM_68K = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)
@@ -34,10 +33,7 @@ ASM = @nasmw
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
-
-# Utility source path
-UTIL = src/util
-MAKELIST = $(UTIL)/makelist$(EXE)
+#PERL = @perl -w
 
 ifdef DEBUG
 NAME = $(TARGET)d
@@ -133,7 +129,7 @@ DBGDEFS =
 DBGOBJS =
 endif
 
-extra:	romcmp$(EXE) $(MAKELIST) $(TOOLS) $(TEXTS)
+extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
@@ -151,17 +147,12 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-src/cpuintrf.h src/cpuintrf.c: src/rules.mak $(MAKELIST)
-	@echo Checking CPU core build rules...
-	@$(MAKELIST) src/cpuintrf.h src/cpuintrf.c src/rules.mak
-
-src/sndintrf.h src/sndintrf.c: src/rules.mak $(MAKELIST)
-	@echo Checking sound chip build rules...
-	@$(MAKELIST) src/sndintrf.h src/sndintrf.c src/rules.mak
-
-$(MAKELIST): $(UTIL)/makelist.c
-	@echo Compling $@...
-	$(CC) $(CDEFS) $(CLAGS) -o $@ $<
+ifdef PERL
+$(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
+	$(PERL) src/makelist.pl
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+endif
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
@@ -210,8 +201,6 @@ maketree: $(sort $(OBJDIRS))
 clean:
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r $(OBJ)
-	@echo Deleting $(UTIL)/makelist$(EXE)...
-	$(RM) -r $(UTIL)/makelist$(EXE)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
 

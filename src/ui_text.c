@@ -113,7 +113,6 @@ const char * default_text[] =
 	"Image Information",
 	"File Manager",
 	"Tape Control",
-	"Disk Control",
 #endif
 	"Cheat",
 	"Memory Card",
@@ -167,19 +166,6 @@ const char * default_text[] =
 	"X position",
 	"Y position",
 	"Watch",
-
-	/* searching */
-	"Lives (or some other value)",
-	"Timers (+/- some value)",
-	"Energy (greater or less)",
-	"Status (bits or flags)",
-	"Slow but sure (changed or not)",
-	"Change Search Speed",
-	"Matches found",
-	"Search not initialized",
-	"No previous values saved",
-	"Previous values already restored",
-	"Restoration successful",
 
 	/* searching */
 	"Lives (or some other value)",
@@ -322,4 +308,3 @@ const char * ui_getstring (int string_num)
 		/* That failed, use the default strings */
 		return default_text[string_num];
 }
-
