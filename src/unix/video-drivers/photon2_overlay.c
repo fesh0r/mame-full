@@ -429,21 +429,7 @@ void ph_ovr_update_display (struct mame_bitmap *bitmap)
 {
    PhRegion_t region_info;	
 	
-   int old_use_dirty = use_dirty;
-
-// TODO:  Not sure just yet what this is for...if it's only x related we can probably
-//	  toss it.   
-   if (current_palette->lookup_dirty || pseudo_color_lookup_dirty)
-   {
-      use_dirty = 0;
-      pseudo_color_lookup_dirty = 0;
-      /* current_palette->lookup_dirty is cleared for us by
-         current_palette_update() */
-   }
-
    (*ph_ovr_update_display_func) (bitmap);
-
-   use_dirty = old_use_dirty;
 
    if (use_mouse &&
        keyboard_pressed (KEYCODE_LALT) &&

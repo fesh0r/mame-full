@@ -559,20 +559,13 @@ static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitma
 
 void xf86_dga1_update_display(struct mame_bitmap *bitmap)
 {
-	int old_use_dirty = use_dirty;
-   
 	if(xf86_dga_fix_viewport)
 	{
 		XF86DGASetViewPort(display,xf86ctx.screen,0,0);
 		xf86_dga_fix_viewport = 0;
 	}
 	
-	if (current_palette->lookup_dirty)
-		use_dirty = 0;
-	
 	(*xf86ctx.xf86_dga_update_display_func)(bitmap);
-	
-	use_dirty = old_use_dirty;
 }
 
 void xf86_dga1_close_display(void)

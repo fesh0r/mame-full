@@ -856,24 +856,12 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
 /* invoked by main tree code to update bitmap into screen */
 void x11_window_update_display (struct mame_bitmap *bitmap)
 {
-   int old_use_dirty = use_dirty;
-   
-   if (current_palette->lookup_dirty || pseudo_color_lookup_dirty)
-   {
-      use_dirty = 0;
-      pseudo_color_lookup_dirty = 0;
-      /* current_palette->lookup_dirty is cleared for us by
-         sysdep_palette_update() */
-   }
-
    (*x11_window_update_display_func) (bitmap);
 
 #ifdef USE_XIL
    if (use_xil)
       refresh_xil_screen ();
 #endif
-
-   use_dirty = old_use_dirty;
 
    if (use_mouse &&
        keyboard_pressed (KEYCODE_LALT) &&

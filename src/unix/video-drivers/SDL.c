@@ -531,7 +531,6 @@ void sdl_update_rgb_direct_32bpp(struct mame_bitmap *bitmap)
 #ifndef DIRECT_HERMES
 void sysdep_update_display(struct mame_bitmap *bitmap)
 {
-   int old_use_dirty = use_dirty;
    SDL_Rect srect = { 0,0,0,0 };
    SDL_Rect drect = { 0,0,0,0 };
    srect.w = Vid_width;
@@ -544,9 +543,6 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
    drect.w = Vid_width;
    drect.h = Vid_height;
 
-   if (current_palette->lookup_dirty)
-      use_dirty = 0;
-   
    (*update_function)(bitmap);
 
    
@@ -555,7 +551,6 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
 
    if(hardware==0)
       SDL_UpdateRects(Surface,1, &drect);
-   use_dirty = old_use_dirty;
 }
 #else /* DIRECT_HERMES */
 void sysdep_update_display(struct mame_bitmap *bitmap)

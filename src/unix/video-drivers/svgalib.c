@@ -418,14 +418,7 @@ int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green,
 /* Update the display. */
 void sysdep_update_display(struct mame_bitmap *bitmap)
 {
-   int old_use_dirty = use_dirty;
-   
-   if (current_palette->lookup_dirty)
-      use_dirty = 0;
-   
    update_functions[update_function](bitmap);
-   
-   use_dirty = old_use_dirty;
 }
 
 

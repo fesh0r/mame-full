@@ -663,24 +663,12 @@ int ph_window_modify_pen (int pen, unsigned char red, unsigned char green,
 void ph_window_update_display (struct mame_bitmap *bitmap)
 {
    PhRegion_t region_info;	
-	
-   int old_use_dirty = use_dirty;
 
 //	fprintf(stderr,"Calling update display\n");
 
 // TODO:  Not sure just yet what this is for...if it's only x related we can probably
 //	  toss it.   
-   if (current_palette->lookup_dirty || pseudo_color_lookup_dirty)
-   {
-      use_dirty = 0;
-      pseudo_color_lookup_dirty = 0;
-      /* sysdep_palette->lookup_dirty is cleared for us by
-         sysdep_palette_update() */
-   }
-
    (*ph_window_update_display_func) (bitmap);
-
-   use_dirty = old_use_dirty;
 
    if (use_mouse &&
        keyboard_pressed (KEYCODE_LALT) &&

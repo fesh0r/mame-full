@@ -803,7 +803,7 @@ int sysdep_display_alloc_palette (int writable_colors)
   	ctable_size*=2;
 
   /* some bitmap fix data values .. 
-   * independend of the mame bitmap line arrangement !
+   * independent of the mame bitmap line arrangement !
    */
   bytes_per_pixel = (Machine->scrbitmap->depth+7) / 8;
 

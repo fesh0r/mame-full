@@ -370,8 +370,6 @@ update_display_16bpp(struct mame_bitmap *bitmap)
 void
 sysdep_update_display(struct mame_bitmap *bitmap)
 {
-	int old_use_dirty;
-
 	/* pause if minturised, setting the flag */
 	while([theWindow isMiniaturized]) {
 		NSEvent *thisEvent;
@@ -387,14 +385,10 @@ sysdep_update_display(struct mame_bitmap *bitmap)
 	isMinaturised = 0;
 
 	/* call appropriate function with dirty */
-	old_use_dirty = use_dirty;
-	if(current_palette->lookup_dirty)
-		use_dirty = 0;
 	if(bitmap->depth == 16)
 		update_display_16bpp(bitmap);
 	else
 		update_display_8bpp(bitmap);
-	use_dirty = old_use_dirty;
 
 	/* make the view as dirty and redisplay the window */
 	[[theWindow contentView] setNeedsDisplay:YES];

@@ -146,7 +146,6 @@ int sysdep_create_display (int depth)
 void sysdep_display_close (void)
 {
    (*ph_func[ph_video_mode].close_display)();
-   osd_dirty_close ();
    /* free the bitmap after cleaning the dirty stuff as it uses the bitmap */
    //osd_free_bitmap (bitmap);
 }
@@ -231,7 +230,6 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
          goto barf;
       
       memset((void *)&phkey[0], FALSE, 128*sizeof(unsigned char) );
-      osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1);
       /* poll mouse twice to clear internal vars */
       if (use_mouse)
       {

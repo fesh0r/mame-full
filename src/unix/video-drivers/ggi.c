@@ -941,15 +941,9 @@ static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap)
  * Update the display.
  */
 void sysdep_update_display(struct mame_bitmap *bitmap) {
-    int old_usedirty = use_dirty;
-
-    if (current_palette->lookup_dirty)
-        use_dirty = 0;
 
     update_function(bitmap);
     ggiFlush(vis);
-    
-    use_dirty = old_usedirty;
 }
 
 int ggi_key(ggi_event *ev)

@@ -547,14 +547,7 @@ static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitma
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap)
 {
-	int old_use_dirty = use_dirty;
-   
-	if (current_palette->lookup_dirty)
-		use_dirty = 0;
-	
 	(*xf86ctx.xf86_dga_update_display_func)(bitmap);
-	
-	use_dirty = old_use_dirty;
 	XDGASync(display,xf86ctx.screen);
 }
 
