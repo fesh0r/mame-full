@@ -410,9 +410,9 @@ V9938_MODE_FUNC (mode_graphic5)
 	{
 	UINT8 *nametbl, colour;
 	int line2, linemask, x, xx;
-	PEN_TYPE pen_bg0;
+	PEN_TYPE pen_bg0[4];
 #if (V9938_WIDTH > 512)
-	PEN_TYPE pen_bg1;
+	PEN_TYPE pen_bg1[4];
 #endif
 	
 	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
@@ -424,40 +424,55 @@ V9938_MODE_FUNC (mode_graphic5)
 		nametbl += 0x8000;
 
 #if (V9938_WIDTH > 512)
-	pen_bg1 = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
-	pen_bg0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
+	pen_bg1[0] = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
+	pen_bg0[0] = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
 
 	xx = vdp.offset_x;
-	while (xx--) { *ln++ = pen_bg0; *ln++ = pen_bg1; }
+	while (xx--) { *ln++ = pen_bg0[0]; *ln++ = pen_bg1[0]; }
+	
+	x = (vdp.contReg[8] & 0x20) ? 0 : 1;
+
+    for (;x<4;x++)
+		{
+		pen_bg0[x] = Machine->pens[pal_ind16[x]];
+		pen_bg1[x] = Machine->pens[pal_ind16[x]];
+		}
 
 	for (x=0;x<128;x++)
 		{
 		colour = *nametbl++;
-        *ln++ = Machine->pens[pal_ind16[colour>>6]];
-        *ln++ = Machine->pens[pal_ind16[(colour>>4)&3]];
-        *ln++ = Machine->pens[pal_ind16[(colour>>2)&3]];
-        *ln++ = Machine->pens[pal_ind16[(colour&3)]];
+
+        *ln++ = pen_bg0[colour>>6];
+		*ln++ = pen_bg1[(colour>>4)&3];
+        *ln++ = pen_bg0[(colour>>2)&3];
+       	*ln++ = pen_bg1[(colour&3)];
 		}
 	
+	pen_bg1[0] = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
+	pen_bg0[0] = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
 	xx = 16 - vdp.offset_x;	
-	while (xx--) { *ln++ = pen_bg0; *ln++ = pen_bg1; }
+	while (xx--) { *ln++ = pen_bg0[0]; *ln++ = pen_bg1[0]; }
 #else
-	pen_bg0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
+	pen_bg0[0] = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
+
+	x = (vdp.contReg[8] & 0x20) ? 0 : 1;
+
+    for (;x<4;x++)
+		pen_bg0[x] = Machine->pens[pal_ind16[x]];
 
 	xx = vdp.offset_x;
-	while (xx--) *ln++ = pen_bg0; 
+	while (xx--) *ln++ = pen_bg0[0]; 
 
 	for (x=0;x<128;x++)
 		{
 		colour = *nametbl++;
-        *ln++ = Machine->pens[pal_ind16[colour>>6]];
-/*		*ln++ = Machine->pens[pal_ind16[(colour>>4)&3]]; */
-        *ln++ = Machine->pens[pal_ind16[(colour>>2)&3]];
-/*		*ln++ = Machine->pens[pal_ind16[(colour&3)]]; */
+        *ln++ = pen_bg0[colour>>6];
+        *ln++ = pen_bg0[(colour>>2)&3];
 		}
 	
+	pen_bg0[0] = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
 	xx = 16 - vdp.offset_x;	
-	while (xx--) *ln++ = pen_bg0; 
+	while (xx--) *ln++ = pen_bg0[0]; 
 #endif
 	vdp.size_now = RENDER_HIGH;
 	}

@@ -1158,7 +1158,7 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
 	ind16 = pal_ind16[0];
 	ind256 = pal_ind256[0];
 
-	if ( !(vdp.contReg[8] & 0x20) )
+	if ( !(vdp.contReg[8] & 0x20) && (vdp.mode != V9938_MODE_GRAPHIC5) )
 		{
 		pal_ind16[0] = pal_ind16[(vdp.contReg[7] & 0x0f)];
 		pal_ind256[0] = pal_ind256[vdp.contReg[7]];
@@ -1169,7 +1169,7 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
 	else
 		v9938_refresh_16 (bmp, line);
 
-	if ( !(vdp.contReg[8] & 0x20) )
+	if ( !(vdp.contReg[8] & 0x20) && (vdp.mode != V9938_MODE_GRAPHIC5) )
 		{
 		pal_ind16[0] = ind16;
 		pal_ind256[0] = ind256;
