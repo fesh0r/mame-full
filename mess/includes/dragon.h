@@ -91,6 +91,8 @@ extern WRITE_HANDLER( coco3_m6847_hs_w );
 extern WRITE_HANDLER( coco3_m6847_fs_w );
 extern int coco3_mmu_translate(int block, int offset);
 extern int dragon_floppy_init(int id);
+extern int dragon_floppy_id(int id);
+extern void dragon_floppy_exit(int id);
 extern int coco_bitbanger_init (int id);
 extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
@@ -114,7 +116,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		IO_RESET_NONE,\
 		0,\
 		dragon_floppy_init,\
-		basicdsk_floppy_exit,\
+		dragon_floppy_exit,\
         NULL,\
         NULL,\
         NULL,\

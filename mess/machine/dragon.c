@@ -150,6 +150,7 @@ static void coco3_setcartline(int data);
 #endif /* MAME_DEBUG */
 
 static void coco3_timer_hblank(void);
+static int count_bank(void);
 
 static struct pia6821_interface dragon_pia_intf[] =
 {
@@ -447,14 +448,32 @@ int coco3_pak_load(int id)
 static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 {
 	UINT8 *rombase;
-	UINT16 romsize;
+	int   romsize;
 	void *fp;
 
 	cart_inserted = 0;
 
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (fp) {
-		romsize = (UINT16) osd_fsize(fp);
+		
+		romsize = osd_fsize(fp);
+
+		/* The following hack is for Arkanoid running on the CoCo2.
+		   The issuse is the CoCo2 hardware only allows the cartridge
+		   interface to access 0xC000-0xFEFF (16K). The Arkanoid ROM is
+		   32K starting at 0x8000. The first 16K is totally inaccessable
+		   from a CoCo2. Thus we need to skip ahead in the ROM file. On
+		   the CoCo3 the entire 32K ROM is accessable. */
+		
+		if ( device_crc(IO_CARTSLOT, 0) == 0x25C3AA70 )     /* Test for Arkanoid  */
+		{
+			if ( destlength == 0x4000 )						/* Test if CoCo2      */
+			{
+				osd_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
+				romsize -= 0x4000;							/* Adjust ROM size    */
+			}
+		}
+		
 		if (romsize > destlength)
 			romsize = destlength;
 
@@ -492,8 +511,22 @@ int dragon64_rom_load(int id)
 
 int coco3_rom_load(int id)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0x88000], 0x8000);
+	UINT8 	*ROM = memory_region(REGION_CPU1);
+	int		count;
+	void	*fp;
+	
+	fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE_R, 0);
+	count = count_bank();
+	osd_fclose( fp );
+	
+	if( count == 0 )
+		/* Load roms starting at 0x8000 and mirror upwards. */
+		/* ROM size is 32K max */
+		return generic_rom_load(id, &ROM[0x88000], 0x8000);
+	else
+		/* Load roms starting at 0x8000 and mirror upwards. */
+		/* ROM bank is 16K max */
+		return generic_rom_load(id, &ROM[0x88000], 0x4000);
 }
 
 /***************************************************************************
@@ -695,6 +728,7 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 #define JOYSTICK_LEFT_X		9
 #define JOYSTICK_LEFT_Y		10
 
+double read_joystick(int joyport);
 double read_joystick(int joyport)
 {
 	return readinputport(joyport) / 255.0;
@@ -1337,6 +1371,7 @@ static void coco3_timer_set_interval(int interval)
   MMU
 ***************************************************************************/
 
+WRITE_HANDLER ( dragon64_ram_w );
 WRITE_HANDLER ( dragon64_ram_w )
 {
 	coco_ram_w(offset + 0x8000, data);
@@ -1357,6 +1392,7 @@ static void d_sam_set_maptype(int val)
 
 /* Coco 3 */
 
+int coco3_mmu_lookup(int block, int forceram);
 int coco3_mmu_lookup(int block, int forceram)
 {
 	int result;
@@ -1798,21 +1834,41 @@ static void coco3_setcartline(int data)
 	coco3_raise_interrupt(COCO3_INT_EI0, cart_line ? 1 : 0);
 }
 
-static int is_twobank(void)
+static int count_bank(void)
 {
-	/* This function, and all calls of it, are hacks for MindRoll */
-	return device_crc(IO_CARTSLOT, 0) == 0x9c241cdc;
+	unsigned int	crc;
+	/* This function, and all calls of it, are hacks for bankswitched games */
+	
+	crc = device_crc(IO_CARTSLOT, 0);
+	
+	switch( crc )
+	{
+		case 0x83bd6056:		/* Mind-Roll */
+			return 1;
+			break;
+		case 0xBF4AD8F8:		/* Predator */
+			return 3;
+			break;
+		case 0xDD94DD06:		/* RoboCop */
+			return 7;
+			break;
+		default:				/* No bankswitching */
+			return 0;
+			break;
+	}
 }
 
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
 	void *fp;
 
-	if (is_twobank()) {
+	if (count_bank() > 0) {
+		/* Pin variable to proper bit width */
+		bank &= count_bank();
 		fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE_R, 0);
 		if (fp) {
 			if (bank)
-				osd_fseek(fp, 0x4000, SEEK_SET);
+				osd_fseek(fp, 0x4000 * bank, SEEK_SET);
 			osd_fread(fp, cartpos, 0x4000);
 			osd_fclose(fp);
 		}
@@ -1868,8 +1924,8 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
 
-	/* HACK */
-	cartslottype = is_twobank() ? &cartridge_twobanks : &cartridge_standard;
+	/* HACK for bankswitching carts */
+	cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 	autocenter_init(12, 0x04);

@@ -54,9 +54,9 @@ static int coco3_vidbase;
 #ifdef MAME_DEBUG
 #define LOG_BORDER	0
 #define LOG_PALETTE	0
-#define LOG_GIME	1
-#define LOG_VIDEO	1
-#define LOG_MISC	1
+#define LOG_GIME	0
+#define LOG_VIDEO	0
+#define LOG_MISC	0
 #else /* !MAME_DEBUG */
 #define LOG_BORDER	0
 #define LOG_PALETTE	0
@@ -79,6 +79,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
  * CoCo 1/2 Stuff
  * -------------------------------------------------- */
 
+void dragon_charproc(UINT8 c);
 void dragon_charproc(UINT8 c)
 {
 	int inv;

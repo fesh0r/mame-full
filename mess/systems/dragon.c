@@ -17,6 +17,7 @@
 #include "includes/6883sam.h"
 #include "includes/rstrtrck.h"
 #include "includes/dragon.h"
+#include "formats/dmkdsk.h"
 #include "includes/basicdsk.h"
 #include "printer.h"
 
