@@ -82,7 +82,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 	{
 		printf("                   ==========================================\n" );
 		printf("                    M.E.S.S.  -  Multi-Emulator Super System\n"  );
-		printf("                             Copyright (C) 1998-2002\n");
+		printf("                             Copyright (C) 1998-2003\n");
 		printf("                                by the MESS team\n"    );
 		printf("                    Official Page at: http://www.mess.org\n");
 		printf("                   ==========================================\n\n" );
