@@ -8,6 +8,14 @@
 #include "windowsui/ColumnEdit.h"
 #endif
 
+/* Compensating for a Mingw bug */
+#ifdef __GNUC__
+#ifdef ListView_GetImageList
+#undef ListView_GetImageList
+#endif
+#define ListView_GetImageList(w,i)	((HIMAGELIST) (int) SendMessage((w), LVM_GETIMAGELIST, (i), 0))
+#endif /* __GNUC__ */
+
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
 static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
 static void SmartListView_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
@@ -271,7 +279,7 @@ static void SmartListView_GetColumnInfo(struct SmartListView *pListView, int *pS
 {
 	int i;
 	RECT r;
-	int nWidth;
+	int nWidth = 0;
 
 	if (pListView->pClass->pfnGetColumnInfo) {
 		pListView->pClass->pfnGetColumnInfo(pListView, pShown, pOrder, pWidths);
@@ -375,7 +383,8 @@ static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POI
 {
 	HWND hwndHeader;
 	HMENU hMenu, hMenuLoad;
-	int i, nMenuItem, nLogicalColumn;
+	int i, nMenuItem;
+	int nLogicalColumn = 0;
 	BOOL bFound = FALSE;
 	RECT rcCol;
 	POINT ptClient;
@@ -479,32 +488,34 @@ static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR 
 
 static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
-    HDC         hDC = lpDrawItemStruct->hDC;
-    RECT        rcItem = lpDrawItemStruct->rcItem;
-    UINT        uiFlags = ILD_TRANSPARENT;
-    HIMAGELIST  hImageList;
-    int         nVisualItem = lpDrawItemStruct->itemID;
-    COLORREF    clrTextSave, clrBkSave;
-    COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
-    static TCHAR szBuff[MAX_PATH];
-    BOOL        bFocus = (GetFocus() == pListView->hwndListView);
-    LPCTSTR     pszText;
-    UINT        nStateImageMask;
-    BOOL        bSelected;
-    LV_COLUMN   lvc;
-    LV_ITEM     lvi;
-    RECT        rcAllLabels;
-    RECT        rcLabel;
-    RECT        rcIcon;
-    int         offset;
-    SIZE        size;
-    int         i;
-    int         nColumn;
-    int         nColumnMax = 0;
-    int         nResults = 0;
-    int         *order;
+	HDC         hDC = lpDrawItemStruct->hDC;
+	RECT        rcItem = lpDrawItemStruct->rcItem;
+	UINT        uiFlags = ILD_TRANSPARENT;
+	HIMAGELIST  hImageList;
+	int         nVisualItem = lpDrawItemStruct->itemID;
+	COLORREF    clrTextSave, clrBkSave;
+	COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
+	static TCHAR szBuff[MAX_PATH];
+	BOOL        bFocus = (GetFocus() == pListView->hwndListView);
+	LPCTSTR     pszText;
+	UINT        nStateImageMask;
+	BOOL        bSelected;
+	LV_COLUMN   lvc;
+	LV_ITEM     lvi;
+	RECT        rcAllLabels;
+	RECT        rcLabel;
+	RECT        rcIcon;
+	int         offset;
+	SIZE        size;
+	int         i;
+	int         nColumn;
+	int         nColumnMax = 0;
+	int         *order;
 	int nItemCount;
 	HBITMAP hBackground;
+
+	memset(&clrTextSave, 0, sizeof(clrTextSave));
+	memset(&clrBkSave, 0, sizeof(clrBkSave));
 
 	order = alloca(pListView->pClass->nNumColumns * sizeof(int));
 
@@ -557,15 +568,15 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
 	hBackground = pListView->hBackground;
 
-    if (hBackground) {
-        RECT        rcClient;
-        HRGN        rgnBitmap;
-        RECT        rcTmpBmp = rcItem;
-        HDC         htempDC;
-        HBITMAP     oldBitmap;
+	if (hBackground) {
+		RECT        rcClient;
+		HRGN        rgnBitmap;
+		RECT        rcTmpBmp = rcItem;
+		HDC         htempDC;
+		HBITMAP     oldBitmap;
 #if HAS_MYBITMAPINFO
-        HPALETTE hPAL;
-        RECT rcFirstItem;
+		HPALETTE hPAL;
+		RECT rcFirstItem;
 		int j;
 #endif
 
@@ -705,22 +716,22 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     {
         int nRetLen;
         UINT nJustify;
-        LV_ITEM lvi;
+        LV_ITEM lvi2;
 
         lvc.mask = LVCF_FMT | LVCF_WIDTH;
         ListView_GetColumn(pListView->hwndListView, order[nColumn] , &lvc);
 
-        lvi.mask = LVIF_TEXT;
-        lvi.iItem = nVisualItem;
-        lvi.iSubItem = order[nColumn];
-        lvi.pszText = szBuff;
-        lvi.cchTextMax = sizeof(szBuff);
+        lvi2.mask = LVIF_TEXT;
+        lvi2.iItem = nVisualItem;
+        lvi2.iSubItem = order[nColumn];
+        lvi2.pszText = szBuff;
+        lvi2.cchTextMax = sizeof(szBuff);
 
-        if (ListView_GetItem(pListView->hwndListView, &lvi) == FALSE)
+        if (ListView_GetItem(pListView->hwndListView, &lvi2) == FALSE)
             continue;
 
         /* This shouldn't oughtta be, but it's needed!!! */
-        _tcscpy(szBuff, lvi.pszText);
+        _tcscpy(szBuff, lvi2.pszText);
 
         rcItem.left = rcItem.right;
         rcItem.right += lvc.cx;

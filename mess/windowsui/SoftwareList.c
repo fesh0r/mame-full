@@ -105,26 +105,8 @@ static void *mess_crc_file;
 static char mess_crc_category[64];
 #endif /* HAS_CRC */
 
-/* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
-static struct deviceentry s_devices[] =
-{
-	{ 1, "Cartridge images" },		/* IO_CARTSLOT */
-	{ 4, "Floppy disk images" },	/* IO_FLOPPY */
-	{ 9, "Hard disk images" },		/* IO_HARDDISK */
-	{ 2, "Cylinders" },				/* IO_CYLINDER */
-	{ 5, "Cassette images" },		/* IO_CASSETTE */
-	{ 2, "Punchcard images" },		/* IO_PUNCHCARD */
-	{ 2, "Punchtape images" },		/* IO_PUNCHTAPE */
-	{ 8, "Printer Output" },		/* IO_PRINTER */
-	{ 6, "Serial Output" },			/* IO_SERIAL */
-	{ 2, "Parallel Output" },		/* IO_PARALLEL */
-	{ 7, "Snapshots" },				/* IO_SNAPSHOT */
-	{ 7, "Quickloads" }				/* IO_QUICKLOAD */
-};
-
 static void AssertValidDevice(int d)
 {
-	assert((sizeof(s_devices) / sizeof(s_devices[0])) + 1 == IO_COUNT);
 	assert(((d > IO_END) && (d < IO_COUNT)) || (d == IO_UNKNOWN) || (d == IO_BAD));
 }
 
@@ -165,19 +147,19 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
     types[num_extensions].ext = NULL;
 }
 
-static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc32)
+static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc)
 {
-    int type, i;
-    char *lpExt;
-    ZIP *pZip = NULL;
+	int type, i;
+	char *lpExt;
+	ZIP *pZip = NULL;
 	UINT32 dummy;
 
-	if (!crc32)
-		crc32 = &dummy;
+	if (!crc)
+		crc = &dummy;
 
-	*crc32 = 0;
-    lpExt = strrchr(filename, '.');
-    type = IO_COUNT;
+	*crc = 0;
+	lpExt = strrchr(filename, '.');
+	type = IO_COUNT;
 
     if (lpExt) {
         /* Are we a ZIP file? */
@@ -188,7 +170,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
                     struct zipent *pZipEnt = readzip(pZip);
                     if (pZipEnt) {
                         lpExt = strrchr(pZipEnt->name, '.');
-						*crc32 = pZipEnt->crc32;
+						*crc = pZipEnt->crc32;
                     }
                 }
             }
@@ -393,7 +375,7 @@ static int checksum_file (const char *file, unsigned char **p, unsigned int *siz
 
 static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_image_type *imagetypes)
 {
-	UINT32 crc32 = 0;
+	UINT32 crc = 0;
 	BOOL bLearnedSomething = FALSE;
 
 #if HAS_CRC
@@ -404,23 +386,23 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 
 	/* Calculate image type */
 	if (img->type == IO_UNKNOWN) {
-		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, &crc32);
+		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, &crc);
 		if (img->type != IO_UNKNOWN)
 			bLearnedSomething = TRUE;
 	}
 
 #if HAS_CRC
 	/* Calculate a CRC file? */
-	if ((eRealize >= REALIZE_ALL) && !crc32 && !img->crc) {
-		checksum_file(img->fullname, NULL, &dummy, &crc32);
+	if ((eRealize >= REALIZE_ALL) && !crc && !img->crc) {
+		checksum_file(img->fullname, NULL, &dummy, &crc);
 		bLearnedSomething = TRUE;
 	}
 
 	/* Load CRC information? */
-	if (mess_crc_file && crc32 && !img->crc) {
-		sprintf(crcstr, "%08x", crc32);
+	if (mess_crc_file && crc && !img->crc) {
+		sprintf(crcstr, "%08x", crc);
 		config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
-		ImageData_SetCrcLine(img, crc32, line);
+		ImageData_SetCrcLine(img, crc, line);
 	}
 #endif
 	return bLearnedSomething;
@@ -734,7 +716,7 @@ enum {
 */
 LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
 {
-	LPCTSTR s;
+	LPCTSTR s = NULL;
 	ImageData *imgd;
 #if HAS_CRC
 	static char crcstr[9];

@@ -184,19 +184,19 @@ static BOOL SoftwareDirectories_OnDelete(HWND hDlg)
 
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 {
-    BOOL          bResult = FALSE;
-    NMLVDISPINFO* pDispInfo = (NMLVDISPINFO*)pNMHDR;
-    LVITEM*       pItem = &pDispInfo->item;
+	BOOL          bResult = FALSE;
+	NMLVDISPINFO* pDispInfo = (NMLVDISPINFO*)pNMHDR;
+	LVITEM*       pItem = &pDispInfo->item;
+	HWND    hList = GetDlgItem(hDlg, IDC_DIR_LIST);
 
+	/* Last item is placeholder for append */
+	if (pItem->iItem == ListView_GetItemCount(hList) - 1)
+	{
+		HWND hEdit = (HWND) (int) SendMessage(hList, LVM_GETEDITCONTROL, 0, 0);
+		Edit_SetText(hEdit, "");
+	}
 
-    /* Last item is placeholder for append */
-    if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
-    {
-        //FIXME!!!!  I cannot get this to compile under mingw
-        Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
-    }
-
-    return bResult;
+	return bResult;
 }
 
 static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
