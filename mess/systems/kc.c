@@ -398,4 +398,4 @@ static const struct IODevice io_kc85_4d[] =
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMPX( 19??, kc85_3,   0,     kc85_3,  kc85,        0,                "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
 COMPX( 19??, kc85_4,   0,     kc85_4,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
-COMPX( 19??, kc85_4d,   0,     kc85_4d,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)
+COMPX( 19??, kc85_4d,   kc85_4,     kc85_4d,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)

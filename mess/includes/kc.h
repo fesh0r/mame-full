@@ -42,6 +42,7 @@ READ_HANDLER(kc85_unmapped_r);
 
 READ_HANDLER(kc85_pio_data_r);
 
+WRITE_HANDLER(kc85_module_w);
 
 WRITE_HANDLER(kc85_4_pio_data_w);
 WRITE_HANDLER(kc85_3_pio_data_w);
