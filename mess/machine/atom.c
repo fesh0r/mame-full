@@ -441,7 +441,7 @@ WRITE_HANDLER ( atom_8255_porta_w )
 		m6847_gm0_w(0,	data & 0x20);
 		m6847_ag_w(0,	data & 0x10);
 		m6847_set_cannonical_row_height();
-		schedule_full_refresh();
+		//schedule_full_refresh();
 	}
 	atom_8255_porta = data;
 /*	logerror("8255: Write port a, %02x\n", data); */
