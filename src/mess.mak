@@ -162,34 +162,34 @@ DRVLIBS += \
 		$(OBJ)/advision.a \
 		$(OBJ)/coleco.a   \
 		$(OBJ)/nec.a	  \
-		$(OBJ)/bally.a    \
+		$(OBJ)/bally.a	  \
 		$(OBJ)/gce.a	  \
 		$(OBJ)/rca.a	  \
 		$(OBJ)/fairch.a   \
 		$(OBJ)/magnavox.a \
 		$(OBJ)/svision.a \
-		$(OBJ)/cpschngr.a \
-		$(OBJ)/intv.a
+		$(OBJ)/intv.a \
+#		$(OBJ)/cpschngr.a
 endif
 
 ifdef MESS_EXCLUDE_MISC_COMPUTERS
 COREDEFS += -DMESS_EXCLUDE_MISC_COMPUTERS
 else
 DRVLIBS += \
-		$(OBJ)/veb.a      \
+		$(OBJ)/veb.a	  \
 		$(OBJ)/dragon.a   \
 		$(OBJ)/kaypro.a   \
-		$(OBJ)/trs80.a    \
+		$(OBJ)/trs80.a	  \
 		$(OBJ)/cgenie.a   \
-		$(OBJ)/pdp1.a     \
+		$(OBJ)/pdp1.a	  \
 		$(OBJ)/apexc.a	  \
-		$(OBJ)/p2000.a    \
-		$(OBJ)/ep128.a    \
-		$(OBJ)/ascii.a    \
+		$(OBJ)/p2000.a	  \
+		$(OBJ)/ep128.a	  \
+		$(OBJ)/ascii.a	  \
 		$(OBJ)/tangerin.a \
-		$(OBJ)/vtech.a    \
+		$(OBJ)/vtech.a	  \
 		$(OBJ)/jupiter.a  \
-		$(OBJ)/mbee.a     \
+		$(OBJ)/mbee.a	  \
 		$(OBJ)/nascom1.a  \
 		$(OBJ)/mtx.a	  \
 		$(OBJ)/samcoupe.a \
@@ -246,7 +246,7 @@ else
 DRVLIBS += \
 		$(OBJ)/apple1.a   \
 		$(OBJ)/apple2.a   \
-		$(OBJ)/lisa.a     \
+		$(OBJ)/lisa.a	  \
 		$(OBJ)/mac.a
 endif
 
@@ -312,7 +312,7 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-	  $(OBJ)/mess/systems/saturn.o   \
+	  $(OBJ)/mess/systems/saturn.o	 \
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
@@ -340,7 +340,7 @@ $(OBJ)/nintendo.a: \
 	  $(OBJ)/mess/sndhrdw/snes.o	 \
 	  $(OBJ)/mess/vidhrdw/snes.o	 \
 	  $(OBJ)/mess/machine/snes.o	 \
-	  $(OBJ)/mess/systems/snes.o     \
+	  $(OBJ)/mess/systems/snes.o	 \
 	  $(OBJ)/mess/machine/nes_mmc.o  \
 	  $(OBJ)/mess/vidhrdw/nes.o	 \
 	  $(OBJ)/mess/machine/nes.o	 \
@@ -349,20 +349,20 @@ $(OBJ)/nintendo.a: \
 $(OBJ)/amiga.a: \
 	  $(OBJ)/mess/vidhrdw/amiga.o	 \
 	  $(OBJ)/mess/machine/amiga.o	 \
-	  $(OBJ)/mess/systems/amiga.o	 
+	  $(OBJ)/mess/systems/amiga.o
 
 $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/tpi6525.o  \
 	  $(OBJ)/mess/machine/cia6526.o  \
 	  $(OBJ)/mess/machine/cbm.o	 \
-	  $(OBJ)/mess/sndhrdw/sid.o      \
+	  $(OBJ)/mess/sndhrdw/sid.o	 \
 	  $(OBJ)/mess/sndhrdw/sidenvel.o \
 	  $(OBJ)/mess/sndhrdw/sidvoice.o \
 	  $(OBJ)/mess/sndhrdw/sid6581.o  \
 	  $(OBJ)/mess/machine/cbmdrive.o \
 	  $(OBJ)/mess/machine/vc1541.o	 \
 	  $(OBJ)/mess/machine/cbmieeeb.o \
-	  $(OBJ)/mess/machine/cbmserb.o	 \
+	  $(OBJ)/mess/machine/cbmserb.o  \
 	  $(OBJ)/mess/machine/vc20tape.o \
 	  $(OBJ)/mess/vidhrdw/vic6567.o  \
 	  $(OBJ)/mess/machine/c64.o	 \
@@ -389,7 +389,7 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/machine/c65.o	 \
 	  $(OBJ)/mess/vidhrdw/vdc8563.o  \
 	  $(OBJ)/mess/systems/c128.o	 \
-	  $(OBJ)/mess/machine/c128.o	 
+	  $(OBJ)/mess/machine/c128.o
 
 $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/machine/counter.o  \
@@ -399,7 +399,7 @@ $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
-	  $(OBJ)/mess/systems/dragon.o   
+	  $(OBJ)/mess/systems/dragon.o
 
 
 $(OBJ)/trs80.a:    \
@@ -501,7 +501,7 @@ $(OBJ)/pcshare.a:	   \
 	  $(OBJ)/mess/sndhrdw/sblaster.o \
 	  $(OBJ)/mess/machine/pc_fdc.o	 \
 	  $(OBJ)/mess/machine/pc_hdc.o	 \
-	  $(OBJ)/mess/machine/pcshare.o	 
+	  $(OBJ)/mess/machine/pcshare.o
 
 $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
@@ -509,7 +509,7 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/ibmpc.o	 \
 	  $(OBJ)/mess/machine/tandy1t.o  \
 	  $(OBJ)/mess/machine/amstr_pc.o \
-	  $(OBJ)/mess/machine/europc.o   \
+	  $(OBJ)/mess/machine/europc.o	 \
 	  $(OBJ)/mess/machine/pc.o \
 	  $(OBJ)/mess/systems/pc.o
 
@@ -541,14 +541,14 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/machine/tc8521.o	 \
 	  $(OBJ)/mess/systems/pcw16.o	 \
 	  $(OBJ)/mess/machine/msm8251.o  \
-	  $(OBJ)/mess/vidhrdw/pcw16.o    \
+	  $(OBJ)/mess/vidhrdw/pcw16.o	 \
 	  $(OBJ)/mess/systems/amstrad.o  \
     $(OBJ)/mess/machine/serial.o
 
 $(OBJ)/veb.a: \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
 	  $(OBJ)/mess/machine/kc.o	 \
-      $(OBJ)/mess/systems/kc.o   \
+      $(OBJ)/mess/systems/kc.o	 \
 
 
 $(OBJ)/nec.a:	   \
@@ -633,7 +633,7 @@ $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
 
 $(OBJ)/lisa.a:	   \
-	  $(OBJ)/mess/machine/iwm.o      \
+	  $(OBJ)/mess/machine/iwm.o	 \
 	  $(OBJ)/mess/machine/sonydriv.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
 	  $(OBJ)/mess/systems/lisa.o
@@ -646,7 +646,7 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/machine/upd7002.o  \
 	  $(OBJ)/mess/vidhrdw/bbc.o	 \
 	  $(OBJ)/mess/machine/bbc.o	 \
-	  $(OBJ)/mess/systems/bbc.o      \
+	  $(OBJ)/mess/systems/bbc.o	 \
 	  $(OBJ)/mess/systems/a310.o	 \
 	  $(OBJ)/mess/systems/z88.o	 \
 	  $(OBJ)/mess/vidhrdw/z88.o
@@ -659,15 +659,15 @@ $(OBJ)/samcoupe.a: \
 $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/vidhrdw/pocketc.o  \
 	  $(OBJ)/mess/systems/pocketc.o  \
-	  $(OBJ)/mess/vidhrdw/pc1401.o   \
-	  $(OBJ)/mess/machine/pc1401.o   \
-	  $(OBJ)/mess/vidhrdw/pc1350.o   \
-	  $(OBJ)/mess/machine/pc1350.o   \
-	  $(OBJ)/mess/vidhrdw/pc1251.o   \
-	  $(OBJ)/mess/machine/pc1251.o   \
+	  $(OBJ)/mess/vidhrdw/pc1401.o	 \
+	  $(OBJ)/mess/machine/pc1401.o	 \
+	  $(OBJ)/mess/vidhrdw/pc1350.o	 \
+	  $(OBJ)/mess/machine/pc1350.o	 \
+	  $(OBJ)/mess/vidhrdw/pc1251.o	 \
+	  $(OBJ)/mess/machine/pc1251.o	 \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
-	  $(OBJ)/mess/systems/mz700.o	 
+	  $(OBJ)/mess/systems/mz700.o
 
 $(OBJ)/hp48.a: \
 	  $(OBJ)/mess/machine/hp48.o \
@@ -696,7 +696,7 @@ $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/systems/odyssey2.o
 
 $(OBJ)/teamconc.a: \
-	$(OBJ)/mess/vidhrdw/comquest.o   \
+	$(OBJ)/mess/vidhrdw/comquest.o	 \
 	$(OBJ)/mess/systems/comquest.o
 
 $(OBJ)/svision.a: $(OBJ)/mess/systems/svision.o
@@ -717,37 +717,37 @@ $(OBJ)/motorola.a: \
 $(OBJ)/svi.a: \
 	  $(OBJ)/mess/machine/svi318.o \
 	  $(OBJ)/mess/systems/svi318.o \
-	  $(OBJ)/mess/formats/svi_cas.o 
+	  $(OBJ)/mess/formats/svi_cas.o
 
 $(OBJ)/exidy.a: \
       $(OBJ)/mess/machine/hd6402.o \
       $(OBJ)/mess/machine/exidy.o \
       $(OBJ)/mess/systems/exidy.o \
-      $(OBJ)/mess/vidhrdw/exidy.o 
+      $(OBJ)/mess/vidhrdw/exidy.o
 
 $(OBJ)/intv.a:	\
 	$(OBJ)/mess/systems/intv.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
-		$(OBJ)/cheatms.o               \
-		$(OBJ)/mess/mess.o             \
-		$(OBJ)/mess/system.o           \
-		$(OBJ)/mess/config.o           \
-		$(OBJ)/mess/filemngr.o         \
-		$(OBJ)/mess/tapectrl.o         \
-		$(OBJ)/mess/menu.o             \
-		$(OBJ)/mess/printer.o          \
-		$(OBJ)/mess/menuentr.o         \
-		$(OBJ)/mess/utils.o            \
-		$(OBJ)/mess/bcd.o              \
+		$(OBJ)/cheatms.o	       \
+		$(OBJ)/mess/mess.o	       \
+		$(OBJ)/mess/system.o	       \
+		$(OBJ)/mess/config.o	       \
+		$(OBJ)/mess/filemngr.o	       \
+		$(OBJ)/mess/tapectrl.o	       \
+		$(OBJ)/mess/menu.o	       \
+		$(OBJ)/mess/printer.o	       \
+		$(OBJ)/mess/menuentr.o	       \
+		$(OBJ)/mess/utils.o	       \
+		$(OBJ)/mess/bcd.o	       \
 		$(OBJ)/mess/gregoria.o			\
 		$(OBJ)/mess/vidhrdw/state.o    \
 		$(OBJ)/mess/vidhrdw/m6847.o    \
 		$(OBJ)/mess/vidhrdw/m6845.o    \
 		$(OBJ)/mess/vidhrdw/tms9928a.o \
 		$(OBJ)/mess/machine/28f008sa.o \
-        $(OBJ)/mess/machine/am29f080.o \
+	$(OBJ)/mess/machine/am29f080.o \
 		$(OBJ)/mess/machine/rriot.o    \
 		$(OBJ)/mess/machine/riot6532.o \
 		$(OBJ)/mess/machine/pit8253.o  \
@@ -761,7 +761,7 @@ COREOBJS += \
 		$(OBJ)/mess/machine/pc_flopp.o \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
-		$(OBJ)/mess/diskctrl.o         \
+		$(OBJ)/mess/diskctrl.o	       \
 		$(OBJ)/mess/machine/dsk.o      \
 		$(OBJ)/mess/machine/flopdrv.o  \
 		$(OBJ)/mess/machine/nec765.o   \
@@ -771,7 +771,7 @@ COREOBJS += \
 
 # additional tools
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
-#TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
+#TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
 
 ifeq ($(OS),win32)
 OUTOPT = $(OBJ)/Win32/dirent.o -out:$@
@@ -789,7 +789,7 @@ mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg.o
 
 OBJDIRS += $(OBJ)/mess/messroms
 
-messroms$(EXE):	$(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
+messroms$(EXE): $(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 #	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
@@ -806,11 +806,11 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/filter.o \
 	  $(OBJ)/mess/tools/filteoln.o \
 	  $(OBJ)/mess/tools/filtbas.o \
-	  $(OBJ)/mess/tools/cococas.o   \
-	  $(OBJ)/mess/tools/vmsx_tap.o   \
-	  $(OBJ)/mess/tools/vmsx_gm2.o   \
+	  $(OBJ)/mess/tools/cococas.o	\
+	  $(OBJ)/mess/tools/vmsx_tap.o	 \
+	  $(OBJ)/mess/tools/vmsx_gm2.o	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o  \
-	  $(OBJ)/mess/tools/fmsx_cas.o  \
+	  $(OBJ)/mess/tools/fmsx_cas.o	\
 	  $(OBJ)/mess/formats/svi_cas.o  \
 	  $(OBJ)/mess/tools/svi_cas.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
