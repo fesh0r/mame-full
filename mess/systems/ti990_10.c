@@ -145,6 +145,8 @@ static int ti990_10_line_interrupt(void)
 static void rset_callback(void)
 {
 	ckon_state = 0;
+
+	vdt911_reset();
 	/* ... */
 }
 
