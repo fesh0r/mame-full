@@ -732,14 +732,8 @@ static void restore(void)
 
 	hdc.d[dsk_sel].unsafe = 0;		/* I think */
 
-	/* clear attention line */
-	//hdc.w[0] &= ~ (0x80 >> dsk_sel);
-
 	if (seek_to_sector(dsk_sel, 0, 0, 0))
 		return;
-
-	/* set attention line */
-	//hdc.w[0] |= (0x80 >> dsk_sel);
 
 	hdc.w[7] |= w7_idle | w7_complete;
 	update_interrupt();
@@ -793,8 +787,8 @@ static void execute_command(void)
 	case 0b110:
 		/* seek */
 		logerror("seek\n");
-		/* ... */
-		hdc.w[7] |= w7_idle | w7_error | w7_abnormal_completion;
+		/* This command can (almost) safely be ignored */
+		hdc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
 	case 0b111:
@@ -828,8 +822,8 @@ WRITE16_HANDLER(ti990_hdc_w)
 		{
 			UINT16 old_data = hdc.w[offset];
 
-			/* Only write writable bits */
-			hdc.w[offset] = (hdc.w[offset] & ~w_mask[offset]) | (data & w_mask[offset]);
+			/* Only write writable bits AND honor byte accesses (ha!) */
+			hdc.w[offset] = (hdc.w[offset] & ((~w_mask[offset]) | mem_mask)) | (data & w_mask[offset] & ~mem_mask);
 
 			if ((offset == 0) || (offset == 7))
 				update_interrupt();
