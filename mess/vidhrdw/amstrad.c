@@ -8,13 +8,13 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/amstrad.h"
-#include "mess/vidhrdw/hd6845s.h"
+#include "includes/amstrad.h"
+#include "vidhrdw/hd6845s.h"
 
 /* CRTC emulation code */
-#include "mess/vidhrdw/m6845.h"
+#include "vidhrdw/m6845.h"
 /* event list for storing colour changes, mode changes and CRTC writes */
-#include "mess/eventlst.h"
+#include "eventlst.h"
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
