@@ -655,7 +655,7 @@ void system32_set_colour (int offset)
 
 	/* there might be better ways of doing this ... but for now its functional ;-) */
 	r_bright = sys32_brightness[0]; r_bright &= 0x3f;
-	g_bright = sys32_brightness[1]; b_bright &= 0x3f;
+	g_bright = sys32_brightness[1]; g_bright &= 0x3f;
 	b_bright = sys32_brightness[2]; b_bright &= 0x3f;
 
 	if ((r_bright & 0x20)) { r = (r * (r_bright&0x1f))>>5; } else { r = r+(((0xf8-r) * (r_bright&0x1f))>>5); }
