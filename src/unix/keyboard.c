@@ -135,6 +135,8 @@ struct kbd_fifo_struct;
 static struct kbd_fifo_struct *kbd_fifo = NULL;
 static char key[KEY_MAX];
 
+UINT8 trying_to_quit;
+
 /* private methods */
 FIFO(INLINE, kbd, struct xmame_keyboard_event)
 
@@ -291,6 +293,13 @@ int osd_is_key_pressed(int keycode)
    
    if (keycode >= KEY_MAX)
       return 0;
+
+   /* special case: if we're trying to quit, fake up/down/up/down */
+   if (keycode == KEY_ESC && trying_to_quit)
+   {
+      static int dummy_state = 1;
+      return dummy_state ^= 1;
+   }
 
    sysdep_update_keyboard();
 	
