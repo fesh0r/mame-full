@@ -89,6 +89,11 @@
 #define MEAN16(P,Q) ( RMASK16((RMASK16(P)+RMASK16(Q))/2) | GMASK16((GMASK16(P)+GMASK16(Q))/2) | BMASK16((BMASK16(P)+BMASK16(Q))/2) )
 #define MEAN32(P,Q) ( RMASK32((RMASK32(P)+RMASK32(Q))/2) | GMASK32((GMASK32(P)+GMASK32(Q))/2) | BMASK32((BMASK32(P)+BMASK32(Q))/2) )
 
+#ifdef USE_XV
+#define XV_YUY2 0x32595559
+#define XV_YV12 0x32315659
+#endif
+
 /* called from config.c to set scale parameters */
 void effect_init1()
 {
@@ -130,11 +135,23 @@ void effect_init1()
 void effect_init2(int src_depth, int dst_depth, int dst_width)
 {
 	if (effect) {
-		int i;
+		int i,rddepth;
 
-		printf("Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, dst_depth);
-		effect_dbbuf = malloc(dst_width*normal_heightscale*dst_depth/8);
-		for (i=0; i<dst_width*normal_heightscale*dst_depth/8; i++)
+		switch(dst_depth) {
+#ifdef USE_XV
+			case XV_YUY2:
+			case XV_YV12:
+				rddepth=16;
+				break;
+#endif
+			default:
+				rddepth=dst_depth;
+				break;
+		}
+
+		printf("Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
+		effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
+		for (i=0; i<dst_width*normal_heightscale*rddepth/8; i++)
 			((char *)effect_dbbuf)[i] = 0;
 		switch (dst_depth) {
 			case 15:
@@ -187,6 +204,18 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
 						break;
 				}
 				break;
+#ifdef USE_XV
+			case XV_YUY2:
+				switch(src_depth) {
+					case 16:
+						effect_scale2x_func = effect_scale2x_16_YUY2;
+						break;
+					case 32:
+						effect_scale2x_direct_func = effect_scale2x_32_YUY2_direct;
+						break;
+       				}
+				break;
+#endif
 		}
 	}
 }
@@ -290,6 +319,146 @@ void effect_scale2x_16_16_direct
 		--count;
 	}
 }
+
+#ifdef USE_XV
+#define RMASK 0xff0000
+#define GMASK 0xff00
+#define BMASK 0xff
+void effect_scale2x_16_YUY2
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup)
+{
+	unsigned char *u8dst0 = (unsigned char *)dst0;
+	unsigned char *u8dst1 = (unsigned char *)dst1;
+	UINT16 *u16src0 = (UINT16 *)src0;
+	UINT16 *u16src1 = (UINT16 *)src1;
+	UINT16 *u16src2 = (UINT16 *)src2;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+	INT32 r,g,b,r2,g2,b2,y,y2,u,v;
+	UINT32 p1,p2,p3,p4;
+	while (count) {
+
+		if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
+			p1 = u32lookup[u16src0[0]];
+		else	p1 = u32lookup[u16src1[0]];
+
+		if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
+			p2 = u32lookup[u16src0[0]];
+		else	p2 = u32lookup[u16src1[0]];
+
+		if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
+			p3 = u32lookup[u16src2[0]];
+		else	p3 = u32lookup[u16src1[0]];
+
+		if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
+			p4 = u32lookup[u16src2[0]];
+		else	p4 = u32lookup[u16src1[0]];
+
+		++u16src0;
+		++u16src1;
+		++u16src2;
+
+		y=p1>>24;
+		*u8dst0++=y;
+		u=((p1>>16)&255) + ((p2>>16)&255);
+		*u8dst0++=u/2;
+		y=p2>>24;
+		*u8dst0++=y;
+		v=(p1&255) + (p2&255);
+		*u8dst0++=v/2;
+
+		y=p3>>24;
+		*u8dst1++=y;
+		u=((p3>>16)&255) + ((p4>>16)&255);
+		*u8dst1++=u/2;
+		y=p4>>24;
+		*u8dst1++=y;
+		v=(p3&255) + (p4&255);
+		*u8dst1++=v/2;
+		--count;
+	}
+}
+
+void effect_scale2x_32_YUY2_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count)
+{
+	unsigned char *u8dst0 = (unsigned char *)dst0;
+	unsigned char *u8dst1 = (unsigned char *)dst1;
+	UINT32 *u32src0 = (UINT32 *)src0;
+	UINT32 *u32src1 = (UINT32 *)src1;
+	UINT32 *u32src2 = (UINT32 *)src2;
+  INT32 r,g,b,r2,g2,b2,y,y2,u,v;
+  UINT32 p1,p2,p3,p4;
+	while (count) {
+
+		if (u32src1[-1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[1] != u32src0[0])
+			p1 = u32src0[0];
+		else	p1 = u32src1[0];
+
+		if (u32src1[1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[-1] != u32src0[0])
+			p2 = u32src0[0];
+		else	p2 = u32src1[0];
+
+		if (u32src1[-1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[1] != u32src2[0])
+			p3 = u32src2[0];
+		else	p3 = u32src1[0];
+
+		if (u32src1[1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[-1] != u32src2[0])
+			p4 = u32src2[0];
+		else	p4 = u32src1[0];
+
+		++u32src0;
+		++u32src1;
+		++u32src2;
+
+    r=p1&RMASK;  r>>=16; \
+    g=p1&GMASK;  g>>=8; \
+    b=p1&BMASK;  b>>=0; \
+
+    r2=p2&RMASK;  r2>>=16; \
+    g2=p2&GMASK;  g2>>=8; \
+    b2=p2&BMASK;  b2>>=0; \
+
+    y = (( 9897*r + 19235*g + 3736*b ) >> 15);
+    y2 = (( 9897*r2 + 19235*g2 + 3736*b2 ) >> 15);
+    r+=r2; g+=g2; b+=b2; \
+    *u8dst0++=y;
+    u = (( -5537*r - 10878*g + 16384*b ) >> 16) + 128; \
+    *u8dst0++=u;
+    v = (( 16384*r - 13730*g - 2664*b ) >> 16) + 128; \
+    *u8dst0++=y2;
+    *u8dst0++=v;
+
+    r=p3&RMASK;  r>>=16; \
+    g=p3&GMASK;  g>>=8; \
+    b=p3&BMASK;  b>>=0; \
+
+    r2=p4&RMASK;  r2>>=16; \
+    g2=p4&GMASK;  g2>>=8; \
+    b2=p4&BMASK;  b2>>=0; \
+
+    y = (( 9897*r + 19235*g + 3736*b ) >> 15);
+    y2 = (( 9897*r2 + 19235*g2 + 3736*b2 ) >> 15);
+    r+=r2; g+=g2; b+=b2; \
+    *u8dst1++=y;
+    u = (( -5537*r - 10878*g + 16384*b ) >> 16) + 128; \
+    *u8dst1++=u;
+    v = (( 16384*r - 13730*g - 2664*b ) >> 16) + 128; \
+    *u8dst1++=y2;
+    *u8dst1++=v;
+
+		--count;
+	}
+}
+
+#undef RMASK
+#undef GMASK
+#undef BMASK
+#endif
+
 
 /* FIXME: this probably doesn't work right for 24 bit */
 void effect_scale2x_16_24

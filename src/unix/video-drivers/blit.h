@@ -23,7 +23,7 @@
                 scaling when writing directly to framebuffer since it
                 tremendously speeds up the reads done to copy one line to
                 the next.
-   
+
    These routines use long copies so everything should always be long aligned.
 */
 
@@ -71,6 +71,29 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
       *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
    }\
       }
+#elif defined BLIT_XV_YUY2
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,y,u,v; \
+      for(;src<end;) \
+      { \
+         r=INDIRECT[*src++]; \
+         y=r>>24; \
+         u=(r>>16)&255; \
+         v=r&255; \
+         *dst++=y; \
+         r=INDIRECT[*src++]; \
+         u+=(r>>16)&255; \
+         v+=r&255; \
+         *dst++=u/2; \
+         y=r>>24; \
+         *dst++=y; \
+         *dst++=v/2; \
+      } \
+   }
 #else /* normal indirect */
 #define COPY_LINE2(SRC, END, DST) \
       {\
@@ -407,6 +430,29 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       *(dst+1) = (INDIRECT[*(src+1)]>> 8) | (INDIRECT[*(src+2)]<<16); \
       *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
    }
+#elif defined BLIT_XV_YUY2
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,y,u,v; \
+      for(;src<end;) \
+      { \
+         r=INDIRECT[*src++]; \
+         y=r>>24; \
+         u=(r>>16)&255; \
+         v=r&255; \
+         *dst++=y; \
+         r=INDIRECT[*src++]; \
+         u+=(r>>16)&255; \
+         v+=r&255; \
+         *dst++=u/2; \
+         y=r>>24; \
+         *dst++=y; \
+         *dst++=v/2; \
+      } \
+   }
 #else /* normal indirect */
 #define COPY_LINE2(SRC, END, DST) \
    SRC_PIXEL  *src = SRC; \
@@ -426,8 +472,38 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
 #endif /* dga_16bpp_hack / packed / normal indirect */
 
 #else  /* not indirect */
+#ifdef BLIT_XV_YUY2
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,g,b,r2,g2,b2,y,y2,u,v; \
+      for(;src<end;) \
+      { \
+         r=g=b=*src++; \
+         r&=RMASK;  r>>=16; \
+         g&=GMASK;  g>>=8; \
+         b&=BMASK;  b>>=0; \
+         r2=g2=b2=*src++; \
+         r2&=RMASK;  r2>>=16; \
+         g2&=GMASK;  g2>>=8; \
+         b2&=BMASK;  b2>>=0; \
+         y = (( 9897*r + 19235*g + 3736*b ) >> 15); \
+         y2 = (( 9897*r2 + 19235*g2 + 3736*b2 ) >> 15); \
+         r+=r2; g+=g2; b+=b2; \
+         *dst++=y; \
+         u = (( -(5537/2)*r - (10878/2)*g + (16384/2)*b ) >> 15) + 128; \
+         *dst++=u; \
+         v = (( (16384/2)*r - (13730/2)*g -(2664/2)*b ) >> 15 ) + 128; \
+         *dst++=y2; \
+         *dst++=v; \
+      }\
+   }
+#else
 #define COPY_LINE2(SRC, END, DST) \
    memcpy(DST, SRC, ((END)-(SRC))*DEST_PIXEL_SIZE);
+#endif
 #endif /* indirect */
 
 #define SCALE_X(X) (X)
@@ -506,6 +582,25 @@ break;
       *(dst+1) = (INDIRECT[*(src  )]>> 8) | (INDIRECT[*(src+1)]<<16); \
       *(dst+2) = (INDIRECT[*(src+1)]>>16) | (INDIRECT[*(src+1)]<<8); \
    }
+#elif defined BLIT_XV_YUY2
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,y,u,v; \
+      for(;src<end;) \
+      { \
+         r=INDIRECT[*src++]; \
+         y=r>>24; \
+         u=(r>>16); \
+         v=r; \
+         *dst++=y; \
+         *dst++=u; \
+         *dst++=y; \
+         *dst++=v; \
+      } \
+   }
 #else /* not pack bits */
 #define COPY_LINE2(SRC, END, DST) \
    SRC_PIXEL  *src = SRC; \
@@ -526,6 +621,29 @@ break;
 
 #else /* not indirect */
 
+#ifdef BLIT_XV_YUY2
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,g,b,y,u,v; \
+      for(;src<end;) \
+      { \
+         r=g=b=*src++; \
+         r&=RMASK;  r>>=16; \
+         g&=GMASK;  g>>=8; \
+         b&=BMASK;  b>>=0; \
+         y = (( 9897*r + 19235*g + 3736*b ) >> 15); \
+         *dst++=y; \
+         u = (( -(5537)*r - (10878)*g + (16384)*b ) >> 15) + 128; \
+         *dst++=u; \
+         v = (( (16384)*r - (13730)*g -(2664)*b ) >> 15 ) + 128; \
+         *dst++=y; \
+         *dst++=v; \
+      }\
+   }
+#else
 #define COPY_LINE2(SRC, END, DST) \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
@@ -541,6 +659,7 @@ break;
       *(dst+12) = *(dst+13) = *(src+6); \
       *(dst+14) = *(dst+15) = *(src+7); \
    }
+#endif
 #endif
 
 #define SCALE_X(X)   ((X)<<1)
