@@ -7,180 +7,389 @@ extern int _joy_type;
 #define joy_type _joy_type
 #endif
 
-/* Main mouse activation flag */
 int use_mouse;
+int joystick;
+int steadykey;
+
+#define ELEMENTS(x)			(sizeof(x) / sizeof((x)[0]))
+
+#define MAX_PATH			256
+
+//============================================================
+//	PARAMETERS
+//============================================================
+
+//#define MAX_KEYBOARDS		1
+//#define MAX_MICE			8
+//#define MAX_JOYSTICKS		8
+//#define MAX_LIGHTGUNS		2
+
+#define MAX_KEYS			256
+
+#define MAX_JOY				256
+#define MAX_AXES			MAX_JOYSTICK_AXIS * MAX_JOYSTICK_STICKS
+//#define MAX_BUTTONS			32
+//#define MAX_POV				4
+
+// this will be filled in dynamically
+static struct OSCodeInfo	codelist[MAX_KEYS+MAX_JOY];
+static int					total_codes;
+
+// additional key data
+static INT8					oldkey[MAX_KEYS];
+static INT8					currkey[MAX_KEYS];
 
 /* Sub mouse activation flag */
 /* assert(use_mouse == use_mouse_1 || use_mouse_2) */
 static int use_mouse_1; /* Allegro mouse, mapped on player 1 */
 static int use_mouse_2; /* OptiMAME mouse extension, mapped on player 2 */
-
 /* Mouse button mask */
-#define mouse_button_1 mouse_b /* Allegro mouse */
-static int mouse_button_2; /* OptiMAME mouse extension */
-
-int joystick;
-int steadykey;
-
-static struct KeyboardInfo keylist[ 256 ];
-
 static struct
 {
-	const char *name;
-	unsigned code;
-	InputCode standardcode;
-} default_keylist[] =
+	int axis[ 2 ];
+	int buttons;
+} mouse_state[ 2 ];
+
+// current joystick
+static int calibration_target;
+
+//============================================================
+//	KEYBOARD/JOYSTICK LIST
+//============================================================
+
+// macros for building/mapping keyboard codes
+#define KEYCODE(allegrokey, ascii)		((allegrokey) | ((ascii) << 16))
+#define ALLEGROKEY(keycode)				((keycode) & 0xff)
+#define ASCIICODE(keycode)			(((keycode) >> 16) & 0xff)
+
+// macros for building/mapping joystick codes
+#define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12) | 0x80000000)
+#define JOYINDEX(joycode)			((joycode) & 0xff)
+#define CODETYPE(joycode)			(((joycode) >> 8) & 0xf)
+#define JOYNUM(joycode)				(((joycode) >> 12) & 0xf)
+
+// macros for differentiating the two
+#define IS_KEYBOARD_CODE(code)		(((code) & 0x80000000) == 0)
+#define IS_JOYSTICK_CODE(code)		(((code) & 0x80000000) != 0)
+
+// joystick types
+//#define CODETYPE_KEYBOARD			0
+#define CODETYPE_AXIS_NEG			1
+#define CODETYPE_AXIS_POS			2
+//#define CODETYPE_POV_UP				3
+//#define CODETYPE_POV_DOWN			4
+//#define CODETYPE_POV_LEFT			5
+//#define CODETYPE_POV_RIGHT			6
+#define CODETYPE_BUTTON				7
+#define CODETYPE_JOYAXIS			8
+#define CODETYPE_MOUSEAXIS			9
+#define CODETYPE_MOUSEBUTTON		10
+//#define CODETYPE_GUNAXIS			11
+
+// master keyboard translation table
+static struct
 {
-	{ "A",			KEY_A,				KEYCODE_A },
-	{ "B",			KEY_B,				KEYCODE_B },
-	{ "C",			KEY_C,				KEYCODE_C },
-	{ "D",			KEY_D,				KEYCODE_D },
-	{ "E",			KEY_E,				KEYCODE_E },
-	{ "F",			KEY_F,				KEYCODE_F },
-	{ "G",			KEY_G,				KEYCODE_G },
-	{ "H",			KEY_H,				KEYCODE_H },
-	{ "I",			KEY_I,				KEYCODE_I },
-	{ "J",			KEY_J,				KEYCODE_J },
-	{ "K",			KEY_K,				KEYCODE_K },
-	{ "L",			KEY_L,				KEYCODE_L },
-	{ "M",			KEY_M,				KEYCODE_M },
-	{ "N",			KEY_N,				KEYCODE_N },
-	{ "O",			KEY_O,				KEYCODE_O },
-	{ "P",			KEY_P,				KEYCODE_P },
-	{ "Q",			KEY_Q,				KEYCODE_Q },
-	{ "R",			KEY_R,				KEYCODE_R },
-	{ "S",			KEY_S,				KEYCODE_S },
-	{ "T",			KEY_T,				KEYCODE_T },
-	{ "U",			KEY_U,				KEYCODE_U },
-	{ "V",			KEY_V,				KEYCODE_V },
-	{ "W",			KEY_W,				KEYCODE_W },
-	{ "X",			KEY_X,				KEYCODE_X },
-	{ "Y",			KEY_Y,				KEYCODE_Y },
-	{ "Z",			KEY_Z,				KEYCODE_Z },
-	{ "0",			KEY_0,				KEYCODE_0 },
-	{ "1",			KEY_1,				KEYCODE_1 },
-	{ "2",			KEY_2,				KEYCODE_2 },
-	{ "3",			KEY_3,				KEYCODE_3 },
-	{ "4",			KEY_4,				KEYCODE_4 },
-	{ "5",			KEY_5,				KEYCODE_5 },
-	{ "6",			KEY_6,				KEYCODE_6 },
-	{ "7",			KEY_7,				KEYCODE_7 },
-	{ "8",			KEY_8,				KEYCODE_8 },
-	{ "9",			KEY_9,				KEYCODE_9 },
-	{ "0 PAD",		KEY_0_PAD,			KEYCODE_0_PAD },
-	{ "1 PAD",		KEY_1_PAD,			KEYCODE_1_PAD },
-	{ "2 PAD",		KEY_2_PAD,			KEYCODE_2_PAD },
-	{ "3 PAD",		KEY_3_PAD,			KEYCODE_3_PAD },
-	{ "4 PAD",		KEY_4_PAD,			KEYCODE_4_PAD },
-	{ "5 PAD",		KEY_5_PAD,			KEYCODE_5_PAD },
-	{ "6 PAD",		KEY_6_PAD,			KEYCODE_6_PAD },
-	{ "7 PAD",		KEY_7_PAD,			KEYCODE_7_PAD },
-	{ "8 PAD",		KEY_8_PAD,			KEYCODE_8_PAD },
-	{ "9 PAD",		KEY_9_PAD,			KEYCODE_9_PAD },
-	{ "F1",			KEY_F1,				KEYCODE_F1 },
-	{ "F2",			KEY_F2,				KEYCODE_F2 },
-	{ "F3",			KEY_F3,				KEYCODE_F3 },
-	{ "F4",			KEY_F4,				KEYCODE_F4 },
-	{ "F5",			KEY_F5,				KEYCODE_F5 },
-	{ "F6",			KEY_F6,				KEYCODE_F6 },
-	{ "F7",			KEY_F7,				KEYCODE_F7 },
-	{ "F8",			KEY_F8,				KEYCODE_F8 },
-	{ "F9",			KEY_F9,				KEYCODE_F9 },
-	{ "F10",		KEY_F10,			KEYCODE_F10 },
-	{ "F11",		KEY_F11,			KEYCODE_F11 },
-	{ "F12",		KEY_F12,			KEYCODE_F12 },
-	{ "ESC",		KEY_ESC,			KEYCODE_ESC },
-	{ "~",			KEY_TILDE,			KEYCODE_TILDE },
-	{ "-",          KEY_MINUS,          KEYCODE_MINUS },
-	{ "=",          KEY_EQUALS,         KEYCODE_EQUALS },
-	{ "BKSPACE",	KEY_BACKSPACE,		KEYCODE_BACKSPACE },
-	{ "TAB",		KEY_TAB,			KEYCODE_TAB },
-	{ "[",          KEY_OPENBRACE,      KEYCODE_OPENBRACE },
-	{ "]",          KEY_CLOSEBRACE,     KEYCODE_CLOSEBRACE },
-	{ "ENTER",		KEY_ENTER,			KEYCODE_ENTER },
-	{ ";",          KEY_COLON,          KEYCODE_COLON },
-	{ ":",          KEY_QUOTE,          KEYCODE_QUOTE },
-	{ "\\",         KEY_BACKSLASH,      KEYCODE_BACKSLASH },
-	{ "<",          KEY_BACKSLASH2,     KEYCODE_BACKSLASH2 },
-	{ ",",          KEY_COMMA,          KEYCODE_COMMA },
-	{ ".",          KEY_STOP,           KEYCODE_STOP },
-	{ "/",          KEY_SLASH,          KEYCODE_SLASH },
-	{ "SPACE",		KEY_SPACE,			KEYCODE_SPACE },
-	{ "INS",		KEY_INSERT,			KEYCODE_INSERT },
-	{ "DEL",		KEY_DEL,			KEYCODE_DEL },
-	{ "HOME",		KEY_HOME,			KEYCODE_HOME },
-	{ "END",		KEY_END,			KEYCODE_END },
-	{ "PGUP",		KEY_PGUP,			KEYCODE_PGUP },
-	{ "PGDN",		KEY_PGDN,			KEYCODE_PGDN },
-	{ "LEFT",		KEY_LEFT,			KEYCODE_LEFT },
-	{ "RIGHT",		KEY_RIGHT,			KEYCODE_RIGHT },
-	{ "UP",			KEY_UP,				KEYCODE_UP },
-	{ "DOWN",		KEY_DOWN,			KEYCODE_DOWN },
-	{ "/ PAD",      KEY_SLASH_PAD,      KEYCODE_SLASH_PAD },
-	{ "* PAD",      KEY_ASTERISK,       KEYCODE_ASTERISK },
-	{ "- PAD",      KEY_MINUS_PAD,      KEYCODE_MINUS_PAD },
-	{ "+ PAD",      KEY_PLUS_PAD,       KEYCODE_PLUS_PAD },
-	{ ". PAD",      KEY_DEL_PAD,        KEYCODE_DEL_PAD },
-	{ "ENTER PAD",  KEY_ENTER_PAD,      KEYCODE_ENTER_PAD },
-	{ "PRTSCR",     KEY_PRTSCR,         KEYCODE_PRTSCR },
-	{ "PAUSE",      KEY_PAUSE,          KEYCODE_PAUSE },
-	{ "LSHIFT",		KEY_LSHIFT,			KEYCODE_LSHIFT },
-	{ "RSHIFT",		KEY_RSHIFT,			KEYCODE_RSHIFT },
-	{ "LCTRL",		KEY_LCONTROL,		KEYCODE_LCONTROL },
-	{ "RCTRL",		KEY_RCONTROL,		KEYCODE_RCONTROL },
-	{ "ALT",		KEY_ALT,			KEYCODE_LALT },
-	{ "ALTGR",		KEY_ALTGR,			KEYCODE_RALT },
-	{ "LWIN",		KEY_LWIN,			KEYCODE_OTHER },
-	{ "RWIN",		KEY_RWIN,			KEYCODE_OTHER },
-	{ "MENU",		KEY_MENU,			KEYCODE_OTHER },
-	{ "SCRLOCK",    KEY_SCRLOCK,        KEYCODE_SCRLOCK },
-	{ "NUMLOCK",    KEY_NUMLOCK,        KEYCODE_NUMLOCK },
-	{ "CAPSLOCK",   KEY_CAPSLOCK,       KEYCODE_CAPSLOCK },
-	{ NULL, 0, 0 }	/* end of table */
+	os_code_t keycode;
+	int key;
+	int ascii;
+} msdos_key_trans_table[] =
+{
+	// MAME key				allegro key			ascii
+	{ KEYCODE_ESC, 			KEY_ESC,			27 },
+	{ KEYCODE_1, 			KEY_1,				'1' },
+	{ KEYCODE_2, 			KEY_2,				'2' },
+	{ KEYCODE_3, 			KEY_3,				'3' },
+	{ KEYCODE_4, 			KEY_4,				'4' },
+	{ KEYCODE_5, 			KEY_5,				'5' },
+	{ KEYCODE_6, 			KEY_6,				'6' },
+	{ KEYCODE_7, 			KEY_7,				'7' },
+	{ KEYCODE_8, 			KEY_8,				'8' },
+	{ KEYCODE_9, 			KEY_9,				'9' },
+	{ KEYCODE_0, 			KEY_0,				'0' },
+	{ KEYCODE_MINUS, 		KEY_MINUS, 			'-' },
+	{ KEYCODE_EQUALS, 		KEY_EQUALS,		 	'=' },
+	{ KEYCODE_BACKSPACE,	KEY_BACKSPACE, 		8 },
+	{ KEYCODE_TAB, 			KEY_TAB, 			9 },
+	{ KEYCODE_Q, 			KEY_Q,				'Q' },
+	{ KEYCODE_W, 			KEY_W,				'W' },
+	{ KEYCODE_E, 			KEY_E,				'E' },
+	{ KEYCODE_R, 			KEY_R,				'R' },
+	{ KEYCODE_T, 			KEY_T,				'T' },
+	{ KEYCODE_Y, 			KEY_Y,				'Y' },
+	{ KEYCODE_U, 			KEY_U,				'U' },
+	{ KEYCODE_I, 			KEY_I,				'I' },
+	{ KEYCODE_O, 			KEY_O,				'O' },
+	{ KEYCODE_P, 			KEY_P,				'P' },
+	{ KEYCODE_OPENBRACE,	KEY_OPENBRACE, 		'[' },
+	{ KEYCODE_CLOSEBRACE,	KEY_CLOSEBRACE, 	']' },
+	{ KEYCODE_ENTER, 		KEY_ENTER,			13 },
+	{ KEYCODE_LCONTROL, 	KEY_LCONTROL, 		0 },
+	{ KEYCODE_A, 			KEY_A,				'A' },
+	{ KEYCODE_S, 			KEY_S,				'S' },
+	{ KEYCODE_D, 			KEY_D,				'D' },
+	{ KEYCODE_F, 			KEY_F,				'F' },
+	{ KEYCODE_G, 			KEY_G,				'G' },
+	{ KEYCODE_H, 			KEY_H,				'H' },
+	{ KEYCODE_J, 			KEY_J,				'J' },
+	{ KEYCODE_K, 			KEY_K,				'K' },
+	{ KEYCODE_L, 			KEY_L,				'L' },
+	{ KEYCODE_COLON, 		KEY_COLON,			';' },
+	{ KEYCODE_QUOTE, 		KEY_QUOTE,			'\'' },
+	{ KEYCODE_TILDE, 		KEY_TILDE, 			'`' },
+	{ KEYCODE_LSHIFT, 		KEY_LSHIFT, 		0 },
+	{ KEYCODE_BACKSLASH,	KEY_BACKSLASH, 		'\\' },
+	{ KEYCODE_Z, 			KEY_Z,				'Z' },
+	{ KEYCODE_X, 			KEY_X,				'X' },
+	{ KEYCODE_C, 			KEY_C,				'C' },
+	{ KEYCODE_V, 			KEY_V,				'V' },
+	{ KEYCODE_B, 			KEY_B,				'B' },
+	{ KEYCODE_N, 			KEY_N,				'N' },
+	{ KEYCODE_M, 			KEY_M,				'M' },
+	{ KEYCODE_COMMA, 		KEY_COMMA,			',' },
+	{ KEYCODE_STOP, 		KEY_STOP, 			'.' },
+	{ KEYCODE_SLASH, 		KEY_SLASH, 			'/' },
+	{ KEYCODE_RSHIFT, 		KEY_RSHIFT, 		0 },
+	{ KEYCODE_ASTERISK, 	KEY_ASTERISK, 		'*' },
+	{ KEYCODE_LALT, 		KEY_ALT, 			0 },
+	{ KEYCODE_SPACE, 		KEY_SPACE, 			' ' },
+	{ KEYCODE_CAPSLOCK, 	KEY_CAPSLOCK, 		0 },
+	{ KEYCODE_F1, 			KEY_F1,				0 },
+	{ KEYCODE_F2, 			KEY_F2,				0 },
+	{ KEYCODE_F3, 			KEY_F3,				0 },
+	{ KEYCODE_F4, 			KEY_F4,				0 },
+	{ KEYCODE_F5, 			KEY_F5,				0 },
+	{ KEYCODE_F6, 			KEY_F6,				0 },
+	{ KEYCODE_F7, 			KEY_F7,				0 },
+	{ KEYCODE_F8, 			KEY_F8,				0 },
+	{ KEYCODE_F9, 			KEY_F9,				0 },
+	{ KEYCODE_F10, 			KEY_F10,			0 },
+	{ KEYCODE_NUMLOCK, 		KEY_NUMLOCK,		0 },
+	{ KEYCODE_SCRLOCK, 		KEY_SCRLOCK,		0 },
+	{ KEYCODE_7_PAD, 		KEY_7_PAD,			0 },
+	{ KEYCODE_8_PAD, 		KEY_8_PAD,			0 },
+	{ KEYCODE_9_PAD, 		KEY_9_PAD,			0 },
+	{ KEYCODE_MINUS_PAD,	KEY_MINUS_PAD,		0 },
+	{ KEYCODE_4_PAD, 		KEY_4_PAD,			0 },
+	{ KEYCODE_5_PAD, 		KEY_5_PAD,			0 },
+	{ KEYCODE_6_PAD, 		KEY_6_PAD,			0 },
+	{ KEYCODE_PLUS_PAD, 	KEY_PLUS_PAD,		0 },
+	{ KEYCODE_1_PAD, 		KEY_1_PAD,			0 },
+	{ KEYCODE_2_PAD, 		KEY_2_PAD,			0 },
+	{ KEYCODE_3_PAD, 		KEY_3_PAD,			0 },
+	{ KEYCODE_0_PAD, 		KEY_0_PAD,			0 },
+	{ KEYCODE_DEL_PAD, 		KEY_DEL_PAD,		0 },
+	{ KEYCODE_F11, 			KEY_F11,			0 },
+	{ KEYCODE_F12, 			KEY_F12,			0 },
+//	{ KEYCODE_F13, 			KEY_F13,			0 },
+//	{ KEYCODE_F14, 			KEY_F14,			0 },
+//	{ KEYCODE_F15, 			KEY_F15,			0 },
+	{ KEYCODE_ENTER_PAD,	KEY_ENTER_PAD,		0 },
+	{ KEYCODE_RCONTROL, 	KEY_RCONTROL,		0 },
+	{ KEYCODE_SLASH_PAD,	KEY_SLASH_PAD,		0 },
+	{ KEYCODE_PRTSCR, 		KEY_PRTSCR, 		0 },
+	{ KEYCODE_RALT, 		KEY_ALTGR,			0 },
+	{ KEYCODE_HOME, 		KEY_HOME,			0 },
+	{ KEYCODE_UP, 			KEY_UP,				0 },
+	{ KEYCODE_PGUP, 		KEY_PGUP,			0 },
+	{ KEYCODE_LEFT, 		KEY_LEFT,			0 },
+	{ KEYCODE_RIGHT, 		KEY_RIGHT,			0 },
+	{ KEYCODE_END, 			KEY_END,			0 },
+	{ KEYCODE_DOWN, 		KEY_DOWN,			0 },
+	{ KEYCODE_PGDN, 		KEY_PGDN,			0 },
+	{ KEYCODE_INSERT, 		KEY_INSERT,			0 },
+	{ KEYCODE_DEL, 			KEY_DEL,			0 },
+	{ KEYCODE_LWIN, 		KEY_LWIN,			0 },
+	{ KEYCODE_RWIN, 		KEY_RWIN,			0 },
+	{ KEYCODE_MENU, 		KEY_MENU,			0 },
+	{ -1 }
 };
 
 
-static void init_key_list(void)
+
+// master joystick translation table
+static int joy_trans_table[][2] =
 {
-	int i;
-	i = 0;
-	while( default_keylist[ i ].name != NULL )
-	{
-		keylist[ i ].name = malloc( strlen( default_keylist[ i ].name ) + 1 );
-		if( keylist[ i ].name == NULL )
-		{
-			printf( "init_key_list() out of memory\n" );
-			exit( 0 );
-		}
-		strcpy( keylist[ i ].name, default_keylist[ i ].name );
-		keylist[ i ].code = default_keylist[ i ].code;
-		keylist[ i ].standardcode = default_keylist[ i ].standardcode;
-		i++;
-	}
-	keylist[ i ].name = NULL;
-	keylist[ i ].code = 0;
-	keylist[ i ].standardcode = 0;
-}
+	// internal code					MAME code
+	{ JOYCODE(0, CODETYPE_AXIS_NEG, 0),	JOYCODE_1_LEFT },
+	{ JOYCODE(0, CODETYPE_AXIS_POS, 0),	JOYCODE_1_RIGHT },
+	{ JOYCODE(0, CODETYPE_AXIS_NEG, 1),	JOYCODE_1_UP },
+	{ JOYCODE(0, CODETYPE_AXIS_POS, 1),	JOYCODE_1_DOWN },
+	{ JOYCODE(0, CODETYPE_BUTTON, 0),	JOYCODE_1_BUTTON1 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 1),	JOYCODE_1_BUTTON2 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 2),	JOYCODE_1_BUTTON3 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 3),	JOYCODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 4),	JOYCODE_1_BUTTON5 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 5),	JOYCODE_1_BUTTON6 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 6),	JOYCODE_1_BUTTON7 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 7),	JOYCODE_1_BUTTON8 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 8),	JOYCODE_1_BUTTON9 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 9),	JOYCODE_1_BUTTON10 },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 0),	JOYCODE_1_ANALOG_X },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 1),	JOYCODE_1_ANALOG_Y },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 2),	JOYCODE_1_ANALOG_Z },
+
+	{ JOYCODE(1, CODETYPE_AXIS_NEG, 0),	JOYCODE_2_LEFT },
+	{ JOYCODE(1, CODETYPE_AXIS_POS, 0),	JOYCODE_2_RIGHT },
+	{ JOYCODE(1, CODETYPE_AXIS_NEG, 1),	JOYCODE_2_UP },
+	{ JOYCODE(1, CODETYPE_AXIS_POS, 1),	JOYCODE_2_DOWN },
+	{ JOYCODE(1, CODETYPE_BUTTON, 0),	JOYCODE_2_BUTTON1 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 1),	JOYCODE_2_BUTTON2 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 2),	JOYCODE_2_BUTTON3 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 3),	JOYCODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 4),	JOYCODE_2_BUTTON5 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 5),	JOYCODE_2_BUTTON6 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 6),	JOYCODE_2_BUTTON7 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 7),	JOYCODE_2_BUTTON8 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 8),	JOYCODE_2_BUTTON9 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 9),	JOYCODE_2_BUTTON10 },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 0),	JOYCODE_2_ANALOG_X },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 1),	JOYCODE_2_ANALOG_Y },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 2),	JOYCODE_2_ANALOG_Z },
+
+	{ JOYCODE(2, CODETYPE_AXIS_NEG, 0),	JOYCODE_3_LEFT },
+	{ JOYCODE(2, CODETYPE_AXIS_POS, 0),	JOYCODE_3_RIGHT },
+	{ JOYCODE(2, CODETYPE_AXIS_NEG, 1),	JOYCODE_3_UP },
+	{ JOYCODE(2, CODETYPE_AXIS_POS, 1),	JOYCODE_3_DOWN },
+	{ JOYCODE(2, CODETYPE_BUTTON, 0),	JOYCODE_3_BUTTON1 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 1),	JOYCODE_3_BUTTON2 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 2),	JOYCODE_3_BUTTON3 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 3),	JOYCODE_3_BUTTON4 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 4),	JOYCODE_3_BUTTON5 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 5),	JOYCODE_3_BUTTON6 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 6),	JOYCODE_3_BUTTON7 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 7),	JOYCODE_3_BUTTON8 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 8),	JOYCODE_3_BUTTON9 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 9),	JOYCODE_3_BUTTON10 },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 0),	JOYCODE_3_ANALOG_X },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 1),	JOYCODE_3_ANALOG_Y },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 2),	JOYCODE_3_ANALOG_Z },
+
+	{ JOYCODE(3, CODETYPE_AXIS_NEG, 0),	JOYCODE_4_LEFT },
+	{ JOYCODE(3, CODETYPE_AXIS_POS, 0),	JOYCODE_4_RIGHT },
+	{ JOYCODE(3, CODETYPE_AXIS_NEG, 1),	JOYCODE_4_UP },
+	{ JOYCODE(3, CODETYPE_AXIS_POS, 1),	JOYCODE_4_DOWN },
+	{ JOYCODE(3, CODETYPE_BUTTON, 0),	JOYCODE_4_BUTTON1 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 1),	JOYCODE_4_BUTTON2 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 2),	JOYCODE_4_BUTTON3 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 3),	JOYCODE_4_BUTTON4 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 4),	JOYCODE_4_BUTTON5 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 5),	JOYCODE_4_BUTTON6 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 6),	JOYCODE_4_BUTTON7 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 7),	JOYCODE_4_BUTTON8 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 8),	JOYCODE_4_BUTTON9 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 9),	JOYCODE_4_BUTTON10 },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 0),	JOYCODE_4_ANALOG_X },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 1),	JOYCODE_4_ANALOG_Y },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 2),	JOYCODE_4_ANALOG_Z },
+
+	{ JOYCODE(4, CODETYPE_AXIS_NEG, 0),	JOYCODE_5_LEFT },
+	{ JOYCODE(4, CODETYPE_AXIS_POS, 0),	JOYCODE_5_RIGHT },
+	{ JOYCODE(4, CODETYPE_AXIS_NEG, 1),	JOYCODE_5_UP },
+	{ JOYCODE(4, CODETYPE_AXIS_POS, 1),	JOYCODE_5_DOWN },
+	{ JOYCODE(4, CODETYPE_BUTTON, 0),	JOYCODE_5_BUTTON1 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 1),	JOYCODE_5_BUTTON2 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 2),	JOYCODE_5_BUTTON3 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 3),	JOYCODE_5_BUTTON4 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 4),	JOYCODE_5_BUTTON5 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 5),	JOYCODE_5_BUTTON6 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 6),	JOYCODE_5_BUTTON7 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 7),	JOYCODE_5_BUTTON8 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 8),	JOYCODE_5_BUTTON9 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 9),	JOYCODE_5_BUTTON10 },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 0),	JOYCODE_5_ANALOG_X },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 1), 	JOYCODE_5_ANALOG_Y },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 2),	JOYCODE_5_ANALOG_Z },
+
+	{ JOYCODE(5, CODETYPE_AXIS_NEG, 0),	JOYCODE_6_LEFT },
+	{ JOYCODE(5, CODETYPE_AXIS_POS, 0),	JOYCODE_6_RIGHT },
+	{ JOYCODE(5, CODETYPE_AXIS_NEG, 1),	JOYCODE_6_UP },
+	{ JOYCODE(5, CODETYPE_AXIS_POS, 1),	JOYCODE_6_DOWN },
+	{ JOYCODE(5, CODETYPE_BUTTON, 0),	JOYCODE_6_BUTTON1 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 1),	JOYCODE_6_BUTTON2 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 2),	JOYCODE_6_BUTTON3 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 3),	JOYCODE_6_BUTTON4 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 4),	JOYCODE_6_BUTTON5 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 5),	JOYCODE_6_BUTTON6 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 6),	JOYCODE_6_BUTTON7 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 7),	JOYCODE_6_BUTTON8 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 8),	JOYCODE_6_BUTTON9 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 9),	JOYCODE_6_BUTTON10 },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 0),	JOYCODE_6_ANALOG_X },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 1),	JOYCODE_6_ANALOG_Y },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 2),	JOYCODE_6_ANALOG_Z },
+
+	{ JOYCODE(6, CODETYPE_AXIS_NEG, 0),	JOYCODE_7_LEFT },
+	{ JOYCODE(6, CODETYPE_AXIS_POS, 0),	JOYCODE_7_RIGHT },
+	{ JOYCODE(6, CODETYPE_AXIS_NEG, 1),	JOYCODE_7_UP },
+	{ JOYCODE(6, CODETYPE_AXIS_POS, 1),	JOYCODE_7_DOWN },
+	{ JOYCODE(6, CODETYPE_BUTTON, 0),	JOYCODE_7_BUTTON1 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 1),	JOYCODE_7_BUTTON2 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 2),	JOYCODE_7_BUTTON3 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 3),	JOYCODE_7_BUTTON4 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 4),	JOYCODE_7_BUTTON5 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 5),	JOYCODE_7_BUTTON6 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 6),	JOYCODE_7_BUTTON7 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 7),	JOYCODE_7_BUTTON8 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 8),	JOYCODE_7_BUTTON9 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 9),	JOYCODE_7_BUTTON10 },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 0),	JOYCODE_7_ANALOG_X },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 1),	JOYCODE_7_ANALOG_Y },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 2),	JOYCODE_7_ANALOG_Z },
+
+	{ JOYCODE(7, CODETYPE_AXIS_NEG, 0),	JOYCODE_8_LEFT },
+	{ JOYCODE(7, CODETYPE_AXIS_POS, 0),	JOYCODE_8_RIGHT },
+	{ JOYCODE(7, CODETYPE_AXIS_NEG, 1),	JOYCODE_8_UP },
+	{ JOYCODE(7, CODETYPE_AXIS_POS, 1),	JOYCODE_8_DOWN },
+	{ JOYCODE(7, CODETYPE_BUTTON, 0),	JOYCODE_8_BUTTON1 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 1),	JOYCODE_8_BUTTON2 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 2),	JOYCODE_8_BUTTON3 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 3),	JOYCODE_8_BUTTON4 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 4),	JOYCODE_8_BUTTON5 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 5),	JOYCODE_8_BUTTON6 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 6),	JOYCODE_8_BUTTON7 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 7),	JOYCODE_8_BUTTON8 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 8),	JOYCODE_8_BUTTON9 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 9),	JOYCODE_8_BUTTON10 },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 0),	JOYCODE_8_ANALOG_X },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 1),	JOYCODE_8_ANALOG_Y },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 2),	JOYCODE_8_ANALOG_Z },
+
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_1_BUTTON1 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_1_BUTTON2 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_1_BUTTON3 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_1_ANALOG_X },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_1_ANALOG_Y },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_1_ANALOG_Z },
+
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_2_BUTTON1 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_2_BUTTON2 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_2_BUTTON3 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_2_ANALOG_X },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
+
+//	{ JOYCODE(0, CODETYPE_GUNAXIS, 0),		GUNCODE_1_ANALOG_X },
+//	{ JOYCODE(0, CODETYPE_GUNAXIS, 1),		GUNCODE_1_ANALOG_Y },
+
+//	{ JOYCODE(1, CODETYPE_GUNAXIS, 0),		GUNCODE_2_ANALOG_X },
+//	{ JOYCODE(1, CODETYPE_GUNAXIS, 1),		GUNCODE_2_ANALOG_Y },
+};
 
 
-/* return a list of all available keys */
-const struct KeyboardInfo *osd_get_key_list(void)
-{
-	return keylist;
-}
+//============================================================
+//	updatekeyboard
+//============================================================
 
-
-/*
-  since the keyboard controller is slow, it is not capable of reporting multiple
-  key presses fast enough. We have to delay them in order not to lose special moves
-  tied to simultaneous button presses.
- */
-
-static int oldkey[KEY_MAX],currkey[KEY_MAX];
+// since the keyboard controller is slow, it is not capable of reporting multiple
+// key presses fast enough. We have to delay them in order not to lose special moves
+// tied to simultaneous button presses.
 
 static void updatekeyboard(void)
 {
-	int i,changed;
+	int i;
+	int changed;
 
 	changed = 0;
 	for (i = 0;i < KEY_MAX;i++)
@@ -190,8 +399,10 @@ static void updatekeyboard(void)
 			changed = 1;
 
 			if (key[i] == 0 && currkey[i] == 0)
-			/* keypress was missed, turn it on for one frame */
+			{
+				/* keypress was missed, turn it on for one frame */
 				currkey[i] = -1;
+			}
 		}
 	}
 
@@ -199,17 +410,231 @@ static void updatekeyboard(void)
 	if (!changed)
 	{
 		for (i = 0;i < KEY_MAX;i++)
+		{
 			currkey[i] = key[i];
+		}
 	}
 
 	for (i = 0;i < KEY_MAX;i++)
+	{
 		oldkey[i] = key[i];
+	}
 }
 
 
-int osd_is_key_pressed(int keycode)
+
+static void updatemouse(void)
 {
-	if (keycode >= KEY_MAX) return 0;
+	if( use_mouse_1 )
+	{
+		static int skip;
+		static int mx,my;
+
+		/* Get mouse button state */
+		mouse_state[ 0 ].buttons = mouse_b;
+
+		/* get_mouse_mickeys() doesn't work when called 60 times per second,
+		   it often returns 0, so I have to call it every other frame and split
+		   the result between two frames.
+		  */
+		if (skip)
+		{
+			mouse_state[ 0 ].axis[ 0 ] = mx;
+			mouse_state[ 0 ].axis[ 1 ] = my;
+		}
+		else
+		{
+			get_mouse_mickeys(&mx,&my);
+
+			mouse_state[ 0 ].axis[ 0 ] = mx/2;
+			mouse_state[ 0 ].axis[ 1 ] = my/2;
+			mx -= mouse_state[ 0 ].axis[ 0 ];
+			my -= mouse_state[ 0 ].axis[ 1 ];
+		}
+		skip ^= 1;
+	}
+	else if( use_mouse_2 )
+	{
+		/* Poll secondary mouse */
+		static int skip2;
+		static int mx2,my2;
+		static __dpmi_regs r;
+
+		/* Get mouse button state */
+		r.x.ax = 103;
+		__dpmi_int(0x33, &r);
+		mouse_state[ 1 ].buttons = r.x.bx;
+
+		/* get_mouse_mickeys() doesn't work when called 60 times per second,
+		   it often returns 0, so I have to call it every other frame and split
+		   the result between two frames.
+		  */
+		if (skip2)
+		{
+			mouse_state[ 1 ].axis[ 0 ] = mx2;
+			mouse_state[ 1 ].axis[ 1 ] = my2;
+		}
+		else
+		{
+			r.x.ax = 111;
+			__dpmi_int(0x33, &r);
+			mx2 = (signed short)r.x.cx;
+			my2 = (signed short)r.x.dx;
+
+			mouse_state[ 1 ].axis[ 0 ] = mx2 / 2;
+			mouse_state[ 1 ].axis[ 1 ] = my2 / 2;
+			mx2 -= mouse_state[ 1 ].axis[ 0 ];
+			my2 -= mouse_state[ 1 ].axis[ 1 ];
+		}
+		skip2 ^= 1;
+	}
+}
+
+
+
+void poll_joysticks(void)
+{
+	if (joystick > JOY_TYPE_NONE)
+	{
+		poll_joystick();
+	}
+	updatekeyboard();
+	updatemouse();
+}
+
+
+
+static const char *msdos_key_name( int key )
+{
+	switch( key )
+	{
+	case KEY_ESC: return "Escape";
+	case KEY_1: return "1";
+	case KEY_2: return "2";
+	case KEY_3: return "3";
+	case KEY_4: return "4";
+	case KEY_5: return "5";
+	case KEY_6: return "6";
+	case KEY_7: return "7";
+	case KEY_8: return "8";
+	case KEY_9: return "9";
+	case KEY_0: return "0";
+	case KEY_MINUS: return "-";
+	case KEY_EQUALS: return "=";
+	case KEY_BACKSPACE: return "Backspace";
+	case KEY_TAB: return "Tab";
+	case KEY_Q: return "Q";
+	case KEY_W: return "W";
+	case KEY_E: return "E";
+	case KEY_R: return "R";
+	case KEY_T: return "T";
+	case KEY_Y: return "Y";
+	case KEY_U: return "U";
+	case KEY_I: return "I";
+	case KEY_O: return "O";
+	case KEY_P: return "P";
+	case KEY_OPENBRACE: return "[";
+	case KEY_CLOSEBRACE: return "]";
+	case KEY_ENTER: return "Enter";
+	case KEY_LCONTROL: return "Left Ctrl";
+	case KEY_A: return "A";
+	case KEY_S: return "S";
+	case KEY_D: return "D";
+	case KEY_F: return "F";
+	case KEY_G: return "G";
+	case KEY_H: return "H";
+	case KEY_J: return "J";
+	case KEY_K: return "K";
+	case KEY_L: return "L";
+	case KEY_COLON: return ";";
+	case KEY_QUOTE: return "'";
+	case KEY_TILDE: return "`";
+	case KEY_LSHIFT: return "Left Shift";
+	case KEY_BACKSLASH: return "\\";
+	case KEY_Z: return "Z";
+	case KEY_X: return "X";
+	case KEY_C: return "C";
+	case KEY_V: return "V";
+	case KEY_B: return "B";
+	case KEY_N: return "N";
+	case KEY_M: return "M";
+	case KEY_COMMA: return ",";
+	case KEY_STOP: return ".";
+	case KEY_SLASH: return "/";
+	case KEY_RSHIFT: return "Right Shift";
+	case KEY_ASTERISK: return "Numpad *";
+	case KEY_ALT: return "Left Alt";
+	case KEY_SPACE: return "Space";
+	case KEY_CAPSLOCK: return "CapsLock";
+	case KEY_F1: return "F1";
+	case KEY_F2: return "F2";
+	case KEY_F3: return "F3";
+	case KEY_F4: return "F4";
+	case KEY_F5: return "F5";
+	case KEY_F6: return "F6";
+	case KEY_F7: return "F7";
+	case KEY_F8: return "F8";
+	case KEY_F9: return "F9";
+	case KEY_F10: return "F10";
+	case KEY_NUMLOCK: return "NumLock";
+	case KEY_SCRLOCK: return "ScrollLock";
+	case KEY_7_PAD: return "Numpad 7";
+	case KEY_8_PAD: return "Numpad 8";
+	case KEY_9_PAD: return "Numpad 9";
+	case KEY_MINUS_PAD: return "Numpad -";
+	case KEY_4_PAD: return "Numpad 4";
+	case KEY_5_PAD: return "Numpad 5";
+	case KEY_6_PAD: return "Numpad 6";
+	case KEY_PLUS_PAD: return "Numpad +";
+	case KEY_1_PAD: return "Numpad 1";
+	case KEY_2_PAD: return "Numpad 2";
+	case KEY_3_PAD: return "Numpad 3";
+	case KEY_0_PAD: return "Numpad 0";
+	case KEY_DEL_PAD: return "Numpad .";
+	case KEY_F11: return "F11";
+	case KEY_F12: return "F12";
+//	case KEY_F13: return "F13";
+//	case KEY_F14: return "F14";
+//	case KEY_F15: return "F15";
+	case KEY_ENTER_PAD: return "Numpad Enter";
+	case KEY_RCONTROL: return "Right Ctrl";
+	case KEY_SLASH_PAD: return "Numpad /";
+	case KEY_PRTSCR: return "SysRq";
+	case KEY_ALTGR: return "Right Alt";
+	case KEY_HOME: return "Home";
+	case KEY_UP: return "Up Arrow";
+	case KEY_PGUP: return "PgUp";
+	case KEY_LEFT: return "Left Arrow";
+	case KEY_RIGHT: return "Right Arrow";
+	case KEY_END: return "End";
+	case KEY_DOWN: return "Down Arrow";
+	case KEY_PGDN: return "PgDn";
+	case KEY_INSERT: return "Insert";
+	case KEY_DEL: return "Delete";
+	case KEY_LWIN: return "Left Win";
+	case KEY_RWIN: return "Right Win";
+	case KEY_MENU: return "AppMenu";
+	default: return NULL;
+	}
+}
+
+
+
+static const char *msdos_mouse_button_name( int button )
+{
+	static char buttonname[ 20 ];
+	sprintf( buttonname, "Button %d", button );
+	return buttonname;
+}
+
+
+//============================================================
+//	is_key_pressed
+//============================================================
+
+static int is_key_pressed(os_code_t keycode)
+{
+	int allegrokey = ALLEGROKEY(keycode);
 
 	/* if update_video_and_audio() is not being called yet, copy key array */
 	if (!Machine->scrbitmap)
@@ -217,12 +642,15 @@ int osd_is_key_pressed(int keycode)
 		int i;
 
 		for (i = 0;i < KEY_MAX;i++)
+		{
 			currkey[i] = key[i];
+		}
 	}
 
-	if (keycode == KEY_PAUSE)
+	if (allegrokey == KEY_PAUSE)
 	{
-		static int pressed,counter;
+		static int pressed;
+		static int counter;
 		int res;
 
 		res = currkey[KEY_PAUSE] ^ pressed;
@@ -231,318 +659,317 @@ int osd_is_key_pressed(int keycode)
 			if (counter > 0)
 			{
 				if (--counter == 0)
+				{
 					pressed = currkey[KEY_PAUSE];
+				}
 			}
-			else counter = 10;
+			else
+			{
+				counter = 10;
+			}
 		}
 
 		return res;
 	}
 
-    if(steadykey) return currkey[keycode];
-	else return key[keycode];
-}
-
-
-int osd_readkey_unicode(int flush)
-{
-	if (flush) clear_keybuf();
-	if (keypressed())
-		return ureadkey(NULL);
-	else
-		return 0;
-}
-
-
-/*
-  limits:
-  - 7 joysticks
-  - 15 sticks on each joystick
-  - 63 buttons on each joystick
-
-  - 256 total inputs
-*/
-#define JOYCODE(joy,stick,axis_or_button,dir) \
-		((((dir)&0x03)<<14)|(((axis_or_button)&0x3f)<<8)|(((stick)&0x1f)<<3)|(((joy)&0x07)<<0))
-
-#define GET_JOYCODE_JOY(code) (((code)>>0)&0x07)
-#define GET_JOYCODE_STICK(code) (((code)>>3)&0x1f)
-#define GET_JOYCODE_AXIS(code) (((code)>>8)&0x3f)
-#define GET_JOYCODE_BUTTON(code) GET_JOYCODE_AXIS(code)
-#define GET_JOYCODE_DIR(code) (((code)>>14)&0x03)
-
-/* use otherwise unused joystick codes for the three mouse buttons */
-#define MOUSECODE(mouse,button) JOYCODE(1,0,((mouse)-1)*3+(button),1)
-
-#define MAX_JOY 256
-#define MAX_JOY_NAME_LEN 40
-
-static struct JoystickInfo joylist[MAX_JOY] =
-{
-	/* will be filled later */
-	{ 0, 0, 0 }	/* end of table */
-};
-
-static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];	/* will be used to store names for the above */
-
-
-static int joyequiv[][2] =
-{
-	{ JOYCODE(1,1,1,1),	JOYCODE_1_LEFT },
-	{ JOYCODE(1,1,1,2),	JOYCODE_1_RIGHT },
-	{ JOYCODE(1,1,2,1),	JOYCODE_1_UP },
-	{ JOYCODE(1,1,2,2),	JOYCODE_1_DOWN },
-	{ JOYCODE(1,0,1,0),	JOYCODE_1_BUTTON1 },
-	{ JOYCODE(1,0,2,0),	JOYCODE_1_BUTTON2 },
-	{ JOYCODE(1,0,3,0),	JOYCODE_1_BUTTON3 },
-	{ JOYCODE(1,0,4,0),	JOYCODE_1_BUTTON4 },
-	{ JOYCODE(1,0,5,0),	JOYCODE_1_BUTTON5 },
-	{ JOYCODE(1,0,6,0),	JOYCODE_1_BUTTON6 },
-	{ JOYCODE(2,1,1,1),	JOYCODE_2_LEFT },
-	{ JOYCODE(2,1,1,2),	JOYCODE_2_RIGHT },
-	{ JOYCODE(2,1,2,1),	JOYCODE_2_UP },
-	{ JOYCODE(2,1,2,2),	JOYCODE_2_DOWN },
-	{ JOYCODE(2,0,1,0),	JOYCODE_2_BUTTON1 },
-	{ JOYCODE(2,0,2,0),	JOYCODE_2_BUTTON2 },
-	{ JOYCODE(2,0,3,0),	JOYCODE_2_BUTTON3 },
-	{ JOYCODE(2,0,4,0),	JOYCODE_2_BUTTON4 },
-	{ JOYCODE(2,0,5,0),	JOYCODE_2_BUTTON5 },
-	{ JOYCODE(2,0,6,0),	JOYCODE_2_BUTTON6 },
-	{ JOYCODE(3,1,1,1),	JOYCODE_3_LEFT },
-	{ JOYCODE(3,1,1,2),	JOYCODE_3_RIGHT },
-	{ JOYCODE(3,1,2,1),	JOYCODE_3_UP },
-	{ JOYCODE(3,1,2,2),	JOYCODE_3_DOWN },
-	{ JOYCODE(3,0,1,0),	JOYCODE_3_BUTTON1 },
-	{ JOYCODE(3,0,2,0),	JOYCODE_3_BUTTON2 },
-	{ JOYCODE(3,0,3,0),	JOYCODE_3_BUTTON3 },
-	{ JOYCODE(3,0,4,0),	JOYCODE_3_BUTTON4 },
-	{ JOYCODE(3,0,5,0),	JOYCODE_3_BUTTON5 },
-	{ JOYCODE(3,0,6,0),	JOYCODE_3_BUTTON6 },
-	{ JOYCODE(4,1,1,1),	JOYCODE_4_LEFT },
-	{ JOYCODE(4,1,1,2),	JOYCODE_4_RIGHT },
-	{ JOYCODE(4,1,2,1),	JOYCODE_4_UP },
-	{ JOYCODE(4,1,2,2),	JOYCODE_4_DOWN },
-	{ JOYCODE(4,0,1,0),	JOYCODE_4_BUTTON1 },
-	{ JOYCODE(4,0,2,0),	JOYCODE_4_BUTTON2 },
-	{ JOYCODE(4,0,3,0),	JOYCODE_4_BUTTON3 },
-	{ JOYCODE(4,0,4,0),	JOYCODE_4_BUTTON4 },
-	{ JOYCODE(4,0,5,0),	JOYCODE_4_BUTTON5 },
-	{ JOYCODE(4,0,6,0),	JOYCODE_4_BUTTON6 },
-	{ 0,0 }
-};
-
-
-static void init_joy_list(void)
-{
-	int tot,i,j,k;
-	char buf[256];
-
-	tot = 0;
-
-	/* first of all, map mouse buttons */
-	for (k = 0;k < 2;k++)
+    if(steadykey)
 	{
-		for (j = 0;j < 3;j++)
-		{
-			sprintf(buf,"MOUSE%d B%d",k+1,j+1);
-			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = MOUSECODE(k+1,j+1);
-			tot++;
-		}
+		return currkey[allegrokey];
 	}
-
-	for (i = 0;i < num_joysticks;i++)
+	else
 	{
-		for (j = 0;j < joy[i].num_sticks;j++)
-		{
-			for (k = 0;k < joy[i].stick[j].num_axis;k++)
-			{
-				sprintf(buf,"J%d %s %s -",i+1,joy[i].stick[j].name,joy[i].stick[j].axis[k].name);
-				strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-				joynames[tot][MAX_JOY_NAME_LEN] = 0;
-				joylist[tot].name = joynames[tot];
-				joylist[tot].code = JOYCODE(i+1,j+1,k+1,1);
-				tot++;
+		return key[allegrokey];
+	}
+}
 
-				sprintf(buf,"J%d %s %s +",i+1,joy[i].stick[j].name,joy[i].stick[j].axis[k].name);
-				strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-				joynames[tot][MAX_JOY_NAME_LEN] = 0;
-				joylist[tot].name = joynames[tot];
-				joylist[tot].code = JOYCODE(i+1,j+1,k+1,2);
-				tot++;
+
+
+//============================================================
+//	init_keycodes
+//============================================================
+
+static void init_keycodes(void)
+{
+	int key;
+
+	// iterate over all possible keys
+	for (key = 0; key < MAX_KEYS; key++)
+	{
+		const char *keyname = msdos_key_name( key );
+		if( keyname != NULL )
+		{
+			// copy the name
+			char *namecopy = malloc(strlen(keyname) + 1);
+			if (namecopy)
+			{
+				input_code_t standardcode;
+				os_code_t code;
+				int entry;
+
+				// find the table entry, if there is one
+				for (entry = 0; msdos_key_trans_table[entry].keycode >= 0; entry++)
+					if (msdos_key_trans_table[entry].key == key)
+						break;
+
+				// compute the code, which encodes allegro and ASCII codes
+				code = KEYCODE(key, 0);
+				standardcode = CODE_OTHER_DIGITAL;
+				if (msdos_key_trans_table[entry].keycode >= 0)
+				{
+					code = KEYCODE(key, msdos_key_trans_table[entry].ascii);
+					standardcode = msdos_key_trans_table[entry].keycode;
+				}
+
+				// fill in the key description
+				codelist[total_codes].name = strcpy(namecopy, keyname);
+				codelist[total_codes].oscode = code;
+				codelist[total_codes].inputcode = standardcode;
+				total_codes++;
 			}
 		}
-		for (j = 0;j < joy[i].num_buttons;j++)
-		{
-			sprintf(buf,"J%d %s",i+1,joy[i].button[j].name);
-			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = JOYCODE(i+1,0,j+1,0);
-			tot++;
-		}
 	}
+}
 
-	/* terminate array */
-	joylist[tot].name = 0;
-	joylist[tot].code = 0;
-	joylist[tot].standardcode = 0;
 
-	/* fill in equivalences */
-	for (i = 0;i < tot;i++)
+
+//============================================================
+//	add_joylist_entry
+//============================================================
+
+static void add_joylist_entry(const char *name, os_code_t code, input_code_t standardcode)
+{
+	// copy the name
+	char *namecopy = malloc(strlen(name) + 1);
+	if (namecopy)
 	{
-		joylist[i].standardcode = JOYCODE_OTHER;
+		int entry;
 
-		j = 0;
-		while (joyequiv[j][0] != 0)
-		{
-			if (joyequiv[j][0] == joylist[i].code)
-			{
-				joylist[i].standardcode = joyequiv[j][1];
+		// find the table entry, if there is one
+		for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
+			if (joy_trans_table[entry][0] == code)
 				break;
-			}
-			j++;
-		}
+
+		// fill in the joy description
+		codelist[total_codes].name = strcpy(namecopy, name);
+		codelist[total_codes].oscode = code;
+		if (entry < ELEMENTS(joy_trans_table))
+			standardcode = joy_trans_table[entry][1];
+		codelist[total_codes].inputcode = standardcode;
+		total_codes++;
 	}
 }
 
 
-/* return a list of all available joys */
-const struct JoystickInfo *osd_get_joy_list(void)
+
+//============================================================
+//	init_joycodes
+//============================================================
+
+static void init_joycodes(void)
 {
-	return joylist;
-}
+	int mouse;
+	int stick;
+	int axis;
+	int button;
+//	int pov;
+	char tempname[MAX_PATH];
 
-
-int osd_is_joy_pressed(int joycode)
-{
-	int joy_num,stick;
-
-
-	/* special case for mouse buttons */
-	switch (joycode)
+	// first of all, map mouse buttons
+	if (use_mouse)
 	{
-		case MOUSECODE(1,1):
-			return mouse_button_1 & 1; break;
-		case MOUSECODE(1,2):
-			return mouse_button_1 & 2; break;
-		case MOUSECODE(1,3):
-			return mouse_button_1 & 4; break;
-                case MOUSECODE(2,1):
-                        return mouse_button_2 & 1; break;
-                case MOUSECODE(2,2):
-                        return mouse_button_2 & 2; break;
-                case MOUSECODE(2,3):
-                        return mouse_button_2 & 4; break;
-	}
-
-	joy_num = GET_JOYCODE_JOY(joycode);
-
-	/* do we have as many sticks? */
-	if (joy_num == 0 || joy_num > num_joysticks)
-		return 0;
-	joy_num--;
-
-	stick = GET_JOYCODE_STICK(joycode);
-
-	if (stick == 0)
-	{
-		/* buttons */
-		int button;
-
-		button = GET_JOYCODE_BUTTON(joycode);
-		if (button == 0 || button > joy[joy_num].num_buttons)
-			return 0;
-		button--;
-
-		return joy[joy_num].button[button].b;
-	}
-	else
-	{
-		/* sticks */
-		int axis,dir;
-
-		if (stick > joy[joy_num].num_sticks)
-			return 0;
-		stick--;
-
-		axis = GET_JOYCODE_AXIS(joycode);
-		dir = GET_JOYCODE_DIR(joycode);
-
-		if (axis == 0 || axis > joy[joy_num].stick[stick].num_axis)
-			return 0;
-		axis--;
-
-		switch (dir)
+		for (mouse = 0; mouse < 2; mouse++)
 		{
-			case 1:
-				return joy[joy_num].stick[stick].axis[axis].d1; break;
-			case 2:
-				return joy[joy_num].stick[stick].axis[axis].d2; break;
-			default:
-				return 0; break;
+			if( ( mouse == 0 && use_mouse_1 ) ||
+				( mouse == 1 && use_mouse_2 ) )
+			{
+				sprintf(tempname, "Mouse %d X", mouse + 1);
+				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
+				sprintf(tempname, "Mouse %d Y", mouse + 1);
+				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+
+				for (button = 0; button < 3; button++)
+				{
+					const char *buttonname = msdos_mouse_button_name( button );
+					if( buttonname != NULL )
+					{
+						// add mouse number to the name
+						if (use_mouse_1 && use_mouse_2)
+							sprintf(tempname, "Mouse %d %s", mouse + 1, buttonname);
+						else
+							sprintf(tempname, "Mouse %s", buttonname);
+						add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
+					}
+				}
+			}
 		}
 	}
 
+	// now map joysticks
+	for (stick = 0; stick < num_joysticks; stick++)
+	{
+		// loop over all axes
+		for (axis = 0; axis < MAX_AXES; axis++)
+		{
+			int s = axis / MAX_JOYSTICK_AXIS;
+			int a = axis % MAX_JOYSTICK_AXIS;
+			if( s < joy[ stick ].num_sticks &&
+				a < joy[ stick ].stick[ s ].num_axis )
+			{
+				char name[ 128 ];
+				sprintf( name, "%s %s", joy[ stick ].stick[ s ].name, joy[ stick ].stick[ s ].axis[ a ].name );
+
+				// add analog axis
+				sprintf(tempname, "J%d %s", stick + 1, name);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+
+				// add negative value
+				sprintf(tempname, "J%d %s -", stick + 1, name);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_NEG, axis), CODE_OTHER_DIGITAL);
+
+				// add positive value
+				sprintf(tempname, "J%d %s +", stick + 1, name);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_POS, axis), CODE_OTHER_DIGITAL);
+			}
+		}
+
+		// loop over all buttons
+		for (button = 0; button < joy[ stick ].num_buttons; button++)
+		{
+			// make the name for this item
+			sprintf(tempname, "J%d %s", stick + 1, joy[ stick ].button[ button ].name);
+			add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_BUTTON, button), CODE_OTHER_DIGITAL);
+		}
+	}
+}
+
+
+
+//============================================================
+//	get_joycode_value
+//============================================================
+
+static INT32 get_joycode_value(os_code_t joycode)
+{
+	int joyindex = JOYINDEX(joycode);
+	int codetype = CODETYPE(joycode);
+	int joynum = JOYNUM(joycode);
+//	DWORD pov;
+
+	// switch off the type
+	switch (codetype)
+	{
+	case CODETYPE_MOUSEBUTTON:
+		return ( mouse_state[ joynum ].buttons >> joyindex ) & 1;
+
+	case CODETYPE_BUTTON:
+		if( joyindex < joy[ joynum ].num_buttons )
+		{
+			return joy[ joynum ].button[ joyindex ].b;
+		}
+		return 0;
+
+	case CODETYPE_AXIS_POS:
+	case CODETYPE_AXIS_NEG:
+	{
+		int s = joyindex / MAX_JOYSTICK_AXIS;
+		int a = joyindex % MAX_JOYSTICK_AXIS;
+
+		if( joystick != JOY_TYPE_NONE &&
+			joynum < num_joysticks &&
+			s < joy[ joynum ].num_sticks &&
+			a < joy[ joynum ].stick[ s ].num_axis )
+		{
+			if( codetype == CODETYPE_AXIS_POS )
+			{
+				return joy[ joynum ].stick[ s ].axis[ a ].d2;
+			}
+			else
+			{
+				return joy[ joynum ].stick[ s ].axis[ a ].d1;
+			}
+		}
+		return 0;
+	}
+
+	// anywhere from 0-45 (315) deg to 0+45 (45) deg
+//	case CODETYPE_POV_UP:
+//		return 0;
+
+	// anywhere from 90-45 (45) deg to 90+45 (135) deg
+//	case CODETYPE_POV_RIGHT:
+//		return 0;
+
+	// anywhere from 180-45 (135) deg to 180+45 (225) deg
+//	case CODETYPE_POV_DOWN:
+//		return 0;
+
+	// anywhere from 270-45 (225) deg to 270+45 (315) deg
+//	case CODETYPE_POV_LEFT:
+//		return 0;
+
+	// analog joystick axis
+	case CODETYPE_JOYAXIS:
+	{
+		int s = joyindex / MAX_JOYSTICK_AXIS;
+		int a = joyindex % MAX_JOYSTICK_AXIS;
+
+		if( joystick != JOY_TYPE_NONE &&
+			joynum < num_joysticks && 
+			s < joy[ joynum ].num_sticks &&
+			a < joy[ joynum ].stick[ s ].num_axis )
+		{
+			return joy[ joynum ].stick[ s ].axis[ a ].pos;
+		}
+		return 0;
+	}
+
+	// analog mouse axis
+	case CODETYPE_MOUSEAXIS:
+		return mouse_state[ joynum ].axis[ joyindex ] * 512;
+
+	// analog gun axis
+//	case CODETYPE_GUNAXIS:
+//		return 0;
+	}
 	return 0;
 }
 
 
-void poll_joysticks(void)
-{
-	updatekeyboard();
 
-	if (joystick > JOY_TYPE_NONE)
-		poll_joystick();
+//============================================================
+//	osd_is_code_pressed
+//============================================================
+
+INT32 osd_get_code_value(os_code_t code)
+{
+	if (IS_KEYBOARD_CODE(code))
+		return is_key_pressed(code);
+	else
+		return get_joycode_value(code);
 }
 
 
-/* return a value in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
+
+//============================================================
+//	osd_get_code_list
+//============================================================
+
+const struct OSCodeInfo *osd_get_code_list(void)
 {
-	int i, joy_num, stick, axis;
+	return codelist;
+}
 
-	for (i=0; i<MAX_ANALOG_AXES; i++)
-	{
-		analog_axis[i] = 0;
-		
-		if (analogjoy_input[i] == CODE_NONE || joystick == JOY_TYPE_NONE)
-			continue;
-		
-		joy_num = GET_JOYCODE_JOY( analogjoy_input[i] );
-		if (joy_num == 0 || joy_num > num_joysticks)
-			continue;
-		joy_num--;
-		
-		stick = GET_JOYCODE_STICK( analogjoy_input[i] );
-		if (stick > joy[joy_num].num_sticks)
-			continue;
-		stick--;
-		
-		axis = GET_JOYCODE_AXIS( analogjoy_input[i] );
-		if (axis == 0 || axis > joy[joy_num].stick[stick].num_axis)
-			continue;
-		axis--;
-
-		analog_axis[i] = joy[joy_num].stick[stick].axis[axis].pos;
-		
-		if (GET_JOYCODE_DIR( analogjoy_input[i] ) == 2 )		/* 1 == neg, 2 == pos */
-			analog_axis[i] = -analog_axis[i];
-	}
+void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+{
 }
 
 
-int osd_is_joystick_axis_code(int joycode)
-{
-	return GET_JOYCODE_STICK( joycode );
-}
 
+//============================================================
+//	osd_joystick_needs_calibration
+//============================================================
 
-static int calibration_target;
-
-int osd_joystick_needs_calibration (void)
+int osd_joystick_needs_calibration(void)
 {
 	/* This could be improved, but unfortunately, this version of Allegro */
 	/* lacks a flag which tells if a joystick is calibrationable, it only  */
@@ -554,7 +981,12 @@ int osd_joystick_needs_calibration (void)
 }
 
 
-void osd_joystick_start_calibration (void)
+
+//============================================================
+//	osd_joystick_start_calibration
+//============================================================
+
+void osd_joystick_start_calibration(void)
 {
 	/* reinitialises the joystick. */
 	remove_joystick();
@@ -562,7 +994,13 @@ void osd_joystick_start_calibration (void)
 	calibration_target = 0;
 }
 
-const char *osd_joystick_calibrate_next (void)
+
+
+//============================================================
+//	osd_joystick_calibrate_next
+//============================================================
+
+const char *osd_joystick_calibrate_next(void)
 {
 	while (calibration_target < num_joysticks)
 	{
@@ -571,465 +1009,38 @@ const char *osd_joystick_calibrate_next (void)
 		else
 			calibration_target++;
 	}
-
 	return 0;
 }
 
-void osd_joystick_calibrate (void)
+
+
+//============================================================
+//	osd_joystick_calibrate
+//============================================================
+
+void osd_joystick_calibrate(void)
 {
 	calibrate_joystick (calibration_target);
 }
 
-void osd_joystick_end_calibration (void)
+
+
+//============================================================
+//	osd_joystick_end_calibration
+//============================================================
+
+void osd_joystick_end_calibration(void)
 {
 	save_joystick_data(0);
 }
 
-void osd_lightgun_read(int player,int *deltax,int *deltay)
-{
-	*( deltax ) = 0;
-	*( deltay ) = 0;
-}
 
-void osd_trak_read(int player,int *deltax,int *deltay)
-{
-	if (player == 0 && use_mouse && use_mouse_1)
-	{
-		static int skip;
-		static int mx,my;
-
-		/* get_mouse_mickeys() doesn't work when called 60 times per second,
-		   it often returns 0, so I have to call it every other frame and split
-		   the result between two frames.
-		  */
-		if (skip)
-		{
-			*deltax = mx;
-			*deltay = my;
-		}
-		else
-		{
-			get_mouse_mickeys(&mx,&my);
-			*deltax = mx/2;
-			*deltay = my/2;
-			mx -= *deltax;
-			my -= *deltay;
-		}
-		skip ^= 1;
-	}
-	else if (player == 1 && use_mouse && use_mouse_2)
-	{
-		static int skip2;
-		static int mx2,my2;
-		static __dpmi_regs r;
-
-		/* Get mouse button state */
-		r.x.ax = 103;
-		__dpmi_int(0x33, &r);
-		mouse_button_2 = r.x.bx;
-
-		/* get_mouse_mickeys() doesn't work when called 60 times per second,
-		   it often returns 0, so I have to call it every other frame and split
-		   the result between two frames.
-		  */
-		if (skip2)
-		{
-			*deltax = mx2;
-			*deltay = my2;
-		}
-		else  /* Poll secondary mouse */
-		{
-			r.x.ax = 111;
-			__dpmi_int(0x33, &r);
-			mx2 = (signed short)r.x.cx;
-			my2 = (signed short)r.x.dx;
-
-			*deltax = mx2/2;
-			*deltay = my2/2;
-			mx2 -= *deltax;
-			my2 -= *deltay;
-		}
-		skip2 ^= 1;
-	}
-	else
-	{
-		*deltax = 0;
-		*deltay = 0;
-	}
-}
-
-
-#ifndef MESS
-#ifndef TINY_COMPILE
-#ifndef CPSMAME
-#ifndef MMSND
-extern int no_of_tiles;
-extern struct GameDriver driver_neogeo;
-#endif
-#endif
-#endif
-#endif
-
-int verbose = 0;
-
-const char*			ctrlrtype;
-static const char*			ctrlrname;
-static const char*			trackball_ini;
-static const char*			paddle_ini;
-static const char*			dial_ini;
-static const char*			ad_stick_ini;
-static const char*			pedal_ini;
-static const char*			lightgun_ini;
-
-// this is used for the ipdef_custom_rc_func
-static struct ipd 			*ipddef_ptr = NULL;
-
-static int					num_osd_ik = 0;
-//static int					size_osd_ik = 0;
-
-struct rc_option *ctrlr_input_opts = NULL;
-
-char s_mousedeflt[ 16 ];
-
-struct rc_option ctrlr_input_opts2[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
-	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
-	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
-	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
-	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
-	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
-	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
-	{ "mouse", NULL, rc_bool, &use_mouse, s_mousedeflt, 0, 0, NULL, "enable mouse input" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
-struct rc_struct *rc = NULL;
-
-void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
-{
-	mame_file *f;
-
-	// open the specified controller type/filename
-	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
-
-	if (f)
-	{
-		if (verbose)
-		{
-			if (ctype)
-				fprintf (stderr, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
-			else
-				fprintf (stderr, "trying to parse ctrlr file %s.ini\n", filename);
-		}
-
-		// process this file
-		if(osd_rc_read(iptrc, f, filename, 1, 1))
-		{
-			if (verbose)
-			{
-				if (ctype)
-					fprintf (stderr, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
-				else
-					fprintf (stderr, "problem parsing ctrlr file %s.ini\n", filename);
-			}
-		}
-	}
-
-	// close the file
-	if (f)
-		mame_fclose (f);
-}
-
-void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	// recursive call to process parents first
-	if (drv->clone_of)
-		process_ctrlr_game (iptrc, ctype, drv->clone_of);
-
-	// now process this game
-	if (drv->name && *(drv->name) != 0)
-		process_ctrlr_file (iptrc, ctype, drv->name);
-}
-
-// nice hack: load source_file.ini (omit if referenced later any)
-void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	char buffer[128];
-	const struct GameDriver *tmp_gd;
-
-	sprintf(buffer, "%s", drv->source_file+12);
-	buffer[strlen(buffer) - 2] = 0;
-
-	tmp_gd = drv;
-	while (tmp_gd != NULL)
-	{
-		if (strcmp(tmp_gd->name, buffer) == 0) break;
-		tmp_gd = tmp_gd->clone_of;
-	}
-
-	// not referenced later, so load it here
-	if (tmp_gd == NULL)
-		// now process this system
-		process_ctrlr_file (iptrc, ctype, buffer);
-}
-
-static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
-{
-	struct ik *pinput_keywords = (struct ik *)option->dest;
-	struct ipd *idef = ipddef_ptr;
-
-	// only process the default definitions if the input port definitions
-	// pointer has been defined
-	if (idef)
-	{
-		// if a keycode was re-assigned
-		if (pinput_keywords->type == IKT_STD)
-		{
-			InputSeq is;
-
-			// get the new keycode
-			seq_set_string (&is, arg);
-
-			// was a sequence was assigned to a keycode? - not valid!
-			if (is[1] != CODE_NONE)
-			{
-				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
-			}
-
-			// for all definitions
-			while (idef->type != IPT_END)
-			{
-				int j;
-
-				// reassign all matching keystrokes to the given argument
-				for (j = 0; j < SEQ_MAX; j++)
-				{
-					// if the keystroke matches
-					if (idef->seq[j] == pinput_keywords->val)
-					{
-						// re-assign
-						idef->seq[j] = is[0];
-					}
-				}
-				// move to the next definition
-				idef++;
-			}
-		}
-
-		// if an input definition was re-defined
-		else if (pinput_keywords->type == IKT_IPT ||
-                 pinput_keywords->type == IKT_IPT_EXT)
-		{
-			// loop through all definitions
-			while (idef->type != IPT_END)
-			{
-				// if the definition matches
-				if (idef->type == pinput_keywords->val)
-				{
-                    if (pinput_keywords->type == IKT_IPT_EXT)
-                        idef++;
-					seq_set_string(&idef->seq, arg);
-					// and abort (there shouldn't be duplicate definitions)
-					break;
-				}
-
-				// move to the next definition
-				idef++;
-			}
-		}
-	}
-
-	return 0;
-}
-
-
-void osd_customize_inputport_defaults(struct ipd *defaults)
-{
-	int i;
-
-	sprintf( s_mousedeflt, "%d", use_mouse );
-
-	// create a structure for the input port options
-	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
-	{
-		fprintf(stderr, "error on ctrlr_input_opts creation\n");
-		exit(1);
-	}
-
-	// Populate the structure with the input_keywords.
-	// For all, use the ipdef_custom_rc_func callback.
-	// Also, reference the original ik structure.
-	for (i=0; i<num_ik+num_osd_ik; i++)
-	{
-		if (i < num_ik)
-		{
-	   		ctrlr_input_opts[i].name = input_keywords[i].name;
-			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
-		}
-		else
-		{
-	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
-			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
-		}
-		ctrlr_input_opts[i].shortname = NULL;
-		ctrlr_input_opts[i].type = rc_use_function;
-		ctrlr_input_opts[i].deflt = NULL;
-		ctrlr_input_opts[i].min = 0.0;
-		ctrlr_input_opts[i].max = 0.0;
-		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
-		ctrlr_input_opts[i].help = NULL;
-		ctrlr_input_opts[i].priority = 0;
-	}
-
-	// add an end-of-opts indicator
-	ctrlr_input_opts[i].type = rc_end;
-
-	if (rc_register(rc, ctrlr_input_opts))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts\n");
-		exit(1);
-	}
-
-	if (rc_register(rc, ctrlr_input_opts2))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
-		exit(1);
-	}
-
-	// set a static variable for the ipdef_custom_rc_func callback
-	ipddef_ptr = defaults;
-
-	// process the main platform-specific default file
-	process_ctrlr_file (rc, NULL, "msdos");
-
-	// if a custom controller has been selected
-	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
-	{
-		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
-		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
-
-		// process the controller-specific default file
-		process_ctrlr_file (rc, ctrlrtype, "default");
-
-		// process the system-specific files for this controller
-		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
-
-		// process the game-specific files for this controller
-		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
-
-
-		while ((input->type & ~IPF_MASK) != IPT_END)
-		{
-			switch (input->type & ~IPF_MASK)
-			{
-				case IPT_PADDLE:
-				case IPT_PADDLE_V:
-					if (!paddle)
-					{
-						if ((paddle_ini != NULL) && (*paddle_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
-						paddle = 1;
-					}
-					break;
-
-				case IPT_DIAL:
-				case IPT_DIAL_V:
-					if (!dial)
-					{
-						if ((dial_ini != NULL) && (*dial_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, dial_ini);
-						dial = 1;
-					}
-					break;
-
-				case IPT_TRACKBALL_X:
-				case IPT_TRACKBALL_Y:
-					if (!trackball)
-					{
-						if ((trackball_ini != NULL) && (*trackball_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
-						trackball = 1;
-					}
-					break;
-
-				case IPT_AD_STICK_X:
-				case IPT_AD_STICK_Y:
-					if (!adstick)
-					{
-						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
-						adstick = 1;
-					}
-					break;
-
-				case IPT_LIGHTGUN_X:
-				case IPT_LIGHTGUN_Y:
-					if (!lightgun)
-					{
-						if ((lightgun_ini != NULL) && (*lightgun_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, lightgun_ini);
-						lightgun = 1;
-					}
-					break;
-
-				case IPT_PEDAL:
-					if (!pedal)
-					{
-						if ((pedal_ini != NULL) && (*pedal_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
-						pedal = 1;
-					}
-					break;
-
-			}
-			++input;
-		}
-	}
-
-	// print the results
-	if (verbose)
-	{
-		if (ctrlrname)
-			fprintf (stderr,"\"%s\" controller support enabled\n",ctrlrname);
-	}
-	if (use_mouse)
-	{
-		__dpmi_regs r;
-
-		/* Initialize the Allegro mouse */
-		use_mouse_1 = install_mouse() != -1;
-
-		/* Initialize the custom MAME mouse driver extension */
-		r.x.ax = 100;
-		__dpmi_int(0x33, &r);
-		use_mouse_2 = r.x.ax != 100 && r.x.ax != 0;
-
-		if (!use_mouse_1 && !use_mouse_2)
-			use_mouse = 0;
-	}
-	else
-	{
-		use_mouse_1 = 0;
-		use_mouse_2 = 0;
-	}
-}
 
 void msdos_init_input (void)
 {
 	int err;
 
 	install_keyboard();
-/* ALLEGRO BUG: the following hangs on many machines */
-//	set_leds(0);    /* turn off all leds */
-
-	/* create the rc object */
-	if (!(rc = rc_create()))
-	{
-		fprintf (stderr, "error on rc creation\n");
-		exit(1);
-	}
 
 	if (joystick != JOY_TYPE_NONE)
 	{
@@ -1067,22 +1078,37 @@ void msdos_init_input (void)
 					joystick_driver->name, joystick_driver->desc);
 	}
 
-	init_key_list();
-	init_joy_list();
+	if (use_mouse)
+	{
+		__dpmi_regs r;
+
+		/* Initialize the Allegro mouse */
+		use_mouse_1 = install_mouse() != -1;
+
+		/* Initialize the custom MAME mouse driver extension */
+		r.x.ax = 100;
+		__dpmi_int(0x33, &r);
+		use_mouse_2 = r.x.ax != 100 && r.x.ax != 0;
+	}
+	else
+	{
+		use_mouse_1 = 0;
+		use_mouse_2 = 0;
+	}
+
+	// init the keyboard list
+	init_keycodes();
+
+	// init the joystick list
+	init_joycodes();
+
+	// terminate array
+	memset(&codelist[total_codes], 0, sizeof(codelist[total_codes]));
 }
+
 
 
 void msdos_shutdown_input(void)
 {
-	if( rc != NULL )
-	{
-		rc_destroy( rc );
-		rc = NULL;
-	}
-	if( ctrlr_input_opts != NULL )
-	{
-		free( ctrlr_input_opts );
-		ctrlr_input_opts = NULL;
-	}
 	remove_keyboard();
 }
