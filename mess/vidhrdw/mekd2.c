@@ -21,8 +21,6 @@
 #define LOG(x)	/* x */
 #endif
 
-static struct artwork *mekd2_backdrop;
-
 void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	char backdrop_name[200];
@@ -74,10 +72,11 @@ void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, cons
 
     nextfree = 21;
 
-	if ((mekd2_backdrop = artwork_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree)) != NULL)
+	backdrop_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
+	if (artwork_backdrop)
     {
         LOG (("backdrop %s successfully loaded\n", backdrop_name));
-		memcpy (&palette[nextfree * 3], mekd2_backdrop->orig_palette, mekd2_backdrop->num_pens_used * 3 * sizeof (unsigned char));
+		memcpy (&palette[nextfree * 3], artwork_backdrop->orig_palette, artwork_backdrop->num_pens_used * 3 * sizeof (unsigned char));
     }
     else
     {
@@ -91,8 +90,6 @@ int mekd2_vh_start (void)
     videoram = malloc (videoram_size);
 	if (!videoram)
         return 1;
-	if (mekd2_backdrop)
-		backdrop_refresh (mekd2_backdrop);
     if (generic_vh_start () != 0)
         return 1;
 
@@ -101,9 +98,6 @@ int mekd2_vh_start (void)
 
 void mekd2_vh_stop (void)
 {
-	if (mekd2_backdrop)
-		artwork_free (mekd2_backdrop);
-	mekd2_backdrop = NULL;
     if (videoram)
         free (videoram);
     videoram = NULL;
@@ -119,9 +113,7 @@ void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
         osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
         memset (videoram, 0x0f, videoram_size);
     }
-	if (mekd2_backdrop)
-		copybitmap (bitmap, mekd2_backdrop->artwork, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
-	else
+	if (artwork_backdrop == NULL)
 		fillbitmap (bitmap, Machine->pens[0], &Machine->drv->visible_area);
 
     for (x = 0; x < 6; x++)
