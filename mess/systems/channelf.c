@@ -1,9 +1,12 @@
 
 /****************************************/
-/*  Fairchild Channel F driver  		*/
-/*                              		*/
-/*  TBD:                        		*/
-/*    	- Setup a tmpbitmap, redraw		*/
+/*  Fairchild Channel F driver          */
+/*                                      */
+/*  Juergen Buchmueller &				*/
+/*  Frank Palazzolo						*/
+/*                                      */
+/*  TBD:                                */
+/*    	- Setup a videoram, redraw		*/
 /*			row on palette change		*/
 /*   	- Split BIOS ROM in two			*/
 /*   	- Sound							*/
@@ -65,7 +68,7 @@ int channelf_load_rom(int id)
 
 int channelf_vh_start(void)
 {
-	videoram_size = 0x00c0;
+	videoram_size = 0x2000;
 
     if (generic_vh_start())
         return 1;
@@ -80,9 +83,9 @@ void channelf_vh_stop(void)
 
 void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-    if( full_refresh )
+	if( full_refresh )
 	{
-		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->visible_area);
+		copybitmap(Machine->scrbitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		memset(dirtybuffer, 1, videoram_size);
     }
 }
@@ -168,10 +171,14 @@ static void plot_4_pixel(int x, int y, int color)
 
     pen = Machine->pens[colormap[color]];
 
-    plot_pixel(Machine->scrbitmap, x, y, pen);
+	plot_pixel(Machine->scrbitmap, x, y, pen);
 	plot_pixel(Machine->scrbitmap, x+1, y, pen);
 	plot_pixel(Machine->scrbitmap, x, y+1, pen);
 	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
+	plot_pixel(tmpbitmap, x, y, pen);
+	plot_pixel(tmpbitmap, x+1, y, pen);
+	plot_pixel(tmpbitmap, x, y+1, pen);
+	plot_pixel(tmpbitmap, x+1, y+1, pen);
 }
 
 int recalc_palette_offset(int code)
@@ -207,21 +214,21 @@ WRITE_HANDLER( channelf_port_0_w )
 
     if (data & 0x20)
 	{
-        if (col == 125)
+        if (col == 0x7d)
 		{
 			palette_code[row] &= 0x03;
 			palette_code[row] |= (val << 2);
 			palette_offset[row] = recalc_palette_offset(palette_code[row]);
 		}
-		else if (col == 126)
+		else if (col == 0x7e)
 		{
 			palette_code[row] &= 0x0c;
 			palette_code[row] |= val;
 			palette_offset[row] = recalc_palette_offset(palette_code[row]);
 		}
-		if (col < 118)
+		if (col < 0x76)
 			plot_4_pixel(col * 2, row * 2, palette_offset[row]+val);
-    }
+	}
 	latch[0] = data;
 }
 
@@ -297,27 +304,21 @@ static struct IOWritePort writeport[] =
 
 INPUT_PORTS_START( channelf )
 	PORT_START /* Front panel buttons */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_SELECT1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_SELECT2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SELECT3 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_SELECT4 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_SELECT1 )	/* START (1) */
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_SELECT2 )	/* HOLD  (2) */
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SELECT3 )	/* MODE  (3) */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_SELECT4 )	/* TIME  (4) */
 	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* Right controller */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 ) /* START (1) */
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 ) /* HOLD  (2) */
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 ) /* MODE  (3) */
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 ) /* TIME  (4) */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER1 ) /* C-CLOCKWISE */
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER1 ) /* CLOCKWISE   */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER1 ) /* PULL UP     */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER1 ) /* PUSH DOWN   */
-
-	PORT_START /* unused */
-	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-    PORT_START /* unused */
-	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* Left controller */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
