@@ -460,6 +460,7 @@ $(OBJ)/kim1.a :    \
 	  $(OBJ)/mess/systems/kim1.o
 
 $(OBJ)/tangerin.a :\
+    $(OBJ)/mess/machine/mfmdisk.o   \
 	  $(OBJ)/mess/vidhrdw/oric.o	 \
 	  $(OBJ)/mess/machine/oric.o	 \
 	  $(OBJ)/mess/systems/oric.o	 \
