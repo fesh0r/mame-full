@@ -599,7 +599,7 @@ READ_HANDLER ( geneve_r )
 		/* speech space */
 		if (has_speech)
 		{
-			if ((offset > 0x1000) && (offset < 0x1400) && (! (offset & 1)))
+			if ((offset >= 0x1000) && (offset < 0x1400) && (! (offset & 1)))
 				return geneve_speech_r(0);
 			else
 				return 0;
@@ -888,7 +888,7 @@ WRITE_HANDLER ( geneve_w )
 		/* speech space */
 		if (has_speech)
 		{
-			if ((offset > 0x1400) && (offset < 0x1800) && (! (offset & 1)))
+			if ((offset >= 0x1400) && (offset < 0x1800) && (! (offset & 1)))
 				geneve_speech_w(0, data);
 			return;
 		}
