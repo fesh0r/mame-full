@@ -26,6 +26,7 @@
 #include "artwork.h"
 #include "tapedlg.h"
 #include "artworkx.h"
+#include "debugcpu.h"
 #include "devices/cassette.h"
 
 #ifdef UNDER_CE
