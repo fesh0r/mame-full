@@ -169,7 +169,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* tiger game.com handheld*/
 
-//TESTDRIVER( vc4000 )		/* interton vc4000 */
+TESTDRIVER( vc4000 )		/* interton vc4000 */
 	/* grundig super play computer 4000 */
 
 	/* bandai wonderswan handheld*/
@@ -672,12 +672,12 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( exidy )  /* Sorcerer                                       */
 
 	/* GALAKSIJA */
-//	DRIVER( galaxy )
+	DRIVER( galaxy )
 
 	/* PK-01 Lviv */
-//	DRIVER( lviv )		/* PK-01 Lviv */
-//	DRIVER( lviva )		/* PK-01 Lviv (alternate) */
-//	DRIVER( lvive )		/* PK-01 Lviv (early)*/
+	DRIVER( lviv )		/* PK-01 Lviv */
+	DRIVER( lviva )		/* PK-01 Lviv (alternate) */
+	DRIVER( lvive )		/* PK-01 Lviv (early)*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */

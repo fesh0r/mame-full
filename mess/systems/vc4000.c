@@ -11,31 +11,31 @@
 
 READ_HANDLER(vc4000_key_r)
 {
-    UINT8 data=0;
-    switch(offset) {
-    case 0:
-	data = readinputport(1);
-	break;
-    case 1:
-	data = readinputport(2);
-	break;
-    case 2:
-	data = readinputport(3);
-	break;
-    case 3:
-	data = readinputport(0);
-	break;
-    case 4:
-	data = readinputport(4);
-	break;
-    case 5:
-	data = readinputport(5);
-	break;
-    case 6:
-	data = readinputport(6);
-	break;
-    }
-    return data;
+	UINT8 data=0;
+	switch(offset) {
+	case 0:
+		data = readinputport(1);
+		break;
+	case 1:
+		data = readinputport(2);
+		break;
+	case 2:
+		data = readinputport(3);
+		break;
+	case 3:
+		data = readinputport(0);
+		break;
+	case 4:
+		data = readinputport(4);
+		break;
+	case 5:
+		data = readinputport(5);
+		break;
+	case 6:
+		data = readinputport(6);
+		break;
+	}
+	return data;
 }
 
 
@@ -146,96 +146,74 @@ static struct GfxDecodeInfo vc4000_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static int vc4000_frame_int(void)
+static INTERRUPT_GEN( vc4000 )
 {
-	return 0;
 }
 
-static unsigned char vc4000_palette[16][3] =
+static unsigned char vc4000_palette[] =
 {
-    // background colors
-    { 0, 0, 0 }, // black
-    { 0, 0, 255 }, // blue
-    { 0, 255, 0 }, // green
-    { 0, 255, 255 }, // cyan
-    { 255, 0, 0 }, // red
-    { 255, 0, 255 }, // magenta
-    { 255, 255, 0 }, // yellow
-    { 255, 255, 255 }, // white
-    // sprite colors
-    // simplier to add another 8 colors else using colormapping
-    // xor 7, bit 2 not green, bit 1 not blue, bit 0 not red
-    { 255, 255, 255 }, // white
-    { 0, 255, 255 }, // cyan
-    { 255, 255, 0 }, // yellow
-    { 0, 255, 0 }, // green
-    { 255, 0, 255 }, // magenta
-    { 0, 0, 255 }, // blue
-    { 255, 0, 0 }, // red
-    { 0, 0, 0 } // black
+	// background colors
+	0, 0, 0, // black
+	0, 0, 255, // blue
+	0, 255, 0, // green
+	0, 255, 255, // cyan
+	255, 0, 0, // red
+	255, 0, 255, // magenta
+	255, 255, 0, // yellow
+	255, 255, 255, // white
+	// sprite colors
+	// simplier to add another 8 colors else using colormapping
+	// xor 7, bit 2 not green, bit 1 not blue, bit 0 not red
+	255, 255, 255, // white
+	0, 255, 255, // cyan
+	255, 255, 0, // yellow
+	0, 255, 0, // green
+	255, 0, 255, // magenta
+	0, 0, 255, // blue
+	255, 0, 0, // red
+	0, 0, 0 // black
 };
 
 static unsigned short vc4000_colortable[1][2] = {
 	{ 0, 1 },
 };
 
-static void vc4000_init_colors (unsigned char *sys_palette,
-				 unsigned short *sys_colortable,
-				 const unsigned char *color_prom)
+static PALETTE_INIT( vc4000 )
 {
-    memcpy (sys_palette, vc4000_palette, sizeof (vc4000_palette));
-    memcpy(sys_colortable, vc4000_colortable,sizeof(vc4000_colortable));
+	palette_set_colors(0, vc4000_palette, sizeof(vc4000_palette) / 3);
+	memcpy(colortable, vc4000_colortable,sizeof(vc4000_colortable));
 }
 
-static void vc4000_machine_init(void)
-{
-}
-
-static struct MachineDriver machine_driver_vc4000 =
-{
+static MACHINE_DRIVER_START( vc4000 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			3000000/3,
-//			3580000/3,
-//			4430000/3,
-			vc4000_readmem,vc4000_writemem,
-			vc4000_readport,vc4000_writeport,
-			vc4000_frame_int, 1,
-			vc4000_video_line,312*50,
-			NULL
-		}
-	},
-	/* frames per second, VBL duration */
-	50, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	vc4000_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(S2650, 3000000/3)        /* 3580000/3, 4430000/3 */
+	MDRV_CPU_MEMORY(vc4000_readmem,vc4000_writemem)
+	MDRV_CPU_PORTS(vc4000_readport,vc4000_writeport)
+	MDRV_CPU_PERIODIC_INT(vc4000_video_line,312*50)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 #ifndef DEBUG
-	128+2*XPOS, 208+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+128-1, 0, YPOS+208+YBOTTOM_SIZE-1},
+	MDRV_SCREEN_SIZE(128+2*XPOS, 208+YPOS+YBOTTOM_SIZE)
+	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1, 0, YPOS+208+YBOTTOM_SIZE-1)
 #else
-	256+2*XPOS, 260+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+256-1, 0, YPOS+260+YBOTTOM_SIZE-1},
+	MDRV_SCREEN_SIZE(256+2*XPOS, 260+YPOS+YBOTTOM_SIZE)
+	MDRV_VISIBLE_AREA(0, 2*XPOS+256-1, 0, YPOS+260+YBOTTOM_SIZE-1)
 #endif
-	vc4000_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (vc4000_palette) / sizeof (vc4000_palette[0]) ,
-	sizeof (vc4000_colortable) / sizeof(vc4000_colortable[0][0]),
-	vc4000_init_colors,		/* convert color prom */
+	MDRV_GFXDECODE( vc4000_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(vc4000_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (vc4000_colortable) / sizeof(vc4000_colortable[0][0]))
+	MDRV_PALETTE_INIT( vc4000 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	vc4000_vh_start,
-	vc4000_vh_stop,
-	vc4000_vh_screenrefresh,
+	MDRV_VIDEO_START( vc4000 )
+	MDRV_VIDEO_UPDATE( vc4000 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {SOUND_CUSTOM, &vc4000_sound_interface},
-	    { 0 }
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, vc4000_sound_interface)
+MACHINE_DRIVER_END
 
 ROM_START(vc4000)
 	ROM_REGION(0x8000,REGION_CPU1, 0)
@@ -293,8 +271,7 @@ static const struct IODevice io_vc4000[] = {
     { IO_END }
 };
 
-
-void init_vc4000(void)
+static DRIVER_INIT( vc4000 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -303,14 +280,3 @@ void init_vc4000(void)
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONSX( 1978, vc4000,	0,	vc4000,  vc4000,  vc4000,		"Interton",		"VC4000", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
-
-
-#ifdef RUNTIME_LOADER
-extern void vc4000_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"vc4000")==0) drivers[i]=&driver_vc4000;
-	}
-}
-#endif

@@ -17,7 +17,6 @@
 #include "machine/8255ppi.h"
 #include "formats/lviv_lvt.h"
 
-unsigned char * lviv_ram;
 unsigned char * lviv_video_ram;
 
 UINT8 lviv_ppi_port_outputs[2][3];
@@ -32,11 +31,11 @@ void lviv_update_memory (void)
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 
-		cpu_setbank(1, lviv_ram);
-		cpu_setbank(2, lviv_ram + 0x4000);
+		cpu_setbank(1, mess_ram);
+		cpu_setbank(2, mess_ram + 0x4000);
 
-		cpu_setbank(5, lviv_ram);
-		cpu_setbank(6, lviv_ram + 0x4000);
+		cpu_setbank(5, mess_ram);
+		cpu_setbank(6, mess_ram + 0x4000);
 	}
 	else
 	{
@@ -140,50 +139,37 @@ static ppi8255_interface lviv_ppi8255_interface =
 	{lviv_ppi_0_portc_w, lviv_ppi_1_portc_w}
 };
 
-void lviv_init_machine(void)
+MACHINE_INIT( lviv )
 {
 	ppi8255_init(&lviv_ppi8255_interface);
 
-	lviv_ram = (unsigned char *)malloc(0xffff); /* 48kB RAM and 16 kB Video RAM */
-	lviv_video_ram = lviv_ram + 0xc000;
+	lviv_video_ram = mess_ram + 0xc000;
 
-	if (lviv_ram)
-	{
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-		memory_set_bankhandler_w(5, 0, MWA_BANK5);
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA_BANK7);
-		memory_set_bankhandler_w(8, 0, MWA_ROM);
+	memory_set_bankhandler_w(5, 0, MWA_BANK5);
+	memory_set_bankhandler_w(6, 0, MWA_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA_ROM);
 
-		cpu_setbank(1, lviv_ram);
-		cpu_setbank(2, lviv_ram + 0x4000);
-		cpu_setbank(3, lviv_ram + 0x8000);
-		cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
+	cpu_setbank(1, mess_ram);
+	cpu_setbank(2, mess_ram + 0x4000);
+	cpu_setbank(3, mess_ram + 0x8000);
+	cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
 
-		cpu_setbank(5, lviv_ram);
-		cpu_setbank(6, lviv_ram + 0x4000);
-		cpu_setbank(7, lviv_ram + 0x8000);
-		cpu_setbank(8, memory_region(REGION_CPU1) + 0x010000);
+	cpu_setbank(5, mess_ram);
+	cpu_setbank(6, mess_ram + 0x4000);
+	cpu_setbank(7, mess_ram + 0x8000);
+	cpu_setbank(8, memory_region(REGION_CPU1) + 0x010000);
 
-		memset(lviv_ram, 0, sizeof(unsigned char)*0xffff);
+	memset(mess_ram, 0, sizeof(unsigned char)*0xffff);
 
-		lviv_ram[0x0000] = 0xc3;		
-		lviv_ram[0x0001] = 0x00;		
-		lviv_ram[0x0002] = 0xc0;		
-	}
-}
-
-void lviv_stop_machine(void)
-{
-	if(lviv_ram)
-	{
-		free(lviv_ram);
-		lviv_ram = NULL;
-	}
+	mess_ram[0x0000] = 0xc3;		
+	mess_ram[0x0001] = 0x00;		
+	mess_ram[0x0002] = 0xc0;		
 }
 
 int lviv_tape_init(int id)

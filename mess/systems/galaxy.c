@@ -111,10 +111,10 @@ static unsigned short galaxy_colortable[] =
 	0, 1
 };
 
-static void galaxy_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( galaxy )
 {
-	memcpy (sys_palette, galaxy_palette, sizeof (galaxy_palette));
-	memcpy (sys_colortable, galaxy_colortable, sizeof (galaxy_colortable));
+	palette_set_colors(0, galaxy_palette, sizeof(galaxy_palette) / 3);
+	memcpy(colortable, galaxy_colortable, sizeof (galaxy_colortable));
 }
 
 /* keyboard input */
@@ -184,48 +184,36 @@ INPUT_PORTS_START (galaxy)
 		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "???", KEYCODE_RSHIFT,  IP_JOY_NONE )
 INPUT_PORTS_END
 
+static INTERRUPT_GEN( galaxy_interrupt )
+{
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
 
 /* machine definition */
-
-static	struct MachineDriver machine_driver_galaxy =
-{
+static MACHINE_DRIVER_START( galaxy )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,				  
-			galaxy_readmem, galaxy_writemem,
-			galaxy_readport, galaxy_writeport,
-			interrupt, 1,
-		},
-	},
-	50,					/* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,		/* vblank duration */
-	1,
-	galaxy_init_machine,
-	galaxy_stop_machine,
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(galaxy_readmem, galaxy_writemem)
+	MDRV_CPU_PORTS(galaxy_readport, galaxy_writeport)
+	MDRV_CPU_VBLANK_INT(galaxy_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	32 * 8,					/* screen width */
-	16 * 13,				/* screen height */
-	{0, 32 * 8 - 1, 0, 16 * 13 - 1},	/* visible_area */
-	galaxy_gfxdecodeinfo,			/* graphics decode info */
-	sizeof (galaxy_palette) / 3,
-	sizeof (galaxy_colortable),		/* colors used for the characters */
-	galaxy_init_palette,			/* initialise palette */
+	MDRV_MACHINE_INIT( galaxy )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	galaxy_vh_start,
-	galaxy_vh_stop,
-	galaxy_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 16*13)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 16*13-1)
+	MDRV_GFXDECODE( galaxy_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (galaxy_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (galaxy_colortable))
+	MDRV_PALETTE_INIT( galaxy )
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
+	MDRV_VIDEO_START( galaxy )
+	MDRV_VIDEO_UPDATE( galaxy )
+MACHINE_DRIVER_END
 
 ROM_START (galaxy)
 	ROM_REGION (0x10000, REGION_CPU1,0)
@@ -237,27 +225,27 @@ ROM_END
 
 
 static const struct IODevice io_galaxy[] = {
-    {
-	IO_SNAPSHOT,		/* type */
-	1,			/* count */
-	"gal\0",        	/* file extensions */
-	IO_RESET_ALL,		/* reset if file changed */
-        NULL,               	/* id */
-	galaxy_load_snap,	/* init */
-	galaxy_exit_snap,	/* exit */
-        NULL,		        /* info */
-        NULL,           	/* open */
-        NULL,               	/* close */
-        NULL,               	/* status */
-        NULL,               	/* seek */
-	NULL,			/* tell */
-        NULL,           	/* input */
-        NULL,               	/* output */
-        NULL,               	/* input_chunk */
-        NULL                	/* output_chunk */
-    },
+	{
+		IO_SNAPSHOT,		/* type */
+		1,			/* count */
+		"gal\0",        	/* file extensions */
+		IO_RESET_ALL,		/* reset if file changed */
+		NULL,               	/* id */
+		galaxy_load_snap,	/* init */
+		galaxy_exit_snap,	/* exit */
+		NULL,		        /* info */
+		NULL,           	/* open */
+		NULL,               	/* close */
+		NULL,               	/* status */
+		NULL,               	/* seek */
+		NULL,			/* tell */
+		NULL,           	/* input */
+		NULL,               	/* output */
+		NULL,               	/* input_chunk */
+		NULL                	/* output_chunk */
+	},
 //    IO_CASSETTE_WAVE(1,"wav\0", NULL, galaxy_init_wav, galaxy_exit_wav),
-    { IO_END }
+	{ IO_END }
 };
 
 /*    YEAR    NAME  PARENT  MACHINE   INPUT  INIT  COMPANY     FULLNAME */

@@ -32,10 +32,8 @@ int galaxy_irq_callback (int cpu)
 	return 1;
 }
 
-
-void galaxy_init_machine(void)
+MACHINE_INIT( galaxy )
 {
-
 	logerror("galaxy_init\r\n");
 	if (galaxy_data)
 	{
@@ -44,11 +42,6 @@ void galaxy_init_machine(void)
 	}
 	cpu_set_irq_callback(0, galaxy_irq_callback);
 
-}
-
-void galaxy_stop_machine(void)
-{
-	logerror("galaxy_stop_machine\n");
 }
 
 READ_HANDLER( galaxy_kbd_r )
@@ -132,9 +125,9 @@ static OPBASE_HANDLER( galaxy_opbaseoverride )
 
 	if (galaxy_data_type == galaxy_GAL)
 		galaxy_setup_gal(galaxy_data,galaxy_data_size);
-	logerror("Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
+	logerror("Snapshot loaded - new PC = %04x\n", activecpu_get_reg(Z80_PC) & 0x0ffff);
 
-	return (cpu_get_reg(Z80_PC) & 0x0ffff);
+	return (activecpu_get_reg(Z80_PC) & 0x0ffff);
 }
 
 
@@ -146,50 +139,50 @@ static void galaxy_setup_gal(unsigned char *data, unsigned long data_size)
 	/* Set registers */
 	lo = data[0] & 0x0ff;
 	hi = data[1] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 	lo = data[4] & 0x0ff;
 	hi = data[5] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	lo = data[8] & 0x0ff;
 	hi = data[9] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 	lo = data[12] & 0x0ff;
 	hi = data[13] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 	lo = data[16] & 0x0ff;
 	hi = data[17] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 	lo = data[20] & 0x0ff;
 	hi = data[21] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 	lo = data[24] & 0x0ff;
 	hi = data[25] & 0x0ff;
-	cpu_set_reg(Z80_PC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 	lo = data[28] & 0x0ff;
 	hi = data[29] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	lo = data[32] & 0x0ff;
 	hi = data[33] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 	lo = data[36] & 0x0ff;
 	hi = data[37] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 	lo = data[40] & 0x0ff;
 	hi = data[41] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 	lo = data[44] & 0x0ff;
 	hi = data[45] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
-	cpu_set_reg(Z80_IFF1, data[48]&0x0ff);
-	cpu_set_reg(Z80_IFF2, data[52]&0x0ff);
-	cpu_set_reg(Z80_HALT, data[56]&0x0ff);
-	cpu_set_reg(Z80_IM, data[60]&0x0ff);
-	cpu_set_reg(Z80_I, data[64]&0x0ff);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IFF1, data[48]&0x0ff);
+	activecpu_set_reg(Z80_IFF2, data[52]&0x0ff);
+	activecpu_set_reg(Z80_HALT, data[56]&0x0ff);
+	activecpu_set_reg(Z80_IM, data[60]&0x0ff);
+	activecpu_set_reg(Z80_I, data[64]&0x0ff);
 
-	cpu_set_reg(Z80_R, (data[68]&0x7f) | (data[72]&0x80));
+	activecpu_set_reg(Z80_R, (data[68]&0x7f) | (data[72]&0x80));
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_IRQ_STATE, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_IRQ_STATE, 0);
 
 	/* Memory dump */
 

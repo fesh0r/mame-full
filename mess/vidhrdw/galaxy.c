@@ -17,15 +17,9 @@ size_t galaxy_charram_size;
 
 static int horizontal_pos = 0x0b;
 
-int galaxy_vh_start (void)
+VIDEO_START( galaxy )
 {
-	if( video_start_generic() )
-		return 1;
-    return 0;
-}
-
-void galaxy_vh_stop (void)
-{
+	return video_start_generic();
 }
 
 WRITE_HANDLER( galaxy_vh_charram_w )
@@ -34,12 +28,12 @@ WRITE_HANDLER( galaxy_vh_charram_w )
     dirtybuffer[offset]	= 1;
 }
 
-void galaxy_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( galaxy )
 {
-
 	int offs;
 	struct rectangle black_area = {0,0,0,16*13};
 	static int fast_mode = FALSE;
+	int full_refresh = 1;
 	
 
 	if (!galaxy_interrupts_enabled)
@@ -85,25 +79,25 @@ void galaxy_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 	}
 
 	for( offs = 0; offs < videoram_size; offs++ )
-    	{
-        	if( dirtybuffer[offs]  )
+    {
+        if( dirtybuffer[offs]  )
 		{
 			int sx, sy;
-		        int code = videoram[offs];
+				int code = videoram[offs];
 
 			sx = (offs % 32) * 8 + horizontal_pos*8-88;
 			
 
 			if (sx>=0 && sx<32*8)
 			{
-           		        if ((code>63 && code<96) || code>127) code-=64;
+           				if ((code>63 && code<96) || code>127) code-=64;
 				sy = (offs / 32) * 13;
 				drawgfx(bitmap, Machine->gfx[0], code & 0x7f, 1, 0,0, sx,sy,
 					&Machine->visible_area, TRANSPARENCY_NONE, 0);
 			}
-		        dirtybuffer[offs] = 0;
+				dirtybuffer[offs] = 0;
 		}
-    	}
+    }
 
 	galaxy_interrupts_enabled = FALSE;
 }

@@ -322,53 +322,33 @@ static struct Wave_interface lviv_wave_interface = {
 };
 
 /* machine definition */
-
-static	struct MachineDriver machine_driver_lviv =
-{
+static MACHINE_DRIVER_START( lviv )
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			2500000,				  
-			lviv_readmem, lviv_writemem,
-			lviv_readport, lviv_writeport,
-			0, 0,
-		},
-	},
-	50,					/* frames per second */
-	0,					/* vblank duration */
-	1,
-	lviv_init_machine,
-	lviv_stop_machine,
+	MDRV_CPU_ADD(8080, 2500000)
+	MDRV_CPU_MEMORY(lviv_readmem, lviv_writemem)
+	MDRV_CPU_PORTS(lviv_readport, lviv_writeport)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	256,					/* screen width */
-	256,					/* screen height */
-	{0, 256 - 1, 0, 256 - 1},		/* visible_area */
-	0,					/* graphics decode info */
-	sizeof (lviv_palette) / 3,
-	sizeof (lviv_colortable),		/* colors used for the characters */
-	lviv_init_palette,			/* initialise palette */
+	MDRV_MACHINE_INIT( lviv )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	lviv_vh_start,
-	lviv_vh_stop,
-	lviv_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(sizeof (lviv_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (lviv_colortable))
+	MDRV_PALETTE_INIT( lviv )
+
+	MDRV_VIDEO_START( lviv )
+	MDRV_VIDEO_UPDATE( lviv )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&lviv_speaker_interface,
-		},
-		{
-			SOUND_WAVE,
-			&lviv_wave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, lviv_speaker_interface)
+	MDRV_SOUND_ADD(WAVE, lviv_wave_interface)
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_lviv[] = {
     IO_CASSETTE_WAVE(1,"lv?\0wav\0",NULL,lviv_tape_init,lviv_tape_exit),
@@ -393,8 +373,12 @@ ROM_START(lvive)
 	ROM_LOAD("lvive.bin", 0x10000, 0x4000, 0xf171c282)
 ROM_END
 
+COMPUTER_CONFIG_START(lviv)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+COMPUTER_CONFIG_END
 
-/*    YEAR    NAME  PARENT  MACHINE   INPUT  INIT  COMPANY     FULLNAME */
-COMP( 1989, lviv,      0,  lviv, lviv,    0,      "", "PK-01 Lviv" )
-COMP( 1989, lviva,  lviv,  lviv, lviv,    0,      "", "PK-01 Lviv (alternate)" )
-COMP( 1986, lvive,  lviv,  lviv, lviv,    0,      "", "PK-01 Lviv (early)" )
+
+/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMPC( 1989, lviv,      0,      lviv,      lviv,     0,       lviv,    "", "PK-01 Lviv" )
+COMPC( 1989, lviva,     lviv,   lviv,      lviv,     0,       lviv,    "", "PK-01 Lviv (alternate)" )
+COMPC( 1986, lvive,     lviv,   lviv,      lviv,     0,       lviv,    "", "PK-01 Lviv (early)" )
