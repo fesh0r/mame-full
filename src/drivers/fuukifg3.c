@@ -18,31 +18,16 @@ Year + Game
 	Asura Buster
 ---------------------------------------------------------------------------
 
-Asura Blade
-Fuuki, 1999
-
-This dump is taken from a ROM board with number FG-3J ROM-J
-There's nothing on the board except some 4M EPROMs and several
-surface mounted MASK ROMs.
-
-The connectors on the board and the size of the board is similar
-to Jaleco Megasys32, however it's not compatible with it due to the
-connector spacing being different. The physical size of the board
-is too large to fit an SSV board.
-So, I have no idea what the main hardware is, the game probably
-runs on a custom Fuuki system board named 'FG-3'?
-
 --
 Notes so far:
 
-Z80 isn't hooked up properly, unknown sound chips. Need hw specs.
+- Z80 isn't hooked up properly, unknown sound chips. Need hw specs (Being worked on, OPL4)
 
-Dips, need DIP sheet.
+- Dips, need DIP sheet.
 
-Bg colour ?
+- Raster Effects are imperfect, bad frames when lots of new sprites.
 
-Raster Effects are imperfect, bad frames when winning, level seems to reset to initial state.
-fg2 suffers the same when inserting coins
+- The scroll values are generally wrong when flip screen is on and rasters are often incorrect
 
 ***************************************************************************/
 
@@ -52,17 +37,20 @@ fg2 suffers the same when inserting coins
 static int fuuki32_raster_enable = 1; /* Enabled by default */
 
 // Described in src/vidhrdw/fuuki32.c
-extern data32_t *fuuki32_vregs, *fuuki32_priority, *spr_tilebank;
-extern data32_t *fuuki32_tilemap_ram, *fuuki32_tilemap_2_ram, *fuuki32_tilemap_bg_ram, *fuuki32_tilemap_bg2_ram;
+extern data32_t *fuuki32_vram_0, *fuuki32_vram_1;
+extern data32_t *fuuki32_vram_2, *fuuki32_vram_3;
+extern data32_t *fuuki32_vregs, *fuuki32_priority, *fuuki32_tilebank;
 
-WRITE32_HANDLER( fuuki32_tilemap_w );
-WRITE32_HANDLER( fuuki32_tilemap_2_w );
-WRITE32_HANDLER( fuuki32_tilemap_bg_w );
-WRITE32_HANDLER( fuuki32_tilemap_bg2_w );
+/* Functions defined in vidhrdw: */
 
-VIDEO_START(fuuki32);
-VIDEO_UPDATE(fuuki32);
-VIDEO_EOF(fuuki32);
+WRITE32_HANDLER( fuuki32_vram_0_w );
+WRITE32_HANDLER( fuuki32_vram_1_w );
+WRITE32_HANDLER( fuuki32_vram_2_w );
+WRITE32_HANDLER( fuuki32_vram_3_w );
+
+VIDEO_START( fuuki32 );
+VIDEO_UPDATE( fuuki32 );
+VIDEO_EOF( fuuki32 );
 
 //data32_t *fuuki32_shared_ram;
 
@@ -125,33 +113,17 @@ static READ32_HANDLER( fuuki32_sound_command_r )
 	return soundlatch2_r(0) << 16;
 }
 
-/* Coins Inputs */
-static READ32_HANDLER( io32_1_r ) // $800000.l
-{
-//	logerror("Input 0: %06x\n", activecpu_get_pc());
-	return (readinputport(0) << 16) | readinputport(0);
+#define FUUKI32_INPUT( _N_ ) \
+\
+static READ32_HANDLER( io32_##_N_##_r ) \
+{ \
+	return (readinputport( _N_ ) << 16) | readinputport( _N_ ); \
 }
 
-/* Player Inputs */
-static READ32_HANDLER( io32_2_r ) // $810000.l
-{
-//	logerror("Input 1: %06x\n", activecpu_get_pc());
-	return (readinputport(1) << 16) | readinputport(1);
-}
-
-/* Dipswitches + Service */
-static READ32_HANDLER( io32_3_r ) // $880000.l
-{
-//	logerror("Input 2: %06x\n", activecpu_get_pc());
-	return (readinputport(2) << 16) | readinputport(2);
-}
-
-/* More Dipswitches */
-static READ32_HANDLER( io32_4_r ) // $890000.l
-{
-//	logerror("Input 3: %06x\n", activecpu_get_pc());
-	return (readinputport(3) << 16) | readinputport(3);
-}
+FUUKI32_INPUT( 0 ) /* $800000.l Coins Inputs */
+FUUKI32_INPUT( 1 ) /* $810000.l Player Inputs */
+FUUKI32_INPUT( 2 ) /* $880000.l Dipswitches + Service */
+FUUKI32_INPUT( 3 ) /* $890000.l More Dipswitches */
 
 /* Fake sound return */
 static READ32_HANDLER( shared )
@@ -176,10 +148,10 @@ static MEMORY_READ32_START( fuuki32_readmem )
 
 	{ 0x700000, 0x703fff, MRA32_RAM }, // Palette
 
-	{ 0x800000, 0x800003, io32_1_r }, // Coin
-	{ 0x810000, 0x810003, io32_2_r }, // Player Inputs
-	{ 0x880000, 0x880003, io32_3_r }, // Service + DIPS
-	{ 0x890000, 0x890003, io32_4_r }, // More DIPS
+	{ 0x800000, 0x800003, io32_0_r }, // Coin
+	{ 0x810000, 0x810003, io32_1_r }, // Player Inputs
+	{ 0x880000, 0x880003, io32_2_r }, // Service + DIPS
+	{ 0x890000, 0x890003, io32_3_r }, // More DIPS
 
 	{ 0x8c0000, 0x8c001f, MRA32_RAM },// Video Registers
 
@@ -194,10 +166,10 @@ MEMORY_END
 static MEMORY_WRITE32_START( fuuki32_writemem )
 	{ 0x000000, 0x1fffff, MWA32_ROM },
 	{ 0x400000, 0x40ffff, MWA32_RAM }, // Work RAM
-	{ 0x500000, 0x501fff, fuuki32_tilemap_w, &fuuki32_tilemap_ram }, // Tilemap 1
-	{ 0x502000, 0x503fff, fuuki32_tilemap_2_w, &fuuki32_tilemap_2_ram }, // Tilemap 2
-	{ 0x504000, 0x505fff, fuuki32_tilemap_bg_w, &fuuki32_tilemap_bg_ram }, // Tilemap bg
-	{ 0x506000, 0x507fff, fuuki32_tilemap_bg2_w, &fuuki32_tilemap_bg2_ram }, // Tilemap bg2
+	{ 0x500000, 0x501fff, fuuki32_vram_0_w, &fuuki32_vram_0 }, // Tilemap 1
+	{ 0x502000, 0x503fff, fuuki32_vram_1_w, &fuuki32_vram_1 }, // Tilemap 2
+	{ 0x504000, 0x505fff, fuuki32_vram_2_w, &fuuki32_vram_2 }, // Tilemap bg
+	{ 0x506000, 0x507fff, fuuki32_vram_3_w, &fuuki32_vram_3 }, // Tilemap bg2
 	{ 0x508000, 0x517fff, MWA32_RAM }, // More tilemap, or linescroll? Seems to be empty all of the time
 
 	{ 0x600000, 0x601fff, MWA32_RAM, &spriteram32, &spriteram_size	},	// Sprites
@@ -215,7 +187,7 @@ static MEMORY_WRITE32_START( fuuki32_writemem )
 //	{ 0x903fe0, 0x903fe3, fuuki32_sound_command_w }, // Shared with Z80
 //	{ 0x903fe4, 0x903fff, MWA32_RAM }, // Shared with Z80
 
-	{ 0xa00000, 0xa00003, MWA32_RAM, &spr_tilebank },
+	{ 0xa00000, 0xa00003, MWA32_RAM, &fuuki32_tilebank },
 MEMORY_END
 
 
@@ -452,8 +424,9 @@ static struct GfxDecodeInfo fuuki32_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x400*2, 0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x8, 0x400*0, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_16x16x8, 0x400*1, 0x40 }, // [1] Layer 2
+	{ REGION_GFX3, 0, &layout_16x16x8, 0x400*1, 0x40 }, // [2] Layer 2
 	{ REGION_GFX4, 0, &layout_8x8x4,   0x400*3, 0x40 }, // [3] BG Layer
+	{ REGION_GFX4, 0, &layout_8x8x4,   0x400*3, 0x40 }, // [4] BG Layer 2 (GFX4!)
 	{ -1 }
 };
 
@@ -469,7 +442,7 @@ static struct GfxDecodeInfo fuuki32_gfxdecodeinfo[] =
 #define INTERRUPTS_NUM	(256-1) // Give much better results than 256..
 static INTERRUPT_GEN( fuuki32_interrupt )
 {
-	if ( cpu_getiloops() == 2 )
+	if ( cpu_getiloops() == 1 )
 		cpu_set_irq_line(0, 1, PULSE_LINE);
 
 	if ( cpu_getiloops() == 0 )
@@ -509,7 +482,7 @@ static MACHINE_DRIVER_START( fuuki32 )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 30*8-1)
 	MDRV_GFXDECODE(fuuki32_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_PALETTE_LENGTH(0x4000/2)
 
 	MDRV_VIDEO_START(fuuki32)
 	MDRV_VIDEO_UPDATE(fuuki32)
@@ -526,6 +499,24 @@ MACHINE_DRIVER_END
 
 								ROMs Loading
 
+
+***************************************************************************/
+
+/***************************************************************************
+
+								Asura Blade
+Fuuki, 1999
+
+This dump is taken from a ROM board with number FG-3J ROM-J
+There's nothing on the board except some 4M EPROMs and several
+surface mounted MASK ROMs.
+
+The connectors on the board and the size of the board is similar
+to Jaleco Megasys32, however it's not compatible with it due to the
+connector spacing being different. The physical size of the board
+is too large to fit an SSV board.
+So, I have no idea what the main hardware is, the game probably
+runs on a custom Fuuki system board named 'FG-3'?
 
 ***************************************************************************/
 

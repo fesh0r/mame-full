@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/konamiic.h"
 
@@ -9,7 +10,7 @@ static int layerpri[3];
 static int prmrsocr_sprite_bank;
 static int sorted_layer[3];
 static int dim_c,dim_v;	/* ssriders, tmnt2 */
-
+static int lastdim,lasten;
 
 static struct tilemap *roz_tilemap;
 
@@ -264,7 +265,16 @@ VIDEO_START( lgtnfght )	/* also tmnt2, ssriders */
 		return 1;
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 		return 1;
+
 	K05324x_set_z_rejection(0);
+
+	dim_c = dim_v = lastdim = lasten = 0;
+
+	state_save_register_int  ("TMNT2", 0, "dim_c",   &dim_c);
+	state_save_register_int  ("TMNT2", 0, "dim_v",   &dim_v);
+	state_save_register_int  ("TMNT2", 0, "lastdim", &lastdim);
+	state_save_register_int  ("TMNT2", 0, "lasten",  &lasten);
+
 	return 0;
 }
 
@@ -757,12 +767,11 @@ VIDEO_UPDATE( glfgreat )
 
 VIDEO_UPDATE( tmnt2 )
 {
-	static int lastdim=-1, lasten=-1;
 	double brt;
 	int i, newdim, newen, cb, ce;
 
 	newdim = dim_v | ((~dim_c & 0x10) >> 1);
-	newen  = K053251_get_priority(5) != 0x3e;
+	newen  = (K053251_get_priority(5) && K053251_get_priority(5) != 0x3e);
 
 	if (newdim != lastdim || newen != lasten)
 	{

@@ -87,6 +87,7 @@ CPUS+=PIC16C57@
 #CPUS+=PIC16C58@
 CPUS+=G65816@
 CPUS+=SPC700@
+CPUS+=E132XS@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -576,6 +577,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
+	$(OBJ)/drivers/mogura.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
@@ -850,6 +852,7 @@ $(OBJ)/neogeo.a: \
 
 $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/hanaawas.o $(OBJ)/drivers/hanaawas.o \
+	$(OBJ)/vidhrdw/speedatk.o $(OBJ)/drivers/speedatk.o \
 	$(OBJ)/vidhrdw/srmp2.o $(OBJ)/drivers/srmp2.o \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/drivers/seta.o \
 	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
@@ -1056,6 +1059,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/portrait.o $(OBJ)/drivers/portrait.o \
 	$(OBJ)/drivers/enigma2.o \
 	$(OBJ)/drivers/ltcasino.o \
+	$(OBJ)/drivers/vamphalf.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

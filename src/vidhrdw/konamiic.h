@@ -31,6 +31,7 @@ int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color));
 READ_HANDLER( K007420_r );
 WRITE_HANDLER( K007420_w );
 void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+void K007420_set_banklimit(int limit);
 
 
 /*

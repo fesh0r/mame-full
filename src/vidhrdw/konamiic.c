@@ -1670,6 +1670,7 @@ int K007342_is_INT_enabled(void)
 static struct GfxElement *K007420_gfx;
 static void (*K007420_callback)(int *code,int *color);
 static unsigned char *K007420_ram;
+static int K007420_banklimit;
 
 int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color))
 {
@@ -1679,6 +1680,8 @@ int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color))
 	if (!K007420_ram) return 1;
 
 	memset(K007420_ram,0,0x200);
+
+	K007420_banklimit = -1;
 
 	return 0;
 }
@@ -1717,10 +1720,12 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 {
 #define K007420_SPRITERAM_SIZE 0x200
 	int offs;
+	int codemask = K007420_banklimit;
+	int bankmask = ~K007420_banklimit;
 
 	for (offs = K007420_SPRITERAM_SIZE - 8; offs >= 0; offs -= 8)
 	{
-		int ox,oy,code,color,flipx,flipy,zoom,w,h,x,y;
+		int ox,oy,code,color,flipx,flipy,zoom,w,h,x,y,bank;
 		static int xoffset[4] = { 0, 1, 4, 5 };
 		static int yoffset[4] = { 0, 2, 8, 10 };
 
@@ -1733,9 +1738,8 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 		(*K007420_callback)(&code,&color);
 
-		/* kludge for rock'n'rage */
-		if ((K007420_ram[offs+4] == 0x40) && (K007420_ram[offs+1] == 0xff) &&
-			(K007420_ram[offs+2] == 0x00) && (K007420_ram[offs+5] == 0xf0)) continue;
+		bank = code & bankmask;
+		code &= codemask;
 
 		/* 0x080 = normal scale, 0x040 = double size, 0x100 half size */
 		zoom = K007420_ram[offs+5] | ((K007420_ram[offs+4] & 0x03) << 8);
@@ -1779,6 +1783,8 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
+					if (c & bankmask) continue; else c += bank;
+
 					drawgfx(bitmap,K007420_gfx,
 						c,
 						color,
@@ -1815,6 +1821,8 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
+					if (c & bankmask) continue; else c += bank;
+
 					drawgfxzoom(bitmap,K007420_gfx,
 						c,
 						color,
@@ -1849,6 +1857,11 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 			K007420_ram[(current_sprite*8)+6], K007420_ram[(current_sprite*8)+7]);
 	}
 #endif
+}
+
+void K007420_set_banklimit(int limit)
+{
+	K007420_banklimit = limit;
 }
 
 

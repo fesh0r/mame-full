@@ -3,17 +3,27 @@
 						  -= Fuuki 32 Bit Games (FG-3) =-
 
 				driver by Paul Priest and David Haywood
-				based on fuuki16 by Luca Elia
+				based on fuukifg2 by Luca Elia
+
 
 	[ 4 Scrolling Layers ]
 
-							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 ]
+							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 (double-buffered) ]
 
 	Tile Size:				16 x 16 x 8		16 x 16 x 8		8 x 8 x 4
 	Layer Size (tiles):		64 x 32			64 x 32			64 x 32
 
-Per-line raster effects used on many stages
-Sprites buffered by two frames
+	[ 1024? Zooming Sprites ]
+
+	Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
+	tiles both horizontally and vertically.
+	There is zooming (from full size to half size) and 4 levels of
+	priority (wrt layers)
+
+	Per-line raster effects used on many stages
+	Sprites buffered by two frames
+	Tilebank buffered by 3 frames? Only 2 in attract
+	Sprite pens needs to be buffered by 3 frames? Or lazy programming? Probably 2
 
 ***************************************************************************/
 
@@ -21,15 +31,95 @@ Sprites buffered by two frames
 
 /* Variables that driver has access to: */
 
-data32_t *fuuki32_vregs, *fuuki32_priority, *spr_tilebank;
-data32_t *fuuki32_tilemap_ram, *fuuki32_tilemap_2_ram, *fuuki32_tilemap_bg_ram, *fuuki32_tilemap_bg2_ram;
+data32_t *fuuki32_vram_0, *fuuki32_vram_1;
+data32_t *fuuki32_vram_2, *fuuki32_vram_3;
+data32_t *fuuki32_vregs,  *fuuki32_priority, *fuuki32_tilebank;
 
-static struct tilemap *fuuki32_tilemap;
-static struct tilemap *fuuki32_tilemap_2;
-static struct tilemap *fuuki32_tilemap_bg;
-static struct tilemap *fuuki32_tilemap_bg2;
+static UINT32 spr_buffered_tilebank[2];
 
-static UINT32 spr_buffered_tilebank, spr_buffered_tilebank_2;
+
+/***************************************************************************
+
+
+									Tilemaps
+
+	Offset: 	Bits:					Value:
+
+		0.w								Code
+
+		2.w		fedc ba98 ---- ----
+				---- ---- 7--- ----		Flip Y
+				---- ---- -6-- ----		Flip X
+				---- ---- --54 3210		Color
+
+
+***************************************************************************/
+
+#define LAYER( _N_ ) \
+\
+static struct tilemap *tilemap_##_N_; \
+\
+static void get_tile_info_##_N_(int tile_index) \
+{ \
+	data16_t code = (fuuki32_vram_##_N_[tile_index]&0xffff0000)>>16; \
+	data16_t attr = (fuuki32_vram_##_N_[tile_index]&0x0000ffff); \
+	SET_TILE_INFO(1 + _N_, code, attr & 0x3f,TILE_FLIPYX( (attr >> 6) & 3 )) \
+} \
+\
+WRITE32_HANDLER( fuuki32_vram_##_N_##_w ) \
+{ \
+	if (fuuki32_vram_##_N_[offset] != data) \
+	{ \
+		COMBINE_DATA(&fuuki32_vram_##_N_[offset]); \
+		tilemap_mark_tile_dirty(tilemap_##_N_,offset); \
+	} \
+}
+
+LAYER( 0 )
+LAYER( 1 )
+LAYER( 2 )
+LAYER( 3 )
+
+
+/***************************************************************************
+
+
+							Video Hardware Init
+
+
+***************************************************************************/
+
+VIDEO_START( fuuki32 )
+{
+	buffered_spriteram32   = auto_malloc(spriteram_size);
+	buffered_spriteram32_2 = auto_malloc(spriteram_size);
+
+	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16, 16, 64,32);
+
+	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16, 16, 64,32);
+
+	tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,  8,  8, 64,32);
+
+	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,  8,  8, 64,32);
+
+	if ( !tilemap_0 || !tilemap_1 || !tilemap_2 || !tilemap_3 )
+		return 1;
+
+	tilemap_set_transparent_pen(tilemap_0,0xff);	// 8 bits
+	tilemap_set_transparent_pen(tilemap_1,0xff);	// 8 bits
+	tilemap_set_transparent_pen(tilemap_2,0x0f);	// 4 bits
+	tilemap_set_transparent_pen(tilemap_3,0x0f);	// 4 bits
+
+	Machine->gfx[1]->color_granularity=16; /* 256 colour tiles with palette selectable on 16 colour boundaries */
+	Machine->gfx[2]->color_granularity=16;
+
+	return 0;
+}
+
 
 /***************************************************************************
 
@@ -69,7 +159,7 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 	data32_t *src = buffered_spriteram32_2; /* Use spriteram buffered by 2 frames, need palette buffered by one frame? */
 
 	/* Draw them backwards, for pdrawgfx */
-	for ( offs = (0x2000-8)/4; offs >=0; offs -= 8/4 )
+	for ( offs = (spriteram_size-8)/4; offs >=0; offs -= 8/4 )
 	{
 		int x, y, xstart, ystart, xend, yend, xinc, yinc;
 		int xnum, ynum, xzoom, yzoom, flipx, flipy;
@@ -83,7 +173,7 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 		int bank = (code & 0xc000) >> 14;
 		int bank_lookedup;
 
-		bank_lookedup = ((spr_buffered_tilebank_2 & 0xffff0000)>>(16+bank*4))&0xf;
+		bank_lookedup = ((spr_buffered_tilebank[1] & 0xffff0000)>>(16+bank*4))&0xf;
 		code &= 0x3fff;
 		code += bank_lookedup * 0x4000;
 
@@ -151,120 +241,20 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 									pri_mask	);
 			}
 		}
+
+#ifdef MAME_DEBUG
+#if 0
+if (keyboard_pressed(KEYCODE_X))
+{	/* Display some info on each sprite */
+	struct DisplayText dt[2];	char buf[10];
+	sprintf(buf, "%Xx%X %X",xnum,ynum,(attr>>6)&3);
+	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
+	dt[0].x = sx;		dt[0].y = sy;
+	dt[1].text = 0;	/* terminate array */
+	displaytext(Machine->scrbitmap,dt);		}
+#endif
+#endif
 	}
-}
-
-
-/***************************************************************************
-
-
-									Tilemaps
-
-	Offset: 	Bits:					Value:
-
-		0.w								Code
-
-		2.w		fedc ba98 ---- ----
-				---- ---- 7--- ----		Flip Y
-				---- ---- -6-- ----		Flip X
-				---- ---- --54 3210		Color (Only top two  bits on 8bpp?)
-
-
-***************************************************************************/
-
-static void get_fuuki32_tile_info(int tile_index)
-{
-	int tileno,attr;
-	tileno = (fuuki32_tilemap_ram[tile_index]&0xffff0000)>>16;
-	attr = (fuuki32_tilemap_ram[tile_index]&0x0000ffff); //?
-	SET_TILE_INFO(1,tileno, (attr>>4) & 3 ,TILE_FLIPYX( (attr >> 6) & 3) )
-}
-
-WRITE32_HANDLER( fuuki32_tilemap_w )
-{
-	if (fuuki32_tilemap_ram[offset] != data)
-	{
-		COMBINE_DATA(&fuuki32_tilemap_ram[offset]);
-		tilemap_mark_tile_dirty(fuuki32_tilemap,offset);
-	}
-}
-
-static void get_fuuki32_tile_2_info(int tile_index)
-{
-	int tileno,attr;
-	tileno = (fuuki32_tilemap_2_ram[tile_index]&0xffff0000)>>16;
-	attr = (fuuki32_tilemap_2_ram[tile_index]&0x0000ffff); //?
-	SET_TILE_INFO(2,tileno, ((attr>>4) & 3), TILE_FLIPYX( (attr >> 6) & 3)  )
-}
-
-WRITE32_HANDLER( fuuki32_tilemap_2_w )
-{
-	if (fuuki32_tilemap_2_ram[offset] != data)
-	{
-		COMBINE_DATA(&fuuki32_tilemap_2_ram[offset]);
-		tilemap_mark_tile_dirty(fuuki32_tilemap_2,offset);
-	}
-}
-
-static void get_fuuki32_tile_bg_info(int tile_index)
-{
-	int tileno,attr;
-	tileno = (fuuki32_tilemap_bg_ram[tile_index]&0xffff0000)>>16;
-	attr = (fuuki32_tilemap_bg_ram[tile_index]&0x0000ffff); //?
-	SET_TILE_INFO(3,tileno, (attr & 0x3f), TILE_FLIPYX( (attr >> 6) & 3)   )
-}
-
-WRITE32_HANDLER( fuuki32_tilemap_bg_w )
-{
-	if (fuuki32_tilemap_bg_ram[offset] != data)
-	{
-		COMBINE_DATA(&fuuki32_tilemap_bg_ram[offset]);
-		tilemap_mark_tile_dirty(fuuki32_tilemap_bg,offset);
-	}
-}
-
-static void get_fuuki32_tile_bg2_info(int tile_index)
-{
-	int tileno,attr;
-	tileno = (fuuki32_tilemap_bg2_ram[tile_index]&0xffff0000)>>16;
-	attr = (fuuki32_tilemap_bg2_ram[tile_index]&0x0000ffff); //?
-	SET_TILE_INFO(3,tileno, (attr & 0x3f), TILE_FLIPYX( (attr >> 6) & 3)   )
-}
-
-WRITE32_HANDLER( fuuki32_tilemap_bg2_w )
-{
-	if (fuuki32_tilemap_bg2_ram[offset] != data)
-	{
-		COMBINE_DATA(&fuuki32_tilemap_bg2_ram[offset]);
-		tilemap_mark_tile_dirty(fuuki32_tilemap_bg2,offset);
-	}
-}
-
-
-/***************************************************************************
-
-
-							Video Hardware Init
-
-
-***************************************************************************/
-
-VIDEO_START( fuuki32 )
-{
-	buffered_spriteram32 = auto_malloc(spriteram_size);
-	buffered_spriteram32_2 = auto_malloc(spriteram_size);
-
-	fuuki32_tilemap     = tilemap_create(get_fuuki32_tile_info,    tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64,32);
-	fuuki32_tilemap_2   = tilemap_create(get_fuuki32_tile_2_info,  tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64,32);
-	fuuki32_tilemap_bg  = tilemap_create(get_fuuki32_tile_bg_info, tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 64,32);
-	fuuki32_tilemap_bg2 = tilemap_create(get_fuuki32_tile_bg2_info,tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 64,32);
-
-	tilemap_set_transparent_pen(fuuki32_tilemap ,  0xff);
-	tilemap_set_transparent_pen(fuuki32_tilemap_2, 0xff);
-	tilemap_set_transparent_pen(fuuki32_tilemap_bg, 0xf);
-	tilemap_set_transparent_pen(fuuki32_tilemap_bg2,0xf);
-
-	return 0;
 }
 
 
@@ -275,10 +265,10 @@ VIDEO_START( fuuki32 )
 
 	Video Registers (fuuki32_vregs):
 
-		00.w		Layer 1 Scroll Y
-		02.w		Layer 1 Scroll X
-		04.w		Layer 0 Scroll Y
-		06.w		Layer 0 Scroll X
+		00.w		Layer 0 Scroll Y
+		02.w		Layer 0 Scroll X
+		04.w		Layer 1 Scroll Y
+		06.w		Layer 1 Scroll X
 		08.w		Layer 2 Scroll Y
 		0a.w		Layer 2 Scroll X
 		0c.w		Layers Y Offset
@@ -286,7 +276,7 @@ VIDEO_START( fuuki32 )
 
 		10-1a.w		? 0
 		1c.w		Trigger a level 5 irq on this raster line
-		1e.w		? $3390/$3393 (Flip Screen Off/On)
+		1e.w		? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
 
 	Priority Register (fuuki32_priority):
 
@@ -304,27 +294,34 @@ VIDEO_START( fuuki32 )
 /* Wrapper to handle bg and bg2 ttogether */
 static void fuuki32_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int i, int flag, int pri)
 {
+	int buffer = ((fuuki32_vregs[0x1e/4]&0x0000ffff) & 0x40);
+
 	switch( i )
 	{
-		case 2:	tilemap_draw(bitmap,cliprect,fuuki32_tilemap_bg2,flag,pri);
-				tilemap_draw(bitmap,cliprect,fuuki32_tilemap_bg,flag,pri);
+		case 2:	if (buffer)	tilemap_draw(bitmap,cliprect,tilemap_3,flag,pri);
+				else		tilemap_draw(bitmap,cliprect,tilemap_2,flag,pri);
 				return;
-		case 1:	tilemap_draw(bitmap,cliprect,fuuki32_tilemap_2,flag,pri);
+		case 1:	tilemap_draw(bitmap,cliprect,tilemap_1,flag,pri);
 				return;
-		case 0:	tilemap_draw(bitmap,cliprect,fuuki32_tilemap,flag,pri);
+		case 0:	tilemap_draw(bitmap,cliprect,tilemap_0,flag,pri);
 				return;
 	}
 }
 
 VIDEO_UPDATE( fuuki32 )
 {
+	data16_t layer0_scrollx, layer0_scrolly;
+	data16_t layer1_scrollx, layer1_scrolly;
+	data16_t layer2_scrollx, layer2_scrolly;
+	data16_t scrollx_offs,   scrolly_offs;
+
 	/*
 	It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
 	*/
 
 	int tm_back, tm_middle, tm_front;
 	int pri_table[6][3] = {
-		{ 0, 1, 2 }, // Not used?
+		{ 0, 1, 2 }, // Special moves 0>1, 0>2 (0,1,2 or 0,2,1)
 		{ 0, 2, 1 }, // Two Levels - 0>1 (0,1,2 or 0,2,1 or 2,0,1)
 		{ 1, 0, 2 }, // Most Levels - 2>1 1>0 2>0 (1,0,2)
 		{ 1, 2, 0 }, // Not used?
@@ -335,26 +332,40 @@ VIDEO_UPDATE( fuuki32 )
 	tm_middle = pri_table[ (fuuki32_priority[0]>>16) & 0x0f ][1];
 	tm_back   = pri_table[ (fuuki32_priority[0]>>16) & 0x0f ][2];
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	flip_screen_set((fuuki32_vregs[0x1e/4]&0x0000ffff) & 1);
+
+	/* Layers scrolling */
+
+	scrolly_offs = ((fuuki32_vregs[0xc/4]&0xffff0000)>>16) - (flip_screen ? 0x103 : 0x1f3);
+	scrollx_offs =  (fuuki32_vregs[0xc/4]&0x0000ffff) - (flip_screen ? 0x2c7 : 0x3f6);
+
+	layer0_scrolly = ((fuuki32_vregs[0x0/4]&0xffff0000)>>16) + scrolly_offs;
+	layer0_scrollx = ((fuuki32_vregs[0x0/4]&0x0000ffff)) + scrollx_offs;
+	layer1_scrolly = ((fuuki32_vregs[0x4/4]&0xffff0000)>>16) + scrolly_offs;
+	layer1_scrollx = ((fuuki32_vregs[0x4/4]&0x0000ffff)) + scrollx_offs;
+
+	layer2_scrolly = ((fuuki32_vregs[0x8/4]&0xffff0000)>>16);
+	layer2_scrollx = ((fuuki32_vregs[0x8/4]&0x0000ffff));
+
+	tilemap_set_scrollx(tilemap_0, 0, layer0_scrollx);
+	tilemap_set_scrolly(tilemap_0, 0, layer0_scrolly);
+	tilemap_set_scrollx(tilemap_1, 0, layer1_scrollx);
+	tilemap_set_scrolly(tilemap_1, 0, layer1_scrolly);
+
+	tilemap_set_scrollx(tilemap_2, 0, layer2_scrollx);
+	tilemap_set_scrolly(tilemap_2, 0, layer2_scrolly);
+	tilemap_set_scrollx(tilemap_3, 0, layer2_scrollx);
+	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly);
+
+	/* The bg colour is the last pen i.e. 0x1fff */
+	fillbitmap(bitmap,(0x800*4)-1,cliprect);
 	fillbitmap(priority_bitmap,0,cliprect);
 
-#if 0
-	usrintf_showmessage	("vidregs %08x %08x %08x %08x", fuuki32_vregs[0], fuuki32_vregs[1], fuuki32_vregs[2], fuuki32_vregs[3]);
-	usrintf_showmessage	("pri %08x", fuuki32_priority[0] );
-#endif
+	fuuki32_draw_layer(bitmap,cliprect, tm_back,   0, 1);
+	fuuki32_draw_layer(bitmap,cliprect, tm_middle, 0, 2);
+	fuuki32_draw_layer(bitmap,cliprect, tm_front,  0, 4);
 
-	tilemap_set_scrolly(fuuki32_tilemap,0,    (fuuki32_vregs[0]&0xffff0000)>>16);
-	tilemap_set_scrollx(fuuki32_tilemap,0,    (fuuki32_vregs[0]&0x0000ffff));
-	tilemap_set_scrolly(fuuki32_tilemap_2,0,  (fuuki32_vregs[1]&0xffff0000)>>16);
-	tilemap_set_scrollx(fuuki32_tilemap_2,0,  (fuuki32_vregs[1]&0x0000ffff));
-	tilemap_set_scrolly(fuuki32_tilemap_bg,0, (fuuki32_vregs[2]&0xffff0000)>>16);
-	tilemap_set_scrollx(fuuki32_tilemap_bg,0, (fuuki32_vregs[2]&0x0000ffff));
-
-	fuuki32_draw_layer(bitmap,cliprect,tm_back,  0,1);
-	fuuki32_draw_layer(bitmap,cliprect,tm_middle,0,2);
-	fuuki32_draw_layer(bitmap,cliprect,tm_front, 0,4);
-
-	/* No rasters on sprites */
+	// don't do the rasters on the sprites . its very slow and the hw might not anyway.
 	if (cliprect->max_y == Machine->visible_area.max_y)
 		fuuki32_draw_sprites(bitmap,&Machine->visible_area);
 }
@@ -363,8 +374,8 @@ VIDEO_EOF( fuuki32 )
 {
 	/* Buffer sprites and tilebank by 2 frames */
 
-	spr_buffered_tilebank_2 = spr_buffered_tilebank;
-	spr_buffered_tilebank = spr_tilebank[0];
+	spr_buffered_tilebank[1] = spr_buffered_tilebank[0];
+	spr_buffered_tilebank[0] = fuuki32_tilebank[0];
 	memcpy(buffered_spriteram32_2,buffered_spriteram32,spriteram_size);
 	memcpy(buffered_spriteram32,spriteram32,spriteram_size);
 }

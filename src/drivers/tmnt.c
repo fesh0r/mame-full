@@ -41,7 +41,8 @@ Updates:
   correctly. TMNT2 stays dimmed most of the time.(fixed)
 - sprite lag, quite evident in lgtnfght and mia but also in the others.
   Also see the left corner of the wall in punkshot DownTown level(should be better)
-- ssriders: Billy no longer goes berserk at stage 4's boss.
+- ssriders: Billy no longer goes berserk at stage 4's boss. Players
+  don't jitter as much walking on slanted surfaces.
 
 * uncertain bugs:
 - Detana!! Twin Bee's remaining sprite lag does not appear to be
@@ -436,7 +437,7 @@ static READ16_HANDLER( ssriders_protection_r )
 			data = -cpu_readmem24bew_word(0x105818);
 			data = ((data / 8 - 4) & 0x1f) * 0x40;
 			data += ((cpu_readmem24bew_word(0x105cb0) +
-						256*K052109_r(0x1a01) + K052109_r(0x1a00) - 4) / 8 + 12) & 0x3f; //*
+						256*K052109_r(0x1a01) + K052109_r(0x1a00) - 6) / 8 + 12) & 0x3f; //*
 			return data;
 
 		default:
@@ -1002,7 +1003,7 @@ MEMORY_END
 
 
 static MEMORY_READ16_START( tmnt2_readmem ) //*
-	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x104000, 0x107fff, MRA16_RAM },	/* main RAM */
 	{ 0x140000, 0x140fff, MRA16_RAM },
 	{ 0x180000, 0x183fff, MRA16_RAM },	// K053245_scattered_word_r
@@ -1252,7 +1253,7 @@ logerror("copy command %04x sprite %08x data %08x: %04x%04x %04x%04x  modifiers 
 #endif
 
 static MEMORY_WRITE16_START( tmnt2_writemem ) //*
-	{ 0x000000, 0x07ffff, MWA16_ROM, &tmnt2_rom },
+	{ 0x000000, 0x0fffff, MWA16_ROM, &tmnt2_rom },
 	{ 0x104000, 0x107fff, MWA16_RAM, &sunset_104000 },	/* main RAM */
 	{ 0x140000, 0x140fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x180000, 0x183fff, K053245_scattered_word_w, &spriteram16 },
@@ -2794,7 +2795,7 @@ static MACHINE_DRIVER_START( tmnt2 ) //*
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(lgtnfght)
@@ -2882,7 +2883,7 @@ static MACHINE_DRIVER_START( thndrx2 )
 	MDRV_NVRAM_HANDLER(thndrx2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
 	MDRV_PALETTE_LENGTH(2048)
@@ -3415,7 +3416,7 @@ ROM_START( glfgretj )
 ROM_END
 
 ROM_START( tmnt2 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "uaa02", 0x000000, 0x20000, CRC(58d5c93d) SHA1(6618678ec2da33d2ee6335cca7c9d49e9148b799) )
 	ROM_LOAD16_BYTE( "uaa03", 0x000001, 0x20000, CRC(0541fec9) SHA1(985364616a95e7dd008b5be02c0f0bf5eef54b3d) )
 	ROM_LOAD16_BYTE( "uaa04", 0x040000, 0x20000, CRC(1d441a7d) SHA1(97ce51eaf1c7560c19d8453f93ce01b0f71fe36d) )
@@ -3441,7 +3442,7 @@ ROM_START( tmnt2 )
 ROM_END
 
 ROM_START( tmnt22p )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "a02",   0x000000, 0x20000, CRC(aadffe3a) SHA1(f20eaef64f81b91726675006aa45807b0841f046) )
 	ROM_LOAD16_BYTE( "a03",   0x000001, 0x20000, CRC(125687a8) SHA1(ab8eb954a56cbb18a26af3431aa8d60406ef23b5) )
 	ROM_LOAD16_BYTE( "a04",   0x040000, 0x20000, CRC(fb5c7ded) SHA1(322ec2a4a6a2ecea0865bc72b6c1d23e52da33da) )
@@ -3467,7 +3468,7 @@ ROM_START( tmnt22p )
 ROM_END
 
 ROM_START( tmnt2a )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ada02", 0x000000, 0x20000, CRC(4f11b587) SHA1(111051da23ce7035405b4d12c0f18dcc1d6c8ddc) )
 	ROM_LOAD16_BYTE( "ada03", 0x000001, 0x20000, CRC(82a1b9ac) SHA1(161e8fd33e0e5c9349fec98b02225ed37578e488) )
 	ROM_LOAD16_BYTE( "ada04", 0x040000, 0x20000, CRC(05ad187a) SHA1(27a36a02ef792d87ffa2364537c42b6c50d6e4f0) )
