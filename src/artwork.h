@@ -30,7 +30,6 @@ struct artwork_info
 	struct osd_bitmap *artwork1;
 	struct osd_bitmap *alpha;
 	struct osd_bitmap *orig_artwork;   /* needed for palette recalcs */
-	struct osd_bitmap *vector_bitmap;  /* needed to buffer the vector image in vg with overlays */
 	UINT8 *orig_palette;               /* needed for restoring the colors after special effects? */
 	int num_pens_used;
 	UINT8 *transparency;
@@ -61,7 +60,6 @@ struct artwork_element
 
 extern struct artwork_info *artwork_backdrop;
 extern struct artwork_info *artwork_overlay;
-extern struct osd_bitmap *overlay_real_scrbitmap;
 extern struct osd_bitmap *artwork_real_scrbitmap;
 
 /*********************************************************************
@@ -79,14 +77,6 @@ void artwork_free(struct artwork_info **a);
   functions that are backdrop-specific
 *********************************************************************/
 void backdrop_refresh(struct artwork_info *a);
-void backdrop_refresh_tables (struct artwork_info *a);
-void backdrop_set_palette(struct artwork_info *a, unsigned char *palette);
-int backdrop_black_recalc(void);
-void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,int sy,
-		   const struct rectangle *clip);
-void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
-		      unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		      const struct rectangle *clip,const struct osd_bitmap *back);
 
 /*********************************************************************
   functions that are overlay-specific
