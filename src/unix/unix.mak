@@ -113,7 +113,7 @@ INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
 ifdef ZLIB
-ZLIB    = contrib/cutzlib-1.1.3/libz.a
+ZLIB    = src/unix/contrib/cutzlib-1.1.3/libz.a
 endif
 
 all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
@@ -145,8 +145,8 @@ MY_LIBS += -lm
 endif
 
 ifdef ZLIB
-MY_CFLAGS += -Icontrib/cutzlib-1.1.3 -I../../contrib/cutzlib-1.1.3
-LDFLAGS   = -Lcontrib/cutzlib-1.1.3
+MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.3 -I../../contrib/cutzlib-1.1.3
+LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.3
 endif
 
 ifdef MAME_DEBUG
@@ -212,9 +212,9 @@ objdirs: $(MY_OBJDIRS)
 $(MY_OBJDIRS):
 	-mkdir $@
 
-xlistdev: contrib/tools/xlistdev.c
+xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(X11INC) contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lm
+	$(CC_COMPILE) $(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lm
 
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	$(CC_COMMENT) @echo Linking $@...
@@ -231,9 +231,9 @@ osdepend:
 	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" \
 	 )
 
-contrib/cutzlib-1.1.3/libz.a:
+src/unix/contrib/cutzlib-1.1.3/libz.a:
 	( \
-	cd contrib/cutzlib-1.1.3; \
+	cd src/unix/contrib/cutzlib-1.1.3; \
 	./configure; \
 	$(MAKE) libz.a \
 	)
@@ -351,5 +351,5 @@ copycab:
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
-	rm -fr $(OBJ) $(NAME).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o $(TOOLS)
+	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.1.3/libz.a src/unix/contrib/cutzlib-1.1.3/*.o $(TOOLS)
 #	cd makedep; make clean
