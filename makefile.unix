@@ -64,7 +64,7 @@ CC	= gcc
 # next/macosx needs -traditional-cpp
 #
 ### for normal optimalisation, full warnings
-CFLAGS    = -O -Wall
+# CFLAGS    = -O -Wall
 ### this should work with all compilers 
 # CFLAGS    =
 ### to get full optimization under gcc/x Intel based OS's..
@@ -72,8 +72,8 @@ CFLAGS    = -O -Wall
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
 #  -malign-jumps=2 -malign-loops=2
 ### for Linux/PowerPC use following opts
-# CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
-#  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
+CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
+ -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 ### for OpenStep/MacOS X use following opts
 # CFLAGS    = -O4 -Wall -Wno-unused -finline-functions -ffast-math \
 #  -fstrength-reduce -traditional-cpp
@@ -311,6 +311,11 @@ NASM_FMT  = -f elf
 # ASM_STRIP = true  # no strip command
 # NASM_FMT  = -f aoutb
 
+ifdef MAME_DEBUG
+NAME=$(TARGET)d
+else
+NAME=$(TARGET)
+endif
 
 ##############################################################################
 # All done, type make -f makefile.unix and enjoy xmame/xmess ;)
