@@ -74,10 +74,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 static int video_handle_vectorres(struct rc_option *option, const char *arg,
 		int priority);
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
-static void change_debugger_focus(int new_debugger_focus);
-static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
-static void update_visible_area(struct mame_display *display);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -533,9 +530,13 @@ static void display_settings_changed(void)
 	vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 
 	/* we could have switched between hw and sw drawn vectors,
-	   so clear Machine->scrbitmap */
+	   so clear Machine->scrbitmap and don't use vector_dirty_pixels
+	   for the next (not skipped) frame */
 	if (normal_params.vec_bounds)
+	{
 		schedule_full_refresh();
+		ui_dirty = FRAMESKIP_LEVELS + 1;
+	}
 
 	sysdep_display_set_keybleds(led_state);
 }
@@ -711,7 +712,6 @@ void change_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-	int skip_this_frame;
 	cycles_t curr;
 	unsigned int flags = 0;
 	int normal_params_changed = 0;
@@ -788,7 +788,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (code_pressed_memory(KEYCODE_HOME))
 			frameskipper = 1;
 	}
-	skip_this_frame = skip_next_frame;
 	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
 	
 	/*** STEP 2: determine if the debugger or the normal game window
@@ -920,8 +919,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (display->changed_flags & DEBUG_BITMAP_CHANGED)
 			update_debug_display(display);
 	}
-	else if ((skip_this_frame == 0) &&
-		 (display->changed_flags & GAME_BITMAP_CHANGED))
+	else if (display->changed_flags & GAME_BITMAP_CHANGED)
 	{
 		/* determine non hotkey flags */
 		if (ui_dirty)

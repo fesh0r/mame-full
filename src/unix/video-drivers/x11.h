@@ -14,7 +14,6 @@ enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_DGA, X11_MODE_COUNT };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
-extern struct rc_option	fx_opts[];
 extern struct rc_option	xgl_opts[];
 
 EXTERN Display 		*display;

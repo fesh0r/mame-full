@@ -16,11 +16,18 @@
 #include "fxcompat.h"
 #include "sysdep/sysdep_display_priv.h"
 
-extern int fxheight;
+/* defined in svgafx.c or x11.c */
+extern int window_height;
+
+/* from fxgen.c */
 extern int vscrntlx;
 extern int vscrntly;
 extern int vscrnwidth;
 extern int vscrnheight;
+extern int vecvscrntlx;
+extern int vecvscrntly;
+extern int vecvscrnwidth;
+extern int vecvscrnheight;
 
 /* from mame's vidhrdw/vector.h */
 #define VCLEAN  0
@@ -50,8 +57,8 @@ static void PointConvert(int x,int y,float *sx,float *sy)
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY)
     dy = 1.0 - dy;
     
-  *sx=vscrntlx + dx*vscrnwidth;
-  *sy=fxheight - (vscrntly + dy*vscrnheight);
+  *sx=vecvscrntlx + dx*vecvscrnwidth;
+  *sy=window_height - (vecvscrntly + dy*vecvscrnheight);
 }
 
 /*
@@ -95,8 +102,8 @@ int fxvec_renderer(point *pt, int num_points)
                                    GR_COMBINE_OTHER_NONE,
                                    FXFALSE);
 
-    grClipWindow(vscrntlx, vscrntly, vscrntlx + vscrnwidth,
-      vscrntly + vscrnheight);
+    grClipWindow(vecvscrntlx, window_height - (vecvscrntly + vecvscrnheight),
+      vecvscrntlx + vecvscrnwidth, window_height - vecvscrntly);
       
     grEnableAA();
 

@@ -22,40 +22,15 @@
 #include "osd_cpu.h"
 #include "fxcompat.h"
 #include "sysdep/sysdep_display_priv.h"
+#include "fxgen.h"
 
-void CalcPoint(GrVertex *vert,int x,int y);
-int  InitTextures(void);
-int  InitVScreen(void);
-void CloseVScreen(void);
-void UpdateTexture(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette);
-void DrawFlatBitmap(void);
-void UpdateFXDisplay(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags);
+/* defined in svgafx.c or x11.c */
+extern int custom_windowsize, window_width, window_height;
+
+/* from fxvec.c */
 int fxvec_renderer(point *pt, int num_points);
 
-static int SetResolution(struct rc_option *option, const char *arg,
-   int priority);
-
-int fxwidth = 640;
-int fxheight = 480;
-int vscrntlx;
-int vscrntly;
-int vscrnwidth;
-int vscrnheight;
-
-static GrScreenResolution_t Gr_resolution = GR_RESOLUTION_640x480;
-static char version[80];
-static GrTexInfo texinfo;
-static int bilinear=1; /* Do binlinear filtering? */
-static const int texsize=256;
-static GrContext_t context=0;
-static int ui_was_dirty=1;
-
 /* The squares that are tiled to make up the game screen polygon */
-
 struct TexSquare
 {
   UINT16 *texture;
@@ -65,6 +40,21 @@ struct TexSquare
   float xcov,ycov;
 };
 
+int vscrntlx;
+int vscrntly;
+int vscrnwidth;
+int vscrnheight;
+int vecvscrntlx;
+int vecvscrntly;
+int vecvscrnwidth;
+int vecvscrnheight;
+
+static char version[80];
+static GrTexInfo texinfo;
+static int bilinear=1; /* Do binlinear filtering? */
+static const int texsize=256;
+static GrContext_t context=0;
+static int bitmap_dirty;
 static struct TexSquare *texgrid=NULL;
 static int texnumx;
 static int texnumy;
@@ -77,21 +67,16 @@ static struct sigaction vscreen_sa;
 static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
    SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGTERM, SIGBUS, -1 };
 static int signals_caught = 0;
+static GrScreenResolution_t Gr_resolution;
 
-struct rc_option fx_opts[] = {
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-   { "FX (Glide) Related", NULL,		rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "resolution",	"res",			rc_use_function, NULL,
-     "640x480",		0,			0,		SetResolution,
-     "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
-};
+static int  InitTextures(void);
+static void UpdateTexture(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette);
+static void DrawFlatBitmap(void);
 
-void CalcPoint(GrVertex *vert,int x,int y)
+
+static void CalcPoint(GrVertex *vert,int x,int y)
 {
   if(x)
   {
@@ -115,11 +100,11 @@ int InitGlide(void)
   int fd = open("/dev/3dfx", O_RDWR);
   if ((fd < 0) && geteuid())
   {
-     fprintf(stderr, "Glide error: couldn't open /dev/3dfx and not running as root\n");
-     return 1;
+    fprintf(stderr, "Glide error: couldn't open /dev/3dfx and not running as root, disabling use of Glide");
+    return 1;
   }
   if (fd >= 0)
-     close(fd);
+    close(fd);
   putenv("FX_GLIDE_NO_SPLASH=");
   grGlideInit();
   grSetupVertexLayout();
@@ -410,38 +395,49 @@ static ResToRes resTable[] = {
 			
 static long resTableSize = sizeof( resTable ) / sizeof( ResToRes );
 
-/* Get screen resolution */
-static int SetResolution(struct rc_option *option, const char *arg,
-   int priority)
+int InitParams(void)
 {
-  int width, height, match;
-  if (sscanf(arg, "%dx%d", &width, &height) == 2)
+  int i;
+  
+  if(custom_windowsize)
   {
-     for( match = 0; match < resTableSize; match++ )
-        if( width==resTable[match].width && height==resTable[match].height)
-        {
-           Gr_resolution = resTable[match].res;
-           fxwidth = width;
-           fxheight = height;
-           option->priority = priority;
-           return 0;
-        }
+    for( i = 0; i < resTableSize; i++ )
+    {
+      if( window_width==resTable[i].width && window_height==resTable[i].height)
+      {
+         Gr_resolution = resTable[i].res;
+         break;
+      }
+    }
+    if(i == resTableSize)
+    {
+      fprintf(stderr,
+          "error: unknown resolution: \"%dx%d\".\n"
+          "   Valid resolutions are:\n", window_width, window_height);
+      for( i = 0; i < resTableSize; i++ )
+      {
+         fprintf(stderr, "   \"%dx%d\"", resTable[i].width,
+            resTable[i].height);
+         if (i && (i % 5) == 0)
+            fprintf(stderr, "\n");
+      }
+      return 1;
+    } 
   }
-  fprintf(stderr,
-      "error: invalid resolution or unknown resolution: \"%s\".\n"
-      "   Valid resolutions are:\n", arg);
-  for( match = 0; match < resTableSize; match++ )
+  else
   {
-     fprintf(stderr, "   \"%dx%d\"", resTable[match].width,
-        resTable[match].height);
-     if (match && (match % 5) == 0)
-        fprintf(stderr, "\n");
+    Gr_resolution = GR_RESOLUTION_640x480;
+    window_width  = 640;
+    window_height = 480;
   }
-  return -1;
+
+  sysdep_display_check_params();
+  mode_check_params((double)window_width/window_height);
+
+  return 0;
 }
 
 /* Set up the virtual screen */
-
 int InitVScreen(void)
 {
   grGlideGetVersion(version);
@@ -455,15 +451,19 @@ int InitVScreen(void)
      return 1;
   }
   fprintf(stderr,
-     "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
+     "info: screen resolution set to %dx%d\n", window_width, window_height);
 
   /* clear the buffer */
   grBufferClear(0,0,0);
   
   /* calculate the vscreen boundaries */
-  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
-  vscrntlx=(fxwidth -vscrnwidth )/2;
-  vscrntly=(fxheight-vscrnheight)/2;
+  mode_clip_aspect(window_width, window_height, &vscrnwidth, &vscrnheight);
+  vscrntlx=(window_width -vscrnwidth )/2;
+  vscrntly=(window_height-vscrnheight)/2;
+  vecvscrnwidth  = vscrnwidth;
+  vecvscrnheight = vscrnheight;
+  vecvscrntlx    = vscrntlx;
+  vecvscrntly    = vscrntly;
   
   /* fill the sysdep_display_properties struct */
   memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
@@ -483,7 +483,7 @@ int InitVScreen(void)
   sysdep_display_properties.vector_renderer = fxvec_renderer;
   
   /* force an update of the bitmap for the first frame */
-  ui_was_dirty = 1;
+  bitmap_dirty = 1;
    
   return InitTextures();
 }
@@ -634,6 +634,29 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
+  if(!sysdep_display_params.vec_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
+    bitmap_dirty=2;
+
+  /* mame artwork is the only case where partial updates are used,
+     so we want to constrain vector drawing to the dirty area which
+     equals the game area */
+  if(memcmp(dirty_area, vis_area, sizeof(struct rectangle)))
+  {
+    vecvscrnwidth  = ((dirty_area->max_x+1)-dirty_area->min_x) *
+      ((double)vscrnwidth/sysdep_display_params.width);
+    vecvscrnheight = ((dirty_area->max_y+1)-dirty_area->min_y) *
+      ((double)vscrnheight/sysdep_display_params.height);
+    vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
+      * (dirty_area->min_x - vis_area->min_x);
+    vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
+      * (dirty_area->min_y - vis_area->min_y);
+/*  printf("vis: %dx%d, %dx%d\n", vis_area->min_x, vis_area->min_y,
+      vis_area->max_x, vis_area->max_y);
+    printf("dirty: %dx%d, %dx%d\n", dirty_area->min_x, dirty_area->min_y,
+      dirty_area->max_x, dirty_area->max_y);
+    printf("vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
+      vecvscrnwidth, vecvscrnwidht); */
+  }
   
   if(flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
   {
@@ -649,13 +672,13 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap,
                                           GR_TEXTUREFILTER_POINT_SAMPLED);
   }
   
-  if(bitmap && (!sysdep_display_params.vec_bounds || 
-     (flags & SYSDEP_DISPLAY_UI_DIRTY) || ui_was_dirty))
+  if(bitmap_dirty)
     UpdateTexture(bitmap, dirty_area, vis_area, palette);
 
   DrawFlatBitmap();
   grBufferSwap(1);
   grBufferClear(0,0,0);
 
-  ui_was_dirty=flags & SYSDEP_DISPLAY_UI_DIRTY;
+  if(bitmap_dirty)
+    bitmap_dirty--;
 }

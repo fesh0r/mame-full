@@ -20,17 +20,14 @@ struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, NULL, "Select x11 video mode: (if compiled in)\n0 Normal windowed (hotkey left-alt + insert)\n1 Xv windowed (hotkey left-alt + home)" },
-	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
    	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 #ifdef USE_DGA
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef USE_OPENGL
 	{ NULL, NULL, rc_link, xgl_opts, NULL, 0, 0, NULL, NULL },
-#endif
-#ifdef USE_GLIDE
-	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
 #endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };

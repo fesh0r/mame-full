@@ -17,22 +17,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include "fxgen.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
-
-/* from fxgen.c */
-int  InitVScreen(void);
-void CloseVScreen(void);
-int  InitGlide(void);
-void ExitGlide(void);
-void VScreenCatchSignals(void);
-void VScreenRestoreSignals(void);
-void UpdateFXDisplay(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags);
-
-extern int fxwidth;
-extern int fxheight;
 
 int xfx_init(void)
 {
@@ -52,16 +39,16 @@ void xfx_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int xfx_open_display(void)
 {
-  sysdep_display_check_params();
-  mode_check_params((double)fxwidth/fxheight);
-
-  if (x11_create_window(&fxwidth, &fxheight, 0))
+  if(InitParams())
+    return 1;
+  
+  if (x11_create_window(&window_width, &window_height, 0))
     return 1;
     
   xinput_open(2, 0);
   
   if (InitVScreen() != 0)
-     return 1;
+    return 1;
 
   VScreenCatchSignals();
   

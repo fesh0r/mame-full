@@ -12,12 +12,12 @@ static int mode_disable(struct rc_option *option, const char *s, int priority);
 
 struct rc_option aspect_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
-   { "Video Mode Selection Related", NULL,	rc_seperator,	NULL,
+   { "Aspect ratio handling", NULL,	rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
    { "keepaspect",	"ka",			rc_bool,	&use_aspect_ratio,
      "1",		0,			0,		NULL,
-     "Try / don't try to keep the aspect ratio of a game when selecting the best video mode" },
+     "Try to keep the correct aspect ratio" },
    { "perfectaspect",   "pa",                   rc_bool,        &perfect_aspect,
      "0",		0,			0,		NULL,
      "Automatically set yarbsize to get the perfect aspect ratio" },
@@ -30,9 +30,13 @@ struct rc_option aspect_opts[] = {
 };
 
 struct rc_option mode_opts[] = {
+   /* name, shortname, type, dest, deflt, min, max, func, help */
+   { "Video Mode Selection Related", NULL,	rc_seperator,	NULL,
+     NULL,		0,			0,		NULL,
+     NULL },
    { "disablemode",	"dm",			rc_use_function, NULL,
      NULL,		0,			0,		mode_disable,
-     "Don't use mode XRESxYRESxDEPTH this can be used to disable specific video modes which don't work on your system. The xDEPTH part of the string is optional and kan be set to 15,16,24 and 32. This option may be used more then once" },
+     "Don't use mode XRESxYRESxDEPTH this can be used to disable specific video modes which don't work on your system. The xDEPTH part of the string is optional and can be set to 15,16,24 and 32. This option may be used more then once" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
