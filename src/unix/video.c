@@ -20,6 +20,7 @@
 
 #define FRAMESKIP_DRIVER_COUNT 2
 static const int safety = 16;
+static int current_widthscale = 1, current_heightscale = 1;
 int normal_widthscale = 1, normal_heightscale = 1;
 int yarbsize = 0;
 static char *vector_res = NULL;
@@ -518,6 +519,7 @@ int osd_create_display(const struct osd_create_params *params,
 	}
 
 	video_depth = (params->depth == 15) ? 16 : params->depth;
+	video_real_depth = params->depth;
 
 	if (!blit_swapxy)
 		aspect_ratio = (double)params->aspect_x
@@ -526,8 +528,8 @@ int osd_create_display(const struct osd_create_params *params,
 		aspect_ratio = (double)params->aspect_y
 			/ (double)params->aspect_x;
 
-	widthscale		= normal_widthscale;
-	heightscale		= normal_heightscale;
+	widthscale		= current_widthscale  = normal_widthscale;
+	heightscale		= current_heightscale = normal_heightscale;
 	use_aspect_ratio	= normal_use_aspect_ratio;
 	video_fps		= params->fps;
 
@@ -645,8 +647,8 @@ static void change_display_settings(struct rectangle *new_visual,
 	if (force_new_visual
 			|| visual_width != new_visual_width
 			|| visual_height != new_visual_height
-			|| widthscale != new_widthscale
-			|| heightscale != new_heightscale
+			|| current_widthscale != new_widthscale
+			|| current_heightscale != new_heightscale
 			|| use_aspect_ratio != new_use_aspect_ratio)
 	{
 		int new_depth = bitmap_depth;
@@ -657,8 +659,8 @@ static void change_display_settings(struct rectangle *new_visual,
 
 		visual_width     = new_visual_width;
 		visual_height    = new_visual_height;
-		widthscale       = new_widthscale;
-		heightscale      = new_heightscale;
+		widthscale	 = current_widthscale  = new_widthscale;
+		heightscale	 = current_heightscale = new_heightscale;
 		use_aspect_ratio = new_use_aspect_ratio;
 
 		if (sysdep_create_display(new_depth) != OSD_OK)
@@ -945,7 +947,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 			frameskipper = 1;
 	}
 
-	if (code_pressed(KEYCODE_LSHIFT))
+	if (!effect && code_pressed(KEYCODE_LSHIFT))
 	{
 		int widthscale_mod  = 0;
 		int heightscale_mod = 0;

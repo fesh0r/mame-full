@@ -95,6 +95,7 @@ EXTERN float		video_fps;
 EXTERN int		video_width;
 EXTERN int		video_height;
 EXTERN int		video_depth;
+EXTERN int		video_real_depth;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		use_mouse;
