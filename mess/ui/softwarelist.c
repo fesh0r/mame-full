@@ -197,7 +197,8 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
         if (lpExt && stricmp(lpExt, ".ZIP")) {
             lpExt++;
 			imgtype = MessLookupImageType(imagetypes, lpExt);
-			if (imgtype) {
+			if (imgtype)
+			{
                 type = imgtype->type;
 #if HAS_CRC
 				if (crc && zipcrc)
@@ -206,9 +207,13 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 					{
 						unsigned char *buf = NULL;
 						assert(pZipEnt);
-						buf = alloca(pZipEnt->uncompressed_size);
-						readuncompresszip(pZip, pZipEnt, (char *) buf);
-						*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
+						buf = malloc(pZipEnt->uncompressed_size);
+						if (buf)
+						{
+							readuncompresszip(pZip, pZipEnt, (char *) buf);
+							*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
+							free(buf);
+						}
 					}
 					else
 					{
@@ -402,7 +407,8 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 #endif
 
 	/* Calculate image type */
-	if (img->type == IO_UNKNOWN) {
+	if (img->type == IO_UNKNOWN)
+	{
 		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, pzipcrc);
 		if (img->type != IO_UNKNOWN)
 			bLearnedSomething = TRUE;
@@ -410,12 +416,15 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 
 #if HAS_CRC
 	/* Calculate a CRC file? */
-	if ((eRealize >= REALIZE_ALL) && !crc && !img->crc) {
+	if ((eRealize >= REALIZE_ALL) && !crc && !img->crc)
+	{
 		extension = strrchr(img->fullname, '.');
-		if (extension) {
+		if (extension)
+		{
 			extension++;
 			imgtype = MessLookupImageType(imagetypes, extension);
-			if (imgtype) {
+			if (imgtype)
+			{
 				crc = CalculateCrc(img->fullname, imgtype->partialcrc);
 				bLearnedSomething = TRUE;
 			}
@@ -423,8 +432,9 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 	}
 
 	/* Load CRC information? */
-	if (mess_crc_file && crc && !img->crc) {
-		sprintf(crcstr, "%08x", crc);
+	if (mess_crc_file && crc && !img->crc)
+	{
+		snprintf(crcstr, sizeof(crcstr) / sizeof(crcstr[0]), "%08x", crc);
 		config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
 		ImageData_SetCrcLine(img, crc, line);
 	}
