@@ -475,7 +475,7 @@ static MACHINE_DRIVER_START( apple2e )
 	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
 	MDRV_PALETTE_INIT(apple2)
 
-	MDRV_VIDEO_START(apple2e)
+	MDRV_VIDEO_START(apple2)
 	MDRV_VIDEO_UPDATE(apple2)
 
 	/* sound hardware */
@@ -492,7 +492,6 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( apple2c )
 	MDRV_IMPORT_FROM( apple2ee )
-	MDRV_VIDEO_START( apple2c )
 MACHINE_DRIVER_END
 
 
@@ -503,6 +502,9 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START(apple2)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, 0x64f415c6 )
+
 	ROM_REGION(0x4700,REGION_CPU1,0)
 	ROM_LOAD_OPTIONAL ( "progaid1.rom", 0x1000, 0x0800, 0x4234e88a )
 	
@@ -517,6 +519,9 @@ ROM_START(apple2)
 ROM_END
 
 ROM_START(apple2p)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, 0 )
+
 	ROM_REGION(0x4700,REGION_CPU1,0)
 	ROM_LOAD ( "a2p.d0", 0x1000, 0x0800, 0x6f05f949 )
 	ROM_LOAD ( "a2p.d8", 0x1800, 0x0800, 0x1f08087c )
@@ -528,6 +533,9 @@ ROM_START(apple2p)
 ROM_END
 
 ROM_START(apple2e)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, 0x186f432d )
+
 	ROM_REGION(0x4700,REGION_CPU1,0)
 	ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, 0xe248835e )
 	ROM_LOAD ( "a2e.ef", 0x2000, 0x2000, 0xfc3d59d8 )
@@ -535,6 +543,9 @@ ROM_START(apple2e)
 ROM_END
 
 ROM_START(apple2ee)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, 0x186f432d )
+
     ROM_REGION(0x4700,REGION_CPU1,0)
     ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, 0x443aa7c4 )
     ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, 0x95e10034 )
@@ -542,22 +553,34 @@ ROM_START(apple2ee)
 ROM_END
 
 ROM_START(apple2ep)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, 0x186f432d )
+
     ROM_REGION(0x4700,REGION_CPU1,0)
     ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, 0x02b648c8)
     ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, 0x67aba8e7 )
+
     ROM_REGION(0x4000,REGION_CPU1,0)
     ROM_LOAD ( "a2c.128", 0x0000, 0x4000, 0xf0edaa1b )
 ROM_END
 
 ROM_START(apple2c0)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, 0x67aba8e7 )
+
     ROM_REGION(0x8700,REGION_CPU1,0)
     ROM_LOAD("a2c.256", 0x0000, 0x8000, 0xc8b979b3)
 ROM_END
 
 ROM_START(apple2cp)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, 0x67aba8e7 )
+
     ROM_REGION(0x8700,REGION_CPU1,0)
     ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, 0x0b996420)
 ROM_END

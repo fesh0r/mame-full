@@ -30,7 +30,13 @@
 #define PROFILER_C08X	PROFILER_USER2
 #define PROFILER_A2INT	PROFILER_USER2
 
+/* softswitch */
 UINT32 a2;
+
+/* before the softswitch is changed, these are applied */
+static UINT32 a2_mask;
+static UINT32 a2_set;
+
 
 /* local */
 static int a2_speaker_state;
@@ -108,14 +114,11 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 
 	assert((val & mask) == val);
 
-	/* disable VAR_ROMSWITCH if the ROM is only 16k */
-	if (memory_region_length(REGION_CPU1) < 0x8000)
-		val &= ~VAR_ROMSWITCH;
+	/* apply mask and set */
+	val &= a2_mask;
+	val |= a2_set;
 
-	/* always internal ROM if no slots exist */
-	if (!apple2_hasslots())
-		val = (val & ~VAR_SLOTC3ROM) | VAR_INTCXROM;
-
+	/* change the softswitch */
 	a2 &= ~mask;
 	a2 |= val;
 
@@ -371,6 +374,28 @@ DRIVER_INIT( apple2 )
 ***************************************************************************/
 MACHINE_INIT( apple2 )
 {
+	/* --------------------------------------------- *
+	 * set up the softswitch mask/set                *
+	 * --------------------------------------------- */
+	a2_mask = ~0;
+	a2_set = 0;
+
+	/* disable VAR_ROMSWITCH if the ROM is only 16k */
+	if (memory_region_length(REGION_CPU1) < 0x8000)
+		a2_mask &= ~VAR_ROMSWITCH;
+
+	/* always internal ROM if no slots exist */
+	if (!apple2_hasslots())
+	{
+		a2_mask &= ~VAR_SLOTC3ROM;
+		a2_set |= VAR_INTCXROM;
+	}
+
+	if (mess_ram_size <= 64*1024)
+		a2_mask &= ~(VAR_RAMRD | VAR_RAMWRT | VAR_80STORE | VAR_ALTZP | VAR_80COL);
+
+	/* --------------------------------------------- */
+
 	apple2_setvar(0, ~0);
 
 	if (apple2_hasslots())
