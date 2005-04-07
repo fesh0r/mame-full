@@ -6,6 +6,9 @@ DRIVER_INIT( apple1 );
 MACHINE_INIT( apple1 );
 SNAPSHOT_LOAD( apple1 );
 
+READ8_HANDLER( apple1_cassette_r );
+WRITE8_HANDLER( apple1_cassette_w );
+
 /* vidhrdw/apple1.c */
 
 VIDEO_START( apple1 );

@@ -5,7 +5,7 @@ Apple I
 CPU:		6502 @ 1.023 MHz
 			(Effective speed with RAM refresh waits is 0.960 MHz.)
 
-Memory:		4-8 KB on main board (4 KB standard)
+RAM:		4-8 KB on main board (4 KB standard)
 
 			Additional memory could be added via the expansion
 			connector, but the user was responsible for making sure
@@ -14,6 +14,11 @@ Memory:		4-8 KB on main board (4 KB standard)
 			Some users replaced the onboard 4-kilobit RAM chips with
 			16-kilobit RAM chips, increasing on-board memory to 32 KB,
 			but this required modifying the RAM interface circuitry.
+
+ROM:		256 bytes for Monitor program
+
+			Optional cassette interface included 256 bytes for
+			cassette routines.
 
 Interrupts:	None.
 			(The system board had jumpers to allow interrupts, but
@@ -40,7 +45,7 @@ $2000-$BFFF:	Unused address space, available for RAM in systems larger
 				than 8 KB.
 
 $C000-$CFFF:	Address space for optional cassette interface
-	$C028:			Cassette interface output port
+	$C000-$C0FF:	Cassette interface I/O range
 	$C100-$C1FF:	Cassette interface ROM
 
 $D000-$DFFF:	I/O address space
@@ -65,6 +70,7 @@ $F000-$FFFF:	ROM address space
 #include "vidhrdw/generic.h"
 #include "includes/apple1.h"
 #include "devices/snapquik.h"
+#include "devices/cassette.h"
 #include "inputx.h"
 
 /* port i/o functions */
@@ -72,7 +78,12 @@ $F000-$FFFF:	ROM address space
 /* memory w/r functions */
 
 static ADDRESS_MAP_START( apple1_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xcfff) AM_NOP
+	AM_RANGE(0x0000, 0xbfff) AM_NOP
+	/* Cassette interface I/O space: */
+	AM_RANGE(0xc000, 0xc0ff) AM_READWRITE(apple1_cassette_r, apple1_cassette_w)
+	/* Cassette interface ROM: */
+	AM_RANGE(0xc100, 0xc1ff) AM_ROM
+	AM_RANGE(0xc200, 0xcfff) AM_NOP
 	AM_RANGE(0xd000, 0xd00f) AM_NOP
 	AM_RANGE(0xd010, 0xd013) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xd014, 0xfeff) AM_NOP
@@ -218,10 +229,11 @@ static MACHINE_DRIVER_START( apple1 )
 	MDRV_VIDEO_UPDATE(apple1)
 MACHINE_DRIVER_END
 
-
 ROM_START(apple1)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("apple1.rom", 0xff00, 0x0100, CRC(a30b6af5) SHA1(224767aa499dc98767e042f375ced1359be8a35f))
+	/* 256-byte cassette interface ROM: */
+	ROM_LOAD("cassette.rom", 0xc100, 0x0100, CRC(11da1692) SHA1(2c536977bd85797453dba0646e3e94e9ff4f9236))
 	/* 512-byte Signetics 2513 character generator ROM: */
 	ROM_REGION(0x0200, REGION_GFX1,0)
 	ROM_LOAD("apple1.vid", 0x0000, 0x0200, CRC(a7e567fc) SHA1(b18aae0a2d4f92f5a7e22640719bbc4652f3f4ee))
@@ -234,8 +246,16 @@ static void apple1_snapshot_getinfo(struct IODevice *dev)
 	dev->file_extensions = "snp\0";
 }
 
+static void apple1_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(apple1)
 	CONFIG_DEVICE(apple1_snapshot_getinfo)
+	CONFIG_DEVICE(apple1_cassette_getinfo)
 	CONFIG_RAM_DEFAULT	(0x1000)
 	CONFIG_RAM			(0x2000)
 	CONFIG_RAM			(0x3000)
@@ -248,7 +268,6 @@ SYSTEM_CONFIG_START(apple1)
 	CONFIG_RAM			(0xA000)
 	CONFIG_RAM			(0xB000)
 	CONFIG_RAM			(0xC000)
-	CONFIG_RAM			(0xD000)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */
