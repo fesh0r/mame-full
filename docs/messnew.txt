@@ -14,6 +14,8 @@ System Driver Changes:
 
 - [APPLE1] Fixed snapshot loading.  (bug #690) [Colin Howell]
 
+- [APPLE1] Added cassette support.  (bug #477) [Colin Howell]
+
 - [SVISION] Fixed aspect ratio.  [PeT]
 
 
