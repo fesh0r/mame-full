@@ -928,8 +928,7 @@ void coco_set_halt_line(int halt_line)
 #define JOYSTICK_LEFT_X		9
 #define JOYSTICK_LEFT_Y		10
 
-double read_joystick(int joyport);
-double read_joystick(int joyport)
+static double read_joystick(int joyport)
 {
 	return readinputport(joyport) / 255.0;
 }
@@ -955,11 +954,13 @@ static double coco_hiresjoy_computetransitiontime(int inputport)
 
 	val = read_joystick(inputport);
 
-	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX) {
+	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX)
+	{
 		/* CoCo MAX 3 Interface */
 		val = val * 2500.0 + 400.0;
 	}
-	else {
+	else
+	{
 		/* Normal Hires Interface */
 		val = val * 4160.0 + 592.0;
 	}
@@ -1193,7 +1194,7 @@ static int keyboard_r(void)
 	{
 		/* Normal joystick */
 		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
-		joyval = (read_joystick(joyport) * 64.0) - 1.0;
+		joyval = read_joystick(joyport) * 64.0;
 
 		if ((d_dac >> 2 ) <= joyval)
 			porta |= 0x80;
