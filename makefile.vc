@@ -320,7 +320,11 @@ else
 include src/$(TARGET).mak
 endif
 include src/rules.mak
+ifeq ($(MAMEOS),windows)
+include mess/$(MAMEOS)/$(MAMEOS).mak
+else
 include src/$(MAMEOS)/$(MAMEOS).mak
+endif
 ifdef MESS
 include mess/rules_ms.mak
 endif

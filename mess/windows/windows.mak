@@ -15,6 +15,22 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/winddraw.o \
 	 $(OBJ)/windows/asmblit.o $(OBJ)/windows/asmtile.o
 
+ifdef MESS
+CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
+OSOBJS += \
+	$(OBJ)/mess/windows/dirio.o		\
+	$(OBJ)/mess/windows/dirutils.o	\
+	$(OBJ)/mess/windows/messwin.o	\
+	$(OBJ)/mess/windows/configms.o	\
+	$(OBJ)/mess/windows/menu.o		\
+	$(OBJ)/mess/windows/opcntrl.o	\
+	$(OBJ)/mess/windows/dialog.o	\
+	$(OBJ)/mess/windows/tapedlg.o	\
+	$(OBJ)/mess/windows/parallel.o	\
+	$(OBJ)/mess/windows/strconv.o	\
+	$(OBJ)/mess/windows/winutils.o
+endif 
+
 # add resource file if no UI
 ifeq ($(WINUI),)
 OSOBJS += $(OBJ)/windows/mame.res
@@ -24,10 +40,14 @@ ifdef NEW_DEBUGGER
 OSOBJS += $(OBJ)/windows/debugwin.o 
 endif
 
+RESFILE=$(OBJ)/mess/windows/mess.res
+
 # enable guard pages on all memory allocations in the debug build
 ifdef DEBUG
+ifndef MESS
 OSOBJS += $(OBJ)/windows/winalloc.o
 LDFLAGS += -Wl,--allow-multiple-definition
+endif
 endif
 
 # video blitting functions
@@ -41,11 +61,19 @@ $(OBJ)/windows/asmtile.o: src/windows/asmtile.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 # add our prefix files to the mix (we need -Wno-strict-aliasing for DirectX)
+ifndef MSVC
 CFLAGS += -mwindows -include src/$(MAMEOS)/winprefix.h
 # CFLAGSOSDEPEND += -Wno-strict-aliasing
+else
+CFLAGS += /FI"windows/winprefix.h"
+endif
 
 # add the windows libaries
+ifndef MSVC
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
+else
+LIBS += dinput.lib
+endif
 
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./
@@ -64,6 +92,7 @@ endif
 #####################################################################
 # Resources
 
+ifndef MESS
 RC = @windres --use-temp-file
 
 RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
@@ -73,4 +102,4 @@ RCFLAGS = -O coff --include-dir src/windows
 $(OBJ)/windows/%.res: src/windows/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
-
+endif
