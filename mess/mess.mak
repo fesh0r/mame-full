@@ -489,7 +489,10 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/systems/mac.o			\
 	$(OBJ)/mess/vidhrdw/apple1.o		\
 	$(OBJ)/mess/machine/apple1.o		\
-	$(OBJ)/mess/systems/apple1.o
+	$(OBJ)/mess/systems/apple1.o		\
+	$(OBJ)/mess/vidhrdw/apple3.o		\
+	$(OBJ)/mess/machine/apple3.o		\
+	$(OBJ)/mess/systems/apple3.o
 
 
 $(OBJ)/avigo.a: \
