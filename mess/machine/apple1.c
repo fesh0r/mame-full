@@ -141,14 +141,16 @@ static int apple1_kbd_data = 0;
 
 
 /*****************************************************************************
-**	driver init
+**	DRIVER_INIT:  driver-specific setup, executed once at MESS startup.
 *****************************************************************************/
 
 DRIVER_INIT( apple1 )
 {
-	/* install RAM handlers */
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, 0, MRA8_BANK1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, 0, MWA8_BANK1);
+	/* Set up the handlers for MESS's dynamically-sized RAM. */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+								 0x0000, mess_ram_size - 1, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+								  0x0000, mess_ram_size - 1, 0, 0, MWA8_BANK1);
 	cpu_setbank(1, mess_ram);
 
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
@@ -166,16 +168,18 @@ DRIVER_INIT( apple1 )
 	timer_pulse(TIME_IN_HZ(120), 0, apple1_kbd_poll);
 }
 
+
 /*****************************************************************************
-**	machine init:  actions to perform on cold boot
+**	MACHINE_INIT:  actions to perform on each cold boot.
 *****************************************************************************/
 
 MACHINE_INIT( apple1 )
 {
-	/* On cold boot, reset the PIA and the display hardware. */
+	/* Reset the PIA and the display hardware. */
 	pia_reset();
 	apple1_vh_dsp_clr();
 }
+
 
 /*****************************************************************************
 **	apple1_verify_header
@@ -220,9 +224,8 @@ static int apple1_verify_header (UINT8 *data)
 SNAPSHOT_LOAD(apple1)
 {
 	UINT64 filesize, datasize;
-	UINT8 *snapbuf;
-	UINT16 start_addr = 0x0000;
-	UINT8 *memptr;
+	UINT8 *snapbuf, *snapptr;
+	UINT16 start_addr, end_addr, addr;
 
 	filesize = mame_fsize(fp);
 	snapbuf = auto_malloc(filesize);
@@ -245,17 +248,21 @@ SNAPSHOT_LOAD(apple1)
 	start_addr = (snapbuf[5] << 8) | (snapbuf[6]);
 	logerror("apple1 - LoadAddress is 0x%04x\n", start_addr);
 
-	if (start_addr + datasize > mess_ram_size)
+	end_addr = start_addr + datasize - 1;
+
+	if ((start_addr < 0xE000 && end_addr > mess_ram_size - 1)
+		|| end_addr > 0xEFFF)
 	{
-		printf("apple1 - Snapshot won't fit in this %d-byte memory configuration; needs %d bytes\n", mess_ram_size, (int) (start_addr + datasize));
+		printf("apple1 - Snapshot won't fit in this memory configuration;\n"
+			   "needs memory from $%04X to $%04X.\n", start_addr, end_addr);
 		return INIT_FAIL;
 	}
 
-	/* Point to the memory region where the snapshot will be loaded to */
-	memptr = mess_ram + start_addr;
-
 	/* Copy the data into memory space. */
-	memcpy(memptr, snapbuf + SNAP_HEADER_LEN, datasize);
+	for (addr = start_addr, snapptr = snapbuf + SNAP_HEADER_LEN;
+		 addr <= end_addr;
+		 addr++, snapptr++)
+		program_write_byte(addr, *snapptr);
 
 	return INIT_PASS;
 }

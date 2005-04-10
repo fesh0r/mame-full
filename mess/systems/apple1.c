@@ -49,15 +49,18 @@ $C000-$CFFF:	Address space for optional cassette interface
 	$C100-$C1FF:	Cassette interface ROM
 
 $D000-$DFFF:	I/O address space
-	$D010-$D013:	Motorola 6820 PIA address space
+	$D010-$D013:	Motorola 6820 PIA registers.
 		$D010:  		Keyboard input port
 		$D011:  		Control register for keyboard input port, with
 						key-available flag.
 		$D012:  		Display output port (bit 7 is a status input)
 		$D013:  		Control register for display output port
+	(PIA registers also mirrored at $D014-$D017, $D018-$D01B, $D01C-$D01F,
+	$D030-$D03F, $D050-$D05F, ... , $DFD0-$DFDF, $DFF0-$DFFF.)
 
 $E000-$EFFF:	Extra RAM space available for a program in an 8 KB system
 				modified to use cassette BASIC
+				(The system simulated here always includes this RAM.)
 
 $F000-$FFFF:	ROM address space
 	$FF00-$FFFF:	Apple Monitor ROM
@@ -79,14 +82,30 @@ $F000-$FFFF:	ROM address space
 
 static ADDRESS_MAP_START( apple1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_NOP
+
 	/* Cassette interface I/O space: */
 	AM_RANGE(0xc000, 0xc0ff) AM_READWRITE(apple1_cassette_r, apple1_cassette_w)
 	/* Cassette interface ROM: */
 	AM_RANGE(0xc100, 0xc1ff) AM_ROM
+
 	AM_RANGE(0xc200, 0xcfff) AM_NOP
-	AM_RANGE(0xd000, 0xd00f) AM_NOP
-	AM_RANGE(0xd010, 0xd013) AM_READWRITE(pia_0_r, pia_0_w)
-	AM_RANGE(0xd014, 0xfeff) AM_NOP
+
+	/* In $D000-$DFFF, PIA is selected by address bit 4 being high,
+	   and PIA registers are addressed with address bits 0-1.  All
+	   other address bits are ignored.  Thus $D010-$D013 is mirrored
+	   at all $Dxxx addresses with bit 4 high. */
+	AM_RANGE(0xd010, 0xd013) AM_MIRROR(0x0fec) AM_READWRITE(pia_0_r, pia_0_w)
+	/* $Dxxx addresses with bit 4 low are NOPs.
+	   (Note this uses AM_SPACE, not AM_RANGE.) */
+	AM_SPACE(0xd000, 0xf010) AM_NOP
+
+	/* We always include the remapped RAM for cassette BASIC, both for
+	   simplicity and to allow the running of BASIC programs. */
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+
+	AM_RANGE(0xf000, 0xfeff) AM_NOP
+
+	/* Monitor ROM: */
 	AM_RANGE(0xff00, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -249,14 +268,17 @@ static void apple1_snapshot_getinfo(struct IODevice *dev)
 static void apple1_cassette_getinfo(struct IODevice *dev)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	cassette_device_getinfo(dev, NULL, NULL, CASSETTE_STOPPED);
 	dev->count = 1;
 }
 
 SYSTEM_CONFIG_START(apple1)
 	CONFIG_DEVICE(apple1_snapshot_getinfo)
 	CONFIG_DEVICE(apple1_cassette_getinfo)
-	CONFIG_RAM_DEFAULT	(0x1000)
+	/* Note that because we always include 4K of RAM at $E000-$EFFF,
+	   the RAM amounts listed here will be 4K below the actual RAM
+	   total. */
+	CONFIG_RAM			(0x1000)
 	CONFIG_RAM			(0x2000)
 	CONFIG_RAM			(0x3000)
 	CONFIG_RAM			(0x4000)
@@ -267,7 +289,7 @@ SYSTEM_CONFIG_START(apple1)
 	CONFIG_RAM			(0x9000)
 	CONFIG_RAM			(0xA000)
 	CONFIG_RAM			(0xB000)
-	CONFIG_RAM			(0xC000)
+	CONFIG_RAM_DEFAULT	(0xC000)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */

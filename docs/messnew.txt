@@ -14,6 +14,8 @@ System Driver Changes:
 
 - [APPLE1] Added cassette support.  (bug #477) [Colin Howell]
 
+- [APPLE1] Added RAM at $E000-$EFFF for BASIC.  (bug #697) [Colin Howell]
+
 - [APPLE2] Keyboard refactorings.  (bug #694) [Christopher Stone]
 
 - [COCO] Fixed joystick ranges (they were previously 0-62 instead of 0-63.)
