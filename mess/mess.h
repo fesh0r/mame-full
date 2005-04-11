@@ -16,6 +16,9 @@
 #include "driver.h"
 #include "image.h"
 #include "artworkx.h"
+#include "config.h"
+
+
 
 /***************************************************************************
 
@@ -95,11 +98,6 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 /* runs checks to see if device code is proper */
 int mess_validitychecks(void);
 
-/* runs a set of test cases on the driver; can pass in an optional callback
- * to provide a way to identify images to test with
- */
-void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype));
-
 /* these are called from mame.c*/
 int devices_init(const struct GameDriver *gamedrv);
 int devices_initialload(const struct GameDriver *gamedrv, int ispreload);
@@ -156,6 +154,8 @@ data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, off
 extern const char *mess_path;
 
 void machine_hard_reset(void);
+
+void mess_config_save_xml(int type, mame_file *file);
 
 #ifdef __cplusplus
 }

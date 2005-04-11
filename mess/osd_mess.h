@@ -1,6 +1,15 @@
+/*********************************************************************
+
+	osd_mess.h
+
+	OS dependent calls for MESS
+
+*********************************************************************/
+
 #ifndef OSD_MESS_H
 #define OSD_MESS_H
 
+struct _mame_file;
 typedef struct _mess_image mess_image;
 
 /* called by the filemanager code to allow the OS to override the file		*/
@@ -15,6 +24,11 @@ int osd_keyboard_disabled(void);
 /* returns 1 if trying to quit; only called when options.disable_normal_ui */
 /* is set */
 int osd_trying_to_quit(void);
+
+/* allows OSD code to store stuff in .cfg files */
+void osd_config_save_xml(int type, struct _mame_file *file);
+
+
 
 /******************************************************************************
 

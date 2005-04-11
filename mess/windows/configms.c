@@ -288,6 +288,12 @@ void set_devicedirectory(int dev, const char *dir)
 
 
 
+void osd_config_save_xml(int type, struct _mame_file *file)
+{
+}
+
+
+
 int win_mess_validitychecks(void)
 {
 	int i;
