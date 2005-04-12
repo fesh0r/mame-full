@@ -82,9 +82,6 @@ static void apple3_video_text40(struct mame_bitmap *bitmap)
 			offset = mess_ram_size - 0x8000 + text_map[y] + x + (a3 & VAR_VM2 ? 0x0400 : 0x0000);
 			ch = mess_ram[offset];
 
-			if (!x && !y)
-				logerror("offset=0x%08x ch=0x%02x\n", offset, ch);
-
 			if (a3 & VAR_VM0)
 			{
 				/* color text */
@@ -126,7 +123,52 @@ static void apple3_video_text40(struct mame_bitmap *bitmap)
 
 static void apple3_video_text80(struct mame_bitmap *bitmap)
 {
-	osd_die("NYI: apple3_video_text80()");
+	int x, y, col, row;
+	offs_t offset;
+	UINT8 ch;
+	const UINT8 *char_data;
+	pen_t fg, bg;
+	UINT16 *dest;
+
+	for (y = 0; y < 24; y++)
+	{
+		for (x = 0; x < 40; x++)
+		{
+			offset = mess_ram_size - 0x8000 + text_map[y] + x;
+
+			/* first character */
+			ch = mess_ram[offset + 0x0000];
+			char_data = &char_mem[(ch & 0x7F) * 8];
+			fg = (ch & 0x80) ? GREEN : BLACK;
+			bg = (ch & 0x80) ? BLACK : GREEN;
+
+			for (row = 0; row < 8; row++)
+			{
+				for (col = 0; col < 7; col++)
+				{
+					dest = ((UINT16 *) bitmap->line[y * 8 + row]) + (x * 14 + col + 0);
+					dest[0] = (char_data[row] & (1 << col)) ? fg : bg;
+					dest[1] = (char_data[row] & (1 << col)) ? fg : bg;
+				}
+			}
+
+			/* second character */
+			ch = mess_ram[offset + 0x0400];
+			char_data = &char_mem[(ch & 0x7F) * 8];
+			fg = (ch & 0x80) ? GREEN : BLACK;
+			bg = (ch & 0x80) ? BLACK : GREEN;
+
+			for (row = 0; row < 8; row++)
+			{
+				for (col = 0; col < 7; col++)
+				{
+					dest = ((UINT16 *) bitmap->line[y * 8 + row]) + (x * 14 + col + 7);
+					dest[0] = (char_data[row] & (1 << col)) ? fg : bg;
+					dest[1] = (char_data[row] & (1 << col)) ? fg : bg;
+				}
+			}
+		}
+	}
 }
 
 

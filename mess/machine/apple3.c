@@ -21,7 +21,8 @@ static UINT8 via_1_a;
 static UINT8 via_1_b;
 static offs_t zpa;
 
-#define LOG_MEMORY	1
+#define LOG_MEMORY		1
+#define LOG_INDXADDR	1
 
 
 
@@ -294,6 +295,8 @@ static void apple3_update_memory(void)
 		logerror("apple3_update_memory(): via_0_b=0x%02x via_1_a=0x0x%02x\n", via_0_b, via_1_a);
 	}
 
+	cpunum_set_clock(0, (via_1_a & 0x80) ? 1000000 : 2000000);
+
 #if 0
 	/* bank 1: 0x0000-0x00FF */
 	if (via_0_b < 0x20)
@@ -459,6 +462,16 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 	{
 		n = *apple3_bankaddr(~0, zpa ^ 0x0C00);
 
+		if (LOG_INDXADDR)
+		{
+			static UINT8 last_n;
+			if (last_n != n)
+			{
+				logerror("indxaddr: zpa=0x%04x n=0x%02x\n", zpa, n);
+				last_n = n;
+			}
+		}
+
 		if (n == 0x8F)
 		{
 			/* get at that special ram under the VIAs */
@@ -483,7 +496,7 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 			if (offset < 0x2000)
 				result = apple3_bankaddr(~0, offset - 0x2000);
 			else if (offset < 0xA000)
-				result = &mess_ram[offset - 0x2000];
+				result = apple3_bankaddr(via_1_a, offset - 0x2000);
 			else if (offset < 0xC000)
 				result = apple3_bankaddr(~0, offset - 0x8000);
 			else if (offset < 0xD000)
@@ -510,7 +523,7 @@ static READ8_HANDLER( apple3_indexed_read )
 	else if (addr != (UINT8 *) ~0)
 		result = *addr;
 	else
-		result = memory_region(REGION_CPU1)[offset % 0x10000];
+		result = memory_region(REGION_CPU1)[offset % memory_region_length(REGION_CPU1)];
 	return result;
 }
 
