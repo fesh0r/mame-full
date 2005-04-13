@@ -149,6 +149,11 @@ static READ8_HANDLER( apple3_c0xx_r )
 			result = apple3_profile_r(offset);
 			break;
 
+		case 0xD0: case 0xD1: case 0xD2: case 0xD3:
+		case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+			result = 0x00;
+			break;
+
 		case 0xDB:
 			apple3_write_charmem();
 			break;
@@ -266,7 +271,7 @@ static UINT8 *apple3_get_zpa_addr(offs_t offset)
 	else if (via_0_b > 0x9F)
 		return apple3_bankaddr(~0, zpa - 0x8000);
 	else
-		return apple3_bankaddr(via_0_b, zpa - 0x2000);
+		return apple3_bankaddr(via_1_a, zpa - 0x2000);
 }
 
 
@@ -295,7 +300,7 @@ static void apple3_update_memory(void)
 		logerror("apple3_update_memory(): via_0_b=0x%02x via_1_a=0x0x%02x\n", via_0_b, via_1_a);
 	}
 
-	cpunum_set_clock(0, (via_1_a & 0x80) ? 1000000 : 2000000);
+	cpunum_set_clock(0, (via_0_a & 0x80) ? 1000000 : 2000000);
 
 #if 0
 	/* bank 1: 0x0000-0x00FF */
@@ -544,6 +549,9 @@ static WRITE8_HANDLER( apple3_indexed_write )
 
 DRIVER_INIT( apple3 )
 {
+	/* hack to get around VIA problem */
+	memory_region(REGION_CPU1)[0x0685] = 0x00;
+
 	acia_6551_init();
 
 	AY3600_init();
