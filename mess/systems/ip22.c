@@ -53,40 +53,40 @@ static VIDEO_UPDATE( ip225015 )
 {
 }
 
-data32_t nMC_CPUControl0;
-data32_t nMC_CPUControl1;
-data32_t nMC_Watchdog;
-data32_t nMC_SysID;
-data32_t nMC_RPSSDiv;
-data32_t nMC_RefCntPreload;
-data32_t nMC_RefCnt;
-data32_t nMC_GIO64ArbParam;
-data32_t nMC_ArbCPUTime;
-data32_t nMC_ArbBurstTime;
-data32_t nMC_MemCfg0;
-data32_t nMC_MemCfg1;
-data32_t nMC_CPUMemAccCfg;
-data32_t nMC_GIOMemAccCfg;
-data32_t nMC_CPUErrorAddr;
-data32_t nMC_CPUErrorStatus;
-data32_t nMC_GIOErrorAddr;
-data32_t nMC_GIOErrorStatus;
-data32_t nMC_SysSemaphore;
-data32_t nMC_GIOLock;
-data32_t nMC_EISALock;
-data32_t nMC_GIO64TransMask;
-data32_t nMC_GIO64Subst;
-data32_t nMC_DMAIntrCause;
-data32_t nMC_DMAControl;
-data32_t nMC_DMATLBEntry0Hi;
-data32_t nMC_DMATLBEntry0Lo;
-data32_t nMC_DMATLBEntry1Hi;
-data32_t nMC_DMATLBEntry1Lo;
-data32_t nMC_DMATLBEntry2Hi;
-data32_t nMC_DMATLBEntry2Lo;
-data32_t nMC_DMATLBEntry3Hi;
-data32_t nMC_DMATLBEntry3Lo;
-data32_t nMC_RPSSCounter;
+static data32_t nMC_CPUControl0;
+static data32_t nMC_CPUControl1;
+static data32_t nMC_Watchdog;
+static data32_t nMC_SysID;
+static data32_t nMC_RPSSDiv;
+static data32_t nMC_RefCntPreload;
+static data32_t nMC_RefCnt;
+static data32_t nMC_GIO64ArbParam;
+static data32_t nMC_ArbCPUTime;
+static data32_t nMC_ArbBurstTime;
+static data32_t nMC_MemCfg0;
+static data32_t nMC_MemCfg1;
+static data32_t nMC_CPUMemAccCfg;
+static data32_t nMC_GIOMemAccCfg;
+static data32_t nMC_CPUErrorAddr;
+static data32_t nMC_CPUErrorStatus;
+static data32_t nMC_GIOErrorAddr;
+static data32_t nMC_GIOErrorStatus;
+static data32_t nMC_SysSemaphore;
+static data32_t nMC_GIOLock;
+static data32_t nMC_EISALock;
+static data32_t nMC_GIO64TransMask;
+static data32_t nMC_GIO64Subst;
+static data32_t nMC_DMAIntrCause;
+static data32_t nMC_DMAControl;
+static data32_t nMC_DMATLBEntry0Hi;
+static data32_t nMC_DMATLBEntry0Lo;
+static data32_t nMC_DMATLBEntry1Hi;
+static data32_t nMC_DMATLBEntry1Lo;
+static data32_t nMC_DMATLBEntry2Hi;
+static data32_t nMC_DMATLBEntry2Lo;
+static data32_t nMC_DMATLBEntry3Hi;
+static data32_t nMC_DMATLBEntry3Lo;
+static data32_t nMC_RPSSCounter;
 
 static READ32_HANDLER( mc_r )
 {
