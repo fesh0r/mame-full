@@ -266,9 +266,11 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
 	DRIVER( apple2g1 )	/* 1987 Apple IIgs ROM01							*/
 	DRIVER( apple2gs )	/* 1989 Apple IIgs ROM03							*/
 	DRIVER( ace100 )    /* 1982 Apple ][ clone								*/
-	DRIVER( laser128 )   /* 1987 Apple //c clone							*/
+	DRIVER( laser128 )  /* 1987 Apple //c clone								*/
 	DRIVER( las128ex )  /* 1987 Apple //c clone								*/
-	DRIVER( las3000 )  /* 1983 (semi) Apple ][+ clone								*/
+	DRIVER( las3000 )   /* 1983 (semi) Apple ][+ clone						*/
+	DRIVER( apple3 )    /* 1980 Apple ///     								*/
+
 /*
  * Lisa 				 January			 1983
  * Lisa 2 				 January			 1984
@@ -806,6 +808,10 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER( abc800m )
 	DRIVER( abc800c )
 	DRIVER( abc806 )
+
+	/* SGI */
+	DRIVER( ip204415 )	/* IP20 IRIS Indigo workstation                     */
+	DRIVER( ip225015 )	/* IP22 Indy workstation                            */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */

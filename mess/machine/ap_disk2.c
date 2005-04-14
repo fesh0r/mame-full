@@ -68,6 +68,8 @@ void apple2_slot6_init(void)
 {
 	int floppy_count, i;
 	mess_image *image;
+	
+	read_state = 1;
 
 	floppy_count = device_count(IO_FLOPPY);
 

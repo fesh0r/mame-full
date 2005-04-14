@@ -26,5 +26,8 @@ VIDEO_START( apple3 );
 VIDEO_UPDATE( apple3 );
 void apple3_write_charmem(void);
 
+READ8_HANDLER( apple3_00xx_r );
+WRITE8_HANDLER( apple3_00xx_w );
+
 
 #endif /* APPLE3_H */

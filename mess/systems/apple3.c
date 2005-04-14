@@ -12,12 +12,15 @@
 
 #include "driver.h"
 #include "includes/apple3.h"
+#include "includes/apple2.h"
+#include "devices/mflopimg.h"
+#include "formats/ap2_dsk.h"
 #include "machine/6522via.h"
 #include "inputx.h"
 
 
 static ADDRESS_MAP_START( apple3_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00FF) AM_RAMBANK(1)
+	AM_RANGE(0x0000, 0x00FF) AM_READWRITE(apple3_00xx_r, apple3_00xx_w)
 	AM_RANGE(0x0100, 0x01FF) AM_RAMBANK(2)
 	AM_RANGE(0x0200, 0x1FFF) AM_RAMBANK(3)
 	AM_RANGE(0x2000, 0x9FFF) AM_RAMBANK(4)
@@ -43,7 +46,7 @@ static MACHINE_DRIVER_START( apple3 )
 	MDRV_SCREEN_SIZE(280*2, 192)
 	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
 	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(512)
 	MDRV_PALETTE_INIT( apple2 )
 
 	MDRV_VIDEO_START( apple3 )
@@ -139,8 +142,17 @@ ROM_START(apple3)
 	ROM_LOAD( "apple3.rom", 0x0000, 0x1000, CRC(55e8eec9) SHA1(579ee4cd2b208d62915a0aa482ddc2744ff5e967))
 ROM_END
 
+static void apple3_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_apple2);
+	dev->count = 2;
+	dev->tag = APDISK_DEVTAG;
+}
+
 SYSTEM_CONFIG_START(apple3)
 	CONFIG_RAM_DEFAULT(0x80000)
+	CONFIG_DEVICE(apple3_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT	INIT    CONFIG	COMPANY				FULLNAME */

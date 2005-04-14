@@ -95,9 +95,9 @@ CPUS+=ARM@
 #CPUS+=ARM7@
 CPUS+=JAGUAR@
 #CPUS+=R3000@
-#CPUS+=R4600@
+CPUS+=R4600@
 #CPUS+=R4700@
-#CPUS+=R5000@
+CPUS+=R5000@
 #CPUS+=QED5271@
 #CPUS+=RM7000@
 CPUS+=SH2@
@@ -307,6 +307,7 @@ DRVLIBS = \
 	$(OBJ)/telmac.a		\
 	$(OBJ)/tx0.a		\
 	$(OBJ)/luxor.a		\
+	$(OBJ)/sgi.a		\
 
 
 $(OBJ)/neocd.a:						\
@@ -880,6 +881,9 @@ $(OBJ)/tx0.a:				\
 $(OBJ)/luxor.a:					\
 	$(OBJ)/mess/systems/abc80.o	\
 
+$(OBJ)/sgi.a:						\
+	$(OBJ)/mess/systems/ip20.o		\
+	$(OBJ)/mess/systems/ip22.o
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\

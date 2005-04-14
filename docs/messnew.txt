@@ -2,7 +2,9 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Apple /// (not working) [Nate Woods]
+- SGI IRIS Indigo workstation (not working) [Mooglyguy]
+- SGI IP22 Indy workstation (not working) [Mooglyguy]
 
 
 

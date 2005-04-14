@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "includes/apple3.h"
+#include "includes/apple2.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 #include "machine/ay3600.h"
@@ -162,7 +163,7 @@ static READ8_HANDLER( apple3_c0xx_r )
 		case 0xE4: case 0xE5: case 0xE6: case 0xE7:
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB:
 		case 0xEC: case 0xED: case 0xEE: case 0xEF:
-			result = iwm_r(offset);
+			result = apple2_c0xx_slot6_r(offset % 0x10);
 			break;
 
 		case 0xF0:
@@ -213,7 +214,7 @@ static WRITE8_HANDLER( apple3_c0xx_w )
 		case 0xE4: case 0xE5: case 0xE6: case 0xE7:
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB:
 		case 0xEC: case 0xED: case 0xEE: case 0xEF:
-			iwm_w(offset, data);
+			apple2_c0xx_slot6_w(offset % 0x10, data);
 			break;
 
 		case 0xF0:
@@ -276,14 +277,14 @@ static UINT8 *apple3_get_zpa_addr(offs_t offset)
 
 
 
-static READ8_HANDLER( apple3_00xx_r )
+READ8_HANDLER( apple3_00xx_r )
 {
 	return *apple3_get_zpa_addr(offset);
 }
 
 
 
-static WRITE8_HANDLER( apple3_00xx_w )
+WRITE8_HANDLER( apple3_00xx_w )
 {
 	*apple3_get_zpa_addr(offset) = data;
 }
@@ -302,28 +303,7 @@ static void apple3_update_memory(void)
 
 	cpunum_set_clock(0, (via_0_a & 0x80) ? 1000000 : 2000000);
 
-#if 0
-	/* bank 1: 0x0000-0x00FF */
-	if (via_0_b < 0x20)
-	{
-		bank = ~0;	/* system bank */
-		page = via_0_b;
-	}
-	else if (via_0_b >= 0xA0)
-	{
-		bank = ~0;	/* system bank */
-		page = via_0_b - 0x80;
-	}
-	else
-	{
-		bank = via_1_a;
-		page = via_0_b - 0x20;
-	}
-	apple3_setbank(1, bank, ((offs_t) page) * 0x100);
-#endif
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x00FF, 0, 0, apple3_00xx_r);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x00FF, 0, 0, apple3_00xx_w);
-
+	/* bank 2 (0100-01FF) */
 	if (!(via_0_a & 0x04))
 	{
 		if (via_0_b < 0x20)
@@ -348,9 +328,15 @@ static void apple3_update_memory(void)
 		page = 0x01;
 	}
 	apple3_setbank(2, bank, ((offs_t) page) * 0x100);
+
+	/* bank 3 (0200-1FFF) */
 	apple3_setbank(3, ~0, 0x0200);
+
+	/* bank 4 (2000-9FFF) */
 	apple3_setbank(4, via_1_a, 0x0000);
-	apple3_setbank(5, ~0, 0x0200);
+
+	/* bank 5 (A000-BFFF) */
+	apple3_setbank(5, ~0, 0x2000);
 
 	/* install bank 8 (C000-CFFF) */
 	if (via_0_a & 0x40)
@@ -559,7 +545,7 @@ DRIVER_INIT( apple3 )
 	via_config(0, &via_0_intf);
 	via_config(1, &via_1_intf);
 
-	iwm_init(NULL);
+	apple2_slot6_init();
 	apple3_profile_init();
 
 	a3 = 0;
