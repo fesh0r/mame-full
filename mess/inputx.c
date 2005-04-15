@@ -282,7 +282,7 @@ static const struct CharInfo charinfo[] =
 	{ UCHAR_MAMEKEY(F13),		"F13",			NULL },		/* F13 function key */
 	{ UCHAR_MAMEKEY(F14),		"F14",			NULL },		/* F14 function key */
 	{ UCHAR_MAMEKEY(F15),		"F15",			NULL },		/* F15 function key */
-	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\032" },	/* esc key */
+	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\033" },	/* esc key */
 	{ UCHAR_MAMEKEY(DEL),		"Delete",		"\010" },	/* delete key */
 	{ UCHAR_MAMEKEY(HOME),		"Home",			"\014" },	/* home key */
 	{ UCHAR_MAMEKEY(LSHIFT),	"Left Shift",	NULL },		/* left shift key */

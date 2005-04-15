@@ -1853,7 +1853,11 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 		{ VK_HOME,		UCHAR_MAMEKEY(HOME) },
 		{ VK_END,		UCHAR_MAMEKEY(END) },
 		{ VK_PRIOR,		UCHAR_MAMEKEY(PGUP) },
-		{ VK_NEXT,		UCHAR_MAMEKEY(PGDN) }
+		{ VK_NEXT,		UCHAR_MAMEKEY(PGDN) },
+		{ VK_UP,		UCHAR_MAMEKEY(UP) },
+		{ VK_DOWN,		UCHAR_MAMEKEY(DOWN) },
+		{ VK_LEFT,		UCHAR_MAMEKEY(LEFT) },
+		{ VK_RIGHT,		UCHAR_MAMEKEY(RIGHT) }
 	};
 
 	if (win_use_natural_keyboard && (message == WM_KEYDOWN))

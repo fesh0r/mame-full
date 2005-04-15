@@ -228,6 +228,8 @@ static WRITE8_HANDLER( apple3_c0xx_w )
 
 INTERRUPT_GEN( apple3_interrupt )
 {
+	via_set_input_ca2(1, (AY3600_keydata_strobe_r() & 0x80) ? 1 : 0);
+	via_set_input_cb1(1, cpu_getvblank());
 	via_set_input_cb2(1, cpu_getvblank());
 }
 
@@ -343,8 +345,6 @@ static void apple3_update_memory(void)
 	{
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xC0FF, 0, 0, apple3_c0xx_r);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xC0FF, 0, 0, apple3_c0xx_w);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xCFFF, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xCFFF, 0, 0, MWA8_NOP);
 	}
 	else 
 	{
@@ -355,6 +355,30 @@ static void apple3_update_memory(void)
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xC0FF, 0, 0, MWA8_BANK8);
 		apple3_setbank(8, ~0, 0x4000);
 	}
+
+	/* install bank 9 (C100-C4FF) */
+	if (via_0_a & 0x40)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xC4FF, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xC4FF, 0, 0, MWA8_NOP);
+	}
+	else
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xC4FF, 0, 0, MRA8_BANK9);
+		if (via_0_a & 0x08)
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xC4FF, 0, 0, MWA8_ROM);
+		else
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC100, 0xC4FF, 0, 0, MWA8_BANK9);
+		apple3_setbank(9, ~0, 0x4100);
+	}
+
+	/* install bank 10 (C500-C7FF) */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC500, 0xC7FF, 0, 0, MRA8_BANK10);
+	if (via_0_a & 0x08)
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC500, 0xC7FF, 0, 0, MWA8_ROM);
+	else
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC500, 0xC7FF, 0, 0, MWA8_BANK10);
+	apple3_setbank(10, ~0, 0x4500);
 
 	/* install bank 6 (D000-EFFF) */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xEFFF, 0, 0, MRA8_BANK6);
@@ -471,7 +495,7 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 			else if (offset < 0x2000)
 				result = apple3_bankaddr(~0, offset - 0x2000);
 			else if (offset > 0x9FFF)
-				result = apple3_bankaddr(~0, offset - 0xA000);
+				result = apple3_bankaddr(~0, offset - 0x8000);
 			else
 				result = &mess_ram[offset - 0x2000];
 		}
@@ -544,6 +568,8 @@ DRIVER_INIT( apple3 )
 
 	via_config(0, &via_0_intf);
 	via_config(1, &via_1_intf);
+	via_set_clock(0, 1000000);
+	via_set_clock(1, 2000000);
 
 	apple2_slot6_init();
 	apple3_profile_init();

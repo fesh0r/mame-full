@@ -478,25 +478,53 @@ int AY3600_anykey_clearstrobe_r(void)
 
 
 /***************************************************************************
-  QUEUE_CHARS( AY3600 )
+  Natural keyboard support
 ***************************************************************************/
+
+static UINT8 AY3600_get_keycode(unicode_char_t ch)
+{
+	UINT8 result;
+
+	switch(ch)
+	{
+		case UCHAR_MAMEKEY(UP):
+			result = 0x0B;
+			break;
+		case UCHAR_MAMEKEY(DOWN):
+			result = 0x0A;
+			break;
+		case UCHAR_MAMEKEY(LEFT):
+			result = 0x08;
+			break;
+		case UCHAR_MAMEKEY(RIGHT):
+			result = 0x15;
+			break;
+
+		default:
+			if (ch <= 0x7F)
+				result = (UINT8) ch;
+			else
+				result = 0;
+			break;
+	}
+
+	return result;
+}
+
+
 
 QUEUE_CHARS( AY3600 )
 {
 	if (keywaiting)
 		return 0;
-	keycode = text[0];
+	keycode = AY3600_get_keycode(text[0]);
 	keywaiting = 1;
 	return 1;
 }
 
 
 
-/***************************************************************************
-  ACCEPT_CHAR( AY3600 )
-***************************************************************************/
-
 ACCEPT_CHAR( AY3600 )
 {
-	return (ch <= 0x7f);
+	return AY3600_get_keycode(ch) != 0;
 }

@@ -53,6 +53,10 @@ Source Changes:
   Also, it is 4 cycles long. Thanks to David Keil and Sockmaster for pointing
   this out.  [Tim Lindner]
 
+- Fixed ESC key under natural keyboard emulation.  [Nate Woods]
+
+- [Windows] Fixed arrow keys under natural keyboard emulation.  [Nate Woods]
+
 
 
 0.95

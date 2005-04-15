@@ -882,6 +882,7 @@ $(OBJ)/luxor.a:					\
 	$(OBJ)/mess/systems/abc80.o	\
 
 $(OBJ)/sgi.a:						\
+	$(OBJ)/mess/machine/sgi.o		\
 	$(OBJ)/mess/systems/ip20.o		\
 	$(OBJ)/mess/systems/ip22.o
 
