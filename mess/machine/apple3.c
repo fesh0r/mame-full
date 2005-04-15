@@ -326,7 +326,7 @@ static void apple3_update_memory(void)
 	}
 	else
 	{
-		bank = 0x00;
+		bank = ~0;
 		page = 0x01;
 	}
 	apple3_setbank(2, bank, ((offs_t) page) * 0x100);
