@@ -521,6 +521,10 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 			else
 				result = (UINT8 *) ~0;
 		}
+		else if (offset < 0x0100)
+		{
+			result = apple3_bankaddr(~0, ((offs_t) via_0_b) * 0x100 + offset);
+		}
 	}
 	return result;
 }
