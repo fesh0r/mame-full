@@ -26,19 +26,37 @@
 #define	WHITE	15
 
 
-static const UINT32 text_map[] ={	0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780,	0x428, 0x4a8, 0x528, 0x5a8, 0x628, 0x6a8, 0x728, 0x7a8,	0x450, 0x4d0, 0x550, 0x5d0, 0x650, 0x6d0, 0x750, 0x7d0};
+static const UINT32 text_map[] =
+{
+	0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780,
+	0x428, 0x4a8, 0x528, 0x5a8, 0x628, 0x6a8, 0x728, 0x7a8,
+	0x450, 0x4d0, 0x550, 0x5d0, 0x650, 0x6d0, 0x750, 0x7d0
+};
 static UINT8 *char_mem;
 static UINT32 *hgr_map;
 
 
 void apple3_write_charmem(void)
 {
-	static const UINT32 screen_hole_map[] =	{		0x478, 0x4f8, 0x578, 0x5f8, 0x678, 0x6f8, 0x778, 0x7f8	};	int i, j, addr;	data8_t val;
+	static const UINT32 screen_hole_map[] =
+	{
+		0x478, 0x4f8, 0x578, 0x5f8, 0x678, 0x6f8, 0x778, 0x7f8
+	};
+	int i, j, addr;
+	data8_t val;
+
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 4; j++)
 		{
-			addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 0);				val = program_read_byte(screen_hole_map[i] + j + 0);				char_mem[((addr * 8) + ((i & 3) * 2) + 0) & 0x3ff] = val;						addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 4);				val = program_read_byte(screen_hole_map[i] + j + 4);				char_mem[((addr * 8) + ((i & 3) * 2) + 1) & 0x3ff] = val;		}
+			addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 0);
+			val = program_read_byte(screen_hole_map[i] + j + 0);
+			char_mem[((addr * 8) + ((i & 3) * 2) + 0) & 0x3ff] = val;
+
+			addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 4);
+			val = program_read_byte(screen_hole_map[i] + j + 4);
+			char_mem[((addr * 8) + ((i & 3) * 2) + 1) & 0x3ff] = val;
+		}
 	}
 }
 
