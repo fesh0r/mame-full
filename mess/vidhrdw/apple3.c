@@ -26,19 +26,19 @@
 #define	WHITE	15
 
 
-static const UINT32 text_map[] ={	0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780,	0x428, 0x4a8, 0x528, 0x5a8, 0x628, 0x6a8, 0x728, 0x7a8,	0x450, 0x4d0, 0x550, 0x5d0, 0x650, 0x6d0, 0x750, 0x7d0};
+static const UINT32 text_map[] ={	0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780,	0x428, 0x4a8, 0x528, 0x5a8, 0x628, 0x6a8, 0x728, 0x7a8,	0x450, 0x4d0, 0x550, 0x5d0, 0x650, 0x6d0, 0x750, 0x7d0};
 static UINT8 *char_mem;
 static UINT32 *hgr_map;
 
 
 void apple3_write_charmem(void)
 {
-	static const UINT32 screen_hole_map[] =	{		0x478, 0x4f8, 0x578, 0x5f8, 0x678, 0x6f8, 0x778, 0x7f8	};	int i, j, addr;	data8_t val;
+	static const UINT32 screen_hole_map[] =	{		0x478, 0x4f8, 0x578, 0x5f8, 0x678, 0x6f8, 0x778, 0x7f8	};	int i, j, addr;	data8_t val;
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 4; j++)
 		{
-			addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 0);				val = program_read_byte(screen_hole_map[i] + j + 0);				char_mem[((addr * 8) + ((i & 3) * 2) + 0) & 0x3ff] = val;						addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 4);				val = program_read_byte(screen_hole_map[i] + j + 4);				char_mem[((addr * 8) + ((i & 3) * 2) + 1) & 0x3ff] = val;		}
+			addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 0);				val = program_read_byte(screen_hole_map[i] + j + 0);				char_mem[((addr * 8) + ((i & 3) * 2) + 0) & 0x3ff] = val;						addr = 0x7f & program_read_byte(screen_hole_map[i] + 0x400 + j + 4);				val = program_read_byte(screen_hole_map[i] + j + 4);				char_mem[((addr * 8) + ((i & 3) * 2) + 1) & 0x3ff] = val;		}
 	}
 }
 
@@ -173,9 +173,34 @@ static void apple3_video_text80(struct mame_bitmap *bitmap)
 
 
 
-static void apple3_video_graphics1(struct mame_bitmap *bitmap)
+static void apple3_video_graphics_hgr(struct mame_bitmap *bitmap)
 {
-	osd_die("NYI: apple3_video_graphics1()");
+	/* hi-res mode: 280x192x2 */
+	int y, i, x;
+	const UINT8 *pix_info;
+	UINT16 *ptr;
+	UINT8 b;
+
+	for (y = 0; y < 192; y++)
+	{
+		if (a3 & VAR_VM2)
+			pix_info = &mess_ram[hgr_map[y]];
+		else
+			pix_info = &mess_ram[hgr_map[y] - 0x2000];
+		ptr = (UINT16 *) bitmap->line[y];
+
+		for (i = 0; i < 40; i++)
+		{
+			b = *(pix_info++);
+
+			for (x = 0; x < 7; x++)
+			{
+				ptr[0] = ptr[1] = (b & 0x01) ? WHITE : BLACK;
+				ptr += 2;
+				b >>= 1;
+			}
+		}
+	}
 }
 
 
@@ -190,8 +215,9 @@ static UINT8 swap_bits(UINT8 b)
 
 
 
-static void apple3_video_graphics2(struct mame_bitmap *bitmap)
+static void apple3_video_graphics_chgr(struct mame_bitmap *bitmap)
 {
+	/* color hi-res mode: 280x192x16 */
 	int y, i, x;
 	const UINT8 *pix_info;
 	const UINT8 *col_info;
@@ -220,11 +246,11 @@ static void apple3_video_graphics2(struct mame_bitmap *bitmap)
 
 			b = *pix_info;
 
-			for (x = 0; x < 8; x++)
+			for (x = 0; x < 7; x++)
 			{
 				ptr[0] = ptr[1] = (b & 1) ? fgcolor : bgcolor;
 				ptr += 2;
-				b <<= 1;
+				b >>= 1;
 			}
 			pix_info++;
 			col_info++;
@@ -234,14 +260,48 @@ static void apple3_video_graphics2(struct mame_bitmap *bitmap)
 
 
 
-static void apple3_video_graphics3(struct mame_bitmap *bitmap)
+static void apple3_video_graphics_shgr(struct mame_bitmap *bitmap)
 {
-	osd_die("NYI: apple3_video_graphics3()");
+	/* super hi-res mode: 560x192x2 */
+	int y, i, x;
+	const UINT8 *pix_info1;
+	const UINT8 *pix_info2;
+	UINT16 *ptr;
+	UINT8 b1, b2;
+
+	for (y = 0; y < 192; y++)
+	{
+		if (a3 & VAR_VM2)
+		{
+			pix_info1 = &mess_ram[hgr_map[y]];
+			pix_info2 = &mess_ram[hgr_map[y] + 0x2000];
+		}
+		else
+		{
+			pix_info1 = &mess_ram[hgr_map[y] - 0x2000];
+			pix_info2 = &mess_ram[hgr_map[y]];
+		}
+		ptr = (UINT16 *) bitmap->line[y];
+
+		for (i = 0; i < 40; i++)
+		{
+			b1 = *(pix_info1++);
+			b2 = *(pix_info2++);
+
+			for (x = 0; x < 7; x++)
+			{
+				*(ptr++) = (b1 & 0x01) ? WHITE : BLACK;
+				*(ptr++) = (b2 & 0x01) ? WHITE : BLACK;
+				b1 >>= 1;
+				b2 >>= 1;
+			}
+		}
+	}
 }
 
 
 
-static void apple3_video_graphics4(struct mame_bitmap *bitmap)
+static void apple3_video_graphics_chires(struct mame_bitmap *bitmap)
 {
 	UINT16 *pen;
 	PAIR pix;
@@ -286,19 +346,19 @@ VIDEO_UPDATE( apple3 )
 			break;
 
 		case VAR_VM3:
-			apple3_video_graphics1(bitmap);	/* hgr mode */
+			apple3_video_graphics_hgr(bitmap);	/* hgr mode */
 			break;
 
 		case VAR_VM3|VAR_VM0:
-			apple3_video_graphics2(bitmap);	/* chgr mode */
+			apple3_video_graphics_chgr(bitmap);
 			break;
 
 		case VAR_VM3|VAR_VM1:
-			apple3_video_graphics3(bitmap);	/* shgr mode */
+			apple3_video_graphics_shgr(bitmap);
 			break;
 
 		case VAR_VM3|VAR_VM1|VAR_VM0:
-			apple3_video_graphics4(bitmap);	/* chires mode */
+			apple3_video_graphics_chires(bitmap);
 			break;
 	}
 }
