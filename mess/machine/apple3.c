@@ -397,7 +397,7 @@ static void apple3_update_memory(void)
 	if (via_0_a & 0x01)
 		cpu_setbank(7, memory_region(REGION_CPU1));
 	else
-		apple3_setbank(7, ~0, 0x6000);
+		apple3_setbank(7, ~0, 0x7000);
 
 	/* reinstall VIA handlers */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xFFD0, 0xFFDF, 0, 0, via_0_r);
