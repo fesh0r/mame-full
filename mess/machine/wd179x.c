@@ -5,15 +5,22 @@
 	Implementations of the Western Digitial 17xx and 19xx families of
 	floppy disk controllers
 
-  KT - Removed disk image code and replaced it with floppy drive functions.
-	   Any disc image is now useable with this code.
-	 - fixed write protect
 
-
- TODO:
-	 - Multiple record read/write
-	 - What happens if a track is read that doesn't have any id's on it?
-	   (e.g. unformatted disc)
+	Kevin Thacker
+		- Removed disk image code and replaced it with floppy drive functions.
+		  Any disc image is now useable with this code.
+		- Fixed write protect
+				  
+	2005-Apr-16 P.Harvey-Smith:
+		- Increased the delay in wd179x_timed_read_sector_request and
+		  wd179x_timed_write_sector_request, to 40us to more closely match
+		  what happens on the real hardware, this has fixed the NitrOS9 boot
+		  problems.
+  
+	TODO:
+		- Multiple record read/write
+		- What happens if a track is read that doesn't have any id's on it?
+	     (e.g. unformatted disc)
 
 ***************************************************************************/
 
@@ -257,7 +264,6 @@ void wd179x_set_side(UINT8 head)
 	if( head != hd )
 		logerror("wd179x_set_side: $%02x\n", head);
 #endif
-
 	hd = head;
 }
 
@@ -916,7 +922,7 @@ static void wd179x_timed_read_sector_request(void)
 	int usecs;
 	WD179X *w = &wd;
 
-	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
+	usecs = 40; /* How long should we wait? How about 40 micro seconds? */
 
 	/* set new timer */
 	timer_reset(w->timer_rs, TIME_IN_USEC(usecs));
@@ -930,7 +936,7 @@ static void wd179x_timed_write_sector_request(void)
 	int usecs;
 	WD179X *w = &wd;
 
-	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
+	usecs = 40; /* How long should we wait? How about 40 micro seconds? */
 
 	/* set new timer */
 	timer_reset(w->timer_ws, TIME_IN_USEC(usecs));
@@ -1084,7 +1090,7 @@ static void wd179x_timed_write_sector_request(void)
 WRITE8_HANDLER ( wd179x_command_w )
 {
 	WD179X *w = &wd;
-
+	
 	floppy_drive_set_motor_state(wd179x_current_image(), 1);
 	floppy_drive_set_ready_state(wd179x_current_image(), 1,0);
 	/* also cleared by writing command */

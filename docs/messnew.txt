@@ -23,6 +23,9 @@ System Driver Changes:
 - [COCO] Fixed joystick ranges (they were previously 0-62 instead of 0-63.)
   (bug #698) [Nate Woods]
 
+- [COCO] Lengthened certain floppy disk controller operations; now NitrOS-9
+  boots on the CoCo 1/2.  (bug #502) [Phill Harvey-Smith]
+
 - [SVISION] Fixed aspect ratio.  [PeT]
 
 
