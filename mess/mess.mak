@@ -308,6 +308,7 @@ DRVLIBS = \
 	$(OBJ)/tx0.a		\
 	$(OBJ)/luxor.a		\
 	$(OBJ)/sgi.a		\
+	$(OBJ)/primo.a		\
 
 
 $(OBJ)/neocd.a:						\
@@ -885,6 +886,12 @@ $(OBJ)/sgi.a:						\
 	$(OBJ)/mess/machine/sgi.o		\
 	$(OBJ)/mess/systems/ip20.o		\
 	$(OBJ)/mess/systems/ip22.o
+
+$(OBJ)/primo.a:				\
+	$(OBJ)/mess/systems/primo.o	\
+	$(OBJ)/mess/machine/primo.o	\
+	$(OBJ)/mess/vidhrdw/primo.o	\
+	$(OBJ)/mess/formats/primoptp.o
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\

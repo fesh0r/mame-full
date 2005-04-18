@@ -28,8 +28,8 @@ struct GfxLayout galaxy_charlayout =
 
 unsigned char galaxy_palette[2*3] =
 {
-	0x00, 0x00, 0x00,		/* Black */
-	0xff, 0xff, 0xff		/* White */
+	0xff, 0xff, 0xff,		/* White */
+	0x00, 0x00, 0x00		/* Black */
 };
 
 unsigned short galaxy_colortable[1][2] =
@@ -45,13 +45,7 @@ PALETTE_INIT( galaxy )
 
 VIDEO_START( galaxy )
 {
-	return video_start_generic();
-}
-
-WRITE8_HANDLER( galaxy_vh_charram_w )
-{
-	videoram[offset] = data;
-	dirtybuffer[offset] = 1;
+	return 0;
 }
 
 VIDEO_UPDATE( galaxy )
@@ -61,13 +55,15 @@ VIDEO_UPDATE( galaxy )
 	static int fast_mode = FALSE;
 	int full_refresh = 1;
 
+	UINT8* videoram = mess_ram;
+
 	if (!galaxy_interrupts_enabled)
 	{
 		black_area.min_x = 0;
 		black_area.max_x = 32*8-1;
 		black_area.min_y = 0;
 		black_area.max_y = 16*13-1;
-		fillbitmap(bitmap, Machine->pens[0], &black_area);
+		fillbitmap(bitmap, Machine->pens[1], &black_area);
 		fast_mode = TRUE;
 		return;
 	}
@@ -88,35 +84,25 @@ VIDEO_UPDATE( galaxy )
 		}
 		if (horizontal_pos == 0x0b)
 			black_area.min_x =  black_area.max_x = 0; 
-		fillbitmap(bitmap, Machine->pens[0], &black_area);
+		fillbitmap(bitmap, Machine->pens[1], &black_area);
 	}	
 
-	if( full_refresh )
-		memset(dirtybuffer, 1, videoram_size);
-
-	if( fast_mode )
+	for( offs = 0; offs < 512; offs++ )
 	{
-		memset(dirtybuffer, 1, videoram_size);
-		fast_mode = FALSE;
-	}
+		int sx, sy;
+		int code = videoram[offs];
 
-	for( offs = 0; offs < videoram_size; offs++ )
-	{
-	        if( dirtybuffer[offs]  )
-		{
-			int sx, sy;
-			int code = videoram[offs];
-
-			sx = (offs % 32) * 8 + horizontal_pos*8-88;
+		sx = (offs % 32) * 8 + horizontal_pos*8-88;
 	
-			if (sx>=0 && sx<32*8)
-			{
-           			if ((code>63 && code<96) || code>127) code-=64;
-				sy = (offs / 32) * 13;
-				drawgfx(bitmap, Machine->gfx[0], code & 0x7f, 1, 0,0, sx,sy,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
-			}
-			dirtybuffer[offs] = 0;
+		if (sx>=0 && sx<32*8)
+		{
+       			if ((code>63 && code<96) || (code>127 && code<192))
+				code-=64;
+       			if (code>191)
+				code-=128;
+			sy = (offs / 32) * 13;
+			drawgfx(bitmap, Machine->gfx[0], code & 0x7f, 1, 0,0, sx,sy,
+				&Machine->visible_area, TRANSPARENCY_NONE, 0);
 		}
 	}
 

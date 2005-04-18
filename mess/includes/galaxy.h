@@ -1,12 +1,14 @@
 #include "devices/snapquik.h"
 
 /* machine/galaxy.c */
+extern DRIVER_INIT( galaxy );
 extern MACHINE_INIT( galaxy );
 extern INTERRUPT_GEN( galaxy_interrupt );
 extern SNAPSHOT_LOAD( galaxy );
 extern int galaxy_interrupts_enabled;
-extern  READ8_HANDLER( galaxy_kbd_r );
-extern WRITE8_HANDLER( galaxy_kbd_w );
+extern READ8_HANDLER( galaxy_keyboard_r );
+extern READ8_HANDLER( galaxy_latch_r );
+extern WRITE8_HANDLER( galaxy_latch_w );
 
 /* vidhrdw/galaxy.c */
 extern struct GfxLayout galaxy_charlayout;

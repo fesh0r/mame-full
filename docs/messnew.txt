@@ -5,6 +5,7 @@ New System Drivers Supported (in no particular order):
 - Apple /// (not working) [Nate Woods]
 - SGI IRIS Indigo workstation (not working) [Mooglyguy]
 - SGI IP22 Indy workstation (not working) [Mooglyguy]
+- Microkey Primo A-32, A-64, B-64 [Krzysztof Strzecha]
 
 
 
@@ -28,6 +29,10 @@ System Driver Changes:
 
 - [SVISION] Fixed aspect ratio.  [PeT]
 
+- [GALAXY] Possibilty to disable ROM 2. 2k, 22k, 38k and 54k memory
+	   configurations added. Memory mapping improved. Palette corrected.
+	   Supprort for newer version of snapshots added. Lot of cleanups.
+	   Keyboard mapping corrected. [Krzysztof Strzecha]
 
 
 User Interface Changes:

@@ -751,6 +751,12 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	DRIVER( mato )		/* Mato (Basic ROM) (PMD-85.2 clone)								*/
 	DRIVER( matoh )		/* Mato (Games ROM) (PMD-85.2 clone)								*/
 
+	/* Microkey */
+	DRIVER( primoa32 )	/* Primo A-32											*/
+TESTDRIVER( primoa48 )		/* Primo A-48											*/
+	DRIVER( primoa64 )	/* Primo A-64											*/
+	DRIVER( primob64 )	/* Primo B-64											*/
+
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
 TESTDRIVER( comquest )	/* Comquest Plus German								*/
