@@ -16,6 +16,8 @@
 
 UINT32 a3;
 
+static void apple3_update_drives(void);
+
 static UINT8 via_0_a;
 static UINT8 via_0_b;
 static UINT8 via_1_a;
@@ -152,6 +154,12 @@ static READ8_HANDLER( apple3_c0xx_r )
 
 		case 0xD0: case 0xD1: case 0xD2: case 0xD3:
 		case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+			/* external drive stuff */
+			if (offset & 1)
+				a3 |= VAR_EXTA0 << ((offset - 0xD0) / 2);
+			else
+				a3 &= ~(VAR_EXTA0 << ((offset - 0xD0) / 2));
+			apple3_update_drives();
 			result = 0x00;
 			break;
 
@@ -204,6 +212,16 @@ static WRITE8_HANDLER( apple3_c0xx_w )
 		case 0xCC: case 0xCD: case 0xCE: case 0xCF:
 			/* profile */
 			apple3_profile_w(offset, data);
+			break;
+
+		case 0xD0: case 0xD1: case 0xD2: case 0xD3:
+		case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+			/* external drive stuff */
+			if (offset & 1)
+				a3 |= VAR_EXTA0 << ((offset - 0xD0) / 2);
+			else
+				a3 &= ~(VAR_EXTA0 << ((offset - 0xD0) / 2));
+			apple3_update_drives();
 			break;
 
 		case 0xDB:
@@ -573,6 +591,13 @@ static WRITE8_HANDLER( apple3_indexed_write )
 		program_write_byte(offset, data);
 	else if (addr != (UINT8 *) ~0)
 		*addr = data;
+}
+
+
+
+static void apple3_update_drives(void)
+{
+	/* stub; empty for now */
 }
 
 

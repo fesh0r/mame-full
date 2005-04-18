@@ -17,6 +17,10 @@ extern UINT32 a3;
 #define VAR_VM1		0x0002
 #define VAR_VM2		0x0004
 #define VAR_VM3		0x0008
+#define VAR_EXTA0		0x0010
+#define VAR_EXTA1		0x0020
+#define VAR_EXTPOWER	0x0040
+#define VAR_EXTSIDE		0x0080
 
 MACHINE_INIT( apple3 );
 DRIVER_INIT( apple3 );
