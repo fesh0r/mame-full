@@ -43,8 +43,8 @@ static data8_t iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
  * Bit 6	  Reserved
  * Bit 5	  Reserved
  * Bit 4	! Clock speed
- *				0=7MHz;	used by apple IIgs
- *				1=8MHz;	used by mac (I believe)
+ *				0=7MHz;	used by Apple IIgs
+ *				1=8MHz;	used by Mac (I believe)
  * Bit 3	! Bit cell time
  *				0=4usec/bit	(used for 5.25" drives)
  *				1=2usec/bit (used for 3.5" drives)
@@ -58,7 +58,8 @@ static data8_t iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
  *				0=read data stays valid for 7usec (used for 5.25" drives)
  *				1=read data stays valid for full byte time (used for 3.5" drives)
  */
-enum {
+enum
+{
 	IWM_MODE_CLOCKSPEED			= 0x10,
 	IWM_MODE_BITCELLTIME		= 0x08,
 	IWM_MODE_MOTOROFFDELAY		= 0x04,
@@ -67,22 +68,25 @@ enum {
 };
 
 static int iwm_mode;		/* 0-31 */
-
-static mame_timer *motor_off_timer;
-
+static mame_timer *motor_timer;
 static iwm_interface iwm_intf;
 
-static void iwm_turnmotoroff(int dummy);
+static void iwm_turnmotor_onoff(int status);
 
-/*
+
+
+
+/***************************************************************************
+
 	IWM code
-*/
+
+***************************************************************************/
 
 void iwm_init(const iwm_interface *intf)
 {
 	iwm_lines = 0;
 	iwm_mode = 0x1f;	/* default value needed by Lisa 2 - no, I don't know if it is true */
-	motor_off_timer = timer_alloc(iwm_turnmotoroff);
+	motor_timer = timer_alloc(iwm_turnmotor_onoff);
 	if (intf)
 		iwm_intf = *intf;
 	else
@@ -137,9 +141,8 @@ static void iwm_modereg_w(int data)
 {
 	iwm_mode = data & 0x1f;	/* Write mode register */
 
-	#if LOG_IWM_EXTRA
-	logerror("iwm_modereg_w: iwm_mode=0x%02x\n", (int) iwm_mode);
-	#endif
+	if (LOG_IWM_EXTRA)
+		logerror("iwm_modereg_w: iwm_mode=0x%02x\n", (int) iwm_mode);
 }
 
 
@@ -150,100 +153,119 @@ static data8_t iwm_read_reg(void)
 
 	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
 	{
-	case 0:
-		/* Read data register */
-		if (iwm_enable2() || !(iwm_lines & IWM_MOTOR))
-		{
-			result = 0xff;
-		}
-		else
-		{
-			/*
-			 * Right now, this function assumes latch mode; which is always used for
-			 * 3.5 inch drives.  Eventually we should check to see if latch mode is
-			 * off
-			 */
-			#if LOG_IWM
-				if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
-					logerror("iwm_read_reg(): latch mode off not implemented\n");
-			#endif
+		case 0:
+			/* Read data register */
+			if (iwm_enable2() || !(iwm_lines & IWM_MOTOR))
+			{
+				result = 0xff;
+			}
+			else
+			{
+				/*
+				 * Right now, this function assumes latch mode; which is always used for
+				 * 3.5 inch drives.  Eventually we should check to see if latch mode is
+				 * off
+				 */
+				if (LOG_IWM)
+				{
+					if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
+						logerror("iwm_read_reg(): latch mode off not implemented\n");
+				}
 
-			result = (iwm_intf.read_data ? iwm_intf.read_data() : 0);
-		}
-		break;
+				result = (iwm_intf.read_data ? iwm_intf.read_data() : 0);
+			}
+			break;
 
-	case IWM_Q6:
-		/* Read status register */
-		result = iwm_statusreg_r();
-		break;
+		case IWM_Q6:
+			/* Read status register */
+			result = iwm_statusreg_r();
+			break;
 
-	case IWM_Q7:
-		/* Read handshake register */
-		result = iwm_enable2() ? iwm_readenable2handshake() : 0x80;
-		break;
+		case IWM_Q7:
+			/* Read handshake register */
+			result = iwm_enable2() ? iwm_readenable2handshake() : 0x80;
+			break;
 	}
 	return result;
 }
+
+
 
 static void iwm_write_reg(data8_t data)
 {
 	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
 	{
-	case IWM_Q6 | IWM_Q7:
-		if (!(iwm_lines & IWM_MOTOR))
-		{
-			iwm_modereg_w(data);
-		}
-		else if (!iwm_enable2())
-		{
-			/*
-			 * Right now, this function assumes latch mode; which is always used for
-			 * 3.5 inch drives.  Eventually we should check to see if latch mode is
-			 * off
-			 */
-			#if LOG_IWM
-				if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
-					logerror("iwm_write_reg(): latch mode off not implemented\n");
-			#endif
+		case IWM_Q6 | IWM_Q7:
+			if (!(iwm_lines & IWM_MOTOR))
+			{
+				iwm_modereg_w(data);
+			}
+			else if (!iwm_enable2())
+			{
+				/*
+				 * Right now, this function assumes latch mode; which is always used for
+				 * 3.5 inch drives.  Eventually we should check to see if latch mode is
+				 * off
+				 */
+				if (LOG_IWM)
+				{
+					if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
+						logerror("iwm_write_reg(): latch mode off not implemented\n");
+				}
 
-			if (iwm_intf.write_data)
-				iwm_intf.write_data(data);
-		}
-		break;
+				if (iwm_intf.write_data)
+					iwm_intf.write_data(data);
+			}
+			break;
 	}
 }
 
-static void iwm_turnmotoroff(int dummy)
+
+
+static void iwm_turnmotor_onoff(int status)
 {
-	iwm_lines &= ~IWM_MOTOR;
+	int enable_lines;
 
+	if (status)
+	{
+		iwm_lines |= IWM_MOTOR;
+		enable_lines = (iwm_lines & IWM_DRIVE) ? 2 : 1;
+	}
+	else
+	{
+		iwm_lines &= ~IWM_MOTOR;
+		enable_lines = 0;
+	}
+
+	/* invoke callback, if present */
 	if (iwm_intf.set_enable_lines)
-		iwm_intf.set_enable_lines(0);
+		iwm_intf.set_enable_lines(enable_lines);
 
-	#if LOG_IWM_EXTRA
-		logerror("iwm_turnmotoroff(): Turning motor off\n");
-	#endif
+	if (LOG_IWM_EXTRA)
+		logerror("iwm_turnmotor_onoff(): Turning motor %s\n", status ? "on" : "off");
 }
+
+
 
 static void iwm_access(int offset)
 {
-#if LOG_IWM_EXTRA
+	static const char *lines[] =
 	{
-		static const char *lines[] =
-		{
-			"IWM_PH0",
-			"IWM_PH1",
-			"IWM_PH2",
-			"IWM_PH3",
-			"IWM_MOTOR",
-			"IWM_DRIVE",
-			"IWM_Q6",
-			"IWM_Q7"
-		};
+		"IWM_PH0",
+		"IWM_PH1",
+		"IWM_PH2",
+		"IWM_PH3",
+		"IWM_MOTOR",
+		"IWM_DRIVE",
+		"IWM_Q6",
+		"IWM_Q7"
+	};
+
+	if (LOG_IWM_EXTRA)
+	{
 		logerror("iwm_access(): %s line %s\n",
 			(offset & 1) ? "setting" : "clearing", lines[offset >> 1]);
 	}
-#endif
 
 	if (offset & 1)
 		iwm_lines |= (1 << (offset >> 1));
@@ -255,52 +277,30 @@ static void iwm_access(int offset)
 
 	switch(offset)
 	{
-	case 0x08:
-		/* Turn off motor */
-		if (iwm_mode & IWM_MODE_MOTOROFFDELAY)
-		{
-			/* Immediately */
-			iwm_lines &= ~IWM_MOTOR;
+		case 0x08:
+			/* Turn off motor */
+			timer_adjust(motor_timer,
+				(iwm_mode & IWM_MODE_MOTOROFFDELAY) ? 0.0 : TIME_IN_SEC(1),
+				0,
+				0.0);
+			break;
 
-			if (iwm_intf.set_enable_lines)
-				iwm_intf.set_enable_lines(0);
+		case 0x09:
+			/* Turn on motor */
+			timer_adjust(motor_timer, 0.0, 1, 0.0);
+			break;
 
-			#if LOG_IWM_EXTRA
-				logerror("iwm_access(): Turning motor off\n");
-			#endif
-		}
-		else
-		{
-			/* One second delay */
-			timer_adjust(motor_off_timer, TIME_IN_SEC(1), 0, 0.);
-		}
-		break;
+		case 0x0A:
+			/* turn off IWM_DRIVE */
+			if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+				iwm_intf.set_enable_lines(1);
+			break;
 
-	case 0x09:
-		/* Turn on motor */
-		iwm_lines |= IWM_MOTOR;
-
-		timer_enable(motor_off_timer, 0);
-
-		if (iwm_intf.set_enable_lines)
-			iwm_intf.set_enable_lines((iwm_lines & IWM_DRIVE) ? 2 : 1);
-
-		#if LOG_IWM_EXTRA
-			logerror("iwm_access(): Turning motor on\n");
-		#endif
-		break;
-
-	case 0x0A:
-		/* turn off IWM_DRIVE */
-		if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
-			iwm_intf.set_enable_lines(1);
-		break;
-
-	case 0x0B:
-		/* turn on IWM_DRIVE */
-		if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
-			iwm_intf.set_enable_lines(2);
-		break;
+		case 0x0B:
+			/* turn on IWM_DRIVE */
+			if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+				iwm_intf.set_enable_lines(2);
+			break;
 	}
 }
 
@@ -310,9 +310,8 @@ data8_t iwm_r(offs_t offset)
 {
 	offset &= 15;
 
-#if LOG_IWM_EXTRA
-	logerror("iwm_r: offset=%i\n", offset);
-#endif
+	if (LOG_IWM_EXTRA)
+		logerror("iwm_r: offset=%i\n", offset);
 
 	iwm_access(offset);
 	return (offset & 1) ? 0 : iwm_read_reg();
@@ -324,9 +323,8 @@ void iwm_w(offs_t offset, data8_t data)
 {
 	offset &= 15;
 
-#if LOG_IWM_EXTRA
-	logerror("iwm_w: offset=%i data=0x%02x\n", offset, data);
-#endif
+	if (LOG_IWM_EXTRA)
+		logerror("iwm_w: offset=%i data=0x%02x\n", offset, data);
 
 	iwm_access(offset);
 	if ( offset & 1 )
