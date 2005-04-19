@@ -27,12 +27,13 @@ System Driver Changes:
 - [COCO] Lengthened certain floppy disk controller operations; now NitrOS-9
   boots on the CoCo 1/2.  (bug #502) [Phill Harvey-Smith]
 
+- [GALAXY] Possibilty to disable ROM 2. 2k, 22k, 38k and 54k memory
+  configurations added. Memory mapping improved. Palette corrected. Supprort
+  for newer version of snapshots added. Lot of cleanups. Keyboard mapping
+  corrected. [Krzysztof Strzecha]
+  
 - [SVISION] Fixed aspect ratio.  [PeT]
 
-- [GALAXY] Possibilty to disable ROM 2. 2k, 22k, 38k and 54k memory
-	   configurations added. Memory mapping improved. Palette corrected.
-	   Supprort for newer version of snapshots added. Lot of cleanups.
-	   Keyboard mapping corrected. [Krzysztof Strzecha]
 
 
 User Interface Changes:
@@ -54,7 +55,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.95u2.  This incorporates all features of the
+- The core is based on MAME 0.95u3.  This incorporates all features of the
   update to this core.  [MAME team]  
 
 - Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
@@ -66,6 +67,7 @@ Source Changes:
 - [Windows] Fixed arrow keys under natural keyboard emulation.  [Nate Woods]
 
 - Fixed index addressing mode disassemble for the hd6309. [tim lindner]
+
 
 
 0.95

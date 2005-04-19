@@ -106,7 +106,7 @@ void ppi8255_init( ppi8255_interface *intfce )
 }
 
 
-int ppi8255_r( int which, int offset )
+int ppi8255_r(int which, int offset)
 {
 	ppi8255 *chip = &chips[which];
 
@@ -123,24 +123,24 @@ int ppi8255_r( int which, int offset )
 		return 0xff;
 	}
 
-	switch(offset)
-	{
-	case 0: /* Port A read */
-	{
+  	switch(offset)
+  	{
+  	case 0: /* Port A read */
+  	{
 		switch (chip->groupA_mode)
 		{
 			case 0:
 			{
 				if (chip->io[0] == 0)
 					return chip->latch[0];	/* output */
-				else
+  				else
 					if (chip->portAread)  return (*chip->portAread)(0);	/* input */
-			}
-			break;
-
+  			}
+  			break;
+  
 			case 1:
-			{
-			}
+  			{
+  			}
 			break;
 
 
@@ -174,10 +174,10 @@ int ppi8255_r( int which, int offset )
 			return chip->latch[1];	/* output */
 		else
 			if (chip->portBread)  return (*chip->portBread)(0);	/* input */
-		break;
-
-	case 2: /* Port C read */
-	{
+  		break;
+  
+  	case 2: /* Port C read */
+  	{
 		switch (chip->groupA_mode)
 		{
 			case 0:
@@ -186,15 +186,15 @@ int ppi8255_r( int which, int offset )
 
 				data = chip->latch[2] & (~chip->io[2]);
 
-				if (chip->portCread)
+  				if (chip->portCread)
 				{
 					data |= chip->portCread(0) & chip->io[2];
 				}
 
 				return data;
-			}
-			break;
-
+  			}
+  			break;
+  
 			case 2:
 			{
 				/* return data - combination of input and latched output depending on
@@ -228,12 +228,12 @@ int ppi8255_r( int which, int offset )
 				break;
 		}
 	}
-	break;
+  	break;
 
 	case 3: /* Control word */
 		return 0xff;
-	}
-
+  	}
+  
 	logerror("8255 chip %d: Port %c is being read but has no handler.  PC: %04X\n", which, 'A' + offset, activecpu_get_pc());
 
 	return 0xff;
@@ -281,7 +281,7 @@ int ppi8255_r( int which, int offset )
 }
 
 
-void ppi8255_w( int which, int offset, int data )
+void ppi8255_w(int which, int offset, int data)
 {
 	ppi8255	*chip;
 
@@ -303,11 +303,11 @@ void ppi8255_w( int which, int offset, int data )
 	}
 
 
-	switch( offset )
+  	switch( offset )
+  	{
+  	case 0: /* Port A write */
 	{
-	case 0: /* Port A write */
-	{
-		chip->latch[0] = data;
+  		chip->latch[0] = data;
 
 		
 		switch (chip->groupA_mode)
@@ -315,7 +315,7 @@ void ppi8255_w( int which, int offset, int data )
 			default:
 			case 0:
 			{
-				PPI8255_PORT_A_WRITE();
+  				PPI8255_PORT_A_WRITE();
 			}
 			break;
 
@@ -343,21 +343,21 @@ void ppi8255_w( int which, int offset, int data )
 			break;
 		}
 	}
-	break;
+  	break;
 
-	case 1: /* Port B write */
-		chip->latch[1] = data;
-		PPI8255_PORT_B_WRITE();
-		break;
+		case 1: /* Port B write */
+			chip->latch[1] = data;
+			PPI8255_PORT_B_WRITE();
+			break;
 
-	case 2: /* Port C write */
+  	case 2: /* Port C write */
 	{
 		switch (chip->groupA_mode)
 		{
 			case 0:
 			{
-				chip->latch[2] = data;
-				PPI8255_PORT_C_WRITE();
+  				chip->latch[2] = data;
+  				PPI8255_PORT_C_WRITE();
 			}
 			break;
 
@@ -380,30 +380,30 @@ void ppi8255_w( int which, int offset, int data )
 				break;
 		}
 	}
-	break;
+  	break;
 
-	case 3: /* Control word */
-		if ( data & 0x80 )
-		{
-			set_mode(which, data & 0x7f, 1);
-		}
-		else
-		{
-			/* bit set/reset */
-			int bit;
-			int newData;
-
-			bit = (data >> 1) & 0x07;
-			
-			if (data & 1)
+		case 3: /* Control word */
+			if (data & 0x80)
 			{
-				newData = chip->latch[2] | (1<<bit);
+				set_mode(which, data & 0x7f, 1);
 			}
 			else
 			{
+  			/* bit set/reset */
+  			int bit;
+			int newData;
+  
+  			bit = (data >> 1) & 0x07;
+  			
+  			if (data & 1)
+			{
+				newData = chip->latch[2] | (1<<bit);
+			}
+  			else
+			{
 				newData = chip->latch[2] & (~(1<<bit));
 			}
-
+  
 			switch (chip->groupA_mode)
 			{
 				case 0:
@@ -443,8 +443,7 @@ void ppi8255_w( int which, int offset, int data )
 			}
 
 			chip->latch[2] = newData;
-		}
-	
+  		}
 	}
 }
 
@@ -514,8 +513,8 @@ static void set_mode(int which, int data, int call_handlers)
 {
 	ppi8255 *chip = &chips[which];
 
-	chip->groupA_mode = ( data >> 5 ) & 3;
-	chip->groupB_mode = ( data >> 2 ) & 1;
+	chip->groupA_mode = (data >> 5) & 3;
+	chip->groupB_mode = (data >> 2) & 1;
 
 	if (chip->groupA_mode == 3)
 		chip->groupA_mode = 2;
@@ -524,56 +523,56 @@ static void set_mode(int which, int data, int call_handlers)
         logerror("8255 chip %d: group B mode %d\n",which,chip->groupB_mode);
 
 	if (((chip->groupA_mode != 0) && (chip->groupA_mode!=2)) || (chip->groupB_mode != 0))
-	{
-		logerror("8255 chip %d: Setting an unsupported mode %02X.  PC: %04X\n", which, data & 0x62, activecpu_get_pc());
-		return;
-	}
-
+  	{
+  		logerror("8255 chip %d: Setting an unsupported mode %02X.  PC: %04X\n", which, data & 0x62, activecpu_get_pc());
+  		return;
+  	}
+  
 	chip->io[0] = 0;
 	chip->io[1] = 0;
 	chip->io[2] = 0;
 
-	/* Port A direction */
-	if ( data & 0x10 )
+  	/* Port A direction */
+  	if ( data & 0x10 )
         {
                 chip->io[0] = 0xff;             /* input */
                 logerror("8255 chip %d: port A input\n",which);
-        }
-        else
-        {
+          }
+          else
+          {
                 logerror("8255 chip %d: port A output\n",which);
-        }
-
-	/* Port B direction */
-	if ( data & 0x02 )
+          }
+  
+  	/* Port B direction */
+  	if ( data & 0x02 )
         {
 		chip->io[1] = 0xff;
                 logerror("8255 chip %d: port B input\n",which);
          }
-         else
+           else
          {
                 logerror("8255 chip %d: port B output\n",which);
          }
 	/* Port C upper direction */
 	if ( data & 0x08 )
 		chip->io[2] |= 0xf0;
-
-	/* Port C lower direction */
-	if ( data & 0x01 )
+  
+  	/* Port C lower direction */
+  	if ( data & 0x01 )
 		chip->io[2] |= 0x0f;
-	
+
 	/* KT: 25-Dec-99 - 8255 resets latches when mode set */
 	chip->latch[0] = chip->latch[1] = chip->latch[2] = 0;
 
 	if (call_handlers)
 	{
-		if (chip->portAwrite)  PPI8255_PORT_A_WRITE();
-		if (chip->portBwrite)  PPI8255_PORT_B_WRITE();
+		if (chip->portAwrite) PPI8255_PORT_A_WRITE();
+		if (chip->portBwrite) PPI8255_PORT_B_WRITE();
 	
 		if (chip->groupA_mode == 0)
 		{
-			if (chip->portCwrite)  PPI8255_PORT_C_WRITE();
-		}
+  			if (chip->portCwrite)  PPI8255_PORT_C_WRITE();
+  		}
 		else
 		{
 			/* all output registers and status flip-flops are reset on mode change or reset */
