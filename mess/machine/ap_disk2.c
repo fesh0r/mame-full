@@ -211,7 +211,7 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 
 
 
-void apple2_slot6_set_lines(mess_image *cur_image, UINT8 new_state)
+static void set_lines(mess_image *cur_image, UINT8 new_state)
 {
 	int image_index;
 	struct apple2_drive *cur_disk;
@@ -224,10 +224,10 @@ void apple2_slot6_set_lines(mess_image *cur_image, UINT8 new_state)
 	old_state = cur_disk->state;
 	cur_disk->state = new_state;
 
-	if (new_state > old_state)
+	if ((new_state & 0x0F) > (old_state & 0x0F))
 	{
 		phase = 0;
-		switch(old_state ^ new_state)
+		switch((old_state ^ new_state) & 0x0F)
 		{
 			case 1:	phase = 0; break;
 			case 2:	phase = 1; break;
@@ -250,6 +250,18 @@ void apple2_slot6_set_lines(mess_image *cur_image, UINT8 new_state)
 				break;
 		}
 	}
+}
+
+
+
+void apple2_slot6_set_lines(mess_image *cur_image, UINT8 new_state)
+{
+	int image_index;
+	struct apple2_drive *cur_disk;
+
+	image_index = image_index_in_device(cur_image);
+	cur_disk = &apple2_drives[image_index];
+	set_lines(cur_image, (cur_disk->state & 0xF0) | (new_state & 0x0F));
 }
 
 
@@ -292,7 +304,7 @@ READ8_HANDLER ( apple2_c0xx_slot6_r )
 			new_state = cur_disk->state | (1 << phase);
 		}
 
-		apple2_slot6_set_lines(cur_image, new_state);
+		set_lines(cur_image, new_state);
 		break;
 
 	case 0x08:		/* MOTOROFF */
