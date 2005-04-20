@@ -615,14 +615,11 @@ DEVICE_LOAD( sms_cart )
 	return (INIT_PASS);
 }
 
-MACHINE_INIT(sms) {
+MACHINE_INIT(sms)
+{
 	smsVersion = 0x00;
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
 		smsFMDetect = 0x01;
 	}
-}
-
-MACHINE_STOP(sms) {
-//	currentLine = 0;
 }
 

@@ -87,7 +87,6 @@ void setup_rom(void);
 DEVICE_LOAD( sms_cart );
 
 MACHINE_INIT(sms);
-MACHINE_STOP(sms);
 INTERRUPT_GEN(sms);
 NVRAM_HANDLER(sms);
 

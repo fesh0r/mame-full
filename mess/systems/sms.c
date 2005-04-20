@@ -142,7 +142,6 @@ static MACHINE_DRIVER_START(sms)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT(sms)
-	MDRV_MACHINE_STOP(sms)
 	MDRV_NVRAM_HANDLER(sms)
 
 	/* video hardware */
@@ -195,7 +194,6 @@ static MACHINE_DRIVER_START(gamegear)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT(sms)
-	MDRV_MACHINE_STOP(sms)
 	MDRV_NVRAM_HANDLER(sms)
 
 	/* video hardware */
