@@ -202,7 +202,7 @@ static void apple2gs_floppy525_getinfo(struct IODevice *dev)
 	dev->count = 2;
 	dev->name = apple2gs_floppy525_getname;
 	dev->tag = APDISK_DEVTAG;
-	dev->not_working = !APPLE2GS_SUPPORT_SLOT6;
+	dev->not_working = 1;
 }
 
 

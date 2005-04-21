@@ -9,8 +9,6 @@
 #ifndef APPLE2GS_H
 #define APPLE2GS_H
 
-#define APPLE2GS_SUPPORT_SLOT6		0
-
 extern UINT8 *apple2gs_slowmem;
 extern data8_t apple2gs_newvideo;
 extern UINT16 apple2gs_bordercolor;
