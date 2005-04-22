@@ -19,10 +19,6 @@ static void machine_init_apexc(void)
 	apexc_teletyper_init();
 }
 
-static void machine_stop_apexc(void)
-{
-}
-
 
 /*
 	APEXC RAM loading/saving from cylinder image
@@ -805,7 +801,6 @@ static MACHINE_DRIVER_START(apexc)
 	/* basic machine hardware */
 	/* APEXC CPU @ 2.0 kHz (memory word clock frequency) */
 	MDRV_CPU_ADD(APEXC, 2000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(NULL)*/
 	MDRV_CPU_PROGRAM_MAP(apexc_mem_map, 0)
 	MDRV_CPU_IO_MAP(apexc_io_map, 0)
@@ -819,7 +814,6 @@ static MACHINE_DRIVER_START(apexc)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( apexc )
-	MDRV_MACHINE_STOP( apexc )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

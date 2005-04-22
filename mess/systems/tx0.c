@@ -332,7 +332,6 @@ static MACHINE_DRIVER_START(tx0_64kw)
 	/* TX0 CPU @ approx. 167 kHz (no master clock, but the memory cycle time is
 	approximately 6usec) */
 	MDRV_CPU_ADD(TX0_64KW, 166667)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(tx0_reset_param)
 	MDRV_CPU_PROGRAM_MAP(tx0_64kw_map, 0)
 	/*MDRV_CPU_PORTS(readport, writeport)*/
@@ -373,7 +372,6 @@ static MACHINE_DRIVER_START(tx0_8kw)
 	/* TX0 CPU @ approx. 167 kHz (no master clock, but the memory cycle time is
 	approximately 6usec) */
 	MDRV_CPU_ADD(TX0_8KW, 166667)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(tx0_reset_param)
 	MDRV_CPU_PROGRAM_MAP(tx0_8kw_map, 0)
 	/*MDRV_CPU_PORTS(readport, writeport)*/

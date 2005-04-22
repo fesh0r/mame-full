@@ -300,7 +300,6 @@ static MACHINE_DRIVER_START(mz700)
 	/* basic machine hardware */
 	/* Z80 CPU @ 3.5 MHz */
 	MDRV_CPU_ADD(Z80, 3500000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(readmem_mz700, writemem_mz700)
 	MDRV_CPU_IO_MAP(readport_mz700, writeport_mz700)

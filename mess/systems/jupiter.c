@@ -37,6 +37,7 @@ Ports:
 /* port i/o functions */
 
 ADDRESS_MAP_START( jupiter_readport , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0xfefe, 0xfefe) AM_READ( jupiter_port_fefe_r )
 	AM_RANGE( 0xfdfe, 0xfdfe) AM_READ( jupiter_port_fdfe_r )
 	AM_RANGE( 0xfbfe, 0xfbfe) AM_READ( jupiter_port_fbfe_r )
@@ -48,6 +49,7 @@ ADDRESS_MAP_START( jupiter_readport , ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( jupiter_writeport , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0x00fe, 0xfffe) AM_WRITE( jupiter_port_fe_w )
 ADDRESS_MAP_END
 
@@ -194,7 +196,6 @@ static INTERRUPT_GEN( jupiter_interrupt )
 static MACHINE_DRIVER_START( jupiter )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3250000)        /* 3.25 Mhz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(jupiter_readmem, jupiter_writemem)
 	MDRV_CPU_IO_MAP(jupiter_readport, jupiter_writeport)
 	MDRV_CPU_VBLANK_INT(jupiter_interrupt,1)

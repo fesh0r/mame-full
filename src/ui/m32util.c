@@ -25,6 +25,7 @@
 
 #include "unzip.h"
 #include "screenshot.h"
+#include "sound/samples.h"
 #include "MAME32.h"
 #include "M32Util.h"
 
@@ -347,22 +348,15 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 				{
 					const char **samplenames = NULL;
 					
-					if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
+					for( i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++ )
 					{
-						/*
-						// cmk 2005-02-27, not sure what to look for here
-						if (drv.sound[i].sound_type == SOUND_SAMPLES)
-							samplenames = ((struct Samplesinterface
-											*)drv.sound[i].sound_interface)->samplenames;
-											*/
+#if (HAS_SAMPLES)
+						if( drv.sound[i].sound_type == SOUND_SAMPLES )
+							samplenames = ((struct Samplesinterface *)drv.sound[i].config)->samplenames;
+#endif
 					}
-					/*
-					#if (HAS_VLM5030 == 1)
-					if (drv.sound[i].sound_type == SOUND_VLM5030)
-					samplenames = ((struct VLM5030interface
-					*)drv.sound[i].sound_interface)->samplenames;
-					#endif
-					*/
+#endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
 						gameinfo->usesSamples = TRUE;

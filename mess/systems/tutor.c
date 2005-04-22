@@ -560,7 +560,6 @@ static MACHINE_DRIVER_START(tutor)
 	/* basic machine hardware */
 	/* TMS9995 CPU @ 10.7 MHz */
 	MDRV_CPU_ADD(TMS9995, 10700000)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(tutor_processor_config)
 	MDRV_CPU_PROGRAM_MAP(tutor_memmap, 0)
 	MDRV_CPU_IO_MAP(tutor_readcru, /*tutor_writecru*/0)
@@ -572,7 +571,6 @@ static MACHINE_DRIVER_START(tutor)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( tutor )
-	/*MDRV_MACHINE_STOP( tutor )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

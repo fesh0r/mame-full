@@ -873,41 +873,21 @@ void CreateSoundFolders(int parent_index)
 
 	for (i=1;i<SOUND_COUNT;i++)
 	{
-#if 0
-		// Defined in sndintrf.c
-		struct snd_interface
-		{
-			unsigned sound_num;										/* ID */
-			const char *name;										/* description */
-			int (*chips_num)(const struct MachineSound *msound);	/* returns number of chips if applicable */
-			int (*chips_clock)(const struct MachineSound *msound);	/* returns chips clock if applicable */
-			int (*start)(const struct MachineSound *msound);		/* starts sound emulation */
-			void (*stop)(void);										/* stops sound emulation */
-			void (*update)(void);									/* updates emulation once per frame if necessary */
-			void (*reset)(void);									/* resets sound emulation */
-		};
-		extern struct snd_interface sndintf[];
-
-		for (jj = 1; jj < i; jj++)
-			if (!strcmp(sndtype_name(i), sndtype_name(jj)))
-				break;
-
-		if (i != jj)
-		{
-			map[i] = map[jj];
-			continue;
-		}
-#endif
 		LPTREEFOLDER lpTemp;
 
-		//dprintf("%s\n",sndtype_name(i));
-		lpTemp = NewFolder(sndtype_name(i), next_folder_id, parent_index, IDI_CPU,
+		// empty fields get filled in with SOUND_DUMMY, so check for this and
+		// don't add it
+		if (strcmp(sndtype_name(SOUND_DUMMY),sndtype_name(i)) == 0)
+			continue;
+
+		//dprintf("%i %s\n",i,sndtype_name(i));
+		lpTemp = NewFolder(sndtype_name(i), next_folder_id, parent_index, IDI_SOUND,
  						   GetFolderFlags(numFolders));
 		ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
 		memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
 
 		ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
-		ExtraFolderData[next_folder_id]->m_nIconId = IDI_CPU;
+		ExtraFolderData[next_folder_id]->m_nIconId = IDI_SOUND;
 		ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
 		ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
 		strcpy( ExtraFolderData[next_folder_id]->m_szTitle, sndtype_name(i) );
@@ -925,10 +905,11 @@ void CreateSoundFolders(int parent_index)
 		for (n = 0; n < MAX_SOUND; n++)
 			if (drv.sound[n].sound_type != SOUND_DUMMY)
 			{
-				// sound type #'s are one-based
+				// sound type #'s are one-based, though that doesn't affect us here
 				AddGame(map[drv.sound[n].sound_type],jj);
 			}
 	}
+
 }
 
 void CreateOrientationFolders(int parent_index)

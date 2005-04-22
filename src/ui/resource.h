@@ -98,6 +98,7 @@
 #define IDC_FRAMESKIP                   1009
 #define IDC_ROTATE                      1010
 #define IDC_HELP_TEXT                   1011
+#define IDC_SCREEN                      1011
 #define IDC_TAB                         1012
 #define IDC_SCANLINES                   1013
 #define IDC_CHEAT                       1014

@@ -149,7 +149,6 @@ static MACHINE_DRIVER_START( wswan )
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( wswan )
-	MDRV_MACHINE_STOP( wswan )
 
 	MDRV_VIDEO_START( generic_bitmapped )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )

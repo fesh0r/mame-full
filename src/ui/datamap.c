@@ -309,6 +309,8 @@ BOOL IsControlDifferent(HWND hDlg,HWND hwnd_ctrl,options_type *o,options_type *b
 		case DM_STRING :
 		{
 			char *value = *(char **)data_item->encoded_var;
+			if( value == NULL )
+				return FALSE;
 			if (strcmp(value,*(char **)((char *)base + ((char *)data_item->encoded_var - (char *)o)))
 				!= 0)
 				return TRUE;

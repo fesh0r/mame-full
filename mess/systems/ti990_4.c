@@ -217,7 +217,6 @@ static MACHINE_DRIVER_START(ti990_4)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0(???) MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(reset_params)*/
 	MDRV_CPU_PROGRAM_MAP(ti990_4_memmap, 0)
 	MDRV_CPU_IO_MAP(ti990_4_readcru, ti990_4_writecru)
@@ -230,7 +229,6 @@ static MACHINE_DRIVER_START(ti990_4)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( ti990_4 )
-	/*MDRV_MACHINE_STOP( ti990_4 )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

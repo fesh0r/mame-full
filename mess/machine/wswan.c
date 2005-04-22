@@ -60,11 +60,7 @@ MACHINE_INIT( wswan )
 	cpu_setbank( 15, ROMMap[ROMBanks - 1] );
 }
 
-MACHINE_STOP( wswan )
-{
-}
-
- READ8_HANDLER( wswan_port_r )
+READ8_HANDLER( wswan_port_r )
 {
 	UINT8 value = 0xff;
 

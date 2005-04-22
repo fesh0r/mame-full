@@ -766,7 +766,6 @@ static MACHINE_DRIVER_START(tm990_189)
 	/* basic machine hardware */
 	/* TMS9980 CPU @ 2.0 MHz */
 	MDRV_CPU_ADD(TMS9980, 2000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(reset_params)
 	MDRV_CPU_PROGRAM_MAP(tm990_189_memmap, 0)
 	MDRV_CPU_IO_MAP(tm990_189_readcru, tm990_189_writecru)
@@ -774,7 +773,6 @@ static MACHINE_DRIVER_START(tm990_189)
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
 	MDRV_MACHINE_INIT( tm990_189 )
-	/*MDRV_MACHINE_STOP( tm990_189 )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - we emulate a 8-segment LED display */
@@ -810,7 +808,6 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	/* basic machine hardware */
 	/* TMS9980 CPU @ 2.0 MHz */
 	MDRV_CPU_ADD(TMS9980, 2000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(reset_params)
 	MDRV_CPU_PROGRAM_MAP(tm990_189_v_memmap, 0)
 	MDRV_CPU_IO_MAP(tm990_189_readcru, tm990_189_writecru)
@@ -818,7 +815,6 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
 	MDRV_MACHINE_INIT( tm990_189_v )
-	/*MDRV_MACHINE_STOP( tm990_189 )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

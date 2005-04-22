@@ -1342,12 +1342,8 @@ ADDRESS_MAP_END
 /* I've handled the I/O ports in this way, because the ports
 are not fully decoded by the CPC h/w. Doing it this way means
 I can decode it myself and a lot of  software should work */
-static ADDRESS_MAP_START(readport_amstrad, ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000, 0xffff) AM_READ(AmstradCPC_ReadPortHandler)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START(writeport_amstrad, ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(AmstradCPC_WritePortHandler)
+static ADDRESS_MAP_START(amstrad_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0xffff) AM_READWRITE(AmstradCPC_ReadPortHandler, AmstradCPC_WritePortHandler)
 ADDRESS_MAP_END
 
 /* Additional notes for the AY-3-8912 in the CPC design
@@ -1585,9 +1581,8 @@ speed of 3.8Mhz */
 static MACHINE_DRIVER_START( amstrad )
 	/* Machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem_amstrad,writemem_amstrad)
-	MDRV_CPU_IO_MAP(readport_amstrad,writeport_amstrad)
+	MDRV_CPU_IO_MAP(amstrad_io, 0)
 
 	MDRV_FRAMES_PER_SECOND(AMSTRAD_FPS)
 	MDRV_INTERLEAVE(1)

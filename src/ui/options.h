@@ -148,6 +148,7 @@ typedef struct
 	int    frames_to_display;
 	char   *effect;
 	char   *aspect;
+	char   *screen;
 	int clean_stretch;
 	int zoom;
 

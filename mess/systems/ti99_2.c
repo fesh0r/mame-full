@@ -394,7 +394,6 @@ static MACHINE_DRIVER_START(ti99_2)
 	/* basic machine hardware */
 	/* TMS9995 CPU @ 10.7 MHz */
 	MDRV_CPU_ADD(TMS9995, 10700000)
-	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(ti99_2_processor_config)
 	MDRV_CPU_PROGRAM_MAP(ti99_2_memmap, 0)
 	MDRV_CPU_IO_MAP(ti99_2_readcru, ti99_2_writecru)

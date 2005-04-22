@@ -535,7 +535,6 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)
@@ -571,7 +570,6 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)
@@ -606,7 +604,6 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)
@@ -641,7 +638,6 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)
@@ -676,7 +672,6 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap_4ev, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)

@@ -545,7 +545,6 @@ static MACHINE_DRIVER_START(exelv)
 	/* basic machine hardware */
 	/* TMS7020 CPU @ 4.91(?) MHz */
 	MDRV_CPU_ADD(TMS7000_EXL, 4910000)
-	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(exelv_memmap, 0)
 	MDRV_CPU_IO_MAP(exelv_portmap, 0)
@@ -557,7 +556,6 @@ static MACHINE_DRIVER_START(exelv)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( exelv )
-	/*MDRV_MACHINE_STOP( exelv )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

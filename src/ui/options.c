@@ -319,6 +319,7 @@ static REG_OPTION regGameOpts[] =
 	{ "screen_aspect",          RO_STRING,  &gOpts.aspect,                          "4:3" },
 	{ "cleanstretch",           RO_ENCODE,  &gOpts.clean_stretch,                   "auto", FALSE, CleanStretchEncodeString, CleanStretchDecodeString },
 	{ "zoom",                   RO_INT,     &gOpts.zoom,                            "2" },
+	{ "screen",					RO_STRING,  &gOpts.screen,                          "\\\\.\\DISPLAY1" },
 
 	// d3d
 	{ "d3d",                    RO_BOOL,    &gOpts.use_d3d,                         "0" },
@@ -3540,9 +3541,14 @@ void SaveGameOptions(int driver_index)
 	}
 	else
 	{
-		if (DeleteFile(buffer) == 0)
+		DWORD dwAttributes =  GetFileAttributes( buffer );
+		if( dwAttributes != 0xFFFFFFFF)
 		{
-			dprintf("error deleting %s; error %d\n",buffer, GetLastError());
+			/*We successfully obtained the Attributes, so File exists, and we can delete it*/
+			if (DeleteFile(buffer) == 0)
+			{
+				dprintf("error deleting %s; error %d\n",buffer, GetLastError());
+			}
 		}
 	}
 }
@@ -3690,9 +3696,14 @@ void SaveFolderOptions(int folder_index, int game_index)
 	else
 	{
 		/*No Differences between Standard Options and Folder Options*/
-		if (DeleteFile(buffer) == 0)
+		DWORD dwAttributes =  GetFileAttributes( buffer );
+		if( dwAttributes != 0xFFFFFFFF)
 		{
-			dprintf("error deleting %s; error %d\n",buffer, GetLastError());
+			/*We successfully obtained the Attributes, so File exists, and we can delete it*/
+			if (DeleteFile(buffer) == 0)
+			{
+				dprintf("error deleting %s; error %d\n",buffer, GetLastError());
+			}
 		}
 		//Check if SubDir
 		if( subdir )

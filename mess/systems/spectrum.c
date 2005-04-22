@@ -341,13 +341,15 @@ static WRITE8_HANDLER ( spectrum_port_w )
 /* ports are not decoded full.
 The function decodes the ports appropriately */
 static ADDRESS_MAP_START (spectrum_readport, ADDRESS_SPACE_IO, 8)
-		AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_port_r)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_port_r)
 ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
 static ADDRESS_MAP_START (spectrum_writeport, ADDRESS_SPACE_IO, 8)
-		AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_port_w)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_port_w)
 ADDRESS_MAP_END
 
 
@@ -515,12 +517,14 @@ static WRITE8_HANDLER ( spectrum_128_port_w )
 /* ports are not decoded full.
 The function decodes the ports appropriately */
 static ADDRESS_MAP_START (spectrum_128_readport, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_128_port_r)
 ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
 static ADDRESS_MAP_START (spectrum_128_writeport, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_128_port_w)
 ADDRESS_MAP_END
 
@@ -1320,10 +1324,12 @@ void ts2068_update_memory(void)
 
 
 static ADDRESS_MAP_START (ts2068_readport, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x0000, 0x0ffff) AM_READ( ts2068_port_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START (ts2068_writeport, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( ts2068_port_w)
 ADDRESS_MAP_END
 
@@ -2014,7 +2020,6 @@ static INTERRUPT_GEN( spec_interrupt )
 static MACHINE_DRIVER_START( spectrum )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3500000)        /* 3.5 Mhz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(spectrum_readmem,spectrum_writemem)
 	MDRV_CPU_IO_MAP(spectrum_readport,spectrum_writeport)
 	MDRV_CPU_VBLANK_INT(spec_interrupt,1)
@@ -2050,7 +2055,6 @@ static MACHINE_DRIVER_START( spectrum_128 )
 	MDRV_IMPORT_FROM( spectrum )
 
 	MDRV_CPU_REPLACE("main", Z80, 3500000)        /* 3.5 Mhz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(spectrum_128_readmem,spectrum_128_writemem)
 	MDRV_CPU_IO_MAP(spectrum_128_readport,spectrum_128_writeport)
 	MDRV_FRAMES_PER_SECOND(50.021)
@@ -2081,7 +2085,6 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( ts2068 )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_REPLACE("main", Z80, 3580000)        /* 3.58 Mhz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(ts2068_mem, 0)
 	MDRV_CPU_IO_MAP(ts2068_readport,ts2068_writeport)
 	MDRV_FRAMES_PER_SECOND(60)

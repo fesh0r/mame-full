@@ -70,8 +70,7 @@ struct VDP
 extern struct VDP vdp;
 
 extern MACHINE_INIT( wswan );
-extern MACHINE_STOP( wswan );
-extern  READ8_HANDLER( wswan_port_r );
+extern READ8_HANDLER( wswan_port_r );
 extern WRITE8_HANDLER( wswan_port_w );
 extern DEVICE_LOAD(wswan_cart);
 extern INTERRUPT_GEN(wswan_scanline_interrupt);

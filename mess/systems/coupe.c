@@ -269,12 +269,9 @@ static WRITE8_HANDLER( coupe_port_w )
 	}
 }
 
-ADDRESS_MAP_START( coupe_readport , ADDRESS_SPACE_IO, 8)	
- AM_RANGE(	0x0000, 0x0ffff) AM_READ( coupe_port_r)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( coupe_writeport , ADDRESS_SPACE_IO, 8)
-	 AM_RANGE(	0x0000, 0x0ffff) AM_WRITE( coupe_port_w)
+ADDRESS_MAP_START( coupe_io , ADDRESS_SPACE_IO, 8)	
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	AM_RANGE( 0x0000, 0x0ffff) AM_READWRITE( coupe_port_r, coupe_port_w )
 ADDRESS_MAP_END
 
 static struct GfxDecodeInfo coupe_gfxdecodeinfo[] = {
@@ -419,9 +416,8 @@ static PALETTE_INIT( coupe )
 static MACHINE_DRIVER_START( coupe )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 6 Mhz */
-	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
 	MDRV_CPU_PROGRAM_MAP(coupe_readmem,coupe_writemem)
-	MDRV_CPU_IO_MAP(coupe_readport,coupe_writeport)
+	MDRV_CPU_IO_MAP(coupe_io, 0)
 	MDRV_CPU_VBLANK_INT(coupe_line_interrupt, 192 + 10)	/* 192 scanlines + 10 lines of vblank (approx).. */
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)

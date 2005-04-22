@@ -115,6 +115,7 @@ static void InitializeDisplayModeUI(HWND hwnd);
 static void InitializeSoundUI(HWND hwnd);
 static void InitializeSkippingUI(HWND hwnd);
 static void InitializeRotateUI(HWND hwnd);
+static void InitializeScreenUI(HWND hwnd);
 static void InitializeResDepthUI(HWND hwnd);
 static void InitializeRefreshUI(HWND hwnd);
 static void InitializeDefaultInputUI(HWND hWnd);
@@ -163,6 +164,7 @@ static int  g_nBeamIndex       = 0;
 static int  g_nFlickerIndex    = 0;
 static int  g_nIntensityIndex  = 0;
 static int  g_nRotateIndex     = 0;
+static int  g_nScreenIndex     = 0;
 static int  g_nInputIndex      = 0;
 static int  g_nBrightnessIndex = 0;
 static int  g_nEffectIndex     = 0;
@@ -291,6 +293,7 @@ static DWORD dwHelpIDs[] =
 	IDC_D3D_ROTATE_EFFECTS, HIDC_D3D_ROTATE_EFFECTS,
 	IDC_STRETCH_SCREENSHOT_LARGER, HIDC_STRETCH_SCREENSHOT_LARGER,
 	IDC_LEDMODE,			HIDC_LEDMODE,
+	IDC_SCREEN,             HIDC_SCREEN,
 	0,                      0
 };
 
@@ -629,9 +632,6 @@ static char *GameInfoCPU(UINT nIndex)
 					drv.cpu[i].cpu_clock / 1000,
 					drv.cpu[i].cpu_clock % 1000);
 
-		if (drv.cpu[i].cpu_flags & CPU_AUDIO_CPU)
-			strcat(buf, " (sound)");
-
 		strcat(buf, "\n");
 
 		i++;
@@ -643,32 +643,51 @@ static char *GameInfoCPU(UINT nIndex)
 /* Build Sound system info string */
 static char *GameInfoSound(UINT nIndex)
 {
-	int soundnum;
+	int i;
 	static char buf[1024];
     struct InternalMachineDriver drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	buf[0] = 0;
 
-	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
-		if (drv.sound[soundnum].sound_type != 0)
-		{
-			sprintf(&buf[strlen(buf)], "%s", sndtype_name(drv.sound[soundnum].sound_type));
+	i = 0;
+	while (i < MAX_SOUND && drv.sound[i].sound_type)
+	{
+		int clock,sound_type,count;
 
-			if (drv.sound[soundnum].clock)
-			{
-				if (drv.sound[soundnum].clock >= 1000000)
-					sprintf(&buf[strlen(buf)], " %d.%06d MHz",
-							drv.sound[soundnum].clock / 1000000,
-							drv.sound[soundnum].clock % 1000000);
-				else
-					sprintf(&buf[strlen(buf)], " %d.%03d kHz",
-							drv.sound[soundnum].clock / 1000,
-							drv.sound[soundnum].clock % 1000);
-			}
-			strcat(buf,"\n");
+		sound_type = drv.sound[i].sound_type;
+		clock = drv.sound[i].clock;
+
+		count = 1;
+		i++;
+
+		while (i < MAX_SOUND
+				&& drv.sound[i].sound_type == sound_type
+				&& drv.sound[i].clock == clock)
+		{
+			count++;
+			i++;
 		}
 
+		if (count > 1)
+			sprintf(&buf[strlen(buf)],"%dx",count);
+
+		sprintf(&buf[strlen(buf)],"%s",sndtype_name(sound_type));
+
+		if (clock)
+		{
+			if (clock >= 1000000)
+				sprintf(&buf[strlen(buf)]," %d.%06d MHz",
+						clock / 1000000,
+						clock % 1000000);
+			else
+				sprintf(&buf[strlen(buf)]," %d.%03d kHz",
+						clock / 1000,
+						clock % 1000);
+		}
+
+		strcat(buf,"\n");
+	}
 
 	return buf;
 }
@@ -1074,6 +1093,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			case IDC_EFFECT:
 			case IDC_DEFAULT_INPUT:
 			case IDC_ROTATE:
+			case IDC_SCREEN:
 			case IDC_SAMPLERATE:
 			case IDC_ARTRES:
 			case IDC_CLEAN_STRETCH :
@@ -1282,7 +1302,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			{
 				SetGameUsesDefaults(g_nGame,g_bUseDefaults);
 				orig_uses_defaults = g_bUseDefaults;
-				//WIP RS Problem is Data is synced in from disk, and changed gamea properties are not yet saved
+				//RS Problem is Data is synced in from disk, and changed games properties are not yet saved
 				//pGameOpts = GetGameOptions(g_nGame, -1);
 			}
 
@@ -2055,6 +2075,16 @@ static void AssignRotate(HWND hWnd)
 	}
 }
 
+static void AssignScreen(HWND hWnd)
+{
+	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nScreenIndex);
+
+	FreeIfAllocated(&pGameOpts->screen);
+	if (ptr != NULL)
+		pGameOpts->screen = strdup(ptr);
+}
+
+
 static void AssignInput(HWND hWnd)
 {
 	int new_length;
@@ -2146,6 +2176,31 @@ static void ResetDataMap(void)
 	{
 		FreeIfAllocated(&pGameOpts->ctrlr);
 		pGameOpts->ctrlr = strdup("");
+	}
+	if (pGameOpts->screen == NULL)
+	{
+		FreeIfAllocated(&pGameOpts->screen);
+		pGameOpts->screen = strdup("\\\\.\\DISPLAY1");
+		g_nScreenIndex = 0;
+	}
+	else
+	{
+		//get the selected Index
+		int iMonitors;
+		DISPLAY_DEVICE dd;
+		int i= 0;
+		//enumerating the Monitors
+		iMonitors = GetSystemMetrics(SM_CMONITORS); // this gets the count of monitors attached
+		ZeroMemory(&dd, sizeof(dd));
+		dd.cb = sizeof(dd);
+		for(i=0; EnumDisplayDevices(NULL, i, &dd, 0); i++)
+		{
+			if( !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) )
+			{
+				if ( stricmp(pGameOpts->screen,dd.DeviceName) == 0 )
+					g_nScreenIndex = i;
+			}
+		}
 	}
 
 	g_nRotateIndex = 0;
@@ -2255,6 +2310,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_ROTATE,        DM_INT,  CT_COMBOBOX, &g_nRotateIndex,           DM_INT, &pGameOpts->ror, 0, 0, AssignRotate);
 	DataMapAdd(IDC_FLIPX,         DM_BOOL, CT_BUTTON,   &pGameOpts->flipx,         DM_BOOL, &pGameOpts->flipx,         0, 0, 0);
 	DataMapAdd(IDC_FLIPY,         DM_BOOL, CT_BUTTON,   &pGameOpts->flipy,         DM_BOOL, &pGameOpts->flipy,         0, 0, 0);
+	DataMapAdd(IDC_SCREEN,        DM_INT,  CT_COMBOBOX, &g_nScreenIndex,		   DM_STRING, &pGameOpts->screen, 0, 0, AssignScreen);
 	/* debugres */
 	DataMapAdd(IDC_GAMMA,         DM_INT,  CT_SLIDER,   &g_nGammaIndex,            DM_DOUBLE, &pGameOpts->f_gamma_correct, 0, 0, AssignGamma);
 	DataMapAdd(IDC_GAMMADISP,     DM_NONE, CT_NONE,  NULL,  DM_DOUBLE, &pGameOpts->f_gamma_correct, 0, 0, 0);
@@ -2476,6 +2532,7 @@ static void InitializeOptions(HWND hDlg)
 	InitializeSoundUI(hDlg);
 	InitializeSkippingUI(hDlg);
 	InitializeRotateUI(hDlg);
+	InitializeScreenUI(hDlg);
 	InitializeDefaultInputUI(hDlg);
 	InitializeEffectUI(hDlg);
 	InitializeArtresUI(hDlg);
@@ -3023,6 +3080,32 @@ static void InitializeResDepthUI(HWND hwnd)
 					ComboBox_InsertString(hCtrl, nCount, buf);
 					ComboBox_SetItemData(hCtrl, nCount++, pDisplayModes->m_Modes[i].m_dwBPP);
 				}
+			}
+		}
+	}
+}
+
+/* Populate the Screen drop down */
+static void InitializeScreenUI(HWND hwnd)
+{
+	int iMonitors;
+	DISPLAY_DEVICE dd;
+	int i= 0;
+	HWND hCtrl = GetDlgItem(hwnd, IDC_SCREEN);
+	if (hCtrl)
+	{
+		/* Remove all items in the list. */
+		ComboBox_ResetContent(hCtrl);
+		//Dynamically populate it, by enumerating the Monitors
+		iMonitors = GetSystemMetrics(SM_CMONITORS); // this gets the count of monitors attached
+		ZeroMemory(&dd, sizeof(dd));
+		dd.cb = sizeof(dd);
+		for(i=0; EnumDisplayDevices(NULL, i, &dd, 0); i++)
+		{
+			if( !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) )
+			{
+				ComboBox_InsertString(hCtrl, i, strdup(dd.DeviceName));
+				ComboBox_SetItemData( hCtrl, i, (const char*)strdup(dd.DeviceName));
 			}
 		}
 	}
