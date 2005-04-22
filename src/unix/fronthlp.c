@@ -435,10 +435,7 @@ int frontend_list(char *gamename)
 					for(j=0;j<MAX_CPU;j++)
 					{
 						const struct MachineCPU *x_cpu = drv.cpu;
-						if (x_cpu[j].cpu_flags & CPU_AUDIO_CPU)
-							fprintf(stdout_file, "[%-6s] ",cputype_name(x_cpu[j].cpu_type));
-						else
-							fprintf(stdout_file, "%-8s ",cputype_name(x_cpu[j].cpu_type));
+						fprintf(stdout_file, "%-8s ",cputype_name(x_cpu[j].cpu_type));
 					}
 					fprintf(stdout_file, " ");
 
