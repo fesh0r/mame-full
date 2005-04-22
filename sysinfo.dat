@@ -716,59 +716,154 @@ $bio
 Apple 1
 
 
-Known issues:
-
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
-scroll_lock key.
-
-The cassette interface is not yet supported (bug#477).
-
-
 Usage:
 
-Upon booting, a backslash is displayed.  You are at the system monitor
-prompt, form which you can examine or set memory values.
+Upon boot or reset, the system displays a "\" and a blinking "@" cursor on the next
+line.  The blinking "@" is the Apple 1's video cursor.  The "\" is the prompt for the
+Monitor program.  From the Monitor, you can examine or change memory or execute another
+program.
+
+You can always interrupt a program and return to the Monitor by pressing the Apple 1's
+RESET switch (F12).  This will not clear the screen or disturb memory contents.
+
+To cold-boot the system, clearing the screen and memory, press the MESS Reset key
+(F3, in partial emulation mode only).
+
+The Apple 1's CLEAR SCREEN switch (F2) will clear the screen and place the cursor at
+the upper left corner.  This only clears the video hardware, not the computer's memory,
+so you can use it whenever you like.
+
+
+To start the cassette interface's mini-monitor from the Monitor, type the Monitor command:
+
+    C100R
+
+This mini-monitor will let you write memory regions to a cassette image or read a cassette
+image into memory.  It will only execute a single line of commands, and will then return you
+to the main Monitor, but this line can contain several write or read commands.
+
+Cassette write command, writing data from memory at $xxxx-$yyyy:
+
+    xxxx.yyyyW
+
+Cassette read command, reading data into memory at $xxxx-$yyyy:
+
+    xxxx.yyyyR
+
+The starting and ending addresses xxxx and yyyy should be 4-digit hexadecimal addresses.
+The starting address can actually be shorter than 4 digits, but to be safe, the ending address
+should be exactly 4 digits.  (A bug in the cassette mini-monitor will cause digits missing
+from the ending address to be replaced by the trailing digits of the starting address, and
+if the starting address does not end with zeroes, much more data will be written or read than
+expected.)
+
+If a command line contains multiple write or read commands, the corresponding memory regions
+will be written or read in sequence.  These commands may be separated by spaces, which are
+ignored.
+
+When a region is written, its data is preceded by a 10-second leader.  When a region is read,
+the leader can vary in length but should be at least 4-5 seconds.
+
+If the cassette image doesn't contain enough data to fill a region, the mini-monitor will hang
+waiting for the remaining data, and the system must be reset.
+
+When all the cassette commands have been executed, the mini-monitor will return to the Monitor,
+which will display a "\" prompt.
+
+
+Some cassette command examples:
+
+To read Apple 1 BASIC from cassette:
+
+    E000.EFFFR
+
+To write a BASIC program to cassette, with BASIC's default LOMEM= setting of 2048:
+
+    4A.00FFW800.FFFW
+
+To read a BASIC program from cassette, with LOMEM=768:
+
+    4A.00FFR300.FFFR
+
+
+Once Apple 1 BASIC is loaded into memory, it can be started with the Monitor command:
+
+    E000R
+
+This will start BASIC from scratch, removing any existing BASIC program and data.
+To return to BASIC from the monitor while preserving the current program and data,
+use the command:
+
+    E2B3R
+
+The BASIC prompt is a ">".  Apple 1 BASIC is generally similar to Apple II Integer BASIC,
+but without the latter's graphics commands.
+
+
+MESS Emulation State:
+
+Optional cassette interface is included and emulated.
+
+4 KB of DRAM is mapped to $E000-$EFFF.  This is required for Apple 1 BASIC.
+
+
+Known Issues:
+
+The cassette interface and $E000-$EFFF DRAM are always included; they cannot be switched off.
+
+The DRAM at $E000-$EFFF is not included in the RAM configured by MESS's -ram option, due
+to limitations in how MESS presently manages configurable RAM.
 
 
 History and Trivia:
 
-The Apple 1 is a kit computer that was introduced and sold in small quantities in 1976.
+The Apple 1 was a kit computer that was introduced and sold in small quantities in 1976.
 
 Steve Wozniak ("Woz"), who worked for Hewlett-Packard at the time, wanted to build his own
-computer.  He could afford neither the Motorola 6800 (his preferred chip), nor Intel 8080
-CPU. Therefore, he decided to build his computer around MOS Technology's 6502 chip, which was
-quite compatible with the Motorola 6800.  He proceeded to write a BASIC interpreter for the
-chip, and then turned to designing the computer that would run it, using an earlier paper
-design for the Motorola 6800.
+computer.  He could afford neither the Intel 8080 (the most popular microprocessor at the
+time) nor the Motorola 6800 (his own preference).  Therefore, he decided to build his computer
+around MOS Technology's new 6502 chip, which was quite compatible with the Motorola 6800 but
+far less expensive.  He proceeded to write a BASIC interpreter for the chip, and then turned
+to designing the computer that would run it, using an earlier paper design for the Motorola
+6800.
 
-The resulting computer was easier to use and more affordable than many other kit computer
-of the time, sporting a keyboard and video terminal interface, all on a single circuit
-board.  To keep costs down, shift registers were used to send text to the monitor rather
-than RAM, with the downside being a slow display rate (60 characters per second).  This
-computer was developed, enhanced and touted for the Homebrew Computer Club in Palo Alto,
-California.
+The resulting computer was easier to use and more affordable than many other kit computers
+of the time, sporting a keyboard interface and TV-compatible video terminal circuitry, all
+on a single circuit board.  To keep costs down, the video memory was implemented using shift
+registers rather than RAM, with the downside being a slow display rate (60 characters per
+second).  However, this was still much faster than the 10-character-per-second electromechanical
+Teletypes used with many early home computers.  Wozniak's computer also used new, more compact
+4-kilobit dynamic RAM chips instead of the 1-kilobit static RAMs used by most other designs.
+Wozniak promoted his computer and enhancements for it at the Homebrew Computer Club in Palo
+Alto, California.
 
 Steve Jobs, who had worked with Woz on the game "Breakout" for Atari, convinced Woz to try
-to market and sell the computer. Together they formed the Apple Computer Company.  Paul
-Terrell, the owner of a local computer shop, was interested in this computer, but only if
-it was fully assembled and with a cassette interface, which Wozniak also designed.
-Normally, the Apple 1 kit was sold "naked", simply as a circuit board, without a monitor,
-power supply, keyboard, tape drive, etc.  They sold about two hundred of the assembled
-units.
+to market and sell the computer.  Together they formed the Apple Computer Company.  Paul
+Terrell, the owner of The Byte Shop, a new local computer store, was interested in this
+computer, but only if it was fully assembled and came with a cassette interface, so
+Wozniak designed one.
+
+Normally, the Apple 1 was sold "naked", simply as a circuit board, without a monitor, power
+supply, keyboard, tape drive, etc.  These would be added by the owner.  Wozniak and Jobs
+assembled about 200 systems and sold about 170 of them.  Most of these were later traded in
+to Apple for Apple IIs and were destroyed.  About 30 to 50 are still in existence.
 
 
 Features:
 
-CPU: MOS 6502 1MHz
+CPU: MOS Technology 6502, 1 MHz
 
-Memory: RAM 4kB expandable to 8kB on board, or 65kB with expansion slot
+Memory: 4 kB DRAM, expandable to 8 kB on board, or up to 52 kB with third-party expansion
+hardware
 
 Screen: 40x24 characters
 
+Storage: Optional cassette interface
+
 
 Links:
+
+Apple I Owners Club -- http://www.applefritter.com/apple1
 
 Apple History -- http://www.apple-history.com/
 
