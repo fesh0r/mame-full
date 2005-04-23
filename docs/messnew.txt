@@ -11,6 +11,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMSTRAD] Cassette now starts up stopped.  [Barry Rodewald]
+
 - [APPLE1] Improved driver.  [Colin Howell]
 
 - [APPLE1] Fixed snapshot loading.  (bug #690) [Colin Howell]
@@ -31,7 +33,9 @@ System Driver Changes:
   configurations added. Memory mapping improved. Palette corrected. Supprort
   for newer version of snapshots added. Lot of cleanups. Keyboard mapping
   corrected. [Krzysztof Strzecha]
-  
+
+- [JAGUAR] Fixed processor type; now a 68000.  [Steve Scavone]
+
 - [SVISION] Fixed aspect ratio.  [PeT]
 
 

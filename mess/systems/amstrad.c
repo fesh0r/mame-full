@@ -1652,7 +1652,7 @@ static void cpc6128_floppy_getinfo(struct IODevice *dev)
 static void cpc6128_cassette_getinfo(struct IODevice *dev)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	cassette_device_getinfo(dev, NULL, NULL, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
 	dev->count = 1;
 }
 
