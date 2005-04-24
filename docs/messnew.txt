@@ -68,7 +68,7 @@ Source Changes:
 
 - [Windows] Fixed arrow keys under natural keyboard emulation.  [Nate Woods]
 
-- Fixed index addressing mode disassemble for the hd6309. [tim lindner]
+- Fixed index addressing mode disassembly for the hd6309. [tim lindner]
 
 
 
