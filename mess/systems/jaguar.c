@@ -73,7 +73,6 @@ UINT8 cojag_is_r3000 = FALSE;
  *************************************/
 
 static data32_t joystick_data;
-static data32_t misc_control_data;
 static UINT8 eeprom_enable;
 
 static data32_t *rom_base;
@@ -106,7 +105,6 @@ static MACHINE_INIT( jaguar )
 
 	/* set up main CPU RAM/ROM banks */
 	cpu_setbank(3, jaguar_gpu_ram);
-	cpu_setbank(4, jaguar_shared_ram);
 
 	/* set up DSP RAM/ROM banks */
 	cpu_setbank(10, jaguar_shared_ram);
@@ -278,8 +276,7 @@ static WRITE32_HANDLER( joystick_w )
 
 
 static ADDRESS_MAP_START( jaguar_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_BASE(&jaguar_shared_ram)
-	AM_RANGE(0x200000, 0x3fffff) AM_READWRITE(MRA32_BANK4, MWA32_BANK4)	/* mirror */
+	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_MIRROR(0x200000)
 	AM_RANGE(0x800000, 0xdfffff) AM_ROM AM_BASE(&cart_base) AM_SIZE(&cart_size)
 	AM_RANGE(0xe00000, 0xe1ffff) AM_ROM AM_BASE(&rom_base) AM_SIZE(&rom_size)
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
@@ -287,7 +284,7 @@ static ADDRESS_MAP_START( jaguar_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
 	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
 	AM_RANGE(0xf03000, 0xf03fff) AM_RAM AM_BASE(&jaguar_gpu_ram)
-	AM_RANGE(0xf0b000, 0xf0bfff) AM_READWRITE(MRA32_BANK3, MWA32_BANK3)
+	AM_RANGE(0xf0b000, 0xf0bfff) AM_RAMBANK(3)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0xf14000, 0xf14003) AM_READWRITE(joystick_r, joystick_w)
 	AM_RANGE(0xf16000, 0xf1600b) AM_READ(cojag_gun_input_r)	// GPI02
@@ -306,17 +303,17 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( gpu_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READWRITE(MRA32_BANK10, MWA32_BANK10)
-	AM_RANGE(0x200000, 0x3fffff) AM_READWRITE(MRA32_BANK14, MWA32_BANK14)
-	AM_RANGE(0x800000, 0xdfffff) AM_READWRITE(MRA32_BANK15, MWA32_ROM)
-	AM_RANGE(0xe00000, 0xe1ffff) AM_READWRITE(MRA32_BANK16, MWA32_ROM)
+	AM_RANGE(0x000000, 0x1fffff) AM_RAMBANK(10)
+	AM_RANGE(0x200000, 0x3fffff) AM_RAMBANK(14)
+	AM_RANGE(0x800000, 0xdfffff) AM_ROMBANK(15)
+	AM_RANGE(0xe00000, 0xe1ffff) AM_ROMBANK(16)
 
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
-	AM_RANGE(0xf00400, 0xf007ff) AM_READWRITE(MRA32_BANK11, MWA32_BANK11)
+	AM_RANGE(0xf00400, 0xf007ff) AM_RAMBANK(11)
 	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
 	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
-	AM_RANGE(0xf03000, 0xf03fff) AM_READWRITE(MRA32_BANK12, MWA32_BANK12)
-	AM_RANGE(0xf0b000, 0xf0bfff) AM_READWRITE(MRA32_BANK17, MWA32_BANK17)
+	AM_RANGE(0xf03000, 0xf03fff) AM_RAMBANK(12)
+	AM_RANGE(0xf0b000, 0xf0bfff) AM_RAMBANK(17)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 ADDRESS_MAP_END
 
@@ -329,14 +326,14 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( dsp_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READWRITE(MRA32_BANK10, MWA32_BANK10)
-	AM_RANGE(0x200000, 0x3fffff) AM_READWRITE(MRA32_BANK14, MWA32_BANK14)
-	AM_RANGE(0x800000, 0xdfffff) AM_READWRITE(MRA32_BANK15, MWA32_ROM)
-	AM_RANGE(0xe00000, 0xe1ffff) AM_READWRITE(MRA32_BANK16, MWA32_ROM)
+	AM_RANGE(0x000000, 0x1fffff) AM_RAMBANK(10)
+	AM_RANGE(0x200000, 0x3fffff) AM_RAMBANK(14)
+	AM_RANGE(0x800000, 0xdfffff) AM_ROMBANK(15)
+	AM_RANGE(0xe00000, 0xe1ffff) AM_ROMBANK(16)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
 	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_READWRITE(MRA32_BANK13, MWA32_BANK13)
+	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAMBANK(13)
 	AM_RANGE(0xf1d000, 0xf1dfff) AM_ROM AM_BASE(&jaguar_wave_rom)
 ADDRESS_MAP_END
 
@@ -447,7 +444,7 @@ static struct jaguar_config dsp_config =
 MACHINE_DRIVER_START( jaguar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 13295000)
+	MDRV_CPU_ADD(M68EC020, 13295000)
 	MDRV_CPU_PROGRAM_MAP(jaguar_mem, 0)
 
 	MDRV_CPU_ADD(JAGUARGPU, 52000000/2)
@@ -509,16 +506,9 @@ static DRIVER_INIT( jaguar )
 	state_save_register_UINT32("jaguar", 0, "gpu_ram",           jaguar_gpu_ram,    0x001000 / 4);
 	state_save_register_UINT32("jaguar", 0, "dspram",            jaguar_dsp_ram,    0x002000 / 4);
 	state_save_register_UINT32("jaguar", 0, "joystick_data",     &joystick_data,           1);
-	state_save_register_UINT32("jaguar", 0, "misc_control_data", &misc_control_data,       1);
 	state_save_register_UINT8("jaguar",  0, "eeprom_enable",     &eeprom_enable,           1);
 
 	cojag_draw_crosshair = FALSE;
-
-	/* install synchronization hooks for GPU */
-	//install_mem_write32_handler(0, 0xf0b000 + gpu_jump_offs, 0xf0b003 + gpu_jump_offs, gpu_jump_w);
-	//install_mem_read32_handler(1, 0xf03000 + gpu_jump_offs, 0xf03003 + gpu_jump_offs, gpu_jump_r);
-	//gpu_jump_address = &jaguar_gpu_ram[gpu_jump_offs/4];
-	//gpu_spin_pc = 0xf03000 + spin_pc;
 
 	/* init the sound system and install DSP speedups */
 	cojag_sound_init();

@@ -34,8 +34,6 @@ System Driver Changes:
   for newer version of snapshots added. Lot of cleanups. Keyboard mapping
   corrected. [Krzysztof Strzecha]
 
-- [JAGUAR] Fixed processor type; now a 68000.  [Steve Scavone]
-
 - [SVISION] Fixed aspect ratio.  [PeT]
 
 
