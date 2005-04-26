@@ -227,6 +227,8 @@ static struct
 
 	int speaker;
 
+	int no_8259;
+
 	/* temporary hack */
 	int offset1;
 } at_8042;
@@ -259,6 +261,7 @@ void at_8042_init(AT8042_CONFIG *config)
 	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
 	at_8042.inport = 0xa0;	
 	at_8042_set_outport(0xfe, 1);
+	at_8042.no_8259 = 0;
 }
 
 static void at_8042_receive(UINT8 data)
@@ -274,21 +277,30 @@ static void at_8042_receive(UINT8 data)
 	}
 }
 
-
-
 static void at_8042_check_keyboard(void)
 {
-	if( !pic8259_0_irq_pending(1)
-		&& !at_8042.keyboard.received
-		&& !at_8042.mouse.received)
+	int data;
+
+	if (at_8042.no_8259)
 	{
-		int data;
-		if ( (data = at_keyboard_read())!=-1)
-			at_8042_receive(data);
+		if (!at_8042.keyboard.received
+			&& !at_8042.mouse.received)
+		{
+			if ( (data = at_keyboard_read())!=-1)
+				at_8042_receive(data);
+		}
+	}
+	else
+	{
+		if( !pic8259_0_irq_pending(1)
+			&& !at_8042.keyboard.received
+			&& !at_8042.mouse.received)
+		{
+			if ( (data = at_keyboard_read())!=-1)
+				at_8042_receive(data);
+		}
 	}
 }
-
-
 
 void at_8042_time(void)
 {
@@ -296,6 +308,10 @@ void at_8042_time(void)
 }
 
 
+void at_8042_set_no_8259(int has_no_8259)
+{
+	at_8042.no_8259 = has_no_8259;
+}
 
 static void at_8042_clear_keyboard_received(void)
 {

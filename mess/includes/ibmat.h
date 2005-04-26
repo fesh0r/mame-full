@@ -13,6 +13,11 @@ typedef struct {
 void at_8042_init(AT8042_CONFIG *config);
 void at_8042_time(void);
 
+/* Note that this function is a hack because currently, the keyboard is
+ * tightly coupled to the 8259.  At some point, the underlying reason
+ * for this needs to be addressed */
+void at_8042_set_no_8259(int has_no_8259);
+
 READ8_HANDLER(at_8042_8_r);
 WRITE8_HANDLER(at_8042_8_w);
 READ32_HANDLER(at_8042_32_r);
