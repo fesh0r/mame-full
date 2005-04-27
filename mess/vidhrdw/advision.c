@@ -57,7 +57,9 @@ PALETTE_INIT( advision )
 
 void advision_vh_write(int data)
 {
-	advision_led_latch[advision_videobank] = data;
+	if (advision_videobank >= 1 && advision_videobank <=5) {
+		advision_led_latch[advision_videobank] = data;
+}
 }
 
 void advision_vh_update(int x)

@@ -4,17 +4,15 @@
 
   Driver file to handle emulation of the Entex Adventurevision.
 
-  by Daniel Boris (dboris@home.com)  1/20/2000
-
 ***************************************************************************/
 
 /**********************************************
 8048 Ports:
 P1 	Bit 0..1  - RAM bank select
-	Bit 3..7  - Keypad input:
+	Bit 3..7  - Keypad input
 
 P2 	Bit 0..3  - A8-A11
-	Bit 4..7  - Sound control
+	Bit 4..7  - Sound control/Video write address
 
 T1	Mirror sync pulse
 

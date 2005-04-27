@@ -11,6 +11,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [ADVISION] Fixed a video glitch.  (bug #17) [Dan Boris]
+
 - [AMSTRAD] Cassette now starts up stopped.  [Barry Rodewald]
 
 - [APPLE1] Improved driver.  [Colin Howell]

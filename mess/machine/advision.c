@@ -56,7 +56,7 @@ WRITE8_HANDLER ( advision_MAINRAM_w )
 WRITE8_HANDLER ( advision_putp1 )
 {
 	static UINT8 *ROM;
-	
+
 	ROM = memory_region(REGION_CPU1);
 	if (data & 0x04)
 		cpu_setbank(1,&ROM[0x0000]);
@@ -67,6 +67,11 @@ WRITE8_HANDLER ( advision_putp1 )
 
 WRITE8_HANDLER ( advision_putp2 )
 {
+	//Use to log sound chip writes
+	//if (data != 0x20 && data != 0x40 && data != 0x60 && data != 0x80 && data != 0xA0 && data != 0x10) {
+	//	logerror("P2 WRITE PC=%x,%x\n",activecpu_get_icount(),data);
+	//}
+
 	if ((advision_videoenable == 0x00) && (data & 0x10))
 	{
 		advision_vh_update(advision_vh_hpos);
@@ -84,9 +89,11 @@ WRITE8_HANDLER ( advision_putp2 )
  READ8_HANDLER ( advision_getp1 ) {
     int d,in;
 
-    logerror("P1 READ PC=%x\n",activecpu_get_pc());
+    // Get joystick switches
     in = input_port_0_r(0);
     d = in | 0x0F;
+
+    // Get buttons
     if (in & 0x02) d = d & 0xF7;    /* Button 3 */
     if (in & 0x08) d = d & 0xCF;    /* Button 1 */
     if (in & 0x04) d = d & 0xAF;    /* Button 2 */
