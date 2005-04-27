@@ -45,6 +45,8 @@
 static int disk6byte;		/* byte queued for writing? */
 static int read_state;		/* 1 = read, 0 = write */
 static int a2_drives_num;
+static int spin_fract_dividend;
+static int spin_fract_divisor;
 
 struct apple2_drive
 {
@@ -70,6 +72,8 @@ void apple2_slot6_init(void)
 	mess_image *image;
 	
 	read_state = 1;
+	spin_fract_dividend = 15;
+	spin_fract_divisor = 16;
 
 	floppy_count = device_count(IO_FLOPPY);
 
@@ -90,6 +94,14 @@ void apple2_slot6_init(void)
 			floppy_drive_seek(image, +35/2);
 		}
 	}
+}
+
+
+
+void apple2_slot6_set_spin_fract(int dividend, int divisor)
+{
+	spin_fract_dividend = dividend;
+	spin_fract_divisor = divisor;
 }
 
 
@@ -136,6 +148,15 @@ static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_
 	/* no image initialized for that drive ? */
 	if (!image_exists(img))
 		return 0xFF;
+
+	/* check the spin count if reading*/
+	if (write_value < 0)
+	{
+		disk->spin_count++;
+		disk->spin_count %= spin_fract_divisor;
+		if (disk->spin_count >= spin_fract_dividend)
+			return 0x00;
+	}
 
 	/* load track if need be */
 	if ((disk->transient_state & TRSTATE_LOADED) == 0)
@@ -320,14 +341,9 @@ READ8_HANDLER ( apple2_c0xx_slot6_r )
 	case 0x0C:		/* Q6L - set transistor Q6 low */
 		cur_disk->state &= ~Q6_MASK;
 		if (read_state)
-		{
-			if ((++cur_disk->spin_count & 0x0F) != 0)
-				result = process_byte(cur_image, cur_disk, -1);
-		}
+			result = process_byte(cur_image, cur_disk, -1);
 		else
-		{
 			process_byte(cur_image, cur_disk, disk6byte);
-		}
 		break;
 	
 	case 0x0D:		/* Q6H - set transistor Q6 high */

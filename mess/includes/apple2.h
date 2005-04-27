@@ -90,6 +90,7 @@ void apple2_setvar(UINT32 val, UINT32 mask);
 
 /* machine/ap_disk2.c */
 void apple2_slot6_init(void);
+void apple2_slot6_set_spin_fract(int dividend, int divisor);
 DEVICE_LOAD ( apple2_floppy );
 UINT8 apple2_slot6_readbyte(mess_image *image);
 void apple2_slot6_writebyte(mess_image *image, UINT8 byte);

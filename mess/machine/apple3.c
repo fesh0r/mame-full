@@ -617,6 +617,8 @@ DRIVER_INIT( apple3 )
 	via_set_clock(1, 2000000);
 
 	apple2_slot6_init();
+	apple2_slot6_set_spin_fract(1, 4);
+
 	apple3_profile_init();
 
 	a3 = 0;
