@@ -22,6 +22,7 @@ static UINT8 via_0_a;
 static UINT8 via_0_b;
 static UINT8 via_1_a;
 static UINT8 via_1_b;
+static int via_1_irq;
 static offs_t zpa;
 
 #define LOG_MEMORY		1
@@ -460,7 +461,9 @@ static WRITE8_HANDLER(apple3_via_1_out_b) { apple3_via_out(&via_1_b, data); }
 
 static void apple2_via_1_irq_func(int state)
 {
-	cpunum_set_input_line(0, M6502_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	if (!via_1_irq && state)
+		cpunum_set_input_line(0, M6502_IRQ_LINE, PULSE_LINE);
+	via_1_irq = state;
 }
 
 static const struct via6522_interface via_0_intf =
@@ -560,6 +563,18 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 			result = apple3_bankaddr(~0, ((offs_t) via_0_b) * 0x100 + offset);
 		}
 	}
+	else if ((offset >= 0xF000) && (via_0_a & 0x01))
+	{
+#if 0
+		/* The Apple /// Diagnostics seems to expect that indexed writes
+		 * always write to RAM.  That image jumps to an address that is
+		 * undefined unless this code is enabled.  However, the Sara
+		 * emulator does not have corresponding code here, though Chris
+		 * Smolinski does not rule out the possibility
+		 */
+		result = apple3_bankaddr(~0, offset - 0x8000);
+#endif
+	}
 	return result;
 }
 
@@ -624,6 +639,7 @@ DRIVER_INIT( apple3 )
 	a3 = 0;
 	via_0_a = ~0;
 	via_1_a = ~0;
+	via_1_irq = 0;
 	apple3_update_memory();
 
 	/* the Apple /// does some weird tricks whereby it monitors the SYNC pin
