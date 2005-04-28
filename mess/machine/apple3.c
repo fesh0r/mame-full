@@ -610,6 +610,24 @@ static WRITE8_HANDLER( apple3_indexed_write )
 
 
 
+static OPBASE_HANDLER( apple3_opbase )
+{
+	UINT8 *opptr;
+
+	if ((address & 0xFF00) == 0x0000)
+	{
+		opptr = apple3_get_zpa_addr(address);
+		opcode_mask = ~0;
+		opcode_base = opcode_arg_base = opptr - address;
+		opcode_memory_min = address;
+		opcode_memory_max = address;
+		address = ~0;
+	}
+	return address;
+}
+
+
+
 static void apple3_update_drives(void)
 {
 	/* stub; empty for now */
@@ -641,6 +659,8 @@ DRIVER_INIT( apple3 )
 	via_1_a = ~0;
 	via_1_irq = 0;
 	apple3_update_memory();
+
+	memory_set_opbase_handler(0, apple3_opbase);
 
 	/* the Apple /// does some weird tricks whereby it monitors the SYNC pin
 	 * on the CPU to check for indexed instructions and directs them to

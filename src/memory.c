@@ -674,16 +674,47 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 
 void *memory_get_op_ptr(int cpunum, offs_t offset)
 {
-	offs_t opbase = ~0;
+	offs_t new_offset;
+	void *ptr;
+	UINT8 *saved_opcode_base;
+	UINT8 *saved_opcode_arg_base;
+	offs_t saved_opcode_mask;
+	offs_t saved_opcode_memory_min;
+	offs_t saved_opcode_memory_max;
+	UINT8 saved_opcode_entry;
 
 	if (cpudata[cpunum].opbase)
-		opbase = cpudata[cpunum].opbase(offset);
+	{
+		/* need to save opcode info */
+		saved_opcode_base = opcode_base;
+		saved_opcode_arg_base = opcode_arg_base;
+		saved_opcode_mask = opcode_mask;
+		saved_opcode_memory_min = opcode_memory_min;
+		saved_opcode_memory_max = opcode_memory_max;
+		saved_opcode_entry = opcode_entry;
 
-	if (opbase == ~0)
-		return memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+		new_offset = cpudata[cpunum].opbase(offset);
+
+		if (new_offset == ~0)
+			ptr = &opcode_base[offset];
+		else
+			ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, new_offset);
+
+		/* restore opcode info */
+		opcode_base = saved_opcode_base;
+		opcode_arg_base = saved_opcode_arg_base;
+		opcode_mask = saved_opcode_mask;
+		opcode_memory_min = saved_opcode_memory_min;
+		opcode_memory_max = saved_opcode_memory_max;
+		opcode_entry = saved_opcode_entry;
+	}
 	else
-		return (void *) (opbase + offset);
+	{
+		ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+	}
+	return ptr;
 }
+
 
 
 /*-------------------------------------------------
