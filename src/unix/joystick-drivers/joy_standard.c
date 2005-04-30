@@ -54,16 +54,17 @@ void joy_standard_poll(void);
 void joy_standard_new_poll(void);
 static joy_struct my_joy_data;
 
+static int first_dev = 0;
+static int last_dev = JOY_MAX - 1;
+
 void joy_standard_init(void)
 {
 	int i, j;
-	char devname[20];
+	int dev;
+	char devname[50];
 #ifdef NEW_JOYSTICK
 	int version;
 #endif
-
-	int first_dev = 0;
-	int last_dev = JOY_MAX - 1;
 
 	/* 
 	 * If the device name ends with an in-range digit, then don't 
@@ -82,10 +83,10 @@ void joy_standard_init(void)
 	}
 
 	fprintf (stderr_file, "Standard joystick interface initialization...\n");
-	for (i = first_dev; i <= last_dev; i++)
+	for (i = 0, dev = first_dev; dev <= last_dev; i++, dev++)
 	{
-		sprintf (devname, "%s%d", joy_dev, i);
-		if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
+		sprintf (devname, "%s%d", joy_dev, dev);
+		if ((joy_data[i].fd = open(devname, O_RDONLY)) >= 0)
 		{
 			if (use_old_driver)
 			{
@@ -169,8 +170,9 @@ void joy_standard_new_poll (void)
 {
 	struct js_event js;
 	int i;
+	int dev;
 
-	for (i=0; i<JOY_MAX; i++)
+	for (i = 0, dev = first_dev; dev <= last_dev; i++, dev++)
 	{
 		if (joy_data[i].fd < 0)
 			continue;
@@ -205,8 +207,9 @@ void joy_standard_new_poll (void)
 void joy_standard_poll(void)
 {
 	int i, j;
+	int dev;
 
-	for (i=0; i<JOY_MAX; i++)
+	for (i = 0, dev = first_dev; dev <= last_dev; i++, dev++)
 	{
 		if (joy_data[i].fd < 0)
 			continue;
