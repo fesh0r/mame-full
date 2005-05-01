@@ -38,6 +38,7 @@ System Driver Changes:
 
 - [SVISION] Fixed aspect ratio.  [PeT]
 
+- [sysinfo.dat] Updated Apple I entry.  [Colin Howell]
 
 
 User Interface Changes:
