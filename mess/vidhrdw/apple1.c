@@ -175,28 +175,47 @@ void apple1_vh_dsp_clr (void)
 	terminal_clear(apple1_terminal);
 }
 
-/* Calculate roughly how long it will take for the display to assert
-   the RDA signal in response to a video display write.  This signal
-   indicates the display has completed the write and is ready to
-   accept another write. */
+/* Calculate how long it will take for the display to assert the RDA
+   signal in response to a video display write.  This signal indicates
+   the display has completed the write and is ready to accept another
+   write. */
 double apple1_vh_dsp_time_to_ready (void)
 {
 	int cursor_x, cursor_y;
 	int cursor_scanline;
+	double scanline_period = cpu_getscanlineperiod();
+	double cursor_hfrac;
 
 	/* The video hardware refreshes the screen by reading the
 	   character codes from its circulating shift-register memory.
 	   Because of the way this memory works, a new character can only
-	   be written at the cursor location at the moment that location
-	   is being scanned.  This happens when we reach the first
-	   scanline in the scanline block for that character line. */
-	/* This isn't perfectly accurate, since we aren't accounting for
-	   the horizontal distance along the scanline, but this is a
-	   relatively small factor on average. */
+	   be written into the cursor location at the moment this location
+	   is about to be read.  This happens during the first scanline of
+	   the cursor's character line, when the beam reaches the cursor's
+	   horizontal position. */
 
 	terminal_getcursor(apple1_terminal, &cursor_x, &cursor_y);
 	cursor_scanline = cursor_y * apple1_charlayout.height;
-	return cpu_getscanlinetime(cursor_scanline);
+
+	/* Each scanline is composed of 455 pixel times.  The first 175 of
+	   these are the horizontal blanking period; the remaining 280 are
+	   for the visible part of the scanline. */
+	cursor_hfrac = (175 + cursor_x * apple1_charlayout.width) / 455;
+
+	if (cpu_getscanline() == cursor_scanline) {
+		/* cpu_gethorzbeampos() doesn't account for the horizontal
+		   blanking interval; it acts as if the scanline period is
+		   entirely composed of visible pixel times.  However, we can
+		   still use it to find what fraction of the current scanline
+		   period has elapsed. */
+		double current_hfrac = cpu_gethorzbeampos() /
+							   Machine->drv->screen_width;
+		if (current_hfrac < cursor_hfrac)
+			return scanline_period * (cursor_hfrac - current_hfrac);
+	}
+
+	return cpu_getscanlinetime(cursor_scanline) + 
+		   scanline_period * cursor_hfrac;
 }
 
 /* Blink the cursor on or off, as appropriate. */
