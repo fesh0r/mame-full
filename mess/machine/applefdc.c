@@ -1,8 +1,13 @@
 /*********************************************************************
 
-	iwm.c
+	applefdc.c
 	
-	Implementation of the IWM (Integrated Woz Machine) chip
+	Implementation of various Apple Floppy Disk Controllers, including
+	the classic Apple controller and the IWM (Integrated Woz Machine)
+	chip
+
+	The IWM chip was used as the floppy disk controller for early Macs and the
+	Apple IIgs, and was eventually superceded by the SWIM chp.
 
 	Nate Woods
 	Raphael Nabet
@@ -10,31 +15,41 @@
 	Writing this code would not be possible if it weren't for the work of the
 	XGS and KEGS emulators which also contain IWM emulations.
 
-	This chip was used as the floppy disk controller for early Macs and the
-	Apple IIgs, and was eventually superceded by the SWIM chp.
-
 	TODO
-	  -	Implement the unimplemented IWM modes (IWM_MODE_CLOCKSPEED,
-		IWM_MODE_BITCELLTIME, IWM_MODE_HANDSHAKEPROTOCOLIWM_MODE_LATCHMODE
-	  - Support 5 1/4" floppy drives, abstract drive interface
-
-	CHANGES
-	  - Separated the drive emulation from the IWM emulation.  This should
-	    enable us to implement other floppy drive interfaces (cf the weird
-		interpretation of the enable line by Lisa2).  (R. Nabet 2000/11/18)
-	  - Write support added (R. Nabet 2000/11)
+	  -	Implement the unimplemented IWM modes 
+			- IWM_MODE_CLOCKSPEED
+			- IWM_MODE_BITCELLTIME
+			- IWM_MODE_HANDSHAKEPROTOCOL
+			- IWM_MODE_LATCHMODE
+	  - Investigate the differences between the IWM and the classic Apple II
+	    controller more fully.  It is currently unclear what are genuine
+		differences and what are effectively hacks that "just seem" to work.
+	  - Figure out iwm_readenable2handshake() and iwm_enable2(); they are
+	    hackish at best
+	  - Support the SWIM chip
+	  - Proper timing
+	  - This code was originally IWM specific; we need to clean up IWMisms in
+	    the code
+	  - Make it faster?
+	  - Add sound?
 
 *********************************************************************/
 
-#include "iwm.h"
+#include "applefdc.h"
 
+/* logging */
 #define LOG_IWM			0
 #define LOG_IWM_EXTRA	0
 
+/* mask for FDC lines */
+#define IWM_MOTOR	0x10
+#define IWM_DRIVE	0x20
+#define IWM_Q6		0x40
+#define IWM_Q7		0x80
 
-static data8_t iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
-
+static data8_t applefdc_writebyte;
+static data8_t applefdc_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
 /*
  * IWM mode (iwm_mode):	The IWM mode has the following values:
@@ -69,7 +84,7 @@ enum
 
 static int iwm_mode;		/* 0-31 */
 static mame_timer *motor_timer;
-static iwm_interface iwm_intf;
+static struct applefdc_interface iwm_intf;
 
 static void iwm_turnmotor_onoff(int status);
 
@@ -82,9 +97,9 @@ static void iwm_turnmotor_onoff(int status);
 
 ***************************************************************************/
 
-void iwm_init(const iwm_interface *intf)
+void applefdc_init(const struct applefdc_interface *intf)
 {
-	iwm_lines = 0;
+	applefdc_lines = 0;
 	iwm_mode = 0x1f;	/* default value needed by Lisa 2 - no, I don't know if it is true */
 	motor_timer = timer_alloc(iwm_turnmotor_onoff);
 	if (intf)
@@ -100,7 +115,7 @@ void iwm_init(const iwm_interface *intf)
 They never get called when booting the Mac Plus driver. */
 static int iwm_enable2(void)
 {
-	return (iwm_lines & IWM_PH1) && (iwm_lines & IWM_PH3);
+	return (applefdc_lines & APPLEFDC_PH1) && (applefdc_lines & APPLEFDC_PH3);
 }
 
 
@@ -117,7 +132,7 @@ static int iwm_readenable2handshake(void)
 
 
 
-static int iwm_statusreg_r(void)
+static int applefdc_statusreg_r(void)
 {
 	/* IWM status:
 	 *
@@ -131,7 +146,11 @@ static int iwm_statusreg_r(void)
 	int status;
 
 	status = iwm_enable2() ? 1 : (iwm_intf.read_status ? iwm_intf.read_status() : 0);
-	result = (status ? 0x80 : 0x00) | (((iwm_lines & IWM_MOTOR) ? 1 : 0) << 5) | iwm_mode;
+
+	result = (status ? 0x80 : 0x00);
+
+	if (iwm_intf.type != APPLEFDC_APPLE2)
+		 result |= (((applefdc_lines & IWM_MOTOR) ? 1 : 0) << 5) | iwm_mode;
 	return result;
 }
 
@@ -147,17 +166,17 @@ static void iwm_modereg_w(int data)
 
 
 
-static data8_t iwm_read_reg(void)
+static data8_t applefdc_read_reg(int lines)
 {
 	data8_t result = 0;
 
-	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
+	switch(lines)
 	{
 		case 0:
 			/* Read data register */
-			if (iwm_enable2() || !(iwm_lines & IWM_MOTOR))
+			if ((iwm_intf.type != APPLEFDC_APPLE2) && (iwm_enable2() || !(applefdc_lines & IWM_MOTOR)))
 			{
-				result = 0xff;
+				result = 0xFF;
 			}
 			else
 			{
@@ -169,7 +188,7 @@ static data8_t iwm_read_reg(void)
 				if (LOG_IWM)
 				{
 					if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
-						logerror("iwm_read_reg(): latch mode off not implemented\n");
+						logerror("applefdc_read_reg(): latch mode off not implemented\n");
 				}
 
 				result = (iwm_intf.read_data ? iwm_intf.read_data() : 0);
@@ -178,12 +197,17 @@ static data8_t iwm_read_reg(void)
 
 		case IWM_Q6:
 			/* Read status register */
-			result = iwm_statusreg_r();
+			result = applefdc_statusreg_r();
 			break;
 
 		case IWM_Q7:
-			/* Read handshake register */
-			result = iwm_enable2() ? iwm_readenable2handshake() : 0x80;
+			/* Classic Apple II: Read status register
+			 * IWM: Read handshake register
+			 */
+			if (iwm_intf.type == APPLEFDC_APPLE2)
+				result = applefdc_statusreg_r();
+			else
+				result = iwm_enable2() ? iwm_readenable2handshake() : 0x80;
 			break;
 	}
 	return result;
@@ -191,12 +215,12 @@ static data8_t iwm_read_reg(void)
 
 
 
-static void iwm_write_reg(data8_t data)
+static void applefdc_write_reg(data8_t data)
 {
-	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
+	switch(applefdc_lines & (IWM_Q6 | IWM_Q7))
 	{
 		case IWM_Q6 | IWM_Q7:
-			if (!(iwm_lines & IWM_MOTOR))
+			if (!(applefdc_lines & IWM_MOTOR))
 			{
 				iwm_modereg_w(data);
 			}
@@ -210,7 +234,7 @@ static void iwm_write_reg(data8_t data)
 				if (LOG_IWM)
 				{
 					if ((iwm_mode & IWM_MODE_LATCHMODE) == 0)
-						logerror("iwm_write_reg(): latch mode off not implemented\n");
+						logerror("applefdc_write_reg(): latch mode off not implemented\n");
 				}
 
 				if (iwm_intf.write_data)
@@ -228,13 +252,17 @@ static void iwm_turnmotor_onoff(int status)
 
 	if (status)
 	{
-		iwm_lines |= IWM_MOTOR;
-		enable_lines = (iwm_lines & IWM_DRIVE) ? 2 : 1;
+		applefdc_lines |= IWM_MOTOR;
+		enable_lines = (applefdc_lines & IWM_DRIVE) ? 2 : 1;
 	}
 	else
 	{
-		iwm_lines &= ~IWM_MOTOR;
-		enable_lines = 0;
+		applefdc_lines &= ~IWM_MOTOR;
+
+		if (iwm_intf.type == APPLEFDC_APPLE2)
+			enable_lines = (applefdc_lines & IWM_DRIVE) ? 2 : 1;
+		else
+			enable_lines = 0;
 	}
 
 	/* invoke callback, if present */
@@ -251,14 +279,14 @@ static void iwm_access(int offset)
 {
 	static const char *lines[] =
 	{
-		"IWM_PH0",
-		"IWM_PH1",
-		"IWM_PH2",
-		"IWM_PH3",
-		"IWM_MOTOR",
-		"IWM_DRIVE",
-		"IWM_Q6",
-		"IWM_Q7"
+		"PH0",
+		"PH1",
+		"PH2",
+		"PH3",
+		"MOTOR",
+		"DRIVE",
+		"Q6",
+		"Q7"
 	};
 
 	if (LOG_IWM_EXTRA)
@@ -268,12 +296,12 @@ static void iwm_access(int offset)
 	}
 
 	if (offset & 1)
-		iwm_lines |= (1 << (offset >> 1));
+		applefdc_lines |= (1 << (offset >> 1));
 	else
-		iwm_lines &= ~(1 << (offset >> 1));
+		applefdc_lines &= ~(1 << (offset >> 1));
 
 	if ((offset < 0x08) && iwm_intf.set_lines)
-		iwm_intf.set_lines(iwm_lines & 0x0f);
+		iwm_intf.set_lines(applefdc_lines & 0x0f);
 
 	switch(offset)
 	{
@@ -292,13 +320,13 @@ static void iwm_access(int offset)
 
 		case 0x0A:
 			/* turn off IWM_DRIVE */
-			if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+			if ((applefdc_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
 				iwm_intf.set_enable_lines(1);
 			break;
 
 		case 0x0B:
 			/* turn on IWM_DRIVE */
-			if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+			if ((applefdc_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
 				iwm_intf.set_enable_lines(2);
 			break;
 	}
@@ -306,34 +334,93 @@ static void iwm_access(int offset)
 
 
 
-data8_t iwm_r(offs_t offset)
+data8_t applefdc_r(offs_t offset)
 {
+	data8_t result = 0;
+
 	offset &= 15;
 
 	if (LOG_IWM_EXTRA)
-		logerror("iwm_r: offset=%i\n", offset);
+		logerror("applefdc_r: offset=%i\n", offset);
 
 	iwm_access(offset);
-	return (offset & 1) ? 0 : iwm_read_reg();
+
+	switch(iwm_intf.type)
+	{
+		case APPLEFDC_APPLE2:
+			switch(offset)
+			{
+				case 0x0C:
+					result = applefdc_read_reg(0);
+					break;
+				case 0x0D:
+					result = applefdc_read_reg(IWM_Q6);
+					break;
+				case 0x0E:
+					result = applefdc_read_reg(IWM_Q7);
+					break;
+				case 0x0F:
+					result = applefdc_read_reg(IWM_Q7 | IWM_Q6);
+					break;
+			}
+			break;
+
+		case APPLEFDC_IWM:
+			if ((offset & 1) == 0)
+				result = applefdc_read_reg(applefdc_lines & (IWM_Q6 | IWM_Q7));
+			break;
+
+		case APPLEFDC_SWIM:
+			osd_die("NYI");
+			break;
+	}
+	return result;
 }
 
 
 
-void iwm_w(offs_t offset, data8_t data)
+void applefdc_w(offs_t offset, data8_t data)
 {
 	offset &= 15;
 
 	if (LOG_IWM_EXTRA)
-		logerror("iwm_w: offset=%i data=0x%02x\n", offset, data);
+		logerror("applefdc_w: offset=%i data=0x%02x\n", offset, data);
 
 	iwm_access(offset);
-	if ( offset & 1 )
-		iwm_write_reg(data);
+
+	switch(iwm_intf.type)
+	{
+		case APPLEFDC_APPLE2:
+			switch(offset)
+			{
+				case 0x0C:
+					if (applefdc_lines & IWM_Q7)
+					{
+						if (iwm_intf.write_data)
+							iwm_intf.write_data(applefdc_writebyte);
+					}
+					break;
+
+				case 0x0D:
+					applefdc_writebyte = data;
+					break;
+			}
+			break;
+
+		case APPLEFDC_IWM:
+			if (offset & 1)
+				applefdc_write_reg(data);
+			break;
+
+		case APPLEFDC_SWIM:
+			osd_die("NYI");
+			break;
+	}
 }
 
 
 
-data8_t iwm_get_lines(void)
+data8_t applefdc_get_lines(void)
 {
-	return iwm_lines & 0x0f;
+	return applefdc_lines & 0x0f;
 }

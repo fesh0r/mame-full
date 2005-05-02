@@ -11,7 +11,8 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 #include "machine/ay3600.h"
-#include "machine/iwm.h"
+#include "machine/applefdc.h"
+#include "machine/appldriv.h"
 #include "includes/6551.h"
 
 UINT32 a3;
@@ -23,6 +24,7 @@ static UINT8 via_0_b;
 static UINT8 via_1_a;
 static UINT8 via_1_b;
 static int via_1_irq;
+static int apple3_enable_mask;
 static offs_t zpa;
 
 #define LOG_MEMORY		1
@@ -172,7 +174,7 @@ static READ8_HANDLER( apple3_c0xx_r )
 		case 0xE4: case 0xE5: case 0xE6: case 0xE7:
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB:
 		case 0xEC: case 0xED: case 0xEE: case 0xEF:
-			result = apple2_c0xx_slot6_r(offset % 0x10);
+			result = applefdc_r(offset);
 			break;
 
 		case 0xF0:
@@ -233,7 +235,7 @@ static WRITE8_HANDLER( apple3_c0xx_w )
 		case 0xE4: case 0xE5: case 0xE6: case 0xE7:
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB:
 		case 0xEC: case 0xED: case 0xEE: case 0xEF:
-			apple2_c0xx_slot6_w(offset % 0x10, data);
+			applefdc_w(offset, data);
 			break;
 
 		case 0xF0:
@@ -630,8 +632,48 @@ static OPBASE_HANDLER( apple3_opbase )
 
 static void apple3_update_drives(void)
 {
-	/* stub; empty for now */
+	int enable_mask = 0x00;
+
+	if (apple3_enable_mask & 0x01)
+		enable_mask |= 0x01;
+
+	if (apple3_enable_mask & 0x02)
+	{
+		switch(a3 & (VAR_EXTA0 | VAR_EXTA1))
+		{
+			case VAR_EXTA0:
+				enable_mask |= 0x02;
+				break;
+			case VAR_EXTA1:
+				enable_mask |= 0x04;
+				break;
+			case VAR_EXTA1|VAR_EXTA0:
+				enable_mask |= 0x08;
+				break;
+		}
+	}
+
+	apple525_set_enable_lines(enable_mask);
 }
+
+
+
+static void apple3_set_enable_lines(int enable_mask)
+{
+	apple3_enable_mask = enable_mask;
+	apple3_update_drives();
+}
+
+
+
+static const struct applefdc_interface apple3_fdc_interface =
+{
+	APPLEFDC_APPLE2,
+	apple525_set_lines,
+	apple3_set_enable_lines,
+	apple525_read_data,
+	apple525_write_data
+};
 
 
 
@@ -639,6 +681,10 @@ DRIVER_INIT( apple3 )
 {
 	/* hack to get around VIA problem */
 	memory_region(REGION_CPU1)[0x0685] = 0x00;
+
+	apple3_enable_mask = 0;
+	applefdc_init(&apple3_fdc_interface);
+	apple3_update_drives();
 
 	acia_6551_init();
 
@@ -648,9 +694,6 @@ DRIVER_INIT( apple3 )
 	via_config(1, &via_1_intf);
 	via_set_clock(0, 1000000);
 	via_set_clock(1, 2000000);
-
-	apple2_slot6_init();
-	apple2_slot6_set_spin_fract(1, 4);
 
 	apple3_profile_init();
 

@@ -22,6 +22,7 @@
 #include "includes/oric.h"
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
+#include "machine/applefdc.h"
 #include "includes/6551.h"
 #include "includes/centroni.h"
 #include "devices/basicdsk.h"
@@ -482,33 +483,14 @@ disk interface rom accessed through 0x0320-0x03ff (read only)
 CALL &320 to start, or use BOBY rom.
 */
 
-extern  READ8_HANDLER ( apple2_c0xx_slot6_r );
-extern WRITE8_HANDLER ( apple2_c0xx_slot6_w );
-extern void apple2_slot6_init(void);
-extern void apple2_slot6_stop(void);
-
-static  READ8_HANDLER(apple2_interface_r)
-{
-	/*logerror("apple 2 interface r: %04x\n",offset); */
-
-	return apple2_c0xx_slot6_r(offset & 0x0f);
-}
-
-static WRITE8_HANDLER(apple2_interface_w)
-{
-	/*logerror("apple 2 interface w: %04x %02x\n",offset,data); */
-
-	apple2_c0xx_slot6_w(offset & 0x0f, data);
-}
-
 static void oric_install_apple2_interface(void)
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, applefdc_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, MRA8_BANK4);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_w);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, applefdc_w);
 	cpu_setbank(4, 	memory_region(REGION_CPU1) + 0x014000 + 0x020);
 }
 
@@ -595,11 +577,11 @@ static WRITE8_HANDLER(apple2_v2_interface_w)
 static void oric_install_apple2_v2_interface(void)
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, applefdc_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, MRA8_BANK4);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_w);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, applefdc_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0380, 0x0383, 0, 0, apple2_v2_interface_w);
 
 	apple2_v2_interface_w(0,0);
@@ -1203,9 +1185,6 @@ MACHINE_INIT( oric )
 
 
 	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
-
-	if (!memcmp(Machine->gamedrv->name, "prav", 4))
-		apple2_slot6_init();
 }
 
 

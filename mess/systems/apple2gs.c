@@ -21,6 +21,7 @@
 #include "formats/ap2_dsk.h"
 #include "includes/apple2gs.h"
 #include "machine/sonydriv.h"
+#include "machine/appldriv.h"
 #include "sound/es5503.h"
 
 static struct GfxLayout apple2gs_text_layout =
@@ -198,10 +199,8 @@ static void apple2gs_floppy35_getinfo(struct IODevice *dev)
 static void apple2gs_floppy525_getinfo(struct IODevice *dev)
 {
 	/* 5.25" floppy */
-	floppy_device_getinfo(dev, floppyoptions_apple2);
-	dev->count = 2;
+	apple525_device_getinfo(dev, 15, 16);
 	dev->name = apple2gs_floppy525_getname;
-	dev->tag = APDISK_DEVTAG;
 	dev->not_working = 1;
 }
 

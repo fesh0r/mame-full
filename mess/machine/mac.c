@@ -28,7 +28,7 @@
 #include "machine/8530scc.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/iwm.h"
+#include "machine/applefdc.h"
 #include "machine/sonydriv.h"
 #include "includes/mac.h"
 
@@ -1444,7 +1444,7 @@ READ16_HANDLER ( mac_iwm_r )
 	logerror("mac_iwm_r: offset=0x%08x\n", offset);
 #endif
 
-	result = iwm_r(offset >> 8);
+	result = applefdc_r(offset >> 8);
 	return (result << 8) | result;
 }
 
@@ -1455,7 +1455,7 @@ WRITE16_HANDLER ( mac_iwm_w )
 #endif
 
 	if (ACCESSING_LSB)
-		iwm_w(offset >> 8, data & 0xff);
+		applefdc_w(offset >> 8, data & 0xff);
 }
 
 /* *************************************************************************
@@ -1584,8 +1584,9 @@ MACHINE_INIT(mac)
 
 	/* initialize floppy */
 	{
-		iwm_interface intf =
+		struct applefdc_interface intf =
 		{
+			APPLEFDC_IWM,
 			sony_set_lines,
 			sony_set_enable_lines,
 
@@ -1594,7 +1595,7 @@ MACHINE_INIT(mac)
 			sony_read_status
 		};
 
-		iwm_init(& intf);
+		applefdc_init(&intf);
 	}
 
 	/* setup the memory overlay */

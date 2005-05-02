@@ -177,10 +177,33 @@ error:
 
 /*************************************
  *
- *	Diagnostics
+ *	Device lookup
  *
  *************************************/
 
+const struct IODevice *device_find_tag(const struct IODevice *devices, const char *tag)
+{
+	int i;
+	for (i = 0; devices[i].type != IO_COUNT; i++)
+	{
+		if (devices[i].tag && !strcmp(devices[i].tag, tag))
+			return &devices[i];
+	}
+	return NULL;
+}
+
+
+
+int device_count_tag(const struct IODevice *devices, const char *tag)
+{
+	const struct IODevice *dev;
+	dev = device_find_tag(devices, tag);
+	return dev ? dev->count : 0;
+}
+
+
+
+/* this function is deprecated */
 const struct IODevice *device_find(const struct IODevice *devices, iodevice_t type)
 {
 	int i;
@@ -198,13 +221,8 @@ const struct IODevice *device_find(const struct IODevice *devices, iodevice_t ty
 int device_count(iodevice_t type)
 {
 	const struct IODevice *dev;
-
-	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
-	{
-		if (dev->type == type)
-			return dev->count;
-	}
-	return 0;
+	dev = device_find(Machine->devices, type);
+	return dev ? dev->count : 0;
 }
 
 

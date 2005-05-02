@@ -16,6 +16,7 @@
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
 #include "machine/6522via.h"
+#include "machine/appldriv.h"
 #include "inputx.h"
 
 
@@ -142,12 +143,18 @@ ROM_START(apple3)
 	ROM_LOAD( "apple3.rom", 0x0000, 0x1000, CRC(55e8eec9) SHA1(579ee4cd2b208d62915a0aa482ddc2744ff5e967))
 ROM_END
 
+static const char *apple2_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
+{
+	snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
+	return buf;
+}
+
 static void apple3_floppy_getinfo(struct IODevice *dev)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_apple2);
-	dev->count = 2;
-	dev->tag = APDISK_DEVTAG;
+	apple525_device_getinfo(dev, 1, 4);
+	dev->count = 4;
+	dev->name = apple2_floppy_getname;
 }
 
 SYSTEM_CONFIG_START(apple3)

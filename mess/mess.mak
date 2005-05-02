@@ -478,14 +478,13 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/formats/ap2_dsk.o		\
 	$(OBJ)/mess/formats/ap_dsk35.o		\
 	$(OBJ)/mess/machine/ay3600.o		\
-	$(OBJ)/mess/machine/ap_disk2.o		\
 	$(OBJ)/mess/machine/lisa.o			\
 	$(OBJ)/mess/systems/lisa.o			\
-	$(OBJ)/mess/machine/iwm.o			\
+	$(OBJ)/mess/machine/applefdc.o		\
 	$(OBJ)/mess/machine/8530scc.o		\
 	$(OBJ)/mess/machine/sonydriv.o		\
+	$(OBJ)/mess/machine/appldriv.o		\
 	$(OBJ)/mess/sndhrdw/mac.o			\
-	$(OBJ)/mess/machine/sonydriv.o		\
 	$(OBJ)/mess/vidhrdw/mac.o			\
 	$(OBJ)/mess/machine/mac.o			\
 	$(OBJ)/mess/systems/mac.o			\

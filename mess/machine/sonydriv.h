@@ -2,7 +2,7 @@
 
 	sonydriv.h
 	
-	Apple/Sony 3.5" floppy drive emulation (to be interfaced with iwm.c)
+	Apple/Sony 3.5" floppy drive emulation (to be interfaced with applefdc.c)
 
 *********************************************************************/
 

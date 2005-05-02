@@ -38,7 +38,7 @@
 
 #include "driver.h"
 #include "machine/6522via.h"
-#include "machine/iwm.h"
+#include "machine/applefdc.h"
 #include "machine/sonydriv.h"
 #include "machine/lisa.h"
 #include "cpu/m68000/m68k.h"
@@ -1211,8 +1211,9 @@ MACHINE_INIT( lisa )
 
 	/* initialize floppy */
 	{
-		iwm_interface intf =
+		struct applefdc_interface intf =
 		{
+			APPLEFDC_IWM,
 			sony_set_lines,
 			sony_set_enable_lines,
 
@@ -1230,7 +1231,7 @@ MACHINE_INIT( lisa )
 			intf.set_enable_lines = lisa210_set_iwm_enable_lines;
 		}
 
-		iwm_init(& intf);
+		applefdc_init(& intf);
 
 		if (lisa_features.floppy_hardware == sony_lisa2)
 			sony_set_enable_lines(1);	/* on lisa2, drive unit 1 is always selected (?) */
@@ -1362,7 +1363,7 @@ INLINE void lisa_fdc_ttl_glue_access(offs_t offset)
 			if (MT1 && ! oldMT1)
 			{
 				PWM_floppy_motor_speed = (PWM_floppy_motor_speed << 1) & 0xff;
-				if (iwm_get_lines() & IWM_PH0)
+				if (applefdc_get_lines() & APPLEFDC_PH0)
 					PWM_floppy_motor_speed |= 1;
 				sony_set_speed(((256-PWM_floppy_motor_speed) * 1.3) + 237);
 			}
@@ -1397,7 +1398,7 @@ INLINE void lisa_fdc_ttl_glue_access(offs_t offset)
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		answer = /*iwm_lisa_r*/iwm_r(offset);
+		answer = /*iwm_lisa_r*/applefdc_r(offset);
 		break;
 
 	case 1:	/* TTL glue */
@@ -1422,7 +1423,7 @@ WRITE8_HANDLER ( lisa_fdc_io_w )
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		/*iwm_lisa_w*/iwm_w(offset, data);
+		/*iwm_lisa_w*/applefdc_w(offset, data);
 		break;
 
 	case 1:	/* TTL glue */

@@ -12,8 +12,6 @@
 #include <mame.h>
 #include "machine/ay3600.h"
 
-#define APDISK_DEVTAG	"apdsk_525"
-
 /* -----------------------------------------------------------------------
  * Softswitch values
  * ----------------------------------------------------------------------- */
@@ -80,21 +78,7 @@ data8_t apple2_getfloatingbusvalue(void);
 
 void apple2_interrupt(void);
 
-READ8_HANDLER ( apple2_c0xx_r );
-WRITE8_HANDLER ( apple2_c0xx_w );
-
-READ8_HANDLER ( apple2_c0xx_slot6_r );
-WRITE8_HANDLER ( apple2_c0xx_slot6_w );
-
 void apple2_setvar(UINT32 val, UINT32 mask);
-
-/* machine/ap_disk2.c */
-void apple2_slot6_init(void);
-void apple2_slot6_set_spin_fract(int dividend, int divisor);
-DEVICE_LOAD ( apple2_floppy );
-UINT8 apple2_slot6_readbyte(mess_image *image);
-void apple2_slot6_writebyte(mess_image *image, UINT8 byte);
-void apple2_slot6_set_lines(mess_image *image, UINT8 new_state);
 
 /* vidhrdw/apple2.c */
 int apple2_video_start(const UINT8 *vram, size_t vram_size, UINT32 ignored_softswitches, int hires_modulo);

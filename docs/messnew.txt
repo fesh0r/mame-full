@@ -73,6 +73,8 @@ Source Changes:
 
 - Fixed index addressing mode disassembly for the hd6309. [tim lindner]
 
+- Merged Apple 2 floppy disk controller and IWM code.  [Nate Woods]
+
 
 
 0.95
