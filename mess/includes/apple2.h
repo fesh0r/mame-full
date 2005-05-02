@@ -75,6 +75,8 @@ DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
 MACHINE_STOP( apple2 );
 data8_t apple2_getfloatingbusvalue(void);
+READ8_HANDLER( apple2_c0xx_r );
+WRITE8_HANDLER( apple2_c0xx_w );
 
 void apple2_interrupt(void);
 
