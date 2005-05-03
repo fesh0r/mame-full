@@ -25,7 +25,8 @@ System Driver Changes:
 
 - [APPLE2] Keyboard refactorings.  (bug #694) [Christopher Stone]
 
-- [APPLE2CP] Now uses the IWM chip.  [Nate Woods]
+- [APPLE2CP] Now uses the IWM chip and implemented CE00 RAM.  System now runs
+  (bug #312) [Nate Woods]
 
 - [COCO] Fixed joystick ranges (they were previously 0-62 instead of 0-63.)
   (bug #698) [Nate Woods]

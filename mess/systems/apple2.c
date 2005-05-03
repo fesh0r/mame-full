@@ -910,4 +910,4 @@ COMPX( 1987, laser128, 0,        apple2c0,  apple2c,  apple2e,  apple2,   apple2
 COMPX( 1987, las128ex, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128ex (rev 4a)",		GAME_NOT_WORKING )
 COMP ( 1985, apple2c0, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c (UniDisk 3.5)" )
 COMP ( 1986, apple2c3, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c (Original Memory Expansion)" )
-COMPX( 1988, apple2cp, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c Plus",				GAME_NOT_WORKING )
+COMP ( 1988, apple2cp, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c Plus" )

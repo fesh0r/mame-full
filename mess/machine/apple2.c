@@ -463,6 +463,20 @@ static void apple2_mem_C800(offs_t begin, offs_t end, struct apple2_meminfo *mem
 	meminfo->write_mem			= APPLE2_MEM_FLOATING;
 }
 
+static void apple2_mem_CE00(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+{
+	if ((a2 & VAR_ROMSWITCH) && !strcmp(Machine->gamedrv->name, "apple2cp"))
+	{
+		meminfo->read_mem		= APPLE2_MEM_AUX;
+		meminfo->write_mem		= APPLE2_MEM_AUX;
+	}
+	else
+	{
+		meminfo->read_mem		= (begin & 0x0FFF) | (a2 & VAR_ROMSWITCH ? 0x4000 : 0x0000) | APPLE2_MEM_ROM;
+		meminfo->write_mem		= APPLE2_MEM_FLOATING;
+	}
+}
+
 static void apple2_mem_D000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
 {
 	if (a2 & VAR_LCRAM)
@@ -527,7 +541,8 @@ static const struct apple2_memmap_entry apple2_memmap_entries[] =
 	{ 0xC100, 0xC2FF, apple2_mem_Cx00, A2MEM_MONO },
 	{ 0xC300, 0xC3FF, apple2_mem_C300, A2MEM_MONO },
 	{ 0xC400, 0xC7FF, apple2_mem_Cx00, A2MEM_MONO },
-	{ 0xC800, 0xCFFF, apple2_mem_C800, A2MEM_MONO },
+	{ 0xC800, 0xCDFF, apple2_mem_C800, A2MEM_MONO },
+	{ 0xCE00, 0xCFFF, apple2_mem_CE00, A2MEM_MONO },
 	{ 0xD000, 0xDFFF, apple2_mem_D000, A2MEM_DUAL },
 	{ 0xE000, 0xFFFF, apple2_mem_E000, A2MEM_DUAL },
 	{ 0 }
@@ -1552,6 +1567,7 @@ DRIVER_INIT( apple2 )
 {
 	struct apple2_memmap_config mem_cfg;
 	struct apple2_config a2_cfg;
+	void *apple2cp_ce00_ram = NULL;
 	
 	memset(&a2_cfg, 0, sizeof(a2_cfg));
 
@@ -1571,14 +1587,18 @@ DRIVER_INIT( apple2 )
 		a2_cfg.slots[6] = &apple2_slot_floppy525;
 	}
 
+	/* there appears to be some hidden RAM that is swapped in on the Apple
+	 * IIc plus; I have not found any official documentation but the BIOS
+	 * clearly uses this area as writeable memory */
+	if (!strcmp(Machine->gamedrv->name, "apple2cp"))
+		apple2cp_ce00_ram = auto_malloc(0x200);
+
 	apple2_init_common(&a2_cfg);
 
 	memset(&mem_cfg, 0, sizeof(mem_cfg));
 	mem_cfg.first_bank = 1;
 	mem_cfg.memmap = apple2_memmap_entries;
+	mem_cfg.auxmem = apple2cp_ce00_ram;
 	apple2_setup_memory(&mem_cfg);
 }
-
-
-
 
