@@ -25,6 +25,8 @@ System Driver Changes:
 
 - [APPLE2] Keyboard refactorings.  (bug #694) [Christopher Stone]
 
+- [APPLE2CP] Now uses the IWM chip.  [Nate Woods]
+
 - [COCO] Fixed joystick ranges (they were previously 0-62 instead of 0-63.)
   (bug #698) [Nate Woods]
 
@@ -73,7 +75,8 @@ Source Changes:
 
 - Fixed index addressing mode disassembly for the hd6309. [tim lindner]
 
-- Merged Apple 2 floppy disk controller and IWM code.  [Nate Woods]
+- Merged Apple 2 floppy disk controller and IWM code.  The apple2c0 and
+  apple2cp drivers now work.  [Nate Woods]
 
 
 

@@ -1557,7 +1557,8 @@ DRIVER_INIT( apple2 )
 
 	/* specify slots */
 	if (!strcmp(Machine->gamedrv->name, "apple2c0") ||
-		!strcmp(Machine->gamedrv->name, "apple2c3"))
+		!strcmp(Machine->gamedrv->name, "apple2c3") ||
+		!strcmp(Machine->gamedrv->name, "apple2cp"))
 	{
 		a2_cfg.slots[0] = &apple2_slot_langcard;
 		a2_cfg.slots[4] = &apple2_slot_mockingboard;
