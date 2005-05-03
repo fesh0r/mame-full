@@ -76,7 +76,7 @@ Source Changes:
 - Fixed index addressing mode disassembly for the hd6309. [tim lindner]
 
 - Merged Apple 2 floppy disk controller and IWM code.  The apple2c0 and
-  apple2cp drivers now work.  [Nate Woods]
+  apple2c3 drivers now work.  [Nate Woods]
 
 
 
