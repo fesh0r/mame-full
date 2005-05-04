@@ -1,4 +1,4 @@
-0.95.1
+0.96
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -63,7 +63,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.95u6.  This incorporates all features of the
+- The core is based on MAME 0.96.  This incorporates all features of the
   update to this core.  [MAME team]  
 
 - Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
