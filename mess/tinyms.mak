@@ -24,6 +24,7 @@ COREOBJS += \
 	$(ZLIB)							\
 	$(OBJ)/cheat.o  	       \
 	$(OBJ)/vidhrdw/tms9928a.o		\
+	$(OBJ)/machine/idectrl.o		\
 	$(OBJ)/mess/mess.o			   \
 	$(OBJ)/mess/image.o		       \
 	$(OBJ)/mess/system.o	       \

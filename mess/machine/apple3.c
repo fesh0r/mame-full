@@ -4,6 +4,13 @@
 
 	Apple ///
 
+
+	VIA #0 (D VIA)
+		CA1:	1 if a cartridge is inserted, 0 otherwise
+
+	VIA #1 (E VIA)
+		CA2:	1 if key pressed, 0 otherwise
+
 ***************************************************************************/
 
 #include "includes/apple3.h"
@@ -455,6 +462,9 @@ static void apple3_via_out(UINT8 *var, UINT8 data)
 }
 
 
+/* these are here to appease the Apple /// confidence tests */
+static READ8_HANDLER(apple3_via_1_in_a) { return ~0; }
+static READ8_HANDLER(apple3_via_1_in_b) { return ~0; }
 
 static WRITE8_HANDLER(apple3_via_0_out_a) { apple3_via_out(&via_0_a, data); }
 static WRITE8_HANDLER(apple3_via_0_out_b) { apple3_via_out(&via_0_b, data); }
@@ -485,8 +495,8 @@ static const struct via6522_interface via_0_intf =
 
 static const struct via6522_interface via_1_intf =
 {
-	NULL,					/* in_a_func */
-	NULL,					/* in_b_func */
+	apple3_via_1_in_a,		/* in_a_func */
+	apple3_via_1_in_b,		/* in_b_func */
 	NULL,					/* in_ca1_func */
 	NULL,					/* in_cb1_func */
 	NULL,					/* in_ca2_func */
@@ -577,6 +587,7 @@ static UINT8 *apple3_get_indexed_addr(offs_t offset)
 		result = apple3_bankaddr(~0, offset - 0x8000);
 #endif
 	}
+
 	return result;
 }
 
