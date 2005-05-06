@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		drccore.h
-**		x86 Dynamic recompiler support routines.
-**		Written by Aaron Giles
+**      drccore.h
+**      x86 Dynamic recompiler support routines.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -13,7 +13,7 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 /* PC and pointer pair */
@@ -56,7 +56,7 @@ struct drccore
 	UINT32		mxcsr_curr;				/* current SSE control word */
 	UINT16		fpcw_save;				/* saved FPU control word */
 	UINT32		mxcsr_save;				/* saved SSE control word */
-	
+
 	struct pc_ptr_pair *sequence_list;	/* PC/pointer sets for the current instruction sequence */
 	UINT32		sequence_count;			/* number of instructions in the current sequence */
 	UINT32		sequence_count_max;		/* max number of instructions in the current sequence */
@@ -100,7 +100,7 @@ struct linkdata
 
 
 /*###################################################################################################
-**	HELPER MACROS
+**  HELPER MACROS
 **#################################################################################################*/
 
 /* useful macros for accessing hi/lo portions of 64-bit values */
@@ -111,7 +111,7 @@ extern const UINT8 scale_lookup[];
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 /* architectural defines */
@@ -201,7 +201,7 @@ extern const UINT8 scale_lookup[];
 
 
 /*###################################################################################################
-**	LOW-LEVEL OPCODE EMITTERS
+**  LOW-LEVEL OPCODE EMITTERS
 **#################################################################################################*/
 
 /* lowest-level opcode emitters */
@@ -212,7 +212,7 @@ extern const UINT8 scale_lookup[];
 
 
 /*###################################################################################################
-**	MODRM EMITTERS
+**  MODRM EMITTERS
 **#################################################################################################*/
 
 // op  reg,reg
@@ -288,7 +288,7 @@ do {														\
 
 
 /*###################################################################################################
-**	SIMPLE OPCODE EMITTERS
+**  SIMPLE OPCODE EMITTERS
 **#################################################################################################*/
 
 #define _pushad() \
@@ -333,10 +333,13 @@ do { OP1(0x9d); } while(0);
 #define _bswap_r32(reg) \
 do { OP1(0x0F); OP1(0xC8+(reg)); } while (0)
 
+#define _cmc() \
+do { OP1(0xf5); } while(0);
+
 
 
 /*###################################################################################################
-**	MOVE EMITTERS
+**  MOVE EMITTERS
 **#################################################################################################*/
 
 #define _mov_r8_imm(dreg, imm) \
@@ -540,7 +543,7 @@ do { OP1(0x8d); MODRM_MBISD(dest, base, indx, scale, disp); } while (0)
 
 
 /*###################################################################################################
-**	SHIFT EMITTERS
+**  SHIFT EMITTERS
 **#################################################################################################*/
 
 #define _sar_r32_cl(dreg) \
@@ -609,6 +612,12 @@ do { OP1(0x0f); OP1(0xac); MODRM_REG(sreg, dreg); OP1(imm); } while (0)
 #define _bt_m32bd_r32(base, disp, reg) \
 do { OP1(0x0f); OP1(0xa3); MODRM_MBD(reg, base, disp); } while (0)
 
+#define _bt_m32abs_imm(addr, imm) \
+do { OP1(0x0f); OP1(0xba); MODRM_MABS(4, addr); OP1(imm); } while (0)
+
+#define _bt_r32_imm(reg, imm) \
+do { OP1(0x0f); OP1(0xba); MODRM_REG(4, reg); OP1(imm); } while (0)
+
 #define _bsr_r32_r32(dreg, sreg) \
 do { OP1(0x0f); OP1(0xbd); MODRM_REG(dreg, sreg); } while (0)
 
@@ -616,7 +625,7 @@ do { OP1(0x0f); OP1(0xbd); MODRM_REG(dreg, sreg); } while (0)
 
 
 /*###################################################################################################
-**	UNARY ARITHMETIC EMITTERS
+**  UNARY ARITHMETIC EMITTERS
 **#################################################################################################*/
 
 #define _neg_r32(reg) \
@@ -628,7 +637,7 @@ do { OP1(0xf7); MODRM_REG(2, reg); } while (0)
 
 
 /*###################################################################################################
-**	32-BIT ARITHMETIC EMITTERS
+**  32-BIT ARITHMETIC EMITTERS
 **#################################################################################################*/
 
 #define _add_r32_r32(r1, r2) \
@@ -686,6 +695,8 @@ do { OP1(0x33); MODRM_MABS(dreg, addr); } while (0)
 #define _add_m32abs_r32(addr, sreg) \
 do { OP1(0x01); MODRM_MABS(sreg, addr); } while (0)
 
+#define _or_m32abs_r32(addr, sreg) \
+do { OP1(0x09); MODRM_MABS(sreg, addr); } while (0)
 
 
 #define _arith_r32_imm_common(reg, dreg, imm)		\
@@ -841,11 +852,11 @@ do { OP1(0xd3);	OP1(0xd8 | ((reg) & 7)); } while(0)
 
 
 /*###################################################################################################
-**	16-BIT AND 8-BIT ARITHMETIC EMITTERS
+**  16-BIT AND 8-BIT ARITHMETIC EMITTERS
 **#################################################################################################*/
 
 #define _or_r8_r8(r1, r2) \
-do { OP1(0x0A); MODRM_REG(r2, r1); } while (0)
+do { OP1(0x08); MODRM_REG(r2, r1); } while (0)
 
 #define _arith_m16abs_imm_common(reg, addr, imm)	\
 do {												\
@@ -922,6 +933,9 @@ do { _arith_m8abs_imm_common(0, addr, imm); } while (0)
 #define _or_m8abs_imm(addr, imm) \
 do { _arith_m8abs_imm_common(1, addr, imm); } while (0)
 
+#define _adc_m8abs_imm(addr, imm) \
+do { _arith_m8abs_imm_common(2, addr, imm); } while (0)
+
 #define _sbb_m8abs_imm(addr, imm) \
 do { _arith_m8abs_imm_common(3, addr, imm); } while (0)
 
@@ -946,6 +960,18 @@ do { OP1(0xf6); MODRM_REG(0, reg); OP1(imm); } while (0)
 #define _and_m8bd_r8(base, disp, sreg) \
 do { OP1(0x20); MODRM_MBD(sreg, base, disp); } while (0)
 
+#define _shl_r8_imm(dreg, imm) \
+do { \
+	if ((imm) == 1) { OP1(0xd0); MODRM_REG(4, dreg); } \
+	else { OP1(0xc0); MODRM_REG(4, dreg); OP1(imm); } \
+} while (0)
+
+#define _shr_r8_imm(dreg, imm) \
+do { \
+	if ((imm) == 1) { OP1(0xd0); MODRM_REG(5, dreg); } \
+	else { OP1(0xc0); MODRM_REG(5, dreg); OP1(imm); } \
+} while (0)
+
 #define _shl_r8_cl(dreg) \
 do { OP1(0xd2); MODRM_REG(4, dreg); } while (0)
 
@@ -967,7 +993,7 @@ do { OP1(0xd2);	OP1(0xd8 | ((reg) & 7)); } while(0)
 
 
 /*###################################################################################################
-**	FLOATING POINT EMITTERS
+**  FLOATING POINT EMITTERS
 **#################################################################################################*/
 
 #define _fnclex() \
@@ -1051,7 +1077,7 @@ do { OP1(0xdd); MODRM_MABS(3, addr); } while (0)
 
 
 /*###################################################################################################
-**	BRANCH EMITTERS
+**  BRANCH EMITTERS
 **#################################################################################################*/
 
 #define _setcc_r8(cond, dreg) \
@@ -1128,7 +1154,7 @@ do {												\
 
 
 /*###################################################################################################
-**	SSE EMITTERS
+**  SSE EMITTERS
 **#################################################################################################*/
 
 #define _ldmxcsr_m32abs(addr) \
@@ -1557,7 +1583,7 @@ do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_MABS(reg, addr); } while (0)
 
 
 /*###################################################################################################
-**	FUNCTION PROTOTYPES
+**  FUNCTION PROTOTYPES
 **#################################################################################################*/
 
 /* init/shutdown */

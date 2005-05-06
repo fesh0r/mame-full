@@ -1,25 +1,25 @@
 /***************************************************************************
 
-	Seibu Sound System v1.02, games using this include:
+    Seibu Sound System v1.02, games using this include:
 
-	Cross Shooter    1987	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
-	Cabal            1988	* "Michel/Seibu    sound 11/04/88" (YM2151 substituted for YM3812, unknown ADPCM)
-	Dead Angle       1988	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (2xYM2203 substituted for YM3812, unknown ADPCM)
-	Dynamite Duke    1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Toki             1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Raiden           1990	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Blood Brothers   1990	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	D-Con            1992	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Cross Shooter    1987   * "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
+    Cabal            1988   * "Michel/Seibu    sound 11/04/88" (YM2151 substituted for YM3812, unknown ADPCM)
+    Dead Angle       1988   * "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (2xYM2203 substituted for YM3812, unknown ADPCM)
+    Dynamite Duke    1989   * "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Toki             1989   * "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Raiden           1990   * "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Blood Brothers   1990     "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    D-Con            1992     "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 
-	Related sound programs (not implemented yet):
+    Related sound programs (not implemented yet):
 
-	Zero Team            	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Legionaire           	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
-	Raiden 2             	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
-	Raiden DX            	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
-	Cup Soccer           	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
-	SD Gundam Psycho Salamander "Copyright by King Bee Sol 1991"
-	* = encrypted
+    Zero Team                 "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Legionaire                "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
+    Raiden 2                  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
+    Raiden DX                 "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
+    Cup Soccer                "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
+    SD Gundam Psycho Salamander "Copyright by King Bee Sol 1991"
+    * = encrypted
 
 ***************************************************************************/
 
@@ -27,7 +27,7 @@
 #include "sound/2151intf.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
-#include "sound/msm5205.h"
+#include "sound/custom.h"
 
 ADDRESS_MAP_EXTERN(seibu_sound_readmem);
 ADDRESS_MAP_EXTERN(seibu_sound_writemem);
@@ -59,6 +59,8 @@ MACHINE_INIT( seibu_sound_1 );
 MACHINE_INIT( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
 
+void *seibu_adpcm_start(int clock, const struct CustomSound_interface *config);
+void seibu_adpcm_stop(void *token);
 void seibu_adpcm_decrypt(int region);
 WRITE8_HANDLER( seibu_adpcm_adr_1_w );
 WRITE8_HANDLER( seibu_adpcm_ctl_1_w );
@@ -81,10 +83,10 @@ static struct YM3812interface ym3812_interface =					\
 
 #define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE							\
 																	\
-static struct MSM5205interface msm5205_interface =					\
+static struct CustomSound_interface adpcm_interface =				\
 {																	\
-	NULL,				/* VCK function */							\
-	MSM5205_S48_4B		/* 8 kHz */									\
+	seibu_adpcm_start,												\
+	seibu_adpcm_stop												\
 };
 
 #define SEIBU_SOUND_SYSTEM_YM2151_HARDWARE							\
@@ -166,12 +168,12 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)						\
 
 #define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE							\
-	MDRV_SOUND_ADD(MSM5205, 384000) 								\
-	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ADD(CUSTOM, 8000)	 								\
+	MDRV_SOUND_CONFIG(adpcm_interface)								\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40) 					\
 																	\
-	MDRV_SOUND_ADD(MSM5205, 384000) 								\
-	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ADD(CUSTOM, 8000) 									\
+	MDRV_SOUND_CONFIG(adpcm_interface)								\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
 

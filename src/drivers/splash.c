@@ -141,7 +141,7 @@ static void splash_msm5205_int(int data)
 static ADDRESS_MAP_START( splash_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xd7ff) AM_WRITE(MWA8_ROM)					/* ROM */
 	AM_RANGE(0xd800, 0xd800) AM_WRITE(splash_adpcm_data_w)		/* ADPCM data for the MSM5205 chip */
-//	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)					/* ??? */
+//  AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)                 /* ??? */
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM3812_control_port_0_w)	/* YM3812 */
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM3812_write_port_0_w)		/* YM3812 */
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)					/* RAM */
@@ -229,7 +229,7 @@ static ADDRESS_MAP_START( funystrp_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)										/* ROM */
 	AM_RANGE(0x100000, 0x100fff) AM_WRITE(MWA16_RAM)										/* protection? RAM */
 	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_pixelram)			/* Pixel Layer */
-//	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)							/* Sound command */
+//  AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)                           /* Sound command */
 	AM_RANGE(0x84000a, 0x84003b) AM_WRITE(splash_coin_w)									/* Coin Counters + Coin Lockout */
 	AM_RANGE(0x880000, 0x8817ff) AM_WRITE(splash_vram_w) AM_BASE(&splash_videoram)				/* Video RAM */
 	AM_RANGE(0x881800, 0x881803) AM_WRITE(MWA16_RAM) AM_BASE(&splash_vregs)						/* Scroll registers */
@@ -278,7 +278,7 @@ INPUT_PORTS_START( splash )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
-	/* 	according to the manual, Lives = 0x00 is NOT used */
+	/*  according to the manual, Lives = 0x00 is NOT used */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -474,11 +474,11 @@ static MACHINE_DRIVER_START( roldfrog )
 	MDRV_CPU_PROGRAM_MAP(roldfrog_readmem,roldfrog_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,30000000)			/* 3 MHz - verified */
+	MDRV_CPU_ADD(Z80,3000000)			/* 3 MHz - verified */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(roldf_sound_map,0)
 	MDRV_CPU_IO_MAP(roldf_sound_io_map,0)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)  /* needed for the msm5205 to play the samples */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -487,7 +487,7 @@ static MACHINE_DRIVER_START( roldfrog )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(2*8, 49*8-1, 2*8, 32*8-1)
-//	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
+//  MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -512,10 +512,10 @@ static MACHINE_DRIVER_START( funystrp )
 	MDRV_CPU_PROGRAM_MAP(funystrp_readmem,funystrp_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-//	MDRV_CPU_ADD(Z80,30000000/8)
-//	/* audio CPU */
-//	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
+//  MDRV_CPU_ADD(Z80,30000000/8)
+//  /* audio CPU */
+//  MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)  /* needed for the msm5205 to play the samples */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -531,14 +531,14 @@ static MACHINE_DRIVER_START( funystrp )
 	MDRV_VIDEO_UPDATE(funystrp)
 
 	/* sound hardware */
-//	MDRV_SPEAKER_STANDARD_MONO("mono")
+//  MDRV_SPEAKER_STANDARD_MONO("mono")
 
-//	MDRV_SOUND_ADD(YM3812, 3000000)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+//  MDRV_SOUND_ADD(YM3812, 3000000)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
-//	MDRV_SOUND_ADD(MSM5205, 384000)
-//	MDRV_SOUND_CONFIG(msm5205_interface)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+//  MDRV_SOUND_ADD(MSM5205, 384000)
+//  MDRV_SOUND_CONFIG(msm5205_interface)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -596,8 +596,8 @@ ROM_START( roldfrog )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
 
-	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -621,8 +621,8 @@ ROM_START( roldfrga )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
 
-	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )

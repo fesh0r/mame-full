@@ -2,35 +2,35 @@
 
 Various Data East 8 bit games:
 
-	Cobra Command (World)       (c) 1988 Data East Corporation (6809)
-	Cobra Command (Japan)       (c) 1988 Data East Corporation (6809)
-	The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
-	The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
-	Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
-	Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
-	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
-	Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
-	Gondomania                  (c) 1987 Data East USA (6809 + I8751)
-	Makyou Senshi               (c) 1987 Data East Corporation (6809 + I8751)
-	Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
-	Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
-	Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
-	Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
-	Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
-	Garyo Retsuden (Japan)      (c) 1987 Data East Corporation (6809 + I8751)
+    Cobra Command (World)       (c) 1988 Data East Corporation (6809)
+    Cobra Command (Japan)       (c) 1988 Data East Corporation (6809)
+    The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
+    The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
+    Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
+    Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
+    Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
+    Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
+    Gondomania                  (c) 1987 Data East USA (6809 + I8751)
+    Makyou Senshi               (c) 1987 Data East Corporation (6809 + I8751)
+    Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
+    Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
+    Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
+    Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
+    Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
+    Garyo Retsuden (Japan)      (c) 1987 Data East Corporation (6809 + I8751)
 
-	All games use a 6502 for sound (some are encrypted), all games except Cobracom
-	use an Intel 8751 for protection & coinage.  For these games the coinage dip
-	switch is not currently supported, they are fixed at 1 coin 1 credit.
+    All games use a 6502 for sound (some are encrypted), all games except Cobracom
+    use an Intel 8751 for protection & coinage.  For these games the coinage dip
+    switch is not currently supported, they are fixed at 1 coin 1 credit.
 
-	Meikyuu Hunter G was formerly known as Mazehunter.
+    Meikyuu Hunter G was formerly known as Mazehunter.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 To do:
-	Support coinage options for all i8751 emulations.
-	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
-	Strangely coloured butterfly on Garyo Retsuden water levels!
+    Support coinage options for all i8751 emulations.
+    Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
+    Strangely coloured butterfly on Garyo Retsuden water levels!
 
   Thanks to José Miguel Morales Farreras for Super Real Darwin information!
 
@@ -182,13 +182,13 @@ static WRITE8_HANDLER( srdarwin_i8751_w )
  	if ((readinputport(4)&1)!=1 && latch) {coins++; latch=0;}
 
 	/* This next value is the index to a series of tables,
-	each table controls the end of level bad guy, wrong values crash the
-	cpu right away via a bogus jump.
+    each table controls the end of level bad guy, wrong values crash the
+    cpu right away via a bogus jump.
 
-	Level number requested is in low byte
+    Level number requested is in low byte
 
-	Addresses on left hand side are from the protection vector table which is
-	stored at location 0xf580 in rom dy_01.rom
+    Addresses on left hand side are from the protection vector table which is
+    stored at location 0xf580 in rom dy_01.rom
 
 ba5e (lda #00) = Level 0?
 ba82 (lda #01) = Pyramid boss, Level 1?
@@ -196,7 +196,7 @@ baaa           = No boss appears, game hangs
 bacc (lda #04) = Killer Bee boss, Level 4?
 bae0 (lda #03) = Snake type boss, Level 3?
 baf9           = Double grey thing boss...!
-bb0a      	   = Single grey thing boss!
+bb0a           = Single grey thing boss!
 bb18 (lda #00) = Hailstorm from top of screen.
 bb31 (lda #28) = Small hailstorm
 bb47 (ldb #05) = Small hailstorm
@@ -213,8 +213,8 @@ bb63           = Square things again
 (40)           = Grey bird
 (42)           = Crash (end of table)
 
-	The table below is hopefully correct thanks to José Miguel Morales Farreras,
-	but Boss #6 is uncomfirmed as correct.
+    The table below is hopefully correct thanks to José Miguel Morales Farreras,
+    but Boss #6 is uncomfirmed as correct.
 
 */
 	if (i8751_value==0x8000) i8751_return=0xf580 +  0; /* Boss #1: Snake + Bees */
@@ -389,11 +389,11 @@ static WRITE8_HANDLER( ghostb_bank_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Bit 0: Interrupt enable/disable (I think..)
-	   Bit 1: NMI enable/disable
-	   Bit 2: ??
-	   Bit 3: Screen flip
-	   Bits 4-7: Bank switch
-	*/
+       Bit 1: NMI enable/disable
+       Bit 2: ??
+       Bit 3: Screen flip
+       Bits 4-7: Bank switch
+    */
 
 	bankaddress = 0x10000 + (data >> 4) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -408,12 +408,12 @@ WRITE8_HANDLER( csilver_control_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/*
-		Bit 0x0f - ROM bank switch.
-		Bit 0x10 - Always set(?)
-		Bit 0x20 - Unused.
-		Bit 0x40 - Unused.
-		Bit 0x80 - Hold subcpu reset line high if clear, else low?  (Not needed anyway)
-	*/
+        Bit 0x0f - ROM bank switch.
+        Bit 0x10 - Always set(?)
+        Bit 0x20 - Unused.
+        Bit 0x40 - Unused.
+        Bit 0x80 - Hold subcpu reset line high if clear, else low?  (Not needed anyway)
+    */
 	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 }
 
@@ -486,8 +486,8 @@ static WRITE8_HANDLER( shackled_int_w )
 {
 #if 0
 /* This is correct, but the cpus in Shackled need an interleave of about 5000!
-	With lower interleave CPU 0 misses an interrupt at the start of the game
-	(The last interrupt has not finished and been ack'd when the new one occurs */
+    With lower interleave CPU 0 misses an interrupt at the start of the game
+    (The last interrupt has not finished and been ack'd when the new one occurs */
 	switch (offset) {
 		case 0: /* CPU 2 - IRQ acknowledge */
 			cpunum_set_input_line(1,M6809_IRQ_LINE,CLEAR_LINE);
@@ -2573,36 +2573,36 @@ ROM_END
 
 ROM_START( meikyuh )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, CRC(87610c39) SHA1(47b83e7decd18f117d00a9f55c42da93b337c04a) )
-	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, CRC(40c9b0b8) SHA1(81deb25e00eb4d4c5133ea42cda279c318ee771c) )
-	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, CRC(5606a8f4) SHA1(e46e887f13f648fe2162cb853b3c20fa60e3d215) )
-	ROM_LOAD( "dw-04.rom", 0x30000, 0x10000, CRC(235c0c36) SHA1(f0635f8348459cb8a56eb6184f1bc31c3a82de6a) )
+	ROM_LOAD( "dw-01-5.1d", 0x08000, 0x08000, CRC(87610c39) SHA1(47b83e7decd18f117d00a9f55c42da93b337c04a) )
+	ROM_LOAD( "dw-02.3d",   0x10000, 0x10000, CRC(40c9b0b8) SHA1(81deb25e00eb4d4c5133ea42cda279c318ee771c) )
+	ROM_LOAD( "dz-03.rom",  0x20000, 0x10000, CRC(5606a8f4) SHA1(e46e887f13f648fe2162cb853b3c20fa60e3d215) )
+	ROM_LOAD( "dw-04.6d",  0x30000, 0x10000, CRC(235c0c36) SHA1(f0635f8348459cb8a56eb6184f1bc31c3a82de6a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64K for sound CPU */
-	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, CRC(c28c4d82) SHA1(ad88506bcbc9763e39d6e6bb25ef2bd6aa929f30) )
+	ROM_LOAD( "dw-05.5f", 0x8000, 0x8000, CRC(c28c4d82) SHA1(ad88506bcbc9763e39d6e6bb25ef2bd6aa929f30) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
-	ROM_LOAD( "dw-00.rom", 0x00000, 0x8000, CRC(3d25f15c) SHA1(590518460d069bc235b5efebec81731d7a2375de) )
+	ROM_LOAD( "dw-00.16b", 0x00000, 0x8000, CRC(3d25f15c) SHA1(590518460d069bc235b5efebec81731d7a2375de) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "dw-14.rom", 0x00000, 0x10000, CRC(9b0dbfa9) SHA1(c9db6e70b217a34fbc2bf17da3f5ec6f0130514a) )
-	ROM_LOAD( "dw-15.rom", 0x10000, 0x10000, CRC(95683fda) SHA1(aa91ad1cd685790e29e16d64bd75a5b4367cf87b) )
-	ROM_LOAD( "dw-11.rom", 0x20000, 0x10000, CRC(1b1fcca7) SHA1(17e510c1b3efa0f6da49461c286b89295db6b9a6) )
-	ROM_LOAD( "dw-13.rom", 0x30000, 0x10000, CRC(e7413056) SHA1(62048a9648cbb6b651e3409f77cee268822fd2e1) )
-	ROM_LOAD( "dw-10.rom", 0x40000, 0x10000, CRC(57667546) SHA1(e7756997ea04204e62404ce8069f8cdb33cb4565) )
-	ROM_LOAD( "dw-12.rom", 0x50000, 0x10000, CRC(4c548db8) SHA1(988411ab41884c926ca971e7b58f406f85be3b54) )
-	ROM_LOAD( "dw-16.rom", 0x60000, 0x10000, CRC(e5bcf927) SHA1(b96bd4c124c9745fae1c1f35bdbbdec9f97ab4a5) )
-	ROM_LOAD( "dw-17.rom", 0x70000, 0x10000, CRC(9e10f723) SHA1(159c5e3d821a10b64cd6d538d19063d0f5b057c0) )
+	ROM_LOAD( "dw-14.14f", 0x00000, 0x10000, CRC(9b0dbfa9) SHA1(c9db6e70b217a34fbc2bf17da3f5ec6f0130514a) )
+	ROM_LOAD( "dw-15.15f", 0x10000, 0x10000, CRC(95683fda) SHA1(aa91ad1cd685790e29e16d64bd75a5b4367cf87b) )
+	ROM_LOAD( "dw-11.9f",  0x20000, 0x10000, CRC(1b1fcca7) SHA1(17e510c1b3efa0f6da49461c286b89295db6b9a6) )
+	ROM_LOAD( "dw-13.12f", 0x30000, 0x10000, CRC(e7413056) SHA1(62048a9648cbb6b651e3409f77cee268822fd2e1) )
+	ROM_LOAD( "dw-10.8f",  0x40000, 0x10000, CRC(57667546) SHA1(e7756997ea04204e62404ce8069f8cdb33cb4565) )
+	ROM_LOAD( "dw-12.1f",  0x50000, 0x10000, CRC(4c548db8) SHA1(988411ab41884c926ca971e7b58f406f85be3b54) )
+	ROM_LOAD( "dw-16.17f", 0x60000, 0x10000, CRC(e5bcf927) SHA1(b96bd4c124c9745fae1c1f35bdbbdec9f97ab4a5) )
+	ROM_LOAD( "dw-17.18f", 0x70000, 0x10000, CRC(9e10f723) SHA1(159c5e3d821a10b64cd6d538d19063d0f5b057c0) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "dw-06.rom", 0x00000, 0x10000, CRC(b65e029d) SHA1(f8791d57f688f16e0f076361603510e7133f4e36) )
-	ROM_LOAD( "dw-07.rom", 0x10000, 0x10000, CRC(668d995d) SHA1(dc6221de6103168c8e19f2c6eb159b8989ca2208) )
-	ROM_LOAD( "dw-08.rom", 0x20000, 0x10000, CRC(bb2cf4a0) SHA1(78806adb6a9ad9fc0707ead567a3220eb2bdb32f) )
-	ROM_LOAD( "dw-09.rom", 0x30000, 0x10000, CRC(6a528d13) SHA1(f1ef592f1efea637abde26bb8e3d02d552582a43) )
+	ROM_LOAD( "dw-06.12f", 0x00000, 0x10000, CRC(b65e029d) SHA1(f8791d57f688f16e0f076361603510e7133f4e36) )
+	ROM_LOAD( "dw-07.14f", 0x10000, 0x10000, CRC(668d995d) SHA1(dc6221de6103168c8e19f2c6eb159b8989ca2208) )
+	ROM_LOAD( "dw-08.15f", 0x20000, 0x10000, CRC(bb2cf4a0) SHA1(78806adb6a9ad9fc0707ead567a3220eb2bdb32f) )
+	ROM_LOAD( "dw-09.17f", 0x30000, 0x10000, CRC(6a528d13) SHA1(f1ef592f1efea637abde26bb8e3d02d552582a43) )
 
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )
-	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, BAD_DUMP CRC(47e1f83b) SHA1(f073eea1f33ed7a4862e4efd143debf1e0ee64b4)  )
-	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, BAD_DUMP CRC(d8fe2d99) SHA1(56f8fcf2f871c7d52d4299a5b9988401ada4319d)  )
+	ROM_LOAD( "dw18.9d",  0x0000, 0x0400, CRC(75f1945f) SHA1(6fa436ae21851ec30847d57c31bdd2fd695e08af)  )
+	ROM_LOAD( "dw19.10d", 0x0400, 0x0400, CRC(cc16f3fa) SHA1(4562106ff752f5fc5ae00ff098141e5d74fe4700)  )
 ROM_END
 
 ROM_START( srdarwin )

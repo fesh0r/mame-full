@@ -1,41 +1,47 @@
 #ifndef _PPC_H
 #define _PPC_H
 
-#define SPR_XER				1		/* Fixed Point Exception Register				Read / Write */
-#define SPR_LR				8		/* Link Register								Read / Write */
-#define SPR_CTR				9		/* Count Register								Read / Write */
-#define SPR_SRR0			26		/* Save/Restore Register 0						Read / Write */
-#define SPR_SRR1			27		/* Save/Restore Register 1						Read / Write */
-#define SPR_SPRG0			272		/* SPR General 0								Read / Write */
-#define SPR_SPRG1			273		/* SPR General 1								Read / Write */
-#define SPR_SPRG2			274		/* SPR General 2								Read / Write */
-#define SPR_SPRG3			275		/* SPR General 3								Read / Write */
-#define SPR_PVR				287		/* Processor Version Number						Read Only */
+#define SPR_XER				1		/* Fixed Point Exception Register               Read / Write */
+#define SPR_LR				8		/* Link Register                                Read / Write */
+#define SPR_CTR				9		/* Count Register                               Read / Write */
+#define SPR_SRR0			26		/* Save/Restore Register 0                      Read / Write */
+#define SPR_SRR1			27		/* Save/Restore Register 1                      Read / Write */
+#define SPR_SPRG0			272		/* SPR General 0                                Read / Write */
+#define SPR_SPRG1			273		/* SPR General 1                                Read / Write */
+#define SPR_SPRG2			274		/* SPR General 2                                Read / Write */
+#define SPR_SPRG3			275		/* SPR General 3                                Read / Write */
+#define SPR_PVR				287		/* Processor Version Number                     Read Only */
 
-#define SPR403_ICDBDR		0x3D3	/* 406GA Instruction Cache Debug Data Register	Rad Only */
-#define SPR403_ESR			0x3D4	/* 406GA Exception Syndrome Register			Read / Write */
-#define SPR403_DEAR			0x3D5	/* 406GA Data Exception Address Register		Read Only */
-#define SPR403_EVPR			0x3D6	/* 406GA Exception Vector Prefix Register		Read / Write */
-#define SPR403_CDBCR		0x3D7	/* 406GA Cache Debug Control Register			Read/Write */
-#define SPR403_TSR			0x3D8	/* 406GA Timer Status Register					Read / Clear */
-#define SPR403_TCR			0x3DA	/* 406GA Timer Control Register					Read / Write */
-#define SPR403_PIT			0x3DB	/* 406GA Programmable Interval Timer			Read / Write */
-#define SPR403_TBHI			988		/* 406GA Time Base High							Read / Write */
-#define SPR403_TBLO			989		/* 406GA Time Base Low							Read / Write */
-#define SPR403_SRR2			0x3DE	/* 406GA Save/Restore Register 2				Read / Write */
-#define SPR403_SRR3			0x3DF	/* 406GA Save/Restore Register 3				Read / Write */
-#define SPR403_DBSR			0x3F0	/* 406GA Debug Status Register					Read / Clear */
-#define SPR403_DBCR			0x3F2	/* 406GA Debug Control Register					Read / Write */
-#define SPR403_IAC1			0x3F4	/* 406GA Instruction Address Compare 1			Read / Write */
-#define SPR403_IAC2			0x3F5	/* 406GA Instruction Address Compare 2			Read / Write */
-#define SPR403_DAC1			0x3F6	/* 406GA Data Address Compare 1					Read / Write */
-#define SPR403_DAC2			0x3F7	/* 406GA Data Address Compare 2					Read / Write */
-#define SPR403_DCCR			0x3FA	/* 406GA Data Cache Cacheability Register		Read / Write */
-#define SPR403_ICCR			0x3FB	/* 406GA I Cache Cacheability Registe			Read / Write */
-#define SPR403_PBL1			0x3FC	/* 406GA Protection Bound Lower 1				Read / Write */
-#define SPR403_PBU1			0x3FD	/* 406GA Protection Bound Upper 1				Read / Write */
-#define SPR403_PBL2			0x3FE	/* 406GA Protection Bound Lower 2				Read / Write */
-#define SPR403_PBU2			0x3FF	/* 406GA Protection Bound Upper 2				Read / Write */
+#define SPR403_ICDBDR		0x3D3	/* 406GA Instruction Cache Debug Data Register  Rad Only */
+#define SPR403_ESR			0x3D4	/* 406GA Exception Syndrome Register            Read / Write */
+#define SPR403_DEAR			0x3D5	/* 406GA Data Exception Address Register        Read Only */
+#define SPR403_EVPR			0x3D6	/* 406GA Exception Vector Prefix Register       Read / Write */
+#define SPR403_CDBCR		0x3D7	/* 406GA Cache Debug Control Register           Read/Write */
+#define SPR403_TSR			0x3D8	/* 406GA Timer Status Register                  Read / Clear */
+#define SPR403_TCR			0x3DA	/* 406GA Timer Control Register                 Read / Write */
+#define SPR403_PIT			0x3DB	/* 406GA Programmable Interval Timer            Read / Write */
+#define SPR403_TBHI			988		/* 406GA Time Base High                         Read / Write */
+#define SPR403_TBLO			989		/* 406GA Time Base Low                          Read / Write */
+#define SPR403_SRR2			0x3DE	/* 406GA Save/Restore Register 2                Read / Write */
+#define SPR403_SRR3			0x3DF	/* 406GA Save/Restore Register 3                Read / Write */
+#define SPR403_DBSR			0x3F0	/* 406GA Debug Status Register                  Read / Clear */
+#define SPR403_DBCR			0x3F2	/* 406GA Debug Control Register                 Read / Write */
+#define SPR403_IAC1			0x3F4	/* 406GA Instruction Address Compare 1          Read / Write */
+#define SPR403_IAC2			0x3F5	/* 406GA Instruction Address Compare 2          Read / Write */
+#define SPR403_DAC1			0x3F6	/* 406GA Data Address Compare 1                 Read / Write */
+#define SPR403_DAC2			0x3F7	/* 406GA Data Address Compare 2                 Read / Write */
+#define SPR403_DCCR			0x3FA	/* 406GA Data Cache Cacheability Register       Read / Write */
+#define SPR403_ICCR			0x3FB	/* 406GA I Cache Cacheability Registe           Read / Write */
+#define SPR403_PBL1			0x3FC	/* 406GA Protection Bound Lower 1               Read / Write */
+#define SPR403_PBU1			0x3FD	/* 406GA Protection Bound Upper 1               Read / Write */
+#define SPR403_PBL2			0x3FE	/* 406GA Protection Bound Lower 2               Read / Write */
+#define SPR403_PBU2			0x3FF	/* 406GA Protection Bound Upper 2               Read / Write */
+
+#define SPR403_SGR			0x3b9	/* 403GCX Storage Guarded Register */
+#define SPR403_DCWR			0x3ba	/* 403GCX Data Cache Write Through */
+#define SPR403_PID			0x3b1	/* 403GCX Process ID */
+#define SPR403_TBHU			0x3cc	/* 403GCX Time Base High User-mode */
+#define SPR403_TBLU			0x3cd	/* 403GCX Time Base Low User-mode */
 
 #define SPR603E_DSISR		18		/* 603E */
 #define SPR603E_DAR			19		/* 603E */
@@ -116,10 +122,12 @@
 #define DCR_IOCR		0xa0	/* io configuration */
 
 enum {
-	EXCEPTION_IRQ			= 0x5,
-	EXCEPTION_DECREMENTER	= 0x9,
-	EXCEPTION_TRAP			= 0x7,	
-	EXCEPTION_SYSTEM_CALL	= 0xc
+	EXCEPTION_IRQ						= 1,
+	EXCEPTION_DECREMENTER				= 2,
+	EXCEPTION_TRAP						= 3,
+	EXCEPTION_SYSTEM_CALL				= 4,
+	EXCEPTION_FIXED_INTERVAL_TIMER		= 21,
+	EXCEPTION_WATCHDOG_TIMER			= 22,
 };
 
 enum {
@@ -188,7 +196,16 @@ typedef struct {
 } ppc_config;
 
 #if (HAS_PPC403)
+typedef UINT8 (* SPU_RX_HANDLER)(void);
+typedef void  (* SPU_TX_HANDLER)(UINT8);
 void ppc403_get_info(UINT32 state, union cpuinfo *info);
+void ppc403_spu_rx(UINT8 data);
+void ppc403_install_spu_rx_handler(SPU_RX_HANDLER rx_handler);
+void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler);
+
+#define PPC403_SPU_RX		5
+#define PPC403_SPU_TX		6
+
 #endif
 
 #if (HAS_PPC602)
