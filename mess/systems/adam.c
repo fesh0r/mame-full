@@ -208,19 +208,21 @@ static ADDRESS_MAP_START( adam_writemem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START ( adam_readport , ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x20, 0x3F) AM_READ( adamnet_r )
-    AM_RANGE( 0x60, 0x7F) AM_READ( adam_memory_map_controller_r )
-    AM_RANGE( 0xA0, 0xBF) AM_READ( adam_video_r )
-    AM_RANGE( 0xE0, 0xFF) AM_READ( adam_paddle_r )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x20, 0x3F) AM_READ( adamnet_r )
+	AM_RANGE( 0x60, 0x7F) AM_READ( adam_memory_map_controller_r )
+	AM_RANGE( 0xA0, 0xBF) AM_READ( adam_video_r )
+	AM_RANGE( 0xE0, 0xFF) AM_READ( adam_paddle_r )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START ( adam_writeport , ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x20, 0x3F) AM_WRITE( adamnet_w )
-    AM_RANGE( 0x60, 0x7F) AM_WRITE( adam_memory_map_controller_w )
-    AM_RANGE( 0x80, 0x9F) AM_WRITE( adam_paddle_toggle_off )
-    AM_RANGE( 0xA0, 0xBF) AM_WRITE( adam_video_w )
-    AM_RANGE( 0xC0, 0xDF) AM_WRITE( adam_paddle_toggle_on )
-    AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x20, 0x3F) AM_WRITE( adamnet_w )
+	AM_RANGE( 0x60, 0x7F) AM_WRITE( adam_memory_map_controller_w )
+	AM_RANGE( 0x80, 0x9F) AM_WRITE( adam_paddle_toggle_off )
+	AM_RANGE( 0xA0, 0xBF) AM_WRITE( adam_video_w )
+	AM_RANGE( 0xC0, 0xDF) AM_WRITE( adam_paddle_toggle_on )
+	AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
 ADDRESS_MAP_END
 
 /*

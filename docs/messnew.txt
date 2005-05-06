@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [ADAM/COLECO/MSX] Fixed regressions caused by Z80 port changes. [Nate Woods]
 
 
 
