@@ -30,5 +30,5 @@ cycles_t osd_cycles_per_second(void)
 
 cycles_t osd_profiling_ticks(void)
 {
-	return 0;
+	return uclock();
 }
