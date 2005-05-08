@@ -423,7 +423,11 @@ void x11_set_window_hints(int type)
         struct rc_option *option;
         XWMHints wm_hints;
 	XSizeHints hints;
+	XClassHint class_hints;
+	XTextProperty window_name;
+	XTextProperty icon_name;
 	unsigned int width, height;
+	char *app = NAME;
 
         x11_get_geometry(&hints.x, &hints.y, &width, &height,
 	          &hints.win_gravity, &hints.flags, type);
@@ -434,7 +438,6 @@ void x11_set_window_hints(int type)
 	/* WM hints */
         wm_hints.input   = True;
         wm_hints.flags   = InputHint;
-        XSetWMHints (display, window, &wm_hints);
 
 	/* Size hints */
 	if (!sysdep_display_params.fullscreen)
@@ -466,8 +469,6 @@ void x11_set_window_hints(int type)
         
 	hints.min_width  = hints.max_width  = hints.base_width  = width;
 	hints.min_height = hints.max_height = hints.base_height = height;
-
-        XSetWMNormalHints (display, window, &hints);
         
         /* Hack to get rid of window title bar */
         if(sysdep_display_params.fullscreen)
@@ -482,23 +483,22 @@ void x11_set_window_hints(int type)
                                 PropModeReplace,(unsigned char *)&mwmhints,4);
         }
 
-#if defined(__sgi)
-{
-	/* Needed for setting the application class */
-	XClassHint class_hints = { NAME, NAME, };
+	class_hints.res_name = app;
+	class_hints.res_class = NAME;
 
-        /* Force first resource class char to be uppercase */
-        class_hints.res_class[0] &= 0xDF;
-        /*
-         * Set the application class (WM_CLASS) so that 4Dwm can display
-         * the appropriate pixmap when the application is iconified
-         */
-        XSetClassHint(display, window, &class_hints);
-        /* Use a simpler name for the icon */
-        XSetIconName(display, window, NAME);
-}
-#endif
-        
+	if (!XStringListToTextProperty(&app, 1, &window_name)) {
+		fprintf(stderr, "Structure allocation for window_name failed\n");
+		exit(-1);
+	}
+
+	if (!XStringListToTextProperty(&app, 1, &icon_name)) {
+		fprintf( stderr, "Structure allocation for icon_name failed\n" );
+		exit(-1);
+	}
+
+	XSetWMProperties(display, window, &window_name, &icon_name,
+	    NULL, 0, &hints, &wm_hints, &class_hints);
+
         XStoreName (display, window, sysdep_display_params.title);
 }
 
