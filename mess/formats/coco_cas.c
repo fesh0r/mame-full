@@ -24,6 +24,11 @@
 	remainder of the data is added to the waveform in a traditional manner.
 	The result has proven to work quite well.
 
+	2005-May-04, P.Harvey-Smith, improved handling of some "copy protected"
+	Dragon games that have odd blocks in odd places, this has slightly
+	increased loading time but does mean games like "Rommel's Revenge" will
+	now load.
+
 **************************************************************************/
 
 #include "coco_cas.h"
@@ -32,7 +37,9 @@
 
 #define COCO_WAVESAMPLES_HEADER		TIME_IN_SEC(1.0)
 #define COCO_WAVESAMPLES_TRAILER	TIME_IN_SEC(1.0)
+#define COCO_LONGSILENCE			TIME_IN_SEC(5.0)
 
+static int synccount;
 
 const struct CassetteModulation coco_cas_modulation =
 {
@@ -61,6 +68,7 @@ static int get_cas_block(cassette_image *cassette, UINT64 *offset, UINT8 *block,
 	int state = 0;
 	int phase = 0;
 
+	synccount = 0;
 	p.w.l = 0;
 	image_size = cassette_image_size(cassette);
 	current_offset = *offset;
@@ -82,6 +90,10 @@ static int get_cas_block(cassette_image *cassette, UINT64 *offset, UINT8 *block,
 					/* found one! */
 					phase = i;
 					state++;
+				}
+				else if (p.b.l == 0x55)
+				{
+					synccount++;
 				}
 			}
 			else if (i == phase)
@@ -190,8 +202,10 @@ static casserr_t coco_cas_load(cassette_image *cassette)
 	/* try to find a block that we can untangle */
 	while(get_cas_block(cassette, &offset, block, &block_length))
 	{
+		/* Forcing a silence before a filename block, improves the ability to load some */
+		/* copy protected Dragon games, e.g. Rommel's Revenge */
 		/* was the last block a filename block? */
-		if ((last_blocktype == 0) || (last_blocktype == 0xFF))
+		if ((last_blocktype == 0) || (last_blocktype == 0xFF) || (block[0] == 0))
 		{
 			/* silence */
 			err = cassette_put_sample(cassette, 0, time_index, COCO_WAVESAMPLES_HEADER, 0);
@@ -201,6 +215,14 @@ static casserr_t coco_cas_load(cassette_image *cassette)
 
 			/* sync data */
 			err = cassette_put_modulated_filler(cassette, 0, time_index, 0x55, 128, &coco_cas_modulation, &time_displacement);
+			if (err)
+				return err;
+			time_index += time_displacement;
+		}
+		else if (synccount != 0)		/* If we have multiple sync bytes in cas file, make sure they */
+		{				/* are passed through */
+			/* sync data */
+			err = cassette_put_modulated_filler(cassette, 0, time_index, 0x55, synccount, &coco_cas_modulation, &time_displacement);
 			if (err)
 				return err;
 			time_index += time_displacement;

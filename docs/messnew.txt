@@ -10,6 +10,11 @@ System Driver Changes:
 ----------------------
 - [ADAM/COLECO/MSX] Fixed regressions caused by Z80 port changes. [Nate Woods]
 
+- [COCO/DRAGON] Improved .CAS loading for images with odd block sequences.
+  [Phill Harvey-Smith]
+
+- [DGNALPHA] Removed optional DOS BIOS.  [Phill Harvey-Smith]
+
 
 
 User Interface Changes:
