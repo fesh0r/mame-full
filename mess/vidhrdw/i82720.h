@@ -45,7 +45,7 @@ typedef enum
 typedef struct compis_gdc_interface
 {
 	compis_gdc_modes mode;
-	UINT16	vramsize;
+	UINT32	vramsize;
 } compis_gdc_interface;
 
 extern void mdrv_compisgdc(struct InternalMachineDriver *machine,
