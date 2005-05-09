@@ -77,7 +77,8 @@ int dma8237_init(int count)
 		dma[which].status = 0x0F;
 		dma[which].timer = mame_timer_alloc(dma8237_timerproc);
 		dma[which].msbflip_timer = mame_timer_alloc(dma8237_msbflip_timerproc);
-		dma[which].eop = 1;
+		dma[which].eop = 0;
+		dma[which].eop |= 1;
 	}
 	return 0;
 }
