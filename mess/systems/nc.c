@@ -122,7 +122,7 @@ UINT8 nc_type;
 
 static char nc_memory_config[4];
 unsigned long nc_display_memory_start;
-static void *nc_keyboard_timer = NULL;
+static mame_timer *nc_keyboard_timer = NULL;
 
 static int nc_membank_rom_mask;
 static int nc_membank_internal_ram_mask;
@@ -1084,6 +1084,7 @@ static WRITE8_HANDLER(nc100_memory_card_wait_state_w)
 
 
 static ADDRESS_MAP_START(nc100_io, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00, 0x0f) AM_WRITE(nc100_display_memory_start_w)
 	AM_RANGE(0x10, 0x13) AM_READWRITE(nc_memory_management_r, nc_memory_management_w)
@@ -1544,6 +1545,7 @@ static WRITE8_HANDLER(nc200_poweroff_control_w)
 }
 
 static ADDRESS_MAP_START(nc200_io, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f) AM_WRITE(nc100_display_memory_start_w)
 	AM_RANGE(0x10, 0x13) AM_READWRITE(nc_memory_management_r, nc_memory_management_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(nc200_memory_card_wait_state_w)

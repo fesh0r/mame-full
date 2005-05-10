@@ -34,13 +34,11 @@ Philips P2000 1 Memory map
 
 /* port i/o functions */
 
-static ADDRESS_MAP_START( p2000t_readport , ADDRESS_SPACE_IO, 8)
+static ADDRESS_MAP_START( p2000t_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f) AM_READ( p2000t_port_000f_r)
-	AM_RANGE(0x20, 0x2f) AM_READ( p2000t_port_202f_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( p2000t_writeport , ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x10, 0x1f) AM_WRITE( p2000t_port_101f_w)
+	AM_RANGE(0x20, 0x2f) AM_READ( p2000t_port_202f_r)
 	AM_RANGE(0x30, 0x3f) AM_WRITE( p2000t_port_303f_w)
 	AM_RANGE(0x50, 0x5f) AM_WRITE( p2000t_port_505f_w)
 	AM_RANGE(0x70, 0x7f) AM_WRITE( p2000t_port_707f_w)
@@ -227,7 +225,7 @@ static MACHINE_DRIVER_START( p2000t )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
 	MDRV_CPU_PROGRAM_MAP(p2000t_readmem, p2000t_writemem)
-	MDRV_CPU_IO_MAP(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_IO_MAP(p2000t_io, 0)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 
     /* video hardware */
@@ -245,7 +243,7 @@ static MACHINE_DRIVER_START( p2000m )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
 	MDRV_CPU_PROGRAM_MAP(p2000m_readmem, p2000m_writemem)
-	MDRV_CPU_IO_MAP(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_IO_MAP(p2000t_io, 0)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)

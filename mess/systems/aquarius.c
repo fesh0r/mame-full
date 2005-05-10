@@ -33,15 +33,11 @@ Aquarius Memory map
 
 /* port i/o functions */
 
-ADDRESS_MAP_START( aquarius_readport , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0xfe, 0xfe) AM_READ( aquarius_port_fe_r)
-	AM_RANGE(0xff, 0xff) AM_READ( aquarius_port_ff_r)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( aquarius_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_START( aquarius_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0xfc, 0xfc) AM_WRITE( aquarius_port_fc_w)
-	AM_RANGE(0xfe, 0xfe) AM_WRITE( aquarius_port_fe_w)
-	AM_RANGE(0xff, 0xff) AM_WRITE( aquarius_port_ff_w)
+	AM_RANGE(0xfe, 0xfe) AM_READWRITE( aquarius_port_fe_r, aquarius_port_fe_w)
+	AM_RANGE(0xff, 0xff) AM_READWRITE( aquarius_port_ff_r, aquarius_port_ff_w)
 ADDRESS_MAP_END
 
 /* Memory w/r functions */
@@ -224,7 +220,7 @@ static MACHINE_DRIVER_START( aquarius )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3500000)
 	MDRV_CPU_PROGRAM_MAP(aquarius_readmem, aquarius_writemem)
-	MDRV_CPU_IO_MAP(aquarius_readport, aquarius_writeport)
+	MDRV_CPU_IO_MAP(aquarius_io, 0)
 	MDRV_CPU_VBLANK_INT( aquarius_interrupt, 1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

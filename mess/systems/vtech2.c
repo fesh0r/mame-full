@@ -86,6 +86,7 @@ static ADDRESS_MAP_START(vtech2_mem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(vtech2_io, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x1f) AM_READWRITE(laser_fdc_r, laser_fdc_w)
 	AM_RANGE(0x40, 0x43) AM_WRITE(laser_bank_select_w)
 	AM_RANGE(0x44, 0x44) AM_WRITE(laser_bg_mode_w)
