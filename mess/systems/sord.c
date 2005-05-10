@@ -99,9 +99,9 @@ static  READ8_HANDLER(fd5_data_r)
 	logerror("fd5 0x010 r: %02x %04x\n",fd5_databus,activecpu_get_pc());
 #endif
 	
-	ppi8255_set_input_acka(0,1);
-	ppi8255_set_input_acka(0,0);
-	ppi8255_set_input_acka(0,1);
+	ppi8255_set_portC(0, 0x50);
+	ppi8255_set_portC(0, 0x10);
+	ppi8255_set_portC(0, 0x50);
 
 	return fd5_databus;
 }
@@ -115,9 +115,9 @@ static WRITE8_HANDLER(fd5_data_w)
 	fd5_databus = data;
 
 	/* set stb on data write */
-	ppi8255_set_input_stba(0,1);
-	ppi8255_set_input_stba(0,0);
-	ppi8255_set_input_stba(0,1);
+	ppi8255_set_portC(0, 0x50);
+	ppi8255_set_portC(0, 0x40);
+	ppi8255_set_portC(0, 0x50);
 
 	cpu_yield();
 }
@@ -198,8 +198,7 @@ static MACHINE_INIT( sord_m5_fd5 )
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
 	machine_init_sord_m5();
-	ppi8255_set_input_acka(0,1);
-	ppi8255_set_input_stba(0,1);
+	ppi8255_set_portC(0, 0x50);
 }
 
 
@@ -295,39 +294,15 @@ static WRITE8_HANDLER(sord_ppi_portb_w)
 
 static WRITE8_HANDLER(sord_ppi_portc_w)
 {
+	obfa = (data & 0x80) ? 1 : 0;
+	intra = (data & 0x08) ? 1 : 0;
+	ibfa = (data & 0x20) ? 1 : 0;
+
 	cpu_yield();
 #ifdef SORD_DEBUG
 	logerror("m5 write to pi5 port c: %02x %04x\n",data,activecpu_get_pc());
 #endif
 }
-
-static WRITE8_HANDLER(sord_ppi_obfa_write)
-{
-//	logerror("ppi obfa write %02x %04x\n",data,activecpu_get_pc());
-	obfa = data & 0x01;
-	cpu_yield();
-}
-
-static WRITE8_HANDLER(sord_ppi_intra_write)
-{
-//	logerror("ppi intra write %02x %04x\n",data,activecpu_get_pc());
-	intra = data & 0x01;
-	cpu_yield();
-}
-
-static WRITE8_HANDLER(sord_ppi_ibfa_write)
-{
-//	logerror("ppi ibfa write %02x %04x\n",data,activecpu_get_pc());
-	ibfa = data & 0x01;
-	cpu_yield();
-}
-
-static ppi8255_mode2_interface sord_ppi8255_mode2_interface = 
-{
-	{sord_ppi_obfa_write},
-	{sord_ppi_intra_write},
-	{sord_ppi_ibfa_write}
-};
 
 static ppi8255_interface sord_ppi8255_interface =
 {
@@ -384,7 +359,7 @@ ADDRESS_MAP_START( writemem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x7000, 0x0ffff) AM_WRITE( MWA8_RAM)
 ADDRESS_MAP_END
 
-static  READ8_HANDLER(sord_ctc_r)
+static READ8_HANDLER(sord_ctc_r)
 {
 	unsigned char data;
 
@@ -469,6 +444,7 @@ static WRITE8_HANDLER(sord_printer_w)
 }
 
 ADDRESS_MAP_START( sord_m5_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f)					AM_READWRITE(sord_ctc_r,			sord_ctc_w)
 	AM_RANGE(0x10, 0x10) AM_MIRROR(0x0e)	AM_READWRITE(TMS9928A_vram_r,		TMS9928A_vram_w)
 	AM_RANGE(0x11, 0x11) AM_MIRROR(0x0e)	AM_READWRITE(TMS9928A_register_r,	TMS9928A_register_w)
@@ -479,6 +455,7 @@ ADDRESS_MAP_START( sord_m5_io , ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( srdm5fd5_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f)					AM_READWRITE(sord_ctc_r,			sord_ctc_w)
 	AM_RANGE(0x10, 0x10) AM_MIRROR(0x0e)	AM_READWRITE(TMS9928A_vram_r,		TMS9928A_vram_w)
 	AM_RANGE(0x11, 0x11) AM_MIRROR(0x0e)	AM_READWRITE(TMS9928A_register_r,	TMS9928A_register_w)
@@ -514,7 +491,6 @@ static MACHINE_INIT( sord_m5 )
 
 	/* PI-5 interface connected to Sord M5 */
 	ppi8255_init(&sord_ppi8255_interface);
-	ppi8255_set_mode2_interface(&sord_ppi8255_mode2_interface);
 
 //	cassette_timer = timer_pulse(TIME_IN_HZ(11025), 0, cassette_timer_callback);
 	TMS9928A_reset ();

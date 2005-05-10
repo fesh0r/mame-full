@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [ADAM/COLECO/MSX] Fixed regressions caused by Z80 port changes. [Nate Woods]
+- [ADAM/COLECO/MSX/SORD] Fixed regressions caused by Z80 port changes. [Nate
+  Woods]
 
 - [COCO/DRAGON] Improved .CAS loading for images with odd block sequences.
   [Phill Harvey-Smith]
@@ -32,7 +33,9 @@ Imgtool Changes:
 Source Changes:
 ----------------
 - The core is based on MAME 0.96u1.  This incorporates all features of the
-  update to this core.  [MAME team]  
+  update to this core.  [MAME team]
+  
+- Rewrote Mode 2 support for the 8255 PPI chip.  [Nate Woods]
 
 
 
