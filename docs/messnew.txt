@@ -37,6 +37,8 @@ Source Changes:
   
 - Rewrote Mode 2 support for the 8255 PPI chip.  [Nate Woods]
 
+- Removed trailing spaces from all input port name declarations.  [Nate Woods]
+
 
 
 0.96
