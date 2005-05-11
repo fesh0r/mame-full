@@ -1,3 +1,86 @@
+0.96
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Apple /// [Nate Woods]
+- Microkey Primo A-32, A-64, B-64 [Krzysztof Strzecha]
+- SGI IRIS Indigo workstation (not working) [Mooglyguy]
+- SGI IP22 Indy workstation (not working) [Mooglyguy]
+
+
+
+System Driver Changes:
+----------------------
+- [ADVISION] Fixed a video glitch.  (bug #17) [Dan Boris]
+
+- [AMSTRAD] Cassette now starts up stopped.  [Barry Rodewald]
+
+- [APPLE1] Improved driver.  [Colin Howell]
+
+- [APPLE1] Fixed snapshot loading.  (bug #690) [Colin Howell]
+
+- [APPLE1] Added cassette support.  (bug #477) [Colin Howell]
+
+- [APPLE1] Added RAM at $E000-$EFFF for BASIC.  (bug #697) [Colin Howell]
+
+- [APPLE2] Keyboard refactorings.  (bug #694) [Christopher Stone]
+
+- [APPLE2CP] Now uses the IWM chip and implemented CE00 RAM.  System now runs
+  (bug #312) [Nate Woods]
+
+- [COCO] Fixed joystick ranges (they were previously 0-62 instead of 0-63.)
+  (bug #698) [Nate Woods]
+
+- [COCO] Lengthened certain floppy disk controller operations; now NitrOS-9
+  boots on the CoCo 1/2.  (bug #502) [Phill Harvey-Smith]
+
+- [GALAXY] Possibilty to disable ROM 2. 2k, 22k, 38k and 54k memory
+  configurations added. Memory mapping improved. Palette corrected. Supprort
+  for newer version of snapshots added. Lot of cleanups. Keyboard mapping
+  corrected. [Krzysztof Strzecha]
+
+- [SVISION] Fixed aspect ratio.  [PeT]
+
+- [sysinfo.dat] Updated Apple I entry.  [Colin Howell]
+
+
+User Interface Changes:
+-----------------------
+- [Windows GUI] Improved error reporting if the emulation fails at runtime.
+  [Nate Woods]
+
+- [Windows GUI] Stopgap measure to fix image loading on the Apple IIgs; this
+  will not work if the Apple IIgs 5.25" disk is ever enabled; in the long run
+  the INI and CFG system must be merged for a real fix. (bug #686) [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.96.  This incorporates all features of the
+  update to this core.  [MAME team]  
+
+- Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
+  Also, it is 4 cycles long. Thanks to David Keil and Sockmaster for pointing
+  this out.  [Tim Lindner]
+
+- Fixed ESC key under natural keyboard emulation.  [Nate Woods]
+
+- [Windows] Fixed arrow keys under natural keyboard emulation.  [Nate Woods]
+
+- Fixed index addressing mode disassembly for the hd6309. [tim lindner]
+
+- Merged Apple 2 floppy disk controller and IWM code.  The apple2c0 and
+  apple2c3 drivers now work.  [Nate Woods]
+
+
+
 0.95
 
 New System Drivers Supported (in no particular order):

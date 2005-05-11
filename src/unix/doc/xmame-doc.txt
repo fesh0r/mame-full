@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-29 March 2005
+10 May 2005
 
 <authorgroup>
 <author><firstname>Juan 
@@ -2360,7 +2360,7 @@ maintainer. --Lawrence Gold)
 
  Unix sources and docs
 
-* The xmame/xmess sources[download/xmame-0.95.tar.bz2||xmame/xmess-0.95 sources]
+* The xmame/xmess sources[download/xmame-0.96.tar.bz2||xmame/xmess-0.96 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2488,7 +2488,7 @@ releases, the core of xmame/xmess.
  The Unix ChangeLog
 
 And now here is the HISTORY of the xmame project (of 
-course that's why you are here :;-)) ... René
+course that's why you are here :;-)) ...
 
 * [changes-unix.html||The Unix port changelog (changes.unix)]
 

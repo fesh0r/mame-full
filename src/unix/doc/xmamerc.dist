@@ -13,7 +13,6 @@ bpp                     0
 heightscale             1
 widthscale              1
 autodouble              1
-scanlines               0
 artwork                 1
 frameskipper            0
 throttle                1

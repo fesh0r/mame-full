@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-29 March 2005
+10 May 2005
 \layout SGML
 
 <authorgroup>
@@ -4293,7 +4293,7 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_inset LatexCommand \url[xmame/xmess-0.95 sources]{download/xmame-0.95.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.96 sources]{download/xmame-0.96.tar.bz2}
 
 \end_inset 
 
@@ -4778,7 +4778,6 @@ The Unix ChangeLog
 
 And now here is the HISTORY of the xmame project (of course that's why you
  are here :;-)) ...
- René
 \layout Itemize
 
 
