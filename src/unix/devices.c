@@ -1064,7 +1064,7 @@ int xmame_keyboard_init(void)
 
 void xmame_keyboard_exit()
 {
-	if(kbd_fifo)
+	if (kbd_fifo)
 		kbd_fifo_destroy(kbd_fifo);
 }
 
