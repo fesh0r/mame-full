@@ -877,7 +877,11 @@ void inputx_handle_mess_extensions(struct InputPort *ipt)
 			}
 
 			rtrim(buf);
-			ipt->name = auto_strdup(buf);
+
+			if (buf[0])
+				ipt->name = auto_strdup(buf);
+			else
+				ipt->name = "Unnamed Key";
 		}
 		ipt++;
 	}
