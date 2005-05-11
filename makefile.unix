@@ -46,21 +46,16 @@ TARGET = mame
 ###########################################################################
 
 # Enable experimental network support.  See 
-# src/unix/doc/multiplayer-readme.txt for more information.
+# src/unix/doc/multiplayer-readme.txt for more information.  (CURRENTLY 
+# BROKEN)
 # XMAME_NET = 1
-
-# Uncomment the next lines to use x86-asm cpu cores.  This is only
-# supported for x86 machines with nasm-0.98 or higher available in your
-# path!  The asm 68k core could cause problems with certain games; please 
-# test with the C core before you report any problems.
-
-# Uncomment to use assembler 68000 engine.
-# X86_ASM_68000 = 1
-# Uncomment to use assembler 68020 engine (CURRENTLY BROKEN).
-# X86_ASM_68020 = 1
 
 # Uncomment to use DRC MIPS3 engine
 # X86_MIPS3_DRC = 1
+
+# Uncomment if you'd like to disable effects.  This can considerably speep 
+# up compilation of the blit files.
+# DISABLE_EFFECTS = 1
 
 # Uncomment the line below to enable the MMX assembly-language optimized
 # routines for the "light scanlines" and "6-tap filter" effects. This
@@ -104,8 +99,8 @@ CC	= gcc
 
 # Compiler for host compilations in cross-compiling environments (used 
 # in src/unix/unix.mak for m68k).
-# HOST_CC=$(CC)
-HOST_CC = gcc
+HOST_CC = $(CC)
+# HOST_CC = gcc
 
 
 ###########################################################################
@@ -123,7 +118,7 @@ CFLAGS =
 ###########################################################################
 
 # GCC on x86
-CFLAGS = -O -Wall -Wno-unused
+CFLAGS = -O2 -Wall -Wno-unused
 
 # GCC on x86 with some optimizations
 # CFLAGS = -O2 -Wall -Wno-unused -mcpu=i686 -fomit-frame-pointer \
@@ -798,13 +793,10 @@ GLCFLAGS += -D_X11_
 # Debug support and object file format
 ###########################################################################
 
-# Comment out the next line if you want to compile CPU disassemblers in
-# MAME for debugging.
-CFLAGS += -DNDEBUG
-
 # Uncomment the next lines to build xmame with a built-in debugger (only
 # supported for X11 and SVGALib). Only enable this if you need it -- if you
 # want to develop drivers, that is, since it slows down xmame considerably.
+# This also enables the built-in profiler.
 # DEBUG = 1
 
 # Uncomment the next line to use the new multiwindow debugger.  This is 
