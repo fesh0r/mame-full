@@ -884,7 +884,11 @@ $(OBJ)/luxor.a:					\
 $(OBJ)/sgi.a:						\
 	$(OBJ)/mess/machine/sgi.o		\
 	$(OBJ)/mess/systems/ip20.o		\
-	$(OBJ)/mess/systems/ip22.o
+	$(OBJ)/mess/systems/ip22.o	\
+	$(OBJ)/mess/machine/wd33c93.o \
+	$(OBJ)/machine/scsihd.o	\
+	$(OBJ)/machine/scsicd.o	\
+	$(OBJ)/mess/vidhrdw/newport.o
 
 $(OBJ)/primo.a:				\
 	$(OBJ)/mess/systems/primo.o	\
@@ -942,6 +946,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/devices/idedrive.o	\
 	$(OBJ)/mess/devices/dsk.o		\
 	$(OBJ)/mess/devices/z80bin.o	\
+	$(OBJ)/mess/devices/chd_cd.o	\
 	$(OBJ)/mess/machine/6551.o		\
 	$(OBJ)/mess/machine/smartmed.o	\
 	$(OBJ)/mess/vidhrdw/m6847.o		\

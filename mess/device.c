@@ -41,6 +41,7 @@ static const struct Devices device_info_array[] =
 	{ IO_SNAPSHOT,	"snapshot",		"dump" }, /* 10 */
 	{ IO_QUICKLOAD,	"quickload",	"quik" }, /* 11 */
 	{ IO_MEMCARD,	"memcard",		"memc" }, /* 12 */
+	{ IO_CDROM,     "cdrom",        "cdrm" }, /* 13 */
 };
 
 const char *device_typename(iodevice_t type)

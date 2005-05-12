@@ -586,6 +586,11 @@ static int image_checkhash(mess_image *image)
 		file = image_fp(image);
 		dev = image_device(image);
 
+		/* do not cause a linear read of 600 megs please */
+		/* TODO: use SHA/MD5 in the CHD header as the hash */
+		if (dev->type == IO_CDROM)
+			return FALSE;
+
 		if (!run_hash(file, dev->partialhash, hash_string, HASH_CRC | HASH_MD5 | HASH_SHA1))
 			return FALSE;
 

@@ -11,7 +11,7 @@
 *  Memory map:
 *
 *  1fa00000 - 1fa02047      Memory Controller
-*  1fb80000 - 1fb9a7ff      HPC3 CHIP0
+*  1fb80000 - 1fb9a7ff      HPC1 CHIP0
 *  1fc00000 - 1fc7ffff      BIOS
 *
 \*********************************************************************/
@@ -21,6 +21,10 @@
 #include "machine/8530scc.h"
 #include "machine/sgi.h"
 #include "machine/eeprom.h"
+#include "machine/8530scc.h"
+#include "machine/wd33c93.h"
+#include "devices/harddriv.h"
+#include "devices/chd_cd.h"
 
 #define VERBOSE_LEVEL ( 2 )
 
@@ -34,6 +38,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
 		logerror( "%08x: %s", activecpu_get_pc(), buf );
+//		printf("%08x: %s", activecpu_get_pc(), buf);
 	}
 }
 
@@ -48,8 +53,8 @@ static VIDEO_UPDATE( ip204415 )
 
 static struct EEPROM_interface eeprom_interface_93C56 =
 {
-	8,					// address bits	8
-	8,					// data bits	8
+	7,					// address bits	7
+	16,					// data bits	16
 	"*110x",			// read			110x aaaaaaaa
 	"*101x",			// write		101x aaaaaaaa dddddddd
 	"*111x",			// erase		111x aaaaaaaa
@@ -81,14 +86,35 @@ static NVRAM_HANDLER(93C56)
 	}
 }
 
-data8_t nHPC_MiscStatus;
-data32_t nHPC_ParBufPtr;
-data32_t nHPC_LocalIOReg0Mask;
-data32_t nHPC_VMEIntMask0;
+static data8_t nHPC_MiscStatus;
+static data32_t nHPC_ParBufPtr;
+static data32_t nHPC_LocalIOReg0Mask;
+static data32_t nHPC_LocalIOReg1Mask;
+static data32_t nHPC_VMEIntMask0;
+static data32_t nHPC_VMEIntMask1;
+
+static data8_t nRTC_RAM[32];
+static data8_t nRTC_Temp;
+
+static data32_t nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
+
+#define RTC_DAYOFWEEK	nRTC_RAM[0x0e]
+#define RTC_YEAR		nRTC_RAM[0x0b]
+#define RTC_MONTH		nRTC_RAM[0x0a]
+#define RTC_DAY			nRTC_RAM[0x09]
+#define RTC_HOUR		nRTC_RAM[0x08]
+#define RTC_MINUTE		nRTC_RAM[0x07]
+#define RTC_SECOND		nRTC_RAM[0x06]
+#define RTC_HUNDREDTH	nRTC_RAM[0x05]
 
 static READ32_HANDLER( hpc_r )
 {
 	offset <<= 2;
+	if( offset >= 0x0e00 && offset <= 0x0e7c )
+	{
+		verboselog( 2, "RTC RAM[0x%02x] Read: %02x\n", ( offset - 0xe00 ) >> 2, nRTC_RAM[ ( offset - 0xe00 ) >> 2 ] );
+		return nRTC_RAM[ ( offset - 0xe00 ) >> 2 ];
+	}
 	switch( offset )
 	{
 	case 0x05c:
@@ -103,44 +129,72 @@ static READ32_HANDLER( hpc_r )
 		verboselog( 2, "HPC Endianness Read: %08x (%08x)\n", 0x0000001f, mem_mask );
 		return 0x0000001f;
 		break;
+	case 0x0120:
+		if (!(mem_mask & 0x0000ff00))
+		{
+			return ( wd33c93_r( 0 ) << 8 );
+		}
+		else
+		{
+			return 0;
+		}
+		break;
 	case 0x0124:
-		verboselog( 2, "HPC Unknown Read: %08x (%08x) (returning 0x00005a00 as kludge)\n", 0x1fb80000 + offset, mem_mask );
-		return 0x0000a500;
+		if (!(mem_mask & 0x0000ff00))
+		{
+			return ( wd33c93_r( 1 ) << 8 );
+		}
+		else
+		{
+			return 0;
+		}
 		break;
 	case 0x01b0:
 		verboselog( 2, "HPC Misc. Status Read: %08x (%08x)\n", nHPC_MiscStatus, mem_mask );
 		return nHPC_MiscStatus;
 		break;
 	case 0x01bc:
-		verboselog( 2, "HPC CPU Serial EEPROM Read\n" );
+//		verboselog( 2, "HPC CPU Serial EEPROM Read\n" );
 		return ( ( EEPROM_read_bit() << 4 ) );
 		break;
 	case 0x01c4:
 		verboselog( 2, "HPC Local IO Register 0 Mask Read: %08x (%08x)\n", nHPC_LocalIOReg0Mask, mem_mask );
 		return nHPC_LocalIOReg0Mask;
 		break;
-	case 0x01d8:
+	case 0x01cc:
+		verboselog( 2, "HPC Local IO Register 1 Mask Read: %08x (%08x)\n", nHPC_LocalIOReg0Mask, mem_mask );
+		return nHPC_LocalIOReg1Mask;
+		break;
+	case 0x01d4:
 		verboselog( 2, "HPC VME Interrupt Mask 0 Read: %08x (%08x)\n", nHPC_LocalIOReg0Mask, mem_mask );
 		return nHPC_VMEIntMask0;
 		break;
+	case 0x01d8:
+		verboselog( 2, "HPC VME Interrupt Mask 1 Read: %08x (%08x)\n", nHPC_LocalIOReg0Mask, mem_mask );
+		return nHPC_VMEIntMask1;
+		break;
 	case 0x0d00:
 		verboselog( 2, "HPC DUART0 Channel B Control Read\n" );
-		return 0x00000004;
+//		return 0x00000004;
+		return 0x7c; //scc_r(0);
 		break;
 	case 0x0d04:
 		verboselog( 2, "HPC DUART0 Channel B Data Read\n" );
-		return 0;
+//		return 0;
+		return scc_r(2);
 		break;
 	case 0x0d08:
-		verboselog( 2, "HPC DUART0 Channel A Control Read\n" );
-		return 0;
+		verboselog( 2, "HPC DUART0 Channel A Control Read (%08x)\n", mem_mask	 );
+//		return 0x40;
+		return 0x7c; //scc_r(1);
 		break;
 	case 0x0d0c:
 		verboselog( 2, "HPC DUART0 Channel A Data Read\n" );
-		return 0;
+//		return 0;
+		return scc_r(3);
 		break;
 	case 0x0d10:
-		verboselog( 2, "HPC DUART1 Channel B Control Read\n" );
+//		verboselog( 2, "HPC DUART1 Channel B Control Read\n" );
 		return 0x00000004;
 		break;
 	case 0x0d14:
@@ -195,11 +249,82 @@ static READ32_HANDLER( hpc_r )
 static WRITE32_HANDLER( hpc_w )
 {
 	offset <<= 2;
+	if( offset >= 0x0e00 && offset <= 0x0e7c )
+	{
+		verboselog( 2, "RTC RAM[0x%02x] Write: %02x\n", ( offset - 0xe00 ) >> 2, data & 0x000000ff );
+		nRTC_RAM[ ( offset - 0xe00 ) >> 2 ] = data & 0x000000ff;
+		switch( ( offset - 0xe00 ) >> 2 )
+		{
+		case 0:
+			break;
+		case 4:
+			if( !( nRTC_RAM[0x00] & 0x80 ) )
+			{
+				if( data & 0x80 )
+				{
+					nRTC_RAM[0x19] = RTC_SECOND;
+					nRTC_RAM[0x1a] = RTC_MINUTE;
+					nRTC_RAM[0x1b] = RTC_HOUR;
+					nRTC_RAM[0x1c] = RTC_DAY;
+					nRTC_RAM[0x1d] = RTC_MONTH;
+				}
+			}
+			break;
+		}
+		return;
+	}
 	switch( offset )
 	{
+	case 0x0090:	// SCSI0 next descriptor pointer
+		nHPC_SCSI0Descriptor = data;
+		break;
+
+	case 0x0094:	// SCSI0 control flags
+		nHPC_SCSI0DMACtrl = data;
+		#if 0
+		if (data & 0x80)
+		{
+			data32_t next;
+
+			printf("DMA activated for SCSI0\n");
+			printf("Descriptor block:\n");
+			printf("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
+				program_read_dword(nHPC_SCSI0Descriptor), program_read_dword(nHPC_SCSI0Descriptor+4),
+				program_read_dword(nHPC_SCSI0Descriptor+8));
+
+			next = program_read_dword(nHPC_SCSI0Descriptor+8);
+			printf("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
+				program_read_dword(next), program_read_dword(next+4),
+				program_read_dword(next+8));
+		}
+		#endif
+		break;
+
 	case 0x00ac:
 		verboselog( 2, "HPC Parallel Buffer Pointer Write: %08x (%08x)\n", data, mem_mask );
 		nHPC_ParBufPtr = data;
+		break;
+	case 0x0120:
+		if (!(mem_mask & 0x0000ff00))
+		{
+			verboselog( 2, "HPC SCSI Controller Register Write: %08x\n", ( data >> 8 ) & 0x000000ff );
+			wd33c93_w( 0, ( data >> 8 ) & 0x000000ff );
+		}
+		else
+		{
+			return;
+		}
+		break;
+	case 0x0124:
+		if (!(mem_mask & 0x0000ff00))
+		{
+			verboselog( 2, "HPC SCSI Controller Data Write: %08x\n", ( data >> 8 ) & 0x000000ff );
+			wd33c93_w( 1, ( data >> 8 ) & 0x000000ff );
+		}
+		else
+		{
+			return;
+		}
 		break;
 	case 0x01b0:
 		verboselog( 2, "HPC Misc. Status Write: %08x (%08x)\n", data, mem_mask );
@@ -230,122 +355,192 @@ static WRITE32_HANDLER( hpc_w )
 		nHPC_MiscStatus = data;
 		break;
 	case 0x01bc:
-		verboselog( 2, "HPC CPU Serial EEPROM Write: %08x (%08x)\n", data, mem_mask );
+//		verboselog( 2, "HPC CPU Serial EEPROM Write: %08x (%08x)\n", data, mem_mask );
 		if( data & 0x00000001 )
 		{
-			verboselog( 2, "    PRE pin high\n" );
 			verboselog( 2, "    CPU board LED on\n" );
 		}
-		if( data & 0x00000002 )
-		{
-			verboselog( 2, "    CS high\n" );
-			EEPROM_set_cs_line( ( data & 0x00000002 ) ? CLEAR_LINE : ASSERT_LINE );
-		}
-		if( data & 0x00000004 )
-		{
-			verboselog( 2, "    CLK high\n" );
-			EEPROM_set_clock_line( ( data & 0x00000004 ) ? CLEAR_LINE : ASSERT_LINE );
-		}
-		if( data & 0x00000008 )
-		{
-			verboselog( 2, "    Data high\n" );
-			EEPROM_write_bit( ( data & 0x00000008 ) ? 1 : 0 );
-		}
+		EEPROM_write_bit( (data & 0x00000008) ? 1 : 0 );
+		EEPROM_set_cs_line( (data & 0x00000002) ? ASSERT_LINE : CLEAR_LINE );
+		EEPROM_set_clock_line( (data & 0x00000004) ? CLEAR_LINE : ASSERT_LINE );
 		break;
 	case 0x01c4:
 		verboselog( 2, "HPC Local IO Register 0 Mask Write: %08x (%08x)\n", data, mem_mask );
 		nHPC_LocalIOReg0Mask = data;
 		break;
-	case 0x01d8:
-		verboselog( 2, "HPC VME Interrupt Mask 0 Read: %08x (%08x)\n", data, mem_mask );
+	case 0x01cc:
+		verboselog( 2, "HPC Local IO Register 1 Mask Write: %08x (%08x)\n", data, mem_mask );
+		nHPC_LocalIOReg1Mask = data;
+		break;
+	case 0x01d4:
+		verboselog( 2, "HPC VME Interrupt Mask 0 Write: %08x (%08x)\n", data, mem_mask );
 		nHPC_VMEIntMask0 = data;
+		break;
+	case 0x01d8:
+		verboselog( 2, "HPC VME Interrupt Mask 1 Write: %08x (%08x)\n", data, mem_mask );
+		nHPC_VMEIntMask1 = data;
 		break;
 	case 0x0d00:
 		verboselog( 2, "HPC DUART0 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+		scc_w(0, data);
 		break;
 	case 0x0d04:
 		verboselog( 2, "HPC DUART0 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
+		scc_w(2, data);
 		break;
 	case 0x0d08:
 		verboselog( 2, "HPC DUART0 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		scc_w(1, data);
 		break;
 	case 0x0d0c:
 		verboselog( 2, "HPC DUART0 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
+		scc_w(3, data);
 		break;
 	case 0x0d10:
 		if( ( data & 0x000000ff ) >= 0x00000020 )
 		{
-			verboselog( 2, "HPC DUART1 Channel B Control Write: %08x (%08x) %c\n", data, mem_mask, data & 0x000000ff );
+//			verboselog( 2, "HPC DUART1 Channel B Control Write: %08x (%08x) %c\n", data, mem_mask, data & 0x000000ff );
+			//printf( "%c", data & 0x000000ff );
 		}
 		else
 		{
-			verboselog( 2, "HPC DUART1 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+//			verboselog( 2, "HPC DUART1 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
 		}
-		printf( "%c", data & 0x000000ff );
 		break;
 	case 0x0d14:
-		verboselog( 2, "HPC DUART1 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
+		if( ( data & 0x000000ff ) >= 0x00000020 || ( data & 0x000000ff ) == 0x0d || ( data & 0x000000ff ) == 0x0a )
+		{
+			verboselog( 2, "HPC DUART1 Channel B Data Write: %08x (%08x) %c\n", data, mem_mask, data & 0x000000ff );
+			printf( "%c", data & 0x000000ff );
+		}
+		else
+		{
+			verboselog( 2, "HPC DUART1 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
+		}
 		break;
 	case 0x0d18:
-		verboselog( 2, "HPC DUART1 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		printf("HPC DUART1 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d1c:
 		verboselog( 2, "HPC DUART1 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d20:
-		verboselog( 2, "HPC DUART2 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+		printf("HPC DUART2 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d24:
 		verboselog( 2, "HPC DUART2 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d28:
-		verboselog( 2, "HPC DUART2 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		printf("HPC DUART2 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d2c:
 		verboselog( 2, "HPC DUART2 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d30:
-		verboselog( 2, "HPC DUART3 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+		printf("HPC DUART3 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d34:
 		verboselog( 2, "HPC DUART3 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d38:
-		verboselog( 2, "HPC DUART3 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		printf("HPC DUART3 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d3c:
 		verboselog( 2, "HPC DUART3 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	default:
-		verboselog( 0, "Unmapped HPC write: 0x%08x (%08x): %08x\n", 0x1fb80000 + offset, mem_mask, data);
+		printf("Unmapped HPC write: 0x%08x (%08x): %08x\n", 0x1fb80000 + offset, mem_mask, data);
 		break;
 	}
 }
 
+// INT/INT2/INT3 interrupt controllers
+static READ32_HANDLER( int_r )
+{
+	printf("INT: read @ ofs %x (mask %x) (PC=%x)\n", offset, mem_mask, activecpu_get_pc());
+	return 0;
+}
+
+static WRITE32_HANDLER( int_w )
+{
+	printf("INT: write %x to ofs %x (mask %x) (PC=%x)\n", data, offset, mem_mask, activecpu_get_pc());
+}
+
 static INTERRUPT_GEN( ip20_update_chips )
 {
-	mc_update();
+	mc_update(0);
+	nRTC_Temp++;
+	if( nRTC_Temp == 100 )
+	{
+		nRTC_Temp = 0;
+		RTC_HUNDREDTH++;
+	}
+	if( ( RTC_HUNDREDTH & 0x0f ) == 0x0a )
+	{
+		RTC_HUNDREDTH -= 0x0a;
+		RTC_HUNDREDTH += 0x10;
+		if( ( RTC_HUNDREDTH & 0xa0 ) == 0xa0 )
+		{
+			RTC_HUNDREDTH = 0;
+			RTC_SECOND++;
+		}
+	}
+	if( ( RTC_SECOND & 0x0f ) == 0x0a )
+	{
+		RTC_SECOND -= 0x0a;
+		RTC_SECOND += 0x10;
+		if( RTC_SECOND == 0x60 )
+		{
+			RTC_SECOND = 0;
+			RTC_MINUTE++;
+		}
+	}
+	if( ( RTC_MINUTE & 0x0f ) == 0x0a )
+	{
+		RTC_MINUTE -= 0x0a;
+		RTC_MINUTE += 0x10;
+		if( RTC_MINUTE == 0x60 )
+		{
+			RTC_MINUTE = 0;
+			RTC_HOUR++;
+		}
+	}
+	if( ( RTC_HOUR & 0x0f ) == 0x0a )
+	{
+		RTC_HOUR -= 0x0a;
+		RTC_HOUR += 0x10;
+		if( RTC_HOUR == 0x24 )
+		{
+			RTC_HOUR = 0;
+			RTC_DAY++;
+		}
+	}
 }
 
 static ADDRESS_MAP_START( ip204415_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE( 0x00000000, 0x001fffff ) AM_RAM AM_SHARE(10)
 	AM_RANGE( 0x08000000, 0x08ffffff ) AM_RAM AM_SHARE(5)
 	AM_RANGE( 0x09000000, 0x097fffff ) AM_RAM AM_SHARE(6)
 	AM_RANGE( 0x0a000000, 0x0a7fffff ) AM_RAM AM_SHARE(7)
 	AM_RANGE( 0x0c000000, 0x0c7fffff ) AM_RAM AM_SHARE(8)
 	AM_RANGE( 0x10000000, 0x107fffff ) AM_RAM AM_SHARE(9)
-	AM_RANGE( 0x08000000, 0x087fffff ) AM_RAM AM_SHARE(1)
-	AM_RANGE( 0x1fa00000, 0x1fa1ffff ) AM_READWRITE( mc_r, mc_w ) AM_SHARE(3)
-	AM_RANGE( 0x1fb80000, 0x1fb80fff ) AM_READWRITE( hpc_r, hpc_w ) AM_SHARE(4)
+	AM_RANGE( 0x18000000, 0x187fffff ) AM_RAM AM_SHARE(1)
+	AM_RANGE( 0x1fa00000, 0x1fa1ffff ) AM_READWRITE( mc_r, mc_w )
+	AM_RANGE( 0x1fb80000, 0x1fb8ffff ) AM_READWRITE( hpc_r, hpc_w )
+	AM_RANGE( 0x1fbd9000, 0x1fbd903f ) AM_READWRITE( int_r, int_w )
 	AM_RANGE( 0x1fc00000, 0x1fc7ffff ) AM_ROM AM_SHARE(2) AM_REGION( REGION_USER1, 0 )
-	AM_RANGE( 0x80000000, 0x8000ffff ) AM_RAM AM_SHARE(1)
+	AM_RANGE( 0x80000000, 0x801fffff ) AM_RAM AM_SHARE(10)
+	AM_RANGE( 0x88000000, 0x88ffffff ) AM_RAM AM_SHARE(5)
+	AM_RANGE( 0xa0000000, 0xa01fffff ) AM_RAM AM_SHARE(10)
 	AM_RANGE( 0xa8000000, 0xa8ffffff ) AM_RAM AM_SHARE(5)
 	AM_RANGE( 0xa9000000, 0xa97fffff ) AM_RAM AM_SHARE(6)
 	AM_RANGE( 0xaa000000, 0xaa7fffff ) AM_RAM AM_SHARE(7)
 	AM_RANGE( 0xac000000, 0xac7fffff ) AM_RAM AM_SHARE(8)
 	AM_RANGE( 0xb0000000, 0xb07fffff ) AM_RAM AM_SHARE(9)
 	AM_RANGE( 0xb8000000, 0xb87fffff ) AM_RAM AM_SHARE(1)
-	AM_RANGE( 0xbfa00000, 0xbfa1ffff ) AM_READWRITE( mc_r, mc_w ) AM_SHARE(3)
-	AM_RANGE( 0xbfb80000, 0xbfb80fff ) AM_READWRITE( hpc_r, hpc_w ) AM_SHARE(4)
+	AM_RANGE( 0xbfa00000, 0xbfa1ffff ) AM_READWRITE( mc_r, mc_w )
+	AM_RANGE( 0xbfb80000, 0xbfb8ffff ) AM_READWRITE( hpc_r, hpc_w )
+	AM_RANGE( 0xbfbd9000, 0xbfbd903f ) AM_READWRITE( int_r, int_w )
 	AM_RANGE( 0xbfc00000, 0xbfc7ffff ) AM_ROM AM_SHARE(2) /* BIOS Mirror */
 ADDRESS_MAP_END
 
@@ -353,19 +548,79 @@ static MACHINE_INIT( ip204415 )
 {
 	mc_init();
 
+	nHPC_MiscStatus = 0;
 	nHPC_ParBufPtr = 0;
 	nHPC_LocalIOReg0Mask = 0;
+	nHPC_LocalIOReg1Mask = 0;
 	nHPC_VMEIntMask0 = 0;
+	nHPC_VMEIntMask1 = 0;
+
+	nRTC_Temp = 0;
 }
+
+static void scsi_irq(int state)
+{
+}
+
+#if 0
+static SCSIConfigTable dev_table =
+{
+        1,                                      /* 1 SCSI device */
+        { { SCSI_ID_6, 0, SCSI_DEVICE_CDROM } } /* SCSI ID 6, using CHD 0, and it's a CD-ROM */
+};
+
+static struct WD33C93interface scsi_intf =
+{
+	&dev_table,		/* SCSI device table */
+	&scsi_irq,		/* command completion IRQ */
+};
+#endif
 
 static DRIVER_INIT( ip204415 )
 {
+	scc_init(NULL);
 }
 
 INPUT_PORTS_START( ip204415 )
 	PORT_START
 	PORT_BIT ( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
+static DEVICE_INIT( ip20_chdcd )
+{
+	return device_init_mess_cd(image);
+}
+
+static DEVICE_LOAD( ip20_chdcd )
+{
+	return device_load_mess_cd(image, file);
+}
+
+static DEVICE_UNLOAD( ip20_chdcd )
+{
+	device_unload_mess_cd(image);
+}
+
+static const char *ip20_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
+{
+	snprintf(buf, bufsize, "CD-ROM #%d", id + 1);
+	return buf;
+}
+
+static void ip20_chdcd_getinfo(struct IODevice *dev)
+{
+	/* CHD CD-ROM */
+	dev->type = IO_CDROM;
+	dev->name = ip20_cdrom_getname;
+	dev->count = 4;
+	dev->file_extensions = "chd\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = device_init_ip20_chdcd;
+	dev->load = device_load_ip20_chdcd;
+	dev->unload = device_unload_ip20_chdcd;
+}
 
 static struct mips3_config config =
 {
@@ -383,6 +638,7 @@ MACHINE_DRIVER_START( ip204415 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT( ip204415 )
+	MDRV_NVRAM_HANDLER(93C56)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(800, 600)
@@ -399,6 +655,7 @@ ROM_START( ip204415 )
 ROM_END
 
 SYSTEM_CONFIG_START( ip204415 )
+	CONFIG_DEVICE(ip20_chdcd_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */

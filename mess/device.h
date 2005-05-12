@@ -33,7 +33,8 @@ typedef enum
 	IO_SNAPSHOT,	/* 10 - Complete 'snapshot' of the state of the computer */
 	IO_QUICKLOAD,	/* 11 - Allow to load program/data into memory, without matching any actual device */
 	IO_MEMCARD,		/* 12 - Memory card */
-	IO_COUNT		/* 13 - Total Number of IO_devices for searching */
+	IO_CDROM,	/* 13 - optical CD-ROM disc */
+	IO_COUNT		/* 14 - Total Number of IO_devices for searching */
 } iodevice_t;
 
 struct IODevice;

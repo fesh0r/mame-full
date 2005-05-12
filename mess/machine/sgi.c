@@ -23,6 +23,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
+void *tMC_UpdateTimer;
 static data32_t nMC_CPUControl0;
 static data32_t nMC_CPUControl1;
 static data32_t nMC_Watchdog;
@@ -64,6 +65,7 @@ static data32_t nMC_DMALineZoomStride;
 static data32_t nMC_DMAGIO64Addr;
 static data32_t nMC_DMAMode;
 static data32_t nMC_DMAZoomByteCnt;
+static data32_t nMC_DMARunning;
 
 READ32_HANDLER( mc_r )
 {
@@ -244,8 +246,61 @@ READ32_HANDLER( mc_r )
 		verboselog( 2, "RPSS 100ns Counter Read: %08x (%08x)\n", nMC_RPSSCounter, mem_mask );
 		return nMC_RPSSCounter;
 		break;
+	case 0x2000:
+	case 0x2004:
+	case 0x2008:
+	case 0x200c:
+		verboselog( 2, "DMA Memory Address Read: %08x (%08x)\n", nMC_DMAMemAddr, mem_mask );
+		return nMC_DMAMemAddr;
+		break;
+	case 0x2010:
+	case 0x2014:
+		verboselog( 2, "DMA Line Count and Width Read: %08x (%08x)\n", nMC_DMALineCntWidth, mem_mask );
+		return nMC_DMALineCntWidth;
+		break;
+	case 0x2018:
+	case 0x201c:
+		verboselog( 2, "DMA Line Zoom and Stride Read: %08x (%08x)\n", nMC_DMALineZoomStride, mem_mask );
+		return nMC_DMALineZoomStride;
+		break;
+	case 0x2020:
+	case 0x2024:
+	case 0x2028:
+	case 0x202c:
+		verboselog( 2, "DMA GIO64 Address Read: %08x (%08x)\n", nMC_DMAGIO64Addr, mem_mask );
+		return nMC_DMAGIO64Addr;
+		break;
+	case 0x2030:
+	case 0x2034:
+		verboselog( 2, "DMA Mode Write: %08x (%08x)\n", nMC_DMAMode, mem_mask );
+		return nMC_DMAMode;
+		break;
+	case 0x2038:
+	case 0x203c:
+		verboselog( 2, "DMA Zoom Count Read: %08x (%08x)\n", nMC_DMAZoomByteCnt, mem_mask );
+		return nMC_DMAZoomByteCnt;
+		break;
+//	case 0x2040:
+//	case 0x2044:
+//		verboselog( 2, "DMA Start Write: %08x (%08x)\n", data, mem_mask );
+		// Start DMA
+//		nMC_DMARunning = 1;
+//		break;
+	case 0x2048:
+	case 0x204c:
+		verboselog( 2, "VDMA Running Read: %08x (%08x)\n", nMC_DMARunning, mem_mask );
+		if( nMC_DMARunning == 1 )
+		{
+			nMC_DMARunning = 0;
+			return 0x00000040;
+		}
+		else
+		{
+			return 0;
+		}
+		break;
 	}
-	verboselog( 0, "Unmapped MC read: 0x%08x (%08x)\n", 0x1fb80000 + offset, mem_mask );
+	verboselog( 0, "Unmapped MC read: 0x%08x (%08x)\n", 0x1fa00000 + offset, mem_mask );
 	return 0;
 }
 
@@ -433,6 +488,7 @@ WRITE32_HANDLER( mc_w )
 		verboselog( 2, "DMA GIO64 Address Write + Start DMA: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAGIO64Addr = data;
 		// Start DMA
+		nMC_DMARunning = 1;
 		break;
 	case 0x2030:
 	case 0x2034:
@@ -447,16 +503,25 @@ WRITE32_HANDLER( mc_w )
 	case 0x2040:
 	case 0x2044:
 		verboselog( 2, "DMA Start Write: %08x (%08x)\n", data, mem_mask );
+		// Start DMA
+		nMC_DMARunning = 1;
 		break;
 	case 0x2070:
 	case 0x2074:
 		verboselog( 2, "DMA GIO64 Address Write + Default Params Write + Start DMA: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAGIO64Addr = data;
+		// Start DMA
+		nMC_DMARunning = 1;
 		break;
 	default:
 		verboselog( 0, "Unmapped MC write: 0x%08x: %08x (%08x)\n", 0x1fa00000 + offset, data, mem_mask );
 		break;
 	}
+}
+
+void mc_update( int nParam )
+{
+	nMC_RPSSCounter += 1000;
 }
 
 void mc_init()
@@ -502,9 +567,6 @@ void mc_init()
 	nMC_DMAGIO64Addr = 0;
 	nMC_DMAMode = 0;
 	nMC_DMAZoomByteCnt = 0;
-}
-
-void mc_update()
-{
-	nMC_RPSSCounter += 1000;
+	tMC_UpdateTimer = timer_alloc( mc_update );
+	timer_adjust( tMC_UpdateTimer, TIME_IN_SEC(1.0/10000.0), 0, TIME_IN_SEC(1.0/10000.0) );
 }

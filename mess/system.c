@@ -484,6 +484,12 @@ TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
 TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
+	/* SILICON GRAPHICS */
+	DRIVER( ip204415 )	/* IP20 Indigo2 */
+	DRIVER( ip225015 )
+	DRIVER( ip224613 )
+	DRIVER( ip244415 )
+
 	/* TEXAS INSTRUMENTS */
 	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
 	DRIVER( ti990_4 )	/* 1976 TI 990/4									*/
@@ -814,10 +820,6 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER( abc800m )
 	DRIVER( abc800c )
 	DRIVER( abc806 )
-
-	/* SGI */
-	DRIVER( ip204415 )	/* IP20 IRIS Indigo workstation                     */
-	DRIVER( ip225015 )	/* IP22 Indy workstation                            */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
