@@ -93,6 +93,7 @@ static struct rc_option opts2[] = {
 	{ "snapshot",  "dump", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
 	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
 	{ "memcard", "memc", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach image to memcard device" },
+	{ "cdrom", "cdrm", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to CD-ROM device" },
 	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
 	{ "MAME Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
