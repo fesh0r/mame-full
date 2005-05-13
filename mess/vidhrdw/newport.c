@@ -925,7 +925,7 @@ static void DoREX3Command(void)
 
 WRITE32_HANDLER( newport_rex3_w )
 {
-	data32_t nTemp;
+	data32_t nTemp=0;
 	if( offset & 0x00000200 )
 	{
 		verboselog( 2, "Start Cmd\n" );
