@@ -69,6 +69,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START (readport2, ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x90, 0x91) AM_READ( msx_printer_r )
 	AM_RANGE( 0xa0, 0xa7) AM_READ( msx_psg_r )
 	AM_RANGE( 0xa8, 0xab) AM_READ( ppi8255_0_r )
@@ -80,6 +81,7 @@ static ADDRESS_MAP_START (readport2, ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START (writeport2, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x77, 0x77) AM_WRITE( msx_90in1_w )
 	AM_RANGE( 0x7c, 0x7d) AM_WRITE( msx_fmpac_w )
 	AM_RANGE( 0x90, 0x91) AM_WRITE( msx_printer_w )
