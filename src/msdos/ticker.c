@@ -130,7 +130,7 @@ cycles_t rdtsc_cycle_counter( void )
 //	uclock_cycle_counter
 //============================================================
 
-cycles_t uclock_cycle_counter( void )
+static cycles_t uclock_cycle_counter( void )
 {
 	/* this assumes that uclock_t is 64-bit (which it is) */
 	return uclock();
@@ -164,7 +164,7 @@ cycles_t osd_cycles(void)
 //	osd_cycles_per_second
 //============================================================
 
-cycles_t osd_cycles_per_second( void )
+cycles_t osd_cycles_per_second(void)
 {
 	return cycles_per_sec;
 }

@@ -786,6 +786,8 @@ static void init_joycodes(void)
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
 				sprintf(tempname, "Mouse %d Y", mouse + 1);
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+				sprintf(tempname, "Mouse %d Z", mouse + 1);
+				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 				for (button = 0; button < 3; button++)
 				{

@@ -1,4 +1,18 @@
 
+0.96
+
+- Added -skip_validitychecks [smf].
+
+
+==========================================================================
+
+0.95
+
+- Updated for new sound core. [smf/DoomSooth]
+
+
+==========================================================================
+
 0.92
 
 - Added -zvg_overlay, -zvg_artwork, -zvg_menu & -zvg 3. [Mark Perreira]

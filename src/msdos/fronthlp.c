@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include "driver.h"
 #include "info.h"
 #include "audit.h"
@@ -6,10 +7,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <unzip.h>
 #include <zlib.h>
+#include "sound/samples.h"
 
 #ifndef S_ISDIR
 #define S_ISDIR(mode) ((mode) & _S_IFDIR)
@@ -272,7 +273,7 @@ void identify_file(const char* name)
 {
 	FILE *f;
 	int length;
-	char* data;
+	unsigned char* data;
 	char hash[HASH_BUF_SIZE];
 
 	f = fopen(name,"rb");
@@ -299,7 +300,7 @@ void identify_file(const char* name)
 	}
 
 	/* allocate space for entire file */
-	data = (char*)malloc(length);
+	data = (unsigned char*)malloc(length);
 	if (!data) {
 		fclose(f);
 		return;
@@ -411,15 +412,19 @@ void identify_dir(const char* dirname)
 void romident(const char* name,int enter_dirs) {
 	struct stat s;
 
-	if (stat(name,&s) != 0)	{
+	if (stat(name,&s) != 0)
+	{
 		printf("%s: %s\n",name,strerror(errno));
 		return;
 	}
 
-	if (S_ISDIR(s.st_mode)) {
+	if (S_ISDIR(s.st_mode))
+	{
 		if (enter_dirs)
 			identify_dir(name);
-	} else {
+	}
+	else
+	{
 		unsigned l = strlen(name);
 		if (l>=4 && stricmp(name+l-4,".zip")==0)
 			identify_zip(name);
@@ -438,12 +443,16 @@ void CLIB_DECL terse_printf(const char *fmt,...)
 
 int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
+	int cmp;
 	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
 	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
 	char name1[200],name2[200];
 	namecopy(name1,drv1->description);
 	namecopy(name2,drv2->description);
-	return strcmp(name1,name2);
+	cmp = stricmp(name1,name2);
+	if (cmp == 0)
+		cmp = stricmp(drv1->description, drv2->description);
+	return cmp;
 }
 
 
@@ -460,6 +469,8 @@ int frontend_help (const char *gamename)
 	struct InternalMachineDriver drv;
 	int i, j;
 	const char *all_games = "*";
+	char *pdest = NULL;
+	int result = 0;
 
 	/* display help unless a game or an utility are specified */
 	if (!gamename && !help && !list && !ident && !verify)
@@ -469,7 +480,7 @@ int frontend_help (const char *gamename)
 	{
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n\n",build_version);
+				"Copyright (C) 1997-2005 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list         for a brief list of supported games\n"
@@ -477,13 +488,12 @@ int frontend_help (const char *gamename)
 				"        MAME -showusage    for a brief list of options\n"
 #if defined( MSDOS )
 				"        MAME -createconfig to create a mame.cfg\n\n"
+				"For usage instructions, please consult the file msdos.txt\n");
 #else
 				"        MAME -showconfig   for a list of configuration options\n"
 				"        MAME -createconfig to create a mame.ini\n\n"
+				"For usage instructions, please consult the file windows.txt\n");
 #endif
-				"For usage instructions, please consult the corresponding readme.\n\n"
-				"MS-DOS:   msdos.txt\n"
-				"Windows:  windows.txt\n");
 		#else
 		showmessinfo();
 		#endif
@@ -496,6 +506,7 @@ int frontend_help (const char *gamename)
 
 	/* since the cpuintrf structure is filled dynamically now, we have to init first */
 	cpuintrf_init();
+	sndintrf_init();
 
 	/* sort the list if requested */
 	if (sortby)
@@ -507,9 +518,9 @@ int frontend_help (const char *gamename)
 
 		/* qsort as appropriate */
 		if (sortby == 1)
-			qsort(drivers, count, sizeof(drivers[0]), compare_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_names);
 		else if (sortby == 2)
-			qsort(drivers, count, sizeof(drivers[0]), compare_driver_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_driver_names);
 	}
 
 	switch (list)  /* front-end utilities ;) */
@@ -583,7 +594,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							printf(" %s",strchr(drivers[i]->description,'('));
 					}
 					printf("\"\n");
@@ -605,7 +618,7 @@ int frontend_help (const char *gamename)
 						const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 						if( drv.sound[j].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+							samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 						if (samplenames != 0 && samplenames[0] != 0)
 						{
@@ -644,7 +657,7 @@ int frontend_help (const char *gamename)
 					const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 					if( drv.sound[k].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)drv.sound[k].sound_interface)->samplenames;
+							samplenames = ((struct Samplesinterface *)drv.sound[k].config)->samplenames;
 #endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
@@ -736,24 +749,13 @@ int frontend_help (const char *gamename)
 					/* Then, cpus */
 
 					for(j=0;j<MAX_CPU;j++)
-					{
-						if (x_cpu[j].cpu_flags & CPU_AUDIO_CPU)
-							printf("[%-6s] ",cputype_name(x_cpu[j].cpu_type));
-						else
-							printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
-					}
+						printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
 
 					/* Then, sound chips */
 
 					for(j=0;j<MAX_SOUND;j++)
 					{
-						if (sound_num(&x_sound[j]))
-						{
-							printf("%dx",sound_num(&x_sound[j]));
-							printf("%-9s ",sound_name(&x_sound[j]));
-						}
-						else
-							printf("%-11s ",sound_name(&x_sound[j]));
+						printf("%-11s ",sndtype_name(x_sound[j].sound_type));
 					}
 
 					/* Lastly, the name of the game and a \newline */
@@ -835,7 +837,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							strcat(name_ref,strchr(drivers[i]->description,'('));
 					}
 
@@ -889,7 +893,7 @@ int frontend_help (const char *gamename)
 #if (HAS_SAMPLES)
 							if (drv.sound[j].sound_type == SOUND_SAMPLES)
 							{
-								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+								samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 								break;
 							}
 #endif
@@ -945,7 +949,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							printf(" %s",strchr(drivers[i]->description,'('));
 					}
 					printf("\n");
@@ -1571,7 +1577,7 @@ j = 0;	// count only the main cpu
 
 					if (count)
 //						printf("%s (%d-%d)\t%d\n",soundtype_name(type),minyear,maxyear,count);
-						printf("%s\t%d\n",soundtype_name(type),count);
+						printf("%s\t%d\n",sndtype_name(type),count);
 				}
 			}
 
@@ -1670,7 +1676,7 @@ j = 0;	// count only the main cpu
 				{
 #if (HAS_SAMPLES)
  					if( drv.sound[j].sound_type == SOUND_SAMPLES )
- 						samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+ 						samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 				}
 #endif
