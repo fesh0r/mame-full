@@ -279,6 +279,9 @@ static READ32_HANDLER( newport_xmap0_r )
 		return XMAP0_MODETBLIDX;
 		break;
 	}
+
+	verboselog( 2, "XMAP0 Unknown nREX3_DCBRegSelect Value: %02x, returning 0\n", nREX3_DCBRegSelect );
+	return 0x00000000;
 }
 
 static WRITE32_HANDLER( newport_xmap0_w )
@@ -370,6 +373,9 @@ static READ32_HANDLER( newport_xmap1_r )
 		return XMAP1_MODETBLIDX;
 		break;
 	}
+
+	verboselog( 2, "XMAP1 Unknown nREX3_DCBRegSelect Value: %02x, returning 0\n", nREX3_DCBRegSelect );
+	return 0x00000000;
 }
 
 static WRITE32_HANDLER( newport_xmap1_w )
