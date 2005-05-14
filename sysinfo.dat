@@ -7089,6 +7089,60 @@ $bio
 Commodore PET series
 
 
+Usage:
+
+LOADING A DIRECTORY OF AVAILABLE FILES:
+
+LOAD"$"[,<devicenumber>]
+
+i.e. to see what is on a disk (device number=8) type:
+
+LOAD"$",8
+
+to see what is on a tape type (default):
+
+LOAD"$"
+
+LOADING FILES:
+
+To load a file into memory from an external device:
+
+LOAD"<filename>"[,<devicenumber>]
+
+Disk Usage:
+
+Since the diskdrive is device number 8:
+
+LOAD"<filename>",8
+
+e.g.
+
+LOAD"PACMAN",8
+
+Tape Usage:
+
+Since the tape drive is the default device:
+
+LOAD"<filename>"
+
+e.g.
+
+LOAD"PACMAN"
+
+To run the file currently in memory type:
+
+RUN
+
+
+MESS Emulation State:
+
+I can't get programs to load from disk
+
+Writing and executing programs in memory seems to work
+ 
+There is white text that pops up to give status information on the bottom few lines that eventually block your view of the cursor and text entry
+
+
 History and Trivia:
 
 The name PET, besides being a marketing ploy to imply a user-friendly machine, is an acronym 
@@ -7115,6 +7169,13 @@ The Commodore 8000 series was a "bundle". It was made up of the computer (most o
 and the bi-directional 132 columns, 160 CPS printer. The 8050 has two 6502's, 4 KB of RAM and 
 12 KB of ROM (which contains the DOS). It was sold with Ozz - a Database, and a version of the 
 spreadsheet "Visicalc".
+
+
+Links:
+
+PDF's of manuals:
+http://www.commodore.ca/manuals/default.htm
+http://www.commodore.ca
 
 
 $end
