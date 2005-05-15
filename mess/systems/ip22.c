@@ -111,7 +111,12 @@ static READ32_HANDLER( pio4_r )
 	{
 	case 0x030/4:
 		verboselog( 2, "Serial 1 Command Transfer Read, 0x1fbd9830: %02x\n", 0x04 );
-		if (activecpu_get_pc() == 0x9fc204c8) return 0x00000005;
+		switch(activecpu_get_pc())
+		{
+			case 0x9fc204c8:	// normal core returns this
+			case 0x9fc204c4:	// DRC core returns this
+				return 0x00000005;
+		}
 		return 0x00000004;
 		break;
 	case 0x038/4:
