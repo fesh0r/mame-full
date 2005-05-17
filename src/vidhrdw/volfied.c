@@ -77,10 +77,10 @@ WRITE16_HANDLER( volfied_video_ctrl_w )
 READ16_HANDLER( volfied_video_ctrl_r )
 {
 	/* Could this be some kind of hardware collision detection? If bit 6 is
-	   set the game will check for collisions with the large enemy, whereas
-	   bit 5 does the same for small enemies. Bit 7 is also used although
-	   its purpose is unclear. This register is usually read during a VBI
-	   and stored in work RAM for later use. */
+       set the game will check for collisions with the large enemy, whereas
+       bit 5 does the same for small enemies. Bit 7 is also used although
+       its purpose is unclear. This register is usually read during a VBI
+       and stored in work RAM for later use. */
 
 	return 0x60;
 }
@@ -97,7 +97,7 @@ WRITE16_HANDLER( volfied_sprite_ctrl_w )
 
 
 /*******************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 *******************************************************/
 
 static void refresh_pixel_layer(void)
@@ -106,18 +106,23 @@ static void refresh_pixel_layer(void)
 
 	/*********************************************************
 
-	VIDEO RAM has 2 screens x 256 rows x 512 columns x 16 bits
+    VIDEO RAM has 2 screens x 256 rows x 512 columns x 16 bits
 
-	x---------------  select image
-	-x--------------  ?             (used for 3-D corners)
-	--x-------------  ?             (used for 3-D walls)
-	---xxxx---------  image B
-	-------xxx------  palette index bits #8 to #A
-	----------x-----  ?
-	-----------x----  ?
-	------------xxxx  image A
+    x---------------  select image
+    -x--------------  ?             (used for 3-D corners)
+    --x-------------  ?             (used for 3-D walls)
+    ---xxxx---------  image B
+    -------xxx------  palette index bits #8 to #A
+    ----------x-----  ?
+    -----------x----  ?
+    ------------xxxx  image A
 
-	*********************************************************/
+    '3d' corners & walls are made using unknown bits for each
+    line the player draws.  However, on the pcb they just
+    appear as solid black. Perhaps it was prototype code that
+    was turned off at some stage.
+
+    *********************************************************/
 
 	UINT16* p = video_ram;
 
@@ -130,7 +135,7 @@ static void refresh_pixel_layer(void)
 	{
 		if (line_dirty[y])
 		{
-			for (x = 0; x < Machine->drv->screen_width; x++)
+			for (x = 1; x < Machine->drv->screen_width + 1; x++) // Hmm, 1 pixel offset is needed to align properly with sprites
 			{
 				int color = (p[x] << 2) & 0x700;
 
@@ -148,7 +153,7 @@ static void refresh_pixel_layer(void)
 					color |= p[x] & 0xf;
 				}
 
-				plot_pixel(pixel_layer, x, y, Machine->pens[color]);
+				plot_pixel(pixel_layer, x - 1, y, Machine->pens[color]);
 			}
 
 			line_dirty[y] = 0;

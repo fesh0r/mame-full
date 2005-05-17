@@ -1,47 +1,47 @@
  /**************************************************************************\
- *				  Texas Instruments TMS320x25 DSP Emulator					*
- *																			*
- *				   Copyright (C) 2001-2002+ Tony La Porta					*
- *						Written for the MAME project.						*
- *																			*
- *																			*
- *	Three versions of the chip are available, and they are: 				*
- *	TMS320C25   Internal ROM one time programmed at TI  					*
- *	TMS320E25   Internal ROM programmable as a normal EPROM 				*
- *	TMS320P25   Internal ROM programmable once as a normal EPROM only		*
- *	These devices can also be used as a MicroController with external ROM	*
- *																			*
- *																			*
- *		Notes : The term 'DMA' within this document, is in reference		*
- *					to Direct Memory Addressing, and NOT the usual term		*
- *					of Direct Memory Access.								*
- *				This is a word based microcontroller, with addressing		*
- *					architecture based on the Harvard addressing scheme.	*
- *																			*
- *																			*
- *																			*
- *	**** Change Log ****													*
- *																			*
- *	TLP (2x-May-2001)														*
- *	 - Work began on this emulator  										*
- *	TLP (12-Jul-2001)														*
- *	 - First private release												*
- *	TLP (xx-Dec-2001) Ver 0.11  											*
- *	 - Various undocumented fixes											*
- *	TLP (13-Jul-2002) Ver 0.12  											*
- *	 - Corrected IRQ2 vector pointer										*
- *	 - Fixed the signedness in many equation based instructions				*
- *	 - Adjusted the level sensing for the Signal inputs 					*
- *	 - Added the ability to view the CPU in the debugger when it's halted	*
- *	TLP (16-Nov-2002)														*
- *	 - First public release after nearly 1.5 years! 						*
- *	 - Adjusted more signedness instructions (ADDH, SUBC, SUBH, etc)		*
- *	TLP (21-Dec-2002)														*
- *	 - Added memory banking for the CNFD, CNFP and CONF instructions		*
- *	 - Corrected IRQ masking checks 										*
- *	TLP (25-Dec-2002) Ver 1.10  											*
- *	 - Added internal timer													*
- *																			*
+ *                Texas Instruments TMS320x25 DSP Emulator                  *
+ *                                                                          *
+ *                 Copyright (C) 2001-2002+ Tony La Porta                   *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *                                                                          *
+ *  Three versions of the chip are available, and they are:                 *
+ *  TMS320C25   Internal ROM one time programmed at TI                      *
+ *  TMS320E25   Internal ROM programmable as a normal EPROM                 *
+ *  TMS320P25   Internal ROM programmable once as a normal EPROM only       *
+ *  These devices can also be used as a MicroController with external ROM   *
+ *                                                                          *
+ *                                                                          *
+ *      Notes : The term 'DMA' within this document, is in reference        *
+ *                  to Direct Memory Addressing, and NOT the usual term     *
+ *                  of Direct Memory Access.                                *
+ *              This is a word based microcontroller, with addressing       *
+ *                  architecture based on the Harvard addressing scheme.    *
+ *                                                                          *
+ *                                                                          *
+ *                                                                          *
+ *  **** Change Log ****                                                    *
+ *                                                                          *
+ *  TLP (2x-May-2001)                                                       *
+ *   - Work began on this emulator                                          *
+ *  TLP (12-Jul-2001)                                                       *
+ *   - First private release                                                *
+ *  TLP (xx-Dec-2001) Ver 0.11                                              *
+ *   - Various undocumented fixes                                           *
+ *  TLP (13-Jul-2002) Ver 0.12                                              *
+ *   - Corrected IRQ2 vector pointer                                        *
+ *   - Fixed the signedness in many equation based instructions             *
+ *   - Adjusted the level sensing for the Signal inputs                     *
+ *   - Added the ability to view the CPU in the debugger when it's halted   *
+ *  TLP (16-Nov-2002)                                                       *
+ *   - First public release after nearly 1.5 years!                         *
+ *   - Adjusted more signedness instructions (ADDH, SUBC, SUBH, etc)        *
+ *  TLP (21-Dec-2002)                                                       *
+ *   - Added memory banking for the CNFD, CNFP and CONF instructions        *
+ *   - Corrected IRQ masking checks                                         *
+ *  TLP (25-Dec-2002) Ver 1.10                                              *
+ *   - Added internal timer                                                 *
+ *                                                                          *
  \**************************************************************************/
 
 /*****************************************************************************
@@ -49,23 +49,23 @@
 
  Fix the levels for S_IN and S_OUT - use assert/release line
 
- #	Support for the built in Timer/Counter Page 91
-  	When idling, Counter must still be activly counting down. When counter
-  	reaches 0 it should issue a TINT (if it's not masked), then come out of
-  	IDLE mode.
-  	If TINT is masked, the Timer still needs to count down.
+ #  Support for the built in Timer/Counter Page 91
+    When idling, Counter must still be activly counting down. When counter
+    reaches 0 it should issue a TINT (if it's not masked), then come out of
+    IDLE mode.
+    If TINT is masked, the Timer still needs to count down.
 
- #	Support for the built in Serial Port
- #	Support for the Global memory register
- #	Support for the switch for RAM block 0 banking between RAM and ROM space
- #	Correct the mulit-cycle instruction cycle counts
- #	Add support to set ROM & RAM as Internal/External in order to correctly
-  	compute cycle timings
- #	Possibly add internal memory into here (instead of having it in the driver)
- #	Check (read) Hold signal level during execution loop ?
- #	Fix bugs
- #	Fix more bugs :-)
- #	Add/fix other things I forgot
+ #  Support for the built in Serial Port
+ #  Support for the Global memory register
+ #  Support for the switch for RAM block 0 banking between RAM and ROM space
+ #  Correct the mulit-cycle instruction cycle counts
+ #  Add support to set ROM & RAM as Internal/External in order to correctly
+    compute cycle timings
+ #  Possibly add internal memory into here (instead of having it in the driver)
+ #  Check (read) Hold signal level during execution loop ?
+ #  Fix bugs
+ #  Fix more bugs :-)
+ #  Add/fix other things I forgot
 *****************************************************************************/
 
 /*
@@ -255,11 +255,11 @@ typedef void (*opcode_fn) (void);
 | 15 | 14 | 13 | 12 |  11 | 10 |   9  | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 | <----ARP---> | OV | OVM |  1 | INTM | <--------------DP---------------> | */
 
-#define ARP_REG		0xe000	/* ARP	(Auxiliary Register Pointer) */
-#define OV_FLAG		0x1000	/* OV	(Overflow flag) 1 indicates an overflow */
-#define OVM_FLAG	0x0800	/* OVM	(Overflow Mode bit) 1 forces ACC overflow to greatest positive or negative saturation value */
-#define INTM_FLAG	0x0200	/* INTM	(Interrupt Mask flag) 0 enables maskable interrupts */
-#define DP_REG		0x01ff	/* DP	(Data bank memory Pointer) */
+#define ARP_REG		0xe000	/* ARP  (Auxiliary Register Pointer) */
+#define OV_FLAG		0x1000	/* OV   (Overflow flag) 1 indicates an overflow */
+#define OVM_FLAG	0x0800	/* OVM  (Overflow Mode bit) 1 forces ACC overflow to greatest positive or negative saturation value */
+#define INTM_FLAG	0x0200	/* INTM (Interrupt Mask flag) 0 enables maskable interrupts */
+#define DP_REG		0x01ff	/* DP   (Data bank memory Pointer) */
 
 
 /***********************************************************************************
@@ -271,36 +271,36 @@ typedef void (*opcode_fn) (void);
 | 15 | 14 | 13 |  12  | 11 |  10 | 9 | 8 |   7  |  6 |  5  |  4 |  3 |  2  | 1 | 0  |
 | <----ARB---> | CNF0 | TC | SXM | C | 1 | CNF1 | HM | FSM | XF | FO | TXM | <-PM-> | */
 
-#define ARB_REG		0xe000	/* ARB	(Auxiliary Register pointer Backup) */
-#define CNF0_REG	0x1000	/* CNF0	(Onchip RAM CoNFiguration) 0 means B0=data memory, 1means B0=program memory */
-#define CNF1_REG	0x0080	/* CNF1	(Onchip RAM CoNFiguration) 0 means B0=data memory, 1means B0=program memory */
-#define TC_FLAG		0x0800	/* TC	(Test Control flag) */
-#define SXM_FLAG	0x0400	/* SXM	(Sign eXtension Mode) */
-#define C_FLAG		0x0200	/* C	(Carry flag) */
-#define HM_FLAG		0x0040	/* HM	(Processor Hold Mode) */
-#define FSM_FLAG	0x0020	/* FSM	(Frame Synchronization Mode - for serial port) */
-#define XF_FLAG		0x0010	/* XF	(XF output pin status) */
-#define FO_FLAG		0x0008	/* FO	(Serial port Format In/Out mode) */
-#define TXM_FLAG	0x0004	/* TXM	(Transmit Mode - for serial port) */
-#define PM_REG		0x0003	/* PM	(Product shift Mode) */
+#define ARB_REG		0xe000	/* ARB  (Auxiliary Register pointer Backup) */
+#define CNF0_REG	0x1000	/* CNF0 (Onchip RAM CoNFiguration) 0 means B0=data memory, 1means B0=program memory */
+#define CNF1_REG	0x0080	/* CNF1 (Onchip RAM CoNFiguration) 0 means B0=data memory, 1means B0=program memory */
+#define TC_FLAG		0x0800	/* TC   (Test Control flag) */
+#define SXM_FLAG	0x0400	/* SXM  (Sign eXtension Mode) */
+#define C_FLAG		0x0200	/* C    (Carry flag) */
+#define HM_FLAG		0x0040	/* HM   (Processor Hold Mode) */
+#define FSM_FLAG	0x0020	/* FSM  (Frame Synchronization Mode - for serial port) */
+#define XF_FLAG		0x0010	/* XF   (XF output pin status) */
+#define FO_FLAG		0x0008	/* FO   (Serial port Format In/Out mode) */
+#define TXM_FLAG	0x0004	/* TXM  (Transmit Mode - for serial port) */
+#define PM_REG		0x0003	/* PM   (Product shift Mode) */
 
 
-#define OV		( R.STR0 & OV_FLAG)			/* OV	(Overflow flag) */
-#define OVM		( R.STR0 & OVM_FLAG)		/* OVM	(Overflow Mode bit) 1 indicates an overflow */
-#define INTM	( R.STR0 & INTM_FLAG)		/* INTM	(Interrupt enable flag) 0 enables maskable interrupts */
-#define ARP		((R.STR0 & ARP_REG) >> 13)	/* ARP	(Auxiliary Register Pointer) */
-#define DP		((R.STR0 & DP_REG) << 7)	/* DP	(Data memory Pointer bit) */
-#define ARB		( R.STR1 & ARB_REG)			/* ARB	(Backup Auxiliary Register pointer) */
-#define CNF0	( R.STR1 & CNF0_REG)		/* CNF0	(Onchip Ram Config register) */
-#define TC		( R.STR1 & TC_FLAG)			/* TC	(Test Control Flag) */
-#define SXM		( R.STR1 & SXM_FLAG)		/* SXM	(Sign Extension Mode) */
-#define CARRY	( R.STR1 & C_FLAG)			/* C	(Carry Flag for accumulator) */
-#define HM		( R.STR1 & HM_FLAG)			/* HM	(Processor Hold Mode) */
-#define FSM		( R.STR1 & FSM_FLAG)		/* FSM	(Frame Synchronization Mode - for serial port) */
-#define XF		( R.STR1 & FSM_FLAG)		/* XF	(XF output pin status) */
-#define FO		( R.STR1 & FO_FLAG)			/* FO	(Serial port Format In/Out mode) */
-#define TXM		( R.STR1 & TXM_FLAG)		/* TXM	(Transmit Mode - for serial port) */
-#define PM		( R.STR1 & PM_REG)			/* PM	(P register shift Mode. See SHIFT_Preg_TO_ALU below )*/
+#define OV		( R.STR0 & OV_FLAG)			/* OV   (Overflow flag) */
+#define OVM		( R.STR0 & OVM_FLAG)		/* OVM  (Overflow Mode bit) 1 indicates an overflow */
+#define INTM	( R.STR0 & INTM_FLAG)		/* INTM (Interrupt enable flag) 0 enables maskable interrupts */
+#define ARP		((R.STR0 & ARP_REG) >> 13)	/* ARP  (Auxiliary Register Pointer) */
+#define DP		((R.STR0 & DP_REG) << 7)	/* DP   (Data memory Pointer bit) */
+#define ARB		( R.STR1 & ARB_REG)			/* ARB  (Backup Auxiliary Register pointer) */
+#define CNF0	( R.STR1 & CNF0_REG)		/* CNF0 (Onchip Ram Config register) */
+#define TC		( R.STR1 & TC_FLAG)			/* TC   (Test Control Flag) */
+#define SXM		( R.STR1 & SXM_FLAG)		/* SXM  (Sign Extension Mode) */
+#define CARRY	( R.STR1 & C_FLAG)			/* C    (Carry Flag for accumulator) */
+#define HM		( R.STR1 & HM_FLAG)			/* HM   (Processor Hold Mode) */
+#define FSM		( R.STR1 & FSM_FLAG)		/* FSM  (Frame Synchronization Mode - for serial port) */
+#define XF		( R.STR1 & FSM_FLAG)		/* XF   (XF output pin status) */
+#define FO		( R.STR1 & FO_FLAG)			/* FO   (Serial port Format In/Out mode) */
+#define TXM		( R.STR1 & TXM_FLAG)		/* TXM  (Transmit Mode - for serial port) */
+#define PM		( R.STR1 & PM_REG)			/* PM   (P register shift Mode. See SHIFT_Preg_TO_ALU below )*/
 
 #define DMA		(DP | (R.opcode.b.l & 0x7f))	/* address used in direct memory access operations */
 #define DMApg0	(R.opcode.b.l & 0x7f)			/* address used in direct memory access operations for sst instruction */
@@ -383,7 +383,7 @@ INLINE void MODIFY_AR_ARP(void)
 
 INLINE void CALCULATE_ADD_CARRY(void)
 {
-	if ( ((INT32)(oldacc.d) < 0) && ((INT32)(R.ACC.d) >= 0) ) {
+	if ( (UINT32)(oldacc.d) > (UINT32)(R.ACC.d) ) {
 		SET1(C_FLAG);
 	}
 	else {
@@ -393,7 +393,7 @@ INLINE void CALCULATE_ADD_CARRY(void)
 
 INLINE void CALCULATE_SUB_CARRY(void)
 {
-	if ( ((INT32)(oldacc.d) >= 0) && ((INT32)(R.ACC.d) < 0) ) {
+	if ( (UINT32)(oldacc.d) < (UINT32)(R.ACC.d) ) {
 		CLR1(C_FLAG);
 	}
 	else {
@@ -410,7 +410,7 @@ INLINE void CALCULATE_ADD_OVERFLOW(INT32 addval)
 		{
 		// Stroff:HACK! support for overflow capping as implemented results in bad DSP floating point math in many
 		// System22 games - for example, the score display in Prop Cycle.
-		//	R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+		//  R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
 		}
 	}
 }
@@ -536,9 +536,10 @@ static void abst(void)
 {
 		if ( (INT32)(R.ACC.d) < 0 ) {
 			R.ACC.d = -R.ACC.d;
-			if (OVM) {
+			if (R.ACC.d == 0x80000000)
+			{
 				SET0(OV_FLAG);
-				if (R.ACC.d == 0x80000000) R.ACC.d-- ;
+				if (OVM) R.ACC.d-- ;
 			}
 		}
 		CLR1(C_FLAG);
@@ -715,7 +716,7 @@ static void blkd(void)
 		R.ALU.d = M_RDRAM(R.PFC);
 		PUTDATA(R.ALU.d);
 		R.PFC++;
-		tms32025_icount -= (1*CLK);
+		R.tms32025_dec_cycles += (1*CLK);
 }
 static void blkp(void)
 {										/** Fix cycle timing **/
@@ -726,7 +727,7 @@ static void blkp(void)
 		R.ALU.d = M_RDROM(R.PFC);
 		PUTDATA(R.ALU.d);
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void blz(void)
 {
@@ -1094,9 +1095,9 @@ static void mac(void)			/** RAM blocks B0,B1,B2 may be important ! */
 		CALCULATE_ADD_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = ( R.ALU.w.l * M_RDROM(R.PFC) );
+		R.Preg.d = ( (INT16)R.ALU.w.l * (INT16)M_RDROM(R.PFC) );
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void macd(void)			/** RAM blocks B0,B1,B2 may be important ! */
 {								/** Fix cycle timing **/
@@ -1114,9 +1115,9 @@ static void macd(void)			/** RAM blocks B0,B1,B2 may be important ! */
 			M_WRTRAM((memaccess+1),R.ALU.w.l);
 		}
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = ( R.ALU.w.l * M_RDROM(R.PFC) );
+		R.Preg.d = ( (INT16)R.ALU.w.l * (INT16)M_RDROM(R.PFC) );
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void mar(void)		/* LARP and NOP are a subset of this instruction */
 {
@@ -1167,7 +1168,7 @@ static void neg(void)
 		else SET0(C_FLAG);
 }
 /*
-static void nop(void) { }	// NOP is a subset of the MAR instruction
+static void nop(void) { }   // NOP is a subset of the MAR instruction
 */
 static void norm(void)
 {
@@ -1386,7 +1387,7 @@ static void sqra(void)
 		CALCULATE_ADD_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = (R.ALU.w.l * R.ALU.w.l);
+		R.Preg.d = ((INT16)R.ALU.w.l * (INT16)R.ALU.w.l);
 }
 static void sqrs(void)
 {
@@ -1397,7 +1398,7 @@ static void sqrs(void)
 		CALCULATE_SUB_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = (R.ALU.w.l * R.ALU.w.l);
+		R.Preg.d = ((INT16)R.ALU.w.l * (INT16)R.ALU.w.l);
 }
 static void sst(void)
 {
@@ -1441,15 +1442,15 @@ static void subb(void)
 static void subc(void)
 {
 	/**
-	 * conditional subtraction, which may be used for division
-	 * execute 16 times for 16-bit division
-	 *
-	 * input:	32 bit numerator in accumulator
-	 *			16 bit denominator in data memory
-	 *
-	 * output:	remainder in upper 16 bits
-	 *			quotient in lower 16 bits
-	 */
+     * conditional subtraction, which may be used for division
+     * execute 16 times for 16-bit division
+     *
+     * input:   32 bit numerator in accumulator
+     *          16 bit denominator in data memory
+     *
+     * output:  remainder in upper 16 bits
+     *          quotient in lower 16 bits
+     */
 	GETDATA(15,SXM);
 	if( R.ACC.d >= R.ALU.d )
 	{
@@ -1461,13 +1462,13 @@ static void subc(void)
 	}
 // Stroff: HACK! support for overflow capping as implemented results in bad DSP floating point math in many
 // System22 games - for example, the score display in Prop Cycle.
-//	R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+//  R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
 
-//		if ((INT32)((oldacc.d ^ subval ) & (oldacc.d ^ R.ALU.d)) < 0)
-//		{
-//			SET0(OV_FLAG);
-//		}
-//		CALCULATE_SUB_CARRY();
+//      if ((INT32)((oldacc.d ^ subval ) & (oldacc.d ^ R.ALU.d)) < 0)
+//      {
+//          SET0(OV_FLAG);
+//      }
+//      CALCULATE_SUB_CARRY();
 }
 
 static void subh(void)
@@ -1522,7 +1523,7 @@ static void tblr(void)
 		}
 		R.ALU.w.l = M_RDROM(R.PFC);
 		if ( (CNF0) && ( (UINT16)(R.PFC) >= 0xff00 ) ) {}	/** TMS32025 only */
-		else tms32025_icount -= (1*CLK);
+		else R.tms32025_dec_cycles += (1*CLK);
 		PUTDATA(R.ALU.w.l);
 		R.PFC++;
 }
@@ -1532,9 +1533,9 @@ static void tblw(void)
 		{
 			R.PFC = R.ACC.w.l;
 		}
-		tms32025_icount -= (1*CLK);
+		R.tms32025_dec_cycles += (1*CLK);
 		GETDATA(0,0);
-		if (R.external_mem_access) tms32025_icount -= (1*CLK);
+		if (R.external_mem_access) R.tms32025_dec_cycles += (1*CLK);
 		M_WRTROM(R.PFC, R.ALU.w.l);
 		R.PFC++;
 }
@@ -1578,7 +1579,7 @@ static void zals(void)
 
 
 /***********************************************************************
- *	Cycle Timings
+ *  Cycle Timings
  ***********************************************************************/
 
 static unsigned cycles_main[256]=
@@ -1660,7 +1661,7 @@ static unsigned cycles_CE_subset[256]=
 
 
 /***********************************************************************
- *	Opcode Table
+ *  Opcode Table
  ***********************************************************************/
 
 static opcode_fn opcode_main[256]=
@@ -1743,12 +1744,12 @@ static opcode_fn opcode_CE_subset[256]=
 
 
 /****************************************************************************
- *	Inits CPU emulation
+ *  Inits CPU emulation
  ****************************************************************************/
 static void tms32025_init (void)
 {
 	int cpu = cpu_getactivecpu();
-	
+
 	R.intRAM = malloc(0x800*2);
 
 	state_save_register_UINT16("tms32025", cpu, "PC", &R.PC, 1);
@@ -1786,7 +1787,7 @@ static void tms32025_init (void)
 }
 
 /****************************************************************************
- *	Reset registers to their initial values
+ *  Reset registers to their initial values
  ****************************************************************************/
 static void tms32025_reset (void *param)
 {
@@ -1813,7 +1814,7 @@ static void tms32025_reset (void *param)
 	/* Reset the Data/Program address banks */
 	memset(tms32025_pgmmap, 0, sizeof(tms32025_pgmmap));
 	memset(tms32025_datamap, 0, sizeof(tms32025_datamap));
-	
+
 	tms32025_datamap[0] = &R.intRAM[0x000];			/* B2 */
 	tms32025_datamap[4] = &R.intRAM[0x200];			/* B0 */
 	tms32025_datamap[5] = &R.intRAM[0x280];			/* B0 */
@@ -1828,7 +1829,7 @@ static void tms32026_reset (void *param)
 	/* Reset the Data/Program address banks */
 	memset(tms32025_pgmmap, 0, sizeof(tms32025_pgmmap));
 	memset(tms32025_datamap, 0, sizeof(tms32025_datamap));
-	
+
 	tms32025_datamap[0] = &R.intRAM[0x000];			/* B2 */
 	tms32025_datamap[4] = &R.intRAM[0x200];			/* B0 */
 	tms32025_datamap[5] = &R.intRAM[0x280];			/* B0 */
@@ -1846,7 +1847,7 @@ static void tms32026_reset (void *param)
 
 
 /****************************************************************************
- *	Shut down CPU emulation
+ *  Shut down CPU emulation
  ****************************************************************************/
 static void tms32025_exit (void)
 {
@@ -1857,14 +1858,14 @@ static void tms32025_exit (void)
 
 
 /****************************************************************************
- *	Issue an interrupt if necessary
+ *  Issue an interrupt if necessary
  ****************************************************************************/
 static int process_IRQs(void)
 {
 	/********** Interrupt Flag Register (IFR) **********
-		|  5  |  4  |  3  |  2  |  1  |  0  |
-		| XINT| RINT| TINT| INT2| INT1| INT0|
-	*/
+        |  5  |  4  |  3  |  2  |  1  |  0  |
+        | XINT| RINT| TINT| INT2| INT1| INT0|
+    */
 	R.tms32025_irq_cycles = 0;
 
 	/* Dont service Interrupts if masked, or prev instruction was EINT ! */
@@ -1902,7 +1903,7 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x08) && (IMR & 0x08)) {		/* Timer IRQ (internal) */
-//			logerror("TMS32025:  Active TINT (Timer)\n");
+//          logerror("TMS32025:  Active TINT (Timer)\n");
 			R.PC = 0x0018;
 			R.idle = 0;
 			R.IFR &= (~0x08);
@@ -1910,7 +1911,7 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x10) && (IMR & 0x10)) {		/* Serial port receive IRQ (internal) */
-//			logerror("TMS32025:  Active RINT (Serial recieve)\n");
+//          logerror("TMS32025:  Active RINT (Serial recieve)\n");
 			DRR = S_IN(TMS32025_DR);
 			R.PC = 0x001A;
 			R.idle = 0;
@@ -1919,7 +1920,7 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x20) && (IMR & 0x20)) {		/* Serial port transmit IRQ (internal) */
-//			logerror("TMS32025:  Active XINT (Serial transmit)\n");
+//          logerror("TMS32025:  Active XINT (Serial transmit)\n");
 			S_OUT(TMS32025_DX,DXR);
 			R.PC = 0x001C;
 			R.idle = 0;
@@ -1954,7 +1955,7 @@ INLINE void process_timer(int counts)
 
 
 /****************************************************************************
- *	Execute ICount cycles. Exit when 0 or less
+ *  Execute ICount cycles. Exit when 0 or less
  ****************************************************************************/
 static int tms32025_execute(int cycles)
 {
@@ -2114,7 +2115,7 @@ static int tms32025_execute(int cycles)
 
 
 /****************************************************************************
- *	Get all registers in given buffer
+ *  Get all registers in given buffer
  ****************************************************************************/
 static void tms32025_get_context (void *dst)
 {
@@ -2128,7 +2129,7 @@ static void tms32025_get_context (void *dst)
 
 
 /****************************************************************************
- *	Set all registers to given values
+ *  Set all registers to given values
  ****************************************************************************/
 static void tms32025_set_context (void *src)
 {
@@ -2142,7 +2143,7 @@ static void tms32025_set_context (void *src)
 
 
 /****************************************************************************
- *	Set IRQ line state
+ *  Set IRQ line state
  ****************************************************************************/
 static void set_irq_line(int irqline, int state)
 {
@@ -2151,13 +2152,13 @@ static void set_irq_line(int irqline, int state)
 	if (state != CLEAR_LINE)
 	{
 		R.IFR |= (1 << irqline);
-//		R.IFR &= 0x07;
+//      R.IFR &= 0x07;
 	}
 }
 
 
 /****************************************************************************
- *	Return a formatted string for a register
+ *  Return a formatted string for a register
  ****************************************************************************/
 static offs_t tms32025_dasm(char *buffer, offs_t pc)
 {
@@ -2167,6 +2168,126 @@ static offs_t tms32025_dasm(char *buffer, offs_t pc)
 	sprintf( buffer, "$%04X", M_RDOP(pc) );
 	return 2;
 #endif
+}
+
+
+/****************************************************************************
+ *  Opcode fetcher
+ ****************************************************************************/
+static int tms32025_readop(UINT32 offset, int size, UINT64 *value)
+{
+	void *ptr;
+
+	/* skip if not custom */
+	if (!tms32025_pgmmap[offset >> 8])
+		return 0;
+
+	ptr = &((UINT8 *)&tms32025_pgmmap[offset >> 8])[offset & 0xff];
+	switch (size)
+	{
+		case 1:	*value = *((data8_t *) ptr);
+		case 2:	*value = *((data16_t *) ptr);
+		case 4:	*value = *((data32_t *) ptr);
+		case 8:	*value = *((data64_t *) ptr);
+	}
+	return 1;
+}
+
+
+/****************************************************************************
+ *  Memory reader
+ ****************************************************************************/
+static int tms32025_read(int space, UINT32 offset, int size, UINT64 *value)
+{
+	void *ptr = NULL;
+	UINT64 temp = 0;
+
+	switch (space)
+	{
+		case ADDRESS_SPACE_PROGRAM:
+			ptr = tms32025_pgmmap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_DATA:
+			ptr = tms32025_datamap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_IO:
+			return 0;
+	}
+
+	switch (size)
+	{
+		case 1:
+			*value = ((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)];
+			break;
+		case 2:
+			*value = ((data16_t *)ptr)[(offset & 0xff) / 2];
+			break;
+		case 4:
+			tms32025_read(space, offset + 0, 2, &temp);
+			*value = temp << 16;
+			tms32025_read(space, offset + 2, 2, &temp);
+			*value |= temp & 0xffff;
+			break;
+		case 8:
+			tms32025_read(space, offset + 0, 4, &temp);
+			*value = temp << 32;
+			tms32025_read(space, offset + 4, 4, &temp);
+			*value |= temp & 0xffffffff;
+			break;
+	}
+	return 1;
+}
+
+
+/****************************************************************************
+ *  Memory writer
+ ****************************************************************************/
+static int tms32025_write(int space, UINT32 offset, int size, UINT64 value)
+{
+	void *ptr = NULL;
+
+	switch (space)
+	{
+		case ADDRESS_SPACE_PROGRAM:
+			ptr = tms32025_pgmmap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_DATA:
+			ptr = tms32025_datamap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_IO:
+			return 0;
+	}
+
+	switch (size)
+	{
+		case 1:
+			((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)] = value;
+			break;
+		case 2:
+			((data16_t *)ptr)[(offset & 0xff) / 2] = value;
+			break;
+		case 4:
+			tms32025_write(space, offset + 0, 2, value >> 16);
+			tms32025_write(space, offset + 2, 2, value);
+			break;
+		case 8:
+			tms32025_write(space, offset + 0, 4, value >> 32);
+			tms32025_write(space, offset + 4, 4, value);
+			break;
+	}
+	return 1;
 }
 
 
@@ -2219,7 +2340,7 @@ static void tms32025_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32025_PRD:		M_WRTRAM(3,info->i);					break;
 		case CPUINFO_INT_REGISTER + TMS32025_IMR:		M_WRTRAM(4,info->i);					break;
 		case CPUINFO_INT_REGISTER + TMS32025_GREG:		M_WRTRAM(5,info->i);					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					R.irq_callback = info->irqcallback;		break;
 	}
@@ -2245,12 +2366,12 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1*CLK;						break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16+1;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16+1;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 17;					break;
@@ -2309,6 +2430,9 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms32025_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32025_dasm;		break;
+		case CPUINFO_PTR_READ:							info->read = tms32025_read;				break;
+		case CPUINFO_PTR_WRITE:							info->write = tms32025_write;			break;
+		case CPUINFO_PTR_READOP:						info->readop = tms32025_readop;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = R.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32025_reg_layout;			break;

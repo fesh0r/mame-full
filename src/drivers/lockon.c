@@ -80,7 +80,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
      	  int offs0 = object_ram[offs+6] << 8;              // Lower 6-bits go into upper ROM portion
      	  int bit7  = (object_ram[offs+6] >> 7) & 0x1;      // Selects which ROM to use in calculating lookup
           int lut;
- 
+
 		  if(!object_ram[offs+4] && !object_ram[offs+5])
                 continue;
         if(object_ram[offs+7] == 0xfc || object_ram[offs+7] == 0xff)   // ?

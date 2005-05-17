@@ -9,6 +9,8 @@ int pc10_nmi_enable;	/* nmi enable */
 int pc10_dog_di;		/* watchdog disable */
 int pc10_int_detect;	/* interrupt detect */
 int pc10_gun_controller;
+int pc10_game_mode;		/* Used in Single monitor version to display Game or PPU */
+int pc10_dispmask_old;
 
 /* Locals */
 static int cart_sel;
@@ -20,13 +22,15 @@ static int MMC2_bank[4], MMC2_bank_latch[2];
 
 /*************************************
  *
- *	Init machine
+ *  Init machine
  *
  *************************************/
 MACHINE_INIT( pc10 )
 {
 	/* initialize latches and flip-flops */
 	pc10_nmi_enable = pc10_dog_di = pc10_dispmask = pc10_sdcs = pc10_int_detect = 0;
+
+	pc10_game_mode = pc10_dispmask_old = 0;
 
 	cart_sel = 0;
 	cntrl_mask = 1;
@@ -51,7 +55,7 @@ MACHINE_INIT( pc10 )
 
 /*************************************
  *
- *	BIOS ports handling
+ *  BIOS ports handling
  *
  *************************************/
 READ8_HANDLER( pc10_port_0_r )
@@ -62,11 +66,11 @@ READ8_HANDLER( pc10_port_0_r )
 WRITE8_HANDLER( pc10_SDCS_w )
 {
 	/*
-		Hooked to CLR on LS194A - Sheet 2, bottom left.
-		Drives character and color code to 0.
-		It's used to keep the screen black during redraws.
-		Also hooked to the video sram. Prevent writes.
-	*/
+        Hooked to CLR on LS194A - Sheet 2, bottom left.
+        Drives character and color code to 0.
+        It's used to keep the screen black during redraws.
+        Also hooked to the video sram. Prevent writes.
+    */
 	pc10_sdcs = ~data & 1;
 }
 
@@ -127,7 +131,7 @@ WRITE8_HANDLER( pc10_CARTSEL_w )
 
 /*************************************
  *
- *	RP5H01 handling
+ *  RP5H01 handling
  *
  *************************************/
 READ8_HANDLER( pc10_prot_r )
@@ -156,11 +160,11 @@ WRITE8_HANDLER( pc10_prot_w )
 		RP5H01_0_reset_w( 0, ~data & 0x01 );	/* D0 */
 		RP5H01_0_enable_w( 0, 1 );
 
-		/* this thing gets dense at some point						*/
-		/* it wants to jump and execute an opcode at $ffff, wich	*/
-		/* is the actual protection memory area						*/
-		/* setting the whole 0x2000 region every time is a waste	*/
-		/* so we just set $ffff with the current value				*/
+		/* this thing gets dense at some point                      */
+		/* it wants to jump and execute an opcode at $ffff, wich    */
+		/* is the actual protection memory area                     */
+		/* setting the whole 0x2000 region every time is a waste    */
+		/* so we just set $ffff with the current value              */
 		memory_region( REGION_CPU1 )[0xffff] = pc10_prot_r(0);
 	}
 }
@@ -168,7 +172,7 @@ WRITE8_HANDLER( pc10_prot_w )
 
 /*************************************
  *
- *	Input Ports
+ *  Input Ports
  *
  *************************************/
 WRITE8_HANDLER( pc10_in0_w )
@@ -259,7 +263,7 @@ static struct RP5H01_interface rp5h01_interface =
 
 /*************************************
  *
- *	Common init for all games
+ *  Common init for all games
  *
  *************************************/
 DRIVER_INIT( playch10 )
@@ -279,7 +283,7 @@ DRIVER_INIT( playch10 )
 
 /**********************************************************************************
  *
- *	Game and Board-specific initialization
+ *  Game and Board-specific initialization
  *
  **********************************************************************************/
 

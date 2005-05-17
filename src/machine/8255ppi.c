@@ -17,75 +17,75 @@
     Control Word:
 
         bit 7   - Mode set flag (1=active)
-		bit 6-5 - Group A Mode selection
-		            00 - Mode 0
-					01 - Mode 1
-					1x - Mode 2
-		bit 4   - Port A direction (1=input 0=output)
-		bit 3   - Port C upper direction (1=input 0=output)
-		bit 2   - Group B Mode selection
-		            0 - Mode 0
-					1 - Mode 1
-		bit 1   - Port B direction (1=input 0=output)
-		bit 0   - Port C lower direction (1=input 0=output)
+        bit 6-5 - Group A Mode selection
+                    00 - Mode 0
+                    01 - Mode 1
+                    1x - Mode 2
+        bit 4   - Port A direction (1=input 0=output)
+        bit 3   - Port C upper direction (1=input 0=output)
+        bit 2   - Group B Mode selection
+                    0 - Mode 0
+                    1 - Mode 1
+        bit 1   - Port B direction (1=input 0=output)
+        bit 0   - Port C lower direction (1=input 0=output)
 
-		Port A and Port C upper are in group A, and Port B and Port C lower
-		are in group B
+        Port A and Port C upper are in group A, and Port B and Port C lower
+        are in group B
 
 
     Mode 0: Basic Input/Output
         In Mode 0, each of the ports (A, B and C) operate as independent
         ports for whom direction can be set independently.
 
-		Port C Usage In Mode 0:
+        Port C Usage In Mode 0:
 
-			bits 7-4	Input/Output A (direction specified by ctrl bit 3)
-			bits 3-0	Input/Output B (direction specified by ctrl bit 0)
+            bits 7-4    Input/Output A (direction specified by ctrl bit 3)
+            bits 3-0    Input/Output B (direction specified by ctrl bit 0)
 
-	Mode 1: Strobed Input/Output
-		In Mode 1, Port A and Port B use their resepective parts of Port C to
-		either generate or accept handshaking signals.  The STB (strobe) input
-		"loads" data into the port, and the	IBF (input buffer full) output is
-		then asserted, and the INTR (interrupt request) output is triggered if
-		interrupts are enabled.  Bits 7-6 of Port C remain usable as
-		conventional IO.
+    Mode 1: Strobed Input/Output
+        In Mode 1, Port A and Port B use their resepective parts of Port C to
+        either generate or accept handshaking signals.  The STB (strobe) input
+        "loads" data into the port, and the IBF (input buffer full) output is
+        then asserted, and the INTR (interrupt request) output is triggered if
+        interrupts are enabled.  Bits 7-6 of Port C remain usable as
+        conventional IO.
 
-		Group A Port C Usage In Mode 1:
+        Group A Port C Usage In Mode 1:
 
-			bits 7-6	Input/Output (direction specified by ctrl bit 3)
-			bit 5		IBFa (input buffer full A) output
-			bit 4		!STBa (strobe A) input
-			bit 3		INTRa (interrupt request A) output
+            bits 7-6    Input/Output (direction specified by ctrl bit 3)
+            bit 5       IBFa (input buffer full A) output
+            bit 4       !STBa (strobe A) input
+            bit 3       INTRa (interrupt request A) output
 
-		Group B Port C Usage In Mode 1:
+        Group B Port C Usage In Mode 1:
 
-			bit 2		!STBb (strobe B) input
-			bit 1		IBFb (input buffer full B) output
-			bit 0		INTRb (interrupt request B) output
-		
+            bit 2       !STBb (strobe B) input
+            bit 1       IBFb (input buffer full B) output
+            bit 0       INTRb (interrupt request B) output
 
-	Mode 2: Strobed Bi-directional Bus	
-		Mode 2 is used to implement a two way handshaking bus.
 
-		When data is written to port A, the OBF (output buffer full) output
-		will be asserted by the PPI.  However, port A will not be asserted
-		unless the ACK input is asserted, otherwise port A will be high
-		impedence.
+    Mode 2: Strobed Bi-directional Bus
+        Mode 2 is used to implement a two way handshaking bus.
 
-		The STB input and IBF output behaves similar to how it does under mode
-		1.  Bits 2-0 of Port C remain usable as conventional IO.
+        When data is written to port A, the OBF (output buffer full) output
+        will be asserted by the PPI.  However, port A will not be asserted
+        unless the ACK input is asserted, otherwise port A will be high
+        impedence.
 
-		Port C Usage In Mode 2:
+        The STB input and IBF output behaves similar to how it does under mode
+        1.  Bits 2-0 of Port C remain usable as conventional IO.
 
-			bit 7		!OBFa (output buffer full A) output
-			bit 6		!ACKa (acknowledge A) input
-			bit 5		IBFa (interrupt buffer full A) output
-			bit 4		!STBa (strobe A) input
-			bit 3		INTRa (interrupt A) output
-			bit 2-0		Reserved by Group B
+        Port C Usage In Mode 2:
+
+            bit 7       !OBFa (output buffer full A) output
+            bit 6       !ACKa (acknowledge A) input
+            bit 5       IBFa (interrupt buffer full A) output
+            bit 4       !STBa (strobe A) input
+            bit 3       INTRa (interrupt A) output
+            bit 2-0     Reserved by Group B
 
     KT 10/01/2000 - Added bit set/reset feature for control port
-	              - Added more accurate port i/o data handling
+                  - Added more accurate port i/o data handling
                   - Added output reset when control mode is programmed
 
 *********************************************************************/
@@ -97,7 +97,7 @@
 static int num;
 
 typedef struct
-{
+	{
 	read8_handler port_read[3];
 	write8_handler port_write[3];
 
@@ -165,16 +165,16 @@ static void ppi8255_get_handshake_signals(ppi8255 *chip, int is_read, data8_t *r
 			handshake |= chip->ibf_a ? 0x20 : 0x00;
 			handshake |= (chip->ibf_a && chip->inte_a) ? 0x08 : 0x00;
 			mask |= 0x28;
-		}
+	}
 		else
-		{
+	{
 			handshake |= chip->obf_a ? 0x00 : 0x80;
 			handshake |= (chip->obf_a && chip->inte_a) ? 0x08 : 0x00;
 			mask |= 0x88;
-		}
+	}
 	}
 	else if (chip->groupA_mode == 2)
-	{
+  	{
 		handshake |= chip->inte_a ? 0x08 : 0x00;
 		handshake |= chip->obf_a ? 0x00 : 0x80;
 		handshake |= chip->ibf_a ? 0x20 : 0x00;
@@ -183,20 +183,20 @@ static void ppi8255_get_handshake_signals(ppi8255 *chip, int is_read, data8_t *r
 
 	/* group B */
 	if (chip->groupB_mode == 1)
-	{
+  	{
 		if (chip->portA_dir)
 		{
 			handshake |= chip->ibf_b ? 0x02 : 0x00;
 			handshake |= (chip->ibf_b && chip->inte_b) ? 0x01 : 0x00;
 			mask |= 0x03;
-		}
+  			}
 		else
-		{
+  			{
 			handshake |= chip->obf_b ? 0x00 : 0x02;
 			handshake |= (chip->obf_b && chip->inte_b) ? 0x01 : 0x00;
 			mask |= 0x03;
 		}
-	}
+  			}
 
 	*result &= ~mask;
 	*result |= handshake & mask;
@@ -238,8 +238,8 @@ static void ppi8255_input(ppi8255 *chip, int port, data8_t data)
 			if (changed)
 				ppi8255_write_port(chip, 2);
 		}
+		}
 	}
-}
 
 
 
@@ -248,12 +248,12 @@ static data8_t ppi8255_read_port(ppi8255 *chip, int port)
 	data8_t result = 0x00;
 
 	if (chip->in_mask[port])
-	{
+				{
 		if (chip->port_read[port])
 			ppi8255_input(chip, port, chip->port_read[port](0));
 
 		result |= chip->read[port] & chip->in_mask[port];
-	}
+				}
 	result |= chip->latch[port] & chip->out_mask[port];
 
 	/* read special port 2 signals */
@@ -261,12 +261,12 @@ static data8_t ppi8255_read_port(ppi8255 *chip, int port)
 		ppi8255_get_handshake_signals(chip, 1, &result);
 
 	return result;
-}
+  			}
 
 
 
 int ppi8255_r(int which, int offset)
-{
+				{
 	ppi8255 *chip = &chips[which];
 	int result = 0;
 
@@ -275,7 +275,7 @@ int ppi8255_r(int which, int offset)
 	{
 		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
-	}
+			}
 
 	offset %= 4;
 
@@ -285,15 +285,15 @@ int ppi8255_r(int which, int offset)
 		case 1: /* Port B read */
 		case 2: /* Port C read */
 			result = ppi8255_read_port(chip, offset);
-			break;
+				break;
 
 		case 3: /* Control word */
 			result = 0xFF;
-			break;
-	}
+				break;
+		}
 
 	return result;
-}
+  	}
 
 
 
@@ -327,33 +327,33 @@ void ppi8255_w(int which, int offset, int data)
 
 	offset %= 4;
 
-	switch(offset)
-	{
-		case 0: /* Port A write */
+  	switch( offset )
+  	{
+  	case 0: /* Port A write */
 		case 1: /* Port B write */
-		case 2: /* Port C write */
+  	case 2: /* Port C write */
 			chip->latch[offset] = data;
 			ppi8255_write_port(chip, offset);
 
 			switch(offset)
-			{
-				case 0:
+		{
+			case 0:
 					if (!chip->portA_dir && (chip->groupA_mode != 0))
-					{
+			{
 						chip->obf_a = 1;
 						ppi8255_write_port(chip, 2);
-					}
-					break;
-
-				case 1:
-					if (!chip->portB_dir && (chip->groupB_mode != 0))
-					{
-						chip->obf_b = 1;
-						ppi8255_write_port(chip, 2);
-					}
-					break;
 			}
 			break;
+
+			case 1:
+					if (!chip->portB_dir && (chip->groupB_mode != 0))
+			{
+						chip->obf_b = 1;
+						ppi8255_write_port(chip, 2);
+			}
+			break;
+	}
+  	break;
 
 		case 3: /* Control word */
 			if (data & 0x80)
@@ -362,19 +362,19 @@ void ppi8255_w(int which, int offset, int data)
 			}
 			else
 			{
-				/* bit set/reset */
-				int bit;
+  			/* bit set/reset */
+  			int bit;
 
-				bit = (data >> 1) & 0x07;
+  			bit = (data >> 1) & 0x07;
 
-				if (data & 1)
+  			if (data & 1)
 					chip->latch[2] |= (1<<bit);		/* set bit */
-				else
+  			else
 					chip->latch[2] &= ~(1<<bit);	/* reset bit */
 
 				ppi8255_write_port(chip, 2);
-			}
-			break;
+				}
+				break;
 	}
 }
 
@@ -457,16 +457,16 @@ static void set_mode(int which, int data, int call_handlers)
 	if (chip->groupA_mode == 3)
 		chip->groupA_mode = 2;
 
-	/* Port A direction */
+  	/* Port A direction */
 	if (chip->portA_dir)
 		chip->in_mask[0] = 0xFF, chip->out_mask[0] = 0x00;	/* input */
-	else
+          else
 		chip->in_mask[0] = 0x00, chip->out_mask[0] = 0xFF; 	/* output */
 
-	/* Port B direction */
+  	/* Port B direction */
 	if (chip->portB_dir)
 		chip->in_mask[1] = 0xFF, chip->out_mask[1] = 0x00;	/* input */
-	else
+           else
 		chip->in_mask[1] = 0x00, chip->out_mask[1] = 0xFF; 	/* output */
 
 	/* Port C upper direction */
@@ -475,14 +475,14 @@ static void set_mode(int which, int data, int call_handlers)
 	else
 		chip->in_mask[2] = 0x00, chip->out_mask[2] = 0xF0;	/* output */
 
-	/* Port C lower direction */
+  	/* Port C lower direction */
 	if (chip->portCL_dir)
 		chip->in_mask[2] |= 0x0F;	/* input */
 	else
 		chip->out_mask[2] |= 0x0F;	/* output */
 
 	/* now depending on the group modes, certain Port C lines may be replaced
-	 * with varying control signals */
+     * with varying control signals */
 	switch(chip->groupA_mode)
 	{
 		case 0:	/* Group A mode 0 */
@@ -513,7 +513,7 @@ static void set_mode(int which, int data, int call_handlers)
 			chip->in_mask[2] &= ~0x07;
 			chip->out_mask[2] &= ~0x07;
 			break;
-	}
+		}
 
 	/* KT: 25-Dec-99 - 8255 resets latches when mode set */
 	chip->latch[0] = chip->latch[1] = chip->latch[2] = 0;

@@ -1,7 +1,7 @@
 /***************************************************************************
 
-Wily Tower				(c) 1984 Irem
-Fighting Basketball		(c) 1984 Paradise Co. Ltd.
+Wily Tower              (c) 1984 Irem
+Fighting Basketball     (c) 1984 Paradise Co. Ltd.
 
 driver by Nicola Salmoria
 
@@ -163,13 +163,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( wilytowr )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -243,13 +243,14 @@ static int p1,p2;
 
 static WRITE8_HANDLER( snddata_w )
 {
+	int num_ays = (sndti_to_sndnum(SOUND_AY8910, 1) != -1) ? 2 : 1;
 	if ((p2 & 0xf0) == 0xe0)
 		AY8910_control_port_0_w(0,offset);
 	else if ((p2 & 0xf0) == 0xa0)
 		AY8910_write_port_0_w(0,offset);
-	else if ((p1 & 0xe0) == 0x60)
+	else if (num_ays == 2 && (p1 & 0xe0) == 0x60)
 		AY8910_control_port_1_w(0,offset);
-	else if ((p1 & 0xe0) == 0x40)
+	else if (num_ays == 2 && (p1 & 0xe0) == 0x40)
 		AY8910_write_port_1_w(0,offset);
 	else // if ((p2 & 0xf0) != 0x70)
 		/* the port address is the data, while the data seems to be control bits */
@@ -331,8 +332,8 @@ static ADDRESS_MAP_START( i8039_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( i8039_readport, ADDRESS_SPACE_IO, 8 )
-//	AM_RANGE(0x00, 0xff)
-//	AM_RANGE(I8039_t1, I8039_t1)
+//  AM_RANGE(0x00, 0xff)
+//  AM_RANGE(I8039_t1, I8039_t1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( i8039_writeport, ADDRESS_SPACE_IO, 8 )
@@ -557,10 +558,10 @@ static MACHINE_DRIVER_START( wilytowr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 3579545/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
-	
+
 	MDRV_SOUND_ADD(AY8910, 3579545/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
@@ -593,10 +594,10 @@ static MACHINE_DRIVER_START( fghtbskt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/4/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -719,7 +720,7 @@ ROM_START( fghtbskt )
 	ROM_LOAD( "fb18.32a",     0x4000, 0x2000, CRC(c23ddcd7) SHA1(f73d142ac0baae519ed633a923e132eb1836adbb) )
 	ROM_LOAD( "fb17.34a",     0x6000, 0x2000, CRC(7db28013) SHA1(305e6a6254f69625c81ae107f4420fd76f9a24ba) )
 	ROM_LOAD( "fb20.29a",     0x8000, 0x2000, CRC(1a1b48f8) SHA1(62f7774807aea86f73f0b9380bb1c237d55bf451) )
-	ROM_LOAD( "fb19.31a",     0xa000, 0x2000, CRC(7ff7e321) SHA1(4fe4eee9c6260599950080c600187ce8e9dab7d2) )	
+	ROM_LOAD( "fb19.31a",     0xa000, 0x2000, CRC(7ff7e321) SHA1(4fe4eee9c6260599950080c600187ce8e9dab7d2) )
 
 	ROM_REGION( 0xa000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "fb01.42a",     0x0000, 0x2000, CRC(1200b220) SHA1(8a5f896441c6a6507e72b9b302a8183cc361d118) )

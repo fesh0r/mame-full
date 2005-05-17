@@ -54,7 +54,7 @@ Notes:
       C416    : Namco custom QFP176
       H8/3002 : Hitachi H8/3002 HD6413002F16 QFP100 microcontroller (H8/3002 has no internal ROM capability)
       MACH210 : PLCC44 CPLD, Namco KEYCUS, stamped 'KC001'
-      62256   : 32K x8 SOJ28 SRAM 
+      62256   : 32K x8 SOJ28 SRAM
       *       : Unpopulated position for SOP44 Mask ROM 'CG1'
 
       NC1_MAIN0B.14D: 512K x16 EPROM type 27C240
@@ -302,13 +302,13 @@ static MACHINE_DRIVER_START( namcond1 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(C352, 0)
 	MDRV_SOUND_CONFIG(c352_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.50)
-	MDRV_SOUND_ROUTE(1, "right", 0.50)
-	MDRV_SOUND_ROUTE(2, "left", 0.50)
-	MDRV_SOUND_ROUTE(3, "right", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+	MDRV_SOUND_ROUTE(1, "left", 0.50)
+	MDRV_SOUND_ROUTE(2, "right", 0.50)
+	MDRV_SOUND_ROUTE(3, "left", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( ncv1 )

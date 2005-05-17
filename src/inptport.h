@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	inptport.h
+    inptport.h
 
-	Handle input ports and mappings.
+    Handle input ports and mappings.
 
 ***************************************************************************/
 
@@ -24,7 +24,7 @@ extern "C" {
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -154,7 +154,7 @@ enum
 	IPT_INTERLOCK,
 	IPT_VOLUME_UP,
 	IPT_VOLUME_DOWN,
-	
+
 	/* mahjong inputs */
 	IPT_MAHJONG_A,
 	IPT_MAHJONG_B,
@@ -185,7 +185,7 @@ enum
 	IPT_MAHJONG_FLIP_FLOP,
 	IPT_MAHJONG_BIG,
 	IPT_MAHJONG_SMALL,
-	
+
 	/* analog inputs */
 #define __ipt_analog_start IPT_PADDLE
 	IPT_PADDLE,			/* absolute */
@@ -227,6 +227,7 @@ enum
 	IPT_UI_RIGHT,
 	IPT_UI_SELECT,
 	IPT_UI_CANCEL,
+	IPT_UI_CLEAR,
 	IPT_UI_PAN_UP,
 	IPT_UI_PAN_DOWN,
 	IPT_UI_PAN_LEFT,
@@ -389,7 +390,7 @@ enum
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -482,7 +483,7 @@ struct InputPort
 
 /*************************************
  *
- *	Macros for building input ports
+ *  Macros for building input ports
  *
  *************************************/
 
@@ -621,7 +622,7 @@ struct InputPort
 
 /*************************************
  *
- *	Helper macros
+ *  Helper macros
  *
  *************************************/
 
@@ -637,7 +638,7 @@ struct InputPort
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -649,7 +650,7 @@ extern const char *inptport_default_strings[];
 
 /*************************************
  *
- *	Function prototypes
+ *  Function prototypes
  *
  *************************************/
 

@@ -109,14 +109,14 @@ WRITE16_HANDLER( nemesis_palette_word_w )
 	data = paletteram16[offset];
 
 	/* Mish, 30/11/99 - Schematics show the resistor values are:
-		300 Ohms
-		620 Ohms
-		1200 Ohms
-		2400 Ohms
-		4700 Ohms
+        300 Ohms
+        620 Ohms
+        1200 Ohms
+        2400 Ohms
+        4700 Ohms
 
-		So the correct weights per bit are 8, 17, 33, 67, 130
-	*/
+        So the correct weights per bit are 8, 17, 33, 67, 130
+    */
 
 	#define MULTIPLIER 8 * bit1 + 17 * bit2 + 33 * bit3 + 67 * bit4 + 130 * bit5
 
@@ -311,7 +311,7 @@ VIDEO_START( nemesis )
 	sprite816_dirty = auto_malloc(1024);
 	if (!sprite816_dirty)
 		return 1;
-	memset(sprite816_dirty,1,32);
+	memset(sprite816_dirty,1,1024);
 
 	sprite6464_dirty = auto_malloc(32);
 	if (!sprite6464_dirty)
@@ -337,19 +337,19 @@ VIDEO_START( nemesis )
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	 *	16 bytes per sprite, in memory from 56000-56fff
-	 *
-	 *	byte	0 :	relative priority.
-	 *	byte	2 :	size (?) value #E0 means not used., bit 0x01 is flipx
-	                0xc0 is upper 2 bits of zoom.
-					0x38 is size.
-	 * 	byte	4 :	zoom = 0xff
-	 *	byte	6 :	low bits sprite code.
-	 *	byte	8 :	color + hi bits sprite code., bit 0x20 is flipy bit. bit 0x01 is high bit of X pos.
-	 *	byte	A :	X position.
-	 *	byte	C :	Y position.
-	 * 	byte	E :	not used.
-	 */
+     *  16 bytes per sprite, in memory from 56000-56fff
+     *
+     *  byte    0 : relative priority.
+     *  byte    2 : size (?) value #E0 means not used., bit 0x01 is flipx
+                    0xc0 is upper 2 bits of zoom.
+                    0x38 is size.
+     *  byte    4 : zoom = 0xff
+     *  byte    6 : low bits sprite code.
+     *  byte    8 : color + hi bits sprite code., bit 0x20 is flipy bit. bit 0x01 is high bit of X pos.
+     *  byte    A : X position.
+     *  byte    C : Y position.
+     *  byte    E : not used.
+     */
 
 	int adress;	/* start of sprite in spriteram */
 	int sx;	/* sprite X-pos */
@@ -441,7 +441,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 				if( zoom )
 				{
-					zoom = ((1<<16)*0x80/zoom) + 0x0200;
+					zoom = ((1<<16)*0x80/zoom) + 0x02ab;
 					if (flipscreen)
 					{
 						sx = 256 - ((zoom * w) >> 16) - sx;

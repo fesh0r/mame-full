@@ -1,6 +1,6 @@
 //============================================================
 //
-//	video.c - Win32 video handling
+//  video.c - Win32 video handling
 //
 //============================================================
 
@@ -31,7 +31,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -49,7 +49,7 @@ extern struct rc_option win_d3d_opts[];
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // frameskipping
@@ -58,7 +58,7 @@ extern struct rc_option win_d3d_opts[];
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // screen to draw on
@@ -85,7 +85,7 @@ UINT8 blit_swapxy;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // screen info
@@ -172,7 +172,7 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 
 
 //============================================================
-//	OPTIONS
+//  OPTIONS
 //============================================================
 
 // prototypes
@@ -232,7 +232,7 @@ struct rc_option video_opts[] =
 
 
 //============================================================
-//	decode_cleanstretch
+//  decode_cleanstretch
 //============================================================
 
 static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority)
@@ -275,7 +275,7 @@ static int decode_cleanstretch(struct rc_option *option, const char *arg, int pr
 
 
 //============================================================
-//	video_set_resolution
+//  video_set_resolution
 //============================================================
 
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority)
@@ -312,13 +312,13 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 
 
 //============================================================
-//	decode_ftr
+//  decode_ftr
 //============================================================
 
 static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 {
 	int ftr;
-	
+
 	if (sscanf(arg, "%d", &ftr) != 1)
 	{
 		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
@@ -337,7 +337,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 
 
 //============================================================
-//	decode_effect
+//  decode_effect
 //============================================================
 
 static int decode_effect(struct rc_option *option, const char *arg, int priority)
@@ -358,7 +358,7 @@ static int decode_effect(struct rc_option *option, const char *arg, int priority
 
 
 //============================================================
-//	decode_aspect
+//  decode_aspect
 //============================================================
 
 static int decode_aspect(struct rc_option *option, const char *arg, int priority)

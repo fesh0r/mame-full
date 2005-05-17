@@ -1326,7 +1326,7 @@ INPUT_PORTS_START( scorpion )
 	PORT_DIPSETTING(    0x03, "3")
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "255" )	
+	PORT_DIPSETTING(    0x00, "255" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
@@ -1382,7 +1382,7 @@ static struct GfxLayout newsin7_charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	3,	/* 3 bits per pixel */
-	{ 0, 2*256*8*8, 2*2*256*8*8 },	/* the bitplanes are separated */
+	{ 2*2*256*8*8, 0, 2*256*8*8 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -1392,7 +1392,7 @@ static struct GfxLayout newsin7_spritelayout =
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 2*64*16*16, 2*2*64*16*16 },	/* the bitplanes are separated */
+	{ 2*2*64*16*16, 0, 2*64*16*16 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -1582,7 +1582,7 @@ static MACHINE_DRIVER_START( froggers )
 	MDRV_SOUND_MODIFY("8910.1")
 	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
-	
+
 	MDRV_SOUND_REMOVE("8910.2")
 MACHINE_DRIVER_END
 
@@ -1754,7 +1754,7 @@ static MACHINE_DRIVER_START( triplep )
 	MDRV_SOUND_MODIFY("8910.1")
 	MDRV_SOUND_CONFIG(triplep_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
-	
+
 	MDRV_SOUND_REMOVE("8910.2")
 MACHINE_DRIVER_END
 
@@ -1815,7 +1815,7 @@ static MACHINE_DRIVER_START( scorpion )
 	MDRV_SOUND_MODIFY("8910.2")
 	MDRV_SOUND_CONFIG(triplep_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
@@ -2546,7 +2546,7 @@ GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,      ROT90, "Amenip
 GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )
 GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars" )
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish" )
-GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
+GAME( 1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7" )
 GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar" )
 GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)" )
 GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )

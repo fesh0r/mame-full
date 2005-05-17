@@ -7,6 +7,11 @@ extern int pc10_sdcs;			/* ShareD Chip Select */
 extern int pc10_dispmask;		/* Display Mask */
 extern int pc10_gun_controller;	/* wether we need to draw a crosshair or not */
 extern int pc10_int_detect;
+extern int pc10_game_mode;
+extern int pc10_dispmask_old;
+
+/* from common.c */
+extern int system_bios;
 
 static struct tilemap *bg_tilemap;
 
@@ -70,9 +75,9 @@ static void ppu_irq( int num, int *ppu_regs )
 	pc10_int_detect = 1;
 }
 
-/* our ppu interface											*/
-/* things like mirroring and wether to use vrom or vram			*/
-/* can be set by calling 'ppu2c03b_override_hardware_options'	*/
+/* our ppu interface                                            */
+/* things like mirroring and wether to use vrom or vram         */
+/* can be set by calling 'ppu2c03b_override_hardware_options'   */
 
 static struct ppu2c03b_interface ppu_interface =
 {
@@ -95,7 +100,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( playch10 )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -115,37 +120,80 @@ VIDEO_START( playch10 )
 
 VIDEO_UPDATE( playch10 )
 {
-	struct rectangle top_monitor = Machine->visible_area;
-	struct rectangle bottom_monitor = Machine->visible_area;
-
-	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
-	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
-
-	/* On Playchoice 10 single monitor, this bit toggles	*/
-	/* between PPU and BIOS display.						*/
-	/* We support the multi-monitor layout. In this case,	*/
-	/* if the bit is not set, then we should display		*/
-	/* the PPU portion.										*/
-
-	if ( !pc10_dispmask )
+	/* Dual monitor version */
+	if(system_bios == 0)
 	{
-		/* render the ppu */
-		ppu2c03b_render( 0, bitmap, 0, 0, 0, 30*8 );
+		struct rectangle top_monitor = Machine->visible_area;
+		struct rectangle bottom_monitor = Machine->visible_area;
 
-		/* if this is a gun game, draw a simple crosshair */
-		if ( pc10_gun_controller )
+		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
+		bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
+
+		/* On Playchoice 10 single monitor, this bit toggles    */
+		/* between PPU and BIOS display.                        */
+		/* We support the multi-monitor layout. In this case,   */
+		/* if the bit is not set, then we should display        */
+		/* the PPU portion.                                     */
+
+		if ( !pc10_dispmask )
 		{
-			int x_center = readinputport( 5 );
-			int y_center = readinputport( 6 ) + 30*8;
+			/* render the ppu */
+			ppu2c03b_render( 0, bitmap, 0, 0, 0, 30*8 );
 
-			draw_crosshair(bitmap, x_center, y_center, &bottom_monitor);
+			/* if this is a gun game, draw a simple crosshair */
+			if ( pc10_gun_controller )
+			{
+				int x_center = readinputport( 5 );
+				int y_center = readinputport( 6 ) + 30*8;
+
+				draw_crosshair(bitmap, x_center, y_center, &bottom_monitor);
+			}
+		}
+
+		/* When the bios is accessing vram, the video circuitry can't access it */
+
+		if ( !pc10_sdcs )
+		{
+			tilemap_draw(bitmap, &top_monitor, bg_tilemap, 0, 0);
 		}
 	}
-
-	/* When the bios is accessing vram, the video circuitry cant access it */
-
-	if ( !pc10_sdcs )
+	else	/* Single Monitor version */
 	{
-		tilemap_draw(bitmap, &top_monitor, bg_tilemap, 0, 0);
+		struct rectangle top_monitor = Machine->visible_area;
+
+		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
+
+		if(pc10_dispmask_old != pc10_dispmask)
+		{
+			pc10_dispmask_old = pc10_dispmask;
+
+			if(pc10_dispmask)
+				pc10_game_mode ^= 1;
+		}
+
+
+		if ( pc10_game_mode )
+		{
+			/* render the ppu */
+			ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
+
+			/* if this is a gun game, draw a simple crosshair */
+			if ( pc10_gun_controller )
+			{
+				int x_center = readinputport( 5 );
+				int y_center = readinputport( 6 );
+
+				draw_crosshair(bitmap, x_center, y_center, &top_monitor);
+			}
+		}
+		else
+		{
+			/* When the bios is accessing vram, the video circuitry can't access it */
+
+			if ( !pc10_sdcs )
+			{
+				tilemap_draw(bitmap, &top_monitor, bg_tilemap, 0, 0);
+			}
+		}
 	}
 }

@@ -1,16 +1,16 @@
 /*******************************************************************************
 
-	Pro Soccer						(c) 1983 Data East Corporation
-	Pro Sport						(c) 1983 Data East Corporation
-	Boomer Rang'R / Genesis			(c) 1983 Data East Corporation
-	Kamikaze Cabbie / Yellow Cab	(c) 1984 Data East Corporation
-	Liberation						(c) 1984 Data East Corporation
+    Pro Soccer                      (c) 1983 Data East Corporation
+    Pro Sport                       (c) 1983 Data East Corporation
+    Boomer Rang'R / Genesis         (c) 1983 Data East Corporation
+    Kamikaze Cabbie / Yellow Cab    (c) 1984 Data East Corporation
+    Liberation                      (c) 1984 Data East Corporation
 
-	Liberation was available on two pcbs - a dedicated twin pcb set and
-	a version on the Genesis/Yellow Cab pcb that had an extra cpu pcb attached
-	for the different protection.  The program is the same on both versions.
+    Liberation was available on two pcbs - a dedicated twin pcb set and
+    a version on the Genesis/Yellow Cab pcb that had an extra cpu pcb attached
+    for the different protection.  The program is the same on both versions.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 *******************************************************************************/
 
@@ -343,6 +343,14 @@ INPUT_PORTS_START( kamikcab )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( yellowcb )
+	PORT_INCLUDE( kamikcab )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfb, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( liberate )
@@ -729,10 +737,10 @@ static MACHINE_DRIVER_START( prosoccr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -765,10 +773,10 @@ static MACHINE_DRIVER_START( prosport )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -803,10 +811,10 @@ static MACHINE_DRIVER_START( boomrang )
 
 	/* sound hardware */
 		MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -841,10 +849,10 @@ static MACHINE_DRIVER_START( liberate )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -878,10 +886,10 @@ static MACHINE_DRIVER_START( liberatb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -987,6 +995,36 @@ ROM_START( kamikcab )
 	ROM_REGION(0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "bp02", 0x00000, 0x4000, CRC(77299e6e) SHA1(477a6f466f08fe99823dc55d246b4d732423663d) )
 	ROM_LOAD( "bp00", 0x04000, 0x2000, CRC(c20ca7ca) SHA1(ca91af848ae38b296992bb21040ef22a325bbcdc) )
+
+	ROM_REGION(0x4000, REGION_USER1, 0 )
+	ROM_LOAD( "bp12", 0x00000, 0x4000, CRC(8c8f5d35) SHA1(5b908d92786dae76aaf84de14f8847ee8ee350a1) )
+
+	ROM_REGION(32, REGION_PROMS, 0 )
+	ROM_LOAD( "bp15", 0, 32,  CRC(30d3acce) SHA1(be88d74250edc2920fc0f95cfdd93468ac9c640e) )
+ROM_END
+
+ROM_START( yellowcb )
+	ROM_REGION(0x10000, REGION_CPU1, 0)
+	ROM_LOAD( "rom11.rom", 0xc000, 0x2000, CRC(af97d530) SHA1(b8b9bfcb2e9164daa115b91a533418a39c40c31d) )
+	ROM_RELOAD(            0x0000, 0x2000 )
+	ROM_LOAD( "rom10.rom", 0xe000, 0x2000, CRC(33c3e9b9) SHA1(7ea6602204c43a86842a0b0f7a0786913a6707d6) )
+	ROM_RELOAD(            0x2000, 0x2000 )
+
+	ROM_REGION(0x10000*2, REGION_CPU2, 0)	/* 64K for CPU 2 */
+	ROM_LOAD( "bp09", 0x0e000, 0x2000, CRC(16b13676) SHA1(f3cad959cbcde243db3ebc77a3692302a44beb09) )
+
+	ROM_REGION(0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom3.rom", 0x0000, 0x2000, CRC(6761d767) SHA1(f5180cc31d3b4103c78b74e5de311565581d6db7) )
+	ROM_LOAD( "rom4.rom", 0x2000, 0x2000, CRC(55517196) SHA1(f46899751e614aa35ec316caacb84e25193a56d6) )
+	ROM_LOAD( "rom5.rom", 0x4000, 0x2000, CRC(33658fd9) SHA1(16c1d211b8fb46467906cd2cd32bcc9eac464573) )
+	ROM_LOAD( "rom6.rom", 0x6000, 0x2000, CRC(fbc20f07) SHA1(7f7028638038f61dae6aca09d393adeea3ab1b2d) )
+	ROM_LOAD( "rom7.rom", 0x8000, 0x2000, CRC(061f9e54) SHA1(2e7b7c98892702513e53b8dd2a2a0dc152d52016) )
+	ROM_LOAD( "rom8.rom", 0xa000, 0x2000, CRC(2ace626d) SHA1(6f12eb2d6a01ac1285d15d15948124b85c6964b7) )
+
+	ROM_REGION(0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom1.rom", 0x0000, 0x2000, CRC(8e92a253) SHA1(94063c5aae9ce36b47e51f55e7502d1b6c4334be) )
+	ROM_LOAD( "rom2.rom", 0x2000, 0x2000, CRC(47ada1bb) SHA1(cc0a38d0cc220382c36e6268f47db332bdbb07a2) )
+	ROM_LOAD( "rom0.rom", 0x4000, 0x2000, CRC(9ead0da1) SHA1(5e46527fa38d75efd266ca982c7cb6d88bb3ea49) )
 
 	ROM_REGION(0x4000, REGION_USER1, 0 )
 	ROM_LOAD( "bp12", 0x00000, 0x4000, CRC(8c8f5d35) SHA1(5b908d92786dae76aaf84de14f8847ee8ee350a1) )
@@ -1112,6 +1150,13 @@ static DRIVER_INIT( prosport )
 	sound_cpu_decrypt();
 }
 
+static DRIVER_INIT( yellowcb )
+{
+	init_prosport();
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xa000, 0, 0, input_port_0_r);
+}
+
 static DRIVER_INIT( liberate )
 {
 	int A;
@@ -1136,6 +1181,7 @@ GAMEX(1983, prosoccr, 0,        prosoccr,  liberate, prosport, ROT270, "Data Eas
 GAMEX(1983, prosport, 0,        prosport,  liberate, prosport, ROT270, "Data East Corporation", "Prosport", GAME_NOT_WORKING )
 GAME( 1983, boomrang, 0,        boomrang,  boomrang, prosport, ROT270, "Data East Corporation", "Boomer Rang'r / Genesis" )
 GAME( 1984, kamikcab, 0,        boomrang,  kamikcab, prosport, ROT270, "Data East Corporation", "Kamikaze Cabbie" )
+GAME( 1984, yellowcb, kamikcab, boomrang,  yellowcb, yellowcb, ROT270, "bootleg",               "Yellow Cab (bootleg)" )
 GAME( 1984, liberate, 0,        liberate,  liberate, liberate, ROT270, "Data East Corporation", "Liberation" )
 GAME( 1984, dualaslt, liberate, liberate,  dualaslt, liberate, ROT270, "Data East USA",         "Dual Assault" )
 GAME( 1984, liberatb, liberate, liberatb,  liberatb, prosport, ROT270, "bootleg",               "Liberation (bootleg)" )

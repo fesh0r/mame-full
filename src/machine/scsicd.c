@@ -4,7 +4,7 @@
 
 ***************************************************************************/
 
-#include "driver.h" 
+#include "driver.h"
 #include "scsidev.h"
 #include "cdrom.h"
 #ifdef MESS
@@ -81,16 +81,16 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 			logerror("SCSICD: READ (10) at LBA %x for %d blocks (%d bytes)\n", our_this->lba, our_this->blocks, retval);
 			break;
 		case 0x42:	// READ SUB-CHANNEL
-	//						logerror("SCSICD: READ SUB-CHANNEL type %d\n", pCmdBuf[3]);
+	//                      logerror("SCSICD: READ SUB-CHANNEL type %d\n", pCmdBuf[3]);
 			retval = 16;
 			break;
 		case 0x43:	// READ TOC
 			// note: this is necessary for Firebeat, but it breaks GV and 573.  need to
 			// investigate further...
-/*			{
-				int trks = cdrom_get_last_track(cdrom);
-				retval = (trks * 8) + 4;
-			}*/
+/*          {
+                int trks = cdrom_get_last_track(cdrom);
+                retval = (trks * 8) + 4;
+            }*/
 			break;
 		case 0x45:	// PLAY AUDIO  (10 byte)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
@@ -209,8 +209,8 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 		case 0x12:	// INQUIRY
 			pData[0] = 0x05;	// device is present, device is CD/DVD (MMC-3)
 			pData[1] = 0x80;	// media is removable
-			pData[2] = 0x05;	// device complies with SPC-3 standard   
-			pData[3] = 0x02;	// response data format = SPC-3 standard 
+			pData[2] = 0x05;	// device complies with SPC-3 standard
+			pData[3] = 0x02;	// response data format = SPC-3 standard
 			memset(&pData[8], 0, 8*3);
 			strcpy((char *)&pData[8], "Sony");	// some Konami games freak out if this isn't "Sony", so we'll lie
 			strcpy((char *)&pData[16], "CDU-76S");	// this is the actual drive on my Nagano '98 board
@@ -227,7 +227,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 			pData[1] = (temp>>16) & 0xff;
 			pData[2] = (temp>>8) & 0xff;
 			pData[3] = (temp & 0xff);
-			pData[4] = 0;	
+			pData[4] = 0;
 			pData[5] = 0;
 			pData[6] = (our_this->bytes_per_sector>>8)&0xff;
 			pData[7] = (our_this->bytes_per_sector & 0xff);
@@ -246,9 +246,9 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 					}
 
 					logerror("True LBA: %d, buffer half: %d\n", our_this->lba, our_this->cur_subblock * our_this->bytes_per_sector);
-	
+
 					memcpy(pData, &tmp_buffer[our_this->cur_subblock * our_this->bytes_per_sector], our_this->bytes_per_sector);
-	
+
 					our_this->cur_subblock++;
 					if (our_this->cur_subblock >= our_this->num_subblocks)
 					{
@@ -274,7 +274,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 						return;
 					}
 
-					logerror("SCSICD: READ SUB-CHANNEL Time = %x, SUBQ = %x\n", fifo[1], fifo[2]);	
+					logerror("SCSICD: READ SUB-CHANNEL Time = %x, SUBQ = %x\n", fifo[1], fifo[2]);
 
 					if (cdrom_audio_active(cdrom))
 					{
@@ -366,7 +366,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 							pData[dptr++] = cdrom_get_adr_control(cdrom, i);
 							pData[dptr++] = i;
 							pData[dptr++] = 0;
-							
+
 							tstart = cdrom_get_track_start(cdrom, i, (fifo[1]&2)>>1);
 
 							pData[dptr++] = (tstart>>24) & 0xff;
@@ -396,7 +396,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 					pData[2] = 0x04;	// IMMED = 1, SOTC = 0
 					pData[3] = pData[4] = pData[5] = pData[6] = pData[7] = 0; // reserved
 
-					// connect each audio channel to 1 output port	
+					// connect each audio channel to 1 output port
 					pData[8] = 1;
 					pData[10] = 2;
 					pData[12] = 4;

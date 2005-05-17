@@ -1644,7 +1644,7 @@ static void I386OP(shld16_i8)(void)			// Opcode 0x0f a4
 			dst = (upper << (shift-16)) | (upper >> (32-shift));
 			SetSZPF16(dst);
 		} else {
-			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;		
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
 			dst = (dst << shift) | (upper >> (16-shift));
 			SetSZPF16(dst);
 		}
@@ -2733,7 +2733,7 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 					b = LOAD_RM8(modrm);
 				} else {
 					ea = GetEA(modrm);
-					b = READ8(ea);
+				b = READ8(ea);
 				}
 				I.cr[0] &= ~0x03;
 				I.cr[0] |= b & 0x03;

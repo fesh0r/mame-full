@@ -1,16 +1,16 @@
 /* this code was hacked out of the fully-featured 6809 disassembler by Sean Riddle */
-/* and then mutliated into a 6309 disassembler by tim lindner					   */
+/* and then mutliated into a 6309 disassembler by tim lindner                      */
 
-/* 6309dasm.c - a 6309 opcode disassembler		*/
-/* Version 1.0 5-AUG-2000						*/
-/* Copyright © 2000 tim lindner 				*/
-/*												*/
-/* based on:									*/
-/*		6809dasm.c - a 6809 opcode disassembler */
-/*		Version 1.4 1-MAR-95					*/
-/*		Copyright © 1995 Sean Riddle			*/
-/*												*/
-/*		thanks to Franklin Bowen for bug fixes, ideas */
+/* 6309dasm.c - a 6309 opcode disassembler      */
+/* Version 1.0 5-AUG-2000                       */
+/* Copyright © 2000 tim lindner                 */
+/*                                              */
+/* based on:                                    */
+/*      6809dasm.c - a 6809 opcode disassembler */
+/*      Version 1.4 1-MAR-95                    */
+/*      Copyright © 1995 Sean Riddle            */
+/*                                              */
+/*      thanks to Franklin Bowen for bug fixes, ideas */
 
 /* Freely distributable on any medium given all copyrights are retained */
 /* by the author and no charge greater than $7.00 is made for obtaining */
@@ -54,8 +54,8 @@ enum HD6309_ADDRESSING_MODES {
 	EXT,
 	IMM,
 	LREL,
-	PG2,						/* PAGE SWITCHES -	Page 2 */
-	PG3 						/*					Page 3 */
+	PG2,						/* PAGE SWITCHES -  Page 2 */
+	PG3 						/*                  Page 3 */
 };
 
 /* number of opcodes in each page */
@@ -769,7 +769,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		if( pb2 == 0x88 || pb2 == 0x8c )
 		{	/* 8-bit offset */
 
-			/* KW 11/05/98 Fix of indirect opcodes		*/
+			/* KW 11/05/98 Fix of indirect opcodes      */
 			offset = (INT8)cpu_readop_arg(pc);
 			p++;
 			if( pb == 0x8c || pb == 0xac || pb == 0xcc || pb == 0xec || pb == 0x9c || pb == 0xbc || pb == 0xdc || pb == 0xfc  ) reg = 4;
@@ -798,13 +798,13 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		if( pb2 == 0x89 || pb2 == 0x8d || pb2 == 0x8f || pb == 0xb0 || pb == 0xd0 || pb == 0xf0 )
 		{	/* 16-bit */
 
-			/* KW 11/05/98 Fix of indirect opcodes		*/
-			
+			/* KW 11/05/98 Fix of indirect opcodes      */
+
 			if( !((pb == 0xcf) || (pb == 0xd0) || (pb == 0xef) || (pb == 0xf0) ) )
 			{
-				offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
+			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
 			}
-			
+
 			if( pb == 0x8d || pb == 0xad || pb == 0xcd || pb == 0xed || pb == 0x9d || pb == 0xbd || pb == 0xdd || pb == 0xfd )
 				reg = 4;
 			if( (pb&0x90) == 0x90 )
@@ -820,28 +820,28 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
                 buffer += sprintf (buffer, "%s", sym1);
 			}
 			else
-			if ( pb == 0xaf || pb == 0xb0 )
-			{
-				offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
-				p += 2;
+		if ( pb == 0xaf || pb == 0xb0 )
+		{
+			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
+			p += 2;
 
-				sym1 = set_ea_info(1, offset, EA_INT16, EA_MEM_WR);
-				ea = ((activecpu_get_reg(HD6309_E) << 8) + (activecpu_get_reg(HD6309_F)) + offset) & 0xffff;
-				buffer += sprintf (buffer, "%s,W", sym1);
-			}
-			else
-			if ( pb == 0xcf || pb == 0xd0 )
-			{
-				ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
-				buffer += sprintf (buffer, ",W++");
-			}
-			else
-			if ( pb == 0xef || pb == 0xf0 )
-			{
-				ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
-				buffer += sprintf (buffer, ",--W");
-			}
-			else
+			sym1 = set_ea_info(1, offset, EA_INT16, EA_MEM_WR);
+			ea = ((activecpu_get_reg(HD6309_E) << 8) + (activecpu_get_reg(HD6309_F)) + offset) & 0xffff;
+			buffer += sprintf (buffer, "%s,W", sym1);
+		}
+		else
+		if ( pb == 0xcf || pb == 0xd0 )
+		{
+			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
+			buffer += sprintf (buffer, ",W++");
+		}
+		else
+		if ( pb == 0xef || pb == 0xf0 )
+		{
+			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
+			buffer += sprintf (buffer, ",--W");
+		}
+		else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
 				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
@@ -853,7 +853,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		{
 			if( (pb & 0x90) == 0x90 )
 				buffer += sprintf (buffer, "[");
-			
+
 			switch( pb & 0x8f )
 			{
 			case 0x80:
@@ -910,11 +910,11 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
 		}
 		/* indirect */
-			if( (pb & 0x90) == 0x90 )
-			{
+		if( (pb & 0x90) == 0x90 )
+		{
 			ea = ( program_read_byte_8( ea ) << 8 ) + program_read_byte_8( (ea+1) & 0xffff );
 			buffer += sprintf (buffer, "]");
-			}
+		}
 		sym2 = set_ea_info(0, ea, size, access);
 		break;
 	default:

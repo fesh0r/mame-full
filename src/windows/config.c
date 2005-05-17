@@ -32,6 +32,10 @@
 #include "video.h"
 #include "fileio.h"
 
+#if NEW_DEBUGGER
+#include "debug/debugcpu.h"
+#endif
+
 extern struct rc_option frontend_opts[];
 extern struct rc_option fileio_opts[];
 extern struct rc_option input_opts[];
@@ -67,6 +71,7 @@ static char *playbackname;
 static char *recordname;
 static char *gamename;
 static char *statename;
+static char *debugscript;
 
 char *rompath_extra;
 
@@ -212,6 +217,7 @@ static struct rc_option opts[] = {
 	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
+	{ "debugscript", NULL, rc_string, &debugscript, NULL, 0, 0, NULL, "script for debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
@@ -621,14 +627,14 @@ int cli_frontend_init (int argc, char **argv)
 		memset(&inp_header, '\0', sizeof(INP_HEADER));
 		strcpy(inp_header.name, drivers[game_index]->name);
 		/* MAME32 stores the MAME version numbers at bytes 9 - 11
-		 * MAME DOS keeps this information in a string, the
-		 * Windows code defines them in the Makefile.
-		 */
+         * MAME DOS keeps this information in a string, the
+         * Windows code defines them in the Makefile.
+         */
 		/*
-		   inp_header.version[0] = 0;
-		   inp_header.version[1] = VERSION;
-		   inp_header.version[2] = BETA_VERSION;
-		 */
+           inp_header.version[0] = 0;
+           inp_header.version[1] = VERSION;
+           inp_header.version[2] = BETA_VERSION;
+         */
 		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
 	}
 
@@ -636,6 +642,13 @@ int cli_frontend_init (int argc, char **argv)
 	{
 		options.savegame = statename;
 	}
+
+#if NEW_DEBUGGER
+	if (debugscript)
+	{
+		debug_source_script(debugscript);
+	}
+#endif
 
 	/* need a decent default for debug width/height */
 	if (options.debug_width == 0)
@@ -816,7 +829,7 @@ static int config_handle_arg(char *arg)
 
 
 //============================================================
-//	vlogerror
+//  vlogerror
 //============================================================
 
 static void vlogerror(const char *text, va_list arg)
@@ -843,7 +856,7 @@ static void vlogerror(const char *text, va_list arg)
 
 
 //============================================================
-//	logerror
+//  logerror
 //============================================================
 
 void CLIB_DECL logerror(const char *text,...)
@@ -858,7 +871,7 @@ void CLIB_DECL logerror(const char *text,...)
 
 
 //============================================================
-//	osd_die
+//  osd_die
 //============================================================
 
 void CLIB_DECL osd_die(const char *text,...)
@@ -876,7 +889,7 @@ void CLIB_DECL osd_die(const char *text,...)
 
 
 //============================================================
-//	win_basename
+//  win_basename
 //============================================================
 
 static char *win_basename(char *filename)
@@ -899,7 +912,7 @@ static char *win_basename(char *filename)
 
 
 //============================================================
-//	win_dirname
+//  win_dirname
 //============================================================
 
 static char *win_dirname(char *filename)
@@ -939,7 +952,7 @@ static char *win_dirname(char *filename)
 
 
 //============================================================
-//	win_strip_extension
+//  win_strip_extension
 //============================================================
 
 static char *win_strip_extension(char *filename)

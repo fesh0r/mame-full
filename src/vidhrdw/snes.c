@@ -126,8 +126,8 @@ static const UINT16 table_obj_offset[8][8] =
 	{ (112*32), (112*32)+32, (112*32)+64, (112*32)+96, (112*32)+128, (112*32)+160, (112*32)+192, (112*32)+224 }
 };
 /* Scroll tables                             32x32      64x32              32x64              64x64 */
-static const UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0},         {0,0x800,0,0x800}   };
-static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0},         {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
+static const UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0}, {0,0x800,0,0x800} };
+static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
 
 struct SCANLINE
 {
@@ -1457,16 +1457,16 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				}
 			}
 
-			/* Increase range_over. 
-			 * Stop drawing if exceeded 32 objects and
-			 * enforcing that limit is enabled */
+			/* Increase range_over.
+             * Stop drawing if exceeded 32 objects and
+             * enforcing that limit is enabled */
 			range_over++;
 			if( range_over == 32 && (readinputport( 16 ) & 0x10) )
 			{
 				/* Set the flag in STAT77 register */
 				snes_ram[STAT77] |= 0x40;
 				/* FIXME: This stops the SNESTest rom from drawing the object
-				 *        test properly.  Maybe we shouldn't stop drawing? */
+                 *        test properly.  Maybe we shouldn't stop drawing? */
 				/* return; */
 			}
 		}
@@ -1722,7 +1722,7 @@ static void snes_update_windowmasks(void)
 
 		/* update colour window */
 		/* FIXME: Why is the colour window different to the other windows? *
-		 * Have I overlooked something or done something wrong? */
+         * Have I overlooked something or done something wrong? */
 		snes_ppu.clipmasks[5][ii] = 0xff;
 		w1 = w2 = -1;
 		if( snes_ram[WOBJSEL] & 0x20 )
@@ -1753,28 +1753,28 @@ static void snes_update_windowmasks(void)
 			{
 				case 0x0:	/* OR */
 					snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0x00 : 0xff;*/
 					break;
 				case 0x4:	/* AND */
 					snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0x00 : 0xff;*/
 					break;
 				case 0x8:	/* XOR */
 					snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0x00 : 0xff;*/
 					break;
 				case 0xc:	/* XNOR */
 					snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0x00 : 0xff;*/
 					break;
 			}
 		}
 		else if( w1 >= 0 )
 			snes_ppu.clipmasks[5][ii] = w1 ? 0xff : 0x00;
-/*			snes_ppu.clipmasks[5][ii] = w1 ? 0x00 : 0xff;*/
+/*          snes_ppu.clipmasks[5][ii] = w1 ? 0x00 : 0xff;*/
 		else if( w2 >= 0 )
 			snes_ppu.clipmasks[5][ii] = w2 ? 0xff : 0x00;
-/*			snes_ppu.clipmasks[5][ii] = w2 ? 0x00 : 0xff;*/
+/*          snes_ppu.clipmasks[5][ii] = w2 ? 0x00 : 0xff;*/
 	}
 }
 
@@ -1860,7 +1860,7 @@ void snes_refresh_scanline( UINT16 curline )
 		for( ii = 0; ii < SNES_SCR_WIDTH * 2; ii++ )
 		{
 			/* Not sure if this is correct behaviour, but a few games seem to
-			 * require it. (SMW, Zelda etc) */
+             * require it. (SMW, Zelda etc) */
 			scanlines[SUBSCREEN].buffer[ii] = Machine->remapped_colortable[FIXED_COLOUR];
 			/* Draw back colour */
 			scanlines[MAINSCREEN].buffer[ii] = Machine->remapped_colortable[0];
@@ -2191,27 +2191,27 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 			snes_dbg_draw_maps( Machine->scrbitmap, tmaddr, dm, curline, tmbg );
 			draw_scanline16( Machine->scrbitmap, 0, curline, SNES_SCR_WIDTH, scanlines[MAINSCREEN].buffer, Machine->pens, 200 );
 			return 1;
+				}
 		}
-	}
 
-	/* Draw some useful information about the back/fixed colours and current bg mode etc. */
+			/* Draw some useful information about the back/fixed colours and current bg mode etc. */
 	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 26, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0xc0) >> 6]] );
 	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 24, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0x30) >> 4]] );
 	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 22, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
 	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 12, curline, Machine->pens[32767] );
 	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 2, curline, Machine->pens[32767] );
-	for( ii = 0; ii < 5; ii++ )
-	{
+			for( ii = 0; ii < 5; ii++ )
+			{
 		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 19 + ii, curline, Machine->remapped_colortable[0] );
 		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 9 + ii, curline, Machine->remapped_colortable[FIXED_COLOUR] );
-	}
-	/* Draw window positions */
-	scanlines[MAINSCREEN].buffer[snes_ram[WH0]] = Machine->pens[dbg_mode_colours[0]];
-	scanlines[MAINSCREEN].buffer[snes_ram[WH1]] = Machine->pens[dbg_mode_colours[0]];
-	scanlines[MAINSCREEN].buffer[snes_ram[WH2]] = Machine->pens[dbg_mode_colours[2]];
-	scanlines[MAINSCREEN].buffer[snes_ram[WH3]] = Machine->pens[dbg_mode_colours[2]];
+			}
+			/* Draw window positions */
+			scanlines[MAINSCREEN].buffer[snes_ram[WH0]] = Machine->pens[dbg_mode_colours[0]];
+			scanlines[MAINSCREEN].buffer[snes_ram[WH1]] = Machine->pens[dbg_mode_colours[0]];
+			scanlines[MAINSCREEN].buffer[snes_ram[WH2]] = Machine->pens[dbg_mode_colours[2]];
+			scanlines[MAINSCREEN].buffer[snes_ram[WH3]] = Machine->pens[dbg_mode_colours[2]];
 
 	return 0;
-}
+	}
 
 #endif /* SNES_DBG_VIDHRDW */

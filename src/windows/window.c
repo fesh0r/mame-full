@@ -1,16 +1,13 @@
 //============================================================
 //
-//	window.c - Win32 window handling
+//  window.c - Win32 window handling
 //
 //============================================================
 
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
-//#define WINVER 0x500
-//#define COMPILE_MULTIMON_STUBS
 #include <windows.h>
 #include <windowsx.h>
-//#include <multimon.h>
 
 // missing stuff from the mingw headers
 #ifndef ENUM_CURRENT_SETTINGS
@@ -53,7 +50,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -70,7 +67,7 @@ int win_d3d_effects_in_use(void);
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // window styles
@@ -94,7 +91,7 @@ int win_d3d_effects_in_use(void);
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // command line config
@@ -157,7 +154,7 @@ int win_physical_height;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // config
@@ -217,7 +214,7 @@ static struct mame_bitmap *last_bitmap;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult);
@@ -234,7 +231,7 @@ static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t 
 
 
 //============================================================
-//	wnd_extra_width
+//  wnd_extra_width
 //============================================================
 
 INLINE int wnd_extra_width(void)
@@ -249,7 +246,7 @@ INLINE int wnd_extra_width(void)
 
 
 //============================================================
-//	wnd_extra_height
+//  wnd_extra_height
 //============================================================
 
 INLINE int wnd_extra_height(void)
@@ -264,7 +261,7 @@ INLINE int wnd_extra_height(void)
 
 
 //============================================================
-//	wnd_extra_left
+//  wnd_extra_left
 //============================================================
 
 INLINE int wnd_extra_left(void)
@@ -279,7 +276,7 @@ INLINE int wnd_extra_left(void)
 
 
 //============================================================
-//	get_aligned_window_pos
+//  get_aligned_window_pos
 //============================================================
 
 INLINE int get_aligned_window_pos(int x)
@@ -307,7 +304,7 @@ INLINE int get_aligned_window_pos(int x)
 
 
 //============================================================
-//	get_screen_bounds
+//  get_screen_bounds
 //============================================================
 
 INLINE void get_screen_bounds(RECT *bounds)
@@ -348,7 +345,7 @@ INLINE void get_screen_bounds(RECT *bounds)
 
 
 //============================================================
-//	set_aligned_window_pos
+//  set_aligned_window_pos
 //============================================================
 
 INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
@@ -359,7 +356,7 @@ INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, 
 
 
 //============================================================
-//	erase_outer_rect
+//  erase_outer_rect
 //============================================================
 
 INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc)
@@ -407,7 +404,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc)
 
 
 //============================================================
-//	get_work_area
+//  get_work_area
 //============================================================
 
 INLINE void get_work_area(RECT *maximum)
@@ -444,7 +441,7 @@ INLINE void get_work_area(RECT *maximum)
 
 
 //============================================================
-//	win_init_window
+//  win_init_window
 //============================================================
 
 int win_init_window(void)
@@ -517,7 +514,7 @@ int win_init_window(void)
 
 
 //============================================================
-//	win_create_window
+//  win_create_window
 //============================================================
 
 int win_create_window(int width, int height, int depth, int attributes, double aspect)
@@ -645,7 +642,7 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 
 
 //============================================================
-//	win_destroy_window
+//  win_destroy_window
 //============================================================
 
 void win_destroy_window(void)
@@ -671,7 +668,7 @@ void win_destroy_window(void)
 
 
 //============================================================
-//	win_update_cursor_state
+//  win_update_cursor_state
 //============================================================
 
 void win_update_cursor_state(void)
@@ -685,7 +682,7 @@ void win_update_cursor_state(void)
 
 
 //============================================================
-//	update_system_menu
+//  update_system_menu
 //============================================================
 
 static void update_system_menu(void)
@@ -704,7 +701,7 @@ static void update_system_menu(void)
 
 
 //============================================================
-//	win_update_video_window
+//  win_update_video_window
 //============================================================
 
 void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -721,7 +718,7 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 
 
 //============================================================
-//	draw_video_contents
+//  draw_video_contents
 //============================================================
 
 static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -779,7 +776,7 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 
 //============================================================
-//	win_video_window_proc
+//  win_video_window_proc
 //============================================================
 
 LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -846,6 +843,10 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 		// syscommands: catch win_start_maximized
 		case WM_SYSCOMMAND:
 		{
+			// prevent screensaver or monitor power events
+			if (wparam == SC_MONITORPOWER || wparam == SC_SCREENSAVE)
+				return 1;
+
 			InvalidateRect(win_video_window, NULL, FALSE);
 			if ((wparam & 0xfff0) == SC_MAXIMIZE)
 			{
@@ -893,7 +894,7 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 
 
 //============================================================
-//	win_constrain_to_aspect_ratio
+//  win_constrain_to_aspect_ratio
 //============================================================
 
 void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, int coordinate_system)
@@ -1056,7 +1057,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, 
 
 
 //============================================================
-//	adjust_window_for_visible
+//  adjust_window_for_visible
 //============================================================
 
 void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
@@ -1168,7 +1169,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 
 //============================================================
-//	win_toggle_maximize
+//  win_toggle_maximize
 //============================================================
 
 void win_toggle_maximize(int force_maximize)
@@ -1283,7 +1284,7 @@ void win_toggle_maximize(int force_maximize)
 
 
 //============================================================
-//	win_toggle_full_screen
+//  win_toggle_full_screen
 //============================================================
 
 void win_toggle_full_screen(void)
@@ -1383,7 +1384,7 @@ void win_toggle_full_screen(void)
 
 
 //============================================================
-//	win_adjust_window
+//  win_adjust_window
 //============================================================
 
 void win_adjust_window(void)
@@ -1428,7 +1429,7 @@ void win_adjust_window(void)
 
 
 //============================================================
-//	win_process_events_periodic
+//  win_process_events_periodic
 //============================================================
 
 void win_process_events_periodic(void)
@@ -1442,7 +1443,7 @@ void win_process_events_periodic(void)
 
 
 //============================================================
-//	win_process_events
+//  win_process_events
 //============================================================
 
 int win_process_events(int ingame)
@@ -1534,7 +1535,7 @@ int win_process_events(int ingame)
 
 
 //============================================================
-//	wait_for_vsync
+//  wait_for_vsync
 //============================================================
 
 void win_wait_for_vsync(void)
@@ -1556,7 +1557,7 @@ void win_wait_for_vsync(void)
 
 
 //============================================================
-//	win_prepare_palette
+//  win_prepare_palette
 //============================================================
 
 UINT32 *win_prepare_palette(struct win_blit_params *params)
@@ -1572,7 +1573,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 
 
 //============================================================
-//	dib_draw_window
+//  dib_draw_window
 //============================================================
 
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -1662,7 +1663,7 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rec
 
 
 //============================================================
-//	lookup_effect
+//  lookup_effect
 //============================================================
 
 int win_lookup_effect(const char *arg)
@@ -1680,7 +1681,7 @@ int win_lookup_effect(const char *arg)
 
 
 //============================================================
-//	win_determine_effect
+//  win_determine_effect
 //============================================================
 
 int win_determine_effect(const struct win_blit_params *params)
@@ -1701,7 +1702,7 @@ int win_determine_effect(const struct win_blit_params *params)
 
 
 //============================================================
-//	compute_multipliers_internal
+//  compute_multipliers_internal
 //============================================================
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult)
@@ -1760,281 +1761,10 @@ static void compute_multipliers_internal(const RECT *rect, int visible_width, in
 
 
 //============================================================
-//	win_compute_multipliers
+//  win_compute_multipliers
 //============================================================
 
 void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 {
 	compute_multipliers_internal(rect, win_visible_width, win_visible_height, xmult, ymult);
 }
-
-
-
-#ifndef NEW_DEBUGGER
-//============================================================
-//	debugwin_init_windows
-//============================================================
-
-int debugwin_init_windows(void)
-{
-#ifdef MAME_DEBUG
-	static int class_registered;
-	RECT bounds, work_bounds;
-	TCHAR title[256];
-	int i;
-
-	if (!class_registered)
-	{
-		WNDCLASS wc = { 0 };
-
-		// initialize the description of the window class
-		wc.lpszClassName 	= TEXT("MAMEDebug");
-		wc.hInstance 		= GetModuleHandle(NULL);
-		wc.lpfnWndProc		= debug_window_proc;
-		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
-		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
-		wc.lpszMenuName		= NULL;
-		wc.hbrBackground	= NULL;
-		wc.style			= 0;
-		wc.cbClsExtra		= 0;
-		wc.cbWndExtra		= 0;
-
-		// register the class; fail if we can't
-		if (!RegisterClass(&wc))
-			return 1;
-
-		class_registered = 1;
-	}
-
-	// fill in the bitmap info header
-	debug_dib_info->bmiHeader.biSize			= sizeof(debug_dib_info->bmiHeader);
-	debug_dib_info->bmiHeader.biPlanes			= 1;
-	debug_dib_info->bmiHeader.biCompression		= BI_RGB;
-	debug_dib_info->bmiHeader.biSizeImage		= 0;
-	debug_dib_info->bmiHeader.biXPelsPerMeter	= 0;
-	debug_dib_info->bmiHeader.biYPelsPerMeter	= 0;
-	debug_dib_info->bmiHeader.biClrUsed			= 0;
-	debug_dib_info->bmiHeader.biClrImportant	= 0;
-
-	// initialize the palette to a gray ramp
-	for (i = 0; i < 255; i++)
-	{
-		debug_dib_info->bmiColors[i].rgbRed			= i;
-		debug_dib_info->bmiColors[i].rgbGreen		= i;
-		debug_dib_info->bmiColors[i].rgbBlue		= i;
-		debug_dib_info->bmiColors[i].rgbReserved	= i;
-	}
-
-	sprintf(title, "Debug: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
-
-	// get the adjusted bounds
-	bounds.top = bounds.left = 0;
-	bounds.right = options.debug_width;
-	bounds.bottom = options.debug_height;
-	AdjustWindowRectEx(&bounds, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
-
-	// get the work bounds
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &work_bounds, 0);
-
-	// create the window
-	win_debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, TEXT("MAMEDebug"), title, DEBUG_WINDOW_STYLE,
-			work_bounds.right - (bounds.right - bounds.left),
-			work_bounds.bottom - (bounds.bottom - bounds.top),
-			bounds.right - bounds.left, bounds.bottom - bounds.top,
-			win_video_window, NULL, GetModuleHandle(NULL), NULL);
-	if (!win_debug_window)
-		return 1;
-#endif
-
-	return 0;
-}
-
-
-
-//============================================================
-//	debugwin_update_windows
-//============================================================
-
-void debugwin_update_windows(struct mame_bitmap *bitmap, const rgb_t *palette)
-{
-#ifdef MAME_DEBUG
-	// get the client DC and draw to it
-	if (win_debug_window)
-	{
-		HDC dc = GetDC(win_debug_window);
-		draw_debug_contents(dc, bitmap, palette);
-		ReleaseDC(win_debug_window, dc);
-	}
-#endif
-}
-
-
-
-//============================================================
-//	draw_debug_contents
-//============================================================
-
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette)
-{
-	static struct mame_bitmap *last_bitmap;
-	static const rgb_t *last_palette;
-	int i;
-
-	// if no bitmap, use the last one we got
-	if (bitmap == NULL)
-		bitmap = last_bitmap;
-	if (palette == NULL)
-		palette = last_palette;
-
-	// if no bitmap, just fill
-	if (bitmap == NULL || palette == NULL || !debug_focus || bitmap->depth != 8)
-	{
-		RECT fill;
-		GetClientRect(win_debug_window, &fill);
-		FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
-		return;
-	}
-	last_bitmap = bitmap;
-	last_palette = palette;
-
-	// if we're iconic, don't bother
-	if (IsIconic(win_debug_window))
-		return;
-
-	// for 8bpp bitmaps, update the debug colors
-	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-	{
-		debug_dib_info->bmiColors[i].rgbRed		= RGB_RED(palette[i]);
-		debug_dib_info->bmiColors[i].rgbGreen	= RGB_GREEN(palette[i]);
-		debug_dib_info->bmiColors[i].rgbBlue	= RGB_BLUE(palette[i]);
-	}
-
-	// fill in bitmap-specific info
-	debug_dib_info->bmiHeader.biWidth = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) / (bitmap->depth / 8);
-	debug_dib_info->bmiHeader.biHeight = -bitmap->height;
-	debug_dib_info->bmiHeader.biBitCount = bitmap->depth;
-
-	// blit to the screen
-	StretchDIBits(dc, 0, 0, bitmap->width, bitmap->height,
-			0, 0, bitmap->width, bitmap->height,
-			bitmap->base, debug_dib_info, DIB_RGB_COLORS, SRCCOPY);
-}
-
-
-
-//============================================================
-//	debug_window_proc
-//============================================================
-
-static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
-{
-	// handle a few messages
-	switch (message)
-	{
-		// paint: redraw the last bitmap
-		case WM_PAINT:
-		{
-			PAINTSTRUCT pstruct;
-			HDC hdc = BeginPaint(wnd, &pstruct);
-			draw_debug_contents(hdc, NULL, NULL);
-			EndPaint(wnd, &pstruct);
-			break;
-		}
-
-		// get min/max info: set the minimum window size
-		case WM_GETMINMAXINFO:
-		{
-			MINMAXINFO *minmax = (MINMAXINFO *)lparam;
-			minmax->ptMinTrackSize.x = 640;
-			minmax->ptMinTrackSize.y = 480;
-			break;
-		}
-
-		// sizing: constrain to the aspect ratio unless control key is held down
-		case WM_SIZING:
-		{
-			InvalidateRect(win_debug_window, NULL, FALSE);
-			break;
-		}
-
-		// destroy: close down the app
-		case WM_DESTROY:
-			win_debug_window = 0;
-			break;
-
-		// everything else: defaults
-		default:
-			return DefWindowProc(wnd, message, wparam, lparam);
-	}
-
-	return 0;
-}
-
-
-
-//============================================================
-//	debugwin_show
-//============================================================
-
-void debugwin_show(int type)
-{
-	if (win_debug_window)
-		ShowWindow(win_debug_window, type);
-}
-
-
-
-//============================================================
-//	debugwin_set_focus
-//============================================================
-
-void debugwin_set_focus(int focus)
-{
-	static int temp_afs, temp_fs, temp_throttle;
-
-	debug_focus = focus;
-
-	// if focused, make sure the window is visible
-	if (debug_focus && win_debug_window)
-	{
-		// if full screen, turn it off
-		if (!win_window_mode)
-			win_toggle_full_screen();
-
-		// store frameskip/throttle settings
-		temp_fs       = frameskip;
-		temp_afs      = autoframeskip;
-		temp_throttle = throttle;
-
-		// temporarily set them to usable values for the debugger
-		frameskip     = 0;
-		autoframeskip = 0;
-		throttle      = 1;
-
-		// show and restore the window
-		ShowWindow(win_debug_window, SW_SHOW);
-		ShowWindow(win_debug_window, SW_RESTORE);
-
-		// make frontmost
-		SetForegroundWindow(win_debug_window);
-
-		// force an update
-		debugwin_update_windows(NULL, NULL);
-	}
-
-	// if not focuessed, bring the game frontmost
-	else if (!debug_focus && win_debug_window)
-	{
-		// restore frameskip/throttle settings
-		frameskip     = temp_fs;
-		autoframeskip = temp_afs;
-		throttle      = temp_throttle;
-
-		// hide the window
-		ShowWindow(win_debug_window, SW_HIDE);
-
-		// make video frontmost
-		SetForegroundWindow(win_video_window);
-	}
-}
-#endif
