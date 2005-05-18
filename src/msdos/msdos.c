@@ -491,6 +491,10 @@ int osd_trying_to_quit( void )
 	return 0;
 }
 
+void osd_config_save_xml(int type, struct _mame_file *file)
+{
+}
+
 //============================================================
 //	osd_keyboard_disabled
 //============================================================
