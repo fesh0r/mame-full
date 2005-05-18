@@ -16,9 +16,11 @@ int osd_init(void)
 {
 	/* now invoice system-dependent initialization */
 #ifdef XMAME_NET
-	if (osd_net_init()      !=OSD_OK) return OSD_NOT_OK;
+	if (osd_net_init() != OSD_OK)
+		return OSD_NOT_OK;
 #endif	
-	if (osd_input_initpre() !=OSD_OK) return OSD_NOT_OK;
+	if (osd_input_initpre() != OSD_OK)
+		return OSD_NOT_OK;
 
 	return OSD_OK;
 }
@@ -53,8 +55,7 @@ void *osd_alloc_executable(size_t size)
 
 void osd_free_executable(void *ptr)
 {
-	if (ptr)
-		free(ptr);
+	free(ptr);
 }
 
 int main(int argc, char **argv)
