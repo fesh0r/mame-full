@@ -1351,10 +1351,6 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	return copy;
 }
 
-void osd_pause(int paused)
-{
-}
-
 /* Note there are 3 known different variants of snprintf:
  1 returns -1 when the buffer was to small
  2 returns the length which would have beem written if the

@@ -828,6 +828,12 @@ int osd_readkey_unicode(int flush)
 		return 0;
 }
 
+void osd_pause(int paused)
+{
+	if (!paused)
+		memset(key, 0, KEY_CODES);
+}
+
 static void update_joystick_axes(void)
 {
 	int joynum, axis;
