@@ -408,7 +408,13 @@ UINT32 hash_data_extract_crc32(const char *d)
 }
 
 
-data32_t read32_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask)
+/***************************************************************************
+
+	Reading read8 handlers with other types
+
+***************************************************************************/
+
+data32_t read32le_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask)
 {
 	data32_t result = 0;
 	if ((mem_mask & 0x000000FF) == 0)
@@ -424,7 +430,7 @@ data32_t read32_with_read8_handler(read8_handler handler, offs_t offset, data32_
 
 
 
-void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
+void write32le_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
 {
 	if ((mem_mask & 0x000000FF) == 0)
 		handler(offset * 4 + 0, data >> 0);
@@ -434,6 +440,34 @@ void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t
 		handler(offset * 4 + 2, data >> 16);
 	if ((mem_mask & 0xFF000000) == 0)
 		handler(offset * 4 + 3, data >> 24);
+}
+
+
+
+data64_t read64be_with_read8_handler(read8_handler handler, offs_t offset, data64_t mem_mask)
+{
+	data64_t result = 0;
+	int i;
+
+	for (i = 0; i < 8; i++)
+	{
+		if (((mem_mask >> (56 - i * 8)) & 0xFF) == 0)
+			result |= ((data64_t) handler(offset * 8 + i)) << (56 - i * 8);
+	}
+	return result;
+}
+
+
+
+void write64be_with_write8_handler(write8_handler handler, offs_t offset, data64_t data, data64_t mem_mask)
+{
+	int i;
+
+	for (i = 0; i < 8; i++)
+	{
+		if (((mem_mask >> (56 - i * 8)) & 0xFF) == 0)
+			handler(offset * 8 + i, data >> (56 - i * 8));
+	}
 }
 
 

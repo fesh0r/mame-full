@@ -33,8 +33,8 @@ struct dma8237
 		UINT8 mode;
 	} chan[4];
 
-	int msb : 1;
-	int eop : 1;
+	unsigned int msb : 1;
+	unsigned int eop : 1;
 	UINT8 temp;
 	UINT8 command;
 	UINT8 drq;
@@ -77,8 +77,7 @@ int dma8237_init(int count)
 		dma[which].status = 0x0F;
 		dma[which].timer = mame_timer_alloc(dma8237_timerproc);
 		dma[which].msbflip_timer = mame_timer_alloc(dma8237_msbflip_timerproc);
-		dma[which].eop = 0;
-		dma[which].eop |= 1;
+		dma[which].eop = 1;
 	}
 	return 0;
 }
@@ -180,7 +179,7 @@ static void dma8237_update_status(int which)
 {
 	UINT16 pending_transfer;
 	int channel;
-	int new_eop;
+	unsigned int new_eop;
 
 	if ((dma[which].status & 0xF0) == 0)
 	{
@@ -215,7 +214,7 @@ static void dma8237_update_status(int which)
 		}
 
 		/* set the eop line, if it has changed */
-		new_eop = (dma[which].status & 0x0F) == 0x0F ? -1 : 0;
+		new_eop = (dma[which].status & 0x0F) == 0x0F ? 1 : 0;
 		if (dma[which].eop != new_eop)
 		{
 			dma[which].eop = new_eop;
@@ -442,7 +441,7 @@ void dma8237_run_transfer(int which, int channel)
 WRITE8_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
 WRITE8_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
 
-READ32_HANDLER( dma8237_32_0_r ) { return read32_with_read8_handler(dma8237_0_r, offset, mem_mask); }
-READ32_HANDLER( dma8237_32_1_r ) { return read32_with_read8_handler(dma8237_1_r, offset, mem_mask); }
-WRITE32_HANDLER( dma8237_32_0_w ) { write32_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
-WRITE32_HANDLER( dma8237_32_1_w ) { write32_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }
+READ32_HANDLER( dma8237_32_0_r ) { return read32le_with_read8_handler(dma8237_0_r, offset, mem_mask); }
+READ32_HANDLER( dma8237_32_1_r ) { return read32le_with_read8_handler(dma8237_1_r, offset, mem_mask); }
+WRITE32_HANDLER( dma8237_32_0_w ) { write32le_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
+WRITE32_HANDLER( dma8237_32_1_w ) { write32le_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }

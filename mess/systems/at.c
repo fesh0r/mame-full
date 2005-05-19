@@ -7,10 +7,10 @@
 #include "driver.h"
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
+#include "machine/uart8250.h"
 #include "vidhrdw/generic.h"
 #include "devices/printer.h"
 
-#include "includes/uart8250.h"
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
@@ -108,12 +108,12 @@ static WRITE8_HANDLER(at_dma8237_1_w)
 
 static READ32_HANDLER(at32_dma8237_1_r)
 {
-	return read32_with_read8_handler(at_dma8237_1_r, offset, mem_mask);
+	return read32le_with_read8_handler(at_dma8237_1_r, offset, mem_mask);
 }
 
 static WRITE32_HANDLER(at32_dma8237_1_w)
 {
-	write32_with_write8_handler(at_dma8237_1_w, offset, data, mem_mask);
+	write32le_with_write8_handler(at_dma8237_1_w, offset, data, mem_mask);
 }
 
 

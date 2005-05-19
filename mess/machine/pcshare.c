@@ -23,12 +23,12 @@
 #include <assert.h>
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "machine/uart8250.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/uart8250.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
@@ -314,14 +314,14 @@ WRITE8_HANDLER(at_page8_w)
 
 READ32_HANDLER(at_page32_r)
 {
-	return read32_with_read8_handler(at_page8_r, offset, mem_mask);
+	return read32le_with_read8_handler(at_page8_r, offset, mem_mask);
 }
 
 
 
 WRITE32_HANDLER(at_page32_w)
 {
-	write32_with_write8_handler(at_page8_w, offset, data, mem_mask);
+	write32le_with_write8_handler(at_page8_w, offset, data, mem_mask);
 }
 
 
@@ -492,14 +492,14 @@ WRITE8_HANDLER(pc_COM2_w) { uart8250_w(1, offset, data); }
 WRITE8_HANDLER(pc_COM3_w) { uart8250_w(2, offset, data); }
 WRITE8_HANDLER(pc_COM4_w) { uart8250_w(3, offset, data); }
 
-READ32_HANDLER(pc32_COM1_r)  { return read32_with_read8_handler(pc_COM1_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM2_r)  { return read32_with_read8_handler(pc_COM2_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM3_r)  { return read32_with_read8_handler(pc_COM3_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM4_r)  { return read32_with_read8_handler(pc_COM4_r, offset, mem_mask); }
-WRITE32_HANDLER(pc32_COM1_w) { write32_with_write8_handler(pc_COM1_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM2_w) { write32_with_write8_handler(pc_COM2_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM3_w) { write32_with_write8_handler(pc_COM3_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM4_w) { write32_with_write8_handler(pc_COM4_w, offset, data, mem_mask); }
+READ32_HANDLER(pc32_COM1_r)  { return read32le_with_read8_handler(pc_COM1_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM2_r)  { return read32le_with_read8_handler(pc_COM2_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM3_r)  { return read32le_with_read8_handler(pc_COM3_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM4_r)  { return read32le_with_read8_handler(pc_COM4_r, offset, mem_mask); }
+WRITE32_HANDLER(pc32_COM1_w) { write32le_with_write8_handler(pc_COM1_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM2_w) { write32le_with_write8_handler(pc_COM2_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM3_w) { write32le_with_write8_handler(pc_COM3_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM4_w) { write32le_with_write8_handler(pc_COM4_w, offset, data, mem_mask); }
 
 
 

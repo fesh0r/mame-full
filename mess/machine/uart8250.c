@@ -1,13 +1,20 @@
+/**********************************************************************
+
+	8250 UART interface and emulation
+
+	KT - 14-Jun-2000 - Improved Interrupt setting/clearing
+	KT - moved into seperate file so it can be used in Super I/O emulation and
+		any other system which uses a PC type COM port
+	KT - 24-Jun-2000 - removed pc specific input port tests. More compatible
+		with PCW16 and PCW16 doesn't requre the PC input port definitions
+		which are not required by the PCW16 hardware
+
+**********************************************************************/
+
 #include "driver.h"
-#include "includes/uart8250.h"
+#include "machine/uart8250.h"
 #include "includes/pc_mouse.h"
 
-/* KT - 14-Jun-2000 - Improved Interrupt setting/clearing */
-/* KT - moved into seperate file so it can be used in Super I/O emulation and any other
-system which uses a PC type COM port */
-/* 24-Jun-2000 - removed pc specific input port tests. More compatible with PCW16 and
-PCW16 doesn't requre the PC input port definitions which are not required by the PCW16
-hardware */
 
 #define LOG(LEVEL,N,M,A)  \
 if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A;
@@ -40,10 +47,9 @@ typedef struct {
 
 	// sending circuit
 	struct {
-		int activ;
+		int active;
 		UINT8 data;
 		double time;
-//		void *timer;
 	} send;
 } UART8250;
 
@@ -58,13 +64,9 @@ UART8250 uart[4]={ { { TYPE8250 } } };
 #define DLAB(n) (uart[n].lcr&0x80) //divisor latch access bit
 #define LOOP(n) (uart[n].mcr&0x10)
 
-#if 0
-static double uart_byte_time(int n)
-{
-	double bit=16.0/uart[n].interface.clockin;
-	return bit*8; // start+data+parity+stop
-}
-#endif
+
+
+
 /* setup iir with the priority id */
 static void uart8250_setup_iir(int n)
 {
@@ -99,11 +101,11 @@ static void uart8250_update_interrupt(int n)
 	int state;
 
 	/* disable int output? */
-	if ((uart[n].mcr & 0x08)==0)
+	if ((uart[n].mcr & 0x08) == 0)
 		return;
 
 	/* if any bits are set and are enabled */
-	if (((uart[n].int_pending&uart[n].ier) & 0x0f)!=0)
+	if (((uart[n].int_pending&uart[n].ier) & 0x0f) != 0)
 	{
 		/* trigger next highest priority int */
 
@@ -114,7 +116,6 @@ static void uart8250_update_interrupt(int n)
 
 		/* int pending */
 		uart[n].iir |= 0x01;
-
 	}
 	else
 	{
@@ -122,9 +123,9 @@ static void uart8250_update_interrupt(int n)
 		state = 0;
 
 		/* no ints pending */
-		uart[n].iir &=~0x01;
+		uart[n].iir &= ~0x01;
 		/* priority level */
-		uart[n].iir &=~(0x04|0x02);
+		uart[n].iir &= ~(0x04|0x02);
 	}
 
 
@@ -133,6 +134,8 @@ static void uart8250_update_interrupt(int n)
 		uart[n].interface.interrupt(n, state);
 }
 
+
+
 /* set pending bit and trigger int */
 static void uart8250_trigger_int(int n, int flag)
 {
@@ -140,6 +143,8 @@ static void uart8250_trigger_int(int n, int flag)
 
 	uart8250_update_interrupt(n);
 }
+
+
 
 /* clear pending bit, if any ints are pending, then int will be triggered, otherwise it
 will be cleared */
@@ -151,10 +156,15 @@ static void uart8250_clear_int(int n, int flag)
 }
 
 
-void uart8250_init(int nr, uart8250_interface *new_interface)
+
+void uart8250_init(int nr, const uart8250_interface *new_interface)
 {
-	memcpy(&uart[nr].interface, new_interface, sizeof(uart8250_interface));
+	memset(&uart[nr], 0, sizeof(uart[nr]));
+	if (new_interface)
+		memcpy(&uart[nr].interface, new_interface, sizeof(uart8250_interface));
 }
+
+
 
 /* 1 based */
 void uart8250_reset(int n)
@@ -165,21 +175,21 @@ void uart8250_reset(int n)
 	uart[n].mcr = 0;
 	uart[n].lsr = (1<<5) | (1<<6);
 
-	uart[n].send.activ=0;
+	uart[n].send.active=0;
 
 	/* refresh with reset state of register */
 	if (uart[n].interface.refresh_connected)
 		uart[n].interface.refresh_connected(n);
 }
 
-void uart8250_w(int n, int idx, int data)
+
+
+void uart8250_w(int n, offs_t idx, data8_t data)
 {
 #ifdef VERBOSE_COM
     static char P[8] = "NONENHNL";  /* names for parity select */
 #endif
     int tmp;
-
-	logerror("uart %d: write %.2x %.2x\n",n,idx,data);
 
 	switch (idx)
 	{
@@ -196,15 +206,10 @@ void uart8250_w(int n, int idx, int data)
 				uart[n].thr = data;
 				COM_LOG(2,"COM_thr_w",("COM%d $%02x\n", n+1, data));
 
-#if 0
-				uart[n].send.activ=1;
-				uart[n].lsr&=~0x40;
-				uart[n].send.data=data;
-				uart[n].send.time=timer_get_time();
-#endif
-				if (LOOP(n)) {
-					uart[n].lsr|=1;
-					uart[n].rbr=data;
+				if (LOOP(n))
+				{
+					uart[n].lsr |= 1;
+					uart[n].rbr = data;
 				}
 				/* writing to thr will clear the int */
 				uart8250_clear_int(n, COM_INT_PENDING_TRANSMITTER_HOLDING_REGISTER_EMPTY);
@@ -254,17 +259,11 @@ void uart8250_w(int n, int idx, int data)
 		uart[n].interface.refresh_connected(n);
 }
 
-WRITE8_HANDLER ( uart8250_0_w ) { uart8250_w(0, offset, data); }
-WRITE8_HANDLER ( uart8250_1_w ) { uart8250_w(1, offset, data); }
-WRITE8_HANDLER ( uart8250_2_w ) { uart8250_w(2, offset, data); }
-WRITE8_HANDLER ( uart8250_3_w ) { uart8250_w(3, offset, data); }
 
-int uart8250_r(int n, int idx)
+
+data8_t uart8250_r(int n, offs_t idx)
 {
 	int data = 0x0ff;
-
-        COM_LOG(1,"COM_r",("COM%d $%02x:\n",
-                                        n+1));
 
 	switch (idx)
 	{
@@ -316,13 +315,15 @@ int uart8250_r(int n, int idx)
 		case 5:
 
 #if 0
-			if (uart[n].send.activ && (timer_get_time()-uart[n].send.time>uart_byte_time(n))) {
+			if (uart[n].send.active && (timer_get_time()-uart[n].send.time>uart_byte_time(n)))
+			{
 				// currently polling is enough for pc1512
 				uart[n].lsr |= 0x40; /* set TSRE */
-				uart[n].send.activ=0;
-				if (LOOP(n)) {
-					uart[n].lsr|=1;
-					uart[n].rbr=uart[n].send.data;
+				uart[n].send.active = 0;
+				if (LOOP(n))
+				{
+					uart[n].lsr |= 1;
+					uart[n].rbr = uart[n].send.data;
 				}
 			}
 #endif
@@ -363,13 +364,9 @@ int uart8250_r(int n, int idx)
 	if (uart[n].interface.refresh_connected)
 		uart[n].interface.refresh_connected(n);
 
-	logerror("uart %d: read %.2x %.2x\n",n,idx,data);
     return data;
 }
- READ8_HANDLER ( uart8250_0_r ) { return uart8250_r(0, offset); }
- READ8_HANDLER ( uart8250_1_r ) { return uart8250_r(1, offset); }
- READ8_HANDLER ( uart8250_2_r ) { return uart8250_r(2, offset); }
- READ8_HANDLER ( uart8250_3_r ) { return uart8250_r(3, offset); }
+
 
 
 void uart8250_receive(int n, int data)
@@ -426,22 +423,23 @@ void uart8250_handshake_in(int n, int new_msr)
 //	}
 }
 
-#if 0
-void	uart8250_set_inputs(int n, int new_inputs)
-{
-	uart8250_change_msr(n, new_inputs);
-}
+
+READ8_HANDLER ( uart8250_0_r ) { return uart8250_r(0, offset); }
+READ8_HANDLER ( uart8250_1_r ) { return uart8250_r(1, offset); }
+READ8_HANDLER ( uart8250_2_r ) { return uart8250_r(2, offset); }
+READ8_HANDLER ( uart8250_3_r ) { return uart8250_r(3, offset); }
+WRITE8_HANDLER ( uart8250_0_w ) { uart8250_w(0, offset, data); }
+WRITE8_HANDLER ( uart8250_1_w ) { uart8250_w(1, offset, data); }
+WRITE8_HANDLER ( uart8250_2_w ) { uart8250_w(2, offset, data); }
+WRITE8_HANDLER ( uart8250_3_w ) { uart8250_w(3, offset, data); }
+
+READ64_HANDLER ( uart8250_64be_0_r ) { return read64be_with_read8_handler(uart8250_0_r, offset, mem_mask); }
+READ64_HANDLER ( uart8250_64be_1_r ) { return read64be_with_read8_handler(uart8250_1_r, offset, mem_mask); }
+READ64_HANDLER ( uart8250_64be_2_r ) { return read64be_with_read8_handler(uart8250_2_r, offset, mem_mask); }
+READ64_HANDLER ( uart8250_64be_3_r ) { return read64be_with_read8_handler(uart8250_3_r, offset, mem_mask); }
+WRITE64_HANDLER ( uart8250_64be_0_w ) { write64be_with_write8_handler(uart8250_0_w, offset, data, mem_mask); }
+WRITE64_HANDLER ( uart8250_64be_1_w ) { write64be_with_write8_handler(uart8250_1_w, offset, data, mem_mask); }
+WRITE64_HANDLER ( uart8250_64be_2_w ) { write64be_with_write8_handler(uart8250_2_w, offset, data, mem_mask); }
+WRITE64_HANDLER ( uart8250_64be_3_w ) { write64be_with_write8_handler(uart8250_3_w, offset, data, mem_mask); }
 
 
-int	uart8250_get_outputs(int n)
-{
-	return uart[n].mcr;
-}
-
-
-int uart8250_get_inputs(int n)
-{
-	return uart[n].msr;
-}
-
-#endif

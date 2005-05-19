@@ -375,14 +375,14 @@ WRITE8_HANDLER(mc146818_port_w)
 
 READ32_HANDLER(mc146818_port32_r)
 {
-	return read32_with_read8_handler(mc146818_port_r, offset, mem_mask);
+	return read32le_with_read8_handler(mc146818_port_r, offset, mem_mask);
 }
 
 
 
 WRITE32_HANDLER(mc146818_port32_w)
 {
-	write32_with_write8_handler(mc146818_port_w, offset, data, mem_mask);
+	write32le_with_write8_handler(mc146818_port_w, offset, data, mem_mask);
 }
 
 

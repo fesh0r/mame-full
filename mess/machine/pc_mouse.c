@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "includes/uart8250.h"
+#include "machine/uart8250.h"
 #include "includes/pc_mouse.h"
 
 static struct {
@@ -13,7 +13,7 @@ static struct {
 	UINT8 queue[256];
 	UINT8 head, tail, mb;
 
-	void *timer;
+	mame_timer *timer;
 
 } pc_mouse;
 

@@ -100,7 +100,7 @@
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
 // for pc com port
-#include "includes/uart8250.h"
+#include "machine/uart8250.h"
 // for pc serial mouse
 #include "includes/pc_mouse.h"
 // pcw/pcw16 beeper

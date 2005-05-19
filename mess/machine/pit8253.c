@@ -1287,10 +1287,10 @@ READ8_HANDLER (	pit8253_1_r	) {	return pit8253_read(1, offset);	}
 WRITE8_HANDLER ( pit8253_0_w ) { pit8253_write(0, offset, data); }
 WRITE8_HANDLER ( pit8253_1_w ) { pit8253_write(1, offset, data); }
 
-READ32_HANDLER ( pit8253_32_0_r	) {	return read32_with_read8_handler(pit8253_0_r, offset, mem_mask); }
-READ32_HANDLER ( pit8253_32_1_r	) {	return read32_with_read8_handler(pit8253_1_r, offset, mem_mask); }
-WRITE32_HANDLER	( pit8253_32_0_w ) { write32_with_write8_handler(pit8253_0_w, offset, data,	mem_mask); }
-WRITE32_HANDLER	( pit8253_32_1_w ) { write32_with_write8_handler(pit8253_1_w, offset, data,	mem_mask); }
+READ32_HANDLER ( pit8253_32_0_r	) {	return read32le_with_read8_handler(pit8253_0_r, offset, mem_mask); }
+READ32_HANDLER ( pit8253_32_1_r	) {	return read32le_with_read8_handler(pit8253_1_r, offset, mem_mask); }
+WRITE32_HANDLER	( pit8253_32_0_w ) { write32le_with_write8_handler(pit8253_0_w, offset, data,	mem_mask); }
+WRITE32_HANDLER	( pit8253_32_1_w ) { write32le_with_write8_handler(pit8253_1_w, offset, data,	mem_mask); }
 
 WRITE8_HANDLER ( pit8253_0_gate_w )	{ pit8253_gate_write(0,	offset,	data); }
 WRITE8_HANDLER ( pit8253_1_gate_w )	{ pit8253_gate_write(1,	offset,	data); }

@@ -371,10 +371,10 @@ READ8_HANDLER ( pic8259_1_r )	{ return pic8259_read(1, offset); }
 WRITE8_HANDLER ( pic8259_0_w )	{ pic8259_write(0, offset, data); }
 WRITE8_HANDLER ( pic8259_1_w )	{ pic8259_write(1, offset, data); }
 
-READ32_HANDLER ( pic8259_32_0_r ) { return read32_with_read8_handler(pic8259_0_r, offset, mem_mask); }
-READ32_HANDLER ( pic8259_32_1_r ) { return read32_with_read8_handler(pic8259_1_r, offset, mem_mask); }
-WRITE32_HANDLER ( pic8259_32_0_w ) { write32_with_write8_handler(pic8259_0_w, offset, data, mem_mask); }
-WRITE32_HANDLER ( pic8259_32_1_w ) { write32_with_write8_handler(pic8259_1_w, offset, data, mem_mask); }
+READ32_HANDLER ( pic8259_32_0_r ) { return read32le_with_read8_handler(pic8259_0_r, offset, mem_mask); }
+READ32_HANDLER ( pic8259_32_1_r ) { return read32le_with_read8_handler(pic8259_1_r, offset, mem_mask); }
+WRITE32_HANDLER ( pic8259_32_0_w ) { write32le_with_write8_handler(pic8259_0_w, offset, data, mem_mask); }
+WRITE32_HANDLER ( pic8259_32_1_w ) { write32le_with_write8_handler(pic8259_1_w, offset, data, mem_mask); }
 
 
 

@@ -19,9 +19,9 @@
 
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "machine/uart8250.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/uart8250.h"
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"

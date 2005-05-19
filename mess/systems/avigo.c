@@ -41,7 +41,7 @@
 #include "includes/avigo.h"
 #include "includes/am29f080.h"
 #include "includes/tc8521.h"
-#include "includes/uart8250.h"
+#include "machine/uart8250.h"
 #include "sound/speaker.h"
 
 static UINT8 avigo_key_line;
