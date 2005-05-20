@@ -156,7 +156,7 @@ static const struct TabViewCallbacks s_softwareTabViewCallbacks =
 #define IO_UNKNOWN	(IO_COUNT + 2)
 
 // TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape!
-static struct deviceentry s_devices[] =
+static const struct deviceentry s_devices[] =
 {
 	{ IO_CARTSLOT,	"roms",		"Cartridge images" },
 	{ IO_FLOPPY,	"floppy",	"Floppy disk images" },
@@ -170,7 +170,8 @@ static struct deviceentry s_devices[] =
 	{ IO_PARALLEL,	NULL,		"Parallel Output" },
 	{ IO_SNAPSHOT,	"snapshot",	"Snapshots" },
 	{ IO_QUICKLOAD,	"snapshot",	"Quickloads" },
-	{ IO_MEMCARD,	NULL,		"Memory cards" }
+	{ IO_MEMCARD,	NULL,		"Memory cards" },
+	{ IO_CDROM,		NULL,		"CD-ROM images" }
 };
 
 

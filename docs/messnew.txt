@@ -17,6 +17,8 @@ System Driver Changes:
 
 - [DGNALPHA] Removed optional DOS BIOS.  [Phill Harvey-Smith]
 
+- [JAGUAR] Added quickload device.  [Nate Woods]
+
 - [SGI] Various improvements; CD-ROM, keyboard and mouse hooked up and
   preliminary SCSI, DMA and Newport graphics board emulation.  [R. Belmont]
 

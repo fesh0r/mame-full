@@ -48,6 +48,7 @@
 #include "cpu/jaguar/jaguar.h"
 #include "includes/jaguar.h"
 #include "devices/cartslot.h"
+#include "devices/snapquik.h"
 
 
 
@@ -529,8 +530,25 @@ static void jaguar_cartslot_getinfo(struct IODevice *dev)
 	dev->load = device_load_jaguar_cart;
 }
 
+static QUICKLOAD_LOAD( jaguar )
+{
+	offs_t quickload_begin = 0x4000;
+	quickload_size = MIN(quickload_size, 0x200000 - quickload_begin);
+	mame_fread(fp, &memory_region(REGION_CPU1)[quickload_begin], quickload_size);
+	cpunum_set_reg(0, REG_PC, quickload_begin);
+	return INIT_PASS;
+}
+
+static void jaguar_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_jaguar, 0.0);
+	dev->file_extensions = "bin\0";
+}
+
 SYSTEM_CONFIG_START(jaguar)
 	CONFIG_DEVICE(jaguar_cartslot_getinfo)
+	CONFIG_DEVICE(jaguar_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 
