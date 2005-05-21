@@ -37,7 +37,7 @@ static void svi318_set_banks (void);
 static int svi318_verify_cart (UINT8 magic[2])
 {
 	/* read the first two bytes */
-	if ( (magic[0] == 0xf3) && (magic[1] == 0xc3) )
+	if ( (magic[0] == 0xf3) && (magic[1] == 0x31) )
 		return IMAGE_VERIFY_PASS;
 	else
 		return IMAGE_VERIFY_FAIL;
