@@ -1,7 +1,7 @@
 /*
 ** svi318.c : driver for Spectravideo SVI-318 and SVI-328
 **
-** Sean Young, 2000
+** Sean Young, Tomas Karlsson
 */
 
 #include "driver.h"
@@ -20,25 +20,27 @@
 
 
 static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_BANK1 )
-    AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK2 )
-    AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK3 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x7fff) AM_WRITE( svi318_writemem0 )
-    AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
+	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( svi318_writemem0 )
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
 ADDRESS_MAP_END
 
 static  READ8_HANDLER (svi318_null_r)
-	{
+{
 	return 0xff;
-	}
+}
 
 static ADDRESS_MAP_START (readport, ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x00, 0x11) AM_READ( svi318_null_r )
-    AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
-    AM_RANGE( 0x13, 0x2f) AM_READ( svi318_null_r )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x00, 0x11) AM_READ( svi318_null_r )
+	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
+	AM_RANGE( 0x13, 0x2f) AM_READ( svi318_null_r )
 #ifdef SVI_DISK
 	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
 	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
@@ -46,18 +48,19 @@ static ADDRESS_MAP_START (readport, ADDRESS_SPACE_IO, 8)
 	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
 	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_status_r )
 #endif
-    AM_RANGE( 0x35, 0x83) AM_READ( svi318_null_r )
-    AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
-    AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
-    AM_RANGE( 0x86, 0x8f) AM_READ( svi318_null_r )
+	AM_RANGE( 0x35, 0x83) AM_READ( svi318_null_r )
+	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
+	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
+	AM_RANGE( 0x86, 0x8f) AM_READ( svi318_null_r )
 	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
-    AM_RANGE( 0x91, 0x95) AM_READ( svi318_null_r )
-    AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
-    AM_RANGE( 0x9b, 0xff) AM_READ( svi318_null_r )
+	AM_RANGE( 0x91, 0x95) AM_READ( svi318_null_r )
+	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
+	AM_RANGE( 0x9b, 0xff) AM_READ( svi318_null_r )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START (writeport, ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
 #ifdef SVI_DISK
 	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
 	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
@@ -66,11 +69,11 @@ static ADDRESS_MAP_START (writeport, ADDRESS_SPACE_IO, 8)
 	AM_RANGE( 0x34, 0x34) AM_WRITE( fdc_disk_motor_w )
 	AM_RANGE( 0x38, 0x38) AM_WRITE( fdc_density_side_w )
 #endif
-    AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
-    AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
+	AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
+	AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
 	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
- 	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
-    AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
+	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
+	AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
 ADDRESS_MAP_END
 
 /*
