@@ -912,9 +912,11 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (strcmp(pOpts->debugres,"auto") != 0)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -dr %s",       pOpts->debugres); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->f_gamma_correct);
-	if (strcmp(pOpts->screen,"\\\\.\\DISPLAY1") != 0)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -screen %s",       pOpts->screen); 
-
+	if (strlen(pOpts->screen) > 0)
+	{
+		if (strcmp(pOpts->screen,"\\\\.\\DISPLAY1") != 0)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -screen %s",       pOpts->screen); 
+	}
 	/* vector */
 	if (DriverIsVector(nGameIndex))
 	{

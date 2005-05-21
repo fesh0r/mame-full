@@ -2077,11 +2077,25 @@ static void AssignRotate(HWND hWnd)
 
 static void AssignScreen(HWND hWnd)
 {
-	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nScreenIndex);
+	const char* ptr = NULL;
+	
+	if( ComboBox_GetCount(hWnd) > 0 )
+		ptr = (const char*)ComboBox_GetItemData(hWnd, g_nScreenIndex);
 
 	FreeIfAllocated(&pGameOpts->screen);
 	if (ptr != NULL)
-		pGameOpts->screen = strdup(ptr);
+	{
+		//only copy if it is different from Display1, as for Display1 this is not necessary
+		if (strcmp(ptr,"\\\\.\\DISPLAY1") != 0)
+		{
+			pGameOpts->screen = strdup(ptr);
+		}
+		else
+		{
+			//keep it empty
+			pGameOpts->screen = strdup("");
+		}
+	}
 }
 
 
@@ -2177,10 +2191,10 @@ static void ResetDataMap(void)
 		FreeIfAllocated(&pGameOpts->ctrlr);
 		pGameOpts->ctrlr = strdup("");
 	}
-	if (pGameOpts->screen == NULL)
+	if (pGameOpts->screen == NULL || stricmp(pGameOpts->screen,"") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->screen);
-		pGameOpts->screen = strdup("\\\\.\\DISPLAY1");
+		pGameOpts->screen = strdup("");
 		g_nScreenIndex = 0;
 	}
 	else

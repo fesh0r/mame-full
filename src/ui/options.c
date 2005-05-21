@@ -319,7 +319,7 @@ static REG_OPTION regGameOpts[] =
 	{ "screen_aspect",          RO_STRING,  &gOpts.aspect,                          "4:3" },
 	{ "cleanstretch",           RO_ENCODE,  &gOpts.clean_stretch,                   "auto", FALSE, CleanStretchEncodeString, CleanStretchDecodeString },
 	{ "zoom",                   RO_INT,     &gOpts.zoom,                            "2" },
-	{ "screen",					RO_STRING,  &gOpts.screen,                          "\\\\.\\DISPLAY1" },
+	{ "screen",					RO_STRING,  &gOpts.screen,                          "" },
 
 	// d3d
 	{ "d3d",                    RO_BOOL,    &gOpts.use_d3d,                         "0" },
