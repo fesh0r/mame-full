@@ -830,6 +830,10 @@ int osd_readkey_unicode(int flush)
 
 void osd_pause(int paused)
 {
+	/*
+	 * Clear the keyboard state when the emulation is unpaused.  This prevents 
+	 * keystrokes from bleeding over from the onscreen display.
+	 */
 	if (!paused)
 		memset(key, 0, KEY_CODES);
 }
