@@ -236,40 +236,28 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
  * CPU Model			 Month			 Year
  * -------------		 -----			 ----
  *
- * Apple I				 July			 1976
- * Apple II 			 April			 1977
- * Apple II Plus		 June			 1979
- * Apple III			 May			 1980
- * Apple IIe			 January		 1983
  * Apple III Plus		 December		 1983
- * Apple IIe Enhanced	 March			 1985
- * Apple IIc			 April			 1984
- * Apple IIc ROM 0		 ?				 1985
- * Apple IIc ROM 3		 September		 1986
  * Apple IIgs			 September		 1986
- * Apple IIe Platinum	 January		 1987
- * Apple IIgs ROM 01	 September		 1987
  * Apple IIc ROM 4		 ?				 198?
- * Apple IIc Plus		 September		 1988
- * Apple IIgs ROM 3 	 August 		 1989
  */
 	DRIVER( apple1 )	/* 1976 Apple 1 									*/
 	DRIVER( apple2 )	/* 1977 Apple ][ 									*/
 	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
+	DRIVER( apple2e )	/* 1983 Apple //e									*/
+	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
+	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
 	DRIVER( apple2c )	/* 1984 Apple //c									*/
 	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
 	DRIVER( apple2c3 )	/* 1986 Apple //c (Original Mem. Exp.)				*/
 	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
-	DRIVER( apple2e )	/* 1983 Apple //e									*/
-	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
-	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
+TESTDRIVER( apple2g0 )  /* 1986 Apple IIgs ROM00							*/
 	DRIVER( apple2g1 )	/* 1987 Apple IIgs ROM01							*/
 	DRIVER( apple2gs )	/* 1989 Apple IIgs ROM03							*/
-	DRIVER( ace100 )    /* 1982 Apple ][ clone								*/
-	DRIVER( laser128 )  /* 1987 Apple //c clone								*/
-	DRIVER( las128ex )  /* 1987 Apple //c clone								*/
-	DRIVER( las3000 )   /* 1983 (semi) Apple ][+ clone						*/
 	DRIVER( apple3 )    /* 1980 Apple ///     								*/
+	DRIVER( ace100 )    /* 1982 Franklin Ace 100							*/
+	DRIVER( laser128 )  /* 1987 Laser 128									*/
+	DRIVER( las128ex )  /* 1987 Laser 128 EX								*/
+TESTDRIVER( las3000 )   /* 1983 Laser 3000									*/
 
 /*
  * Lisa 				 January			 1983

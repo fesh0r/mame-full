@@ -162,6 +162,17 @@ ROM_START(apple2g1)
 	ROM_LOAD("rom01", 0x0000, 0x20000, CRC(42f124b0) SHA1(e4fc7560b69d062cb2da5b1ffbe11cd1ca03cc37))
 ROM_END
 
+ROM_START(apple2g0)
+	ROM_REGION(0x1000,REGION_GFX1,0)
+	ROM_LOAD ( "apple2gs.chr", 0x0000, 0x1000, CRC(91e53cd8) SHA1(34e2443e2ef960a36c047a09ed5a93f471797f89))
+
+	ROM_REGION(0x20000,REGION_CPU1,0)
+	ROM_LOAD("rom0A.bin", 0x0000,  0x8000, CRC(9cc78238) SHA1(0ea82e10720a01b68722ab7d9f66efec672a44d3))
+	ROM_LOAD("rom0B.bin", 0x8000,  0x8000, CRC(8baf2a79) SHA1(91beeb11827932fe10475252d8036a63a2edbb1c))
+	ROM_LOAD("rom0C.bin", 0x10000, 0x8000, CRC(94c32caa) SHA1(4806d50d676b06f5213b181693fc1585956b98bb))
+	ROM_LOAD("rom0D.bin", 0x18000, 0x8000, CRC(200a15b8) SHA1(0c2890bb169ead63369738bbd5f33b869f24c42a))
+ROM_END
+
 
 
 /* -----------------------------------------------------------------------
@@ -201,7 +212,7 @@ static void apple2gs_floppy525_getinfo(struct IODevice *dev)
 	/* 5.25" floppy */
 	apple525_device_getinfo(dev, 15, 16);
 	dev->name = apple2gs_floppy525_getname;
-	dev->not_working = 1;
+//	dev->not_working = 1;
 }
 
 
@@ -219,3 +230,4 @@ SYSTEM_CONFIG_END
 
 COMPX( 1989, apple2gs, 0,        apple2,	apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM03)",			GAME_NOT_WORKING )
 COMPX( 1987, apple2g1, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM01)",			GAME_NOT_WORKING )
+COMPX( 1986, apple2g0, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM00)",			GAME_NOT_WORKING )
