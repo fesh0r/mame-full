@@ -33,7 +33,7 @@
 #include "includes/pc_video.h"
 
 #include "includes/pc_ide.h"
-#include "includes/pc_fdc_h.h"
+#include "machine/pc_fdc.h"
 #include "includes/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"

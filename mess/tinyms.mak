@@ -81,7 +81,6 @@ COREOBJS += \
 	$(OBJ)/mess/machine/pclpt.o    \
 	$(OBJ)/mess/machine/centroni.o \
 	$(OBJ)/mess/machine/pckeybrd.o \
-	$(OBJ)/mess/machine/pc_fdc_h.o \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \

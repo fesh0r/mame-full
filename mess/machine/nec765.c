@@ -2072,7 +2072,7 @@ void nec765_reset(int offset)
 		fdc.nec765_status[0] = 0x080 | 0x040;
 	
 		/* for the purpose of pc-xt. If any of the drives have a disk inserted,
-		do not set not-ready - need to check with pc_fdc_hw.c whether all drives
+		do not set not-ready - need to check with pc_fdc.c whether all drives
 		are checked or only the drive selected with the drive select bits?? */
 
 		a_drive_is_ready = 0;

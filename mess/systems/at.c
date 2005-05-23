@@ -22,7 +22,7 @@
 
 #include "machine/pc_hdc.h"
 #include "includes/pc_ide.h"
-#include "includes/pc_fdc_h.h"
+#include "machine/pc_fdc.h"
 #include "includes/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
@@ -163,7 +163,7 @@ static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc32_HDC1_r,				pc32_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc32_HDC2_r,				pc32_HDC2_w)
 	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc32_parallelport1_r,		pc32_parallelport1_w)
-	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc32_fdc_r,				pc32_fdc_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc32le_fdc_r,				pc32le_fdc_w)
 	AM_RANGE(0x03bc, 0x03bf) AM_READWRITE(pc32_parallelport0_r,		pc32_parallelport0_w)
 	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc32_COM1_r,				pc32_COM1_w)
 ADDRESS_MAP_END

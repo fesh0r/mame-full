@@ -36,7 +36,7 @@
 
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
-#include "includes/pc_fdc_h.h"
+#include "machine/pc_fdc.h"
 
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
@@ -361,6 +361,34 @@ static struct dma8237_interface pc_dma =
 
 /* ----------------------------------------------------------------------- */
 
+static void pc_fdc_interrupt(int state)
+{
+	if (state)
+	{
+		/* issue IRQ */
+		pic8259_0_issue_irq(6);
+	}
+}
+
+
+
+static void pc_fdc_dma_drq(int state, int read_)
+{
+	dma8237_drq_write(0, FDC_DMA, state);
+}
+
+
+
+static const struct pc_fdc_interface fdc_interface =
+{
+	pc_fdc_interrupt,
+	pc_fdc_dma_drq,
+};
+
+
+
+/* ----------------------------------------------------------------------- */
+
 void init_pc_common(UINT32 flags)
 {
 	/* MESS managed RAM */
@@ -374,7 +402,7 @@ void init_pc_common(UINT32 flags)
 		pit8253_init(1, &pc_pit8253_config);
 
 	/* FDC/HDC hardware */
-	pc_fdc_setup();
+	pc_fdc_init(&fdc_interface);
 	pc_hdc_setup();
 
 	/* com hardware */

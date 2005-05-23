@@ -95,7 +95,7 @@
 // PC-AT keyboard
 #include "includes/pckeybrd.h"
 // change to superio later
-#include "includes/pc_fdc_h.h"
+#include "machine/pc_fdc.h"
 // for pc disk images
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
@@ -1200,7 +1200,7 @@ static void	pcw16_fdc_interrupt(int state)
 	pcw16_trigger_fdc_int();
 }
 
-pc_fdc_hw_interface pcw16_fdc_interface=
+static const struct pc_fdc_interface pcw16_fdc_interface=
 {
 	pcw16_fdc_interrupt,
 	NULL
