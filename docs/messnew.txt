@@ -40,7 +40,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.96u2.  This incorporates all features of the
+- The core is based on MAME 0.96u3.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Rewrote Mode 2 support for the 8255 PPI chip.  [Nate Woods]

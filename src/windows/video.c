@@ -379,7 +379,7 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 
 
 //============================================================
-//	win_orient_rect
+//  win_orient_rect
 //============================================================
 
 void win_orient_rect(struct rectangle *rect)
@@ -392,7 +392,7 @@ void win_orient_rect(struct rectangle *rect)
 		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
 		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
 	}
-	
+
 	// apply X flip
 	if (blit_flipx)
 	{
@@ -400,7 +400,7 @@ void win_orient_rect(struct rectangle *rect)
 		rect->min_x = video_width - rect->max_x - 1;
 		rect->max_x = temp;
 	}
-	
+
 	// apply Y flip
 	if (blit_flipy)
 	{
@@ -413,7 +413,7 @@ void win_orient_rect(struct rectangle *rect)
 
 
 //============================================================
-//	win_disorient_rect
+//  win_disorient_rect
 //============================================================
 
 void win_disorient_rect(struct rectangle *rect)
@@ -435,7 +435,7 @@ void win_disorient_rect(struct rectangle *rect)
 		rect->min_x = video_width - rect->max_x - 1;
 		rect->max_x = temp;
 	}
-	
+
 	// unapply X/Y swap last
 	if (blit_swapxy)
 	{
@@ -447,9 +447,9 @@ void win_disorient_rect(struct rectangle *rect)
 
 
 //============================================================
-//	devices_enum_callback
+//  devices_enum_callback
 //============================================================
-static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription, 
+static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription,
 										 LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm)
 {
 	if (verbose)
@@ -474,7 +474,7 @@ static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription
 
 
 //============================================================
-//	osd_create_display
+//  osd_create_display
 //============================================================
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
@@ -483,7 +483,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	double aspect_ratio;
 	int r, g, b;
 	HRESULT result;
-	
+
 	logerror("width %d, height %d depth %d\n", params->width, params->height, params->depth);
 
 	// copy the parameters into globals for later use
@@ -502,7 +502,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	// extract useful parameters from the attributes
 	vector_game			= ((params->video_attributes & VIDEO_TYPE_VECTOR) != 0);
 	rgb_direct			= ((params->video_attributes & VIDEO_RGB_DIRECT) != 0);
-	
+
 	if (!blit_swapxy)
 		aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
 	else
@@ -510,7 +510,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 	// if not using the primary display, enumerate the display devices and find the
 	// proper screen
-	
+
 	screen_guid_ptr = NULL;
 	ddraw_device_found = FALSE;
 	monitor = NULL;
@@ -535,7 +535,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	// create the window
 	if (win_create_window(video_width, video_height, video_depth, video_attributes, aspect_ratio))
 		return 1;
-	
+
 	// initialize the palette to a fixed 5-5-5 mapping
 	for (r = 0; r < 32; r++)
 		for (g = 0; g < 32; g++)
@@ -578,7 +578,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 
 //============================================================
-//	osd_close_display
+//  osd_close_display
 //============================================================
 
 void osd_close_display(void)
@@ -597,7 +597,7 @@ void osd_close_display(void)
 
 
 //============================================================
-//	osd_skip_this_frame
+//  osd_skip_this_frame
 //============================================================
 
 int osd_skip_this_frame(void)

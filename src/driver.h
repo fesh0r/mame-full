@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	driver.h
+    driver.h
 
-	Include this with all MAME files. Includes all the core system pieces.
+    Include this with all MAME files. Includes all the core system pieces.
 
 ***************************************************************************/
 
@@ -50,7 +50,7 @@
 
 /***************************************************************************
 
-	Core MAME includes
+    Core MAME includes
 
 ***************************************************************************/
 
@@ -80,7 +80,7 @@
 
 /***************************************************************************
 
-	Macros for building machine drivers
+    Macros for building machine drivers
 
 ***************************************************************************/
 
@@ -317,7 +317,7 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 
 /***************************************************************************
 
-	Internal representation of a machine driver, built from the constructor
+    Internal representation of a machine driver, built from the constructor
 
 ***************************************************************************/
 
@@ -368,7 +368,7 @@ struct InternalMachineDriver
 
 /***************************************************************************
 
-	Machine driver constants and flags
+    Machine driver constants and flags
 
 ***************************************************************************/
 
@@ -439,7 +439,7 @@ struct InternalMachineDriver
 
 /***************************************************************************
 
-	Game driver structure
+    Game driver structure
 
 ***************************************************************************/
 
@@ -473,7 +473,7 @@ struct GameDriver
 
 /***************************************************************************
 
-	Game driver flags
+    Game driver flags
 
 ***************************************************************************/
 
@@ -503,7 +503,7 @@ struct GameDriver
 
 /***************************************************************************
 
-	Macros for building game drivers
+    Macros for building game drivers
 
 ***************************************************************************/
 
@@ -594,7 +594,7 @@ const struct GameDriver driver_##NAME =		\
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -603,7 +603,7 @@ extern const struct GameDriver *drivers[];
 
 /***************************************************************************
 
-	Miscellaneous
+    Miscellaneous
 
 ***************************************************************************/
 

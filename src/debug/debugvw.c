@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugvw.c
-**		Debugger view engine.
-**		Written by Aaron Giles
+**      debugvw.c
+**      Debugger view engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -19,7 +19,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG			0
@@ -27,7 +27,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define MAX_VIEW_WIDTH		(256)
@@ -41,7 +41,7 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 /* debug_view_callbacks contains calbacks specific to a given view */
@@ -139,7 +139,7 @@ struct debug_view_memory
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 static struct debug_view *first_view;
@@ -147,13 +147,13 @@ static struct debug_view *first_view;
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void console_update(struct debug_view *view);
@@ -186,11 +186,11 @@ static struct debug_view_callbacks callback_table[] =
 
 
 /*###################################################################################################
-**	INITIALIZATION
+**  INITIALIZATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_init - initializes the view system
+    debug_view_init - initializes the view system
 -------------------------------------------------*/
 
 void debug_view_init(void)
@@ -201,7 +201,7 @@ void debug_view_init(void)
 
 
 /*-------------------------------------------------
-	debug_view_exit - exits the view system
+    debug_view_exit - exits the view system
 -------------------------------------------------*/
 
 void debug_view_exit(void)
@@ -214,12 +214,12 @@ void debug_view_exit(void)
 
 
 /*###################################################################################################
-**	VIEW CREATION/DELETION
+**  VIEW CREATION/DELETION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_alloc - allocate a new debug
-	view
+    debug_view_alloc - allocate a new debug
+    view
 -------------------------------------------------*/
 
 struct debug_view *debug_view_alloc(int type)
@@ -267,7 +267,7 @@ struct debug_view *debug_view_alloc(int type)
 
 
 /*-------------------------------------------------
-	debug_view_free - free a debug view
+    debug_view_free - free a debug view
 -------------------------------------------------*/
 
 void debug_view_free(struct debug_view *view)
@@ -297,12 +297,12 @@ void debug_view_free(struct debug_view *view)
 
 
 /*###################################################################################################
-**	PROPERTY MANAGEMENT
+**  PROPERTY MANAGEMENT
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_get_property - return the value
-	of a given property
+    debug_view_get_property - return the value
+    of a given property
 -------------------------------------------------*/
 
 void debug_view_get_property(struct debug_view *view, int property, void *value)
@@ -372,8 +372,8 @@ void debug_view_get_property(struct debug_view *view, int property, void *value)
 
 
 /*-------------------------------------------------
-	debug_view_set_property - set the value
-	of a given property
+    debug_view_set_property - set the value
+    of a given property
 -------------------------------------------------*/
 
 void debug_view_set_property(struct debug_view *view, int property, const void *value)
@@ -507,12 +507,12 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 
 
 /*###################################################################################################
-**	UPDATE MANAGEMENT
+**  UPDATE MANAGEMENT
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_begin_update - bracket a sequence
-	of changes so that only one update occurs
+    debug_view_begin_update - bracket a sequence
+    of changes so that only one update occurs
 -------------------------------------------------*/
 
 void debug_view_begin_update(struct debug_view *view)
@@ -523,8 +523,8 @@ void debug_view_begin_update(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	debug_view_end_update - bracket a sequence
-	of changes so that only one update occurs
+    debug_view_end_update - bracket a sequence
+    of changes so that only one update occurs
 -------------------------------------------------*/
 
 void debug_view_end_update(struct debug_view *view)
