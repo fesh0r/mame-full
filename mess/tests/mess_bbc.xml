@@ -1,0 +1,7 @@
+<tests>
+
+<test name="bbc_000" driver="bbcb">
+	<wait time="5"/>
+</test>
+
+</tests>

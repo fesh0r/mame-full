@@ -12,6 +12,8 @@ System Driver Changes:
   TI85] Fixed regressions caused by Z80 port changes.  (bugs #707, #708, #709)
   [Nate Woods]
 
+- [BBCB] Fixed fatal regression introduced in 0.93.  [Nate Woods]
+
 - [COCO/DRAGON] Improved .CAS loading for images with odd block sequences.
   [Phill Harvey-Smith]
 

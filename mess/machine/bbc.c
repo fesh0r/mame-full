@@ -2129,7 +2129,7 @@ MACHINE_INIT( bbcb )
 		break;
 	}
 
-	tms5220_reset_chip(sndti_token(SOUND_TMS5220, 0));
+	sndti_reset(SOUND_TMS5220, 0);
 }
 
 
