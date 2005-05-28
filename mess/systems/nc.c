@@ -93,10 +93,10 @@
 
  ******************************************************************************/
 #include "driver.h"
+#include "machine/mc146818.h"	/* for NC200 real time clock */
 #include "includes/nc.h"
 #include "includes/tc8521.h"	/* for NC100 real time clock */
 #include "includes/msm8251.h"	/* for NC100 uart */
-#include "includes/mc146818.h"	/* for NC200 real time clock */
 #include "includes/nec765.h"	/* for NC200 disk drive interface */
 #include "devices/mflopimg.h"	/* for NC200 disk image */
 #include "formats/pc_dsk.h"		/* for NC200 disk image */

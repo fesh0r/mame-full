@@ -24,11 +24,11 @@
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "machine/uart8250.h"
+#include "machine/mc146818.h"
+#include "machine/pic8259.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/pic8259.h"
 #include "includes/pit8253.h"
-#include "includes/mc146818.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
@@ -389,6 +389,13 @@ static const struct pc_fdc_interface fdc_interface =
 
 /* ----------------------------------------------------------------------- */
 
+static void pc_pic_set_int_line(int interrupt)
+{
+	cpunum_set_input_line(0, 0, interrupt ? HOLD_LINE : CLEAR_LINE);
+}
+
+
+
 void init_pc_common(UINT32 flags)
 {
 	/* MESS managed RAM */
@@ -440,7 +447,7 @@ void init_pc_common(UINT32 flags)
 	at_keyboard_set_input_port_base(4);
 
 	/* PIC */
-	pic8259_init(2);
+	pic8259_init(2, pc_pic_set_int_line);
 
 	/* DMA */
 	if (flags & PCCOMMON_DMA8237_AT)

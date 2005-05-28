@@ -16,7 +16,7 @@
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
 #include "includes/i8271.h"
-#include "includes/mc146818.h"
+#include "machine/mc146818.h"
 #include "machine/mc6850.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"

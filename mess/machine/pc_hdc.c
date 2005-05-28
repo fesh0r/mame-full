@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "mscommon.h"
-#include "includes/pic8259.h"
+#include "machine/pic8259.h"
 #include "machine/8237dma.h"
 #include "machine/pc_hdc.h"
 #include "devices/harddriv.h"

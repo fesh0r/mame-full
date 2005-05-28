@@ -178,7 +178,7 @@
 #include "includes/pckeybrd.h"
 #include "includes/ibmat.h"
 #include "includes/pit8253.h"
-#include "includes/pic8259.h"
+#include "machine/pic8259.h"
 #include "includes/pcshare.h"
 
 

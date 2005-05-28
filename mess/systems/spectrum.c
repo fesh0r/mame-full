@@ -2362,6 +2362,11 @@ SYSTEM_CONFIG_START(ts2068)
 	CONFIG_RAM_DEFAULT(48 * 1024)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(tc2048)
+	CONFIG_IMPORT_FROM(spectrum)
+	CONFIG_RAM_DEFAULT(48 * 1024)
+SYSTEM_CONFIG_END
+
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
 COMP ( 1982, spectrum, 0,        0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum" )
 COMPX( 2000, specpls4, spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum +4", GAME_COMPUTER_MODIFIED )
@@ -2373,9 +2378,9 @@ COMPX( 1987, speclec,  spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclai
 COMP ( 1986, inves,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Investronica",	"Inves Spectrum 48K+" )
 COMP ( 1985, tk90x,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-90x Color Computer" )
 COMP ( 1986, tk95,     spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-95 Color Computer" )
-COMP ( 1984, tc2048,   spectrum, 0,		tc2048,		spectrum,	0,		spectrum,	"Timex of Portugal",	"TC-2048" )
-COMP ( 1983, ts2068,   spectrum, 0,		ts2068,		spectrum,	0,		ts2068,		"Timex Sinclair",	"TS-2068" )
-COMP ( 1986, uk2086,   spectrum, 0,		uk2086,		spectrum,	0,		ts2068,		"Unipolbrit",	"UK-2086 ver. 1.2" )
+COMP ( 1984, tc2048,   spectrum, 0,		tc2048,			spectrum,	0,		tc2048,		"Timex of Portugal",	"TC-2048" )
+COMP ( 1983, ts2068,   spectrum, 0,		ts2068,			spectrum,	0,		ts2068,		"Timex Sinclair",	"TS-2068" )
+COMP ( 1986, uk2086,   spectrum, 0,		uk2086,			spectrum,	0,		ts2068,		"Unipolbrit",	"UK-2086 ver. 1.2" )
 
 COMPX( 1986, spec128,  0,		 0,		spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMPX( 1985, spec128s, spec128,  0,		spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)

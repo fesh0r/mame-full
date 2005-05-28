@@ -429,43 +429,43 @@ static void ts2068_lores_scanline(struct mame_bitmap *bitmap, int y, int borderl
 {
 	int x,b,scrx,scry;
 	unsigned short ink,pap;
-        unsigned char *attr, *scr;
+	unsigned char *attr, *scr;
 
-        scrx=TS2068_LEFT_BORDER;
+	scrx=TS2068_LEFT_BORDER;
 	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
 
-        scr=mess_ram + y*32 + screen*0x2000;
-        attr=mess_ram + ((scry>>3)*32) + screen*0x2000 + 0x1800;
+	scr = mess_ram + y*32 + screen*0x2000;
+	attr = mess_ram + ((scry>>3)*32) + screen*0x2000 + 0x1800;
 
-        for (x=0;x<32;x++)
+	for (x=0;x<32;x++)
 	{
-                /* Get ink and paper colour with bright */
-                if (flash_invert && (*attr & 0x80))
-                {
-                        ink=((*attr)>>3) & 0x0f;
-                        pap=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
-                }
-                else
-                {
-                        ink=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
-                        pap=((*attr)>>3) & 0x0f;
-                }
+		/* Get ink and paper colour with bright */
+		if (flash_invert && (*attr & 0x80))
+		{
+			ink=((*attr)>>3) & 0x0f;
+			pap=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+		}
+		else
+		{
+			ink=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+			pap=((*attr)>>3) & 0x0f;
+		}
 
 		for (b=0x80;b!=0;b>>=1)
 		{
-                        if (*scr&b)
+			if (*scr&b)
 			{
-                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
-                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+				plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+				plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
 			}
 			else
 			{
-                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
-                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+				plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+				plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
 			}
 		}
-                scr++;
-                attr++;
+		scr++;
+		attr++;
 	}
 }
 
@@ -510,39 +510,39 @@ VIDEO_UPDATE( ts2068 )
 
 VIDEO_UPDATE( tc2048 )
 {
-        /* for now TS2068 will do a full-refresh */
+	/* for now TS2068 will do a full-refresh */
 	int count;
 	int full_refresh = 1;
 
-        if ((ts2068_port_ff_data & 7) == 6)
-        {
-                /* 64 Column mode */
-                unsigned short inkcolor = (ts2068_port_ff_data & 0x38) >> 3;
-                for (count = 0; count < 192; count++)
-                        ts2068_64col_scanline(bitmap, count, SPEC_TOP_BORDER, inkcolor);
+	if ((ts2068_port_ff_data & 7) == 6)
+	{
+		/* 64 Column mode */
+		unsigned short inkcolor = (ts2068_port_ff_data & 0x38) >> 3;
+		for (count = 0; count < 192; count++)
+			ts2068_64col_scanline(bitmap, count, SPEC_TOP_BORDER, inkcolor);
 	}
-        else if ((ts2068_port_ff_data & 7) == 2)
-        {
-                /* Extended Color mode */
-                for (count = 0; count < 192; count++)
-                        ts2068_hires_scanline(bitmap, count, SPEC_TOP_BORDER);
-        }
-        else if ((ts2068_port_ff_data & 7) == 1)
-        {
-                /* Screen 6000-7aff */
-                for (count = 0; count < 192; count++)
-                        ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 1);
-        }
-        else
-        {
-                /* Screen 4000-5aff */
-                for (count = 0; count < 192; count++)
-                        ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 0);
-        }
+	else if ((ts2068_port_ff_data & 7) == 2)
+	{
+		/* Extended Color mode */
+		for (count = 0; count < 192; count++)
+			ts2068_hires_scanline(bitmap, count, SPEC_TOP_BORDER);
+	}
+	else if ((ts2068_port_ff_data & 7) == 1)
+	{
+		/* Screen 6000-7aff */
+		for (count = 0; count < 192; count++)
+			ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 1);
+	}
+	else
+	{
+		/* Screen 4000-5aff */
+		for (count = 0; count < 192; count++)
+			ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 0);
+	}
 
-        draw_border(bitmap, full_refresh,
-                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
-                TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
-                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+	draw_border(bitmap, full_refresh,
+		SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+		TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
+		SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+		SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }

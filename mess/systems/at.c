@@ -8,12 +8,12 @@
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
 #include "machine/uart8250.h"
+#include "machine/mc146818.h"
+#include "machine/pic8259.h"
 #include "vidhrdw/generic.h"
 #include "devices/printer.h"
 
-#include "includes/pic8259.h"
 #include "includes/pit8253.h"
-#include "includes/mc146818.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
@@ -150,12 +150,12 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_32_0_r,			dma8237_32_0_w)
-	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_32_0_r,			pic8259_32_0_w)
+	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_32le_0_r,			pic8259_32le_0_w)
 	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_32_0_r,			pit8253_32_0_w)
 	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_32_r,				at_8042_32_w)
-	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port32_r,		mc146818_port32_w)
+	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port32le_r,		mc146818_port32le_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page32_r,				at_page32_w)
-	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_32_1_r,			pic8259_32_1_w)
+	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_32le_1_r,			pic8259_32le_1_w)
 	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(at32_dma8237_1_r,			at32_dma8237_1_w)
 	AM_RANGE(0x0278, 0x027f) AM_READWRITE(pc32_parallelport2_r,		pc32_parallelport2_w)
 	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc32_COM4_r,				pc32_COM4_w)

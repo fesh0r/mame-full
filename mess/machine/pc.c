@@ -14,11 +14,11 @@
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "machine/uart8250.h"
+#include "machine/mc146818.h"
+#include "machine/pic8259.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/pic8259.h"
 #include "includes/pit8253.h"
-#include "includes/mc146818.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"

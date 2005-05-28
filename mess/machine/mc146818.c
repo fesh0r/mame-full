@@ -71,7 +71,7 @@
 
 *********************************************************************/
 
-#include "includes/mc146818.h"
+#include "mc146818.h"
 #include "mscommon.h"
 
 
@@ -109,16 +109,20 @@ static void mc146818_timer(int param)
 {
 	int year, month;
 
-	if (BCD_MODE) {
+	if (BCD_MODE)
+	{
 		mc146818->data[0]=bcd_adjust(mc146818->data[0]+1);
-		if (mc146818->data[0]>=0x60) {
+		if (mc146818->data[0]>=0x60)
+		{
 			mc146818->data[0]=0;
 			mc146818->data[2]=bcd_adjust(mc146818->data[2]+1);
-			if (mc146818->data[2]>=0x60) {
+			if (mc146818->data[2]>=0x60)
+			{
 				mc146818->data[2]=0;
 				mc146818->data[4]=bcd_adjust(mc146818->data[4]+1);
 				// different handling of hours
-				if (mc146818->data[4]>=0x24) {
+				if (mc146818->data[4]>=0x24)
+				{
 					mc146818->data[4]=0;
 					WEEK_DAY=bcd_adjust(WEEK_DAY+1)%7;
 					DAY=bcd_adjust(DAY+1);
@@ -127,14 +131,18 @@ static void mc146818_timer(int param)
 					if (mc146818->type!=MC146818_IGNORE_CENTURY) year+=bcd_2_dec(CENTURY)*100;
 					else year+=2000; // save for julian_days_in_month calculation
 					DAY=bcd_adjust(DAY+1);
-					if (DAY>gregorian_days_in_month(MONTH, year)) {
+					if (DAY>gregorian_days_in_month(MONTH, year))
+					{
 						DAY=1;
 						MONTH=bcd_adjust(MONTH+1);
-						if (MONTH>0x12) {
+						if (MONTH>0x12) 
+						{
 							MONTH=1;
 							YEAR=year=bcd_adjust(YEAR+1);
-							if (mc146818->type!=MC146818_IGNORE_CENTURY) {
-								if (year>=0x100) { 
+							if (mc146818->type!=MC146818_IGNORE_CENTURY)
+							{
+								if (year>=0x100)
+								{ 
 									CENTURY=bcd_adjust(CENTURY+1);
 								}
 							}
@@ -143,9 +151,12 @@ static void mc146818_timer(int param)
 				}
 			}
 		}
-	} else {
-		mc146818->data[0]=mc146818->data[0]+1;
-		if (mc146818->data[0]>=60) {
+	}
+	else
+	{
+		mc146818->data[0] = mc146818->data[0]+1;
+		if (mc146818->data[0]>=60)
+		{
 			mc146818->data[0]=0;
 			mc146818->data[2]=mc146818->data[2]+1;
 			if (mc146818->data[2]>=60) {
@@ -266,10 +277,10 @@ void mc146818_set_time(void)
 	time_t t;
 	struct tm *tmtime;
 
-	t=time(NULL);
-	if (t==-1) return;
+	t = time(NULL);
+	if (t == -1) return;
 
-	tmtime=gmtime(&t);
+	tmtime = gmtime(&t);
 
 	mc146818_set_gmtime(tmtime);
 	// freeing of gmtime??
@@ -344,10 +355,8 @@ READ8_HANDLER(mc146818_port_r)
 		break;
 	}
 
-#if LOG_MC146818
-	logerror("mc146818_port_r(): index=0x%02x data=0x%02x\n",
-		mc146818->index, data);
-#endif
+	if (LOG_MC146818)
+		logerror("mc146818_port_r(): index=0x%02x data=0x%02x\n", mc146818->index, data);
 	return data;
 }
 
@@ -355,10 +364,8 @@ READ8_HANDLER(mc146818_port_r)
 
 WRITE8_HANDLER(mc146818_port_w)
 {
-#if LOG_MC146818
-	logerror("mc146818_port_w(): index=0x%02x data=0x%02x\n",
-		mc146818->index, data);
-#endif
+	if (LOG_MC146818)
+		logerror("mc146818_port_w(): index=0x%02x data=0x%02x\n", mc146818->index, data);
 
 	switch (offset) {
 	case 0:
@@ -373,18 +380,22 @@ WRITE8_HANDLER(mc146818_port_w)
 
 
 
-READ32_HANDLER(mc146818_port32_r)
+READ32_HANDLER(mc146818_port32le_r)
 {
 	return read32le_with_read8_handler(mc146818_port_r, offset, mem_mask);
 }
 
-
-
-WRITE32_HANDLER(mc146818_port32_w)
+WRITE32_HANDLER(mc146818_port32le_w)
 {
 	write32le_with_write8_handler(mc146818_port_w, offset, data, mem_mask);
 }
 
+READ64_HANDLER(mc146818_port64be_r)
+{
+	return read64be_with_read8_handler(mc146818_port_r, offset, mem_mask);
+}
 
-
-
+WRITE64_HANDLER(mc146818_port64be_w)
+{
+	write64be_with_write8_handler(mc146818_port_w, offset, data, mem_mask);
+}

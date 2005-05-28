@@ -1,0 +1,7 @@
+<tests>
+
+<test name="tc2048_000" driver="tc2048">
+	<wait time="5"/>
+</test>
+
+</tests>
