@@ -2,9 +2,6 @@
 ** Spectravideo SVI-318 and SVI-328
 */
 
-/* disk emulation doesn't work yet! */
-#define SVI_DISK */
-
 typedef struct {
 	/* general */
 	int svi318;
@@ -27,25 +24,22 @@ void svi318_vdp_interrupt (int i);
 WRITE8_HANDLER (svi318_writemem0);
 WRITE8_HANDLER (svi318_writemem1);
 
- READ8_HANDLER (svi318_printer_r);
+READ8_HANDLER (svi318_printer_r);
 WRITE8_HANDLER (svi318_printer_w);
 
- READ8_HANDLER (svi318_ppi_r);
+READ8_HANDLER (svi318_ppi_r);
 WRITE8_HANDLER (svi318_ppi_w);
 
 WRITE8_HANDLER (svi318_psg_port_b_w);
- READ8_HANDLER (svi318_psg_port_a_r);
+READ8_HANDLER (svi318_psg_port_a_r);
 
 /* cassette functions */
 DEVICE_LOAD( svi318_cassette );
 int svi318_cassette_present (int id);
 
 /* floppy functions */
-#ifdef SVI_DISK
 WRITE8_HANDLER (fdc_disk_motor_w);
 WRITE8_HANDLER (fdc_density_side_w);
- READ8_HANDLER (svi318_fdc_status_r);
-#endif
+READ8_HANDLER (svi318_fdc_status_r);
 
 DEVICE_LOAD( svi318_floppy );
-
