@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Microkey Primo A-48 [Krzysztof Strzecha]
 
 
 
@@ -26,6 +26,9 @@ System Driver Changes:
 
 - [TC2048] Fixed regression introduced in 0.79.  (bug #713) [Nate Woods]
 
+- [PRIMO] Primo B-32 and B-48 testdrivers added. EPROM+RAM expansion emulation
+  added. Support for .pp files improved. Memory fixed for A-48 model. Fixed
+  address of second video memory area. Fixed Z80 regression.
 
 
 User Interface Changes:
