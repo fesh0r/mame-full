@@ -2,15 +2,22 @@
 
 Primo driver by Krzysztof Strzecha
 
+What's new:
+-----------
+2005.05.19 -	Primo B-32 and B-48 testdrivers added.
+2005.05.15 -	EPROM+RAM expansion.
+		Support for .pp files improved.
+		Some cleanups.
+2005.05.12 -	Memory fixed for A-48 model what make it fully working.
+		Fixed address of second video memory area.
+
 To do:
 	1. Disk
-	2. RAM expansion
-	3. V.24 / tape control
-	4. CDOS autoboot
-	5. Joystick
-	6. Printer
-	7. .PRI, .PP, formats
-	8. Primo A-48 doesnt work (probably bad rom dump)
+	2. V.24 / tape control
+	3. CDOS autoboot
+	4. Joystick
+	5. Printer
+	6. .PRI format
 
 Primo variants:
 	A-32 - 16kB RAM + 16KB ROM
@@ -98,41 +105,38 @@ Interrupts:
 #include "vidhrdw/generic.h"
 #include "devices/cassette.h"
 #include "devices/snapquik.h"
+#include "devices/cartslot.h"
 #include "includes/cbmserb.h"
 #include "includes/primo.h"
 #include "formats/primoptp.h"
 
 
-ADDRESS_MAP_START( primoa_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE( 0x00, 0x3f ) AM_READ( primo_be_1_r )
+ADDRESS_MAP_START( primoa_port, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x00, 0x3f ) AM_READWRITE( primo_be_1_r, primo_ki_1_w )
+	AM_RANGE( 0xfd, 0xfd ) AM_WRITE( primo_FD_w )
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( primoa_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE( 0x00, 0x3f ) AM_WRITE( primo_ki_1_w )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( primob_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE( 0x00, 0x3f ) AM_READ( primo_be_1_r )
-	AM_RANGE( 0x40, 0x7f ) AM_READ( primo_be_2_r )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( primob_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE( 0x00, 0x3f ) AM_WRITE( primo_ki_1_w )
-	AM_RANGE( 0x40, 0x7f ) AM_WRITE( primo_ki_2_w )
+ADDRESS_MAP_START( primob_port, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x00, 0x3f ) AM_READWRITE( primo_be_1_r, primo_ki_1_w )
+	AM_RANGE( 0x40, 0x7f ) AM_READWRITE( primo_be_2_r, primo_ki_2_w )
+	AM_RANGE( 0xfd, 0xfd ) AM_WRITE( primo_FD_w )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( primo32_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_ROM, MWA8_ROM )
+	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_BANK1, MWA8_BANK1 )
 	AM_RANGE( 0x4000, 0x7fff ) AM_READWRITE( MRA8_RAM, MWA8_RAM )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( primo48_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_ROM, MWA8_ROM )
-	AM_RANGE( 0x4000, 0xbfff ) AM_READWRITE( MRA8_RAM, MWA8_RAM )
+	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_BANK1, MWA8_BANK1 )
+	AM_RANGE( 0x4000, 0x7fff ) AM_READWRITE( MRA8_RAM, MWA8_RAM )
+	AM_RANGE( 0x8000, 0xbfff ) AM_MIRROR ( 0x4000 ) AM_READWRITE( MRA8_RAM, MWA8_RAM )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( primo64_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_ROM, MWA8_ROM )
+	AM_RANGE( 0x0000, 0x3fff ) AM_READWRITE( MRA8_BANK1, MWA8_BANK1 )
 	AM_RANGE( 0x4000, 0xffff ) AM_READWRITE( MRA8_RAM, MWA8_RAM )
 ADDRESS_MAP_END
 
@@ -141,8 +145,8 @@ INPUT_PORTS_START( primo )
 		PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("Y")		PORT_CODE(KEYCODE_Y)		PORT_CHAR('y')
 		PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("Up")	PORT_CODE(KEYCODE_UP)		PORT_CHAR(UCHAR_MAMEKEY(UP))
 		PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("S")		PORT_CODE(KEYCODE_S)		PORT_CHAR('s')
-		PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("SHIFT")	PORT_CODE(KEYCODE_LSHIFT)	PORT_CHAR(UCHAR_MAMEKEY(LSHIFT))
-		PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("SHIFT")	PORT_CODE(KEYCODE_RSHIFT) 	PORT_CHAR(UCHAR_MAMEKEY(RSHIFT))
+		PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("SHIFT")	PORT_CODE(KEYCODE_LSHIFT)	PORT_CHAR(UCHAR_SHIFT_1)
+		PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("SHIFT")	PORT_CODE(KEYCODE_RSHIFT) 	PORT_CHAR(UCHAR_SHIFT_1)
 		PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("E")		PORT_CODE(KEYCODE_E)		PORT_CHAR('e')
 		PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("UPPER")	PORT_CODE(KEYCODE_LALT)		PORT_CHAR(UCHAR_MAMEKEY(LALT))
 		PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("W")		PORT_CODE(KEYCODE_W)		PORT_CHAR('w')
@@ -213,13 +217,17 @@ INPUT_PORTS_START( primo )
 		PORT_CONFNAME( 0x01, 0x00, "CPU clock" )
 			PORT_CONFSETTING( 0x00, "2.50 MHz" )
 			PORT_CONFSETTING( 0x01, "3.75 MHz" )
+	PORT_START_TAG( "MEMORY_EXPANSION" )	/* IN6 */
+		PORT_CONFNAME( 0x01, 0x00, "EPROM+RAM Expansion" )
+			PORT_CONFSETTING( 0x00, DEF_STR( On ) )
+			PORT_CONFSETTING( 0x01, DEF_STR( Off ) )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( primoa32 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG( "main", Z80, 2500000 )
 	MDRV_CPU_PROGRAM_MAP( primo32_mem, 0 )
-	MDRV_CPU_IO_MAP( primoa_readport, primoa_writeport )
+	MDRV_CPU_IO_MAP( primoa_port, 0 )
 	MDRV_FRAMES_PER_SECOND( 50 )
 	MDRV_VBLANK_DURATION( 2500 )
 	MDRV_CPU_VBLANK_INT( primo_vblank_interrupt, 1 )
@@ -258,41 +266,79 @@ static MACHINE_DRIVER_START( primoa64 )
 	MDRV_CPU_PROGRAM_MAP( primo64_mem, 0 )
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( primob32 )
+	MDRV_IMPORT_FROM( primoa32 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_IO_MAP( primob_port, 0 )
+
+	MDRV_MACHINE_INIT( primob )
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( primob48 )
+	MDRV_IMPORT_FROM( primoa48 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_IO_MAP( primob_port, 0 )
+
+	MDRV_MACHINE_INIT( primob )
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( primob64 )
 	MDRV_IMPORT_FROM( primoa64 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_IO_MAP( primob_readport, primob_writeport )
+	MDRV_CPU_IO_MAP( primob_port, 0 )
 
 	MDRV_MACHINE_INIT( primob )
 MACHINE_DRIVER_END
 
 ROM_START( primoa32 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "a32_1.rom", 0x0000, 0x1000, CRC(4e91c1a4) )
-	ROM_LOAD( "a32_2.rom", 0x1000, 0x1000, CRC(81a8a0fb) )
-	ROM_LOAD( "a32_3.rom", 0x2000, 0x1000, CRC(a97de2f5) )
-	ROM_LOAD( "a32_4.rom", 0x3000, 0x1000, CRC(70f84bc8) )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "a32_1.rom", 0x10000, 0x1000, CRC(4e91c1a4) )
+	ROM_LOAD( "a32_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
+	ROM_LOAD( "a32_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
+	ROM_LOAD( "a32_4.rom", 0x13000, 0x1000, CRC(70f84bc8) )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
 ROM_END
 
 ROM_START( primoa48 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "a48_1.rom", 0x0000, 0x1000, CRC(7de6ad6f) )
-	ROM_LOAD( "a48_2.rom", 0x1000, 0x1000, CRC(81a8a0fb) )
-	ROM_LOAD( "a48_3.rom", 0x2000, 0x1000, CRC(a97de2f5) )
-	ROM_LOAD( "a48_4.rom", 0x3000, 0x1000, CRC(e4d0c452) )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "a48_1.rom", 0x10000, 0x1000, CRC(7de6ad6f) )
+	ROM_LOAD( "a48_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
+	ROM_LOAD( "a48_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
+	ROM_LOAD( "a48_4.rom", 0x13000, 0x1000, CRC(e4d0c452) )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
 ROM_END
 
 ROM_START( primoa64 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "a64_1.rom", 0x0000, 0x1000, CRC(6a7a9b9b) )
-	ROM_LOAD( "a64_2.rom", 0x1000, 0x1000, CRC(81a8a0fb) )
-	ROM_LOAD( "a64_3.rom", 0x2000, 0x1000, CRC(a97de2f5) )
-	ROM_LOAD( "a64_4.rom", 0x3000, 0x1000, CRC(e4d0c452) )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "a64_1.rom", 0x10000, 0x1000, CRC(6a7a9b9b) )
+	ROM_LOAD( "a64_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
+	ROM_LOAD( "a64_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
+	ROM_LOAD( "a64_4.rom", 0x13000, 0x1000, CRC(e4d0c452) )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
+ROM_END
+
+ROM_START( primob32 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "b32.rom", 0x10000, 0x4000, NO_DUMP )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
+ROM_END
+
+ROM_START( primob48 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "b48.rom", 0x10000, 0x4000, NO_DUMP )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
 ROM_END
 
 ROM_START( primob64 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "b64.rom", 0x0000, 0x4000, CRC(73305e4d) )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "b64.rom", 0x10000, 0x4000, CRC(73305e4d) )
+	ROM_FILL( 0x14000, 0x4000, 0xff )
+	ROM_FILL( 0x18000, 0x4000, 0xff )
 ROM_END
 
 static struct CassetteOptions primo_cassette_options = {
@@ -312,7 +358,25 @@ static void primo_snapshot_getinfo(struct IODevice *dev)
 {
 	/* snapshot */
 	snapshot_device_getinfo(dev, snapshot_load_primo, 0.0);
-	dev->file_extensions = "pp\0pss\0";
+	dev->file_extensions = "pss\0";
+}
+
+static void primo_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_primo, 0.0);
+	dev->file_extensions = "pp\0";
+}
+
+static void primo_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "rom\0";
+	dev->name = device_name_cartslot_primo;
+	dev->load = device_load_cartslot_primo;
+	dev->unload = device_unload_cartslot_primo;
 }
 
 static void primo_floppy_getinfo(struct IODevice *dev)
@@ -325,6 +389,8 @@ static void primo_floppy_getinfo(struct IODevice *dev)
 SYSTEM_CONFIG_START( primoa )
 	CONFIG_DEVICE(primo_cassette_getinfo)
 	CONFIG_DEVICE(primo_snapshot_getinfo)
+	CONFIG_DEVICE(primo_quickload_getinfo)
+	CONFIG_DEVICE(primo_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( primob )
@@ -336,4 +402,6 @@ SYSTEM_CONFIG_END
 COMP ( 1984, primoa32, 0,        0,     primoa32, primo, primo32, primoa, "Microkey", "Primo A-32" )
 COMP ( 1984, primoa48, primoa32, 0,     primoa48, primo, primo48, primoa, "Microkey", "Primo A-48" )
 COMP ( 1984, primoa64, primoa32, 0,     primoa64, primo, primo64, primoa, "Microkey", "Primo A-64" )
+COMP ( 1984, primob32, primoa32, 0,     primob32, primo, primo32, primob, "Microkey", "Primo B-32" )
+COMP ( 1984, primob48, primoa32, 0,     primob48, primo, primo48, primob, "Microkey", "Primo B-48" )
 COMP ( 1984, primob64, primoa32, 0,     primob64, primo, primo64, primob, "Microkey", "Primo B-64" )

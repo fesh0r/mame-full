@@ -5,13 +5,18 @@ extern READ8_HANDLER ( primo_be_1_r );
 extern READ8_HANDLER ( primo_be_2_r );
 extern WRITE8_HANDLER ( primo_ki_1_w );
 extern WRITE8_HANDLER ( primo_ki_2_w );
+extern WRITE8_HANDLER ( primo_FD_w );
 extern DRIVER_INIT ( primo32 );
 extern DRIVER_INIT ( primo48 );
 extern DRIVER_INIT ( primo64 );
 extern MACHINE_INIT( primoa );
 extern MACHINE_INIT( primob );
 extern INTERRUPT_GEN( primo_vblank_interrupt );
-SNAPSHOT_LOAD( primo );
+extern SNAPSHOT_LOAD( primo );
+extern QUICKLOAD_LOAD( primo );
+extern DEVICE_LOAD( cartslot_primo );
+extern DEVICE_UNLOAD( cartslot_primo );
+extern const char *device_name_cartslot_primo(const struct IODevice *, int, char *, size_t);
 
 /* vidhrdw/pmd85.c */
 extern VIDEO_START( primo );

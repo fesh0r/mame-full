@@ -1,31 +1,75 @@
-/***************************************************************************
+/*******************************************************************************
 
-  primo.c
+	primo.c
 
-  Functions to emulate general aspects of Primo (RAM, ROM, interrupts,
-  I/O ports)
+	Functions to emulate general aspects of Microkey Primo computers
+	(RAM, ROM, interrupts, I/O ports)
 
-  Krzysztof Strzecha
+	Krzysztof Strzecha
 
-***************************************************************************/
+*******************************************************************************/
 
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "devices/cassette.h"
 #include "devices/snapquik.h"
+#include "devices/cartslot.h"
 #include "includes/cbmserb.h"
 #include "includes/primo.h"
 #include "sound/speaker.h"
 
+static UINT8 primo_port_FD = 0x00;
 static int primo_nmi = 0;
 static int serial_atn = 1, serial_clock = 1, serial_data = 1;
+
+/*******************************************************************************
+
+	Interrupt callback
+
+*******************************************************************************/
 
 INTERRUPT_GEN( primo_vblank_interrupt )
 {
 	if (primo_nmi)
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
+
+/*******************************************************************************
+
+	Memory banking
+
+*******************************************************************************/
+
+void primo_update_memory (void)
+{
+	switch (primo_port_FD & 0x03)
+	{
+		case 0x00:	/* Original ROM */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);
+			break;
+		case 0x01:	/* EPROM extension 1 */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x14000);
+			break;
+		case 0x02:	/* RAM */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK1);
+			cpu_setbank(1, memory_region(REGION_CPU1));
+			break;
+		case 0x03:	/* EPROM extension 2 */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x18000);
+			break;
+	}
+	logerror ("Memory update: %02x\n", primo_port_FD);
+}
+
+/*******************************************************************************
+
+	IO read/write handlers
+
+*******************************************************************************/
 
 READ8_HANDLER( primo_be_1_r )
 {
@@ -95,7 +139,7 @@ WRITE8_HANDLER( primo_ki_1_w )
 	
 	// bit 3 - display buffer
 	if (data & 0x08)
-		primo_video_memory_base |= 0x4000;
+		primo_video_memory_base |= 0x2000;
 	else
 		primo_video_memory_base &= 0xdfff;
 
@@ -145,52 +189,77 @@ WRITE8_HANDLER( primo_ki_2_w )
 //	logerror ("IOW KI-2 data:%02x\n", data);
 }
 
+WRITE8_HANDLER( primo_FD_w )
+{
+	if (!readinputport(6))
+	{
+		primo_port_FD = data;
+		primo_update_memory();
+	}
+}
+
+/*******************************************************************************
+
+	Driver initialization
+
+*******************************************************************************/
+
+void primo_common_driver_init (void)
+{
+	primo_port_FD = 0x00;
+}
+
 DRIVER_INIT( primo32 )
 {
+	primo_common_driver_init();
 	primo_video_memory_base = 0x6800;
 }
 
 DRIVER_INIT( primo48 )
 {
+	primo_common_driver_init();
 	primo_video_memory_base = 0xa800;
 }
 
 DRIVER_INIT( primo64 )
 {
+	primo_common_driver_init();
 	primo_video_memory_base = 0xe800;
+}
+
+/*******************************************************************************
+
+	Machine initialization
+
+*******************************************************************************/
+
+void primo_common_machine_init (void)
+{
+	if (readinputport(6))
+		primo_port_FD = 0x00;
+	primo_update_memory();
+	cpunum_set_clockscale(0, readinputport(5) ? 1.5 : 1.0);
 }
 
 MACHINE_INIT( primoa )
 {
-	cpunum_set_clockscale(0, readinputport(5) ? 1.5 : 1.0);
+	primo_common_machine_init();
 }
 
 MACHINE_INIT( primob )
 {
-	cpunum_set_clockscale(0, readinputport(5) ? 1.5 : 1.0);
+	primo_common_machine_init();
 
 	cbm_serial_reset_write (0);
 	cbm_drive_0_config (SERIAL, 8);
 	cbm_drive_1_config (SERIAL, 9);
 }
 
-static void primo_setup_pp (UINT8* snapshot_data, UINT32 snapshot_size)
-{
-	int i;
+/*******************************************************************************
 
-	UINT16 load_addr;
-	UINT16 start_addr;
+	Snapshot files (.pss)
 
-	load_addr = snapshot_data[0] + snapshot_data[1]*256;
-	start_addr = snapshot_data[2] + snapshot_data[3]*256;
-
-	for (i=4; i<snapshot_size; i++)
-		program_write_byte(start_addr+i-4, snapshot_data[i]);
-
-	cpunum_set_reg(0, Z80_PC, start_addr);
-
-	logerror ("Snapshot .pp l: %04x r: %04x s: %04x\n", load_addr, start_addr, snapshot_size-4);
-}
+*******************************************************************************/
 
 static void primo_setup_pss (UINT8* snapshot_data, UINT32 snapshot_size)
 {
@@ -242,11 +311,82 @@ SNAPSHOT_LOAD( primo )
 		return INIT_FAIL;
 	}
 	
-	if (!strncmp((char *)snapshot_data, "PS01", 4))
-		primo_setup_pss(snapshot_data, snapshot_size);
-	else
-		primo_setup_pp(snapshot_data, snapshot_size);
+	if (strncmp((char *)snapshot_data, "PS01", 4))
+	{
+		free(snapshot_data);
+		return INIT_FAIL;
+	}
+	
+	primo_setup_pss(snapshot_data, snapshot_size);
 
 	free(snapshot_data);
 	return INIT_PASS;
+}
+
+/*******************************************************************************
+
+	Quicload files (.pp)
+
+*******************************************************************************/
+
+
+static void primo_setup_pp (UINT8* quickload_data, UINT32 quickload_size)
+{
+	int i;
+
+	UINT16 load_addr;
+	UINT16 start_addr;
+
+	load_addr = quickload_data[0] + quickload_data[1]*256;
+	start_addr = quickload_data[2] + quickload_data[3]*256;
+
+	for (i=4; i<quickload_size; i++)
+		program_write_byte(start_addr+i-4, quickload_data[i]);
+
+	cpunum_set_reg(0, Z80_PC, start_addr);
+
+	logerror ("Quickload .pp l: %04x r: %04x s: %04x\n", load_addr, start_addr, quickload_size-4);
+}
+
+QUICKLOAD_LOAD( primo )
+{
+	UINT8 *quickload_data;
+
+	if (!(quickload_data = (UINT8*) malloc(quickload_size)))
+		return INIT_FAIL;
+
+	if (mame_fread(fp, quickload_data, quickload_size) != quickload_size)
+	{
+		free(quickload_data);
+		return INIT_FAIL;
+	}
+	
+	primo_setup_pp(quickload_data, quickload_size);
+
+	free(quickload_data);
+	return INIT_PASS;
+}
+
+/*******************************************************************************
+
+	EPROM expansion files (.rom)
+
+*******************************************************************************/
+
+const char *device_name_cartslot_primo(const struct IODevice *dev, int id, char *buf, size_t bufsize)
+{
+	snprintf(buf, bufsize, "EPROM Expansion Bank #%d", id + 1);
+	return buf;
+}
+
+DEVICE_LOAD( cartslot_primo )
+{
+	int id = image_index_in_device(image);
+	return cartslot_load_generic (file, REGION_CPU1, id ? 0x14000 : 0x18000, 0, 0x4000, 0);
+}
+
+DEVICE_UNLOAD( cartslot_primo )
+{
+	int id = image_index_in_device(image);
+	memset (memory_region(REGION_CPU1) + (id ? 0x14000 : 0x18000), 0x4000, 0xff);
 }
