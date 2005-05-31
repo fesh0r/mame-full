@@ -9,8 +9,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [ADAM/AQUARIUS/C128/COLECO/EP128/KAYPRO/MPF1/MSX/MSX2/NC100/P2000T/SMS/SORD/
-  TI85] Fixed regressions caused by Z80 port changes.  (bugs #707, #708, #709)
-  [Nate Woods]
+  TI85] Fixed regressions caused by Z80 port changes.  (bugs #707, #708, #709,
+  #715) [Nate Woods]
 
 - [BBCB] Fixed fatal regression introduced in 0.93.  [Nate Woods]
 
@@ -21,14 +21,15 @@ System Driver Changes:
 
 - [JAGUAR] Added quickload device.  [Nate Woods]
 
+- [PRIMO] Primo B-32 and B-48 testdrivers added. EPROM+RAM expansion emulation
+  added. Support for .pp files improved. Memory fixed for A-48 model. Fixed
+  address of second video memory area. Fixed Z80 regression.
+
 - [SGI] Various improvements; CD-ROM, keyboard and mouse hooked up and
   preliminary SCSI, DMA and Newport graphics board emulation.  [R. Belmont]
 
 - [TC2048] Fixed regression introduced in 0.79.  (bug #713) [Nate Woods]
 
-- [PRIMO] Primo B-32 and B-48 testdrivers added. EPROM+RAM expansion emulation
-  added. Support for .pp files improved. Memory fixed for A-48 model. Fixed
-  address of second video memory area. Fixed Z80 regression.
 
 
 User Interface Changes:
