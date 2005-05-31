@@ -83,6 +83,7 @@ static struct help_item static_help_list[] =
 		"  help [<topic>] -- get help on a particular topic\n"
 		"  do <expression> -- evaluates the given expression\n"
 		"  printf <format>[,<item>[,...]] -- prints one or more <item>s to the console using <format>\n"
+		"  logerror <format>[,<item>[,...]] -- outputs one or more <item>s to the error.log\n"
 		"  tracelog <format>[,<item>[,...]] -- outputs one or more <item>s to the trace file using <format>\n"
 		"  snap [<filename>] -- save a screen snapshot\n"
 		"  quit -- exits MAME and the debugger\n"
@@ -104,6 +105,7 @@ static struct help_item static_help_list[] =
 		"  save <filename>,<address>,<length>[,<cpunum>] -- save binary program memory to the given file\n"
 		"  saved <filename>,<address>,<length>[,<cpunum>] -- save binary data memory to the given file\n"
 		"  savei <filename>,<address>,<length>[,<cpunum>] -- save binary I/O memory to the given file\n"
+		"  memdump [<filename>] -- dump the current memory map to <filename>\n"
 		"\n"
 	},
 	{

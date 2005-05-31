@@ -2983,3 +2983,4 @@ void memory_dump(FILE *file)
 				dump_map(file, &cpudata[cpunum].space[spacenum], &cpudata[cpunum].space[spacenum].write);
 			}
 }
+

@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	mame.h
+    mame.h
 
-	Controls execution of the core MAME system.
+    Controls execution of the core MAME system.
 
 ***************************************************************************/
 
@@ -30,7 +30,7 @@ extern int gbPriorityBitmapIsDirty;
 
 /***************************************************************************
 
-	Parameters
+    Parameters
 
 ***************************************************************************/
 
@@ -59,7 +59,7 @@ extern int gbPriorityBitmapIsDirty;
 
 /***************************************************************************
 
-	Core description of the currently-running machine
+    Core description of the currently-running machine
 
 ***************************************************************************/
 
@@ -78,39 +78,39 @@ struct RunningMachine
 
 	/* points to the definition of the game machine */
 	const struct GameDriver *gamedrv;
-	
+
 	/* points to the constructed MachineDriver */
 	const struct InternalMachineDriver *drv;
 
 	/* array of memory regions */
-	struct RegionInfo memory_region[MAX_MEMORY_REGIONS];
-	
+	struct RegionInfo		memory_region[MAX_MEMORY_REGIONS];
+
 
 	/* ----- video-related information ----- */
 
 	/* array of pointers to graphic sets (chars, sprites) */
 	struct GfxElement *		gfx[MAX_GFX_ELEMENTS];
-	
+
 	/* main bitmap to render to (but don't do it directly!) */
 	struct mame_bitmap *	scrbitmap;
 
 	/* current visible area, and a prerotated one adjusted for orientation */
-	struct rectangle visible_area;
+	struct rectangle 		visible_area;
 	struct rectangle		absolute_visible_area;
 
 	/* current video refresh rate */
 	float					refresh_rate;
 
 	/* remapped palette pen numbers. When you write directly to a bitmap in a
-	   non-paletteized mode, use this array to look up the pen number. For example,
-	   if you want to use color #6 in the palette, use pens[6] instead of just 6. */
-	pen_t *					pens;	
+       non-paletteized mode, use this array to look up the pen number. For example,
+       if you want to use color #6 in the palette, use pens[6] instead of just 6. */
+	pen_t *					pens;
 
 	/* lookup table used to map gfx pen numbers to color numbers */
-	UINT16 *				game_colortable;	
+	UINT16 *				game_colortable;
 
 	/* the above, already remapped through Machine->pens */
-	pen_t *					remapped_colortable;	
+	pen_t *					remapped_colortable;
 
 	/* video color depth: 16, 15 or 32 */
 	int						color_depth;
@@ -125,42 +125,42 @@ struct RunningMachine
 	/* ----- input-related information ----- */
 
 	/* the input ports definition from the driver is copied here and modified */
-	struct InputPort *input_ports;	
+	struct InputPort *		input_ports;
 
 	/* original input_ports without modifications */
-	struct InputPort *input_ports_default;
+	struct InputPort *		input_ports_default;
 
 
 	/* ----- user interface-related information ----- */
 
 	/* font used by the user interface */
-	struct GfxElement *uifont;
+	struct GfxElement *		uifont;
 	struct GfxElement *		uirotfont;
-	
+
 	/* font parameters */
-	int uifontwidth,uifontheight;
+	int 					uifontwidth, uifontheight;
 
 	/* user interface visible area */
-	int uixmin,uiymin;
-	int uiwidth,uiheight;
+	int 					uixmin, uiymin;
+	int 					uiwidth, uiheight;
 
 	/* user interface orientation */
-	int ui_orientation;
+	int 					ui_orientation;
 
 
 	/* ----- debugger-related information ----- */
 
 	/* bitmap where the debugger is rendered */
-	struct mame_bitmap *debug_bitmap;
-	
+	struct mame_bitmap *	debug_bitmap;
+
 	/* pen array for the debugger, analagous to the pens above */
-	pen_t *debug_pens;
+	pen_t *					debug_pens;
 
 	/* colortable mapped through the pens, as for the game */
-	pen_t *debug_remapped_colortable;
+	pen_t *					debug_remapped_colortable;
 
 	/* font used by the debugger */
-	struct GfxElement *debugger_font;
+	struct GfxElement *		debugger_font;
 
 #ifdef MESS
 	struct IODevice *devices;
@@ -171,7 +171,7 @@ struct RunningMachine
 
 /***************************************************************************
 
-	Options passed from the frontend to the main core
+    Options passed from the frontend to the main core
 
 ***************************************************************************/
 
@@ -217,8 +217,8 @@ struct GameOptions
 	float	brightness;		/* brightness of the display */
 	float	pause_bright;		/* additional brightness when in pause */
 	float	gamma;			/* gamma correction of the display */
-	int vector_width;	/* requested width for vector games; 0 means default (640) */
-	int vector_height;	/* requested height for vector games; 0 means default (480) */
+	int		vector_width;	/* requested width for vector games; 0 means default (640) */
+	int		vector_height;	/* requested height for vector games; 0 means default (480) */
 	int		ui_orientation;	/* orientation of the UI relative to the video */
 
 	int		beam;			/* vector beam width */
@@ -241,11 +241,11 @@ struct GameOptions
 
 	const char *controller;	/* controller-specific cfg to load */
 
-#ifdef MESS	
-	UINT32	ram;
+	#ifdef MESS
+	UINT32 ram;
 	struct ImageFile image_files[32];
 	int		image_count;
-	int		disable_normal_ui;
+	int disable_normal_ui;
 
 	int		min_width;		/* minimum width for the display */
 	int		min_height;		/* minimum height for the display */
@@ -256,7 +256,7 @@ struct GameOptions
 
 /***************************************************************************
 
-	Display state passed to the OSD layer for rendering
+    Display state passed to the OSD layer for rendering
 
 ***************************************************************************/
 
@@ -281,34 +281,34 @@ struct GameOptions
 /* video display */
 struct mame_display
 {
-    /* bitfield indicating which states have changed */
-    UINT32					changed_flags;
+	/* bitfield indicating which states have changed */
+	UINT32					changed_flags;
 
-    /* game bitmap and display information */
-    struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
-    struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
-    const rgb_t *			game_palette;			/* points to game's adjusted palette */
-    UINT32					game_palette_entries;	/* number of palette entries in game's palette */
-    UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
-    struct rectangle 		game_visible_area;		/* the game's visible area */
+	/* game bitmap and display information */
+	struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
+	struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
+	const rgb_t *			game_palette;			/* points to game's adjusted palette */
+	UINT32					game_palette_entries;	/* number of palette entries in game's palette */
+	UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
+	struct rectangle 		game_visible_area;		/* the game's visible area */
 	float					game_refresh_rate;		/* refresh rate */
-    void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
+	void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
 
-    /* debugger bitmap and display information */
-    struct mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
-    const rgb_t *			debug_palette;			/* points to debugger's palette */
-    UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
-    UINT8					debug_focus;			/* set to 1 if debugger has focus */
+	/* debugger bitmap and display information */
+	struct mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
+	const rgb_t *			debug_palette;			/* points to debugger's palette */
+	UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
+	UINT8					debug_focus;			/* set to 1 if debugger has focus */
 
-    /* other misc information */
-    UINT8					led_state;				/* bitfield of current LED states */
+	/* other misc information */
+	UINT8					led_state;				/* bitfield of current LED states */
 };
 
 
 
 /***************************************************************************
 
-	Performance data
+    Performance data
 
 ***************************************************************************/
 
@@ -324,7 +324,7 @@ struct performance_info
 
 /***************************************************************************
 
-	Globals referencing the current machine and the global options
+    Globals referencing the current machine and the global options
 
 ***************************************************************************/
 
@@ -335,14 +335,14 @@ extern struct RunningMachine *Machine;
 
 /***************************************************************************
 
-	Function prototypes
+    Function prototypes
 
 ***************************************************************************/
 
 /* ----- core system management ----- */
 
 /* execute a given game by index in the drivers[] array */
-int run_game (int game);
+int run_game(int game);
 
 /* construct a machine driver */
 struct InternalMachineDriver;
@@ -388,7 +388,7 @@ int updatescreen(void);
 int mame_highscore_enabled(void);
 
 /* set the state of a given LED */
-void set_led_status(int num,int on);
+void set_led_status(int num, int on);
 
 /* return current performance data */
 const struct performance_info *mame_get_performance_info(void);

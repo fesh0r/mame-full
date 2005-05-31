@@ -609,18 +609,18 @@ int osd_skip_this_frame(void)
 
 
 //============================================================
-//	osd_get_fps_text
+//  osd_get_fps_text
 //============================================================
 
 const char *osd_get_fps_text(const struct performance_info *performance)
 {
 	static char buffer[1024];
 	char *dest = buffer;
-	
+
 	// display the FPS, frameskip, percent, fps and target fps
-	dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps", 
-			autoframeskip ? "auto" : "fskp", frameskip, 
-			(int)(performance->game_speed_percent + 0.5), 
+	dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps",
+			autoframeskip ? "auto" : "fskp", frameskip,
+			(int)(performance->game_speed_percent + 0.5),
 			(int)(performance->frames_per_second + 0.5),
 			(int)(Machine->refresh_rate + 0.5));
 
@@ -633,7 +633,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	{
 		dest += sprintf(dest, "\n %d partial updates", performance->partial_updates_this_frame);
 	}
-	
+
 	/* return a pointer to the static buffer */
 	return buffer;
 }
@@ -641,7 +641,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 
 
 //============================================================
-//	check_inputs
+//  check_inputs
 //============================================================
 
 static void check_inputs(void)
@@ -722,7 +722,7 @@ static void check_inputs(void)
 
 
 //============================================================
-//	throttle_speed
+//  throttle_speed
 //============================================================
 
 static void throttle_speed(void)
@@ -780,7 +780,7 @@ static void throttle_speed(void)
 
 
 //============================================================
-//	update_palette
+//  update_palette
 //============================================================
 
 static void update_palette(struct mame_display *display)
@@ -791,11 +791,11 @@ static void update_palette(struct mame_display *display)
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
-//		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
+//      UINT32 dirtyflags = display->game_palette_dirty[i / 32];
 		if (dirtyflags)
 		{
 			display->game_palette_dirty[i / 32] = 0;
-			
+
 			// loop over all 32 bits and update dirty entries
 			for (j = 0; (j < 32) && (i+j < display->game_palette_entries); j++, dirtyflags >>= 1)
 				if (dirtyflags & 1)
@@ -805,7 +805,7 @@ static void update_palette(struct mame_display *display)
 					int r = RGB_RED(rgbvalue);
 					int g = RGB_GREEN(rgbvalue);
 					int b = RGB_BLUE(rgbvalue);
-					
+
 					// update both lookup tables
 					palette_16bit_lookup[i + j] = win_color16(r, g, b) * 0x10001;
 					palette_32bit_lookup[i + j] = win_color32(r, g, b);
@@ -820,7 +820,7 @@ static void update_palette(struct mame_display *display)
 
 
 //============================================================
-//	update_visible_area
+//  update_visible_area
 //============================================================
 
 static void update_visible_area(struct mame_display *display)
@@ -855,7 +855,7 @@ static void update_visible_area(struct mame_display *display)
 
 
 //============================================================
-//	update_autoframeskip
+//  update_autoframeskip
 //============================================================
 
 void update_autoframeskip(void)
@@ -865,7 +865,7 @@ void update_autoframeskip(void)
 	if (!game_was_paused && !debugger_was_visible && cpu_getcurrentframe() > 2 * FRAMESKIP_LEVELS)
 	{
 		const struct performance_info *performance = mame_get_performance_info();
-	
+
 		// if we're too fast, attempt to increase the frameskip
 		if (performance->game_speed_percent >= 99.5)
 		{
@@ -908,7 +908,7 @@ void update_autoframeskip(void)
 
 
 //============================================================
-//	render_frame
+//  render_frame
 //============================================================
 
 static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -936,10 +936,10 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 		{
 			char name[20];
 			mame_file *fp;
-			
+
 			// make a filename with an underscore prefix
 			sprintf(name, "_%.8s", Machine->gamedrv->name);
-			
+
 			// write out the screenshot
 			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
 			{
@@ -968,7 +968,7 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 
 
 //============================================================
-//	osd_update_video_and_audio
+//  osd_update_video_and_audio
 //============================================================
 
 void osd_update_video_and_audio(struct mame_display *display)
@@ -991,7 +991,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	// if this is the first frame in a sequence, adjust the base time for this frame
 	if (frameskip_counter == 0)
 		this_frame_base = last_skipcount0_time + (int)((double)FRAMESKIP_LEVELS * (double)cps / video_fps);
-	
+
 	// if the visible area has changed, update it
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 		update_visible_area(display);
@@ -1017,7 +1017,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (display->changed_flags & GAME_BITMAP_CHANGED)
 	{
 		win_orient_rect(&updatebounds);
-	
+
 		if (display->changed_flags & VECTOR_PIXELS_CHANGED)
 			render_frame(display->game_bitmap, &updatebounds, display->vector_dirty_pixels);
 		else
@@ -1051,7 +1051,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 
 //============================================================
-//	osd_override_snapshot
+//  osd_override_snapshot
 //============================================================
 
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
@@ -1136,7 +1136,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 
 
 //============================================================
-//	osd_pause
+//  osd_pause
 //============================================================
 
 void osd_pause(int paused)

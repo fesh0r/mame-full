@@ -101,10 +101,12 @@ static void execute_memdump(int ref, int params, const char **param);
 
 void debug_command_init(void)
 {
+	struct symbol_table *global_table = debug_expression_get_global_symtable();
+
 	/* add a few simple global functions */
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "min", 0, 2, 2, execute_min);
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "max", 0, 2, 2, execute_max);
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "if", 0, 3, 3, execute_if);
+	debug_symtable_add_function(global_table, "min", 0, 2, 2, execute_min);
+	debug_symtable_add_function(global_table, "max", 0, 2, 2, execute_max);
+	debug_symtable_add_function(global_table, "if", 0, 3, 3, execute_if);
 
 	/* add all the commands */
 	debug_console_register_command("help",      CMDFLAG_NONE, 0, 0, 1, execute_help);
