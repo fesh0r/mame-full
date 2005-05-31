@@ -23,7 +23,8 @@ System Driver Changes:
 
 - [PRIMO] Primo B-32 and B-48 testdrivers added. EPROM+RAM expansion emulation
   added. Support for .pp files improved. Memory fixed for A-48 model. Fixed
-  address of second video memory area. Fixed Z80 regression.
+  address of second video memory area. Fixed Z80 regression. [Krzysztof
+  Strzecha]
 
 - [SGI] Various improvements; CD-ROM, keyboard and mouse hooked up and
   preliminary SCSI, DMA and Newport graphics board emulation.  [R. Belmont]
