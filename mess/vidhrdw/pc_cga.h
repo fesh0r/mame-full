@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "includes/crtc6845.h"
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_video.h"
 
 #define CGA_PALETTE_SETS 83	/* one for colour, one for mono,
 				 * 81 for colour composite */

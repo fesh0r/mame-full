@@ -29,10 +29,10 @@
 #include "vidhrdw/generic.h"
 
 #include "includes/pit8253.h"
-#include "includes/pc_vga.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_mda.h"
-#include "includes/pc_aga.h"
+#include "vidhrdw/pc_vga.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_mda.h"
+#include "vidhrdw/pc_aga.h"
 
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"

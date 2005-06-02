@@ -25,12 +25,12 @@
 #include "vidhrdw/generic.h"
 
 #include "includes/pit8253.h"
-#include "includes/pc_vga.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_mda.h"
-#include "includes/pc_aga.h"
-#include "includes/pc_t1t.h"
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_vga.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_mda.h"
+#include "vidhrdw/pc_aga.h"
+#include "vidhrdw/pc_t1t.h"
+#include "vidhrdw/pc_video.h"
 
 #include "includes/pc_ide.h"
 #include "machine/pc_fdc.h"

@@ -4,7 +4,6 @@
 
 #include "includes/pcshare.h"
 #include "includes/tandy1t.h"
-//#include "includes/pc_t1t.h"
 
 
 /* tandy 1000 eeprom

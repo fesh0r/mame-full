@@ -1,9 +1,9 @@
-#include "includes/pc_aga.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_mda.h"
+#include "vidhrdw/pc_aga.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_mda.h"
 #include "includes/crtc6845.h"
 #include "includes/amstr_pc.h"
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_video.h"
 #include "vidhrdw/generic.h"
 
 static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);

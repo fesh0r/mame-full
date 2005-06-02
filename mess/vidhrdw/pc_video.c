@@ -6,7 +6,7 @@
 
 *********************************************************************/
 
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_video.h"
 #include "vidhrdw/generic.h"
 #include "state.h"
 

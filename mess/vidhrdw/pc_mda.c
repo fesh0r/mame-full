@@ -1,13 +1,14 @@
 /***************************************************************************
 
-  Monochrom Display Adapter (MDA) section
+  Monochrome Display Adapter (MDA) section
 
 ***************************************************************************/
+
 #include "vidhrdw/generic.h"
 #include "includes/crtc6845.h"
 
-#include "includes/pc_mda.h"
-#include "includes/pc_cga.h" //for the cga palette hack
+#include "vidhrdw/pc_mda.h"
+#include "vidhrdw/pc_cga.h" //for the cga palette hack
 #include "mscommon.h"
 
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */

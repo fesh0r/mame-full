@@ -16,14 +16,15 @@
 #include "machine/uart8250.h"
 #include "machine/mc146818.h"
 #include "machine/pic8259.h"
+
 #include "vidhrdw/generic.h"
+#include "vidhrdw/pc_vga.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_aga.h"
+#include "vidhrdw/pc_mda.h"
+#include "vidhrdw/pc_t1t.h"
 
 #include "includes/pit8253.h"
-#include "includes/pc_vga.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_mda.h"
-#include "includes/pc_aga.h"
-#include "includes/pc_t1t.h"
 
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
@@ -152,9 +153,21 @@ DRIVER_INIT( pc1512 )
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
 
+
+
+static const struct pc_vga_interface vga_interface =
+{
+	input_port_0_r,
+
+	ADDRESS_SPACE_IO,
+	0x0000
+};
+
+
+
 DRIVER_INIT( pc1640 )
 {
-	pc_vga_init(input_port_0_r);
+	pc_vga_init(&vga_interface);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, MRA8_BANK1 );
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, MRA8_BANK2 );
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_BANK3 );
@@ -184,7 +197,7 @@ DRIVER_INIT( pc_vga )
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 
-	pc_vga_init(input_port_0_r);
+	pc_vga_init(&vga_interface);
 }
 
 MACHINE_INIT( pc_mda )

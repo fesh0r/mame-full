@@ -161,10 +161,17 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 	devcount = 0;
 	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 		devcount++;
-	allocated_slots = malloc(devcount * sizeof(*allocated_slots));
-	if (!allocated_slots)
-		goto error;
-	memset(allocated_slots, 0, devcount * sizeof(*allocated_slots));
+	if (devcount > 0)
+	{
+		allocated_slots = malloc(devcount * sizeof(*allocated_slots));
+		if (!allocated_slots)
+			goto error;
+		memset(allocated_slots, 0, devcount * sizeof(*allocated_slots));
+	}
+	else
+	{
+		allocated_slots = NULL;
+	}
 
 	/* distribute images to appropriate devices */
 	for (i = 0; i < options.image_count; i++)

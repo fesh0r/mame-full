@@ -7,12 +7,13 @@
   most people think of
 
 ***************************************************************************/
+
 #include "vidhrdw/generic.h"
 
 #include "includes/crtc6845.h"
-#include "includes/pc_cga.h" // cga monitor palette
-#include "includes/pc_aga.h" //europc charset
-#include "includes/pc_t1t.h"
+#include "vidhrdw/pc_cga.h" // cga monitor palette
+#include "vidhrdw/pc_aga.h" //europc charset
+#include "vidhrdw/pc_t1t.h"
 #include "mscommon.h"
 
 #define VERBOSE_T1T 1		/* T1T (Tandy 1000 Graphics Adapter) */

@@ -52,8 +52,8 @@
 #include "state.h"
 
 #include "includes/crtc6845.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_video.h"
 #include "mscommon.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */

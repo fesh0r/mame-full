@@ -14,10 +14,10 @@
 #include "devices/printer.h"
 
 #include "includes/pit8253.h"
-#include "includes/pc_vga.h"
-#include "includes/pc_cga.h"
-#include "includes/pc_mda.h"
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_vga.h"
+#include "vidhrdw/pc_cga.h"
+#include "vidhrdw/pc_mda.h"
+#include "vidhrdw/pc_video.h"
 #include "includes/pc.h"
 
 #include "machine/pc_hdc.h"

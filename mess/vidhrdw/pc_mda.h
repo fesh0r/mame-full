@@ -1,4 +1,4 @@
-#include "includes/pc_video.h"
+#include "vidhrdw/pc_video.h"
 
 #if 0
 	// cutted from some aga char rom

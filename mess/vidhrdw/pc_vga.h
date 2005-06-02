@@ -1,23 +1,40 @@
+/***************************************************************************
+
+	pc_vga.h
+
+	PC standard VGA adaptor
+
+***************************************************************************/
+
+#ifndef PC_VGA_H
+#define PC_VGA_H
 
 #include "osdepend.h"
 
 MACHINE_DRIVER_EXTERN( pcvideo_vga );
 MACHINE_DRIVER_EXTERN( pcvideo_pc1640 );
 
-void pc_vga_init(read8_handler read_dipswitch);
+struct pc_vga_interface
+{
+	read8_handler read_dipswitch;
 
+	/* where the ports go */
+	int port_addressspace;
+	offs_t port_offset;
+};
+
+
+void pc_vga_init(const struct pc_vga_interface *intf);
 void pc_vga_reset(void);
 
-// include in port access list
- READ8_HANDLER( ega_port_03b0_r );
- READ8_HANDLER( ega_port_03c0_r );
- READ8_HANDLER( ega_port_03d0_r );
+READ8_HANDLER( ega_port_03c0_r );
+READ8_HANDLER( ega_port_03d0_r );
 
- READ8_HANDLER( paradise_ega_03c0_r );
+READ8_HANDLER( paradise_ega_03c0_r );
 
- READ8_HANDLER( vga_port_03b0_r );
- READ8_HANDLER( vga_port_03c0_r );
- READ8_HANDLER( vga_port_03d0_r );
+READ8_HANDLER( vga_port_03b0_r );
+READ8_HANDLER( vga_port_03c0_r );
+READ8_HANDLER( vga_port_03d0_r );
 
 WRITE8_HANDLER( vga_port_03b0_w );
 WRITE8_HANDLER( vga_port_03c0_w );
@@ -76,3 +93,6 @@ WRITE8_HANDLER( vga_port_03d0_w );
         }
         memory[i]=0x100-chksum;
 #endif
+
+#endif /* PC_VGA_H */
+
