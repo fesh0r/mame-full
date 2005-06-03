@@ -1,4 +1,4 @@
-0.96.1
+0.97
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -47,7 +47,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.96u4.  This incorporates all features of the
+- The core is based on MAME 0.97.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Rewrote Mode 2 support for the 8255 PPI chip.  [Nate Woods]
