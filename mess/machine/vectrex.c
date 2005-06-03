@@ -122,19 +122,19 @@ WRITE8_HANDLER ( vectrex_mirrorram_w )
  *********************************************************************/
 void vectrex_configuration(void)
 {
-	unsigned char in2 = input_port_2_r (0);
+	unsigned char cport = input_port_5_r (0);
 
 	/* Vectrex 'dipswitch' configuration */
 
 	/* Imager control */
-	if (in2 & 0x01) /* Imager enabled */
+	if (cport & 0x01) /* Imager enabled */
 	{
 		if (vectrex_imager_status == 0)
-			vectrex_imager_status = in2 & 0x01;
+			vectrex_imager_status = cport & 0x01;
 
-		vector_add_point_function = in2 & 0x02 ? vectrex_add_point_stereo: vectrex_add_point;
+		vector_add_point_function = cport & 0x02 ? vectrex_add_point_stereo: vectrex_add_point;
 
-		switch ((in2>>2) & 0x07)
+		switch ((cport>>2) & 0x07)
 		{
 		case 0x00:
 			imager_colors[0]=imager_colors[1]=imager_colors[2]=BLACK;
@@ -164,7 +164,7 @@ void vectrex_configuration(void)
 			break;
 		}
 
-		switch ((in2>>5) & 0x07)
+		switch ((cport>>5) & 0x07)
 		{
 		case 0x00:
 			imager_colors[3]=imager_colors[4]=imager_colors[5]=BLACK;
@@ -212,21 +212,17 @@ void v_via_irq (int level)
 
  READ8_HANDLER( v_via_pb_r )
 {
-	/* Joystick */
-	if (vectrex_via_out[PORTA] & 0x80)
-	{
-		if ( input_port_1_r(0) & (0x02<<(vectrex_via_out[PORTB] & 0x6)))
-			vectrex_via_out[PORTB] &= ~0x20;
-		else
-			vectrex_via_out[PORTB] |= 0x20;
-	}
+	int pot;
+	if (vectrex_via_out[PORTB] & 1)
+		pot = readinputport(((vectrex_via_out[PORTB] & 0x6)>>1) + 1);
 	else
-	{
-		if ( input_port_1_r(0) & (0x01<<(vectrex_via_out[PORTB] & 0x6)))
-			vectrex_via_out[PORTB] |= 0x20;
-		else
-			vectrex_via_out[PORTB] &= ~0x20;
-	}
+		pot = 0;
+
+	if (pot-128>(signed char)vectrex_via_out[PORTA])
+		vectrex_via_out[PORTB] |= 0x20;
+	else
+		vectrex_via_out[PORTB] &= ~0x20;
+
 	return vectrex_via_out[PORTB];
 }
 
