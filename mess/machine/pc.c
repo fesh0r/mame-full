@@ -200,36 +200,41 @@ DRIVER_INIT( pc_vga )
 	pc_vga_init(&vga_interface);
 }
 
+static int pc_irq_callback(int irqline)
+{
+	return pic8259_acknowledge(0);
+}
+
 MACHINE_INIT( pc_mda )
 {
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_INIT( pc_cga )
 {
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_INIT( pc_t1t )
 {
 	pc_t1t_reset();
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_INIT( pc_aga )
 {
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_INIT( pc_vga )
 {
 	pc_vga_reset();
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, pc_irq_callback);
 }
 
 /**************************************************************************

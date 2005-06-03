@@ -11,7 +11,8 @@
 
 
 int pic8259_init(int count, void (*set_int_line)(int interrupt));
-void pic8259_reset(void);
+
+int pic8259_acknowledge(int which);
 
 READ8_HANDLER ( pic8259_0_r );
 READ8_HANDLER ( pic8259_1_r );

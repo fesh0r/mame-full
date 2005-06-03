@@ -57,13 +57,8 @@ static struct pic8259 *pic;
 static void pic8259_timerproc(int which);
 
 
-static int irq_callback(int irqline)
+int pic8259_acknowledge(int which)
 {
-	/* The only IRQ line the 8259 uses is line 0, so ignore	the	argument */
-
-	/* Todo: what about ACKs on the	other PICs? */
-	int which =	0;
-
 	struct pic8259 *p = &pic[which];
 	UINT8 mask;
 	int irq;
@@ -83,16 +78,10 @@ static int irq_callback(int irqline)
 			return irq + p->base;
 		}
 	}
-	assert(0);
 	return 0;
 }
 
-void pic8259_reset(void)
-{
-	/* MESS	doesn't currently support any machines which have an 8259 and
-	   multiple	CPUs. When it does,	this will need to be changed. */
-	cpu_set_irq_callback(0,	irq_callback);
-}
+
 
 /* initializer */
 int pic8259_init(int count, void (*set_int_line)(int interrupt))

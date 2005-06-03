@@ -1580,8 +1580,14 @@ static void compis_pic_set_int_line(int interrupt)
 	cpunum_set_input_line(0, 0, interrupt ? HOLD_LINE : CLEAR_LINE);
 }
 
+static int compis_irq_callback(int irqline)
+{
+	return pic8259_acknowledge(0);
+}
+
 DRIVER_INIT( compis )
 {
+	cpu_set_irq_callback(0,	compis_irq_callback);
 	pic8259_init(2, compis_pic_set_int_line);
 	memset (&compis, 0, sizeof (compis) );
 }
@@ -1614,8 +1620,8 @@ MACHINE_INIT( compis )
 	/* Keyboard */
 	compis_keyb_init();
 
-	/* OSP PIC 8259	*/
-	pic8259_reset();
+	/* OSP PIC 8259 */
+	cpu_set_irq_callback(0, compis_irq_callback);
 }
 
 /*-------------------------------------------------------------------------*/

@@ -133,10 +133,17 @@ DRIVER_INIT( ps2m30286 )
 
 
 
+static int at_irq_callback(int irqline)
+{
+	return pic8259_acknowledge(0);
+}
+
+
+
 MACHINE_INIT( at )
 {
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, at_irq_callback);
 }
 
 
@@ -145,7 +152,7 @@ MACHINE_INIT( at_vga )
 {
 	pc_vga_reset();
 	dma8237_reset();
-	pic8259_reset();
+	cpu_set_irq_callback(0, at_irq_callback);
 }
 
 void at_cga_frame_interrupt (void)
