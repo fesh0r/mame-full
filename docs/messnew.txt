@@ -2,13 +2,13 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Dragon Beta [Phill Harvey-Smith]
 
 
 
 System Driver Changes:
 ----------------------
-(none)
+- [DRAGON] Fixed printer output.  [Phill Harvey-Smith]
 
 
 

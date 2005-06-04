@@ -883,6 +883,19 @@ static void coco3_snapshot_getinfo(struct IODevice *dev)
 	dev->file_extensions = "pak\0";
 }
 
+/*************************************
+*
+*	Dragon only devices 
+*
+**************************************/
+
+static void dragon_printer_getinfo(struct IODevice *dev)
+{
+	/* printer port */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
 
 
 /*************************************
@@ -903,6 +916,17 @@ SYSTEM_CONFIG_START( generic_coco12 )
 	CONFIG_DEVICE( coco_cartslot_getinfo )
 	CONFIG_DEVICE( coco_snapshot_getinfo )
 SYSTEM_CONFIG_END
+
+/* These have to be split up, as the CoCo has a bitbanger */
+/* where the Dragon has a paralell printer port */
+SYSTEM_CONFIG_START( generic_dragon )
+	CONFIG_DEVICE( coco_cassette_getinfo )
+	CONFIG_DEVICE( coco_floppy_getinfo )
+	CONFIG_DEVICE( coco_cartslot_getinfo )
+	CONFIG_DEVICE( coco_snapshot_getinfo )
+	CONFIG_DEVICE( dragon_printer_getinfo )
+SYSTEM_CONFIG_END
+
 
 /* ----------------------------------------------------------------------- */
 
@@ -932,17 +956,17 @@ SYSTEM_CONFIG_START(coco3)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon32)
-	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_IMPORT_FROM	( generic_dragon )
 	CONFIG_RAM_DEFAULT	(32 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon64)
-	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_IMPORT_FROM	( generic_dragon )
 	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dgnalpha)
-	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_IMPORT_FROM	( generic_dragon )
 	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 

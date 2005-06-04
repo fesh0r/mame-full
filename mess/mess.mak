@@ -309,6 +309,7 @@ DRVLIBS = \
 	$(OBJ)/luxor.a		\
 	$(OBJ)/sgi.a		\
 	$(OBJ)/primo.a		\
+	$(OBJ)/dgn_beta.a	\
 
 
 $(OBJ)/neocd.a:						\
@@ -430,6 +431,11 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/devices/coco_vhd.o	\
 	$(OBJ)/mess/machine/mc10.o		\
 	$(OBJ)/mess/systems/mc10.o		\
+
+$(OBJ)/dgn_beta.a:	\
+	$(OBJ)/mess/machine/dgn_beta.o	\
+	$(OBJ)/mess/vidhrdw/dgn_beta.o	\
+	$(OBJ)/mess/systems/dgn_beta.o	
 
 $(OBJ)/trs80.a:    \
 	$(OBJ)/mess/machine/trs80.o	 \

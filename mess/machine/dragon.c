@@ -121,6 +121,14 @@ static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
 
+/* Are we a CoCo or a Dragon ? */
+typedef enum
+{
+	AM_COCO,
+	AM_DRAGON
+} coco_or_dragon_t;
+static coco_or_dragon_t coco_or_dragon;
+
 /* Dragon 64 / Alpha shared */
 static int dragon_map_type;					/* Dragonm 64/Alpha map type, used for rom paging */
 static UINT8 *dragon_rom_bank;					/* Dragon 64 / Alpha rom bank in use */
@@ -1030,6 +1038,11 @@ static mess_image *bitbanger_image(void)
 	return image_from_devtype_and_index(IO_BITBANGER, 0);
 }
 
+static mess_image *printer_image(void)
+{
+	return image_from_devtype_and_index(IO_PRINTER, 0);
+}
+
 static void soundmux_update(void)
 {
 	/* This function is called whenever the MUX (selector switch) is changed
@@ -1117,7 +1130,7 @@ WRITE8_HANDLER ( dgnalpha_psg_porta_write )
 {
 	/* Bits 0..3 are the drive select lines for the internal floppy interface */
 	/* Bit 4 is the motor on, in the real hardware these are inverted on their way to the drive */
-	/* I do not know if bits 5..7 have any function */ 
+	/* Bits 5,6,7 are connected to /DDEN, ENP and 5/8 on the WD2797 */ 
 	switch (data & 0xF)
 	{
 		case(0x01) :
@@ -1256,7 +1269,7 @@ static WRITE8_HANDLER ( d_pia0_pb_w )
   PIA1 ($FF20-$FF3F) (Chip U4)
 
   PIA1 PA0		- CASSDIN
-  PIA1 PA1		- RS232 OUT
+  PIA1 PA1		- RS232 OUT (CoCo), Printer Strobe (Dragon)
   PIA1 PA2-PA7	- DAC
   PIA1 PB0		- RS232 IN
   PIA1 PB1		- Single bit sound
@@ -1289,7 +1302,7 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	 *
 	 *	Bits
 	 *  7-2:	DAC to speaker or cassette
-	 *    1:	Serial out
+	 *    1:	Serial out (CoCo), Printer strobe (Dragon)
 	 */
 	d_dac = data & 0xfc;
 	dragon_sound_update();
@@ -1299,7 +1312,21 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	else
 		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) / 128.0);
 
-	bitbanger_output(bitbanger_image(), (data & 2) >> 1);
+	switch(coco_or_dragon)
+	{
+		case AM_COCO:
+			/* Only the coco has a bitbanger */
+			bitbanger_output(bitbanger_image(), (data & 2) >> 1);
+			break;
+	
+		case AM_DRAGON:
+			/* If strobe bit is high send data from pia0 port b to dragon parallel printer */
+			if (data&2)
+			{
+				printer_output(printer_image(),pia0_pb);
+			}
+			break;
+	}
 }
 
 /*
@@ -1533,7 +1560,8 @@ static  READ8_HANDLER ( d_pia1_pa_r )
 static  READ8_HANDLER ( d_pia1_pb_r_coco )
 {
 	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
-	 * and serial-in (pb0). Serial-in not yet implemented.
+	 * on the CoCo serial-in (pb0). Serial-in not yet implemented.
+	 * on the Dragon pb0, is the printer /busy line.
 	 */
 	int result;
 
@@ -1543,6 +1571,7 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco )
 		result = 0x04;
 	else
 		result = 0x00;
+			
 	return result;
 }
 
@@ -1558,7 +1587,7 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
 	else if (mess_ram_size <= 0x4000)
 		result = 0x04;					/* 16K: wire pia1_pb2 high */
 	else
-		result = (pia0_pb & 0x40) >> 4;	/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
+		result = (pia0_pb & 0x40) >> 4;		/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
 	return result;
 }
 
@@ -2434,6 +2463,8 @@ MACHINE_INIT( dragon32 )
 	cpu_setbank(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+
+	coco_or_dragon = AM_DRAGON;
 }
 
 MACHINE_INIT( dragon64 )
@@ -2442,6 +2473,8 @@ MACHINE_INIT( dragon64 )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
+	
+	coco_or_dragon = AM_DRAGON;
 }
 
 MACHINE_INIT( dgnalpha )
@@ -2458,6 +2491,8 @@ MACHINE_INIT( dgnalpha )
 	dgnalpha_just_reset=1;
 	
 	wd179x_init(WD_TYPE_179X,dgnalpha_fdc_callback);
+
+	coco_or_dragon = AM_DRAGON;
 }
 
 MACHINE_INIT( coco )
@@ -2465,6 +2500,8 @@ MACHINE_INIT( coco )
 	cpu_setbank(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+
+	coco_or_dragon = AM_COCO;
 }
 
 MACHINE_INIT( coco2 )
@@ -2472,6 +2509,8 @@ MACHINE_INIT( coco2 )
 	cpu_setbank(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+
+	coco_or_dragon = AM_COCO;
 }
 
 MACHINE_INIT( coco3 )
@@ -2497,6 +2536,8 @@ MACHINE_INIT( coco3 )
 	coco3_vh_reset();
 
 	coco3_interupt_line = 0;
+	
+	coco_or_dragon = AM_COCO;
 }
 
 MACHINE_STOP( coco )
