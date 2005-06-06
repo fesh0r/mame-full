@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [DRAGON] Fixed printer output.  [Phill Harvey-Smith]
 
+- [NES] Fixed NES timing.  (bug #724) [Andrew Church]
+
 
 
 User Interface Changes:

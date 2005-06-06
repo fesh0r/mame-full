@@ -10,9 +10,12 @@
 #define NES_H
 
 #define BOTTOM_VISIBLE_SCANLINE		239		/* The bottommost visible scanline */
-#define NMI_SCANLINE     			244		/* 244 times Bayou Billy perfectly */
-#define NTSC_SCANLINES_PER_FRAME	262
-#define PAL_SCANLINES_PER_FRAME		305		/* verify - times Elite perfectly */
+#define NMI_SCANLINE     			243
+#define NTSC_SCANLINES_PER_FRAME	262.5
+#define PAL_SCANLINES_PER_FRAME		312.5		/* in theory--needs verification */
+
+#define NTSC_CLOCK		N2A03_DEFAULTCLOCK	/* 1.789772 MHz */
+#define PAL_CLOCK		(26601712.0/15)		/* 1.773447 MHz */
 
 #define PORT_PAD0		0
 #define PORT_PAD1		1

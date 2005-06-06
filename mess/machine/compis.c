@@ -194,7 +194,8 @@ void compis_irq_set(UINT8 irq)
 
 void compis_osp_pic_irq(UINT8 irq)
 {
-	pic8259_0_issue_irq(irq);
+	pic8259_set_irq_line(0, irq, 1);
+	pic8259_set_irq_line(0, irq, 0);
 }
 
  READ8_HANDLER ( compis_osp_pic_r )

@@ -8,6 +8,8 @@
 #include "zlib.h"
 #include "image.h"
 
+#include <math.h>
+
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
 //#define LOG_PPU
@@ -119,13 +121,13 @@ static void init_nes_core (void)
 
 DRIVER_INIT( nes )
 {
-	ppu_scanlines_per_frame = NTSC_SCANLINES_PER_FRAME;
+	ppu_scanlines_per_frame = ceil(NTSC_SCANLINES_PER_FRAME);
 	init_nes_core ();
 }
 
 DRIVER_INIT( nespal )
 {
-	ppu_scanlines_per_frame = PAL_SCANLINES_PER_FRAME;
+	ppu_scanlines_per_frame = ceil(PAL_SCANLINES_PER_FRAME);
 	init_nes_core ();
 }
 

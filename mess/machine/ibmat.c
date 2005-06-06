@@ -270,35 +270,21 @@ static void at_8042_receive(UINT8 data)
 	logerror("at_8042_receive Received 0x%02x\n", data);
 #endif
 
-	at_8042.data=data;
+	at_8042.data = data;
 	at_8042.keyboard.received = 1;
-	if( !pic8259_0_irq_pending(1)) { // this forgets some interrupts
-		pic8259_0_issue_irq(1);
-	}
+	pic8259_set_irq_line(0, 1, 1);
+	pic8259_set_irq_line(0, 1, 0);
 }
 
 static void at_8042_check_keyboard(void)
 {
 	int data;
 
-	if (at_8042.no_8259)
+	if (!at_8042.keyboard.received
+		&& !at_8042.mouse.received)
 	{
-		if (!at_8042.keyboard.received
-			&& !at_8042.mouse.received)
-		{
-			if ( (data = at_keyboard_read())!=-1)
-				at_8042_receive(data);
-		}
-	}
-	else
-	{
-		if( !pic8259_0_irq_pending(1)
-			&& !at_8042.keyboard.received
-			&& !at_8042.mouse.received)
-		{
-			if ( (data = at_keyboard_read())!=-1)
-				at_8042_receive(data);
-		}
+		if ( (data = at_keyboard_read())!=-1)
+			at_8042_receive(data);
 	}
 }
 

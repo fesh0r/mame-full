@@ -2,85 +2,70 @@
 
 	8259 PIC interface and emulation
 
+	The 8259 is a programmable interrupt controller used to multiplex
+	interrupts for x86 and other computers.  The chip is set up by
+	writing a series of Initialization Command Words (ICWs) after which
+	the chip is operational and capable of dispatching interrupts.  After
+	this, Operation Command Words (OCWs) can be written to control further
+	behavior.
+
 **********************************************************************/
 
 #include "machine/pic8259.h"
 
-/* NPW 22-Nov-2002 - fun with Microsoft... */
-#ifdef x86
-#undef x86
-#endif
-
 #define IRQ_COUNT	8
 
-#define VERBOSE		0
+#define LOG_ICW		0
+#define LOG_OCW		0
+#define LOG_GENERAL	0
 
-#if VERBOSE
-#define LOG(msg)	logerror msg
-#else
-#define LOG(msg)
-#endif
+typedef enum
+{
+	STATE_ICW1,
+	STATE_ICW2,
+	STATE_ICW3,
+	STATE_ICW4,
+	STATE_READY
+} pic8259_state_t;
 
-/* note this structure is whacked out; the author of this code was fixated
- * on separating out every single signal */
 struct pic8259
 {
 	mame_timer *timer;
 	void (*set_int_line)(int interrupt);
 
-	UINT8 enable;
+	pic8259_state_t state;
+
+	UINT8 irq_lines;
 	UINT8 in_service;
 	UINT8 pending;
 	UINT8 prio;
+	UINT8 interrupt_mask;
 
-	UINT8 icw2;
-	UINT8 icw3;
-	UINT8 icw4;
-
-	UINT8 special;
 	UINT8 input;
+	unsigned int special : 1;
 
-	UINT8 level_trig_mode;
-	UINT8 vector_size;
-	UINT8 cascade;
+	/* ICW1 state */
+	unsigned int level_trig_mode : 1;
+	unsigned int vector_size : 1;
+	unsigned int cascade : 1;
+	unsigned int icw4_needed : 1;
+
+	/* ICW2 state */
 	UINT8 base;
+
+	/* ICW3 state */
 	UINT8 slave;
 
-	UINT8 nested;
-	UINT8 mode;
-	UINT8 auto_eoi;
-	UINT8 x86;
+	/* ICW4 state */
+	unsigned int nested : 1;
+	unsigned int mode : 2;
+	unsigned int auto_eoi : 1;
+	unsigned int is_x86 : 1;
 };
 
 static struct pic8259 *pic;
 
 static void pic8259_timerproc(int which);
-
-
-int pic8259_acknowledge(int which)
-{
-	struct pic8259 *p = &pic[which];
-	UINT8 mask;
-	int irq;
-
-	for (irq = 0; irq < IRQ_COUNT; irq++)
-	{
-		mask = 1 << irq;
-
-		/* is this IRQ pending and enabled? */
-		if ((p->pending & mask) && !(p->enable & mask))
-		{
-			LOG(("pic8259 irq_callback(): PIC #%d acknowledge IRQ #%d\n", which, irq));
-
-			p->pending &= ~mask;
-			p->in_service |= mask;
-
-			return irq + p->base;
-		}
-	}
-	return 0;
-}
-
 
 
 /* initializer */
@@ -122,14 +107,16 @@ static void pic8259_timerproc(int which)
 		/* is this IRQ in service? */
 		if (p->in_service & mask)
 		{
-			LOG(("pic8259_timerproc(): PIC #%d IRQ #%d still in service\n", which, irq));
+			if (LOG_GENERAL)
+				logerror("pic8259_timerproc(): PIC #%d IRQ #%d still in service\n", which, irq);
 			return;
 		}
 
 		/* is this IRQ pending and enabled? */
-		if ((p->pending & mask) && !(p->enable & mask))
+		if ((p->pending & mask) && !(p->interrupt_mask & mask))
 		{
-			LOG(("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq));
+			if (LOG_GENERAL)
+				logerror("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq);
 			if (p->set_int_line)
 				p->set_int_line(1);
 			return;
@@ -148,52 +135,87 @@ static void pic8259_set_timer(int which)
 
 
 
-static void pic8259_issue_irq(int which, int irq)
+void pic8259_set_irq_line(int which, int irq, int state)
 {
 	assert(irq >= 0);
 	assert(irq < IRQ_COUNT);
 
-	LOG(("pic8259_issue_irq(): PIC #%d received IRQ #%d\n", which, irq));
+	if (state)
+	{
+		/* setting IRQ line */
+		if (!(pic[which].irq_lines & (1 << irq)))
+		{
+			if (LOG_GENERAL)
+				logerror("pic8259_set_irq_line(): PIC #%d set IRQ line #%d\n", which, irq);
 
-	pic[which].pending |= 1 << irq;
-	pic8259_set_timer(which);
+			pic[which].irq_lines |= 1 << irq;		
+			pic[which].pending |= 1 << irq;
+			pic8259_set_timer(which);
+		}
+	}
+	else
+	{
+		/* clearing IRQ line */
+		if (pic[which].irq_lines & (1 << irq))
+		{
+			if (LOG_GENERAL)
+				logerror("pic8259_set_irq_line(): PIC #%d cleared IRQ line #%d\n", which, irq);
+
+			pic[which].irq_lines &= ~(1 << irq);
+		}
+	}
 }
 
 
 
-static int pic8259_irq_pending(int which, int irq)
+int pic8259_acknowledge(int which)
 {
-	UINT8 mask = 1 << irq;
-	return (pic[which].pending & mask) ? 1 : 0;
+	struct pic8259 *p = &pic[which];
+	UINT8 mask;
+	int irq;
+
+	for (irq = 0; irq < IRQ_COUNT; irq++)
+	{
+		mask = 1 << irq;
+
+		/* is this IRQ pending and enabled? */
+		if ((p->pending & mask) && !(p->interrupt_mask & mask))
+		{
+			if (LOG_GENERAL)
+				logerror("pic8259_acknowledge(): PIC #%d acknowledge IRQ #%d\n", which, irq);
+
+			p->pending &= ~mask;
+			if (!p->auto_eoi)
+				p->in_service |= mask;
+
+			return irq + p->base;
+		}
+	}
+	return 0;
 }
 
 
 
 static data8_t pic8259_read(int which, offs_t offset)
 {
-	struct pic8259 *this = &pic[which];
+	struct pic8259 *p = &pic[which];
 
 	/* NPW 18-May-2003 - Changing 0xFF to 0x00 as per Ruslan */
 	data8_t data = 0x00;
 
-	switch( offset ) {
-	case 0: /* PIC acknowledge IRQ */
-        if (this->special)
-		{
-            this->special = 0;
-            data = this->input;
-            LOG(("PIC_ack_r(): $%02x read special\n", data));
-        }
-		else
-		{
-            LOG(("PIC_ack_r(): $%02x\n", data));
-        }
-        break;
+	switch(offset & 1)
+	{
+		case 0: /* PIC acknowledge IRQ */
+			if (p->special)
+			{
+				p->special = 0;
+				data = p->input;
+			}
+			break;
 
-	case 1: /* PIC mask register */
-        data = this->enable;
-        LOG(("PIC_enable_r(): $%02x\n", data));
-        break;
+		case 1: /* PIC mask register */
+			data = p->interrupt_mask;
+			break;
 	}
 	return data;
 }
@@ -202,155 +224,155 @@ static data8_t pic8259_read(int which, offs_t offset)
 
 static void pic8259_write(int which, offs_t offset, data8_t data )
 {
-	struct pic8259 *this = &pic[which];
-	switch( offset )
-	{
-    case 0:    /* PIC acknowledge IRQ */
-		if( data & 0x10 )	/* write ICW1 ? */
-		{
-            this->icw2 = 1;
-            this->icw3 = 1;
-            this->level_trig_mode = (data >> 3) & 1;
-            this->vector_size = (data >> 2) & 1;
-			this->cascade = ((data >> 1) & 1) ^ 1;
-			if( this->cascade == 0 )
-				this->icw3 = 0;
-            this->icw4 = data & 1;
-			LOG(("PIC_ack_w(): $%02x: ICW1, icw4 %d, cascade %d, vec size %d, ltim %d\n",
-                data, this->icw4, this->cascade, this->vector_size, this->level_trig_mode));
-		}
-		else if (data & 0x08)
-		{
-            LOG(("PIC_ack_w(): $%02x: OCW3", data));
-			switch (data & 0x60)
-			{
-                case 0x00:
-                case 0x20:
-                    break;
-                case 0x40:
-                    LOG((", reset special mask"));
-                    break;
-                case 0x60:
-                    LOG((", set special mask"));
-                    break;
-            }
-			switch (data & 0x03)
-			{
-                case 0x00:
-				case 0x01:
-					LOG((", no operation"));
-                    break;
-                case 0x02:
-                    LOG((", read request register"));
-                    this->special = 1;
-					this->input = this->pending;
-                    break;
-                case 0x03:
-                    LOG((", read in-service register"));
-                    this->special = 1;
-					this->input = this->in_service & ~this->enable;
-                    break;
-            }
-            LOG(("\n"));
-		}
-		else
-		{
-			int n = data & 7;
-            UINT8 mask = 1 << n;
-            LOG(("PIC_ack_w(): $%02x: OCW2", data));
-			switch (data & 0xe0)
-			{
-                case 0x00:
-                    LOG((" rotate auto EOI clear\n"));
-					this->prio = 0;
-                    break;
-                case 0x20:
-                    LOG((" nonspecific EOI\n"));
-					for( n = 0, mask = 1<<this->prio; n < 8; n++, mask = (mask<<1) | (mask>>7) )
-					{
-						if( this->in_service & mask )
-						{
-							LOG(("pic8259_write(): PIC #%d clearing IRQ %d\n", which, n));
-                            this->in_service &= ~mask;
-                            break;
-                        }
-                    }
-                    break;
-                case 0x40:
-                    LOG((" OCW2 NOP\n"));
-                    break;
-                case 0x60:
-                    LOG((" OCW2 specific EOI%d\n", n));
-					if( this->in_service & mask )
-                    {
-						this->in_service &= ~mask;
-					}
-                    break;
-                case 0x80:
-					LOG((" OCW2 rotate auto EOI set\n"));
-					this->prio = ++this->prio & 7;
-                    break;
-                case 0xa0:
-                    LOG((" OCW2 rotate on nonspecific EOI\n"));
-					for( n = 0, mask = 1<<this->prio; n < 8; n++, mask = (mask<<1) | (mask>>7) )
-					{
-						if( this->in_service & mask )
-						{
-                            this->in_service &= ~mask;
-							this->prio = ++this->prio & 7;
-                            break;
-                        }
-                    }
-					break;
-                case 0xc0:
-                    LOG((" OCW2 set priority\n"));
-					this->prio = n & 7;
-                    break;
-                case 0xe0:
-                    LOG((" OCW2 rotate on specific EOI%d\n", n));
-					if( this->in_service & mask )
-					{
-						this->in_service &= ~mask;
-						this->pending &= ~mask;
-						this->prio = ++this->prio & 7;
-					}
-                    break;
-            }
-        }
-        break;
-    case 1:    /* PIC ICW2,3,4 or OCW1 */
-		if( this->icw2 )
-		{
-            this->base = data & 0xf8;
-            LOG(("PIC_enable_w(): $%02x: ICW2 (base)\n", this->base));
-            this->icw2 = 0;
-		}
-		else if( this->icw3 )
-		{
-            this->slave = data;
-            LOG(("PIC_enable_w(): $%02x: ICW3 (slave)\n", this->slave));
-            this->icw3 = 0;
-		}
-		else if( this->icw4 )
-		{
-            this->nested = (data >> 4) & 1;
-            this->mode = (data >> 2) & 3;
-            this->auto_eoi = (data >> 1) & 1;
-            this->x86 = data & 1;
-            LOG(("PIC_enable_w(): $%02x: ICW4 x86 mode %d, auto EOI %d, mode %d, nested %d\n",
-                data, this->x86, this->auto_eoi, this->mode, this->nested));
-            this->icw4 = 0;
-		}
-		else
-		{
-            LOG(("PIC_enable_w(): $%02x: OCW1 enable\n", data));
-            this->enable = data;
-			this->in_service &= data;
-			this->pending &= data;
-        }
-        break;
-    }
+	struct pic8259 *p = &pic[which];
 
+	switch(offset & 1)
+	{
+		case 0:    /* PIC acknowledge IRQ */
+			if (data & 0x10)
+			{
+				/* write ICW1 - this pretty much resets the chip */
+				if (LOG_ICW)
+					logerror("pic8259_write(): ICW1; which=%d data=0x%08X\n", which, data);
+
+				p->interrupt_mask	= 0x00;
+				p->level_trig_mode	= (data & 0x08) ? 1 : 0;
+				p->vector_size		= (data & 0x04) ? 1 : 0;
+				p->cascade			= (data & 0x02) ? 0 : 1;
+				p->icw4_needed		= (data & 0x01) ? 1 : 0;
+				p->state			= STATE_ICW2;
+			}
+			else if (p->state == STATE_READY)
+			{
+				if ((data & 0x98) == 0x08)
+				{
+					/* write OCW3 */
+					if (LOG_OCW)
+						logerror("pic8259_write(): OCW3; which=%d data=0x%08X\n", which, data);
+
+					switch (data & 0x03)
+					{
+						case 0x02:
+							p->special = 1;
+							p->input = p->pending;
+							break;
+						case 0x03:
+							p->special = 1;
+							p->input = p->in_service & ~p->interrupt_mask;
+							break;
+					}
+				}
+				else if ((data & 0x18) == 0x00)
+				{
+					int n = data & 7;
+					UINT8 mask = 1 << n;
+
+					/* write OCW2 */
+					if (LOG_OCW)
+						logerror("pic8259_write(): OCW2; which=%d data=0x%08X\n", which, data);
+
+					switch (data & 0xe0)
+					{
+						case 0x00:
+							p->prio = 0;
+							break;
+						case 0x20:
+							for (n = 0, mask = 1<<p->prio; n < 8; n++, mask = (mask<<1) | (mask>>7))
+							{
+								if (p->in_service & mask)
+								{
+									p->in_service &= ~mask;
+									break;
+								}
+							}
+							break;
+						case 0x40:
+							break;
+						case 0x60:
+							if( p->in_service & mask )
+							{
+								p->in_service &= ~mask;
+							}
+							break;
+						case 0x80:
+							p->prio = ++p->prio & 7;
+							break;
+						case 0xa0:
+							for (n = 0, mask = 1<<p->prio; n < 8; n++, mask = (mask<<1) | (mask>>7))
+							{
+								if( p->in_service & mask )
+								{
+									p->in_service &= ~mask;
+									p->prio = ++p->prio & 7;
+									break;
+								}
+							}
+							break;
+						case 0xc0:
+							p->prio = n & 7;
+							break;
+						case 0xe0:
+							if( p->in_service & mask )
+							{
+								p->in_service &= ~mask;
+								p->pending &= ~mask;
+								p->prio = ++p->prio & 7;
+							}
+							break;
+					}
+				}
+			}
+			break;
+
+		case 1:
+			switch(p->state)
+			{
+				case STATE_ICW1:
+					break;
+
+				case STATE_ICW2:
+					/* write ICW2 */
+					if (LOG_ICW)
+						logerror("pic8259_write(): ICW2; which=%d data=0x%08X\n", which, data);
+
+					p->base = data & 0xf8;
+					if (p->cascade)
+						p->state = STATE_ICW3;
+					else
+						p->state = p->icw4_needed ? STATE_ICW4 : STATE_READY;
+					break;
+
+				case STATE_ICW3:
+					/* write ICW3 */
+					if (LOG_ICW)
+						logerror("pic8259_write(): ICW3; which=%d data=0x%08X\n", which, data);
+
+					p->slave = data;
+					p->state = p->icw4_needed ? STATE_ICW4 : STATE_READY;
+					break;
+
+				case STATE_ICW4:
+					/* write ICW4 */
+					if (LOG_ICW)
+						logerror("pic8259_write(): ICW4; which=%d data=0x%08X\n", which, data);
+
+					p->nested	= (data & 0x10) ? 1 : 0;
+					p->mode = (data >> 2) & 3;
+					p->auto_eoi = (data & 0x02) ? 1 : 0;
+					p->is_x86 = (data & 0x01) ? 1 : 0;
+					p->state = STATE_READY;
+					break;
+
+				case STATE_READY:
+					/* write OCW1 - set interrupt mask register */
+					if (LOG_OCW)
+						logerror("pic8259_write(): OCW1; which=%d data=0x%08X\n", which, data);
+
+					p->interrupt_mask = data;
+					break;
+			}
+			break;
+    }
 	pic8259_set_timer(which);
 }
 
@@ -372,26 +394,3 @@ READ64_HANDLER ( pic8259_64be_0_r ) { return read64be_with_read8_handler(pic8259
 READ64_HANDLER ( pic8259_64be_1_r ) { return read64be_with_read8_handler(pic8259_1_r, offset, mem_mask); }
 WRITE64_HANDLER ( pic8259_64be_0_w ) { write64be_with_write8_handler(pic8259_0_w, offset, data, mem_mask); }
 WRITE64_HANDLER ( pic8259_64be_1_w ) { write64be_with_write8_handler(pic8259_1_w, offset, data, mem_mask); }
-
-
-/* ----------------------------------------------------------------------- */
-
-void pic8259_0_issue_irq(int irq)
-{
-	pic8259_issue_irq(0, irq);
-}
-
-void pic8259_1_issue_irq(int irq)
-{
-	pic8259_issue_irq(1, irq);
-}
-
-int pic8259_0_irq_pending(int irq)
-{
-	return pic8259_irq_pending(0, irq);
-}
-
-int pic8259_1_irq_pending(int irq)
-{
-	return pic8259_irq_pending(1, irq);
-}

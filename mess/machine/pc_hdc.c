@@ -139,8 +139,13 @@ static struct hard_disk_file *pc_hdc_file(int id)
 
 static void pc_hdc_result(int n)
 {
+	int irq;
+
 	/* dip switch selected INT 5 or 2 */
-	pic8259_0_issue_irq((dip[n] & 0x40) ? 5 : 2);
+	irq = (dip[n] & 0x40) ? 5 : 2;
+
+	pic8259_set_irq_line(0, irq, 1);
+	pic8259_set_irq_line(0, irq, 0);
 
 #if LOG_HDC_STATUS
 	logerror("pc_hdc_result(): $%02x to $%04x\n", csb[n], data_cnt);

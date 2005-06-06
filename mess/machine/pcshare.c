@@ -83,12 +83,10 @@ static void pc_keyb_timer(int param);
 /* called when a interrupt is set/cleared from com hardware */
 static void pc_com_interrupt(int nr, int state)
 {
-	static const int irq[4]={4,3,4,3};
+	static const int irq[4] = {4, 3, 4, 3};
+
 	/* issue COM1/3 IRQ4, COM2/4 IRQ3 */
-	if (state)
-	{
-		pic8259_0_issue_irq(irq[nr]);
-	}
+	pic8259_set_irq_line(0, irq[nr], state);
 }
 
 /* called when com registers read/written - used to update peripherals that
@@ -138,8 +136,7 @@ static uart8250_interface com_interface[4]=
 
 static void pc_timer0_w(int state)
 {
-	if (state)
-		pic8259_0_issue_irq(0);
+	pic8259_set_irq_line(0, 0, state);
 }
 
 
@@ -363,11 +360,7 @@ static struct dma8237_interface pc_dma =
 
 static void pc_fdc_interrupt(int state)
 {
-	if (state)
-	{
-		/* issue IRQ */
-		pic8259_0_issue_irq(6);
-	}
+	pic8259_set_irq_line(0, 6, state);
 }
 
 
@@ -591,12 +584,13 @@ void pc_keyboard(void)
 
 	at_keyboard_polling();
 
-	if( !pic8259_0_irq_pending(1) && pc_keyb.on)
+	if (pc_keyb.on)
 	{
 		if ( (data=at_keyboard_read())!=-1) {
 			pc_keyb.data = data;
 			DBG_LOG(1,"KB_scancode",("$%02x\n", pc_keyb.data));
-			pic8259_0_issue_irq(1);
+			pic8259_set_irq_line(0, 1, 1);
+			pic8259_set_irq_line(0, 1, 0);
 		}
 	}
 }
