@@ -113,7 +113,7 @@ static void pic8259_timerproc(int which)
 		}
 
 		/* is this IRQ pending and enabled? */
-		if ((p->pending & mask) && !(p->interrupt_mask & mask))
+		if ((p->state == STATE_READY) && (p->pending & mask) && !(p->interrupt_mask & mask))
 		{
 			if (LOG_GENERAL)
 				logerror("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq);
@@ -203,7 +203,7 @@ static data8_t pic8259_read(int which, offs_t offset)
 	/* NPW 18-May-2003 - Changing 0xFF to 0x00 as per Ruslan */
 	data8_t data = 0x00;
 
-	switch(offset & 1)
+	switch(offset)
 	{
 		case 0: /* PIC acknowledge IRQ */
 			if (p->special)
@@ -226,14 +226,14 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 {
 	struct pic8259 *p = &pic[which];
 
-	switch(offset & 1)
+	switch(offset)
 	{
 		case 0:    /* PIC acknowledge IRQ */
 			if (data & 0x10)
 			{
 				/* write ICW1 - this pretty much resets the chip */
 				if (LOG_ICW)
-					logerror("pic8259_write(): ICW1; which=%d data=0x%08X\n", which, data);
+					logerror("pic8259_write(): ICW1; which=%d data=0x%02X\n", which, data);
 
 				p->interrupt_mask	= 0x00;
 				p->level_trig_mode	= (data & 0x08) ? 1 : 0;
@@ -248,7 +248,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 				{
 					/* write OCW3 */
 					if (LOG_OCW)
-						logerror("pic8259_write(): OCW3; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): OCW3; which=%d data=0x%02X\n", which, data);
 
 					switch (data & 0x03)
 					{
@@ -269,7 +269,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 
 					/* write OCW2 */
 					if (LOG_OCW)
-						logerror("pic8259_write(): OCW2; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): OCW2; which=%d data=0x%02X\n", which, data);
 
 					switch (data & 0xe0)
 					{
@@ -333,7 +333,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 				case STATE_ICW2:
 					/* write ICW2 */
 					if (LOG_ICW)
-						logerror("pic8259_write(): ICW2; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): ICW2; which=%d data=0x%02X\n", which, data);
 
 					p->base = data & 0xf8;
 					if (p->cascade)
@@ -345,7 +345,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 				case STATE_ICW3:
 					/* write ICW3 */
 					if (LOG_ICW)
-						logerror("pic8259_write(): ICW3; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): ICW3; which=%d data=0x%02X\n", which, data);
 
 					p->slave = data;
 					p->state = p->icw4_needed ? STATE_ICW4 : STATE_READY;
@@ -354,7 +354,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 				case STATE_ICW4:
 					/* write ICW4 */
 					if (LOG_ICW)
-						logerror("pic8259_write(): ICW4; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): ICW4; which=%d data=0x%02X\n", which, data);
 
 					p->nested	= (data & 0x10) ? 1 : 0;
 					p->mode = (data >> 2) & 3;
@@ -366,7 +366,7 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 				case STATE_READY:
 					/* write OCW1 - set interrupt mask register */
 					if (LOG_OCW)
-						logerror("pic8259_write(): OCW1; which=%d data=0x%08X\n", which, data);
+						logerror("pic8259_write(): OCW1; which=%d data=0x%02X\n", which, data);
 
 					p->interrupt_mask = data;
 					break;
