@@ -7,12 +7,12 @@
 
 #include "includes/vectrex.h"
 
-#define BLACK 0x00000000
-#define RED   0x00ff0000
-#define GREEN 0x0000ff00
-#define BLUE  0x000000ff
-#define WHITE RED|GREEN|BLUE
-#define DARKRED 0x00800000
+#define VC_BLACK 0x00000000
+#define VC_RED   0x00ff0000
+#define VC_GREEN 0x0000ff00
+#define VC_BLUE  0x000000ff
+#define VC_WHITE VC_RED|VC_GREEN|VC_BLUE
+#define VC_DARKRED 0x00800000
 
 #define PORTB 0
 #define PORTA 1
@@ -22,17 +22,18 @@
  *********************************************************************/
 unsigned char *vectrex_ram;		   /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
 unsigned char vectrex_via_out[2];
-UINT32 vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
+UINT32 vectrex_beam_color = VC_WHITE;	   /* the color of the vectrex beam */
 int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
 double imager_freq;
 mame_timer *imager_timer;
+int vectrex_lightpen_port=0;
 
 /*********************************************************************
   Local variables
  *********************************************************************/
 
 /* Colors for right and left eye */
-static UINT32 imager_colors[6] = {WHITE,WHITE,WHITE,WHITE,WHITE,WHITE};
+static UINT32 imager_colors[6] = {VC_WHITE,VC_WHITE,VC_WHITE,VC_WHITE,VC_WHITE,VC_WHITE};
 
 /* Starting points of the three colors */
 /* Values taken from J. Nelson's drawings*/
@@ -137,69 +138,69 @@ void vectrex_configuration(void)
 		switch ((cport>>2) & 0x07)
 		{
 		case 0x00:
-			imager_colors[0]=imager_colors[1]=imager_colors[2]=BLACK;
+			imager_colors[0]=imager_colors[1]=imager_colors[2]=VC_BLACK;
 			break;
 		case 0x01:
-			imager_colors[0]=imager_colors[1]=imager_colors[2]=DARKRED;
+			imager_colors[0]=imager_colors[1]=imager_colors[2]=VC_DARKRED;
 			break;
 		case 0x02:
-			imager_colors[0]=imager_colors[1]=imager_colors[2]=GREEN;
+			imager_colors[0]=imager_colors[1]=imager_colors[2]=VC_GREEN;
 			break;
 		case 0x03:
-			imager_colors[0]=imager_colors[1]=imager_colors[2]=BLUE;
+			imager_colors[0]=imager_colors[1]=imager_colors[2]=VC_BLUE;
 			break;
 		case 0x04:
 			/* mine3 has a different color sequence */
 			if (vectrex_imager_angles == minestorm_3d_angles)
 			{
-				imager_colors[0]=GREEN;
-				imager_colors[1]=RED;
+				imager_colors[0]=VC_GREEN;
+				imager_colors[1]=VC_RED;
 			}
 			else
 			{
-				imager_colors[0]=RED;
-				imager_colors[1]=GREEN;
+				imager_colors[0]=VC_RED;
+				imager_colors[1]=VC_GREEN;
 			}
-			imager_colors[2]=BLUE;
+			imager_colors[2]=VC_BLUE;
 			break;
 		}
 
 		switch ((cport>>5) & 0x07)
 		{
 		case 0x00:
-			imager_colors[3]=imager_colors[4]=imager_colors[5]=BLACK;
+			imager_colors[3]=imager_colors[4]=imager_colors[5]=VC_BLACK;
 			break;
 		case 0x01:
-			imager_colors[3]=imager_colors[4]=imager_colors[5]=DARKRED;
+			imager_colors[3]=imager_colors[4]=imager_colors[5]=VC_DARKRED;
 			break;
 		case 0x02:
-			imager_colors[3]=imager_colors[4]=imager_colors[5]=GREEN;
+			imager_colors[3]=imager_colors[4]=imager_colors[5]=VC_GREEN;
 			break;
 		case 0x03:
-			imager_colors[3]=imager_colors[4]=imager_colors[5]=BLUE;
+			imager_colors[3]=imager_colors[4]=imager_colors[5]=VC_BLUE;
 			break;
 		case 0x04:
 			if (vectrex_imager_angles == minestorm_3d_angles)
 			{
-				imager_colors[3]=GREEN;
-				imager_colors[4]=RED;
+				imager_colors[3]=VC_GREEN;
+				imager_colors[4]=VC_RED;
 			}
 			else
 			{
-				imager_colors[3]=RED;
-				imager_colors[4]=GREEN;
+				imager_colors[3]=VC_RED;
+				imager_colors[4]=VC_GREEN;
 			}
-			imager_colors[5]=BLUE;
+			imager_colors[5]=VC_BLUE;
 			break;
 		}
 	}
 	else
 	{
 		vector_add_point_function = vectrex_add_point;
-		vectrex_beam_color = WHITE;
-		imager_colors[0]=imager_colors[1]=imager_colors[2]=imager_colors[3]=imager_colors[4]=imager_colors[5]=WHITE;
+		vectrex_beam_color = VC_WHITE;
+		imager_colors[0]=imager_colors[1]=imager_colors[2]=imager_colors[3]=imager_colors[4]=imager_colors[5]=VC_WHITE;
 	}
-
+	vectrex_lightpen_port = (input_port_6_r (0) & 0x03);
 }
 
 /*********************************************************************
@@ -213,12 +214,9 @@ void v_via_irq (int level)
  READ8_HANDLER( v_via_pb_r )
 {
 	int pot;
-	if (vectrex_via_out[PORTB] & 1)
-		pot = readinputport(((vectrex_via_out[PORTB] & 0x6)>>1) + 1);
-	else
-		pot = 0;
+	pot = readinputport(((vectrex_via_out[PORTB] & 0x6)>>1) + 1) - 0x80;
 
-	if (pot-128>(signed char)vectrex_via_out[PORTA])
+	if (pot > (signed char)vectrex_via_out[PORTA])
 		vectrex_via_out[PORTB] |= 0x20;
 	else
 		vectrex_via_out[PORTB] &= ~0x20;
