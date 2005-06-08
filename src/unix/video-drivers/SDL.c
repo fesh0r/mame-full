@@ -132,13 +132,13 @@ int sysdep_display_driver_open(int reopen)
     /* We can't ask SDL which pixel formats are available, so we
        try all well known formats + the format preferred by the SDL
        videodriver, also trying the preferred format will ensure that
-       we try atleast one available format, so that we will always find
+       we try at least one available format, so that we will always find
        some modes.
        
        The preferred format is tried last, so that if
        a just as good well known format is found this will be used instead of
-       the preffered format. This is done because the effectcode only supports
-       well know formats, so if we can choise we want a well known format. */
+       the preferred format. This is done because the effect code only supports
+       well know formats, so if we can choose we want a well known format. */
     switch (i)
     {
       case 0:
@@ -164,7 +164,7 @@ int sysdep_display_driver_open(int reopen)
         pixel_format.BitsPerPixel = 16;
         pixel_format.BytesPerPixel = 2;
         pixel_format.Rmask  = 0x01F << 11;
-        pixel_format.Gmask  = 0x02F << 5;
+        pixel_format.Gmask  = 0x03F << 5;
         pixel_format.Bmask  = 0x01F << 0;
         pixel_format.Rshift = 11;
         pixel_format.Gshift = 5;
@@ -328,9 +328,9 @@ int sysdep_display_driver_open(int reopen)
   /* clear the unused area of the screen */
   for (i=0; i<2; i++)
   {
-    unsigned char *video_mem = video_surface->pixels;
-
+    unsigned char *video_mem;
     SDL_LockSurface(video_surface);
+    video_mem = video_surface->pixels;
     
     /* top */
     memset(video_mem, 0, starty*video_surface->pitch);
@@ -414,9 +414,7 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
-  unsigned char *video_mem = video_surface->pixels;
-  video_mem += startx * video_surface->format->BytesPerPixel;
-  video_mem += starty * video_surface->pitch;
+  unsigned char *video_mem;
   
   /* do we need todo a full update? */
   if (first_update)
@@ -426,6 +424,10 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
   }  
 
   SDL_LockSurface(video_surface);
+
+  video_mem = video_surface->pixels;
+  video_mem += startx * video_surface->format->BytesPerPixel;
+  video_mem += starty * video_surface->pitch;
     
   blit_func(bitmap, vis_in_dest_out, dirty_area, palette, video_mem,
     video_surface->pitch/video_surface->format->BytesPerPixel);
@@ -479,11 +481,11 @@ void sysdep_display_driver_clear_buffer(void)
 
   for (i=0; i<2; i++)
   {
+    SDL_LockSurface(video_surface);
+
     video_mem = video_surface->pixels;
     video_mem += startx * video_surface->format->BytesPerPixel;
     video_mem += starty * video_surface->pitch;
-
-    SDL_LockSurface(video_surface);
 
     for (line=0; line<scaled_height; line++)
       memset(video_mem + line*video_surface->pitch, 0,
