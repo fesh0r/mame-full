@@ -26,6 +26,7 @@ struct pc_vga_interface
 
 void pc_vga_init(const struct pc_vga_interface *intf);
 void pc_vga_reset(void);
+void *pc_vga_memory(void);
 
 READ8_HANDLER( ega_port_03c0_r );
 READ8_HANDLER( ega_port_03d0_r );

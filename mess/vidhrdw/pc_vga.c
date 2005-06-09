@@ -1251,3 +1251,10 @@ static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height, stru
 	}
 	return proc;
 }
+
+
+
+void *pc_vga_memory(void)
+{
+	return vga.memory;
+}
