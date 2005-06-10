@@ -8,6 +8,17 @@
 	This code takes care of installing the various VGA memory and port
 	handlers
 
+	The VGA standard is compatible with MDA, CGA, Hercules, EGA
+	(mda, cga, hercules not real register compatible)
+	several vga cards drive also mda, cga, ega monitors
+	some vga cards have register compatible mda, cga, hercules modes
+
+	ega/vga
+	64k (early ega 16k) words of 32 bit memory
+
+
+	ROM declarations:
+
 	(oti 037 chip)
     ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
 	(tseng labs famous et4000 isa vga card (oem))
@@ -31,22 +42,8 @@
 
 ***************************************************************************/
 
-#ifdef MAME_DEBUG
-#define LOG(x)	logerror x
-#else
-#define LOG(x)
-#endif
-
-/* vga
- standard compatible to mda, cga, hercules?, ega
- (mda, cga, hercules not real register compatible)
- several vga cards drive also mda, cga, ega monitors
- some vga cards have register compatible mda, cga, hercules modes
-
- ega/vga
- 64k (early ega 16k) words of 32 bit memory
- */
-
+#define LOG_ACCESSES	0
+#define LOG_REGISTERS	1
 
 static PALETTE_INIT( ega );
 static PALETTE_INIT( vga );
@@ -192,7 +189,6 @@ static PALETTE_INIT( vga )
 	memcpy(colortable, vga_colortable,0x200);
 }
 
-static UINT8 rotate_right[8][256];
 static UINT8 color_bitplane_to_packed[4/*plane*/][8/*pixel*/][256];
 
 static struct
@@ -285,6 +281,13 @@ static struct
 
 #define FONT1 ( ((vga.sequencer.data[3]&3)|((vga.sequencer.data[3]&0x10)<<2))*0x2000)
 #define FONT2 ( ((vga.sequencer.data[3]&c)>>2)|((vga.sequencer.data[3]&0x20)<<3))*0x2000)
+
+
+INLINE UINT8 rotate_right(UINT8 val, UINT8 rot)
+{
+	return (val >> rot) | (val << (8 - rot));
+}
+
 
 
 static int ega_get_clock(void)
@@ -426,16 +429,16 @@ static  READ8_HANDLER(vga_ega_r)
 
 INLINE UINT8 vga_latch_helper(UINT8 cpu, UINT8 latch, UINT8 mask)
 {
-	switch (vga.gc.data[3]&0x18) {
-	case 0:
-		return rotate_right[vga.gc.data[3]&7][(cpu&mask)|(latch&~mask)];
-	case 8:
-		return rotate_right[vga.gc.data[3]&7][((cpu&latch)&mask)|(latch&~mask)];
-	case 0x10:
-		return rotate_right[vga.gc.data[3]&7][((cpu|latch)&mask)|(latch&~mask)];
-	case 0x18:
-		return rotate_right[vga.gc.data[3]&7][((cpu^latch)&mask)|(latch&~mask)];
-;
+	switch (vga.gc.data[3] & 0x18)
+	{
+		case 0x00:
+			return rotate_right((cpu&mask)|(latch&~mask), vga.gc.data[3] & 0x07);
+		case 0x08:
+			return rotate_right(((cpu&latch)&mask)|(latch&~mask), vga.gc.data[3] & 0x07);
+		case 0x10:
+			return rotate_right(((cpu|latch)&mask)|(latch&~mask), vga.gc.data[3] & 0x07);
+		case 0x18:
+			return rotate_right(((cpu^latch)&mask)|(latch&~mask), vga.gc.data[3] & 0x07);
 	}
 	return 0; /* must not be reached, suppress compiler warning */
 }
@@ -621,7 +624,7 @@ static WRITE8_HANDLER(vga_crtc_w)
 	switch (offset)
 	{
 		case 0xa:
-			vga.feature_control=data;
+			vga.feature_control = data;
 			break;
 
 		case 4:
@@ -629,6 +632,14 @@ static WRITE8_HANDLER(vga_crtc_w)
 			break;
 
 		case 5:
+			if (LOG_REGISTERS)
+			{
+				logerror("vga_crtc_w(): CRTC[0x%02X%s] = 0x%02X\n",
+					vga.crtc.index,
+					(vga.crtc.index < sizeof(vga.crtc.data)) ? "" : "?",
+					data);
+			}
+
 			if (vga.crtc.index < sizeof(vga.crtc.data))
 				vga.crtc.data[vga.crtc.index] = data;
 			break;
@@ -771,23 +782,25 @@ READ8_HANDLER( vga_port_03c0_r )
 
 READ8_HANDLER(vga_port_03d0_r)
 {
-	int data=0xff;
-	if (CRTC_PORT_ADDR==0x3d0)
-		data=vga_crtc_r(offset);
+	data8_t data = 0xff;
+	if (CRTC_PORT_ADDR == 0x3d0)
+		data = vga_crtc_r(offset);
 	return data;
 }
 
 WRITE8_HANDLER( vga_port_03b0_w )
 {
-	LOG(("vga_port_03b0_w(): port=0x%04x data=0x%02x\n", offset + 0x3b0, data));
+	if (LOG_ACCESSES)
+		logerror("vga_port_03b0_w(): port=0x%04x data=0x%02x\n", offset + 0x3b0, data);
 
-	if (CRTC_PORT_ADDR!=0x3b0) return;
-	vga_crtc_w(offset, data);
+	if (CRTC_PORT_ADDR == 0x3b0)
+		vga_crtc_w(offset, data);
 }
 
 WRITE8_HANDLER(vga_port_03c0_w)
 {
-	LOG(("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data));
+	if (LOG_ACCESSES)
+		logerror("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data);
 
 	switch (offset) {
 	case 0:
@@ -812,6 +825,13 @@ WRITE8_HANDLER(vga_port_03c0_w)
 		vga.sequencer.index = data;
 		break;
 	case 5:
+		if (LOG_REGISTERS)
+		{
+			logerror("vga_port_03c0_w(): SEQ[0x%02X%s] = 0x%02X\n",
+				vga.sequencer.index,
+				(vga.sequencer.index < sizeof(vga.sequencer.data)) ? "" : "?",
+				data);
+		}
 		if (vga.sequencer.index < sizeof(vga.sequencer.data))
 		{
 			vga.sequencer.data[vga.sequencer.index] = data;
@@ -870,7 +890,14 @@ WRITE8_HANDLER(vga_port_03c0_w)
 		vga.gc.index=data;
 		break;
 	case 0xf:
-		if (vga.gc.index<sizeof(vga.gc.data))
+		if (LOG_REGISTERS)
+		{
+			logerror("vga_port_03c0_w(): GC[0x%02X%s] = 0x%02X\n",
+				vga.gc.index,
+				(vga.gc.index < sizeof(vga.gc.data)) ? "" : "?",
+				data);
+		}
+		if (vga.gc.index < sizeof(vga.gc.data))
 		{
 			vga.gc.data[vga.gc.index]=data;
 			vga_cpu_interface();
@@ -883,9 +910,10 @@ WRITE8_HANDLER(vga_port_03c0_w)
 
 WRITE8_HANDLER(vga_port_03d0_w)
 {
-	LOG(("vga_port_03d0_w(): port=0x%04x data=0x%02x\n", offset + 0x3d0, data));
+	if (LOG_ACCESSES)
+		logerror("vga_port_03d0_w(): port=0x%04x data=0x%02x\n", offset + 0x3d0, data);
 
-	if (CRTC_PORT_ADDR==0x3d0)
+	if (CRTC_PORT_ADDR == 0x3d0)
 		vga_crtc_w(offset,data);
 }
 
@@ -946,15 +974,6 @@ void pc_vga_init(const struct pc_vga_interface *intf)
 	int i, j, k, mask, buswidth;
 
 	memset(&vga, 0, sizeof(vga));
-
-	for (j=0; j<8; j++)
-	{
-		for (i=0; i<256; i++)
-		{
-			rotate_right[j][i]=i>>j;
-			rotate_right[j][i]|=i<<(8-j);
-		}
-	}
 
 	for (k=0;k<4;k++)
 	{

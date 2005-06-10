@@ -42,7 +42,10 @@ OSOBJS += \
 	$(OBJ)/ui/tabview.o \
 	$(OBJ)/ui/help.o \
 	$(OBJ)/ui/history.o \
-	$(OBJ)/ui/dialogs.o \
+	$(OBJ)/ui/dialogs.o
+	
+ifdef MESS
+OSOBJS += \
 	$(OBJ)/mess/ui/mess32ui.o \
 	$(OBJ)/mess/ui/optionsms.o \
  	$(OBJ)/mess/ui/layoutms.o \
@@ -51,6 +54,7 @@ OSOBJS += \
 		$(OBJ)/mess/ui/propertiesms.o \
 		$(OBJ)/mess/ui/softwarepicker.o \
 		$(OBJ)/mess/ui/devview.o
+endif
 
 # add resource file
 GUIRESFILE = $(OBJ)/mess/ui/mess32.res
