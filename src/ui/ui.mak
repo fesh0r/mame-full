@@ -63,7 +63,11 @@ OSOBJS += \
 endif
 
 # add resource file
+ifdef MESS
 GUIRESFILE = $(OBJ)/mess/ui/mess32.res
+else
+OSOBJS += $(OBJ)/ui/mame32.res
+endif
 
 #####################################################################
 # compiler
@@ -112,6 +116,18 @@ $(OBJ)/mess/windows/%.res: mess/windows/%.rc
 $(OBJ)/mess/%.res: mess/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
+endif
+
+ifndef MESS
+UI_RC = @windres --use-temp-file
+
+UI_RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
+
+UI_RCFLAGS = -O coff --include-dir src/ui
+
+$(OBJ)/ui/%.res: src/ui/%.rc
+	@echo Compiling mame32 resources $<...
+	$(UI_RC) $(UI_RCDEFS) $(UI_RCFLAGS) -o $@ -i $<
 endif
 
 #####################################################################
