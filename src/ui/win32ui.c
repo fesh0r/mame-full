@@ -46,6 +46,7 @@
 #include <sys/stat.h>
 #include <wingdi.h>
 #include <time.h>
+#include <tchar.h>
 
 #include <driver.h>
 #include <osdepend.h>

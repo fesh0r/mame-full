@@ -24,19 +24,19 @@ $(OBJ)/mess/ui/mess32.res:	src/ui/mame32.rc mess/ui/mess32.rc src/ui/resource.h 
 
 # only OS specific output files and rules
 OSOBJS += \
-        $(OBJ)/ui/m32util.o \
-        $(OBJ)/ui/directinput.o \
-        $(OBJ)/ui/dijoystick.o \
-        $(OBJ)/ui/directdraw.o \
-        $(OBJ)/ui/directories.o \
-        $(OBJ)/ui/audit32.o \
-        $(OBJ)/ui/columnedit.o \
-        $(OBJ)/ui/screenshot.o \
-        $(OBJ)/ui/treeview.o \
-        $(OBJ)/ui/splitters.o \
-        $(OBJ)/ui/bitmask.o \
-        $(OBJ)/ui/datamap.o \
-        $(OBJ)/ui/dxdecode.o \
+	$(OBJ)/ui/m32util.o \
+	$(OBJ)/ui/directinput.o \
+	$(OBJ)/ui/dijoystick.o \
+	$(OBJ)/ui/directdraw.o \
+	$(OBJ)/ui/directories.o \
+	$(OBJ)/ui/audit32.o \
+	$(OBJ)/ui/columnedit.o \
+	$(OBJ)/ui/screenshot.o \
+	$(OBJ)/ui/treeview.o \
+	$(OBJ)/ui/splitters.o \
+	$(OBJ)/ui/bitmask.o \
+	$(OBJ)/ui/datamap.o \
+	$(OBJ)/ui/dxdecode.o \
 	$(OBJ)/ui/picker.o \
 	$(OBJ)/ui/properties.o \
 	$(OBJ)/ui/tabview.o \
@@ -49,11 +49,17 @@ OSOBJS += \
 	$(OBJ)/mess/ui/mess32ui.o \
 	$(OBJ)/mess/ui/optionsms.o \
  	$(OBJ)/mess/ui/layoutms.o \
-		$(OBJ)/mess/ui/ms32main.o \
- 		$(OBJ)/mess/ui/ms32util.o \
-		$(OBJ)/mess/ui/propertiesms.o \
-		$(OBJ)/mess/ui/softwarepicker.o \
-		$(OBJ)/mess/ui/devview.o
+	$(OBJ)/mess/ui/ms32main.o \
+	$(OBJ)/mess/ui/ms32util.o \
+	$(OBJ)/mess/ui/propertiesms.o \
+	$(OBJ)/mess/ui/softwarepicker.o \
+	$(OBJ)/mess/ui/devview.o
+else
+OSOBJS += \
+	$(OBJ)/ui/win32ui.o \
+	$(OBJ)/ui/options.o \
+ 	$(OBJ)/ui/layout.o \
+	$(OBJ)/ui/m32main.o
 endif
 
 # add resource file
