@@ -9,6 +9,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [C65] Fixed regression introduced in 0.96.  [Nate Woods]
+
 - [DRAGON] Fixed printer output.  [Phill Harvey-Smith]
 
 - [NES] Fixed NES timing.  (bug #724) [Andrew Church]
