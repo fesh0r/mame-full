@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- BeBox [Nate Woods]
 - Dragon Beta [Phill Harvey-Smith]
 
 

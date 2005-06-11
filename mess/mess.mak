@@ -130,7 +130,7 @@ CPUS+=I386@
 #CPUS+=M37710@
 #CPUS+=PPC403@
 #CPUS+=PPC602@
-#CPUS+=PPC603@
+CPUS+=PPC603@
 #CPUS+=SE3208@
 #CPUS+=MC68HC11@
 CPUS+=Z80GB@
@@ -310,6 +310,7 @@ DRVLIBS = \
 	$(OBJ)/sgi.a		\
 	$(OBJ)/primo.a		\
 	$(OBJ)/dgn_beta.a	\
+	$(OBJ)/be.a			\
 
 
 $(OBJ)/neocd.a:						\
@@ -901,6 +902,13 @@ $(OBJ)/primo.a:				\
 	$(OBJ)/mess/machine/primo.o	\
 	$(OBJ)/mess/vidhrdw/primo.o	\
 	$(OBJ)/mess/formats/primoptp.o
+
+$(OBJ)/be.a:						\
+	$(OBJ)/mess/systems/bebox.o		\
+	$(OBJ)/mess/machine/bebox.o		\
+	$(OBJ)/mess/machine/pci.o		\
+	$(OBJ)/mess/machine/mpc105.o	\
+	$(OBJ)/mess/vidhrdw/cirrus.o
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\

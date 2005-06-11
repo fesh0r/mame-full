@@ -10,6 +10,7 @@
 #define PC_VGA_H
 
 #include "osdepend.h"
+#include "pc_video.h"
 
 MACHINE_DRIVER_EXTERN( pcvideo_vga );
 MACHINE_DRIVER_EXTERN( pcvideo_pc1640 );
@@ -23,8 +24,16 @@ struct pc_vga_interface
 	offs_t port_offset;
 };
 
+struct pc_svga_interface
+{
+	size_t vram_size;
+	int seq_regcount;
+	int gc_regcount;
+	int crtc_regcount;
+	pc_video_update_proc (*choosevideomode)(const UINT8 *sequencer, const UINT8 *crtc, const UINT8 *gc, int *width, int *height);
+};
 
-void pc_vga_init(const struct pc_vga_interface *intf);
+void pc_vga_init(const struct pc_vga_interface *vga_intf, const struct pc_svga_interface *svga_intf);
 void pc_vga_reset(void);
 void *pc_vga_memory(void);
 

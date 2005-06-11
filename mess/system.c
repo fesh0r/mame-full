@@ -812,6 +812,9 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER( abc800c )
 	DRIVER( abc806 )
 
+	/* Be Incorporated */
+	DRIVER( bebox )
+
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
