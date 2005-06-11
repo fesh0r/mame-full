@@ -13,7 +13,7 @@ System Driver Changes:
 
 - [NES] Fixed NES timing.  (bug #724) [Andrew Church]
 
-
+- [VECTREX] Added lightpen support. (bug #115) [Mathis Rosenhauer]
 
 User Interface Changes:
 -----------------------
