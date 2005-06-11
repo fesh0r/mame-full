@@ -8,6 +8,7 @@
 
 #include <time.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include "testmess.h"
 #include "inputx.h"
@@ -122,6 +123,7 @@ static int format_index;
 static UINT64 runtime_hash;
 static void *wavptr;
 static UINT32 samples_this_frame;
+static jmp_buf die_jmpbuf;
 
 /* command list */
 static mess_pile command_pile;
@@ -152,6 +154,30 @@ static void dump_screenshot(void)
 
 	if (screenshot_num >= 0)
 		screenshot_num++;
+}
+
+
+
+void CLIB_DECL osd_die(const char *text,...)
+{
+	va_list va;
+	char buf[256];
+	char *s;
+
+	/* format the die message */
+	va_start(va, text);
+	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), text, va);
+	va_end(va);
+
+	/* strip out \n */
+	s = strchr(buf, '\n');
+	if (s)
+		*s = '\0';
+
+	/* report the failure */
+	report_message(MSG_FAILURE, "Die: %s", buf);
+	state = STATE_ABORTED;
+	longjmp(die_jmpbuf, -1);
 }
 
 
@@ -208,7 +234,8 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();
-	run_game(driver_num);
+	if (setjmp(die_jmpbuf) == 0)
+		run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
 
 	/* what happened? */

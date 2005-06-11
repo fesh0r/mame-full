@@ -127,11 +127,6 @@ void osd_pause(int paused)
 {
 }
 
-void CLIB_DECL osd_die(const char *text,...)
-{
-	exit(-1);
-}
-
 void CLIB_DECL logerror(const char *text,...)
 {
 }
