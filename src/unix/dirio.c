@@ -150,17 +150,17 @@ int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 #ifdef BSD43
 		if(S_IFDIR & stat_buf.st_mode)
 #else
-			if(S_ISDIR(stat_buf.st_mode))
+		if(S_ISDIR(stat_buf.st_mode))
 #endif
-			{
-				*is_dir = 1;
-			}
+		{
+			*is_dir = 1;
+		}
 #ifndef __QNXNTO__
-			else if (!fnmatch(my_dir->filemask, d->d_name))
+		else if (!fnmatch(my_dir->filemask, d->d_name))
 #else
-			else if (!fnmatch(my_dir->filemask, d->d_name,0))   
+		else if (!fnmatch(my_dir->filemask, d->d_name,0))   
 #endif
-				continue;
+			continue;
 
 		strncpy(name, d->d_name, namelength-1);
 		name[namelength-1] = 0;

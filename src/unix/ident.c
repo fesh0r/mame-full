@@ -259,7 +259,11 @@ void romident(const char* name,int enter_dirs)
 		return;
 	}
 
+#ifdef BSD43
+	if (S_IFDIR & s.st_mode)
+#else
 	if (S_ISDIR(s.st_mode)) {
+#endif
 		if (enter_dirs)
 			identify_dir(name);
 	} else {
