@@ -284,8 +284,7 @@ static char *copy_and_expand_variables(const char *path, int len)
 	return result;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory in variable expansion!\n");
-	exit(1);
+	osd_die("Out of memory in variable expansion!\n");
 }
 
 
@@ -354,8 +353,7 @@ static void expand_pathlist(struct pathdata *list)
 	return;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory!\n");
-	exit(1);
+	osd_die("Out of memory!\n");
 }
 
 
@@ -500,7 +498,11 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 	/* get the file attributes */
 	if (stat(fullpath, &buf))
 		return PATH_NOT_FOUND;
+#ifdef BSD43
+	else if (S_IFDIR & buf.st_mode)
+#else
 	else if (S_ISDIR(buf.st_mode))
+#endif
 		return PATH_IS_DIRECTORY;
 	else
 		return PATH_IS_FILE;
