@@ -71,88 +71,104 @@ void blit_6tap_render_line_yuy2(unsigned short *dst0, unsigned short *dst1,
   unsigned char *src5 = (unsigned char *) _6tap2x_buf5;
   unsigned int *src32 = (unsigned int *) _6tap2x_buf2;
   unsigned int *mydst = (unsigned int *)dst0;
-  unsigned int i,p1,p2,uv;
-  int r,g,b;
+  unsigned int i,y1,y2,uv;
+  int p1,p2,p3;
 
   /* first we need to just copy the 3rd line into the first destination line */
   for (i = 0; i < count; i++)
   {
-    p1 = effect_rgb2yuv[_32TO16_RGB_565(*src32)]; src32++;
-    p2 = effect_rgb2yuv[_32TO16_RGB_565(*src32)]; src32++;
+    y1 = effect_rgb2yuv[_32TO16_RGB_565(*src32)]; src32++;
+    y2 = effect_rgb2yuv[_32TO16_RGB_565(*src32)]; src32++;
 
-    uv = (p1&UVMASK)>>1;
-    uv += (p2&UVMASK)>>1;
+    uv = (y1&UVMASK)>>1;
+    uv += (y2&UVMASK)>>1;
     uv &= UVMASK;
-    p1 &= Y1MASK;
-    p2 &= Y2MASK;
-    *mydst++ = p1|p2|uv;
+    y1 &= Y1MASK;
+    y2 &= Y2MASK;
+    *mydst++ = y1|y2|uv;
   }
 
   /* then we need to vertically filter for the second line */
   mydst = (unsigned int *)dst1;
   for (i = 0; i < count; i++)
   {
-    /* first, do the blue part */
-    b = (((int) *src2++ + (int) *src3++) << 2) -
-            ((int) *src1++ + (int) *src4++);
-    b += b << 2;
-    b += ((int) *src0++ + (int) *src5++);
-    b = (b + 0x10) >> 5;
-    b = _6TAP_CLIP(b);
-    b = b - (b >> 2);
-    /* next, do the green part */
-    g = (((int) *src2++ + (int) *src3++) << 2) -
-             ((int) *src1++ + (int) *src4++);
-    g += g << 2;
-    g += ((int) *src0++ + (int) *src5++);
-    g = (g + 0x10) >> 5;
-    g = _6TAP_CLIP(g);
-    g = g - (g >> 2);
-    /* last, do the red part */
-    r = (((int) *src2++ + (int) *src3++) << 2) -
-           ((int) *src1++ + (int) *src4++);
-    r += r << 2;
-    r += ((int) *src0++ + (int) *src5++);
-    r = (r + 0x10) >> 5;
-    r = _6TAP_CLIP(r);
-    r = r - (r >> 2);
+#ifndef LSB_FIRST
     src0++; src1++; src2++; src3++; src4++; src5++;
-    p1 = effect_rgb2yuv[((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3)];
+#endif
+    /* first, do p1 */
+    p1 = (((int) *src2++ + (int) *src3++) << 2) -
+            ((int) *src1++ + (int) *src4++);
+    p1 += p1 << 2;
+    p1 += ((int) *src0++ + (int) *src5++);
+    p1 = (p1 + 0x10) >> 5;
+    p1 = _6TAP_CLIP(p1);
+    p1 = p1 - (p1 >> 2);
+    /* next, do p2 */
+    p2 = (((int) *src2++ + (int) *src3++) << 2) -
+             ((int) *src1++ + (int) *src4++);
+    p2 += p2 << 2;
+    p2 += ((int) *src0++ + (int) *src5++);
+    p2 = (p2 + 0x10) >> 5;
+    p2 = _6TAP_CLIP(p2);
+    p2 = p2 - (p2 >> 2);
+    /* last, do p3 */
+    p3 = (((int) *src2++ + (int) *src3++) << 2) -
+           ((int) *src1++ + (int) *src4++);
+    p3 += p3 << 2;
+    p3 += ((int) *src0++ + (int) *src5++);
+    p3 = (p3 + 0x10) >> 5;
+    p3 = _6TAP_CLIP(p3);
+    p3 = p3 - (p3 >> 2);
+    /* get the yuv value */
+#ifndef LSB_FIRST
+    y1 = effect_rgb2yuv[((p1&0xF8)<<8)|((p2&0xFC)<<3)|((p3&0xF8)>>3)];
+#else
+    y1 = effect_rgb2yuv[((p3&0xF8)<<8)|((p2&0xFC)<<3)|((p1&0xF8)>>3)];
+    src0++; src1++; src2++; src3++; src4++; src5++;
+#endif
 
-    /* first, do the blue part */
-    b = (((int) *src2++ + (int) *src3++) << 2) -
-            ((int) *src1++ + (int) *src4++);
-    b += b << 2;
-    b += ((int) *src0++ + (int) *src5++);
-    b = (b + 0x10) >> 5;
-    b = _6TAP_CLIP(b);
-    b = b - (b >> 2);
-    /* next, do the green part */
-    g = (((int) *src2++ + (int) *src3++) << 2) -
-             ((int) *src1++ + (int) *src4++);
-    g += g << 2;
-    g += ((int) *src0++ + (int) *src5++);
-    g = (g + 0x10) >> 5;
-    g = _6TAP_CLIP(g);
-    g = g - (g >> 2);
-    /* last, do the red part */
-    r = (((int) *src2++ + (int) *src3++) << 2) -
-           ((int) *src1++ + (int) *src4++);
-    r += r << 2;
-    r += ((int) *src0++ + (int) *src5++);
-    r = (r + 0x10) >> 5;
-    r = _6TAP_CLIP(r);
-    r = r - (r >> 2);
+#ifndef LSB_FIRST
     src0++; src1++; src2++; src3++; src4++; src5++;
-    p2 = effect_rgb2yuv[((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3)];
+#endif
+    /* first, do p1 */
+    p1 = (((int) *src2++ + (int) *src3++) << 2) -
+            ((int) *src1++ + (int) *src4++);
+    p1 += p1 << 2;
+    p1 += ((int) *src0++ + (int) *src5++);
+    p1 = (p1 + 0x10) >> 5;
+    p1 = _6TAP_CLIP(p1);
+    p1 = p1 - (p1 >> 2);
+    /* next, do p2 */
+    p2 = (((int) *src2++ + (int) *src3++) << 2) -
+             ((int) *src1++ + (int) *src4++);
+    p2 += p2 << 2;
+    p2 += ((int) *src0++ + (int) *src5++);
+    p2 = (p2 + 0x10) >> 5;
+    p2 = _6TAP_CLIP(p2);
+    p2 = p2 - (p2 >> 2);
+    /* last, do p3 */
+    p3 = (((int) *src2++ + (int) *src3++) << 2) -
+           ((int) *src1++ + (int) *src4++);
+    p3 += p3 << 2;
+    p3 += ((int) *src0++ + (int) *src5++);
+    p3 = (p3 + 0x10) >> 5;
+    p3 = _6TAP_CLIP(p3);
+    p3 = p3 - (p3 >> 2);
+    /* get the yuv value */
+#ifndef LSB_FIRST
+    y2 = effect_rgb2yuv[((p1&0xF8)<<8)|((p2&0xFC)<<3)|((p3&0xF8)>>3)];
+#else
+    y2 = effect_rgb2yuv[((p3&0xF8)<<8)|((p2&0xFC)<<3)|((p1&0xF8)>>3)];
+    src0++; src1++; src2++; src3++; src4++; src5++;
+#endif
 
     /* write the pixel */
-    uv = (p1&UVMASK)>>1;
-    uv += (p2&UVMASK)>>1;
+    uv = (y1&UVMASK)>>1;
+    uv += (y2&UVMASK)>>1;
     uv &= UVMASK;
-    p1 &= Y1MASK;
-    p2 &= Y2MASK;
-    *mydst++ = p1|p2|uv;
+    y1 &= Y1MASK;
+    y2 &= Y2MASK;
+    *mydst++ = y1|y2|uv;
   }
 }
 

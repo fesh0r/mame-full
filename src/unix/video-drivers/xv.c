@@ -655,10 +655,6 @@ void xv_clear_display_buffer(void)
   }
 }
 
-#define RMASK 0xff0000
-#define GMASK 0x00ff00
-#define BMASK 0x0000ff
-
 /* Hacked into place, until I integrate YV12 support into the blit core... */
 static void xv_update_16_to_YV12(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
@@ -702,24 +698,24 @@ static void xv_update_16_to_YV12(struct mame_bitmap *bitmap,
       for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x+=2)
       {
             v1 = palette->lookup[*src++];
-            y1 = (v1)  & 0xff;
-            u1 = (v1>>8) & 0xff;
-            v1 = (v1>>24)     & 0xff;
+            y1 = (v1>>Y1SHIFT) & 0xff;
+            u1 = (v1>>USHIFT)  & 0xff;
+            v1 = (v1>>VSHIFT)  & 0xff;
 
             v2 = palette->lookup[*src++];
-            y2 = (v2)  & 0xff;
-            u2 = (v2>>8) & 0xff;
-            v2 = (v2>>24)     & 0xff;
+            y2 = (v2>>Y1SHIFT) & 0xff;
+            u2 = (v2>>USHIFT)  & 0xff;
+            v2 = (v2>>VSHIFT)  & 0xff;
 
             v3 = palette->lookup[*src2++];
-            y3 = (v3)  & 0xff;
-            u3 = (v3>>8) & 0xff;
-            v3 = (v3>>24)     & 0xff;
+            y3 = (v3>>Y1SHIFT) & 0xff;
+            u3 = (v3>>USHIFT)  & 0xff;
+            v3 = (v3>>VSHIFT)  & 0xff;
 
             v4 = palette->lookup[*src2++];
-            y4 = (v4)  & 0xff;
-            u4 = (v4>>8) & 0xff;
-            v4 = (v4>>24)     & 0xff;
+            y4 = (v4>>Y1SHIFT) & 0xff;
+            u4 = (v4>>USHIFT)  & 0xff;
+            v4 = (v4>>VSHIFT)  & 0xff;
 
          *dest_y = y1;
          *(dest_y++ + xvimage->width) = y3;
@@ -776,9 +772,9 @@ static void xv_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
       for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x++)
       {
             v1 = palette->lookup[*src++];
-            y1 = (v1)  & 0xff;
-            u1 = (v1>>8) & 0xff;
-            v1 = (v1>>24)     & 0xff;
+            y1 = (v1>>Y1SHIFT) & 0xff;
+            u1 = (v1>>USHIFT)  & 0xff;
+            v1 = (v1>>VSHIFT)  & 0xff;
 
          *(dest_y+xvimage->width)=y1;
          *dest_y++=y1;
@@ -859,10 +855,6 @@ static void xv_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
          *(dest_y++ + xvimage->width) = y3;
          *dest_y = y2;
          *(dest_y++ + xvimage->width) = y4;
-
-         r&=RMASK;  r>>=16;
-         g&=GMASK;  g>>=8;
-         b&=BMASK;  b>>=0;
          *dest_u++ = (u1+u2+u3+u4)/4;
          *dest_v++ = (v1+v2+v3+v4)/4;
       }

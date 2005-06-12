@@ -70,7 +70,11 @@ void _6TAP_ADDLINE(blit_6tap)(SRC_PIXEL *src, unsigned int count,
   u8dest = ((unsigned char *) _6tap2x_buf5) + 20;
   for (i = 2; i < count - 3; i++)
     {
-	/* first, do the blue part */
+#ifndef LSB_FIRST
+	/* clear the first byte */
+	*u8dest++ = 0;
+#endif
+	/* first, do the blue part (on LSB_FIRST, on MSB_FIRST the red) */
 	pixel = (((int)  u8dest[-4] + (int) u8dest[4]) << 2) -
 	         ((int) u8dest[-12] + (int) u8dest[12]);
 	pixel += pixel << 2;
@@ -84,15 +88,17 @@ void _6TAP_ADDLINE(blit_6tap)(SRC_PIXEL *src, unsigned int count,
 	pixel += ((int) u8dest[-20] + (int) u8dest[20]);
 	pixel = (pixel + 0x10) >> 5;
 	*u8dest++ = _6TAP_CLIP(pixel);
-	/* last, do the red part */
+	/* last, do the red part (on LSB_FIRST, on MSB_FIRST the blue) */
 	pixel = (((int)  u8dest[-4] + (int) u8dest[4]) << 2) -
 	         ((int) u8dest[-12] + (int) u8dest[12]);
 	pixel += pixel << 2;
 	pixel += ((int) u8dest[-20] + (int) u8dest[20]);
 	pixel = (pixel + 0x10) >> 5;
 	*u8dest++ = _6TAP_CLIP(pixel);
+#ifdef LSB_FIRST
 	/* clear the last byte */
 	*u8dest++ = 0;
+#endif
 	u8dest += 4;
     }
 }
@@ -108,7 +114,7 @@ void _6TAP_RENDER_LINE(blit_6tap)(RENDER_PIXEL *dst0, RENDER_PIXEL *dst1,
   unsigned char *src5 = (unsigned char *) _6tap2x_buf5;
   unsigned int *src32 = (unsigned int *) _6tap2x_buf2;
   unsigned int i;
-  int red, green, blue;
+  int p1, p2, p3;
 
   /* first we need to just copy the 3rd line into the first destination line */
   for (i = 0; i < (count << 1); i++)
@@ -120,33 +126,40 @@ void _6TAP_RENDER_LINE(blit_6tap)(RENDER_PIXEL *dst0, RENDER_PIXEL *dst1,
   /* then we need to vertically filter for the second line */
   for (i = 0; i < (count << 1); i++)
     {
-	/* first, do the blue part */
-	blue = (((int) *src2++ + (int) *src3++) << 2) -
-	        ((int) *src1++ + (int) *src4++);
-	blue += blue << 2;
-	blue += ((int) *src0++ + (int) *src5++);
-	blue = (blue + 0x10) >> 5;
-	blue = _6TAP_CLIP(blue);
-	blue = blue - (blue >> 2);
-	/* next, do the green part */
-	green = (((int) *src2++ + (int) *src3++) << 2) -
-	         ((int) *src1++ + (int) *src4++);
-	green += green << 2;
-	green += ((int) *src0++ + (int) *src5++);
-	green = (green + 0x10) >> 5;
-	green = _6TAP_CLIP(green);
-	green = green - (green >> 2);
-	/* last, do the red part */
-	red = (((int) *src2++ + (int) *src3++) << 2) -
-	       ((int) *src1++ + (int) *src4++);
-	red += red << 2;
-	red += ((int) *src0++ + (int) *src5++);
-	red = (red + 0x10) >> 5;
-	red = _6TAP_CLIP(red);
-	red = red - (red >> 2);
-	/* write the pixel */
-	*dst1++ = RGB_TO_RENDER_PIXEL(red, green, blue);
+#ifndef LSB_FIRST
 	src0++; src1++; src2++; src3++; src4++; src5++;
+#endif
+	/* first, do p1 */
+	p1 = (((int) *src2++ + (int) *src3++) << 2) -
+	        ((int) *src1++ + (int) *src4++);
+	p1 += p1 << 2;
+	p1 += ((int) *src0++ + (int) *src5++);
+	p1 = (p1 + 0x10) >> 5;
+	p1 = _6TAP_CLIP(p1);
+	p1 = p1 - (p1 >> 2);
+	/* next, do p2 */
+	p2 = (((int) *src2++ + (int) *src3++) << 2) -
+	         ((int) *src1++ + (int) *src4++);
+	p2 += p2 << 2;
+	p2 += ((int) *src0++ + (int) *src5++);
+	p2 = (p2 + 0x10) >> 5;
+	p2 = _6TAP_CLIP(p2);
+	p2 = p2 - (p2 >> 2);
+	/* last, do p3 */
+	p3 = (((int) *src2++ + (int) *src3++) << 2) -
+	       ((int) *src1++ + (int) *src4++);
+	p3 += p3 << 2;
+	p3 += ((int) *src0++ + (int) *src5++);
+	p3 = (p3 + 0x10) >> 5;
+	p3 = _6TAP_CLIP(p3);
+	p3 = p3 - (p3 >> 2);
+	/* write the pixel */
+#ifndef LSB_FIRST
+	*dst1++ = RGB_TO_RENDER_PIXEL(p1, p2, p3);
+#else
+	*dst1++ = RGB_TO_RENDER_PIXEL(p3, p2, p1);
+	src0++; src1++; src2++; src3++; src4++; src5++;
+#endif
     }
 }
 #endif
