@@ -9,7 +9,6 @@ timer                   0
 
 ### Video Related ###
 video-mode              0
-bpp                     0
 heightscale             1
 widthscale              1
 autodouble              1
