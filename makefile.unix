@@ -53,6 +53,9 @@ TARGET = mame
 # Uncomment to use DRC MIPS3 engine
 # X86_MIPS3_DRC = 1
 
+# Uncomment to use DRC PowerPC engine
+# X86_PPC_DRC = 1
+
 # Uncomment if you'd like to disable effects.  This can considerably speep 
 # up compilation of the blit files.
 # DISABLE_EFFECTS = 1
