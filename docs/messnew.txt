@@ -17,6 +17,8 @@ System Driver Changes:
 
 - [VECTREX] Added lightpen support. (bug #115) [Mathis Rosenhauer]
 
+- [VECTREX] Added analog joystick emulation [Mathis Rosenhauer]
+
 
 
 User Interface Changes:
