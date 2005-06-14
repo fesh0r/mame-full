@@ -142,5 +142,9 @@ LIBS += -lkernel32 \
 #        -lhtmlhelp
 endif
 
+ifndef MESS
+LDFLAGS += -mwindows
+endif
+
 #####################################################################
 
