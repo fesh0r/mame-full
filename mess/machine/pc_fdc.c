@@ -15,6 +15,8 @@
 #include "includes/nec765.h"
 
 
+#define LOG_FDC		0
+
 /* registers etc */
 struct pc_fdc
 {
@@ -36,17 +38,6 @@ struct pc_fdc
 
 	struct pc_fdc_interface fdc_interface;
 } pc_fdc;
-
-
-
-#define VERBOSE	0
-
-#if VERBOSE
-#define LOG(msg)	logerror msg
-#else
-#define LOG(msg)	(void)(0)
-#endif
-
 
 static struct pc_fdc *fdc;
 
@@ -214,7 +205,6 @@ static void pc_fdc_dor_w(data8_t data)
 	int selected_drive;
 	int floppy_count;
 
-	LOG(("FDC DOR: %02x\r\n",data));
 	floppy_count = device_count(IO_FLOPPY);
 
 	if (floppy_count > (fdc->digital_output_register & 0x03))
@@ -318,6 +308,9 @@ READ8_HANDLER ( pc_fdc_r )
 			data = fdc->digital_input_register;
 			break;
     }
+
+	if (LOG_FDC)
+		logerror("pc_fdc_r(): offset=%d result=0x%02X\n", offset, data);
 	return data;
 }
 
@@ -325,6 +318,9 @@ READ8_HANDLER ( pc_fdc_r )
 
 WRITE8_HANDLER ( pc_fdc_w )
 {
+	if (LOG_FDC)
+		logerror("pc_fdc_w(): offset=%d data=0x%02X\n", offset, data);
+
 	switch(offset)
 	{
 		case 0:	/* n/a */
