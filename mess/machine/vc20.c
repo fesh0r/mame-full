@@ -371,6 +371,8 @@ static struct via6522_interface via0 =
 	0,								   /*via0_read_cb2, */
 	vc20_via0_write_porta,
 	0,								   /*via0_write_portb, */
+	0,                                 /*via0_write_ca1, */
+	0,                                 /*via0_write_cb1, */
 	vc20_via0_write_ca2,
 	0,								   /*via0_write_cb2, */
 	vc20_via0_irq
@@ -384,6 +386,8 @@ static struct via6522_interface via0 =
 	0,								   /*via1_read_cb2, */
 	vc20_via1_write_porta,								   /*via1_write_porta, */
 	vc20_via1_write_portb,
+	0,                                 /*via1_write_ca1, */
+	0,                                 /*via1_write_cb1, */
 	vc20_via1_write_ca2,
 	vc20_via1_write_cb2,
 	vc20_via1_irq
@@ -399,6 +403,8 @@ via4 =
 	0,								   /*via1_read_cb2, */
 	0,								   /*via1_write_porta, */
 	vc20_via4_write_portb,
+	0,                                 /*via0_write_ca1, */
+	0,                                 /*via0_write_cb1, */
 	0, /*vc20_via5_write_ca2, */
 	0, /*vc20_via5_write_cb2, */
 	vc20_via1_irq
@@ -412,6 +418,8 @@ via4 =
 	0,								   /*via1_read_cb2, */
 	vc20_via5_write_porta,
 	0,/*vc20_via5_write_portb, */
+	0,                                 /*via0_write_ca1, */
+	0,                                 /*via0_write_cb1, */
 	vc20_via5_write_ca2,
 	vc20_via5_write_cb2,
 	vc20_via1_irq

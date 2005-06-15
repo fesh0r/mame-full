@@ -604,6 +604,8 @@ static struct via6522_interface via2 =
 	0,								   /*via2_read_cb2, */
 	0,								   /*via2_write_porta, */
 	vc1541_via0_write_portb,
+	0,                                 /*via2_write_ca1, */
+	0,                                 /*via2_write_cb1, */
 	0,								   /*via2_write_ca2, */
 	0,								   /*via2_write_cb2, */
 	vc1541_via0_irq
@@ -617,6 +619,8 @@ static struct via6522_interface via2 =
 	0,								   /*via3_read_cb2, */
 	vc1541_via1_write_porta,
 	vc1541_via1_write_portb,
+	0,                                 /*via3_write_ca1, */
+	0,                                 /*via3_write_cb1, */
 	0,								   /*via3_write_ca2, */
 	0,								   /*via3_write_cb2, */
 	vc1541_via1_irq

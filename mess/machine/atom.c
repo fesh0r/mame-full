@@ -114,13 +114,11 @@ struct via6522_interface atom_6522_interface=
 	NULL,
 	atom_via_out_a_func,	/* printer data */
 	NULL,
+	NULL,
+	NULL,
 	atom_via_out_ca2_func,	/* printer strobe */
 	NULL,
 	atom_via_irq_func,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 

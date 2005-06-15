@@ -62,6 +62,7 @@ static  READ8_HANDLER(mac_via_in_a);
 static  READ8_HANDLER(mac_via_in_b);
 static WRITE8_HANDLER(mac_via_out_a);
 static WRITE8_HANDLER(mac_via_out_b);
+static WRITE8_HANDLER(mac_via_out_cb2);
 static void mac_via_irq(int state);
 
 static struct via6522_interface mac_via6522_intf =
@@ -71,11 +72,8 @@ static struct via6522_interface mac_via6522_intf =
 	NULL, NULL,
 	mac_via_out_a, mac_via_out_b,
 	NULL, NULL,
-	mac_via_irq,
-	NULL,
-	NULL,
-	keyboard_receive,
-	keyboard_send_reply
+	NULL, mac_via_out_cb2,
+	mac_via_irq
 };
 
 /* tells which model is being emulated (set by macxxx_init) */
@@ -470,12 +468,14 @@ static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 /* used to store the reply to most keyboard commands */
 static int keyboard_reply;
 
-/* flag set when inquiry command is in progress */
-static int inquiry_in_progress;
+/* Keyboard communication in progress? */
+static int kbd_comm;
+static int kbd_receive;
 /* timer which is used to time out inquiry */
 static mame_timer *inquiry_timeout;
-/* flag which is true while the keyboard data line is not ready to receive the keyboard reply */
-static int hold_keyboard_reply;
+
+static int kbd_shift_reg;
+static int kbd_shift_count;
 
 /*
 	scan_keyboard()
@@ -592,7 +592,10 @@ static void keyboard_init(void)
 	int i;
 
 	/* init flag */
-	inquiry_in_progress = FALSE;
+	kbd_comm = FALSE;
+	kbd_receive = FALSE;
+	kbd_shift_reg=0;
+	kbd_shift_count=0;
 
 	/* clear key matrix */
 	for (i=0; i<7; i++)
@@ -604,6 +607,61 @@ static void keyboard_init(void)
 	keycode_buf_index = 0;
 }
 
+/******************* Keyboard <-> VIA communication ***********************/
+
+static void kbd_clock(int param)
+{
+	int i;
+	if (kbd_comm == TRUE)
+	{
+		for (i=0; i<8; i++)
+		{
+			/* Put data on CB2 if we are sending*/
+			if (kbd_receive == FALSE)
+				via_set_input_cb2(0, kbd_shift_reg&0x80?1:0);
+			kbd_shift_reg <<= 1;
+			via_set_input_cb1(0, 0);
+			via_set_input_cb1(0, 1);
+		}
+		if (kbd_receive == TRUE)
+		{
+			kbd_receive = FALSE;
+			/* Process the command received from mac */
+			keyboard_receive(kbd_shift_reg & 0xff);
+		}
+		else
+		{
+			/* Communication is over */ 
+			kbd_comm = FALSE;
+		}
+	}
+}
+
+static void kbd_shift_out(int data)
+{
+	if (kbd_comm == TRUE)
+	{
+		kbd_shift_reg = data;
+		timer_set(1e-3, 0, kbd_clock);
+	}
+}
+
+static WRITE8_HANDLER(mac_via_out_cb2)
+{
+	if (kbd_comm == FALSE && data == 0)
+	{
+		/* Mac pulls CB2 down to initiate communication */
+		kbd_comm = TRUE;
+		kbd_receive = TRUE;
+		timer_set(1e-4, 0, kbd_clock);
+	}
+	if (kbd_comm == TRUE && kbd_receive == TRUE)
+	{
+		/* Shift in what mac is sending */
+		kbd_shift_reg = (kbd_shift_reg & ~1) | data;
+	}
+}
+
 /*
 	called when inquiry times out (1/4s)
 */
@@ -613,12 +671,7 @@ static void inquiry_timeout_func(int unused)
 	logerror("keyboard enquiry timeout\n");
 #endif
 
-	inquiry_in_progress = FALSE;
-
-	if (hold_keyboard_reply)
-		keyboard_reply = 0x7B;
-	else
-		via_set_input_si(0, 0x7B);	/* always send NULL */
+	kbd_shift_out(0x7B);	/* always send NULL */
 }
 
 /*
@@ -626,14 +679,6 @@ static void inquiry_timeout_func(int unused)
 */
 static void keyboard_receive(int val)
 {
-	hold_keyboard_reply = TRUE;
-
-	if (inquiry_in_progress)
-	{	/* new command aborts last inquiry */
-		inquiry_in_progress = FALSE;
-		mame_timer_reset(inquiry_timeout, time_never);
-	}
-
 	switch (val)
 	{
 	case 0x10:
@@ -645,7 +690,6 @@ static void keyboard_receive(int val)
 		if (keyboard_reply == 0x7B)
 		{	
 			/* if NULL, wait until key pressed or timeout */
-			inquiry_in_progress = TRUE;
 			mame_timer_adjust(inquiry_timeout,
 				make_mame_time(0, DOUBLE_TO_SUBSECONDS(0.25)),
 				0, time_zero);
@@ -657,7 +701,7 @@ static void keyboard_receive(int val)
 #if LOG_KEYBOARD
 		logerror("keyboard command : instant\n");
 #endif
-		keyboard_reply = scan_keyboard();
+		kbd_shift_out(scan_keyboard());
 		break;
 
 	case 0x16:
@@ -688,7 +732,7 @@ static void keyboard_receive(int val)
 		/* keypads :
 			??? : standard keypad (always available on Mac Plus) ???
 		*/
-		keyboard_reply = 0x17;	/* probably wrong */
+		kbd_shift_out(0x17);	/* probably wrong */
 		break;
 
 	case 0x36:
@@ -696,32 +740,15 @@ static void keyboard_receive(int val)
 #if LOG_KEYBOARD
 		logerror("keyboard command : test\n");
 #endif
-		keyboard_reply = 0x7D;	/* ACK */
+		kbd_shift_out(0x7D);	/* ACK */
 		break;
 
 	default:
 #if LOG_KEYBOARD
 		logerror("unknown keyboard command 0x%X\n", val);
 #endif
-		keyboard_reply = 0;
+		kbd_shift_out(0);
 		break;
-	}
-}
-
-/*
-	called when the VIA SR is set as input
-	(this is seen by the keyboard because it causes the keyboard data line to go high)
-*/
-static void keyboard_send_reply(void)
-{
-	hold_keyboard_reply = FALSE;
-
-	if (! inquiry_in_progress)
-	{
-#if LOG_KEYBOARD
-		logerror("keyboard reply sent 0x%X\n", keyboard_reply);
-#endif
-		via_set_input_si(0, keyboard_reply);
 	}
 }
 
@@ -1675,7 +1702,7 @@ static void mac_vblank_irq(void)
 	static int irq_count = 0, ca1_data = 0, ca2_data = 0;
 
 	/* handle keyboard */
-	if (inquiry_in_progress)
+	if (kbd_comm == TRUE)
 	{
 		int keycode = scan_keyboard();
 
@@ -1685,13 +1712,8 @@ static void mac_vblank_irq(void)
 
 			logerror("keyboard enquiry successful, keycode %X\n", keycode);
 
-			inquiry_in_progress = FALSE;
 			timer_reset(inquiry_timeout, TIME_NEVER);
-
-			if (hold_keyboard_reply)
-				keyboard_reply = keycode;
-			else
-				via_set_input_si(0, keycode);
+			kbd_shift_out(keycode);
 		}
 	}
 

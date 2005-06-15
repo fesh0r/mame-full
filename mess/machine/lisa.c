@@ -149,11 +149,8 @@ static struct via6522_interface lisa_via6522_intf[2] =
 		NULL, NULL,
 		COPS_via_out_a, COPS_via_out_b,
 		COPS_via_out_ca2, COPS_via_out_cb2,
+		NULL, NULL,
 		COPS_via_irq_func,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
 	},
 	{	/* parallel interface via - incomplete */
 		NULL, parallel_via_in_b,
@@ -161,11 +158,7 @@ static struct via6522_interface lisa_via6522_intf[2] =
 		NULL, NULL,
 		NULL, NULL,
 		NULL, NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
+		NULL, NULL,
 	}
 };
 

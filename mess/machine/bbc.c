@@ -1183,6 +1183,7 @@ bbcb_system_via= {
   bbcb_via_system_read_cb2,
   bbcb_via_system_write_porta,
   bbcb_via_system_write_portb,
+  NULL, NULL,
   bbcb_via_system_write_ca2,
   bbcb_via_system_write_cb2,
   bbc_via_system_irq
@@ -1271,6 +1272,8 @@ static struct via6522_interface bbcb_user_via =
 	0,//via_user_read_cb2,
 	bbcb_via_user_write_porta,//via_user_write_porta,
 	bbcb_via_user_write_portb,//via_user_write_portb,
+	0, //via_user_write_ca1
+	0, //via_user_write_cb1
 	bbcb_via_user_write_ca2,//via_user_write_ca2,
 	0,//via_user_write_cb2,
 	bbc_via_user_irq //via_user_irq

@@ -488,6 +488,8 @@ static const struct via6522_interface via_0_intf =
 	NULL,					/* in_cb2_func */
 	apple3_via_0_out_a,		/* out_a_func */
 	apple3_via_0_out_b,		/* out_b_func */
+	NULL,					/* out_ca1_func */
+	NULL,					/* out_cb1_func */
 	NULL,					/* out_ca2_func */
 	NULL,					/* out_cb2_func */
 	NULL					/* irq_func */
@@ -503,6 +505,8 @@ static const struct via6522_interface via_1_intf =
 	NULL,					/* in_cb2_func */
 	apple3_via_1_out_a,		/* out_a_func */
 	apple3_via_1_out_b,		/* out_b_func */
+	NULL,					/* out_ca1_func */
+	NULL,					/* out_cb1_func */
 	NULL,					/* out_ca2_func */
 	NULL,					/* out_cb2_func */
 	apple2_via_1_irq_func	/* irq_func */

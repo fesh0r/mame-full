@@ -112,6 +112,8 @@ static struct via6522_interface via0={
 	0,
 	0,
 	0,
+	0,
+	0,
 	sym1_irq
 },
 via1 = { 0 },

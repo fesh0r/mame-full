@@ -338,6 +338,7 @@ static struct via6522_interface via6522[2] =
         via_0_in_ca1, via_0_in_cb1,
         via_0_in_ca2, via_0_in_cb2,
         via_0_out_a,  via_0_out_b,
+		0, 0,
         via_0_out_ca2,via_0_out_cb2,
         via_0_irq,
     },
@@ -346,6 +347,7 @@ static struct via6522_interface via6522[2] =
         via_1_in_ca1, via_1_in_cb1,
         via_1_in_ca2, via_1_in_cb2,
         via_1_out_a,  via_1_out_b,
+		0, 0,
         via_1_out_ca2,via_1_out_cb2,
         via_1_irq,
     }

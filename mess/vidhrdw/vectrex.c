@@ -11,8 +11,7 @@
 #include "includes/vectrex.h"
 
 #define RAMP_DELAY 6.333e-6
-#define BLANK_DELAY 0
-#define SH_DELAY 6.333e-6
+#define SH_DELAY RAMP_DELAY
 
 #define VEC_SHIFT 16
 #define INT_PER_CLOCK 900
@@ -30,22 +29,23 @@
  *********************************************************************/
 static WRITE8_HANDLER ( v_via_pa_w );
 static WRITE8_HANDLER( v_via_pb_w );
-static void vectrex_shift_reg_w (int via_sr);
 static WRITE8_HANDLER ( v_via_ca2_w );
+static WRITE8_HANDLER ( v_via_cb2_w );
 
 static struct via6522_interface vectrex_via6522_interface =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ v_via_pa_r, v_via_pb_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ v_via_pa_w, v_via_pb_w, v_via_ca2_w, 0,
-	/*irq                      */ v_via_irq,
-
-	vectrex_shift_reg_w
+	v_via_pa_r, v_via_pb_r,         /* read PA/B */
+	0, 0, 0, 0,                     /* read ca1, cb1, ca2, cb2 */
+	v_via_pa_w, v_via_pb_w,         /* write PA/B */ 
+	0, 0, v_via_ca2_w, v_via_cb2_w, /* write ca1, cb1, ca2, cb2 */
+	v_via_irq,                      /* IRQ */
 };
 
 static int x_center, y_center, x_max, y_max;
 static int x_int, y_int; /* X, Y integrators IC LF347*/
 static int lightpen_down=1, pen_x, pen_y; /* Lightpen position */
 static mame_timer *lp_t;
+static int blank;
 
 /* Analog signals: 0 : X-axis sample and hold IC LF347
  *                 coupled by the MUX CD4052
@@ -64,7 +64,6 @@ static mame_timer *lp_t;
 static int analog_sig[5];
 
 static double start_time;
-static int old_via_sr = 0;
 static int last_point_x, last_point_y, last_point_z, last_point=0;
 static double last_point_starttime;
 static float z_factor;
@@ -218,51 +217,17 @@ INLINE void vectrex_zero_integrators(void)
 
 INLINE void vectrex_dot(void)
 {
-	last_point_x = x_int;
-	last_point_y = y_int;
-	last_point_z = analog_sig[ASIG_Z] > 0? (int)(analog_sig[ASIG_Z] * z_factor): 0;
-	last_point_starttime = timer_get_time();
-	last_point = 1;
-}
-
-INLINE void vectrex_shift_out(int shift, int pattern)
-{
-	int x = (analog_sig[ASIG_X] - analog_sig[ASIG_ZR]) * INT_PER_CLOCK * 2;
-	int y = (analog_sig[ASIG_Y] + analog_sig[ASIG_ZR]) * INT_PER_CLOCK * 2;
-	int z = analog_sig[ASIG_Z] > 0? (int)(analog_sig[ASIG_Z] * z_factor): 0;
-
-	if (last_point && (!(pattern & 0x80) || !z))
-		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
-				  MIN( (int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
-	last_point = 0;
-
-	while (shift)
+	if (!last_point)
 	{
-		while (shift)
-		{
-			x_int += x;
-			y_int -= y;
-			shift--;
-			if ((pattern >> shift) & 0x1)
-			{
-				if (!((pattern >> (shift - 1)) & 0x1))
-					break;
-			}
-			else
-			{
-				if ((pattern >> (shift - 1)) & 0x1)
-					break;
-			}
-		}
-		vector_add_point_function(x_int, y_int, vectrex_beam_color,
-					  z * ((pattern >> shift) & 0x1));
-
-		if (lightpen_check() && z * ((pattern >> shift) & 0x1))
-			lightpen_trigger(0);
+		last_point_x = x_int;
+		last_point_y = y_int;
+		last_point_z = analog_sig[ASIG_Z] > 0? (int)(analog_sig[ASIG_Z] * z_factor): 0;
+		last_point_starttime = timer_get_time();
+		last_point = 1;
 	}
 }
 
-INLINE void vectrex_solid_line(double int_time, int pattern)
+INLINE void vectrex_solid_line(double int_time, int blank)
 {
 	int z = analog_sig[ASIG_Z] > 0? (int)(analog_sig[ASIG_Z]*z_factor): 0;
     int length = (int)(VECTREX_CLOCK * INT_PER_CLOCK * int_time);
@@ -272,14 +237,14 @@ INLINE void vectrex_solid_line(double int_time, int pattern)
 	 * Obviously this first dot isn't needed so we optimize it away :) but we have to take care
 	 * not to optimize _all_ dots, that's why we do draw the dot if the following line is
 	 * black (a move). */
-	if (last_point && (!(pattern & 0x80) || !z))
+	if (last_point && (!blank || !z))
 		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
 				  MIN((int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
 	last_point = 0;
 
 	x_int += (int)(length * (analog_sig[ASIG_X] - analog_sig[ASIG_ZR]));
 	y_int -= (int)(length * (analog_sig[ASIG_Y] + analog_sig[ASIG_ZR]));
-	vector_add_point_function(x_int, y_int, vectrex_beam_color, z * (pattern & 0x1));
+	vector_add_point_function(x_int, y_int, vectrex_beam_color, z * blank);
 }
 
 /*********************************************************************
@@ -370,7 +335,7 @@ static WRITE8_HANDLER ( v_via_pb_w )
 					b2 = (double)(pen_x-x_int)*(pen_x-x_int)
 						+(double)(pen_y-y_int)*(pen_y-y_int);
 					d2=b2-ab*ab/a2;
-					if (d2<2e10 && analog_sig[ASIG_Z]*(old_via_sr&1)>0)
+					if (d2<2e10 && analog_sig[ASIG_Z]*blank>0)
 						timer_adjust(lp_t, ab/a2/(VECTREX_CLOCK*INT_PER_CLOCK),0,0);
 				}
 			}
@@ -381,7 +346,7 @@ static WRITE8_HANDLER ( v_via_pb_w )
 			/* This is a rare case used by some new games */
 		{
 			double time_now = timer_get_time()+SH_DELAY;
-			vectrex_solid_line(time_now-start_time, old_via_sr);
+			vectrex_solid_line(time_now-start_time, blank);
 			start_time = time_now;
 		}
 	}
@@ -391,7 +356,7 @@ static WRITE8_HANDLER ( v_via_pb_w )
 		if (!(vectrex_via_out[PORTB] & 0x80))
 		{
 			/* RAMP was active before - we can draw the line */
-			vectrex_solid_line(timer_get_time()-start_time+RAMP_DELAY, old_via_sr);
+			vectrex_solid_line(timer_get_time()-start_time+RAMP_DELAY, blank);
 			/* Cancel running timer, line already finished */
 			if (lightpen_down)
 				timer_adjust(lp_t,TIME_NEVER ,0,0);
@@ -428,7 +393,7 @@ static WRITE8_HANDLER ( v_via_pa_w )
 		 * before updating the signals.
 		 */
 		time_now = timer_get_time() + SH_DELAY;
-		vectrex_solid_line(time_now - start_time, old_via_sr);
+		vectrex_solid_line(time_now - start_time, blank);
 		start_time = time_now;
 	}
 	/* DAC output always goes into X integrator */
@@ -440,38 +405,39 @@ static WRITE8_HANDLER ( v_via_pa_w )
 		vectrex_multiplexer ((vectrex_via_out[PORTB] >> 1) & 0x3);
 }
 
-static void vectrex_shift_reg_w (int via_sr)
-{
-	double time_now;
-
-	if (vectrex_via_out[PORTB] & 0x80)
-	{
-		/* RAMP inactive */
-		/* This generates a dot (here we take the dwell time into account) */
-
-		if (via_sr & 0x1)
-		{
-			if (lightpen_check())
-				lightpen_trigger(0);
-			
-			vectrex_dot();
-		}
-	}
-	else
-	{
-		/* RAMP active */
-		time_now = timer_get_time() + BLANK_DELAY;
-		vectrex_solid_line(time_now - start_time, old_via_sr);
-		vectrex_shift_out(8, via_sr);
-		start_time = time_now + TIME_IN_CYCLES(16, 0);
-	}
-	old_via_sr = via_sr;
-}
-
 static WRITE8_HANDLER ( v_via_ca2_w )
 {
 	if  (!data)    /* ~ZERO low ? Then zero integrators*/
 		vectrex_zero_integrators();
+}
+
+static WRITE8_HANDLER ( v_via_cb2_w )
+{
+	double time_now;
+	if (blank != data)
+	{
+		if (vectrex_via_out[PORTB] & 0x80)
+		{
+			/* RAMP inactive */
+			/* This generates a dot (here we take the dwell time into account) */
+			
+			if (data)
+				vectrex_dot();
+		}
+		else
+		{
+			/* RAMP active 
+			 * Take MAX because RAMP is slower than BLANK
+			 */
+			time_now = MAX(timer_get_time(),start_time);
+			vectrex_solid_line(time_now - start_time, blank);
+			start_time = time_now;
+		}
+		if (data & lightpen_check())
+			lightpen_trigger(0);
+
+		blank = data;
+	}
 }
 
 /*****************************************************************
@@ -483,10 +449,8 @@ static WRITE8_HANDLER ( v_via_ca2_w )
 static struct via6522_interface spectrum1_via6522_interface =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ v_via_pa_r, s1_via_pb_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ v_via_pa_w, v_via_pb_w, v_via_ca2_w, 0,
+	/*outputs: A/B,CB1,CA/B2   */ v_via_pa_w, v_via_pb_w, 0, v_via_ca2_w, v_via_cb2_w,
 	/*irq                      */ v_via_irq,
-
-	vectrex_shift_reg_w
 };
 /*
 static const char *radius_8_led =

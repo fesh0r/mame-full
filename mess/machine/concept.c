@@ -49,12 +49,9 @@ static struct via6522_interface concept_via6522_intf =
 	NULL, NULL,
 	NULL, NULL,
 	via_out_a, via_out_b,
+	NULL, NULL,
 	NULL, via_out_cb2,
 	via_irq_func,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
 };
 
 /* keyboard interface */

@@ -460,13 +460,11 @@ struct via6522_interface oric_6522_interface=
 	oric_via_in_cb2_func,
 	oric_via_out_a_func,
 	oric_via_out_b_func,
+	NULL,
+	NULL,
 	oric_via_out_ca2_func,
 	oric_via_out_cb2_func,
 	oric_via_irq_func,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 
@@ -1460,11 +1458,9 @@ struct via6522_interface telestrat_via2_interface=
 	telestrat_via2_out_b_func,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
 	telestrat_via2_irq_func,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 #if 0
