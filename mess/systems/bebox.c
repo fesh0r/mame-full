@@ -14,6 +14,8 @@
 #include "machine/mc146818.h"
 #include "machine/pc_fdc.h"
 #include "machine/pci.h"
+#include "devices/mflopimg.h"
+#include "formats/pc_dsk.h"
 
 static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 	AM_RANGE(0x7FFFF0F0, 0x7FFFF0F7) AM_READWRITE( bebox_cpu0_imask_r, bebox_cpu0_imask_w )
@@ -81,10 +83,18 @@ ROM_START(bebox)
 	ROM_LOAD( "bootnub.rom", 0x000000, 0x4000, CRC(5348d09a) SHA1(1b637a3d7a2b072aa128dd5c037bbb440d525c1a) )
 ROM_END
 
+static void bebox_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_pc);
+	dev->count = 2;
+}
+
 SYSTEM_CONFIG_START(bebox)
 	CONFIG_RAM(8 * 1024 * 1024)
 	CONFIG_RAM(16 * 1024 * 1024)
 	CONFIG_RAM_DEFAULT(32 * 1024 * 1024)
+	CONFIG_DEVICE(bebox_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

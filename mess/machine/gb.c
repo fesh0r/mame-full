@@ -30,6 +30,7 @@
 	13/6/2002		AK - Added GameBoy Color support.
 
 	17/5/2004       WP - Added Megaduck/Cougar Boy support.
+	13/6/2005		WP - Added support for bootstrap rom banking.
 
 ***************************************************************************/
 #define __MACHINE_GB_C
@@ -67,6 +68,45 @@ void (*refresh_scanline)(void);
 /* #define V_BANK*/			/* Display bank switching debug information */
 #endif
 
+static void gb_init_regs(void)
+{
+	/* Initialize the registers */
+	LCDSTAT = 0x00;
+	CURLINE = CMPLINE = 0x00;
+	IFLAGS = ISWITCH = 0x00;
+	SIODATA = 0x00;
+	SIOCONT = 0x7E;
+	SCROLLX = SCROLLY = 0x00;
+	WNDPOSX = WNDPOSY = 0x00;
+
+	gb_io_w( 0x05, 0x00 );		/* TIMECNT */
+	gb_io_w( 0x06, 0x00 );		/* TIMEMOD */
+	gb_io_w( 0x07, 0x00 );		/* TIMEFRQ */
+	gb_video_w( 0x0, 0x91 );	/* LCDCONT */
+	gb_video_w( 0x7, 0xFC );	/* BGRDPAL */
+	gb_video_w( 0x8, 0xFC );	/* SPR0PAL */
+	gb_video_w( 0x9, 0xFC );	/* SPR1PAL */
+
+	gb_sound_w(0x16,0xF1);		/*Gameboy, F0 for SGB*/ /* set this first */
+	gb_sound_w(0x00,0x80);
+	gb_sound_w(0x01,0xBF);
+	gb_sound_w(0x02,0xF3);
+	gb_sound_w(0x04,0x3F);		/* NOTE: Should be 0xBF but it causes a tone at startup */
+	gb_sound_w(0x06,0x3F);
+	gb_sound_w(0x07,0x00);
+	gb_sound_w(0x09,0xBF);
+	gb_sound_w(0x0A,0x7F);
+	gb_sound_w(0x0B,0xFF);
+	gb_sound_w(0x0C,0x9F);
+	gb_sound_w(0x0E,0xBF);
+	gb_sound_w(0x10,0xFF);
+	gb_sound_w(0x11,0x00);
+	gb_sound_w(0x12,0x00);
+	gb_sound_w(0x13,0xBF);
+	gb_sound_w(0x14,0x77);
+	gb_sound_w(0x15,0xF3);
+}
+
 static void gb_init(void)
 {
 	int ii;
@@ -83,41 +123,14 @@ static void gb_init(void)
 		cpu_setbank( 10, ROMMap[0] );
 	}
 
-	/* Initialize the registers */
-	LCDSTAT = 0x00;
-	CURLINE = CMPLINE = 0x00;
-	IFLAGS = ISWITCH = 0x00;
-	SIODATA = 0x00;
-	SIOCONT = 0x7E;
-	SCROLLX = SCROLLY = 0x00;
-	WNDPOSX = WNDPOSY = 0x00;
-	gb_io_w( 0x05, 0x00 );		/* TIMECNT */
-	gb_io_w( 0x06, 0x00 );		/* TIMEMOD */
-	gb_io_w( 0x07, 0x00 );		/* TIMEFRQ */
-	gb_video_w( 0x0, 0x91 );	/* LCDCONT */
-	gb_video_w( 0x7, 0xFC );	/* BGRDPAL */
-	gb_video_w( 0x8, 0xFC );	/* SPR0PAL */
-	gb_video_w( 0x9, 0xFC );	/* SPR1PAL */
-
-	/* Initialise the Sound Registers */
-	gb_sound_w(0x16,0xF1); /*Gameboy, F0 for SGB*/ /* set this first */
-	gb_sound_w(0x00,0x80);
-	gb_sound_w(0x01,0xBF);
-	gb_sound_w(0x02,0xF3);
-	gb_sound_w(0x04,0x3F); /* NOTE: Should be 0xBF but it causes a tone at startup */
-	gb_sound_w(0x06,0x3F);
-	gb_sound_w(0x07,0x00);
-	gb_sound_w(0x09,0xBF);
-	gb_sound_w(0x0A,0x7F);
-	gb_sound_w(0x0B,0xFF);
-	gb_sound_w(0x0C,0x9F);
-	gb_sound_w(0x0E,0xBF);
-	gb_sound_w(0x10,0xFF);
-	gb_sound_w(0x11,0x00);
-	gb_sound_w(0x12,0x00);
-	gb_sound_w(0x13,0xBF);
-	gb_sound_w(0x14,0x77);
-	gb_sound_w(0x15,0xF3);
+//	/* Initialize the registers */
+//	LCDSTAT = 0x00;
+//	CURLINE = CMPLINE = 0x00;
+//	IFLAGS = ISWITCH = 0x00;
+//	SIODATA = 0x00;
+//	SIOCONT = 0x7E;
+//	SCROLLX = SCROLLY = 0x00;
+//	WNDPOSX = WNDPOSY = 0x00;
 
 	/* Initialize palette arrays */
 	for( ii = 0; ii < 4; ii++ )
@@ -168,6 +181,10 @@ static void gb_init(void)
 
 MACHINE_INIT( gb )
 {
+        /* Enable BIOS rom */
+        cpu_setbank(5, gb_ram + 0x10000);
+        cpu_setbank(10, gb_ram + 0x0100);
+
 	gb_init();
 
 	/* set the scanline refresh function */
@@ -177,6 +194,8 @@ MACHINE_INIT( gb )
 MACHINE_INIT( sgb )
 {
 	gb_init();
+
+	gb_init_regs();
 
 	sgb_tile_data = (UINT8 *)memory_region( REGION_GFX1 );
 	memset( sgb_tile_data, 0, 0x2000 );
@@ -202,11 +221,23 @@ MACHINE_INIT( sgb )
 	refresh_scanline = sgb_refresh_scanline;
 }
 
+MACHINE_INIT( gbpocket )
+{
+	gb_init();
+
+	gb_init_regs();
+
+	/* set the scanline refresh function */
+	refresh_scanline = gb_refresh_scanline;
+}
+
 MACHINE_INIT( gbc )
 {
 	int ii;
 
 	gb_init();
+
+	gb_init_regs();
 
 	/* Allocate memory for internal ram */
 	for( ii = 0; ii < 8; ii++ )
@@ -495,6 +526,12 @@ WRITE8_HANDLER ( gb_io_w )
 	}
 
 	gb_ram [offset] = data;
+}
+
+WRITE8_HANDLER ( gb_bios_w )
+{
+	/* disable BIOS ROM */
+	cpu_setbank(5, gb_ram);
 }
 
 #ifdef MAME_DEBUG
@@ -1115,6 +1152,26 @@ WRITE8_HANDLER ( gb_ie_w )
 	}
 }
 
+DEVICE_INIT(gb_cart)
+{
+	int I;
+
+	gb_ram = memory_region(REGION_CPU1);
+        memset (gb_ram, 0, 0x10000);
+	memset (gb_ram, 0xFF, 0x4000);
+
+	for(I = 0; I < 256; I++) {
+		RAMMap[I] = ROMMap[I] = NULL;
+	}
+	ROMMap[0] = gb_ram;
+	ROMBanks = 0;
+	RAMBanks = 0;
+	MBCType = NONE;
+	CartType = 0;
+	ROMMask = 0;
+	return INIT_PASS;
+}
+
 DEVICE_LOAD(gb_cart)
 {
 	static const char *CartTypes[] =
@@ -1249,11 +1306,11 @@ DEVICE_LOAD(gb_cart)
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
 
-	if( new_memory_region(REGION_CPU1, 0x10000,0) )
-	{
-		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
-		return INIT_FAIL;
-	}
+//	if( new_memory_region(REGION_CPU1, 0x10000,0) )
+//	{
+//		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
+//		return INIT_FAIL;
+//	}
 
 	gb_ram = memory_region(REGION_CPU1);
 	memset (gb_ram, 0, 0x10000);

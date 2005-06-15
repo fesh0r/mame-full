@@ -357,7 +357,7 @@ static void bebox_fdc_interrupt_delayed(int state)
 
 static void bebox_fdc_interrupt(int state)
 {
-	timer_set(TIME_IN_MSEC(60), state, bebox_fdc_interrupt_delayed);
+	timer_set(TIME_IN_MSEC(1), state, bebox_fdc_interrupt_delayed);
 }
 
 
@@ -505,6 +505,8 @@ MACHINE_INIT( bebox )
 DRIVER_INIT( bebox )
 {
 	int cpu;
+	offs_t vram_begin;
+	offs_t vram_end;
 
 	mpc105_init(0);
 	pci_add_device(0, 1, &cirrus5430_callbacks);
@@ -532,9 +534,11 @@ DRIVER_INIT( bebox )
 	pc_vga_init(&bebox_vga_interface, &cirrus_svga_interface);
 
 	/* install VGA memory */
+	vram_begin = 0xC1000000;
+	vram_end = vram_begin + pc_vga_memory_size() - 1;
 	for (cpu = 0; cpu < 2; cpu++)
 	{
-		memory_install_read64_handler(cpu, ADDRESS_SPACE_PROGRAM, 0xC1000000, 0xC103FFFF, 0, 0, bebox_video_r);
-		memory_install_write64_handler(cpu, ADDRESS_SPACE_PROGRAM, 0xC1000000, 0xC103FFFF, 0, 0, bebox_video_w);
+		memory_install_read64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_r);
+		memory_install_write64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_w);
 	}
 }

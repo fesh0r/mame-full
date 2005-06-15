@@ -32,16 +32,12 @@ typedef enum
 } NEC765_PHASE;
 
 /* uncomment the following line for verbose information */
-#define VERBOSE
+#define LOG_VERBOSE		1
+#define LOG_COMMAND		1
+#define LOG_EXTRA		0
 
 /* uncomment this to not allow end of cylinder "error" */
 #define NO_END_OF_CYLINDER
-
-#ifdef VERBOSE
-/* uncomment the following line for super-verbose information i.e. data
-transfer bytes */
-//#define SUPER_VERBOSE
-#endif
 
 
 
@@ -725,11 +721,10 @@ void nec765_set_tc_state(int state)
 	}
 }
 
- READ8_HANDLER(nec765_status_r)
+READ8_HANDLER(nec765_status_r)
 {
-#ifdef SUPER_VERBOSE
-	logerror("nec765 status r: %02x\n",fdc.FDC_main);
-#endif
+	if (LOG_EXTRA)
+		logerror("nec765 status r: %02x\n",fdc.FDC_main);
 	return fdc.FDC_main;
 }
 
@@ -932,9 +927,10 @@ static void nec765_read_data(void)
 		nec765_setup_result_phase(7);
 		return;
 	}
-#ifdef VERBOSE
-	logerror("sector c: %02x h: %02x r: %02x n: %02x\n",fdc.nec765_command_bytes[2], fdc.nec765_command_bytes[3],fdc.nec765_command_bytes[4], fdc.nec765_command_bytes[5]);
-#endif
+
+	if (LOG_VERBOSE)
+		logerror("sector c: %02x h: %02x r: %02x n: %02x\n",fdc.nec765_command_bytes[2], fdc.nec765_command_bytes[3],fdc.nec765_command_bytes[4], fdc.nec765_command_bytes[5]);
+
 	/* find a sector to read data from */
 	{
 		int found_sector_to_read;
@@ -1563,9 +1559,8 @@ void nec765_update_state(void)
 			}
 		}
 
-#ifdef VERBOSE
-		logerror("NEC765: RESULT: %02x\n", fdc.nec765_data_reg);
-#endif
+		if (LOG_VERBOSE)
+			logerror("NEC765: RESULT: %02x\n", fdc.nec765_data_reg);
 
 		fdc.nec765_transfer_bytes_count++;
 		fdc.nec765_transfer_bytes_remaining--;
@@ -1586,9 +1581,8 @@ void nec765_update_state(void)
 		fdc.nec765_transfer_bytes_count++;
 		fdc.nec765_transfer_bytes_remaining--;
 
-#ifdef SUPER_VERBOSE
-		logerror("EXECUTION PHASE READ: %02x\n", fdc.nec765_data_reg);
-#endif
+		if (LOG_EXTRA)
+			logerror("EXECUTION PHASE READ: %02x\n", fdc.nec765_data_reg);
 
 		if ((fdc.nec765_transfer_bytes_remaining==0) || (fdc.nec765_flags & NEC765_TC))
 		{
@@ -1604,9 +1598,9 @@ void nec765_update_state(void)
 	case NEC765_COMMAND_PHASE_FIRST_BYTE:
 		fdc.FDC_main |= 0x10;                      /* set BUSY */
 
-#ifdef VERBOSE
-		logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
-#endif
+		if (LOG_VERBOSE)
+			logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
+
 		/* seek in progress? */
 		if (fdc.nec765_flags & NEC765_SEEK_ACTIVE)
 		{
@@ -1635,9 +1629,9 @@ void nec765_update_state(void)
         break;
 
     case NEC765_COMMAND_PHASE_BYTES:
-#ifdef VERBOSE
-		logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
-#endif
+		if (LOG_VERBOSE)
+			logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
+
 		fdc.nec765_command_bytes[fdc.nec765_transfer_bytes_count] = fdc.nec765_data_reg;
 		fdc.nec765_transfer_bytes_count++;
 		fdc.nec765_transfer_bytes_remaining--;
@@ -1691,18 +1685,16 @@ void nec765_update_state(void)
 		nec765_update_state();
 	}
 
-#ifdef SUPER_VERBOSE
-	logerror("DATA R: %02x\n", fdc.nec765_data_reg);
-#endif
+	if (LOG_EXTRA)
+		logerror("DATA R: %02x\n", fdc.nec765_data_reg);
 
 	return fdc.nec765_data_reg;
 }
 
 WRITE8_HANDLER(nec765_data_w)
 {
-#ifdef SUPER_VERBOSE
-	logerror("DATA W: %02x\n", data);
-#endif
+	if (LOG_EXTRA)
+		logerror("DATA W: %02x\n", data);
 
 	/* write data to data reg */
 	fdc.nec765_data_reg = data;
@@ -1735,13 +1727,47 @@ static void nec765_setup_invalid(void)
 
 static void nec765_setup_command(void)
 {
+	static const char *commands[] =
+	{
+		NULL,						/* [00] */
+		NULL,						/* [01] */
+		"Read Track",				/* [02] */
+		"Specify",					/* [03] */
+		"Sense Drive Status",		/* [04] */
+		"Write Data",				/* [05] */
+		"Read Data",				/* [06] */
+		"Recalibrate",				/* [07] */
+		"Sense Interrupt Status",	/* [08] */
+		"Write Deleted Data",		/* [09] */
+		"Read ID",					/* [0A] */
+		NULL,						/* [0B] */
+		"Read Deleted Data",		/* [0C] */
+		"Format Track",				/* [0D] */
+		"Dump Registers",			/* [0E] */
+		"Seek",						/* [0F] */
+		"Version",					/* [10] */
+		NULL,						/* [11] */
+		"Perpendicular Mode",		/* [12] */
+		"Configure",				/* [13] */
+		"Lock"						/* [13] */
+	};
+
 	mess_image *img = current_image();
+	const char *cmd = NULL;
 	chrn_id id;
 
 	/* if not in dma mode set execution phase bit */
 	if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 	{
         fdc.FDC_main |= 0x020;              /* execution phase */
+	}
+
+	if (LOG_COMMAND)
+	{
+		if ((fdc.nec765_command_bytes[0] & 0x1f) < sizeof(commands) / sizeof(commands[0]))
+			cmd = commands[fdc.nec765_command_bytes[0] & 0x1f];
+		logerror("nec765_setup_command(): Setting up command 0x%02X (%s)\n",
+			fdc.nec765_command_bytes[0] & 0x1f, cmd ? cmd : "???");
 	}
 
 	switch (fdc.nec765_command_bytes[0] & 0x01f) {

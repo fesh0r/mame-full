@@ -227,7 +227,7 @@ unsigned DasmZ80GB( char *buffer, unsigned pc )
 		d = &mnemonic_main[op];
 	}
 
-    if( d->arguments )
+	if( d->arguments )
 	{
 		dst += sprintf(dst, "%-4s ", s_mnemonic[d->mnemonic]);
 		src = d->arguments;
@@ -243,40 +243,40 @@ unsigned DasmZ80GB( char *buffer, unsigned pc )
 				pc += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
-                break;
-            case 'B':   /* Byte op arg */
+				break;
+			case 'B':   /* Byte op arg */
 				ea = cpu_readop_arg( pc++ );
 				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case '(':   /* Memory byte at (...) */
-                *dst++ = *src;
+				*dst++ = *src;
 				if( !strncmp( src, "(bc)", 4) )
 				{
 					ea = z80gb_get_reg( Z80GB_BC );
 					set_ea_info(0, ea, EA_UINT8, d->access);
 				}
-                else
+				else
 				if( !strncmp( src, "(de)", 4) )
 				{
 					ea = z80gb_get_reg( Z80GB_DE );
 					set_ea_info(0, ea, EA_UINT8, d->access);
-                }
-                else
-                if( !strncmp( src, "(hl)", 4) )
+				}
+				else
+				if( !strncmp( src, "(hl)", 4) )
 				{
 					ea = z80gb_get_reg( Z80GB_HL );
 					if( d->access == EA_ABS_PC )
 						set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
 					else
 						set_ea_info(0, ea, EA_UINT8, d->access);
-                }
+				}
 				else
 				if( !strncmp( src, "(sp)", 4) )
 				{
 					ea = z80gb_get_reg( Z80GB_SP );
 					set_ea_info(0, ea, EA_UINT16, d->access);
-                }
+				}
 				else
 				if( !strncmp( src, "(F)", 3) )
 				{
@@ -284,29 +284,29 @@ unsigned DasmZ80GB( char *buffer, unsigned pc )
 					symbol = set_ea_info(0, ea, EA_UINT8, d->access);
 					dst += sprintf( dst, "%s", symbol );
 					src++;
-                }
+				}
 				else
 				if( !strncmp( src, "(C)", 3) )
 				{
 					ea = 0xff00 + (z80gb_get_reg( Z80GB_BC ) & 0xff);
-					symbol = set_ea_info(0, 0xff00, EA_DEFAULT, EA_VALUE);
+					symbol = set_ea_info(0, 0xff00, EA_UINT16, EA_VALUE);
 					set_ea_info(1, ea, EA_UINT8, d->access);
 					dst += sprintf( dst, "%s+c", symbol );
-                    src++;
-                }
-                break;
+					src++;
+				}
+				break;
 			case 'N':   /* Immediate 16 bit */
 				ea = cpu_readop_arg(pc) + ( cpu_readop_arg((pc+1)&0xffff) << 8 );
 				pc += 2;
 				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE );
 				dst += sprintf( dst, "%s", symbol );
-                break;
+				break;
 			case 'O':   /* Offset relative to PC */
 				offset = (INT8) cpu_readop_arg(pc++);
 				symbol = set_ea_info(0, PC, offset + 2, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
-            case 'V':   /* Restart vector */
+			case 'V':   /* Restart vector */
 				ea = op & 0x38;
 				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
 				dst += sprintf( dst, "%s", symbol );
@@ -327,9 +327,9 @@ unsigned DasmZ80GB( char *buffer, unsigned pc )
 	else
 	{
 		dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
-    }
+	}
 
-    return pc - PC;
+	return pc - PC;
 }
 
 #endif

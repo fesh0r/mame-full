@@ -42,13 +42,16 @@ Priority:  Todo:                                                  Done:
 #include "devices/cartslot.h"
 
 /* Initial value of the cpu registers */
-static UINT16 dmg_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy        / Super GameBoy   */
+static UINT16 dmg_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };	/* GameBoy                          */
+static UINT16 sgb_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };    /* Super GameBoy                    */
 static UINT16 gbp_cpu_reset[6] = { 0xFFB0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Pocket / Super GameBoy 2 */
 static UINT16 gbc_cpu_reset[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Color  / Gameboy Advance */
 static UINT16 megaduck_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFE, 0x0000 };	/* Megaduck */
 
 static ADDRESS_MAP_START(gb_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)				/* 16k fixed ROM bank */
+//	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)				/* 16k fixed ROM bank */
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0x0100, 0x3fff) AM_READ(MRA8_BANK10)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)			/* 16k switched ROM bank */
 	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)				/* 8k VRAM */
 	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
@@ -72,7 +75,9 @@ static ADDRESS_MAP_START(gb_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff27, 0xff2f) AM_WRITE(MWA8_NOP)				/* Unused registers */
 	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
 	AM_RANGE(0xff40, 0xff4b) AM_WRITE(gb_video_w)			/* Video controller */
-	AM_RANGE(0xff4c, 0xff7f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff4c, 0xff4f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff50, 0xff50) AM_WRITE(gb_bios_w)				/* BIOS disable */
+	AM_RANGE(0xff51, 0xff7f) AM_WRITE(MWA8_NOP)				/* Unused registers */
 	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127 bytes high RAM */
 	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
 ADDRESS_MAP_END
@@ -305,6 +310,9 @@ static MACHINE_DRIVER_START( supergb )
 	MDRV_CPU_REPLACE("main", Z80GB, 4295454)	/* 4.295454 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_readmem_map, sgb_writemem_map)
 
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_CONFIG(sgb_cpu_reset)
+
 	MDRV_MACHINE_INIT( sgb )
 
 	MDRV_SCREEN_SIZE(32*8, 28*8)
@@ -318,6 +326,7 @@ static MACHINE_DRIVER_START( gbpocket )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_CONFIG(gbp_cpu_reset)
+	MDRV_MACHINE_INIT( gbpocket )
 	MDRV_PALETTE_INIT(gbp)
 MACHINE_DRIVER_END
 
@@ -341,10 +350,21 @@ static void gameboy_cartslot_getinfo(struct IODevice *dev)
 	dev->count = 1;
 	dev->file_extensions = "gb\0gmb\0cgb\0gbc\0sgb\0";
 	dev->must_be_loaded = 1;
+	dev->init = device_init_gb_cart;
 	dev->load = device_load_gb_cart;
 }
 
+static void gameboy_cartslot_getinfo_gb(struct IODevice *dev)
+{
+	gameboy_cartslot_getinfo(dev);
+	dev->must_be_loaded = 0;
+}
+
 SYSTEM_CONFIG_START(gameboy)
+	CONFIG_DEVICE(gameboy_cartslot_getinfo)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(gameboy_gb)
 	CONFIG_DEVICE(gameboy_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
@@ -401,7 +421,8 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 ROM_START( gameboy )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x10100, REGION_CPU1, 0 )
+	ROM_LOAD( "dmg_boot.bin", 0x10000, 0x0100, CRC(59c8598e) SHA1(4ed31ec6b0b175bb109c0eb5fd3d193da823339f) )
 ROM_END
 
 ROM_START( supergb )
@@ -423,7 +444,7 @@ ROM_START( megaduck )
 ROM_END
 
 /*    YEAR  NAME      PARENT   COMPAT	MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
-CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
+CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy_gb, "Nintendo", "GameBoy"  )
 CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
 CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
 CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )

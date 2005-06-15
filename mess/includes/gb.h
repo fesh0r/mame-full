@@ -100,7 +100,9 @@ extern WRITE8_HANDLER( gb_ram_bank_select_mbc5 );
 extern WRITE8_HANDLER( gb_ram_enable );
 extern WRITE8_HANDLER( gb_io_w );
 extern  READ8_HANDLER ( gb_io_r );
+extern WRITE8_HANDLER( gb_bios_w );
 extern WRITE8_HANDLER( gb_ie_w );
+extern DEVICE_INIT(gb_cart);
 extern DEVICE_LOAD(gb_cart);
 extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
@@ -108,6 +110,8 @@ extern void gb_scanline_interrupt_set_mode3(int param);
 
 extern MACHINE_INIT( gb );
 extern MACHINE_STOP( gb );
+
+extern MACHINE_INIT( gbpocket );
 
 /* from vidhrdw/gb.c */
 extern WRITE8_HANDLER( gb_video_w );

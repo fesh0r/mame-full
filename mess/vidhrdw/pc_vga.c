@@ -1328,3 +1328,11 @@ void *pc_vga_memory(void)
 {
 	return vga.memory;
 }
+
+
+
+size_t pc_vga_memory_size(void)
+{
+	return vga.svga_intf.vram_size;
+}
+
