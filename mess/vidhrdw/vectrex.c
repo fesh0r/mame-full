@@ -449,7 +449,7 @@ static WRITE8_HANDLER ( v_via_cb2_w )
 static struct via6522_interface spectrum1_via6522_interface =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ v_via_pa_r, s1_via_pb_r, 0, 0, 0, 0,
-	/*outputs: A/B,CB1,CA/B2   */ v_via_pa_w, v_via_pb_w, 0, v_via_ca2_w, v_via_cb2_w,
+	/*outputs: A/B,CA/B1,CA/B2 */ v_via_pa_w, v_via_pb_w, 0, 0, v_via_ca2_w, v_via_cb2_w,
 	/*irq                      */ v_via_irq,
 };
 /*
