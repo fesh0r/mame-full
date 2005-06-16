@@ -35,6 +35,7 @@ typedef enum
 #define LOG_VERBOSE		1
 #define LOG_COMMAND		1
 #define LOG_EXTRA		0
+#define LOG_INTERRUPT	0
 
 /* uncomment this to not allow end of cylinder "error" */
 #define NO_END_OF_CYLINDER
@@ -594,6 +595,8 @@ static void nec765_change_flags(unsigned int flags, unsigned int mask)
 /* set int output */
 static void nec765_set_int(int state)
 {
+	if (LOG_INTERRUPT)
+		logerror("nec765_set_int(): state=%d\n", state);
 	nec765_change_flags(state ? NEC765_INT : 0, NEC765_INT);
 }
 
