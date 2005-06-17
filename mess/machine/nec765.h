@@ -12,6 +12,14 @@
 #include "devices/flopdrv.h"
 
 
+/* supported versions */
+typedef enum
+{
+	NEC765A = 0,
+	NEC765B = 1,
+	SMC37C78 = 2
+} NEC765_VERSION;
+
 #define NEC765_DAM_DELETED_DATA 0x0f8
 #define NEC765_DAM_DATA 0x0fb
 
@@ -25,7 +33,7 @@ typedef struct nec765_interface
 } nec765_interface;
 
 /* init nec765 interface */
-void nec765_init(nec765_interface *, int version);
+void nec765_init(nec765_interface *iface, NEC765_VERSION version);
 /* set nec765 terminal count input state */
 void nec765_set_tc_state(int);
 /* set nec765 ready input*/
@@ -41,14 +49,6 @@ READ8_HANDLER(nec765_data_r);
 WRITE8_HANDLER(nec765_data_w);
 /* read of main status register */
 READ8_HANDLER(nec765_status_r);
-
-/* supported versions */
-typedef enum
-{
-	NEC765A = 0,
-	NEC765B = 1,
-	SMC37C78 = 2
-} NEC765_VERSION;
 
 /* dma acknowledge with write */
 WRITE8_HANDLER(nec765_dack_w);
