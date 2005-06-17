@@ -66,7 +66,7 @@ typedef struct nec765
 {
 	unsigned long	sector_counter;
 	/* version of fdc to emulate */
-	int version;
+	NEC765_VERSION version;
 	/* main status register */
 	unsigned char    FDC_main;
 	/* data register */
@@ -1505,7 +1505,7 @@ static int nec765_get_command_byte_count(void)
 
 				/* configure */
 				case 0x013:
-					return 3;
+					return 4;
 
 				/* dumpreg */
 				case 0x0e:

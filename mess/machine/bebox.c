@@ -96,6 +96,7 @@
 #include "machine/mpc105.h"
 #include "machine/mc146818.h"
 #include "machine/pic8259.h"
+#include "machine/8237dma.h"
 #include "machine/idectrl.h"
 #include "machine/pci.h"
 
@@ -498,6 +499,110 @@ static const struct pc_vga_interface bebox_vga_interface =
 
 /*************************************
  *
+ *	8237 DMA
+ *
+ *************************************/
+
+static data8_t dma_offset[2][4];
+static data8_t at_pages[0x10];
+
+
+static READ8_HANDLER(at_page8_r)
+{
+	data8_t data = at_pages[offset % 0x10];
+
+	switch(offset % 8)
+	{
+		case 1:
+			data = dma_offset[(offset / 8) & 1][2];
+			break;
+		case 2:
+			data = dma_offset[(offset / 8) & 1][3];
+			break;
+		case 3:
+			data = dma_offset[(offset / 8) & 1][1];
+			break;
+		case 7:
+			data = dma_offset[(offset / 8) & 1][0];
+			break;
+	}
+	return data;
+}
+
+
+
+static WRITE8_HANDLER(at_page8_w)
+{
+	at_pages[offset % 0x10] = data;
+
+	switch(offset % 8)
+	{
+		case 1:
+			dma_offset[(offset / 8) & 1][2] = data;
+			break;
+		case 2:
+			dma_offset[(offset / 8) & 1][3] = data;
+			break;
+		case 3:
+			dma_offset[(offset / 8) & 1][1] = data;
+			break;
+		case 7:
+			dma_offset[(offset / 8) & 1][0] = data;
+			break;
+	}
+}
+
+
+
+READ64_HANDLER(bebox_page_r)
+{
+	return read64be_with_read8_handler(at_page8_r, offset, mem_mask);
+}
+
+
+
+WRITE64_HANDLER(bebox_page_w)
+{
+	write64be_with_write8_handler(at_page8_w, offset, data, mem_mask);
+}
+
+
+
+static data8_t bebox_dma_read_byte(int channel, offs_t offset)
+{
+	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
+		& 0xFF0000;
+	return program_read_byte(page_offset + offset);
+}
+
+
+
+static void bebox_dma_write_byte(int channel, offs_t offset, data8_t data)
+{
+	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
+		& 0xFF0000;
+	program_write_byte(page_offset + offset, data);
+}
+
+
+
+static const struct dma8237_interface bebox_dma =
+{
+	0,
+	TIME_IN_USEC(1),
+
+	bebox_dma_read_byte,
+	bebox_dma_write_byte,
+
+	{ 0, 0, pc_fdc_dack_r, 0 },
+	{ 0, 0, pc_fdc_dack_w, 0 },
+	0
+};
+
+
+
+/*************************************
+ *
  *	Driver main
  *
  *************************************/
@@ -540,6 +645,9 @@ DRIVER_INIT( bebox )
 	pic8259_init(2, bebox_pic_set_int_line);
 	ide_controller_init_custom(0, &bebox_ide_interface, NULL);
 	pc_vga_init(&bebox_vga_interface, &cirrus_svga_interface);
+
+	dma8237_init(2);
+	dma8237_config(0, &bebox_dma);
 
 	/* install VGA memory */
 	vram_begin = 0xC1000000;

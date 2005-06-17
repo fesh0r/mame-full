@@ -14,8 +14,23 @@
 #include "machine/mc146818.h"
 #include "machine/pc_fdc.h"
 #include "machine/pci.h"
+#include "machine/8237dma.h"
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
+
+
+static READ8_HANDLER(at_dma8237_1_r)  { return dma8237_1_r(offset / 2); }
+static WRITE8_HANDLER(at_dma8237_1_w) { dma8237_1_w(offset / 2, data); }
+
+static READ64_HANDLER( bebox_dma8237_1_r )
+{
+	return read64be_with_read8_handler(at_dma8237_1_r, offset, mem_mask);
+}
+
+static WRITE64_HANDLER( bebox_dma8237_1_w )
+{
+	write64be_with_write8_handler(at_dma8237_1_w, offset, data, mem_mask);
+}
 
 static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 	AM_RANGE(0x7FFFF0F0, 0x7FFFF0F7) AM_READWRITE( bebox_cpu0_imask_r, bebox_cpu0_imask_w )
@@ -24,9 +39,12 @@ static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 	AM_RANGE(0x7FFFF3F0, 0x7FFFF3F7) AM_READWRITE( bebox_crossproc_interrupts_r, bebox_crossproc_interrupts_w )
 	AM_RANGE(0x7FFFF4F0, 0x7FFFF4F7) AM_WRITE( bebox_processor_resets_w )
 
+	AM_RANGE(0x80000000, 0x8000001F) AM_READWRITE( dma8237_64be_0_r, dma8237_64be_0_w )
 	AM_RANGE(0x80000020, 0x8000003F) AM_READWRITE( pic8259_64be_0_r, pic8259_64be_0_w )
 	AM_RANGE(0x80000070, 0x8000007F) AM_READWRITE( mc146818_port64be_r, mc146818_port64be_w )
+	AM_RANGE(0x80000080, 0x8000009F) AM_READWRITE( bebox_page_r, bebox_page_w)
 	AM_RANGE(0x800000A0, 0x800000BF) AM_READWRITE( pic8259_64be_1_r, pic8259_64be_1_w )
+	AM_RANGE(0x800000C0, 0x800000DF) AM_READWRITE( bebox_dma8237_1_r, bebox_dma8237_1_w)
 	AM_RANGE(0x800001F0, 0x800001F7) AM_READWRITE( bebox_800001F0_r, bebox_800001F0_w )
 	AM_RANGE(0x800002F8, 0x800002FF) AM_READWRITE( uart8250_64be_1_r, uart8250_64be_1_w )
 	AM_RANGE(0x80000380, 0x80000387) AM_READWRITE( uart8250_64be_2_r, uart8250_64be_2_w )

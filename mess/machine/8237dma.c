@@ -434,14 +434,19 @@ void dma8237_run_transfer(int which, int channel)
 
 
 
-/******************* Standard 8-bit/32-bit CPU interfaces *******************/
+/******************* Standard 8-bit/32-bit/64-bit CPU interfaces *******************/
 
- READ8_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
- READ8_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
+READ8_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
+READ8_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
 WRITE8_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
 WRITE8_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
 
-READ32_HANDLER( dma8237_32_0_r ) { return read32le_with_read8_handler(dma8237_0_r, offset, mem_mask); }
-READ32_HANDLER( dma8237_32_1_r ) { return read32le_with_read8_handler(dma8237_1_r, offset, mem_mask); }
-WRITE32_HANDLER( dma8237_32_0_w ) { write32le_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
-WRITE32_HANDLER( dma8237_32_1_w ) { write32le_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }
+READ32_HANDLER( dma8237_32le_0_r ) { return read32le_with_read8_handler(dma8237_0_r, offset, mem_mask); }
+READ32_HANDLER( dma8237_32le_1_r ) { return read32le_with_read8_handler(dma8237_1_r, offset, mem_mask); }
+WRITE32_HANDLER( dma8237_32le_0_w ) { write32le_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
+WRITE32_HANDLER( dma8237_32le_1_w ) { write32le_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }
+
+READ64_HANDLER( dma8237_64be_0_r ) { return read64be_with_read8_handler(dma8237_0_r, offset, mem_mask); }
+READ64_HANDLER( dma8237_64be_1_r ) { return read64be_with_read8_handler(dma8237_1_r, offset, mem_mask); }
+WRITE64_HANDLER( dma8237_64be_0_w ) { write64be_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
+WRITE64_HANDLER( dma8237_64be_1_w ) { write64be_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }
