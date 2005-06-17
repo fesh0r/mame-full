@@ -32,7 +32,7 @@ Some bugs left :
 #include "cpu/z80/z80.h"		/* for cycle tables */
 #include "vidhrdw/m6845.h"		/* CRTC display */
 #include "includes/amstrad.h"
-#include "includes/nec765.h"	/* for floppy disc controller */
+#include "machine/nec765.h"	/* for floppy disc controller */
 #include "devices/dsk.h"		/* for CPCEMU style disk images */
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"

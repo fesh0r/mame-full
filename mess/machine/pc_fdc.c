@@ -12,8 +12,14 @@
 **********************************************************************/
 
 #include "machine/pc_fdc.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 
+
+/* if not 1, DACK and TC inputs to FDC are disabled, and DRQ and IRQ are held
+ * at high impedance i.e they are not affective */
+#define PC_FDC_FLAGS_DOR_DMA_ENABLED	(1<<3)
+#define PC_FDC_FLAGS_DOR_FDC_ENABLED	(1<<2)
+#define PC_FDC_FLAGS_DOR_MOTOR_ON		(1<<4)
 
 #define LOG_FDC		0
 
@@ -310,7 +316,7 @@ READ8_HANDLER ( pc_fdc_r )
     }
 
 	if (LOG_FDC)
-		logerror("pc_fdc_r(): offset=%d result=0x%02X\n", offset, data);
+		logerror("pc_fdc_r(): pc=0x%08x offset=%d result=0x%02X\n", (unsigned) activecpu_get_reg(REG_PC), offset, data);
 	return data;
 }
 
@@ -319,7 +325,7 @@ READ8_HANDLER ( pc_fdc_r )
 WRITE8_HANDLER ( pc_fdc_w )
 {
 	if (LOG_FDC)
-		logerror("pc_fdc_w(): offset=%d data=0x%02X\n", offset, data);
+		logerror("pc_fdc_w(): pc=0x%08x offset=%d data=0x%02X\n", (unsigned) activecpu_get_reg(REG_PC), offset, data);
 
 	switch(offset)
 	{

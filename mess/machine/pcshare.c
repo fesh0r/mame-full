@@ -42,7 +42,7 @@
 #include "includes/centroni.h"
 
 #include "machine/pc_hdc.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 
 #include "includes/pcshare.h"
 #include "mscommon.h"
@@ -374,6 +374,7 @@ static void pc_fdc_dma_drq(int state, int read_)
 
 static const struct pc_fdc_interface fdc_interface =
 {
+	NEC765A,
 	pc_fdc_interrupt,
 	pc_fdc_dma_drq,
 };

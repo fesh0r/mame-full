@@ -17,10 +17,11 @@
                 PCW and PC drivers
 	- resolve "ready" state stuff (ready state when reset for PC, ready state change while processing command AND
 	while idle)
+
 ***************************************************************************/
 
 #include "driver.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 
 typedef enum
 {
@@ -33,7 +34,7 @@ typedef enum
 
 /* uncomment the following line for verbose information */
 #define LOG_VERBOSE		1
-#define LOG_COMMAND		1
+#define LOG_COMMAND		0
 #define LOG_EXTRA		0
 #define LOG_INTERRUPT	0
 
@@ -1752,7 +1753,7 @@ static void nec765_setup_command(void)
 		NULL,						/* [11] */
 		"Perpendicular Mode",		/* [12] */
 		"Configure",				/* [13] */
-		"Lock"						/* [13] */
+		"Lock"						/* [14] */
 	};
 
 	mess_image *img = current_image();
@@ -1922,7 +1923,12 @@ static void nec765_setup_command(void)
 		else
 		{
 			/* no int */
-			nec765_setup_invalid();
+			fdc.nec765_result_bytes[0] = 0x80;
+			/* return pcn */
+			fdc.nec765_result_bytes[1] = fdc.pcn[fdc.drive];
+
+			/* return result */
+			nec765_setup_result_phase(2);
 		}
 		break;
 
@@ -2034,6 +2040,7 @@ static void nec765_setup_command(void)
 				break;
 
 			case 0x13:		/* configure */
+				nec765_idle();
 				break;
 				
 			case 0x0e:		/* dump reg */

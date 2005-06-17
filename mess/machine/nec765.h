@@ -1,3 +1,14 @@
+/***************************************************************************
+
+	machine/nec765.h
+
+	Functions to emulate a NEC765/Intel 8272 compatible floppy disk controller
+
+***************************************************************************/
+
+#ifndef NEC765_H
+#define NEC765_H
+
 #include "devices/flopdrv.h"
 
 
@@ -25,11 +36,11 @@ void nec765_set_ready_int(void);
 void nec765_idle(void);
 
 /* read of data register */
- READ8_HANDLER(nec765_data_r);
+READ8_HANDLER(nec765_data_r);
 /* write to data register */
 WRITE8_HANDLER(nec765_data_w);
 /* read of main status register */
- READ8_HANDLER(nec765_status_r);
+READ8_HANDLER(nec765_status_r);
 
 /* supported versions */
 typedef enum
@@ -42,7 +53,7 @@ typedef enum
 /* dma acknowledge with write */
 WRITE8_HANDLER(nec765_dack_w);
 /* dma acknowledge with read */
- READ8_HANDLER(nec765_dack_r);
+READ8_HANDLER(nec765_dack_r);
 
 /* reset nec765 */
 void nec765_reset(int);
@@ -70,3 +81,6 @@ void nec765_set_reset_state(int);
 /* this is set if the FDC encounters a Deleted Data Mark when executing a read data
 command, or FDC encounters a Data Mark when executing a read deleted data command */
 #define NEC765_ST2_CONTROL_MARK (1<<6)
+
+#endif /* NEC765_H */
+

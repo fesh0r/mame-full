@@ -33,7 +33,7 @@
 #include "includes/centroni.h"
 
 #include "machine/pc_hdc.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "includes/amstr_pc.h"
 #include "includes/europc.h"
 #include "includes/ibmpc.h"

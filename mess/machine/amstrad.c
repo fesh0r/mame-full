@@ -24,7 +24,7 @@ rom/ram selection
 #include "includes/amstrad.h"
 //#include "systems/i8255.h"
 #include "machine/8255ppi.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "devices/dsk.h"
 #include "devices/cassette.h"
 #include "sound/ay8910.h"

@@ -44,7 +44,7 @@
 /* - IRQ of NEC765 is connected to INT of Z80 */
 /* PI-5 interface is required. mode 2 of the 8255 is used to communicate with the FD-5 */
 
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "devices/cassette.h"
 #include "image.h"
 

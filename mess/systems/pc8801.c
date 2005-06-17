@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.37 2005/05/11 00:59:25 npwoods Exp $
+  $Id: pc8801.c,v 1.38 2005/06/17 02:12:55 npwoods Exp $
 
 ***************************************************************************/
 
@@ -9,7 +9,7 @@
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/pc8801.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "machine/8255ppi.h"
 #include "includes/d88.h"
 #include "devices/basicdsk.h"

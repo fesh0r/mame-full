@@ -115,6 +115,8 @@ static data32_t bebox_crossproc_interrupts;
  *
  *************************************/
 
+static void bebox_update_interrupts(void);
+
 static void bebox_mbreg32_w(data32_t *target, data64_t data, data64_t mem_mask)
 {
 	int i;
@@ -142,10 +144,15 @@ WRITE64_HANDLER( bebox_cpu0_imask_w )
 	data32_t old_imask = bebox_cpu_imask[0];
 
 	bebox_mbreg32_w(&bebox_cpu_imask[0], data, mem_mask);
-	if (LOG_CPUIMASK && (old_imask != bebox_cpu_imask[0]))
+
+	if (old_imask != bebox_cpu_imask[0])
 	{
-		logerror("BeBox CPU #0 pc=0x%08X imask=0x%08x\n",
-			(unsigned) activecpu_get_reg(REG_PC), bebox_cpu_imask[0]);
+		if (LOG_CPUIMASK)
+		{
+			logerror("BeBox CPU #0 pc=0x%08X imask=0x%08x\n",
+				(unsigned) activecpu_get_reg(REG_PC), bebox_cpu_imask[0]);
+		}
+		bebox_update_interrupts();
 	}
 }
 
@@ -154,10 +161,15 @@ WRITE64_HANDLER( bebox_cpu1_imask_w )
 	data32_t old_imask = bebox_cpu_imask[1];
 
 	bebox_mbreg32_w(&bebox_cpu_imask[1], data, mem_mask);
-	if (LOG_CPUIMASK && (old_imask != bebox_cpu_imask[1]))
+
+	if (old_imask != bebox_cpu_imask[1])
 	{
-		logerror("BeBox CPU #1 pc=0x%08X imask=0x%08x\n",
-			(unsigned) activecpu_get_reg(REG_PC), bebox_cpu_imask[1]);
+		if (LOG_CPUIMASK)
+		{
+			logerror("BeBox CPU #1 pc=0x%08X imask=0x%08x\n",
+				(unsigned) activecpu_get_reg(REG_PC), bebox_cpu_imask[1]);
+		}
+		bebox_update_interrupts();
 	}
 }
 
@@ -236,7 +248,7 @@ static void bebox_update_interrupts(void)
 		
 		if (LOG_INTERRUPTS)
 		{
-			logerror("bebox_update_interrupts(): CPU #%d [%08X|%08X] IRQ %s\n", cpunum,
+			logerror("\tbebox_update_interrupts(): CPU #%d [%08X|%08X] IRQ %s\n", cpunum,
 				bebox_interrupts, bebox_cpu_imask[cpunum], interrupt ? "on" : "off");
 		}
 
@@ -349,21 +361,17 @@ static const uart8250_interface bebox_uart_inteface =
  *
  *************************************/
 
-static void bebox_fdc_interrupt_delayed(int state)
+static void bebox_fdc_interrupt(int state)
 {
 	bebox_set_irq_bit(13, state);
 	pic8259_set_irq_line(0, 6, state);
-}
-
-static void bebox_fdc_interrupt(int state)
-{
-	timer_set(TIME_IN_MSEC(1), state, bebox_fdc_interrupt_delayed);
 }
 
 
 
 static const struct pc_fdc_interface bebox_fdc_interface =
 {
+	SMC37C78,
 	bebox_fdc_interrupt,
 	NULL
 };

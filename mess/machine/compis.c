@@ -20,7 +20,7 @@
 #include "machine/pic8259.h"
 #include "includes/compis.h"
 #include "includes/pit8253.h"
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "includes/msm8251.h"
 #include "devices/basicdsk.h"
 #include "devices/printer.h"

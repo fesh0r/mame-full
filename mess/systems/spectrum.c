@@ -151,7 +151,7 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "sound/speaker.h"
 
 /* +3 hardware */
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "cpuintrf.h"
 #include "devices/dsk.h"
 

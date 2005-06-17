@@ -94,7 +94,7 @@
  ******************************************************************************/
 #include "driver.h"
 // nec765 interface
-#include "includes/nec765.h"
+#include "machine/nec765.h"
 #include "devices/dsk.h"
 // pcw video hardware
 #include "includes/pcw.h"

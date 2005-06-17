@@ -8,12 +8,7 @@
 #define PC_FDC_H
 
 #include "driver.h"
-
-/* if not 1, DACK and TC inputs to FDC are disabled, and DRQ and IRQ are held
-at high impedance i.e they are not affective */ 
-#define PC_FDC_FLAGS_DOR_DMA_ENABLED (1<<3)
-#define PC_FDC_FLAGS_DOR_FDC_ENABLED (1<<2)
-#define PC_FDC_FLAGS_DOR_MOTOR_ON	(1<<4)
+#include "machine/nec765.h"
 
 /* interface has been seperated, so that it can be used in the super i/o chip */
 
@@ -31,6 +26,7 @@ at high impedance i.e they are not affective */
 /* main interface */
 struct pc_fdc_interface
 {
+	NEC765_VERSION nec765_type;
 	void (*pc_fdc_interrupt)(int);
 	void (*pc_fdc_dma_drq)(int,int);
 };

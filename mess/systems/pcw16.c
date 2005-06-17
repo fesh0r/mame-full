@@ -1202,6 +1202,7 @@ static void	pcw16_fdc_interrupt(int state)
 
 static const struct pc_fdc_interface pcw16_fdc_interface=
 {
+	NEC765A,
 	pcw16_fdc_interrupt,
 	NULL
 };
