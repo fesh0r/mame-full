@@ -362,6 +362,8 @@ static const uart8250_interface bebox_uart_inteface =
  *
  *************************************/
 
+#define FDC_DMA 2
+
 static void bebox_fdc_interrupt(int state)
 {
 	bebox_set_irq_bit(13, state);
@@ -370,11 +372,18 @@ static void bebox_fdc_interrupt(int state)
 
 
 
+static void bebox_fdc_dma_drq(int state, int read_)
+{
+	dma8237_drq_write(0, FDC_DMA, state);
+}
+
+
+
 static const struct pc_fdc_interface bebox_fdc_interface =
 {
 	SMC37C78,
 	bebox_fdc_interrupt,
-	NULL
+	bebox_fdc_dma_drq
 };
 
 
