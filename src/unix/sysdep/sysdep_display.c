@@ -157,6 +157,12 @@ int sysdep_display_change_params(
       !sysdep_display_properties.mode_info[new_params->video_mode])
     new_params->video_mode = orig_params.video_mode;
 
+  if (new_params->width > new_params->max_width)
+  	new_params->max_width = new_params->width;
+
+  if (new_params->height > new_params->max_height)
+  	new_params->max_height = new_params->height;
+
   /* Check and adjust the new params */
   if (sysdep_display_check_params(new_params))
   {
@@ -264,9 +270,8 @@ int sysdep_display_change_params(
   
 sysdep_display_change_params_error:
   /* oops this sorta sucks, FIXME don't use exit! */
-  fprintf(stderr, "Fatal error in sysdep_display_change_params\n");
   sysdep_display_exit();
-  exit(1);
+  osd_die("Fatal error in sysdep_display_change_params\n");
   return 0; /* shut up warnings, never reached */
 }
 
