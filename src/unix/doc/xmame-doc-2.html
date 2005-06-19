@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML
 ><HEAD
 ><TITLE
@@ -5,10 +6,14 @@
   </TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REL="HOME"
+TITLE="XMAME/XMESS DOCUMENTATION
+  "
 HREF="xmame-doc.html"><LINK
 REL="PREVIOUS"
+TITLE="XMAME/XMESS DOCUMENTATION
+  "
 HREF="xmame-doc.html"><LINK
 REL="NEXT"
 TITLE="Xmame Frequently Asked Questions
@@ -29,7 +34,7 @@ CELLSPACING="0"
 ><TH
 COLSPAN="3"
 ALIGN="center"
-></TH
+>XMAME/XMESS DOCUMENTATION</TH
 ></TR
 ><TR
 ><TD
@@ -66,8 +71,8 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="XMAME-DOC-2"
-></A
->Compiling, Setting Up and Starting Xmame/Xmess</H1
+>Compiling, Setting Up and Starting Xmame/Xmess</A
+></H1
 ><P
 >Note: This section is not a Unix tutorial. You need to know some basic  Unix commands to compile and install xmame/xmess.
   </P
@@ -77,8 +82,8 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN91"
-></A
->Requirements</H2
+>Requirements</A
+></H2
 ><P
 ></P
 ><UL
@@ -121,18 +126,15 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN106"
-></A
->Follow these steps to compile xmame/xmess</H2
+>Follow these steps to compile xmame/xmess</A
+></H2
 ><P
 ></P
 ><OL
 TYPE="1"
 ><LI
 ><P
->See <A
-HREF="xmame-doc-2.html#COMPILENOTES"
->Compile Notes for Specific Operating Systems</A
-> for platform specific compiling information.
+>See Compile Notes for Specific Operating Systems for platform specific compiling information.
     </P
 ></LI
 ><LI
@@ -173,377 +175,16 @@ CLASS="PROGRAMLISTING"
 ></LI
 ><LI
 ><P
->After extracting the archive, change to the subdirectory created by  the extraction process. For example, after extracting the xmame-0.81.1.tar.bz2 archive, a directory named xmame-0.81.1 is created; change to it. This directory is the top of the source tree.
+>After extracting the archive, chan to do if it doesn't.
     </P
-></LI
-><LI
-><P
->Edit the Makefile (a link to makefile.unix) and change the settings according to your system. The default makefile.unix is preconfigured to run under X11/Linux. Be careful when you edit this file.
-    </P
-><P
-></P
-><UL
-><LI
-><P
->If you intend to compile in X11 joystick support, type the following to see the available Xdevice list:
-     </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make xlistdev; ./xlistdev
-     </PRE
-></TD
-></TR
-></TABLE
-></LI
-><LI
-><P
->Choose the desired device and re-edit Makefile, setting the option X11_JOYNAME to the correct device.
-     </P
-></LI
-></UL
-></LI
-><LI
-><P
->Compile xmame/xmess by typing:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make
-    </PRE
-></TD
-></TR
-></TABLE
-></LI
-><LI
-><P
->If the compile fails, report the problem to the author.
-    </P
-></LI
-><LI
-><P
->*** YOU MAY NEED TO BE root TO PERFORM THIS STEP *** To install xmame/xmess, type:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make install
-    </PRE
-></TD
-></TR
-></TABLE
-></LI
-><LI
-><P
->If you want you can now build xmame/xmess for another target/display method, otherwise skip to the next step.
-    </P
-><P
-></P
-><OL
-TYPE="a"
-><LI
-><P
->If you want to also build for another target repeat repeat the &ldquo;make&rdquo; and &ldquo;make install&rdquo; steps adding &ldquo;TARGET=&lt;target&gt;&rdquo; to the make command for example:
-     </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make TARGET=mess
-make install
-     </PRE
-></TD
-></TR
-></TABLE
-></LI
-><LI
-><P
->If you want to also build for another display method repeat the &ldquo;make&rdquo; and &ldquo;make install&rdquo; steps adding &ldquo;DISPLAY_METHOD=&lt;method&gt;&rdquo; to the make command for example:
-     </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make DISPLAY_METHOD=svgalib
-make install
-     </PRE
-></TD
-></TR
-></TABLE
-></LI
-><LI
-><P
->You can also combine the 2 above for example:
-     </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->make TARGET=mess DISPLAY_METHOD=svgalib
-make install
-     </PRE
-></TD
-></TR
-></TABLE
-></LI
-></OL
-></LI
-><LI
-><P
->In your home directory, create a subdirectory called .xmame.
-    </P
-></LI
-><LI
-><P
->From the top of the source tree, copy the file doc/xmamerc.dist to the &dollar;&lcub;HOME&rcub;/.xmame/ directory. (For xmess do this for xmessrc)
-    </P
-></LI
-><LI
-><P
->If desired, copy xmamerc.dist to the global xmamerc location as &quot;xmamerc&quot; (for xmess, copy xmamerc.dist to xmessrc). The global xmamerc location is defined in the Makefile.
-    </P
-></LI
-><LI
-><P
->Edit &dollar;&lcub;HOME&rcub;/.xmame/xmamerc to match your preferences. (For xmess, edit &dollar;&lcub;HOME&rcub;/.xmess/xmessrc)
-    </P
-></LI
-><LI
-><P
->Be sure that the DISPLAY and PATH environment variables are  set correctly.
-    </P
-></LI
-><LI
-><P
->Make sure your ROM images are installed.
-    </P
-></LI
-><LI
-><P
->Start the X-Window System. (Unless you compiled for a different display method in which case you skip this step.)
-    </P
-></LI
-><LI
-><P
->Start xmame/xmess. For example:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="90%"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->/usr/local/bin/xmame.x11 dkong
-    </PRE
-></TD
-></TR
-></TABLE
-></LI
-></OL
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN170"
-></A
->If you have problems compiling, installing and starting xmame/xmess...</H2
-><P
-></P
-><UL
-><LI
-><P
->Read  <A
-HREF="xmame-doc-3.html#XMAMEFAQ"
->Xmame frequently asked questions</A
->
-    </P
-></LI
-><LI
-><P
->Read (the recent parts of) <A
-HREF="xmame-doc-7.html#CHANGELOGS"
->Changelogs</A
->. They might contain some hints about recent changes which aren't fully documented yet.
-    </P
-></LI
-><LI
-><P
->Check <A
-HREF="xmame-doc-2.html#COMPILENOTES"
->Compile Notes for Specific Operating Systems</A
-> for operating system-specific notes. You may need to do something special for your operating system.
-    </P
-></LI
-><LI
-><P
->Check Display subsystem specific comments and notes for display subsystem-specific notes. You may need to do something special for your display system.
-    </P
-></LI
-><LI
-><P
->If you get an error about gz_open and a bunch of other functions not found during linking, read: <A
-HREF="xmame-doc-3.html#GZOPEN"
->FAQ: Why do I get gz_open symbol not while compiling?</A
-> and <A
-HREF="xmame-doc-3.html#ZLIB"
->FAQ: Why do I get zlib.h not found?</A
->.
-    </P
-></LI
-><LI
-><P
->Be sure that the rompath in your xmamerc/xmessrc is correct; see <A
-HREF="xmame-doc-3.html#FILELOCATIONS"
->FAQ: Where do roms.images.etc go?</A
->.
-    </P
-></LI
-><LI
-><P
->Check xmamerc/xmessrc: Is it configured correctly?
-    </P
-></LI
-><LI
-><P
->Are you getting messages that you are missing files? Maybe you are missing PROMs; see <A
-HREF="xmame-doc-3.html#GAMENOTWORKING"
->FAQ: Why doesn't a game work?</A
-> and <A
-HREF="xmame-doc-3.html#PROMS"
->FAQ: What are PROMs?</A
->
-    </P
-></LI
-><LI
-><P
->Is the program in your PATH?
-    </P
-></LI
-><LI
-><P
->The svgalib/xf86_dga build of xmame/xmess requires setuid root. Are your permissions correct?
-    </P
-></LI
-><LI
-><P
->Try asking the friendly folks at the newsgroup alt.games.mame to see if anyone else has experienced the same problem as you.
-    </P
-></LI
-><LI
-><P
->Try mailing to the xmame mailinglist, see <A
-HREF="xmame-doc-4.html#MAIL"
->Mail</A
-> for more information.
-    </P
-></LI
-></UL
-><P
->If all else fails, send email to the current maintainer of the xmame/xmess project. See <A
-HREF="xmame-doc-4.html#MAIL"
->Mail</A
-> for contact information.
-   </P
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN209"
-></A
->Compile Notes for Specific Operating Systems <A
-NAME="COMPILENOTES"
-></A
-></H2
 ><DIV
 CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN212"
-></A
->Linux i386</H3
-><P
->Linux i386 is the platform I (Hans) use, so xmame should compile without any hassles on Linux i386. (Note: The same is true for Lawrence Gold.)
-    </P
-><P
->Some bugs have been found and worked around when using gcc27x, please use egcs if available. If more gcc bugs popup, egcs will be  made mandatory, but I hope that won't be necessary.
-    </P
-><P
->It has been reported that some SoundBlaster AWE32 and VIA-82cxxx (onboard) cards do not  correctly manage get_freespace(). If so, you'll get some audio_ioctl() calls failed messages in console, and if everything goes right a message that xmame/xmess is falling back to timer based audio. If  this doesn't happen and sound isn't right, try forcing timer-based  audio by starting xmame/xmess with -timer.
-    </P
-><P
->SB64/128PCI cards (Ensoniq 137x-based cards) also do not correctly manage get_freespace(). Unfortunately, this doesn't result in failed ioctl's; instead, they just ignore the calls. Xmame tries to autodetect this and to fall back to timer-based audio. If this doesn't happen and sound isn't right, try forcing timer based audio by starting xmame/xmess with -timer.
-    </P
-><P
->Some have reported success using ALSA with OSS emulation (see <A
-HREF="http://www.alsa-project.org/"
-TARGET="_top"
->http://www.alsa-project.org/</A
->). If you experience the above problems, this would certainly be worth a try.
-    </P
-><P
->Also, I've tested sound using the PC-Speaker driver module. It works!! But it needs -timer. Again, it should do this  automagically, but you know what to do if it doesn't.
-    </P
-><P
->Distribution-Specific Comments:
-    </P
-><P
-></P
-><UL
-><LI
-><P
->S.u.S.E. Linux: Besides the gcc compiler and libc libraries, which are both from the &quot;d&quot; series, other packages  need to be installed or the build will fail. If compiling for svgalib, the svgalib package from series &quot;d&quot; installed. If compiling for the X-Window System, you must have xdevel package from series &quot;x&quot; installed. These packages can be installed using the &quot;yast&quot; utility included in the S.u.S.E. distribution.
-     </P
-></LI
-><LI
-><P
->Red Hat Linux is the operating system used by the author. xmame/xmess  should build correctly under Red Hat Linux. :-)
-     </P
-></LI
-></UL
-></DIV
-><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
-><A
-NAME="AEN227"
-></A
->Linux PowerPC</H3
+NAME="AEN125"
+>Linux PowerPC</A
+></H3
 ><P
 >Linux PowerPC should work from now on. Here's an email from Andreas Varga <A
 HREF="mailto:sid@skater.htu.tuwien.ac.at"
@@ -624,9 +265,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN255"
-></A
->IRIX</H3
+NAME="AEN153"
+>IRIX</A
+></H3
 ><P
 >Use the generic unix arch for those machines that have no  sound support installed (xmame/xmess uses the dmedia package or the newer AL package on IRIX systems).
     </P
@@ -645,9 +286,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN261"
-></A
->HPUX</H3
+NAME="AEN159"
+>HPUX</A
+></H3
 ><P
 >Use the generic unix arch. In HP-UX, gcc and gnu-make are MANDATORY.
     </P
@@ -657,9 +298,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN264"
-></A
->ULTRIX</H3
+NAME="AEN162"
+>ULTRIX</A
+></H3
 ><P
 >Use the generic unix arch.
     </P
@@ -697,16 +338,16 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN276"
-></A
->SunOS &amp; Solaris</H3
+NAME="AEN174"
+>SunOS &amp; Solaris</A
+></H3
 ><P
 >There are 2 relevant architecture options available in the makefile: 
     </P
 ><TABLE
 BORDER="0"
 BGCOLOR="#E0E0E0"
-WIDTH="100%"
+WIDTH="90%"
 ><TR
 ><TD
 ><PRE
@@ -735,7 +376,7 @@ CLASS="PROGRAMLISTING"
 ><TABLE
 BORDER="0"
 BGCOLOR="#E0E0E0"
-WIDTH="100%"
+WIDTH="90%"
 ><TR
 ><TD
 ><PRE
@@ -757,9 +398,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN287"
-></A
->Openstep</H3
+NAME="AEN185"
+>Openstep</A
+></H3
 ><P
 >You must use the OpenStep gnumake, not make. You must also use the NeXT/Apple cc rather than gcc. Also use only the optimisation options as recommended for OpenStep in the makefile, others will cause the resulting executable to crash. The OpenStep assembler on i386 architectures is incompatible with the MAME assembler CPU cores and thus you must use the C versions (Use i386-noasm instead of i386 when compiling for i386).
     </P
@@ -770,6 +411,8 @@ NAME="AEN287"
 >On an OpenStep keyboard the functions keys do not all operate as expected. Using the command key in conjuction with a number key generates the equivalent function key within xmame, with 0, - and = + representing F10, F11 and F12 resepectively. Also note that the ALT + keys cannot be mapped. As most games tend to use this as the default fire button it is exteremly useful to remap this globally the first time you run xmame.
     </P
 ></DIV
+></LI
+></OL
 ></DIV
 ></DIV
 ><DIV
@@ -816,7 +459,7 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
-></TD
+>XMAME/XMESS DOCUMENTATION</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"

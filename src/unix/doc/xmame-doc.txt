@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-10 May 2005
+7 June 2005
 
 <authorgroup>
 <author><firstname>Juan 
@@ -320,21 +320,6 @@ Also, I've tested sound using the PC-Speaker driver
 module. It works!! But it needs -timer. Again, it 
 should do this  automagically, but you know what to do 
 if it doesn't.
-
-Distribution-Specific Comments:
-
-* S.u.S.E. Linux: Besides the gcc compiler and libc 
-  libraries, which are both from the "d" series, other 
-  packages  need to be installed or the build will 
-  fail. If compiling for svgalib, the svgalib package 
-  from series "d" installed. If compiling for the 
-  X-Window System, you must have xdevel package from 
-  series "x" installed. These packages can be installed 
-  using the "yast" utility included in the S.u.S.E. distribution.
-
-* Red Hat Linux is the operating system used by the 
-  author. xmame/xmess  should build correctly under Red 
-  Hat Linux. :-)
 
  Linux PowerPC
 
@@ -2360,7 +2345,9 @@ maintainer. --Lawrence Gold)
 
  Unix sources and docs
 
-* The xmame/xmess sources[download/xmame-0.96.tar.bz2||xmame/xmess-0.96 sources]
+* The xmame/xmess sources
+
+  [download/xmame-0.97.tar.bz2||xmame/xmess-0.97 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2382,7 +2369,7 @@ maintainer. --Lawrence Gold)
 
 * [ftp://ftp.rx3.net/pub/arc/xmame/||xmame RPMs for several display targets]
 
-* [http://www.syntheticsw.com/~wizard/projects/slackware/||Slackware packages]
+* [http://www.linuxpackages.net/search_view.php?by=name&name=xmame&ver=10.1||Slackware packages]
 
  Xmame/xmess download mirrors
 
@@ -2412,7 +2399,9 @@ maintainer. --Lawrence Gold)
 
 * [http://it-mame.sourceforge.net/index2.html||it-mame]
 
-* [http://www.voicenet.com/~jceklosk/||jMame], a Java front-end (requires JRE 1.4.0)
+* [http://www.linuxrules.net/||JavaXmame], a Java front-end
+
+* [http://www.voicenet.com/~jceklosk/||jMame], another Java front-end (requires JRE 1.4.0)
 
 * [http://sourceforge.net/projects/kaf||KAF], the Khelben Arcade Frontend (requires QT)
 

@@ -2,9 +2,23 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.97, 13 June 2005
+	- Everything from MAME 0.97 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.97 (http://x.mame.net/changes-mess.html).
+	- When the emulation is unpaused, the keyboard state is cleared.  This 
+	  prevents keypresses from bleeding over from the user interface.
+	- The SDL driver now uses the correct green mask for RGB 565.  This 
+	  fixes a problem with SDL on DirectFB being unable to find a valid 
+	  video mode.  (Uli H.)
+	- The SDL driver now locks the video surface before retrieving the 
+	  pointer to its memory.  This fixes a crash with SDL on DirectFB.  
+	  (Uli H.)
+	- Fixed a few spots in the code for 4.3 BSD, e.g., OpenStep on NeXT.
+	- Fixed bugs in the Xv driver and the 6-tap effect that affected 
+	  big-endian architectures.  (Hans de Goede)
+
 Release 0.96, 10 May 2005
-	- Everything from MAME 0.96 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.96 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.96 and MESS 0.96.
 	- Fixed the RGB to YUV conversion used by the Xv driver so that it 
 	  conforms to the CCIR digital component video specifications.  Fixes 
 	  Bugzilla bug 691.  (Alex W. Jackson)

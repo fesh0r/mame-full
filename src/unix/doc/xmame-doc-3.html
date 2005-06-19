@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML
 ><HEAD
 ><TITLE
@@ -5,8 +6,10 @@
   </TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REL="HOME"
+TITLE="XMAME/XMESS DOCUMENTATION
+  "
 HREF="xmame-doc.html"><LINK
 REL="PREVIOUS"
 TITLE="Compiling, Setting Up and Starting Xmame/Xmess
@@ -31,7 +34,7 @@ CELLSPACING="0"
 ><TH
 COLSPAN="3"
 ALIGN="center"
-></TH
+>XMAME/XMESS DOCUMENTATION</TH
 ></TR
 ><TR
 ><TD
@@ -68,9 +71,9 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="XMAME-DOC-3"
-></A
 >Xmame Frequently Asked Questions<A
 NAME="XMAMEFAQ"
+></A
 ></A
 ></H1
 ><DIV
@@ -78,9 +81,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN295"
-></A
->What is MAME?</H2
+NAME="AEN193"
+>What is MAME?</A
+></H2
 ><P
 >MAME is an arcade machine emulator. Started in 1997 by Nicola  Salmoria, MAME started out as a series of emulators for  individual games. This series of emulators was combined into a  simgle multi-game emulator. This is the current form of MAME; no longer a one-man show, there are over 100 contributors to the project.
    </P
@@ -100,9 +103,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN301"
-></A
->What is MESS?</H2
+NAME="AEN199"
+>What is MESS?</A
+></H2
 ><P
 >MESS is just like MAME---a virtual machine emulator, only it doesn't emulate arcade machines but rather computers and consoles.
    </P
@@ -119,9 +122,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN306"
-></A
->What is xmame/xmess?</H2
+NAME="AEN204"
+>What is xmame/xmess?</A
+></H2
 ><P
 >Xmame/xmess are the Unix/X11 ports of the MAME and MESS projects. It makes MAME/MESS available on UNIX and similar systems using the X11R6 X-Window System (and SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
    </P
@@ -137,9 +140,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN311"
-></A
->What are the differences between MAME/MESS and xmame/xmess?</H2
+NAME="AEN209"
+>What are the differences between MAME/MESS and xmame/xmess?</A
+></H2
 ><P
 >None significant.
    </P
@@ -155,9 +158,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN316"
-></A
->What hardware and operating systems are supported?</H2
+NAME="AEN214"
+>What hardware and operating systems are supported?</A
+></H2
 ><P
 >Xmame runs on both little-endian and big-endian CPUs, using aligned integer access if needed and is compatible with 64 bit CPUs. The current list of supported CPUs in the makefile is:
    </P
@@ -315,210 +318,210 @@ TARGET="_top"
 ><UL
 ><LI
 ><P
->i386/linux/x11 (+DGA)  -&gt; Lawrence <TT
+>i386/linux/x11 (+DGA)  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/linux/svgalib  -&gt; Lawrence <TT
+>i386/linux/svgalib  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/linux/xgl  -&gt; Sven Goethel <TT
+>i386/linux/xgl  -&gt; Sven Goethel <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:sgoethel@jausoft.com"
 >sgoethel@jausoft.com</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/linux/xfx  -&gt; Lawrence <TT
+>i386/linux/xfx  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/linux/svgafx  -&gt; Lawrence <TT
+>i386/linux/svgafx  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/linux/ggi  -&gt; Christian <TT
+>i386/linux/ggi  -&gt; Christian <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:cpg@aladdin.de"
 >cpg@aladdin.de</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->alpha/linux/x11  -&gt; Christian <TT
+>alpha/linux/x11  -&gt; Christian <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:cpg@aladdin.de"
 >cpg@aladdin.de</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->alpha/digital unix/x11 *  -&gt; Lawrence <TT
+>alpha/digital unix/x11 *  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->powerpc/linux/x11  -&gt; Andreas <TT
+>powerpc/linux/x11  -&gt; Andreas <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:sid@skater.htu.tuwien.ac.at"
 >sid@skater.htu.tuwien.ac.at</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->powerpc/linux/svgalib  -&gt; Andreas <TT
+>powerpc/linux/svgalib  -&gt; Andreas <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:sid@skater.htu.tuwien.ac.at"
 >sid@skater.htu.tuwien.ac.at</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/freebsd/x11  -&gt; Jacob A. Hart <TT
+>i386/freebsd/x11  -&gt; Jacob A. Hart <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:c9710216@studentmail.newcastle.edu.au"
 >c9710216@studentmail.newcastle.edu.au</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/netbsd/x11  -&gt; Dave <TT
+>i386/netbsd/x11  -&gt; Dave <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:dave@dtsp.co.nz"
 >dave@dtsp.co.nz</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->alpha/netbsd/x11  -&gt; Christian <TT
+>alpha/netbsd/x11  -&gt; Christian <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:cpg@aladdin.de"
 >cpg@aladdin.de</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->Sparc/Solaris/x11  -&gt; Lawrence <TT
+>Sparc/Solaris/x11  -&gt; Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/Unixware7/x11 *  -&gt; Richard <TT
+>i386/Unixware7/x11 *  -&gt; Richard <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:xmame@frogface.ddns.org"
 >xmame@frogface.ddns.org</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->i386/openstep  -&gt; Pete French <TT
+>i386/openstep  -&gt; Pete French <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:pete@toybox.twisted.org.uk"
 >pete@toybox.twisted.org.uk</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->Sparc/SunOs  -&gt; Saga <TT
+>Sparc/SunOs  -&gt; Saga <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:jolletx@cybercable.fr"
 >jolletx@cybercable.fr</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ><LI
 ><P
->mips/irix/x11  -&gt; Dingus Family <TT
+>mips/irix/x11  -&gt; Dingus Family <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:ddingus@uswest.net"
 >ddingus@uswest.net</A
->&#62;</TT
+>&#62;</CODE
 >
     </P
 ></LI
 ></UL
 ><P
->We are always looking for people willing to test and answer questions about xmame on a new arch/os/display. This takes very little work and could help other people tremendously. If you're interested, mail Lawrence <TT
+>We are always looking for people willing to test and answer questions about xmame on a new arch/os/display. This takes very little work and could help other people tremendously. If you're interested, mail Lawrence <CODE
 CLASS="EMAIL"
 >&#60;<A
 HREF="mailto:gold@aros.net"
 >gold@aros.net</A
->&#62;</TT
+>&#62;</CODE
 >.
    </P
 ></DIV
@@ -527,9 +530,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN432"
-></A
->My system is supported but xmame/xmess gives me errors and fails. Why?</H2
+NAME="AEN330"
+>My system is supported but xmame/xmess gives me errors and fails. Why?</A
+></H2
 ><P
 >Xmame/xmess should run on 16, 24 and 32bpp true color displays. If your X server does not support any  of these display types, xmame/xmess will not run. Support for 8bpp pseudo color displays may return in future versions.
    </P
@@ -542,9 +545,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN436"
-></A
->What is the role of the xmamerc/xmessrc file?</H2
+NAME="AEN334"
+>What is the role of the xmamerc/xmessrc file?</A
+></H2
 ><P
 >A normal xmame/xmess invocation looks like:
    </P
@@ -574,9 +577,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN442"
-></A
->What is the syntax of the xmamerc/xmessrc file.</H2
+NAME="AEN340"
+>What is the syntax of the xmamerc/xmessrc file.</A
+></H2
 ><P
 >The syntax is quite simple:
    </P
@@ -622,10 +625,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN450"
-></A
+NAME="AEN348"
 >Where do roms, images, samples, highscores, configfiles, etc go? <A
 NAME="FILELOCATIONS"
+></A
 ></A
 ></H2
 ><DIV
@@ -633,9 +636,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN453"
-></A
->Roms/Samples</H3
+NAME="AEN351"
+>Roms/Samples</A
+></H3
 ><P
 >Xmame/xmess uses a &quot;:&quot; seperated rompath to find out which dirs to search for roms/samples.
     </P
@@ -692,9 +695,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN463"
-></A
->Read/write Diskette Images</H3
+NAME="AEN361"
+>Read/write Diskette Images</A
+></H3
 ><P
 >This section only applies to xmess emulations which support read/write diskette images and thus try to open the image read/write.
     </P
@@ -742,9 +745,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN472"
-></A
->Rom Cartridges/Read Only Diskette Images</H3
+NAME="AEN370"
+>Rom Cartridges/Read Only Diskette Images</A
+></H3
 ><P
 >Xmess begins by searching for cartdriges/disks from the current dir in the following way:
     </P
@@ -885,9 +888,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN491"
-></A
->Artwork</H3
+NAME="AEN389"
+>Artwork</A
+></H3
 ><P
 >Xmame/xmess searches every dir in the rompath for artwork in the following way:
     </P
@@ -952,9 +955,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN500"
-></A
->Xmame configuration</H3
+NAME="AEN398"
+>Xmame configuration</A
+></H3
 ><P
 >Xmame looks for the following configuration files and parses each one found. Files parsed later can overwrite options in previously parsed files:
     </P
@@ -990,9 +993,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN507"
-></A
->Game configuration</H3
+NAME="AEN405"
+>Game configuration</A
+></H3
 ><P
 >Game configuration files are kept on a per-user base in:
     </P
@@ -1016,9 +1019,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN511"
-></A
->Game state</H3
+NAME="AEN409"
+>Game state</A
+></H3
 ><P
 >Game state files are kept on a per-user base in:
     </P
@@ -1042,9 +1045,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN515"
-></A
->NVram</H3
+NAME="AEN413"
+>NVram</A
+></H3
 ><P
 >NVram files are kept on a per-user base in:
     </P
@@ -1068,9 +1071,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN519"
-></A
->Mem cards</H3
+NAME="AEN417"
+>Mem cards</A
+></H3
 ><P
 >Mem cards files are kept on a per-user base in:
     </P
@@ -1097,9 +1100,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN524"
-></A
->Screenshots</H3
+NAME="AEN422"
+>Screenshots</A
+></H3
 ><P
 >Screenshots, which can be made by pressing F12, are saved as png files in the directory from where xmame is started (cwd).
     </P
@@ -1129,9 +1132,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN530"
-></A
->High scores</H3
+NAME="AEN428"
+>High scores</A
+></H3
 ><P
 >High scores are stored in XMAMEROOT as defined in Makefile when building. This can be overridden by the hiscore_directory entry in xmamerc/xmessrc, which can again be overridden by the -hiscore-directory command line option.
     </P
@@ -1198,9 +1201,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN542"
-></A
->hiscore.dat</H3
+NAME="AEN440"
+>hiscore.dat</A
+></H3
 ><P
 >If you want to use high scores, xmame needs to load hiscore.dat to get high score info.
     </P
@@ -1220,9 +1223,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN548"
-></A
->cheat.dat</H3
+NAME="AEN446"
+>cheat.dat</A
+></H3
 ><P
 >If you want to use cheats, xmame needs to load cheat.dat to get cheat info.
     </P
@@ -1242,9 +1245,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN554"
-></A
->history.dat</H3
+NAME="AEN452"
+>history.dat</A
+></H3
 ><P
 >If you want to display some nice background info on games, xmame needs to load history.dat.
     </P
@@ -1264,9 +1267,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN560"
-></A
->Input logs</H3
+NAME="AEN458"
+>Input logs</A
+></H3
 ><P
 >Input logs are saved/read under the name specified after the -record / -playback option; this name is relative to the current path.
     </P
@@ -1276,9 +1279,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN563"
-></A
->Xmame/xmess still can't find files/store high scores</H3
+NAME="AEN461"
+>Xmame/xmess still can't find files/store high scores</A
+></H3
 ><P
 >Type &quot;xmame/xmess -showconfig | more&quot; and check that the rompath and hiscore_directory shown are correct and readable and writable. Otherwise, recheck xmamerc/xmessrc. Remember that xmess also searches the current dir.
     </P
@@ -1289,9 +1292,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN566"
-></A
->How do I start xmess/xmame ?</H2
+NAME="AEN464"
+>How do I start xmess/xmame ?</A
+></H2
 ><P
 >To start xmame, type
    </P
@@ -1340,9 +1343,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN575"
-></A
->What are the command line parameters for xmame/xmess?</H2
+NAME="AEN473"
+>What are the command line parameters for xmame/xmess?</A
+></H2
 ><P
 >To see a list of available parameters, type:
    </P
@@ -1371,10 +1374,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN581"
-></A
+NAME="AEN479"
 >What keys does xmame/xmess use?<A
 NAME="KEYBINDINGS"
+></A
 ></A
 ></H2
 ><P
@@ -1537,9 +1540,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN598"
-></A
->Why doesn't a game have sound?</H2
+NAME="AEN496"
+>Why doesn't a game have sound?</A
+></H2
 ><P
 ></P
 ><UL
@@ -1575,9 +1578,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN611"
-></A
->My sound seems lagged. / My sound Clicks. / What does -bufsize do?</H2
+NAME="AEN509"
+>My sound seems lagged. / My sound Clicks. / What does -bufsize do?</A
+></H2
 ><P
 >With the -bufsize commandline option or the bufsize configfile keyword, you can specify the number of frames of audio to buffer. The default is 2 frames.
    </P
@@ -1599,10 +1602,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN618"
-></A
+NAME="AEN516"
 >Why doesn't a game work? <A
 NAME="GAMENOTWORKING"
+></A
 ></A
 ></H2
 ><P
@@ -1640,10 +1643,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN632"
-></A
+NAME="AEN530"
 >What are PROMs? <A
 NAME="PROMS"
+></A
 ></A
 ></H2
 ><P
@@ -1665,9 +1668,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN639"
-></A
->Why is xmame/xmess slow?</H2
+NAME="AEN537"
+>Why is xmame/xmess slow?</A
+></H2
 ><P
 >Xmame/xmess is a compiled C program that is emulating hardware.  Software emulation of hardware always incurs a speed penalty. Here  are some things you can do:
    </P
@@ -1724,9 +1727,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN655"
-></A
->SPEEDUP &num; 1 - Inline compiling</H3
+NAME="AEN553"
+>SPEEDUP &num; 1 - Inline compiling</A
+></H3
 ><P
 >Try enabling inline compiling by commenting and uncommenting the following lines:
     </P
@@ -1750,9 +1753,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN659"
-></A
->SPEEDUP &num; 2 - Direct Graphics Access</H3
+NAME="AEN557"
+>SPEEDUP &num; 2 - Direct Graphics Access</A
+></H3
 ><P
 >For a big boost, try enabling DGA by uncommenting the following line:
     </P
@@ -1812,9 +1815,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN672"
-></A
->SPEEDUP &num; 3 - NASM</H3
+NAME="AEN570"
+>SPEEDUP &num; 3 - NASM</A
+></H3
 ><P
 >You can also try installing nasm and compiling the asm core, that helps a bit too.
     </P
@@ -1824,9 +1827,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN675"
-></A
->SPEEDUP &num; 4 - ICC</H3
+NAME="AEN573"
+>SPEEDUP &num; 4 - ICC</A
+></H3
 ><P
 >If you are running on an intel architecture machine, you could try to compile xmame with the Intel C Compiler. Some people have reported speed gains from +10&percnt;.
     </P
@@ -1837,9 +1840,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN678"
-></A
->I've got a dual processor machine. What can I do to take full advantage of this?</H2
+NAME="AEN576"
+>I've got a dual processor machine. What can I do to take full advantage of this?</A
+></H2
 ><P
 >Not much. Xmame is a single-threaded port of a single-threaded DOS app. Some degree of speedup will hopefully be found on an SMP machine since xmame is more likely to get to hog its one CPU for longer. But of course the same applies to any CPU-intensive program. And all the things one would normally do to any application to give it more CPU time (higher priority, kill or renice unecessary process, etc.) will work with xmame.
    </P
@@ -1852,9 +1855,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN682"
-></A
->Why doesn't my joystick handle diagonal movement correctly on my Intel x86 system?</H2
+NAME="AEN580"
+>Why doesn't my joystick handle diagonal movement correctly on my Intel x86 system?</A
+></H2
 ><P
 >Xmame/xmess uses autocalibrating, but you could try to use specific programs to calibrate it (jscal that comes with joystick  module works fine....).
    </P
@@ -1864,9 +1867,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN685"
-></A
->How do I enable XinputExtensions X11 based joystick in Xfree86?</H2
+NAME="AEN583"
+>How do I enable XinputExtensions X11 based joystick in Xfree86?</A
+></H2
 ><P
 >You need to edit XF86Config to enable the XInput section. See the  manual page for XF86Config.
    </P
@@ -1876,9 +1879,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN688"
-></A
->How do I read a manual page?</H2
+NAME="AEN586"
+>How do I read a manual page?</A
+></H2
 ><P
 >Easy. If you want to read the manual page for XF86Config, type: man XF86Config
    </P
@@ -1888,10 +1891,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN691"
-></A
+NAME="AEN589"
 >Why do I get gz_open symbol not found while compiling? <A
 NAME="GZOPEN"
+></A
 ></A
 ></H2
 ><P
@@ -1912,10 +1915,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN698"
-></A
+NAME="AEN596"
 >Why do I get zlib.h not found? <A
 NAME="ZLIB"
+></A
 ></A
 ></H2
 ><P
@@ -1930,9 +1933,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN703"
-></A
->When I run xmame.x11, nothing happens---no window pops up or anything. Help!</H2
+NAME="AEN601"
+>When I run xmame.x11, nothing happens---no window pops up or anything. Help!</A
+></H2
 ><P
 >Are you running a recent version of KDE, such as 2.1.1? It appears that there's a bug with KDE's window manager that prevents some X11 apps from popping up their main window. You can either run the SDL version of xmame, or try the following workaround, which several people have reported as being successful:
    </P
@@ -1955,9 +1958,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN707"
-></A
->Can I run xmame fullscreen?</H2
+NAME="AEN605"
+>Can I run xmame fullscreen?</A
+></H2
 ><P
 >Yes, of course you can. There are several ways to accomplish this, each with its own advantages and disadvantages.
    </P
@@ -1972,9 +1975,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN712"
-></A
->xmame.x11/DGA</H3
+NAME="AEN610"
+>xmame.x11/DGA</A
+></H3
 ><P
 >First, before recompiling, make sure you have an xserver with the &ldquo;xfree-dga&quot; extension enabled (do a &ldquo;xdpyinfo&rdquo; and see if you've got the &ldquo;xfree-dga&quot; extension); any recent release of XFree86 should have it.
     </P
@@ -1999,9 +2002,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN720"
-></A
->xmame.x11/Xv</H3
+NAME="AEN618"
+>xmame.x11/Xv</A
+></H3
 ><P
 >Xv is the X Window System video extension. Among other things, it supports hardware scaling if your graphics card (and X driver) is capable of doing so. You can achieve a very nice fullscreen display without taxing your cpu very much because the scaling will all be done by your video card.
     </P
@@ -2042,9 +2045,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN730"
-></A
->xmame.x11/OpenGL</H3
+NAME="AEN628"
+>xmame.x11/OpenGL</A
+></H3
 ><P
 >To use OpenGL, you must have:
     </P
@@ -2139,9 +2142,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN754"
-></A
->Cabinet Models</H4
+NAME="AEN652"
+>Cabinet Models</A
+></H4
 ><P
 >Cabinet model information is stored in the &quot;cab&quot; subdirectory of the directory you specified with the ROMPATH variable in the Makefile. Path information specified in xmamerc or with the 'rompath' shell environment variable is currently not used. Each cabinet model has it's own subdirectory. GLmame will first try to load either the user-specified cabinet model (using the -cabinet command-line option), or a model corresponding to the current game name. Failing that, it will use the generic &quot;glmame&quot; model.
      </P
@@ -2445,9 +2448,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN795"
-></A
->Present Limitations/Bugs</H4
+NAME="AEN693"
+>Present Limitations/Bugs</A
+></H4
 ><P
 ></P
 ><UL
@@ -2468,9 +2471,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN802"
-></A
->Future Work</H4
+NAME="AEN700"
+>Future Work</A
+></H4
 ><P
 ></P
 ><UL
@@ -2491,9 +2494,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN809"
-></A
->License</H4
+NAME="AEN707"
+>License</A
+></H4
 ><P
 >The GLmame code is based upon Mike Oliphant's GLmame code version 0.6. 
      </P
@@ -2509,9 +2512,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN814"
-></A
->Version History</H4
+NAME="AEN712"
+>Version History</A
+></H4
 ><P
 >v0.83 -- March 29th, 2001 ---------------------------
      </P
@@ -2631,9 +2634,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN855"
-></A
->Authors</H4
+NAME="AEN753"
+>Authors</A
+></H4
 ><P
 >Since GLmame version 0.7: Sven Goethel <A
 HREF="mailto:sgoethel@jausoft.com"
@@ -2673,9 +2676,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN866"
-></A
->xmame.x11/GLIDE</H3
+NAME="AEN764"
+>xmame.x11/GLIDE</A
+></H3
 ><P
 >To run with 3Dfx support, you must have:
     </P
@@ -2722,9 +2725,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN879"
-></A
->Common Questions (FAQ)</H4
+NAME="AEN777"
+>Common Questions (FAQ)</A
+></H4
 ><P
 >Q: When I run with Glide support, it just dumps core.
      </P
@@ -2743,9 +2746,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN885"
-></A
->Present Limitations/Bugs</H4
+NAME="AEN783"
+>Present Limitations/Bugs</A
+></H4
 ><P
 ></P
 ><UL
@@ -2766,9 +2769,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN892"
-></A
->Future Work</H4
+NAME="AEN790"
+>Future Work</A
+></H4
 ><P
 ></P
 ><UL
@@ -2784,9 +2787,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN897"
-></A
->License</H4
+NAME="AEN795"
+>License</A
+></H4
 ><P
 >The FXmame code is Copyright 1998 by Mike Oliphant. It may be used and distributed under the terms of the MAME license.
      </P
@@ -2796,9 +2799,9 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN900"
-></A
->Version History</H4
+NAME="AEN798"
+>Version History</A
+></H4
 ><P
 >v0.5 -- December 11th, 1998 ---------------------------
      </P
@@ -2876,9 +2879,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN926"
-></A
->Authors</H3
+NAME="AEN824"
+>Authors</A
+></H3
 ><P
 >Since fall of 2004: Hans de Goede
     </P
@@ -2899,9 +2902,9 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN932"
-></A
->xmame.SDL</H3
+NAME="AEN830"
+>xmame.SDL</A
+></H3
 ><P
 >The SDL library was meant to make it easy for programmers to make full screen applications. To start SDL in fullscreen mode, just run xmame.SDL with the option '-fullscreen'. If you want to know the resolutions that SDL can use, run &ldquo;xmame.SDL -listmodes&rdquo;, choose the resolution you want, and start &rdquo;xmame.SDL -modenumber &lt;insert chosen number here&gt;&rdquo;.
     </P
@@ -2927,9 +2930,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN940"
-></A
->I am only getting a few frames-per-second in xmame.x11/OpenGL. This sucks! What gives?</H2
+NAME="AEN838"
+>I am only getting a few frames-per-second in xmame.x11/OpenGL. This sucks! What gives?</A
+></H2
 ><P
 ></P
 ><UL
@@ -2950,9 +2953,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN947"
-></A
->When I run xmame.x11/OpenGL, it just dumps core. That's not as much fun as 3D Pac-Man, now is it?</H2
+NAME="AEN845"
+>When I run xmame.x11/OpenGL, it just dumps core. That's not as much fun as 3D Pac-Man, now is it?</A
+></H2
 ><P
 ></P
 ><UL
@@ -2973,9 +2976,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN954"
-></A
->When I run xmame.x11/OpenGL, everything is messed up.</H2
+NAME="AEN852"
+>When I run xmame.x11/OpenGL, everything is messed up.</A
+></H2
 ><P
 >Read the above experiences, and try
    </P
@@ -3004,10 +3007,10 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN964"
-></A
+NAME="AEN862"
 >xmame.SDL / fullscreen has a large border around the game. <A
 NAME="SCREENBORDER"
+></A
 ></A
 ></H2
 ><P
@@ -3035,9 +3038,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN973"
-></A
->I only use some of the emulation parts (Neo Geo / CPS-2 /...). Do I need the entire xmame?</H2
+NAME="AEN871"
+>I only use some of the emulation parts (Neo Geo / CPS-2 /...). Do I need the entire xmame?</A
+></H2
 ><P
 >There used to be targets such as &ldquo;cpmame&rdquo; and &ldquo;neomame&rdquo;, but these have been removed from the core.
    </P
@@ -3047,9 +3050,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN976"
-></A
->Why does xmame freeze and lock up when I hit &lt;ESC&gt; to exit the game or P to pause the game?</H2
+NAME="AEN874"
+>Why does xmame freeze and lock up when I hit &lt;ESC&gt; to exit the game or P to pause the game?</A
+></H2
 ><P
 >There appears to be a bug in the &quot;timer-based audio&quot; code that xmame/oss uses on at least one motherboard that we are aware of. Specifically, the ATX 845Pro (Intel Pentium 4 processor) with an integrated i810 soundchip.
    </P
@@ -3065,9 +3068,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN981"
-></A
->Why does xmame report &ldquo;can't resolve host name '/dev/dsp'&rdquo; when trying to use esound?</H2
+NAME="AEN879"
+>Why does xmame report &ldquo;can't resolve host name '/dev/dsp'&rdquo; when trying to use esound?</A
+></H2
 ><P
 >Remove the words &quot;/dev/dsp&quot; from the &quot;audiodevice&quot; line in xmamerc. In other words, you want to have the word &quot;audiodevice&quot; on a line all by itself, with no audiodevice specified.
    </P
@@ -3077,9 +3080,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN984"
-></A
->Where can I get the latest version of xmame/xmess?</H2
+NAME="AEN882"
+>Where can I get the latest version of xmame/xmess?</A
+></H2
 ><P
 >The xmame/xmess Home Page always has the most up-to-date version. The address is
    </P
@@ -3096,9 +3099,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN989"
-></A
->I upgraded xmame and now some games do not work anymore.</H2
+NAME="AEN887"
+>I upgraded xmame and now some games do not work anymore.</A
+></H2
 ><P
 >This can happen, especially if the drivers are in full development or some internal core routines have changed and the drivers have to be updated to accomodate for these core changes. Sometimes a new romdump has been made from the game and you still have the old version, or the zipfile has changed names and you need to rename yours (or any combination of these factors :-).
    </P
@@ -3144,9 +3147,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1005"
-></A
->Where can I send fixes, bug reports, suggestions, or money?  :-)</H2
+NAME="AEN903"
+>Where can I send fixes, bug reports, suggestions, or money?  :-)</A
+></H2
 ><P
 >See <A
 HREF="xmame-doc-4.html#MAIL"
@@ -3159,9 +3162,9 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1009"
-></A
->What if my question is still not answered?</H2
+NAME="AEN907"
+>What if my question is still not answered?</A
+></H2
 ><P
 >Please check the offical MAME and MESS readme files to see if that answers your question:
    </P
