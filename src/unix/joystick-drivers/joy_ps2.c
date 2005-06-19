@@ -194,9 +194,8 @@ static void ps2pad_lockset (
     rc = ioctl (fd, PS2PAD_IOCSETMODE, &padmode);
     if (rc != 0) 
     {
-	fprintf (stderr_file, "PS2 Pad could not be %slocked! rc=%d \n",
+		osd_die("PS2 Pad could not be %slocked! rc=%d \n",
 			(lock == 0) ? "un" : "", rc);
-	exit(-1);
     }
     return;
 }

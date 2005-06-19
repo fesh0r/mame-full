@@ -230,17 +230,13 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 					PhDCRelease(image);
 					image = PdCreateOffscreenContext(0, view_size.w, view_size.h, Pg_OSC_MEM_PAGE_ALIGN);
 					if (image == NULL)
-					{
-						fprintf(stderr, "error: failed to create offscreen context\n");
-						exit(1);
-					}
+						osd_die("error: failed to create offscreen context\n");
 
 					scaled_buffer_ptr = PdGetOffscreenContextPtr (image);
 					if (!scaled_buffer_ptr)
 					{
-						fprintf (stderr, "error: failed get a pointer to offscreen context.\n");
 						PhDCRelease (image);
-						exit(1);
+						osd_die("error: failed get a pointer to offscreen context.\n");
 					}
 	
 					depth = 0;
@@ -285,10 +281,7 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 					}
 
 					if (ph_window_update_display_func == NULL)
-					{
-						fprintf(stderr, "error: Unsupported\n");
-						exit(1);
-					}
+						osd_die("error: Unsupported\n");
 				}
 				break;
 				

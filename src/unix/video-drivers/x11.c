@@ -486,15 +486,11 @@ void x11_set_window_hints(int type)
 	class_hints.res_name = app;
 	class_hints.res_class = NAME;
 
-	if (!XStringListToTextProperty(&app, 1, &window_name)) {
-		fprintf(stderr, "Structure allocation for window_name failed\n");
-		exit(-1);
-	}
+	if (!XStringListToTextProperty(&app, 1, &window_name))
+		osd_die("Structure allocation for window_name failed\n");
 
-	if (!XStringListToTextProperty(&app, 1, &icon_name)) {
-		fprintf( stderr, "Structure allocation for icon_name failed\n" );
-		exit(-1);
-	}
+	if (!XStringListToTextProperty(&app, 1, &icon_name))
+		osd_die("Structure allocation for icon_name failed\n");
 
 	XSetWMProperties(display, window, &window_name, &icon_name,
 	    NULL, 0, &hints, &wm_hints, &class_hints);
