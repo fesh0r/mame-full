@@ -40,6 +40,8 @@ Source Changes:
 ----------------
 - [Messtest] Now will catch osd_die() messages.  [Nate Woods]
 
+- Removed the 83 track limit on floppy disk images.  (bug #721) [Tim Lindner]
+
 
 
 0.97
