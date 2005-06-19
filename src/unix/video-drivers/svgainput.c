@@ -246,7 +246,7 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	   first place :)                                                     */
 	if(ioctl(__svgalib_tty_fd, VT_GETMODE, &vtmode) == -1)
 	{
-		fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo\n");
+		fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo (tty-fd = %d)\n", __svgalib_tty_fd);
 		return -1;
 	}
 	release_signal = vtmode.relsig;
