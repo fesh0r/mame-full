@@ -397,7 +397,7 @@ static const struct pc_fdc_interface bebox_fdc_interface =
 READ64_HANDLER( bebox_interrupt_ack_r )
 {
 	int result;
-	result = 1 << pic8259_acknowledge(0);
+	result = pic8259_acknowledge(0);
 	bebox_set_irq_bit(5, 0);	/* HACK */
 	return ((data64_t) result) << 56;
 }
@@ -512,7 +512,7 @@ static const struct pc_vga_interface bebox_vga_interface =
  *
  *************************************/
 
-static data8_t dma_offset[2][4];
+static data16_t dma_offset[2][4];
 static data8_t at_pages[0x10];
 
 
@@ -547,16 +547,20 @@ static WRITE8_HANDLER(at_page8_w)
 	switch(offset % 8)
 	{
 		case 1:
-			dma_offset[(offset / 8) & 1][2] = data;
+			dma_offset[(offset / 8) & 1][2] &= 0xFF00;
+			dma_offset[(offset / 8) & 1][2] |= ((data16_t ) data) << 0;
 			break;
 		case 2:
-			dma_offset[(offset / 8) & 1][3] = data;
+			dma_offset[(offset / 8) & 1][3] &= 0xFF00;
+			dma_offset[(offset / 8) & 1][3] |= ((data16_t ) data) << 0;
 			break;
 		case 3:
-			dma_offset[(offset / 8) & 1][1] = data;
+			dma_offset[(offset / 8) & 1][1] &= 0xFF00;
+			dma_offset[(offset / 8) & 1][1] |= ((data16_t ) data) << 0;
 			break;
 		case 7:
-			dma_offset[(offset / 8) & 1][0] = data;
+			dma_offset[(offset / 8) & 1][0] &= 0xFF00;
+			dma_offset[(offset / 8) & 1][0] |= ((data16_t ) data) << 0;
 			break;
 	}
 }
@@ -577,10 +581,49 @@ WRITE64_HANDLER(bebox_page_w)
 
 
 
+static WRITE8_HANDLER(at_hipage8_w)
+{
+	switch(offset % 8)
+	{
+		case 1:
+			dma_offset[(offset / 8) & 1][2] &= 0x00FF;
+			dma_offset[(offset / 8) & 1][2] |= ((data16_t ) data) << 8;
+			break;
+		case 2:
+			dma_offset[(offset / 8) & 1][3] &= 0x00FF;
+			dma_offset[(offset / 8) & 1][3] |= ((data16_t ) data) << 8;
+			break;
+		case 3:
+			dma_offset[(offset / 8) & 1][1] &= 0x00FF;
+			dma_offset[(offset / 8) & 1][1] |= ((data16_t ) data) << 8;
+			break;
+		case 7:
+			dma_offset[(offset / 8) & 1][0] &= 0x00FF;
+			dma_offset[(offset / 8) & 1][0] |= ((data16_t ) data) << 8;
+			break;
+	}
+}
+
+
+
+READ64_HANDLER(bebox_80000480_r)
+{
+	osd_die("NYI");
+}
+
+
+
+WRITE64_HANDLER(bebox_80000480_w)
+{
+	write64be_with_write8_handler(at_hipage8_w, offset, data, mem_mask);
+}
+
+
+
 static data8_t bebox_dma_read_byte(int channel, offs_t offset)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
-		& 0xFF0000;
+		& 0x7FFF0000;
 	return program_read_byte(page_offset + offset);
 }
 
@@ -589,7 +632,7 @@ static data8_t bebox_dma_read_byte(int channel, offs_t offset)
 static void bebox_dma_write_byte(int channel, offs_t offset, data8_t data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
-		& 0xFF0000;
+		& 0x7FFF0000;
 	program_write_byte(page_offset + offset, data);
 }
 
@@ -605,7 +648,7 @@ static const struct dma8237_interface bebox_dma =
 
 	{ 0, 0, pc_fdc_dack_r, 0 },
 	{ 0, 0, pc_fdc_dack_w, 0 },
-	0
+	pc_fdc_set_tc_state
 };
 
 
