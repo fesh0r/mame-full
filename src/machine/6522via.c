@@ -225,7 +225,7 @@ static void via_shift (int which)
 	{
 		v->out_cb2 = (v->sr >> 7) & 1;
 		v->sr =  (v->sr << 1) | v->out_cb2;
-		
+
 		if (v->intf->out_cb2_func)
 			v->intf->out_cb2_func(0, v->out_cb2);
 
@@ -236,7 +236,7 @@ static void via_shift (int which)
 			v->intf->out_cb1_func(0, 0);
 			v->intf->out_cb1_func(0, 1);
 		}
-		
+
 		v->shift_counter = (v->shift_counter + 1) % 8;
 
 		if (v->shift_counter)
@@ -251,7 +251,7 @@ static void via_shift (int which)
 	{
 		v->out_cb2 = (v->sr >> 7) & 1;
 		v->sr =  (v->sr << 1) | v->out_cb2;
-		
+
 		if (v->intf->out_cb2_func)
 			v->intf->out_cb2_func(0, v->out_cb2);
 
@@ -269,7 +269,7 @@ static void via_shift (int which)
 			v->in_cb2 = v->intf->in_cb2_func(0);
 
 		v->sr =  (v->sr << 1) | (v->in_cb2 & 1);
-		
+
 		v->shift_counter = (v->shift_counter + 1) % 8;
 
 		if (v->shift_counter == 0)

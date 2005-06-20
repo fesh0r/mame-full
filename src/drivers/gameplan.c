@@ -195,7 +195,7 @@ static struct via6522_interface via_1_interface =
 {
 	/*inputs : A/B         */ io_port_r, NULL,
 	/*inputs : CA/B1,CA/B2 */ NULL, NULL, NULL, NULL,
-	/*outputs: A/B         */ NULL, io_select_w, 
+	/*outputs: A/B         */ NULL, io_select_w,
 	/*outputs: CA/B1,CA/B2 */ NULL, NULL, NULL, coin_w,
 	/*irq                  */ NULL
 };
@@ -245,7 +245,7 @@ static struct via6522_interface via_2_interface =
 {
 	/*inputs : A/B         */ NULL, sound_ack_r,
 	/*inputs : CA/B1,CA/B2 */ NULL, NULL, NULL, NULL,
-	/*outputs: A/B         */ sound_cmd_w, NULL, 
+	/*outputs: A/B         */ sound_cmd_w, NULL,
 	/*outputs: CA/B1,CA/B2 */ NULL, NULL, sound_trigger_w, sound_reset_w,
 	/*irq                  */ NULL
 };

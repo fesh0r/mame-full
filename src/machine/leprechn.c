@@ -51,7 +51,7 @@ static struct via6522_interface leprechn_via_0_interface =
 {
 	/*inputs : A/B         */ 0, leprechn_videoram_r,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B         */ leprechn_videoram_w, leprechn_graphics_command_w, 
+	/*outputs: A/B         */ leprechn_videoram_w, leprechn_graphics_command_w,
 	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ 0
 };
@@ -69,7 +69,7 @@ static struct via6522_interface leprechn_via_2_interface =
 {
 	/*inputs : A/B         */ 0, 0,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B         */ leprechn_sh_w, 0, 
+	/*outputs: A/B         */ leprechn_sh_w, 0,
 	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ 0
 };
