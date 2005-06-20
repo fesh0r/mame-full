@@ -277,9 +277,15 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 		if (err)
 			goto error;
 	}
-	floppy_drive_set_geometry_absolute(image,
-		floppy_get_tracks_per_disk(flopimg->floppy), 
-		floppy_get_heads_per_disk(flopimg->floppy));
+
+	/* if we can get head and track counts, then set the geometry accordingly */
+	if (floppy_callbacks(flopimg->floppy)->get_heads_per_disk
+		&& floppy_callbacks(flopimg->floppy)->get_tracks_per_disk)
+	{
+		floppy_drive_set_geometry_absolute(image,
+			floppy_get_tracks_per_disk(flopimg->floppy), 
+			floppy_get_heads_per_disk(flopimg->floppy));
+	}
 	return INIT_PASS;
 
 error:

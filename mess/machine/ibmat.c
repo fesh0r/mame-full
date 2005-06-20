@@ -175,7 +175,7 @@
 
 #include "driver.h"
 
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 #include "includes/ibmat.h"
 #include "includes/pit8253.h"
 #include "machine/pic8259.h"

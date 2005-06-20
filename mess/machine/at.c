@@ -19,7 +19,7 @@
 #include "includes/pcshare.h"
 #include "includes/ibmat.h"
 #include "includes/at.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 #include "includes/sblaster.h"
 
 static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };

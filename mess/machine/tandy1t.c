@@ -1,6 +1,6 @@
 #include "driver.h"
 
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 
 #include "includes/pcshare.h"
 #include "includes/tandy1t.h"

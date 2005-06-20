@@ -27,7 +27,7 @@
 #include "includes/pit8253.h"
 
 #include "includes/pc_mouse.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 
 #include "includes/pclpt.h"
 #include "includes/centroni.h"

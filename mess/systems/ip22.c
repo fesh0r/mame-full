@@ -48,7 +48,7 @@
 #include "driver.h"
 #include "cpu/mips/mips3.h"
 #include "machine/sgi.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 #include "includes/pc_mouse.h"
 #include "includes/at.h"
 #include "includes/ibmat.h"

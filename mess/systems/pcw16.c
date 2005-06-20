@@ -93,7 +93,7 @@
 #include "includes/centroni.h" // centronics printer handshake simulation
 #include "devices/printer.h" // printer device
 // PC-AT keyboard
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 // change to superio later
 #include "machine/pc_fdc.h"
 // for pc disk images

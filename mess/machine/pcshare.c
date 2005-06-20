@@ -35,7 +35,7 @@
 #include "vidhrdw/pc_aga.h"
 
 #include "includes/pc_mouse.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 #include "machine/pc_fdc.h"
 
 #include "includes/pclpt.h"

@@ -23,7 +23,7 @@
 #include "machine/pc_hdc.h"
 #include "includes/pc_ide.h"
 #include "machine/pc_fdc.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
 #include "includes/pc_mouse.h"

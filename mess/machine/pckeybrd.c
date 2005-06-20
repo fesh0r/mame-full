@@ -8,16 +8,12 @@
 */
 
 #include "driver.h"
-#include "includes/pckeybrd.h"
+#include "machine/pckeybrd.h"
 
 /* AT keyboard documentation comes from www.beyondlogic.org and HelpPC documentation */
 
 /* to enable logging of keyboard read/writes */
-#ifdef MAME_DEBUG
 #define LOG_KEYBOARD	0
-#else
-#define LOG_KEYBOARD	0
-#endif
 
 
 /*
@@ -353,9 +349,9 @@ void at_keyboard_set_input_port_base(int base)
 /* insert a code into the buffer */
 static void at_keyboard_queue_insert(UINT8 data)
 {
-#if LOG_KEYBOARD
-	logerror("keyboard queueing %.2x\n",data);
-#endif
+	if (LOG_KEYBOARD)
+		logerror("keyboard queueing %.2x\n",data);
+
 	keyboard.queue[keyboard.head] = data;
 	keyboard.head++;
 	keyboard.head %= (sizeof(keyboard.queue) / sizeof(keyboard.queue[0]));
@@ -577,9 +573,10 @@ int at_keyboard_read(void)
 		return -1;
 
 	data = keyboard.queue[keyboard.tail];
-#if LOG_KEYBOARD
-	logerror("at_keyboard_read(): Keyboard Read 0x%02x\n",data);
-#endif
+
+	if (LOG_KEYBOARD)
+		logerror("at_keyboard_read(): Keyboard Read 0x%02x\n",data);
+
 	keyboard.tail++;
 	keyboard.tail %= sizeof(keyboard.queue) / sizeof(keyboard.queue[0]);
 	return data;
@@ -641,157 +638,158 @@ SeeAlso: #P046
 
 void at_keyboard_write(UINT8 data)
 {
-#if LOG_KEYBOARD
-	logerror("keyboard write %.2x\n",data);
-#endif
-	switch (keyboard.input_state) {
-	case 0:
-		switch (data) {
-		case 0xed: // leds schalten
-			/* acknowledge */
-			at_keyboard_queue_insert(0x0fa);
-			/* now waiting for  code... */
-			keyboard.input_state=1;
-			break;
-		case 0xee: // echo
-			/* echo code with no acknowledge */
-			at_keyboard_queue_insert(0xee);
-			break;
-		case 0xf0: // scancodes adjust
-			/* acknowledge */
-			at_clear_buffer_and_acknowledge();
-			/* waiting for data */
-			keyboard.input_state=2;
-			break;
-		case 0xf2: // identify keyboard
-			/* ack and two byte keyboard id */
-			at_keyboard_queue_insert(0xfa);
+	if (LOG_KEYBOARD)
+		logerror("keyboard write %.2x\n",data);
 
-			/* send keyboard code */
-			if (keyboard.type == AT_KEYBOARD_TYPE_MF2) {
-				at_keyboard_queue_insert(0xab);
-				at_keyboard_queue_insert(0x41);
+	switch (keyboard.input_state)
+	{
+		case 0:
+			switch (data) {
+			case 0xed: // leds schalten
+				/* acknowledge */
+				at_keyboard_queue_insert(0x0fa);
+				/* now waiting for  code... */
+				keyboard.input_state=1;
+				break;
+			case 0xee: // echo
+				/* echo code with no acknowledge */
+				at_keyboard_queue_insert(0xee);
+				break;
+			case 0xf0: // scancodes adjust
+				/* acknowledge */
+				at_clear_buffer_and_acknowledge();
+				/* waiting for data */
+				keyboard.input_state=2;
+				break;
+			case 0xf2: // identify keyboard
+				/* ack and two byte keyboard id */
+				at_keyboard_queue_insert(0xfa);
+
+				/* send keyboard code */
+				if (keyboard.type == AT_KEYBOARD_TYPE_MF2) {
+					at_keyboard_queue_insert(0xab);
+					at_keyboard_queue_insert(0x41);
+				}
+				else
+				{
+					/* from help-pc docs */
+					at_keyboard_queue_insert(0x0ab);
+					at_keyboard_queue_insert(0x083);
+				}
+
+				break;
+			case 0xf3: // adjust rates
+				/* acknowledge */
+				at_keyboard_queue_insert(0x0fa);
+
+				keyboard.input_state=3;
+				break;
+			case 0xf4: // activate
+				at_clear_buffer_and_acknowledge();
+
+				keyboard.on=1;
+				break;
+			case 0xf5:
+				/* acknowledge */
+				at_clear_buffer_and_acknowledge();
+				// standardvalues
+				keyboard.on=0;
+				break;
+			case 0xf6:
+				at_clear_buffer_and_acknowledge();
+				// standardvalues
+				keyboard.on=1;
+				break;
+			case 0xfe: // resend
+				// should not happen, for now send 0 
+				at_keyboard_queue_insert(0);	//keyboard.last_code);
+				break;
+			case 0xff: // reset
+				/* it doesn't state this in the docs I have read, but I assume
+				that the keyboard input buffer is cleared. The PCW16 sends &ff,
+				and requires that 0x0fa is the first byte to be read */
+					
+				at_clear_buffer_and_acknowledge();
+
+	//			/* acknowledge */
+	//			at_keyboard_queue_insert(0xfa);
+				/* BAT completion code */
+				at_keyboard_queue_insert(0xaa);
+				break;
+			}
+			break;
+		case 1: 
+			/* code received */
+			keyboard.input_state=0;
+
+			/* command? */
+			if (data & 0x080)
+			{
+				/* command received instead of code - execute command */
+				at_keyboard_write(data);
 			}
 			else
 			{
-				/* from help-pc docs */
-				at_keyboard_queue_insert(0x0ab);
-				at_keyboard_queue_insert(0x083);
-			}
-
-			break;
-		case 0xf3: // adjust rates
-			/* acknowledge */
-			at_keyboard_queue_insert(0x0fa);
-
-			keyboard.input_state=3;
-			break;
-		case 0xf4: // activate
-			at_clear_buffer_and_acknowledge();
-
-			keyboard.on=1;
-			break;
-		case 0xf5:
-			/* acknowledge */
-			at_clear_buffer_and_acknowledge();
-			// standardvalues
-			keyboard.on=0;
-			break;
-		case 0xf6:
-			at_clear_buffer_and_acknowledge();
-			// standardvalues
-			keyboard.on=1;
-			break;
-		case 0xfe: // resend
-			// should not happen, for now send 0 
-			at_keyboard_queue_insert(0);	//keyboard.last_code);
-			break;
-		case 0xff: // reset
-			/* it doesn't state this in the docs I have read, but I assume
-			that the keyboard input buffer is cleared. The PCW16 sends &ff,
-			and requires that 0x0fa is the first byte to be read */
-				
-			at_clear_buffer_and_acknowledge();
-
-//			/* acknowledge */
-//			at_keyboard_queue_insert(0xfa);
-			/* BAT completion code */
-			at_keyboard_queue_insert(0xaa);
-			break;
-		}
-		break;
-	case 1: 
-		/* code received */
-		keyboard.input_state=0;
-
-		/* command? */
-		if (data & 0x080)
-		{
-			/* command received instead of code - execute command */
-			at_keyboard_write(data);
-		}
-		else
-		{
-			/* send acknowledge */
-			at_keyboard_queue_insert(0x0fa);
-		
-			/* led  bits */
-			/* bits: 0 scroll lock, 1 num lock, 2 capslock */
+				/* send acknowledge */
+				at_keyboard_queue_insert(0x0fa);
 			
-			/* led's in same order as my keyboard leds. */
-			/* num lock, caps lock, scroll lock */
-			set_led_status(2, (data & 0x01));
-			set_led_status(0, ((data & 0x02)>>1));
-			set_led_status(1, ((data & 0x04)>>2));
+				/* led  bits */
+				/* bits: 0 scroll lock, 1 num lock, 2 capslock */
+				
+				/* led's in same order as my keyboard leds. */
+				/* num lock, caps lock, scroll lock */
+				set_led_status(2, (data & 0x01));
+				set_led_status(0, ((data & 0x02)>>1));
+				set_led_status(1, ((data & 0x04)>>2));
 
-		}
-		break;
-	case 2:
-		keyboard.input_state=0;
+			}
+			break;
+		case 2:
+			keyboard.input_state=0;
 
-		/* command? */
-		if (data & 0x080)
-		{
-			/* command received instead of code - execute command */
-			at_keyboard_write(data);
-		}
-		else
-		{
-			/* 00  return byte indicating scan code set in use
-			01  select scan code set 1  (used on PC & XT)
-			02  select scan code set 2
-			03  select scan code set 3
-			*/
-
-			if (data == 0x00)
+			/* command? */
+			if (data & 0x080)
 			{
-					at_keyboard_queue_insert(keyboard.scan_code_set);
+				/* command received instead of code - execute command */
+				at_keyboard_write(data);
 			}
 			else
 			{
-				keyboard.scan_code_set = data;
+				/* 00  return byte indicating scan code set in use
+				01  select scan code set 1  (used on PC & XT)
+				02  select scan code set 2
+				03  select scan code set 3
+				*/
+
+				if (data == 0x00)
+				{
+						at_keyboard_queue_insert(keyboard.scan_code_set);
+				}
+				else
+				{
+					keyboard.scan_code_set = data;
+				}
 			}
-		}
-	
-		break;
-	case 3:
-		/* 6,5: 250ms, 500ms, 750ms, 1s */
-		/* 4..0: 30 26.7 .... 2 chars/s*/
-	
-		/* command? */
-		keyboard.input_state=0;
-		if (data & 0x080)
-		{
-			/* command received instead of code - execute command */
-			at_keyboard_write(data);
-		}
-		else
-		{
-			/* received keyboard repeat */
+		
+			break;
+		case 3:
+			/* 6,5: 250ms, 500ms, 750ms, 1s */
+			/* 4..0: 30 26.7 .... 2 chars/s*/
+		
+			/* command? */
+			keyboard.input_state=0;
+			if (data & 0x080)
+			{
+				/* command received instead of code - execute command */
+				at_keyboard_write(data);
+			}
+			else
+			{
+				/* received keyboard repeat */
 
-		}
+			}
 
-		break;
+			break;
 	}
 }
 
@@ -1224,6 +1222,4 @@ CHARQUEUE_EMPTY( at_keyboard )
 {
 	return at_keyboard_queue_size() == 0;
 }
-
-
 

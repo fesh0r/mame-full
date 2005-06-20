@@ -15,6 +15,7 @@
 #include "machine/pc_fdc.h"
 #include "machine/pci.h"
 #include "machine/8237dma.h"
+#include "machine/pckeybrd.h"
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
 
@@ -93,6 +94,7 @@ static MACHINE_DRIVER_START( bebox )
 MACHINE_DRIVER_END
 
 static INPUT_PORTS_START( bebox )
+	PORT_INCLUDE( at_keyboard )
 INPUT_PORTS_END
 
 ROM_START(bebox)
