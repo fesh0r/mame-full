@@ -24,7 +24,7 @@
 #include "machine/pic8259.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "vidhrdw/pc_vga.h"
 #include "vidhrdw/pc_cga.h"
 #include "vidhrdw/pc_mda.h"

@@ -12,7 +12,7 @@
 #include "sound/streams.h"
 #include "sound/custom.h"
 #include "machine/random.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "includes/dai.h"
 
 static void *dai_sh_start(int clock, const struct CustomSound_interface *config);

@@ -15,7 +15,7 @@
 #include "vidhrdw/pc_vga.h"
 #include "vidhrdw/pc_cga.h"
 
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "includes/pcshare.h"
 #include "machine/8042kbdc.h"
 #include "includes/at.h"
@@ -174,12 +174,4 @@ MACHINE_INIT( at_vga )
 	pc_vga_reset();
 	dma8237_reset();
 	cpu_set_irq_callback(0, at_irq_callback);
-}
-
-void at_cga_frame_interrupt (void)
-{
-}
-
-void at_vga_frame_interrupt (void)
-{
 }

@@ -28,7 +28,7 @@
 #include "machine/pic8259.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "vidhrdw/pc_vga.h"
 #include "vidhrdw/pc_cga.h"
 #include "vidhrdw/pc_mda.h"
@@ -146,7 +146,7 @@ static void pc_timer0_w(int state)
  * timer1	DRAM refresh (ignored)
  * timer2	PIO port C pin 4 and speaker polling
  */
-static struct pit8253_config pc_pit8253_config =
+static const struct pit8253_config pc_pit8253_config =
 {
 	TYPE8253,
 	{
@@ -166,7 +166,7 @@ static struct pit8253_config pc_pit8253_config =
 	}
 };
 
-static struct pit8253_config pc_pit8254_config =
+static const struct pit8253_config pc_pit8254_config =
 {
 	TYPE8254,
 	{

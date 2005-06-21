@@ -14,7 +14,7 @@
 #include "devices/cassette.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/dai.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "machine/random.h"
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"

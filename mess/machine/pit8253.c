@@ -19,7 +19,7 @@
 
 #include <math.h>
 #include "driver.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "state.h"
 
 
@@ -85,7 +85,7 @@ struct pit8253_timer
 
 struct pit8253
 {
-	struct pit8253_config *config;
+	const struct pit8253_config *config;
 	struct pit8253_timer timers[MAX_TIMER];
 };
 
@@ -825,7 +825,7 @@ static void	presave(void)
 }
 
 
-int	pit8253_init(int count,	struct pit8253_config *config)
+int	pit8253_init(int count,	const struct pit8253_config *config)
 {
 	int	i, timerno,	n=0;
 	struct pit8253 *pit;
@@ -1287,10 +1287,15 @@ READ8_HANDLER (	pit8253_1_r	) {	return pit8253_read(1, offset);	}
 WRITE8_HANDLER ( pit8253_0_w ) { pit8253_write(0, offset, data); }
 WRITE8_HANDLER ( pit8253_1_w ) { pit8253_write(1, offset, data); }
 
-READ32_HANDLER ( pit8253_32_0_r	) {	return read32le_with_read8_handler(pit8253_0_r, offset, mem_mask); }
-READ32_HANDLER ( pit8253_32_1_r	) {	return read32le_with_read8_handler(pit8253_1_r, offset, mem_mask); }
-WRITE32_HANDLER	( pit8253_32_0_w ) { write32le_with_write8_handler(pit8253_0_w, offset, data,	mem_mask); }
-WRITE32_HANDLER	( pit8253_32_1_w ) { write32le_with_write8_handler(pit8253_1_w, offset, data,	mem_mask); }
+READ32_HANDLER ( pit8253_32le_0_r ) { return read32le_with_read8_handler(pit8253_0_r, offset, mem_mask); }
+READ32_HANDLER ( pit8253_32le_1_r ) { return read32le_with_read8_handler(pit8253_1_r, offset, mem_mask); }
+WRITE32_HANDLER	( pit8253_32le_0_w ) { write32le_with_write8_handler(pit8253_0_w, offset, data,	mem_mask); }
+WRITE32_HANDLER	( pit8253_32le_1_w ) { write32le_with_write8_handler(pit8253_1_w, offset, data,	mem_mask); }
+
+READ64_HANDLER ( pit8253_64be_0_r ) { return read64be_with_read8_handler(pit8253_0_r, offset, mem_mask); }
+READ64_HANDLER ( pit8253_64be_1_r ) { return read64be_with_read8_handler(pit8253_1_r, offset, mem_mask); }
+WRITE64_HANDLER	( pit8253_64be_0_w ) { write64be_with_write8_handler(pit8253_0_w, offset, data,	mem_mask); }
+WRITE64_HANDLER	( pit8253_64be_1_w ) { write64be_with_write8_handler(pit8253_1_w, offset, data,	mem_mask); }
 
 WRITE8_HANDLER ( pit8253_0_gate_w )	{ pit8253_gate_write(0,	offset,	data); }
 WRITE8_HANDLER ( pit8253_1_gate_w )	{ pit8253_gate_write(1,	offset,	data); }

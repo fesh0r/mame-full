@@ -16,7 +16,7 @@
 #include "includes/pmd85.h"
 #include "machine/8255ppi.h"
 #include "includes/msm8251.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "includes/serial.h"
 
 static UINT8 pmd85_rom_module_present = 0;

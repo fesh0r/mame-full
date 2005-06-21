@@ -24,7 +24,7 @@
 #include "vidhrdw/pc_mda.h"
 #include "vidhrdw/pc_t1t.h"
 
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 
 #include "includes/pc_mouse.h"
 #include "machine/pckeybrd.h"

@@ -17,8 +17,10 @@
 #include "machine/8237dma.h"
 #include "machine/pckeybrd.h"
 #include "machine/8042kbdc.h"
+#include "machine/pit8253.h"
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
+#include "vidhrdw/cirrus.h"
 
 
 static READ8_HANDLER(at_dma8237_1_r)  { return dma8237_1_r(offset / 2); }
@@ -43,6 +45,7 @@ static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 
 	AM_RANGE(0x80000000, 0x8000001F) AM_READWRITE( dma8237_64be_0_r, dma8237_64be_0_w )
 	AM_RANGE(0x80000020, 0x8000003F) AM_READWRITE( pic8259_64be_0_r, pic8259_64be_0_w )
+	AM_RANGE(0x80000040, 0x8000005f) AM_READWRITE( pit8253_64be_0_r, pit8253_64be_0_w )
 	AM_RANGE(0x80000060, 0x8000006F) AM_READWRITE( kbdc8042_64be_r, kbdc8042_64be_w )
 	AM_RANGE(0x80000070, 0x8000007F) AM_READWRITE( mc146818_port64be_r, mc146818_port64be_w )
 	AM_RANGE(0x80000080, 0x8000009F) AM_READWRITE( bebox_page_r, bebox_page_w)
@@ -56,6 +59,7 @@ static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 	AM_RANGE(0x800003F8, 0x800003FF) AM_READWRITE( uart8250_64be_0_r, uart8250_64be_0_w )
 	AM_RANGE(0x80000480, 0x8000048F) AM_READWRITE( bebox_80000480_r, bebox_80000480_w )
 	AM_RANGE(0x80000CF8, 0x80000CFF) AM_READWRITE( pci_64be_r, pci_64be_w )
+	AM_RANGE(0x800042E8, 0x800042EF) AM_WRITE( cirrus_64be_42E8_w )
 
 	AM_RANGE(0xBFFFFFF0, 0xBFFFFFFF) AM_READ( bebox_interrupt_ack_r )
 

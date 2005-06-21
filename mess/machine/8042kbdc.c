@@ -177,7 +177,7 @@
 
 #include "machine/pckeybrd.h"
 #include "machine/8042kbdc.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "machine/pic8259.h"
 #include "includes/pcshare.h"
 

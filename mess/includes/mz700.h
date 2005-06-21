@@ -13,7 +13,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 
 /* from mess/machine/mz700.c */
 DRIVER_INIT(mz700);

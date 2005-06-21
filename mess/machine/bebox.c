@@ -96,6 +96,7 @@
 #include "machine/mpc105.h"
 #include "machine/mc146818.h"
 #include "machine/pic8259.h"
+#include "machine/pit8253.h"
 #include "machine/8237dma.h"
 #include "machine/idectrl.h"
 #include "machine/pci.h"
@@ -693,6 +694,43 @@ static const struct dma8237_interface bebox_dma =
 
 /*************************************
  *
+ *	8254 PIT
+ *
+ *************************************/
+
+static void bebox_timer0_w(int state)
+{
+	pic8259_set_irq_line(0, 0, state);
+}
+
+
+
+static const struct pit8253_config bebox_pit8254_config =
+{
+	TYPE8254,
+	{
+		{
+			4772720/4,				/* heartbeat IRQ */
+			bebox_timer0_w,
+			NULL
+		},
+		{
+			4772720/4,				/* dram refresh */
+			NULL,
+			NULL
+		},
+		{
+			4772720/4,				/* pio port c pin 4, and speaker polling enough */
+			NULL,
+			NULL
+		}
+	}
+};
+
+
+
+/*************************************
+ *
  *	Driver main
  *
  *************************************/
@@ -735,6 +773,7 @@ DRIVER_INIT( bebox )
 	pic8259_init(2, bebox_pic_set_int_line);
 	ide_controller_init_custom(0, &bebox_ide_interface, NULL);
 	pc_vga_init(&bebox_vga_interface, &cirrus_svga_interface);
+	pit8253_init(1, &bebox_pit8254_config);
 
 	dma8237_init(2);
 	dma8237_config(0, &bebox_dma);

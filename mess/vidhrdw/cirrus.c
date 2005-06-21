@@ -197,3 +197,19 @@ const struct pci_device_info cirrus5430_callbacks =
 
 
 
+/*************************************
+ *
+ *	Ports
+ *
+ *************************************/
+
+WRITE8_HANDLER( cirrus_42E8_w )
+{
+	if (data & 0x80)
+		pc_vga_reset();
+}
+
+
+
+WRITE64_HANDLER( cirrus_64be_42E8_w ) { write64be_with_write8_handler(cirrus_42E8_w, offset, data, mem_mask); }
+

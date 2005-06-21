@@ -63,7 +63,7 @@ Timings:
 #include "cpu/i8085/i8085.h"
 #include "vidhrdw/generic.h"
 #include "includes/dai.h"
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"
 #include "devices/cassette.h"

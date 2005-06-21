@@ -14,7 +14,7 @@
 #include "sound/streams.h"
 #include "includes/pcshare.h"
 
-#include "includes/pit8253.h"
+#include "machine/pit8253.h"
 
 #define SND_LOG(n,m,a)
 #define BASECLOCK	1193180
