@@ -16,6 +16,7 @@
 #include "machine/pci.h"
 #include "machine/8237dma.h"
 #include "machine/pckeybrd.h"
+#include "machine/8042kbdc.h"
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
 
@@ -42,6 +43,7 @@ static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 
 	AM_RANGE(0x80000000, 0x8000001F) AM_READWRITE( dma8237_64be_0_r, dma8237_64be_0_w )
 	AM_RANGE(0x80000020, 0x8000003F) AM_READWRITE( pic8259_64be_0_r, pic8259_64be_0_w )
+	AM_RANGE(0x80000060, 0x8000006F) AM_READWRITE( kbdc8042_64be_r, kbdc8042_64be_w )
 	AM_RANGE(0x80000070, 0x8000007F) AM_READWRITE( mc146818_port64be_r, mc146818_port64be_w )
 	AM_RANGE(0x80000080, 0x8000009F) AM_READWRITE( bebox_page_r, bebox_page_w)
 	AM_RANGE(0x800000A0, 0x800000BF) AM_READWRITE( pic8259_64be_1_r, pic8259_64be_1_w )

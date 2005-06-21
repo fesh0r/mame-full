@@ -479,6 +479,9 @@ static struct ide_interface bebox_ide_interface =
  *
  *************************************/
 
+static read8_handler bebox_vga_memory_rh;
+static write8_handler bebox_vga_memory_wh;
+
 static READ64_HANDLER( bebox_video_r )
 {
 	const UINT64 *mem = (const UINT64 *) pc_vga_memory();
@@ -497,9 +500,44 @@ static WRITE64_HANDLER( bebox_video_w )
 
 
 
+static READ64_HANDLER( bebox_vga_memory_r )
+{
+	return read64be_with_read8_handler(bebox_vga_memory_rh, offset, mem_mask);
+}
+
+
+
+static WRITE64_HANDLER( bebox_vga_memory_w )
+{
+	write64be_with_write8_handler(bebox_vga_memory_wh, offset, data, mem_mask);
+}
+
+
+
+static void bebox_map_vga_memory(offs_t begin, offs_t end, read8_handler rh, write8_handler wh)
+{
+	read64_handler rh64 = (rh == MRA8_BANK4) ? MRA64_BANK4 : bebox_vga_memory_r;
+	write64_handler wh64 = (wh == MWA8_BANK4) ? MWA64_BANK4 : bebox_vga_memory_w;
+
+	bebox_vga_memory_rh = rh;
+	bebox_vga_memory_wh = wh;
+
+	memory_install_read64_handler(0, ADDRESS_SPACE_PROGRAM, 0xC00A0000, 0xC00BFFFF, 0, 0, MRA64_NOP);
+	memory_install_write64_handler(0, ADDRESS_SPACE_PROGRAM, 0xC00A0000, 0xC00BFFFF, 0, 0, MWA64_NOP);
+
+	memory_install_read64_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0000000 + begin, 0xC0000000 + end, 0, 0, rh64);
+	memory_install_write64_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0000000 + begin, 0xC0000000 + end, 0, 0, wh64);
+}
+
+
+
 static const struct pc_vga_interface bebox_vga_interface =
 {
+	4,
+	bebox_map_vga_memory,
+
 	NULL,
+
 	ADDRESS_SPACE_PROGRAM,
 	0x80000000
 };

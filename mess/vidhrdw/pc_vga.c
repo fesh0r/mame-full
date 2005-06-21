@@ -545,6 +545,41 @@ static void vga_cpu_interface(void)
 		write_handler = vga_text_w;
 	}
 
+	/* remap the VGA memory */
+	if (vga.vga_intf.map_vga_memory)
+	{
+		sel = vga.gc.data[6] & 0x0c;
+
+		switch(sel)
+		{
+			case 0x00:
+				if (vga.vga_intf.vga_memory_bank != 0)
+				{
+					read_handler = (read8_handler) vga.vga_intf.vga_memory_bank;
+					write_handler = (write8_handler) vga.vga_intf.vga_memory_bank;
+				}
+				else
+				{
+					read_handler = MRA8_NOP;
+					write_handler = MWA8_NOP;
+				}
+				vga.vga_intf.map_vga_memory(0xA0000, 0xBFFFF, read_handler, write_handler);
+
+				if (vga.vga_intf.vga_memory_bank != 0)
+					cpu_setbank(vga.vga_intf.vga_memory_bank, vga.memory);
+				break;
+			case 0x04:
+				vga.vga_intf.map_vga_memory(0xA0000, 0xAFFFF, read_handler, write_handler);
+				break;
+			case 0x08:
+				vga.vga_intf.map_vga_memory(0xB0000, 0xB7FFF, read_handler, write_handler);
+				break;
+			case 0x0C:
+				vga.vga_intf.map_vga_memory(0xB8000, 0xBFFFF, read_handler, write_handler);
+				break;
+		}
+	}
+
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
 	switch(buswidth)
 	{

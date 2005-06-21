@@ -176,7 +176,7 @@
 #include "driver.h"
 
 #include "machine/pckeybrd.h"
-#include "includes/ibmat.h"
+#include "machine/8042kbdc.h"
 #include "includes/pit8253.h"
 #include "machine/pic8259.h"
 #include "includes/pcshare.h"
@@ -204,7 +204,7 @@
 
 static struct
 {
-	AT8042_TYPE type;
+	kbdc8042_type_t type;
 	void (*set_gate_a20)(int a20);
 
 	UINT8 inport, outport, data, command;
@@ -227,11 +227,11 @@ static struct
 
 	int speaker;
 
-	int no_8259;
-
 	/* temporary hack */
 	int offset1;
-} at_8042;
+} kbdc8042;
+
+static void at_8042_check_keyboard(void);
 
 
 
@@ -244,24 +244,36 @@ static struct
 static void at_8042_set_outport(UINT8 data, int initial)
 {
 	UINT8 change;
-	change = initial ? 0xFF : (at_8042.outport ^ data);
-	at_8042.outport = data;
+	change = initial ? 0xFF : (kbdc8042.outport ^ data);
+	kbdc8042.outport = data;
 	if (change & 0x02)
-		at_8042.set_gate_a20(data & 0x02 ? 1 : 0);
+	{
+		if (kbdc8042.set_gate_a20)
+			kbdc8042.set_gate_a20(data & 0x02 ? 1 : 0);
+	}
 }
 
 
 
-void at_8042_init(AT8042_CONFIG *config)
+static void kbdc8042_time(int dummy)
 {
-	memset(&at_8042, 0, sizeof(at_8042));
-	at_8042.type = config->type;
-	at_8042.set_gate_a20 = config->set_gate_a20;
+	at_keyboard_polling();
+	at_8042_check_keyboard();
+}
+
+
+
+void kbdc8042_init(const struct kbdc8042_interface *intf)
+{
+	memset(&kbdc8042, 0, sizeof(kbdc8042));
+	kbdc8042.type = intf->type;
+	kbdc8042.set_gate_a20 = intf->set_gate_a20;
 
 	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
-	at_8042.inport = 0xa0;	
+	kbdc8042.inport = 0xa0;	
 	at_8042_set_outport(0xfe, 1);
-	at_8042.no_8259 = 0;
+
+	timer_set(TIME_IN_HZ(60), 0, kbdc8042_time);
 }
 
 static void at_8042_receive(UINT8 data)
@@ -270,8 +282,8 @@ static void at_8042_receive(UINT8 data)
 	logerror("at_8042_receive Received 0x%02x\n", data);
 #endif
 
-	at_8042.data = data;
-	at_8042.keyboard.received = 1;
+	kbdc8042.data = data;
+	kbdc8042.keyboard.received = 1;
 	pic8259_set_irq_line(0, 1, 1);
 	pic8259_set_irq_line(0, 1, 0);
 }
@@ -280,34 +292,26 @@ static void at_8042_check_keyboard(void)
 {
 	int data;
 
-	if (!at_8042.keyboard.received
-		&& !at_8042.mouse.received)
+	if (!kbdc8042.keyboard.received
+		&& !kbdc8042.mouse.received)
 	{
 		if ( (data = at_keyboard_read())!=-1)
 			at_8042_receive(data);
 	}
 }
 
-void at_8042_time(void)
-{
-	at_8042_check_keyboard();
-}
 
-
-void at_8042_set_no_8259(int has_no_8259)
-{
-	at_8042.no_8259 = has_no_8259;
-}
 
 static void at_8042_clear_keyboard_received(void)
 {
-#if LOG_KEYBOARD
-	if (at_8042.keyboard.received)
-		logerror("at_8042_8_r(): Clearing at_8042.keyboard.received\n");
-#endif
+	if (kbdc8042.keyboard.received)
+	{
+		if (LOG_KEYBOARD)
+			logerror("kbdc8042_8_r(): Clearing kbdc8042.keyboard.received\n");
+	}
 
-	at_8042.keyboard.received = 0;
-	at_8042.mouse.received = 0;
+	kbdc8042.keyboard.received = 0;
+	kbdc8042.mouse.received = 0;
 }
 
 
@@ -335,15 +339,15 @@ static void at_8042_clear_keyboard_received(void)
  *		0: Keyboard data in
  */
 
-READ8_HANDLER(at_8042_8_r)
+READ8_HANDLER(kbdc8042_8_r)
 {
 	static int poll_delay = 10;
 	data8_t data = 0;
 
 	switch (offset) {
 	case 0:
-		data = at_8042.data;
-		if (at_8042.type != AT8042_AT386 || (data != 0x55))
+		data = kbdc8042.data;
+		if (kbdc8042.type != KBDC8042_AT386 || (data != 0x55))
 		{
 			/* at386 self test doesn't like this */
 			at_8042_clear_keyboard_received();
@@ -352,7 +356,7 @@ READ8_HANDLER(at_8042_8_r)
 		break;
 
 	case 1:
-		data = at_8042.speaker;
+		data = kbdc8042.speaker;
 		data &= ~0xc0; /* AT BIOS don't likes this being set */
 
 		/* needed for AMI BIOS, maybe only some keyboard controller revisions! */
@@ -361,15 +365,15 @@ READ8_HANDLER(at_8042_8_r)
 		/* polled for changes in ibmat bios */
 		if (--poll_delay < 0)
 		{
-			if (at_8042.type != AT8042_PS2)
+			if (kbdc8042.type != KBDC8042_PS2)
 				poll_delay = 4; /* ibmat */
 			else
 				poll_delay = 8; /* ibm ps2m30 */
-			at_8042.offset1 ^= 0x10;
+			kbdc8042.offset1 ^= 0x10;
 		}
-		data = (data & ~0x10) | at_8042.offset1;
+		data = (data & ~0x10) | kbdc8042.offset1;
 
-		if (at_8042.speaker & 1)
+		if (kbdc8042.speaker & 1)
 			data |= 0x20;
 		else
 			data &= ~0x20; /* ps2m30 wants this */
@@ -385,51 +389,50 @@ READ8_HANDLER(at_8042_8_r)
 	case 4:
 		at_8042_check_keyboard();
 
-		if (at_8042.keyboard.received || at_8042.mouse.received)
+		if (kbdc8042.keyboard.received || kbdc8042.mouse.received)
 			data |= 1;
-		if (at_8042.sending)
+		if (kbdc8042.sending)
 			data |= 2;
 
-		at_8042.sending = 0; /* quicker than normal */
+		kbdc8042.sending = 0; /* quicker than normal */
 		data |= 4; /* selftest ok */
 
-		if (at_8042.last_write_to_control)
+		if (kbdc8042.last_write_to_control)
 			data |= 8;
 
-		switch (at_8042.status_read_mode) {
+		switch (kbdc8042.status_read_mode) {
 		case 0:
-			if (!at_8042.keyboard.on) data|=0x10;
-			if (at_8042.mouse.received) data|=0x20;
+			if (!kbdc8042.keyboard.on) data|=0x10;
+			if (kbdc8042.mouse.received) data|=0x20;
 			break;
 		case 1:
-			data|=at_8042.inport&0xf;
+			data |= kbdc8042.inport&0xf;
 			break;
 		case 2:
-			data|=at_8042.inport<<4;
+			data |= kbdc8042.inport<<4;
 			break;
 		}
 		break;
 	}
 
-#if LOG_ACCESSES
-	logerror("at_8042_8_r(): offset=%d data=0x%02x\n", offset, (unsigned) data);
-#endif
+	if (LOG_ACCESSES)
+		logerror("kbdc8042_8_r(): offset=%d data=0x%02x\n", offset, (unsigned) data);
 	return data;
 }
 
 
 
-WRITE8_HANDLER(at_8042_8_w)
+WRITE8_HANDLER(kbdc8042_8_w)
 {
 	switch (offset) {
 	case 0:
-		at_8042.last_write_to_control = 0;
-		at_8042.status_read_mode = 0;
-		switch (at_8042.operation_write_state) {
+		kbdc8042.last_write_to_control = 0;
+		kbdc8042.status_read_mode = 0;
+		switch (kbdc8042.operation_write_state) {
 		case 0:
 			/* normal case */
-			at_8042.data = data;
-			at_8042.sending=1;
+			kbdc8042.data = data;
+			kbdc8042.sending=1;
 			at_keyboard_write(data);
 			break;
 
@@ -449,51 +452,51 @@ WRITE8_HANDLER(at_8042_8_w)
 
 		case 2:
 			/* preceeded by writing 0xD2 to port 60h */
-			at_8042.data = data;
-			at_8042.sending=1;
+			kbdc8042.data = data;
+			kbdc8042.sending=1;
 			at_keyboard_write(data);
 			break;
 
 		case 3:
 			/* preceeded by writing 0xD3 to port 60h */
-			at_8042.data = data;
+			kbdc8042.data = data;
 			break;
 
 		case 4:
 			/* preceeded by writing 0xD4 to port 60h */
-			at_8042.data = data;
+			kbdc8042.data = data;
 			break;
 
 		case 5:
 			/* preceeded by writing 0x60 to port 60h */
-			at_8042.command = data;
+			kbdc8042.command = data;
 			break;
 		}
-		at_8042.operation_write_state = 0;
+		kbdc8042.operation_write_state = 0;
 		break;
 
 	case 1:
-		at_8042.speaker=data;
+		kbdc8042.speaker=data;
 		pc_sh_speaker(data&3);
 		break;
 
 	case 4:
-		at_8042.last_write_to_control=0;
+		kbdc8042.last_write_to_control=0;
 
 		/* switch based on the command */
 		switch(data) {
 		case 0x20:	/* current 8042 command byte is placed on port 60h */
-			at_8042.data = at_8042.command;
+			kbdc8042.data = kbdc8042.command;
 			break;
 		case 0x60:	/* next data byte is placed in 8042 command byte */
-			at_8042.operation_write_state = 5;
-			at_8042.send_to_mouse = 0;
+			kbdc8042.operation_write_state = 5;
+			kbdc8042.send_to_mouse = 0;
 			break;
 		case 0xa7:	/* disable auxilary interface */
-			at_8042.mouse.on = 0;
+			kbdc8042.mouse.on = 0;
 			break;
 		case 0xa8:	/* enable auxilary interface */
-			at_8042.mouse.on = 1;
+			kbdc8042.mouse.on = 1;
 			break;
 		case 0xa9:	/* test mouse */
 			at_8042_receive(PS2_MOUSE_ON ? 0x00 : 0xff);
@@ -505,10 +508,10 @@ WRITE8_HANDLER(at_8042_8_w)
 			at_8042_receive(KEYBOARD_ON ? 0x00 : 0xff);
 			break;
 		case 0xad:	/* disable keyboard interface */
-			at_8042.keyboard.on = 0;
+			kbdc8042.keyboard.on = 0;
 			break;
 		case 0xae:	/* enable keyboard interface */
-			at_8042.keyboard.on = 1;
+			kbdc8042.keyboard.on = 1;
 			break;
 		case 0xc0:	/* read input port */
 			/*	|7|6|5|4|3 2 1 0|  8042 Input Port
@@ -520,41 +523,41 @@ WRITE8_HANDLER(at_8042_8_w)
 			 *	 | `----------- 1=primary display is MDA, 0=CGA
 			 *	 `------------ 1=keyboard not inhibited; 0=inhibited
 			 */
-			at_8042_receive(at_8042.inport);
+			at_8042_receive(kbdc8042.inport);
 			break;
 		case 0xc1:	/* read input port 3..0 until write to 0x60 */
-			at_8042.status_read_mode = 1;
+			kbdc8042.status_read_mode = 1;
 			break;
 		case 0xc2:	/* read input port 7..4 until write to 0x60 */
-			at_8042.status_read_mode = 2;
+			kbdc8042.status_read_mode = 2;
 			break;
 		case 0xd0:	/* read output port */
-			at_8042_receive(at_8042.outport);
+			at_8042_receive(kbdc8042.outport);
 			break;
 		case 0xd1:
 			/* write output port; next byte written to port 60h is placed on
 			 * 8042 output port */
-			at_8042.operation_write_state = 1;
+			kbdc8042.operation_write_state = 1;
 			break;
 		case 0xd2:
 			/* write keyboard output register; on PS/2 systems next port 60h
 			 * write is written to port 60h output register as if initiated
 			 * by a device; invokes interrupt if enabled */
-			at_8042.operation_write_state = 2;
-			at_8042.send_to_mouse = 0;
+			kbdc8042.operation_write_state = 2;
+			kbdc8042.send_to_mouse = 0;
 			break;
 		case 0xd3:
 			/* write auxillary output register; on PS/2 systems next port 60h
 			 * write is written to port 60h input register as if initiated
 			 * by a device; invokes interrupt if enabled */
-			at_8042.operation_write_state = 3;
-			at_8042.send_to_mouse = 1;
+			kbdc8042.operation_write_state = 3;
+			kbdc8042.send_to_mouse = 1;
 			break;
 		case 0xd4:
 			/* write auxillary device; on PS/2 systems the next data byte
 			 * written to input register a port at 60h is sent to the
 			 * auxiliary device  */
-			at_8042.operation_write_state = 4;
+			kbdc8042.operation_write_state = 4;
 			break;
 		case 0xe0:
 			/* read test inputs; read T1/T0 test inputs into bit 1/0 */
@@ -575,24 +578,38 @@ WRITE8_HANDLER(at_8042_8_w)
 			 * an effect currently is bit 0, which pulses the CPU's reset line
 			 */
 			cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
-			at_8042_set_outport(at_8042.outport | 0x02, 0);
+			at_8042_set_outport(kbdc8042.outport | 0x02, 0);
 			break;
 		}
-		at_8042.sending = 1;
+		kbdc8042.sending = 1;
 		break;
 	}
 }
 
 
 
-READ32_HANDLER(at_8042_32_r)
+READ32_HANDLER( kbdc8042_32le_r )
 {
-	return read32le_with_read8_handler(at_8042_8_r, offset, mem_mask);
+	return read32le_with_read8_handler(kbdc8042_8_r, offset, mem_mask);
 }
 
 
 
-WRITE32_HANDLER( at_8042_32_w )
+WRITE32_HANDLER( kbdc8042_32le_w )
 {
-	write32le_with_write8_handler(at_8042_8_w, offset, data, mem_mask);
+	write32le_with_write8_handler(kbdc8042_8_w, offset, data, mem_mask);
+}
+
+
+
+READ64_HANDLER( kbdc8042_64be_r )
+{
+	return read64be_with_read8_handler(kbdc8042_8_r, offset, mem_mask);
+}
+
+
+
+WRITE64_HANDLER( kbdc8042_64be_w )
+{
+	write64be_with_write8_handler(kbdc8042_8_w, offset, data, mem_mask);
 }

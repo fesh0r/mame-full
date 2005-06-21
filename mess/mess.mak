@@ -590,7 +590,7 @@ $(OBJ)/pc.a:	   \
 
 $(OBJ)/at.a:	   \
 	$(OBJ)/mess/machine/pc_ide.o   \
-	$(OBJ)/mess/machine/ibmat.o    \
+	$(OBJ)/mess/machine/8042kbdc.o    \
 	$(OBJ)/mess/machine/ps2.o	 \
 	$(OBJ)/mess/machine/at.o       \
 	$(OBJ)/mess/systems/at.o

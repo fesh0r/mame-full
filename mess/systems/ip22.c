@@ -51,7 +51,7 @@
 #include "machine/pckeybrd.h"
 #include "includes/pc_mouse.h"
 #include "includes/at.h"
-#include "includes/ibmat.h"
+#include "machine/8042kbdc.h"
 #include "includes/ps2.h"
 #include "includes/pcshare.h"
 #include "vidhrdw/newport.h"
@@ -124,10 +124,10 @@ static READ32_HANDLER( pio4_r )
 		return 0x00000004;
 		break;
 	case 0x40/4:
-		return at_8042_8_r(0);
+		return kbdc8042_8_r(0);
 		break;
 	case 0x44/4:
-		return at_8042_8_r(4);
+		return kbdc8042_8_r(4);
 		break;
 	case 0x58/4:
 		return 0x20;	// chip rev 1, board rev 0, "Guinness" (Indy) => 0x01 for "Full House" (Indigo2)
@@ -195,10 +195,10 @@ static WRITE32_HANDLER( pio4_w )
 		}
 		break;
 	case 0x40/4:
-		at_8042_8_w(0, data);
+		kbdc8042_8_w(0, data);
 		break;
 	case 0x44/4:
-		at_8042_8_w(4, data);
+		kbdc8042_8_w(4, data);
 		break;
 	case 0x80/4:
 	case 0x84/4:
@@ -804,10 +804,6 @@ static MACHINE_INIT( ip225015 )
 	timer_set(TIME_IN_MSEC(1), 0, ip22_timer);
 }
 
-static void sgi_gate_a20(int a20)
-{
-}
-
 static void dump_chain(data32_t ch_base)
 {
 	printf("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
@@ -988,15 +984,14 @@ static struct WD33C93interface scsi_intf =
 
 static DRIVER_INIT( ip225015 )
 {
-	AT8042_CONFIG at8042={
-		AT8042_STANDARD, sgi_gate_a20
+	struct kbdc8042_interface at8042={
+		KBDC8042_STANDARD, NULL
 	};
 
 	// IP22 uses 2 pieces of PC-compatible hardware: the 8042 PS/2 keyboard/mouse
 	// interface and the 8254 PIT.  Both are licensed cores embedded in the IOC custom chip.
 	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_TIMER_8254);
-	at_8042_init(&at8042);
-	at_8042_set_no_8259(1);
+	kbdc8042_init(&at8042);
 
 	// SCSI init
 	wd33c93_init(&scsi_intf);
@@ -1077,9 +1072,6 @@ static void rtc_update(void)
 
 static INTERRUPT_GEN( ip22_vbl )
 {
-	at_keyboard_polling();
-	at_8042_time();
-
 	nIntCounter++;
 	if(1) // nIntCounter == 60 )
 	{
