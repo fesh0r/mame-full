@@ -175,7 +175,9 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
                                       restore the videomode with dga */
             osd_exit();
             sysdep_close();
-            osd_die("error: could not create new photon display while switching display modes\n");
+            fprintf (stderr,
+               "error: could not create new photon display while switching display modes\n");
+            exit (1);              /* ugly, anyone know a better way ? */
          }
       }
       else

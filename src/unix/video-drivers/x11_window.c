@@ -70,7 +70,8 @@ int x11_test_mit_shm (Display * display, XErrorEvent * error)
         }
         /* else unexpected error code: notify and exit */
         XGetErrorText (display, ret, msg, 256);
-        osd_die("Unexpected X Error %d: %s\n", (int)ret, msg);
+        fprintf (stderr, "Unexpected X Error %d: %s\n", (int)ret, msg);
+        exit(1);
         /* to make newer gcc's shut up, grrr */
         return 0;
 }

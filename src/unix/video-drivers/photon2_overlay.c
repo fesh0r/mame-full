@@ -352,8 +352,9 @@ int I_OverlayOff(void)
         props.flags &= ~Pg_SCALER_PROP_SCALER_ENABLE;
         switch(PgConfigScalerChannel(channel, &props)){
 	        case -1:
-	           osd_die("error: configure channel failed!\n");
-               break;
+	           fprintf(stderr, "error: configure channel failed!\n");
+	           exit(1);
+                break;
 		case 1:
 			grab_ptrs(channel);
 		break;
