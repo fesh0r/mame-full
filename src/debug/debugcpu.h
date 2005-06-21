@@ -59,6 +59,7 @@ struct debug_trace_info
 	offs_t			trace_over_target;			/* target for tracing over
                                                     (0 = not tracing over,
                                                     ~0 = not currently tracing over) */
+	int				auto_flush;					/* does this trace automatically flush after every access? */
 };
 
 
@@ -157,7 +158,7 @@ void				debug_cpu_next_cpu(void);
 void				debug_cpu_ignore_cpu(int cpunum, int ignore);
 
 /* tracing support */
-void				debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action);
+void				debug_cpu_trace(int cpunum, FILE *file, int trace_over, int auto_flush, const char *action);
 
 /* breakpoints */
 void				debug_check_breakpoints(int cpunum, offs_t pc);

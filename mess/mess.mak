@@ -908,7 +908,8 @@ $(OBJ)/be.a:						\
 	$(OBJ)/mess/machine/bebox.o		\
 	$(OBJ)/mess/machine/pci.o		\
 	$(OBJ)/mess/machine/mpc105.o	\
-	$(OBJ)/mess/vidhrdw/cirrus.o
+	$(OBJ)/mess/vidhrdw/cirrus.o	\
+	$(OBJ)/machine/intelfsh.o
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\

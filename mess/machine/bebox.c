@@ -100,6 +100,7 @@
 #include "machine/8237dma.h"
 #include "machine/idectrl.h"
 #include "machine/pci.h"
+#include "machine/intelfsh.h"
 
 #define LOG_CPUIMASK	1
 #define LOG_UART		1
@@ -731,9 +732,52 @@ static const struct pit8253_config bebox_pit8254_config =
 
 /*************************************
  *
+ *	Flash ROM
+ *
+ *************************************/
+
+static READ8_HANDLER( bebox_flash8_r )
+{
+	offset = (offset & ~7) | (7 - (offset & 7));
+	return intelflash_read(0, offset);
+}
+
+
+
+static WRITE8_HANDLER( bebox_flash8_w )
+{
+	offset = (offset & ~7) | (7 - (offset & 7));
+	intelflash_write(0, offset, data);
+}
+
+
+
+READ64_HANDLER( bebox_flash_r )
+{
+	return read64be_with_read8_handler(bebox_flash8_r, offset, mem_mask);
+}
+
+
+
+WRITE64_HANDLER( bebox_flash_w )
+{
+	write64be_with_write8_handler(bebox_flash8_w, offset, data, mem_mask);
+}
+
+
+
+/*************************************
+ *
  *	Driver main
  *
  *************************************/
+
+NVRAM_HANDLER( bebox )
+{
+	nvram_handler_intelflash(0, file, read_or_write);
+}
+
+
 
 MACHINE_INIT( bebox )
 {
@@ -752,8 +796,9 @@ DRIVER_INIT( bebox )
 	mpc105_init(0);
 	pci_add_device(0, 1, &cirrus5430_callbacks);
 
-	cpu_setbank(1, memory_region(REGION_USER1));
+	/* set up boot and flash ROM */
 	cpu_setbank(2, memory_region(REGION_USER2));
+	intelflash_init(0, FLASH_FUJITSU_29F016A, memory_region(REGION_USER1));
 
 	/* install MESS managed RAM */
 	for (cpu = 0; cpu < 2; cpu++)
@@ -763,6 +808,7 @@ DRIVER_INIT( bebox )
 	}
 	cpu_setbank(3, mess_ram);
 
+	/* set up UARTs */
 	uart8250_init(0, NULL);
 	uart8250_init(1, NULL);
 	uart8250_init(2, NULL);
@@ -785,5 +831,27 @@ DRIVER_INIT( bebox )
 	{
 		memory_install_read64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_r);
 		memory_install_write64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_w);
+	}
+
+	/* The following is a verrrry ugly hack put in to support NetBSD for
+	 * NetBSD.  When NetBSD/bebox it does most of its work on CPU #0 and then
+	 * lets CPU #1 go.  However, it seems that CPU #1 jumps into never-never
+	 * land, crashes, and then goes into NetBSD's crash handler which catches
+	 * it.  The current PowerPC core cannot catch this trip into never-never
+	 * land properly, and MESS crashes.  In the interim, this "mitten" catches
+	 * the crash
+	 */
+	{
+		static UINT64 ops[2] =
+		{
+			/* li r0, 0x0700 */
+			/* mtspr ctr, r0 */
+			U64(0x380007007C0903A6),
+
+			/* bcctr 0x14, 0 */
+			U64(0x4E80042000000000)
+		};
+		memory_install_read64_handler(1, ADDRESS_SPACE_PROGRAM, 0x9421FFF0, 0x9421FFFF, 0, 0, MRA64_BANK1);
+		cpu_setbank(1, ops);
 	}
 }
