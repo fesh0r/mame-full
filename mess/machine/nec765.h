@@ -30,10 +30,13 @@ typedef struct nec765_interface
 
 	/* dma data request */
 	void	(*dma_drq)(int state,int read_write);
+
+	/* image lookup */
+	mess_image *(*get_image)(int floppy_index);
 } nec765_interface;
 
 /* init nec765 interface */
-void nec765_init(nec765_interface *iface, NEC765_VERSION version);
+void nec765_init(const nec765_interface *iface, NEC765_VERSION version);
 /* set nec765 terminal count input state */
 void nec765_set_tc_state(int);
 /* set nec765 ready input*/

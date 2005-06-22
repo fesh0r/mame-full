@@ -129,7 +129,7 @@ static NEC765 fdc;
 static char nec765_data_buffer[32*1024];
 
 
-nec765_interface nec765_iface;
+static nec765_interface nec765_iface;
 
 
 static const INT8 nec765_cmd_size[32] =
@@ -142,9 +142,18 @@ static const INT8 nec765_cmd_size[32] =
 
 static mess_image *current_image(void)
 {
-	if (fdc.drive >= device_count(IO_FLOPPY))
-		return NULL;
-	return image_from_devtype_and_index(IO_FLOPPY, fdc.drive);
+	mess_image *image = NULL;
+
+	if (!nec765_iface.get_image)
+	{
+		if (fdc.drive < device_count(IO_FLOPPY))
+			image = image_from_devtype_and_index(IO_FLOPPY, fdc.drive);
+	}
+	else
+	{
+		image = nec765_iface.get_image(fdc.drive);
+	}
+	return image;
 }
 
 static void nec765_setup_drive_and_side(void)
@@ -659,7 +668,7 @@ static void nec765_set_ready_change_callback(mess_image *img, int state)
 
 
 
-void nec765_init(nec765_interface *iface, NEC765_VERSION version)
+void nec765_init(const nec765_interface *iface, NEC765_VERSION version)
 {
 	int i;
 

@@ -116,7 +116,7 @@ static void bebox_floppy_getinfo(struct IODevice *dev)
 {
 	/* floppy */
 	floppy_device_getinfo(dev, floppyoptions_pc);
-	dev->count = 2;
+	dev->count = 1;
 }
 
 SYSTEM_CONFIG_START(bebox)

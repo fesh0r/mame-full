@@ -381,11 +381,21 @@ static void bebox_fdc_dma_drq(int state, int read_)
 
 
 
+static mess_image *bebox_fdc_get_image(int floppy_index)
+{
+	/* the BeBox boot ROM seems to query for floppy #1 when it should be
+	 * querying for floppy #0 */
+	return image_from_devtype_and_index(IO_FLOPPY, 0);
+}
+
+
+
 static const struct pc_fdc_interface bebox_fdc_interface =
 {
 	SMC37C78,
 	bebox_fdc_interrupt,
-	bebox_fdc_dma_drq
+	bebox_fdc_dma_drq,
+	bebox_fdc_get_image
 };
 
 

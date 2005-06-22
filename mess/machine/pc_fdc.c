@@ -49,11 +49,13 @@ static struct pc_fdc *fdc;
 
 static void pc_fdc_hw_interrupt(int state);
 static void pc_fdc_hw_dma_drq(int,int);
+static mess_image *pc_fdc_get_image(int floppy_index);
 
 static nec765_interface pc_fdc_nec765_interface = 
 {
 	pc_fdc_hw_interrupt,
-	pc_fdc_hw_dma_drq
+	pc_fdc_hw_dma_drq,
+	pc_fdc_get_image
 };
 
 static void pc_fdc_reset(void)
@@ -96,6 +98,24 @@ void pc_fdc_init(const struct pc_fdc_interface *iface)
 		img = image_from_devtype_and_index(IO_FLOPPY, i);
 		floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
 	}
+}
+
+
+
+static mess_image *pc_fdc_get_image(int floppy_index)
+{
+	mess_image *image = NULL;
+
+	if (!fdc->fdc_interface.get_image)
+	{
+		if (floppy_index < device_count(IO_FLOPPY))
+			image = image_from_devtype_and_index(IO_FLOPPY, floppy_index);
+	}
+	else
+	{
+		image = fdc->fdc_interface.get_image(floppy_index);
+	}
+	return image;
 }
 
 
