@@ -78,10 +78,18 @@ static void init_at_common(const struct kbdc8042_interface *at8042)
 
 
 
+static void at_keyboard_interrupt(int state)
+{
+	pic8259_set_irq_line(0, 1, state);
+}
+
+
+
 DRIVER_INIT( atcga )
 {
-	struct kbdc8042_interface at8042={
-		KBDC8042_STANDARD, at286_set_gate_a20
+	struct kbdc8042_interface at8042 =
+	{
+		KBDC8042_STANDARD, at286_set_gate_a20, at_keyboard_interrupt
 	};
 	init_at_common(&at8042);
 }
@@ -90,8 +98,9 @@ DRIVER_INIT( atcga )
 
 DRIVER_INIT( at386 )
 {
-	struct kbdc8042_interface at8042={
-		KBDC8042_AT386, at386_set_gate_a20
+	struct kbdc8042_interface at8042 =
+	{
+		KBDC8042_AT386, at386_set_gate_a20, at_keyboard_interrupt
 	};
 	init_at_common(&at8042);
 }
@@ -131,8 +140,9 @@ static const struct pc_vga_interface vga_interface =
 
 DRIVER_INIT( at_vga )
 {
-	struct kbdc8042_interface at8042={
-		KBDC8042_STANDARD, at286_set_gate_a20
+	struct kbdc8042_interface at8042 =
+	{
+		KBDC8042_STANDARD, at286_set_gate_a20, at_keyboard_interrupt
 	};
 
 	init_at_common(&at8042);
@@ -144,8 +154,9 @@ DRIVER_INIT( at_vga )
 
 DRIVER_INIT( ps2m30286 )
 {
-	struct kbdc8042_interface at8042={
-		KBDC8042_PS2, at386_set_gate_a20
+	struct kbdc8042_interface at8042 =
+	{
+		KBDC8042_PS2, at386_set_gate_a20, at_keyboard_interrupt
 	};
 	init_at_common(&at8042);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);

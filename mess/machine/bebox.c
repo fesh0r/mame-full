@@ -101,6 +101,7 @@
 #include "machine/idectrl.h"
 #include "machine/pci.h"
 #include "machine/intelfsh.h"
+#include "machine/8042kbdc.h"
 
 #define LOG_CPUIMASK	1
 #define LOG_UART		1
@@ -782,6 +783,29 @@ WRITE64_HANDLER( bebox_flash_w )
  *
  *************************************/
 
+static void bebox_keyboard_interrupt(int state)
+{
+	bebox_set_irq_bit(16, state);
+	pic8259_set_irq_line(0, 1, state);
+}
+
+
+
+static const struct kbdc8042_interface bebox_8042_interface =
+{
+	KBDC8042_STANDARD,
+	NULL,
+	bebox_keyboard_interrupt
+};
+
+
+
+/*************************************
+ *
+ *	Driver main
+ *
+ *************************************/
+
 NVRAM_HANDLER( bebox )
 {
 	nvram_handler_intelflash(0, file, read_or_write);
@@ -830,6 +854,7 @@ DRIVER_INIT( bebox )
 	ide_controller_init_custom(0, &bebox_ide_interface, NULL);
 	pc_vga_init(&bebox_vga_interface, &cirrus_svga_interface);
 	pit8253_init(1, &bebox_pit8254_config);
+	kbdc8042_init(&bebox_8042_interface);
 
 	dma8237_init(2);
 	dma8237_config(0, &bebox_dma);

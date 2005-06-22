@@ -984,8 +984,9 @@ static struct WD33C93interface scsi_intf =
 
 static DRIVER_INIT( ip225015 )
 {
-	struct kbdc8042_interface at8042={
-		KBDC8042_STANDARD, NULL
+	struct kbdc8042_interface at8042 =
+	{
+		KBDC8042_STANDARD, NULL, NULL
 	};
 
 	// IP22 uses 2 pieces of PC-compatible hardware: the 8042 PS/2 keyboard/mouse

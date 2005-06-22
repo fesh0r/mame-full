@@ -178,7 +178,6 @@
 #include "machine/pckeybrd.h"
 #include "machine/8042kbdc.h"
 #include "machine/pit8253.h"
-#include "machine/pic8259.h"
 #include "includes/pcshare.h"
 
 
@@ -206,6 +205,7 @@ static struct
 {
 	kbdc8042_type_t type;
 	void (*set_gate_a20)(int a20);
+	void (*keyboard_interrupt)(int state);
 
 	UINT8 inport, outport, data, command;
 
@@ -268,6 +268,7 @@ void kbdc8042_init(const struct kbdc8042_interface *intf)
 	memset(&kbdc8042, 0, sizeof(kbdc8042));
 	kbdc8042.type = intf->type;
 	kbdc8042.set_gate_a20 = intf->set_gate_a20;
+	kbdc8042.keyboard_interrupt = intf->keyboard_interrupt;
 
 	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
 	kbdc8042.inport = 0xa0;	
@@ -283,8 +284,12 @@ static void at_8042_receive(UINT8 data)
 
 	kbdc8042.data = data;
 	kbdc8042.keyboard.received = 1;
-	pic8259_set_irq_line(0, 1, 1);
-	pic8259_set_irq_line(0, 1, 0);
+
+	if (kbdc8042.keyboard_interrupt)
+	{
+		kbdc8042.keyboard_interrupt(1);
+		kbdc8042.keyboard_interrupt(0);
+	}
 }
 
 static void at_8042_check_keyboard(void)
