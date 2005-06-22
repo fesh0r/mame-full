@@ -43,7 +43,7 @@ static struct via6522_interface vectrex_via6522_interface =
 
 static int x_center, y_center, x_max, y_max;
 static int x_int, y_int; /* X, Y integrators IC LF347*/
-static int lightpen_down=1, pen_x, pen_y; /* Lightpen position */
+static int lightpen_down=0, pen_x, pen_y; /* Lightpen position */
 static mame_timer *lp_t;
 static int blank;
 
