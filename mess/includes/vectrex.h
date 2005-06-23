@@ -10,10 +10,6 @@
 #endif
 
 /* From machine/vectrex.c */
-extern unsigned char *vectrex_ram;
- READ8_HANDLER  ( vectrex_mirrorram_r );
-WRITE8_HANDLER ( vectrex_mirrorram_w );
-
 DEVICE_LOAD( vectrex_cart );
 
 /* From machine/vectrex.c */

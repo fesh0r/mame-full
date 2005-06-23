@@ -20,7 +20,6 @@
 /*********************************************************************
   Global variables
  *********************************************************************/
-unsigned char *vectrex_ram;		   /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
 unsigned char vectrex_via_out[2];
 UINT32 vectrex_beam_color = VC_WHITE;	   /* the color of the vectrex beam */
 int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
@@ -103,19 +102,6 @@ DEVICE_LOAD( vectrex_cart )
 	}
 
 	return INIT_PASS;
-}
-
-/*********************************************************************
-  Vectrex memory handler
- *********************************************************************/
- READ8_HANDLER ( vectrex_mirrorram_r )
-{
-	return vectrex_ram[offset];
-}
-
-WRITE8_HANDLER ( vectrex_mirrorram_w )
-{
-	vectrex_ram[offset] = data;
 }
 
 /*********************************************************************
