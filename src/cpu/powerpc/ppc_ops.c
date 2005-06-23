@@ -813,8 +813,8 @@ static void ppc_mcrf(UINT32 op)
 
 static void ppc_mcrxr(UINT32 op)
 {
-	CR(RT >> 2) = XER & 0x0F;
-	XER = 0;
+	CR(RT >> 2) = (XER >> 28) & 0x0F;
+	XER &= ~0xf0000000;
 }
 
 static void ppc_mfcr(UINT32 op)

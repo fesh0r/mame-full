@@ -229,7 +229,7 @@ typedef struct {
 	int reserved;
 	UINT32 reserved_address;
 
-	int exception_pending;
+	int interrupt_pending;
 	int external_int;
 
 	UINT64 tb;			/* 56-bit timebase register */
@@ -619,43 +619,9 @@ INLINE UINT32 ppc_get_spr(int spr)
 
 INLINE void ppc_set_msr(UINT32 value)
 {
-	int i;
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
 	MSR = value;
-
-	if( value & MSR_EE ) {
-		/* check for pending interrupts */
-		for(i=0; i < 32; i++) {
-			if(ppc.exception_pending & (1 << i)) {
-				ppc.exception_pending &= ~(1 << i);
-#if (HAS_PPC603)
-				if(ppc.is603) {
-					ppc603_exception(i);
-				}
-#endif
-#if (HAS_PPC602)
-				if(ppc.is602) {
-					ppc602_exception(i);
-				}
-#endif
-#if (HAS_PPC403)
-				if(!ppc.is602 && !ppc.is603) {
-					if (i == EXCEPTION_IRQ)
-					{
-						if (EXIER & ppc.external_int)
-							ppc403_exception(i);
-					}
-					else
-					{
-					ppc403_exception(i);
-				}
-				}
-#endif
-				break;
-			}
-		}
-	}
 }
 
 INLINE UINT32 ppc_get_msr(void)
@@ -757,11 +723,14 @@ INLINE void WRITE8(UINT32 a, UINT8 d)
 
 #if HAS_PPC403
 	if( a >= 0x40000000 && a <= 0x4000000f )		/* Serial Port */
+	{
 		ppc403_spu_w(a, d);
+		return;
+	}
 #endif
 
-		program_write_byte_32be(a, d);
-	}
+	program_write_byte_32be(a, d);
+}
 
 INLINE void WRITE16(UINT32 a, UINT16 d)
 {
@@ -825,7 +794,7 @@ INLINE void WRITE64(UINT32 a, UINT64 d)
 	}
 	program_write_qword_64be(a, d);
 #endif
-}
+}		
 
 #if (HAS_PPC403)
 #include "ppc403.c"

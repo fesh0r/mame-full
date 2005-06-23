@@ -20,10 +20,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
 					ppc.npc = 0x00000000 | 0x0500;
+					
+				ppc.interrupt_pending &= ~0x1;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
 			}
 			break;
 
@@ -45,10 +44,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
 					ppc.npc = 0x00000000 | 0x0900;
+					
+				ppc.interrupt_pending &= ~0x2;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_DECREMENTER;
 			}
 			break;
 
@@ -114,10 +112,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x1400;
 				else
 					ppc.npc = 0x00000000 | 0x1400;
+					
+				ppc.interrupt_pending &= ~0x4;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_SMI;
 			}
 			break;
 
@@ -130,7 +127,7 @@ void ppc603_exception(int exception)
 static void ppc603_set_irq_line(int irqline, int state)
 {
 	if( state ) {
-		ppc603_exception(EXCEPTION_IRQ);
+		ppc.interrupt_pending |= 0x1;
 		if (ppc.irq_callback)
 		{
 			ppc.irq_callback(irqline);
@@ -140,8 +137,31 @@ static void ppc603_set_irq_line(int irqline, int state)
 
 static void ppc603_set_smi_line(int state)
 {
-	if( state )
-		ppc603_exception(EXCEPTION_SMI);
+	if( state ) {
+		ppc.interrupt_pending |= 0x4;
+	}
+}
+
+INLINE void ppc603_check_interrupts(void)
+{
+	if (MSR & MSR_EE)
+	{
+		if (ppc.interrupt_pending != 0)
+		{
+			if (ppc.interrupt_pending & 0x1)
+			{
+				ppc603_exception(EXCEPTION_IRQ);
+			}
+			else if (ppc.interrupt_pending & 0x2)
+			{
+				ppc603_exception(EXCEPTION_DECREMENTER);
+			}
+			else if (ppc.interrupt_pending & 0x4)
+			{
+				ppc603_exception(EXCEPTION_SMI);
+			}
+		}
+	}
 }
 
 static void ppc603_reset(void *param)
@@ -155,7 +175,7 @@ static void ppc603_reset(void *param)
 
 	ppc.hid0 = 1;
 
-	ppc.exception_pending = 0;
+	ppc.interrupt_pending = 0;
 }
 
 
@@ -189,9 +209,11 @@ static int ppc603_execute(int cycles)
 		ppc.tb += 1;
 
 		DEC -= 1;
-		if(DEC > dec_old) {
-			ppc603_exception(EXCEPTION_DECREMENTER);
+		if(DEC == 0) {
+			ppc.interrupt_pending |= 0x2;
 		}
+		
+		ppc603_check_interrupts();
 	}
 
 	return cycles - ppc_icount;

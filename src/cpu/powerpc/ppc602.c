@@ -20,10 +20,9 @@ void ppc602_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
 					ppc.npc = ppc.ibr | 0x0500;
+					
+				ppc.interrupt_pending &= ~0x1;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending = 1 << EXCEPTION_IRQ;
 			}
 			break;
 
@@ -45,10 +44,9 @@ void ppc602_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
 					ppc.npc = ppc.ibr | 0x0900;
+					
+				ppc.interrupt_pending &= ~0x2;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_DECREMENTER;
 			}
 			break;
 
@@ -104,10 +102,28 @@ void ppc602_exception(int exception)
 static void ppc602_set_irq_line(int irqline, int state)
 {
 	if( state ) {
-		ppc602_exception(EXCEPTION_IRQ);
+		ppc.interrupt_pending |= 0x1;
 		if (ppc.irq_callback)
 		{
 			ppc.irq_callback(irqline);
+		}
+	}
+}
+
+INLINE void ppc602_check_interrupts(void)
+{
+	if (MSR & MSR_EE)
+	{
+		if (ppc.interrupt_pending != 0)
+		{
+			if (ppc.interrupt_pending & 0x1)
+			{
+				ppc602_exception(EXCEPTION_IRQ);
+			}
+			else if (ppc.interrupt_pending & 0x2)
+			{
+				ppc602_exception(EXCEPTION_DECREMENTER);
+			}
 		}
 	}
 }
@@ -123,7 +139,7 @@ static void ppc602_reset(void *param)
 
 	ppc.hid0 = 1;
 
-	ppc.exception_pending = 0;
+	ppc.interrupt_pending = 0;
 }
 
 static int ppc602_execute(int cycles)
@@ -138,7 +154,7 @@ static int ppc602_execute(int cycles)
 		dec_old = DEC;
 		ppc.pc = ppc.npc;
 		CALL_MAME_DEBUG;
-
+		
 		ppc.npc = ppc.pc + 4;
 		opcode = ROPCODE64(ppc.pc);
 
@@ -156,9 +172,11 @@ static int ppc602_execute(int cycles)
 		ppc.tb += 1;
 
 		DEC -= 1;
-		if(DEC > dec_old) {
-			ppc602_exception(EXCEPTION_DECREMENTER);
+		if(DEC == 0) {
+			ppc.interrupt_pending |= 0x2;
 		}
+		
+		ppc602_check_interrupts();
 	}
 
 	return cycles - ppc_icount;
