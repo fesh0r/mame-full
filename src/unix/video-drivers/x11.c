@@ -423,9 +423,10 @@ void x11_set_window_hints(int type)
         struct rc_option *option;
         XWMHints wm_hints;
 	XSizeHints hints;
-	XClassHint class_hints;
-	XTextProperty window_name;
-	XTextProperty icon_name;
+	XClassHint class_hints = { NAME, NAME };
+	XTextProperty window_name, icon_name;
+	XTextProperty *window_name_p = &window_name;
+	XTextProperty *icon_name_p = &icon_name;
 	unsigned int width, height;
 	char *app = NAME;
 
@@ -483,23 +484,25 @@ void x11_set_window_hints(int type)
                                 PropModeReplace,(unsigned char *)&mwmhints,4);
         }
 
-	class_hints.res_name = app;
-	class_hints.res_class = NAME;
-
 	if (!XStringListToTextProperty(&app, 1, &window_name)) {
-		fprintf(stderr, "Structure allocation for window_name failed\n");
-		exit(-1);
+		fprintf(stderr, "Warning: Structure allocation for window_name failed\n");
+		window_name_p = NULL;
 	}
 
 	if (!XStringListToTextProperty(&app, 1, &icon_name)) {
-		fprintf( stderr, "Structure allocation for icon_name failed\n" );
-		exit(-1);
+		fprintf( stderr, "Warning: Structure allocation for icon_name failed\n" );
+		icon_name_p = NULL;
 	}
 
-	XSetWMProperties(display, window, &window_name, &icon_name,
+	XSetWMProperties(display, window, window_name_p, icon_name_p,
 	    NULL, 0, &hints, &wm_hints, &class_hints);
 
         XStoreName (display, window, sysdep_display_params.title);
+        
+        if (window_name_p)
+          XFree(window_name_p->value);
+        if (icon_name_p)
+          XFree(icon_name_p->value);
 }
 
 static void x11_get_geometry(int *x, int *y, unsigned int *width,

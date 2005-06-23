@@ -450,7 +450,8 @@ blit_func_p sysdep_display_effect_open(void)
     fprintf(stderr, "Error: could not allocate memory\n");
     return NULL;
   }
-  memset(effect_dbbuf, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
+  /* HDG: AFAIK this is not nescesarry 
+  memset(effect_dbbuf, 0, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4); */
 
   switch(sysdep_display_properties.palette_info.fourcc_format)
   {

@@ -79,10 +79,7 @@ static int FindXvPort(long format)
 
 	for (i = 0; i < num_adaptors; i++)
 	{
-		int firstport=ai[i].base_id;
-		int portcount=ai[i].num_ports;
-
-		for (p = firstport; p < ai[i].base_id+portcount; p++)
+		for (p = ai[i].base_id; p < ai[i].base_id+ai[i].num_ports; p++)
 		{
 			fo = XvListImageFormats(display, p, &num_formats);
 			for (j = 0; j < num_formats; j++)
@@ -96,6 +93,7 @@ static int FindXvPort(long format)
 						sysdep_display_properties.palette_info.fourcc_format=format;
 						sysdep_display_properties.palette_info.bpp=fo[j].bits_per_pixel;
 						XFree(fo);
+						XvFreeAdaptorInfo(ai);
 						return 1;
 					}
 				}
