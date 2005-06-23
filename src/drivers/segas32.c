@@ -63,18 +63,12 @@ static data16_t* segas32_shared_ram;
 
 data16_t* segas32_protram;
 
-/* clean up */
-data16_t sys32_tilebank_external;
-data16_t sys32_displayenable;
-data16_t *system32_mixerregs[2];		// mixer registers
-int system32_mixerShift;
 
 /* used by multi32.c? */
 int analogRead[8];
 int analogSwitch=0;
 
 int system32_temp_kludge;
-data16_t *sys32_spriteram16;
 
 static read16_handler custom_io_r;
 static write16_handler custom_io_w;
@@ -130,6 +124,11 @@ extern WRITE16_HANDLER( ga2_dpram_w );
 
 extern WRITE16_HANDLER(sonic_level_load_protection);
 
+/* vidhrdw/segas32.c */
+extern data16_t sys32_tilebank_external;
+extern data16_t sys32_displayenable;
+extern int system32_mixerShift;
+extern data16_t *sys32_spriteram16;
 
 
 /*************************************
