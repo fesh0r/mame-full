@@ -79,6 +79,7 @@
 #define SPR603E_HID0		1008	/* 603E */
 #define SPR603E_HID1		1009	/* 603E */
 #define SPR603E_IABR		1010	/* 603E */
+#define SPR603E_HID2		1011	/* 603E */
 
 #define SPR602_TCR			984		/* 602 */
 #define SPR602_IBR			986		/* 602 */
