@@ -56,7 +56,6 @@ ADDRESS_MAP_START( astrocade_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( astrocade_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READ(astrocade_intercept_r)
 	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READ(astrocade_video_retrace_r)
 	/*AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_READ(astrocade_horiz_r)*/
@@ -75,7 +74,6 @@ ADDRESS_MAP_START( astrocade_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( astrocade_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x00, 0x07) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_register_w)
 	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_WRITE(astrocade_mode_w)
 	AM_RANGE(0x09, 0x09) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_split_w)
