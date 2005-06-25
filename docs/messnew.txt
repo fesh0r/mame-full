@@ -9,6 +9,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600] Fixed TIA problem that caused graphics glitches in Warlords.  (bug
+  #396) [Wilbert Pol]
+
 - [ASTROCDE] Fixed sound regression introduced in 0.96.  [Frank Palazzolo]
 
 - [C65] Fixed regression introduced in 0.96.  [Nate Woods]

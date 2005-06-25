@@ -118,6 +118,54 @@ void ppc603_exception(int exception)
 			}
 			break;
 
+		case EXCEPTION_DSI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0300;
+				else
+					ppc.npc = 0x00000000 | 0x0300;
+					
+				ppc.interrupt_pending &= ~0x4;
+				change_pc(ppc.npc);
+			}
+			break;
+
+		case EXCEPTION_ISI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0400;
+				else
+					ppc.npc = 0x00000000 | 0x0400;
+					
+				ppc.interrupt_pending &= ~0x4;
+				change_pc(ppc.npc);
+			}
+			break;
+	
 		default:
 			osd_die("ppc: Unhandled exception %d\n", exception);
 			break;
@@ -232,7 +280,7 @@ static int ppc603_translate_virt(offs_t *addr_ptr, const BATENT *bat)
 	UINT32 vsid, hash, pteg_address;
 	UINT32 target_pte, bl, mask;
 	UINT64 pte, *pteg_ptr;
-	int i;
+	int i, hash_type;
 
 	address = *addr_ptr;
 
@@ -257,31 +305,39 @@ static int ppc603_translate_virt(offs_t *addr_ptr, const BATENT *bat)
 	vsid = ppc.sr[(address >> 28) & 0x0F];
 	hash = (vsid & 0x7FFFF) ^ ((address >> 12) & 0xFFFF);
 
-	pteg_address = (ppc.sdr1 & 0xFFFF0000)
-		| (((ppc.sdr1 & 0x01FF) & (hash >> 10)) << 16)
-		| ((hash & 0x03FF) << 6);
-
-	target_pte = (vsid << 7) | ((address >> 22) & 0x3F) | 0x80000000;
-
-	pteg_ptr = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, pteg_address);
-	if (pteg_ptr)
+	/* we have to try both types of hashes */
+	for (hash_type = 0; hash_type <= 1; hash_type++)
 	{
-		for (i = 0; i < 8; i++)
-		{
-			pte = pteg_ptr[i];
+		pteg_address = (ppc.sdr1 & 0xFFFF0000)
+			| (((ppc.sdr1 & 0x01FF) & (hash >> 10)) << 16)
+			| (((hash & 0x03FF) << 6) ^ (hash_type ? 0x1FF00000000 : 0x00000000000));
 
-			/* is valid? */
-			if (((pte >> 32) & 0xFFFFFFFF) == target_pte)
+		target_pte = (vsid << 7) | ((address >> 22) & 0x3F) | 0x80000000;
+		target_pte |= hash_type ? 0x40 : 0x00;
+
+		pteg_ptr = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, pteg_address);
+		if (pteg_ptr)
+		{
+			for (i = 0; i < 8; i++)
 			{
-				*addr_ptr = ((UINT32) (pte & 0xFFFFF000))
-					| (address & 0x0FFF);
-				return 1;
+				pte = pteg_ptr[i];
+
+				/* is valid? */
+				if (((pte >> 32) & 0xFFFFFFFF) == target_pte)
+				{
+					*addr_ptr = ((UINT32) (pte & 0xFFFFF000))
+						| (address & 0x0FFF);
+					return 1;
+				}
 			}
 		}
 	}
 
 	/* lookup failure - exception */
-	ppc603_exception(EXCEPTION_TRAP);
+	if (bat == ppc.dbat)
+		ppc603_exception(EXCEPTION_DSI);
+	else
+		ppc603_exception(EXCEPTION_ISI);
 	return 0;
 }
 

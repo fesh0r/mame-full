@@ -197,7 +197,7 @@ void mc146818_init(MC146818_TYPE type)
 	if (!mc146818)
 		return;
 
-	memset(mc146818, 0, sizeof(mc146818));
+	memset(mc146818, 0, sizeof(*mc146818));
 	mc146818->type = type;
 	mc146818->last_refresh = timer_get_time();
     timer_pulse(TIME_IN_HZ(1.0), 0, mc146818_timer);

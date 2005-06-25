@@ -604,19 +604,21 @@ static void vga_cpu_interface(void)
 	}
 }
 
-static  READ8_HANDLER(vga_crtc_r)
+static READ8_HANDLER(vga_crtc_r)
 {
-	int data=0xff;
+	data8_t data = 0xff;
 
 	switch (offset) {
-	case 4: data=vga.crtc.index;break;
+	case 4:
+		data = vga.crtc.index;
+		break;
 	case 5:
-		if (vga.crtc.index<sizeof(vga.crtc.data))
-			data=vga.crtc.data[vga.crtc.index];
+		if (vga.crtc.index < vga.svga_intf.crtc_regcount)
+			data = vga.crtc.data[vga.crtc.index];
 		break;
 	case 0xa:
-		vga.attribute.state=0;
-		data=0;/*4; */
+		vga.attribute.state = 0;
+		data = 0;/*4; */
 #if 0 /* slow */
 		{
 			int clock=vga.monitor.get_clock();
@@ -767,7 +769,7 @@ READ8_HANDLER( vga_port_03c0_r )
 			break;
 
 		case 5:
-			if (vga.sequencer.index < sizeof(vga.sequencer.data))
+			if (vga.sequencer.index < vga.svga_intf.seq_regcount)
 				data = vga.sequencer.data[vga.sequencer.index];
 			break;
 
@@ -823,7 +825,7 @@ READ8_HANDLER( vga_port_03c0_r )
 			break;
 
 		case 0xf:
-			if (vga.gc.index < sizeof(vga.gc.data))
+			if (vga.gc.index < vga.svga_intf.gc_regcount)
 				data = vga.gc.data[vga.gc.index];
 			break;
 	}
@@ -1069,6 +1071,9 @@ void pc_vga_init(const struct pc_vga_interface *vga_intf, const struct pc_svga_i
 	vga.gc.data			= (UINT8 *) auto_malloc(vga.svga_intf.gc_regcount);
 	memset(vga.memory, '\0', vga.svga_intf.vram_size);
 	memset(vga.fontdirty, '\0', 0x800);
+	memset(vga.sequencer.data, '\0', vga.svga_intf.seq_regcount);
+	memset(vga.crtc.data, '\0', vga.svga_intf.crtc_regcount);
+	memset(vga.gc.data, '\0', vga.svga_intf.gc_regcount);
 
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
 	switch(buswidth)
