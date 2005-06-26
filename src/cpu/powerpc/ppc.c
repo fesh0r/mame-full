@@ -249,7 +249,8 @@ typedef struct {
 	UINT32 tcr;
 	UINT32 ibr;
 
-	/* PowerPC 603 function pointers for address translation */
+	/* PowerPC function pointers for memory accesses/exceptions */
+	void (*exception)(int exception);
 	data8_t (*read8)(offs_t address);
 	data16_t (*read16)(offs_t address);
 	data32_t (*read32)(offs_t address);
@@ -258,6 +259,12 @@ typedef struct {
 	void (*write16)(offs_t address, data16_t data);
 	void (*write32)(offs_t address, data32_t data);
 	void (*write64)(offs_t address, data64_t data);
+	data16_t (*read16_unaligned)(offs_t address);
+	data32_t (*read32_unaligned)(offs_t address);
+	data64_t (*read64_unaligned)(offs_t address);
+	void (*write16_unaligned)(offs_t address, data16_t data);
+	void (*write32_unaligned)(offs_t address, data32_t data);
+	void (*write64_unaligned)(offs_t address, data64_t data);
 } PPC_REGS;
 
 
@@ -619,22 +626,23 @@ INLINE UINT32 ppc_get_spr(int spr)
 	return 0;
 }
 
-static data8_t ppc603_read8_virt(offs_t address);
-static data16_t ppc603_read16_virt(offs_t address);
-static data32_t ppc603_read32_virt(offs_t address);
-static data64_t ppc603_read64_virt(offs_t address);
-static void ppc603_write8_virt(offs_t address, data8_t data);
-static void ppc603_write16_virt(offs_t address, data16_t data);
-static void ppc603_write32_virt(offs_t address, data32_t data);
-static void ppc603_write64_virt(offs_t address, data64_t data);
+static data8_t ppc_read8_translated(offs_t address);
+static data16_t ppc_read16_translated(offs_t address);
+static data32_t ppc_read32_translated(offs_t address);
+static data64_t ppc_read64_translated(offs_t address);
+static void ppc_write8_translated(offs_t address, data8_t data);
+static void ppc_write16_translated(offs_t address, data16_t data);
+static void ppc_write32_translated(offs_t address, data32_t data);
+static void ppc_write64_translated(offs_t address, data64_t data);
 
 INLINE void ppc_set_msr(UINT32 value)
 {
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
+
 	MSR = value;
 
-	if (IS_PPC603())
+	if (IS_PPC603() || IS_PPC602())
 	{
 		if (!(MSR & MSR_DR))
 		{
@@ -649,14 +657,14 @@ INLINE void ppc_set_msr(UINT32 value)
 		}
 		else
 		{
-			ppc.read8 = ppc603_read8_virt;
-			ppc.read16 = ppc603_read16_virt;
-			ppc.read32 = ppc603_read32_virt;
-			ppc.read64 = ppc603_read64_virt;
-			ppc.write8 = ppc603_write8_virt;
-			ppc.write16 = ppc603_write16_virt;
-			ppc.write32 = ppc603_write32_virt;
-			ppc.write64 = ppc603_write64_virt;
+			ppc.read8 = ppc_read8_translated;
+			ppc.read16 = ppc_read16_translated;
+			ppc.read32 = ppc_read32_translated;
+			ppc.read64 = ppc_read64_translated;
+			ppc.write8 = ppc_write8_translated;
+			ppc.write16 = ppc_write16_translated;
+			ppc.write32 = ppc_write32_translated;
+			ppc.write64 = ppc_write64_translated;
 		}
 	}
 }
@@ -691,147 +699,7 @@ static void (* optable59[1024])(UINT32);
 static void (* optable63[1024])(UINT32);
 static void (* optable[64])(UINT32);
 
-INLINE UINT8 READ8(UINT32 a)
-{
-	if (IS_PPC603() || IS_PPC602())
-		return ppc.read8(a);
-
-#if HAS_PPC403
-	if(a >= 0x40000000 && a <= 0x4000000f)		/* Serial Port */
-		return ppc403_spu_r(a);
-#endif
-
-		return program_read_byte_32be(a);
-	}
-
-INLINE UINT16 READ16(UINT32 a)
-{
-	if (IS_PPC603() || IS_PPC602()) {
-		if( a & 0x1 ) {
-			return ((UINT16)ppc.read8(a+0) << 8) | ((UINT16)ppc.read8(a+1) << 0);
-		}
-		return ppc.read16(a);
-	}
-
-	if( a & 0x1 ) {
-		osd_die("ppc: Unaligned read16 %08X at %08X\n", a, ppc.pc);
-	}
-
-	return program_read_word_32be(a);
-}
-
-INLINE UINT32 READ32(UINT32 a)
-{
-	if (IS_PPC603() || IS_PPC602()) {
-		if( a & 0x3 ) {
-			return ((UINT32)ppc.read8(a+0) << 24) | ((UINT32)ppc.read8(a+1) << 16) |
-				   ((UINT32)ppc.read8(a+2) << 8) | ((UINT32)ppc.read8(a+3) << 0);
-		}
-		return ppc.read32(a);
-	}
-
-	if( a & 0x3 ) {
-		osd_die("ppc: Unaligned read32 %08X at %08X\n", a, ppc.pc);
-	}
-
-	return program_read_dword_32be(a);
-}
-
-INLINE UINT64 READ64(UINT32 a)
-{
-#if (HAS_PPC603 || HAS_PPC602)
-	if( a & 0x7 ) {
-		return ((UINT64)READ32(a+0) << 32) | (UINT64)(READ32(a+4));
-	}
-	return ppc.read64(a);
-#else
-	return 0;
-#endif
-}
-
-
-INLINE void WRITE8(UINT32 a, UINT8 d)
-{
-	if (IS_PPC603() || IS_PPC602())
-	{
-		ppc.write8(a, d&0xff);
-		return;
-	}
-
-#if HAS_PPC403
-	if( a >= 0x40000000 && a <= 0x4000000f )		/* Serial Port */
-	{
-		ppc403_spu_w(a, d);
-		return;
-	}
-#endif
-
-	program_write_byte_32be(a, d);
-}
-
-INLINE void WRITE16(UINT32 a, UINT16 d)
-{
-	if (IS_PPC603() || IS_PPC602())
-	{
-		if( a & 0x1 ) {
-			ppc.write8(a+0, (UINT8)(d >> 8));
-			ppc.write8(a+1, (UINT8)(d));
-			return;
-		}
-		ppc.write16(a, d);
-		return;
-	}
-
-	if( a & 0x1 ) {
-		osd_die("ppc: Unaligned write16 %08X, %04X at %08X\n", a, d, ppc.pc);
-	} else {
-		program_write_word_32be(a, d);
-	}
-}
-
-INLINE void WRITE32(UINT32 a, UINT32 d)
-{
-	if (IS_PPC603() || IS_PPC602())
-	{
-		if( ppc.reserved ) {
-			if( a == ppc.reserved_address ) {
-				ppc.reserved = 0;
-			}
-		}
-		if( a & 0x3 ) {
-			ppc.write8(a+0, (UINT8)(d >> 24));
-			ppc.write8(a+1, (UINT8)(d >> 16));
-			ppc.write8(a+2, (UINT8)(d >> 8));
-			ppc.write8(a+3, (UINT8)(d >> 0));
-			return;
-		}
-		ppc.write32(a, d);
-		return;
-	}
-
-	if( a & 0x3 ) {
-		osd_die("ppc: Unaligned write32 %08X, %08X at %08X\n", a, d, ppc.pc);
-	} else {
-		if( ppc.reserved ) {
-			if( a == ppc.reserved_address ) {
-				ppc.reserved = 0;
-			}
-		}
-		program_write_dword_32be(a, d);
-	}
-}
-
-INLINE void WRITE64(UINT32 a, UINT64 d)
-{
-#if (HAS_PPC603 || HAS_PPC602)
-	if( a & 0x7 ) {
-		ppc.write32(a+0, (UINT32)(d >> 32));
-		ppc.write32(a+4, (UINT32)(d));
-		return;
-	}
-	ppc.write64(a, d);
-#endif
-}
+#include "ppc_mem.c"
 
 #if (HAS_PPC403)
 #include "ppc403.c"
@@ -929,6 +797,18 @@ static void ppc403_init(void)
 
 	ppc.spu.rx_timer = timer_alloc(ppc403_spu_rx_callback);
 	ppc.spu.tx_timer = timer_alloc(ppc403_spu_tx_callback);
+
+	ppc.exception = ppc403_exception;
+	ppc.read8 = ppc403_read8;
+	ppc.read16 = ppc403_read16;
+	ppc.read32 = ppc403_read32;
+	ppc.write8 = ppc403_write8;
+	ppc.write16 = ppc403_write16;
+	ppc.write32 = ppc403_write32;
+	ppc.read16_unaligned = ppc403_read16_unaligned;
+	ppc.read32_unaligned = ppc403_read32_unaligned;
+	ppc.write16_unaligned = ppc403_write16_unaligned;
+	ppc.write32_unaligned = ppc403_write32_unaligned;
 }
 
 static void ppc403_exit(void)
@@ -1032,6 +912,7 @@ static void ppc603_init(void)
 
 	ppc.is603 = 1;
 
+	ppc.exception = ppc603_exception;
 	ppc.read8 = program_read_byte_64be;
 	ppc.read16 = program_read_word_64be;
 	ppc.read32 = program_read_dword_64be;
@@ -1040,6 +921,12 @@ static void ppc603_init(void)
 	ppc.write16 = program_write_word_64be;
 	ppc.write32 = program_write_dword_64be;
 	ppc.write64 = program_write_qword_64be;
+	ppc.read16_unaligned = ppc_read16_unaligned;
+	ppc.read32_unaligned = ppc_read32_unaligned;
+	ppc.read64_unaligned = ppc_read64_unaligned;
+	ppc.write16_unaligned = ppc_write16_unaligned;
+	ppc.write32_unaligned = ppc_write32_unaligned;
+	ppc.write64_unaligned = ppc_write64_unaligned;
 }
 
 static void ppc603_exit(void)
@@ -1142,6 +1029,7 @@ static void ppc602_init(void)
 
 	ppc.is602 = 1;
 
+	ppc.exception = ppc602_exception;
 	ppc.read8 = program_read_byte_64be;
 	ppc.read16 = program_read_word_64be;
 	ppc.read32 = program_read_dword_64be;
@@ -1150,6 +1038,12 @@ static void ppc602_init(void)
 	ppc.write16 = program_write_word_64be;
 	ppc.write32 = program_write_dword_64be;
 	ppc.write64 = program_write_qword_64be;
+	ppc.read16_unaligned = ppc_read16_unaligned;
+	ppc.read32_unaligned = ppc_read32_unaligned;
+	ppc.read64_unaligned = ppc_read64_unaligned;
+	ppc.write16_unaligned = ppc_write16_unaligned;
+	ppc.write32_unaligned = ppc_write32_unaligned;
+	ppc.write64_unaligned = ppc_write64_unaligned;
 }
 
 static void ppc602_exit(void)

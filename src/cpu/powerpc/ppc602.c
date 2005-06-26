@@ -161,7 +161,10 @@ static int ppc602_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 		ppc.npc = ppc.pc + 4;
-		opcode = ROPCODE64(ppc.pc);
+		if (MSR & MSR_IR)
+			opcode = ppc_readop_translated(ppc.pc);
+		else
+			opcode = ROPCODE64(ppc.pc);
 
 		switch(opcode >> 26)
 		{
