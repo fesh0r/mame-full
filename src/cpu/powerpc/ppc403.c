@@ -248,7 +248,7 @@ void ppc403_exception(int exception)
 				ppc.npc = EVPR | 0x0500;
 				change_pc(ppc.npc);
 				EXISR |= ppc.external_int;
-				
+
 				ppc.interrupt_pending &= ~0x1;
 			}
 			break;

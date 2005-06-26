@@ -20,7 +20,7 @@ void ppc602_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
 					ppc.npc = ppc.ibr | 0x0500;
-					
+
 				ppc.interrupt_pending &= ~0x1;
 				change_pc(ppc.npc);
 			}
@@ -44,7 +44,7 @@ void ppc602_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
 					ppc.npc = ppc.ibr | 0x0900;
-					
+
 				ppc.interrupt_pending &= ~0x2;
 				change_pc(ppc.npc);
 			}
@@ -130,9 +130,14 @@ INLINE void ppc602_check_interrupts(void)
 
 static void ppc602_reset(void *param)
 {
+	float multiplier;
 	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
 	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	ppc.bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);
@@ -154,7 +159,7 @@ static int ppc602_execute(int cycles)
 		dec_old = DEC;
 		ppc.pc = ppc.npc;
 		CALL_MAME_DEBUG;
-		
+
 		ppc.npc = ppc.pc + 4;
 		opcode = ROPCODE64(ppc.pc);
 
@@ -175,7 +180,7 @@ static int ppc602_execute(int cycles)
 		if(DEC == 0) {
 			ppc.interrupt_pending |= 0x2;
 		}
-		
+
 		ppc602_check_interrupts();
 	}
 

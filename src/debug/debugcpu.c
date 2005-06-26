@@ -494,7 +494,7 @@ void debug_cpu_ignore_cpu(int cpunum, int ignore)
     CPU
 -------------------------------------------------*/
 
-void debug_cpu_trace(int cpunum, FILE *file, int trace_over, int auto_flush, const char *action)
+void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
 {
 	/* close existing files and delete expressions */
 	if (debug_cpuinfo[cpunum].trace.file)
@@ -517,9 +517,6 @@ void debug_cpu_trace(int cpunum, FILE *file, int trace_over, int auto_flush, con
 
 	/* specify trace over */
 	debug_cpuinfo[cpunum].trace.trace_over_target = trace_over ? ~0 : 0;
-
-	/* specify auto flush */
-	debug_cpuinfo[cpunum].trace.auto_flush = auto_flush;
 }
 
 
@@ -873,10 +870,6 @@ static void perform_trace(struct debug_cpu_info *info)
 
 		/* output the result */
 		fprintf(info->trace.file, "%s\n", buffer);
-
-		/* auto flush? */
-		if (info->trace.auto_flush)
-			fflush(info->trace.file);
 
 		/* do we need to step the trace over this instruction? */
 		if (info->trace.trace_over_target && (dasmresult & DASMFLAG_SUPPORTED)

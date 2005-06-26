@@ -165,8 +165,8 @@ void debug_command_init(void)
 
 	debug_console_register_command("dasm",      CMDFLAG_NONE, 0, 3, 5, execute_dasm);
 
-	debug_console_register_command("trace",     CMDFLAG_NONE, 0, 1, 4, execute_trace);
-	debug_console_register_command("traceover", CMDFLAG_NONE, 0, 1, 4, execute_traceover);
+	debug_console_register_command("trace",     CMDFLAG_NONE, 0, 1, 3, execute_trace);
+	debug_console_register_command("traceover", CMDFLAG_NONE, 0, 1, 3, execute_traceover);
 
 	debug_console_register_command("snap",      CMDFLAG_NONE, 0, 0, 1, execute_snap);
 
@@ -467,7 +467,7 @@ static void execute_quit(int ref, int params, const char *param[])
 
 	/* turn off all traces */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-		debug_cpu_trace(cpunum, NULL, 0, 0, NULL);
+		debug_cpu_trace(cpunum, NULL, 0, NULL);
 
 	osd_die("Exited via the debugger\n");
 }
@@ -1508,14 +1508,13 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 	FILE *f = NULL;
 	const char *mode;
 	UINT64 cpunum;
-	int auto_flush = 0;
 
 	cpunum = cpu_getactivecpu();
 
 	/* validate parameters */
-	if (params > 1 && param[1] && !validate_parameter_number(param[1], &cpunum))
+	if (params > 1 && !validate_parameter_number(param[1], &cpunum))
 		return;
-	if (params > 2 && param[2] && !validate_parameter_command(action = param[2]))
+	if (params > 2 && !validate_parameter_command(action = param[2]))
 		return;
 
 	/* further validation */
@@ -1525,17 +1524,6 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 	{
 		debug_console_printf("Invalid CPU number!");
 		return;
-	}
-
-	/* auto flush? */
-	if (params > 3)
-	{
-		if (stricmp(param[3], "flush"))
-		{
-			debug_console_printf("Invalid parameter!");
-			return;
-		}
-		auto_flush = 1;
 	}
 
 	/* open the file */
@@ -1559,7 +1547,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 	}
 
 	/* do it */
-	debug_cpu_trace(cpunum, f, trace_over, auto_flush, action);
+	debug_cpu_trace(cpunum, f, trace_over, action);
 	if (f)
 		debug_console_printf("Tracing CPU %d to file %s\n", (int)cpunum, filename);
 	else

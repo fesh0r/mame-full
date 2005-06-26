@@ -223,6 +223,7 @@ typedef struct {
 	int interrupt_pending;
 	int external_int;
 
+	int bus_freq_multiplier;
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
@@ -405,19 +406,19 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 					/* trigger interrupt */
 					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
-				DEC = value;
+				DEC = value * (ppc.bus_freq_multiplier * 2);
 				return;
 
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
 				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= ((UINT64) value) << 0;
+				ppc.tb |= ((UINT64) value*4) << 0;
 				return;
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
 				ppc.tb &= U64(0x00000000ffffffff);
-				ppc.tb |= ((UINT64) value) << 32;
+				ppc.tb |= ((UINT64) value*4) << 32;
 				return;
 
 			case SPR603E_HID0:
@@ -585,11 +586,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR603E_TBL_W:		return (ppc.tb & 0xffffffff);
-			case SPR603E_TBU_W:		return ((ppc.tb >> 32) & 0xffffffff);
+			case SPR603E_TBL_W:		return ((ppc.tb / 4) & 0xffffffff);
+			case SPR603E_TBU_W:		return (((ppc.tb / 4) >> 32) & 0xffffffff);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
-			case SPR603E_DEC:		return DEC;
+			case SPR603E_DEC:		return DEC / (ppc.bus_freq_multiplier * 2);
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
@@ -830,7 +831,7 @@ INLINE void WRITE64(UINT32 a, UINT64 d)
 	}
 	ppc.write64(a, d);
 #endif
-}		
+}
 
 #if (HAS_PPC403)
 #include "ppc403.c"

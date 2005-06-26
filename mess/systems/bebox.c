@@ -71,7 +71,9 @@ ADDRESS_MAP_END
 
 static ppc_config bebox_ppc_config =
 {
-	PPC_MODEL_603
+	PPC_MODEL_603,
+	0x10,
+	BUS_FREQUENCY_66MHZ
 };
 
 

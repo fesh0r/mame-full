@@ -600,7 +600,7 @@ static struct help_item static_help_list[] =
 	{
 		"trace",
 		"\n"
-		"  trace {<filename>|OFF}[,<cpunum>[,<action>[,flush]]]\n"
+		"  trace {<filename>|OFF}[,<cpunum>[,<action>]]\n"
 		"\n"
 		"Starts or stops tracing of the execution of the specified <cpunum>. If <cpunum> is omitted,\n"
 		"the currently active CPU is specified. When enabling tracing, specify the filename in the\n"
@@ -609,7 +609,7 @@ static struct help_item static_help_list[] =
 		"is a command that is executed before each trace is logged. Generally, this is used to include\n"
 		"a 'tracelog' command. Note that you may need to embed the action within braces { } in order\n"
 		"to prevent commas and semicolons from being interpreted as applying to the trace command\n"
-		"itself. If flush is specified, then the trace output is flushed after every write.\n"
+		"itself.\n"
 		"\n"
 		"Examples:\n"
 		"\n"
@@ -628,15 +628,12 @@ static struct help_item static_help_list[] =
 		"trace asteroid.tr,0,{tracelog \"A=%02X \",a}\n"
 		"  Begin tracing the execution of CPU #0, logging output to asteroid.tr. Before each line,\n"
 		"  output A=<aval> to the tracelog.\n"
-		"trace klax.tr,0,,flush\n"
-		"  Begin tracing the execution of CPU #0, logging output to klax.tr, flushing after every\n"
-		"  write.\n"
 		"\n"
 	},
 	{
 		"traceover",
 		"\n"
-		"  traceover {<filename>|OFF}[,<cpunum>[,<action>[,flush]]]\n"
+		"  traceover {<filename>|OFF}[,<cpunum>[,<action>]]\n"
 		"\n"
 		"Starts or stops tracing of the execution of the specified <cpunum>. When tracing reaches\n"
 		"a subroutine or call, tracing will skip over the subroutine. The same algorithm is used as is\n"
@@ -648,7 +645,7 @@ static struct help_item static_help_list[] =
 		"parameter which is a command that is executed before each trace is logged. Generally, this is\n"
 		"used to include a 'tracelog' command. Note that you may need to embed the action within braces\n"
 		"{ } in order to prevent commas and semicolons from being interpreted as applying to the trace\n"
-		"command itself. If flush is specified, then the trace output is flushed after every write.\n"
+		"command itself.\n"
 		"\n"
 		"Examples:\n"
 		"\n"
@@ -664,10 +661,6 @@ static struct help_item static_help_list[] =
 		"traceover asteroid.tr,0,{tracelog \"A=%02X \",a}\n"
 		"  Begin tracing the execution of CPU #0, logging output to asteroid.tr. Before each line,\n"
 		"  output A=<aval> to the tracelog.\n"
-		"\n"
-		"traceover klax.tr,0,,flush\n"
-		"  Begin tracing the execution of CPU #0, logging output to klax.tr, flushing after every\n"
-		"  write.\n"
 		"\n"
 	},
 	{
