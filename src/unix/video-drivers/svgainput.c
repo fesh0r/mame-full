@@ -229,11 +229,7 @@ void svga_input_exit(void)
 
 int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 {
-	struct vt_mode vtmode;
 	extern int __svgalib_tty_fd;
-
-	release_function = release_func;
-	acquire_function = acquire_func;
 
 	/* svgalib prior to 1.4.1 used SIGUSR1 and SIGUSR2 as signals for
 	   console switching later versions use SIGPROF and sigunused, but
@@ -243,22 +239,37 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	   Thus we can no longer use the svgalib version to determine which
 	   signals are used. To solve this problem we query the tty to see
 	   which signals are actually used. which we should have done in the
-	   first place :)                                                     */
-	if(ioctl(__svgalib_tty_fd, VT_GETMODE, &vtmode) == -1)
+	   first place :) 
+	   
+	   To make it even more fun later svgalibs add a novccontrol option
+	   to /etc/vga/libvga.conf which when set results in disabling
+	   svgalibs vccontrol altogether this can be recognised by
+	   __svgalib_tty_fd being -1, in this case we don't have any way to
+	   know if vc's are changed (I dunno if they can be changed with this
+	   option set), so we just do nothing if __svgalib_tty_fd == -1.   */
+	if(__svgalib_tty_fd != -1)
 	{
-		fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo (tty-fd = %d)\n", __svgalib_tty_fd);
-		return -1;
-	}
-	release_signal = vtmode.relsig;
-	acquire_signal = vtmode.acqsig;
+		struct vt_mode vtmode;
 
-	/* catch console switch signals to enable / disable the vga pass through */
-	memset(&release_sa, 0, sizeof(struct sigaction));
-	memset(&acquire_sa, 0, sizeof(struct sigaction));
-	release_sa.sa_handler = release_handler;
-	acquire_sa.sa_handler = acquire_handler;
-	sigaction(release_signal, &release_sa, &oldrelease_sa);
-	sigaction(acquire_signal, &acquire_sa, &oldacquire_sa);
+		if(ioctl(__svgalib_tty_fd, VT_GETMODE, &vtmode) == -1)
+		{
+			fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo (tty-fd = %d)\n", __svgalib_tty_fd);
+			return -1;
+		}
+		release_signal = vtmode.relsig;
+		acquire_signal = vtmode.acqsig;
+		release_function = release_func;
+		acquire_function = acquire_func;
+
+		/* catch console switch signals to enable /
+		   disable the vga pass through */
+		memset(&release_sa, 0, sizeof(struct sigaction));
+		memset(&acquire_sa, 0, sizeof(struct sigaction));
+		release_sa.sa_handler = release_handler;
+		acquire_sa.sa_handler = acquire_handler;
+		sigaction(release_signal, &release_sa, &oldrelease_sa);
+		sigaction(acquire_signal, &acquire_sa, &oldacquire_sa);
+	}
 
 	/* init the keyboard */
 	if ((console_fd = keyboard_init_return_fd()) < 0)
