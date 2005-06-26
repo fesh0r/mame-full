@@ -58,6 +58,18 @@ void osd_free_executable(void *ptr)
 	free(ptr);
 }
 
+int osd_is_bad_read_ptr(const void *ptr, size_t size)
+{
+	/*
+	 * Not the most correct way to do this, but I don't 
+	 * know if it's worth writing a full implementation.
+	 */
+	if (!ptr)
+		return TRUE;
+
+	return FALSE;
+}
+
 int main(int argc, char **argv)
 {
 	int res;
