@@ -224,11 +224,10 @@ static void append_generate_exception(struct drccore *drc, UINT8 exception)
 	_jcc_short_link(COND_Z, &link1);	// if Z == 0, bit == 1
 	_or_r32_imm(REG_EAX, MSR_LE);		// set LE
 	_resolve_link(&link1);
-	_mov_r32_r32(REG_EDX, REG_EAX);
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_r32(REG_EAX);
 	_call((genf *)ppc_set_msr);
-	_add_r32_imm(REG_ESP, 4);
+	_pop_r32(REG_EDX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
 	if (ppc.is603)
@@ -3035,8 +3034,13 @@ static UINT32 recompile_faddx(struct drccore *drc, UINT32 op)
 
 static UINT32 recompile_fcmpo(struct drccore *drc, UINT32 op)
 {
-	printf("PPCDRC: fcmpo unimplemented\n");
-	return RECOMPILE_UNIMPLEMENTED;
+	_mov_m32abs_r32(&ppc_icount, REG_EBP);
+	_push_imm(op);
+	_call((genf *)ppc_fcmpo);
+	_add_r32_imm(REG_ESP, 4);
+	_mov_r32_m32abs(REG_EBP, &ppc_icount);
+
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
 static UINT32 recompile_fcmpu(struct drccore *drc, UINT32 op)

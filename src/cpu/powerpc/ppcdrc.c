@@ -422,7 +422,8 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
-				osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
+				ppc.tb &= U64(0x00000000ffffffff);
+				ppc.tb |= ((UINT64) value*4) << 32;
 				return;
 
 			case SPR603E_HID0:
