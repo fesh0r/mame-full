@@ -104,8 +104,18 @@ static void ppc_write64_unaligned(UINT32 a, UINT64 d)
 
 /***********************************************************************/
 
-static int ppc_translate_address(offs_t *addr_ptr, const BATENT *bat)
+enum
 {
+	PPC_TRANSLATE_DATA	= 0x0000,
+	PPC_TRANSLATE_CODE	= 0x0001,
+
+	PPC_TRANSLATE_READ	= 0x0000,
+	PPC_TRANSLATE_WRITE	= 0x0002
+};
+
+static int ppc_translate_address(offs_t *addr_ptr, int flags)
+{
+	const BATENT *bat;
 	UINT32 address;
 	UINT32 sr, vsid, hash, this_hash;
 	UINT32 pteg_address;
@@ -113,6 +123,8 @@ static int ppc_translate_address(offs_t *addr_ptr, const BATENT *bat)
 	UINT64 pte;
 	UINT64 *pteg_ptr[2];
 	int i, hash_type;
+
+	bat = (flags & PPC_TRANSLATE_CODE) ? ppc.ibat : ppc.dbat;
 
 	address = *addr_ptr;
 
@@ -141,6 +153,17 @@ static int ppc_translate_address(offs_t *addr_ptr, const BATENT *bat)
 	}
 	else
 	{
+		if ((flags & PPC_TRANSLATE_CODE) && (sr & 0x10000000))
+		{
+			/* no execute is set */
+			if (ppc.exception)
+			{
+				ppc.exception(EXCEPTION_ISI);
+				return 0;
+			}
+			osd_die("ppc: executing no exec page");
+		}
+
 		vsid = sr & 0x00FFFFFF;
 		hash = (vsid & 0x0007FFFF) ^ ((address >> 12) & 0xFFFF);
 
@@ -209,10 +232,20 @@ static int ppc_translate_address(offs_t *addr_ptr, const BATENT *bat)
 	/* lookup failure - exception */
 	if (ppc.exception)
 	{
-		if (bat == ppc.dbat)
-			ppc.exception(EXCEPTION_DSI);
-		else
+		if (flags & PPC_TRANSLATE_CODE)
+		{
 			ppc.exception(EXCEPTION_ISI);
+		}
+		else
+		{
+			ppc.dar = address;
+			if (flags & PPC_TRANSLATE_WRITE)
+				ppc.dsisr = 0x42000000;
+			else
+				ppc.dsisr = 0x40000000;
+
+			ppc.exception(EXCEPTION_DSI);
+		}
 	}
 	else
 		osd_die("ppc: address translation exception");
@@ -221,59 +254,59 @@ static int ppc_translate_address(offs_t *addr_ptr, const BATENT *bat)
 
 static data8_t ppc_read8_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
 		return program_read_byte_64be(address);
 	return 0;
 }
 
 static data16_t ppc_read16_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
 		return program_read_word_64be(address);
 	return 0;
 }
 
 static data32_t ppc_read32_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
 		return program_read_dword_64be(address);
 	return 0;
 }
 
 static data64_t ppc_read64_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
 		return program_read_qword_64be(address);
 	return 0;
 }
 
 static void ppc_write8_translated(offs_t address, data8_t data)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
 		program_write_byte_64be(address, data);
 }
 
 static void ppc_write16_translated(offs_t address, data16_t data)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
 		program_write_word_64be(address, data);
 }
 
 static void ppc_write32_translated(offs_t address, data32_t data)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
 		program_write_dword_64be(address, data);
 }
 
 static void ppc_write64_translated(offs_t address, data64_t data)
 {
-	if (ppc_translate_address(&address, ppc.dbat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
 		program_write_qword_64be(address, data);
 }
 
 static data32_t ppc_readop_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, ppc.ibat))
+	if (ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ))
 		return program_read_dword_64be(address);
 	return 0;
 }
