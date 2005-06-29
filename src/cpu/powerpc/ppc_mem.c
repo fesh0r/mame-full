@@ -110,7 +110,9 @@ enum
 	PPC_TRANSLATE_CODE	= 0x0001,
 
 	PPC_TRANSLATE_READ	= 0x0000,
-	PPC_TRANSLATE_WRITE	= 0x0002
+	PPC_TRANSLATE_WRITE	= 0x0002,
+
+	PPC_TRANSLATE_NOEXCEPTION = 0x0004
 };
 
 static int ppc_translate_address(offs_t *addr_ptr, int flags)
@@ -156,6 +158,8 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 		if ((flags & PPC_TRANSLATE_CODE) && (sr & 0x10000000))
 		{
 			/* no execute is set */
+			if (flags & PPC_TRANSLATE_NOEXCEPTION)
+				return 0;
 			if (ppc.exception)
 			{
 				ppc.exception(EXCEPTION_ISI);
@@ -230,6 +234,8 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 	}
 
 	/* lookup failure - exception */
+	if (flags & PPC_TRANSLATE_NOEXCEPTION)
+		return 0;
 	if (ppc.exception)
 	{
 		if (flags & PPC_TRANSLATE_CODE)
@@ -311,5 +317,65 @@ static data32_t ppc_readop_translated(offs_t address)
 	return 0;
 }
 
+/***********************************************************************/
 
+static int ppc_readop(UINT32 offset, int size, UINT64 *value)
+{
+	if (!(ppc.msr & MSR_IR))
+		return 0;
 
+	*value = 0;
+
+	if (ppc_translate_address(&offset, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
+	{
+		switch(size)
+		{
+			case 1:	*value = program_read_byte(offset);	break;
+			case 2:	*value = program_read_word(offset);	break;
+			case 4:	*value = program_read_dword(offset);	break;
+			case 8:	*value = program_read_qword(offset);	break;
+		}
+	}
+
+	return 1;
+}
+
+static int ppc_read(int space, UINT32 offset, int size, UINT64 *value)
+{
+	if (!(ppc.msr & MSR_DR))
+		return 0;
+
+	*value = 0;
+
+	if (ppc_translate_address(&offset, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
+	{
+		switch(size)
+		{
+			case 1:	*value = program_read_byte(offset);	break;
+			case 2:	*value = program_read_word(offset);	break;
+			case 4:	*value = program_read_dword(offset);	break;
+			case 8:	*value = program_read_qword(offset);	break;
+		}
+	}
+
+	return 1;
+}
+
+static int ppc_write(int space, UINT32 offset, int size, UINT64 value)
+{
+	if (!(ppc.msr & MSR_DR))
+		return 0;
+
+	if (ppc_translate_address(&offset, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE | PPC_TRANSLATE_NOEXCEPTION))
+	{
+		switch(size)
+		{
+			case 1:	program_write_byte(offset, value);	break;
+			case 2:	program_write_word(offset, value);	break;
+			case 4:	program_write_dword(offset, value);	break;
+			case 8:	program_write_qword(offset, value);	break;
+		}
+	}
+
+	return 1;
+}

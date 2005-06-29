@@ -1550,6 +1550,9 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc603_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc603_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
+		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
+		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
@@ -1592,6 +1595,9 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc602_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc602_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
+		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
+		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC602"); break;
