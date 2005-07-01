@@ -148,6 +148,8 @@ imgtoolerr_t concept_createmodule(imgtool_library *library)
 	module->description				= "Concept floppy disk image";
 	module->extensions				= "img\0";
 	module->eoln					= EOLN_CR;
+	module->image_extra_bytes		= sizeof(concept_image);
+	module->imageenum_extra_bytes	= sizeof(concept_iterator);
 
 	module->open					= concept_image_init;
 	module->close					= concept_image_exit;
@@ -261,12 +263,10 @@ static int get_catalog_entry(concept_image *image, const unsigned char *filename
 */
 static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f)
 {
-	concept_image *image;
+	concept_image *image = (concept_image *) img_extrabytes(img);
 	int reply;
 	int i;
 	unsigned totphysrecs;
-
-	image = (concept_image *) img_extrabytes(img);
 
 	image->file_handle = f;
 
@@ -298,10 +298,7 @@ static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f)
 */
 static void concept_image_exit(imgtool_image *img)
 {
-	concept_image *image = (concept_image *) img;
-
-	stream_close(image->file_handle);
-	free(image);
+	/*concept_image *image = (concept_image *) img_extrabytes(img);*/
 }
 
 /*
@@ -311,7 +308,7 @@ static void concept_image_exit(imgtool_image *img)
 */
 static void concept_image_info(imgtool_image *img, char *string, size_t len)
 {
-	concept_image *image = (concept_image *) img;
+	concept_image *image = (concept_image *) img_extrabytes(img);
 	char vol_name[8];
 
 	memcpy(vol_name, image->dev_dir.vol_hdr.volname + 1, image->dev_dir.vol_hdr.volname[0]);
@@ -338,7 +335,7 @@ static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, cons
 */
 static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
-	concept_iterator *iter = (concept_iterator*) img_enum_extrabytes(enumeration);
+	concept_iterator *iter = (concept_iterator *) img_enum_extrabytes(enumeration);
 
 
 	ent->corrupt = 0;
@@ -399,7 +396,6 @@ static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgto
 */
 static void concept_image_closeenum(imgtool_imageenum *enumeration)
 {
-	free(enumeration);
 }
 
 /*
@@ -432,7 +428,7 @@ static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size)
 */
 static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
 {
-	concept_image *image = (concept_image *) img;
+	concept_image *image = (concept_image *) img_extrabytes(img);
 	size_t filename_len = strlen(filename);
 	unsigned char concept_fname[16];
 	int catalog_index;
