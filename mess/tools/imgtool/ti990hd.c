@@ -136,13 +136,13 @@ typedef struct ti990_sc0
 	UINT16BE	ilf;			/* intermediate loader flag */
 	char		din[8];			/* diagnostic file name */
 	UINT16BE	dif;			/* diagnostic flag */
-	UINT16BE	drs;			/* "DBUILD DETERMINES DEFAULT PRS" (whatever it means) */
+	UINT16BE	drs;			/* default physical record size "DBUILD DETERMINES DEFAULT PRS" (whatever it means) */
 	UINT16BE	bal;			/* starting sector of bad ADU list */
 	UINT16BE	spr;			/* track 0 sectors per record */
 	char		wf1[8];			/* WCS primary microcode file */
 	char		wf2[8];			/* WCS secondary microcode file */
 	UINT16BE	wff;			/* WCS flag switch */
-	UINT16BE	vif;			/* track 1 select flag (whatever it means) */
+	UINT16BE	vif;			/* track 1 select flag (whatever it means) volume information copied flag */
 	UINT16BE	sta;			/* state of disk: */
 									/*	1 = disk surface has not been tested for defects */
 									/*	2 = disk surface has been tested, but no file system has been installed */
@@ -164,7 +164,7 @@ typedef struct ti990_dor
 	char dnm[8];				/* directory file name (VCATALOG for root) */
 	UINT16BE lvl;				/* level # of directory (0 for root, 1 for children of root, 2 for grandchildren, etc) */
 	char pnm[8];				/* name of parent directory (VCATALOG for root, even though it makes little sense) */
-	UINT16BE prs;				/* "default physical record lenght (used for file creation)" */
+	UINT16BE prs;				/* "default physical record length (used for file creation)" */
 	/* DORSIZ = >1C */
 } ti990_dor;
 
@@ -211,8 +211,8 @@ typedef struct ti990_ace
 */
 typedef struct ti990_fdr
 {
-	UINT16BE	hkc;			/* hask key count */
-	UINT16BE	hkv;			/* hask key value */
+	UINT16BE	hkc;			/* hask key count: the number of file descriptor records that are present in the directory that hashed to this record number */
+	UINT16BE	hkv;			/* hask key value: the result of the hash algorithm for the file name actually covered in this record */
 	char		fnm[8];			/* file name */
 	UINT8		rsv[2];			/* reserved */
 	UINT16BE	fl1;			/* flags word 1 */
@@ -222,7 +222,7 @@ typedef struct ti990_fdr
 	UINT16BE	pas;			/* primary allocation size: # of ADUs allocated in primary allocation block? */
 	UINT16BE	paa;			/* primary allocation address: first ADU of primary allocation block? */
 	UINT16BE	sas;			/* secondary allocation size: used to determinate the # of blocks allocated per secondary allocation */
-	UINT16BE	saa;			/* offset of secondary table: ???? */
+	UINT16BE	saa;			/* offset of secondary table: ???? "offset into this FDR of the secondary allocation table, if any.  No secondary allocation table is denoted by 0.  Secondary allocations are present only for unbounded files." */
 	UINT16BE	rfa;			/* record number of first alias */
 	UINT32BE	eom;			/* end of medium record number */
 	UINT32BE	bkm;			/* end of medium block number */
@@ -237,7 +237,7 @@ typedef struct ti990_fdr
 	UINT8		apb;			/* ADU's per block */
 	UINT8		bpa;			/* blocks per ADU */
 	UINT16BE	mrs;			/* minimumu KIF record size */
-	UINT8		sat[64];		/* secondary allocation table: 16-entry table (format unknown) */
+	UINT8		sat[64];		/* secondary allocation table: 16 2-word entries.  The first word of an entry contains the size, in ADUs, of the secondary allocation.  The second word contains the starting ADU of the allocation. */
 
 /* bytes >86 to >100 are optional */
 	UINT8		res[10];		/* reserved: seem to be actually meaningful (at least under DX10 3.6.x) */
@@ -509,6 +509,11 @@ static void fname_to_str(char *dst, const char src[8], int n)
 	dst[last_nonspace+1] = '\0';
 }
 
+#if 0
+#pragma mark -
+#pragma mark DISK ROUTINES
+#endif
+
 /*
 	Convert physical sector address to offset
 */
@@ -686,6 +691,11 @@ static int write_sector_logical(imgtool_stream *file_handle, int secnum, const t
 {
 	return write_sector_logical_len(file_handle, secnum, geometry, src, geometry->bytes_per_sector);
 }
+
+#if 0
+#pragma mark -
+#pragma mark CATALOG FILE ROUTINES
+#endif
 
 /*
 	Find the catalog entry and fdr record associated with a file name
