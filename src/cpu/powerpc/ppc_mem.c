@@ -319,6 +319,57 @@ static data32_t ppc_readop_translated(offs_t address)
 
 /***********************************************************************/
 
+
+static offs_t ppc_dasm(char *buffer, offs_t pc)
+{
+#ifdef MAME_DEBUG
+	UINT32 op, translated_pc;
+
+	if (MSR & MSR_IR)
+	{
+		translated_pc = pc;
+		if (!ppc_translate_address(&translated_pc, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
+		{
+			sprintf(buffer, "<not executable>");
+			return 4;
+		}
+		op = program_read_dword_32be(translated_pc);
+	}
+	else
+		op = ROPCODE(pc);
+	return ppc_dasm_one(buffer, pc, op);
+#else
+	sprintf(buffer, "$%08X", ROPCODE(pc));
+	return 4;
+#endif
+}
+
+static offs_t ppc_dasm64(char *buffer, offs_t pc)
+{
+#ifdef MAME_DEBUG
+	UINT32 op, translated_pc;
+
+	if (MSR & MSR_IR)
+	{
+		translated_pc = pc;
+		if (!ppc_translate_address(&translated_pc, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
+		{
+			sprintf(buffer, "<not executable>");
+			return 4;
+		}
+		op = program_read_dword_64be(translated_pc);
+	}
+	else
+		op = ROPCODE64(pc);
+	return ppc_dasm_one(buffer, pc, op);
+#else
+	sprintf(buffer, "$%08X", (UINT32)ROPCODE64(pc));
+	return 4;
+#endif
+}
+
+/***********************************************************************/
+
 static int ppc_readop(UINT32 offset, int size, UINT64 *value)
 {
 	if (!(ppc.msr & MSR_IR))

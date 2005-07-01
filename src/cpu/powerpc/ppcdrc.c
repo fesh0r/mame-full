@@ -1270,26 +1270,6 @@ static UINT8 ppc_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-static offs_t ppc_dasm(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return ppc_dasm_one(buffer, pc, ROPCODE(pc));
-#else
-	sprintf(buffer, "$%08X", ROPCODE(pc));
-	return 4;
-#endif
-}
-
-static offs_t ppc_dasm64(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return ppc_dasm_one(buffer, pc, ROPCODE64(pc));
-#else
-	sprintf(buffer, "$%08X", (UINT32)ROPCODE64(pc));
-	return 4;
-#endif
-}
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
