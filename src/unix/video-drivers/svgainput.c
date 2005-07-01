@@ -253,7 +253,7 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 
 		if(ioctl(__svgalib_tty_fd, VT_GETMODE, &vtmode) == -1)
 		{
-			fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo (tty-fd = %d)\n", __svgalib_tty_fd);
+			fprintf(stderr, "Svgalib: Error: Couldn't get tty modeinfo (tty-fd = %d).\n", __svgalib_tty_fd);
 			return -1;
 		}
 		release_signal = vtmode.relsig;
@@ -270,6 +270,9 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 		sigaction(release_signal, &release_sa, &oldrelease_sa);
 		sigaction(acquire_signal, &acquire_sa, &oldacquire_sa);
 	}
+	else
+		fprintf(stderr, "Svgalib: Warning: Couldn't catch console switch signals (tty-fd = %d).\n", __svgalib_tty_fd);
+	
 
 	/* init the keyboard */
 	if ((console_fd = keyboard_init_return_fd()) < 0)
