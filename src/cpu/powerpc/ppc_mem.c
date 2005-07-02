@@ -104,6 +104,10 @@ static void ppc_write64_unaligned(UINT32 a, UINT64 d)
 
 /***********************************************************************/
 
+#define DSISR_PAGE		0x40000000
+#define DSISR_PROT		0x08000000
+#define DSISR_STORE		0x02000000
+
 enum
 {
 	PPC_TRANSLATE_DATA	= 0x0000,
@@ -115,16 +119,32 @@ enum
 	PPC_TRANSLATE_NOEXCEPTION = 0x0004
 };
 
+static int ppc_is_protected(UINT32 pp, int flags)
+{
+	if (flags & PPC_TRANSLATE_WRITE)
+	{
+		if ((pp & 0x00000003) != 0x00000002)
+			return TRUE;
+	}
+	else
+	{
+		if ((pp & 0x00000003) == 0x00000000)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 static int ppc_translate_address(offs_t *addr_ptr, int flags)
 {
 	const BATENT *bat;
 	UINT32 address;
-	UINT32 sr, vsid, hash, this_hash;
+	UINT32 sr, vsid, hash;
 	UINT32 pteg_address;
 	UINT32 target_pte, bl, mask;
 	UINT64 pte;
 	UINT64 *pteg_ptr[2];
 	int i, hash_type;
+	UINT32 dsisr = DSISR_PROT;
 
 	bat = (flags & PPC_TRANSLATE_CODE) ? ppc.ibat : ppc.dbat;
 
@@ -140,6 +160,9 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 
 			if ((address & mask) == (bat[i].u & 0xFFFE0000))
 			{
+				if (ppc_is_protected(bat[i].l, flags))
+					goto exception;
+
 				*addr_ptr = (bat[i].l & 0xFFFE0000)
 					| (address & ((bl << 15) | 0x0001FFFF));
 				return 1;
@@ -155,32 +178,20 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 	}
 	else
 	{
+		/* is no execute is set? */
 		if ((flags & PPC_TRANSLATE_CODE) && (sr & 0x10000000))
-		{
-			/* no execute is set */
-			if (flags & PPC_TRANSLATE_NOEXCEPTION)
-				return 0;
-			if (ppc.exception)
-			{
-				ppc.exception(EXCEPTION_ISI);
-				return 0;
-			}
-			osd_die("ppc: executing no exec page");
-		}
+			goto exception;
 
 		vsid = sr & 0x00FFFFFF;
 		hash = (vsid & 0x0007FFFF) ^ ((address >> 12) & 0xFFFF);
+		target_pte = (vsid << 7) | ((address >> 22) & 0x3F) | 0x80000000;
 
 		/* we have to try both types of hashes */
 		for (hash_type = 0; hash_type <= 1; hash_type++)
 		{
-			this_hash = hash ^ (hash_type ? 0x7FFFF : 0x00000); 
 			pteg_address = (ppc.sdr1 & 0xFFFF0000)
-				| (((ppc.sdr1 & 0x01FF) & (this_hash >> 10)) << 16)
-				| ((this_hash & 0x03FF) << 6);
-
-			target_pte = (vsid << 7) | ((address >> 22) & 0x3F) | 0x80000000;
-			target_pte |= hash_type ? 0x40 : 0x00;
+				| (((ppc.sdr1 & 0x01FF) & (hash >> 10)) << 16)
+				| ((hash & 0x03FF) << 6);
 
 			pteg_ptr[hash_type] = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, pteg_address);
 			if (pteg_ptr[hash_type])
@@ -192,12 +203,18 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 					/* is valid? */
 					if (((pte >> 32) & 0xFFFFFFFF) == target_pte)
 					{
+						if (ppc_is_protected((UINT32) pte, flags))
+							goto exception;
+
 						*addr_ptr = ((UINT32) (pte & 0xFFFFF000))
 							| (address & 0x0FFF);
 						return 1;
 					}
 				}
 			}
+
+			hash ^= 0x7FFFF;
+			target_pte ^= 0x40;
 		}
 
 		if (DUMP_PAGEFAULTS)
@@ -233,88 +250,82 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 		}
 	}
 
+	dsisr = DSISR_PAGE;
+
+exception:
 	/* lookup failure - exception */
-	if (flags & PPC_TRANSLATE_NOEXCEPTION)
-		return 0;
-	if (ppc.exception)
+	if ((flags & PPC_TRANSLATE_NOEXCEPTION) == 0)
 	{
 		if (flags & PPC_TRANSLATE_CODE)
 		{
-			ppc.exception(EXCEPTION_ISI);
+			longjmp(ppc.exception_jmpbuf, EXCEPTION_ISI);
 		}
 		else
 		{
 			ppc.dar = address;
 			if (flags & PPC_TRANSLATE_WRITE)
-				ppc.dsisr = 0x42000000;
+				ppc.dsisr = dsisr | DSISR_STORE;
 			else
-				ppc.dsisr = 0x40000000;
+				ppc.dsisr = dsisr;
 
-			ppc.exception(EXCEPTION_DSI);
+			longjmp(ppc.exception_jmpbuf, EXCEPTION_DSI);
 		}
 	}
-	else
-		osd_die("ppc: address translation exception");
 	return 0;
 }
 
 static data8_t ppc_read8_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
-		return program_read_byte_64be(address);
-	return 0;
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
+	return program_read_byte_64be(address);
 }
 
 static data16_t ppc_read16_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
-		return program_read_word_64be(address);
-	return 0;
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
+	return program_read_word_64be(address);
 }
 
 static data32_t ppc_read32_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
-		return program_read_dword_64be(address);
-	return 0;
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
+	return program_read_dword_64be(address);
 }
 
 static data64_t ppc_read64_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ))
-		return program_read_qword_64be(address);
-	return 0;
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
+	return program_read_qword_64be(address);
 }
 
 static void ppc_write8_translated(offs_t address, data8_t data)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
-		program_write_byte_64be(address, data);
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
+	program_write_byte_64be(address, data);
 }
 
 static void ppc_write16_translated(offs_t address, data16_t data)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
-		program_write_word_64be(address, data);
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
+	program_write_word_64be(address, data);
 }
 
 static void ppc_write32_translated(offs_t address, data32_t data)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
-		program_write_dword_64be(address, data);
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
+	program_write_dword_64be(address, data);
 }
 
 static void ppc_write64_translated(offs_t address, data64_t data)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE))
-		program_write_qword_64be(address, data);
+	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
+	program_write_qword_64be(address, data);
 }
 
 static data32_t ppc_readop_translated(offs_t address)
 {
-	if (ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ))
-		return program_read_dword_64be(address);
-	return 0;
+	ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ);
+	return program_read_dword_64be(address);
 }
 
 /***********************************************************************/

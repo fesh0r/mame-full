@@ -250,10 +250,17 @@ static void ppc603_reset(void *param)
 
 static int ppc603_execute(int cycles)
 {
-	int readop_succeeded;
-	UINT32 opcode, dec_old, address;
+	int exception_type;
+	UINT32 opcode, dec_old;
 	ppc_icount = cycles;
 	change_pc(ppc.npc);
+
+	exception_type = setjmp(ppc.exception_jmpbuf);
+	if (exception_type)
+	{
+		ppc.npc = ppc.pc;
+		ppc603_exception(exception_type);
+	}
 
 	while( ppc_icount > 0 )
 	{
@@ -263,28 +270,18 @@ static int ppc603_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 		if (MSR & MSR_IR)
-		{
-			address = ppc.pc;
-			readop_succeeded = ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ);
-			opcode = readop_succeeded ? program_read_dword_64be(address) : 0;
-		}
+			opcode = ppc_readop_translated(ppc.pc);
 		else
-		{
 			opcode = ROPCODE64(ppc.pc);
-			readop_succeeded = 1;
-		}
 
-		if (readop_succeeded)
+		ppc.npc = ppc.pc + 4;
+		switch(opcode >> 26)
 		{
-			ppc.npc = ppc.pc + 4;
-			switch(opcode >> 26)
-			{
-				case 19:	optable19[(opcode >> 1) & 0x3ff](opcode); break;
-				case 31:	optable31[(opcode >> 1) & 0x3ff](opcode); break;
-				case 59:	optable59[(opcode >> 1) & 0x3ff](opcode); break;
-				case 63:	optable63[(opcode >> 1) & 0x3ff](opcode); break;
-				default:	optable[opcode >> 26](opcode); break;
-			}
+			case 19:	optable19[(opcode >> 1) & 0x3ff](opcode); break;
+			case 31:	optable31[(opcode >> 1) & 0x3ff](opcode); break;
+			case 59:	optable59[(opcode >> 1) & 0x3ff](opcode); break;
+			case 63:	optable63[(opcode >> 1) & 0x3ff](opcode); break;
+			default:	optable[opcode >> 26](opcode); break;
 		}
 
 		ppc_icount--;

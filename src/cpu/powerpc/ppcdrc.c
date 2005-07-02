@@ -4,6 +4,7 @@
     Written by Ville Linde
 */
 
+#include <setjmp.h>
 #include "driver.h"
 #include "ppc.h"
 #include "mamedbg.h"
@@ -280,7 +281,7 @@ typedef struct {
 	UINT32 ibr;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
-	void (*exception)(int exception);
+	jmp_buf exception_jmpbuf;
 	data8_t (*read8)(offs_t address);
 	data16_t (*read16)(offs_t address);
 	data32_t (*read32)(offs_t address);
@@ -1040,8 +1041,18 @@ static void ppcdrc603_reset(void *param)
 
 static int ppcdrc603_execute(int cycles)
 {
+	int exception_type;
+
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	
+	exception_type = setjmp(ppc.exception_jmpbuf);
+	if (exception_type)
+	{
+		//ppc.npc = ppc.pc;
+		//ppc603_exception(exception_type);
+	}
+	
 	drc_execute(ppc.drc);
 	return cycles - ppc_icount;
 }
@@ -1199,8 +1210,18 @@ static void ppcdrc602_reset(void *param)
 
 static int ppcdrc602_execute(int cycles)
 {
+	int exception_type;
+
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+
+	exception_type = setjmp(ppc.exception_jmpbuf);
+	if (exception_type)
+	{
+		//ppc.npc = ppc.pc;
+		//ppc602_exception(exception_type);
+	}
+
 	drc_execute(ppc.drc);
 	return cycles - ppc_icount;
 }

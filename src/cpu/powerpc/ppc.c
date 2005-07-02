@@ -1,5 +1,6 @@
 /* IBM/Motorola PowerPC 4xx/6xx Emulator */
 
+#include <setjmp.h>
 #include "driver.h"
 #include "ppc.h"
 #include "mamedbg.h"
@@ -250,7 +251,7 @@ typedef struct {
 	UINT32 ibr;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
-	void (*exception)(int exception);
+	jmp_buf exception_jmpbuf;
 	data8_t (*read8)(offs_t address);
 	data16_t (*read16)(offs_t address);
 	data32_t (*read32)(offs_t address);
@@ -798,7 +799,6 @@ static void ppc403_init(void)
 	ppc.spu.rx_timer = timer_alloc(ppc403_spu_rx_callback);
 	ppc.spu.tx_timer = timer_alloc(ppc403_spu_tx_callback);
 
-	ppc.exception = ppc403_exception;
 	ppc.read8 = ppc403_read8;
 	ppc.read16 = ppc403_read16;
 	ppc.read32 = ppc403_read32;
@@ -912,7 +912,6 @@ static void ppc603_init(void)
 
 	ppc.is603 = 1;
 
-	ppc.exception = ppc603_exception;
 	ppc.read8 = program_read_byte_64be;
 	ppc.read16 = program_read_word_64be;
 	ppc.read32 = program_read_dword_64be;
@@ -1029,7 +1028,6 @@ static void ppc602_init(void)
 
 	ppc.is602 = 1;
 
-	ppc.exception = ppc602_exception;
 	ppc.read8 = program_read_byte_64be;
 	ppc.read16 = program_read_word_64be;
 	ppc.read32 = program_read_dword_64be;
