@@ -119,7 +119,7 @@ void ppc603_exception(int exception)
 			break;
 
 		case EXCEPTION_DSI:
-			if( ppc_get_msr() & MSR_EE ) {
+			{
 				UINT32 msr = ppc_get_msr();
 
 				SRR0 = ppc.npc;
@@ -143,7 +143,7 @@ void ppc603_exception(int exception)
 			break;
 
 		case EXCEPTION_ISI:
-			if( ppc_get_msr() & MSR_EE ) {
+			{
 				UINT32 msr = ppc_get_msr();
 
 				SRR0 = ppc.npc;
