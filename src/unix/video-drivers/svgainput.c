@@ -14,8 +14,8 @@
 static int console_fd       = -1;
 static int mouse_fd         = -1;
 static int leds             =  0;
-static int release_signal   =  0;
-static int acquire_signal   =  0;
+static int release_signal   = -1;
+static int acquire_signal   = -1;
 static struct sigaction release_sa;
 static struct sigaction oldrelease_sa;
 static struct sigaction acquire_sa;
@@ -232,7 +232,7 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	extern int __svgalib_tty_fd;
 
 	/* svgalib prior to 1.4.1 used SIGUSR1 and SIGUSR2 as signals for
-	   console switching later versions use SIGPROF and sigunused, but
+	   console switching later versions use SIGPROF and SIGUNUSED, but
 	   certain distros have changed svgalib 1.4.1 and later to return
 	   to the old behaviour because of glibc conflicts.
 
@@ -246,8 +246,21 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	   svgalibs vccontrol altogether this can be recognised by
 	   __svgalib_tty_fd being -1, in this case we don't have any way to
 	   know if vc's are changed (I dunno if they can be changed with this
-	   option set), so we just do nothing if __svgalib_tty_fd == -1.   */
-	if(__svgalib_tty_fd != -1)
+	   option set), so we just do nothing if __svgalib_tty_fd == -1. 
+	   
+	   Last but not least svgalib >= 1.9.14 don't export __svgalib_tty_fd
+	   from the .so anymore. Which gets us into the trouble we deserve
+	   for using internal symbols. Strange enough this doesn't result
+	   in a linker error but in __svgalib_tty_fd being -1. Luckily
+	   svgalib >= 19.14 always uses SIGUSR1 and SIGUSR2, so this
+	   can be worked around by detecting the svgalib version and
+	   assuming SIGUSR1 and SIGUSR2 if its >= 1.9.14 . */
+	if (vga_setmode(-1) >= 0x1914)
+	{
+		release_signal = SIGUSR1;
+		acquire_signal = SIGUSR2;
+	}
+	else if(__svgalib_tty_fd != -1)
 	{
 		struct vt_mode vtmode;
 
@@ -258,6 +271,12 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 		}
 		release_signal = vtmode.relsig;
 		acquire_signal = vtmode.acqsig;
+	}
+	else
+		fprintf(stderr, "Svgalib: Warning: Couldn't catch console switch signals (tty-fd = %d).\n", __svgalib_tty_fd);
+
+	if (release_signal != -1)
+	{
 		release_function = release_func;
 		acquire_function = acquire_func;
 
@@ -270,9 +289,6 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 		sigaction(release_signal, &release_sa, &oldrelease_sa);
 		sigaction(acquire_signal, &acquire_sa, &oldacquire_sa);
 	}
-	else
-		fprintf(stderr, "Svgalib: Warning: Couldn't catch console switch signals (tty-fd = %d).\n", __svgalib_tty_fd);
-	
 
 	/* init the keyboard */
 	if ((console_fd = keyboard_init_return_fd()) < 0)
@@ -298,8 +314,11 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 void svga_input_close(void)
 {
 	/* restore the old handlers */
-	sigaction(release_signal, &oldrelease_sa, NULL);
-	sigaction(acquire_signal, &oldacquire_sa, NULL);
+	if (release_signal != -1)
+	{
+		sigaction(release_signal, &oldrelease_sa, NULL);
+		sigaction(acquire_signal, &oldacquire_sa, NULL);
+	}
 
 	if (console_fd >= 0)
 	{
