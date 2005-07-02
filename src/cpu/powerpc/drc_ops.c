@@ -37,7 +37,7 @@ static void ppcdrc_init(void)
 	drconfig.address_bits     = 32;
 	drconfig.lsbs_to_ignore   = 2;
 	drconfig.uses_fp          = 1;
-	drconfig.uses_sse         = 1;
+	drconfig.uses_sse         = USE_SSE2;
 	drconfig.pc_in_memory     = 0;
 	drconfig.icount_in_memory = 0;
 	drconfig.pcptr            = (UINT32 *)&ppc.pc;
