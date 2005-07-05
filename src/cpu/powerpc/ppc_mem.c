@@ -1,5 +1,13 @@
 #define DUMP_PAGEFAULTS 0
 
+#ifndef TRUE
+#define TRUE    1
+#endif
+
+#ifndef FALSE
+#define FALSE   0
+#endif
+
 INLINE UINT8 READ8(UINT32 a)
 {
 	return ppc.read8(a);
