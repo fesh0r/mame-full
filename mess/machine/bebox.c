@@ -779,7 +779,7 @@ WRITE64_HANDLER( bebox_flash_w )
 
 /*************************************
  *
- *	Driver main
+ *	Keyboard
  *
  *************************************/
 
@@ -796,6 +796,42 @@ static const struct kbdc8042_interface bebox_8042_interface =
 	KBDC8042_STANDARD,
 	NULL,
 	bebox_keyboard_interrupt
+};
+
+
+
+/*************************************
+ *
+ *	SCSI
+ *
+ *************************************/
+
+static data32_t scsi53c810_pci_read(int function, int offset)
+{
+	data32_t result = 0;
+
+	if (function == 0)
+	{
+		switch(offset)
+		{
+			case 0x00:	/* vendor/device ID */
+				result = 0x00011000;
+				break;
+
+			case 0x08:
+				result = 0x01000000;
+				break;
+		}
+	}
+	return result;
+}
+
+
+
+static const struct pci_device_info scsi53c810_callbacks =
+{
+	scsi53c810_pci_read,
+	NULL
 };
 
 
@@ -829,6 +865,8 @@ DRIVER_INIT( bebox )
 
 	mpc105_init(0);
 	pci_add_device(0, 1, &cirrus5430_callbacks);
+	if (0)
+		pci_add_device(0, 12, &scsi53c810_callbacks);
 
 	/* set up boot and flash ROM */
 	cpu_setbank(2, memory_region(REGION_USER2));

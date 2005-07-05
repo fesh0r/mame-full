@@ -65,6 +65,8 @@
 		0x060700		PCI/CardBus
 		0x068000		Other
 
+	Information on PCI vendors can be found at http://www.pcidatabase.com/
+
 ***************************************************************************/
 
 #include "machine/pci.h"
