@@ -19,6 +19,7 @@
 #include "machine/8042kbdc.h"
 #include "machine/pit8253.h"
 #include "devices/mflopimg.h"
+#include "devices/chd_cd.h"
 #include "formats/pc_dsk.h"
 #include "vidhrdw/cirrus.h"
 
@@ -121,11 +122,19 @@ static void bebox_floppy_getinfo(struct IODevice *dev)
 	dev->count = 1;
 }
 
+static void bebox_cdrom_getinfo(struct IODevice *dev)
+{
+	/* cdrom */
+	cdrom_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(bebox)
 	CONFIG_RAM(8 * 1024 * 1024)
 	CONFIG_RAM(16 * 1024 * 1024)
 	CONFIG_RAM_DEFAULT(32 * 1024 * 1024)
 	CONFIG_DEVICE(bebox_floppy_getinfo)
+	CONFIG_DEVICE(bebox_cdrom_getinfo)
 SYSTEM_CONFIG_END
 
 
