@@ -23,6 +23,9 @@ System Driver Changes:
   
 - [NES] Fixed NES timing.  (bug #724) [Andrew Church]
 
+- [TUTOR] Fixed minor bug when clearing memory while unloading cartridges.
+  [Nate Woods]
+
 - [VECTREX] Added lightpen support. (bug #115) [Mathis Rosenhauer]
 
 - [VECTREX] Added analog joystick emulation [Mathis Rosenhauer]

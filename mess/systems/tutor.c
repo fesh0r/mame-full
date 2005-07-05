@@ -132,7 +132,7 @@ static void tutor_vblank_interrupt(void)
 	mapped to both a keyboard key and a joystick switch.
 */
 
-static  READ8_HANDLER(read_keyboard)
+static READ8_HANDLER(read_keyboard)
 {
 	return readinputport(offset);
 }
@@ -146,7 +146,7 @@ static DEVICE_LOAD(tutor_cart)
 
 static DEVICE_UNLOAD(tutor_cart)
 {
-	memset(memory_region(REGION_CPU1) + cartridge_base, 0x6000, 0);
+	memset(memory_region(REGION_CPU1) + cartridge_base, 0, 0x6000);
 }
 
 /*
