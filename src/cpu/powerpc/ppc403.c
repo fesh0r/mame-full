@@ -153,6 +153,7 @@ static void ppc403_reset(void *param)
 static int ppc403_execute(int cycles)
 {
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
 	change_pc(ppc.npc);
 
 	while( ppc_icount > 0 )
@@ -175,9 +176,6 @@ static int ppc403_execute(int cycles)
 		}
 
 		ppc_icount--;
-
-		/* TODO: Update timebase */
-		ppc.tb++;
 
 		/* Programmable Interval Timer (PIT) */
 		if (ppc.pit_counter > 0)
@@ -222,6 +220,9 @@ static int ppc403_execute(int cycles)
 
 		ppc403_check_interrupts();
 	}
+
+	// update timebase
+	ppc.tb += (ppc_tb_base_icount - ppc_icount);
 
 	return cycles - ppc_icount;
 }

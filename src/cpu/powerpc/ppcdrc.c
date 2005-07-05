@@ -253,7 +253,6 @@ typedef struct {
 	int exception_pending;
 	int external_int;
 
-	int bus_freq_multiplier;
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
@@ -309,6 +308,10 @@ typedef struct {
 
 
 static int ppc_icount;
+static int ppc_tb_base_icount;
+static int ppc_dec_base_icount;
+static int ppc_dec_trigger_cycle;
+static int bus_freq_multiplier = 1;
 static PPC_REGS ppc;
 static UINT32 ppc_rotate_mask[32][32];
 
@@ -384,6 +387,63 @@ INLINE UINT32 check_condition_code(UINT32 bo, UINT32 bi)
 	return ctr_ok && condition_ok;
 }
 
+INLINE UINT64 ppc_read_timebase(void)
+{
+	int cycles = ppc_tb_base_icount - ppc_icount;
+
+	if (ppc.is603 || ppc.is602)
+	{
+		// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+		return ppc.tb + (cycles / 4);
+	}
+	else
+	{
+		// timebase is incremented once every core cycle on PPC403
+		return ppc.tb + cycles;
+	}
+}
+
+INLINE void ppc_write_timebase_l(UINT32 tbl)
+{
+	ppc_tb_base_icount = ppc_icount;
+
+	ppc.tb &= ~0xffffffff;
+	ppc.tb |= tbl;
+}
+
+INLINE void ppc_write_timebase_h(UINT32 tbh)
+{
+	ppc_tb_base_icount = ppc_icount;
+
+	ppc.tb &= 0xffffffff;
+	ppc.tb |= (UINT64)(tbh) << 32;
+}
+
+INLINE UINT32 read_decrementer(void)
+{
+	int cycles = ppc_dec_base_icount - ppc_icount;
+
+	// decrementer is decremented once every four bus clock cycles, so adjust the cycles accordingly
+	return DEC - (cycles / (bus_freq_multiplier * 2));
+}
+
+INLINE void write_decrementer(UINT32 value)
+{
+	ppc_dec_base_icount = ppc_icount;
+
+	DEC = value;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+}
+
 /*********************************************************************/
 
 INLINE void ppc_set_spr(int spr, UINT32 value)
@@ -412,19 +472,17 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 					/* trigger interrupt */
 					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
-				DEC = value * ppc.bus_freq_multiplier * 2;
+				write_decrementer(value);
 				return;
 
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
-				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= (UINT64)(value*4);
+				ppc_write_timebase_l(value);
 				return;
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
-				ppc.tb &= U64(0x00000000ffffffff);
-				ppc.tb |= ((UINT64) value*4) << 32;
+				ppc_write_timebase_h(value);
 				return;
 
 			case SPR603E_HID0:
@@ -477,8 +535,8 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	if (!ppc.is603 && !ppc.is602) {
 		switch(spr)
 		{
-			case SPR403_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; return;
-			case SPR403_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; return;
+			case SPR403_TBHI:		ppc_write_timebase_h(value); return;
+			case SPR403_TBLO:		ppc_write_timebase_l(value); return;
 
 			case SPR403_TSR:
 				ppc.tsr &= ~value; // 1 clears, 0 does nothing
@@ -546,9 +604,9 @@ INLINE UINT32 ppc_get_spr(int spr)
 		switch (spr)
 		{
 			case SPR403_TBLU:
-			case SPR403_TBLO:		return (ppc.tb & 0xffffffff);
+			case SPR403_TBLO:		return (UINT32)(ppc_read_timebase());
 			case SPR403_TBHU:
-			case SPR403_TBHI:		return ((ppc.tb >> 32) & 0xffffff);
+			case SPR403_TBHI:		return (UINT32)(ppc_read_timebase() >> 32);
 
 			case SPR403_EVPR:		return EVPR;
 			case SPR403_ESR:		return ppc.esr;
@@ -592,11 +650,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR603E_TBL_W:		return ((ppc.tb / 4) & 0xffffffff);
-			case SPR603E_TBU_W:		return (((ppc.tb / 4) >> 32) & 0xffffffff);
+			case SPR603E_TBL_W:		return (UINT32)(ppc_read_timebase());
+			case SPR603E_TBU_W:		return (UINT32)(ppc_read_timebase() >> 32);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
-			case SPR603E_DEC:		return DEC / (ppc.bus_freq_multiplier * 2);
+			case SPR603E_DEC:		return read_decrementer();
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
@@ -834,7 +892,13 @@ static int ppcdrc403_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+
 	drc_execute(ppc.drc);
+
+	// update timebase
+	ppc.tb += (ppc_tb_base_icount - ppc_icount);
+
 	return cycles - ppc_icount;
 }
 
@@ -1015,13 +1079,13 @@ static void ppcdrc603_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	switch(config->pvr)
 	{
-		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
 		default: break;
 	}
 
@@ -1045,6 +1109,8 @@ static int ppcdrc603_execute(int cycles)
 
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
 	
 	exception_type = setjmp(ppc.exception_jmpbuf);
 	if (exception_type)
@@ -1052,8 +1118,26 @@ static int ppcdrc603_execute(int cycles)
 		//ppc.npc = ppc.pc;
 		//ppc603_exception(exception_type);
 	}
-	
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+
 	drc_execute(ppc.drc);
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
+
 	return cycles - ppc_icount;
 }
 
@@ -1197,7 +1281,7 @@ static void ppcdrc602_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0);
 	change_pc(ppc.pc);
@@ -1214,6 +1298,18 @@ static int ppcdrc602_execute(int cycles)
 
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
 
 	exception_type = setjmp(ppc.exception_jmpbuf);
 	if (exception_type)
@@ -1223,6 +1319,14 @@ static int ppcdrc602_execute(int cycles)
 	}
 
 	drc_execute(ppc.drc);
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
+
 	return cycles - ppc_icount;
 }
 

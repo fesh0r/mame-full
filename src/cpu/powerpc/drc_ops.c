@@ -106,26 +106,15 @@ static void ppcdrc_recompile(struct drccore *drc)
 static void update_counters(struct drccore *drc)
 {
 	struct linkdata link1;
-	/* update timebase counter */
-	/* maybe this should only be updated on branches ? */
-
-	_mov_r64_m64abs(REG_EDX, REG_EAX, &ppc.tb);				// mov  edx:eax, [ppc.tb]
-	_add_r32_imm(REG_EAX, 1);								// add  eax,1
-	_adc_r32_imm(REG_EDX, 0);								// adc  edx,0
-	_mov_m64abs_r64(&ppc.tb, REG_EDX, REG_EAX);				// mov  [ppc.tb],edx:eax
 
 	/* decrementer */
 	if (ppc.is603 || ppc.is602)
 	{
-		_mov_r32_m32abs(REG_EAX, &ppc.dec);
-		_sub_r32_imm(REG_EAX, 1);
-		_mov_m32abs_r32(&ppc.dec, REG_EAX);
-		_cmp_r32_imm(REG_EAX, 0);
+		_cmp_r32_m32abs(REG_EBP, &ppc_dec_trigger_cycle);
 		_jcc_short_link(COND_NZ, &link1);
 		_or_m32abs_imm(&ppc.exception_pending, 0x2);
 		_resolve_link(&link1);
 	}
-
 }
 
 static void ppcdrc_entrygen(struct drccore *drc)
