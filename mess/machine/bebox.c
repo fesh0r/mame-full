@@ -284,6 +284,7 @@ static void bebox_set_irq_bit(unsigned int interrupt_bit, int val)
 		"RTC",
 		"KEYBOARD",
 		"SOUND",
+		"PCI3",
 		"PCI2",
 		"PCI1",
 		"SCSI",
@@ -828,10 +829,16 @@ static data32_t scsi53c810_pci_read(int function, int offset)
 
 
 
+static void scsi53c810_pci_write(int function, int offset, data32_t data)
+{
+}
+
+
+
 static const struct pci_device_info scsi53c810_callbacks =
 {
 	scsi53c810_pci_read,
-	NULL
+	scsi53c810_pci_write
 };
 
 
