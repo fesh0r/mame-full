@@ -78,6 +78,16 @@ static void dmaop_interrupt(void)
 	lsi810.halted = 1;
 }
 
+static void dmaop_block_move(void)
+{
+	osd_die("NYI: dmaop_block_move");
+}
+
+static void dmaop_reselect(void)
+{
+	/* SCSI bus arbitration not directly emulated */
+}
+
 
 
 static void dma_exec(void)
@@ -305,4 +315,6 @@ void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), voi
 
 	add_opcode(0xc0, 0xfe, dmaop_move_memory);
 	add_opcode(0x98, 0xf8, dmaop_interrupt);
+	add_opcode(0x00, 0xc0, dmaop_block_move);
+	add_opcode(0x40, 0xf8, dmaop_reselect);
 }
