@@ -47,7 +47,9 @@ enum
 	UI_serial,
 	UI_parallel,
 	UI_snapshot,
-	UI_quickload
+	UI_quickload,
+	UI_memcard,
+	UI_cdrom
 };
 
 #endif /* MUI_TEXT_H */

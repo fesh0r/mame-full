@@ -102,6 +102,7 @@
 #include "machine/pci.h"
 #include "machine/intelfsh.h"
 #include "machine/8042kbdc.h"
+#include "machine/53c810.h"
 
 #define LOG_CPUIMASK	1
 #define LOG_UART		1
@@ -807,6 +808,101 @@ static const struct kbdc8042_interface bebox_8042_interface =
  *
  *************************************/
 
+static data32_t scsi53c810_data[0x100 / 4];
+
+static READ64_HANDLER( scsi53c810_r )
+{
+	int reg = offset*8;
+	UINT64 r = 0;
+	if (!(mem_mask & U64(0xff00000000000000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+0) << 56;
+	}
+	if (!(mem_mask & U64(0x00ff000000000000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+1) << 48;
+	}
+	if (!(mem_mask & U64(0x0000ff0000000000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+2) << 40;
+	}
+	if (!(mem_mask & U64(0x000000ff00000000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+3) << 32;
+	}
+	if (!(mem_mask & U64(0x00000000ff000000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+4) << 24;
+	}
+	if (!(mem_mask & U64(0x0000000000ff0000))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+5) << 16;
+	}
+	if (!(mem_mask & U64(0x000000000000ff00))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+6) << 8;
+	}
+	if (!(mem_mask & U64(0x00000000000000ff))) {
+		r |= (UINT64)lsi53c810_reg_r(reg+7) << 0;
+	}
+
+	return r;
+}
+
+
+
+static WRITE64_HANDLER( scsi53c810_w )
+{
+	int reg = offset*8;
+	if (!(mem_mask & U64(0xff00000000000000))) {
+		lsi53c810_reg_w(reg+0, data >> 56);
+	}
+	if (!(mem_mask & U64(0x00ff000000000000))) {
+		lsi53c810_reg_w(reg+1, data >> 48);
+	}
+	if (!(mem_mask & U64(0x0000ff0000000000))) {
+		lsi53c810_reg_w(reg+2, data >> 40);
+	}
+	if (!(mem_mask & U64(0x000000ff00000000))) {
+		lsi53c810_reg_w(reg+3, data >> 32);
+	}
+	if (!(mem_mask & U64(0x00000000ff000000))) {
+		lsi53c810_reg_w(reg+4, data >> 24);
+	}
+	if (!(mem_mask & U64(0x0000000000ff0000))) {
+		lsi53c810_reg_w(reg+5, data >> 16);
+	}
+	if (!(mem_mask & U64(0x000000000000ff00))) {
+		lsi53c810_reg_w(reg+6, data >> 8);
+	}
+	if (!(mem_mask & U64(0x00000000000000ff))) {
+		lsi53c810_reg_w(reg+7, data >> 0);
+	}
+}
+
+
+
+#define BYTE_REVERSE32(x)		(((x >> 24) & 0xff) | \
+								((x >> 8) & 0xff00) | \
+								((x << 8) & 0xff0000) | \
+								((x << 24) & 0xff000000))
+
+static UINT32 scsi53c810_fetch(UINT32 dsp)
+{
+	UINT32 result;
+	result = program_read_dword_64be(dsp & 0x7FFFFFFF);
+	return BYTE_REVERSE32(result);
+}
+
+
+
+static void scsi53c810_irq_callback(void)
+{
+	bebox_set_irq_bit(21, 1);
+	bebox_set_irq_bit(21, 0);
+}
+
+
+
+static void scsi53c810_dma_callback(UINT32 src, UINT32 dst, int length, int byteswap)
+{
+}
+
+
+
 static data32_t scsi53c810_pci_read(int function, int offset)
 {
 	data32_t result = 0;
@@ -822,6 +918,10 @@ static data32_t scsi53c810_pci_read(int function, int offset)
 			case 0x08:
 				result = 0x01000000;
 				break;
+
+			default:
+				result = scsi53c810_data[offset / 4];
+				break;
 		}
 	}
 	return result;
@@ -831,6 +931,37 @@ static data32_t scsi53c810_pci_read(int function, int offset)
 
 static void scsi53c810_pci_write(int function, int offset, data32_t data)
 {
+	offs_t addr;
+
+	if (function == 0)
+	{
+		scsi53c810_data[offset / 4] = data;
+
+		switch(offset)
+		{
+			case 0x04:
+				/* command
+				 *
+				 * bit 8:	SERR/ Enable
+				 * bit 6:	Enable Parity Response
+				 * bit 4:	Write and Invalidate Mode
+				 * bit 2:	Enable Bus Mastering
+				 * bit 1:	Enable Memory Space
+				 * bit 0:	Enable IO Space
+				 */
+				if (data & 0x02)
+				{
+					/* brutal ugly hack; at some point the PCI code should be handling this stuff */
+					if (scsi53c810_data[5] != 0xFFFFFFF0)
+					{
+						addr = (scsi53c810_data[5] | 0xC0000000) & ~0xFF;
+						memory_install_read64_handler(0, ADDRESS_SPACE_PROGRAM, addr, addr + 0xFF, 0, 0, scsi53c810_r);
+						memory_install_write64_handler(0, ADDRESS_SPACE_PROGRAM, addr, addr + 0xFF, 0, 0, scsi53c810_w);
+					}
+				}
+				break;
+		}
+	}
 }
 
 
@@ -912,6 +1043,9 @@ DRIVER_INIT( bebox )
 		memory_install_read64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_r);
 		memory_install_write64_handler(cpu, ADDRESS_SPACE_PROGRAM, vram_begin, vram_end, 0, 0, bebox_video_w);
 	}
+
+	/* SCSI */
+	lsi53c810_init(scsi53c810_fetch, scsi53c810_irq_callback, scsi53c810_dma_callback);
 
 	/* The following is a verrrry ugly hack put in to support NetBSD for
 	 * NetBSD.  When NetBSD/bebox it does most of its work on CPU #0 and then

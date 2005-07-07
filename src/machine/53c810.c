@@ -4,36 +4,42 @@
 
 #define DMA_MAX_ICOUNT	512		/* Maximum number of DMA Scripts opcodes to run */
 
-static UINT8 *ram;
-
 static struct {
+	UINT8 scntl0;
+	UINT8 scntl1;
+	UINT8 scntl2;
+	UINT8 scntl3;
+	UINT8 scid;
 	UINT8 istat;
 	UINT8 dstat;
 	UINT8 dien;
 	UINT8 dcntl;
 	UINT8 dmode;
+	UINT32 dsa;
 	UINT32 dsp;
 	UINT32 dsps;
 	UINT32 dcmd;
+	UINT8 sien0;
+	UINT8 sien1;
+	UINT8 stime0;
+	UINT8 respid;
+	UINT8 stest1;
+	UINT8 scratch_a[4];
+	UINT8 scratch_b[4];
 	int dma_icount;
 	int halted;
 
+	UINT32 (* fetch)(UINT32 dsp);
 	void (* irq_callback)(void);
 	void (* dma_callback)(UINT32, UINT32, int, int);
 } lsi810;
-
-#define BYTE_REVERSE32(x)		(((x >> 24) & 0xff) | \
-								((x >> 8) & 0xff00) | \
-								((x << 8) & 0xff0000) | \
-								((x << 24) & 0xff000000))
 
 static void (* dma_opcode[256])(void);
 
 
 INLINE UINT32 FETCH(void)
 {
-	//UINT32 r = BYTE_REVERSE32(*(UINT32*)&ram[lsi810.dsp ^ 4]);
-	UINT32 r = BYTE_REVERSE32(program_read_dword_64be(lsi810.dsp));
+	UINT32 r = lsi810.fetch(lsi810.dsp);
 	lsi810.dsp += 4;
 	return r;
 }
@@ -94,8 +100,26 @@ UINT8 lsi53c810_reg_r(int reg)
 {
 	switch(reg)
 	{
+		case 0x00:		/* SCNTL0 */
+			return lsi810.scntl0;
+		case 0x01:		/* SCNTL1 */
+			return lsi810.scntl1;
+		case 0x02:		/* SCNTL2 */
+			return lsi810.scntl2;
+		case 0x03:		/* SCNTL3 */
+			return lsi810.scntl3;
+		case 0x04:		/* SCID */
+			return lsi810.scid;
 		case 0x0c:		/* DSTAT */
 			return lsi810.dstat;
+		case 0x10:		/* DSA [7-0] */
+			return lsi810.dsa & 0xff;
+		case 0x11:		/* DSA [15-8] */
+			return (lsi810.dsa >> 8) & 0xff;
+		case 0x12:		/* DSA [23-16] */
+			return (lsi810.dsa >> 16) & 0xff;
+		case 0x13:		/* DSA [31-24] */
+			return (lsi810.dsa >> 24) & 0xff;
 		case 0x14:		/* ISTAT */
 			return lsi810.istat;
 		case 0x2c:		/* DSP [7-0] */
@@ -106,10 +130,30 @@ UINT8 lsi53c810_reg_r(int reg)
 			return (lsi810.dsp >> 16) & 0xff;
 		case 0x2f:		/* DSP [31-24] */
 			return (lsi810.dsp >> 24) & 0xff;
+		case 0x34:		/* SCRATCH A */
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			return lsi810.scratch_a[reg % 4];
 		case 0x39:		/* DIEN */
 			return lsi810.dien;
 		case 0x3b:		/* DCNTL */
 			return lsi810.dcntl;
+		case 0x40:		/* SIEN0 */
+			return lsi810.sien0;
+		case 0x41:		/* SIEN1 */
+			return lsi810.sien1;
+		case 0x48:		/* STIME0 */
+			return lsi810.stime0;
+		case 0x4a:		/* RESPID */
+			return lsi810.respid;
+		case 0x4d:		/* STEST1 */
+			return lsi810.stest1;
+		case 0x5c:		/* SCRATCH B */
+		case 0x5d:
+		case 0x5e:
+		case 0x5f:
+			return lsi810.scratch_b[reg % 4];
 
 		default:
 			osd_die("LSI53C810: reg_r: Unknown reg %02X\n", reg);
@@ -122,6 +166,37 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 {
 	switch(reg)
 	{
+		case 0x00:		/* SCNTL0 */
+			lsi810.scntl0 = value;
+			break;
+		case 0x01:		/* SCNTL1 */
+			lsi810.scntl1 = value;
+			break;
+		case 0x02:		/* SCNTL2 */
+			lsi810.scntl2 = value;
+			break;
+		case 0x03:		/* SCNTL3 */
+			lsi810.scntl3 = value;
+			break;
+		case 0x04:		/* SCID */
+			lsi810.scid = value;
+			break;
+		case 0x10:		/* DSA [7-0] */
+			lsi810.dsa &= 0xffffff00;
+			lsi810.dsa |= value;
+			break;
+		case 0x11:		/* DSA [15-8] */
+			lsi810.dsa &= 0xffff00ff;
+			lsi810.dsa |= value << 8;
+			break;
+		case 0x12:		/* DSA [23-16] */
+			lsi810.dsa &= 0xff00ffff;
+			lsi810.dsa |= value << 16;
+			break;
+		case 0x13:		/* DSA [31-24] */
+			lsi810.dsa &= 0x00ffffff;
+			lsi810.dsa |= value << 24;
+			break;
 		case 0x14:		/* ISTAT */
 			lsi810.istat = value;
 			break;
@@ -144,6 +219,12 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 			if((lsi810.dmode & 0x1) == 0 && !lsi810.halted) {
 				dma_exec();
 			}
+			break;
+		case 0x34:		/* SCRATCH A */
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			lsi810.scratch_a[reg % 4] = value;
 			break;
 		case 0x38:		/* DMODE */
 			lsi810.dmode = value;
@@ -172,6 +253,27 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 				dma_exec();
 			}
 			break;
+		case 0x40:		/* SIEN0 */
+			lsi810.sien0 = value;
+			break;
+		case 0x41:		/* SIEN1 */
+			lsi810.sien1 = value;
+			break;
+		case 0x48:		/* STIME0 */
+			lsi810.stime0 = value;
+			break;
+		case 0x4a:		/* RESPID */
+			lsi810.respid = value;
+			break;
+		case 0x4d:		/* STEST1 */
+			lsi810.stest1 = value;
+			break;
+		case 0x5c:		/* SCRATCH B */
+		case 0x5d:
+		case 0x5e:
+		case 0x5f:
+			lsi810.scratch_b[reg % 4] = value;
+			break;
 
 		default:
 			osd_die("LSI53C810: reg_w: Unknown reg %02X, %02X\n", reg, value);
@@ -188,7 +290,7 @@ static void add_opcode(UINT8 op, UINT8 mask, void (* handler)(void))
 	}
 }
 
-void lsi53c810_init(UINT8 *mem, void (*irq_callback)(void), void (*dma_callback)(UINT32,UINT32,int,int))
+void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), void (*dma_callback)(UINT32,UINT32,int,int))
 {
 	int i;
 	memset(&lsi810, 0, sizeof(lsi810));
@@ -197,7 +299,7 @@ void lsi53c810_init(UINT8 *mem, void (*irq_callback)(void), void (*dma_callback)
 		dma_opcode[i] = dmaop_invalid;
 	}
 
-	ram = (UINT8*)mem;
+	lsi810.fetch = fetch;
 	lsi810.irq_callback = irq_callback;
 	lsi810.dma_callback = dma_callback;
 

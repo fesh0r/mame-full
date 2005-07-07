@@ -556,11 +556,25 @@ int mess_validitychecks(void)
 	int i, j;
 	int is_invalid;
 	int error = 0;
+	iodevice_t devtype;
 	struct IODevice *devices;
 	const struct IODevice *dev;
+	const char *name;
 	const char *s1;
 	const char *s2;
 	extern int device_valididtychecks(void);
+	extern const char *mess_default_text[];
+
+	/* make sure that all of the UI_* strings are set for all devices */
+	for (devtype = 0; devtype < IO_COUNT; devtype++)
+	{
+		name = mess_default_text[UI_cartridge - IO_CARTSLOT - UI_last_mame_entry + devtype];
+		if (!name || !name[0])
+		{
+			printf("Device type %d does not have an associated UI string\n", devtype);
+			error = 1;
+		}
+	}
 
 	/* MESS specific driver validity checks */
 	for (i = 0; drivers[i]; i++)
