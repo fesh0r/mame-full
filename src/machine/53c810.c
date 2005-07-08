@@ -1,6 +1,7 @@
 /* LSI Logic LSI53C810A PCI to SCSI I/O Processor */
 
 #include "driver.h"
+#include "scsidev.h"
 
 #define DMA_MAX_ICOUNT	512		/* Maximum number of DMA Scripts opcodes to run */
 
@@ -28,6 +29,12 @@ static struct {
 	UINT8 scratch_b[4];
 	int dma_icount;
 	int halted;
+
+	struct
+	{
+		void *data;		// device's "this" pointer
+		pSCSIDispatch handler;	// device's handler routine	
+	} devices[8];
 
 	UINT32 (* fetch)(UINT32 dsp);
 	void (* irq_callback)(void);
@@ -80,12 +87,61 @@ static void dmaop_interrupt(void)
 
 static void dmaop_block_move(void)
 {
-	osd_die("NYI: dmaop_block_move");
+	UINT32 address;
+	UINT32 count;
+
+	address = FETCH();
+	if (lsi810.dcmd & 0x20000000)
+		address = lsi810.fetch(address);
+
+	if (lsi810.dcmd & 0x10000000)
+		osd_die("LSI53C810: Table indirect not implemented\n");
+
+	count = lsi810.dcmd & 0x00ffffff;
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_block_move not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_block_move not implemented\n");
+	}
 }
 
-static void dmaop_reselect(void)
+static void dmaop_io(void)
 {
-	/* SCSI bus arbitration not directly emulated */
+	UINT32 operand;
+
+	operand = FETCH();
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_io not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_io not implemented\n");
+	}
+}
+
+static void dmaop_transfer_control(void)
+{
+	UINT32 dsps, dest;
+
+	dsps = FETCH();
+
+	/* relative or absolute addressing? */
+	if (lsi810.dcmd & 0x08000000)
+		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF00000000 : 0));
+	else
+		dest = dsps;
+
+	osd_die("LSI53C810: dmaop_transfer_control not implemented\n");
 }
 
 
@@ -316,5 +372,6 @@ void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), voi
 	add_opcode(0xc0, 0xfe, dmaop_move_memory);
 	add_opcode(0x98, 0xf8, dmaop_interrupt);
 	add_opcode(0x00, 0xc0, dmaop_block_move);
-	add_opcode(0x40, 0xf8, dmaop_reselect);
+	add_opcode(0x40, 0xc0, dmaop_io);
+	add_opcode(0x80, 0xc0, dmaop_transfer_control);
 }
