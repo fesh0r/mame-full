@@ -470,7 +470,8 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				if((value & 0x80000000) && !(DEC & 0x80000000))
 				{
 					/* trigger interrupt */
-					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
+					if( MSR & MSR_EE )
+						longjmp(ppc.exception_jmpbuf, EXCEPTION_DECREMENTER);
 				}
 				write_decrementer(value);
 				return;

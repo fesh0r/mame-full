@@ -119,7 +119,35 @@ static void update_counters(struct drccore *drc)
 
 static void ppcdrc_entrygen(struct drccore *drc)
 {
+	struct linkdata link1;
+	struct linkdata link2;
+
 	append_check_interrupts(drc, 0);
+
+	/* append setjmp call for ISI/DSI/DECREMENTER exceptions */
+	if (ppc.is603 || ppc.is602)
+	{
+		/* generate setjmp call; note that we have to set up EBP */
+		_mov_m32abs_r32(&ppc_icount, REG_EBP);
+		_mov_r32_r32(REG_EBP, REG_ESP);
+		_push_imm(ppc.exception_jmpbuf);
+		_call(_setjmp);
+		_add_r32_imm(REG_ESP, 4);
+		_mov_r32_m32abs(REG_EBP, &ppc_icount);
+
+		/* dispatch based on link */
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc_short_link(COND_Z, &link1);
+
+		/* decrementer exception? */
+		_cmp_r32_imm(REG_EAX, EXCEPTION_DECREMENTER);
+		_jcc_short_link(COND_NZ, &link2);
+		_jmp_m32abs(&ppc.generate_decrementer_exception);
+		_resolve_link(&link2);
+
+		_int(3);
+		_resolve_link(&link1);
+	}
 }
 
 static UINT32 compile_one(struct drccore *drc, UINT32 pc)
