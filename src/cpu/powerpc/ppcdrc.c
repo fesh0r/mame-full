@@ -263,6 +263,8 @@ typedef struct {
 	void *		generate_syscall_exception;
 	void *		generate_decrementer_exception;
 	void *		generate_trap_exception;
+	void *		generate_dsi_exception;
+	void *		generate_isi_exception;
 
 	// PowerPC 60x specific registers */
 	UINT32 dec;

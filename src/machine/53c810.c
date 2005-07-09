@@ -33,7 +33,7 @@ static struct {
 	struct
 	{
 		void *data;		// device's "this" pointer
-		pSCSIDispatch handler;	// device's handler routine	
+		pSCSIDispatch handler;	// device's handler routine
 	} devices[8];
 
 	UINT32 (* fetch)(UINT32 dsp);

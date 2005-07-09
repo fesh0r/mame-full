@@ -1121,6 +1121,9 @@ do { OP1(0xe9); OP4(0x00); (link)->target = drc->cache_top; (link)->size = 4; } 
 #define _jmp(target) \
 do { OP1(0xe9); OP4((UINT32)(target) - ((UINT32)drc->cache_top + 4)); } while (0)
 
+#define _jmp_r32(reg) \
+do { OP1(0xff); MODRM_REG(4, reg); } while (0)
+
 
 
 #define _call(target) \

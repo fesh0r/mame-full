@@ -65,6 +65,12 @@ static void ppcdrc_reset(struct drccore *drc)
 
 	ppc.generate_trap_exception = drc->cache_top;
 	append_generate_exception(drc, EXCEPTION_TRAP);
+
+	ppc.generate_dsi_exception = drc->cache_top;
+	append_generate_exception(drc, EXCEPTION_DSI);
+
+	ppc.generate_isi_exception = drc->cache_top;
+	append_generate_exception(drc, EXCEPTION_ISI);
 }
 
 static void ppcdrc_recompile(struct drccore *drc)
@@ -117,12 +123,24 @@ static void update_counters(struct drccore *drc)
 	}
 }
 
+static void *ppcdrc_exception_handler(int exception_type)
+{
+	switch(exception_type)
+	{
+		case EXCEPTION_DECREMENTER:
+			return ppc.generate_decrementer_exception;
+		case EXCEPTION_DSI:
+			return ppc.generate_dsi_exception;
+		case EXCEPTION_ISI:
+			return ppc.generate_isi_exception;
+	}
+	osd_die("Unknown exception %d\n", exception_type);
+	return NULL;
+}
+
 static void ppcdrc_entrygen(struct drccore *drc)
 {
 	struct linkdata link1;
-	struct linkdata link2;
-
-	append_check_interrupts(drc, 0);
 
 	/* append setjmp call for ISI/DSI/DECREMENTER exceptions */
 	if (ppc.is603 || ppc.is602)
@@ -138,16 +156,15 @@ static void ppcdrc_entrygen(struct drccore *drc)
 		/* dispatch based on link */
 		_cmp_r32_imm(REG_EAX, 0);
 		_jcc_short_link(COND_Z, &link1);
-
-		/* decrementer exception? */
-		_cmp_r32_imm(REG_EAX, EXCEPTION_DECREMENTER);
-		_jcc_short_link(COND_NZ, &link2);
-		_jmp_m32abs(&ppc.generate_decrementer_exception);
-		_resolve_link(&link2);
-
-		_int(3);
+		_push_r32(REG_EAX);
+		_call(ppcdrc_exception_handler);
+		_add_r32_imm(REG_ESP, 4);
+		_mov_r32_m32abs(REG_EBP, &ppc_icount);
+		_jmp_r32(REG_EAX);
 		_resolve_link(&link1);
 	}
+
+	append_check_interrupts(drc, 0);
 }
 
 static UINT32 compile_one(struct drccore *drc, UINT32 pc)
@@ -221,9 +238,9 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 }
 
 
-static UINT32 exception_vector[32] =
+static const UINT32 exception_vector[32] =
 {
-	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00
+	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00, 0x1400, 0x0300, 0x0400
 };
 
 static void append_generate_exception(struct drccore *drc, UINT8 exception)
@@ -306,13 +323,15 @@ static void append_check_interrupts(struct drccore *drc, int inline_generate)
 	_test_r32_imm(REG_EAX, 0x1);			/* is it a IRQ? */
 	_jcc_short_link(COND_Z, &link3);
 	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_jmp(ppc.generate_interrupt_exception);
+	_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
+	_jmp_r32(REG_EAX);
 	_resolve_link(&link3);
 
 	_test_r32_imm(REG_EAX, 0x2);			/* is it a decrementer exception */
 	_jcc_short_link(COND_Z, &link4);
 	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_jmp(ppc.generate_decrementer_exception);
+	_mov_r32_m32abs(REG_EAX, &ppc.generate_decrementer_exception);
+	_jmp_r32(REG_EAX);
 	_resolve_link(&link4);
 
 	_resolve_link(&link1);
