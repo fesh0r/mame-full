@@ -460,11 +460,11 @@ static data8_t sndto68k[16], sndtoppc[2];	/* read/write split mapping */
 
 static READ32_HANDLER( ppc_sound_r )
 {
+	UINT32 r = 0;
 
 	/* Hack to get past the sound IC test */
 	return 0x005f0000;
 
-	UINT32 r = 0;
 	if (!(mem_mask & 0xff000000))
 	{
 		r |= sndtoppc[0] << 24;
