@@ -97,7 +97,7 @@ static struct rc_option opts2[] = {
 	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
 	{ "MAME Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "defaultgame", "def", rc_string, &defaultgamename, "pacman", 0, 0, NULL, "Set the default game started when no game is given on the commandline, only useful for in the configfiles" },
+	{ "defaultgame", "def", rc_string, &defaultgamename, "robby", 0, 0, NULL, "Set the default game started when no game is given on the command line (only useful in the config files)" },
 #endif
 	{ "language", "lang", rc_string, &language, "english", 0, 0, NULL, "Select the language for the menus and osd" },
 	{ "fuzzycmp", "fc", rc_bool, &use_fuzzycmp, "1", 0, 0, NULL, "Enable/disable use of fuzzy gamename matching when there is no exact match" },

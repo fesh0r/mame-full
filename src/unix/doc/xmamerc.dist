@@ -70,7 +70,7 @@ history_file            /usr/local/share/xmame/history.dat
 mameinfo_file           /usr/local/share/xmame/mameinfo.dat
 
 ### Mame Related ###
-defaultgame             pacman
+defaultgame             robby
 language                english
 fuzzycmp                1
 cheat                   0
