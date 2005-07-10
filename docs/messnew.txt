@@ -1,4 +1,4 @@
-0.97.1
+0.98
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -46,7 +46,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.97u5.  This incorporates all features of the
+- The core is based on MAME 0.98.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - [Messtest] Now will catch osd_die() messages.  [Nate Woods]
