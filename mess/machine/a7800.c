@@ -71,9 +71,9 @@ static void a7800_driver_init(int ispal, int lines)
 	a7800_lines = lines;
 
 	/* standard banks */
-	cpu_setbank(5, &ROM[0x2040]);		/* RAM0 */
-	cpu_setbank(6, &ROM[0x2140]);		/* RAM1 */
-	cpu_setbank(7, &ROM[0x2000]);		/* MAINRAM */
+	memory_set_bankptr(5, &ROM[0x2040]);		/* RAM0 */
+	memory_set_bankptr(6, &ROM[0x2140]);		/* RAM1 */
+	memory_set_bankptr(7, &ROM[0x2000]);		/* MAINRAM */
 }
 
 
@@ -104,10 +104,10 @@ MACHINE_INIT( a7800 )
 	
 	/* set banks to default states */
 	memory = memory_region(REGION_CPU1);
-	cpu_setbank( 1, memory + 0x4000 );
-	cpu_setbank( 2, memory + 0x8000 );
-	cpu_setbank( 3, memory + 0xA000 );
-	cpu_setbank( 4, memory + 0xC000 );
+	memory_set_bankptr( 1, memory + 0x4000 );
+	memory_set_bankptr( 2, memory + 0x8000 );
+	memory_set_bankptr( 3, memory + 0xA000 );
+	memory_set_bankptr( 4, memory + 0xC000 );
 
 	/* pokey cartridge */
 	if (a7800_cart_type & 0x01)
@@ -411,8 +411,8 @@ WRITE8_HANDLER( a7800_cart_w )
 		{
 			data &= 0x07;
 		}
-		cpu_setbank(2,memory_region(REGION_CPU1) + 0x10000 + (data << 14));
-		cpu_setbank(3,memory_region(REGION_CPU1) + 0x12000 + (data << 14));
+		memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x10000 + (data << 14));
+		memory_set_bankptr(3,memory_region(REGION_CPU1) + 0x12000 + (data << 14));
 	/*	logerror("BANK SEL: %d\n",data); */
 	}
 	else if(( a7800_cart_type == MBANK_TYPE_ABSOLUTE ) &&( offset == 0x4000 ) )
@@ -421,11 +421,11 @@ WRITE8_HANDLER( a7800_cart_w )
 		/*logerror( "F18 BANK SEL: %d\n", data );*/
 		if( data & 1 )
 		{
-			cpu_setbank(1,memory_region(REGION_CPU1) + 0x10000 );
+			memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x10000 );
 		}
 		else if( data & 2 )
 		{
-			cpu_setbank(1,memory_region(REGION_CPU1) + 0x14000 );
+			memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x14000 );
 		}
 	}
 	else if(( a7800_cart_type == MBANK_TYPE_ACTIVISION ) &&( offset >= 0xBF80 ) )
@@ -435,8 +435,8 @@ WRITE8_HANDLER( a7800_cart_w )
 
 		/*logerror( "Activision BANK SEL: %d\n", data );*/
 
-		cpu_setbank( 3, memory_region( REGION_CPU1 ) + 0x10000 + ( data << 14 ) );
-		cpu_setbank( 4, memory_region( REGION_CPU1 ) + 0x12000 + ( data << 14 ) );
+		memory_set_bankptr( 3, memory_region( REGION_CPU1 ) + 0x10000 + ( data << 14 ) );
+		memory_set_bankptr( 4, memory_region( REGION_CPU1 ) + 0x12000 + ( data << 14 ) );
 	}
 }
 

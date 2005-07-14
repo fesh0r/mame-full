@@ -581,12 +581,12 @@ static void c64_bankswitch (int reset)
 	    || (loram && !c64_exrom)) // for omega race cartridge
 //	    || (loram && hiram && !c64_exrom))
 	{
-		cpu_setbank (1, roml);
+		memory_set_bankptr (1, roml);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_RAM);	// always ram: pitstop
 	}
 	else
 	{
-		cpu_setbank (1, c64_memory + 0x8000);
+		memory_set_bankptr (1, c64_memory + 0x8000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_RAM);
 	}
 
@@ -598,15 +598,15 @@ static void c64_bankswitch (int reset)
 	    || (!c64_exrom) )
 #endif
 	{
-		cpu_setbank (3, romh);
+		memory_set_bankptr (3, romh);
 	}
 	else if (loram && hiram &&c64_game)
 	{
-		cpu_setbank (3, c64_basic);
+		memory_set_bankptr (3, c64_basic);
 	}
 	else
 	{
-		cpu_setbank (3, c64_memory + 0xa000);
+		memory_set_bankptr (3, c64_memory + 0xa000);
 	}
 
 	if ((!c64_game && c64_exrom)
@@ -619,20 +619,20 @@ static void c64_bankswitch (int reset)
 	{
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_BANK5);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_BANK6);
-		cpu_setbank (6, c64_memory + 0xd000);
+		memory_set_bankptr (6, c64_memory + 0xd000);
 		if (!charen && (loram || hiram))
 		{
-			cpu_setbank (5, c64_chargen);
+			memory_set_bankptr (5, c64_chargen);
 		}
 		else
 		{
-			cpu_setbank (5, c64_memory + 0xd000);
+			memory_set_bankptr (5, c64_memory + 0xd000);
 		}
 	}
 
 	if (!c64_game && c64_exrom)
 	{
-		cpu_setbank (7, romh);
+		memory_set_bankptr (7, romh);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_NOP);
 	}
 	else
@@ -640,11 +640,11 @@ static void c64_bankswitch (int reset)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_RAM);
 		if (hiram)
 		{
-			cpu_setbank (7, c64_kernal);
+			memory_set_bankptr (7, c64_kernal);
 		}
 		else
 		{
-			cpu_setbank (7, c64_memory + 0xe000);
+			memory_set_bankptr (7, c64_memory + 0xe000);
 		}
 	}
 	game = c64_game;

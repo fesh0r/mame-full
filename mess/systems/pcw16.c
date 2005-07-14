@@ -454,8 +454,8 @@ static void pcw16_update_bank(int bank)
 
 	mem_ptr = mem_ptr + ((bank_id - bank_offs)<<14);
 	pcw16_mem_ptr[bank] = (char*)mem_ptr;
-	cpu_setbank((bank+1), mem_ptr);
-	cpu_setbank((bank+5), mem_ptr);
+	memory_set_bankptr((bank+1), mem_ptr);
+	memory_set_bankptr((bank+5), mem_ptr);
 
 	if ((bank_id & 0x080)==0)
 	{

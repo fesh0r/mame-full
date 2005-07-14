@@ -79,7 +79,7 @@ static void concept_fdc_init(int slot);
 
 MACHINE_INIT(concept)
 {
-	cpu_setbank(1, memory_region(REGION_CPU1) + rom0_base);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + rom0_base);
 
 	/* initialize int state */
 	pending_interrupts = 0;

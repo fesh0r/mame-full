@@ -194,13 +194,13 @@ static WRITE8_HANDLER(tutor_mapper_w)
 	case 0x08:
 		/* disable cartridge ROM, enable BASIC ROM at base >8000 */
 		cartridge_enable = 0;
-		cpu_setbank(1, memory_region(REGION_CPU1) + basic_base);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + basic_base);
 		break;
 
 	case 0x0c:
 		/* enable cartridge ROM, disable BASIC ROM at base >8000 */
 		cartridge_enable = 1;
-		cpu_setbank(1, memory_region(REGION_CPU1) + cartridge_base);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + cartridge_base);
 		break;
 
 	default:

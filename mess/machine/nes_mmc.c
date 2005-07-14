@@ -151,8 +151,8 @@ WRITE8_HANDLER ( nes_mapper_w )
 			/* It's really 35-in-1, and it's mostly different versions of Battle City. Unfortunately, the vrom dumps are bad */
 			case 0x7fde:
 				data &= (nes.prg_chunks - 1);
-				cpu_setbank (3, &nes.rom[data * 0x4000 + 0x10000]);
-				cpu_setbank (4, &nes.rom[data * 0x4000 + 0x12000]);
+				memory_set_bankptr (3, &nes.rom[data * 0x4000 + 0x10000]);
+				memory_set_bankptr (4, &nes.rom[data * 0x4000 + 0x12000]);
 				break;
 		}
 #endif
@@ -170,7 +170,7 @@ static void prg8_89 (int bank)
 	if (nes.slow_banking)
 		memcpy (&nes.rom[0x8000], &nes.rom[bank * 0x2000 + 0x10000], 0x2000);
 	else
-		cpu_setbank (1, &nes.rom[bank * 0x2000 + 0x10000]);
+		memory_set_bankptr (1, &nes.rom[bank * 0x2000 + 0x10000]);
 }
 
 static void prg8_ab (int bank)
@@ -180,7 +180,7 @@ static void prg8_ab (int bank)
 	if (nes.slow_banking)
 		memcpy (&nes.rom[0xa000], &nes.rom[bank * 0x2000 + 0x10000], 0x2000);
 	else
-		cpu_setbank (2, &nes.rom[bank * 0x2000 + 0x10000]);
+		memory_set_bankptr (2, &nes.rom[bank * 0x2000 + 0x10000]);
 }
 
 static void prg8_cd (int bank)
@@ -190,7 +190,7 @@ static void prg8_cd (int bank)
 	if (nes.slow_banking)
 		memcpy (&nes.rom[0xc000], &nes.rom[bank * 0x2000 + 0x10000], 0x2000);
 	else
-		cpu_setbank (3, &nes.rom[bank * 0x2000 + 0x10000]);
+		memory_set_bankptr (3, &nes.rom[bank * 0x2000 + 0x10000]);
 }
 
 static void prg8_ef (int bank)
@@ -200,7 +200,7 @@ static void prg8_ef (int bank)
 	if (nes.slow_banking)
 		memcpy (&nes.rom[0xe000], &nes.rom[bank * 0x2000 + 0x10000], 0x2000);
 	else
-		cpu_setbank (4, &nes.rom[bank * 0x2000 + 0x10000]);
+		memory_set_bankptr (4, &nes.rom[bank * 0x2000 + 0x10000]);
 }
 
 static void prg16_89ab (int bank)
@@ -211,8 +211,8 @@ static void prg16_89ab (int bank)
 		memcpy (&nes.rom[0x8000], &nes.rom[bank * 0x4000 + 0x10000], 0x4000);
 	else
 	{
-		cpu_setbank (1, &nes.rom[bank * 0x4000 + 0x10000]);
-		cpu_setbank (2, &nes.rom[bank * 0x4000 + 0x12000]);
+		memory_set_bankptr (1, &nes.rom[bank * 0x4000 + 0x10000]);
+		memory_set_bankptr (2, &nes.rom[bank * 0x4000 + 0x12000]);
 	}
 }
 
@@ -224,8 +224,8 @@ static void prg16_cdef (int bank)
 		memcpy (&nes.rom[0xc000], &nes.rom[bank * 0x4000 + 0x10000], 0x4000);
 	else
 	{
-		cpu_setbank (3, &nes.rom[bank * 0x4000 + 0x10000]);
-		cpu_setbank (4, &nes.rom[bank * 0x4000 + 0x12000]);
+		memory_set_bankptr (3, &nes.rom[bank * 0x4000 + 0x10000]);
+		memory_set_bankptr (4, &nes.rom[bank * 0x4000 + 0x12000]);
 	}
 }
 
@@ -237,10 +237,10 @@ static void prg32 (int bank)
 		memcpy (&nes.rom[0x8000], &nes.rom[bank * 0x8000 + 0x10000], 0x8000);
 	else
 	{
-		cpu_setbank (1, &nes.rom[bank * 0x8000 + 0x10000]);
-		cpu_setbank (2, &nes.rom[bank * 0x8000 + 0x12000]);
-		cpu_setbank (3, &nes.rom[bank * 0x8000 + 0x14000]);
-		cpu_setbank (4, &nes.rom[bank * 0x8000 + 0x16000]);
+		memory_set_bankptr (1, &nes.rom[bank * 0x8000 + 0x10000]);
+		memory_set_bankptr (2, &nes.rom[bank * 0x8000 + 0x12000]);
+		memory_set_bankptr (3, &nes.rom[bank * 0x8000 + 0x14000]);
+		memory_set_bankptr (4, &nes.rom[bank * 0x8000 + 0x16000]);
 	}
 }
 
@@ -366,10 +366,10 @@ static WRITE8_HANDLER( mapper1_w )
 				 	{
 						/* Pick 1st or 4th 256k bank */
 						MMC1_extended_base = 0xc0000 * (MMC1_extended_bank & 0x01) + 0x10000;
-						cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-						cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+						memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+						memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+						memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+						memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 #ifdef LOG_MMC
 						logerror("MMC1_extended 1024k bank (no reg) select: %02x\n", MMC1_extended_bank);
 #endif
@@ -380,10 +380,10 @@ static WRITE8_HANDLER( mapper1_w )
 						if (MMC1_extended_swap)
 						{
 							MMC1_extended_base = 0x40000 * MMC1_extended_bank + 0x10000;
-							cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-							cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-							cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+							memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+							memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+							memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+							memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 #ifdef LOG_MMC
 							logerror("MMC1_extended 1024k bank (reg 1) select: %02x\n", MMC1_extended_bank);
 #endif
@@ -396,10 +396,10 @@ static WRITE8_HANDLER( mapper1_w )
 				{
 					/* Pick 1st or 2nd 256k bank */
 					MMC1_extended_base = 0x40000 * (MMC1_extended_bank & 0x01) + 0x10000;
-					cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-					cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-					cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-					cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+					memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+					memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+					memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+					memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 #ifdef LOG_MMC
 					logerror("MMC1_extended 512k bank select: %02x\n", MMC1_extended_bank & 0x01);
 #endif
@@ -435,10 +435,10 @@ static WRITE8_HANDLER( mapper1_w )
 					{
 						/* Set 256k bank based on the 256k bank select register */
 						MMC1_extended_base = 0x40000 * MMC1_extended_bank + 0x10000;
-						cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-						cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+						memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+						memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+						memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+						memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 #ifdef LOG_MMC
 						logerror("MMC1_extended 1024k bank (reg 2) select: %02x\n", MMC1_extended_bank);
 #endif
@@ -465,14 +465,14 @@ static WRITE8_HANDLER( mapper1_w )
 
 					MMC1_bank1 = bank * 0x4000;
 					MMC1_bank2 = bank * 0x4000 + 0x2000;
-					cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-					cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+					memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+					memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
 					if (!MMC1_extended)
 					{
 						MMC1_bank3 = bank * 0x4000 + 0x4000;
 						MMC1_bank4 = bank * 0x4000 + 0x6000;
-						cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+						memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+						memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 					}
 #ifdef LOG_MMC
 					logerror("MMC1 32k bank select: %02x\n", MMC1_reg);
@@ -488,14 +488,14 @@ static WRITE8_HANDLER( mapper1_w )
 						MMC1_bank1 = bank * 0x4000;
 						MMC1_bank2 = bank * 0x4000 + 0x2000;
 
-						cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+						memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+						memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
 						if (!MMC1_extended)
 						{
 							MMC1_bank3 = MMC1_High;
 							MMC1_bank4 = MMC1_High + 0x2000;
-							cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+							memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+							memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 						}
 #ifdef LOG_MMC
 						logerror("MMC1 16k-low bank select: %02x\n", MMC1_reg);
@@ -513,10 +513,10 @@ static WRITE8_HANDLER( mapper1_w )
 							MMC1_bank3 = bank * 0x4000;
 							MMC1_bank4 = bank * 0x4000 + 0x2000;
 
-							cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-							cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-							cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+							memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+							memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+							memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+							memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 						}
 #ifdef LOG_MMC
 						logerror("MMC1 16k-high bank select: %02x\n", MMC1_reg);
@@ -553,15 +553,15 @@ static void mapper4_set_prg (void)
 
 	if (MMC3_cmd & 0x40)
 	{
-		cpu_setbank (1, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
-		cpu_setbank (3, &nes.rom[0x2000 * (MMC3_prg0) + 0x10000]);
+		memory_set_bankptr (1, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
+		memory_set_bankptr (3, &nes.rom[0x2000 * (MMC3_prg0) + 0x10000]);
 	}
 	else
 	{
-		cpu_setbank (1, &nes.rom[0x2000 * (MMC3_prg0) + 0x10000]);
-		cpu_setbank (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
+		memory_set_bankptr (1, &nes.rom[0x2000 * (MMC3_prg0) + 0x10000]);
+		memory_set_bankptr (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
 	}
-	cpu_setbank (2, &nes.rom[0x2000 * (MMC3_prg1) + 0x10000]);
+	memory_set_bankptr (2, &nes.rom[0x2000 * (MMC3_prg1) + 0x10000]);
 }
 
 static void mapper4_set_chr (void)
@@ -939,7 +939,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 
 		case 0x1013: /* $5113 */
 			logerror ("MMC5 mid RAM bank select: %02x\n", data & 0x07);
-			cpu_setbank (5, &nes.wram[data * 0x2000]);
+			memory_set_bankptr (5, &nes.wram[data * 0x2000]);
 			/* The & 4 is a hack that'll tide us over for now */
 			battery_ram = &nes.wram[(data & 4) * 0x2000];
 			break;
@@ -955,14 +955,14 @@ static WRITE8_HANDLER( mapper5_l_w )
 						/* ROM */
 						logerror ("\tROM bank select (8k, $8000): %02x\n", data);
 						data &= ((nes.prg_chunks << 1) - 1);
-						cpu_setbank (1, &nes.rom[data * 0x2000 + 0x10000]);
+						memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
 					}
 					else
 					{
 						/* RAM */
 						logerror ("\tRAM bank select (8k, $8000): %02x\n", data & 0x07);
 						/* The & 4 is a hack that'll tide us over for now */
-						cpu_setbank (1, &nes.wram[(data & 4) * 0x2000]);
+						memory_set_bankptr (1, &nes.wram[(data & 4) * 0x2000]);
 					}
 					break;
 			}
@@ -983,8 +983,8 @@ static WRITE8_HANDLER( mapper5_l_w )
 						/* RAM */
 						logerror ("\tRAM bank select (16k, $8000): %02x\n", data & 0x07);
 						/* The & 4 is a hack that'll tide us over for now */
-						cpu_setbank (1, &nes.wram[((data & 4) >> 1) * 0x4000]);
-						cpu_setbank (2, &nes.wram[((data & 4) >> 1) * 0x4000 + 0x2000]);
+						memory_set_bankptr (1, &nes.wram[((data & 4) >> 1) * 0x4000]);
+						memory_set_bankptr (2, &nes.wram[((data & 4) >> 1) * 0x4000 + 0x2000]);
 					}
 					break;
 				case 0x03:
@@ -993,14 +993,14 @@ static WRITE8_HANDLER( mapper5_l_w )
 					{
 						/* ROM */
 						data &= ((nes.prg_chunks << 1) - 1);
-						cpu_setbank (2, &nes.rom[data * 0x2000 + 0x10000]);
+						memory_set_bankptr (2, &nes.rom[data * 0x2000 + 0x10000]);
 					}
 					else
 					{
 						/* RAM */
 						logerror ("\tRAM bank select (8k, $a000): %02x\n", data & 0x07);
 						/* The & 4 is a hack that'll tide us over for now */
-						cpu_setbank (2, &nes.wram[(data & 4) * 0x2000]);
+						memory_set_bankptr (2, &nes.wram[(data & 4) * 0x2000]);
 					}
 					break;
 			}
@@ -1016,14 +1016,14 @@ static WRITE8_HANDLER( mapper5_l_w )
 					{
 						/* ROM */
 						data &= ((nes.prg_chunks << 1) - 1);
-						cpu_setbank (3, &nes.rom[data * 0x2000 + 0x10000]);
+						memory_set_bankptr (3, &nes.rom[data * 0x2000 + 0x10000]);
 					}
 					else
 					{
 						/* RAM */
 						logerror ("\tRAM bank select (8k, $c000): %02x\n", data & 0x07);
 						/* The & 4 is a hack that'll tide us over for now */
-						cpu_setbank (3, &nes.wram[(data & 4)* 0x2000]);
+						memory_set_bankptr (3, &nes.wram[(data & 4)* 0x2000]);
 					}
 					break;
 			}
@@ -1044,7 +1044,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 				case 0x03:
 					/* 8k switch */
 					data &= ((nes.prg_chunks << 1) - 1);
-					cpu_setbank (4, &nes.rom[data * 0x2000 + 0x10000]);
+					memory_set_bankptr (4, &nes.rom[data * 0x2000 + 0x10000]);
 					break;
 			}
 			break;
@@ -1350,8 +1350,8 @@ static WRITE8_HANDLER( mapper8_w )
 
 	/* Switch 16k PRG bank */
 	data = (data >> 3) & (nes.prg_chunks - 1);
-	cpu_setbank (1, &nes.rom[data * 0x4000 + 0x10000]);
-	cpu_setbank (2, &nes.rom[data * 0x4000 + 0x12000]);
+	memory_set_bankptr (1, &nes.rom[data * 0x4000 + 0x10000]);
+	memory_set_bankptr (2, &nes.rom[data * 0x4000 + 0x12000]);
 }
 
 #if 0
@@ -1376,7 +1376,7 @@ static WRITE8_HANDLER( mapper9_w )
 	switch (offset & 0x7000)
 	{
 		case 0x2000:
-			cpu_setbank (1, &nes.rom[data * 0x2000 + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
 			break;
 		case 0x3000:
 		case 0x4000:
@@ -1443,7 +1443,7 @@ static WRITE8_HANDLER( mapper10_w )
 	{
 		case 0x2000:
 			/* Switch the first 8k prg bank */
-			cpu_setbank (1, &nes.rom[data * 0x2000 + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
 			break;
 		case 0x3000:
 			MMC2_bank0 = data;
@@ -1505,22 +1505,22 @@ static WRITE8_HANDLER( mapper15_w )
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-			cpu_setbank (1, &nes.rom[bank + base]);
-			cpu_setbank (2, &nes.rom[bank + (base ^ 0x2000)]);
-			cpu_setbank (3, &nes.rom[bank + (base ^ 0x4000)]);
-			cpu_setbank (4, &nes.rom[bank + (base ^ 0x6000)]);
+			memory_set_bankptr (1, &nes.rom[bank + base]);
+			memory_set_bankptr (2, &nes.rom[bank + (base ^ 0x2000)]);
+			memory_set_bankptr (3, &nes.rom[bank + (base ^ 0x4000)]);
+			memory_set_bankptr (4, &nes.rom[bank + (base ^ 0x6000)]);
 			break;
 
 		case 0x0001:
-			cpu_setbank (3, &nes.rom[bank + base]);
-			cpu_setbank (4, &nes.rom[bank + (base ^ 0x2000)]);
+			memory_set_bankptr (3, &nes.rom[bank + base]);
+			memory_set_bankptr (4, &nes.rom[bank + (base ^ 0x2000)]);
 			break;
 
 		case 0x0002:
-			cpu_setbank (1, &nes.rom[bank + base]);
-			cpu_setbank (2, &nes.rom[bank + base]);
-			cpu_setbank (3, &nes.rom[bank + base]);
-			cpu_setbank (4, &nes.rom[bank + base]);
+			memory_set_bankptr (1, &nes.rom[bank + base]);
+			memory_set_bankptr (2, &nes.rom[bank + base]);
+			memory_set_bankptr (3, &nes.rom[bank + base]);
+			memory_set_bankptr (4, &nes.rom[bank + base]);
         	break;
 
 		case 0x0003:
@@ -1528,8 +1528,8 @@ static WRITE8_HANDLER( mapper15_w )
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-			cpu_setbank (3, &nes.rom[bank + base]);
-			cpu_setbank (4, &nes.rom[bank + (base ^ 0x2000)]);
+			memory_set_bankptr (3, &nes.rom[bank + base]);
+			memory_set_bankptr (4, &nes.rom[bank + (base ^ 0x2000)]);
         	break;
 	}
 }
@@ -1627,7 +1627,7 @@ static WRITE8_HANDLER( mapper17_l_w )
 		case 0x407:
 			data &= ((nes.prg_chunks << 1) - 1);
 //			logerror("Mapper 17 bank switch, bank: %02x, data: %02x\n", offset & 0x03, data);
-			cpu_setbank ((offset & 0x03) + 1, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr ((offset & 0x03) + 1, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		/* $4510 - $4517 : 1k CHR-Rom switch */
 		case 0x410:
@@ -1700,37 +1700,37 @@ static WRITE8_HANDLER( mapper18_w )
 			/* Switch 8k bank at $8000 - low 4 bits */
 			bank_8000 = (bank_8000 & 0xf0) | (data & 0x0f);
 			bank_8000 &= prg_mask;
-			cpu_setbank (1, &nes.rom[0x2000 * (bank_8000) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (bank_8000) + 0x10000]);
 			break;
 		case 0x0001:
 			/* Switch 8k bank at $8000 - high 4 bits */
 			bank_8000 = (bank_8000 & 0x0f) | (data << 4);
 			bank_8000 &= prg_mask;
-			cpu_setbank (1, &nes.rom[0x2000 * (bank_8000) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (bank_8000) + 0x10000]);
 			break;
 		case 0x0002:
 			/* Switch 8k bank at $a000 - low 4 bits */
 			bank_a000 = (bank_a000 & 0xf0) | (data & 0x0f);
 			bank_a000 &= prg_mask;
-			cpu_setbank (2, &nes.rom[0x2000 * (bank_a000) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (bank_a000) + 0x10000]);
 			break;
 		case 0x0003:
 			/* Switch 8k bank at $a000 - high 4 bits */
 			bank_a000 = (bank_a000 & 0x0f) | (data << 4);
 			bank_a000 &= prg_mask;
-			cpu_setbank (2, &nes.rom[0x2000 * (bank_a000) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (bank_a000) + 0x10000]);
 			break;
 		case 0x1000:
 			/* Switch 8k bank at $c000 - low 4 bits */
 			bank_c000 = (bank_c000 & 0xf0) | (data & 0x0f);
 			bank_c000 &= prg_mask;
-			cpu_setbank (3, &nes.rom[0x2000 * (bank_c000) + 0x10000]);
+			memory_set_bankptr (3, &nes.rom[0x2000 * (bank_c000) + 0x10000]);
 			break;
 		case 0x1001:
 			/* Switch 8k bank at $c000 - high 4 bits */
 			bank_c000 = (bank_c000 & 0x0f) | (data << 4);
 			bank_c000 &= prg_mask;
-			cpu_setbank (3, &nes.rom[0x2000 * (bank_c000) + 0x10000]);
+			memory_set_bankptr (3, &nes.rom[0x2000 * (bank_c000) + 0x10000]);
 			break;
 
 		/* $9002, 3 (1002, 3) uncaught = Jaleco Baseball writes 0 */
@@ -1934,17 +1934,17 @@ static WRITE8_HANDLER( mapper19_w )
 		case 0x6000:
 			/* Switch 8k bank at $8000 */
 			data &= prg_mask;
-			cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x6800:
 			/* Switch 8k bank at $a000 */
 			data &= prg_mask;
-			cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x7000:
 			/* Switch 8k bank at $c000 */
 			data &= prg_mask;
-			cpu_setbank (3, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (3, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 	}
 }
@@ -2082,7 +2082,7 @@ static WRITE8_HANDLER( konami_vrc2a_w )
 			case 0:
 				/* Switch 8k bank at $8000 */
 				data &= ((nes.prg_chunks << 1) - 1);
-				cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+				memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 				break;
 			case 0x1000:
 				switch (data & 0x03)
@@ -2097,7 +2097,7 @@ static WRITE8_HANDLER( konami_vrc2a_w )
 			case 0x2000:
 				/* Switch 8k bank at $a000 */
 				data &= ((nes.prg_chunks << 1) - 1);
-				cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+				memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 				break;
 			default:
 				logerror("konami_vrc2a_w uncaught offset: %04x value: %02x\n", offset, data);
@@ -2156,7 +2156,7 @@ static WRITE8_HANDLER( konami_vrc2b_w )
 			case 0:
 				/* Switch 8k bank at $8000 */
 				data &= ((nes.prg_chunks << 1) - 1);
-				cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+				memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 				break;
 			case 0x1000:
 				switch (data & 0x03)
@@ -2171,7 +2171,7 @@ static WRITE8_HANDLER( konami_vrc2b_w )
 			case 0x2000:
 				/* Switch 8k bank at $a000 */
 				data &= ((nes.prg_chunks << 1) - 1);
-				cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+				memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 				break;
 			default:
 				logerror("konami_vrc2b_w offset: %04x value: %02x\n", offset, data);
@@ -2308,7 +2308,7 @@ static WRITE8_HANDLER( konami_vrc4_w )
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= ((nes.prg_chunks << 1) - 1);
-			cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x1000:
 			switch (data & 0x03)
@@ -2325,7 +2325,7 @@ static WRITE8_HANDLER( konami_vrc4_w )
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((nes.prg_chunks << 1) - 1);
-			cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x3000:
 			/* Switch 1k vrom at $0000 - low 4 bits */
@@ -2653,12 +2653,12 @@ static WRITE8_HANDLER( mapper33_w )
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= ((nes.prg_chunks << 1) - 1);
-			cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x0001:
 			/* Switch 8k bank at $A000 */
 			data &= ((nes.prg_chunks << 1) - 1);
-			cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 			break;
 		case 0x0002:
 			/* Switch 2k VROM at $0000 */
@@ -2821,11 +2821,11 @@ static WRITE8_HANDLER( mapper64_w )
 			{
 				if (data & 0x40)
 				{
-					cpu_setbank (1, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
+					memory_set_bankptr (1, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
 				}
 				else
 				{
-					cpu_setbank (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
+					memory_set_bankptr (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
 				}
 			}
 
@@ -2865,12 +2865,12 @@ static WRITE8_HANDLER( mapper64_w )
 					data &= prg_mask;
 					if (select_high)
 					{
-						cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($A000) cmd 6 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($8000) cmd 6 value: %02x\n", data);
 					}
 					break;
@@ -2878,12 +2878,12 @@ static WRITE8_HANDLER( mapper64_w )
 					data &= prg_mask;
 					if (select_high)
 					{
-						cpu_setbank (3, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (3, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($C000) cmd 7 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($A000) cmd 7 value: %02x\n", data);
 					}
 					break;
@@ -2899,12 +2899,12 @@ static WRITE8_HANDLER( mapper64_w )
 					data &= prg_mask;
 					if (select_high)
 					{
-						cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($C000) cmd 15 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (3, &nes.rom[0x2000 * (data) + 0x10000]);
+						memory_set_bankptr (3, &nes.rom[0x2000 * (data) + 0x10000]);
 //						logerror("     Mapper 64 switch ($A000) cmd 15 value: %02x\n", data);
 					}
 					break;
@@ -2968,7 +2968,7 @@ static WRITE8_HANDLER( mapper65_w )
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= prg_mask;
-			cpu_setbank (1, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (1, &nes.rom[0x2000 * (data) + 0x10000]);
 #ifdef LOG_MMC
 			logerror("     Mapper 65 switch ($8000) value: %02x\n", data);
 #endif
@@ -2989,7 +2989,7 @@ static WRITE8_HANDLER( mapper65_w )
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= prg_mask;
-			cpu_setbank (2, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (2, &nes.rom[0x2000 * (data) + 0x10000]);
 #ifdef LOG_MMC
 			logerror("     Mapper 65 switch ($a000) value: %02x\n", data);
 #endif
@@ -3010,7 +3010,7 @@ static WRITE8_HANDLER( mapper65_w )
 		case 0x4000:
 			/* Switch 8k bank at $c000 */
 			data &= prg_mask;
-			cpu_setbank (3, &nes.rom[0x2000 * (data) + 0x10000]);
+			memory_set_bankptr (3, &nes.rom[0x2000 * (data) + 0x10000]);
 #ifdef LOG_MMC
 			logerror("     Mapper 65 switch ($c000) value: %02x\n", data);
 #endif
@@ -3202,7 +3202,7 @@ static WRITE8_HANDLER( mapper69_w )
 #if 0
 					if (!(data & 0x40))
 					{
-						cpu_setbank (5, &nes.rom[(data & 0x3f) * 0x2000 + 0x10000]);
+						memory_set_bankptr (5, &nes.rom[(data & 0x3f) * 0x2000 + 0x10000]);
 					}
 					else
 #endif
@@ -3970,7 +3970,7 @@ int mapper_reset (int mapperNum)
 	MMC5_vram_control = 0;
 
 	/* Point the WRAM/battery area to the first RAM bank */
-	cpu_setbank (5, &nes.wram[0x0000]);
+	memory_set_bankptr (5, &nes.wram[0x0000]);
 
 	switch (mapperNum)
 	{
@@ -4003,10 +4003,10 @@ int mapper_reset (int mapperNum)
 			MMC1_bank3 = MMC1_High;
 			MMC1_bank4 = MMC1_High + 0x2000;
 
-			cpu_setbank (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
-			cpu_setbank (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
-			cpu_setbank (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
-			cpu_setbank (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
+			memory_set_bankptr (1, &nes.rom[MMC1_extended_base + MMC1_bank1]);
+			memory_set_bankptr (2, &nes.rom[MMC1_extended_base + MMC1_bank2]);
+			memory_set_bankptr (3, &nes.rom[MMC1_extended_base + MMC1_bank3]);
+			memory_set_bankptr (4, &nes.rom[MMC1_extended_base + MMC1_bank4]);
 			logerror("-- page1: %06x\n", MMC1_bank1);
 			logerror("-- page2: %06x\n", MMC1_bank2);
 			logerror("-- page3: %06x\n", MMC1_bank3);
@@ -4061,10 +4061,10 @@ int mapper_reset (int mapperNum)
 			MMC2_bank0 = MMC2_bank1 = 0;
 			MMC2_bank0_hi = MMC2_bank1_hi = 0;
 			MMC2_bank0_latch = MMC2_bank1_latch = 0xfe;
-			cpu_setbank (1, &nes.rom[0x10000]);
-			cpu_setbank (2, &nes.rom[(nes.prg_chunks-2) * 0x4000 + 0x12000]);
-			cpu_setbank (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x12000]);
+			memory_set_bankptr (1, &nes.rom[0x10000]);
+			memory_set_bankptr (2, &nes.rom[(nes.prg_chunks-2) * 0x4000 + 0x12000]);
+			memory_set_bankptr (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
+			memory_set_bankptr (4, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x12000]);
 			break;
 		case 10:
 			/* Reset VROM latches */
@@ -4188,8 +4188,8 @@ int mapper_reset (int mapperNum)
 			break;
 		case 91:
 			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-//			cpu_setbank (1, &nes.rom[0x10000]);
-//			cpu_setbank (2, &nes.rom[0x12000]);
+//			memory_set_bankptr (1, &nes.rom[0x10000]);
+//			memory_set_bankptr (2, &nes.rom[0x12000]);
 			prg16_89ab (nes.prg_chunks-1);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
@@ -4202,10 +4202,10 @@ int mapper_reset (int mapperNum)
 			prg16_cdef (nes.prg_chunks-1);
 			break;
 		case 97:
-//			cpu_setbank (1, &nes.rom[0x10000]);
-//			cpu_setbank (2, &nes.rom[0x12000]);
-//			cpu_setbank (3, &nes.rom[0x14000]);
-//			cpu_setbank (4, &nes.rom[0x16000]);
+//			memory_set_bankptr (1, &nes.rom[0x10000]);
+//			memory_set_bankptr (2, &nes.rom[0x12000]);
+//			memory_set_bankptr (3, &nes.rom[0x14000]);
+//			memory_set_bankptr (4, &nes.rom[0x16000]);
 			prg16_89ab (nes.prg_chunks-2);
 			prg16_cdef (nes.prg_chunks-1);
 			break;

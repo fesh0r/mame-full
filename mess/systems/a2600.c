@@ -148,39 +148,39 @@ static int next_bank(void)
 
 void mode8K_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x1000 * offset);
+	memory_set_bankptr(1, CART + 0x1000 * offset);
 }
 void mode12_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x1000 * offset);
+	memory_set_bankptr(1, CART + 0x1000 * offset);
 }
 void mode16_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x1000 * offset);
+	memory_set_bankptr(1, CART + 0x1000 * offset);
 }
 void mode32_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x1000 * offset);
+	memory_set_bankptr(1, CART + 0x1000 * offset);
 }
 void modeTV_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x800 * (data & 3));
+	memory_set_bankptr(1, CART + 0x800 * (data & 3));
 }
 void modeUA_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + (offset >> 6) * 0x1000);
+	memory_set_bankptr(1, CART + (offset >> 6) * 0x1000);
 }
 void modePB_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1 + (offset >> 3), CART + 0x400 * (offset & 7));
+	memory_set_bankptr(1 + (offset >> 3), CART + 0x400 * (offset & 7));
 }
 void modeMN_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x800 * offset);
+	memory_set_bankptr(1, CART + 0x800 * offset);
 }
 void modeDC_switch(UINT16 offset, UINT8 data)
 {
-	cpu_setbank(1, CART + 0x1000 * next_bank());
+	memory_set_bankptr(1, CART + 0x1000 * next_bank());
 }
 
 
@@ -227,7 +227,7 @@ OPBASE_HANDLER(modeAV_opbase_handler)
 		/* Still cheating a bit here by looking bit 13 of the address..., but the high byte of the
 		   cpu should be the last byte that was on the data bus and so should determine the bank
 		   we should switch in. */
-		cpu_setbank( 1, CART + 0x1000 * ( ( address & 0x2000) ? 0 : 1 ) );
+		memory_set_bankptr( 1, CART + 0x1000 * ( ( address & 0x2000) ? 0 : 1 ) );
 		/* and restore old opbase handler */
 		memory_set_opbase_handler(0, AV_old_opbase_handler);
 	}
@@ -319,7 +319,7 @@ static void install_banks(int count, unsigned init)
 			0x1000 + (i + 0) * 0x1000 / count - 0,
 			0x1000 + (i + 1) * 0x1000 / count - 1, 0, 0, handler[i]);
 
-		cpu_setbank(i + 1, memory_region(REGION_USER1) + init);
+		memory_set_bankptr(i + 1, memory_region(REGION_USER1) + init);
 	}
 }
 
@@ -527,7 +527,7 @@ static MACHINE_INIT( a2600 )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x10ff, 0, 0, MWA8_BANK9);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1100, 0x11ff, 0, 0, MRA8_BANK9);
 
-		cpu_setbank(9, extra_RAM);
+		memory_set_bankptr(9, extra_RAM);
 	}
 
 	if (mode == modeCV)
@@ -535,7 +535,7 @@ static MACHINE_INIT( a2600 )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x17ff, 0, 0, MWA8_BANK9);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x13ff, 0, 0, MRA8_BANK9);
 
-		cpu_setbank(9, extra_RAM);
+		memory_set_bankptr(9, extra_RAM);
 	}
 
 	if (chip)
@@ -543,7 +543,7 @@ static MACHINE_INIT( a2600 )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x107f, 0, 0, MWA8_BANK9);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1080, 0x10ff, 0, 0, MRA8_BANK9);
 
-		cpu_setbank(9, extra_RAM);
+		memory_set_bankptr(9, extra_RAM);
 	}
 }
 

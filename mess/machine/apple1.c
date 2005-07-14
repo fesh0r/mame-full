@@ -151,7 +151,7 @@ DRIVER_INIT( apple1 )
 								 0x0000, mess_ram_size - 1, 0, 0, MRA8_BANK1);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
 								  0x0000, mess_ram_size - 1, 0, 0, MWA8_BANK1);
-	cpu_setbank(1, mess_ram);
+	memory_set_bankptr(1, mess_ram);
 
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 

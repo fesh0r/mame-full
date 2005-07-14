@@ -70,8 +70,8 @@ static int Enterprise_KeyboardLine = 0;
 /* set read/write pointers for CPU page */
 static void	Enterprise_SetMemoryPage(int CPU_Page, int EP_Page)
 {
-	cpu_setbank((CPU_Page+1), Enterprise_Pages_Read[EP_Page & 0x0ff]);
-	cpu_setbank((CPU_Page+5), Enterprise_Pages_Write[EP_Page & 0x0ff]);
+	memory_set_bankptr((CPU_Page+1), Enterprise_Pages_Read[EP_Page & 0x0ff]);
+	memory_set_bankptr((CPU_Page+5), Enterprise_Pages_Write[EP_Page & 0x0ff]);
 }
 
 /* EP specific handling of dave register write */

@@ -134,38 +134,38 @@ static void c16_bankswitch (void)
 	switch (lowrom)
 	{
 	case 0:
-		cpu_setbank (2, c16_memory + 0x10000);
+		memory_set_bankptr (2, c16_memory + 0x10000);
 		break;
 	case 1:
-		cpu_setbank (2, c16_memory + 0x18000);
+		memory_set_bankptr (2, c16_memory + 0x18000);
 		break;
 	case 2:
-		cpu_setbank (2, c16_memory + 0x20000);
+		memory_set_bankptr (2, c16_memory + 0x20000);
 		break;
 	case 3:
-		cpu_setbank (2, c16_memory + 0x28000);
+		memory_set_bankptr (2, c16_memory + 0x28000);
 		break;
 	}
 	switch (highrom)
 	{
 	case 0:
-		cpu_setbank (3, c16_memory + 0x14000);
-		cpu_setbank (8, c16_memory + 0x17f20);
+		memory_set_bankptr (3, c16_memory + 0x14000);
+		memory_set_bankptr (8, c16_memory + 0x17f20);
 		break;
 	case 1:
-		cpu_setbank (3, c16_memory + 0x1c000);
-		cpu_setbank (8, c16_memory + 0x1ff20);
+		memory_set_bankptr (3, c16_memory + 0x1c000);
+		memory_set_bankptr (8, c16_memory + 0x1ff20);
 		break;
 	case 2:
-		cpu_setbank (3, c16_memory + 0x24000);
-		cpu_setbank (8, c16_memory + 0x27f20);
+		memory_set_bankptr (3, c16_memory + 0x24000);
+		memory_set_bankptr (8, c16_memory + 0x27f20);
 		break;
 	case 3:
-		cpu_setbank (3, c16_memory + 0x2c000);
-		cpu_setbank (8, c16_memory + 0x2ff20);
+		memory_set_bankptr (3, c16_memory + 0x2c000);
+		memory_set_bankptr (8, c16_memory + 0x2ff20);
 		break;
 	}
-	cpu_setbank (4, c16_memory + 0x17c00);
+	memory_set_bankptr (4, c16_memory + 0x17c00);
 }
 
 WRITE8_HANDLER(c16_switch_to_rom)
@@ -201,22 +201,22 @@ WRITE8_HANDLER(c16_switch_to_ram)
 	switch (DIPMEMORY)
 	{
 	case MEMORY64K:
-		cpu_setbank (2, c16_memory + 0x8000);
-		cpu_setbank (3, c16_memory + 0xc000);
-		cpu_setbank (4, c16_memory + 0xfc00);
-		cpu_setbank (8, c16_memory + 0xff20);
+		memory_set_bankptr (2, c16_memory + 0x8000);
+		memory_set_bankptr (3, c16_memory + 0xc000);
+		memory_set_bankptr (4, c16_memory + 0xfc00);
+		memory_set_bankptr (8, c16_memory + 0xff20);
 		break;
 	case MEMORY32K:
-		cpu_setbank (2, c16_memory);
-		cpu_setbank (3, c16_memory + 0x4000);
-		cpu_setbank (4, c16_memory + 0x7c00);
-		cpu_setbank (8, c16_memory + 0x7f20);
+		memory_set_bankptr (2, c16_memory);
+		memory_set_bankptr (3, c16_memory + 0x4000);
+		memory_set_bankptr (4, c16_memory + 0x7c00);
+		memory_set_bankptr (8, c16_memory + 0x7f20);
 		break;
 	case MEMORY16K:
-		cpu_setbank (2, c16_memory);
-		cpu_setbank (3, c16_memory);
-		cpu_setbank (4, c16_memory + 0x3c00);
-		cpu_setbank (8, c16_memory + 0x3f20);
+		memory_set_bankptr (2, c16_memory);
+		memory_set_bankptr (3, c16_memory);
+		memory_set_bankptr (4, c16_memory + 0x3c00);
+		memory_set_bankptr (8, c16_memory + 0x3f20);
 		break;
 	}
 }
@@ -224,10 +224,10 @@ WRITE8_HANDLER(c16_switch_to_ram)
 WRITE8_HANDLER(plus4_switch_to_ram)
 {
 	ted7360_rom = 0;
-	cpu_setbank (2, c16_memory + 0x8000);
-	cpu_setbank (3, c16_memory + 0xc000);
-	cpu_setbank (4, c16_memory + 0xfc00);
-	cpu_setbank (8, c16_memory + 0xff20);
+	memory_set_bankptr (2, c16_memory + 0x8000);
+	memory_set_bankptr (3, c16_memory + 0xc000);
+	memory_set_bankptr (4, c16_memory + 0xfc00);
+	memory_set_bankptr (8, c16_memory + 0xff20);
 }
 
 int c16_read_keyboard (int databus)
@@ -583,13 +583,13 @@ MACHINE_INIT( c16 )
 #endif
 	if (TYPE_C16)
 	{
-		cpu_setbank (1, (DIPMEMORY == MEMORY16K) ? c16_memory : c16_memory + 0x4000);
+		memory_set_bankptr (1, (DIPMEMORY == MEMORY16K) ? c16_memory : c16_memory + 0x4000);
 		switch (DIPMEMORY)
 		{
 		case MEMORY16K:
-			cpu_setbank (5, c16_memory);
-			cpu_setbank (6, c16_memory);
-			cpu_setbank (7, c16_memory);
+			memory_set_bankptr (5, c16_memory);
+			memory_set_bankptr (6, c16_memory);
+			memory_set_bankptr (7, c16_memory);
 #ifdef NEW_BANKHANDLER
 			/* causes problems to do this */
 			/* seeable with c16 and 32k ram extension */
@@ -607,16 +607,16 @@ MACHINE_INIT( c16 )
 		case MEMORY32K:
 #ifdef NEW_BANKHANDLER
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x4000, 0x7fff, 0, 0, MWA8_RAM);
-			cpu_setbank (5, c16_memory);
+			memory_set_bankptr (5, c16_memory);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x8000, 0xfcff, 0, 0, MWA8_BANK5);
-			cpu_setbank (6, (c16_memory + 0x7f20));
+			memory_set_bankptr (6, (c16_memory + 0x7f20));
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff20, 0xff3d, 0, 0, MWA8_BANK6);
-			cpu_setbank (7, (c16_memory + 0x7f40));
+			memory_set_bankptr (7, (c16_memory + 0x7f40));
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff40, 0xffff, 0, 0, MWA8_BANK7);
 #else
-			cpu_setbank (5, c16_memory + 0x4000);
-			cpu_setbank (6, c16_memory);
-			cpu_setbank (7, c16_memory + 0x4000);
+			memory_set_bankptr (5, c16_memory + 0x4000);
+			memory_set_bankptr (6, c16_memory);
+			memory_set_bankptr (7, c16_memory + 0x4000);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff20, 0xff3d, 0, 0, c16_write_7f20);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff40, 0xffff, 0, 0, c16_write_7f40);
 #endif

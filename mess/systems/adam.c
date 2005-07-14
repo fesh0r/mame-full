@@ -493,90 +493,90 @@ Lineal virtual memory map:
 			if (adam_net_data & 0x02)
 			{
 				/* Read */
-				cpu_setbank(1, BankBase+0x32000); /* No data here */
-				cpu_setbank(2, BankBase+0x34000); /* No data here */
-				cpu_setbank(3, BankBase+0x36000); /* No data here */
-				cpu_setbank(4, BankBase+0x38000); /* EOS ROM */
+				memory_set_bankptr(1, BankBase+0x32000); /* No data here */
+				memory_set_bankptr(2, BankBase+0x34000); /* No data here */
+				memory_set_bankptr(3, BankBase+0x36000); /* No data here */
+				memory_set_bankptr(4, BankBase+0x38000); /* EOS ROM */
 
 				/* Write */
-				cpu_setbank(6, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(7, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(8, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(9, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(6, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(7, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(8, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(9, BankBase+0x3A000); /* Write protecting ROM */
 			}
 			else
 			{
 				/* Read */
-				cpu_setbank(1, BankBase+0x20000); /* SmartWriter ROM */
-				cpu_setbank(2, BankBase+0x22000);
-				cpu_setbank(3, BankBase+0x24000);
-				cpu_setbank(4, BankBase+0x26000);
+				memory_set_bankptr(1, BankBase+0x20000); /* SmartWriter ROM */
+				memory_set_bankptr(2, BankBase+0x22000);
+				memory_set_bankptr(3, BankBase+0x24000);
+				memory_set_bankptr(4, BankBase+0x26000);
 	            
 				/* Write */
-				cpu_setbank(6, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(7, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(8, BankBase+0x3A000); /* Write protecting ROM */
-				cpu_setbank(9, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(6, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(7, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(8, BankBase+0x3A000); /* Write protecting ROM */
+				memory_set_bankptr(9, BankBase+0x3A000); /* Write protecting ROM */
 			}
 			break;
 		case 1: /* Internal RAM */
 			/* Read */
-			cpu_setbank(1, BankBase);
-			cpu_setbank(2, BankBase+0x02000);
-			cpu_setbank(3, BankBase+0x04000);
-			cpu_setbank(4, BankBase+0x06000);
+			memory_set_bankptr(1, BankBase);
+			memory_set_bankptr(2, BankBase+0x02000);
+			memory_set_bankptr(3, BankBase+0x04000);
+			memory_set_bankptr(4, BankBase+0x06000);
 	        
 			/* Write */
-			cpu_setbank(6, BankBase);
-			cpu_setbank(7, BankBase+0x02000);
-			cpu_setbank(8, BankBase+0x04000);
-			cpu_setbank(9, BankBase+0x06000);
+			memory_set_bankptr(6, BankBase);
+			memory_set_bankptr(7, BankBase+0x02000);
+			memory_set_bankptr(8, BankBase+0x04000);
+			memory_set_bankptr(9, BankBase+0x06000);
 			break;
 		case 2: /* RAM Expansion */
 			/* Read */
-			cpu_setbank(1, BankBase+0x10000);
-			cpu_setbank(2, BankBase+0x12000);
-			cpu_setbank(3, BankBase+0x14000);
-			cpu_setbank(4, BankBase+0x16000);
+			memory_set_bankptr(1, BankBase+0x10000);
+			memory_set_bankptr(2, BankBase+0x12000);
+			memory_set_bankptr(3, BankBase+0x14000);
+			memory_set_bankptr(4, BankBase+0x16000);
 
 			/* Write */
-			cpu_setbank(6, BankBase+0x10000);
-			cpu_setbank(7, BankBase+0x12000);
-			cpu_setbank(8, BankBase+0x14000);
-			cpu_setbank(9, BankBase+0x16000);
+			memory_set_bankptr(6, BankBase+0x10000);
+			memory_set_bankptr(7, BankBase+0x12000);
+			memory_set_bankptr(8, BankBase+0x14000);
+			memory_set_bankptr(9, BankBase+0x16000);
 			break;
 		case 3: /* OS7 ROM (8k) + Internal RAM (24k) */
 			/* Read */
-			cpu_setbank(1, BankBase+0x30000);
-			cpu_setbank(2, BankBase+0x02000);
-			cpu_setbank(3, BankBase+0x04000);
-			cpu_setbank(4, BankBase+0x06000);
+			memory_set_bankptr(1, BankBase+0x30000);
+			memory_set_bankptr(2, BankBase+0x02000);
+			memory_set_bankptr(3, BankBase+0x04000);
+			memory_set_bankptr(4, BankBase+0x06000);
 	        
 			/* Write */
-			cpu_setbank(6, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(7, BankBase+0x02000);
-			cpu_setbank(8, BankBase+0x04000);
-			cpu_setbank(9, BankBase+0x06000);
+			memory_set_bankptr(6, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(7, BankBase+0x02000);
+			memory_set_bankptr(8, BankBase+0x04000);
+			memory_set_bankptr(9, BankBase+0x06000);
 	}
 
 	switch (adam_upper_memory)
 	{
 		case 0: /* Internal RAM */
 			/* Read */
-			cpu_setbank(5, BankBase+0x08000);
-			/*cpu_setbank(10, BankBase+0x08000);*/
+			memory_set_bankptr(5, BankBase+0x08000);
+			/*memory_set_bankptr(10, BankBase+0x08000);*/
 			break;
 		case 1: /* ROM Expansion */
 			break;
 		case 2: /* RAM Expansion */
 			/* Read */
-			cpu_setbank(5, BankBase+0x18000);
-			/*cpu_setbank(10, BankBase+0x18000);*/
+			memory_set_bankptr(5, BankBase+0x18000);
+			/*memory_set_bankptr(10, BankBase+0x18000);*/
 			break;
 		case 3: /* Cartridge ROM */
 			/* Read */
-			cpu_setbank(5, BankBase+0x28000);
-			/*cpu_setbank(10, BankBase+0x3A000); *//* Write protecting ROM */
+			memory_set_bankptr(5, BankBase+0x28000);
+			/*memory_set_bankptr(10, BankBase+0x3A000); *//* Write protecting ROM */
 			break;
 	}
 }

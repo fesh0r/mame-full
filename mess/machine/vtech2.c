@@ -164,7 +164,7 @@ WRITE8_HANDLER( laser_bank_select_w )
 		}
 		else
 		{
-			cpu_setbank(offset+1, &mem[0x4000*laser_bank[offset]]);
+			memory_set_bankptr(offset+1, &mem[0x4000*laser_bank[offset]]);
 			if( laser_bank_mask & (1 << data) )
 			{
 				read_handler = mra_bank_hard[offset];

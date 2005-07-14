@@ -156,8 +156,8 @@ static void svision_timer(int param)
 static void svision_update_banks(void)
 {
 	UINT8 *cart_rom = memory_region(REGION_USER1);
-	cpu_setbank(1, cart_rom + ((svision_reg[0x26] & 0x60) << 9));
-	cpu_setbank(2, cart_rom + 0xC000);
+	memory_set_bankptr(1, cart_rom + ((svision_reg[0x26] & 0x60) << 9));
+	memory_set_bankptr(2, cart_rom + 0xC000);
 }
 
 static  READ8_HANDLER(svision_r)

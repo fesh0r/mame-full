@@ -102,9 +102,9 @@ static void init_ti99_2_32(void)
 static void machine_init_ti99_2(void)
 {
 	if (! ROM_paged)
-		cpu_setbank(1, memory_region(REGION_CPU1)+0x4000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1)+0x4000);
 	else
-		cpu_setbank(1, TI99_2_32_ROMPAGE0);
+		memory_set_bankptr(1, TI99_2_32_ROMPAGE0);
 }
 
 static void machine_stop_ti99_2(void)
@@ -248,7 +248,7 @@ static WRITE8_HANDLER ( ti99_2_write_kbd )
 	/* now, we handle ROM paging */
 	if (ROM_paged)
 	{	/* if we have paged ROMs, page according to S0 keyboard interface line */
-		cpu_setbank(1, (KeyRow == 0) ? TI99_2_32_ROMPAGE1 : TI99_2_32_ROMPAGE0);
+		memory_set_bankptr(1, (KeyRow == 0) ? TI99_2_32_ROMPAGE1 : TI99_2_32_ROMPAGE0);
 	}
 }
 

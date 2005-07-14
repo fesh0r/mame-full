@@ -1134,8 +1134,8 @@ WRITE8_HANDLER( lynx_memory_config )
 	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfff7, 0, 0, (data & 4) ? MRA8_RAM : MRA8_BANK3);
 	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfffa, 0xffff, 0, 0, (data & 8) ? MRA8_RAM : MRA8_BANK4);
 
-	cpu_setbank(3, memory_region(REGION_CPU1) + 0x10000);
-	cpu_setbank(4, memory_region(REGION_CPU1) + 0x101fa);
+	memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x10000);
+	memory_set_bankptr(4, memory_region(REGION_CPU1) + 0x101fa);
 }
 
 MACHINE_INIT( lynx )

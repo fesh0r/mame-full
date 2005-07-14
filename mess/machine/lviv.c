@@ -32,13 +32,13 @@ static void lviv_update_memory (void)
 {
 	if (lviv_ppi_port_outputs[0][2] & 0x02)
 	{
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x4000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x4000);
 	}
 	else
 	{
-		cpu_setbank(1, mess_ram + 0x8000);
-		cpu_setbank(2, lviv_video_ram);
+		memory_set_bankptr(1, mess_ram + 0x8000);
+		memory_set_bankptr(2, lviv_video_ram);
 	}
 }
 
@@ -169,10 +169,10 @@ WRITE8_HANDLER ( lviv_io_w )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_BANK3);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x4000);
-		cpu_setbank(3, mess_ram + 0x8000);
-		cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x4000);
+		memory_set_bankptr(3, mess_ram + 0x8000);
+		memory_set_bankptr(4, memory_region(REGION_CPU1) + 0x010000);
 	}
 	else
 	{
@@ -221,10 +221,10 @@ MACHINE_INIT( lviv )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_ROM);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, 0, MWA8_ROM);
 
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(4, memory_region(REGION_CPU1) + 0x010000);
 
 	/*timer_pulse(TIME_IN_NSEC(200), 0, lviv_draw_pixel);*/
 

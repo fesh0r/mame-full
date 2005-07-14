@@ -186,9 +186,9 @@ static void z88_install_memory_handler_pair(offs_t start, offs_t size, int bank_
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, start, start + size - 1, 0, 0, write_handler);
 
 	if (read_addr)
-		cpu_setbank(bank_base + 0, read_addr);
+		memory_set_bankptr(bank_base + 0, read_addr);
 	if (write_addr)
-		cpu_setbank(bank_base + 1, write_addr);
+		memory_set_bankptr(bank_base + 1, write_addr);
 }
 
 

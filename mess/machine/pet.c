@@ -316,7 +316,7 @@ WRITE8_HANDLER(cbm8096_w)
 
 		if (data&0x20)
 		{
-			cpu_setbank(1, pet_memory+0x8000);
+			memory_set_bankptr(1, pet_memory+0x8000);
 			wh = videoram_w;
 		}
 		else
@@ -335,59 +335,59 @@ WRITE8_HANDLER(cbm8096_w)
 
 		if (data&4) {
 			if (!(data&0x20)) {
-				cpu_setbank(1,pet_memory+0x14000);
+				memory_set_bankptr(1,pet_memory+0x14000);
 			}
-			cpu_setbank(2,pet_memory+0x15000);
-			cpu_setbank(3,pet_memory+0x16000);
-			cpu_setbank(4,pet_memory+0x17000);
+			memory_set_bankptr(2,pet_memory+0x15000);
+			memory_set_bankptr(3,pet_memory+0x16000);
+			memory_set_bankptr(4,pet_memory+0x17000);
 		} else {
 			if (!(data&0x20)) {
-				cpu_setbank(1,pet_memory+0x10000);
+				memory_set_bankptr(1,pet_memory+0x10000);
 			}
-			cpu_setbank(2,pet_memory+0x11000);
-			cpu_setbank(3,pet_memory+0x12000);
-			cpu_setbank(4,pet_memory+0x13000);
+			memory_set_bankptr(2,pet_memory+0x11000);
+			memory_set_bankptr(3,pet_memory+0x12000);
+			memory_set_bankptr(4,pet_memory+0x13000);
 		}
 		if (data&8) {
 			if (!(data&0x40)) {
-				cpu_setbank(7,pet_memory+0x1e800);
+				memory_set_bankptr(7,pet_memory+0x1e800);
 			}
-			cpu_setbank(6, pet_memory+0x1c000);
-			cpu_setbank(8, pet_memory+0x1f000);
-			cpu_setbank(9, pet_memory+0x1fff1);
+			memory_set_bankptr(6, pet_memory+0x1c000);
+			memory_set_bankptr(8, pet_memory+0x1f000);
+			memory_set_bankptr(9, pet_memory+0x1fff1);
 		} else {
 			if (!(data&0x40)) {
-				cpu_setbank(7,pet_memory+0x1a800);
+				memory_set_bankptr(7,pet_memory+0x1a800);
 			}
-			cpu_setbank(6, pet_memory+0x18000);
-			cpu_setbank(8, pet_memory+0x1b000);
-			cpu_setbank(9, pet_memory+0x1bff1);
+			memory_set_bankptr(6, pet_memory+0x18000);
+			memory_set_bankptr(8, pet_memory+0x1b000);
+			memory_set_bankptr(9, pet_memory+0x1bff1);
 		}
 	}
 	else
 	{
-		cpu_setbank(1, pet_memory + 0x8000);
+		memory_set_bankptr(1, pet_memory + 0x8000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, videoram_w);
 
-		cpu_setbank(2, pet_memory + 0x9000);
+		memory_set_bankptr(2, pet_memory + 0x9000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(3, pet_memory + 0xa000);
+		memory_set_bankptr(3, pet_memory + 0xa000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(4,pet_memory+0xb000);
+		memory_set_bankptr(4,pet_memory+0xb000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(6,pet_memory+0xc000);
+		memory_set_bankptr(6,pet_memory+0xc000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, 0, MWA8_ROM);
 
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, cbm8096_io_r);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, cbm8096_io_w);
 
-		cpu_setbank(8,pet_memory+0xf000);
+		memory_set_bankptr(8,pet_memory+0xf000);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, 0, MWA8_ROM);
 
-		cpu_setbank(9,pet_memory+0xfff1);
+		memory_set_bankptr(9,pet_memory+0xfff1);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, 0, MWA8_ROM);
 	}
 }
@@ -406,7 +406,7 @@ extern WRITE8_HANDLER(superpet_w)
 		break;
 	case 4:case 5:
 		spet.bank=data&0xf;
-		cpu_setbank(3,superpet_memory+(spet.bank<<12));
+		memory_set_bankptr(3,superpet_memory+(spet.bank<<12));
 		/* 7 low writeprotects systemlatch */
 		break;
 	case 0:case 1:case 2:case 3:
@@ -484,11 +484,11 @@ void superpet_driver_init(void)
 
 	superpet_memory=memory_region(REGION_CPU2+0x10000);
 
-	cpu_setbank(3, superpet_memory);
+	memory_set_bankptr(3, superpet_memory);
 	memory_set_context(1);
-	cpu_setbank(1, pet_memory);
-	cpu_setbank(2, pet_memory+0x8000);
-	cpu_setbank(3, superpet_memory);
+	memory_set_bankptr(1, pet_memory);
+	memory_set_bankptr(2, pet_memory+0x8000);
+	memory_set_bankptr(3, superpet_memory);
 	memory_set_context(0);
 
 	superpet_vh_init();

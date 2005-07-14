@@ -1338,7 +1338,7 @@ WRITE8_HANDLER ( pc1512_w )
 
 	case 0xe:
 		pc1512.read = data;
-		cpu_setbank(1, videoram + videoram_offset[data & 3]);
+		memory_set_bankptr(1, videoram + videoram_offset[data & 3]);
 		break;
 
 	/* The PC1512 doesn't have a full 6845; writes to the first 9 6845
@@ -1418,7 +1418,7 @@ VIDEO_START( pc1512 )
 		return 1;
 
 	videoram_size = 0x4000; //! used in cga this way, size of plain memory in 1 bank
-	cpu_setbank(1,videoram + videoram_offset[0]);
+	memory_set_bankptr(1,videoram + videoram_offset[0]);
 	pc1512.write = 0xf;
 	pc1512.read = 0;
 	

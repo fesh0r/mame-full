@@ -133,7 +133,7 @@ data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, off
 	write8_handler write_bank = (write8_handler) (STATIC_BANK1 + bank - 1);
 	offs_t bank_size = end - start + 1;
 
-	cpu_setbank(bank, mess_ram + ram_offset);
+	memory_set_bankptr(bank, mess_ram + ram_offset);
 
 	memory_install_read8_handler(cpunum, spacenum, start,
 		MIN(end, start - ram_offset + mess_ram_size - 1), 0, 0, read_bank);

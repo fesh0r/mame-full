@@ -68,7 +68,7 @@ static void hp48_config(void)
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK1);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK1);
-			cpu_setbank(1, hp48_card1);
+			memory_set_bankptr(1, hp48_card1);
 		}
 	}
 	if (hp48s.mem[CARD2].adr!=-1) {
@@ -77,7 +77,7 @@ static void hp48_config(void)
 		if (end!=begin) {
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK2);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK2);
-			cpu_setbank(2, hp48_card2);
+			memory_set_bankptr(2, hp48_card2);
 		}
 	}
 	if (hp48s.mem[RAM].adr!=-1) {
@@ -86,7 +86,7 @@ static void hp48_config(void)
 		if (end!=begin) {
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK3);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK3);
-			cpu_setbank(3, hp48_ram);
+			memory_set_bankptr(3, hp48_ram);
 		}
 	}
 	if (hp48s.mem[HDW].adr!=-1)

@@ -24,14 +24,14 @@ static MACHINE_INIT( a310 )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 
-	cpu_setbank(1,&mem[0x00200000]);
-	cpu_setbank(2,&mem[0x00000000]);
-    cpu_setbank(3,&mem[0x00200000]);
-    cpu_setbank(4,&mem[0x00200000]);
-    cpu_setbank(5,&mem[0x00200000]);
-    cpu_setbank(6,&mem[0x00200000]);
-    cpu_setbank(7,&mem[0x00200000]);
-    cpu_setbank(8,&mem[0x00200000]);
+	memory_set_bankptr(1,&mem[0x00200000]);
+	memory_set_bankptr(2,&mem[0x00000000]);
+    memory_set_bankptr(3,&mem[0x00200000]);
+    memory_set_bankptr(4,&mem[0x00200000]);
+    memory_set_bankptr(5,&mem[0x00200000]);
+    memory_set_bankptr(6,&mem[0x00200000]);
+    memory_set_bankptr(7,&mem[0x00200000]);
+    memory_set_bankptr(8,&mem[0x00200000]);
 }
 
 static VIDEO_UPDATE( a310 )

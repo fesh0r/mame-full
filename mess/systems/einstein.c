@@ -756,14 +756,14 @@ static void einstein_page_rom(void)
 {
 	if (einstein_rom_enabled)
 	{
-		cpu_setbank(1, memory_region(REGION_CPU1)+0x010000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1)+0x010000);
 	}
 	else
 	{
 #ifdef EINSTEIN_DUMP_RAM
 		einstein_dump_ram();
 #endif
-		cpu_setbank(1, mess_ram);
+		memory_set_bankptr(1, mess_ram);
 	}
 }
 
@@ -1378,9 +1378,9 @@ static int einstein_cpu_acknowledge_int(int cpu)
 
 static MACHINE_INIT( einstein )
 {
-	cpu_setbank(2, mess_ram+0x02000);
-	cpu_setbank(3, mess_ram);
-	cpu_setbank(4, mess_ram+0x02000);
+	memory_set_bankptr(2, mess_ram+0x02000);
+	memory_set_bankptr(3, mess_ram);
+	memory_set_bankptr(4, mess_ram+0x02000);
 
 	z80ctc_init(&einstein_ctc_intf);
 	z80pio_init(&einstein_pio_intf);

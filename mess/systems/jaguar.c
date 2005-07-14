@@ -105,17 +105,17 @@ static MACHINE_INIT( jaguar )
 	rom_base[0x53c / 4] = 0x67000002;
 
 	/* set up main CPU RAM/ROM banks */
-	cpu_setbank(3, jaguar_gpu_ram);
+	memory_set_bankptr(3, jaguar_gpu_ram);
 
 	/* set up DSP RAM/ROM banks */
-	cpu_setbank(10, jaguar_shared_ram);
-	cpu_setbank(11, jaguar_gpu_clut);
-	cpu_setbank(12, jaguar_gpu_ram);
-	cpu_setbank(13, jaguar_dsp_ram);
-	cpu_setbank(14, jaguar_shared_ram);
-	cpu_setbank(15, cart_base);
-	cpu_setbank(16, rom_base);
-	cpu_setbank(17, jaguar_gpu_ram);
+	memory_set_bankptr(10, jaguar_shared_ram);
+	memory_set_bankptr(11, jaguar_gpu_clut);
+	memory_set_bankptr(12, jaguar_gpu_ram);
+	memory_set_bankptr(13, jaguar_dsp_ram);
+	memory_set_bankptr(14, jaguar_shared_ram);
+	memory_set_bankptr(15, cart_base);
+	memory_set_bankptr(16, rom_base);
+	memory_set_bankptr(17, jaguar_gpu_ram);
 
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();

@@ -587,8 +587,8 @@ static void c65_bankswitch_interface(int value)
 	{
 		if (value&1)
 		{
-			cpu_setbank (8, c64_colorram + 0x400);
-			cpu_setbank (9, c64_colorram + 0x400);
+			memory_set_bankptr (8, c64_colorram + 0x400);
+			memory_set_bankptr (9, c64_colorram + 0x400);
 			rh = MRA8_BANK8;
 			wh = MWA8_BANK9;
 		}
@@ -604,20 +604,20 @@ static void c65_bankswitch_interface(int value)
 	c65_io_dc00_on=!(value&1);
 #if 0
 	/* cartridge roms !?*/
-	if (value&0x08) { cpu_setbank (1, c64_roml); }
-	else { cpu_setbank (1, c64_memory + 0x8000); }
-	if (value&0x10) { cpu_setbank (2, c64_basic); }
-	else { cpu_setbank (2, c64_memory + 0xa000); }
+	if (value&0x08) { memory_set_bankptr (1, c64_roml); }
+	else { memory_set_bankptr (1, c64_memory + 0x8000); }
+	if (value&0x10) { memory_set_bankptr (2, c64_basic); }
+	else { memory_set_bankptr (2, c64_memory + 0xa000); }
 #endif
 	if ((old^value)&0x20) { /* bankswitching faulty when doing actual page */
-		if (value&0x20) { cpu_setbank (3, c65_interface); }
-		else { cpu_setbank (3, c64_memory + 0xc000); }
+		if (value&0x20) { memory_set_bankptr (3, c65_interface); }
+		else { memory_set_bankptr (3, c64_memory + 0xc000); }
 	}
 	c65_charset_select=value&0x40;
 #if 0
 	/* cartridge roms !?*/
-	if (value&0x80) { cpu_setbank (8, c64_kernal); }
-	else { cpu_setbank (6, c64_memory + 0xe000); }
+	if (value&0x80) { memory_set_bankptr (8, c64_kernal); }
+	else { memory_set_bankptr (6, c64_memory + 0xe000); }
 #endif
 	old=value;
 }
@@ -641,25 +641,25 @@ void c65_bankswitch (void)
 	if ((!c64_game && c64_exrom)
 		|| (loram && hiram && !c64_exrom))
 	{
-		cpu_setbank (1, c64_roml);
+		memory_set_bankptr (1, c64_roml);
 	}
 	else
 	{
-		cpu_setbank (1, c64_memory + 0x8000);
+		memory_set_bankptr (1, c64_memory + 0x8000);
 	}
 
 	if ((!c64_game && c64_exrom && hiram)
 		|| (!c64_exrom))
 	{
-		cpu_setbank (2, c64_romh);
+		memory_set_bankptr (2, c64_romh);
 	}
 	else if (loram && hiram)
 	{
-		cpu_setbank (2, c64_basic);
+		memory_set_bankptr (2, c64_basic);
 	}
 	else
 	{
-		cpu_setbank (2, c64_memory + 0xa000);
+		memory_set_bankptr (2, c64_memory + 0xa000);
 	}
 
 	if ((!c64_game && c64_exrom)
@@ -668,8 +668,8 @@ void c65_bankswitch (void)
 		c65_io_on = 1;
 		rh4 = c65_read_io;
 		wh5 = c65_write_io;
-		cpu_setbank (6, c64_colorram);
-		cpu_setbank (7, c64_colorram);
+		memory_set_bankptr (6, c64_colorram);
+		memory_set_bankptr (7, c64_colorram);
 
 		if (c65_io_dc00_on)
 		{
@@ -680,8 +680,8 @@ void c65_bankswitch (void)
 		{
 			rh8 = MRA8_BANK8;
 			wh9 = MWA8_BANK9;
-			cpu_setbank (8, c64_colorram+0x400);
-			cpu_setbank (9, c64_colorram+0x400);
+			memory_set_bankptr (8, c64_colorram+0x400);
+			memory_set_bankptr (9, c64_colorram+0x400);
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, 0, rh8);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, 0, wh9);
@@ -691,20 +691,20 @@ void c65_bankswitch (void)
 		c65_io_on = 0;
 		rh4 = MRA8_BANK4;
 		wh5 = MWA8_BANK5;
-		cpu_setbank(5, c64_memory+0xd000);
-		cpu_setbank(7, c64_memory+0xd800);
-		cpu_setbank(9, c64_memory+0xdc00);
+		memory_set_bankptr(5, c64_memory+0xd000);
+		memory_set_bankptr(7, c64_memory+0xd800);
+		memory_set_bankptr(9, c64_memory+0xdc00);
 		if (!charen && (loram || hiram))
 		{
-			cpu_setbank (4, c64_chargen);
-			cpu_setbank (6, c64_chargen+0x800);
-			cpu_setbank (8, c64_chargen+0xc00);
+			memory_set_bankptr (4, c64_chargen);
+			memory_set_bankptr (6, c64_chargen+0x800);
+			memory_set_bankptr (8, c64_chargen+0xc00);
 		}
 		else
 		{
-			cpu_setbank (4, c64_memory + 0xd000);
-			cpu_setbank (6, c64_memory + 0xd800);
-			cpu_setbank (8, c64_memory + 0xdc00);
+			memory_set_bankptr (4, c64_memory + 0xd000);
+			memory_set_bankptr (6, c64_memory + 0xd800);
+			memory_set_bankptr (8, c64_memory + 0xdc00);
 		}
 	}
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d000, 0x0d7ff, 0, 0, rh4);
@@ -712,17 +712,17 @@ void c65_bankswitch (void)
 
 	if (!c64_game && c64_exrom)
 	{
-		cpu_setbank (10, c64_romh);
+		memory_set_bankptr (10, c64_romh);
 	}
 	else
 	{
 		if (hiram)
 		{
-			cpu_setbank (10, c64_kernal);
+			memory_set_bankptr (10, c64_kernal);
 		}
 		else
 		{
-			cpu_setbank (10, c64_memory + 0xe000);
+			memory_set_bankptr (10, c64_memory + 0xe000);
 		}
 	}
 	old = data;

@@ -736,27 +736,27 @@ WRITE8_HANDLER( adamnet_w )
 	{
 		if (data&0x02)
 		{
-			cpu_setbank(1, BankBase+0x32000); /* No data here */
-			cpu_setbank(2, BankBase+0x34000); /* No data here */
-			cpu_setbank(3, BankBase+0x36000); /* No data here */
-			cpu_setbank(4, BankBase+0x38000); /* EOS ROM */
+			memory_set_bankptr(1, BankBase+0x32000); /* No data here */
+			memory_set_bankptr(2, BankBase+0x34000); /* No data here */
+			memory_set_bankptr(3, BankBase+0x36000); /* No data here */
+			memory_set_bankptr(4, BankBase+0x38000); /* EOS ROM */
 
-			cpu_setbank(6, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(7, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(8, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(9, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(6, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(7, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(8, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(9, BankBase+0x3A000); /* Write protecting ROM */
 		}
 		else
 		{
-			cpu_setbank(1, BankBase+0x20000); /* SmartWriter ROM */
-			cpu_setbank(2, BankBase+0x22000);
-			cpu_setbank(3, BankBase+0x24000);
-			cpu_setbank(4, BankBase+0x26000);
+			memory_set_bankptr(1, BankBase+0x20000); /* SmartWriter ROM */
+			memory_set_bankptr(2, BankBase+0x22000);
+			memory_set_bankptr(3, BankBase+0x24000);
+			memory_set_bankptr(4, BankBase+0x26000);
 	        
-			cpu_setbank(6, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(7, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(8, BankBase+0x3A000); /* Write protecting ROM */
-			cpu_setbank(9, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(6, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(7, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(8, BankBase+0x3A000); /* Write protecting ROM */
+			memory_set_bankptr(9, BankBase+0x3A000); /* Write protecting ROM */
 		}
 	}
 	adam_net_data = data;

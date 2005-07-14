@@ -1904,7 +1904,7 @@ static void d_sam_set_maptype(int val)
 		writebank = MWA8_ROM;
 	}
 
-	cpu_setbank(2, readbank);
+	memory_set_bankptr(2, readbank);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xfeff, 0, 0, writebank);
 }
 
@@ -1937,8 +1937,8 @@ static void dragon64_sam_set_maptype(int val)
 		writebank3 = MWA8_ROM;
 	}
 
-	cpu_setbank(2, readbank2);
-	cpu_setbank(3, readbank3);
+	memory_set_bankptr(2, readbank2);
+	memory_set_bankptr(3, readbank3);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, writebank2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xfeff, 0, 0, writebank3);
 }
@@ -2080,7 +2080,7 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 			readbank = &mess_ram[offset];
 			writebank = bank_info[i].handler;
 		}
-		cpu_setbank(i + 1, readbank);
+		memory_set_bankptr(i + 1, readbank);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, bank_info[i].start, bank_info[i].end, 0, 0, writebank);
 
 #if LOG_MMU
@@ -2460,7 +2460,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 MACHINE_INIT( dragon32 )
 {
-	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 
@@ -2469,7 +2469,7 @@ MACHINE_INIT( dragon32 )
 
 MACHINE_INIT( dragon64 )
 {
-	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
@@ -2479,7 +2479,7 @@ MACHINE_INIT( dragon64 )
 
 MACHINE_INIT( dgnalpha )
 {
-	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 
 	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
@@ -2497,7 +2497,7 @@ MACHINE_INIT( dgnalpha )
 
 MACHINE_INIT( coco )
 {
-	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
@@ -2506,7 +2506,7 @@ MACHINE_INIT( coco )
 
 MACHINE_INIT( coco2 )
 {
-	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 

@@ -226,7 +226,7 @@ static PALETTE_INIT( comquest )
 static MACHINE_INIT( comquest )
 {
 //	UINT8 *mem=memory_region(REGION_USER1);
-//	cpu_setbank(1,mem+0x00000);
+//	memory_set_bankptr(1,mem+0x00000);
 }
 
 UINT32 amask= 0xffff;

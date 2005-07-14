@@ -175,25 +175,25 @@ void c128_bankswitch_64 (int reset)
 	if ((!c64_game && c64_exrom)
 		|| (loram && hiram && !c64_exrom))
 	{
-		cpu_setbank (8, c64_roml);
+		memory_set_bankptr (8, c64_roml);
 	}
 	else
 	{
-		cpu_setbank (8, c64_memory + 0x8000);
+		memory_set_bankptr (8, c64_memory + 0x8000);
 	}
 
 	if ((!c64_game && c64_exrom && hiram)
 		|| (!c64_exrom))
 	{
-		cpu_setbank (9, c64_romh);
+		memory_set_bankptr (9, c64_romh);
 	}
 	else if (loram && hiram)
 	{
-		cpu_setbank (9, c64_basic);
+		memory_set_bankptr (9, c64_basic);
 	}
 	else
 	{
-		cpu_setbank (9, c64_memory + 0xa000);
+		memory_set_bankptr (9, c64_memory + 0xa000);
 	}
 
 	if ((!c64_game && c64_exrom)
@@ -207,31 +207,31 @@ void c128_bankswitch_64 (int reset)
 		rh = MRA8_BANK5;
 		c128_write_io = 0;
 		if ((!charen && (loram || hiram)))
-			cpu_setbank (13, c64_chargen);
+			memory_set_bankptr (13, c64_chargen);
 		else
-			cpu_setbank (13, c64_memory + 0xd000);
+			memory_set_bankptr (13, c64_memory + 0xd000);
 	}
 	c128_set_m8502_read_handler(0xd000, 0xdfff, rh);
 
 	if (!c64_game && c64_exrom)
 	{
-		cpu_setbank (14, c64_romh);
-		cpu_setbank (15, c64_romh+0x1f00);
-		cpu_setbank (16, c64_romh+0x1f05);
+		memory_set_bankptr (14, c64_romh);
+		memory_set_bankptr (15, c64_romh+0x1f00);
+		memory_set_bankptr (16, c64_romh+0x1f05);
 	}
 	else
 	{
 		if (hiram)
 		{
-			cpu_setbank (14, c64_kernal);
-			cpu_setbank (15, c64_kernal+0x1f00);
-			cpu_setbank (16, c64_kernal+0x1f05);
+			memory_set_bankptr (14, c64_kernal);
+			memory_set_bankptr (15, c64_kernal+0x1f00);
+			memory_set_bankptr (16, c64_kernal+0x1f05);
 		}
 		else
 		{
-			cpu_setbank (14, c64_memory + 0xe000);
-			cpu_setbank (15, c64_memory + 0xff00);
-			cpu_setbank (16, c64_memory + 0xff05);
+			memory_set_bankptr (14, c64_memory + 0xe000);
+			memory_set_bankptr (15, c64_memory + 0xff00);
+			memory_set_bankptr (16, c64_memory + 0xff05);
 		}
 	}
 	old = data;
@@ -281,8 +281,8 @@ static int mmu_page0, mmu_page1;
 	 c128_ram = c64_memory + MMU_RAM_ADDR;
 	 c128_va1617 = MMU_VIC_ADDR;
 #if 1
-	 cpu_setbank (10, c128_z80);
-	 cpu_setbank (11, c128_ram+0x1000);
+	 memory_set_bankptr (10, c128_z80);
+	 memory_set_bankptr (11, c128_ram+0x1000);
 	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
 		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) )
 		 c128_ram=NULL;
@@ -293,32 +293,32 @@ static int mmu_page0, mmu_page1;
 		 c128_ram_bottom = 0;
 
 	 if (MMU_RAM_ADDR==0) { /* this is used in z80 mode for rom on/off switching !*/
-		 cpu_setbank (10, c128_z80);
-		 cpu_setbank (11, c128_z80+0x400);
+		 memory_set_bankptr (10, c128_z80);
+		 memory_set_bankptr (11, c128_z80+0x400);
 	 } else {
-		 cpu_setbank (10, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
-		 cpu_setbank (11, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+		 memory_set_bankptr (10, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
+		 memory_set_bankptr (11, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
 	 }
-	 cpu_setbank (1, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
-	 cpu_setbank (2, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+	 memory_set_bankptr (1, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
+	 memory_set_bankptr (2, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
 
-	 cpu_setbank (3, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
-	 cpu_setbank (4, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
-	 cpu_setbank (5, c128_ram + 0x4000);
+	 memory_set_bankptr (3, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
+	 memory_set_bankptr (4, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
+	 memory_set_bankptr (5, c128_ram + 0x4000);
 
 	 if (MMU_TOP)
 		 c128_ram_top = 0x10000 - MMU_SIZE;
 	 else
 		 c128_ram_top = 0x10000;
 
-	 if (c128_ram_top > 0xc000) { cpu_setbank (6, c128_ram + 0xc000); }
-	 else { cpu_setbank (6, c64_memory + 0xc000); }
-	 if (c128_ram_top > 0xe000) { cpu_setbank (7, c128_ram + 0xe000); }
-	 else { cpu_setbank (7, c64_memory + 0xd000); }
-	 if (c128_ram_top > 0xf000) { cpu_setbank (8, c128_ram + 0xf000); }
-	 else { cpu_setbank (8, c64_memory + 0xe000); }
-	 if (c128_ram_top > 0xff05) { cpu_setbank (9, c128_ram + 0xff05); }
-	 else { cpu_setbank (9, c64_memory + 0xff05); }
+	 if (c128_ram_top > 0xc000) { memory_set_bankptr (6, c128_ram + 0xc000); }
+	 else { memory_set_bankptr (6, c64_memory + 0xc000); }
+	 if (c128_ram_top > 0xe000) { memory_set_bankptr (7, c128_ram + 0xe000); }
+	 else { memory_set_bankptr (7, c64_memory + 0xd000); }
+	 if (c128_ram_top > 0xf000) { memory_set_bankptr (8, c128_ram + 0xf000); }
+	 else { memory_set_bankptr (8, c64_memory + 0xe000); }
+	 if (c128_ram_top > 0xff05) { memory_set_bankptr (9, c128_ram + 0xff05); }
+	 else { memory_set_bankptr (9, c64_memory + 0xff05); }
 
 	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
 		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) )
@@ -339,17 +339,17 @@ static void c128_bankswitch_128 (int reset)
 		c128_ram_bottom = 0;
 		c128_ram_top = 0x10000;
 
-		cpu_setbank (1, c64_memory);
-		cpu_setbank (2, c64_memory + 0x100);
+		memory_set_bankptr (1, c64_memory);
+		memory_set_bankptr (2, c64_memory + 0x100);
 
-		cpu_setbank (3, c64_memory + 0x200);
-		cpu_setbank (4, c64_memory + 0x400);
-		cpu_setbank (5, c64_memory + 0x1000);
-		cpu_setbank (6, c64_memory + 0x2000);
+		memory_set_bankptr (3, c64_memory + 0x200);
+		memory_set_bankptr (4, c64_memory + 0x400);
+		memory_set_bankptr (5, c64_memory + 0x1000);
+		memory_set_bankptr (6, c64_memory + 0x2000);
 
-		cpu_setbank (7, c64_memory + 0x4000);
+		memory_set_bankptr (7, c64_memory + 0x4000);
 
-		cpu_setbank (12, c64_memory + 0xc000);
+		memory_set_bankptr (12, c64_memory + 0xc000);
 
 		c128_bankswitch_64 (reset);
 	}
@@ -357,47 +357,47 @@ static void c128_bankswitch_128 (int reset)
 	{
 		c128_ram = c64_memory + MMU_RAM_ADDR;
 		c128_va1617 = MMU_VIC_ADDR;
-		cpu_setbank (1, c64_memory + mmu_page0);
-		cpu_setbank (2, c64_memory + mmu_page1);
+		memory_set_bankptr (1, c64_memory + mmu_page0);
+		memory_set_bankptr (2, c64_memory + mmu_page1);
 		if (MMU_BOTTOM)
 			{
 				c128_ram_bottom = MMU_SIZE;
 			}
 		else
 			c128_ram_bottom = 0;
-		cpu_setbank (3, (c128_ram_bottom > 0x200 ? c64_memory : c128_ram) + 0x200);
-		cpu_setbank (4, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
-		cpu_setbank (5, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
-		cpu_setbank (6, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
+		memory_set_bankptr (3, (c128_ram_bottom > 0x200 ? c64_memory : c128_ram) + 0x200);
+		memory_set_bankptr (4, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+		memory_set_bankptr (5, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
+		memory_set_bankptr (6, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
 
 		if (MMU_RAM_LO)
 			{
-				cpu_setbank (7, c128_ram + 0x4000);
+				memory_set_bankptr (7, c128_ram + 0x4000);
 			}
 		else
 			{
-				cpu_setbank (7, c128_basic);
+				memory_set_bankptr (7, c128_basic);
 			}
 
 		if (MMU_RAM_MID)
 			{
-				cpu_setbank (8, c128_ram + 0x8000);
-				cpu_setbank (9, c128_ram + 0xa000);
+				memory_set_bankptr (8, c128_ram + 0x8000);
+				memory_set_bankptr (9, c128_ram + 0xa000);
 			}
 		else if (MMU_ROM_MID)
 			{
-				cpu_setbank (8, c128_basic + 0x4000);
-				cpu_setbank (9, c128_basic + 0x6000);
+				memory_set_bankptr (8, c128_basic + 0x4000);
+				memory_set_bankptr (9, c128_basic + 0x6000);
 			}
 		else if (MMU_INTERNAL_ROM_MID)
 			{
-				cpu_setbank (8, c128_internal_function);
-				cpu_setbank (9, c128_internal_function + 0x2000);
+				memory_set_bankptr (8, c128_internal_function);
+				memory_set_bankptr (9, c128_internal_function + 0x2000);
 			}
 		else
 			{
-				cpu_setbank (8, c128_external_function);
-				cpu_setbank (9, c128_external_function + 0x2000);
+				memory_set_bankptr (8, c128_external_function);
+				memory_set_bankptr (9, c128_external_function + 0x2000);
 			}
 
 		if (MMU_TOP)
@@ -425,66 +425,66 @@ static void c128_bankswitch_128 (int reset)
 		{
 			if (c128_ram_top > 0xc000)
 			{
-				cpu_setbank (12, c128_ram + 0xc000);
+				memory_set_bankptr (12, c128_ram + 0xc000);
 			}
 			else
 			{
-				cpu_setbank (12, c64_memory + 0xc000);
+				memory_set_bankptr (12, c64_memory + 0xc000);
 			}
 			if (!MMU_IO_ON)
 			{
 				if (c128_ram_top > 0xd000)
 				{
-					cpu_setbank (13, c128_ram + 0xd000);
+					memory_set_bankptr (13, c128_ram + 0xd000);
 				}
 				else
 				{
-					cpu_setbank (13, c64_memory + 0xd000);
+					memory_set_bankptr (13, c64_memory + 0xd000);
 				}
 			}
 			if (c128_ram_top > 0xe000)
 			{
-				cpu_setbank (14, c128_ram + 0xe000);
+				memory_set_bankptr (14, c128_ram + 0xe000);
 			}
 			else
 			{
-				cpu_setbank (14, c64_memory + 0xe000);
+				memory_set_bankptr (14, c64_memory + 0xe000);
 			}
 			if (c128_ram_top > 0xff05)
 			{
-				cpu_setbank (16, c128_ram + 0xff05);
+				memory_set_bankptr (16, c128_ram + 0xff05);
 			}
 			else
 			{
-				cpu_setbank (16, c64_memory + 0xff05);
+				memory_set_bankptr (16, c64_memory + 0xff05);
 			}
 		}
 		else if (MMU_ROM_HI)
 		{
-			cpu_setbank (12, c128_editor);
+			memory_set_bankptr (12, c128_editor);
 			if (!MMU_IO_ON) {
-				cpu_setbank (13, c128_chargen);
+				memory_set_bankptr (13, c128_chargen);
 			}
-			cpu_setbank (14, c128_kernal);
-			cpu_setbank (16, c128_kernal + 0x1f05);
+			memory_set_bankptr (14, c128_kernal);
+			memory_set_bankptr (16, c128_kernal + 0x1f05);
 		}
 		else if (MMU_INTERNAL_ROM_HI)
 		{
-			cpu_setbank (12, c128_internal_function);
+			memory_set_bankptr (12, c128_internal_function);
 			if (!MMU_IO_ON) {
-				cpu_setbank (13, c128_internal_function + 0x1000);
+				memory_set_bankptr (13, c128_internal_function + 0x1000);
 			}
-			cpu_setbank (14, c128_internal_function + 0x2000);
-			cpu_setbank (16, c128_internal_function + 0x3f05);
+			memory_set_bankptr (14, c128_internal_function + 0x2000);
+			memory_set_bankptr (16, c128_internal_function + 0x3f05);
 		}
 		else					   /*if (MMU_EXTERNAL_ROM_HI) */
 		{
-			cpu_setbank (12, c128_external_function);
+			memory_set_bankptr (12, c128_external_function);
 			if (!MMU_IO_ON) {
-				cpu_setbank (13, c128_external_function + 0x1000);
+				memory_set_bankptr (13, c128_external_function + 0x1000);
 			}
-			cpu_setbank (14, c128_external_function + 0x2000);
-			cpu_setbank (16, c128_external_function + 0x3f05);
+			memory_set_bankptr (14, c128_external_function + 0x2000);
+			memory_set_bankptr (16, c128_external_function + 0x3f05);
 		}
 		if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
 			 ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) c128_ram=NULL;

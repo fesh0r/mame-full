@@ -43,7 +43,7 @@ static WRITE8_HANDLER( keylatch_w )
 
 static WRITE8_HANDLER( bankswitch_w )
 {
-	cpu_setbank(1, memory_region(REGION_CPU1));
+	memory_set_bankptr(1, memory_region(REGION_CPU1));
 }
 
 /* Memory Maps */
@@ -225,7 +225,7 @@ static MACHINE_INIT( studio2 )
 
 static MACHINE_INIT( vip )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1)+0x8000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1)+0x8000);
 }
 
 /* Machine Drivers */

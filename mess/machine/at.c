@@ -50,7 +50,7 @@ static void at386_set_gate_a20(int a20)
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, 0, mirror, MWA32_ROM);
 	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MRA32_ROM);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MWA32_ROM);
-	cpu_setbank(10, mess_ram);
+	memory_set_bankptr(10, mess_ram);
 
 	if (a20)
 	{
@@ -61,8 +61,8 @@ static void at386_set_gate_a20(int a20)
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		0, mirror, MWA32_NOP);
 		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MRA32_BANK2);
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MWA32_ROM);
-		cpu_setbank(1, mess_ram + 0xa0000);
-		cpu_setbank(2, memory_region(REGION_CPU1) + 0x0f0000);
+		memory_set_bankptr(1, mess_ram + 0xa0000);
+		memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x0f0000);
 	}
 }
 

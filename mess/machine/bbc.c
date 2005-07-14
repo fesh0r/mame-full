@@ -73,7 +73,7 @@ Model A memory handling functions
 /* for the model A just address the 4 on board ROM sockets */
 WRITE8_HANDLER ( page_selecta_w )
 {
-	cpu_setbank(4,memory_region(REGION_USER1)+((data&0x03)<<14));
+	memory_set_bankptr(4,memory_region(REGION_USER1)+((data&0x03)<<14));
 }
 
 
@@ -96,9 +96,9 @@ WRITE8_HANDLER ( page_selectb_w )
 	bbc_rombank=data&0x0f;
 	if (bbc_rombank!=1)
 	{
-		cpu_setbank(4,memory_region(REGION_USER1)+(bbc_rombank<<14));
+		memory_set_bankptr(4,memory_region(REGION_USER1)+(bbc_rombank<<14));
 	} else {
-		cpu_setbank(4,memory_region(REGION_USER2)+((bbc_DFSType)<<14));
+		memory_set_bankptr(4,memory_region(REGION_USER2)+((bbc_DFSType)<<14));
 	}
 }
 
@@ -175,14 +175,14 @@ WRITE8_HANDLER ( page_selectbp_w )
 		if (pagedRAM)
 		{
 			/* if paged ram then set 8000 to afff to read from the ram 8000 to afff */
-			cpu_setbank(4,memory_region(REGION_CPU1)+0x8000);
+			memory_set_bankptr(4,memory_region(REGION_CPU1)+0x8000);
 		} else {
 			/* if paged rom then set the rom to be read from 8000 to afff */
-			cpu_setbank(4,memory_region(REGION_USER1)+(bbc_rombank<<14));
+			memory_set_bankptr(4,memory_region(REGION_USER1)+(bbc_rombank<<14));
 		};
 
 		/* set the rom to be read from b000 to bfff */
-		cpu_setbank(6,memory_region(REGION_USER1)+(bbc_rombank<<14)+0x03000);
+		memory_set_bankptr(6,memory_region(REGION_USER1)+(bbc_rombank<<14)+0x03000);
 	}
 	else
 	{
@@ -190,7 +190,7 @@ WRITE8_HANDLER ( page_selectbp_w )
 		vdusel=(data>>7)&0x01;
 		bbcbp_setvideoshadow(vdusel);
 		//need to make the video display do a full screen refresh for the new memory area
-		cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+		memory_set_bankptr(2, memory_region(REGION_CPU1)+0x3000);
 	}
 }
 
@@ -226,15 +226,15 @@ static OPBASE_HANDLER( bbcbp_opbase_handler )
 	if (vdusel==0)
 	{
 		// not in shadow ram mode so just read normal ram
-		cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+		memory_set_bankptr(2, memory_region(REGION_CPU1)+0x3000);
 	} else {
 		if (vdudriverset())
 		{
 			// if VDUDriver set then read from shadow ram
-			cpu_setbank(2, memory_region(REGION_CPU1)+0xb000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1)+0xb000);
 		} else {
 			// else read from normal ram
-			cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1)+0x3000);
 		}
 	}
 	return address;
@@ -402,9 +402,9 @@ WRITE8_HANDLER ( bbcm_ACCCON_write )
 
 	if (ACCCON_Y)
 	{
-		cpu_setbank(7,memory_region(REGION_CPU1)+0x9000);
+		memory_set_bankptr(7,memory_region(REGION_CPU1)+0x9000);
 	} else {
-		cpu_setbank(7,memory_region(REGION_USER1)+0x40000);
+		memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000);
 	}
 
 	bbcbp_setvideoshadow(ACCCON_D);
@@ -412,9 +412,9 @@ WRITE8_HANDLER ( bbcm_ACCCON_write )
 
 	if (ACCCON_X)
 	{
-		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+		memory_set_bankptr( 2, memory_region( REGION_CPU1 ) + 0xb000 );
 	} else {
-		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0x3000 );
+		memory_set_bankptr( 2, memory_region( REGION_CPU1 ) + 0x3000 );
 	}
 
 }
@@ -435,11 +435,11 @@ WRITE8_HANDLER ( page_selectbm_w )
 
 	if (pagedRAM)
 	{
-		cpu_setbank(4,memory_region(REGION_CPU1)+0x8000);
-		cpu_setbank(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		memory_set_bankptr(4,memory_region(REGION_CPU1)+0x8000);
+		memory_set_bankptr(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
 	} else {
-		cpu_setbank(4,memory_region(REGION_USER1)+((bbc_rombank)<<14));
-		cpu_setbank(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		memory_set_bankptr(4,memory_region(REGION_USER1)+((bbc_rombank)<<14));
+		memory_set_bankptr(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
 	}
 
 }
@@ -457,13 +457,13 @@ static OPBASE_HANDLER( bbcm_opbase_handler )
 {
 	if (ACCCON_X)
 	{
-		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+		memory_set_bankptr( 2, memory_region( REGION_CPU1 ) + 0xb000 );
 	} else {
 		if (ACCCON_E && bbcm_vdudriverset())
 		{
-			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+			memory_set_bankptr( 2, memory_region( REGION_CPU1 ) + 0xb000 );
 		} else {
-			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0x3000 );
+			memory_set_bankptr( 2, memory_region( REGION_CPU1 ) + 0x3000 );
 		}
 	}
 
@@ -2065,12 +2065,12 @@ DRIVER_INIT( bbcm )
 
 MACHINE_INIT( bbca )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1));
-	cpu_setbank(3,memory_region(REGION_CPU1));
+	memory_set_bankptr(1,memory_region(REGION_CPU1));
+	memory_set_bankptr(3,memory_region(REGION_CPU1));
 
-	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
-	cpu_setbank(7,memory_region(REGION_USER1)+0x10000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x13f00);  /* bank 9 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
+	memory_set_bankptr(7,memory_region(REGION_USER1)+0x10000);  /* bank 7 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(9,memory_region(REGION_USER1)+0x13f00);  /* bank 9 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2088,21 +2088,21 @@ MACHINE_INIT( bbcb )
 	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
 	bbc_RAMSize=  (readinputport(21)>>5)&0x01;
 
-	cpu_setbank(1,memory_region(REGION_CPU1));
+	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	if (bbc_RAMSize)
 	{
 		/* 32K Model B */
-		cpu_setbank(3,memory_region(REGION_CPU1)+0x4000);
+		memory_set_bankptr(3,memory_region(REGION_CPU1)+0x4000);
 		set_video_memory_lookups(32);
 	} else {
 		/* 16K just repeat the lower 16K*/
-		cpu_setbank(3,memory_region(REGION_CPU1));
+		memory_set_bankptr(3,memory_region(REGION_CPU1));
 		set_video_memory_lookups(16);
 	}
 
-	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
-	cpu_setbank(7,memory_region(REGION_USER1)+0x40000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00);  /* bank 9 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
+	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000);  /* bank 7 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00);  /* bank 9 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2139,12 +2139,12 @@ MACHINE_INIT( bbcb )
 
 MACHINE_INIT( bbcbp )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1));
-	cpu_setbank(2,memory_region(REGION_CPU1)+0x03000);  /* bank 2 screen/shadow ram     from 3000 to 7fff */
-	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to afff */
-	cpu_setbank(6,memory_region(REGION_USER1)+0x03000); /* bank 6 is the paged ROMs     from b000 to bfff */
-	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(1,memory_region(REGION_CPU1));
+	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x03000);  /* bank 2 screen/shadow ram     from 3000 to 7fff */
+	memory_set_bankptr(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to afff */
+	memory_set_bankptr(6,memory_region(REGION_USER1)+0x03000); /* bank 6 is the paged ROMs     from b000 to bfff */
+	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000); /* bank 7 points at the OS rom  from c000 to ffff */
+	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 points at the OS rom  from c000 to ffff */
 
 	memory_set_opbase_handler(0, bbcbp_opbase_handler);
 
@@ -2170,13 +2170,13 @@ MACHINE_INIT( bbcbp )
 
 MACHINE_INIT( bbcm )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1));			/* bank 1 regular lower ram		from 0000 to 2fff */
-	cpu_setbank(2,memory_region(REGION_CPU1)+0x3000);	/* bank 2 screen/shadow ram		from 3000 to 7fff */
-	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to 8fff */
-	cpu_setbank(5,memory_region(REGION_USER1)+0x01000); /* bank 5 is the paged ROMs     from 9000 to bfff */
-	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 6 OS rom of RAM			from c000 to dfff */
-	cpu_setbank(8,memory_region(REGION_USER1)+0x42000); /* bank 8 OS rom  				from e000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 is the top of the OS  from ff00 to ffff */
+	memory_set_bankptr(1,memory_region(REGION_CPU1));			/* bank 1 regular lower ram		from 0000 to 2fff */
+	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x3000);	/* bank 2 screen/shadow ram		from 3000 to 7fff */
+	memory_set_bankptr(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to 8fff */
+	memory_set_bankptr(5,memory_region(REGION_USER1)+0x01000); /* bank 5 is the paged ROMs     from 9000 to bfff */
+	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000); /* bank 6 OS rom of RAM			from c000 to dfff */
+	memory_set_bankptr(8,memory_region(REGION_USER1)+0x42000); /* bank 8 OS rom  				from e000 to ffff */
+	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 is the top of the OS  from ff00 to ffff */
 
 	memory_set_opbase_handler(0, bbcm_opbase_handler);
 

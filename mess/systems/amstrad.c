@@ -295,8 +295,8 @@ void amstrad_setLowerRom(void)
 			BankBase = AmstradCPC_RamBanks[0];
 		}
 /* bank 0 - 0x0000..0x03fff */
-		cpu_setbank(1, BankBase);
-		cpu_setbank(2, BankBase+0x02000);
+		memory_set_bankptr(1, BankBase);
+		memory_set_bankptr(2, BankBase+0x02000);
 }		
 /*-----------------
   - Set Upper Rom -
@@ -310,8 +310,8 @@ void amstrad_setUpperRom(void)
 		} else {
 			BankBase = AmstradCPC_RamBanks[3];
 		}
-		cpu_setbank(7, BankBase);
-		cpu_setbank(8, BankBase+0x2000);
+		memory_set_bankptr(7, BankBase);
+		memory_set_bankptr(8, BankBase+0x2000);
 }		
 void AmstradCPC_SetUpperRom(int Data)
 {
@@ -328,22 +328,22 @@ void amstrad_rethinkMemory(void)
 /* bank 0 - 0x0000..0x03fff */
     amstrad_setLowerRom();
 /* bank 1 - 0x04000..0x07fff */
-		cpu_setbank(3, AmstradCPC_RamBanks[1]);
-		cpu_setbank(4, AmstradCPC_RamBanks[1]+0x2000);
+		memory_set_bankptr(3, AmstradCPC_RamBanks[1]);
+		memory_set_bankptr(4, AmstradCPC_RamBanks[1]+0x2000);
 /* bank 2 - 0x08000..0x0bfff */
-		cpu_setbank(5, AmstradCPC_RamBanks[2]);
-		cpu_setbank(6, AmstradCPC_RamBanks[2]+0x2000);
+		memory_set_bankptr(5, AmstradCPC_RamBanks[2]);
+		memory_set_bankptr(6, AmstradCPC_RamBanks[2]+0x2000);
 /* bank 3 - 0x0c000..0x0ffff */
     amstrad_setUpperRom();
 /* other banks */    
-		cpu_setbank(9, AmstradCPC_RamBanks[0]);
-		cpu_setbank(10, AmstradCPC_RamBanks[0]+0x2000);
-		cpu_setbank(11, AmstradCPC_RamBanks[1]);
-		cpu_setbank(12, AmstradCPC_RamBanks[1]+0x2000);
-		cpu_setbank(13, AmstradCPC_RamBanks[2]);
-		cpu_setbank(14, AmstradCPC_RamBanks[2]+0x2000);
-		cpu_setbank(15, AmstradCPC_RamBanks[3]);
-		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x2000);
+		memory_set_bankptr(9, AmstradCPC_RamBanks[0]);
+		memory_set_bankptr(10, AmstradCPC_RamBanks[0]+0x2000);
+		memory_set_bankptr(11, AmstradCPC_RamBanks[1]);
+		memory_set_bankptr(12, AmstradCPC_RamBanks[1]+0x2000);
+		memory_set_bankptr(13, AmstradCPC_RamBanks[2]);
+		memory_set_bankptr(14, AmstradCPC_RamBanks[2]+0x2000);
+		memory_set_bankptr(15, AmstradCPC_RamBanks[3]);
+		memory_set_bankptr(16, AmstradCPC_RamBanks[3]+0x2000);
 
 /* multiface hardware enabled? */
 		if (multiface_hardware_enabled()) {
@@ -918,10 +918,10 @@ static void multiface_rethink_memory(void)
 	{
 
 		/* set bank addressess */
-		cpu_setbank(1, multiface_rom);
-		cpu_setbank(2, multiface_ram);
-		cpu_setbank(9, multiface_rom);
-		cpu_setbank(10, multiface_ram);
+		memory_set_bankptr(1, multiface_rom);
+		memory_set_bankptr(2, multiface_ram);
+		memory_set_bankptr(9, multiface_rom);
+		memory_set_bankptr(10, multiface_ram);
 	}
 }
 

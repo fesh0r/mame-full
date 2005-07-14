@@ -33,28 +33,28 @@ static void msx_cpu_setbank (int page, UINT8 *mem)
 	case 1:
 	case 2:
 	case 3:
-		cpu_setbank (page, mem);
+		memory_set_bankptr (page, mem);
 		break;
 	case 4:
-		cpu_setbank (4, mem);
-		cpu_setbank (5, mem + 0x1ff8);
+		memory_set_bankptr (4, mem);
+		memory_set_bankptr (5, mem + 0x1ff8);
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0x7ff8, 0x7fff, 0, 0, MRA8_BANK5);
 		break;
 	case 5:
-		cpu_setbank (6, mem);
-		cpu_setbank (7, mem + 0x1800);
+		memory_set_bankptr (6, mem);
+		memory_set_bankptr (7, mem + 0x1800);
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0x9800, 0x9fff, 0, 0, MRA8_BANK7);
 		break;
 	case 6:
-		cpu_setbank (8, mem);
-		cpu_setbank (9, mem + 0x1800);
+		memory_set_bankptr (8, mem);
+		memory_set_bankptr (9, mem + 0x1800);
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xbfff, 0, 0, MRA8_BANK9);
 		break;
 	case 7:
-		cpu_setbank (10, mem);
+		memory_set_bankptr (10, mem);
 		break;
 	case 8:
-		cpu_setbank (11, mem);
+		memory_set_bankptr (11, mem);
 		msx1.top_page = mem;
 		break;
 	}

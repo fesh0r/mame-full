@@ -132,7 +132,7 @@ static void ti85_timer_callback (int param)
 
 static void update_ti85_memory (void)
 {
-	cpu_setbank(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*ti85_memory_page_0x4000);
+	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*ti85_memory_page_0x4000);
 }
 
 static void update_ti86_memory (void)
@@ -141,26 +141,26 @@ static void update_ti86_memory (void)
 
 	if (ti85_memory_page_0x4000 & 0x40)
 	{
-		cpu_setbank(2,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
-		cpu_setbank(6,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
+		memory_set_bankptr(2,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
+		memory_set_bankptr(6,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
 		wh = MWA8_BANK6;
 	}
 	else
 	{
-		cpu_setbank(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti85_memory_page_0x4000&0x0f));
+		memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti85_memory_page_0x4000&0x0f));
 		wh = MWA8_ROM;
 	}
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, wh);
 
 	if (ti86_memory_page_0x8000 & 0x40)
 	{
-		cpu_setbank(3,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
-		cpu_setbank(7,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
+		memory_set_bankptr(3,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
+		memory_set_bankptr(7,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
 		wh = MWA8_BANK7;
 	}
 	else
 	{
-		cpu_setbank(3,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti86_memory_page_0x8000&0x0f));
+		memory_set_bankptr(3,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti86_memory_page_0x8000&0x0f));
 		wh = MWA8_ROM;
 	}
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, wh);
@@ -197,8 +197,8 @@ MACHINE_INIT( ti81 )
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
 }
 
 MACHINE_INIT( ti85 )
@@ -229,8 +229,8 @@ MACHINE_INIT( ti85 )
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
 }
 
 MACHINE_STOP( ti85 )
@@ -261,11 +261,11 @@ MACHINE_INIT( ti86 )
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
+		memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
 
-		cpu_setbank(4, ti86_ram);
-		cpu_setbank(8, ti86_ram);
+		memory_set_bankptr(4, ti86_ram);
+		memory_set_bankptr(8, ti86_ram);
 
 		if (ti_calculator_model == TI_86)
 			memset(ti86_ram, 0, sizeof(unsigned char)*128*1024);

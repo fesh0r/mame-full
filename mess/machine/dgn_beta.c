@@ -233,7 +233,7 @@ static void UpdateBanks(int first, int last)
 			videoram=readbank;
 
 		PageRegs[TaskReg][Page].memory=readbank;
-		cpu_setbank(Page+1,readbank);
+		memory_set_bankptr(Page+1,readbank);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, bank_start, bank_end,0,0,writebank);
 		memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, bank_start, bank_end,0,0,writebank);
 	}
@@ -276,7 +276,7 @@ static void ResetBanks(void)
 			videoram=readbank;
 		
 		PageRegs[TaskReg][Page].memory=readbank;
-		cpu_setbank(Page+1,readbank);
+		memory_set_bankptr(Page+1,readbank);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, bank_start, bank_end,0,0,writebank);
 		memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, bank_start, bank_end,0,0,writebank);
 	}

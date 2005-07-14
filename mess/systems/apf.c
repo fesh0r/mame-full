@@ -356,14 +356,14 @@ static void apf_common_init(void)
 
 	apf_ints = 0;
 
-	cpu_setbank(1, rom_ptr);
-	cpu_setbank(2, rom_ptr);
-	cpu_setbank(3, rom_ptr);
-	cpu_setbank(4, rom_ptr);
-	cpu_setbank(5, rom_ptr);
-	cpu_setbank(6, rom_ptr);
-	cpu_setbank(7, rom_ptr);
-	cpu_setbank(8, rom_ptr);
+	memory_set_bankptr(1, rom_ptr);
+	memory_set_bankptr(2, rom_ptr);
+	memory_set_bankptr(3, rom_ptr);
+	memory_set_bankptr(4, rom_ptr);
+	memory_set_bankptr(5, rom_ptr);
+	memory_set_bankptr(6, rom_ptr);
+	memory_set_bankptr(7, rom_ptr);
+	memory_set_bankptr(8, rom_ptr);
 
 	pia_config(0, PIA_STANDARD_ORDERING,&apf_m1000_pia_interface);
 

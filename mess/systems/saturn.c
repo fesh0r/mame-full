@@ -1818,15 +1818,15 @@ static MACHINE_INIT( saturn )
 	memory_install_read16_handler(2, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100ee3, 0, 0, dsp_68k_r);
 	memory_install_write16_handler(2, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100ee3, 0, 0, dsp_68k_w);
 
-	cpu_setbank(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
-	cpu_setbank(2, (UINT8 *) workh_ram_base);
-	cpu_setbank(3, (UINT8 *) sound_base);
-/*  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
-  cpu_setbank(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
-  cpu_setbank(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
-  cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
-  cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
-  cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);*/
+	memory_set_bankptr(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
+	memory_set_bankptr(2, (UINT8 *) workh_ram_base);
+	memory_set_bankptr(3, (UINT8 *) sound_base);
+/*  memory_set_bankptr(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
+  memory_set_bankptr(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
+  memory_set_bankptr(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
+  memory_set_bankptr(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
+  memory_set_bankptr(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
+  memory_set_bankptr(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);*/
 }
 
 static DRIVER_INIT( saturn )

@@ -85,8 +85,8 @@ static void avigo_setbank(int bank, void *address, read8_handler rh, write8_hand
 {
 	if (address)
 	{
-		cpu_setbank(1+bank, address);
-		cpu_setbank(5+bank, address);
+		memory_set_bankptr(1+bank, address);
+		memory_set_bankptr(5+bank, address);
 		avigo_banked_opbase[bank] = ((data8_t *) address) - (bank * 0x4000);
 	}
 	if (rh)

@@ -43,7 +43,7 @@ static void coupe_update_bank(int bank, data8_t *memory, int is_readonly)
 	write8_handler wh;
 
 	if (memory)
-		cpu_setbank(bank, memory);
+		memory_set_bankptr(bank, memory);
 
 	rh = !memory ? MRA8_NOP :							(read8_handler) (STATIC_BANK1 + bank - 1);
 	wh = !memory ? MWA8_NOP : (is_readonly ? MWA8_ROM :	(write8_handler) (STATIC_BANK1 + bank - 1));

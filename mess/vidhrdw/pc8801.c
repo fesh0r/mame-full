@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.13 2004/06/12 21:05:39 npwoods Exp $
+  $Id: pc8801.c,v 1.14 2005/07/14 03:49:25 npwoods Exp $
 
 ***************************************************************************/
 
@@ -276,8 +276,8 @@ int is_pc8801_vram_select(void)
       rh6 = MRA8_BANK6; \
       wh5 = write_gvram##n##_bank5; \
       wh6 = write_gvram##n##_bank6; \
-      cpu_setbank(5, gVRAM + 0x4000*n ); \
-      cpu_setbank(6, gVRAM + 0x4000*n + 0x3000 ); \
+      memory_set_bankptr(5, gVRAM + 0x4000*n ); \
+      memory_set_bankptr(6, gVRAM + 0x4000*n + 0x3000 ); \
       return 1;
 
       VVV

@@ -258,7 +258,7 @@ static  READ8_HANDLER(pcw_keyboard_r)
 
 static void pcw_update_read_memory_block(int block, int bank)
 {
-	cpu_setbank(block + 1, mess_ram + ((bank * 0x4000) % mess_ram_size));
+	memory_set_bankptr(block + 1, mess_ram + ((bank * 0x4000) % mess_ram_size));
 
 	/* bank 3? */
 	if (bank == 3)
@@ -282,7 +282,7 @@ static void pcw_update_read_memory_block(int block, int bank)
 
 static void pcw_update_write_memory_block(int block, int bank)
 {
-	cpu_setbank(block + 5, mess_ram + ((bank * 0x4000) % mess_ram_size));
+	memory_set_bankptr(block + 5, mess_ram + ((bank * 0x4000) % mess_ram_size));
 }
 
 
@@ -362,7 +362,7 @@ static void pcw_update_mem(int block, int data)
 
 		FakeROM = &memory_region(REGION_CPU1)[0x010000];
 
-		cpu_setbank(1, FakeROM);
+		memory_set_bankptr(1, FakeROM);
 	}
 }
 

@@ -211,8 +211,8 @@ static DRIVER_INIT( amiga )
 	amiga_machine_config(&amiga_intf);
 
 	/* set up memory */
-	cpu_setbank(1, memory_region(REGION_USER1));
-	cpu_setbank(3, memory_region(REGION_USER1));
+	memory_set_bankptr(1, memory_region(REGION_USER1));
+	memory_set_bankptr(3, memory_region(REGION_USER1));
 }
 
 /***************************************************************************

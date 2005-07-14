@@ -33,7 +33,7 @@ WRITE8_HANDLER(pc1403_asic_write)
 	logerror ("asic write %.4x %.2x\n",offset, data);
 	break;
     case 2/*0x3c00*/:
-	cpu_setbank(1, memory_region(REGION_USER1)+((data&7)<<14));
+	memory_set_bankptr(1, memory_region(REGION_USER1)+((data&7)<<14));
 	logerror ("asic write %.4x %.2x\n",offset, data);
 	break;
     case 3/*0x3e00*/: break;
@@ -251,7 +251,7 @@ void init_pc1403(void)
 
 MACHINE_INIT( pc1403 )
 {
-	cpu_setbank(1, memory_region(REGION_USER1));
+	memory_set_bankptr(1, memory_region(REGION_USER1));
 	if (RAM32K)
 	{
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MRA8_RAM);

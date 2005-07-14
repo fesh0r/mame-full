@@ -710,14 +710,14 @@ void machine_init_ti99(void)
 	else if (ti99_model == model_99_4p)
 	{
 		/* set up system ROM and scratch pad pointers */
-		cpu_setbank(1, memory_region(REGION_CPU1) + offset_rom0_4p);	/* system ROM */
-		cpu_setbank(2, memory_region(REGION_CPU1) + offset_sram_4p);	/* scratch pad */
-		cpu_setbank(11, memory_region(REGION_CPU1) + offset_dram_4p);	/* extra RAM for debugger */
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + offset_rom0_4p);	/* system ROM */
+		memory_set_bankptr(2, memory_region(REGION_CPU1) + offset_sram_4p);	/* scratch pad */
+		memory_set_bankptr(11, memory_region(REGION_CPU1) + offset_dram_4p);	/* extra RAM for debugger */
 	}
 	else
 	{
 		/* set up scratch pad pointer */
-		cpu_setbank(1, memory_region(REGION_CPU1) + offset_sram);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + offset_sram);
 	}
 
 	if (ti99_model != model_99_4p)
@@ -2726,7 +2726,7 @@ static void ti99_4p_mapper_init(void)
 		{
 		case 2:
 		case 3:
-			cpu_setbank(3+(i-2), xRAM_ptr + (i<<11));
+			memory_set_bankptr(3+(i-2), xRAM_ptr + (i<<11));
 			break;
 
 		case 10:
@@ -2735,7 +2735,7 @@ static void ti99_4p_mapper_init(void)
 		case 13:
 		case 14:
 		case 15:
-			cpu_setbank(5+(i-10), xRAM_ptr + (i<<11));
+			memory_set_bankptr(5+(i-10), xRAM_ptr + (i<<11));
 			break;
 		}
 	}
@@ -2761,7 +2761,7 @@ static void ti99_4p_mapper_cru_w(int offset, int data)
 				{
 				case 2:
 				case 3:
-					cpu_setbank(3+(i-2), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
+					memory_set_bankptr(3+(i-2), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
 					break;
 
 				case 10:
@@ -2770,7 +2770,7 @@ static void ti99_4p_mapper_cru_w(int offset, int data)
 				case 13:
 				case 14:
 				case 15:
-					cpu_setbank(5+(i-10), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
+					memory_set_bankptr(5+(i-10), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
 					break;
 				}
 			}
@@ -2799,7 +2799,7 @@ static WRITE16_HANDLER(ti99_4p_mapper_w)
 		{
 		case 2:
 		case 3:
-			cpu_setbank(3+(page-2), xRAM_ptr+ti99_4p_mapper_lookup[page]);
+			memory_set_bankptr(3+(page-2), xRAM_ptr+ti99_4p_mapper_lookup[page]);
 			break;
 
 		case 10:
@@ -2808,7 +2808,7 @@ static WRITE16_HANDLER(ti99_4p_mapper_w)
 		case 13:
 		case 14:
 		case 15:
-			cpu_setbank(5+(page-10), xRAM_ptr+ti99_4p_mapper_lookup[page]);
+			memory_set_bankptr(5+(page-10), xRAM_ptr+ti99_4p_mapper_lookup[page]);
 			break;
 		}
 	}

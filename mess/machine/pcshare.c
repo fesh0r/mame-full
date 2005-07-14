@@ -394,7 +394,7 @@ void init_pc_common(UINT32 flags)
 {
 	/* MESS managed RAM */
 	if (mess_ram)
-		cpu_setbank(10, mess_ram);
+		memory_set_bankptr(10, mess_ram);
 
 	/* PIT */
 	if (flags & PCCOMMON_TIMER_8254)

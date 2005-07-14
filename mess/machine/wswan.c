@@ -44,20 +44,20 @@ MACHINE_INIT( wswan )
 	memcpy( ws_portram, ws_portram_init, 256 );
 
 	/* Switch in the banks */
-	cpu_setbank( 2, ROMMap[ROMBanks - 1] );
-	cpu_setbank( 3, ROMMap[ROMBanks - 1] );
-	cpu_setbank( 4, ROMMap[ROMBanks - 12] );
-	cpu_setbank( 5, ROMMap[ROMBanks - 11] );
-	cpu_setbank( 6, ROMMap[ROMBanks - 10] );
-	cpu_setbank( 7, ROMMap[ROMBanks - 9] );
-	cpu_setbank( 8, ROMMap[ROMBanks - 8] );
-	cpu_setbank( 9, ROMMap[ROMBanks - 7] );
-	cpu_setbank( 10, ROMMap[ROMBanks - 6] );
-	cpu_setbank( 11, ROMMap[ROMBanks - 5] );
-	cpu_setbank( 12, ROMMap[ROMBanks - 4] );
-	cpu_setbank( 13, ROMMap[ROMBanks - 3] );
-	cpu_setbank( 14, ROMMap[ROMBanks - 2] );
-	cpu_setbank( 15, ROMMap[ROMBanks - 1] );
+	memory_set_bankptr( 2, ROMMap[ROMBanks - 1] );
+	memory_set_bankptr( 3, ROMMap[ROMBanks - 1] );
+	memory_set_bankptr( 4, ROMMap[ROMBanks - 12] );
+	memory_set_bankptr( 5, ROMMap[ROMBanks - 11] );
+	memory_set_bankptr( 6, ROMMap[ROMBanks - 10] );
+	memory_set_bankptr( 7, ROMMap[ROMBanks - 9] );
+	memory_set_bankptr( 8, ROMMap[ROMBanks - 8] );
+	memory_set_bankptr( 9, ROMMap[ROMBanks - 7] );
+	memory_set_bankptr( 10, ROMMap[ROMBanks - 6] );
+	memory_set_bankptr( 11, ROMMap[ROMBanks - 5] );
+	memory_set_bankptr( 12, ROMMap[ROMBanks - 4] );
+	memory_set_bankptr( 13, ROMMap[ROMBanks - 3] );
+	memory_set_bankptr( 14, ROMMap[ROMBanks - 2] );
+	memory_set_bankptr( 15, ROMMap[ROMBanks - 1] );
 }
 
 READ8_HANDLER( wswan_port_r )
@@ -248,13 +248,13 @@ WRITE8_HANDLER( wswan_port_w )
 			break;
 		case 0xc1:		/* SRAM bank select */
 			/* FIXME: unsupported */
-/*			cpu_setbank( 1, RAMMap[data] ); */
+/*			memory_set_bankptr( 1, RAMMap[data] ); */
 			break;
 		case 0xc2:		/* ROM bank select for bank 1 (0x2000-0x2fff) */
-			cpu_setbank( 2, ROMMap[ROMBanks - (0xff - data) - 1]);
+			memory_set_bankptr( 2, ROMMap[ROMBanks - (0xff - data) - 1]);
 			break;
 		case 0xc3:		/* ROM bank select for bank 2 (0x3000-0x3fff) */
-			cpu_setbank( 3, ROMMap[ROMBanks - (0xff - data) - 1]);
+			memory_set_bankptr( 3, ROMMap[ROMBanks - (0xff - data) - 1]);
 			break;
 		default:
 			logerror( "Write to unsupported port: %X - %X\n", offset, data );

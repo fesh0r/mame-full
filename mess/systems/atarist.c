@@ -1956,8 +1956,8 @@ static MACHINE_INIT( atarist )
 	unsigned char *RAM3 = memory_region(REGION_USER2);
 
 	/* Setup ROM */
-	cpu_setbank(1,&RAM3[0]);
-	cpu_setbank(2,&RAM[0]);
+	memory_set_bankptr(1,&RAM3[0]);
+	memory_set_bankptr(2,&RAM[0]);
 
 	/* Setup first 8 bytes of memory */
 	WRITE_WORD(&RAM2[0],READ_WORD(&RAM[0]));

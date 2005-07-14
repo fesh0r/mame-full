@@ -551,29 +551,29 @@ static void svi318_set_banks ()
 	svi.bank2 = (v&4)?(v&16)?0:3:2;
 
 	if (svi.banks[0][svi.bank1])
-		cpu_setbank (1, svi.banks[0][svi.bank1]);
+		memory_set_bankptr (1, svi.banks[0][svi.bank1]);
 	else
-		cpu_setbank (1, svi.empty_bank);
+		memory_set_bankptr (1, svi.empty_bank);
 
 	if (svi.banks[1][svi.bank2])
 	{
-		cpu_setbank (2, svi.banks[1][svi.bank2]);
-		cpu_setbank (3, svi.banks[1][svi.bank2] + 0x4000);
+		memory_set_bankptr (2, svi.banks[1][svi.bank2]);
+		memory_set_bankptr (3, svi.banks[1][svi.bank2] + 0x4000);
 
 		/* SVI-318 has only 16kB RAM -- not 32kb! */
 		if (!svi.bank2 && svi.svi318)
-			cpu_setbank (2, svi.empty_bank);
+			memory_set_bankptr (2, svi.empty_bank);
 
 		if ((svi.bank1 == 1) && ( (v & 0xc0) != 0xc0))
 		{
-			cpu_setbank (2, (v&80)?svi.empty_bank:svi.banks[1][1] + 0x4000);
-			cpu_setbank (3, (v&40)?svi.empty_bank:svi.banks[1][1]);
+			memory_set_bankptr (2, (v&80)?svi.empty_bank:svi.banks[1][1] + 0x4000);
+			memory_set_bankptr (3, (v&40)?svi.empty_bank:svi.banks[1][1]);
 		}
 	}
 	else
 	{
-		cpu_setbank (2, svi.empty_bank);
-		cpu_setbank (3, svi.empty_bank);
+		memory_set_bankptr (2, svi.empty_bank);
+		memory_set_bankptr (3, svi.empty_bank);
 	}
 }
 

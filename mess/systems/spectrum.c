@@ -418,8 +418,8 @@ extern void spectrum_128_update_memory(void)
 				ram_page = spectrum_128_port_7ffd_data & 0x07;
 				ram_data = spectrum_ram + (ram_page<<14);
 
-				cpu_setbank(4, ram_data);
-				cpu_setbank(8, ram_data);
+				memory_set_bankptr(4, ram_data);
+				memory_set_bankptr(8, ram_data);
 
 				logerror("RAM at 0xc000: %02x\n",ram_page);
 		}
@@ -431,7 +431,7 @@ extern void spectrum_128_update_memory(void)
 
 		ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
-		cpu_setbank(1, ChosenROM);
+		memory_set_bankptr(1, ChosenROM);
 
 		logerror("rom switch: %02x\n", ROMSelection);
 }
@@ -549,12 +549,12 @@ static MACHINE_INIT( spectrum_128 )
 		/* 0x0000-0x3fff always holds ROM */
 
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		cpu_setbank(2, spectrum_ram + (5<<14));
-		cpu_setbank(6, spectrum_ram + (5<<14));
+		memory_set_bankptr(2, spectrum_ram + (5<<14));
+		memory_set_bankptr(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		cpu_setbank(3, spectrum_ram + (2<<14));
-		cpu_setbank(7, spectrum_ram + (2<<14));
+		memory_set_bankptr(3, spectrum_ram + (2<<14));
+		memory_set_bankptr(7, spectrum_ram + (2<<14));
 
 		/* set initial ram config */
 		spectrum_128_port_7ffd_data = 0;
@@ -637,19 +637,19 @@ void spectrum_plus3_update_memory(void)
 			ram_page = spectrum_128_port_7ffd_data & 0x07;
 			ram_data = spectrum_ram + (ram_page<<14);
 
-			cpu_setbank(4, ram_data);
-			cpu_setbank(8, ram_data);
+			memory_set_bankptr(4, ram_data);
+			memory_set_bankptr(8, ram_data);
 
 			logerror("RAM at 0xc000: %02x\n",ram_page);
 
 			/* Reset memory between 0x4000 - 0xbfff in case extended paging was being used */
 			/* Bank 5 in 0x4000 - 0x7fff */
-			cpu_setbank(2, spectrum_ram + (5<<14));
-			cpu_setbank(6, spectrum_ram + (5<<14));
+			memory_set_bankptr(2, spectrum_ram + (5<<14));
+			memory_set_bankptr(6, spectrum_ram + (5<<14));
 
 			/* Bank 2 in 0x8000 - 0xbfff */
-			cpu_setbank(3, spectrum_ram + (2<<14));
-			cpu_setbank(7, spectrum_ram + (2<<14));
+			memory_set_bankptr(3, spectrum_ram + (2<<14));
+			memory_set_bankptr(7, spectrum_ram + (2<<14));
 
 
 			ROMSelection = ((spectrum_128_port_7ffd_data>>4) & 0x01) |
@@ -659,7 +659,7 @@ void spectrum_plus3_update_memory(void)
 
 			ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
-			cpu_setbank(1, ChosenROM);
+			memory_set_bankptr(1, ChosenROM);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 
 			logerror("rom switch: %02x\n", ROMSelection);
@@ -677,22 +677,22 @@ void spectrum_plus3_update_memory(void)
 			memory_selection = &spectrum_plus3_memory_selections[(MemorySelection<<2)];
 
 			ram_data = spectrum_ram + (memory_selection[0]<<14);
-			cpu_setbank(1, ram_data);
-			cpu_setbank(5, ram_data);
+			memory_set_bankptr(1, ram_data);
+			memory_set_bankptr(5, ram_data);
 			/* allow writes to 0x0000-0x03fff */
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK5);
 
 			ram_data = spectrum_ram + (memory_selection[1]<<14);
-			cpu_setbank(2, ram_data);
-			cpu_setbank(6, ram_data);
+			memory_set_bankptr(2, ram_data);
+			memory_set_bankptr(6, ram_data);
 
 			ram_data = spectrum_ram + (memory_selection[2]<<14);
-			cpu_setbank(3, ram_data);
-			cpu_setbank(7, ram_data);
+			memory_set_bankptr(3, ram_data);
+			memory_set_bankptr(7, ram_data);
 
 			ram_data = spectrum_ram + (memory_selection[3]<<14);
-			cpu_setbank(4, ram_data);
-			cpu_setbank(8, ram_data);
+			memory_set_bankptr(4, ram_data);
+			memory_set_bankptr(8, ram_data);
 
 			logerror("extended memory paging: %02x\n",MemorySelection);
 		}
@@ -1015,14 +1015,14 @@ void ts2068_update_memory(void)
 		{
 				rh = MRA8_BANK1;
 				wh = MWA8_ROM;
-				cpu_setbank(1, ExROM);
+				memory_set_bankptr(1, ExROM);
 				logerror("0000-1fff EXROM\n");
 		}
 		else
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(1, DOCK);
+				memory_set_bankptr(1, DOCK);
 				rh = MRA8_BANK1;
 				if (timex_cart_chunks&0x01)
 					wh = MWA8_BANK9;
@@ -1040,7 +1040,7 @@ void ts2068_update_memory(void)
 	else
 	{
 		ChosenROM = memory_region(REGION_CPU1) + 0x010000;
-		cpu_setbank(1, ChosenROM);
+		memory_set_bankptr(1, ChosenROM);
 		rh = MRA8_BANK1;
 		wh = MWA8_ROM;
 		logerror("0000-1fff HOME\n");
@@ -1052,7 +1052,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(2, ExROM);
+			memory_set_bankptr(2, ExROM);
 			rh = MRA8_BANK2;
 			wh = MWA8_ROM;
 			logerror("2000-3fff EXROM\n");
@@ -1061,7 +1061,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(2, DOCK+0x2000);
+				memory_set_bankptr(2, DOCK+0x2000);
 				rh = MRA8_BANK2;
 				if (timex_cart_chunks&0x02)
 					wh = MWA8_BANK10;
@@ -1079,7 +1079,7 @@ void ts2068_update_memory(void)
 	else
 	{
 		ChosenROM = memory_region(REGION_CPU1) + 0x012000;
-		cpu_setbank(2, ChosenROM);
+		memory_set_bankptr(2, ChosenROM);
 		rh = MRA8_BANK2;
 		wh = MWA8_ROM;
 		logerror("2000-3fff HOME\n");
@@ -1091,7 +1091,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(3, ExROM);
+			memory_set_bankptr(3, ExROM);
 			rh = MRA8_BANK3;
 			wh = MWA8_ROM;
 			logerror("4000-5fff EXROM\n");
@@ -1100,7 +1100,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(3, DOCK+0x4000);
+				memory_set_bankptr(3, DOCK+0x4000);
 				rh = MRA8_BANK3;
 				if (timex_cart_chunks&0x04)
 					wh = MWA8_BANK11;
@@ -1117,8 +1117,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(3, mess_ram);
-		cpu_setbank(11, mess_ram);
+		memory_set_bankptr(3, mess_ram);
+		memory_set_bankptr(11, mess_ram);
 		rh = MRA8_BANK3;
 		wh = MWA8_BANK11;
 		logerror("4000-5fff RAM\n");
@@ -1130,7 +1130,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(4, ExROM);
+			memory_set_bankptr(4, ExROM);
 			rh = MRA8_BANK4;
 			wh = MWA8_ROM;
 			logerror("6000-7fff EXROM\n");
@@ -1139,7 +1139,7 @@ void ts2068_update_memory(void)
 		{
 				if (timex_cart_type == TIMEX_CART_DOCK)
 				{
-					cpu_setbank(4, DOCK+0x6000);
+					memory_set_bankptr(4, DOCK+0x6000);
 					rh = MRA8_BANK4;
 					if (timex_cart_chunks&0x08)
 						wh = MWA8_BANK12;
@@ -1156,8 +1156,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(4, mess_ram + 0x2000);
-		cpu_setbank(12, mess_ram + 0x2000);
+		memory_set_bankptr(4, mess_ram + 0x2000);
+		memory_set_bankptr(12, mess_ram + 0x2000);
 		rh = MRA8_BANK4;
 		wh = MWA8_BANK12;
 		logerror("6000-7fff RAM\n");
@@ -1169,7 +1169,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(5, ExROM);
+			memory_set_bankptr(5, ExROM);
 			rh = MRA8_BANK5;
 			wh = MWA8_ROM;
 			logerror("8000-9fff EXROM\n");
@@ -1178,7 +1178,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(5, DOCK+0x8000);
+				memory_set_bankptr(5, DOCK+0x8000);
 				rh = MRA8_BANK5;
 				if (timex_cart_chunks&0x10)
 					wh = MWA8_BANK13;
@@ -1195,8 +1195,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(5, mess_ram + 0x4000);
-		cpu_setbank(13, mess_ram + 0x4000);
+		memory_set_bankptr(5, mess_ram + 0x4000);
+		memory_set_bankptr(13, mess_ram + 0x4000);
 		rh = MRA8_BANK5;
 		wh = MWA8_BANK13;
 		logerror("8000-9fff RAM\n");
@@ -1208,7 +1208,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(6, ExROM);
+			memory_set_bankptr(6, ExROM);
 			rh = MRA8_BANK6;
 			wh = MWA8_ROM;
 			logerror("a000-bfff EXROM\n");
@@ -1217,7 +1217,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(6, DOCK+0xa000);
+				memory_set_bankptr(6, DOCK+0xa000);
 				rh = MRA8_BANK6;
 				if (timex_cart_chunks&0x20)
 					wh = MWA8_BANK14;
@@ -1234,8 +1234,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(6, mess_ram + 0x6000);
-		cpu_setbank(14, mess_ram + 0x6000);
+		memory_set_bankptr(6, mess_ram + 0x6000);
+		memory_set_bankptr(14, mess_ram + 0x6000);
 		rh = MRA8_BANK6;
 		wh = MWA8_BANK14;
 		logerror("a000-bfff RAM\n");
@@ -1247,7 +1247,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(7, ExROM);
+			memory_set_bankptr(7, ExROM);
 			rh = MRA8_BANK7;
 			wh = MWA8_ROM;
 			logerror("c000-dfff EXROM\n");
@@ -1256,7 +1256,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(7, DOCK+0xc000);
+				memory_set_bankptr(7, DOCK+0xc000);
 				rh = MRA8_BANK7;
 				if (timex_cart_chunks&0x40)
 					wh = MWA8_BANK15;
@@ -1273,8 +1273,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(7, mess_ram + 0x8000);
-		cpu_setbank(15, mess_ram + 0x8000);
+		memory_set_bankptr(7, mess_ram + 0x8000);
+		memory_set_bankptr(15, mess_ram + 0x8000);
 		rh = MRA8_BANK7;
 		wh = MWA8_BANK15;
 		logerror("c000-dfff RAM\n");
@@ -1286,7 +1286,7 @@ void ts2068_update_memory(void)
 	{
 		if (ts2068_port_ff_data & 0x80)
 		{
-			cpu_setbank(8, ExROM);
+			memory_set_bankptr(8, ExROM);
 			rh = MRA8_BANK8;
 			wh = MWA8_ROM;
 			logerror("e000-ffff EXROM\n");
@@ -1295,7 +1295,7 @@ void ts2068_update_memory(void)
 		{
 			if (timex_cart_type == TIMEX_CART_DOCK)
 			{
-				cpu_setbank(8, DOCK+0xe000);
+				memory_set_bankptr(8, DOCK+0xe000);
 				rh = MRA8_BANK8;
 				if (timex_cart_chunks&0x80)
 					wh = MWA8_BANK16;
@@ -1312,8 +1312,8 @@ void ts2068_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(8, mess_ram + 0xa000);
-		cpu_setbank(16, mess_ram + 0xa000);
+		memory_set_bankptr(8, mess_ram + 0xa000);
+		memory_set_bankptr(16, mess_ram + 0xa000);
 		rh = MRA8_BANK8;
 		wh = MWA8_BANK16;
 		logerror("e000-ffff RAM\n");
@@ -1418,8 +1418,8 @@ ADDRESS_MAP_END
 
 static MACHINE_INIT( tc2048 )
 {
-	cpu_setbank(1, mess_ram);
-	cpu_setbank(2, mess_ram);
+	memory_set_bankptr(1, mess_ram);
+	memory_set_bankptr(2, mess_ram);
 	ts2068_port_ff_data = 0;
 
 	machine_init_spectrum();
@@ -1590,8 +1590,8 @@ static void scorpion_update_memory(void)
 		ram_page = (spectrum_128_port_7ffd_data & 0x07) | ((scorpion_256_port_1ffd_data & (1<<4))>>1);
 		ram_data = spectrum_ram + (ram_page<<14);
 
-		cpu_setbank(4, ram_data);
-		cpu_setbank(8, ram_data);
+		memory_set_bankptr(4, ram_data);
+		memory_set_bankptr(8, ram_data);
 
 		logerror("RAM at 0xc000: %02x\n",ram_page);
 	}
@@ -1604,8 +1604,8 @@ static void scorpion_update_memory(void)
 		/* connect page 0 of ram to 0x0000 */
 		rh = MRA8_BANK1;
 		wh = MWA8_BANK5;
-		cpu_setbank(1, spectrum_ram+(8<<14));
-		cpu_setbank(5, spectrum_ram+(8<<14));
+		memory_set_bankptr(1, spectrum_ram+(8<<14));
+		memory_set_bankptr(5, spectrum_ram+(8<<14));
 	}
 	else
 	{
@@ -1630,7 +1630,7 @@ static void scorpion_update_memory(void)
 		/* rom 0 is 128K rom, rom 1 is 48 BASIC */
 		ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
-		cpu_setbank(1, ChosenROM);
+		memory_set_bankptr(1, ChosenROM);
 
 		logerror("rom switch: %02x\n", ROMSelection);
 	}
@@ -1763,12 +1763,12 @@ static MACHINE_INIT( scorpion )
 	if (spectrum_alloc_ram(256))
 	{
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		cpu_setbank(2, spectrum_ram + (5<<14));
-		cpu_setbank(6, spectrum_ram + (5<<14));
+		memory_set_bankptr(2, spectrum_ram + (5<<14));
+		memory_set_bankptr(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		cpu_setbank(3, spectrum_ram + (2<<14));
-		cpu_setbank(7, spectrum_ram + (2<<14));
+		memory_set_bankptr(3, spectrum_ram + (2<<14));
+		memory_set_bankptr(7, spectrum_ram + (2<<14));
 
 		spectrum_128_port_7ffd_data = 0;
 		scorpion_256_port_1ffd_data = 0;
@@ -1812,12 +1812,12 @@ static MACHINE_INIT( pentagon )
 	if (spectrum_alloc_ram(128))
 	{
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		cpu_setbank(2, spectrum_ram + (5<<14));
-		cpu_setbank(6, spectrum_ram + (5<<14));
+		memory_set_bankptr(2, spectrum_ram + (5<<14));
+		memory_set_bankptr(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		cpu_setbank(3, spectrum_ram + (2<<14));
-		cpu_setbank(7, spectrum_ram + (2<<14));
+		memory_set_bankptr(3, spectrum_ram + (2<<14));
+		memory_set_bankptr(7, spectrum_ram + (2<<14));
 
 		betadisk_init();
 	}

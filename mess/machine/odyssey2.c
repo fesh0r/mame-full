@@ -29,7 +29,7 @@ DRIVER_INIT( odyssey2 )
 
 MACHINE_INIT( odyssey2 )
 {
-    cpu_setbank(1, memory_region(REGION_USER1) + 3*0x800);
+    memory_set_bankptr(1, memory_region(REGION_USER1) + 3*0x800);
     p1 = 0;
     p2 = 0;
     return;
@@ -79,14 +79,14 @@ READ8_HANDLER( odyssey2_getp1 )
 WRITE8_HANDLER( odyssey2_putp1 )
 {
     p1=data;
-    cpu_setbank(1, memory_region(REGION_USER1)+(((data&3)^3)<<11));
+    memory_set_bankptr(1, memory_region(REGION_USER1)+(((data&3)^3)<<11));
 /* 2kbyte eprom are connected a0..a9 to a0..a9
    but a10 of the eprom is connected to a11 of the cpu
 
    the first 0x400 bytes are internal rom, than comes 0x400 bytes of the eprom
    and the 2nd 0x400 bytes are mapped 2 times
 */
-    cpu_setbank(2, memory_region(REGION_USER1)+(((data&3)^3)<<11)+0x400);
+    memory_set_bankptr(2, memory_region(REGION_USER1)+(((data&3)^3)<<11)+0x400);
     logerror("%.6f p1 written %.2x\n", timer_get_time(), data);
 }
 

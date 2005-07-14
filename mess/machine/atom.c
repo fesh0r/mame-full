@@ -482,7 +482,7 @@ static void atom_eprom_box_refresh(void)
 	/* get address of eprom data */
 	eprom_data = memory_region(REGION_CPU1) + 0x010000 + (selected_eprom<<12);
 	/* set bank address */
-	cpu_setbank(1, eprom_data);
+	memory_set_bankptr(1, eprom_data);
 }
 
 void atom_eprom_box_init(void)

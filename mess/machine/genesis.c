@@ -2364,9 +2364,9 @@ void genesis_common_init( void )
 	memset( genesis_mainram, 0x00, 0x10000);
 
 
-//	cpu_setbank(1,memory_region(REGION_USER1)); /* cartridge at BANK1 */
-	cpu_setbank(2,genesis_mainram); /* BANK2 = mainram */
-//	cpu_setbank(3,memory_region(REGION_CPU2));  /* BANK3 = mainram */
+//	memory_set_bankptr(1,memory_region(REGION_USER1)); /* cartridge at BANK1 */
+	memory_set_bankptr(2,genesis_mainram); /* BANK2 = mainram */
+//	memory_set_bankptr(3,memory_region(REGION_CPU2));  /* BANK3 = mainram */
 
 	/* prevent the z80 from running (code must be uploaded by the 68k first) */
 	cpunum_set_input_line(1, INPUT_LINE_HALT,  ASSERT_LINE);

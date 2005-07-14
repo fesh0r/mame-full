@@ -304,21 +304,21 @@ static WRITE8_HANDLER ( mtx_bankswitch_w )
 	// bankswitcherooney type thing (tm)
 
 	romoffset = memory_region(REGION_CPU1) + 0x10000 + bank1;
-	cpu_setbank(1, romoffset);
+	memory_set_bankptr(1, romoffset);
 	romoffset = memory_region(REGION_CPU1) + 0x10000 + bank2;
-	cpu_setbank(2, romoffset);
+	memory_set_bankptr(2, romoffset);
 
-	cpu_setbank(3, mess_ram + bank3);
-	cpu_setbank(11, mess_ram + bank3);
+	memory_set_bankptr(3, mess_ram + bank3);
+	memory_set_bankptr(11, mess_ram + bank3);
 
-	cpu_setbank(4, mess_ram + bank4);
-	cpu_setbank(12, mess_ram + bank4);
+	memory_set_bankptr(4, mess_ram + bank4);
+	memory_set_bankptr(12, mess_ram + bank4);
 
-	cpu_setbank(5, mess_ram + bank5);
-	cpu_setbank(13, mess_ram + bank5);
+	memory_set_bankptr(5, mess_ram + bank5);
+	memory_set_bankptr(13, mess_ram + bank5);
 
-	cpu_setbank(6, mess_ram + bank6);
-	cpu_setbank(14, mess_ram + bank6);
+	memory_set_bankptr(6, mess_ram + bank6);
+	memory_set_bankptr(14, mess_ram + bank6);
 
 }
 
@@ -633,27 +633,27 @@ static MACHINE_INIT( mtx512 )
 	romoffset[0x0aaf] = 0xae;
 	romoffset[0x0ab0] = 0x0a;
 	romoffset[0x0ab1] = 0xc9;	// ret
-	cpu_setbank(1, romoffset);
+	memory_set_bankptr(1, romoffset);
 	romoffset = memory_region(REGION_CPU1) + 0x12000;
-	cpu_setbank(2, romoffset);
+	memory_set_bankptr(2, romoffset);
 
-	cpu_setbank(3, mess_ram + 0x6000);
-	cpu_setbank(11, mess_ram + 0x6000);
+	memory_set_bankptr(3, mess_ram + 0x6000);
+	memory_set_bankptr(11, mess_ram + 0x6000);
 
-	cpu_setbank(4, mess_ram + 0x4000);
-	cpu_setbank(12, mess_ram + 0x4000);
+	memory_set_bankptr(4, mess_ram + 0x4000);
+	memory_set_bankptr(12, mess_ram + 0x4000);
 
-	cpu_setbank(5, mess_ram + 0x2000);
-	cpu_setbank(13, mess_ram + 0x2000);
+	memory_set_bankptr(5, mess_ram + 0x2000);
+	memory_set_bankptr(13, mess_ram + 0x2000);
 
-	cpu_setbank(6, mess_ram);
-	cpu_setbank(14, mess_ram);
+	memory_set_bankptr(6, mess_ram);
+	memory_set_bankptr(14, mess_ram);
 
-	cpu_setbank(7, mtx_commonram);
-	cpu_setbank(15, mtx_commonram);
+	memory_set_bankptr(7, mtx_commonram);
+	memory_set_bankptr(15, mtx_commonram);
 
-	cpu_setbank(8, mtx_commonram + 0x2000);
-	cpu_setbank(16, mtx_commonram + 0x2000);
+	memory_set_bankptr(8, mtx_commonram + 0x2000);
+	memory_set_bankptr(16, mtx_commonram + 0x2000);
 
 	mtx_loadindex = 0;
 	mtx_saveindex = 0;

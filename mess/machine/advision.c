@@ -22,7 +22,7 @@ MACHINE_INIT( advision )
 {
 	advision_ram = memory_region(REGION_CPU1) + 0x2000;
     advision_rambank = 0x300;
-    cpu_setbank(1,memory_region(REGION_CPU1) + 0x1000);
+    memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x1000);
     advision_framestart = 0;
     advision_videoenable = 0;
 }
@@ -59,9 +59,9 @@ WRITE8_HANDLER ( advision_putp1 )
 
 	ROM = memory_region(REGION_CPU1);
 	if (data & 0x04)
-		cpu_setbank(1,&ROM[0x0000]);
+		memory_set_bankptr(1,&ROM[0x0000]);
 	else
-		cpu_setbank(1,&ROM[0x1000]);
+		memory_set_bankptr(1,&ROM[0x1000]);
 	advision_rambank = (data & 0x03) << 8;
 }
 

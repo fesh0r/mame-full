@@ -355,7 +355,7 @@ static void nc_refresh_memory_bank_config(int bank)
 
 			addr = (memory_region(REGION_CPU1)+0x010000) + (mem_bank<<14);
 
-			cpu_setbank(bank+1, addr);
+			memory_set_bankptr(bank+1, addr);
 
 			write_handler = MWA8_NOP;
 #ifdef VERBOSE
@@ -373,8 +373,8 @@ static void nc_refresh_memory_bank_config(int bank)
 
 			addr = mess_ram + (mem_bank<<14);
 
-			cpu_setbank(bank+1, addr);
-			cpu_setbank(bank+5, addr);
+			memory_set_bankptr(bank+1, addr);
+			memory_set_bankptr(bank+5, addr);
 
 			write_handler = nc_bankhandler_w[bank];
 #ifdef VERBOSE
@@ -394,13 +394,13 @@ static void nc_refresh_memory_bank_config(int bank)
 				mem_bank = mem_bank & nc_membank_card_ram_mask;
 				addr = nc_card_ram + (mem_bank<<14);
 
-				cpu_setbank(bank+1, addr);
+				memory_set_bankptr(bank+1, addr);
 
 				/* write enabled? */
 				if (readinputport(10) & 0x02)
 				{
 					/* yes */
-					cpu_setbank(bank+5, addr);
+					memory_set_bankptr(bank+5, addr);
 
 					write_handler = nc_bankhandler_w[bank];
 				}

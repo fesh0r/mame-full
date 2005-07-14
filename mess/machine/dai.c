@@ -53,7 +53,7 @@ WRITE8_HANDLER( dai_stack_interrupt_circuit_w )
 
 static void dai_update_memory (int dai_rom_bank)
 {
-	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000 + dai_rom_bank*0x1000);
+	memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x010000 + dai_rom_bank*0x1000);
 }
 
 static void dai_bootstrap_callback (int param)
@@ -136,8 +136,8 @@ MACHINE_INIT( dai )
 {
 	memory_set_opbase_handler(0, dai_opbaseoverride);
 
-	cpu_setbank(1, mess_ram);
-	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);
+	memory_set_bankptr(1, mess_ram);
+	memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x010000);
 
 	tms5501_init(0, &dai_tms5501_init_param);
 	ppi8255_init(&dai_ppi82555_intf);

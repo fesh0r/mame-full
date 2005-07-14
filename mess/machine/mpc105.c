@@ -67,7 +67,7 @@ static void mpc105_update_memory(void)
 						memory_install_write64_handler(cpunum, ADDRESS_SPACE_PROGRAM, begin, end,
 							0, 0, (write64_handler) (bank + mpc105->bank_base));
 					}
-					cpu_setbank(bank + mpc105->bank_base, mess_ram);
+					memory_set_bankptr(bank + mpc105->bank_base, mess_ram);
 				}
 			}
 		}

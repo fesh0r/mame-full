@@ -116,11 +116,11 @@ static void gb_init(void)
 	MBC3RTCBank = 0;
 	ROMBank = 1;
 	RAMBank = 0;
-	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	if ( MBCType != MEGADUCK ) {
-		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 	} else {
-		cpu_setbank( 10, ROMMap[0] );
+		memory_set_bankptr( 10, ROMMap[0] );
 	}
 
 //	/* Initialize the registers */
@@ -182,8 +182,8 @@ static void gb_init(void)
 MACHINE_INIT( gb )
 {
         /* Enable BIOS rom */
-        cpu_setbank(5, gb_ram + 0x10000);
-        cpu_setbank(10, gb_ram + 0x0100);
+        memory_set_bankptr(5, gb_ram + 0x10000);
+        memory_set_bankptr(10, gb_ram + 0x0100);
 
 	gb_init();
 
@@ -250,7 +250,7 @@ MACHINE_INIT( gbc )
 		}
 	}
 	GBC_RAMBank = 0;
-	cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
+	memory_set_bankptr (3, GBC_RAMMap[GBC_RAMBank]);
 
 	/* Allocate memory for video ram */
 	for( ii = 0; ii < 2; ii++ )
@@ -265,7 +265,7 @@ MACHINE_INIT( gbc )
 		}
 	}
 	GBC_VRAMBank = 0;
-	cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
+	memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);
 
 	gb_chrgen = GBC_VRAMMap[0];
 	gbc_chrgen = GBC_VRAMMap[1];
@@ -343,7 +343,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc1 )
 
 		ROMBank = data & 0x1F; /* Only uses lower 5 bits */
 		/* Switch banks */
-		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	}
 }
 
@@ -360,7 +360,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc2 )
 		if( offset & 0x0100 )
 			ROMBank = data;
 		/* Switch banks */
-		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	}
 }
 
@@ -375,7 +375,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc3 )
 
 		ROMBank = data;
 		/* Switch banks */
-		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	}
 }
 
@@ -394,7 +394,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc5 )
 			ROMBank = (ROMBank & 0xFF ) | ((UINT16)(data & 0x1) << 8);
 		}
 		/* Switch banks */
-		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	}
 }
 
@@ -408,7 +408,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 		{
 			/* Select the upper bits of the ROMMask */
 			ROMBank |= data << 5;
-			cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+			memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 			return;
 		}
 		else
@@ -416,7 +416,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 			RAMBank = data;
 		}
 		/* Switch banks */
-		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 	}
 }
 
@@ -428,7 +428,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc3 )
 		if( data & 0x8 )	/* RTC banks */
 		{
 			MBC3RTCBank = (data & 0xf) - 8;
-			cpu_setbank (2, &MBC3RTCMap[MBC3RTCBank]);
+			memory_set_bankptr (2, &MBC3RTCMap[MBC3RTCBank]);
 			return;
 		}
 		else	/* RAM banks */
@@ -436,7 +436,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc3 )
 			RAMBank = data & 0x3;
 		}
 		/* Switch banks */
-		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 	}
 }
 
@@ -451,7 +451,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc5 )
 		}
 		RAMBank = data;
 		/* Switch banks */
-		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 	}
 }
 
@@ -531,7 +531,7 @@ WRITE8_HANDLER ( gb_io_w )
 WRITE8_HANDLER ( gb_bios_w )
 {
 	/* disable BIOS ROM */
-	cpu_setbank(5, gb_ram);
+	memory_set_bankptr(5, gb_ram);
 }
 
 #ifdef MAME_DEBUG
@@ -1767,7 +1767,7 @@ WRITE8_HANDLER ( gbc_video_w )
 			break;
 		case 0xFF4F:	/* VBK - VRAM bank select */
 			GBC_VRAMBank = data & 0x1;
-			cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
+			memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);
 			data |= 0xFE;
 			break;
 		case 0xFF51:	/* HDMA1 - HBL General DMA - Source High */
@@ -1833,7 +1833,7 @@ WRITE8_HANDLER ( gbc_video_w )
 			break;
 		case 0xFF70:	/* SVBK - RAM bank select */
 			GBC_RAMBank = data & 0x7;
-			cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
+			memory_set_bankptr (3, GBC_RAMMap[GBC_RAMBank]);
 			break;
 		/* Undocumented registers */
 		case 0xFF6C:
@@ -1978,7 +1978,7 @@ WRITE8_HANDLER( megaduck_rom_bank_select_type1 )
 		ROMBank = data & ROMMask;
 
 		/* Switch banks */
-		cpu_setbank (1, ROMMap[ROMBank]);
+		memory_set_bankptr (1, ROMMap[ROMBank]);
 	}
 }
 
@@ -1989,8 +1989,8 @@ WRITE8_HANDLER( megaduck_rom_bank_select_type2 )
 		ROMBank = (data << 1) & ROMMask;
 
 		/* Switch banks */
-		cpu_setbank( 10, ROMMap[ROMBank]);
-		cpu_setbank( 1, ROMMap[ROMBank + 1]);
+		memory_set_bankptr( 10, ROMMap[ROMBank]);
+		memory_set_bankptr( 1, ROMMap[ROMBank + 1]);
 	}
 }
 

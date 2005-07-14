@@ -46,13 +46,13 @@ static void pmd851_update_memory (void)
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MRA8_NOP);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, 0, MRA8_NOP);
 
-		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(5, mess_ram + 0xc000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(5, mess_ram + 0xc000);
 
-		cpu_setbank(6, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(7, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(8, mess_ram + 0xc000);
+		memory_set_bankptr(6, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(7, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(8, mess_ram + 0xc000);
 	}
 	else
 	{
@@ -65,11 +65,11 @@ static void pmd851_update_memory (void)
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MRA8_BANK2);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, 0, MRA8_BANK4);
 
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x1000);
-		cpu_setbank(3, mess_ram + 0x2000);
-		cpu_setbank(4, mess_ram + 0x3000);
-		cpu_setbank(5, mess_ram + 0x4000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x1000);
+		memory_set_bankptr(3, mess_ram + 0x2000);
+		memory_set_bankptr(4, mess_ram + 0x3000);
+		memory_set_bankptr(5, mess_ram + 0x4000);
 	}
 }
 
@@ -81,16 +81,16 @@ static void pmd852a_update_memory (void)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MWA8_ROM);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(2, mess_ram + 0x9000);
-		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(4, mess_ram + 0xb000);
-		cpu_setbank(5, mess_ram + 0xc000);
-		cpu_setbank(6, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(7, mess_ram + 0x9000);
-		cpu_setbank(8, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(9, mess_ram + 0xb000);
-		cpu_setbank(10, mess_ram + 0xc000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(2, mess_ram + 0x9000);
+		memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(4, mess_ram + 0xb000);
+		memory_set_bankptr(5, mess_ram + 0xc000);
+		memory_set_bankptr(6, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(7, mess_ram + 0x9000);
+		memory_set_bankptr(8, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(9, mess_ram + 0xb000);
+		memory_set_bankptr(10, mess_ram + 0xc000);
 
 	}
 	else
@@ -98,11 +98,11 @@ static void pmd852a_update_memory (void)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MWA8_BANK1);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, 0, 0, MWA8_BANK3);
 
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x1000);
-		cpu_setbank(3, mess_ram + 0x2000);
-		cpu_setbank(4, mess_ram + 0x5000);
-		cpu_setbank(5, mess_ram + 0x4000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x1000);
+		memory_set_bankptr(3, mess_ram + 0x2000);
+		memory_set_bankptr(4, mess_ram + 0x5000);
+		memory_set_bankptr(5, mess_ram + 0x4000);
 	}
 }
 
@@ -110,33 +110,33 @@ static void pmd853_update_memory (void)
 {
 	if (pmd85_startup_mem_map)
 	{
-		cpu_setbank( 1, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 2, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 3, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 4, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 5, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 6, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 7, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 8, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank( 9, mess_ram);
-		cpu_setbank(10, mess_ram + 0x2000);
-		cpu_setbank(11, mess_ram + 0x4000);
-		cpu_setbank(12, mess_ram + 0x6000);
-		cpu_setbank(13, mess_ram + 0x8000);
-		cpu_setbank(14, mess_ram + 0xa000);
-		cpu_setbank(15, mess_ram + 0xc000);
-		cpu_setbank(16, mess_ram + 0xe000);
+		memory_set_bankptr( 1, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 2, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 3, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 4, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 5, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 6, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 7, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 8, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr( 9, mess_ram);
+		memory_set_bankptr(10, mess_ram + 0x2000);
+		memory_set_bankptr(11, mess_ram + 0x4000);
+		memory_set_bankptr(12, mess_ram + 0x6000);
+		memory_set_bankptr(13, mess_ram + 0x8000);
+		memory_set_bankptr(14, mess_ram + 0xa000);
+		memory_set_bankptr(15, mess_ram + 0xc000);
+		memory_set_bankptr(16, mess_ram + 0xe000);
 	}
 	else
 	{
-		cpu_setbank( 1, mess_ram);
-		cpu_setbank( 2, mess_ram + 0x2000);
-		cpu_setbank( 3, mess_ram + 0x4000);
-		cpu_setbank( 4, mess_ram + 0x6000);
-		cpu_setbank( 5, mess_ram + 0x8000);
-		cpu_setbank( 6, mess_ram + 0xa000);
-		cpu_setbank( 7, mess_ram + 0xc000);
-		cpu_setbank( 8, pmd853_memory_mapping ? memory_region(REGION_CPU1) + 0x010000 : mess_ram + 0xe000);
+		memory_set_bankptr( 1, mess_ram);
+		memory_set_bankptr( 2, mess_ram + 0x2000);
+		memory_set_bankptr( 3, mess_ram + 0x4000);
+		memory_set_bankptr( 4, mess_ram + 0x6000);
+		memory_set_bankptr( 5, mess_ram + 0x8000);
+		memory_set_bankptr( 6, mess_ram + 0xa000);
+		memory_set_bankptr( 7, mess_ram + 0xc000);
+		memory_set_bankptr( 8, pmd853_memory_mapping ? memory_region(REGION_CPU1) + 0x010000 : mess_ram + 0xe000);
 	}
 }
 
@@ -148,12 +148,12 @@ static void alfa_update_memory (void)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x33ff, 0, 0, MWA8_ROM);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3400, 0x3fff, 0, 0, MWA8_NOP);
 
-		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(2, memory_region(REGION_CPU1) + 0x011000);
-		cpu_setbank(4, mess_ram + 0xc000);
-		cpu_setbank(5, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(6, memory_region(REGION_CPU1) + 0x011000);
-		cpu_setbank(7, mess_ram + 0xc000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x011000);
+		memory_set_bankptr(4, mess_ram + 0xc000);
+		memory_set_bankptr(5, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(6, memory_region(REGION_CPU1) + 0x011000);
+		memory_set_bankptr(7, mess_ram + 0xc000);
 	}
 	else
 	{
@@ -161,10 +161,10 @@ static void alfa_update_memory (void)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x33ff, 0, 0, MWA8_BANK2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3400, 0x3fff, 0, 0, MWA8_BANK3);
 
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x1000);
-		cpu_setbank(3, mess_ram + 0x3400);
-		cpu_setbank(4, mess_ram + 0x4000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x1000);
+		memory_set_bankptr(3, mess_ram + 0x3400);
+		memory_set_bankptr(4, mess_ram + 0x4000);
 	}
 }
 
@@ -174,17 +174,17 @@ static void mato_update_memory (void)
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 
-		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(2, mess_ram + 0xc000);
-		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(4, mess_ram + 0xc000);
+		memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(2, mess_ram + 0xc000);
+		memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankptr(4, mess_ram + 0xc000);
 	}
 	else
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK1);
 
-		cpu_setbank(1, mess_ram);
-		cpu_setbank(2, mess_ram + 0x4000);
+		memory_set_bankptr(1, mess_ram);
+		memory_set_bankptr(2, mess_ram + 0x4000);
 	}
 }
 
