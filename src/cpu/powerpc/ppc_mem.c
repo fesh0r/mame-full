@@ -261,7 +261,7 @@ exception:
 	{
 		if (flags & PPC_TRANSLATE_CODE)
 		{
-			longjmp(ppc.exception_jmpbuf, EXCEPTION_ISI);
+			ppc_exception(EXCEPTION_ISI);
 		}
 		else
 		{
@@ -271,7 +271,7 @@ exception:
 			else
 				ppc.dsisr = dsisr;
 
-			longjmp(ppc.exception_jmpbuf, EXCEPTION_DSI);
+			ppc_exception(EXCEPTION_DSI);
 		}
 	}
 	return 0;

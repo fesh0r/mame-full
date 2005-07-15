@@ -22,7 +22,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc);
 
 static void append_generate_exception(struct drccore *drc, UINT8 exception);
 static void append_check_interrupts(struct drccore *drc, int inline_generate);
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc);
+static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc, UINT32 *opptr);
 
 static UINT32 temp_ppc_pc;
 
@@ -54,6 +54,13 @@ static void ppcdrc_init(void)
 
 static void ppcdrc_reset(struct drccore *drc)
 {
+	ppc.invoke_exception_handler = drc->cache_top;
+	drc_append_restore_volatiles(drc);
+	_mov_r32_m32bd(REG_EAX, REG_ESP, 4);
+	_mov_r32_m32abs(REG_ESP, &ppc.host_esp);
+	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+	_jmp_r32(REG_EAX);
+
 	ppc.generate_interrupt_exception = drc->cache_top;
 	append_generate_exception(drc, EXCEPTION_IRQ);
 
@@ -73,10 +80,34 @@ static void ppcdrc_reset(struct drccore *drc)
 	append_generate_exception(drc, EXCEPTION_ISI);
 }
 
+static UINT32 *ppcdrc_getopptr(UINT32 address)
+{
+	UINT32 *result;
+	UINT32 offset = 0;
+
+	if (ppc.is603 || ppc.is602)
+	{
+		if (MSR & MSR_IR)
+		{
+			if (!ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
+				return NULL;
+		}
+		address = DWORD_XOR_BE(address);
+		offset = (address & 0x07) / sizeof(*result);
+		address &= ~0x07;
+	}
+
+	result = (UINT32 *) memory_get_op_ptr(cpu_getactivecpu(), address);
+	if (result)
+		result += offset;
+	return result;
+}
+
 static void ppcdrc_recompile(struct drccore *drc)
 {
 	int remaining = MAX_INSTRUCTIONS;
 	UINT32 pc = ppc.pc;
+	UINT32 *opptr;
 
 	/* begin the sequence */
 	drc_begin_sequence(drc, pc);
@@ -84,8 +115,9 @@ static void ppcdrc_recompile(struct drccore *drc)
 	/* loose verification case: one verification here only */
 	if (!(ppc.drcoptions & PPCDRC_STRICT_VERIFY))
 	{
-		change_pc(pc);
-		drc_append_verify_code(drc, cpu_opptr(pc), 4);
+		opptr = ppcdrc_getopptr(pc);
+		if (opptr)
+			drc_append_verify_code(drc, opptr, 4);
 	}
 
 	/* loop until we hit an unconditional branch */
@@ -98,6 +130,13 @@ static void ppcdrc_recompile(struct drccore *drc)
 		pc += (INT8)(result >> 24);
 		if (result & RECOMPILE_END_OF_STRING)
 			break;
+
+		/* do not recompile across MMU page boundaries */
+		if ((pc & 0x0FFF) == 0)
+		{
+			remaining = 0;
+			break;
+		}
 	}
 
 	/* add dispatcher just in case */
@@ -140,30 +179,7 @@ static void *ppcdrc_exception_handler(int exception_type)
 
 static void ppcdrc_entrygen(struct drccore *drc)
 {
-	struct linkdata link1;
-
-	/* append setjmp call for ISI/DSI/DECREMENTER exceptions */
-	if (ppc.is603 || ppc.is602)
-	{
-		/* generate setjmp call; note that we have to set up EBP */
-		_mov_m32abs_r32(&ppc_icount, REG_EBP);
-		_mov_r32_r32(REG_EBP, REG_ESP);
-		_push_imm(ppc.exception_jmpbuf);
-		_call(_setjmp);
-		_add_r32_imm(REG_ESP, 4);
-		_mov_r32_m32abs(REG_EBP, &ppc_icount);
-
-		/* dispatch based on link */
-		_cmp_r32_imm(REG_EAX, 0);
-		_jcc_short_link(COND_Z, &link1);
-		_push_r32(REG_EAX);
-		_call(ppcdrc_exception_handler);
-		_add_r32_imm(REG_ESP, 4);
-		_mov_r32_m32abs(REG_EBP, &ppc_icount);
-		_jmp_r32(REG_EAX);
-		_resolve_link(&link1);
-	}
-
+	_mov_m32abs_r32(&ppc.host_esp, REG_ESP);
 	append_check_interrupts(drc, 0);
 }
 
@@ -177,19 +193,37 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	drc_register_code_at_cache_top(drc, pc);
 
 	/* get a pointer to the current instruction */
-	change_pc(pc);
-	opptr = cpu_opptr(pc);
+	opptr = ppcdrc_getopptr(pc);
 
 	//log_symbol(drc, ~2);
 	//log_symbol(drc, pc);
 
-	/* emit debugging and self-modifying code checks */
+	/* emit debugging call */
 	drc_append_call_debugger(drc);
+
+	/* null opptr?  if legit, we need to generate an ISI exception */
+	if (!opptr)
+	{
+		/* first check to see if the code is up to date; if not, recompile */
+		_push_imm(pc);
+		_call(ppcdrc_getopptr);
+		_add_r32_imm(REG_ESP, 4);
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc(COND_NZ, drc->recompile);
+
+		/* code is up to date; do the exception */
+		_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+		_mov_r32_m32abs(REG_EAX, &ppc.generate_isi_exception);
+		_jmp_r32(REG_EAX);
+		return RECOMPILE_SUCCESSFUL | RECOMPILE_END_OF_STRING;
+	}
+
+	/* emit self-modifying code checks */
 	if (ppc.drcoptions & PPCDRC_STRICT_VERIFY)
 		drc_append_verify_code(drc, opptr, 4);
 
 	/* compile the instruction */
-	result = recompile_instruction(drc, pc);
+	result = recompile_instruction(drc, pc, opptr);
 
 	/* handle the results */
 	if (!(result & RECOMPILE_SUCCESSFUL))
@@ -211,18 +245,12 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	return (result & 0xffff) | ((UINT8)cycles << 16) | ((UINT8)pcdelta << 24);
 }
 
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
+static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc, UINT32 *opptr)
 {
 	UINT32 opcode;
 	temp_ppc_pc = pc;
-	if (ppc.is602 || ppc.is603)
-	{
-		opcode = ROPCODE64(pc);
-	}
-	else
-	{
-		opcode = ROPCODE(pc);
-	}
+
+	opcode = *opptr;
 
 	if (opcode != 0) {		// this is a little workaround for VF3
 		switch(opcode >> 26)
@@ -248,10 +276,12 @@ static void append_generate_exception(struct drccore *drc, UINT8 exception)
 	struct linkdata link1, link2, link3;
 
 	_mov_r32_m32abs(REG_EAX, &ppc.msr);
+	_and_r32_imm(REG_EAX, 0xff73);
 	_mov_m32abs_r32(&SRR1, REG_EAX);
+	_mov_r32_m32abs(REG_EAX, &ppc.msr);
 
-	// Clear WE, PR, EE, PR
-	_and_r32_imm(REG_EAX, ~(MSR_WE | MSR_PR | MSR_EE | MSR_PE));
+	// Clear POW, EE, PR, FP, FE0, SE, BE, FE1, IR, DR, RI
+	_and_r32_imm(REG_EAX, ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI));
 	// Set LE to ILE
 	_and_r32_imm(REG_EAX, ~MSR_LE);		// clear LE first
 	_test_r32_imm(REG_EAX, MSR_ILE);
@@ -1155,6 +1185,7 @@ static UINT32 recompile_lbz(struct drccore *drc, UINT32 op)
 	}
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1170,6 +1201,7 @@ static UINT32 recompile_lbzu(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EDX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1185,6 +1217,7 @@ static UINT32 recompile_lbzux(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EDX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1202,6 +1235,7 @@ static UINT32 recompile_lbzx(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EAX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 

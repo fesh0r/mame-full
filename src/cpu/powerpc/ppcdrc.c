@@ -4,7 +4,6 @@
     Written by Ville Linde
 */
 
-#include <setjmp.h>
 #include "driver.h"
 #include "ppc.h"
 #include "mamedbg.h"
@@ -259,6 +258,7 @@ typedef struct {
 	struct drccore *drc;
 	UINT32 drcoptions;
 
+	void *		invoke_exception_handler;
 	void *		generate_interrupt_exception;
 	void *		generate_syscall_exception;
 	void *		generate_decrementer_exception;
@@ -282,7 +282,6 @@ typedef struct {
 	UINT32 ibr;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
-	jmp_buf exception_jmpbuf;
 	data8_t (*read8)(offs_t address);
 	data16_t (*read16)(offs_t address);
 	data32_t (*read32)(offs_t address);
@@ -297,6 +296,9 @@ typedef struct {
 	void (*write16_unaligned)(offs_t address, data16_t data);
 	void (*write32_unaligned)(offs_t address, data32_t data);
 	void (*write64_unaligned)(offs_t address, data64_t data);
+
+	/* saved ESP when entering entry point */
+	UINT32 host_esp;
 } PPC_REGS;
 
 
@@ -448,6 +450,33 @@ INLINE void write_decrementer(UINT32 value)
 
 /*********************************************************************/
 
+INLINE void ppc_exception(int exception_type)
+{
+	void *exception_code = NULL;
+	void (*invoke_exception_handler)(void *handler);
+
+	switch(exception_type)
+	{
+		case EXCEPTION_DECREMENTER:
+			exception_code = ppc.generate_decrementer_exception;
+			break;
+		case EXCEPTION_DSI:
+			exception_code = ppc.generate_dsi_exception;
+			break;
+		case EXCEPTION_ISI:
+			exception_code = ppc.generate_isi_exception;
+			break;
+		default:
+			osd_die("Unknown exception %d\n", exception_type);
+			break;
+	}
+
+	memcpy(&invoke_exception_handler, &ppc.invoke_exception_handler, sizeof(invoke_exception_handler));
+	invoke_exception_handler(exception_code);
+}
+
+/*********************************************************************/
+
 INLINE void ppc_set_spr(int spr, UINT32 value)
 {
 	switch (spr)
@@ -473,7 +502,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				{
 					/* trigger interrupt */
 					if( MSR & MSR_EE )
-						longjmp(ppc.exception_jmpbuf, EXCEPTION_DECREMENTER);
+						ppc_exception(EXCEPTION_DECREMENTER);
 				}
 				write_decrementer(value);
 				return;
@@ -1108,20 +1137,11 @@ static void ppcdrc603_reset(void *param)
 
 static int ppcdrc603_execute(int cycles)
 {
-	int exception_type;
-
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
 	ppc_dec_base_icount = cycles;
 	
-	exception_type = setjmp(ppc.exception_jmpbuf);
-	if (exception_type)
-	{
-		//ppc.npc = ppc.pc;
-		//ppc603_exception(exception_type);
-	}
-
 	// check if decrementer exception occurs during execution
 	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
 	{
@@ -1314,13 +1334,6 @@ static int ppcdrc602_execute(int cycles)
 		ppc_dec_trigger_cycle = 0x7fffffff;
 	}
 
-	exception_type = setjmp(ppc.exception_jmpbuf);
-	if (exception_type)
-	{
-		//ppc.npc = ppc.pc;
-		//ppc602_exception(exception_type);
-	}
-
 	drc_execute(ppc.drc);
 
 	// update timebase
@@ -1371,6 +1384,7 @@ static UINT8 ppc_reg_layout[] =
 	PPC_PC,			PPC_MSR,		-1,
 	PPC_CR,			PPC_LR,			-1,
 	PPC_CTR,		PPC_XER,		-1,
+	PPC_SRR0,		PPC_SRR1,		-1,
 	PPC_R0,		 	PPC_R16,		-1,
 	PPC_R1, 		PPC_R17,		-1,
 	PPC_R2, 		PPC_R18,		-1,
@@ -1413,6 +1427,8 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_LR:				LR = info->i;							break;
 		case CPUINFO_INT_REGISTER + PPC_CTR:			CTR = info->i;							break;
 		case CPUINFO_INT_REGISTER + PPC_XER:			XER = info->i;						 	break;
+		case CPUINFO_INT_REGISTER + PPC_SRR0:			SRR0 = info->i;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR1:			SRR1 = info->i;							break;
 
 		case CPUINFO_INT_REGISTER + PPC_R0:				ppc.r[0] = info->i;						break;
 		case CPUINFO_INT_REGISTER + PPC_R1:				ppc.r[1] = info->i;						break;
@@ -1488,6 +1504,8 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_LR:				info->i = LR;							break;
 		case CPUINFO_INT_REGISTER + PPC_CTR:			info->i = CTR;							break;
 		case CPUINFO_INT_REGISTER + PPC_XER:			info->i = XER;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR0:			info->i = SRR0;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR1:			info->i = SRR1;							break;
 
 		case CPUINFO_INT_REGISTER + PPC_R0:				info->i = ppc.r[0];						break;
 		case CPUINFO_INT_REGISTER + PPC_R1:				info->i = ppc.r[1];						break;
@@ -1549,6 +1567,8 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + PPC_LR:				sprintf(info->s = cpuintrf_temp_str(), "LR: %08X", LR); break;
 		case CPUINFO_STR_REGISTER + PPC_CTR:			sprintf(info->s = cpuintrf_temp_str(), "CTR: %08X", CTR); break;
 		case CPUINFO_STR_REGISTER + PPC_XER:			sprintf(info->s = cpuintrf_temp_str(), "XER: %08X", XER); break;
+		case CPUINFO_STR_REGISTER + PPC_SRR0:			sprintf(info->s = cpuintrf_temp_str(), "SRR0: %08X", SRR0); break;
+		case CPUINFO_STR_REGISTER + PPC_SRR1:			sprintf(info->s = cpuintrf_temp_str(), "SRR1: %08X", SRR1); break;
 
 		case CPUINFO_STR_REGISTER + PPC_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", ppc.r[0]); break;
 		case CPUINFO_STR_REGISTER + PPC_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", ppc.r[1]); break;
