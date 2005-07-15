@@ -1179,6 +1179,7 @@ static UINT8 ppc603_reg_layout[] =
 	PPC_PC,			PPC_MSR,		-1,
 	PPC_CR,			PPC_LR,			-1,
 	PPC_CTR,		PPC_XER,		-1,
+	PPC_SRR0,		PPC_SRR1,		-1,
 	PPC_DEC,						-1,
 	PPC_R0,		 	PPC_R16,		-1,
 	PPC_R1, 		PPC_R17,		-1,
@@ -1279,7 +1280,7 @@ static void ppc603_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
-		case CPUINFO_INT_REGISTER + PPC_DEC:				DEC = info->i;						break;
+		case CPUINFO_INT_REGISTER + PPC_DEC:				write_decrementer(info->i);		break;
 		case CPUINFO_INT_INPUT_STATE + PPC_INPUT_LINE_SMI:	ppc603_set_smi_line(info->i);	break;
 		default:	ppc_set_info(state, info);		break;
 	}
@@ -1458,6 +1459,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_REGISTER + PPC_DEC:			info->i = read_decrementer(); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
