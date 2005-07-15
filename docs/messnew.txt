@@ -14,7 +14,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed minor cosmetic bug in the Interface Options dialog.
+  (bug #732) [Nate Woods]
 
 
 

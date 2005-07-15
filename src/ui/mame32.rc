@@ -923,7 +923,7 @@ BEGIN
 #ifdef MESS
     GROUPBOX        "System Selection",IDC_STATIC,6,4,189,194
     CONTROL         "&Search for new systems on start",IDC_START_GAME_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,16,111,10,0,HIDC_START_GAME_CHECK
-    CONTROL         "Allow system selection by a &joystick (requires restart)",IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,30,174,10,0,HIDC_JOY_GUI
+    CONTROL         "Allow system selection by a &joystick (requires restart)",IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,30,178,10,0,HIDC_JOY_GUI
     CONTROL         "Allow system selection by custom &key sequences",IDC_KEY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,44,166,10
 #else
     GROUPBOX        "Game Selection",IDC_STATIC,6,4,189,194
