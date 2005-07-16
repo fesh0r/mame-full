@@ -387,7 +387,16 @@ struct hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image)
 
 struct chd_file *mess_hd_get_chd_file(mess_image *image)
 {
-	return hard_disk_get_chd(mess_hd_get_hard_disk_file(image));
+	struct chd_file *result = NULL;
+	struct hard_disk_file *hd_file;
+
+	if (image)
+	{
+		hd_file = mess_hd_get_hard_disk_file(image);
+		if (hd_file)
+			result = hard_disk_get_chd(hd_file);
+	}
+	return result;
 }
 
 
