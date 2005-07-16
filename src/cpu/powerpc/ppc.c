@@ -230,7 +230,7 @@ typedef struct {
 
 
 	// STUFF added for the 6xx series
-	UINT32 dec;
+	UINT32 dec, dec_frac;
 	UINT32 fpscr;
 
 	FPR	fpr[32];
@@ -431,7 +431,7 @@ INLINE UINT32 read_decrementer(void)
 
 INLINE void write_decrementer(UINT32 value)
 {
-	ppc_dec_base_icount = ppc_icount;
+	ppc_dec_base_icount = ppc_icount + (ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2);
 
 	DEC = value;
 

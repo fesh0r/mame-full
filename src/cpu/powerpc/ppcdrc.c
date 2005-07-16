@@ -267,7 +267,7 @@ typedef struct {
 	void *		generate_isi_exception;
 
 	// PowerPC 60x specific registers */
-	UINT32 dec;
+	UINT32 dec, dec_frac;
 	UINT32 fpscr;
 
 	FPR	fpr[32];
@@ -433,7 +433,7 @@ INLINE UINT32 read_decrementer(void)
 
 INLINE void write_decrementer(UINT32 value)
 {
-	ppc_dec_base_icount = ppc_icount;
+	ppc_dec_base_icount = ppc_icount + (ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2);
 
 	DEC = value;
 
@@ -1140,7 +1140,7 @@ static int ppcdrc603_execute(int cycles)
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
-	ppc_dec_base_icount = cycles;
+	ppc_dec_base_icount = cycles + ppc.dec_frac;
 	
 	// check if decrementer exception occurs during execution
 	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
@@ -1159,6 +1159,7 @@ static int ppcdrc603_execute(int cycles)
 	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
 
 	// update decrementer
+	ppc.dec_frac = ((ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2));
 	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
 
 	return cycles - ppc_icount;

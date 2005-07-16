@@ -162,21 +162,6 @@ static void update_counters(struct drccore *drc)
 	}
 }
 
-static void *ppcdrc_exception_handler(int exception_type)
-{
-	switch(exception_type)
-	{
-		case EXCEPTION_DECREMENTER:
-			return ppc.generate_decrementer_exception;
-		case EXCEPTION_DSI:
-			return ppc.generate_dsi_exception;
-		case EXCEPTION_ISI:
-			return ppc.generate_isi_exception;
-	}
-	osd_die("Unknown exception %d\n", exception_type);
-	return NULL;
-}
-
 static void ppcdrc_entrygen(struct drccore *drc)
 {
 	_mov_m32abs_r32(&ppc.host_esp, REG_ESP);
@@ -234,10 +219,9 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	pcdelta = (INT8)(result >> 24);
 	cycles = (INT8)(result >> 16);
 
-	update_counters(drc);
-
 	/* epilogue */
 	drc_append_standard_epilogue(drc, cycles, pcdelta, 1);
+	update_counters(drc);
 
 	if (result & RECOMPILE_ADD_DISPATCH)
 		drc_append_dispatcher(drc);
