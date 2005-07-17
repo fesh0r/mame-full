@@ -233,7 +233,7 @@ static MACHINE_DRIVER_START( arcadia )
 	MDRV_CPU_ADD_TAG("main", S2650, 3580000/3)        /* 1.796 Mhz */
 	MDRV_CPU_PROGRAM_MAP(arcadia_readmem,arcadia_writemem)
 	MDRV_CPU_IO_MAP(arcadia_readport,arcadia_writeport)
-	MDRV_CPU_PERIODIC_INT(arcadia_video_line, 262*60)
+	MDRV_CPU_PERIODIC_INT(arcadia_video_line, TIME_IN_HZ(262*60))
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

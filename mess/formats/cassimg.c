@@ -13,6 +13,7 @@
 #include "cassimg.h"
 #include "utils.h"
 #include "pool.h"
+#include "mamecore.h"
 
 /* debugging parameters */
 #define LOG_PUT_SAMPLES			0
@@ -20,14 +21,6 @@
 
 #define SAMPLES_PER_BLOCK		0x40000
 #define CASSETTE_FLAG_DIRTY		0x10000
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	0
-#endif
 
 struct sample_block
 {

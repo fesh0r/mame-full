@@ -34,6 +34,7 @@
 #include "coco_cas.h"
 #include "utils.h"
 #include "timer.h"
+#include "mamecore.h"
 
 #define COCO_WAVESAMPLES_HEADER		TIME_IN_SEC(1.0)
 #define COCO_WAVESAMPLES_TRAILER	TIME_IN_SEC(1.0)

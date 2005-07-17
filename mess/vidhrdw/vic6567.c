@@ -561,7 +561,7 @@ WRITE8_HANDLER ( vic2_port_w )
 	}
 }
 
- READ8_HANDLER ( vic2_port_r )
+READ8_HANDLER ( vic2_port_r )
 {
 	int val = 0;
 	offset &= 0x3f;

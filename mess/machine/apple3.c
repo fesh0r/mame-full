@@ -283,7 +283,7 @@ static void apple3_setbank(int mame_bank, UINT16 bank, offs_t offset)
 	UINT8 *ptr;
 
 	ptr = apple3_bankaddr(bank, offset);
-	cpu_setbank(mame_bank, ptr);
+	memory_set_bankptr(mame_bank, ptr);
 
 	if (LOG_MEMORY)
 	{
@@ -439,7 +439,7 @@ static void apple3_update_memory(void)
 	else
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xF000, 0xFFFF, 0, 0, MWA8_BANK7);
 	if (via_0_a & 0x01)
-		cpu_setbank(7, memory_region(REGION_CPU1));
+		memory_set_bankptr(7, memory_region(REGION_CPU1));
 	else
 		apple3_setbank(7, ~0, 0x7000);
 

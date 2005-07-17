@@ -490,7 +490,7 @@ WRITE8_HANDLER( c64_write_io )
 	}
 }
 
- READ8_HANDLER( c64_read_io )
+READ8_HANDLER( c64_read_io )
 {
 	if (offset < 0x400)
 		return vic2_port_r (offset & 0x3ff);

@@ -72,6 +72,7 @@
 #include <assert.h>
 #include "formats/ap_dsk35.h"
 #include "utils.h"
+#include "mamecore.h"
 
 
 #define APPLE35_TAG "a35_tag"

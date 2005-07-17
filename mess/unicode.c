@@ -8,6 +8,7 @@
 
 #include "unicode.h"
 #include "utils.h"
+#include "mamecore.h"
 
 int uchar_isvalid(unicode_char_t uchar)
 {

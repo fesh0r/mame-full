@@ -1007,7 +1007,7 @@ DRIVER_INIT( bebox )
 		pci_add_device(0, 12, &scsi53c810_callbacks);
 
 	/* set up boot and flash ROM */
-	cpu_setbank(2, memory_region(REGION_USER2));
+	memory_set_bankptr(2, memory_region(REGION_USER2));
 	intelflash_init(0, FLASH_FUJITSU_29F016A, memory_region(REGION_USER1));
 
 	/* install MESS managed RAM */
@@ -1016,7 +1016,7 @@ DRIVER_INIT( bebox )
 		memory_install_read64_handler(cpu, ADDRESS_SPACE_PROGRAM, 0, mess_ram_size - 1, 0, 0x02000000, MRA64_BANK3);
 		memory_install_write64_handler(cpu, ADDRESS_SPACE_PROGRAM, 0, mess_ram_size - 1, 0, 0x02000000, MWA64_BANK3);
 	}
-	cpu_setbank(3, mess_ram);
+	memory_set_bankptr(3, mess_ram);
 
 	/* set up UARTs */
 	uart8250_init(0, NULL);
@@ -1066,6 +1066,6 @@ DRIVER_INIT( bebox )
 			U64(0x4E80042000000000)
 		};
 		memory_install_read64_handler(1, ADDRESS_SPACE_PROGRAM, 0x9421FFF0, 0x9421FFFF, 0, 0, MRA64_BANK1);
-		cpu_setbank(1, ops);
+		memory_set_bankptr(1, ops);
 	}
 }

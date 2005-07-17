@@ -1605,7 +1605,7 @@ static void apple2gs_setup_memory(void)
 	/* install expanded memory */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x010000, mess_ram_size - 1, 0, 0, MRA8_BANK1);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x010000, mess_ram_size - 1, 0, 0, MWA8_BANK1);
-	cpu_setbank(1, mess_ram + 0x010000);
+	memory_set_bankptr(1, mess_ram + 0x010000);
 
 	/* install hi memory */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe00000, 0xe1ffff, 0, 0, MRA8_BANK2);
@@ -1614,13 +1614,13 @@ static void apple2gs_setup_memory(void)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe02000, 0xe03fff, 0, 0, apple2gs_E02xxx_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe10400, 0xe107ff, 0, 0, apple2gs_E104xx_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe12000, 0xe13fff, 0, 0, apple2gs_E12xxx_w);
-	cpu_setbank(2, apple2gs_slowmem);
+	memory_set_bankptr(2, apple2gs_slowmem);
 
 	/* install alternate ROM bank */
 	begin = 0x1000000 - memory_region_length(REGION_CPU1);
 	end = 0xffffff;
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK3);
-	cpu_setbank(3, memory_region(REGION_CPU1));
+	memory_set_bankptr(3, memory_region(REGION_CPU1));
 
 	/* install new xxC000-xxCFFF handlers */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x00c000, 0x00cfff, 0, 0, apple2gs_00Cxxx_r);

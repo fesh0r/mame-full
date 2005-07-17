@@ -6,8 +6,8 @@
 
 ***************************************************************************/
 
-#ifndef DRIVER_H
-#define DRIVER_H
+#ifndef __DRIVER_H__
+#define __DRIVER_H__
 
 
 /***************************************************************************
@@ -54,10 +54,9 @@
 
 ***************************************************************************/
 
-#include "osd_cpu.h"
+#include "mamecore.h"
 #include "memory.h"
 #include "mamedbg.h"
-#include "osdepend.h"
 #include "mame.h"
 #include "common.h"
 #include "drawgfx.h"
@@ -171,7 +170,7 @@
 	if (cpu)															\
 	{																	\
 		cpu->timed_interrupt = func;									\
-		cpu->timed_interrupts_per_second = (rate);						\
+		cpu->timed_interrupt_period = (rate);							\
 	}																	\
 
 
@@ -600,34 +599,4 @@ const struct GameDriver driver_##NAME =		\
 
 extern const struct GameDriver *drivers[];
 
-
-/***************************************************************************
-
-    Miscellaneous
-
-***************************************************************************/
-
-/* ensure that TRUE/FALSE are defined */
-#ifndef TRUE
-#define TRUE    1
-#endif
-
-#ifndef FALSE
-#define FALSE   0
-#endif
-
-/* Use to prevent warnings from GCC about overly-long integer constants. */
-#ifdef __GNUC__
-#define U64(val) val##ULL
-#define S64(val) val##LL
-#else
-#define U64(val) val
-#define S64(val) val
-#endif
-
-/* Suppress warnings about redefining the macro 'PPC' on LinuxPPC. */
-#ifdef PPC
-#undef PPC
-#endif
-
-#endif
+#endif	/* __DRIVER_H__ */

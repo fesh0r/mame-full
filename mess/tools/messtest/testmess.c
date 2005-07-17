@@ -139,21 +139,40 @@ static void dump_screenshot(void)
 {
 	mame_file *fp;
 	char buf[128];
+	struct mame_bitmap *bitmap;
+	int x, y, is_blank;
+	pen_t color;
 
-	/* if we are at runtime, dump a screenshot */
+	bitmap = artwork_get_ui_bitmap();
+
+	/* dump a screenshot */
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 		(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
 		current_testcase.name, screenshot_num);
 	fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
 	if (fp)
 	{
-		save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+		save_screen_snapshot_as(fp, bitmap);
 		mame_fclose(fp);
 		report_message(MSG_INFO, "Saved screenshot as %s", buf);
 	}
 
 	if (screenshot_num >= 0)
 		screenshot_num++;
+
+	/* check to see if bitmap is blank */
+	is_blank = 1;
+	color = bitmap->read(bitmap, 0, 0);
+	for (y = 0; is_blank && (y < bitmap->height); y++)
+	{
+		for (x = 0; is_blank && (x < bitmap->width); x++)
+		{
+			if (bitmap->read(bitmap, x, y) != color)
+				is_blank = 0;
+		}
+	}
+	if (is_blank)
+		report_message(MSG_FAILURE, "Screenshot is blank");
 }
 
 
@@ -735,7 +754,7 @@ struct command_procmap_entry
 	void (*proc)(void);
 };
 
-static struct command_procmap_entry commands[] =
+static const struct command_procmap_entry commands[] =
 {
 	{ MESSTEST_COMMAND_WAIT,			command_wait },
 	{ MESSTEST_COMMAND_INPUT,			command_input },

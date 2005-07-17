@@ -655,7 +655,6 @@ static int can_post_key_alternate(unicode_char_t ch)
 
 int inputx_can_post_key(unicode_char_t ch)
 {
-	
 	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
 }
 

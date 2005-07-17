@@ -209,7 +209,7 @@ void apple2_update_memory(void)
 			/* set the memory bank */
 			if (rbase)
 			{
-				cpu_setbank(rbank, rbase);
+				memory_set_bankptr(rbank, rbase);
 			}
 
 			/* record the current settings */
@@ -284,7 +284,7 @@ void apple2_update_memory(void)
 			/* set the memory bank */
 			if (wbase)
 			{
-				cpu_setbank(wbank, wbase);
+				memory_set_bankptr(wbank, wbase);
 			}
 
 			/* record the current settings */

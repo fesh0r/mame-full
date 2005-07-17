@@ -1397,7 +1397,7 @@ static void sharcop_immdata_to_dmpm(void)
 	int m = (sharc.opcode >> 38) & 0x7;
 	UINT32 data = (UINT32)sharc.opcode;
 
-	if(sharc.opcode & 0x2000000000) {
+	if(sharc.opcode & U64(0x2000000000)) {
 		/* program memory (PM) */
 		pm_write32(PM_REG_I(i), data);
 		PM_REG_I(i)+=PM_REG_M(m);

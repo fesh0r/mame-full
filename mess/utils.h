@@ -171,8 +171,6 @@ unsigned short ccitt_crc16_one( unsigned short crc, const unsigned char data );
 #define PATH_SEPARATOR	'/'
 #endif
 
-#define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
-
 
 
 /* miscellaneous functions */
@@ -181,39 +179,5 @@ char *strip_extension(const char *filename);
 int compute_log2(int val);
 int findextension(const char *extensions, const char *ext);
 int hexdigit(char c);
-
-
-
-/* Endian macros */
-#define FLIPENDIAN_INT16(x)	(((((UINT16) (x)) >> 8) | ((x) << 8)) & 0xffff) 
-#define FLIPENDIAN_INT32(x)	((((UINT32) (x)) << 24) | (((UINT32) (x)) >> 24) | \
-	(( ((UINT32) (x)) & 0x0000ff00) << 8) | (( ((UINT32) (x)) & 0x00ff0000) >> 8))
-#define FLIPENDIAN_INT64(x)	\
-	(												\
-		(((((UINT64) (x)) >> 56) & ((UINT64) 0xFF)) <<  0)	|	\
-		(((((UINT64) (x)) >> 48) & ((UINT64) 0xFF)) <<  8)	|	\
-		(((((UINT64) (x)) >> 40) & ((UINT64) 0xFF)) << 16)	|	\
-		(((((UINT64) (x)) >> 32) & ((UINT64) 0xFF)) << 24)	|	\
-		(((((UINT64) (x)) >> 24) & ((UINT64) 0xFF)) << 32)	|	\
-		(((((UINT64) (x)) >> 16) & ((UINT64) 0xFF)) << 40)	|	\
-		(((((UINT64) (x)) >>  8) & ((UINT64) 0xFF)) << 48)	|	\
-		(((((UINT64) (x)) >>  0) & ((UINT64) 0xFF)) << 56)		\
-	)
-
-#ifdef LSB_FIRST
-#define BIG_ENDIANIZE_INT16(x)		(FLIPENDIAN_INT16(x))
-#define BIG_ENDIANIZE_INT32(x)		(FLIPENDIAN_INT32(x))
-#define BIG_ENDIANIZE_INT64(x)		(FLIPENDIAN_INT64(x))
-#define LITTLE_ENDIANIZE_INT16(x)	(x)
-#define LITTLE_ENDIANIZE_INT32(x)	(x)
-#define LITTLE_ENDIANIZE_INT64(x)	(x)
-#else
-#define BIG_ENDIANIZE_INT16(x)		(x)
-#define BIG_ENDIANIZE_INT32(x)		(x)
-#define BIG_ENDIANIZE_INT64(x)		(x)
-#define LITTLE_ENDIANIZE_INT16(x)	(FLIPENDIAN_INT16(x))
-#define LITTLE_ENDIANIZE_INT32(x)	(FLIPENDIAN_INT32(x))
-#define LITTLE_ENDIANIZE_INT64(x)	(FLIPENDIAN_INT64(x))
-#endif /* LSB_FIRST */
 
 #endif /* UTILS_H */

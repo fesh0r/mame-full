@@ -54,18 +54,6 @@ extern int devices_inited;
 	#endif
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /* Win32 defines this for vararg functions */
 #ifndef DECL_SPEC
 #define DECL_SPEC
@@ -167,9 +155,5 @@ extern const char *mess_path;
 void machine_hard_reset(void);
 
 void mess_config_save_xml(int type, mame_file *file);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
