@@ -234,7 +234,7 @@ static REG_OPTION regSettings[] =
     { "ui_key_view_picture_area",   RO_ENCODE,  &settings.ui_key_view_picture_area,   "KEYCODE_LALT KEYCODE_P",     FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_status",         RO_ENCODE,  &settings.ui_key_view_status,         "KEYCODE_LALT KEYCODE_S",     FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_toolbars",       RO_ENCODE,  &settings.ui_key_view_toolbars,       "KEYCODE_LALT KEYCODE_T",     FALSE, KeySeqEncodeString,  KeySeqDecodeString},
- 
+
     { "ui_key_view_tab_cabinet",    RO_ENCODE,  &settings.ui_key_view_tab_cabinet,    "KEYCODE_LALT KEYCODE_3", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_tab_cpanel",     RO_ENCODE,  &settings.ui_key_view_tab_cpanel,     "KEYCODE_LALT KEYCODE_6", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_tab_flyer",      RO_ENCODE,  &settings.ui_key_view_tab_flyer,      "KEYCODE_LALT KEYCODE_2", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
@@ -330,7 +330,8 @@ static REG_OPTION regGameOpts[] =
 	{ "d3deffectrotate",        RO_BOOL,    &gOpts.d3d_rotate_effects,              "1" },
 	{ "d3dscan",                RO_INT,     &gOpts.d3d_scanlines,                   "100" },
 	{ "d3dfeedback",            RO_INT,     &gOpts.d3d_feedback,                    "100" },
-
+	
+	//input
 	{ "mouse",                  RO_BOOL,    &gOpts.use_mouse,                       "0" },
 	{ "joystick",               RO_BOOL,    &gOpts.use_joystick,                    "0" },
 	{ "a2d",                    RO_DOUBLE,  &gOpts.f_a2d,                           "0.3" },
@@ -339,6 +340,13 @@ static REG_OPTION regGameOpts[] =
 	{ "dual_lightgun",          RO_BOOL,    &gOpts.dual_lightgun,                   "0" },
 	{ "offscreen_reload",       RO_BOOL,    &gOpts.offscreen_reload,                "0" },
 	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,                           "" },
+	{ "digital",                RO_STRING,  &gOpts.digital,                         "" },
+	{ "paddle",	                RO_STRING,  &gOpts.paddle,					        "" },
+	{ "adstick",	            RO_STRING,  &gOpts.adstick,			                "" },
+	{ "pedal",			        RO_STRING,  &gOpts.pedal,				            "" },
+	{ "dial",				    RO_STRING,  &gOpts.dial,		                    "" },
+	{ "trackball",				RO_STRING,  &gOpts.trackball,                       "" },
+	{ "lightgun_device",        RO_STRING,  &gOpts.lightgun_device,                 "" },
 
 	// core video
 	{ "brightness",             RO_DOUBLE,  &gOpts.f_bright_correct,                "1.0" }, 
@@ -492,9 +500,9 @@ static GAMEVARIABLE_OPTION gamevariable_options[] =
 // (TAB_...)
 const char* image_tabs_long_name[MAX_TAB_TYPES] =
 {
-	"Snapshot",
-	"Flyer",
-	"Cabinet",
+	"Snapshot ",
+	"Flyer ",
+	"Cabinet ",
 	"Marquee",
 	"Title",
 	"Control Panel",
@@ -741,7 +749,7 @@ BOOL OptionsInit()
 
 	size_folder_filters = 1;
 	num_folder_filters = 0;
-	folder_filters = (folder_filter_type *) malloc(size_folder_filters * sizeof(folder_filter_type));
+	folder_filters = (folder_filter_type *)malloc(size_folder_filters*sizeof(folder_filter_type));
 	if (!folder_filters)
 		return FALSE;
 
@@ -749,8 +757,8 @@ BOOL OptionsInit()
 
 	// have our mame core (file code) know about our rom path
 	// this leaks a little, but the win32 file core writes to this string
-	set_pathlist(FILETYPE_ROM, strdup(settings.romdirs));
-	set_pathlist(FILETYPE_SAMPLE, strdup(settings.sampledirs));
+	set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
+	set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
 #ifdef MESS
 	set_pathlist(FILETYPE_HASH, strdup(settings.mess.hashdir));
 #endif
@@ -772,7 +780,7 @@ void OptionsExit(void)
 {
 	int i;
 
-	for (i = 0; i < num_games; i++)
+	for (i=0;i<num_games;i++)
 	{
 		FreeGameOptions(&game_options[i]);
 	}
@@ -1241,7 +1249,7 @@ void SetFilterInherit(BOOL inherit)
 BOOL GetFilterInherit(void)
 {
 	return settings.inherit_filter;
- }
+}
 
 void SetOffsetClones(BOOL offset)
 {
@@ -1251,7 +1259,7 @@ void SetOffsetClones(BOOL offset)
 BOOL GetOffsetClones(void)
 {
 	return settings.offset_clones;
- }
+}
 
 void SetGameCaption(BOOL caption)
 {
@@ -1824,7 +1832,7 @@ void SetControlPanelDir(const char *path)
 		settings.cpaneldir = strdup(path);
 }
 
-const char* GetDiffDir(void)
+const char * GetDiffDir(void)
 {
 	return settings.diffdir;
 }
@@ -1860,7 +1868,7 @@ void SetBgDir (const char* path)
 	FreeIfAllocated(&settings.bgdir);
 
 	if (path != NULL)
-		settings.bgdir = strdup (path);
+		settings.bgdir = strdup(path);
 }
 
 const char* GetFolderDir(void)
@@ -3925,7 +3933,7 @@ static void WriteOptionToFile(FILE *fptr,REG_OPTION *regOpt)
 
 }
 
-char* GetVersionString(void)
+char * GetVersionString(void)
 {
 	return build_version;
 }

@@ -24,7 +24,7 @@
 #ifdef __GNUC__
 #define NONAMELESSUNION
 #else
-#include <multimon.h>
+#include <multidef.h>
 #endif
 #include <ddraw.h>
 

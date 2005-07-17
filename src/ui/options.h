@@ -173,6 +173,13 @@ typedef struct
 	BOOL   dual_lightgun;
 	BOOL   offscreen_reload;
 	char *ctrlr;
+	char *digital;
+	char *paddle;
+	char *adstick;
+	char *pedal;
+	char *dial;
+	char *trackball;
+	char *lightgun_device;
 
 	/* Core video */
 	double f_bright_correct; /* "1.0", 0.5, 2.0 */

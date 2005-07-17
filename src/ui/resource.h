@@ -85,6 +85,7 @@
 #define IDI_HEADER_UP                   182
 #define IDI_HEADER_DOWN                 183
 #define IDD_PROP_DIRECT3D               184
+#define IDD_PROP_CONTROLLER             185
 #define IDI_SOUNDTAB                    666
 #define IDC_LIST                        1000
 #define IDC_PLAY                        1001
@@ -306,6 +307,14 @@
 #define IDC_CYCLETIMESECTXT             1230
 #define IDC_SCREENSHOT_BORDERSIZETXT    1232
 #define IDC_CRC_ONLY                    1233
+#define IDC_PADDLE                      1234
+#define IDC_ADSTICK                     1235
+#define IDC_PEDAL                       1236
+#define IDC_DIAL                        1237
+#define IDC_TRACKBALL                   1238
+#define IDC_LIGHTGUNDEVICE              1239
+#define IDC_ANALOG_AXES_TEXT            1240
+#define IDC_ANALOG_AXES                 1241
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -397,9 +406,9 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        185
+#define _APS_NEXT_RESOURCE_VALUE        187
 #define _APS_NEXT_COMMAND_VALUE         40097
-#define _APS_NEXT_CONTROL_VALUE         1232
+#define _APS_NEXT_CONTROL_VALUE         1242
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
