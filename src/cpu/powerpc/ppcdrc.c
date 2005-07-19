@@ -1318,8 +1318,6 @@ static void ppcdrc602_reset(void *param)
 
 static int ppcdrc602_execute(int cycles)
 {
-	int exception_type;
-
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
