@@ -57,7 +57,7 @@
  ***************************************************************************/
 
 #ifdef MAME_DEBUG
-static BOOL CheckOptions(REG_OPTION *opts, BOOL bPassedToMAME);
+static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME);
 #endif // MAME_DEBUG
 
 static void FreeOptionStruct(void *option_struct, const REG_OPTION *options);
@@ -3936,7 +3936,7 @@ static const char * GetDefaultOptionsFilename()
  ***************************************************************************/
 
 #ifdef MAME_DEBUG
-static BOOL CheckOptions(REG_OPTION *opts, BOOL bPassedToMAME)
+static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME)
 {
 	struct rc_struct *rc;
 	int i;
@@ -3972,6 +3972,9 @@ static BOOL CheckOptions(REG_OPTION *opts, BOOL bPassedToMAME)
 				dprintf("CheckOptions(): Option '%s' needs both an encode and a decode callback\n", opts[i].ini_name);
 				nBadOptions++;
 			}
+			break;
+
+		default:
 			break;
 		}
 	}
