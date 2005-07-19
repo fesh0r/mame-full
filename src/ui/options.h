@@ -106,9 +106,9 @@ typedef struct
 {
 	char ini_name[40]; // ini name
 	int  m_iType;                                 // key type
-	void *m_vpData;                               // key data
+	size_t m_iDataOffset;                         // offset to data within struct
 	const char *m_pDefaultValue;                  // default value on startup
-	BOOL m_bOnlyOnGame;                           // use this option only on games
+	BOOL (*m_pfnQualifier)(int driver_index);     // used to identify when this option is relevant
 	void (*encode)(void *data, char *str);        // encode function
 	void (*decode)(const char *str, void *data);  // decode function
 } REG_OPTION;
@@ -409,6 +409,15 @@ typedef struct
 #endif
 
 } settings_type; /* global settings for the UI only */
+
+typedef struct
+{
+	const char *name;
+	int m_iType;
+	size_t m_iOffset;
+	BOOL (*m_pfnQualifier)(int driver_index);
+	const void *m_vpDefault;
+} GAMEVARIABLE_OPTION;
 
 BOOL OptionsInit(void);
 void FolderOptionsInit(void);
