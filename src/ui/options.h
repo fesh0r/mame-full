@@ -46,7 +46,7 @@ enum
 };
 
 // config helpers types
-enum
+typedef enum
 {
 	RO_BOOL = 0, // BOOL value
 	RO_INT,      // int value
@@ -54,7 +54,7 @@ enum
 	RO_COLOR,    // COLORREF value
 	RO_STRING,   // pointer to string    - m_vpData is an allocated buffer
 	RO_ENCODE    // encode/decode string - calls decode/encode functions
-};
+} rotype_t;
 
 /* Default input */
 enum 
@@ -104,8 +104,8 @@ enum
 // used to be "registry option", now is just for a game/global option
 typedef struct
 {
-	char ini_name[40]; // ini name
-	int  m_iType;                                 // key type
+	const char *ini_name;                         // ini name
+	rotype_t m_iType;                             // key type
 	size_t m_iDataOffset;                         // offset to data within struct
 	const char *m_pDefaultValue;                  // default value on startup
 	BOOL (*m_pfnQualifier)(int driver_index);     // used to identify when this option is relevant
