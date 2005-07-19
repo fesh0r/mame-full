@@ -90,13 +90,13 @@
 #define SYSDEP_DISPLAY_QUIT_REQUESTED     0x02
 
 /* from mame's palette.h */
-#ifndef PALETTE_H
+#ifndef __PALETTE_H__
 typedef unsigned int pen_t;
 typedef unsigned int rgb_t;
 #endif
 
 /* from mame's common.h */
-#ifndef COMMON_H
+#ifndef __COMMON_H__
 struct mame_bitmap
 {
 	int width,height;	/* width and height of the bitmap */
@@ -116,7 +116,7 @@ struct mame_bitmap
 #endif
 
 /* from mame's drawgfx.h */
-#ifndef DRAWGFX_H
+#ifndef __DRAWGFX_H__
 struct rectangle
 {
 	int min_x,max_x;
