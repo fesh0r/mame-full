@@ -410,15 +410,6 @@ typedef struct
 
 } settings_type; /* global settings for the UI only */
 
-typedef struct
-{
-	const char *name;
-	int m_iType;
-	size_t m_iOffset;
-	BOOL (*m_pfnQualifier)(int driver_index);
-	const void *m_vpDefault;
-} GAMEVARIABLE_OPTION;
-
 BOOL OptionsInit(void);
 void FolderOptionsInit(void);
 void OptionsExit(void);
