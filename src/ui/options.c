@@ -75,7 +75,8 @@ static void WriteIntOptionToFile(FILE *fptr,const char *key,int value);
 static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value);
 static void WriteColorOptionToFile(FILE *fptr,const char *key,COLORREF value);
 
-static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2);
+static BOOL IsOptionEqual(const REG_OPTION *opt, const void *o1, const void *o2);
+static BOOL AreOptionsEqual(const REG_OPTION *option_array, const void *o1, const void *o2);
 static void WriteOptionToFile(FILE *fptr, const void *option_struct, const REG_OPTION *regOpt);
 
 static void  ColumnEncodeString(void* data, char* str);
@@ -444,12 +445,6 @@ static const REG_OPTION regGameOpts[] =
 // options in mame32.ini that we'll never override with with game-specific options
 static const REG_OPTION global_game_options[] =
 {
-	{"skip_disclaimer",         RO_BOOL,    offsetof(settings_type, skip_disclaimer),   "0" },
-	{"skip_gameinfo",           RO_BOOL,    offsetof(settings_type, skip_gameinfo),     "0" },
-	{"skip_validitychecks",     RO_BOOL,    offsetof(settings_type, skip_validitychecks),     "0" },
-	{"high_priority",           RO_BOOL,    offsetof(settings_type, high_priority),     "0" },
-
-
 #ifdef MESS
 	{ "biospath",               RO_STRING,  offsetof(settings_type, romdirs),          "bios" },
 	{ "softwarepath",           RO_STRING,  offsetof(settings_type, mess.softwaredirs),"software" },
@@ -3385,88 +3380,54 @@ void SaveOptions(void)
 //returns true if different
 BOOL GetVectorUsesDefaultsMem(void)
 {
-	BOOL options_different = FALSE;
-	options_type Opts;
-	int i;
 	int redirect_index = 0;
-	CopyGameOptions( &global, &Opts );
+
 	//Use the redirect array, to get correct folder
 	redirect_index = GetRedirectIndex(FOLDER_VECTOR);
 	if( redirect_index < 0)
 		return TRUE;
 
-	for (i = 0; regGameOpts[i].ini_name[0]; i++)
-	{
-		if (IsOptionEqual(i,&folder_options[redirect_index], &Opts ) == FALSE)
-		{
-			options_different = TRUE;
-		}
-
-	}
-	return options_different;
+	return AreOptionsEqual(regGameOpts, &folder_options[redirect_index], &global);
 }
 
 //returns true if different
 BOOL GetFolderUsesDefaultsMem(int folder_index, int driver_index)
 {
-	BOOL options_different = FALSE;
-	options_type Opts;
-	int i;
+	const options_type *opts;
 	int redirect_index;
 
 	if( DriverIsVector(driver_index) )
-		CopyGameOptions( GetVectorOptions(), &Opts );
+		opts = GetVectorOptions();
 	else
-		CopyGameOptions( &global, &Opts );
+		opts = &global;
+
 	//Use the redirect array, to get correct folder
 	redirect_index = GetRedirectIndex(folder_index);
 	if( redirect_index < 0)
 		return TRUE;
 
-	for (i = 0; regGameOpts[i].ini_name[0]; i++)
-	{
-		if (IsOptionEqual(i,&folder_options[redirect_index], &Opts ) == FALSE)
-		{
-			options_different = TRUE;
-		}
-
-	}
-	return options_different;
+	return AreOptionsEqual(regGameOpts, &folder_options[redirect_index], opts);
 }
 
 //returns true if different
 BOOL GetGameUsesDefaultsMem(int driver_index)
 {
-	BOOL options_different = FALSE;
-	options_type Opts;
-	int i;
+	const options_type *opts;
 	int nParentIndex= -1;
-	if( driver_index >= 0)
+
+	if ((driver_index >= 0) && DriverIsClone(driver_index))
 	{
-		if( DriverIsClone(driver_index) )
-		{
-			nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
-			if( nParentIndex >= 0)
-				CopyGameOptions(GetGameOptions(nParentIndex, FALSE), &Opts );
-			else
-				//No Parent found, use source
-				CopyGameOptions(GetSourceOptions(driver_index), &Opts);
-		}
+		nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
+		if( nParentIndex >= 0)
+			opts = GetGameOptions(nParentIndex, FALSE);
 		else
-			CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+			//No Parent found, use source
+			opts = GetSourceOptions(driver_index);
 	}
 	else
-		CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+		opts = GetSourceOptions(driver_index);
 
-	for (i = 0; regGameOpts[i].ini_name[0]; i++)
-	{
-		if (IsOptionEqual(i,&game_options[driver_index], &Opts ) == FALSE)
-		{
-			options_different = TRUE;
-		}
-
-	}
-	return options_different;
+	return AreOptionsEqual(regGameOpts, &game_options[driver_index], opts);
 }
 
 void SaveGameOptions(int driver_index)
@@ -3493,16 +3454,10 @@ void SaveGameOptions(int driver_index)
 	}
 	else
 		CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+
 	if (game_variables[driver_index].use_default == FALSE)
 	{
-		for (i = 0; regGameOpts[i].ini_name[0]; i++)
-		{
-			if (IsOptionEqual(i,&game_options[driver_index], &Opts ) == FALSE)
-			{
-				options_different = TRUE;
-			}
-
-		}
+		options_different = !AreOptionsEqual(regGameOpts, &game_options[driver_index], &Opts);
 	}
 
 	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name);
@@ -3517,7 +3472,7 @@ void SaveGameOptions(int driver_index)
 
 			for (i = 0; regGameOpts[i].ini_name[0]; i++)
 			{
-				if (IsOptionEqual(i,&game_options[driver_index],&Opts) == FALSE)
+				if (IsOptionEqual(&regGameOpts[i],&game_options[driver_index],&Opts) == FALSE)
 				{
 					WriteOptionToFile(fptr, &game_options[driver_index], &regGameOpts[i]);
 				}
@@ -3571,14 +3526,8 @@ void SaveFolderOptions(int folder_index, int game_index)
 	if( redirect_index < 0)
 		return;
 
-	for (i = 0; regGameOpts[i].ini_name[0]; i++)
-	{
-		if (IsOptionEqual(i,&folder_options[redirect_index],pOpts) == FALSE)
-		{
-			options_different = TRUE;
-		}
+	options_different = !AreOptionsEqual(regGameOpts, &folder_options[redirect_index], pOpts);
 
-	}
 	//Find the Title
 	for( i = 0; i<=folder_index; i++ )
 	{
@@ -3670,7 +3619,7 @@ void SaveFolderOptions(int folder_index, int game_index)
 
 			for (i = 0; regGameOpts[i].ini_name[0]; i++)
 			{
-				if (IsOptionEqual(i,&folder_options[redirect_index],pOpts) == FALSE)
+				if (IsOptionEqual(&regGameOpts[i],&folder_options[redirect_index],pOpts) == FALSE)
 				{
 					WriteOptionToFile(fptr, &folder_options[redirect_index], &regGameOpts[i]);
 				}
@@ -3785,29 +3734,29 @@ static void WriteColorOptionToFile(FILE *fptr,const char *key,COLORREF value)
 			(int)((value >> 16) & 0xff));
 }
 
-static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
+static BOOL IsOptionEqual(const REG_OPTION *opt, const void *o1, const void *o2)
 {
-	switch (regGameOpts[option_index].m_iType)
+	switch(opt->m_iType)
 	{
 	case RO_DOUBLE:
 	{
 		double a,b;
-		a = *(double *) ptr_offset(o1, regGameOpts[option_index].m_iDataOffset);
-		b = *(double *) ptr_offset(o2, regGameOpts[option_index].m_iDataOffset);
+		a = *(double *) ptr_offset(o1, opt->m_iDataOffset);
+		b = *(double *) ptr_offset(o2, opt->m_iDataOffset);
 		return fabs(a-b) < 0.000001;
 	}
 	case RO_COLOR :
 	{
 		COLORREF a,b;
-		a = *(COLORREF *) ptr_offset(o1, regGameOpts[option_index].m_iDataOffset);
-		b = *(COLORREF *) ptr_offset(o2, regGameOpts[option_index].m_iDataOffset);
+		a = *(COLORREF *) ptr_offset(o1, opt->m_iDataOffset);
+		b = *(COLORREF *) ptr_offset(o2, opt->m_iDataOffset);
 		return a == b;
 	}
 	case RO_STRING:
 	{
 		char *a,*b;
-		a = *(char **) ptr_offset(o1, regGameOpts[option_index].m_iDataOffset);
-		b = *(char **) ptr_offset(o2, regGameOpts[option_index].m_iDataOffset);
+		a = *(char **) ptr_offset(o1, opt->m_iDataOffset);
+		b = *(char **) ptr_offset(o2, opt->m_iDataOffset);
 		if( a != NULL && b != NULL )
 			return strcmp(a,b) == 0;
 		else 
@@ -3816,22 +3765,22 @@ static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
 	case RO_BOOL:
 	{
 		BOOL a,b;
-		a = *(BOOL *) ptr_offset(o1, regGameOpts[option_index].m_iDataOffset);
-		b = *(BOOL *) ptr_offset(o2, regGameOpts[option_index].m_iDataOffset);
+		a = *(BOOL *) ptr_offset(o1, opt->m_iDataOffset);
+		b = *(BOOL *) ptr_offset(o2, opt->m_iDataOffset);
 		return a == b;
 	}
 	case RO_INT:
 	{
 		int a,b;
-		a = *(int *) ptr_offset(o1, regGameOpts[option_index].m_iDataOffset);
-		b = *(int *) ptr_offset(o2, regGameOpts[option_index].m_iDataOffset);
+		a = *(int *) ptr_offset(o1, opt->m_iDataOffset);
+		b = *(int *) ptr_offset(o2, opt->m_iDataOffset);
 		return a == b;
 	}
 	case RO_ENCODE:
 	{
 		char a[1000],b[1000];
-		regGameOpts[option_index].encode(ptr_offset(o1, regGameOpts[option_index].m_iDataOffset), a);
-		regGameOpts[option_index].encode(ptr_offset(o2, regGameOpts[option_index].m_iDataOffset), b);
+		opt->encode(ptr_offset(o1, opt->m_iDataOffset), a);
+		opt->encode(ptr_offset(o2, opt->m_iDataOffset), b);
 		if( a != NULL && b != NULL )
 			return strcmp(a,b) == 0;
 		else 
@@ -3842,6 +3791,19 @@ static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
 		break;
 	}
 
+	return TRUE;
+}
+
+
+
+static BOOL AreOptionsEqual(const REG_OPTION *option_array, const void *o1, const void *o2)
+{
+	int i;
+	for (i = 0; option_array[i].ini_name[0]; i++)
+	{
+		if (!IsOptionEqual(&option_array[i], o1, o2))
+			return FALSE;
+	}
 	return TRUE;
 }
 
