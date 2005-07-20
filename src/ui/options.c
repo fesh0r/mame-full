@@ -3220,6 +3220,9 @@ static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_ga
 {
 	FILE *fptr;
 	char buffer[512];
+	char *key,*value_str;
+	const REG_OPTION *option;
+	void *option_struct;
 
 	fptr = fopen(filename,"rt");
 	if (fptr == NULL)
@@ -3227,9 +3230,6 @@ static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_ga
 
 	while (fgets(buffer,sizeof(buffer),fptr) != NULL)
 	{
-		char *key,*value_str;
-		const REG_OPTION *option;
-
 		if (buffer[0] == '\0')
 			continue;
 
@@ -3256,21 +3256,24 @@ static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_ga
 			dprintf("invalid line [%s]",buffer);
 			continue;
 		}
+
+		option_struct = o;
 		option = GetOption(regGameOpts, key);
-		if (option == NULL)
+		if (!option && load_global_game_options)
 		{
-			if (load_global_game_options)
-				option = GetOption(global_game_options, key);
-			
-			if (option == NULL)
-			{
-				dprintf("load game options found unknown option %s",key);
-				continue;
-			}
+			option_struct = &settings;
+			option = GetOption(global_game_options, key);
 		}
 
-		//dprintf("loading option <%s> <%s>",option,value_str);
-		LoadOption(o,option,value_str);
+		if (option)
+		{
+			//dprintf("loading option <%s> <%s>",option,value_str);
+			LoadOption(option_struct, option, value_str);
+		}
+		else
+		{
+			dprintf("load game options found unknown option %s",key);
+		}
 	}
 
 	fclose(fptr);
