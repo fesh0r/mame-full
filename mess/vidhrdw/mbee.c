@@ -508,7 +508,7 @@ VIDEO_START( mbee )
 
 VIDEO_UPDATE( mbee )
 {
-	int offs, cursor, screen;
+	int offs, cursor, screen_;
 	int full_refresh = 1;
 
 	if( mbee_frame_counter > 0 )
@@ -537,14 +537,14 @@ VIDEO_UPDATE( mbee )
 	framecnt++;
 
 	cursor = crt.cursor_address_hi * 256 + crt.cursor_address_lo;
-	screen = crt.screen_address_hi * 256 + crt.screen_address_lo;
-	for( offs = screen; offs < crt.horizontal_displayed * crt.vertical_displayed + screen; offs++ )
+	screen_ = crt.screen_address_hi * 256 + crt.screen_address_lo;
+	for( offs = screen_; offs < crt.horizontal_displayed * crt.vertical_displayed + screen_; offs++ )
 	{
 		if( dirtybuffer[offs] )
 		{
 			int sx, sy, code, color;
-			sy = off_y + ((offs - screen) / crt.horizontal_displayed) * (crt.scan_lines + 1);
-			sx = (off_x + ((offs - screen) % crt.horizontal_displayed)) * 8;
+			sy = off_y + ((offs - screen_) / crt.horizontal_displayed) * (crt.scan_lines + 1);
+			sx = (off_x + ((offs - screen_) % crt.horizontal_displayed)) * 8;
 			code = videoram[offs];
 			color = colorram[offs];
 			drawgfx( bitmap,Machine->gfx[0],code,color,0,0,sx,sy,

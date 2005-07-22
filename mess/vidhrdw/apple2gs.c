@@ -106,7 +106,7 @@ VIDEO_UPDATE( apple2gs )
 		new_cliprect.max_x = MIN(cliprect->max_x - 40, 559);
 		new_cliprect.max_y = MIN(cliprect->max_y - 4, 191);
 		if ((new_cliprect.max_x > new_cliprect.min_x) && (new_cliprect.max_y > new_cliprect.min_y))
-			video_update_apple2(apple2gs_legacy_gfx, &new_cliprect, do_skip);
+			video_update_apple2(screen, apple2gs_legacy_gfx, &new_cliprect, do_skip);
 		
 		for (i = 0; i < 192; i++)
 		{

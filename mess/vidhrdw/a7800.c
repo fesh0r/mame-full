@@ -451,8 +451,8 @@ void a7800_interrupt(void)
 /* This routine is called at the start of vblank to refresh the screen */
 VIDEO_UPDATE( a7800 )
 {
-	maria_scanline=0;
-	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
+	maria_scanline = 0;
+	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
 }
 
 

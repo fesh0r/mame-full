@@ -1141,7 +1141,7 @@ static int ppcdrc603_execute(int cycles)
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
 	ppc_dec_base_icount = cycles + ppc.dec_frac;
-	
+
 	// check if decrementer exception occurs during execution
 	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
 	{

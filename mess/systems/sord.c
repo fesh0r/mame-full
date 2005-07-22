@@ -22,6 +22,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
 #include "machine/z80fmly.h"
@@ -326,7 +327,7 @@ static DEVICE_LOAD( sord_cartslot )
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-	cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, Z80_VECTOR( 0, state));
+	cpunum_set_input_line(0, 0, state);
 }
 
 static z80ctc_interface	sord_m5_ctc_intf =
@@ -624,10 +625,10 @@ INPUT_PORTS_START(sord_m5)
 INPUT_PORTS_END
 
 
-static Z80_DaisyChain sord_m5_daisy_chain[] =
+static struct z80_irq_daisy_chain sord_m5_daisy_chain[] =
 {
-	{z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
-	{0,0,0,-1}
+	{z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
+	{0,0,0,0,-1}
 };
 
 

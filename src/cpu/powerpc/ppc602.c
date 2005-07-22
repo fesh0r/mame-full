@@ -187,7 +187,7 @@ static int ppc602_execute(int cycles)
 		if (MSR & MSR_IR)
 			opcode = ppc_readop_translated(ppc.pc);
 		else
-			opcode = ROPCODE64(ppc.pc);
+		opcode = ROPCODE64(ppc.pc);
 
 		ppc.npc = ppc.pc + 4;
 		switch(opcode >> 26)

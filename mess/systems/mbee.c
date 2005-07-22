@@ -44,6 +44,7 @@
 #include "devices/cassette.h"
 #include "devices/z80bin.h"
 #include "inputx.h"
+#include "cpu/z80/z80daisy.h"
 
 #define VERBOSE 1
 
@@ -237,10 +238,10 @@ static PALETTE_INIT( mbee )
 	}
 }
 
-Z80_DaisyChain mbee_daisy_chain[] =
+struct z80_irq_daisy_chain mbee_daisy_chain[] =
 {
-    { z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-    { 0, 0, 0, -1}      /* end mark */
+    { z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
+    { 0, 0, 0, 0, -1}      /* end mark */
 };
 
 

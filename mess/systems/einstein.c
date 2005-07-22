@@ -82,6 +82,7 @@
 #include "machine/z80fmly.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
 #include "includes/wd179x.h"
 #include "includes/centroni.h"
 #include "includes/msm8251.h"
@@ -312,6 +313,8 @@ static void einstein_scan_keyboard(void)
 
 static void einstein_update_interrupts(void)
 {
+	/* NPW 21-Jul-2005 - Not sure how to update this for MAME 0.98u2 */
+/*
 	if (einstein_int & einstein_int_mask & EINSTEIN_KEY_INT)
 		cpunum_set_input_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
@@ -322,7 +325,6 @@ static void einstein_update_interrupts(void)
 	else
 		cpunum_set_input_line(0, Z80_INT_IEO, PULSE_LINE);
 
-/*
 	if (einstein_int & einstein_int_mask & EINSTEIN_FIRE_INT)
 		cpunum_set_input_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
@@ -478,14 +480,14 @@ static void einstein_fire_reti(int which)
 {
 }
 
-static Z80_DaisyChain einstein_daisy_chain[] =
+static struct z80_irq_daisy_chain einstein_daisy_chain[] =
 {
-	{einstein_keyboard_int_reset, einstein_keyboard_interrupt, einstein_keyboard_reti, 0},
-    {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
-	{einstein_adc_int_reset,einstein_adc_interrupt, einstein_adc_reti, 0},
-	{z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
+	{einstein_keyboard_int_reset, einstein_keyboard_interrupt, 0, einstein_keyboard_reti, 0},
+    {z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
+	{einstein_adc_int_reset,einstein_adc_interrupt, 0, einstein_adc_reti, 0},
+	{z80pio_reset, z80pio_irq_state, z80pio_irq_ack, z80pio_irq_reti, 0},
 //	{einstein_fire_int_reset,einstein_fire_interrupt, einstein_fire_reti, 0},
-    {0,0,0,-1}
+    {0,0,0,0,-1}
 };
 
 static  READ8_HANDLER(einstein_vdp_r)
@@ -1671,8 +1673,8 @@ static VIDEO_UPDATE( einstein_80col )
 
 static VIDEO_UPDATE( einstein2 )
 {
-	video_update_tms9928a(bitmap, cliprect, do_skip);
-	video_update_einstein_80col(bitmap, cliprect, do_skip);
+	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
+	video_update_einstein_80col(screen, bitmap, cliprect, do_skip);
 }
 
 static const TMS9928a_interface tms9928a_interface =

@@ -8,11 +8,13 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "devices/cartslot.h"
+#include "cpu/z80/z80daisy.h"
 
 unsigned char key_sense;
 int mtx_loadindex;
@@ -816,10 +818,10 @@ INPUT_PORTS_START( mtx512 )
 
 INPUT_PORTS_END
 
-static Z80_DaisyChain mtx_daisy_chain[] =
+static struct z80_irq_daisy_chain mtx_daisy_chain[] =
 {
-        {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
-        {0,0,0,-1}
+	{z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
+	{0,0,0,0,-1}
 };
 
 static const TMS9928a_interface tms9928a_interface =

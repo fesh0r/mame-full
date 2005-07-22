@@ -22,6 +22,7 @@
 #include "driver.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80daisy.h"
 
 static void pio_interrupt(int state);
 
@@ -44,7 +45,7 @@ static z80pio_interface z80pio_intf =
 
 static void pio_interrupt(int state)
 {
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line(0, 0, state);
 }
 
 static void keyboard_scan(void)
@@ -300,7 +301,7 @@ static PALETTE_INIT( super80_bw )
 	memcpy(colortable, & bw_colortable, sizeof(bw_colortable));
 }
 
-static Z80_DaisyChain super80_daisy_chain[] =
+static struct z80_irq_daisy_chain super80_daisy_chain[] =
 {
 	{z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
 	{0,0,0,-1}

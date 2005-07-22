@@ -305,7 +305,7 @@ static VIDEO_UPDATE( tm990_189 )
 
 static VIDEO_UPDATE( tm990_189_v )
 {
-	video_update_tms9928a(bitmap, cliprect, do_skip);
+	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
 
 	plot_box(bitmap, LED_display_window_left, LED_display_window_top, LED_display_window_width, LED_display_window_height, Machine->pens[1]);
 	update_common(bitmap,

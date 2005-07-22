@@ -1496,7 +1496,7 @@ int m6847_get_bordercolor(void)
 	return bordercolor;
 }
 
-void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip)
+void internal_video_update_m6847(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip)
 {
 	static int last_artifact_value = 0;
 	int artifact_value;
@@ -1513,12 +1513,12 @@ void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectan
 		}
 	}
 
-	video_update_videomap(bitmap, cliprect, do_skip);
+	video_update_videomap(screen, bitmap, cliprect, do_skip);
 }
 
 static VIDEO_UPDATE( m6847 )
 {
-	internal_video_update_m6847(bitmap, cliprect, do_skip);
+	internal_video_update_m6847(screen, bitmap, cliprect, do_skip);
 }
 
 int m6847_is_t1(int version)

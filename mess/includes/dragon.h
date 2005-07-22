@@ -44,7 +44,7 @@ UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metap
 int internal_m6847_getadjustedscanline(void);
 void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
 
-void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip);
+void internal_video_update_m6847(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *

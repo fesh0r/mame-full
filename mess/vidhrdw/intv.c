@@ -840,7 +840,7 @@ VIDEO_UPDATE( intvkbd )
 //	char c;
 
 	/* Draw the underlying INTV screen first */
-	video_update_intv(bitmap, cliprect, do_skip);
+	video_update_intv(screen, bitmap, cliprect, do_skip);
 
 	/* if the intvkbd text is not blanked, overlay it */
 	if (!intvkbd_text_blanked)

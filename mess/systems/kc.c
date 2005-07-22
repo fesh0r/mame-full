@@ -15,19 +15,20 @@
 #include "cpuintrf.h"
 #include "machine/z80fmly.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
 #include "includes/kc.h"
 #include "devices/cassette.h"
 
 /* pio is last in chain and therefore has highest priority */
 
-static Z80_DaisyChain kc85_daisy_chain[] =
+static struct z80_irq_daisy_chain kc85_daisy_chain[] =
 {
-        {z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
-        {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
-        {0,0,0,-1}
+	{z80pio_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
+	{z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
+	{0,0,0,0,-1}
 };
 
-static  READ8_HANDLER(kc85_4_port_r)
+static READ8_HANDLER(kc85_4_port_r)
 {
 	int port;
 

@@ -761,7 +761,7 @@ static void log_video(void)
 VIDEO_UPDATE( coco3 )
 {
 	coco3_palette_recalc(0);
-	internal_video_update_m6847(bitmap, cliprect, do_skip);
+	internal_video_update_m6847(screen, bitmap, cliprect, do_skip);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
