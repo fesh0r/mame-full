@@ -457,8 +457,7 @@ static void general_invalidate(UINT8 inval_flags_mask, int scanline)
 
 	/* sanity check the scanline */
 	assert(scanline >= 0);
-	if (Machine->scrbitmap)
-		assert(scanline <= Machine->scrbitmap->height);
+	assert(scanline <= Machine->drv->screen_height);
 
 	/* figure out how soon our timer needs to go off */
 	if (scanline <= cpu_getscanline())
@@ -491,11 +490,11 @@ void videomap_invalidate_lineinfo()
 	scanline = cpu_getscanline();
 	horzbeampos = cpu_gethorzbeampos();
 
-	if (scanline > Machine->scrbitmap->height)
-		scanline = Machine->scrbitmap->height;
+	if (scanline > Machine->drv->screen_height)
+		scanline = Machine->drv->screen_height;
 
 	assert(scanline >= 0);
-	assert(scanline <= Machine->scrbitmap->height);
+	assert(scanline <= Machine->drv->screen_height);
 
 	/* am I in the left side? adjustment is 0 if so; 1 otherwise*/
 	adjustment = (horzbeampos < (Machine->drv->screen_width / 2)) ? 0 : 1;

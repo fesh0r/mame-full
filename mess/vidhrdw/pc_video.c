@@ -91,10 +91,10 @@ VIDEO_UPDATE( pc_video )
 			pc_current_height = h;
 			pc_anythingdirty = 1;
 
-			if (pc_current_width > Machine->scrbitmap->width)
-				pc_current_width = Machine->scrbitmap->width;
-			if (pc_current_height > Machine->scrbitmap->height)
-				pc_current_height = Machine->scrbitmap->height;
+			if (pc_current_width > Machine->drv->screen_width)
+				pc_current_width = Machine->drv->screen_width;
+			if (pc_current_height > Machine->drv->screen_height)
+				pc_current_height = Machine->drv->screen_height;
 
 			if ((pc_current_width > 100) && (pc_current_height > 100))
 				set_visible_area(0, pc_current_width-1, 0, pc_current_height-1);

@@ -34,17 +34,17 @@ void mac_set_screen_buffer(int buffer)
 
 static void mac_videomap_frame_callback(struct videomap_framecallback_info *info)
 {
-	info->visible_scanlines = Machine->scrbitmap->height;
+	info->visible_scanlines = Machine->drv->screen_height;
 	info->video_base = mess_ram_size - (screen_buffer ? MAC_MAIN_SCREEN_BUF_OFFSET : MAC_ALT_SCREEN_BUF_OFFSET);
-	info->pitch = Machine->scrbitmap->width / 8;
+	info->pitch = Machine->drv->screen_width / 8;
 }
 
 
 
 static void mac_videomap_line_callback(struct videomap_linecallback_info *info)
 {
-	info->visible_columns = Machine->scrbitmap->width;
-	info->grid_width = Machine->scrbitmap->width;
+	info->visible_columns = Machine->drv->screen_width;
+	info->grid_width = Machine->drv->screen_width;
 	info->grid_depth = 1;
 	info->scanlines_per_row = 1;
 }

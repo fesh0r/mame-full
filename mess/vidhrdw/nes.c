@@ -40,7 +40,7 @@ PALETTE_INIT( nes )
 	ppu2c03b_init_palette(0);
 }
 
-static void draw_sight(int playerNum, int x_center, int y_center)
+static void draw_sight(struct mame_bitmap *bitmap, int playerNum, int x_center, int y_center)
 {
 	int x,y;
 	UINT16 color;
@@ -58,11 +58,11 @@ static void draw_sight(int playerNum, int x_center, int y_center)
 
 	for(y = y_center-5; y < y_center+6; y++)
 		if((y >= 0) && (y < 256))
-			plot_pixel (Machine->scrbitmap, x_center, y, color);
+			plot_pixel (bitmap, x_center, y, color);
 
 	for(x = x_center-5; x < x_center+6; x++)
 		if((x >= 0) && (x < 256))
-			plot_pixel (Machine->scrbitmap, x, y_center, color);
+			plot_pixel (bitmap, x, y_center, color);
 }
 
 /***************************************************************************
@@ -87,9 +87,9 @@ VIDEO_UPDATE( nes )
 	if ((readinputport(PORT_CONFIG1) & 0x00f0) == 0x0030)
 		sights |= 0x0002;
 	if (sights & 0x0001)
-		draw_sight(1, readinputport(PORT_ZAPPER0_X), readinputport(PORT_ZAPPER0_Y));
+		draw_sight(bitmap, 1, readinputport(PORT_ZAPPER0_X), readinputport(PORT_ZAPPER0_Y));
 	if (sights & 0x0002)
-		draw_sight(2, readinputport(PORT_ZAPPER1_X), readinputport(PORT_ZAPPER1_Y));
+		draw_sight(bitmap, 2, readinputport(PORT_ZAPPER1_X), readinputport(PORT_ZAPPER1_Y));
 
 	/* if this is a disk system game, check for the flip-disk key */
 	if (nes.mapper == 20)

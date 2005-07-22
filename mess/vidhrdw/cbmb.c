@@ -101,7 +101,7 @@ VIDEO_UPDATE( cbmb )
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, Machine->gfx[cbmb_font]->width*x, 
+						plot_box(bitmap, Machine->gfx[cbmb_font]->width*x, 
 								 height*y+cursor.top, 
 								 Machine->gfx[cbmb_font]->width, k, Machine->pens[1]);
 				}

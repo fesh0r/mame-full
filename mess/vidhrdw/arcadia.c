@@ -823,7 +823,7 @@ INTERRUPT_GEN( arcadia_video_line )
 
 	if (arcadia_video.line<arcadia_video.ypos)
 	{
-		plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->scrbitmap->width, 1, Machine->gfx[0]->colortable[0]);
+		plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
 		memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 	}
 	else
@@ -851,7 +851,7 @@ INTERRUPT_GEN( arcadia_video_line )
 		else
 		{
 			arcadia_video.charline=0xd;
-			plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->scrbitmap->width, 1, Machine->gfx[0]->colortable[0]);
+			plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
 			memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 		}
 	}

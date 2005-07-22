@@ -1215,7 +1215,7 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
 		 line += height, addr=(addr+EGA_LINE_LENGTH)&0x3ffff)
 	{
-		bitmapline = (UINT16 *) Machine->scrbitmap->line[line];
+		bitmapline = (UINT16 *) bitmap->line[line];
 
 		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff)
 		{
@@ -1243,7 +1243,7 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 			if (line + i >= LINES)
 				break;
 
-			newbitmapline = (UINT16 *) Machine->scrbitmap->line[line+i];
+			newbitmapline = (UINT16 *) bitmap->line[line+i];
 			memcpy(newbitmapline, bitmapline, EGA_COLUMNS * 8 * sizeof(UINT16));
 		}
 	}

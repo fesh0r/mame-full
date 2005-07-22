@@ -288,7 +288,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	struct crtc6845_cursor cursor;
 	UINT8 attr;
 
-	char_width = Machine->scrbitmap->width / 80;
+	char_width = Machine->drv->screen_width / 80;
 
 	crtc6845_time(crtc);
 	crtc6845_get_cursor(crtc, &cursor);
@@ -343,7 +343,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	struct crtc6845_cursor cursor;
 	int char_width;
 
-	char_width = Machine->scrbitmap->width / 80;
+	char_width = Machine->drv->screen_width / 80;
 
 	crtc6845_time(crtc);
 	crtc6845_get_cursor(crtc, &cursor);
@@ -419,11 +419,11 @@ pc_video_update_proc pc_mda_choosevideomode(int *width, int *height, struct crtc
 	switch (mda.mode_control & 0x2a) { /* text and gfx modes */
 	case 0x08:
 		proc = mda_text_inten;
-		*width *= Machine->scrbitmap->width / 80;
+		*width *= Machine->drv->screen_width / 80;
 		break;
 	case 0x28:
 		proc = mda_text_blink;
-		*width *= Machine->scrbitmap->width / 80;
+		*width *= Machine->drv->screen_width / 80;
 		break;
 	case 0x0a:
 	case 0x2a:

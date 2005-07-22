@@ -127,10 +127,10 @@ VIDEO_UPDATE( mpf1 )
 	int x;
 	static UINT8 xpositions[] = { 20, 59, 97, 135, 185, 223 };
 
-	fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
+	fillbitmap(bitmap, get_black_pen(), NULL);
 
 	for(x = 0; x < 6; x++)
-		draw_led(Machine->scrbitmap, leddisplay, leddigit[x], xpositions[x], 377);
+		draw_led(bitmap, leddisplay, leddigit[x], xpositions[x], 377);
 }
 
 /* Memory Maps */

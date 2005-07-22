@@ -60,7 +60,7 @@ VIDEO_UPDATE( kim1 )
 {
     int x, y;
 
-	fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
+	fillbitmap(bitmap, get_black_pen(), NULL);
 
     for (x = 0; x < 6; x++)
     {

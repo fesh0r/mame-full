@@ -1039,7 +1039,7 @@ void internal_m6847_line_callback(struct videomap_linecallback_info *info, const
 
 	info->visible_columns = 256 * intf->width_factor;
 	info->scanlines_per_row = the_state.rowheight;
-	info->borderleft_columns = (Machine->scrbitmap->width - info->visible_columns) / 2;
+	info->borderleft_columns = (Machine->drv->screen_width - info->visible_columns) / 2;
 	info->border_value = 0xff;
 	info->text_modulo = 12;
 
@@ -1410,10 +1410,10 @@ int internal_m6847_getadjustedscanline(void)
 	horzbeampos = cpu_gethorzbeampos();
 
 	/* adjust scanline because things seem to behave weird here */
-	if ((horzbeampos + (Machine->scrbitmap->width / 4)) < Machine->scrbitmap->width)
+	if ((horzbeampos + (Machine->drv->screen_width / 4)) < Machine->drv->screen_width)
 	{
 		if (scanline == 0)
-			scanline = Machine->scrbitmap->height-1;
+			scanline = Machine->drv->screen_height-1;
 		else
 			scanline--;
 	}

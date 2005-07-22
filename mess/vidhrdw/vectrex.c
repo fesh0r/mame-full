@@ -254,8 +254,8 @@ VIDEO_START( vectrex )
 {
 	int width, height;
 
-	width = Machine->scrbitmap->width;
-	height = Machine->scrbitmap->height;
+	width = Machine->drv->screen_width;
+	height = Machine->drv->screen_height;
 
 	x_center=((Machine->visible_area.max_x
 		  -Machine->visible_area.min_x) / 2) << VEC_SHIFT;

@@ -367,7 +367,7 @@ static void coco3_line_callback(struct videomap_linecallback_info *info)
 		/* new CoCo 3 video modes */
 		info->visible_columns = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
 		info->scanlines_per_row = coco3_hires_linesperrow();
-		info->borderleft_columns = (Machine->scrbitmap->width - info->visible_columns) / 2;
+		info->borderleft_columns = (Machine->drv->screen_width - info->visible_columns) / 2;
 		info->border_value = 0xff;
 		info->offset = (coco3_gimevhreg[7] & 0x7f) * 2;
 		info->offset_wrap = 256;
