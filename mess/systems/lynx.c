@@ -19,6 +19,7 @@ static int rotate=0;
 int lynx_rotate;
 static int lynx_line_y;
 UINT32 lynx_palette[0x10];
+static struct mame_bitmap *lynx_bitmap;
 
 static ADDRESS_MAP_START( lynx_readmem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0xfbff) AM_READ( MRA8_RAM )
@@ -68,6 +69,7 @@ static INTERRUPT_GEN( lynx_frame_int )
 
 static VIDEO_START( lynx )
 {
+	lynx_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
     return 0;
 }
 
@@ -120,8 +122,8 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					plot_pixel(Machine->scrbitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
-					plot_pixel(Machine->scrbitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
+					plot_pixel(lynx_bitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
+					plot_pixel(lynx_bitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
@@ -131,8 +133,8 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=0;x<160;j++,x+=2)
 				{
-					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
-					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
+					plot_pixel(lynx_bitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
+					plot_pixel(lynx_bitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
@@ -146,8 +148,8 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					plot_pixel(Machine->scrbitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
-					plot_pixel(Machine->scrbitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
+					plot_pixel(lynx_bitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
+					plot_pixel(lynx_bitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
@@ -157,8 +159,8 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=0;x<160;j++,x+=2)
 				{
-					plot_pixel(Machine->scrbitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
-					plot_pixel(Machine->scrbitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
+					plot_pixel(lynx_bitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
+					plot_pixel(lynx_bitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
@@ -177,6 +179,7 @@ void lynx_draw_lines(int newline)
 
 static VIDEO_UPDATE( lynx )
 {
+	copybitmap(bitmap, lynx_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 	lynx_audio_debug(bitmap);
 }
 

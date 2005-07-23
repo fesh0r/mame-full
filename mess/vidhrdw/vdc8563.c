@@ -438,7 +438,7 @@ static void vdc8563_monotext_screenrefresh (struct mame_bitmap *bitmap, int full
 					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8,
+						plot_box(bitmap, Machine->gfx[0]->width*x+8,
 								 height*y+height+CRTC6845_CURSOR_TOP,
 								 Machine->gfx[0]->width, k, Machine->pens[FRAMECOLOR]);
 				}
@@ -480,7 +480,7 @@ static void vdc8563_text_screenrefresh (struct mame_bitmap *bitmap, int full_ref
 					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8,
+						plot_box(bitmap, Machine->gfx[0]->width*x+8,
 								 height*y+height+CRTC6845_CURSOR_TOP,
 								 Machine->gfx[0]->width, k, Machine->pens[0x10|(ch&0xf)]);
 				}

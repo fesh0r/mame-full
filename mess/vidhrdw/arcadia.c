@@ -506,12 +506,14 @@ static struct {
 	    UINT8 ram3[3][16];
 	} d;
     } reg;
+	struct mame_bitmap *bitmap;
 } arcadia_video={ 0 };
 
 VIDEO_START( arcadia )
 {
 	int i;
-	for (i=0; i<0x40; i++) {
+	for (i=0; i<0x40; i++)
+	{
 		rectangle[i][0]=0;
 		rectangle[i][4]=0;
 		if (i&1) rectangle[i][0]|=3;
@@ -524,10 +526,11 @@ VIDEO_START( arcadia )
 		rectangle[i][5]=rectangle[i][6]=rectangle[i][7]=rectangle[i][4];
 	}
 
+	arcadia_video.bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	return 0;
 }
 
- READ8_HANDLER(arcadia_video_r)
+READ8_HANDLER(arcadia_video_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -801,7 +804,7 @@ INTERRUPT_GEN( arcadia_video_line )
 
 	if (arcadia_video.line<arcadia_video.ypos)
 	{
-		plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
+		plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
 		memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 	}
 	else
@@ -813,7 +816,7 @@ INTERRUPT_GEN( arcadia_video_line )
 		if (arcadia_video.charline<13)
 		{
 			if (((arcadia_video.line-arcadia_video.ypos)&(h-1))==0) {
-				arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*h+arcadia_video.ypos,
+				arcadia_vh_draw_line(arcadia_video.bitmap, arcadia_video.charline*h+arcadia_video.ypos,
 					arcadia_video.reg.d.chars1[arcadia_video.charline]);
 			}
 		}
@@ -821,7 +824,7 @@ INTERRUPT_GEN( arcadia_video_line )
 		{
 			if (((arcadia_video.line-arcadia_video.ypos)&(h-1))==0)
 			{
-				arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*h+arcadia_video.ypos,
+				arcadia_vh_draw_line(arcadia_video.bitmap, arcadia_video.charline*h+arcadia_video.ypos,
 					arcadia_video.reg.d.chars2[arcadia_video.charline-13]);
 			}
 			arcadia_video.charline-=13;
@@ -829,12 +832,12 @@ INTERRUPT_GEN( arcadia_video_line )
 		else
 		{
 			arcadia_video.charline=0xd;
-			plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
+			plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->drv->screen_width, 1, Machine->gfx[0]->colortable[0]);
 			memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 		}
 	}
 	if (arcadia_video.line==261)
-		arcadia_draw_sprites(Machine->scrbitmap);
+		arcadia_draw_sprites(arcadia_video.bitmap);
 }
 
 READ8_HANDLER(arcadia_vsync_r)
@@ -844,4 +847,5 @@ READ8_HANDLER(arcadia_vsync_r)
 
 VIDEO_UPDATE( arcadia )
 {
+	copybitmap(bitmap, arcadia_video.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 }

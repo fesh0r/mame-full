@@ -185,7 +185,7 @@ static struct {
 
 	int chargenaddr, videoaddr;
 
-	struct mame_bitmap *bitmap;		   /* Machine->scrbitmap for speedup */
+	struct mame_bitmap *bitmap;
 	int x_begin, x_end;
 	int y_begin, y_end;
 
@@ -653,7 +653,7 @@ VIDEO_START( vic2 )
 {
 	int i;
 
-	vic2.bitmap = Machine->scrbitmap;
+	vic2.bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 
 	if (vic2.vic3) {
 		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 656 / 8);
@@ -1343,19 +1343,7 @@ INTERRUPT_GEN( vic2_raster_irq )
 
 VIDEO_UPDATE( vic2 )
 {
-#if 0
-    char text[40];
-    int i, y;
-    for (y=0, i=0; i<8; i++) {
-	if (SPRITEON(i)) {
-	    sprintf(text,"%d x:%d y:%d",i,
-		    SPRITE_X_POS(i), SPRITE_Y_POS(i) );
-
-	    ui_text(bitmap,text,0,y);
-	    y+=8;
-	}
-    }
-#endif
+	copybitmap(bitmap, vic2.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 	statetext_display(bitmap);
 }
 

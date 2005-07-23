@@ -495,7 +495,7 @@ static int y_begin, y_end;
 
 static UINT16 c16_bitmap[2], bitmapmulti[4], mono[2], monoinversed[2], multi[4], ecmcolor[2], colors[5];
 
-static struct mame_bitmap *ted7360_bitmap;	/* Machine->scrbitmap for speedup */
+static struct mame_bitmap *ted7360_bitmap;
 static int rasterline = 0, lastline = 0;
 static double rastertime;
 static void ted7360_drawlines (int first, int last);
@@ -937,7 +937,7 @@ VIDEO_START( ted7360 )
 	cursorelement->colortable = cursorcolortable;
 	cursorcolortable[1] = Machine->pens[1];
 	cursorelement->total_colors = 2;
-	ted7360_bitmap = Machine->scrbitmap;
+	ted7360_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	return 0;
 }
 
@@ -1262,4 +1262,5 @@ INTERRUPT_GEN( ted7360_raster_interrupt )
 
 VIDEO_UPDATE( ted7360 )
 {
+	copybitmap(bitmap, ted7360_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 }

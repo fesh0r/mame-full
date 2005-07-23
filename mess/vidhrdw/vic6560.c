@@ -163,7 +163,7 @@ VIDEO_START( vic6560 )
 	pointercolortable[1] = Machine->pens[1];
 	pointercolortable[2] = Machine->pens[0];
 	pointerelement->total_colors = 3;
-	vic6560_bitmap = Machine->scrbitmap;
+	vic6560_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	return 0;
 }
 
@@ -540,4 +540,5 @@ INTERRUPT_GEN( vic656x_raster_interrupt )
 
 VIDEO_UPDATE( vic6560 )
 {
+	copybitmap(bitmap, vic6560_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 }

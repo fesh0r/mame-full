@@ -38,59 +38,67 @@ typedef struct {
 int _y;
 #endif
 
-static struct {
+static struct
+{
     SPRITE sprites[4];
     int line;
     UINT8 sprite_collision;
     UINT8 background_collision;
-    union {
-	UINT8 data[0x100];
-	struct {
-	    SPRITE_HELPER sprites[3];
-	    UINT8 res[0x10];
-	    SPRITE_HELPER sprite4;
-	    UINT8 res2[0x30];
-	    UINT8 grid[20][2];
-	    UINT8 grid_control[5];
-	    UINT8 res3[0x13];
-	    UINT8 sprite_sizes;
-	    UINT8 sprite_colors[2];
-	    UINT8 score_control;
-	    UINT8 res4[2];
-	    UINT8 background;
-	    UINT8 sound;
-	    UINT8 bcd[2];
-	    UINT8 background_collision;
-	    UINT8 sprite_collision;
-	} d;
+    union
+	{
+		UINT8 data[0x100];
+		struct {
+			SPRITE_HELPER sprites[3];
+			UINT8 res[0x10];
+			SPRITE_HELPER sprite4;
+			UINT8 res2[0x30];
+			UINT8 grid[20][2];
+			UINT8 grid_control[5];
+			UINT8 res3[0x13];
+			UINT8 sprite_sizes;
+			UINT8 sprite_colors[2];
+			UINT8 score_control;
+			UINT8 res4[2];
+			UINT8 background;
+			UINT8 sound;
+			UINT8 bcd[2];
+			UINT8 background_collision;
+			UINT8 sprite_collision;
+		} d;
     } reg;
-} vc4000_video={
+
+	struct mame_bitmap *bitmap;
+} vc4000_video =
+{
     { 
-	{ &vc4000_video.reg.d.sprites[0],1 },
-	{ &vc4000_video.reg.d.sprites[1],2 }, 
-	{ &vc4000_video.reg.d.sprites[2],4 },
-	{ &vc4000_video.reg.d.sprite4,8 }
+		{ &vc4000_video.reg.d.sprites[0],1 },
+		{ &vc4000_video.reg.d.sprites[1],2 }, 
+		{ &vc4000_video.reg.d.sprites[2],4 },
+		{ &vc4000_video.reg.d.sprite4,8 }
     }    
 };
 
 VIDEO_START(vc4000)
 {
     int i;
-    for (i=0;i<0x20; i++) {
-	sprite_collision[i]=0;
-	if ((i&3)==3) sprite_collision[i]|=0x20;
-	if ((i&5)==5) sprite_collision[i]|=0x10;
-	if ((i&9)==9) sprite_collision[i]|=8;
-	if ((i&6)==6) sprite_collision[i]|=4;
-	if ((i&0xa)==0xa) sprite_collision[i]|=2;
-	if ((i&0xc)==0xc) sprite_collision[i]|=1;
-	background_collision[i]=0;
-	if ((i&0x11)==0x11) background_collision[i]|=0x80;
-	if ((i&0x12)==0x12) background_collision[i]|=0x40;
-	if ((i&0x14)==0x14) background_collision[i]|=0x20;
-	if ((i&0x18)==0x18) background_collision[i]|=0x10;
+    
+	for (i=0;i<0x20; i++)
+	{
+		sprite_collision[i]=0;
+		if ((i&3)==3) sprite_collision[i]|=0x20;
+		if ((i&5)==5) sprite_collision[i]|=0x10;
+		if ((i&9)==9) sprite_collision[i]|=8;
+		if ((i&6)==6) sprite_collision[i]|=4;
+		if ((i&0xa)==0xa) sprite_collision[i]|=2;
+		if ((i&0xc)==0xc) sprite_collision[i]|=1;
+		background_collision[i]=0;
+		if ((i&0x11)==0x11) background_collision[i]|=0x80;
+		if ((i&0x12)==0x12) background_collision[i]|=0x40;
+		if ((i&0x14)==0x14) background_collision[i]|=0x20;
+		if ((i&0x18)==0x18) background_collision[i]|=0x10;
     }
 
+	vc4000_video.bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
     return 0;
 }
 
@@ -371,7 +379,7 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
 
 	if (vc4000_video.line>=Machine->drv->screen_height) return;
 
-	plot_box(Machine->scrbitmap, 0, vc4000_video.line, Machine->drv->screen_width, 1, Machine->pens[(vc4000_video.reg.d.background)&7]);
+	plot_box(vc4000_video.bitmap, 0, vc4000_video.line, Machine->drv->screen_width, 1, Machine->pens[(vc4000_video.reg.d.background)&7]);
 
 	if (line<0 || line>=200) return;
 	if (!vc4000_video.reg.d.background&8) return;
@@ -411,7 +419,7 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
 			for (l=0; l<w; l++) {
 			collision[x+l]|=0x10;
 			}
-			plot_box(Machine->scrbitmap, x, vc4000_video.line, w, 1, Machine->pens[(vc4000_video.reg.d.background>>4)&7]);
+			plot_box(vc4000_video.bitmap, x, vc4000_video.line, w, 1, Machine->pens[(vc4000_video.reg.d.background>>4)&7]);
 		}
 		if (j==7) m=0x100;
 	}
@@ -437,13 +445,13 @@ INTERRUPT_GEN( vc4000_video_line )
 	vc4000_draw_grid(collision);
 
 	Machine->gfx[0]->colortable[1]=Machine->pens[8|((vc4000_video.reg.d.sprite_colors[0]>>3)&7)];
-	vc4000_sprite_update(Machine->scrbitmap, collision, &vc4000_video.sprites[0]);
+	vc4000_sprite_update(vc4000_video.bitmap, collision, &vc4000_video.sprites[0]);
 	Machine->gfx[0]->colortable[1]=Machine->pens[8|(vc4000_video.reg.d.sprite_colors[0]&7)];
-	vc4000_sprite_update(Machine->scrbitmap, collision, &vc4000_video.sprites[1]);
+	vc4000_sprite_update(vc4000_video.bitmap, collision, &vc4000_video.sprites[1]);
 	Machine->gfx[0]->colortable[1]=Machine->pens[8|((vc4000_video.reg.d.sprite_colors[1]>>3)&7)];
-	vc4000_sprite_update(Machine->scrbitmap, collision, &vc4000_video.sprites[2]);
+	vc4000_sprite_update(vc4000_video.bitmap, collision, &vc4000_video.sprites[2]);
 	Machine->gfx[0]->colortable[1]=Machine->pens[8|(vc4000_video.reg.d.sprite_colors[1]&7)];
-	vc4000_sprite_update(Machine->scrbitmap, collision, &vc4000_video.sprites[3]);
+	vc4000_sprite_update(vc4000_video.bitmap, collision, &vc4000_video.sprites[3]);
 
 	if (vc4000_video.line==275) vc4000_video.reg.d.sprite_collision |=0x40;
 
@@ -458,13 +466,13 @@ INTERRUPT_GEN( vc4000_video_line )
 	if ((vc4000_video.line>=y)&&(vc4000_video.line<y+20))
 	{
 		x = 58;
-		vc4000_draw_digit(Machine->scrbitmap, x, y, vc4000_video.reg.d.bcd[0]>>4, vc4000_video.line-y);
-		vc4000_draw_digit(Machine->scrbitmap, x+16, y, vc4000_video.reg.d.bcd[0]&0xf, vc4000_video.line-y);
+		vc4000_draw_digit(vc4000_video.bitmap, x, y, vc4000_video.reg.d.bcd[0]>>4, vc4000_video.line-y);
+		vc4000_draw_digit(vc4000_video.bitmap, x+16, y, vc4000_video.reg.d.bcd[0]&0xf, vc4000_video.line-y);
 		x = 106;
 		if (vc4000_video.reg.d.score_control&2)
 			x += 16;
-		vc4000_draw_digit(Machine->scrbitmap, x, y, vc4000_video.reg.d.bcd[1]>>4, vc4000_video.line-y);
-		vc4000_draw_digit(Machine->scrbitmap, x+16, y, vc4000_video.reg.d.bcd[1]&0xf, vc4000_video.line-y);
+		vc4000_draw_digit(vc4000_video.bitmap, x, y, vc4000_video.reg.d.bcd[1]>>4, vc4000_video.line-y);
+		vc4000_draw_digit(vc4000_video.bitmap, x+16, y, vc4000_video.reg.d.bcd[1]&0xf, vc4000_video.line-y);
 	}
 
 	if ((vc4000_video.line == 275) |
@@ -480,32 +488,5 @@ INTERRUPT_GEN( vc4000_video_line )
 
 VIDEO_UPDATE( vc4000 )
 {
-#if 0
-    char str[0x40];
-//    snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",
-//	     input_port_7_r(0), input_port_8_r(0),
-//	     input_port_9_r(0), input_port_10_r(0));
-
-//    snprintf(str, sizeof(str), "%.2x %.2x %.2x", 
-	snprintf(str, sizeof(str), "%.2x:%.2x %.2x:%.2x %.2x:%.2x %.2x:%.2x",
-			vc4000_video.reg.d.pos[0].x,
-			vc4000_video.reg.d.pos[0].y,
-			vc4000_video.reg.d.pos[1].x,
-			vc4000_video.reg.d.pos[1].y,
-			vc4000_video.reg.d.pos[2].x,
-			vc4000_video.reg.d.pos[2].y,
-			vc4000_video.reg.d.pos[3].x,
-			vc4000_video.reg.d.pos[3].y );
-	ui_text(bitmap, str, 0, 0);
-	snprintf(str, sizeof(str), "%.2x:%.2x %.2x:%.2x %.2x:%.2x %.2x:%.2x",
-			vc4000_video.pos[0].x,
-			vc4000_video.pos[0].y,
-			vc4000_video.pos[1].x,
-			vc4000_video.pos[1].y,
-			vc4000_video.pos[2].x,
-			vc4000_video.pos[2].y,
-			vc4000_video.pos[3].x,
-			vc4000_video.pos[3].y );
-	ui_text(bitmap, str, 0, 8);
-#endif
+	copybitmap(bitmap, vc4000_video.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 }
