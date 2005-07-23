@@ -193,16 +193,8 @@ static void vic3_drawlines (int first, int last)
 
 	if (!SCREENON)
 	{
-/*		if (Machine->color_depth == 8)
-		{
-			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
-				memset (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
-		}
-		else
-*/		{
-			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
-				memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
-		}
+		for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
+			memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		return;
 	}
 	if (COLUMNS40)
@@ -214,18 +206,13 @@ static void vic3_drawlines (int first, int last)
 		end = last;
 	else
 		end = vic2.y_begin + YPOS;
-/*	if (Machine->color_depth == 8)
+
+	for (line = first; line < end; line++)
 	{
-		for (line = first; line < end; line++)
-			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
-					vic2.bitmap->width);
+		memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+			vic2.bitmap->width);
 	}
-	else
-*/	{
-		for (line = first; line < end; line++)
-			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
-					  vic2.bitmap->width);
-	}
+
 	if (LINES25)
 	{
 		vline = line - vic2.y_begin - YPOS;
@@ -348,41 +335,24 @@ static void vic3_drawlines (int first, int last)
 				memset (vic2.sprites[i].paintedline, 0, sizeof (vic2.sprites[i].paintedline));
 			}
 		}
-/*		if (Machine->color_depth == 8)
+
+		for (i = ybegin; i <= yend; i++)
 		{
-			for (i = ybegin; i <= yend; i++)
-			{
-				memset (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR], xbegin);
-				memset (vic2.bitmap->line[yoff + i] + xend, Machine->pens[FRAMECOLOR],
-						vic2.bitmap->width - xend);
-			}
-		}
-		else
-*/		{
-			for (i = ybegin; i <= yend; i++)
-			{
-				memset16 (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
-						  xbegin);
-				memset16 ((short *) vic2.bitmap->line[yoff + i] + xend,
-						  Machine->pens[FRAMECOLOR], vic2.bitmap->width - xend);
-			}
+			memset16 (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
+						xbegin);
+			memset16 ((short *) vic2.bitmap->line[yoff + i] + xend,
+						Machine->pens[FRAMECOLOR], vic2.bitmap->width - xend);
 		}
 	}
 	if (last < vic2.bitmap->height)
 		end = last;
 	else
 		end = vic2.bitmap->height;
-/*	if (Machine->color_depth == 8)
+
+	for (; line < end; line++)
 	{
-		for (; line < end; line++)
-			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
-					vic2.bitmap->width);
-	}
-	else
-*/	{
-		for (; line < end; line++)
-			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
-					  vic2.bitmap->width);
+		memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+			vic2.bitmap->width);
 	}
 }
 

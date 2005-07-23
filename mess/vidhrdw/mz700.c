@@ -65,7 +65,7 @@ VIDEO_UPDATE(mz700)
 
     if( full_refresh )
 	{
-		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 		memset(dirtybuffer, 1, videoram_size);
     }
 

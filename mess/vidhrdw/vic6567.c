@@ -743,37 +743,18 @@ static void vic2_draw_character (int ybegin, int yend, int ch,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = code;
-			vic2.bitmap->line[y + yoff][xoff] = color[code >> 7];
-			vic2.bitmap->line[y + yoff][1 + xoff] = color[(code >> 6) & 1];
-			vic2.bitmap->line[y + yoff][2 + xoff] = color[(code >> 5) & 1];
-			vic2.bitmap->line[y + yoff][3 + xoff] = color[(code >> 4) & 1];
-			vic2.bitmap->line[y + yoff][4 + xoff] = color[(code >> 3) & 1];
-			vic2.bitmap->line[y + yoff][5 + xoff] = color[(code >> 2) & 1];
-			vic2.bitmap->line[y + yoff][6 + xoff] = color[(code >> 1) & 1];
-			vic2.bitmap->line[y + yoff][7 + xoff] = color[code & 1];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = code;
-			*((short *) vic2.bitmap->line[y + yoff] + xoff) = color[code >> 7];
-			*((short *) vic2.bitmap->line[y + yoff] + 1 + xoff) = color[(code >> 6) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 2 + xoff) = color[(code >> 5) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 3 + xoff) = color[(code >> 4) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 4 + xoff) = color[(code >> 3) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 5 + xoff) = color[(code >> 2) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 6 + xoff) = color[(code >> 1) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 7 + xoff) = color[code & 1];
-		}
+		code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
+		vic2.screen[y + yoff][xoff >> 3] = code;
+		*((short *) vic2.bitmap->line[y + yoff] + xoff) = color[code >> 7];
+		*((short *) vic2.bitmap->line[y + yoff] + 1 + xoff) = color[(code >> 6) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 2 + xoff) = color[(code >> 5) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 3 + xoff) = color[(code >> 4) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 4 + xoff) = color[(code >> 3) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 5 + xoff) = color[(code >> 2) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 6 + xoff) = color[(code >> 1) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 7 + xoff) = color[code & 1];
 	}
 }
 
@@ -782,37 +763,18 @@ static void vic2_draw_character_multi (int ybegin, int yend, int ch,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
-			vic2.bitmap->line[y + yoff][xoff] =
-				vic2.bitmap->line[y + yoff][xoff + 1] = vic2.multi[code >> 6];
-			vic2.bitmap->line[y + yoff][xoff + 2] =
-				vic2.bitmap->line[y + yoff][xoff + 3] = vic2.multi[(code >> 4) & 3];
-			vic2.bitmap->line[y + yoff][xoff + 4] =
-				vic2.bitmap->line[y + yoff][xoff + 5] = vic2.multi[(code >> 2) & 3];
-			vic2.bitmap->line[y + yoff][xoff + 6] =
-				vic2.bitmap->line[y + yoff][xoff + 7] = vic2.multi[code & 3];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 1) = vic2.multi[code >> 6];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 2) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 3) = vic2.multi[(code >> 4) & 3];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 4) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 5) = vic2.multi[(code >> 2) & 3];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 6) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 7) = vic2.multi[code & 3];
-		}
+		code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
+		vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 1) = vic2.multi[code >> 6];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 2) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 3) = vic2.multi[(code >> 4) & 3];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 4) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 5) = vic2.multi[(code >> 2) & 3];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 6) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 7) = vic2.multi[code & 3];
 	}
 }
 
@@ -821,37 +783,18 @@ static void vic2_draw_bitmap (int ybegin, int yend,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = code;
-			vic2.bitmap->line[y + yoff][xoff] = vic2.c64_bitmap[code >> 7];
-			vic2.bitmap->line[y + yoff][1 + xoff] = vic2.c64_bitmap[(code >> 6) & 1];
-			vic2.bitmap->line[y + yoff][2 + xoff] = vic2.c64_bitmap[(code >> 5) & 1];
-			vic2.bitmap->line[y + yoff][3 + xoff] = vic2.c64_bitmap[(code >> 4) & 1];
-			vic2.bitmap->line[y + yoff][4 + xoff] = vic2.c64_bitmap[(code >> 3) & 1];
-			vic2.bitmap->line[y + yoff][5 + xoff] = vic2.c64_bitmap[(code >> 2) & 1];
-			vic2.bitmap->line[y + yoff][6 + xoff] = vic2.c64_bitmap[(code >> 1) & 1];
-			vic2.bitmap->line[y + yoff][7 + xoff] = vic2.c64_bitmap[code & 1];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = code;
-			*((short *) vic2.bitmap->line[y + yoff] + xoff) = vic2.c64_bitmap[code >> 7];
-			*((short *) vic2.bitmap->line[y + yoff] + 1 + xoff) = vic2.c64_bitmap[(code >> 6) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 2 + xoff) = vic2.c64_bitmap[(code >> 5) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 3 + xoff) = vic2.c64_bitmap[(code >> 4) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 4 + xoff) = vic2.c64_bitmap[(code >> 3) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 5 + xoff) = vic2.c64_bitmap[(code >> 2) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 6 + xoff) = vic2.c64_bitmap[(code >> 1) & 1];
-			*((short *) vic2.bitmap->line[y + yoff] + 7 + xoff) = vic2.c64_bitmap[code & 1];
-		}
+		code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
+		vic2.screen[y + yoff][xoff >> 3] = code;
+		*((short *) vic2.bitmap->line[y + yoff] + xoff) = vic2.c64_bitmap[code >> 7];
+		*((short *) vic2.bitmap->line[y + yoff] + 1 + xoff) = vic2.c64_bitmap[(code >> 6) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 2 + xoff) = vic2.c64_bitmap[(code >> 5) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 3 + xoff) = vic2.c64_bitmap[(code >> 4) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 4 + xoff) = vic2.c64_bitmap[(code >> 3) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 5 + xoff) = vic2.c64_bitmap[(code >> 2) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 6 + xoff) = vic2.c64_bitmap[(code >> 1) & 1];
+		*((short *) vic2.bitmap->line[y + yoff] + 7 + xoff) = vic2.c64_bitmap[code & 1];
 	}
 }
 
@@ -860,37 +803,18 @@ static void vic2_draw_bitmap_multi (int ybegin, int yend,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read ((vic2.chargenaddr&0x2000)+ ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
-			vic2.bitmap->line[y + yoff][xoff] =
-				vic2.bitmap->line[y + yoff][xoff + 1] = vic2.bitmapmulti[code >> 6];
-			vic2.bitmap->line[y + yoff][xoff + 2] =
-				vic2.bitmap->line[y + yoff][xoff + 3] = vic2.bitmapmulti[(code >> 4) & 3];
-			vic2.bitmap->line[y + yoff][xoff + 4] =
-				vic2.bitmap->line[y + yoff][xoff + 5] = vic2.bitmapmulti[(code >> 2) & 3];
-			vic2.bitmap->line[y + yoff][xoff + 6] =
-				vic2.bitmap->line[y + yoff][xoff + 7] = vic2.bitmapmulti[code & 3];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
-			vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 1) = vic2.bitmapmulti[code >> 6];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 2) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 3) = vic2.bitmapmulti[(code >> 4) & 3];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 4) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 5) = vic2.bitmapmulti[(code >> 2) & 3];
-			*((short *) vic2.bitmap->line[y + yoff] + xoff + 6) =
-				*((short *) vic2.bitmap->line[y + yoff] + xoff + 7) = vic2.bitmapmulti[code & 3];
-		}
+		code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
+		vic2.screen[y + yoff][xoff >> 3] = vic2.foreground[code];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 1) = vic2.bitmapmulti[code >> 6];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 2) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 3) = vic2.bitmapmulti[(code >> 4) & 3];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 4) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 5) = vic2.bitmapmulti[(code >> 2) & 3];
+		*((short *) vic2.bitmap->line[y + yoff] + xoff + 6) =
+			*((short *) vic2.bitmap->line[y + yoff] + xoff + 7) = vic2.bitmapmulti[code & 3];
 	}
 }
 
@@ -901,53 +825,26 @@ static void vic2_draw_sprite_code_multi (int y, int xbegin,
 
 	if ((y < YPOS) || (y >= 208) || (xbegin <= 1) || (xbegin >= 328))
 		return;
-/*	if (Machine->color_depth == 8)
+
+	for (x = 0, mask = 0xc0, shift = 6; x < 8; x += 2, mask >>= 2, shift -= 2)
 	{
-		for (x = 0, mask = 0xc0, shift = 6; x < 8; x += 2, mask >>= 2, shift -= 2)
+		if (code & mask)
 		{
-			if (code & mask)
+			switch ((prior & mask) >> shift)
 			{
-				switch ((prior & mask) >> shift)
-				{
-				case 1:
-					vic2.bitmap->line[y][xbegin + x + 1] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				case 2:
-					vic2.bitmap->line[y][xbegin + x] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				case 3:
-					vic2.bitmap->line[y][xbegin + x] =
-						vic2.bitmap->line[y][xbegin + x + 1] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				}
-			}
-		}
-	}
-	else
-*/	{
-		for (x = 0, mask = 0xc0, shift = 6; x < 8; x += 2, mask >>= 2, shift -= 2)
-		{
-			if (code & mask)
-			{
-				switch ((prior & mask) >> shift)
-				{
-				case 1:
+			case 1:
+				((short *) vic2.bitmap->line[y])[xbegin + x + 1] =
+					vic2.spritemulti[(code >> shift) & 3];
+				break;
+			case 2:
+				((short *) vic2.bitmap->line[y])[xbegin + x] =
+					vic2.spritemulti[(code >> shift) & 3];
+				break;
+			case 3:
+				((short *) vic2.bitmap->line[y])[xbegin + x] =
 					((short *) vic2.bitmap->line[y])[xbegin + x + 1] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				case 2:
-					((short *) vic2.bitmap->line[y])[xbegin + x] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				case 3:
-					((short *) vic2.bitmap->line[y])[xbegin + x] =
-						((short *) vic2.bitmap->line[y])[xbegin + x + 1] =
-						vic2.spritemulti[(code >> shift) & 3];
-					break;
-				}
+					vic2.spritemulti[(code >> shift) & 3];
+				break;
 			}
 		}
 	}
@@ -959,24 +856,12 @@ static void vic2_draw_sprite_code (int y, int xbegin, int code, int color)
 
 	if ((y < YPOS) || (y >= 208) || (xbegin <= 1) || (xbegin >= 328))
 		return;
-/*	if (Machine->color_depth == 8)
+
+	for (x = 0, mask = 0x80; x < 8; x++, mask >>= 1)
 	{
-		for (x = 0, mask = 0x80; x < 8; x++, mask >>= 1)
+		if (code & mask)
 		{
-			if (code & mask)
-			{
-				vic2.bitmap->line[y][xbegin + x] = color;
-			}
-		}
-	}
-	else
-*/	{
-		for (x = 0, mask = 0x80; x < 8; x++, mask >>= 1)
-		{
-			if (code & mask)
-			{
-				((short *) vic2.bitmap->line[y])[xbegin + x] = color;
-			}
+			((short *) vic2.bitmap->line[y])[xbegin + x] = color;
 		}
 	}
 }
@@ -1259,16 +1144,8 @@ static void vic2_drawlines (int first, int last)
 
 	if (!SCREENON)
 	{
-/*		if (Machine->color_depth == 8)
-		{
-			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
-				memset (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
-		}
-		else
-*/		{
-			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
-				memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
-		}
+		for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
+			memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		return;
 	}
 

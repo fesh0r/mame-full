@@ -309,35 +309,17 @@ static void vic6560_draw_character (int ybegin, int yend,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
-			vic6560_bitmap->line[y + yoff][xoff] = color[code >> 7];
-			vic6560_bitmap->line[y + yoff][xoff + 1] = color[(code >> 6) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 2] = color[(code >> 5) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 3] = color[(code >> 4) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 4] = color[(code >> 3) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 5] = color[(code >> 2) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 6] = color[(code >> 1) & 1];
-			vic6560_bitmap->line[y + yoff][xoff + 7] = color[code & 1];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff) = color[code >> 7];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 1) = color[(code >> 6) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 2) = color[(code >> 5) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 3) = color[(code >> 4) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 4) = color[(code >> 3) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 5) = color[(code >> 2) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 6) = color[(code >> 1) & 1];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 7) = color[code & 1];
-		}
+		code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff) = color[code >> 7];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 1) = color[(code >> 6) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 2) = color[(code >> 5) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 3) = color[(code >> 4) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 4) = color[(code >> 3) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 5) = color[(code >> 2) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 6) = color[(code >> 1) & 1];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 7) = color[code & 1];
 	}
 }
 
@@ -346,35 +328,17 @@ static void vic6560_draw_character_multi (int ybegin, int yend,
 {
 	int y, code;
 
-/*	if (Machine->color_depth == 8)
+	for (y = ybegin; y <= yend; y++)
 	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
-			vic6560_bitmap->line[y + yoff][xoff + 1] =
-				vic6560_bitmap->line[y + yoff][xoff] = color[code >> 6];
-			vic6560_bitmap->line[y + yoff][xoff + 3] =
-				vic6560_bitmap->line[y + yoff][xoff + 2] = color[(code >> 4) & 3];
-			vic6560_bitmap->line[y + yoff][xoff + 5] =
-				vic6560_bitmap->line[y + yoff][xoff + 4] = color[(code >> 2) & 3];
-			vic6560_bitmap->line[y + yoff][xoff + 7] =
-				vic6560_bitmap->line[y + yoff][xoff + 6] = color[code & 3];
-		}
-	}
-	else
-*/	{
-		for (y = ybegin; y <= yend; y++)
-		{
-			code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 1) =
-				*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff) = color[code >> 6];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 3) =
-				*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 2) = color[(code >> 4) & 3];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 5) =
-				*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 4) = color[(code >> 2) & 3];
-			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 7) =
-				*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 6) = color[code & 3];
-		}
+		code = vic_dma_read ((chargenaddr + ch * charheight + y) & 0x3fff);
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 1) =
+			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff) = color[code >> 6];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 3) =
+			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 2) = color[(code >> 4) & 3];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 5) =
+			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 4) = color[(code >> 2) & 3];
+		*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 7) =
+			*((UINT16 *) vic6560_bitmap->line[y + yoff] + xoff + 6) = color[code & 3];
 	}
 }
 
@@ -391,30 +355,14 @@ INLINE void vic6560_draw_pointer (struct mame_bitmap *bitmap,
 	{0xf0, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00};
 	int i, j, y, x;
 
-/*	if (Machine->color_depth == 8)
+	for (y = visible->min_y, j = yoff; y <= visible->max_y; y++, j++)
 	{
-		for (y = visible->min_y, j = yoff; y <= visible->max_y; y++, j++)
+		for (x = visible->min_x, i = xoff; x <= visible->max_x; x++, i++)
 		{
-			for (x = visible->min_x, i = xoff; x <= visible->max_x; x++, i++)
-			{
-				if ((blackmask[j] << i) & 0x80)
-					bitmap->line[y][x] = black;
-				else if ((whitemask[j] << (i & ~1)) & 0x80)
-					bitmap->line[y][x] = white;
-			}
-		}
-	}
-	else
-*/	{
-		for (y = visible->min_y, j = yoff; y <= visible->max_y; y++, j++)
-		{
-			for (x = visible->min_x, i = xoff; x <= visible->max_x; x++, i++)
-			{
-				if ((blackmask[j] << i) & 0x80)
-					*((UINT16 *) bitmap->line[y] + x) = black;
-				else if ((whitemask[j] << (i & ~1)) & 0x80)
-					*((UINT16 *) bitmap->line[y] + x) = white;
-			}
+			if ((blackmask[j] << i) & 0x80)
+				*((UINT16 *) bitmap->line[y] + x) = black;
+			else if ((whitemask[j] << (i & ~1)) & 0x80)
+				*((UINT16 *) bitmap->line[y] + x) = white;
 		}
 	}
 }
@@ -430,20 +378,11 @@ static void vic6560_drawlines (int first, int last)
 	if (first >= last)
 		return;
 
-/*	if (Machine->color_depth == 8)
+	for (line = first; (line < ypos) && (line < last); line++)
 	{
-		for (line = first; (line < ypos) && (line < last); line++)
-		{
-			memset (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
-		}
+		memset16 (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
 	}
-	else
-*/	{
-		for (line = first; (line < ypos) && (line < last); line++)
-		{
-			memset16 (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
-		}
-	}
+
 	for (vline = line - ypos; (line < last) && (line < ypos + ysize);)
 	{
 		if (matrix8x16)
@@ -463,16 +402,8 @@ static void vic6560_drawlines (int first, int last)
 
 		if (xpos > 0)
 		{
-/*			if (Machine->color_depth == 8)
-			{
-				for (i = ybegin; i <= yend; i++)
-					memset (vic6560_bitmap->line[yoff + i], framecolor, xpos);
-			}
-			else
-*/			{
-				for (i = ybegin; i <= yend; i++)
-					memset16 (vic6560_bitmap->line[yoff + i], framecolor, xpos);
-			}
+			for (i = ybegin; i <= yend; i++)
+				memset16 (vic6560_bitmap->line[yoff + i], framecolor, xpos);
 		}
 		for (xoff = xpos; (xoff < xpos + xsize) && (xoff < vic656x_xsize); xoff += 8, offs++)
 		{
@@ -508,17 +439,10 @@ static void vic6560_drawlines (int first, int last)
 		}
 		if (xoff < vic656x_xsize)
 		{
-/*			if (Machine->color_depth == 8)
+			for (i = ybegin; i <= yend; i++)
 			{
-				for (i = ybegin; i <= yend; i++)
-					memset (vic6560_bitmap->line[yoff + i] + xoff, framecolor,
-							vic656x_xsize - xoff);
-			}
-			else
-*/			{
-				for (i = ybegin; i <= yend; i++)
-					memset16 ((UINT16 *) vic6560_bitmap->line[yoff + i] + xoff,
-							  framecolor, vic656x_xsize - xoff);
+				memset16 ((UINT16 *) vic6560_bitmap->line[yoff + i] + xoff,
+					framecolor, vic656x_xsize - xoff);
 			}
 		}
 		if (matrix8x16)
@@ -532,19 +456,10 @@ static void vic6560_drawlines (int first, int last)
 			line = vline + ypos;
 		}
 	}
-/*	if (Machine->color_depth == 8)
+
+	for (; line < last; line++)
 	{
-		for (; line < last; line++)
-		{
-			memset (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
-		}
-	}
-	else
-*/	{
-		for (; line < last; line++)
-		{
-			memset16 (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
-		}
+		memset16 (vic6560_bitmap->line[line], framecolor, vic656x_xsize);
 	}
 }
 

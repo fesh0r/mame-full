@@ -36,7 +36,7 @@ VIDEO_START( cgenie )
 	if( video_start_generic() != 0 )
         return 1;
 
-    dlybitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
+    dlybitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if( !dlybitmap )
 		return 1;
 

@@ -36,13 +36,13 @@ VIDEO_START( primo )
 	return 0;
 }
 
-static void primo_draw_scanline(int primo_scanline)
+static void primo_draw_scanline(struct mame_bitmap *bitmap, int primo_scanline)
 {
 	int x, i;
 	UINT8 data;
 
 	/* set up scanline */
-	UINT16 *scanline = (UINT16*)Machine->scrbitmap->line[primo_scanline];
+	UINT16 *scanline = (UINT16*) bitmap->line[primo_scanline];
 
 	/* address of current line in Primo video memory */
 	UINT8* primo_video_ram_line = memory_region(REGION_CPU1) + primo_video_memory_base + 32*primo_scanline;
@@ -62,5 +62,5 @@ VIDEO_UPDATE( primo )
 	int primo_scanline;
 
 	for (primo_scanline=0; primo_scanline<192; primo_scanline++)                  	
-		primo_draw_scanline (primo_scanline);
+		primo_draw_scanline(bitmap, primo_scanline);
 }

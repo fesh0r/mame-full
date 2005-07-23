@@ -240,13 +240,8 @@ static MACHINE_DRIVER_START( arcadia )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#if arcadia_DEBUG
-	MDRV_SCREEN_SIZE(128+2*XPOS+40, 262)
-	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1+40, 0, 262-1)
-#else
 	MDRV_SCREEN_SIZE(128+2*XPOS, 262)
 	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1, 0, 262-1)
-#endif
 	MDRV_GFXDECODE( arcadia_gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(sizeof (arcadia_palette) / sizeof (arcadia_palette[0]))
 	MDRV_COLORTABLE_LENGTH(sizeof (arcadia_colortable) / sizeof(arcadia_colortable[0][0]))
