@@ -11,11 +11,6 @@ extern  READ8_HANDLER(vc4000_vsync_r);
 extern  READ8_HANDLER(vc4000_video_r);
 extern WRITE8_HANDLER(vc4000_video_w);
 
-
-#define YPOS 8
-#define YBOTTOM_SIZE 40
-#define XPOS 48
-
 extern VIDEO_START( vc4000 );
 extern VIDEO_UPDATE( vc4000 );
 

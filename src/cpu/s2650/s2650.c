@@ -1217,7 +1217,7 @@ static int s2650_execute(int cycles)
 				break;
 			case 0x92:		/* LPSU */
 				s2650_ICount -= 7;
-				S.psu = R0 & ~PSU34;
+				S.psu = R0 & ~(PSU34 | SI);
 				break;
 			case 0x93:		/* LPSL */
 				s2650_ICount -= 7;

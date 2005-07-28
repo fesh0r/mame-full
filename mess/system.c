@@ -191,8 +191,8 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	/* WATARA */
 	DRIVER( svision )	/* Super Vision	Handheld							*/
 
-	/* INTERON */
-TESTDRIVER( vc4000 )	/* Interton vc4000									*/
+	/* INTERTON */
+	DRIVER( vc4000 )	/* Interton vc4000									*/
 
 	/* BANDAI */
 TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
@@ -826,4 +826,3 @@ TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 #endif /* DRIVER_RECURSIVE */
 
 #endif /* TINY_COMPILE */
-
