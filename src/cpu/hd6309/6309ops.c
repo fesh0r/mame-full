@@ -2742,12 +2742,13 @@ INLINE void muld_im( void )
 INLINE void divd_im( void )
 {
 	UINT8   t;
-	INT16   v;
+	INT16   v, oldD;
 
 	IMMBYTE( t );
 
 	if( t != 0 )
 	{
+		oldD = D;
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
@@ -2757,9 +2758,20 @@ INLINE void divd_im( void )
 
 		if( B & 0x01 )
 			SEC;
-
-		if ( (v > 127) || (v < -128) )
+	
+		if( (INT16)D < 0 )
+			SEN;
+			
+		if ( (v > 127) || (v < -128) ) /* soft overflow */
+		{
 			SEV;
+	
+			if( (v > 255) || (v < -256) ) /* hard overflow - division is aborted */
+			{
+				SET_NZ16( oldD );
+				D = abs( oldD );
+			}
+		}
 	}
 	else
 	{
