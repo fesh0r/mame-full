@@ -252,14 +252,14 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 ROM_START( mac512ke )
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD16_WORD_SWAP( "macplus.rom",  0x00000, 0x20000, CRC(b2102e8e) SHA1(7d2f808a045aa3a1b242764f0e2c7d13e288bf1f))
+	ROM_REGION16_BE(0x20000, REGION_USER1, 0)
+	ROM_LOAD16_WORD( "macplus.rom",  0x00000, 0x20000, CRC(b2102e8e) SHA1(7d2f808a045aa3a1b242764f0e2c7d13e288bf1f))
 ROM_END
 
 
 ROM_START( macplus )
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD16_WORD_SWAP( "macplus.rom",  0x00000, 0x20000, CRC(b2102e8e) SHA1(7d2f808a045aa3a1b242764f0e2c7d13e288bf1f))
+	ROM_REGION16_BE(0x20000, REGION_USER1, 0)
+	ROM_LOAD16_WORD( "macplus.rom",  0x00000, 0x20000, CRC(b2102e8e) SHA1(7d2f808a045aa3a1b242764f0e2c7d13e288bf1f))
 ROM_END
 
 static void mac128512_floppy_getinfo(struct IODevice *dev)
