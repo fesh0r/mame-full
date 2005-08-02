@@ -44,7 +44,9 @@ OSOBJS += \
 	$(OBJ)/ui/tabview.o \
 	$(OBJ)/ui/help.o \
 	$(OBJ)/ui/history.o \
-	$(OBJ)/ui/dialogs.o
+	$(OBJ)/ui/dialogs.o \
+	$(OBJ)/ui/optcore.o	\
+	$(OBJ)/ui/inifile.o	\
 	
 ifdef MESS
 OSOBJS += \

@@ -42,6 +42,7 @@
 #include "splitters.h"
 #include "dijoystick.h"
 #include "audit.h"
+#include "optcore.h"
 #include "options.h"
 #include "picker.h"
 #include "windows/config.h"
@@ -49,8 +50,6 @@
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
-
-#define ptr_offset(ptr, offset)	((void *) (((const char *) ptr) + offset))
 
 /***************************************************************************
     Internal function prototypes
@@ -60,24 +59,10 @@
 static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME);
 #endif // MAME_DEBUG
 
-static void FreeOptionStruct(void *option_struct, const REG_OPTION *options);
 static void LoadFolderFilter(int folder_index,int filters);
 
-static const REG_OPTION * GetOption(const REG_OPTION *option_array, const char *key);
-static void LoadOption(void *option_struct,const REG_OPTION *option,const char *value_str);
 static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value);
-static void ParseKeyValueStrings(char *buffer,char **key,char **value);
 static void LoadOptionsAndSettings(void);
-static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_game_options);
-
-static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value);
-static void WriteIntOptionToFile(FILE *fptr,const char *key,int value);
-static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value);
-static void WriteColorOptionToFile(FILE *fptr,const char *key,COLORREF value);
-
-static BOOL IsOptionEqual(const REG_OPTION *opt, const void *o1, const void *o2);
-static BOOL AreOptionsEqual(const REG_OPTION *option_array, const void *o1, const void *o2);
-static void WriteOptionToFile(FILE *fptr, const void *option_struct, const REG_OPTION *regOpt);
 
 static void  ColumnEncodeString(void* data, char* str);
 static void  ColumnDecodeString(const char* str, void* data);
@@ -116,8 +101,6 @@ static void FolderFlagsDecodeString(const char *str,void *data);
 
 static void TabFlagsEncodeString(void *data,char *str);
 static void TabFlagsDecodeString(const char *str,void *data);
-
-static const char * GetDefaultOptionsFilename(void);
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -445,6 +428,12 @@ static const REG_OPTION regGameOpts[] =
 // options in mame32.ini that we'll never override with with game-specific options
 static const REG_OPTION global_game_options[] =
 {
+	{"skip_disclaimer",         RO_BOOL,    offsetof(settings_type, skip_disclaimer),   "0" },
+	{"skip_gameinfo",           RO_BOOL,    offsetof(settings_type, skip_gameinfo),     "0" },
+	{"skip_validitychecks",     RO_BOOL,    offsetof(settings_type, skip_validitychecks),     "0" },
+	{"high_priority",           RO_BOOL,    offsetof(settings_type, high_priority),     "0" },
+
+
 #ifdef MESS
 	{ "biospath",               RO_STRING,  offsetof(settings_type, romdirs),          "bios" },
 	{ "softwarepath",           RO_STRING,  offsetof(settings_type, mess.softwaredirs),"software" },
@@ -624,18 +613,6 @@ int num_folder_filters;
 
 
 
-static void LoadDefaultOptions(void *option_struct, const REG_OPTION *opts)
-{
-	int i;
-	for (i = 0; opts[i].ini_name[0]; i++)
-	{
-		if (opts[i].m_pDefaultValue)
-			LoadOption(option_struct, &opts[i], opts[i].m_pDefaultValue);
-	}
-}
-
-
-
 /***************************************************************************
     External functions  
  ***************************************************************************/
@@ -791,19 +768,6 @@ void OptionsExit(void)
 	settings.show_folder_flags = NULL;
 }
 
-static void FreeOptionStruct(void *option_struct, const REG_OPTION *options)
-{
-	int i;
-
-	for (i = 0; options[i].ini_name[0]; i++)
-	{
-		if (options[i].m_iType == RO_STRING)
-		{
-			FreeIfAllocated((char **) ptr_offset(option_struct, options[i].m_iDataOffset));
-		}
-	}
-}
-
 // frees the sub-data (strings)
 void FreeGameOptions(options_type *o)
 {
@@ -838,43 +802,18 @@ int GetRedirectValue(int index)
 }
 
 // performs a "deep" copy--strings in source are allocated and copied in dest
-void CopyGameOptions(options_type *source,options_type *dest)
+void CopyGameOptions(const options_type *source,options_type *dest)
 {
-	int i;
-
-	*dest = *source;
-
-	// now there's a bunch of strings in dest that need to be reallocated
-	// to be a separate copy
-	for (i = 0; regGameOpts[i].ini_name[0]; i++)
-	{
-		if (regGameOpts[i].m_iType == RO_STRING)
-		{
-			char **string_to_copy = 
-				(char **)((char *)dest + regGameOpts[i].m_iDataOffset);
-			if (*string_to_copy != NULL)
-			{
-				*string_to_copy = strdup(*string_to_copy);
-			}
-		}
-	}
+	CopyOptionStruct(dest, source, regGameOpts, sizeof(options_type));
 }
 
-// sync in the options specified in filename
-void SyncInGameOptions(options_type *opts, const char *filename)
+static DWORD GetFolderSettingsFileID(int folder_index)
 {
-	LoadOptions(filename, opts, FALSE);
-}
-
-// sync in the options specified in filename
-void SyncInFolderOptions(options_type *opts, int folder_index)
-{
-	char buffer[512];
-	char title[512];
-	int i;
 	extern FOLDERDATA g_folderData[];
 	extern LPEXFOLDERDATA ExtraFolderData[];
 	extern int numExtraFolders;
+	DWORD nSettingsFile = 0;
+	int i, j;
 	const char *pParent;
 
 	for( i = 0; i<=folder_index; i++ )
@@ -883,18 +822,17 @@ void SyncInFolderOptions(options_type *opts, int folder_index)
 		{
 			if( g_folderData[i].m_nFolderId == folder_index )
 			{
-				snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[i].m_lpTitle );
+				nSettingsFile = i | SETTINGS_FILE_FOLDER;				
 				break;
 			}
 		}
 		else if( folder_index < MAX_FOLDERS + numExtraFolders)
 		{
-			
 			if( ExtraFolderData[i] )
 			{
 				if( ExtraFolderData[i]->m_nFolderId == folder_index )
 				{
-					snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[i]->m_szTitle );
+					nSettingsFile = i | SETTINGS_FILE_EXFOLDER;				
 					break;
 				}
 			}
@@ -908,24 +846,35 @@ void SyncInFolderOptions(options_type *opts, int folder_index)
 				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
 				if( pParent )
 				{
+					nSettingsFile = folder_index | SETTINGS_FILE_EXFOLDERPARENT;
+
 					if( ExtraFolderData[folder_index]->m_nParent == FOLDER_SOURCE )
 					{
-						//we have a source ini to create, so remove the ".c" at the end of the title
-						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
-						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
-					}
-					else
-					{
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
+						for (j = 0; drivers[j]; j++)
+						{
+							if (!strcmp(drivers[j]->source_file, ExtraFolderData[folder_index]->m_szTitle))
+							{
+								nSettingsFile = j | SETTINGS_FILE_SOURCEFILE;
+								break;
+							}
+						}
 					}
 					break;
 				}
 			}
 		}
 	}
-	SyncInGameOptions(opts, buffer);
+	return nSettingsFile;
+}
+
+// sync in the options specified in filename
+void SyncInFolderOptions(options_type *opts, int folder_index)
+{
+	DWORD nSettingsFile;
+
+	nSettingsFile = GetFolderSettingsFileID(folder_index);
+	if (nSettingsFile)
+		LoadSettingsFile(nSettingsFile, opts, regGameOpts);
 }
 
 
@@ -968,7 +917,7 @@ options_type * GetFolderOptions(int folder_index, BOOL bIsVector)
 	return &folder_options[redirect_index];
 }
 
-int * GetFolderOptionsRedirectArr()
+int * GetFolderOptionsRedirectArr(void)
 {
 	return &folder_options_redirect[0];
 }
@@ -1019,8 +968,7 @@ options_type * GetSourceOptions(int driver_index )
 
 options_type * GetGameOptions(int driver_index, int folder_index )
 {
-	char buffer[512];
-	char title[512];
+	int parent_index;
 
 	assert(0 <= driver_index && driver_index < num_games);
 
@@ -1031,21 +979,19 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 		//If it is a Vector game sync in the Vector.ini settings
 		SyncInFolderOptions(&game_options[driver_index], FOLDER_VECTOR);
 	}
+	
 	//If it has source folder settings sync in the source\sourcefile.ini settings
-	strcpy(title, GetDriverFilename(driver_index) );
-	title[strlen(title)-2] = '\0';
-	//Core expects it there
-	snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
-	SyncInGameOptions(&game_options[driver_index], buffer);
+	LoadSettingsFile(driver_index | SETTINGS_FILE_SOURCEFILE, &game_options[driver_index], regGameOpts);
+	
 	//Sync in parent settings if it has one
 	if( DriverIsClone(driver_index))
 	{
-		snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->clone_of->name );
-		SyncInGameOptions(&game_options[driver_index], buffer);
+		parent_index = GetDriverIndex(drivers[driver_index]->clone_of);
+		LoadSettingsFile(parent_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
 	}
+
 	//last but not least, sync in game specific settings
-	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name );
-	SyncInGameOptions(&game_options[driver_index], buffer);
+	LoadSettingsFile(driver_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
 	return &game_options[driver_index];
 }
 
@@ -1474,7 +1420,7 @@ BOOL AllowedToSetShowTab(int tab,BOOL show)
 	return show_tab_flags != 0;
 }
 
-int GetHistoryTab()
+int GetHistoryTab(void)
 {
 	return settings.history_tab;
 }
@@ -2862,73 +2808,6 @@ static void TabFlagsDecodeString(const char *str,void *data)
 	}
 }
 
-static const REG_OPTION * GetOption(const REG_OPTION *option_array, const char *key)
-{
-	int i;
-
-	for (i = 0; option_array[i].ini_name[0]; i++)
-	{
-		if (strcmp(option_array[i].ini_name,key) == 0)
-			return &option_array[i];
-	}
-	return NULL;
-}
-
-static void LoadOption(void *option_struct, const REG_OPTION *option, const char *value_str)
-{
-	//dprintf("trying to load %s type %i [%s]",option->ini_name,option->m_iType,value_str);
-	void *ptr;
-
-	ptr = ((char *) option_struct) + option->m_iDataOffset;
-
-	switch (option->m_iType)
-	{
-	case RO_DOUBLE :
-		*((double *)ptr) = atof(value_str);
-		break;
-
-	case RO_COLOR :
-	{
-		unsigned int r,g,b;
-		if (sscanf(value_str,"%u,%u,%u",&r,&g,&b) == 3)
-			*((COLORREF *)ptr) = RGB(r,g,b);
-		else if (!strchr(value_str, ',') && (atoi(value_str) == -1))
-			*((COLORREF *)ptr) = -1;
-		break;
-	}
-
-	case RO_STRING:
-		if (*(char**)ptr != NULL)
-			free(*(char**)ptr);
-		*(char **)ptr = strdup(value_str);
-		break;
-
-	case RO_BOOL:
-	{
-		int value_int;
-		if (sscanf(value_str,"%i",&value_int) == 1)
-			*((int *)ptr) = (value_int != 0);
-		break;
-	}
-
-	case RO_INT:
-	{
-		int value_int;
-		if (sscanf(value_str,"%i",&value_int) == 1)
-			*((int *)ptr) = value_int;
-		break;
-	}
-
-	case RO_ENCODE:
-		option->decode(value_str, ptr);
-		break;
-
-	default:
-		break;
-	}
-	
-}
-
 static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 {
 	int i;
@@ -2981,129 +2860,36 @@ static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 	return FALSE;
 }
 
-// out of a string, parse two substrings (non-blanks, or quoted).
-// we modify buffer, and return key and value to point to the substrings, or NULL
-static void ParseKeyValueStrings(char *buffer,char **key,char **value)
-{
-	char *ptr;
-	BOOL quoted;
-
-	*key = NULL;
-	*value = NULL;
-
-	ptr = buffer;
-	while (*ptr == ' ' || *ptr == '\t')
-		ptr++;
-	*key = ptr;
-	quoted = FALSE;
-	while (1)
-	{
-		if (*ptr == 0 || (!quoted && (*ptr == ' ' || *ptr == '\t')) || (quoted && *ptr == '\"'))
-		{
-			// found end of key
-			if (*ptr == 0)
-				return;
-
-			*ptr = '\0';
-			ptr++;
-			break;
-		}
-
-		if (*ptr == '\"')
-			quoted = TRUE;
-		ptr++;
-	}
-
-	while (*ptr == ' ' || *ptr == '\t')
-		ptr++;
-
-	*value = ptr;
-	quoted = FALSE;
-	while (1)
-	{
-		if (*ptr == 0 || (!quoted && (*ptr == ' ' || *ptr == '\t')) || (quoted && *ptr == '\"'))
-		{
-			// found end of value;
-			*ptr = '\0';
-			break;
-		}
-
-		if (*ptr == '\"')
-			quoted = TRUE;
-		ptr++;
-	}
-
-	if (**key == '\"')
-		(*key)++;
-
-	if (**value == '\"')
-		(*value)++;
-
-	if (**key == '\0')
-	{
-		*key = NULL;
-		*value = NULL;
-	}
-}
-
 /* Register access functions below */
 static void LoadOptionsAndSettings(void)
 {
-	char buffer[2048];
-	FILE *fptr;
+	struct SettingsHandler handlers[3];
 
-	fptr = fopen(UI_INI_FILENAME,"rt");
-	if (fptr != NULL)
-	{
-		while (fgets(buffer,sizeof(buffer),fptr) != NULL)
-		{
-			char *key,*value_str;
-			const REG_OPTION *option;
+	memset(handlers, 0, sizeof(handlers));
 
-			if (buffer[0] == '\0' || buffer[0] == '#')
-				continue;
+	handlers[0].type = SH_OPTIONSTRUCT;
+	handlers[0].u.option_struct.option_struct = &settings;
+	handlers[0].u.option_struct.option_array = regSettings;
+	handlers[1].type = SH_MANUAL;
+	handlers[1].u.manual.parse = LoadGameVariableOrFolderFilter;
+	handlers[2].type = SH_END;
+	LoadSettingsFileEx(SETTINGS_FILE_UI, handlers);
 
-			// we're guaranteed that strlen(buffer) >= 1 now
-			buffer[strlen(buffer)-1] = '\0';
-
-			ParseKeyValueStrings(buffer,&key,&value_str);
-			if (key == NULL || value_str == NULL)
-			{
-				//dprintf("invalid line [%s]",buffer);
-				continue;
-			}
-
-			option = GetOption(regSettings, key);
-			if (option == NULL)
-			{
-				// search for game_have_rom/have_sample/play_count/play_time thing
-				if (LoadGameVariableOrFolderFilter(key,value_str) == FALSE)
-				{
-					dprintf("found unknown option %s",key);
-				}
-			}
-			else
-			{
-				LoadOption(&settings, option, value_str);
-			}
-
-		}
-
-		fclose(fptr);
-	}
-
-	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),GetDefaultOptionsFilename());
-	LoadOptions(buffer, &global, TRUE);
+	handlers[0].type = SH_OPTIONSTRUCT;
+	handlers[0].u.option_struct.option_struct = &global;
+	handlers[0].u.option_struct.option_array = regGameOpts;
+	handlers[1].type = SH_OPTIONSTRUCT;
+	handlers[1].u.option_struct.option_struct = &settings;
+	handlers[1].u.option_struct.option_array = regSettings;
+	handlers[2].type = SH_END;
+	LoadSettingsFileEx(SETTINGS_FILE_GLOBAL, handlers);
 }
 
 void LoadGameOptions(int driver_index)
 {
-	char buffer[512];
-
-	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name);
-	
 	CopyGameOptions(&global, &game_options[driver_index]);
-	if (LoadOptions(buffer, &game_options[driver_index], FALSE))
+
+	if (LoadSettingsFile(driver_index, &game_options[driver_index], regGameOpts))
 	{
 		// successfully loaded
 		game_variables[driver_index].use_default = FALSE;
@@ -3139,63 +2925,10 @@ const char * GetFolderNameByID(UINT nID)
 
 void LoadFolderOptions(int folder_index )
 {
-	char buffer[512];
-	char title[512];
-	int i;
 	int redirect_index;
-	extern FOLDERDATA g_folderData[];
-	extern LPEXFOLDERDATA ExtraFolderData[];
-	extern int numExtraFolders;
-	const char *pParent;
+	DWORD nSettingsFile;
 
-	for( i = 0; i<=folder_index; i++ )
-	{
-		if( folder_index < MAX_FOLDERS)
-		{
-			if( g_folderData[i].m_nFolderId == folder_index )
-			{
-				snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[i].m_lpTitle );
-				break;
-			}
-		}
-		else if( folder_index < MAX_FOLDERS + numExtraFolders)
-		{
-			
-			if( ExtraFolderData[i] )
-			{
-				if( ExtraFolderData[i]->m_nFolderId == folder_index )
-				{
-					snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[i]->m_szTitle );
-					break;
-				}
-			}
-		}
-		else
-		{
-			//we jump to the corrsponding folderData
-			if( ExtraFolderData[folder_index] )
-			{
-				//SubDirName is ParentFolderName
-				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
-				if( pParent )
-				{
-					if( ExtraFolderData[folder_index]->m_nParent == FOLDER_SOURCE )
-					{
-						//we have a source ini to create, so remove the ".c" at the end of the title
-						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
-						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
-					}
-					else
-					{
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
-					}
-					break;
-				}
-			}
-		}
-	}
+	nSettingsFile = GetFolderSettingsFileID(folder_index);
 	
 	//Use the redirect array, to get correct folder
 	redirect_index = GetRedirectIndex(folder_index);
@@ -3203,76 +2936,11 @@ void LoadFolderOptions(int folder_index )
 		return;
 
 	CopyGameOptions(&global, &folder_options[redirect_index]);
-	if (LoadOptions(buffer, &folder_options[redirect_index], FALSE))
+	if (LoadSettingsFile(nSettingsFile, &folder_options[redirect_index], regGameOpts))
 	{
 		// uses globals
 		CopyGameOptions(&global, &folder_options[redirect_index] );
 	}
-}
-
-
-static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_game_options)
-{
-	FILE *fptr;
-	char buffer[512];
-	char *key,*value_str;
-	const REG_OPTION *option;
-	void *option_struct;
-
-	fptr = fopen(filename,"rt");
-	if (fptr == NULL)
-		return FALSE;
-
-	while (fgets(buffer,sizeof(buffer),fptr) != NULL)
-	{
-		if (buffer[0] == '\0')
-			continue;
-
-		// we're guaranteed that strlen(buffer) >= 1 now
-		// strip new-line
-		buffer[strlen(buffer)-1] = '\0';
-
-		// continue if it was an empty line
-		if (buffer[0] == '\0')
-			continue;
-		
-		// # starts a comment, but #* is a special MAME32 code
-		// saying it's an option for us, but NOT for the main
-		// MAME
-		if (buffer[0] == '#')
-		{
-			if (buffer[1] != '*')
-				continue;
-		}
-
-		ParseKeyValueStrings(buffer,&key,&value_str);
-		if (key == NULL || value_str == NULL)
-		{
-			dprintf("invalid line [%s]",buffer);
-			continue;
-		}
-
-		option_struct = o;
-		option = GetOption(regGameOpts, key);
-		if (!option && load_global_game_options)
-		{
-			option_struct = &settings;
-			option = GetOption(global_game_options, key);
-		}
-
-		if (option)
-		{
-			//dprintf("loading option <%s> <%s>",option,value_str);
-			LoadOption(option_struct, option, value_str);
-		}
-		else
-		{
-			dprintf("load game options found unknown option %s",key);
-		}
-	}
-
-	fclose(fptr);
-	return TRUE;
 }
 
 DWORD GetFolderFlags(int folder_index)
@@ -3288,93 +2956,111 @@ DWORD GetFolderFlags(int folder_index)
 	return 0;
 }
 
-void SaveOptions(void)
+static void EmitFolderFilters(void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
 {
 	int i;
-	FILE *fptr;
+	char key[32];
+	char value_str[32];
 
-	fptr = fopen(UI_INI_FILENAME,"wt");
-	if (fptr != NULL)
+	for (i = 0; i < GetNumFolders(); i++)
 	{
-		fprintf(fptr,"### " UI_INI_FILENAME " ###\n\n");
-		fprintf(fptr,"### interface ###\n\n");
-		
-		if (save_gui_settings)
+		LPTREEFOLDER lpFolder = GetFolder(i);
+
+		if ((lpFolder->m_dwFlags & F_MASK) != 0)
 		{
-			for (i = 0; regSettings[i].ini_name[0]; i++)
-			{
-				if (!regSettings[i].m_pfnQualifier || regSettings[i].m_pfnQualifier(-1))
-					WriteOptionToFile(fptr, &settings, &regSettings[i]);
-			}
+			sprintf(key, "%i_filters", i);
+			sprintf(value_str, "%i", (int)(lpFolder->m_dwFlags & F_MASK));
+			emit_callback(param, key, value_str, lpFolder->m_lpTitle);
 		}
-		
-		fprintf(fptr,"\n");
-		fprintf(fptr,"### folder filters ###\n\n");
-		
-		for (i=0;i<GetNumFolders();i++)
+	}
+}
+
+
+
+static void EmitGameVariables(void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
+{
+	int i, j;
+	int driver_index;
+	int nValue;
+	const char *pValue;
+	char key[32];
+	char value_str[32];
+	void *pv;
+
+	for (i = 0; i < num_games; i++)
+	{
+		driver_index = GetIndexFromSortedIndex(i); 
+
+		// need to improve this to not save too many
+		for (j = 0; j < sizeof(gamevariable_options) / sizeof(gamevariable_options[0]); j++)
 		{
-			LPTREEFOLDER lpFolder = GetFolder(i);
-
-			if ((lpFolder->m_dwFlags & F_MASK) != 0)
+			if (!gamevariable_options[j].m_pfnQualifier || gamevariable_options[j].m_pfnQualifier(driver_index))
 			{
-				fprintf(fptr,"# %s\n",lpFolder->m_lpTitle);
-				fprintf(fptr,"%i_filters %i\n",i,(int)(lpFolder->m_dwFlags & F_MASK));
-			}
-		}
+				snprintf(key, sizeof(key), "%s_%s", drivers[driver_index]->name, gamevariable_options[j].ini_name);
+				pv = ((UINT8 *) &game_variables[driver_index]) + gamevariable_options[j].m_iDataOffset;
 
-		fprintf(fptr,"\n");
-		fprintf(fptr,"### game variables ###\n\n");
-		for (i=0;i<num_games;i++)
-		{
-			int j;
-			int nValue;
-			const char *pValue;
-			void *pv;
-			int driver_index = GetIndexFromSortedIndex(i); 
-
-			// need to improve this to not save too many
-			for (j = 0; j < sizeof(gamevariable_options) / sizeof(gamevariable_options[0]); j++)
-			{
-				if (!gamevariable_options[j].m_pfnQualifier || gamevariable_options[j].m_pfnQualifier(driver_index))
-				{
-					pv = ((UINT8 *) &game_variables[driver_index]) + gamevariable_options[j].m_iDataOffset;
-
-					switch(gamevariable_options[j].m_iType) {
-					case RO_INT:
-					case RO_BOOL:
-						nValue = *((int *) pv);
-						if (nValue != atoi(gamevariable_options[j].m_pDefaultValue))
-						{
-							fprintf(fptr, "%s_%s %i\n",
-								drivers[driver_index]->name,
-								gamevariable_options[j].ini_name,
-								nValue);
-						}
-						break;
-
-					case RO_STRING:
-						pValue = *((const char **) pv);
-						if (!pValue)
-							pValue = "";
-
-						if (strcmp(pValue, gamevariable_options[j].m_pDefaultValue))
-						{
-							fprintf(fptr, "%s_%s \"%s\"\n",
-								drivers[driver_index]->name,
-								gamevariable_options[j].ini_name,
-								pValue);
-						}
-						break;
-
-					default:
-						assert(0);
-						break;
+				switch(gamevariable_options[j].m_iType) {
+				case RO_INT:
+				case RO_BOOL:
+					nValue = *((int *) pv);
+					if (nValue != atoi(gamevariable_options[j].m_pDefaultValue))
+					{
+						snprintf(value_str, sizeof(value_str), "%i", nValue);
+						emit_callback(param, key, value_str, NULL);
 					}
+					break;
+
+				case RO_STRING:
+					pValue = *((const char **) pv);
+					if (!pValue)
+						pValue = "";
+
+					if (strcmp(pValue, gamevariable_options[j].m_pDefaultValue))
+					{
+						emit_callback(param, key, pValue, NULL);
+					}
+					break;
+
+				default:
+					assert(0);
+					break;
 				}
 			}
 		}
-		fclose(fptr);
 	}
+}
+
+
+
+void SaveOptions(void)
+{
+	int i;
+	struct SettingsHandler handlers[4];
+
+	memset(handlers, 0, sizeof(handlers));
+	i = 0;
+
+	if (save_gui_settings)
+	{
+		handlers[i].type = SH_OPTIONSTRUCT;
+		handlers[i].comment = "interface";
+		handlers[i].u.option_struct.option_struct = (void *) &settings;
+		handlers[i].u.option_struct.option_array = regSettings;
+		handlers[i].u.option_struct.qualifier_param = -1;
+		i++;
+	}
+
+	handlers[i].type = SH_MANUAL;
+	handlers[i].comment = "folder filters";
+	handlers[i].u.manual.emit = EmitFolderFilters;
+	i++;
+
+	handlers[i].type = SH_MANUAL;
+	handlers[i].comment = "game variables";
+	handlers[i].u.manual.emit = EmitGameVariables;
+	i++;
+
+	handlers[i].type = SH_END;
 }
 
 //returns true if different
@@ -3432,9 +3118,6 @@ BOOL GetGameUsesDefaultsMem(int driver_index)
 
 void SaveGameOptions(int driver_index)
 {
-	int i;
-	FILE *fptr;
-	char buffer[512];
 	BOOL options_different = FALSE;
 	options_type Opts;
 	int nParentIndex= -1;
@@ -3460,60 +3143,20 @@ void SaveGameOptions(int driver_index)
 		options_different = !AreOptionsEqual(regGameOpts, &game_options[driver_index], &Opts);
 	}
 
-	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name);
-	if (options_different)
-	{
-		fptr = fopen(buffer,"wt");
-		if (fptr != NULL)
-		{
-			fprintf(fptr,"### ");
-			fprintf(fptr,"%s",drivers[driver_index]->name);
-			fprintf(fptr," ###\n\n");
-
-			for (i = 0; regGameOpts[i].ini_name[0]; i++)
-			{
-				if (IsOptionEqual(&regGameOpts[i],&game_options[driver_index],&Opts) == FALSE)
-				{
-					WriteOptionToFile(fptr, &game_options[driver_index], &regGameOpts[i]);
-				}
-			}
-
-			fclose(fptr);
-		}
-	}
-	else
-	{
-		DWORD dwAttributes =  GetFileAttributes( buffer );
-		if( dwAttributes != 0xFFFFFFFF)
-		{
-			/*We successfully obtained the Attributes, so File exists, and we can delete it*/
-			if (DeleteFile(buffer) == 0)
-			{
-				dprintf("error deleting %s; error %d\n",buffer, GetLastError());
-			}
-		}
-	}
+	SaveSettingsFile(driver_index | SETTINGS_FILE_GAME,
+		&game_options[driver_index],
+		&Opts,
+		regGameOpts);
 }
 
 void SaveFolderOptions(int folder_index, int game_index)
 {
-	int i;
-	FILE *fptr;
-	char buffer[512];
-	char subdir[512];
-	char title[512];
-	char *inititle = NULL;
+	DWORD nSettingsFile;
 	int redirect_index = 0;
-	extern FOLDERDATA g_folderData[];
-	extern LPEXFOLDERDATA ExtraFolderData[];
-	extern int numExtraFolders;
 	BOOL options_different = FALSE;
-	const char *pParent;
 	options_type *pOpts;
 	options_type Opts;
-	struct stat file_stat;
-	*buffer = 0;
-	*subdir = 0;
+
 	if( DriverIsVector(game_index) && folder_index != FOLDER_VECTOR )
 	{
 		CopyGameOptions( GetVectorOptions(), &Opts );
@@ -3529,370 +3172,47 @@ void SaveFolderOptions(int folder_index, int game_index)
 	options_different = !AreOptionsEqual(regGameOpts, &folder_options[redirect_index], pOpts);
 
 	//Find the Title
-	for( i = 0; i<=folder_index; i++ )
-	{
-		if( folder_index < MAX_FOLDERS)
-		{
-			if( g_folderData[i].m_nFolderId == folder_index )
-			{
-				snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[i].m_lpTitle );
-				inititle = strdup(g_folderData[i].m_lpTitle );
-				break;
-			}
-		}
-		else if( folder_index < MAX_FOLDERS + numExtraFolders)
-		{
-			
-			if( ExtraFolderData[i] )
-			{
-				if( ExtraFolderData[i]->m_nFolderId == folder_index )
-				{
-					snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[i]->m_szTitle );
-					inititle = strdup(ExtraFolderData[i]->m_szTitle );
-					break;
-				}
-			}
-		}
-		else
-		{
-			//we jump to the corrsponding folderData
-			if( ExtraFolderData[folder_index] )
-			{
-				//SubDirName is ParentFolderName
-				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
-				if( pParent )
-				{
-					if( ExtraFolderData[folder_index]->m_nParent == FOLDER_SOURCE )
-					{
-						//we have a source ini to create, so remove the ".c" at the end of the title
-						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
-						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
-						snprintf(subdir,sizeof(subdir),"%s\\drivers\\",GetIniDir() );
-					}
-					else
-					{
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
-						snprintf(subdir,sizeof(subdir),"%s\\%s",GetIniDir(),pParent );
-					}
-					inititle = strdup(ExtraFolderData[folder_index]->m_szTitle );
-					//need to check if Subdirectory Exists
-					/* Don't allow empty entries. */
-					if (strcmp(subdir, ""))
-					{
-						char *tmp, tmp1[MAX_PATH];
-						tmp = strdup(subdir);
-						tmp = strtok(tmp,"\\");
-						strcpy(tmp1, tmp);
-						while( tmp != NULL)
- 						{
-							/* Check validity of edited directory. */
-							if (! (stat(tmp1, &file_stat) == 0
-							&&	(file_stat.st_mode & S_IFDIR)) )
-							{
-								//Create all parts of it 
-								CreateDirectory( tmp1, NULL );
-							}
-							tmp = strtok(NULL,"\\");
-							if( tmp != NULL)
-							{
-								strcat(tmp1,"\\");
-								strcat(tmp1, tmp);
-							}
- 						}
-						free(tmp);
-					}
-					break;
-				}
-			}
-		}
-	}
-	if (options_different)
-	{
-		fptr = fopen(buffer,"wt");
-		if (fptr != NULL)
-		{
-			fprintf(fptr,"### ");
-			fprintf(fptr,"%s",inititle);
-			fprintf(fptr," ###\n\n");
+	nSettingsFile = GetFolderSettingsFileID(folder_index);
 
-			for (i = 0; regGameOpts[i].ini_name[0]; i++)
-			{
-				if (IsOptionEqual(&regGameOpts[i],&folder_options[redirect_index],pOpts) == FALSE)
-				{
-					WriteOptionToFile(fptr, &folder_options[redirect_index], &regGameOpts[i]);
-				}
-			}
-
-			fclose(fptr);
-		}
-	}
-	else
-	{
-		/*No Differences between Standard Options and Folder Options*/
-		DWORD dwAttributes =  GetFileAttributes( buffer );
-		if( dwAttributes != 0xFFFFFFFF)
-		{
-			/*We successfully obtained the Attributes, so File exists, and we can delete it*/
-			if (DeleteFile(buffer) == 0)
-			{
-				dprintf("error deleting %s; error %d\n",buffer, GetLastError());
-			}
-		}
-		//Check if SubDir
-		if( subdir )
-		{
-			//we just call rmdir on the subdirs, if they are empty, they get deleted, 
- 			//otherwise it just stays as is
-			char *tmp, *tmp1;
-			int result;
-			tmp = strdup(subdir);
-			tmp1 = strrchr(tmp-1,'\\');
-			while( tmp != NULL && tmp1 != NULL)
-			{
-				_rmdir( tmp );
-				result = tmp1-tmp;
-				strncpy(tmp, subdir, result);
-				tmp[result] = '\0';
-				tmp1 = strrchr(tmp-1,'\\');
-			}
-			free(tmp);
- 		}
- 	}
-	if( inititle != NULL)
-		free(inititle);
- }
+	SaveSettingsFile(nSettingsFile, &folder_options[redirect_index], pOpts, regGameOpts);
+}
 
 
 void SaveDefaultOptions(void)
 {
-	int i;
-	FILE *fptr;
-	char buffer[512];
+	int i = 0;
+	struct SettingsHandler handlers[3];
 
-	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),GetDefaultOptionsFilename());
+	memset(handlers, 0, sizeof(handlers));
 
-	fptr = fopen(buffer,"wt");
-	if( fptr == NULL && GetLastError() == ERROR_PATH_NOT_FOUND )
+	if (save_gui_settings)
 	{
-		CreateDirectory( GetIniDir(), NULL);
-		fptr = fopen(buffer,"wt");
-	}
-	if (fptr != NULL)
-	{
-		char s[_MAX_PATH];
-		snprintf(s,sizeof(s),"### %s ###\n\n",GetDefaultOptionsFilename());
-		
-		if (save_gui_settings)
-		{
-			fprintf(fptr,"### global-only options ###\n\n");
-		
-			for (i = 0; global_game_options[i].ini_name[0]; i++)
-			{
-				if (!global_game_options[i].m_pfnQualifier || global_game_options[i].m_pfnQualifier(-1))
-					WriteOptionToFile(fptr, &settings, &global_game_options[i]);
-			}
-		}
-
-		if (save_default_options)
-		{
-			fprintf(fptr,"\n### default game options ###\n\n");
-
-			for (i = 0; regGameOpts[i].ini_name[0]; i++)
-			{
-				if (!regGameOpts[i].m_pfnQualifier || regGameOpts[i].m_pfnQualifier(-1))
-					WriteOptionToFile(fptr, &global, &regGameOpts[i]);
-			}
-		}
-
-		fclose(fptr);
-	}
-}
-
-static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value)
-{
-	if (value[0] && !strchr(value,' '))
-		fprintf(fptr,"%s %s\n",key,value);
-	else
-		fprintf(fptr,"%s \"%s\"\n",key,value);
-}
-
-static void WriteIntOptionToFile(FILE *fptr,const char *key,int value)
-{
-	fprintf(fptr,"%s %i\n",key,value);
-}
-
-static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value)
-{
-	fprintf(fptr,"%s %i\n",key,value ? 1 : 0);
-}
-
-static void WriteColorOptionToFile(FILE *fptr,const char *key,COLORREF value)
-{
-	fprintf(fptr,"%s %i,%i,%i\n",key,(int)(value & 0xff),(int)((value >> 8) & 0xff),
-			(int)((value >> 16) & 0xff));
-}
-
-static BOOL IsOptionEqual(const REG_OPTION *opt, const void *o1, const void *o2)
-{
-	switch(opt->m_iType)
-	{
-	case RO_DOUBLE:
-	{
-		double a,b;
-		a = *(double *) ptr_offset(o1, opt->m_iDataOffset);
-		b = *(double *) ptr_offset(o2, opt->m_iDataOffset);
-		return fabs(a-b) < 0.000001;
-	}
-	case RO_COLOR :
-	{
-		COLORREF a,b;
-		a = *(COLORREF *) ptr_offset(o1, opt->m_iDataOffset);
-		b = *(COLORREF *) ptr_offset(o2, opt->m_iDataOffset);
-		return a == b;
-	}
-	case RO_STRING:
-	{
-		char *a,*b;
-		a = *(char **) ptr_offset(o1, opt->m_iDataOffset);
-		b = *(char **) ptr_offset(o2, opt->m_iDataOffset);
-		if( a != NULL && b != NULL )
-			return strcmp(a,b) == 0;
-		else 
-			return FALSE;
-	}
-	case RO_BOOL:
-	{
-		BOOL a,b;
-		a = *(BOOL *) ptr_offset(o1, opt->m_iDataOffset);
-		b = *(BOOL *) ptr_offset(o2, opt->m_iDataOffset);
-		return a == b;
-	}
-	case RO_INT:
-	{
-		int a,b;
-		a = *(int *) ptr_offset(o1, opt->m_iDataOffset);
-		b = *(int *) ptr_offset(o2, opt->m_iDataOffset);
-		return a == b;
-	}
-	case RO_ENCODE:
-	{
-		char a[1000],b[1000];
-		opt->encode(ptr_offset(o1, opt->m_iDataOffset), a);
-		opt->encode(ptr_offset(o2, opt->m_iDataOffset), b);
-		if( a != NULL && b != NULL )
-			return strcmp(a,b) == 0;
-		else 
-			return FALSE;
+		handlers[i].type = SH_OPTIONSTRUCT;
+		handlers[i].comment = "global-only options";
+		handlers[i].u.option_struct.option_struct = &settings;
+		handlers[i].u.option_struct.option_array = global_game_options;
+		handlers[i].u.option_struct.qualifier_param = -1;
+		i++;
 	}
 
-	default:
-		break;
-	}
-
-	return TRUE;
-}
-
-
-
-static BOOL AreOptionsEqual(const REG_OPTION *option_array, const void *o1, const void *o2)
-{
-	int i;
-	for (i = 0; option_array[i].ini_name[0]; i++)
+	if (save_default_options)
 	{
-		if (!IsOptionEqual(&option_array[i], o1, o2))
-			return FALSE;
-	}
-	return TRUE;
-}
-
-
-static void WriteOptionToFile(FILE *fptr, const void *option_struct, const REG_OPTION *regOpt)
-{
-	BOOL*	pBool;
-	int*	pInt;
-	char*	pString;
-	double* pDouble;
-	const char *key = regOpt->ini_name;
-	char	cTemp[1000];
-	
-	switch (regOpt->m_iType)
-	{
-	case RO_DOUBLE:
-		pDouble = (double*) ptr_offset(option_struct, regOpt->m_iDataOffset);
-        _gcvt( *pDouble, 10, cTemp );
-		WriteStringOptionToFile(fptr, key, cTemp);
-		break;
-
-	case RO_COLOR :
-	{
-		COLORREF color = *(COLORREF *) ptr_offset(option_struct, regOpt->m_iDataOffset);
-		if (color != (COLORREF)-1)
-			WriteColorOptionToFile(fptr,key,color);
-		break;
+		handlers[i].type = SH_OPTIONSTRUCT;
+		handlers[i].comment = "default game options";
+		handlers[i].u.option_struct.option_struct = &global;
+		handlers[i].u.option_struct.option_array = regGameOpts;
+		handlers[i].u.option_struct.qualifier_param = -1;
+		i++;
 	}
 
-	case RO_STRING:
-		pString = *((char **) ptr_offset(option_struct, regOpt->m_iDataOffset));
-		if (pString != NULL && pString[0] != 0)
-		    WriteStringOptionToFile(fptr, key, pString);
-		break;
+	handlers[i].type = SH_END;
 
-	case RO_BOOL:
-		pBool = (BOOL*) ptr_offset(option_struct, regOpt->m_iDataOffset);
-		WriteBoolOptionToFile(fptr, key, *pBool);
-		break;
-
-	case RO_INT:
-		pInt = (int*) ptr_offset(option_struct, regOpt->m_iDataOffset);
-		WriteIntOptionToFile(fptr, key, *pInt);
-		break;
-
-	case RO_ENCODE:
-		regOpt->encode(ptr_offset(option_struct, regOpt->m_iDataOffset), cTemp);
-		WriteStringOptionToFile(fptr, key, cTemp);
-		break;
-
-	default:
-		break;
-	}
-
+	SaveSettingsFileEx(SETTINGS_FILE_GLOBAL, handlers);
 }
 
 char * GetVersionString(void)
 {
 	return build_version;
-}
-
-static const char * GetDefaultOptionsFilename()
-{
-	static char pModule[_MAX_PATH];
-	char *ptr;
-
-	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
-
-	// take out the path if there is one
-	ptr = strrchr(pModule,'\\');
-	if (ptr != NULL)
-	{
-		// move length of string, minus the backslash but plus the terminating 0
-		memmove(pModule,ptr+1,strlen(ptr));
-	}
-
-	// take out the extension
-	ptr = strrchr(pModule,'.');
-	if (ptr != NULL)
-	{
-		*ptr = 0;
-	}
-
-	// add .ini
-	strcat(pModule,".ini");
-
-	//dprintf("got [%s] for ini name\n",pModule);
-
-	return pModule;
 }
 
 

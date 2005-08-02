@@ -14,6 +14,10 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows GUI] Refactored INI parsing out of the main option code.  This
+  should make it easier to swap out a different configuration file system.
+  [Nate Woods]
+
 - [Windows GUI] Fixed minor cosmetic bug in the Interface Options dialog.
   (bug #732) [Nate Woods]
 
@@ -27,7 +31,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.98u2.  This incorporates all features of the
+- The core is based on MAME 0.98u3.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - [Messtest] Now raises an error when a blank screenshot is emitted, as that

@@ -45,17 +45,6 @@ enum
 	UNKNOWN	= -1
 };
 
-// config helpers types
-typedef enum
-{
-	RO_BOOL = 0, // BOOL value
-	RO_INT,      // int value
-	RO_DOUBLE,   // double value
-	RO_COLOR,    // COLORREF value
-	RO_STRING,   // pointer to string    - m_vpData is an allocated buffer
-	RO_ENCODE    // encode/decode string - calls decode/encode functions
-} rotype_t;
-
 /* Default input */
 enum 
 {
@@ -100,18 +89,6 @@ enum
 	D3D_PRESCALE_AUTO = 1,
 	MAX_D3D_PRESCALE = 10,
 };
-
-// used to be "registry option", now is just for a game/global option
-typedef struct
-{
-	const char *ini_name;                         // ini name
-	rotype_t m_iType;                             // key type
-	size_t m_iDataOffset;                         // offset to data within struct
-	const char *m_pDefaultValue;                  // default value on startup
-	BOOL (*m_pfnQualifier)(int driver_index);     // used to identify when this option is relevant
-	void (*encode)(void *data, char *str);        // encode function
-	void (*decode)(const char *str, void *data);  // decode function
-} REG_OPTION;
 
 typedef struct
 {
@@ -415,8 +392,7 @@ void FolderOptionsInit(void);
 void OptionsExit(void);
 
 void FreeGameOptions(options_type *o);
-void CopyGameOptions(options_type *source,options_type *dest);
-void SyncInGameOptions(options_type *opts, const char *filename);
+void CopyGameOptions(const options_type *source,options_type *dest);
 void SyncInFolderOptions(options_type *opts, int folder_index);
 options_type * GetDefaultOptions(int iProperty, BOOL bVectorFolder);
 options_type * GetFolderOptions(int folder_index, BOOL bIsVector);
