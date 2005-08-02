@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [COCO/DRAGON] Fixed a rounding error in cassette loading that affected the
+  Dragon game "Screaming Abdabs".  (bug #735) [Nate Woods]
+
 - [MAC] Fixed endian problems under big endian hosts.  [Nate Woods]
 
 

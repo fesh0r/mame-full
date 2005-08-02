@@ -804,19 +804,39 @@ casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, do
 	double *time_displacement)
 {
 	casserr_t err;
-	UINT8 buffer[1024];
+	UINT8 buffer_stack[1024];
+	UINT8 *buffer;
+	UINT8 *alloc_buffer = NULL;
 	double delta;
 	double total_displacement = 0.0;
 	size_t this_length;
+	size_t buffer_length;
+
+	if (length <= sizeof(buffer_stack))
+	{
+		buffer = buffer_stack;
+		buffer_length = sizeof(buffer_stack);
+	}
+	else
+	{
+		buffer_length = MIN(length, 100000);
+		alloc_buffer = malloc(buffer_length);
+		if (!alloc_buffer)
+		{
+			err = CASSETTE_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+		buffer = alloc_buffer;
+	}
 
 	while(length > 0)
 	{
-		this_length = (size_t) MIN(length, sizeof(buffer));
+		this_length = (size_t) MIN(length, buffer_length);
 		cassette_image_read(cassette, buffer, offset, this_length);
 
 		err = cassette_put_modulated_data(cassette, channel, time_index, buffer, this_length, modulation, &delta);
 		if (err)
-			return err;
+			goto done;
 		total_displacement += delta;
 		time_index += delta;
 		length -= this_length;
@@ -824,7 +844,12 @@ casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, do
 
 	if (time_displacement)
 		*time_displacement = total_displacement;
-	return CASSETTE_ERROR_SUCCESS;
+	err = CASSETTE_ERROR_SUCCESS;
+
+done:
+	if (alloc_buffer)
+		free(alloc_buffer);
+	return err;
 }
 
 
