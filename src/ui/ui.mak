@@ -47,6 +47,7 @@ OSOBJS += \
 	$(OBJ)/ui/dialogs.o \
 	$(OBJ)/ui/optcore.o	\
 	$(OBJ)/ui/inifile.o	\
+	$(OBJ)/ui/dirwatch.o	\
 	
 ifdef MESS
 OSOBJS += \

@@ -69,6 +69,7 @@
 #include "bitmask.h"
 #include "TreeView.h"
 #include "Splitters.h"
+#include "DirWatch.h"
 #include "help.h"
 #include "history.h"
 #include "options.h"
@@ -500,6 +501,11 @@ static BOOL bShowStatusBar = 1;
 static BOOL bShowTabCtrl   = 1;
 static BOOL bProgressShown = FALSE;
 static BOOL bListReady     = FALSE;
+
+#define	WM_MAME32_FILECHANGED	(WM_USER + 0)
+#define	WM_MAME32_AUDITGAME		(WM_USER + 1)
+
+static PDIRWATCHER s_pWatcher;
 
 /* use a joystick subsystem in the gui? */
 static struct OSDJoystick* g_pJoyGUI = NULL;
@@ -1936,6 +1942,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		return FALSE;
 	}
 
+	s_pWatcher = DirWatcher_Init(hMain, WM_MAME32_FILECHANGED);
+	if (s_pWatcher)
+		DirWatcher_Watch(s_pWatcher, 0, GetRomDirs(), TRUE);
+
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
 	
@@ -2562,6 +2572,61 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 		return TRUE;
 	}
+
+	case WM_MAME32_FILECHANGED:
+		{
+			char szFileName[32];
+			char *s;
+			int nGameIndex;
+			const struct GameDriver *drv;
+
+			snprintf(szFileName, sizeof(szFileName), "%s", (LPCTSTR) lParam);
+			s = strchr(szFileName, '.');
+			if (s)
+				*s = '\0';
+			s = strchr(szFileName, '\\');
+			if (s)
+				*s = '\0';
+
+			for (nGameIndex = 0; drivers[nGameIndex]; nGameIndex++)
+			{
+				for (drv = drivers[nGameIndex]; drv; drv = drv->clone_of)
+				{
+					if (!stricmp(drv->name, szFileName))
+					{
+						if (GetRomAuditResults(nGameIndex) != UNKNOWN)
+						{
+							SetRomAuditResults(nGameIndex, UNKNOWN);
+							PostMessage(hMain, WM_MAME32_AUDITGAME, nGameIndex, 0);
+						}
+						break;
+					}
+				}
+			}
+		}
+		break;
+
+	case WM_MAME32_AUDITGAME:
+		{
+			LV_FINDINFO lvfi;
+			int nGameIndex;
+
+			nGameIndex = wParam;
+			Mame32VerifyRomSet(nGameIndex);
+			Mame32VerifySampleSet(nGameIndex);
+
+			memset(&lvfi, 0, sizeof(lvfi));
+			lvfi.flags	= LVFI_PARAM;
+			lvfi.lParam = nGameIndex;
+
+			i = ListView_FindItem(hwndList, -1, &lvfi);
+			if (i != -1)
+			{
+				ListView_RedrawItems(hwndList, i, i);
+			}
+		}
+		break;
+
 	default:
 
 		break;
