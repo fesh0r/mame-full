@@ -1944,7 +1944,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	s_pWatcher = DirWatcher_Init(hMain, WM_MAME32_FILECHANGED);
 	if (s_pWatcher)
+	{
 		DirWatcher_Watch(s_pWatcher, 0, GetRomDirs(), TRUE);
+		DirWatcher_Watch(s_pWatcher, 1, GetSampleDirs(), TRUE);
+	}
 
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
@@ -2579,27 +2582,45 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			char *s;
 			int nGameIndex;
 			const struct GameDriver *drv;
+			int (*pfnGetAuditResults)(int driver_index) = NULL;
+			void (*pfnSetAuditResults)(int driver_index, int audit_results) = NULL;
 
-			snprintf(szFileName, sizeof(szFileName), "%s", (LPCTSTR) lParam);
-			s = strchr(szFileName, '.');
-			if (s)
-				*s = '\0';
-			s = strchr(szFileName, '\\');
-			if (s)
-				*s = '\0';
-
-			for (nGameIndex = 0; drivers[nGameIndex]; nGameIndex++)
+			switch(HIWORD(wParam))
 			{
-				for (drv = drivers[nGameIndex]; drv; drv = drv->clone_of)
+				case 0:
+					pfnGetAuditResults = GetRomAuditResults;
+					pfnSetAuditResults = SetRomAuditResults;
+					break;
+
+				case 1:
+					pfnGetAuditResults = GetSampleAuditResults;
+					pfnSetAuditResults = SetSampleAuditResults;
+					break;
+			}
+
+			if (pfnGetAuditResults && pfnSetAuditResults)
+			{
+				snprintf(szFileName, sizeof(szFileName), "%s", (LPCTSTR) lParam);
+				s = strchr(szFileName, '.');
+				if (s)
+					*s = '\0';
+				s = strchr(szFileName, '\\');
+				if (s)
+					*s = '\0';
+
+				for (nGameIndex = 0; drivers[nGameIndex]; nGameIndex++)
 				{
-					if (!stricmp(drv->name, szFileName))
+					for (drv = drivers[nGameIndex]; drv; drv = drv->clone_of)
 					{
-						if (GetRomAuditResults(nGameIndex) != UNKNOWN)
+						if (!stricmp(drv->name, szFileName))
 						{
-							SetRomAuditResults(nGameIndex, UNKNOWN);
-							PostMessage(hMain, WM_MAME32_AUDITGAME, nGameIndex, 0);
+							if (pfnGetAuditResults(nGameIndex) != UNKNOWN)
+							{
+								pfnSetAuditResults(nGameIndex, UNKNOWN);
+								PostMessage(hMain, WM_MAME32_AUDITGAME, wParam, nGameIndex);
+							}
+							break;
 						}
-						break;
 					}
 				}
 			}
@@ -2611,9 +2632,17 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			LV_FINDINFO lvfi;
 			int nGameIndex;
 
-			nGameIndex = wParam;
-			Mame32VerifyRomSet(nGameIndex);
-			Mame32VerifySampleSet(nGameIndex);
+			nGameIndex = lParam;
+
+			switch(HIWORD(wParam))
+			{
+				case 0:
+					Mame32VerifyRomSet(nGameIndex);
+					break;
+				case 1:
+					Mame32VerifySampleSet(nGameIndex);
+					break;
+			}
 
 			memset(&lvfi, 0, sizeof(lvfi));
 			lvfi.flags	= LVFI_PARAM;
@@ -4492,7 +4521,15 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 			if (bUpdateSoftware)
 				MessUpdateSoftwareList();
-#endif
+#endif /* MESS */
+
+			if (s_pWatcher)
+			{
+				if (bUpdateRoms)
+					DirWatcher_Watch(s_pWatcher, 0, GetRomDirs(), TRUE);
+				if (bUpdateSamples)
+					DirWatcher_Watch(s_pWatcher, 1, GetSampleDirs(), TRUE);
+			}
 
 			/* update game list */
 			if (bUpdateRoms == TRUE || bUpdateSamples == TRUE)
