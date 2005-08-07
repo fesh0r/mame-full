@@ -1,4 +1,4 @@
-0.98.1
+0.99
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -38,7 +38,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.98u3.  This incorporates all features of the
+- The core is based on MAME 0.99.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - [Messtest] Now raises an error when a blank screenshot is emitted, as that
