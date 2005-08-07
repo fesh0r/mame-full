@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMSTRAD] Added green screen display configuration setting.  [bobz]
+
 - [COCO/DRAGON] Fixed a rounding error in cassette loading that affected the
   Dragon game "Screaming Abdabs".  (bug #735) [Nate Woods]
 

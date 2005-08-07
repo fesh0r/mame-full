@@ -1290,6 +1290,7 @@ static MACHINE_INIT( amstrad )
 	amstrad_reset_machine();
 
 	multiface_init();
+	
 }
 
 static MACHINE_INIT( kccomp )
@@ -1540,6 +1541,11 @@ As far as I know, the KC compact used HD6845S only.
 	PORT_CONFSETTING(0x00, DEF_STR( Off) )
 	PORT_CONFSETTING(0x01, DEF_STR( On) )
 	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Multiface Stop") PORT_CODE(KEYCODE_F1)
+
+	PORT_START_TAG("green_display")
+	PORT_CONFNAME( 0x01, 0x00, "Color/Green Display" )
+	PORT_CONFSETTING(0x00, "Color Display" )
+	PORT_CONFSETTING(0x01, "Green Display" )
 
 INPUT_PORTS_END
 
