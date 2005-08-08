@@ -103,7 +103,7 @@ static BOOL DirWatcher_WatchDirectory(PDIRWATCHER pWatcher, int nIndex, int nSub
 	pEntry->overlapped.hEvent = pWatcher->hRequestEvent;
 
 	hDir = CreateFile(pszPath, FILE_LIST_DIRECTORY,
-		FILE_SHARE_READ | FILE_SHARE_DELETE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 		NULL, OPEN_EXISTING,
 		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
 	if (!hDir || (hDir == INVALID_HANDLE_VALUE))
