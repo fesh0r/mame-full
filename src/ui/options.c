@@ -2880,7 +2880,7 @@ static void LoadOptionsAndSettings(void)
 	handlers[0].u.option_struct.option_array = regGameOpts;
 	handlers[1].type = SH_OPTIONSTRUCT;
 	handlers[1].u.option_struct.option_struct = &settings;
-	handlers[1].u.option_struct.option_array = regSettings;
+	handlers[1].u.option_struct.option_array = global_game_options;
 	handlers[2].type = SH_END;
 	LoadSettingsFileEx(SETTINGS_FILE_GLOBAL, handlers);
 }
@@ -3061,6 +3061,8 @@ void SaveOptions(void)
 	i++;
 
 	handlers[i].type = SH_END;
+
+	SaveSettingsFileEx(SETTINGS_FILE_UI, handlers);
 }
 
 //returns true if different
