@@ -251,7 +251,7 @@ static long WINAPI      MameWindowProc(HWND hwnd,UINT message,UINT wParam,LONG l
 
 static void             SetView(int menu_id);
 static void             ResetListView(void);
-static void             UpdateGameList(void);
+static void             UpdateGameList(BOOL bUpdateRomAudit, BOOL bUpdateSampleAudit);
 static void             DestroyIcons(void);
 static void             ReloadIcons(void);
 static void             PollGUIJoystick(void);
@@ -4004,14 +4004,16 @@ static void ResetListView()
 
 }
 
-static void UpdateGameList()
+static void UpdateGameList(BOOL bUpdateRomAudit, BOOL bUpdateSampleAudit)
 {
 	int i;
 
 	for (i = 0; i < game_count; i++)
 	{
-		SetRomAuditResults(i, UNKNOWN);
-		SetSampleAuditResults(i, UNKNOWN);
+		if (bUpdateRomAudit && DriverUsesRoms(i))
+			SetRomAuditResults(i, UNKNOWN);
+		if (bUpdateSampleAudit && DriverUsesSamples(i))
+			SetSampleAuditResults(i, UNKNOWN);
 	}
 
 	idle_work	 = TRUE;
@@ -4477,7 +4479,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		break;
 
 	case ID_UPDATE_GAMELIST:
-		UpdateGameList();
+		UpdateGameList(TRUE, TRUE);
 		break;
 
 	case ID_OPTIONS_FONT:
@@ -4533,7 +4535,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 			/* update game list */
 			if (bUpdateRoms == TRUE || bUpdateSamples == TRUE)
-				UpdateGameList();
+				UpdateGameList(bUpdateRoms, bUpdateSamples);
 
 			SetFocus(hwndList);
 		}

@@ -30,6 +30,9 @@ User Interface Changes:
   and automatically reaudit files that are added, removed or modified in those
   directories.  [Nate Woods]
 
+- [Windows GUI] Changing BIOS or Samples directories will now only reaudit
+  systems for which they are relevant.  [Nate Woods]
+
 
 
 Imgtool Changes:
