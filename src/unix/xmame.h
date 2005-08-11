@@ -72,7 +72,7 @@ EXTERN int		doublebuffer; /* xgl */
 
 /* global variables and miscellaneous flags */
 
-EXTERN float		video_fps;
+EXTERN float	video_fps;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		throttle;
@@ -117,8 +117,8 @@ int barath_skip_next_frame();
 int barath_show_fps(char *buffer);
 
 /* miscellaneous */
-int config_init (int argc, char *argv[]);
-void config_exit(void);
+int xmame_config_init(int argc, char *argv[]);
+void xmame_config_exit(void);
 int frontend_list(char *gamename);
 int frontend_ident(char *gamename);
 void init_search_paths(void);

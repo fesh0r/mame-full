@@ -230,7 +230,7 @@ int xmess_printf_output(const char *fmt, va_list arg)
 /*
  * get configuration from configfile and env.
  */
-int config_init (int argc, char *argv[])
+int xmame_config_init(int argc, char *argv[])
 {
 	char buffer[BUF_SIZE];
 	unsigned char lsb_test[2]={0,1};
@@ -643,7 +643,7 @@ int config_init (int argc, char *argv[])
 	return 1234;
 }
 
-void config_exit(void)
+void xmame_config_exit(void)
 {
 	gamename = NULL;
 

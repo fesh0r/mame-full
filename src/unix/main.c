@@ -98,13 +98,13 @@ int main(int argc, char **argv)
 			build_version);
 
 	/* parse configuration file and environment */
-	if ((res = config_init(argc, argv)) == 1234)
+	if ((res = xmame_config_init(argc, argv)) == 1234)
 	{
 		/* go for it */
 		res = run_game (game_index);
 	}
 
-	config_exit();
+	xmame_config_exit();
 	sysdep_display_exit();
 
 	return res;
