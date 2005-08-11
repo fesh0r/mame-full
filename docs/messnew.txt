@@ -13,6 +13,9 @@ System Driver Changes:
 - [COCO/DRAGON] Fixed a rounding error in cassette loading that affected the
   Dragon game "Screaming Abdabs".  (bug #735) [Nate Woods]
 
+- [DGNALPHA] Fixed NMI interrupt, so that Dragon Data Alpha OS-9 can now boot.
+  [Phill Harvey-Smith]
+
 - [MAC] Fixed endian problems under big endian hosts.  [Nate Woods]
 
 
