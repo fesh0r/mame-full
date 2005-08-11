@@ -36,6 +36,8 @@ struct DirWatcherEntry
 		FILE_NOTIFY_INFORMATION notify;
 		BYTE buffer[1024];
 	} u;
+
+	TCHAR szDirPath[1];
 };
 
 
@@ -96,10 +98,11 @@ static BOOL DirWatcher_WatchDirectory(PDIRWATCHER pWatcher, int nIndex, int nSub
 	struct DirWatcherEntry *pEntry;
 	HANDLE hDir;
 
-	pEntry = malloc(sizeof(*pEntry));
+	pEntry = malloc(sizeof(*pEntry) + (_tcslen(pszPath) * sizeof(pszPath)));
 	if (!pEntry)
 		goto error;
 	memset(pEntry, 0, sizeof(*pEntry));
+	_tcscpy(pEntry->szDirPath, pszPath);
 	pEntry->overlapped.hEvent = pWatcher->hRequestEvent;
 
 	hDir = CreateFile(pszPath, FILE_LIST_DIRECTORY,
@@ -133,6 +136,10 @@ error:
 static void DirWatcher_Signal(PDIRWATCHER pWatcher, struct DirWatcherEntry *pEntry)
 {
 	LPTSTR pszFileName;
+	LPTSTR pszFullFileName;
+	BOOL bPause;
+	HANDLE hFile;
+	int nTries;
 
 #ifdef UNICODE
 	pszFileName = pEntry->u.notify.FileName;
@@ -145,6 +152,30 @@ static void DirWatcher_Signal(PDIRWATCHER pWatcher, struct DirWatcherEntry *pEnt
 	}
 #endif
 
+	// get the full path to this new file
+	pszFullFileName = (LPTSTR) alloca((_tcslen(pEntry->szDirPath) + _tcslen(pszFileName) + 2) * sizeof(*pszFullFileName));
+	_tcscpy(pszFullFileName, pEntry->szDirPath);
+	_tcscat(pszFullFileName, TEXT("\\"));
+	_tcscat(pszFullFileName, pszFileName);
+
+	// attempt to busy wait until any result other than ERROR_SHARING_VIOLATION
+	// is generated
+	nTries = 100;
+	do
+	{
+		hFile = CreateFile(pszFullFileName, GENERIC_READ,
+			FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		if (hFile != INVALID_HANDLE_VALUE)
+			CloseHandle(hFile);
+
+		bPause = (nTries--) && (hFile == INVALID_HANDLE_VALUE)
+			&& (GetLastError() == ERROR_SHARING_VIOLATION);
+		if (bPause)
+			Sleep(10);
+	}
+	while(bPause);
+
+	// send the message (assuming that we have a target)
 	if (pWatcher->hwndTarget)
 	{
 		SendMessage(pWatcher->hwndTarget,
