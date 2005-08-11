@@ -29,6 +29,8 @@ Source Changes:
 - The core is based on MAME 0.99u1.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]
+
 
 
 0.99
