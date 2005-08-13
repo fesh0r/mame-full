@@ -154,6 +154,4 @@ extern const char *mess_path;
 
 void machine_hard_reset(void);
 
-void mess_config_save_xml(int type, mame_file *file);
-
 #endif

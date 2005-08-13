@@ -25,9 +25,6 @@ int osd_keyboard_disabled(void);
 /* is set */
 int osd_trying_to_quit(void);
 
-/* allows OSD code to store stuff in .cfg files */
-void osd_config_save_xml(int type, struct _mame_file *file);
-
 
 
 /******************************************************************************
