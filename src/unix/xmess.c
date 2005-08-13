@@ -394,7 +394,3 @@ int osd_select_file(mess_image *img, char *filename)
 void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
-
-void osd_config_save_xml(int type, struct _mame_file *file)
-{
-}
