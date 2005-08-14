@@ -1,25 +1,33 @@
-/* *************************************************************************
- * Mac hardware
- *
- * The hardware for Mac 128k, 512k, 512ke, Plus (SCSI, SCC, etc).
- *
- * Nate Woods
- * Ernesto Corvi
- * Raphael Nabet
- *
- * TODO
- * - Fully implement SCSI
- * - Call the RTC timer
- *
- * - Support Mac 128k, 512k (easy, we just need the ROM image)
- * - Support Mac SE, Classic (we need to find the ROMs and implement ADB ; SE FDHD and Classic
- *   require SIWM support, too)
- * - Check that 0x600000-0x6fffff still address RAM when overlay bit is off (IM-III seems to say it
- *   does not on Mac 128k, 512k, and 512ke).
- * - What on earth are 0x700000-0x7fffff mapped to ?
- * - What additional features does the MacPlus RTC have ? (IM IV just states : "The new chip
- *   includes additionnal parameter RAM that's reserved by Apple.")
- * *************************************************************************/
+/****************************************************************************
+	Mac hardware
+	
+	The hardware for Mac 128k, 512k, 512ke, Plus (SCSI, SCC, etc).
+
+	Nate Woods
+	Ernesto Corvi
+	Raphael Nabet
+
+	Notes:
+		- The Mac Plus boot code seems to check to see the extent of ROM
+		  mirroring to determine if SCSI is available.  If the ROM is mirrored,
+		  then SCSI is not available.  Thanks to R. Belmont for making this
+		  discovery.
+
+	TODO
+		- Fully implement SCSI
+		- Call the RTC timer
+
+		- Support Mac 128k, 512k (easy, we just need the ROM image)
+		- Support Mac SE, Classic (we need to find the ROMs and implement ADB;
+		  SE FDHD and Classic require SIWM support, too)
+		- Check that 0x600000-0x6fffff still address RAM when overlay bit is off
+		  (IM-III seems to say it does not on Mac 128k, 512k, and 512ke).
+		- What on earth are 0x700000-0x7fffff mapped to ?
+		- What additional features does the MacPlus RTC have ? (IM IV just
+		  states : "The new chip includes additionnal parameter RAM that's
+		  reserved by Apple.")
+
+****************************************************************************/
 
 
 #include "driver.h"
@@ -38,7 +46,6 @@
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
-#define LOG_TRAPS		1
 #define LOG_SCSI		1
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
@@ -47,7 +54,6 @@
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
-#define LOG_TRAPS		0
 #define LOG_SCSI		0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
@@ -110,10 +116,11 @@ static void mac_install_memory(offs_t memory_begin, offs_t memory_end,
 
 	memory_set_bankptr(bank, memory_data);
 
-#if LOG_MEMORY
-	logerror("mac_install_memory(): bank=%d range=[0x%06x...0x%06x] mask=0x%06x ptr=0x%08x\n",
-		bank, memory_begin, memory_end, memory_mask, memory_data);
-#endif
+	if (LOG_MEMORY)
+	{
+		logerror("mac_install_memory(): bank=%d range=[0x%06x...0x%06x] mask=0x%06x ptr=0x%p\n",
+			bank, memory_begin, memory_end, memory_mask, memory_data);
+	}
 }
 
 
@@ -152,9 +159,8 @@ static void set_via_interrupt(int value)
 
 WRITE16_HANDLER ( mac_autovector_w )
 {
-#if LOG_GENERAL
-	logerror("mac_autovector_w: offset=0x%08x data=0x%04x\n", offset, data);
-#endif
+	if (LOG_GENERAL)
+		logerror("mac_autovector_w: offset=0x%08x data=0x%04x\n", offset, data);
 
 	/* This should throw an exception */
 
@@ -163,9 +169,8 @@ WRITE16_HANDLER ( mac_autovector_w )
 
 READ16_HANDLER ( mac_autovector_r )
 {
-#if LOG_GENERAL
-	logerror("mac_autovector_r: offset=0x%08x\n", offset);
-#endif
+	if (LOG_GENERAL)
+		logerror("mac_autovector_r: offset=0x%08x\n", offset);
 
 	/* This should throw an exception */
 
@@ -175,9 +180,8 @@ READ16_HANDLER ( mac_autovector_r )
 
 static void set_scc_waitrequest(int waitrequest)
 {
-#if LOG_GENERAL
-	logerror("set_scc_waitrequest: waitrequest=%i\n", waitrequest);
-#endif
+	if (LOG_GENERAL)
+		logerror("set_scc_waitrequest: waitrequest=%i\n", waitrequest);
 
 	/* Not Yet Implemented */
 }
@@ -219,9 +223,8 @@ static void set_memory_overlay(int overlay)
 
 		mac_overlay = overlay;
 
-#if LOG_GENERAL
-		logerror("set_memory_overlay: overlay=%i\n", overlay);
-#endif
+		if (LOG_GENERAL)
+			logerror("set_memory_overlay: overlay=%i\n", overlay);
 	}
 }
 
@@ -231,10 +234,6 @@ static void set_memory_overlay(int overlay)
  * Trap Tracing
  *
  * This is debug code that will output diagnostics regarding OS traps called
- *
- * To use this code you need to enable LOG_TRAPS and call this function from
- * m68000_1010() in m68k_in.c.  This also requires using the C version of the
- * M68k cpu core.
  *
  * For whatever it is worth:
  *		The first call to _Read occurs in the Mac Plus at 0x00400734
@@ -506,15 +505,16 @@ static int scan_keyboard()
 		keybuf = readinputport(i+3);
 
 		if (keybuf != key_matrix[i])
-		{	/* if state has changed, find first bit which has changed */
-#if LOG_KEYBOARD
-			logerror("keyboard state changed, %d %X\n", i, keybuf);
-#endif
+		{
+			/* if state has changed, find first bit which has changed */
+			if (LOG_KEYBOARD)
+				logerror("keyboard state changed, %d %X\n", i, keybuf);
 
 			for (j=0; j<16; j++)
 			{
 				if (((keybuf ^ key_matrix[i]) >> j) & 1)
-				{	/* update key_matrix */
+				{
+					/* update key_matrix */
 					key_matrix[i] = (key_matrix[i] & ~ (1 << j)) | (keybuf & (1 << j));
 
 					if (i < 4)
@@ -522,7 +522,8 @@ static int scan_keyboard()
 						/* create key code */
 						keycode = (i << 5) | (j << 1) | 0x01;
 						if (! (keybuf & (1 << j)))
-						{	/* key up */
+						{
+							/* key up */
 							keycode |= 0x80;
 						}
 						return keycode;
@@ -533,11 +534,14 @@ static int scan_keyboard()
 						keycode = ((i & 3) << 5) | (j << 1) | 0x01;
 
 						if ((keycode == 0x05) || (keycode == 0x0d) || (keycode == 0x11) || (keycode == 0x1b))
-						{	/* these keys cause shift to be pressed (for compatibility with mac 128/512) */
+						{
+							/* these keys cause shift to be pressed (for compatibility with mac 128/512) */
 							if (keybuf & (1 << j))
-							{	/* key down */
+							{
+								/* key down */
 								if (! (key_matrix[3] & 0x0100))
-								{	/* shift key is really up */
+								{
+									/* shift key is really up */
 									keycode_buf[0] = keycode;
 									keycode_buf[1] = 0x79;
 									keycode_buf_index = 2;
@@ -547,7 +551,8 @@ static int scan_keyboard()
 							else
 							{	/* key up */
 								if (! (key_matrix[3] & 0x0100))
-								{	/* shift key is really up */
+								{
+									/* shift key is really up */
 									keycode_buf[0] = keycode | 0x80;;
 									keycode_buf[1] = 0x79;
 									keycode_buf_index = 2;
@@ -557,7 +562,8 @@ static int scan_keyboard()
 						}
 
 						if (! (keybuf & (1 << j)))
-						{	/* key up */
+						{
+							/* key up */
 							keycode |= 0x80;
 						}
 						keycode_buf[0] = keycode;
@@ -569,7 +575,8 @@ static int scan_keyboard()
 						/* create key code */
 						keycode = (j << 1) | 0x01;
 						if (! (keybuf & (1 << j)))
-						{	/* key up */
+						{
+							/* key up */
 							keycode |= 0x80;
 						}
 						keycode_buf[0] = keycode;
@@ -667,10 +674,8 @@ static WRITE8_HANDLER(mac_via_out_cb2)
 */
 static void inquiry_timeout_func(int unused)
 {
-#if LOG_KEYBOARD
-	logerror("keyboard enquiry timeout\n");
-#endif
-
+	if (LOG_KEYBOARD)
+		logerror("keyboard enquiry timeout\n");
 	kbd_shift_out(0x7B);	/* always send NULL */
 }
 
@@ -683,9 +688,9 @@ static void keyboard_receive(int val)
 	{
 	case 0x10:
 		/* inquiry - returns key transition code, or NULL ($7B) if time out (1/4s) */
-#if LOG_KEYBOARD
-		logerror("keyboard command : inquiry\n");
-#endif
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : inquiry\n");
+
 		keyboard_reply = scan_keyboard();
 		if (keyboard_reply == 0x7B)
 		{	
@@ -698,17 +703,16 @@ static void keyboard_receive(int val)
 
 	case 0x14:
 		/* instant - returns key transition code, or NULL ($7B) */
-#if LOG_KEYBOARD
-		logerror("keyboard command : instant\n");
-#endif
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : instant\n");
+
 		kbd_shift_out(scan_keyboard());
 		break;
 
 	case 0x16:
 		/* model number - resets keyboard, return model number */
-#if LOG_KEYBOARD
-		logerror("keyboard command : model number\n");
-#endif
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : model number\n");
 
 		{	/* reset */
 			int i;
@@ -737,16 +741,16 @@ static void keyboard_receive(int val)
 
 	case 0x36:
 		/* test - resets keyboard, return ACK ($7D) or NAK ($77) */
-#if LOG_KEYBOARD
-		logerror("keyboard command : test\n");
-#endif
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : test\n");
+
 		kbd_shift_out(0x7D);	/* ACK */
 		break;
 
 	default:
-#if LOG_KEYBOARD
-		logerror("unknown keyboard command 0x%X\n", val);
-#endif
+		if (LOG_KEYBOARD)
+			logerror("unknown keyboard command 0x%X\n", val);
+
 		kbd_shift_out(0);
 		break;
 	}
@@ -908,9 +912,8 @@ static void scsi_state_bw(int offset, UINT8 b)
 
 static void scsi_chipreset(void)
 {
-#if LOG_SCSI
-	logerror("scsi_busreset(): reseting chip\n");
-#endif
+	if (LOG_SCSI)
+		logerror("scsi_busreset(): reseting chip\n");
 
 	scsi_state_bw(scsiRd+sCDR, 0);
 	scsi_state_bw(scsiWr+sODR, 0);
@@ -934,9 +937,8 @@ static void scsi_chipreset(void)
 
 static void scsi_busreset(void)
 {
-#if LOG_SCSI
-	logerror("scsi_busreset(): reseting bus\n");
-#endif
+	if (LOG_SCSI)
+		logerror("scsi_busreset(): reseting bus\n");
 
 	scsi_state_bw(scsiRd+sCDR, 0);
 	scsi_state_bw(scsiWr+sODR, 0);
@@ -1050,9 +1052,8 @@ static void scsi_check(void)
 
 READ16_HANDLER ( macplus_scsi_r )
 {
-#if LOG_SCSI
-	logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) activecpu_get_pc());
-#endif
+	if (LOG_SCSI)
+		logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) activecpu_get_pc());
 
 	offset <<= 1;
 	offset %= sizeof(scsi_state);
@@ -1063,9 +1064,8 @@ READ16_HANDLER ( macplus_scsi_r )
 
 WRITE16_HANDLER ( macplus_scsi_w )
 {
-#if LOG_SCSI
-	logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) activecpu_get_pc());
-#endif
+	if (LOG_SCSI)
+		logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) activecpu_get_pc());
 
 	offset <<= 1;
 	offset %= sizeof(scsi_state);
@@ -1218,9 +1218,8 @@ static void rtc_shift_data(int data)
 	if (rtc_data_dir)
 	{	/* RTC -> VIA transmission */
 		rtc_data_out = (rtc_data_byte >> --rtc_bit_count) & 0x01;
-#if LOG_RTC
-		logerror("RTC shifted new data %d\n", rtc_data_out);
-#endif
+		if (LOG_RTC)
+			logerror("RTC shifted new data %d\n", rtc_data_out);
 	}
 	else
 	{	/* VIA -> RTC transmission */
@@ -1236,9 +1235,8 @@ static void rtc_shift_data(int data)
 /* called every second, to increment the Clock count */
 static void rtc_incticks(void)
 {
-#if LOG_RTC
-	logerror("rtc_incticks called\n");
-#endif
+	if (LOG_RTC)
+		logerror("rtc_incticks called\n");
 
 	if (++rtc_seconds[0] == 0)
 		if (++rtc_seconds[1] == 0)
@@ -1258,9 +1256,8 @@ static void rtc_execute_cmd(int data)
 {
 	int i;
 
-#if LOG_RTC
-	logerror("rtc_execute_cmd: data=%i\n", data);
-#endif
+	if (LOG_RTC)
+		logerror("rtc_execute_cmd: data=%i\n", data);
 
 	/* Time to execute a command */
 	if (rtc_write_cmd_in_progress)
@@ -1275,31 +1272,27 @@ static void rtc_execute_cmd(int data)
 		case 0: case 1: case 2: case 3:	/* seconds register */
 		case 4: case 5: case 6: case 7:	/* ??? (not described in IM III) */
 			/* after various tries, I assumed rtc_seconds[4+i] is mapped to rtc_seconds[i] */
-#if LOG_RTC
-			logerror("RTC clock write, address = %X, data = %X\n", i, (int) rtc_data_byte);
-#endif
+			if (LOG_RTC)
+				logerror("RTC clock write, address = %X, data = %X\n", i, (int) rtc_data_byte);
 			rtc_seconds[i & 3] = rtc_data_byte;
 			break;
 
 		case 8: case 9: case 10: case 11:	/* RAM address $10-$13 */
-#if LOG_RTC
-			logerror("RTC RAM write, address = %X, data = %X\n", (i & 3) + 0x10, (int) rtc_data_byte);
-#endif
+			if (LOG_RTC)
+				logerror("RTC RAM write, address = %X, data = %X\n", (i & 3) + 0x10, (int) rtc_data_byte);
 			rtc_ram[(i & 3) + 0x10] = rtc_data_byte;
 			break;
 
 		case 12:
 			/* Test register - do nothing */
-#if LOG_RTC
-			logerror("RTC write to test register, data = %X\n", (int) rtc_data_byte);
-#endif
+			if (LOG_RTC)
+				logerror("RTC write to test register, data = %X\n", (int) rtc_data_byte);
 			break;
 
 		case 13:
 			/* Write-protect register  */
-#if LOG_RTC
-			logerror("RTC write to write-protect register, data = %X\n", (int) rtc_data_byte);
-#endif
+			if (LOG_RTC)
+				logerror("RTC write to write-protect register, data = %X\n", (int) rtc_data_byte);
 			rtc_write_protect = (rtc_data_byte & 0x80) ? TRUE : FALSE;
 			break;
 
@@ -1307,9 +1300,8 @@ static void rtc_execute_cmd(int data)
 		case 20: case 21: case 22: case 23:
 		case 24: case 25: case 26: case 27:
 		case 28: case 29: case 30: case 31:
-#if LOG_RTC
-			logerror("RTC RAM write, address = %X, data = %X\n", i & 15, (int) rtc_data_byte);
-#endif
+			if (LOG_RTC)
+				logerror("RTC RAM write, address = %X, data = %X\n", i & 15, (int) rtc_data_byte);
 			rtc_ram[i & 15] = rtc_data_byte;
 			break;
 
@@ -1338,15 +1330,13 @@ static void rtc_execute_cmd(int data)
 			case 0: case 1: case 2: case 3:
 			case 4: case 5: case 6: case 7:
 				rtc_data_byte = rtc_seconds[i & 3];
-#if LOG_RTC
-				logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
-#endif
+				if (LOG_RTC)
+					logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
 				break;
 
 			case 8: case 9: case 10: case 11:
-#if LOG_RTC
-				logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
-#endif
+				if (LOG_RTC)
+					logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
 				rtc_data_byte = rtc_ram[(i & 3) + 0x10];
 				break;
 
@@ -1354,14 +1344,14 @@ static void rtc_execute_cmd(int data)
 			case 20: case 21: case 22: case 23:
 			case 24: case 25: case 26: case 27:
 			case 28: case 29: case 30: case 31:
-#if LOG_RTC
-				logerror("RTC RAM read, address = %X\n", i & 15);
-#endif
+				if (LOG_RTC)
+					logerror("RTC RAM read, address = %X\n", i & 15);
 				rtc_data_byte = rtc_ram[i & 15];
 				break;
 
 			default:
-				logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
+				if (LOG_RTC)
+					logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
 				rtc_data_byte = 0;
 				break;
 			}
@@ -1370,9 +1360,8 @@ static void rtc_execute_cmd(int data)
 		{
 			/* Writing an RTC register */
 			/* wait for extra data byte */
-#if LOG_RTC
-			logerror("RTC write, waiting for data byte\n", rtc_cmd);
-#endif
+			if (LOG_RTC)
+				logerror("RTC write, waiting for data byte : %X\n", (int) rtc_cmd);
 			rtc_write_cmd_in_progress = TRUE;
 			rtc_data_byte = 0;
 			rtc_bit_count = 0;
@@ -1386,39 +1375,22 @@ NVRAM_HANDLER( mac )
 {
 	if (read_or_write)
 	{
-#if LOG_RTC
-		logerror("Writing PRAM to file\n");
-#endif
+		if (LOG_RTC)
+			logerror("Writing PRAM to file\n");
 		mame_fwrite(file, rtc_ram, sizeof(rtc_ram));
 	}
 	else
 	{
 		if (file)
 		{
-#if LOG_RTC
-			logerror("Reading PRAM from file\n");
-#endif
+			if (LOG_RTC)
+				logerror("Reading PRAM from file\n");
 			mame_fread(file, rtc_ram, sizeof(rtc_ram));
 		}
 		else
 		{
-#if LOG_RTC
-			logerror("trashing PRAM\n");
-#endif
-			memset(rtc_ram, 0, sizeof(rtc_ram));
-			/* Geez, what's the point, Mac ROMs can create default values quite well. */
-			/*rtc_ram[0] = 168;
-			rtc_ram[3] = 34;
-			rtc_ram[4] = 204;
-			rtc_ram[5] = 10;
-			rtc_ram[6] = 204;
-			rtc_ram[7] = 10;
-			rtc_ram[13] = 2;
-			rtc_ram[14] = 99;
-			rtc_ram[16] = 3;
-			rtc_ram[17] = 83;
-			rtc_ram[18] = 4;
-			rtc_ram[19] = 76;*/
+			if (LOG_RTC)
+				logerror("trashing PRAM\n");
 		}
 
 		{
@@ -1439,9 +1411,8 @@ NVRAM_HANDLER( mac )
 
 			seconds = difftime(time(NULL), mktime(& mac_reference));
 
-#if LOG_RTC
-			logerror("second count 0x%lX\n", (unsigned long) seconds);
-#endif
+			if (LOG_RTC)
+				logerror("second count 0x%lX\n", (unsigned long) seconds);
 
 			rtc_seconds[0] = seconds & 0xff;
 			rtc_seconds[1] = (seconds >> 8) & 0xff;
@@ -1467,9 +1438,8 @@ READ16_HANDLER ( mac_iwm_r )
 
 	int result = 0;
 
-#if LOG_MAC_IWM
-	logerror("mac_iwm_r: offset=0x%08x\n", offset);
-#endif
+	if (LOG_MAC_IWM)
+		logerror("mac_iwm_r: offset=0x%08x\n", offset);
 
 	result = applefdc_r(offset >> 8);
 	return (result << 8) | result;
@@ -1477,9 +1447,8 @@ READ16_HANDLER ( mac_iwm_r )
 
 WRITE16_HANDLER ( mac_iwm_w )
 {
-#if LOG_MAC_IWM
-	logerror("mac_iwm_w: offset=0x%08x data=0x%04x\n", offset, data);
-#endif
+	if (LOG_MAC_IWM)
+		logerror("mac_iwm_w: offset=0x%08x data=0x%04x\n", offset, data);
 
 	if (ACCESSING_LSB)
 		applefdc_w(offset >> 8, data & 0xff);
@@ -1574,9 +1543,8 @@ READ16_HANDLER ( mac_via_r )
 	offset >>= 8;
 	offset &= 0x0f;
 
-#if LOG_VIA
-	logerror("mac_via_r: offset=0x%02x\n", offset);
-#endif
+	if (LOG_VIA)
+		logerror("mac_via_r: offset=0x%02x\n", offset);
 	data = via_0_r(offset);
 
 	return (data & 0xff) | (data << 8);
@@ -1587,9 +1555,8 @@ WRITE16_HANDLER ( mac_via_w )
 	offset >>= 8;
 	offset &= 0x0f;
 
-#if LOG_VIA
-	logerror("mac_via_w: offset=0x%02x data=0x%08x\n", offset, data);
-#endif
+	if (LOG_VIA)
+		logerror("mac_via_w: offset=0x%02x data=0x%08x\n", offset, data);
 
 	if (ACCESSING_MSB)
 		via_0_w(offset, (data >> 8) & 0xff);
@@ -1656,8 +1623,8 @@ static void mac_driver_init(mac_model_t model)
 	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
 	mac_install_memory(0x600000, 0x6fffff, mess_ram_size, mess_ram, FALSE, 2);
 
-	/* set up ROM at 0x400000-0x4fffff (-0x5fffff for mac 128k/512k/512ke) */
-	mac_install_memory(0x400000, (model == model_macplus) ? 0x4fffff : 0x5fffff,
+	/* set up ROM at 0x400000-0x43ffff (-0x5fffff for mac 128k/512k/512ke) */
+	mac_install_memory(0x400000, (model == model_macplus) ? 0x43ffff : 0x5fffff,
 		memory_region_length(REGION_USER1), memory_region(REGION_USER1), TRUE, 3);
 
 	set_memory_overlay(1);
