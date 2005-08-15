@@ -20,7 +20,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [MAC/TI99/TI990HD] Fixed a variety of crashes.  [Raphael Nabet]
 
 
 
@@ -75,7 +75,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [CONCEPT] Fixed a variety of crashes.  [Raphael Nabet]
 
 
 
