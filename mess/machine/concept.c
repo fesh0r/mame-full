@@ -1,7 +1,7 @@
 /*
 	Corvus Concept driver
 
-	Raphael Nabet, 2003
+	Raphael Nabet, Brett Wyer, 2003-2005
 */
 
 #include "driver.h"
@@ -13,6 +13,10 @@
 #include "includes/wd179x.h"
 #include "cpu/m68000/m68k.h"
 #include "devices/basicdsk.h"
+#include "includes/corvus_hd.h"
+
+#define VERBOSE 1
+#define VERY_VERBOSE 0
 
 /* interrupt priority encoder */
 static UINT8 pending_interrupts;
@@ -51,7 +55,7 @@ static struct via6522_interface concept_via6522_intf =
 	via_out_a, via_out_b,
 	NULL, NULL,
 	NULL, via_out_cb2,
-	via_irq_func,
+	via_irq_func
 };
 
 /* keyboard interface */
@@ -76,6 +80,7 @@ struct
 } expansion_slots[4];
 
 static void concept_fdc_init(int slot);
+static void concept_hdc_init(int slot);
 
 MACHINE_INIT(concept)
 {
@@ -100,7 +105,8 @@ MACHINE_INIT(concept)
 	/* initialize expansion slots */
 	memset(expansion_slots, 0, sizeof(expansion_slots));
 
-	concept_fdc_init(0);
+	concept_hdc_init(1);	/* Flat cable Hard Disk Controller in Slot 2 */
+	concept_fdc_init(2);	/* Floppy Disk Controller in Slot 3 */
 }
 
 static void install_expansion_slot(int slot,
@@ -220,11 +226,17 @@ INTERRUPT_GEN( concept_interrupt )
 */
 static  READ8_HANDLER(via_in_a)
 {
+#if VERBOSE
+	logerror("via_in_a: VIA port A (Omninet and COMM port status) read\n");
+#endif
 	return 1;		/* omninet ready always 1 */
 }
 
 static WRITE8_HANDLER(via_out_a)
 {
+#if VERBOSE
+	logerror("via_out_a: VIA port A status written: data=0x%2.2x\n", data);
+#endif
 	/*iox = (data & 0x80) != 0;*/
 }
 
@@ -242,11 +254,20 @@ static WRITE8_HANDLER(via_out_a)
 */
 static  READ8_HANDLER(via_in_b)
 {
-	return 0/*0xc0*/;
+	UINT8 status;
+
+	status = ((readinputport(dipswitch_port_concept) & 0x80) >> 1) | ((readinputport(dipswitch_port_concept) & 0x40) << 1);
+#if VERBOSE
+	logerror("via_in_b: VIA port B (DIP switches, Video, Comm Rate) - status: 0x%2.2x\n", status);
+#endif
+	return status;
 }
 
 static WRITE8_HANDLER(via_out_b)
 {
+#if VERY_VERBOSE
+	logerror("via_out_b: VIA port B (Video Control and COMM rate select) written: data=0x%2.2x\n", data);
+#endif
 }
 
 /*
@@ -254,6 +275,9 @@ static WRITE8_HANDLER(via_out_b)
 */
 static WRITE8_HANDLER(via_out_cb2)
 {
+#if VERBOSE
+	logerror("via_out_cb2: Sound control written: data=0x%2.2x\n", data);
+#endif
 }
 
 /*
@@ -292,6 +316,7 @@ READ16_HANDLER(concept_io_r)
 
 		default:
 			/* ??? */
+			logerror("concept_io_r: Slot I/O memory accessed for unknown purpose at address 0x03%4.4x\n", offset << 1);
 			break;
 		}
 		break;
@@ -306,6 +331,9 @@ READ16_HANDLER(concept_io_r)
 		/* IO4 ROM */
 		{
 			int slot = ((offset >> 8) & 7) - 1;
+#if VERBOSE
+			logerror("concept_io_r: Slot ROM memory accessed for slot %d at address 0x03%4.4x\n", slot, offset << 1);
+#endif
 			if (expansion_slots[slot].rom_read)
 				return expansion_slots[slot].rom_read(offset & 0xff);
 		}
@@ -313,10 +341,16 @@ READ16_HANDLER(concept_io_r)
 
 	case 5:
 		/* slot status */
+#if VERBOSE
+		logerror("concept_io_r: Slot status read at address 0x03%4.4x\n", offset << 1);
+#endif
 		break;
 
 	case 6:
 		/* calendar R/W */
+#if VERY_VERBOSE
+		logerror("concept_io_r: Calendar read at address 0x03%4.4x\n", offset << 1);
+#endif
 		if (!clock_enable)
 			return mm58274c_r(0, clock_address);
 		break;
@@ -357,30 +391,42 @@ READ16_HANDLER(concept_io_r)
 			/* NSR0 data comm port 0 */
 		case 2:
 			/* NSR1 data comm port 1 */
+#if VERBOSE
+			logerror("concept_io_r: Data comm port read at address 0x03%4.4x\n", offset << 1);
+#endif
 			if ((offset & 0xf) == 1)
 				return 0x10;
 			break;
 
 		case 3:
 			/* NVIA versatile system interface */
+#if VERBOSE
+			logerror("concept_io_r: VIA read at address 0x03%4.4x\n", offset << 1);
+#endif
 			return via_read(0, offset & 0xf);
 			break;
 
 		case 4:
 			/* NCALM clock calendar address and strobe register */
 			/* write-only? */
+#if VERBOSE
+			logerror("concept_io_r: NCALM clock/calendar read at address 0x03%4.4x\n", offset << 1);
+#endif
 			break;
 
 		case 5:
 			/* NOMNI omninet strobe */
+			logerror("concept_io_r: NOMNI Omninet Transporter register read at address 0x03%4.4x\n", offset << 1);
 			break;
 
 		case 6:
 			/* NOMOFF reset omninet interrupt flip-flop */
+			logerror("concept_io_r: NOMOFF Omninet interrupt flip-flop read at address 0x03%4.4x\n", offset << 1);
 			break;
 
 		case 7:
-			/* NIOSTRB external I/O ROM strobe */
+			/* NIOSTRB external I/O ROM strobe (disables interface RAM) */
+			logerror("concept_io_r: NIOSTRB External I/O ROM strobe read at address 0x03%4.4x\n", offset << 1);
 			break;
 		}
 		break;
@@ -412,6 +458,10 @@ WRITE16_HANDLER(concept_io_w)
 			/* IO4 registers */
 			{
 				int slot = ((offset >> 4) & 7) - 1;
+#if VERBOSE
+				logerror("concept_io_w: Slot I/O register written for slot %d at address 0x03%4.4x, data: 0x%4.4x\n", 
+					slot, offset << 1, data);
+#endif
 				if (expansion_slots[slot].reg_write)
 					expansion_slots[slot].reg_write(offset & 0xf, data);
 			}
@@ -419,6 +469,7 @@ WRITE16_HANDLER(concept_io_w)
 
 		default:
 			/* ??? */
+			logerror("concept_io_w: Slot I/O memory written for unknown purpose at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
 			break;
 		}
 		break;
@@ -433,6 +484,9 @@ WRITE16_HANDLER(concept_io_w)
 		/* IO4 ROM */
 		{
 			int slot = ((offset >> 8) & 7) - 1;
+#if VERBOSE
+			logerror("concept_io_w: Slot ROM memory written to for slot %d at address 0x03%4.4x, data: 0x%4.4x\n", slot, offset << 1, data);
+#endif
 			if (expansion_slots[slot].rom_write)
 				expansion_slots[slot].rom_write(offset & 0xff, data);
 		}
@@ -440,10 +494,14 @@ WRITE16_HANDLER(concept_io_w)
 
 	case 5:
 		/* slot status */
+		logerror("concept_io_w: Slot status written at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
 		break;
 
 	case 6:
 		/* calendar R/W */
+#if VERBOSE
+		logerror("concept_io_w: Calendar written to at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
+#endif
 		if (!clock_enable)
 			mm58274c_w(0, clock_address, data & 0xf);
 		break;
@@ -481,14 +539,17 @@ WRITE16_HANDLER(concept_io_w)
 
 		case 5:
 			/* NOMNI omninet strobe */
+			logerror("concept_io_w: NOMNI Omninet Transporter register written at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
 			break;
 
 		case 6:
 			/* NOMOFF reset omninet interrupt flip-flop */
+			logerror("concept_io_w: NOMOFF Omninet flip-flop reset at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
 			break;
 
 		case 7:
 			/* NIOSTRB external I/O ROM strobe */
+			logerror("concept_io_w: NIOSTRB External I/O ROM strobe written at address 0x03%4.4x, data: 0x%4.4x\n", offset << 1, data);
 			break;
 		}
 		break;
@@ -604,6 +665,8 @@ static  READ8_HANDLER(concept_fdc_reg_r)
 
 static WRITE8_HANDLER(concept_fdc_reg_w)
 {
+	int current_drive;
+
 	switch (offset)
 	{
 	case 0:
@@ -611,10 +674,13 @@ static WRITE8_HANDLER(concept_fdc_reg_w)
 		fdc_local_command = data;
 
 		wd179x_set_side((data & LC_FLPSD1_mask) != 0);
-		wd179x_set_drive(((data >> LC_DE0_bit) & 1) | ((data >> (LC_DE1_bit-1)) & 2));
+		current_drive = ((data >> LC_DE0_bit) & 1) | ((data >> (LC_DE1_bit-1)) & 2);
+		wd179x_set_drive(current_drive);
 		/*motor_on = (data & LC_MOTOROF_mask) == 0;*/
+		// floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, current_drive), (data & LC_MOTOROF_mask) == 0 ? 1 : 0);
 		/*flp_8in = (data & LC_FLP8IN_mask) != 0;*/
 		wd179x_set_density((data & LC_FMMFM_mask) ? DEN_FM_LO : DEN_MFM_LO);
+		floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, current_drive), 1, 0);
 		break;
 
 	case 8:
@@ -642,5 +708,69 @@ static WRITE8_HANDLER(concept_fdc_reg_w)
 static  READ8_HANDLER(concept_fdc_rom_r)
 {
 	UINT8 data[8] = "CORVUS01";
+	return (offset < 8) ? data[offset] : 0;
+}
+
+/*
+ *	Concept Hard Disk Controller (hdc)
+ */
+
+static void concept_hdc_init(int slot);
+
+static  READ8_HANDLER(concept_hdc_reg_r);
+static WRITE8_HANDLER(concept_hdc_reg_w);
+static  READ8_HANDLER(concept_hdc_rom_r);
+
+/*
+ *	Hook up the Register and ROM R/W routines into the Slot I/O Space
+ */
+
+static void concept_hdc_init(int slot)
+{
+	if(corvus_hdc_init())
+		install_expansion_slot(slot, concept_hdc_reg_r, concept_hdc_reg_w, concept_hdc_rom_r, NULL);
+}
+
+/*
+ *	Handle reads against the Hard Disk Controller's onboard registers
+ */
+static  READ8_HANDLER(concept_hdc_reg_r)
+{
+	switch (offset)
+	{
+	case 0:
+		/* HDC Data Register */
+		return corvus_hdc_data_r(offset);
+		break;
+
+	case 1:
+		/* HDC Status Register */
+		return corvus_hdc_status_r(offset);
+		break;
+	}
+
+	return 0;
+}
+
+/*
+ *	Handle writes against the Hard Disk Controller's onboard registers
+ */
+static WRITE8_HANDLER(concept_hdc_reg_w)
+{
+	switch (offset)
+	{
+	case 0:
+		/* HDC Data Register */
+		corvus_hdc_data_w(offset, data);
+		break;
+	}
+}
+
+/*
+ *	Handle reads agsint the Hard Disk Controller's onboard ROM
+ */
+static  READ8_HANDLER(concept_hdc_rom_r)
+{
+	UINT8 data[8] = { 0xa9, 0x20, 0xa9, 0x00, 0xa9, 0x03, 0xa9, 0x3c };			/* Same as Apple II */
 	return (offset < 8) ? data[offset] : 0;
 }

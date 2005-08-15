@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [CONCEPT] Added HD support.  [Brett Wyer, Raphael Nabet]
 
 
 

@@ -11,7 +11,9 @@ enum
 
 enum
 {
-	input_port_keyboard_concept = 0
+	input_port_keyboard_concept = 0,
+	dipswitch_port_concept = 6,
+	display_orientation_concept = 7
 };
 
 MACHINE_INIT(concept);

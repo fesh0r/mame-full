@@ -25,7 +25,7 @@
 	  manual pp. 76 through 78. and User Guide p. 2-1 through 2-9.
 	Clock: mm58174 RTC
 
-	Raphael Nabet, 2003
+	Raphael Nabet, Brett Wyer, 2003-2005
 */
 
 #include "driver.h"
@@ -33,6 +33,7 @@
 #include "includes/concept.h"
 #include "devices/mflopimg.h"
 #include "formats/basicdsk.h"
+#include "devices/harddriv.h"
 
 static ADDRESS_MAP_START(concept_memmap, ADDRESS_SPACE_PROGRAM, 16)
 
@@ -186,7 +187,39 @@ INPUT_PORTS_START( concept )
 		PORT_BIT(0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("F10") PORT_CODE(KEYCODE_F10)
 		PORT_BIT(0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("(up)") PORT_CODE(KEYCODE_UP)
 		PORT_BIT(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("???") PORT_CODE(KEYCODE_SLASH_PAD)
-		PORT_BIT(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("BREAK") PORT_CODE(KEYCODE_NUMLOCK)
+		PORT_BIT(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("BREAK") PORT_CODE(KEYCODE_PAUSE)
+
+	PORT_START	/* port 6: on-board DIP switches */
+		PORT_DIPNAME(0x01, 0x00, "Omninet Address bit 0")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x01, DEF_STR( On ))
+		PORT_DIPNAME(0x02, 0x02, "Omninet Address bit 1")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x02, DEF_STR( On ))
+		PORT_DIPNAME(0x04, 0x00, "Omninet Address bit 2")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x04, DEF_STR( On ))
+		PORT_DIPNAME(0x08, 0x00, "Omninet Address bit 3")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x08, DEF_STR( On ))
+		PORT_DIPNAME(0x10, 0x00, "Omninet Address bit 4")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x10, DEF_STR( On ))
+		PORT_DIPNAME(0x20, 0x00, "Omninet Address bit 5")
+		PORT_DIPSETTING(0x00, DEF_STR( Off ))
+		PORT_DIPSETTING(0x20, DEF_STR( On ))
+		PORT_DIPNAME(0xc0, 0x00, "Type of Boot")
+		PORT_DIPSETTING(0x00, "Prompt fo type of Boot")		// Documentation has 0x00 and 0xc0 reversed per boot PROM
+		PORT_DIPSETTING(0x40, "Boot from Omninet")
+		PORT_DIPSETTING(0x80, "Boot from Local Disk")
+		PORT_DIPSETTING(0xc0, "Boot from Diskette")
+
+#if 0
+	PORT_START	/* port 7: Display orientation */
+		PORT_DIPNAME(0x01, 0x00, "Screen Orientation")
+		PORT_DIPSETTING(0x00, "Horizontal")
+		PORT_DIPSETTING(0x01, "Vertical")
+#endif
 
 INPUT_PORTS_END
 
@@ -203,7 +236,7 @@ ROM_START( concept )
 	// version 1 lvl 7 release
 	ROM_LOAD16_BYTE("bootl17h", 0x010000, 0x1000, CRC(6dd9718f))
 	ROM_LOAD16_BYTE("bootl17l", 0x010001, 0x1000, CRC(107a3830))
-#elif 0
+#elif 1
 	// version 0 lvl 8 release
 	ROM_LOAD16_BYTE("bootl08h", 0x010000, 0x1000, CRC(ee479f51))
 	ROM_LOAD16_BYTE("bootl08l", 0x010001, 0x1000, CRC(acaefd07))
@@ -274,9 +307,17 @@ static void concept_floppy_getinfo(struct IODevice *dev)
 	dev->count = 4;
 }
 
+static void concept_harddisk_getinfo(struct IODevice *dev)
+{
+	/* Hard Drive */
+	harddisk_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(concept)
 	/* The concept should eventually support floppies, hard disks, etc. */
 	CONFIG_DEVICE(concept_floppy_getinfo)
+	CONFIG_DEVICE(concept_harddisk_getinfo)
 SYSTEM_CONFIG_END
 
 
