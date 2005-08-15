@@ -9,7 +9,7 @@
 	extract text files in flat format instead, but I need to re-implement it
 	properly (using filters comes to mind).
 
-	Raphael Nabet, 2002-2003
+	Raphael Nabet, 2002-2004
 
 	TODO:
 	- finish and test hd support ***test sibling FDR support***
@@ -3033,7 +3033,7 @@ static int open_file_lvl2_win(ti99_lvl2_imgref *l2_img, const char *fpath, ti99_
 			/* otherwise read next FDR */
 			if (get_UINT16BE(cur_fdr->nextsibFDR_AU) >= l2_file->u.win.l2_img->AUformat.totAUs)
 				return IMGTOOLERR_CORRUPTIMAGE;
-			
+
 			prevfdr_aphysrec = curfdr_aphysrec;
 			curfdr_aphysrec = get_win_fdr_nextsibFDR_aphysrec(l2_file->u.win.l2_img, cur_fdr);
 			if (read_absolute_physrec(& l2_file->u.win.l2_img->l1_img, curfdr_aphysrec, &fdr_buf))
@@ -4004,14 +4004,12 @@ imgtoolerr_t ti99_createmodule(imgtool_library *library)
 */
 static int dsk_image_init(imgtool_image *img, imgtool_stream *f, ti99_img_format img_format)
 {
-	ti99_lvl2_imgref *image;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	dsk_vib vib;
 	int reply;
 	int totphysrecs;
 	unsigned fdir_aphysrec;
 	int i;
-
-	image = (ti99_lvl2_imgref *) img_extrabytes(img);
 
 	/* open disk image at level 1 */
 	reply = open_image_lvl1(f, img_format, &image->l1_img, &vib);
@@ -4136,12 +4134,10 @@ static imgtoolerr_t dsk_image_init_pc99_mfm(imgtool_image *image, imgtool_stream
 */
 static imgtoolerr_t win_image_init(imgtool_image *img, imgtool_stream *f)
 {
-	ti99_lvl2_imgref *image;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	win_vib_ddr vib;
 	int reply;
 	int i;
-
-	image = (ti99_lvl2_imgref *) img_extrabytes(img);
 
 	/* open disk image at level 1 */
 	reply = open_image_lvl1(f, if_harddisk, & image->l1_img, NULL);
@@ -4195,6 +4191,7 @@ static imgtoolerr_t win_image_init(imgtool_image *img, imgtool_stream *f)
 static void ti99_image_exit(imgtool_image *img)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
+
 	close_image_lvl1(&image->l1_img);
 }
 
@@ -4205,7 +4202,7 @@ static void ti99_image_exit(imgtool_image *img)
 */
 static void ti99_image_info(imgtool_image *img, char *string, size_t len)
 {
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	char vol_name[11];
 
 	fname_to_str(vol_name, image->vol_name, 11);
@@ -4219,9 +4216,7 @@ static void ti99_image_info(imgtool_image *img, char *string, size_t len)
 static imgtoolerr_t dsk_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img_enum_image(enumeration));
-	dsk_iterator *iter;
-
-	iter = (dsk_iterator *) img_enum_extrabytes(enumeration);
+	dsk_iterator *iter = (dsk_iterator *) img_enum_extrabytes(enumeration);
 
 	iter->image = image;
 	iter->level = 0;
@@ -4342,10 +4337,8 @@ static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 static imgtoolerr_t win_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img_enum_image(enumeration));
-	win_iterator *iter;
+	win_iterator *iter = (win_iterator *) img_enum_extrabytes(enumeration);
 	imgtoolerr_t errorcode;
-
-	iter = img_enum_extrabytes(enumeration);
 
 	iter->image = image;
 	iter->level = 0;
@@ -4363,7 +4356,7 @@ static imgtoolerr_t win_image_beginenum(imgtool_imageenum *enumeration, const ch
 */
 static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
-	win_iterator *iter = (win_iterator*) img_enum_extrabytes(enumeration);
+	win_iterator *iter = (win_iterator *) img_enum_extrabytes(enumeration);
 	unsigned fdr_aphysrec;
 	win_fdr fdr;
 	int reply;
@@ -4483,7 +4476,7 @@ static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 */
 static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size)
 {
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	size_t freeAUs;
 	int i;
 
@@ -4507,7 +4500,7 @@ static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, i
 #if 1
 
 	/* extract data as TIFILES */
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	ti99_lvl2_fileref src_file;
 	ti99_lvl2_fileref dst_file;
 	ti99_date_time date_time;
@@ -4590,7 +4583,7 @@ static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, i
 
 #else
 
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	ti99_lvl3_fileref src_file;
 	UINT8 buf[256];
 	int reclen;
@@ -4641,7 +4634,7 @@ static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, i
 */
 static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	const char *filename;
 	char ti_fname[10];
 	ti99_lvl2_fileref src_file;
@@ -4845,7 +4838,7 @@ static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, 
 				return IMGTOOLERR_WRITEERROR;
 		}
 		break;
-	
+
 	case L2I_WIN:
 		/* save allocation bitmap (aphysrecs 1 through n, n<=33) */
 		for (i=0; i < (image->AUformat.totAUs+2047)/2048; i++)
@@ -4862,7 +4855,7 @@ static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, 
 */
 static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath)
 {
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	dsk_fdr fdr;
 	int i, cluster_index;
 	unsigned cur_AU, cluster_lastfphysrec;
@@ -5000,7 +4993,7 @@ static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath)
 
 static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath)
 {
-	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
+	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	int parent_ddr_AU, is_dir, catalog_index;
 	win_fdr fdr;
 	int i;
@@ -5128,7 +5121,7 @@ static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath)
 		{
 			if (cursibFDR_index <= endsibFDR_index)
 			{
-				
+
 				for (i = 0; i < 54; i++)
 				{
 					cur_AU = get_UINT16BE(fdr.clusters[i][0]);

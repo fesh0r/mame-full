@@ -173,7 +173,7 @@ typedef struct mac_FInfo
 	mac_type  creator;		/* file creator */
 	UINT16BE  flags;		/* Finder flags */
 	mac_point location;		/* file's location in window */
-								/* If set to {0, 0}, and the initied flag is
+								/* If set to {0, 0}, and the inited flag is
 								clear, the Finder will place the item
 								automatically */
 	UINT16BE  fldr;			/* MFS: window that contains file */
@@ -556,9 +556,6 @@ INLINE void mac_strcpy(UINT8 *dest, const UINT8 *src)
 	dst (O): dest macintosh string
 	n (I): max string lenght for dest (range 0-255, buffer lenght + 1)
 	src (I): source macintosh string (first byte is lenght)
-
-	Return a zero if s1 and s2 are equal, a negative value if s1 is less than
-	s2, and a positive value if s1 is greater than s2.
 */
 static void mac_strncpy(UINT8 *dest, int n, const UINT8 *src)
 {
@@ -858,7 +855,7 @@ static UINT16 MB_calcCRC(const MBHeader *header)
 
 #if 0
 #pragma mark -
-#pragma mark DISK imgtool_image ROUTINES
+#pragma mark DISK IMAGE ROUTINES
 #endif
 /*
 	Low-level disk routines: the disk is implemented as a succession of
@@ -890,7 +887,7 @@ typedef struct diskcopy_header_t
 */
 typedef struct mac_l1_imgref
 {
-	imgtool_stream *f;					/* imgtool file reference */
+	imgtool_stream *f;			/* imgtool file reference */
 	UINT32 num_blocks;			/* total number of 512-byte blocks */
 	UINT32 tagbytesperblock;	/* number of tag bytes per block */
 	UINT32 tag_offset;			/* file offset to tag data */
@@ -1420,7 +1417,8 @@ static imgtoolerr_t mfs_dir_update(mac_fileref *fileref);
 
 	Open a macintosh image.
 
-	l2_img (I/O): level-2 image reference to open (l1_img field be initialized)
+	l2_img (I/O): level-2 image reference to open (l1_img field must be
+		initialized)
 
 	Return imgtool error code
 */
@@ -1685,7 +1683,7 @@ static imgtoolerr_t mac_file_write(mac_fileref *fileref, UINT32 len, const void 
 		/* update tag data */
 		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 		{
-#if 0
+#if !TAG_CHECKS
 			errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
 			if (errorcode)
 				return errorcode;
@@ -5464,7 +5462,7 @@ static imgtoolerr_t resfile_get_resdata(mac_resfileref *resfileref, const rsrc_r
 		stored in the data fork of two (usually invisible) files called
 		"Desktop DF" and "Desktop DF".  The desktop database is used for
 		volumes shared by Appleshare 2, and for most volumes under System 7 and
-		later. The format of these file is not documented AFAIK.
+		later.  The format of these file is not documented AFAIK.
 
 
 	The reasons for the introduction of the desktop database were:
@@ -5551,14 +5549,12 @@ static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename
 static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
 /*
-	Open a file as a mfs image (common code).
+	Open a file as a mfs/hfs image (common code).
 */
 static imgtoolerr_t mac_image_init(imgtool_image *img, imgtool_stream *f)
 {
-	mac_l2_imgref *image;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 	imgtoolerr_t errorcode;
-
-	image = (mac_l2_imgref *) img_extrabytes(img);
 
 	errorcode = floppy_image_open(f, &image->l1_img);
 	if (errorcode)
@@ -5568,24 +5564,23 @@ static imgtoolerr_t mac_image_init(imgtool_image *img, imgtool_stream *f)
 }
 
 /*
-	close a mfs image
+	close a mfs/hfs image
 */
 static void mac_image_exit(imgtool_image *img)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 
 	mac_image_close(image);
-	free(image);
 }
 
 /*
-	get basic information on a mfs image
+	get basic information on a mfs/hfs image
 
 	Currently returns the volume name
 */
 static void mac_image_info(imgtool_image *img, char *string, size_t len)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 
 	switch (image->format)
 	{
@@ -5625,10 +5620,9 @@ typedef struct mac_iterator
 static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img_enum_image(enumeration));
-	mac_iterator *iter;
+	mac_iterator *iter = (mac_iterator *) img_enum_extrabytes(enumeration);
 	imgtoolerr_t errorcode;
 
-	iter = (mac_iterator *) img_enum_extrabytes(enumeration);
 	iter->format = image->format;
 	iter->l2_img = image;
 
@@ -5840,7 +5834,7 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 */
 static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
-	mac_iterator *iter = (mac_iterator *) enumeration;
+	mac_iterator *iter = (mac_iterator *) img_enum_extrabytes(enumeration);
 
 	switch (iter->format)
 	{
@@ -5861,7 +5855,7 @@ static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 */
 static void mac_image_closeenum(imgtool_imageenum *enumeration)
 {
-	free(enumeration);
+	/*mac_iterator *iter = (mac_iterator *) img_enum_extrabytes(enumeration);*/
 }
 
 /*
@@ -5869,7 +5863,7 @@ static void mac_image_closeenum(imgtool_imageenum *enumeration)
 */
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 
 	*size = image->freeABs;
 
@@ -5881,7 +5875,7 @@ static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size)
 */
 static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 	UINT32 parID;
 	mac_str255 filename;
 	mac_cat_info cat_info;
@@ -6051,7 +6045,7 @@ static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, im
 */
 static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 	UINT32 parID;
 	mac_str255 filename;
 	mac_cat_info cat_info;
