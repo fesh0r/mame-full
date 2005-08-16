@@ -624,7 +624,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
-	DRIVER( superbrd )	/* 1979 Superboard II								*/
+	DRIVER( sb2m600b )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
 	DRIVER( msx )		/* 1983 MSX 										*/
