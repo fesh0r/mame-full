@@ -1,3 +1,4 @@
+#include "driver.h"
 #include "sound/discrete.h"
 
 const struct discrete_dac_r1_ladder sb2m600_dac =
