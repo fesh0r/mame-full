@@ -151,7 +151,7 @@ SOUNDS+=CUSTOM@
 SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
 #SOUNDS+=DMADAC@
-#SOUNDS+=DISCRETE@
+SOUNDS+=DISCRETE@
 SOUNDS+=AY8910@
 SOUNDS+=YM2203@
 # enable only one of the following two
@@ -601,9 +601,10 @@ $(OBJ)/p2000.a:    \
 	$(OBJ)/mess/systems/p2000t.o	 \
 	$(OBJ)/mess/machine/p2000t.o	 \
 	$(OBJ)/mess/machine/mc6850.o	 \
-	$(OBJ)/mess/vidhrdw/uk101.o	 \
-	$(OBJ)/mess/systems/uk101.o	\
-	$(OBJ)/mess/machine/uk101.o	 \
+	$(OBJ)/mess/vidhrdw/osi.o	 \
+	$(OBJ)/mess/sndhrdw/osi.o	 \
+	$(OBJ)/mess/systems/osi.o	\
+	$(OBJ)/mess/machine/osi.o	 \
 
 $(OBJ)/amstrad.a:  \
 	$(OBJ)/mess/systems/amstrad.o  \
