@@ -13,7 +13,7 @@
 #include "includes/wd179x.h"
 #include "cpu/m68000/m68k.h"
 #include "devices/basicdsk.h"
-#include "includes/corvus_hd.h"
+#include "includes/corvushd.h"
 
 #define VERBOSE 1
 #define VERY_VERBOSE 0

@@ -855,7 +855,8 @@ $(OBJ)/dai.a:     \
 
 $(OBJ)/concept.a:  \
 	$(OBJ)/mess/systems/concept.o   \
-	$(OBJ)/mess/machine/concept.o
+	$(OBJ)/mess/machine/concept.o	\
+	$(OBJ)/mess/machine/corvushd.o
 
 $(OBJ)/bandai.a:     \
 	$(OBJ)/mess/systems/wswan.o   \
