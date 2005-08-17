@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-7 June 2005
+16 August 2005
 
 <authorgroup>
 <author><firstname>Juan 
@@ -1081,8 +1081,8 @@ F12          Save a screen snapshot
 ESC          Exit emulator
 
 Xmame's X11 display target allows you to switch between 
-different modes and to toggle fullscreen using the 
-following key combos:
+different modes and to toggle full-screen display using 
+the following key combos:
 
 Key combo:             Switches to:
 
@@ -1096,7 +1096,8 @@ left-alt + delete      Glide
 
 left-alt + end         XIL
 
-left-alt + page down   Toggle between windowd and fullscreen
+left-alt + page down   Toggle between windowed and 
+full-screen modes
 
 You can also change certain settings in the X11 target:
 
@@ -1142,7 +1143,7 @@ during runtime:
 
 Key combo:             Result:
 left-alt + enter       Toggles between windowed and
-                       fullscreen modes.
+                       full-screen modes.
 
  Why doesn't a game have sound?
 
@@ -1293,11 +1294,11 @@ should give you some speed increase.
 Besides that, it automatically switches to the right 
 mode and removes any window manager stuff, but that can 
 be done without DGA too. (I might add such a feature 
-later, since it allows easy fullscreen without running 
-as root.)
+later, since it allows easy full screen support without 
+running as root.)
 
 Adding a 320x240 mode will most definitely get you a 
-very nice fullscreen display at scale = 1. ;)
+very nice full-screen display at scale = 1. ;)
 
 Don't forget that you still need to set up the Modes 
 line of the   "Display" subsection of the "Screen" 
@@ -1359,14 +1360,14 @@ blow most of the benefit away. Also, it needs to be
 implemented with a portable threads interface ... which 
 basically means POSIX threads. In a nutshell, it's a 
 lot of effort for probably not much gain. But of course 
-if you are feeling particulary energetic and in the 
+if you are feeling particularly energetic and in the 
 mood to code, then patches can always be submitted to 
 the xmame devel mailing list ... :)
 
  Why doesn't my joystick handle diagonal movement 
   correctly on my Intel x86 system?
 
-Xmame/xmess uses autocalibrating, but you could try to 
+Xmame/xmess uses auto-calibration, but you could try to 
 use specific programs to calibrate it (jscal that comes 
 with joystick  module works fine....).
 
@@ -1419,12 +1420,12 @@ reported as being successful:
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk 
 '{print $4}'`
 
- Can I run xmame fullscreen?
+ Can I run xmame full screen?
 
 Yes, of course you can. There are several ways to 
 accomplish this, each with its own advantages and disadvantages.
 
-To enable the fullscreen support, you will need to 
+To enable the full screen support, you will need to 
 change some settings in the makefile and recompile xmame.
 
 Besides the x11 and SDL drivers, the FX and GL drivers 
@@ -1433,8 +1434,8 @@ a separate chapter for these later on.
 
  xmame.x11/DGA
 
-First, before recompiling, make sure you have an 
-xserver with the "xfree-dga" extension enabled (do a "xdpyinfo"
+First, before recompiling, make sure you have an X 
+server with the "xfree-dga" extension enabled (do a "xdpyinfo"
  and see if you've got the "xfree-dga" extension); any 
 recent release of XFree86 should have it.
 
@@ -1445,19 +1446,19 @@ Now build xmame and give the xmame.x11 file permanent
 root permissions so that you don't need to start xmame 
 as root (do a "chown root xmame.x11" and a "chmod u+s xmame.x11").
 
-If you want to start immediately in fullscreen mode, 
+If you want to start immediately in full-screen mode, 
 start xmame.x11 with the "-fullscreen" argument or 
 specify "fullscreen 1" in your xmamerc file.
 
 During play you can switch between windowed and 
-fullscreen mode. See [keybindings]
+full-screen mode. See [keybindings]
 
  xmame.x11/Xv
 
 Xv is the X Window System video extension. Among other 
 things, it supports hardware scaling if your graphics 
 card (and X driver) is capable of doing so. You can 
-achieve a very nice fullscreen display without taxing 
+achieve a very nice full-screen display without taxing 
 your cpu very much because the scaling will all be done 
 by your video card.
 
@@ -1473,7 +1474,7 @@ To compile this into xmame, select "DISPLAY_METHOD = x11"
 and uncomment the line "X11_XV = 1" in the makefile.
 
 Build xmame, and use the -fullscreen parameter when 
-loading a game to get a nice fullscreen display.
+loading a game to get a nice full-screen display.
 
 If the colors seem messed up and/or you only see half 
 of the game image, try using "-yuv" or "-yv12". By default, 
@@ -1493,15 +1494,15 @@ To use OpenGL, you must have:
 * libjpeg
 
 * hardware 3D acceleration (if you want any kind of 
-  decent framerate)
+  decent frame rate)
 
 Select "DISPLAY_METHOD = x11" and uncomment the line "
 X11_OPENGL = 1" in the makefile. Follow the general 
 instructions for installing xmame. There are some 
 additional makefile options:
 
-* For runtime printed debug info, add "-DGLDEBUG" to the "
-  GLCFLAGS" variable.
+* For runtimerun-time printed debug info, add "-DGLDEBUG" 
+  to the "GLCFLAGS" variable.
 
 * GLU version 1.2 is recommended (e.g., from SGI). If 
   you use Mesa's GLU, you may have to add "-DGLU_VERSION_1_2"
@@ -1562,14 +1563,14 @@ with a transparent game screen.
 Note that in order to display the game options or the 
 fps display in vector games, the game's bitmap is 
 overlaid above the vector display. Drawing the bitmap 
-is a big cpu hog for some low-end hardware accelerated 
+is a big CPU hog for some low-end hardware accelerated 
 OpenGL implementations, so you'll notice that the game 
 slows down when the bitmap is overlaid.
 
 Because bitmap overlaying is the default, you can 
 toggle it on and off by pressing the "RIGHT_ALT-O" key, 
-or turn it off at startup by using the command line 
-option "-noglbitmap".
+or turn it off at startup time by using the command 
+line option "-noglbitmap".
 
 A problem with vector games and the cabinet mode is 
 that some vector points do not reside within the screen 
@@ -1760,7 +1761,7 @@ v0.83 -- March 29th, 2001 ---------------------------
 v0.6 -- December 14th, 1998 ---------------------------
 
 * added support for systems that do not support 
-  paletted textures (SGI and solaris OpenGL 
+  paletted textures (SGI and Solaris OpenGL 
   implementations, for example)
 
 * merged source with xmame b8.1
@@ -1777,7 +1778,7 @@ v0.4 -- October 21st, 1998 --------------------------
 
 v0.3 -- October 12th, 1998 --------------------------
 
-* fixed verticle screen centering in fullscreen mode
+* fixed vertical screen centering in full-screen mode
 
 * moved cabinet and camera panning information into a 
   user-editable configuration file
@@ -1895,19 +1896,19 @@ Original author: Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed
  xmame.SDL
 
 The SDL library was meant to make it easy for 
-programmers to make full screen applications. To start 
-SDL in fullscreen mode, just run xmame.SDL with the 
+programmers to make full-screen applications. To start 
+SDL in full-screen mode, just run xmame.SDL with the 
 option '-fullscreen'. If you want to know the 
 resolutions that SDL can use, run "xmame.SDL -listmodes", 
 choose the resolution you want, and start "xmame.SDL 
 -modenumber <insert chosen number here>".
 
 You can add "fullscreen 1" to your xmamerc file if you 
-want SDL to start fullscreen automatically; the 
+want SDL to start full-screen automatically; the 
 modenumber line can also be used in the xmamerc.
 
 Most problems experienced by people who are trying to 
-use SDL for fullscreen are related to the section [screenborder]
+use SDL for full-screen are related to the section [screenborder]
 
 During play you can switch between windowed and 
 fullscreen mode. See [keybindings]
@@ -1952,7 +1953,7 @@ xserver does not have access to low resolutions
 (320x240, 400x300, and 512x384, for instance). In the 
 case of SDL, the window will be in the resolution of 
 closest matching resolution that SDL can switch to for 
-full screen display.
+full-screen display.
 
 In this case, you have to add "Modelines" for these 
 resolutions in your XF86config file and add these 
@@ -2347,7 +2348,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.97.tar.bz2||xmame/xmess-0.97 sources]
+  [download/xmame-0.99.tar.bz2||xmame/xmess-0.99 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2407,7 +2408,7 @@ maintainer. --Lawrence Gold)
 
 * [http://kemulator.sourceforge.net/||Kemulator], a KDE front-end with MESS and Stella support
 
-* [http://designs.stormheart.com/kmameleon/||KMameleon], a KDE front-end
+* [http://kmameleon.berlios.de/||KMameleon], a KDE front-end
 
 * [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
 

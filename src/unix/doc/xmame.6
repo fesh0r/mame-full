@@ -196,6 +196,10 @@ Select x11 video mode (if compiled in).
 Normal window (hotkey left-alt + insert)
 .IP \fB1\fP 3
 Fullscreen DGA (hotkey left-alt + home)
+.IP \fB2\fP 3
+Windowed Xv
+.IP \fB3\fP 3
+Fullscreen Xv
 .RE
 .SS X11-window related
 .TP
@@ -204,10 +208,6 @@ Show/don't show the cursor.
 .TP
 .B \-[no]ms, \-[no]mitshm
 Use/don't use the MIT shared memory extension (if available and compiled in).
-.TP
-.B \-[no]xv, \-[no]xvext
-Use/don't use Xv extension for hardware scaling (if available and compiled
-in).
 .TP
 .B \-[no]fullscreen
 Start in fullscreen mode.
@@ -304,19 +304,15 @@ Select type of joystick support to use:
 .IP \fB0\fP 3
 No joystick
 .IP \fB1\fP 3
-i386 style joystick driver (if compiled in)
+Standard joystick
 .IP \fB2\fP 3
-Fm Town Pad support (if compiled in)
+FM Towns pad
 .IP \fB3\fP 3
-X11 input extension joystick (if compiled in)
+NetBSD/FreeBSD USB joystick
 .IP \fB4\fP 3
-new i386 linux 1.x.x joystick driver(if compiled in)
+PS2-Linux native pad
 .IP \fB5\fP 3
-NetBSD USB joystick driver (if compiled in)
-.IP \fB6\fP 3
-PS2-Linux native pad (if compiled in)
-.IP \fB7\fP 3
-SDL joystick driver
+SDL joystick
 .RE
 .TP
 .B \-[no]as, \-[no]analogstick

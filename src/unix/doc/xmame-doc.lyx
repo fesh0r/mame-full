@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-7 June 2005
+16 August 2005
 \layout SGML
 
 <authorgroup>
@@ -2110,7 +2110,7 @@ ESC          Exit emulator
 \layout Standard
 
 Xmame's X11 display target allows you to switch between different modes
- and to toggle fullscreen using the following key combos:
+ and to toggle full-screen display using the following key combos:
 \layout Code
 
 Key combo:             Switches to:
@@ -2131,7 +2131,7 @@ left-alt + delete      Glide
 left-alt + end         XIL
 \layout Code
 
-left-alt + page down   Toggle between windowd and fullscreen
+left-alt + page down   Toggle between windowed and full-screen modes
 \layout Standard
 
 You can also change certain settings in the X11 target:
@@ -2207,7 +2207,7 @@ Key combo:             Result:
 \newline 
 left-alt + enter       Toggles between windowed and
 \newline 
-                       fullscreen modes.
+                       full-screen modes.
 \layout Subsection
 
 Why doesn't a game have sound?
@@ -2409,11 +2409,11 @@ d X server, which could be just as fast.
 
 Besides that, it automatically switches to the right mode and removes any
  window manager stuff, but that can be done without DGA too.
- (I might add such a feature later, since it allows easy fullscreen without
- running as root.)
+ (I might add such a feature later, since it allows easy full screen support
+ without running as root.)
 \layout Standard
 
-Adding a 320x240 mode will most definitely get you a very nice fullscreen
+Adding a 320x240 mode will most definitely get you a very nice full-screen
  display at scale = 1.
  ;)
 \layout Standard
@@ -2494,7 +2494,7 @@ Surely you could have one thread doing emulation and another thead doing
  Also, it needs to be implemented with a portable threads interface ...
  which basically means POSIX threads.
  In a nutshell, it's a lot of effort for probably not much gain.
- But of course if you are feeling particulary energetic and in the mood
+ But of course if you are feeling particularly energetic and in the mood
  to code, then patches can always be submitted to the xmame devel mailing
  list ...
  :)
@@ -2504,7 +2504,7 @@ Why doesn't my joystick handle diagonal movement correctly on my Intel x86
  system?
 \layout Standard
 
-Xmame/xmess uses autocalibrating, but you could try to use specific programs
+Xmame/xmess uses auto-calibration, but you could try to use specific programs
  to calibrate it (jscal that comes with joystick  module works fine....).
 \layout Subsection
 
@@ -2589,7 +2589,7 @@ Are you running a recent version of KDE, such as 2.1.1? It appears that there's
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
 \layout Subsection
 
-Can I run xmame fullscreen?
+Can I run xmame full screen?
 \layout Standard
 
 Yes, of course you can.
@@ -2597,7 +2597,7 @@ Yes, of course you can.
  and disadvantages.
 \layout Standard
 
-To enable the fullscreen support, you will need to change some settings
+To enable the full screen support, you will need to change some settings
  in the makefile and recompile xmame.
 \layout Standard
 
@@ -2609,7 +2609,7 @@ Besides the x11 and SDL drivers, the FX and GL drivers are also capable
 xmame.x11/DGA
 \layout Standard
 
-First, before recompiling, make sure you have an xserver with the 
+First, before recompiling, make sure you have an X server with the 
 \begin_inset Quotes eld
 \end_inset 
 
@@ -2655,11 +2655,11 @@ chown root xmame.x11" and a
 chmod u+s xmame.x11").
 \layout Standard
 
-If you want to start immediately in fullscreen mode, start xmame.x11 with
+If you want to start immediately in full-screen mode, start xmame.x11 with
  the "-fullscreen" argument or specify "fullscreen 1" in your xmamerc file.
 \layout Standard
 
-During play you can switch between windowed and fullscreen mode.
+During play you can switch between windowed and full-screen mode.
  See 
 \begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{keybindings}
 
@@ -2674,7 +2674,7 @@ xmame.x11/Xv
 Xv is the X Window System video extension.
  Among other things, it supports hardware scaling if your graphics card
  (and X driver) is capable of doing so.
- You can achieve a very nice fullscreen display without taxing your cpu
+ You can achieve a very nice full-screen display without taxing your cpu
  very much because the scaling will all be done by your video card.
 \layout Standard
 
@@ -2716,7 +2716,7 @@ X11_XV = 1
 \layout Standard
 
 Build xmame, and use the -fullscreen parameter when loading a game to get
- a nice fullscreen display.
+ a nice full-screen display.
 \layout Standard
 
 If the colors seem messed up and/or you only see half of the game image,
@@ -2758,7 +2758,7 @@ An OpenGL implementation
 libjpeg
 \layout Itemize
 
-hardware 3D acceleration (if you want any kind of decent framerate)
+hardware 3D acceleration (if you want any kind of decent frame rate)
 \layout Standard
 
 Select 
@@ -2778,7 +2778,7 @@ X11_OPENGL = 1" in the makefile.
  There are some additional makefile options:
 \layout Itemize
 
-For runtime printed debug info, add 
+For runtimerun-time printed debug info, add 
 \begin_inset Quotes eld
 \end_inset 
 
@@ -2881,14 +2881,14 @@ Three cabinet models are provided.
 
 Note that in order to display the game options or the fps display in vector
  games, the game's bitmap is overlaid above the vector display.
- Drawing the bitmap is a big cpu hog for some low-end hardware accelerated
+ Drawing the bitmap is a big CPU hog for some low-end hardware accelerated
  OpenGL implementations, so you'll notice that the game slows down when
  the bitmap is overlaid.
 \layout Standard
 
 Because bitmap overlaying is the default, you can toggle it on and off by
- pressing the "RIGHT_ALT-O" key, or turn it off at startup by using the
- command line option "-noglbitmap".
+ pressing the "RIGHT_ALT-O" key, or turn it off at startup time by using
+ the command line option "-noglbitmap".
 \layout Standard
 
 A problem with vector games and the cabinet mode is that some vector points
@@ -3133,7 +3133,7 @@ v0.6 -- December 14th, 1998 ---------------------------
 \layout Itemize
 
 added support for systems that do not support paletted textures (SGI and
- solaris OpenGL implementations, for example)
+ Solaris OpenGL implementations, for example)
 \layout Itemize
 
 merged source with xmame b8.1
@@ -3157,7 +3157,7 @@ updated to work with xmame v0.34b5.2
 v0.3 -- October 12th, 1998 --------------------------
 \layout Itemize
 
-fixed verticle screen centering in fullscreen mode
+fixed vertical screen centering in full-screen mode
 \layout Itemize
 
 moved cabinet and camera panning information into a user-editable configuration
@@ -3382,10 +3382,10 @@ Original author: Mike Oliphant
 xmame.SDL
 \layout Standard
 
-The SDL library was meant to make it easy for programmers to make full screen
+The SDL library was meant to make it easy for programmers to make full-screen
  applications.
- To start SDL in fullscreen mode, just run xmame.SDL with the option '-fullscreen
-'.
+ To start SDL in full-screen mode, just run xmame.SDL with the option '-fullscree
+n'.
  If you want to know the resolutions that SDL can use, run 
 \begin_inset Quotes eld
 \end_inset 
@@ -3413,11 +3413,11 @@ fullscreen 1
 \begin_inset Quotes erd
 \end_inset 
 
- to your xmamerc file if you want SDL to start fullscreen automatically;
+ to your xmamerc file if you want SDL to start full-screen automatically;
  the modenumber line can also be used in the xmamerc.
 \layout Standard
 
-Most problems experienced by people who are trying to use SDL for fullscreen
+Most problems experienced by people who are trying to use SDL for full-screen
  are related to the section 
 \begin_inset LatexCommand \ref[fullscreen has a large border]{screenborder}
 
@@ -3489,7 +3489,7 @@ If the game runs in fullscreen but occupies only a small area in the center
  of the screen, then your xserver does not have access to low resolutions
  (320x240, 400x300, and 512x384, for instance).
  In the case of SDL, the window will be in the resolution of closest matching
- resolution that SDL can switch to for full screen display.
+ resolution that SDL can switch to for full-screen display.
 \layout Standard
 
 In this case, you have to add "Modelines" for these resolutions in your
@@ -4277,7 +4277,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.97 sources]{download/xmame-0.97.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.99 sources]{download/xmame-0.99.tar.bz2}
 
 \end_inset 
 
@@ -4497,7 +4497,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[KMameleon]{http://designs.stormheart.com/kmameleon/}
+\begin_inset LatexCommand \url[KMameleon]{http://kmameleon.berlios.de/}
 
 \end_inset 
 

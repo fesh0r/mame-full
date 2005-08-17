@@ -63,7 +63,10 @@ INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_3x3) ( SRC_PIXEL *src0,
   unsigned int *dst0 = (unsigned int *)dst;
   unsigned int *dst1 = (unsigned int *)(dst + dest_width);
   unsigned int *dst2 = (unsigned int *)(dst + 2*dest_width);
-  unsigned int p0[6], p1[6], p2[6], c[9], uv;
+  unsigned int p0[6] = { 0, 0, 0, 0, 0, 0 };
+  unsigned int p1[6] = { 0, 0, 0, 0, 0, 0 };
+  unsigned int p2[6] = { 0, 0, 0, 0, 0, 0 };
+  unsigned int c[9], uv;
   
   XQ2X_SQUARE_INIT
   

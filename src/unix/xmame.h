@@ -72,7 +72,7 @@ EXTERN int		doublebuffer; /* xgl */
 
 /* global variables and miscellaneous flags */
 
-EXTERN float	video_fps;
+EXTERN float		video_fps;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		throttle;
