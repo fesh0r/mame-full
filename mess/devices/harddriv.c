@@ -17,7 +17,7 @@
 
 #include "harddriv.h"
 
-
+#define MAX_HARDDISKS	(8)
 
 static const char *error_strings[] =
 {
@@ -45,6 +45,7 @@ static const char *error_strings[] =
 	"unsupported CHD version"
 };
 
+static struct hard_disk_file *drive_handles[MAX_HARDDISKS];
 
 static const char *chd_get_error_string(int chderr)
 {
@@ -259,6 +260,7 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	struct mess_hd *hd;
 	struct chd_file *chd;
 	int is_writeable;
+	int id = image_index_in_device(image);
 
 	hd = get_drive(image);
 
@@ -294,6 +296,8 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	hd->hard_disk_handle = hard_disk_open(chd);
 	if (!hd->hard_disk_handle)
 		goto error;
+
+	drive_handles[id] = hd->hard_disk_handle;
 
 	return INIT_PASS;
 
@@ -435,3 +439,14 @@ void harddisk_device_getinfo(struct IODevice *iodev)
 	iodev->createimage_options[1].extensions = NULL;
 	iodev->createimage_options[1].optspec = NULL;
 }
+
+struct hard_disk_file *mess_hd_get_hard_disk_file_by_number(int drivenum)
+{
+	if ((drivenum < 0) || (drivenum > MAX_HARDDISKS))
+	{
+		return NULL;
+	}
+
+	return drive_handles[drivenum];
+}
+

@@ -500,7 +500,8 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/systems/apple1.o		\
 	$(OBJ)/mess/vidhrdw/apple3.o		\
 	$(OBJ)/mess/machine/apple3.o		\
-	$(OBJ)/mess/systems/apple3.o
+	$(OBJ)/mess/systems/apple3.o		\
+	$(OBJ)/mess/machine/ncr5380.o
 
 
 $(OBJ)/avigo.a: \

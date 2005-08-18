@@ -38,6 +38,7 @@
 #include "cpu/m68000/m68000.h"
 #include "machine/applefdc.h"
 #include "machine/sonydriv.h"
+#include "machine/ncr5380.h"
 #include "includes/mac.h"
 
 #include <time.h>
@@ -46,7 +47,6 @@
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
-#define LOG_SCSI		1
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
 #define LOG_MEMORY		0
@@ -54,7 +54,6 @@
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
-#define LOG_SCSI		0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
 #define LOG_MEMORY		0
@@ -1604,241 +1603,76 @@ static void mouse_callback(void)
 
 /* *************************************************************************
  * SCSI
- *
- * NCR/Symbios 5380 SCSI control chip
  * *************************************************************************/
 
-#define scsiRd           0x000
-#define scsiWr           0x001
+/*
 
-#define sCDR             0x000       /* current scsi data register  (r/o) */
-#define sODR             0x000       /* output data register        (w/o) */
-#define sICR             0x010       /* initiator command register  (r/w) */
-#define sMR              0x020       /* mode register               (r/w) */
-#define sTCR             0x030       /* target command register     (r/w) */
-#define sCSR             0x040       /* current SCSI bus status     (r/o) */
-#define sSER             0x040       /* select enable register      (w/o) */
-#define sBSR             0x050       /* bus and status register     (r/o) */
-#define sDMAtx           0x050       /* start DMA send              (w/o) */
-#define sIDR             0x060       /* input data register         (r/o) */
-#define sTDMArx          0x060       /* start DMA target receive    (w/o) */
-#define sRESET           0x070       /* reset parity/interrupt      (r/o) */
-#define sIDMArx          0x070       /* start DMA initiator receive (w/o) */
-#define dackWr           0x200       /* DACK write */
-#define dackRd           0x200       /* DACK read */
+From http://www.mac.m68k-linux.org/devel/plushw.php
 
-static UINT16 scsi_state[0x10000];
-static struct
-{
-	UINT8 reset;
-	UINT8 IRQ;
-	UINT8 DRQ;
-	UINT8 EOP;
-	UINT8 DACK;
-	UINT8 ready;
-	UINT8 A0;
-	UINT8 A1;
-	UINT8 A2;
-	UINT8 CS;
-	UINT8 I_OW;
-	UINT8 I_OR;
-	UINT8 D0_D7;
-	UINT8 MSG;
-	UINT8 C_D;
-	UINT8 I_O;
-	UINT8 ACK;
-	UINT8 REQ;
-	UINT8 DBP;
-	UINT8 DB0_DB7;
-	UINT8 rst;
-	UINT8 bsy;
-	UINT8 sel;
-	UINT8 atn;
-} scsi_chip;
+The address of each register is computed as follows:
 
-static int scsi_do_check;
+  $580drn
 
-static UINT8 scsi_state_br(int offset)
-{
-	UINT16 res;
-	res = scsi_state[offset / 2];
-	if ((offset & 1) == 0)
-		res >>= 8;
-	return (UINT8) res;
-}
+  where r represents the register number (from 0 through 7),
+  n determines whether it a read or write operation
+  (0 for reads, or 1 for writes), and
+  d determines whether the DACK signal to the NCR 5380 is asserted.
+  (0 for not asserted, 1 is for asserted)
 
-static void scsi_state_bw(int offset, UINT8 b)
-{
-	scsi_state[offset / 2] &= (offset % 2) ? 0xff00 : 0x00ff;
-	scsi_state[offset / 2] |= (offset % 2) ? ((UINT16) b) : (((UINT16) b) << 8);
-}
+Here's an example of the address expressed in binary:
 
-static void scsi_chipreset(void)
-{
-	if (LOG_SCSI)
-		logerror("scsi_busreset(): reseting chip\n");
+  0101 1000 0000 00d0 0rrr 000n
 
-	scsi_state_bw(scsiRd+sCDR, 0);
-	scsi_state_bw(scsiWr+sODR, 0);
-	scsi_state_bw(scsiRd+sICR, 0);
-	scsi_state_bw(scsiWr+sICR, 0);
-	scsi_state_bw(scsiRd+sMR, 0);
-	scsi_state_bw(scsiWr+sMR, 0);
-	scsi_state_bw(scsiRd+sTCR, 0);
-	scsi_state_bw(scsiWr+sTCR, 0);
-	scsi_state_bw(scsiRd+sCSR, 0);
-	scsi_state_bw(scsiWr+sSER, 0);
-	scsi_state_bw(scsiRd+sBSR, 0);
-	scsi_state_bw(scsiWr+sDMAtx, 0);
-	scsi_state_bw(scsiRd+sIDR, 0);
-	scsi_state_bw(scsiWr+sTDMArx, 0);
-	scsi_state_bw(scsiRd+sRESET, 0);
-	scsi_state_bw(scsiWr+sIDMArx, 0);
-	scsi_state_bw(scsiRd+sODR+dackWr, 0);
-	scsi_state_bw(scsiWr+sIDR+dackRd, 0);
-}
+Note:  Asserting the DACK signal applies only to write operations to
+       the output data register and read operations from the input
+       data register.
 
-static void scsi_busreset(void)
-{
-	if (LOG_SCSI)
-		logerror("scsi_busreset(): reseting bus\n");
+  Symbolic            Memory
+  Location            Location   NCR 5380 Internal Register
 
-	scsi_state_bw(scsiRd+sCDR, 0);
-	scsi_state_bw(scsiWr+sODR, 0);
-	scsi_state_bw(scsiRd+sICR, scsi_state_br(scsiRd+sICR) & 0x80);
-	scsi_state_bw(scsiWr+sICR, scsi_state_br(scsiWr+sICR) & 0x80);
-	scsi_state_bw(scsiRd+sMR, scsi_state_br(scsiRd+sMR) & 0x40);
-	scsi_state_bw(scsiWr+sMR, scsi_state_br(scsiWr+sMR) & 0x40);
-	scsi_state_bw(scsiRd+sTCR, 0);
-	scsi_state_bw(scsiWr+sTCR, 0);
-	scsi_state_bw(scsiRd+sCSR, 0x80);
-	scsi_state_bw(scsiWr+sSER, 0);
-	scsi_state_bw(scsiRd+sBSR, 0x10);
-	scsi_state_bw(scsiWr+sDMAtx, 0);
-	scsi_state_bw(scsiRd+sIDR, 0);
-	scsi_state_bw(scsiWr+sTDMArx, 0);
-	scsi_state_bw(scsiRd+sRESET, 0);
-	scsi_state_bw(scsiWr+sIDMArx, 0);
-	scsi_state_bw(scsiRd+sODR+dackWr, 0);
-	scsi_state_bw(scsiWr+sIDR+dackRd, 0);
+  scsiWr+sODR+dackWr  $580201    Output Data Register with DACK
+  scsiRd+sIDR+dackRd  $580260    Current SCSI Data with DACK
+  scsiWr+sODR         $580001    Output Data Register
+  scsiWr+sICR         $580011    Initiator Command Register
+  scsiWr+sMR          $580021    Mode Register
+  scsiWr+sTCR         $580031    Target Command Register
+  scsiWr+sSER         $580041    Select Enable Register
+  scsiWr+sDMAtx       $580051    Start DMA Send
+  scsiWr+sTDMArx      $580061    Start DMA Target Receive
+  scsiWr+sIDMArx      $580071    Start DMA Initiator Receive
+  scsiRd+sCDR         $580000    Current SCSI Data
+  scsiRd+sICR         $580010    Initiator Command Register
+  scsiRd+sMR          $580020    Mode Registor
+  scsiRd+sTCR         $580030    Target Command Register
+  scsiRd+sCSR         $580040    Current SCSI Bus Status
+  scsiRd+sBSR         $580050    Bus and Status Register
+  scsiRd+sIDR         $580060    Input Data Register
+  scsiRd+sRESET       $580070    Reset Parity/Interrupt
 
-	scsi_chip.IRQ = 1;
-	scsi_chip.DRQ = 0;
-	scsi_chip.EOP = 0;
-	scsi_chip.DACK = 0;
-	scsi_chip.ready = 0;
-	scsi_chip.A0 = 0;
-	scsi_chip.A1 = 0;
-	scsi_chip.A2 = 0;
-	scsi_chip.CS = 0;
-	scsi_chip.I_OW = 0;
-	scsi_chip.I_OR = 0;
-	scsi_chip.D0_D7 = 0;
-	scsi_chip.MSG = 0;
-	scsi_chip.C_D = 0;
-	scsi_chip.I_O = 0;
-	scsi_chip.ACK = 0;
-	scsi_chip.REQ = 0;
-	scsi_chip.DBP = 0;
-	scsi_chip.DB0_DB7 = 0;
-	scsi_chip.bsy = 0;
-	scsi_chip.sel = 0;
-	scsi_chip.atn = 0;
-
-	/* In vMac, there is code at this point that ORs the word at 0xb22 with
-	 * 0x8000.  The purpose of that eludes me
-	 */
-}
-
-static void scsi_checkpins(void)
-{
-	if (scsi_chip.reset == 1)
-		scsi_chipreset();
-
-	if (scsi_chip.rst == 1)
-	{
-		scsi_state_bw(scsiRd + sICR, scsi_state_br(scsiRd + sICR) | 0x80);
-		scsi_state_bw(scsiRd + sCSR, 0x80);
-		scsi_state_bw(scsiRd + sBSR, 0x10);
-		scsi_busreset();
-	}
-	else
-	{
-		scsi_state_bw(scsiRd + sICR, scsi_state_br(scsiRd + sICR) & ~0x80);
-		scsi_state_bw(scsiRd + sCSR, scsi_state_br(scsiRd + sCSR) & ~0x80);
-	}
-
-	if (scsi_chip.sel == 1)
-	{
-		scsi_state_bw(scsiRd + sCSR, scsi_state_br(scsiRd + sCSR) | 0x02);
-		scsi_state_bw(scsiRd + sBSR, 0x10);
-	}
-	else
-	{
-		scsi_state_bw(scsiRd + sCSR, scsi_state_br(scsiRd + sCSR) & ~0x02);
-	}
-}
-
-static void scsi_check(void)
-{
-	scsi_checkpins();
-
-	if ((scsi_state_br(scsiWr + sICR) >> 7) == 1)	/* Check assert RST */
-		scsi_chip.rst = 1;
-	else
-		scsi_chip.rst = 0;
-
-	if ((scsi_state_br(scsiWr + sICR) >> 2) == 1)	/* Check assert SEL */
-		scsi_chip.sel = 1;
-	else
-		scsi_chip.sel = 0;
-
-	/* Arbitration select/reselect */
-	if ((scsi_state_br(scsiWr + sODR) >> 7) == 1)
-	{
-		if ((scsi_state_br(scsiWr + sMR) & 1) == 1)
-		{
-			/* Dummy - indicate arbitration in process */
-			scsi_state_bw(scsiRd + sICR, scsi_state_br(scsiRd + sICR) | 0x40);
-			/* that we didn't lose arbitration */
-			scsi_state_bw(scsiRd + sICR, scsi_state_br(scsiRd + sICR) & ~0x20);
-			/* and no higher priority present */
-			scsi_state_bw(scsiRd + sCDR, 0x00);
-
-			/* This will make arbitration work, but when it actually tries to
-			 * connect it will fail
 			 */
-		}
-	}
-	scsi_checkpins();
-}
 
 READ16_HANDLER ( macplus_scsi_r )
 {
-	if (LOG_SCSI)
-		logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) activecpu_get_pc());
+	int reg = (offset>>3) & 0xf;
 
-	offset <<= 1;
-	offset %= sizeof(scsi_state);
-	offset /= sizeof(scsi_state[0]);
+	if ((reg == 6) && (offset == 0x130))
+	{
+		reg = R5380_CURDATA_DTACK;
+	}
 
-	return scsi_state[offset];
+	return ncr5380_r(reg)<<8;
 }
 
 WRITE16_HANDLER ( macplus_scsi_w )
 {
-	if (LOG_SCSI)
-		logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) activecpu_get_pc());
+	int reg = (offset>>3) & 0xf;
 
-	offset <<= 1;
-	offset %= sizeof(scsi_state);
-	offset /= sizeof(scsi_state[0]);
+	if ((reg == 0) && (offset == 0x100))
+	{
+		reg = R5380_OUTDATA_DTACK;
+	}
 
-	scsi_state[offset] &= (UINT16) mem_mask;
-	scsi_state[offset] |= (UINT16) data;
-	scsi_do_check = 1;
-
-	scsi_check();
+	ncr5380_w(reg, data);
 }
 
 /* *************************************************************************
@@ -2420,9 +2254,23 @@ DRIVER_INIT(mac512ke)
 	mac_driver_init(model_mac512ke);
 }
 
+static SCSIConfigTable dev_table =
+{
+        1,                                      /* 1 SCSI device */
+        { { SCSI_ID_6, 0, SCSI_DEVICE_HARDDISK } } /* SCSI ID 6, using CHD 0, and it's a harddisk */
+};
+
+static struct NCR5380interface macplus_5380intf =
+{
+	&dev_table,	// SCSI device table
+	NULL		// IRQ (unconnected on the Mac Plus)
+};
+
 DRIVER_INIT(macplus)
 {
 	mac_driver_init(model_macplus);
+
+	ncr5380_init(&macplus_5380intf);
 }
 
 

@@ -40,6 +40,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
 #include "machine/sonydriv.h"
+#include "devices/harddriv.h"
 #include "includes/mac.h"
 #include "videomap.h"
 
@@ -274,6 +275,20 @@ static void mac_floppy_getinfo(struct IODevice *dev)
 	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
 }
 
+static void mac_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	dev->type = IO_HARDDISK;
+	dev->count = 2;
+	dev->file_extensions = "chd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_mess_hd;
+	dev->load = device_load_mess_hd;
+	dev->unload = device_unload_mess_hd;
+}
+
 SYSTEM_CONFIG_START(mac128k)
 	CONFIG_DEVICE(mac128512_floppy_getinfo)
 	CONFIG_RAM_DEFAULT(0x020000)
@@ -286,6 +301,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(macplus)
 	CONFIG_DEVICE(mac_floppy_getinfo)
+	CONFIG_DEVICE(mac_harddisk_getinfo)
 	CONFIG_RAM			(0x080000)
 	CONFIG_RAM_DEFAULT	(0x100000)
 	CONFIG_RAM			(0x200000)

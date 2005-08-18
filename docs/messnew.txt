@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [CONCEPT] Added HD support.  [Brett Wyer, Raphael Nabet]
 
+- [MAC] Added SCSI HD support.  [R. Belmont]
+
 
 
 User Interface Changes:
