@@ -7,14 +7,23 @@
 	Ernesto Corvi
 	Raphael Nabet
 
+	Mac Model Feature Summary:
+		
+						CPU		FDC		Keyb	PRAM	ROMMir
+		 - Mac 128k		68k		IWM		orig	orig	???
+		 - Mac 512k		68k		IWM		orig	orig	???
+		 - Mac 512ke	68k		IWM		orig	orig	???
+		 - Mac Plus		68k		IWM		orig	ext		no
+		 - Mac SE		68k		IWM		ADB		ext		???
+		 - Mac Classic	68k		IWM		ADB		ext		???
+
 	Notes:
 		- The Mac Plus boot code seems to check to see the extent of ROM
 		  mirroring to determine if SCSI is available.  If the ROM is mirrored,
 		  then SCSI is not available.  Thanks to R. Belmont for making this
 		  discovery.
 
-	TODO
-		- Fully implement SCSI
+	TODO:
 		- Call the RTC timer
 
 		- Support Mac 128k, 512k (easy, we just need the ROM image)
@@ -23,9 +32,6 @@
 		- Check that 0x600000-0x6fffff still address RAM when overlay bit is off
 		  (IM-III seems to say it does not on Mac 128k, 512k, and 512ke).
 		- What on earth are 0x700000-0x7fffff mapped to ?
-		- What additional features does the MacPlus RTC have ? (IM IV just
-		  states : "The new chip includes additionnal parameter RAM that's
-		  reserved by Apple.")
 
 ****************************************************************************/
 
@@ -1758,8 +1764,6 @@ static unsigned char rtc_data_dir;
 /* when rtc_data_dir == 1, state of rTCData as set by RTC (-> data bit seen by VIA) */
 static unsigned char rtc_data_out;
 
-/* set to 1 when a write command is in progress (-> requires another byte with immediate data) */
-static unsigned char rtc_write_cmd_in_progress;
 /* set to 1 when command in progress */
 static unsigned char rtc_cmd;
 
@@ -1768,12 +1772,22 @@ static unsigned char rtc_write_protect;
 
 /* internal seconds register */
 static unsigned char rtc_seconds[/*8*/4];
-/* 20-byte long PRAM */
-static unsigned char rtc_ram[20];
+/* 20-byte long PRAM, or 256-byte long XPRAM */
+static unsigned char rtc_ram[256];
+/* current extended address and RTC state */
+static unsigned char rtc_xpaddr, rtc_state;
 
 /* a few protos */
 static void rtc_write_rTCEnb(int data);
 static void rtc_execute_cmd(int data);
+
+enum
+{
+	RTC_STATE_NORMAL,
+	RTC_STATE_WRITE,
+	RTC_STATE_XPCOMMAND,
+	RTC_STATE_XPWRITE
+};
 
 /* init the rtc core */
 static void rtc_init(void)
@@ -1781,9 +1795,9 @@ static void rtc_init(void)
 	rtc_rTCClk = 0;
 
 	rtc_write_protect = TRUE;	/* Mmmmh... Should be saved with the NVRAM, actually... */
-	//rtc_write_cmd_in_progress = rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
 	rtc_rTCEnb = 0;
 	rtc_write_rTCEnb(1);
+	rtc_state = RTC_STATE_NORMAL;
 }
 
 /* write the rTCEnb state */
@@ -1794,14 +1808,16 @@ static void rtc_write_rTCEnb(int val)
 		/* rTCEnb goes high (inactive) */
 		rtc_rTCEnb = 1;
 		/* abort current transmission */
-		rtc_write_cmd_in_progress = rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_state = RTC_STATE_NORMAL;
 	}
 	else if ((! val) && rtc_rTCEnb)
 	{
 		/* rTCEnb goes low (active) */
 		rtc_rTCEnb = 0;
 		/* abort current transmission */
-		rtc_write_cmd_in_progress = rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_state = RTC_STATE_NORMAL;
 	}
 }
 
@@ -1854,11 +1870,40 @@ static void rtc_execute_cmd(int data)
 	int i;
 
 	if (LOG_RTC)
-		logerror("rtc_execute_cmd: data=%i\n", data);
+		logerror("rtc_execute_cmd: data=%x, state=%x\n", data, rtc_state);
 
-	/* Time to execute a command */
-	if (rtc_write_cmd_in_progress)
+	if (rtc_state == RTC_STATE_XPCOMMAND)
 	{
+		rtc_xpaddr = ((rtc_cmd & 7)<<5) | ((data&0x7c)>>2);
+		if ((rtc_cmd & 0x80) != 0)	
+		{
+			// read command
+			if (LOG_RTC)
+				logerror("RTC: Reading extended address %x\n", rtc_xpaddr);
+
+			rtc_data_dir = 1;
+			rtc_data_byte = rtc_ram[rtc_xpaddr];
+			rtc_state = RTC_STATE_NORMAL;
+		}
+		else
+		{
+			// write command
+			rtc_state = RTC_STATE_XPWRITE;
+			rtc_data_byte = 0;
+			rtc_bit_count = 0;
+		}
+	}
+	else if (rtc_state == RTC_STATE_XPWRITE)
+	{
+		if (LOG_RTC)
+			logerror("RTC: writing %x to extended address %x\n", data, rtc_xpaddr);
+		rtc_ram[rtc_xpaddr] = data;
+		rtc_state = RTC_STATE_NORMAL;
+	}
+	else if (rtc_state == RTC_STATE_WRITE)
+	{
+		rtc_state = RTC_STATE_NORMAL;
+
 		/* Writing an RTC register */
 		i = (rtc_cmd >> 2) & 0x1f;
 		if (rtc_write_protect && (i != 13))
@@ -1906,62 +1951,68 @@ static void rtc_execute_cmd(int data)
 			logerror("Unknown RTC write command : %X, data = %d\n", (int) rtc_cmd, (int) rtc_data_byte);
 			break;
 		}
-		//rtc_write_cmd_in_progress = FALSE;
 	}
 	else
 	{
-		if ((rtc_data_byte & 0x03) != 0x01)
-		{
-			logerror("Unknown RTC command : %X\n", (int) rtc_cmd);
-			return;
-		}
-
+		// always save this byte to rtc_cmd
 		rtc_cmd = rtc_data_byte;
-		if (rtc_cmd & 0x80)
+
+		if ((rtc_cmd & 0x78) == 0x38)	// extended command
 		{
-			/* Reading an RTC register */
-			rtc_data_dir = 1;
-			i = (rtc_cmd >> 2) & 0x1f;
-			switch(i)
-			{
-			case 0: case 1: case 2: case 3:
-			case 4: case 5: case 6: case 7:
-				rtc_data_byte = rtc_seconds[i & 3];
-				if (LOG_RTC)
-					logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
-				break;
-
-			case 8: case 9: case 10: case 11:
-				if (LOG_RTC)
-					logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
-				rtc_data_byte = rtc_ram[(i & 3) + 0x10];
-				break;
-
-			case 16: case 17: case 18: case 19:
-			case 20: case 21: case 22: case 23:
-			case 24: case 25: case 26: case 27:
-			case 28: case 29: case 30: case 31:
-				if (LOG_RTC)
-					logerror("RTC RAM read, address = %X\n", i & 15);
-				rtc_data_byte = rtc_ram[i & 15];
-				break;
-
-			default:
-				if (LOG_RTC)
-					logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
-				rtc_data_byte = 0;
-				break;
-			}
+			rtc_state = RTC_STATE_XPCOMMAND;
+			rtc_data_byte = 0;
+			rtc_bit_count = 0;
 		}
 		else
 		{
-			/* Writing an RTC register */
-			/* wait for extra data byte */
-			if (LOG_RTC)
-				logerror("RTC write, waiting for data byte : %X\n", (int) rtc_cmd);
-			rtc_write_cmd_in_progress = TRUE;
-			rtc_data_byte = 0;
-			rtc_bit_count = 0;
+			if (rtc_cmd & 0x80)
+			{
+				rtc_state = RTC_STATE_NORMAL;
+
+				/* Reading an RTC register */
+				rtc_data_dir = 1;
+				i = (rtc_cmd >> 2) & 0x1f;
+				switch(i)
+				{
+					case 0: case 1: case 2: case 3:
+					case 4: case 5: case 6: case 7:
+						rtc_data_byte = rtc_seconds[i & 3];
+						if (LOG_RTC)
+							logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
+						break;
+
+					case 8: case 9: case 10: case 11:
+						if (LOG_RTC)
+							logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
+						rtc_data_byte = rtc_ram[(i & 3) + 0x10];
+						break;
+
+					case 16: case 17: case 18: case 19:
+					case 20: case 21: case 22: case 23:
+					case 24: case 25: case 26: case 27:
+					case 28: case 29: case 30: case 31:
+						if (LOG_RTC)
+							logerror("RTC RAM read, address = %X\n", i & 15);
+						rtc_data_byte = rtc_ram[i & 15];
+						break;
+
+					default:
+						if (LOG_RTC)
+							logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
+						rtc_data_byte = 0;
+						break;
+				}
+			}
+			else
+			{
+				/* Writing an RTC register */
+				/* wait for extra data byte */
+				if (LOG_RTC)
+					logerror("RTC write, waiting for data byte : %X\n", (int) rtc_cmd);
+				rtc_state = RTC_STATE_WRITE;
+				rtc_data_byte = 0;
+				rtc_bit_count = 0;
+			}
 		}
 	}
 }

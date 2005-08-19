@@ -10,7 +10,7 @@ System Driver Changes:
 ----------------------
 - [CONCEPT] Added HD support.  [Brett Wyer, Raphael Nabet]
 
-- [MAC] Added SCSI HD support.  [R. Belmont]
+- [MAC] Added SCSI HD and extended PRAM support.  [R. Belmont]
 
 
 
