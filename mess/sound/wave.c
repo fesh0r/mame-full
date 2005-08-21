@@ -26,6 +26,7 @@ static void wave_sound_update(void *param,stream_sample_t **inputs, stream_sampl
 	double duration;
 	int num = ((int) param) & ~WAVE_TOKEN_MASK;
 	stream_sample_t *buffer = _buffer[0];
+	int i;
 
 	image = image_from_devtype_and_index(IO_CASSETTE, num);
 	state = cassette_get_state(image);
@@ -37,7 +38,10 @@ static void wave_sound_update(void *param,stream_sample_t **inputs, stream_sampl
 		time_index = cassette_get_position(image);
 		duration = ((double) length) / Machine->sample_rate;
 
-		cassette_get_samples(cassette, 0, time_index, duration, length, 2, buffer, CASSETTE_WAVEFORM_32BIT);
+		cassette_get_samples(cassette, 0, time_index, duration, length, 2, buffer, CASSETTE_WAVEFORM_16BIT);
+
+		for (i = length-1; i >= 0; i--)
+			buffer[i] = ((INT16 *) buffer)[i];
 	}
 	else
 	{

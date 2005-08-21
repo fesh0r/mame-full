@@ -498,23 +498,24 @@ casserr_t cassette_get_samples(cassette_image *cassette, int channel,
 
 		/* and write out the result */
 		dest_ptr = samples;
-		dest_ptr += sample_bytes * sample_index;
-		switch(waveform_bytes_per_sample(waveform_flags)) {
-		case 1:
-			*((INT8 *) dest_ptr) = interpolate8(sum);
-			break;
-		case 2:
-			word = interpolate16(sum);
-			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
-				word = FLIPENDIAN_INT16(word);
-			*((INT16 *) dest_ptr) = word;
-			break;
-		case 4:
-			dword = sum;
-			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
-				dword = FLIPENDIAN_INT32(dword);
-			*((INT32 *) dest_ptr) = dword;
-			break;
+		dest_ptr += waveform_bytes_per_sample(waveform_flags) * sample_index;
+		switch(waveform_bytes_per_sample(waveform_flags))
+		{
+			case 1:
+				*((INT8 *) dest_ptr) = interpolate8(sum);
+				break;
+			case 2:
+				word = interpolate16(sum);
+				if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+					word = FLIPENDIAN_INT16(word);
+				*((INT16 *) dest_ptr) = word;
+				break;
+			case 4:
+				dword = sum;
+				if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+					dword = FLIPENDIAN_INT32(dword);
+				*((INT32 *) dest_ptr) = dword;
+				break;
 		}
 	}
 	return CASSETTE_ERROR_SUCCESS;

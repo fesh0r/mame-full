@@ -31,6 +31,8 @@ Source Changes:
 - The core is based on MAME 0.99u2.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
+
 - [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]
 
 
