@@ -752,14 +752,19 @@ copycab:
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
-	rm -fr $(OBJ) $(NAME).* xlistdev $(TOOLS)
+	@rm -fr $(OBJ) $(NAME).* xlistdev $(TOOLS)
 
 clean68k:
-	@echo Deleting 68k files...
-	rm -f $(OBJ)/cpuintrf.o
-	rm -f $(OBJ)/drivers/cps2.o
-	rm -rf $(OBJ)/cpu/m68000
+	@echo Deleting 68k object files...
+	@rm -f $(OBJ)/cpuintrf.o
+	@rm -f $(OBJ)/drivers/cps2.o
+	@rm -rf $(OBJ)/cpu/m68000
 
 cleanosd:
-	@echo Deleting OSDEPEND files...
-	rm -rf $(OBJDIR)
+	@echo Deleting OSDEPEND object files...
+	@rm -rf $(OBJDIR)
+
+cleancore:
+	@echo Deleting core object files...
+	@if test -d $(OBJ); then \
+	rm -rf `find $(OBJ) -mindepth 1 -path '$(OBJDIR)' -prune -o -print`; fi
