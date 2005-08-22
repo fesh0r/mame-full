@@ -365,7 +365,7 @@ static opcodeinfo pg2opcodes[] =
 	{ 0x38,0,"PSHSW",    INH,        0,        0,    6},
 	{ 0x39,0,"PULSW",    INH,        0,        0,    6},
 	{ 0x3A,0,"PSHUW",    INH,        0,        0,    6},
-	{ 0x3B,0,"PULSW",    INH,        0,        0,    6},
+	{ 0x3B,0,"PULUW",    INH,        0,        0,    6},
 
 	{ 0x3F,2,"SWI2",     INH,        0,        0,   20},
 
