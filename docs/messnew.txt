@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [C128] Fixed regression introduced in 0.99.  [Nate Woods]
+
 - [CONCEPT] Added HD support.  [Brett Wyer, Raphael Nabet]
 
 - [MAC] Added SCSI HD and extended PRAM support.  [R. Belmont]

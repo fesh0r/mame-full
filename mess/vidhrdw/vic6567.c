@@ -1343,7 +1343,8 @@ INTERRUPT_GEN( vic2_raster_irq )
 
 VIDEO_UPDATE( vic2 )
 {
-	copybitmap(bitmap, vic2.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	if (vic2.on)
+		copybitmap(bitmap, vic2.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 	statetext_display(bitmap);
 }
 
