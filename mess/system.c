@@ -277,6 +277,7 @@ TESTDRIVER( las3000 )   /* 1983 Laser 3000									*/
  */
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
+	DRIVER( macse )	    /* 1987 Apple Macintosh SE   						*/
 
 	/* ATARI */
 /*

@@ -18,6 +18,7 @@ MACHINE_INIT( mac );
 DRIVER_INIT(mac128k512k);
 DRIVER_INIT(mac512ke);
 DRIVER_INIT(macplus);
+DRIVER_INIT(macse);
 
 INTERRUPT_GEN( mac_interrupt );
 

@@ -90,12 +90,14 @@ static struct via6522_interface mac_via6522_intf =
 /* tells which model is being emulated (set by macxxx_init) */
 typedef enum
 {
-	model_mac128k512k,
-	model_mac512ke,
-	model_macplus
+	MODEL_MAC_128K512K,
+	MODEL_MAC_512KE,
+	MODEL_MAC_PLUS,
+	MODEL_MAC_SE
 } mac_model_t;
 
 static int mac_overlay = 0;
+static mac_model_t mac_model;
 
 static const char *lookup_trap(UINT16 opcode);
 
@@ -2160,9 +2162,14 @@ static WRITE8_HANDLER(mac_via_out_a)
 	set_scc_waitrequest((data & 0x80) >> 7);
 	mac_set_screen_buffer((data & 0x40) >> 6);
 	sony_set_sel_line((data & 0x20) >> 5);
-	set_memory_overlay((data & 0x10) >> 4);
 	mac_set_sound_buffer((data & 0x08) >> 3);
 	mac_set_volume(data & 0x07);
+
+	/* Early Mac models had VIA A4 control overlaying.  In the Mac SE (and
+	 * possibly later models), overlay was set on reset, but cleared on the
+	 * first access to the ROM. */
+	if (mac_model < MODEL_MAC_SE)
+		set_memory_overlay((data & 0x10) >> 4);
 }
 
 static WRITE8_HANDLER(mac_via_out_b)
@@ -2251,6 +2258,9 @@ MACHINE_INIT(mac)
 
 	/* setup sound */
 	mac_set_sound_buffer(0);
+
+	if (mac_model == MODEL_MAC_SE)
+		timer_set(0.0, 0, set_memory_overlay);
 }
 
 
@@ -2267,12 +2277,13 @@ static void mac_state_load(void)
 static void mac_driver_init(mac_model_t model)
 {
 	mac_overlay = -1;
+	mac_model = model;
 
 	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
 	mac_install_memory(0x600000, 0x6fffff, mess_ram_size, mess_ram, FALSE, 2);
 
 	/* set up ROM at 0x400000-0x43ffff (-0x5fffff for mac 128k/512k/512ke) */
-	mac_install_memory(0x400000, (model == model_macplus) ? 0x43ffff : 0x5fffff,
+	mac_install_memory(0x400000, (model == MODEL_MAC_PLUS) ? 0x43ffff : 0x5fffff,
 		memory_region_length(REGION_USER1), memory_region(REGION_USER1), TRUE, 3);
 
 	set_memory_overlay(1);
@@ -2297,18 +2308,18 @@ static void mac_driver_init(mac_model_t model)
 
 DRIVER_INIT(mac128k512k)
 {
-	mac_driver_init(model_mac128k512k);
+	mac_driver_init(MODEL_MAC_128K512K);
 }
 
 DRIVER_INIT(mac512ke)
 {
-	mac_driver_init(model_mac512ke);
+	mac_driver_init(MODEL_MAC_512KE);
 }
 
 static SCSIConfigTable dev_table =
 {
-        1,                                      /* 1 SCSI device */
-        { { SCSI_ID_6, 0, SCSI_DEVICE_HARDDISK } } /* SCSI ID 6, using CHD 0, and it's a harddisk */
+	1,                                      /* 1 SCSI device */
+	{ { SCSI_ID_6, 0, SCSI_DEVICE_HARDDISK } } /* SCSI ID 6, using CHD 0, and it's a harddisk */
 };
 
 static struct NCR5380interface macplus_5380intf =
@@ -2319,11 +2330,17 @@ static struct NCR5380interface macplus_5380intf =
 
 DRIVER_INIT(macplus)
 {
-	mac_driver_init(model_macplus);
+	mac_driver_init(MODEL_MAC_PLUS);
 
 	ncr5380_init(&macplus_5380intf);
 }
 
+DRIVER_INIT(macse)
+{
+	mac_driver_init(MODEL_MAC_SE);
+
+	ncr5380_init(&macplus_5380intf);
+}
 
 
 static void mac_vblank_irq(void)
