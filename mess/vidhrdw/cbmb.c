@@ -110,7 +110,5 @@ VIDEO_UPDATE( cbmb )
 			}
 		}
 	}
-
-	statetext_display(bitmap);
 }
 

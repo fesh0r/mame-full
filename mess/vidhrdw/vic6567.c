@@ -1331,7 +1331,6 @@ INTERRUPT_GEN( vic2_raster_irq )
 			/* lightpen timer starten */
 			timer_set (tme, 1, vic2_timer_timeout);
 		}
-		//statetext_display(vic2.bitmap);
 	}
 	if (vic2.rasterline == C64_2_RASTERLINE (RASTERLINE))
 	{
@@ -1345,7 +1344,6 @@ VIDEO_UPDATE( vic2 )
 {
 	if (vic2.on)
 		copybitmap(bitmap, vic2.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
-	statetext_display(bitmap);
 }
 
 static PALETTE_INIT( vic2 )

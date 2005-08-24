@@ -1195,9 +1195,9 @@ static void prepare_menus(void)
 #if HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode							? MFS_CHECKED : MFS_ENABLED);
 #endif // HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_show_fps_get()							? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_get_show_fps()							? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
-	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_show_profiler_get()						? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_get_show_profiler()						? MFS_CHECKED : MFS_ENABLED);
 #endif
 
 	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,		(has_keyboard) ?
@@ -1544,7 +1544,7 @@ static int invoke_command(UINT command)
 
 #if HAS_PROFILER
 	case ID_OPTIONS_PROFILER:
-		ui_show_profiler_set(!ui_show_profiler_get());
+		ui_set_show_profiler(!ui_get_show_profiler());
 		break;
 #endif // HAS_PROFILER
 
@@ -1584,7 +1584,7 @@ static int invoke_command(UINT command)
 #endif
 
 	case ID_OPTIONS_TOGGLEFPS:
-		ui_show_fps_set(!ui_show_fps_get());
+		ui_set_show_fps(!ui_get_show_fps());
 		break;
 
 	case ID_OPTIONS_USEMOUSE:
@@ -1733,7 +1733,7 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 
 	// remove the profiler menu item if it doesn't exist
 #if HAS_PROFILER
-	ui_show_profiler_set(0);
+	ui_set_show_profiler(0);
 #else
 	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
 #endif

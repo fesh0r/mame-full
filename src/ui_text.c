@@ -75,6 +75,7 @@ static const char *mame_default_text[] =
 	"THIS " CAPGAMENOUN " DOESN'T WORK PROPERLY",
 	"The game has protection which isn't fully emulated.",
 	"There are working clones of this game. They are:",
+	"One or more ROMs/CHDs for this game are incorrect. The " GAMENOUN " may not run correctly.",
 	"Type OK or move the joystick left then right to continue",
 
 	/* main menu */
@@ -118,16 +119,16 @@ static const char *mame_default_text[] =
 	"(locked)",
 
 	/* memory card */
-	"Load Memory Card",
-	"Eject Memory Card",
-	"Create Memory Card",
-	"Failed To Load Memory Card!",
-	"Load OK!",
-	"Memory Card Ejected!",
-	"Memory Card Created OK!",
-	"Failed To Create Memory Card!",
-	"(It already exists ?)",
-	"DAMN!! Internal Error!",
+	"Card Number:",
+	"Load Selected Card",
+	"Eject Current Card",
+	"Create New Card",
+	"Error loading memory card",
+	"Memory card loaded",
+	"Memory card ejected",
+	"Memory card created",
+	"Error creating memory card",
+	"(Card may already exist)",
 
 	/* cheats */
 	"Enable/Disable a Cheat",

@@ -341,10 +341,7 @@ VIDEO_UPDATE( laser )
 
 	if( laser_frame_time > 0 )
 	{
-		ui_text(bitmap, laser_frame_message, 2, Machine->visible_area.max_y - 9);
-		/* if the message timed out, clear it on the next frame */
-		if( --laser_frame_time == 0 )
-			schedule_full_refresh();
+		ui_popup("%s", laser_frame_message);
 	}
 }
 

@@ -697,7 +697,7 @@ INLINE void arcadia_vh_draw_line(struct mame_bitmap *bitmap,
 		case 0x40: graphics=false;break;
 //		case 0x80:
 //			alien invaders shields are empty 0x80
-//		    usrintf_showmessage_secs(5, "graphics code 0x80 used");
+//		    ui_popup(5, "graphics code 0x80 used");
 	    }
 	}
 	if (graphics)

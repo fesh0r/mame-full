@@ -413,23 +413,6 @@ VIDEO_UPDATE( odyssey2 )
 			}
 		}
 	}
-
-#if 0
-	char str[0x40];
-	for (i=0; i<4; i++)
-	{
-		snprintf(str, sizeof(str), "%.2x:%.2x %.2x",
-				o2_vdc.s.sprites[i].x,
-				o2_vdc.s.sprites[i].y,
-				o2_vdc.s.sprites[i].color);
-		ui_text(bitmap, str, 160, i*8);
-	}
-	snprintf(str, sizeof(str), "%.2x %.2x",
-			o2_vdc.s.collision,
-			collision);
-	ui_text(bitmap, str, 160, i*8);
-#endif
-    return;
 }
 
 void odyssey2_sh_update( void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length )

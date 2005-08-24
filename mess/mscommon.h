@@ -85,21 +85,6 @@ int	gregorian_is_leap_year(int year);
 /* months are one counted */
 int gregorian_days_in_month(int month, int year);
 
-/***************************************************************************
-
-	PeT's state text code
-
-***************************************************************************/
-
-/* call this at init time to add your state functions */
-void statetext_add_function(void (*function)(void));
-
-/* call this in your state function to output text */
-void statetext_display_text(const char *text);
-
-/* call this at last after updating your frame */
-void statetext_display(struct mame_bitmap *bitmap);
-
 /**************************************************************************/
 
 #ifdef __cplusplus

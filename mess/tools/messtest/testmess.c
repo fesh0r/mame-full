@@ -779,7 +779,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	/* if the visible area has changed, update it */
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
-		set_ui_visarea(display->game_visible_area.min_x, display->game_visible_area.min_y,
+		ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
 			display->game_visible_area.max_x, display->game_visible_area.max_y);
 	}
 
@@ -799,10 +799,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 	}
 
 	/* update the runtime hash */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	if (0)
 	{
-		runtime_hash *= 57;
-		runtime_hash ^= cpunum_get_reg(cpunum, REG_PC);	/* TODO - Add more registers? */
+		for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		{
+			runtime_hash *= 57;
+			runtime_hash ^= cpunum_get_reg(cpunum, REG_PC);	/* TODO - Add more registers? */
+		}
 	}
 
 	for (i = 0; i < sizeof(commands) / sizeof(commands[i]); i++)

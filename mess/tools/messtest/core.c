@@ -392,7 +392,7 @@ static int external_entity_handler(XML_Parser parser,
 
 		code_init();
 		c = token_to_code(buf);
-		code_close();
+		code_exit();
 
 		if (c != CODE_NONE)
 		{

@@ -780,7 +780,6 @@ static void c65_common_driver_init (void)
 	cia6526_config (1, &c64_cia1);
 	vic4567_init (c64_pal, c65_dma_read, c65_dma_read_color,
 				  c64_vic_interrupt, c65_bankswitch_interface);
-	statetext_add_function(c65_state);
 }
 
 void c65_driver_init (void)
@@ -825,22 +824,4 @@ MACHINE_INIT( c65 )
 
 	c65_bankswitch_interface(0xff);
 	c65_bankswitch ();
-}
-
-void c65_state (void)
-{
-	char text[70];
-
-#if VERBOSE_DBG
-	cia6526_status (text, sizeof (text));
-	statetext_display_text (text);
-
-	snprintf (text, sizeof(text), "c65 vic:%.4x m6510:%d c64:%d",
-			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode);
-#endif
-	cbm_drive_0_status (text, sizeof (text));
-	statetext_display_text (text);
-
-	cbm_drive_1_status (text, sizeof (text));
-	statetext_display_text (text);
 }

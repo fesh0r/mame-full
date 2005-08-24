@@ -714,3 +714,9 @@ int mess_validitychecks(void)
 #endif /* WIN32 */
 	return error;
 }
+
+
+/* DUMMY CALLS UNTIL I FIX THE FILE MANAGER AND THE TAPECONTROL */
+void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos)
+{
+}

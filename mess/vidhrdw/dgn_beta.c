@@ -49,6 +49,4 @@ VIDEO_UPDATE(dgnbeta)
 			}
 		}
 	}
-
-	statetext_display(bitmap);
 }

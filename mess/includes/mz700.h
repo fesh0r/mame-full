@@ -27,7 +27,6 @@ WRITE8_HANDLER ( mz700_bank_w );
 
 /* from src/mess/vidhrdw/mz700.c */
 
-extern char mz700_frame_message[64+1];
 extern int mz700_frame_time;
 
 //extern void mz700_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);

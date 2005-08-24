@@ -50,10 +50,6 @@
 
 extern char *rompath_extra;
 
-// from datafile.c
-extern const char *history_filename;
-extern const char *mameinfo_filename;
-
 // from cheat.c
 extern char *cheatfile;
 
@@ -118,13 +114,6 @@ struct rc_option fileio_opts[] =
 	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "diff", 0, 0, NULL, "directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
-#ifdef MESS
-	{ "sysinfo_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
-	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, "messinfo.dat", 0, 0, NULL, NULL },
-#else
-	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
-	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
-#endif
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 

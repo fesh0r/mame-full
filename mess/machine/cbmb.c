@@ -253,7 +253,6 @@ static struct crtc6845_config cbm600_crtc= { 1600000 /*?*/, cbmb_vh_cursor };
 void cbm600_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
 	crtc6845_init(&cbm600_crtc);
 }
@@ -261,7 +260,6 @@ void cbm600_driver_init (void)
 void cbm600pal_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
 	crtc6845_init(&cbm600_crtc);
 }
@@ -269,7 +267,6 @@ void cbm600pal_driver_init (void)
 void cbm600hu_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	statetext_add_function(cbmb_state);
 	crtc6845_init(&cbm600_crtc);
 }
 
@@ -278,7 +275,6 @@ static struct crtc6845_config cbm700_crtc= { 2000000 /*?*/, cbmb_vh_cursor };
 void cbm700_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	statetext_add_function(cbmb_state);
 	cbm700_vh_init();
 	crtc6845_init(&cbm700_crtc);
 }
@@ -287,7 +283,6 @@ void cbm500_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	cbm500=1;
-	statetext_add_function(cbmb_state);
 	vic6567_init (0, 0, cbmb_dma_read, cbmb_dma_read_color, NULL);
 }
 
@@ -599,22 +594,5 @@ void cbmb_frame_interrupt (int param)
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_SHIFTLOCK ? 1 : 0);
 #if 0
 	set_led_status (0 /*KB_NUMLOCK_FLAG */ , JOYSTICK_SWAP ? 1 : 0);
-#endif
-}
-
-void cbmb_state(void)
-{
-#if VERBOSE_DBG
-	char text[70];
-
-	snprintf(text, sizeof(text),
-			 "%.2x %.2x",
-			 MODELL_700, VIDEO_NTSC);
-	statetext_display_text (text);
-
-#if 0
-	cia6526_status (text, sizeof (text));
-	statetext_display_text (text);
-#endif
 #endif
 }

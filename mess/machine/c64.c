@@ -837,8 +837,6 @@ static void c64_common_driver_init (void)
 		vic6567_init (0, c64_pal, c64_dma_read, c64_dma_read_color,
 					  c64_vic_interrupt);
 	}
-	statetext_add_function(c64_state);
-
 	cia6526_reset ();
 }
 
@@ -1395,36 +1393,3 @@ INTERRUPT_GEN( c64_frame_interrupt )
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_SHIFTLOCK ? 1 : 0);
 	set_led_status (0 /*KB_NUMLOCK_FLAG */ , JOYSTICK_SWAP ? 1 : 0);
 }
-
-void c64_state(void)
-{
-	char text[70];
-
-#if VERBOSE_DBG
-#if 0
-	cia6526_status (text, sizeof (text));
-	statetext_display_text (text);
-
-	snprintf (text, sizeof(text), "c64 vic:%.4x m6510:%d exrom:%d game:%d",
-			  c64_vicaddr - c64_memory, c64_port6510 & 7,
-			  c64_exrom, c64_game);
-	statetext_display_text (text);
-#endif
-
-	vdc8563_state();
-//	statetext_display_text (text);
-#endif
-
-	vc20_tape_status (text, sizeof (text));
-	statetext_display_text (text);
-#ifdef VC1541
-	vc1541_drive_status (text, sizeof (text));
-#else
-	cbm_drive_0_status (text, sizeof (text));
-#endif
-	statetext_display_text (text);
-
-	cbm_drive_1_status (text, sizeof (text));
-	statetext_display_text (text);
-}
-

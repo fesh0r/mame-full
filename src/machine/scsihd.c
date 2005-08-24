@@ -92,7 +92,7 @@ int scsihd_exec_command(SCSIHd *our_this, data8_t *pCmdBuf)
 			break;
 		case 0x28: 	// READ (10 byte)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
-			our_this->blocks = pCmdBuf[6]<<24 | pCmdBuf[7]<<16 | pCmdBuf[8]<<8 | pCmdBuf[9]; 
+			our_this->blocks = pCmdBuf[6]<<24 | pCmdBuf[7]<<16 | pCmdBuf[8]<<8 | pCmdBuf[9];
 
 			logerror("SCSIHD: READ at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
 
@@ -134,9 +134,9 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 			pData[2] = 0x05;	// device complies with SPC-3 standard
 			pData[3] = 0x02;	// response data format = SPC-3 standard
 			memset(&pData[8], 0, 8*3);
-			// Apple HD SC setup utility needs to see this 
+			// Apple HD SC setup utility needs to see this
 			// we should make it configurable at some point.
-			strcpy((char *)&pData[8], " SEAGATE          ST225N");	
+			strcpy((char *)&pData[8], " SEAGATE          ST225N");
 			strcpy((char *)&pData[32], "1.0");
 			break;
 
@@ -190,8 +190,8 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 				pData[1] = (temp>>16) & 0xff;
 				pData[2] = (temp>>8) & 0xff;
 				pData[3] = (temp & 0xff);
-				pData[4] = (info->sectorbytes>>24)&0xff; 
-				pData[5] = (info->sectorbytes>>16)&0xff; 
+				pData[4] = (info->sectorbytes>>24)&0xff;
+				pData[5] = (info->sectorbytes>>16)&0xff;
 				pData[6] = (info->sectorbytes>>8)&0xff;
 				pData[7] = (info->sectorbytes & 0xff);
 			}

@@ -27,9 +27,14 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 		if (options.disable_normal_ui)
 		{
 			/* we are using the new UI; just do the minimal stuff here */
-			if (ui_show_profiler_get())
-				profiler_show(bitmap);
-			ui_display_fps(bitmap);
+			if (ui_get_show_profiler())
+			{
+				int ui_width, ui_height;
+				ui_get_bounds(&ui_width, &ui_height);
+				ui_draw_text_full(profiler_get_text(), 0, 0, ui_width, JUSTIFY_LEFT,
+					WRAP_WORD, DRAW_OPAQUE, RGB_WHITE, RGB_BLACK, NULL, NULL);
+			}
+			ui_display_fps();
 		}
 		else
 		{
@@ -68,7 +73,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 							strcat(buf,"\n");
 							strcat(buf,ui_getstring (UI_keyb7));
 							strcat(buf,"\n");
-							ui_displaymessagewindow(bitmap, buf);
+							ui_draw_message_window(buf);
 
 						if( --ui_display_count == 0 )
 							schedule_full_refresh();
@@ -91,7 +96,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 							strcat(buf,"\n");
 							strcat(buf,ui_getstring (UI_keyb7));
 							strcat(buf,"\n");
-							ui_displaymessagewindow(bitmap, buf);
+							ui_draw_message_window(buf);
 
 						if( --ui_display_count == 0 )
 							schedule_full_refresh();
@@ -99,7 +104,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 				}
 			}
 			if (((Machine->gamedrv->flags & GAME_COMPUTER) == 0) || ui_active)
-				trying_to_quit = handle_user_interface(bitmap);
+				trying_to_quit = ui_update_and_render(bitmap);
 		}
 
 		/* run display routine for device */
@@ -121,7 +126,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 	return trying_to_quit;
 }
 
-int displayimageinfo(struct mame_bitmap *bitmap, int selected)
+int ui_display_image_info(int selected)
 {
 	char buf[2048], *dst = buf;
 	const struct IODevice *dev;
@@ -174,11 +179,6 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 				if (info)
 					dst += sprintf(dst,"%s\n", info);
 
-// why is extrainfo printed? only MSX and NES use it that i know of ... Cowering
-//				info = device_extrainfo(type,id);
-//				if( info )
-//					dst += sprintf(dst,"%s\n", info);
-
 				if (base_filename_noextension)
 					free(base_filename_noextension);
 			}
@@ -193,10 +193,9 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 	{
 		/* startup info, print MAME version and ask for any key */
 
-		strcat(buf,"\n\t");
-		strcat(buf,ui_getstring(UI_anykey));
-		ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
-		ui_displaymessagewindow(bitmap, buf);
+		strcat(buf, "\n\t");
+		strcat(buf, ui_getstring(UI_anykey));
+		ui_draw_message_window(buf);
 
 		sel = 0;
 		if (code_read_async() != CODE_NONE)
@@ -212,7 +211,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 		strcat(buf," ");
 		strcat(buf,ui_getstring(UI_righthilight));
 
-		ui_displaymessagewindow(bitmap,buf);
+		ui_draw_message_window(buf);
 
 		if (input_ui_pressed(IPT_UI_SELECT))
 			sel = -1;

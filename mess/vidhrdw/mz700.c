@@ -22,7 +22,6 @@
 #define LOG(N,M,A)
 #endif
 
-char mz700_frame_message[64+1];
 int mz700_frame_time = 0;
 
 //void mz700_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
@@ -54,14 +53,6 @@ VIDEO_UPDATE(mz700)
 {
     int offs;
     int full_refresh = 1;
-
-	if( mz700_frame_time > 0 )
-    {
-		ui_text(bitmap, mz700_frame_message, 1, Machine->visible_area.max_y - 9);
-        /* if the message timed out, clear it on the next frame */
-		if( --mz700_frame_time == 0 )
-			full_refresh = 1;
-    }
 
     if( full_refresh )
 	{

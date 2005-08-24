@@ -1198,37 +1198,8 @@ static void ted7360_drawlines (int first, int last)
 	}
 }
 
-static void ted7360_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
-{
-	int x, x0, y1t, width = (Machine->visible_area.max_x -
-							 Machine->visible_area.min_x) / Machine->uifont->width;
-
-	if (text[0] != 0)
-	{
-		x = strlen (text);
-		*y -= Machine->uifont->height * ((x + width - 1) / width);
-		y1t = *y + Machine->uifont->height;
-		x = 0;
-		while (text[x])
-		{
-			for (x0 = Machine->visible_area.min_x;
-				 text[x] && (x0 < Machine->visible_area.max_x -
-							 Machine->uifont->width);
-				 x++, x0 += Machine->uifont->width)
-			{
-				drawgfx (bitmap, Machine->uifont, text[x], 0, 0, 0, x0, y1t, 0,
-						 TRANSPARENCY_NONE, 0);
-			}
-			y1t += Machine->uifont->height;
-		}
-	}
-}
-
 INTERRUPT_GEN( ted7360_raster_interrupt )
 {
-	int y;
-	char text[70];
-
 	rasterline++;
 	rastertime = timer_get_time ();
 	if (rasterline >= lines)
@@ -1236,22 +1207,6 @@ INTERRUPT_GEN( ted7360_raster_interrupt )
 		rasterline = 0;
 		ted7360_drawlines (lastline, TED7360_LINES);
 		lastline = 0;
-
-		y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
-
-		vc20_tape_status (text, sizeof (text));
-		ted7360_draw_text (ted7360_bitmap, text, &y);
-
-		if (REAL_C1551) {
-			vc1541_drive_status (text, sizeof (text));
-			ted7360_draw_text (ted7360_bitmap, text, &y);
-		}
-
-		cbm_drive_0_status (text, sizeof (text));
-		ted7360_draw_text (ted7360_bitmap, text, &y);
-
-		cbm_drive_1_status (text, sizeof (text));
-		ted7360_draw_text (ted7360_bitmap, text, &y);
 	}
 	if (rasterline == C16_2_RASTERLINE (RASTERLINE))
 	{

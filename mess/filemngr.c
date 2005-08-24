@@ -216,22 +216,12 @@ enum {
 static char *fs_dupe(const char *src, int len)
 {
 	char *dst;
-	int display_length;
-	int display_width;
-
-	display_width = (Machine->uiwidth / Machine->uifontwidth);
-	display_length = len;
-
-	if (display_length>display_width)
-		display_length = display_width;
 
 	/* malloc space for string + NULL char + extra char.*/
 	dst = malloc(len+2);
 	if (dst)
 	{
 		strcpy(dst, src);
-		/* copy old char to end of string */
-		dst[len+1]=dst[display_length];
 		/* put in NULL to cut string. */
 		dst[len+1]='\0';
 	}
@@ -316,7 +306,7 @@ static int DECL_SPEC fs_compare(const void *p1, const void *p2)
 
 }
 
-#define MAX_ENTRIES_IN_MENU (SEL_MASK-1)
+#define MAX_ENTRIES_IN_MENU ((1<<12)-2)
 
 static void fs_generate_filelist(void)
 {

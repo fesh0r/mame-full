@@ -11,8 +11,6 @@
 #include "includes/cgenie.h"
 
 int cgenie_font_offset[4] = {0, 0, 0, 0};
-char cgenie_frame_message[64];
-int cgenie_frame_time;
 
 static CRTC6845 crt;
 static int graphics = 0;
@@ -498,12 +496,4 @@ VIDEO_UPDATE( cgenie )
 		cgenie_refresh_tv_set(bitmap,full_refresh);
 	else
 		cgenie_refresh_monitor(bitmap,full_refresh);
-
-    if( cgenie_frame_time > 0 )
-	{
-		ui_text(bitmap, cgenie_frame_message, 2, Machine->visible_area.max_y - 9);
-		/* if the message timed out, clear it on the next frame */
-		if( --cgenie_frame_time == 0 )
-			schedule_full_refresh();
-    }
 }

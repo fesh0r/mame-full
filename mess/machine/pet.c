@@ -441,8 +441,6 @@ static void pet_common_driver_init (void)
 	pia_config(0,PIA_STANDARD_ORDERING,&pet_pia0);
 	pia_config(1,PIA_STANDARD_ORDERING,&pet_pia1);
 
-	statetext_add_function(pet_state);
-
 	cbm_ieee_open();
 }
 
@@ -853,31 +851,4 @@ INTERRUPT_GEN( pet_frame_interrupt )
 		pet_keyboard_normal();
 
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
-}
-
-void pet_state(void)
-{
-	char text[70];
-
-#if 0
-	snprintf(text, sizeof(text),
-			 "%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
-			 pet_keyline[0],
-			 pet_keyline[1],
-			 pet_keyline[2],
-			 pet_keyline[3],
-			 pet_keyline[4],
-			 pet_keyline[5],
-			 pet_keyline[6],
-			 pet_keyline[7],
-			 pet_keyline[8],
-			 pet_keyline[9]);
-	statetext_display_text(text);
-#endif
-
-	cbm_drive_0_status (text, sizeof (text));
-	statetext_display_text(text);
-
-	cbm_drive_1_status (text, sizeof (text));
-	statetext_display_text(text);
 }

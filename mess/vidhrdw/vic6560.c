@@ -463,37 +463,9 @@ static void vic6560_drawlines (int first, int last)
 	}
 }
 
-static void vic6560_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
-{
-	int x, x0, y1v, width = (Machine->visible_area.max_x -
-							 Machine->visible_area.min_x) / Machine->uifont->width;
-
-	if (text[0] != 0)
-	{
-		x = strlen (text);
-		*y -= Machine->uifont->height * ((x + width - 1) / width);
-		y1v = *y + Machine->uifont->height;
-		x = 0;
-		while (text[x])
-		{
-			for (x0 = Machine->visible_area.min_x;
-				 text[x] && (x0 < Machine->visible_area.max_x -
-							 Machine->uifont->width);
-				 x++, x0 += Machine->uifont->width)
-			{
-				drawgfx (bitmap, Machine->uifont, text[x], 0, 0, 0, x0, y1v, 0,
-						 TRANSPARENCY_NONE, 0);
-			}
-			y1v += Machine->uifont->height;
-		}
-	}
-}
-
 INTERRUPT_GEN( vic656x_raster_interrupt )
 {
 	struct rectangle r;
-	int y;
-	char text[50];
 
 	rasterline++;
 	if (rasterline >= vic656x_lines)
@@ -522,19 +494,6 @@ INTERRUPT_GEN( vic656x_raster_interrupt )
 #endif
 			}
 		}
-		y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
-
-		vc20_tape_status (text, sizeof (text));
-		vic6560_draw_text (vic6560_bitmap, text, &y);
-#ifdef VC1541
-		vc1541_drive_status (text, sizeof (text));
-#else
-		cbm_drive_0_status (text, sizeof (text));
-#endif
-		vic6560_draw_text (vic6560_bitmap, text, &y);
-
-		cbm_drive_1_status (text, sizeof (text));
-		vic6560_draw_text (vic6560_bitmap, text, &y);
 	}
 }
 

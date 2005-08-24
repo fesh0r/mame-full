@@ -24,17 +24,23 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-- [PRODOS] Added support for ProDOS 6 forked files (storage class $5).  [Nate
-  Woods]
+- [PRODOS] Added data fork support for ProDOS 6 forked files (storage class
+  $5).  [Nate Woods]
 
 - [MAC/TI99/TI990HD] Fixed a variety of crashes.  [Raphael Nabet]
+
+- [RSDOS] Fixed an unexpected error message if the directory track fills up.
+  [Nate Woods]
 
 
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.99u2.  This incorporates all features of the
+- The core is based on MAME 0.99u3.  This incorporates all features of the
   update to this core.  [MAME team]
+  
+- Removed fringe statetext feature used by a handful of the CBM drivers.  [Nate
+  Woods]
 
 - Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
 

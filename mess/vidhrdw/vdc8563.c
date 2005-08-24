@@ -566,20 +566,4 @@ VIDEO_UPDATE( vdc8563 )
 	}
 
 	vdc.changed=0;
-
-	statetext_display(bitmap);
-}
-
-extern void vdc8563_state (void)
-{
-#if VERBOSE_DBG
-	char text[50]="";
-#if 1
-	snprintf (text, sizeof (text), "vdc %.2x", vdc.reg[0x1b]);
-#else
-	snprintf (text, sizeof (text), "enable:%.2x occured:%.2x",
-			  vdc.reg[0x1a], vdc.reg[0x19]);
-#endif
-	statetext_display_text (text);
-#endif
 }

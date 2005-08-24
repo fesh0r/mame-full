@@ -73,6 +73,7 @@ enum
 	UI_brokengame,
 	UI_brokenprotection,
 	UI_workingclones,
+	UI_incorrectroms,
 	UI_typeok,
 
 	/* main menu */
@@ -114,6 +115,7 @@ enum
 	UI_locked,
 
 	/* memory card */
+	UI_selectcard,
 	UI_loadcard,
 	UI_ejectcard,
 	UI_createcard,
@@ -123,7 +125,6 @@ enum
 	UI_cardcreated,
 	UI_cardcreatedfailed,
 	UI_cardcreatedfailed2,
-	UI_carderror,
 
 	/* cheat stuff */
 	UI_enablecheat,

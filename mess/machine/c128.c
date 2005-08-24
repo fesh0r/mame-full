@@ -766,7 +766,6 @@ void c128_driver_init (void)
 	vic2_set_rastering(0);
 	vdc8563_init(0);
 	vdc8563_set_rastering(1);
-	statetext_add_function(c128_state);
 }
 
 void c128pal_driver_init (void)
@@ -778,7 +777,6 @@ void c128pal_driver_init (void)
 	vic2_set_rastering(1);
 	vdc8563_init(0);
 	vdc8563_set_rastering(0);
-	statetext_add_function(c128_state);
 }
 
 void c128_driver_shutdown (void)
@@ -812,21 +810,4 @@ VIDEO_UPDATE( c128 )
 {
 	video_update_vdc8563(screen, bitmap, cliprect, do_skip);
 	video_update_vic2(screen, bitmap, cliprect, do_skip);
-}
-
-void c128_state(void)
-{
-	char text[70];
-
-	vc20_tape_status (text, sizeof (text));
-	statetext_display_text (text);
-#ifdef VC1541
-	vc1541_drive_status (text, sizeof (text));
-#else
-	cbm_drive_0_status (text, sizeof (text));
-#endif
-	statetext_display_text (text);
-
-	cbm_drive_1_status (text, sizeof (text));
-	statetext_display_text (text);
 }

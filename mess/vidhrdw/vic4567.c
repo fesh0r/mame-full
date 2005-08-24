@@ -701,31 +701,32 @@ static void vic3_draw_bitplanes(void)
 		}
 	}
 	if (XPOS>0) {
-		vis.min_x=0;
-		vis.max_x=XPOS-1;
-		vis.min_y=0;
-		vis.max_y=Machine->uiheight-1;
+		vis.min_x = 0;
+		vis.max_x = XPOS-1;
+		vis.min_y = 0;
+		vis.max_y = Machine->visible_area.max_y;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
 	if (XPOS+VIC3_BITPLANES_WIDTH<Machine->visible_area.max_x) {
-		vis.min_x=XPOS+VIC3_BITPLANES_WIDTH;
-		vis.max_x=Machine->uiwidth-1;
-		vis.min_y=0;
-		vis.max_y=Machine->uiheight-1;
+		vis.min_x = XPOS+VIC3_BITPLANES_WIDTH;
+		vis.max_x = Machine->visible_area.max_x;
+		vis.min_y = 0;
+		vis.max_y = Machine->visible_area.max_y;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
-	if (YPOS>0) {
-		vis.min_y=0;
-		vis.max_y=YPOS-1;
-		vis.min_x=0;
-		vis.max_x=Machine->uiwidth-1;
+	if (YPOS>0)
+	{
+		vis.min_y = 0;
+		vis.max_y = YPOS-1;
+		vis.min_x = 0;
+		vis.max_x = Machine->visible_area.max_x;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
 	if (YPOS+VIC3_LINES<Machine->visible_area.max_y) {
-		vis.min_y=YPOS+VIC3_LINES;
-		vis.max_y=Machine->uiheight-1;
-		vis.min_x=0;
-		vis.max_x=Machine->uiwidth-1;
+		vis.min_y = YPOS+VIC3_LINES;
+		vis.max_y = Machine->visible_area.max_y;
+		vis.min_x = 0;
+		vis.max_x = Machine->visible_area.max_x;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
 }

@@ -257,7 +257,7 @@ VIDEO_UPDATE( avigo )
 
 		char	avigo_text[256];
 		sprintf(avigo_text,"X: %03x Y: %03x",avigo_ad_x, avigo_ad_y);
-		ui_text(bitmap, avigo_text, 0, 200);
+		ui_draw_text(avigo_text, 0, 200);
 
 	}
 	{
@@ -271,7 +271,7 @@ VIDEO_UPDATE( avigo )
 
 
 		sprintf(avigo_text,"Xb: %02x Yb: %02x zb: %02x ab:%02x bb:%02x",xb, yb,zb,ab,bb);
-		ui_text(bitmap, avigo_text, 0, 216+16);
+		ui_draw_text(avigo_text, 0, 216+16);
 
 	}
 }

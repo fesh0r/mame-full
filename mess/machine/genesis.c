@@ -222,7 +222,7 @@ void genesis_vdp_spritebuffer_scanline (genvdp *current_vdp, int line, int reqpr
 
 			if (xpos == 0)
 			{
-			//	usrintf_showmessage("xpos0!");
+			//	ui_popup("xpos0!");
 				return;
 			}
 
@@ -1033,11 +1033,11 @@ VIDEO_START(genesis)
 
 VIDEO_UPDATE(genesis)
 {
-//	usrintf_showmessage("rasterline %04x %i", genesis_vdp.genesis_vdp_regs[0x0a], genesis_vdp.genesis_vdp_regs[0x0a]);
+//	ui_popup("rasterline %04x %i", genesis_vdp.genesis_vdp_regs[0x0a], genesis_vdp.genesis_vdp_regs[0x0a]);
 
 
 /*
-	usrintf_showmessage("%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x r%02x %02x %02x %02x %02x %02x",
+	ui_popup("%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x r%02x %02x %02x %02x %02x %02x",
 
 	genesis_vdp.genesis_vdp_regs[0x00],
 	genesis_vdp.genesis_vdp_regs[0x01],
@@ -1058,7 +1058,7 @@ VIDEO_UPDATE(genesis)
 	);
 */
 
-//	usrintf_showmessage("%02x %02x",genesis_vdp.genesis_vdp_regs[0x11], genesis_vdp.genesis_vdp_regs[0x12]);
+//	ui_popup("%02x %02x",genesis_vdp.genesis_vdp_regs[0x11], genesis_vdp.genesis_vdp_regs[0x12]);
 
 	int i;
 	for(i=0;i<0x40;i++)
