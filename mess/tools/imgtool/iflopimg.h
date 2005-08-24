@@ -34,15 +34,16 @@ struct ImgtoolFloppyCallbacks
 	unsigned int writing_untested : 1;				/* used when we support writing, but not in main build */
 	unsigned int creation_untested : 1;				/* used when we support creation, but not in main build */
 
-	imgtoolerr_t	(*create)		(imgtool_image *img, option_resolution *opts);
-	imgtoolerr_t	(*open)			(imgtool_image *img);
+	imgtoolerr_t	(*create)		(imgtool_image *image, option_resolution *opts);
+	imgtoolerr_t	(*open)			(imgtool_image *image);
 	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
 	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(imgtool_imageenum *enumeration);
-	imgtoolerr_t	(*free_space)	(imgtool_image *img, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(imgtool_image *img, const char *fname, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(imgtool_image *img, const char *fname);
+	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *filename);
+	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);

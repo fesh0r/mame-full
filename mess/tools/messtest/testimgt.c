@@ -156,7 +156,7 @@ static void putfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_writefile(image, filename_buffer, stream, NULL, NULL);
+	err = img_writefile(image, filename_buffer, NULL, stream, NULL, NULL);
 	if (err)
 	{
 		report_imgtoolerr(err);
@@ -188,7 +188,7 @@ static void checkfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_readfile(image, filename_buffer, stream, NULL);
+	err = img_readfile(image, filename_buffer, NULL, stream, NULL);
 	if (err)
 	{
 		report_imgtoolerr(err);

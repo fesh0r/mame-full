@@ -31,8 +31,7 @@ typedef enum
 {
 	ITLS_NAME,
 	ITLS_DESCRIPTION
-}
-imgtool_libsort_t;
+} imgtool_libsort_t;
 
 typedef struct
 {
@@ -47,15 +46,27 @@ typedef struct
 	unsigned int eof : 1;
 	unsigned int corrupt : 1;
 	unsigned int directory : 1;
-}
-imgtool_dirent;
+} imgtool_dirent;
 
 typedef struct
 {
 	UINT8 level;
 	UINT64 block;
-}
-imgtool_chainent;
+} imgtool_chainent;
+
+typedef enum
+{
+	FORK_END,
+	FORK_DATA,
+	FORK_RESOURCE,
+	FORK_ALTERNATE
+} imgtool_forktype_t;
+
+typedef struct
+{
+	imgtool_forktype_t type;
+	char forkname[64];
+} imgtool_forkent;
 
 struct ImageModule
 {
@@ -90,9 +101,10 @@ struct ImageModule
 	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(imgtool_imageenum *enumeration);
 	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *fname, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *fname);
+	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *filename);
+	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);

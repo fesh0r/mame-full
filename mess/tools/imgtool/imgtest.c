@@ -63,7 +63,7 @@ static imgtoolerr_t create_file_in_image(const struct ImageModule *module, const
 	if (err)
 		goto done;
 
-	err = img_writefile(img, fname, s, NULL, NULL);
+	err = img_writefile(img, fname, NULL, s, NULL, NULL);
 	if (err)
 		goto done;
 
@@ -101,7 +101,7 @@ static int verify_file_in_image(const struct ImageModule *module, const char *im
 	if (err)
 		goto done;
 
-	err = img_readfile(img, fname, s, NULL);
+	err = img_readfile(img, fname, NULL, s, NULL);
 	if (err)
 		goto done;
 

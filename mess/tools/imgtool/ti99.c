@@ -3839,8 +3839,8 @@ static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 static imgtoolerr_t win_image_beginenum(imgtool_imageenum *enumeration, const char *path);
 static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf);
-static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf);
+static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath);
 static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath);
 static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
@@ -4495,7 +4495,7 @@ static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size)
 /*
 	Extract a file from a ti99_image.  The file is saved in tifile format.
 */
-static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf)
+static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf)
 {
 #if 1
 
@@ -4632,7 +4632,7 @@ static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, i
 /*
 	Add a file to a ti99_image.  The file must be in tifile format.
 */
-static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img_extrabytes(img);
 	const char *filename;

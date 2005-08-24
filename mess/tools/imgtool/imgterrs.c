@@ -35,7 +35,9 @@ static const char *msgs[] =
 	"Invalid path",
 	"Path not found",
 	"Directory not empty",
-	"Seek error"
+	"Seek error",
+	"File system does not support forks",
+	"Fork not found"
 };
 
 

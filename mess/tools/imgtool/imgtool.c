@@ -49,6 +49,8 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 		features.supports_readsector = 1;
 	if (module->write_sector)
 		features.supports_writesector = 1;
+	if (module->list_forks)
+		features.supports_forks = 1;
 	return features;
 }
 

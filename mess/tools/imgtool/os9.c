@@ -907,7 +907,7 @@ static imgtoolerr_t os9_diskimage_freespace(imgtool_image *img, UINT64 *size)
 
 
 
-static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
+static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	const struct os9_diskinfo *disk_info;
@@ -944,7 +944,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 
 
 
-static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *path, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *path, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	struct os9_fileinfo file_info;

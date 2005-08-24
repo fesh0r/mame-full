@@ -5543,8 +5543,8 @@ static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const ch
 static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void mac_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf);
-static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
+static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 /*static imgtoolerr_t mac_image_deletefile(imgtool_image *img, const char *filename);
 static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
@@ -5873,7 +5873,7 @@ static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size)
 /*
 	Extract a file from a disk image.  The file is saved in macbinary format.
 */
-static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf)
+static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 	UINT32 parID;
@@ -6043,7 +6043,7 @@ static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, im
 /*
 	Add a file to a disk image.  The file must be in macbinary format.
 */
-static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img);
 	UINT32 parID;

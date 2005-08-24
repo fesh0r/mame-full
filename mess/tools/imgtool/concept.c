@@ -131,8 +131,8 @@ static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, cons
 static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf);
-/*static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
+/*static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *filename);
 static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
@@ -426,7 +426,7 @@ static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size)
 /*
 	Extract a file from a concept_image.
 */
-static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
+static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	concept_image *image = (concept_image *) img_extrabytes(img);
 	size_t filename_len = strlen(filename);
@@ -462,7 +462,7 @@ static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filen
 /*
 	Add a file to a concept_image.
 */
-static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	/* ... */
 

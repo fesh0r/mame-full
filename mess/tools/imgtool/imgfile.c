@@ -216,6 +216,26 @@ done:
 
 
 
+static imgtoolerr_t cannonicalize_fork(imgtool_image *image, const char **fork)
+{
+	/* does this module support forks? */
+	if (image->module->list_forks)
+	{
+		/* this module supports forks; make sure that fork is non-NULL */
+		if (!*fork)
+			*fork = "";
+	}
+	else
+	{
+		/* this module does not support forks; make sure that fork is NULL */
+		if (*fork)
+			return IMGTOOLERR_NOFORKS;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -545,32 +565,37 @@ static imgtoolerr_t process_filter(imgtool_stream **mainstream, imgtool_stream *
 
 
 
-imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf, FILTERMODULE filter)
+imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *newstream = NULL;
 	char *alloc_path = NULL;
 
-	if (!img->module->read_file)
+	if (!image->module->read_file)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
 
 	/* custom filter? */
-	err = process_filter(&destf, &newstream, img->module, filter, PURPOSE_READ);
+	err = process_filter(&destf, &newstream, image->module, filter, PURPOSE_READ);
 	if (err)
 		goto done;
 
 	/* cannonicalize path */
-	if (img->module->path_separator)
+	if (image->module->path_separator)
 	{
-		err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
+		err = cannonicalize_path(image, FALSE, &filename, &alloc_path);
 		if (err)
 			goto done;
 	}
 
-	err = img->module->read_file(img, fname, destf);
+	err = cannonicalize_fork(image, &fork);
+	if (err)
+		goto done;
+
+	/* invoke the actual module */
+	err = image->module->read_file(image, filename, fork, destf);
 	if (err)
 	{
 		err = markerrorsource(err);
@@ -587,7 +612,7 @@ done:
 
 
 
-imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts, FILTERMODULE filter)
+imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
 	char *buf = NULL;
@@ -598,44 +623,48 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	UINT64 free_space;
 	UINT64 file_size;
 
-	if (!img->module->write_file)
+	if (!image->module->write_file)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
 
 	/* Does this image module prefer upper case file names? */
-	if (img->module->prefer_ucase)
+	if (image->module->prefer_ucase)
 	{
-		buf = malloc(strlen(fname) + 1);
+		buf = malloc(strlen(filename) + 1);
 		if (!buf)
 		{
 			err = IMGTOOLERR_OUTOFMEMORY;
 			goto done;
 		}
-		strcpy(buf, fname);
+		strcpy(buf, filename);
 		for (s = buf; *s; s++)
 			*s = toupper(*s);
-		fname = buf;
+		filename = buf;
 	}
 
 	/* custom filter? */
-	err = process_filter(&sourcef, &newstream, img->module, filter, PURPOSE_WRITE);
+	err = process_filter(&sourcef, &newstream, image->module, filter, PURPOSE_WRITE);
 	if (err)
 		goto done;
 
 	/* cannonicalize path */
-	if (img->module->path_separator)
+	if (image->module->path_separator)
 	{
-		err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
+		err = cannonicalize_path(image, FALSE, &filename, &alloc_path);
 		if (err)
 			goto done;
 	}
 
+	err = cannonicalize_fork(image, &fork);
+	if (err)
+		goto done;
+
 	/* allocate dummy options if necessary */
-	if (!opts && img->module->writefile_optguide)
+	if (!opts && image->module->writefile_optguide)
 	{
-		alloc_resolution = option_resolution_create(img->module->writefile_optguide, img->module->writefile_optspec);
+		alloc_resolution = option_resolution_create(image->module->writefile_optguide, image->module->writefile_optspec);
 		if (!alloc_resolution)
 		{
 			err = IMGTOOLERR_OUTOFMEMORY;
@@ -647,9 +676,9 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 		option_resolution_finish(opts);
 
 	/* if free_space is implemented; do a quick check to see if space is available */
-	if (img->module->free_space)
+	if (image->module->free_space)
 	{
-		err = img->module->free_space(img, &free_space);
+		err = image->module->free_space(image, &free_space);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -666,7 +695,7 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	}
 
 	/* actually invoke the write file handler */
-	err = img->module->write_file(img, fname, sourcef, opts);
+	err = image->module->write_file(image, filename, fork, sourcef, opts);
 	if (err)
 	{
 		err = markerrorsource(err);
@@ -687,13 +716,14 @@ done:
 
 
 
-imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest, FILTERMODULE filter)
+imgtoolerr_t img_getfile(imgtool_image *image, const char *filename, const char *fork,
+	const char *dest, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;
 
 	if (!dest)
-		dest = fname;
+		dest = filename;
 
 	f = stream_open(dest, OSD_FOPEN_WRITE);
 	if (!f)
@@ -702,7 +732,7 @@ imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest
 		goto done;
 	}
 
-	err = img_readfile(img, fname, f, filter);
+	err = img_readfile(image, filename, fork, f, filter);
 	if (err)
 		goto done;
 
@@ -714,7 +744,8 @@ done:
 
 
 
-imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *source, option_resolution *opts, FILTERMODULE filter)
+imgtoolerr_t img_putfile(imgtool_image *image, const char *newfname, const char *fork,
+	const char *source, option_resolution *opts, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;
@@ -726,7 +757,7 @@ imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *s
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, newfname, f, opts, filter);
+	err = img_writefile(image, newfname, fork, f, opts, filter);
 	stream_close(f);
 	return err;
 }

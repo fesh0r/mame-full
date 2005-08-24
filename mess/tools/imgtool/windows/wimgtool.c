@@ -671,7 +671,7 @@ static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *pa
 			if (entry.directory)
 				err = get_recursive_directory(image, subpath, local_subpath);
 			else
-				err = img_getfile(image, subpath, T2A(local_subpath), NULL);
+				err = img_getfile(image, subpath, NULL, T2A(local_subpath), NULL);
 			if (err)
 				goto done;
 		}
@@ -717,7 +717,7 @@ static imgtoolerr_t put_recursive_directory(imgtool_image *image, LPCTSTR local_
 				if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 					err = put_recursive_directory(image, local_subpath, subpath);
 				else
-					err = img_putfile(image, subpath, T2A(local_subpath), NULL, NULL);
+					err = img_putfile(image, subpath, NULL, T2A(local_subpath), NULL, NULL);
 				if (err)
 					goto done;
 			}
@@ -916,6 +916,7 @@ static void menu_insert(HWND window)
 	option_resolution *opts = NULL;
 	BOOL cancel;
 	const struct ImageModule *module;
+	const char *fork = NULL;
 
 	info = get_wimgtool_info(window);
 
@@ -950,7 +951,7 @@ static void menu_insert(HWND window)
 		image_filename = s2;
 	}
 
-	err = img_putfile(info->image, image_filename, ofn.lpstrFile, opts, NULL);
+	err = img_putfile(info->image, image_filename, fork, ofn.lpstrFile, opts, NULL);
 	if (err)
 		goto done;
 
@@ -1006,7 +1007,7 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	}
 	else
 	{
-		err = img_getfile(info->image, filename, ofn.lpstrFile, NULL);
+		err = img_getfile(info->image, filename, NULL, ofn.lpstrFile, NULL);
 		if (err)
 			goto done;
 	}
@@ -1267,7 +1268,7 @@ static void drop_files(HWND window, HDROP drop)
 		if (GetFileAttributes(buffer) & FILE_ATTRIBUTE_DIRECTORY)
 			err = put_recursive_directory(info->image, buffer, subpath);
 		else
-			err = img_putfile(info->image, subpath, T2A(buffer), NULL, NULL);
+			err = img_putfile(info->image, subpath, NULL, T2A(buffer), NULL, NULL);
 		if (err)
 			goto done;
 	}

@@ -1409,13 +1409,16 @@ done:
 
 
 
-static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *filename, imgtool_stream *destf)
+static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 	UINT8 buffer[BLOCK_SIZE];
+	const UINT8 *forkinfo_ptr;
 	UINT16 key_pointer;
 	int nest_level;
+
+	fork = "";	/* temporary; until we fully implement forks in this driver */
 
 	err = prodos_lookup_path(image, filename, CREATE_NONE, NULL, &ent);
 	if (err)
@@ -1431,6 +1434,14 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 		if (err)
 			return err;
 
+		/* figure out which fork */
+		if (!strcmp(fork, ""))
+			forkinfo_ptr = &buffer[0];
+		else if (!strcmp(fork, "RESOURCE_FORK"))
+			forkinfo_ptr = &buffer[256];
+		else
+			return IMGTOOLERR_FORKNOTFOUND;
+
 		key_pointer = pick_integer(buffer, 1, 2);
 		nest_level = (buffer[0] & 0x0F) - 1;
 
@@ -1440,6 +1451,8 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	else
 	{
 		/* conventional ProDOS file */
+		if (*fork != '\0')
+			return IMGTOOLERR_FORKNOTFOUND;
 		key_pointer = ent.key_pointer;
 		nest_level = (ent.storage_type >> 4) - 1;
 	}
@@ -1454,7 +1467,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 
 
 
-static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char *filename, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;

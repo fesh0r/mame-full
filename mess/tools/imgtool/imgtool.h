@@ -220,13 +220,14 @@ imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz);
  *		Start reading from a file on an image with a stream
  *
  * Parameters:
- *		img:				The image to read from
- *		fname:				The filename on the image
+ *		image:				The image to read from
+ *		filename:			The filename on the image
+ *		fork:				The fork on the file
  *		destf:				Place to receive the stream
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf,
-	FILTERMODULE filter);
+imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork,
+	imgtool_stream *destf, FILTERMODULE filter);
 
 /* img_writefile
  *
@@ -234,14 +235,15 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
  *		Start writing to a new file on an image with a stream
  *
  * Parameters:
- *		img:				The image to read from
- *		fname:				The filename on the image
+ *		image:				The image to read from
+ *		filename:			The filename on the image
+ *		fork:				The fork on the file
  *		destf:				Place to receive the stream
  *		options/ropts:		Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef,
-	option_resolution *resolution, FILTERMODULE filter);
+imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork,
+	imgtool_stream *sourcef, option_resolution *resolution, FILTERMODULE filter);
 
 /* img_getfile
  *
@@ -249,13 +251,14 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
  *		Read a file from an image, storing it into a native file
  *
  * Parameters:
- *		img:				The image to read from
- *		fname:				The filename on the image
+ *		image:				The image to read from
+ *		filename:			The filename on the image
+ *		fork:				The fork on the file
  *		dest:				Filename for native file to write to
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest,
-	FILTERMODULE filter);
+imgtoolerr_t img_getfile(imgtool_image *img, const char *filename, const char *fork,
+	const char *dest, FILTERMODULE filter);
 
 /* img_putfile
  *
@@ -263,15 +266,16 @@ imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest
  *		Read a native file and store it on an image
  *
  * Parameters:
- *		img:				The image to read from
+ *		image:				The image to read from
  *		newfname:			The filename on the image to store (if NULL, then
  *							the file will be named basename(source)
+ *		fork:				The fork on the file
  *		source:				Native filename for source
  *		opts:				Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *source,
-	option_resolution *opts, FILTERMODULE filter);
+imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *fork,
+	const char *source, option_resolution *opts, FILTERMODULE filter);
 
 /* img_deletefile
  *
@@ -396,6 +400,7 @@ struct imgtool_module_features
 	unsigned int supports_lastmodified_time : 1;
 	unsigned int supports_readsector : 1;
 	unsigned int supports_writesector : 1;
+	unsigned int supports_forks : 1;
 };
 
 struct imgtool_module_features img_get_module_features(const struct ImageModule *module);

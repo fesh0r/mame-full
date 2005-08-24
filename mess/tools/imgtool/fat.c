@@ -2066,7 +2066,7 @@ static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 
 
 
-static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *filename, imgtool_stream *destf)
+static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	struct fat_file file;
@@ -2094,7 +2094,7 @@ static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *fil
 
 
 
-static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *filename, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	struct fat_file file;

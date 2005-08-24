@@ -387,7 +387,7 @@ static imgtoolerr_t delete_entry(imgtool_image *img, struct rsdos_dirent *ent, i
 
 
 
-static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
+static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fname, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	struct rsdos_dirent ent;
@@ -409,7 +409,7 @@ static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fna
 
 
 
-static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fname, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	floperr_t ferr;
 	imgtoolerr_t err;
