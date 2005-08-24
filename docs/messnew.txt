@@ -24,6 +24,9 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- [PRODOS] Added support for ProDOS 6 forked files (storage class $5).  [Nate
+  Woods]
+
 - [MAC/TI99/TI990HD] Fixed a variety of crashes.  [Raphael Nabet]
 
 

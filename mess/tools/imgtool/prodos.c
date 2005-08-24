@@ -30,6 +30,8 @@
 	                  10 - Seedling File (1 block)
 					  20 - Sapling File (2-256 blocks)
 					  30 - Tree File (257-32768 blocks)
+					  40 - Pascal Areas on ProFile HDs (???)
+					  50 - GS/OS Extended File (data and rsrc fork)
 					  E0 - Subdirectory Header
 				      F0 - Volume Header
        1      15  File name (NUL padded)
@@ -72,6 +74,27 @@
 	  33       2  Active entry count in directory
 	  35       2  Volume bitmap block number
 	  37       2  Total blocks on volume
+
+  GS/OS Extended Files (storage type $5) point to an extended key block that
+  contains information about the two forks.  The first half of the extended
+  key block contains info about the data form, and the second half the
+  resource fork.  Both sides have the following format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       1  Storage type (bits 3-0, unlike the directory entry)
+	   1       2  Key pointer
+	   3       2  Blocks used
+	   5       3  File size
+	   8       1  Size of secondary info #1 (must be 18 to be valid)
+	   9       1  Secondary info #1 type (1=FInfo 2=xFInfo)
+	  10      16  FInfo or xFInfo
+	  26       1  Size of secondary info #2 (must be 18 to be valid)
+	  27       1  Secondary info #2 type (1=FInfo 2=xFInfo)
+	  28      16  FInfo or xFInfo
+
+  For more info, consult ProDOS technical note #25
+	(http://web.pdx.edu/~heiss/technotes/pdos/tn.pdos.25.html)
 
 *****************************************************************************/
 
@@ -203,7 +226,8 @@ static UINT32 prodos_time_now(void)
 
 static int is_file_storagetype(UINT8 storage_type)
 {
-	return (storage_type >= 0x10) && (storage_type <= 0x3F);
+	return ((storage_type >= 0x10) && (storage_type <= 0x3F))
+		|| ((storage_type >= 0x50) && (storage_type <= 0x5F));
 }
 
 
@@ -1159,6 +1183,7 @@ static UINT32 prodos_get_storagetype_maxfilesize(UINT8 storage_type)
 			max_filesize = BLOCK_SIZE * 256;
 			break;
 		case 0x30:
+		case 0x50:
 			max_filesize = BLOCK_SIZE * 32768;
 			break;
 	}
@@ -1388,6 +1413,9 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
+	UINT8 buffer[BLOCK_SIZE];
+	UINT16 key_pointer;
+	int nest_level;
 
 	err = prodos_lookup_path(image, filename, CREATE_NONE, NULL, &ent);
 	if (err)
@@ -1396,8 +1424,28 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = prodos_read_file_tree(image, &ent.filesize, ent.key_pointer, 
-		(ent.storage_type >> 4) - 1, destf);
+	if ((ent.storage_type & 0xF0) == 0x50)
+	{
+		/* special case for storage class $5 */
+		err = prodos_load_block(image, ent.key_pointer, buffer);
+		if (err)
+			return err;
+
+		key_pointer = pick_integer(buffer, 1, 2);
+		nest_level = (buffer[0] & 0x0F) - 1;
+
+		if ((nest_level < 0) || (nest_level > 2))
+			return IMGTOOLERR_CORRUPTFILE;
+	}
+	else
+	{
+		/* conventional ProDOS file */
+		key_pointer = ent.key_pointer;
+		nest_level = (ent.storage_type >> 4) - 1;
+	}
+
+	err = prodos_read_file_tree(image, &ent.filesize, key_pointer, 
+		nest_level, destf);
 	if (err)
 		return err;
 
