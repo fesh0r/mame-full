@@ -648,7 +648,6 @@ static void update_params(void)
 		   so clear Machine->scrbitmap and don't use vector_dirty_pixels
 		   for the next (not skipped) frame */
 		schedule_full_refresh();
-		ui_dirty = FRAMESKIP_LEVELS + 1;
 		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 	}
   }
@@ -833,7 +832,7 @@ static void update_game_vis_area(void)
   normal_params.width  = (game_vis_area.max_x + 1) - game_vis_area.min_x;
   normal_params.height = (game_vis_area.max_y + 1) - game_vis_area.min_y;
 		   
-  set_ui_visarea(game_vis_area.min_x, game_vis_area.min_y,
+  ui_set_visible_area(game_vis_area.min_x, game_vis_area.min_y,
     game_vis_area.max_x, game_vis_area.max_y);
 
   normal_params_changed |= VISIBLE_AREA_CHANGED;
@@ -1120,7 +1119,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 
 		/* determine non hotkey flags */
-		if (ui_dirty)
+		if (ui_is_dirty())
 			flags |= SYSDEP_DISPLAY_UI_DIRTY;
 
 		if (display->changed_flags & GAME_BITMAP_CHANGED)
@@ -1422,5 +1421,5 @@ const char *osd_get_fps_text(const struct performance_info *performance)
  */
 int should_sleep_idle()
 {
-	return sleep_idle && !setup_active();
+	return sleep_idle && !ui_is_setup_active();
 }

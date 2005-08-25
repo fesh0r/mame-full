@@ -38,8 +38,6 @@ extern char *rompath_extra;
 
 /* from datafile.c */
 extern const char *db_filename;
-extern const char *history_filename;
-extern const char *mameinfo_filename;
 
 /* from cheat.c */
 extern char *cheatfile;
@@ -115,13 +113,6 @@ struct rc_option fileio_opts[] =
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, XMAMEROOT"/ctrlr", 0, 0, NULL, "Directory to save controller definitions" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
 	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
-#ifdef MESS
-	{ "sysinfo_file", NULL, rc_string, &history_filename, XMAMEROOT"/sysinfo.dat", 0, 0, NULL, NULL },
-	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/messinfo.dat", 0, 0, NULL, NULL },
-#else
-	{ "history_file", NULL, rc_string, &history_filename, XMAMEROOT"/history.dat", 0, 0, NULL, NULL },
-	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/mameinfo.dat", 0, 0, NULL, NULL },
-#endif
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "Set a file to record keypresses into" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "Set a file to playback keypresses from" },
 	{ "stdout-file", "out", rc_file, &stdout_file, NULL, 1,	0, NULL, "Set a file to redirect stdout to" },

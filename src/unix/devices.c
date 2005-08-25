@@ -1363,7 +1363,7 @@ void unset_rapidfire_ctrl_button(int joy_num)
 	rapidfire_data[joy_num].ctrl_button = -1;
 }
 
-int setrapidfire(struct mame_bitmap *bitmap, int selected)
+int setrapidfire(int selected)
 {
 	const char *menu_item[42] = {
 		"Joy1Button 1",
@@ -1412,7 +1412,6 @@ int setrapidfire(struct mame_bitmap *bitmap, int selected)
 	const char *menu_subitem[42];
 	char sub[42][16];
 	int sel;
-	int arrowize;
 	int items = 41;
 	int joy;
 	int button;
@@ -1444,8 +1443,7 @@ int setrapidfire(struct mame_bitmap *bitmap, int selected)
 			menu_subitem[ (joy*10) + button ] = &sub[ (joy*10) + button ][0];
 		}
 	}
-	arrowize = 0;
-	ui_displaymenu(bitmap, menu_item, menu_subitem, 0, sel, arrowize);
+	/*ui_draw_menu(menu_item, menu_subitem, 0, sel, 0);*/
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % items;
@@ -1574,7 +1572,7 @@ void joystick_rapidfire(void)
 	int button_num;
 	int ctrl;
 
-	if (setup_active())
+	if (ui_is_setup_active())
 		return;
 
 	for (joy_num=0; joy_num<4 && joy_data[joy_num].fd>=0; joy_num++)

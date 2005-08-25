@@ -20,8 +20,6 @@ extern void XInput_trackballs_reset();
 /* from ... */
 extern char *cheatfile;
 extern char *db_filename;
-extern char *history_filename;
-extern char *mameinfo_filename;
 
 extern char *playbackname;
 extern char *recordname;
@@ -105,7 +103,6 @@ static struct rc_option opts2[] = {
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "Skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
 	{ "skip_validitychecks", NULL, rc_bool, &options.skip_validitychecks, "1", 0, 0, NULL, "Skip doing the code validity checks" },
-	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "Use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
 #ifdef MAME_DEBUG
@@ -260,8 +257,6 @@ int xmame_config_init(int argc, char *argv[])
 	options.gui_host = 1;
 	cheatfile = NULL;
 	db_filename = NULL;
-	history_filename = NULL;
-	mameinfo_filename = NULL;
 
 	/* create the rc object */
 	if (!(rc = rc_create()))
@@ -437,7 +432,7 @@ int xmame_config_init(int argc, char *argv[])
 			game_index = (float)rand()*i/RAND_MAX;
 
 			fprintf(stdout_file, "Random game selected: %s (%s)\n  verifying roms... ",drivers[game_index]->name,drivers[game_index]->description);
-			if(VerifyRomSet (game_index, (verify_printf_proc)config_printf) == CORRECT)
+			if(audit_verify_roms (game_index, (verify_printf_proc)config_printf) == CORRECT)
 			{
 				fprintf(stdout_file, "OK\n");
 				break;

@@ -39,9 +39,9 @@ struct rc_option frontend_ident_opts[] = {
 
 
 /* Identifies a rom from from this checksum */
-static void match_roms(const struct GameDriver *driver,const char* hash,int *found)
+static void match_roms(const game_driver *driver,const char* hash,int *found)
 {
-	const struct RomModule *region, *rom;
+	const rom_entry *region, *rom;
 
 	for (region = rom_first_region(driver); region; region = rom_next_region(region))
 	{
@@ -166,10 +166,7 @@ void identify_file(const char* name)
 	/* Compute checksum of all the available functions. Since MAME for
 	   now carries inforamtions only for CRC and SHA1, we compute only
 	   these */
-	if (options.crc_only)
-		hash_compute(hash, data, length, HASH_CRC);
-	else
-		hash_compute(hash, data, length, HASH_CRC|HASH_SHA1);
+	hash_compute(hash, data, length, HASH_CRC | HASH_SHA1);
 	
 	/* Try to identify the ROM */
 	identify_rom(name, hash, length);
@@ -191,6 +188,7 @@ void identify_zip(const char* zipname)
 			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
 			char hash[HASH_BUF_SIZE];
 			UINT8 crcs[4];
+			UINT8 *data;
 
 /*			sprintf(buf,"%s/%s",zipname,ent->name); */
 			sprintf(buf,"%-12s",ent->name);
@@ -201,13 +199,10 @@ void identify_zip(const char* zipname)
 			   ZIP header) */
 			hash_data_clear(hash);
 
-			if (!options.crc_only)
-			{
-				UINT8* data =  (UINT8*)malloc(ent->uncompressed_size);
-				readuncompresszip(zip, ent, (char *)data);
-				hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
-				free(data);
-			}
+			data =  (UINT8*)malloc(ent->uncompressed_size);
+			readuncompresszip(zip, ent, (char *)data);
+			hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
+			free(data);
 			
 			crcs[0] = (UINT8)(ent->crc32 >> 24);
 			crcs[1] = (UINT8)(ent->crc32 >> 16);

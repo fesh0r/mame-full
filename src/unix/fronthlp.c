@@ -96,8 +96,8 @@ struct rc_option frontend_list_opts[] = {
 int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
 	int cmp;
-	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
-	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	game_driver *drv1 = *(game_driver **)elem1;
+	game_driver *drv2 = *(game_driver **)elem2;
 	char name1[200], name2[200];
 	namecopy(name1, drv1->description, 200);
 	namecopy(name2, drv2->description, 200);
@@ -109,8 +109,8 @@ int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 
 int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
 {
-	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
-	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	game_driver *drv1 = *(game_driver **)elem1;
+	game_driver *drv2 = *(game_driver **)elem2;
 	return strcmp(drv1->name, drv2->name);
 }
 
@@ -204,9 +204,9 @@ static void frontend_verify(int driver, int rom)
 	int status;
 
 	if(rom)
-		status = VerifyRomSet(driver, (verify_printf_proc)myprintf);
+		status = audit_verify_roms(driver, (verify_printf_proc)myprintf);
 	else
-		status = VerifySampleSet(driver, (verify_printf_proc)myprintf);
+		status = audit_verify_samples(driver, (verify_printf_proc)myprintf);
 
 	if (verbose)
 		fprintf(stdout_file, "%s %s ", rom? "romset":"sampleset",
@@ -239,7 +239,7 @@ static void frontend_verify(int driver, int rom)
 
 static int frontend_uses_roms(int driver)
 {
-	const struct RomModule *region, *rom;
+	const rom_entry *region, *rom;
 	int total_roms = 0;
 
 	for (region = rom_first_region(drivers[driver]); region; region = rom_next_region(region))
@@ -334,7 +334,7 @@ int frontend_list(char *gamename)
 			"--------  ----------  -----------\n"
 	};
 
-	struct InternalMachineDriver drv;
+	machine_config drv;
 	int matching     = 0;
 	int skipped      = 0;
 
@@ -434,14 +434,14 @@ int frontend_list(char *gamename)
 					/* Then, cpus */
 					for(j=0;j<MAX_CPU;j++)
 					{
-						const struct MachineCPU *x_cpu = drv.cpu;
+						const cpu_config *x_cpu = drv.cpu;
 						fprintf(stdout_file, "%-8s ",cputype_name(x_cpu[j].cpu_type));
 					}
 					fprintf(stdout_file, " ");
 
 					for(j=0;j<MAX_SOUND;j++)
 					{
-						const struct MachineSound *x_sound = drv.sound;
+						const sound_config *x_sound = drv.sound;
 						fprintf(stdout_file, "%-11s ", sndtype_name(x_sound[j].sound_type));
 					}
 
@@ -454,7 +454,7 @@ int frontend_list(char *gamename)
 
 						if (drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 						{
-							const struct GameDriver *maindrv;
+							const game_driver *maindrv;
 							int foundworking;
 
 							if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
@@ -565,7 +565,7 @@ int frontend_list(char *gamename)
 #endif
 				case LIST_ROMSIZE:
 					{
-						const struct RomModule *region, *rom, *chunk;
+						const rom_entry *region, *rom, *chunk;
 
 						j = 0;
 						for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
@@ -584,14 +584,54 @@ int frontend_list(char *gamename)
 					break;
 
 				case LIST_ROMS: /* game roms list */
-					if(!frontend_uses_roms(i))
 					{
-						skipped++;
-						continue;
-					}
+						const rom_entry *region, *rom, *chunk;
+						char buf[512];
 
-					printromlist(drivers[i]->rom, drivers[i]->name);
-					fprintf(stdout_file, "\n");
+						if (!frontend_uses_roms(i))
+						{
+							skipped++;
+							continue;
+						}
+
+						fprintf(stdout_file, "This is the list of the ROMs required for driver \"%s\".\n"
+									"Name            Size Checksum\n", gamename);
+						for (region = drivers[i]->rom; region; region = rom_next_region(region))			
+						{
+							for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+							{
+								const char *name = ROM_GETNAME(rom);
+								const char* hash = ROM_GETHASHDATA(rom);
+								int length = -1; /* default is for disks! */
+
+								if (ROMREGION_ISROMDATA(region))
+								{
+									length = 0;
+									for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+										length += ROM_GETLENGTH(chunk);
+								}
+
+								fprintf(stdout_file, "%-12s ", name);
+								if (length >= 0)
+									fprintf(stdout_file, "%7d",length);
+								else
+									fprintf(stdout_file, "       ");
+
+								if (!hash_data_has_info(hash, HASH_INFO_NO_DUMP))
+								{
+									if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
+										fprintf(stdout_file, " BAD");
+
+									hash_data_print(hash, 0, buf);
+									fprintf(stdout_file, " %s", buf);
+								}
+								else
+									fprintf(stdout_file, " NO GOOD DUMP KNOWN");
+
+								fprintf(stdout_file, "\n");
+							}
+						}
+					}
 					break;
 #if (HAS_SAMPLES || HAS_VLM5030)
 				case LIST_SAMPLES: /* game samples list */
@@ -670,7 +710,7 @@ int frontend_list(char *gamename)
 
 					/*** internal verification list commands (developers only) ***/
 				case LIST_MISSINGROMS:
-					if (RomsetMissing (i))
+					if (audit_has_missing_roms (i))
 					{
 						fprintf(stdout_file, "%-10s%-10s%s\n", drivers[i]->name,
 								(drivers[i]->clone_of) ? drivers[i]->clone_of->name : "",
@@ -680,10 +720,10 @@ int frontend_list(char *gamename)
 					break;
 				case LIST_DUPCRC:
 					{
-						const struct RomModule *region, *rom;
+						const rom_entry *region, *rom;
 						int found = 0;
 
-						if(!frontend_uses_roms(i))
+						if (!frontend_uses_roms(i))
 						{
 							skipped++;
 							continue;
@@ -694,7 +734,7 @@ int frontend_list(char *gamename)
 								if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
 									for (j = i + 1; drivers[j]; j++)
 									{
-										const struct RomModule *region1, *rom1;
+										const rom_entry *region1, *rom1;
 
 										for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
 											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
@@ -789,10 +829,10 @@ int frontend_list(char *gamename)
 					break;
 				case LIST_WRONGMERGE: /* list duplicate crc-32 with different ROM name in clone sets */
 					{
-						const struct RomModule *region, *rom;
+						const rom_entry *region, *rom;
 						int found = 0;
 
-						if(!frontend_uses_roms(i))
+						if (!frontend_uses_roms(i))
 						{
 							skipped++;
 							continue;
@@ -805,7 +845,7 @@ int frontend_list(char *gamename)
 									{
 										if (j != i && drivers[j]->clone_of && (drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 && (drivers[j]->clone_of == drivers[i] || (i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
 										{
-											const struct RomModule *region1, *rom1;
+											const rom_entry *region1, *rom1;
 											int match = 0;
 
 											for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
@@ -953,7 +993,7 @@ static int frontend_list_clones(char *gamename)
 
 static int frontend_list_cpu(void)
 {
-	struct InternalMachineDriver drv;
+	machine_config drv;
 	int i, j;
 	int year;
 
@@ -979,7 +1019,7 @@ static int frontend_list_cpu(void)
 			expand_machine_driver(drivers[i]->drv, &drv);	
 			if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 			{
-				const struct MachineCPU *x_cpu = drv.cpu;
+				const cpu_config *x_cpu = drv.cpu;
 
 				if (atoi(drivers[i]->year) == year)
 				{
@@ -1077,7 +1117,7 @@ static int frontend_list_hash(int type)
 	int i;
 	for (i = 0; drivers[i]; i++)
 	{
-		const struct RomModule *region, *rom;
+		const rom_entry *region, *rom;
 		for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
 			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
@@ -1101,7 +1141,7 @@ static int frontend_list_hash(int type)
  * loading
  */
 int osd_display_loading_rom_message(const char *name,
-		struct rom_load_data *romdata)
+		rom_load_data *romdata)
 {
 	static int count = 0;
 	

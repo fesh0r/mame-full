@@ -2,7 +2,7 @@
 
 int rapidfire_enable;
 
-int setrapidfire(struct mame_bitmap *bitmap, int selected)
+int setrapidfire(int selected)
 {
 	return 1;
 }
