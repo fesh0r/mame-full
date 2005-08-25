@@ -315,6 +315,7 @@ static void create_font(void);
 static void onscrd_init(void);
 
 static int handle_keys(struct mame_bitmap *bitmap);
+static void ui_display_fps(void);
 static void ui_display_profiler(void);
 static void ui_display_popup(void);
 static int setup_menu(int selected);
