@@ -1802,10 +1802,10 @@ void osd_joystick_end_calibration(void)
 /*	osd_customize_inputport_list */
 /*============================================================ */
 
-void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
 	static input_seq_t no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
-	struct InputPortDefinition *idef = defaults;
+	input_port_default_entry *idef = defaults;
 
 	/* loop over all the defaults */
 	while (idef->type != IPT_END)

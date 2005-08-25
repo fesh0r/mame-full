@@ -689,7 +689,7 @@ static void update_params(void)
   normal_params_changed = 0;
 }
 
-static void update_palette(struct mame_display *display, int force_dirty)
+static void update_palette(mame_display *display, int force_dirty)
 {
 	int i, j;
 
@@ -722,7 +722,7 @@ static void update_palette(struct mame_display *display, int force_dirty)
 	}
 }
 
-static void update_debug_display(struct mame_display *display)
+static void update_debug_display(mame_display *display)
 {
         struct rectangle vis_area;
         struct rectangle dirty_area;
@@ -886,7 +886,7 @@ void change_debugger_focus(int new_debugger_focus)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct mame_display *display)
+void osd_update_video_and_audio(mame_display *display)
 {
 	cycles_t curr;
 	const char *msg = NULL;
