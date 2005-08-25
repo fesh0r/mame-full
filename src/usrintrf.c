@@ -338,7 +338,6 @@ static UINT32 menu_reset_game(UINT32 state);
 static UINT32 menu_bookkeeping(UINT32 state);
 static UINT32 menu_game_info(UINT32 state);
 #else
-static UINT32 menu_image_info(UINT32 state);
 static UINT32 menu_file_manager(UINT32 state);
 static UINT32 menu_tape_control(UINT32 state);
 #endif
@@ -1364,7 +1363,7 @@ do { \
 	ADD_MENU(UI_gameinfo, menu_game_info, 0);
 #else /* MESS */
   	/* add image info menu */
-	ADD_MENU(UI_imageinfo, menu_image_info, 0);
+	ADD_MENU(UI_imageinfo, ui_menu_image_info, 0);
 
   	/* add image info menu */
 	ADD_MENU(UI_filemanager, menu_file_manager, 0);
@@ -2234,12 +2233,6 @@ static UINT32 menu_reset_game(UINT32 state)
  *************************************/
 
 #ifdef MESS
-static UINT32 menu_image_info(UINT32 state)
-{
-	return ui_menu_stack_pop();
-}
-
-
 static UINT32 menu_file_manager(UINT32 state)
 {
 	return ui_menu_stack_pop();
@@ -3021,8 +3014,28 @@ int ui_display_game_info(struct mame_bitmap *bitmap)
 	}
 
 #ifdef MESS
-	while (ui_display_image_info(0) == 1)
+	erase_screen(bitmap);
+	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
+	update_video_and_audio();
+	update_video_and_audio();
+	update_video_and_audio();
+	update_video_and_audio();
+
+	while (code_read_async() == CODE_NONE)
 	{
+		char *bufptr = buf;
+
+		/* first draw a box around the whole screen */
+		ui_get_bounds(&ui_width, &ui_height);
+		add_filled_box(0, 0, ui_width - 1, ui_height - 1);
+
+		/* add the game info */
+		bufptr += ui_sprintf_image_info(bufptr);
+
+		/* draw the window */
+		ui_draw_message_window(buf);
+
+		/* render and update */
 		render_ui(bitmap);
 		update_video_and_audio();
 	}

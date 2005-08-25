@@ -126,11 +126,19 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 	return trying_to_quit;
 }
 
-int ui_display_image_info(int selected)
+
+
+/*************************************
+ *
+ *  Image info
+ *
+ *************************************/
+
+int ui_sprintf_image_info(char *buf)
 {
-	char buf[2048], *dst = buf;
+	char *dst = buf;
 	const struct IODevice *dev;
-	int id, sel = selected - 1;
+	int id;
 
 	dst += sprintf(dst, "%s\n\n", Machine->gamedrv->description);
 
@@ -188,46 +196,27 @@ int ui_display_image_info(int selected)
 			}
 		}
 	}
+	return dst - buf;
+}
 
-	if (sel == -1)
-	{
-		/* startup info, print MAME version and ask for any key */
 
-		strcat(buf, "\n\t");
-		strcat(buf, ui_getstring(UI_anykey));
-		ui_draw_message_window(buf);
 
-		sel = 0;
-		if (code_read_async() != CODE_NONE)
-			sel = -1;
-	}
-	else
-	{
-		/* menu system, use the normal menu keys */
-		strcat(buf,"\n\t");
-		strcat(buf,ui_getstring(UI_lefthilight));
-		strcat(buf," ");
-		strcat(buf,ui_getstring(UI_returntomain));
-		strcat(buf," ");
-		strcat(buf,ui_getstring(UI_righthilight));
+UINT32 ui_menu_image_info(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
 
-		ui_draw_message_window(buf);
+	/* add the game info */
+	bufptr += ui_sprintf_image_info(bufptr);
 
-		if (input_ui_pressed(IPT_UI_SELECT))
-			sel = -1;
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
 
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			sel = -1;
+	/* draw the text */
+	ui_draw_message_window(buf);
 
-		if (input_ui_pressed(IPT_UI_CONFIGURE))
-			sel = -2;
-	}
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
+	/* handle the keys */
+	ui_menu_generic_keys(&selected, 1);
+	return selected;
 }
