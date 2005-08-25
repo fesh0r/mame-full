@@ -256,7 +256,7 @@ VIDEO_START( cyclwarr )
 
 /********************************************************************/
 
-INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,unsigned int ssx,unsigned int ssy,
 		const struct rectangle *clip, int scalex, int scaley, int rotate, int write_priority_only )
 {

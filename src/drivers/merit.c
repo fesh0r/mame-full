@@ -439,7 +439,7 @@ VIDEO_UPDATE( merit )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
-static struct GfxLayout tiles8x8x3_layout =
+static gfx_layout tiles8x8x3_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -450,7 +450,7 @@ static struct GfxLayout tiles8x8x3_layout =
 	16*8
 };
 
-static struct GfxLayout tiles8x8x1_layout =
+static gfx_layout tiles8x8x1_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -461,7 +461,7 @@ static struct GfxLayout tiles8x8x1_layout =
 	16*8
 };
 
-struct GfxDecodeInfo merit_gfxdecodeinfo[] =
+gfx_decode merit_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x3_layout, 0,  32 },
 	{ REGION_GFX2, 0, &tiles8x8x1_layout, 0, 128 },

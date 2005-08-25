@@ -117,7 +117,7 @@ INPUT_PORTS_START( wswan )
 	PORT_BIT( 0x8, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Button B") 
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 { { -1 } /* end of array */ };
 
 /* WonderSwan can display 16 shades of grey */

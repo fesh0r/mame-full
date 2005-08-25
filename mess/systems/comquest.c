@@ -171,7 +171,7 @@ INPUT_PORTS_START( comquest )
 
 INPUT_PORTS_END
 
-static struct GfxLayout comquest_charlayout =
+static gfx_layout comquest_charlayout =
 {
         8,8,
         256*8,                                    /* 256 characters */
@@ -202,7 +202,7 @@ static struct GfxLayout comquest_charlayout =
         8*8
 };
 
-static struct GfxDecodeInfo comquest_gfxdecodeinfo[] = {
+static gfx_decode comquest_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &comquest_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };

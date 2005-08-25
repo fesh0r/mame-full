@@ -31,7 +31,7 @@ struct	{
 	UINT8	saa5050_prvchr;
 } saa5050_state;
 
-static struct GfxLayout saa5050_charlayout =
+static gfx_layout saa5050_charlayout =
 {
 	6, 10,
 	256,
@@ -43,7 +43,7 @@ static struct GfxLayout saa5050_charlayout =
 	8 * 10
 };
 
-static struct GfxLayout saa5050_hilayout =
+static gfx_layout saa5050_hilayout =
 {
 	6, 10,
 	256,
@@ -55,7 +55,7 @@ static struct GfxLayout saa5050_hilayout =
 	8 * 10
 };
 
-static struct GfxLayout saa5050_lolayout =
+static gfx_layout saa5050_lolayout =
 {
 	6, 10,
 	256,
@@ -67,7 +67,7 @@ static struct GfxLayout saa5050_lolayout =
 	8 * 10
 };
 
-static struct GfxDecodeInfo saa5050_gfxdecodeinfo[] =
+static gfx_decode saa5050_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &saa5050_charlayout, 0, 128},
 	{ REGION_GFX1, 0x0000, &saa5050_hilayout, 0, 128},

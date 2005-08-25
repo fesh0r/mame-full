@@ -78,7 +78,7 @@ INLINE void get_rng_936_tile_info(int tile_index)
 
 VIDEO_START(rng)
 {
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8, 8,	// 8x8
 		4096,	// # of tiles

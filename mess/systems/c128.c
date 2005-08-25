@@ -1035,7 +1035,7 @@ static PALETTE_INIT( c128 )
 	}
 }
 
-static struct GfxLayout c128_charlayout =
+static gfx_layout c128_charlayout =
 {
 	8,16,
 	512,                                    /* 256 characters */
@@ -1050,7 +1050,7 @@ static struct GfxLayout c128_charlayout =
 	8*16
 };
 
-static struct GfxLayout c128graphic_charlayout =
+static gfx_layout c128graphic_charlayout =
 {
 	8,1,
 	256,                                    /* 256 characters */
@@ -1063,7 +1063,7 @@ static struct GfxLayout c128graphic_charlayout =
 	8
 };
 
-static struct GfxDecodeInfo c128_gfxdecodeinfo[] = {
+static gfx_decode c128_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &c128_charlayout, 0, 0x100 },
 	{ 2, 0x0000, &c128graphic_charlayout, 0, 0x100 },
     { -1 } /* end of array */
@@ -1250,7 +1250,7 @@ ROM_START (c128nor)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
-static SID6581_interface sound_interface =
+static SID6581_interface c128_sound_interface =
 {
 	c64_paddle_read
 };
@@ -1292,7 +1292,7 @@ static MACHINE_DRIVER_START( c128 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("sid6581", SID6581, VIC6567_CLOCK)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c128_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1313,7 +1313,7 @@ static MACHINE_DRIVER_START( c128pal )
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("sid6581", SID6581, VIC6569_CLOCK)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c128_sound_interface)
 MACHINE_DRIVER_END
 
 #define init_c128 c128_driver_init

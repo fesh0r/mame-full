@@ -18,9 +18,9 @@ WRITE8_HANDLER ( pc_MDA_w );
  READ8_HANDLER ( pc_MDA_r );
 
 extern unsigned char mda_palette[4][3];
-extern struct GfxLayout pc_mda_charlayout;
-extern struct GfxLayout pc_mda_gfxlayout_1bpp;
-extern struct GfxDecodeInfo pc_mda_gfxdecodeinfo[];
+extern gfx_layout pc_mda_charlayout;
+extern gfx_layout pc_mda_gfxlayout_1bpp;
+extern gfx_decode pc_mda_gfxdecodeinfo[];
 extern unsigned short mda_colortable[256*2+1*2];
 
 PALETTE_INIT( pc_mda );

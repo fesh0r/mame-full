@@ -1327,7 +1327,7 @@ void toaplan2_log_vram(void)
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int controller, int priority_to_display, int bank_sel )
 {
-	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
+	const gfx_element *gfx = Machine->gfx[ ((controller*2)+1) ];
 
 	int offs;
 

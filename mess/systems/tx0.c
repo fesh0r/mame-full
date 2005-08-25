@@ -204,7 +204,7 @@ static INPUT_PORTS_START( tx0 )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fontlayout =
+static gfx_layout fontlayout =
 {
 	6, 8,			/* 6*8 characters */
 	tx0_charnum,	/* 96+xx characters */
@@ -215,7 +215,7 @@ static struct GfxLayout fontlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fontlayout, 0, 3 },
 	{ -1 }	/* end of array */

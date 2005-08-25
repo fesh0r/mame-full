@@ -111,7 +111,7 @@ static UINT16 mono[2], monoinverted[2], multi[4], multiinverted[4];
 /* transparent, white, black */
 static UINT32 pointercolortable[3] =
 {0};
-static struct GfxLayout pointerlayout =
+static gfx_layout pointerlayout =
 {
 	8, 8,
 	1,
@@ -128,7 +128,7 @@ static UINT8 pointermask[] =
 	0xf0, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00	/* whitemask */
 };
 
-static struct GfxElement *pointerelement;
+static gfx_element *pointerelement;
 
 static void vic656x_init (void)
 {

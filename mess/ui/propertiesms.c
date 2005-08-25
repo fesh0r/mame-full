@@ -186,7 +186,7 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     return bResult;
 }
 
-BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
+BOOL PropSheetFilter_Config(const machine_config *drv, const game_driver *gamedrv)
 {
 	return (ram_option_count(gamedrv) > 0) || DriverHasDevice(gamedrv, IO_PRINTER);
 }
@@ -234,7 +234,7 @@ enum component_msg
 	CMSG_COMMAND
 };
 
-static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params)
 {
 	HWND hList;
 	RECT        rectClient;
@@ -343,7 +343,7 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 	return TRUE;
 }
 
-static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params)
 {
 	char buf[RAM_STRING_BUFLEN];
 	int i, ramopt_count, sel, default_index, nIndex;
@@ -422,7 +422,7 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	return TRUE;
 }
 
-static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params)
 {
 	HWND hPrinterText, hPrinterCaption, hPrinterBrowse;
 	options_type *o = params->o;
@@ -497,7 +497,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 
 /* ------------------------------------------------------------------------ */
 
-typedef BOOL (*component_proc)(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params);
+typedef BOOL (*component_proc)(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params);
 
 static component_proc s_ComponentProcs[] =
 {
@@ -509,7 +509,7 @@ static component_proc s_ComponentProcs[] =
 static BOOL InvokeComponentProcs(int nGame, enum component_msg msg, HWND hWnd, struct component_param_block *params)
 {
 	int i;
-	const struct GameDriver *gamedrv;
+	const game_driver *gamedrv;
 	BOOL handled = FALSE;
 
 	/* figure out which GameDriver we're using.  NULL indicated default options */

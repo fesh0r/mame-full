@@ -214,7 +214,7 @@ INPUT_PORTS_START(ti99_4p)
 INPUT_PORTS_END
 
 
-static const struct GfxDecodeInfo gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ -1 }		/* end of array */
 };

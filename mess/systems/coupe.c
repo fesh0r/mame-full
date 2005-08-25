@@ -274,7 +274,7 @@ ADDRESS_MAP_START( coupe_io , ADDRESS_SPACE_IO, 8)
 	AM_RANGE( 0x0000, 0x0ffff) AM_READWRITE( coupe_port_r, coupe_port_w )
 ADDRESS_MAP_END
 
-static struct GfxDecodeInfo coupe_gfxdecodeinfo[] = {
+static gfx_decode coupe_gfxdecodeinfo[] = {
 	{-1}
 };	 /* end of array */
 

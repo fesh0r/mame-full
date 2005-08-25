@@ -142,7 +142,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout sb2m600_charlayout =
+static gfx_layout sb2m600_charlayout =
 {
 	8, 8,
 	256,
@@ -153,7 +153,7 @@ static struct GfxLayout sb2m600_charlayout =
 	8 * 8
 };
 
-static struct GfxLayout uk101_charlayout =
+static gfx_layout uk101_charlayout =
 {
 	8, 16,
 	256,
@@ -167,13 +167,13 @@ static struct GfxLayout uk101_charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo sb2m600_gfxdecodeinfo[] =
+static gfx_decode sb2m600_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &sb2m600_charlayout, 0, 1 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo uk101_gfxdecodeinfo[] =
+static gfx_decode uk101_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &uk101_charlayout, 0, 1 },
 	{ -1 }

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.38 2005/06/17 02:12:55 npwoods Exp $
+  $Id: pc8801.c,v 1.39 2005/08/25 04:16:22 npwoods Exp $
 
 ***************************************************************************/
 
@@ -15,7 +15,7 @@
 #include "devices/basicdsk.h"
 #include "sound/2203intf.h"
 
-static struct GfxLayout char_layout_40L_h =
+static gfx_layout char_layout_40L_h =
 {
 	8, 4,						/* 16 x 4 graphics */
 	1024,						/* 256 codes */
@@ -26,7 +26,7 @@ static struct GfxLayout char_layout_40L_h =
 	8 * 2						/* code takes 8 times 8 bits */
 };
 
-static struct GfxLayout char_layout_40R_h =
+static gfx_layout char_layout_40R_h =
 {
 	8, 4,						/* 16 x 4 graphics */
 	1024,						/* 256 codes */
@@ -37,7 +37,7 @@ static struct GfxLayout char_layout_40R_h =
 	8 * 2						/* code takes 8 times 8 bits */
 };
 
-static struct GfxLayout char_layout_80_h =
+static gfx_layout char_layout_80_h =
 {
 	8, 4,           /* 16 x 4 graphics */
 	1024,            /* 256 codes */
@@ -48,7 +48,7 @@ static struct GfxLayout char_layout_80_h =
 	8 * 2           /* code takes 8 times 8 bits */
 };
 
-static struct GfxLayout char_layout_40L_l =
+static gfx_layout char_layout_40L_l =
 {
 	8, 2,           /* 16 x 4 graphics */
 	1024,            /* 256 codes */
@@ -59,7 +59,7 @@ static struct GfxLayout char_layout_40L_l =
 	8 * 2           /* code takes 8 times 8 bits */
 };
 
-static struct GfxLayout char_layout_40R_l =
+static gfx_layout char_layout_40R_l =
 {
 	8, 2,           /* 16 x 4 graphics */
 	1024,            /* 256 codes */
@@ -70,7 +70,7 @@ static struct GfxLayout char_layout_40R_l =
 	8 * 2           /* code takes 8 times 8 bits */
 };
 
-static struct GfxLayout char_layout_80_l =
+static gfx_layout char_layout_80_l =
 {
 	8, 2,           /* 16 x 4 graphics */
 	1024,            /* 256 codes */
@@ -81,7 +81,7 @@ static struct GfxLayout char_layout_80_l =
 	8 * 2           /* code takes 8 times 8 bits */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout_80_l, 0, 16 },
 	{ REGION_GFX1, 0, &char_layout_40L_l, 0, 16 },

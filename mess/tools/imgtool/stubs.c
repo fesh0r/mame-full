@@ -5,7 +5,7 @@
 /* Variables to hold the status of various game options */
 static FILE *errorlog;
 
-const struct GameDriver *drivers[1];
+const game_driver *drivers[1];
 int rompath_extra;
 int cheatfile;
 const char *db_filename;

@@ -300,7 +300,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	4,
 	8,
@@ -312,7 +312,7 @@ static struct GfxLayout charlayout =
 	8*4*2
 };
 
-static struct GfxLayout magiccrd_charlayout =
+static gfx_layout magiccrd_charlayout =
 {
     4,
 	8,
@@ -326,13 +326,13 @@ static struct GfxLayout magiccrd_charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout, 0, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo magiccrd_gfxdecodeinfo[] =
+static gfx_decode magiccrd_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &magiccrd_charlayout, 0, 16 },
 	{ -1 }

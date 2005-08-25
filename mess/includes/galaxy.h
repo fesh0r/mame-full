@@ -11,7 +11,7 @@ extern READ8_HANDLER( galaxy_latch_r );
 extern WRITE8_HANDLER( galaxy_latch_w );
 
 /* vidhrdw/galaxy.c */
-extern struct GfxLayout galaxy_charlayout;
+extern gfx_layout galaxy_charlayout;
 extern unsigned char galaxy_palette[2*3];
 extern unsigned short galaxy_colortable[1][2];
 extern PALETTE_INIT( galaxy );

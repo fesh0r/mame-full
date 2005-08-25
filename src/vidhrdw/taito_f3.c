@@ -648,7 +648,7 @@ VIDEO_START( f3 )
 	init_alpha_blend_func();
 
 	{
-		const struct GfxElement *sprite_gfx = Machine->gfx[2];
+		const gfx_element *sprite_gfx = Machine->gfx[2];
 		int c;
 
 		for (c = 0;c < sprite_gfx->total_elements;c++)
@@ -672,7 +672,7 @@ VIDEO_START( f3 )
 
 
 	{
-		const struct GfxElement *pf_gfx = Machine->gfx[1];
+		const gfx_element *pf_gfx = Machine->gfx[1];
 		int c;
 
 		for (c = 0;c < pf_gfx->total_elements;c++)
@@ -2647,7 +2647,7 @@ static void f3_scanline_draw(struct mame_bitmap *bitmap, const struct rectangle 
 	dest++;						\
 	pri++;
 
-INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,
 		unsigned int color,
 		int flipx,int flipy,
@@ -2810,7 +2810,7 @@ INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const struct GfxElement *gf
 #undef NEXT_P
 
 
-INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,
 		unsigned int color,
 		int flipx,int flipy,
@@ -3212,7 +3212,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 static void f3_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	const struct tempsprite *sprite_ptr;
-	const struct GfxElement *sprite_gfx = Machine->gfx[2];
+	const gfx_element *sprite_gfx = Machine->gfx[2];
 
 	sprite_ptr = sprite_end;
 	sprite_pri_usage=0;

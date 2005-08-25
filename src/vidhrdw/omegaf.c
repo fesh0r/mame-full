@@ -607,7 +607,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				if(sprite_overdraw_enabled)
 				{
 					int x,y,offset = 0;
-					const struct GfxElement *gfx = Machine->gfx[(big) ? 4 : 3];
+					const gfx_element *gfx = Machine->gfx[(big) ? 4 : 3];
 					data8_t *srcgfx = gfx->gfxdata + tile * gfx->char_modulo;
 
 					for(y = 0; y < gfx->height; y++)

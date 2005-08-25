@@ -248,7 +248,7 @@ static INPUT_PORTS_START( super80 )
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_UNUSED)
 INPUT_PORTS_END
 
-struct GfxLayout super80_elg4_charlayout =
+gfx_layout super80_elg4_charlayout =
 {
 	8,10,					/* 8 x 10 characters */
 	256,					/* 256 characters */
@@ -262,7 +262,7 @@ struct GfxLayout super80_elg4_charlayout =
 	8*16					/* every char takes 16 bytes */
 };
 
-struct GfxLayout super80_dslc_charlayout =
+gfx_layout super80_dslc_charlayout =
 {
 	8,10,					/* 8 x 10 characters */
 	128,					/* 128 characters */
@@ -276,7 +276,7 @@ struct GfxLayout super80_dslc_charlayout =
 	8*16					/* every char takes 16 bytes */
 };
 
-static struct GfxDecodeInfo super80_gfxdecodeinfo[] =
+static gfx_decode super80_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &super80_elg4_charlayout, 0, 2},
 	{ REGION_GFX1, 0x1000, &super80_dslc_charlayout, 0, 2},

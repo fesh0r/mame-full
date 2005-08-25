@@ -98,8 +98,8 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 int mess_validitychecks(void);
 
 /* these are called from mame.c*/
-int devices_init(const struct GameDriver *gamedrv);
-int devices_initialload(const struct GameDriver *gamedrv, int ispreload);
+int devices_init(const game_driver *gamedrv);
+int devices_initialload(const game_driver *gamedrv, int ispreload);
 void devices_exit(void);
 
 char *auto_strlistdup(char *strlist);
@@ -119,8 +119,8 @@ enum
 /* This call is used to return the next compatible driver with respect to
  * software images.  It is usable both internally and from front ends
  */
-const struct GameDriver *mess_next_compatible_driver(const struct GameDriver *drv);
-int mess_count_compatible_drivers(const struct GameDriver *drv);
+const game_driver *mess_next_compatible_driver(const game_driver *drv);
+int mess_count_compatible_drivers(const game_driver *drv);
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -131,10 +131,10 @@ extern data8_t mess_ram_default_value;
 
 /* RAM parsing options */
 #define RAM_STRING_BUFLEN 16
-UINT32		ram_option(const struct GameDriver *gamedrv, unsigned int i);
-int			ram_option_count(const struct GameDriver *gamedrv);
-int			ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
-UINT32		ram_default(const struct GameDriver *gamedrv);
+UINT32		ram_option(const game_driver *gamedrv, unsigned int i);
+int			ram_option_count(const game_driver *gamedrv);
+int			ram_is_valid_option(const game_driver *gamedrv, UINT32 ram);
+UINT32		ram_default(const game_driver *gamedrv);
 UINT32		ram_parse_string(const char *s);
 const char *ram_string(char *buffer, UINT32 ram);
 int			ram_validate_option(void);

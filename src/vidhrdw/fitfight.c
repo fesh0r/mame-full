@@ -16,7 +16,7 @@ extern char bbprot_kludge;
 
 static void fitfight_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer )
 {
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	data16_t *source = fitfight_spriteram;
 	data16_t *finish = source + 0x800/2;
 

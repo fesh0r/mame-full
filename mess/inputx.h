@@ -85,9 +85,9 @@ enum
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
 void inputx_update(UINT32 *ports);
-void inputx_handle_mess_extensions(struct InputPort *ipt);
+void inputx_handle_mess_extensions(input_port_entry *ipt);
 
-int inputx_validitycheck(const struct GameDriver *gamedrv);
+int inputx_validitycheck(const game_driver *gamedrv);
 
 /* these can be called from FEs */
 int inputx_can_post(void);
@@ -112,9 +112,9 @@ void inputx_postn_utf8(const char *text, size_t text_len);
 void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate);
 
 /* miscellaneous functions */
-int input_classify_port(const struct InputPort *in);
+int input_classify_port(const input_port_entry *in);
 int input_has_input_class(int inputclass);
-int input_player_number(const struct InputPort *in);
+int input_player_number(const input_port_entry *in);
 int input_count_players(void);
 int input_category_active(int category);
 

@@ -152,7 +152,7 @@ BOOL IsAuditResultNo(int audit_result)
 int Mame32VerifyRomSet(int game)
 {
 	int iStatus;
-	iStatus = VerifyRomSet(game, (verify_printf_proc)DetailsPrintf);
+	iStatus = audit_verify_roms(game, (verify_printf_proc)DetailsPrintf);
 	SetRomAuditResults(game, iStatus);
 	return iStatus;
 }
@@ -161,7 +161,7 @@ int Mame32VerifyRomSet(int game)
 int Mame32VerifySampleSet(int game)
 {
 	int iStatus;
-	iStatus = VerifySampleSet(game, (verify_printf_proc)DetailsPrintf);
+	iStatus = audit_verify_samples(game, (verify_printf_proc)DetailsPrintf);
 	SetSampleAuditResults(game, iStatus);
 	return iStatus;
 }

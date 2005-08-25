@@ -162,7 +162,7 @@ INPUT_PORTS_START( microtan )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	PORT_4WAY
 INPUT_PORTS_END
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
     8, 16,      /* 8 x 16 graphics */
     128,        /* 128 codes */
@@ -174,7 +174,7 @@ static struct GfxLayout char_layout =
     8 * 16      /* code takes 8 times 16 bits */
 };
 
-static struct GfxLayout chunky_layout =
+static gfx_layout chunky_layout =
 {
     8, 16,      /* 8 x 16 graphics */
     256,        /* 256 codes */
@@ -186,7 +186,7 @@ static struct GfxLayout chunky_layout =
     8 * 16      /* code takes 8 times 16 bits */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
     { REGION_GFX1, 0, &char_layout, 0, 1 },
     { REGION_GFX2, 0, &chunky_layout, 0, 1 },

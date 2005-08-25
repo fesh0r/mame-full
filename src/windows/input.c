@@ -739,7 +739,7 @@ usage:
 //  autoselect_analog_devices
 //============================================================
 
-static void autoselect_analog_devices(const struct InputPort *inp, int type1, int type2, int type3, int anatype, const char *ananame)
+static void autoselect_analog_devices(const input_port_entry *inp, int type1, int type2, int type3, int anatype, const char *ananame)
 {
 	// loop over input ports
 	for ( ; inp->type != IPT_END; inp++)
@@ -993,7 +993,7 @@ out_of_joysticks:
 
 int win_init_input(void)
 {
-	const struct InputPort *inp;
+	const input_port_entry *inp;
 	HRESULT result;
 
 	// first attempt to initialize DirectInput
@@ -2050,10 +2050,10 @@ void osd_joystick_end_calibration(void)
 //  osd_customize_inputport_list
 //============================================================
 
-void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
 	static input_seq_t no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
-	struct InputPortDefinition *idef = defaults;
+	input_port_default_entry *idef = defaults;
 
 	// loop over all the defaults
 	while (idef->type != IPT_END)

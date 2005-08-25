@@ -754,7 +754,7 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 // that the ROM loading process is finished.
 // return non-zero to abort loading
 #ifndef WINUI
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
+int osd_display_loading_rom_message(const char *name,rom_load_data *romdata)
 {
 	if (name)
 		fprintf(stdout, "loading %-32s\r", name);

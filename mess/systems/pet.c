@@ -573,7 +573,7 @@ static unsigned short pet_colortable[][2] = {
 	{ 1, 0 }
 };
 
-static struct GfxLayout pet_charlayout =
+static gfx_layout pet_charlayout =
 {
         8,8,
         256,                                    /* 256 characters */
@@ -587,7 +587,7 @@ static struct GfxLayout pet_charlayout =
         8*8
 };
 
-static struct GfxLayout pet80_charlayout =
+static gfx_layout pet80_charlayout =
 {
         8,16,
         256,                                    /* 256 characters */
@@ -603,19 +603,19 @@ static struct GfxLayout pet80_charlayout =
         8*16
 };
 
-static struct GfxDecodeInfo pet_gfxdecodeinfo[] = {
+static gfx_decode pet_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &pet_charlayout,                     0, 1 },
 	{ 1, 0x0800, &pet_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo pet80_gfxdecodeinfo[] = {
+static gfx_decode pet80_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &pet80_charlayout,                     0, 1 },
 	{ 1, 0x1000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo superpet_gfxdecodeinfo[] = {
+static gfx_decode superpet_gfxdecodeinfo[] = {
 	{ 2, 0x0000, &pet80_charlayout,                     0, 1 },
 	{ 2, 0x1000, &pet80_charlayout,                     0, 1 },
 	{ 2, 0x2000, &pet80_charlayout,                     0, 1 },

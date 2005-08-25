@@ -1585,7 +1585,7 @@ void m6847_set_cannonical_row_height(void)
 	m6847_set_row_height(rowheight);
 }
 
-void mdrv_m6847(struct InternalMachineDriver *machine, int (*video_start_proc)(void), int is_pal)
+void mdrv_m6847(machine_config *machine, int (*video_start_proc)(void), int is_pal)
 {
 	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE)
 	MDRV_SCREEN_SIZE(M6847_SCREEN_WIDTH, M6847_SCREEN_HEIGHT)

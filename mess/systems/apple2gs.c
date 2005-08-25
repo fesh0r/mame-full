@@ -24,7 +24,7 @@
 #include "machine/appldriv.h"
 #include "sound/es5503.h"
 
-static struct GfxLayout apple2gs_text_layout =
+static gfx_layout apple2gs_text_layout =
 {
 	14,8,		/* 14*8 characters */
 	512,		/* 256 characters */
@@ -35,7 +35,7 @@ static struct GfxLayout apple2gs_text_layout =
 	8*8			/* every char takes 8 bytes */
 };
 
-static struct GfxLayout apple2gs_dbltext_layout =
+static gfx_layout apple2gs_dbltext_layout =
 {
 	7,8,		/* 7*8 characters */
 	512,		/* 256 characters */
@@ -46,7 +46,7 @@ static struct GfxLayout apple2gs_dbltext_layout =
 	8*8			/* every char takes 8 bytes */
 };
 
-static struct GfxDecodeInfo apple2gs_gfxdecodeinfo[] =
+static gfx_decode apple2gs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &apple2gs_text_layout, 0, 2 },
 	{ REGION_GFX1, 0x0000, &apple2gs_dbltext_layout, 0, 2 },

@@ -276,7 +276,7 @@ INPUT_PORTS_START( mz700 )
 	PORT_BIT( 0x10, 0x00, IPT_JOYSTICK_RIGHT) PORT_8WAY
 INPUT_PORTS_END
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8, 8,		/* 8 x 8 graphics */
 	512,		/* 512 codes */
@@ -287,7 +287,7 @@ static struct GfxLayout char_layout =
 	8 * 8		/* code takes 8 times 8 bits */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 256 },
 	{-1}

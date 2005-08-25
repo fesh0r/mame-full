@@ -686,7 +686,7 @@ static unsigned short cbmb_colortable[] = {
 	0, 1
 };
 
-static struct GfxLayout cbm600_charlayout =
+static gfx_layout cbm600_charlayout =
 {
 	8,16,
 	256,                                    /* 256 characters */
@@ -701,7 +701,7 @@ static struct GfxLayout cbm600_charlayout =
 	8*16
 };
 
-static struct GfxLayout cbm700_charlayout =
+static gfx_layout cbm700_charlayout =
 {
 	9,16,
 	256,                                    /* 256 characters */
@@ -716,13 +716,13 @@ static struct GfxLayout cbm700_charlayout =
 	8*16
 };
 
-static struct GfxDecodeInfo cbm600_gfxdecodeinfo[] = {
+static gfx_decode cbm600_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &cbm600_charlayout, 0, 1 },
 	{ 1, 0x1000, &cbm600_charlayout, 0, 1 },
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo cbm700_gfxdecodeinfo[] = {
+static gfx_decode cbm700_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &cbm700_charlayout, 0, 1 },
 	{ 1, 0x1000, &cbm700_charlayout, 0, 1 },
     { -1 } /* end of array */

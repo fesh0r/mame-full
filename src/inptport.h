@@ -18,8 +18,6 @@
 #include "unicode.h"
 #endif
 
-struct xml_data_node;
-
 
 
 /*************************************
@@ -398,9 +396,11 @@ enum
  *
  *************************************/
 
-struct IptInitParams;
+/* this is an opaque type */
+typedef struct _input_port_init_params input_port_init_params;
 
-struct InputPortDefinition
+
+struct _input_port_default_entry
 {
 	UINT32		type;			/* type of port; see enum above */
 	UINT8		group;			/* which group the port belongs to */
@@ -411,9 +411,10 @@ struct InputPortDefinition
 	input_seq_t	defaultincseq;	/* default input sequence to increment (analog ports only) */
 	input_seq_t	defaultdecseq;	/* default input sequence to decrement (analog ports only) */
 };
+typedef struct _input_port_default_entry input_port_default_entry;
 
 
-struct InputPort
+struct _input_port_entry
 {
 	UINT32		mask;			/* bits affected */
 	UINT32		default_value;	/* default value for the bits affected */
@@ -482,6 +483,7 @@ struct InputPort
 	} keyboard;
 #endif
 };
+typedef struct _input_port_entry input_port_entry;
 
 
 
@@ -495,10 +497,10 @@ struct InputPort
 
 /* start of table */
 #define INPUT_PORTS_START(name)										\
- 	void construct_ipt_##name(struct IptInitParams *param)			\
+ 	void construct_ipt_##name(input_port_init_params *param)			\
 	{																\
  		const char *modify_tag = NULL;								\
- 		struct InputPort *port;										\
+ 		input_port_entry *port;										\
 		int seq_index[3];											\
 		int key;													\
 		(void) port; (void) seq_index; (void) key; (void)modify_tag;\
@@ -509,13 +511,13 @@ struct InputPort
 
 /* aliasing */
 #define INPUT_PORTS_ALIAS(name, base)								\
- 	void construct_ipt_##name(struct IptInitParams *param)			\
+ 	void construct_ipt_##name(input_port_init_params *param)			\
 	{																\
  		construct_ipt_##base(param);								\
 	}																\
 
 #define INPUT_PORTS_EXTERN(name)									\
-	extern void construct_ipt_##name(struct IptInitParams *param)	\
+	extern void construct_ipt_##name(input_port_init_params *param)	\
 
 /* including */
 #define PORT_INCLUDE(name)											\
@@ -658,18 +660,18 @@ extern const char *inptport_default_strings[];
  *
  *************************************/
 
-int inputport_init(void (*construct_ipt)(struct IptInitParams *));
+int inputport_init(void (*construct_ipt)(input_port_init_params *));
 
-void inptport_load(int config_type, struct xml_data_node *parentnode);
-void inptport_save(int config_type, struct xml_data_node *parentnode);
+void inptport_load(int config_type, xml_data_node *parentnode);
+void inptport_save(int config_type, xml_data_node *parentnode);
 
-struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 type, const char *tag, UINT32 mask);
-struct InputPort *input_port_allocate(void (*construct_ipt)(struct IptInitParams *));
+input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
+input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *));
 
-struct InputPortDefinition *get_input_port_list(void);
-const struct InputPortDefinition *get_input_port_list_defaults(void);
+input_port_default_entry *get_input_port_list(void);
+const input_port_default_entry *get_input_port_list_defaults(void);
 
-int input_port_active(const struct InputPort *in);
+int input_port_active(const input_port_entry *in);
 int port_type_is_analog(int type);
 int port_type_in_use(int type);
 int port_type_to_group(int type, int player);
@@ -677,10 +679,10 @@ int port_tag_to_index(const char *tag);
 read8_handler port_tag_to_handler8(const char *tag);
 read16_handler port_tag_to_handler16(const char *tag);
 read32_handler port_tag_to_handler32(const char *tag);
-const char *input_port_name(const struct InputPort *in);
-input_seq_t *input_port_seq(struct InputPort *in, int seqtype);
+const char *input_port_name(const input_port_entry *in);
+input_seq_t *input_port_seq(input_port_entry *in, int seqtype);
 input_seq_t *input_port_default_seq(int type, int player, int seqtype);
-int input_port_condition(const struct InputPort *in);
+int input_port_condition(const input_port_entry *in);
 
 const char *port_type_to_token(int type, int player);
 int token_to_port_type(const char *string, int *player);

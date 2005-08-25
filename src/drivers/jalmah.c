@@ -871,7 +871,7 @@ INPUT_PORTS_START( jalmah2 )
 	PORT_BIT( 0xe1e1, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -882,7 +882,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -895,7 +895,7 @@ static struct GfxLayout tilelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo jalmah_gfxdecodeinfo[] =
+static gfx_decode jalmah_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },
 	{ REGION_GFX2, 0, &tilelayout, 0x200, 16 },

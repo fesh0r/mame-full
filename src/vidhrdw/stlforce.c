@@ -112,7 +112,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	const UINT16 *source = stlforce_spriteram+0x0;
 	const UINT16 *finish = stlforce_spriteram+0x800;
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 	int ypos, xpos, attr, num;
 
 	while( source<finish )

@@ -36,7 +36,7 @@
 
 ***************************************************************************/
 
-extern struct artwork_callbacks mess_artwork_callbacks;
+extern artwork_callbacks mess_artwork_callbacks;
 
 
 

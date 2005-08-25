@@ -9,7 +9,7 @@
 static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
 
-struct GfxLayout europc_cga_charlayout =
+gfx_layout europc_cga_charlayout =
 {
 	8,16,					/* 8 x 32 characters */
     256,                    /* 256 characters */
@@ -25,7 +25,7 @@ struct GfxLayout europc_cga_charlayout =
     8*16                     /* every char takes 8 bytes */
 };
 
-struct GfxLayout europc_mda_charlayout =
+gfx_layout europc_mda_charlayout =
 {
 	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
 	256,					/* 256 characters */
@@ -43,7 +43,7 @@ struct GfxLayout europc_mda_charlayout =
 	8*16
 };
 
-struct GfxLayout pc200_mda_charlayout =
+gfx_layout pc200_mda_charlayout =
 {
 	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
 	256,					/* 256 characters */
@@ -59,7 +59,7 @@ struct GfxLayout pc200_mda_charlayout =
 	8*16 					/* every char takes 8 bytes (upper half) */
 };
 
-struct GfxLayout pc200_cga_charlayout =
+gfx_layout pc200_cga_charlayout =
 {
     8,16,               /* 8 x 16 characters */
     256,                    /* 256 characters */
@@ -76,7 +76,7 @@ struct GfxLayout pc200_cga_charlayout =
 };
 
 
-struct GfxDecodeInfo europc_gfxdecodeinfo[] =
+gfx_decode europc_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
 	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
@@ -89,7 +89,7 @@ struct GfxDecodeInfo europc_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-struct GfxDecodeInfo aga_gfxdecodeinfo[] =
+gfx_decode aga_gfxdecodeinfo[] =
 {
 /* The four CGA fonts */
 	{ 1, 0x1000, &pc200_cga_charlayout,		   0, 256 },   /* single width */

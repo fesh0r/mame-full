@@ -227,7 +227,7 @@ VIDEO_START( splash )
 static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 
 	for (i = 0; i < 0x400; i += 4){
 		int sx = splash_spriteram[i+2] & 0xff;
@@ -248,7 +248,7 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 
 	for (i = 0; i < 0x400; i += 4){
 		int sx = splash_spriteram[i+2] & 0x1ff;

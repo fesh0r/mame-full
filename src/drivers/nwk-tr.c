@@ -46,7 +46,7 @@ static struct tilemap *K001604_layer[1];
 
 #define K001604_NUM_TILES		16384
 
-static struct GfxLayout K001604_char_layout =
+static gfx_layout K001604_char_layout =
 {
 	8, 8,
 	K001604_NUM_TILES,

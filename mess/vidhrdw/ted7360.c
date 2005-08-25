@@ -502,7 +502,7 @@ static void ted7360_drawlines (int first, int last);
 
 static UINT32 cursorcolortable[2] =
 {0};
-static struct GfxLayout cursorlayout =
+static gfx_layout cursorlayout =
 {
 	8, 8,
 	1,
@@ -515,7 +515,7 @@ static struct GfxLayout cursorlayout =
 
 static UINT8 cursormask[] =
 {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-static struct GfxElement *cursorelement;
+static gfx_element *cursorelement;
 
 static void ted7360_timer_timeout (int which);
 

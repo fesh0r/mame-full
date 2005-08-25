@@ -266,7 +266,7 @@ static void f1gp_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *
 
 VIDEO_UPDATE( f1gp )
 {
-	static struct GfxLayout tilelayout =
+	static gfx_layout tilelayout =
 	{
 		16,16,
 		TOTAL_CHARS,

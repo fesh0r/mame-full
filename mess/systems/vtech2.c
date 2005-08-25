@@ -317,7 +317,7 @@ INPUT_PORTS_START( laser500 )
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout_80 =
+static gfx_layout charlayout_80 =
 {
 	8,8,					/* 8 x 8 characters */
 	256,					/* 256 characters */
@@ -330,7 +330,7 @@ static struct GfxLayout charlayout_80 =
 	8*8 					/* every char takes 8 bytes */
 };
 
-static struct GfxLayout charlayout_40 =
+static gfx_layout charlayout_40 =
 {
 	8*2,8,					/* 8*2 x 8 characters */
 	256,					/* 256 characters */
@@ -343,7 +343,7 @@ static struct GfxLayout charlayout_40 =
 	8*8 					/* every char takes 8 bytes */
 };
 
-static struct GfxLayout gfxlayout_1bpp =
+static gfx_layout gfxlayout_1bpp =
 {
 	8,1,					/* 8x1 pixels */
 	256,					/* 256 codes */
@@ -356,7 +356,7 @@ static struct GfxLayout gfxlayout_1bpp =
 	8						/* one byte per code */
 };
 
-static struct GfxLayout gfxlayout_1bpp_dw =
+static gfx_layout gfxlayout_1bpp_dw =
 {
 	8*2,1,					/* 8 times 2x1 pixels */
 	256,					/* 256 codes */
@@ -369,7 +369,7 @@ static struct GfxLayout gfxlayout_1bpp_dw =
 	8						/* one byte per code */
 };
 
-static struct GfxLayout gfxlayout_1bpp_qw =
+static gfx_layout gfxlayout_1bpp_qw =
 {
 	8*4,1,					/* 8 times 4x1 pixels */
 	256,					/* 256 codes */
@@ -382,7 +382,7 @@ static struct GfxLayout gfxlayout_1bpp_qw =
 	8						/* one byte per code */
 };
 
-static struct GfxLayout gfxlayout_4bpp =
+static gfx_layout gfxlayout_4bpp =
 {
 	2*4,1,					/* 2 times 4x1 pixels */
 	256,					/* 256 codes */
@@ -395,7 +395,7 @@ static struct GfxLayout gfxlayout_4bpp =
 	2*4 					/* one byte per code */
 };
 
-static struct GfxLayout gfxlayout_4bpp_dh =
+static gfx_layout gfxlayout_4bpp_dh =
 {
 	2*4,2,					/* 2 times 4x2 pixels */
 	256,					/* 256 codes */
@@ -408,7 +408,7 @@ static struct GfxLayout gfxlayout_4bpp_dh =
 	2*4 					/* one byte per code */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_80,		  0, 256 },
 	{ REGION_GFX1, 0, &charlayout_40,		  0, 256 },

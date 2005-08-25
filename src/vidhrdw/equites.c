@@ -343,7 +343,7 @@ static void equites_draw_sprites(struct mame_bitmap *bitmap)
 #define SHIFTX -4
 #define SHIFTY 1
 
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 	data16_t *sptr, *eptr;
 	int encode, bank, tile, color, fy, fx, fxy, absx, absy, sx, sy, flipadjx;
 
@@ -516,7 +516,7 @@ static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 #define SHIFTX 0
 #define SHIFTY 0
 
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 	data16_t *data_ptr;
 	int data, sprite, fx, fy, absx, absy, sx, sy, adjy, scalex, scaley, color, i;
 

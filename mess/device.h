@@ -12,6 +12,7 @@
 #include "osd_mess.h"
 #include "opresolv.h"
 #include "fileio.h"
+#include "mamecore.h"
 
 struct mame_bitmap;
 
@@ -38,7 +39,6 @@ typedef enum
 } iodevice_t;
 
 struct IODevice;
-struct GameDriver;
 
 typedef void (*device_getinfo_handler)(struct IODevice *dev);
 
@@ -113,7 +113,7 @@ const char *device_brieftypename(iodevice_t type);
 int device_typeid(const char *name);
 
 /* device allocation */
-struct IODevice *devices_allocate(const struct GameDriver *gamedrv);
+struct IODevice *devices_allocate(const game_driver *gamedrv);
 
 /* device lookup */
 const struct IODevice *device_find_tag(const struct IODevice *devices, const char *tag);

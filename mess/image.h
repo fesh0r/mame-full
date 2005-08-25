@@ -70,7 +70,7 @@ void image_unload(mess_image *img);
 const char *image_error(mess_image *img);
 
 /* used for driver init and machine init */
-int image_load_all(const struct GameDriver *gamedrv, int ispreload);
+int image_load_all(const game_driver *gamedrv, int ispreload);
 void image_unload_all(int ispreload);
 
 /* used to set the error that occured during image loading */

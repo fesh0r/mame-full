@@ -216,7 +216,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 	while( source<finish ){
 		int tile_number = source[0];

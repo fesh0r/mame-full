@@ -111,7 +111,7 @@ static void encode_ptr(void *ptr, char filename[ENCODED_IMAGE_REF_LEN])
 
 
 
-int chd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, struct chd_file *parent)
+int chd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
@@ -120,7 +120,7 @@ int chd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 comp
 
 
 
-struct chd_file *chd_open_ref(void *ref, int writeable, struct chd_file *parent)
+chd_file *chd_open_ref(void *ref, int writeable, chd_file *parent)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
@@ -157,13 +157,13 @@ static mess_image *decode_image_ref(const char encoded_image_ref[ENCODED_IMAGE_R
  *
  *************************************/
 
-static struct chd_interface_file *mess_chd_open(const char *filename, const char *mode);
-static void mess_chd_close(struct chd_interface_file *file);
-static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 mess_chd_length(struct chd_interface_file *file);
+static chd_interface_file *mess_chd_open(const char *filename, const char *mode);
+static void mess_chd_close(chd_interface_file *file);
+static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 mess_chd_length(chd_interface_file *file);
 
-static struct chd_interface mess_hard_disk_interface =
+static chd_interface mess_hard_disk_interface =
 {
 	mess_chd_open,
 	mess_chd_close,
@@ -173,7 +173,7 @@ static struct chd_interface mess_hard_disk_interface =
 };
 
 
-static struct chd_interface_file *mess_chd_open(const char *filename, const char *mode)
+static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
 	mess_image *img = decode_image_ref(filename);
 
@@ -185,18 +185,18 @@ static struct chd_interface_file *mess_chd_open(const char *filename, const char
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (struct chd_interface_file *) image_fp(img);
+	return (chd_interface_file *) image_fp(img);
 }
 
 
 
-static void mess_chd_close(struct chd_interface_file *file)
+static void mess_chd_close(chd_interface_file *file)
 {
 }
 
 
 
-static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -204,7 +204,7 @@ static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT
 
 
 
-static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fwrite((mame_file *)file, buffer, count);
@@ -212,7 +212,7 @@ static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UIN
 
 
 
-static UINT64 mess_chd_length(struct chd_interface_file *file)
+static UINT64 mess_chd_length(chd_interface_file *file)
 {
 	return mame_fsize((mame_file *)file);
 }
@@ -258,7 +258,7 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 {
 	int err = 0;
 	struct mess_hd *hd;
-	struct chd_file *chd;
+	chd_file *chd;
 	int is_writeable;
 	int id = image_index_in_device(image);
 
@@ -389,9 +389,9 @@ struct hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image)
  *
  *************************************/
 
-struct chd_file *mess_hd_get_chd_file(mess_image *image)
+chd_file *mess_hd_get_chd_file(mess_image *image)
 {
-	struct chd_file *result = NULL;
+	chd_file *result = NULL;
 	struct hard_disk_file *hd_file;
 
 	if (image)

@@ -99,8 +99,8 @@ VIDEO_START( zwackery )
 PALETTE_INIT( zwackery )
 {
 	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
-	struct GfxElement *gfx0 = Machine->gfx[0];
-	struct GfxElement *gfx2 = Machine->gfx[2];
+	gfx_element *gfx0 = Machine->gfx[0];
+	gfx_element *gfx2 = Machine->gfx[2];
 	int code, y, x;
 
 	/* "colorize" each code */

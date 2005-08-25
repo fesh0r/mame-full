@@ -73,7 +73,7 @@ namcos22_draw_direct_poly( const data16_t *pSource )
 }
 
 static void
-DrawDirectPolys( void )
+DrawDirectPolys( struct mame_bitmap *bitmap )
 {
 	while( mDirectPolyCount )
 	{
@@ -135,9 +135,9 @@ DrawDirectPolys( void )
 		mCamera.clip.max_x = 640;
 		mCamera.clip.max_y = 320;
 
-		namcos22_BlitTri( Machine->scrbitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
+		namcos22_BlitTri( bitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
 		v[4] = v[0]; /* wrap */
-		namcos22_BlitTri( Machine->scrbitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
+		namcos22_BlitTri( bitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
 	}
 }
 
@@ -164,7 +164,7 @@ namcos22_point_rom_r( offs_t offs )
 }
 
 /* text layer uses a set of 16x16x8bpp tiles defined in RAM */
-static struct GfxLayout cg_layout =
+static gfx_layout cg_layout =
 {
 	16,16,
 	NUM_CG_CHARS,
@@ -223,7 +223,7 @@ static void TextTilemapGetInfo( int tile_index )
  */
 static void
 mydrawgfxzoom(
-	struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+	struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 	unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 	const struct rectangle *clip,int transparency,int transparent_color,
 	int scalex, int scaley, INT32 zcoord )
@@ -1118,7 +1118,7 @@ HandleBB0003( const INT32 *pSource )
 } /* HandleBB0003 */
 
 static void
-Handle200002( const INT32 *pSource )
+Handle200002( struct mame_bitmap *bitmap, const INT32 *pSource )
 {
 	if( mCode>=0x45 )
 	{
@@ -1143,7 +1143,7 @@ Handle200002( const INT32 *pSource )
 		m[3][2] = pSource[0xc]; /* zpos */
 
 		matrix3d_Multiply( m, mViewMatrix );
-		BlitPolyObject( Machine->scrbitmap, mCode, m );
+		BlitPolyObject( bitmap, mCode, m );
 	}
 } /* Handle200002 */
 
@@ -1180,7 +1180,7 @@ Handle233002( const INT32 *pSource )
 } /* Handle233002 */
 
 static void
-SimulateSlaveDSP( int bDebug )
+SimulateSlaveDSP( struct mame_bitmap *bitmap, int bDebug )
 {
 	const INT32 *pSource = 0x300 + (INT32 *)namcos22_polygonram;
 	INT16 len;
@@ -1234,7 +1234,7 @@ SimulateSlaveDSP( int bDebug )
 			break;
 
 		case 0x0d:
-			Handle200002( pSource ); /* render primitive */
+			Handle200002( bitmap, pSource ); /* render primitive */
 			break;
 
 		default:
@@ -1261,7 +1261,7 @@ DrawPolygons( struct mame_bitmap *bitmap )
 #ifdef MAME_DEBUG
 		bDebug = code_pressed(KEYCODE_Q);
 #endif
-		SimulateSlaveDSP( bDebug );
+		SimulateSlaveDSP( bitmap, bDebug );
 
 		if( bDebug )
 		{
@@ -1273,7 +1273,7 @@ DrawPolygons( struct mame_bitmap *bitmap )
 			}
 			while( code_pressed(KEYCODE_Q) ){}
 		}
-		DrawDirectPolys();
+		DrawDirectPolys(bitmap);
 	}
 } /* DrawPolygons */
 
@@ -1481,7 +1481,7 @@ VIDEO_START( namcos22s )
 		memory_region(REGION_GFX2)	/* texture */
 	) == 0 )
 	{
-		struct GfxElement *pGfx = decodegfx( (UINT8 *)namcos22_cgram,&cg_layout );
+		gfx_element *pGfx = decodegfx( (UINT8 *)namcos22_cgram,&cg_layout );
 		if( pGfx )
 		{
 			Machine->gfx[NAMCOS22_ALPHA_GFX] = pGfx;

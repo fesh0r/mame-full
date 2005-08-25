@@ -53,7 +53,7 @@ extern INTERRUPT_GEN( m6847_vh_interrupt );
 #define M6847_SCREEN_WIDTH	320
 #define M6847_SCREEN_HEIGHT	263
 
-extern void mdrv_m6847(struct InternalMachineDriver *machine, int (*video_start_proc)(void), int is_pal);
+extern void mdrv_m6847(machine_config *machine, int (*video_start_proc)(void), int is_pal);
 
 #define MDRV_M6847_NTSC(video_start_proc)		mdrv_m6847(machine, (video_start_##video_start_proc), 0);
 #define MDRV_M6847_PAL(video_start_proc)		mdrv_m6847(machine, (video_start_##video_start_proc), 1);

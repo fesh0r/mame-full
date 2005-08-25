@@ -179,7 +179,7 @@ PORT_BIT(0x1ff,0x10,IPT_AD_STICK_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT
 #endif
 INPUT_PORTS_END
 
-static struct GfxLayout arcadia_charlayout =
+static gfx_layout arcadia_charlayout =
 {
         8,1,
         256,                                    /* 256 characters */
@@ -201,7 +201,7 @@ static struct GfxLayout arcadia_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo arcadia_gfxdecodeinfo[] = {
+static gfx_decode arcadia_gfxdecodeinfo[] = {
     { REGION_GFX1, 0x0000, &arcadia_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };

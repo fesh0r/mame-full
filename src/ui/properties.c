@@ -194,7 +194,7 @@ HBRUSH background_brush = NULL;
 #define PARENT_COLOR RGB( 190, 128, 192 ) // PURPLE
 #define GAME_COLOR RGB( 0, 128, 192 ) // DARK BLUE
 
-BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
+BOOL PropSheetFilter_Vector(const machine_config *drv, const game_driver *gamedrv)
 {
 	return (drv->video_attributes & VIDEO_TYPE_VECTOR) != 0;
 }
@@ -390,13 +390,13 @@ DWORD GetHelpIDs(void)
 }
 
 static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
-	const struct GameDriver *gamedrv, UINT *pnMaxPropSheets, PROP_SOURCE source )
+	const game_driver *gamedrv, UINT *pnMaxPropSheets, PROP_SOURCE source )
 {
 	PROPSHEETPAGE *pspages;
 	int maxPropSheets;
 	int possiblePropSheets;
 	int i;
-    struct InternalMachineDriver drv;
+    machine_config drv;
 
 	if (gamedrv)
 	    expand_machine_driver(gamedrv->drv, &drv);
@@ -642,7 +642,7 @@ static char *GameInfoCPU(UINT nIndex)
 {
 	int i;
 	static char buf[1024] = "";
-    struct InternalMachineDriver drv;
+    machine_config drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
@@ -676,7 +676,7 @@ static char *GameInfoSound(UINT nIndex)
 {
 	int i;
 	static char buf[1024];
-    struct InternalMachineDriver drv;
+    machine_config drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	buf[0] = 0;
@@ -727,7 +727,7 @@ static char *GameInfoSound(UINT nIndex)
 static char *GameInfoScreen(UINT nIndex)
 {
 	static char buf[1024];
-    struct InternalMachineDriver drv;
+    machine_config drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
@@ -752,7 +752,7 @@ static char *GameInfoScreen(UINT nIndex)
 static char *GameInfoColors(UINT nIndex)
 {
 	static char buf[1024];
-    struct InternalMachineDriver drv;
+    machine_config drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
@@ -2827,7 +2827,7 @@ static void SetStereoEnabled(HWND hWnd, int nIndex)
 {
 	BOOL enabled = FALSE;
 	HWND hCtrl;
-    struct InternalMachineDriver drv;
+    machine_config drv;
 	int speakernum, num_speakers;
 
 	num_speakers = 0;
@@ -2855,7 +2855,7 @@ static void SetYM3812Enabled(HWND hWnd, int nIndex)
 	int i;
 	BOOL enabled;
 	HWND hCtrl;
-    struct InternalMachineDriver drv;
+    machine_config drv;
 
 	if (nIndex > -1)
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
@@ -2890,7 +2890,7 @@ static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled)
 	int i;
 	BOOL enabled = FALSE;
 	HWND hCtrl;
-    struct InternalMachineDriver drv;
+    machine_config drv;
 
 	hCtrl = GetDlgItem(hWnd, IDC_SAMPLES);
 
@@ -3797,8 +3797,8 @@ static void InitializeBIOSUI(HWND hwnd)
 
 	if (hCtrl)
 	{
-		const struct GameDriver *gamedrv = drivers[g_nGame];
-		const struct SystemBios *thisbios;
+		const game_driver *gamedrv = drivers[g_nGame];
+		const bios_entry *thisbios;
 
 		if (g_nGame == GLOBAL_OPTIONS)
 		{

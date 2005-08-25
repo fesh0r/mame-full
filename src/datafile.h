@@ -14,9 +14,9 @@
 struct tDatafileIndex
 {
 	long offset;
-	const struct GameDriver *driver;
+	const game_driver *driver;
 };
 
-extern int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize);
+extern int load_driver_history (const game_driver *drv, char *buffer, int bufsize);
 
 #endif	/* __DATAFILE_H__ */

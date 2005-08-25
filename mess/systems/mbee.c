@@ -171,7 +171,7 @@ INPUT_PORTS_START( mbee )
     PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-struct GfxLayout mbee_charlayout =
+gfx_layout mbee_charlayout =
 {
     8,16,                   /* 8 x 16 characters */
     256,                    /* 256 characters */
@@ -185,7 +185,7 @@ struct GfxLayout mbee_charlayout =
     8*16                    /* every char takes 16 bytes */
 };
 
-static struct GfxDecodeInfo mbee_gfxdecodeinfo[] =
+static gfx_decode mbee_gfxdecodeinfo[] =
 {
     { REGION_CPU1, 0xf000, &mbee_charlayout, 0, 256},
 	{ -1 }   /* end of array */

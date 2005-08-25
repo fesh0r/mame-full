@@ -101,7 +101,7 @@ VIDEO_START( mustache )
 static void mustache_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	struct rectangle clip = *cliprect;
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size;offs += 4)

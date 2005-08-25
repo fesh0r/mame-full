@@ -62,7 +62,7 @@ ADDRESS_MAP_END
 
 /* graphics output */
 
-struct	GfxLayout	aquarius_charlayout =
+static gfx_layout aquarius_charlayout =
 {
 	8, 8,
 	256,
@@ -74,7 +74,7 @@ struct	GfxLayout	aquarius_charlayout =
 	8 * 8
 };
 
-static struct GfxDecodeInfo aquarius_gfxdecodeinfo[] =
+static gfx_decode aquarius_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &aquarius_charlayout, 0, 256},
 	{ -1 } /* end of array */

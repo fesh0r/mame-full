@@ -75,7 +75,7 @@ static struct polygon *polys ;
 
 static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	data32_t *source = hng64_spriteram;
 	data32_t *finish = hng64_spriteram + 0xb000/4;
 
@@ -1480,7 +1480,7 @@ INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 {
 	float *dp = &(depthBuffer[y*Machine->visible_area.max_x+x_start]);
 
-	const struct GfxElement *gfx = Machine->gfx[6] ;
+	const gfx_element *gfx = Machine->gfx[6] ;
 	const UINT8 *textureOffset ;
 	UINT8 paletteEntry ;
 	float t_coord, s_coord ;

@@ -346,7 +346,7 @@ ROM_START (c65a)
 ROM_END
 
 
-static SID6581_interface sound_interface =
+static SID6581_interface c65_sound_interface =
 {
 	c64_paddle_read
 };
@@ -372,7 +372,7 @@ static MACHINE_DRIVER_START( c65 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 	MDRV_SOUND_ADD_TAG("sid_r", SID8580, 985248)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c65_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 	MDRV_SOUND_ADD_TAG("sid_l", SID8580, 985248)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
@@ -384,7 +384,7 @@ static MACHINE_DRIVER_START( c65pal )
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
 
 	MDRV_SOUND_REPLACE("sid_r", SID8580, 1022727)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c65_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 	MDRV_SOUND_ADD_TAG("sid_l", SID8580, 1022727)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)

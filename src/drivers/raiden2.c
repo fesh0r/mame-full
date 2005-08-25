@@ -565,7 +565,7 @@ INPUT_PORTS_END
 
 /* GFX DECODING */
 
-static struct GfxLayout raiden2_charlayout =
+static gfx_layout raiden2_charlayout =
 {
 	8,8,
 	4096,
@@ -577,7 +577,7 @@ static struct GfxLayout raiden2_charlayout =
 };
 
 
-static struct GfxLayout raiden2_tilelayout =
+static gfx_layout raiden2_tilelayout =
 {
 	16,16,
 	0x8000,
@@ -594,7 +594,7 @@ static struct GfxLayout raiden2_tilelayout =
 	128*8
 };
 
-static struct GfxLayout r2_t2 =
+static gfx_layout r2_t2 =
 {
 	16, 16,
 	0x10000,
@@ -606,7 +606,7 @@ static struct GfxLayout r2_t2 =
 	16*16*4
 };
 
-static struct GfxDecodeInfo raiden2_gfxdecodeinfo[] =
+static gfx_decode raiden2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 128 },
 	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 128 },

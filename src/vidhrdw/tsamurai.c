@@ -149,7 +149,7 @@ WRITE8_HANDLER( tsamurai_fg_colorram_w )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	struct GfxElement *gfx = Machine->gfx[2];
+	gfx_element *gfx = Machine->gfx[2];
 	const unsigned char *source = spriteram+32*4-4;
 	const unsigned char *finish = spriteram; /* ? */
 	static int flicker;

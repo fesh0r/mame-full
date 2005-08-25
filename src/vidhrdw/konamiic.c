@@ -1286,7 +1286,7 @@ void K007121_sprites_draw(int chip,struct mame_bitmap *bitmap,const struct recta
 		const unsigned char *source,int base_color,int global_x_offset,int bank_base,
 		UINT32 pri_mask)
 {
-	const struct GfxElement *gfx = Machine->gfx[chip];
+	const gfx_element *gfx = Machine->gfx[chip];
 	int flipscreen = K007121_flipscreen[chip];
 	int i,num,inc,offs[5],trans;
 	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
@@ -1676,7 +1676,7 @@ int K007342_is_INT_enabled(void)
 /*                                                                         */
 /***************************************************************************/
 
-static struct GfxElement *K007420_gfx;
+static gfx_element *K007420_gfx;
 static void (*K007420_callback)(int *code,int *color);
 static unsigned char *K007420_ram;
 static int K007420_banklimit;
@@ -1964,7 +1964,7 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		void (*callback)(int tilemap,int bank,int *code,int *color))
 {
 	int gfx_index, i;
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8,8,
 		0,				/* filled in later */
@@ -2425,7 +2425,7 @@ void K052109_set_layer_offsets(int layer, int dx, int dy)
 /***************************************************************************/
 
 static int K051960_memory_region;
-static struct GfxElement *K051960_gfx;
+static gfx_element *K051960_gfx;
 static void (*K051960_callback)(int *code,int *color,int *priority,int *shadow);
 static int K051960_romoffset;
 static int K051960_spriteflip,K051960_readroms;
@@ -2438,7 +2438,7 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		void (*callback)(int *code,int *color,int *priority,int *shadow))
 {
 	int gfx_index,i;
-	static struct GfxLayout spritelayout =
+	static gfx_layout spritelayout =
 	{
 		16,16,
 		0,				/* filled in later */
@@ -2913,7 +2913,7 @@ void K05324x_set_z_rejection(int zcode)
 #define MAX_K053245_CHIPS 2
 
 static int K053245_memory_region[MAX_K053245_CHIPS];
-static struct GfxElement *K053245_gfx[MAX_K053245_CHIPS];
+static gfx_element *K053245_gfx[MAX_K053245_CHIPS];
 static void (*K053245_callback[MAX_K053245_CHIPS])(int *code,int *color,int *priority);
 static int K053244_rombank[MAX_K053245_CHIPS];
 static int K053245_ramsize[MAX_K053245_CHIPS];
@@ -2925,7 +2925,7 @@ int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int p
 		void (*callback)(int *code,int *color,int *priority))
 {
 	int gfx_index,i;
-	static struct GfxLayout spritelayout =
+	static gfx_layout spritelayout =
 	{
 		16,16,
 		0,				/* filled in later */
@@ -3651,11 +3651,11 @@ static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
 data16_t *K053247_ram=0;
-static struct GfxElement *K053247_gfx;
+static gfx_element *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053246_OBJCHA_line;
 
-void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy)
+void K053247_export_config(data16_t **ram, gfx_element **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy)
 {
 	if(ram)
 		*ram = K053247_ram;
@@ -3687,7 +3687,7 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 					 void (*callback)(int *code,int *color,int *priority))
 {
 	int gfx_index,i;
-	static struct GfxLayout spritelayout =
+	static gfx_layout spritelayout =
 	{
 		16,16,
 		0,				/* filled in later */
@@ -3779,7 +3779,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 {
 	int gfx_index;
 
-	static struct GfxLayout spritelayout =	/* System GX sprite layout */
+	static gfx_layout spritelayout =	/* System GX sprite layout */
 	{
 		16,16,
 		32768,				/* filled in later */
@@ -3790,7 +3790,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		  10*8*9, 10*8*10, 10*8*11, 10*8*12, 10*8*13, 10*8*14, 10*8*15 },
 		16*16*5
 	};
-	static struct GfxLayout spritelayout2 =	/* Run and Gun sprite layout */
+	static gfx_layout spritelayout2 =	/* Run and Gun sprite layout */
 	{
 		16,16,
 		32768,				/* filled in later */
@@ -3800,7 +3800,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		{ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960 },
 		16*16*4
 	};
-	static struct GfxLayout spritelayout3 =	/* Lethal Enforcers II sprite layout */
+	static gfx_layout spritelayout3 =	/* Lethal Enforcers II sprite layout */
 	{
 		16,16,
 		32768,				/* filled in later */
@@ -3811,7 +3811,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		  128*8, 128*9, 128*10, 128*11, 128*12, 128*13, 128*14, 128*15 },
 		128*16
 	};
-	static struct GfxLayout spritelayout4 =	/* System GX 6bpp sprite layout */
+	static gfx_layout spritelayout4 =	/* System GX 6bpp sprite layout */
 	{
 		16,16,
 		32768,				/* filled in later */
@@ -4598,7 +4598,7 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 
 	if (bpp == 4)
 	{
-		static struct GfxLayout charlayout =
+		static gfx_layout charlayout =
 		{
 			16,16,
 			0,				/* filled in later */
@@ -4620,7 +4620,7 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 	}
 	else if (bpp == 7 || bpp == 8)
 	{
-		static struct GfxLayout charlayout =
+		static gfx_layout charlayout =
 		{
 			16,16,
 			0,				/* filled in later */
@@ -5529,7 +5529,7 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 {
 	int gfx_index;
 	int i;
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8, 8,
 		0,				/* filled in later */
@@ -6105,7 +6105,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	struct tilemap *tilemap;
 	int gfx_index;
 	int i;
-	struct GfxLayout charlayout8 =
+	gfx_layout charlayout8 =
 	{
 		8, 8,
 		0, /* filled in later */
@@ -6115,7 +6115,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0, 8*8, 8*8*2, 8*8*3, 8*8*4, 8*8*5, 8*8*6, 8*8*7 },
 		8*8*8
 	};
-	struct GfxLayout charlayout8le =
+	gfx_layout charlayout8le =
 	{
 		8, 8,
 		0,
@@ -6126,7 +6126,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
 		8*8*4
 	};
-	struct GfxLayout charlayout6 =
+	gfx_layout charlayout6 =
 	{
 		8, 8,
 		0, /* filled in later */
@@ -6136,7 +6136,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0, 6*8, 6*8*2, 6*8*3, 6*8*4, 6*8*5, 6*8*6, 6*8*7 },
 		8*8*6
 	};
-	struct GfxLayout charlayout5 =
+	gfx_layout charlayout5 =
 	{
 		8, 8,
 		0, /* filled in later */
@@ -6146,7 +6146,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0, 5*8, 5*8*2, 5*8*3, 5*8*4, 5*8*5, 5*8*6, 5*8*7 },
 		8*8*5
 	};
-	struct GfxLayout charlayout4 =
+	gfx_layout charlayout4 =
 	{
 		8, 8,
 		0,
@@ -6156,7 +6156,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
 		8*8*4
 	};
-	static struct GfxLayout charlayout4dj =
+	static gfx_layout charlayout4dj =
 	{
 		8, 8,
 		0,				/* filled in later */
@@ -6945,7 +6945,7 @@ static int K056832_update_linemap(struct mame_bitmap *bitmap, int page, int flag
 	struct tilemap *tilemap;
 	struct mame_bitmap *pixmap, *xprmap;
 	UINT8 *xprdata;
-	const struct GfxElement *src_gfx;
+	const gfx_element *src_gfx;
 
 	UINT32 *dirty;
 	int all_dirty, line;

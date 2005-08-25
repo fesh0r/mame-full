@@ -27,7 +27,7 @@ PALETTE_INIT( flower )
 
 static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	data8_t *source = spriteram + 0x200;
 	data8_t *finish = source - 0x200;
 

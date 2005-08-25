@@ -90,7 +90,7 @@ static int mess_activate_artwork(struct osd_create_params *params)
 
 
 
-static mame_file *mess_load_artwork_file(const struct GameDriver **driver)
+static mame_file *mess_load_artwork_file(const game_driver **driver)
 {
 	char filename[2048];
 	mame_file *artfile = NULL;
@@ -119,7 +119,7 @@ static mame_file *mess_load_artwork_file(const struct GameDriver **driver)
 
 
 
-struct artwork_callbacks mess_artwork_callbacks =
+artwork_callbacks mess_artwork_callbacks =
 {
 	mess_activate_artwork,
 	mess_load_artwork_file

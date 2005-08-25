@@ -16,7 +16,7 @@
 
 struct hard_disk_file
 {
-	struct chd_file *	chd;				/* CHD file */
+	chd_file *	chd;				/* CHD file */
 	struct hard_disk_info info;				/* hard disk info */
 	UINT32				hunksectors;		/* sectors per hunk */
 	UINT32				cachehunk;			/* which hunk is cached */
@@ -31,7 +31,7 @@ struct hard_disk_file
  *
  *************************************/
 
-struct hard_disk_file *hard_disk_open(struct chd_file *chd)
+struct hard_disk_file *hard_disk_open(chd_file *chd)
 {
 	int cylinders, heads, sectors, sectorbytes;
 	struct hard_disk_file *file;
@@ -102,7 +102,7 @@ void hard_disk_close(struct hard_disk_file *file)
  *
  *************************************/
 
-struct chd_file *hard_disk_get_chd(struct hard_disk_file *file)
+chd_file *hard_disk_get_chd(struct hard_disk_file *file)
 {
 	return file->chd;
 }

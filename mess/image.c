@@ -570,7 +570,7 @@ static int run_hash(mame_file *file,
 
 static int image_checkhash(mess_image *image)
 {
-	const struct GameDriver *drv;
+	const game_driver *drv;
 	const struct IODevice *dev;
 	mame_file *file;
 	char hash_string[HASH_BUF_SIZE];
@@ -1116,7 +1116,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 {
 	const char *sysname;
 	char *lpExt;
-	const struct GameDriver *gamedrv = Machine->gamedrv;
+	const game_driver *gamedrv = Machine->gamedrv;
 
 	assert(img);
 

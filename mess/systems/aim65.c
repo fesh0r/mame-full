@@ -102,7 +102,7 @@ INPUT_PORTS_START( aim65 )
 	PORT_DIPSETTING( 0x08, "Keyboard")
 INPUT_PORTS_END
 
-static struct GfxLayout aim65_charlayout =
+static gfx_layout aim65_charlayout =
 {
         32,2,
         256,                                    /* 256 characters */
@@ -124,7 +124,7 @@ static struct GfxLayout aim65_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo aim65_gfxdecodeinfo[] = {
+static gfx_decode aim65_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &aim65_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };

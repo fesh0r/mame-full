@@ -27,7 +27,7 @@ unsigned char mda_palette[4][3] = {
 	{ 0x00,0xff,0x00 }
 };
 
-struct GfxLayout pc_mda_charlayout =
+gfx_layout pc_mda_charlayout =
 {
 	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
 	256,					/* 256 characters */
@@ -45,7 +45,7 @@ struct GfxLayout pc_mda_charlayout =
 	8*8 					/* every char takes 8 bytes (upper half) */
 };
 
-struct GfxDecodeInfo pc_mda_gfxdecodeinfo[] =
+gfx_decode pc_mda_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &pc_mda_charlayout,		0, 256 },
     { -1 } /* end of array */
@@ -102,7 +102,7 @@ static struct
 
 	UINT8 mode_control, configuration_switch; //hercules
 
-	struct GfxElement *gfx_char[4];
+	gfx_element *gfx_char[4];
 } mda;
 
 /***************************************************************************

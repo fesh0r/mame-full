@@ -309,7 +309,7 @@ INPUT_PORTS_START( cshooter )
 INPUT_PORTS_END
 
 
-static struct GfxLayout cshooter_charlayout =
+static gfx_layout cshooter_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	RGN_FRAC(1,1),		/* 512 characters */
@@ -320,7 +320,7 @@ static struct GfxLayout cshooter_charlayout =
 	128*2
 };
 
-static struct GfxLayout cshooter_unknownlayout =
+static gfx_layout cshooter_unknownlayout =
 {
 	8,8,		/* 8*8 characters */
 	RGN_FRAC(1,1),		/* 512 characters */
@@ -331,7 +331,7 @@ static struct GfxLayout cshooter_unknownlayout =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,     &cshooter_charlayout,   0, 1  },
 	{ REGION_GFX1, 128/8, &cshooter_charlayout,   0, 1  },

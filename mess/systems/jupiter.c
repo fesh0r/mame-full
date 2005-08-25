@@ -85,7 +85,7 @@ ADDRESS_MAP_END
 
 /* graphics output */
 
-struct GfxLayout jupiter_charlayout =
+gfx_layout jupiter_charlayout =
 {
 	8, 8,	/* 8x8 characters */
 	128,	/* 128 characters */
@@ -96,7 +96,7 @@ struct GfxLayout jupiter_charlayout =
 	8*8 	/* each character takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo jupiter_gfxdecodeinfo[] =
+static gfx_decode jupiter_gfxdecodeinfo[] =
 {
 	{REGION_CPU1, 0x2c00, &jupiter_charlayout, 0, 2},
 	{-1}

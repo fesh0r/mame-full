@@ -44,7 +44,7 @@ ADDRESS_MAP_START (galaxy_mem, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 
-static struct GfxDecodeInfo galaxy_gfxdecodeinfo[] =
+static gfx_decode galaxy_gfxdecodeinfo[] =
 {
 	{REGION_GFX1, 0x0000, &galaxy_charlayout, 0, 2},
 	{-1}

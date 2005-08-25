@@ -222,7 +222,7 @@ static UINT32 K037122_reg[256];
 
 #define K037122_NUM_TILES		8192
 
-static struct GfxLayout K037122_char_layout =
+static gfx_layout K037122_char_layout =
 {
 	8, 8,
 	K037122_NUM_TILES,

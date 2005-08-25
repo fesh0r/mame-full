@@ -94,7 +94,7 @@ enum
 	asrfontdata_size = 96/*128*/*8
 };
 
-static struct GfxLayout fontlayout =
+static gfx_layout fontlayout =
 {
 	6, 8,			/* 6*8 characters */
 	/*96*/128,				/* 96 characters */
@@ -105,7 +105,7 @@ static struct GfxLayout fontlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-struct GfxDecodeInfo asr733_gfxdecodeinfo[] =
+gfx_decode asr733_gfxdecodeinfo[] =
 {
 	{ asr733_chr_region, 0, &fontlayout, 0, 1 },
 	{ -1 }	/* end of array */

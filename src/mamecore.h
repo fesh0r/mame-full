@@ -34,6 +34,15 @@ typedef UINT32 FPTR;
 #endif
 
 
+/* These are forward struct declarations that are used to break
+   circular dependencies in the code */
+
+typedef struct _mame_display mame_display;
+typedef struct _game_driver game_driver;
+typedef struct _machine_config machine_config;
+typedef struct _rom_load_data rom_load_data;
+typedef struct _xml_data_node xml_data_node;
+
 
 
 /***************************************************************************
@@ -319,6 +328,7 @@ INLINE UINT64 d2u(double d)
 #endif
 
 
+
 /* Some optimizations/warnings cleanups for GCC */
 #if defined(__GNUC__)
 #define ATTR_UNUSED			__attribute__((__unused__))
@@ -340,6 +350,7 @@ INLINE UINT64 d2u(double d)
 #else
 #define DECL_NORETURN
 #endif
+
 
 
 

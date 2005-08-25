@@ -50,7 +50,7 @@ static void taotaido_drawsprite( UINT16 spriteno, struct mame_bitmap *bitmap, co
 	int x,y;
 
 	data16_t *source = &taotaido_spriteram_older[spriteno*4];
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 
 	int yzoom = (source[0] & 0xf000) >> 12;

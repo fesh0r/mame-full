@@ -14,7 +14,7 @@ BOOL DriverIsModified(int driver_index)
 
 BOOL DriverUsesMouse(int driver_index)
 {
-	const struct InputPort *input_ports;
+	const input_port_entry *input_ports;
 	BOOL retval = FALSE;
 
 	if (drivers[driver_index]->construct_ipt == NULL)
@@ -46,7 +46,7 @@ BOOL DriverUsesMouse(int driver_index)
 	return retval;
 }
 
-BOOL DriverHasDevice(const struct GameDriver *gamedrv, iodevice_t type)
+BOOL DriverHasDevice(const game_driver *gamedrv, iodevice_t type)
 {
 	BOOL b;
 	const struct IODevice *devices;

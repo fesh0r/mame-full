@@ -215,7 +215,7 @@ INPUT_PORTS_START( talbot )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -226,7 +226,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 16 bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -239,7 +239,7 @@ static struct GfxLayout spritelayout =
 	64*8	/* every sprite takes 64 bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 64 },
 	{ REGION_GFX2, 0, &spritelayout, 0, 64 },

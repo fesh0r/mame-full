@@ -282,8 +282,8 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 	int tx, ty, sx, sy, flipx, flipy;
 	int xsize, ysize, xzoom, yzoom;
 	int code, attr, color, size, pri, pri_mask, trans;
-	struct GfxElement *gfx = Machine->gfx[0];
-	struct GfxElement mygfx = *gfx;
+	gfx_element *gfx = Machine->gfx[0];
+	gfx_element mygfx = *gfx;
 
 	data32_t		*source	= sprram_top;
 	const data32_t	*finish	= sprram_top + (sprram_size - 0x10) / 4;

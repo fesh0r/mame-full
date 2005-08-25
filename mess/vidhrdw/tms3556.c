@@ -198,7 +198,7 @@ WRITE8_HANDLER(tms3556_reg_w)
 
 	machine struct initialization helper
 */
-void mdrv_tms3556(struct InternalMachineDriver *machine)
+void mdrv_tms3556(machine_config *machine)
 {
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)

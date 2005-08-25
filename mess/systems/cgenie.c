@@ -271,7 +271,7 @@ INPUT_PORTS_START( cgenie )
 	PORT_BIT(0x80, 0x00, IPT_UNKNOWN) PORT_NAME("Joy 2 [*]") PORT_CODE(JOYCODE_2_BUTTON1)
 INPUT_PORTS_END
 
-struct GfxLayout cgenie_charlayout =
+gfx_layout cgenie_charlayout =
 {
 	8,8,		   /* 8*8 characters */
 	384,		   /* 256 fixed + 128 defineable characters */
@@ -282,7 +282,7 @@ struct GfxLayout cgenie_charlayout =
 	8*8 		   /* every char takes 8 bytes */
 };
 
-static struct GfxLayout cgenie_gfxlayout =
+static gfx_layout cgenie_gfxlayout =
 {
 	8,8,			/* 4*8 characters */
 	256,			/* 256 graphics patterns */
@@ -293,7 +293,7 @@ static struct GfxLayout cgenie_gfxlayout =
 	8*8 			/* every char takes 8 bytes */
 };
 
-static struct GfxDecodeInfo cgenie_gfxdecodeinfo[] =
+static gfx_decode cgenie_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &cgenie_charlayout,	  0, 3*16},
 	{ REGION_GFX2, 0, &cgenie_gfxlayout, 3*16*2, 3*4},

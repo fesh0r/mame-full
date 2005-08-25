@@ -285,8 +285,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 {
 	const data8_t *source = &spriteram[0x0800-0x20];	/* the last is NOT a sprite */
 	const data8_t *finish = &spriteram[0];
-	struct GfxElement *gfx = Machine->gfx[1];
-	struct GfxElement mygfx = *gfx;
+	gfx_element *gfx = Machine->gfx[1];
+	gfx_element mygfx = *gfx;
 
 	int sprite_xoffs = spriteram[0x07f5] + ((spriteram[0x07f4] & 1) << 8);
 	int sprite_yoffs = spriteram[0x07f7];

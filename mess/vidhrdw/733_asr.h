@@ -12,7 +12,7 @@ enum
 	asr733_chr_region_len	= 128*asr733_single_char_len
 };
 
-extern struct GfxDecodeInfo asr733_gfxdecodeinfo[];
+extern gfx_decode asr733_gfxdecodeinfo[];
 
 extern unsigned char asr733_palette[];
 extern unsigned short asr733_colortable[];

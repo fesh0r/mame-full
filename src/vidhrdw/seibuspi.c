@@ -231,7 +231,7 @@ WRITE32_HANDLER( video_dma_address_w )
 	COMBINE_DATA( &video_dma_address );
 }
 
-static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const struct GfxElement *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
+static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const gfx_element *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
 {
 	UINT8 *dp;
 	int i, j;
@@ -362,7 +362,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int a;
 	int priority;
 	int x,y, x1, y1;
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 	if( layer_enable & 0x10 )
 		return;

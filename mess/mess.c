@@ -18,8 +18,6 @@
 #include "inputx.h"
 #include "artwork.h"
 
-extern struct GameOptions options;
-
 /* Globals */
 const char *mess_path;
 int devices_inited;
@@ -30,7 +28,7 @@ data8_t mess_ram_default_value = 0xCD;
 
 
 
-static int ram_init(const struct GameDriver *gamedrv)
+static int ram_init(const game_driver *gamedrv)
 {
 	int i;
 
@@ -91,7 +89,7 @@ static int ram_init(const struct GameDriver *gamedrv)
  *  ith all user specified image names.
  ****************************************************************************/
 
-int devices_init(const struct GameDriver *gamedrv)
+int devices_init(const game_driver *gamedrv)
 {
 	int i;
 
@@ -138,7 +136,7 @@ int devices_init(const struct GameDriver *gamedrv)
 
 
 
-int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
+int devices_initialload(const game_driver *gamedrv, int ispreload)
 {
 	int i;
 	int id;
@@ -263,8 +261,6 @@ void devices_exit(void)
 
 int register_device(iodevice_t type, const char *arg)
 {
-	extern struct GameOptions options;
-
 	/* Check the the device type is valid, otherwise this lookup will be bad*/
 	if (type < 0 || type >= IO_COUNT)
 	{
@@ -373,7 +369,7 @@ char *auto_strlistdup(char *strlist)
 
 
 
-const struct GameDriver *mess_next_compatible_driver(const struct GameDriver *drv)
+const game_driver *mess_next_compatible_driver(const game_driver *drv)
 {
 	if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
 		drv = drv->clone_of;
@@ -386,7 +382,7 @@ const struct GameDriver *mess_next_compatible_driver(const struct GameDriver *dr
 
 
 
-int mess_count_compatible_drivers(const struct GameDriver *drv)
+int mess_count_compatible_drivers(const game_driver *drv)
 {
 	int count = 0;
 	while(drv)

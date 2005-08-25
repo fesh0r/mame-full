@@ -119,7 +119,7 @@ VIDEO_START( mechatt )
 
 INLINE const data8_t *get_source_ptr(unsigned int sprite, int dx, int dy, int bank, int block)
 {
-	const struct GfxElement *gfx=Machine->gfx[bank];
+	const gfx_element *gfx=Machine->gfx[bank];
 	int source_base,code=0;
 
 	/* Get a tile index from the x,y position in the block */

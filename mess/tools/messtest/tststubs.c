@@ -114,11 +114,11 @@ void osd_trak_read(int player, int *deltax, int *deltay)
 {
 }
 
-void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
 }
 
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
+int osd_display_loading_rom_message(const char *name, rom_load_data *romdata)
 {
 	return 0;
 }

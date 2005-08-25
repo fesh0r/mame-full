@@ -493,7 +493,7 @@ INPUT_PORTS_START( pc1350 )
 	PORT_DIPSETTING( 7, "7/High" )
 INPUT_PORTS_END
 
-static struct GfxLayout pc1401_charlayout =
+static gfx_layout pc1401_charlayout =
 {
         2,21,
         128,                                    /* 256 characters */
@@ -514,7 +514,7 @@ static struct GfxLayout pc1401_charlayout =
         1*8
 };
 
-static struct GfxLayout pc1251_charlayout =
+static gfx_layout pc1251_charlayout =
 {
         3,21,
         128,                                    /* 256 characters */
@@ -535,7 +535,7 @@ static struct GfxLayout pc1251_charlayout =
         1*8
 };
 
-static struct GfxLayout pc1350_charlayout =
+static gfx_layout pc1350_charlayout =
 {
         2,16,
         256,                                    /* 256 characters */
@@ -550,17 +550,17 @@ static struct GfxLayout pc1350_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo pc1401_gfxdecodeinfo[] = {
+static gfx_decode pc1401_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo pc1251_gfxdecodeinfo[] = {
+static gfx_decode pc1251_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo pc1350_gfxdecodeinfo[] = {
+static gfx_decode pc1350_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };

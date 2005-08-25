@@ -27,6 +27,7 @@
 #include "tapedlg.h"
 #include "artworkx.h"
 #include "debugcpu.h"
+#include "inptport.h"
 #include "devices/cassette.h"
 
 #ifdef UNDER_CE
@@ -127,7 +128,7 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 static void customize_input(const char *title, int cust_type, int player, int inputclass, const char *section)
 {
 	dialog_box *dlg;
-	struct InputPort *in;
+	input_port_entry *in;
 	struct png_info png;
 	struct inputform_customization customizations[128];
 	RECT *pr;
@@ -135,7 +136,7 @@ static void customize_input(const char *title, int cust_type, int player, int in
 
 	struct
 	{
-		struct InputPort *in;
+		input_port_entry *in;
 		const RECT *pr;
 	} portslots[256];
 
@@ -282,7 +283,7 @@ static void customize_categorizedinput(const char *section, int category)
 
 static void storeval_inputport(void *param, int val)
 {
-	struct InputPort *in = (struct InputPort *) param;
+	input_port_entry *in = (input_port_entry *) param;
 	in->default_value = (UINT16) val;
 }
 
@@ -295,7 +296,7 @@ static void storeval_inputport(void *param, int val)
 static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
 {
 	dialog_box *dlg;
-	struct InputPort *in;
+	input_port_entry *in;
 	const char *switch_name = NULL;
 	UINT32 type;
 	
@@ -370,28 +371,28 @@ static void customize_configuration(void)
 
 static void store_delta(void *param, int val)
 {
-	((struct InputPort *) param)->analog.delta = val;
+	((input_port_entry *) param)->analog.delta = val;
 }
 
 
 
 static void store_centerdelta(void *param, int val)
 {
-	((struct InputPort *) param)->analog.centerdelta = val;
+	((input_port_entry *) param)->analog.centerdelta = val;
 }
 
 
 
 static void store_reverse(void *param, int val)
 {
-	((struct InputPort *) param)->analog.reverse = val;
+	((input_port_entry *) param)->analog.reverse = val;
 }
 
 
 
 static void store_sensitivity(void *param, int val)
 {
-	((struct InputPort *) param)->analog.sensitivity = val;
+	((input_port_entry *) param)->analog.sensitivity = val;
 }
 
 
@@ -399,7 +400,7 @@ static void store_sensitivity(void *param, int val)
 static void customize_analogcontrols(void)
 {
 	dialog_box *dlg;
-	struct InputPort *in;
+	input_port_entry *in;
 	const char *name;
 	char buf[255];
 	static const struct dialog_layout layout = { 120, 52 };
@@ -1068,8 +1069,8 @@ static void setup_joystick_menu(void)
 	HMENU joystick_menu;
 	int i, j;
 	HMENU submenu = NULL;
-	const struct InputPort *in;
-	const struct InputPort *in_setting;
+	const input_port_entry *in;
+	const input_port_entry *in_setting;
 	char buf[256];
 	int child_count = 0;
 
@@ -1157,7 +1158,7 @@ static void prepare_menus(void)
 	UINT flags_for_writing;
 	mess_image *img;
 	int has_config, has_dipswitch, has_keyboard, has_analog, has_misc;
-	const struct InputPort *in;
+	const input_port_entry *in;
 	UINT16 in_cat_value = 0;
 
 	if (!win_menu_bar)
@@ -1490,7 +1491,7 @@ static int invoke_command(UINT command)
 	mess_image *img;
 	int port_count;
 	UINT16 setting, category;
-	struct InputPort *in;
+	input_port_entry *in;
 	const char *section;
 
 	switch(command) {

@@ -11,5 +11,5 @@ extern int tms3556_init(int vram_size);
 extern void tms3556_reset(void);
 extern void tms3556_interrupt(void);
 
-extern void mdrv_tms3556(struct InternalMachineDriver *machine);
+extern void mdrv_tms3556(machine_config *machine);
 #define MDRV_TMS3556	mdrv_tms3556(machine);

@@ -61,27 +61,28 @@ extern char build_version[];
 
 ***************************************************************************/
 
-struct RegionInfo
+struct _region_info
 {
 	UINT8 *		base;
 	size_t		length;
 	UINT32		type;
 	UINT32		flags;
 };
+typedef struct _region_info region_info;
 
 
-struct RunningMachine
+struct _running_machine
 {
 	/* ----- game-related information ----- */
 
 	/* points to the definition of the game machine */
-	const struct GameDriver *gamedrv;
+	const game_driver *		gamedrv;
 
 	/* points to the constructed MachineDriver */
-	const struct InternalMachineDriver *drv;
+	const machine_config *	drv;
 
 	/* array of memory regions */
-	struct RegionInfo		memory_region[MAX_MEMORY_REGIONS];
+	region_info				memory_region[MAX_MEMORY_REGIONS];
 
 	/* number of bad ROMs encountered */
 	int						rom_load_warnings;
@@ -90,7 +91,7 @@ struct RunningMachine
 	/* ----- video-related information ----- */
 
 	/* array of pointers to graphic sets (chars, sprites) */
-	struct GfxElement *		gfx[MAX_GFX_ELEMENTS];
+	gfx_element *		gfx[MAX_GFX_ELEMENTS];
 
 	/* main bitmap to render to (but don't do it directly!) */
 	struct mame_bitmap *	scrbitmap;
@@ -126,10 +127,10 @@ struct RunningMachine
 	/* ----- input-related information ----- */
 
 	/* the input ports definition from the driver is copied here and modified */
-	struct InputPort *		input_ports;
+	input_port_entry *		input_ports;
 
 	/* original input_ports without modifications */
-	struct InputPort *		input_ports_default;
+	input_port_entry *		input_ports_default;
 
 
 	/* ----- user interface-related information ----- */
@@ -150,12 +151,13 @@ struct RunningMachine
 	pen_t *					debug_remapped_colortable;
 
 	/* font used by the debugger */
-	struct GfxElement *		debugger_font;
+	gfx_element *		debugger_font;
 
 #ifdef MESS
 	struct IODevice *devices;
 #endif /* MESS */
 };
+typedef struct _running_machine running_machine;
 
 
 
@@ -186,7 +188,7 @@ struct ImageFile
 
 /* The host platform should fill these fields with the preferences specified in the GUI */
 /* or on the commandline. */
-struct GameOptions
+struct _global_options
 {
 	mame_file *	record;			/* handle to file to record input to */
 	mame_file *	playback;		/* handle to file to playback input from */
@@ -229,7 +231,7 @@ struct GameOptions
 
 	const char *controller;	/* controller-specific cfg to load */
 
-	#ifdef MESS
+#ifdef MESS
 	UINT32 ram;
 	struct ImageFile image_files[32];
 	int		image_count;
@@ -239,6 +241,7 @@ struct GameOptions
 	int		min_height;		/* minimum height for the display */
 #endif /* MESS */
 };
+typedef struct _global_options global_options;
 
 
 
@@ -267,7 +270,7 @@ struct GameOptions
 
 /* the main mame_display structure, containing the current state of the */
 /* video display */
-struct mame_display
+struct _mame_display
 {
 	/* bitfield indicating which states have changed */
 	UINT32					changed_flags;
@@ -291,6 +294,7 @@ struct mame_display
 	/* other misc information */
 	UINT8					led_state;				/* bitfield of current LED states */
 };
+/* in mamecore.h: typedef struct _mame_display mame_display; */
 
 
 
@@ -316,8 +320,8 @@ struct performance_info
 
 ***************************************************************************/
 
-extern struct GameOptions options;
-extern struct RunningMachine *Machine;
+extern global_options options;
+extern running_machine *Machine;
 
 
 
@@ -333,8 +337,7 @@ extern struct RunningMachine *Machine;
 int run_game(int game);
 
 /* construct a machine driver */
-struct InternalMachineDriver;
-void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), struct InternalMachineDriver *output);
+void expand_machine_driver(void (*constructor)(machine_config *), machine_config *output);
 
 /* pause the system */
 void mame_pause(int pause);

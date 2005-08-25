@@ -48,7 +48,7 @@ typedef struct compis_gdc_interface
 	UINT32	vramsize;
 } compis_gdc_interface;
 
-extern void mdrv_compisgdc(struct InternalMachineDriver *machine,
+extern void mdrv_compisgdc(machine_config *machine,
                            const compis_gdc_interface *intf);
 
 #define MDRV_COMPISGDC(intf)		mdrv_compisgdc(machine, (intf));

@@ -111,7 +111,7 @@ ADDRESS_MAP_END
 
 /* graphics output */
 
-struct GfxLayout apple1_charlayout =
+gfx_layout apple1_charlayout =
 {
 	7, 8,				/* character cell is 7 pixels wide by 8 pixels high */
 	64,					/* 64 characters in 2513 character generator ROM */
@@ -124,7 +124,7 @@ struct GfxLayout apple1_charlayout =
 	8 * 8				/* 8 8-bit pixel rows per character */
 };
 
-static struct	GfxDecodeInfo apple1_gfxdecodeinfo[] =
+static gfx_decode apple1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &apple1_charlayout, 0, 1},
 	{ -1 }

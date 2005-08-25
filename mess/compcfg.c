@@ -5,7 +5,7 @@
 
 #define MAX_RAM_OPTIONS	16
 
-static int get_ram_options(const struct GameDriver *gamedrv, UINT32 *ram_options, int max_options, int *default_option)
+static int get_ram_options(const game_driver *gamedrv, UINT32 *ram_options, int max_options, int *default_option)
 {
 	struct SystemConfigurationParamBlock params;
 
@@ -23,7 +23,7 @@ static int get_ram_options(const struct GameDriver *gamedrv, UINT32 *ram_options
 
 
 
-UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i)
+UINT32 ram_option(const game_driver *gamedrv, unsigned int i)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
 	int ram_optcount;
@@ -34,7 +34,7 @@ UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i)
 
 
 
-UINT32 ram_default(const struct GameDriver *gamedrv)
+UINT32 ram_default(const game_driver *gamedrv)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
 	int ram_optcount;
@@ -46,7 +46,7 @@ UINT32 ram_default(const struct GameDriver *gamedrv)
 
 
 
-int ram_option_count(const struct GameDriver *gamedrv)
+int ram_option_count(const game_driver *gamedrv)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
 	return get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
@@ -54,7 +54,7 @@ int ram_option_count(const struct GameDriver *gamedrv)
 
 
 
-int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram)
+int ram_is_valid_option(const game_driver *gamedrv, UINT32 ram)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
 	int ram_optcount;

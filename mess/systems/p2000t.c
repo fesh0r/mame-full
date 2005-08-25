@@ -83,7 +83,7 @@ ADDRESS_MAP_END
 
 /* graphics output */
 
-struct	GfxLayout p2000m_charlayout =
+static gfx_layout p2000m_charlayout =
 {
 	6, 10,
 	256,
@@ -95,13 +95,13 @@ struct	GfxLayout p2000m_charlayout =
 	8 * 10
 };
 
-static	struct	GfxDecodeInfo p2000m_gfxdecodeinfo[] =
+static gfx_decode p2000m_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &p2000m_charlayout, 0, 128 },
 	{ -1 }
 };
 
-static	unsigned	char	p2000m_palette[2 * 3] =
+static unsigned char p2000m_palette[2 * 3] =
 {
 	0x00, 0x00, 0x00,
 	0xff, 0xff, 0xff

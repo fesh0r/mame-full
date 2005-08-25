@@ -32,7 +32,7 @@ void deco16_tilemap_4_draw(struct mame_bitmap *bitmap, const struct rectangle *c
 void deco16_tilemap_34_combine_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority);
 
 void deco16_clear_sprite_priority_bitmap(void);
-void deco16_pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void deco16_pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 pri_mask,UINT32 sprite_mask,UINT8 write_pri);
 

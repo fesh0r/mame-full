@@ -22,4 +22,4 @@ extern int apple1_vh_clrscrn_pressed;
 
 /* systems/apple1.c */
 
-extern struct GfxLayout apple1_charlayout;
+extern gfx_layout apple1_charlayout;

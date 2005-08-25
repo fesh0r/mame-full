@@ -18,7 +18,7 @@
 #ifndef DRIVER_RECURSIVE
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-struct GameDriver driver_0 =
+game_driver driver_0 =
 {
 	__FILE__,
 	0,
@@ -41,13 +41,13 @@ struct GameDriver driver_0 =
 #define DRIVER_RECURSIVE
 
 /* step 1: declare all external references */
-#define DRIVER(NAME) extern struct GameDriver driver_##NAME;
+#define DRIVER(NAME) extern game_driver driver_##NAME;
 #include "driver.c"
 
 /* step 2: define the drivers[] array */
 #undef DRIVER
 #define DRIVER(NAME) &driver_##NAME,
-const struct GameDriver *drivers[] =
+const game_driver *drivers[] =
 {
 #include "driver.c"
 	0	/* end of array */
@@ -1653,6 +1653,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( fhawk )		/* B70 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( fhawkj )	/* B70 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( plotting )	/* B96 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( plottinu )	/* B96 (c) 1989 Taito Corporation Japan (US) */
 	DRIVER( plottina )	/* B96 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwr )	/* C01 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwru )	/* C01 (c) 1989 Taito America Corporation (US) */
@@ -3600,7 +3601,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( astrof3 )	/* (c) [1980?] */
 	DRIVER( abattle )	/* Sidam */
 	DRIVER( abattle2 )	/* Sidam */
-	DRIVER( afire )		/* Ren? Pierre */
+	DRIVER( afire )		/* Rene Pierre */
 	DRIVER( acombat )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
@@ -5698,6 +5699,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( s1945iii )	/* (c) 1999 */
 	DRIVER( dragnblz )	/* (c) 2000 */
 	DRIVER( gnbarich )	/* (c) 2001 */
+	DRIVER( tgm2 )		/* (c) 2000 */
+	DRIVER( tgm2p )		/* (c) 2000 */
 	DRIVER( hotgmck )	/* (c) 1997 */
 	DRIVER( hgkairak )	/* (c) 1998 */
 	DRIVER( hotgmck3 )	/* (c) 1999 */

@@ -486,7 +486,7 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 			if (color == 0xf)	/* 8bpp */
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;
@@ -515,7 +515,7 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 			else
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;

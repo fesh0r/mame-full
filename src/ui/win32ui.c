@@ -298,7 +298,7 @@ static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filen
 static void             MamePlayGame(void);
 static void             MamePlayGameWithOptions(int nGame);
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-static int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata);
+static int UpdateLoadProgress(const char* name, const rom_load_data *romdata);
 static BOOL GameCheck(void);
 static BOOL FolderCheck(void);
 
@@ -738,7 +738,7 @@ const char* column_names[COLUMN_MAX] =
 
 /* a tiny compile is without Neogeo games */
 #if (defined(NEOFREE) || defined(TINY_COMPILE)) && !defined(NEOMAME)
-struct GameDriver driver_neogeo =
+game_driver driver_neogeo =
 {
 	__FILE__,
 	0,
@@ -758,7 +758,7 @@ struct GameDriver driver_neogeo =
 	NOT_A_DRIVER,
 };
 #else
-extern struct GameDriver driver_neogeo;
+extern game_driver driver_neogeo;
 #endif
 
 /***************************************************************************
@@ -1714,7 +1714,7 @@ int GetMinimumScreenShotWindowWidth(void)
 }
 
 
-int GetDriverIndex(const struct GameDriver *driver)
+int GetDriverIndex(const game_driver *driver)
 {
 	return GetGameNameIndex(driver->name);
 }
@@ -2581,7 +2581,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			char szFileName[32];
 			char *s;
 			int nGameIndex;
-			const struct GameDriver *drv;
+			const game_driver *drv;
 			int (*pfnGetAuditResults)(int driver_index) = NULL;
 			void (*pfnSetAuditResults)(int driver_index, int audit_results) = NULL;
 
@@ -4844,7 +4844,7 @@ const TCHAR *GamePicker_GetItemString(HWND hwndPicker, int nItem, int nColumn,
 
 		case COLUMN_TYPE:
         {
-            struct InternalMachineDriver drv;
+            machine_config drv;
             expand_machine_driver(drivers[nItem]->drv,&drv);
 
 			/* Vector/Raster */
@@ -5265,7 +5265,7 @@ static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_
 
 	case COLUMN_TYPE:
     {
-        struct InternalMachineDriver drv1,drv2;
+        machine_config drv1,drv2;
         expand_machine_driver(drivers[index1]->drv,&drv1);
         expand_machine_driver(drivers[index2]->drv,&drv2);
 
@@ -6463,7 +6463,7 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 }
 
 // replaces function in src/windows/fileio.c:
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
+int osd_display_loading_rom_message(const char *name,rom_load_data *romdata)
 {
 	int retval;
 
@@ -6525,7 +6525,7 @@ static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wPara
 	return 0;
 }
 
-int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
+int UpdateLoadProgress(const char* name, const rom_load_data *romdata)
 {
 	static HWND hWndLoad = 0;
 	MSG Msg;

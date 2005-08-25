@@ -307,11 +307,11 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 		drivers_info = malloc(sizeof(struct DriversInfo) * GetNumGames());
 		for (ndriver = 0; ndriver < GetNumGames(); ndriver++)
 		{
-			const struct GameDriver *gamedrv = drivers[ndriver];
+			const game_driver *gamedrv = drivers[ndriver];
 			struct DriversInfo *gameinfo = &drivers_info[ndriver];
-			const struct RomModule *region, *rom;
-			struct InternalMachineDriver drv;
-			const struct InputPort *input_ports;
+			const rom_entry *region, *rom;
+			machine_config drv;
+			const input_port_entry *input_ports;
 			int speakernum, num_speakers;
 			gameinfo->isClone = ((gamedrv->clone_of->flags & NOT_A_DRIVER) == 0);
 			gameinfo->isBroken = ((gamedrv->flags & GAME_NOT_WORKING) != 0);

@@ -67,7 +67,7 @@ extern struct tile_info
 } tile_info;
 
 #define SET_TILE_INFO(GFX,CODE,COLOR,FLAGS) { \
-	const struct GfxElement *gfx = Machine->gfx[(GFX)]; \
+	const gfx_element *gfx = Machine->gfx[(GFX)]; \
 	int _code = (CODE) % gfx->total_elements; \
 	tile_info.tile_number = _code; \
 	tile_info.pen_data = gfx->gfxdata + _code*gfx->char_modulo; \

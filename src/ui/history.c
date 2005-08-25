@@ -27,7 +27,7 @@
 
 #include "history.h"
 
-extern int load_driver_history(const struct GameDriver *drv, char *buffer, int bufsize);
+extern int load_driver_history(const game_driver *drv, char *buffer, int bufsize);
 
 /**************************************************************
  * functions

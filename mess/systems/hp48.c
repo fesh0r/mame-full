@@ -152,7 +152,7 @@ INPUT_PORTS_START( hp48s )
 INPUT_PORTS_END
 
 
-static struct GfxLayout hp48_charlayout =
+static gfx_layout hp48_charlayout =
 {
         2,16,
         256,                                    /* 256 characters */
@@ -167,7 +167,7 @@ static struct GfxLayout hp48_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo hp48_gfxdecodeinfo[] = {
+static gfx_decode hp48_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &hp48_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };

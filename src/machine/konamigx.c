@@ -497,7 +497,7 @@ void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *c
     pri     : 0 = topmost, 255 = backmost (pixel priority)
 */
 
-INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElement *gfx, const struct rectangle *cliprect,
+INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const gfx_element *gfx, const struct rectangle *cliprect,
 		unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy,
 		int scalex, int scaley, int alpha, int drawmode, int zcode, int pri)
 {
@@ -1223,7 +1223,7 @@ static int gx_objdma, gx_primode;
 
 // mirrored K053247 and K054338 settings
 static data16_t *K053247_ram;
-static struct GfxElement *K053247_gfx;
+static gfx_element *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053247_dx, K053247_dy;
 

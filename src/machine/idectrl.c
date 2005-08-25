@@ -268,7 +268,7 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
  *
  *************************************/
 
-int ide_controller_init_custom(int which, struct ide_interface *intf, struct chd_file *diskhandle)
+int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
 	const struct hard_disk_info *hdinfo;

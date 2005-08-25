@@ -584,7 +584,7 @@ byte #4:
 
 static void bootleg_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const unsigned char *source, int circuit )
 {
-	const struct GfxElement *gfx = Machine->gfx[circuit+2];
+	const gfx_element *gfx = Machine->gfx[circuit+2];
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);

@@ -2650,7 +2650,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -2661,7 +2661,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -2674,7 +2674,7 @@ static struct GfxLayout tilelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo tharrier_gfxdecodeinfo[] =
+static gfx_decode tharrier_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x200-0x2ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2682,7 +2682,7 @@ static struct GfxDecodeInfo tharrier_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo macross_gfxdecodeinfo[] =
+static gfx_decode macross_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x200, 16 },	/* color 0x200-0x2ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2690,7 +2690,7 @@ static struct GfxDecodeInfo macross_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo macross2_gfxdecodeinfo[] =
+static gfx_decode macross2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2698,7 +2698,7 @@ static struct GfxDecodeInfo macross2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
+static gfx_decode bjtwin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
 	{ REGION_GFX2, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2706,7 +2706,7 @@ static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo bioship_gfxdecodeinfo[] =
+static gfx_decode bioship_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
@@ -2715,7 +2715,7 @@ static struct GfxDecodeInfo bioship_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo strahl_gfxdecodeinfo[] =
+static gfx_decode strahl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x300, 16 },	/* color 0x300-0x3ff */

@@ -1498,7 +1498,7 @@ static void old_style_menu(const char **items, const char **subitems, char *flag
 {
 	static ui_menu_item item_list[1000];
 	int menu_items;
-	
+
 	for (menu_items = 0; items[menu_items]; menu_items++)
 	{
 		item_list[menu_items].text = items[menu_items];
@@ -1867,7 +1867,7 @@ int cheat_menu(int selection)
 	UINT8			total;
 	static INT32	submenu_choice = 0;
 	static int		firstEntry = 0;
-	
+
 	memset(menu_item, 0, sizeof(menu_item));
 
 	cheatEngineWasActive = 1;
@@ -10373,7 +10373,7 @@ static void BuildCPUInfoList(void)
 
 	// do regions
 	{
-		const struct RomModule *	traverse = rom_first_region(Machine->gamedrv);
+		const rom_entry *	traverse = rom_first_region(Machine->gamedrv);
 
 		memset(regionInfoList, 0, sizeof(CPUInfo) * kRegionListLength);
 

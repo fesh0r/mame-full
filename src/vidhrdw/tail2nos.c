@@ -174,7 +174,7 @@ static void drawsprites(struct mame_bitmap *bitmap,const struct rectangle *clipr
 
 VIDEO_UPDATE( tail2nos )
 {
-	static struct GfxLayout tilelayout =
+	static gfx_layout tilelayout =
 	{
 		16,16,
 		TOTAL_CHARS,

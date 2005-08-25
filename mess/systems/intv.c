@@ -91,7 +91,7 @@ static struct AY8910interface ay8910_interface =
 
 /* graphics output */
 
-struct GfxLayout intv_gromlayout =
+gfx_layout intv_gromlayout =
 {
 	16, 16,
 	256,
@@ -103,7 +103,7 @@ struct GfxLayout intv_gromlayout =
 	8 * 16
 };
 
-struct GfxLayout intv_gramlayout =
+gfx_layout intv_gramlayout =
 {
 	16, 16,
 	64,
@@ -115,7 +115,7 @@ struct GfxLayout intv_gramlayout =
 	8 * 8
 };
 
-struct GfxLayout intvkbd_charlayout =
+gfx_layout intvkbd_charlayout =
 {
 	8, 8,
 	256,
@@ -126,14 +126,14 @@ struct GfxLayout intvkbd_charlayout =
 	8 * 8
 };
 
-static struct	GfxDecodeInfo intv_gfxdecodeinfo[] =
+static gfx_decode intv_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0x3000<<1, &intv_gromlayout, 0, 256},
     { 0, 0, &intv_gramlayout, 0, 256 },    /* Dynamically decoded from RAM */
 	{ -1 }
 };
 
-static struct	GfxDecodeInfo intvkbd_gfxdecodeinfo[] =
+static gfx_decode intvkbd_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0x3000<<1, &intv_gromlayout, 0, 256},
     { 0, 0, &intv_gramlayout, 0, 256 },    /* Dynamically decoded from RAM */

@@ -692,7 +692,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 			if (support_8bpp && color == 0xf)	/* 8bpp */
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;
@@ -721,7 +721,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 			else
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;

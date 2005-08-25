@@ -36,7 +36,7 @@ static const char *error_strings[] =
 	"unsupported CHD version"
 };
 
-static struct cdrom_file *drive_handles[MAX_CDROMS];
+static cdrom_file *drive_handles[MAX_CDROMS];
 
 static const char *chd_get_error_string(int chderr)
 {
@@ -59,7 +59,7 @@ static const char *mess_cd_option_spec =
 
 struct mess_cd
 {
-	struct cdrom_file *cdrom_handle;
+	cdrom_file *cdrom_handle;
 };
 
 static struct mess_cd *get_drive(mess_image *img)
@@ -98,7 +98,7 @@ static void encode_ptr(void *ptr, char filename[ENCODED_IMAGE_REF_LEN])
 
 
 
-int chdcd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, struct chd_file *parent)
+int chdcd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
@@ -107,7 +107,7 @@ int chdcd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 co
 
 
 
-struct chd_file *chdcd_open_ref(void *ref, int writeable, struct chd_file *parent)
+chd_file *chdcd_open_ref(void *ref, int writeable, chd_file *parent)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
@@ -144,13 +144,13 @@ static mess_image *decode_image_ref(const char encoded_image_ref[ENCODED_IMAGE_R
  *
  *************************************/
 
-static struct chd_interface_file *mess_chd_open(const char *filename, const char *mode);
-static void mess_chd_close(struct chd_interface_file *file);
-static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 mess_chd_length(struct chd_interface_file *file);
+static chd_interface_file *mess_chd_open(const char *filename, const char *mode);
+static void mess_chd_close(chd_interface_file *file);
+static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 mess_chd_length(chd_interface_file *file);
 
-static struct chd_interface mess_cdrom_interface =
+static chd_interface mess_cdrom_interface =
 {
 	mess_chd_open,
 	mess_chd_close,
@@ -160,7 +160,7 @@ static struct chd_interface mess_cdrom_interface =
 };
 
 
-static struct chd_interface_file *mess_chd_open(const char *filename, const char *mode)
+static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
 	mess_image *img = decode_image_ref(filename);
 
@@ -172,18 +172,18 @@ static struct chd_interface_file *mess_chd_open(const char *filename, const char
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (struct chd_interface_file *) image_fp(img);
+	return (chd_interface_file *) image_fp(img);
 }
 
 
 
-static void mess_chd_close(struct chd_interface_file *file)
+static void mess_chd_close(chd_interface_file *file)
 {
 }
 
 
 
-static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -191,7 +191,7 @@ static UINT32 mess_chd_read(struct chd_interface_file *file, UINT64 offset, UINT
 
 
 
-static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fwrite((mame_file *)file, buffer, count);
@@ -199,7 +199,7 @@ static UINT32 mess_chd_write(struct chd_interface_file *file, UINT64 offset, UIN
 
 
 
-static UINT64 mess_chd_length(struct chd_interface_file *file)
+static UINT64 mess_chd_length(chd_interface_file *file)
 {
 	return mame_fsize((mame_file *)file);
 }
@@ -245,7 +245,7 @@ static int internal_load_mess_cd(mess_image *image, const char *metadata)
 {
 	int err = 0;
 	struct mess_cd *cd;
-	struct chd_file *chd;
+	chd_file *chd;
 	int id = image_index_in_device(image);
 
 	cd = get_drive(image);
@@ -315,7 +315,7 @@ DEVICE_UNLOAD(mess_cd)
  *
  *************************************/
 
-struct cdrom_file *mess_cd_get_cdrom_file(mess_image *image)
+cdrom_file *mess_cd_get_cdrom_file(mess_image *image)
 {
 	struct mess_cd *cd = get_drive(image);
 	return cd->cdrom_handle;
@@ -330,7 +330,7 @@ struct cdrom_file *mess_cd_get_cdrom_file(mess_image *image)
  *
  *************************************/
 
-struct chd_file *mess_cd_get_chd_file(mess_image *image)
+chd_file *mess_cd_get_chd_file(mess_image *image)
 {
 	return NULL;	// not supported by the src/cdrom.c core at this time
 }
@@ -372,7 +372,7 @@ void cdrom_device_getinfo(struct IODevice *iodev)
 	iodev->createimage_options[1].optspec = NULL;
 }
 
-struct cdrom_file *mess_cd_get_cdrom_file_by_number(int drivenum)
+cdrom_file *mess_cd_get_cdrom_file_by_number(int drivenum)
 {
 	if ((drivenum < 0) || (drivenum > MAX_CDROMS))
 	{

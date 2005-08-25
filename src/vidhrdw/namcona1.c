@@ -116,7 +116,7 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 
 /*************************************************************************/
 
-static struct GfxLayout shape_layout =
+static gfx_layout shape_layout =
 {
 	8,8,
 	0x1000,
@@ -131,7 +131,7 @@ static struct GfxLayout shape_layout =
 	8*8
 }; /* shape_layout */
 
-static struct GfxLayout cg_layout =
+static gfx_layout cg_layout =
 {
 	8,8,
 	0x1000,
@@ -227,7 +227,7 @@ static void update_gfx( void )
 VIDEO_START( namcona1 )
 {
 	int i;
-	struct GfxElement *gfx0,*gfx1;
+	gfx_element *gfx0,*gfx1;
 	static void (*get_info[4])(int tile_index) =
 	{ tilemap_get_info0, tilemap_get_info1, tilemap_get_info2, tilemap_get_info3 };
 
@@ -277,7 +277,7 @@ static void pdraw_masked_tile(
 		int priority,
 		int bShadow )
 {
-	const struct GfxElement *gfx,*mask;
+	const gfx_element *gfx,*mask;
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
@@ -405,7 +405,7 @@ static void pdraw_opaque_tile(
 		int priority,
 		int bShadow )
 {
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
@@ -574,7 +574,7 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 	int scrollx, scrolly;
 	struct rectangle clip;
 	const pen_t *paldata;
-	struct GfxElement *pGfx;
+	gfx_element *pGfx;
 
 	pGfx = Machine->gfx[0];
 	paldata = &pGfx->colortable[pGfx->color_granularity * tilemap_palette_bank[which]];

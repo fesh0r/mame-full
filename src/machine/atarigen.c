@@ -1464,8 +1464,8 @@ void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
 
 void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1)
 {
-	struct GfxElement *gx0 = Machine->gfx[gfx0];
-	struct GfxElement *gx1 = Machine->gfx[gfx1];
+	gfx_element *gx0 = Machine->gfx[gfx0];
+	gfx_element *gx1 = Machine->gfx[gfx1];
 	int c, x, y;
 
 	/* loop over elements */

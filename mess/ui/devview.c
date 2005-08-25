@@ -178,7 +178,7 @@ static LRESULT CALLBACK DevView_EditWndProc(HWND hwndEdit, UINT nMessage, WPARAM
 BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 {
 	struct DevViewInfo *pDevViewInfo;
-	const struct GameDriver *drv;
+	const game_driver *drv;
 	const struct IODevice *devices;
 	const struct IODevice *dev;
 	struct DevViewEntry *pEnt;

@@ -756,7 +756,7 @@ ROM_END
 	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, CRC(e801dadc ))
 #endif
 
-static SID6581_interface sound_interface =
+static SID6581_interface c64_sound_interface =
 {
 	c64_paddle_read
 };
@@ -779,7 +779,7 @@ static MACHINE_DRIVER_START( c64 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("sid", SID6581, VIC6567_CLOCK)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c64_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
@@ -793,7 +793,7 @@ static MACHINE_DRIVER_START( ultimax )
 	MDRV_CPU_PROGRAM_MAP( ultimax_readmem, ultimax_writemem )
 
 	MDRV_SOUND_REPLACE("sid", SID6581, 1000000)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c64_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
@@ -810,7 +810,7 @@ static MACHINE_DRIVER_START( c64pal )
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
 
 	MDRV_SOUND_REPLACE("sid", SID6581, VIC6569_CLOCK)
-	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_CONFIG(c64_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 

@@ -541,9 +541,9 @@ rgb_t debugger_palette[] = {
 #include "dbgfonts/m0813fnt.c"
 
 
-struct GfxElement *build_debugger_font(void)
+gfx_element *build_debugger_font(void)
 {
-	struct GfxElement *font;
+	gfx_element *font;
 
 	font = decodegfx(fontdata,&fontlayout);
 
@@ -556,7 +556,7 @@ struct GfxElement *build_debugger_font(void)
 	return font;
 }
 
-static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
+static void toggle_cursor(struct mame_bitmap *bitmap, gfx_element *font)
 {
 	int sx, sy, x, y;
 
@@ -587,7 +587,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 void dbg_put_screen_char(int ch, int attr, int x, int y)
 {
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
-	struct GfxElement *font = Machine->debugger_font;
+	gfx_element *font = Machine->debugger_font;
 
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
@@ -1823,7 +1823,7 @@ static int hit_brk_regs(void)
  **************************************************************************/
 static const char *name_rom( const char *type, int regnum, unsigned *base, unsigned start )
 {
-	const struct RomModule *region, *rom, *chunk;
+	const rom_entry *region, *rom, *chunk;
 	unsigned offset = *base;
 
 	for (region = rom_first_region(Machine->gamedrv); region; region = rom_next_region(region))

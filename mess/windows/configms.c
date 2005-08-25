@@ -95,7 +95,7 @@ struct rc_option mess_opts[] =
  * return 0 --> no problem
  * return 1 --> something went wrong
  */
-int write_config(const char* filename, const struct GameDriver *gamedrv)
+int write_config(const char* filename, const game_driver *gamedrv)
 {
 	mame_file *f;
 	char buffer[128];

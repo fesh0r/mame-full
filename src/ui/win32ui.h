@@ -57,7 +57,7 @@ BOOL GetUseXPControl(void);
 int GetMinimumScreenShotWindowWidth(void);
 
 // we maintain an array of drivers sorted by name, useful all around
-int GetDriverIndex(const struct GameDriver *driver);
+int GetDriverIndex(const game_driver *driver);
 int GetGameNameIndex(const char *name);
 int GetIndexFromSortedIndex(int sorted_index);
 

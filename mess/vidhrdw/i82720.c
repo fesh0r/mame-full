@@ -1468,7 +1468,7 @@ VIDEO_START ( compis_gdc )
 	return compis_gdc_start(&sIntf);
 }
 
-void mdrv_compisgdc(struct InternalMachineDriver *machine,
+void mdrv_compisgdc(machine_config *machine,
                     const compis_gdc_interface *intf)
 
 {

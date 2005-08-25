@@ -19,11 +19,11 @@ DEVICE_UNLOAD( mess_cd );
 
 const struct IODevice *mess_cd_device_specify(struct IODevice *iodev, int count);
 
-struct cdrom_file *mess_cd_get_cdrom_file(mess_image *image);
-struct chd_file *mess_cd_get_chd_file(mess_image *image);
+cdrom_file *mess_cd_get_cdrom_file(mess_image *image);
+chd_file *mess_cd_get_chd_file(mess_image *image);
 
 void cdrom_device_getinfo(struct IODevice *iodev);
 
-struct cdrom_file *mess_cd_get_cdrom_file_by_number(int drivenum);
+cdrom_file *mess_cd_get_cdrom_file_by_number(int drivenum);
 
 #endif /* MESS_CD_H */

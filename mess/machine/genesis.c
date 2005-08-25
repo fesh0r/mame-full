@@ -72,7 +72,7 @@ int genesis_68k_has_z80_bus;
 
 static genvdp genesis_vdp;
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	0x800,
@@ -182,7 +182,7 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 
 void genesis_vdp_spritebuffer_scanline (genvdp *current_vdp, int line, int reqpri)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data8_t *srcgfx = gfx->gfxdata;
 	int shadowmode = genesis_vdp.genesis_vdp_regs[0x0c]&0x08;
 	int sbr = genesis_vdp.genesis_vdp_regs[0x05]<<9;
@@ -342,7 +342,7 @@ c0-ff are unused
 
 void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	int _2tileblock;
 	data8_t *srcgfx = gfx->gfxdata;

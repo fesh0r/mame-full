@@ -167,7 +167,7 @@ static ADDRESS_MAP_START(megaduck_writemem_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static struct GfxDecodeInfo gb_gfxdecodeinfo[] =
+static gfx_decode gb_gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };

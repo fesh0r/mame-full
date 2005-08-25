@@ -118,7 +118,7 @@ static int show_profiler;
 
 static UINT8 ui_dirty;
 
-static struct GfxElement *uirotfont;
+static gfx_element *uirotfont;
 static pen_t uirotfont_colortable[2*2];
 
 static char popup_text[200];
@@ -291,7 +291,7 @@ static const UINT8 uifontdata[] =
 };
 
 #define MAX_UIFONT_SIZE 8 /* max(width,height) */
-static const struct GfxLayout uifontlayout =
+static const gfx_layout uifontlayout =
 {
 	6,8,
 	256,
@@ -1122,7 +1122,7 @@ void ui_draw_message_window(const char *text)
 
 static void create_font(void)
 {
-	struct GfxLayout layout = uifontlayout;
+	gfx_layout layout = uifontlayout;
 	int temp, i;
 
 	/* free any existing fonts */
@@ -1308,7 +1308,7 @@ do { \
 	int has_configs = FALSE;
 	int has_analog = FALSE;
 	int has_dips = FALSE;
-	struct InputPort *in;
+	input_port_entry *in;
 	int menu_items = 0;
 
 	/* scan the input port array to see what options we need to enable */
@@ -1509,8 +1509,8 @@ static UINT32 menu_default_input(UINT32 state)
 	static input_seq_t starting_seq;
 
 	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
-	const struct InputPortDefinition *indef;
-	struct InputPortDefinition *in;
+	const input_port_default_entry *indef;
+	input_port_default_entry *in;
 	const input_seq_t *selected_defseq = NULL;
 	input_seq_t *selected_seq = NULL;
 	UINT8 selected_is_analog = FALSE;
@@ -1636,7 +1636,7 @@ static UINT32 menu_default_input(UINT32 state)
  *
  *************************************/
 
-INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, struct InputPort *in, int which)
+INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, input_port_entry *in, int which)
 {
 	/* set the item text using the formatting string provided */
 	item->text = &menu_string_pool[menu_string_pool_offset];
@@ -1663,7 +1663,7 @@ static UINT32 menu_game_input(UINT32 state)
 	int selected = state & 0x3fff;
 	int record_next = (state >> 14) & 1;
 	int polling = (state >> 15) & 1;
-	struct InputPort *in;
+	input_port_entry *in;
 	int menu_items = 0;
 
 	/* reset the menu and string pool */
@@ -1769,9 +1769,9 @@ static UINT32 menu_game_input(UINT32 state)
  *
  *************************************/
 
-INLINE void switch_menu_add_item(ui_menu_item *item, const struct InputPort *in, int switch_entry)
+INLINE void switch_menu_add_item(ui_menu_item *item, const input_port_entry *in, int switch_entry)
 {
-	const struct InputPort *tin;
+	const input_port_entry *tin;
 
 	/* set the text to the name and the subitem text to invalid */
 	item->text = input_port_name(in);
@@ -1800,10 +1800,10 @@ INLINE void switch_menu_add_item(ui_menu_item *item, const struct InputPort *in,
 }
 
 
-static void switch_menu_pick_previous(struct InputPort *in, int switch_entry)
+static void switch_menu_pick_previous(input_port_entry *in, int switch_entry)
 {
 	int last_value = in->default_value;
-	const struct InputPort *tin;
+	const input_port_entry *tin;
 
 	/* scan for the current selection in the list */
 	for (tin = in + 1; tin->type == switch_entry; tin++)
@@ -1823,9 +1823,9 @@ static void switch_menu_pick_previous(struct InputPort *in, int switch_entry)
 }
 
 
-static void switch_menu_pick_next(struct InputPort *in, int switch_entry)
+static void switch_menu_pick_next(input_port_entry *in, int switch_entry)
 {
-	const struct InputPort *tin;
+	const input_port_entry *tin;
 	int foundit = FALSE;
 
 	/* scan for the current selection in the list */
@@ -1852,8 +1852,8 @@ static UINT32 menu_switches(UINT32 state)
 	int switch_entry = (state >> 24) & 0xff;
 	int switch_name = (state >> 16) & 0xff;
 	int selected = state & 0xffff;
-	struct InputPort *selected_in = NULL;
-	struct InputPort *in;
+	input_port_entry *selected_in = NULL;
+	input_port_entry *in;
 	int menu_items = 0;
 
 	/* reset the menu */
@@ -1895,7 +1895,7 @@ static UINT32 menu_switches(UINT32 state)
  *
  *************************************/
 
-INLINE void analog_menu_add_item(ui_menu_item *item, const struct InputPort *in, int append_string, int which_item)
+INLINE void analog_menu_add_item(ui_menu_item *item, const input_port_entry *in, int append_string, int which_item)
 {
 	int value, minval, maxval;
 
@@ -1947,8 +1947,8 @@ INLINE void analog_menu_add_item(ui_menu_item *item, const struct InputPort *in,
 static UINT32 menu_analog(UINT32 state)
 {
 	ui_menu_item item_list[MAX_INPUT_PORTS * 4 * ANALOG_ITEM_COUNT];
-	struct InputPort *selected_in = NULL;
-	struct InputPort *in;
+	input_port_entry *selected_in = NULL;
+	input_port_entry *in;
 	int menu_items = 0;
 	int delta = 0;
 
@@ -2171,7 +2171,7 @@ static UINT32 menu_memory_card(UINT32 state)
 		cardnum--;
 	if (selected == 0 && input_ui_pressed(IPT_UI_RIGHT) && cardnum < 1000)
 		cardnum++;
-	
+
 	/* handle actions */
 	if (input_ui_pressed(IPT_UI_SELECT))
 		switch (selected)
@@ -2927,7 +2927,7 @@ int ui_display_game_warnings(struct mame_bitmap *bitmap)
 
 			if (Machine->gamedrv->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 			{
-				const struct GameDriver *maindrv;
+				const game_driver *maindrv;
 				int foundworking;
 
 				if (Machine->gamedrv->flags & GAME_NOT_WORKING)
@@ -3041,127 +3041,127 @@ int ui_display_game_info(struct mame_bitmap *bitmap)
 /*
 int memcard_menu(int selection)
 {
-	int sel;
-	int menutotal = 0;
-	const char *menuitem[10];
-	char buf[256];
-	char buf2[256];
+    int sel;
+    int menutotal = 0;
+    const char *menuitem[10];
+    char buf[256];
+    char buf2[256];
 
-	sel = selection - 1 ;
+    sel = selection - 1 ;
 
-	sprintf(buf, "%s %03d", ui_getstring (UI_loadcard), cardnum);
-	menuitem[menutotal++] = buf;
-	menuitem[menutotal++] = ui_getstring (UI_ejectcard);
-	menuitem[menutotal++] = ui_getstring (UI_createcard);
-	menuitem[menutotal++] = ui_getstring (UI_returntomain);
-	menuitem[menutotal] = 0;
+    sprintf(buf, "%s %03d", ui_getstring (UI_loadcard), cardnum);
+    menuitem[menutotal++] = buf;
+    menuitem[menutotal++] = ui_getstring (UI_ejectcard);
+    menuitem[menutotal++] = ui_getstring (UI_createcard);
+    menuitem[menutotal++] = ui_getstring (UI_returntomain);
+    menuitem[menutotal] = 0;
 
-	if (mcd_action!=0)
-	{
-		strcpy (buf2, "\n");
+    if (mcd_action!=0)
+    {
+        strcpy (buf2, "\n");
 
-		switch(mcd_action)
-		{
-			case 1:
-				strcat (buf2, ui_getstring (UI_loadfailed));
-				break;
-			case 2:
-				strcat (buf2, ui_getstring (UI_loadok));
-				break;
-			case 3:
-				strcat (buf2, ui_getstring (UI_cardejected));
-				break;
-			case 4:
-				strcat (buf2, ui_getstring (UI_cardcreated));
-				break;
-			case 5:
-				strcat (buf2, ui_getstring (UI_cardcreatedfailed));
-				strcat (buf2, "\n");
-				strcat (buf2, ui_getstring (UI_cardcreatedfailed2));
-				break;
-			default:
-				strcat (buf2, ui_getstring (UI_carderror));
-				break;
-		}
+        switch(mcd_action)
+        {
+            case 1:
+                strcat (buf2, ui_getstring (UI_loadfailed));
+                break;
+            case 2:
+                strcat (buf2, ui_getstring (UI_loadok));
+                break;
+            case 3:
+                strcat (buf2, ui_getstring (UI_cardejected));
+                break;
+            case 4:
+                strcat (buf2, ui_getstring (UI_cardcreated));
+                break;
+            case 5:
+                strcat (buf2, ui_getstring (UI_cardcreatedfailed));
+                strcat (buf2, "\n");
+                strcat (buf2, ui_getstring (UI_cardcreatedfailed2));
+                break;
+            default:
+                strcat (buf2, ui_getstring (UI_carderror));
+                break;
+        }
 
-		strcat (buf2, "\n\n");
-		ui_draw_message_window(buf2);
-		if (input_ui_pressed(IPT_UI_SELECT))
-			mcd_action = 0;
-	}
-	else
-	{
-		//ui_draw_menu(menuitem,0,0,sel,0);
+        strcat (buf2, "\n\n");
+        ui_draw_message_window(buf2);
+        if (input_ui_pressed(IPT_UI_SELECT))
+            mcd_action = 0;
+    }
+    else
+    {
+        //ui_draw_menu(menuitem,0,0,sel,0);
 
-		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-			cardnum = (cardnum + 1) % 1000;
+        if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+            cardnum = (cardnum + 1) % 1000;
 
-		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-			cardnum = (cardnum + 999) % 1000;
+        if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+            cardnum = (cardnum + 999) % 1000;
 
-		if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-			sel = (sel + 1) % menutotal;
+        if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
+            sel = (sel + 1) % menutotal;
 
-		if (input_ui_pressed_repeat(IPT_UI_UP,8))
-			sel = (sel + menutotal - 1) % menutotal;
+        if (input_ui_pressed_repeat(IPT_UI_UP,8))
+            sel = (sel + menutotal - 1) % menutotal;
 
-		if (input_ui_pressed(IPT_UI_SELECT))
-		{
-			switch(sel)
-			{
-			case 0:
-				memcard_intf.eject();
-				if (memcard_intf.load(cardnum))
-				{
-					memcard_status=1;
-					memcard_number=cardnum;
-					mcd_action = 2;
-				}
-				else
-					mcd_action = 1;
-				break;
-			case 1:
-				memcard_intf.eject();
-				mcd_action = 3;
-				break;
-			case 2:
-				if (memcard_intf.create(cardnum))
-					mcd_action = 4;
-				else
-					mcd_action = 5;
-				break;
+        if (input_ui_pressed(IPT_UI_SELECT))
+        {
+            switch(sel)
+            {
+            case 0:
+                memcard_intf.eject();
+                if (memcard_intf.load(cardnum))
+                {
+                    memcard_status=1;
+                    memcard_number=cardnum;
+                    mcd_action = 2;
+                }
+                else
+                    mcd_action = 1;
+                break;
+            case 1:
+                memcard_intf.eject();
+                mcd_action = 3;
+                break;
+            case 2:
+                if (memcard_intf.create(cardnum))
+                    mcd_action = 4;
+                else
+                    mcd_action = 5;
+                break;
 #ifdef MESS
-			case 3:
-				memcard_manager=1;
-				sel=-2;
-				machine_reset();
-				break;
-			case 4:
-				sel=-1;
-				break;
+            case 3:
+                memcard_manager=1;
+                sel=-2;
+                machine_reset();
+                break;
+            case 4:
+                sel=-1;
+                break;
 #else
-			case 3:
-				sel=-1;
-				break;
+            case 3:
+                sel=-1;
+                break;
 #endif
 
 
-			}
-		}
+            }
+        }
 
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			sel = -1;
+        if (input_ui_pressed(IPT_UI_CANCEL))
+            sel = -1;
 
-		if (input_ui_pressed(IPT_UI_CONFIGURE))
-			sel = -2;
+        if (input_ui_pressed(IPT_UI_CONFIGURE))
+            sel = -2;
 
-		if (sel == -1 || sel == -2)
-		{
-			schedule_full_refresh();
-		}
-	}
+        if (sel == -1 || sel == -2)
+        {
+            schedule_full_refresh();
+        }
+    }
 
-	return sel + 1;
+    return sel + 1;
 }
 */
 
@@ -3238,7 +3238,7 @@ static void displayosd(const char *text,int percentage,int default_percentage)
 
 static void onscrd_adjuster(int increment,int arg)
 {
-	struct InputPort *in = &Machine->input_ports[arg];
+	input_port_entry *in = &Machine->input_ports[arg];
 	char buf[80];
 	int value;
 
@@ -3511,7 +3511,7 @@ static void onscrd_refresh(int increment,int arg)
 
 static void onscrd_init(void)
 {
-	struct InputPort *in;
+	input_port_entry *in;
 	int item,ch;
 
 	item = 0;

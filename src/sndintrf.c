@@ -37,44 +37,48 @@
  *
  *************************************/
 
-struct sound_output
+struct _sound_output
 {
-	sound_stream *	stream;							/* associated stream */
-	int				output;							/* output number */
+	sound_stream *	stream;					/* associated stream */
+	int				output;					/* output number */
 };
+typedef struct _sound_output sound_output;
 
 
-struct sound_info
+struct _sound_info
 {
-	const struct MachineSound *sound;				/* pointer to the sound info */
-	int				sndindex;						/* index of this chip */
-	struct snd_interface intf;						/* copy of the sound interface for this chip */
-	void *			token;							/* token returned by the start callback */
-	int				outputs;						/* number of outputs from this instance */
-	struct sound_output *output;					/* array of output information */
+	const sound_config *sound;				/* pointer to the sound info */
+	int				sndindex;				/* index of this chip */
+	sound_interface intf;					/* copy of the sound interface for this chip */
+	void *			token;					/* token returned by the start callback */
+	int				outputs;				/* number of outputs from this instance */
+	sound_output *	output;					/* array of output information */
 };
+typedef struct _sound_info sound_info;
 
 
-struct speaker_input
+struct _speaker_input
 {
-	float			gain;							/* current gain */
-	float			default_gain;					/* default gain */
-	char *			name;							/* name of this input */
+	float			gain;					/* current gain */
+	float			default_gain;			/* default gain */
+	char *			name;					/* name of this input */
 };
+typedef struct _speaker_input speaker_input;
 
 
-struct speaker_info
+struct _speaker_info
 {
-	const struct MachineSpeaker *speaker;			/* pointer to the speaker info */
-	sound_stream *	mixer_stream;					/* mixing stream */
-	int				inputs;							/* number of input streams */
-	struct speaker_input *input;					/* array of input information */
+	const speaker_config *speaker;			/* pointer to the speaker info */
+	sound_stream *	mixer_stream;			/* mixing stream */
+	int				inputs;					/* number of input streams */
+	speaker_input *	input;					/* array of input information */
 #ifdef MAME_DEBUG
-	INT32			max_sample;						/* largest sample value we've seen */
-	INT32			clipped_samples;				/* total number of clipped samples */
-	INT32			total_samples;					/* total number of samples */
+	INT32			max_sample;				/* largest sample value we've seen */
+	INT32			clipped_samples;		/* total number of clipped samples */
+	INT32			total_samples;			/* total number of samples */
 #endif
 };
+typedef struct _speaker_info speaker_info;
 
 
 
@@ -180,7 +184,7 @@ void filter_rc_get_info(void *token, UINT32 state, union sndinfo *info);
  *
  *************************************/
 
-struct snd_interface sndintrf[SOUND_COUNT];
+sound_interface sndintrf[SOUND_COUNT];
 
 const struct
 {
@@ -521,12 +525,12 @@ const struct
 static mame_timer *sound_update_timer;
 
 static int totalsnd;
-static struct sound_info sound[MAX_SOUND];
-static struct sound_info *current_sound_start;
+static sound_info sound[MAX_SOUND];
+static sound_info *current_sound_start;
 static UINT8 sound_matrix[SOUND_COUNT][MAX_SOUND];
 
 static int totalspeakers;
-static struct speaker_info speaker[MAX_SPEAKER];
+static speaker_info speaker[MAX_SPEAKER];
 
 static INT16 *finalmix;
 static INT32 *leftmix, *rightmix;
@@ -635,7 +639,7 @@ void sndintrf_init(void)
 	for (mapindex = 0; mapindex < sizeof(sndintrf_map) / sizeof(sndintrf_map[0]); mapindex++)
 	{
 		int sndtype = sndintrf_map[mapindex].sndtype;
-		struct snd_interface *intf = &sndintrf[sndtype];
+		sound_interface *intf = &sndintrf[sndtype];
 		union sndinfo info;
 
 		/* start with the get_info routine */
@@ -673,8 +677,8 @@ static int start_sound_chips(void)
 	/* start up all the sound chips */
 	for (sndnum = 0; sndnum < MAX_SOUND; sndnum++)
 	{
-		const struct MachineSound *msound = &Machine->drv->sound[sndnum];
-		struct sound_info *info;
+		const sound_config *msound = &Machine->drv->sound[sndnum];
+		sound_info *info;
 		int index;
 
 		/* stop when we hit an empty entry */
@@ -770,8 +774,8 @@ static int start_speakers(void)
 	/* start up all the speakers */
 	for (totalspeakers = 0; totalspeakers < MAX_SPEAKER; totalspeakers++)
 	{
-		const struct MachineSpeaker *mspeaker = &Machine->drv->speaker[totalspeakers];
-		struct speaker_info *info;
+		const speaker_config *mspeaker = &Machine->drv->speaker[totalspeakers];
+		speaker_info *info;
 
 		/* stop when we hit an empty entry */
 		if (!mspeaker->tag)
@@ -798,7 +802,7 @@ static int start_speakers(void)
  *
  *************************************/
 
-static struct speaker_info *find_speaker_by_tag(const char *tag)
+static speaker_info *find_speaker_by_tag(const char *tag)
 {
 	int spknum;
 
@@ -810,7 +814,7 @@ static struct speaker_info *find_speaker_by_tag(const char *tag)
 }
 
 
-static struct sound_info *find_sound_by_tag(const char *tag)
+static sound_info *find_sound_by_tag(const char *tag)
 {
 	int sndnum;
 
@@ -837,14 +841,14 @@ static int route_sound(void)
 	/* iterate over all the sound chips */
 	for (sndnum = 0; sndnum < totalsnd; sndnum++)
 	{
-		struct sound_info *info = &sound[sndnum];
+		sound_info *info = &sound[sndnum];
 
 		/* iterate over all routes */
 		for (routenum = 0; routenum < info->sound->routes; routenum++)
 		{
-			const struct MachineSoundRoute *mroute = &info->sound->route[routenum];
-			struct speaker_info *speaker;
-			struct sound_info *sound;
+			const sound_route *mroute = &info->sound->route[routenum];
+			speaker_info *speaker;
+			sound_info *sound;
 
 			/* find the target */
 			speaker = find_speaker_by_tag(mroute->target);
@@ -872,7 +876,7 @@ static int route_sound(void)
 	streams_set_tag(NULL);
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
-		struct speaker_info *info = &speaker[spknum];
+		speaker_info *info = &speaker[spknum];
 		if (info->inputs)
 		{
 			info->mixer_stream = stream_create(info->inputs, 1, Machine->sample_rate, info, mixer_update);
@@ -886,14 +890,14 @@ static int route_sound(void)
 	/* iterate again over all the sound chips */
 	for (sndnum = 0; sndnum < totalsnd; sndnum++)
 	{
-		struct sound_info *info = &sound[sndnum];
+		sound_info *info = &sound[sndnum];
 
 		/* iterate over all routes */
 		for (routenum = 0; routenum < info->sound->routes; routenum++)
 		{
-			const struct MachineSoundRoute *mroute = &info->sound->route[routenum];
-			struct speaker_info *speaker;
-			struct sound_info *sound;
+			const sound_route *mroute = &info->sound->route[routenum];
+			speaker_info *speaker;
+			sound_info *sound;
 
 			/* find the target */
 			speaker = find_speaker_by_tag(mroute->target);
@@ -953,7 +957,7 @@ void sound_exit(void)
 	/* log the maximum sample values for all speakers */
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
-		struct speaker_info *spk = &speaker[spknum];
+		speaker_info *spk = &speaker[spknum];
 #ifdef WIN32
 		printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
 #else
@@ -967,7 +971,7 @@ void sound_exit(void)
 	for (sndnum = 0; sndnum < MAX_SOUND; sndnum++)
 		if (Machine->drv->sound[sndnum].sound_type != 0)
 		{
-			struct sound_info *info = &sound[sndnum];
+			sound_info *info = &sound[sndnum];
 			if (info->intf.stop)
 				(*info->intf.stop)(info->token);
 		}
@@ -990,9 +994,9 @@ void sound_exit(void)
  *
  *************************************/
 
-void sndintrf_load(int config_type, struct xml_data_node *parentnode)
+void sndintrf_load(int config_type, xml_data_node *parentnode)
 {
-	struct xml_data_node *channelnode;
+	xml_data_node *channelnode;
 	int mixernum;
 
 	/* we only care about game files */
@@ -1018,7 +1022,7 @@ void sndintrf_load(int config_type, struct xml_data_node *parentnode)
 }
 
 
-void sndintrf_save(int config_type, struct xml_data_node *parentnode)
+void sndintrf_save(int config_type, xml_data_node *parentnode)
 {
 	int mixernum;
 
@@ -1035,7 +1039,7 @@ void sndintrf_save(int config_type, struct xml_data_node *parentnode)
 
 			if (defvol != newvol)
 			{
-				struct xml_data_node *channelnode = xml_add_child(parentnode, "channel", NULL);
+				xml_data_node *channelnode = xml_add_child(parentnode, "channel", NULL);
 				if (channelnode)
 				{
 					xml_set_attribute_int(channelnode, "index", mixernum);
@@ -1056,7 +1060,7 @@ void sndintrf_save(int config_type, struct xml_data_node *parentnode)
 
 static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct speaker_info *speaker = param;
+	speaker_info *speaker = param;
 	int numinputs = speaker->inputs;
 	int pos;
 
@@ -1091,7 +1095,7 @@ void sound_reset(void)
 	for (sndnum = 0; sndnum < MAX_SOUND; sndnum++)
 		if (Machine->drv->sound[sndnum].sound_type != 0)
 		{
-			struct sound_info *info = &sound[sndnum];
+			sound_info *info = &sound[sndnum];
 			if (info->intf.reset)
 				(*info->intf.reset)(info->token);
 		}
@@ -1134,7 +1138,7 @@ void sound_frame_update(void)
 	/* force all the speaker streams to generate the proper number of samples */
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
-		struct speaker_info *spk = &speaker[spknum];
+		speaker_info *spk = &speaker[spknum];
 		stream_sample_t *stream_buf;
 
 		/* get the output buffer */

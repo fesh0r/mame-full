@@ -107,13 +107,13 @@ static imgtool_stream *decode_image_ref(const char *encoded_image_ref)
 }
 
 
-static struct chd_interface_file *imgtool_chd_open(const char *filename, const char *mode);
-static void imgtool_chd_close(struct chd_interface_file *file);
-static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 imgtool_chd_length(struct chd_interface_file *file);
+static chd_interface_file *imgtool_chd_open(const char *filename, const char *mode);
+static void imgtool_chd_close(chd_interface_file *file);
+static UINT32 imgtool_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 imgtool_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 imgtool_chd_length(chd_interface_file *file);
 
-static struct chd_interface imgtool_chd_interface =
+static chd_interface imgtool_chd_interface =
 {
 	imgtool_chd_open,
 	imgtool_chd_close,
@@ -129,7 +129,7 @@ static struct chd_interface imgtool_chd_interface =
 /*
 	imgtool_chd_open - interface for opening a hard disk image
 */
-static struct chd_interface_file *imgtool_chd_open(const char *filename, const char *mode)
+static chd_interface_file *imgtool_chd_open(const char *filename, const char *mode)
 {
 	imgtool_stream *img = decode_image_ref(filename);
 
@@ -143,13 +143,13 @@ static struct chd_interface_file *imgtool_chd_open(const char *filename, const c
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (struct chd_interface_file *) img;
+	return (chd_interface_file *) img;
 }
 
 /*
 	imgtool_chd_close - interface for closing a hard disk image
 */
-static void imgtool_chd_close(struct chd_interface_file *file)
+static void imgtool_chd_close(chd_interface_file *file)
 {
 	(void) file;
 }
@@ -157,7 +157,7 @@ static void imgtool_chd_close(struct chd_interface_file *file)
 /*
 	imgtool_chd_read - interface for reading from a hard disk image
 */
-static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+static UINT32 imgtool_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	stream_seek((imgtool_stream *)file, offset, SEEK_SET);
 	return stream_read((imgtool_stream *)file, buffer, count);
@@ -166,7 +166,7 @@ static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, U
 /*
 	imgtool_chd_write - interface for writing to a hard disk image
 */
-static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+static UINT32 imgtool_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	stream_seek((imgtool_stream *)file, offset, SEEK_SET);
 	return stream_write((imgtool_stream *)file, buffer, count);
@@ -175,7 +175,7 @@ static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, 
 /*
 	imgtool_chd_write - interface for determining the length of a hard disk image
 */
-static UINT64 imgtool_chd_length(struct chd_interface_file *file)
+static UINT64 imgtool_chd_length(chd_interface_file *file)
 {
 	return stream_size((imgtool_stream *)file);
 }
@@ -190,9 +190,9 @@ imgtoolerr_t imghd_create(imgtool_stream *stream, UINT32 hunksize, UINT32 cylind
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	char encoded_image_ref[encoded_image_ref_max_len];
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 	UINT8 *cache = NULL;
-	struct chd_file *chd = NULL;
+	chd_file *chd = NULL;
 	int rc;
 	UINT64 logicalbytes;
 	int hunknum, totalhunks;
@@ -288,7 +288,7 @@ imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	char encoded_image_ref[encoded_image_ref_max_len];
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 
 	hard_disk->hard_disk = NULL;
 	hard_disk->chd = NULL;
@@ -328,7 +328,7 @@ done:
 */
 void imghd_close(struct mess_hard_disk_file *disk)
 {
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
@@ -356,7 +356,7 @@ void imghd_close(struct mess_hard_disk_file *disk)
 */
 imgtoolerr_t imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, void *buffer)
 {
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 	UINT32 reply;
 
 	chd_save_interface(&interface_save);
@@ -376,7 +376,7 @@ imgtoolerr_t imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT
 */
 imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer)
 {
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 	UINT32 reply;
 
 	chd_save_interface(&interface_save);
@@ -396,7 +396,7 @@ imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UIN
 */
 const struct hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk)
 {
-	struct chd_interface interface_save;
+	chd_interface interface_save;
 	const struct hard_disk_info *reply;
 
 	chd_save_interface(&interface_save);

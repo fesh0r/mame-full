@@ -172,7 +172,7 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
     **- End of Comments -*/
 
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	data16_t *source = buffered_spriteram16;
 	data16_t *finish = source + 0x2000/2;
 

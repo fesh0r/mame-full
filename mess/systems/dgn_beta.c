@@ -66,7 +66,7 @@ static unsigned short dgnbeta_colortable[][2] = {
 	{ 1, 0 }
 };
 
-static struct GfxLayout dgnbeta_charlayout =
+static gfx_layout dgnbeta_charlayout =
 {
         8,9,
         256,                    /* 512 characters */
@@ -79,7 +79,7 @@ static struct GfxLayout dgnbeta_charlayout =
         16*8			/* Each char is 16 bytes apart */
 };
 
-static struct GfxDecodeInfo dgnbeta_gfxdecodeinfo[] = {
+static gfx_decode dgnbeta_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &dgnbeta_charlayout,                     0, 1 },
         { -1 } /* end of array */
 };

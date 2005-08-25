@@ -31,10 +31,8 @@ void osd_wait_for_debugger(void);
 /* mame_bitmap used to be declared here, but has moved to common.c */
 /* sadly, the include order requires that at least this forward declaration is here */
 struct mame_bitmap;
-struct mame_display;
 struct performance_info;
 struct rectangle;
-struct rom_load_data;
 
 
 /* these are the parameters passed into osd_create_display */
@@ -104,7 +102,7 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
-void osd_update_video_and_audio(struct mame_display *display);
+void osd_update_video_and_audio(struct _mame_display *display);
 
 
 /*
@@ -205,7 +203,7 @@ int osd_readkey_unicode(int flush);
   This function is called on startup, before reading the configuration from disk.
   Scan the list, and change the keys/joysticks you want.
 */
-void osd_customize_inputport_list(struct InputPortDefinition *defaults);
+void osd_customize_inputport_list(input_port_default_entry *defaults);
 
 
 /* Joystick calibration routines BW 19981216 */
@@ -313,7 +311,7 @@ void osd_free_executable(void *ptr);
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata);
+int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 
 /* called when the game is paused/unpaused, so the OS dependent code can do special */
 /* things like changing the title bar or darkening the display. */

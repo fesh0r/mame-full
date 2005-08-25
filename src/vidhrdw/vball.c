@@ -124,7 +124,7 @@ void vb_mark_all_dirty( void )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	unsigned char *src = spriteram;
 	int i;
 

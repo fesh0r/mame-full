@@ -209,7 +209,7 @@ INPUT_PORTS_START( famicom )
 INPUT_PORTS_END
 
 /* This layout is not changed at runtime */
-struct GfxLayout nes_vram_charlayout =
+gfx_layout nes_vram_charlayout =
 {
     8,8,    /* 8*8 characters */
     512,    /* 512 characters */

@@ -258,7 +258,7 @@ INPUT_PORTS_START( mgolf )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8, 8,
 	128,
@@ -274,7 +274,7 @@ static struct GfxLayout tile_layout =
 };
 
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	8, 16,
 	16,
@@ -291,7 +291,7 @@ static struct GfxLayout sprite_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0, 2 },
 	{ REGION_GFX2, 0, &sprite_layout, 0, 2 },

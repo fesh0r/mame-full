@@ -91,7 +91,7 @@ VIDEO_UPDATE( yumefuda )
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -102,7 +102,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-struct GfxDecodeInfo yumefuda_gfxdecodeinfo[] =
+gfx_decode yumefuda_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 0x10 },
 	{ -1 } /* end of array */

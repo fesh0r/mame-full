@@ -108,7 +108,7 @@ static void default_device_getdispositions(const struct IODevice *dev, int id,
 
 
 
-struct IODevice *devices_allocate(const struct GameDriver *gamedrv)
+struct IODevice *devices_allocate(const game_driver *gamedrv)
 {
 	struct SystemConfigurationParamBlock params;
 	device_getinfo_handler handlers[64];

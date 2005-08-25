@@ -254,7 +254,7 @@ INPUT_PORTS_START( trs80 )
 
 INPUT_PORTS_END
 
-static struct GfxLayout trs80_charlayout_normal_width =
+static gfx_layout trs80_charlayout_normal_width =
 {
 	FW,FH,			/* 6 x 12 characters */
 	256,			/* 256 characters */
@@ -268,7 +268,7 @@ static struct GfxLayout trs80_charlayout_normal_width =
 	8*FH		   /* every char takes FH bytes */
 };
 
-static struct GfxLayout trs80_charlayout_double_width =
+static gfx_layout trs80_charlayout_double_width =
 {
 	FW*2,FH,	   /* FW*2 x FH*3 characters */
 	256,		   /* 256 characters */
@@ -282,7 +282,7 @@ static struct GfxLayout trs80_charlayout_double_width =
 	8*FH		   /* every char takes FH bytes */
 };
 
-static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
+static gfx_decode trs80_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &trs80_charlayout_normal_width, 0, 4 },
 	{ REGION_GFX1, 0, &trs80_charlayout_double_width, 0, 4 },

@@ -17,7 +17,7 @@
 struct InputCode
 {
 	UINT32 port[NUM_SIMUL_KEYS];
-	const struct InputPort *ipt[NUM_SIMUL_KEYS];
+	const input_port_entry *ipt[NUM_SIMUL_KEYS];
 };
 
 struct KeyBuffer
@@ -349,11 +349,11 @@ static const char *charstr(unicode_char_t ch)
 
 
 
-static int scan_keys(const struct InputPort *input_ports, struct InputCode *codes, UINT32 *ports, const struct InputPort **shift_ports, int keys, int shift)
+static int scan_keys(const input_port_entry *input_ports, struct InputCode *codes, UINT32 *ports, const input_port_entry **shift_ports, int keys, int shift)
 {
 	int result = 0;
-	const struct InputPort *ipt;
-	const struct InputPort *ipt_key = NULL;
+	const input_port_entry *ipt;
+	const input_port_entry *ipt_key = NULL;
 	UINT32 port = (UINT32) -1;
 	unicode_char_t code;
 
@@ -416,10 +416,10 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 
 #define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES)
 
-static int build_codes(const struct InputPort *input_ports, struct InputCode *codes, int map_lowercase)
+static int build_codes(const input_port_entry *input_ports, struct InputCode *codes, int map_lowercase)
 {
 	UINT32 ports[NUM_SIMUL_KEYS];
-	const struct InputPort *ipts[NUM_SIMUL_KEYS];
+	const input_port_entry *ipts[NUM_SIMUL_KEYS];
 	int switch_upper, rc = 0;
 	unicode_char_t c;
 
@@ -460,12 +460,12 @@ done:
 
 ***************************************************************************/
 
-int inputx_validitycheck(const struct GameDriver *gamedrv)
+int inputx_validitycheck(const game_driver *gamedrv)
 {
 	char buf[CODE_BUFFER_SIZE];
 	struct InputCode *codes;
-	const struct InputPort *input_ports;
-	const struct InputPort *ipt;
+	const input_port_entry *input_ports;
+	const input_port_entry *ipt;
 	int port_count, i, j;
 	int error = 0;
 	unicode_char_t last_char = 0;
@@ -820,7 +820,7 @@ void inputx_update(UINT32 *ports)
 {
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
-	const struct InputPort *ipt;
+	const input_port_entry *ipt;
 	unicode_char_t ch;
 	int i;
 	int value;
@@ -856,7 +856,7 @@ void inputx_update(UINT32 *ports)
 
 
 
-void inputx_handle_mess_extensions(struct InputPort *ipt)
+void inputx_handle_mess_extensions(input_port_entry *ipt)
 {
 	char buf[256];
 	int i, pos;
@@ -1112,7 +1112,7 @@ void inputx_post_utf8(const char *text)
 	This stuff is here more out of convienience than anything else
 ***************************************************************************/
 
-int input_classify_port(const struct InputPort *port)
+int input_classify_port(const input_port_entry *port)
 {
 	int result;
 
@@ -1186,7 +1186,7 @@ int input_classify_port(const struct InputPort *port)
 
 
 
-int input_player_number(const struct InputPort *port)
+int input_player_number(const input_port_entry *port)
 {
 	return port->player;
 }
@@ -1195,7 +1195,7 @@ int input_player_number(const struct InputPort *port)
 
 int input_has_input_class(int inputclass)
 {
-	struct InputPort *in;
+	input_port_entry *in;
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
 		if (input_classify_port(in) == inputclass)
@@ -1208,7 +1208,7 @@ int input_has_input_class(int inputclass)
 
 int input_count_players(void)
 {
-	const struct InputPort *in;
+	const input_port_entry *in;
 	int joystick_count;
 
 	joystick_count = 0;
@@ -1227,8 +1227,8 @@ int input_count_players(void)
 
 int input_category_active(int category)
 {
-	const struct InputPort *in;
-	const struct InputPort *in_base = NULL;
+	const input_port_entry *in;
+	const input_port_entry *in_base = NULL;
 
 	assert(category >= 1);
 

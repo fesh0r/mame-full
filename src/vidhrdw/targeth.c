@@ -117,7 +117,7 @@ VIDEO_START( targeth )
 static void targeth_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int i;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	for (i = 3; i < (0x1000 - 6)/2; i += 4){
 		int sx = targeth_spriteram[i+2] & 0x03ff;

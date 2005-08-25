@@ -3899,7 +3899,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16x16 */
 	RGN_FRAC(1,2),	/* Number of tiles */
@@ -3912,7 +3912,7 @@ static struct GfxLayout tilelayout =
 	8*4*16
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,	/* 8x8 */
 	RGN_FRAC(1,2),	/* Number of 8x8 sprites */
@@ -3923,7 +3923,7 @@ static struct GfxLayout spritelayout =
 	8*16
 };
 
-static struct GfxLayout raizing_textlayout =
+static gfx_layout raizing_textlayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3935,7 +3935,7 @@ static struct GfxLayout raizing_textlayout =
 };
 
 #ifdef LSB_FIRST
-static struct GfxLayout truxton2_tx_tilelayout =
+static gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3946,7 +3946,7 @@ static struct GfxLayout truxton2_tx_tilelayout =
 	8*64
 };
 #else
-static struct GfxLayout truxton2_tx_tilelayout =
+static gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3959,7 +3959,7 @@ static struct GfxLayout truxton2_tx_tilelayout =
 #endif
 
 #ifdef LSB_FIRST
-static struct GfxLayout batrider_tx_tilelayout =
+static gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3970,7 +3970,7 @@ static struct GfxLayout batrider_tx_tilelayout =
 	8*32
 };
 #else
-static struct GfxLayout batrider_tx_tilelayout =
+static gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3983,7 +3983,7 @@ static struct GfxLayout batrider_tx_tilelayout =
 #endif
 
 
-static struct GfxLayout fixeighblayout =
+static gfx_layout fixeighblayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -3994,14 +3994,14 @@ static struct GfxLayout fixeighblayout =
    8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_2[] =
+static gfx_decode gfxdecodeinfo_2[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
@@ -4010,7 +4010,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_2[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
+static gfx_decode truxton2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
 	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
@@ -4020,7 +4020,7 @@ static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
+static gfx_decode raizing_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,         0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,       0,  64 },
@@ -4029,7 +4029,7 @@ static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
 };
 
 /* This is wrong a bit. Text layer is dynamically changed. */
-static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
+static gfx_decode batrider_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,             0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,           0,  64 },
@@ -4037,7 +4037,7 @@ static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo fixeighb_gfxdecodeinfo[] =
+static gfx_decode fixeighb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout     , 0, 128 },
 	{ REGION_GFX1, 0, &spritelayout   , 0,  64 },

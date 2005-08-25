@@ -310,7 +310,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout zx_pixel_layout =
+static gfx_layout zx_pixel_layout =
 {
 	8, 1,							   /* 8x1 pixels */
 	256,							   /* 256 codes */
@@ -323,7 +323,7 @@ static struct GfxLayout zx_pixel_layout =
 	8								   /* one byte per code */
 };
 
-static struct GfxLayout zx_char_layout =
+static gfx_layout zx_char_layout =
 {
 	8, 8,							   /* 8x8 pixels */
 	64,								   /* 64 codes */
@@ -338,28 +338,28 @@ static struct GfxLayout zx_char_layout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo zx80_gfxdecodeinfo[] =
+static gfx_decode zx80_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_CPU1, 0x0e00, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo zx81_gfxdecodeinfo[] =
+static gfx_decode zx81_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_CPU1, 0x1e00, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo pc8300_gfxdecodeinfo[] =
+static gfx_decode pc8300_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_GFX2, 0x0000, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo pow3000_gfxdecodeinfo[] =
+static gfx_decode pow3000_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_GFX2, 0x0000, &zx_char_layout,  0, 2 },

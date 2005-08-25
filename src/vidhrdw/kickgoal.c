@@ -97,7 +97,7 @@ WRITE16_HANDLER( kickgoal_bg2ram_w )
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -223,7 +223,7 @@ VIDEO_START( actionhw )
 
 static void actionhw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)

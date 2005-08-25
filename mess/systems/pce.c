@@ -139,7 +139,7 @@ INPUT_PORTS_END
 
 
 #if 0
-static struct GfxLayout pce_bg_layout =
+static gfx_layout pce_bg_layout =
 {
         8, 8,
         2048,
@@ -150,7 +150,7 @@ static struct GfxLayout pce_bg_layout =
         32*8,
 };
 
-static struct GfxLayout pce_obj_layout =
+static gfx_layout pce_obj_layout =
 {
         16, 16,
         512,
@@ -161,7 +161,7 @@ static struct GfxLayout pce_obj_layout =
         128*8,
 };
 
-static struct GfxDecodeInfo pce_gfxdecodeinfo[] =
+static gfx_decode pce_gfxdecodeinfo[] =
 {
    { 1, 0x0000, &pce_bg_layout, 0, 0x10 },
    { 1, 0x0000, &pce_obj_layout, 0x100, 0x10 },

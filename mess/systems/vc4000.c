@@ -112,7 +112,7 @@ PORT_BIT(0x1ff,0x70,IPT_AD_STICK_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_
 #endif
 INPUT_PORTS_END
 
-static struct GfxLayout vc4000_charlayout =
+static gfx_layout vc4000_charlayout =
 {
         8,1,
         256,                                    /* 256 characters */
@@ -134,7 +134,7 @@ static struct GfxLayout vc4000_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo vc4000_gfxdecodeinfo[] =
+static gfx_decode vc4000_gfxdecodeinfo[] =
 {
     { REGION_GFX1, 0x0000, &vc4000_charlayout,                     0, 2 },
     { -1 } /* end of array */

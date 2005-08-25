@@ -123,7 +123,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout studio2_charlayout =
+static gfx_layout studio2_charlayout =
 {
         32,1,
         256,                                    /* 256 characters */
@@ -147,7 +147,7 @@ static struct GfxLayout studio2_charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo studio2_gfxdecodeinfo[] = {
+static gfx_decode studio2_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &studio2_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };

@@ -480,7 +480,7 @@ static int index_datafile (struct tDatafileIndex **_index)
  *
  *      Returns 0 if successful.
  **************************************************************************/
-static int load_datafile_text (const struct GameDriver *drv, char *buffer, int bufsize,
+static int load_datafile_text (const game_driver *drv, char *buffer, int bufsize,
         struct tDatafileIndex *idx, const char *tag)
 {
         int     offset = 0;
@@ -582,7 +582,7 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
  *
  *      NOTE: For efficiency the indices are never freed (intentional leak).
  **************************************************************************/
-int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize)
+int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
 {
         static struct tDatafileIndex *hist_idx = 0;
         static struct tDatafileIndex *mame_idx = 0;
@@ -607,7 +607,7 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
                 /* load history text */
                 if (hist_idx)
                 {
-                        const struct GameDriver *gdrv;
+                        const game_driver *gdrv;
 
                         gdrv = drv;
                         do
@@ -638,7 +638,7 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
                 if (mame_idx)
                 {
                         int len = strlen (buffer);
-                        const struct GameDriver *gdrv;
+                        const game_driver *gdrv;
 
                         gdrv = drv;
                         do

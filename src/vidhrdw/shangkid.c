@@ -64,7 +64,7 @@ WRITE8_HANDLER( shangkid_videoram_w )
 }
 
 static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	int transparent_pen;
 	int bank_index;
 	int c,r;

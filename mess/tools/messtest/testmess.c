@@ -336,9 +336,9 @@ int osd_update_audio_stream(INT16 *buffer)
 
 static void find_switch(const char *switch_name, const char *switch_setting,
 	int switch_type, int switch_setting_type,
-	struct InputPort **in_switch, struct InputPort **in_switch_setting)
+	input_port_entry **in_switch, input_port_entry **in_switch_setting)
 {
-	struct InputPort *in;
+	input_port_entry *in;
 
 	*in_switch = NULL;
 	*in_switch_setting = NULL;
@@ -478,8 +478,8 @@ static void command_screenshot(void)
 
 static void command_switch(void)
 {
-	struct InputPort *switch_name;
-	struct InputPort *switch_setting;
+	input_port_entry *switch_name;
+	input_port_entry *switch_setting;
 
 	find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
 		IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING, &switch_name, &switch_setting);
@@ -769,7 +769,7 @@ static const struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_END,				command_end }
 };
 
-void osd_update_video_and_audio(struct mame_display *display)
+void osd_update_video_and_audio(mame_display *display)
 {
 	int i;
 	double time_limit;

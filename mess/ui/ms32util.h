@@ -6,7 +6,7 @@
 BOOL DriverIsComputer(int driver_index);
 BOOL DriverIsModified(int driver_index);
 BOOL DriverUsesMouse(int driver_index);
-BOOL DriverHasDevice(const struct GameDriver *gamedrv, iodevice_t type);
+BOOL DriverHasDevice(const game_driver *gamedrv, iodevice_t type);
 
 #endif /* MS32UTIL_H */
 

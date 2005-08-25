@@ -1825,7 +1825,7 @@ static MACHINE_INIT( pentagon )
 
 /****************************************************************************************************/
 
-static struct GfxLayout spectrum_charlayout = {
+static gfx_layout spectrum_charlayout = {
 	8,8,
 	256,
 	1,						/* 1 bits per pixel */
@@ -1838,7 +1838,7 @@ static struct GfxLayout spectrum_charlayout = {
 	8				/* every char takes 1 consecutive byte */
 };
 
-static struct GfxDecodeInfo spectrum_gfxdecodeinfo[] = {
+static gfx_decode spectrum_gfxdecodeinfo[] = {
 	{ 0, 0x0, &spectrum_charlayout, 0, 0x80 },
 	{ 0, 0x0, &spectrum_charlayout, 0, 0x80 },
 	{ 0, 0x0, &spectrum_charlayout, 0, 0x80 },

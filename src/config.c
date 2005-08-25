@@ -203,7 +203,7 @@ void config_save_settings(void)
 
 static int config_load_xml(mame_file *file, int config_type)
 {
-	struct xml_data_node *root, *confignode, *systemnode;
+	xml_data_node *root, *confignode, *systemnode;
 	struct config_type *type;
 	const char *srcfile;
 	int version, count;
@@ -301,8 +301,8 @@ error:
 
 static int config_save_xml(mame_file *file, int config_type)
 {
-	struct xml_data_node *root = xml_file_create();
-	struct xml_data_node *confignode, *systemnode;
+	xml_data_node *root = xml_file_create();
+	xml_data_node *confignode, *systemnode;
 	struct config_type *type;
 
 	/* if we don't have a root, bail */
@@ -325,7 +325,7 @@ static int config_save_xml(mame_file *file, int config_type)
 	/* loop over all registrants and call their save function */
 	for (type = typelist; type; type = type->next)
 	{
-		struct xml_data_node *curnode = xml_add_child(systemnode, type->name, NULL);
+		xml_data_node *curnode = xml_add_child(systemnode, type->name, NULL);
 		if (!curnode)
 			goto error;
 		(*type->save)(config_type, curnode);

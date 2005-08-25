@@ -54,7 +54,7 @@ int mbee_frame_counter;
 UINT8 *pcgram;
 
 /* from mess/systems/microbee.c */
-extern struct GfxLayout mbee_charlayout;
+extern gfx_layout mbee_charlayout;
 
 
 WRITE8_HANDLER ( mbee_pcg_color_latch_w )

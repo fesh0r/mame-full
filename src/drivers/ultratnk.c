@@ -424,7 +424,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout playfield_layout =
+static gfx_layout playfield_layout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -436,7 +436,7 @@ static struct GfxLayout playfield_layout =
 };
 
 
-static struct GfxLayout motion_layout =
+static gfx_layout motion_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -451,7 +451,7 @@ static struct GfxLayout motion_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &playfield_layout, 0, 4 }, 	/* playfield graphics */
 	{ REGION_GFX2, 0, &motion_layout,    0, 4 }, 	/* motion graphics */

@@ -81,7 +81,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		int flipx=(tile&0x80)?1:0;
 		int flipy=0;
 
-		struct GfxElement *gfx = Machine->gfx[2];
+		gfx_element *gfx = Machine->gfx[2];
 
 		if (flipscreen)
 		{

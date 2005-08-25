@@ -94,7 +94,7 @@ ADDRESS_MAP_END
 
 /* graphics output */
 
-struct	GfxLayout	nascom1_charlayout =
+static gfx_layout nascom1_charlayout =
 {
 	8, 16,
 	128,
@@ -106,13 +106,13 @@ struct	GfxLayout	nascom1_charlayout =
 	8 * 16
 };
 
-static	struct	GfxDecodeInfo	nascom1_gfxdecodeinfo[] =
+static gfx_decode nascom1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom1_charlayout, 0, 1},
 	{-1}
 };
 
-struct	GfxLayout	nascom2_charlayout =
+static gfx_layout nascom2_charlayout =
 {
 	8, 14,
 	256,
@@ -124,7 +124,7 @@ struct	GfxLayout	nascom2_charlayout =
 	8 * 16
 };
 
-static	struct	GfxDecodeInfo	nascom2_gfxdecodeinfo[] =
+static gfx_decode nascom2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom2_charlayout, 0, 1},
 	{-1}

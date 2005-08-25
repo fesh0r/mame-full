@@ -161,7 +161,7 @@ VIDEO_START( grchamp )
 
 static void draw_text( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	const UINT8 *source = videoram;
 	int bank = (grchamp_videoreg0&0x20)?256:0;
 	int offs;
@@ -275,7 +275,7 @@ static int collision_check( struct mame_bitmap *bitmap, int which )
 }
 
 static void draw_rain( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
-	const struct GfxElement *gfx = Machine->gfx[4];
+	const gfx_element *gfx = Machine->gfx[4];
 	int tile_number = grchamp_tile_number>>4;
 	if( tile_number ){
 		int scrollx = grchamp_rain_xpos;
@@ -382,7 +382,7 @@ static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle 
 }
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	int bank = (grchamp_videoreg0&0x20)?0x40:0x00;
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x40;

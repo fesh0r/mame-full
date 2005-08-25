@@ -20,10 +20,10 @@
 
 #include "driver.h"
 
-extern struct GfxLayout europc_cga_charlayout;
-extern struct GfxLayout europc_mda_charlayout;
-extern struct GfxDecodeInfo europc_gfxdecodeinfo[];
-extern struct GfxDecodeInfo aga_gfxdecodeinfo[];
+extern gfx_layout europc_cga_charlayout;
+extern gfx_layout europc_mda_charlayout;
+extern gfx_decode europc_gfxdecodeinfo[];
+extern gfx_decode aga_gfxdecodeinfo[];
 
 extern PALETTE_INIT( pc_aga );
 

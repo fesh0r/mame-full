@@ -71,7 +71,7 @@ WRITE16_HANDLER( drgnmst_md_videoram_w )
 
 static void drgnmst_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data16_t *source = spriteram16;
 	data16_t *finish = source + 0x800/2;
 

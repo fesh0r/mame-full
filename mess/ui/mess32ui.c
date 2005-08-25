@@ -35,7 +35,7 @@
 #define LOG_SOFTWARE	0
 
 static int requested_device_type(char *tchar);
-static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv);
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const game_driver *gamedrv);
 static BOOL MessApproveImageList(HWND hParent, int nDriver);
 
 static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn);
@@ -254,7 +254,7 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     int the_index;
     int nIconPos = 0;
     HICON hIcon = 0;
-    const struct GameDriver *drv;
+    const game_driver *drv;
     char buffer[32];
 	const char *iconname;
 
@@ -338,7 +338,7 @@ static BOOL AddSoftwarePickerDirs(HWND hwndPicker, LPCTSTR pszDirectories, LPCTS
 
 static void MyFillSoftwareList(int nGame, BOOL bForce)
 {
-	const struct GameDriver *drv;
+	const game_driver *drv;
 	HWND hwndSoftwarePicker;
 	HWND hwndSoftwareDevView;
 	
@@ -378,7 +378,7 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 	int i;
 	int nCount;
 	const struct IODevice *pDevice;
-	const struct GameDriver *pDriver;
+	const game_driver *pDriver;
 	char szMessage[256];
 	LPCTSTR pszMessage;
 	LPCTSTR pszSoftware;
@@ -591,7 +591,7 @@ static void MessReadMountedSoftware(int nGame)
 	int i;
 	LVFINDINFO lvfi;
 	LPTSTR apszSoftware[IO_COUNT];
-	const struct GameDriver *pDriver;
+	const game_driver *pDriver;
 	const struct IODevice *pDeviceList;
 	const struct IODevice *pDevice;
 	LPCTSTR pszSoftware;
@@ -699,7 +699,7 @@ static void InitMessPicker(void)
 
 
 
-static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *pDriver)
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const game_driver *pDriver)
 {
 	const struct IODevice *pDevice;
 	int nGame;

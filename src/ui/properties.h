@@ -52,14 +52,14 @@ const char *GameInfoStatus(int driver_index, BOOL bRomStatus);
 typedef struct
 {
 	BOOL bOnDefaultPage;
-	BOOL (*pfnFilterProc)(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+	BOOL (*pfnFilterProc)(const machine_config *drv, const game_driver *gamedrv);
 	DWORD dwDlgID;
 	DLGPROC pfnDlgProc;
 } PROPERTYSHEETINFO;
 
 extern const PROPERTYSHEETINFO g_propSheets[];
 
-BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+BOOL PropSheetFilter_Vector(const machine_config *drv, const game_driver *gamedrv);
 
 INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);

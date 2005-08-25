@@ -147,7 +147,7 @@ unsigned short cga_colortable[] =
      12,11,12,15, 13,11,12,15, 14,11,12,15, 15,11,12,15,
 };
 
-struct GfxLayout CGA_charlayout =
+gfx_layout CGA_charlayout =
 {
 	8,16,					/* 8 x 16 characters */
     256,                    /* 256 characters */
@@ -163,7 +163,7 @@ struct GfxLayout CGA_charlayout =
     8*8                     /* every char takes 8 bytes */
 };
 
-static struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
+static gfx_decode CGA_gfxdecodeinfo[] =
 {
 /* Support up to four CGA fonts */
 	{ 1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */

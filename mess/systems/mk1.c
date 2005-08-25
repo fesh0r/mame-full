@@ -198,7 +198,7 @@ static void mk1_interrupt(UINT16 addr, bool level)
 static DRIVER_INIT( mk1 )
 {
     F3853_CONFIG config;
-	struct InternalMachineDriver drv;
+	machine_config drv;
 
 	construct_mk1(&drv);
 

@@ -164,7 +164,7 @@ WRITE8_HANDLER( spdodgeb_videoram_w )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	unsigned char *src;
 	int i;
 

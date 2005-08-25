@@ -27,5 +27,5 @@ extern size_t jupiter_charram_size;
 
 /* systems/jupiter.c */
 
-extern struct GfxLayout jupiter_charlayout;
+extern gfx_layout jupiter_charlayout;
 												

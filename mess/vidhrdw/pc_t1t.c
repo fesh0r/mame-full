@@ -70,7 +70,7 @@ static unsigned short pcjr_colortable[] =
 	 0,1,2,3, 4,5,6,7, 8,9,0xa,0xb, 0xc,0xd,0xe,0xf
 };
 
-static struct GfxLayout t1t_gfxlayout_4bpp =
+static gfx_layout t1t_gfxlayout_4bpp =
 {
 	2,1,					/* 8 x 32 graphics */
     256,                    /* 256 codes */
@@ -83,7 +83,7 @@ static struct GfxLayout t1t_gfxlayout_4bpp =
 	1*8 					/* every code takes 1 byte */
 };
 
-static struct GfxLayout t1t_charlayout =
+static gfx_layout t1t_charlayout =
 {
 	8,8,					/* 8 x 8 characters */
     128,                    /* 128 characters */
@@ -97,7 +97,7 @@ static struct GfxLayout t1t_charlayout =
     8*8                     /* every char takes 8 bytes */
 };
 
-static struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
+static gfx_decode t1000hx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xfc0a8, &t1t_charlayout,			0,				128 },	/* single width */
@@ -105,7 +105,7 @@ static struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo t1000sx_gfxdecodeinfo[] =
+static gfx_decode t1000sx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xf40a3, &t1t_charlayout,			0,				128 },	/* single width */
@@ -528,7 +528,7 @@ static void t1t_plot_char(struct mame_bitmap *bitmap, const struct
 	int width;
 	int height;
 	int bgcolor;
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 
 	gfx = Machine->gfx[ch & 0x80 ? 1 : 0];
 	drawgfx(bitmap, gfx, ch & 0x7f, attr, 

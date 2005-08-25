@@ -72,7 +72,7 @@ BOOL ScreenShotLoaded(void)
 }
 
 #ifdef MESS
-static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwareName, int nType)
+static BOOL LoadSoftwareScreenShot(const game_driver *drv, LPCSTR lpSoftwareName, int nType)
 {
 	char *s = alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 5);
 	sprintf(s, "%s/%s.png", drv->name, lpSoftwareName);

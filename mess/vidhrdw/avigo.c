@@ -34,7 +34,7 @@ static int stylus_y;
 /* colour table filled in from avigo colour table*/
 static UINT32 stylus_color_table[3] = {0,0,0};
 
-static struct GfxLayout pointerlayout =
+static gfx_layout pointerlayout =
 {
 	8, 8,
 	1,
@@ -51,7 +51,7 @@ static UINT8 pointermask[] =
 	0xf0, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00	/* whitemask */
 };
 
-static struct GfxElement *stylus_pointer;
+static gfx_element *stylus_pointer;
 
 void	avigo_vh_set_stylus_marker_position(int x,int y)
 {

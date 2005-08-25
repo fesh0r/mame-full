@@ -23,7 +23,7 @@
  *
  *************************************/
 
-struct MachineCPU
+struct _cpu_config
 {
 	int			cpu_type;					/* index for the CPU type */
 	int			cpu_flags;					/* flags; see #defines below */
@@ -36,6 +36,7 @@ struct MachineCPU
 	void *		reset_param;				/* parameter for cpu_reset */
 	const char *tag;
 };
+typedef struct _cpu_config cpu_config;
 
 
 

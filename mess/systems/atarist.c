@@ -1811,7 +1811,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };

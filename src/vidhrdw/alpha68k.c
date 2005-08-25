@@ -334,7 +334,7 @@ static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 	int data, offs, mx, my, tile, color, fy, i;
 	UINT8 *color_prom = memory_region(REGION_USER1);
-	struct GfxElement *gfx = Machine->gfx[0];
+	gfx_element *gfx = Machine->gfx[0];
 
 	for (offs=0; offs<0x400; offs+=0x20)
 	{

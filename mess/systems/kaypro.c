@@ -171,7 +171,7 @@ INPUT_PORTS_END
 #define FW  ((KAYPRO_FONT_W+7)/8)*8
 #define FH  KAYPRO_FONT_H
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
     FW, FH,         /* 8*16 characters */
     4 * 256,        /* 4 * 256 characters */
@@ -190,7 +190,7 @@ static struct GfxLayout charlayout =
     FW * FH         /* every char takes 16 bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
     { 1, 0, &charlayout, 0, 4},
 	{-1}

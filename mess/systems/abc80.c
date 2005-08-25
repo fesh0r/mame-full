@@ -928,7 +928,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout charlayout_abc80 =
+static gfx_layout charlayout_abc80 =
 {
 	6, 10,
 	128,
@@ -939,7 +939,7 @@ static struct GfxLayout charlayout_abc80 =
 	10*8
 };
 
-static struct GfxLayout charlayout_abc800m =
+static gfx_layout charlayout_abc800m =
 {
 	6, 10,
 	128,
@@ -952,20 +952,20 @@ static struct GfxLayout charlayout_abc800m =
 
 /* Graphics Decode Info */
 
-static struct GfxDecodeInfo gfxdecodeinfo_abc80[] =
+static gfx_decode gfxdecodeinfo_abc80[] =
 {
 	{ REGION_GFX1, 0,     &charlayout_abc80, 0, 2 },	// normal characters
 	{ REGION_GFX1, 0x500, &charlayout_abc80, 0, 2 },	// graphics characters
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_abc800m[] =
+static gfx_decode gfxdecodeinfo_abc800m[] =
 {
 	{ REGION_GFX1, 0, &charlayout_abc800m, 0, 2 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_abc802[] =
+static gfx_decode gfxdecodeinfo_abc802[] =
 {
 	{ REGION_GFX1, 0,     &charlayout_abc800m, 0, 2 },
 	{ REGION_GFX1, 0x800, &charlayout_abc800m, 0, 2 },

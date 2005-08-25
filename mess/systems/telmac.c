@@ -514,7 +514,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout charlayout_normal_size =
+static gfx_layout charlayout_normal_size =
 {
 	CDP1869_CHAR_WIDTH, CDP1869_CHAR_HEIGHT_PAL,
 	256,
@@ -525,7 +525,7 @@ static struct GfxLayout charlayout_normal_size =
 	8*8
 };
 
-static struct GfxLayout charlayout_double_size =
+static gfx_layout charlayout_double_size =
 {
 	CDP1869_CHAR_WIDTH*2, CDP1869_CHAR_HEIGHT_PAL*2,
 	256,
@@ -538,7 +538,7 @@ static struct GfxLayout charlayout_double_size =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_normal_size, 0, 128 },
 	{ REGION_GFX1, 0, &charlayout_double_size, 0, 128 },

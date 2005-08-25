@@ -13,7 +13,7 @@
 
 static int horizontal_pos = 0x0b;
 
-struct GfxLayout galaxy_charlayout =
+gfx_layout galaxy_charlayout =
 {
 	8, 13,				/* 8x8 characters */
 	128,				/* 128 characters */

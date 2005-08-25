@@ -104,10 +104,10 @@ struct SystemConfigurationParamBlock
  * COMP and COMPX are for computers
  ******************************************************************************/
 #define CONS(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT; \
-extern const struct GameDriver driver_##COMPAT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
+extern const game_driver driver_##PARENT; \
+extern const game_driver driver_##COMPAT;   \
+extern const game_driver driver_##NAME;   \
+const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -126,10 +126,10 @@ const struct GameDriver driver_##NAME = 	\
 };
 
 #define CONSX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##COMPAT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
+extern const game_driver driver_##PARENT;   \
+extern const game_driver driver_##COMPAT;   \
+extern const game_driver driver_##NAME;   \
+const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -148,10 +148,10 @@ const struct GameDriver driver_##NAME = 	\
 };
 
 #define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##COMPAT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
+extern const game_driver driver_##PARENT;   \
+extern const game_driver driver_##COMPAT;   \
+extern const game_driver driver_##NAME;   \
+const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -170,10 +170,10 @@ const struct GameDriver driver_##NAME = 	\
 };
 
 #define COMPX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##COMPAT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
+extern const game_driver driver_##PARENT;   \
+extern const game_driver driver_##COMPAT;   \
+extern const game_driver driver_##NAME;   \
+const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\

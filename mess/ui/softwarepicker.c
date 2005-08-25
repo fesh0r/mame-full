@@ -61,7 +61,7 @@ struct SoftwarePickerInfo
 	int nCurrentPosition;
 	struct DirectorySearchInfo *pFirstSearchInfo;
 	struct DirectorySearchInfo *pLastSearchInfo;
-	const struct GameDriver *pDriver;
+	const game_driver *pDriver;
 	hash_file *pHashFile;
 	void (*pfnErrorProc)(const char *message);
 };
@@ -181,7 +181,7 @@ int SoftwarePicker_GetImageType(HWND hwndPicker, int nIndex)
 
 
 
-void SoftwarePicker_SetDriver(HWND hwndPicker, const struct GameDriver *pDriver)
+void SoftwarePicker_SetDriver(HWND hwndPicker, const game_driver *pDriver)
 {
 	struct SoftwarePickerInfo *pPickerInfo;
 	int i;

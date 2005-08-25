@@ -172,7 +172,7 @@ byte #4:    attributes
 
 static void ddribble_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char* source, int lenght, int gfxset, int flipscreen )
 {
-	struct GfxElement *gfx = Machine->gfx[gfxset];
+	gfx_element *gfx = Machine->gfx[gfxset];
 	const unsigned char *finish = source + lenght;
 
 	while( source < finish )

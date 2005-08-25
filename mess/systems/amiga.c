@@ -63,7 +63,7 @@ INPUT_PORTS_START( amiga )
     PORT_BIT( 0xff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(2)
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
     { -1 } /* end of array */
 };

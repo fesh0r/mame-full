@@ -9,6 +9,6 @@ void MessPropToOptions(int nGame, HWND hWnd, options_type *o);
 void MessSetPropEnabledControls(HWND hWnd, options_type *o);
 
 INT_PTR CALLBACK GameMessOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+BOOL PropSheetFilter_Config(const machine_config *drv, const game_driver *gamedrv);
 
 #endif /* PROPERTIESMS_H */

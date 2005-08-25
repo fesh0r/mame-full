@@ -645,7 +645,7 @@ ADDRESS_MAP_END
 
 /*********************************************************************/
 
-static struct GfxLayout char512 =
+static gfx_layout char512 =
 {
 	8,8,
 	512,
@@ -656,7 +656,7 @@ static struct GfxLayout char512 =
 	256
 };
 
-static struct GfxLayout char1024 =
+static gfx_layout char1024 =
 {
 	8,8,
 	1024,
@@ -667,7 +667,7 @@ static struct GfxLayout char1024 =
 	256
 };
 
-static struct GfxLayout tile1024 =
+static gfx_layout tile1024 =
 {
 	16,16,
 	1024,
@@ -680,7 +680,7 @@ static struct GfxLayout tile1024 =
 	128*8
 };
 
-static struct GfxLayout tile2048 =
+static gfx_layout tile2048 =
 {
 	16,16,
 	2048,
@@ -693,7 +693,7 @@ static struct GfxLayout tile2048 =
 	128*8
 };
 
-static struct GfxLayout tdfever_tiles =
+static gfx_layout tdfever_tiles =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -706,7 +706,7 @@ static struct GfxLayout tdfever_tiles =
 	128*8
 };
 
-static struct GfxLayout tdfever2_tiles =
+static gfx_layout tdfever2_tiles =
 {
 	16,16,
 	512*6,
@@ -719,7 +719,7 @@ static struct GfxLayout tdfever2_tiles =
 	128*8
 };
 
-static struct GfxLayout sprite512 =
+static gfx_layout sprite512 =
 {
 	16,16,
 	512,
@@ -731,7 +731,7 @@ static struct GfxLayout sprite512 =
 	256
 };
 
-static struct GfxLayout sprite1024 =
+static gfx_layout sprite1024 =
 {
 	16,16,
 	1024,
@@ -743,7 +743,7 @@ static struct GfxLayout sprite1024 =
 	256
 };
 
-static struct GfxLayout big_sprite512 =
+static gfx_layout big_sprite512 =
 {
 	32,32,
 	512,
@@ -766,7 +766,7 @@ static struct GfxLayout big_sprite512 =
 	16*32*2
 };
 
-static struct GfxLayout gwar_sprite1024 =
+static gfx_layout gwar_sprite1024 =
 {
 	16,16,
 	1024,
@@ -781,7 +781,7 @@ static struct GfxLayout gwar_sprite1024 =
 	256
 };
 
-static struct GfxLayout gwar_sprite2048 =
+static gfx_layout gwar_sprite2048 =
 {
 	16,16,
 	2048,
@@ -793,7 +793,7 @@ static struct GfxLayout gwar_sprite2048 =
 	256
 };
 
-static struct GfxLayout gwar_big_sprite1024 =
+static gfx_layout gwar_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -816,7 +816,7 @@ static struct GfxLayout gwar_big_sprite1024 =
 	1024
 };
 
-static struct GfxLayout tdfever_big_sprite1024 =
+static gfx_layout tdfever_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -841,7 +841,7 @@ static struct GfxLayout tdfever_big_sprite1024 =
 
 /*********************************************************************/
 
-static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
+static gfx_decode tnk3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },
 	{ REGION_GFX2, 0x0, &char1024,	128*1, 16 },
@@ -849,7 +849,7 @@ static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
+static gfx_decode athena_gfxdecodeinfo[] =
 {
 	/* colors 512-1023 are currently unused, I think they are a second bank */
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },	/* colors 384..511 */
@@ -858,7 +858,7 @@ static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo ikari_gfxdecodeinfo[] =
+static gfx_decode ikari_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,             256, 16 },
 	{ REGION_GFX2, 0x0, &tile1024,            256, 16 },
@@ -867,7 +867,7 @@ static struct GfxDecodeInfo ikari_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gwar_gfxdecodeinfo[] =
+static gfx_decode gwar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -876,7 +876,7 @@ static struct GfxDecodeInfo gwar_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] =
+static gfx_decode bermudat_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -885,7 +885,7 @@ static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo psychos_gfxdecodeinfo[] =
+static gfx_decode psychos_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -894,7 +894,7 @@ static struct GfxDecodeInfo psychos_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
+static gfx_decode tdfever_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever_tiles,				256*2, 16 },
@@ -902,7 +902,7 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tdfever2_gfxdecodeinfo[] =
+static gfx_decode tdfever2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever2_tiles,				256*2, 16 },

@@ -27,7 +27,7 @@
 #define STEP16(START,STEP) STEP8(START,STEP),STEP8((START)+8*(STEP),STEP)
 
 
-struct GfxLayout
+struct _gfx_layout
 {
 	UINT16 width,height; /* width and height (in pixels) of chars/sprites */
 	UINT32 total; /* total numer of chars/sprites in the rom */
@@ -37,6 +37,7 @@ struct GfxLayout
 	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
 	UINT32 charincrement; /* distance between two consecutive characters/sprites (in bits) */
 };
+typedef struct _gfx_layout gfx_layout;
 
 #define GFX_RAW 0x12345678
 /* When planeoffset[0] is set to GFX_RAW, the gfx data is left as-is, with no conversion.
@@ -54,7 +55,7 @@ struct GfxLayout
    not be prerotated and will rely on GFX_SWAPXY.
 */
 
-struct GfxElement
+struct _gfx_element
 {
 	UINT16 width,height;
 
@@ -73,21 +74,23 @@ struct GfxElement
 	UINT32 char_modulo;	/* = line_modulo * height */
 	UINT32 flags;
 };
+typedef struct _gfx_element gfx_element;
 
 #define GFX_PACKED				1	/* two 4bpp pixels are packed in one byte of gfxdata */
 #define GFX_SWAPXY				2	/* characters are mirrored along the top-left/bottom-right diagonal */
 #define GFX_DONT_FREE_GFXDATA	4	/* gfxdata was not malloc()ed, so don't free it on exit */
 
 
-struct GfxDecodeInfo
+struct _gfx_decode
 {
 	int memory_region;	/* memory region where the data resides (usually 1) */
 						/* -1 marks the end of the array */
 	UINT32 start;	/* beginning of data to decode */
-	struct GfxLayout *gfxlayout;
+	gfx_layout *gfxlayout;
 	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
 	UINT16 total_color_codes;	/* total number of color codes */
 };
+typedef struct _gfx_decode gfx_decode;
 
 
 struct rectangle
@@ -96,7 +99,9 @@ struct rectangle
 	int min_y,max_y;
 };
 
-struct _alpha_cache {
+
+struct _alpha_cache
+{
 	const UINT8 *alphas;
 	const UINT8 *alphad;
 	UINT8 alpha[0x101][0x100];
@@ -146,18 +151,18 @@ extern int pdrawgfx_shadow_lowpri;
 #define read_pixel(bm,x,y)		(*(bm)->read)(bm,x,y)
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)
 
-void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
-struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
+void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
+gfx_element *decodegfx(const unsigned char *src,const gfx_layout *gl);
 void set_pixel_functions(struct mame_bitmap *bitmap);
-void freegfx(struct GfxElement *gfx);
-void drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void freegfx(gfx_element *gfx);
+void drawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
-void mdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void mdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
@@ -256,14 +261,14 @@ void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
 
 void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip);
-void drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
-void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
-void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);

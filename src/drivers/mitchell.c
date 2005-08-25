@@ -940,7 +940,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	32768,	/* 32768 characters */
@@ -951,7 +951,7 @@ static struct GfxLayout charlayout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout marukin_charlayout =
+static gfx_layout marukin_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	65536,	/* 65536 characters */
@@ -962,7 +962,7 @@ static struct GfxLayout marukin_charlayout =
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	2048,   /* 2048 sprites */
@@ -975,21 +975,21 @@ static struct GfxLayout spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo mgakuen_gfxdecodeinfo[] =
+static gfx_decode mgakuen_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &marukin_charlayout, 0,  64 }, /* colors 0-1023 */
 	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo marukin_gfxdecodeinfo[] =
+static gfx_decode marukin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &marukin_charlayout, 0, 128 }, /* colors 0-2047 */
 	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 128 }, /* colors 0-2047 */
 	{ REGION_GFX2, 0, &spritelayout,   0,  16 }, /* colors 0- 255 */

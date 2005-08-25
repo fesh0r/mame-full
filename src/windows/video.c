@@ -181,7 +181,7 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
 static int decode_effect(struct rc_option *option, const char *arg, int priority);
 static int decode_aspect(struct rc_option *option, const char *arg, int priority);
-static void update_visible_area(struct mame_display *display);
+static void update_visible_area(mame_display *display);
 
 // internal variables
 static char *cleanstretch;
@@ -328,7 +328,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 	/* if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing */
 	frames_to_display = ftr;
 	if (frames_to_display > 0 && frames_to_display < 60*60*5)
-		options.skip_warnings = 1;
+		options.skip_warnings = options.skip_disclaimer = 1;
 
 	option->priority = priority;
 	return 0;
@@ -479,7 +479,7 @@ static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
-	struct mame_display dummy_display;
+	mame_display dummy_display;
 	double aspect_ratio;
 	int r, g, b;
 	HRESULT result;
@@ -786,7 +786,7 @@ static void throttle_speed(void)
 //  update_palette
 //============================================================
 
-static void update_palette(struct mame_display *display)
+static void update_palette(mame_display *display)
 {
 	int i, j;
 
@@ -826,7 +826,7 @@ static void update_palette(struct mame_display *display)
 //  update_visible_area
 //============================================================
 
-static void update_visible_area(struct mame_display *display)
+static void update_visible_area(mame_display *display)
 {
 	struct rectangle adjusted = display->game_visible_area;
 
@@ -974,7 +974,7 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 //  osd_update_video_and_audio
 //============================================================
 
-void osd_update_video_and_audio(struct mame_display *display)
+void osd_update_video_and_audio(mame_display *display)
 {
 	struct rectangle updatebounds = display->game_bitmap_update;
 	cycles_t cps = osd_cycles_per_second();

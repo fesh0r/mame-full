@@ -14,7 +14,7 @@
 struct mess_hard_disk_file
 {
 	struct hard_disk_file *hard_disk;
-	struct chd_file *chd;
+	chd_file *chd;
 };
 
 

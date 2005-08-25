@@ -188,7 +188,7 @@ static VIDEO_UPDATE(ti99_2)
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
-static struct GfxLayout ti99_2_charlayout =
+static gfx_layout ti99_2_charlayout =
 {
 	8,8,        /* 8 x 8 characters */
 	128,        /* 128 characters */
@@ -201,7 +201,7 @@ static struct GfxLayout ti99_2_charlayout =
 	8*8         /* every char takes 8 bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0x1c00, & ti99_2_charlayout, 0, 0 },
 	{ -1 }    /* end of array */

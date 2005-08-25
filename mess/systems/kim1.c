@@ -139,7 +139,7 @@ INPUT_PORTS_START( kim1 )
 	PORT_BIT (0x01, 0x00, IPT_UNUSED )
 INPUT_PORTS_END
 
-static struct GfxLayout led_layout =
+static gfx_layout led_layout =
 {
 	18, 24, 	/* 16 x 24 LED 7segment displays */
 	128,		/* 128 codes */
@@ -159,7 +159,7 @@ static struct GfxLayout led_layout =
 	24 * 24,	/* every LED code takes 32 times 18 (aligned 24) bit words */
 };
 
-static struct GfxLayout key_layout =
+static gfx_layout key_layout =
 {
 	24, 18, 	/* 24 * 18 keyboard icons */
 	24, 		/* 24  codes */
@@ -174,7 +174,7 @@ static struct GfxLayout key_layout =
 	18 * 24 * 2,	/* every icon takes 18 rows of 24 * 2 bits */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ 1, 0, &led_layout, 0, 16 },
 	{ 2, 0, &key_layout, 16*2, 2 },

@@ -11,7 +11,7 @@ extern data32_t *silkroad_vidram,*silkroad_vidram2,*silkroad_vidram3, *silkroad_
 
 static void silkroad_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data32_t *source = silkroad_sprram;
 	data32_t *finish = source + 0x1000/4;
 	data32_t *maxspr = source;

@@ -328,7 +328,7 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 			int flipx = ((chunk_number>>15) & 0x1) ^ object_flip_x;
 			int flipy = 0;
 
-			const struct GfxElement *gfx = Machine->gfx[bank];
+			const gfx_element *gfx = Machine->gfx[bank];
 
                         if(!(OPCD & 0x80))  /* Seems to work! */
                              trans = TRANSPARENCY_PEN;
