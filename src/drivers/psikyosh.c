@@ -60,7 +60,7 @@ Daraku:           PL1 Button 1 (passes, doesn't test sound)
 Space Bomber:     PL1 Start (passes all, only if bit 0x40 is set. But then EEPROM resets?)
 Gunbird 2:        PL1 Start (passes all, only if bit 0x40 is set. But then EEPROM resets)
 Strikers 1945III: PL1 Start (passes all, only if bit 0x40 is set)
-Dragon Blaze:     PL1 Start (fails on undumped sample rom, bit 0x40 has to be set anyway)
+Dragon Blaze:     PL1 Start (passes all, only if bit 0x40 is set)
 Gunbarich:        PL1 Start (passes all, only if bit 0x40 is set)
 
 
@@ -116,7 +116,157 @@ TAKO-8
 0-2-9-1-0 All Data Initialised
 1-2-3-4-5 Best Score Erased
 
+--- Tetris The Grand Master 2 / TGM2+ ---
+
+4-1-5-7-3 All Data Initialised
+4-1-7-6-5 Best Score Erased
+
+The following 4 are also tested for, but appear to be disabled:
+1-3-5-7-9
+0-2-4-6-8
+4-1-3-7-3
+5-0-2-1-3
+
 ----------------------------------------------------------------*/
+
+/*
+
+Psikyo PS3-V1 hardware readme
+-----------------------------
+
+Strikers 1945 II
+Sol Divid
+Daraku
+Space Bomber
+
+PCB Layout
+----------
+
+PS3-V1
+|-------------------------------------------------|
+|HA13118         3771    PROG_L                   |
+|    VOL  YAC513         PROG_H      |-----|      |
+|      JRC4741                       | SH2 |      |
+|                          *U16      |     |      |
+|     YMF278B  SOUND.U32             |-----|      |
+|                                                 |
+|J                                                |
+|A                57.2727MHz   HY514260   HY514260|
+|M                                                |
+|M                 |-------|                      |
+|A                 |PSIKYO |                      |
+|                  |PS6406B|        *4L.10  0L.4  |
+|          62256   |       |                      |
+|93C56     62256   |-------|        *5L.9   1L.3  |
+|JP5                                              |
+|   *6H.37  *4H.31   2H.20   0H.13  *6L.8   2L.2  |
+|                                                 |
+|                                   *7L.7   3L.1  |
+|   *7H.36  *5H.30   3H.19   1H.12                |
+|-------------------------------------------------|
+Notes:
+      JP5 - hardwired jumper bank (x4) for region selection. Cut 2ND jumper from left
+            for International/English region. All jumpers shorted = Japan region (default)
+      SH2 - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PROG_H/PROG_L - 27C4096 DIP40 EPROM
+      All other ROMs - 32M SOP44 MaskROM
+      * - ROM locations not populated
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+
+Psikyo PS5 hardware readme
+--------------------------
+
+Gunbird 2
+Strikers 1945 III / Strikers 1999
+
+PCB Layout
+----------
+
+PS5
+|-------------------------------------------------|
+|HA13118      M514260      PROG_L.U16    DATA.U1  |
+| VOL    3771 M514260      PROG_H.U17             |
+|                                    *PROG_DATA.U2|
+|                          PAL                    |
+|                                                 |
+|   JRC4741                          0H.10   0L.3 |
+|J          |-----|                               |
+|A          | SH2 |      57.2727MHz  1H.11   1L.4 |
+|M  YAC513  |     |                               |
+|M          |-----|       |-------|  2H.12   2L.5 |
+|A                        |PSIKYO |               |
+|                         |PS6406B|  3H.13   3L.6 |
+|                         |       |               |
+|                         |-------| *4H.14  *4L.7 |
+|                                                 |
+|                           62256   *5H.15  *5L.8 |
+|                           62256                 |
+|                   93C56                         |
+|            JP4             YMF278B    SOUND.9   |
+|-------------------------------------------------|
+Notes:
+      JP4 - hardwired jumper bank (x4) for region selection. Cut leftmost jumper
+            for International/English region. All jumpers shorted = Japan region (default)
+      SH2 - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PAL - AMD PALCE 16V8H stamped 'PS5-1' (DIP20)
+      PROG_H/PROG_L/DATA - 27C4096 DIP40 EPROM
+      All other ROMs - 64M/32M SOP44 MaskROM
+      * - ROM locations not populated
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+
+Psikyo PS5V2 hardware readme
+----------------------------
+
+Dragon Blaze, Psikyo, 2000
+Gunbarich, Psikyo, 2001
+Tetris The Grand Master 2 , Psikyo, 2000
+Tetris The Grand Master 2+, Psikyo, 2000
+
+PCB Layout
+----------
+
+PS5V2
+|----------------------------------------------------|
+|HA13118  PS5-1  SM81C256  PROG_H.U21 *0H.U11 *0L.U3 |
+|VOL  JRC4741    SM81C256  PROG_L.U22                |
+|     YAC516  3771                    *1H.U12 *1L.U4 |
+|              |-----|          *U23                 |
+|              | SH2 |                *2H.U13 *2L.U5 |
+|              |     |                               |
+|J    YMF278B  |-----|                 3H.U14  3L.U6 |
+|A                          57.2727MHz               |
+|M                                     4H.U15  4L.U7 |
+|M    SND.U52               |-------|                |
+|A                          |PSIKYO |  5H.U16  5L.U8 |
+|                           |PS6406B|                |
+|                           |       | *6H.U17 *6L.U9 |
+|                    62256  |-------|                |
+|         JP3 93C56  62256            *7H.U18 *7L.U10|
+|                                                    |
+|  10L.U58    9L.U41    8L.U28    7L.U19     6L.U1   |
+|                                                    |
+|  10H.U59    9H.U42    8H.U29    7H.U20     6H.U2   |
+|----------------------------------------------------|
+Notes:
+      JP3     - hardwired jumper bank (x4) for region selection. Cut rightmost jumper
+                for International/English region. All jumpers shorted = Japan region (default)
+      SH2     - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PROG_H/PROG_L - 27C4096 DIP40 EPROM
+      ROMs U1-U59 (at bottom of PCB) - 16M DIP42 MaskROM
+      ROMs U3-U10 & U11-U18 (at side of PCB) - 16M TSOP48 Type-II surface-mounted MaskROM
+      ROM U52 - 32M TSOP48 Type-II surface-mounted MaskROM
+      * - ROM locations not populated on tgm2 & tgm2+
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+*/
 
 #include "driver.h"
 #include "state.h"
@@ -129,7 +279,7 @@ TAKO-8
 
 #include "psikyosh.h"
 
-#define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
+#define ROMTEST 1 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
 static data8_t factory_eeprom[16]  = { 0x00,0x02,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00 };
 static data8_t daraku_eeprom[16]   = { 0x03,0x02,0x00,0x48,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
@@ -224,6 +374,9 @@ static NVRAM_HANDLER(93C56)
 
  				if (use_factory_eeprom==EEPROM_GNBARICH) /* Might as well do Gnbarich as well, otherwise the highscore is incorrect */
  					memcpy(eeprom_data+0xf0, gnbarich_eeprom, 0x10);
+
+ 				if (use_factory_eeprom==EEPROM_USER1) /* load a default eeprom for TGM2 / TGM2+ as it requires more data initalized */
+ 					memcpy(eeprom_data, memory_region(REGION_USER1), 0x100);
 
 				EEPROM_set_data(eeprom_data,0x100);
 			}
@@ -478,6 +631,18 @@ static MACHINE_DRIVER_START( psikyo5 )
 	MDRV_CPU_PROGRAM_MAP(ps5_readmem,ps5_writemem)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( psikyo5_240 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(psikyo3v1)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(ps5_readmem,ps5_writemem)
+
+	/* It probably has a register to change visarea */
+	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 30*8-1)
+MACHINE_DRIVER_END
+
+
 #define UNUSED_PORT \
 	PORT_START_TAG("IN2")/* not read? */ \
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
@@ -644,6 +809,42 @@ INPUT_PORTS_START( gnbarich ) /* Same as S1945iii except only one button */
 	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x02, "International Ver A." )
 	PORT_DIPSETTING(    0x01, "International Ver B." )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tgm2 )
+	PORT_START_TAG("IN0")
+	PSIKYOSH_PORT_PLAYER( 1, IPT_START1, 3 )
+	PORT_START_TAG("IN1")
+	PSIKYOSH_PORT_PLAYER( 2, IPT_START2, 3 )
+
+	UNUSED_PORT
+	PORT_COIN( 1 )
+
+	PORT_START_TAG("IN4")/* jumper pads on the PCB */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 #if ROMTEST
@@ -855,6 +1056,71 @@ ROM_START( gnbarich )
 ROM_END
 
 
+ROM_START( tgm2 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2.u21",   0x000000, 0x080000, CRC(b19f6c31) SHA1(c58346c575db71262aebc3993743cb031c41e4af) )
+	ROM_LOAD32_WORD_SWAP( "1.u22",   0x000002, 0x080000, CRC(c521bf24) SHA1(0ee5b9f74b6b8bcc01b2270c53f30d99e877ed64) )
+
+	ROM_REGION( 0x3000000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	/* Lower positions not populated */
+    ROM_LOAD32_WORD( "81ts_3l.u6",   0x0c00000, 0x200000, CRC(d77cff9c) SHA1(93ee48c350110ebf9a80cca95c599c90a523147d) )
+    ROM_LOAD32_WORD( "82ts_3h.u14",  0x0c00002, 0x200000, CRC(f012b583) SHA1(907e1c93cbfa6a0285f96c53f5ccb63e313053d7) )
+    ROM_LOAD32_WORD( "83ts_4l.u7",   0x1000000, 0x200000, CRC(078cafc3) SHA1(26e47c8f0aaa461e69e9f40ee61ce4b4cc480776) )
+    ROM_LOAD32_WORD( "84ts_4h.u15",  0x1000002, 0x200000, CRC(1f91446b) SHA1(81b43156c6a0f4e63dcc9e7c1e9dd54bcba38240) )
+    ROM_LOAD32_WORD( "85ts_5l.u8",   0x1400000, 0x200000, CRC(40fbd259) SHA1(6b8cbfc6232e04785fd232158b3f4d56fadb0c7d) )
+    ROM_LOAD32_WORD( "86ts_5h.u16",  0x1400002, 0x200000, CRC(186c935f) SHA1(0cab30c2ec4df3dc35b4c9de63d29bd0bc99afdb) )
+	ROM_LOAD32_WORD( "87ts_6l.u1",   0x1800000, 0x200000, CRC(c17dc48a) SHA1(4399bfc253fb1cd4ef1081d7350c73df3a0f7441) )
+	ROM_LOAD32_WORD( "88ts_6h.u2",   0x1800002, 0x200000, CRC(e4dba5da) SHA1(24db1e19f4df94ba3a22fba59e4fd065921db1c5) )
+	ROM_LOAD32_WORD( "89ts_7l.u19",  0x1c00000, 0x200000, CRC(dab1b2c5) SHA1(114fd7717b97cdfd605ab7e2a354190c41ba4a82) )
+	ROM_LOAD32_WORD( "90ts_7h.u20",  0x1c00002, 0x200000, CRC(aae696b3) SHA1(9ac27365719c1700f647911dc324a0e2aacea172) )
+	ROM_LOAD32_WORD( "91ts_8l.u28",  0x2000000, 0x200000, CRC(e953ace1) SHA1(c6cdfd807a7a84b86378c3585aeb7c0cb066f8a1) )
+	ROM_LOAD32_WORD( "92ts_8h.u29",  0x2000002, 0x200000, CRC(9da3b976) SHA1(ce1e4eb93760749200ede45703412868ca29a5e7) )
+	ROM_LOAD32_WORD( "93ts_9l.u41",  0x2400000, 0x200000, CRC(233087fe) SHA1(c4adb307ce11ef558fd23b299ce7f458de581446) )
+	ROM_LOAD32_WORD( "94ts_9h.u42",  0x2400002, 0x200000, CRC(9da831c7) SHA1(42698697aa85df088745b2d37ec89b01adce700f) )
+	ROM_LOAD32_WORD( "95ts_10l.u58", 0x2800000, 0x200000, CRC(303a5240) SHA1(5816d1922e85bc27a2a13cdd183d9e67c7ddb2e1) )
+	ROM_LOAD32_WORD( "96ts_10h.u59", 0x2800002, 0x200000, CRC(2240ebf6) SHA1(b61f93a18dd9d94fb57d95745d4df2e41a0371ff) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "97ts_snd.u52", 0x000000, 0x400000, CRC(9155eca6) SHA1(f0b4f68462d8a465c39815d3b7fd9818788132ae) )
+
+	ROM_REGION( 0x100, REGION_USER1, 0 ) /* Default Eeprom (contains scores etc.) */
+	/* might need byteswapping to reprogram actual chip */
+	ROM_LOAD( "tgm2.default.nv", 0x000, 0x100, CRC(50e2348c) SHA1(d17d2739c97a1d93a95dcc9f11feb1f6f228729e) )
+ROM_END
+
+ROM_START( tgm2p )
+	ROM_REGION( 0x100000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2b.u21",   0x000000, 0x080000, CRC(38bc626c) SHA1(783e8413b11f1fa08d331b09ef4ed63f62b87ead) )
+	ROM_LOAD32_WORD_SWAP( "1b.u22",   0x000002, 0x080000, CRC(7599fb19) SHA1(3f7e81756470c173cc17a7e7dee91437571fd0c3) )
+
+	ROM_REGION( 0x3000000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	/* Lower positions not populated */
+    ROM_LOAD32_WORD( "81ts_3l.u6",   0x0c00000, 0x200000, CRC(d77cff9c) SHA1(93ee48c350110ebf9a80cca95c599c90a523147d) )
+    ROM_LOAD32_WORD( "82ts_3h.u14",  0x0c00002, 0x200000, CRC(f012b583) SHA1(907e1c93cbfa6a0285f96c53f5ccb63e313053d7) )
+    ROM_LOAD32_WORD( "83ts_4l.u7",   0x1000000, 0x200000, CRC(078cafc3) SHA1(26e47c8f0aaa461e69e9f40ee61ce4b4cc480776) )
+    ROM_LOAD32_WORD( "84ts_4h.u15",  0x1000002, 0x200000, CRC(1f91446b) SHA1(81b43156c6a0f4e63dcc9e7c1e9dd54bcba38240) )
+    ROM_LOAD32_WORD( "85ts_5l.u8",   0x1400000, 0x200000, CRC(40fbd259) SHA1(6b8cbfc6232e04785fd232158b3f4d56fadb0c7d) )
+    ROM_LOAD32_WORD( "86ts_5h.u16",  0x1400002, 0x200000, CRC(186c935f) SHA1(0cab30c2ec4df3dc35b4c9de63d29bd0bc99afdb) )
+	ROM_LOAD32_WORD( "87ts_6l.u1",   0x1800000, 0x200000, CRC(c17dc48a) SHA1(4399bfc253fb1cd4ef1081d7350c73df3a0f7441) )
+	ROM_LOAD32_WORD( "88ts_6h.u2",   0x1800002, 0x200000, CRC(e4dba5da) SHA1(24db1e19f4df94ba3a22fba59e4fd065921db1c5) )
+	ROM_LOAD32_WORD( "89ts_7l.u19",  0x1c00000, 0x200000, CRC(dab1b2c5) SHA1(114fd7717b97cdfd605ab7e2a354190c41ba4a82) )
+	ROM_LOAD32_WORD( "90ts_7h.u20",  0x1c00002, 0x200000, CRC(aae696b3) SHA1(9ac27365719c1700f647911dc324a0e2aacea172) )
+	ROM_LOAD32_WORD( "91ts_8l.u28",  0x2000000, 0x200000, CRC(e953ace1) SHA1(c6cdfd807a7a84b86378c3585aeb7c0cb066f8a1) )
+	ROM_LOAD32_WORD( "92ts_8h.u29",  0x2000002, 0x200000, CRC(9da3b976) SHA1(ce1e4eb93760749200ede45703412868ca29a5e7) )
+	ROM_LOAD32_WORD( "93ts_9l.u41",  0x2400000, 0x200000, CRC(233087fe) SHA1(c4adb307ce11ef558fd23b299ce7f458de581446) )
+	ROM_LOAD32_WORD( "94ts_9h.u42",  0x2400002, 0x200000, CRC(9da831c7) SHA1(42698697aa85df088745b2d37ec89b01adce700f) )
+	ROM_LOAD32_WORD( "95ts_10l.u58", 0x2800000, 0x200000, CRC(303a5240) SHA1(5816d1922e85bc27a2a13cdd183d9e67c7ddb2e1) )
+	ROM_LOAD32_WORD( "96ts_10h.u59", 0x2800002, 0x200000, CRC(2240ebf6) SHA1(b61f93a18dd9d94fb57d95745d4df2e41a0371ff) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "97ts_snd.u52", 0x000000, 0x400000, CRC(9155eca6) SHA1(f0b4f68462d8a465c39815d3b7fd9818788132ae) )
+
+	ROM_REGION( 0x100, REGION_USER1, 0 ) /* Default Eeprom (contains scores etc.) */
+	/* might need byteswapping to reprogram actual chip */
+	ROM_LOAD( "tgm2p.default.nv", 0x000, 0x100, CRC(b2328b40) SHA1(e6cda4d6f4e91b9f78d2ca84a5eee6c3bd03fe02) )
+ROM_END
+
+
 /* are these right? should i fake the counter return?
    'speedups / idle skipping isn't needed for 'hotgmck, hgkairak'
    as the core catches and skips the idle loops automatically'
@@ -990,6 +1256,26 @@ PC  :0602CAF2: BT      $0602CAE6
 	return psh_ram[0x006000C/4];
 }
 
+static READ32_HANDLER( tgm2_speedup_r )
+{
+	UINT32 retaddr = 0x06000C/4;
+
+	/* tgm2 */
+	if (activecpu_get_pc()==0x0602895a) {cpu_spinuntil_int();return psh_ram[retaddr];} // attract / title
+	if (activecpu_get_pc()==0x06028ef2) {cpu_spinuntil_int();return psh_ram[retaddr];} // attract game
+	if (activecpu_get_pc()==0x06028cac) {cpu_spinuntil_int();return psh_ram[retaddr];} // gameplay
+
+	/* tgm2p */
+	if (activecpu_get_pc()==0x0602ae5a) {cpu_spinuntil_int();return psh_ram[retaddr];} // attract / title
+	if (activecpu_get_pc()==0x0602b3f2) {cpu_spinuntil_int();return psh_ram[retaddr];} // attract game
+	if (activecpu_get_pc()==0x0602b1ac) {cpu_spinuntil_int();return psh_ram[retaddr];} // gameplay
+
+//  printf("active %08x  ",activecpu_get_pc());
+	return psh_ram[retaddr];
+}
+
+
+
 static DRIVER_INIT( soldivid )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x600000c, 0x600000f, 0, 0, soldivid_speedup_r );
@@ -1044,18 +1330,26 @@ static DRIVER_INIT( gnbarich )
 	use_factory_eeprom=EEPROM_GNBARICH;
 }
 
+static DRIVER_INIT( tgm2 )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x606000c, 0x606000f, 0, 0, tgm2_speedup_r );
+	use_factory_eeprom=EEPROM_USER1;
+}
+
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
-GAMEX( 1997, soldivid, 0,        psikyo3v1, soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_SOUND ) // Music Tempo
-GAMEX( 1997, s1945ii,  0,        psikyo3v1, s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
-GAME ( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels" )
-GAME ( 1998, sbomberb, 0,        psikyo3v1, sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)" )
+GAMEX( 1997, soldivid, 0,        psikyo3v1,   soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_SOUND ) // Music Tempo
+GAMEX( 1997, s1945ii,  0,        psikyo3v1,   s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
+GAME ( 1998, daraku,   0,        psikyo3v1,   daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels" )
+GAME ( 1998, sbomberb, 0,        psikyo3v1,   sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)" )
 
 /* ps5 */
-GAME ( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2" )
-GAMEX( 1999, s1945iii, 0,        psikyo5,   s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
+GAME ( 1998, gunbird2, 0,        psikyo5,     gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2" )
+GAMEX( 1999, s1945iii, 0,        psikyo5,     s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
 
 /* ps5v2 */
-GAME ( 2000, dragnblz, 0,        psikyo5,   dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze" )
-GAME ( 2001, gnbarich, 0,        psikyo5,   gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich" )
+GAME ( 2000, dragnblz, 0,        psikyo5,     dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze" )
+GAME ( 2001, gnbarich, 0,        psikyo5,     gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich" )
+GAME ( 2000, tgm2,     0,        psikyo5_240, tgm2,     tgm2,     ROT0,   "Arika", "Tetris the Absolute The Grand Master 2" )
+GAME ( 2000, tgm2p,    tgm2,     psikyo5_240, tgm2,     tgm2,     ROT0,   "Arika", "Tetris the Absolute The Grand Master 2 Plus" )

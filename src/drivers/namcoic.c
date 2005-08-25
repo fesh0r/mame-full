@@ -270,7 +270,7 @@ WRITE32_HANDLER( namco_tilemapvideoram32_le_w )
 /**************************************************************************************/
 
 static void zdrawgfxzoom(
-		struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+		struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		int scalex, int scaley, int zpos )
@@ -443,7 +443,7 @@ namcos2_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *clipre
 				int scaley = (sizey<<16)/((word0&0x0200)?0x20:0x10);
 				if(scalex && scaley)
 				{
-					struct GfxElement gfx = *Machine->gfx[rgn];
+					gfx_element gfx = *Machine->gfx[rgn];
 					if( (word0&0x0200)==0 )
 					{
 						gfx.width = 16;
@@ -1582,7 +1582,7 @@ namco_road_init( int gfxbank )
 		mpRoadRAM = auto_malloc(0x20000);
 		if( mpRoadRAM )
 		{
-			struct GfxElement *pGfx = decodegfx( 0x10000+(UINT8 *)mpRoadRAM, &RoadTileLayout );
+			gfx_element *pGfx = decodegfx( 0x10000+(UINT8 *)mpRoadRAM, &RoadTileLayout );
 			if( pGfx )
 			{
 				pGfx->colortable = &Machine->remapped_colortable[0xf00];

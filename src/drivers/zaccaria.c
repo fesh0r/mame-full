@@ -271,7 +271,7 @@ static WRITE8_HANDLER( mc1408_data_w )
 }
 
 
-struct GameDriver monymony_driver;
+game_driver monymony_driver;
 
 static READ8_HANDLER( zaccaria_prot1_r )
 {

@@ -133,7 +133,7 @@ static NVRAM_HANDLER( mitchell )
 static READ8_HANDLER( pang_port5_r )
 {
 	int bit;
-	extern const struct GameDriver driver_mgakuen2;
+	extern const game_driver driver_mgakuen2;
 
 	bit = EEPROM_read_bit() << 7;
 

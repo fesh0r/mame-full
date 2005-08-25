@@ -64,7 +64,7 @@ static NVRAM_HANDLER( trackfld )
 
 		if (we_flipped_the_switch)
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it */
@@ -96,7 +96,7 @@ static NVRAM_HANDLER( trackfld )
 		}
 		else
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it on */

@@ -269,6 +269,7 @@ To Do / Unknowns:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "machine/nmk112.h"
 #include "sound/2151intf.h"
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
@@ -1107,45 +1108,34 @@ static WRITE8_HANDLER( battleg_bankswitch_w )
 	}
 }
 
-static void raizing_oki6295_set_bankbase( int chip, int channel, int base )
-{
-	/* The OKI6295 ROM space is divided in four banks, each one independantly */
-	/* controlled. The sample table at the beginning of the addressing space  */
-	/* is divided in four pages as well, banked together with the sample data */
-
-	data8_t *rom = (data8_t *)memory_region(REGION_SOUND1 + chip);
-
-	/* copy the samples */
-	memcpy(rom + channel * 0x10000, rom + 0x40000 + base, 0x10000);
-
-	/* and also copy the samples address table */
-	rom += channel * 0x100;
-	memcpy(rom, rom + 0x40000 + base, 0x100);
-}
-
+// what chip do battleg and batrider actually use for soundrom banking?
+// it works the same way as the NMK112 but the interface is different...
+// interesting fact: these two games had the same composer & sfx designer
+// (Manabu NAMIKI) as the NMK games which used the NMK112
+// (macross2, tdragon2, quizpani...)
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_0 )
 {
-	raizing_oki6295_set_bankbase( 0, 0,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 0, 1, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(0,  data		& 0x0f);	// chip 0 bank 0
+	NMK112_okibank_w(1, (data >> 4)	& 0x0f);	// chip 0 bank 1
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_1 )
 {
-	raizing_oki6295_set_bankbase( 0, 2,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 0, 3, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(2,  data		& 0x0f);	// chip 0 bank 2
+	NMK112_okibank_w(3, (data >> 4)	& 0x0f);	// chip 0 bank 3
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_2 )
 {
-	raizing_oki6295_set_bankbase( 1, 0,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 1, 1, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(4,  data		& 0x0f);	// chip 1 bank 0
+	NMK112_okibank_w(5, (data >> 4)	& 0x0f);	// chip 1 bank 1
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_3 )
 {
-	raizing_oki6295_set_bankbase( 1, 2,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 1, 3, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(6,  data		& 0x0f);	// chip 1 bank 2
+	NMK112_okibank_w(7, (data >> 4)	& 0x0f);	// chip 1 bank 3
 }
 
 static WRITE8_HANDLER( batrider_bankswitch_w )

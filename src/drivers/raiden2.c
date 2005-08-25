@@ -40,7 +40,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	const UINT8 *source = spriteram+0x1000-8 ;
 	const UINT8 *finish = spriteram;
 
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 //  static int ytlim = 1;
 //  static int xtlim = 1;

@@ -344,7 +344,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 	const UINT16 *source = sprites_buffer+0x800-4;
 	const UINT16 *finish = sprites_buffer;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int x, y, color, flipx, dy, pri, pri_mask, i;
 
 	while( source>=finish )

@@ -161,7 +161,7 @@ Offset+3
 
 static void draw_sprites(struct mame_bitmap *bitmap)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	UINT32 cnt;
 	int block, offs;
 	int code,color,x,y,fx,fy;

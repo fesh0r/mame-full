@@ -3969,7 +3969,7 @@ GAME( 1994, spacedxj, spacedx, spacedx,  pbobble,  0, ROT0,   "Taito Corporation
 GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0" )
 /*
     Sonic Blast Man is a ticket dispensing game.
-    (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
+    (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_config).
     It is a bit different from other games running on this system,
     in that it has a punching pad that player needs to punch to hit
     the enemy.

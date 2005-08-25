@@ -1440,10 +1440,10 @@ static WRITE16_HANDLER( sub_ctrl_w )
 }
 
 
-const struct GameDriver driver_blandia;
-const struct GameDriver driver_gundhara;
-const struct GameDriver driver_kamenrid;
-const struct GameDriver driver_zingzip;
+const game_driver driver_blandia;
+const game_driver driver_gundhara;
+const game_driver driver_kamenrid;
+const game_driver driver_zingzip;
 
 /*  ---- 3---       Coin #1 Lock Out
     ---- -2--       Coin #0 Lock Out

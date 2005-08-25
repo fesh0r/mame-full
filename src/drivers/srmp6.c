@@ -126,7 +126,7 @@ VIDEO_UPDATE(srmp6)
 {
 	const UINT16 *source = spriteram16;
 	const UINT16 *finish = source+spriteram_size/2;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 

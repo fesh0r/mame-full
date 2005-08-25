@@ -641,7 +641,7 @@ static struct YM2610interface ym2610_interface =
 **************************************************************/
 
 #if 0
-static int subwoofer_sh_start(const struct MachineSound *msound)
+static int subwoofer_sh_start(const sound_config *msound)
 {
 	/* Adjust the lowpass filter of the first three YM2610 channels */
 
