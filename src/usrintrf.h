@@ -168,5 +168,7 @@ int ui_is_setup_active(void);
 /* return true if the on-screen thermometers are displayed */
 int ui_is_onscrd_active(void);
 
+/* renders the fps counter */
+void ui_display_fps(void);
 
 #endif	/* __USRINTRF_H__ */
