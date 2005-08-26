@@ -22,6 +22,8 @@ static imgtool_library *library;
 static imgtool_image *image;
 static struct expected_dirent entries[256];
 static char filename_buffer[256];
+static const char *fork_string;
+static char fork_buffer[256];
 static char driver_buffer[256];
 static int entry_count;
 static int failed;
@@ -128,6 +130,7 @@ static void createimage_param_handler(const char **attributes)
 static void file_start_handler(const char **attributes)
 {
 	const char *filename;
+	const char *fork;
 
 	filename = find_attribute(attributes, "name");
 	if (!filename)
@@ -136,7 +139,11 @@ static void file_start_handler(const char **attributes)
 		return;
 	}
 
+	fork = find_attribute(attributes, "fork");
+
 	snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
+	snprintf(fork_buffer, sizeof(fork_buffer) / sizeof(fork_buffer[0]), "%s", fork ? fork : "");
+	fork_string = fork ? fork_buffer : NULL;
 }
 
 
@@ -156,7 +163,7 @@ static void putfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_writefile(image, filename_buffer, NULL, stream, NULL, NULL);
+	err = img_writefile(image, filename_buffer, fork_string, stream, NULL, NULL);
 	if (err)
 	{
 		report_imgtoolerr(err);
@@ -188,7 +195,7 @@ static void checkfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_readfile(image, filename_buffer, NULL, stream, NULL);
+	err = img_readfile(image, filename_buffer, fork_string, stream, NULL);
 	if (err)
 	{
 		report_imgtoolerr(err);

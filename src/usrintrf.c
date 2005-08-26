@@ -1367,7 +1367,7 @@ do { \
 	ADD_MENU(UI_imageinfo, ui_menu_image_info, 0);
 
   	/* add image info menu */
-	ADD_MENU(UI_filemanager, menu_file_manager, 0);
+	ADD_MENU(UI_filemanager, menu_file_manager, 1);
 
 #if HAS_WAVE
   	/* add tape control menu */
@@ -2236,7 +2236,10 @@ static UINT32 menu_reset_game(UINT32 state)
 #ifdef MESS
 static UINT32 menu_file_manager(UINT32 state)
 {
-	return ui_menu_stack_pop();
+	int result = filemanager(state);
+	if (result == 0)
+		return ui_menu_stack_pop();
+	return result;
 }
 
 

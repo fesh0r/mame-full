@@ -62,7 +62,6 @@ extern int devices_inited;
 /***************************************************************************/
 
 void showmessinfo(void);
-int filemanager(struct mame_bitmap *bitmap, int selected);
 
 UINT32 hash_data_extract_crc32(const char *d);
 
