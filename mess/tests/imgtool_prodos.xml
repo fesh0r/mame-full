@@ -166,6 +166,42 @@
 	<checkdirectory path="/"/>
 </imgtooltest>
 
+<imgtooltest name="prodos_007">
+	<createimage driver="apple2_do_prodos_525"/>
+	
+	<putfile name="FOO.TXT">'data fork text'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="14"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT" fork="">'data fork text'</checkfile>
+	<checkfile name="FOO.TXT" fork="RESOURCE_FORK"/>
+	
+	<putfile name="FOO.TXT" fork="RESOURCE_FORK">'resource fork text'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="14"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT" fork="">'data fork text'</checkfile>
+	<checkfile name="FOO.TXT" fork="RESOURCE_FORK">'resource fork text'</checkfile>
+</imgtooltest>
+
+<imgtooltest name="prodos_008">
+	<createimage driver="apple2_do_prodos_525"/>
+	
+	<putfile name="FOO.TXT">'data fork text' * 500</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="14"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT" fork="">'data fork text' * 500</checkfile>
+	<checkfile name="FOO.TXT" fork="RESOURCE_FORK"/>
+	
+	<putfile name="FOO.TXT" fork="RESOURCE_FORK">'resource fork text' * 1000</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="14"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT" fork="">'data fork text' * 500</checkfile>
+	<checkfile name="FOO.TXT" fork="RESOURCE_FORK">'resource fork text' * 1000</checkfile>
+</imgtooltest>
+
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>
