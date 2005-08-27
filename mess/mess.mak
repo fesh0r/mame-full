@@ -938,6 +938,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/artworkx.o			\
 	$(OBJ)/mess/mesintrf.o			\
 	$(OBJ)/mess/filemngr.o			\
+	$(OBJ)/mess/tapectrl.o			\
 	$(OBJ)/mess/compcfg.o			\
 	$(OBJ)/mess/utils.o				\
 	$(OBJ)/mess/eventlst.o			\
@@ -989,7 +990,6 @@ COREOBJS +=							\
 	$(OBJ)/mess/machine/wd179x.o   \
 	$(OBJ)/mess/machine/serial.o   \
 	$(OBJ)/mess/formats/wavfile.o
-#	$(OBJ)/mess/tapectrl.o			\
 
 
 

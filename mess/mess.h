@@ -82,7 +82,7 @@ void write64be_with_32le_handler(write32_handler handler, offs_t offset, data64_
 /***************************************************************************/
 
 #if HAS_WAVE
-int tapecontrol(struct mame_bitmap *bitmap, int selected);
+int tapecontrol(int selected);
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);
 #endif
 

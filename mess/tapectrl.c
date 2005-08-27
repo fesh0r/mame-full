@@ -1,3 +1,11 @@
+/*********************************************************************
+
+  tapectrl.c
+
+  MESS's clunky built-in tape control
+
+*********************************************************************/
+
 #include "driver.h"
 #include "image.h"
 #include "ui_text.h"
@@ -21,13 +29,11 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 		*endpos = t1;
 }
 
-int tapecontrol(struct mame_bitmap *bitmap, int selected)
+int tapecontrol(int selected)
 {
 	static int id = 0;
 	char timepos[32];
-	const char *menu_item[40];
-	const char *menu_subitem[40];
-	char flag[40];
+	ui_menu_item menu_item[40];
 	char name[64];
 	mess_image *img;
 
@@ -48,7 +54,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		strcat(name, ui_getstring(UI_returntomain));
 		strcat(name, " ");
 		strcat(name, ui_getstring(UI_righthilight));
-		ui_displaymessagewindow(bitmap, name);
+		ui_draw_message_window(name);
 		
 		if (input_ui_pressed(IPT_UI_SELECT) || input_ui_pressed(IPT_UI_CANCEL))
 			sel = -1;
@@ -61,15 +67,15 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	}
 
 	strcpy( name, image_typename_id(img) );
-	menu_item[total] = name;
-	menu_subitem[total] = image_filename(img);
-	flag[total] = 0;
+	menu_item[total].text = name;
+	menu_item[total].subtext = image_filename(img);
+	menu_item[total].flags = 0;
 	total++;
 
 	tapecontrol_gettime(timepos, sizeof(timepos) / sizeof(timepos[0]), img, NULL, NULL);
 
 	state = cassette_get_state(img);
-	menu_item[total] =
+	menu_item[total].text =
 		ui_getstring(
 			(state & CASSETTE_MASK_UISTATE) == CASSETTE_STOPPED
 				?	UI_stopped
@@ -78,43 +84,39 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 					: ((state & CASSETTE_MASK_MOTOR) == CASSETTE_MOTOR_ENABLED ? UI_recording : UI_recording_inhibited)
 					));
 
-	menu_subitem[total] = timepos;
-	flag[total] = 0;
+	menu_item[total].subtext = timepos;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_pauseorstop);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_pauseorstop);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_play);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_play);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_record);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_record);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_rewind);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_rewind);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_fastforward);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_fastforward);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
 
-	menu_item[total] = ui_getstring(UI_returntomain);
-	menu_subitem[total] = 0;
-	flag[total] = 0;
+	menu_item[total].text = ui_getstring(UI_returntomain);
+	menu_item[total].subtext = 0;
+	menu_item[total].flags = 0;
 	total++;
-
-	menu_item[total] = 0;   /* terminate array */
-	menu_subitem[total] = 0;
-	flag[total] = 0;
 
 	arrowize = 0;
 	if (sel < total - 1)
@@ -123,11 +125,11 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	if (sel > 255)  /* are we waiting for a new key? */
 	{
 		/* display the menu */
-		ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel & 0xff,3);
+		ui_draw_menu(menu_item, total, sel & 0xff);
 		return sel + 1;
 	}
 
-	ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel,arrowize);
+	ui_draw_menu(menu_item, total, sel);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{

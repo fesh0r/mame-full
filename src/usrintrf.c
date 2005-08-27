@@ -1372,7 +1372,7 @@ do { \
 #if HAS_WAVE
   	/* add tape control menu */
 	if (device_find(Machine->devices, IO_CASSETTE))
-		ADD_MENU(UI_tapecontrol, menu_tape_control, 0);
+		ADD_MENU(UI_tapecontrol, menu_tape_control, 1);
 #endif /* HAS_WAVE */
 #endif /* !MESS */
 
@@ -2245,7 +2245,10 @@ static UINT32 menu_file_manager(UINT32 state)
 
 static UINT32 menu_tape_control(UINT32 state)
 {
-	return ui_menu_stack_pop();
+	int result = tapecontrol(state);
+	if (result == 0)
+		return ui_menu_stack_pop();
+	return result;
 }
 #endif
 

@@ -1,3 +1,11 @@
+/*********************************************************************
+
+  filemngr.c
+
+  MESS's clunky built-in file manager
+
+*********************************************************************/
+
 #include "driver.h"
 #include "utils.h"
 #include "image.h"
@@ -11,7 +19,7 @@
 #endif
 
 #define SEL_BITS	12
-#define SEL_MASK	(1<<SEL_BITS)
+#define SEL_MASK	((1<<SEL_BITS)-1)
 
 static int count_chars_entered;
 static char *enter_string;
@@ -30,7 +38,7 @@ static void start_enter_string(char *string_buffer, int max_string_size, int fil
 
 
 /* code, lower case (w/o shift), upper case (with shift), control */
-static int code_to_char_table[] =
+static const int code_to_char_table[] =
 {
 	KEYCODE_0, '0', ')', 0,
 	KEYCODE_1, '1', '!', 0,
@@ -88,7 +96,7 @@ static int code_to_char_table[] =
  * Maybe change this for different platforms?
  * Put it to osd_cpu? Make it an osd_... function?
  */
-static char valid_filename_char[256] =
+static const char valid_filename_char[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* 00-0f */
 	0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* 10-1f */
@@ -518,7 +526,7 @@ static int fileselect(int selected, const char *default_selection)
 		}
 
 
-		//ui_displaymenu(bitmap, fs_item, fs_subitem, fs_flags, sel, arrowize);
+		ui_draw_menu(fs_item, fs_total, sel);
 
 		/* borrowed from usrintrf.c */
 		visible = 0; //Machine->uiheight / (3 * Machine->uifontheight /2) -1;
