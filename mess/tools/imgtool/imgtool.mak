@@ -31,7 +31,6 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/imgterrs.o	\
 	$(OBJ)/mess/tools/imgtool/rsdos.o		\
 	$(OBJ)/mess/tools/imgtool/os9.o			\
-	$(OBJ)/mess/tools/imgtool/imgtest.o		\
 	$(OBJ)/mess/tools/imgtool/imghd.o		\
 	$(OBJ)/mess/tools/imgtool/mac.o			\
 	$(OBJ)/mess/tools/imgtool/ti99.o		\

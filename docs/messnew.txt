@@ -24,6 +24,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- Removed no-longer used 'test' command.  [Nate Woods]
+
 - [PRODOS] Added data fork support for ProDOS 6 forked files (storage class
   $5).  [Nate Woods]
 

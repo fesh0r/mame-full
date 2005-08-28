@@ -773,41 +773,8 @@ error:
 
 /* ----------------------------------------------------------------------- */
 
-#ifdef MAME_DEBUG
-static int cmd_test(const struct command *c, int argc, char *argv[])
-{
-	imgtoolerr_t err;
-	const char *module_name;
-
-	module_name = (argc > 0) ? argv[0] : NULL;
-
-	if (module_name)
-		fprintf(stdout, "Running test suite for module '%s':\n\n", module_name);
-	else
-		fprintf(stdout, "Running test suite for all modules\n\n");
-
-	err = imgtool_test_byname(library, module_name);
-	if (err)
-		goto error;
-
-	fprintf(stdout, "...Test succeeded!\n");
-	return 0;
-
-error:
-	reporterror(err, c, argv[0], NULL, NULL, NULL, NULL);
-	return -1;
-}
-#endif
-
-
-
-/* ----------------------------------------------------------------------- */
-
 static struct command cmds[] =
 {
-#ifdef MAME_DEBUG
-	{ "test",				cmd_test,				"<format>", 0, 1, 0 },
-#endif
 	{ "create",				cmd_create,				"<format> <imagename>", 2, 8, 0},
 	{ "dir",				cmd_dir,				"<format> <imagename> [path]", 2, 3, 0 },
 	{ "get",				cmd_get,				"<format> <imagename> <filename> [newname] [--filter=filter] [--fork=fork]", 3, 4, 0 },

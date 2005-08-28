@@ -416,21 +416,6 @@ struct imgtool_module_features
 
 struct imgtool_module_features img_get_module_features(const struct ImageModule *module);
 
-/* imgtool_test
- * imgtool_test_byname
- *
- * Description:
- *		(Only present when MAME_DEBUG is on)
- *		These functions run a test suite on the module
- *
- * Parameters:
- *		module/modulename:	The module for this image format.  If NULL, tests are run on all modules
- */
-#ifdef MAME_DEBUG
-imgtoolerr_t imgtool_test(imgtool_library *library, const struct ImageModule *module);
-imgtoolerr_t imgtool_test_byname(imgtool_library *library, const char *modulename);
-#endif /* MAME_DEBUG */
-
 /* imgtool_validitychecks
  *
  * Description:
