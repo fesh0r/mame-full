@@ -69,12 +69,13 @@ static int scan_keyboard(void);
 static void inquiry_timeout_func(int unused);
 static void keyboard_receive(int val);
 static void keyboard_send_reply(void);
-static  READ8_HANDLER(mac_via_in_a);
-static  READ8_HANDLER(mac_via_in_b);
+static READ8_HANDLER(mac_via_in_a);
+static READ8_HANDLER(mac_via_in_b);
 static WRITE8_HANDLER(mac_via_out_a);
 static WRITE8_HANDLER(mac_via_out_b);
 static WRITE8_HANDLER(mac_via_out_cb2);
 static void mac_via_irq(int state);
+static unsigned mac_dasm_override(int cpunum, char *buffer, unsigned pc);
 
 static struct via6522_interface mac_via6522_intf =
 {
@@ -98,8 +99,6 @@ typedef enum
 
 static int mac_overlay = 0;
 static mac_model_t mac_model;
-
-static const char *lookup_trap(UINT16 opcode);
 
 
 
@@ -237,24 +236,1232 @@ static void set_memory_overlay(int overlay)
 
 
 
+/*
+	R Nabet 000531 : added keyboard code
+*/
+
+/* *************************************************************************
+ * non-ADB keyboard support
+ *
+ * The keyboard uses a i8021 (?) microcontroller.
+ * It uses a bidirectional synchonous serial line, connected to the VIA (SR feature)
+ *
+ * Our emulation is more a hack than anything else - the keyboard controller is
+ * not emulated, instead we interpret keyboard commands directly.  I made
+ * many guesses, which may be wrong
+ *
+ * todo :
+ * * find the correct model number for the Mac Plus keyboard ?
+ * * emulate original Macintosh keyboards (2 layouts : US and international)
+ *
+ * references :
+ * * IM III-29 through III-32 and III-39 through III-42
+ * * IM IV-250
+ * *************************************************************************/
+
+/* used to store the reply to most keyboard commands */
+static int keyboard_reply;
+
+/* Keyboard communication in progress? */
+static int kbd_comm;
+static int kbd_receive;
+/* timer which is used to time out inquiry */
+static mame_timer *inquiry_timeout;
+
+static int kbd_shift_reg;
+static int kbd_shift_count;
+
+/*
+	scan_keyboard()
+
+	scan the keyboard, and returns key transition code (or NULL ($7B) if none)
+*/
+
+/* keyboard matrix to detect transition */
+static int key_matrix[7];
+
+/* keycode buffer (used for keypad/arrow key transition) */
+static int keycode_buf[2];
+static int keycode_buf_index;
+
+static int scan_keyboard()
+{
+	int i, j;
+	int keybuf;
+	int keycode;
+
+	if (keycode_buf_index)
+	{
+		return keycode_buf[--keycode_buf_index];
+	}
+
+	for (i=0; i<7; i++)
+	{
+		keybuf = readinputport(i+3);
+
+		if (keybuf != key_matrix[i])
+		{
+			/* if state has changed, find first bit which has changed */
+			if (LOG_KEYBOARD)
+				logerror("keyboard state changed, %d %X\n", i, keybuf);
+
+			for (j=0; j<16; j++)
+			{
+				if (((keybuf ^ key_matrix[i]) >> j) & 1)
+				{
+					/* update key_matrix */
+					key_matrix[i] = (key_matrix[i] & ~ (1 << j)) | (keybuf & (1 << j));
+
+					if (i < 4)
+					{
+						/* create key code */
+						keycode = (i << 5) | (j << 1) | 0x01;
+						if (! (keybuf & (1 << j)))
+						{
+							/* key up */
+							keycode |= 0x80;
+						}
+						return keycode;
+					}
+					else if (i < 6)
+					{
+						/* create key code */
+						keycode = ((i & 3) << 5) | (j << 1) | 0x01;
+
+						if ((keycode == 0x05) || (keycode == 0x0d) || (keycode == 0x11) || (keycode == 0x1b))
+						{
+							/* these keys cause shift to be pressed (for compatibility with mac 128/512) */
+							if (keybuf & (1 << j))
+							{
+								/* key down */
+								if (! (key_matrix[3] & 0x0100))
+								{
+									/* shift key is really up */
+									keycode_buf[0] = keycode;
+									keycode_buf[1] = 0x79;
+									keycode_buf_index = 2;
+									return 0x71;	/* "presses" shift down */
+								}
+							}
+							else
+							{	/* key up */
+								if (! (key_matrix[3] & 0x0100))
+								{
+									/* shift key is really up */
+									keycode_buf[0] = keycode | 0x80;;
+									keycode_buf[1] = 0x79;
+									keycode_buf_index = 2;
+									return 0xF1;	/* "releases" shift */
+								}
+							}
+						}
+
+						if (! (keybuf & (1 << j)))
+						{
+							/* key up */
+							keycode |= 0x80;
+						}
+						keycode_buf[0] = keycode;
+						keycode_buf_index = 1;
+						return 0x79;
+					}
+					else /* i == 6 */
+					{
+						/* create key code */
+						keycode = (j << 1) | 0x01;
+						if (! (keybuf & (1 << j)))
+						{
+							/* key up */
+							keycode |= 0x80;
+						}
+						keycode_buf[0] = keycode;
+						keycode_buf_index = 1;
+						return 0x79;
+					}
+				}
+			}
+		}
+	}
+
+	return 0x7B;	/* return NULL */
+}
+
+/*
+	power-up init
+*/
+static void keyboard_init(void)
+{
+	int i;
+
+	/* init flag */
+	kbd_comm = FALSE;
+	kbd_receive = FALSE;
+	kbd_shift_reg=0;
+	kbd_shift_count=0;
+
+	/* clear key matrix */
+	for (i=0; i<7; i++)
+	{
+		key_matrix[i] = 0;
+	}
+
+	/* purge transmission buffer */
+	keycode_buf_index = 0;
+}
+
+/******************* Keyboard <-> VIA communication ***********************/
+
+static void kbd_clock(int param)
+{
+	int i;
+	if (kbd_comm == TRUE)
+	{
+		for (i=0; i<8; i++)
+		{
+			/* Put data on CB2 if we are sending*/
+			if (kbd_receive == FALSE)
+				via_set_input_cb2(0, kbd_shift_reg&0x80?1:0);
+			kbd_shift_reg <<= 1;
+			via_set_input_cb1(0, 0);
+			via_set_input_cb1(0, 1);
+		}
+		if (kbd_receive == TRUE)
+		{
+			kbd_receive = FALSE;
+			/* Process the command received from mac */
+			keyboard_receive(kbd_shift_reg & 0xff);
+		}
+		else
+		{
+			/* Communication is over */ 
+			kbd_comm = FALSE;
+		}
+	}
+}
+
+static void kbd_shift_out(int data)
+{
+	if (kbd_comm == TRUE)
+	{
+		kbd_shift_reg = data;
+		timer_set(1e-3, 0, kbd_clock);
+	}
+}
+
+static WRITE8_HANDLER(mac_via_out_cb2)
+{
+	if (kbd_comm == FALSE && data == 0)
+	{
+		/* Mac pulls CB2 down to initiate communication */
+		kbd_comm = TRUE;
+		kbd_receive = TRUE;
+		timer_set(1e-4, 0, kbd_clock);
+	}
+	if (kbd_comm == TRUE && kbd_receive == TRUE)
+	{
+		/* Shift in what mac is sending */
+		kbd_shift_reg = (kbd_shift_reg & ~1) | data;
+	}
+}
+
+/*
+	called when inquiry times out (1/4s)
+*/
+static void inquiry_timeout_func(int unused)
+{
+	if (LOG_KEYBOARD)
+		logerror("keyboard enquiry timeout\n");
+	kbd_shift_out(0x7B);	/* always send NULL */
+}
+
+/*
+	called when a command is received from the mac
+*/
+static void keyboard_receive(int val)
+{
+	switch (val)
+	{
+	case 0x10:
+		/* inquiry - returns key transition code, or NULL ($7B) if time out (1/4s) */
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : inquiry\n");
+
+		keyboard_reply = scan_keyboard();
+		if (keyboard_reply == 0x7B)
+		{	
+			/* if NULL, wait until key pressed or timeout */
+			mame_timer_adjust(inquiry_timeout,
+				make_mame_time(0, DOUBLE_TO_SUBSECONDS(0.25)),
+				0, time_zero);
+		}
+		break;
+
+	case 0x14:
+		/* instant - returns key transition code, or NULL ($7B) */
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : instant\n");
+
+		kbd_shift_out(scan_keyboard());
+		break;
+
+	case 0x16:
+		/* model number - resets keyboard, return model number */
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : model number\n");
+
+		{	/* reset */
+			int i;
+
+			/* clear key matrix */
+			for (i=0; i<7; i++)
+			{
+				key_matrix[i] = 0;
+			}
+
+			/* purge transmission buffer */
+			keycode_buf_index = 0;
+		}
+
+		/* format : 1 if another device (-> keypad ?) connected | next device (-> keypad ?) number 1-8
+							| keyboard model number 1-8 | 1  */
+		/* keyboards :
+			3 : mac 512k, US and international layout ? Mac plus ???
+			other values : Apple II keyboards ?
+		*/
+		/* keypads :
+			??? : standard keypad (always available on Mac Plus) ???
+		*/
+		kbd_shift_out(0x17);	/* probably wrong */
+		break;
+
+	case 0x36:
+		/* test - resets keyboard, return ACK ($7D) or NAK ($77) */
+		if (LOG_KEYBOARD)
+			logerror("keyboard command : test\n");
+
+		kbd_shift_out(0x7D);	/* ACK */
+		break;
+
+	default:
+		if (LOG_KEYBOARD)
+			logerror("unknown keyboard command 0x%X\n", val);
+
+		kbd_shift_out(0);
+		break;
+	}
+}
+
+/* *************************************************************************
+ * Mouse
+ * *************************************************************************/
+
+static int mouse_bit_x = 0, mouse_bit_y = 0;
+
+static void mouse_callback(void)
+{
+	static int	last_mx = 0, last_my = 0;
+	static int	count_x = 0, count_y = 0;
+
+	int			new_mx, new_my;
+	int			x_needs_update = 0, y_needs_update = 0;
+
+	new_mx = readinputport(1);
+	new_my = readinputport(2);
+
+	/* see if it moved in the x coord */
+	if (new_mx != last_mx)
+	{
+		int		diff = new_mx - last_mx;
+
+		/* check for wrap */
+		if (diff > 0x80)
+			diff = 0x100-diff;
+		if  (diff < -0x80)
+			diff = -0x100-diff;
+
+		count_x += diff;
+
+		last_mx = new_mx;
+	}
+	/* see if it moved in the y coord */
+	if (new_my != last_my)
+	{
+		int		diff = new_my - last_my;
+
+		/* check for wrap */
+		if (diff > 0x80)
+			diff = 0x100-diff;
+		if  (diff < -0x80)
+			diff = -0x100-diff;
+
+		count_y += diff;
+
+		last_my = new_my;
+	}
+
+	/* update any remaining count and then return */
+	if (count_x)
+	{
+		if (count_x < 0)
+		{
+			count_x++;
+			mouse_bit_x = 0;
+		}
+		else
+		{
+			count_x--;
+			mouse_bit_x = 1;
+		}
+		x_needs_update = 1;
+	}
+	else if (count_y)
+	{
+		if (count_y < 0)
+		{
+			count_y++;
+			mouse_bit_y = 1;
+		}
+		else
+		{
+			count_y--;
+			mouse_bit_y = 0;
+		}
+		y_needs_update = 1;
+	}
+
+	if (x_needs_update || y_needs_update)
+		/* assert Port B External Interrupt on the SCC */
+		mac_scc_mouse_irq( x_needs_update, y_needs_update );
+}
+
+/* *************************************************************************
+ * SCSI
+ * *************************************************************************/
+
+/*
+
+From http://www.mac.m68k-linux.org/devel/plushw.php
+
+The address of each register is computed as follows:
+
+  $580drn
+
+  where r represents the register number (from 0 through 7),
+  n determines whether it a read or write operation
+  (0 for reads, or 1 for writes), and
+  d determines whether the DACK signal to the NCR 5380 is asserted.
+  (0 for not asserted, 1 is for asserted)
+
+Here's an example of the address expressed in binary:
+
+  0101 1000 0000 00d0 0rrr 000n
+
+Note:  Asserting the DACK signal applies only to write operations to
+       the output data register and read operations from the input
+       data register.
+
+  Symbolic            Memory
+  Location            Location   NCR 5380 Internal Register
+
+  scsiWr+sODR+dackWr  $580201    Output Data Register with DACK
+  scsiRd+sIDR+dackRd  $580260    Current SCSI Data with DACK
+  scsiWr+sODR         $580001    Output Data Register
+  scsiWr+sICR         $580011    Initiator Command Register
+  scsiWr+sMR          $580021    Mode Register
+  scsiWr+sTCR         $580031    Target Command Register
+  scsiWr+sSER         $580041    Select Enable Register
+  scsiWr+sDMAtx       $580051    Start DMA Send
+  scsiWr+sTDMArx      $580061    Start DMA Target Receive
+  scsiWr+sIDMArx      $580071    Start DMA Initiator Receive
+  scsiRd+sCDR         $580000    Current SCSI Data
+  scsiRd+sICR         $580010    Initiator Command Register
+  scsiRd+sMR          $580020    Mode Registor
+  scsiRd+sTCR         $580030    Target Command Register
+  scsiRd+sCSR         $580040    Current SCSI Bus Status
+  scsiRd+sBSR         $580050    Bus and Status Register
+  scsiRd+sIDR         $580060    Input Data Register
+  scsiRd+sRESET       $580070    Reset Parity/Interrupt
+
+			 */
+
+READ16_HANDLER ( macplus_scsi_r )
+{
+	int reg = (offset>>3) & 0xf;
+
+	if ((reg == 6) && (offset == 0x130))
+	{
+		reg = R5380_CURDATA_DTACK;
+	}
+
+	return ncr5380_r(reg)<<8;
+}
+
+WRITE16_HANDLER ( macplus_scsi_w )
+{
+	int reg = (offset>>3) & 0xf;
+
+	if ((reg == 0) && (offset == 0x100))
+	{
+		reg = R5380_OUTDATA_DTACK;
+	}
+
+	ncr5380_w(reg, data);
+}
+
+/* *************************************************************************
+ * SCC
+ *
+ * Serial Control Chip
+ * *************************************************************************/
+
+static void mac_scc_ack(void)
+{
+	set_scc_interrupt(0);
+}
+
+
+
+void mac_scc_mouse_irq( int x, int y)
+{
+	static int last_was_x = 0;
+
+	if (x && y)
+	{
+		if (last_was_x)
+			scc_set_status(0x0a);
+		else
+			scc_set_status(0x02);
+
+		last_was_x ^= 1;
+	}
+	else
+	{
+		if (x)
+			scc_set_status(0x0a);
+		else
+			scc_set_status(0x02);
+	}
+
+	//cpunum_set_input_line(0, 2, ASSERT_LINE);
+	set_scc_interrupt(1);
+}
+
+
+
+READ16_HANDLER ( mac_scc_r )
+{
+	data16_t result;
+	result = scc_r(offset);
+	return (result << 8) | result;
+}
+
+
+
+WRITE16_HANDLER ( mac_scc_w )
+{
+	scc_w(offset, (data8_t) data);
+}
+
+
+
+static const struct scc8530_interface mac_scc8530_interface =
+{
+	mac_scc_ack
+};
+
+
+
+/* *************************************************************************
+ * RTC
+ *
+ * Real Time Clock chip - contains clock information and PRAM.  This chip is
+ * accessed through the VIA
+ * *************************************************************************/
+
+/* state of rTCEnb and rTCClk lines */
+static unsigned char rtc_rTCEnb;
+static unsigned char rtc_rTCClk;
+
+/* serial transmit/receive register : bits are shifted in/out of this byte */
+static unsigned char rtc_data_byte;
+/* serial transmitted/received bit count */
+static unsigned char rtc_bit_count;
+/* direction of the current transfer (0 : VIA->RTC, 1 : RTC->VIA) */
+static unsigned char rtc_data_dir;
+/* when rtc_data_dir == 1, state of rTCData as set by RTC (-> data bit seen by VIA) */
+static unsigned char rtc_data_out;
+
+/* set to 1 when command in progress */
+static unsigned char rtc_cmd;
+
+/* write protect flag */
+static unsigned char rtc_write_protect;
+
+/* internal seconds register */
+static unsigned char rtc_seconds[/*8*/4];
+/* 20-byte long PRAM, or 256-byte long XPRAM */
+static unsigned char rtc_ram[256];
+/* current extended address and RTC state */
+static unsigned char rtc_xpaddr, rtc_state;
+
+/* a few protos */
+static void rtc_write_rTCEnb(int data);
+static void rtc_execute_cmd(int data);
+
+enum
+{
+	RTC_STATE_NORMAL,
+	RTC_STATE_WRITE,
+	RTC_STATE_XPCOMMAND,
+	RTC_STATE_XPWRITE
+};
+
+/* init the rtc core */
+static void rtc_init(void)
+{
+	rtc_rTCClk = 0;
+
+	rtc_write_protect = TRUE;	/* Mmmmh... Should be saved with the NVRAM, actually... */
+	rtc_rTCEnb = 0;
+	rtc_write_rTCEnb(1);
+	rtc_state = RTC_STATE_NORMAL;
+}
+
+/* write the rTCEnb state */
+static void rtc_write_rTCEnb(int val)
+{
+	if (val && (! rtc_rTCEnb))
+	{
+		/* rTCEnb goes high (inactive) */
+		rtc_rTCEnb = 1;
+		/* abort current transmission */
+		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_state = RTC_STATE_NORMAL;
+	}
+	else if ((! val) && rtc_rTCEnb)
+	{
+		/* rTCEnb goes low (active) */
+		rtc_rTCEnb = 0;
+		/* abort current transmission */
+		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
+		rtc_state = RTC_STATE_NORMAL;
+	}
+}
+
+/* shift data (called on rTCClk high-to-low transition (?)) */
+static void rtc_shift_data(int data)
+{
+	if (rtc_rTCEnb)
+		/* if enable line inactive (high), do nothing */
+		return;
+
+	if (rtc_data_dir)
+	{	/* RTC -> VIA transmission */
+		rtc_data_out = (rtc_data_byte >> --rtc_bit_count) & 0x01;
+		if (LOG_RTC)
+			logerror("RTC shifted new data %d\n", rtc_data_out);
+	}
+	else
+	{	/* VIA -> RTC transmission */
+		rtc_data_byte = (rtc_data_byte << 1) | (data ? 1 : 0);
+
+		if (++rtc_bit_count == 8)
+		{	/* if one byte received, send to command interpreter */
+			rtc_execute_cmd(rtc_data_byte);
+		}
+	}
+}
+
+/* called every second, to increment the Clock count */
+static void rtc_incticks(void)
+{
+	if (LOG_RTC)
+		logerror("rtc_incticks called\n");
+
+	if (++rtc_seconds[0] == 0)
+		if (++rtc_seconds[1] == 0)
+			if (++rtc_seconds[2] == 0)
+				++rtc_seconds[3];
+
+	/*if (++rtc_seconds[4] == 0)
+		if (++rtc_seconds[5] == 0)
+			if (++rtc_seconds[6] == 0)
+				++rtc_seconds[7];*/
+}
+
+/* Executes a command.
+Called when the first byte after "enable" is received, and when the data byte after a write command
+is received. */
+static void rtc_execute_cmd(int data)
+{
+	int i;
+
+	if (LOG_RTC)
+		logerror("rtc_execute_cmd: data=%x, state=%x\n", data, rtc_state);
+
+	if (rtc_state == RTC_STATE_XPCOMMAND)
+	{
+		rtc_xpaddr = ((rtc_cmd & 7)<<5) | ((data&0x7c)>>2);
+		if ((rtc_cmd & 0x80) != 0)	
+		{
+			// read command
+			if (LOG_RTC)
+				logerror("RTC: Reading extended address %x\n", rtc_xpaddr);
+
+			rtc_data_dir = 1;
+			rtc_data_byte = rtc_ram[rtc_xpaddr];
+			rtc_state = RTC_STATE_NORMAL;
+		}
+		else
+		{
+			// write command
+			rtc_state = RTC_STATE_XPWRITE;
+			rtc_data_byte = 0;
+			rtc_bit_count = 0;
+		}
+	}
+	else if (rtc_state == RTC_STATE_XPWRITE)
+	{
+		if (LOG_RTC)
+			logerror("RTC: writing %x to extended address %x\n", data, rtc_xpaddr);
+		rtc_ram[rtc_xpaddr] = data;
+		rtc_state = RTC_STATE_NORMAL;
+	}
+	else if (rtc_state == RTC_STATE_WRITE)
+	{
+		rtc_state = RTC_STATE_NORMAL;
+
+		/* Writing an RTC register */
+		i = (rtc_cmd >> 2) & 0x1f;
+		if (rtc_write_protect && (i != 13))
+			/* write-protection : only write-protect can be written again */
+			return;
+		switch(i)
+		{
+		case 0: case 1: case 2: case 3:	/* seconds register */
+		case 4: case 5: case 6: case 7:	/* ??? (not described in IM III) */
+			/* after various tries, I assumed rtc_seconds[4+i] is mapped to rtc_seconds[i] */
+			if (LOG_RTC)
+				logerror("RTC clock write, address = %X, data = %X\n", i, (int) rtc_data_byte);
+			rtc_seconds[i & 3] = rtc_data_byte;
+			break;
+
+		case 8: case 9: case 10: case 11:	/* RAM address $10-$13 */
+			if (LOG_RTC)
+				logerror("RTC RAM write, address = %X, data = %X\n", (i & 3) + 0x10, (int) rtc_data_byte);
+			rtc_ram[(i & 3) + 0x10] = rtc_data_byte;
+			break;
+
+		case 12:
+			/* Test register - do nothing */
+			if (LOG_RTC)
+				logerror("RTC write to test register, data = %X\n", (int) rtc_data_byte);
+			break;
+
+		case 13:
+			/* Write-protect register  */
+			if (LOG_RTC)
+				logerror("RTC write to write-protect register, data = %X\n", (int) rtc_data_byte);
+			rtc_write_protect = (rtc_data_byte & 0x80) ? TRUE : FALSE;
+			break;
+
+		case 16: case 17: case 18: case 19:	/* RAM address $00-$0f */
+		case 20: case 21: case 22: case 23:
+		case 24: case 25: case 26: case 27:
+		case 28: case 29: case 30: case 31:
+			if (LOG_RTC)
+				logerror("RTC RAM write, address = %X, data = %X\n", i & 15, (int) rtc_data_byte);
+			rtc_ram[i & 15] = rtc_data_byte;
+			break;
+
+		default:
+			logerror("Unknown RTC write command : %X, data = %d\n", (int) rtc_cmd, (int) rtc_data_byte);
+			break;
+		}
+	}
+	else
+	{
+		// always save this byte to rtc_cmd
+		rtc_cmd = rtc_data_byte;
+
+		if ((rtc_cmd & 0x78) == 0x38)	// extended command
+		{
+			rtc_state = RTC_STATE_XPCOMMAND;
+			rtc_data_byte = 0;
+			rtc_bit_count = 0;
+		}
+		else
+		{
+			if (rtc_cmd & 0x80)
+			{
+				rtc_state = RTC_STATE_NORMAL;
+
+				/* Reading an RTC register */
+				rtc_data_dir = 1;
+				i = (rtc_cmd >> 2) & 0x1f;
+				switch(i)
+				{
+					case 0: case 1: case 2: case 3:
+					case 4: case 5: case 6: case 7:
+						rtc_data_byte = rtc_seconds[i & 3];
+						if (LOG_RTC)
+							logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
+						break;
+
+					case 8: case 9: case 10: case 11:
+						if (LOG_RTC)
+							logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
+						rtc_data_byte = rtc_ram[(i & 3) + 0x10];
+						break;
+
+					case 16: case 17: case 18: case 19:
+					case 20: case 21: case 22: case 23:
+					case 24: case 25: case 26: case 27:
+					case 28: case 29: case 30: case 31:
+						if (LOG_RTC)
+							logerror("RTC RAM read, address = %X\n", i & 15);
+						rtc_data_byte = rtc_ram[i & 15];
+						break;
+
+					default:
+						if (LOG_RTC)
+							logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
+						rtc_data_byte = 0;
+						break;
+				}
+			}
+			else
+			{
+				/* Writing an RTC register */
+				/* wait for extra data byte */
+				if (LOG_RTC)
+					logerror("RTC write, waiting for data byte : %X\n", (int) rtc_cmd);
+				rtc_state = RTC_STATE_WRITE;
+				rtc_data_byte = 0;
+				rtc_bit_count = 0;
+			}
+		}
+	}
+}
+
+/* should save PRAM to file */
+/* TODO : save write_protect flag, save time difference with host clock */
+NVRAM_HANDLER( mac )
+{
+	if (read_or_write)
+	{
+		if (LOG_RTC)
+			logerror("Writing PRAM to file\n");
+		mame_fwrite(file, rtc_ram, sizeof(rtc_ram));
+	}
+	else
+	{
+		if (file)
+		{
+			if (LOG_RTC)
+				logerror("Reading PRAM from file\n");
+			mame_fread(file, rtc_ram, sizeof(rtc_ram));
+		}
+		else
+		{
+			if (LOG_RTC)
+				logerror("trashing PRAM\n");
+		}
+
+		{
+			/* Now we copy the host clock into the Mac clock */
+			/* Cool, isn't it ? :-) */
+			/* All these functions should be ANSI */
+			struct tm mac_reference;
+			UINT32 seconds;
+
+			/* The count starts on 1st January 1904 */
+			mac_reference.tm_sec = 0;
+			mac_reference.tm_min = 0;
+			mac_reference.tm_hour = 0;
+			mac_reference.tm_mday = 1;
+			mac_reference.tm_mon = 0;
+			mac_reference.tm_year = 4;
+			mac_reference.tm_isdst = 0;
+
+			seconds = difftime(time(NULL), mktime(& mac_reference));
+
+			if (LOG_RTC)
+				logerror("second count 0x%lX\n", (unsigned long) seconds);
+
+			rtc_seconds[0] = seconds & 0xff;
+			rtc_seconds[1] = (seconds >> 8) & 0xff;
+			rtc_seconds[2] = (seconds >> 16) & 0xff;
+			rtc_seconds[3] = (seconds >> 24) & 0xff;
+		}
+	}
+}
+
+/* ********************************** *
+ * IWM Code specific to the Mac Plus  *
+ * ********************************** */
+
+READ16_HANDLER ( mac_iwm_r )
+{
+	/* The first time this is called is in a floppy test, which goes from
+	 * $400104 to $400126.  After that, all access to the floppy goes through
+	 * the disk driver in the MacOS
+	 *
+	 * I just thought this would be on interest to someone trying to further
+	 * this driver along
+	 */
+
+	int result = 0;
+
+	if (LOG_MAC_IWM)
+		logerror("mac_iwm_r: offset=0x%08x\n", offset);
+
+	result = applefdc_r(offset >> 8);
+	return (result << 8) | result;
+}
+
+WRITE16_HANDLER ( mac_iwm_w )
+{
+	if (LOG_MAC_IWM)
+		logerror("mac_iwm_w: offset=0x%08x data=0x%04x\n", offset, data);
+
+	if (ACCESSING_LSB)
+		applefdc_w(offset >> 8, data & 0xff);
+}
+
+/* *************************************************************************
+ * ADB
+ * *************************************************************************/
+
+static int adb_via_b3;
+
+static int has_adb(void)
+{
+	return mac_model >= MODEL_MAC_SE;
+}
+
+
+
+static void mac_adb_newaction(int state)
+{
+	adb_via_b3 = 1;
+}
+
+
+
+/* *************************************************************************
+ * VIA
+ * *************************************************************************
+ *
+ *
+ * PORT A
+ *
+ *	bit 7				R	SCC Wait/Request
+ *	bit 6				W	Main/Alternate screen buffer select
+ *	bit 5				W	Floppy Disk Line Selection
+ *	bit 4				W	Overlay/Normal memory mapping
+ *	bit 3				W	Main/Alternate sound buffer
+ *	bit 2-0				W	Sound Volume
+ *
+ *
+ * PORT B
+ *
+ *	bit 7				W	Sound enable
+ *	bit 6				R	Video beam in display
+ *	bit 5	(pre-ADB)	R	Mouse Y2
+ *			(ADB)		W	ADB ST1
+ *	bit	4	(pre-ADB)	R	Mouse X2
+ *			(ADB)		W	ADB ST0
+ *	bit 3	(pre-ADB)	R	Mouse button (active low)
+ *			(ADB)		R	ADB INT
+ *	bit 2				W	Real time clock enable
+ *	bit 1				W	Real time clock data clock
+ *	bit 0				RW	Real time clock data
+ *
+ */
+
+static READ8_HANDLER(mac_via_in_a)
+{
+	return 0x80;
+}
+
+static READ8_HANDLER(mac_via_in_b)
+{
+	int val = 0;
+
+	/* video beam in display (! VBLANK && ! HBLANK basically) */
+	if (cpu_getvblank())
+		val |= 0x40;
+
+	if (has_adb())
+	{
+		if (adb_via_b3)
+			val |= 0x08;
+	}
+	else
+	{
+		if (mouse_bit_y)	/* Mouse Y2 */
+			val |= 0x20;
+		if (mouse_bit_x)	/* Mouse X2 */
+			val |= 0x10;
+		if ((readinputport(0) & 0x01) == 0)
+			val |= 0x08;
+	}
+	if (rtc_data_out)
+		val |= 1;
+
+	return val;
+}
+
+static WRITE8_HANDLER(mac_via_out_a)
+{
+	set_scc_waitrequest((data & 0x80) >> 7);
+	mac_set_screen_buffer((data & 0x40) >> 6);
+	sony_set_sel_line((data & 0x20) >> 5);
+	mac_set_sound_buffer((data & 0x08) >> 3);
+	mac_set_volume(data & 0x07);
+
+	/* Early Mac models had VIA A4 control overlaying.  In the Mac SE (and
+	 * possibly later models), overlay was set on reset, but cleared on the
+	 * first access to the ROM. */
+	if (mac_model < MODEL_MAC_SE)
+		set_memory_overlay((data & 0x10) >> 4);
+}
+
+static WRITE8_HANDLER(mac_via_out_b)
+{
+	int new_rtc_rTCClk;
+
+	mac_enable_sound((data & 0x80) == 0);
+	rtc_write_rTCEnb(data & 0x04);
+	new_rtc_rTCClk = (data >> 1) & 0x01;
+	if ((! new_rtc_rTCClk) && (rtc_rTCClk))
+		rtc_shift_data(data & 0x01);
+	rtc_rTCClk = new_rtc_rTCClk;
+
+	if (has_adb())
+		mac_adb_newaction((data & 0x30) >> 4);
+}
+
+static void mac_via_irq(int state)
+{
+	/* interrupt the 68k (level 1) */
+	//cpunum_set_input_line(0, 1, state);
+	set_via_interrupt(state);
+}
+
+READ16_HANDLER ( mac_via_r )
+{
+	int data;
+
+	offset >>= 8;
+	offset &= 0x0f;
+
+	if (LOG_VIA)
+		logerror("mac_via_r: offset=0x%02x\n", offset);
+	data = via_0_r(offset);
+
+	return (data & 0xff) | (data << 8);
+}
+
+WRITE16_HANDLER ( mac_via_w )
+{
+	offset >>= 8;
+	offset &= 0x0f;
+
+	if (LOG_VIA)
+		logerror("mac_via_w: offset=0x%02x data=0x%08x\n", offset, data);
+
+	if (ACCESSING_MSB)
+		via_0_w(offset, (data >> 8) & 0xff);
+}
+
+
+
+/* *************************************************************************
+ * Main
+ * *************************************************************************/
+
+MACHINE_INIT(mac)
+{
+	/* initialize real-time clock */
+	rtc_init();
+
+	/* initialize serial */
+	scc_init(&mac_scc8530_interface);
+
+	/* initialize floppy */
+	{
+		struct applefdc_interface intf =
+		{
+			APPLEFDC_IWM,
+			sony_set_lines,
+			sony_set_enable_lines,
+
+			sony_read_data,
+			sony_write_data,
+			sony_read_status
+		};
+
+		applefdc_init(&intf);
+	}
+
+	/* setup the memory overlay */
+	set_memory_overlay(1);
+
+	/* reset the via */
+	via_reset();
+
+	/* setup videoram */
+	mac_set_screen_buffer(1);
+
+	/* setup sound */
+	mac_set_sound_buffer(0);
+
+	if (mac_model == MODEL_MAC_SE)
+		timer_set(0.0, 0, set_memory_overlay);
+}
+
+
+
+static void mac_state_load(void)
+{
+	int overlay = mac_overlay;
+	mac_overlay = -1;
+	set_memory_overlay(overlay);
+}
+
+
+
+static void mac_driver_init(mac_model_t model)
+{
+	mac_overlay = -1;
+	mac_model = model;
+
+	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
+	mac_install_memory(0x600000, 0x6fffff, mess_ram_size, mess_ram, FALSE, 2);
+
+	/* set up ROM at 0x400000-0x43ffff (-0x5fffff for mac 128k/512k/512ke) */
+	mac_install_memory(0x400000, (model == MODEL_MAC_PLUS) ? 0x43ffff : 0x5fffff,
+		memory_region_length(REGION_USER1), memory_region(REGION_USER1), TRUE, 3);
+
+	set_memory_overlay(1);
+
+	/* configure via */
+	via_config(0, &mac_via6522_intf);
+	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
+
+	/* setup keyboard */
+	keyboard_init();
+
+	inquiry_timeout = mame_timer_alloc(inquiry_timeout_func);
+
+	cpuintrf_set_dasm_override(mac_dasm_override);
+
+	/* save state stuff */
+	state_save_register_int("mac", 0, "overlay", &mac_overlay);
+	state_save_register_func_postload(mac_state_load);
+}
+
+
+
+DRIVER_INIT(mac128k512k)
+{
+	mac_driver_init(MODEL_MAC_128K512K);
+}
+
+DRIVER_INIT(mac512ke)
+{
+	mac_driver_init(MODEL_MAC_512KE);
+}
+
+static SCSIConfigTable dev_table =
+{
+	1,                                      /* 1 SCSI device */
+	{ { SCSI_ID_6, 0, SCSI_DEVICE_HARDDISK } } /* SCSI ID 6, using CHD 0, and it's a harddisk */
+};
+
+static struct NCR5380interface macplus_5380intf =
+{
+	&dev_table,	// SCSI device table
+	NULL		// IRQ (unconnected on the Mac Plus)
+};
+
+DRIVER_INIT(macplus)
+{
+	mac_driver_init(MODEL_MAC_PLUS);
+
+	ncr5380_init(&macplus_5380intf);
+}
+
+DRIVER_INIT(macse)
+{
+	mac_driver_init(MODEL_MAC_SE);
+
+	ncr5380_init(&macplus_5380intf);
+}
+
+
+static void mac_vblank_irq(void)
+{
+	static int irq_count = 0, ca1_data = 0, ca2_data = 0;
+
+	/* handle keyboard */
+	if (kbd_comm == TRUE)
+	{
+		int keycode = scan_keyboard();
+
+		if (keycode != 0x7B)
+		{
+			/* if key pressed, send the code */
+
+			logerror("keyboard enquiry successful, keycode %X\n", keycode);
+
+			timer_reset(inquiry_timeout, TIME_NEVER);
+			kbd_shift_out(keycode);
+		}
+	}
+
+	/* signal VBlank on CA1 input on the VIA */
+	ca1_data ^= 1;
+	via_set_input_ca1(0, ca1_data);
+
+	if (++irq_count == 60)
+	{
+		irq_count = 0;
+
+		ca2_data ^= 1;
+		/* signal 1 Hz irq on CA2 input on the VIA */
+		via_set_input_ca2(0, ca2_data);
+
+		rtc_incticks();
+	}
+}
+
+
+
+INTERRUPT_GEN( mac_interrupt )
+{
+	int scanline;
+
+	mac_sh_updatebuffer();
+
+	scanline = cpu_getscanline();
+	if (scanline == 342)
+		mac_vblank_irq();
+
+	/* check for mouse changes at 10 irqs per frame */
+	if (!(scanline % 10))
+		mouse_callback();
+}
+
+
+
 /* *************************************************************************
  * Trap Tracing
  *
  * This is debug code that will output diagnostics regarding OS traps called
- *
- * For whatever it is worth:
- *		The first call to _Read occurs in the Mac Plus at 0x00400734
  * *************************************************************************/
-
-static char *cstrfrompstr(char *buf)
-{
-	static char newbuf[256];
-	memcpy(newbuf, buf+1, buf[0]);
-	newbuf[(int)buf[0]] = '\0';
-	return newbuf;
-}
-
-
 
 static const char *lookup_trap(UINT16 opcode)
 {
@@ -1211,1187 +2418,3 @@ static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 
 
 
-/*
-	R Nabet 000531 : added keyboard code
-*/
-
-/* *************************************************************************
- * non-ADB keyboard support
- *
- * The keyboard uses a i8021 (?) microcontroller.
- * It uses a bidirectional synchonous serial line, connected to the VIA (SR feature)
- *
- * Our emulation is more a hack than anything else - the keyboard controller is
- * not emulated, instead we interpret keyboard commands directly.  I made
- * many guesses, which may be wrong
- *
- * todo :
- * * find the correct model number for the Mac Plus keyboard ?
- * * emulate original Macintosh keyboards (2 layouts : US and international)
- *
- * references :
- * * IM III-29 through III-32 and III-39 through III-42
- * * IM IV-250
- * *************************************************************************/
-
-/* used to store the reply to most keyboard commands */
-static int keyboard_reply;
-
-/* Keyboard communication in progress? */
-static int kbd_comm;
-static int kbd_receive;
-/* timer which is used to time out inquiry */
-static mame_timer *inquiry_timeout;
-
-static int kbd_shift_reg;
-static int kbd_shift_count;
-
-/*
-	scan_keyboard()
-
-	scan the keyboard, and returns key transition code (or NULL ($7B) if none)
-*/
-
-/* keyboard matrix to detect transition */
-static int key_matrix[7];
-
-/* keycode buffer (used for keypad/arrow key transition) */
-static int keycode_buf[2];
-static int keycode_buf_index;
-
-static int scan_keyboard()
-{
-	int i, j;
-	int keybuf;
-	int keycode;
-
-	if (keycode_buf_index)
-	{
-		return keycode_buf[--keycode_buf_index];
-	}
-
-	for (i=0; i<7; i++)
-	{
-		keybuf = readinputport(i+3);
-
-		if (keybuf != key_matrix[i])
-		{
-			/* if state has changed, find first bit which has changed */
-			if (LOG_KEYBOARD)
-				logerror("keyboard state changed, %d %X\n", i, keybuf);
-
-			for (j=0; j<16; j++)
-			{
-				if (((keybuf ^ key_matrix[i]) >> j) & 1)
-				{
-					/* update key_matrix */
-					key_matrix[i] = (key_matrix[i] & ~ (1 << j)) | (keybuf & (1 << j));
-
-					if (i < 4)
-					{
-						/* create key code */
-						keycode = (i << 5) | (j << 1) | 0x01;
-						if (! (keybuf & (1 << j)))
-						{
-							/* key up */
-							keycode |= 0x80;
-						}
-						return keycode;
-					}
-					else if (i < 6)
-					{
-						/* create key code */
-						keycode = ((i & 3) << 5) | (j << 1) | 0x01;
-
-						if ((keycode == 0x05) || (keycode == 0x0d) || (keycode == 0x11) || (keycode == 0x1b))
-						{
-							/* these keys cause shift to be pressed (for compatibility with mac 128/512) */
-							if (keybuf & (1 << j))
-							{
-								/* key down */
-								if (! (key_matrix[3] & 0x0100))
-								{
-									/* shift key is really up */
-									keycode_buf[0] = keycode;
-									keycode_buf[1] = 0x79;
-									keycode_buf_index = 2;
-									return 0x71;	/* "presses" shift down */
-								}
-							}
-							else
-							{	/* key up */
-								if (! (key_matrix[3] & 0x0100))
-								{
-									/* shift key is really up */
-									keycode_buf[0] = keycode | 0x80;;
-									keycode_buf[1] = 0x79;
-									keycode_buf_index = 2;
-									return 0xF1;	/* "releases" shift */
-								}
-							}
-						}
-
-						if (! (keybuf & (1 << j)))
-						{
-							/* key up */
-							keycode |= 0x80;
-						}
-						keycode_buf[0] = keycode;
-						keycode_buf_index = 1;
-						return 0x79;
-					}
-					else /* i == 6 */
-					{
-						/* create key code */
-						keycode = (j << 1) | 0x01;
-						if (! (keybuf & (1 << j)))
-						{
-							/* key up */
-							keycode |= 0x80;
-						}
-						keycode_buf[0] = keycode;
-						keycode_buf_index = 1;
-						return 0x79;
-					}
-				}
-			}
-		}
-	}
-
-	return 0x7B;	/* return NULL */
-}
-
-/*
-	power-up init
-*/
-static void keyboard_init(void)
-{
-	int i;
-
-	/* init flag */
-	kbd_comm = FALSE;
-	kbd_receive = FALSE;
-	kbd_shift_reg=0;
-	kbd_shift_count=0;
-
-	/* clear key matrix */
-	for (i=0; i<7; i++)
-	{
-		key_matrix[i] = 0;
-	}
-
-	/* purge transmission buffer */
-	keycode_buf_index = 0;
-}
-
-/******************* Keyboard <-> VIA communication ***********************/
-
-static void kbd_clock(int param)
-{
-	int i;
-	if (kbd_comm == TRUE)
-	{
-		for (i=0; i<8; i++)
-		{
-			/* Put data on CB2 if we are sending*/
-			if (kbd_receive == FALSE)
-				via_set_input_cb2(0, kbd_shift_reg&0x80?1:0);
-			kbd_shift_reg <<= 1;
-			via_set_input_cb1(0, 0);
-			via_set_input_cb1(0, 1);
-		}
-		if (kbd_receive == TRUE)
-		{
-			kbd_receive = FALSE;
-			/* Process the command received from mac */
-			keyboard_receive(kbd_shift_reg & 0xff);
-		}
-		else
-		{
-			/* Communication is over */ 
-			kbd_comm = FALSE;
-		}
-	}
-}
-
-static void kbd_shift_out(int data)
-{
-	if (kbd_comm == TRUE)
-	{
-		kbd_shift_reg = data;
-		timer_set(1e-3, 0, kbd_clock);
-	}
-}
-
-static WRITE8_HANDLER(mac_via_out_cb2)
-{
-	if (kbd_comm == FALSE && data == 0)
-	{
-		/* Mac pulls CB2 down to initiate communication */
-		kbd_comm = TRUE;
-		kbd_receive = TRUE;
-		timer_set(1e-4, 0, kbd_clock);
-	}
-	if (kbd_comm == TRUE && kbd_receive == TRUE)
-	{
-		/* Shift in what mac is sending */
-		kbd_shift_reg = (kbd_shift_reg & ~1) | data;
-	}
-}
-
-/*
-	called when inquiry times out (1/4s)
-*/
-static void inquiry_timeout_func(int unused)
-{
-	if (LOG_KEYBOARD)
-		logerror("keyboard enquiry timeout\n");
-	kbd_shift_out(0x7B);	/* always send NULL */
-}
-
-/*
-	called when a command is received from the mac
-*/
-static void keyboard_receive(int val)
-{
-	switch (val)
-	{
-	case 0x10:
-		/* inquiry - returns key transition code, or NULL ($7B) if time out (1/4s) */
-		if (LOG_KEYBOARD)
-			logerror("keyboard command : inquiry\n");
-
-		keyboard_reply = scan_keyboard();
-		if (keyboard_reply == 0x7B)
-		{	
-			/* if NULL, wait until key pressed or timeout */
-			mame_timer_adjust(inquiry_timeout,
-				make_mame_time(0, DOUBLE_TO_SUBSECONDS(0.25)),
-				0, time_zero);
-		}
-		break;
-
-	case 0x14:
-		/* instant - returns key transition code, or NULL ($7B) */
-		if (LOG_KEYBOARD)
-			logerror("keyboard command : instant\n");
-
-		kbd_shift_out(scan_keyboard());
-		break;
-
-	case 0x16:
-		/* model number - resets keyboard, return model number */
-		if (LOG_KEYBOARD)
-			logerror("keyboard command : model number\n");
-
-		{	/* reset */
-			int i;
-
-			/* clear key matrix */
-			for (i=0; i<7; i++)
-			{
-				key_matrix[i] = 0;
-			}
-
-			/* purge transmission buffer */
-			keycode_buf_index = 0;
-		}
-
-		/* format : 1 if another device (-> keypad ?) connected | next device (-> keypad ?) number 1-8
-							| keyboard model number 1-8 | 1  */
-		/* keyboards :
-			3 : mac 512k, US and international layout ? Mac plus ???
-			other values : Apple II keyboards ?
-		*/
-		/* keypads :
-			??? : standard keypad (always available on Mac Plus) ???
-		*/
-		kbd_shift_out(0x17);	/* probably wrong */
-		break;
-
-	case 0x36:
-		/* test - resets keyboard, return ACK ($7D) or NAK ($77) */
-		if (LOG_KEYBOARD)
-			logerror("keyboard command : test\n");
-
-		kbd_shift_out(0x7D);	/* ACK */
-		break;
-
-	default:
-		if (LOG_KEYBOARD)
-			logerror("unknown keyboard command 0x%X\n", val);
-
-		kbd_shift_out(0);
-		break;
-	}
-}
-
-/* *************************************************************************
- * Mouse
- * *************************************************************************/
-
-static int mouse_bit_x = 0, mouse_bit_y = 0;
-
-static void mouse_callback(void)
-{
-	static int	last_mx = 0, last_my = 0;
-	static int	count_x = 0, count_y = 0;
-
-	int			new_mx, new_my;
-	int			x_needs_update = 0, y_needs_update = 0;
-
-	new_mx = readinputport(1);
-	new_my = readinputport(2);
-
-	/* see if it moved in the x coord */
-	if (new_mx != last_mx)
-	{
-		int		diff = new_mx - last_mx;
-
-		/* check for wrap */
-		if (diff > 0x80)
-			diff = 0x100-diff;
-		if  (diff < -0x80)
-			diff = -0x100-diff;
-
-		count_x += diff;
-
-		last_mx = new_mx;
-	}
-	/* see if it moved in the y coord */
-	if (new_my != last_my)
-	{
-		int		diff = new_my - last_my;
-
-		/* check for wrap */
-		if (diff > 0x80)
-			diff = 0x100-diff;
-		if  (diff < -0x80)
-			diff = -0x100-diff;
-
-		count_y += diff;
-
-		last_my = new_my;
-	}
-
-	/* update any remaining count and then return */
-	if (count_x)
-	{
-		if (count_x < 0)
-		{
-			count_x++;
-			mouse_bit_x = 0;
-		}
-		else
-		{
-			count_x--;
-			mouse_bit_x = 1;
-		}
-		x_needs_update = 1;
-	}
-	else if (count_y)
-	{
-		if (count_y < 0)
-		{
-			count_y++;
-			mouse_bit_y = 1;
-		}
-		else
-		{
-			count_y--;
-			mouse_bit_y = 0;
-		}
-		y_needs_update = 1;
-	}
-
-	if (x_needs_update || y_needs_update)
-		/* assert Port B External Interrupt on the SCC */
-		mac_scc_mouse_irq( x_needs_update, y_needs_update );
-}
-
-/* *************************************************************************
- * SCSI
- * *************************************************************************/
-
-/*
-
-From http://www.mac.m68k-linux.org/devel/plushw.php
-
-The address of each register is computed as follows:
-
-  $580drn
-
-  where r represents the register number (from 0 through 7),
-  n determines whether it a read or write operation
-  (0 for reads, or 1 for writes), and
-  d determines whether the DACK signal to the NCR 5380 is asserted.
-  (0 for not asserted, 1 is for asserted)
-
-Here's an example of the address expressed in binary:
-
-  0101 1000 0000 00d0 0rrr 000n
-
-Note:  Asserting the DACK signal applies only to write operations to
-       the output data register and read operations from the input
-       data register.
-
-  Symbolic            Memory
-  Location            Location   NCR 5380 Internal Register
-
-  scsiWr+sODR+dackWr  $580201    Output Data Register with DACK
-  scsiRd+sIDR+dackRd  $580260    Current SCSI Data with DACK
-  scsiWr+sODR         $580001    Output Data Register
-  scsiWr+sICR         $580011    Initiator Command Register
-  scsiWr+sMR          $580021    Mode Register
-  scsiWr+sTCR         $580031    Target Command Register
-  scsiWr+sSER         $580041    Select Enable Register
-  scsiWr+sDMAtx       $580051    Start DMA Send
-  scsiWr+sTDMArx      $580061    Start DMA Target Receive
-  scsiWr+sIDMArx      $580071    Start DMA Initiator Receive
-  scsiRd+sCDR         $580000    Current SCSI Data
-  scsiRd+sICR         $580010    Initiator Command Register
-  scsiRd+sMR          $580020    Mode Registor
-  scsiRd+sTCR         $580030    Target Command Register
-  scsiRd+sCSR         $580040    Current SCSI Bus Status
-  scsiRd+sBSR         $580050    Bus and Status Register
-  scsiRd+sIDR         $580060    Input Data Register
-  scsiRd+sRESET       $580070    Reset Parity/Interrupt
-
-			 */
-
-READ16_HANDLER ( macplus_scsi_r )
-{
-	int reg = (offset>>3) & 0xf;
-
-	if ((reg == 6) && (offset == 0x130))
-	{
-		reg = R5380_CURDATA_DTACK;
-	}
-
-	return ncr5380_r(reg)<<8;
-}
-
-WRITE16_HANDLER ( macplus_scsi_w )
-{
-	int reg = (offset>>3) & 0xf;
-
-	if ((reg == 0) && (offset == 0x100))
-	{
-		reg = R5380_OUTDATA_DTACK;
-	}
-
-	ncr5380_w(reg, data);
-}
-
-/* *************************************************************************
- * SCC
- *
- * Serial Control Chip
- * *************************************************************************/
-
-static void mac_scc_ack(void)
-{
-	set_scc_interrupt(0);
-}
-
-
-
-void mac_scc_mouse_irq( int x, int y)
-{
-	static int last_was_x = 0;
-
-	if (x && y)
-	{
-		if (last_was_x)
-			scc_set_status(0x0a);
-		else
-			scc_set_status(0x02);
-
-		last_was_x ^= 1;
-	}
-	else
-	{
-		if (x)
-			scc_set_status(0x0a);
-		else
-			scc_set_status(0x02);
-	}
-
-	//cpunum_set_input_line(0, 2, ASSERT_LINE);
-	set_scc_interrupt(1);
-}
-
-
-
-READ16_HANDLER ( mac_scc_r )
-{
-	data16_t result;
-	result = scc_r(offset);
-	return (result << 8) | result;
-}
-
-
-
-WRITE16_HANDLER ( mac_scc_w )
-{
-	scc_w(offset, (data8_t) data);
-}
-
-
-
-static const struct scc8530_interface mac_scc8530_interface =
-{
-	mac_scc_ack
-};
-
-
-
-/* *************************************************************************
- * RTC
- *
- * Real Time Clock chip - contains clock information and PRAM.  This chip is
- * accessed through the VIA
- * *************************************************************************/
-
-/* state of rTCEnb and rTCClk lines */
-static unsigned char rtc_rTCEnb;
-static unsigned char rtc_rTCClk;
-
-/* serial transmit/receive register : bits are shifted in/out of this byte */
-static unsigned char rtc_data_byte;
-/* serial transmitted/received bit count */
-static unsigned char rtc_bit_count;
-/* direction of the current transfer (0 : VIA->RTC, 1 : RTC->VIA) */
-static unsigned char rtc_data_dir;
-/* when rtc_data_dir == 1, state of rTCData as set by RTC (-> data bit seen by VIA) */
-static unsigned char rtc_data_out;
-
-/* set to 1 when command in progress */
-static unsigned char rtc_cmd;
-
-/* write protect flag */
-static unsigned char rtc_write_protect;
-
-/* internal seconds register */
-static unsigned char rtc_seconds[/*8*/4];
-/* 20-byte long PRAM, or 256-byte long XPRAM */
-static unsigned char rtc_ram[256];
-/* current extended address and RTC state */
-static unsigned char rtc_xpaddr, rtc_state;
-
-/* a few protos */
-static void rtc_write_rTCEnb(int data);
-static void rtc_execute_cmd(int data);
-
-enum
-{
-	RTC_STATE_NORMAL,
-	RTC_STATE_WRITE,
-	RTC_STATE_XPCOMMAND,
-	RTC_STATE_XPWRITE
-};
-
-/* init the rtc core */
-static void rtc_init(void)
-{
-	rtc_rTCClk = 0;
-
-	rtc_write_protect = TRUE;	/* Mmmmh... Should be saved with the NVRAM, actually... */
-	rtc_rTCEnb = 0;
-	rtc_write_rTCEnb(1);
-	rtc_state = RTC_STATE_NORMAL;
-}
-
-/* write the rTCEnb state */
-static void rtc_write_rTCEnb(int val)
-{
-	if (val && (! rtc_rTCEnb))
-	{
-		/* rTCEnb goes high (inactive) */
-		rtc_rTCEnb = 1;
-		/* abort current transmission */
-		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
-		rtc_state = RTC_STATE_NORMAL;
-	}
-	else if ((! val) && rtc_rTCEnb)
-	{
-		/* rTCEnb goes low (active) */
-		rtc_rTCEnb = 0;
-		/* abort current transmission */
-		rtc_data_byte = rtc_bit_count = rtc_data_dir = rtc_data_out = 0;
-		rtc_state = RTC_STATE_NORMAL;
-	}
-}
-
-/* shift data (called on rTCClk high-to-low transition (?)) */
-static void rtc_shift_data(int data)
-{
-	if (rtc_rTCEnb)
-		/* if enable line inactive (high), do nothing */
-		return;
-
-	if (rtc_data_dir)
-	{	/* RTC -> VIA transmission */
-		rtc_data_out = (rtc_data_byte >> --rtc_bit_count) & 0x01;
-		if (LOG_RTC)
-			logerror("RTC shifted new data %d\n", rtc_data_out);
-	}
-	else
-	{	/* VIA -> RTC transmission */
-		rtc_data_byte = (rtc_data_byte << 1) | (data ? 1 : 0);
-
-		if (++rtc_bit_count == 8)
-		{	/* if one byte received, send to command interpreter */
-			rtc_execute_cmd(rtc_data_byte);
-		}
-	}
-}
-
-/* called every second, to increment the Clock count */
-static void rtc_incticks(void)
-{
-	if (LOG_RTC)
-		logerror("rtc_incticks called\n");
-
-	if (++rtc_seconds[0] == 0)
-		if (++rtc_seconds[1] == 0)
-			if (++rtc_seconds[2] == 0)
-				++rtc_seconds[3];
-
-	/*if (++rtc_seconds[4] == 0)
-		if (++rtc_seconds[5] == 0)
-			if (++rtc_seconds[6] == 0)
-				++rtc_seconds[7];*/
-}
-
-/* Executes a command.
-Called when the first byte after "enable" is received, and when the data byte after a write command
-is received. */
-static void rtc_execute_cmd(int data)
-{
-	int i;
-
-	if (LOG_RTC)
-		logerror("rtc_execute_cmd: data=%x, state=%x\n", data, rtc_state);
-
-	if (rtc_state == RTC_STATE_XPCOMMAND)
-	{
-		rtc_xpaddr = ((rtc_cmd & 7)<<5) | ((data&0x7c)>>2);
-		if ((rtc_cmd & 0x80) != 0)	
-		{
-			// read command
-			if (LOG_RTC)
-				logerror("RTC: Reading extended address %x\n", rtc_xpaddr);
-
-			rtc_data_dir = 1;
-			rtc_data_byte = rtc_ram[rtc_xpaddr];
-			rtc_state = RTC_STATE_NORMAL;
-		}
-		else
-		{
-			// write command
-			rtc_state = RTC_STATE_XPWRITE;
-			rtc_data_byte = 0;
-			rtc_bit_count = 0;
-		}
-	}
-	else if (rtc_state == RTC_STATE_XPWRITE)
-	{
-		if (LOG_RTC)
-			logerror("RTC: writing %x to extended address %x\n", data, rtc_xpaddr);
-		rtc_ram[rtc_xpaddr] = data;
-		rtc_state = RTC_STATE_NORMAL;
-	}
-	else if (rtc_state == RTC_STATE_WRITE)
-	{
-		rtc_state = RTC_STATE_NORMAL;
-
-		/* Writing an RTC register */
-		i = (rtc_cmd >> 2) & 0x1f;
-		if (rtc_write_protect && (i != 13))
-			/* write-protection : only write-protect can be written again */
-			return;
-		switch(i)
-		{
-		case 0: case 1: case 2: case 3:	/* seconds register */
-		case 4: case 5: case 6: case 7:	/* ??? (not described in IM III) */
-			/* after various tries, I assumed rtc_seconds[4+i] is mapped to rtc_seconds[i] */
-			if (LOG_RTC)
-				logerror("RTC clock write, address = %X, data = %X\n", i, (int) rtc_data_byte);
-			rtc_seconds[i & 3] = rtc_data_byte;
-			break;
-
-		case 8: case 9: case 10: case 11:	/* RAM address $10-$13 */
-			if (LOG_RTC)
-				logerror("RTC RAM write, address = %X, data = %X\n", (i & 3) + 0x10, (int) rtc_data_byte);
-			rtc_ram[(i & 3) + 0x10] = rtc_data_byte;
-			break;
-
-		case 12:
-			/* Test register - do nothing */
-			if (LOG_RTC)
-				logerror("RTC write to test register, data = %X\n", (int) rtc_data_byte);
-			break;
-
-		case 13:
-			/* Write-protect register  */
-			if (LOG_RTC)
-				logerror("RTC write to write-protect register, data = %X\n", (int) rtc_data_byte);
-			rtc_write_protect = (rtc_data_byte & 0x80) ? TRUE : FALSE;
-			break;
-
-		case 16: case 17: case 18: case 19:	/* RAM address $00-$0f */
-		case 20: case 21: case 22: case 23:
-		case 24: case 25: case 26: case 27:
-		case 28: case 29: case 30: case 31:
-			if (LOG_RTC)
-				logerror("RTC RAM write, address = %X, data = %X\n", i & 15, (int) rtc_data_byte);
-			rtc_ram[i & 15] = rtc_data_byte;
-			break;
-
-		default:
-			logerror("Unknown RTC write command : %X, data = %d\n", (int) rtc_cmd, (int) rtc_data_byte);
-			break;
-		}
-	}
-	else
-	{
-		// always save this byte to rtc_cmd
-		rtc_cmd = rtc_data_byte;
-
-		if ((rtc_cmd & 0x78) == 0x38)	// extended command
-		{
-			rtc_state = RTC_STATE_XPCOMMAND;
-			rtc_data_byte = 0;
-			rtc_bit_count = 0;
-		}
-		else
-		{
-			if (rtc_cmd & 0x80)
-			{
-				rtc_state = RTC_STATE_NORMAL;
-
-				/* Reading an RTC register */
-				rtc_data_dir = 1;
-				i = (rtc_cmd >> 2) & 0x1f;
-				switch(i)
-				{
-					case 0: case 1: case 2: case 3:
-					case 4: case 5: case 6: case 7:
-						rtc_data_byte = rtc_seconds[i & 3];
-						if (LOG_RTC)
-							logerror("RTC clock read, address = %X -> data = %X\n", i, rtc_data_byte);
-						break;
-
-					case 8: case 9: case 10: case 11:
-						if (LOG_RTC)
-							logerror("RTC RAM read, address = %X\n", (i & 3) + 0x10);
-						rtc_data_byte = rtc_ram[(i & 3) + 0x10];
-						break;
-
-					case 16: case 17: case 18: case 19:
-					case 20: case 21: case 22: case 23:
-					case 24: case 25: case 26: case 27:
-					case 28: case 29: case 30: case 31:
-						if (LOG_RTC)
-							logerror("RTC RAM read, address = %X\n", i & 15);
-						rtc_data_byte = rtc_ram[i & 15];
-						break;
-
-					default:
-						if (LOG_RTC)
-							logerror("Unknown RTC read command : %X\n", (int) rtc_cmd);
-						rtc_data_byte = 0;
-						break;
-				}
-			}
-			else
-			{
-				/* Writing an RTC register */
-				/* wait for extra data byte */
-				if (LOG_RTC)
-					logerror("RTC write, waiting for data byte : %X\n", (int) rtc_cmd);
-				rtc_state = RTC_STATE_WRITE;
-				rtc_data_byte = 0;
-				rtc_bit_count = 0;
-			}
-		}
-	}
-}
-
-/* should save PRAM to file */
-/* TODO : save write_protect flag, save time difference with host clock */
-NVRAM_HANDLER( mac )
-{
-	if (read_or_write)
-	{
-		if (LOG_RTC)
-			logerror("Writing PRAM to file\n");
-		mame_fwrite(file, rtc_ram, sizeof(rtc_ram));
-	}
-	else
-	{
-		if (file)
-		{
-			if (LOG_RTC)
-				logerror("Reading PRAM from file\n");
-			mame_fread(file, rtc_ram, sizeof(rtc_ram));
-		}
-		else
-		{
-			if (LOG_RTC)
-				logerror("trashing PRAM\n");
-		}
-
-		{
-			/* Now we copy the host clock into the Mac clock */
-			/* Cool, isn't it ? :-) */
-			/* All these functions should be ANSI */
-			struct tm mac_reference;
-			UINT32 seconds;
-
-			/* The count starts on 1st January 1904 */
-			mac_reference.tm_sec = 0;
-			mac_reference.tm_min = 0;
-			mac_reference.tm_hour = 0;
-			mac_reference.tm_mday = 1;
-			mac_reference.tm_mon = 0;
-			mac_reference.tm_year = 4;
-			mac_reference.tm_isdst = 0;
-
-			seconds = difftime(time(NULL), mktime(& mac_reference));
-
-			if (LOG_RTC)
-				logerror("second count 0x%lX\n", (unsigned long) seconds);
-
-			rtc_seconds[0] = seconds & 0xff;
-			rtc_seconds[1] = (seconds >> 8) & 0xff;
-			rtc_seconds[2] = (seconds >> 16) & 0xff;
-			rtc_seconds[3] = (seconds >> 24) & 0xff;
-		}
-	}
-}
-
-/* ********************************** *
- * IWM Code specific to the Mac Plus  *
- * ********************************** */
-
-READ16_HANDLER ( mac_iwm_r )
-{
-	/* The first time this is called is in a floppy test, which goes from
-	 * $400104 to $400126.  After that, all access to the floppy goes through
-	 * the disk driver in the MacOS
-	 *
-	 * I just thought this would be on interest to someone trying to further
-	 * this driver along
-	 */
-
-	int result = 0;
-
-	if (LOG_MAC_IWM)
-		logerror("mac_iwm_r: offset=0x%08x\n", offset);
-
-	result = applefdc_r(offset >> 8);
-	return (result << 8) | result;
-}
-
-WRITE16_HANDLER ( mac_iwm_w )
-{
-	if (LOG_MAC_IWM)
-		logerror("mac_iwm_w: offset=0x%08x data=0x%04x\n", offset, data);
-
-	if (ACCESSING_LSB)
-		applefdc_w(offset >> 8, data & 0xff);
-}
-
-/* *************************************************************************
- * VIA
- * *************************************************************************
- *
- *
- * PORT A
- *
- *	bit 7	R	SCC Wait/Request
- *	bit 6	W	Main/Alternate screen buffer select
- *	bit 5	W	Floppy Disk Line Selection
- *	bit 4	W	Overlay/Normal memory mapping
- *	bit 3	W	Main/Alternate sound buffer
- *	bit 2-0	W	Sound Volume
- *
- *
- * PORT B
- *
- *	bit 7	W	Sound enable
- *	bit 6	R	Video beam in display
- *	bit 5	R	Mouse Y2
- *	bit	4	R	Mouse X2
- *	bit 3	R	Mouse button (active low)
- *	bit 2	W	Real time clock enable
- *	bit 1	W	Real time clock data clock
- *	bit 0	RW	Real time clock data
- *
- */
-
-static  READ8_HANDLER(mac_via_in_a)
-{
-	return 0x80;
-}
-
-static  READ8_HANDLER(mac_via_in_b)
-{
-	int val = 0;
-
-	/* video beam in display (! VBLANK && ! HBLANK basically) */
-	if (cpu_getvblank())
-		val |= 0x40;
-
-	if (mouse_bit_y)	/* Mouse Y2 */
-		val |= 0x20;
-	if (mouse_bit_x)	/* Mouse X2 */
-		val |= 0x10;
-	if ((readinputport(0) & 0x01) == 0)
-		val |= 0x08;
-	if (rtc_data_out)
-		val |= 1;
-
-	return val;
-}
-
-static WRITE8_HANDLER(mac_via_out_a)
-{
-	set_scc_waitrequest((data & 0x80) >> 7);
-	mac_set_screen_buffer((data & 0x40) >> 6);
-	sony_set_sel_line((data & 0x20) >> 5);
-	mac_set_sound_buffer((data & 0x08) >> 3);
-	mac_set_volume(data & 0x07);
-
-	/* Early Mac models had VIA A4 control overlaying.  In the Mac SE (and
-	 * possibly later models), overlay was set on reset, but cleared on the
-	 * first access to the ROM. */
-	if (mac_model < MODEL_MAC_SE)
-		set_memory_overlay((data & 0x10) >> 4);
-}
-
-static WRITE8_HANDLER(mac_via_out_b)
-{
-	int new_rtc_rTCClk;
-
-	mac_enable_sound((data & 0x80) == 0);
-	rtc_write_rTCEnb(data & 0x04);
-	new_rtc_rTCClk = (data >> 1) & 0x01;
-	if ((! new_rtc_rTCClk) && (rtc_rTCClk))
-		rtc_shift_data(data & 0x01);
-	rtc_rTCClk = new_rtc_rTCClk;
-}
-
-static void mac_via_irq(int state)
-{
-	/* interrupt the 68k (level 1) */
-	//cpunum_set_input_line(0, 1, state);
-	set_via_interrupt(state);
-}
-
-READ16_HANDLER ( mac_via_r )
-{
-	int data;
-
-	offset >>= 8;
-	offset &= 0x0f;
-
-	if (LOG_VIA)
-		logerror("mac_via_r: offset=0x%02x\n", offset);
-	data = via_0_r(offset);
-
-	return (data & 0xff) | (data << 8);
-}
-
-WRITE16_HANDLER ( mac_via_w )
-{
-	offset >>= 8;
-	offset &= 0x0f;
-
-	if (LOG_VIA)
-		logerror("mac_via_w: offset=0x%02x data=0x%08x\n", offset, data);
-
-	if (ACCESSING_MSB)
-		via_0_w(offset, (data >> 8) & 0xff);
-}
-
-
-
-/* *************************************************************************
- * Main
- * *************************************************************************/
-
-MACHINE_INIT(mac)
-{
-	/* initialize real-time clock */
-	rtc_init();
-
-	/* initialize serial */
-	scc_init(&mac_scc8530_interface);
-
-	/* initialize floppy */
-	{
-		struct applefdc_interface intf =
-		{
-			APPLEFDC_IWM,
-			sony_set_lines,
-			sony_set_enable_lines,
-
-			sony_read_data,
-			sony_write_data,
-			sony_read_status
-		};
-
-		applefdc_init(&intf);
-	}
-
-	/* setup the memory overlay */
-	set_memory_overlay(1);
-
-	/* reset the via */
-	via_reset();
-
-	/* setup videoram */
-	mac_set_screen_buffer(1);
-
-	/* setup sound */
-	mac_set_sound_buffer(0);
-
-	if (mac_model == MODEL_MAC_SE)
-		timer_set(0.0, 0, set_memory_overlay);
-}
-
-
-
-static void mac_state_load(void)
-{
-	int overlay = mac_overlay;
-	mac_overlay = -1;
-	set_memory_overlay(overlay);
-}
-
-
-
-static void mac_driver_init(mac_model_t model)
-{
-	mac_overlay = -1;
-	mac_model = model;
-
-	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
-	mac_install_memory(0x600000, 0x6fffff, mess_ram_size, mess_ram, FALSE, 2);
-
-	/* set up ROM at 0x400000-0x43ffff (-0x5fffff for mac 128k/512k/512ke) */
-	mac_install_memory(0x400000, (model == MODEL_MAC_PLUS) ? 0x43ffff : 0x5fffff,
-		memory_region_length(REGION_USER1), memory_region(REGION_USER1), TRUE, 3);
-
-	set_memory_overlay(1);
-
-	/* configure via */
-	via_config(0, &mac_via6522_intf);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup keyboard */
-	keyboard_init();
-
-	inquiry_timeout = mame_timer_alloc(inquiry_timeout_func);
-
-	cpuintrf_set_dasm_override(mac_dasm_override);
-
-	/* save state stuff */
-	state_save_register_int("mac", 0, "overlay", &mac_overlay);
-	state_save_register_func_postload(mac_state_load);
-}
-
-
-
-DRIVER_INIT(mac128k512k)
-{
-	mac_driver_init(MODEL_MAC_128K512K);
-}
-
-DRIVER_INIT(mac512ke)
-{
-	mac_driver_init(MODEL_MAC_512KE);
-}
-
-static SCSIConfigTable dev_table =
-{
-	1,                                      /* 1 SCSI device */
-	{ { SCSI_ID_6, 0, SCSI_DEVICE_HARDDISK } } /* SCSI ID 6, using CHD 0, and it's a harddisk */
-};
-
-static struct NCR5380interface macplus_5380intf =
-{
-	&dev_table,	// SCSI device table
-	NULL		// IRQ (unconnected on the Mac Plus)
-};
-
-DRIVER_INIT(macplus)
-{
-	mac_driver_init(MODEL_MAC_PLUS);
-
-	ncr5380_init(&macplus_5380intf);
-}
-
-DRIVER_INIT(macse)
-{
-	mac_driver_init(MODEL_MAC_SE);
-
-	ncr5380_init(&macplus_5380intf);
-}
-
-
-static void mac_vblank_irq(void)
-{
-	static int irq_count = 0, ca1_data = 0, ca2_data = 0;
-
-	/* handle keyboard */
-	if (kbd_comm == TRUE)
-	{
-		int keycode = scan_keyboard();
-
-		if (keycode != 0x7B)
-		{
-			/* if key pressed, send the code */
-
-			logerror("keyboard enquiry successful, keycode %X\n", keycode);
-
-			timer_reset(inquiry_timeout, TIME_NEVER);
-			kbd_shift_out(keycode);
-		}
-	}
-
-	/* signal VBlank on CA1 input on the VIA */
-	ca1_data ^= 1;
-	via_set_input_ca1(0, ca1_data);
-
-	if (++irq_count == 60)
-	{
-		irq_count = 0;
-
-		ca2_data ^= 1;
-		/* signal 1 Hz irq on CA2 input on the VIA */
-		via_set_input_ca2(0, ca2_data);
-
-		rtc_incticks();
-	}
-}
-
-
-
-INTERRUPT_GEN( mac_interrupt )
-{
-	int scanline;
-
-	mac_sh_updatebuffer();
-
-	scanline = cpu_getscanline();
-	if (scanline == 342)
-		mac_vblank_irq();
-
-	/* check for mouse changes at 10 irqs per frame */
-	if (!(scanline % 10))
-		mouse_callback();
-}
