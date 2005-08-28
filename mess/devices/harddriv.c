@@ -363,6 +363,7 @@ DEVICE_UNLOAD(mess_hd)
 	assert(hd->hard_disk_handle);
 	hard_disk_close(hd->hard_disk_handle);
 	hd->hard_disk_handle = NULL;
+	drive_handles[image_index_in_device(image)] = NULL;
 }
 
 
