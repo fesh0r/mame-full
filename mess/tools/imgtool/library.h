@@ -65,8 +65,14 @@ typedef enum
 typedef struct
 {
 	imgtool_forktype_t type;
+	UINT64 size;
 	char forkname[64];
 } imgtool_forkent;
+
+typedef struct
+{
+	unsigned int recommended : 1;
+} imgtool_filter_suggestion;
 
 struct ImageModule
 {
@@ -107,6 +113,7 @@ struct ImageModule
 	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*suggest_filters)(imgtool_image *image, const char *path, imgtool_filter_suggestion *suggestions, size_t suggestions_length);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);

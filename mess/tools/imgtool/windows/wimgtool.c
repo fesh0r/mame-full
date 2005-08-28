@@ -527,7 +527,6 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	if (info->image)
 		default_module = img_module(info->image);
 
-	memset(ofn, 0, sizeof(*ofn));
 	pile_init(&pile);
 
 	if (!creating_file)
@@ -596,6 +595,7 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	}
 	memcpy(filter, pile_getptr(&pile), pile_size(&pile));
 
+	memset(ofn, 0, sizeof(*ofn));
 	ofn->lStructSize = sizeof(*ofn);
 	ofn->Flags = OFN_EXPLORER;
 	ofn->hwndOwner = window;
