@@ -168,7 +168,6 @@ typedef struct
 	BOOL   auto_rol;
 	BOOL   flipx;
 	BOOL   flipy;
-	char *debugres;
 	double f_gamma_correct;
 
 	/* Core vector */
@@ -181,7 +180,6 @@ typedef struct
 	/* Sound */
 	int    samplerate;
 	BOOL   use_samples;
-	BOOL   use_filter;
 	BOOL   enable_sound;
 	int    attenuation;
 	int    audio_latency;
@@ -203,10 +201,8 @@ typedef struct
 	BOOL   leds;
 	char   *ledmode;
 	BOOL   high_priority;
-	BOOL   skip_disclaimer;
 	BOOL   skip_gameinfo;
 	BOOL   skip_validitychecks;
-	BOOL   crc_only;
 	int bios;
 
 #ifdef MESS
@@ -292,7 +288,6 @@ typedef struct
     LOGFONT  list_font;
     COLORREF list_font_color;
     COLORREF list_clone_color;
-    BOOL     skip_disclaimer;
     BOOL     skip_gameinfo;
     BOOL     skip_validitychecks;
     BOOL     high_priority;

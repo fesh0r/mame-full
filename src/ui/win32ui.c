@@ -830,13 +830,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
-#ifdef MESS
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -sysinfo_file \"%s\"",       GetHistoryFileName());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -messinfo_file \"%s\"",      GetMAMEInfoFileName());
-#else
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -history_file \"%s\"",       GetHistoryFileName());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -mameinfo_file \"%s\"",      GetMAMEInfoFileName());
-#endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr_directory \"%s\"",    GetCtrlrDir());
 
 	/* video */
@@ -931,8 +924,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",pOpts->flipx ? "" : "no");
 	if (pOpts->flipy)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",pOpts->flipy ? "" : "no");
-	if (strcmp(pOpts->debugres,"auto") != 0)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -dr %s",       pOpts->debugres); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->f_gamma_correct);
 	if (strlen(pOpts->screen) > 0)
 	{
@@ -951,7 +942,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	/* sound */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -sr %d",                     pOpts->samplerate);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssamples",                 pOpts->use_samples     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sresamplefilter",          pOpts->use_filter      ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssound",                   pOpts->enable_sound    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -vol %d",                    pOpts->attenuation);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -audio_latency %i",          pOpts->audio_latency);
@@ -985,10 +975,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->old_timing)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -rdtsc");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
-	if (pOpts->crc_only)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -crconly");		
-	if (pOpts->skip_disclaimer)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_disclaimer");
 	if (pOpts->skip_gameinfo)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
 	if (pOpts->skip_validitychecks)

@@ -348,7 +348,6 @@ static const REG_OPTION regGameOpts[] =
 	{ "autorol",                RO_BOOL,    offsetof(options_type, auto_rol),                        "0" },
 	{ "flipx",                  RO_BOOL,    offsetof(options_type, flipx),                           "0" },
 	{ "flipy",                  RO_BOOL,    offsetof(options_type, flipy),                           "0" },
-	{ "debug_resolution",       RO_STRING,  offsetof(options_type, debugres),                        "auto" },
 	{ "gamma",                  RO_DOUBLE,  offsetof(options_type, f_gamma_correct),                 "1.0" },
 
 	// vector
@@ -361,7 +360,6 @@ static const REG_OPTION regGameOpts[] =
 	// sound
 	{ "samplerate",             RO_INT,     offsetof(options_type, samplerate),                      "44100" },
 	{ "samples",                RO_BOOL,    offsetof(options_type, use_samples),                     "1" },
-	{ "resamplefilter",         RO_BOOL,    offsetof(options_type, use_filter),                      "1" },
 	{ "sound",                  RO_BOOL,    offsetof(options_type, enable_sound),                    "1" },
 	{ "volume",                 RO_INT,     offsetof(options_type, attenuation),                     "0" },
 	{ "audio_latency",          RO_INT,     offsetof(options_type, audio_latency),                   "1" },
@@ -383,10 +381,8 @@ static const REG_OPTION regGameOpts[] =
 	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "0" },
 	{ "led_mode",               RO_STRING,  offsetof(options_type, ledmode),                         "ps/2" },
 	{ "high_priority",          RO_BOOL,    offsetof(options_type, high_priority),                   "0" },
-	{ "skip_disclaimer",        RO_BOOL,    offsetof(options_type, skip_disclaimer),                 "0" },
 	{ "skip_gameinfo",          RO_BOOL,    offsetof(options_type, skip_gameinfo),                   "0" },
 	{ "skip_validitychecks",    RO_BOOL,    offsetof(options_type, skip_validitychecks),             "1" },
-	{ "crconly",                RO_BOOL,    offsetof(options_type, crc_only),                        "0" },
 	{ "bios",                   RO_INT,     offsetof(options_type, bios),                            "0" },
 
 #ifdef MESS
@@ -428,7 +424,6 @@ static const REG_OPTION regGameOpts[] =
 // options in mame32.ini that we'll never override with with game-specific options
 static const REG_OPTION global_game_options[] =
 {
-	{"skip_disclaimer",         RO_BOOL,    offsetof(settings_type, skip_disclaimer),   "0" },
 	{"skip_gameinfo",           RO_BOOL,    offsetof(settings_type, skip_gameinfo),     "0" },
 	{"skip_validitychecks",     RO_BOOL,    offsetof(settings_type, skip_validitychecks),     "0" },
 	{"high_priority",           RO_BOOL,    offsetof(settings_type, high_priority),     "0" },
@@ -453,13 +448,6 @@ static const REG_OPTION global_game_options[] =
 	{ "snapshot_directory",     RO_STRING,  offsetof(settings_type, imgdir),           "snap" },
 	{ "diff_directory",         RO_STRING,  offsetof(settings_type, diffdir),          "diff" },
 	{ "cheat_file",             RO_STRING,  offsetof(settings_type, cheat_filename),   "cheat.dat" },
-#ifdef MESS
-	{ "sysinfo_file",           RO_STRING,  offsetof(settings_type, history_filename), "sysinfo.dat" },
-	{ "messinfo_file",          RO_STRING,  offsetof(settings_type, mameinfo_filename),"messinfo.dat" },
-#else
-	{ "history_file",           RO_STRING,  offsetof(settings_type, history_filename), "history.dat" },
-	{ "mameinfo_file",          RO_STRING,  offsetof(settings_type, mameinfo_filename),"mameinfo.dat" },
-#endif
 	{ "ctrlr_directory",        RO_STRING,  offsetof(settings_type, ctrlrdir),         "ctrlr" },
 	{ "" }
 
