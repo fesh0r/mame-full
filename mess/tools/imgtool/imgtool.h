@@ -288,6 +288,17 @@ imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *f
  */
 imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname);
 
+/* img_listforks
+ *
+ * Description:
+ *		Lists all forks on an image
+ *
+ * Parameters:
+ *		image:				The image to read from
+ *		path:				The filename on the image
+ */
+imgtoolerr_t img_listforks(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
+
 /* img_createdir
  *
  * Description:

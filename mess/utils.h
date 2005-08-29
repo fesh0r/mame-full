@@ -164,6 +164,38 @@ unsigned short ccitt_crc16(unsigned short crc, const unsigned char *buffer, size
 unsigned short ccitt_crc16_one( unsigned short crc, const unsigned char data );
 
 /* -----------------------------------------------------------------------
+ * Alignment-friendly integer placement
+ * ----------------------------------------------------------------------- */
+
+INLINE void place_integer_be(void *ptr, size_t offset, size_t size, UINT64 value)
+{
+	UINT8 *byte_ptr = ((UINT8 *) ptr) + offset;
+	if (size >= 1)	byte_ptr[0] = (UINT8) (value >> ((size - 0) * 8));
+	if (size >= 2)	byte_ptr[1] = (UINT8) (value >> ((size - 1) * 8));
+	if (size >= 3)	byte_ptr[2] = (UINT8) (value >> ((size - 2) * 8));
+	if (size >= 4)	byte_ptr[3] = (UINT8) (value >> ((size - 3) * 8));
+	if (size >= 5)	byte_ptr[4] = (UINT8) (value >> ((size - 4) * 8));
+	if (size >= 6)	byte_ptr[5] = (UINT8) (value >> ((size - 5) * 8));
+	if (size >= 7)	byte_ptr[6] = (UINT8) (value >> ((size - 6) * 8));
+	if (size >= 8)	byte_ptr[7] = (UINT8) (value >> ((size - 7) * 8));
+}
+
+INLINE UINT64 pick_integer_be(const void *ptr, size_t offset, size_t size)
+{
+	UINT64 result = 0;
+	const UINT8 *byte_ptr = ((const UINT8 *) ptr) + offset;
+	if (size >= 1)	result |= ((UINT64) byte_ptr[0]) << ((size - 0) * 8);
+	if (size >= 2)	result |= ((UINT64) byte_ptr[1]) << ((size - 1) * 8);
+	if (size >= 3)	result |= ((UINT64) byte_ptr[2]) << ((size - 2) * 8);
+	if (size >= 4)	result |= ((UINT64) byte_ptr[3]) << ((size - 3) * 8);
+	if (size >= 5)	result |= ((UINT64) byte_ptr[4]) << ((size - 4) * 8);
+	if (size >= 6)	result |= ((UINT64) byte_ptr[5]) << ((size - 5) * 8);
+	if (size >= 7)	result |= ((UINT64) byte_ptr[6]) << ((size - 6) * 8);
+	if (size >= 8)	result |= ((UINT64) byte_ptr[7]) << ((size - 7) * 8);
+	return result;
+}
+
+/* -----------------------------------------------------------------------
  * Miscellaneous
  * ----------------------------------------------------------------------- */
 

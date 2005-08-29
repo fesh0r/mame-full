@@ -798,6 +798,37 @@ done:
 
 
 
+imgtoolerr_t img_listforks(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	if (!image->module->list_forks)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (image->module->path_separator)
+	{
+		err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+		if (err)
+			goto done;
+	}
+
+	err = image->module->list_forks(image, path, ents, len);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
 imgtoolerr_t img_createdir(imgtool_image *img, const char *path)
 {
 	imgtoolerr_t err;
