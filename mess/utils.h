@@ -196,6 +196,34 @@ INLINE UINT64 pick_integer_be(const void *ptr, size_t offset, size_t size)
 	return result;
 }
 
+INLINE void place_integer_le(void *ptr, size_t offset, size_t size, UINT64 value)
+{
+	UINT8 *byte_ptr = ((UINT8 *) ptr) + offset;
+	if (size >= 1)	byte_ptr[0] = (UINT8) (value >> (0 * 8));
+	if (size >= 2)	byte_ptr[1] = (UINT8) (value >> (1 * 8));
+	if (size >= 3)	byte_ptr[2] = (UINT8) (value >> (2 * 8));
+	if (size >= 4)	byte_ptr[3] = (UINT8) (value >> (3 * 8));
+	if (size >= 5)	byte_ptr[4] = (UINT8) (value >> (4 * 8));
+	if (size >= 6)	byte_ptr[5] = (UINT8) (value >> (5 * 8));
+	if (size >= 7)	byte_ptr[6] = (UINT8) (value >> (6 * 8));
+	if (size >= 8)	byte_ptr[7] = (UINT8) (value >> (7 * 8));
+}
+
+INLINE UINT64 pick_integer_le(const void *ptr, size_t offset, size_t size)
+{
+	UINT64 result = 0;
+	const UINT8 *byte_ptr = ((const UINT8 *) ptr) + offset;
+	if (size >= 1)	result |= ((UINT64) byte_ptr[0]) << (0 * 8);
+	if (size >= 2)	result |= ((UINT64) byte_ptr[1]) << (1 * 8);
+	if (size >= 3)	result |= ((UINT64) byte_ptr[2]) << (2 * 8);
+	if (size >= 4)	result |= ((UINT64) byte_ptr[3]) << (3 * 8);
+	if (size >= 5)	result |= ((UINT64) byte_ptr[4]) << (4 * 8);
+	if (size >= 6)	result |= ((UINT64) byte_ptr[5]) << (5 * 8);
+	if (size >= 7)	result |= ((UINT64) byte_ptr[6]) << (6 * 8);
+	if (size >= 8)	result |= ((UINT64) byte_ptr[7]) << (7 * 8);
+	return result;
+}
+
 /* -----------------------------------------------------------------------
  * Miscellaneous
  * ----------------------------------------------------------------------- */

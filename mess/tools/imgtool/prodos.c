@@ -146,38 +146,6 @@ typedef enum
 
 
 
-static UINT32 pick_integer(const void *data, size_t offset, size_t length)
-{
-	const UINT8 *data_int = (const UINT8 *) data;
-	UINT32 result = 0;
-
-	data_int += offset;
-
-	while(length--)
-	{
-		result <<= 8;
-		result |= data_int[length];
-	}
-	return result;
-}
-
-
-
-static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
-{
-	UINT8 b;
-	size_t i = 0;
-
-	while(length--)
-	{
-		b = (UINT8) value;
-		value >>= 8;
-		((UINT8 *) ptr)[offset + i++] = b;
-	}
-}
-
-
-
 static time_t prodos_crack_time(UINT32 prodos_time)
 {
 	struct tm t;
@@ -488,10 +456,10 @@ static imgtoolerr_t prodos_diskimage_open(imgtool_image *image)
 	/* did we find the volume header? */
 	if ((ent[0] & 0xF0) == 0xF0)
 	{
-		di->dirent_size			= pick_integer(ent, 31, 1);
-		di->dirents_per_block	= pick_integer(ent, 32, 1);
-		di->volume_bitmap_block	= pick_integer(ent, 35, 2);
-		di->total_blocks		= pick_integer(ent, 37, 2);
+		di->dirent_size			= pick_integer_le(ent, 31, 1);
+		di->dirents_per_block	= pick_integer_le(ent, 32, 1);
+		di->volume_bitmap_block	= pick_integer_le(ent, 35, 2);
+		di->total_blocks		= pick_integer_le(ent, 37, 2);
 	}
 
 	/* sanity check these values */
@@ -685,11 +653,11 @@ static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolut
 
 	/* prepare initial dir block */
 	memset(buffer, 0, sizeof(buffer));
-	place_integer(buffer, 4 +  0, 1, 0xF0);
-	place_integer(buffer, 4 + 31, 1, dirent_size);
-	place_integer(buffer, 4 + 32, 1, BLOCK_SIZE / dirent_size);
-	place_integer(buffer, 4 + 35, 2, volume_bitmap_block);
-	place_integer(buffer, 4 + 37, 2, total_blocks);
+	place_integer_le(buffer, 4 +  0, 1, 0xF0);
+	place_integer_le(buffer, 4 + 31, 1, dirent_size);
+	place_integer_le(buffer, 4 + 32, 1, BLOCK_SIZE / dirent_size);
+	place_integer_le(buffer, 4 + 35, 2, volume_bitmap_block);
+	place_integer_le(buffer, 4 + 37, 2, total_blocks);
 
 	err = prodos_save_block(image, ROOTDIR_BLOCK, buffer);
 	if (err)
@@ -771,8 +739,8 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	ent->storage_type = appleenum->block_data[offset + 0];
 	memcpy(ent->filename, &appleenum->block_data[offset + 1], 15);
 	ent->filename[15] = '\0';
-	ent->creation_time		= pick_integer(appleenum->block_data, offset + 24, 4);
-	ent->lastmodified_time	= pick_integer(appleenum->block_data, offset + 33, 4);
+	ent->creation_time		= pick_integer_le(appleenum->block_data, offset + 24, 4);
+	ent->lastmodified_time	= pick_integer_le(appleenum->block_data, offset + 33, 4);
 	ent->file_type = 0x3F3F3F3F;
 	ent->file_creator = 0x3F3F3F3F;
 
@@ -780,7 +748,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	{
 		/* this is a ProDOS extended file; we need to get the extended info
 		 * block */
-		ent->extkey_pointer	= pick_integer(appleenum->block_data, offset + 17, 2);
+		ent->extkey_pointer	= pick_integer_le(appleenum->block_data, offset + 17, 2);
 
 		err = prodos_load_block(image, ent->extkey_pointer, buffer);
 		if (err)
@@ -788,16 +756,16 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 
 		for (fork_num = 0; fork_num <= 1; fork_num++)
 		{
-			ent->key_pointer[fork_num]	= pick_integer(buffer, 1 + (fork_num * 256), 2);
-			ent->filesize[fork_num]		= pick_integer(buffer, 5 + (fork_num * 256), 3);
+			ent->key_pointer[fork_num]	= pick_integer_le(buffer, 1 + (fork_num * 256), 2);
+			ent->filesize[fork_num]		= pick_integer_le(buffer, 5 + (fork_num * 256), 3);
 			ent->depth[fork_num]		= buffer[fork_num * 256] & 0x0F;
 		}
 	}
 	else
 	{
 		/* normal ProDOS files have all of the info right here */
-		ent->key_pointer[0]	= pick_integer(appleenum->block_data, offset + 17, 2);
-		ent->filesize[0]	= pick_integer(appleenum->block_data, offset + 21, 3);
+		ent->key_pointer[0]	= pick_integer_le(appleenum->block_data, offset + 17, 2);
+		ent->filesize[0]	= pick_integer_le(appleenum->block_data, offset + 21, 3);
 		ent->depth[0]		= ent->storage_type >> 4;
 	}
 
@@ -806,7 +774,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	next_index = appleenum->index + 1;
 	if (next_index >= di->dirents_per_block)
 	{
-		next_block = pick_integer(appleenum->block_data, 2, 2);
+		next_block = pick_integer_le(appleenum->block_data, 2, 2);
 		next_index = 0;
 	}
 
@@ -834,8 +802,8 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 
 	appleenum->block_data[offset + 0] = ent->storage_type;
 	memcpy(&appleenum->block_data[offset + 1], ent->filename, 15);
-	place_integer(appleenum->block_data, offset + 24, 4, ent->creation_time);
-	place_integer(appleenum->block_data, offset + 33, 4, ent->lastmodified_time);
+	place_integer_le(appleenum->block_data, offset + 24, 4, ent->creation_time);
+	place_integer_le(appleenum->block_data, offset + 33, 4, ent->lastmodified_time);
 
 	if (is_extendedfile_storagetype(ent->storage_type))
 	{
@@ -845,8 +813,8 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 
 		for (fork_num = 0; fork_num <= 1; fork_num++)
 		{
-			place_integer(buffer, 1 + (fork_num * 256), 2, ent->key_pointer[fork_num]);
-			place_integer(buffer, 5 + (fork_num * 256), 3, ent->filesize[fork_num]);
+			place_integer_le(buffer, 1 + (fork_num * 256), 2, ent->key_pointer[fork_num]);
+			place_integer_le(buffer, 5 + (fork_num * 256), 3, ent->filesize[fork_num]);
 			buffer[fork_num * 256] = ent->depth[fork_num];
 		}
 
@@ -854,13 +822,13 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 		if (err)
 			return err;
 
-		place_integer(appleenum->block_data, offset + 17, 2, ent->extkey_pointer);
-		place_integer(appleenum->block_data, offset + 21, 3, BLOCK_SIZE);
+		place_integer_le(appleenum->block_data, offset + 17, 2, ent->extkey_pointer);
+		place_integer_le(appleenum->block_data, offset + 21, 3, BLOCK_SIZE);
 	}
 	else
 	{
-		place_integer(appleenum->block_data, offset + 17, 2, ent->key_pointer[0]);
-		place_integer(appleenum->block_data, offset + 21, 3, ent->filesize[0]);
+		place_integer_le(appleenum->block_data, offset + 17, 2, ent->key_pointer[0]);
+		place_integer_le(appleenum->block_data, offset + 21, 3, ent->filesize[0]);
 	}
 
 	err = prodos_save_block(image, appleenum->block, appleenum->block_data);
@@ -961,7 +929,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 					goto done;
 
 				/* save this link */
-				place_integer(buffer, 2, 2, free_block);
+				place_integer_le(buffer, 2, 2, free_block);
 				err = prodos_save_block(image, this_block, buffer);
 				if (err)
 					goto done;
@@ -1698,7 +1666,7 @@ static imgtoolerr_t prodos_free_directory(imgtool_image *image, UINT8 *volume_bi
 				return IMGTOOLERR_DIRNOTEMPTY;
 		}
 
-		next_block = pick_integer(buffer, 2, 2);
+		next_block = pick_integer_le(buffer, 2, 2);
 
 		err = prodos_free_directory(image, volume_bitmap, next_block);
 		if (err)

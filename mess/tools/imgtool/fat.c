@@ -296,37 +296,6 @@ static const UINT8 boot_sector_code[] =
 
 
 
-static UINT32 pick_integer(const void *ptr, size_t offset, size_t length)
-{
-	UINT32 value = 0;
-	UINT8 b;
-
-	while(length--)
-	{
-		b = ((UINT8 *) ptr)[offset + length];
-		value <<= 8;
-		value |= b;
-	}
-	return value;
-}
-
-
-
-static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
-{
-	UINT8 b;
-	size_t i = 0;
-
-	while(length--)
-	{
-		b = (UINT8) value;
-		value >>= 8;
-		((UINT8 *) ptr)[offset + i++] = b;
-	}
-}
-
-
-
 static int fat_is_harddisk(imgtool_image *image)
 {
 	return !strcmp(img_module(image)->name, "pc_chd_fat");
@@ -503,8 +472,8 @@ static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, struct fat_
 		pi->partitions[i].ending_track		= ((partition_info[6] << 2) & 0xFF00) | partition_info[7];
 		pi->partitions[i].ending_sector		= partition_info[6] & 0x3F;
 
-		pi->partitions[i].sector_index		= pick_integer(partition_info,  8, 4);
-		pi->partitions[i].total_sectors		= pick_integer(partition_info, 12, 4);
+		pi->partitions[i].sector_index		= pick_integer_le(partition_info,  8, 4);
+		pi->partitions[i].total_sectors		= pick_integer_le(partition_info, 12, 4);
 
 		switch(partition_info[4] & 0x0F)
 		{
@@ -626,16 +595,16 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	}
 	
 	info->fat_bits				= fat_bits;
-	sector_size					= pick_integer(header, 11, 2);
-	info->sectors_per_cluster	= pick_integer(header, 13, 1);
-	info->reserved_sectors		= pick_integer(header, 14, 2);
-	info->fat_count				= pick_integer(header, 16, 1);
-	info->root_entries			= pick_integer(header, 17, 2);
-	total_sectors_l				= pick_integer(header, 19, 2);
-	info->sectors_per_fat		= pick_integer(header, 22, 2);
-	info->sectors_per_track		= pick_integer(header, 24, 2);
-	info->heads					= pick_integer(header, 26, 2);
-	total_sectors_h				= pick_integer(header, 32, 4);
+	sector_size					= pick_integer_le(header, 11, 2);
+	info->sectors_per_cluster	= pick_integer_le(header, 13, 1);
+	info->reserved_sectors		= pick_integer_le(header, 14, 2);
+	info->fat_count				= pick_integer_le(header, 16, 1);
+	info->root_entries			= pick_integer_le(header, 17, 2);
+	total_sectors_l				= pick_integer_le(header, 19, 2);
+	info->sectors_per_fat		= pick_integer_le(header, 22, 2);
+	info->sectors_per_track		= pick_integer_le(header, 24, 2);
+	info->heads					= pick_integer_le(header, 26, 2);
+	total_sectors_h				= pick_integer_le(header, 32, 4);
 
 	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
 	available_sectors = info->total_sectors - info->reserved_sectors
@@ -742,20 +711,20 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	/* prepare the header */
 	memset(header, 0, sizeof(header));
 	memcpy(&header[3], "IMGTOOL ", 8);
-	place_integer(header, 11, 2, FAT_SECLEN);
-	place_integer(header, 13, 1, sectors_per_cluster);
-	place_integer(header, 14, 1, reserved_sectors);
-	place_integer(header, 16, 1, fat_count);
-	place_integer(header, 17, 2, root_dir_count);
-	place_integer(header, 19, 2, (UINT16) (total_sectors >> 0));
-	place_integer(header, 21, 1, media_descriptor);
-	place_integer(header, 22, 2, sectors_per_fat);
-	place_integer(header, 24, 2, sectors);
-	place_integer(header, 26, 2, heads);
-	place_integer(header, 28, 4, hidden_sectors);
-	place_integer(header, 32, 4, (UINT32) (total_sectors >> 16));
-	place_integer(header, 38, 1, 0x28);
-	place_integer(header, 39, 4, rand());
+	place_integer_le(header, 11, 2, FAT_SECLEN);
+	place_integer_le(header, 13, 1, sectors_per_cluster);
+	place_integer_le(header, 14, 1, reserved_sectors);
+	place_integer_le(header, 16, 1, fat_count);
+	place_integer_le(header, 17, 2, root_dir_count);
+	place_integer_le(header, 19, 2, (UINT16) (total_sectors >> 0));
+	place_integer_le(header, 21, 1, media_descriptor);
+	place_integer_le(header, 22, 2, sectors_per_fat);
+	place_integer_le(header, 24, 2, sectors);
+	place_integer_le(header, 26, 2, heads);
+	place_integer_le(header, 28, 4, hidden_sectors);
+	place_integer_le(header, 32, 4, (UINT32) (total_sectors >> 16));
+	place_integer_le(header, 38, 1, 0x28);
+	place_integer_le(header, 39, 4, rand());
 	memcpy(&header[43], "           ", 11);
 	memcpy(&header[54], fat_bits_string, 8);
 
@@ -1295,8 +1264,8 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 		}
 
 		/* record the new file size */
-		place_integer(dirent, 26, 2, file->first_cluster);
-		place_integer(dirent, 28, 4, new_size);
+		place_integer_le(dirent, 26, 2, file->first_cluster);
+		place_integer_le(dirent, 28, 4, new_size);
 
 		/* delete the file, if appropriate */
 		if (delete_file)
@@ -1603,13 +1572,13 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	}
 
 	/* other attributes */
-	ent->filesize				= pick_integer(entry, 28, 4);
+	ent->filesize				= pick_integer_le(entry, 28, 4);
 	ent->directory				= (entry[11] & 0x10) ? 1 : 0;
-	ent->first_cluster			= pick_integer(entry, 26, 2);
+	ent->first_cluster			= pick_integer_le(entry, 26, 2);
 	ent->dirent_sector_index	= entry_sector_index;
 	ent->dirent_sector_offset	= entry_sector_offset;
-	ent->creation_time			= fat_crack_time(pick_integer(entry, 14, 4));
-	ent->lastmodified_time		= fat_crack_time(pick_integer(entry, 22, 4));
+	ent->creation_time			= fat_crack_time(pick_integer_le(entry, 14, 4));
+	ent->lastmodified_time		= fat_crack_time(pick_integer_le(entry, 22, 4));
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1663,9 +1632,9 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	
 	/* set up file dates in the new dirent */
 	now = fat_setup_time(time(NULL));
-	place_integer(created_entry, 14, 4, now);
-	place_integer(created_entry, 18, 2, now);
-	place_integer(created_entry, 22, 4, now);
+	place_integer_le(created_entry, 14, 4, now);
+	place_integer_le(created_entry, 18, 2, now);
+	place_integer_le(created_entry, 22, 4, now);
 
 	while(*filename)
 	{
@@ -2213,11 +2182,11 @@ static imgtoolerr_t fat_diskimage_createdir(imgtool_image *image, const char *pa
 
 	memset(initial_data, 0, sizeof(initial_data));
 	memcpy(&initial_data[0], ".          ", 11);
-	place_integer(initial_data, 11, 1, 0x10);
-	place_integer(initial_data, 26, 2, file.first_cluster);
+	place_integer_le(initial_data, 11, 1, 0x10);
+	place_integer_le(initial_data, 26, 2, file.first_cluster);
 	memcpy(&initial_data[32], ".          ", 11);
-	place_integer(initial_data, 43, 1, 0x10);
-	place_integer(initial_data, 58, 2, file.parent_first_cluster);
+	place_integer_le(initial_data, 43, 1, 0x10);
+	place_integer_le(initial_data, 58, 2, file.parent_first_cluster);
 
 	err = fat_write_file(image, &file, initial_data, sizeof(initial_data), NULL);
 	if (err)
