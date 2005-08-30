@@ -74,6 +74,33 @@ typedef struct
 	unsigned int recommended : 1;
 } imgtool_filter_suggestion;
 
+enum
+{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	IMGTOOLATTR_INT_FIRST = 0x00000,
+	IMGTOOLATTR_INT_MAC_TYPE,
+	IMGTOOLATTR_INT_MAC_CREATOR,
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	IMGTOOLATTR_PTR_FIRST = 0x10000,
+	IMGTOOLATTR_PTR_READFILE,
+	IMGTOOLATTR_PTR_WRITEFILE,
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	IMGTOOLATTR_STR_FIRST = 0x20000,
+
+	/* --- the following bits of info are returned as time_t values --- */
+	IMGTOOLATTR_TIME_FIRST = 0x30000,
+	IMGTOOLATTR_TIME_CREATED,
+	IMGTOOLATTR_TIME_LASTMODIFIED
+};
+
+typedef union
+{
+	INT64	i;
+	time_t	t;
+} imgtool_attribute;
+
 struct ImageModule
 {
 	struct ImageModule *previous;
@@ -114,6 +141,8 @@ struct ImageModule
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*suggest_filters)(imgtool_image *image, const char *path, imgtool_filter_suggestion *suggestions, size_t suggestions_length);
+	imgtoolerr_t	(*get_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
+	imgtoolerr_t	(*set_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);

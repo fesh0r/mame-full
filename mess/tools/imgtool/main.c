@@ -37,7 +37,7 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 /* ----------------------------------------------------------------------- */
 
 static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
-	option_resolution *resolution, FILTERMODULE *filter, const char **fork)
+	option_resolution *resolution, filter_getinfoproc *filter, const char **fork)
 {
 	int i;
 	int lastunnamed = 0;
@@ -230,13 +230,13 @@ done:
 static int cmd_get(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	imgtool_image *img;
+	imgtool_image *image;
 	char *newfname;
 	int unnamedargs;
-	FILTERMODULE filter;
+	filter_getinfoproc filter;
 	const char *fork;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &image);
 	if (err)
 		goto error;
 
@@ -245,8 +245,8 @@ static int cmd_get(const struct command *c, int argc, char *argv[])
 		return -1;
 	newfname = (unnamedargs == 4) ? argv[3] : NULL;
 
-	err = img_getfile(img, argv[2], fork, newfname, filter);
-	img_close(img);
+	err = img_getfile(image, argv[2], fork, newfname, filter);
+	img_close(image);
 	if (err)
 		goto error;
 
@@ -266,7 +266,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	imgtool_image *img;
 	const char *filename = NULL;
 	int unnamedargs;
-	FILTERMODULE filter;
+	filter_getinfoproc filter;
 	const struct ImageModule *module;
 	option_resolution *resolution = NULL;
 	const char *fork;
@@ -328,7 +328,7 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	imgtool_image *img = NULL;
 	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
-	FILTERMODULE filter;
+	filter_getinfoproc filter;
 	int unnamedargs;
 	const char *path = NULL;
 	int arg;
@@ -637,13 +637,15 @@ static int cmd_listformats(const struct command *c, int argc, char *argv[])
 
 static int cmd_listfilters(const struct command *c, int argc, char *argv[])
 {
-	FILTERMODULE *f = filters;
+	int i;
 
 	fprintf(stdout, "Filters supported by imgtool:\n\n");
 
-	while(*f) {
-		fprintf(stdout, "  %-10s%s\n", (*f)->name, (*f)->humanname);
-		f++;
+	for (i = 0; filters[i]; i++)
+	{
+		fprintf(stdout, "  %-10s%s\n",
+			filter_get_info_string(filters[i], FILTINFO_STR_NAME),
+			filter_get_info_string(filters[i], FILTINFO_STR_NAME));
 	}
 
 	return 0;

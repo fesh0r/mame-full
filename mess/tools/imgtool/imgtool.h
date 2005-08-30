@@ -16,53 +16,12 @@
 #include "formats/flopimg.h"
 #include "opresolv.h"
 #include "library.h"
+#include "filter.h"
 
-/* -----------------------------------------------------------------------
- * Filters
- * ----------------------------------------------------------------------- */
-
-struct filter_info
-{
-	int (*sendproc)(struct filter_info *fi, void *buf, int buflen);
-	void *filterstate;
-	void *filterparam;
-	void *internalparam;
-};
 
 typedef struct ImageModule ImageModule;
 typedef const struct ImageModule *ImageModuleConstPtr;
 
-struct filter_module
-{
-	const char *name;
-	const char *humanname;
-	void *(*calcreadparam)(const struct ImageModule *imgmod);
-	void *(*calcwriteparam)(const struct ImageModule *imgmod);
-	int (*filterreadproc)(struct filter_info *fi, void *buf, int buflen);
-	int (*filterwriteproc)(struct filter_info *fi, void *buf, int buflen);
-	int statesize;
-};
-
-typedef struct _imgtool_filter imgtool_filter;
-
-typedef const struct filter_module *FILTERMODULE;
-
-enum {
-	PURPOSE_READ,
-	PURPOSE_WRITE
-};
-
-imgtool_filter *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
-void filter_term(imgtool_filter *f);
-int filter_writetostream(imgtool_filter *f, imgtool_stream *s, const void *buf, int buflen);
-int filter_readfromstream(imgtool_filter *f, imgtool_stream *s, void *buf, int buflen);
-int filter_readintobuffer(imgtool_filter *f, imgtool_stream *s);
-
-extern FILTERMODULE filters[];
-
-FILTERMODULE filter_lookup(const char *name);
-
-imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f);
 
 /* ----------------------------------------------------------------------- */
 
@@ -227,7 +186,7 @@ imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz);
  *      filter:             Filter to use, or NULL if none
  */
 imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork,
-	imgtool_stream *destf, FILTERMODULE filter);
+	imgtool_stream *destf, filter_getinfoproc filter);
 
 /* img_writefile
  *
@@ -243,7 +202,7 @@ imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char
  *      filter:             Filter to use, or NULL if none
  */
 imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork,
-	imgtool_stream *sourcef, option_resolution *resolution, FILTERMODULE filter);
+	imgtool_stream *sourcef, option_resolution *resolution, filter_getinfoproc filter);
 
 /* img_getfile
  *
@@ -258,7 +217,7 @@ imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const cha
  *      filter:             Filter to use, or NULL if none
  */
 imgtoolerr_t img_getfile(imgtool_image *img, const char *filename, const char *fork,
-	const char *dest, FILTERMODULE filter);
+	const char *dest, filter_getinfoproc filter);
 
 /* img_putfile
  *
@@ -275,7 +234,7 @@ imgtoolerr_t img_getfile(imgtool_image *img, const char *filename, const char *f
  *      filter:             Filter to use, or NULL if none
  */
 imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *fork,
-	const char *source, option_resolution *opts, FILTERMODULE filter);
+	const char *source, option_resolution *opts, filter_getinfoproc filter);
 
 /* img_deletefile
  *

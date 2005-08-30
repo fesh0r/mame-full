@@ -133,6 +133,8 @@ struct prodos_dirent
 	int depth[2];
 	UINT32 lastmodified_time;
 	UINT32 creation_time;
+	UINT32 file_type;
+	UINT32 file_creator;
 };
 
 typedef enum
@@ -771,6 +773,8 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	ent->filename[15] = '\0';
 	ent->creation_time		= pick_integer(appleenum->block_data, offset + 24, 4);
 	ent->lastmodified_time	= pick_integer(appleenum->block_data, offset + 33, 4);
+	ent->file_type = 0x3F3F3F3F;
+	ent->file_creator = 0x3F3F3F3F;
 
 	if (is_extendedfile_storagetype(ent->storage_type))
 	{
@@ -1632,6 +1636,7 @@ static imgtoolerr_t prodos_diskimage_listforks(imgtool_image *image, const char 
 	/* specify data fork */
 	ents[fork_num].type = FORK_DATA;
 	ents[fork_num].forkname[0] = '\0';
+	ents[fork_num].size = ent.filesize[0];
 	fork_num++;
 
 	if (is_extendedfile_storagetype(ent.storage_type))
@@ -1639,6 +1644,7 @@ static imgtoolerr_t prodos_diskimage_listforks(imgtool_image *image, const char 
 		/* specify the resource fork */
 		ents[fork_num].type = FORK_RESOURCE;
 		strcpy(ents[fork_num].forkname, "RESOURCE_FORK");
+		ents[fork_num].size = ent.filesize[1];
 		fork_num++;
 	}
 
@@ -1794,6 +1800,46 @@ static imgtoolerr_t prodos_get_file_tree(imgtool_image *image, imgtool_chainent 
 
 
 
+static imgtoolerr_t prodos_diskimage_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values)
+{
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+	int i;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
+	if (err)
+		return err;
+
+	for (i = 0; attrs[i]; i++)
+	{
+		switch(attrs[i])
+		{
+			case IMGTOOLATTR_INT_MAC_TYPE:
+				values[i].i = ent.file_type;
+				break;
+			case IMGTOOLATTR_INT_MAC_CREATOR:
+				values[i].i = ent.file_creator;
+				break;
+			case IMGTOOLATTR_TIME_CREATED:
+				values[i].t = prodos_crack_time(ent.creation_time);
+				break;
+			case IMGTOOLATTR_TIME_LASTMODIFIED:
+				values[i].t = prodos_crack_time(ent.lastmodified_time);
+				break;
+		}
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
 static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size)
 {
 	imgtoolerr_t err;
@@ -1868,6 +1914,8 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->list_forks					= prodos_diskimage_listforks;
 	module->create_dir					= prodos_diskimage_createdir;
 	module->delete_dir					= prodos_diskimage_deletedir;
+	module->get_attrs					= prodos_diskimage_getattrs;
+	module->set_attrs					= prodos_diskimage_setattrs;
 	module->get_chain					= prodos_diskimage_getchain;
 	return IMGTOOLERR_SUCCESS;
 }

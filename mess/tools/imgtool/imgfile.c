@@ -544,43 +544,18 @@ imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz)
 
 
 
-static imgtoolerr_t process_filter(imgtool_stream **mainstream, imgtool_stream **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
-{
-	imgtool_filter *f;
-
-	if (filter)
-	{
-		f = filter_init(filter, imgmod, purpose);
-		if (!f)
-			return IMGTOOLERR_OUTOFMEMORY;
-
-		*newstream = stream_open_filter(*mainstream, f);
-		if (!(*newstream))
-			return IMGTOOLERR_OUTOFMEMORY;
-
-		*mainstream = *newstream;
-	}
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf, FILTERMODULE filter)
+imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf, filter_getinfoproc filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *newstream = NULL;
 	char *alloc_path = NULL;
+	union filterinfo u;
 
 	if (!image->module->read_file)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
-
-	/* custom filter? */
-	err = process_filter(&destf, &newstream, image->module, filter, PURPOSE_READ);
-	if (err)
-		goto done;
 
 	/* cannonicalize path */
 	if (image->module->path_separator)
@@ -594,12 +569,32 @@ imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char
 	if (err)
 		goto done;
 
-	/* invoke the actual module */
-	err = image->module->read_file(image, filename, fork, destf);
-	if (err)
+	if (filter)
 	{
-		err = markerrorsource(err);
-		goto done;
+		/* use a filter */
+		filter(FILTINFO_PTR_READFILE, &u);
+		if (!u.read_file)
+		{
+			err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+			goto done;
+		}
+
+		err = u.read_file(image, filename, destf);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
+	}
+	else
+	{
+		/* invoke the actual module */
+		err = image->module->read_file(image, filename, fork, destf);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
 	}
 
 done:
@@ -612,7 +607,7 @@ done:
 
 
 
-imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts, FILTERMODULE filter)
+imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts, filter_getinfoproc filter)
 {
 	imgtoolerr_t err;
 	char *buf = NULL;
@@ -622,6 +617,7 @@ imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const cha
 	char *alloc_path = NULL;
 	UINT64 free_space;
 	UINT64 file_size;
+	union filterinfo u;
 
 	if (!image->module->write_file)
 	{
@@ -643,11 +639,6 @@ imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const cha
 			*s = toupper(*s);
 		filename = buf;
 	}
-
-	/* custom filter? */
-	err = process_filter(&sourcef, &newstream, image->module, filter, PURPOSE_WRITE);
-	if (err)
-		goto done;
 
 	/* cannonicalize path */
 	if (image->module->path_separator)
@@ -694,12 +685,32 @@ imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const cha
 		}
 	}
 
-	/* actually invoke the write file handler */
-	err = image->module->write_file(image, filename, fork, sourcef, opts);
-	if (err)
+	if (filter)
 	{
-		err = markerrorsource(err);
-		goto done;
+		/* use a filter */
+		filter(FILTINFO_PTR_WRITEFILE, &u);
+		if (!u.write_file)
+		{
+			err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+			goto done;
+		}
+
+		err = u.write_file(image, filename, sourcef);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
+	}
+	else
+	{
+		/* actually invoke the write file handler */
+		err = image->module->write_file(image, filename, fork, sourcef, opts);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
 	}
 
 done:
@@ -717,13 +728,32 @@ done:
 
 
 imgtoolerr_t img_getfile(imgtool_image *image, const char *filename, const char *fork,
-	const char *dest, FILTERMODULE filter)
+	const char *dest, filter_getinfoproc filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;
+	char *alloc_dest = NULL;
+	const char *filter_extension = NULL;
 
 	if (!dest)
-		dest = filename;
+	{
+		if (filter)
+			filter_extension = filter_get_info_string(filter, FILTINFO_STR_EXTENSION);
+
+		if (filter_extension)
+		{
+			alloc_dest = malloc(strlen(filename) + 1 + strlen(filter_extension) + 1);
+			if (!alloc_dest)
+				return IMGTOOLERR_OUTOFMEMORY;
+
+			sprintf(alloc_dest, "%s.%s", filename, filter_extension);
+			dest = alloc_dest;
+		}
+		else
+		{
+			dest = filename;
+		}
+	}
 
 	f = stream_open(dest, OSD_FOPEN_WRITE);
 	if (!f)
@@ -739,13 +769,15 @@ imgtoolerr_t img_getfile(imgtool_image *image, const char *filename, const char 
 done:
 	if (f)
 		stream_close(f);
+	if (alloc_dest)
+		free(alloc_dest);
 	return err;
 }
 
 
 
 imgtoolerr_t img_putfile(imgtool_image *image, const char *newfname, const char *fork,
-	const char *source, option_resolution *opts, FILTERMODULE filter)
+	const char *source, option_resolution *opts, filter_getinfoproc filter)
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;

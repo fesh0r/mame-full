@@ -18,8 +18,7 @@
 typedef enum
 {
 	IMG_FILE,
-	IMG_MEM,
-	IMG_FILTER
+	IMG_MEM
 } imgtype_t;
 
 struct _imgtool_stream
@@ -34,11 +33,6 @@ struct _imgtool_stream
 			size_t bufsz;
 			size_t pos;
 		} m;
-		struct {
-			imgtool_stream *s;
-			imgtool_filter *f;
-			size_t totalread;
-		} filt;
 	} u;
 };
 
@@ -233,23 +227,6 @@ imgtool_stream *stream_open_mem(void *buf, size_t sz)
 
 
 
-imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f)
-{
-	imgtool_stream *imgfile;
-
-	imgfile = malloc(sizeof(struct _imgtool_stream));
-	if (!imgfile)
-		return NULL;
-
-	imgfile->imgtype = IMG_FILTER;
-	imgfile->u.filt.s = s;
-	imgfile->u.filt.f = f;
-	imgfile->u.filt.totalread = 0;
-	return imgfile;
-}
-
-
-
 void stream_close(imgtool_stream *s)
 {
 	assert(s);
@@ -262,10 +239,6 @@ void stream_close(imgtool_stream *s)
 
 		case IMG_MEM:
 			free(s->u.m.buf);
-			break;
-
-		case IMG_FILTER:
-			filter_term(s->u.filt.f);
 			break;
 
 		default:
@@ -294,11 +267,6 @@ size_t stream_read(imgtool_stream *s, void *buf, size_t sz)
 				result = sz;
 			memcpy(buf, s->u.m.buf + s->u.m.pos, result);
 			s->u.m.pos += result;
-			break;
-
-		case IMG_FILTER:
-			result = filter_readfromstream(s->u.filt.f, s->u.filt.s, buf, sz);
-			s->u.filt.totalread += result;
 			break;
 
 		default:
@@ -334,10 +302,6 @@ size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
 			result = fwrite(buf, 1, sz, s->u.f);
 			break;
 
-		case IMG_FILTER:
-			result = filter_writetostream(s->u.filt.f, s->u.filt.s, buf, sz);
-			break;
-
 		default:
 			assert(0);
 			break;
@@ -359,11 +323,6 @@ UINT64 stream_size(imgtool_stream *s)
 
 		case IMG_MEM:
 			result = s->u.m.bufsz;
-			break;
-
-		case IMG_FILTER:
-			s->u.filt.totalread += filter_readintobuffer(s->u.filt.f, s->u.filt.s);
-			result = s->u.filt.totalread;
 			break;
 
 		default:
