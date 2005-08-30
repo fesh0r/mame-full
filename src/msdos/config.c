@@ -89,12 +89,11 @@ static int config_ror = 0;
 static int config_rol = 0;
 static int config_autoror = 0;
 static int config_autorol = 0;
-static int maxlogsize;
 static int curlogsize;
 static int errorlog;
 static int createconfig;
 static int showusage;
-static int ignorecfg;
+static int readconfig;
 static const char *playbackname;
 static const char *recordname;
 static char *gamename;
@@ -222,7 +221,7 @@ static int get_bool( const char *section, const char *option, const char *shortc
 
 	res = def;
 
-	if (ignorecfg) goto cmdline;
+	if (!readconfig) goto cmdline;
 
 	/* look into mame.cfg, [section] */
 	if (def == 0)
@@ -316,7 +315,7 @@ static int get_int( const char *section, const char *option, const char *shortcu
 
 	res = def;
 
-	if (!ignorecfg)
+	if (readconfig)
 	{
 		/* if the option does not exist, create it */
 		if (get_config_int (section, option, -777) == -777)
@@ -371,7 +370,7 @@ static float get_float( const char *section, const char *option, const char *sho
 
 	res = def;
 
-	if (!ignorecfg)
+	if (readconfig)
 	{
 		/* if the option does not exist, create it */
 		if (get_config_float (section, option, 9999.0) == 9999.0)
@@ -434,7 +433,7 @@ static const char *get_string( const char *section, const char *option, const ch
 
 	res = def;
 
-	if (!ignorecfg)
+	if (readconfig)
 	{
 		/* if the option does not exist, create it */
 		if (get_config_string (section, option, "#") == "#" )
@@ -888,6 +887,8 @@ struct rc_option config_opts[] =
 	{ "zvg_overlay", NULL, rc_bool, &zvg_overlay_enabled, "0", 0, 0, NULL, "support for zvg game overlays" },
 	{ "zvg_artwork", NULL, rc_bool, &zvg_artwork_enabled, "0", 0, 0, NULL, "support for zvg game artwork" },
 	{ "zvg_menu", NULL, rc_bool, &zvg_menu_enabled, "0", 0, 0, NULL, "mame called from zvg menu" },
+	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
+//	{ "language", NULL, rc_string, &s_language, "english", 0, 0, NULL, NULL },
 
 	{ "224x288_h", NULL, rc_int, &tw224x288_h, "95", 0, 0, NULL, NULL },
 	{ "224x288_v", NULL, rc_int, &tw224x288_v, "84", 0, 0, NULL, NULL },
@@ -986,7 +987,6 @@ struct rc_option config_opts[] =
 	{ "autorol", NULL, rc_bool, &config_autorol, "0", 0, 0, NULL, "automatically rotate screen anti-clockwise for vertical games" },
 	{ "flipx", NULL, rc_bool, &config_flipx, "0", 0, 0, NULL, "flip screen left-right" },
 	{ "flipy", NULL, rc_bool, &config_flipy, "0", 0, 0, NULL, "flip screen upside-down" },
-	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
 	{ "gamma", NULL, rc_float, &options.gamma, "1.0", 0.5, 2.0, NULL, "gamma correction"},
 	{ "brightness", "bright", rc_float, &options.brightness, "1.0", 0.5, 2.0, NULL, "brightness correction"},
 	{ "pause_brightness", NULL, rc_float, &options.pause_bright, "0.65", 0.5, 2.0, NULL, "additional pause brightness"},
@@ -1003,7 +1003,6 @@ struct rc_option config_opts[] =
 	{ "Mame CORE sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "samplerate", "sr", rc_int, &options.samplerate, "44100", 5000, 50000, NULL, "set samplerate" },
 	{ "samples", NULL, rc_bool, &options.use_samples, "1", 0, 0, NULL, "use samples" },
-	{ "resamplefilter", NULL, rc_bool, &options.use_filter, "1", 0, 0, NULL, "resample if samplerate does not match" },
 	{ "sound", NULL, rc_bool, &enable_sound, "1", 0, 0, NULL, "enable/disable sound and sound CPUs" },
 	{ "volume", "vol", rc_int, &attenuation, "0", -32, 0, NULL, "volume (range [-32,0])" },
 
@@ -1017,24 +1016,22 @@ struct rc_option config_opts[] =
 	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
+//	{ "debugscript", NULL, rc_string, &debugscript, NULL, 0, 0, NULL, "script for debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
-	{ "maxlogsize", NULL, rc_int, &maxlogsize, "10000", 0, 2000000, NULL, "maximum error.log size (in KB)" },
 //	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
-	{ "language", NULL, rc_string, &s_language, "english", 0, 0, NULL, NULL },
-	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
 	{ "skip_validitychecks", NULL, rc_bool, &options.skip_validitychecks, "0", 0, 0, NULL, "skip doing the code validity checks" },
-	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
+//	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "createconfig", "cc", rc_set_int, &createconfig, NULL, 1, 0, NULL, "create the default configuration file" },
 //	{ "showconfig", "sc", rc_set_int, &showconfig, NULL, 1, 0, NULL, "display running parameters in rc style" },
 	{ "showusage", "su", rc_set_int, &showusage, NULL, 1, 0, NULL, "show this help" },
-	{ "ignorecfg", NULL, rc_set_int, &ignorecfg, NULL, 1, 0, NULL, "use default settings" },
+	{ "readconfig",	"rc", rc_bool, &readconfig, "1", 0, 0, NULL, "enable/disable loading of configfiles" },
 //	{ "verbose", "v", rc_bool, &verbose, "0", 0, 0, NULL, "display additional diagnostic information" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }	
 };
@@ -1043,7 +1040,9 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 {
 	int i;
 	int orientation;
-	struct InternalMachineDriver drv;
+	machine_config drv;
+
+	game = game_index;
 
 	/* force third mouse button emulation to "no" otherwise Allegro will default to "yes" */
 	set_config_string( 0, "emulate_three", "no" );
@@ -1098,7 +1097,6 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	usestereo					= get_bool( "config", "stereo", NULL, 1 );
 	attenuation 				= get_int( "config", "volume", "vol", 0 );
 	sampleratedetect			= get_bool( "config", "sampleratedetect", NULL, 1 );
-	options.use_filter			= get_bool( "config", "resamplefilter", NULL, 1 );
 
 	/* input configuration */
 	use_mouse					= get_bool( "config", "mouse", NULL, 1 );
@@ -1198,13 +1196,9 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	options.language_file		= mame_fopen( 0, s_language, FILETYPE_LANGUAGE, 0 );
 
 	options.pause_bright		= get_float( "config", "pause_brightness", NULL, 0.65, 0.5, 2.0 );
-	options.skip_disclaimer		= get_bool( "config", "skip_disclaimer", NULL, 0 );
 	options.skip_gameinfo		= get_bool( "config", "skip_gameinfo", NULL, 0 );
 	options.skip_validitychecks	= get_bool( "config", "skip_validitychecks", NULL, 0 );
-	options.crc_only			= get_bool( "config", "crconly", NULL, 0 );
 	s_bios						= get_string( "config", "bios", NULL, "default", NULL, NULL, NULL );
-
-	maxlogsize					= get_int( "config", "maxlogsize", NULL, 0 );
 
 	/* process graphic configuration */
 	if( stricmp( vesamode, "vesa1" ) == 0 )
@@ -1635,7 +1629,7 @@ int cli_frontend_init( int argc, char **argv )
 	memset(&options,0,sizeof(options));
 
 	/* these are not available in mame.cfg */
-	ignorecfg = 0;
+	readconfig = 1;
 	createconfig = 0;
 	showusage = 0;
 	logfile = 0;
@@ -1648,9 +1642,9 @@ int cli_frontend_init( int argc, char **argv )
 		{
 			gamename = argv[ i ];
 		}
-		else if( stricmp( argv[ i ], "-ignorecfg" ) == 0 )
+		else if( stricmp( argv[ i ], "-noreadconfig" ) == 0 )
 		{
-			ignorecfg = 1;
+			readconfig = 0;
 		}
 		else if( stricmp( argv[ i ], "-createconfig" ) == 0 || stricmp( argv[ i ], "-cc" ) == 0 )
 		{
@@ -1863,7 +1857,7 @@ int cli_frontend_init( int argc, char **argv )
 	{
 		INP_HEADER inp_header;
 
-		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		memset(&inp_header, '\0', sizeof(inp_header));
 		strcpy(inp_header.name, drivers[game_index]->name);
 
 		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
@@ -1889,13 +1883,6 @@ void CLIB_DECL logerror(const char *text,...)
 	if (errorlog && logfile)
 	{
 		curlogsize += vfprintf(logfile, text, arg);
-		if( maxlogsize > 0 && curlogsize > maxlogsize * 1024 )
-		{
-			osd_close_display();
-			osd_exit();
-			cli_frontend_exit();
-			exit(1);
-		}
 		if( b_flusherrorlog )
 		{
 			fflush(logfile);

@@ -1440,7 +1440,7 @@ static void build_rgb_to_pen( void )
 //	compress_palette
 //============================================================
 
-static int compress_palette( struct mame_display *display )
+static int compress_palette( mame_display *display )
 {
 	int i;
 	int j;
@@ -1498,7 +1498,7 @@ static int compress_palette( struct mame_display *display )
 #define PALETTE_DIRTY( i ) ( display->game_palette_dirty[ ( i ) / 32 ] & ( 1 << ( ( i ) % 32 ) ) )
 #define PALETTE_DIRTY_CLEAR( i ) display->game_palette_dirty[ ( i ) / 32 ] &= ~( 1 << ( ( i ) % 32 ) )
 
-static void update_palette(struct mame_display *display)
+static void update_palette(mame_display *display)
 {
 	int i;
 	int j;
@@ -1770,7 +1770,7 @@ static void update_palette(struct mame_display *display)
 						compress_palette( display );
 #ifdef MAME_DEBUG
 						{
-							usrintf_showmessage( "need %d colors switching to r%dg%db%d", ran_out,
+							ui_popup( "need %d colors switching to r%dg%db%d", ran_out,
 								palette_bits[ palette_bit ].r,
 								palette_bits[ palette_bit ].g,
 								palette_bits[ palette_bit ].b );
@@ -1782,7 +1782,7 @@ static void update_palette(struct mame_display *display)
 					else
 					{
 						/* this should not happen */
-						usrintf_showmessage( "Error: Palette overflow -%d", ran_out );
+						ui_popup( "Error: Palette overflow -%d", ran_out );
 
 						logerror( "Error: no way to shrink the palette to 256 colors, left out %d colors.\n", ran_out );
 #if VERBOSE
@@ -1997,7 +1997,7 @@ static void init_palette( int colors )
 //	update_palette_debugger
 //============================================================
 
-static void update_palette_debugger(struct mame_display *display)
+static void update_palette_debugger(mame_display *display)
 {
 	int i;
 
@@ -2030,7 +2030,7 @@ static void update_palette_debugger(struct mame_display *display)
 }
 
 /* center image inside the display based on the visual area */
-static void update_visible_area(struct mame_display *display)
+static void update_visible_area(mame_display *display)
 {
 	int align;
 	int act_width;
@@ -2351,11 +2351,11 @@ static void update_visible_area(struct mame_display *display)
 
 		if( video_swapxy )
 		{
-			set_ui_visarea(skiplines, skipcolumns, skiplines+gfx_display_lines-1, skipcolumns+gfx_display_columns-1);
+			ui_set_visible_area(skiplines, skipcolumns, skiplines+gfx_display_lines-1, skipcolumns+gfx_display_columns-1);
 		}
 		else
 		{
-			set_ui_visarea(skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+			ui_set_visible_area(skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
 		}
 	}
 
@@ -2434,7 +2434,7 @@ static void update_visible_area(struct mame_display *display)
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
-	struct mame_display dummy_display;
+	mame_display dummy_display;
 
 	if( video_swapxy )
 	{
@@ -2547,7 +2547,7 @@ void osd_close_display(void)
 	}
 }
 
-static void set_debugger_focus(struct mame_display *display, int debugger_has_focus)
+static void set_debugger_focus(mame_display *display, int debugger_has_focus)
 {
 	static int temp_afs, temp_fs, temp_throttle;
 
@@ -2611,7 +2611,7 @@ static void bitblit_dummy( struct mame_bitmap *bitmap, int sx, int sy, int sw, i
 	logerror("msdos/video.c: undefined bitblit() function for %d x %d!\n",xmultiply,ymultiply);
 }
 
-INLINE void pan_display( struct mame_display *display )
+INLINE void pan_display( mame_display *display )
 {
 	int pan_changed = 0;
 
@@ -2658,11 +2658,11 @@ INLINE void pan_display( struct mame_display *display )
 	{
 		if( video_swapxy )
 		{
-			set_ui_visarea(skiplines, skipcolumns, skiplines+gfx_display_lines-1, skipcolumns+gfx_display_columns-1);
+			ui_set_visible_area(skiplines, skipcolumns, skiplines+gfx_display_lines-1, skipcolumns+gfx_display_columns-1);
 		}
 		else
 		{
-			set_ui_visarea(skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+			ui_set_visible_area(skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
 		}
 	}
 }
@@ -2754,7 +2754,7 @@ void win_orient_rect(struct rectangle *_rect)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct mame_display *display)
+void osd_update_video_and_audio(mame_display *display)
 {
 	cycles_t curr, target;
 	static cycles_t prev_measure,this_frame_base;

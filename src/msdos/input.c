@@ -968,7 +968,7 @@ const struct OSCodeInfo *osd_get_code_list(void)
 	return codelist;
 }
 
-void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
 }
 

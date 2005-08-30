@@ -14,7 +14,7 @@ nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
 endif
 
-CFLAGS += -D_HUGE=HUGE_VAL -DCLIB_DECL=
+CFLAGS += -D_HUGE=HUGE_VAL
 
 # add allegro, audio & fpu emulator libs
 LIBS += -lalleg -laudio -lemu -lzvg

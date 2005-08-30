@@ -296,7 +296,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 
 					if (drivers[i]->flags & GAME_NOT_WORKING)
 					{
-						const struct GameDriver *maindrv;
+						const game_driver *maindrv;
 						int foundworking;
 
 						if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))

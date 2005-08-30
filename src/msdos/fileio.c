@@ -1,13 +1,8 @@
 //============================================================
 //
-//	fileio.c - MSDOS file access functions
+//  fileio.c - MSDOS file access functions
 //
 //============================================================
-
-// MAME headers
-#include "driver.h"
-#include "unzip.h"
-#include "rc.h"
 
 // MSDOS headers
 #include <errno.h>
@@ -17,11 +12,16 @@
 #include <limits.h>
 #include <ctype.h>
 
+// MAME headers
+#include "driver.h"
+#include "unzip.h"
+#include "rc.h"
+
 #ifdef MESS
 #include "image.h"
 #endif
 
-#define VERBOSE			0
+#define VERBOSE				0
 
 #define MAX_OPEN_FILES		16
 #define FILE_BUFFER_SIZE	256
@@ -29,7 +29,7 @@
 #define INVALID_HANDLE_VALUE ( -1 )
 
 //============================================================
-//	EXTERNALS
+//  EXTERNALS
 //============================================================
 
 extern char *rompath_extra;
@@ -44,7 +44,7 @@ extern char *cheatfile;
 
 
 //============================================================
-//	TYPE DEFINITIONS
+//  TYPE DEFINITIONS
 //============================================================
 
 typedef int HANDLE;
@@ -75,13 +75,13 @@ static osd_file openfile[MAX_OPEN_FILES];
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 int m_b_initialised = 0;
 
 //============================================================
-//	FILE PATH OPTIONS
+//  FILE PATH OPTIONS
 //============================================================
 
 struct rc_option fileio_opts[] =
@@ -131,7 +131,7 @@ struct rc_option fileio_opts[] =
 
 
 //============================================================
-//	is_pathsep
+//  is_pathsep
 //============================================================
 
 INLINE int is_pathsep(char c)
@@ -142,7 +142,7 @@ INLINE int is_pathsep(char c)
 
 
 //============================================================
-//	find_reverse_path_sep
+//  find_reverse_path_sep
 //============================================================
 
 static char *find_reverse_path_sep(char *name)
@@ -156,7 +156,7 @@ static char *find_reverse_path_sep(char *name)
 
 
 //============================================================
-//	create_path
+//  create_path
 //============================================================
 
 static void create_path(char *path, int has_filename)
@@ -171,15 +171,15 @@ static void create_path(char *path, int has_filename)
 		create_path(path, 0);
 		*sep = '\\';
 	}
-	
+
 	/* if we have a filename, we're done */
 	if (has_filename)
 		return;
-	
+
 	/* if the path already exists, we're done */
 	if( stat( path, &s ) == 0 )
 		return;
-	
+
 	/* create the path */
 	mkdir( path, S_IWUSR );
 }
@@ -187,7 +187,7 @@ static void create_path(char *path, int has_filename)
 
 
 //============================================================
-//	is_variablechar
+//  is_variablechar
 //============================================================
 
 INLINE int is_variablechar(char c)
@@ -198,7 +198,7 @@ INLINE int is_variablechar(char c)
 
 
 //============================================================
-//	parse_variable
+//  parse_variable
 //============================================================
 
 static const char *parse_variable(const char **start, const char *end)
@@ -206,16 +206,20 @@ static const char *parse_variable(const char **start, const char *end)
 	const char *src = *start, *var;
 	char variable[1024];
 	char *dest = variable;
-	
+
 	/* copy until we hit the end or until we hit a non-variable character */
 	for (src = *start; src < end && is_variablechar(*src); src++)
 		*dest++ = *src;
-	
+
+	// an empty variable means "$" and should not be expanded
+	if(src == *start)
+		return("$");
+
 	/* NULL terminate and return a pointer to the end */
 	*dest = 0;
 	*start = src;
 
-	/* return the actuval variable value */
+	/* return the actual variable value */
 	var = getenv(variable);
 	return (var) ? var : "";
 }
@@ -223,7 +227,7 @@ static const char *parse_variable(const char **start, const char *end)
 
 
 //============================================================
-//	copy_and_expand_variables
+//  copy_and_expand_variables
 //============================================================
 
 static char *copy_and_expand_variables(const char *path, int len)
@@ -253,20 +257,19 @@ static char *copy_and_expand_variables(const char *path, int len)
 		else
 			*dst++ = c;
 	}
-	
+
 	/* NULL terminate and return */
 	*dst = 0;
 	return result;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory in variable expansion!\n");
-	exit(1);
+	osd_die("Out of memory in variable expansion!\n");
 }
 
 
 
 //============================================================
-//	expand_pathlist
+//  expand_pathlist
 //============================================================
 
 static void expand_pathlist(struct pathdata *list)
@@ -285,7 +288,7 @@ static void expand_pathlist(struct pathdata *list)
 
 		for (pathindex = 0; pathindex < list->pathcount; pathindex++)
 			free((void *)list->path[pathindex]);
-		free(list->path);
+		free((void *)list->path);
 	}
 
 	// by default, start with an empty list
@@ -301,7 +304,7 @@ static void expand_pathlist(struct pathdata *list)
 	while (1)
 	{
 		// allocate space for the new pointer
-		list->path = realloc(list->path, (list->pathcount + 1) * sizeof(char *));
+		list->path = realloc((void *)list->path, (list->pathcount + 1) * sizeof(char *));
 		if (!list->path)
 			goto out_of_memory;
 
@@ -321,27 +324,27 @@ static void expand_pathlist(struct pathdata *list)
 		if (!token)
 			token = rawpath + strlen(rawpath);
 	}
-	
+
 	// when finished, reset the path info, so that future INI parsing will
 	// cause us to get called again
+	free((void *)list->rawpath);
 	list->rawpath = NULL;
 	return;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory!\n");
-	exit(1);
+	osd_die("Out of memory!\n");
 }
 
 
 
 //============================================================
-//	get_path_for_filetype
+//  get_path_for_filetype
 //============================================================
 
 static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *count)
 {
 	struct pathdata *list;
-	
+
 	// handle aliasing of some paths
 	switch (filetype)
 	{
@@ -350,6 +353,7 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 			list = &pathlist[FILETYPE_ROM];
 			break;
 #endif
+
 		default:
 			list = &pathlist[filetype];
 			break;
@@ -365,17 +369,18 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 			const char *rawpath = (list->rawpath) ? list->rawpath : "";
 			char *newpath = malloc(strlen(rompath_extra) + strlen(rawpath) + 2);
 			sprintf(newpath, "%s;%s", rompath_extra, rawpath);
+			free((void *)list->rawpath);
 			list->rawpath = newpath;
 		}
 
 		// decompose the path
 		expand_pathlist(list);
 	}
-	
+
 	// set the count
 	if (count)
 		*count = list->pathcount;
-	
+
 	// return a valid path always
 	return (pathindex < list->pathcount) ? list->path[pathindex] : "";
 }
@@ -383,14 +388,14 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 
 
 //============================================================
-//	compose_path
+//  compose_path
 //============================================================
 
 static void compose_path(char *output, int pathtype, int pathindex, const char *filename)
 {
 	const char *basepath = get_path_for_filetype(pathtype, pathindex, NULL);
 	char *p;
-	
+
 #ifdef MESS
 	if (osd_is_absolute_path(filename))
 		basepath = NULL;
@@ -403,7 +408,7 @@ static void compose_path(char *output, int pathtype, int pathindex, const char *
 	if (*output && !is_pathsep(output[strlen(output) - 1]))
 		strcat(output, "\\");
 	strcat(output, filename);
-	
+
 	/* convert forward slashes to backslashes */
 	for (p = output; *p; p++)
 		if (*p == '/')
@@ -413,13 +418,13 @@ static void compose_path(char *output, int pathtype, int pathindex, const char *
 
 
 //============================================================
-//	osd_get_path_count
+//  osd_get_path_count
 //============================================================
 
 int osd_get_path_count(int pathtype)
 {
 	DWORD count;
-	
+
 	/* get the count and return it */
 	get_path_for_filetype(pathtype, 0, &count);
 	return count;
@@ -428,7 +433,7 @@ int osd_get_path_count(int pathtype)
 
 
 //============================================================
-//	osd_get_path_info
+//  osd_get_path_info
 //============================================================
 
 int osd_get_path_info(int pathtype, int pathindex, const char *filename)
@@ -451,7 +456,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 
 
 //============================================================
-//	osd_fopen
+//  osd_fopen
 //============================================================
 
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
@@ -483,11 +488,11 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	{
 		return NULL;
 	}
-	
+
 	/* zap the file record */
 	file = &openfile[i];
 	memset(file, 0, sizeof(*file));
-	
+
 	/* convert the mode into disposition and attrib */
 	if (strchr(mode, 'r'))
 		disposition = 0, attrib = O_RDONLY;
@@ -495,7 +500,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 		disposition = O_CREAT | O_TRUNC, attrib = O_WRONLY;
 	if (strchr(mode, '+'))
 		attrib = O_RDWR;
-	
+
 	/* compose the full path */
 	compose_path(fullpath, pathtype, pathindex, filename);
 
@@ -506,7 +511,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 		/* if it's read-only, or if the path exists, then that's final */
 		if( ( disposition & O_CREAT ) == 0 || errno != ENOENT )
 			return NULL;
-	
+
 		/* create the path and try again */
 		create_path(fullpath, 1);
 		file->handle = open( fullpath, attrib | disposition | O_BINARY, S_IRUSR | S_IWUSR  );
@@ -530,7 +535,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 
 
 //============================================================
-//	osd_fseek
+//  osd_fseek
 //============================================================
 
 int osd_fseek(osd_file *file, INT64 offset, int whence)
@@ -549,7 +554,7 @@ int osd_fseek(osd_file *file, INT64 offset, int whence)
 
 
 //============================================================
-//	osd_ftell
+//  osd_ftell
 //============================================================
 
 UINT64 osd_ftell(osd_file *file)
@@ -560,7 +565,7 @@ UINT64 osd_ftell(osd_file *file)
 
 
 //============================================================
-//	osd_feof
+//  osd_feof
 //============================================================
 
 int osd_feof(osd_file *file)
@@ -571,7 +576,7 @@ int osd_feof(osd_file *file)
 
 
 //============================================================
-//	osd_fread
+//  osd_fread
 //============================================================
 
 UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
@@ -588,7 +593,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 		if (bytes_to_copy > length)
 			bytes_to_copy = length;
 		memcpy(buffer, &file->buffer[file->offset - file->bufferbase], bytes_to_copy);
-		
+
 		// account for it
 		bytes_left -= bytes_to_copy;
 		file->offset += bytes_to_copy;
@@ -609,7 +614,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 		}
 		file->filepos = file->offset;
 	}
-	
+
 	// if we have a small read remaining, do it to the buffer and copy out the results
 	if (length < FILE_BUFFER_SIZE/2)
 	{
@@ -621,19 +626,19 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 			file->bufferbytes = 0;
 		}
 		file->filepos += file->bufferbytes;
-		
+
 		// copy it out
 		bytes_to_copy = bytes_left;
 		if (bytes_to_copy > file->bufferbytes)
 			bytes_to_copy = file->bufferbytes;
 		memcpy(buffer, file->buffer, bytes_to_copy);
-		
+
 		// adjust pointers and return
 		file->offset += bytes_to_copy;
 		bytes_left -= bytes_to_copy;
 		return length - bytes_left;
 	}
-	
+
 	// otherwise, just read directly to the buffer
 	else
 	{
@@ -644,7 +649,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 			result = 0;
 		}
 		file->filepos += result;
-		
+
 		// adjust the pointers and return
 		file->offset += result;
 		bytes_left -= result;
@@ -655,13 +660,13 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 
 
 //============================================================
-//	osd_fwrite
+//  osd_fwrite
 //============================================================
 
 UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 {
 	DWORD result;
-	
+
 	// invalidate any buffered data
 	file->bufferbytes = 0;
 
@@ -670,7 +675,7 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 	{
 		return 0;
 	}
-	
+
 	// do the write
 	result = write( file->handle, buffer, length );
 	if( result < 0 )
@@ -678,7 +683,7 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 		result = 0;
 	}
 	file->filepos += result;
-	
+
 	// adjust the pointers
 	file->offset += result;
 	if (file->offset > file->end)
@@ -689,7 +694,7 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 
 
 //============================================================
-//	osd_fclose
+//  osd_fclose
 //============================================================
 
 void osd_fclose(osd_file *file)
@@ -708,7 +713,7 @@ void osd_fclose(osd_file *file)
 #include <dirent.h>
 
 //============================================================
-//	osd_create_directory
+//  osd_create_directory
 //============================================================
 
 int osd_create_directory(int pathtype, int pathindex, const char *s_dirname)
@@ -722,7 +727,7 @@ int osd_create_directory(int pathtype, int pathindex, const char *s_dirname)
 }
 
 //============================================================
-//	osd_dirname
+//  osd_dirname
 //============================================================
 
 char *osd_dirname(const char *filename)
@@ -760,7 +765,7 @@ char *osd_dirname(const char *filename)
 }
 
 //============================================================
-//	osd_basename
+//  osd_basename
 //============================================================
 
 char *osd_basename(char *filename)
@@ -781,7 +786,7 @@ char *osd_basename(char *filename)
 }
 
 //============================================================
-//	osd_path_separator
+//  osd_path_separator
 //============================================================
 
 const char *osd_path_separator(void)
@@ -790,7 +795,7 @@ const char *osd_path_separator(void)
 }
 
 //============================================================
-//	osd_is_path_separator
+//  osd_is_path_separator
 //============================================================
 
 int osd_is_path_separator(char ch)
@@ -799,7 +804,7 @@ int osd_is_path_separator(char ch)
 }
 
 //============================================================
-//	osd_is_absolute_path
+//  osd_is_absolute_path
 //============================================================
 int osd_is_absolute_path(const char *path)
 {
@@ -831,7 +836,7 @@ static int fnmatch(const char *f1, const char *f2)
 			if (f1[1])
 			{
 				/* skip until first occurance of the character after the asterisk */
-                while (*f2 && toupper(f1[1]) != toupper(*f2))
+				while (*f2 && toupper(f1[1]) != toupper(*f2))
 					f2++;
 				/* skip repetitions of the character after the asterisk */
 				while (*f2 && toupper(f1[1]) == toupper(f2[1]))
@@ -840,31 +845,31 @@ static int fnmatch(const char *f1, const char *f2)
 			else
 			{
 				/* skip until end of string */
-                while (*f2)
+				while (*f2)
 					f2++;
 			}
-        }
+		}
 		else
 		if (*f1 == '?')
 		{
 			/* skip one character */
-            f2++;
+			f2++;
 		}
 		else
 		{
 			/* mismatch? */
-            if (toupper(*f1) != toupper(*f2))
+			if (toupper(*f1) != toupper(*f2))
 				return 0;
-            /* skip one character */
+			/* skip one character */
 			f2++;
 		}
 		/* skip mask */
-        f1++;
+		f1++;
 	}
 	/* no match if anything is left */
 	if (*f1 || *f2)
 		return 0;
-    return 1;
+	return 1;
 }
 
 int osd_num_devices(void)
@@ -872,7 +877,7 @@ int osd_num_devices(void)
 	if (num_devices == 0)
 	{
 		union REGS r;
-        int dev, previous_dev;
+		int dev, previous_dev;
 		r.h.ah = 0x19;	/* get current drive */
 		intdos(&r,&r);
 		previous_dev = r.h.al;	/* save current drive */
@@ -891,36 +896,34 @@ int osd_num_devices(void)
 				dos_devices[num_devices*4+3] = '\0';
 				num_devices++;
 			}
-        }
+		}
 		r.h.ah = 0x0e;		/* select previous drive again */
 		r.h.dl = previous_dev;
 		intdos(&r,&r);
-    }
+	}
 	return num_devices;
 }
 
 const char *osd_get_device_name(int idx)
 {
 	if (idx < num_devices)
-        return &dos_devices[idx*4];
-    return "";
+		return &dos_devices[idx*4];
+	return "";
 }
 
 void osd_change_device(const char *device)
 {
-        char chdir_device[4];
+	char chdir_device[4];
 
 	dos_device[0] = device[0];
 	dos_device[1] = '\0';
 
-        chdir_device[0] = device[0];
-        chdir_device[1] = ':';
-        chdir_device[2] = '\\';
-        chdir_device[3] = '\0';
+	chdir_device[0] = device[0];
+	chdir_device[1] = ':';
+	chdir_device[2] = '\\';
+	chdir_device[3] = '\0';
 
-
-        chdir(chdir_device);
-
+	chdir(chdir_device);
 }
 
 static char startup_dir[260]; /* Max Windows Path? */
@@ -929,19 +932,18 @@ static char startup_dir[260]; /* Max Windows Path? */
 /* Go back to the startup dir on exit */
 void return_to_startup_dir(void)
 {
-    chdir(startup_dir);
+	chdir(startup_dir);
 }
 
 void osd_change_directory(const char *directory)
 {
-		if (!startup_dir[0])
-		{
-			getcwd(startup_dir,sizeof(startup_dir));
-			atexit(return_to_startup_dir);
-		}
+	if (!startup_dir[0])
+	{
+		getcwd(startup_dir,sizeof(startup_dir));
+		atexit(return_to_startup_dir);
+	}
 
-        chdir(directory);
-
+	chdir(directory);
 }
 
 static char dos_cwd[260];
@@ -977,23 +979,23 @@ void *osd_dir_open(const char *mess_dirname, const char *filemask)
 
 	strcpy(dos_filemask, filemask);
 
-    dir = opendir(".");
+	dir = opendir(".");
 
-    return dir;
+	return dir;
 }
 
 int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 {
 	int len;
-    struct dirent *d;
+	struct dirent *d;
 
-    name[0] = '\0';
+	name[0] = '\0';
 	*is_dir = 0;
 
-    if (!dir)
+	if (!dir)
 		return 0;
 
-    d = readdir(dir);
+	d = readdir(dir);
 	while (d)
 	{
 		struct stat st;
@@ -1016,7 +1018,7 @@ int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 			/* no match, zap the name and type again */
 			name[0] = '\0';
 			*is_dir = 0;
-        }
+		}
 		d = readdir(dir);
 	}
 	return 0;
@@ -1031,17 +1033,15 @@ void osd_dir_close(void *dir)
 #endif
 
 
-#ifndef WINUI
-
 //============================================================
-//	osd_display_loading_rom_message
+//  osd_display_loading_rom_message
 //============================================================
 
 // called while loading ROMs. It is called a last time with name == 0 to signal
 // that the ROM loading process is finished.
 // return non-zero to abort loading
-
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
+#ifndef WINUI
+int osd_display_loading_rom_message(const char *name,rom_load_data *romdata)
 {
 	if (name)
 		fprintf(stdout, "loading %-32s\r", name);
@@ -1057,7 +1057,7 @@ int osd_display_loading_rom_message(const char *name,struct rom_load_data *romda
 
 #ifdef WINUI
 //============================================================
-//	set_pathlist
+//  set_pathlist
 //============================================================
 
 void set_pathlist(int file_type, const char *new_rawpath)
@@ -1078,6 +1078,7 @@ void set_pathlist(int file_type, const char *new_rawpath)
 	list->path = NULL;
 	list->pathcount = 0;
 
+	free((void *)list->rawpath);
 	list->rawpath = new_rawpath;
 
 }
