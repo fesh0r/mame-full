@@ -38,7 +38,7 @@ static struct
 	int max_page;
 	int max_page_limit;
 	int page_dirty;
-	struct rectangle old_dirty_area;
+	rectangle old_dirty_area;
 #ifdef TDFX_DGA_WORKAROUND
 	int current_X11_mode;
 #endif
@@ -381,11 +381,11 @@ static int xf86_dga2_set_mode(void)
         return !(xf86ctx.update_display_func=sysdep_display_effect_open());
 }
 
-const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *xf86_dga2_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
-  struct rectangle my_dirty_area = *dirty_area;
+  rectangle my_dirty_area = *dirty_area;
   
   if (xf86ctx.max_page)
   {

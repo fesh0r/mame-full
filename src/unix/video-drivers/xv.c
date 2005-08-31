@@ -23,17 +23,17 @@
 #error "USE_XV defined but USE_MITSHM is not defined, XV needs MITSHM!"
 #endif
 
-static void xv_update_16_to_YV12 (struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_16_to_YV12 (mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
-static void xv_update_16_to_YV12_perfect (struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_16_to_YV12_perfect (mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
-static void xv_update_32_to_YV12_direct (struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_32_to_YV12_direct (mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
-static void xv_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_32_to_YV12_direct_perfect (mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
 /* options initialiased through the rc_option struct */
@@ -598,15 +598,15 @@ static void xv_destroy_image(void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-const char *xv_update_display(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+const char *xv_update_display(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;
   int _dint;
   unsigned int _duint;
   unsigned int pw,ph;
-  struct rectangle vis_area = *vis_in_dest_out;
+  rectangle vis_area = *vis_in_dest_out;
 
   sysdep_display_orient_bounds(&vis_area, bitmap->width, bitmap->height);
 
@@ -654,8 +654,8 @@ void xv_clear_display_buffer(void)
 }
 
 /* Hacked into place, until I integrate YV12 support into the blit core... */
-static void xv_update_16_to_YV12(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_16_to_YV12(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y;
@@ -738,8 +738,8 @@ static void xv_update_16_to_YV12(struct mame_bitmap *bitmap,
 }
 
 
-static void xv_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_16_to_YV12_perfect(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {      /* this one is used when scale==2 */
    unsigned int _x,_y;
@@ -784,8 +784,8 @@ static void xv_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
    }
 }
 
-static void xv_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_32_to_YV12_direct(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y,r,g,b;
@@ -859,8 +859,8 @@ static void xv_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
    }
 }
 
-static void xv_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+static void xv_update_32_to_YV12_direct_perfect(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 { /* This one is used when scale == 2 */
    int _x,_y,r,g,b;

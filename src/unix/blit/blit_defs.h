@@ -108,8 +108,8 @@
 #endif
 
 #define BLIT_BEGIN(NAME) \
-void FUNC_NAME(NAME)(struct mame_bitmap *bitmap, \
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, \
+void FUNC_NAME(NAME)(mame_bitmap *bitmap, \
+  rectangle *vis_in_dest_out, rectangle *dirty_area, \
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width) \
 { \
   int y, yarbsize; \

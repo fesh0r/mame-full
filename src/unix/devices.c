@@ -83,7 +83,7 @@ UINT8				trying_to_quit;
 	+ JOY_MAX * (JOY_BUTTONS + JOY_AXES * (JOY_DIRS + 1)) \
 	+ GUN_MAX * 2
 
-static struct OSCodeInfo	codelist[TOTAL_CODES];
+static os_code_info	codelist[TOTAL_CODES];
 static int			total_codes;
 
 /* Controller override options */
@@ -900,8 +900,8 @@ static void update_joystick_axes(void)
 		}
 }
 
-static void add_joylist_entry(const char *name, os_code_t code,
-		input_code_t standardcode)
+static void add_joylist_entry(const char *name, os_code code,
+		input_code standardcode)
 {
 	/* copy the name */
 	char *namecopy = malloc(strlen(name) + 1);
@@ -925,8 +925,8 @@ static void add_joylist_entry(const char *name, os_code_t code,
 }
 
 
-static void add_keylist_entry(const char *name, os_code_t code,
-		input_code_t standardcode)
+static void add_keylist_entry(const char *name, os_code code,
+		input_code standardcode)
 {
 	/* copy the name */
 	char *namecopy = malloc(strlen(name) + 1);
@@ -1216,7 +1216,7 @@ void joy_evaluate_moves(void)
 /*	get_joycode_value */
 /*============================================================ */
 
-static INT32 get_joycode_value(os_code_t joycode)
+static INT32 get_joycode_value(os_code joycode)
 {
 	int joyindex = JOYINDEX(joycode);
 	int codetype = CODETYPE(joycode);
@@ -1726,7 +1726,7 @@ void osd_poll_joysticks(void)
 /*	osd_is_code_pressed */
 /*============================================================ */
 
-INT32 osd_get_code_value(os_code_t code)
+INT32 osd_get_code_value(os_code code)
 {
 	if (IS_KEYBOARD_CODE(code))
 		return is_key_pressed(code);
@@ -1740,7 +1740,7 @@ INT32 osd_get_code_value(os_code_t code)
 /*	osd_get_code_list */
 /*============================================================ */
 
-const struct OSCodeInfo *osd_get_code_list(void)
+const os_code_info *osd_get_code_list(void)
 {
 	return codelist;
 }
@@ -1804,7 +1804,7 @@ void osd_joystick_end_calibration(void)
 
 void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
-	static input_seq_t no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+	static input_seq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
 	input_port_default_entry *idef = defaults;
 
 	/* loop over all the defaults */

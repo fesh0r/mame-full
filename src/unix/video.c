@@ -59,8 +59,8 @@ static struct sysdep_display_open_params debug_params = {
   xmame_keyboard_register_event, NULL, NULL };
 
 /* Visual area override related vars, for dual monitor games hacks */
-static struct rectangle game_vis_area;
-static struct rectangle game_vis_area_override_rect[3] = {
+static rectangle game_vis_area;
+static rectangle game_vis_area_override_rect[3] = {
   {-1,-1,-1,-1},
   {-1,-1,-1,-1},
   {-1,-1,-1,-1} };
@@ -378,7 +378,7 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 	return 0;
 }
 
-int osd_create_display(const struct osd_create_params *params,
+int osd_create_display(const osd_create_params *params,
 		UINT32 *rgb_components)
 {
 	int orientation;
@@ -724,8 +724,8 @@ static void update_palette(mame_display *display, int force_dirty)
 
 static void update_debug_display(mame_display *display)
 {
-        struct rectangle vis_area;
-        struct rectangle dirty_area;
+        rectangle vis_area;
+        rectangle dirty_area;
         
 	if (!debug_palette)
 	{
@@ -1124,7 +1124,7 @@ void osd_update_video_and_audio(mame_display *display)
 
 		if (display->changed_flags & GAME_BITMAP_CHANGED)
 		{
-			struct rectangle vis_area = game_vis_area;
+			rectangle vis_area = game_vis_area;
 
 			/* at the end, we need the current time */
 			curr = osd_cycles();
@@ -1270,11 +1270,11 @@ void osd_update_video_and_audio(mame_display *display)
 	osd_poll_joysticks();
 }
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
-		struct rectangle *bounds)
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap,
+		rectangle *bounds)
 {
-	struct rectangle newbounds;
-	struct mame_bitmap *copy;
+	rectangle newbounds;
+	mame_bitmap *copy;
 	int x, y, w, h, t;
 
 	/* if we can send it in raw, no need to override anything */
@@ -1357,7 +1357,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
  3 returns the number of chars written, you can try to detect
    if the buffer was to small by seeing if that this is one less
    then the sizeof the buffer. */
-const char *osd_get_fps_text(const struct performance_info *performance)
+const char *osd_get_fps_text(const performance_info *performance)
 {
 	static char buffer[1024];
 	char *dest  = buffer;

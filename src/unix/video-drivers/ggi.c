@@ -438,9 +438,9 @@ void sysdep_display_close(void)
 /*
  * Update the display.
  */
-const char *sysdep_display_update(struct mame_bitmap *bitmap,
-		struct rectangle *vis_in_dest_out,
-		struct rectangle *dirty_area,
+const char *sysdep_display_update(mame_bitmap *bitmap,
+		rectangle *vis_in_dest_out,
+		rectangle *dirty_area,
 		struct sysdep_palette_struct *palette, int keyb_leds,
 		int flags)
 {

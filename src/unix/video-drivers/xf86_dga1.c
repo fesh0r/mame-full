@@ -358,8 +358,8 @@ static int xf86_dga1_set_mode(void)
         return !(xf86ctx.update_display_func=sysdep_display_effect_open());
 }
 
-const char *xf86_dga1_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *xf86_dga1_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
 	if(xf86_dga_fix_viewport)

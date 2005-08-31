@@ -17,8 +17,8 @@
 
 static int  (*p_xf86_dga_open_display)(int reopen);
 static void (*p_xf86_dga_close_display)(void);
-static const char * (*p_xf86_dga_update_display)(struct mame_bitmap *,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+static const char * (*p_xf86_dga_update_display)(mame_bitmap *,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags);
 static void (*p_xf86_dga_clear_display)(void);
 
@@ -78,8 +78,8 @@ void xf86_dga_close_display(void)
   p_xf86_dga_close_display();
 }
 
-const char *xf86_dga_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *xf86_dga_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
   return p_xf86_dga_update_display(bitmap, vis_area, dirty_area,

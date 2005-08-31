@@ -319,8 +319,8 @@ static void x11_window_destroy_image(void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-const char *x11_window_update_display(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+const char *x11_window_update_display(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int flags)
 {
    x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,

@@ -81,8 +81,8 @@ int LoadCabinet (const char *fname);
 /* glgen.c */
 int  gl_open_display(int reopen);
 void gl_close_display(void);
-const char *gl_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char *gl_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags);
 void CalcCabPointbyViewpoint( 
   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 

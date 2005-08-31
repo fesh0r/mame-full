@@ -410,8 +410,8 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
    return 1;
 }
 
-const char *sysdep_display_update(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+const char *sysdep_display_update(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
   unsigned char *video_mem;

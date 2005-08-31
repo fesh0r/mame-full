@@ -91,13 +91,27 @@
 
 /* from mame's palette.h */
 #ifndef __PALETTE_H__
-typedef unsigned int pen_t;
 typedef unsigned int rgb_t;
 #endif
 
-/* from mame's common.h */
-#ifndef __COMMON_H__
-struct mame_bitmap
+/* from mame's vidhrwd/vector.h */
+#ifndef __VECTOR__
+typedef struct
+{
+	int x; int y;
+	rgb_t col;
+	int intensity;
+	int arg1; int arg2; /* start/end in pixel array or clipping info */
+	int status;         /* for dirty and clipping handling */
+	rgb_t (*callback)(void);
+} point;
+#endif
+
+/* from mame's mamecore.h */
+#ifndef __MAMECORE_H__
+typedef unsigned int pen_t;
+
+struct _mame_bitmap
 {
 	int width,height;	/* width and height of the bitmap */
 	int depth;			/* bits per pixel */
@@ -109,32 +123,18 @@ struct mame_bitmap
 	int rowbytes;		/* bytes per row (including padding) */
 
 	/* functions to render in the correct orientation */
-	void (*plot)(struct mame_bitmap *bitmap,int x,int y,pen_t pen);
-	pen_t (*read)(struct mame_bitmap *bitmap,int x,int y);
-	void (*plot_box)(struct mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
+	void (*plot)(struct _mame_bitmap *bitmap,int x,int y,pen_t pen);
+	pen_t (*read)(struct _mame_bitmap *bitmap,int x,int y);
+	void (*plot_box)(struct _mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
 };
-#endif
+typedef struct _mame_bitmap mame_bitmap;
 
-/* from mame's drawgfx.h */
-#ifndef __DRAWGFX_H__
-struct rectangle
+struct _rectangle
 {
 	int min_x,max_x;
 	int min_y,max_y;
 };
-#endif
-
-/* from mame's vidhrdw/vector.h */
-#ifndef __VECTOR__
-typedef struct
-{
-	int x; int y;
-	rgb_t col;
-	int intensity;
-	int arg1; int arg2; /* start/end in pixel array or clipping info */
-	int status;         /* for dirty and clipping handling */
-	rgb_t (*callback)(void);
-} point;
+typedef struct _rectangle rectangle;
 #endif
 
 struct sysdep_display_mousedata
@@ -185,8 +185,8 @@ struct sysdep_display_open_params {
   /* keyboard event handler */
   void (*keyboard_handler)(struct sysdep_display_keyboard_event *event);
   /* vectorgame bounds (only used by drivers which have special vector code) */
-  const struct rectangle *vec_src_bounds;
-  const struct rectangle *vec_dest_bounds;
+  const rectangle *vec_src_bounds;
+  const rectangle *vec_dest_bounds;
 };
 
 struct sysdep_display_properties_struct {
@@ -236,8 +236,8 @@ int sysdep_display_change_params(
   struct sysdep_display_open_params *new_params);
 
 /* update */
-const char *sysdep_display_update(struct mame_bitmap *bitmap,
-  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *sysdep_display_update(mame_bitmap *bitmap,
+  rectangle *vis_area, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int keyb_leds, int flags);
 
 /* input */

@@ -93,8 +93,8 @@ void x11_set_window_hints(int type);
 int  x11_window_init(void);
 int  x11_window_open_display(int reopen);
 void x11_window_close_display(void);
-const char * x11_window_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+const char * x11_window_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_in_dest_out, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void x11_window_clear_display_buffer(void);
@@ -106,8 +106,8 @@ int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 int  xv_init(void);
 int  xv_open_display(int reopen);
 void xv_close_display(void);
-const char * xv_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char * xv_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void xv_clear_display_buffer(void);
@@ -117,8 +117,8 @@ void xv_clear_display_buffer(void);
 int  xgl_init(void);
 int  xgl_open_display(int reopen);
 void xgl_close_display(void);
-const char * xgl_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char * xgl_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 #endif
@@ -128,8 +128,8 @@ int  xfx_init(void);
 void xfx_exit(void);
 int  xfx_open_display(int reopen);
 void xfx_close_display(void);
-const char * xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char * xfx_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 #endif
@@ -138,8 +138,8 @@ const char * xfx_update_display(struct mame_bitmap *bitmap,
 int  xil_init(void);
 int  xil_open_display(int reopen);
 void xil_close_display(void);
-const char * xil_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char * xil_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void xil_clear_display_buffer(void);
@@ -149,24 +149,24 @@ void xil_clear_display_buffer(void);
 int  xf86_dga_init(void);
 int  xf86_dga_open_display(int reopen);
 void xf86_dga_close_display(void);
-const char * xf86_dga_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char * xf86_dga_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void xf86_dga_clear_display(void);
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(int reopen);
 void xf86_dga1_close_display(void);
-const char * xf86_dga1_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char * xf86_dga1_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void xf86_dga1_clear_display(void);
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(int reopen);
 void xf86_dga2_close_display(void);
-const char * xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char * xf86_dga2_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 void xf86_dga2_clear_display(void);

@@ -22,11 +22,11 @@
 #include "photon2.h"
 #include "driver.h"
 //#include "phkeyboard.h"
-static void ph_ovr_update_16_to_16bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_16_to_24bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_16_to_32bpp (struct mame_bitmap *bitmap);
-static void ph_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
-static void (*ph_ovr_update_display_func) (struct mame_bitmap *bitmap) = NULL;
+static void ph_ovr_update_16_to_16bpp (mame_bitmap *bitmap);
+static void ph_ovr_update_16_to_24bpp (mame_bitmap *bitmap);
+static void ph_ovr_update_16_to_32bpp (mame_bitmap *bitmap);
+static void ph_window_update_32_to_32bpp_direct (mame_bitmap *bitmap);
+static void (*ph_ovr_update_display_func) (mame_bitmap *bitmap) = NULL;
 
 /* hmm we need these to do the clean up correctly, or we could just 
    trust unix & X to clean up after us but lett's keep things clean */
@@ -381,7 +381,7 @@ void ph_ovr_close_display (void)
 }
 
 //* invoked by main tree code to update bitmap into screen */
-void ph_ovr_update_display (struct mame_bitmap *bitmap)
+void ph_ovr_update_display (mame_bitmap *bitmap)
 {
    PhRegion_t region_info;	
 	
@@ -422,7 +422,7 @@ INLINE void ph_ovr_put_image (int x, int y, int width, int height)
 #define SRC_PIXEL unsigned short
 #define PUT_IMAGE(X, Y, WIDTH, HEIGHT) ph_ovr_put_image(X, Y, WIDTH, HEIGHT);
 
-static void ph_ovr_update_16_to_16bpp (struct mame_bitmap *bitmap)
+static void ph_ovr_update_16_to_16bpp (mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
 
@@ -442,14 +442,14 @@ static void ph_ovr_update_16_to_16bpp (struct mame_bitmap *bitmap)
 
 #define DEST_PIXEL unsigned int
 
-static void ph_ovr_update_16_to_24bpp (struct mame_bitmap *bitmap)
+static void ph_ovr_update_16_to_24bpp (mame_bitmap *bitmap)
 {
 #define PACK_BITS
 #include "blit.h"
 #undef PACK_BITS
 }
 
-static void ph_ovr_update_16_to_32bpp (struct mame_bitmap *bitmap)
+static void ph_ovr_update_16_to_32bpp (mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -458,7 +458,7 @@ static void ph_ovr_update_16_to_32bpp (struct mame_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned int
 
-static void ph_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)
+static void ph_window_update_32_to_32bpp_direct(mame_bitmap *bitmap)
 {
 #include "blit.h"
 }

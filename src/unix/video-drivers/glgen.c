@@ -700,7 +700,7 @@ void gl_close_display (void)
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area)
+static void InitTextures (mame_bitmap *bitmap, rectangle *vis_area)
 {
   int x=0, y=0;
   unsigned char *line_1=0;
@@ -1383,8 +1383,8 @@ static void cabinetTextureRotationTranslation ()
 }
 
 /* FIXME: do partial updates */
-static void drawTextureDisplay (struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+static void drawTextureDisplay (mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags)
 {
@@ -1526,8 +1526,8 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
 }
 
 /* Draw a frame in Cabinet mode */
-static void UpdateCabDisplay (struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+static void UpdateCabDisplay (mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags)
 {
@@ -1619,8 +1619,8 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-static void UpdateGLDisplay (struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+static void UpdateGLDisplay (mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags)
 {
@@ -1649,8 +1649,8 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap,
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-const char *gl_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char *gl_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
   static char msg_buf[32];
@@ -1707,8 +1707,8 @@ const char *gl_update_display(struct mame_bitmap *bitmap,
 }
 
 #if 0 /* disabled for now */
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
-		struct rectangle *bounds)
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap,
+		rectangle *bounds)
 {
 	do_snapshot = 1;
 	return NULL;

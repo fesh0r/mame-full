@@ -315,7 +315,7 @@ sysdep_create_display(int depth)
  */
 
 static void
-update_display_8bpp(struct mame_bitmap *bitmap)
+update_display_8bpp(mame_bitmap *bitmap)
 {
 #define	SRC_PIXEL	unsigned char
 #define	DEST_PIXEL	unsigned short
@@ -335,7 +335,7 @@ update_display_8bpp(struct mame_bitmap *bitmap)
  */
 
 static void
-update_display_16bpp(struct mame_bitmap *bitmap)
+update_display_16bpp(mame_bitmap *bitmap)
 {
 #define	SRC_PIXEL	unsigned short
 #define	DEST_PIXEL	unsigned short
@@ -364,7 +364,7 @@ update_display_16bpp(struct mame_bitmap *bitmap)
  */
 
 void
-sysdep_update_display(struct mame_bitmap *bitmap)
+sysdep_update_display(mame_bitmap *bitmap)
 {
 	/* pause if minturised, setting the flag */
 	while([theWindow isMiniaturized]) {

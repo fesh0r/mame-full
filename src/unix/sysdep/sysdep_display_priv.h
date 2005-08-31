@@ -24,15 +24,15 @@
 #include "sysdep/sysdep_display.h"
 #include "begin_code.h"
 
-typedef void (*blit_func_p)(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+typedef void (*blit_func_p)(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
 /* from sysdep_display.c */
 extern struct sysdep_display_open_params sysdep_display_params;
 
-void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height);
-void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align);
+void sysdep_display_orient_bounds(rectangle *bounds, int width, int height);
+void sysdep_display_check_bounds(mame_bitmap *bitmap, rectangle *vis_in_dest_out, rectangle *dirty_area, int x_align);
 
 /* from the sysdep display driver */
 int  sysdep_display_driver_open(int reopen);

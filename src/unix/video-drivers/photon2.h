@@ -87,14 +87,14 @@ void process_x11_joy_event(XEvent *event);
 /* Normal photon window functions */
 int  ph_window_create_display(int depth);
 void ph_window_close_display(void);
-void ph_window_update_display(struct mame_bitmap *bitmap);
+void ph_window_update_display(mame_bitmap *bitmap);
 void ph_window_refresh_screen(void);
 
 /* photon video overlay functions */
 int  ph_ovr_init(void);
 int  ph_ovr_create_display(int depth);
 void ph_ovr_close_display(void);
-void ph_ovr_update_display(struct mame_bitmap *bitmap);
+void ph_ovr_update_display(mame_bitmap *bitmap);
 
 #if 0
 /* XIL functions */

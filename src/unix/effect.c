@@ -29,7 +29,7 @@ char *effect_dbbuf  = NULL;
 char *rotate_dbbuf0 = NULL;
 char *rotate_dbbuf1 = NULL;
 char *rotate_dbbuf2 = NULL;
-void (*rotate_func)(void *dst, struct mame_bitmap *bitamp, int y, struct rectangle *bounds);
+void (*rotate_func)(void *dst, mame_bitmap *bitamp, int y, rectangle *bounds);
 unsigned int effect_rgb2yuv[65536];
 /* for the 6tap filter */
 char *_6tap2x_buf0 = NULL;
@@ -322,8 +322,8 @@ static blit_func_p effect_funcs[] = {
 #endif
 };
 
-static void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
-static void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
+static void rotate_16_16(void *dst, mame_bitmap *bitmap, int y, rectangle *bounds);
+static void rotate_32_32(void *dst, mame_bitmap *bitmap, int y, rectangle *bounds);
 
 /* Functions
 
@@ -745,7 +745,7 @@ void sysdep_display_effect_close(void)
 /**********************************
  * rotate
  **********************************/
-static void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds)
+static void rotate_16_16(void *dst, mame_bitmap *bitmap, int y, rectangle *bounds)
 {
   int x;
   unsigned short * u16dst = (unsigned short *)dst;
@@ -774,7 +774,7 @@ static void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct re
            u16dst[x-bounds->min_x] = ((unsigned short *)bitmap->line[bitmap->height - y -1])[x];
 }
 
-static void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds)
+static void rotate_32_32(void *dst, mame_bitmap *bitmap, int y, rectangle *bounds)
 {
   int x;
   unsigned int * u32dst = (unsigned int *)dst;

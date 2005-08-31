@@ -72,8 +72,8 @@ struct x_func_struct {
 	int  (*init)(void);
 	int  (*open_display)(int reopen);
 	void (*close_display)(void);
-	const char * (*update_display)(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	const char * (*update_display)(mame_bitmap *bitmap,
+	  rectangle *src_bounds,  rectangle *dest_bounds,
 	  struct sysdep_palette_struct *palette, int flags);
         void (*clear_display_buffer)(void);
         void (*exit)(void);
@@ -274,8 +274,8 @@ void sysdep_display_close(void)
     ~SYSDEP_DISPLAY_DIRECT_FB;
 }
 
-const char *sysdep_display_update(struct mame_bitmap *bitmap,
-  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *sysdep_display_update(mame_bitmap *bitmap,
+  rectangle *vis_area, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
         int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&

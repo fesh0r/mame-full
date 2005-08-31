@@ -45,7 +45,7 @@ struct ph_func_struct {
    int  (*init)(void);
    int  (*create_display)(int depth);
    void (*close_display)(void);
-   void (*update_display)(struct mame_bitmap *bitmap);
+   void (*update_display)(mame_bitmap *bitmap);
 };
 
 struct ph_func_struct ph_func[PH_MODE_COUNT] = {
@@ -142,7 +142,7 @@ int ph_init_palette_info(void)
    return OSD_OK;
 }
 
-void sysdep_update_display (struct mame_bitmap *bitmap)
+void sysdep_update_display (mame_bitmap *bitmap)
 {
    extern unsigned short *shrinked_pens;
    int new_video_mode = ph_video_mode;

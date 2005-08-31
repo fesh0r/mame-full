@@ -112,8 +112,8 @@ void sysdep_display_close(void)
 }
 
 
-const char *sysdep_display_update(struct mame_bitmap *bitmap,
-  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *sysdep_display_update(mame_bitmap *bitmap,
+  rectangle *vis_area, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
   svga_input_set_keybleds(keyb_leds);

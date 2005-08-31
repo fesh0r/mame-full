@@ -283,7 +283,7 @@ int sysdep_display_update_keyboard(void)
   return i;
 }
 
-void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)
+void sysdep_display_orient_bounds(rectangle *bounds, int width, int height)
 {
         int temp;
 
@@ -324,7 +324,7 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 	}
 }
 
-void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align)
+void sysdep_display_check_bounds(mame_bitmap *bitmap, rectangle *vis_in_dest_out, rectangle *dirty_area, int x_align)
 {	
 	int old_bound;
 	

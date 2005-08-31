@@ -1,7 +1,7 @@
 /*
  *  Support for the XIL imaging library.
  *
- *  Elias Mårtenson (elias-m@algonet.se)
+ *  Elias Mï¿½tenson (elias-m@algonet.se)
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,8 +175,8 @@ void xil_close_display (void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-const char *xil_update_display(struct mame_bitmap *bitmap,
-  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+const char *xil_update_display(mame_bitmap *bitmap,
+  rectangle *vis_in_dest_out, rectangle *dirty_area,
   struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;

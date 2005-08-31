@@ -172,8 +172,8 @@ void xgl_close_display (void)
 #endif
 }
 
-const char *xgl_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char *xgl_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;

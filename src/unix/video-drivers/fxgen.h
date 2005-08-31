@@ -10,8 +10,8 @@ int  InitVScreen(int reopen);
 void CloseVScreen(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
-const char * xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+const char * xfx_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 

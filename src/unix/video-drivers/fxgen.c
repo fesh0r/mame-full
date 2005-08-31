@@ -71,8 +71,8 @@ static int signals_caught = 0;
 static GrScreenResolution_t Gr_resolution;
 
 static void FreeTextures(void);
-static void UpdateTexture(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+static void UpdateTexture(mame_bitmap *bitmap,
+	  rectangle *dirty_area,  rectangle *vis_area,
 	  struct sysdep_palette_struct *palette);
 static void DrawFlatBitmap(void);
 static int fxgen_set_resolution(struct rc_option *option, const char *arg,
@@ -549,7 +549,7 @@ int InitVScreen(int reopen)
 
   if(sysdep_display_params.vec_dest_bounds)
   {
-    struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
+    rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
     sysdep_display_orient_bounds(&vec_bounds, orig_width, orig_height);
     vecvscrnwidth  = (vec_bounds.max_x-vec_bounds.min_x) *
       ((double)vscrnwidth/sysdep_display_params.width);
@@ -594,8 +594,8 @@ void CloseVScreen(void)
 
 /* Update the texture with the contents of the game screen */
 /* FIXME: do partial updates */
-void UpdateTexture(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+void UpdateTexture(mame_bitmap *bitmap,
+	  rectangle *vis_area,  rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette)
 {
 	int y,rline,texline,xsquare,ysquare,ofs,width, i;
@@ -716,8 +716,8 @@ void DrawFlatBitmap(void)
   }
 }
 
-const char *xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+const char *xfx_update_display(mame_bitmap *bitmap,
+	  rectangle *vis_area, rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
   const char *msg = NULL;

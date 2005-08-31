@@ -384,10 +384,10 @@ int xmame_config_init(int argc, char *argv[])
 	/* check for game name embedded in .inp header */
 	if (options.playback)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
 		/* read playback header */
-		mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+		mame_fread(options.playback, &inp_header, sizeof(inp_header));
 
 		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
 			mame_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
@@ -611,11 +611,11 @@ int xmame_config_init(int argc, char *argv[])
 
 	if (options.record)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
-		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		memset(&inp_header, '\0', sizeof(inp_header));
 		strcpy(inp_header.name, drivers[game_index]->name);
-		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+		mame_fwrite(options.record, &inp_header, sizeof(inp_header));
 	}
 
 	if (statename)
