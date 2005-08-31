@@ -524,3 +524,32 @@ int stream_isreadonly(imgtool_stream *s)
 	return s->write_protect;
 }
 
+
+
+size_t stream_putc(imgtool_stream *stream, char c)
+{
+	return stream_write(stream, &c, 1);
+}
+
+
+
+size_t stream_puts(imgtool_stream *stream, const char *s)
+{
+	return stream_write(stream, s, strlen(s));
+}
+
+
+
+size_t stream_printf(imgtool_stream *stream, const char *fmt, ...)
+{
+	va_list va;
+	char buf[256];
+
+	va_start(va, fmt);
+	vsprintf(buf, fmt, va);
+	va_end(va);
+
+	return stream_puts(stream, buf);
+}
+
+

@@ -1,3 +1,11 @@
+/****************************************************************************
+
+	filtbas.c
+
+	Filter for Microsoft-style tokenized BASIC files
+
+*****************************************************************************/
+
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -20,157 +28,98 @@ struct basictokens
 	int num_entries;
 };
 
-struct filter_basic_state
+
+
+static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
+	imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *destf)
 {
-	int position;
-	int done;
-	int linesize;
-	char linebuffer[300];
-};
-
-static int sendstring(struct filter_info *fi, const char *s)
-{
-	int buflen;
-	buflen = strlen(s);
-	return fi->sendproc(fi, (void *) s, buflen);
-}
-
-static int CLIB_DECL sendstringf(struct filter_info *fi, const char *fmt, ...)
-{
-	va_list va;
-	char buffer[256];
-
-	va_start(va, fmt);
-	vsprintf(buffer, fmt, va);
-	va_end(va);
-
-	return sendstring(fi, buffer);
-}
-
-#define filter_basic_write NULL
-/*
-static int filter_basic_write(const struct basictokens *tokens, struct filter_basic_state *state,
-	int (*sendproc)(struct filter_info *fi, void *buf, int buflen), char *buf, int buflen)
-{
-}
-*/
-
-static void sendline(struct filter_info *fi, char *line, int len)
-{
-	int textlen;
-	int val;
+	imgtoolerr_t err;
+	imgtool_stream *mem_stream;
+	UINT8 line_header[4];
+	UINT16 address, line_number;
+	UINT8 b, shift;
 	int i;
-	const char *keyword;
-	const struct basictokens *tokens = (const struct basictokens *) fi->filterparam;
-	const struct basictoken_tableent *tableent;
+	const struct basictoken_tableent *token_table;
+	const char *token;
 
-	while(len > 0) {
-		for (textlen = 0; (textlen < len) && ((line[textlen] & 0x80) == 0); textlen++)
-			;
-		if (textlen > 0) {
-			fi->sendproc(fi, line, textlen);
-			line += textlen;
-			len -= textlen;
-		}
-		if (len > 0) {
-			/* We are at a keyword */
-			val = *line;
-			line++;
-			len--;
-			assert(val & 0x80);
-
-			tableent = NULL;
-			for (i = 0; i < tokens->num_entries; i++) {
-				if (tokens->entries[i].shift == val) {
-					tableent = &tokens->entries[i];
-					break;
-				}
-				else if (tokens->entries[i].shift == 0) {
-					tableent = &tokens->entries[i];
-				}
-			}
-
-			if (tableent && tableent->shift) {
-				if (len > 0) {
-					val = *line;
-					line++;
-					len--;
-				}
-				else {
-					/* A shift character at the end of input... weird... */
-					tableent = NULL;
-				}
-			}
-
-			if (tableent) {
-				val -= tableent->base;
-				if ((val >= 0) && (val < tableent->num_tokens))
-					keyword = tableent->tokens[val];
-				else
-					keyword = NULL;
-			}
-			else {
-				/* Can't find a table; unknown token */
-				keyword = NULL;
-			}
-
-			/* IIRC, when an unknown token was reached, a ! would be displayed */
-			if (!keyword)
-				keyword = "!";
-			sendstring(fi, keyword);
-		}
+	mem_stream = stream_open_mem(NULL, 0);
+	if (!mem_stream)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
 	}
-	sendstring(fi, EOLN);
+
+	/* read actual file */
+	err = img_module(image)->read_file(image, filename, fork, mem_stream);
+	if (err)
+		goto done;
+
+	/* skip first three bytes */
+	stream_seek(mem_stream, 3, SEEK_SET);
+
+	while(stream_read(mem_stream, line_header, sizeof(line_header)) == sizeof(line_header))
+	{
+		address = (UINT16) pick_integer_be(line_header, 0, 2);
+		line_number = (UINT16) pick_integer_be(line_header, 2, 2);
+
+		stream_printf(destf, "%u ", (unsigned) line_number);
+		shift = 0x00;
+
+		while((stream_read(mem_stream, &b, 1) > 0) && (b != 0x00))
+		{
+			if (b & 0x80)
+			{
+				token = NULL;
+
+				for (i = 0; i < tokens->num_entries; i++)
+				{
+					token_table = &tokens->entries[i];
+					if (token_table->shift == shift)
+					{
+						if ((b - 0x80) < token_table->num_tokens)
+						{
+							token = token_table->tokens[b - 0x80];
+							if (token)
+								shift = 0x00;
+						}
+					}
+
+					if (token_table->shift == b)
+					{
+						shift = token_table->shift;
+						break;
+					}
+				}
+
+				if (shift == 0x00)
+					stream_puts(destf, token ? token : "!");
+			}
+			else
+			{
+				stream_putc(destf, (char) b);
+			}
+		}
+
+		stream_puts(destf, EOLN);
+	}
+
+done:
+	if (mem_stream)
+		stream_close(mem_stream);
+	return err;
 }
 
-static int filter_basic_read(struct filter_info *fi, void *buf, int buflen)
+
+
+static imgtoolerr_t basic_writefile(const struct basictokens *tokens,
+	imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
-	char b;
-	int result = 0;
-	int sizetoskip;
-	char *bufc = (char *) buf;
-	unsigned int nextaddr;
-	unsigned int linenumber;
-//	const struct basictokens *tokens = (const struct basictokens *) fi->filterparam;
-	struct filter_basic_state *state = (struct filter_basic_state *) fi->filterstate;
-
-	/* Skip first three bytes */
-	if (state->position < 3) {
-		sizetoskip = MIN(3 - state->position, buflen);
-		bufc += sizetoskip;
-		buflen -= sizetoskip;
-		result += sizetoskip;
-	}
-
-	while(buflen > 0) {
-		b = *(bufc++);
-		buflen--;
-
-		/* Did we just terminate a line? */
-		if ((state->linesize >= 4) && (b == 0)) {
-			/* We have a full line! */
-			nextaddr = ((unsigned int) (UINT8) state->linebuffer[0]) * 256 + ((unsigned int) (UINT8) state->linebuffer[1]);
-			linenumber = ((unsigned int) (UINT8) state->linebuffer[2]) * 256 + ((unsigned int) (UINT8) state->linebuffer[3]);
-
-			if (nextaddr == 0)
-				state->done = 1;
-
-			if (!state->done) {
-				sendstringf(fi, "%i ", (int) linenumber);
-				sendline(fi, state->linebuffer + 4, state->linesize - 4);
-			}
-			state->linesize = 0;
-		}
-		else {
-			/* Put it into the line buffer (unless the impossible happens and the line is too large for the buffer) */
-			if ((state->linesize+1) < (sizeof(state->linebuffer) / sizeof(state->linebuffer[0])))
-				state->linebuffer[state->linesize++] = b;
-		}
-	}
-
-	state->position += result;
-	return result;
+	return IMGTOOLERR_UNIMPLEMENTED;
 }
+
+
 
 /* ----------------------------------------------------------------------- */
 
@@ -304,7 +253,7 @@ static const char *cocobas_functions[] =
 	"SGN",		/* 0xff80 */
 	"INT",		/* 0xff81 */
 	"ABS",		/* 0xff82 */
-	"USR"		/* 0xff83 */
+	"USR",		/* 0xff83 */
 	"RND",		/* 0xff84 */
 	"SIN",		/* 0xff85 */
 	"PEEK",		/* 0xff86 */
@@ -2485,56 +2434,88 @@ static const char *basic_100[] = /* "BASIC 10.0" - supported by c65 & clones */
         int8     $00     End of line delimiter
  */
 
-static void *filter_cocobas_calcparam(const struct ImageModule *imgmod)
+/*************************************
+ *
+ *  CoCo BASIC
+ *
+ *************************************/
+
+static const struct basictoken_tableent cocobas_tokenents[] =
 {
-	static const struct basictoken_tableent cocobas_tokenents[] = {
-		{ 0x00,	0x80,	cocobas_statements,	sizeof(cocobas_statements) / sizeof(cocobas_statements[0]) },
-		{ 0xff,	0x80,	cocobas_functions,	sizeof(cocobas_functions) / sizeof(cocobas_functions[0]) }
-	};
-
-	static const struct basictokens cocobas_tokens = {
-		0x2600,
-		cocobas_tokenents,
-		sizeof(cocobas_tokenents) / sizeof(cocobas_tokenents[0])
-	};
-
-	return (void *) &cocobas_tokens;
-}
-
-static void *filter_dragonbas_calcparam(const struct ImageModule *imgmod)
-{
-	static const struct basictoken_tableent dragonbas_tokenents[] = {
-		{ 0x00,	0x80,	dragonbas_statements,	sizeof(dragonbas_statements) / sizeof(dragonbas_statements[0]) },
-		{ 0xff,	0x80,	dragonbas_functions,	sizeof(dragonbas_functions) / sizeof(dragonbas_functions[0]) }
-	};
-
-	static const struct basictokens dragonbas_tokens = {
-		0x2600,
-		dragonbas_tokenents,
-		sizeof(dragonbas_tokenents) / sizeof(dragonbas_tokenents[0])
-	};
-
-	return (void *) &dragonbas_tokens;
-}
-
-struct filter_module filter_cocobas =
-{
-	"cocobas",
-	"CoCo Tokenized Basic Files",
-	filter_cocobas_calcparam,
-	filter_cocobas_calcparam,
-	filter_basic_read,
-	filter_basic_write,
-	sizeof(struct filter_basic_state)
+	{ 0x00,	0x80,	cocobas_statements,	sizeof(cocobas_statements) / sizeof(cocobas_statements[0]) },
+	{ 0xff,	0x80,	cocobas_functions,	sizeof(cocobas_functions) / sizeof(cocobas_functions[0]) }
 };
 
-struct filter_module filter_dragonbas =
+static const struct basictokens cocobas_tokens =
 {
-	"dragonbas",
-	"Dragon Tokenized Basic Files",
-	filter_dragonbas_calcparam,
-	filter_dragonbas_calcparam,
-	filter_basic_read,
-	filter_basic_write,
-	sizeof(struct filter_basic_state)
+	0x2600,
+	cocobas_tokenents,
+	sizeof(cocobas_tokenents) / sizeof(cocobas_tokenents[0])
 };
+
+static imgtoolerr_t cocobas_readfile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *destf)
+{
+	return basic_readfile(&cocobas_tokens, image, filename, fork, destf);
+}
+
+static imgtoolerr_t cocobas_writefile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+{
+	return basic_writefile(&cocobas_tokens, image, filename, fork, sourcef, opts);
+}
+
+void filter_cocobas_getinfo(UINT32 state, union filterinfo *info)
+{
+	switch(state)
+	{
+		case FILTINFO_STR_NAME:			info->s = "cocobas"; break;
+		case FILTINFO_STR_HUMANNAME:	info->s = "CoCo Tokenized Basic Files"; break;
+		case FILTINFO_PTR_READFILE:		info->read_file = cocobas_readfile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = cocobas_writefile; break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Dragon BASIC
+ *
+ *************************************/
+
+static const struct basictoken_tableent dragonbas_tokenents[] =
+{
+	{ 0x00,	0x80,	dragonbas_statements,	sizeof(dragonbas_statements) / sizeof(dragonbas_statements[0]) },
+	{ 0xff,	0x80,	dragonbas_functions,	sizeof(dragonbas_functions) / sizeof(dragonbas_functions[0]) }
+};
+
+static const struct basictokens dragonbas_tokens =
+{
+	0x2600,
+	dragonbas_tokenents,
+	sizeof(dragonbas_tokenents) / sizeof(dragonbas_tokenents[0])
+};
+
+static imgtoolerr_t dragonbas_readfile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *destf)
+{
+	return basic_readfile(&dragonbas_tokens, image, filename, fork, destf);
+}
+
+static imgtoolerr_t dragonbas_writefile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+{
+	return basic_writefile(&dragonbas_tokens, image, filename, fork, sourcef, opts);
+}
+
+void filter_dragonbas_getinfo(UINT32 state, union filterinfo *info)
+{
+	switch(state)
+	{
+		case FILTINFO_STR_NAME:			info->s = "dragonbas"; break;
+		case FILTINFO_STR_HUMANNAME:	info->s = "Dragon Tokenized Basic Files"; break;
+		case FILTINFO_PTR_READFILE:		info->read_file = dragonbas_readfile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = dragonbas_writefile; break;
+	}
+}
