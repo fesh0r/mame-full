@@ -58,11 +58,11 @@
  *
  *************************************/
 
-data32_t *jaguar_shared_ram;
-data32_t *jaguar_gpu_ram;
-data32_t *jaguar_gpu_clut;
-data32_t *jaguar_dsp_ram;
-data32_t *jaguar_wave_rom;
+UINT32 *jaguar_shared_ram;
+UINT32 *jaguar_gpu_ram;
+UINT32 *jaguar_gpu_clut;
+UINT32 *jaguar_dsp_ram;
+UINT32 *jaguar_wave_rom;
 UINT8 cojag_is_r3000 = FALSE;
 
 
@@ -73,13 +73,13 @@ UINT8 cojag_is_r3000 = FALSE;
  *
  *************************************/
 
-static data32_t joystick_data;
+static UINT32 joystick_data;
 static UINT8 eeprom_enable;
 
-static data32_t *rom_base;
+static UINT32 *rom_base;
 static size_t rom_size;
 
-static data32_t *cart_base;
+static UINT32 *cart_base;
 static size_t cart_size;
 
 
@@ -182,9 +182,9 @@ static WRITE32_HANDLER( dspctrl_w )
 
 static READ32_HANDLER( joystick_r )
 {
-	data16_t joystick_result = 0xffff;
-	data16_t joybuts_result = 0xffff;
-	data32_t result;
+	UINT16 joystick_result = 0xffff;
+	UINT16 joybuts_result = 0xffff;
+	UINT32 result;
 	int i;
 
 	/*

@@ -25,7 +25,7 @@ it will crash shortly afterwards tho
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-static struct tilemap *background_layer,*midground_layer,*foreground_layer,*text_layer;
+static tilemap *background_layer,*midground_layer,*foreground_layer,*text_layer;
 static unsigned char *back_data,*fore_data,*mid_data, *scrollregs;
 static int mid_bank;
 
@@ -34,7 +34,7 @@ static unsigned char zz[0x400];
 
 /* SPRITE DRAWING (move to vidhrdw file) */
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ,int pri_mask )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect ,int pri_mask )
 {
 
 	const UINT8 *source = spriteram+0x1000-8 ;
@@ -204,7 +204,7 @@ static void get_text_tile_info( int tile_index )
 	SET_TILE_INFO(0,tile,color,0)
 }
 
-static void set_scroll(struct tilemap *tm, int plane)
+static void set_scroll(tilemap *tm, int plane)
 {
 	int x = (scrollregs[plane*4+1]<<8) | scrollregs[plane*4+0];
 	int y = (scrollregs[plane*4+3]<<8) | scrollregs[plane*4+2];

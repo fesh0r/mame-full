@@ -29,6 +29,7 @@ static int entry_count;
 static int failed;
 static UINT64 recorded_freespace;
 static option_resolution *opts;
+static filter_getinfoproc filter;
 
 
 
@@ -131,6 +132,7 @@ static void file_start_handler(const char **attributes)
 {
 	const char *filename;
 	const char *fork;
+	const char *filter_name;
 
 	filename = find_attribute(attributes, "name");
 	if (!filename)
@@ -144,6 +146,21 @@ static void file_start_handler(const char **attributes)
 	snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
 	snprintf(fork_buffer, sizeof(fork_buffer) / sizeof(fork_buffer[0]), "%s", fork ? fork : "");
 	fork_string = fork ? fork_buffer : NULL;
+
+	filter_name = find_attribute(attributes, "filter");
+	if (filter_name)
+	{
+		filter = filter_lookup(filter_name);
+		if (!filter)
+		{
+			failed = TRUE;
+			report_message(MSG_FAILURE, "Cannot find filter '%s'", filter_name);
+		}
+	}
+	else
+	{
+		filter = NULL;
+	}
 }
 
 
@@ -163,7 +180,7 @@ static void putfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_writefile(image, filename_buffer, fork_string, stream, NULL, NULL);
+	err = img_writefile(image, filename_buffer, fork_string, stream, NULL, filter);
 	if (err)
 	{
 		report_imgtoolerr(err);
@@ -195,7 +212,7 @@ static void checkfile_end_handler(const void *buffer, size_t size)
 		return;
 	}
 
-	err = img_readfile(image, filename_buffer, fork_string, stream, NULL);
+	err = img_readfile(image, filename_buffer, fork_string, stream, filter);
 	if (err)
 	{
 		report_imgtoolerr(err);

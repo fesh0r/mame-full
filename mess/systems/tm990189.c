@@ -250,7 +250,7 @@ INLINE void draw_digit(void)
 	segment_state[digitsel] |= ~segment;
 }
 
-static void update_common(struct mame_bitmap *bitmap,
+static void update_common(mame_bitmap *bitmap,
 							int display_x, int display_y,
 							int LED14_x, int LED14_y,
 							int LED56_x, int LED56_y,
@@ -482,7 +482,7 @@ static DEVICE_UNLOAD( tm990_189_rs232 )
 
 	tms9902_set_dsr(id, 0);
 
-	timer_remove(rs232_input_timer);
+	timer_reset(rs232_input_timer, TIME_NEVER);	/* FIXME - timers should only be allocated once */
 }
 
 static void rts_callback(int which, int RTS)

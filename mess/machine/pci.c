@@ -83,7 +83,7 @@ struct pci_device_entry
 
 static struct pci_device_entry *pci_devices;
 static struct pci_device_entry *pci_current_device;
-static data32_t pci_address;
+static UINT32 pci_address;
 
 
 
@@ -113,7 +113,7 @@ void pci_add_device(int bus, int device, const struct pci_device_info *devinfo)
 
 READ32_HANDLER(pci_32le_r)
 {
-	data32_t result = 0xFFFFFFFF;
+	UINT32 result = 0xFFFFFFFF;
 	int function, reg;
 
 	offset %= 2;

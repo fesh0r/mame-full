@@ -325,7 +325,7 @@ NVRAM_HANDLER( mc146818 )
 
 READ8_HANDLER(mc146818_port_r)
 {
-	data8_t data = 0;
+	UINT8 data = 0;
 	switch (offset) {
 	case 0:
 		data = mc146818->index;

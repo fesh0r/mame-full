@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_layer,*fg_layer,*tx_layer;
+static tilemap *bg_layer,*fg_layer,*tx_layer;
 unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 static int flipscreen,back_bankbase,fore_bankbase,back_palbase;
@@ -155,7 +155,7 @@ WRITE8_HANDLER( dynduke_control_w )
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 

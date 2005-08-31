@@ -1255,7 +1255,7 @@ static void kc85_4_update_0x04000(void)
 	/* access ram? */
 	if (kc85_86_data & (1<<0))
 	{
-		data8_t *mem_ptr;
+		UINT8 *mem_ptr;
 
 		mem_ptr = mess_ram + 0x04000;
 

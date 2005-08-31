@@ -11,7 +11,7 @@
 
 #include "includes/crtc6845.h"
 
-typedef void (*pc_video_update_proc)(struct mame_bitmap *bitmap,
+typedef void (*pc_video_update_proc)(mame_bitmap *bitmap,
 	struct crtc6845 *crtc);
 
 struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
@@ -24,11 +24,11 @@ WRITE8_HANDLER( pc_video_videoram_w );
 WRITE32_HANDLER( pc_video_videoram32_w );
 
 /* renderers */
-void pc_render_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+void pc_render_gfx_1bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	const UINT8 *vram, const UINT16 *palette, int interlace);
-void pc_render_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+void pc_render_gfx_2bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	const UINT8 *vram, const UINT16 *palette, int interlace);
-void pc_render_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+void pc_render_gfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	const UINT8 *vram, const UINT16 *palette, int interlace);
 
 #endif /* PC_VIDEO_H */

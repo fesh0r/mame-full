@@ -23,7 +23,7 @@
 static int ultratnk_controls;
 static UINT8 *mirror_ram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /*************************************
  *
@@ -56,7 +56,7 @@ static PALETTE_INIT( ultratnk )
  *
  *************************************/
 
-static void ultratnk_draw_sprites( struct mame_bitmap *bitmap )
+static void ultratnk_draw_sprites( mame_bitmap *bitmap )
 {
 	const UINT8 *pMem = memory_region( REGION_CPU1 );
 

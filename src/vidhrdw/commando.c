@@ -11,7 +11,7 @@
 
 UINT8 *commando_videoram2, *commando_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( commando_videoram_w )
 {
@@ -117,7 +117,7 @@ VIDEO_START( commando )
 	return 0;
 }
 
-static void commando_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void commando_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

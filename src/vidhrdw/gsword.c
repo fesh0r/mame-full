@@ -17,7 +17,7 @@ UINT8 *gsword_spriteattrib_ram;
 
 static int charbank, charpalbank, flipscreen;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( josvolly )
 {
@@ -179,7 +179,7 @@ VIDEO_START( gsword )
 	return 0;
 }
 
-void gsword_draw_sprites(struct mame_bitmap *bitmap)
+void gsword_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

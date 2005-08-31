@@ -17,11 +17,11 @@ driver by David Haywood and few bits by Pierpaolo Prazzoli
 
 static int out = 0;
 
-static data16_t* pkscramble_fgtilemap_ram;
-static data16_t* pkscramble_mdtilemap_ram;
-static data16_t* pkscramble_bgtilemap_ram;
+static UINT16* pkscramble_fgtilemap_ram;
+static UINT16* pkscramble_mdtilemap_ram;
+static UINT16* pkscramble_bgtilemap_ram;
 
-static struct tilemap *fg_tilemap, *md_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *md_tilemap, *bg_tilemap;
 
 static WRITE16_HANDLER( pkscramble_fgtilemap_w )
 {

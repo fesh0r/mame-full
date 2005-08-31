@@ -15,7 +15,7 @@ int tecmo_video_type = 0;
    This is needed because there is a difference in the tile and sprite indexing.
 */
 
-static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
+static tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
 
 /***************************************************************************
@@ -177,7 +177,7 @@ WRITE8_HANDLER( tecmo_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 	const UINT8 layout[8][8] =

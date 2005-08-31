@@ -12,7 +12,7 @@
 UINT8 *trackfld_scroll;
 UINT8 *trackfld_scroll2;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int bg_bank = 0, sprite_bank1 = 0, sprite_bank2 = 0;
 
 /***************************************************************************
@@ -184,7 +184,7 @@ VIDEO_START( trackfld )
 	return 0;
 }
 
-static void trackfld_draw_sprites( struct mame_bitmap *bitmap )
+static void trackfld_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -17,7 +17,7 @@ static UINT16 ddragon3_fg_scrollx;
 static UINT16 ddragon3_fg_scrolly;
 static UINT16 ddragon3_bg_tilebase;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 WRITE16_HANDLER( ddragon3_scroll16_w )
@@ -142,7 +142,7 @@ VIDEO_START( ddragon3 )
  *   6,7| unused
  */
 
-static void ddragon3_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void ddragon3_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	UINT16 *source = spriteram16;
 	UINT16 *finish = source + 0x800;

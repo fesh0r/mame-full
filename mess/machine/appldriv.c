@@ -105,7 +105,7 @@ static void apple525_seek_disk(mess_image *img, struct apple525_disk *disk, sign
 
 
 
-static void apple525_disk_set_lines(mess_image *image, data8_t new_state)
+static void apple525_disk_set_lines(mess_image *image, UINT8 new_state)
 {
 	struct apple525_disk *cur_disk;
 	UINT8 old_state;
@@ -146,7 +146,7 @@ static void apple525_disk_set_lines(mess_image *image, data8_t new_state)
 
 
 
-void apple525_set_lines(data8_t lines)
+void apple525_set_lines(UINT8 lines)
 {
 	int i, count;
 	mess_image *image;
@@ -233,7 +233,7 @@ static mess_image *apple525_selected_image(void)
 
 
 
-data8_t apple525_read_data(void)
+UINT8 apple525_read_data(void)
 {
 	mess_image *image;
 	image = apple525_selected_image();
@@ -242,7 +242,7 @@ data8_t apple525_read_data(void)
 
 
 
-void apple525_write_data(data8_t data)
+void apple525_write_data(UINT8 data)
 {
 	mess_image *image;
 	image = apple525_selected_image();

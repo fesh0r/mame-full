@@ -35,7 +35,7 @@
 
 UINT8 *airbustr_videoram2, *airbustr_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( airbustr_videoram_w )
 {
@@ -173,7 +173,7 @@ Offset:                 Values:
 
 */
 
-static void airbustr_draw_sprites( struct mame_bitmap *bitmap,const struct rectangle *cliprect )
+static void airbustr_draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect )
 {
 	int i, offs;
 

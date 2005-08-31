@@ -17,6 +17,7 @@
 #include "sound/streams.h"
 #include "sound/wavwrite.h"
 #include "config.h"
+#include "state.h"
 
 #define VERBOSE			(0)
 #define MAKE_WAVS		(0)
@@ -613,6 +614,12 @@ int sound_init(void)
 	if (route_sound())
 		return 1;
 
+	/* register globals with the save state system */
+	state_save_push_tag(0);
+	state_save_register_UINT16("sndintrf", 0, "latched_value", latched_value, 4);
+	state_save_register_UINT8("sndintrf", 0, "latch_read", latch_read, 4);
+	state_save_pop_tag();
+
 	if (MAKE_WAVS)
 		wavfile = wav_open("finalmix.wav", Machine->sample_rate, 2);
 
@@ -679,6 +686,7 @@ static int start_sound_chips(void)
 	{
 		const sound_config *msound = &Machine->drv->sound[sndnum];
 		sound_info *info;
+		int num_regs;
 		int index;
 
 		/* stop when we hit an empty entry */
@@ -706,11 +714,20 @@ static int start_sound_chips(void)
 
 		/* start the chip, tagging all its streams */
 		VPRINTF(("sndnum = %d -- sound_type = %d, index = %d\n", sndnum, msound->sound_type, index));
+		num_regs = state_save_get_reg_count();
 		current_sound_start = info;
 		streams_set_tag(info);
 		info->token = (*info->intf.start)(index, msound->clock, msound->config);
 		current_sound_start = NULL;
 		VPRINTF(("  token = %p\n", info->token));
+
+		/* if no state registered for saving, we can't save */
+		num_regs = state_save_get_reg_count() - num_regs;
+		if (num_regs == 0)
+		{
+			logerror("Sound chip #%d (%s) did not register any state to save!\n", sndnum, sndnum_name(sndnum));
+			cpu_loadsave_disallow();
+		}
 
 		/* if that failed, die */
 		if (!info->token)

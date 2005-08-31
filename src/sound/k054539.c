@@ -64,7 +64,7 @@ struct k054539_info {
 	double pantab[0xf];
 
 	double K054539_gain[8];
-	data8_t K054539_posreg_latch[8][3];
+	UINT8 K054539_posreg_latch[8][3];
 	int K054539_flags;
 
 	unsigned char regs[0x230];
@@ -483,7 +483,7 @@ static void K054539_init_chip(struct k054539_info *info, int sndindex)
 	state_save_register_int  ("K054539", sndindex, "cur_ptr",  &info->cur_ptr);
 }
 
-static void K054539_w(int chip, offs_t offset, data8_t data) //*
+static void K054539_w(int chip, offs_t offset, UINT8 data) //*
 {
 	struct k054539_info *info = sndti_token(SOUND_K054539, chip);
 #if 0
@@ -511,7 +511,7 @@ static void K054539_w(int chip, offs_t offset, data8_t data) //*
 #endif
 
 	int latch, offs, ch, pan;
-	data8_t *regbase, *regptr, *posptr;
+	UINT8 *regbase, *regptr, *posptr;
 
 	regbase = info->regs;
 	latch = (info->K054539_flags & K054539_UPDATE_AT_KEYON) && (regbase[0x22f] & 1);
@@ -607,29 +607,23 @@ static void K054539_w(int chip, offs_t offset, data8_t data) //*
 	regbase[offset] = data;
 }
 
-static void reset_zones(void)
+static void reset_zones(void *param)
 {
-	int chip;
-	for(chip=0; chip<MAX_SOUND; chip++) {
-		struct k054539_info *info = sndti_token(SOUND_K054539, chip);
-		if (info)
-		{
-			int data = info->regs[0x22e];
-			info->cur_zone =
-				data == 0x80 ? info->ram :
-				info->rom + 0x20000*data;
-			info->cur_limit = data == 0x80 ? 0x4000 : 0x20000;
-		}
-	}
+	struct k054539_info *info = param;
+	int data = info->regs[0x22e];
+	info->cur_zone =
+		data == 0x80 ? info->ram :
+		info->rom + 0x20000*data;
+	info->cur_limit = data == 0x80 ? 0x4000 : 0x20000;
 }
 
-static data8_t K054539_r(int chip, offs_t offset)
+static UINT8 K054539_r(int chip, offs_t offset)
 {
 	struct k054539_info *info = sndti_token(SOUND_K054539, chip);
 	switch(offset) {
 	case 0x22d:
 		if(info->regs[0x22f] & 0x10) {
-			data8_t res = info->cur_zone[info->cur_ptr];
+			UINT8 res = info->cur_zone[info->cur_ptr];
 			info->cur_ptr++;
 			if(info->cur_ptr == info->cur_limit)
 				info->cur_ptr = 0;
@@ -690,8 +684,7 @@ static void *k054539_start(int sndindex, int clock, const void *config)
 
 	K054539_init_chip(info, sndindex);
 
-	if (sndindex == 0)
-		state_save_register_func_postload(reset_zones);
+	state_save_register_func_postload_ptr(reset_zones, info);
 	return info;
 }
 

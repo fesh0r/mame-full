@@ -283,7 +283,7 @@ INLINE void odyssey2_draw_sprite(UINT8 bg[][320], UINT8 code, int x, int y, int 
     }
 }
 
-INLINE void odyssey2_draw_char(struct mame_bitmap *bitmap, UINT8 bg[][320], int x, int y, int ptr, int color)
+INLINE void odyssey2_draw_char(mame_bitmap *bitmap, UINT8 bg[][320], int x, int y, int ptr, int color)
 {
     int n, i;
     int offset=ptr|((color&1)<<8);

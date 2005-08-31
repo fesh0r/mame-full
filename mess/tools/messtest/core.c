@@ -366,7 +366,7 @@ static int external_entity_handler(XML_Parser parser,
 	int rc = 0, i;
 	char buf[256];
 	static const char *mamekey_prefix = "mamekey_";
-	input_code_t c;
+	input_code c;
 
 	buf[0] = '\0';
 

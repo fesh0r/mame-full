@@ -17,8 +17,8 @@ UINT8* triplhnt_orga_ram;
 int triplhnt_sprite_zoom;
 int triplhnt_sprite_bank;
 
-static struct mame_bitmap* helper;
-static struct tilemap* tilemap;
+static mame_bitmap* helper;
+static tilemap* bg_tilemap;
 
 
 static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -42,16 +42,16 @@ VIDEO_START( triplhnt )
 	if (helper == NULL)
 		return 1;
 
-	tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 16, 16);
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 16, 16);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 		return 1;
 
 	return 0;
 }
 
 
-static void triplhnt_draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void triplhnt_draw_sprites(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -60,7 +60,7 @@ static void triplhnt_draw_sprites(struct mame_bitmap* bitmap, const struct recta
 
 	for (i = 0; i < 16; i++)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		int j = (triplhnt_orga_ram[i] & 15) ^ 15;
 
@@ -147,9 +147,9 @@ VIDEO_UPDATE( triplhnt )
 	int cross_x = readinputport(8);
 	int cross_y = readinputport(9);
 
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	triplhnt_draw_sprites(bitmap, cliprect);
 

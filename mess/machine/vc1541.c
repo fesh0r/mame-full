@@ -647,7 +647,7 @@ DEVICE_UNLOAD(vc1541)
 {
 	/* writeback of image data */
 	vc1541->d64.data = NULL;
-	timer_remove(vc1541->timer);
+	timer_reset(vc1541->timer, TIME_NEVER);	/* FIXME - timers should only be allocated once */
 }
 
 int vc1541_config (int id, int mode, VC1541_CONFIG *config)

@@ -28,6 +28,7 @@
             - calls init_machine() [mame.c]
 
             init_machine() [mame.c]
+                - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls uistring_init() [ui_text.c] to initialize the localized strings
                 - calls code_init() [input.c] to initialize the input system
                 - calls inputport_init() [inptport.c] to set up the input ports
@@ -121,7 +122,6 @@
                 - frees all the memory regions
                 - calls chd_close_all() [chd.c] to tear down the hard disks
                 - calls code_exit() [input.c] to tear down the input system
-                - calls state_save_reset() [state.c] to reset the saved state system
                 - calls coin_counter_reset() [common.c] to reset coin counters
 
             - ends resource tracking (level 2), freeing all auto_mallocs and timers
@@ -194,7 +194,7 @@ static cycles_t last_fps_time;
 static int frames_since_last_fps;
 static int rendered_frames_since_last_fps;
 static int vfcount;
-static struct performance_info performance;
+static performance_info performance;
 
 /* misc other statics */
 static int leds_status;
@@ -389,6 +389,9 @@ int run_game(int game)
 
 static int init_machine(void)
 {
+	/* allow save state registrations starting here */
+	state_save_allow_registration(TRUE);
+
 	/* load the localization file */
 	if (uistring_init(options.language_file) != 0)
 	{
@@ -653,9 +656,6 @@ static void shutdown_machine(void)
 	/* close down the input system */
 	code_exit();
 
-	/* reset the saved states */
-	state_save_reset();
-
 	/* reset coin counters */
 	coin_counter_reset();
 }
@@ -704,7 +704,7 @@ void expand_machine_driver(void (*constructor)(machine_config *), machine_config
 
 static int vh_open(void)
 {
-	struct osd_create_params params;
+	osd_create_params params;
 	artwork_callbacks *artcallbacks;
 	int bmwidth = Machine->drv->screen_width;
 	int bmheight = Machine->drv->screen_height;
@@ -1070,10 +1070,10 @@ static int init_buffered_spriteram(void)
 	}
 
 	/* make 16-bit and 32-bit pointer variants */
-	buffered_spriteram16 = (data16_t *)buffered_spriteram;
-	buffered_spriteram32 = (data32_t *)buffered_spriteram;
-	buffered_spriteram16_2 = (data16_t *)buffered_spriteram_2;
-	buffered_spriteram32_2 = (data32_t *)buffered_spriteram_2;
+	buffered_spriteram16 = (UINT16 *)buffered_spriteram;
+	buffered_spriteram32 = (UINT32 *)buffered_spriteram;
+	buffered_spriteram16_2 = (UINT16 *)buffered_spriteram_2;
+	buffered_spriteram32_2 = (UINT32 *)buffered_spriteram_2;
 	return 0;
 }
 
@@ -1182,7 +1182,7 @@ void reset_partial_updates(void)
 
 void force_partial_update(int scanline)
 {
-	struct rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area;
 
 	/* if skipping this frame, bail */
 	if (osd_skip_this_frame())
@@ -1465,7 +1465,7 @@ void set_led_status(int num, int on)
     info
 -------------------------------------------------*/
 
-const struct performance_info *mame_get_performance_info(void)
+const performance_info *mame_get_performance_info(void)
 {
 	return &performance;
 }
@@ -2030,12 +2030,12 @@ int mame_validitychecks(void)
 
 							if (drv.cpu[cpu].construct_map[space][mapnum])
 							{
-								struct address_map_t address_map[MAX_ADDRESS_MAP_SIZE];
-								const struct address_map_t *map = address_map;
+								address_map addrmap[MAX_ADDRESS_MAP_SIZE];
+								const address_map *map = addrmap;
 								UINT32 flags, val;
 
-								memset(address_map, 0, sizeof(address_map));
-								(*drv.cpu[cpu].construct_map[space][mapnum])(address_map);
+								memset(addrmap, 0, sizeof(addrmap));
+								(*drv.cpu[cpu].construct_map[space][mapnum])(addrmap);
 
 								if (IS_AMENTRY_END(map))
 									continue;

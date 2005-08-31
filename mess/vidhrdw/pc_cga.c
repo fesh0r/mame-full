@@ -519,14 +519,14 @@ WRITE32_HANDLER( pc_cga32_w )
   The character cell size is 16x8
 ***************************************************************************/
 
-static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc) * 2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 
 	crtc6845_time(crtc);
@@ -579,14 +579,14 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   The character cell size is 16x8
 ***************************************************************************/
 
-static void cga_text_inten_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_text_inten_alt(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc) * 2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 
 	if (CGA_CHIPSET != CGA_CHIPSET_PC200) 
@@ -634,14 +634,14 @@ static void cga_text_inten_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
   Draw text mode with 40x25 characters (default) and blinking colors.
   The character cell size is 16x8
 ***************************************************************************/
-static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 
 	crtc6845_time(crtc);
@@ -706,14 +706,14 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   The character cell size is 16x8
 ***************************************************************************/
 
-static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_text_blink_alt(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 	
 	if (CGA_CHIPSET != CGA_CHIPSET_PC200) 
@@ -775,7 +775,7 @@ static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
 
-static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_gfx_2bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	const UINT16 *palette;
 	int colorset = cga.color_select & 0x3F;
@@ -817,7 +817,7 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
 
-static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_gfx_1bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	const UINT16 *palette;
 
@@ -833,7 +833,7 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 
 
-INLINE void cga_plot_unit_4bpp(struct mame_bitmap *bitmap, 
+INLINE void cga_plot_unit_4bpp(mame_bitmap *bitmap, 
 				 int x, int y, int offs, int scale)
 {
 	int color;
@@ -846,7 +846,7 @@ INLINE void cga_plot_unit_4bpp(struct mame_bitmap *bitmap,
 }
 
 
-static void cga_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc, int scale)
+static void cga_gfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc, int scale)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -895,7 +895,7 @@ static void cga_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc, int 
  * The different scaling factors mean that the '160x200' versions of screens
  * are the same size as the normal colour ones.
  */ 
-static void cga_gfx_4bpph(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_gfx_4bpph(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	pc_cga_check_palette();
 	cga_gfx_4bpp(bitmap, crtc, 8);
@@ -903,7 +903,7 @@ static void cga_gfx_4bpph(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	
 /* The lo-res graphics mode on a colour composite monitor */
-static void cga_gfx_4bppl(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_gfx_4bppl(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	pc_cga_check_palette();
 	cga_gfx_4bpp(bitmap, crtc, 4);
@@ -912,7 +912,7 @@ static void cga_gfx_4bppl(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 
 
-INLINE void pgfx_plot_unit_4bpp(struct mame_bitmap *bitmap, 
+INLINE void pgfx_plot_unit_4bpp(mame_bitmap *bitmap, 
 							 int x, int y, int offs)
 {
 	int color, values[2];
@@ -947,7 +947,7 @@ INLINE void pgfx_plot_unit_4bpp(struct mame_bitmap *bitmap,
   Second plane at CGA_base + 0x4000 / 0x6000 
 ***************************************************************************/
 
-static void cga_pgfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_pgfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -990,7 +990,7 @@ static void cga_pgfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 
 
-INLINE void pgfx_plot_unit_2bpp(struct mame_bitmap *bitmap, 
+INLINE void pgfx_plot_unit_2bpp(mame_bitmap *bitmap, 
 					 int x, int y, const UINT16 *palette, int offs)
 {
 	int i;
@@ -1037,7 +1037,7 @@ INLINE void pgfx_plot_unit_2bpp(struct mame_bitmap *bitmap,
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
 
-static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cga_pgfx_2bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -1111,7 +1111,7 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 // mapping of the 4 planes into videoram
 // (text data should be readable at videoram+0)
 static const int videoram_offset[4]= { 0xc000, 0x8000, 0x4000, 0 };
-INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap, 
+INLINE void pc1512_plot_unit(mame_bitmap *bitmap, 
 							 int x, int y, int offs)
 {
 	int color, values[4];
@@ -1143,7 +1143,7 @@ INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap,
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
 
-static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void pc1512_gfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -1375,7 +1375,7 @@ WRITE8_HANDLER ( pc1512_w )
 
  READ8_HANDLER ( pc1512_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	switch (offset) {
 	case 0xd:

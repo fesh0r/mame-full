@@ -10,7 +10,7 @@ UINT8 *c1943_bgscrollx;
 
 static int chon, objon, sc1on, sc2on;
 
-static struct tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
+static tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -210,7 +210,7 @@ VIDEO_START( 1943 )
 	return 0;
 }
 
-static void c1943_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void c1943_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs;
 

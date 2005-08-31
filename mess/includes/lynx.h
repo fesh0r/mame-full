@@ -34,7 +34,7 @@ WRITE8_HANDLER(suzy_write);
  READ8_HANDLER(suzy_read);
 void lynx_timer_count_down(int nr);
 
-void lynx_audio_debug(struct mame_bitmap *bitmap);
+void lynx_audio_debug(mame_bitmap *bitmap);
 void lynx_audio_reset(void);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);

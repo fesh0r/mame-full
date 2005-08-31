@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -221,7 +221,7 @@ VIDEO_START( docastle )
 	return 0;
 }
 
-static void docastle_draw_sprites( struct mame_bitmap *bitmap )
+static void docastle_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

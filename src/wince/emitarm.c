@@ -107,7 +107,7 @@ enum
 static void emit_regreg_shift(struct blitter_params *params, INT32 opcode, unsigned int rd, unsigned int r1,
 	unsigned int r2, INT32 shift_type, unsigned int shift)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	assert(rd < 16);
 	assert(r1 < 16);
@@ -149,7 +149,7 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 	UINT32 tmp;
 	INT32 subopcode1;
 	INT32 subopcode2;
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	assert(rd < 16);
 	assert(r1 < 16);
@@ -247,7 +247,7 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 
 void emit_header(struct blitter_params *params)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	// stmfd	sp!,	{r4-r12}
 	_stmfd_wb(COND_AL, RSP, 0x1ff0);
@@ -264,7 +264,7 @@ void emit_header(struct blitter_params *params)
 
 void emit_footer(struct blitter_params *params)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	// ldmfd	sp!, {r12-r4}
 	_ldmfd_wb(COND_AL, RSP, 0x1ff0);
@@ -291,7 +291,7 @@ int emit_copy_pixels(struct blitter_params *params, const int *pixel_spans, int 
 		int reg;
 	};
 
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 	struct calculated_blend_mask blend_masks[2];
 	int blend_mask_count = 0;
 	int source_index = 0;
@@ -397,7 +397,7 @@ void emit_begin_loop(struct blitter_params *params)
 
 void emit_finish_loop(struct blitter_params *params, void *loop_begin)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	// bne	begin
 	_bcc(COND_NE, loop_begin);

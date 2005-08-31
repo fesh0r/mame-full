@@ -32,7 +32,7 @@ Any fixes for this driver should be forwarded to AGEMAME at (http://www.mameworl
 /* vidhrdw */
 
 #if 0 //Disabled
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static WRITE8_HANDLER( cm_videoram_w )
 {

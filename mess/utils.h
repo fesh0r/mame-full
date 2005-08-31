@@ -50,14 +50,6 @@
 #define FUNCATTR_CONST
 #endif
 
-#ifndef MIN
-#define MIN(a, b)		((a) < (b) ? (a) : (b))
-#endif /* MIN */
-
-#ifndef MAX
-#define MAX(a, b)		((a) > (b) ? (a) : (b))
-#endif /* MIN */
-
 #ifndef TRUE
 #define TRUE	1
 #endif

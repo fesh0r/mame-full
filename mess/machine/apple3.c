@@ -95,7 +95,7 @@ static UINT8 apple3_profile_r(offs_t offset)
 
 
 
-static void apple3_profile_w(offs_t offset, data8_t data)
+static void apple3_profile_w(offs_t offset, UINT8 data)
 {
 	offset %= 4;
 	profile_lastaddr = -1;

@@ -49,7 +49,7 @@ const char *filter_get_info_string(filter_getinfoproc get_info, UINT32 state)
 
 const filter_getinfoproc filters[] =
 {
-//	filter_eoln_getinfo,
+	filter_eoln_getinfo,
 //	filter_cocobas_getinfo,
 //	filter_dragonbas_getinfo,
 	filter_macbinary_getinfo,

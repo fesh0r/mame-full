@@ -314,7 +314,7 @@ READ8_HANDLER(apple2_c0xx_r)
 		apple2_c06x_r,
 		apple2_c07x_r
 	};
-	data8_t result = 0x00;
+	UINT8 result = 0x00;
 	int slot;
 
 	offset &= 0xFF;
@@ -576,7 +576,7 @@ void apple2_setvar(UINT32 val, UINT32 mask)
  *     with FIX:
  * ----------------------------------------------------------------------- */
 
-data8_t apple2_getfloatingbusvalue(void)
+UINT8 apple2_getfloatingbusvalue(void)
 {
 	enum
 	{
@@ -832,7 +832,7 @@ static WRITE8_HANDLER ( apple2_auxram2000_w )
 
 READ8_HANDLER ( apple2_c00x_r )
 {
-	data8_t result;
+	UINT8 result;
 
 	/* Read the keyboard data and strobe */
 	profiler_mark(PROFILER_C00X);
@@ -880,7 +880,7 @@ WRITE8_HANDLER ( apple2_c00x_w )
 
 READ8_HANDLER ( apple2_c01x_r )
 {
-	data8_t result = apple2_getfloatingbusvalue() & 0x7F;
+	UINT8 result = apple2_getfloatingbusvalue() & 0x7F;
 
 	profiler_mark(PROFILER_C01X);
 
@@ -1139,7 +1139,7 @@ WRITE8_HANDLER ( apple2_c08x_w )
  * Language Card
  * ----------------------------------------------------------------------- */
 
-static data8_t apple2_langcard_read(void *token, offs_t offset)
+static UINT8 apple2_langcard_read(void *token, offs_t offset)
 {
 	return apple2_c08x_r(offset);
 
@@ -1147,7 +1147,7 @@ static data8_t apple2_langcard_read(void *token, offs_t offset)
 
 
 
-static void apple2_langcard_write(void *token, offs_t offset, data8_t data)
+static void apple2_langcard_write(void *token, offs_t offset, UINT8 data)
 {
 	apple2_c08x_w(offset, data);
 }
@@ -1185,7 +1185,7 @@ static void apple2_mockingboard_reset(void *token)
 
 
 
-static data8_t apple2_mockingboard_read(void *token, offs_t offset)
+static UINT8 apple2_mockingboard_read(void *token, offs_t offset)
 {
 	static int flip1 = 0, flip2 = 0;
 
@@ -1209,7 +1209,7 @@ static data8_t apple2_mockingboard_read(void *token, offs_t offset)
 
 
 
-static void apple2_mockingboard_write(void *token, offs_t offset, data8_t data)
+static void apple2_mockingboard_write(void *token, offs_t offset, UINT8 data)
 {
 	static int latch0, latch1;
 
@@ -1292,7 +1292,7 @@ static int apple2_fdc_has_35;
 static int apple2_fdc_has_525;
 static int apple2_fdc_diskreg;
 
-static void apple2_fdc_set_lines(data8_t lines)
+static void apple2_fdc_set_lines(UINT8 lines)
 {
 	if (apple2_fdc_diskreg & 0x40)
 	{
@@ -1339,9 +1339,9 @@ static void apple2_fdc_set_enable_lines(int enable_mask)
 
 
 
-static data8_t apple2_fdc_read_data(void)
+static UINT8 apple2_fdc_read_data(void)
 {
-	data8_t result = 0x00;
+	UINT8 result = 0x00;
 
 	if (apple2_fdc_diskreg & 0x40)
 	{
@@ -1364,7 +1364,7 @@ static data8_t apple2_fdc_read_data(void)
 
 
 
-static void apple2_fdc_write_data(data8_t data)
+static void apple2_fdc_write_data(UINT8 data)
 {
 	if (apple2_fdc_diskreg & 0x40)
 	{
@@ -1411,7 +1411,7 @@ static int apple2_fdc_read_status(void)
 
 
 
-void apple2_iwm_setdiskreg(data8_t data)
+void apple2_iwm_setdiskreg(UINT8 data)
 {
 	apple2_fdc_diskreg = data & 0xC0;
 	if (apple2_fdc_has_35)
@@ -1420,7 +1420,7 @@ void apple2_iwm_setdiskreg(data8_t data)
 
 
 
-data8_t apple2_iwm_getdiskreg(void)
+UINT8 apple2_iwm_getdiskreg(void)
 {
 	return apple2_fdc_diskreg;
 }
@@ -1473,14 +1473,14 @@ static void *apple2_fdc_iwm_init(int slot)
 
 
 
-static data8_t apple2_fdc_read(void *token, offs_t offset)
+static UINT8 apple2_fdc_read(void *token, offs_t offset)
 {
 	return applefdc_r(offset);
 }
 
 
 
-static void apple2_fdc_write(void *token, offs_t offset, data8_t data)
+static void apple2_fdc_write(void *token, offs_t offset, UINT8 data)
 {
 	applefdc_w(offset, data);
 }

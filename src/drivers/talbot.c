@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static UINT8 *workram;
 static UINT8 *talbot_mcu_ram;
@@ -264,7 +264,7 @@ VIDEO_START( talbot )
 	return 0;
 }
 
-static void talbot_draw_sprites( struct mame_bitmap *bitmap )
+static void talbot_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

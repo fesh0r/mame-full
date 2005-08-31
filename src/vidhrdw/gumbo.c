@@ -2,11 +2,11 @@
 
 #include "driver.h"
 
-extern data16_t *gumbo_bg_videoram;
-extern data16_t *gumbo_fg_videoram;
+extern UINT16 *gumbo_bg_videoram;
+extern UINT16 *gumbo_fg_videoram;
 
-static struct tilemap *gumbo_bg_tilemap;
-static struct tilemap *gumbo_fg_tilemap;
+static tilemap *gumbo_bg_tilemap;
+static tilemap *gumbo_fg_tilemap;
 
 WRITE16_HANDLER( gumbo_bg_videoram_w )
 {

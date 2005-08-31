@@ -14,8 +14,8 @@
 struct mpc105_info
 {
 	int bank_base;
-	data8_t bank_enable;
-	data32_t bank_registers[8];
+	UINT8 bank_enable;
+	UINT32 bank_registers[8];
 };
 
 
@@ -76,9 +76,9 @@ static void mpc105_update_memory(void)
 
 
 
-static data32_t mpc105_pci_read(int function, int offset)
+static UINT32 mpc105_pci_read(int function, int offset)
 {
-	data32_t result;
+	UINT32 result;
 
 	if (function != 0)
 		return 0;
@@ -151,7 +151,7 @@ static data32_t mpc105_pci_read(int function, int offset)
 
 
 
-static void mpc105_pci_write(int function, int offset, data32_t data)
+static void mpc105_pci_write(int function, int offset, UINT32 data)
 {
 	int i;
 
@@ -177,9 +177,9 @@ static void mpc105_pci_write(int function, int offset, data32_t data)
 			break;
 
 		case 0xA0:	/* memory enable */
-			if (mpc105->bank_enable != (data8_t) data)
+			if (mpc105->bank_enable != (UINT8) data)
 			{
-				mpc105->bank_enable = (data8_t) data;
+				mpc105->bank_enable = (UINT8) data;
 				mpc105_update_memory();
 			}
 			break;

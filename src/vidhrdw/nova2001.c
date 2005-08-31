@@ -36,7 +36,7 @@
 
 UINT8 *nova2001_videoram2, *nova2001_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 PALETTE_INIT( nova2001 )
 {
@@ -177,7 +177,7 @@ VIDEO_START( nova2001 )
 	return 0;
 }
 
-static void nova2001_draw_sprites( struct mame_bitmap *bitmap )
+static void nova2001_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

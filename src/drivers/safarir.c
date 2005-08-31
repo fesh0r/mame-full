@@ -48,7 +48,7 @@ size_t safarir_ram_size;
 
 static UINT8 *safarir_ram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 WRITE8_HANDLER( safarir_ram_w )

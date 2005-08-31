@@ -1,8 +1,5 @@
 /*
 To do:
- - finish memory card menu
- - finish joystick calibration menu
- - figure out how to untangle cheat menus
  - make single step work reliably
 */
 /*********************************************************************
@@ -64,8 +61,8 @@ enum
  *
  *************************************/
 
-#define UI_BOX_LR_BORDER		(get_char_width(' ') / 2)
-#define UI_BOX_TB_BORDER		(get_char_width(' ') / 2)
+#define UI_BOX_LR_BORDER		(ui_get_char_width(' ') / 2)
+#define UI_BOX_TB_BORDER		(ui_get_char_width(' ') / 2)
 
 
 
@@ -86,12 +83,12 @@ memcard_interface memcard_intf;
  *************************************/
 
 /* raw coordinates, relative to the real scrbitmap */
-static struct rectangle uirawbounds;
+static rectangle uirawbounds;
 
 /* rotated coordinates, easier to deal with */
-static struct rectangle uirotbounds;
+static rectangle uirotbounds;
 static int uirotwidth, uirotheight;
-int uirotcharwidth, uirotcharheight;
+static int uirotcharwidth, uirotcharheight;
 
 /* UI states */
 static int therm_state;
@@ -130,7 +127,7 @@ static int onscrd_arg[MAX_OSD_ITEMS];
 static int onscrd_total_items;
 
 
-static input_seq_t starting_seq;
+static input_seq starting_seq;
 
 
 
@@ -314,13 +311,12 @@ static void draw_multiline_text_box(const char *text, int justify, float xpos, f
 static void create_font(void);
 static void onscrd_init(void);
 
-static int handle_keys(struct mame_bitmap *bitmap);
-/*static void ui_display_fps(void);*/
+static int handle_keys(mame_bitmap *bitmap);
 static void ui_display_profiler(void);
 static void ui_display_popup(void);
 static int setup_menu(int selected);
 static int on_screen_display(int selected);
-static void showcharset(struct mame_bitmap *bitmap);
+static void showcharset(mame_bitmap *bitmap);
 static void initiate_load_save(int type);
 static int update_load_save(void);
 
@@ -347,15 +343,13 @@ static int sprintf_game_info(char *buf);
 
 
 /* -- begin this stuff will go away with the new rendering system */
-static void ui_raw2rot_rect(struct rectangle *rect);
-static void ui_rot2raw_rect(struct rectangle *rect);
-static int get_char_width(UINT16 ch);
-static int get_string_width(const char *s);
+static void ui_raw2rot_rect(rectangle *rect);
+static void ui_rot2raw_rect(rectangle *rect);
 static void add_line(int x1, int y1, int x2, int y2, rgb_t color);
 static void add_fill(int left, int top, int right, int bottom, rgb_t color);
 static void add_char(int x, int y, UINT16 ch, int color);
 static void add_filled_box(int x1, int y1, int x2, int y2);
-static void render_ui(struct mame_bitmap *dest);
+static void render_ui(mame_bitmap *dest);
 /* -- end this stuff will go away with the new rendering system */
 
 
@@ -440,7 +434,7 @@ void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax)
  *
  *************************************/
 
-int ui_update_and_render(struct mame_bitmap *bitmap)
+int ui_update_and_render(mame_bitmap *bitmap)
 {
 	/* if we're single-stepping, pause now */
 	if (single_step)
@@ -535,6 +529,18 @@ void ui_get_bounds(int *width, int *height)
 int ui_get_line_height(void)
 {
 	return uirotcharheight + 2;
+}
+
+
+int ui_get_char_width(UINT16 ch)
+{
+	return uirotcharwidth;
+}
+
+
+int ui_get_string_width(const char *s)
+{
+	return strlen(s) * uirotcharwidth;
 }
 
 
@@ -692,7 +698,7 @@ void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, 
 				break;
 
 			/* add the width of this character and advance */
-			curwidth += get_char_width(*s);
+			curwidth += ui_get_char_width(*s);
 			s++;
 		}
 
@@ -713,7 +719,7 @@ void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, 
 				else if (s > linestart)
 				{
 					s--;
-					curwidth -= get_char_width(*s);
+					curwidth -= ui_get_char_width(*s);
 				}
 			}
 
@@ -721,13 +727,13 @@ void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, 
 			else if (wrap == WRAP_TRUNCATE)
 			{
 				/* add in the width of the ... */
-				curwidth += 3 * get_char_width('.');
+				curwidth += 3 * ui_get_char_width('.');
 
 				/* while we are above the wrap width, back up one character */
 				while (curwidth > wrapwidth && s > linestart)
 				{
 					s--;
-					curwidth -= get_char_width(*s);
+					curwidth -= ui_get_char_width(*s);
 				}
 			}
 		}
@@ -752,7 +758,7 @@ void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, 
 			if (draw != DRAW_NONE)
 			{
 				add_char(curx, cury, *linestart, fgcolor);
-				curx += get_char_width(*linestart);
+				curx += ui_get_char_width(*linestart);
 			}
 			linestart++;
 		}
@@ -761,11 +767,11 @@ void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, 
 		if (wrap == WRAP_TRUNCATE && *s != 0 && draw != DRAW_NONE)
 		{
 			add_char(curx, cury, '.', fgcolor);
-			curx += get_char_width('.');
+			curx += ui_get_char_width('.');
 			add_char(curx, cury, '.', fgcolor);
-			curx += get_char_width('.');
+			curx += ui_get_char_width('.');
 			add_char(curx, cury, '.', fgcolor);
-			curx += get_char_width('.');
+			curx += ui_get_char_width('.');
 		}
 
 		/* if we're not word-wrapping, we're done */
@@ -806,10 +812,10 @@ void ui_draw_menu(const ui_menu_item *items, int numitems, int selected)
 	const char *left_hilight = ui_getstring(UI_lefthilight);
 	const char *right_hilight = ui_getstring(UI_righthilight);
 
-	int left_hilight_width = get_string_width(left_hilight);
-	int right_hilight_width = get_string_width(right_hilight);
-	int left_arrow_width = get_string_width(left_arrow);
-	int space_width = get_char_width(' ');
+	int left_hilight_width = ui_get_string_width(left_hilight);
+	int right_hilight_width = ui_get_string_width(right_hilight);
+	int left_arrow_width = ui_get_string_width(left_arrow);
+	int space_width = ui_get_char_width(' ');
 	int line_height = ui_get_line_height();
 
 	int effective_width, effective_left;
@@ -833,11 +839,11 @@ void ui_draw_menu(const ui_menu_item *items, int numitems, int selected)
 		int total_width;
 
 		/* compute width of left hand side */
-		total_width = left_hilight_width + get_string_width(item->text) + right_hilight_width;
+		total_width = left_hilight_width + ui_get_string_width(item->text) + right_hilight_width;
 
 		/* add in width of right hand side */
 		if (item->subtext)
-			total_width += 2 * space_width + get_string_width(item->subtext);
+			total_width += 2 * space_width + ui_get_string_width(item->subtext);
 
 		/* track the maximum */
 		if (total_width > visible_width)
@@ -913,7 +919,7 @@ void ui_draw_menu(const ui_menu_item *items, int numitems, int selected)
 			item_width += 2 * space_width;
 
 			/* if the subitem doesn't fit here, display dots */
-			if (get_string_width(subitem_text) > effective_width - item_width)
+			if (ui_get_string_width(subitem_text) > effective_width - item_width)
 			{
 				subitem_text = "...";
 				if (itemnum == selected)
@@ -1079,7 +1085,7 @@ static void draw_multiline_text_box(const char *text, int justify, float xpos, f
 
 	/* compute the multi-line target width/height */
 	ui_draw_text_full(text, 0, 0, ui_width - 2 * UI_BOX_LR_BORDER,
-				JUSTIFY_LEFT, WRAP_WORD, DRAW_NONE, RGB_WHITE, RGB_BLACK, &target_width, &target_height);
+				justify, WRAP_WORD, DRAW_NONE, RGB_WHITE, RGB_BLACK, &target_width, &target_height);
 	if (target_height > ui_height - 2 * UI_BOX_TB_BORDER)
 		target_height = ((ui_height - 2 * UI_BOX_TB_BORDER) / ui_get_line_height()) * ui_get_line_height();
 
@@ -1103,7 +1109,7 @@ static void draw_multiline_text_box(const char *text, int justify, float xpos, f
 					target_x + target_width - 1 + UI_BOX_LR_BORDER,
 					target_y + target_height - 1 + UI_BOX_TB_BORDER);
 	ui_draw_text_full(text, target_x, target_y, target_width,
-				JUSTIFY_LEFT, WRAP_WORD, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+				justify, WRAP_WORD, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
 }
 
 
@@ -1196,7 +1202,7 @@ static void create_font(void)
  *
  *************************************/
 
-static int handle_keys(struct mame_bitmap *bitmap)
+static int handle_keys(mame_bitmap *bitmap)
 {
 	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
@@ -1445,7 +1451,7 @@ static UINT32 menu_default_input_groups(UINT32 state)
  *
  *************************************/
 
-INLINE int input_menu_update_polling(input_seq_t *selected_seq, int *record_next, int *polling)
+INLINE int input_menu_update_polling(input_seq *selected_seq, int *record_next, int *polling)
 {
 	int result = seq_read_async(selected_seq, !*record_next);
 
@@ -1468,7 +1474,7 @@ INLINE int input_menu_update_polling(input_seq_t *selected_seq, int *record_next
 }
 
 
-INLINE void input_menu_toggle_none_default(input_seq_t *selected_seq, input_seq_t *original_seq, const input_seq_t *selected_defseq)
+INLINE void input_menu_toggle_none_default(input_seq *selected_seq, input_seq *original_seq, const input_seq *selected_defseq)
 {
 	/* if we used to be "none", toggle to the default value */
 	if (seq_get_1(original_seq) == CODE_NONE)
@@ -1487,7 +1493,7 @@ INLINE void input_menu_toggle_none_default(input_seq_t *selected_seq, input_seq_
  *
  *************************************/
 
-INLINE void default_input_menu_add_item(ui_menu_item *item, const char *format, const char *name, const input_seq_t *seq, const input_seq_t *defseq)
+INLINE void default_input_menu_add_item(ui_menu_item *item, const char *format, const char *name, const input_seq *seq, const input_seq *defseq)
 {
 	/* set the item text using the formatting string provided */
 	item->text = &menu_string_pool[menu_string_pool_offset];
@@ -1506,13 +1512,13 @@ INLINE void default_input_menu_add_item(ui_menu_item *item, const char *format, 
 
 static UINT32 menu_default_input(UINT32 state)
 {
-	static input_seq_t starting_seq;
+	static input_seq starting_seq;
 
 	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
 	const input_port_default_entry *indef;
 	input_port_default_entry *in;
-	const input_seq_t *selected_defseq = NULL;
-	input_seq_t *selected_seq = NULL;
+	const input_seq *selected_defseq = NULL;
+	input_seq *selected_seq = NULL;
 	UINT8 selected_is_analog = FALSE;
 	int selected = state & 0x3fff;
 	int record_next = (state >> 14) & 1;
@@ -1655,10 +1661,10 @@ INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, inp
 
 static UINT32 menu_game_input(UINT32 state)
 {
-	static const input_seq_t default_seq = SEQ_DEF_1(CODE_DEFAULT);
+	static const input_seq default_seq = SEQ_DEF_1(CODE_DEFAULT);
 
 	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
-	input_seq_t *selected_seq = NULL;
+	input_seq *selected_seq = NULL;
 	UINT8 selected_is_analog = FALSE;
 	int selected = state & 0x3fff;
 	int record_next = (state >> 14) & 1;
@@ -2010,22 +2016,40 @@ static UINT32 menu_analog(UINT32 state)
 
 static UINT32 menu_joystick_calibrate(UINT32 state)
 {
-	char buf[2048];
-	char *bufptr = buf;
-	int selected = 0;
+	const char *msg;
 
-	/* add the default text */
-	bufptr += sprintf(bufptr, "This feature is temporarily disabled pending completion of the user interface rewrite.\n");
+	/* two states */
+	switch (state)
+	{
+		/* state 0 is just starting */
+		case 0:
+			osd_joystick_start_calibration();
+			state++;
+			break;
 
-	/* make it look like a menu */
-	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
+		/* state 1 is where we spend our time */
+		case 1:
 
-	/* draw the text */
-	ui_draw_message_window(buf);
+			/* get the message; if none, we're done */
+			msg = osd_joystick_calibrate_next();
+			if (msg == NULL)
+			{
+				osd_joystick_end_calibration();
+				return ui_menu_stack_pop();
+			}
 
-	/* handle the keys */
-	ui_menu_generic_keys(&selected, 1);
-	return selected;
+			/* display the message */
+			ui_draw_message_window(msg);
+
+			/* handle cancel and select */
+			if (input_ui_pressed(IPT_UI_CANCEL))
+				return ui_menu_stack_pop();
+			if (input_ui_pressed(IPT_UI_SELECT))
+				osd_joystick_calibrate();
+			break;
+	}
+
+	return state;
 }
 
 
@@ -2238,7 +2262,7 @@ static UINT32 menu_file_manager(UINT32 state)
 {
 	int result = filemanager(state);
 	if (result == 0)
-		return ui_menu_stack_pop();
+	return ui_menu_stack_pop();
 	return result;
 }
 
@@ -2247,7 +2271,7 @@ static UINT32 menu_tape_control(UINT32 state)
 {
 	int result = tapecontrol(state);
 	if (result == 0)
-		return ui_menu_stack_pop();
+	return ui_menu_stack_pop();
 	return result;
 }
 #endif
@@ -2347,16 +2371,197 @@ static int sprintf_game_info(char *buf)
     erase_screen - erase the screen
 -------------------------------------------------*/
 
-static void erase_screen(struct mame_bitmap *bitmap)
+static void erase_screen(mame_bitmap *bitmap)
 {
 	fillbitmap(bitmap, get_black_pen(), NULL);
 	schedule_full_refresh();
 }
 
 
+#if 0
+
+static int showgfx_mode;
+
+void showgfx_show(int visible)
+{
+	showgfx_enabled = visible;
+
+	if (!showgfx_enabled)
+	{
+		mame_pause(TRUE);
+		showgfx_mode = 0;
+	}
+	else
+	{
+		mame_pause(FALSE);
+	}
 
 
-static void showcharset(struct mame_bitmap *bitmap)
+	schedule_full_refresh();
+
+	/* mark all the tilemaps dirty on exit so they are updated correctly on the next frame */
+	tilemap_mark_all_tiles_dirty(NULL);
+}
+
+
+void showgfx_render(mame_bitmap *bitmap)
+{
+	static const rectangle fullrect = { 0, 10000, 0, 10000 };
+	int num_tilemap = tilemap_count();
+	int num_gfx;
+
+	/* determine the number of gfx sets we have */
+
+
+	/* mark the whole thing dirty */
+	artwork_mark_ui_dirty(fullrect.min_x, fullrect.min_y, fullrect.max_x, fullrect.max_y);
+	ui_dirty = 5;
+
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+	{
+		go_to_next_mode;
+		showgfx_xscroll = 0;
+		showgfx_yscroll = 0;
+	}
+
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+
+	if (input_ui_pressed(
+}
+
+
+static void show_colors(int submode)
+{
+	int boxheight = ui_get_line_height();
+	int boxwidth = ui_get_char_width('0');
+
+	int i;
+	char buf[80];
+	int mode,bank,color,firstdrawn;
+	int palpage;
+	int changed;
+	int total_colors = 0;
+	pen_t *colortable = NULL;
+	int cpx=0,cpy,skip_chars=0,skip_tmap=0;
+	int sx,sy,colors;
+	int column_heading_max;
+	struct bounds;
+
+
+	/* make the boxes square */
+	if (boxwidth < boxheight)
+		boxwidth = boxheight;
+	else
+		boxheight = boxwidth;
+
+	/* submode 0 is the palette */
+	if (submode == 0)
+	{
+		total_colors = Machine->drv->total_colors;
+		colortable = Machine->pens;
+		ui_draw_text(0, 0, "PALETTE");
+	}
+
+	/* submode 1 is the CLUT */
+	else if (submode == 1)
+	{
+		total_colors = Machine->drv->color_table_len;
+		colortable = Machine->remapped_colortable;
+		ui_draw_text(0, 0, "CLUT");
+	}
+
+	/* anything else is invalid */
+	else
+		return;
+
+	/* start with a blank slate */
+	fillbitmap(bitmap, get_black_pen(), NULL);
+
+	/* determine how many colors on this page */
+	colors = total_colors - showgfx_yscroll;
+	if (colors > 256)
+		colors = 256;
+
+	/* and the maximum number of colums we need to display */
+	if (colors < 16)
+		column_heading_max = (color < 16) ? colors : 16;
+
+	/* determine the grid top/left */
+	grid_top = 3 * ui_get_line_height();
+	grid_left = ui_get_string_width("0000");
+
+	/* display the column headings */
+	for (colnum = 0; colnum < column_heading_max; colnum++)
+	{
+		char tempstr[10];
+
+		/* draw a single hex digit over the center of each column */
+		sprintf(tempstr, "%X", colnum);
+		ui_draw_text(tempstr,  grid_left + colnum * boxwidth + (boxwidth - ui_get_string_width(tempstr)) / 2,
+					 grid_top - ui_get_line_height());
+	}
+
+	/* display the row headings */
+	for (rownum = 0; rownum < (colors + 15) / 16; rownum++)
+	{
+		char tempstr[10];
+
+		/* draw the palette index to the left of each row */
+		sprintf(tempstr, "%X", showgfx_yscroll + rownum * 16);
+		ui_draw_text(tempstr, grid_left - ui_get_string_width(tempstr),
+					 grid_top + rownum * boxheight + (boxheight - ui_get_line_height()) / 2);
+	}
+
+	/* now draw the pretty boxes */
+	for (colornum = 0; colornum < colors; colornum++)
+	{
+		rectangle bounds;
+
+		/* compute the bounds of the box */
+		bounds.min_x = grid_left + (colornum % 16) * boxwidth;
+		bounds.max_x = bounds.min_x + boxwidth - 1;
+		bounds.min_y = grid_top + (colornum / 16) * boxheight;
+		bounds.max_y = bounds.min_y + boxheight - 1;
+
+		bounds.min_x = uirotbounds.min_x + 3*uirotcharwidth + (uirotcharwidth*4/3)*(i % 16);
+		bounds.min_y = uirotbounds.min_y + 2*uirotcharheight + (uirotcharheight)*(i / 16) + uirotcharheight;
+		bounds.max_x = bounds.min_x + uirotcharwidth*4/3 - 1;
+		bounds.max_y = bounds.min_y + uirotcharheight - 1;
+		ui_rot2raw_rect(&bounds);
+		fillbitmap(bitmap, colortable[i + 256*palpage], &bounds);
+	}
+	}
+	else
+		ui_draw_text("N/A",3*uirotcharwidth,2*uirotcharheight);
+
+	ui_draw_text(buf,0,0);
+
+	render_ui(bitmap);
+	update_video_and_audio();
+
+	if (code_pressed_memory_repeat(KEYCODE_PGDN,4))
+	{
+		if (256 * (palpage + 1) < total_colors)
+		{
+			palpage++;
+			changed = 1;
+		}
+	}
+
+	if (code_pressed_memory_repeat(KEYCODE_PGUP,4))
+	{
+		if (palpage > 0)
+		{
+			palpage--;
+			changed = 1;
+		}
+	}
+}
+
+#endif
+
+
+static void showcharset(mame_bitmap *bitmap)
 {
 	int i;
 	char buf[80];
@@ -2382,7 +2587,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 	do
 	{
-		static const struct rectangle fullrect = { 0, 10000, 0, 10000 };
+		static const rectangle fullrect = { 0, 10000, 0, 10000 };
 
 		/* mark the whole thing dirty */
 		artwork_mark_ui_dirty(fullrect.min_x, fullrect.min_y, fullrect.max_x, fullrect.max_y);
@@ -2447,7 +2652,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 						for (i = 0;i < colors;i++)
 						{
-							struct rectangle bounds;
+							rectangle bounds;
 							bounds.min_x = uirotbounds.min_x + 3*uirotcharwidth + (uirotcharwidth*4/3)*(i % 16);
 							bounds.min_y = uirotbounds.min_y + 2*uirotcharheight + (uirotcharheight)*(i / 16) + uirotcharheight;
 							bounds.max_x = bounds.min_x + uirotcharwidth*4/3 - 1;
@@ -2493,7 +2698,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 					{
-						struct rectangle bounds;
+						rectangle bounds;
 						bounds.min_x = (i % cpx) * crotwidth + uirotbounds.min_x;
 						bounds.min_y = uirotcharheight + (i / cpx) * crotheight + uirotbounds.min_y;
 						bounds.max_x = bounds.min_x + crotwidth - 1;
@@ -2778,68 +2983,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 
 
-static int calibratejoysticks(int selected)
-{
-	const char *msg;
-	char buf[2048];
-	int sel;
-	static int calibration_started = 0;
-
-	sel = selected - 1;
-
-	if (calibration_started == 0)
-	{
-		osd_joystick_start_calibration();
-		calibration_started = 1;
-		strcpy (buf, "");
-	}
-
-	if (sel > SEL_MASK) /* Waiting for the user to acknowledge joystick movement */
-	{
-		if (input_ui_pressed(IPT_UI_CANCEL))
-		{
-			calibration_started = 0;
-			sel = -1;
-		}
-		else if (input_ui_pressed(IPT_UI_SELECT))
-		{
-			osd_joystick_calibrate();
-			sel &= SEL_MASK;
-		}
-
-		ui_draw_message_window(buf);
-	}
-	else
-	{
-		msg = osd_joystick_calibrate_next();
-		schedule_full_refresh();
-		if (msg == 0)
-		{
-			calibration_started = 0;
-			osd_joystick_end_calibration();
-			sel = -1;
-		}
-		else
-		{
-			strcpy (buf, msg);
-			ui_draw_message_window(buf);
-			sel |= 1 << SEL_BITS;
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-
-
-int ui_display_copyright(struct mame_bitmap *bitmap)
+int ui_display_copyright(mame_bitmap *bitmap)
 {
 	char buf[1000];
 	char *bufptr = buf;
@@ -2878,7 +3022,7 @@ int ui_display_copyright(struct mame_bitmap *bitmap)
 	return 0;
 }
 
-int ui_display_game_warnings(struct mame_bitmap *bitmap)
+int ui_display_game_warnings(mame_bitmap *bitmap)
 {
 #define WARNING_FLAGS (	GAME_NOT_WORKING | \
 						GAME_UNEMULATED_PROTECTION | \
@@ -2990,7 +3134,7 @@ int ui_display_game_warnings(struct mame_bitmap *bitmap)
 }
 
 
-int ui_display_game_info(struct mame_bitmap *bitmap)
+int ui_display_game_info(mame_bitmap *bitmap)
 {
 	int ui_width, ui_height;
 	char buf[2048];
@@ -3058,133 +3202,6 @@ int ui_display_game_info(struct mame_bitmap *bitmap)
 	return 0;
 }
 
-/*
-int memcard_menu(int selection)
-{
-    int sel;
-    int menutotal = 0;
-    const char *menuitem[10];
-    char buf[256];
-    char buf2[256];
-
-    sel = selection - 1 ;
-
-    sprintf(buf, "%s %03d", ui_getstring (UI_loadcard), cardnum);
-    menuitem[menutotal++] = buf;
-    menuitem[menutotal++] = ui_getstring (UI_ejectcard);
-    menuitem[menutotal++] = ui_getstring (UI_createcard);
-    menuitem[menutotal++] = ui_getstring (UI_returntomain);
-    menuitem[menutotal] = 0;
-
-    if (mcd_action!=0)
-    {
-        strcpy (buf2, "\n");
-
-        switch(mcd_action)
-        {
-            case 1:
-                strcat (buf2, ui_getstring (UI_loadfailed));
-                break;
-            case 2:
-                strcat (buf2, ui_getstring (UI_loadok));
-                break;
-            case 3:
-                strcat (buf2, ui_getstring (UI_cardejected));
-                break;
-            case 4:
-                strcat (buf2, ui_getstring (UI_cardcreated));
-                break;
-            case 5:
-                strcat (buf2, ui_getstring (UI_cardcreatedfailed));
-                strcat (buf2, "\n");
-                strcat (buf2, ui_getstring (UI_cardcreatedfailed2));
-                break;
-            default:
-                strcat (buf2, ui_getstring (UI_carderror));
-                break;
-        }
-
-        strcat (buf2, "\n\n");
-        ui_draw_message_window(buf2);
-        if (input_ui_pressed(IPT_UI_SELECT))
-            mcd_action = 0;
-    }
-    else
-    {
-        //ui_draw_menu(menuitem,0,0,sel,0);
-
-        if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-            cardnum = (cardnum + 1) % 1000;
-
-        if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-            cardnum = (cardnum + 999) % 1000;
-
-        if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-            sel = (sel + 1) % menutotal;
-
-        if (input_ui_pressed_repeat(IPT_UI_UP,8))
-            sel = (sel + menutotal - 1) % menutotal;
-
-        if (input_ui_pressed(IPT_UI_SELECT))
-        {
-            switch(sel)
-            {
-            case 0:
-                memcard_intf.eject();
-                if (memcard_intf.load(cardnum))
-                {
-                    memcard_status=1;
-                    memcard_number=cardnum;
-                    mcd_action = 2;
-                }
-                else
-                    mcd_action = 1;
-                break;
-            case 1:
-                memcard_intf.eject();
-                mcd_action = 3;
-                break;
-            case 2:
-                if (memcard_intf.create(cardnum))
-                    mcd_action = 4;
-                else
-                    mcd_action = 5;
-                break;
-#ifdef MESS
-            case 3:
-                memcard_manager=1;
-                sel=-2;
-                machine_reset();
-                break;
-            case 4:
-                sel=-1;
-                break;
-#else
-            case 3:
-                sel=-1;
-                break;
-#endif
-
-
-            }
-        }
-
-        if (input_ui_pressed(IPT_UI_CANCEL))
-            sel = -1;
-
-        if (input_ui_pressed(IPT_UI_CONFIGURE))
-            sel = -2;
-
-        if (sel == -1 || sel == -2)
-        {
-            schedule_full_refresh();
-        }
-    }
-
-    return sel + 1;
-}
-*/
-
 
 
 
@@ -3225,7 +3242,7 @@ static void drawbar(int leftx, int topy, int width, int height, int percentage, 
 
 static void displayosd(const char *text,int percentage,int default_percentage)
 {
-	int space_width = get_char_width(' ');
+	int space_width = ui_get_char_width(' ');
 	int line_height = ui_get_line_height();
 	int ui_width, ui_height;
 	int text_height;
@@ -3643,7 +3660,7 @@ static void initiate_load_save(int type)
 
 static int update_load_save(void)
 {
-	input_code_t code;
+	input_code code;
 	char file = 0;
 
 	/* if we're not in the middle of anything, skip */
@@ -3757,7 +3774,7 @@ static void ui_display_popup(void)
  *
  *************************************/
 
-static void ui_raw2rot_rect(struct rectangle *rect)
+static void ui_raw2rot_rect(rectangle *rect)
 {
 	int temp, w, h;
 
@@ -3789,7 +3806,7 @@ static void ui_raw2rot_rect(struct rectangle *rect)
 }
 
 
-static void ui_rot2raw_rect(struct rectangle *rect)
+static void ui_rot2raw_rect(rectangle *rect)
 {
 	int temp, w, h;
 
@@ -3818,24 +3835,12 @@ static void ui_rot2raw_rect(struct rectangle *rect)
 		rect->min_y = h - rect->max_y - 1;
 		rect->max_y = temp;
 	}
-}
-
-
-static int get_char_width(UINT16 ch)
-{
-	return uirotcharwidth;
-}
-
-
-static int get_string_width(const char *s)
-{
-	return strlen(s) * uirotcharwidth;
 }
 
 
 static void add_line(int x1, int y1, int x2, int y2, rgb_t color)
 {
-	if (elemindex < (sizeof(elemlist) / sizeof(elemlist[0])))
+	if (elemindex < ARRAY_LENGTH(elemlist))
 	{
 		elemlist[elemindex].x = (x1 < x2) ? x1 : x2;
 		elemlist[elemindex].y = (y1 < y2) ? y1 : y2;
@@ -3856,7 +3861,7 @@ static void add_fill(int left, int top, int right, int bottom, rgb_t color)
 
 static void add_char(int x, int y, UINT16 ch, int color)
 {
-	if (elemindex <= (sizeof(elemlist) / sizeof(elemlist[0])))
+	if (elemindex < ARRAY_LENGTH(elemlist))
 	{
 		elemlist[elemindex].x = x;
 		elemlist[elemindex].y = y;
@@ -3878,7 +3883,7 @@ static void add_filled_box(int x1, int y1, int x2, int y2)
 }
 
 
-static void render_ui(struct mame_bitmap *dest)
+static void render_ui(mame_bitmap *dest)
 {
 	int i;
 
@@ -3890,7 +3895,7 @@ static void render_ui(struct mame_bitmap *dest)
 	for (i = 0; i < elemindex; i++)
 	{
 		render_element *elem = &elemlist[i];
-		struct rectangle bounds;
+		rectangle bounds;
 
 		switch (elem->type)
 		{

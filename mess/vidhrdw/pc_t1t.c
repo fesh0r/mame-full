@@ -522,8 +522,7 @@ WRITE8_HANDLER ( pc_T1T_w )
   Plot single text character
 ***************************************************************************/
 
-static void t1t_plot_char(struct mame_bitmap *bitmap, const struct
-	rectangle *r, UINT8 ch, UINT8 attr)
+static void t1t_plot_char(mame_bitmap *bitmap, const rectangle *r, UINT8 ch, UINT8 attr)
 {
 	int width;
 	int height;
@@ -550,14 +549,14 @@ static void t1t_plot_char(struct mame_bitmap *bitmap, const struct
   Draw text mode with 40x25 characters (default) with high intensity bg.
 ***************************************************************************/
 
-static void t1t_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void t1t_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 
 	crtc6845_time(crtc);
@@ -578,7 +577,7 @@ static void t1t_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 				if (cursor.on && (pcjr.pc_framecnt & 32) && (offs == cursor.pos * 2))
 				{
 					int k = height - cursor.top;
-					struct rectangle rect2 = r;
+					rectangle rect2 = r;
 					rect2.min_y += cursor.top; 
 					if (cursor.bottom<height)
 						k=cursor.bottom-cursor.top+1;
@@ -602,14 +601,14 @@ static void t1t_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Draw text mode with 40x25 characters (default) and blinking colors.
 ***************************************************************************/
 
-static void t1t_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void t1t_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 
 	crtc6845_time(crtc);
@@ -638,7 +637,7 @@ static void t1t_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 				if (cursor.on&& (pcjr.pc_framecnt & 32) && (offs == cursor.pos * 2))
 				{
 					int k = height-cursor.top;
-					struct rectangle rect2 = r;
+					rectangle rect2 = r;
 					rect2.min_y += cursor.top;
 
 					if (cursor.bottom < height)
@@ -666,7 +665,7 @@ static void t1t_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Even scanlines are from T1T_base + 0x0000, odd from T1T_base + 0x2000
 ***************************************************************************/
 
-static void t1t_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void t1t_gfx_2bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	static const UINT16 palette[] =
 	{
@@ -684,7 +683,7 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from T1T_base + 0x0000, odd from T1T_base + 0x2000
 ***************************************************************************/
-static void t1t_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void t1t_gfx_1bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -726,7 +725,7 @@ static void t1t_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   CGA_base + 0x2000
 ***************************************************************************/
 
-static void t1t_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void t1t_gfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	pc_render_gfx_4bpp(bitmap, crtc, pcjr.displayram, NULL, 4);
 }

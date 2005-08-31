@@ -205,12 +205,12 @@ static struct win_effect_data effect_table[] =
 
 static void update_system_menu(void);
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 
 static int create_debug_window(void);
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
+static void draw_debug_contents(HDC dc, mame_bitmap *bitmap, const rgb_t *palette);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 
@@ -694,7 +694,7 @@ static void update_system_menu(void)
 //	win_update_video_window
 //============================================================
 
-void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
+void win_update_video_window(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
@@ -711,9 +711,9 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 //	draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
-	static struct mame_bitmap *last;
+	static mame_bitmap *last;
 
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
@@ -1363,9 +1363,9 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 #ifdef UNDER_CE
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
-	extern void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT32 *palette);
+	extern void ce_blit(mame_bitmap *bitmap, int orientation, const UINT32 *palette);
 
 	if (win_video_window)
 		ce_blit(bitmap, 0, palette_16bit_lookup);
@@ -1426,7 +1426,7 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rec
 */
 }
 #else // !UNDER_CE
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;
@@ -1629,7 +1629,7 @@ static int create_debug_window(void)
 //	win_update_debug_window
 //============================================================
 
-void win_update_debug_window(struct mame_bitmap *bitmap, const rgb_t *palette)
+void win_update_debug_window(mame_bitmap *bitmap, const rgb_t *palette)
 {
 #ifdef MAME_DEBUG
 	// get the client DC and draw to it
@@ -1648,9 +1648,9 @@ void win_update_debug_window(struct mame_bitmap *bitmap, const rgb_t *palette)
 //	draw_debug_contents
 //============================================================
 
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette)
+static void draw_debug_contents(HDC dc, mame_bitmap *bitmap, const rgb_t *palette)
 {
-	static struct mame_bitmap *last_bitmap;
+	static mame_bitmap *last_bitmap;
 	static const rgb_t *last_palette;
 	int i;
 

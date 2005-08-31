@@ -13,7 +13,7 @@ UINT8 *pbaction_videoram2, *pbaction_colorram2;
 
 static int scroll;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( pbaction_videoram_w )
 {
@@ -103,7 +103,7 @@ VIDEO_START( pbaction )
 	return 0;
 }
 
-static void pbaction_draw_sprites( struct mame_bitmap *bitmap )
+static void pbaction_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

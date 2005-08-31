@@ -119,7 +119,7 @@ VIDEO_UPDATE( pet40 )
 VIDEO_UPDATE( pet80 )
 {
 	int x, y, i;
-	struct rectangle rect;
+	rectangle rect;
 	int w=crtc6845_get_char_columns(crtc6845);
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);

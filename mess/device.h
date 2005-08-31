@@ -14,8 +14,6 @@
 #include "fileio.h"
 #include "mamecore.h"
 
-struct mame_bitmap;
-
 #define MAX_DEV_INSTANCES	5
 
 typedef enum
@@ -90,7 +88,7 @@ struct IODevice
 		unsigned int *readable, unsigned int *writeable, unsigned int *creatable);
 
 	/* cosmetic/UI callbacks */
-	void (*display)(mess_image *img, struct mame_bitmap *bitmap);
+	void (*display)(mess_image *img, mame_bitmap *bitmap);
 	const char *(*name)(const struct IODevice *dev, int id, char *buf, size_t bufsize);
 
 	/* image creation options */

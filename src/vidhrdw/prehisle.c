@@ -14,7 +14,7 @@ UINT16 *prehisle_bg_videoram16;
 
 static int invert_controls;
 
-static struct tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
+static tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
 
 
 WRITE16_HANDLER( prehisle_bg_videoram16_w )
@@ -127,7 +127,7 @@ VIDEO_START( prehisle )
 	return 0;
 }
 
-static void prehisle_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void prehisle_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

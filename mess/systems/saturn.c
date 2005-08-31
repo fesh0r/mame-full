@@ -945,7 +945,7 @@ static WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
  *  VDP1                                                *
  ********************************************************/
 
-static struct mame_bitmap *saturn_bitmap[2];
+static mame_bitmap *saturn_bitmap[2];
 int video_w; /* indicates which bitmap is currently displayed and which is drawn */
 
 struct _vdp1_state
@@ -1333,7 +1333,7 @@ static void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
 static void render_plane(unsigned char *buffer,int pal,int trans)
 
 {
-  struct mame_bitmap *bitmap = saturn_bitmap[video_w];
+  mame_bitmap *bitmap = saturn_bitmap[video_w];
   int loopx,loopy;
   int col;
   UINT32 *memt;

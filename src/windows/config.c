@@ -474,10 +474,10 @@ int cli_frontend_init (int argc, char **argv)
 	/* check for game name embedded in .inp header */
 	if (options.playback)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
 		/* read playback header */
-		mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+		mame_fread(options.playback, &inp_header, sizeof(inp_header));
 
 		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
 			mame_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
@@ -594,9 +594,9 @@ int cli_frontend_init (int argc, char **argv)
 
 	if (options.record)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
-		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		memset(&inp_header, '\0', sizeof(inp_header));
 		strcpy(inp_header.name, drivers[game_index]->name);
 		/* MAME32 stores the MAME version numbers at bytes 9 - 11
          * MAME DOS keeps this information in a string, the
@@ -607,7 +607,7 @@ int cli_frontend_init (int argc, char **argv)
            inp_header.version[1] = VERSION;
            inp_header.version[2] = BETA_VERSION;
          */
-		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+		mame_fwrite(options.record, &inp_header, sizeof(inp_header));
 	}
 
 	if( statename )

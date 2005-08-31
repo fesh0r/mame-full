@@ -792,39 +792,39 @@ static void coco3_ram_w(int offset, int data, int block)
 	}
 }
 
-void coco3_ram_b1_w (offs_t offset, data8_t data)
+void coco3_ram_b1_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 0);
 }
-void coco3_ram_b2_w (offs_t offset, data8_t data)
+void coco3_ram_b2_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 1);
 }
-void coco3_ram_b3_w (offs_t offset, data8_t data)
+void coco3_ram_b3_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 2);
 }
-void coco3_ram_b4_w (offs_t offset, data8_t data)
+void coco3_ram_b4_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 3);
 }
-void coco3_ram_b5_w (offs_t offset, data8_t data)
+void coco3_ram_b5_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 4);
 }
-void coco3_ram_b6_w (offs_t offset, data8_t data)
+void coco3_ram_b6_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 5);
 }
-void coco3_ram_b7_w (offs_t offset, data8_t data)
+void coco3_ram_b7_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 6);
 }
-void coco3_ram_b8_w (offs_t offset, data8_t data)
+void coco3_ram_b8_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 7);
 }
-void coco3_ram_b9_w (offs_t offset, data8_t data)
+void coco3_ram_b9_w (offs_t offset, UINT8 data)
 {
 	coco3_ram_w(offset, data, 8);
 }

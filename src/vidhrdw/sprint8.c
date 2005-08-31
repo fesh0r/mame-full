@@ -13,11 +13,11 @@ UINT8* sprint8_pos_h_ram;
 UINT8* sprint8_pos_v_ram;
 UINT8* sprint8_pos_d_ram;
 
-static struct tilemap* tilemap1;
-static struct tilemap* tilemap2;
+static tilemap* tilemap1;
+static tilemap* tilemap2;
 
-static struct mame_bitmap* helper1;
-static struct mame_bitmap* helper2;
+static mame_bitmap* helper1;
+static mame_bitmap* helper2;
 
 
 static void get_tile_info1(int tile_index)
@@ -114,7 +114,7 @@ VIDEO_START( sprint8 )
 }
 
 
-static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* rect)
+static void draw_sprites(mame_bitmap* bitmap, const rectangle* rect)
 {
 	int i;
 

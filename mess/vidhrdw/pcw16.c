@@ -63,7 +63,7 @@ VIDEO_START( pcw16 )
 }
 
 /* 640, 1 bit per pixel */
-static void pcw16_vh_decode_mode0(struct mame_bitmap *bitmap, int x, int y, unsigned char byte)
+static void pcw16_vh_decode_mode0(mame_bitmap *bitmap, int x, int y, unsigned char byte)
 {
 	int b;
 	int local_byte;
@@ -86,7 +86,7 @@ static void pcw16_vh_decode_mode0(struct mame_bitmap *bitmap, int x, int y, unsi
 }
 
 /* 320, 2 bits per pixel */
-static void pcw16_vh_decode_mode1(struct mame_bitmap *bitmap, int x, int y, unsigned char byte)
+static void pcw16_vh_decode_mode1(mame_bitmap *bitmap, int x, int y, unsigned char byte)
 {
 	int b;
 	int px;
@@ -117,7 +117,7 @@ static void pcw16_vh_decode_mode1(struct mame_bitmap *bitmap, int x, int y, unsi
 }
 
 /* 160, 4 bits per pixel */
-static void pcw16_vh_decode_mode2(struct mame_bitmap *bitmap, int x, int y, unsigned char byte)
+static void pcw16_vh_decode_mode2(mame_bitmap *bitmap, int x, int y, unsigned char byte)
 {
 	int px;
 	int b;
@@ -179,7 +179,7 @@ VIDEO_UPDATE( pcw16 )
 	if ((pcw16_video_control & (1<<6))==0)
 	{
 		/* blank */
-		struct rectangle rect;
+		rectangle rect;
 
 		rect.min_x = 0;
 		rect.min_y = 0;
@@ -192,7 +192,7 @@ VIDEO_UPDATE( pcw16 )
 	{
 		/* no blank */
 
-		struct rectangle rect;
+		rectangle rect;
 
 		/* render top border */
 		rect.min_x = 0;

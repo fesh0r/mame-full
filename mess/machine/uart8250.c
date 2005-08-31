@@ -184,7 +184,7 @@ void uart8250_reset(int n)
 
 
 
-void uart8250_w(int n, offs_t idx, data8_t data)
+void uart8250_w(int n, offs_t idx, UINT8 data)
 {
 #ifdef VERBOSE_COM
     static char P[8] = "NONENHNL";  /* names for parity select */
@@ -261,7 +261,7 @@ void uart8250_w(int n, offs_t idx, data8_t data)
 
 
 
-data8_t uart8250_r(int n, offs_t idx)
+UINT8 uart8250_r(int n, offs_t idx)
 {
 	int data = 0x0ff;
 

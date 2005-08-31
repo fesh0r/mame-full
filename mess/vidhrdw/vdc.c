@@ -39,7 +39,7 @@ VIDEO_START( pce )
 VIDEO_UPDATE( pce )
 {
     /* only refresh the visible portion of the display */
-    struct rectangle pce_visible_area;
+    rectangle pce_visible_area;
 
     int center_x = ((360/2) - (vdc.physical_width/2));
     int center_y = ((256/2) - (vdc.physical_height/2));

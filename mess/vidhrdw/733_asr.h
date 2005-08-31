@@ -36,7 +36,7 @@ void asr733_cru_w(int offset, int data, int unit);
  READ8_HANDLER(asr733_0_cru_r);
 WRITE8_HANDLER(asr733_0_cru_w);
 
-void asr733_refresh(struct mame_bitmap *bitmap, int unit, int x, int y);
+void asr733_refresh(mame_bitmap *bitmap, int unit, int x, int y);
 
 void asr733_keyboard(int unit);
 

@@ -2734,6 +2734,7 @@ V-V                           TP-027
 	DRIVER( sftm111 )	/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftmj )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( shufshot )	/* (c) Strata/Incredible Technologies */
+	DRIVER( sshot139 )	/* (c) Strata/Incredible Technologies */
 	DRIVER( sshot137 )	/* (c) Strata/Incredible Technologies */
 	DRIVER( wcbowldx )	/* (c) 1999 Incredible Technologies */
 
@@ -4804,6 +4805,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( powj )		/* A7008 'DG' (c) 1988 */
 	DRIVER( searchar )	/* A8007 'BH' (c) 1989 */
 	DRIVER( sercharu )	/* A8007 'BH' (c) 1989 */
+	DRIVER( sercharj )	/* A8007 'BH' (c) 1989 */
 	DRIVER( streetsm )	/* A8007 'S2' (c) 1989 */
 	DRIVER( streets1 )	/* A7008 'S2' (c) 1989 */
 	DRIVER( streetsw )	/*            (c) 1989 */
@@ -5699,8 +5701,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( s1945iii )	/* (c) 1999 */
 	DRIVER( dragnblz )	/* (c) 2000 */
 	DRIVER( gnbarich )	/* (c) 2001 */
-	DRIVER( tgm2 )		/* (c) 2000 */
-	DRIVER( tgm2p )		/* (c) 2000 */
+	/* tgm2 (c) 2000 -- removed at Arika's request */
+	/* tgm2p (c) 2000 -- removed at Arika's request */
 	DRIVER( hotgmck )	/* (c) 1997 */
 	DRIVER( hgkairak )	/* (c) 1998 */
 	DRIVER( hotgmck3 )	/* (c) 1999 */
@@ -6219,6 +6221,7 @@ Other Sun games
 	DRIVER( mmpanic )	/* "70" 1992 Nakanihon/Taito */
 	DRIVER( quizchq )	/* "73" (c) 1993 Nakanihon */
 	DRIVER( quizchql )	/* "73" (c) 1993 Laxan */
+	DRIVER( funkyfig )	/* "74" (c) 1993 Nakanihon + East Technology */
 	DRIVER( animaljr )	/* "75" 1993 Nakanihon/Taito */
 	DRIVER( quiz365 )	/* "78" (c) 1994 Nakanihon */
 	DRIVER( quiz365t )	/* "78" (c) 1994 Nakanihon (Taiwan) */
@@ -6489,6 +6492,7 @@ Other Sun games
 	DRIVER( plctr13b )  /* (c) 1996 P&P Marketing */
 	DRIVER( sshooter )	/* (c) 1998 P&P Marketing */
 	DRIVER( sshoot12 )	/* (c) 1998 P&P Marketing */
+	DRIVER( sshoot11 )	/* (c) 1998 P&P Marketing */
 	DRIVER( pass )		/* (c) 1992 Oksan */
 	DRIVER( news )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
 	DRIVER( taxidrvr )	/* [1984 Graphic Techno] */
@@ -6617,8 +6621,8 @@ Other Sun games
 	DRIVER( yujan )		/* (C) 1999 Yubis */
 	DRIVER( onetwo )	/* (c) 1997 Barko */
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
-	DRIVER( pchmp95 )	/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
-	DRIVER( pchmp95v )	/* (c) 1995 Veltmeijer Automaten */
+	DRIVER( witch )		/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
+	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( pitboss )	/* (c) 1983 Merit */
 	DRIVER( trvwhiz )	/* (c) 1985 Merit */
@@ -6665,11 +6669,13 @@ Other Sun games
 	DRIVER( ampoker2 )	/* (c) 198? Novomatic */
 	DRIVER( ampokr2a )	/* (c) 198? Novomatic */
 	DRIVER( ampokr2b )	/* (c) 198? Novomatic */
+	DRIVER( ampokr2c )	/* (c) 198? Novomatic */
 	DRIVER( lucky8 )	/* (c) 1989 Falcon */
 	DRIVER( starspnr )	/* (c) 1982? ACE */
 	DRIVER( vp906iii )	/* (c) 1985 Casino Electronics Inc. */
 	DRIVER( attckufo )	/* (c) 1980 Ryoto Electric Co. */
 	DRIVER( fortecar )
 	DRIVER( jackpool )	/* (c) 1997 Electronic Projects */
+	DRIVER( murogem )	/* ??? */
 
 #endif	/* DRIVER_RECURSIVE */

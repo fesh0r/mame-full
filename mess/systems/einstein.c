@@ -1586,7 +1586,7 @@ static struct AY8910interface einstein_ay_interface =
   127*262 = 33274 cycles per frame, vsync len 375 cycles
 */
 
-static void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
+static void einstein_80col_plot_char_line(int x,int y, mame_bitmap *bitmap)
 {
 	if (Einstein_DE)
 	{

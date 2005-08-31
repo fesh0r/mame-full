@@ -64,7 +64,7 @@ L056-6    9A          "      "      VLI-8-4 7A         "
 #include "sound/dac.h"
 #include "sound/5220intf.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( looping )
 {
@@ -126,23 +126,23 @@ WRITE8_HANDLER( looping_colorram_w )
 		/* mark the whole column dirty */
 		for( i=0; i<0x20; i++ )
 		{
-			tilemap_mark_tile_dirty( tilemap, offs );
+			tilemap_mark_tile_dirty( bg_tilemap, offs );
 			offs += 0x20;
 		}
 	}
 	else
 	{
 		/* even bytes are column scroll */
-		tilemap_set_scrolly( tilemap,offset/2,data );
+		tilemap_set_scrolly( bg_tilemap,offset/2,data );
 	}
 }
 
 VIDEO_START( looping )
 {
-	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
-	if( tilemap )
+	bg_tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+	if( bg_tilemap )
 	{
-		tilemap_set_scroll_cols( tilemap, 0x20 );
+		tilemap_set_scroll_cols( bg_tilemap, 0x20 );
 		return 0;
 	}
 	return -1;
@@ -151,10 +151,10 @@ VIDEO_START( looping )
 WRITE8_HANDLER( looping_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty( tilemap, offset );
+	tilemap_mark_tile_dirty( bg_tilemap, offset );
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source + 0x10*4; /* ? */
@@ -199,7 +199,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 VIDEO_UPDATE( looping )
 {
-	tilemap_draw( bitmap,cliprect,tilemap,0,0 );
+	tilemap_draw( bitmap,cliprect,bg_tilemap,0,0 );
 	draw_sprites( bitmap,cliprect );
 }
 

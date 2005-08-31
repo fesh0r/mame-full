@@ -42,9 +42,9 @@ static void ppcdrc403_set_irq_line(int irqline, int state);
 #endif
 
 static void ppcdrc_init(void);
-static void ppcdrc_reset(struct drccore *drc);
-static void ppcdrc_recompile(struct drccore *drc);
-static void ppcdrc_entrygen(struct drccore *drc);
+static void ppcdrc_reset(drc_core *drc);
+static void ppcdrc_recompile(drc_core *drc);
+static void ppcdrc_entrygen(drc_core *drc);
 
 #define RD				((op >> 21) & 0x1F)
 #define RT				((op >> 21) & 0x1f)
@@ -255,7 +255,7 @@ typedef struct {
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
-	struct drccore *drc;
+	drc_core *drc;
 	UINT32 drcoptions;
 
 	void *		invoke_exception_handler;
@@ -282,20 +282,20 @@ typedef struct {
 	UINT32 ibr;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
-	data8_t (*read8)(offs_t address);
-	data16_t (*read16)(offs_t address);
-	data32_t (*read32)(offs_t address);
-	data64_t (*read64)(offs_t address);
-	void (*write8)(offs_t address, data8_t data);
-	void (*write16)(offs_t address, data16_t data);
-	void (*write32)(offs_t address, data32_t data);
-	void (*write64)(offs_t address, data64_t data);
-	data16_t (*read16_unaligned)(offs_t address);
-	data32_t (*read32_unaligned)(offs_t address);
-	data64_t (*read64_unaligned)(offs_t address);
-	void (*write16_unaligned)(offs_t address, data16_t data);
-	void (*write32_unaligned)(offs_t address, data32_t data);
-	void (*write64_unaligned)(offs_t address, data64_t data);
+	UINT8 (*read8)(offs_t address);
+	UINT16 (*read16)(offs_t address);
+	UINT32 (*read32)(offs_t address);
+	UINT64 (*read64)(offs_t address);
+	void (*write8)(offs_t address, UINT8 data);
+	void (*write16)(offs_t address, UINT16 data);
+	void (*write32)(offs_t address, UINT32 data);
+	void (*write64)(offs_t address, UINT64 data);
+	UINT16 (*read16_unaligned)(offs_t address);
+	UINT32 (*read32_unaligned)(offs_t address);
+	UINT64 (*read64_unaligned)(offs_t address);
+	void (*write16_unaligned)(offs_t address, UINT16 data);
+	void (*write32_unaligned)(offs_t address, UINT32 data);
+	void (*write64_unaligned)(offs_t address, UINT64 data);
 
 	/* saved ESP when entering entry point */
 	UINT32 host_esp;
@@ -306,7 +306,7 @@ typedef struct {
 typedef struct {
 	int code;
 	int subcode;
-	UINT32 (* handler)(struct drccore *, UINT32);
+	UINT32 (* handler)(drc_core *, UINT32);
 } PPC_OPCODE;
 
 
@@ -715,14 +715,14 @@ INLINE UINT32 ppc_get_spr(int spr)
 	return 0;
 }
 
-static data8_t ppc_read8_translated(offs_t address);
-static data16_t ppc_read16_translated(offs_t address);
-static data32_t ppc_read32_translated(offs_t address);
-static data64_t ppc_read64_translated(offs_t address);
-static void ppc_write8_translated(offs_t address, data8_t data);
-static void ppc_write16_translated(offs_t address, data16_t data);
-static void ppc_write32_translated(offs_t address, data32_t data);
-static void ppc_write64_translated(offs_t address, data64_t data);
+static UINT8 ppc_read8_translated(offs_t address);
+static UINT16 ppc_read16_translated(offs_t address);
+static UINT32 ppc_read32_translated(offs_t address);
+static UINT64 ppc_read64_translated(offs_t address);
+static void ppc_write8_translated(offs_t address, UINT8 data);
+static void ppc_write16_translated(offs_t address, UINT16 data);
+static void ppc_write32_translated(offs_t address, UINT32 data);
+static void ppc_write64_translated(offs_t address, UINT64 data);
 
 INLINE void ppc_set_msr(UINT32 value)
 {
@@ -780,7 +780,7 @@ INLINE UINT32 ppc_get_cr(void)
 	return CR(0) << 28 | CR(1) << 24 | CR(2) << 20 | CR(3) << 16 | CR(4) << 12 | CR(5) << 8 | CR(6) << 4 | CR(7);
 }
 
-static void log_code(struct drccore *drc)
+static void log_code(drc_core *drc)
 {
 #if LOG_CODE
 	FILE *temp;
@@ -791,11 +791,11 @@ static void log_code(struct drccore *drc)
 }
 /***********************************************************************/
 
-static UINT32 (* optable19[1024])(struct drccore *, UINT32);
-static UINT32 (* optable31[1024])(struct drccore *, UINT32);
-static UINT32 (* optable59[1024])(struct drccore *, UINT32);
-static UINT32 (* optable63[1024])(struct drccore *, UINT32);
-static UINT32 (* optable[64])(struct drccore *, UINT32);
+static UINT32 (* optable19[1024])(drc_core *, UINT32);
+static UINT32 (* optable31[1024])(drc_core *, UINT32);
+static UINT32 (* optable59[1024])(drc_core *, UINT32);
+static UINT32 (* optable63[1024])(drc_core *, UINT32);
+static UINT32 (* optable[64])(drc_core *, UINT32);
 
 #include "ppc_mem.c"
 

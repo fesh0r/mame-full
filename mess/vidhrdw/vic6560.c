@@ -89,7 +89,7 @@ UINT8 vic6560[16];
 
 bool vic6560_pal;
 
-static struct mame_bitmap *vic6560_bitmap;
+static mame_bitmap *vic6560_bitmap;
 static int rasterline = 0, lastline = 0;
 static void vic6560_drawlines (int start, int last);
 
@@ -282,7 +282,7 @@ WRITE8_HANDLER ( vic6560_port_w )
 	return val;
 }
 
-static int DOCLIP (struct rectangle *r1, const struct rectangle *r2)
+static int DOCLIP (rectangle *r1, const rectangle *r2)
 {
 	if (r1->min_x > r2->max_x)
 		return 0;
@@ -344,8 +344,8 @@ static void vic6560_draw_character_multi (int ybegin, int yend,
 
 
 #ifndef GFX
-INLINE void vic6560_draw_pointer (struct mame_bitmap *bitmap,
-								  struct rectangle *visible, int xoff, int yoff)
+INLINE void vic6560_draw_pointer (mame_bitmap *bitmap,
+								  rectangle *visible, int xoff, int yoff)
 {
 	/* this is a a static graphical object */
 	/* should be easy to convert to gfx_element!? */
@@ -465,7 +465,7 @@ static void vic6560_drawlines (int first, int last)
 
 INTERRUPT_GEN( vic656x_raster_interrupt )
 {
-	struct rectangle r;
+	rectangle r;
 
 	rasterline++;
 	if (rasterline >= vic656x_lines)

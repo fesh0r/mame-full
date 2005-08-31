@@ -141,7 +141,7 @@ static void coco_vhd_readwrite(UINT8 data)
 
 READ8_HANDLER(coco_vhd_io_r)
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	switch(offset) {
 	case 0xff83 - 0xff40:

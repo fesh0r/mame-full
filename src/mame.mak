@@ -1109,7 +1109,7 @@ $(OBJ)/dynax.a: \
 $(OBJ)/sigma.a: \
 	$(OBJ)/vidhrdw/nyny.o $(OBJ)/drivers/nyny.o \
 	$(OBJ)/drivers/r2dtank.o \
-	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o \
+	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o $(OBJ)/sndhrdw/spiders.o\
 
 $(OBJ)/igs.a: \
 	$(OBJ)/vidhrdw/goldstar.o $(OBJ)/drivers/goldstar.o \
@@ -1250,7 +1250,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/ssingles.o \
 	$(OBJ)/drivers/tcl.o \
 	$(OBJ)/drivers/onetwo.o \
-	$(OBJ)/drivers/pbchmp95.o \
+	$(OBJ)/drivers/witch.o \
 	$(OBJ)/drivers/suprgolf.o \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
 	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
@@ -1304,6 +1304,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/lucky8.o \
 	$(OBJ)/drivers/starspnr.o \
 	$(OBJ)/drivers/vp906iii.o \
+	$(OBJ)/drivers/murogem.o \
 	$(OBJ)/drivers/attckufo.o $(OBJ)/sndhrdw/attckufo.o $(OBJ)/vidhrdw/attckufo.o \
 
 

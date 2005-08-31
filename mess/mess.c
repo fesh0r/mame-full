@@ -23,8 +23,8 @@ const char *mess_path;
 int devices_inited;
 
 UINT32 mess_ram_size;
-data8_t *mess_ram;
-data8_t mess_ram_default_value = 0xCD;
+UINT8 *mess_ram;
+UINT8 mess_ram_default_value = 0xCD;
 
 
 
@@ -417,23 +417,23 @@ UINT32 hash_data_extract_crc32(const char *d)
 
 ***************************************************************************/
 
-data32_t read32le_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask)
+UINT32 read32le_with_read8_handler(read8_handler handler, offs_t offset, UINT32 mem_mask)
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 	if ((mem_mask & 0x000000FF) == 0)
-		result |= ((data32_t) handler(offset * 4 + 0)) << 0;
+		result |= ((UINT32) handler(offset * 4 + 0)) << 0;
 	if ((mem_mask & 0x0000FF00) == 0)
-		result |= ((data32_t) handler(offset * 4 + 1)) << 8;
+		result |= ((UINT32) handler(offset * 4 + 1)) << 8;
 	if ((mem_mask & 0x00FF0000) == 0)
-		result |= ((data32_t) handler(offset * 4 + 2)) << 16;
+		result |= ((UINT32) handler(offset * 4 + 2)) << 16;
 	if ((mem_mask & 0xFF000000) == 0)
-		result |= ((data32_t) handler(offset * 4 + 3)) << 24;
+		result |= ((UINT32) handler(offset * 4 + 3)) << 24;
 	return result;
 }
 
 
 
-void write32le_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
+void write32le_with_write8_handler(write8_handler handler, offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	if ((mem_mask & 0x000000FF) == 0)
 		handler(offset * 4 + 0, data >> 0);
@@ -447,22 +447,22 @@ void write32le_with_write8_handler(write8_handler handler, offs_t offset, data32
 
 
 
-data64_t read64be_with_read8_handler(read8_handler handler, offs_t offset, data64_t mem_mask)
+UINT64 read64be_with_read8_handler(read8_handler handler, offs_t offset, UINT64 mem_mask)
 {
-	data64_t result = 0;
+	UINT64 result = 0;
 	int i;
 
 	for (i = 0; i < 8; i++)
 	{
 		if (((mem_mask >> (56 - i * 8)) & 0xFF) == 0)
-			result |= ((data64_t) handler(offset * 8 + i)) << (56 - i * 8);
+			result |= ((UINT64) handler(offset * 8 + i)) << (56 - i * 8);
 	}
 	return result;
 }
 
 
 
-void write64be_with_write8_handler(write8_handler handler, offs_t offset, data64_t data, data64_t mem_mask)
+void write64be_with_write8_handler(write8_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask)
 {
 	int i;
 
@@ -475,19 +475,19 @@ void write64be_with_write8_handler(write8_handler handler, offs_t offset, data64
 
 
 
-data64_t read64le_with_32le_handler(read32_handler handler, offs_t offset, data64_t mem_mask)
+UINT64 read64le_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask)
 {
-	data64_t result = 0;
+	UINT64 result = 0;
 	if ((mem_mask & U64(0x00000000FFFFFFFF)) != U64(0x00000000FFFFFFFF))
-		result |= ((data64_t) handler(offset * 2 + 0, (data32_t) (mem_mask >> 0))) << 0;
+		result |= ((UINT64) handler(offset * 2 + 0, (UINT32) (mem_mask >> 0))) << 0;
 	if ((mem_mask & U64(0xFFFFFFFF00000000)) != U64(0xFFFFFFFF00000000))
-		result |= ((data64_t) handler(offset * 2 + 1, (data32_t) (mem_mask >> 0))) << 32;
+		result |= ((UINT64) handler(offset * 2 + 1, (UINT32) (mem_mask >> 0))) << 32;
 	return result;
 }
 
 
 
-void write64le_with_32le_handler(write32_handler handler, offs_t offset, data64_t data, data64_t mem_mask)
+void write64le_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask)
 {
 	if ((mem_mask & U64(0x00000000FFFFFFFF)) != U64(0x00000000FFFFFFFF))
 		handler(offset * 2 + 0, data >>  0, mem_mask >>  0);
@@ -497,9 +497,9 @@ void write64le_with_32le_handler(write32_handler handler, offs_t offset, data64_
 
 
 
-data64_t read64be_with_32le_handler(read32_handler handler, offs_t offset, data64_t mem_mask)
+UINT64 read64be_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask)
 {
-	data64_t result;
+	UINT64 result;
 	mem_mask = FLIPENDIAN_INT64(mem_mask);
 	result = read64le_with_32le_handler(handler, offset, mem_mask);
 	return FLIPENDIAN_INT64(result);
@@ -507,7 +507,7 @@ data64_t read64be_with_32le_handler(read32_handler handler, offs_t offset, data6
 
 
 
-void write64be_with_32le_handler(write32_handler handler, offs_t offset, data64_t data, data64_t mem_mask)
+void write64be_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask)
 {
 	data = FLIPENDIAN_INT64(data);
 	mem_mask = FLIPENDIAN_INT64(mem_mask);

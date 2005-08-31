@@ -3,12 +3,12 @@
 
 
 
-extern data16_t *welltris_spriteram;
+extern UINT16 *welltris_spriteram;
 extern size_t welltris_spriteram_size;
-extern data16_t *welltris_pixelram;
-extern data16_t *welltris_charvideoram;
+extern UINT16 *welltris_pixelram;
+extern UINT16 *welltris_charvideoram;
 
-static struct tilemap *char_tilemap;
+static tilemap *char_tilemap;
 static unsigned char gfxbank[8];
 static UINT16 charpalettebank;
 static UINT16 spritepalettebank;
@@ -39,7 +39,7 @@ WRITE16_HANDLER( welltris_spriteram_w )
 
 
 /* Sprite Drawing is pretty much the same as fromance.c */
-static void welltris_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void welltris_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;
@@ -151,7 +151,7 @@ static void welltris_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	}
 }
 
-static void setbank(struct tilemap *tmap, int num, int bank)
+static void setbank(tilemap *tmap, int num, int bank)
 {
 	if (gfxbank[num] != bank)
 	{
@@ -227,7 +227,7 @@ VIDEO_START( welltris )
 	return 0;
 }
 
-static void welltris_drawbackground(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void welltris_drawbackground(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x, y;
 	int pixdata;

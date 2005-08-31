@@ -276,7 +276,7 @@ WRITE8_HANDLER ( pc_MDA_w )
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void mda_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
@@ -284,7 +284,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
 	int char_width;
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 	UINT8 attr;
 
@@ -309,7 +309,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {
 					int k=height-cursor.top;
-					struct rectangle rect2=r;
+					rectangle rect2=r;
 					rect2.min_y+=cursor.top; 
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
@@ -332,14 +332,14 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void mda_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc);
-	struct rectangle r;
+	rectangle r;
 	struct crtc6845_cursor cursor;
 	int char_width;
 
@@ -371,7 +371,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 //				if ((cursor.on)&&(offs==cursor.pos*2)) {
 				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {
 					int k=height-cursor.top;
-					struct rectangle rect2=r;
+					rectangle rect2=r;
 					rect2.min_y+=cursor.top; 
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
@@ -395,7 +395,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   bit 7 being the leftmost.
 ***************************************************************************/
 
-static void hercules_gfx(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void hercules_gfx(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	const UINT8 *vram = videoram;
 	static const UINT16 palette[2] = {0, 10};

@@ -61,7 +61,7 @@ D.9B         [f99cac4b] /
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bgtilemap, *txttilemap;
+static tilemap *bgtilemap, *txttilemap;
 static unsigned char *scrollram;
 static unsigned char *mainram;
 
@@ -117,7 +117,7 @@ VIDEO_START( panicr )
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap,const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect )
 {
 	int offs,fx,fy,x,y,color,sprite;
 

@@ -20,7 +20,7 @@ UINT8 *mystston_videoram2;
 
 static int mystston_fgcolor, mystston_bgpage;
 
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 /***************************************************************************
 
@@ -147,7 +147,7 @@ VIDEO_START( mystston )
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

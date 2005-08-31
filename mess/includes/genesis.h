@@ -19,6 +19,6 @@ MACHINE_INIT ( genesis );
 INTERRUPT_GEN( genesis_interrupt );
 DRIVER_INIT ( genesis );
 
-extern data16_t *genesis_cartridge;
+extern UINT16 *genesis_cartridge;
 extern int genesis_is_ntsc;
 extern int genesis_region;

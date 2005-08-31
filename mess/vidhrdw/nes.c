@@ -40,7 +40,7 @@ PALETTE_INIT( nes )
 	ppu2c03b_init_palette(0);
 }
 
-static void draw_sight(struct mame_bitmap *bitmap, int playerNum, int x_center, int y_center)
+static void draw_sight(mame_bitmap *bitmap, int playerNum, int x_center, int y_center)
 {
 	int x,y;
 	UINT16 color;

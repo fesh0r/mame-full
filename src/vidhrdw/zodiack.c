@@ -16,7 +16,7 @@ size_t zodiack_bulletsram_size;
 
 extern int percuss_hardware;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( zodiack_videoram_w )
 {
@@ -160,7 +160,7 @@ VIDEO_START( zodiack )
 	return 0;
 }
 
-static void zodiack_draw_bullets( struct mame_bitmap *bitmap )
+static void zodiack_draw_bullets( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -187,7 +187,7 @@ static void zodiack_draw_bullets( struct mame_bitmap *bitmap )
 	}
 }
 
-static void zodiack_draw_sprites( struct mame_bitmap *bitmap )
+static void zodiack_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

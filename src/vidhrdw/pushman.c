@@ -1,8 +1,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap,*tx_tilemap;
-static data16_t control[2];
+static tilemap *bg_tilemap,*tx_tilemap;
+static UINT16 control[2];
 
 
 /***************************************************************************
@@ -91,7 +91,7 @@ WRITE16_HANDLER( pushman_videoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,x,y,color,sprite,flipx,flipy;
 

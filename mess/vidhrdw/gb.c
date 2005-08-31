@@ -17,7 +17,7 @@ static UINT8 bg_zbuf[160];
 
 INLINE void gb_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam;
 	int i, yindex;
 
@@ -120,7 +120,7 @@ struct layer_struct
 
 void gb_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -132,7 +132,7 @@ void gb_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		struct rectangle r = Machine->visible_area;
+		rectangle r = Machine->visible_area;
 		r.min_y = r.max_y = yindex;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}
@@ -238,7 +238,7 @@ void gb_refresh_scanline (void)
 
 INLINE void sgb_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam, pal;
 	INT16 i, yindex;
 
@@ -333,7 +333,7 @@ INLINE void sgb_update_sprites (void)
 
 void sgb_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -349,7 +349,7 @@ void sgb_refresh_scanline (void)
 			return;
 		case 2:	/* Blank screen (black) */
 			{
-				struct rectangle r = Machine->visible_area;
+				rectangle r = Machine->visible_area;
 				r.min_x = SGB_XOFFSET;
 				r.max_x -= SGB_XOFFSET;
 				r.min_y = SGB_YOFFSET;
@@ -358,7 +358,7 @@ void sgb_refresh_scanline (void)
 			} return;
 		case 3:	/* Blank screen (white - or should it be color 0?) */
 			{
-				struct rectangle r = Machine->visible_area;
+				rectangle r = Machine->visible_area;
 				r.min_x = SGB_XOFFSET;
 				r.max_x -= SGB_XOFFSET;
 				r.min_y = SGB_YOFFSET;
@@ -376,7 +376,7 @@ void sgb_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		struct rectangle r = Machine->visible_area;
+		rectangle r = Machine->visible_area;
 		r.min_x = SGB_XOFFSET;
 		r.max_x -= SGB_XOFFSET;
 		r.min_y = r.max_y = yindex + SGB_YOFFSET;
@@ -492,7 +492,7 @@ void sgb_refresh_border(void)
 	UINT16 *map;
 	UINT16 yidx, xidx, xindex;
 	UINT8 pal, i;
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 
 	map = (UINT16 *)sgb_tile_map - 32;
 
@@ -567,7 +567,7 @@ void sgb_refresh_border(void)
 
 INLINE void gbc_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam;
 	int i, xindex, yindex;
 
@@ -663,7 +663,7 @@ INLINE void gbc_update_sprites (void)
 
 void gbc_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = tmpbitmap;
+	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -675,7 +675,7 @@ void gbc_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		struct rectangle r = Machine->visible_area;
+		rectangle r = Machine->visible_area;
 		r.min_y = r.max_y = yindex;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}

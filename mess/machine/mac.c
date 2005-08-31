@@ -750,7 +750,7 @@ void mac_scc_mouse_irq( int x, int y)
 
 READ16_HANDLER ( mac_scc_r )
 {
-	data16_t result;
+	UINT16 result;
 	result = scc_r(offset);
 	return (result << 8) | result;
 }
@@ -759,7 +759,7 @@ READ16_HANDLER ( mac_scc_r )
 
 WRITE16_HANDLER ( mac_scc_w )
 {
-	scc_w(offset, (data8_t) data);
+	scc_w(offset, (UINT8) data);
 }
 
 

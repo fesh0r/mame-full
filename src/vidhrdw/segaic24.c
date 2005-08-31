@@ -80,7 +80,7 @@ static UINT16 *sys24_char_ram, *sys24_tile_ram;
 static UINT16 sys24_tile_mask;
 static unsigned char *sys24_char_dirtymap;
 static int sys24_char_dirty, sys24_char_gfx_index;
-static struct tilemap *sys24_tile_layer[4];
+static tilemap *sys24_tile_layer[4];
 
 #ifdef LSB_FIRST
 static gfx_layout sys24_char_layout = {
@@ -231,7 +231,7 @@ void sys24_tile_update(void)
 	}
 }
 
-static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm, struct mame_bitmap *dm, const UINT16 *mask,
+static void sys24_tile_draw_rect(mame_bitmap *bm, mame_bitmap *tm, mame_bitmap *dm, const UINT16 *mask,
 								 UINT16 tpri, UINT8 lpri, int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
 {
 	int y;
@@ -365,7 +365,7 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 // about sprite priority hence the lack of support for the
 // priority_bitmap
 
-static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap *tm, struct mame_bitmap *dm, const UINT16 *mask,
+static void sys24_tile_draw_rect_rgb(mame_bitmap *bm, mame_bitmap *tm, mame_bitmap *dm, const UINT16 *mask,
 									 UINT16 tpri, UINT8 lpri, int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
 {
 	int y;
@@ -477,7 +477,7 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 	}
 }
 
-void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int lpri, int flags)
+void sys24_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect, int layer, int lpri, int flags)
 {
 	UINT16 hscr = sys24_tile_ram[0x5000+(layer >> 1)];
 	UINT16 vscr = sys24_tile_ram[0x5004+(layer >> 1)];
@@ -512,8 +512,8 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 		switch((ctrl & 0x6000) >> 13) {
 		case 1: {
-			struct rectangle c1 = *cliprect;
-			struct rectangle c2 = *cliprect;
+			rectangle c1 = *cliprect;
+			rectangle c2 = *cliprect;
 			UINT16 v;
 			v = (-vscr) & 0x1ff;
 			if(c1.max_y >= v)
@@ -528,8 +528,8 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 			break;
 		}
 		case 2: {
-			struct rectangle c1 = *cliprect;
-			struct rectangle c2 = *cliprect;
+			rectangle c1 = *cliprect;
+			rectangle c2 = *cliprect;
 			UINT16 h;
 			h = (+hscr) & 0x1ff;
 			if(c1.max_x >= h)
@@ -551,8 +551,8 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		};
 
 	} else {
-		struct mame_bitmap *bm, *tm;
-		void (*draw)(struct mame_bitmap *, struct mame_bitmap *, struct mame_bitmap *, const UINT16 *,
+		mame_bitmap *bm, *tm;
+		void (*draw)(mame_bitmap *, mame_bitmap *, mame_bitmap *, const UINT16 *,
 					 UINT16, UINT8, int, int, int, int, int, int, int);
 		int win = layer & 1;
 
@@ -700,7 +700,7 @@ int sys24_sprite_vh_start(void)
     0   11------    --------
 */
 
-void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const int *spri)
+void sys24_sprite_draw(mame_bitmap *bitmap, const rectangle *cliprect, const int *spri)
 {
 	UINT16 curspr = 0;
 	int countspr = 0;

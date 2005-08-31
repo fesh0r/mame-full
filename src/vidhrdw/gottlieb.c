@@ -15,7 +15,7 @@ UINT8 *gottlieb_charram;
 static int background_priority = 0;
 static int spritebank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int swap_bg_ramrom;
 
 /***************************************************************************
@@ -184,7 +184,7 @@ VIDEO_START( vidvince )
 	return gottlieb_video_start_common();
 }
 
-static void gottlieb_draw_sprites( struct mame_bitmap *bitmap )
+static void gottlieb_draw_sprites( mame_bitmap *bitmap )
 {
     int offs;
 

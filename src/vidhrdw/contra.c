@@ -15,8 +15,8 @@ unsigned char *contra_fg_vram,*contra_fg_cram;
 unsigned char *contra_text_vram,*contra_text_cram;
 unsigned char *contra_bg_vram,*contra_bg_cram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
-static struct rectangle bg_clip, fg_clip, tx_clip;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static rectangle bg_clip, fg_clip, tx_clip;
 
 /***************************************************************************
 **
@@ -269,7 +269,7 @@ WRITE8_HANDLER( contra_K007121_ctrl_1_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bank )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int bank )
 {
 	const unsigned char *source;
 	int base_color = (K007121_ctrlram[bank][6]&0x30)*2;
@@ -282,9 +282,9 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 VIDEO_UPDATE( contra )
 {
-	struct rectangle bg_finalclip = bg_clip;
-	struct rectangle fg_finalclip = fg_clip;
-	struct rectangle tx_finalclip = tx_clip;
+	rectangle bg_finalclip = bg_clip;
+	rectangle fg_finalclip = fg_clip;
+	rectangle tx_finalclip = tx_clip;
 
 	sect_rect(&bg_finalclip, cliprect);
 	sect_rect(&fg_finalclip, cliprect);

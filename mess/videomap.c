@@ -6,14 +6,6 @@
 #include "mess.h"
 #include "vidhrdw/generic.h"
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -573,7 +565,7 @@ static int calc_pitch_adjust(int base_scanline, int scanline_count)
 
 struct draw_body_params
 {
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	struct drawline_params dl_params;
 	int base_scanline;
 	int scanline_count;
@@ -662,7 +654,7 @@ static void draw_body_task(void *param, int task_num, int task_count)
 	}
 }
 
-static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanline_count, UINT8 **db, int *do_skip)
+static void draw_body(mame_bitmap *bitmap, int base_scanline, int scanline_count, UINT8 **db, int *do_skip)
 {
 	int i;
 	int pens_len;
@@ -743,7 +735,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 }
 
 /* used to draw the border when someone has been doing tricks within the border */
-static void plot_modified_border(struct mame_bitmap *bitmap, int x, int y, int width, int height, pen_t pen)
+static void plot_modified_border(mame_bitmap *bitmap, int x, int y, int width, int height, pen_t pen)
 {
 	assert(height);
 	do
@@ -754,11 +746,11 @@ static void plot_modified_border(struct mame_bitmap *bitmap, int x, int y, int w
 }
 
 /* main video update routine; draws the border and relies on draw_body to do the active display area */
-static void internal_videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 **db, int draw_border, int *do_skip)
+static void internal_videomap_update(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 **db, int draw_border, int *do_skip)
 {
 	int scanline_length;
 	int height, width, base;
-	void (*plot_border)(struct mame_bitmap *_bitmap, int x, int y, int _width, int _height, pen_t pen);
+	void (*plot_border)(mame_bitmap *_bitmap, int x, int y, int _width, int _height, pen_t pen);
 
 	if (draw_border)
 		*do_skip = 0;
@@ -814,7 +806,7 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 
 VIDEO_UPDATE(videomap)
 {
-	struct mame_bitmap *bmp = bitmap;
+	mame_bitmap *bmp = bitmap;
 	int full_refresh;
 	int is_partial_update;
 

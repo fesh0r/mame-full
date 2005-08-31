@@ -69,15 +69,15 @@ UINT32 hash_data_extract_crc32(const char *d);
 
 /***************************************************************************/
 
-data32_t read32le_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask);
-void write32le_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask);
-data64_t read64be_with_read8_handler(read8_handler handler, offs_t offset, data64_t mem_mask);
-void write64be_with_write8_handler(write8_handler handler, offs_t offset, data64_t data, data64_t mem_mask);
+UINT32 read32le_with_read8_handler(read8_handler handler, offs_t offset, UINT32 mem_mask);
+void write32le_with_write8_handler(write8_handler handler, offs_t offset, UINT32 data, UINT32 mem_mask);
+UINT64 read64be_with_read8_handler(read8_handler handler, offs_t offset, UINT64 mem_mask);
+void write64be_with_write8_handler(write8_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
 
-data64_t read64le_with_32le_handler(read32_handler handler, offs_t offset, data64_t mem_mask);
-void write64le_with_32le_handler(write32_handler handler, offs_t offset, data64_t data, data64_t mem_mask);
-data64_t read64be_with_32le_handler(read32_handler handler, offs_t offset, data64_t mem_mask);
-void write64be_with_32le_handler(write32_handler handler, offs_t offset, data64_t data, data64_t mem_mask);
+UINT64 read64le_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask);
+void write64le_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
+UINT64 read64be_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask);
+void write64be_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
 
 /***************************************************************************/
 
@@ -125,8 +125,8 @@ int mess_count_compatible_drivers(const game_driver *drv);
 
 /* RAM configuration calls */
 extern UINT32 mess_ram_size;
-extern data8_t *mess_ram;
-extern data8_t mess_ram_default_value;
+extern UINT8 *mess_ram;
+extern UINT8 mess_ram_default_value;
 
 /* RAM parsing options */
 #define RAM_STRING_BUFLEN 16
@@ -139,7 +139,7 @@ const char *ram_string(char *buffer, UINT32 ram);
 int			ram_validate_option(void);
 void		ram_dump(const char *filename);
 
-data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank);
+UINT8 *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank);
 
 /* --------------------------------------------------------------------------------------------- */
 

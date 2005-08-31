@@ -23,7 +23,7 @@ enum
 
 struct blitter_params
 {
-	struct drccore *blitter;
+	drccore *blitter;
 	int flags;
 
 	const UINT32 *source_palette;

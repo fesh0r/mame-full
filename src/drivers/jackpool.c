@@ -14,12 +14,12 @@ Copyright (C) 1992 HI-TECH Software..Brisbane, QLD Australia
 #include "machine/random.h"
 
 
-static struct tilemap *jackpool_layer0_tilemap;
-static data16_t *jackpool_layer0_videoram;
-static struct tilemap *jackpool_layer1_tilemap;
-static data16_t *jackpool_layer1_videoram;
-static struct tilemap *jackpool_layer2_tilemap;
-static data16_t *jackpool_layer2_videoram;
+static tilemap *jackpool_layer0_tilemap;
+static UINT16 *jackpool_layer0_videoram;
+static tilemap *jackpool_layer1_tilemap;
+static UINT16 *jackpool_layer1_videoram;
+static tilemap *jackpool_layer2_tilemap;
+static UINT16 *jackpool_layer2_videoram;
 
 
 static void get_jackpool_layer0_tile_info(int tile_index)

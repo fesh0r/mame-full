@@ -366,7 +366,7 @@ typedef struct {
 //
 // Prototypes
 //
-static struct hard_disk_file *corvus_hdc_file(int id);
+static hard_disk_file *corvus_hdc_file(int id);
 static void corvus_hdc_callback(int function);
 
 //
@@ -561,7 +561,7 @@ static UINT8 corvus_write_sector(UINT8 drv, UINT32 sector, UINT8 *buffer, int le
 
 	corvus_hdc_t
 			*c = &corvus_hdc;
-	struct hard_disk_file
+	hard_disk_file
 			*disk;				// Structures for interface to CHD routines
 	UINT8	tbuffer[512];		// Buffer to hold an entire sector
 	UINT16	cylinder;			// Cylinder this sector resides on
@@ -683,7 +683,7 @@ static UINT8 corvus_read_sector(UINT8 drv, UINT32 sector, UINT8 *buffer, int len
 
 	corvus_hdc_t
 			*c = &corvus_hdc;
-	struct hard_disk_file
+	hard_disk_file
 			*disk;				// Structures for interface to CHD routines
 	UINT8	tbuffer[512];		// Buffer to store full sector results in
 	UINT16	cylinder;
@@ -1217,7 +1217,7 @@ static UINT8 corvus_format_drive(UINT8 *pattern, UINT16 len) {
 // Returns:
 //		hard_disk_file object
 //
-static struct hard_disk_file *corvus_hdc_file(int id) {
+static hard_disk_file *corvus_hdc_file(int id) {
 
 	mess_image *img;
 	
@@ -1477,8 +1477,8 @@ static void corvus_hdc_callback(int function) {
 UINT8 corvus_hdc_init() {
 
 	corvus_hdc_t			*c = &corvus_hdc;	// Pick up global controller structure
-	struct hard_disk_file	*disk;				// Structures for interface to CHD routines
-	struct hard_disk_info	*info;
+	hard_disk_file	*disk;				// Structures for interface to CHD routines
+	hard_disk_info	*info;
 
 	if((disk = corvus_hdc_file(0)))				// Attach to the CHD file
 		info = hard_disk_get_info(disk);		// Pick up the Head/Cylinder/Sector info

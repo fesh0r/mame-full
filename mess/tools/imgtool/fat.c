@@ -2332,7 +2332,7 @@ static imgtoolerr_t	fat_chd_diskimage_getsectorsize(imgtool_image *image, UINT32
 static UINT32 fat_chd_calc_lbasector(struct fat_diskinfo *disk_info, UINT32 track, UINT32 head, UINT32 sector)
 {
 	UINT32 lbasector;
-	const struct hard_disk_info *hd_info;
+	const hard_disk_info *hd_info;
 
 	hd_info = imghd_get_header(&disk_info->harddisk);
 	lbasector = track;

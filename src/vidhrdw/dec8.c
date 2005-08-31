@@ -44,7 +44,7 @@ sprites.
 #include "vidhrdw/generic.h"
 
 static int scroll1[4],scroll2[4];
-static struct tilemap *dec8_pf0_tilemap,*dec8_pf1_tilemap,*dec8_fix_tilemap;
+static tilemap *dec8_pf0_tilemap,*dec8_pf1_tilemap,*dec8_fix_tilemap;
 static int dec8_pf0_control[0x20],dec8_pf1_control[0x20];
 static int gfx_mask,game_uses_priority;
 unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
@@ -241,7 +241,7 @@ WRITE8_HANDLER( gondo_scroll_w )
 /******************************************************************************/
 
 /* 'Karnov' sprites, used by Gondomania, Last Mission, Shackled, Ghostbusters */
-static void draw_sprites1(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void draw_sprites1(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs,x,y,sprite,sprite2,colour,extra,fx,fy;
 
@@ -304,7 +304,7 @@ static void draw_sprites1(struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 /* 'Dec0' sprites, used by Cobra Command, Oscar */
-static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void draw_sprites2(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs,x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
@@ -367,7 +367,7 @@ static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cl
 	}
 }
 
-static void srdarwin_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void srdarwin_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	int offs;
 
@@ -417,7 +417,7 @@ static void srdarwin_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 
 /* Draw character tiles, each game has different colour masks */
 #if 0
-static void draw_characters(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int mask, int shift)
+static void draw_characters(mame_bitmap *bitmap, const rectangle *cliprect, int mask, int shift)
 {
 	int mx,my,tile,color,offs;
 

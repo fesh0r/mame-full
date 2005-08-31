@@ -66,7 +66,7 @@ static const char led[]={
     " ddddddddddddddd   hh"
 };
 
-static void mk2_draw_7segment(struct mame_bitmap *bitmap,int value, int x, int y)
+static void mk2_draw_7segment(mame_bitmap *bitmap,int value, int x, int y)
 {
 	draw_led(bitmap, led, value, x, y);
 }
@@ -84,7 +84,7 @@ static const struct {
 	{162,223}
 };
 
-static void mk2_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
+static void mk2_draw_led(mame_bitmap *bitmap,INT16 color, int x, int y)
 {
 	draw_led(bitmap, radius_2_led, color, x, y);
 }

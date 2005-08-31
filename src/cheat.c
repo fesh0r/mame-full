@@ -749,7 +749,7 @@ struct SearchRegion
 	UINT8	flags;
 
 	UINT8	* cachedPointer;
-	const struct address_map_t
+	const address_map
 			* writeHandler;
 
 	UINT8	* first;
@@ -892,8 +892,6 @@ static INT32				menuItemInfoLength = 0;
 static int					useClassicSearchBox = 1;
 static int					dontPrintNewLabels = 0;
 static int					autoSaveEnabled = 0;
-
-extern int					uirotcharwidth, uirotcharheight;
 
 static const char *	kCheatNameTemplates[] =
 {
@@ -1770,7 +1768,7 @@ void cheat_init(void)
 	dontPrintNewLabels =	0;
 	autoSaveEnabled =		0;
 
-	fullMenuPageHeight =	screenHeight / (3 * uirotcharheight / 2) - 1;
+	fullMenuPageHeight =	screenHeight / ui_get_line_height() - 1;
 
 	BuildCPUInfoList();
 
@@ -7179,14 +7177,14 @@ void cheat_display_watches(void)
 				case kWatchLabel_Address:
 					numChars = sprintf(buf, "%.8X: ", info->address);
 
-					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 					xOffset += numChars;
 					break;
 
 				case kWatchLabel_String:
 					numChars = sprintf(buf, "%s: ", info->label);
 
-					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 					xOffset += numChars;
 					break;
 			}
@@ -7213,7 +7211,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Hex:
 						numChars = sprintf(buf, "%.*X", kSearchByteDigitsTable[info->elementBytes], data);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7221,7 +7219,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Decimal:
 						numChars = sprintf(buf, "%.*d", kSearchByteDecDigitsTable[info->elementBytes], data);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7229,7 +7227,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Binary:
 						numChars = PrintBinary(buf, data, kSearchByteMaskTable[info->elementBytes]);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7237,7 +7235,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_ASCII:
 						numChars = PrintASCII(buf, data, info->elementBytes);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						break;
 				}
@@ -7495,7 +7493,7 @@ static void DisposeAction(CheatAction * action)
 static void InitWatch(WatchInfo * info, UINT32 idx)
 {
 	if(idx > 0)
-		info->y = watchList[idx - 1].y + uirotcharheight;
+		info->y = watchList[idx - 1].y + ui_get_line_height();
 	else
 		info->y = 0;
 }
@@ -8172,7 +8170,7 @@ static void BuildSearchRegions(SearchInfo * info)
 			}
 			else if(info->targetIdx < cpu_gettotalcpu())
 			{
-				const struct address_map_t			* map = NULL;
+				const address_map			* map = NULL;
 				SearchRegion						* traverse;
 				int									count = 0;
 
@@ -9304,7 +9302,7 @@ static void DoSearch(SearchInfo * search)
 
 static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelativeAddress)
 {
-	const struct address_map_t	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
+	const address_map	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
 
 	while(!IS_AMENTRY_END(map))
 	{

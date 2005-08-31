@@ -40,8 +40,8 @@ enum
 **  MACROS
 **#################################################################################################*/
 
-#define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & address_space[spc].addrmask)
-#define BYTE2ADDR(val,info,spc) ((((val) & address_space[spc].addrmask) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
+#define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & active_address_space[spc].addrmask)
+#define BYTE2ADDR(val,info,spc) ((((val) & active_address_space[spc].addrmask) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
 
 
 
@@ -175,14 +175,14 @@ int					debug_watchpoint_enable(int wpnum, int enable);
 const int *			debug_watchpoint_count_ptr(int cpunum);
 
 /* memory accessors */
-data8_t				debug_read_byte(int spacenum, offs_t address);
-data16_t			debug_read_word(int spacenum, offs_t address);
-data32_t			debug_read_dword(int spacenum, offs_t address);
-data64_t			debug_read_qword(int spacenum, offs_t address);
-void				debug_write_byte(int spacenum, offs_t address, data8_t data);
-void				debug_write_word(int spacenum, offs_t address, data16_t data);
-void				debug_write_dword(int spacenum, offs_t address, data32_t data);
-void				debug_write_qword(int spacenum, offs_t address, data64_t data);
+UINT8				debug_read_byte(int spacenum, offs_t address);
+UINT16			debug_read_word(int spacenum, offs_t address);
+UINT32			debug_read_dword(int spacenum, offs_t address);
+UINT64			debug_read_qword(int spacenum, offs_t address);
+void				debug_write_byte(int spacenum, offs_t address, UINT8 data);
+void				debug_write_word(int spacenum, offs_t address, UINT16 data);
+void				debug_write_dword(int spacenum, offs_t address, UINT32 data);
+void				debug_write_qword(int spacenum, offs_t address, UINT64 data);
 UINT64				debug_read_opcode(UINT32 offset, int size);
 
 #endif

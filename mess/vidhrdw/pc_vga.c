@@ -521,7 +521,7 @@ static void vga_cpu_interface(void)
 	static int sequencer, gc;
 	read8_handler read_handler;
 	write8_handler write_handler;
-	data8_t sel;
+	UINT8 sel;
 	int buswidth;
 
 	if ((gc==vga.gc.data[6])&&(sequencer==vga.sequencer.data[4])) return;
@@ -606,7 +606,7 @@ static void vga_cpu_interface(void)
 
 static READ8_HANDLER(vga_crtc_r)
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 
 	switch (offset) {
 	case 4:
@@ -702,7 +702,7 @@ static WRITE8_HANDLER(vga_crtc_w)
 
 READ8_HANDLER( vga_port_03b0_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	if (CRTC_PORT_ADDR==0x3b0)
 		data=vga_crtc_r(offset);
 	return data;
@@ -712,7 +712,7 @@ READ8_HANDLER( vga_port_03b0_r )
 
 READ8_HANDLER( ega_port_03c0_r)
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	switch (offset) {
 	case 2: data=0xff;/*!*/break;
 	}
@@ -721,7 +721,7 @@ READ8_HANDLER( ega_port_03c0_r)
 
 READ8_HANDLER( vga_port_03c0_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 
 	switch (offset)
 	{
@@ -834,7 +834,7 @@ READ8_HANDLER( vga_port_03c0_r )
 
 READ8_HANDLER(vga_port_03d0_r)
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	if (CRTC_PORT_ADDR == 0x3d0)
 		data = vga_crtc_r(offset);
 	return data;
@@ -973,7 +973,7 @@ WRITE8_HANDLER(vga_port_03d0_w)
 
 READ8_HANDLER( paradise_ega_03c0_r )
 {
-	data8_t data = vga_port_03c0_r(offset);
+	UINT8 data = vga_port_03c0_r(offset);
 
 	if (offset == 2)
 	{
@@ -1137,7 +1137,7 @@ VIDEO_START( vga )
 #define myMIN(a, b) ((a) < (b) ? (a) : (b))
 #define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
-static void vga_vh_text(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void vga_vh_text(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	UINT8 ch, attr;
 	UINT8 bits;
@@ -1204,7 +1204,7 @@ static void vga_vh_text(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
-static void vga_vh_ega(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void vga_vh_ega(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int pos, line, column, c, addr, i;
 	int height = CRTC6845_CHAR_HEIGHT;
@@ -1249,7 +1249,7 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
-static void vga_vh_vga(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int pos, line, column, c, addr;
 	UINT16 *bitmapline;

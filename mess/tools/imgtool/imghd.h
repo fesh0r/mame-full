@@ -13,7 +13,7 @@
 
 struct mess_hard_disk_file
 {
-	struct hard_disk_file *hard_disk;
+	hard_disk_file *hard_disk;
 	chd_file *chd;
 };
 
@@ -34,6 +34,6 @@ imgtoolerr_t imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT
 imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer);
 
 /* gets the header from a hard disk */
-const struct hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk);
+const hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk);
 
 #endif /* IMGHD_H */

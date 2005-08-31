@@ -57,7 +57,7 @@ Code disassembling
 #include "machine/eeprom.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static void y_get_bg_tile_info(int tile_index)
 {

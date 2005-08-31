@@ -128,7 +128,7 @@
 #define IRQ_DOC			0x80
 
 UINT8 *apple2gs_slowmem;
-data8_t apple2gs_newvideo;
+UINT8 apple2gs_newvideo;
 
 static UINT8 apple2gs_vgcint;
 static UINT8 apple2gs_langsel;
@@ -170,7 +170,7 @@ static UINT8 clock_bram[256];
 
 static void process_clock(void)
 {
-	data8_t operation;
+	UINT8 operation;
 	seconds_t current_interval;
 
 	/* update clock_curtime */
@@ -355,22 +355,22 @@ typedef enum
 } adbstate_t;
 
 static adbstate_t adb_state;
-static data8_t adb_command;
-static data8_t adb_mode;
-static data8_t adb_kmstatus;
-static data8_t adb_latent_result;
+static UINT8 adb_command;
+static UINT8 adb_mode;
+static UINT8 adb_kmstatus;
+static UINT8 adb_latent_result;
 static size_t adb_command_length;
 static size_t adb_command_pos;
-static data8_t adb_command_bytes[8];
-static data8_t adb_response_bytes[8];
-static data8_t adb_response_length;
+static UINT8 adb_command_bytes[8];
+static UINT8 adb_response_bytes[8];
+static UINT8 adb_response_length;
 static size_t adb_response_pos;
-static data8_t adb_memory[0x100];
+static UINT8 adb_memory[0x100];
 static int adb_address_keyboard;
 static int adb_address_mouse;
 
 
-static data8_t adb_read_memory(UINT32 address)
+static UINT8 adb_read_memory(UINT32 address)
 {
 	if (address < (sizeof(adb_memory) / sizeof(adb_memory[0])))
 		return adb_memory[address];
@@ -380,7 +380,7 @@ static data8_t adb_read_memory(UINT32 address)
 
 
 
-static void adb_write_memory(UINT32 address, data8_t data)
+static void adb_write_memory(UINT32 address, UINT8 data)
 {
 	if (address < (sizeof(adb_memory) / sizeof(adb_memory[0])))
 		adb_memory[address] = data;
@@ -388,21 +388,21 @@ static void adb_write_memory(UINT32 address, data8_t data)
 
 
 
-static void adb_set_mode(data8_t mode)
+static void adb_set_mode(UINT8 mode)
 {
 	adb_mode = mode;
 }
 
 
 
-static void adb_set_config(data8_t b1, data8_t b2, data8_t b3)
+static void adb_set_config(UINT8 b1, UINT8 b2, UINT8 b3)
 {
 	/* ignore for now */
 }
 
 
 
-static void adb_post_response(const data8_t *bytes, size_t length)
+static void adb_post_response(const UINT8 *bytes, size_t length)
 {
 	assert(length < (sizeof(adb_response_bytes) / sizeof(adb_response_bytes[0])));
 	memcpy(adb_response_bytes, bytes, length);
@@ -414,16 +414,16 @@ static void adb_post_response(const data8_t *bytes, size_t length)
 
 
 
-static void adb_post_response_1(data8_t b)
+static void adb_post_response_1(UINT8 b)
 {
 	adb_post_response(&b, 1);
 }
 
 
 
-static void adb_post_response_2(data8_t b1, data8_t b2)
+static void adb_post_response_2(UINT8 b1, UINT8 b2)
 {
-	data8_t b[2];
+	UINT8 b[2];
 	b[0] = b1;
 	b[1] = b2;
 	adb_post_response(b, 2);
@@ -517,9 +517,9 @@ static void adb_do_command(void)
 
 
 
-static data8_t adb_read_datareg(void)
+static UINT8 adb_read_datareg(void)
 {
-	data8_t result;
+	UINT8 result;
 
 	switch(adb_state)
 	{
@@ -546,7 +546,7 @@ static data8_t adb_read_datareg(void)
 
 
 
-static void adb_write_datareg(data8_t data)
+static void adb_write_datareg(UINT8 data)
 {
 #if LOG_ADB
 	logerror("adb_write_datareg(): data=0x%02x\n", data);
@@ -657,14 +657,14 @@ static void adb_write_datareg(data8_t data)
 
 
 
-static data8_t adb_read_kmstatus(void)
+static UINT8 adb_read_kmstatus(void)
 {
 	return adb_kmstatus;
 }
 
 
 
-static void adb_write_kmstatus(data8_t data)
+static void adb_write_kmstatus(UINT8 data)
 {
 	adb_kmstatus &= ~0x54;
 	adb_kmstatus |= data & 0x54;
@@ -672,9 +672,9 @@ static void adb_write_kmstatus(data8_t data)
 
 
 
-static data8_t adb_read_mousedata(void)
+static UINT8 adb_read_mousedata(void)
 {
-	data8_t result = 0x00;
+	UINT8 result = 0x00;
 	UINT8 absolute;
 	INT8 delta;
 
@@ -745,7 +745,7 @@ static void adb_check_mouse(void)
 
 
 
-static void apple2gs_set_scanint(data8_t data)
+static void apple2gs_set_scanint(UINT8 data)
 {
 	/* second interrupt */
 	if ((apple2gs_vgcint & 0x40) && !(data & 0x40))
@@ -836,12 +836,12 @@ INTERRUPT_GEN( apple2gs_interrupt )
  * Sound handlers
  * ----------------------------------------------------------------------- */
 
-static data8_t sndglu_ctrl;
+static UINT8 sndglu_ctrl;
 static int sndglu_addr, sndglu_dummy_read;
 
 static READ8_HANDLER( gssnd_r )
 {
-	data8_t ret = 0;
+	UINT8 ret = 0;
 
 	switch (offset)
 	{
@@ -929,7 +929,7 @@ static WRITE8_HANDLER( gssnd_w )
 
 static READ8_HANDLER( apple2gs_c0xx_r )
 {
-	data8_t result;
+	UINT8 result;
 
 	offset &= 0xFF;
 
@@ -1482,9 +1482,9 @@ static UINT8 *apple2gs_getslotmem(offs_t address)
 
 
 
-static data8_t apple2gs_xxCxxx_r(offs_t address)
+static UINT8 apple2gs_xxCxxx_r(offs_t address)
 {
-	data8_t result;
+	UINT8 result;
 	int slot;
 
 	if ((apple2gs_shadow & 0x40) && ((address & 0xF00000) == 0x000000))
@@ -1509,7 +1509,7 @@ static data8_t apple2gs_xxCxxx_r(offs_t address)
 
 
 
-static void apple2gs_xxCxxx_w(offs_t address, data8_t data)
+static void apple2gs_xxCxxx_w(offs_t address, UINT8 data)
 {
 	int slot;
 

@@ -32,19 +32,19 @@ typedef enum
 struct applefdc_interface
 {
 	applefdc_t type;
-	void (*set_lines)(data8_t lines);
+	void (*set_lines)(UINT8 lines);
 	void (*set_enable_lines)(int enable_mask);
 
-	data8_t (*read_data)(void);
-	void (*write_data)(data8_t data);
+	UINT8 (*read_data)(void);
+	void (*write_data)(UINT8 data);
 	int (*read_status)(void);
 };
 
 
 void applefdc_init(const struct applefdc_interface *intf);
-data8_t applefdc_r(offs_t offset);
-void applefdc_w(offs_t offset, data8_t data);
-data8_t applefdc_get_lines(void);
+UINT8 applefdc_r(offs_t offset);
+void applefdc_w(offs_t offset, UINT8 data);
+UINT8 applefdc_get_lines(void);
 
 
 #endif /* APPLEFDC_H */

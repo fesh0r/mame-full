@@ -30,7 +30,7 @@ int currentLine;
 int lineCountDownCounter;
 int irqState;			/* The status of the IRQ line, as seen by the VDP */
 
-struct mame_bitmap *prevBitMap;
+mame_bitmap *prevBitMap;
 int prevBitMapSaved;
 
 /* NTSC 192 lines precalculated return values from the V counter */
@@ -504,7 +504,7 @@ WRITE8_HANDLER(sms_vdp_ctrl_w) {
 }
 
 #ifdef MAME_DEBUG
-void sms_show_tile_line(struct mame_bitmap *bitmap, int line, int palletteSelected) {
+void sms_show_tile_line(mame_bitmap *bitmap, int line, int palletteSelected) {
 	int tileColumn, tileRow;
 	int pixelX;
 	int bitPlane0, bitPlane1, bitPlane2, bitPlane3;
@@ -543,7 +543,7 @@ void sms_show_tile_line(struct mame_bitmap *bitmap, int line, int palletteSelect
 }
 #endif
 
-void sms_refresh_line(struct mame_bitmap *bitmap, int line) {
+void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	int tileColumn;
 	int xScroll, yScroll, xScrollStartColumn;
 	int spriteIndex;
@@ -553,7 +553,7 @@ void sms_refresh_line(struct mame_bitmap *bitmap, int line) {
 	int bitPlane0, bitPlane1, bitPlane2, bitPlane3;
 	UINT16 *nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0E) << 10) & 0x3800) + ((((line + reg[0x09]) % 224) >> 3) << 6)]);
 	UINT8 *spriteTable = (UINT8 *) &(VRAM[(reg[0x05] << 7) & 0x3F00]);
-	struct rectangle rec;
+	rectangle rec;
 
 	rec = Machine->visible_area;
 	pixelPlotY = line;

@@ -402,7 +402,7 @@ sprite x position
 */
 
 
-static UINT8 rectangle[0x40][8];
+static UINT8 arcadia_rectangle[0x40][8];
 static UINT8 chars[0x40][8]={
     // read from the screen generated from a palladium
     { 0,0,0,0,0,0,0,0 },			// 00 (space)
@@ -506,7 +506,7 @@ static struct {
 	    UINT8 ram3[3][16];
 	} d;
     } reg;
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 } arcadia_video={ 0 };
 
 VIDEO_START( arcadia )
@@ -514,16 +514,16 @@ VIDEO_START( arcadia )
 	int i;
 	for (i=0; i<0x40; i++)
 	{
-		rectangle[i][0]=0;
-		rectangle[i][4]=0;
-		if (i&1) rectangle[i][0]|=3;
-		if (i&2) rectangle[i][0]|=0x1c;
-		if (i&4) rectangle[i][0]|=0xe0;
-		if (i&8) rectangle[i][4]|=3;
-		if (i&0x10) rectangle[i][4]|=0x1c;
-		if (i&0x20) rectangle[i][4]|=0xe0;
-		rectangle[i][1]=rectangle[i][2]=rectangle[i][3]=rectangle[i][0];
-		rectangle[i][5]=rectangle[i][6]=rectangle[i][7]=rectangle[i][4];
+		arcadia_rectangle[i][0]=0;
+		arcadia_rectangle[i][4]=0;
+		if (i&1) arcadia_rectangle[i][0]|=3;
+		if (i&2) arcadia_rectangle[i][0]|=0x1c;
+		if (i&4) arcadia_rectangle[i][0]|=0xe0;
+		if (i&8) arcadia_rectangle[i][4]|=3;
+		if (i&0x10) arcadia_rectangle[i][4]|=0x1c;
+		if (i&0x20) arcadia_rectangle[i][4]|=0xe0;
+		arcadia_rectangle[i][1]=arcadia_rectangle[i][2]=arcadia_rectangle[i][3]=arcadia_rectangle[i][0];
+		arcadia_rectangle[i][5]=arcadia_rectangle[i][6]=arcadia_rectangle[i][7]=arcadia_rectangle[i][4];
 	}
 
 	arcadia_video.bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
@@ -632,7 +632,7 @@ WRITE8_HANDLER(arcadia_video_w)
     }
 }
 
-INLINE void arcadia_draw_char(struct mame_bitmap *bitmap, UINT8 *ch, int color,
+INLINE void arcadia_draw_char(mame_bitmap *bitmap, UINT8 *ch, int color,
 			      int y, int x)
 {
     int k,b;
@@ -677,7 +677,7 @@ INLINE void arcadia_draw_char(struct mame_bitmap *bitmap, UINT8 *ch, int color,
     }
 }
 
-INLINE void arcadia_vh_draw_line(struct mame_bitmap *bitmap,
+INLINE void arcadia_vh_draw_line(mame_bitmap *bitmap,
 				 int y, UINT8 chars1[16])
 {
     int x, ch, j, h;
@@ -701,13 +701,13 @@ INLINE void arcadia_vh_draw_line(struct mame_bitmap *bitmap,
 	    }
 	}
 	if (graphics)
-	    arcadia_draw_char(bitmap, rectangle[ch&0x3f], ch, y, x);
+	    arcadia_draw_char(bitmap, arcadia_rectangle[ch&0x3f], ch, y, x);
 	else
 	    arcadia_draw_char(bitmap, chars[ch&0x3f], ch, y, x);
     }
 }
 
-static bool arcadia_sprite_collision(int n1, int n2)
+static int arcadia_sprite_collision(int n1, int n2)
 {
     int k, b1, b2, x;
     if (arcadia_video.pos[n1].x+8<=arcadia_video.pos[n2].x) return FALSE;
@@ -725,7 +725,7 @@ static bool arcadia_sprite_collision(int n1, int n2)
     return FALSE;
 }
 
-static void arcadia_draw_sprites(struct mame_bitmap *bitmap)
+static void arcadia_draw_sprites(mame_bitmap *bitmap)
 {
     int i, k, x, y;
     UINT8 b;

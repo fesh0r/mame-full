@@ -31,9 +31,9 @@
 #define VIDEO_STOP(name)		void video_stop_##name(void)
 #define VIDEO_EOF(name)			void video_eof_##name(void)
 #ifdef MESS
-#define VIDEO_UPDATE(name)		void video_update_##name(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip)
+#define VIDEO_UPDATE(name)		void video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect, int *do_skip)
 #else
-#define VIDEO_UPDATE(name)		void video_update_##name(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+#define VIDEO_UPDATE(name)		void video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect)
 #endif
 
 /* NULL versions */
@@ -85,15 +85,15 @@
 
 /* use this to declare external references to a machine driver */
 #define MACHINE_DRIVER_EXTERN(game)										\
-	void construct_##game(machine_config *machine)		\
+	void construct_##game(machine_config *machine)						\
 
 
 /* start/end tags for the machine driver */
 #define MACHINE_DRIVER_START(game) 										\
-	void construct_##game(machine_config *machine)		\
+	void construct_##game(machine_config *machine)						\
 	{																	\
-		cpu_config *cpu = NULL;									\
-		sound_config *sound = NULL;								\
+		cpu_config *cpu = NULL;											\
+		sound_config *sound = NULL;										\
 		(void)cpu;														\
 		(void)sound;													\
 
@@ -344,7 +344,7 @@ struct _machine_config
 	UINT32 video_attributes;
 	UINT32 aspect_x, aspect_y;
 	int screen_width,screen_height;
-	struct rectangle default_visible_area;
+	rectangle default_visible_area;
 	gfx_decode *gfxdecodeinfo;
 	UINT32 total_colors;
 	UINT32 color_table_len;
@@ -354,9 +354,9 @@ struct _machine_config
 	void (*video_stop)(void);
 	void (*video_eof)(void);
 #ifdef MESS
-	void (*video_update)(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip);
+	void (*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect, int *do_skip);
 #else
-	void (*video_update)(int screen, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+	void (*video_update)(int screen, mame_bitmap *bitmap,const rectangle *cliprect);
 #endif
 
 	sound_config sound[MAX_SOUND];

@@ -74,11 +74,11 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-data8_t nRTC_Regs[0x80];
-data8_t nRTC_UserRAM[0x200];
-data8_t nRTC_RAM[0x800];
+UINT8 nRTC_Regs[0x80];
+UINT8 nRTC_UserRAM[0x200];
+UINT8 nRTC_RAM[0x800];
 
-static data32_t nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
+static UINT32 nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
 
 static NVRAM_HANDLER( ip22 )
 {
@@ -103,7 +103,7 @@ static NVRAM_HANDLER( ip22 )
 #define RTC_SECOND	nRTC_RAM[0x06]
 #define RTC_HUNDREDTH	nRTC_RAM[0x05]
 
-static data32_t ioc_regs[64];
+static UINT32 ioc_regs[64];
 
 static READ32_HANDLER( pio4_r )
 {
@@ -220,11 +220,11 @@ static WRITE32_HANDLER( pio4_w )
 	}
 }
 
-data32_t nHPC3_enetr_nbdp;
-data32_t nHPC3_enetr_cbp;
-data32_t nHPC3_hd0_register;
-data32_t nHPC3_hd0_regs[0x20];
-data32_t nHPC3_hd1_regs[0x20];
+UINT32 nHPC3_enetr_nbdp;
+UINT32 nHPC3_enetr_cbp;
+UINT32 nHPC3_hd0_register;
+UINT32 nHPC3_hd0_regs[0x20];
+UINT32 nHPC3_hd1_regs[0x20];
 
 static READ32_HANDLER( hpc3_hd_enet_r )
 {
@@ -338,9 +338,9 @@ static WRITE32_HANDLER( hpc3_hd0_w )
 	}
 }
 
-data32_t nHPC3_unk0;
-data32_t nHPC3_unk1;
-data32_t nHPC3_IC_Unk0;
+UINT32 nHPC3_unk0;
+UINT32 nHPC3_unk1;
+UINT32 nHPC3_IC_Unk0;
 
 static READ32_HANDLER( hpc3_unk_r )
 {
@@ -782,7 +782,7 @@ static ADDRESS_MAP_START( ip225015_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE( 0xbfc00000, 0xbfc7ffff ) AM_ROM AM_SHARE(2) /* BIOS Mirror */
 ADDRESS_MAP_END
 
-data32_t nIntCounter;
+UINT32 nIntCounter;
 
 // mc_update wants once every millisecond (1/1000th of a second)
 static void ip22_timer(int refcon)
@@ -804,7 +804,7 @@ static MACHINE_INIT( ip225015 )
 	timer_set(TIME_IN_MSEC(1), 0, ip22_timer);
 }
 
-static void dump_chain(data32_t ch_base)
+static void dump_chain(UINT32 ch_base)
 {
 	printf("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
 
@@ -820,7 +820,7 @@ static void dump_chain(data32_t ch_base)
 #define HPC3_DMACTRL_DIR	(0x04)
 #define HPC3_DMACTRL_ENABLE	(0x10)
 
-static data8_t dma_buffer[4096];
+static UINT8 dma_buffer[4096];
 
 static void scsi_irq(int state)
 {
@@ -836,7 +836,7 @@ static void scsi_irq(int state)
 			// HPC3 DMA: host to device
 			if ((nHPC_SCSI0DMACtrl & HPC3_DMACTRL_ENABLE) && (nHPC_SCSI0DMACtrl & HPC3_DMACTRL_DIR))
 			{
-				data32_t rptr, dptr, tmpword;
+				UINT32 rptr, dptr, tmpword;
 				int length;
 
 				rptr = program_read_dword(nHPC_SCSI0Descriptor);
@@ -890,7 +890,7 @@ static void scsi_irq(int state)
 			// HPC3 DMA: device to host
 			if ((nHPC_SCSI0DMACtrl & HPC3_DMACTRL_ENABLE) && !(nHPC_SCSI0DMACtrl & HPC3_DMACTRL_DIR))
 			{
-				data32_t wptr, tmpword;
+				UINT32 wptr, tmpword;
 				int words, sptr, twords;
 		
 				words = wd33c93_get_dma_count();

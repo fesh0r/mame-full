@@ -185,7 +185,7 @@ static struct {
 
 	int chargenaddr, videoaddr;
 
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	int x_begin, x_end;
 	int y_begin, y_end;
 

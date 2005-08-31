@@ -10,7 +10,7 @@
 #include "vidhrdw/voodoo.h"
 #include "machine/timekpr.h"
 
-static data8_t led_reg0 = 0x7f, led_reg1 = 0x7f;
+static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 /* defined in hornet.c */
 READ32_HANDLER(pci_3dfx_r);
@@ -42,7 +42,7 @@ static UINT32 *K001604_tile_ram;
 static UINT32 *K001604_char_ram;
 static UINT8 *K001604_dirty_map;
 static int K001604_gfx_index, K001604_char_dirty;
-static struct tilemap *K001604_layer[1];
+static tilemap *K001604_layer[1];
 
 #define K001604_NUM_TILES		16384
 
@@ -148,7 +148,7 @@ void K001604_tile_update(void)
 	}
 }
 
-void K001604_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void K001604_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	tilemap_draw(bitmap, cliprect, K001604_layer[0], 0,0);
 }
@@ -303,7 +303,7 @@ static WRITE32_HANDLER( sysreg_w )
 	}
 }
 
-static data8_t sndto68k[16], sndtoppc[16];	/* read/write split mapping */
+static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */
 
 static READ32_HANDLER( sound_r )
 {

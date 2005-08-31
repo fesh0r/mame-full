@@ -85,12 +85,12 @@ void decrypt_vbowl(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1));
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
 
 	int rom_size = 0x80000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x4100) == 0x0100)
 			x ^= 0x0002;
@@ -130,4 +130,4 @@ ROM_START( vbowl )
 	ROM_LOAD( "vrbowlng.u69",  0x200000, 0x100000, BAD_DUMP CRC(19172e3b) SHA1(da9297621a98835c0d27b4d4a90d295a284c7ef6) ) // FIXED BITS (xxxxxxxx11111111)  maybe bad
 ROM_END
 
-GAMEX( 199?, vbowl, 0, vbowl, vbowl, vbowl, ROT0, "IGS", "Virtual Bowling", GAME_NOT_WORKING | GAME_NO_SOUND  )
+GAMEX( 1996, vbowl, 0, vbowl, vbowl, vbowl, ROT0, "Alta / IGS", "Virtua Bowling", GAME_NOT_WORKING | GAME_NO_SOUND  )

@@ -125,7 +125,7 @@ static void amiga_cia_0_portA_w( int data )
 	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
 }
 
-static data16_t amiga_read_joy0dat(void)
+static UINT16 amiga_read_joy0dat(void)
 {
 	if ( readinputport( 0 ) & 0x20 ) {
 		int input = ( readinputport( 1 ) >> 4 );
@@ -149,7 +149,7 @@ static data16_t amiga_read_joy0dat(void)
 	}
 }
 
-static data16_t amiga_read_joy1dat(void)
+static UINT16 amiga_read_joy1dat(void)
 {
 	if ( readinputport( 0 ) & 0x10 ) {
 		int input = ( readinputport( 1 ) & 0x0f );
@@ -173,12 +173,12 @@ static data16_t amiga_read_joy1dat(void)
 	}
 }
 
-static data16_t amiga_read_dskbytr(void)
+static UINT16 amiga_read_dskbytr(void)
 {
 	return amiga_fdc_get_byte();
 }
 
-static void amiga_write_dsklen(data16_t data)
+static void amiga_write_dsklen(UINT16 data)
 {
 	extern custom_regs_def custom_regs;
 

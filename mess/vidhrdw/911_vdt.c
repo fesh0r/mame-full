@@ -466,7 +466,7 @@ WRITE8_HANDLER(vdt911_0_cru_w)
 /*
 	Video refresh
 */
-void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
+void vdt911_refresh(mame_bitmap *bitmap, int unit, int x, int y)
 {
 	const gfx_element *gfx = Machine->gfx[vdt[unit].model];
 	int height = (vdt[unit].screen_size == char_960) ? 12 : /*25*/24;
@@ -481,7 +481,7 @@ void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 
 	if (! vdt[unit].display_enable)
 	{
-		struct rectangle my_rect;
+		rectangle my_rect;
 
 		my_rect.min_x = x;
 		my_rect.max_x = x + 80*7 - 1;

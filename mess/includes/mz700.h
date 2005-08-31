@@ -33,7 +33,7 @@ extern int mz700_frame_time;
 extern PALETTE_INIT(mz700);
 //extern int mz700_vh_start (void);
 //extern void mz700_vh_stop (void);
-//extern void mz700_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+//extern void mz700_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh);
 extern VIDEO_START(mz700);
 extern VIDEO_UPDATE(mz700);
 

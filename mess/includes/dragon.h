@@ -44,7 +44,7 @@ UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metap
 int internal_m6847_getadjustedscanline(void);
 void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
 
-void internal_video_update_m6847(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int *do_skip);
+void internal_video_update_m6847(int screen, mame_bitmap *bitmap, const rectangle *cliprect, int *do_skip);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
@@ -52,15 +52,15 @@ void internal_video_update_m6847(int screen, struct mame_bitmap *bitmap, const s
 
 extern int coco3_gimevhreg[8];
 
-void coco3_ram_b1_w (offs_t offset, data8_t data);
-void coco3_ram_b2_w (offs_t offset, data8_t data);
-void coco3_ram_b3_w (offs_t offset, data8_t data);
-void coco3_ram_b4_w (offs_t offset, data8_t data);
-void coco3_ram_b5_w (offs_t offset, data8_t data);
-void coco3_ram_b6_w (offs_t offset, data8_t data);
-void coco3_ram_b7_w (offs_t offset, data8_t data);
-void coco3_ram_b8_w (offs_t offset, data8_t data);
-void coco3_ram_b9_w (offs_t offset, data8_t data);
+void coco3_ram_b1_w (offs_t offset, UINT8 data);
+void coco3_ram_b2_w (offs_t offset, UINT8 data);
+void coco3_ram_b3_w (offs_t offset, UINT8 data);
+void coco3_ram_b4_w (offs_t offset, UINT8 data);
+void coco3_ram_b5_w (offs_t offset, UINT8 data);
+void coco3_ram_b6_w (offs_t offset, UINT8 data);
+void coco3_ram_b7_w (offs_t offset, UINT8 data);
+void coco3_ram_b8_w (offs_t offset, UINT8 data);
+void coco3_ram_b9_w (offs_t offset, UINT8 data);
 void coco3_vh_sethires(int hires);
 
 VIDEO_START( dragon );

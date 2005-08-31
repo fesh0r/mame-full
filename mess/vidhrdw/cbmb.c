@@ -70,7 +70,7 @@ void cbmb_vh_set_font(int font)
 VIDEO_UPDATE( cbmb )
 {
 	int x, y, i;
-	struct rectangle rect, rect2;
+	rectangle rect, rect2;
 	int w=crtc6845_get_char_columns(crtc6845);
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);

@@ -176,7 +176,7 @@ MACHINE_INIT( dai )
 
  READ8_HANDLER( dai_io_discrete_devices_r )
 {
-	data8_t data = 0x00;
+	UINT8 data = 0x00;
 
 	switch(offset & 0x000f) {
 	case 0x00:

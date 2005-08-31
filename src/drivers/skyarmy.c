@@ -24,10 +24,10 @@
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-data8_t *skyarmy_videoram;
-data8_t *skyarmy_colorram;
-data8_t *skyarmy_scrollram;
-static struct tilemap* skyarmy_tilemap;
+UINT8 *skyarmy_videoram;
+UINT8 *skyarmy_colorram;
+UINT8 *skyarmy_scrollram;
+static tilemap* skyarmy_tilemap;
 
 static void get_skyarmy_tile_info(int tile_index)
 {

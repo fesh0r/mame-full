@@ -13,7 +13,7 @@ Video hardware driver by Uki
 static UINT8 strnskil_scrl_ctrl;
 static UINT8 strnskil_xscroll[2];
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( strnskil )
 {
@@ -90,7 +90,7 @@ VIDEO_START( strnskil )
 	return 0;
 }
 
-static void strnskil_draw_sprites( struct mame_bitmap *bitmap )
+static void strnskil_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

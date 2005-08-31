@@ -108,7 +108,7 @@ static NVRAM_HANDLER( nvram )
 
 /* vidhrdw */
 
-//static struct tilemap *bg_tilemap;
+//static tilemap *bg_tilemap;
 
 PALETTE_INIT( starspnr )
 {

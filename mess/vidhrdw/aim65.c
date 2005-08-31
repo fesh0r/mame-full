@@ -124,7 +124,7 @@ static const char led[] = {
 	"   fffffff    eeeeee" 
 };
 
-static void aim65_draw_7segment(struct mame_bitmap *bitmap,int value, int x, int y)
+static void aim65_draw_7segment(mame_bitmap *bitmap,int value, int x, int y)
 {
 	int i, xi, yi, mask, color;
 
@@ -195,7 +195,7 @@ static const char* single_led=
 " 111"
 ;
 
-static void aim65_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
+static void aim65_draw_led(mame_bitmap *bitmap,INT16 color, int x, int y)
 {
 	int j, xi=0;
 	for (j=0; single_led[j]; j++) {

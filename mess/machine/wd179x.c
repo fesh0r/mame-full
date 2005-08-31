@@ -1469,7 +1469,7 @@ WRITE8_HANDLER ( wd179x_data_w )
 
  READ8_HANDLER( wd179x_r )
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	switch(offset % 4) {
 	case 0: 

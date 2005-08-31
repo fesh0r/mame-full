@@ -76,7 +76,7 @@ VIDEO_START( hp48 )
 	return video_start_generic();
 }
 
-static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const char *figure, int color)
+static void hp48_draw_special(mame_bitmap *bitmap,int x, int y, const char *figure, int color)
 {
 	int j, xi=0;
 	for (j=0; figure[j]; j++) {

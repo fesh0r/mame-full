@@ -442,7 +442,7 @@ static unsigned short apexc_colortable[] =
 #define APEXC_PALETTE_SIZE sizeof(apexc_palette)/3
 #define APEXC_COLORTABLE_SIZE sizeof(apexc_colortable)/2
 
-static struct mame_bitmap *apexc_bitmap;
+static mame_bitmap *apexc_bitmap;
 
 enum
 {
@@ -458,12 +458,12 @@ enum
 	teletyper_window_offset_y = panel_window_height
 };
 
-static const struct rectangle panel_window =
+static const rectangle panel_window =
 {
 	panel_window_offset_x,	panel_window_offset_x+panel_window_width-1,	/* min_x, max_x */
 	panel_window_offset_y,	panel_window_offset_y+panel_window_height-1,/* min_y, max_y */
 };
-static const struct rectangle teletyper_window =
+static const rectangle teletyper_window =
 {
 	teletyper_window_offset_x,	teletyper_window_offset_x+teletyper_window_width-1,	/* min_x, max_x */
 	teletyper_window_offset_y,	teletyper_window_offset_y+teletyper_window_height-1,/* min_y, max_y */
@@ -472,7 +472,7 @@ enum
 {
 	teletyper_scroll_step = 8
 };
-static const struct rectangle teletyper_scroll_clear_window =
+static const rectangle teletyper_scroll_clear_window =
 {
 	teletyper_window_offset_x,	teletyper_window_offset_x+teletyper_window_width-1,	/* min_x, max_x */
 	teletyper_window_offset_y+teletyper_window_height-teletyper_scroll_step,	teletyper_window_offset_y+teletyper_window_height-1,	/* min_y, max_y */
@@ -496,7 +496,7 @@ static VIDEO_START( apexc )
 }
 
 /* draw a small 8*8 LED (well, there were no LEDs at the time, so let's call this a lamp ;-) ) */
-static void apexc_draw_led(struct mame_bitmap *bitmap, int x, int y, int state)
+static void apexc_draw_led(mame_bitmap *bitmap, int x, int y, int state)
 {
 	int xx, yy;
 
@@ -506,14 +506,14 @@ static void apexc_draw_led(struct mame_bitmap *bitmap, int x, int y, int state)
 }
 
 /* write a single char on screen */
-static void apexc_draw_char(struct mame_bitmap *bitmap, char character, int x, int y, int color)
+static void apexc_draw_char(mame_bitmap *bitmap, char character, int x, int y, int color)
 {
 	drawgfx(bitmap, Machine->gfx[0], character-32, color, 0, 0,
 				x+1, y, &Machine->visible_area, TRANSPARENCY_PEN, 0);
 }
 
 /* write a string on screen */
-static void apexc_draw_string(struct mame_bitmap *bitmap, const char *buf, int x, int y, int color)
+static void apexc_draw_string(mame_bitmap *bitmap, const char *buf, int x, int y, int color)
 {
 	while (* buf)
 	{

@@ -48,8 +48,8 @@
 #define IWM_Q7		0x80
 
 
-static data8_t applefdc_writebyte;
-static data8_t applefdc_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
+static UINT8 applefdc_writebyte;
+static UINT8 applefdc_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
 /*
  * IWM mode (iwm_mode):	The IWM mode has the following values:
@@ -166,9 +166,9 @@ static void iwm_modereg_w(int data)
 
 
 
-static data8_t applefdc_read_reg(int lines)
+static UINT8 applefdc_read_reg(int lines)
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	switch(lines)
 	{
@@ -215,7 +215,7 @@ static data8_t applefdc_read_reg(int lines)
 
 
 
-static void applefdc_write_reg(data8_t data)
+static void applefdc_write_reg(UINT8 data)
 {
 	switch(applefdc_lines & (IWM_Q6 | IWM_Q7))
 	{
@@ -334,9 +334,9 @@ static void iwm_access(int offset)
 
 
 
-data8_t applefdc_r(offs_t offset)
+UINT8 applefdc_r(offs_t offset)
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	offset &= 15;
 
@@ -379,7 +379,7 @@ data8_t applefdc_r(offs_t offset)
 
 
 
-void applefdc_w(offs_t offset, data8_t data)
+void applefdc_w(offs_t offset, UINT8 data)
 {
 	offset &= 15;
 
@@ -420,7 +420,7 @@ void applefdc_w(offs_t offset, data8_t data)
 
 
 
-data8_t applefdc_get_lines(void)
+UINT8 applefdc_get_lines(void)
 {
 	return applefdc_lines & 0x0f;
 }

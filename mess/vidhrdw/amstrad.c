@@ -46,7 +46,7 @@ int amstrad_CRTC_HS_Counter;
 /* 2 HSYNCS after the VSYNC Counter */
 static int amstrad_CRTC_HS_After_VS_Counter;
 
-static struct mame_bitmap	*amstrad_bitmap;
+static mame_bitmap	*amstrad_bitmap;
 
 /* the mode is re-loaded at each HSYNC */
 /* current mode to render */
@@ -292,7 +292,7 @@ static void amstrad_draw_screen_disabled(void)
 /* mode 0 - low resolution - 16 colours */
 static void amstrad_draw_screen_enabled_mode_0(void)
 {
-	struct mame_bitmap *bitmap = amstrad_bitmap;
+	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
 	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
@@ -333,7 +333,7 @@ static void amstrad_draw_screen_enabled_mode_0(void)
 /* mode 1 - medium resolution - 4 colours */
 static void amstrad_draw_screen_enabled_mode_1(void)
 {
-	struct mame_bitmap *bitmap = amstrad_bitmap;
+	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
 	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
@@ -367,7 +367,7 @@ static void amstrad_draw_screen_enabled_mode_1(void)
 /* mode 2: high resolution - 2 colours */
 static void amstrad_draw_screen_enabled_mode_2(void)
 {
-	struct mame_bitmap *bitmap = amstrad_bitmap;
+	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
 	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
@@ -395,7 +395,7 @@ static void amstrad_draw_screen_enabled_mode_2(void)
 /* undocumented mode. low resolution - 4 colours */
 static void amstrad_draw_screen_enabled_mode_3(void)
 {
-	struct mame_bitmap *bitmap = amstrad_bitmap;
+	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
 	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
@@ -564,7 +564,7 @@ static struct crtc6845_interface amstrad6845= {
 
 VIDEO_UPDATE( amstrad )
 {
-	struct rectangle rect;
+	rectangle rect;
 
 	rect.min_x = 0;
 	rect.max_x = AMSTRAD_SCREEN_WIDTH-1;

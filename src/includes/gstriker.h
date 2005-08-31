@@ -10,8 +10,8 @@
 
 typedef struct
 {
-	struct tilemap* tmap;
-	data16_t* vram;
+	tilemap* tmap;
+	UINT16* vram;
 	UINT16 pal_base;
 	UINT8 gfx_region;
 } sVS920A;
@@ -32,9 +32,9 @@ extern WRITE16_HANDLER( VS920A_1_vram_w );
 
 typedef struct
 {
-	struct tilemap* tmap;
-	data16_t* vram;
-	data16_t regs[8];
+	tilemap* tmap;
+	UINT16* vram;
+	UINT16 regs[8];
 	UINT8 bank[8];
 	UINT16 pal_base;
 	UINT8 gfx_region;
@@ -59,7 +59,7 @@ extern WRITE16_HANDLER(MB60553_1_vram_w);
 
 typedef struct
 {
-	data16_t* vram;
+	UINT16* vram;
 	UINT16 pal_base;
 	UINT8 gfx_region;
 

@@ -13,7 +13,7 @@
 
 
 /* pointer to TX-0 RAM */
-static data32_t *tx0_memory;
+static UINT32 *tx0_memory;
 
 
 /*
@@ -78,7 +78,7 @@ static void init_tx0(void)
 	};
 
 	/* set up memory regions */
-	tx0_memory = (data32_t *) memory_region(REGION_CPU1);
+	tx0_memory = (UINT32 *) memory_region(REGION_CPU1);
 
 	/* set up our font */
 	dst = memory_region(REGION_GFX1);
@@ -408,7 +408,7 @@ MACHINE_DRIVER_END
 
 ROM_START(tx0_64kw)
 	/*CPU memory space*/
-	ROM_REGION(0x10000 * sizeof(data32_t),REGION_CPU1,0)
+	ROM_REGION(0x10000 * sizeof(UINT32),REGION_CPU1,0)
 		/* Note this computer has no ROM... */
 
 	ROM_REGION(tx0_fontdata_size, REGION_GFX1, 0)
@@ -417,7 +417,7 @@ ROM_END
 
 ROM_START(tx0_8kw)
 	/*CPU memory space*/
-	ROM_REGION(0x2000 * sizeof(data32_t),REGION_CPU1,0)
+	ROM_REGION(0x2000 * sizeof(UINT32),REGION_CPU1,0)
 		/* Note this computer has no ROM... */
 
 	ROM_REGION(tx0_fontdata_size, REGION_GFX1, 0)

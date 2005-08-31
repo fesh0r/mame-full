@@ -34,8 +34,8 @@ typedef struct hfdc_t
 						with the drive in non-DMA modes??? */
 	int reg_ptr;
 	int (*select_callback)(int which, select_mode_t select_mode, int select_line, int gpos);
-	data8_t (*dma_read_callback)(int which, offs_t offset);
-	void (*dma_write_callback)(int which, offs_t offset, data8_t data);
+	UINT8 (*dma_read_callback)(int which, offs_t offset);
+	void (*dma_write_callback)(int which, offs_t offset, UINT8 data);
 	void (*int_callback)(int which, int state);
 } hfdc_t;
 
@@ -277,7 +277,7 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 
 static struct
 {
-	struct hard_disk_file *hd_handle;
+	hard_disk_file *hd_handle;
 	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	int current_cylinder;
 
@@ -287,7 +287,7 @@ static struct
 
 int smc92x4_hd_load(mess_image *image, int disk_unit)
 {
-	const struct hard_disk_info *info;
+	const hard_disk_info *info;
 
 	if (device_load_mess_hd(image, image_fp(image)) == INIT_PASS)
 	{

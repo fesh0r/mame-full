@@ -14,7 +14,7 @@ unsigned char *lwings_fgvideoram;
 unsigned char *lwings_bg1videoram;
 
 static int bAvengersHardware, bg2_image;
-static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
+static tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 /***************************************************************************
 
@@ -194,7 +194,7 @@ INLINE int is_sprite_on(int offs)
 	return sx || sy;
 }
 
-static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void lwings_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -231,7 +231,7 @@ static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 	}
 }
 
-static void trojan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void trojan_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

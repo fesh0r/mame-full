@@ -13,9 +13,9 @@
 /***************************************************************************
   Statics for this module
 ***************************************************************************/
-static struct tilemap *dblwidth_tilemap;
-static struct tilemap *normwidth_tilemap;
-static struct tilemap *current_tilemap;
+static tilemap *dblwidth_tilemap;
+static tilemap *normwidth_tilemap;
+static tilemap *current_tilemap;
 static const UINT8 *translate;
 static int color;
 
@@ -77,7 +77,7 @@ VIDEO_START( trs80 )
 ***************************************************************************/
 VIDEO_UPDATE( trs80 )
 {
-	struct tilemap *new_tilemap;
+	tilemap *new_tilemap;
 
 	/* Special translation if video RAM with only 7 bits is present
 	 * I don't know if it's entirely correct, but it's close ;-)

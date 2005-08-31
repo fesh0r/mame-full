@@ -15,7 +15,7 @@ unsigned char *firetrap_bg1videoram;
 unsigned char *firetrap_bg2videoram;
 unsigned char *firetrap_fgvideoram;
 
-static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
+static tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 
 
@@ -215,7 +215,7 @@ WRITE8_HANDLER( firetrap_bg2_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

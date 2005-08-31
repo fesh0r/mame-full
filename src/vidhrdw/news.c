@@ -2,11 +2,11 @@
 #include "news.h"
 
 
-data8_t *news_fgram;
-data8_t *news_bgram;
+UINT8 *news_fgram;
+UINT8 *news_bgram;
 
 static int bgpic;
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 
 

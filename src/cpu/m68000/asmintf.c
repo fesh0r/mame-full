@@ -213,13 +213,13 @@ static void change_pc_m68k(offs_t pc)
  * 16-bit data memory interface
  ****************************************************************************/
 
-static data32_t readlong_d16(offs_t address)
+static UINT32 readlong_d16(offs_t address)
 {
-	data32_t result = program_read_word_16be(address) << 16;
+	UINT32 result = program_read_word_16be(address) << 16;
 	return result | program_read_word_16be(address + 2);
 }
 
-static void writelong_d16(offs_t address, data32_t data)
+static void writelong_d16(offs_t address, UINT32 data)
 {
 	program_write_word_16be(address, data >> 16);
 	program_write_word_16be(address + 2, data);
@@ -252,9 +252,9 @@ static const struct m68k_memory_interface interface_d16 =
 #ifdef A68K2
 
 /* potentially misaligned 16-bit reads with a 32-bit data bus (and 24-bit address bus) */
-static data16_t readword_d32(offs_t address)
+static UINT16 readword_d32(offs_t address)
 {
-	data16_t result;
+	UINT16 result;
 
 	if (!(address & 1))
 		return program_read_word_32be(address);
@@ -263,7 +263,7 @@ static data16_t readword_d32(offs_t address)
 }
 
 /* potentially misaligned 16-bit writes with a 32-bit data bus (and 24-bit address bus) */
-static void writeword_d32(offs_t address, data16_t data)
+static void writeword_d32(offs_t address, UINT16 data)
 {
 	if (!(address & 1))
 	{
@@ -275,9 +275,9 @@ static void writeword_d32(offs_t address, data16_t data)
 }
 
 /* potentially misaligned 32-bit reads with a 32-bit data bus (and 24-bit address bus) */
-static data32_t readlong_d32(offs_t address)
+static UINT32 readlong_d32(offs_t address)
 {
-	data32_t result;
+	UINT32 result;
 
 	if (!(address & 3))
 		return program_read_dword_32be(address);
@@ -292,7 +292,7 @@ static data32_t readlong_d32(offs_t address)
 }
 
 /* potentially misaligned 32-bit writes with a 32-bit data bus (and 24-bit address bus) */
-static void writelong_d32(offs_t address, data32_t data)
+static void writelong_d32(offs_t address, UINT32 data)
 {
 	if (!(address & 3))
 	{

@@ -12,9 +12,9 @@
     Longer term:
         - struct mame_layer
           {
-            struct mame_bitmap *bitmap;
+            mame_bitmap *bitmap;
             int rectcount;
-            struct rectangle rectlist[MAX_RECTS];
+            rectangle rectlist[MAX_RECTS];
           }
         - add 4 mame_layers for backdrop, overlay, bezel, ui to mame_display
         - some mechanism to let the OSD do the blending
@@ -352,10 +352,10 @@ enum
 
 ***************************************************************************/
 
-struct artwork_piece
+struct _artwork_piece
 {
 	/* linkage */
-	struct artwork_piece *	next;
+	struct _artwork_piece *	next;
 
 	/* raw data from the .art file */
 	UINT8					layer;
@@ -372,17 +372,18 @@ struct artwork_piece
 	char *					alpha_filename;
 
 	/* bitmaps */
-	struct mame_bitmap *	rawbitmap;
-	struct mame_bitmap *	prebitmap;
-	struct mame_bitmap *	yrgbbitmap;
+	mame_bitmap *	rawbitmap;
+	mame_bitmap *	prebitmap;
+	mame_bitmap *	yrgbbitmap;
 	UINT32 *				scanlinehint;
 	UINT8					blendflags;
 
 	/* derived/dynamic data */
 	int						intersects_game;
 	int						visible;
-	struct rectangle		bounds;
+	rectangle		bounds;
 };
+typedef struct _artwork_piece artwork_piece;
 
 
 
@@ -396,18 +397,18 @@ static UINT8 rshift, gshift, bshift, ashift;
 static UINT32 nonalpha_mask;
 static UINT32 transparent_color;
 
-static struct artwork_piece *artwork_list;
+static artwork_piece *artwork_list;
 static int num_underlays, num_overlays, num_bezels;
 static int num_pieces;
 
-static struct mame_bitmap *underlay, *overlay, *overlay_yrgb, *bezel, *final;
-static struct rectangle underlay_invalid, overlay_invalid, bezel_invalid;
-static struct rectangle gamerect, screenrect;
+static mame_bitmap *underlay, *overlay, *overlay_yrgb, *bezel, *final;
+static rectangle underlay_invalid, overlay_invalid, bezel_invalid;
+static rectangle gamerect, screenrect;
 static int gamescale;
 
-static struct mame_bitmap *uioverlay;
+static mame_bitmap *uioverlay;
 static UINT32 *uioverlayhint;
-static struct rectangle uibounds, last_uibounds;
+static rectangle uibounds, last_uibounds;
 
 static UINT32 *palette_lookup;
 
@@ -427,24 +428,24 @@ static const artwork_overlay_piece *overlay_list;
 static int artwork_prep(void);
 static int artwork_load(const game_driver *gamename, int width, int height, const artwork_callbacks *callbacks);
 static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rgb32_components[3]);
-static int load_bitmap(const char *gamename, struct artwork_piece *piece);
-static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original);
-static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight);
-static void trim_bitmap(struct artwork_piece *piece);
+static int load_bitmap(const char *gamename, artwork_piece *piece);
+static int load_alpha_bitmap(const char *gamename, artwork_piece *piece, const png_info *original);
+static int scale_bitmap(artwork_piece *piece, int newwidth, int newheight);
+static void trim_bitmap(artwork_piece *piece);
 static int parse_art_file(mame_file *file);
 static int validate_pieces(void);
 static void sort_pieces(void);
 static void update_palette_lookup(mame_display *display);
 static int update_layers(void);
-static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display);
-static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color);
-static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist);
-static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds);
-static void cmy_blend_intersecting_rect(struct mame_bitmap *dstbitmap, struct mame_bitmap *dstyrgbbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, struct mame_bitmap *srcyrgbbitmap, const struct rectangle *srcbounds, UINT8 blendflags);
+static void render_game_bitmap(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_underlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_underlay_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_ui_overlay(mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display);
+static void erase_rect(mame_bitmap *bitmap, const rectangle *bounds, UINT32 color);
+static void alpha_blend_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds, const UINT32 *hintlist);
+static void add_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds);
+static void cmy_blend_intersecting_rect(mame_bitmap *dstbitmap, mame_bitmap *dstyrgbbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, mame_bitmap *srcyrgbbitmap, const rectangle *srcbounds, UINT8 blendflags);
 static int generate_overlay(const artwork_overlay_piece *list, int width, int height);
 static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int endx);
 
@@ -458,7 +459,7 @@ static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int en
     union_rect - compute the union of two rects
 -------------------------------------------------*/
 
-INLINE void union_rect(struct rectangle *dst, const struct rectangle *src)
+INLINE void union_rect(rectangle *dst, const rectangle *src)
 {
 	if (dst->max_x == 0)
 		*dst = *src;
@@ -596,14 +597,14 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
     to osd_create_display
 -------------------------------------------------*/
 
-int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components, const artwork_callbacks *callbacks)
+int artwork_create_display(osd_create_params *params, UINT32 *rgb_components, const artwork_callbacks *callbacks)
 {
 	int original_width = params->width;
 	int original_height = params->height;
 	int original_depth = params->depth;
 	double min_x, min_y, max_x, max_y;
 	UINT32 rgb32_components[3];
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 
 	/* reset UI */
 	uioverlay = NULL;
@@ -748,7 +749,7 @@ void artwork_update_visible_area(mame_display *display)
 	int original_width = ( display->game_visible_area.max_x - display->game_visible_area.min_x ) + 1;
 	int original_height = ( display->game_visible_area.max_y - display->game_visible_area.min_y ) + 1;
 
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 	/* compute the extent of all the artwork */
 	min_x = min_y = 0.0;
 	max_x = max_y = 1.0;
@@ -797,7 +798,7 @@ void artwork_update_visible_area(mame_display *display)
 
 void artwork_update_video_and_audio(mame_display *display)
 {
-	static struct rectangle ui_changed_bounds;
+	static rectangle ui_changed_bounds;
 	static int ui_changed;
 	int artwork_changed = 0, ui_visible = 0;
 
@@ -875,7 +876,7 @@ void artwork_update_video_and_audio(mame_display *display)
 			/* apply the bezel */
 			if (num_bezels)
 			{
-				struct artwork_piece *piece;
+				artwork_piece *piece;
 				for (piece = artwork_list; piece; piece = piece->next)
 					if (piece->layer >= LAYER_BEZEL && piece->intersects_game)
 						alpha_blend_intersecting_rect(final, &gamerect, piece->prebitmap, &piece->bounds, piece->scanlinehint);
@@ -916,7 +917,7 @@ void artwork_update_video_and_audio(mame_display *display)
     certain parameters when saving a screenshot
 -------------------------------------------------*/
 
-void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rectangle *rect, UINT32 *rgb_components)
+void artwork_override_screenshot_params(mame_bitmap **bitmap, rectangle *rect, UINT32 *rgb_components)
 {
 	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_system_active())
 	{
@@ -936,7 +937,7 @@ void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rect
     artwork_get_ui_bitmap - get the UI bitmap
 -------------------------------------------------*/
 
-struct mame_bitmap *artwork_get_ui_bitmap(void)
+mame_bitmap *artwork_get_ui_bitmap(void)
 {
 	return uioverlay ? uioverlay : Machine->scrbitmap;
 }
@@ -953,7 +954,7 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 	/* add to the UI overlay hint if it exists */
 	if (uioverlayhint)
 	{
-		struct rectangle rect;
+		rectangle rect;
 		int y;
 
 		/* clip to visible */
@@ -1033,7 +1034,7 @@ void artwork_set_overlay(const artwork_overlay_piece *overlist)
 
 void artwork_show(const char *tag, int show)
 {
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 
 	/* find all the pieces that match the tag */
 	for (piece = artwork_list; piece; piece = piece->next)
@@ -1073,8 +1074,8 @@ void artwork_show(const char *tag, int show)
 
 static int update_layers(void)
 {
-	struct artwork_piece *piece = artwork_list;
-	struct rectangle combined;
+	artwork_piece *piece = artwork_list;
+	rectangle combined;
 	int changed = 0;
 
 	/* update the underlays */
@@ -1136,7 +1137,7 @@ static int update_layers(void)
     bitmap
 -------------------------------------------------*/
 
-static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color)
+static void erase_rect(mame_bitmap *bitmap, const rectangle *bounds, UINT32 color)
 {
 	int x, y;
 
@@ -1156,9 +1157,9 @@ static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bound
     artwork piece into a bitmap
 -------------------------------------------------*/
 
-static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist)
+static void alpha_blend_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds, const UINT32 *hintlist)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	UINT32 dummy_range[2];
 	int lclip, rclip;
 	int x, y, h;
@@ -1238,9 +1239,9 @@ static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const s
     artwork piece into a bitmap
 -------------------------------------------------*/
 
-static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds)
+static void add_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	int x, y, width;
 
 	/* compute the intersection and resulting width */
@@ -1273,11 +1274,11 @@ static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct re
 -------------------------------------------------*/
 
 static void cmy_blend_intersecting_rect(
-	struct mame_bitmap *dstprebitmap, struct mame_bitmap *dstyrgbbitmap, const struct rectangle *dstbounds,
-	struct mame_bitmap *srcprebitmap, struct mame_bitmap *srcyrgbbitmap, const struct rectangle *srcbounds,
+	mame_bitmap *dstprebitmap, mame_bitmap *dstyrgbbitmap, const rectangle *dstbounds,
+	mame_bitmap *srcprebitmap, mame_bitmap *srcyrgbbitmap, const rectangle *srcbounds,
 	UINT8 blendflags)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	int x, y, width;
 
 	/* compute the intersection and resulting width */
@@ -1414,7 +1415,7 @@ static void update_palette_lookup(mame_display *display)
 
 #define PIXEL(x,y,srcdstbase,srcdstrpix,bits)	(*((UINT##bits *)srcdstbase##base + (y) * srcdstrpix##rowpixels + (x)))
 
-static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1539,7 +1540,7 @@ static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette,
     bitmap on top of an underlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_underlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1671,7 +1672,7 @@ static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t 
     bitmap blended with an overlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1811,7 +1812,7 @@ static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *
     added to an underlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_underlay_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1956,7 +1957,7 @@ static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, cons
     render_ui_overlay - render the UI overlay
 -------------------------------------------------*/
 
-static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display)
+static void render_ui_overlay(mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -2066,7 +2067,7 @@ mame_file *artwork_load_artwork_file(const game_driver **driver)
 static int artwork_load(const game_driver *driver, int width, int height, const artwork_callbacks *callbacks)
 {
 	const artwork_overlay_piece *list = overlay_list;
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 	mame_file *artfile;
 	int result;
 
@@ -2141,7 +2142,7 @@ static int artwork_load(const game_driver *driver, int width, int height, const 
     it
 -------------------------------------------------*/
 
-static int open_and_read_png(const char *gamename, const char *filename, struct png_info *png)
+static int open_and_read_png(const char *gamename, const char *filename, png_info *png)
 {
 	int result;
 	mame_file *file;
@@ -2188,9 +2189,9 @@ static int open_and_read_png(const char *gamename, const char *filename, struct 
     load_bitmap - load the artwork into a bitmap
 -------------------------------------------------*/
 
-static int load_bitmap(const char *gamename, struct artwork_piece *piece)
+static int load_bitmap(const char *gamename, artwork_piece *piece)
 {
-	struct png_info png;
+	png_info png;
 	UINT8 *src;
 	int x, y;
 
@@ -2275,9 +2276,9 @@ static int load_bitmap(const char *gamename, struct artwork_piece *piece)
     mask
 -------------------------------------------------*/
 
-static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original)
+static int load_alpha_bitmap(const char *gamename, artwork_piece *piece, const png_info *original)
 {
-	struct png_info png;
+	png_info png;
 	UINT8 *src;
 	int x, y;
 
@@ -2373,7 +2374,7 @@ static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, 
 
 static int artwork_prep(void)
 {
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 
 	/* mark everything dirty */
 	underlay_invalid = screenrect;
@@ -2406,7 +2407,7 @@ static int artwork_prep(void)
     given piece of artwork
 -------------------------------------------------*/
 
-static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight)
+static int scale_bitmap(artwork_piece *piece, int newwidth, int newheight)
 {
 	UINT32 sx, sxfrac, sxstep, sy, syfrac, systep;
 	UINT32 global_brightness, global_alpha;
@@ -2572,7 +2573,7 @@ static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight
     from a scaled image
 -------------------------------------------------*/
 
-static void trim_bitmap(struct artwork_piece *piece)
+static void trim_bitmap(artwork_piece *piece)
 {
 	UINT32 *hintbase = piece->scanlinehint;
 	int top, bottom, left, right;
@@ -2666,10 +2667,10 @@ static void trim_bitmap(struct artwork_piece *piece)
     entry
 -------------------------------------------------*/
 
-static struct artwork_piece *create_new_piece(const char *tag)
+static artwork_piece *create_new_piece(const char *tag)
 {
 	/* allocate a new piece */
-	struct artwork_piece *newpiece = auto_malloc(sizeof(struct artwork_piece));
+	artwork_piece *newpiece = auto_malloc(sizeof(artwork_piece));
 	if (!newpiece)
 		return NULL;
 	num_pieces++;
@@ -2707,8 +2708,8 @@ static struct artwork_piece *create_new_piece(const char *tag)
 
 static int CLIB_DECL artwork_sort_compare(const void *item1, const void *item2)
 {
-	const struct artwork_piece *piece1 = *((const struct artwork_piece **)item1);
-	const struct artwork_piece *piece2 = *((const struct artwork_piece **)item2);
+	const artwork_piece *piece1 = *((const artwork_piece **)item1);
+	const artwork_piece *piece2 = *((const artwork_piece **)item2);
 	if (piece1->layer < piece2->layer)
 		return -1;
 	else if (piece1->layer > piece2->layer)
@@ -2729,8 +2730,8 @@ static int CLIB_DECL artwork_sort_compare(const void *item1, const void *item2)
 
 static void sort_pieces(void)
 {
-	struct artwork_piece *array[MAX_PIECES];
-	struct artwork_piece *piece;
+	artwork_piece *array[MAX_PIECES];
+	artwork_piece *piece;
 	int i = 0;
 
 	/* copy the list into the array, filtering as we go */
@@ -2783,7 +2784,7 @@ static void sort_pieces(void)
 
 static int validate_pieces(void)
 {
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 
 	/* verify each one */
 	for (piece = artwork_list; piece; piece = piece->next)
@@ -2832,7 +2833,7 @@ static int validate_pieces(void)
     overlay piece
 -------------------------------------------------*/
 
-static int generate_rect_piece(struct artwork_piece *piece, const artwork_overlay_piece *data, int width, int height)
+static int generate_rect_piece(artwork_piece *piece, const artwork_overlay_piece *data, int width, int height)
 {
 	int gfxwidth, gfxheight;
 
@@ -2873,7 +2874,7 @@ static int generate_rect_piece(struct artwork_piece *piece, const artwork_overla
     overlay piece
 -------------------------------------------------*/
 
-static void render_disk(struct mame_bitmap *bitmap, int r, UINT32 color)
+static void render_disk(mame_bitmap *bitmap, int r, UINT32 color)
 {
 	int xc = bitmap->width / 2, yc = bitmap->height / 2;
 	int x = 0, twox = 0;
@@ -2910,10 +2911,10 @@ static void render_disk(struct mame_bitmap *bitmap, int r, UINT32 color)
 }
 
 
-static int generate_disk_piece(struct artwork_piece *piece, const artwork_overlay_piece *data, int width, int height)
+static int generate_disk_piece(artwork_piece *piece, const artwork_overlay_piece *data, int width, int height)
 {
 	double x = data->left, y = data->top, r = data->right;
-	struct rectangle temprect;
+	rectangle temprect;
 	int gfxwidth, gfxradius;
 
 	/* convert from pixel coordinates if necessary */
@@ -2959,7 +2960,7 @@ static int generate_disk_piece(struct artwork_piece *piece, const artwork_overla
 
 static int generate_overlay(const artwork_overlay_piece *list, int width, int height)
 {
-	struct artwork_piece *piece;
+	artwork_piece *piece;
 	int priority = 0;
 
 	/* loop until done */
@@ -3026,7 +3027,7 @@ static char *strip_space(char *string)
     parse_tag_value - parse a tag/value pair
 -------------------------------------------------*/
 
-static int parse_tag_value(struct artwork_piece *piece, const char *tag, const char *value)
+static int parse_tag_value(artwork_piece *piece, const char *tag, const char *value)
 {
 	/* handle the various tags */
 	if (!strcmp(tag, "layer"))
@@ -3094,7 +3095,7 @@ static int parse_tag_value(struct artwork_piece *piece, const char *tag, const c
 
 static int parse_art_file(mame_file *file)
 {
-	struct artwork_piece *current = NULL;
+	artwork_piece *current = NULL;
 	char *tag, *value, *p;
 	char buffer[1000];
 
@@ -3318,7 +3319,7 @@ intersect:
 /*
  * Export some variables needed by OSD vector code in xmame.
  */
-const struct rectangle *artwork_get_game_rect(void)
+const rectangle *artwork_get_game_rect(void)
 {
 	if (artwork_list)
 		return &gamerect;

@@ -931,11 +931,11 @@ static UINT16 masked_value(struct pit8253_timer	*timer)
 	 latched_count
 	 rmsb
   so they don't affect any timer operations except other reads. */
-static data8_t pit8253_read(int	which,offs_t offset)
+static UINT8 pit8253_read(int	which,offs_t offset)
 {
 	struct pit8253 *pit	= get_pit(which);
 	struct pit8253_timer *timer	= get_timer(pit,offset);
-	data8_t	data;
+	UINT8	data;
 	UINT16 value;
 
 	LOG2(("pit8253_read(): pit %d, offset %d\n",which,offset));

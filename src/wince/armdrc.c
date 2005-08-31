@@ -19,9 +19,9 @@
 	drc_init
 ------------------------------------------------------------------*/
 
-struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
+drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 {
-	struct drccore *drc;
+	drccore *drc;
 
 	/* allocate memory */
 	drc = malloc(sizeof(*drc));
@@ -43,7 +43,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc_exit
 ------------------------------------------------------------------*/
 
-void drc_exit(struct drccore *drc)
+void drc_exit(drccore *drc)
 {
 	int i;
 

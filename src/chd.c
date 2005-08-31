@@ -80,12 +80,14 @@ struct _map_entry
 };
 typedef struct _map_entry map_entry;
 
+
 struct _crcmap_entry
 {
 	UINT32					hunknum;		/* hunk number */
 	struct _crcmap_entry *	next;			/* next entry in list */
 };
 typedef struct _crcmap_entry crcmap_entry;
+
 
 struct _metadata_entry
 {
@@ -96,6 +98,7 @@ struct _metadata_entry
 	UINT32					metatag;		/* metadata tag */
 };
 typedef struct _metadata_entry metadata_entry;
+
 
 struct _chd_file
 {
@@ -124,6 +127,17 @@ struct _chd_file
 
 	UINT32					maxhunk;		/* maximum hunk accessed */
 };
+
+
+struct _chd_exfile
+{
+	chd_file *chd;
+	struct MD5Context md5;
+	struct sha1_ctx sha;
+	int hunknum;
+	UINT64 sourceoffset;
+};
+
 
 struct _zlib_codec_data
 {
@@ -1917,15 +1931,6 @@ static int find_metadata_entry(chd_file *chd, UINT32 metatag, UINT32 metaindex, 
  *      to this code once it's all verified.
  *
  *************************************/
-
-struct _chd_exfile
-{
-	chd_file *chd;
-	struct MD5Context md5;
-	struct sha1_ctx sha;
-	int hunknum;
-	UINT64 sourceoffset;
-};
 
 chd_exfile *chd_start_compress_ex(chd_file *chd)
 {

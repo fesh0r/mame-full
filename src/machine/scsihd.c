@@ -14,16 +14,16 @@
 
 typedef struct
 {
-	data32_t lba, blocks, last_lba;
+	UINT32 lba, blocks, last_lba;
 	int last_command;
- 	struct hard_disk_file *disk;
-	data8_t last_packet[16];
+ 	hard_disk_file *disk;
+	UINT8 last_packet[16];
 } SCSIHd;
 
 
 // scsihd_exec_command
 
-int scsihd_exec_command(SCSIHd *our_this, data8_t *pCmdBuf)
+int scsihd_exec_command(SCSIHd *our_this, UINT8 *pCmdBuf)
 {
 	int retdata = 0;
 
@@ -114,7 +114,7 @@ int scsihd_exec_command(SCSIHd *our_this, data8_t *pCmdBuf)
 	return retdata;
 }
 
-void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
+void scsihd_read_data(SCSIHd *our_this, int bytes, UINT8 *pData)
 {
 	int i;
 
@@ -175,7 +175,7 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 
 		case 0x25:	// READ CAPACITY
 			{
-				struct hard_disk_info *info;
+				hard_disk_info *info;
 				UINT32 temp;
 
 				info = hard_disk_get_info(our_this->disk);
@@ -203,7 +203,7 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 	}
 }
 
-void scsihd_write_data(SCSIHd *our_this, int bytes, data8_t *pData)
+void scsihd_write_data(SCSIHd *our_this, int bytes, UINT8 *pData)
 {
 	switch (our_this->last_command)
 	{
@@ -227,10 +227,10 @@ void scsihd_write_data(SCSIHd *our_this, int bytes, data8_t *pData)
 	}
 }
 
-int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
+int scsihd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm)
 {
 	SCSIHd *instance, **result;
-	struct hard_disk_file **devptr;
+	hard_disk_file **devptr;
 
 	switch (operation)
 	{
@@ -271,14 +271,14 @@ int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 			break;
 
 		case SCSIOP_GET_DEVICE:
-			devptr = (struct hard_disk_file **)ptrparm;
+			devptr = (hard_disk_file **)ptrparm;
 			instance = (SCSIHd *)file;
 			*devptr = instance->disk;
 			break;
 
 		case SCSIOP_SET_DEVICE:
 			instance = (SCSIHd *)file;
-			instance->disk = (struct hard_disk_file *)ptrparm;
+			instance->disk = (hard_disk_file *)ptrparm;
 			break;
 
 	}

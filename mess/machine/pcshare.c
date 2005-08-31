@@ -229,8 +229,8 @@ static CENTRONICS_CONFIG cent_config[3]={
  *
  *************************************************************************/
 
-static data8_t dma_offset[2][4];
-static data8_t at_pages[0x10];
+static UINT8 dma_offset[2][4];
+static UINT8 at_pages[0x10];
 static offs_t pc_page_offset_mask;
 
 
@@ -261,7 +261,7 @@ WRITE8_HANDLER(pc_page_w)
 
 READ8_HANDLER(at_page8_r)
 {
-	data8_t data = at_pages[offset % 0x10];
+	UINT8 data = at_pages[offset % 0x10];
 
 	switch(offset % 8) {
 	case 1:
@@ -323,7 +323,7 @@ WRITE32_HANDLER(at_page32_w)
 
 
 
-static data8_t pc_dma_read_byte(int channel, offs_t offset)
+static UINT8 pc_dma_read_byte(int channel, offs_t offset)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& pc_page_offset_mask;
@@ -332,7 +332,7 @@ static data8_t pc_dma_read_byte(int channel, offs_t offset)
 
 
 
-static void pc_dma_write_byte(int channel, offs_t offset, data8_t data)
+static void pc_dma_write_byte(int channel, offs_t offset, UINT8 data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& pc_page_offset_mask;

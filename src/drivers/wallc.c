@@ -52,7 +52,7 @@ Thanks to HIGHWAYMAN for providing info on how to get to these epoxies
 #include "vidhrdw/res_net.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -248,7 +248,7 @@ static DRIVER_INIT( wallc )
 	unsigned char c;
 	unsigned int i;
 
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	for (i=0; i<0x2000*2; i++)
 	{
@@ -263,7 +263,7 @@ static DRIVER_INIT( wallca )
 	unsigned char c;
 	unsigned int i;
 
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	for (i=0; i<0x4000; i++)
 	{

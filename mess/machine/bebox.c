@@ -108,9 +108,9 @@
 #define LOG_UART		1
 #define LOG_INTERRUPTS	1
 
-static data32_t bebox_cpu_imask[2];
-static data32_t bebox_interrupts;
-static data32_t bebox_crossproc_interrupts;
+static UINT32 bebox_cpu_imask[2];
+static UINT32 bebox_interrupts;
+static UINT32 bebox_crossproc_interrupts;
 
 
 
@@ -122,7 +122,7 @@ static data32_t bebox_crossproc_interrupts;
 
 static void bebox_update_interrupts(void);
 
-static void bebox_mbreg32_w(data32_t *target, data64_t data, data64_t mem_mask)
+static void bebox_mbreg32_w(UINT32 *target, UINT64 data, UINT64 mem_mask)
 {
 	int i;
 
@@ -140,13 +140,13 @@ static void bebox_mbreg32_w(data32_t *target, data64_t data, data64_t mem_mask)
 
 
 
-READ64_HANDLER( bebox_cpu0_imask_r )		{ return ((data64_t) bebox_cpu_imask[0]) << 32; }
-READ64_HANDLER( bebox_cpu1_imask_r )		{ return ((data64_t) bebox_cpu_imask[1]) << 32; }
-READ64_HANDLER( bebox_interrupt_sources_r )	{ return ((data64_t) bebox_interrupts) << 32; }
+READ64_HANDLER( bebox_cpu0_imask_r )		{ return ((UINT64) bebox_cpu_imask[0]) << 32; }
+READ64_HANDLER( bebox_cpu1_imask_r )		{ return ((UINT64) bebox_cpu_imask[1]) << 32; }
+READ64_HANDLER( bebox_interrupt_sources_r )	{ return ((UINT64) bebox_interrupts) << 32; }
 
 WRITE64_HANDLER( bebox_cpu0_imask_w )
 {
-	data32_t old_imask = bebox_cpu_imask[0];
+	UINT32 old_imask = bebox_cpu_imask[0];
 
 	bebox_mbreg32_w(&bebox_cpu_imask[0], data, mem_mask);
 
@@ -163,7 +163,7 @@ WRITE64_HANDLER( bebox_cpu0_imask_w )
 
 WRITE64_HANDLER( bebox_cpu1_imask_w )
 {
-	data32_t old_imask = bebox_cpu_imask[1];
+	UINT32 old_imask = bebox_cpu_imask[1];
 
 	bebox_mbreg32_w(&bebox_cpu_imask[1], data, mem_mask);
 
@@ -180,20 +180,20 @@ WRITE64_HANDLER( bebox_cpu1_imask_w )
 
 READ64_HANDLER( bebox_crossproc_interrupts_r )
 {
-	data32_t result;
+	UINT32 result;
 	result = bebox_crossproc_interrupts;
 	if (cpu_getactivecpu())
 		result |= 0x02000000;
 	else
 		result &= ~0x02000000;
-	return ((data64_t) result) << 32;
+	return ((UINT64) result) << 32;
 }
 
 WRITE64_HANDLER( bebox_crossproc_interrupts_w )
 {
 	static const struct
 	{
-		data32_t mask;
+		UINT32 mask;
 		int cpunum;
 		int active_high;
 		int inputline;
@@ -205,7 +205,7 @@ WRITE64_HANDLER( bebox_crossproc_interrupts_w )
 		{ 0x04000000, 1, 0, PPC_INPUT_LINE_TLBISYNC }
 	};
 	int i, line;
-	data32_t old_crossproc_interrupts = bebox_crossproc_interrupts;
+	UINT32 old_crossproc_interrupts = bebox_crossproc_interrupts;
 
 	bebox_mbreg32_w(&bebox_crossproc_interrupts, data, mem_mask);
 
@@ -245,7 +245,7 @@ WRITE64_HANDLER( bebox_processor_resets_w )
 static void bebox_update_interrupts(void)
 {
 	int cpunum;
-	data32_t interrupt;
+	UINT32 interrupt;
 
 	for (cpunum = 0; cpunum < 2; cpunum++)
 	{
@@ -300,7 +300,7 @@ static void bebox_set_irq_bit(unsigned int interrupt_bit, int val)
 		"SMI0",
 		NULL
 	};
-	data32_t old_interrupts;
+	UINT32 old_interrupts;
 
 	if (LOG_INTERRUPTS)
 	{
@@ -414,7 +414,7 @@ READ64_HANDLER( bebox_interrupt_ack_r )
 	int result;
 	result = pic8259_acknowledge(0);
 	bebox_set_irq_bit(5, 0);	/* HACK */
-	return ((data64_t) result) << 56;
+	return ((UINT64) result) << 56;
 }
 
 
@@ -442,7 +442,7 @@ WRITE64_HANDLER( bebox_800001F0_w ) { write64be_with_write8_handler(bebox_800001
 
 READ64_HANDLER( bebox_800003F0_r )
 {
-	data64_t result = pc64be_fdc_r(offset, mem_mask | 0xFFFF);
+	UINT64 result = pc64be_fdc_r(offset, mem_mask | 0xFFFF);
 
 	if (((mem_mask >> 8) & 0xFF) == 0)
 	{
@@ -565,13 +565,13 @@ static const struct pc_vga_interface bebox_vga_interface =
  *
  *************************************/
 
-static data16_t dma_offset[2][4];
-static data8_t at_pages[0x10];
+static UINT16 dma_offset[2][4];
+static UINT8 at_pages[0x10];
 
 
 static READ8_HANDLER(at_page8_r)
 {
-	data8_t data = at_pages[offset % 0x10];
+	UINT8 data = at_pages[offset % 0x10];
 
 	switch(offset % 8)
 	{
@@ -601,19 +601,19 @@ static WRITE8_HANDLER(at_page8_w)
 	{
 		case 1:
 			dma_offset[(offset / 8) & 1][2] &= 0xFF00;
-			dma_offset[(offset / 8) & 1][2] |= ((data16_t ) data) << 0;
+			dma_offset[(offset / 8) & 1][2] |= ((UINT16 ) data) << 0;
 			break;
 		case 2:
 			dma_offset[(offset / 8) & 1][3] &= 0xFF00;
-			dma_offset[(offset / 8) & 1][3] |= ((data16_t ) data) << 0;
+			dma_offset[(offset / 8) & 1][3] |= ((UINT16 ) data) << 0;
 			break;
 		case 3:
 			dma_offset[(offset / 8) & 1][1] &= 0xFF00;
-			dma_offset[(offset / 8) & 1][1] |= ((data16_t ) data) << 0;
+			dma_offset[(offset / 8) & 1][1] |= ((UINT16 ) data) << 0;
 			break;
 		case 7:
 			dma_offset[(offset / 8) & 1][0] &= 0xFF00;
-			dma_offset[(offset / 8) & 1][0] |= ((data16_t ) data) << 0;
+			dma_offset[(offset / 8) & 1][0] |= ((UINT16 ) data) << 0;
 			break;
 	}
 }
@@ -640,19 +640,19 @@ static WRITE8_HANDLER(at_hipage8_w)
 	{
 		case 1:
 			dma_offset[(offset / 8) & 1][2] &= 0x00FF;
-			dma_offset[(offset / 8) & 1][2] |= ((data16_t ) data) << 8;
+			dma_offset[(offset / 8) & 1][2] |= ((UINT16 ) data) << 8;
 			break;
 		case 2:
 			dma_offset[(offset / 8) & 1][3] &= 0x00FF;
-			dma_offset[(offset / 8) & 1][3] |= ((data16_t ) data) << 8;
+			dma_offset[(offset / 8) & 1][3] |= ((UINT16 ) data) << 8;
 			break;
 		case 3:
 			dma_offset[(offset / 8) & 1][1] &= 0x00FF;
-			dma_offset[(offset / 8) & 1][1] |= ((data16_t ) data) << 8;
+			dma_offset[(offset / 8) & 1][1] |= ((UINT16 ) data) << 8;
 			break;
 		case 7:
 			dma_offset[(offset / 8) & 1][0] &= 0x00FF;
-			dma_offset[(offset / 8) & 1][0] |= ((data16_t ) data) << 8;
+			dma_offset[(offset / 8) & 1][0] |= ((UINT16 ) data) << 8;
 			break;
 	}
 }
@@ -673,7 +673,7 @@ WRITE64_HANDLER(bebox_80000480_w)
 
 
 
-static data8_t bebox_dma_read_byte(int channel, offs_t offset)
+static UINT8 bebox_dma_read_byte(int channel, offs_t offset)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& 0x7FFF0000;
@@ -682,7 +682,7 @@ static data8_t bebox_dma_read_byte(int channel, offs_t offset)
 
 
 
-static void bebox_dma_write_byte(int channel, offs_t offset, data8_t data)
+static void bebox_dma_write_byte(int channel, offs_t offset, UINT8 data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& 0x7FFF0000;
@@ -808,7 +808,7 @@ static const struct kbdc8042_interface bebox_8042_interface =
  *
  *************************************/
 
-static data32_t scsi53c810_data[0x100 / 4];
+static UINT32 scsi53c810_data[0x100 / 4];
 
 static READ64_HANDLER( scsi53c810_r )
 {
@@ -903,9 +903,9 @@ static void scsi53c810_dma_callback(UINT32 src, UINT32 dst, int length, int byte
 
 
 
-static data32_t scsi53c810_pci_read(int function, int offset)
+static UINT32 scsi53c810_pci_read(int function, int offset)
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 
 	if (function == 0)
 	{
@@ -929,7 +929,7 @@ static data32_t scsi53c810_pci_read(int function, int offset)
 
 
 
-static void scsi53c810_pci_write(int function, int offset, data32_t data)
+static void scsi53c810_pci_write(int function, int offset, UINT32 data)
 {
 	offs_t addr;
 

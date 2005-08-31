@@ -764,7 +764,7 @@ static void crtc6845_remove_vsync_set_timer(void)
 {
 	if (crtc6845_vsync_set_timer!=NULL)
 	{
-		timer_remove(crtc6845_vsync_set_timer);
+		timer_remove(crtc6845_vsync_set_timer);	/* FIXME - timers should only be allocated once */
 		crtc6845_vsync_set_timer = NULL;
 	}
 }
@@ -774,7 +774,7 @@ static void crtc6845_remove_vsync_clear_timer(void)
 {
 	if (crtc6845_vsync_clear_timer!=NULL)
 	{
-		timer_remove(crtc6845_vsync_clear_timer);
+		timer_reset(crtc6845_vsync_clear_timer, TIME_NEVER);	/* FIXME - timers should only be allocated once */
 		crtc6845_vsync_clear_timer = NULL;
 	}
 }

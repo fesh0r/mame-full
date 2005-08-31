@@ -18,8 +18,8 @@ struct dma8237_interface
 	double bus_speed;
 
 	/* accessors to main memory */
-	data8_t (*memory_read_func)(int channel, offs_t offset);
-	void    (*memory_write_func)(int channel, offs_t offset, data8_t data);
+	UINT8 (*memory_read_func)(int channel, offs_t offset);
+	void    (*memory_write_func)(int channel, offs_t offset, UINT8 data);
 
 	/* channel accesors */
 	int     (*channel_read_func[4])(void);

@@ -36,8 +36,8 @@ void uart8250_receive(int n, int data);
 #define UART8250_INPUTS_DATA_CARRIER_DETECT 0x0080
 void uart8250_handshake_in(int n, int data);
 
-data8_t uart8250_r(int n, offs_t offset);
-void uart8250_w(int n, offs_t offset, data8_t data);
+UINT8 uart8250_r(int n, offs_t offset);
+void uart8250_w(int n, offs_t offset, UINT8 data);
 
 /* helpers */
 READ8_HANDLER ( uart8250_0_r );

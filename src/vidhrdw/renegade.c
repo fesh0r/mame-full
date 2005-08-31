@@ -10,8 +10,8 @@
 
 UINT8 *renegade_videoram2;
 int renegade_scrollx;
-static struct tilemap *bg_tilemap;
-static struct tilemap *fg_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *fg_tilemap;
 
 WRITE8_HANDLER( renegade_videoram_w )
 {
@@ -93,7 +93,7 @@ VIDEO_START( renegade )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	UINT8 *source = spriteram;
 	UINT8 *finish = source + 96 * 4;

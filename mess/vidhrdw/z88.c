@@ -43,7 +43,7 @@ extern struct blink_hw blink;
 
 /* temp - change to gfxelement structure */
 
-static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
+static void z88_vh_render_8x8(mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
 {
         int h,b;
 
@@ -72,7 +72,7 @@ static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, int pen0
         }
 }
 
-static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
+static void z88_vh_render_6x8(mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
 {
 	int h,b;
 
@@ -104,7 +104,7 @@ static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, int pen0
 	}
 }
 
-static void z88_vh_render_line(struct mame_bitmap *bitmap, int x, int y,int pen)
+static void z88_vh_render_line(mame_bitmap *bitmap, int x, int y,int pen)
 {
 	plot_pixel(bitmap, x, y+7, pen);
 	plot_pixel(bitmap, x+1, y+7, pen);

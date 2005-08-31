@@ -36,7 +36,7 @@ VIDEO_START( primo )
 	return 0;
 }
 
-static void primo_draw_scanline(struct mame_bitmap *bitmap, int primo_scanline)
+static void primo_draw_scanline(mame_bitmap *bitmap, int primo_scanline)
 {
 	int x, i;
 	UINT8 data;

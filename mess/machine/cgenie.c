@@ -856,7 +856,7 @@ static UINT8 psg_b_inp = 0x00;
 	return psg_a_inp;
 }
 
-data8_t cgenie_psg_port_b_r(offs_t port)
+UINT8 cgenie_psg_port_b_r(offs_t port)
 {
 	if( psg_a_out < 0xd0 )
 	{

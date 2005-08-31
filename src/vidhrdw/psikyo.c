@@ -59,12 +59,12 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data32_t *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
+UINT32 *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
 int psikyo_ka302c_banking;
 
 /* Variables only used here: */
 
-static struct tilemap 	*tilemap_0_size0, *tilemap_0_size1, *tilemap_0_size2, *tilemap_0_size3,
+static tilemap 	*tilemap_0_size0, *tilemap_0_size1, *tilemap_0_size2, *tilemap_0_size3,
 						*tilemap_1_size0, *tilemap_1_size1, *tilemap_1_size2, *tilemap_1_size3;
 static UINT8 tilemap_0_bank, tilemap_1_bank;
 static UINT32 *spritebuf1, *spritebuf2;
@@ -84,7 +84,7 @@ Offset:
 
 static void get_tile_info_0( int tile_index )
 {
-	data16_t code = ((data16_t *)psikyo_vram_0)[BYTE_XOR_BE(tile_index)];
+	UINT16 code = ((UINT16 *)psikyo_vram_0)[BYTE_XOR_BE(tile_index)];
 	SET_TILE_INFO(
 			1,
 			(code & 0x1fff) + 0x2000*tilemap_0_bank,
@@ -94,7 +94,7 @@ static void get_tile_info_0( int tile_index )
 
 static void get_tile_info_1( int tile_index )
 {
-	data16_t code = ((data16_t *)psikyo_vram_1)[BYTE_XOR_BE(tile_index)];
+	UINT16 code = ((UINT16 *)psikyo_vram_1)[BYTE_XOR_BE(tile_index)];
 	SET_TILE_INFO(
 			1,
 			(code & 0x1fff) + 0x2000*tilemap_1_bank,
@@ -105,8 +105,8 @@ static void get_tile_info_1( int tile_index )
 
 WRITE32_HANDLER( psikyo_vram_0_w )
 {
-	data32_t newlong = psikyo_vram_0[offset];
-	data32_t oldlong = COMBINE_DATA(&psikyo_vram_0[offset]);
+	UINT32 newlong = psikyo_vram_0[offset];
+	UINT32 oldlong = COMBINE_DATA(&psikyo_vram_0[offset]);
 	if (oldlong == newlong)	return;
 	if (ACCESSING_MSW32)
 	{
@@ -127,8 +127,8 @@ WRITE32_HANDLER( psikyo_vram_0_w )
 
 WRITE32_HANDLER( psikyo_vram_1_w )
 {
-	data32_t newlong = psikyo_vram_1[offset];
-	data32_t oldlong = COMBINE_DATA(&psikyo_vram_1[offset]);
+	UINT32 newlong = psikyo_vram_1[offset];
+	UINT32 oldlong = COMBINE_DATA(&psikyo_vram_1[offset]);
 	if (oldlong == newlong)	return;
 	if (ACCESSING_MSW32)
 	{
@@ -147,9 +147,9 @@ WRITE32_HANDLER( psikyo_vram_1_w )
 	}
 }
 
-void psikyo_switch_banks( int tilemap, int bank )
+void psikyo_switch_banks( int tmap, int bank )
 {
-	if((tilemap==0) && (bank != tilemap_0_bank))
+	if((tmap==0) && (bank != tilemap_0_bank))
 	{
 		tilemap_0_bank = bank;
 		tilemap_mark_all_tiles_dirty(tilemap_0_size0);
@@ -157,7 +157,7 @@ void psikyo_switch_banks( int tilemap, int bank )
 		tilemap_mark_all_tiles_dirty(tilemap_0_size2);
 		tilemap_mark_all_tiles_dirty(tilemap_0_size3);
 	}
-	else if((tilemap==1) && (bank != tilemap_1_bank))
+	else if((tmap==1) && (bank != tilemap_1_bank))
 	{
 		tilemap_1_bank = bank;
 		tilemap_mark_all_tiles_dirty(tilemap_1_size0);
@@ -302,14 +302,14 @@ Note:   Not all sprites are displayed: in the top part of spriteram
 
 ***************************************************************************/
 
-static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int trans_pen)
+static void psikyo_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int trans_pen)
 {
 	/* tile layers 0 & 1 have priorities 1 & 2 */
 	int pri[] = { 0, 0xfc, 0xff, 0xff };
 
 	int offs;
 
-	data16_t *spritelist	=	(data16_t *)(spritebuf2 + 0x1800/4);
+	UINT16 *spritelist	=	(UINT16 *)(spritebuf2 + 0x1800/4);
 
 	unsigned char *TILES	=	memory_region(REGION_USER1);	// Sprites LUT
 	int TILES_LEN			=	memory_region_length(REGION_USER1);
@@ -323,7 +323,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 	/* Look for "end of sprites" marker in the sprites list */
 	for ( offs = 0/2 ; offs < (0x800-2)/2 ; offs += 2/2 )	// skip last "sprite"
 	{
-		data16_t sprite = spritelist[ BYTE_XOR_BE(offs) ];
+		UINT16 sprite = spritelist[ BYTE_XOR_BE(offs) ];
 		if (sprite == 0xffff)	break;
 	}
 	offs -= 2/2;
@@ -331,7 +331,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 	//  fprintf(stderr, "\n");
 	for ( ; offs >= 0/2 ; offs -= 2/2 )
 	{
-		data32_t *source;
+		UINT32 *source;
 		int	sprite;
 
 		int	x,y, attr,code, flipx,flipy, nx,ny, zoomx,zoomy;
@@ -437,15 +437,15 @@ VIDEO_UPDATE( psikyo )
 {
 	int i, layers_ctrl = -1;
 
-	data32_t tm0size, tm1size;
+	UINT32 tm0size, tm1size;
 
-	data32_t layer0_scrollx, layer0_scrolly;
-	data32_t layer1_scrollx, layer1_scrolly;
-	data32_t layer0_ctrl = psikyo_vregs[ 0x412/4 ];
-	data32_t layer1_ctrl = psikyo_vregs[ 0x416/4 ];
-	data32_t spr_ctrl = spritebuf2[ 0x1ffe/4 ];
+	UINT32 layer0_scrollx, layer0_scrolly;
+	UINT32 layer1_scrollx, layer1_scrolly;
+	UINT32 layer0_ctrl = psikyo_vregs[ 0x412/4 ];
+	UINT32 layer1_ctrl = psikyo_vregs[ 0x416/4 ];
+	UINT32 spr_ctrl = spritebuf2[ 0x1ffe/4 ];
 
-	struct tilemap *tmptilemap0, *tmptilemap1;
+	tilemap *tmptilemap0, *tmptilemap1;
 
 	flip_screen_set(~readinputport(2) & 1);	// hardwired to a DSW bit
 
@@ -550,10 +550,10 @@ VIDEO_UPDATE( psikyo )
 		{
 			if (layer0_ctrl & 0x0200)
 				/* per-tile rowscroll */
-				x0 = ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x000/2 + i/16)];
+				x0 = ((UINT16 *)psikyo_vregs)[BYTE_XOR_BE(0x000/2 + i/16)];
 			else
 				/* per-line rowscroll */
-				x0 = ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x000/2 + i)];
+				x0 = ((UINT16 *)psikyo_vregs)[BYTE_XOR_BE(0x000/2 + i)];
 		}
 
 		tilemap_set_scrollx(
@@ -567,10 +567,10 @@ VIDEO_UPDATE( psikyo )
 		{
 			if (layer1_ctrl & 0x0200)
 				/* per-tile rowscroll */
-				x1 = ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x200/2 + i/16)];
+				x1 = ((UINT16 *)psikyo_vregs)[BYTE_XOR_BE(0x200/2 + i/16)];
 			else
 				/* per-line rowscroll */
-				x1 = ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x200/2 + i)];
+				x1 = ((UINT16 *)psikyo_vregs)[BYTE_XOR_BE(0x200/2 + i)];
 		}
 
 		tilemap_set_scrollx(

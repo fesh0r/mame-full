@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.14 2005/07/14 03:49:25 npwoods Exp $
+  $Id: pc8801.c,v 1.15 2005/08/31 01:22:09 npwoods Exp $
 
 ***************************************************************************/
 
@@ -75,7 +75,7 @@ static int disp_plane[3];
 
 static char *graph_dirty=NULL;
 static unsigned short *attr_tmp=NULL,*attr_old=NULL,*text_old=NULL;
-static struct mame_bitmap *wbm1,*wbm2;
+static mame_bitmap *wbm1,*wbm2;
 
 #define TRAM(x,y) (pc88sr_is_highspeed ? \
 	pc88sr_textRAM[(dmac_addr[2]+(x)+(y)*120)&0xfff] : \

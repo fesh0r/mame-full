@@ -77,7 +77,7 @@ static WRITE32_HANDLER( a310_videoram_w )
 
 
 static ADDRESS_MAP_START( a310_mem, ADDRESS_SPACE_PROGRAM, 32 )
-    AM_RANGE(0x001ff000, 0x001fffff) AM_WRITE(a310_videoram_w) AM_BASE((data32_t**)&videoram) AM_SIZE(&videoram_size)
+    AM_RANGE(0x001ff000, 0x001fffff) AM_WRITE(a310_videoram_w) AM_BASE((UINT32**)&videoram) AM_SIZE(&videoram_size)
 
 	AM_RANGE(0x00000000, 0x007fffff) AM_READWRITE(MRA32_BANK1, MWA32_ROM)
 	AM_RANGE(0x00800000, 0x00ffffff) AM_READWRITE(MRA32_BANK2, MWA32_BANK2)

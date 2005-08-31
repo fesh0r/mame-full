@@ -13,7 +13,7 @@
 
 UINT8 *bagman_video_enable;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 WRITE8_HANDLER( bagman_videoram_w )
@@ -119,7 +119,7 @@ VIDEO_START( bagman )
 	return 0;
 }
 
-static void bagman_draw_sprites( struct mame_bitmap *bitmap )
+static void bagman_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

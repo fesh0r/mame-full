@@ -144,9 +144,9 @@ WRITE8_HANDLER(sms_vdp_data_w);
  READ8_HANDLER(sms_vdp_ctrl_r);
 WRITE8_HANDLER(sms_vdp_ctrl_w);
 #ifdef MAME_DEBUG
-void sms_show_tile_line(struct mame_bitmap *bitmap, int line, int palletteSelected);
+void sms_show_tile_line(mame_bitmap *bitmap, int line, int palletteSelected);
 #endif
-void sms_refresh_line(struct mame_bitmap *bitmap, int line);
+void sms_refresh_line(mame_bitmap *bitmap, int line);
 void sms_update_palette(void);
 
 #endif /* _SMS_H_ */

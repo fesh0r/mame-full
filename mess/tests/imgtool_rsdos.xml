@@ -94,4 +94,10 @@
 	<checkfreespace/>
 </imgtooltest>
 
+<imgtooltest name="coco_rs_003">
+	<createimage driver="coco_jvc_rsdos"/>
+	<putfile name="FOO.TXT" filter="ascii">'Hello&#13;&#10;World&#10;'</putfile>
+	<checkfile name="FOO.TXT">'Hello&#13;World&#13;'</checkfile>
+</imgtooltest>
+
 </tests>

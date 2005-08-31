@@ -40,7 +40,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.99u4.  This incorporates all features of the
+- The core is based on MAME 0.99u6.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Removed fringe statetext feature used by a handful of the CBM drivers.  [Nate

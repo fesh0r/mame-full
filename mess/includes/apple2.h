@@ -51,8 +51,8 @@ struct apple2_slotdevice
 	const char *description;
 	void *(*init)(int slot);
 	void (*reset)(void *token);
-	data8_t (*read)(void *token, offs_t offset);
-	void (*write)(void *token, offs_t offset, data8_t data);
+	UINT8 (*read)(void *token, offs_t offset);
+	void (*write)(void *token, offs_t offset, UINT8 data);
 };
 
 struct apple2_config
@@ -66,15 +66,15 @@ extern const struct apple2_slotdevice apple2_slot_mockingboard;
 extern const struct apple2_slotdevice apple2_slot_floppy525;
 extern const struct apple2_slotdevice apple2_slot_iwm;
 
-void apple2_iwm_setdiskreg(data8_t data);
-data8_t apple2_iwm_getdiskreg(void);
+void apple2_iwm_setdiskreg(UINT8 data);
+UINT8 apple2_iwm_getdiskreg(void);
 
 /* machine/apple2.c */
 void apple2_init_common(const struct apple2_config *config);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
 MACHINE_STOP( apple2 );
-data8_t apple2_getfloatingbusvalue(void);
+UINT8 apple2_getfloatingbusvalue(void);
 READ8_HANDLER( apple2_c0xx_r );
 WRITE8_HANDLER( apple2_c0xx_w );
 

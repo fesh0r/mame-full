@@ -34,7 +34,7 @@ UINT8 *wilytowr_videoram2, *wilytowr_scrollram;
 
 static int pal_bank, fg_flag, sy_offset;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 PALETTE_INIT( wilytowr )
@@ -183,7 +183,7 @@ VIDEO_START( wilytowr )
 	return 0;
 }
 
-static void wilytowr_draw_sprites( struct mame_bitmap *bitmap )
+static void wilytowr_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

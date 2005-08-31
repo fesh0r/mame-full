@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( higemaru_videoram_w )
 {
@@ -105,7 +105,7 @@ VIDEO_START( higemaru )
 	return 0;
 }
 
-static void higemaru_draw_sprites( struct mame_bitmap *bitmap )
+static void higemaru_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

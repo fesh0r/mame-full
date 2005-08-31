@@ -93,21 +93,15 @@ struct _gfx_decode
 typedef struct _gfx_decode gfx_decode;
 
 
-struct rectangle
-{
-	int min_x,max_x;
-	int min_y,max_y;
-};
-
-
 struct _alpha_cache
 {
 	const UINT8 *alphas;
 	const UINT8 *alphad;
 	UINT8 alpha[0x101][0x100];
 };
+typedef struct _alpha_cache alpha_cache;
 
-extern struct _alpha_cache alpha_cache;
+extern struct _alpha_cache drawgfx_alpha_cache;
 
 enum
 {
@@ -153,35 +147,35 @@ extern int pdrawgfx_shadow_lowpri;
 
 void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
 gfx_element *decodegfx(const unsigned char *src,const gfx_layout *gl);
-void set_pixel_functions(struct mame_bitmap *bitmap);
+void set_pixel_functions(mame_bitmap *bitmap);
 void freegfx(gfx_element *gfx);
-void drawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
+void drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color);
-void pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
+		const rectangle *clip,int transparency,int transparent_color);
+void pdrawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,
+		const rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
-void mdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
+void mdrawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,
+		const rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
-void copybitmap(struct mame_bitmap *dest,struct mame_bitmap *src,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color);
-void copybitmap_remap(struct mame_bitmap *dest,struct mame_bitmap *src,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color);
-void copyscrollbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
+void copybitmap(mame_bitmap *dest,mame_bitmap *src,int flipx,int flipy,int sx,int sy,
+		const rectangle *clip,int transparency,int transparent_color);
+void copybitmap_remap(mame_bitmap *dest,mame_bitmap *src,int flipx,int flipy,int sx,int sy,
+		const rectangle *clip,int transparency,int transparent_color);
+void copyscrollbitmap(mame_bitmap *dest,mame_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
-		const struct rectangle *clip,int transparency,int transparent_color);
-void copyscrollbitmap_remap(struct mame_bitmap *dest,struct mame_bitmap *src,
+		const rectangle *clip,int transparency,int transparent_color);
+void copyscrollbitmap_remap(mame_bitmap *dest,mame_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
-		const struct rectangle *clip,int transparency,int transparent_color);
-void draw_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen);
-void draw_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen);
-void pdraw_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen,int pri);
-void pdraw_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen,int pri);
-void extract_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,UINT8 *dst);
-void extract_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,UINT16 *dst);
+		const rectangle *clip,int transparency,int transparent_color);
+void draw_scanline8(mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen);
+void draw_scanline16(mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen);
+void pdraw_scanline8(mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen,int pri);
+void pdraw_scanline16(mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen,int pri);
+void extract_scanline8(mame_bitmap *bitmap,int x,int y,int length,UINT8 *dst);
+void extract_scanline16(mame_bitmap *bitmap,int x,int y,int length,UINT16 *dst);
 
 
 /* Alpha blending functions */
@@ -190,14 +184,14 @@ void alpha_init(void);
 INLINE void alpha_set_level(int level) {
 	if(level == 0)
 		level = -1;
-	alpha_cache.alphas = alpha_cache.alpha[level+1];
-	alpha_cache.alphad = alpha_cache.alpha[255-level];
+	drawgfx_alpha_cache.alphas = drawgfx_alpha_cache.alpha[level+1];
+	drawgfx_alpha_cache.alphad = drawgfx_alpha_cache.alpha[255-level];
 }
 
 INLINE UINT32 alpha_blend16( UINT32 d, UINT32 s )
 {
-	const UINT8 *alphas = alpha_cache.alphas;
-	const UINT8 *alphad = alpha_cache.alphad;
+	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
+	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
 	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
 		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
 }
@@ -205,16 +199,16 @@ INLINE UINT32 alpha_blend16( UINT32 d, UINT32 s )
 
 INLINE UINT32 alpha_blend32( UINT32 d, UINT32 s )
 {
-	const UINT8 *alphas = alpha_cache.alphas;
-	const UINT8 *alphad = alpha_cache.alphad;
+	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
+	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
 	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
 
 INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
 {
-	const UINT8 *alphas = alpha_cache.alpha[level];
-	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
+	const UINT8 *alphad = drawgfx_alpha_cache.alpha[255 - level];
 	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
 		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
 }
@@ -222,8 +216,8 @@ INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
 
 INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
 {
-	const UINT8 *alphas = alpha_cache.alpha[level];
-	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
+	const UINT8 *alphad = drawgfx_alpha_cache.alpha[255 - level];
 	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
@@ -256,33 +250,25 @@ INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
   Optionally the bitmap can be tiled across the screen instead of doing a single
   copy. This is obtained by setting the wraparound parameter to true.
  */
-void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
+void copyrozbitmap(mame_bitmap *dest,mame_bitmap *src,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
-		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
+		const rectangle *clip,int transparency,int transparent_color,UINT32 priority);
 
-void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip);
-void drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+void fillbitmap(mame_bitmap *dest,pen_t pen,const rectangle *clip);
+void drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
-void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+		const rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
+void pdrawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
+		const rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
-void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+void mdrawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
+		const rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
 
 void drawgfx_toggle_crosshair(void);
-void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip,int player);
-
-INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)
-{
-	if (src->min_x > dst->min_x) dst->min_x = src->min_x;
-	if (src->max_x < dst->max_x) dst->max_x = src->max_x;
-	if (src->min_y > dst->min_y) dst->min_y = src->min_y;
-	if (src->max_y < dst->max_y) dst->max_y = src->max_y;
-}
+void draw_crosshair(mame_bitmap *bitmap,int x,int y,const rectangle *clip,int player);
 
 
 #endif	/* __DRAWGFX_H__ */

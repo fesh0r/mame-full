@@ -3,9 +3,9 @@
 
 extern unsigned char *taitol_rambanks;
 
-static struct tilemap *bg18_tilemap;
-static struct tilemap *bg19_tilemap;
-static struct tilemap *ch1a_tilemap;
+static tilemap *bg18_tilemap;
+static tilemap *bg19_tilemap;
+static tilemap *ch1a_tilemap;
 
 static int cur_ctrl = 0;
 static int horshoes_gfxbank = 0;
@@ -266,7 +266,7 @@ void taitol_obj1b_m(int offset)
                  plgirs2 bullets and raimais big bosses.
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

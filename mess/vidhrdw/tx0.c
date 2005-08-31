@@ -11,23 +11,23 @@
 #include "vidhrdw/crt.h"
 
 
-static struct mame_bitmap *panel_bitmap;
-static struct mame_bitmap *typewriter_bitmap;
+static mame_bitmap *panel_bitmap;
+static mame_bitmap *typewriter_bitmap;
 
-static const struct rectangle panel_bitmap_bounds =
+static const rectangle panel_bitmap_bounds =
 {
 	0,	panel_window_width-1,	/* min_x, max_x */
 	0,	panel_window_height-1,	/* min_y, max_y */
 };
 
-static const struct rectangle typewriter_bitmap_bounds =
+static const rectangle typewriter_bitmap_bounds =
 {
 	0,	typewriter_window_width-1,	/* min_x, max_x */
 	0,	typewriter_window_height-1,	/* min_y, max_y */
 };
 
-static void tx0_draw_panel_backdrop(struct mame_bitmap *bitmap);
-static void tx0_draw_panel(struct mame_bitmap *bitmap);
+static void tx0_draw_panel_backdrop(mame_bitmap *bitmap);
+static void tx0_draw_panel(mame_bitmap *bitmap);
 
 
 
@@ -124,7 +124,7 @@ enum
 };
 
 /* draw a small 8*8 LED (or is this a lamp? ) */
-static void tx0_draw_led(struct mame_bitmap *bitmap, int x, int y, int state)
+static void tx0_draw_led(mame_bitmap *bitmap, int x, int y, int state)
 {
 	int xx, yy;
 
@@ -134,7 +134,7 @@ static void tx0_draw_led(struct mame_bitmap *bitmap, int x, int y, int state)
 }
 
 /* draw nb_bits leds which represent nb_bits bits in value */
-static void tx0_draw_multipleled(struct mame_bitmap *bitmap, int x, int y, int value, int nb_bits)
+static void tx0_draw_multipleled(mame_bitmap *bitmap, int x, int y, int value, int nb_bits)
 {
 	while (nb_bits)
 	{
@@ -148,7 +148,7 @@ static void tx0_draw_multipleled(struct mame_bitmap *bitmap, int x, int y, int v
 
 
 /* draw a small 8*8 switch */
-static void tx0_draw_switch(struct mame_bitmap *bitmap, int x, int y, int state)
+static void tx0_draw_switch(mame_bitmap *bitmap, int x, int y, int state)
 {
 	int xx, yy;
 	int i;
@@ -189,7 +189,7 @@ static void tx0_draw_switch(struct mame_bitmap *bitmap, int x, int y, int state)
 
 
 /* draw nb_bits switches which represent nb_bits bits in value */
-static void tx0_draw_multipleswitch(struct mame_bitmap *bitmap, int x, int y, int value, int nb_bits)
+static void tx0_draw_multipleswitch(mame_bitmap *bitmap, int x, int y, int value, int nb_bits)
 {
 	while (nb_bits)
 	{
@@ -203,14 +203,14 @@ static void tx0_draw_multipleswitch(struct mame_bitmap *bitmap, int x, int y, in
 
 
 /* write a single char on screen */
-static void tx0_draw_char(struct mame_bitmap *bitmap, char character, int x, int y, int color)
+static void tx0_draw_char(mame_bitmap *bitmap, char character, int x, int y, int color)
 {
 	drawgfx(bitmap, Machine->gfx[0], character-32, color, 0, 0,
 				x+1, y, &Machine->visible_area, TRANSPARENCY_PEN, 0);
 }
 
 /* write a string on screen */
-static void tx0_draw_string(struct mame_bitmap *bitmap, const char *buf, int x, int y, int color)
+static void tx0_draw_string(mame_bitmap *bitmap, const char *buf, int x, int y, int color)
 {
 	while (* buf)
 	{
@@ -223,14 +223,14 @@ static void tx0_draw_string(struct mame_bitmap *bitmap, const char *buf, int x, 
 
 
 /* draw a vertical line */
-static void tx0_draw_vline(struct mame_bitmap *bitmap, int x, int y, int height, int color)
+static void tx0_draw_vline(mame_bitmap *bitmap, int x, int y, int height, int color)
 {
 	while (height--)
 		plot_pixel(bitmap, x, y++, color);
 }
 
 /* draw a horizontal line */
-static void tx0_draw_hline(struct mame_bitmap *bitmap, int x, int y, int width, int color)
+static void tx0_draw_hline(mame_bitmap *bitmap, int x, int y, int width, int color)
 {
 	while (width--)
 		plot_pixel(bitmap, x++, y, color);
@@ -240,7 +240,7 @@ static void tx0_draw_hline(struct mame_bitmap *bitmap, int x, int y, int width, 
 /*
 	draw the operator control panel (fixed backdrop)
 */
-static void tx0_draw_panel_backdrop(struct mame_bitmap *bitmap)
+static void tx0_draw_panel_backdrop(mame_bitmap *bitmap)
 {
 	int i;
 	char buf[3];
@@ -287,7 +287,7 @@ static void tx0_draw_panel_backdrop(struct mame_bitmap *bitmap)
 /*
 	draw the operator control panel (dynamic elements)
 */
-static void tx0_draw_panel(struct mame_bitmap *bitmap)
+static void tx0_draw_panel(mame_bitmap *bitmap)
 {
 	int cm_sel, lr_sel;
 	int i;
@@ -343,7 +343,7 @@ enum
 	typewriter_write_offset_y = typewriter_window_height-typewriter_line_height,
 	typewriter_scroll_step = typewriter_line_height
 };
-static const struct rectangle typewriter_scroll_clear_window =
+static const rectangle typewriter_scroll_clear_window =
 {
 	0, typewriter_window_width-1,	/* min_x, max_x */
 	typewriter_window_height-typewriter_scroll_step, typewriter_window_height-1,	/* min_y, max_y */

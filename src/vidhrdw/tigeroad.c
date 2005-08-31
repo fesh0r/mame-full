@@ -1,7 +1,7 @@
 #include "vidhrdw/generic.h"
 
 static int bgcharbank;
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE16_HANDLER( tigeroad_videoram_w )
 {
@@ -67,7 +67,7 @@ WRITE16_HANDLER( tigeroad_scroll_w )
 	}
 }
 
-static void tigeroad_draw_sprites( struct mame_bitmap *bitmap, int priority )
+static void tigeroad_draw_sprites( mame_bitmap *bitmap, int priority )
 {
 	UINT16 *source = &buffered_spriteram16[spriteram_size/2] - 4;
 	UINT16 *finish = buffered_spriteram16;

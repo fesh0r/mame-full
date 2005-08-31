@@ -6,7 +6,7 @@ Atari Canyon Bomber video emulation
 
 #include "driver.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 UINT8* canyon_videoram;
 
@@ -15,7 +15,7 @@ WRITE8_HANDLER( canyon_videoram_w )
 {
 	if (canyon_videoram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	canyon_videoram[offset] = data;
@@ -32,14 +32,14 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( canyon )
 {
-	tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	return (tilemap == NULL) ? 1 : 0;
+	return (bg_tilemap == NULL) ? 1 : 0;
 }
 
 
-static void canyon_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle* cliprect)
+static void canyon_draw_sprites(mame_bitmap *bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -61,7 +61,7 @@ static void canyon_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 }
 
 
-static void canyon_draw_bombs(struct mame_bitmap *bitmap, const struct rectangle* cliprect)
+static void canyon_draw_bombs(mame_bitmap *bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -70,7 +70,7 @@ static void canyon_draw_bombs(struct mame_bitmap *bitmap, const struct rectangle
 		int sx = 254 - canyon_videoram[0x3d0 + 2 * i + 0x5];
 		int sy = 246 - canyon_videoram[0x3d0 + 2 * i + 0xc];
 
-		struct rectangle rect;
+		rectangle rect;
 
 		rect.min_x = sx;
 		rect.min_y = sy;
@@ -89,7 +89,7 @@ static void canyon_draw_bombs(struct mame_bitmap *bitmap, const struct rectangle
 
 VIDEO_UPDATE( canyon )
 {
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	canyon_draw_sprites(bitmap, cliprect);
 

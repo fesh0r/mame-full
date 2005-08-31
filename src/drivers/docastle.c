@@ -1050,14 +1050,14 @@ ROM_END
 
 /* Game Drivers */
 
-GAMEX(1983, docastle, 0,        docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1983, docastl2, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 2)", GAME_NO_COCKTAIL )
-GAMEX(1983, docastlo, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (older)", GAME_NO_COCKTAIL )
-GAMEX(1983, douni,    docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do vs. Unicorns", GAME_NO_COCKTAIL )
-GAMEX(1984, dorunrun, 0,        dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1984, dorunru2, dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 2)", GAME_NO_COCKTAIL )
-GAMEX(1984, dorunruc, dorunrun, docastle, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (Do's Castle hardware)", GAME_NO_COCKTAIL )
-GAMEX(1987, spiero,   dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Super Pierrot (Japan)", GAME_NO_COCKTAIL )
+GAME( 1983, docastle, 0,        docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 1)" )
+GAME( 1983, docastl2, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 2)" )
+GAME( 1983, docastlo, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (older)" )
+GAME( 1983, douni,    docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do vs. Unicorns" )
+GAME( 1984, dorunrun, 0,        dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 1)" )
+GAME( 1984, dorunru2, dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 2)" )
+GAME( 1984, dorunruc, dorunrun, docastle, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (Do's Castle hardware)" )
+GAME( 1987, spiero,   dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Super Pierrot (Japan)" )
 GAME( 1984, dowild,   0,        dorunrun, dowild,   0, ROT0,   "Universal", "Mr. Do's Wild Ride" )
 GAME( 1984, jjack,    0,        dorunrun, jjack,    0, ROT270, "Universal", "Jumping Jack" )
 GAME( 1984, kickridr, 0,        dorunrun, kickridr, 0, ROT0,   "Universal", "Kick Rider" )

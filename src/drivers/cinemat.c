@@ -35,9 +35,10 @@
 #include "cpu/ccpu/ccpu.h"
 #include "machine/z80fmly.h"
 #include "cinemat.h"
+#include "state.h"
 
 
-static data16_t *rambase;
+static UINT16 *rambase;
 
 static UINT8 coin_detected;
 static UINT8 coin_last_input;
@@ -64,6 +65,14 @@ MACHINE_INIT( cinemat )
 
 	/* reset mux select */
 	mux_select = 0;
+
+        /* register state saves */
+        state_save_register_UINT8("cinemat", 0, "coin_detected", &coin_detected,1);
+        state_save_register_UINT8("cinemat", 0, "coin_last_input", &coin_last_input,1);
+        state_save_register_UINT8("cinemat", 0, "coin_last_reset", &coin_last_reset,1);
+        state_save_register_UINT8("cinemat", 0, "mux_select", &mux_select,1);
+        state_save_register_UINT8("cinemat", 0, "qb3_ram_bank", &qb3_ram_bank,1);
+
 }
 
 

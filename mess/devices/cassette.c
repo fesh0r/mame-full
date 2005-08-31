@@ -328,7 +328,7 @@ static DEVICE_UNLOAD(cassette)
 /*
 	display a small tape icon, with the current position in the tape image
 */
-static void device_display_cassette(mess_image *image, struct mame_bitmap *bitmap)
+static void device_display_cassette(mess_image *image, mame_bitmap *bitmap)
 {
 	char buf[65];
 	int x, y, n;

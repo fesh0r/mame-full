@@ -1067,8 +1067,8 @@ int image_index_in_device(mess_image *img)
 char *mess_try_image_file_as_zip(int pathindex, const char *path,
 	const struct IODevice *dev)
 {
-	ZIP *zip = NULL;
-	struct zipent *zipentry = NULL;
+	zip_file *zip = NULL;
+	zip_entry *zipentry = NULL;
 	char *name;
 	const char *ext;
 	int is_zip;
@@ -1143,8 +1143,8 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 			{
 				int pathindex;
 				int pathcount = osd_get_path_count(filetype);
-				ZIP *zipfile;
-				struct zipent *zipentry;
+				zip_file *zipfile;
+				zip_entry *zipentry;
 				char *newname;
 				char *name;
 				char *zipname;

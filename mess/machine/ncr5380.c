@@ -59,11 +59,11 @@ typedef struct
 static SCSIDev devices[8];	// SCSI IDs 0-7
 static struct NCR5380interface *intf;
 
-static data8_t n5380_Registers[8];
-static data8_t last_id;
-static data8_t n5380_Command[32];
+static UINT8 n5380_Registers[8];
+static UINT8 last_id;
+static UINT8 n5380_Command[32];
 static int cmd_ptr, d_ptr, d_limit;
-static data8_t n5380_Data[512];
+static UINT8 n5380_Data[512];
 
 // get the length of a SCSI command based on it's command byte type
 static int get_cmd_len(int cbyte)
@@ -281,7 +281,7 @@ WRITE8_HANDLER(ncr5380_w)
 READ8_HANDLER(ncr5380_r)
 {
 	int reg = offset & 7;
-	data8_t rv = 0;
+	UINT8 rv = 0;
 
 	switch( reg )
 	{
@@ -348,7 +348,7 @@ extern void ncr5380_init( struct NCR5380interface *interface )
 	for (i = 0; i < interface->scsidevs->devs_present; i++)
 	{
 		devices[interface->scsidevs->devices[i].scsiID].handler = interface->scsidevs->devices[i].handler;
-		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (data8_t *)NULL);
+		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}	
 
 	state_save_register_UINT8("ncr5380", 0, "registers", n5380_Registers, 8);
@@ -360,7 +360,7 @@ extern void ncr5380_init( struct NCR5380interface *interface )
 	state_save_register_int("ncr5380", 0, "dlimit", &d_limit);
 }
 
-void ncr5380_read_data(int bytes, data8_t *pData)
+void ncr5380_read_data(int bytes, UINT8 *pData)
 {
 	if (devices[last_id].handler)
 	{
@@ -372,7 +372,7 @@ void ncr5380_read_data(int bytes, data8_t *pData)
 	}
 }
 
-void ncr5380_write_data(int bytes, data8_t *pData)
+void ncr5380_write_data(int bytes, UINT8 *pData)
 {
 	if (devices[last_id].handler)
 	{
@@ -391,7 +391,7 @@ void *ncr5380_get_device(int id)
 	if (devices[id].handler)
 	{
 		logerror("ncr5380: fetching dev pointer for SCSI ID %d\n", id);
-		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (data8_t *)&ret);
+		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (UINT8 *)&ret);
 
 		return ret;
 	}

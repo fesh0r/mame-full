@@ -91,14 +91,14 @@ struct _running_machine
 	/* ----- video-related information ----- */
 
 	/* array of pointers to graphic sets (chars, sprites) */
-	gfx_element *		gfx[MAX_GFX_ELEMENTS];
+	gfx_element *			gfx[MAX_GFX_ELEMENTS];
 
 	/* main bitmap to render to (but don't do it directly!) */
-	struct mame_bitmap *	scrbitmap;
+	mame_bitmap *	scrbitmap;
 
 	/* current visible area, and a prerotated one adjusted for orientation */
-	struct rectangle 		visible_area;
-	struct rectangle		absolute_visible_area;
+	rectangle 		visible_area;
+	rectangle		absolute_visible_area;
 
 	/* current video refresh rate */
 	float					refresh_rate;
@@ -142,7 +142,7 @@ struct _running_machine
 	/* ----- debugger-related information ----- */
 
 	/* bitmap where the debugger is rendered */
-	struct mame_bitmap *	debug_bitmap;
+	mame_bitmap *	debug_bitmap;
 
 	/* pen array for the debugger, analagous to the pens above */
 	pen_t *					debug_pens;
@@ -151,7 +151,7 @@ struct _running_machine
 	pen_t *					debug_remapped_colortable;
 
 	/* font used by the debugger */
-	gfx_element *		debugger_font;
+	gfx_element *			debugger_font;
 
 #ifdef MESS
 	struct IODevice *devices;
@@ -276,17 +276,17 @@ struct _mame_display
 	UINT32					changed_flags;
 
 	/* game bitmap and display information */
-	struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
-	struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
+	mame_bitmap *	game_bitmap;			/* points to game's bitmap */
+	rectangle		game_bitmap_update;		/* bounds that need to be updated */
 	const rgb_t *			game_palette;			/* points to game's adjusted palette */
 	UINT32					game_palette_entries;	/* number of palette entries in game's palette */
 	UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
-	struct rectangle 		game_visible_area;		/* the game's visible area */
+	rectangle 		game_visible_area;		/* the game's visible area */
 	float					game_refresh_rate;		/* refresh rate */
 	void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
 
 	/* debugger bitmap and display information */
-	struct mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
+	mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
 	const rgb_t *			debug_palette;			/* points to debugger's palette */
 	UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
 	UINT8					debug_focus;			/* set to 1 if debugger has focus */
@@ -304,13 +304,14 @@ struct _mame_display
 
 ***************************************************************************/
 
-struct performance_info
+struct _performance_info
 {
 	double					game_speed_percent;		/* % of full speed */
 	double					frames_per_second;		/* actual rendered fps */
 	int						vector_updates_last_second; /* # of vector updates last second */
 	int						partial_updates_this_frame; /* # of partial updates last frame */
 };
+/* In mamecore.h: typedef struct _performance_info performance_info; */
 
 
 
@@ -385,7 +386,7 @@ int mame_highscore_enabled(void);
 void set_led_status(int num, int on);
 
 /* return current performance data */
-const struct performance_info *mame_get_performance_info(void);
+const performance_info *mame_get_performance_info(void);
 
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);

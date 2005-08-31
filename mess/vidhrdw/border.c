@@ -34,7 +34,7 @@ void set_last_border_color (int NewColor)
         CurrBorderColor = NewColor;
 }
 
-void draw_border(struct mame_bitmap *bitmap,
+void draw_border(mame_bitmap *bitmap,
 	int full_refresh,               /* Full refresh flag */
 	int TopBorderLines,             /* Border lines before actual screen */
 	int ScreenLines,                /* Screen height in pixels */
@@ -57,7 +57,7 @@ void draw_border(struct mame_bitmap *bitmap,
 	int CyclesSoFar = 0;
 	int NumItems, CurrItem = 0, NextItem;
 	int Count, ScrX, NextScrX, ScrY;
-	struct rectangle r;
+	rectangle r;
 
 	pItem = EventList_GetFirstItem();
 	NumItems = EventList_NumEvents();

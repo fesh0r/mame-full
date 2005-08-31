@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/aquarius.h"
 
-static struct tilemap *aquarius_tilemap;
+static tilemap *aquarius_tilemap;
 
 /**************************************************************************/
 

@@ -44,7 +44,7 @@ Tomasz Slanina 20050225
 /* vidhrdw */
 
 static UINT8 *vroulet_ball;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static WRITE8_HANDLER(vroulet_paletteram_w)
 {

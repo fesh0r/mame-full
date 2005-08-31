@@ -3,7 +3,7 @@
 #include "state.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 static int flipscreen;
 static UINT8 ninjakun_xscroll,ninjakun_yscroll;
 
@@ -212,7 +212,7 @@ VIDEO_START( ninjakid ){
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect ){
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 

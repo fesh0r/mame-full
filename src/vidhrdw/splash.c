@@ -10,13 +10,13 @@
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-data16_t *splash_vregs;
-data16_t *splash_videoram;
-data16_t *splash_spriteram;
-data16_t *splash_pixelram;
-data16_t *roldfrog_bitmap_mode;
+UINT16 *splash_vregs;
+UINT16 *splash_videoram;
+UINT16 *splash_spriteram;
+UINT16 *splash_pixelram;
+UINT16 *roldfrog_bitmap_mode;
 int splash_bitmap_type;
-static struct tilemap *tilemap[2];
+static tilemap *bg_tilemap[2];
 
 /***************************************************************************
 
@@ -90,10 +90,10 @@ WRITE16_HANDLER( splash_vram_w )
 	COMBINE_DATA(&splash_videoram[offset]);
 
 	if (oldword != splash_videoram[offset])
-		tilemap_mark_tile_dirty(tilemap[offset >> 11],((offset << 1) & 0x0fff) >> 1);
+		tilemap_mark_tile_dirty(bg_tilemap[offset >> 11],((offset << 1) & 0x0fff) >> 1);
 }
 
-static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void splash_draw_bitmap(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int sx,sy,color,count,colxor,bitswap;
 	colxor = 0; /* splash and some bitmap modes in roldfrog */
@@ -181,16 +181,16 @@ static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle
 
 VIDEO_START( splash )
 {
-	tilemap[0] = tilemap_create(get_tile_info_splash_tilemap0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info_splash_tilemap1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info_splash_tilemap0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info_splash_tilemap1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	if (!tilemap[0] || !tilemap[1])
+	if (!bg_tilemap[0] || !bg_tilemap[1])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
 
-	tilemap_set_scrollx(tilemap[0], 0, 4);
+	tilemap_set_scrollx(bg_tilemap[0], 0, 4);
 
 	return 0;
 }
@@ -224,7 +224,7 @@ VIDEO_START( splash )
       400| xxxxxxxx -------- | unused
 */
 
-static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void splash_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	const gfx_element *gfx = Machine->gfx[1];
@@ -245,7 +245,7 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 	}
 }
 
-static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void funystrp_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	const gfx_element *gfx = Machine->gfx[1];
@@ -273,26 +273,26 @@ static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 VIDEO_UPDATE( splash )
 {
 	/* set scroll registers */
-	tilemap_set_scrolly(tilemap[0], 0, splash_vregs[0]);
-	tilemap_set_scrolly(tilemap[1], 0, splash_vregs[1]);
+	tilemap_set_scrolly(bg_tilemap[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(bg_tilemap[1], 0, splash_vregs[1]);
 
 	splash_draw_bitmap(bitmap,cliprect);
 
-	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,0);
 	splash_draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,0);
 }
 
 VIDEO_UPDATE( funystrp )
 {
 	/* set scroll registers */
-	tilemap_set_scrolly(tilemap[0], 0, splash_vregs[0]);
-	tilemap_set_scrolly(tilemap[1], 0, splash_vregs[1]);
+	tilemap_set_scrolly(bg_tilemap[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(bg_tilemap[1], 0, splash_vregs[1]);
 
 	splash_draw_bitmap(bitmap,cliprect);
 
-	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,0);
 	/*Sprite chip is similar but not the same*/
 	funystrp_draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,0);
 }

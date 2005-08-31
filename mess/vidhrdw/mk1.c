@@ -76,7 +76,7 @@ static char led[]={
     "     eeeeeeeeeeee        aa"
 };
 
-static void mk1_draw_9segment(struct mame_bitmap *bitmap,int value, int x, int y)
+static void mk1_draw_9segment(mame_bitmap *bitmap,int value, int x, int y)
 {
 	draw_led(bitmap, led, value, x, y);
 }

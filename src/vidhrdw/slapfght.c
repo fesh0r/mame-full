@@ -15,7 +15,7 @@ size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 static int flipscreen;
 
-static struct tilemap *pf1_tilemap,*fix_tilemap;
+static tilemap *pf1_tilemap,*fix_tilemap;
 
 
 
@@ -156,7 +156,7 @@ void slapfght_log_vram(void)
   Render the Sprites
 
 ***************************************************************************/
-static void perfrman_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
+static void perfrman_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority_to_display )
 {
 	int offs;
 

@@ -108,7 +108,7 @@ int ui_init(void);
 void ui_exit(void);
 
 /* once-per-frame update and render */
-int ui_update_and_render(struct mame_bitmap *bitmap);
+int ui_update_and_render(mame_bitmap *bitmap);
 
 /* returns non-zero if the UI has been drawn recently */
 int ui_is_dirty(void);
@@ -118,6 +118,10 @@ void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax);
 
 /* returns the line height of the font used by the UI system */
 int ui_get_line_height(void);
+
+/* returns the width of a character or string in the UI font */
+int ui_get_char_width(UINT16 ch);
+int ui_get_string_width(const char *s);
 
 /* returns the current width/height of the UI rendering area */
 void ui_get_bounds(int *width, int *height);
@@ -147,9 +151,9 @@ void CLIB_DECL ui_popup(const char *text, ...) ATTR_PRINTF(1,2);
 void CLIB_DECL ui_popup_time(int seconds, const char *text, ...) ATTR_PRINTF(2,3);
 
 /* informational displays used before the game is fully up and running */
-int ui_display_copyright(struct mame_bitmap *bitmap);
-int ui_display_game_warnings(struct mame_bitmap *bitmap);
-int ui_display_game_info(struct mame_bitmap *bitmap);
+int ui_display_copyright(mame_bitmap *bitmap);
+int ui_display_game_warnings(mame_bitmap *bitmap);
+int ui_display_game_info(mame_bitmap *bitmap);
 
 /* temporarily show the FPS display for a period of time */
 void ui_show_fps_temp(double seconds);

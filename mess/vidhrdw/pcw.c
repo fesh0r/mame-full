@@ -73,7 +73,7 @@ VIDEO_UPDATE( pcw )
 	/* video enable? */
 	if ((pcw_vdu_video_control_register & (1<<6))!=0)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		/* render top border */
 		rect.min_x = 0;
@@ -170,7 +170,7 @@ VIDEO_UPDATE( pcw )
 	else
 	{
 		/* not video - render whole lot in pen 0 */
-		struct rectangle rect;
+		rectangle rect;
 
 		/* render top border */
 		rect.min_x = 0;

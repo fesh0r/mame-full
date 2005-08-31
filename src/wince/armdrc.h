@@ -178,8 +178,8 @@ UINT32 build_immediate_operand(UINT32 *op);
 #define drc_exit	arm_drc_exit
 
 /* init/shutdown */
-struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config);
-void drc_exit(struct drccore *drc);
+drccore *drc_init(UINT8 cpunum, struct drcconfig *config);
+void drc_exit(drccore *drc);
 
 #endif /* __DRCCORE_H__ */
 

@@ -511,7 +511,7 @@ static PDIRWATCHER s_pWatcher;
 static struct OSDJoystick* g_pJoyGUI = NULL;
 
 /* store current keyboard state (in internal codes) here */
-static input_code_t keyboard_state[ __code_max ]; /* __code_max #defines the number of internal key_codes */
+static input_code keyboard_state[ __code_max ]; /* __code_max #defines the number of internal key_codes */
 
 /* table copied from windows/inputs.c */
 // table entry indices
@@ -523,9 +523,9 @@ static input_code_t keyboard_state[ __code_max ]; /* __code_max #defines the num
 typedef struct
 {
 	char		name[40];	    // functionality name (optional)
-	input_seq_t	is;				// the input sequence (the keys pressed)
+	input_seq	is;				// the input sequence (the keys pressed)
 	UINT		func_id;        // the identifier
-	input_seq_t* (*getiniptr)(void);// pointer to function to get the value from .ini file
+	input_seq* (*getiniptr)(void);// pointer to function to get the value from .ini file
 } GUISequence;
 
 static GUISequence GUISequenceControl[]=
@@ -2106,8 +2106,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	for (i = 0; i < NUM_GUI_SEQUENCES; i++)
 	{
-		input_seq_t *is1;
-		input_seq_t *is2;
+		input_seq *is1;
+		input_seq *is2;
 		is1 = &(GUISequenceControl[i].is);
 		is2 = GUISequenceControl[i].getiniptr();
 		seq_copy(is1, is2);
@@ -3549,7 +3549,7 @@ char* ConvertAmpersandString(const char *s)
 	return buf;
 }
 
-static int GUI_seq_pressed(input_code_t* code)
+static int GUI_seq_pressed(input_code* code)
 {
 	int j;
 	int res = 1;
@@ -3591,7 +3591,7 @@ static void check_for_GUI_action(void)
 
 	for (i = 0; i < NUM_GUI_SEQUENCES; i++)
 	{
-		input_seq_t *is = &(GUISequenceControl[i].is);
+		input_seq *is = &(GUISequenceControl[i].is);
 
 		if (GUI_seq_pressed(is->code))
 		{
@@ -3626,7 +3626,7 @@ static void KeyboardStateClear(void)
 static void KeyboardKeyDown(int syskey, int vk_code, int special)
 {
 	int i, found = 0;
-	input_code_t icode = 0;
+	input_code icode = 0;
 	int special_code = (special >> 24) & 1;
 	int scancode = (special>>16) & 0xff;
 
@@ -3696,7 +3696,7 @@ static void KeyboardKeyDown(int syskey, int vk_code, int special)
 static void KeyboardKeyUp(int syskey, int vk_code, int special)
 {
 	int i, found = 0;
-	input_code_t icode = 0;
+	input_code icode = 0;
 	int special_code = (special >> 24) & 1;
 	int scancode = (special>>16) & 0xff;
 
@@ -5539,7 +5539,7 @@ void SetStatusBarTextF(int part_index, const char *fmt, ...)
 	SetStatusBarText(part_index, buf);
 }
 
-static void MameMessageBox(const char *fmt, ...)
+static void CLIB_DECL MameMessageBox(const char *fmt, ...)
 {
 	char buf[2048];
 	va_list va;
@@ -5590,10 +5590,10 @@ static void MamePlayBackGame()
 		// check for game name embedded in .inp header
 		if (pPlayBack)
 		{
-			INP_HEADER inp_header;
+			inp_header inp_header;
 
 			// read playback header
-			mame_fread(pPlayBack, &inp_header, sizeof(INP_HEADER));
+			mame_fread(pPlayBack, &inp_header, sizeof(inp_header));
 
 			if (!isalnum(inp_header.name[0])) // If first byte is not alpha-numeric
 				mame_fseek(pPlayBack, 0, SEEK_SET); // old .inp file - no header
@@ -5687,7 +5687,7 @@ static void MameLoadState()
 		}
 
 		// call the MAME core function to check the save state file
-		rc = state_save_check_file(pSaveState, selected_filename, MameMessageBox);
+		rc = state_save_check_file(pSaveState, selected_filename, TRUE, MameMessageBox);
 		mame_fclose(pSaveState);
 		if (rc)
 			return;

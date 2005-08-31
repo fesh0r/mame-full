@@ -223,7 +223,7 @@ void tms9901_cleanup(int which)
 {
 	if (tms9901[which].timer)
 	{
-		timer_remove(tms9901[which].timer);
+		timer_reset(tms9901[which].timer, TIME_NEVER);	/* FIXME - timers should only be allocated once */
 		tms9901[which].timer = NULL;
 	}
 }

@@ -13,8 +13,8 @@
 
 struct pci_device_info
 {
-	data32_t (*read_callback)(int function, int reg);
-	void (*write_callback)(int function, int reg, data32_t data);
+	UINT32 (*read_callback)(int function, int reg);
+	void (*write_callback)(int function, int reg, UINT32 data);
 };
 
 

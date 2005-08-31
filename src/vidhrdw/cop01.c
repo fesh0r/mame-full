@@ -11,10 +11,10 @@
 
 
 
-data8_t *cop01_bgvideoram,*cop01_fgvideoram;
+UINT8 *cop01_bgvideoram,*cop01_fgvideoram;
 
 static unsigned char mightguy_vreg[4];
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 
@@ -184,7 +184,7 @@ WRITE8_HANDLER( cop01_vreg_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs,code,attr,sx,sy,flipx,flipy,color;
 

@@ -12,7 +12,7 @@
 extern UINT8 shaolins_nmi_enable;
 
 static int palettebank;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -165,7 +165,7 @@ VIDEO_START( shaolins )
 	return 0;
 }
 
-static void shaolins_draw_sprites( struct mame_bitmap *bitmap )
+static void shaolins_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

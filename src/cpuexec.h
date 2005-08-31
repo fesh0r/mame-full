@@ -90,11 +90,13 @@ enum
 {
 	LOADSAVE_NONE,
 	LOADSAVE_SAVE,
-	LOADSAVE_LOAD
+	LOADSAVE_LOAD,
+	LOADSAVE_LOAD_POSTRESET
 };
 void cpu_loadsave_schedule(int type, char id);
 void cpu_loadsave_schedule_file(int type, const char *name);
 void cpu_loadsave_reset(void);
+void cpu_loadsave_disallow(void);
 
 
 

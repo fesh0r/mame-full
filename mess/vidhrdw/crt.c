@@ -143,7 +143,7 @@ VIDEO_EOF( crt )
 
 	update the bitmap
 */
-void video_update_crt(struct mame_bitmap *bitmap)
+void video_update_crt(mame_bitmap *bitmap)
 {
 	int i, p_i;
 	int y;

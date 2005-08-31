@@ -9,16 +9,16 @@
 #include "driver.h"
 
 
-data8_t *espial_videoram;
-data8_t *espial_colorram;
-data8_t *espial_attributeram;
-data8_t *espial_scrollram;
-data8_t *espial_spriteram_1;
-data8_t *espial_spriteram_2;
-data8_t *espial_spriteram_3;
+UINT8 *espial_videoram;
+UINT8 *espial_colorram;
+UINT8 *espial_attributeram;
+UINT8 *espial_scrollram;
+UINT8 *espial_spriteram_1;
+UINT8 *espial_spriteram_2;
+UINT8 *espial_spriteram_3;
 
 static int flipscreen;
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************
@@ -80,9 +80,9 @@ PALETTE_INIT( espial )
 
 static void get_tile_info(int tile_index)
 {
-	data8_t code = espial_videoram[tile_index];
-	data8_t col = espial_colorram[tile_index];
-	data8_t attr = espial_attributeram[tile_index];
+	UINT8 code = espial_videoram[tile_index];
+	UINT8 col = espial_colorram[tile_index];
+	UINT8 attr = espial_attributeram[tile_index];
 	SET_TILE_INFO(0,
 				  code | ((attr & 0x03) << 8),
 				  col & 0x3f,
@@ -99,12 +99,12 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( espial )
 {
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 
 	return 0;
 }
@@ -112,13 +112,13 @@ VIDEO_START( espial )
 VIDEO_START( netwars )
 {
 	/* Net Wars has a tile map that's twice as big as Espial's */
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_scroll_cols(tilemap, 32);
-	tilemap_set_scrolldy(tilemap, 0, 0x100);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+	tilemap_set_scrolldy(bg_tilemap, 0, 0x100);
 
 	return 0;
 }
@@ -135,7 +135,7 @@ WRITE8_HANDLER( espial_videoram_w )
 	if (espial_videoram[offset] != data)
 	{
 		espial_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -145,7 +145,7 @@ WRITE8_HANDLER( espial_colorram_w )
 	if (espial_colorram[offset] != data)
 	{
 		espial_colorram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -155,7 +155,7 @@ WRITE8_HANDLER( espial_attributeram_w )
 	if (espial_attributeram[offset] != data)
 	{
 		espial_attributeram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -163,7 +163,7 @@ WRITE8_HANDLER( espial_attributeram_w )
 WRITE8_HANDLER( espial_scrollram_w )
 {
 	espial_scrollram[offset] = data;
-	tilemap_set_scrolly(tilemap, offset, data);
+	tilemap_set_scrolly(bg_tilemap, offset, data);
 }
 
 
@@ -181,7 +181,7 @@ WRITE8_HANDLER( espial_flipscreen_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -254,7 +254,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( espial )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_sprites(bitmap, cliprect);
 }

@@ -126,7 +126,7 @@ int pc_hdc_setup(void)
 	return 0;
 }
 
-static struct hard_disk_file *pc_hdc_file(int id)
+static hard_disk_file *pc_hdc_file(int id)
 {
 	mess_image *img;
 	
@@ -188,8 +188,8 @@ static int no_dma(void)
 
 static int get_lbasector(void)
 {
-	struct hard_disk_info *info;
-	struct hard_disk_file *file;
+	hard_disk_info *info;
+	hard_disk_file *file;
 	int lbasector;
 
 	file = pc_hdc_file(idx);
@@ -214,18 +214,18 @@ static int get_lbasector(void)
 /* the following crap is an abomination; it is a relic of the old crappy DMA
  * implementation that threw the idea of "emulating the hardware" to the wind
  */
-static data8_t *hdcdma_data;
-static data8_t *hdcdma_src;
-static data8_t *hdcdma_dst;
+static UINT8 *hdcdma_data;
+static UINT8 *hdcdma_src;
+static UINT8 *hdcdma_dst;
 static int hdcdma_read;
 static int hdcdma_write;
 static int hdcdma_size;
 
 int pc_hdc_dack_r(void)
 {
-	data8_t result;
-	struct hard_disk_info *info;
-	struct hard_disk_file *file;
+	UINT8 result;
+	hard_disk_info *info;
+	hard_disk_file *file;
 	
 	file = pc_hdc_file(idx);
 	if (!file)
@@ -264,8 +264,8 @@ int pc_hdc_dack_r(void)
 
 void pc_hdc_dack_w(int data)
 {
-	struct hard_disk_info *info;
-	struct hard_disk_file *file;
+	hard_disk_info *info;
+	hard_disk_file *file;
 	
 	file = pc_hdc_file(idx);
 	if (!file)
@@ -298,7 +298,7 @@ void pc_hdc_dack_w(int data)
 
 static void execute_read(void)
 {
-	struct hard_disk_file *disk = pc_hdc_file(idx);
+	hard_disk_file *disk = pc_hdc_file(idx);
 	UINT8 data[512], *src = data;
 	int size = sector_cnt[idx] * 512;
 	int read_ = 0;
@@ -329,7 +329,7 @@ static void execute_read(void)
 
 static void execute_write(void)
 {
-	struct hard_disk_file *disk = pc_hdc_file(idx);
+	hard_disk_file *disk = pc_hdc_file(idx);
 	UINT8 data[512], *dst = data;
 	int size = sector_cnt[idx] * 512;
 	int write_ = 512;

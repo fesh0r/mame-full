@@ -346,7 +346,7 @@ static void at_8042_clear_keyboard_received(void)
 READ8_HANDLER(kbdc8042_8_r)
 {
 	static int poll_delay = 10;
-	data8_t data = 0;
+	UINT8 data = 0;
 
 	switch (offset) {
 	case 0:

@@ -51,7 +51,7 @@ VIDEO_START( galaxy )
 VIDEO_UPDATE( galaxy )
 {
 	int offs;
-	struct rectangle black_area = {0,0,0,16*13};
+	rectangle black_area = {0,0,0,16*13};
 	static int fast_mode = FALSE;
 	int full_refresh = 1;
 

@@ -57,7 +57,7 @@ VIDEO_START( pocketc )
 	return video_start_generic();
 }
 
-void pocketc_draw_special(struct mame_bitmap *bitmap,
+void pocketc_draw_special(mame_bitmap *bitmap,
 						  int x, int y, const POCKETC_FIGURE fig, int color)
 {
 	int i,j;

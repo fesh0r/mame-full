@@ -28,15 +28,8 @@ void osd_wait_for_debugger(void);
 
 ******************************************************************************/
 
-/* mame_bitmap used to be declared here, but has moved to common.c */
-/* sadly, the include order requires that at least this forward declaration is here */
-struct mame_bitmap;
-struct performance_info;
-struct rectangle;
-
-
 /* these are the parameters passed into osd_create_display */
-struct osd_create_params
+struct _osd_create_params
 {
 	int width, height;			/* width and height */
 	int aspect_x, aspect_y;		/* aspect ratio X:Y */
@@ -45,6 +38,7 @@ struct osd_create_params
 	float fps;					/* frame rate */
 	int video_attributes;		/* video flags from driver */
 };
+typedef struct _osd_create_params osd_create_params;
 
 
 
@@ -72,7 +66,7 @@ struct osd_create_params
 
   Returns 0 on success.
 */
-int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components);
+int osd_create_display(const osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
 
@@ -110,14 +104,14 @@ void osd_update_video_and_audio(struct _mame_display *display);
   snapshot.  This function will either return a new bitmap, for which the
   caller is responsible for freeing.
 */
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds);
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds);
 
 /*
   Returns a pointer to the text to display when the FPS display is toggled.
   This normally includes information about the frameskip, FPS, and percentage
   of full game speed.
 */
-const char *osd_get_fps_text(const struct performance_info *performance);
+const char *osd_get_fps_text(const performance_info *performance);
 
 
 
@@ -174,14 +168,14 @@ void osd_sound_enable(int enable);
 /*
   return a list of all available inputs (see input.h)
 */
-const struct OSCodeInfo *osd_get_code_list(void);
+const os_code_info *osd_get_code_list(void);
 
 /*
   return the value of the specified input. digital inputs return 0 or 1. analog
   inputs should return a value between -65536 and +65536. oscode is the OS dependent
   code specified in the list returned by osd_get_code_list().
 */
-INT32 osd_get_code_value(os_code_t oscode);
+INT32 osd_get_code_value(os_code oscode);
 
 /*
   Return the Unicode value of the most recently pressed key. This
@@ -228,15 +222,13 @@ void osd_joystick_end_calibration(void);
 ******************************************************************************/
 
 /* inp header */
-typedef struct
+struct _inp_header
 {
 	char name[9];      /* 8 bytes for game->name + NUL */
 	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
 	char reserved[20]; /* for future use, possible store game options? */
-} INP_HEADER;
-
-
-typedef struct _osd_file osd_file;
+};
+typedef struct _inp_header inp_header;
 
 
 /* These values are returned by osd_get_path_info */

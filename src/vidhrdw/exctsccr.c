@@ -11,7 +11,7 @@
 
 static int gfx_bank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -159,7 +159,7 @@ VIDEO_START( exctsccr )
 	return 0;
 }
 
-static void exctsccr_draw_sprites( struct mame_bitmap *bitmap ) {
+static void exctsccr_draw_sprites( mame_bitmap *bitmap ) {
 	int offs;
 	UINT8 *OBJ1, *OBJ2;
 

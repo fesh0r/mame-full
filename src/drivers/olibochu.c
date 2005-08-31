@@ -14,7 +14,7 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( olibochu )
 {
@@ -109,7 +109,7 @@ VIDEO_START( olibochu )
 	return 0;
 }
 
-static void olibochu_draw_sprites( struct mame_bitmap *bitmap )
+static void olibochu_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

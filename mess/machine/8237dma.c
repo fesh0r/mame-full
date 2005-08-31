@@ -116,7 +116,7 @@ void dma8237_reset(void)
 static int dma8237_do_operation(int which, int channel)
 {
 	int done;
-	data8_t data;
+	UINT8 data;
 	UINT8 mode;
 
 	mode = dma[which].chan[channel].mode;
@@ -243,9 +243,9 @@ static void prepare_msb_flip(int which)
 
 
 
-static data8_t dma8237_read(int which, offs_t offset)
+static UINT8 dma8237_read(int which, offs_t offset)
 {
-	data8_t data = 0xFF;
+	UINT8 data = 0xFF;
 	UINT8 mode;
 
 	dma8237_verify(which);
@@ -282,7 +282,7 @@ static data8_t dma8237_read(int which, offs_t offset)
 
 	case 8:
 		/* DMA status register */
-		data = (data8_t) dma[which].status;
+		data = (UINT8) dma[which].status;
 		break;
 
 	case 10:
@@ -308,7 +308,7 @@ static data8_t dma8237_read(int which, offs_t offset)
 
 
 
-static void dma8237_write(int which, offs_t offset, data8_t data)
+static void dma8237_write(int which, offs_t offset, UINT8 data)
 {
 	int channel;
 

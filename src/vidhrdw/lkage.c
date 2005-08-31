@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static unsigned char bg_tile_bank, fg_tile_bank;
 unsigned char *lkage_scroll, *lkage_vreg;
 
@@ -105,7 +105,7 @@ VIDEO_START( lkage )
 } /* VIDEO_START( lkage ) */
 
 static void
-draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const unsigned char *source = spriteram;
 	const unsigned char *finish = source+0x60;

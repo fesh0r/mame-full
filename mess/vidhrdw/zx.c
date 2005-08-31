@@ -35,8 +35,8 @@ void zx_ula_bkgnd(int color)
 	if (ula_frame_vsync == 0 && color != old_c)
 	{
 		int y, new_x, new_y;
-		struct rectangle r;
-		struct mame_bitmap *bitmap = Machine->scrbitmap;
+		rectangle r;
+		mame_bitmap *bitmap = Machine->scrbitmap;
 
 		new_y = cpu_getscanline();
 		new_x = cpu_gethorzbeampos();
@@ -87,7 +87,7 @@ static void zx_ula_nmi(int param)
 	 * An NMI is issued on the ZX81 every 64us for the blanked
 	 * scanlines at the top and bottom of the display.
 	 */
-	struct rectangle r = Machine->visible_area;
+	rectangle r = Machine->visible_area;
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
@@ -119,7 +119,7 @@ static void zx_ula_irq(int param)
 
 int zx_ula_r(int offs, int region)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	mame_bitmap *bitmap = Machine->scrbitmap;
 	int x, y, chr, data, ireg, rreg, cycles, offs0 = offs, halted = 0;
 	UINT8 *chrgen, *rom = memory_region(REGION_CPU1);
 

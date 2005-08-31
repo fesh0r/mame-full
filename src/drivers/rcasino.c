@@ -40,7 +40,7 @@ Get correct data for hopper on and lockout.
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int pulse;
 static int hopper;
 PALETTE_INIT( rcasino )

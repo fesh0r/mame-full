@@ -190,7 +190,7 @@
 #include "vidhrdw/voodoo.h"
 #include "machine/timekpr.h"
 
-static data8_t led_reg0 = 0x7f, led_reg1 = 0x7f;
+static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 static WRITE32_HANDLER( paletteram32_w )
 {
@@ -217,7 +217,7 @@ static UINT32 *K037122_tile_ram;
 static UINT32 *K037122_char_ram;
 static UINT8 *K037122_dirty_map;
 static int K037122_gfx_index, K037122_char_dirty;
-static struct tilemap *K037122_layer[1];
+static tilemap *K037122_layer[1];
 static UINT32 K037122_reg[256];
 
 #define K037122_NUM_TILES		8192
@@ -314,7 +314,7 @@ void K037122_tile_update(void)
 	}
 }
 
-void K037122_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	tilemap_draw(bitmap, cliprect, K037122_layer[0], 0,0);
 }
@@ -456,7 +456,7 @@ static WRITE32_HANDLER( sysreg_w )
 }
 }
 
-static data8_t sndto68k[16], sndtoppc[2];	/* read/write split mapping */
+static UINT8 sndto68k[16], sndtoppc[2];	/* read/write split mapping */
 
 static READ32_HANDLER( ppc_sound_r )
 {

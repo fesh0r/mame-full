@@ -45,7 +45,7 @@ static const char *error_strings[] =
 	"unsupported CHD version"
 };
 
-static struct hard_disk_file *drive_handles[MAX_HARDDISKS];
+static hard_disk_file *drive_handles[MAX_HARDDISKS];
 
 static const char *chd_get_error_string(int chderr)
 {
@@ -72,7 +72,7 @@ static const char *mess_hd_option_spec =
 
 struct mess_hd
 {
-	struct hard_disk_file *hard_disk_handle;
+	hard_disk_file *hard_disk_handle;
 };
 
 static struct mess_hd *get_drive(mess_image *img)
@@ -375,7 +375,7 @@ DEVICE_UNLOAD(mess_hd)
  *
  *************************************/
 
-struct hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image)
+hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image)
 {
 	struct mess_hd *hd = get_drive(image);
 	return hd->hard_disk_handle;
@@ -393,7 +393,7 @@ struct hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image)
 chd_file *mess_hd_get_chd_file(mess_image *image)
 {
 	chd_file *result = NULL;
-	struct hard_disk_file *hd_file;
+	hard_disk_file *hd_file;
 
 	if (image)
 	{
@@ -441,7 +441,7 @@ void harddisk_device_getinfo(struct IODevice *iodev)
 	iodev->createimage_options[1].optspec = NULL;
 }
 
-struct hard_disk_file *mess_hd_get_hard_disk_file_by_number(int drivenum)
+hard_disk_file *mess_hd_get_hard_disk_file_by_number(int drivenum)
 {
 	if ((drivenum < 0) || (drivenum > MAX_HARDDISKS))
 	{

@@ -26,7 +26,7 @@
 
 void emit_header(struct blitter_params *params)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	// mov ecx, dword ptr [source_bits]
 	_mov_r32_m32bd(REG_ECX, REG_ESP, 0x08);
@@ -55,7 +55,7 @@ void emit_header(struct blitter_params *params)
 
 void emit_footer(struct blitter_params *params)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 
 	// pop eax
 	_pop_r32(REG_EAX);
@@ -75,19 +75,19 @@ void emit_footer(struct blitter_params *params)
 
 void emit_increment_sourcebits(struct blitter_params *params, INT32 adjustment)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 	_add_r32_imm(REG_ECX, adjustment);
 }
 
 void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 	_add_r32_imm(REG_EDX, adjustment);
 }
 
 int emit_copy_pixels(struct blitter_params *params, const int *pixel_spans, int max_spans, int dest_xpitch)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 	int i, j;
 	int source_index = 0;
 
@@ -164,7 +164,7 @@ void emit_begin_loop(struct blitter_params *params)
 
 void emit_finish_loop(struct blitter_params *params, void *loop_begin)
 {
-	struct drccore *drc = params->blitter;
+	drccore *drc = params->blitter;
 	if (params->flags & BLIT_MUST_BLEND)
 	{
 		// mov eax, [esp+4]

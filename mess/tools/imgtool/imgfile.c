@@ -579,7 +579,7 @@ imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char
 			goto done;
 		}
 
-		err = u.read_file(image, filename, destf);
+		err = u.read_file(image, filename, fork, destf);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -695,7 +695,7 @@ imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const cha
 			goto done;
 		}
 
-		err = u.write_file(image, filename, sourcef);
+		err = u.write_file(image, filename, fork, sourcef, opts);
 		if (err)
 		{
 			err = markerrorsource(err);

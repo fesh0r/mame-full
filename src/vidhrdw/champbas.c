@@ -11,7 +11,7 @@
 
 static int gfxbank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -132,7 +132,7 @@ VIDEO_START( champbas )
 	return 0;
 }
 
-static void champbas_draw_sprites( struct mame_bitmap *bitmap )
+static void champbas_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

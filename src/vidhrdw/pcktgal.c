@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( pcktgal )
 {
@@ -68,7 +68,7 @@ VIDEO_START( pcktgal )
 	return 0;
 }
 
-static void pcktgal_draw_sprites( struct mame_bitmap *bitmap )
+static void pcktgal_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -265,9 +265,9 @@ void crtc6845_get_cursor(struct crtc6845 *crtc, struct crtc6845_cursor *cursor)
 	cursor->bottom = CRTC6845_CURSOR_BOTTOM;
 }
 
-data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
+UINT8 crtc6845_port_r(struct crtc6845 *crtc, int offset)
 {
-	data8_t val = 0xff;
+	UINT8 val = 0xff;
 	int idx;
 
 	if (offset & 1)
@@ -283,7 +283,7 @@ data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
 	return val;
 }
 
-int crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
+int crtc6845_port_w(struct crtc6845 *crtc, int offset, UINT8 data)
 {
 	struct crtc6845_cursor cursor;
 	int idx;

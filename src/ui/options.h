@@ -18,7 +18,7 @@
 #endif
 
 #include "osd_cpu.h"
-#include "input.h" /* for input_seq_t definition */
+#include "input.h" /* for input_seq definition */
 
 
 enum 
@@ -98,7 +98,7 @@ typedef struct
 typedef struct
 {
 	char *seq_string;	/* KEYCODE_LALT KEYCODE_A, etc... */
-	input_seq_t is;		/* sequence definition in MAME's internal keycodes */
+	input_seq is;		/* sequence definition in MAME's internal keycodes */
 } KeySeq;
 
 typedef struct
@@ -645,40 +645,40 @@ void SaveDefaultOptions(void);
 
 
 // Keyboard control of ui
-input_seq_t* Get_ui_key_up(void);
-input_seq_t* Get_ui_key_down(void);
-input_seq_t* Get_ui_key_left(void);
-input_seq_t* Get_ui_key_right(void);
-input_seq_t* Get_ui_key_start(void);
-input_seq_t* Get_ui_key_pgup(void);
-input_seq_t* Get_ui_key_pgdwn(void);
-input_seq_t* Get_ui_key_home(void);
-input_seq_t* Get_ui_key_end(void);
-input_seq_t* Get_ui_key_ss_change(void);
-input_seq_t* Get_ui_key_history_up(void);
-input_seq_t* Get_ui_key_history_down(void);
+input_seq* Get_ui_key_up(void);
+input_seq* Get_ui_key_down(void);
+input_seq* Get_ui_key_left(void);
+input_seq* Get_ui_key_right(void);
+input_seq* Get_ui_key_start(void);
+input_seq* Get_ui_key_pgup(void);
+input_seq* Get_ui_key_pgdwn(void);
+input_seq* Get_ui_key_home(void);
+input_seq* Get_ui_key_end(void);
+input_seq* Get_ui_key_ss_change(void);
+input_seq* Get_ui_key_history_up(void);
+input_seq* Get_ui_key_history_down(void);
 
-input_seq_t* Get_ui_key_context_filters(void);
-input_seq_t* Get_ui_key_select_random(void);
-input_seq_t* Get_ui_key_game_audit(void);
-input_seq_t* Get_ui_key_game_properties(void);
-input_seq_t* Get_ui_key_help_contents(void);
-input_seq_t* Get_ui_key_update_gamelist(void);
-input_seq_t* Get_ui_key_view_folders(void);
-input_seq_t* Get_ui_key_view_fullscreen(void);
-input_seq_t* Get_ui_key_view_pagetab(void);
-input_seq_t* Get_ui_key_view_picture_area(void);
-input_seq_t* Get_ui_key_view_status(void);
-input_seq_t* Get_ui_key_view_toolbars(void);
+input_seq* Get_ui_key_context_filters(void);
+input_seq* Get_ui_key_select_random(void);
+input_seq* Get_ui_key_game_audit(void);
+input_seq* Get_ui_key_game_properties(void);
+input_seq* Get_ui_key_help_contents(void);
+input_seq* Get_ui_key_update_gamelist(void);
+input_seq* Get_ui_key_view_folders(void);
+input_seq* Get_ui_key_view_fullscreen(void);
+input_seq* Get_ui_key_view_pagetab(void);
+input_seq* Get_ui_key_view_picture_area(void);
+input_seq* Get_ui_key_view_status(void);
+input_seq* Get_ui_key_view_toolbars(void);
 
-input_seq_t* Get_ui_key_view_tab_cabinet(void);
-input_seq_t* Get_ui_key_view_tab_cpanel(void);
-input_seq_t* Get_ui_key_view_tab_flyer(void);
-input_seq_t* Get_ui_key_view_tab_history(void);
-input_seq_t* Get_ui_key_view_tab_marquee(void);
-input_seq_t* Get_ui_key_view_tab_screenshot(void);
-input_seq_t* Get_ui_key_view_tab_title(void);
-input_seq_t* Get_ui_key_quit(void);
+input_seq* Get_ui_key_view_tab_cabinet(void);
+input_seq* Get_ui_key_view_tab_cpanel(void);
+input_seq* Get_ui_key_view_tab_flyer(void);
+input_seq* Get_ui_key_view_tab_history(void);
+input_seq* Get_ui_key_view_tab_marquee(void);
+input_seq* Get_ui_key_view_tab_screenshot(void);
+input_seq* Get_ui_key_view_tab_title(void);
+input_seq* Get_ui_key_quit(void);
 
 
 int GetUIJoyUp(int joycodeIndex);

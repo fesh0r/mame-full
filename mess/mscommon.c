@@ -19,7 +19,7 @@ typedef short termchar_t;
 
 struct terminal
 {
-	struct tilemap *tm;
+	tilemap *tm;
 	int gfx;
 	int blank_char;
 	int char_bits;
@@ -85,7 +85,7 @@ struct terminal *terminal_create(
 	return term;
 }
 
-void terminal_draw(struct mame_bitmap *dest, const struct rectangle *cliprect, struct terminal *terminal)
+void terminal_draw(mame_bitmap *dest, const rectangle *cliprect, struct terminal *terminal)
 {
 	current_terminal = terminal;
 	tilemap_draw(dest, cliprect, terminal->tm, 0, 0);
@@ -178,7 +178,7 @@ void terminal_clear(struct terminal *terminal)
 
 ***************************************************************************/
 
-void draw_led(struct mame_bitmap *bitmap, const char *led, int valueorcolor, int x, int y)
+void draw_led(mame_bitmap *bitmap, const char *led, int valueorcolor, int x, int y)
 {
 	char c;
 	int i, xi, yi, mask, color;

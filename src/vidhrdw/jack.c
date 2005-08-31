@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( jack_videoram_w )
 {
@@ -70,7 +70,7 @@ VIDEO_START( jack )
 	return 0;
 }
 
-static void jack_draw_sprites( struct mame_bitmap *bitmap )
+static void jack_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -155,7 +155,7 @@ VIDEO_START( joinem )
 	return 0;
 }
 
-static void joinem_draw_sprites( struct mame_bitmap *bitmap )
+static void joinem_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

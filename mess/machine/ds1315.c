@@ -69,7 +69,7 @@ void ds1315_init( void )
 	
  READ8_HANDLER ( ds1315_r_data )
 {
-	data8_t	result;
+	UINT8	result;
 	
 	if( ds1315_mode == ds_calendar_io )
 	{

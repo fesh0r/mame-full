@@ -126,7 +126,7 @@ static void pit_irq_2(int which)
 
 static  READ8_HANDLER ( pio_port_a_r )
 {
-	data8_t data = pio_port_a_output;
+	UINT8 data = pio_port_a_output;
 	LOG(2,"mz700_pio_port_a_r",("%02X\n", data));
 	return data;
 }
@@ -134,7 +134,7 @@ static  READ8_HANDLER ( pio_port_a_r )
 /* read keyboard row - indexed by a demux LS145 which is connected to PA0-3 */
 static  READ8_HANDLER ( pio_port_b_r )
 {
-	data8_t demux_LS145, data = 0xff;
+	UINT8 demux_LS145, data = 0xff;
 
     demux_LS145 = pio_port_a_output & 15;
     data = readinputport(1 + demux_LS145);
@@ -145,7 +145,7 @@ static  READ8_HANDLER ( pio_port_b_r )
 
 static READ8_HANDLER (pio_port_c_r )
 {
-    data8_t data = pio_port_c_output & 0x0f;
+    UINT8 data = pio_port_c_output & 0x0f;
 
     /*
      * bit 7 in     vertical blank
@@ -216,7 +216,7 @@ static WRITE8_HANDLER ( pio_port_c_w )
 
  READ8_HANDLER ( mz700_mmio_r )
 {
-	data8_t data = 0x7e;
+	UINT8 data = 0x7e;
 
 	switch (offset & 15)
 	{
@@ -504,7 +504,7 @@ static UINT8 mz800_palette_bank;
 /* port CE */
  READ8_HANDLER( mz800_crtc_r )
 {
-	data8_t data = 0x00;
+	UINT8 data = 0x00;
 	LOG(1,"mz800_crtc_r",("%02X\n",data));
     return data;
 }
@@ -512,7 +512,7 @@ static UINT8 mz800_palette_bank;
 /* port D0 - D7 / memory E000 - FFFF */
  READ8_HANDLER( mz800_mmio_r )
 {
-	data8_t data = 0x7e;
+	UINT8 data = 0x7e;
 
 	switch (offset & 15)
 	{
@@ -536,7 +536,7 @@ static UINT8 mz800_palette_bank;
  READ8_HANDLER( mz800_bank_r )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-    data8_t data = 0xff;
+    UINT8 data = 0xff;
 
     switch (offset)
     {
@@ -598,7 +598,7 @@ static UINT8 mz800_palette_bank;
  READ8_HANDLER( mz800_ramdisk_r )
 {
 	UINT8 *mem = memory_region(REGION_USER1);
-	data8_t data = mem[mz800_ramaddr];
+	UINT8 data = mem[mz800_ramaddr];
 	LOG(2,"mz800_ramdisk_r",("[%04X] -> %02X\n", mz800_ramaddr, data));
 	if (mz800_ramaddr++ == 0)
 		LOG(1,"mz800_ramdisk_r",("address wrap 0000\n"));

@@ -1175,7 +1175,7 @@ static int save_this_port_type(int type)
  *
  *************************************/
 
-INLINE input_code_t get_default_code(int config_type, int type)
+INLINE input_code get_default_code(int config_type, int type)
 {
 	switch (type)
 	{
@@ -1205,7 +1205,7 @@ INLINE int string_to_seq_index(const char *string)
 }
 
 
-static void apply_remaps(input_code_t *remaptable)
+static void apply_remaps(input_code *remaptable)
 {
 	int remapnum, portnum, seqnum;
 
@@ -1231,7 +1231,7 @@ static void apply_remaps(input_code_t *remaptable)
 
 
 
-static int apply_config_to_default(xml_data_node *portnode, int type, int player, input_seq_t *newseq)
+static int apply_config_to_default(xml_data_node *portnode, int type, int player, input_seq *newseq)
 {
 	int portnum;
 
@@ -1255,7 +1255,7 @@ static int apply_config_to_default(xml_data_node *portnode, int type, int player
 }
 
 
-static int apply_config_to_current(xml_data_node *portnode, int type, int player, input_seq_t *newseq)
+static int apply_config_to_current(xml_data_node *portnode, int type, int player, input_seq *newseq)
 {
 	input_port_entry *updateport;
 	int mask, defvalue, index;
@@ -1314,7 +1314,7 @@ void inptport_load(int config_type, xml_data_node *parentnode)
 	if (config_type == CONFIG_TYPE_CONTROLLER)
 	{
 		xml_data_node *remapnode;
-		input_code_t remap[__code_max];
+		input_code remap[__code_max];
 		int remapnum;
 
 		/* reset the remap table to default */
@@ -1324,8 +1324,8 @@ void inptport_load(int config_type, xml_data_node *parentnode)
 		/* build up the remap table */
 		for (remapnode = xml_get_sibling(parentnode->child, "remap"); remapnode; remapnode = xml_get_sibling(remapnode->next, "remap"))
 		{
-			input_code_t origcode = token_to_code(xml_get_attribute_string(remapnode, "origcode", ""));
-			input_code_t newcode = token_to_code(xml_get_attribute_string(remapnode, "newcode", ""));
+			input_code origcode = token_to_code(xml_get_attribute_string(remapnode, "origcode", ""));
+			input_code newcode = token_to_code(xml_get_attribute_string(remapnode, "newcode", ""));
 			if (origcode != CODE_NONE && origcode < __code_max && newcode != CODE_NONE)
 				remap[origcode] = newcode;
 		}
@@ -1337,7 +1337,7 @@ void inptport_load(int config_type, xml_data_node *parentnode)
 	/* iterate over all the port nodes */
 	for (portnode = xml_get_sibling(parentnode->child, "port"); portnode; portnode = xml_get_sibling(portnode->next, "port"))
 	{
-		input_seq_t newseq[3], tempseq;
+		input_seq newseq[3], tempseq;
 		xml_data_node *seqnode;
 		int type, player;
 
@@ -1379,7 +1379,7 @@ void inptport_load(int config_type, xml_data_node *parentnode)
  *
  *************************************/
 
-static void add_sequence(xml_data_node *parentnode, int type, int porttype, const input_seq_t *seq)
+static void add_sequence(xml_data_node *parentnode, int type, int porttype, const input_seq *seq)
 {
 	xml_data_node *seqnode;
 	char seqbuffer[256];
@@ -1518,7 +1518,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 {
 	/* this function is used within an INPUT_PORT callback to set up a single port */
 	input_port_entry *port;
-	input_code_t code;
+	input_code code;
 
 	/* are we modifying an existing port? */
 	if (tag != NULL)
@@ -1775,10 +1775,10 @@ const char *input_port_name(const input_port_entry *port)
 }
 
 
-input_seq_t *input_port_seq(input_port_entry *port, int seqtype)
+input_seq *input_port_seq(input_port_entry *port, int seqtype)
 {
-	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
-	input_seq_t *portseq;
+	static input_seq ip_none = SEQ_DEF_1(CODE_NONE);
+	input_seq *portseq;
 
 	/* if port is disabled, return no key */
 	if (port->unused)
@@ -1816,9 +1816,9 @@ input_seq_t *input_port_seq(input_port_entry *port, int seqtype)
 }
 
 
-input_seq_t *input_port_default_seq(int type, int player, int seqtype)
+input_seq *input_port_default_seq(int type, int player, int seqtype)
 {
-	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
+	static input_seq ip_none = SEQ_DEF_1(CODE_NONE);
 
 	/* find the default setting */
 	int defindex = default_ports_lookup[type][player];

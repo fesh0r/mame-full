@@ -196,12 +196,12 @@ int pic8259_acknowledge(int which)
 
 
 
-static data8_t pic8259_read(int which, offs_t offset)
+static UINT8 pic8259_read(int which, offs_t offset)
 {
 	struct pic8259 *p = &pic[which];
 
 	/* NPW 18-May-2003 - Changing 0xFF to 0x00 as per Ruslan */
-	data8_t data = 0x00;
+	UINT8 data = 0x00;
 
 	switch(offset)
 	{
@@ -222,7 +222,7 @@ static data8_t pic8259_read(int which, offs_t offset)
 
 
 
-static void pic8259_write(int which, offs_t offset, data8_t data )
+static void pic8259_write(int which, offs_t offset, UINT8 data )
 {
 	struct pic8259 *p = &pic[which];
 

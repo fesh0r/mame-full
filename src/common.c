@@ -11,6 +11,7 @@
 #include "harddisk.h"
 #include "artwork.h"
 #include "config.h"
+#include "state.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -40,11 +41,12 @@
 
 ***************************************************************************/
 
-struct malloc_info
+struct _malloc_info
 {
 	int tag;
 	void *ptr;
 };
+typedef struct _malloc_info malloc_info;
 
 
 
@@ -61,7 +63,7 @@ unsigned int coinlockedout[COIN_COUNTERS];
 static unsigned int lastcoin[COIN_COUNTERS];
 
 /* malloc tracking */
-static struct malloc_info malloc_list[MAX_MALLOCS];
+static malloc_info malloc_list[MAX_MALLOCS];
 static int malloc_list_index = 0;
 
 /* resource tracking */
@@ -69,9 +71,9 @@ int resource_tracking_tag = 0;
 
 /* generic NVRAM */
 size_t generic_nvram_size;
-data8_t *generic_nvram;
-data16_t *generic_nvram16;
-data32_t *generic_nvram32;
+UINT8 *generic_nvram;
+UINT16 *generic_nvram16;
+UINT32 *generic_nvram32;
 
 /* disks */
 static chd_file *disk_handle[4];
@@ -409,9 +411,9 @@ void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
     bitmap_alloc_core
 -------------------------------------------------*/
 
-struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
+mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 {
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 
 	/* obsolete kludge: pass in negative depth to prevent orientation swapping */
 	if (depth < 0)
@@ -425,7 +427,7 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
 	}
 
 	/* allocate memory for the bitmap struct */
-	bitmap = use_auto ? auto_malloc(sizeof(struct mame_bitmap)) : malloc(sizeof(struct mame_bitmap));
+	bitmap = use_auto ? auto_malloc(sizeof(mame_bitmap)) : malloc(sizeof(mame_bitmap));
 	if (bitmap != NULL)
 	{
 		int i, rowlen, rdwidth, bitmapsize, linearraysize, pixelsize;
@@ -493,7 +495,7 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
     current screen depth
 -------------------------------------------------*/
 
-struct mame_bitmap *bitmap_alloc(int width,int height)
+mame_bitmap *bitmap_alloc(int width,int height)
 {
 	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,0);
 }
@@ -504,7 +506,7 @@ struct mame_bitmap *bitmap_alloc(int width,int height)
     specific depth
 -------------------------------------------------*/
 
-struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 {
 	return bitmap_alloc_core(width,height,depth,0);
 }
@@ -514,7 +516,7 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
     bitmap_free - free a bitmap
 -------------------------------------------------*/
 
-void bitmap_free(struct mame_bitmap *bitmap)
+void bitmap_free(mame_bitmap *bitmap)
 {
 	/* skip if NULL */
 	if (!bitmap)
@@ -543,7 +545,7 @@ void bitmap_free(struct mame_bitmap *bitmap)
 void *auto_malloc(size_t size)
 {
 	void *result = malloc(size);
-	struct malloc_info *info;
+	malloc_info *info;
 
 	/* fail horribly if it doesn't work */
 	if (!result)
@@ -593,7 +595,7 @@ void auto_free(void)
 	/* start at the end and free everything on the current tag */
 	while (malloc_list_index > 0 && malloc_list[malloc_list_index - 1].tag >= tag)
 	{
-		struct malloc_info *info = &malloc_list[--malloc_list_index];
+		malloc_info *info = &malloc_list[--malloc_list_index];
 		free(info->ptr);
 	}
 }
@@ -604,7 +606,7 @@ void auto_free(void)
     current screen depth
 -------------------------------------------------*/
 
-struct mame_bitmap *auto_bitmap_alloc(int width,int height)
+mame_bitmap *auto_bitmap_alloc(int width,int height)
 {
 	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,1);
 }
@@ -615,7 +617,7 @@ struct mame_bitmap *auto_bitmap_alloc(int width,int height)
     specific depth
 -------------------------------------------------*/
 
-struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
+mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
 {
 	return bitmap_alloc_core(width,height,depth,1);
 }
@@ -643,6 +645,7 @@ void end_resource_tracking(void)
 	/* call everyone who tracks resources to let them know */
 	auto_free();
 	timer_free();
+	state_save_free();
 
 	/* decrement the tag counter */
 	resource_tracking_tag--;
@@ -661,10 +664,10 @@ void end_resource_tracking(void)
     given handler for screenshots and movies
 -------------------------------------------------*/
 
-static void save_frame_with(mame_file *fp, struct mame_bitmap *bitmap, int (*write_handler)(mame_file *, struct mame_bitmap *))
+static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_handler)(mame_file *, mame_bitmap *))
 {
-	struct rectangle bounds;
-	struct mame_bitmap *osdcopy;
+	rectangle bounds;
+	mame_bitmap *osdcopy;
 	UINT32 saved_rgb_components[3];
 
 	/* allow the artwork system to override certain parameters */
@@ -694,7 +697,7 @@ static void save_frame_with(mame_file *fp, struct mame_bitmap *bitmap, int (*wri
 	}
 	else
 	{
-		struct mame_bitmap *copy;
+		mame_bitmap *copy;
 		int sizex, sizey, scalex, scaley;
 
 		sizex = bounds.max_x - bounds.min_x + 1;
@@ -771,7 +774,7 @@ static void save_frame_with(mame_file *fp, struct mame_bitmap *bitmap, int (*wri
     the given file handle
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
+void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap)
 {
 	save_frame_with(fp, bitmap, png_write_bitmap);
 }
@@ -808,7 +811,7 @@ static mame_file *mame_fopen_next(int filetype)
     save_screen_snapshot - save a snapshot.
 -------------------------------------------------*/
 
-void save_screen_snapshot(struct mame_bitmap *bitmap)
+void save_screen_snapshot(mame_bitmap *bitmap)
 {
 	mame_file *fp;
 
@@ -850,7 +853,7 @@ void record_movie_stop(void)
 }
 
 
-void record_movie_frame(struct mame_bitmap *bitmap)
+void record_movie_frame(mame_bitmap *bitmap)
 {
 	if (movie_file != NULL && bitmap != NULL)
 	{

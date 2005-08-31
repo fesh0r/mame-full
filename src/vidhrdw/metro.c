@@ -57,22 +57,22 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data16_t *metro_videoregs;
-data16_t *metro_screenctrl;
-data16_t *metro_scroll;
-data16_t *metro_tiletable;
+UINT16 *metro_videoregs;
+UINT16 *metro_screenctrl;
+UINT16 *metro_scroll;
+UINT16 *metro_tiletable;
 size_t metro_tiletable_size;
-data16_t *metro_vram_0,*metro_vram_1,*metro_vram_2;
-data16_t *metro_window;
+UINT16 *metro_vram_0,*metro_vram_1,*metro_vram_2;
+UINT16 *metro_window;
 
 static int support_8bpp,support_16x16;
 static int has_zoom;
 
 
-data16_t *metro_K053936_ram;
-static struct tilemap *metro_K053936_tilemap;
+UINT16 *metro_K053936_ram;
+static tilemap *metro_K053936_tilemap;
 
-static data16_t *metro_tiletable_old;
+static UINT16 *metro_tiletable_old;
 
 
 static void metro_K053936_get_tile_info(int tile_index)
@@ -99,7 +99,7 @@ static void metro_K053936_gstrik2_get_tile_info(int tile_index)
 
 WRITE16_HANDLER( metro_K053936_w )
 {
-	data16_t oldword = metro_K053936_ram[offset];
+	UINT16 oldword = metro_K053936_ram[offset];
 	COMBINE_DATA(&metro_K053936_ram[offset]);
 	if (oldword != metro_K053936_ram[offset])
 		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
@@ -171,8 +171,8 @@ WRITE16_HANDLER( metro_paletteram_w )
 
 ***************************************************************************/
 
-static struct tilemap *tilemap[3];
-static struct tilemap *tilemap_16x16[3];
+static tilemap *bg_tilemap[3];
+static tilemap *tilemap_16x16[3];
 static UINT8 *empty_tiles;
 
 /* A 2048 x 2048 virtual tilemap */
@@ -189,9 +189,9 @@ static UINT8 *empty_tiles;
 
 
 /* 8x8x4 tiles only */
-INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -227,9 +227,9 @@ INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
 
 /* 8x8x4 or 8x8x8 tiles. It's the tile's color that decides: if its low 4
    bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
-INLINE void get_tile_info_8bit(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info_8bit(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -270,9 +270,9 @@ INLINE void get_tile_info_8bit(int tile_index,int layer,data16_t *vram)
 
 /* 16x16x4 or 16x16x8 tiles. It's the tile's color that decides: if its low 4
    bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
-INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -312,10 +312,10 @@ INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,data16_t *vram)
 }
 
 
-INLINE void metro_vram_w(offs_t offset,data16_t data,data16_t mem_mask,int layer,data16_t *vram)
+INLINE void metro_vram_w(offs_t offset,UINT16 data,UINT16 mem_mask,int layer,UINT16 *vram)
 {
-	data16_t olddata = vram[offset];
-	data16_t newdata = COMBINE_DATA(&vram[offset]);
+	UINT16 olddata = vram[offset];
+	UINT16 newdata = COMBINE_DATA(&vram[offset]);
 	if ( newdata != olddata )
 	{
 		/* Account for the window */
@@ -326,7 +326,7 @@ INLINE void metro_vram_w(offs_t offset,data16_t data,data16_t mem_mask,int layer
 		if	( (col >= 0) && (col < WIN_NX) &&
 			  (row >= 0) && (row < WIN_NY) )
 		{
-			tilemap_mark_tile_dirty(tilemap[layer], row * WIN_NX + col );
+			tilemap_mark_tile_dirty(bg_tilemap[layer], row * WIN_NX + col );
 			if (tilemap_16x16[layer])
 				tilemap_mark_tile_dirty(tilemap_16x16[layer], row * WIN_NX + col );
 		}
@@ -356,12 +356,12 @@ WRITE16_HANDLER( metro_vram_2_w ) { metro_vram_w(offset,data,mem_mask,2,metro_vr
 /* Dirty the relevant tilemap when its window changes */
 WRITE16_HANDLER( metro_window_w )
 {
-	data16_t olddata = metro_window[offset];
-	data16_t newdata = COMBINE_DATA( &metro_window[offset] );
+	UINT16 olddata = metro_window[offset];
+	UINT16 newdata = COMBINE_DATA( &metro_window[offset] );
 	if ( newdata != olddata )
 	{
 		offset /= 2;
-		tilemap_mark_all_tiles_dirty(tilemap[offset]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[offset]);
 		if (tilemap_16x16[offset]) tilemap_mark_all_tiles_dirty(tilemap_16x16[offset]);
 	}
 }
@@ -408,20 +408,20 @@ VIDEO_START( metro_14100 )
 	alloc_empty_tiles();
 	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
-	tilemap[0] = tilemap_create(get_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[1] = tilemap_create(get_tile_info_1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[2] = tilemap_create(get_tile_info_2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[0] = tilemap_create(get_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[1] = tilemap_create(get_tile_info_1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[2] = tilemap_create(get_tile_info_2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
 	tilemap_16x16[0] = NULL;
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !metro_tiletable_old)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
-	tilemap_set_transparent_pen(tilemap[2],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[2],0);
 
 	return 0;
 }
@@ -435,24 +435,24 @@ VIDEO_START( metro_14220 )
 	alloc_empty_tiles();
 	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
-	tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
 	tilemap_16x16[0] = NULL;
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !metro_tiletable_old)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
-	tilemap_set_transparent_pen(tilemap[2],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[2],0);
 
-	tilemap_set_scrolldx(tilemap[0], -2, 2);
-	tilemap_set_scrolldx(tilemap[1], -2, 2);
-	tilemap_set_scrolldx(tilemap[2], -2, 2);
+	tilemap_set_scrolldx(bg_tilemap[0], -2, 2);
+	tilemap_set_scrolldx(bg_tilemap[1], -2, 2);
+	tilemap_set_scrolldx(bg_tilemap[2], -2, 2);
 
 	return 0;
 }
@@ -466,22 +466,22 @@ VIDEO_START( metro_14300 )
 	alloc_empty_tiles();
 	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
-	tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
 	tilemap_16x16[0] = tilemap_create(get_tile_info_0_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
 	tilemap_16x16[1] = tilemap_create(get_tile_info_1_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
 	tilemap_16x16[2] = tilemap_create(get_tile_info_2_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2]
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2]
 			|| !tilemap_16x16[0] || !tilemap_16x16[1] || !tilemap_16x16[2]
 			|| !empty_tiles || !metro_tiletable_old)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
-	tilemap_set_transparent_pen(tilemap[2],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[2],0);
 	tilemap_set_transparent_pen(tilemap_16x16[0],0);
 	tilemap_set_transparent_pen(tilemap_16x16[1],0);
 	tilemap_set_transparent_pen(tilemap_16x16[2],0);
@@ -505,9 +505,9 @@ VIDEO_START( blzntrnd )
 	K053936_wraparound_enable(0, 0);
 	K053936_set_offset(0, -69, -21);
 
-	tilemap_set_scrolldx(tilemap[0], 8, -8);
-	tilemap_set_scrolldx(tilemap[1], 8, -8);
-	tilemap_set_scrolldx(tilemap[2], 8, -8);
+	tilemap_set_scrolldx(bg_tilemap[0], 8, -8);
+	tilemap_set_scrolldx(bg_tilemap[1], 8, -8);
+	tilemap_set_scrolldx(bg_tilemap[2], 8, -8);
 
 	return 0;
 }
@@ -528,9 +528,9 @@ VIDEO_START( gstrik2 )
 	K053936_wraparound_enable(0, 0);
 	K053936_set_offset(0, -69, -19);
 
-	tilemap_set_scrolldx(tilemap[0], 8, -8);
-	tilemap_set_scrolldx(tilemap[1], 0, 0);
-	tilemap_set_scrolldx(tilemap[2], 8, -8);
+	tilemap_set_scrolldx(bg_tilemap[0], 8, -8);
+	tilemap_set_scrolldx(bg_tilemap[1], 0, 0);
+	tilemap_set_scrolldx(bg_tilemap[2], 8, -8);
 
 	return 0;
 }
@@ -597,7 +597,7 @@ VIDEO_START( gstrik2 )
 
 /* Draw sprites */
 
-void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void metro_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	const int region		=	REGION_GFX1;
 
@@ -615,7 +615,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 	int i, j, pri;
 	int primask[4] = { 0x0000, 0xff00, 0xff00|0xf0f0, 0xff00|0xf0f0|0xcccc };
 
-	data16_t *src;
+	UINT16 *src;
 	int inc;
 
 	if (sprites == 0)
@@ -769,7 +769,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 ***************************************************************************/
 
-void metro_tilemap_draw	(struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct tilemap *tmap, UINT32 flags, UINT32 priority,
+void metro_tilemap_draw	(mame_bitmap *bitmap, const rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority,
 						 int sx, int sy, int wx, int wy)	// scroll & window values
 {
 #if 1
@@ -795,7 +795,7 @@ void metro_tilemap_draw	(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 	for ( i = 0; i < 4 ; i++ )
 	{
-		struct rectangle clip;
+		rectangle clip;
 
 		tilemap_set_scrollx(tmap, 0, sx + ((i & 1) ? -x : 0));
 		tilemap_set_scrolly(tmap, 0, sy + ((i & 2) ? -y : 0));
@@ -829,9 +829,9 @@ void metro_tilemap_draw	(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 
 /* Draw all the layers that match the given priority */
-static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int layers_ctrl)
+static void draw_layers(mame_bitmap *bitmap, const rectangle *cliprect, int pri, int layers_ctrl)
 {
-	data16_t layers_pri = metro_videoregs[0x10/2];
+	UINT16 layers_pri = metro_videoregs[0x10/2];
 	int layer;
 
 	/* Draw all the layers with priority == pri */
@@ -840,13 +840,13 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 		if ( pri == ((layers_pri >> (layer*2)) & 3) )
 		{
 			/* Scroll and Window values */
-			data16_t sy = metro_scroll[layer * 2 + 0];	data16_t sx = metro_scroll[layer * 2 + 1];
-			data16_t wy = metro_window[layer * 2 + 0];	data16_t wx = metro_window[layer * 2 + 1];
+			UINT16 sy = metro_scroll[layer * 2 + 0];	UINT16 sx = metro_scroll[layer * 2 + 1];
+			UINT16 wy = metro_window[layer * 2 + 0];	UINT16 wx = metro_window[layer * 2 + 1];
 
 			if (layers_ctrl & (1<<layer))	// for debug
 			{
 				/* Only *one* of tilemap_16x16 & tilemap is enabled at any given time! */
-				metro_tilemap_draw(bitmap,cliprect,tilemap[layer], 0, 1<<(3-pri), sx, sy, wx, wy);
+				metro_tilemap_draw(bitmap,cliprect,bg_tilemap[layer], 0, 1<<(3-pri), sx, sy, wx, wy);
 				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,cliprect,tilemap_16x16[layer], 0, 1<<(3-pri), sx, sy, wx, wy);
 			}
 		}
@@ -856,7 +856,7 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 
 /* Dirty tilemaps when the tiles set changes */
-static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
+static void dirty_tiles(int layer,UINT16 *vram,UINT8 *dirtyindex)
 {
 	int col,row;
 
@@ -866,11 +866,11 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 		{
 			int offset = (col + metro_window[layer * 2 + 1] / 8) % BIG_NX +
 						((row + metro_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX;
-			data16_t code = vram[offset];
+			UINT16 code = vram[offset];
 
 			if (!(code & 0x8000) && dirtyindex[(code & 0x1ff0) >> 4])
 			{
-				tilemap_mark_tile_dirty(tilemap[layer], row * WIN_NX + col );
+				tilemap_mark_tile_dirty(bg_tilemap[layer], row * WIN_NX + col );
 				if (tilemap_16x16[layer])
 					tilemap_mark_tile_dirty(tilemap_16x16[layer], row * WIN_NX + col );
 			}
@@ -882,8 +882,8 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 VIDEO_UPDATE( metro )
 {
 	int i,pri,layers_ctrl = -1;
-	data8_t *dirtyindex;
-	data16_t screenctrl = *metro_screenctrl;
+	UINT8 *dirtyindex;
+	UINT16 screenctrl = *metro_screenctrl;
 
 	dirtyindex = malloc(metro_tiletable_size/4);
 	if (dirtyindex)
@@ -945,7 +945,7 @@ VIDEO_UPDATE( metro )
 		{
 			int big = screenctrl & (0x0020 << layer);
 
-			tilemap_set_enable(tilemap[layer],!big);
+			tilemap_set_enable(bg_tilemap[layer],!big);
 			tilemap_set_enable(tilemap_16x16[layer],big);
 		}
 	}

@@ -78,7 +78,7 @@ ROMS: All ROM labels say only "PROM" and a number.
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-struct tilemap *pturn_tilemap,*pturn_bgmap;
+tilemap *pturn_tilemap,*pturn_bgmap;
 static void get_pturn_tile_info(int tile_index)
 {
 	int tileno,palno;

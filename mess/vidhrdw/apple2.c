@@ -13,9 +13,9 @@
 static const UINT8 *a2_videoram;
 static UINT32 a2_videomask;
 static UINT32 old_a2;
-static struct tilemap *text_tilemap;
-static struct tilemap *dbltext_tilemap;
-static struct tilemap *lores_tilemap;
+static tilemap *text_tilemap;
+static tilemap *dbltext_tilemap;
+static tilemap *lores_tilemap;
 static int text_videobase;
 static int dbltext_videobase;
 static int lores_videobase;
@@ -57,10 +57,10 @@ INLINE UINT32 effective_a2(void)
 
 
 
-static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-	int beginrow, int endrow, struct tilemap *tm, int raw_videobase, int *tm_videobase)
+static void apple2_draw_tilemap(mame_bitmap *bitmap, const rectangle *cliprect,
+	int beginrow, int endrow, tilemap *tm, int raw_videobase, int *tm_videobase)
 {
-	struct rectangle new_cliprect;
+	rectangle new_cliprect;
 
 	new_cliprect = *cliprect;
 
@@ -131,7 +131,7 @@ static UINT32 apple2_dbltext_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_
 	return apple2_text_getmemoryoffset(col / 2, row, num_cols / 2, num_rows) + ((col % 2) ? 0x00000 : 0x10000);
 }
 
-static void apple2_text_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
+static void apple2_text_draw(mame_bitmap *bitmap, const rectangle *cliprect, int page, int beginrow, int endrow)
 {
 	if (effective_a2() & VAR_80COL)
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, page ? 0x800 : 0x400, &dbltext_videobase);
@@ -189,7 +189,7 @@ static void apple2_lores_gettileinfo(int memory_offset)
 	pal_data[1] = (ch >> 4) & 0x0f;
 }
 
-static void apple2_lores_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
+static void apple2_lores_draw(mame_bitmap *bitmap, const rectangle *cliprect, int page, int beginrow, int endrow)
 {
 	apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, lores_tilemap, page ? 0x800 : 0x400, &lores_videobase);
 }
@@ -206,7 +206,7 @@ static UINT32 apple2_hires_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_co
 
 struct drawtask_params
 {
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	const UINT8 *vram;
 	int beginrow;
 	int rowcount;
@@ -216,7 +216,7 @@ struct drawtask_params
 static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 {
 	struct drawtask_params *dtparams;
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	const UINT8 *vram;
 	int beginrow;
 	int endrow;
@@ -295,7 +295,7 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 	}
 }
 
-static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
+static void apple2_hires_draw(mame_bitmap *bitmap, const rectangle *cliprect, int page, int beginrow, int endrow)
 {
 	struct drawtask_params dtparams;
 

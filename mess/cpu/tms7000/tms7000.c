@@ -608,7 +608,7 @@ static void tms7000_service_timer1( void )
 
 WRITE8_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 {
-	data8_t	temp1, temp2, temp3;
+	UINT8	temp1, temp2, temp3;
 	
 	switch( offset )
 	{
@@ -676,8 +676,8 @@ WRITE8_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 
  READ8_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 {
-	data8_t result;
-	data8_t	temp1, temp2, temp3;
+	UINT8 result;
+	UINT8	temp1, temp2, temp3;
 	
 	switch( offset )
 	{

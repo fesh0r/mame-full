@@ -283,9 +283,9 @@ void identify_file(const char* name)
 
 void identify_zip(const char* zipname)
 {
-	struct zipent* ent;
+	zip_entry* ent;
 
-	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
+	zip_file* zip = openzip( FILETYPE_RAW, 0, zipname );
 	if (!zip)
 		return;
 

@@ -88,12 +88,12 @@ Input port 2, mapped to memory address $9002:
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
+static tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
 
-static struct rectangle bg_tilemap_l_clip;
-static struct rectangle bg_tilemap_r_clip;
+static rectangle bg_tilemap_l_clip;
+static rectangle bg_tilemap_r_clip;
 
-static struct mame_bitmap *headlight_bitmap, *flip_bitmap;
+static mame_bitmap *headlight_bitmap, *flip_bitmap;
 
 static UINT8 *madalien_videoram;
 static UINT8 *madalien_charram;
@@ -297,7 +297,7 @@ VIDEO_START( madalien )
 
 VIDEO_UPDATE( madalien )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int i, yh, x, y, xp, yp, color;
 
 	for (i=0; i<256; i++)

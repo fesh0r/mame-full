@@ -11,7 +11,7 @@ int mess_ui_active(void)
 	return ui_active;
 }
 
-int handle_mess_user_interface(struct mame_bitmap *bitmap)
+int handle_mess_user_interface(mame_bitmap *bitmap)
 {
 	static int ui_toggle_key = 0;
 	static int ui_display_count = 30;

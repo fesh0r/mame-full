@@ -13,7 +13,7 @@
 unsigned char *gng_fgvideoram;
 unsigned char *gng_bgvideoram;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 
@@ -115,7 +115,7 @@ WRITE8_HANDLER( gng_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[2];
 	int offs;

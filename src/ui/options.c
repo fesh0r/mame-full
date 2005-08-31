@@ -1999,134 +1999,134 @@ void GetTextPlayTime(int driver_index,char *buf)
 }
 
 
-input_seq_t* Get_ui_key_up(void)
+input_seq* Get_ui_key_up(void)
 {
 	return &settings.ui_key_up.is;
 }
-input_seq_t* Get_ui_key_down(void)
+input_seq* Get_ui_key_down(void)
 {
 	return &settings.ui_key_down.is;
 }
-input_seq_t* Get_ui_key_left(void)
+input_seq* Get_ui_key_left(void)
 {
 	return &settings.ui_key_left.is;
 }
-input_seq_t* Get_ui_key_right(void)
+input_seq* Get_ui_key_right(void)
 {
 	return &settings.ui_key_right.is;
 }
-input_seq_t* Get_ui_key_start(void)
+input_seq* Get_ui_key_start(void)
 {
 	return &settings.ui_key_start.is;
 }
-input_seq_t* Get_ui_key_pgup(void)
+input_seq* Get_ui_key_pgup(void)
 {
 	return &settings.ui_key_pgup.is;
 }
-input_seq_t* Get_ui_key_pgdwn(void)
+input_seq* Get_ui_key_pgdwn(void)
 {
 	return &settings.ui_key_pgdwn.is;
 }
-input_seq_t* Get_ui_key_home(void)
+input_seq* Get_ui_key_home(void)
 {
 	return &settings.ui_key_home.is;
 }
-input_seq_t* Get_ui_key_end(void)
+input_seq* Get_ui_key_end(void)
 {
 	return &settings.ui_key_end.is;
 }
-input_seq_t* Get_ui_key_ss_change(void)
+input_seq* Get_ui_key_ss_change(void)
 {
 	return &settings.ui_key_ss_change.is;
 }
-input_seq_t* Get_ui_key_history_up(void)
+input_seq* Get_ui_key_history_up(void)
 {
 	return &settings.ui_key_history_up.is;
 }
-input_seq_t* Get_ui_key_history_down(void)
+input_seq* Get_ui_key_history_down(void)
 {
 	return &settings.ui_key_history_down.is;
 }
 
 
-input_seq_t* Get_ui_key_context_filters(void)
+input_seq* Get_ui_key_context_filters(void)
 {
 	return &settings.ui_key_context_filters.is;
 }
-input_seq_t* Get_ui_key_select_random(void)
+input_seq* Get_ui_key_select_random(void)
 {
 	return &settings.ui_key_select_random.is;
 }
-input_seq_t* Get_ui_key_game_audit(void)
+input_seq* Get_ui_key_game_audit(void)
 {
 	return &settings.ui_key_game_audit.is;
 }
-input_seq_t* Get_ui_key_game_properties(void)
+input_seq* Get_ui_key_game_properties(void)
 {
 	return &settings.ui_key_game_properties.is;
 }
-input_seq_t* Get_ui_key_help_contents(void)
+input_seq* Get_ui_key_help_contents(void)
 {
 	return &settings.ui_key_help_contents.is;
 }
-input_seq_t* Get_ui_key_update_gamelist(void)
+input_seq* Get_ui_key_update_gamelist(void)
 {
 	return &settings.ui_key_update_gamelist.is;
 }
-input_seq_t* Get_ui_key_view_folders(void)
+input_seq* Get_ui_key_view_folders(void)
 {
 	return &settings.ui_key_view_folders.is;
 }
-input_seq_t* Get_ui_key_view_fullscreen(void)
+input_seq* Get_ui_key_view_fullscreen(void)
 {
 	return &settings.ui_key_view_fullscreen.is;
 }
-input_seq_t* Get_ui_key_view_pagetab(void)
+input_seq* Get_ui_key_view_pagetab(void)
 {
 	return &settings.ui_key_view_pagetab.is;
 }
-input_seq_t* Get_ui_key_view_picture_area(void)
+input_seq* Get_ui_key_view_picture_area(void)
 {
 	return &settings.ui_key_view_picture_area.is;
 }
-input_seq_t* Get_ui_key_view_status(void)
+input_seq* Get_ui_key_view_status(void)
 {
 	return &settings.ui_key_view_status.is;
 }
-input_seq_t* Get_ui_key_view_toolbars(void)
+input_seq* Get_ui_key_view_toolbars(void)
 {
 	return &settings.ui_key_view_toolbars.is;
 }
 
-input_seq_t* Get_ui_key_view_tab_cabinet(void)
+input_seq* Get_ui_key_view_tab_cabinet(void)
 {
 	return &settings.ui_key_view_tab_cabinet.is;
 }
-input_seq_t* Get_ui_key_view_tab_cpanel(void)
+input_seq* Get_ui_key_view_tab_cpanel(void)
 {
 	return &settings.ui_key_view_tab_cpanel.is;
 }
-input_seq_t* Get_ui_key_view_tab_flyer(void)
+input_seq* Get_ui_key_view_tab_flyer(void)
 {
 	return &settings.ui_key_view_tab_flyer.is;
 }
-input_seq_t* Get_ui_key_view_tab_history(void)
+input_seq* Get_ui_key_view_tab_history(void)
 {
 	return &settings.ui_key_view_tab_history.is;
 }
-input_seq_t* Get_ui_key_view_tab_marquee(void)
+input_seq* Get_ui_key_view_tab_marquee(void)
 {
 	return &settings.ui_key_view_tab_marquee.is;
 }
-input_seq_t* Get_ui_key_view_tab_screenshot(void)
+input_seq* Get_ui_key_view_tab_screenshot(void)
 {
 	return &settings.ui_key_view_tab_screenshot.is;
 }
-input_seq_t* Get_ui_key_view_tab_title(void)
+input_seq* Get_ui_key_view_tab_title(void)
 {
 	return &settings.ui_key_view_tab_title.is;
 }
-input_seq_t* Get_ui_key_quit(void)
+input_seq* Get_ui_key_quit(void)
 {
 	return &settings.ui_key_quit.is;
 }
@@ -2466,7 +2466,7 @@ static void KeySeqEncodeString(void *data, char* str)
 static void KeySeqDecodeString(const char *str, void* data)
 {
 	KeySeq *ks = (KeySeq*)data;
-	input_seq_t *is = &(ks->is);
+	input_seq *is = &(ks->is);
 
 	FreeIfAllocated(&ks->seq_string);
 	ks->seq_string = strdup(str);

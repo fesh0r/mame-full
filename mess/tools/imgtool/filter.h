@@ -25,8 +25,8 @@ union filterinfo
 	genf *  f;											/* generic function pointers */
 	const char *s;										/* generic strings */
 
-	imgtoolerr_t (*read_file)(imgtool_image *image, const char *filename, imgtool_stream *destf);
-	imgtoolerr_t (*write_file)(imgtool_image *image, const char *filename, imgtool_stream *sourcef);
+	imgtoolerr_t (*read_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t (*write_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
 };
 
 enum

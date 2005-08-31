@@ -14,7 +14,7 @@ static double time_released;
 static UINT8 prev = 0;
 static UINT8 mask = 0;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static void get_tile_info(int tile_index)
@@ -29,7 +29,7 @@ static WRITE8_HANDLER( mgolf_vram_w )
 {
 	if (mgolf_video_ram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	mgolf_video_ram[offset] = data;
@@ -38,9 +38,9 @@ static WRITE8_HANDLER( mgolf_vram_w )
 
 static VIDEO_START( mgolf )
 {
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	return tilemap == NULL;
+	return bg_tilemap == NULL;
 }
 
 
@@ -50,7 +50,7 @@ static VIDEO_UPDATE( mgolf )
 
 	/* draw playfield */
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw sprites */
 

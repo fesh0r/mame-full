@@ -33,10 +33,10 @@ WRITE8_HANDLER( usg_charram_w );
 VIDEO_START(usg);
 PALETTE_INIT(usg);
 VIDEO_UPDATE(usg);
-extern struct tilemap *usg_tilemap;
+extern tilemap *usg_tilemap;
 
 
-extern data8_t *usg_videoram,*usg_charram;
+extern UINT8 *usg_videoram,*usg_charram;
 
 
 static WRITE8_HANDLER( usg_rombank_w )

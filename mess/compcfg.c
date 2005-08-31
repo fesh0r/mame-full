@@ -127,7 +127,7 @@ const char *ram_string(char *buffer, UINT32 ram)
 
 /* ----------------------------------------------------------------------- */
 
-data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank)
+UINT8 *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank)
 {
 	read8_handler read_bank = (read8_handler) (STATIC_BANK1 + bank - 1);
 	write8_handler write_bank = (write8_handler) (STATIC_BANK1 + bank - 1);

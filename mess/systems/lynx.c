@@ -19,7 +19,7 @@ static int rotate=0;
 int lynx_rotate;
 static int lynx_line_y;
 UINT32 lynx_palette[0x10];
-static struct mame_bitmap *lynx_bitmap;
+static mame_bitmap *lynx_bitmap;
 
 static ADDRESS_MAP_START( lynx_readmem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0xfbff) AM_READ( MRA8_RAM )

@@ -11,7 +11,7 @@
 UINT8 *sbrkout_horiz_ram;
 UINT8 *sbrkout_vert_ram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( sbrkout_videoram_w )
 {
@@ -40,7 +40,7 @@ VIDEO_START( sbrkout )
 	return 0;
 }
 
-static void sbrkout_draw_balls( struct mame_bitmap *bitmap )
+static void sbrkout_draw_balls( mame_bitmap *bitmap )
 {
 	int ball;
 

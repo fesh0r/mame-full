@@ -129,7 +129,7 @@ static void customize_input(const char *title, int cust_type, int player, int in
 {
 	dialog_box *dlg;
 	input_port_entry *in;
-	struct png_info png;
+	png_info png;
 	struct inputform_customization customizations[128];
 	RECT *pr;
 	int this_inputclass, this_player, portslot_count, i;

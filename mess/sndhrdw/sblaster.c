@@ -74,7 +74,8 @@ void soundblaster_config(SOUNDBLASTER_CONFIG *config)
 
 void soundblaster_reset(void)
 {
-	if (blaster.timer) { timer_remove(blaster.timer); blaster.timer=0; }
+	if (blaster.timer)
+		blaster.timer = NULL;
 	blaster.on=0;
 	blaster.mode=OFF;
 	blaster.input_state=0;

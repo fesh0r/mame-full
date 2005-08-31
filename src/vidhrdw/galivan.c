@@ -42,7 +42,7 @@ static unsigned char scrollx[2], scrolly[2];
 
 static int flipscreen, layers;
 
-static struct tilemap *bg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *tx_tilemap;
 
 static const unsigned char *spritepalettebank;
 static int ninjemak_dispdisable;
@@ -365,7 +365,7 @@ WRITE8_HANDLER( ninjemak_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

@@ -38,8 +38,8 @@ static READ32_HANDLER( newport_xmap1_r );
 static WRITE32_HANDLER( newport_xmap1_w );
 static WRITE32_HANDLER( newport_vc2_w );
 
-static data16_t nVC2_Register[0x20];
-static data16_t nVC2_RAM[0x8000];
+static UINT16 nVC2_Register[0x20];
+static UINT16 nVC2_RAM[0x8000];
 
 #define VC2_VIDENTRY		nVC2_Register[0x00]
 #define VC2_CURENTRY		nVC2_Register[0x01]
@@ -60,8 +60,8 @@ static data16_t nVC2_RAM[0x8000];
 #define VC2_DISPLAYCTRL		nVC2_Register[0x10]
 #define VC2_CONFIG			nVC2_Register[0x1f]
 
-static data32_t nXMAP0_Register[0x08];
-static data32_t nXMAP0_ModeTable[0x20];
+static UINT32 nXMAP0_Register[0x08];
+static UINT32 nXMAP0_ModeTable[0x20];
 
 #define XMAP0_CONFIG		nXMAP0_Register[0x00]
 #define XMAP0_REVISION		nXMAP0_Register[0x01]
@@ -70,8 +70,8 @@ static data32_t nXMAP0_ModeTable[0x20];
 #define XMAP0_POPUPCMAP		nXMAP0_Register[0x04]
 #define XMAP0_MODETBLIDX	nXMAP0_Register[0x07]
 
-static data32_t nXMAP1_Register[0x08];
-static data32_t nXMAP1_ModeTable[0x20];
+static UINT32 nXMAP1_Register[0x08];
+static UINT32 nXMAP1_ModeTable[0x20];
 
 #define XMAP1_CONFIG		nXMAP1_Register[0x00]
 #define XMAP1_REVISION		nXMAP1_Register[0x01]
@@ -80,79 +80,79 @@ static data32_t nXMAP1_ModeTable[0x20];
 #define XMAP1_POPUPCMAP		nXMAP1_Register[0x04]
 #define XMAP1_MODETBLIDX	nXMAP1_Register[0x07]
 
-static data32_t nREX3_DrawMode1;
-static data32_t nREX3_DrawMode0;
-static data32_t nREX3_LSMode;
-static data32_t nREX3_LSPattern;
-static data32_t nREX3_LSPatSave;
-static data32_t nREX3_ZPattern;
-static data32_t nREX3_ColorBack;
-static data32_t nREX3_ColorVRAM;
-static data32_t nREX3_AlphaRef;
-//static data32_t nREX3_Stall0;
-static data32_t nREX3_SMask0X;
-static data32_t nREX3_SMask0Y;
-static data32_t nREX3_Setup;
-static data32_t nREX3_StepZ;
-static data32_t nREX3_XStart;
-static data32_t nREX3_YStart;
-static data32_t nREX3_XEnd;
-static data32_t nREX3_YEnd;
-static data32_t nREX3_XSave;
-static data32_t nREX3_XYMove;
-static data32_t nREX3_BresD;
-static data32_t nREX3_BresS1;
-static data32_t nREX3_BresOctInc1;
-static data32_t nREX3_BresRndInc2;
-static data32_t nREX3_BresE1;
-static data32_t nREX3_BresS2;
-static data32_t nREX3_AWeight0;
-static data32_t nREX3_AWeight1;
-static data32_t nREX3_XStartF;
-static data32_t nREX3_YStartF;
-static data32_t nREX3_XEndF;
-static data32_t nREX3_YEndF;
-static data32_t nREX3_XStartI;
-//static data32_t nREX3_YEndF1;
-static data32_t nREX3_XYStartI;
-static data32_t nREX3_XYEndI;
-static data32_t nREX3_XStartEndI;
-static data32_t nREX3_ColorRed;
-static data32_t nREX3_ColorAlpha;
-static data32_t nREX3_ColorGreen;
-static data32_t nREX3_ColorBlue;
-static data32_t nREX3_SlopeRed;
-static data32_t nREX3_SlopeAlpha;
-static data32_t nREX3_SlopeGreen;
-static data32_t nREX3_SlopeBlue;
-static data32_t nREX3_WriteMask;
-static data32_t nREX3_ZeroFract;
-static data32_t nREX3_ZeroOverflow;
-//static data32_t nREX3_ColorIndex;
-static data32_t nREX3_HostDataPortMSW;
-static data32_t nREX3_HostDataPortLSW;
-static data32_t nREX3_DCBMode;
-static data32_t nREX3_DCBRegSelect;
-static data32_t nREX3_DCBSlvSelect;
-static data32_t nREX3_DCBDataMSW;
-static data32_t nREX3_DCBDataLSW;
-static data32_t nREX3_SMask1X;
-static data32_t nREX3_SMask1Y;
-static data32_t nREX3_SMask2X;
-static data32_t nREX3_SMask2Y;
-static data32_t nREX3_SMask3X;
-static data32_t nREX3_SMask3Y;
-static data32_t nREX3_SMask4X;
-static data32_t nREX3_SMask4Y;
-static data32_t nREX3_TopScanline;
-static data32_t nREX3_XYWin;
-static data32_t nREX3_ClipMode;
-static data32_t nREX3_Config;
-static data32_t nREX3_Status;
+static UINT32 nREX3_DrawMode1;
+static UINT32 nREX3_DrawMode0;
+static UINT32 nREX3_LSMode;
+static UINT32 nREX3_LSPattern;
+static UINT32 nREX3_LSPatSave;
+static UINT32 nREX3_ZPattern;
+static UINT32 nREX3_ColorBack;
+static UINT32 nREX3_ColorVRAM;
+static UINT32 nREX3_AlphaRef;
+//static UINT32 nREX3_Stall0;
+static UINT32 nREX3_SMask0X;
+static UINT32 nREX3_SMask0Y;
+static UINT32 nREX3_Setup;
+static UINT32 nREX3_StepZ;
+static UINT32 nREX3_XStart;
+static UINT32 nREX3_YStart;
+static UINT32 nREX3_XEnd;
+static UINT32 nREX3_YEnd;
+static UINT32 nREX3_XSave;
+static UINT32 nREX3_XYMove;
+static UINT32 nREX3_BresD;
+static UINT32 nREX3_BresS1;
+static UINT32 nREX3_BresOctInc1;
+static UINT32 nREX3_BresRndInc2;
+static UINT32 nREX3_BresE1;
+static UINT32 nREX3_BresS2;
+static UINT32 nREX3_AWeight0;
+static UINT32 nREX3_AWeight1;
+static UINT32 nREX3_XStartF;
+static UINT32 nREX3_YStartF;
+static UINT32 nREX3_XEndF;
+static UINT32 nREX3_YEndF;
+static UINT32 nREX3_XStartI;
+//static UINT32 nREX3_YEndF1;
+static UINT32 nREX3_XYStartI;
+static UINT32 nREX3_XYEndI;
+static UINT32 nREX3_XStartEndI;
+static UINT32 nREX3_ColorRed;
+static UINT32 nREX3_ColorAlpha;
+static UINT32 nREX3_ColorGreen;
+static UINT32 nREX3_ColorBlue;
+static UINT32 nREX3_SlopeRed;
+static UINT32 nREX3_SlopeAlpha;
+static UINT32 nREX3_SlopeGreen;
+static UINT32 nREX3_SlopeBlue;
+static UINT32 nREX3_WriteMask;
+static UINT32 nREX3_ZeroFract;
+static UINT32 nREX3_ZeroOverflow;
+//static UINT32 nREX3_ColorIndex;
+static UINT32 nREX3_HostDataPortMSW;
+static UINT32 nREX3_HostDataPortLSW;
+static UINT32 nREX3_DCBMode;
+static UINT32 nREX3_DCBRegSelect;
+static UINT32 nREX3_DCBSlvSelect;
+static UINT32 nREX3_DCBDataMSW;
+static UINT32 nREX3_DCBDataLSW;
+static UINT32 nREX3_SMask1X;
+static UINT32 nREX3_SMask1Y;
+static UINT32 nREX3_SMask2X;
+static UINT32 nREX3_SMask2Y;
+static UINT32 nREX3_SMask3X;
+static UINT32 nREX3_SMask3Y;
+static UINT32 nREX3_SMask4X;
+static UINT32 nREX3_SMask4Y;
+static UINT32 nREX3_TopScanline;
+static UINT32 nREX3_XYWin;
+static UINT32 nREX3_ClipMode;
+static UINT32 nREX3_Config;
+static UINT32 nREX3_Status;
 
-static data32_t *video_base;
+static UINT32 *video_base;
 
-static data8_t nDrawGreen;
+static UINT8 nDrawGreen;
 
 VIDEO_START( newport )
 {
@@ -178,21 +178,21 @@ VIDEO_UPDATE( newport )
 	/* loop over rows and copy to the destination */
 	for( y = cliprect->min_y; y <= cliprect->max_y; y++ )
 	{
-		data32_t *src = &video_base[1344 * y];
-		data16_t *dest = &((data16_t *)bitmap->line[y])[cliprect->min_x];
+		UINT32 *src = &video_base[1344 * y];
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
 		int x;
 
 		/* loop over columns */
 		for( x = cliprect->min_x; x < cliprect->max_x; x++ )
 		{
-			data32_t nPix = *src++;
+			UINT32 nPix = *src++;
 			*dest++ = ( ( nPix & 0x00f80000 ) >> 9 ) | ( ( nPix & 0x0000f800 ) >> 6 ) | ( ( nPix & 0x000000f8 ) >> 3 );
 		}
 	}
 }
 
-data16_t nCMAP0_PaletteIndex;
-data32_t nCMAP0_Palette[0x10000];
+UINT16 nCMAP0_PaletteIndex;
+UINT32 nCMAP0_Palette[0x10000];
 
 static WRITE32_HANDLER( newport_cmap0_w )
 {
@@ -229,7 +229,7 @@ static READ32_HANDLER( newport_cmap0_r )
 
 static READ32_HANDLER( newport_xmap0_r )
 {
-	data8_t nModeIdx;
+	UINT8 nModeIdx;
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0:
@@ -286,7 +286,7 @@ static READ32_HANDLER( newport_xmap0_r )
 
 static WRITE32_HANDLER( newport_xmap0_w )
 {
-	data8_t n8BitVal = data & 0x000000ff;
+	UINT8 n8BitVal = data & 0x000000ff;
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0:
@@ -323,7 +323,7 @@ static WRITE32_HANDLER( newport_xmap0_w )
 
 static READ32_HANDLER( newport_xmap1_r )
 {
-	data8_t nModeIdx;
+	UINT8 nModeIdx;
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0:
@@ -380,7 +380,7 @@ static READ32_HANDLER( newport_xmap1_r )
 
 static WRITE32_HANDLER( newport_xmap1_w )
 {
-	data8_t n8BitVal = data & 0x000000ff;
+	UINT8 n8BitVal = data & 0x000000ff;
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0:
@@ -417,8 +417,8 @@ static WRITE32_HANDLER( newport_xmap1_w )
 
 static WRITE32_HANDLER( newport_vc2_w )
 {
-	data8_t nVC2_RegIdx;
-	data16_t nVC2_RegData;
+	UINT8 nVC2_RegIdx;
+	UINT16 nVC2_RegData;
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0x00:
@@ -508,7 +508,7 @@ static WRITE32_HANDLER( newport_vc2_w )
 
 READ32_HANDLER( newport_rex3_r )
 {
-	data32_t nTemp;
+	UINT32 nTemp;
 //	if( offset >= ( 0x0800 / 4 ) )
 //	{
 //		verboselog( 2, "%08x:\n", 0xbf0f0000 + ( offset << 2 ) );
@@ -865,17 +865,17 @@ READ32_HANDLER( newport_rex3_r )
 
 static void DoREX3Command(void)
 {
-	data32_t nCommand = ( ( nREX3_DrawMode0 & ( 1 << 15 ) ) >> 15 ) |
+	UINT32 nCommand = ( ( nREX3_DrawMode0 & ( 1 << 15 ) ) >> 15 ) |
 						( ( nREX3_DrawMode0 & ( 1 <<  5 ) ) >>  4 ) |
 						( ( nREX3_DrawMode0 & ( 1 <<  9 ) ) >>  7 ) |
 						( ( nREX3_DrawMode0 & ( 1 <<  8 ) ) >>  5 ) |
 						( ( nREX3_DrawMode0 & 0x0000001c  ) <<  2 ) |
 						( ( nREX3_DrawMode0 & 0x00000003  ) <<  7 );
-	data16_t nX, nY;
-	data16_t nStartX = ( nREX3_XYStartI >> 16 ) & 0x0000ffff;
-	data16_t nStartY = ( nREX3_XYStartI >>  0 ) & 0x0000ffff;
-	data16_t nEndX = ( nREX3_XYEndI >> 16 ) & 0x0000ffff;
-	data16_t nEndY = ( nREX3_XYEndI >>  0 ) & 0x0000ffff;
+	UINT16 nX, nY;
+	UINT16 nStartX = ( nREX3_XYStartI >> 16 ) & 0x0000ffff;
+	UINT16 nStartY = ( nREX3_XYStartI >>  0 ) & 0x0000ffff;
+	UINT16 nEndX = ( nREX3_XYEndI >> 16 ) & 0x0000ffff;
+	UINT16 nEndY = ( nREX3_XYEndI >>  0 ) & 0x0000ffff;
 	INT16 nMoveX, nMoveY;
 
 	switch( nCommand )
@@ -931,7 +931,7 @@ static void DoREX3Command(void)
 
 WRITE32_HANDLER( newport_rex3_w )
 {
-	data32_t nTemp=0;
+	UINT32 nTemp=0;
 	if( offset & 0x00000200 )
 	{
 		verboselog( 2, "Start Cmd\n" );

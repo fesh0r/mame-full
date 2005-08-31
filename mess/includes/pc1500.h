@@ -19,10 +19,10 @@ void pc1500_init_colors (unsigned char *sys_palette,
 						 const unsigned char *color_prom);
 int pc1500_vh_start(void);
 void pc1500_vh_stop(void);
-void pc1500_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-void pc1500a_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-void trs80pc2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-//void pc1600_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+void pc1500_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh);
+void pc1500a_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh);
+void trs80pc2_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh);
+//void pc1600_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh);
 
 
 // on key directly connected to bf1 and +5v

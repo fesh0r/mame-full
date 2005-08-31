@@ -11,7 +11,7 @@
 
 UINT8 *hyperspt_scroll;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -123,7 +123,7 @@ VIDEO_START( hyperspt )
 	return 0;
 }
 
-static void hyperspt_draw_sprites( struct mame_bitmap *bitmap )
+static void hyperspt_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -152,7 +152,7 @@ static void fdc_dma_proc( int drive ) {
 
 			cur_pos %= ( 544 * 2 * 11 );
 
-			*((data16_t *) RAM) = dat;
+			*((UINT16 *) RAM) = dat;
 
 			RAM += 2;
 		}

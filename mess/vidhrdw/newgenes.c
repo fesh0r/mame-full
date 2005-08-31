@@ -126,8 +126,8 @@ int current_dma_id = 0;
 unsigned short *Pen;
 unsigned char *scroll_a;
 unsigned char *scroll_b;
-//struct mame_bitmap *bitmap_vram;
-//struct mame_bitmap *bitmap_sprite;
+//mame_bitmap *bitmap_vram;
+//mame_bitmap *bitmap_sprite;
 
 
 unsigned char *spritelayer;
@@ -148,7 +148,7 @@ char *tile_changed_1, *tile_changed_2;
 
 typedef struct
 {
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	int x;
 	int y;
 	int attribute;
@@ -1071,7 +1071,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 
 
 /* Oh lordy, another combinelayers */
-void combinelayers3(struct mame_bitmap *dest, int startline, int endline)
+void combinelayers3(mame_bitmap *dest, int startline, int endline)
 {
 	int x;
 	unsigned char y;
@@ -1579,7 +1579,7 @@ void plot_sprites(int priority)
   the main emulation engine.
 
 ***************************************************************************/
-//void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+//void genesis_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 //{
 //
 //genesis_modify_display(0);
@@ -1587,7 +1587,7 @@ void plot_sprites(int priority)
 //copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
 //
 //}
-void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+void genesis_vh_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 //void genesis_modify_display(int inter)
 {
 
@@ -1603,13 +1603,13 @@ void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 	account when accessing this area byte-wise */
 
 
-	struct rectangle visiblearea =
+	rectangle visiblearea =
 	{
 		0, 0,
 		0, 0
 	};
 
-  //	struct rectangle visiblearea =
+  //	rectangle visiblearea =
   //	{
   //		128, 128,
   //		0, 0

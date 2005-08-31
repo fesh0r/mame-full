@@ -52,10 +52,10 @@ static struct
 	offs_t wrbuf_base;	// start address in write buffer command
 	int wrbuf_len;		// count converted into byte lenght in write buffer command
 	int wrbuf_count;	// current count in write buffer command
-	data8_t *wrbuf;		// write buffer used by write buffer command
-	data8_t *data_ptr;	// main FEEPROM area
-	data8_t *blocklock;	// block lock flags
-	data8_t *prot_regs;	// protection registers
+	UINT8 *wrbuf;		// write buffer used by write buffer command
+	UINT8 *data_ptr;	// main FEEPROM area
+	UINT8 *blocklock;	// block lock flags
+	UINT8 *prot_regs;	// protection registers
 } strata[MAX_STRATA];
 
 /* accessors for individual block lock flags */
@@ -635,7 +635,7 @@ static void strataflash_w(int id, offs_t offset, int data, bus_width_t bus_width
 /*
 	read a 8-bit word from FEEPROM
 */
-data8_t strataflash_8_r(int id, offs_t offset)
+UINT8 strataflash_8_r(int id, offs_t offset)
 {
 	return strataflash_r(id, offset, bw_8);
 }
@@ -643,7 +643,7 @@ data8_t strataflash_8_r(int id, offs_t offset)
 /*
 	write a 8-bit word to FEEPROM
 */
-void strataflash_8_w(int id, offs_t offset, data8_t data)
+void strataflash_8_w(int id, offs_t offset, UINT8 data)
 {
 	strataflash_w(id, offset, data, bw_8);
 }
@@ -651,7 +651,7 @@ void strataflash_8_w(int id, offs_t offset, data8_t data)
 /*
 	read a 16-bit word from FEEPROM
 */
-data16_t strataflash_16_r(int id, offs_t offset)
+UINT16 strataflash_16_r(int id, offs_t offset)
 {
 	return strataflash_r(id, offset, bw_16);
 }
@@ -659,7 +659,7 @@ data16_t strataflash_16_r(int id, offs_t offset)
 /*
 	write a 16-bit word to FEEPROM
 */
-void strataflash_16_w(int id, offs_t offset, data16_t data)
+void strataflash_16_w(int id, offs_t offset, UINT16 data)
 {
 	strataflash_w(id, offset, data, bw_16);
 }

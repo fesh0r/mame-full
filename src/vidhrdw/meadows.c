@@ -13,7 +13,7 @@
 #define SPR_ADJUST_Y    -14
 
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /*************************************
@@ -80,7 +80,7 @@ WRITE8_HANDLER( meadows_spriteram_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *clip)
 {
 	int i;
 

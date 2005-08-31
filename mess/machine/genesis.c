@@ -59,13 +59,13 @@ typedef struct
 
 } genvdp;
 
-data16_t *genesis_cartridge;
-data16_t *genesis_mainram;
-data8_t *genesis_z80ram;
+UINT16 *genesis_cartridge;
+UINT16 *genesis_mainram;
+UINT8 *genesis_z80ram;
 
 int genesis_z80_bank_step;
-data32_t genesis_z80_bank_addr;
-data32_t genesis_z80_bank_partial;
+UINT32 genesis_z80_bank_addr;
+UINT32 genesis_z80_bank_partial;
 
 int genesis_z80_is_reset;
 int genesis_68k_has_z80_bus;
@@ -136,7 +136,7 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 
 	for (i = 0; i < 320; i++)
 	{
-		data8_t pixel = (UINT16)current_vdp->genesis_vdp_bg_render_buffer[i];
+		UINT8 pixel = (UINT16)current_vdp->genesis_vdp_bg_render_buffer[i];
 		int r,g,b;
 		int paldat;
 
@@ -183,11 +183,11 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 void genesis_vdp_spritebuffer_scanline (genvdp *current_vdp, int line, int reqpri)
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	data8_t *srcgfx = gfx->gfxdata;
+	UINT8 *srcgfx = gfx->gfxdata;
 	int shadowmode = genesis_vdp.genesis_vdp_regs[0x0c]&0x08;
 	int sbr = genesis_vdp.genesis_vdp_regs[0x05]<<9;
 	int spriteno = 0;
-	data16_t* spritebase = &genesis_vdp.genesis_vdp_vram[sbr>>1];
+	UINT16* spritebase = &genesis_vdp.genesis_vdp_vram[sbr>>1];
 
 //	Index + 0  :   ------yy yyyyyyyy
 //  Index + 2  :   ----hhvv -lllllll
@@ -345,8 +345,8 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	const gfx_element *gfx = Machine->gfx[0];
 
 	int _2tileblock;
-	data8_t *srcgfx = gfx->gfxdata;
-	data8_t* renderto ;
+	UINT8 *srcgfx = gfx->gfxdata;
+	UINT8* renderto ;
 	int scroll_xsize = genesis_vdp.genesis_vdp_regs[0x10]&0x3;
 	int scroll_ysize = (genesis_vdp.genesis_vdp_regs[0x10]&0x30)>>4;
 
@@ -447,7 +447,7 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	{
 		int tiledat;
 		int tileno,flipx,flipy,col,pri;
-		data8_t* tileloc;
+		UINT8* tileloc;
 		int x;
 
 		vscroll_cols = 0;
@@ -606,7 +606,7 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	{
 		int tiledat;
 		int tileno,flipx,flipy,col,pri;
-		data8_t* tileloc;
+		UINT8* tileloc;
 		int x;
 
 		block_is_not_vwindow = (
@@ -769,7 +769,7 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	{
 		int tiledat;
 		int tileno,flipx,flipy,col,pri;
-		data8_t* tileloc;
+		UINT8* tileloc;
 		int x;
 
 		vscroll_cols = 0;
@@ -879,7 +879,7 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	{
 		int tiledat;
 		int tileno,flipx,flipy,col,pri;
-		data8_t* tileloc;
+		UINT8* tileloc;
 		int x;
 		block_is_not_vwindow = (
 			((!win_down)  && (line>=win_vpos)) ||
@@ -1258,7 +1258,7 @@ WRITE16_HANDLER ( genesis_68000_z80_reset_w )
 	}
 }
 
-static data8_t genesis_io_ram[0x20];
+static UINT8 genesis_io_ram[0x20];
 
 void genesis_init_io (void)
 {
@@ -1496,11 +1496,11 @@ WRITE16_HANDLER ( genesis_68000_io_w )
 	}
 }
 
-data16_t genesis_vdp_data_read ( genvdp *current_vdp )
+UINT16 genesis_vdp_data_read ( genvdp *current_vdp )
 {
 //	logerror("Read VDP Data Port\n");
 	/* clear command pending flag */
-	data16_t retdata;
+	UINT16 retdata;
 
 	retdata = 0;
 //	return 0;
@@ -1527,7 +1527,7 @@ data16_t genesis_vdp_data_read ( genvdp *current_vdp )
 	return retdata;
 }
 
-data16_t genesis_vdp_control_read ( genvdp *current_vdp )
+UINT16 genesis_vdp_control_read ( genvdp *current_vdp )
 {
 	int retvalue;
 	//logerror("Read VDP Control Port (Status Register)\n");
@@ -1568,7 +1568,7 @@ data16_t genesis_vdp_control_read ( genvdp *current_vdp )
 //	return mame_rand();
 }
 
-data16_t genesis_vdp_hvcounter_read ( genvdp *current_vdp )
+UINT16 genesis_vdp_hvcounter_read ( genvdp *current_vdp )
 {
 	int vcnt = current_vdp->sline;
 
@@ -1584,9 +1584,9 @@ data16_t genesis_vdp_hvcounter_read ( genvdp *current_vdp )
 	return (((vcnt))&0xff)<<8|(cpu_gethorzbeampos()&0xff);
 }
 
-data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mask )
+UINT16 genesis_vdp_read ( genvdp *current_vdp, offs_t offset, UINT16 mem_mask )
 {
-	data16_t retdata;
+	UINT16 retdata;
 
 	retdata = 0x00;
 
@@ -1633,7 +1633,7 @@ data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mas
 	return retdata;
 }
 
-void genesis_vdp_data_write ( genvdp *current_vdp, data16_t data )
+void genesis_vdp_data_write ( genvdp *current_vdp, UINT16 data )
 {
 //	logerror("Genesis VDP DATA Write  DATA: %04x CMDMODE: %02x OFFSET: %06x INC %02x\n", data, current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr,  current_vdp -> genesis_vdp_regs[0x0f] );
 	/* clear command pending flag */
@@ -1688,7 +1688,7 @@ void genesis_vdp_data_write ( genvdp *current_vdp, data16_t data )
 }
 
 
-void genesis_vdp_set_register ( genvdp *current_vdp, data16_t data )
+void genesis_vdp_set_register ( genvdp *current_vdp, UINT16 data )
 {
 	int reg, val;
 
@@ -1762,8 +1762,8 @@ void what_mode ( genvdp *current_vdp )
 
 void genesis_vdp_do_dma ( genvdp *current_vdp )
 {
-	data16_t  readdata;
-	data32_t  sourceaddr;
+	UINT16  readdata;
+	UINT32  sourceaddr;
 
 	int count;
 
@@ -1782,7 +1782,7 @@ void genesis_vdp_do_dma ( genvdp *current_vdp )
 		{
 			// read from rom
 			//logerror("DMA FROM ROM!\n");
-			readdata = ((data16_t*)memory_region(REGION_CPU1))[sourceaddr>>1];
+			readdata = ((UINT16*)memory_region(REGION_CPU1))[sourceaddr>>1];
 		}
 
 		if ((sourceaddr >=0xe00000) &&  (sourceaddr <=0xffffff))
@@ -1961,7 +1961,7 @@ void genesis_vdp_check_dma ( genvdp *current_vdp )
 	}
 }
 
-void genesis_vdp_set_cmdmode_cmdaddr ( genvdp *current_vdp, data16_t data )
+void genesis_vdp_set_cmdmode_cmdaddr ( genvdp *current_vdp, UINT16 data )
 {
 	int modepart, addrpart;
 
@@ -2001,7 +2001,7 @@ void genesis_vdp_set_cmdmode_cmdaddr ( genvdp *current_vdp, data16_t data )
 
 
 
-void genesis_vdp_control_write ( genvdp *current_vdp, data16_t data )
+void genesis_vdp_control_write ( genvdp *current_vdp, UINT16 data )
 {
 	if (current_vdp -> genesis_vdp_command_pending) // second part of a command word
 	{
@@ -2027,7 +2027,7 @@ void genesis_vdp_control_write ( genvdp *current_vdp, data16_t data )
 	}
 }
 
-void genesis_vdp_write ( genvdp *current_vdp, offs_t offset, data16_t data, data16_t mem_mask )
+void genesis_vdp_write ( genvdp *current_vdp, offs_t offset, UINT16 data, UINT16 mem_mask )
 {
 //	if ((offset!=0x00) && (offset !=0x02)) logerror("Genesis VDP Write %06x, %04x, %04x\n", offset, data, mem_mask);
 
@@ -2198,8 +2198,8 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w )
 
  READ8_HANDLER ( genesis_banked_68k_r )
 {
-	data32_t addr;
-//	data16_t dat;
+	UINT32 addr;
+//	UINT16 dat;
 
 //	logerror("z80 PC %04x accessing  68k space %08x offset %04x\n", activecpu_get_pc(), genesis_z80_bank_addr, offset);
 

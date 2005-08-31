@@ -63,7 +63,7 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( vp906iii )
 {

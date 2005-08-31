@@ -12,7 +12,7 @@
 static int gfxbank, palettebank;
 extern int arkanoid_paddle_select;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( arkanoid_videoram_w )
 {
@@ -86,7 +86,7 @@ VIDEO_START( arkanoid )
 	return 0;
 }
 
-static void arkanoid_draw_sprites( struct mame_bitmap *bitmap )
+static void arkanoid_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -974,7 +974,7 @@ static imgtoolerr_t open_image_lvl1(imgtool_stream *file_handle, ti99_img_format
 
 	if (img_format == if_harddisk)
 	{
-		const struct hard_disk_info *info; 
+		const hard_disk_info *info; 
 
 		err = imghd_open(file_handle, &l1_img->harddisk_handle);
 		if (err)

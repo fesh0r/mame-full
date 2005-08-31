@@ -72,7 +72,7 @@
 #include "machine/z80fmly.h"
 #include "sound/sn76477.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /* vidhrdw */
 

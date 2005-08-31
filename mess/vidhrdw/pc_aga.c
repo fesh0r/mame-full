@@ -370,7 +370,7 @@ WRITE8_HANDLER( pc200_cga_w )
 
  READ8_HANDLER ( pc200_cga_r )
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	switch(offset) {
 	case 8:

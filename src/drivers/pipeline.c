@@ -54,8 +54,8 @@ Notes:
 #include "machine/8255ppi.h"
 #include "cpu/z80/z80daisy.h"
 
-static struct tilemap *tilemap1;
-static struct tilemap *tilemap2;
+static tilemap *tilemap1;
+static tilemap *tilemap2;
 
 static UINT8 *vram1;
 static UINT8 *vram2;

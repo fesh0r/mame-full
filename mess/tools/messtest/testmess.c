@@ -139,7 +139,7 @@ static void dump_screenshot(void)
 {
 	mame_file *fp;
 	char buf[128];
-	struct mame_bitmap *bitmap;
+	mame_bitmap *bitmap;
 	int x, y, is_blank;
 	pen_t color;
 

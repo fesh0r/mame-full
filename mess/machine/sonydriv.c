@@ -156,9 +156,9 @@ static void save_track_data(int floppy_select)
 
 
 
-data8_t sony_read_data(void)
+UINT8 sony_read_data(void)
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 	mess_image *cur_image;
 	floppy *f;
 
@@ -179,7 +179,7 @@ data8_t sony_read_data(void)
 
 
 
-void sony_write_data(data8_t data)
+void sony_write_data(UINT8 data)
 {
 	mess_image *cur_image;
 	floppy *f;
@@ -421,7 +421,7 @@ static void sony_doaction(void)
 
 
 
-void sony_set_lines(data8_t lines)
+void sony_set_lines(UINT8 lines)
 {
 	int old_sony_lines = sony_lines;
 

@@ -18,7 +18,7 @@
 #include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
-static struct tilemap *suprgolf_tilemap;
+static tilemap *suprgolf_tilemap;
 
 static int suprgolf_rom_bank;
 

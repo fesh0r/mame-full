@@ -30,7 +30,7 @@
 
 static unsigned char *m90_spriteram;
 unsigned char *m90_video_data;
-static struct tilemap *pf1_layer,*pf2_layer,*pf1_wide_layer,*pf2_wide_layer;
+static tilemap *pf1_layer,*pf2_layer,*pf1_wide_layer,*pf2_wide_layer;
 static int m90_video_control_data[16];
 
 static void get_tile_info(int tile_index,int layer,int page_mask)
@@ -73,7 +73,7 @@ VIDEO_START( m90 )
 	return 0;
 }
 
-static void m90_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void m90_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -108,7 +108,7 @@ static void m90_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *c
 }
 
 #if 0
-static void bootleg_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void bootleg_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -145,7 +145,7 @@ WRITE8_HANDLER( m90_video_control_w )
 }
 
 
-static void markdirty(struct tilemap *tilemap,int page,offs_t offset)
+static void markdirty(tilemap *tilemap,int page,offs_t offset)
 {
 	offset -= page * 0x4000;
 

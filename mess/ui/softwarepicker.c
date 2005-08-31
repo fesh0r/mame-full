@@ -72,7 +72,7 @@ static const TCHAR s_szSoftwarePickerProp[] = TEXT("SWPICKER");
 
 
 
-static ZIP *OpenZipFile(LPCTSTR pszFilename)
+static zip_file *OpenZipFile(LPCTSTR pszFilename)
 {
 	return openzip(FILETYPE_IMAGE, 0, pszFilename); 
 }
@@ -449,7 +449,7 @@ error:
 
 
 static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
-	BOOL bForce, ZIP *pZip, struct zipent *pZipEnt)
+	BOOL bForce, zip_file *pZip, zip_entry *pZipEnt)
 {
 	LPCTSTR pszZipSubPath;
 	LPTSTR s;
@@ -482,8 +482,8 @@ static BOOL SoftwarePicker_InternalAddFile(HWND hwndPicker, LPCTSTR pszFilename,
 {
 	LPCTSTR s;
 	BOOL rc = TRUE;
-	ZIP *pZip;
-	struct zipent *pZipEnt;
+	zip_file *pZip;
+	zip_entry *pZipEnt;
 
 	s = _tcsrchr(pszFilename, '.');
 	if (s && (!_tcscmp(s, TEXT(".zip"))))

@@ -39,8 +39,8 @@ MACHINE_INIT( coupe );
 
 void coupe_eof_callback(void);
 
-void drawMode1_line(struct mame_bitmap *,int);
-void drawMode2_line(struct mame_bitmap *,int);
-void drawMode3_line(struct mame_bitmap *,int);
-void drawMode4_line(struct mame_bitmap *,int);
+void drawMode1_line(mame_bitmap *,int);
+void drawMode2_line(mame_bitmap *,int);
+void drawMode3_line(mame_bitmap *,int);
+void drawMode4_line(mame_bitmap *,int);
 

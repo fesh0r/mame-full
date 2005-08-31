@@ -194,7 +194,7 @@ void pc_fdc_hw_dma_drq(int state, int read_)
 
 
 
-static void pc_fdc_data_rate_w(data8_t data)
+static void pc_fdc_data_rate_w(UINT8 data)
 {
 	if ((data & 0x080)!=0)
 	{
@@ -226,7 +226,7 @@ static void pc_fdc_data_rate_w(data8_t data)
 	 `------------------ 1 = turn floppy drive D motor on
  */
 
-static void pc_fdc_dor_w(data8_t data)
+static void pc_fdc_dor_w(UINT8 data)
 {
 	int selected_drive;
 	int floppy_count;
@@ -310,7 +310,7 @@ static void pc_fdc_dor_w(data8_t data)
 
 READ8_HANDLER ( pc_fdc_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 
 	switch(offset)
 	{

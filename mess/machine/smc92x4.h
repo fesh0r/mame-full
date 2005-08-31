@@ -32,10 +32,10 @@ typedef struct smc92x4_intf
 	int (*select_callback)(int which, select_mode_t select_mode, int select_line, int gpos);
 	/* dma_read_callback will be called by the smc99x4 core to read the sector
 	buffer */
-	data8_t (*dma_read_callback)(int which, offs_t offset);
+	UINT8 (*dma_read_callback)(int which, offs_t offset);
 	/* dma_read_callback will be called by the smc99x4 core to write the sector
 	buffer */
-	void (*dma_write_callback)(int which, offs_t offset, data8_t data);
+	void (*dma_write_callback)(int which, offs_t offset, UINT8 data);
 	/* int_callback will be called by the smc99x4 core whenever the state of
 	the interrupt lien changes */
 	void (*int_callback)(int which, int state);

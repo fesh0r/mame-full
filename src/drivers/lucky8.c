@@ -30,7 +30,7 @@ Any fixes for this driver should be forwarded to AGEMAME forum at (http://www.ma
 
 /* vidhrdw */
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( lucky8 )
 {

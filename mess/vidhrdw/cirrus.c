@@ -67,7 +67,7 @@
 
 
 
-static void cirrus_update_8bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cirrus_update_8bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	UINT16 *line;
 	const UINT8 *vram;
@@ -86,21 +86,21 @@ static void cirrus_update_8bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc
 
 
 
-static void cirrus_update_16bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cirrus_update_16bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	osd_die("NYI");
 }
 
 
 
-static void cirrus_update_24bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cirrus_update_24bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	osd_die("NYI");
 }
 
 
 
-static void cirrus_update_32bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+static void cirrus_update_32bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	osd_die("NYI");
 }
@@ -148,9 +148,9 @@ const struct pc_svga_interface cirrus_svga_interface =
  *
  *************************************/
 
-static data32_t cirrus5430_pci_read(int function, int offset)
+static UINT32 cirrus5430_pci_read(int function, int offset)
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 
 	if (function == 0)
 	{
@@ -181,7 +181,7 @@ static data32_t cirrus5430_pci_read(int function, int offset)
 
 
 
-static void cirrus5430_pci_write(int function, int offset, data32_t data)
+static void cirrus5430_pci_write(int function, int offset, UINT32 data)
 {
 	if (LOG_PCIACCESS)
 		logerror("cirrus5430_pci_write(): function=%d offset=0x%02X data=0x%04X\n", function, offset, data);

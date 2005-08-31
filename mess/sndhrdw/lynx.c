@@ -129,7 +129,7 @@ void lynx_audio_count_down(int nr)
     This->count--;
 }
 
-void lynx_audio_debug(struct mame_bitmap *bitmap)
+void lynx_audio_debug(mame_bitmap *bitmap)
 {
     char str[40];
     sprintf(str,"%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",

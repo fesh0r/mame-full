@@ -15,7 +15,7 @@ unsigned char *stfight_text_attr_ram;
 unsigned char *stfight_vh_latch_ram;
 unsigned char *stfight_sprite_ram;
 
-static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
 static int stfight_sprite_base = 0;
 
 /*
@@ -248,7 +248,7 @@ WRITE8_HANDLER( stfight_vh_latch_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs,sx,sy;
 

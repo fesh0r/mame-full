@@ -17,7 +17,7 @@ unsigned char *pang_colorram;
 /* Private */
 static unsigned char *pang_objram;           /* Sprite RAM */
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int flipscreen;
 
 
@@ -224,7 +224,7 @@ READ8_HANDLER( mgakuen_paletteram_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,sx,sy;
 

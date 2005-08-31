@@ -37,7 +37,7 @@ DEVICE_LOAD( coupe_floppy )
 
 
 
-static void coupe_update_bank(int bank, data8_t *memory, int is_readonly)
+static void coupe_update_bank(int bank, UINT8 *memory, int is_readonly)
 {
 	read8_handler rh;
 	write8_handler wh;
@@ -58,7 +58,7 @@ void coupe_update_memory(void)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int PAGE_MASK = (mess_ram_size / 0x4000) - 1;
-	data8_t *memory;
+	UINT8 *memory;
 	int is_readonly;
 
 	/* BANK1 */

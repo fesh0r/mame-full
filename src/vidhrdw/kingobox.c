@@ -9,7 +9,7 @@ extern int kingofb_nmi_enable;
 
 static int palette_bank;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -234,7 +234,7 @@ VIDEO_START( kingofb )
 	return 0;
 }
 
-static void kingofb_draw_sprites( struct mame_bitmap *bitmap )
+static void kingofb_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -301,7 +301,7 @@ VIDEO_START( ringking )
 	return 0;
 }
 
-static void ringking_draw_sprites( struct mame_bitmap *bitmap )
+static void ringking_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

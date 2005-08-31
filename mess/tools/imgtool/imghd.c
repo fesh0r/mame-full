@@ -394,10 +394,10 @@ imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UIN
 
 	Return pointer to the header of MAME HD image
 */
-const struct hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk)
+const hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk)
 {
 	chd_interface interface_save;
-	const struct hard_disk_info *reply;
+	const hard_disk_info *reply;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);

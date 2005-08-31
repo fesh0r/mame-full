@@ -13,7 +13,7 @@
 
 
 
-static struct mame_bitmap *apple2gs_legacy_gfx;
+static mame_bitmap *apple2gs_legacy_gfx;
 UINT16 apple2gs_bordercolor;
 
 VIDEO_START( apple2gs )
@@ -37,7 +37,7 @@ VIDEO_UPDATE( apple2gs )
 	UINT8 scb, b;
 	int i, j, row, col, palette;
 	UINT16 last_pixel = 0, pixel;
-	struct rectangle new_cliprect;
+	rectangle new_cliprect;
 
 	if (apple2gs_newvideo & 0x80)
 	{

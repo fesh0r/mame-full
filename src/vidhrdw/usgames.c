@@ -1,9 +1,9 @@
 #include "driver.h"
 
-data8_t *usg_videoram,*usg_charram;
+UINT8 *usg_videoram,*usg_charram;
 
 
-struct tilemap *usg_tilemap;
+tilemap *usg_tilemap;
 
 
 

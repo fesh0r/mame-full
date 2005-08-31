@@ -13,7 +13,7 @@ unsigned char *tsamurai_videoram;
 static int bgcolor;
 static int textbank1, textbank2;
 
-static struct tilemap *background, *foreground;
+static tilemap *background, *foreground;
 
 
 /***************************************************************************
@@ -147,7 +147,7 @@ WRITE8_HANDLER( tsamurai_fg_colorram_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	gfx_element *gfx = Machine->gfx[2];
 	const unsigned char *source = spriteram+32*4-4;

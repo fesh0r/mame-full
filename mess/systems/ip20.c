@@ -86,17 +86,17 @@ static NVRAM_HANDLER(93C56)
 	}
 }
 
-static data8_t nHPC_MiscStatus;
-static data32_t nHPC_ParBufPtr;
-static data32_t nHPC_LocalIOReg0Mask;
-static data32_t nHPC_LocalIOReg1Mask;
-static data32_t nHPC_VMEIntMask0;
-static data32_t nHPC_VMEIntMask1;
+static UINT8 nHPC_MiscStatus;
+static UINT32 nHPC_ParBufPtr;
+static UINT32 nHPC_LocalIOReg0Mask;
+static UINT32 nHPC_LocalIOReg1Mask;
+static UINT32 nHPC_VMEIntMask0;
+static UINT32 nHPC_VMEIntMask1;
 
-static data8_t nRTC_RAM[32];
-static data8_t nRTC_Temp;
+static UINT8 nRTC_RAM[32];
+static UINT8 nRTC_Temp;
 
-static data32_t nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
+static UINT32 nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
 
 #define RTC_DAYOFWEEK	nRTC_RAM[0x0e]
 #define RTC_YEAR		nRTC_RAM[0x0b]
@@ -284,7 +284,7 @@ static WRITE32_HANDLER( hpc_w )
 		#if 0
 		if (data & 0x80)
 		{
-			data32_t next;
+			UINT32 next;
 
 			printf("DMA activated for SCSI0\n");
 			printf("Descriptor block:\n");

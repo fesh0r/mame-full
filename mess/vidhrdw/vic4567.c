@@ -662,7 +662,7 @@ static void vic3_draw_bitplanes(void)
 #ifndef OPTIMIZE
 	UINT8 colors[8];
 #endif
-	struct rectangle vis;
+	rectangle vis;
 
 	if (VIC3_LINES==400) { /* interlaced! */
 		for ( y1s=0, offset=0; y1s<400; y1s+=16) {

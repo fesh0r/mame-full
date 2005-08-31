@@ -37,9 +37,9 @@ Provided to you by Thierry (ShinobiZ) & Gerald (COY)
 #include "sound/ay8910.h"
 #include "vidhrdw/crtc6845.h"
 
-static struct tilemap *tilemap;
-static data8_t *vram_lo,*vram_hi;
-static data8_t *backup_ram;
+static tilemap *bg_tilemap;
+static UINT8 *vram_lo,*vram_hi;
+static UINT8 *backup_ram;
 
 //before 53 after 71 then 6b
 /*
@@ -64,9 +64,9 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( couple )
 {
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
-	if(!tilemap)
+	if(!bg_tilemap)
 		return 1;
 
 	return 0;
@@ -74,19 +74,19 @@ VIDEO_START( couple )
 
 VIDEO_UPDATE( couple )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
 static WRITE8_HANDLER( couple_vram_lo_w )
 {
 	vram_lo[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 static WRITE8_HANDLER( couple_vram_hi_w )
 {
 	vram_hi[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 static READ8_HANDLER( dummy_inputs_r )

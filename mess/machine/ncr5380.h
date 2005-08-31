@@ -37,8 +37,8 @@ enum
 #define R5380_CURDATA_DTACK	(R5380_CURDATA | 0x10)
 
 extern void ncr5380_init( struct NCR5380interface *interface );
-extern void ncr5380_read_data(int bytes, data8_t *pData);
-extern void ncr5380_write_data(int bytes, data8_t *pData);
+extern void ncr5380_read_data(int bytes, UINT8 *pData);
+extern void ncr5380_write_data(int bytes, UINT8 *pData);
 extern void *ncr5380_get_device(int id);
 extern void ncr5380_set_device(int id, void *);
 extern READ8_HANDLER(ncr5380_r);

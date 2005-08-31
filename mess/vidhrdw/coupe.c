@@ -16,7 +16,7 @@
 
 unsigned char *sam_screen;
 
-void drawMode4_line(struct mame_bitmap *bitmap,int y)
+void drawMode4_line(mame_bitmap *bitmap,int y)
 {
 	int x;
 	unsigned char tmp=0;
@@ -58,7 +58,7 @@ void drawMode4_line(struct mame_bitmap *bitmap,int y)
 	}
 }
 
-void drawMode3_line(struct mame_bitmap *bitmap,int y)
+void drawMode3_line(mame_bitmap *bitmap,int y)
 {
 	int x;
 	unsigned char tmp=0;
@@ -100,7 +100,7 @@ void drawMode3_line(struct mame_bitmap *bitmap,int y)
 	}
 }
 
-void drawMode2_line(struct mame_bitmap *bitmap,int y)
+void drawMode2_line(mame_bitmap *bitmap,int y)
 {
 	int x,b,scrx;
 	unsigned char tmp=0;
@@ -138,7 +138,7 @@ void drawMode2_line(struct mame_bitmap *bitmap,int y)
 	}
 }
 
-void drawMode1_line(struct mame_bitmap *bitmap,int y)
+void drawMode1_line(mame_bitmap *bitmap,int y)
 {
 	int x,b,scrx,scry;
 	unsigned char tmp=0;

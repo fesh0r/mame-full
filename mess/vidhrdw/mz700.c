@@ -48,7 +48,7 @@ VIDEO_START(mz700)
     return 0;
 }
 
-//void mz700_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+//void mz700_vh_screenrefresh(mame_bitmap *bitmap, int full_refresh)
 VIDEO_UPDATE(mz700)
 {
     int offs;

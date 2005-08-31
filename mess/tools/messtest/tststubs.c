@@ -13,7 +13,7 @@ void osd_exit(void)
 {
 }
 
-int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
+int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
 	rgb_components[0] = 0xff0000;
 	rgb_components[1] = 0x00ff00;
@@ -30,12 +30,12 @@ int osd_skip_this_frame(void)
 	return 0;
 }
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
 {
 	return NULL;
 }
 
-const char *osd_get_fps_text(const struct performance_info *performance)
+const char *osd_get_fps_text(const performance_info *performance)
 {
 	return NULL;
 }
@@ -53,13 +53,13 @@ void osd_sound_enable(int enable)
 {
 }
 
-const struct OSCodeInfo *osd_get_code_list(void)
+const os_code_info *osd_get_code_list(void)
 {
-	static const struct OSCodeInfo ci[1];
+	static const os_code_info ci[1];
 	return ci;
 }
 
-INT32 osd_get_code_value(os_code_t oscode)
+INT32 osd_get_code_value(os_code oscode)
 {
 	return 0;
 }

@@ -35,7 +35,7 @@
 
 unsigned char *xain_charram, *xain_bgram0, *xain_bgram1, xain_pri;
 
-static struct tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
+static tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
 
 
 /***************************************************************************
@@ -183,7 +183,7 @@ WRITE8_HANDLER( xain_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

@@ -193,7 +193,7 @@ const char *set_ea_info(int what, unsigned value, int size, int access)
 			break;
 
 		case EA_ABS_PC: /* Absolute program counter change */
-			result &= (address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
+			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
 			if( size == EA_INT8 || size == EA_UINT8 )
 				width = 2;
 			else
@@ -208,7 +208,7 @@ const char *set_ea_info(int what, unsigned value, int size, int access)
 
 		case EA_REL_PC: /* Relative program counter change */
 		default:
-			result &= (address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
+			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
 			width = (activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM) + 3) / 4;
 	}
 	sprintf( buffer[which], "%s$%0*X", sign, width, result );
@@ -1350,17 +1350,17 @@ const int *debug_watchpoint_count_ptr(int cpunum)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-data8_t debug_read_byte(int spacenum, offs_t address)
+UINT8 debug_read_byte(int spacenum, offs_t address)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	data8_t result;
+	UINT8 result;
 	UINT64 custom;
 
 	memory_set_debugger_access(1);
 	if (info->read && (*info->read)(spacenum, address, 1, &custom))
 		result = custom;
 	else
-		result = (*address_space[spacenum].accessors->read_byte)(address);
+		result = (*active_address_space[spacenum].accessors->read_byte)(address);
 	memory_set_debugger_access(0);
 	return result;
 }
@@ -1371,10 +1371,10 @@ data8_t debug_read_byte(int spacenum, offs_t address)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-data16_t debug_read_word(int spacenum, offs_t address)
+UINT16 debug_read_word(int spacenum, offs_t address)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	data16_t result;
+	UINT16 result;
 
 	if (info->read)
 	{
@@ -1386,16 +1386,16 @@ data16_t debug_read_word(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_word && !(address & 1))
+	if (active_address_space[spacenum].accessors->read_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_word)(address);
+		result = (*active_address_space[spacenum].accessors->read_word)(address);
 		memory_set_debugger_access(0);
 	}
 	else
 	{
-		data8_t byte0 = debug_read_byte(spacenum, address + 0);
-		data8_t byte1 = debug_read_byte(spacenum, address + 1);
+		UINT8 byte0 = debug_read_byte(spacenum, address + 0);
+		UINT8 byte1 = debug_read_byte(spacenum, address + 1);
 		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
 			result = byte0 | (byte1 << 8);
 		else
@@ -1410,10 +1410,10 @@ data16_t debug_read_word(int spacenum, offs_t address)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-data32_t debug_read_dword(int spacenum, offs_t address)
+UINT32 debug_read_dword(int spacenum, offs_t address)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	data32_t result;
+	UINT32 result;
 
 	if (info->read)
 	{
@@ -1425,16 +1425,16 @@ data32_t debug_read_dword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_dword && !(address & 3))
+	if (active_address_space[spacenum].accessors->read_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_dword)(address);
+		result = (*active_address_space[spacenum].accessors->read_dword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
 	{
-		data16_t word0 = debug_read_word(spacenum, address + 0);
-		data16_t word1 = debug_read_word(spacenum, address + 2);
+		UINT16 word0 = debug_read_word(spacenum, address + 0);
+		UINT16 word1 = debug_read_word(spacenum, address + 2);
 		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
 			result = word0 | (word1 << 16);
 		else
@@ -1449,10 +1449,10 @@ data32_t debug_read_dword(int spacenum, offs_t address)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-data64_t debug_read_qword(int spacenum, offs_t address)
+UINT64 debug_read_qword(int spacenum, offs_t address)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	data64_t result;
+	UINT64 result;
 
 	if (info->read)
 	{
@@ -1464,20 +1464,20 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_qword && !(address & 7))
+	if (active_address_space[spacenum].accessors->read_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_qword)(address);
+		result = (*active_address_space[spacenum].accessors->read_qword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
 	{
-		data32_t dword0 = debug_read_dword(spacenum, address + 0);
-		data32_t dword1 = debug_read_dword(spacenum, address + 4);
+		UINT32 dword0 = debug_read_dword(spacenum, address + 0);
+		UINT32 dword1 = debug_read_dword(spacenum, address + 4);
 		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
-			result = dword0 | ((data64_t)dword1 << 32);
+			result = dword0 | ((UINT64)dword1 << 32);
 		else
-			result = dword1 | ((data64_t)dword0 << 32);
+			result = dword1 | ((UINT64)dword0 << 32);
 	}
 	return result;
 }
@@ -1488,7 +1488,7 @@ data64_t debug_read_qword(int spacenum, offs_t address)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-void debug_write_byte(int spacenum, offs_t address, data8_t data)
+void debug_write_byte(int spacenum, offs_t address, UINT8 data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	memory_modified = 1;
@@ -1496,7 +1496,7 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
 	if (info->write && (*info->write)(spacenum, address, 1, data))
 		;
 	else
-		(*address_space[spacenum].accessors->write_byte)(address, data);
+		(*active_address_space[spacenum].accessors->write_byte)(address, data);
 	memory_set_debugger_access(0);
 }
 
@@ -1506,7 +1506,7 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-void debug_write_word(int spacenum, offs_t address, data16_t data)
+void debug_write_word(int spacenum, offs_t address, UINT16 data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	memory_modified = 1;
@@ -1519,10 +1519,10 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_word && !(address & 1))
+	if (active_address_space[spacenum].accessors->write_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_word)(address, data);
+		(*active_address_space[spacenum].accessors->write_word)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1543,7 +1543,7 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-void debug_write_dword(int spacenum, offs_t address, data32_t data)
+void debug_write_dword(int spacenum, offs_t address, UINT32 data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	memory_modified = 1;
@@ -1556,10 +1556,10 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_dword && !(address & 3))
+	if (active_address_space[spacenum].accessors->write_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_dword)(address, data);
+		(*active_address_space[spacenum].accessors->write_dword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1580,7 +1580,7 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
     current cpu in the specified memory space
 -------------------------------------------------*/
 
-void debug_write_qword(int spacenum, offs_t address, data64_t data)
+void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	memory_modified = 1;
@@ -1593,10 +1593,10 @@ void debug_write_qword(int spacenum, offs_t address, data64_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_qword && !(address & 7))
+	if (active_address_space[spacenum].accessors->write_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_qword)(address, data);
+		(*active_address_space[spacenum].accessors->write_qword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1696,10 +1696,10 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 
 	switch(size)
 	{
-		case 1:	return *((data8_t *) ptr);
-		case 2:	return *((data16_t *) ptr);
-		case 4:	return *((data32_t *) ptr);
-		case 8:	return *((data64_t *) ptr);
+		case 1:	return *((UINT8 *) ptr);
+		case 2:	return *((UINT16 *) ptr);
+		case 4:	return *((UINT32 *) ptr);
+		case 8:	return *((UINT64 *) ptr);
 	}
 
 	return 0;	/* appease compiler */

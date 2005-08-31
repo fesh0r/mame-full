@@ -68,7 +68,7 @@ static struct
 						// 0 means no card loaded
 	int log2_pages_per_block;	// log2 of number of pages per erase block (usually 4 or 5)
 
-	data8_t *data_ptr;	// FEEPROM data area
+	UINT8 *data_ptr;	// FEEPROM data area
 
 	enum
 	{
@@ -93,9 +93,9 @@ static struct
 	int status;			// current status
 	int accumulated_status;	// accumulated status
 
-	data8_t *pagereg;	// page register used by program command
-	data8_t id[2];		// chip ID
-	data8_t mp_opcode;	// multi-plane operation code
+	UINT8 *pagereg;	// page register used by program command
+	UINT8 id[2];		// chip ID
+	UINT8 mp_opcode;	// multi-plane operation code
 } smartmedia[MAX_SMARTMEDIA];
 
 /*
@@ -249,7 +249,7 @@ int smartmedia_protected(int id)
 /*
 	write a byte to SmartMedia command port
 */
-void smartmedia_command_w(int id, data8_t data)
+void smartmedia_command_w(int id, UINT8 data)
 {
 	if (id >= MAX_SMARTMEDIA)
 	{
@@ -364,7 +364,7 @@ void smartmedia_command_w(int id, data8_t data)
 /*
 	write a byte to SmartMedia address port
 */
-void smartmedia_address_w(int id, data8_t data)
+void smartmedia_address_w(int id, UINT8 data)
 {
 	if (id >= MAX_SMARTMEDIA)
 	{
@@ -422,9 +422,9 @@ void smartmedia_address_w(int id, data8_t data)
 /*
 	read a byte from SmartMedia data port
 */
-data8_t smartmedia_data_r(int id)
+UINT8 smartmedia_data_r(int id)
 {
-	data8_t reply = 0;
+	UINT8 reply = 0;
 
 	if (id >= MAX_SMARTMEDIA)
 	{
@@ -472,7 +472,7 @@ data8_t smartmedia_data_r(int id)
 /*
 	write a byte to SmartMedia data port
 */
-void smartmedia_data_w(int id, data8_t data)
+void smartmedia_data_w(int id, UINT8 data)
 {
 	if (id >= MAX_SMARTMEDIA)
 	{

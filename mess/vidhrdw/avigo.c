@@ -210,7 +210,7 @@ VIDEO_UPDATE( avigo )
     int b;
     int x;
     int pens[2];
-	struct rectangle r;
+	rectangle r;
 
 	/* draw avigo display */
     pens[0] = Machine->pens[0];

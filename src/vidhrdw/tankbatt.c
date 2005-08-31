@@ -12,7 +12,7 @@
 UINT8 *tankbatt_bulletsram;
 size_t tankbatt_bulletsram_size;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -94,7 +94,7 @@ VIDEO_START( tankbatt )
 	return 0;
 }
 
-static void tankbatt_draw_bullets( struct mame_bitmap *bitmap )
+static void tankbatt_draw_bullets( mame_bitmap *bitmap )
 {
 	int offs;
 

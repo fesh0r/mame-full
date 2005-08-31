@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_layer,*fg_layer,*tx_layer;
+static tilemap *bg_layer,*fg_layer,*tx_layer;
 unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 
 static int flipscreen,ALTERNATE;
@@ -126,7 +126,7 @@ WRITE8_HANDLER( raiden_control_w )
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri_mask)
 {
 	int offs,fx,fy,x,y,color,sprite;
 

@@ -9,8 +9,8 @@ Video hardware
 
 #include "vidhrdw/generic.h"
 
-static data8_t *mayumi_videoram;
-static struct tilemap *mayumi_tilemap;
+static UINT8 *mayumi_videoram;
+static tilemap *mayumi_tilemap;
 
 static void get_tile_info(int tile_index)
 {

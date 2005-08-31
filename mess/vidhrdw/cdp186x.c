@@ -113,7 +113,7 @@ VIDEO_UPDATE( cdp1864 )
 
 */
 
-static struct tilemap *normal_tilemap, *double_tilemap;
+static tilemap *normal_tilemap, *double_tilemap;
 
 static CDP1869_CONFIG cdp1869;
 
@@ -225,7 +225,7 @@ VIDEO_START( cdp1869 )
 
 VIDEO_UPDATE( cdp1869 )
 {
-	struct rectangle clip;
+	rectangle clip;
 
 	clip.min_x = Machine->visible_area.min_x + 60;
 	clip.max_x = Machine->visible_area.max_x - 36;

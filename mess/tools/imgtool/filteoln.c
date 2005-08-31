@@ -1,68 +1,117 @@
+/****************************************************************************
+
+	filteoln.c
+
+	Native end-of-line filter
+
+*****************************************************************************/
+
 #include <string.h>
 #include "imgtool.h"
 #include "osdutils.h"
 
-struct filter_eoln_state
+
+static imgtoolerr_t convert_stream_eolns(imgtool_stream *source, imgtool_stream *dest, const char *eoln)
 {
-	int after_cr;
-};
+	size_t len, i, pos;
+	char buffer[2000];
+	int hit_cr = FALSE;
 
-static int filter_eoln_proc(struct filter_info *fi, void *buf, int buflen)
-{
-	struct filter_eoln_state *filterstate;
-	char *cbuf;
-	char c;
-	int base;
-	char *eoln;
-	int eolnsize;
-	int result, i;
+	while((len = stream_read(source, buffer, sizeof(buffer))) > 0)
+	{
+		pos = 0;
 
-	filterstate = (struct filter_eoln_state *) fi->filterstate;
-	cbuf = (char *) buf;
-	base = 0;
-	eoln = (char *) fi->filterparam;
-	eolnsize = strlen(eoln);
-	result = 0;
-
-	for (i = 0; i < buflen; i++) {
-		c = cbuf[i];
-
-		switch(c) {
-		case '\x0a':
-		case '\x0d':
-			if ((c != '\x0a') || (!filterstate->after_cr)) {
-				if (base != i)
-					result += fi->sendproc(fi, &cbuf[base], i - base);
-				result += fi->sendproc(fi, eoln, eolnsize);
+		for (i = 0; i < len; i++)
+		{
+			switch(buffer[i])
+			{
+				case '\r':
+				case '\n':
+					if (!hit_cr || (buffer[i] != '\n'))
+					{
+						if (i > pos)
+							stream_write(dest, buffer + pos, i - pos);
+						stream_write(dest, eoln, strlen(eoln));
+					}
+					pos = i + 1;
+					break;
 			}
-			base = i + 1;
-			break;
+			hit_cr = (buffer[i] == '\r');
 		}
 
-		filterstate->after_cr = (c == '\x0d');
+		if (i > pos)
+			stream_write(dest, buffer + pos, i - pos);
 	}
-	if (base != i)
-		result += fi->sendproc(fi, &cbuf[base], i - base);
-	return result;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
-static void *filter_eoln_calcreadparam(const struct ImageModule *imgmod)
+
+
+static imgtoolerr_t ascii_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
-	return (void *) EOLN;
+	imgtoolerr_t err;
+	imgtool_stream *mem_stream;
+
+	mem_stream = stream_open_mem(NULL, 0);
+	if (!mem_stream)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	err = img_module(image)->read_file(image, filename, fork, mem_stream);
+	if (err)
+		goto done;
+
+	err = convert_stream_eolns(mem_stream, destf, EOLN);
+	if (err)
+		goto done;
+
+done:
+	if (mem_stream)
+		stream_close(mem_stream);
+	return err;
 }
 
-static void *filter_eoln_calcwriteparam(const struct ImageModule *imgmod)
+
+
+static imgtoolerr_t ascii_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
-	return (void *) imgmod->eoln;
+	imgtoolerr_t err;
+	imgtool_stream *mem_stream = NULL;
+
+	mem_stream = stream_open_mem(NULL, 0);
+	if (!mem_stream)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	err = convert_stream_eolns(sourcef, mem_stream, img_module(image)->eoln);
+	if (err)
+		goto done;
+	stream_seek(mem_stream, SEEK_SET, 0);
+
+	err = img_module(image)->write_file(image, filename, fork, mem_stream, opts);
+	if (err)
+		goto done;
+
+done:
+	if (mem_stream)
+		stream_close(mem_stream);
+	return err;
 }
 
-struct filter_module filter_eoln =
+
+
+void filter_eoln_getinfo(UINT32 state, union filterinfo *info)
 {
-	"ascii",
-	"Ascii Text Filter",
-	filter_eoln_calcreadparam,
-	filter_eoln_calcwriteparam,
-	filter_eoln_proc,
-	filter_eoln_proc,
-	sizeof(struct filter_eoln_state)
-};
+	switch(state)
+	{
+		case FILTINFO_STR_NAME:			info->s = "ascii"; break;
+		case FILTINFO_STR_HUMANNAME:	info->s = "Ascii Text Filter"; break;
+		case FILTINFO_PTR_READFILE:		info->read_file = ascii_readfile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = ascii_writefile; break;
+	}
+}

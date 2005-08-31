@@ -407,9 +407,9 @@ struct _input_port_default_entry
 	UINT8		player;			/* player number (0 is player 1) */
 	const char *token;			/* token used to store settings */
 	const char *name;			/* user-friendly name */
-	input_seq_t	defaultseq;		/* default input sequence */
-	input_seq_t	defaultincseq;	/* default input sequence to increment (analog ports only) */
-	input_seq_t	defaultdecseq;	/* default input sequence to decrement (analog ports only) */
+	input_seq	defaultseq;		/* default input sequence */
+	input_seq	defaultincseq;	/* default input sequence to increment (analog ports only) */
+	input_seq	defaultdecseq;	/* default input sequence to decrement (analog ports only) */
 };
 typedef struct _input_port_default_entry input_port_default_entry;
 
@@ -443,7 +443,7 @@ struct _input_port_entry
 								/* 2WAY should be used for joysticks wich move only */
 								/* on one axis (e.g. Battle Zone) */
 	const char *name;			/* user-friendly name to display */
-	input_seq_t	seq;			/* input sequence affecting the input bits */
+	input_seq	seq;			/* input sequence affecting the input bits */
 	UINT16		category;		/* (MESS-specific) category */
 
 	/* valid if type is between __ipt_analog_start and __ipt_analog_end */
@@ -456,8 +456,8 @@ struct _input_port_entry
 		INT32	centerdelta;	/* delta to apply each frame no digital inputs are pressed */
 		UINT8	reverse;		/* reverse the sense of the analog axis */
 		UINT8	reset;			/* always preload in->default for relative axes, returning only deltas */
-		input_seq_t incseq;		/* increment sequence */
-		input_seq_t decseq;		/* decrement sequence */
+		input_seq incseq;		/* increment sequence */
+		input_seq decseq;		/* decrement sequence */
 	} analog;
 
 	/* valid if type is IPT_PORT */
@@ -680,8 +680,8 @@ read8_handler port_tag_to_handler8(const char *tag);
 read16_handler port_tag_to_handler16(const char *tag);
 read32_handler port_tag_to_handler32(const char *tag);
 const char *input_port_name(const input_port_entry *in);
-input_seq_t *input_port_seq(input_port_entry *in, int seqtype);
-input_seq_t *input_port_default_seq(int type, int player, int seqtype);
+input_seq *input_port_seq(input_port_entry *in, int seqtype);
+input_seq *input_port_default_seq(int type, int player, int seqtype);
 int input_port_condition(const input_port_entry *in);
 
 const char *port_type_to_token(int type, int player);

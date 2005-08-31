@@ -14,7 +14,7 @@ int cgenie_font_offset[4] = {0, 0, 0, 0};
 
 static CRTC6845 crt;
 static int graphics = 0;
-static struct mame_bitmap *dlybitmap = NULL;
+static mame_bitmap *dlybitmap = NULL;
 static UINT8 *cleanbuffer = NULL;
 static UINT8 *colorbuffer = NULL;
 static int update_all = 0;
@@ -284,10 +284,10 @@ void cgenie_invalidate_range(int l, int h)
 }
 
 
-static void cgenie_refresh_monitor(struct mame_bitmap * bitmap, int full_refresh)
+static void cgenie_refresh_monitor(mame_bitmap * bitmap, int full_refresh)
 {
 	int i, address, offset, cursor, size, code, x, y;
-    struct rectangle r;
+    rectangle r;
 
 	if( crt.vertical_displayed == 0 || crt.horizontal_displayed == 0 )
 	{
@@ -348,7 +348,7 @@ static void cgenie_refresh_monitor(struct mame_bitmap * bitmap, int full_refresh
 
 				if( i == cursor )
 				{
-				struct rectangle rc;
+				rectangle rc;
 
 				/* check if cursor turned off */
 					if( (crt.cursor_top & 0x60) == 0x20 )
@@ -378,10 +378,10 @@ static void cgenie_refresh_monitor(struct mame_bitmap * bitmap, int full_refresh
 	update_all = 0;
 }
 
-static void cgenie_refresh_tv_set(struct mame_bitmap * bitmap, int full_refresh)
+static void cgenie_refresh_tv_set(mame_bitmap * bitmap, int full_refresh)
 {
 	int i, address, offset, cursor, size, code, x, y;
-    struct rectangle r;
+    rectangle r;
 
     if( crt.vertical_displayed == 0 || crt.horizontal_displayed == 0 )
 	{
@@ -448,7 +448,7 @@ static void cgenie_refresh_tv_set(struct mame_bitmap * bitmap, int full_refresh)
 
 				if( i == cursor )
 				{
-					struct rectangle rc;
+					rectangle rc;
 
 					/* check if cursor turned off */
 					if( (crt.cursor_top & 0x60) == 0x20 )

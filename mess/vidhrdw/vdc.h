@@ -73,7 +73,7 @@ typedef struct
     UINT8 vdc_latch;
     pair vdc_data[32];
     int status;
-    struct mame_bitmap *bmp;
+    mame_bitmap *bmp;
 }VDC;
 
 

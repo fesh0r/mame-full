@@ -285,7 +285,7 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 //	win_orient_rect
 //============================================================
 
-void win_orient_rect(struct rectangle *rect)
+void win_orient_rect(rectangle *rect)
 {
 	int temp;
 
@@ -319,7 +319,7 @@ void win_orient_rect(struct rectangle *rect)
 //	win_disorient_rect
 //============================================================
 
-void win_disorient_rect(struct rectangle *rect)
+void win_disorient_rect(rectangle *rect)
 {
 	int temp;
 
@@ -748,7 +748,7 @@ void update_autoframeskip(void)
 //	render_frame
 //============================================================
 
-static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
+static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
 {
 	cycles_t curr;
 
@@ -861,10 +861,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 //	osd_save_snapshot
 //============================================================
 
-void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds)
+void osd_save_snapshot(mame_bitmap *bitmap, const rectangle *bounds)
 {
 	struct rectangle newbounds;
-	struct mame_bitmap *copy;
+	mame_bitmap *copy;
 	int x, y, w, h, t;
 
 	// if we can send it in raw, do it

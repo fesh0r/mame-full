@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int flipscreen;
 
 
@@ -117,7 +117,7 @@ WRITE8_HANDLER( sidepckt_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

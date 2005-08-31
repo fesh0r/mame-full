@@ -1140,8 +1140,8 @@ static int hfdc_irq_state;
 
 
 static int hfdc_select_callback(int which, select_mode_t select_mode, int select_line, int gpos);
-static data8_t hfdc_dma_read_callback(int which, offs_t offset);
-static void hfdc_dma_write_callback(int which, offs_t offset, data8_t data);
+static UINT8 hfdc_dma_read_callback(int which, offs_t offset);
+static void hfdc_dma_write_callback(int which, offs_t offset, UINT8 data);
 static void hfdc_int_callback(int which, int state);
 
 static const smc92x4_intf hfdc_intf =
@@ -1206,7 +1206,7 @@ static int hfdc_select_callback(int which, select_mode_t select_mode, int select
 /*
 	Read a byte from buffer in DMA mode
 */
-static data8_t hfdc_dma_read_callback(int which, offs_t offset)
+static UINT8 hfdc_dma_read_callback(int which, offs_t offset)
 {
 	(void) which;
 	return hfdc_ram[offset & 0x7fff];
@@ -1215,7 +1215,7 @@ static data8_t hfdc_dma_read_callback(int which, offs_t offset)
 /*
 	Write a byte to buffer in DMA mode
 */
-static void hfdc_dma_write_callback(int which, offs_t offset, data8_t data)
+static void hfdc_dma_write_callback(int which, offs_t offset, UINT8 data)
 {
 	(void) which;
 	hfdc_ram[offset & 0x7fff] = data;

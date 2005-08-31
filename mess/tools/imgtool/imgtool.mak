@@ -24,6 +24,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/modules.o		\
 	$(OBJ)/mess/tools/imgtool/iflopimg.o	\
 	$(OBJ)/mess/tools/imgtool/filter.o		\
+	$(OBJ)/mess/tools/imgtool/filteoln.o	\
 	$(OBJ)/mess/tools/imgtool/macbin.o		\
 	$(OBJ)/mess/tools/imgtool/imgtool.o		\
 	$(OBJ)/mess/tools/imgtool/imgfile.o		\
@@ -37,7 +38,6 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/concept.o		\
 	$(OBJ)/mess/tools/imgtool/fat.o			\
 	$(OBJ)/mess/tools/imgtool/prodos.o		\
-#	$(OBJ)/mess/tools/imgtool/filteoln.o	\
 #	$(OBJ)/mess/tools/imgtool/filtbas.o		\
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \

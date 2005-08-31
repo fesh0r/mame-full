@@ -457,7 +457,7 @@ MACHINE_DRIVER_END
 ROM_START(pdp1)
 	/*CPU memory space*/
 #ifdef SUPPORT_ODD_WORD_SIZES
-	ROM_REGION(0x10000 * sizeof(data32_t),REGION_CPU1,0)
+	ROM_REGION(0x10000 * sizeof(UINT32),REGION_CPU1,0)
 		/* Note this computer has no ROM... */
 #else
 	ROM_REGION(0x10000 * sizeof(int),REGION_CPU1,0)

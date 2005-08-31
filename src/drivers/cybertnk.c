@@ -122,10 +122,10 @@ lev 7 : 0x7c : 0000 07e0 - input device clear?
 #include "vidhrdw/generic.h"
 #include "sound/3812intf.h"
 
-static struct tilemap *tx_tilemap;
-static data16_t *tx_vram;
-data16_t *slave_data;
-data16_t *com_ram;
+static tilemap *tx_tilemap;
+static UINT16 *tx_vram;
+UINT16 *slave_data;
+UINT16 *com_ram;
 //static UINT16 mux_data;
 
 #define MASTER_CPU (cpu_getactivecpu() == 0)

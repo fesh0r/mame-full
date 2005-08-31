@@ -78,7 +78,7 @@ typedef struct hd_unit_t
 {
 	mess_image *img;						/* image descriptor */
 	enum { format_mame, format_old } format;
-	struct hard_disk_file *hd_handle;		/* mame hard disk descriptor - only if format == format_mame */
+	hard_disk_file *hd_handle;		/* mame hard disk descriptor - only if format == format_mame */
 	mame_file *fd;							/* file descriptor - only if format == format_old */
 	unsigned int wp : 1;					/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;				/* TRUE when a disk has just been connected */
@@ -202,7 +202,7 @@ DEVICE_LOAD( ti990_hd )
 	int id = image_index_in_device(image);
 	hd_unit_t *d;
 	char tag[8];
-	const struct hard_disk_info *standard_header;
+	const hard_disk_info *standard_header;
 	disk_image_header custom_header;
 	int bytes_read;
 

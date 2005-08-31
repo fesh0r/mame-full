@@ -52,7 +52,7 @@ static UINT32 mac_time(time_t t)
 
 
 
-static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filename, imgtool_stream *destf)
+static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	static const UINT32 attrs[] =
 	{

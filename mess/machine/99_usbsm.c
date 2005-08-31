@@ -37,8 +37,8 @@ static int usbsm_cru_r(int offset);
 static void usbsm_cru_w(int offset, int data);
 static  READ8_HANDLER(usbsm_mem_r);
 static WRITE8_HANDLER(usbsm_mem_w);
-static data16_t usbsm_mem_16_r(offs_t offset);
-static void usbsm_mem_16_w(offs_t offset, data16_t data);
+static UINT16 usbsm_mem_16_r(offs_t offset);
+static void usbsm_mem_16_w(offs_t offset, UINT16 data);
 
 /* pointer to the SRAM area */
 static UINT16 *ti99_usbsm_RAM;
@@ -218,9 +218,9 @@ static WRITE8_HANDLER(usbsm_mem_w)
 /*
 	demultiplexed read in USB-SmartMedia DSR space
 */
-static data16_t usbsm_mem_16_r(offs_t offset)
+static UINT16 usbsm_mem_16_r(offs_t offset)
 {
-	data16_t reply = 0;
+	UINT16 reply = 0;
 
 	if (offset < 0x800)
 	{	/* 0x4000-0x4fff range */
@@ -252,7 +252,7 @@ static data16_t usbsm_mem_16_r(offs_t offset)
 /*
 	demultiplexed write in USB-SmartMedia DSR space
 */
-static void usbsm_mem_16_w(offs_t offset, data16_t data)
+static void usbsm_mem_16_w(offs_t offset, UINT16 data)
 {
 	if (offset < 0x800)
 	{	/* 0x4000-0x4fff range */

@@ -8,7 +8,7 @@
 
 #include "vidhrdw/generic.h"
 
-static struct tilemap *background_layer,*text_layer;
+static tilemap *background_layer,*text_layer;
 
 
 static void get_back_tile_info(int tile_index)
@@ -106,7 +106,7 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 
 ********************************************************************/
 
-static void cabal_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void cabal_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs,data0,data1,data2;
 

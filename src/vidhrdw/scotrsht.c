@@ -3,7 +3,7 @@
 
 UINT8 *scotrsht_scroll;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int scotrsht_charbank = 0;
 
 /* Similar as Iron Horse */
@@ -126,7 +126,7 @@ static void scotrsht_get_bg_tile_info(int tile_index)
 }
 
 /* Same as Jailbreak */
-void scotrsht_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void scotrsht_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 

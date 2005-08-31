@@ -4,7 +4,7 @@
 UINT8 *jailbrek_scroll_x;
 UINT8 *jailbrek_scroll_dir;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( jailbrek )
 {
@@ -86,7 +86,7 @@ VIDEO_START( jailbrek )
 	return 0;
 }
 
-static void jailbrek_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void jailbrek_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 

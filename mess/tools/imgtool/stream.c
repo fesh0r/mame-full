@@ -51,8 +51,8 @@ static size_t fsize(FILE *f)
 static imgtool_stream *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
 	imgtool_stream *imgfile = NULL;
-	ZIP *z = NULL;
-	struct zipent *zipent;
+	zip_file *z = NULL;
+	zip_entry *zipent;
 	FILE *f;
 
 	if (read_or_write)

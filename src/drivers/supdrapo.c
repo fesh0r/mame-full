@@ -27,7 +27,7 @@ A3-1J
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 static unsigned char *char_bank;
 
 WRITE8_HANDLER( supdrapo_videoram_w )

@@ -6,19 +6,19 @@
 
 #include "driver.h"
 
-static struct rectangle _spritevisiblearea =
+static rectangle _spritevisiblearea =
 {
 	2*8+1, 32*8-1,
 	2*8,   30*8-1
 };
-static struct rectangle _spritevisibleareaflipx =
+static rectangle _spritevisibleareaflipx =
 {
 	0*8, 30*8-2,
 	2*8, 30*8-1
 };
 
-static struct rectangle* spritevisiblearea;
-static struct rectangle* spritevisibleareaflipx;
+static rectangle* spritevisiblearea;
+static rectangle* spritevisibleareaflipx;
 
 
 #define STARS_COLOR_BASE 		(memory_region_length(REGION_PROMS))
@@ -26,12 +26,12 @@ static struct rectangle* spritevisibleareaflipx;
 #define BACKGROUND_COLOR_BASE	(BULLETS_COLOR_BASE + 2)
 
 
-data8_t *galaxian_videoram;
-data8_t *galaxian_spriteram;
-data8_t *galaxian_spriteram2;
-data8_t *galaxian_attributesram;
-data8_t *galaxian_bulletsram;
-data8_t *rockclim_videoram;
+UINT8 *galaxian_videoram;
+UINT8 *galaxian_spriteram;
+UINT8 *galaxian_spriteram2;
+UINT8 *galaxian_attributesram;
+UINT8 *galaxian_bulletsram;
+UINT8 *rockclim_videoram;
 size_t galaxian_spriteram_size;
 size_t galaxian_spriteram2_size;
 size_t galaxian_bulletsram_size;
@@ -39,8 +39,8 @@ size_t galaxian_bulletsram_size;
 
 static void get_tile_info(int tile_index);
 static void rockclim_get_tile_info(int tile_index);
-static struct tilemap *tilemap;
-static struct tilemap *rockclim_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *rockclim_tilemap;
 static int mooncrst_gfxextend;
 static int gfxbank[5];
 static int spriteram2_present;
@@ -59,19 +59,19 @@ static void  batman2_modify_charcode(UINT16 *code,UINT8 x);
 static void  mariner_modify_charcode(UINT16 *code,UINT8 x);
 static void  jumpbug_modify_charcode(UINT16 *code,UINT8 x);
 
-static void (*modify_spritecode)(data8_t *spriteram,int*,int*,int*,int);	/* function to call to do sprite banking */
-static void  gmgalax_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void mooncrst_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void mooncrgx_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void  moonqsr_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void mshuttle_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void  calipso_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void   pisces_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void mimonkey_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void  batman2_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void  jumpbug_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void dkongjrm_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void   ad2083_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void (*modify_spritecode)(UINT8 *spriteram,int*,int*,int*,int);	/* function to call to do sprite banking */
+static void  gmgalax_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void mooncrst_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void mooncrgx_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void  moonqsr_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void mshuttle_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void  calipso_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void   pisces_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void mimonkey_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void  batman2_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void  jumpbug_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void dkongjrm_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void   ad2083_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
 
 static void (*modify_color)(UINT8 *color);	/* function to call to do modify how the color codes map to the PROM */
 static void frogger_modify_color(UINT8 *color);
@@ -84,7 +84,7 @@ static void frogger_modify_ypos(UINT8 *sy);
 static void stars_blink_callback(int param);
 static void stars_scroll_callback(int param);
 
-static void (*tilemap_set_scroll)( struct tilemap *, int col, int value );
+static void (*tilemap_set_scroll)( tilemap *, int col, int value );
 
 /* star circuit */
 #define STAR_COUNT  252
@@ -101,37 +101,37 @@ static void *stars_blink_timer;
 static void *stars_scroll_timer;
 static int timer_adjusted;
        void galaxian_init_stars(int colors_offset);
-static void (*draw_stars)(struct mame_bitmap *);		/* function to call to draw the star layer */
-static void     noop_draw_stars(struct mame_bitmap *bitmap);
-       void galaxian_draw_stars(struct mame_bitmap *bitmap);
-	   void scramble_draw_stars(struct mame_bitmap *bitmap);
-static void   rescue_draw_stars(struct mame_bitmap *bitmap);
-static void  mariner_draw_stars(struct mame_bitmap *bitmap);
-static void  jumpbug_draw_stars(struct mame_bitmap *bitmap);
+static void (*draw_stars)(mame_bitmap *);		/* function to call to draw the star layer */
+static void     noop_draw_stars(mame_bitmap *bitmap);
+       void galaxian_draw_stars(mame_bitmap *bitmap);
+	   void scramble_draw_stars(mame_bitmap *bitmap);
+static void   rescue_draw_stars(mame_bitmap *bitmap);
+static void  mariner_draw_stars(mame_bitmap *bitmap);
+static void  jumpbug_draw_stars(mame_bitmap *bitmap);
 static void start_stars_blink_timer(double ra, double rb, double c);
 static void start_stars_scroll_timer(void);
 
 /* bullets circuit */
 static int darkplnt_bullet_color;
-static void (*draw_bullets)(struct mame_bitmap *,int,int,int);	/* function to call to draw a bullet */
-static void galaxian_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
-static void gteikob2_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
-static void scramble_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
-static void   theend_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
-static void darkplnt_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
+static void (*draw_bullets)(mame_bitmap *,int,int,int);	/* function to call to draw a bullet */
+static void galaxian_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
+static void gteikob2_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
+static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
+static void   theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
+static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 
 /* background circuit */
 static int background_enable;
 static int background_red, background_green, background_blue;
-static void (*draw_background)(struct mame_bitmap *);	/* function to call to draw the background */
-static void galaxian_draw_background(struct mame_bitmap *bitmap);
-static void scramble_draw_background(struct mame_bitmap *bitmap);
-static void  turtles_draw_background(struct mame_bitmap *bitmap);
-static void  mariner_draw_background(struct mame_bitmap *bitmap);
-static void  frogger_draw_background(struct mame_bitmap *bitmap);
-static void stratgyx_draw_background(struct mame_bitmap *bitmap);
-static void  minefld_draw_background(struct mame_bitmap *bitmap);
-static void   rescue_draw_background(struct mame_bitmap *bitmap);
+static void (*draw_background)(mame_bitmap *);	/* function to call to draw the background */
+static void galaxian_draw_background(mame_bitmap *bitmap);
+static void scramble_draw_background(mame_bitmap *bitmap);
+static void  turtles_draw_background(mame_bitmap *bitmap);
+static void  mariner_draw_background(mame_bitmap *bitmap);
+static void  frogger_draw_background(mame_bitmap *bitmap);
+static void stratgyx_draw_background(mame_bitmap *bitmap);
+static void  minefld_draw_background(mame_bitmap *bitmap);
+static void   rescue_draw_background(mame_bitmap *bitmap);
 
 
 /***************************************************************************
@@ -452,12 +452,12 @@ PALETTE_INIT( mariner )
 
 static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,UINT32))
 {
-	tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
+	tilemap_set_transparent_pen(bg_tilemap,0);
 
 
 	modify_charcode = 0;
@@ -494,7 +494,7 @@ VIDEO_START( galaxian_plain )
 {
 	int ret = video_start_common(tilemap_scan_rows);
 
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	return ret;
@@ -608,7 +608,7 @@ VIDEO_START( sfx )
 {
 	int ret = video_start_common(tilemap_scan_cols);
 
-	tilemap_set_scroll_rows(tilemap, 32);
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrollx;
 
 	draw_stars = scramble_draw_stars;
@@ -806,12 +806,12 @@ VIDEO_START( scorpion )
 	return ret;
 }
 
-static void rockclim_draw_background(struct mame_bitmap *bitmap)
+static void rockclim_draw_background(mame_bitmap *bitmap)
 {
 	tilemap_draw(bitmap,0,rockclim_tilemap, 0,0);
 }
 
-static void rockclim_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void rockclim_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	if (gfxbank[2])	*code|=0x40;
 }
@@ -841,13 +841,13 @@ static void drivfrcg_get_tile_info(int tile_index)
 
 VIDEO_START( drivfrcg )
 {
-	tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -882,13 +882,13 @@ VIDEO_START( drivfrcg )
 
 VIDEO_START( ad2083 )
 {
-	tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -921,12 +921,12 @@ VIDEO_START( ad2083 )
 	return 0;
 }
 
-data8_t *racknrol_tiles_bank;
+UINT8 *racknrol_tiles_bank;
 
 WRITE8_HANDLER( racknrol_tiles_bank_w )
 {
 	racknrol_tiles_bank[offset] = data;
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 static void racknrol_get_tile_info(int tile_index)
@@ -943,13 +943,13 @@ static void racknrol_get_tile_info(int tile_index)
 
 VIDEO_START( racknrol )
 {
-	tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -997,7 +997,7 @@ WRITE8_HANDLER( galaxian_videoram_w )
 	if (galaxian_videoram[offset] != data)
 	{
 		galaxian_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -1017,7 +1017,7 @@ WRITE8_HANDLER( galaxian_attributesram_w )
 			int i;
 
 			for (i = offset >> 1; i < 0x0400; i += 32)
-				tilemap_mark_tile_dirty(tilemap, i);
+				tilemap_mark_tile_dirty(bg_tilemap, i);
 		}
 		else
 		{
@@ -1026,7 +1026,7 @@ WRITE8_HANDLER( galaxian_attributesram_w )
 				modify_ypos(&data);
 			}
 
-			tilemap_set_scroll(tilemap, offset >> 1, data);
+			tilemap_set_scroll(bg_tilemap, offset >> 1, data);
 		}
 
 		galaxian_attributesram[offset] = data;
@@ -1040,7 +1040,7 @@ WRITE8_HANDLER( galaxian_flip_screen_x_w )
 	{
 		flip_screen_x = data & 0x01;
 
-		tilemap_set_flip(tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
@@ -1050,7 +1050,7 @@ WRITE8_HANDLER( galaxian_flip_screen_y_w )
 	{
 		flip_screen_y = data & 0x01;
 
-		tilemap_set_flip(tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
@@ -1118,7 +1118,7 @@ WRITE8_HANDLER( galaxian_gfxbank_w )
 	{
 		gfxbank[offset] = data;
 
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
 
@@ -1233,12 +1233,12 @@ static void jumpbug_modify_charcode(UINT16 *code,UINT8 x)
 
 /* sprite banking functions */
 
-static void gmgalax_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void gmgalax_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= (gfxbank[0] << 7) | 0x40;
 }
 
-static void mooncrst_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void mooncrst_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	if (gfxbank[2] && ((*code & 0x30) == 0x20))
 	{
@@ -1246,7 +1246,7 @@ static void mooncrst_modify_spritecode(data8_t *spriteram,int *code,int *flipx,i
 	}
 }
 
-static void mooncrgx_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void mooncrgx_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	if (gfxbank[2] && ((*code & 0x30) == 0x20))
 	{
@@ -1254,17 +1254,17 @@ static void mooncrgx_modify_spritecode(data8_t *spriteram,int *code,int *flipx,i
 	}
 }
 
-static void moonqsr_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void moonqsr_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= ((spriteram[offs + 2] & 0x20) << 1);
 }
 
-static void mshuttle_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void mshuttle_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= ((spriteram[offs + 2] & 0x30) << 2);
 }
 
-static void calipso_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void calipso_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	/* No flips */
 	*code = spriteram[offs + 1];
@@ -1272,23 +1272,23 @@ static void calipso_modify_spritecode(data8_t *spriteram,int *code,int *flipx,in
 	*flipy = 0;
 }
 
-static void pisces_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void pisces_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= (gfxbank[0] << 6);
 }
 
-static void mimonkey_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void mimonkey_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= (gfxbank[0] << 6) | (gfxbank[2] << 7);
 }
 
-static void batman2_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void batman2_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	/* only the upper 64 sprites are used */
 	*code |= 0x40;
 }
 
-static void jumpbug_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void jumpbug_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	if (((*code & 0x30) == 0x20) &&
 		 (gfxbank[2] & 0x01) != 0)
@@ -1299,14 +1299,14 @@ static void jumpbug_modify_spritecode(data8_t *spriteram,int *code,int *flipx,in
 	}
 }
 
-static void dkongjrm_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void dkongjrm_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	/* No x flip */
 	*code = (spriteram[offs + 1] & 0x7f) | 0x80;
 	*flipx = 0;
 }
 
-static void ad2083_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+static void ad2083_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	/* No x flip */
 	*code = (spriteram[offs + 1] & 0x7f) | ((spriteram[offs + 2] & 0x30) << 2);
@@ -1340,7 +1340,7 @@ static void frogger_modify_ypos(UINT8 *sy)
 
 /* bullet drawing functions */
 
-static void galaxian_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
+static void galaxian_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
 	int i;
 
@@ -1363,12 +1363,12 @@ static void galaxian_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, i
 	}
 }
 
-static void gteikob2_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
+static void gteikob2_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
 	galaxian_draw_bullets(bitmap, offs, 260 - x, y);
 }
 
-static void scramble_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
+static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
 	if (flip_screen_x)  x++;
 
@@ -1382,7 +1382,7 @@ static void scramble_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, i
 	}
 }
 
-static void darkplnt_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
+static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
 	if (flip_screen_x)  x++;
 
@@ -1395,7 +1395,7 @@ static void darkplnt_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, i
 	}
 }
 
-static void theend_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
+static void theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
 	int i;
 
@@ -1416,13 +1416,13 @@ static void theend_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int
 
 /* background drawing functions */
 
-static void galaxian_draw_background(struct mame_bitmap *bitmap)
+static void galaxian_draw_background(mame_bitmap *bitmap)
 {
 	/* plain black background */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }
 
-static void scramble_draw_background(struct mame_bitmap *bitmap)
+static void scramble_draw_background(mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -1434,14 +1434,14 @@ static void scramble_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-static void turtles_draw_background(struct mame_bitmap *bitmap)
+static void turtles_draw_background(mame_bitmap *bitmap)
 {
 	int color = (background_blue << 2) | (background_green << 1) | background_red;
 
 	fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE + color],&Machine->visible_area);
 }
 
-static void frogger_draw_background(struct mame_bitmap *bitmap)
+static void frogger_draw_background(mame_bitmap *bitmap)
 {
 	/* color split point verified on real machine */
 	if (flip_screen_x)
@@ -1456,7 +1456,7 @@ static void frogger_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-static void stratgyx_draw_background(struct mame_bitmap *bitmap)
+static void stratgyx_draw_background(mame_bitmap *bitmap)
 {
 	UINT8 x;
 	UINT8 *prom;
@@ -1495,7 +1495,7 @@ static void stratgyx_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-static void minefld_draw_background(struct mame_bitmap *bitmap)
+static void minefld_draw_background(mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -1520,7 +1520,7 @@ static void minefld_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-static void rescue_draw_background(struct mame_bitmap *bitmap)
+static void rescue_draw_background(mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -1545,7 +1545,7 @@ static void rescue_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-static void mariner_draw_background(struct mame_bitmap *bitmap)
+static void mariner_draw_background(mame_bitmap *bitmap)
 {
 	UINT8 x;
 	UINT8 *prom;
@@ -1663,7 +1663,7 @@ void galaxian_init_stars(int colors_offset)
 	}
 }
 
-static void plot_star(struct mame_bitmap *bitmap, int x, int y, int color)
+static void plot_star(mame_bitmap *bitmap, int x, int y, int color)
 {
 	if (y < Machine->visible_area.min_y ||
 		y > Machine->visible_area.max_y ||
@@ -1684,11 +1684,11 @@ static void plot_star(struct mame_bitmap *bitmap, int x, int y, int color)
 	plot_pixel(bitmap, x, y, Machine->pens[stars_colors_start + color]);
 }
 
-static void noop_draw_stars(struct mame_bitmap *bitmap)
+static void noop_draw_stars(mame_bitmap *bitmap)
 {
 }
 
-void galaxian_draw_stars(struct mame_bitmap *bitmap)
+void galaxian_draw_stars(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1715,7 +1715,7 @@ void galaxian_draw_stars(struct mame_bitmap *bitmap)
 	}
 }
 
-void scramble_draw_stars(struct mame_bitmap *bitmap)
+void scramble_draw_stars(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1759,7 +1759,7 @@ void scramble_draw_stars(struct mame_bitmap *bitmap)
 	}
 }
 
-static void rescue_draw_stars(struct mame_bitmap *bitmap)
+static void rescue_draw_stars(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1805,7 +1805,7 @@ static void rescue_draw_stars(struct mame_bitmap *bitmap)
 	}
 }
 
-static void mariner_draw_stars(struct mame_bitmap *bitmap)
+static void mariner_draw_stars(mame_bitmap *bitmap)
 {
 	int offs;
 	UINT8 *prom;
@@ -1840,7 +1840,7 @@ static void mariner_draw_stars(struct mame_bitmap *bitmap)
 	}
 }
 
-static void jumpbug_draw_stars(struct mame_bitmap *bitmap)
+static void jumpbug_draw_stars(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1955,7 +1955,7 @@ static void rockclim_get_tile_info(int tile_index)
 	SET_TILE_INFO(2, code, 0, 0)
 }
 
-static void draw_bullets_common(struct mame_bitmap *bitmap)
+static void draw_bullets_common(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1978,7 +1978,7 @@ static void draw_bullets_common(struct mame_bitmap *bitmap)
 }
 
 
-static void draw_sprites(struct mame_bitmap *bitmap, data8_t *spriteram, size_t spriteram_size)
+static void draw_sprites(mame_bitmap *bitmap, UINT8 *spriteram, size_t spriteram_size)
 {
 	int offs;
 
@@ -2055,7 +2055,7 @@ VIDEO_UPDATE( galaxian )
 	}
 
 
-	tilemap_draw(bitmap, 0, tilemap, 0, 0);
+	tilemap_draw(bitmap, 0, bg_tilemap, 0, 0);
 
 
 	if (draw_bullets)

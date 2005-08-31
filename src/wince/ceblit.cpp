@@ -43,7 +43,7 @@ typedef void (__cdecl *blitter_func)(void *dest_bits, const void *source_bits);
 static int current_source_pitch, current_source_width, current_source_height;
 static const UINT32 *current_palette;
 static GXDisplayProperties display_properties;
-static struct drccore *current_blitter;
+static drccore *current_blitter;
 
 
 //============================================================
@@ -85,7 +85,7 @@ INT32 calc_blend_mask(struct blitter_params *params, int divisor)
 //	generate_blitter 
 //============================================================
 
-static struct drccore *generate_blitter(int orientation)
+static drccore *generate_blitter(int orientation)
 {
 	struct drcconfig drcfg;
 	struct blitter_params params;
@@ -237,7 +237,7 @@ static struct drccore *generate_blitter(int orientation)
 //============================================================
 
 
-extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT32 *palette)
+extern "C" void ce_blit(mame_bitmap *bitmap, int orientation, const UINT32 *palette)
 {
 	const void *source_bits;
 	void *dest_bits;

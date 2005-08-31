@@ -85,10 +85,10 @@ enum
 #define SBIC_AuxStat_BSY	(0x20)	// Level 2 command in progress
 #define SBIC_AuxStat_IRQ	(0x80)	// IRQ pending
 
-static data8_t n33C93_RegisterSelect;
-static data8_t n33C93_Data;
-static data8_t n33C93_Registers[SBIC_num_registers];
-static data8_t last_id;
+static UINT8 n33C93_RegisterSelect;
+static UINT8 n33C93_Data;
+static UINT8 n33C93_Registers[SBIC_num_registers];
+static UINT8 last_id;
 
 static void wd33c93_irq( int cmdtype )
 {
@@ -149,7 +149,7 @@ WRITE8_HANDLER(wd33c93_w)
 			{
 			case 0x00: /* Reset controller */
 				// this clears all the registers
-				memset(n33C93_Registers, 0, SBIC_num_registers * sizeof(data8_t));
+				memset(n33C93_Registers, 0, SBIC_num_registers * sizeof(UINT8));
 
 				if( n33C93_Registers[ SBIC_myid ] & SBIC_MyID_Advanced )
 				{
@@ -229,7 +229,7 @@ WRITE8_HANDLER(wd33c93_w)
 
 READ8_HANDLER(wd33c93_r)
 {
-	data8_t rv = 0;
+	UINT8 rv = 0;
 
 	switch( offset )
 	{
@@ -277,14 +277,14 @@ extern void wd33c93_init( struct WD33C93interface *interface )
 	for (i = 0; i < interface->scsidevs->devs_present; i++)
 	{
 		devices[interface->scsidevs->devices[i].scsiID].handler = interface->scsidevs->devices[i].handler;
-		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (data8_t *)NULL);
+		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}	
 
 	state_save_register_UINT8("wd33c93", 0, "registers", n33C93_Registers, SBIC_num_registers);
 	state_save_register_UINT8("wd33c93", 0, "register select", &n33C93_RegisterSelect, 1);
 }
 
-void wd33c93_read_data(int bytes, data8_t *pData)
+void wd33c93_read_data(int bytes, UINT8 *pData)
 {
 	if (devices[last_id].handler)
 	{
@@ -296,7 +296,7 @@ void wd33c93_read_data(int bytes, data8_t *pData)
 	}
 }
 
-void wd33c93_write_data(int bytes, data8_t *pData)
+void wd33c93_write_data(int bytes, UINT8 *pData)
 {
 	if (devices[last_id].handler)
 	{
@@ -315,7 +315,7 @@ void *wd33c93_get_device(int id)
 	if (devices[id].handler)
 	{
 		logerror("wd33c93: fetching dev pointer for SCSI ID %d\n", id);
-		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (data8_t *)&ret);
+		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (UINT8 *)&ret);
 
 		return ret;
 	}

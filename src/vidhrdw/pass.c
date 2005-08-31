@@ -2,12 +2,12 @@
 
 #include "driver.h"
 
-static struct tilemap *pass_bg_tilemap;
-static struct tilemap *pass_fg_tilemap;
+static tilemap *pass_bg_tilemap;
+static tilemap *pass_fg_tilemap;
 
 /* in drivers/pass.c */
-extern data16_t *pass_bg_videoram;
-extern data16_t *pass_fg_videoram;
+extern UINT16 *pass_bg_videoram;
+extern UINT16 *pass_fg_videoram;
 /* end in drivers/pass.c */
 
 /* background tilemap stuff */

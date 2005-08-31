@@ -13,7 +13,7 @@ static int spritectrl[3];
 
 int crbaloon_collision;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -111,7 +111,7 @@ VIDEO_START( crbaloon )
 	return 0;
 }
 
-static void crbaloon_draw_sprites( struct mame_bitmap *bitmap )
+static void crbaloon_draw_sprites( mame_bitmap *bitmap )
 {
 	int x,y;
 

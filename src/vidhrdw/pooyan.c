@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -120,7 +120,7 @@ VIDEO_START( pooyan )
 	return 0;
 }
 
-static void pooyan_draw_sprites( struct mame_bitmap *bitmap )
+static void pooyan_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

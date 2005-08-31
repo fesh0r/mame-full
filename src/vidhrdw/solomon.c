@@ -4,7 +4,7 @@
 UINT8 *solomon_videoram2;
 UINT8 *solomon_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( solomon_videoram_w )
 {
@@ -89,7 +89,7 @@ VIDEO_START( solomon )
 	return 0;
 }
 
-static void solomon_draw_sprites( struct mame_bitmap *bitmap )
+static void solomon_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

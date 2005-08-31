@@ -83,7 +83,7 @@ static void scc_putbreg(int data)
 
 READ8_HANDLER(scc_r)
 {
-	data8_t result = 0;
+	UINT8 result = 0;
 
 	offset %= 4;
 
