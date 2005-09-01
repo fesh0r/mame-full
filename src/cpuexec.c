@@ -322,7 +322,8 @@ int cpu_init(void)
 		/* if no state registered for saving, we can't save */
 		if (num_regs == 0)
 		{
-			logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cpunum_name(cpunum));
+			/* NPW 31-Aug-2005 - this crashes under many CPU cores */
+			/*logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cpunum_name(cpunum));*/
 			cpu_loadsave_disallow();
 		}
 
