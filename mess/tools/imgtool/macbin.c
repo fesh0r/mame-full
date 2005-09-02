@@ -25,7 +25,7 @@
 	  87       4  [I]   Resource Fork Length
 	  91       4  [I]   Creation Date
 	  95       4  [I]   Last Modified Date
-	  99       4  [I]   "Get Info" comment length
+	  99       2  [I]   "Get Info" comment length
      101       1  [II]  Finder Flags (bits 7-0)
 	 102       4  [III] MacBinary III Signature 'mBIN'
 	 106       1  [III] Script of Filename
@@ -139,6 +139,50 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 
 
 
+static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+{
+	UINT8 header[126];
+	UINT32 datafork_size;
+	UINT32 resourcefork_size;
+	UINT64 total_size;
+	UINT64 header_size;
+	int version;
+
+	memset(header, 0, sizeof(header));
+	stream_read(sourcef, header, sizeof(header));
+
+	if (header[0] != 0x00)
+		return IMGTOOLERR_CORRUPTFILE;
+	if (header[74] != 0x00)
+		return IMGTOOLERR_CORRUPTFILE;
+	if (header[82] != 0x00)
+		return IMGTOOLERR_CORRUPTFILE;
+
+	datafork_size = pick_integer_be(header, 83, 4);
+	resourcefork_size = pick_integer_be(header, 87, 4);
+	total_size = stream_size(sourcef);
+	header_size = total_size - datafork_size - resourcefork_size;
+
+	if (header_size == 101)
+	{
+		version = 1;
+	}
+	else if (header_size == 126)
+	{
+		if (header[122] >= 0x82)
+			version = 3;
+		else
+			version = 2;
+	}
+	else
+	{
+		return IMGTOOLERR_CORRUPTFILE;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 void filter_macbinary_getinfo(UINT32 state, union filterinfo *info)
 {
 	switch(state)
@@ -147,5 +191,6 @@ void filter_macbinary_getinfo(UINT32 state, union filterinfo *info)
 		case FILTINFO_STR_HUMANNAME:	info->s = "MacBinary"; break;
 		case FILTINFO_STR_EXTENSION:	info->s = "bin"; break;
 		case FILTINFO_PTR_READFILE:		info->read_file = macbinary_readfile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = 0 ? NULL : macbinary_writefile; break;
 	}
 }
