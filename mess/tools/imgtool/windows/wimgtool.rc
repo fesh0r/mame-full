@@ -174,6 +174,16 @@ BEGIN
                     UDS_ARROWKEYS,181,106,9,12
 END
 
+IDD_EXTRACTOPTIONS DIALOG  0, 0, 182, 22
+STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_CLIPSIBLINGS | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Mode:",IDC_STATIC,5,4,48,8
+    COMBOBOX        IDC_FILTERCOMBO,54,2,119,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -221,6 +231,14 @@ BEGIN
         RIGHTMARGIN, 338
         TOPMARGIN, 7
         BOTTOMMARGIN, 119
+    END
+
+    IDD_EXTRACTOPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 175
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 15
     END
 END
 #endif    // APSTUDIO_INVOKED

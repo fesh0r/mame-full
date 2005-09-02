@@ -1808,6 +1808,40 @@ static imgtoolerr_t prodos_diskimage_setattrs(imgtool_image *image, const char *
 
 
 
+static imgtoolerr_t prodos_diskimage_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+{
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
+	if (err)
+		return err;
+
+	suggestions[0].viability = is_normalfile_storagetype(ent.storage_type) ? SUGGESTION_POSSIBLE : SUGGESTION_RECOMMENDED;
+	suggestions[0].filter = filter_macbinary_getinfo;
+	suggestions[0].fork = NULL;
+	suggestions[0].description = NULL;
+
+	suggestions[1].viability = SUGGESTION_POSSIBLE;
+	suggestions[1].filter = filter_eoln_getinfo;
+	suggestions[1].fork = NULL;
+	suggestions[1].description = NULL;
+
+	suggestions[2].viability = is_normalfile_storagetype(ent.storage_type) ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
+	suggestions[2].filter = NULL;
+	suggestions[2].fork = "";
+	suggestions[2].description = "Raw (data fork)";
+
+	suggestions[3].viability = SUGGESTION_POSSIBLE;
+	suggestions[3].filter = NULL;
+	suggestions[3].fork = "RESOURCE_FORK";
+	suggestions[3].description = "Raw (resource fork)";
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size)
 {
 	imgtoolerr_t err;
@@ -1884,6 +1918,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->delete_dir					= prodos_diskimage_deletedir;
 	module->get_attrs					= prodos_diskimage_getattrs;
 	module->set_attrs					= prodos_diskimage_setattrs;
+	module->suggest_transfer			= prodos_diskimage_suggesttransfer;
 	module->get_chain					= prodos_diskimage_getchain;
 	return IMGTOOLERR_SUCCESS;
 }

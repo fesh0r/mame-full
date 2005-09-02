@@ -280,7 +280,7 @@ imgtoolerr_t img_createdir(imgtool_image *img, const char *path);
  */
 imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
 
-/* img_suggest_filters
+/* img_suggesttransfer
  *
  * Description:
  *		Suggest a list of filters appropriate for a file
@@ -289,7 +289,7 @@ imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
  *		image:				The image to read from
  *		path:				The path to the directory to delete
  */
-imgtoolerr_t img_suggest_filters(imgtool_image *image, const char *path, imgtool_filter_suggestion *suggestions, size_t suggestions_length);
+imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 
 /* img_getchain
  * img_getchain_string

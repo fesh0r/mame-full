@@ -968,6 +968,61 @@ done:
 
 
 
+struct extract_suggestion_info
+{
+	int selected;
+	imgtool_transfer_suggestion suggestions[8];
+};
+
+
+
+static UINT_PTR CALLBACK extract_dialog_hook(HWND dlgwnd, UINT message,
+	WPARAM wparam, LPARAM lparam)
+{
+	UINT_PTR rc = 0;
+	int i;
+	HWND filter_combo;
+	struct extract_suggestion_info *info;
+	OPENFILENAME *ofi;
+	LONG_PTR l;
+
+	filter_combo = GetDlgItem(dlgwnd, IDC_FILTERCOMBO);
+
+	switch(message)
+	{
+		case WM_INITDIALOG:
+			ofi = (OPENFILENAME *) lparam;
+			info = (struct extract_suggestion_info *) ofi->lCustData;
+			SetWindowLongPtr(dlgwnd, GWLP_USERDATA, (LONG_PTR) info);
+			
+			for (i = 0; info->suggestions[i].viability; i++)
+			{
+				SendMessage(filter_combo, CB_ADDSTRING, 0, (LPARAM) info->suggestions[i].description);
+			}
+			SendMessage(filter_combo, CB_SETCURSEL, info->selected, 0);
+
+			rc = TRUE;
+			break;
+
+		case WM_COMMAND:
+			switch(HIWORD(wparam))
+			{
+				case CBN_SELCHANGE:
+					if (LOWORD(wparam) == IDC_FILTERCOMBO)
+					{
+						l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
+						info = (struct extract_suggestion_info *) l;
+						info->selected = SendMessage(filter_combo, CB_GETCURSEL, 0, 0);
+					}
+					break;
+			}
+			break;
+	}
+	return rc;
+}
+
+
+
 static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, void *param)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -976,26 +1031,64 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	struct wimgtool_info *info;
 	const char *filename;
 	const char *image_basename;
+	const char *fork;
+	struct extract_suggestion_info suggestion_info;
 	int i;
+	filter_getinfoproc filter;
 
 	info = get_wimgtool_info(window);
 
 	filename = entry->filename;
 
+	// figure out a suggested host filename
 	image_basename = entry->filename;
 	for (i = 0; entry->filename[i]; i++)
 	{
 		if (entry->filename[i] == img_module(info->image)->path_separator)
 			image_basename = &entry->filename[i + 1];
 	}
-
 	_tcscpy(host_filename, U2T(image_basename));
 
+
+	// try suggesting some filters (only if doing a single file)
+	if (!entry->directory)
+	{
+		img_suggesttransfer(info->image, filename, suggestion_info.suggestions,
+			sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]));
+
+		suggestion_info.selected = 0;
+		for (i = 0; i < sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]); i++)
+		{
+			if (suggestion_info.suggestions[i].viability == SUGGESTION_RECOMMENDED)
+			{
+				suggestion_info.selected = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		memset(&suggestion_info, 0, sizeof(suggestion_info));
+		suggestion_info.selected = -1;
+	}
+
+	// set up the OPENFILENAME struct
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
+	ofn.Flags = OFN_EXPLORER;
 	ofn.lpstrFile = host_filename;
 	ofn.lpstrFilter = TEXT("All files (*.*)\0*.*\0");
 	ofn.nMaxFile = sizeof(host_filename) / sizeof(host_filename[0]);
+
+	if (suggestion_info.suggestions[0].viability)
+	{
+		ofn.Flags |= OFN_ENABLEHOOK | OFN_ENABLESIZING | OFN_ENABLETEMPLATE;
+		ofn.lpfnHook = extract_dialog_hook;
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_EXTRACTOPTIONS);
+		ofn.lCustData = (LPARAM) &suggestion_info;
+	}
+
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
@@ -1007,7 +1100,18 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	}
 	else
 	{
-		err = img_getfile(info->image, filename, NULL, ofn.lpstrFile, NULL);
+		if (suggestion_info.selected >= 0)
+		{
+			fork = suggestion_info.suggestions[suggestion_info.selected].fork;
+			filter = suggestion_info.suggestions[suggestion_info.selected].filter;
+		}
+		else
+		{
+			fork = NULL;
+			filter = NULL;
+		}
+
+		err = img_getfile(info->image, filename, fork, ofn.lpstrFile, filter);
 		if (err)
 			goto done;
 	}

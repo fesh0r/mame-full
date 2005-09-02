@@ -439,6 +439,53 @@ done:
 
 
 
+imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+{
+	imgtoolerr_t err;
+	int i;
+	char *alloc_path = NULL;
+
+	/* clear out buffer */
+	memset(suggestions, 0, sizeof(*suggestions) * suggestions_length);
+
+	if (!image->module->suggest_transfer)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (image->module->path_separator)
+	{
+		err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+		if (err)
+			goto done;
+	}
+
+	err = image->module->suggest_transfer(image, path, suggestions, suggestions_length);
+	if (err)
+		goto done;
+
+	/* fill in any missing descriptions */
+	for (i = 0; suggestions[i].viability; i++)
+	{
+		if (!suggestions[i].description)
+		{
+			if (suggestions[i].filter)
+				suggestions[i].description = filter_get_info_string(suggestions[i].filter, FILTINFO_STR_HUMANNAME);
+			else
+				suggestions[i].description = "Raw";
+		}
+	}
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
 imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent *chain, size_t chain_size)
 {
 	size_t i;

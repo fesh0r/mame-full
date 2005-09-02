@@ -528,6 +528,37 @@ static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *f
 
 
 
+static imgtoolerr_t rsdos_diskimage_suggesttransfer(imgtool_image *image, const char *fname, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+{
+	imgtoolerr_t err;
+	struct rsdos_dirent ent;
+	int pos;
+
+	err = lookup_rsdos_file(image, fname, &ent, &pos);
+	if (err)
+		return err;
+
+	if (ent.asciiflag == (char) 0xFF)
+	{
+		/* ASCII file */
+		suggestions[0].viability = SUGGESTION_RECOMMENDED;
+		suggestions[0].filter = filter_eoln_getinfo;
+		suggestions[1].viability = SUGGESTION_POSSIBLE;
+		suggestions[1].filter = NULL;
+	}
+	else if (ent.ftype == 0)
+	{
+		/* tokenized BASIC file */
+		suggestions[0].viability = SUGGESTION_RECOMMENDED;
+		suggestions[0].filter = NULL;
+		suggestions[1].viability = SUGGESTION_POSSIBLE;
+		suggestions[1].filter = filter_cocobas_getinfo;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 /*********************************************************************
 	Imgtool module declaration
 *********************************************************************/
@@ -557,6 +588,7 @@ static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct 
 	module->read_file				= rsdos_diskimage_readfile;
 	module->write_file				= rsdos_diskimage_writefile;
 	module->delete_file				= rsdos_diskimage_deletefile;
+	module->suggest_transfer		= rsdos_diskimage_suggesttransfer;
 	module->writefile_optguide		= coco_rsdos_writefile_optionguide;
 	module->writefile_optspec		= "T0-[2]-3;M0-[1]";
 	return IMGTOOLERR_SUCCESS;

@@ -27,6 +27,19 @@ typedef struct _imgtool_image imgtool_image;
 typedef struct _imgtool_imageenum imgtool_imageenum;
 typedef struct _imgtool_library imgtool_library;
 
+union filterinfo
+{
+	INT64	i;											/* generic integers */
+	void *	p;											/* generic pointers */
+	genf *  f;											/* generic function pointers */
+	const char *s;										/* generic strings */
+
+	imgtoolerr_t (*read_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t (*write_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+};
+
+typedef void (*filter_getinfoproc)(UINT32 state, union filterinfo *info);
+
 typedef enum
 {
 	ITLS_NAME,
@@ -69,10 +82,20 @@ typedef struct
 	char forkname[64];
 } imgtool_forkent;
 
+typedef enum
+{
+	SUGGESTION_END,
+	SUGGESTION_POSSIBLE,
+	SUGGESTION_RECOMMENDED
+} imgtool_suggestion_viability_t;
+
 typedef struct
 {
-	unsigned int recommended : 1;
-} imgtool_filter_suggestion;
+	imgtool_suggestion_viability_t viability;
+	filter_getinfoproc filter;
+	const char *fork;
+	const char *description;
+} imgtool_transfer_suggestion;
 
 enum
 {
@@ -140,9 +163,9 @@ struct ImageModule
 	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
-	imgtoolerr_t	(*suggest_filters)(imgtool_image *image, const char *path, imgtool_filter_suggestion *suggestions, size_t suggestions_length);
 	imgtoolerr_t	(*get_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
 	imgtoolerr_t	(*set_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+	imgtoolerr_t	(*suggest_transfer)(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);

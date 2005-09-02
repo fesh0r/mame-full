@@ -18,17 +18,6 @@
 
 typedef struct _imgtool_filter imgtool_filter;
 
-union filterinfo
-{
-	INT64	i;											/* generic integers */
-	void *	p;											/* generic pointers */
-	genf *  f;											/* generic function pointers */
-	const char *s;										/* generic strings */
-
-	imgtoolerr_t (*read_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
-	imgtoolerr_t (*write_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
-};
-
 enum
 {
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
@@ -46,8 +35,6 @@ enum
 	FILTINFO_STR_HUMANNAME,
 	FILTINFO_STR_EXTENSION
 };
-
-typedef void (*filter_getinfoproc)(UINT32 state, union filterinfo *info);
 
 extern const filter_getinfoproc filters[];
 
