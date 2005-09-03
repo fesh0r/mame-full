@@ -457,9 +457,12 @@ imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool
 	/* cannonicalize path */
 	if (image->module->path_separator)
 	{
-		err = cannonicalize_path(image, FALSE, &path, &alloc_path);
-		if (err)
-			goto done;
+		if (path)
+		{
+			err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+			if (err)
+				goto done;
+		}
 	}
 
 	err = image->module->suggest_transfer(image, path, suggestions, suggestions_length);

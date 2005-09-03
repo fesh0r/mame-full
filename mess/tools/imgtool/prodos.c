@@ -1812,12 +1812,18 @@ static imgtoolerr_t prodos_diskimage_suggesttransfer(imgtool_image *image, const
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
+	int is_extended = FALSE;
 
-	err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
-	if (err)
-		return err;
+	if (path)
+	{
+		err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
+		if (err)
+			return err;
 
-	suggestions[0].viability = is_normalfile_storagetype(ent.storage_type) ? SUGGESTION_POSSIBLE : SUGGESTION_RECOMMENDED;
+		is_extended = is_extendedfile_storagetype(ent.storage_type);
+	}
+
+	suggestions[0].viability = !is_extended ? SUGGESTION_POSSIBLE : SUGGESTION_RECOMMENDED;
 	suggestions[0].filter = filter_macbinary_getinfo;
 	suggestions[0].fork = NULL;
 	suggestions[0].description = NULL;
@@ -1827,7 +1833,7 @@ static imgtoolerr_t prodos_diskimage_suggesttransfer(imgtool_image *image, const
 	suggestions[1].fork = NULL;
 	suggestions[1].description = NULL;
 
-	suggestions[2].viability = is_normalfile_storagetype(ent.storage_type) ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
+	suggestions[2].viability = !is_extended ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
 	suggestions[2].filter = NULL;
 	suggestions[2].fork = "";
 	suggestions[2].description = "Raw (data fork)";

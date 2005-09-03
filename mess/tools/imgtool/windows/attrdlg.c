@@ -7,7 +7,8 @@
 #include "wimgres.h"
 #include "opcntrl.h"
 
-#define CONTROL_START 10000
+#define CONTROL_FILTER	10000
+#define CONTROL_START	10001
 
 static const TCHAR owner_prop[] = TEXT("wimgtool_owned");
 
@@ -24,7 +25,7 @@ static HFONT get_window_font(HWND window)
 
 
 static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
-	const struct OptionGuide *guide, const char *optspec)
+	struct transfer_suggestion_info *suggestion_info, const struct OptionGuide *guide, const char *optspec)
 {
 	int label_width = 100;
 	int control_height = 20;
@@ -32,15 +33,15 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 	RECT dialog_rect;
 	HWND control, aux_control;
 	DWORD style;
-	int i, x, width;
+	int i, x, width, selected;
 	char buf[256];
 
 	GetWindowRect(dialog, &dialog_rect);
 
-	for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
+	if (suggestion_info)
 	{
 		// set up label control
-		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Mode:");
 		control = CreateWindow(TEXT("STATIC"), U2T(buf), WS_CHILD | WS_VISIBLE,
 			margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
 		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
@@ -50,64 +51,108 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 		x = margin + label_width;
 		width = dialog_rect.right - dialog_rect.left - x - margin;
 
-		aux_control = NULL;
-		switch(guide[i].option_type)
-		{
-			case OPTIONTYPE_STRING:
-				style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP;
-				control = CreateWindow(TEXT("Edit"), NULL, style,
-						x, *y, width, control_height, dialog, NULL, NULL, NULL);
-				break;
+		style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
+		control = CreateWindow(TEXT("ComboBox"), NULL, style,
+				x, *y, width, control_height * 8, dialog, NULL, NULL, NULL);
 
-			case OPTIONTYPE_INT:
-				style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_NUMBER;
-				control = CreateWindow(TEXT("Edit"), NULL, style,
-						x, *y, width - 16, control_height, dialog, NULL, NULL, NULL);
-				style = WS_CHILD | WS_VISIBLE | UDS_AUTOBUDDY;
-				aux_control = CreateWindow(TEXT("msctls_updown32"), NULL, style,
-						x + width - 16, *y, 16, control_height, dialog, NULL, NULL, NULL);
-				SendMessage(aux_control, UDM_SETRANGE32, 0x80000000, 0x7FFFFFFF);
-				break;
-
-			case OPTIONTYPE_ENUM_BEGIN:
-				style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
-				control = CreateWindow(TEXT("ComboBox"), NULL, style,
-						x, *y, width, control_height * 8, dialog, NULL, NULL, NULL);
-				break;
-
-			default:
-				control = NULL;
-				break;
-		}
-
-		if (!control)
-			return -1;
-
-		SetWindowLong(control, GWL_ID, CONTROL_START + control_count++);
+		SetWindowLong(control, GWL_ID, CONTROL_FILTER);
 		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
 		SetProp(control, owner_prop, (HANDLE) 1);
-		win_prepare_option_control(control, &guide[i], optspec);
 
-		if (aux_control)
-			SetProp(aux_control, owner_prop, (HANDLE) 1);
-
-		if (guide[i].option_type == OPTIONTYPE_ENUM_BEGIN)
+		selected = 0;
+		for (i = 0; suggestion_info->suggestions[i].viability; i++)
 		{
-			while(guide[i+1].option_type == OPTIONTYPE_ENUM_VALUE)
-				i++;
+			SendMessage(control, CB_ADDSTRING, 0, (LPARAM) suggestion_info->suggestions[i].description);
+			if (suggestion_info->suggestions[i].viability == SUGGESTION_RECOMMENDED)
+				selected = i;
 		}
+		SendMessage(control, CB_SETCURSEL, selected, 0);
 
 		*y += control_height;
+	}
+
+	if (guide)
+	{
+		for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
+		{
+			// set up label control
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
+			control = CreateWindow(TEXT("STATIC"), U2T(buf), WS_CHILD | WS_VISIBLE,
+				margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
+			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+			SetProp(control, owner_prop, (HANDLE) 1);
+
+			// set up the active control
+			x = margin + label_width;
+			width = dialog_rect.right - dialog_rect.left - x - margin;
+
+			aux_control = NULL;
+			switch(guide[i].option_type)
+			{
+				case OPTIONTYPE_STRING:
+					style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP;
+					control = CreateWindow(TEXT("Edit"), NULL, style,
+							x, *y, width, control_height, dialog, NULL, NULL, NULL);
+					break;
+
+				case OPTIONTYPE_INT:
+					style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_NUMBER;
+					control = CreateWindow(TEXT("Edit"), NULL, style,
+							x, *y, width - 16, control_height, dialog, NULL, NULL, NULL);
+					style = WS_CHILD | WS_VISIBLE | UDS_AUTOBUDDY;
+					aux_control = CreateWindow(TEXT("msctls_updown32"), NULL, style,
+							x + width - 16, *y, 16, control_height, dialog, NULL, NULL, NULL);
+					SendMessage(aux_control, UDM_SETRANGE32, 0x80000000, 0x7FFFFFFF);
+					break;
+
+				case OPTIONTYPE_ENUM_BEGIN:
+					style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
+					control = CreateWindow(TEXT("ComboBox"), NULL, style,
+							x, *y, width, control_height * 8, dialog, NULL, NULL, NULL);
+					break;
+
+				default:
+					control = NULL;
+					break;
+			}
+
+			if (!control)
+				return -1;
+
+			SetWindowLong(control, GWL_ID, CONTROL_START + control_count++);
+			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+			SetProp(control, owner_prop, (HANDLE) 1);
+			win_prepare_option_control(control, &guide[i], optspec);
+
+			if (aux_control)
+				SetProp(aux_control, owner_prop, (HANDLE) 1);
+
+			if (guide[i].option_type == OPTIONTYPE_ENUM_BEGIN)
+			{
+				while(guide[i+1].option_type == OPTIONTYPE_ENUM_VALUE)
+					i++;
+			}
+
+			*y += control_height;
+		}
 	}
 	return control_count;
 }
 
 
 
-static void apply_option_controls(HWND dialog, option_resolution *resolution, int control_count)
+static void apply_option_controls(HWND dialog, struct transfer_suggestion_info *suggestion_info,
+	option_resolution *resolution, int control_count)
 {
 	int i;
 	HWND control;
+
+	if (suggestion_info)
+	{
+		control = GetDlgItem(dialog, CONTROL_FILTER);
+		if (control)
+			suggestion_info->selected = SendMessage(control, CB_GETCURSEL, 0, 0);
+	}
 
 	for (i = 0; i < control_count; i++)
 	{
@@ -203,7 +248,7 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 		y = r1.bottom + info->margin - r2.top;
 
 		info->control_count = create_option_controls(dlgwnd, font,
-			r1.left - r2.left, &y, guide, info->module->createimage_optspec);
+			r1.left - r2.left, &y, NULL, guide, info->module->createimage_optspec);
 	}
 	adjust_dialog_height(dlgwnd);
 	return 0;
@@ -303,7 +348,7 @@ UINT_PTR CALLBACK win_new_dialog_hook(HWND dlgwnd, UINT message,
 					if (module->createimage_optguide && module->createimage_optspec)
 					{
 						resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
-						apply_option_controls(dlgwnd, resolution, info->control_count);
+						apply_option_controls(dlgwnd, NULL, resolution, info->control_count);
 						option_resolution_finish(resolution);
 					}
 					*((option_resolution **) ofn_notify->lpOFN->lCustData) = resolution;
@@ -324,6 +369,7 @@ UINT_PTR CALLBACK win_new_dialog_hook(HWND dlgwnd, UINT message,
 
 struct putfileopt_info
 {
+	struct transfer_suggestion_info *suggestion_info;
 	option_resolution *resolution;
 	const struct OptionGuide *guide;
 	const char *optspec;
@@ -355,7 +401,7 @@ static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
 			xmargin = r1.left - r2.left;
 			ymargin = y = r1.top - r2.top - 20;
 
-			control_count = create_option_controls(dialog, font, xmargin, &y, pfo_info->guide, pfo_info->optspec);
+			control_count = create_option_controls(dialog, font, xmargin, &y, pfo_info->suggestion_info, pfo_info->guide, pfo_info->optspec);
 			if (control_count < 0)
 				return -1;
 			pfo_info->control_count = control_count;
@@ -375,7 +421,7 @@ static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
 				{
 					l = GetWindowLongPtr(dialog, GWLP_USERDATA);
 					pfo_info = (struct putfileopt_info *) l;
-					apply_option_controls(dialog, pfo_info->resolution, pfo_info->control_count);
+					apply_option_controls(dialog, pfo_info->suggestion_info, pfo_info->resolution, pfo_info->control_count);
 				}
 
 				EndDialog(dialog, LOWORD(wparam));
@@ -387,7 +433,8 @@ static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
 
 
 
-imgtoolerr_t win_show_option_dialog(HWND parent, const struct OptionGuide *guide, const char *optspec,
+imgtoolerr_t win_show_option_dialog(HWND parent, struct transfer_suggestion_info *suggestion_info,
+	const struct OptionGuide *guide, const char *optspec,
 	option_resolution **result, BOOL *cancel)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -397,16 +444,20 @@ imgtoolerr_t win_show_option_dialog(HWND parent, const struct OptionGuide *guide
 
 	*cancel = FALSE;
 
-	res = option_resolution_create(guide, optspec);
-	if (!res)
+	if (guide)
 	{
-		err = IMGTOOLERR_OUTOFMEMORY;
-		goto done;
+		res = option_resolution_create(guide, optspec);
+		if (!res)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
 	}
 
 	pfo_info.resolution = res;
 	pfo_info.guide = guide;
 	pfo_info.optspec = optspec;
+	pfo_info.suggestion_info = suggestion_info;
 	rc = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_FILEOPTIONS), parent,
 		putfileopt_dialogproc, (LPARAM) &pfo_info);
 	*cancel = (rc == IDCANCEL);

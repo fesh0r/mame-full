@@ -36,7 +36,8 @@ Imgtool Changes:
 - [RSDOS] Fixed an unexpected error message if the directory track fills up.
   [Nate Woods]
 
-- [Windows] Added a feature to use filters when extracting files.  [Nate Woods]
+- [Windows] Added a feature to use filters when inserting and extracting files.
+  (bug #631) [Nate Woods]
 
 
 

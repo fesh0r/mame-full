@@ -917,6 +917,9 @@ static void menu_insert(HWND window)
 	BOOL cancel;
 	const struct ImageModule *module;
 	const char *fork = NULL;
+	struct transfer_suggestion_info suggestion_info;
+	int use_suggestion_info;
+	filter_getinfoproc filter = NULL;
 
 	info = get_wimgtool_info(window);
 
@@ -931,14 +934,27 @@ static void menu_insert(HWND window)
 	}
 
 	module = img_module(info->image);
-	if (module->writefile_optguide && module->writefile_optspec)
+
+	img_suggesttransfer(info->image, NULL, suggestion_info.suggestions,
+		sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]));
+
+	/* do we need to show an option dialog? */
+	if (suggestion_info.suggestions[0].viability || (module->writefile_optguide && module->writefile_optspec))
 	{
-		err = win_show_option_dialog(window, module->writefile_optguide,
-			module->writefile_optspec, &opts, &cancel);
+		use_suggestion_info = (suggestion_info.suggestions[0].viability != SUGGESTION_END);
+		err = win_show_option_dialog(window, use_suggestion_info ? &suggestion_info : NULL,
+			module->writefile_optguide, module->writefile_optspec, &opts, &cancel);
 		if (err || cancel)
 			goto done;
+
+		if (use_suggestion_info)
+		{
+			fork = suggestion_info.suggestions[suggestion_info.selected].fork;
+			filter = suggestion_info.suggestions[suggestion_info.selected].filter;
+		}
 	}
 
+	/* figure out the image filename */
 	s1 = _tcsrchr(ofn.lpstrFile, '\\');
 	s1 = s1 ? s1 + 1 : ofn.lpstrFile;
 	image_filename = T2U(s1);
@@ -951,7 +967,7 @@ static void menu_insert(HWND window)
 		image_filename = s2;
 	}
 
-	err = img_putfile(info->image, image_filename, fork, ofn.lpstrFile, opts, NULL);
+	err = img_putfile(info->image, image_filename, fork, ofn.lpstrFile, opts, filter);
 	if (err)
 		goto done;
 
@@ -968,21 +984,13 @@ done:
 
 
 
-struct extract_suggestion_info
-{
-	int selected;
-	imgtool_transfer_suggestion suggestions[8];
-};
-
-
-
 static UINT_PTR CALLBACK extract_dialog_hook(HWND dlgwnd, UINT message,
 	WPARAM wparam, LPARAM lparam)
 {
 	UINT_PTR rc = 0;
 	int i;
 	HWND filter_combo;
-	struct extract_suggestion_info *info;
+	struct transfer_suggestion_info *info;
 	OPENFILENAME *ofi;
 	LONG_PTR l;
 
@@ -992,7 +1000,7 @@ static UINT_PTR CALLBACK extract_dialog_hook(HWND dlgwnd, UINT message,
 	{
 		case WM_INITDIALOG:
 			ofi = (OPENFILENAME *) lparam;
-			info = (struct extract_suggestion_info *) ofi->lCustData;
+			info = (struct transfer_suggestion_info *) ofi->lCustData;
 			SetWindowLongPtr(dlgwnd, GWLP_USERDATA, (LONG_PTR) info);
 			
 			for (i = 0; info->suggestions[i].viability; i++)
@@ -1011,7 +1019,7 @@ static UINT_PTR CALLBACK extract_dialog_hook(HWND dlgwnd, UINT message,
 					if (LOWORD(wparam) == IDC_FILTERCOMBO)
 					{
 						l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
-						info = (struct extract_suggestion_info *) l;
+						info = (struct transfer_suggestion_info *) l;
 						info->selected = SendMessage(filter_combo, CB_GETCURSEL, 0, 0);
 					}
 					break;
@@ -1032,7 +1040,7 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	const char *filename;
 	const char *image_basename;
 	const char *fork;
-	struct extract_suggestion_info suggestion_info;
+	struct transfer_suggestion_info suggestion_info;
 	int i;
 	filter_getinfoproc filter;
 
