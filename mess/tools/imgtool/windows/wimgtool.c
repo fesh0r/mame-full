@@ -756,7 +756,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	if (read_or_write != OSD_FOPEN_READ)
 	{
 		features = img_get_module_features(module);
-		if (!features.supports_writing && !features.supports_createdir && !features.supports_deletefile && !features.supports_deletedir)
+		if (features.is_read_only)
 			read_or_write = OSD_FOPEN_READ;
 	}
 

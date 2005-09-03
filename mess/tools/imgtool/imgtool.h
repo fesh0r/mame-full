@@ -382,6 +382,7 @@ struct imgtool_module_features
 	unsigned int supports_readsector : 1;
 	unsigned int supports_writesector : 1;
 	unsigned int supports_forks : 1;
+	unsigned int is_read_only : 1;
 };
 
 struct imgtool_module_features img_get_module_features(const struct ImageModule *module);

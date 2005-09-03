@@ -38,6 +38,10 @@
 	
 	For more information, consult http://www.lazerware.com/formats/macbinary.html
 
+	TODO: I believe that the script code is some sort of identifier identifying
+	the character set used for the filename.  If this is true, we are not
+	handling that properly
+
 *****************************************************************************/
 
 #include <string.h>
@@ -46,8 +50,7 @@
 static UINT32 mac_time(time_t t)
 {
 	/* not sure if this is correct... */
-	return t
-		+ (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
+	return t + (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
 }
 
 
@@ -60,20 +63,34 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 		IMGTOOLATTR_TIME_LASTMODIFIED,
 		IMGTOOLATTR_INT_MAC_TYPE,
 		IMGTOOLATTR_INT_MAC_CREATOR,
+		IMGTOOLATTR_INT_MAC_FINDERFLAGS,
+		IMGTOOLATTR_INT_MAC_COORDX,
+		IMGTOOLATTR_INT_MAC_COORDY,
+		IMGTOOLATTR_INT_MAC_FINDERFOLDER,
+		IMGTOOLATTR_INT_MAC_SCRIPTCODE,
+		IMGTOOLATTR_INT_MAC_EXTENDEDFLAGS,
 		0
 	};
 	imgtoolerr_t err;
 	UINT8 header[126];
 	const char *basename;
 	int i, len;
+
 	UINT32 type_code;
 	UINT32 creator_code;
+	UINT16 finder_flags;
+	UINT16 coord_x;
+	UINT16 coord_y;
+	UINT16 finder_folder;
+	UINT8 script_code;
+	UINT8 extended_flags;
+
 	imgtool_forkent fork_entries[4];
 	const imgtool_forkent *data_fork = NULL;
 	const imgtool_forkent *resource_fork = NULL;
 	UINT32 creation_time;
 	UINT32 lastmodified_time;
-	imgtool_attribute attr_values[4];
+	imgtool_attribute attr_values[10];
 
 	/* get the forks */
 	err = img_listforks(image, filename, fork_entries, sizeof(fork_entries));
@@ -91,10 +108,16 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	err = img_module(image)->get_attrs(image, filename, attrs, attr_values);
 	if (err)
 		return err;
-	creation_time = mac_time(attr_values[0].t);
+	creation_time     = mac_time(attr_values[0].t);
 	lastmodified_time = mac_time(attr_values[1].t);
-	type_code = attr_values[2].i;
-	creator_code = attr_values[3].i;
+	type_code         = attr_values[2].i;
+	creator_code      = attr_values[3].i;
+	finder_flags      = attr_values[4].i;
+	coord_x           = attr_values[5].i;
+	coord_y           = attr_values[6].i;
+	finder_folder     = attr_values[7].i;
+	script_code       = attr_values[8].i;
+	extended_flags    = attr_values[9].i;
 
 	memset(header, 0, sizeof(header));
 
@@ -111,13 +134,22 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 
 	place_integer_be(header,  65, 4, type_code);
 	place_integer_be(header,  69, 4, creator_code);
+	place_integer_be(header,  73, 1, (finder_flags >> 8) & 0xFF);
+	place_integer_be(header,  75, 2, coord_x);
+	place_integer_be(header,  77, 2, coord_y);
+	place_integer_be(header,  79, 2, finder_folder);
 	place_integer_be(header,  83, 4, data_fork ? data_fork->size : 0);
 	place_integer_be(header,  87, 4, resource_fork ? resource_fork->size : 0);
 	place_integer_be(header,  91, 4, creation_time);
 	place_integer_be(header,  95, 4, lastmodified_time);
-	place_integer_be(header, 122, 1, 0x81);
+	place_integer_be(header, 101, 1, (finder_flags >> 0) & 0xFF);
+	place_integer_be(header, 102, 4, 0x6D42494E);
+	place_integer_be(header, 106, 1, script_code);
+	place_integer_be(header, 107, 1, extended_flags);
+	place_integer_be(header, 122, 1, 0x82);
 	place_integer_be(header, 123, 1, 0x81);
-	
+	place_integer_be(header, 124, 2, ccitt_crc16(0, header, 124));
+
 	stream_write(destf, header, sizeof(header));
 	
 	if (data_fork)
@@ -191,6 +223,6 @@ void filter_macbinary_getinfo(UINT32 state, union filterinfo *info)
 		case FILTINFO_STR_HUMANNAME:	info->s = "MacBinary"; break;
 		case FILTINFO_STR_EXTENSION:	info->s = "bin"; break;
 		case FILTINFO_PTR_READFILE:		info->read_file = macbinary_readfile; break;
-		case FILTINFO_PTR_WRITEFILE:	info->write_file = 0 ? NULL : macbinary_writefile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = macbinary_writefile; break;
 	}
 }

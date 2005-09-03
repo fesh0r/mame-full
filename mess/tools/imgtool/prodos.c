@@ -93,6 +93,29 @@
 	  27       1  Secondary info #2 type (1=FInfo 2=xFInfo)
 	  28      16  FInfo or xFInfo
 
+  FInfo format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       4  File type
+	   4       4  File creator
+	   8       2  Finder flags
+      10       2  X Coordinate
+	  12       2  Y Coordinate
+	  14       2  Finder folder
+
+  xFInfo format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       2  Icon ID
+	   2       6  Reserved
+	   8       1  Script Code
+	   9       1  Extended flags
+      10       2  Comment ID
+	  12       4  Put Away Directory
+
+
   For more info, consult ProDOS technical note #25
 	(http://web.pdx.edu/~heiss/technotes/pdos/tn.pdos.25.html)
 
@@ -133,8 +156,24 @@ struct prodos_dirent
 	int depth[2];
 	UINT32 lastmodified_time;
 	UINT32 creation_time;
+
+	unsigned int has_finfo : 1;
+	unsigned int has_xfinfo : 1;
+
+	/* FInfo */
 	UINT32 file_type;
 	UINT32 file_creator;
+	UINT16 finder_flags;
+	UINT16 coord_x;
+	UINT16 coord_y;
+	UINT16 finder_folder;
+
+	/* xFInfo */
+	UINT16 icon_id;
+	UINT8 script_code;
+	UINT8 extended_flags;
+	UINT16 comment_id;
+	UINT32 putaway_directory;
 };
 
 typedef enum
@@ -722,9 +761,11 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 {
 	imgtoolerr_t err;
 	struct prodos_diskinfo *di;
+	size_t finfo_offset;
 	UINT32 next_block, next_index;
 	UINT32 offset;
 	UINT8 buffer[BLOCK_SIZE];
+	const UINT8 *finfo;
 	int fork_num;
 
 	di = get_prodos_info(image);
@@ -743,6 +784,17 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	ent->lastmodified_time	= pick_integer_le(appleenum->block_data, offset + 33, 4);
 	ent->file_type = 0x3F3F3F3F;
 	ent->file_creator = 0x3F3F3F3F;
+	ent->has_finfo = 0;
+	ent->has_xfinfo = 0;
+	ent->finder_flags  = 0;
+	ent->coord_x = 0;
+	ent->coord_y = 0;
+	ent->finder_folder = 0;
+	ent->icon_id = 0;
+	ent->script_code = 0;
+	ent->extended_flags = 0;
+	ent->comment_id = 0;
+	ent->putaway_directory = 0;
 
 	if (is_extendedfile_storagetype(ent->storage_type))
 	{
@@ -759,6 +811,36 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 			ent->key_pointer[fork_num]	= pick_integer_le(buffer, 1 + (fork_num * 256), 2);
 			ent->filesize[fork_num]		= pick_integer_le(buffer, 5 + (fork_num * 256), 3);
 			ent->depth[fork_num]		= buffer[fork_num * 256] & 0x0F;
+
+			for (finfo_offset = 10; finfo_offset <= 28; finfo_offset += 18)
+			{
+				finfo = &buffer[finfo_offset + (fork_num * 256)];
+
+				if (*(finfo++) == 18)
+				{
+					switch(*(finfo++))
+					{
+						case 1:	/* FInfo */
+							ent->has_finfo = 1;
+							ent->file_type     = pick_integer_be(finfo,  0, 4);
+							ent->file_creator  = pick_integer_be(finfo,  4, 4);
+							ent->finder_flags  = pick_integer_be(finfo,  8, 2);
+							ent->coord_x       = pick_integer_be(finfo, 10, 2);
+							ent->coord_y       = pick_integer_be(finfo, 12, 2);
+							ent->finder_folder = pick_integer_be(finfo, 14, 4);
+							break;
+
+						case 2:	/* xFInfo */
+							ent->has_xfinfo = 1;
+							ent->icon_id           = pick_integer_be(finfo,  0, 2);
+							ent->script_code       = pick_integer_be(finfo,  8, 1);
+							ent->extended_flags    = pick_integer_be(finfo,  9, 1);
+							ent->comment_id        = pick_integer_be(finfo, 10, 2);
+							ent->putaway_directory = pick_integer_be(finfo, 12, 4);
+							break;
+					}
+				}
+			}
 		}
 	}
 	else
@@ -1513,6 +1595,10 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 			return err;
 	}
 
+	/* have we not actually received the correct amount of bytes? if not, fill in the rest */
+	if (ent.filesize[fork_num] > 0)
+		stream_fill(destf, 0, ent.filesize[fork_num]);
+
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1788,6 +1874,34 @@ static imgtoolerr_t prodos_diskimage_getattrs(imgtool_image *image, const char *
 			case IMGTOOLATTR_INT_MAC_CREATOR:
 				values[i].i = ent.file_creator;
 				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFLAGS:
+				values[i].i = ent.finder_flags;
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDX:
+				values[i].i = ent.coord_x;
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDY:
+				values[i].i = ent.coord_y;
+				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFOLDER:
+				values[i].i = ent.finder_folder;
+				break;
+			case IMGTOOLATTR_INT_MAC_ICONID:
+				values[i].i = ent.icon_id;
+				break;
+			case IMGTOOLATTR_INT_MAC_SCRIPTCODE:
+				values[i].i = ent.finder_folder;
+				break;
+			case IMGTOOLATTR_INT_MAC_EXTENDEDFLAGS:
+				values[i].i = ent.extended_flags;
+				break;
+			case IMGTOOLATTR_INT_MAC_COMMENTID:
+				values[i].i = ent.comment_id;
+				break;
+			case IMGTOOLATTR_INT_MAC_PUTAWAYDIRECTORY:
+				values[i].i = ent.putaway_directory;
+				break;
+
 			case IMGTOOLATTR_TIME_CREATED:
 				values[i].t = prodos_crack_time(ent.creation_time);
 				break;

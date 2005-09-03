@@ -301,7 +301,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	{
 		filename = argv[i];
 		printf("Putting file '%s'...\n", filename);
-		err = img_putfile(img, NULL, filename, fork, resolution, filter);
+		err = img_putfile(img, NULL, fork, filename, resolution, filter);
 		if (err)
 			goto error;
 	}
