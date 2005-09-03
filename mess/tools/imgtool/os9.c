@@ -78,22 +78,6 @@ struct os9_direnum
 
 
 
-static UINT32 pick_integer(const void *ptr, size_t offset, size_t length)
-{
-	UINT32 value = 0;
-	UINT8 b;
-
-	while(length--)
-	{
-		b = ((UINT8 *) ptr)[offset++];
-		value <<= 8;
-		value |= b;
-	}
-	return value;
-}
-
-
-
 static void pick_string(const void *ptr, size_t offset, size_t length, char *dest)
 {
 	UINT8 b;
@@ -106,17 +90,6 @@ static void pick_string(const void *ptr, size_t offset, size_t length, char *des
 			length = 0;
 	}
 	*dest = '\0';
-}
-
-
-
-static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
-{
-	while(length > 0)
-	{
-		((UINT8 *) ptr)[offset + --length] = (UINT8) value;
-		value >>= 8;
-	}
 }
 
 
@@ -239,7 +212,7 @@ static int os9_interpret_dirent(void *entry, char **filename, UINT32 *lsn, int *
 	entry_b[i] &= 0x7F;
 	entry_b[i+1] = '\0';
 
-	*lsn = pick_integer(entry, 29, 3);
+	*lsn = pick_integer_be(entry, 29, 3);
 	if (strcmp(entry_b, ".") && strcmp(entry_b, ".."))
 		*filename = entry_b;
 	return *filename != NULL;
@@ -263,10 +236,10 @@ static imgtoolerr_t os9_decode_file_header(imgtool_image *image,
 		return err;
 
 	info->lsn				= lsn;
-	attributes				= pick_integer(header, 0, 1);
-	info->owner_id			= pick_integer(header, 1, 2);
-	info->link_count		= pick_integer(header, 8, 1);
-	info->file_size			= pick_integer(header, 9, 4);
+	attributes				= pick_integer_be(header, 0, 1);
+	info->owner_id			= pick_integer_be(header, 1, 2);
+	info->link_count		= pick_integer_be(header, 8, 1);
+	info->file_size			= pick_integer_be(header, 9, 4);
 	info->directory			= (attributes & 0x80) ? 1 : 0;
 	info->non_sharable		= (attributes & 0x40) ? 1 : 0;
 	info->public_execute	= (attributes & 0x20) ? 1 : 0;
@@ -284,8 +257,8 @@ static imgtoolerr_t os9_decode_file_header(imgtool_image *image,
 	max_entries = MIN(max_entries, sizeof(info->sector_map) / sizeof(info->sector_map[0]) - 1);
 	for (i = 0; i < max_entries; i++)
 	{
-		lsn = pick_integer(header, 16 + (i * 5) + 0, 3);
-		count = pick_integer(header, 16 + (i * 5) + 3, 2);
+		lsn = pick_integer_be(header, 16 + (i * 5) + 0, 3);
+		count = pick_integer_be(header, 16 + (i * 5) + 3, 2);
 		if (count <= 0)
 			break;
 
@@ -462,15 +435,15 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 		return err;
 
 	file_info->file_size = new_size;
-	place_integer(header, 9, 4, file_info->file_size);
+	place_integer_be(header, 9, 4, file_info->file_size);
 
 	/* do we have to write the sector map? */
 	if (sector_map_length >= 0)
 	{
 		for (i = 0; i < MIN(sector_map_length + 1, sizeof(file_info->sector_map) / sizeof(file_info->sector_map[0])); i++)
 		{
-			place_integer(header, 16 + (i * 5) + 0, 3, file_info->sector_map[i].lsn);
-			place_integer(header, 16 + (i * 5) + 3, 2, file_info->sector_map[i].count);
+			place_integer_be(header, 16 + (i * 5) + 0, 3, file_info->sector_map[i].lsn);
+			place_integer_be(header, 16 + (i * 5) + 3, 2, file_info->sector_map[i].count);
 		}
 	}
 
@@ -552,7 +525,7 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
 			
 			/* write the file */
 			memset(block, 0, sizeof(block));
-			place_integer(block, 0, 1, 0x1B | ((create == CREATE_DIR) ? 0x80 : 0x00));
+			place_integer_be(block, 0, 1, 0x1B | ((create == CREATE_DIR) ? 0x80 : 0x00));
 			err = os9_write_lsn(img, allocated_lsn, 0, block, sizeof(block));
 			if (err)
 				goto done;
@@ -565,7 +538,7 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
 			/* now prepare the directory entry */
 			memset(entry, 0, sizeof(entry));
 			place_string(entry, 0, 28, path);
-			place_integer(entry, 29, 3, allocated_lsn);
+			place_integer_be(entry, 29, 3, allocated_lsn);
 
 			/* now write the directory entry */
 			entry_index = dir_size;
@@ -616,19 +589,19 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 	if (ferr)
 		return imgtool_floppy_error(ferr);
 
-	info->total_sectors				= pick_integer(header,   0, 3);
-	track_size_in_sectors			= pick_integer(header,   3, 1);
-	info->allocation_bitmap_bytes	= pick_integer(header,   4, 2);
-	info->cluster_size				= pick_integer(header,   6, 2);
-	info->root_dir_lsn				= pick_integer(header,   8, 3);
-	info->owner_id					= pick_integer(header,  11, 2);
-	attributes						= pick_integer(header,  13, 1);
-	info->disk_id					= pick_integer(header,  14, 2);
-	info->format_flags				= pick_integer(header,  16, 1);
-	info->sectors_per_track			= pick_integer(header,  17, 2);
-	info->bootstrap_lsn				= pick_integer(header,  21, 3);
-	info->bootstrap_size			= pick_integer(header,  24, 2);
-	info->sector_size				= pick_integer(header, 104, 2);
+	info->total_sectors				= pick_integer_be(header,   0, 3);
+	track_size_in_sectors			= pick_integer_be(header,   3, 1);
+	info->allocation_bitmap_bytes	= pick_integer_be(header,   4, 2);
+	info->cluster_size				= pick_integer_be(header,   6, 2);
+	info->root_dir_lsn				= pick_integer_be(header,   8, 3);
+	info->owner_id					= pick_integer_be(header,  11, 2);
+	attributes						= pick_integer_be(header,  13, 1);
+	info->disk_id					= pick_integer_be(header,  14, 2);
+	info->format_flags				= pick_integer_be(header,  16, 1);
+	info->sectors_per_track			= pick_integer_be(header,  17, 2);
+	info->bootstrap_lsn				= pick_integer_be(header,  21, 3);
+	info->bootstrap_size			= pick_integer_be(header,  24, 2);
+	info->sector_size				= pick_integer_be(header, 104, 2);
 
 	info->sides					= (info->format_flags & 0x01) ? 2 : 1;
 	info->double_density		= (info->format_flags & 0x02) ? 1 : 0;
@@ -723,19 +696,19 @@ static imgtoolerr_t os9_diskimage_create(imgtool_image *img, option_resolution *
 	format_flags = ((heads > 1) ? 0x01 : 0x00) | ((tracks > 40) ? 0x02 : 0x00);
 
 	memset(header, 0, sector_bytes);
-	place_integer(header,   0,  3, heads * tracks * sectors);
-	place_integer(header,   3,  1, sectors);
-	place_integer(header,   4,  2, (allocation_bitmap_bits + 7) / 8);
-	place_integer(header,   6,  2, cluster_size);
-	place_integer(header,   8,  3, 1 + allocation_bitmap_lsns);
-	place_integer(header,  11,  2, owner_id);
-	place_integer(header,  13,  1, attributes);
-	place_integer(header,  14,  2, disk_id);
-	place_integer(header,  16,  1, format_flags);
-	place_integer(header,  17,  2, sectors);
+	place_integer_be(header,   0,  3, heads * tracks * sectors);
+	place_integer_be(header,   3,  1, sectors);
+	place_integer_be(header,   4,  2, (allocation_bitmap_bits + 7) / 8);
+	place_integer_be(header,   6,  2, cluster_size);
+	place_integer_be(header,   8,  3, 1 + allocation_bitmap_lsns);
+	place_integer_be(header,  11,  2, owner_id);
+	place_integer_be(header,  13,  1, attributes);
+	place_integer_be(header,  14,  2, disk_id);
+	place_integer_be(header,  16,  1, format_flags);
+	place_integer_be(header,  17,  2, sectors);
 	place_string(header,   31, 32, title);
-	place_integer(header, 100,  4, 1);
-	place_integer(header, 104,  4, (sector_bytes == 256) ? 0 : sector_bytes);
+	place_integer_be(header, 100,  4, 1);
+	place_integer_be(header, 104,  4, (sector_bytes == 256) ? 0 : sector_bytes);
 
 	err = floppy_write_sector(imgtool_floppy(img), 0, 0, first_sector_id, 0, header, sector_bytes);
 	if (err)
@@ -868,7 +841,7 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	while(!filename[0] || !strcmp(filename, ".") || !strcmp(filename, ".."));
 
 	/* read file attributes */
-	lsn = pick_integer(dir_entry, 29, 3);
+	lsn = pick_integer_be(dir_entry, 29, 3);
 	err = os9_decode_file_header(img_enum_image(enumeration), lsn, &file_info);
 	if (err)
 		return err;
@@ -1110,9 +1083,9 @@ static imgtoolerr_t os9_diskimage_createdir(imgtool_image *image, const char *pa
 
 	memset(dir_data, 0, sizeof(dir_data));
 	place_string(dir_data,   0, 32, ".");
-	place_integer(dir_data, 29,  3, file_info.lsn);
+	place_integer_be(dir_data, 29,  3, file_info.lsn);
 	place_string(dir_data,  32, 32, "..");
-	place_integer(dir_data, 29,  3, parent_lsn);
+	place_integer_be(dir_data, 29,  3, parent_lsn);
 
 	err = os9_write_lsn(image, file_info.sector_map[0].lsn, 0, dir_data, sizeof(dir_data));
 	if (err)
