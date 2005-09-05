@@ -485,6 +485,126 @@ static void node_checkfreespace(struct imgtooltest_state *state, xml_data_node *
 
 
 
+static UINT32 identify_attribute(struct imgtooltest_state *state, xml_data_node *node, imgtool_attribute *value)
+{
+	xml_attribute_node *attr_node;
+	UINT32 attribute;
+
+	attr_node = xml_get_attribute(node, "name");
+	if (!attr_node)
+	{
+		state->failed = 1;
+		error_missingattribute("name");
+		return 0;
+	}
+
+	if (!strcmp(attr_node->value, "mac_file_type"))
+		attribute = IMGTOOLATTR_INT_MAC_TYPE;
+	else if (!strcmp(attr_node->value, "mac_file_creator"))
+		attribute = IMGTOOLATTR_INT_MAC_CREATOR;
+	else
+	{
+		error_missingattribute("name");
+		return 0;
+	}
+
+	attr_node = xml_get_attribute(node, "value");
+	if (!attr_node)
+	{
+		state->failed = 1;
+		error_missingattribute("value");
+		return 0;
+	}
+
+	switch(attribute)
+	{
+		case IMGTOOLATTR_INT_MAC_TYPE:
+		case IMGTOOLATTR_INT_MAC_CREATOR:
+			if (strlen(attr_node->value) != 4)
+			{
+				state->failed = 1;
+				error_missingattribute("value");
+				return 0;
+			}
+			value->i = pick_integer_be(attr_node->value, 0, 4);
+			break;
+	}
+	return attribute;
+}
+
+
+
+static void node_setattr(struct imgtooltest_state *state, xml_data_node *node)
+{
+	imgtoolerr_t err;
+	xml_attribute_node *attr_node;
+	UINT32 attribute;
+	imgtool_attribute value;
+
+	attr_node = xml_get_attribute(node, "path");
+	if (!attr_node)
+	{
+		state->failed = 1;
+		error_missingattribute("path");
+		return;
+	}
+
+	attribute = identify_attribute(state, node, &value);
+	if (!attribute)
+		return;
+
+	err = img_setattr(state->image, attr_node->value, attribute, value);
+	if (err)
+	{
+		state->failed = 1;
+		report_imgtoolerr(err);
+		return;
+	}
+}
+
+
+
+static void node_checkattr(struct imgtooltest_state *state, xml_data_node *node)
+{
+	imgtoolerr_t err;
+	xml_attribute_node *attr_node;
+	UINT32 attribute;
+	imgtool_attribute value;
+	imgtool_attribute expected_value;
+
+	memset(&value, 0, sizeof(value));
+	memset(&expected_value, 0, sizeof(expected_value));
+
+	attr_node = xml_get_attribute(node, "path");
+	if (!attr_node)
+	{
+		state->failed = 1;
+		error_missingattribute("path");
+		return;
+	}
+
+	attribute = identify_attribute(state, node, &expected_value);
+	if (!attribute)
+		return;
+
+	err = img_getattr(state->image, attr_node->value, attribute, &value);
+	if (err)
+	{
+		state->failed = 1;
+		report_imgtoolerr(err);
+		return;
+	}
+
+	if (memcmp(&value, &expected_value, sizeof(value)))
+	{
+		state->failed = 1;
+		error_reportf("Comparison failed\n");
+		return;
+	}
+}
+
+
+
 void node_testimgtool(xml_data_node *node)
 {
 	imgtoolerr_t err;
@@ -530,6 +650,10 @@ void node_testimgtool(xml_data_node *node)
 			node_recordfreespace(&state, child_node);
 		else if (!strcmp(child_node->name, "checkfreespace"))
 			node_checkfreespace(&state, child_node);
+		else if (!strcmp(child_node->name, "setattr"))
+			node_setattr(&state, child_node);
+		else if (!strcmp(child_node->name, "checkattr"))
+			node_checkattr(&state, child_node);
 	}
 
 	report_testcase_ran(state.failed);

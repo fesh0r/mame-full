@@ -439,6 +439,94 @@ done:
 
 
 
+imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	if (!image->module->get_attrs)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (image->module->path_separator)
+	{
+		if (path)
+		{
+			err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+			if (err)
+				goto done;
+		}
+	}
+
+	err = image->module->get_attrs(image, path, attrs, values);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
+imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	if (!image->module->set_attrs)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (image->module->path_separator)
+	{
+		if (path)
+		{
+			err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+			if (err)
+				goto done;
+		}
+	}
+
+	err = image->module->set_attrs(image, path, attrs, values);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
+imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value)
+{
+	UINT32 attrs[2];
+	attrs[0] = attr;
+	attrs[1] = 0;
+	return img_getattrs(image, path, attrs, value);
+}
+
+
+
+imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value)
+{
+	UINT32 attrs[2];
+	attrs[0] = attr;
+	attrs[1] = 0;
+	return img_setattrs(image, path, attrs, &value);
+}
+
+
+
 imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t err;

@@ -115,8 +115,6 @@ enum
 
 	/* --- the following bits of info are returned as pointers to data or functions --- */
 	IMGTOOLATTR_PTR_FIRST = 0x10000,
-	IMGTOOLATTR_PTR_READFILE,
-	IMGTOOLATTR_PTR_WRITEFILE,
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	IMGTOOLATTR_STR_FIRST = 0x20000,

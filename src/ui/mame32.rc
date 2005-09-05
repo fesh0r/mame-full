@@ -1555,11 +1555,9 @@ BEGIN
 #ifdef MESS
     ID_CONTEXT_FILTERS      "Allows filtering out systems from a folder"
     ID_CONTEXT_SELECT_RANDOM "Randomly select a system."
-    ID_FILE_PLAY_RECORD_WAVE "Record the sound output of a system"
 #else
     ID_CONTEXT_FILTERS      "Allows filtering out games from a folder"
     ID_CONTEXT_SELECT_RANDOM "Randomly select a game."
-    ID_FILE_PLAY_RECORD_WAVE "Record the sound output of a game"
 #endif
 END
 

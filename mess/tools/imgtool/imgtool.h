@@ -280,6 +280,25 @@ imgtoolerr_t img_createdir(imgtool_image *img, const char *path);
  */
 imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
 
+/* img_getattrs
+ * img_setattrs
+ * img_getattrs
+ * img_setattr
+ *
+ * Description:
+ *		Gets or sets attributes on a file
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		path:				The path to the directory to delete
+ *		attrs:				The list of attributes on the file
+ *		values:				Values to get or store
+ */
+imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
+imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value);
+imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value);
+
 /* img_suggesttransfer
  *
  * Description:
