@@ -161,7 +161,8 @@ static xml_attribute_node *add_attribute(xml_data_node *node, const char *name, 
 
 static void xml_element_start(void *data, const XML_Char *name, const XML_Char **attributes)
 {
-	xml_data_node **curnode = data;
+	xml_custom_parse *parse_info = data;
+	xml_data_node **curnode = parse_info->curnode;
 	xml_data_node *newnode;
 	int attr;
 
@@ -188,7 +189,8 @@ static void xml_element_start(void *data, const XML_Char *name, const XML_Char *
 
 static void xml_data(void *data, const XML_Char *s, int len)
 {
-	xml_data_node **curnode = data;
+	xml_custom_parse *parse_info = data;
+	xml_data_node **curnode = parse_info->curnode;
 	int oldlen = 0;
 	char *newdata;
 
@@ -221,12 +223,13 @@ static void xml_data(void *data, const XML_Char *s, int len)
 
 static void xml_element_end(void *data, const XML_Char *name)
 {
-	xml_data_node **curnode = data;
+	xml_custom_parse *parse_info = data;
+	xml_data_node **curnode = parse_info->curnode;
 	char *orig;
 
 	/* strip leading/trailing spaces from the value data */
 	orig = (char *)(*curnode)->value;
-	if (orig)
+	if (orig && parse_info->trim_whitespace)
 	{
 		char *start = orig;
 		char *end = start + strlen(start);
@@ -286,11 +289,16 @@ xml_data_node *xml_file_create(void)
  *
  *************************************/
 
-xml_data_node *xml_file_read(mame_file *file)
+xml_data_node *xml_file_read_custom(xml_custom_parse *parse_info)
 {
 	xml_data_node *rootnode, *curnode;
 	XML_Parser parser;
 	int done;
+
+	/* initialize error results */
+	parse_info->error_message = NULL;
+	parse_info->error_line = 0;
+	parse_info->error_column = 0;
 
 	/* create a root node */
 	rootnode = xml_file_create();
@@ -308,8 +316,11 @@ xml_data_node *xml_file_read(mame_file *file)
 	/* configure the parser */
 	XML_SetElementHandler(parser, xml_element_start, xml_element_end);
 	XML_SetCharacterDataHandler(parser, xml_data);
-	XML_SetUserData(parser, &curnode);
+	XML_SetUserData(parser, parse_info);
 	curnode = rootnode;
+	if (parse_info->init)
+		parse_info->init(parser);
+	parse_info->curnode = &rootnode;
 
 	/* loop through the file and parse it */
 	do
@@ -317,12 +328,16 @@ xml_data_node *xml_file_read(mame_file *file)
 		char tempbuf[TEMP_BUFFER_SIZE];
 
 		/* read as much as we can */
-		int bytes = mame_fread(file, tempbuf, sizeof(tempbuf));
-		done = mame_feof(file);
+		int bytes = parse_info->read(parse_info->param, tempbuf, sizeof(tempbuf));
+		done = parse_info->eof(parse_info->param);
 
 		/* parse the data */
 		if (XML_Parse(parser, tempbuf, bytes, done) == XML_STATUS_ERROR)
 		{
+			parse_info->error_message = XML_ErrorString(XML_GetErrorCode(parser));
+			parse_info->error_line = XML_GetCurrentLineNumber(parser);
+			parse_info->error_column = XML_GetCurrentColumnNumber(parser);
+
 			xml_file_free(rootnode);
 			return NULL;
 		}
@@ -334,6 +349,33 @@ xml_data_node *xml_file_read(mame_file *file)
 
 	/* return the root node */
 	return rootnode;
+}
+
+
+
+static size_t parse_read(void *param, void *buffer, size_t length)
+{
+	return mame_fread((mame_file *) param, buffer, length);
+}
+
+
+
+static int parse_eof(void *param)
+{
+	return mame_feof((mame_file *) param);
+}
+
+
+
+xml_data_node *xml_file_read(mame_file *file)
+{
+	xml_custom_parse parse;
+	parse.init = NULL;
+	parse.read = parse_read;
+	parse.eof = parse_eof;
+	parse.param = (void *) file;
+	parse.trim_whitespace = 1;
+	return xml_file_read_custom(&parse);
 }
 
 

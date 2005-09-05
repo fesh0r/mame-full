@@ -9,11 +9,9 @@
 #ifndef TESTMESS_H
 #define TESTMESS_H
 
+#include "xmlfile.h"
 #include "core.h"
 
-extern const struct messtest_tagdispatch testmess_dispatch[];
-
-void testmess_start_handler(const char **attributes);
-void testmess_end_handler(const void *buffer, size_t size);
+void node_testmess(xml_data_node *node);
 
 #endif /* TESTMESS_H */

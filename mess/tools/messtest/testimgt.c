@@ -14,24 +14,9 @@
 
 struct expected_dirent
 {
-	char filename[256];
+	const char *filename;
 	int size;
 };
-
-static imgtool_library *library;
-static imgtool_image *image;
-static struct expected_dirent entries[256];
-static char filename_buffer[256];
-static const char *fork_string;
-static char fork_buffer[256];
-static char driver_buffer[256];
-static int entry_count;
-static int failed;
-static UINT64 recorded_freespace;
-static option_resolution *opts;
-static filter_getinfoproc filter;
-
-
 
 static const char *tempfile_name(void)
 {
@@ -46,44 +31,76 @@ static const char *tempfile_name(void)
 static void report_imgtoolerr(imgtoolerr_t err)
 {
 	const char *msg;
-	failed = TRUE;
 	msg = imgtool_error(err);
 	report_message(MSG_FAILURE, msg);
 }
 
 
 
-static void createimage_start_handler(const char **attributes)
+struct imgtooltest_state
 {
-	const char *driver;
-	const struct ImageModule *module;
+	imgtool_library *library;
+	imgtool_image *image;
+	UINT64 recorded_freespace;
+	int failed;
+};
 
-	driver = find_attribute(attributes, "driver");
-	if (!driver)
+
+
+static void node_createimage(struct imgtooltest_state *state, xml_data_node *node)
+{
+	imgtoolerr_t err;
+	xml_data_node *child_node;
+	xml_attribute_node *attr_node;
+	option_resolution *opts = NULL;
+	const struct ImageModule *module;
+	const char *driver;
+	const char *param_name;
+	const char *param_value;
+
+	attr_node = xml_get_attribute(node, "driver");
+	if (!attr_node)
 	{
 		error_missingattribute("driver");
 		return;
 	}
-
-	strncpy(driver_buffer, driver, sizeof(driver_buffer) / sizeof(driver_buffer[0]));
+	driver = attr_node->value;
 	
 	/* does image creation support options? */
-	module = imgtool_library_findmodule(library, driver);
+	module = imgtool_library_findmodule(state->library, attr_node->value);
 	if (module && module->createimage_optguide && module->createimage_optspec)
 		opts = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
-	else
-		opts = NULL;
-}
 
+	report_message(MSG_INFO, "Creating image (module '%s')", driver);
 
+	for (child_node = xml_get_sibling(node->child, "param"); child_node; child_node = xml_get_sibling(child_node->next, "param"))
+	{
+		if (!opts)
+		{
+			report_message(MSG_FAILURE, "Cannot specify creation options with this module");
+			return;
+		}
 
-static void createimage_end_handler(const void *buffer, size_t size)
-{
-	imgtoolerr_t err;
+		attr_node = xml_get_attribute(child_node, "name");
+		if (!attr_node)
+		{
+			error_missingattribute("name");
+			return;
+		}
+		param_name = attr_node->value;
 
-	report_message(MSG_INFO, "Creating image (module '%s')", driver_buffer);
+		attr_node = xml_get_attribute(child_node, "value");
+		if (!attr_node)
+		{
+			error_missingattribute("value");
+			return;
+		}
+		param_value = attr_node->value;
 
-	err = img_create_byname(library, driver_buffer, tempfile_name(), opts, &image);
+		option_resolution_add_param(opts, param_name, param_value);
+	}
+
+	err = img_create_byname(state->library, driver, tempfile_name(), opts, &state->image);
 	if (opts)
 	{
 		option_resolution_close(opts);
@@ -91,6 +108,7 @@ static void createimage_end_handler(const void *buffer, size_t size)
 	}
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
@@ -98,91 +116,71 @@ static void createimage_end_handler(const void *buffer, size_t size)
 
 
 
-static void createimage_param_handler(const char **attributes)
+static void get_file_params(xml_data_node *node, const char **filename, const char **fork,
+	filter_getinfoproc *filter)
 {
-	const char *param_name;
-	const char *param_value;
+	xml_attribute_node *attr_node;
 
-	if (!opts)
-	{
-		report_message(MSG_FAILURE, "Cannot specify creation options with this module");
-		return;
-	}
+	*filename = NULL;
+	*fork = NULL;
+	*filter = NULL;
 
-	param_name = find_attribute(attributes, "name");
-	if (!param_name)
+	attr_node = xml_get_attribute(node, "name");
+	if (!attr_node)
 	{
 		error_missingattribute("name");
 		return;
 	}
+	*filename = attr_node->value;
 
-	param_value = find_attribute(attributes, "value");
-	if (!param_value)
+	attr_node = xml_get_attribute(node, "fork");
+	if (attr_node)
+		*fork = attr_node->value;
+
+	attr_node = xml_get_attribute(node, "filter");
+	if (attr_node)
 	{
-		error_missingattribute("value");
-		return;
-	}
+		*filter = filter_lookup(attr_node->value);
 
-	option_resolution_add_param(opts, param_name, param_value);
-}
-
-
-
-static void file_start_handler(const char **attributes)
-{
-	const char *filename;
-	const char *fork;
-	const char *filter_name;
-
-	filename = find_attribute(attributes, "name");
-	if (!filename)
-	{
-		error_missingattribute("name");
-		return;
-	}
-
-	fork = find_attribute(attributes, "fork");
-
-	snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
-	snprintf(fork_buffer, sizeof(fork_buffer) / sizeof(fork_buffer[0]), "%s", fork ? fork : "");
-	fork_string = fork ? fork_buffer : NULL;
-
-	filter_name = find_attribute(attributes, "filter");
-	if (filter_name)
-	{
-		filter = filter_lookup(filter_name);
-		if (!filter)
-		{
-			failed = TRUE;
-			report_message(MSG_FAILURE, "Cannot find filter '%s'", filter_name);
-		}
-	}
-	else
-	{
-		filter = NULL;
+		if (!*filter)
+			report_message(MSG_FAILURE, "Cannot find filter '%s'", attr_node->value);
 	}
 }
 
 
 
-static void putfile_end_handler(const void *buffer, size_t size)
+static void node_putfile(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
+	const char *filename;
+	const char *fork;
+	filter_getinfoproc filter;
 	imgtool_stream *stream;
-	
-	if (!image)
+	mess_pile pile;
+
+	get_file_params(node, &filename, &fork, &filter);
+	if (!filename)
 		return;
 
-	stream = stream_open_mem((void *) buffer, size);
+	pile_init(&pile);
+	messtest_get_data(node, &pile);
+
+	stream = stream_open_mem(NULL, 0);
 	if (!stream)
 	{
+		state->failed = 1;
 		error_outofmemory();
 		return;
 	}
 
-	err = img_writefile(image, filename_buffer, fork_string, stream, NULL, filter);
+	stream_write(stream, pile_getptr(&pile), pile_size(&pile));
+	stream_seek(stream, 0, SEEK_SET);
+	pile_delete(&pile);
+
+	err = img_writefile(state->image, filename, fork, stream, NULL, filter);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
@@ -190,107 +188,58 @@ static void putfile_end_handler(const void *buffer, size_t size)
 	if (VERBOSE_FILECHAIN)
 	{
 		char buf[1024];
-		err = img_getchain_string(image, filename_buffer, buf, sizeof(buf) / sizeof(buf[0]));
+		err = img_getchain_string(state->image, filename, buf, sizeof(buf) / sizeof(buf[0]));
 		if (err == IMGTOOLERR_SUCCESS)
-			report_message(MSG_INFO, "Filechain '%s': %s", filename_buffer, buf);
+			report_message(MSG_INFO, "Filechain '%s': %s", filename, buf);
 	}
 }
 
 
 
-static void checkfile_end_handler(const void *buffer, size_t size)
+static void node_checkfile(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
+	const char *filename;
+	const char *fork;
+	filter_getinfoproc filter;
 	imgtool_stream *stream;
 	UINT64 stream_sz;
 	const void *stream_ptr;
+	mess_pile pile;
+
+	get_file_params(node, &filename, &fork, &filter);
+	if (!filename)
+		return;
 
 	stream = stream_open_mem(NULL, 0);
 	if (!stream)
 	{
+		state->failed = 1;
 		error_outofmemory();
 		return;
 	}
 
-	err = img_readfile(image, filename_buffer, fork_string, stream, filter);
+	err = img_readfile(state->image, filename, fork, stream, filter);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
+
+	pile_init(&pile);
+	messtest_get_data(node, &pile);
 
 	stream_ptr = stream_getptr(stream);
 	stream_sz = stream_size(stream);
 
-	if ((size != stream_sz) || (memcmp(stream_ptr, buffer, size)))
+	if ((pile_size(&pile) != stream_sz) || (memcmp(stream_ptr, pile_getptr(&pile), pile_size(&pile))))
 	{
-		failed = TRUE;
 		report_message(MSG_FAILURE, "Failed file verification");
 		return;
 	}
-}
 
-
-
-static void deletefile_start_handler(const char **attributes)
-{
-	imgtoolerr_t err;
-	const char *filename;
-
-	filename = find_attribute(attributes, "name");
-	if (!filename)
-	{
-		error_missingattribute("name");
-		return;
-	}
-
-	err = img_deletefile(image, filename);
-	if (err)
-	{
-		report_imgtoolerr(err);
-		return;
-	}
-}
-
-
-
-static void checkdirectory_start_handler(const char **attributes)
-{
-	const char *filename;
-
-	filename = find_attribute(attributes, "path");
-	if (filename)
-		snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
-	else
-		filename_buffer[0] = '\0';
-
-	memset(&entries, 0, sizeof(entries));
-	entry_count = 0;
-}
-
-
-
-static void checkdirectory_entry_handler(const char **attributes)
-{
-	const char *name;
-	const char *size;
-	struct expected_dirent *entry;
-
-	if (entry_count >= sizeof(entries) / sizeof(entries[0]))
-	{
-		failed = TRUE;
-		report_message(MSG_FAILURE, "Too many directory entries");
-		return;
-	}
-
-	name = find_attribute(attributes, "name");
-	size = find_attribute(attributes, "size");
-
-	entry = &entries[entry_count++];
-
-	if (name)
-		snprintf(entry->filename, sizeof(entry->filename) / sizeof(entry->filename[0]), "%s", name);
-	entry->size = size ? atoi(size) : -1;
+	pile_delete(&pile);
 }
 
 
@@ -305,7 +254,7 @@ static void append_to_list(char *buf, size_t buflen, const char *entry)
 
 
 
-static void checkdirectory_end_handler(const void *buffer, size_t size)
+static void node_checkdirectory(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum;
@@ -314,12 +263,41 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	char actual_listing[128];
 	int i, actual_count;
 	int mismatch;
+	xml_attribute_node *attr_node;
+	xml_data_node *child_node;
+	const char *filename;
+	struct expected_dirent *entry;
+	struct expected_dirent entries[256];
+	int entry_count;
 
-	if (!image)
+	if (!state->image)
 	{
-		failed = TRUE;
 		report_message(MSG_FAILURE, "Image not loaded");
 		return;
+	}
+
+
+	attr_node = xml_get_attribute(node, "path");
+	filename = attr_node ? attr_node->value : "";
+
+	memset(&entries, 0, sizeof(entries));
+	entry_count = 0;
+
+	for (child_node = xml_get_sibling(node->child, "entry"); child_node; child_node = xml_get_sibling(child_node->next, "entry"))
+	{
+		if (entry_count >= sizeof(entries) / sizeof(entries[0]))
+		{
+			report_message(MSG_FAILURE, "Too many directory entries");
+			return;
+		}
+
+		entry = &entries[entry_count++];
+
+		attr_node = xml_get_attribute(child_node, "name");
+		entry->filename = attr_node ? attr_node->value : NULL;
+
+		attr_node = xml_get_attribute(child_node, "size");
+		entry->size = attr_node ? atoi(attr_node->value) : -1;
 	}
 
 	/* build expected listing string */
@@ -338,7 +316,7 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 
 	memset(&ent, 0, sizeof(ent));
 
-	err = img_beginenum(image, filename_buffer, &imageenum);
+	err = img_beginenum(state->image, filename, &imageenum);
 	if (err)
 		goto done;
 
@@ -367,7 +345,7 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 
 	if (mismatch)
 	{
-		failed = TRUE;
+		state->failed = 1;
 		report_message(MSG_FAILURE, "File listing mismatch: {%s} expected {%s}",
 			actual_listing, expected_listing);
 		goto done;
@@ -377,26 +355,55 @@ done:
 	if (imageenum)
 		img_closeenum(imageenum);
 	if (err)
+	{
+		state->failed = 1;
 		report_imgtoolerr(err);
+	}
 }
 
 
 
-static void createdirectory_start_handler(const char **attributes)
+static void node_deletefile(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
-	const char *dirname;
+	xml_attribute_node *attr_node;
 
-	dirname = find_attribute(attributes, "path");
-	if (!dirname)
+	attr_node = xml_get_attribute(node, "name");
+	if (!attr_node)
 	{
+		state->failed = 1;
+		error_missingattribute("name");
+		return;
+	}
+
+	err = img_deletefile(state->image, attr_node->value);
+	if (err)
+	{
+		state->failed = 1;
+		report_imgtoolerr(err);
+		return;
+	}
+}
+
+
+
+static void node_createdirectory(struct imgtooltest_state *state, xml_data_node *node)
+{
+	imgtoolerr_t err;
+	xml_attribute_node *attr_node;
+
+	attr_node = xml_get_attribute(node, "path");
+	if (!attr_node)
+	{
+		state->failed = 1;
 		error_missingattribute("path");
 		return;
 	}
 
-	err = img_createdir(image, dirname);
+	err = img_createdir(state->image, attr_node->value);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
@@ -404,21 +411,23 @@ static void createdirectory_start_handler(const char **attributes)
 
 
 
-static void deletedirectory_start_handler(const char **attributes)
+static void node_deletedirectory(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
-	const char *dirname;
+	xml_attribute_node *attr_node;
 
-	dirname = find_attribute(attributes, "path");
-	if (!dirname)
+	attr_node = xml_get_attribute(node, "path");
+	if (!attr_node)
 	{
+		state->failed = 1;
 		error_missingattribute("path");
 		return;
 	}
 
-	err = img_deletedir(image, dirname);
+	err = img_deletedir(state->image, attr_node->value);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
@@ -426,13 +435,14 @@ static void deletedirectory_start_handler(const char **attributes)
 
 
 
-static void recordfreespace_start_handler(const char **attributes)
+static void node_recordfreespace(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
 
-	err = img_freespace(image, &recorded_freespace);
+	err = img_freespace(state->image, &state->recorded_freespace);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
@@ -440,23 +450,24 @@ static void recordfreespace_start_handler(const char **attributes)
 
 
 
-static void checkfreespace_start_handler(const char **attributes)
+static void node_checkfreespace(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err;
 	UINT64 current_freespace;
 	INT64 leaked_space;
 	const char *verb;
 
-	err = img_freespace(image, &current_freespace);
+	err = img_freespace(state->image, &current_freespace);
 	if (err)
 	{
+		state->failed = 1;
 		report_imgtoolerr(err);
 		return;
 	}
 
-	if (recorded_freespace != current_freespace)
+	if (state->recorded_freespace != current_freespace)
 	{
-		leaked_space = recorded_freespace - current_freespace;
+		leaked_space = state->recorded_freespace - current_freespace;
 		if (leaked_space > 0)
 		{
 			verb = "Leaked";
@@ -467,20 +478,22 @@ static void checkfreespace_start_handler(const char **attributes)
 			verb = "Reverse leaked";
 		}
 
-		failed = TRUE;
+		state->failed = 1;
 		report_message(MSG_FAILURE, "%s %u bytes of space", verb, (unsigned int) leaked_space);
 	}
 }
 
 
 
-void testimgtool_start_handler(const char **attributes)
+void node_testimgtool(xml_data_node *node)
 {
 	imgtoolerr_t err;
+	xml_data_node *child_node;
+	xml_attribute_node *attr_node;
+	struct imgtooltest_state state;
+	static imgtool_library *library;
 
-	failed = FALSE;
-	recorded_freespace = ~0;
-
+	/* create the library, if it hasn't been created already */
 	if (!library)
 	{
 		err = imgtool_create_cannonical_library(FALSE, &library);
@@ -491,49 +504,36 @@ void testimgtool_start_handler(const char **attributes)
 		}
 	}
 
-	report_testcase_begin(find_attribute(attributes, "name"));
-}
+	attr_node = xml_get_attribute(node, "name");
+	report_testcase_begin(attr_node ? attr_node->value : NULL);
+	
+	memset(&state, 0, sizeof(state));
+	state.library = library;
 
-
-
-void testimgtool_end_handler(const void *buffer, size_t size)
-{
-	report_testcase_ran(failed);
-
-	if (image)
+	for (child_node = node->child; child_node; child_node = child_node->next)
 	{
-		img_close(image);
-		image = NULL;
+		if (!strcmp(child_node->name, "createimage"))
+			node_createimage(&state, child_node);
+		else if (!strcmp(child_node->name, "checkfile"))
+			node_checkfile(&state, child_node);
+		else if (!strcmp(child_node->name, "checkdirectory"))
+			node_checkdirectory(&state, child_node);
+		else if (!strcmp(child_node->name, "putfile"))
+			node_putfile(&state, child_node);
+		else if (!strcmp(child_node->name, "deletefile"))
+			node_deletefile(&state, child_node);
+		else if (!strcmp(child_node->name, "createdirectory"))
+			node_createdirectory(&state, child_node);
+		else if (!strcmp(child_node->name, "deletedirectory"))
+			node_deletedirectory(&state, child_node);
+		else if (!strcmp(child_node->name, "recordfreespace"))
+			node_recordfreespace(&state, child_node);
+		else if (!strcmp(child_node->name, "checkfreespace"))
+			node_checkfreespace(&state, child_node);
 	}
+
+	report_testcase_ran(state.failed);
+
+	if (state.image)
+		img_close(state.image);
 }
-
-
-
-static const struct messtest_tagdispatch checkdirectory_dispatch[] =
-{
-	{ "entry",			DATA_NONE,		checkdirectory_entry_handler },
-	{ NULL }
-};
-
-static const struct messtest_tagdispatch createimage_dispatch[] =
-{
-	{ "param",			DATA_NONE,		createimage_param_handler },
-	{ NULL }
-};
-
-const struct messtest_tagdispatch testimgtool_dispatch[] =
-{
-	{ "createimage",		DATA_NONE,		createimage_start_handler,		createimage_end_handler, createimage_dispatch },
-	{ "checkfile",			DATA_BINARY,	file_start_handler,				checkfile_end_handler },
-	{ "checkdirectory",		DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
-	{ "putfile",			DATA_BINARY,	file_start_handler,				putfile_end_handler },
-	{ "deletefile",			DATA_NONE,		deletefile_start_handler,		NULL },
-	{ "createdirectory",	DATA_NONE,		createdirectory_start_handler,	NULL },
-	{ "deletedirectory",	DATA_NONE,		deletedirectory_start_handler,	NULL },
-	{ "recordfreespace",	DATA_NONE,		recordfreespace_start_handler,	NULL },
-	{ "checkfreespace",		DATA_NONE,		checkfreespace_start_handler,	NULL },
-	{ NULL }
-};
-
-
-

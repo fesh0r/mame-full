@@ -53,7 +53,10 @@ Source Changes:
 
 - [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]
 
-- Fixed PULUW mnemonic in the 6309 disassembler. [tim lindner]
+- Fixed PULUW mnemonic in the 6309 disassembler.  [tim lindner]
+
+- [Messtest] Refactored to use src/xmlfile.c code.  [Nate Woods]
+
 
 
 0.99

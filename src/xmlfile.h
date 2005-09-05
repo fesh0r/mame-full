@@ -44,6 +44,26 @@ struct _xml_data_node
 
 
 
+struct XML_ParserStruct;
+
+struct _xml_custom_parse
+{
+	void (*init)(struct XML_ParserStruct *parser);
+	size_t (*read)(void *param, void *buffer, size_t length);
+	int (*eof)(void *param);
+	void *param;
+	int trim_whitespace;
+
+	const char *error_message;
+	int error_line;
+	int error_column;
+
+	xml_data_node **curnode;
+};
+typedef struct _xml_custom_parse xml_custom_parse;
+
+
+
 /*************************************
  *
  *  Function prototypes
@@ -52,6 +72,7 @@ struct _xml_data_node
 
 xml_data_node *xml_file_create(void);
 xml_data_node *xml_file_read(mame_file *file);
+xml_data_node *xml_file_read_custom(xml_custom_parse *parse_info);
 void xml_file_write(xml_data_node *node, mame_file *file);
 void xml_file_free(xml_data_node *node);
 

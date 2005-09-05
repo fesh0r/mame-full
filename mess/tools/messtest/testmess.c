@@ -921,12 +921,12 @@ static void command_end_handler(const void *buffer, size_t size)
 
 
 
-static void wait_handler(const char **attributes)
+static void node_wait(xml_data_node *node)
 {
-	const char *s;
+	xml_attribute_node *attr_node;
 
-	s = find_attribute(attributes, "time");
-	if (!s)
+	attr_node = xml_get_attribute(node, "time");
+	if (!attr_node)
 	{
 		error_missingattribute("time");
 		return;
@@ -934,58 +934,57 @@ static void wait_handler(const char **attributes)
 
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_WAIT;
-	new_command.u.wait_time = mame_time_to_double(parse_time(s));
+	new_command.u.wait_time = mame_time_to_double(parse_time(attr_node->value));
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void input_handler(const char **attributes)
+static void node_input(xml_data_node *node)
 {
 	/* <input> - inputs natural keyboard data into a system */
-	const char *s;
+	xml_attribute_node *attr_node;
 	mame_time rate;
 
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_INPUT;
-	s = find_attribute(attributes, "rate");
-	rate = s ? parse_time(s) : make_mame_time(0, 0);
+	attr_node = xml_get_attribute(node, "rate");
+	rate = attr_node ? parse_time(attr_node->value) : make_mame_time(0, 0);
 	new_command.u.input_args.rate = rate;
+	new_command.u.input_args.input_chars = node->value;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void rawinput_handler(const char **attributes)
+static void node_rawinput(xml_data_node *node)
 {
 	/* <rawinput> - inputs raw data into a system */
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_RAWINPUT;
-}
 
-
-
-static void input_end_handler(const void *ptr, size_t size)
-{
-	char *s;
-
-	if (size > 0)
+	if (!append_command())
 	{
-		s = pool_malloc(&command_pool, size);
-		if (!s)
-		{
-			error_outofmemory();
-			return;
-		}
-		memcpy(s, ptr, size);
-
-		new_command.u.input_args.input_chars = s;
+		error_outofmemory();
+		return;
 	}
-	command_end_handler(NULL, 0);
 }
 
 
 
-static void switch_handler(const char **attributes)
+static void node_switch(xml_data_node *node)
 {
+	xml_attribute_node *attr_node;
 	const char *s1;
 	const char *s2;
 
@@ -994,39 +993,53 @@ static void switch_handler(const char **attributes)
 	new_command.command_type = MESSTEST_COMMAND_SWITCH;
 
 	/* 'name' attribute */
-	s1 = find_attribute(attributes, "name");
-	if (!s1)
+	attr_node = xml_get_attribute(node, "name");
+	if (!attr_node)
 	{
 		error_missingattribute("name");
 		return;
 	}
+	s1 = attr_node->value;
 
 	/* 'value' attribute */
-	s2 = find_attribute(attributes, "value");
-	if (!s2)
+	attr_node = xml_get_attribute(node, "value");
+	if (!attr_node)
 	{
 		error_missingattribute("value");
 		return;
 	}
+	s2 = attr_node->value;
 
-	new_command.u.switch_args.name = pool_strdup(&command_pool, s1);
-	new_command.u.switch_args.value = pool_strdup(&command_pool, s2);
+	new_command.u.switch_args.name = s1;
+	new_command.u.switch_args.value = s2;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void screenshot_handler(const char **attributes)
+static void node_screenshot(xml_data_node *node)
 {
 	/* <screenshot> - dumps a screenshot */
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void image_handler(const char **attributes, enum messtest_command_type command)
+static void node_image(xml_data_node *node, enum messtest_command_type command)
 {
-	const char *s;
+	xml_attribute_node *attr_node;
 	const char *s1;
 	const char *s2;
 	const char *s3;
@@ -1037,21 +1050,23 @@ static void image_handler(const char **attributes, enum messtest_command_type co
 	new_command.command_type = command;
 
 	/* 'preload' attribute */
-	s = find_attribute(attributes, "preload");
-	preload = s ? atoi(s) : 0;
+	attr_node = xml_get_attribute(node, "preload");
+	preload = attr_node ? atoi(attr_node->value) : 0;
 	if (preload)
 		new_command.command_type += 2;
 
 	/* 'filename' attribute */
-	s1 = find_attribute(attributes, "filename");
+	attr_node = xml_get_attribute(node, "filename");
+	s1 = attr_node ? attr_node->value : NULL;
 
 	/* 'type' attribute */
-	s2 = find_attribute(attributes, "type");
-	if (!s2)
+	attr_node = xml_get_attribute(node, "type");
+	if (!attr_node)
 	{
 		error_missingattribute("type");
 		return;
 	}
+	s2 = attr_node->value;
 
 	device_type = device_typeid(s2);
 	if (device_type < 0)
@@ -1061,56 +1076,70 @@ static void image_handler(const char **attributes, enum messtest_command_type co
 	}
 	
 	/* 'slot' attribute */
-	s3 = find_attribute(attributes, "slot");
+	attr_node = xml_get_attribute(node, "slot");
+	s3 = attr_node ? attr_node->value : NULL;
 
 	/* 'format' attribute */
 	format_index = 0;
-	s4 = find_attribute(attributes, "format");
+	attr_node = xml_get_attribute(node, "format");
+	s4 = attr_node ? attr_node->value : NULL;
 
-	new_command.u.image_args.filename = s1 ? pool_strdup(&command_pool, s1) : NULL;
+	new_command.u.image_args.filename = s1;
 	new_command.u.image_args.device_type = device_type;
 	new_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
-	new_command.u.image_args.format = s4 ? pool_strdup(&command_pool, s4) : NULL;
+	new_command.u.image_args.format = s4;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void imagecreate_handler(const char **attributes)
+static void node_imagecreate(xml_data_node *node)
 {
 	/* <imagecreate> - creates an image */
-	image_handler(attributes, MESSTEST_COMMAND_IMAGE_CREATE);
+	node_image(node, MESSTEST_COMMAND_IMAGE_CREATE);
 }
 
 
 
-static void imageload_handler(const char **attributes)
+static void node_imageload(xml_data_node *node)
 {
 	/* <imageload> - loads an image */
-	image_handler(attributes, MESSTEST_COMMAND_IMAGE_LOAD);
+	node_image(node, MESSTEST_COMMAND_IMAGE_LOAD);
 }
 
 
 
-static void memverify_handler(const char **attributes)
+static void node_memverify(xml_data_node *node)
 {
+	xml_attribute_node *attr_node;
 	const char *s1;
 	const char *s2;
 	const char *s3;
 	int region;
+	void *new_buffer;
+	mess_pile pile;
 
 	/* <memverify> - verifies that a range of memory contains specific data */
-	s1 = find_attribute(attributes, "start");
+	attr_node = xml_get_attribute(node, "start");
+	s1 = attr_node ? attr_node->value : NULL;
 	if (!s1)
 	{
 		error_missingattribute("start");
 		return;
 	}
 
-	s2 = find_attribute(attributes, "end");
+	attr_node = xml_get_attribute(node, "end");
+	s2 = attr_node ? attr_node->value : NULL;
 	if (!s2)
 		s2 = "0";
 
-	s3 = find_attribute(attributes, "region");
+	attr_node = xml_get_attribute(node, "region");
+	s3 = attr_node ? attr_node->value : NULL;
 
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
@@ -1124,21 +1153,39 @@ static void memverify_handler(const char **attributes)
 			error_invalidmemregion(s3);
 		new_command.u.verify_args.mem_region = region;
 	}
+
+	pile_init(&pile);
+	messtest_get_data(node, &pile);
+	new_buffer = pool_malloc(&command_pool, pile_size(&pile));
+	memcpy(new_buffer, pile_getptr(&pile), pile_size(&pile));
+	new_command.u.verify_args.verify_data = new_buffer;
+	new_command.u.verify_args.verify_data_size = pile_size(&pile);
+	pile_delete(&pile);
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-static void imageverify_handler(const char **attributes)
+static void node_imageverify(xml_data_node *node)
 {
+	xml_attribute_node *attr_node;
 	const char *s;
 	iodevice_t device_type;
+	void *new_buffer;
+	mess_pile pile;
 
 	/* <imageverify> - verifies that an image contains specific data */
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_VERIFY_IMAGE;
 
 	/* 'type' attribute */
-	s = find_attribute(attributes, "type");
+	attr_node = xml_get_attribute(node, "type");
+	s = attr_node ? attr_node->value : NULL;
 	if (!s)
 	{
 		error_missingattribute("type");
@@ -1153,6 +1200,20 @@ static void imageverify_handler(const char **attributes)
 	}
 
 	new_command.u.verify_args.device_type = device_type;
+
+	pile_init(&pile);
+	messtest_get_data(node, &pile);
+	new_buffer = pool_malloc(&command_pool, pile_size(&pile));
+	memcpy(new_buffer, pile_getptr(&pile), pile_size(&pile));
+	new_command.u.verify_args.verify_data = new_buffer;
+	new_command.u.verify_args.verify_data_size = pile_size(&pile);
+	pile_delete(&pile);
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
@@ -1166,13 +1227,21 @@ static void verify_end_handler(const void *buffer, size_t size)
 	new_command.u.verify_args.verify_data = new_buffer;
 	new_command.u.verify_args.verify_data_size = size;
 	command_end_handler(NULL, 0);
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
 }
 
 
 
-void testmess_start_handler(const char **attributes)
+void node_testmess(xml_data_node *node)
 {
-	const char *s;
+	xml_data_node *child_node;
+	xml_attribute_node *attr_node;
+	int result;
 
 	pile_init(&command_pile);
 	pool_init(&command_pool);
@@ -1181,53 +1250,51 @@ void testmess_start_handler(const char **attributes)
 	command_count = 0;
 
 	/* 'driver' attribute */
-	s = find_attribute(attributes, "driver");
-	if (!s)
+	attr_node = xml_get_attribute(node, "driver");
+	if (!attr_node)
 	{
 		error_missingattribute("driver");
 		return;
 	}
-	current_testcase.driver = pool_strdup(&command_pool, s);
-	if (!current_testcase.driver)
-	{
-		error_outofmemory();
-		return;
-	}
+	current_testcase.driver = attr_node->value;
 
 	/* 'name' attribute */
-	s = find_attribute(attributes, "name");
-	if (s)
-	{
-		current_testcase.name = pool_strdup(&command_pool, s);
-		if (!current_testcase.name)
-		{
-			error_outofmemory();
-			return;
-		}
-	}
-	else
-	{
-		current_testcase.name = current_testcase.driver;
-	}
+	attr_node = xml_get_attribute(node, "name");
+	current_testcase.name = attr_node ? attr_node->value : current_testcase.driver;
 
 	/* 'ramsize' attribute */
-	s = find_attribute(attributes, "ramsize");
-	current_testcase.ram = s ? ram_parse_string(s) : 0;
+	attr_node = xml_get_attribute(node, "ramsize");
+	current_testcase.ram = attr_node ? ram_parse_string(attr_node->value) : 0;
 
 	/* 'wavwrite' attribute */
-	s = find_attribute(attributes, "wavwrite");
-	current_testcase.wavwrite = (s && (atoi(s) != 0));
+	attr_node = xml_get_attribute(node, "wavwrite");
+	current_testcase.wavwrite = attr_node && (atoi(attr_node->value) != 0);
 
 	/* report the beginning of the test case */
 	report_testcase_begin(current_testcase.name);
 	current_testcase.commands = NULL;
-}
 
-
-
-void testmess_end_handler(const void *buffer, size_t size)
-{
-	int result;
+	for (child_node = node->child; child_node; child_node = child_node->next)
+	{
+		if (!strcmp(child_node->name, "wait"))
+			node_wait(child_node);
+		else if (!strcmp(child_node->name, "input"))
+			node_input(child_node);
+		else if (!strcmp(child_node->name, "rawinput"))
+			node_rawinput(child_node);
+		else if (!strcmp(child_node->name, "switch"))
+			node_switch(child_node);
+		else if (!strcmp(child_node->name, "screenshot"))
+			node_screenshot(child_node);
+		else if (!strcmp(child_node->name, "imagecreate"))
+			node_imagecreate(child_node);
+		else if (!strcmp(child_node->name, "imageload"))
+			node_imageload(child_node);
+		else if (!strcmp(child_node->name, "memverify"))
+			node_memverify(child_node);
+		else if (!strcmp(child_node->name, "imageverify"))
+			node_imageverify(child_node);
+	}
 
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_END;
@@ -1243,20 +1310,3 @@ void testmess_end_handler(const void *buffer, size_t size)
 	pile_delete(&command_pile);
 	pool_exit(&command_pool);
 }
-
-
-
-const struct messtest_tagdispatch testmess_dispatch[] =
-{
-	{ "wait",			DATA_NONE,		wait_handler,			command_end_handler },
-	{ "input",			DATA_TEXT,		input_handler,			input_end_handler },
-	{ "rawinput",		DATA_TEXT,		rawinput_handler,		input_end_handler },
-	{ "switch",			DATA_NONE,		switch_handler,			command_end_handler },
-	{ "screenshot",		DATA_NONE,		screenshot_handler,		command_end_handler },
-	{ "imagecreate",	DATA_NONE,		imagecreate_handler,	command_end_handler },
-	{ "imageload",		DATA_NONE,		imageload_handler,		command_end_handler },
-	{ "memverify",		DATA_BINARY,	memverify_handler,		verify_end_handler },
-	{ "imageverify",	DATA_BINARY,	imageverify_handler,	verify_end_handler },
-	{ NULL }
-};
-

@@ -11,6 +11,8 @@
 
 #include "mame.h"
 #include "timer.h"
+#include "xmlfile.h"
+#include "pile.h"
 
 
 /***************************************************************************
@@ -81,5 +83,7 @@ void report_testcase_ran(int failure);
 
 /* turns a filename into a temporary filename */
 void make_filename_temporary(char *filename, size_t buflen);
+
+void messtest_get_data(xml_data_node *node, mess_pile *pile);
 
 #endif /* CORE_H */

@@ -50,13 +50,11 @@ struct messtest_state
 
 	int test_count;
 	int failure_count;
-
-	mess_pile blobpile;
-	blobparse_state_t blobstate;
-	size_t multiple;
 };
 
 static struct messtest_state *state;
+static const char *current_testcase_name;
+static int is_failure;
 
 
 
@@ -114,20 +112,6 @@ void error_baddevicetype(const char *s)
 
 
 
-static struct messtest_tagdispatch root_dispatch[] =
-{
-	{ "tests",			DATA_NONE, NULL, NULL, root_dispatch },
-	{ "test",			DATA_NONE, testmess_start_handler, testmess_end_handler, testmess_dispatch },
-	{ "imgtooltest",	DATA_NONE, testimgtool_start_handler, testimgtool_end_handler, testimgtool_dispatch },
-	{ NULL }
-};
-
-
-
-static const struct messtest_tagdispatch initial_dispatch = { NULL, DATA_NONE, NULL, NULL, root_dispatch };
-
-
-
 static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
 {
 	const struct messtest_tagdispatch *dispatch;
@@ -153,23 +137,11 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	}
 
 	state->dispatch[++state->dispatch_pos] = dispatch;
-	if (dispatch && dispatch->datatype)
-		pile_clear(&state->blobpile);
-	state->blobstate = BLOBSTATE_INITIAL;
 }
 
 
 
-static void data_handler_text(const XML_Char *s, int len)
-{
-	int i;
-	for (i = 0; i < len; i++)
-		pile_putc(&state->blobpile, s[i]);
-}
-
-
-
-static void data_handler_binary(const XML_Char *s, int len)
+void messtest_get_data(xml_data_node *node, mess_pile *pile)
 {
 	void *ptr;
 	int i = 0;
@@ -177,13 +149,20 @@ static void data_handler_binary(const XML_Char *s, int len)
 	int found;
 	char c;
 	char quote_char;
+	blobparse_state_t blobstate = BLOBSTATE_INITIAL;
+	const char *s;
+	size_t len;
+	int multiple = 0;
+
+	s = node->value ? node->value : "";
+	len = strlen(s);
 
 	while(i < len)
 	{
 		/* read next character */
 		c = s[i++];
 
-		switch(state->blobstate)
+		switch(blobstate)
 		{
 			case BLOBSTATE_INITIAL:
 				if ((c == '\0') || isspace(c))
@@ -192,20 +171,20 @@ static void data_handler_binary(const XML_Char *s, int len)
 				}
 				else if (c == '0')
 				{
-					state->blobstate = BLOBSTATE_AFTER_0;
+					blobstate = BLOBSTATE_AFTER_0;
 				}
 				else if (c == '*')
 				{
-					state->blobstate = BLOBSTATE_AFTER_STAR;
-					state->multiple = (size_t) -1;
+					blobstate = BLOBSTATE_AFTER_STAR;
+					multiple = (size_t) -1;
 				}
 				else if (c == '\'')
 				{
-					state->blobstate = BLOBSTATE_SINGLEQUOTES;
+					blobstate = BLOBSTATE_SINGLEQUOTES;
 				}
 				else if (c == '\"')
 				{
-					state->blobstate = BLOBSTATE_DOUBLEQUOTES;
+					blobstate = BLOBSTATE_DOUBLEQUOTES;
 				}
 				else
 					goto parseerror;
@@ -214,7 +193,7 @@ static void data_handler_binary(const XML_Char *s, int len)
 			case BLOBSTATE_AFTER_0:
 				if (tolower(c) == 'x')
 				{
-					state->blobstate = BLOBSTATE_HEX;
+					blobstate = BLOBSTATE_HEX;
 				}
 				else
 					goto parseerror;
@@ -224,34 +203,34 @@ static void data_handler_binary(const XML_Char *s, int len)
 				if (isdigit(c))
 				{
 					/* add this digit to the multiple */
-					if (state->multiple == (size_t) -1)
-						state->multiple = 0;
+					if (multiple == (size_t) -1)
+						multiple = 0;
 					else
-						state->multiple *= 10;
-					state->multiple += c - '0';
+						multiple *= 10;
+					multiple += c - '0';
 				}
-				else if ((c != '\0') && isspace(c) && (state->multiple == (size_t) -1))
+				else if ((c != '\0') && isspace(c) && (multiple == (size_t) -1))
 				{
 					/* ignore whitespace */
 				}
 				else
 				{
 					/* do the multiplication */
-					size = pile_size(&state->blobpile);
-					ptr = pile_detach(&state->blobpile);
+					size = pile_size(pile);
+					ptr = pile_detach(pile);
 
-					for (j = 0; j < state->multiple; j++)
-						pile_write(&state->blobpile, ptr, size);
+					for (j = 0; j < multiple; j++)
+						pile_write(pile, ptr, size);
 
 					free(ptr);
-					state->blobstate = BLOBSTATE_INITIAL;
+					blobstate = BLOBSTATE_INITIAL;
 				}
 				break;
 
 			case BLOBSTATE_HEX:
 				if ((c == '\0') || isspace(c))
 				{
-					state->blobstate = BLOBSTATE_INITIAL;
+					blobstate = BLOBSTATE_INITIAL;
 				}
 				else
 				{
@@ -260,7 +239,7 @@ static void data_handler_binary(const XML_Char *s, int len)
 					while(((i + 2) <= len) && isxdigit(s[i]) && isxdigit(s[i+1]))
 					{
 						c = (hexdigit(s[i]) << 4) | hexdigit(s[i+1]);
-						pile_putc(&state->blobpile, c);
+						pile_putc(pile, c);
 						i += 2;
 						found = TRUE;
 					}
@@ -271,14 +250,14 @@ static void data_handler_binary(const XML_Char *s, int len)
 
 			case BLOBSTATE_SINGLEQUOTES:
 			case BLOBSTATE_DOUBLEQUOTES:
-				quote_char = state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"';
+				quote_char = blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"';
 				if (c == quote_char)
 				{
-					state->blobstate = BLOBSTATE_INITIAL;
+					blobstate = BLOBSTATE_INITIAL;
 				}
 				else if (c != '\0')
 				{
-					pile_putc(&state->blobpile, c);
+					pile_putc(pile, c);
 				}
 				else
 					goto parseerror;
@@ -290,61 +269,6 @@ static void data_handler_binary(const XML_Char *s, int len)
 parseerror:
 	error_report("Parse Error");
 	return;
-}
-
-
-
-static void data_handler(void *data, const XML_Char *s, int len)
-{
-	int dispatch_pos;
-
-	dispatch_pos = state->dispatch_pos;
-	while((dispatch_pos > 0) && !state->dispatch[state->dispatch_pos])
-		dispatch_pos--;
-
-	switch(state->dispatch[dispatch_pos]->datatype)
-	{
-		case DATA_NONE:
-			break;
-
-		case DATA_TEXT:
-			data_handler_text(s, len);
-			break;
-
-		case DATA_BINARY:
-			data_handler_binary(s, len);
-			break;
-	}
-}
-
-
-
-static void end_handler(void *data, const XML_Char *name)
-{
-	const struct messtest_tagdispatch *dispatch;
-	void *ptr;
-	size_t size;
-	XML_Char zero;
-
-	dispatch = state->dispatch[state->dispatch_pos];
-	if (!state->aborted && dispatch && dispatch->end_handler)
-	{
-		/* tell the driver that we are at the end of the block */
-		zero = '\0';
-		data_handler(NULL, &zero, 1);
-
-		/* if we are doing text, add a trailing NUL */
-		if (dispatch->datatype == DATA_TEXT)
-			pile_putc(&state->blobpile, '\0');
-
-		/* retrieve the blob and pass it */
-		ptr = pile_getptr(&state->blobpile);
-		size = pile_size(&state->blobpile);
-		dispatch->end_handler(ptr, size);
-	}
-
-	if (state->dispatch_pos > 0)
-		state->dispatch_pos--;
 }
 
 
@@ -418,26 +342,76 @@ done:
 
 
 
+static void parse_init(XML_Parser parser)
+{
+	XML_SetExternalEntityRefHandler(parser, external_entity_handler);
+}
+
+
+
+static size_t parse_read(void *param, void *buffer, size_t length)
+{
+	return fread(buffer, 1, length, (FILE *) param);
+}
+
+
+
+static int parse_eof(void *param)
+{
+	return feof((FILE *) param);
+}
+
+
+
+static void node_tests(xml_data_node *tests_node, int *test_count, int *failure_count)
+{
+	xml_data_node *child_node;
+
+	for (child_node = tests_node->child; child_node; child_node = child_node->next)
+	{
+		if (!strcmp(child_node->name, "tests"))
+		{
+			node_tests(child_node, test_count, failure_count);
+		}
+		else if (!strcmp(child_node->name, "test"))
+		{
+			/* a MESS test */
+			node_testmess(child_node);
+
+			(*test_count)++;
+			if (is_failure)
+				(*failure_count)++;
+		}
+		else if (!strcmp(child_node->name, "imgtooltest"))
+		{
+			/* an Imgtool test */
+			node_testimgtool(child_node);
+
+			(*test_count)++;
+			if (is_failure)
+				(*failure_count)++;
+		}
+	}
+}
+
+
+
 int messtest(const struct messtest_options *opts, int *test_count, int *failure_count)
 {
-	struct messtest_state the_state;
-	char buf[1024];
 	char saved_directory[1024];
-	FILE *in;
-	int len, done;
+	FILE *file;
 	int result = -1;
 	char *script_directory;
+	xml_custom_parse parse;
+	xml_data_node *root_node;
+	xml_data_node *tests_node;
 
-	state = &the_state;
-
-	memset(state, 0, sizeof(*state));
-	state->script_filename = opts->script_filename;
-	state->dispatch[0] = &initial_dispatch;
-	pile_init(&state->blobpile);
+	*test_count = 0;
+	*failure_count = 0;
 
 	/* open the script file */
-	in = fopen(state->script_filename, "r");
-	if (!in)
+	file = fopen(opts->script_filename, "r");
+	if (!file)
 	{
 		fprintf(stderr, "%s: Cannot open file\n", state->script_filename);
 		goto done;
@@ -447,7 +421,7 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 	saved_directory[0] = '\0';
 	if (!opts->preserve_directory)
 	{
-		script_directory = osd_dirname(state->script_filename);
+		script_directory = osd_dirname(opts->script_filename);
 		if (script_directory)
 		{
 			osd_getcurdir(saved_directory, sizeof(saved_directory) / sizeof(saved_directory[0]));
@@ -456,48 +430,31 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 		}
 	}
 
-	state->parser = XML_ParserCreate(NULL);
-	if (!state->parser)
+	/* do the parse */
+	memset(&parse, 0, sizeof(parse));
+	parse.init = parse_init;
+	parse.read = parse_read;
+	parse.eof = parse_eof;
+	parse.param = (void *) file;
+	root_node = xml_file_read_custom(&parse);
+	if (!root_node)
 	{
-		fprintf(stderr, "Out of memory\n");
+		error_reportf("%s", parse.error_message);
 		goto done;
 	}
 
-	XML_SetUserData(state->parser, &state);
-	XML_SetElementHandler(state->parser, start_handler, end_handler);
-	XML_SetCharacterDataHandler(state->parser, data_handler);
-	XML_SetExternalEntityRefHandler(state->parser, external_entity_handler);
+	/* find the tests node */
+	tests_node = xml_get_sibling(root_node->child, "tests");
+	if (!tests_node)
+		goto done;
 
-	do
-	{
-		len = (int) fread(buf, 1, sizeof(buf), in);
-		done = feof(in);
-		
-		if (XML_Parse(state->parser, buf, len, done) == XML_STATUS_ERROR)
-		{
-			error_reportf("%s", XML_ErrorString(XML_GetErrorCode(state->parser)));
-			goto done;
-		}
-	}
-	while(!done);
-
+	node_tests(tests_node, test_count, failure_count);
 	result = 0;
 
 done:
 	/* restore the directory */
 	if (saved_directory[0])
 		osd_setcurdir(saved_directory);
-
-	/* dispose of the parser */
-	if (state->parser)
-		XML_ParserFree(state->parser);
-
-	/* write out test and failure counts */
-	if (test_count)
-		*test_count = state->test_count;
-	if (failure_count)
-		*failure_count = state->failure_count;
-	pile_delete(&state->blobpile);
 	return result;
 }
 
@@ -518,7 +475,7 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), fmt, va);
 	va_end(va);
 
-	prefix1 = state->current_testcase_name;
+	prefix1 = current_testcase_name;
 	prefix2 = msgtype ? "***" : "...";
 
 	base = 0;
@@ -564,18 +521,15 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 
 void report_testcase_begin(const char *testcase_name)
 {
-	state->current_testcase_name = strdup(testcase_name);
-	if (!state->current_testcase_name)
-		error_outofmemory();
+	current_testcase_name = testcase_name;
+	is_failure = FALSE;
 }
 
 
 
 void report_testcase_ran(int failure)
 {
-	state->test_count++;
-	if (failure)
-		state->failure_count++;
+	is_failure = failure;
 }
 
 
