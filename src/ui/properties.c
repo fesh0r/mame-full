@@ -268,7 +268,6 @@ static DWORD dwHelpIDs[] =
 	IDC_TRANSLUCENCY,       HIDC_TRANSLUCENCY,
 	IDC_TRIPLE_BUFFER,      HIDC_TRIPLE_BUFFER,
 	IDC_USE_DEFAULT,        HIDC_USE_DEFAULT,
-	IDC_USE_FILTER,         HIDC_USE_FILTER,
 	IDC_USE_MOUSE,          HIDC_USE_MOUSE,
 	IDC_USE_SOUND,          HIDC_USE_SOUND,
 	IDC_VOLUME,             HIDC_VOLUME,
@@ -278,10 +277,8 @@ static DWORD dwHelpIDs[] =
 	IDC_LIGHTGUN,           HIDC_LIGHTGUN,
 	IDC_STEADYKEY,          HIDC_STEADYKEY,
 	IDC_OLD_TIMING,         HIDC_OLD_TIMING,
-	IDC_CRC_ONLY,           HIDC_CRC_ONLY,
 	IDC_JOY_GUI,            HIDC_JOY_GUI,
 	IDC_RANDOM_BG,          HIDC_RANDOM_BG,
-	IDC_SKIP_DISCLAIMER,    HIDC_SKIP_DISCLAIMER,
 	IDC_SKIP_GAME_INFO,     HIDC_SKIP_GAME_INFO,
 	IDC_SKIP_VALIDITY_CHECKS, HIDC_SKIP_VALIDITY_CHECKS,
 	IDC_HIGH_PRIORITY,      HIDC_HIGH_PRIORITY,
@@ -396,7 +393,7 @@ static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
 	int maxPropSheets;
 	int possiblePropSheets;
 	int i;
-    machine_config drv;
+	machine_config drv;
 
 	if (gamedrv)
 	    expand_machine_driver(gamedrv->drv, &drv);
@@ -642,8 +639,8 @@ static char *GameInfoCPU(UINT nIndex)
 {
 	int i;
 	static char buf[1024] = "";
-    machine_config drv;
-    expand_machine_driver(drivers[nIndex]->drv,&drv);
+	machine_config drv;
+	expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
 
@@ -676,8 +673,8 @@ static char *GameInfoSound(UINT nIndex)
 {
 	int i;
 	static char buf[1024];
-    machine_config drv;
-    expand_machine_driver(drivers[nIndex]->drv,&drv);
+	machine_config drv;
+	expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	buf[0] = 0;
 
@@ -727,8 +724,8 @@ static char *GameInfoSound(UINT nIndex)
 static char *GameInfoScreen(UINT nIndex)
 {
 	static char buf[1024];
-    machine_config drv;
-    expand_machine_driver(drivers[nIndex]->drv,&drv);
+	machine_config drv;
+	expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		strcpy(buf, "Vector Game");
@@ -752,8 +749,8 @@ static char *GameInfoScreen(UINT nIndex)
 static char *GameInfoColors(UINT nIndex)
 {
 	static char buf[1024];
-    machine_config drv;
-    expand_machine_driver(drivers[nIndex]->drv,&drv);
+	machine_config drv;
+	expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
 	sprintf(buf, "%d colors ", drv.total_colors);
@@ -2134,7 +2131,6 @@ static void SetPropEnabledControls(HWND hWnd)
 
 		EnableWindow(GetDlgItem(hWnd,IDC_VOLUME),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_RATETEXT),sound);
-		EnableWindow(GetDlgItem(hWnd,IDC_USE_FILTER),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_VOLUMEDISP),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_VOLUMETEXT),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY),sound);
@@ -2720,7 +2716,6 @@ static void BuildDataMap(void)
 	/* sound */
 	DataMapAdd(IDC_SAMPLERATE,    DM_INT,  CT_COMBOBOX, &g_nSampleRateIndex,       DM_INT, &pGameOpts->samplerate, 0, 0, AssignSampleRate);
 	DataMapAdd(IDC_SAMPLES,       DM_BOOL, CT_BUTTON,   &pGameOpts->use_samples,   DM_BOOL, &pGameOpts->use_samples,   0, 0, 0);
-	//DataMapAdd(IDC_USE_FILTER,    DM_BOOL, CT_BUTTON,   &pGameOpts->use_filter,    DM_BOOL, &pGameOpts->use_filter,    0, 0, 0);
 	DataMapAdd(IDC_USE_SOUND,     DM_BOOL, CT_BUTTON,   &pGameOpts->enable_sound,  DM_BOOL, &pGameOpts->enable_sound,  0, 0, 0);
 	DataMapAdd(IDC_VOLUME,        DM_INT,  CT_SLIDER,   &g_nVolumeIndex,           DM_INT, &pGameOpts->attenuation, 0, 0, AssignVolume);
 	DataMapAdd(IDC_VOLUMEDISP,    DM_NONE, CT_NONE,  NULL,  DM_INT, &pGameOpts->attenuation, 0, 0, 0);
@@ -2744,10 +2739,8 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          DM_BOOL, &pGameOpts->leds,          0, 0, 0);
 	DataMapAdd(IDC_LEDMODE,       DM_INT,  CT_COMBOBOX, &g_nLedmodeIndex,		   DM_STRING, &pGameOpts->ledmode,  0, 0, AssignLedmode);
 	DataMapAdd(IDC_HIGH_PRIORITY, DM_BOOL, CT_BUTTON,   &pGameOpts->high_priority, DM_BOOL, &pGameOpts->high_priority, 0, 0, 0);
-	//DataMapAdd(IDC_SKIP_DISCLAIMER, DM_BOOL, CT_BUTTON, &pGameOpts->skip_disclaimer, DM_BOOL, &pGameOpts->skip_disclaimer, 0, 0, 0);
 	DataMapAdd(IDC_SKIP_GAME_INFO, DM_BOOL, CT_BUTTON,  &pGameOpts->skip_gameinfo, DM_BOOL, &pGameOpts->skip_gameinfo, 0, 0, 0);
 	DataMapAdd(IDC_SKIP_VALIDITY_CHECKS, DM_BOOL, CT_BUTTON, &pGameOpts->skip_validitychecks, DM_BOOL, &pGameOpts->skip_validitychecks, 0, 0, 0);
-	//DataMapAdd(IDC_CRC_ONLY,      DM_BOOL, CT_BUTTON,   &pGameOpts->crc_only,      DM_BOOL, &pGameOpts->crc_only,      0, 0, 0);
 	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &pGameOpts->bios,          DM_INT, &pGameOpts->bios,        0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_USE_NEW_UI,    DM_BOOL, CT_BUTTON,   &pGameOpts->mess.use_new_ui,DM_BOOL, &pGameOpts->mess.use_new_ui, 0, 0, 0);
@@ -2827,7 +2820,7 @@ static void SetStereoEnabled(HWND hWnd, int nIndex)
 {
 	BOOL enabled = FALSE;
 	HWND hCtrl;
-    machine_config drv;
+	machine_config drv;
 	int speakernum, num_speakers;
 
 	num_speakers = 0;
@@ -2855,7 +2848,7 @@ static void SetYM3812Enabled(HWND hWnd, int nIndex)
 	int i;
 	BOOL enabled;
 	HWND hCtrl;
-    machine_config drv;
+	machine_config drv;
 
 	if (nIndex > -1)
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
@@ -2890,7 +2883,7 @@ static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled)
 	int i;
 	BOOL enabled = FALSE;
 	HWND hCtrl;
-    machine_config drv;
+	machine_config drv;
 
 	hCtrl = GetDlgItem(hWnd, IDC_SAMPLES);
 

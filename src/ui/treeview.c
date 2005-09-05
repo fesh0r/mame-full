@@ -354,6 +354,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	/*Filter Text is already global*/
 
 	if (MyStrStrI(drivers[nGame]->description,GetFilterText()) == NULL &&
+		MyStrStrI(drivers[nGame]->name,GetFilterText()) == NULL && 
 		MyStrStrI(drivers[nGame]->source_file,GetFilterText()) == NULL && 
 		MyStrStrI(drivers[nGame]->manufacturer,GetFilterText()) == NULL)
 	{

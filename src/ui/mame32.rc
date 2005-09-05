@@ -24,7 +24,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// Englisch (USA) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
@@ -287,8 +287,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,99,0,0
- PRODUCTVERSION 0,99,0,0
+ FILEVERSION 0,100,0,0
+ PRODUCTVERSION 0,100,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -539,7 +539,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,153,125,44,14
 END
 
-IDD_PROP_GAME DIALOG DISCARDABLE  0, 0, 220, 239
+IDD_PROP_GAME DIALOG DISCARDABLE  0, 0, 220, 240
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "General"
 FONT 8, "MS Sans Serif"
@@ -593,7 +593,7 @@ BEGIN
                     NOT WS_TABSTOP
 END
 
-IDD_PROP_DISPLAY DIALOGEX 0, 0, 220, 238
+IDD_PROP_DISPLAY DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Display"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -620,6 +620,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,146,91,10,0,HIDC_FLIPY
     CONTROL         "Flip screen left-right",IDC_FLIPX,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,158,77,10,0,HIDC_FLIPX
+    GROUPBOX        "Screen",IDC_STATIC,4,176,103,28
+    COMBOBOX        IDC_SCREEN,10,186,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_SCREEN
     GROUPBOX        "Effects",IDC_STATIC,113,40,102,45
     CONTROL         "Use scanlines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | 
                     WS_GROUP | WS_TABSTOP,119,52,77,9,0,HIDC_SCANLINES
@@ -645,15 +648,12 @@ BEGIN
                     TBS_NOTICKS | WS_TABSTOP,119,179,71,10,0,
                     HIDC_PAUSEBRIGHT
     LTEXT           "0.65",IDC_PAUSEBRIGHTDISP,193,179,15,8
-    GROUPBOX        "Screen",IDC_STATIC,4,175,103,34
-    COMBOBOX        IDC_SCREEN,10,186,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_SCREEN
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,218,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,121,218,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 END
 
-IDD_PROP_DIRECT3D DIALOGEX 0, 0, 220, 220
+IDD_PROP_DIRECT3D DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Direct3D"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -696,15 +696,15 @@ BEGIN
                     TBS_NOTICKS | WS_TABSTOP,125,107,58,10,0,
                     HIDC_D3D_FEEDBACK
     RTEXT           "100",IDC_D3D_FEEDBACK_DISP,181,106,14,10,SS_CENTERIMAGE
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 #ifdef MESS
     LTEXT           "The new MESS UI is incompatible with Direct3D, so it must be turned off before D3D can be used",IDC_D3D_NEWUI_WARNING,108,177,110,28
 #endif
 END
 
-IDD_PROP_SOUND DIALOGEX 0, 0, 220, 220
+IDD_PROP_SOUND DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Sound"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -718,9 +718,6 @@ BEGIN
                     HIDC_USE_SOUND
     CONTROL         "Use samples",IDC_SAMPLES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,52,55,10,0,HIDC_SAMPLES
-    CONTROL         "Resample if sample rate does not match",IDC_USE_FILTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,140,10,0,
-                    HIDC_USE_FILTER
     GROUPBOX        "Sample rate",IDC_RATETEXT,60,78,100,28
     COMBOBOX        IDC_SAMPLERATE,66,88,88,60,CBS_DROPDOWNLIST | 
                     CBS_UPPERCASE | WS_VSCROLL | WS_TABSTOP,0,
@@ -735,12 +732,12 @@ BEGIN
                     HIDC_AUDIO_LATENCY
     RTEXT           "1/5",IDC_AUDIO_LATENCY_DISP,132,151,20,10,
                     SS_CENTERIMAGE
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 END
 
-IDD_PROP_ADVANCED DIALOGEX 0, 0, 220, 220
+IDD_PROP_ADVANCED DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Advanced"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -809,21 +806,21 @@ BEGIN
                     WS_TABSTOP,119,142,77,10,0,HIDC_AUTOFRAMESKIP
     COMBOBOX        IDC_FRAMESKIP,119,154,90,88,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_FRAMESKIP
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 END
 
-IDD_PROP_INPUT DIALOGEX 0, 0, 220, 220
+IDD_PROP_INPUT DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Controllers"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_JOYSTICK,IDC_STATIC,20,10,20,20
-    LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,54,9,161,25,
+    LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,4,40,103,47
-    GROUPBOX        "",IDC_STATIC,4,90,103,39
+    GROUPBOX        "",IDC_STATIC,4,89,103,39
     CONTROL         "Enable joystick input",IDC_JOYSTICK,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,10,40,78,10,0,
                     HIDC_JOYSTICK
@@ -833,11 +830,11 @@ BEGIN
     LTEXT           "0.3",IDC_A2DDISP,78,64,16,10,SS_CENTERIMAGE | NOT 
                     WS_GROUP
     CONTROL         "Enable lightgun input",IDC_LIGHTGUN,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,90,80,10,0,HIDC_LIGHTGUN
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,89,80,10,0,HIDC_LIGHTGUN
     CONTROL         "Offscreen shots reload",IDC_RELOAD,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,102,86,10,0,HIDC_RELOAD
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,101,86,10,0,HIDC_RELOAD
     CONTROL         "Dual lightguns",IDC_DUAL_LIGHTGUN,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,114,86,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,113,86,10,0,
                     HIDC_DUAL_LIGHTGUN
     CONTROL         "Enable mouse input",IDC_USE_MOUSE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,40,86,10,0,
@@ -853,21 +850,21 @@ BEGIN
                     WS_TABSTOP,119,95,76,10,0,HIDC_LEDS
     COMBOBOX        IDC_LEDMODE,119,105,90,42,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP,0,HIDC_LEDMODE
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,0x809d0447
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
-                    0,0,0x809d0401
+    GROUPBOX        "Digital joystick axes",IDC_ANALOG_AXES_TEXT,4,131,211,
+                    73
     CONTROL         "List1",IDC_ANALOG_AXES,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOLABELWRAP | 
-                    WS_BORDER | WS_TABSTOP,9,142,200,51,WS_EX_CLIENTEDGE,
+                    WS_BORDER | WS_TABSTOP,10,141,199,57,WS_EX_CLIENTEDGE,
                     HIDC_ANALOG_AXES
-    GROUPBOX        "Digital joystick axes",IDC_ANALOG_AXES_TEXT,4,132,211,
-                    66
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,0x809d0447
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
+                    0,0,0x809d0401
 END
 
-IDD_PROP_MISC DIALOGEX 0, 0, 220, 220
+IDD_PROP_MISC DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Miscellaneous"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_MAME32_ICON,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -879,6 +876,8 @@ BEGIN
     CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,40,86,10,0,HIDC_CHEAT
 #endif
+    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,52,96,10,0,HIDC_LOG
     CONTROL         "Sleep when possible",IDC_SLEEP,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,64,86,10,0,HIDC_SLEEP
     CONTROL         "Use RDTSC timing system",IDC_OLD_TIMING,"Button",
@@ -887,21 +886,16 @@ BEGIN
     CONTROL         "High thread priority",IDC_HIGH_PRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,88,86,10,0,
                     HIDC_HIGH_PRIORITY
-    CONTROL         "Skip disclaimer",IDC_SKIP_DISCLAIMER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,
-                    HIDC_SKIP_DISCLAIMER
 #ifdef MESS
     CONTROL         "Skip system info",IDC_SKIP_GAME_INFO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,86,10,0,HIDC_SKIP_GAME_INFO
 #else
     CONTROL         "Skip game info",IDC_SKIP_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,112,86,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,
                     HIDC_SKIP_GAME_INFO
 #endif
     CONTROL         "Skip validity checks",IDC_SKIP_VALIDITY_CHECKS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,124,86,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,112,86,10,0,
                     HIDC_SKIP_VALIDITY_CHECKS
-    CONTROL         "Use CRC only",IDC_CRC_ONLY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,136,86,10,0,HIDC_CRC_ONLY
     CONTROL         "Use additional artwork",IDC_ARTWORK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,40,82,10,0,HIDC_ARTWORK
     CONTROL         "Backdrops",IDC_BACKDROPS,"Button",BS_AUTOCHECKBOX | 
@@ -918,8 +912,8 @@ BEGIN
     GROUPBOX        "BIOS",IDC_STATIC,60,148,100,28
     COMBOBOX        IDC_BIOS,66,158,88,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP,0,HIDC_BIOS
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 #ifdef MESS
     CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
@@ -928,7 +922,7 @@ BEGIN
 #endif
 END
 
-IDD_PROP_VECTOR DIALOGEX 0, 0, 220, 220
+IDD_PROP_VECTOR DIALOGEX 0, 0, 220, 228
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Vector"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -957,8 +951,8 @@ BEGIN
                     HIDC_INTENSITY
     RTEXT           "1.5",IDC_INTENSITYDISP,132,139,20,10,SS_CENTERIMAGE | 
                     NOT WS_GROUP
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,202,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,202,97,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,HIDC_USE_DEFAULT
 END
 
@@ -1184,13 +1178,44 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,97,115,50,14
 END
 
+IDD_PROP_CONTROLLER DIALOGEX 0, 0, 220, 228
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Controller Mapping"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    ICON            IDI_JOYSTICK,IDC_STATIC,20,10,20,20
+    LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
+                    SS_NOPREFIX
+    GROUPBOX        "Paddle device",IDC_STATIC,4,40,103,28
+    COMBOBOX        IDC_PADDLE,10,50,91,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_PADDLE
+    GROUPBOX        "ADStick device",IDC_STATIC,4,71,103,28
+    COMBOBOX        IDC_ADSTICK,10,80,91,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_ADSTICK
+    GROUPBOX        "Pedal device",IDC_STATIC,4,102,103,28
+    COMBOBOX        IDC_PEDAL,10,112,91,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_PEDAL
+    GROUPBOX        "Dial device",IDC_STATIC,113,40,102,28
+    COMBOBOX        IDC_DIAL,119,50,90,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_DIAL
+    GROUPBOX        "Trackball device",IDC_STATIC,113,71,102,28
+    COMBOBOX        IDC_TRACKBALL,119,80,90,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_TRACKBALL
+    GROUPBOX        "Lightgun device",IDC_STATIC,113,102,102,28
+    COMBOBOX        IDC_LIGHTGUNDEVICE,119,112,90,62,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP,0,HIDC_LIGHTGUNDEVICE
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,0x806a0447
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
+                    0,0,0x806a0401
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
 //
 
-IDA_TAB_KEYS ACCELERATORS DISCARDABLE
+IDA_TAB_KEYS ACCELERATORS DISCARDABLE 
 BEGIN
     "1",            ID_VIEW_TAB_SCREENSHOT, VIRTKEY, ALT, NOINVERT
     "2",            ID_VIEW_TAB_FLYER,      VIRTKEY, ALT, NOINVERT
@@ -1493,9 +1518,11 @@ BEGIN
 #ifdef MESS
     ID_FILE_PLAY_RECORD     "Record a system for later playback"
     ID_FILE_PLAY_BACK       "Playback a recorded system"
+    ID_FILE_PLAY_RECORD_WAVE "Record the sound output of a system"
 #else
     ID_FILE_PLAY_RECORD     "Record a game for later playback"
     ID_FILE_PLAY_BACK       "Playback a recorded game"
+    ID_FILE_PLAY_RECORD_WAVE "Record the sound output of a game"
 #endif
     ID_VIEW_PICTURE_AREA    "Show or hide the picture area"
     ID_HELP_CONTENTS        "Display help contents"
@@ -1558,7 +1585,7 @@ BEGIN
     ID_SORT_DESCENDING      "Sort column in descending (Z-A) order"
 END
 
-#endif    // English (U.S.) resources
+#endif    // Englisch (USA) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

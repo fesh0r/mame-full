@@ -826,7 +826,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -hiscore_directory \"%s\"",  GetHiDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -state_directory \"%s\"",    GetStateDir());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -artwork_directory \"%s\"",  GetArtDir());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -artwork_directory \"%s\"",	GetArtDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
@@ -5590,19 +5590,19 @@ static void MamePlayBackGame()
 		// check for game name embedded in .inp header
 		if (pPlayBack)
 		{
-			inp_header inp_header;
+			inp_header input_header;
 
 			// read playback header
-			mame_fread(pPlayBack, &inp_header, sizeof(inp_header));
+			mame_fread(pPlayBack, &input_header, sizeof(inp_header));
 
-			if (!isalnum(inp_header.name[0])) // If first byte is not alpha-numeric
+			if (!isalnum(input_header.name[0])) // If first byte is not alpha-numeric
 				mame_fseek(pPlayBack, 0, SEEK_SET); // old .inp file - no header
 			else
 			{
 				int i;
 				for (i = 0; drivers[i] != 0; i++) // find game and play it
 				{
-					if (strcmp(drivers[i]->name, inp_header.name) == 0)
+					if (strcmp(drivers[i]->name, input_header.name) == 0)
 					{
 						nGame = i;
 						break;
@@ -6449,7 +6449,7 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 }
 
 // replaces function in src/windows/fileio.c:
-int osd_display_loading_rom_message(const char *name,rom_load_data *romdata)
+int osd_display_loading_rom_message(const char *name, rom_load_data *romdata)
 {
 	int retval;
 
@@ -6544,7 +6544,7 @@ int UpdateLoadProgress(const char* name, const rom_load_data *romdata)
 	{
 		// final call to us
 		SetWindowText(GetDlgItem(hWndLoad, IDC_LOAD_ROMNAME), "");
-		if (romdata->errors > 0 || romdata->warnings > 0)
+		if (romdata->errors > 0 )
 		{
 			
 			/*
@@ -6561,15 +6561,12 @@ int UpdateLoadProgress(const char* name, const rom_load_data *romdata)
 			if (romdata->errors)
 				SetWindowText(GetDlgItem(hWndLoad,IDC_ERROR_TEXT),
 							  "ERROR: required files are missing, the game cannot be run.");
-			else
-				SetWindowText(GetDlgItem(hWndLoad,IDC_ERROR_TEXT),
-							  "WARNING: the game might not run correctly.");
 		}
 	}
 	else
 		SetWindowText(GetDlgItem(hWndLoad, IDC_LOAD_ROMNAME), name);
 
-	if (name == NULL && (romdata->errors > 0 || romdata->warnings > 0))
+	if (name == NULL && (romdata->errors > 0 ))
 	{
 		while (GetMessage(&Msg, NULL, 0, 0))
 		{

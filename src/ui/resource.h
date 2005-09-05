@@ -217,7 +217,6 @@
 #define IDC_FILTER_EDIT                 1129
 #define IDC_ABOUT                       1130
 #define IDC_PROP_DISPLAY                1131
-#define IDC_USE_FILTER                  1132
 #define IDC_USE_SOUND                   1133
 #define IDC_WAITVSYNC                   1134
 #define IDC_HWSTRETCH                   1135
@@ -259,7 +258,6 @@
 #define IDC_LOAD_STATUS                 1173
 #define IDC_ERROR_TEXT                  1174
 #define IDC_ARTMISCTEXT                 1175
-#define IDC_SKIP_DISCLAIMER             1176
 #define IDC_SKIP_GAME_INFO              1177
 #define IDC_PROP_SOURCE                 1178
 #define IDC_OLD_TIMING                  1179
@@ -306,7 +304,6 @@
 #define IDC_SKIP_VALIDITY_CHECKS        1227
 #define IDC_CYCLETIMESECTXT             1230
 #define IDC_SCREENSHOT_BORDERSIZETXT    1232
-#define IDC_CRC_ONLY                    1233
 #define IDC_PADDLE                      1234
 #define IDC_ADSTICK                     1235
 #define IDC_PEDAL                       1236

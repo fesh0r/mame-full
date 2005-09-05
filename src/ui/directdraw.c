@@ -21,10 +21,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#ifndef _MSC_VER
 #ifdef __GNUC__
 #define NONAMELESSUNION
 #else
 #include <multidef.h>
+#endif
 #endif
 #include <ddraw.h>
 
