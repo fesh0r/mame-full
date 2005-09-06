@@ -598,7 +598,7 @@ static void node_checkattr(struct imgtooltest_state *state, xml_data_node *node)
 	if (memcmp(&value, &expected_value, sizeof(value)))
 	{
 		state->failed = 1;
-		error_reportf("Comparison failed\n");
+		report_message(MSG_FAILURE, "Comparison failed");
 		return;
 	}
 }

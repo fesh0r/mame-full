@@ -133,8 +133,8 @@ void image_make_readonly(mess_image *img);
   able to eliminate the need for a unload function.
 ****************************************************************************/
 
-void *image_malloc(mess_image *img, size_t size) FUNCATTR_MALLOC;
-char *image_strdup(mess_image *img, const char *src) FUNCATTR_MALLOC;
+void *image_malloc(mess_image *img, size_t size) ATTR_MALLOC;
+char *image_strdup(mess_image *img, const char *src) ATTR_MALLOC;
 void *image_realloc(mess_image *img, void *ptr, size_t size);
 void image_freeptr(mess_image *img, void *ptr);
 

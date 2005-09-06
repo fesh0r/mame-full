@@ -36,23 +36,6 @@ typedef enum
 	BLOBSTATE_DOUBLEQUOTES
 } blobparse_state_t;
 
-struct messtest_state
-{
-	XML_Parser parser;
-	memory_pool pool;
-
-	const struct messtest_tagdispatch *dispatch[32];
-	int dispatch_pos;
-	unsigned int aborted : 1;
-
-	const char *script_filename;
-	char *current_testcase_name;
-
-	int test_count;
-	int failure_count;
-};
-
-static struct messtest_state *state;
 static const char *current_testcase_name;
 static int is_failure;
 
@@ -60,12 +43,10 @@ static int is_failure;
 
 void error_report(const char *message)
 {
-	fprintf(stderr, "%s:(%i:%i): %s\n",
-		state->script_filename,
-		XML_GetCurrentLineNumber(state->parser),
-		XML_GetCurrentColumnNumber(state->parser),
+	fprintf(stderr, "%s: %s\n",
+		current_testcase_name,
 		message);
-	state->aborted = 1;
+	is_failure = 1;
 }
 
 
@@ -108,35 +89,6 @@ void error_invalidmemregion(const char *s)
 void error_baddevicetype(const char *s)
 {
 	error_reportf("Bad device type '%s'\n", s);
-}
-
-
-
-static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
-{
-	const struct messtest_tagdispatch *dispatch;
-
-	/* try to find the tag */
-	dispatch = state->dispatch[state->dispatch_pos] ? state->dispatch[state->dispatch_pos]->subdispatch : NULL;
-	if (dispatch)
-	{
-		while(dispatch->tag)
-		{
-			if (!strcmp(tagname, dispatch->tag))
-				break;
-			dispatch++;
-		}
-		if (!dispatch->tag)
-		{
-			error_reportf("Unknown tag '%s'\n", tagname);
-			return;
-		}
-
-		if (!state->aborted && dispatch->start_handler)
-			dispatch->start_handler(attributes);
-	}
-
-	state->dispatch[++state->dispatch_pos] = dispatch;
 }
 
 
@@ -413,7 +365,7 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 	file = fopen(opts->script_filename, "r");
 	if (!file)
 	{
-		fprintf(stderr, "%s: Cannot open file\n", state->script_filename);
+		fprintf(stderr, "%s: Cannot open file\n", opts->script_filename);
 		goto done;
 	}
 

@@ -202,6 +202,24 @@
 	<checkfile name="FOO.TXT" fork="RESOURCE_FORK">'resource fork text' * 1000</checkfile>
 </imgtooltest>
 
+<!--
+<imgtooltest name="prodos_009">
+	<createimage driver="apple2_do_prodos_525"/>
+	
+	<putfile name="FOO.TXT">'data fork text' * 500</putfile>
+	<checkattr path="FOO.TXT" name="mac_file_type" value="????"/>
+	<checkattr path="FOO.TXT" name="mac_file_creator" value="????"/>
+
+	<setattr path="FOO.TXT" name="mac_file_type" value="TEXT"/>	
+	<checkattr path="FOO.TXT" name="mac_file_type" value="TEXT"/>
+	<checkattr path="FOO.TXT" name="mac_file_creator" value="????"/>
+
+	<setattr path="FOO.TXT" name="mac_file_creator" value="NATE"/>	
+	<checkattr path="FOO.TXT" name="mac_file_type" value="TEXT"/>
+	<checkattr path="FOO.TXT" name="mac_file_creator" value="NATE"/>	
+</imgtooltest>
+-->
+
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>

@@ -21,44 +21,6 @@
 #include "osdutils.h"
 
 /* -----------------------------------------------------------------------
- * GCC related optimizations
- * ----------------------------------------------------------------------- */
-
-#ifdef __GNUC__
-#if (__GNUC__ > 2)
-#define FUNCATTR_MALLOC		__attribute__ ((malloc))
-#endif
-
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
-#define FUNCATTR_PURE		__attribute__ ((pure))
-#endif
-
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
-#define FUNCATTR_CONST		__attribute__ ((const))
-#endif
-#endif /* __GNUC__ */
-
-#ifndef FUNCATTR_MALLOC
-#define FUNCATTR_MALLOC
-#endif
-
-#ifndef FUNCATTR_PURE
-#define FUNCATTR_PURE
-#endif
-
-#ifndef FUNCATTR_CONST
-#define FUNCATTR_CONST
-#endif
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	0
-#endif
-
-/* -----------------------------------------------------------------------
  * strncpyz
  * strncatz
  *

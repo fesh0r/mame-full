@@ -6,14 +6,6 @@
 #include "mess.h"
 #include "vidhrdw/generic.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #define PROFILER_VIDEOMAP_DRAWBORDER	PROFILER_USER3
 #define PROFILER_VIDEOMAP_DRAWBODY		PROFILER_USER4
 

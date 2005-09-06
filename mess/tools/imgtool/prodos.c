@@ -157,9 +157,6 @@ struct prodos_dirent
 	UINT32 lastmodified_time;
 	UINT32 creation_time;
 
-	unsigned int has_finfo : 1;
-	unsigned int has_xfinfo : 1;
-
 	/* FInfo */
 	UINT32 file_type;
 	UINT32 file_creator;
@@ -784,8 +781,6 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	ent->lastmodified_time	= pick_integer_le(appleenum->block_data, offset + 33, 4);
 	ent->file_type = 0x3F3F3F3F;
 	ent->file_creator = 0x3F3F3F3F;
-	ent->has_finfo = 0;
-	ent->has_xfinfo = 0;
 	ent->finder_flags  = 0;
 	ent->coord_x = 0;
 	ent->coord_y = 0;
@@ -812,7 +807,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 			ent->filesize[fork_num]		= pick_integer_le(buffer, 5 + (fork_num * 256), 3);
 			ent->depth[fork_num]		= buffer[fork_num * 256] & 0x0F;
 
-			for (finfo_offset = 10; finfo_offset <= 28; finfo_offset += 18)
+			for (finfo_offset = 8; finfo_offset <= 26; finfo_offset += 18)
 			{
 				finfo = &buffer[finfo_offset + (fork_num * 256)];
 
@@ -821,7 +816,6 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 					switch(*(finfo++))
 					{
 						case 1:	/* FInfo */
-							ent->has_finfo = 1;
 							ent->file_type     = pick_integer_be(finfo,  0, 4);
 							ent->file_creator  = pick_integer_be(finfo,  4, 4);
 							ent->finder_flags  = pick_integer_be(finfo,  8, 2);
@@ -831,7 +825,6 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 							break;
 
 						case 2:	/* xFInfo */
-							ent->has_xfinfo = 1;
 							ent->icon_id           = pick_integer_be(finfo,  0, 2);
 							ent->script_code       = pick_integer_be(finfo,  8, 1);
 							ent->extended_flags    = pick_integer_be(finfo,  9, 1);
@@ -870,25 +863,86 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 
 
 
+/* changes a normal file to a ProDOS extended file */
+static imgtoolerr_t prodos_promote_file(imgtool_image *image, UINT8 *bitmap, struct prodos_dirent *ent)
+{
+	imgtoolerr_t err;
+	UINT16 new_block;
+	UINT8 buffer[BLOCK_SIZE];
+
+	err = prodos_alloc_block(image, bitmap, &new_block);
+	if (err)
+		return err;
+
+	/* create raw extended info block */
+	memset(buffer, 0, sizeof(buffer));
+	place_integer_be(buffer,  8, 1, 18);
+	place_integer_be(buffer,  9, 1, 1);
+	place_integer_be(buffer, 10, 4, 0x3F3F3F3F);
+	place_integer_be(buffer, 14, 4, 0x3F3F3F3F);
+	place_integer_be(buffer, 26, 1, 18);
+	place_integer_be(buffer, 27, 1, 2);
+
+	err = prodos_save_block(image, new_block, buffer);
+	if (err)
+		return err;
+
+	ent->storage_type = (ent->storage_type & 0x0F) | 0x50;
+	ent->extkey_pointer = new_block;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
-	struct prodos_direnum *appleenum, const struct prodos_dirent *ent)
+	struct prodos_direnum *appleenum, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
 	struct prodos_diskinfo *di;
-	UINT32 offset;
+	UINT32 offset, ext_offset;
 	UINT8 buffer[BLOCK_SIZE];
 	int fork_num;
+	int needs_finfo = FALSE;
+	int needs_xfinfo = FALSE;
+	UINT8 *finfo;
 
 	di = get_prodos_info(image);
 	offset = appleenum->index * di->dirent_size + 4;
+
+	/* determine whether we need FInfo and/or xFInfo */
+	if (!is_dir_storagetype(ent->storage_type))
+	{
+		needs_finfo = (ent->file_type != 0x3F3F3F3F) ||
+			(ent->file_creator != 0x3F3F3F3F) ||
+			(ent->finder_flags != 0) ||
+			(ent->coord_x != 0) ||
+			(ent->coord_y != 0) ||
+			(ent->finder_folder != 0);
+
+		needs_xfinfo = (ent->icon_id != 0) ||
+			(ent->script_code != 0) ||
+			(ent->extended_flags != 0) ||
+			(ent->comment_id != 0) ||
+			(ent->putaway_directory != 0);
+	}
 
 	appleenum->block_data[offset + 0] = ent->storage_type;
 	memcpy(&appleenum->block_data[offset + 1], ent->filename, 15);
 	place_integer_le(appleenum->block_data, offset + 24, 4, ent->creation_time);
 	place_integer_le(appleenum->block_data, offset + 33, 4, ent->lastmodified_time);
 
+	/* do we need to promote this file to an extended file? */
+	if (!is_extendedfile_storagetype(ent->storage_type)
+		&& (needs_finfo || needs_xfinfo))
+	{
+		err = prodos_promote_file(image, NULL, ent);
+		if (err)
+			return err;
+	}
+
 	if (is_extendedfile_storagetype(ent->storage_type))
 	{
+		/* ProDOS extended file */
 		err = prodos_load_block(image, ent->extkey_pointer, buffer);
 		if (err)
 			return err;
@@ -898,7 +952,40 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 			place_integer_le(buffer, 1 + (fork_num * 256), 2, ent->key_pointer[fork_num]);
 			place_integer_le(buffer, 5 + (fork_num * 256), 3, ent->filesize[fork_num]);
 			buffer[fork_num * 256] = ent->depth[fork_num];
+
+			for (ext_offset = 8; ext_offset <= 26; ext_offset += 18)
+			{
+				finfo = &buffer[fork_num * 256 + ext_offset];
+				if (*(finfo++) == 18)
+				{
+					switch(*(finfo++))
+					{
+						case 1:	/* FInfo */
+							place_integer_be(finfo,  0, 4, ent->file_type);
+							place_integer_be(finfo,  4, 4, ent->file_creator);
+							place_integer_be(finfo,  8, 2, ent->finder_flags);
+							place_integer_be(finfo, 10, 2, ent->coord_x);
+							place_integer_be(finfo, 12, 2, ent->coord_y);
+							place_integer_be(finfo, 14, 4, ent->finder_folder);
+							needs_finfo = FALSE;
+							break;
+
+						case 2:	/* xFInfo */
+							place_integer_be(finfo,  0, 2, ent->icon_id);
+							place_integer_be(finfo,  8, 1, ent->script_code);
+							place_integer_be(finfo,  9, 1, ent->extended_flags);
+							place_integer_be(finfo, 10, 2, ent->comment_id);
+							place_integer_be(finfo, 12, 4, ent->putaway_directory);
+							needs_xfinfo = FALSE;
+							break;
+					}
+				}
+			}
 		}
+
+		/* creating FInfo and xInfo from scratch is not yet supported */
+		if (needs_finfo || needs_xfinfo)
+			return IMGTOOLERR_UNIMPLEMENTED;
 
 		err = prodos_save_block(image, ent->extkey_pointer, buffer);
 		if (err)
@@ -909,6 +996,7 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 	}
 	else
 	{
+		/* normal file */
 		place_integer_le(appleenum->block_data, offset + 17, 2, ent->key_pointer[0]);
 		place_integer_le(appleenum->block_data, offset + 21, 3, ent->filesize[0]);
 	}
@@ -1042,6 +1130,8 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 			ent->storage_type = (create == CREATE_DIR) ? 0xe0 : 0x10;
 			ent->creation_time = ent->lastmodified_time = prodos_time_now();
 			ent->key_pointer[0] = new_file_block;
+			ent->file_type = 0x3F3F3F3F;
+			ent->file_creator = 0x3F3F3F3F;
 			strncpy(ent->filename, old_path, sizeof(ent->filename) / sizeof(ent->filename[0]));
 
 			/* and place it */
@@ -1165,17 +1255,9 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 	if (fork_num && (new_blockcount > 0) && !is_extendedfile_storagetype(ent->storage_type))
 	{
 		/* need to change a normal file to an extended file */
-		err = prodos_alloc_block(image, bitmap, &new_block);
+		err = prodos_promote_file(image, bitmap, ent);
 		if (err)
 			return err;
-
-		memset(buffer, 0, sizeof(buffer));
-		err = prodos_save_block(image, new_block, buffer);
-		if (err)
-			return err;
-
-		ent->storage_type = (ent->storage_type & 0x0F) | 0x50;
-		ent->extkey_pointer = new_block;
 	}
 
 	key_pointer = ent->key_pointer[fork_num];
@@ -1890,7 +1972,7 @@ static imgtoolerr_t prodos_diskimage_getattrs(imgtool_image *image, const char *
 				values[i].i = ent.icon_id;
 				break;
 			case IMGTOOLATTR_INT_MAC_SCRIPTCODE:
-				values[i].i = ent.finder_folder;
+				values[i].i = ent.script_code;
 				break;
 			case IMGTOOLATTR_INT_MAC_EXTENDEDFLAGS:
 				values[i].i = ent.extended_flags;
@@ -1910,6 +1992,7 @@ static imgtoolerr_t prodos_diskimage_getattrs(imgtool_image *image, const char *
 				break;
 		}
 	}
+
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1917,8 +2000,67 @@ static imgtoolerr_t prodos_diskimage_getattrs(imgtool_image *image, const char *
 
 static imgtoolerr_t prodos_diskimage_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
-}
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+	struct prodos_direnum direnum;
+	int i;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, &direnum, &ent);
+	if (err)
+		return err;
+
+	for (i = 0; attrs[i]; i++)
+	{
+		switch(attrs[i])
+		{
+			case IMGTOOLATTR_INT_MAC_TYPE:
+				ent.file_type = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_CREATOR:
+				ent.file_creator = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFLAGS:
+				ent.finder_flags = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDX:
+				ent.coord_x = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDY:
+				ent.coord_y = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFOLDER:
+				ent.finder_folder = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_ICONID:
+				ent.icon_id = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_SCRIPTCODE:
+				ent.script_code = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_EXTENDEDFLAGS:
+				ent.extended_flags = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_COMMENTID:
+				ent.comment_id = values[i].i;
+				break;
+			case IMGTOOLATTR_INT_MAC_PUTAWAYDIRECTORY:
+				ent.putaway_directory = values[i].i;
+				break;
+
+			case IMGTOOLATTR_TIME_CREATED:
+				ent.creation_time = prodos_setup_time(values[i].t);
+				break;
+			case IMGTOOLATTR_TIME_LASTMODIFIED:
+				ent.lastmodified_time = prodos_setup_time(values[i].t);
+				break;
+		}
+	}
+
+	err = prodos_put_dirent(image, &direnum, &ent);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;}
 
 
 
