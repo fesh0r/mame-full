@@ -1,3 +1,8 @@
+<!DOCTYPE tests
+[
+	<!ENTITY eoln SYSTEM "http://www.mess.org/messtest/">
+]>
+
 <tests>
 
 <imgtooltest name="coco_rs_jvc">
@@ -98,6 +103,13 @@
 	<createimage driver="coco_jvc_rsdos"/>
 	<putfile name="FOO.TXT" filter="ascii">'Hello&#13;&#10;World&#10;'</putfile>
 	<checkfile name="FOO.TXT">'Hello&#13;World&#13;'</checkfile>
+</imgtooltest>
+
+<imgtooltest name="coco_rs_004">
+	<!-- NOTE: should be using &eoln; here -->
+	<createimage driver="coco_jvc_rsdos"/>
+	<putfile name="FOO.TXT">'Hello&#13;World&#13;'</putfile>
+	<checkfile name="FOO.TXT" filter="ascii">'Hello&#13;&#10;World&#13;&#10;'</checkfile>
 </imgtooltest>
 
 </tests>

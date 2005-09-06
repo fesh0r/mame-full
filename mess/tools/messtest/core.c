@@ -281,6 +281,13 @@ static int external_entity_handler(XML_Parser parser,
 				goto done;
 		}
 	}
+	else if (!strcmp(context, "eoln"))
+	{
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "<eoln>%s</eoln>", EOLN);
+
+		if (XML_Parse(extparser, buf, strlen(buf), 0) == XML_STATUS_ERROR)
+			goto done;
+	}
 
 	if (XML_Parse(extparser, NULL, 0, 1) == XML_STATUS_ERROR)
 		goto done;

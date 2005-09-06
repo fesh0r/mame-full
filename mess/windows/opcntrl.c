@@ -317,17 +317,40 @@ optreserr_t win_add_resolution_parameter(HWND control, option_resolution *resolu
 	const struct OptionGuide *guide;
 	TCHAR buf[256];
 	optreserr_t err;
+	const char *text;
+	const char *old_text;
+	int i;
 
 	if (!GetWindowText(control, buf, sizeof(buf) / sizeof(buf[0])))
 		return OPTIONRESOLTUION_ERROR_INTERNAL;
+	text = U2T(buf);
 
 	guide = (const struct OptionGuide *) GetProp(control, guide_prop);
 	if (!guide)
 		return OPTIONRESOLTUION_ERROR_INTERNAL;
 
-	err = option_resolution_add_param(resolution, guide->identifier, U2T(buf));
-	if (err)
-		return err;
+	if (guide->option_type == OPTIONTYPE_ENUM_BEGIN)
+	{
+		/* need to convert display name to identifier */
+		old_text = text;
+		text = NULL;
+
+		for (i = 1; guide[i].option_type == OPTIONTYPE_ENUM_VALUE; i++)
+		{
+			if (!strcmp(guide[i].display_name, old_text))
+			{
+				text = guide[i].identifier;
+				break;
+			}
+		}
+	}
+
+	if (text)
+	{
+		err = option_resolution_add_param(resolution, guide->identifier, text);
+		if (err)
+			return err;
+	}
 
 	return OPTIONRESOLUTION_ERROR_SUCCESS;
 }
