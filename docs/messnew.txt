@@ -51,6 +51,8 @@ Source Changes:
 
 - Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
 
+- [Windows] Added a -skip_warnings option.  [Nate Woods]
+
 - [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]
 
 - Fixed PULUW mnemonic in the 6309 disassembler.  [tim lindner]

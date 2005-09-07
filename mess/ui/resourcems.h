@@ -16,6 +16,7 @@
 #define IDC_PRINTER_CAPTION				2010
 #define IDC_PRINTER_EDITTEXT			2011
 #define IDC_PRINTER_BROWSE				2012
+#define IDC_SKIP_WARNINGS               2013
 #define IDI_WIN_NOROMSNEEDED			2100
 #define IDI_WIN_MISSINGOPTROM			2101
 #define IDI_WIN_FLOP                    2102

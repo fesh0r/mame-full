@@ -202,6 +202,9 @@ typedef struct
 	char   *ledmode;
 	BOOL   high_priority;
 	BOOL   skip_gameinfo;
+#ifdef MESS
+	BOOL   skip_warnings;
+#endif
 	BOOL   skip_validitychecks;
 	int bios;
 
@@ -289,6 +292,9 @@ typedef struct
     COLORREF list_font_color;
     COLORREF list_clone_color;
     BOOL     skip_gameinfo;
+#ifdef MESS
+	BOOL     skip_warnings;
+#endif
     BOOL     skip_validitychecks;
     BOOL     high_priority;
 

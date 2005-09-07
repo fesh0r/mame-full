@@ -887,7 +887,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,88,86,10,0,
                     HIDC_HIGH_PRIORITY
 #ifdef MESS
-    CONTROL         "Skip system info",IDC_SKIP_GAME_INFO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,86,10,0,HIDC_SKIP_GAME_INFO
+    CONTROL         "Skip system info",IDC_SKIP_GAME_INFO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,HIDC_SKIP_GAME_INFO
+    CONTROL         "Skip warnings",IDC_SKIP_WARNINGS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,124,86,10,0
 #else
     CONTROL         "Skip game info",IDC_SKIP_GAME_INFO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,
@@ -917,7 +919,7 @@ BEGIN
                     0,0,HIDC_USE_DEFAULT
 #ifdef MESS
     CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,130,144,70,10,0,HIDC_LOG
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,136,86,10,0
     LTEXT           "Direct3D is incompatible with the new MESS UI, so it must be turned off before the new UI can be used",IDC_NEWUI_D3D_WARNING,108,177,110,28
 #endif
 END

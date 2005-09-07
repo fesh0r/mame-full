@@ -977,6 +977,10 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
 	if (pOpts->skip_gameinfo)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
+#ifdef MESS
+	if (pOpts->skip_warnings)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_warnings");
+#endif
 	if (pOpts->skip_validitychecks)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_validitychecks");
 	if (pOpts->high_priority)

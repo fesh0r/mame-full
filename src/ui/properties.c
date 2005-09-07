@@ -2743,6 +2743,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_SKIP_VALIDITY_CHECKS, DM_BOOL, CT_BUTTON, &pGameOpts->skip_validitychecks, DM_BOOL, &pGameOpts->skip_validitychecks, 0, 0, 0);
 	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &pGameOpts->bios,          DM_INT, &pGameOpts->bios,        0, 0, 0);
 #ifdef MESS
+	DataMapAdd(IDC_SKIP_WARNINGS, DM_BOOL, CT_BUTTON,   &pGameOpts->skip_warnings, DM_BOOL, &pGameOpts->skip_warnings, 0, 0, 0);
 	DataMapAdd(IDC_USE_NEW_UI,    DM_BOOL, CT_BUTTON,   &pGameOpts->mess.use_new_ui,DM_BOOL, &pGameOpts->mess.use_new_ui, 0, 0, 0);
 #endif
 
