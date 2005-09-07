@@ -102,7 +102,7 @@ Notes:
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap;
-static int nmi_enable = 0, flip_screen_x = 0, flip_screen_y = 0;
+static int nmi_enable = 0;
 static UINT8 *jollyjgr_bitmap;
 
 static WRITE8_HANDLER( jollyjgr_videoram_w )
