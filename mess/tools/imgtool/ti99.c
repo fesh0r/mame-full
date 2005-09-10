@@ -4305,10 +4305,10 @@ static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 				if (iter->level)
 				{
 					fname_to_str(ent->filename, iter->image->u.dsk.catalogs[0].subdirs[iter->index[0]].name, sizeof(ent->filename) / sizeof(ent->filename[0]));
-					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]));
+					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 				}
 				fname_to_str(buf, fdr.name, 11);
-				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
+				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 			}
 #endif
 			/* parse flags */
@@ -4403,11 +4403,11 @@ static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 				for (i=0; i<iter->level; i++)
 				{
 					fname_to_str(buf, iter->catalog[i].subdirs[iter->index[i]].name, 11);
-					strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
-					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]));
+					strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
+					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 				}
 				fname_to_str(buf, iter->catalog[iter->level].subdirs[iter->index[iter->level]].name, 11);
-				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
+				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 			}
 #endif
 
@@ -4444,11 +4444,11 @@ static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_d
 				for (i=0; i<iter->level; i++)
 				{
 					fname_to_str(buf, iter->catalog[i].subdirs[iter->index[i]].name, 11);
-					strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
-					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]));
+					strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
+					strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 				}
 				fname_to_str(buf, iter->catalog[iter->level].files[iter->index[iter->level]].name, 11);
-				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
+				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 			}
 #endif
 			/* parse flags */

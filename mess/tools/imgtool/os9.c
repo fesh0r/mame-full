@@ -16,7 +16,7 @@ typedef enum
 {
 	CREATE_NONE,
 	CREATE_FILE,
-	CREATE_DIR,
+	CREATE_DIR
 } creation_policy_t;
 
 struct os9_diskinfo

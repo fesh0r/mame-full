@@ -1252,11 +1252,11 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 			for (i=0; i<iter->level; i++)
 			{
 				fname_to_str(buf, iter->xdr[i].fdr.fnm, 9);
-				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
-				strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]));
+				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
+				strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 			}
 			fname_to_str(buf, iter->xdr[iter->level].fdr.fnm, 9);
-			strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
+			strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1);
 		}
 #endif
 
