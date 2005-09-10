@@ -838,7 +838,7 @@ void inputx_update(void)
 			/* loop through this character's component codes */
 			for (i = 0; code->ipt[i] && (i < sizeof(code->ipt) / sizeof(code->ipt[0])); i++)
 			{
-				value = code->ipt[i]->default_value;
+				value = code->ipt[i]->mask;
 				input_port_set_digital_value(code->port[i], value, value);
 			}
 		}

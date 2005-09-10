@@ -2522,8 +2522,8 @@ UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue)
 void input_port_set_digital_value(int portnum, UINT32 value, UINT32 mask)
 {
 	input_port_info *portinfo = &port_info[portnum];
-	portinfo->defvalue &= ~mask;
-	portinfo->defvalue |= value;
+	portinfo->digital &= ~mask;
+	portinfo->digital |= value;
 }
 
 
