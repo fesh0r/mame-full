@@ -816,14 +816,13 @@ static void inputx_timerproc(int dummy)
 
 
 
-void inputx_update(UINT32 *ports)
+void inputx_update(void)
 {
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
-	const input_port_entry *ipt;
 	unicode_char_t ch;
 	int i;
-	int value;
+	UINT32 value;
 
 	if (inputx_can_post())
 	{
@@ -839,16 +838,8 @@ void inputx_update(UINT32 *ports)
 			/* loop through this character's component codes */
 			for (i = 0; code->ipt[i] && (i < sizeof(code->ipt) / sizeof(code->ipt[0])); i++)
 			{
-				ipt = code->ipt[i];
-				value = ports[code->port[i]];
-
-				/* toggle this value */
-				if (ipt->default_value & ipt->mask)
-					value &= ~ipt->mask;
-				else
-					value |= ipt->mask;
-
-				ports[code->port[i]] = value;
+				value = code->ipt[i]->default_value;
+				input_port_set_digital_value(code->port[i], value, value);
 			}
 		}
 	}

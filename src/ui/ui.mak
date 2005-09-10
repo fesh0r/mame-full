@@ -48,7 +48,7 @@ OSOBJS += \
 	$(OBJ)/ui/optcore.o	\
 	$(OBJ)/ui/inifile.o	\
 	$(OBJ)/ui/dirwatch.o	\
-	$(OBJ)/datafile.o	\
+	$(OBJ)/ui/datafile.o	\
 	
 ifdef MESS
 OSOBJS += \

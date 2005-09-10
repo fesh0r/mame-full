@@ -84,7 +84,7 @@ enum
 
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
-void inputx_update(UINT32 *ports);
+void inputx_update(void);
 void inputx_handle_mess_extensions(input_port_entry *ipt);
 
 int inputx_validitycheck(const game_driver *gamedrv);
