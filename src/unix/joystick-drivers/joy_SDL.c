@@ -41,8 +41,11 @@ void joy_SDL_init (void)
 			/* Set the file descriptor to a dummy value. */
 			joy_data[i].fd = 1;
 			joy_data[i].num_buttons = SDL_JoystickNumButtons(joystick[i]);
-			joy_data[i].num_axes    = SDL_JoystickNumAxes(joystick[i]);
-
+			joy_data[i].num_axes    = SDL_JoystickNumAxes(joystick[i])
+								+ (SDL_JoystickNumHats (joystick[i]) * 2)
+								+ (SDL_JoystickNumBalls (joystick[i]) * 2);
+			/* Each Hat Switch and Trackball is two dimensions */
+			
 			if (joy_data[i].num_buttons > JOY_BUTTONS)
 				joy_data[i].num_buttons = JOY_BUTTONS;
 			if (joy_data[i].num_axes > JOY_AXES)
@@ -67,7 +70,7 @@ void joy_SDL_init (void)
 void joy_SDL_poll (void)
 {
 #ifdef SDL_JOYSTICK
-	int i,j;
+	int i,j,k;
 
 	SDL_JoystickUpdate();
 
@@ -75,9 +78,69 @@ void joy_SDL_poll (void)
 	{
 		if (joy_data[i].fd)
 		{
-			for (j=0; j<joy_data[i].num_axes; j++)
+			k = 0; /* Count of total axes, including hats and balls */
+			for (j=0; j<SDL_JoystickNumAxes(joystick[i]); j++)
+			{
+				if (k >= joy_data[i].num_axes)
+					break;
 				joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick[i], j);
-
+				k++;
+			}
+			for (j=0; j<SDL_JoystickNumHats(joystick[i]);j++)
+			{
+				if (k +1 >= joy_data[i].num_axes)
+					break;
+				switch (SDL_JoystickGetHat (joystick[i], j)) 
+				{
+					case SDL_HAT_UP:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].mid;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].min;
+						break;
+					case SDL_HAT_RIGHT:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].max;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].mid;
+						break;
+					case SDL_HAT_DOWN:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].mid;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].max;
+						break;
+					case SDL_HAT_LEFT:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].min;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].mid;
+						break;
+					case SDL_HAT_RIGHTUP:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].max;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].min;
+						break;
+					case SDL_HAT_RIGHTDOWN:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].max;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].max;
+						break;
+					case SDL_HAT_LEFTUP:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].min;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].min;
+						break;
+					case SDL_HAT_LEFTDOWN:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].min;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].max;
+						break;
+					case SDL_HAT_CENTERED:
+					default:
+						joy_data[i].axis[k].val = joy_data[i].axis[k].mid;
+						joy_data[i].axis[k+1].val = joy_data[i].axis[k+1].mid;
+						break;
+				}
+				k += 2;
+			}
+			
+			for (j=0; j<SDL_JoystickNumBalls(joystick[i]);j++)
+			{
+				if (k +1 >= joy_data[i].num_axes)
+					break;
+				SDL_JoystickGetBall (joystick[i], j, &joy_data[i].axis[k].val, &joy_data[i].axis[k+1].val);
+				k += 2;
+			}
+			
 			for (j=0; j<joy_data[i].num_buttons; j++)
 				joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick[i], j);
 		}

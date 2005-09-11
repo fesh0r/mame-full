@@ -11,7 +11,7 @@
 
 #define JOY_MAX			8
 #define JOY_BUTTONS		32
-#define JOY_AXES		8
+#define JOY_AXES		16
 #define JOY_DIRS		2
 #define JOY_NAME_LEN		20
 #define HISTORY_LENGTH		16
