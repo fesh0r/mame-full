@@ -130,6 +130,7 @@ static void *netbsd_dsp_create(const void *flags)
   a_info.play.precision = desired_precision;
   if (ioctl(priv->fd, AUDIO_SETINFO, &a_info) < 0)
     {
+#if !defined (__ARCH_openbsd)
       perror("error: AUDIO_SETINFO");
       netbsd_dsp_destroy(dsp);
       return NULL;
@@ -137,6 +138,7 @@ static void *netbsd_dsp_create(const void *flags)
   if (a_info.play.encoding != desired_encoding
       || a_info.play.precision != desired_precision)
     {
+#endif
       if (desired_precision == 8)
 	{
 	  fprintf(stderr, "error: couldn't set sound to 8 bits,\n");

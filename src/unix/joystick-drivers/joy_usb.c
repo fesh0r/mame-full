@@ -21,8 +21,9 @@ struct rc_option joy_usb_opts[] = {
 
 #ifdef USB_JOYSTICK
 
-#if !defined(__ARCH_netbsd) && !defined(__ARCH_freebsd)
-#error "USB joysticks are only supported under NetBSD and FreeBSD.  Patches to support other archs are welcome ;)"
+    
+#if !defined(__ARCH_openbsd) && !defined(__ARCH_netbsd) && !defined(__ARCH_freebsd)
+#error "USB joysticks are only supported under OpenBSD, NetBSD and FreeBSD.  Patches to support other archs are welcome ;)"
 #endif
 
 #if defined(HAVE_USBHID_H) || defined(HAVE_LIBUSBHID_H)
@@ -117,7 +118,7 @@ static int joy_initialize_hid(int i)
     }
 
 #if defined(HAVE_USBHID_H) || defined(HAVE_LIBUSBHID_H)
-#if defined(__ARCH_netbsd) || (defined(__ARCH_freebsd) && __FreeBSD_version > 500000)
+#if defined(__ARCH_openbsd) || defined(__ARCH_netbsd) || (defined(__ARCH_freebsd) && __FreeBSD_version > 500000)
   if (ioctl(joy_data[i].fd, USB_GET_REPORT_ID, &report_id) < 0)
     {
       fprintf(stderr_file, "error: /dev/uhid%d: %s", i, strerror(errno));

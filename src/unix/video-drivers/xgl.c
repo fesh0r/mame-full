@@ -78,8 +78,8 @@ struct rc_option xgl_opts[] = {
 
 int xgl_init(void)
 {
-  const char *libGLName = "libGL.so.1";
-  const char *libGLUName = "libGLU.so.1";
+  const char *libGLName = "libGL.so";
+  const char *libGLUName = "libGLU.so";
   
   if (!loadGLLibrary(libGLName, libGLUName))
   {
