@@ -1,4 +1,4 @@
-0.99.1
+0.100
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -43,7 +43,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.99u10.  This incorporates all features of the
+- The core is based on MAME 0.100.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Removed fringe statetext feature used by a handful of the CBM drivers.  [Nate
