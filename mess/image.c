@@ -130,17 +130,21 @@ void image_exit(void)
 	int i, j, indx;
 
 	indx = 0;
-	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
-	{
-		for (j = 0; j < Machine->devices[i].count; j++)
-		{
-			/* call the exit handler if appropriate */
-			if (Machine->devices[i].exit)
-				Machine->devices[i].exit(&images[indx + j]);
 
-			tagpool_exit(&images[indx + j].tagpool);
+	if (Machine->devices)
+	{
+		for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+		{
+			for (j = 0; j < Machine->devices[i].count; j++)
+			{
+				/* call the exit handler if appropriate */
+				if (Machine->devices[i].exit)
+					Machine->devices[i].exit(&images[indx + j]);
+
+				tagpool_exit(&images[indx + j].tagpool);
+			}
+			indx += Machine->devices[i].count;
 		}
-		indx += Machine->devices[i].count;
 	}
 }
 
@@ -420,17 +424,20 @@ void image_unload_all(int ispreload)
 	ispreload = ispreload ? 1 : 0;
 
 	/* unload all devices with matching preload */
-	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	if (Machine->devices)
 	{
-		if (dev->load_at_init == ispreload)
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 		{
-			/* all instances */
-			for (id = 0; id < dev->count; id++)
+			if (dev->load_at_init == ispreload)
 			{
-				img = image_from_device_and_index(dev, id);
+				/* all instances */
+				for (id = 0; id < dev->count; id++)
+				{
+					img = image_from_device_and_index(dev, id);
 
-				/* unload this image */
-				image_unload_internal(img, TRUE);
+					/* unload this image */
+					image_unload_internal(img, TRUE);
+				}
 			}
 		}
 	}

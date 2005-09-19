@@ -28,6 +28,8 @@ Source Changes:
 ----------------
 - The core is based on MAME 0.100u1.  This incorporates all features of the
   update to this core.  [MAME team]
+
+- Fixed crashes when running deviceless systems. [Nate Woods]
   
 
 

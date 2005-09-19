@@ -149,60 +149,63 @@ void osd_begin_final_unloading(void)
 
 	memset(dev_opts, 0, sizeof(dev_opts));
 
-	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	if (Machine->devices)
 	{
-		for (count = dev->count; count > 0; count--)
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 		{
-			img = image_from_device_and_index(dev, count - 1);
-			if (image_exists(img))
-				break;
-		}
-
-		if (count > 0)
-		{
-			// compute length of string
-			blocksize = 0;
-			for (id = 0; id < count; id++)
+			for (count = dev->count; count > 0; count--)
 			{
-				img = image_from_device_and_index(dev, id);
-
+				img = image_from_device_and_index(dev, count - 1);
 				if (image_exists(img))
-				{
-					filename = image_filename(img);
-					blocksize += strlen(filename);
-					if (use_filename_quotes(filename))
-						blocksize += 2;
-				}
-				blocksize++;
+					break;
 			}
 
-			s = malloc(blocksize);
-			if (!s)
-				return;
-			*s = '\0';
-
-			for (id = 0; id < count; id++)
+			if (count > 0)
 			{
-				img = image_from_device_and_index(dev, id);
+				// compute length of string
+				blocksize = 0;
+				for (id = 0; id < count; id++)
+				{
+					img = image_from_device_and_index(dev, id);
 
-				if (image_exists(img))
-				{
-					filename = image_filename(img);
-					if (use_filename_quotes(filename))
-						strcat(s, "\"");
-					strcat(s, filename);
-					if (use_filename_quotes(filename))
-						strcat(s, "\"");
+					if (image_exists(img))
+					{
+						filename = image_filename(img);
+						blocksize += strlen(filename);
+						if (use_filename_quotes(filename))
+							blocksize += 2;
+					}
+					blocksize++;
 				}
-				if (id+1 < count)
+
+				s = malloc(blocksize);
+				if (!s)
+					return;
+				*s = '\0';
+
+				for (id = 0; id < count; id++)
 				{
-					len = strlen(s);
-					s[len+0] = IMAGE_SEPARATOR;
-					s[len+1] = '\0';
+					img = image_from_device_and_index(dev, id);
+
+					if (image_exists(img))
+					{
+						filename = image_filename(img);
+						if (use_filename_quotes(filename))
+							strcat(s, "\"");
+						strcat(s, filename);
+						if (use_filename_quotes(filename))
+							strcat(s, "\"");
+					}
+					if (id+1 < count)
+					{
+						len = strlen(s);
+						s[len+0] = IMAGE_SEPARATOR;
+						s[len+1] = '\0';
+					}
 				}
+
+				dev_opts[dev->type] = s;
 			}
-
-			dev_opts[dev->type] = s;
 		}
 	}
 }
