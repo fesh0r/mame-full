@@ -161,7 +161,8 @@ TESTDRIVER( studio2 )	/* Studio II										*/
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
-	DRIVER( adam )		/* Coleco Adam										*/
+	DRIVER( colecob )	/* Spectravideo SVI-603 Coleco Game Adapter				*/
+	DRIVER( adam )		/* Coleco Adam								*/
 	DRIVER( fnvision )  /* Coleco FunVision                                 */
 
 	/* NEC */
