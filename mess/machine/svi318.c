@@ -172,19 +172,19 @@ static ppi8255_interface svi318_ppi8255_interface =
 	{svi318_ppi_port_c_w}
 };
 
-READ8_HANDLER (svi318_ppi_r)
+READ8_HANDLER( svi318_ppi_r )
 {
 	return ppi8255_0_r (offset);
 }
 
-WRITE8_HANDLER (svi318_ppi_w)
+WRITE8_HANDLER( svi318_ppi_w )
 {
 	ppi8255_0_w (offset + 2, data);
 }
 
 /* Printer port */
 
-WRITE8_HANDLER (svi318_printer_w)
+WRITE8_HANDLER( svi318_printer_w )
 {
 	if (!offset)
 		svi.prn_data = data;
@@ -197,7 +197,7 @@ WRITE8_HANDLER (svi318_printer_w)
 	}
 }
 
-READ8_HANDLER (svi318_printer_r)
+READ8_HANDLER( svi318_printer_r )
 {
 	if (printer_status(image_from_devtype_and_index(IO_PRINTER, 0), 0) )
 		return 0xfe;
@@ -220,7 +220,7 @@ READ8_HANDLER (svi318_printer_r)
   8  RIGHT2 Joystick 2, Right
 */
 
-READ8_HANDLER (svi318_psg_port_a_r)
+READ8_HANDLER( svi318_psg_port_a_r )
 {
 	return readinputport (11);
 }
@@ -241,7 +241,7 @@ READ8_HANDLER (svi318_psg_port_a_r)
  with RAM are disabled.
 */
 
-WRITE8_HANDLER (svi318_psg_port_b_w)
+WRITE8_HANDLER( svi318_psg_port_b_w )
 {
 	if ( (svi.bank_switch ^ data) & 0x20)
 		set_led_status (0, !(data & 0x20) );
@@ -254,48 +254,48 @@ WRITE8_HANDLER (svi318_psg_port_b_w)
 
 typedef struct
 {
-	UINT8 seldrive;
+	UINT8 driveselect;
 	UINT8 irq_drq;
+	UINT8 heads[2];
 } SVI318_FDC_STRUCT;
 
-static SVI318_FDC_STRUCT svi318_fdc_status;
-static UINT8 svi318_dsk_heads[2];
+static SVI318_FDC_STRUCT svi318_fdc;
 
 static void svi_fdc_callback(int param)
 {
 	switch( param )
 	{
 	case WD179X_IRQ_CLR:
-		svi318_fdc_status.irq_drq &= ~0x80;
+		svi318_fdc.irq_drq &= ~0x80;
 		break;
 	case WD179X_IRQ_SET:
-		svi318_fdc_status.irq_drq |= 0x80;
+		svi318_fdc.irq_drq |= 0x80;
 		break;
 	case WD179X_DRQ_CLR:
-		svi318_fdc_status.irq_drq &= ~0x40;
+		svi318_fdc.irq_drq &= ~0x40;
 		break;
 	case WD179X_DRQ_SET:
-		svi318_fdc_status.irq_drq |= 0x40;
+		svi318_fdc.irq_drq |= 0x40;
 		break;
 	}
 }
 
-WRITE8_HANDLER (fdc_disk_motor_w)
+WRITE8_HANDLER( svi318_fdc_drive_motor_w )
 {
 	switch (data & 3)
 	{
 	case 1:
 		wd179x_set_drive(0);
-		svi318_fdc_status.seldrive = 0;
+		svi318_fdc.driveselect = 0;
 		break;
 	case 2:
 		wd179x_set_drive(1);
-		svi318_fdc_status.seldrive = 1;
+		svi318_fdc.driveselect = 1;
 		break;
 	}
 }
 
-WRITE8_HANDLER (fdc_density_side_w)
+WRITE8_HANDLER( svi318_fdc_density_side_w )
 {
 	mess_image *image;
 
@@ -303,20 +303,20 @@ WRITE8_HANDLER (fdc_density_side_w)
 
 	wd179x_set_side(data & 0x02 ? 1:0);
             
-	image = image_from_devtype_and_index(IO_FLOPPY, svi318_fdc_status.seldrive);
+	image = image_from_devtype_and_index(IO_FLOPPY, svi318_fdc.driveselect);
 	if (image_exists(image))
 	{
 		UINT8 sectors;
 		UINT16 sectorSize;
 		sectors =  data & 0x01 ? 18:17;
 		sectorSize = data & 0x01 ? 128:256;
-		basicdsk_set_geometry(image, 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sectors, sectorSize, 1, 0, FALSE);
+		basicdsk_set_geometry(image, 40, svi318_fdc.heads[svi318_fdc.driveselect], sectors, sectorSize, 1, 0, FALSE);
 	}
 }
 
-READ8_HANDLER (svi318_fdc_status_r)
+READ8_HANDLER( svi318_fdc_irqdrq_r )
 {
-	return svi318_fdc_status.irq_drq;
+	return svi318_fdc.irq_drq;
 }
 
 static unsigned long svi318_calcoffset(UINT8 t, UINT8 h, UINT8 s,
@@ -344,10 +344,10 @@ DEVICE_LOAD( svi318_floppy )
 		switch (size)
 		{
 		case 172032: /* Single sided */
-			svi318_dsk_heads[id] = 1;
+			svi318_fdc.heads[id] = 1;
 			break;
 		case 346112: /* Double sided */
-			svi318_dsk_heads[id] = 2;
+			svi318_fdc.heads[id] = 2;
 			break;
 		default:
 			return INIT_FAIL;
@@ -359,13 +359,190 @@ DEVICE_LOAD( svi318_floppy )
 	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
 		return INIT_FAIL;
 
-	basicdsk_set_geometry(image, 40, svi318_dsk_heads[id], 17, 256, 1, 0, FALSE);
+	basicdsk_set_geometry(image, 40, svi318_fdc.heads[id], 17, 256, 1, 0, FALSE);
 	basicdsk_set_calcoffset(image, svi318_calcoffset);
 
 	return INIT_PASS;
 }
 
-/* The init functions */
+/* 80 column card */
+
+#include "vidhrdw/m6845.h"
+static int svi318_80col_state;
+static char *svi318_80col_ram = NULL;
+
+static int svi318_6845_RA = 0;
+static int svi318_scr_x = 0;
+static int svi318_scr_y = 0;
+static int svi318_HSync = 0;
+static int svi318_VSync = 0;
+static int svi318_DE = 0;
+
+// called when the 6845 changes the character row
+static void svi318_Set_RA(int offset, int data)
+{
+	svi318_6845_RA=data;
+}
+
+
+// called when the 6845 changes the HSync
+static void svi318_Set_HSync(int offset, int data)
+{
+	svi318_HSync=data;
+	if(!svi318_HSync)
+	{
+		svi318_scr_y++;
+		svi318_scr_x = -40;
+	}
+}
+
+// called when the 6845 changes the VSync
+static void svi318_Set_VSync(int offset, int data)
+{
+	svi318_VSync=data;
+	if (!svi318_VSync)
+	{
+		svi318_scr_y = 0;
+	}
+}
+
+static void svi318_Set_DE(int offset, int data)
+{
+	svi318_DE = data;
+}
+
+static struct crtc6845_interface
+svi318_crtc6845_interface= {
+	0,// Memory Address register
+	svi318_Set_RA,// Row Address register
+	svi318_Set_HSync,// Horizontal status
+	svi318_Set_VSync,// Vertical status
+	svi318_Set_DE,// Display Enabled status
+	0,// Cursor status
+};
+
+/* 80 column card init */
+static void svi318_80col_init(void)
+{
+	/* 2K RAM */
+	svi318_80col_ram = auto_malloc(0x800);
+memset(svi318_80col_ram, 0x40, 0x400);
+	/* initialise 6845 */
+	crtc6845_config(&svi318_crtc6845_interface);
+
+	svi318_80col_state=(1<<2)|(1<<1);
+}
+
+READ8_HANDLER( svi318_crtc_r )
+{
+	return 0xff;
+}
+
+WRITE8_HANDLER( svi318_crtc_w )
+{
+}
+
+WRITE8_HANDLER( svi318_crtcbank_w )
+{
+}
+
+static void svi318_80col_plot_char_line(int x,int y, mame_bitmap *bitmap)
+{
+	if (svi318_DE)
+	{
+		unsigned char *data = memory_region(REGION_GFX1);
+		int w;
+		unsigned char data_byte;
+		int char_code;
+
+		char_code = svi318_80col_ram[crtc6845_memory_address_r(0)&0x07ff];
+		
+		data_byte = data[(char_code<<3) + svi318_6845_RA];
+
+		for (w=0; w<8;w++)
+		{
+			if (data_byte & 0x080)
+			{
+				plot_pixel(bitmap, x+w, y,1);
+			}
+			else
+			{
+				plot_pixel(bitmap, x+w, y,0);
+			}
+
+			data_byte = data_byte<<1;
+
+		}
+	}
+	else
+	{
+		plot_pixel(bitmap, x+0, y, 0);
+		plot_pixel(bitmap, x+1, y, 0);
+		plot_pixel(bitmap, x+2, y, 0);
+		plot_pixel(bitmap, x+3, y, 0);
+		plot_pixel(bitmap, x+4, y, 0);
+		plot_pixel(bitmap, x+5, y, 0);
+		plot_pixel(bitmap, x+6, y, 0);
+		plot_pixel(bitmap, x+7, y, 0);
+	}
+
+}
+
+static VIDEO_UPDATE( svi318_80col )
+{
+	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
+
+	c=0;
+
+	// loop until the end of the Vertical Sync pulse
+	while((svi318_VSync)&&(c<33274))
+	{
+		// Clock the 6845
+		crtc6845_clock();
+		c++;
+	}
+
+	// loop until the Vertical Sync pulse goes high
+	// or until a timeout (this catches the 6845 with silly register values that would not give a VSYNC signal)
+	while((!svi318_VSync)&&(c<33274))
+	{
+		while ((svi318_HSync)&&(c<33274))
+		{
+			crtc6845_clock();
+			c++;
+		}
+		// Do all the clever split mode changes in here before the next while loop
+
+		while ((!svi318_HSync)&&(c<33274))
+		{
+			// check that we are on the emulated screen area.
+			if ((svi318_scr_x>=0) && (svi318_scr_x<640) && (svi318_scr_y>=0) && (svi318_scr_y<400))
+			{
+				svi318_80col_plot_char_line(svi318_scr_x, svi318_scr_y, bitmap);
+			}
+
+			svi318_scr_x+=8;
+
+			// Clock the 6845
+			crtc6845_clock();
+			c++;
+		}
+	}
+}
+
+VIDEO_UPDATE( svi328b )
+{
+	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
+	video_update_svi318_80col(screen, bitmap, cliprect, do_skip);
+}
+
+MACHINE_INIT( svi328b )
+{
+	machine_init_svi318();
+	svi318_80col_init();
+}
+
+/* Init functions */
 
 void svi318_vdp_interrupt (int i)
 {
@@ -518,7 +695,7 @@ INTERRUPT_GEN( svi318_interrupt )
 
 /* Memory */
 
-WRITE8_HANDLER (svi318_writemem0)
+WRITE8_HANDLER( svi318_writemem0 )
 {
 	if (svi.bank1 < 2) return;
 
@@ -526,7 +703,7 @@ WRITE8_HANDLER (svi318_writemem0)
 		svi.banks[0][svi.bank1][offset] = data;
 }
 
-WRITE8_HANDLER (svi318_writemem1)
+WRITE8_HANDLER( svi318_writemem1 )
 {
 	switch (svi.bank2)
 	{

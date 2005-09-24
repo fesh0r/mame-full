@@ -21,25 +21,28 @@ DEVICE_UNLOAD( svi318_cart );
 INTERRUPT_GEN( svi318_interrupt );
 void svi318_vdp_interrupt (int i);
 
-WRITE8_HANDLER (svi318_writemem0);
-WRITE8_HANDLER (svi318_writemem1);
+WRITE8_HANDLER( svi318_writemem0 );
+WRITE8_HANDLER( svi318_writemem1 );
 
-READ8_HANDLER (svi318_printer_r);
-WRITE8_HANDLER (svi318_printer_w);
+READ8_HANDLER( svi318_printer_r );
+WRITE8_HANDLER( svi318_printer_w );
 
-READ8_HANDLER (svi318_ppi_r);
-WRITE8_HANDLER (svi318_ppi_w);
+READ8_HANDLER( svi318_ppi_r );
+WRITE8_HANDLER( svi318_ppi_w );
 
-WRITE8_HANDLER (svi318_psg_port_b_w);
-READ8_HANDLER (svi318_psg_port_a_r);
+WRITE8_HANDLER( svi318_psg_port_b_w );
+READ8_HANDLER( svi318_psg_port_a_r );
 
-/* cassette functions */
 DEVICE_LOAD( svi318_cassette );
 int svi318_cassette_present (int id);
 
-/* floppy functions */
-WRITE8_HANDLER (fdc_disk_motor_w);
-WRITE8_HANDLER (fdc_density_side_w);
-READ8_HANDLER (svi318_fdc_status_r);
-
+READ8_HANDLER( svi318_fdc_irqdrq_r );
+WRITE8_HANDLER( svi318_fdc_drive_motor_w );
+WRITE8_HANDLER( svi318_fdc_density_side_w );
 DEVICE_LOAD( svi318_floppy );
+
+READ8_HANDLER( svi318_crtc_r );
+WRITE8_HANDLER( svi318_crtc_w );
+WRITE8_HANDLER( svi318_crtcbank_w );
+VIDEO_UPDATE( svi328b );
+MACHINE_INIT( svi328b );
