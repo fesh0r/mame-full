@@ -18,52 +18,75 @@
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( svi318_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_BANK1 )
 	AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK2 )
 	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK3 )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( svi318_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( svi318_writemem0 )
 	AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
 ADDRESS_MAP_END
 
-static  READ8_HANDLER( svi318_null_r )
-{
-	return 0xff;
-}
-
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( svi318_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE( 0x00, 0x11) AM_READ( svi318_null_r )
 	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
-	AM_RANGE( 0x13, 0x2f) AM_READ( svi318_null_r )
 	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
 	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
 	AM_RANGE( 0x32, 0x32) AM_READ( wd179x_sector_r )
 	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
-	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_status_r )
-	AM_RANGE( 0x35, 0x83) AM_READ( svi318_null_r )
+	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_irqdrq_r )
 	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
 	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
-	AM_RANGE( 0x86, 0x8f) AM_READ( svi318_null_r )
 	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
-	AM_RANGE( 0x91, 0x95) AM_READ( svi318_null_r )
 	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
-	AM_RANGE( 0x9b, 0xff) AM_READ( svi318_null_r )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( svi318_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
 	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
 	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
 	AM_RANGE( 0x32, 0x32) AM_WRITE( wd179x_sector_w )
 	AM_RANGE( 0x33, 0x33) AM_WRITE( wd179x_data_w )
-	AM_RANGE( 0x34, 0x34) AM_WRITE( fdc_disk_motor_w )
-	AM_RANGE( 0x38, 0x38) AM_WRITE( fdc_density_side_w )
+	AM_RANGE( 0x34, 0x34) AM_WRITE( svi318_fdc_drive_motor_w )
+	AM_RANGE( 0x38, 0x38) AM_WRITE( svi318_fdc_density_side_w )
+	AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
+	AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
+	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
+	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
+	AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( svi318_readport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
+	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
+	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
+	AM_RANGE( 0x32, 0x32) AM_READ( wd179x_sector_r )
+	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
+	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_irqdrq_r )
+	AM_RANGE( 0x50, 0x51) AM_READ( svi318_crtc_r )
+	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
+	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
+	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
+	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( svi318_writeport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
+	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
+	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
+	AM_RANGE( 0x32, 0x32) AM_WRITE( wd179x_sector_w )
+	AM_RANGE( 0x33, 0x33) AM_WRITE( wd179x_data_w )
+	AM_RANGE( 0x34, 0x34) AM_WRITE( svi318_fdc_drive_motor_w )
+	AM_RANGE( 0x38, 0x38) AM_WRITE( svi318_fdc_density_side_w )
+	AM_RANGE( 0x50, 0x51) AM_WRITE( svi318_crtc_w )
+	AM_RANGE( 0x58, 0x58) AM_WRITE( svi318_crtcbank_w )
 	AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
 	AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
 	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
@@ -72,36 +95,35 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /*
-Keyboard status table
-
-     Bit#:|  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
-          |     |     |     |     |     |     |     |     |
-Line:     |     |     |     |     |     |     |     |     |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  0       | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  1       | "/" | "." | "=" | "," | "'" | ":" | "9" | "8" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  2       | "G" | "F" | "E" | "D" | "C" | "B" | "A" | "-" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  3       | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  4       | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  5       | UP  | BS  | "]" | "\" | "[" | "Z" | "Y" | "X" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  6       |LEFT |ENTER|STOP | ESC |RGRAP|LGRAP|CTRL |SHIFT|
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  7       |DOWN | INS | CLS | F5  | F4  | F3  | F2  | F1  |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  8       |RIGHT|     |PRINT| SEL |CAPS | DEL | TAB |SPACE|
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
-  9*      | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" |
- ---------+-----+-----+-----+-----+-----+-----+-----+-----|
- 10*      | "," | "." | "/" | "*" | "-" | "+" | "9" | "8" |
- ----------------------------------------------------------
- * Numcerical keypad (SVI-328 only)
-
+  Keyboard status table
+  
+       Bit#:|  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+            |     |     |     |     |     |     |     |     |
+  Line:     |     |     |     |     |     |     |     |     |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    0       | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    1       | "/" | "." | "=" | "," | "'" | ":" | "9" | "8" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    2       | "G" | "F" | "E" | "D" | "C" | "B" | "A" | "-" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    3       | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    4       | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    5       | UP  | BS  | "]" | "\" | "[" | "Z" | "Y" | "X" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    6       |LEFT |ENTER|STOP | ESC |RGRAP|LGRAP|CTRL |SHIFT|
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    7       |DOWN | INS | CLS | F5  | F4  | F3  | F2  | F1  |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    8       |RIGHT|     |PRINT| SEL |CAPS | DEL | TAB |SPACE|
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+    9*      | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" |
+   ---------+-----+-----+-----+-----+-----+-----+-----+-----|
+   10*      | "," | "." | "/" | "*" | "-" | "+" | "9" | "8" |
+   ----------------------------------------------------------
+   * Numcerical keypad (SVI-328 only)
 */
 
 INPUT_PORTS_START( svi318_keys )
@@ -293,10 +315,10 @@ INPUT_PORTS_START ( svi328 )
   PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line")
   PORT_DIPSETTING( 0, DEF_STR( No ) )
   PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )
-  PORT_DIPNAME( 0x01, 0x00, "Bank 21 RAM")
+  PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_UNUSED)
+  PORT_DIPNAME( 0x02, 0x00, "Bank 22 RAM")
   PORT_DIPSETTING( 0, DEF_STR( Off ) )
-  PORT_DIPSETTING( 0x01, DEF_STR( On ) )
-  PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+  PORT_DIPSETTING( 0x02, DEF_STR( On ) )
   PORT_DIPNAME( 0x04, 0x00, "Bank 31 RAM")
   PORT_DIPSETTING( 0, DEF_STR( Off ) )
   PORT_DIPSETTING( 0x04, DEF_STR( On ) )
@@ -333,10 +355,10 @@ static const TMS9928a_interface tms9928a_interface =
 
 static MACHINE_DRIVER_START( svi318 )
 	/* Basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3579545)        /* 3.579545 Mhz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
-	MDRV_CPU_VBLANK_INT(svi318_interrupt,1)
+	MDRV_CPU_ADD_TAG( "main", Z80, 3579545 )	/* 3.579545 Mhz */
+	MDRV_CPU_PROGRAM_MAP( svi318_readmem, svi318_writemem )
+	MDRV_CPU_IO_MAP( svi318_readport, svi318_writeport )
+	MDRV_CPU_VBLANK_INT( svi318_interrupt, 1 )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
@@ -358,6 +380,18 @@ static MACHINE_DRIVER_START( svi318 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)	
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( svi328b )
+	MDRV_IMPORT_FROM( svi318 )
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP( svi318_readport2, svi318_writeport2 )
+	MDRV_MACHINE_INIT( svi328b )
+
+	/* video hardware */
+	MDRV_SCREEN_SIZE(640, 400)
+	MDRV_VISIBLE_AREA(0,640-1, 0, 400-1)
+	MDRV_VIDEO_UPDATE( svi328b )
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -367,17 +401,31 @@ MACHINE_DRIVER_END
 
 ROM_START (svi318)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("svi100.rom", 0x0000, 0x8000, CRC(98d48655))
+    ROM_LOAD ("svi100.rom", 0x0000, 0x8000, CRC(98d48655) SHA1(07758272df475e5e06187aa3574241df1b14035b))
 ROM_END
 
 ROM_START (svi328)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("svi110.rom", 0x0000, 0x8000, CRC(709904e9))
+    ROM_LOAD ("svi110.rom", 0x0000, 0x8000, CRC(709904e9) SHA1(7d8daf52f78371ca2c9443e04827c8e1f98c8f2c))
 ROM_END
 
 ROM_START (svi328a)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("svi111.rom", 0x0000, 0x8000, CRC(bc433df6))
+    ROM_LOAD ("svi111.rom", 0x0000, 0x8000, CRC(bc433df6) SHA1(10349ce675f6d6d47f0976e39cb7188eba858d89))
+ROM_END
+
+ROM_START (svi328b)
+    ROM_REGION (0x10000, REGION_CPU1,0)
+    ROM_LOAD ("svi111.rom", 0x0000, 0x8000, CRC(bc433df6) SHA1(10349ce675f6d6d47f0976e39cb7188eba858d89))
+    ROM_REGION( 0x1000, REGION_GFX1, 0)
+    ROM_LOAD ("svi806.rom", 0x0000, 0x1000, CRC(850bc232) SHA1(ed45cb0e9bd18a9d7bd74f87e620f016a7ae840f))
+ROM_END
+
+ROM_START (svi328c)
+    ROM_REGION (0x10000, REGION_CPU1,0)
+    ROM_LOAD ("svi111.rom", 0x0000, 0x8000, CRC(bc433df6) SHA1(10349ce675f6d6d47f0976e39cb7188eba858d89))
+    ROM_REGION( 0x1000, REGION_GFX1, 0)
+    ROM_LOAD ("svi806se.rom", 0x0000, 0x1000, CRC(daea8956) SHA1(3f16d5513ad35692488ae7d864f660e76c6e8ed3))
 ROM_END
 
 static void svi318_printer_getinfo(struct IODevice *dev)
@@ -420,7 +468,9 @@ SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE(svi318_floppy_getinfo)
 SYSTEM_CONFIG_END
 
-/*   YEAR	NAME		PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */
-COMP(1983,	svi318,		0,	0,	svi318,	svi318,	svi318, svi318,	"Spectravideo", "SVI-318 (SV BASIC v1.0)" )
-COMP(1983,	svi328,		svi318,	0,	svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328 (SV BASIC v1.1)" )
-COMP(1983,	svi328a,	svi318,	0,	svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328 (SV BASIC v1.11)" )
+/*   YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT   INIT    CONFIG  COMPANY FULLNAME */
+COMP(1983, svi318,       0,      0, svi318,  svi318, svi318, svi318, "Spectravideo", "SVI-318 (SV BASIC v1.0)" )
+COMP(1983, svi328,  svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.1)" )
+COMP(1983, svi328a, svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.11)" )
+COMPX(1983, svi328b, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card", GAME_NOT_WORKING  )
+COMPX(1983, svi328c, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card (Swedish)", GAME_NOT_WORKING  )
