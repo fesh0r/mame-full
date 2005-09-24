@@ -83,7 +83,7 @@ UINT8				trying_to_quit;
 	+ JOY_MAX * (JOY_BUTTONS + JOY_AXES * (JOY_DIRS + 1)) \
 	+ GUN_MAX * 2
 
-static os_code_info	codelist[TOTAL_CODES];
+static os_code_info		codelist[TOTAL_CODES];
 static int			total_codes;
 
 /* Controller override options */
@@ -1365,60 +1365,23 @@ void unset_rapidfire_ctrl_button(int joy_num)
 
 int setrapidfire(int selected)
 {
-	const char *menu_item[42] = {
-		"Joy1Button 1",
-		"Joy1Button 2",
-		"Joy1Button 3",
-		"Joy1Button 4",
-		"Joy1Button 5",
-		"Joy1Button 6",
-		"Joy1Button 7",
-		"Joy1Button 8",
-		"Joy1Button 9",
-		"Joy1Button10",
-		"Joy2Button 1",
-		"Joy2Button 2",
-		"Joy2Button 3",
-		"Joy2Button 4",
-		"Joy2Button 5",
-		"Joy2Button 6",
-		"Joy2Button 7",
-		"Joy2Button 8",
-		"Joy2Button 9",
-		"Joy2Button10",
-		"Joy3Button 1",
-		"Joy3Button 2",
-		"Joy3Button 3",
-		"Joy3Button 4",
-		"Joy3Button 5",
-		"Joy3Button 6",
-		"Joy3Button 7",
-		"Joy3Button 8",
-		"Joy3Button 9",
-		"Joy3Button10",
-		"Joy4Button 1",
-		"Joy4Button 2",
-		"Joy4Button 3",
-		"Joy4Button 4",
-		"Joy4Button 5",
-		"Joy4Button 6",
-		"Joy4Button 7",
-		"Joy4Button 8",
-		"Joy4Button 9",
-		"Joy4Button10",
-		0,
-		0              /* terminate array */
-	};
-	const char *menu_subitem[42];
-	char sub[42][16];
-	int sel;
-	int items = 41;
+	ui_menu_item menu_item[42];
+	INT32 sel;
+	char buffer[42][28];
+	int total = 0;
 	int joy;
 	int button;
-	int d0,flag;
+        int d0;
+	int flag;
 
-	menu_subitem[40] = 0;
-	menu_item[40] = ui_getstring (UI_returntomain);
+        memset(menu_item, 0, sizeof(menu_item));
+	for (joy = 0; joy < 4; joy += 1)
+	{
+		for (button = 0; button < 10; button += 1)
+		{
+		        sprintf(&buffer[ (joy*10) + button ][0], "Joy%1dButton%2d               ", joy+1, button+1);
+		}
+	}
 
 	sel = selected - 1;
 
@@ -1428,32 +1391,36 @@ int setrapidfire(int selected)
 		{
 			if (is_rapidfire_ctrl_button(joy, button))
 			{
-				sprintf(&sub[ (joy*10) + button ][0], "    SWITCH");
+				sprintf(&buffer[ (joy*10) + button ][17], "    SWITCH");
 			}
 			else
 			{
 				int speed = get_rapidfire_speed(joy, button);
 				if (speed & 0x0100)
-					sprintf(&sub[ (joy*10) + button ][0], "RAPID %3d", speed & 0xFF);
+					sprintf(&buffer[ (joy*10) + button ][17], " RAPID %3d", speed & 0xFF);
 				else if(speed & 0x0200)
-					sprintf(&sub[ (joy*10) + button ][0], "CHARGE %3d", speed & 0xFF);
+					sprintf(&buffer[ (joy*10) + button ][17], "CHARGE %3d", speed & 0xFF);
 				else
-					sprintf(&sub[ (joy*10) + button ][0], "     OFF");
+					sprintf(&buffer[ (joy*10) + button ][17], "       OFF");
 			}
-			menu_subitem[ (joy*10) + button ] = &sub[ (joy*10) + button ][0];
+			menu_item[ (joy*10) + button ].text = buffer[ (joy*10) + button ];
+			total++;
 		}
 	}
-	/*ui_draw_menu(menu_item, menu_subitem, 0, sel, 0);*/
+
+	menu_item[total++].text = ui_getstring (UI_returntomain);
+
+	ui_draw_menu(menu_item, total, sel);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-		sel = (sel + 1) % items;
+		sel = (sel + 1) % total;
 
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-		sel = (sel + items - 1) % items;
+		sel = (sel + total - 1) % total;
 
 	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 	{
-		if (sel < items - 1)
+		if (sel < total - 1)
 		{
 			joy    = sel / 10;
 			button = sel % 10;
@@ -1483,13 +1450,13 @@ int setrapidfire(int selected)
 
 	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 	{
-		if (sel < items - 1)
+		if (sel < total - 1)
 		{
 			joy    = sel / 10;
 			button = sel % 10;
 			d0 = get_rapidfire_speed(joy, button);
 			flag = d0 & 0xff00;
-			if((flag & 0x300)&&(is_rapidfire_ctrl_button(joy, button)))
+			if((flag & 0x300)&&(!is_rapidfire_ctrl_button(joy, button)))
 			{
 				d0 &= 0xff;
 				if (d0 <= 32)
@@ -1513,8 +1480,8 @@ int setrapidfire(int selected)
 
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
-		if (sel == items - 1) sel = -1;         /* cancel */
-		else if (sel < items - 1)
+		if (sel == total - 1) sel = -1;         /* cancel */
+		else if (sel < total - 1)
 		{
 			joy    = sel / 10;
 			button = sel % 10;
@@ -1976,7 +1943,7 @@ static int devices_verify_joytype(struct rc_option *option, const char *arg,
 		bufsize -= n;
 #endif
 #ifdef USB_JOYSTICK
-		n = snprintf(dest, bufsize, "\n3 NetBSD/FreeBSD USB joystick");
+		n = snprintf(dest, bufsize, "\n3 OpenBSD/NetBSD/FreeBSD USB joystick");
 		dest    += n;
 		bufsize -= n;
 #endif
