@@ -764,9 +764,11 @@ TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
 TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
-	DRIVER( svi318 ) 	/* SVI-318											*/
-	DRIVER( svi328 ) 	/* SVI-328											*/
-	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
+	DRIVER( svi318 ) 	/* SVI-318 (SV BASIC v1.0)							*/
+	DRIVER( svi328 ) 	/* SVI-328 (SV BASIC v1.1)							*/
+	DRIVER( svi328a ) 	/* SVI-328 (SV BASIC v1.11)							*/
+TESTDRIVER( svi328b ) 	/* SVI-328 + 80 column card							*/
+TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 
 	/* Andrew Donald Booth (this is the name of the designer, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */
