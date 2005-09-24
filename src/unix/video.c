@@ -892,6 +892,10 @@ void osd_update_video_and_audio(mame_display *display)
 	const char *msg = NULL;
 	static int flags = 0;
 	static int palette_changed = 0;
+#ifdef MESS
+	if (!throttle && (display->changed_flags & GAME_OPTIONAL_FRAMESKIP))
+		display->changed_flags &= ~GAME_VISIBLE_AREA_CHANGED;
+#endif
 	
 	/*** STEP 1 update sound,fps,vis_area,palette and leds ***/
 	if (sysdep_sound_stream)

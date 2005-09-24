@@ -1,3 +1,66 @@
+0.100
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Macintosh SE [Nate Woods]
+
+
+
+System Driver Changes:
+----------------------
+- [C128] Fixed regression introduced in 0.99.  [Nate Woods]
+
+- [CONCEPT] Added HD support.  [Brett Wyer, Raphael Nabet]
+
+- [MAC] Added SCSI HD and extended PRAM support.  [R. Belmont]
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+- Removed no-longer used 'test' command.  [Nate Woods]
+
+- Added a MacBinary filter.  [Nate Woods]
+
+- [PRODOS] Added data fork support for ProDOS 6 forked files (storage class
+  $5).  [Nate Woods]
+
+- [MAC/TI99/TI990HD] Fixed a variety of crashes.  [Raphael Nabet]
+
+- [RSDOS] Fixed an unexpected error message if the directory track fills up.
+  [Nate Woods]
+
+- [Windows] Added a feature to use filters when inserting and extracting files.
+  (bug #631) [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.100.  This incorporates all features of the
+  update to this core.  [MAME team]
+  
+- Removed fringe statetext feature used by a handful of the CBM drivers.  [Nate
+  Woods]
+
+- Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
+
+- [Windows] Added a -skip_warnings option.  [Nate Woods]
+
+- [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]
+
+- Fixed PULUW mnemonic in the 6309 disassembler.  [tim lindner]
+
+- [Messtest] Refactored to use src/xmlfile.c code.  [Nate Woods]
+
+
+
 0.99
 
 New System Drivers Supported (in no particular order):

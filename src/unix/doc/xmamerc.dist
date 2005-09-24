@@ -66,8 +66,6 @@ rompath                 /usr/local/share/xmame/roms
 snapshot_directory      .
 cheat_file              /usr/local/share/xmame/cheat.dat
 hiscore_file            /usr/local/share/xmame/hiscore.dat
-history_file            /usr/local/share/xmame/history.dat
-mameinfo_file           /usr/local/share/xmame/mameinfo.dat
 
 ### Mame Related ###
 defaultgame             robby

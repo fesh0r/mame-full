@@ -2,9 +2,20 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.100.1, 21 September 2005
+	- Everything from MAME 0.100 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.100 (http://x.mame.net/changes-mess.html).
+	- Using "make install" no longer strips debug symbols from the 
+	  executables.
+	- Improved support for OpenBSD, including fixing audio on 8-bit sound 
+	  cards.  (Claudio Castiglia)
+	- Improved the SDL joystick driver so that it will work better with 
+	  components identified as hat switches or trackballs.  (Dave Ahlswede)
+	- Increased the maximum number of joystick axes from 8 to 16 to support 
+	  the Gravis Xterminator joypad.  (Dave Ahlswede)
+
 Release 0.99, 16 August 2005
-	- Everything from MAME 0.99 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.99 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.99 and MESS 0.99.
 	- The SVGAlib target no longer fails silently under certain conditions. 
 	  (Hans de Goede)
 	- Removed some unnecessary calls to exit() and fixed a few memory leaks 
