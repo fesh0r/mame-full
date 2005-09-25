@@ -352,7 +352,7 @@ static void bebox_uart_handshake(int id, int data)
 
 static const uart8250_interface bebox_uart_inteface =
 {
-	TYPE8250,
+	TYPE16550,
 	0,
 	NULL,
 	bebox_uart_transmit,
