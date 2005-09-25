@@ -817,7 +817,8 @@ TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 	DRIVER( abc806 )
 
 	/* Be Incorporated */
-	DRIVER( bebox )
+	DRIVER( bebox )		/* BeBox Dual603-66	*/
+	DRIVER( bebox2 )	/* BeBox Dual603-133	*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */

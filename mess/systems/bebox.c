@@ -81,11 +81,11 @@ static ppc_config bebox_ppc_config =
 
 static MACHINE_DRIVER_START( bebox )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(PPC603, 66000000)        /* 66 Mhz */
+	MDRV_CPU_ADD_TAG("ppc1", PPC603, 66000000)	/* 66 MHz */
 	MDRV_CPU_CONFIG(bebox_ppc_config)
 	MDRV_CPU_PROGRAM_MAP(bebox_mem, 0)
 
-	MDRV_CPU_ADD(PPC603, 66000000)        /* 66 Mhz */
+	MDRV_CPU_ADD_TAG("ppc2", PPC603, 66000000)	/* 66 MHz */
 	MDRV_CPU_CONFIG(bebox_ppc_config)
 	MDRV_CPU_PROGRAM_MAP(bebox_mem, 0)
 
@@ -104,11 +104,24 @@ static MACHINE_DRIVER_START( bebox )
 	MDRV_NVRAM_HANDLER( bebox )
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( bebox2 )
+	MDRV_IMPORT_FROM( bebox )
+	MDRV_CPU_REPLACE("ppc1", PPC603, 133000000)	/* 133 MHz */
+	MDRV_CPU_REPLACE("ppc2", PPC603, 133000000)	/* 133 MHz */
+MACHINE_DRIVER_END
+
 static INPUT_PORTS_START( bebox )
 	PORT_INCLUDE( at_keyboard )
 INPUT_PORTS_END
 
 ROM_START(bebox)
+    ROM_REGION(0x00200000, REGION_USER1, ROMREGION_64BIT | ROMREGION_BE)
+	ROM_LOAD( "bootmain.rom", 0x000000, 0x20000, CRC(df2d19e0) SHA1(da86a7d23998dc953dd96a2ac5684faaa315c701) )
+    ROM_REGION(0x4000, REGION_USER2, ROMREGION_64BIT | ROMREGION_BE)
+	ROM_LOAD( "bootnub.rom", 0x000000, 0x4000, CRC(5348d09a) SHA1(1b637a3d7a2b072aa128dd5c037bbb440d525c1a) )
+ROM_END
+
+ROM_START(bebox2)
     ROM_REGION(0x00200000, REGION_USER1, ROMREGION_64BIT | ROMREGION_BE)
 	ROM_LOAD( "bootmain.rom", 0x000000, 0x20000, CRC(df2d19e0) SHA1(da86a7d23998dc953dd96a2ac5684faaa315c701) )
     ROM_REGION(0x4000, REGION_USER2, ROMREGION_64BIT | ROMREGION_BE)
@@ -139,4 +152,5 @@ SYSTEM_CONFIG_END
 
 
 /*     YEAR     NAME        PARENT  COMPAT  MACHINE   INPUT     INIT    CONFIG  COMPANY             FULLNAME */
-COMPX( 1996,	bebox,		0,		0,		bebox,    bebox,	bebox,  bebox,	"Be Incorporated",	"BeBox", GAME_NOT_WORKING )
+COMPX( 1996,	bebox,		0,	0,	bebox,    bebox,	bebox,  bebox,	"Be Incorporated",	"BeBox Dual603-66", GAME_NOT_WORKING )
+COMPX( 1996,	bebox2,		bebox,	0,	bebox2,    bebox,	bebox,  bebox,	"Be Incorporated",	"BeBox Dual603-133", GAME_NOT_WORKING )
