@@ -388,6 +388,10 @@ static void coco3_line_callback(struct videomap_linecallback_info *info)
 		}
 		if (coco3_gimevhreg[1] & 0x04)
 			info->grid_width |= info->grid_width / 4;
+
+		/* special case; videomap does not like 0 scanlines per row */
+		if (info->scanlines_per_row == 0)
+			info->scanlines_per_row = Machine->drv->screen_height;
 	}
 	else
 	{

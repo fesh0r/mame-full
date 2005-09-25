@@ -8,7 +8,10 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [MTX512] Fixed regression introduced in 0.96  [Gerco Ballintijn]
+- [COCO3] Fixed assertion failure when using the zero/infinite scanlines video
+  mode.  [Nate Woods]
+
+- [MTX512] Fixed regression introduced in 0.96.  [Gerco Ballintijn]
 
 
 
