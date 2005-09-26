@@ -72,8 +72,15 @@ ADDRESS_MAP_END
 
 static ppc_config bebox_ppc_config =
 {
-	PPC_MODEL_603,
-	0x10,
+	PPC_MODEL_603,	/* 603 "Wart" */
+	0x10,		/* Multiplier 1.0, Bus = 66MHz, Core = 66MHz */
+	BUS_FREQUENCY_66MHZ
+};
+
+static ppc_config bebox2_ppc_config =
+{
+	PPC_MODEL_603E,	/* 603E "Stretch", version 1.3 */
+	0x10,		/* Multiplier 2.0, Bus = 66MHz, Core = 133MHz */
 	BUS_FREQUENCY_66MHZ
 };
 
@@ -107,7 +114,10 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bebox2 )
 	MDRV_IMPORT_FROM( bebox )
 	MDRV_CPU_REPLACE("ppc1", PPC603, 133000000)	/* 133 MHz */
+	MDRV_CPU_CONFIG(bebox2_ppc_config)
+
 	MDRV_CPU_REPLACE("ppc2", PPC603, 133000000)	/* 133 MHz */
+	MDRV_CPU_CONFIG(bebox2_ppc_config)
 MACHINE_DRIVER_END
 
 static INPUT_PORTS_START( bebox )
@@ -151,6 +161,6 @@ SYSTEM_CONFIG_START(bebox)
 SYSTEM_CONFIG_END
 
 
-/*     YEAR     NAME        PARENT  COMPAT  MACHINE   INPUT     INIT    CONFIG  COMPANY             FULLNAME */
-COMPX( 1996,	bebox,		0,	0,	bebox,    bebox,	bebox,  bebox,	"Be Incorporated",	"BeBox Dual603-66", GAME_NOT_WORKING )
-COMPX( 1996,	bebox2,		bebox,	0,	bebox2,    bebox,	bebox,  bebox,	"Be Incorporated",	"BeBox Dual603-133", GAME_NOT_WORKING )
+/*     YEAR   NAME      PARENT  COMPAT  MACHINE   INPUT     INIT    CONFIG  COMPANY             FULLNAME */
+COMPX( 1995,  bebox,    0,      0,      bebox,    bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-66", GAME_NOT_WORKING )
+COMPX( 1996,  bebox2,   bebox,  0,      bebox2,   bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-133", GAME_NOT_WORKING )
