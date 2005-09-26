@@ -473,6 +473,11 @@ int ui_update_and_render(mame_bitmap *bitmap)
 	if (options.cheat)
 		cheat_display_watches();
 
+#ifdef MESS
+	/* let MESS display its stuff */
+	mess_ui_update();
+#endif
+
 	/* finally, display any popup messages */
 	ui_display_popup();
 
@@ -1204,6 +1209,13 @@ static void create_font(void)
 
 static int handle_keys(mame_bitmap *bitmap)
 {
+#ifdef MESS
+	if (osd_trying_to_quit())
+		return 1;
+	if (options.disable_normal_ui)
+		return 0;
+#endif
+
 	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
 		return 1;

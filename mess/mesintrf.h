@@ -14,7 +14,7 @@
 #include "usrintrf.h"
 
 int mess_ui_active(void);
-int handle_mess_user_interface(mame_bitmap *bitmap);
+void mess_ui_update(void);
 
 /* image info screen */
 int ui_sprintf_image_info(char *buf);

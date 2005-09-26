@@ -11,119 +11,96 @@ int mess_ui_active(void)
 	return ui_active;
 }
 
-int handle_mess_user_interface(mame_bitmap *bitmap)
+void mess_ui_update(void)
 {
 	static int ui_toggle_key = 0;
 	static int ui_display_count = 30;
 
 	char buf[2048];
-	int trying_to_quit;
 	int id;
 	const struct IODevice *dev;
 
-	trying_to_quit = osd_trying_to_quit();
-	if (!trying_to_quit)
+	/* traditional MESS interface */
+	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		if (options.disable_normal_ui)
+		if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 		{
-			/* we are using the new UI; just do the minimal stuff here */
-			if (ui_get_show_profiler())
+			if( !ui_toggle_key )
 			{
-				int ui_width, ui_height;
-				ui_get_bounds(&ui_width, &ui_height);
-				ui_draw_text_full(profiler_get_text(), 0, 0, ui_width, JUSTIFY_LEFT,
-					WRAP_WORD, DRAW_OPAQUE, RGB_WHITE, RGB_BLACK, NULL, NULL);
+				ui_toggle_key = 1;
+				ui_active = !ui_active;
+				ui_display_count = 30;
+				schedule_full_refresh();
 			}
-			ui_display_fps();
 		}
 		else
 		{
-			/* traditional MESS interface */
-			if (Machine->gamedrv->flags & GAME_COMPUTER)
-			{
-				if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
-				{
-					if( !ui_toggle_key )
-					{
-						ui_toggle_key = 1;
-						ui_active = !ui_active;
-						ui_display_count = 30;
-						schedule_full_refresh();
-					}
-				}
-				else
-				{
-					ui_toggle_key = 0;
-				}
-
-				if (ui_active)
-				{
-					if( ui_display_count > 0 )
-					{
-							buf[0] = 0;
-							strcpy(buf,ui_getstring (UI_keyb1));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb2));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb3));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb5));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb2));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb7));
-							strcat(buf,"\n");
-							ui_draw_message_window(buf);
-
-						if( --ui_display_count == 0 )
-							schedule_full_refresh();
-					}
-				}
-				else
-				{
-					if( ui_display_count > 0 )
-					{
-							buf[0] = 0;
-							strcpy(buf,ui_getstring (UI_keyb1));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb2));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb4));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb6));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb2));
-							strcat(buf,"\n");
-							strcat(buf,ui_getstring (UI_keyb7));
-							strcat(buf,"\n");
-							ui_draw_message_window(buf);
-
-						if( --ui_display_count == 0 )
-							schedule_full_refresh();
-					}
-				}
-			}
-			if (((Machine->gamedrv->flags & GAME_COMPUTER) == 0) || ui_active)
-				trying_to_quit = ui_update_and_render(bitmap);
+			ui_toggle_key = 0;
 		}
 
-		/* run display routine for device */
-		if (devices_inited)
+		if (ui_active)
 		{
-			for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+			if( ui_display_count > 0 )
 			{
-				if (dev->display)
+					buf[0] = 0;
+					strcpy(buf,ui_getstring (UI_keyb1));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb3));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb5));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb7));
+					strcat(buf,"\n");
+					ui_draw_message_window(buf);
+
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
+			}
+		}
+		else
+		{
+			if( ui_display_count > 0 )
+			{
+					buf[0] = 0;
+					strcpy(buf,ui_getstring (UI_keyb1));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb4));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb6));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb7));
+					strcat(buf,"\n");
+					ui_draw_message_window(buf);
+
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
+			}
+		}
+	}
+
+	/* run display routine for device */
+	if (devices_inited)
+	{
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+		{
+			if (dev->display)
+			{
+				for (id = 0; id < device_count(dev->type); id++)
 				{
-					for (id = 0; id < device_count(dev->type); id++)
-					{
-						mess_image *img = image_from_devtype_and_index(dev->type, id);
-						dev->display(img, bitmap);
-					}
+					mess_image *img = image_from_devtype_and_index(dev->type, id);
+					dev->display(img, NULL);
 				}
 			}
 		}
 	}
-	return trying_to_quit;
 }
 
 

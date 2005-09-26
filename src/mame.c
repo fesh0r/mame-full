@@ -258,12 +258,6 @@ static void compute_aspect_ratio(const machine_config *drv, int *aspect_x, int *
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 
-#ifdef MESS
-#include "mesintrf.h"
-#define ui_update_and_render	handle_mess_user_interface
-#endif
-
-
 /***************************************************************************
 
     Inline functions

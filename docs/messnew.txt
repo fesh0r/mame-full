@@ -56,7 +56,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows] Fixed a regression in the new UI that prevented the "Show FPS"
+  function from working.  [Nate Woods]
 
 
 
