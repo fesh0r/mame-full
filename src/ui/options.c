@@ -268,6 +268,13 @@ static const REG_OPTION regSettings[] =
 	{ "background_directory",       RO_STRING,  offsetof(settings_type, bgdir),            "bkground" },
 	{ "folder_directory",           RO_STRING,  offsetof(settings_type, folderdir),        "folders" },
 	{ "icons_directory",            RO_STRING,  offsetof(settings_type, iconsdir),         "icons" },
+#ifdef MESS
+	{ "sysinfo_file",				RO_STRING,  offsetof(settings_type, history_filename), "sysinfo.dat" },
+	{ "messinfo_file",				RO_STRING,  offsetof(settings_type, mameinfo_filename),"messinfo.dat" },
+#else
+	{ "history_file",				RO_STRING,  offsetof(settings_type, history_filename), "history.dat" },
+	{ "mameinfo_file",				RO_STRING,  offsetof(settings_type, mameinfo_filename),"mameinfo.dat" },
+#endif
 
 #ifdef MESS
 	{ "mess_column_widths",         RO_ENCODE,  offsetof(settings_type, mess.mess_column_width), "186, 230, 88, 84, 84, 68, 248, 248",	NULL, MessColumnEncodeString, MessColumnDecodeWidths},

@@ -17,7 +17,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a regression that prevented sysinfo.dat from being
+  properly recognized.  [Nate Woods]
 
 
 
