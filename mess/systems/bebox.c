@@ -20,6 +20,7 @@
 #include "machine/pit8253.h"
 #include "devices/mflopimg.h"
 #include "devices/chd_cd.h"
+#include "devices/harddriv.h"
 #include "formats/pc_dsk.h"
 #include "vidhrdw/cirrus.h"
 
@@ -69,21 +70,19 @@ static ADDRESS_MAP_START( bebox_mem, ADDRESS_SPACE_PROGRAM, 64 )
 ADDRESS_MAP_END
 
 
-
 static ppc_config bebox_ppc_config =
 {
-	PPC_MODEL_603,	/* 603 "Wart" */
-	0x10,		/* Multiplier 1.0, Bus = 66MHz, Core = 66MHz */
+	PPC_MODEL_603,	/* 603 "Wart"					*/
+	0x10,		/* Multiplier 1.0, Bus = 66MHz, Core = 66MHz	*/
 	BUS_FREQUENCY_66MHZ
 };
 
 static ppc_config bebox2_ppc_config =
 {
-	PPC_MODEL_603E,	/* 603E "Stretch", version 1.3 */
-	0x10,		/* Multiplier 2.0, Bus = 66MHz, Core = 133MHz */
+	PPC_MODEL_603E,	/* 603E "Stretch", version 1.3			*/
+	0x19,		/* Multiplier 2.0, Bus = 66MHz, Core = 133MHz	*/
 	BUS_FREQUENCY_66MHZ
 };
-
 
 
 static MACHINE_DRIVER_START( bebox )
@@ -152,12 +151,20 @@ static void bebox_cdrom_getinfo(struct IODevice *dev)
 	dev->count = 1;
 }
 
+static void bebox_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	harddisk_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(bebox)
 	CONFIG_RAM(8 * 1024 * 1024)
 	CONFIG_RAM(16 * 1024 * 1024)
 	CONFIG_RAM_DEFAULT(32 * 1024 * 1024)
 	CONFIG_DEVICE(bebox_floppy_getinfo)
 	CONFIG_DEVICE(bebox_cdrom_getinfo)
+	CONFIG_DEVICE(bebox_harddisk_getinfo)
 SYSTEM_CONFIG_END
 
 

@@ -19,7 +19,7 @@
 
 	Keyboard/Mouse      (Intel 8242)   80000060, 80000064
 	Real Time Clock     (BQ3285)       80000070, 80000074
-	IDE ATA Interface	               800001F0-F7, 800003F6-7
+	IDE ATA Interface                  800001F0-F7, 800003F6-7
 	COM2                               800002F8-F
 	GeekPort A/D Control               80000360-1
 	GeekPort A/D Data                  80000362-3
@@ -113,7 +113,6 @@ static UINT32 bebox_interrupts;
 static UINT32 bebox_crossproc_interrupts;
 
 
-
 /*************************************
  *
  *	Interrupts and Motherboard Registers
@@ -137,7 +136,6 @@ static void bebox_mbreg32_w(UINT32 *target, UINT64 data, UINT64 mem_mask)
 		}
 	}
 }
-
 
 
 READ64_HANDLER( bebox_cpu0_imask_r )		{ return ((UINT64) bebox_cpu_imask[0]) << 32; }
@@ -241,7 +239,6 @@ WRITE64_HANDLER( bebox_processor_resets_w )
 }
 
 
-
 static void bebox_update_interrupts(void)
 {
 	int cpunum;
@@ -260,7 +257,6 @@ static void bebox_update_interrupts(void)
 		cpunum_set_input_line(cpunum, INPUT_LINE_IRQ0, interrupt ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
-
 
 
 static void bebox_set_irq_bit(unsigned int interrupt_bit, int val)
@@ -327,7 +323,6 @@ static void bebox_set_irq_bit(unsigned int interrupt_bit, int val)
 }
 
 
-
 /*************************************
  *
  *	COM ports
@@ -341,13 +336,11 @@ static void bebox_uart_transmit(int id, int data)
 }
 
 
-
 static void bebox_uart_handshake(int id, int data)
 {
 	if (LOG_UART)
 		logerror("bebox_uart_handshake(): id=%d data=0x%02X\n", id, data);
 }
-
 
 
 static const uart8250_interface bebox_uart_inteface =
@@ -358,7 +351,6 @@ static const uart8250_interface bebox_uart_inteface =
 	bebox_uart_transmit,
 	bebox_uart_handshake
 };
-
 
 
 /*************************************
@@ -376,12 +368,10 @@ static void bebox_fdc_interrupt(int state)
 }
 
 
-
 static void bebox_fdc_dma_drq(int state, int read_)
 {
 	dma8237_drq_write(0, FDC_DMA, state);
 }
-
 
 
 static mess_image *bebox_fdc_get_image(int floppy_index)
@@ -392,7 +382,6 @@ static mess_image *bebox_fdc_get_image(int floppy_index)
 }
 
 
-
 static const struct pc_fdc_interface bebox_fdc_interface =
 {
 	SMC37C78,
@@ -400,7 +389,6 @@ static const struct pc_fdc_interface bebox_fdc_interface =
 	bebox_fdc_dma_drq,
 	bebox_fdc_get_image
 };
-
 
 
 /*************************************
@@ -418,12 +406,10 @@ READ64_HANDLER( bebox_interrupt_ack_r )
 }
 
 
-
 static void bebox_pic_set_int_line(int interrupt)
 {
 	bebox_set_irq_bit(5, interrupt);
 }
-
 
 
 /*************************************
@@ -437,7 +423,6 @@ static WRITE8_HANDLER( bebox_800001F0_8_w ) { ide_controller_0_w(offset + 0x1F0,
 
 READ64_HANDLER( bebox_800001F0_r ) { return read64be_with_read8_handler(bebox_800001F0_8_r, offset, mem_mask); }
 WRITE64_HANDLER( bebox_800001F0_w ) { write64be_with_write8_handler(bebox_800001F0_8_w, offset, data, mem_mask); }
-
 
 
 READ64_HANDLER( bebox_800003F0_r )
@@ -459,7 +444,6 @@ READ64_HANDLER( bebox_800003F0_r )
 }
 
 
-
 WRITE64_HANDLER( bebox_800003F0_w )
 {
 	pc64be_fdc_w(offset, data, mem_mask | 0xFFFF);
@@ -472,7 +456,6 @@ WRITE64_HANDLER( bebox_800003F0_w )
 }
 
 
-
 static void bebox_ide_interrupt(int state)
 {
 	bebox_set_irq_bit(7, state);
@@ -480,12 +463,10 @@ static void bebox_ide_interrupt(int state)
 }
 
 
-
 static struct ide_interface bebox_ide_interface =
 {
 	bebox_ide_interrupt
 };
-
 
 
 /*************************************
@@ -504,7 +485,6 @@ static READ64_HANDLER( bebox_video_r )
 }
 
 
-
 static WRITE64_HANDLER( bebox_video_w )
 {
 	UINT64 *mem = (UINT64 *) pc_vga_memory();
@@ -514,19 +494,16 @@ static WRITE64_HANDLER( bebox_video_w )
 }
 
 
-
 static READ64_HANDLER( bebox_vga_memory_r )
 {
 	return read64be_with_read8_handler(bebox_vga_memory_rh, offset, mem_mask);
 }
 
 
-
 static WRITE64_HANDLER( bebox_vga_memory_w )
 {
 	write64be_with_write8_handler(bebox_vga_memory_wh, offset, data, mem_mask);
 }
-
 
 
 static void bebox_map_vga_memory(offs_t begin, offs_t end, read8_handler rh, write8_handler wh)
@@ -545,7 +522,6 @@ static void bebox_map_vga_memory(offs_t begin, offs_t end, read8_handler rh, wri
 }
 
 
-
 static const struct pc_vga_interface bebox_vga_interface =
 {
 	4,
@@ -558,7 +534,6 @@ static const struct pc_vga_interface bebox_vga_interface =
 };
 
 
-
 /*************************************
  *
  *	8237 DMA
@@ -567,7 +542,6 @@ static const struct pc_vga_interface bebox_vga_interface =
 
 static UINT16 dma_offset[2][4];
 static UINT8 at_pages[0x10];
-
 
 static READ8_HANDLER(at_page8_r)
 {
@@ -590,7 +564,6 @@ static READ8_HANDLER(at_page8_r)
 	}
 	return data;
 }
-
 
 
 static WRITE8_HANDLER(at_page8_w)
@@ -619,19 +592,16 @@ static WRITE8_HANDLER(at_page8_w)
 }
 
 
-
 READ64_HANDLER(bebox_page_r)
 {
 	return read64be_with_read8_handler(at_page8_r, offset, mem_mask);
 }
 
 
-
 WRITE64_HANDLER(bebox_page_w)
 {
 	write64be_with_write8_handler(at_page8_w, offset, data, mem_mask);
 }
-
 
 
 static WRITE8_HANDLER(at_hipage8_w)
@@ -658,19 +628,16 @@ static WRITE8_HANDLER(at_hipage8_w)
 }
 
 
-
 READ64_HANDLER(bebox_80000480_r)
 {
 	osd_die("NYI");
 }
 
 
-
 WRITE64_HANDLER(bebox_80000480_w)
 {
 	write64be_with_write8_handler(at_hipage8_w, offset, data, mem_mask);
 }
-
 
 
 static UINT8 bebox_dma_read_byte(int channel, offs_t offset)
@@ -681,14 +648,12 @@ static UINT8 bebox_dma_read_byte(int channel, offs_t offset)
 }
 
 
-
 static void bebox_dma_write_byte(int channel, offs_t offset, UINT8 data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& 0x7FFF0000;
 	program_write_byte(page_offset + offset, data);
 }
-
 
 
 static const struct dma8237_interface bebox_dma =
@@ -705,7 +670,6 @@ static const struct dma8237_interface bebox_dma =
 };
 
 
-
 /*************************************
  *
  *	8254 PIT
@@ -716,7 +680,6 @@ static void bebox_timer0_w(int state)
 {
 	pic8259_set_irq_line(0, 0, state);
 }
-
 
 
 static const struct pit8253_config bebox_pit8254_config =
@@ -742,7 +705,6 @@ static const struct pit8253_config bebox_pit8254_config =
 };
 
 
-
 /*************************************
  *
  *	Flash ROM
@@ -756,13 +718,11 @@ static READ8_HANDLER( bebox_flash8_r )
 }
 
 
-
 static WRITE8_HANDLER( bebox_flash8_w )
 {
 	offset = (offset & ~7) | (7 - (offset & 7));
 	intelflash_write(0, offset, data);
 }
-
 
 
 READ64_HANDLER( bebox_flash_r )
@@ -771,12 +731,10 @@ READ64_HANDLER( bebox_flash_r )
 }
 
 
-
 WRITE64_HANDLER( bebox_flash_w )
 {
 	write64be_with_write8_handler(bebox_flash8_w, offset, data, mem_mask);
 }
-
 
 
 /*************************************
@@ -792,14 +750,12 @@ static void bebox_keyboard_interrupt(int state)
 }
 
 
-
 static const struct kbdc8042_interface bebox_8042_interface =
 {
 	KBDC8042_STANDARD,
 	NULL,
 	bebox_keyboard_interrupt
 };
-
 
 
 /*************************************
@@ -843,7 +799,6 @@ static READ64_HANDLER( scsi53c810_r )
 }
 
 
-
 static WRITE64_HANDLER( scsi53c810_w )
 {
 	int reg = offset*8;
@@ -874,7 +829,6 @@ static WRITE64_HANDLER( scsi53c810_w )
 }
 
 
-
 #define BYTE_REVERSE32(x)		(((x >> 24) & 0xff) | \
 								((x >> 8) & 0xff00) | \
 								((x << 8) & 0xff0000) | \
@@ -888,7 +842,6 @@ static UINT32 scsi53c810_fetch(UINT32 dsp)
 }
 
 
-
 static void scsi53c810_irq_callback(void)
 {
 	bebox_set_irq_bit(21, 1);
@@ -896,11 +849,9 @@ static void scsi53c810_irq_callback(void)
 }
 
 
-
 static void scsi53c810_dma_callback(UINT32 src, UINT32 dst, int length, int byteswap)
 {
 }
-
 
 
 static UINT32 scsi53c810_pci_read(int function, int offset)
@@ -926,7 +877,6 @@ static UINT32 scsi53c810_pci_read(int function, int offset)
 	}
 	return result;
 }
-
 
 
 static void scsi53c810_pci_write(int function, int offset, UINT32 data)
@@ -965,13 +915,28 @@ static void scsi53c810_pci_write(int function, int offset, UINT32 data)
 }
 
 
-
 static const struct pci_device_info scsi53c810_callbacks =
 {
 	scsi53c810_pci_read,
 	scsi53c810_pci_write
 };
 
+static SCSIConfigTable dev_table =
+{
+	2, /* 2 SCSI devices */
+	{
+		{ SCSI_ID_0, 0, SCSI_DEVICE_HARDDISK },	/* SCSI ID 0, using HD 0, HD */
+		{ SCSI_ID_3, 0, SCSI_DEVICE_CDROM }	/* SCSI ID 3, using CHD 0, CD-ROM */
+	}
+};
+
+static struct LSI53C810interface scsi53c810_intf =
+{
+	&dev_table,		/* SCSI device table */
+	&scsi53c810_irq_callback,
+	&scsi53c810_dma_callback,
+	&scsi53c810_fetch,
+};
 
 
 /*************************************
@@ -985,15 +950,11 @@ NVRAM_HANDLER( bebox )
 	nvram_handler_intelflash(0, file, read_or_write);
 }
 
-
-
 MACHINE_INIT( bebox )
 {
 	cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
-
-
 
 DRIVER_INIT( bebox )
 {
@@ -1045,7 +1006,7 @@ DRIVER_INIT( bebox )
 	}
 
 	/* SCSI */
-	lsi53c810_init(scsi53c810_fetch, scsi53c810_irq_callback, scsi53c810_dma_callback);
+	lsi53c810_init(&scsi53c810_intf);
 
 	/* The following is a verrrry ugly hack put in to support NetBSD for
 	 * NetBSD.  When NetBSD/bebox it does most of its work on CPU #0 and then
