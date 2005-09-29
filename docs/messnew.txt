@@ -13,6 +13,8 @@ System Driver Changes:
 
 - [MTX512] Fixed regression introduced in 0.96.  [Gerco Ballintijn]
 
+- [SNES] SPC, APU and DSP bug fixes; sound now works in some games.  [R Belmont]
+
 
 
 User Interface Changes:

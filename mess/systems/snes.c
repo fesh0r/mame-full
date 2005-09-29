@@ -4,20 +4,18 @@
 
   Driver file to handle emulation of the Nintendo Super NES.
 
+  R. Belmont
   Anthony Kruize
   Based on the original MESS driver by Lee Hammerton (aka Savoury Snax)
 
   Driver is preliminary right now.
-  Sound emulation currently consists of the SPC700 and that's about it. Without
-  the DSP being emulated, there's no sound even if the code is being executed.
-  I need to figure out how to get the 65816 and the SPC700 to stay in sync.
 
   The memory map included below is setup in a way to make it easier to handle
   Mode 20 and Mode 21 ROMs.
 
   Todo (in no particular order):
+    - Fix additional sound bugs
     - Emulate extra chips - superfx, dsp2, sa-1 etc.
-    - Add sound emulation. Currently the SPC700 is emulated, but that's it.
     - Add horizontal mosaic, hi-res. interlaced etc to video emulation.
     - Add support for fullgraphic mode(partially done).
     - Fix support for Mode 7. (In Progress)
@@ -43,14 +41,21 @@ static ADDRESS_MAP_START( snes_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x800000, 0xffffff) AM_READWRITE(snes_r_bank4, snes_w_bank4)	/* Mirror and ROM */
 ADDRESS_MAP_END
 
+static READ8_HANDLER( spc_ram_100_r )
+{
+	return spc_ram_r(offset + 0x100);
+}
 
+static WRITE8_HANDLER( spc_ram_100_w )
+{
+	spc_ram_w(offset + 0x100, data);
+}
 
 static ADDRESS_MAP_START( spc_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x00ef) AM_RAM									/* lower 32k ram */
-	AM_RANGE(0x00f0, 0x00ff) AM_READWRITE(spc_io_r, spc_io_w)		/* spc io */
-	AM_RANGE(0x0100, 0x7fff) AM_RAM									/* lower 32k ram continued */
-	AM_RANGE(0x8000, 0xffbf) AM_RAM									/* upper 32k ram */
-	AM_RANGE(0xffc0, 0xffff) AM_READWRITE(spc_bank_r, spc_bank_w)	/* upper 32k ram continued or Initial Program Loader ROM */
+	AM_RANGE(0x0000, 0x00ef) AM_READWRITE(spc_ram_r, spc_ram_w)   	/* lower 32k ram */
+	AM_RANGE(0x00f0, 0x00ff) AM_READWRITE(spc_io_r, spc_io_w)   	/* spc io */
+	AM_RANGE(0x0100, 0xffbf) AM_READWRITE(spc_ram_100_r, spc_ram_100_w) /* ram continued */
+	AM_RANGE(0xffc0, 0xffff) AM_READWRITE(spc_bank_r, spc_bank_w)  	/* upper 32k ram continued or Initial Program Loader ROM */
 ADDRESS_MAP_END
 
 
@@ -465,13 +470,13 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_CPU_PROGRAM_MAP(snes_map, 0)
 	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_NTSC)
 
-	MDRV_CPU_ADD_TAG("sound", SPC700, 2048000)	/* 2.048 Mhz */
+	MDRV_CPU_ADD_TAG("sound", SPC700, 1024000)	/* 1.024 Mhz */
 	MDRV_CPU_PROGRAM_MAP(spc_map, 0)
 	MDRV_CPU_VBLANK_INT(NULL, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
+	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT( snes )
 	MDRV_MACHINE_STOP( snes )
@@ -492,8 +497,8 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(snes_sound_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.50)
-	MDRV_SOUND_ROUTE(0, "right", 0.50)
+	MDRV_SOUND_ROUTE(0, "left", 1.00)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( snespal )
@@ -529,7 +534,7 @@ ROM_START(snes)
 	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
-	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(38000B6B))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(44bb3a40))	/* boot rom */
 ROM_END
 
 ROM_START(snespal)
@@ -538,9 +543,9 @@ ROM_START(snespal)
 	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
-	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(38000B6B))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(44bb3a40))	/* boot rom */
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
-CONSX( 1989, snes,    0,      0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-CONSX( 1991, snespal, snes,   0,      snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+CONSX( 1989, snes,    0,      0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+CONSX( 1991, snespal, snes,   0,      snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
