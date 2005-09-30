@@ -205,7 +205,6 @@ typedef struct
 #ifdef MESS
 	BOOL   skip_warnings;
 #endif
-	BOOL   skip_validitychecks;
 	int bios;
 
 #ifdef MESS
@@ -295,7 +294,6 @@ typedef struct
 #ifdef MESS
 	BOOL     skip_warnings;
 #endif
-    BOOL     skip_validitychecks;
     BOOL     high_priority;
 
 	// Keyboard control of ui

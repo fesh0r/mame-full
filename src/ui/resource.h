@@ -301,7 +301,6 @@
 #define IDC_GAME_CAPTION                1224
 #define IDC_SCREENSHOT_BORDERSIZE       1225
 #define IDC_SCREENSHOT_BORDERCOLOR      1226
-#define IDC_SKIP_VALIDITY_CHECKS        1227
 #define IDC_CYCLETIMESECTXT             1230
 #define IDC_SCREENSHOT_BORDERSIZETXT    1232
 #define IDC_PADDLE                      1234

@@ -89,7 +89,6 @@
 #define HIDC_SCREEN                     0x809a03f3    // IDD_PROP_DISPLAY [Englisch (USA)]
 #define HIDC_SIZES                      0x809c03ef    // IDD_PROP_ADVANCED [Englisch (USA)]
 #define HIDC_SKIP_GAME_INFO             0x809e0499    // IDD_PROP_MISC [Englisch (USA)]
-#define HIDC_SKIP_VALIDITY_CHECKS       0x809e04cb    // IDD_PROP_MISC [Englisch (USA)]
 #define HIDC_SLEEP                      0x809e03f8    // IDD_PROP_MISC [Englisch (USA)]
 #define HIDC_START_GAME_CHECK           0x80ad045b    // IDD_INTERFACE_OPTIONS [Englisch (USA)]
 #define HIDC_STEADYKEY                  0x809d0480    // IDD_PROP_INPUT [Englisch (USA)]

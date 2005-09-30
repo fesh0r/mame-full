@@ -981,8 +981,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->skip_warnings)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_warnings");
 #endif
-	if (pOpts->skip_validitychecks)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_validitychecks");
 	if (pOpts->high_priority)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -high_priority");
 

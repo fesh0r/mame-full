@@ -1170,8 +1170,8 @@ INLINE void SET_FLAG_I(uint value)
 			SRC     = OPER_8_##SMODE();		\
 			DST     = EA_##DMODE();			\
 			TMP3 = read_8_##DMODE(DST);		\
-			TMP2 = SRC - TMP3 - (CFLAG_AS_1() ^ 1);	\
-			SUBOP_ADC(SRC, ~TMP3);			\
+			TMP2 = TMP3 - SRC - (CFLAG_AS_1() ^ 1);	\
+			SUBOP_ADC(~SRC, TMP3);			\
 			FLAG_C = (TMP2 <= 0xff) ? CFLAG_SET : 0; \
 			write_8_##DMODE(DST, (UINT8)spc_int16)
 

@@ -51,7 +51,7 @@ static ADDRESS_MAP_START( snes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(snes_w_bank2)	/* I/O and ROM (repeats for each bank) */
 	AM_RANGE(0x400000, 0x5fffff) AM_WRITE(MWA8_ROM)		/* ROM (and reserved in Mode 20) */
 	AM_RANGE(0x600000, 0x6fffff) AM_WRITE(MWA8_NOP)		/* Reserved */
-	AM_RANGE(0x700000, 0x77ffff) AM_WRITE(MWA8_RAM)		/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
+	AM_RANGE(0x700000, 0x77ffff) AM_WRITE(snes_w_sram) 	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
 	AM_RANGE(0x780000, 0x7dffff) AM_WRITE(MWA8_NOP)		/* Reserved */
 	AM_RANGE(0x7e0000, 0x7fffff) AM_WRITE(MWA8_RAM)		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
 	AM_RANGE(0x800000, 0xffffff) AM_WRITE(snes_w_bank4)	/* Mirror and ROM */
@@ -229,7 +229,7 @@ static MACHINE_DRIVER_START( snes )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(400)
 
 	MDRV_MACHINE_INIT( snes )
 

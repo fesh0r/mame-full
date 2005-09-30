@@ -33,11 +33,11 @@
 static ADDRESS_MAP_START( snes_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x000000, 0x2fffff) AM_READWRITE(snes_r_bank1, snes_w_bank1)	/* I/O and ROM (repeats for each bank) */
 	AM_RANGE(0x300000, 0x3fffff) AM_READWRITE(snes_r_bank2, snes_w_bank2)	/* I/O and ROM (repeats for each bank) */
-	AM_RANGE(0x400000, 0x5fffff) AM_READWRITE(snes_r_bank3, MWA8_ROM)		/* ROM (and reserved in Mode 20) */
-	AM_RANGE(0x600000, 0x6fffff) AM_NOP										/* Reserved */
-	AM_RANGE(0x700000, 0x77ffff) AM_READWRITE(snes_r_sram, MWA8_RAM)			/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
-	AM_RANGE(0x780000, 0x7dffff) AM_NOP										/* Reserved */
-	AM_RANGE(0x7e0000, 0x7fffff) AM_RAM										/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
+	AM_RANGE(0x400000, 0x5fffff) AM_READWRITE(snes_r_bank3, MWA8_ROM)	/* ROM (and reserved in Mode 20) */
+	AM_RANGE(0x600000, 0x6fffff) AM_NOP					/* Reserved */
+	AM_RANGE(0x700000, 0x77ffff) AM_READWRITE(snes_r_sram, snes_w_sram)	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
+	AM_RANGE(0x780000, 0x7dffff) AM_NOP					/* Reserved */
+	AM_RANGE(0x7e0000, 0x7fffff) AM_RAM					/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
 	AM_RANGE(0x800000, 0xffffff) AM_READWRITE(snes_r_bank4, snes_w_bank4)	/* Mirror and ROM */
 ADDRESS_MAP_END
 
@@ -476,7 +476,7 @@ static MACHINE_DRIVER_START( snes )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(400)
 
 	MDRV_MACHINE_INIT( snes )
 	MDRV_MACHINE_STOP( snes )
@@ -487,7 +487,7 @@ static MACHINE_DRIVER_START( snes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(SNES_SCR_WIDTH * 2, SNES_SCR_HEIGHT * 2)
-	MDRV_VISIBLE_AREA(0, SNES_SCR_WIDTH-1, 0, SNES_SCR_HEIGHT-1 )
+	MDRV_VISIBLE_AREA(0, SNES_SCR_WIDTH*2-1, 0, SNES_SCR_HEIGHT-1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32768)
 	MDRV_COLORTABLE_LENGTH(257)

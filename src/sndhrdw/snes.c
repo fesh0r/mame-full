@@ -1293,9 +1293,7 @@ WRITE8_HANDLER( spc_io_w )
 		case 0x5:		/* Port 1 */
 		case 0x6:		/* Port 2 */
 		case 0x7:		/* Port 3 */
-//			printf("SPC: %02x to APU @ %d (PC=%x)\n", data, offset&3, activecpu_get_pc());
 			spc_port_out[offset - 4] = data;
-			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			break;
 		case 0xA:		/* Timer 0 */
 		case 0xB:		/* Timer 1 */

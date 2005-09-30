@@ -895,9 +895,6 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,
                     HIDC_SKIP_GAME_INFO
 #endif
-    CONTROL         "Skip validity checks",IDC_SKIP_VALIDITY_CHECKS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,112,86,10,0,
-                    HIDC_SKIP_VALIDITY_CHECKS
     CONTROL         "Use additional artwork",IDC_ARTWORK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,40,82,10,0,HIDC_ARTWORK
     CONTROL         "Backdrops",IDC_BACKDROPS,"Button",BS_AUTOCHECKBOX | 

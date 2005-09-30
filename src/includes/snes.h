@@ -341,6 +341,7 @@ extern WRITE8_HANDLER( snes_w_bank1 );
 extern WRITE8_HANDLER( snes_w_bank2 );
 extern WRITE8_HANDLER( snes_w_bank4 );
 extern WRITE8_HANDLER( snes_w_io );
+extern WRITE8_HANDLER( snes_w_sram );
 
 extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );

@@ -238,7 +238,6 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	options.ram = current_testcase.ram;
 	options.vector_intensity = 1.5;
 	options.use_artwork = 1;
-	options.skip_validitychecks = 1;
 	options.samplerate = 44100;
 
 	/* preload any needed images */

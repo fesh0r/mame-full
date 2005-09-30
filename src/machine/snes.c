@@ -87,6 +87,11 @@ MACHINE_INIT( snes )
 READ8_HANDLER( snes_r_sram )
 {
 	UINT8 value = 0xff;
+	int mask;
+
+	// limit SRAM size to what's actually present
+	mask = (snes_cart.sram * 1024) - 1;
+	offset &= mask;
 
 	if( snes_cart.sram > 0 )
 	{
@@ -94,6 +99,20 @@ READ8_HANDLER( snes_r_sram )
 	}
 
 	return value;
+}
+
+WRITE8_HANDLER( snes_w_sram )
+{
+	int mask;
+
+	// limit SRAM size to what's actually present
+	mask = (snes_cart.sram * 1024) - 1;
+	offset &= mask;
+
+	if( snes_cart.sram > 0 )
+	{
+		snes_ram[0x700000 + offset] = data;
+	}
 }
 
 /* 0x000000 - 0x2fffff */
@@ -132,7 +151,14 @@ READ8_HANDLER( snes_r_bank2 )
 		if( snes_cart.mode == SNES_MODE_20 )
 			return 0xff;						/* Reserved */
 		else	/* MODE_21 */
+		{
+			int mask;
+
+			// limit SRAM size to what's actually present
+			mask = (snes_cart.sram * 1024) - 1;
+			offset &= mask;
 			return snes_ram[0x300000 + offset];	/* sram */
+		}
 	}
 	else
 	{
@@ -215,7 +241,14 @@ WRITE8_HANDLER( snes_w_bank2 )
 		if( snes_cart.mode == SNES_MODE_20 )			/* Reserved */
 			logerror( "Attempt to write to reserved address: %X\n", offset );
 		else /* MODE_21 */
+		{
+			int mask;
+
+			// limit SRAM size to what's actually present
+			mask = (snes_cart.sram * 1024) - 1;
+			offset &= mask;
 			snes_ram[0x300000 + offset] = data;  /* sram */
+		}
 	}
 	else
 		logerror( "Attempt to write to ROM address: %X\n", offset );
@@ -914,7 +947,6 @@ WRITE8_HANDLER( snes_w_io )
 		case APU03:		/* Audio port register */
 //			printf("816: %02x to APU @ %d\n", data, offset&3);
 	     		spc_port_in[offset & 0x3] = data;
-			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{
@@ -1279,17 +1311,26 @@ void snes_hdma()
 				{
 					program_write_byte(bbus, program_read_byte(abus++));
 				} break;
+				case 5:		/* 4 bytes to 2 addresses (l,h,l,h) */
+				{
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
+				}
 				case 1:		/* 2 addresses (l,h) */
 				{
 					program_write_byte(bbus, program_read_byte(abus++));
 					program_write_byte(bbus + 1, program_read_byte(abus++));
 				} break;
 				case 2:		/* Write twice (l,l) */
+				case 6:
 				{
 					program_write_byte(bbus, program_read_byte(abus++));
 					program_write_byte(bbus, program_read_byte(abus++));
 				} break;
 				case 3:		/* 2 addresses/Write twice (l,l,h,h) */
+				case 7:
 				{
 					program_write_byte(bbus, program_read_byte(abus++));
 					program_write_byte(bbus, program_read_byte(abus++));
@@ -1384,6 +1425,7 @@ void snes_gdma( UINT8 channels )
 			{
 				case 0:		/* 1 address */
 				case 2:		/* 1 address ?? */
+				case 6:
 				{
 					while( length-- )
 					{
@@ -1395,6 +1437,7 @@ void snes_gdma( UINT8 channels )
 					}
 				} break;
 				case 1:		/* 2 addresses (l,h) */
+				case 5:
 				{
 					while( length-- )
 					{
@@ -1413,6 +1456,7 @@ void snes_gdma( UINT8 channels )
 					}
 				} break;
 				case 3:		/* 2 addresses/write twice (l,l,h,h) */
+				case 7:
 				{
 					while( length-- )
 					{

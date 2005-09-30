@@ -392,7 +392,6 @@ static const REG_OPTION regGameOpts[] =
 #ifdef MESS
 	{ "skip_warnings",          RO_BOOL,    offsetof(options_type, skip_warnings),     "0" },
 #endif
-	{ "skip_validitychecks",    RO_BOOL,    offsetof(options_type, skip_validitychecks),             "1" },
 	{ "bios",                   RO_INT,     offsetof(options_type, bios),                            "0" },
 
 #ifdef MESS
@@ -438,7 +437,6 @@ static const REG_OPTION global_game_options[] =
 #ifdef MESS
 	{"skip_warnings",           RO_BOOL,    offsetof(settings_type, skip_warnings),     "0" },
 #endif
-	{"skip_validitychecks",     RO_BOOL,    offsetof(settings_type, skip_validitychecks),     "0" },
 	{"high_priority",           RO_BOOL,    offsetof(settings_type, high_priority),     "0" },
 
 
