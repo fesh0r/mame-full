@@ -112,11 +112,8 @@ int main(int argc, char *argv[])
 		/* this is for XMESS */
 		extern const char *cheatfile;
 		extern const char *db_filename;
-		extern const char *history_filename;
-		extern const char *mameinfo_filename;
 
-		cheatfile = db_filename = history_filename = mameinfo_filename
-			= NULL;
+		cheatfile = db_filename = NULL;
 	}
 #endif /* WIN32 */
 
