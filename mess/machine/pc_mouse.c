@@ -29,9 +29,6 @@ static void pc_mouse_scan(int n);
 
 void pc_mouse_initialise(void)
 {
-	/* Must call pc_mouse_set_serial_port, and
-	   pc_mouse_set_protocol before calling pc_mouse_initialise */
-
 	pc_mouse.head = pc_mouse.tail = 0;
 	pc_mouse.timer = timer_alloc(pc_mouse_scan);
 	pc_mouse.inputs=UART8250_HANDSHAKE_IN_DSR|UART8250_HANDSHAKE_IN_CTS;
@@ -49,13 +46,6 @@ static void	pc_mouse_queue_data(int data)
 {
 	pc_mouse.queue[pc_mouse.head] = data;
 	pc_mouse.head = ++pc_mouse.head % 256;
-}
-
-void	pc_mouse_set_protocol(PC_MOUSE_PROTOCOL protocol)
-{
-	/*TODO: This function is not needed any more - set by DIP now */
-	/*must be removed from machine drivers first */
-	pc_mouse.protocol = protocol;
 }
 
 /**************************************************************************
@@ -259,7 +249,7 @@ void pc_mouse_handshake_in(int n, int outputs)
  **************************************************************************/
 
 INPUT_PORTS_START( pc_mouse_mousesystems )
-	PORT_START
+	PORT_START_TAG( "pc_mouse_misc" )
 	PORT_CONFNAME( 0x80, 0x80, "Mouse Protocol" ) 
 	PORT_CONFSETTING( 0x80, "Mouse Systems" )
 	PORT_CONFSETTING( 0x00, "Microsoft" )
@@ -267,10 +257,10 @@ INPUT_PORTS_START( pc_mouse_mousesystems )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Mouse Middle Button") PORT_CODE(MOUSECODE_1_BUTTON3)
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("Mouse Right Button") PORT_CODE(MOUSECODE_1_BUTTON2)
 
-	PORT_START /* Mouse - X AXIS */  
+	PORT_START_TAG( "pc_mouse_x" ) /* Mouse - X AXIS */  
 	PORT_BIT( 0xfff, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 
-	PORT_START /* Mouse - Y AXIS */
+	PORT_START_TAG( "pc_mouse_y" ) /* Mouse - Y AXIS */
 	PORT_BIT( 0xfff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 INPUT_PORTS_END
 

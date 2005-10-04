@@ -427,7 +427,6 @@ void init_pc_common(UINT32 flags)
 	pc_lpt_set_device(2, &CENTRONICS_PRINTER_DEVICE);
 
 	/* serial mouse */
-	pc_mouse_set_protocol(TYPE_MICROSOFT_MOUSE);
 	pc_mouse_set_serial_port(0);
 	pc_mouse_initialise();
 
