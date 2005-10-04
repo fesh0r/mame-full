@@ -93,6 +93,8 @@ Source Changes:
 
 - Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
 
+- Fixed and cleaned up mouse code.  (bug #747)  [Lineback and Nate Woods]
+
 - [Windows] Added a -skip_warnings option.  [Nate Woods]
 
 - [Windows GUI] Fixed copyright year.  (bug #740) [Nate Woods]

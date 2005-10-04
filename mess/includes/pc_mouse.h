@@ -8,7 +8,6 @@ typedef enum { TYPE_MICROSOFT_MOUSE, TYPE_MOUSE_SYSTEMS } PC_MOUSE_PROTOCOL;
 void pc_mouse_handshake_in(int n, int data);
 
 // set base for input port
-void pc_mouse_set_input_base(int base);
 void pc_mouse_set_protocol(PC_MOUSE_PROTOCOL protocol);
 void pc_mouse_set_serial_port(int uart_index);
 void pc_mouse_initialise(void);

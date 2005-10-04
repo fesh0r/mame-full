@@ -428,7 +428,6 @@ void init_pc_common(UINT32 flags)
 
 	/* serial mouse */
 	pc_mouse_set_protocol(TYPE_MICROSOFT_MOUSE);
-	pc_mouse_set_input_base(12);
 	pc_mouse_set_serial_port(0);
 	pc_mouse_initialise();
 

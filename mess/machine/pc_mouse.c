@@ -1,13 +1,21 @@
+/***************************************************************************
+
+	machine/pc_mouse.c
+
+	Code for emulating PC-style serial mouses
+
+***************************************************************************/
+
 #include "driver.h"
 #include "machine/uart8250.h"
 #include "includes/pc_mouse.h"
+#include "inputx.h"
 
 static struct {
 
 	PC_MOUSE_PROTOCOL protocol;
 
-	int input_base;
-	int serial_port; // -1 for deactivating yet
+	int serial_port; /* -1 for deactivating mouse */
 	int inputs;
 
 	UINT8 queue[256];
@@ -21,10 +29,9 @@ static void pc_mouse_scan(int n);
 
 void pc_mouse_initialise(void)
 {
-	memset(&pc_mouse, 0, sizeof(pc_mouse));
-	pc_mouse.protocol = TYPE_MICROSOFT_MOUSE;
-	pc_mouse.input_base = 12;
-	pc_mouse.serial_port = -1;
+	/* Must call pc_mouse_set_serial_port, and
+	   pc_mouse_set_protocol before calling pc_mouse_initialise */
+
 	pc_mouse.head = pc_mouse.tail = 0;
 	pc_mouse.timer = timer_alloc(pc_mouse_scan);
 	pc_mouse.inputs=UART8250_HANDSHAKE_IN_DSR|UART8250_HANDSHAKE_IN_CTS;
@@ -37,11 +44,6 @@ void pc_mouse_set_serial_port(int uart_index)
 	pc_mouse.serial_port = uart_index;
 }
 
-void pc_mouse_set_input_base(int base)
-{
-	pc_mouse.input_base = base;
-}
-
 /* add data to queue */
 static void	pc_mouse_queue_data(int data)
 {
@@ -51,6 +53,8 @@ static void	pc_mouse_queue_data(int data)
 
 void	pc_mouse_set_protocol(PC_MOUSE_PROTOCOL protocol)
 {
+	/*TODO: This function is not needed any more - set by DIP now */
+	/*must be removed from machine drivers first */
 	pc_mouse.protocol = protocol;
 }
 
@@ -61,124 +65,136 @@ static void pc_mouse_scan(int n)
 {
 	static int ox = 0, oy = 0;
 	int nx,ny;
-    int dx, dy, nb;
-	int can_scan = 0;
+	int dx, dy, nb;
 	int mbc;
 
-	nx = readinputport((pc_mouse.input_base+1));
-	if (nx>=0x800) nx-=0x1000;
-	else if (nx<=-0x800) nx+=0x1000;
-
-	dx = nx - ox;
-	ox = nx;
-
-	ny = readinputport((pc_mouse.input_base+2));
-	if (ny>=0x800) ny-=0x1000;
-	else if (ny<=-0x800) ny+=0x1000;
-
-	dy = ny - oy;
-	oy = ny;
-
-	nb = readinputport(pc_mouse.input_base);
-	mbc = nb^pc_mouse.mb;
-	pc_mouse.mb = nb;
-
-	if ( (pc_mouse.head==pc_mouse.tail) &&( dx || dy || (mbc!=0) ) )
+	/* Do not get deltas or send packets if queue is not empty (Prevents drifting) */
+	if (pc_mouse.head==pc_mouse.tail) 
 	{
-		can_scan = 1;
-	}
-
-	/* check if there is any delta or mouse buttons changed */
-	if (can_scan)
-	{
-		switch (pc_mouse.protocol)
+		nx = readinputportbytag("pc_mouse_x");
+	
+		dx = nx - ox;
+		if (dx<=-0x800) dx = nx + 0x1000 - ox; /* Prevent jumping */
+		if (dx>=0x800) dx = nx - 0x1000 - ox;
+		ox = nx;
+	
+		ny = readinputportbytag("pc_mouse_y");
+	
+		dy = ny - oy;
+		if (dy<=-0x800) dy = ny + 0x1000 - oy;
+		if (dy>=0x800) dy = ny - 0x1000 - oy;
+		oy = ny;
+	
+		nb = readinputportbytag("pc_mouse_misc");
+		if ((nb & 0x80) != 0) 
 		{
-
-		default:
-		case TYPE_MICROSOFT_MOUSE:
-			{
-				/* split deltas into packtes of -128..+127 max */
-				do
-				{
-					UINT8 m0, m1, m2;
-					int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
-					int ddy = (dy < -128) ? -128 : (dy > 127) ? 127 : dy;
-					m0 = 0x40 | ((nb << 4) & 0x30) | ((ddx >> 6) & 0x03) | ((ddy >> 4) & 0x0c);
-					m1 = ddx & 0x3f;
-					m2 = ddy & 0x3f;
-
-					/* KT - changed to use a function */
-					pc_mouse_queue_data(m0 | 0x40);
-					pc_mouse_queue_data(m1 & 0x03f);
-					pc_mouse_queue_data(m2 & 0x03f);
-					dx -= ddx;
-					dy -= ddy;
-				} while( dx || dy );
-			}
-			break;
-
-			/* mouse systems mouse
-			from "PC Mouse information" by Tomi Engdahl */
-
-			/*
-			The data is sent in 5 byte packets in following format:
-					D7      D6      D5      D4      D3      D2      D1      D0
-
-			1.      1       0       0       0       0       LB      CB      RB
-			2.      X7      X6      X5      X4      X3      X2      X1      X0
-			3.      Y7      Y6      Y5      Y4      Y3      Y4      Y1      Y0
-			4.      X7'     X6'     X5'     X4'     X3'     X2'     X1'     X0'
-			5.      Y7'     Y6'     Y5'     Y4'     Y3'     Y4'     Y1'     Y0'
-
-			LB is left button state (0=pressed, 1=released)
-			CB is center button state (0=pressed, 1=released)
-			RB is right button state (0=pressed, 1=released)
-			X7-X0 movement in X direction since last packet in signed byte
-				  format (-128..+127), positive direction right
-			Y7-Y0 movement in Y direction since last packet in signed byte
-				  format (-128..+127), positive direction up
-			X7'-X0' movement in X direction since sending of X7-X0 packet in signed byte
-				  format (-128..+127), positive direction right
-			Y7'-Y0' movement in Y direction since sending of Y7-Y0 in signed byte
-				  format (-128..+127), positive direction up
-
-			The last two bytes in the packet (bytes 4 and 5) contains information about movement data changes which have occured after data butes 2 and 3 have been sent. */
-
-			case TYPE_MOUSE_SYSTEMS:
-			{
-
-				dy =-dy;
-
-				do
-				{
-					int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
-					int ddy = (dy < -128) ? -128 : (dy > 127) ? 127 : dy;
-
-					/* KT - changed to use a function */
-					pc_mouse_queue_data(0x080 | (pc_mouse.mb & 0x07));
-					pc_mouse_queue_data(ddx);
-					pc_mouse_queue_data(ddy);
-					/* for now... */
-					pc_mouse_queue_data(0);
-					pc_mouse_queue_data(0);
-					dx -= ddx;
-					dy -= ddy;
-				} while( dx || dy );
-
-			}
-			break;
+			pc_mouse.protocol=TYPE_MOUSE_SYSTEMS;
 		}
-    }
+		else
+		{	
+			pc_mouse.protocol=TYPE_MICROSOFT_MOUSE;
+		}
+		mbc = nb^pc_mouse.mb; 
+		pc_mouse.mb = nb;
+	
+		/* check if there is any delta or mouse buttons changed */
+		if ( (dx!=0) || (dy!=0) || (mbc!=0) )
+		{
+			switch (pc_mouse.protocol)
+			{
+	
+			default:
+			case TYPE_MICROSOFT_MOUSE:
+				{
+					/* split deltas into packtes of -128..+127 max */
+					do
+					{
+						UINT8 m0, m1, m2;
+						int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
+						int ddy = (dy < -128) ? -128 : (dy > 127) ? 127 : dy;
+						m0 = 0x40 | ((nb << 4) & 0x30) | ((ddx >> 6) & 0x03) | ((ddy >> 4) & 0x0c);
+						m1 = ddx & 0x3f;
+						m2 = ddy & 0x3f;
+	
+						/* KT - changed to use a function */
+						pc_mouse_queue_data(m0 | 0x40);
+						pc_mouse_queue_data(m1 & 0x03f);
+						pc_mouse_queue_data(m2 & 0x03f);
+						if ((mbc & 0x04) != 0)  /* If button 3 changed send extra byte */
+						{
+						pc_mouse_queue_data( (nb & 0x04) << 3);
+						}
+	
+						dx -= ddx;
+						dy -= ddy;
+					} while( dx || dy );
+				}
+				break;
+	
+				/* mouse systems mouse
+				from "PC Mouse information" by Tomi Engdahl */
+	
+				/*
+				The data is sent in 5 byte packets in following format:
+						D7      D6      D5      D4      D3      D2      D1      D0
+	
+				1.      1       0       0       0       0       LB      CB      RB
+				2.      X7      X6      X5      X4      X3      X2      X1      X0
+				3.      Y7      Y6      Y5      Y4      Y3      Y4      Y1      Y0
+				4.      X7'     X6'     X5'     X4'     X3'     X2'     X1'     X0'
+				5.      Y7'     Y6'     Y5'     Y4'     Y3'     Y4'     Y1'     Y0'
+	
+				LB is left button state (0=pressed, 1=released)
+				CB is center button state (0=pressed, 1=released)
+				RB is right button state (0=pressed, 1=released)
+				X7-X0 movement in X direction since last packet in signed byte
+					  format (-128..+127), positive direction right
+				Y7-Y0 movement in Y direction since last packet in signed byte
+					  format (-128..+127), positive direction up
+				X7'-X0' movement in X direction since sending of X7-X0 packet in signed byte
+					  format (-128..+127), positive direction right
+				Y7'-Y0' movement in Y direction since sending of Y7-Y0 in signed byte
+					  format (-128..+127), positive direction up
+	
+				The last two bytes in the packet (bytes 4 and 5) contains information about movement data changes which have occured after data butes 2 and 3 have been sent. */
+	
+				case TYPE_MOUSE_SYSTEMS:
+				{
+	
+					dy =-dy;
+	
+					do
+					{
+						int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
+						int ddy = (dy < -128) ? -128 : (dy > 127) ? 127 : dy;
+	
+						/* KT - changed to use a function */
+						pc_mouse_queue_data(0x080 | ((((nb & 0x04) >> 1) + ((nb & 0x02) << 1) + (nb & 0x01)) ^ 0x07));
+						pc_mouse_queue_data(ddx);
+						pc_mouse_queue_data(ddy);
+						/* for now... */
+						pc_mouse_queue_data(0);
+						pc_mouse_queue_data(0);
+						dx -= ddx;
+						dy -= ddy;
+					} while( dx || dy );
+	
+				}
+				break;
+			}
+		}
+	} 
+
+	/* Send any data from this scan or any pending data from a previous scan */
 
 	if( pc_mouse.tail != pc_mouse.head )
 	{
 		int data;
 
 		data = pc_mouse.queue[pc_mouse.tail];
-
 		uart8250_receive(n, data);
 		pc_mouse.tail = ++pc_mouse.tail & 255;
-    }
+	}
 }
 
 
@@ -211,8 +227,16 @@ void pc_mouse_handshake_in(int n, int outputs)
 
 			/* reset mouse */
 			pc_mouse.head = pc_mouse.tail = pc_mouse.mb = 0;
-			pc_mouse.queue[pc_mouse.head] = 'M';  /* put 'M' into the buffer.. hmm */
-			pc_mouse.head = ++pc_mouse.head % 256;
+
+			if ((readinputportbytag("pc_mouse_misc") & 0x80) == 0 ) 
+			{
+				/* Identify as Microsoft 3 Button Mouse */
+				pc_mouse.queue[pc_mouse.head] = 'M';  
+				pc_mouse.head = ++pc_mouse.head % 256;
+				pc_mouse.queue[pc_mouse.head] = '3';  
+				pc_mouse.head = ++pc_mouse.head % 256;  
+			}
+
 			/* start a timer to scan the mouse input */
 			timer_adjust(pc_mouse.timer, 0, pc_mouse.serial_port, TIME_IN_HZ(240));
 		}
@@ -220,7 +244,7 @@ void pc_mouse_handshake_in(int n, int outputs)
 		{
 			/* CTS just went to 0 */
 			timer_adjust(pc_mouse.timer, 0, pc_mouse.serial_port, 0);
-			pc_mouse.head = pc_mouse.tail = 0;
+			pc_mouse.head = pc_mouse.tail = 0; 
 		}
 	}
 
@@ -235,12 +259,15 @@ void pc_mouse_handshake_in(int n, int outputs)
  **************************************************************************/
 
 INPUT_PORTS_START( pc_mouse_mousesystems )
-	PORT_START	/* IN12 */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("Mouse Left Button") PORT_CODE(KEYCODE_Q) PORT_CODE(JOYCODE_1_BUTTON1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("Mouse Middle Button") PORT_CODE(KEYCODE_W) PORT_CODE(JOYCODE_1_BUTTON2)
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("Mouse Right Button") PORT_CODE(KEYCODE_E) PORT_CODE(JOYCODE_1_BUTTON3)
+	PORT_START
+	PORT_CONFNAME( 0x80, 0x80, "Mouse Protocol" ) 
+	PORT_CONFSETTING( 0x80, "Mouse Systems" )
+	PORT_CONFSETTING( 0x00, "Microsoft" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Mouse Left Button") PORT_CODE(MOUSECODE_1_BUTTON1)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Mouse Middle Button") PORT_CODE(MOUSECODE_1_BUTTON3)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("Mouse Right Button") PORT_CODE(MOUSECODE_1_BUTTON2)
 
-	PORT_START /* Mouse - X AXIS */
+	PORT_START /* Mouse - X AXIS */  
 	PORT_BIT( 0xfff, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 
 	PORT_START /* Mouse - Y AXIS */
@@ -250,24 +277,28 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( pc_mouse_microsoft )
-	PORT_START	/* IN12 */
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Mouse Button Left") PORT_CODE(JOYCODE_1_BUTTON1)
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Mouse Button Right") PORT_CODE(JOYCODE_1_BUTTON2)
+	PORT_START_TAG( "pc_mouse_misc" )
+	PORT_CONFNAME( 0x80, 0x00, "Mouse Protocol" ) 
+	PORT_CONFSETTING( 0x00, "Microsoft" )         
+	PORT_CONFSETTING( 0x80, "Mouse Systems" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Mouse Left Button") PORT_CODE(MOUSECODE_1_BUTTON1)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Mouse Middle Button") PORT_CODE(MOUSECODE_1_BUTTON3)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("Mouse Right Button") PORT_CODE(MOUSECODE_1_BUTTON2)
 
-	PORT_START /* IN13 mouse X */
-	PORT_BIT(0xfff,0,IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0xfff) PORT_CODE_DEC(KEYCODE_LEFT) PORT_CODE_INC(KEYCODE_RIGHT) PORT_CODE_DEC(JOYCODE_1_LEFT) PORT_CODE_INC(JOYCODE_1_RIGHT)
+	PORT_START_TAG( "pc_mouse_x" ) /* Mouse - X AXIS */  
+	PORT_BIT( 0xfff, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 
-	PORT_START /* IN14 mouse Y */
-	PORT_BIT(0xfff,0,IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0xfff) PORT_CODE_DEC(KEYCODE_UP) PORT_CODE_INC(KEYCODE_DOWN) PORT_CODE_DEC(JOYCODE_1_UP) PORT_CODE_INC(JOYCODE_1_DOWN)
+	PORT_START_TAG( "pc_mouse_y" ) /* Mouse - Y AXIS */
+	PORT_BIT( 0xfff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 INPUT_PORTS_END
 
 
 
 INPUT_PORTS_START( pc_mouse_none )
-	PORT_START      /* IN12 */
+	PORT_START_TAG( "pc_mouse_misc" )      /* IN12 */
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN13 */
+	PORT_START_TAG( "pc_mouse_x" )      /* IN13 */
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN14 */
+	PORT_START_TAG( "pc_mouse_y" )      /* IN14 */
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 INPUT_PORTS_END

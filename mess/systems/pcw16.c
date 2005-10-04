@@ -1371,7 +1371,6 @@ static MACHINE_INIT( pcw16 )
 
 	/* initialise mouse */
 	pc_mouse_set_protocol(TYPE_MOUSE_SYSTEMS);
-	pc_mouse_set_input_base(1);
 	pc_mouse_set_serial_port(0);
 	pc_mouse_initialise();
 
