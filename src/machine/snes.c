@@ -4,6 +4,7 @@
 
   Machine file to handle emulation of the Nintendo Super NES
 
+  R. Belmont
   Anthony Kruize
   Based on the original code by Lee Hammerton (aka Savoury Snax)
 
@@ -25,13 +26,16 @@ UINT16 *snes_cgram = NULL;		/* Colour RAM */
 UINT16 *snes_oam = NULL;		/* Object Attribute Memory */
 static UINT16 cgram_address;	/* CGRAM address */
 static UINT8  vram_read_offset;	/* VRAM read offset */
-static UINT16 vram_fg_count;	/* Fullgraphic increase count */
-static UINT16 vram_fg_incr;		/* Fullgraphic increase */
-static UINT16 vram_fg_cntr;		/* Fullgraphic counter */
-static INT16 vram_fg_offset;	/* Fullgraphic offset */
 UINT8  spc_port_in[4];	/* Port for sending data to the SPC700 */
 UINT8  spc_port_out[4];	/* Port for receiving data from the SPC700 */
 static UINT8 snes_hdma_chnl;	/* channels enabled for HDMA */
+static UINT8 joy1l, joy1h, joy2l, joy2h, joy3l, joy3h, joy4l, joy4h;
+
+// full graphic variables
+static UINT16 vram_fgr_high, vram_fgr_increment, vram_fgr_count, vram_fgr_mask, vram_fgr_shift, vram_read_buffer;
+static UINT16 vram_fgr_inctab[4] = { 1, 32, 128, 128 };
+static UINT16 vram_fgr_inccnts[4] = { 0, 32, 64, 128 };
+static UINT16 vram_fgr_shiftab[4] = { 0, 5, 6, 7 };
 
 struct snes_cart_info snes_cart = { SNES_MODE_20, 0x40000, 0x40000 };
 
@@ -45,6 +49,8 @@ static struct
 
 static void snes_init_ram(void)
 {
+	int i;
+
 	/* Init VRAM */
 	snes_vram = (UINT8 *)memory_region( REGION_GFX1 );
 	memset( snes_vram, 0, SNES_VRAM_SIZE );
@@ -57,6 +63,16 @@ static void snes_init_ram(void)
 	snes_oam = (UINT16 *)memory_region( REGION_USER2 );
 	memset( snes_oam, 0xff, SNES_OAM_SIZE );
 
+	/* Init work RAM - 0x55 isn't exactly right but it's close */
+	/* make sure it happens to the 65816 (CPU 0) */
+	cpuintrf_push_context(0);
+	for (i = 0; i < (128*1024); i++)
+	{
+		
+		program_write_byte(0x7e0000 + i, 0x55);
+	}
+	cpuintrf_pop_context();
+
 	/* Inititialize registers/variables */
 	snes_ppu.update_windows = 1;
 	snes_ppu.update_palette = 1;
@@ -68,6 +84,7 @@ static void snes_init_ram(void)
 	snes_ppu.mode = 0;
 	cgram_address = 0;
 	vram_read_offset = 2;
+	joy1l = joy1h = joy2l = joy2h = joy3l = joy3h = 0;
 }
 
 /* should we treat this as nvram in MAME? */
@@ -288,6 +305,19 @@ READ8_HANDLER( snes_r_io )
 	/* offset is from 0x000000 */
 	switch( offset )
 	{
+		/* hacks for SimCity 2000 to boot - I presume openbus emulation will fix */
+		case 0x221a:	
+		case 0x231c:
+		case 0x241e:
+			return 1;
+		case 0x2017:
+		case 0x221b: 
+		case 0x231d:
+		case 0x241f:
+			return 0;
+		case 0x2016:
+			return 2;
+
 		case OAMADDL:
 		case OAMADDH:
 		case VMADDL:
@@ -316,7 +346,11 @@ READ8_HANDLER( snes_r_io )
 			return 0x0;		/* Return value is meaningless */
 		case ROAMDATA:	/* Read data from OAM (DR) */
 			{
-				value = (snes_oam[snes_ppu.oam.address] >> (snes_ram[OAMDATA] << 3)) & 0xff;
+				int oam_addr = snes_ppu.oam.address;
+
+				while (oam_addr > 0x21f) oam_addr -= 0x220;
+
+				value = (snes_oam[oam_addr] >> (snes_ram[OAMDATA] << 3)) & 0xff;
 				snes_ram[OAMDATA] = (snes_ram[OAMDATA] + 1) % 2;
 				if( snes_ram[OAMDATA] == 0 )
 				{
@@ -328,97 +362,58 @@ READ8_HANDLER( snes_r_io )
 			}
 		case RVMDATAL:	/* Read data from VRAM (low) */
 			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
-				value = snes_vram[(addr << 1) - vram_read_offset];
-				if( !(snes_ram[VMAIN] & 0x80) )
-				{
-					if( vram_read_offset == 0 )
-					{
-						vram_read_offset = 2;
-					}
-					/* Increase the address */
-					if( snes_ram[VMAIN] & 0xc )
-					{
-						addr++;
-						vram_fg_offset += 7;	/* addr increases by 1, plus 7 = 8 */
-						vram_fg_count--;
-						if( vram_fg_count == 0 )
-						{
-							vram_fg_cntr--;
-							vram_fg_count = vram_fg_incr;
-							if( vram_fg_cntr == 0 )
+				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
+				
+				value = vram_read_buffer & 0xff;
+
+				if (!vram_fgr_high)
 							{
-								vram_fg_cntr = 8;
-								vram_fg_offset -= 7;
-							}
-							else
+					if (vram_fgr_count)
 							{
-								vram_fg_offset -= (vram_fg_count * 8) - 1;
-							}
-						}
+						UINT32 rem = addr & vram_fgr_mask;
+						UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
+							       ((rem & (vram_fgr_count - 1)) << 3);
+
+						vram_read_buffer = snes_vram[(faddr<<1)&0xffff] | snes_vram[((faddr<<1)+1) & 0xffff]<<8;
 					}
 					else
 					{
-						switch( snes_ram[VMAIN] & 0x03 )
-						{
-							case 0: addr++;      break;
-							case 1: addr += 32;  break;
-							case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-							case 3: addr += 128; break;
-						}
+						vram_read_buffer = snes_vram[(addr<<1)&0xffff] | snes_vram[((addr<<1)+1) & 0xffff]<<8;
 					}
+
+					addr += vram_fgr_increment;
 					snes_ram[VMADDL] = addr & 0xff;
 					snes_ram[VMADDH] = (addr >> 8) & 0xff;
 				}
-				return value;
 			}
+			return value;
 		case RVMDATAH:	/* Read data from VRAM (high) */
 			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
+				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
-				value = snes_vram[(addr << 1) + 1 - vram_read_offset];
-				if( snes_ram[VMAIN] & 0x80 )
-				{
-					if( vram_read_offset == 0 )
-					{
-						vram_read_offset = 2;
-					}
-					/* Increase the address */
-					if( snes_ram[VMAIN] & 0xc )
-					{
-						addr++;
-						vram_fg_offset += 7;	/* addr increases by 1, plus 7 = 8 */
-						vram_fg_count--;
-						if( vram_fg_count == 0 )
-						{
-							vram_fg_cntr--;
-							vram_fg_count = vram_fg_incr;
-							if( vram_fg_cntr == 0 )
+				value = (vram_read_buffer>>8) & 0xff;
+
+				if (!vram_fgr_high)
 							{
-								vram_fg_cntr = 8;
-								vram_fg_offset -= 7;
-							}
-							else
+					if (vram_fgr_count)
 							{
-								vram_fg_offset -= (vram_fg_count * 8) - 1;
-							}
-						}
+						UINT32 rem = addr & vram_fgr_mask;
+						UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
+							       ((rem & (vram_fgr_count - 1)) << 3);
+
+						vram_read_buffer = snes_vram[(faddr<<1)&0xffff] | snes_vram[((faddr<<1)+1) & 0xffff]<<8;
 					}
 					else
 					{
-						switch( snes_ram[VMAIN] & 0x03 )
-						{
-							case 0: addr++;      break;
-							case 1: addr += 32;  break;
-							case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-							case 3: addr += 128; break;
-						}
+						vram_read_buffer = snes_vram[(addr<<1)&0xffff] | snes_vram[((addr<<1)+1) & 0xffff]<<8;
 					}
+
+					addr += vram_fgr_increment;
 					snes_ram[VMADDL] = addr & 0xff;
 					snes_ram[VMADDH] = (addr >> 8) & 0xff;
 				}
-				return value;
 			}
+			return value;
 		case RCGDATA:	/* Read data from CGRAM */
 				value = ((UINT8 *)snes_cgram)[cgram_address];
 				cgram_address = (cgram_address + 1) % (SNES_CGRAM_SIZE - 2);
@@ -461,15 +456,28 @@ READ8_HANDLER( snes_r_io )
 			/* FIXME: need to reset OPHCT and OPVCT */
 			return snes_ram[offset];
 		case APU00:		/* Audio port register */
-		case APU01:		/* Audio port register */
-		case APU02:		/* Audio port register */
-		case APU03:		/* Audio port register */
+		case APU01:		
+		case APU02:		
+		case APU03:		
+		case APU00+4:		/* these registers are mirrored */
+		case APU01+4:		
+		case APU02+4:		
+		case APU03+4:		
+		case APU00+8:		
+		case APU01+8:		
+		case APU02+8:		
+		case APU03+8:		
+		case APU00+12:		
+		case APU01+12:		
+		case APU02+12:		
+		case APU03+12:		
 			return spc_port_out[offset & 0x3];
 		case WMDATA:	/* Data to read from WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
 
 				value = program_read_byte(0x7e0000 + addr++);
+				addr &= 0x1ffff;
 				snes_ram[WMADDH] = (addr >> 16) & 0x1;
 				snes_ram[WMADDM] = (addr >> 8) & 0xff;
 				snes_ram[WMADDL] = addr & 0xff;
@@ -499,6 +507,7 @@ READ8_HANDLER( snes_r_io )
 				value = ((joypad[1].low | (joypad[1].high << 8) | 0x10000) >> (15 - (joypad[1].oldrol++ % 16))) & 0x1;
 				if( !(joypad[1].oldrol % 17) )
 					value = 0x1;
+				value |= 0x1c;	// bits 4, 3, and 2 are always set
 				return value;
 			}
 		case HTIMEL:
@@ -518,9 +527,9 @@ READ8_HANDLER( snes_r_io )
 			snes_ram[offset] = 0;	/* Register is reset on read */
 			return value;
 		case HVBJOY:		/* H/V blank and joypad controller enable */
-			/* FIXME: JOYCONT and HBLANK are emulated wrong at present */
-			value = snes_ram[offset] & 0xbe;
-			snes_ram[offset] = ((snes_ram[offset]^0x41)&0x41)|value;
+			/* FIXME: HBLANK is emulated wrong at present */
+			// bits: 7 = VBLANK, 6 = HBLANK, 0 = CONTROLLERS_BUSY
+			snes_ram[offset] ^= 0x40;	// fake hblank
 			return snes_ram[offset];
 		case RDIO:			/* Programmable I/O port (in port ) */
 			/* FIXME: do something here */
@@ -574,7 +583,7 @@ READ8_HANDLER( snes_r_io )
 //      case 0x420c: //PC: 9c7d - 8fab          //only nss_ssoc
 
 		default:
-			printf("offset = %x pc = %x\n",offset,activecpu_get_pc());
+			printf("snes_r: offset = %x pc = %x\n",offset,activecpu_get_pc());
 #endif	/* MESS */
 
 	}
@@ -650,7 +659,11 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case OAMDATA:	/* Data for OAM write (DW) */
 			{
-				snes_oam[snes_ppu.oam.address] = ((snes_oam[snes_ppu.oam.address] >> 8) & 0xff) + (data << 8);
+				int oam_addr = snes_ppu.oam.address;
+
+				while (oam_addr > 0x21f) oam_addr -= 0x220;
+
+				snes_oam[oam_addr] = ((snes_oam[oam_addr] >> 8) & 0xff) + (data << 8);
 				snes_ram[OAMDATA] = (snes_ram[OAMDATA] + 1) % 2;
 				if( snes_ram[OAMDATA] == 0 )
 				{
@@ -732,118 +745,96 @@ WRITE8_HANDLER( snes_w_io )
 			snes_ppu.update_offsets = 1;
 			return;
 		case VMAIN:		/* VRAM address increment value designation */
-			{
-				/* FIXME: We don't support full graphic properly yet */
+			vram_fgr_high = (data & 0x80);
+			vram_fgr_increment = vram_fgr_inctab[data & 3];
+
 				if( data & 0xc )
 				{
-					vram_fg_incr = vram_fg_count = 0x10 << ((data & 0xc) >> 2);
-					vram_fg_cntr = 8;
-					vram_fg_offset = 0;
+				int md = (data & 0xc)>>2;
+
+				vram_fgr_count = vram_fgr_inccnts[md];
+				vram_fgr_mask = (vram_fgr_count*8)-1;
+				vram_fgr_shift = vram_fgr_shiftab[md];
 				}
-#ifdef SNES_DBG_REG_W
-				if( (data & 0x80) != (snes_ram[VMAIN] & 0x80) )
-					printf( "VRAM access: %s(%d)\n", (data & 0x80) >> 7?"Word":"Byte", (data & 0x80) >> 7 );
-				if( (data & 0xc) && (data & 0xc) != (snes_ram[VMAIN] & 0xc) )
-					printf( "Full graphic specified: %d, incr: %d\n", (data & 0xc) >> 2, vram_fg_incr );
-#endif
+			else
+			{
+				vram_fgr_count = 0;
 			}
+//			printf("VMAIN: high %x inc %x count %x mask %x shift %x\n", vram_fgr_high, vram_fgr_increment, vram_fgr_count, vram_fgr_mask, vram_fgr_shift);
 			break;
 		case VMADDL:	/* Address for VRAM read/write (low) */
 		case VMADDH:	/* Address for VRAM read/write (high) */
-			vram_read_offset = 0;
-			vram_fg_count = vram_fg_incr;
-			vram_fg_cntr = 8;
+			{
+				UINT32 addr;
+
+				snes_ram[offset] = data;
+				addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
+
+				if (vram_fgr_count)
+							{
+					UINT32 rem = addr & vram_fgr_mask;
+					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
+						       ((rem & (vram_fgr_count - 1)) << 3);
+
+					vram_read_buffer = snes_vram[(faddr<<1)&0xffff] | snes_vram[((faddr<<1)+1) & 0xffff]<<8;
+							}
+							else
+							{
+					vram_read_buffer = snes_vram[(addr<<1)&0xffff] | snes_vram[((addr<<1)+1) & 0xffff]<<8;
+						}
+
+					}
 			break;
-		case VMDATAL:	/* Data for VRAM write (low) */
-			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
-				if( snes_ram[VMAIN] & 0xc )
-					snes_vram[(addr + vram_fg_offset) << 1] = data;
-				else
-					snes_vram[addr << 1] = data;
+		case VMDATAL:	/* 2118: Data for VRAM write (low) */
+					{
+				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
-				vram_read_offset = 0;
-				if( !(snes_ram[VMAIN] & 0x80) )
+				if (vram_fgr_count)
+						{
+					UINT32 rem = addr & vram_fgr_mask;
+					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
+						       ((rem & (vram_fgr_count - 1)) << 3);
+
+					snes_vram[(faddr<<1)&0xffff] = data;
+						}
+				else
 				{
-					if( snes_ram[VMAIN] & 0xc )
-					{
-						addr++;
-						vram_fg_offset += 7;	/* addr increases by 1, plus 7 = 8 */
-						vram_fg_count--;
-						if( vram_fg_count == 0 )
-						{
-							vram_fg_cntr--;
-							vram_fg_count = vram_fg_incr;
-							if( vram_fg_cntr == 0 )
-							{
-								vram_fg_cntr = 8;
-								vram_fg_offset -= 7;
-							}
-							else
-							{
-								vram_fg_offset -= (vram_fg_count * 8) - 1;
-							}
-						}
+					snes_vram[(addr<<1)&0xffff] = data;
 					}
-					else
-					{
-						switch( snes_ram[VMAIN] & 0x03 )
-						{
-							case 0: addr++;      break;
-							case 1: addr += 32;  break;
-							case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-							case 3: addr += 128; break;
-						}
-					}
+
+				if (!vram_fgr_high)
+				{
+					addr += vram_fgr_increment;
 					snes_ram[VMADDL] = addr & 0xff;
 					snes_ram[VMADDH] = (addr >> 8) & 0xff;
 				}
-			} return;
-		case VMDATAH:	/* Data for VRAM write (high) */
+			} 
+			return;
+		case VMDATAH:	/* 2119: Data for VRAM write (high) */
 			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
-				if( snes_ram[VMAIN] & 0xc )
-					snes_vram[((addr + vram_fg_offset) << 1) + 1] = data;
-				else
-					snes_vram[(addr << 1) + 1] = data;
+				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
-				vram_read_offset = 0;
-				if( (snes_ram[VMAIN] & 0x80) )
-				{
-					if( snes_ram[VMAIN] & 0xc )
-					{
-						addr++;
-						vram_fg_offset += 7;	/* addr increases by 1, plus 7 = 8 */
-						vram_fg_count--;
-						if( vram_fg_count == 0 )
+				if (vram_fgr_count)
 						{
-							vram_fg_cntr--;
-							vram_fg_count = vram_fg_incr;
-							if( vram_fg_cntr == 0 )
-							{
-								vram_fg_cntr = 8;
-								vram_fg_offset -= 7;
+					UINT32 rem = addr & vram_fgr_mask;
+					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
+						       ((rem & (vram_fgr_count - 1)) << 3);
+
+					snes_vram[((faddr<<1)+1)&0xffff] = data;
 							}
 							else
 							{
-								vram_fg_offset -= (vram_fg_count * 8) - 1;
+					snes_vram[((addr<<1)+1)&0xffff] = data;
 							}
-						}
-					}
-					else
-					{
-						switch( snes_ram[VMAIN] & 0x03 )
+
+				if (vram_fgr_high)
 						{
-							case 0: addr++;      break;
-							case 1: addr += 32;  break;
-							case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-							case 3: addr += 128; break;
-						}
-					}
+					addr += vram_fgr_increment;
 					snes_ram[VMADDL] = addr & 0xff;
 					snes_ram[VMADDH] = (addr >> 8) & 0xff;
 				}
-			} return;
+			} 
+			return;
 		case M7SEL:		/* Mode 7 initial settings */
 			break;
 		case M7A:		/* Mode 7 COS angle/x expansion (DW) */
@@ -942,17 +933,30 @@ WRITE8_HANDLER( snes_w_io )
 #endif
 			break;
 		case APU00:		/* Audio port register */
-		case APU01:		/* Audio port register */
-		case APU02:		/* Audio port register */
-		case APU03:		/* Audio port register */
-//			printf("816: %02x to APU @ %d\n", data, offset&3);
+		case APU01:		
+		case APU02:		
+		case APU03:		
+		case APU00+4:		/* these registers are mirrored: see NBA Live '95 @ 8098c5 */
+		case APU01+4:		
+		case APU02+4:		
+		case APU03+4:		
+		case APU00+8:		
+		case APU01+8:		
+		case APU02+8:		
+		case APU03+8:		
+		case APU00+12:		
+		case APU01+12:		
+		case APU02+12:		
+		case APU03+12:		
+//          printf("816: %02x to APU @ %d\n", data, offset&3);
 	     		spc_port_in[offset & 0x3] = data;
+			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
-
 				program_write_byte(0x7e0000 + addr++, data );
+				addr &= 0x1ffff;
 				snes_ram[WMADDH] = (addr >> 16) & 0x1;
 				snes_ram[WMADDM] = (addr >> 8) & 0xff;
 				snes_ram[WMADDL] = addr & 0xff;
@@ -971,8 +975,8 @@ WRITE8_HANDLER( snes_w_io )
 				joypad[3].oldrol = 0;
 			}
 			break;
-		case OLDJOY2:	/* Old NES joystick support */
 		case NMITIMEN:	/* Flag for v-blank, timer int. and joy read */
+		case OLDJOY2:	/* Old NES joystick support */
 		case WRIO:		/* Programmable I/O port */
 		case WRMPYA:	/* Multiplier A */
 			break;
@@ -1172,13 +1176,52 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	/* Start of VBlank */
 	if( snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line )
 	{
-		snes_ram[HVBJOY] |= 0x80;		/* Set vblank bit to on */
+		snes_ram[HVBJOY] |= 0x81;		/* Set vblank bit to on & indicate controllers being read */
 		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits - done every nmi (presumably because no sprites drawn here) */
 		snes_ram[RDNMI] |= 0x80;		/* Set NMI occured bit */
 		if( snes_ram[NMITIMEN] & 0x80 )	/* NMI only signaled if this bit set */
 		{
 			cpunum_set_input_line( 0, G65816_LINE_NMI, HOLD_LINE );
 		}
+	}
+
+	/* three lines after start of vblank we update the controllers (value from snes9x) */
+	if (snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line + 3)
+	{
+		int i;
+
+		joypad[0].low = readinputport( 0 );
+		joypad[0].high = readinputport( 1 );
+		joypad[1].low = readinputport( 2 );
+		joypad[1].high = readinputport( 3 );
+		joypad[2].low = readinputport( 4 );
+		joypad[2].high = readinputport( 5 );
+		joypad[3].low = readinputport( 6 );
+		joypad[3].high = readinputport( 7 );
+
+		// avoid sending signals that could crash games
+		for (i = 0; i < 4; i++)
+		{
+			// if left, no right
+			if (joypad[i].high & 2)	joypad[i].high &= ~1;
+			// if up, no down
+			if (joypad[i].high & 8)	joypad[i].high &= ~4;
+		}
+
+		// is automatic reading on?
+		if (snes_ram[NMITIMEN] & 1)
+		{
+			joy1l = joypad[0].low;
+			joy1h = joypad[0].high;
+			joy2l = joypad[1].low;
+			joy2h = joypad[1].high;
+			joy3l = joypad[2].low;
+			joy3h = joypad[2].high;
+			joy4l = joypad[3].low;
+			joy4h = joypad[3].high;
+		}
+
+		snes_ram[HVBJOY] &= 0x7e;		/* Clear busy bit */
 	}
 
 	/* Setup HDMA on start of new frame */
@@ -1193,17 +1236,6 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 			snes_hdma();
 
 		force_partial_update( snes_ppu.beam.current_vert );
-	}
-	else
-	{
-		joypad[0].low = readinputport( 0 );
-		joypad[0].high = readinputport( 1 );
-		joypad[1].low = readinputport( 2 );
-		joypad[1].high = readinputport( 3 );
-		joypad[2].low = readinputport( 4 );
-		joypad[2].high = readinputport( 5 );
-		joypad[3].low = readinputport( 6 );
-		joypad[3].high = readinputport( 7 );
 	}
 
 	/* Vertical IRQ timer */

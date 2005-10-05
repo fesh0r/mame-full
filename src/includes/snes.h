@@ -423,6 +423,7 @@ extern READ8_HANDLER( spc_bank_r );
 extern WRITE8_HANDLER( spc_bank_w );
 extern READ8_HANDLER( spc_ram_r );
 extern WRITE8_HANDLER( spc_ram_w );
+extern READ8_HANDLER( spc_ipl_r );
 extern void *snes_sh_start(int clock, const struct CustomSound_interface *config);
 extern void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length );
 extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );
@@ -489,7 +490,7 @@ extern voice_state_type
 /*========== MACROS ==========*/
 
 /* The functions to actually read and write to the DSP registers must be
-   implemented by the specific SPC core implementation, as this is too 
+   implemented by the specific SPC core implementation, as this is too
    specific to generalize.  However, by defining these macros, we can
    generalize the DSP's behavior while staying out of the SPC's internals,
    by requiring that the SPC core must use these macros at the appropriate
