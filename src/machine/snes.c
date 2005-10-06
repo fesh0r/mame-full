@@ -28,6 +28,7 @@ static UINT16 cgram_address;	/* CGRAM address */
 static UINT8  vram_read_offset;	/* VRAM read offset */
 UINT8  spc_port_in[4];	/* Port for sending data to the SPC700 */
 UINT8  spc_port_out[4];	/* Port for receiving data from the SPC700 */
+UINT8  ppu_last_scroll;	/* as per Theme Park, this is shared by all scroll regs */
 static UINT8 snes_hdma_chnl;	/* channels enabled for HDMA */
 static UINT8 joy1l, joy1h, joy2l, joy2h, joy3l, joy3h, joy4l, joy4h;
 
@@ -712,36 +713,46 @@ WRITE8_HANDLER( snes_w_io )
 			snes_ppu.layer[2].data = (data & 0xf) << 13;
 			snes_ppu.layer[3].data = (data & 0xf0) << 9;
 			break;
+
+		// Anomie says "Current = (Byte<<8) | (Prev&~7) | ((Current>>8)&7);"
 		case BG1HOFS:	/* BG1 - horizontal scroll (DW) */
-			snes_ppu.layer[0].offset.horizontal = ((snes_ppu.layer[0].offset.horizontal >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[0].offset.horizontal = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[0].offset.horizontal>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG1VOFS:	/* BG1 - vertical scroll (DW) */
-			snes_ppu.layer[0].offset.vertical = ((snes_ppu.layer[0].offset.vertical >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[0].offset.vertical = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[0].offset.vertical>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG2HOFS:	/* BG2 - horizontal scroll (DW) */
-			snes_ppu.layer[1].offset.horizontal = ((snes_ppu.layer[1].offset.horizontal >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[1].offset.horizontal = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[1].offset.horizontal>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG2VOFS:	/* BG2 - vertical scroll (DW) */
-			snes_ppu.layer[1].offset.vertical = ((snes_ppu.layer[1].offset.vertical >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[1].offset.vertical = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[1].offset.vertical>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG3HOFS:	/* BG3 - horizontal scroll (DW) */
-			snes_ppu.layer[2].offset.horizontal = ((snes_ppu.layer[2].offset.horizontal >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[2].offset.horizontal = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[2].offset.horizontal>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG3VOFS:	/* BG3 - vertical scroll (DW) */
-			snes_ppu.layer[2].offset.vertical = ((snes_ppu.layer[2].offset.vertical >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[2].offset.vertical = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[2].offset.vertical>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG4HOFS:	/* BG4 - horizontal scroll (DW) */
-			snes_ppu.layer[3].offset.horizontal = ((snes_ppu.layer[3].offset.horizontal >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[3].offset.horizontal = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[3].offset.horizontal>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case BG4VOFS:	/* BG4 - vertical scroll (DW) */
-			snes_ppu.layer[3].offset.vertical = ((snes_ppu.layer[3].offset.vertical >> 8) & 0xff) + (data << 8);
+			snes_ppu.layer[3].offset.vertical = (data<<8) | (ppu_last_scroll & ~7) | ((snes_ppu.layer[3].offset.vertical>>8) & 7);
+			ppu_last_scroll = data;
 			snes_ppu.update_offsets = 1;
 			return;
 		case VMAIN:		/* VRAM address increment value designation */
@@ -857,7 +868,7 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case CGADD:		/* Initial address for colour RAM writing */
 			/* CGRAM is 16-bit, but when reading/writing we treat it as
-             * 8-bit, so we need to double the address */
+             		 * 8-bit, so we need to double the address */
 			cgram_address = data << 1;
 			break;
 		case CGDATA:	/* Data for colour RAM */
@@ -948,7 +959,7 @@ WRITE8_HANDLER( snes_w_io )
 		case APU01+12:		
 		case APU02+12:		
 		case APU03+12:		
-//          printf("816: %02x to APU @ %d\n", data, offset&3);
+//		        printf("816: %02x to APU @ %d\n", data, offset&3);
 	     		spc_port_in[offset & 0x3] = data;
 			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			return;
@@ -1176,8 +1187,9 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	/* Start of VBlank */
 	if( snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line )
 	{
+		program_write_byte(OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
+		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
 		snes_ram[HVBJOY] |= 0x81;		/* Set vblank bit to on & indicate controllers being read */
-		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits - done every nmi (presumably because no sprites drawn here) */
 		snes_ram[RDNMI] |= 0x80;		/* Set NMI occured bit */
 		if( snes_ram[NMITIMEN] & 0x80 )	/* NMI only signaled if this bit set */
 		{
@@ -1219,6 +1231,10 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 			joy3h = joypad[2].high;
 			joy4l = joypad[3].low;
 			joy4h = joypad[3].high;
+
+			// make sure oldrol starts returning all 1s because the auto-read reads it :-)
+			joypad[0].oldrol = 16;
+			joypad[1].oldrol = 16;
 		}
 
 		snes_ram[HVBJOY] &= 0x7e;		/* Clear busy bit */
@@ -1262,10 +1278,9 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
 	if( snes_ppu.beam.current_vert == 0 )
 	{	/* VBlank is over, time for a new frame */
-		program_write_byte(OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
-		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
 		snes_ram[HVBJOY] &= 0x7f;		/* Clear vblank bit */
 		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
+		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits */
 		cpunum_set_input_line( 0, G65816_LINE_NMI, CLEAR_LINE );
 	}
 }
@@ -1349,7 +1364,7 @@ void snes_hdma()
 					program_write_byte(bbus + 1, program_read_byte(abus++));
 					program_write_byte(bbus, program_read_byte(abus++));
 					program_write_byte(bbus + 1, program_read_byte(abus++));
-				}
+				} break;
 				case 1:		/* 2 addresses (l,h) */
 				{
 					program_write_byte(bbus, program_read_byte(abus++));
