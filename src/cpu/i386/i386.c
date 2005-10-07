@@ -2,12 +2,12 @@
     Intel 386 emulator
 
     Written by Ville Linde
-    
+
     Currently supports:
-    	Intel 386
-    	Intel 486
-    	Intel Pentium
-    	Cyrix MediaGX
+        Intel 386
+        Intel 486
+        Intel Pentium
+        Cyrix MediaGX
 */
 
 #include "driver.h"
@@ -50,7 +50,7 @@ void i386_load_segment_descriptor( int segment )
 
 		v1 = READ32( base + entry );
 		v2 = READ32( base + entry + 4 );
-	
+
 		I.sreg[segment].base = (v2 & 0xff000000) | ((v2 & 0xff) << 16) | ((v1 >> 16) & 0xffff);
 		I.sreg[segment].limit = ((v2 << 16) & 0xf0000) | (v1 & 0xffff);
 		I.sreg[segment].d = ((v2 & 0x400000) && PROTECTED_MODE && !V8086_MODE) ? 1 : 0;
@@ -58,7 +58,7 @@ void i386_load_segment_descriptor( int segment )
 	else
 	{
 		I.sreg[segment].base = I.sreg[segment].selector << 4;
-		
+
 		if( segment == CS && !I.performed_intersegment_jump )
 			I.sreg[segment].base |= 0xfff00000;
 	}
@@ -291,12 +291,12 @@ static void i386_trap(int irq, int irq_gate)
 		I.sreg[CS].selector = segment;
 		I.eip = offset;
 	}
-	
+
 	if (irq_gate)
 	{
 		I.IF = 0;
 	}
-	
+
 	i386_load_segment_descriptor(CS);
 	CHANGE_PC(I.eip);
 }
@@ -305,7 +305,7 @@ static void i386_check_irq_line(void)
 {
 	/* Check if the interrupts are enabled */
 	if ( I.irq_line && I.IF )
-	{ 
+	{
 		i386_trap(I.irq_callback(0), 1);
 	}
 }
@@ -368,7 +368,7 @@ static void build_cycle_table(void)
 		{
 			cycle_table_pm[j] = auto_malloc(sizeof(UINT8) * CYCLES_NUM_OPCODES);
 		}
-	
+
 		for (i=0; i < sizeof(x86_cycle_table)/sizeof(X86_CYCLE_TABLE); i++)
 		{
 			int opcode = x86_cycle_table[i].op;
@@ -425,7 +425,7 @@ void i386_init(void)
 	int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
 	int cpu = cpu_getactivecpu();
 	const char *state_type = "I386";
-	
+
 	build_cycle_table();
 
 	for( i=0; i < 256; i++ ) {
@@ -487,11 +487,11 @@ static void build_opcode_table(UINT32 features)
 		I.opcode_table2_16[i] = I386OP(invalid);
 		I.opcode_table2_32[i] = I386OP(invalid);
 	}
-	
+
 	for (i=0; i < sizeof(x86_opcode_table)/sizeof(X86_OPCODE); i++)
 	{
 		X86_OPCODE *op = &x86_opcode_table[i];
-		
+
 		if ((op->flags & features))
 		{
 			if (op->flags & OP_2BYTE)
@@ -511,14 +511,14 @@ static void build_opcode_table(UINT32 features)
 void i386_reset(void *param)
 {
 	memset( &I, 0, sizeof(I386_REGS) );
-	
+
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;
 
 	I.idtr.base = 0;
 	I.idtr.limit = 0x3ff;
-	
+
 	I.a20_mask = ~0;
 
 	I.cr[0] = 0;
@@ -638,7 +638,7 @@ static void i386_set_irq_line(int irqline, int state)
 	{
 		I.halted = 0;
 	}
-	
+
 	if ( irqline == INPUT_LINE_NMI )
 	{
 		/* NMI (I do not think that this is 100% right) */
@@ -668,7 +668,7 @@ int i386_execute(int num_cycles)
 {
 	I.cycles = num_cycles;
 	CHANGE_PC(I.eip);
-	
+
 	if (I.halted)
 	{
 		I.tsc += num_cycles;
@@ -730,7 +730,7 @@ unsigned i386_dasm(char *buffer, unsigned pc)
 	{
 		translate_address(&address);
 	}
-	
+
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, address, I.sreg[CS].d, I.sreg[CS].d);
 #else
@@ -747,7 +747,7 @@ static int i386_debug_readop(UINT32 offset, int size, UINT64 *value)
 		case 2: *value = READ16(offset); break;
 		case 4: *value = READ32(offset); break;
 	}
-	
+
 	return 1;
 }
 
@@ -980,7 +980,7 @@ static void i486_reset(void *param)
 
 	I.idtr.base = 0;
 	I.idtr.limit = 0x3ff;
-	
+
 	I.a20_mask = ~0;
 
 	I.cr[0] = 0;
@@ -989,11 +989,11 @@ static void i486_reset(void *param)
 
 	REG32(EAX) = 0x0308;	// Intel 386, stepping D1
 	REG32(EDX) = 0;
-	
+
 	build_opcode_table(OP_I386 | OP_FPU | OP_I486);
 	I.cycle_table_rm = cycle_table_rm[CPU_CYCLES_I486];
 	I.cycle_table_pm = cycle_table_pm[CPU_CYCLES_I486];
-	
+
 	CHANGE_PC(I.eip);
 }
 
@@ -1031,7 +1031,7 @@ void i486_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:		      				info->exit = i486_exit;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i486_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i486_win_layout;			break;
-		
+
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
 		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
@@ -1055,7 +1055,7 @@ void i486_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
-						
+
 		default:	i386_get_info(state, info); break;
 	}
 }
@@ -1113,7 +1113,7 @@ static void pentium_reset(void *param)
 
 	I.idtr.base = 0;
 	I.idtr.limit = 0x3ff;
-	
+
 	I.a20_mask = ~0;
 
 	I.cr[0] = 0;
@@ -1122,23 +1122,23 @@ static void pentium_reset(void *param)
 
 	REG32(EAX) = 0x0308;	// Intel 386, stepping D1
 	REG32(EDX) = 0;
-	
+
 	build_opcode_table(OP_I386 | OP_FPU | OP_I486 | OP_PENTIUM);
 	I.cycle_table_rm = cycle_table_rm[CPU_CYCLES_PENTIUM];
 	I.cycle_table_pm = cycle_table_pm[CPU_CYCLES_PENTIUM];
-	
+
 	I.cpuid_id0 = 0x756e6547;	// Genu
 	I.cpuid_id1 = 0x49656e69;	// ineI
 	I.cpuid_id2 = 0x6c65746e;	// ntel
-	
+
 	I.cpuid_max_input_value_eax = 0x01;
-	
+
 	// [11:8] Family
 	// [ 7:4] Model
 	// [ 3:0] Stepping ID
 	// Family 5 (Pentium), Model 2 (75 - 200MHz), Stepping 1
 	I.cpu_version = (5 << 8) | (2 << 4) | (1);
-	
+
 	// [ 0:0] FPU on chip
 	// [ 2:2] I/O breakpoints
 	// [ 4:4] Time Stamp Counter
@@ -1184,7 +1184,7 @@ void pentium_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:		      				info->exit = pentium_exit;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pentium_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pentium_win_layout;			break;
-		
+
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
 		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
@@ -1208,7 +1208,7 @@ void pentium_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
-						
+
 		default:	i386_get_info(state, info); break;
 	}
 }
@@ -1266,7 +1266,7 @@ static void mediagx_reset(void *param)
 
 	I.idtr.base = 0;
 	I.idtr.limit = 0x3ff;
-	
+
 	I.a20_mask = ~0;
 
 	I.cr[0] = 0;
@@ -1275,23 +1275,23 @@ static void mediagx_reset(void *param)
 
 	REG32(EAX) = 0x0308;	// Intel 386, stepping D1
 	REG32(EDX) = 0;
-	
+
 	build_opcode_table(OP_I386 | OP_FPU | OP_I486 | OP_PENTIUM | OP_CYRIX);
 	I.cycle_table_rm = cycle_table_rm[CPU_CYCLES_MEDIAGX];
 	I.cycle_table_pm = cycle_table_pm[CPU_CYCLES_MEDIAGX];
-	
+
 	I.cpuid_id0 = 0x69727943;	// Cyri
 	I.cpuid_id1 = 0x736e4978;	// xIns
 	I.cpuid_id2 = 0x6d616574;	// tead
-	
+
 	I.cpuid_max_input_value_eax = 0x01;
-	
+
 	// [11:8] Family
 	// [ 7:4] Model
 	// [ 3:0] Stepping ID
 	// Family 4, Model 4 (MediaGX)
 	I.cpu_version = (4 << 8) | (4 << 4) | (1);
-	
+
 	// [ 0:0] FPU on chip
 	// [ 2:2] I/O breakpoints
 	// [ 4:4] Time Stamp Counter
@@ -1337,7 +1337,7 @@ void mediagx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:		      				info->exit = mediagx_exit;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mediagx_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mediagx_win_layout;			break;
-		
+
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
 		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
@@ -1361,7 +1361,7 @@ void mediagx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
 		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
-						
+
 		default:	i386_get_info(state, info); break;
 	}
 }

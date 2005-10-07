@@ -1,7 +1,7 @@
 // Intel 486+ specific opcodes
 
 static void I486OP(cpuid)(void)				// Opcode 0x0F A2
-{	
+{
 	switch (REG32(EAX))
 	{
 		case 0:
@@ -13,13 +13,13 @@ static void I486OP(cpuid)(void)				// Opcode 0x0F A2
 			CYCLES(CYCLES_CPUID);
 			break;
 		}
-		
+
 		case 1:
 		{
 			REG32(EAX) = I.cpu_version;
 			REG32(EDX) = I.feature_flags;
 			CYCLES(CYCLES_CPUID_EAX1);
-			break;	
+			break;
 		}
 	}
 }
@@ -32,5 +32,5 @@ static void I486OP(invd)(void)				// Opcode 0x0f 08
 
 static void I486OP(wbinvd)(void)			// Opcode 0x0f 09
 {
-	// Nothing to do ?	
+	// Nothing to do ?
 }

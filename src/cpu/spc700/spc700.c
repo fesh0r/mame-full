@@ -4,11 +4,11 @@
 /*
 
   Sony/Nintendo SPC700 CPU Emulator
-  
+
   The SPC700 is 6502-based at heart but contains a lot of the extended
   opcodes of the Mitsubishi 770 and 7700 series 65xxx-based MCUs,  plus
-  a few special twists borrowed from the 68000.  
-  
+  a few special twists borrowed from the 68000.
+
   It was designed by Sony's Ken Kutaragi, later the "father of the PlayStation".
 
   Original emulation by Anthony Kruize and Lee Hammerton.
@@ -771,7 +771,7 @@ INLINE void SET_FLAG_I(uint value)
 			SRC     = OPER_8_##SMODE();		\
 			spc_int16 = (short)OPER_8_##DMODE() - (short)SRC;	\
 			FLAG_C  = (spc_int16 >= 0) ? CFLAG_SET : 0;	 \
-			FLAG_NZ = MAKE_UINT_8(spc_int16);	 
+			FLAG_NZ = MAKE_UINT_8(spc_int16);
 
 /* Compare word */
 #define OP_CMPW(BCLK, MODE)													\
@@ -1427,7 +1427,7 @@ static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
 #endif
 }
 
-//static int dump_flag = 0;
+//int dump_flag = 0;
 
 /* Execute instructions for <clocks> cycles */
 int spc700_execute(int clocks)
@@ -1440,7 +1440,7 @@ int spc700_execute(int clocks)
 		REG_PC++;
 
 #if 0
-		if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
+//      if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
 
 		if (dump_flag && 0)
 		{
@@ -1462,6 +1462,8 @@ int spc700_execute(int clocks)
 				p & 0x04 ? 'I':'.',
 				p & 0x02 ? 'Z':'.',
 				p & 0x01 ? 'C':'.');
+
+			dump_flag--;
 		}
 #endif
 		switch(REG_IR = read_8_immediate(REG_PPC))

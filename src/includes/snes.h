@@ -419,8 +419,6 @@ extern UINT8 spc_port_in[4];	/* SPC input ports */
 extern UINT8 spc_port_out[4];	/* SPC output ports */
 extern READ8_HANDLER( spc_io_r );
 extern WRITE8_HANDLER( spc_io_w );
-extern READ8_HANDLER( spc_bank_r );
-extern WRITE8_HANDLER( spc_bank_w );
 extern READ8_HANDLER( spc_ram_r );
 extern WRITE8_HANDLER( spc_ram_w );
 extern READ8_HANDLER( spc_ipl_r );

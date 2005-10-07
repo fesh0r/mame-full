@@ -2751,7 +2751,7 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				I.sreg[CS].selector = selector;
 				I.performed_intersegment_jump = 1;
 				i386_load_segment_descriptor( CS );
-				I.eip = address;	
+				I.eip = address;
 				CHANGE_PC(I.eip);
 			}
 			break;

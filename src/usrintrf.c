@@ -619,11 +619,13 @@ int ui_get_show_profiler(void)
 
 void CLIB_DECL ui_popup(const char *text,...)
 {
+	int seconds;
 	va_list arg;
 	va_start(arg,text);
 	vsprintf(popup_text,text,arg);
 	va_end(arg);
-	popup_text_counter = 2 * Machine->refresh_rate;
+	seconds = strlen(popup_text) / 40 + 2;
+	popup_text_counter = seconds * Machine->refresh_rate;
 }
 
 
@@ -2104,6 +2106,14 @@ static UINT32 menu_bookkeeping(UINT32 state)
 	char *bufptr = buf;
 	int selected = 0;
 	int ctrnum;
+	mame_time total_time;
+
+	/* show total time first */
+	total_time = mame_timer_get_time();
+	if (total_time.seconds >= 60 * 60)
+		bufptr += sprintf(bufptr, "%s: %d:%02d:%02d\n\n", ui_getstring(UI_totaltime), total_time.seconds / (60*60), (total_time.seconds / 60) % 60, total_time.seconds % 60);
+	else
+		bufptr += sprintf(bufptr, "%s: %d:%02d\n\n", ui_getstring(UI_totaltime), (total_time.seconds / 60) % 60, total_time.seconds % 60);
 
 	/* show tickets at the top */
 	if (dispensed_tickets)

@@ -208,6 +208,7 @@ static struct rc_option opts[] = {
 #endif
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
+	{ "autosave", NULL, rc_bool, &options.auto_save, "0", 0, 0, NULL, "enable automatic restore at startup and save at exit" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },

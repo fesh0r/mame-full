@@ -146,7 +146,6 @@ static const opcode_struct g_opcodes[256] =
 
 INLINE unsigned int read_8(unsigned int address)
 {
-	const UINT8 *ptr;
 	address = ADDRESS_65816(address);
 	return program_read_byte_8(address);
 }

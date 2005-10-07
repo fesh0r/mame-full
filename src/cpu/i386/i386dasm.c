@@ -1335,7 +1335,7 @@ static char* handle_param(char* s, UINT32 param)
 		case PARAM_REG16:
 			s += sprintf( s, "%s", i386_reg[0][MODRM_REG1] );
 			break;
-			
+
 		case PARAM_REG2_32:
 			s += sprintf( s, "%s", i386_reg[1][MODRM_REG2] );
 			break;
@@ -1439,7 +1439,7 @@ static char* handle_param(char* s, UINT32 param)
 		case PARAM_CREG:
 			s += sprintf( s, "cr%d", MODRM_REG1 );
 			break;
-			
+
 		case PARAM_TREG:
 			s += sprintf( s, "tr%d", MODRM_REG1 );
 			break;
@@ -1511,7 +1511,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			}
 			break;
 		}
-		
+
 		case 1:		// Group D9
 		{
 			if (op2 < 0xc0)
@@ -1536,10 +1536,10 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "fld st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
 						sprintf(s, "fxch st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x10: sprintf(s, "fnop"); break;
 					case 0x20: sprintf(s, "fchs"); break;
 					case 0x21: sprintf(s, "fabs"); break;
@@ -1568,13 +1568,13 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 					case 0x3d: sprintf(s, "fscale"); break;
 					case 0x3e: sprintf(s, "fsin"); break;
 					case 0x3f: sprintf(s, "fcos"); break;
-					
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
 			break;
 		}
-		
+
 		case 2:		// Group DA
 		{
 			if (op2 < 0xc0)
@@ -1599,23 +1599,23 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "fcmovb st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
 						sprintf(s, "fcmove st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
 						sprintf(s, "fcmovbe st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 						sprintf(s, "fcmovu st(0), st(%d)", op2 & 0x7); break;
-						
+
 					default: sprintf(s, "??? (FPU)"); break;
-						
+
 				}
 			}
 			break;
 		}
-		
+
 		case 3:		// Group DB
 		{
 			if (op2 < 0xc0)
@@ -1640,31 +1640,31 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "fcmovnb st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
 						sprintf(s, "fcmovne st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
 						sprintf(s, "fcmovnbe st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 						sprintf(s, "fcmovnu st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x22: sprintf(s, "fclex"); break;
 					case 0x23: sprintf(s, "finit"); break;
-						
+
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 						sprintf(s, "fucomi st(0), st(%d)", op2 & 0x7); break;
-						
+
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 						sprintf(s, "fcomi st(0), st(%d)", op2 & 0x7); break;
-						
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
 			break;
 		}
-		
+
 		case 4:		// Group DC
 		{
 			if (op2 < 0xc0)
@@ -1689,28 +1689,28 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "fadd st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
 						sprintf(s, "fmul st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 						sprintf(s, "fsubr st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 						sprintf(s, "fsub st(%d), st(0)", op2 & 0x7); break;
-				
+
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 						sprintf(s, "fdivr st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-						sprintf(s, "fdiv st(%d), st(0)", op2 & 0x7); break;					
-						
+						sprintf(s, "fdiv st(%d), st(0)", op2 & 0x7); break;
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
 			break;
 		}
-		
+
 		case 5:		// Group DD
 		{
 			if (op2 < 0xc0)
@@ -1735,25 +1735,25 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "ffree st(%d)", op2 & 0x7); break;
-						
+
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
 						sprintf(s, "fst st(%d)", op2 & 0x7); break;
-						
+
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 						sprintf(s, "fstp st(%d)", op2 & 0x7); break;
-				
+
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 						sprintf(s, "fucom st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-						sprintf(s, "fucomp st(%d)", op2 & 0x7); break;					
-						
+						sprintf(s, "fucomp st(%d)", op2 & 0x7); break;
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
 			break;
 		}
-		
+
 		case 6:		// Group DE
 		{
 			if (op2 < 0xc0)
@@ -1778,30 +1778,30 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 						sprintf(s, "faddp st(%d)", op2 & 0x7); break;
-						
+
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
 						sprintf(s, "fmulp st(%d)", op2 & 0x7); break;
-						
+
 					case 0x19: sprintf(s, "fcompp"); break;
-						
+
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 						sprintf(s, "fsubrp st(%d)", op2 & 0x7); break;
-						
+
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 						sprintf(s, "fsubp st(%d)", op2 & 0x7); break;
-				
+
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 						sprintf(s, "fdivrp st(%d), st(0)", op2 & 0x7); break;
-						
+
 					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-						sprintf(s, "fdivp st(%d)", op2 & 0x7); break;					
-						
+						sprintf(s, "fdivp st(%d)", op2 & 0x7); break;
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
 			break;
 		}
-		
+
 		case 7:		// Group DF
 		{
 			if (op2 < 0xc0)
@@ -1825,13 +1825,13 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x20: sprintf(s, "fstsw ax"); break;
-						
+
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 						sprintf(s, "fucomip st(%d)", op2 & 0x7); break;
-				
+
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-						sprintf(s, "fcomip st(%d), st(0)", op2 & 0x7); break;			
-						
+						sprintf(s, "fcomip st(%d), st(0)", op2 & 0x7); break;
+
 					default: sprintf(s, "??? (FPU)"); break;
 				}
 			}
@@ -1903,11 +1903,11 @@ static void decode_opcode(char *s, I386_OPCODE *op, UINT8 op1)
 				}
 			}
 			goto handle_unknown;
-			
+
 		case FPU:
 			op2 = FETCHD();
 			handle_fpu( s, op1, op2);
-			return; 
+			return;
 
 		case MODRM:
 			handle_modrm( modrm_string );

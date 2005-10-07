@@ -37,22 +37,22 @@ INLINE void FPU_PUSH(X87_REG value)
 	{
 		I.fpu_top = 7;
 	}
-	
+
 	I.fpu_reg[I.fpu_top] = value;
 }
 
 INLINE X87_REG FPU_POP(void)
 {
 	X87_REG value = I.fpu_reg[I.fpu_top];
-	
+
 	I.fpu_tag_word |= 3 << (I.fpu_top * 2);		// set FPU register tag to 3 (empty)
-	
+
 	I.fpu_top++;
 	if (I.fpu_top > 7)
 	{
 		I.fpu_top = 0;
 	}
-	
+
 	return value;
 }
 
@@ -65,27 +65,27 @@ static void I386OP(fpu_group_d8)(void)		// Opcode 0xd8
 static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
 {
 	UINT8 modrm = FETCH();
-	
+
 	if (modrm < 0xc0)
 	{
 		UINT32 ea = GetEA(modrm);
-		
+
 		switch ((modrm >> 3) & 0x7)
 		{
 			case 5:			// FLDCW
 			{
 				I.fpu_control_word = READ16(ea);
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			case 7:			// FSTCW
 			{
-				WRITE16(ea, I.fpu_control_word);	
+				WRITE16(ea, I.fpu_control_word);
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op D9 %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -100,32 +100,32 @@ static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
 				X87_REG t = ST(modrm & 7);
 				FPU_PUSH(t);
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			case 0x20:		// FCHS
 			{
 				ST(0).i ^= FPU_SIGN_BIT_DOUBLE;
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			case 0x28:		// FLD1
 			{
 				X87_REG t;
 				t.f = 1.0;
 				FPU_PUSH(t);
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			case 0x2e:		// FLDZ
 			{
 				X87_REG t;
 				t.f = 0.0;
 				FPU_PUSH(t);
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
 			default:
 				osd_die("I386: FPU Op D9 %02X at %08X\n", modrm, I.pc-2);
@@ -142,7 +142,7 @@ static void I386OP(fpu_group_da)(void)		// Opcode 0xda
 static void I386OP(fpu_group_db)(void)		// Opcode 0xdb
 {
 	UINT8 modrm = FETCH();
-	
+
 	if (modrm < 0xc0)
 	{
 		osd_die("I386: FPU Op DB %02X at %08X\n", modrm, I.pc-2);
@@ -159,33 +159,33 @@ static void I386OP(fpu_group_db)(void)		// Opcode 0xdb
 				I.fpu_data_ptr = 0;
 				I.fpu_inst_ptr = 0;
 				I.fpu_opcode = 0;
-				
+
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			case 0x24:		// FSETPM (treated as nop on 387+)
 			{
 				CYCLES(1);
 				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op DB %02X at %08X\n", modrm, I.pc-2);
 		}
-	}	
+	}
 }
 
 static void I386OP(fpu_group_dc)(void)		// Opcode 0xdc
 {
 	UINT8 modrm = FETCH();
-	
+
 	if (modrm < 0xc0)
 	{
 		//UINT32 ea = GetEA(modrm);
-		
+
 		switch ((modrm >> 3) & 0x7)
-		{			
+		{
 			default:
 				osd_die("I386: FPU Op DC %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -212,7 +212,7 @@ static void I386OP(fpu_group_dc)(void)		// Opcode 0xdc
 				CYCLES(1);		// TODO
 				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op DC %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -222,20 +222,20 @@ static void I386OP(fpu_group_dc)(void)		// Opcode 0xdc
 static void I386OP(fpu_group_dd)(void)		// Opcode 0xdd
 {
 	UINT8 modrm = FETCH();
-	
+
 	if (modrm < 0xc0)
 	{
 		UINT32 ea = GetEA(modrm);
-		
+
 		switch ((modrm >> 3) & 0x7)
 		{
 			case 7:			// FSTSW
 			{
-				WRITE16(ea, (I.fpu_status_word & ~FPU_STACK_TOP_MASK) | (I.fpu_top << 10));	
+				WRITE16(ea, (I.fpu_status_word & ~FPU_STACK_TOP_MASK) | (I.fpu_top << 10));
 				CYCLES(1);		// TODO
-				break;	
+				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op DD %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -243,7 +243,7 @@ static void I386OP(fpu_group_dd)(void)		// Opcode 0xdd
 	else
 	{
 		switch (modrm & 0x3f)
-		{			
+		{
 			default:
 				osd_die("I386: FPU Op DD %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -256,8 +256,8 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 
 	if (modrm < 0xc0)
 	{
-	//	UINT32 ea = GetEA(modrm);
-		
+	//  UINT32 ea = GetEA(modrm);
+
 		switch ((modrm >> 3) & 0x7)
 		{
 			default:
@@ -293,7 +293,7 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 				CYCLES(1);		// TODO
 				break;
 			}
-			
+
 			// FDIVP
 			case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
 			{
@@ -313,7 +313,7 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 				CYCLES(1);		// TODO
 				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op DE %02X at %08X\n", modrm, I.pc-2);
 		}
@@ -323,11 +323,11 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 static void I386OP(fpu_group_df)(void)		// Opcode 0xdf
 {
 	UINT8 modrm = FETCH();
-	
+
 	if (modrm < 0xc0)
 	{
-	//	UINT32 ea = GetEA(modrm);
-		
+	//  UINT32 ea = GetEA(modrm);
+
 		switch ((modrm >> 3) & 0x7)
 		{
 			default:
@@ -344,7 +344,7 @@ static void I386OP(fpu_group_df)(void)		// Opcode 0xdf
 				CYCLES(1);		// TODO
 				break;
 			}
-			
+
 			default:
 				osd_die("I386: FPU Op DF %02X at %08X\n", modrm, I.pc-2);
 		}

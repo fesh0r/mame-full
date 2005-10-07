@@ -19,7 +19,7 @@ typedef struct {
 
 static X86_OPCODE x86_opcode_table[] =
 {
-//	Opcode		Flags						16-bit handler					32-bit handler
+//  Opcode      Flags                       16-bit handler                  32-bit handler
 	{ 0x00,		OP_I386,					I386OP(add_rm8_r8),				I386OP(add_rm8_r8),			},
 	{ 0x01,		OP_I386,					I386OP(add_rm16_r16),			I386OP(add_rm32_r32),		},
 	{ 0x02,		OP_I386,					I386OP(add_r8_rm8),				I386OP(add_r8_rm8),			},

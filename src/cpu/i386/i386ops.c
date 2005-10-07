@@ -1029,7 +1029,7 @@ static void I386OP(repeat)(int invert_flag)
 			cycle_adjustment = -4;
 			flag = NULL;
 			break;
-			
+
 		case 0x6e:
 		case 0x6f:
 			/* OUTSB, OUTSW, OUTSD */
@@ -1038,7 +1038,7 @@ static void I386OP(repeat)(int invert_flag)
 			cycle_adjustment = -4;
 			flag = NULL;
 			break;
-			
+
 		case 0xa4:
 		case 0xa5:
 			/* MOVSB, MOVSW, MOVSD */

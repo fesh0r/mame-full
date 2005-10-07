@@ -69,7 +69,7 @@ static void snes_init_ram(void)
 	cpuintrf_push_context(0);
 	for (i = 0; i < (128*1024); i++)
 	{
-		
+
 		program_write_byte(0x7e0000 + i, 0x55);
 	}
 	cpuintrf_pop_context();
@@ -307,12 +307,12 @@ READ8_HANDLER( snes_r_io )
 	switch( offset )
 	{
 		/* hacks for SimCity 2000 to boot - I presume openbus emulation will fix */
-		case 0x221a:	
+		case 0x221a:
 		case 0x231c:
 		case 0x241e:
 			return 1;
 		case 0x2017:
-		case 0x221b: 
+		case 0x221b:
 		case 0x231d:
 		case 0x241f:
 			return 0;
@@ -364,13 +364,13 @@ READ8_HANDLER( snes_r_io )
 		case RVMDATAL:	/* Read data from VRAM (low) */
 			{
 				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
-				
+
 				value = vram_read_buffer & 0xff;
 
 				if (!vram_fgr_high)
-							{
+				{
 					if (vram_fgr_count)
-							{
+					{
 						UINT32 rem = addr & vram_fgr_mask;
 						UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
 							       ((rem & (vram_fgr_count - 1)) << 3);
@@ -383,8 +383,8 @@ READ8_HANDLER( snes_r_io )
 					}
 
 					addr += vram_fgr_increment;
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
+					snes_ram[VMADDL] = addr&0xff;
+					snes_ram[VMADDH] = (addr>>8)&0xff;
 				}
 			}
 			return value;
@@ -395,9 +395,9 @@ READ8_HANDLER( snes_r_io )
 				value = (vram_read_buffer>>8) & 0xff;
 
 				if (!vram_fgr_high)
-							{
+				{
 					if (vram_fgr_count)
-							{
+					{
 						UINT32 rem = addr & vram_fgr_mask;
 						UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
 							       ((rem & (vram_fgr_count - 1)) << 3);
@@ -410,8 +410,8 @@ READ8_HANDLER( snes_r_io )
 					}
 
 					addr += vram_fgr_increment;
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
+					snes_ram[VMADDL] = addr&0xff;
+					snes_ram[VMADDH] = (addr>>8)&0xff;
 				}
 			}
 			return value;
@@ -457,21 +457,21 @@ READ8_HANDLER( snes_r_io )
 			/* FIXME: need to reset OPHCT and OPVCT */
 			return snes_ram[offset];
 		case APU00:		/* Audio port register */
-		case APU01:		
-		case APU02:		
-		case APU03:		
+		case APU01:
+		case APU02:
+		case APU03:
 		case APU00+4:		/* these registers are mirrored */
-		case APU01+4:		
-		case APU02+4:		
-		case APU03+4:		
-		case APU00+8:		
-		case APU01+8:		
-		case APU02+8:		
-		case APU03+8:		
-		case APU00+12:		
-		case APU01+12:		
-		case APU02+12:		
-		case APU03+12:		
+		case APU01+4:
+		case APU02+4:
+		case APU03+4:
+		case APU00+8:
+		case APU01+8:
+		case APU02+8:
+		case APU03+8:
+		case APU00+12:
+		case APU01+12:
+		case APU02+12:
+		case APU03+12:
 			return spc_port_out[offset & 0x3];
 		case WMDATA:	/* Data to read from WRAM */
 			{
@@ -759,19 +759,19 @@ WRITE8_HANDLER( snes_w_io )
 			vram_fgr_high = (data & 0x80);
 			vram_fgr_increment = vram_fgr_inctab[data & 3];
 
-				if( data & 0xc )
-				{
+			if (data & 0xc)
+			{
 				int md = (data & 0xc)>>2;
 
 				vram_fgr_count = vram_fgr_inccnts[md];
 				vram_fgr_mask = (vram_fgr_count*8)-1;
 				vram_fgr_shift = vram_fgr_shiftab[md];
-				}
+			}
 			else
 			{
 				vram_fgr_count = 0;
 			}
-//			printf("VMAIN: high %x inc %x count %x mask %x shift %x\n", vram_fgr_high, vram_fgr_increment, vram_fgr_count, vram_fgr_mask, vram_fgr_shift);
+//          printf("VMAIN: high %x inc %x count %x mask %x shift %x\n", vram_fgr_high, vram_fgr_increment, vram_fgr_count, vram_fgr_mask, vram_fgr_shift);
 			break;
 		case VMADDL:	/* Address for VRAM read/write (low) */
 		case VMADDH:	/* Address for VRAM read/write (high) */
@@ -782,69 +782,69 @@ WRITE8_HANDLER( snes_w_io )
 				addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
 				if (vram_fgr_count)
-							{
+				{
 					UINT32 rem = addr & vram_fgr_mask;
 					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
 						       ((rem & (vram_fgr_count - 1)) << 3);
 
 					vram_read_buffer = snes_vram[(faddr<<1)&0xffff] | snes_vram[((faddr<<1)+1) & 0xffff]<<8;
-							}
-							else
-							{
+				}
+				else
+				{
 					vram_read_buffer = snes_vram[(addr<<1)&0xffff] | snes_vram[((addr<<1)+1) & 0xffff]<<8;
-						}
+				}
 
-					}
+			}
 			break;
 		case VMDATAL:	/* 2118: Data for VRAM write (low) */
-					{
+			{
 				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
 				if (vram_fgr_count)
-						{
+				{
 					UINT32 rem = addr & vram_fgr_mask;
 					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
 						       ((rem & (vram_fgr_count - 1)) << 3);
 
 					snes_vram[(faddr<<1)&0xffff] = data;
-						}
+				}
 				else
 				{
 					snes_vram[(addr<<1)&0xffff] = data;
-					}
+				}
 
 				if (!vram_fgr_high)
 				{
 					addr += vram_fgr_increment;
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
+					snes_ram[VMADDL] = addr&0xff;
+					snes_ram[VMADDH] = (addr>>8)&0xff;
 				}
-			} 
+			}
 			return;
 		case VMDATAH:	/* 2119: Data for VRAM write (high) */
 			{
 				UINT32 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
 				if (vram_fgr_count)
-						{
+				{
 					UINT32 rem = addr & vram_fgr_mask;
 					UINT32 faddr = (addr & ~vram_fgr_mask) + (rem >> vram_fgr_shift) +
 						       ((rem & (vram_fgr_count - 1)) << 3);
 
 					snes_vram[((faddr<<1)+1)&0xffff] = data;
-							}
-							else
-							{
+				}
+				else
+				{
 					snes_vram[((addr<<1)+1)&0xffff] = data;
-							}
+				}
 
 				if (vram_fgr_high)
-						{
+				{
 					addr += vram_fgr_increment;
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
+					snes_ram[VMADDL] = addr&0xff;
+					snes_ram[VMADDH] = (addr>>8)&0xff;
 				}
-			} 
+			}
 			return;
 		case M7SEL:		/* Mode 7 initial settings */
 			break;
@@ -868,7 +868,7 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case CGADD:		/* Initial address for colour RAM writing */
 			/* CGRAM is 16-bit, but when reading/writing we treat it as
-             		 * 8-bit, so we need to double the address */
+                 * 8-bit, so we need to double the address */
 			cgram_address = data << 1;
 			break;
 		case CGDATA:	/* Data for colour RAM */
@@ -944,22 +944,22 @@ WRITE8_HANDLER( snes_w_io )
 #endif
 			break;
 		case APU00:		/* Audio port register */
-		case APU01:		
-		case APU02:		
-		case APU03:		
+		case APU01:
+		case APU02:
+		case APU03:
 		case APU00+4:		/* these registers are mirrored: see NBA Live '95 @ 8098c5 */
-		case APU01+4:		
-		case APU02+4:		
-		case APU03+4:		
-		case APU00+8:		
-		case APU01+8:		
-		case APU02+8:		
-		case APU03+8:		
-		case APU00+12:		
-		case APU01+12:		
-		case APU02+12:		
-		case APU03+12:		
-//		        printf("816: %02x to APU @ %d\n", data, offset&3);
+		case APU01+4:
+		case APU02+4:
+		case APU03+4:
+		case APU00+8:
+		case APU01+8:
+		case APU02+8:
+		case APU03+8:
+		case APU00+12:
+		case APU01+12:
+		case APU02+12:
+		case APU03+12:
+//          printf("816: %02x to APU @ %d\n", data, offset&3);
 	     		spc_port_in[offset & 0x3] = data;
 			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			return;
@@ -988,7 +988,7 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case NMITIMEN:	/* Flag for v-blank, timer int. and joy read */
 		case OLDJOY2:	/* Old NES joystick support */
-		case WRIO:		/* Programmable I/O port */
+		case WRIO:    	/* Programmable I/O port */
 		case WRMPYA:	/* Multiplier A */
 			break;
 		case WRMPYB:	/* Multiplier B */

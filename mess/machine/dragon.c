@@ -2568,7 +2568,6 @@ DRIVER_INIT( coco )
 	else if (cart_inserted == 2)
 		cart_inserted = 0;
 
-	pia_init(2);
 	sam_init();
 
 	/* The choise of 50hz is arbitrary */

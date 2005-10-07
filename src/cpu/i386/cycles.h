@@ -197,7 +197,7 @@ typedef enum {
 	CYCLES_INT,
 	CYCLES_INT3,
 	CYCLES_INTO_OF1,
-	CYCLES_INTO_OF0,	
+	CYCLES_INTO_OF0,
 	CYCLES_BOUND_IN_RANGE,
 	CYCLES_BOUND_OUT_RANGE,
 	CYCLES_IRET,
@@ -241,7 +241,7 @@ typedef enum {
 	CYCLES_VERW_REG,
 	CYCLES_VERW_MEM,
 	CYCLES_LOCK,
-	
+
 	CYCLES_BSWAP,
 	CYCLES_CMPXCHG8B,
 	CYCLES_CMPXCHG,
@@ -252,7 +252,7 @@ typedef enum {
 	CYCLES_RDTSC,
 	CYCLES_RSM,
 	CYCLES_RDMSR,
-	
+
 	CYCLES_FABS,
 	CYCLES_FADD,
 	CYCLES_FBLD,
@@ -313,7 +313,7 @@ typedef enum {
 	CYCLES_FXTRACT,
 	CYCLES_FYL2X,
 	CYCLES_FYL2XPI,
-	
+
 	CYCLES_NUM_OPCODES
 } X86_CYCLES;
 
@@ -333,8 +333,8 @@ typedef struct
 
 static X86_CYCLE_TABLE x86_cycle_table[] =
 {
-	// opcode					  rm/pmode
-	//							  i386         i486		    pentium	     mediagx
+	// opcode                     rm/pmode
+	//                            i386         i486         pentium      mediagx
 	{ CYCLES_MOV_REG_REG,		{ {  2,  2 },  {  1,  1 },  {  1,  1 },  {  1,  1 } }		},
 	{ CYCLES_MOV_REG_MEM,		{ {  2,  2 },  {  1,  1 },  {  1,  1 },  {  1,  1 }	}		},
 	{ CYCLES_MOV_MEM_REG,		{ {  4,  4 },  {  1,  1 },  {  1,  1 },  {  1,  1 }	}		},
@@ -577,13 +577,13 @@ static X86_CYCLE_TABLE x86_cycle_table[] =
 	{ CYCLES_VERW_REG,			{ {  0, 15 },  { 11, 11 },  {  7,  7 },  {  0,  8 }	}		},
 	{ CYCLES_VERW_MEM,			{ {  0, 16 },  { 11, 11 },  {  7,  7 },  {  0,  8 }	}		},
 	{ CYCLES_LOCK,				{ {  0,  0 },  {  1,  1 },  {  1,  1 },  {  1,  1 }	}		},
-	
+
 	// i486+
 	{ CYCLES_BSWAP,				{ {  0,  0 },  {  1,  1 },  {  1,  1 },  {  6,  6 }	}		},
 	{ CYCLES_CMPXCHG,			{ {  0,  0 },  {  6,  6 },  {  5,  5 },  {  6,  6 }	}		},
 	{ CYCLES_INVD,				{ {  0,  0 },  {  4,  4 },  { 15, 15 },  { 20, 20 }	}		},
-	{ CYCLES_XADD,				{ {  0,  0 },  {  4,  4 },  {  4,  4 },  {  2,  2 }	}		},	
-	
+	{ CYCLES_XADD,				{ {  0,  0 },  {  4,  4 },  {  4,  4 },  {  2,  2 }	}		},
+
 	// Pentium+
 	{ CYCLES_CMPXCHG8B,			{ {  0,  0 },  {  0,  0 },  { 10, 10 },  {  6,  6 }	}		},
 	{ CYCLES_CPUID,				{ {  0,  0 },  {  0,  0 },  { 14, 14 },  { 12, 12 }	}		},
@@ -591,7 +591,7 @@ static X86_CYCLE_TABLE x86_cycle_table[] =
 	{ CYCLES_RDTSC,				{ {  0,  0 },  {  0,  0 },  { 20, 20 },  {  1,  1 }	}		},
 	{ CYCLES_RSM,				{ {  0,  0 },  {  0,  0 },  { 82, 82 },  { 57, 57 }	}		},
 	{ CYCLES_RDMSR,				{ {  0,  0 },  {  0,  0 },  { 20, 20 },  {  1,  1 }	}		},
-	
+
 	// FPU
 	{ CYCLES_FABS,				{ {  0,  0 },  {  3,  3 },  {  1,  1 },  {  1,  1 }	}		},
 	{ CYCLES_FADD,				{ {  0,  0 },  {  8,  8 },  {  3,  3 },  {  1,  1 }	}		},

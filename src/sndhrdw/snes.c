@@ -5,7 +5,7 @@
   File to handle the sound emulation of the Nintendo Super NES.
 
   By R. Belmont, adapted from OpenSPC 0.3.99 by Brad Martin with permission.
-  Thanks to Brad and also to Charles Bilyué of SNeESe.
+  Thanks to Brad and also to Charles Bilyu? of SNeESe.
 
   OpenSPC's license terms (the LGPL) follow:
 
@@ -1233,7 +1233,7 @@ READ8_HANDLER( spc_io_r )
 		case 0x5:		/* Port 1 */
 		case 0x6:		/* Port 2 */
 		case 0x7:		/* Port 3 */
-//			printf("SPC: rd %02x @ %d, PC=%x\n", spc_port_in[offset-4], offset-4, activecpu_get_pc());
+//          printf("SPC: rd %02x @ %d, PC=%x\n", spc_port_in[offset-4], offset-4, activecpu_get_pc());
 			return spc_port_in[offset - 4];
 		case 0xA:		/* Timer 0 */
 		case 0xB:		/* Timer 1 */
@@ -1328,7 +1328,7 @@ WRITE8_HANDLER( spc_io_w )
 }
 
 READ8_HANDLER( spc_ram_r )
-	{
+{
 	return spc_ram[offset];
 }
 
@@ -1338,7 +1338,7 @@ WRITE8_HANDLER( spc_ram_w )
 
 	// if RAM is mapped in, mirror accordingly
 	if ((!(spc_ram[0xf1] & 0x80)) && (offset >= 0xffc0))
-{
+	{
 		ipl_region[offset-0xffc0] = data;
 	}
 }

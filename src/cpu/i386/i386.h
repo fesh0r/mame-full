@@ -165,7 +165,7 @@ typedef struct {
 	I386_SYS_TABLE idtr;	// Interrupt Descriptor Table Register
 	I386_SEG_DESC task;		// Task register
 	I386_SEG_DESC ldtr;		// Local Descriptor Table Register
-	
+
 	int halted;
 
 	int operand_size;
@@ -181,13 +181,13 @@ typedef struct {
 	int irq_line;
 	int (*irq_callback)(int);
 	UINT32 a20_mask;
-	
+
 	int cpuid_max_input_value_eax;
 	UINT32 cpuid_id0, cpuid_id1, cpuid_id2;
 	UINT32 cpu_version;
 	UINT32 feature_flags;
 	UINT64 tsc;
-	
+
 	// FPU
 	X87_REG fpu_reg[8];
 	UINT16 fpu_control_word;
@@ -197,12 +197,12 @@ typedef struct {
 	UINT64 fpu_inst_ptr;
 	UINT16 fpu_opcode;
 	int fpu_top;
-	
+
 	void (*opcode_table1_16[256])(void);
 	void (*opcode_table1_32[256])(void);
 	void (*opcode_table2_16[256])(void);
 	void (*opcode_table2_32[256])(void);
-	
+
 	UINT8 *cycle_table_pm;
 	UINT8 *cycle_table_rm;
 } I386_REGS;
@@ -287,11 +287,11 @@ INLINE int translate_address(UINT32 *address)
 	UINT32 directory = (a >> 22) & 0x3ff;
 	UINT32 table = (a >> 12) & 0x3ff;
 	UINT32 offset = a & 0xfff;
-	
+
 	// TODO: 4MB pages
 	UINT32 page_dir = program_read_dword_32le(pdbr + directory * 4);
 	UINT32 page_entry = program_read_dword_32le((page_dir & 0xfffff000) + (table * 4));
-	
+
 	*address = (page_entry & 0xfffff000) | offset;
 	return 1;
 }
@@ -300,14 +300,14 @@ INLINE void CHANGE_PC(UINT32 pc)
 {
 	UINT32 address;
 	I.pc = i386_translate( CS, pc );
-	
+
 	address = I.pc;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	change_pc(address & I.a20_mask);
 }
 
@@ -317,14 +317,14 @@ INLINE void NEAR_BRANCH(INT32 offs)
 	/* TODO: limit */
 	I.eip += offs;
 	I.pc += offs;
-	
+
 	address = I.pc;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	change_pc(address & I.a20_mask);
 }
 
@@ -332,7 +332,7 @@ INLINE UINT8 FETCH(void)
 {
 	UINT8 value;
 	UINT32 address = I.pc;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
@@ -347,12 +347,12 @@ INLINE UINT16 FETCH16(void)
 {
 	UINT16 value;
 	UINT32 address = I.pc;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	if( address & 0x1 ) {		/* Unaligned read */
 		address &= I.a20_mask;
 		value = (cpu_readop(address+0) << 0) |
@@ -369,12 +369,12 @@ INLINE UINT32 FETCH32(void)
 {
 	UINT32 value;
 	UINT32 address = I.pc;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	if( I.pc & 0x3 ) {		/* Unaligned read */
 		address &= I.a20_mask;
 		value = (cpu_readop(address+0) << 0) |
@@ -393,12 +393,12 @@ INLINE UINT32 FETCH32(void)
 INLINE UINT8 READ8(UINT32 ea)
 {
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	address &= I.a20_mask;
 	return program_read_byte_32le(address);
 }
@@ -406,12 +406,12 @@ INLINE UINT16 READ16(UINT32 ea)
 {
 	UINT16 value;
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	address &= I.a20_mask;
 	if( ea & 0x1 ) {		/* Unaligned read */
 		value = (program_read_byte_32le( address+0 ) << 0) |
@@ -425,12 +425,12 @@ INLINE UINT32 READ32(UINT32 ea)
 {
 	UINT32 value;
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	address &= I.a20_mask;
 	if( ea & 0x3 ) {		/* Unaligned read */
 		value = (program_read_byte_32le( address+0 ) << 0) |
@@ -446,24 +446,24 @@ INLINE UINT32 READ32(UINT32 ea)
 INLINE void WRITE8(UINT32 ea, UINT8 value)
 {
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	address &= I.a20_mask;
 	program_write_byte_32le(address, value);
 }
 INLINE void WRITE16(UINT32 ea, UINT16 value)
 {
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	address &= I.a20_mask;
 	if( ea & 0x1 ) {		/* Unaligned write */
 		program_write_byte_32le( address+0, value & 0xff );
@@ -475,12 +475,12 @@ INLINE void WRITE16(UINT32 ea, UINT16 value)
 INLINE void WRITE32(UINT32 ea, UINT32 value)
 {
 	UINT32 address = ea;
-	
+
 	if (I.cr[0] & 0x80000000)		// page translation enabled
 	{
 		translate_address(&address);
 	}
-	
+
 	ea &= I.a20_mask;
 	if( ea & 0x3 ) {		/* Unaligned write */
 		program_write_byte_32le( address+0, value & 0xff );
@@ -769,8 +769,8 @@ INLINE void BUMP_DI(int adjustment)
 
 /***********************************************************************************/
 
-//#define CYCLES(x)			(I.cycles -= (PROTECTED_MODE ? cycle_table_pm[x] : cycle_table_rm[x]))
-//#define CYCLES_RM(modrm, r, m)		(I.cycles -= ((modrm >= 0xc0) ? (PROTECTED_MODE ? cycle_table_pm[r] : cycle_table_rm[r]) : (PROTECTED_MODE ? cycle_table_pm[m] : cycle_table_rm[m])))
+//#define CYCLES(x)         (I.cycles -= (PROTECTED_MODE ? cycle_table_pm[x] : cycle_table_rm[x]))
+//#define CYCLES_RM(modrm, r, m)        (I.cycles -= ((modrm >= 0xc0) ? (PROTECTED_MODE ? cycle_table_pm[r] : cycle_table_rm[r]) : (PROTECTED_MODE ? cycle_table_pm[m] : cycle_table_rm[m])))
 
 #define C_ALU_REG_REG		2
 #define C_ALU_REG_MEM		7

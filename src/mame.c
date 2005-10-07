@@ -344,6 +344,8 @@ int run_game(int game)
 		else
 			cpu_loadsave_schedule_file(LOADSAVE_LOAD, options.savegame);
 	}
+	else if (options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+		cpu_loadsave_schedule_file(LOADSAVE_LOAD, Machine->gamedrv->name);
 	else
 		cpu_loadsave_reset();
 
