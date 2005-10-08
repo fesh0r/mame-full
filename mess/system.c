@@ -407,6 +407,7 @@ TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 	DRIVER( atvga ) 	/* 19?? AT VGA										*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( at386 )		/* 19?? IBM AT 386									*/
+	DRIVER( at486 )		/* 19?? IBM AT 486									*/
 
 	/* SINCLAIR */
 	DRIVER( zx80 )		/* Sinclair ZX-80						*/

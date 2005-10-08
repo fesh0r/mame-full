@@ -955,6 +955,22 @@ static NVRAM_HANDLER( model3 )
 	}
 }
 
+static SCSIConfigTable scsi_dev_table =
+{
+	1, /* 1 SCSI device */
+	{
+		{ SCSI_ID_0, 0, SCSI_DEVICE_HARDDISK } /* SCSI ID 0, using HD 0, HD */
+	}
+};
+
+static struct LSI53C810interface scsi_intf =
+{
+	&scsi_dev_table,  /* SCSI device table */
+	&scsi_irq_callback,
+	&real3d_dma_callback,
+	&scsi_fetch,
+}; 
+
 static void model3_init(int step)
 {
 	model3_step = step;
@@ -972,7 +988,7 @@ static void model3_init(int step)
 		} else {
 			mpc105_init();
 		}
-		lsi53c810_init(scsi_fetch, scsi_irq_callback, real3d_dma_callback);
+		lsi53c810_init(&scsi_intf);
 		real3d_device_id = 0x16c311db;	/* PCI Vendor ID (11db = SEGA), Device ID (16c3 = 315-5827) */
 	}
 	else {
