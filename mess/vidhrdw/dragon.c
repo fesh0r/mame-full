@@ -647,9 +647,8 @@ WRITE8_HANDLER(coco3_palette_w)
 	data &= 0x3f;
 	paletteram[offset] = data;
 
-#if LOG_PALETTE
-	logerror("CoCo3 Palette: %i <== $%02x\n", offset, data);
-#endif
+	if (LOG_PALETTE)
+		logerror("CoCo3 Palette: %i <== $%02x\n", offset, data);
 }
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom)
@@ -714,7 +713,6 @@ static int coco3_hires_linesperrow(void)
 	return (indexx == 7) ? coco3_calculate_rows(NULL, NULL) : hires_linesperrow[indexx];
 }
 
-#if LOG_VIDEO
 static void log_video(void)
 {
 	int rows, cols, visualbytesperrow, bytesperrow, vidbase;
@@ -756,7 +754,6 @@ static void log_video(void)
 		break;
 	}
 }
-#endif
 
 /*
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
@@ -845,9 +842,9 @@ WRITE8_HANDLER(coco3_gimevh_w)
 {
 	int xorval;
 
-#if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, activecpu_get_pc(), cpu_getscanline());
-#endif
+	if (LOG_GIME)
+		logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, activecpu_get_pc(), cpu_getscanline());
+
 	/* Features marked with '!' are not yet implemented */
 
 	xorval = coco3_gimevhreg[offset] ^ data;
@@ -879,9 +876,8 @@ WRITE8_HANDLER(coco3_gimevh_w)
 		{
 			videomap_invalidate_frameinfo();
 			videomap_invalidate_lineinfo();
-#if LOG_GIME
-			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
-#endif
+			if (LOG_GIME)
+				logerror("CoCo3 GIME: $ff98 forcing refresh\n");
 		}
 		break;
 
@@ -901,9 +897,9 @@ WRITE8_HANDLER(coco3_gimevh_w)
 		 *		  Bits 6,7 Unused
 		 *		  Bits 0-5 BRDR Border color
 		 */
-#if LOG_BORDER
-		logerror("CoCo3 GIME: Writing $%02x into border; scanline=%i\n", data, cpu_getscanline());
-#endif
+		if (LOG_BORDER)
+			logerror("CoCo3 GIME: Writing $%02x into border; scanline=%i\n", data, cpu_getscanline());
+
 		if (coco3_hires)
 			videomap_invalidate_border();
 		break;
@@ -952,11 +948,12 @@ WRITE8_HANDLER(coco3_gimevh_w)
 
 void coco3_vh_sethires(int hires)
 {
-	if (hires != coco3_hires) {
+	if (hires != coco3_hires)
+	{
 		coco3_hires = hires;
-#if LOG_GIME
-		logerror("CoCo3 GIME: %s hires graphics/text\n", hires ? "Enabling" : "Disabling");
-#endif
+		if (LOG_GIME)
+			logerror("CoCo3 GIME: %s hires graphics/text\n", hires ? "Enabling" : "Disabling");
+
 		videomap_invalidate_frameinfo();
 		videomap_invalidate_lineinfo();
 		videomap_invalidate_border();

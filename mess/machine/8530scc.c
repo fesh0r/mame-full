@@ -87,9 +87,8 @@ READ8_HANDLER(scc_r)
 
 	offset %= 4;
 
-#if LOG_SCC
-	logerror("scc_r: offset=%u\n", (unsigned int) offset);
-#endif
+	if (LOG_SCC)
+		logerror("scc_r: offset=%u\n", (unsigned int) offset);
 
 	switch(offset)
 	{

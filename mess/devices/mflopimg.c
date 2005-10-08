@@ -112,7 +112,6 @@ static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index
 
 
 
-#if LOG_FLOPPY
 static void log_readwrite(const char *name, int head, int track, int sector, const char *buf, int length)
 {
 	char membuf[1024];
@@ -121,7 +120,6 @@ static void log_readwrite(const char *name, int head, int track, int sector, con
 		sprintf(membuf + i*2, "%02x", (int) (UINT8) buf[i]);
 	logerror("%s:  head=%i track=%i sector=%i buffer='%s'\n", name, head, track, sector, membuf);
 }
-#endif
 
 
 
@@ -134,9 +132,9 @@ static void flopimg_read_sector_data_into_buffer(mess_image *image, int side, in
 		return;
 
 	floppy_read_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
-#if LOG_FLOPPY
-	log_readwrite("sector_read", side, flopimg->track, index1, ptr, length);
-#endif
+	
+	if (LOG_FLOPPY)
+		log_readwrite("sector_read", side, flopimg->track, index1, ptr, length);
 }
 
 
@@ -149,9 +147,9 @@ static void flopimg_write_sector_data_from_buffer(mess_image *image, int side, i
 	if (!flopimg || !flopimg->floppy)
 		return;
 
-#if LOG_FLOPPY
-	log_readwrite("sector_write", side, flopimg->track, index1, ptr, length);
-#endif
+	if (LOG_FLOPPY)
+		log_readwrite("sector_write", side, flopimg->track, index1, ptr, length);
+
 	floppy_write_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
 }
 

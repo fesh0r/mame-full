@@ -286,10 +286,8 @@ WRITE8_HANDLER(at_page8_w)
 {
 	at_pages[offset % 0x10] = data;
 
-#if LOG_PORT80
-	if (offset == 0)
-		logerror(" at_page8_w(): Port 80h <== 0x%02x (PC=0x%08x)\n", data, activecpu_get_reg(REG_PC));
-#endif /* LOG_PORT80 */
+	if (LOG_PORT80 && (offset == 0))	
+		logerror(" at_page8_w(): Port 80h <== 0x%02x (PC=0x%08x)\n", data, (unsigned) activecpu_get_reg(REG_PC));
 
 	switch(offset % 8) {
 	case 1:

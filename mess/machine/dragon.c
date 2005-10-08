@@ -391,18 +391,21 @@ static const struct cartridge_slot *coco_cart_interface;
   evolved into a snapshot file format, with a file format so convoluted and
   changing to make it worthy of Microsoft.
 ***************************************************************************/
+
 static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
 {
-	if (*paklen) {
-		if (*pakbase < segaddr) {
+	if (*paklen)
+	{
+		if (*pakbase < segaddr)
+		{
 			/* We have to skip part of the PAK file */
 			int skiplen;
 
 			skiplen = segaddr - *pakbase;
-			if (mame_fseek(fp, skiplen, SEEK_CUR)) {
-#if LOG_PAK
-				logerror("Could not fully read PAK.\n");
-#endif
+			if (mame_fseek(fp, skiplen, SEEK_CUR))
+			{
+				if (LOG_PAK)
+					logerror("Could not fully read PAK.\n");
 				return 1;
 			}
 
@@ -410,17 +413,18 @@ static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 
 			*paklen -= skiplen;
 		}
 
-		if (*pakbase < segaddr + seglen) {
+		if (*pakbase < segaddr + seglen)
+		{
 			mem += *pakbase - segaddr;
 			seglen -= *pakbase - segaddr;
 
 			if (seglen > *paklen)
 				seglen = *paklen;
 
-			if (mame_fread(fp, mem, seglen) < seglen) {
-#if LOG_PAK
-				logerror("Could not fully read PAK.\n");
-#endif
+			if (mame_fread(fp, mem, seglen) < seglen)
+			{
+				if (LOG_PAK)
+					logerror("Could not fully read PAK.\n");
 				return 1;
 			}
 
@@ -497,17 +501,15 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 
 	if (mess_ram_size < 0x10000)
 	{
-#if LOG_PAK
-		logerror("Cannot load PAK files without at least 64k.\n");
-#endif
+		if (LOG_PAK)
+			logerror("Cannot load PAK files without at least 64k.\n");
 		return INIT_FAIL;
 	}
 
 	if (mame_fread(fp, &header, sizeof(header)) < sizeof(header))
 	{
-#if LOG_PAK
-		logerror("Could not fully read PAK.\n");
-#endif
+		if (LOG_PAK)
+			logerror("Could not fully read PAK.\n");
 		return INIT_FAIL;
 	}
 
@@ -518,9 +520,8 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 
 	if (mame_fseek(fp, paklength, SEEK_CUR))
 	{
-#if LOG_PAK
-		logerror("Could not fully read PAK.\n");
-#endif
+		if (LOG_PAK)
+			logerror("Could not fully read PAK.\n");
 		return INIT_FAIL;
 	}
 
@@ -529,9 +530,8 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 	{
 		if (pak_decode_trailer(trailerraw, trailerlen, &trailer))
 		{
-#if LOG_PAK
-			logerror("Invalid or unknown PAK trailer.\n");
-#endif
+			if (LOG_PAK)
+				logerror("Invalid or unknown PAK trailer.\n");
 			return INIT_FAIL;
 		}
 
@@ -540,9 +540,8 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 
 	if (mame_fseek(fp, sizeof(pak_header), SEEK_SET))
 	{
-#if LOG_PAK
-		logerror("Unexpected error while reading PAK.\n");
-#endif
+		if (LOG_PAK)
+			logerror("Unexpected error while reading PAK.\n");
 		return INIT_FAIL;
 	}
 
@@ -749,10 +748,11 @@ static void d_recalc_firq(void)
 
 static void coco3_recalc_irq(void)
 {
-#if LOG_IRQ_RECALC
-	logerror("coco3_recalc_irq(): gime_irq=%i pia0_irq_a=%i pia0_irq_b=%i (GIME IRQ %s)\n",
-		gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
-#endif
+	if (LOG_IRQ_RECALC)
+	{
+		logerror("coco3_recalc_irq(): gime_irq=%i pia0_irq_a=%i pia0_irq_b=%i (GIME IRQ %s)\n",
+			gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
+	}
 
 	if ((coco3_gimereg[0] & 0x20) && gime_irq && is_cpu_suspended())
 		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
@@ -840,22 +840,23 @@ static void coco3_raise_interrupt(int mask, int state)
 	else
 		coco3_interupt_line &= ~mask;
 
-	if (lowtohigh) {
-		if ((coco3_gimereg[0] & 0x20) && (coco3_gimereg[2] & mask)) {
+	if (lowtohigh)
+	{
+		if ((coco3_gimereg[0] & 0x20) && (coco3_gimereg[2] & mask))
+		{
 			gime_irq |= (coco3_gimereg[2] & mask);
 			coco3_recalc_irq();
 
-#if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising IRQ; scanline=%i\n", cpu_getscanline());
-#endif
+			if (LOG_INT_COCO3)
+				logerror("CoCo3 Interrupt: Raising IRQ; scanline=%i\n", cpu_getscanline());
 		}
-		if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask)) {
+		if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask))
+		{
 			gime_firq |= (coco3_gimereg[3] & mask);
 			coco3_recalc_firq();
 
-#if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising FIRQ; scanline=%i\n", cpu_getscanline());
-#endif
+			if (LOG_INT_COCO3)
+				logerror("CoCo3 Interrupt: Raising FIRQ; scanline=%i\n", cpu_getscanline());
 		}
 	}
 }
@@ -899,9 +900,9 @@ INTERRUPT_GEN( coco3_vh_interrupt )
 
 WRITE8_HANDLER( coco3_m6847_fs_w )
 {
-#if LOG_VBORD
-	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, cpu_getscanline());
-#endif
+	if (LOG_VBORD)
+		logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, cpu_getscanline());
+
 	pia_0_cb1_w(0, coco3_vidvars.fs_pia_flip ? !data : data);
 	coco3_raise_interrupt(COCO3_INT_VBORD, coco3_vidvars.fs_gime_flip ? !data : data);
 }
@@ -1752,10 +1753,11 @@ static void coco3_timer_fallingedge_handler(int dummy)
 
 static void coco3_timer_newvalue(void)
 {
-	if (coco3_timer_value == 0) {
-#if LOG_INT_TMR
-		logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", cpu_getscanline(), timer_get_time());
-#endif
+	if (coco3_timer_value == 0)
+	{
+		if (LOG_INT_TMR)
+			logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", cpu_getscanline(), timer_get_time());
+
 		coco3_raise_interrupt(COCO3_INT_TMR, 1);
 		timer_adjust(coco3_timer_fallingedge, coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_CMPCARRIER*4*57, 0, 0);
 
@@ -1783,9 +1785,8 @@ static void coco3_timer_cannonicalize(int newvalue)
 
 	current_time = timer_get_time();
 
-#if LOG_TIMER
-	logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
-#endif
+	if (LOG_TIMER)
+		logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
 
 	if (coco3_timer_counterbase >= 0)
 	{
@@ -1793,9 +1794,8 @@ static void coco3_timer_cannonicalize(int newvalue)
 		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);
 		assert(elapsed >= 0);
 
-#if LOG_TIMER
-		logerror("coco3_timer_cannonicalize(): Recalculating; current_time=%g base=%g elapsed=%i\n", current_time, coco3_timer_counterbase, elapsed);
-#endif
+		if (LOG_TIMER)
+			logerror("coco3_timer_cannonicalize(): Recalculating; current_time=%g base=%g elapsed=%i\n", current_time, coco3_timer_counterbase, elapsed);
 
 		if (elapsed) {
 			coco3_timer_value -= elapsed;
@@ -1811,9 +1811,9 @@ static void coco3_timer_cannonicalize(int newvalue)
 	/* non-negative values of newvalue set the timer value; negative values simply cannonicalize */
 	if (newvalue >= 0)
 	{
-#if LOG_TIMER
-		logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
-#endif
+		if (LOG_TIMER)
+			logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
+
 		coco3_timer_value = newvalue;
 	}
 
@@ -1823,9 +1823,8 @@ static void coco3_timer_cannonicalize(int newvalue)
 		duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
 		timer_adjust(coco3_timer_counter, duration, -1, 0);
 
-#if LOG_TIMER
-		logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
-#endif
+		if (LOG_TIMER)
+			logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
 	}
 	else
 	{
@@ -1837,10 +1836,11 @@ static void coco3_timer_cannonicalize(int newvalue)
 
 static void coco3_timer_hblank(void)
 {
-	if (!coco3_timer_interval && (coco3_timer_value > 0)) {
-#if LOG_DEC_TIMER
-		logerror("coco3_timer_hblank(): Decrementing timer (%i ==> %i)\n", coco3_timer_value, coco3_timer_value - 1);
-#endif
+	if (!coco3_timer_interval && (coco3_timer_value > 0))
+	{
+		if (LOG_DEC_TIMER)
+			logerror("coco3_timer_hblank(): Decrementing timer (%i ==> %i)\n", coco3_timer_value, coco3_timer_value - 1);
+
 		coco3_timer_value--;
 		coco3_timer_newvalue();
 	}
@@ -1849,9 +1849,8 @@ static void coco3_timer_hblank(void)
 /* Write into MSB of timer ($FF94); this causes a reset (source: Sockmaster) */
 static void coco3_timer_msb_w(int data)
 {
-#if LOG_TIMER_SET
-	logerror("coco3_timer_msb_w(): data=$%02x\n", data);
-#endif
+	if (LOG_TIMER_SET)
+		logerror("coco3_timer_msb_w(): data=$%02x\n", data);
 
 	coco3_timer_base &= 0x00ff;
 	coco3_timer_base |= (data & 0x0f) << 8;
@@ -1861,9 +1860,8 @@ static void coco3_timer_msb_w(int data)
 /* Write into LSB of timer ($FF95); this does not cause a reset (source: Sockmaster) */
 static void coco3_timer_lsb_w(int data)
 {
-#if LOG_TIMER_SET
-	logerror("coco3_timer_lsb_w(): data=$%02x\n", data);
-#endif
+	if (LOG_TIMER_SET)
+		logerror("coco3_timer_lsb_w(): data=$%02x\n", data);
 
 	coco3_timer_base &= 0xff00;
 	coco3_timer_base |= (data & 0xff);
@@ -1875,9 +1873,8 @@ static void coco3_timer_set_interval(int interval)
 	if (interval)
 		interval = 1;
 
-#if LOG_TIMER_SET
-	logerror("coco3_timer_set_interval(): Interval is %s\n", interval ? "280ns" : "63.5us");
-#endif
+	if (LOG_TIMER_SET)
+		logerror("coco3_timer_set_interval(): Interval is %s\n", interval ? "280ns" : "63.5us");
 
 	if (coco3_timer_interval != interval) {
 		coco3_timer_interval = interval;
@@ -2094,11 +2091,12 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 		memory_set_bankptr(i + 1, readbank);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, bank_info[i].start, bank_info[i].end, 0, 0, writebank);
 
-#if LOG_MMU
-		logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
-			(i == 8) ? 0xfe00 : i * 0x2000,
-			offset);
-#endif
+		if (LOG_MMU)
+		{
+			logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
+				(i == 8) ? 0xfe00 : i * 0x2000,
+				offset);
+		}
 	}
 }
 
@@ -2166,9 +2164,8 @@ WRITE8_HANDLER(coco3_gime_w)
 {
 	coco3_gimereg[offset] = data;
 
-#if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, activecpu_get_pc());
-#endif
+	if (LOG_GIME)
+		logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, activecpu_get_pc());
 
 	/* Features marked with '!' are not yet implemented */
 	switch(offset) {
@@ -2213,15 +2210,16 @@ WRITE8_HANDLER(coco3_gime_w)
 		 *		  Bit 1 EI1 Keyboard interrupt
 		 *		  Bit 0 EI0 Cartridge interrupt
 		 */
-#if LOG_INT_MASKING
-		logerror("CoCo3 IRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
-			(data & 0x20) ? "TMR " : "",
-			(data & 0x10) ? "HBORD " : "",
-			(data & 0x08) ? "VBORD " : "",
-			(data & 0x04) ? "EI2 " : "",
-			(data & 0x02) ? "EI1 " : "",
-			(data & 0x01) ? "EI0 " : "");
-#endif
+		if (LOG_INT_MASKING)
+		{
+			logerror("CoCo3 IRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
+				(data & 0x20) ? "TMR " : "",
+				(data & 0x10) ? "HBORD " : "",
+				(data & 0x08) ? "VBORD " : "",
+				(data & 0x04) ? "EI2 " : "",
+				(data & 0x02) ? "EI1 " : "",
+				(data & 0x01) ? "EI0 " : "");
+		}
 		break;
 
 	case 3:
@@ -2235,15 +2233,16 @@ WRITE8_HANDLER(coco3_gime_w)
 		 *		  Bit 1 EI1 Keyboard interrupt
 		 *		  Bit 0 EI0 Cartridge interrupt
 		 */
-#if LOG_INT_MASKING
-		logerror("CoCo3 FIRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
-			(data & 0x20) ? "TMR " : "",
-			(data & 0x10) ? "HBORD " : "",
-			(data & 0x08) ? "VBORD " : "",
-			(data & 0x04) ? "EI2 " : "",
-			(data & 0x02) ? "EI1 " : "",
-			(data & 0x01) ? "EI0 " : "");
-#endif
+		if (LOG_INT_MASKING)
+		{
+			logerror("CoCo3 FIRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
+				(data & 0x20) ? "TMR " : "",
+				(data & 0x10) ? "HBORD " : "",
+				(data & 0x08) ? "VBORD " : "",
+				(data & 0x04) ? "EI2 " : "",
+				(data & 0x02) ? "EI1 " : "",
+				(data & 0x01) ? "EI0 " : "");
+		}
 		break;
 
 	case 4:

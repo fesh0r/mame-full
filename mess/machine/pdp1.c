@@ -475,10 +475,11 @@ static void begin_tape_read(int binary, int nac)
 	tape_reader.rby = (binary) ? 1 : 0;
 	tape_reader.rcp = nac;
 
-	#if LOG_IOT_OVERLAP
+	if (LOG_IOT_OVERLAP)
+	{
 		if (timer_enable(tape_reader.timer, 0))
 			logerror("Error: overlapped perforated tape reads (Read-in mode, RPA/RPB instruction)\n");
-	#endif
+	}
 	/* set up delay if tape is advancing */
 	if (tape_reader.motor_on && tape_reader.rcl)
 	{
@@ -593,9 +594,8 @@ void pdp1_tape_read_binary(void)
  */
 void iot_rpa(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("Warning, RPA instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("Warning, RPA instruction not fully emulated: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
 
 	begin_tape_read(0, nac);
 }
@@ -631,9 +631,8 @@ void iot_rpa(int op2, int nac, int mb, int *io, int ac)
  */
 void iot_rpb(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("Warning, RPB instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("Warning, RPB instruction not fully emulated: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
 
 	begin_tape_read(1, nac);
 }
@@ -643,9 +642,9 @@ void iot_rpb(int op2, int nac, int mb, int *io, int ac)
 */
 void iot_rrb(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("RRB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("RRB instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+
 	*io = tape_reader.rb;
 	io_status &= ~io_st_ptr;
 }
@@ -666,16 +665,18 @@ void iot_rrb(int op2, int nac, int mb, int *io, int ac)
  */
 void iot_ppa(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("PPA instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("PPA instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+
 	tape_write(*io & 0377);
 	io_status &= ~io_st_ptp;
 	/* delay is approximately 1/63.3 second */
-	#if LOG_IOT_OVERLAP
+	if (LOG_IOT_OVERLAP)
+	{
 		if (timer_enable(tape_puncher.timer, 0))
-			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+	}
+
 	timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
 }
 
@@ -692,16 +693,17 @@ void iot_ppa(int op2, int nac, int mb, int *io, int ac)
  */
 void iot_ppb(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("PPB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("PPB instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+
 	tape_write((*io >> 12) | 0200);
 	io_status &= ~io_st_ptp;
 	/* delay is approximately 1/63.3 second */
-	#if LOG_IOT_OVERLAP
+	if (LOG_IOT_OVERLAP)
+	{
 		if (timer_enable(tape_puncher.timer, 0))
-			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+	}
 	timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
 }
 
@@ -736,9 +738,9 @@ DEVICE_UNLOAD(pdp1_typewriter)
 */
 static void typewriter_out(UINT8 data)
 {
-	#if LOG_IOT_EXTRA
+	if (LOG_IOT_EXTRA)
 		logerror("typewriter output %o\n", data);
-	#endif
+
 	pdp1_typewriter_drawchar(data);
 	if (typewriter.fd)
 #if 1
@@ -858,9 +860,8 @@ void iot_tyo(int op2, int nac, int mb, int *io, int ac)
 {
 	int ch, delay;
 
-	#if LOG_IOT_EXTRA
-		logerror("Warning, TYO instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("Warning, TYO instruction not fully emulated: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
 
 	ch = (*io) & 077;
 
@@ -885,10 +886,12 @@ void iot_tyo(int op2, int nac, int mb, int *io, int ac)
 		delay = 105;	/* approximately 105ms */
 		break;
 	}
-	#if LOG_IOT_OVERLAP
+	if (LOG_IOT_OVERLAP)
+	{
 		if (timer_enable(typewriter.tyo_timer, 0))
-			logerror("Error: overlapped TYO instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+			logerror("Error: overlapped TYO instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+	}
+
 	timer_adjust(typewriter.tyo_timer, TIME_IN_MSEC(delay), nac, 0.);
 }
 
@@ -908,9 +911,8 @@ void iot_tyo(int op2, int nac, int mb, int *io, int ac)
  */
 void iot_tyi(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("Warning, TYI instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("Warning, TYI instruction not fully emulated: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
 
 	*io = typewriter.tb;
 	if (! (io_status & io_st_tyi))
@@ -918,9 +920,8 @@ void iot_tyi(int op2, int nac, int mb, int *io, int ac)
 	else
 	{
 		io_status &= ~io_st_tyi;
-		#if USE_SBS
+		if (USE_SBS)
 			cpunum_set_input_line_and_vector(0, 0, CLEAR_LINE, 0);	/* interrupt it, baby */
-		#endif
 	}
 }
 
@@ -997,12 +998,13 @@ void iot_dpy(int op2, int nac, int mb, int *io, int ac)
 	if (nac)
 	{
 		/* 50us delay */
-		#if LOG_IOT_OVERLAP
+		if (LOG_IOT_OVERLAP)
+		{
 			/* note that overlap detection is incomplete: it will only work if both DPY
 			instructions require a completion pulse */
 			if (timer_enable(dpy_timer, 0))
-				logerror("Error: overlapped DPY instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
+				logerror("Error: overlapped DPY instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
+		}
 		timer_adjust(dpy_timer, TIME_IN_USEC(50), 0, 0.);
 	}
 }
@@ -1210,9 +1212,8 @@ void iot_011(int op2, int nac, int mb, int *io, int ac)
 */
 void iot_cks(int op2, int nac, int mb, int *io, int ac)
 {
-	#if LOG_IOT_EXTRA
-		logerror("CKS instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-	#endif
+	if (LOG_IOT_EXTRA)
+		logerror("CKS instruction: mb=0%06o, pc=0%06o\n", (unsigned) mb, (unsigned) cpunum_get_reg(0, PDP1_PC));
 
 	*io = io_status;
 }

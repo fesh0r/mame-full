@@ -1266,11 +1266,10 @@ static void execute_instruction_8kw(void)
 						MBR |= LR;
 						break;
 
-#if LOG
 					default:
-						logerror("unrecognized instruction");
+						if (LOG)
+							logerror("unrecognized instruction");
 						break;
-#endif
 					}
 				}
 
@@ -1305,11 +1304,10 @@ static void execute_instruction_8kw(void)
 						AC = (AC >> 1) | (AC & 0400000);
 						break;
 
-#if LOG
 					default:
-						logerror("unrecognized instruction");
+						if (LOG)
+							logerror("unrecognized instruction");
 						break;
-#endif
 					}
 				}
 

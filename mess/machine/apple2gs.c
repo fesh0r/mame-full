@@ -284,7 +284,6 @@ NVRAM_HANDLER( apple2gs )
  * Interrupts
  * ----------------------------------------------------------------------- */
 
-#if LOG_IRQ
 static const char *apple2gs_irq_name(UINT8 irq_mask)
 {
 	switch(irq_mask)
@@ -300,7 +299,6 @@ static const char *apple2gs_irq_name(UINT8 irq_mask)
 	}
 	return NULL;
 }
-#endif
 
 
 
@@ -308,9 +306,9 @@ static void apple2gs_add_irq(UINT8 irq_mask)
 {
 	if ((apple2gs_pending_irqs & irq_mask) == 0x00)
 	{
-#if LOG_IRQ
-		logerror("apple2gs_add_irq(): adding %s\n", apple2gs_irq_name(irq_mask));
-#endif
+		if (LOG_IRQ)
+			logerror("apple2gs_add_irq(): adding %s\n", apple2gs_irq_name(irq_mask));
+
 		apple2gs_pending_irqs |= irq_mask;
 		cpunum_set_input_line(0, G65816_LINE_IRQ, apple2gs_pending_irqs ? ASSERT_LINE : CLEAR_LINE);
 	}
@@ -322,9 +320,9 @@ static void apple2gs_remove_irq(UINT8 irq_mask)
 {
 	if (apple2gs_pending_irqs & irq_mask)
 	{
-#if LOG_IRQ
-		logerror("apple2gs_remove_irq(): removing %s\n", apple2gs_irq_name(irq_mask));
-#endif
+		if (LOG_IRQ)
+			logerror("apple2gs_remove_irq(): removing %s\n", apple2gs_irq_name(irq_mask));
+
 		apple2gs_pending_irqs &= ~irq_mask;
 		cpunum_set_input_line(0, G65816_LINE_IRQ, apple2gs_pending_irqs ? ASSERT_LINE : CLEAR_LINE);
 	}
@@ -438,9 +436,8 @@ static void adb_do_command(void)
 	UINT8 val;
 
 	adb_state = ADBSTATE_IDLE;
-#if LOG_ADB
-	logerror("adb_do_command(): adb_command=0x%02x\n", adb_command);
-#endif
+	if (LOG_ADB)
+		logerror("adb_do_command(): adb_command=0x%02x\n", adb_command);
 
 	switch(adb_command)
 	{
@@ -538,9 +535,9 @@ static UINT8 adb_read_datareg(void)
 			break;
 	}
 
-#if LOG_ADB
-	logerror("adb_read_datareg(): result=0x%02x\n", result);
-#endif
+	if (LOG_ADB)
+		logerror("adb_read_datareg(): result=0x%02x\n", result);
+
 	return result;
 }
 
@@ -548,9 +545,8 @@ static UINT8 adb_read_datareg(void)
 
 static void adb_write_datareg(UINT8 data)
 {
-#if LOG_ADB
-	logerror("adb_write_datareg(): data=0x%02x\n", data);
-#endif
+	if (LOG_ADB)
+		logerror("adb_write_datareg(): data=0x%02x\n", data);
 
 	switch(adb_state)
 	{
@@ -634,9 +630,8 @@ static void adb_write_datareg(UINT8 data)
 			if (adb_command_length > 0)
 			{
 				adb_state = ADBSTATE_INCOMMAND;
-#if LOG_ADB
-				logerror("adb_write_datareg(): in command length %d\n", adb_command_length);
-#endif
+				if (LOG_ADB)
+					logerror("adb_write_datareg(): in command length %d\n", adb_command_length);
 			}
 			break;
 
@@ -1053,9 +1048,8 @@ static READ8_HANDLER( apple2gs_c0xx_r )
 			break;
 	}
 
-#if LOG_C0XX
-	logerror("apple2gs_c0xx_r(): offset=0x%02x result=0x%02x\n", offset, result);
-#endif
+	if (LOG_C0XX)
+		logerror("apple2gs_c0xx_r(): offset=0x%02x result=0x%02x\n", offset, result);
 	return result;
 }
 
@@ -1065,9 +1059,8 @@ static WRITE8_HANDLER( apple2gs_c0xx_w )
 {
 	offset &= 0xFF;
 
-#if LOG_C0XX
-	logerror("apple2gs_c0xx_w(): offset=0x%02x data=0x%02x\n", offset, data);
-#endif
+	if (LOG_C0XX)
+		logerror("apple2gs_c0xx_w(): offset=0x%02x data=0x%02x\n", offset, data);
 
 	switch(offset)
 	{

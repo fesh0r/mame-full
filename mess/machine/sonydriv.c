@@ -253,10 +253,11 @@ int sony_read_status(void)
 
 	action = ((sony_lines & (SONY_CA1 | SONY_CA0)) << 2) | (sony_sel_line << 1) | ((sony_lines & SONY_CA2) >> 2);
 
-	#if LOG_SONY_EXTRA
+	if (LOG_SONY_EXTRA)
+	{
 		logerror("sony_status(): action=%d pc=0x%08x%s\n",
 			action, (int) activecpu_get_pc(), sony_floppy_enable ? "" : " (no drive enabled)");
-	#endif
+	}
 
 	if ((! sony_enable2()) && sony_floppy_enable)
 	{
@@ -344,9 +345,8 @@ int sony_read_status(void)
 			result = 0;
 			break;
 		default:
-			#if LOG_SONY
+			if (LOG_SONY)
 				logerror("sony_status(): unknown action\n");
-			#endif
 			break;
 		}
 	}
@@ -364,10 +364,11 @@ static void sony_doaction(void)
 
 	action = ((sony_lines & (SONY_CA1 | SONY_CA0)) << 2) | ((sony_lines & SONY_CA2) >> 2) | (sony_sel_line << 1);
 
-	#if LOG_SONY
+	if (LOG_SONY)
+	{
 		logerror("sony_doaction(): action=%d pc=0x%08x%s\n",
 			action, (int) activecpu_get_pc(), (sony_floppy_enable) ? "" : " (MOTOR OFF)");
-	#endif
+	}
 
 	if (sony_floppy_enable)
 	{
@@ -411,9 +412,8 @@ static void sony_doaction(void)
 				image_unload(cur_image);
 			break;
 		default:
-			#if LOG_SONY
+			if (LOG_SONY)
 				logerror("sony_doaction(): unknown action %d\n", action);
-			#endif
 			break;
 		}
 	}
@@ -429,12 +429,13 @@ void sony_set_lines(UINT8 lines)
 
 	/* have we just set LSTRB ? */
 	if ((sony_lines & ~old_sony_lines) & SONY_LSTRB)
+	{
 		/* if so, write drive reg */
 		sony_doaction();
+	}
 
-	#if LOG_SONY_EXTRA
+	if (LOG_SONY_EXTRA)
 		logerror("sony_set_lines(): %d\n", lines);
-	#endif
 }
 
 
@@ -457,9 +458,8 @@ void sony_set_enable_lines(int enable_mask)
 		break;
 	}
 
-	#if LOG_SONY_EXTRA
+	if (LOG_SONY_EXTRA)
 		logerror("sony_set_enable_lines(): %d\n", enable_mask);
-	#endif
 }
 
 
@@ -468,9 +468,8 @@ void sony_set_sel_line(int sel)
 {
 	sony_sel_line = sel ? 1 : 0;
 
-	#if LOG_SONY_EXTRA
+	if (LOG_SONY_EXTRA)
 		logerror("sony_set_sel_line(): %s line IWM_SEL\n", sony_sel_line ? "setting" : "clearing");
-	#endif
 }
 
 

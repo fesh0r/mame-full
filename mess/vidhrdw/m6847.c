@@ -1332,9 +1332,8 @@ static void hs_fall(int dummy)
 	the_state.hs = 0;
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
 
-#if LOG_HS
-	logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
-#endif
+	if (LOG_HS)
+		logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
 }
 
 static void hs_rise(int dummy)
@@ -1342,9 +1341,8 @@ static void hs_rise(int dummy)
 	the_state.hs = 1;
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
 
-#if LOG_HS
-	logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
-#endif
+	if (LOG_HS)
+		logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
 }
 
 static void fs_fall(int dummy)
@@ -1352,9 +1350,8 @@ static void fs_fall(int dummy)
 	the_state.fs = 0;
 	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
 
-#if LOG_FS
-	logerror("fs_fall(): fs=0 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-#endif
+	if (LOG_FS)
+		logerror("fs_fall(): fs=0 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 }
 
 static void fs_rise(int dummy)
@@ -1362,9 +1359,8 @@ static void fs_rise(int dummy)
 	the_state.fs = 1;
 	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
 
-#if LOG_FS
-	logerror("fs_rise(): fs=1 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-#endif
+	if (LOG_FS)
+		logerror("fs_rise(): fs=1 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 }
 */
 
@@ -1379,9 +1375,8 @@ static void hs_set(int val)
 	if (the_state.initparams.hs_func)
 		timer_adjust(the_state.hs_timer_actual, the_state.initparams.callback_delay, val, 0);
 
-#if LOG_HS
-	logerror("hs_set(): hs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-#endif
+	if (LOG_HS)
+		logerror("hs_set(): hs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 }
 
 static void fs_set_actual(int val)
@@ -1395,9 +1390,8 @@ static void fs_set(int val)
 	if (the_state.initparams.fs_func)
 		timer_adjust(the_state.fs_timer_actual, the_state.initparams.callback_delay, val, 0);
 
-#if LOG_FS
-	logerror("fs_set(): fs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-#endif
+	if (LOG_FS)
+		logerror("fs_set(): fs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 }
 
 
@@ -1424,9 +1418,8 @@ void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanl
 {
 	int new_fs;
 
-#if LOG_INTERRUPT
-	logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
-#endif
+	if (LOG_INTERRUPT)
+		logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
 
 	/* vsync interrupt */
 	if (rise_scanline > fall_scanline)
@@ -1538,12 +1531,12 @@ int m6847_is_t1(int version)
 
 void m6847_set_video_offset(int offset)
 {
-#if LOG_M6847
-	logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
-#endif
+	if (LOG_M6847)
+		logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
 
 	offset %= the_state.initparams.ramsize;
-	if (offset != the_state.videooffset) {
+	if (offset != the_state.videooffset)
+	{
 		the_state.videooffset = offset;
 		videomap_invalidate_frameinfo();
 	}

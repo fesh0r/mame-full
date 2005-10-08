@@ -147,9 +147,8 @@ static void pc_hdc_result(int n)
 	pic8259_set_irq_line(0, irq, 1);
 	pic8259_set_irq_line(0, irq, 0);
 
-#if LOG_HDC_STATUS
-	logerror("pc_hdc_result(): $%02x to $%04x\n", csb[n], data_cnt);
-#endif
+	if (LOG_HDC_STATUS)
+		logerror("pc_hdc_result(): $%02x to $%04x\n", csb[n], data_cnt);
 
 	buffer[data_cnt++] = csb[n];
 
@@ -162,16 +161,16 @@ static void pc_hdc_result(int n)
 			buffer[data_cnt++] = ((cylinder[idx] >> 2) & 0xc0) | sector[idx];
 			buffer[data_cnt++] = cylinder[idx] & 0xff;
 
-#if LOG_HDC_STATUS
-			logerror("pc_hdc_result(): result [%02x %02x %02x %02x]\n",
-				buffer[data_cnt-4], buffer[data_cnt-3], buffer[data_cnt-2], buffer[data_cnt-1]);
-#endif
+			if (LOG_HDC_STATUS)
+			{
+				logerror("pc_hdc_result(): result [%02x %02x %02x %02x]\n",
+					buffer[data_cnt-4], buffer[data_cnt-3], buffer[data_cnt-2], buffer[data_cnt-1]);
+			}
 		}
 		else
 		{
-#if LOG_HDC_STATUS
-			logerror("pc_hdc_result(): result [%02x]\n", buffer[data_cnt-1]);
-#endif
+			if (LOG_HDC_STATUS)
+				logerror("pc_hdc_result(): result [%02x]\n", buffer[data_cnt-1]);
         }
     }
 	status[n] |= STA_INTERRUPT | STA_INPUT | STA_REQUEST | STA_COMMAND | STA_READY;
@@ -401,9 +400,8 @@ static void pc_hdc_command(int n)
 	ptr = buffer;
 	cmd = buffer[0];
 
-#if LOG_HDC_STATUS
-	logerror("pc_hdc_command(): Executing command; pc=0x%08x cmd=0x%02x drv=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), cmd, drv);
-#endif
+	if (LOG_HDC_STATUS)
+		logerror("pc_hdc_command(): Executing command; pc=0x%08x cmd=0x%02x drv=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), cmd, drv);
 
 	switch (cmd)
 	{
@@ -434,10 +432,11 @@ static void pc_hdc_command(int n)
 			get_drive(n);
 			get_chsn(n);
 
-#if LOG_HDC_STATUS
-			logerror("hdc read pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
-#endif
+			if (LOG_HDC_STATUS)
+			{
+				logerror("hdc read pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
+					(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
+			}
 
 			if (test_ready(n))
 				execute_read();
@@ -448,10 +447,11 @@ static void pc_hdc_command(int n)
 			get_drive(n);
 			get_chsn(n);
 
-#if LOG_HDC_STATUS
-			logerror("hdc write pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
-#endif
+			if (LOG_HDC_STATUS)
+			{
+				logerror("hdc write pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
+					(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
+			}
 
 			if (test_ready(n))
 				execute_write();
@@ -506,9 +506,8 @@ static void pc_hdc_data_w(int n, int data)
 {
 	if( data_cnt == 0 )
 	{
-#if LOG_HDC_DATA
-		logerror("hdc_data_w BOARD #%d $%02x: ", n, data));
-#endif
+		if (LOG_HDC_DATA)
+			logerror("hdc_data_w BOARD #%d $%02x: ", n, data);
 
         ptr = buffer;
 		data_cnt = 6;	/* expect 6 bytes including this one */
@@ -553,17 +552,15 @@ static void pc_hdc_data_w(int n, int data)
 
 	if (data_cnt)
 	{
-#if LOG_HDC_DATA
-		logerror("hdc_data_w BOARD #%d $%02x\n", n, data);
-#endif
+		if (LOG_HDC_DATA)
+			logerror("hdc_data_w BOARD #%d $%02x\n", n, data);
 
 		*ptr++ = data;
 		status[n] |= STA_READY;
-		if( --data_cnt == 0 )
+		if (--data_cnt == 0)
 		{
-#if LOG_HDC_STATUS
-			logerror("pc_hdc_data_w(): Launching command; pc=0x%08x\n", (unsigned) cpunum_get_reg(0, REG_PC));
-#endif
+			if (LOG_HDC_STATUS)
+				logerror("pc_hdc_data_w(): Launching command; pc=0x%08x\n", (unsigned) cpunum_get_reg(0, REG_PC));
 
             status[n] &= ~STA_COMMAND;
 			status[n] &= ~STA_REQUEST;
@@ -602,16 +599,15 @@ static void pc_hdc_select_w(int n, int data)
 
 static void pc_hdc_control_w(int n, int data)
 {
-#if LOG_HDC_STATUS
-	logerror("pc_hdc_control_w(): Control write pc=0x%08x data=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), data);
-#endif
+	if (LOG_HDC_STATUS)
+		logerror("pc_hdc_control_w(): Control write pc=0x%08x data=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), data);
 
 	hdc_control = data;
 }
 
 
 
-static int  pc_hdc_data_r(int n)
+static int pc_hdc_data_r(int n)
 {
 	int data = 0xff;
 	if( data_cnt )
@@ -667,9 +663,8 @@ static int pc_HDC_r(int chip, int offs)
 		case 3: break;
 	}
 
-#if LOG_HDC_CALL
-	logerror("pc_HDC_r(): chip=%d offs=%d result=0x%02x\n", chip, offs, data);
-#endif
+	if (LOG_HDC_CALL)
+		logerror("pc_HDC_r(): chip=%d offs=%d result=0x%02x\n", chip, offs, data);
 
 	return data;
 }
@@ -678,9 +673,8 @@ static int pc_HDC_r(int chip, int offs)
 
 static void pc_HDC_w(int chip, int offs, int data)
 {
-#if LOG_HDC_CALL
-	logerror("pc_HDC_w(): chip=%d offs=%d data=0x%02x\n", chip, offs, data);
-#endif
+	if (LOG_HDC_CALL)
+		logerror("pc_HDC_w(): chip=%d offs=%d data=0x%02x\n", chip, offs, data);
 
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file(chip<<1) )
 		return;

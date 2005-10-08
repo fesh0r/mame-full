@@ -342,10 +342,11 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 	const char *str;
 	WORD command;
 
-#if LOG_WINMSGS
-	logerror("dialog_proc(): dlgwnd=0x%08x msg=0x%08x wparam=0x%08x lparam=0x%08x\n",
-		(unsigned int) dlgwnd, (unsigned int) msg, (unsigned int) wparam, (unsigned int) lparam);
-#endif
+	if (LOG_WINMSGS)
+	{
+		logerror("dialog_proc(): dlgwnd=0x%08x msg=0x%08x wparam=0x%08x lparam=0x%08x\n",
+			(unsigned int) dlgwnd, (unsigned int) msg, (unsigned int) wparam, (unsigned int) lparam);
+	}
 
 	switch(msg) {
 	case WM_INITDIALOG:
