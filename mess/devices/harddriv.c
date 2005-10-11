@@ -17,7 +17,8 @@
 
 #include "harddriv.h"
 
-#define MAX_HARDDISKS	(8)
+#define MAX_HARDDISKS	8
+#define USE_CHD_OPEN	0
 
 static const char *error_strings[] =
 {
@@ -176,6 +177,10 @@ static chd_interface mess_hard_disk_interface =
 static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
 	mess_image *img = decode_image_ref(filename);
+
+	/* used when experimenting with CHDs */
+	if (USE_CHD_OPEN && !img)
+		return (chd_interface_file *) mame_fopen(NULL, filename, FILETYPE_IMAGE, 0);
 
 	/* invalid "file name"? */
 	assert(img);

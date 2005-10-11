@@ -31,7 +31,7 @@ typedef enum
 struct pic8259
 {
 	mame_timer *timer;
-	void (*set_int_line)(int interrupt);
+	void (*set_int_line)(int which, int interrupt);
 
 	pic8259_state_t state;
 
@@ -69,7 +69,7 @@ static void pic8259_timerproc(int which);
 
 
 /* initializer */
-int pic8259_init(int count, void (*set_int_line)(int interrupt))
+int pic8259_init(int count, void (*set_int_line)(int which, int interrupt))
 {
 	int i;
 
@@ -98,7 +98,6 @@ static void pic8259_timerproc(int which)
 	int irq;
 	UINT8 mask;
 
-
 	/* check the various IRQs */
 	for (irq = 0; irq < IRQ_COUNT; irq++) 
 	{
@@ -118,12 +117,12 @@ static void pic8259_timerproc(int which)
 			if (LOG_GENERAL)
 				logerror("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq);
 			if (p->set_int_line)
-				p->set_int_line(1);
+				p->set_int_line(which, 1);
 			return;
 		}
 	}
 	if (p->set_int_line)
-		p->set_int_line(0);
+		p->set_int_line(which, 0);
 }
 
 
@@ -162,6 +161,7 @@ void pic8259_set_irq_line(int which, int irq, int state)
 				logerror("pic8259_set_irq_line(): PIC #%d cleared IRQ line #%d\n", which, irq);
 
 			pic[which].irq_lines &= ~(1 << irq);
+			pic8259_set_timer(which);
 		}
 	}
 }

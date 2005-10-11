@@ -1576,9 +1576,20 @@ void compis_cpu_init(void)
 /* Name: compis                                                            */
 /* Desc: Driver - Init                                                     */
 /*-------------------------------------------------------------------------*/
-static void compis_pic_set_int_line(int interrupt)
+static void compis_pic_set_int_line(int which, int interrupt)
 {
-	cpunum_set_input_line(0, 0, interrupt ? HOLD_LINE : CLEAR_LINE);
+	switch(which)
+	{
+		case 0:
+			/* Master */
+			cpunum_set_input_line(0, 0, interrupt ? HOLD_LINE : CLEAR_LINE);
+			break;
+
+		case 1:
+			/* Slave */
+			pic8259_set_irq_line(0, 2, interrupt);
+			break;
+	}
 }
 
 static int compis_irq_callback(int irqline)
