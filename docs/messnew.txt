@@ -26,7 +26,10 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- Merged COMPX/CONSX into COMP/CONS as per the new convetion in MAME.  [Nate
+- The core is based on MAME 0.101u1.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Merged COMPX/CONSX into COMP/CONS as per the new convention in MAME.  [Nate
   Woods]
 
 
