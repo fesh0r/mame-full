@@ -169,5 +169,5 @@ SYSTEM_CONFIG_END
 
 
 /*     YEAR   NAME      PARENT  COMPAT  MACHINE   INPUT     INIT    CONFIG  COMPANY             FULLNAME */
-COMPX( 1995,  bebox,    0,      0,      bebox,    bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-66", GAME_NOT_WORKING )
-COMPX( 1996,  bebox2,   bebox,  0,      bebox2,   bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-133", GAME_NOT_WORKING )
+COMP( 1995,  bebox,    0,      0,      bebox,    bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-66", GAME_NOT_WORKING )
+COMP( 1996,  bebox2,   bebox,  0,      bebox2,   bebox,    bebox,  bebox,  "Be Incorporated",  "BeBox Dual603-133", GAME_NOT_WORKING )

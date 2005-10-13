@@ -543,6 +543,6 @@ DRIVER_INIT(gen_jpn)
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */
-CONS( 1988, gen_usa,  0,		0,		gen_ntsc,  genesis,	gen_usa,	genesis,	"Sega",   "Genesis (USA, NTSC)" )
-CONS( 1988, gen_eur,  gen_usa,	0,		gen_pal,   genesis,	gen_eur,	genesis,	"Sega",   "Megadrive (Europe, PAL)" )
-CONS( 1988, gen_jpn,  gen_usa,	0,		gen_ntsc,  genesis,	gen_jpn,	genesis,	"Sega",   "Megadrive (Japan, NTSC)" )
+CONS( 1988, gen_usa,  0,		0,		gen_ntsc,  genesis,	gen_usa,	genesis,	"Sega",   "Genesis (USA, NTSC)" , 0)
+CONS( 1988, gen_eur,  gen_usa,	0,		gen_pal,   genesis,	gen_eur,	genesis,	"Sega",   "Megadrive (Europe, PAL)" , 0)
+CONS( 1988, gen_jpn,  gen_usa,	0,		gen_ntsc,  genesis,	gen_jpn,	genesis,	"Sega",   "Megadrive (Japan, NTSC)" , 0)

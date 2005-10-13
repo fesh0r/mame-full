@@ -451,5 +451,5 @@ SYSTEM_CONFIG_START(ti99_2)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT	INIT		CONFIG		COMPANY					FULLNAME */
-COMP(	1983,	ti99_224,	0,			0,		ti99_2,		ti99_2,	ti99_2_24,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (24kb ROMs)" )
-COMP(	1983,	ti99_232,	ti99_224,	0,		ti99_2,		ti99_2,	ti99_2_32,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (32kb ROMs)" )
+COMP(	1983,	ti99_224,	0,			0,		ti99_2,		ti99_2,	ti99_2_24,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (24kb ROMs)" , 0)
+COMP(	1983,	ti99_232,	ti99_224,	0,		ti99_2,		ti99_2,	ti99_2_32,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (32kb ROMs)" , 0)

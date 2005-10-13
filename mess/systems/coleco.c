@@ -276,6 +276,6 @@ SYSTEM_CONFIG_START(coleco)
 SYSTEM_CONFIG_END
 
 //    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME
-CONS( 1982, coleco,   0,		0,	coleco,   coleco,   0,		coleco,	"Coleco", "ColecoVision" )
-CONS( 1982, colecoa,  coleco,	0,		coleco,   coleco,   0,		coleco,	"Coleco", "ColecoVision (Thick Characters)" )
-CONS( 1983, colecob,  coleco,	0,		coleco,   coleco,   0,		coleco,	"Spectravideo", "SVI-603 Coleco Game Adapter" )
+CONS( 1982, coleco,   0,		0,	coleco,   coleco,   0,		coleco,	"Coleco", "ColecoVision" , 0)
+CONS( 1982, colecoa,  coleco,	0,		coleco,   coleco,   0,		coleco,	"Coleco", "ColecoVision (Thick Characters)" , 0)
+CONS( 1983, colecob,  coleco,	0,		coleco,   coleco,   0,		coleco,	"Spectravideo", "SVI-603 Coleco Game Adapter" , 0)

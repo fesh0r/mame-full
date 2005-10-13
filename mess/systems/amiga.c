@@ -241,5 +241,5 @@ SYSTEM_CONFIG_START(amiga)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
-COMPX( 1984, amiga,    0,		0,		ntsc,     amiga,    amiga,	amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
-COMPX( 1990, cdtv,     0,       0,		ntsc,     amiga,    amiga,	amiga,	"Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )
+COMP( 1984, amiga,    0,		0,		ntsc,     amiga,    amiga,	amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
+COMP( 1990, cdtv,     0,       0,		ntsc,     amiga,    amiga,	amiga,	"Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )

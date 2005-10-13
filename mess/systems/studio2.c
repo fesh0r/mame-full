@@ -334,7 +334,7 @@ static DRIVER_INIT( vip )
 /*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG      COMPANY   FULLNAME */
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac elf2 16 key keyblock
-CONSX(1977,	vip,		0,		0,		vip,		vip,		vip,		studio2,	"RCA",		"COSMAC VIP", GAME_NOT_WORKING )
-CONSX(1976,	studio2,	0,		0,		studio2,	studio2,	studio2,	studio2,	"RCA",		"Studio II", GAME_NOT_WORKING )
+CONS(1977,	vip,		0,		0,		vip,		vip,		vip,		studio2,	"RCA",		"COSMAC VIP", GAME_NOT_WORKING )
+CONS(1976,	studio2,	0,		0,		studio2,	studio2,	studio2,	studio2,	"RCA",		"Studio II", GAME_NOT_WORKING )
 // hanimex mpt-02
 // colour studio 2 (m1200) with little color capability

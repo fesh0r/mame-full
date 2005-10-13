@@ -138,4 +138,4 @@ SYSTEM_CONFIG_START(sym1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
-COMPX( 1978, sym1,	  0, 		0,		sym1,	  sym1, 	sym1,	sym1,	"Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)
+COMP( 1978, sym1,	  0, 		0,		sym1,	  sym1, 	sym1,	sym1,	"Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)

@@ -922,20 +922,20 @@ missing:
 
 /*     YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY   FULLNAME */
 /* PU-7/PU-8 */
-CONSX( 1994, psx,    0,      0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxe20, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002 E v2.0 05/10/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxa22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxe22, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1994, psx,    0,      0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1995, psxe20, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002 E v2.0 05/10/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1995, psxa22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1995, psxe22, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-18 */
-CONSX( 1995, psxj22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5000 J v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1996, psxj30, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5500 J v3.0 09/09/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxe30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph5502/scph5552 E v3.0 01/06/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1995, psxj22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5000 J v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1996, psxj30, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5500 J v3.0 09/09/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1997, psxe30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph5502/scph5552 E v3.0 01/06/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-20 */
-CONSX( 1996, psxa30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7003 A v3.0 11/18/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxj40, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7000 J v4.0 08/18/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxa41, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7001 A v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1996, psxa30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7003 A v3.0 11/18/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1997, psxj40, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7000 J v4.0 08/18/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1997, psxa41, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7001 A v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-22 */
-CONSX( 1997, psxe41, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7502 E v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 1997, psxe41, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7502 E v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-23 */
 /* PM-41 */
-CONSX( 2000, psxa45, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PS one (scph101 A v4.5 05/25/00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONS( 2000, psxa45, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PS one (scph101 A v4.5 05/25/00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

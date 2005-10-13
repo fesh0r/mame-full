@@ -404,8 +404,8 @@ SYSTEM_CONFIG_START(mz700)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */
-COMP( 1982, mz700,	  0,		0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700" )
-COMP( 1982, mz700j,   mz700,	0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700 (Japan)" )
-COMP( 1982, mz800,	  mz700,	0,		mz800,	  mz700,	mz800,	mz700,	"Sharp",     "MZ-800" )
+COMP( 1982, mz700,	  0,		0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700" , 0)
+COMP( 1982, mz700j,   mz700,	0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700 (Japan)" , 0)
+COMP( 1982, mz800,	  mz700,	0,		mz800,	  mz700,	mz800,	mz700,	"Sharp",     "MZ-800" , 0)
 
 

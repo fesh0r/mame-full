@@ -322,4 +322,4 @@ SYSTEM_CONFIG_END
 
 
 /*	  YEAR  NAME	  PARENT	COMPAT	MACHINE   INPUT	   INIT	 CONFIG   COMPANY           FULLNAME */
-COMP( 1982, concept,  0,		0,		concept,  concept, 0,    concept, "Corvus Systems", "Concept" )
+COMP( 1982, concept,  0,		0,		concept,  concept, 0,    concept, "Corvus Systems", "Concept" , 0)

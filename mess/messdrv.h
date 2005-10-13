@@ -99,33 +99,11 @@ struct SystemConfigurationParamBlock
 	int inputx_charqueue_empty_##name(void)										\
 
 /******************************************************************************
- * MESS' version of the GAME() and GAMEX() macros of MAME
- * CONS and CONSX are for consoles
- * COMP and COMPX are for computers
+ * MESS' version of the GAME() macros of MAME
+ * CONS is for consoles
+ * COMP is for computers
  ******************************************************************************/
-#define CONS(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
-extern const game_driver driver_##PARENT; \
-extern const game_driver driver_##COMPAT;   \
-extern const game_driver driver_##NAME;   \
-const game_driver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	system_bios_0,							\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	construct_sysconfig_##CONFIG,			\
-	&driver_##COMPAT,						\
-	ROT0									\
-};
-
-#define CONSX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
+#define CONS(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
 extern const game_driver driver_##PARENT;   \
 extern const game_driver driver_##COMPAT;   \
 extern const game_driver driver_##NAME;   \
@@ -147,29 +125,7 @@ const game_driver driver_##NAME = 	\
 	ROT0|(FLAGS)							\
 };
 
-#define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
-extern const game_driver driver_##PARENT;   \
-extern const game_driver driver_##COMPAT;   \
-extern const game_driver driver_##NAME;   \
-const game_driver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	system_bios_0,							\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	construct_sysconfig_##CONFIG,			\
-	&driver_##COMPAT,						\
-	ROT0|GAME_COMPUTER 						\
-};
-
-#define COMPX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
+#define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
 extern const game_driver driver_##PARENT;   \
 extern const game_driver driver_##COMPAT;   \
 extern const game_driver driver_##NAME;   \

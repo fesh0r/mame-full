@@ -586,5 +586,5 @@ SYSTEM_CONFIG_START(exelv)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT		COMPAT	MACHINE		INPUT	INIT	CONFIG		COMPANY			FULLNAME */
-/*COMP(	1984,	exl100,	0,			0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exl 100" )*/
-COMP(	1986,	exeltel,0/*exl100*/,0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exeltel" )
+/*COMP(	1984,	exl100,	0,			0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exl 100" , 0)*/
+COMP(	1986,	exeltel,0/*exl100*/,0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exeltel" , 0)

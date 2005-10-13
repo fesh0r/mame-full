@@ -506,6 +506,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY      FULLNAME */
-CONSX( 1979, intv,		0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision", GAME_NOT_WORKING )
-CONSX( 1981, intvsrs,	0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision (Sears)", GAME_NOT_WORKING )
-COMPX( 1981, intvkbd,	0,		0,		intvkbd,  intvkbd, 	intvkbd,	intvkbd,	"Mattel",    "Intellivision Keyboard Component (Unreleased)", GAME_NOT_WORKING)
+CONS( 1979, intv,		0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision", GAME_NOT_WORKING )
+CONS( 1981, intvsrs,	0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision (Sears)", GAME_NOT_WORKING )
+COMP( 1981, intvkbd,	0,		0,		intvkbd,  intvkbd, 	intvkbd,	intvkbd,	"Mattel",    "Intellivision Keyboard Component (Unreleased)", GAME_NOT_WORKING)

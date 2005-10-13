@@ -340,4 +340,4 @@ SYSTEM_CONFIG_START(ti990_4)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
-COMP( 1976,	ti990_4,	0,		0,		ti990_4,	ti990_4,	ti990_4,	ti990_4,	"Texas Instruments",	"TI Model 990/4 Microcomputer System" )
+COMP( 1976,	ti990_4,	0,		0,		ti990_4,	ti990_4,	ti990_4,	ti990_4,	"Texas Instruments",	"TI Model 990/4 Microcomputer System" , 0)

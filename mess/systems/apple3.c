@@ -165,5 +165,5 @@ SYSTEM_CONFIG_START(apple3)
 SYSTEM_CONFIG_END
 
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT	INIT    CONFIG	COMPANY				FULLNAME */
-COMPX( 1980,	apple3,		0,		0,		apple3,    apple3,	apple3,	apple3,	"Apple Computer",	"Apple ///", GAME_NOT_WORKING )
+COMP( 1980,	apple3,		0,		0,		apple3,    apple3,	apple3,	apple3,	"Apple Computer",	"Apple ///", GAME_NOT_WORKING )
 

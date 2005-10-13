@@ -282,4 +282,4 @@ SYSTEM_CONFIG_START( microtan )
 SYSTEM_CONFIG_END
 
 //    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME
-COMP( 1979, microtan, 0,		0,		microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" )
+COMP( 1979, microtan, 0,		0,		microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" , 0)

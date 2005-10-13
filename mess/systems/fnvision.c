@@ -365,4 +365,4 @@ SYSTEM_CONFIG_START( fnvision )
 SYSTEM_CONFIG_END
 
 //    YEAR	NAME	  PARENT COMPAT MACHINE INPUT INIT COMPANY FULLNAME
-CONSX( 1981, fnvision, 0, 0, fnvision, fnvision, 0, fnvision, "Video Technology", "FunVision", GAME_NOT_WORKING )
+CONS( 1981, fnvision, 0, 0, fnvision, fnvision, 0, fnvision, "Video Technology", "FunVision", GAME_NOT_WORKING )

@@ -228,4 +228,4 @@ SYSTEM_CONFIG_START(kim1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG  COMPANY   FULLNAME */
-COMP( 1975, kim1,	  0, 		0,		kim1,	  kim1, 	kim1,	  kim1,	  "MOS Technologies",  "KIM-1" )
+COMP( 1975, kim1,	  0, 		0,		kim1,	  kim1, 	kim1,	  kim1,	  "MOS Technologies",  "KIM-1" , 0)

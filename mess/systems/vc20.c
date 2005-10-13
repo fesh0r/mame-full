@@ -850,11 +850,11 @@ SYSTEM_CONFIG_END
 #endif
 
 /*		YEAR	NAME		PARENT	COMPAT	MACHINE INPUT		INIT	CONFIG     COMPANY 							FULLNAME */
-COMPX ( 1981,	vic20,		0,		0,		vic20,	vic20,		vic20,	vc20,      "Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic20i, 	vic20,	0,		vic20i, vic20i, 	vic20i, vc20,      "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic1001,	vic20,	0,		vic20,	vic1001,	vic20,	vc20,      "Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vc20,		vic20,	0,		vc20,	vc20,		vc20,	vc20,      "Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic20swe,	vic20,	0,		vc20,	vic20swe,	vc20,	vc20,      "Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vic20,		0,		0,		vic20,	vic20,		vic20,	vc20,      "Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vic20i, 	vic20,	0,		vic20i, vic20i, 	vic20i, vc20,      "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vic1001,	vic20,	0,		vic20,	vic1001,	vic20,	vc20,      "Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vc20,		vic20,	0,		vc20,	vc20,		vc20,	vc20,      "Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vic20swe,	vic20,	0,		vc20,	vic20swe,	vc20,	vc20,      "Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
-COMPX ( 1981,	vic20v, 	vic20,	0,		vic20v, vic20,		vic20,	vc20v,     "Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vc20v,		vic20,	0,		vc20v,	vic20,		vc20,	vc20v,     "Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vic20v, 	vic20,	0,		vic20v, vic20,		vic20,	vc20v,     "Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
+COMP ( 1981,	vc20v,		vic20,	0,		vc20v,	vic20,		vc20,	vc20v,     "Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)

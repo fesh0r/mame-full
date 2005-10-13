@@ -444,13 +444,13 @@ ROM_START( megaduck )
 ROM_END
 
 /*    YEAR  NAME      PARENT   COMPAT	MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
-CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy_gb, "Nintendo", "GameBoy"  )
-CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
-CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
-CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )
+CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy_gb, "Nintendo", "GameBoy"  , 0)
+CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" , 0)
+CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" , 0)
+CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" , 0)
 
 /* Sound is not 100% yet, it generates some sounds which could be ok. Since we're lacking a real
    system there's no way to verify. Same goes for the colors of the LCD. We are no using the default
    GameBoy green colors */
-CONS( 1993, megaduck, 0,       0,       megaduck, gameboy, 0,    megaduck,"Creatronic/Videojet/Timlex/Cougar",  "MegaDuck/Cougar Boy" )
+CONS( 1993, megaduck, 0,       0,       megaduck, gameboy, 0,    megaduck,"Creatronic/Videojet/Timlex/Cougar",  "MegaDuck/Cougar Boy" , 0)
 

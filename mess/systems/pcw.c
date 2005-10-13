@@ -1058,9 +1058,9 @@ SYSTEM_CONFIG_END
 /* these are all variants on the pcw design */
 /* major difference is memory configuration and drive type */
 /*     YEAR	NAME	    PARENT		COMPAT	MACHINE   INPUT INIT	CONFIG		COMPANY 	   FULLNAME */
-COMPX( 1985, pcw8256,   0,			0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
-COMPX( 1985, pcw8512,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9256,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9512,   pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
-COMPX( 1993, pcw10,	    pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
+COMP( 1985, pcw8256,   0,			0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
+COMP( 1985, pcw8512,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
+COMP( 1987, pcw9256,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
+COMP( 1987, pcw9512,   pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
+COMP( 1993, pcw10,	    pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
 

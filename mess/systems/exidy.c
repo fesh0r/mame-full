@@ -833,4 +833,4 @@ SYSTEM_CONFIG_START(exidy)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */
-COMPX(1979,	exidy,	0,		0,		exidy,	exidy,	0,		exidy,	"Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)
+COMP(1979,	exidy,	0,		0,		exidy,	exidy,	0,		exidy,	"Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)

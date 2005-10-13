@@ -162,5 +162,5 @@ SYSTEM_CONFIG_START(mc10)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */
-COMP( 1983, mc10,     0,		0,		mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" )
+COMP( 1983, mc10,     0,		0,		mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" , 0)
 

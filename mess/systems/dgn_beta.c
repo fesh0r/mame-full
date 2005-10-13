@@ -222,4 +222,4 @@ SYSTEM_CONFIG_START(dgnbeta)
 SYSTEM_CONFIG_END
 
 /*     YEAR	NAME		PARENT	COMPAT		MACHINE    	INPUT		INIT    	CONFIG		COMPANY			FULLNAME */
-COMP(  1984,	dgnbeta,	0,	0,		dgnbeta,	dgnbeta,	dgnbeta,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" )
+COMP(  1984,	dgnbeta,	0,	0,		dgnbeta,	dgnbeta,	dgnbeta,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" , 0)

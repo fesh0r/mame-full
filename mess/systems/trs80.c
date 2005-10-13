@@ -479,10 +479,10 @@ SYSTEM_CONFIG_END
 
 
 /*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP ( 1977, trs80,    0,		 0,		level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
-COMP ( 1978, trs80l2,  trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
-COMP ( 1978, trs80l2a, trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
-COMP ( 1980, sys80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"EACA Computers Ltd.","System-80" )
-COMPX( 1981, lnw80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
-COMPX( 1980, trs80m3,  trs80,	 0,		model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+COMP ( 1977, trs80,    0,		 0,		level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" , 0)
+COMP ( 1978, trs80l2,  trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" , 0)
+COMP ( 1978, trs80l2a, trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" , 0)
+COMP ( 1980, sys80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"EACA Computers Ltd.","System-80" , 0)
+COMP( 1981, lnw80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
+COMP( 1980, trs80m3,  trs80,	 0,		model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 

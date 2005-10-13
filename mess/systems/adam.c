@@ -713,5 +713,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME    PARENT	COMPAT	MACHINE INPUT   INIT	CONFIG	COMPANY FULLNAME */
-COMP( 1982, adam,   0,		coleco,	adam,   adam,   0,		adam,	"Adam", "ColecoAdam" )
+COMP( 1982, adam,   0,		coleco,	adam,   adam,   0,		adam,	"Adam", "ColecoAdam" , 0)
 

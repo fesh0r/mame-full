@@ -608,5 +608,5 @@ SYSTEM_CONFIG_START(geneve)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
-COMP( 1987?,geneve,   0,		0,		geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" )
-COMP( 199??,genmod,   geneve,	0,		geneve_60hz,  geneve,  genmod,	geneve,	"Myarc",	"Geneve 9640 (with Genmod modification)" )
+COMP( 1987?,geneve,   0,		0,		geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" , 0)
+COMP( 199??,genmod,   geneve,	0,		geneve_60hz,  geneve,  genmod,	geneve,	"Myarc",	"Geneve 9640 (with Genmod modification)" , 0)

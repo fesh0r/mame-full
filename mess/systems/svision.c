@@ -400,6 +400,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY		FULLNAME */
-CONSX(1992,	svision,	0,		0,		svision,	svision,	svision,	svision,	"Watara",	"Super Vision", GAME_IMPERFECT_SOUND)
+CONS(1992,	svision,	0,		0,		svision,	svision,	svision,	svision,	"Watara",	"Super Vision", GAME_IMPERFECT_SOUND)
 // marketed under a ton of firms and names
 

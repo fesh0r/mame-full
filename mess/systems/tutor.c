@@ -635,4 +635,4 @@ SYSTEM_CONFIG_START(tutor)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT		COMPAT	MACHINE		INPUT	INIT	CONFIG		COMPANY		FULLNAME */
-COMP(	1983?,	tutor,	0,			0,		tutor,		tutor,	NULL,	tutor,		"Tomy",		"Tomy Tutor" )
+COMP(	1983?,	tutor,	0,			0,		tutor,		tutor,	NULL,	tutor,		"Tomy",		"Tomy Tutor" , 0)

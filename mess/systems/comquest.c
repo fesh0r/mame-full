@@ -331,4 +331,4 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG		MONITOR	COMPANY   FULLNAME */
-CONS( 19??, comquest, 0, 		0,		comquest, comquest, 0,		comquest,	"Data Concepts",  "Comquest Plus German")
+CONS( 19??, comquest, 0, 		0,		comquest, comquest, 0,		comquest,	"Data Concepts",  "Comquest Plus German", 0)

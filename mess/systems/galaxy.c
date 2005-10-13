@@ -171,4 +171,4 @@ SYSTEM_CONFIG_START(galaxy)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-COMP(1983,	galaxy,	0,	0,	galaxy,	galaxy,	galaxy,	galaxy,	"",	"Galaksija")
+COMP(1983,	galaxy,	0,	0,	galaxy,	galaxy,	galaxy,	galaxy,	"",	"Galaksija", 0)

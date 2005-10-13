@@ -995,5 +995,5 @@ SYSTEM_CONFIG_START(tm990_189)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY					FULLNAME */
-COMP( 1978,	990189,	  0,		0,		tm990_189,	tm990_189,	0,		tm990_189,	"Texas Instruments",	"TM 990/189 University Board microcomputer with University Basic" )
-COMP( 1980,	990189v,  990189,	0,		tm990_189_v,tm990_189,	0,		tm990_189,	"Texas Instruments",	"TM 990/189 University Board microcomputer with University Basic and Video Board Interface" )
+COMP( 1978,	990189,	  0,		0,		tm990_189,	tm990_189,	0,		tm990_189,	"Texas Instruments",	"TM 990/189 University Board microcomputer with University Basic" , 0)
+COMP( 1980,	990189v,  990189,	0,		tm990_189_v,tm990_189,	0,		tm990_189,	"Texas Instruments",	"TM 990/189 University Board microcomputer with University Basic and Video Board Interface" , 0)

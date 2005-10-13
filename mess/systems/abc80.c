@@ -1346,8 +1346,8 @@ SYSTEM_CONFIG_END
 /* Drivers */
 
 /*    YEAR	NAME  PARENT  COMPAT MACHINE  INPUT	INIT CONFIG	 COMPANY             FULLNAME */
-COMPX( 1978, abc80,   0,       0, abc80,   abc80,  0, abc80,  "Luxor Datorer AB", "ABC 80", GAME_NOT_WORKING )
-COMPX( 1981, abc800c, 0,       0, abc800c, abc800, 0, abc800, "Luxor Datorer AB", "ABC 800C/HR", GAME_NOT_WORKING )
-COMPX( 1981, abc800m, abc800c, 0, abc800m, abc800, 0, abc800, "Luxor Datorer AB", "ABC 800M/HR", GAME_NOT_WORKING )
-COMPX( 1983, abc802,  0,       0, abc802,  abc802, 0, abc802, "Luxor Datorer AB", "ABC 802", GAME_NOT_WORKING )
-COMPX( 1983, abc806,  0,       0, abc806,  abc806, 0, abc806, "Luxor Datorer AB", "ABC 806", GAME_NOT_WORKING )
+COMP( 1978, abc80,   0,       0, abc80,   abc80,  0, abc80,  "Luxor Datorer AB", "ABC 80", GAME_NOT_WORKING )
+COMP( 1981, abc800c, 0,       0, abc800c, abc800, 0, abc800, "Luxor Datorer AB", "ABC 800C/HR", GAME_NOT_WORKING )
+COMP( 1981, abc800m, abc800c, 0, abc800m, abc800, 0, abc800, "Luxor Datorer AB", "ABC 800M/HR", GAME_NOT_WORKING )
+COMP( 1983, abc802,  0,       0, abc802,  abc802, 0, abc802, "Luxor Datorer AB", "ABC 802", GAME_NOT_WORKING )
+COMP( 1983, abc806,  0,       0, abc806,  abc806, 0, abc806, "Luxor Datorer AB", "ABC 806", GAME_NOT_WORKING )

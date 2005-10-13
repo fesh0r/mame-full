@@ -329,11 +329,11 @@ SYSTEM_CONFIG_END
 
 
 /*	   YEAR		NAME	  PARENT	COMPAT	MACHINE   INPUT		INIT			CONFIG		COMPANY				FULLNAME */
-/*COMPX( 1984,	mac128k,  0, 		0,		mac128k,  macplus,	mac128k512k,	macplus,	"Apple Computer",	"Macintosh 128k",  0 )
-COMPX( 1984,	mac512k,  mac128k,	0,		mac128k,  macplus,  mac128k512k,	macplus,	"Apple Computer",	"Macintosh 512k",  0 )*/
-COMPX( 1986,	mac512ke, macplus,  0,		mac512ke, macplus,  mac512ke,		mac512k,	"Apple Computer",	"Macintosh 512ke", 0 )
-COMPX( 1986,	macplus,  0,		0,		macplus,  macplus,  macplus,		macplus,	"Apple Computer",	"Macintosh Plus",  0 )
-COMPX( 1987,	macse,    0,		0,		macplus,  macplus,  macse,		    macse,		"Apple Computer",	"Macintosh SE",  GAME_NOT_WORKING )
+/*COMP( 1984,	mac128k,  0, 		0,		mac128k,  macplus,	mac128k512k,	macplus,	"Apple Computer",	"Macintosh 128k",  0 )
+COMP( 1984,	mac512k,  mac128k,	0,		mac128k,  macplus,  mac128k512k,	macplus,	"Apple Computer",	"Macintosh 512k",  0 )*/
+COMP( 1986,	mac512ke, macplus,  0,		mac512ke, macplus,  mac512ke,		mac512k,	"Apple Computer",	"Macintosh 512ke", 0 )
+COMP( 1986,	macplus,  0,		0,		macplus,  macplus,  macplus,		macplus,	"Apple Computer",	"Macintosh Plus",  0 )
+COMP( 1987,	macse,    0,		0,		macplus,  macplus,  macse,		    macse,		"Apple Computer",	"Macintosh SE",  GAME_NOT_WORKING )
 
 
 

@@ -305,7 +305,7 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY		 FULLNAME */
-CONS( 1976, channelf, 0,		0,		channelf, channelf, 0,			channelf,	"Fairchild", "Channel F" )
+CONS( 1976, channelf, 0,		0,		channelf, channelf, 0,			channelf,	"Fairchild", "Channel F" , 0)
 
 
 

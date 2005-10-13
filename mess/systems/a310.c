@@ -234,7 +234,7 @@ ROM_START(a310)
 ROM_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG  COMPANY    FULLNAME */
-COMP( 1988, a310,	  0,		0,		a310,	  a310, 	NULL,	  NULL,	  "Acorn",   "Archimedes 310" )
+COMP( 1988, a310,	  0,		0,		a310,	  a310, 	NULL,	  NULL,	  "Acorn",   "Archimedes 310" , 0)
 
 
 

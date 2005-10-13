@@ -228,6 +228,6 @@ SYSTEM_CONFIG_START(apple2gs)
 	CONFIG_RAM_DEFAULT			(2 * 1024 * 1024)
 SYSTEM_CONFIG_END
 
-COMPX( 1989, apple2gs, 0,        apple2,	apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM03)",			GAME_NOT_WORKING )
-COMPX( 1987, apple2g1, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM01)",			GAME_NOT_WORKING )
-COMPX( 1986, apple2g0, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM00)",			GAME_NOT_WORKING )
+COMP( 1989, apple2gs, 0,        apple2,	apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM03)",			GAME_NOT_WORKING )
+COMP( 1987, apple2g1, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM01)",			GAME_NOT_WORKING )
+COMP( 1986, apple2g0, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM00)",			GAME_NOT_WORKING )

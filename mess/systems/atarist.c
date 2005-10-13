@@ -2362,4 +2362,4 @@ http://home.wanadoo.nl/jarod/museum/megaste.htm
 /* 1989 : Mega STe - Seperate keyboard, 16MHz 68000 (switchable to 8MHz), memory cache, VME bus, TOS 2.05 & 2.06 */
 
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT	CONFIG   COMPANY    FULLNAME */
-COMP ( 1985, atarist,  0,        0,		atarist,  atarist,  0,     atarist, "atarist", "atarist" )
+COMP ( 1985, atarist,  0,        0,		atarist,  atarist,  0,     atarist, "atarist", "atarist" , 0)

@@ -490,4 +490,4 @@ SYSTEM_CONFIG_START(cgenie)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
-COMP( 1982, cgenie,   0,		0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" )
+COMP( 1982, cgenie,   0,		0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" , 0)

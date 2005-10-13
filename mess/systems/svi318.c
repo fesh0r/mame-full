@@ -469,8 +469,8 @@ SYSTEM_CONFIG_START(svi318)
 SYSTEM_CONFIG_END
 
 /*   YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT   INIT    CONFIG  COMPANY FULLNAME */
-COMP(1983, svi318,       0,      0, svi318,  svi318, svi318, svi318, "Spectravideo", "SVI-318 (SV BASIC v1.0)" )
-COMP(1983, svi328,  svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.1)" )
-COMP(1983, svi328a, svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.11)" )
-COMPX(1983, svi328b, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card", GAME_NOT_WORKING  )
-COMPX(1983, svi328c, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card (Swedish)", GAME_NOT_WORKING  )
+COMP(1983, svi318,       0,      0, svi318,  svi318, svi318, svi318, "Spectravideo", "SVI-318 (SV BASIC v1.0)" , 0)
+COMP(1983, svi328,  svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.1)" , 0)
+COMP(1983, svi328a, svi318,      0, svi318,  svi328, svi318, svi318, "Spectravideo", "SVI-328 (SV BASIC v1.11)" , 0)
+COMP(1983, svi328b, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card", GAME_NOT_WORKING  )
+COMP(1983, svi328c, svi318,      0, svi328b, svi328, svi318, svi318, "Spectravideo", "SVI-328 + 80 column card (Swedish)", GAME_NOT_WORKING  )

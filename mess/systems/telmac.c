@@ -993,10 +993,10 @@ static DRIVER_INIT( telmac )
 /* System Drivers */
 
 //     YEAR  NAME 	   PARENT   COMPAT   MACHINE   INPUT     INIT	 CONFIG    COMPANY 	      FULLNAME
-COMPX( 1977, tmc1800,  0,       0,	     tmc1800,  tmc1800,  telmac, tmc1800,  "Telercas Oy", "Telmac 1800", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000,  0,       tmc1800, tmc2000,  tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000t, tmc2000, tmc1800, tmc2000t, tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000 (TOOL-2000)", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000e, 0,       0,	     tmc2000e, tmc2000e, telmac, tmc2000e, "Telercas Oy", "Telmac 2000E", GAME_NOT_WORKING )
-COMPX( 1982, tmc600,   0,       0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series I)", GAME_NOT_WORKING )
-COMPX( 1982, tmc600a,  tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series II)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-COMPX( 1982, tmc600as, tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 AS", GAME_NOT_WORKING )
+COMP( 1977, tmc1800,  0,       0,	     tmc1800,  tmc1800,  telmac, tmc1800,  "Telercas Oy", "Telmac 1800", GAME_NOT_WORKING )
+COMP( 1980, tmc2000,  0,       tmc1800, tmc2000,  tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000", GAME_NOT_WORKING )
+COMP( 1980, tmc2000t, tmc2000, tmc1800, tmc2000t, tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000 (TOOL-2000)", GAME_NOT_WORKING )
+COMP( 1980, tmc2000e, 0,       0,	     tmc2000e, tmc2000e, telmac, tmc2000e, "Telercas Oy", "Telmac 2000E", GAME_NOT_WORKING )
+COMP( 1982, tmc600,   0,       0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series I)", GAME_NOT_WORKING )
+COMP( 1982, tmc600a,  tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series II)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+COMP( 1982, tmc600as, tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 AS", GAME_NOT_WORKING )

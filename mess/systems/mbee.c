@@ -369,8 +369,8 @@ SYSTEM_CONFIG_START(mbee)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-COMP( 1982, mbee,     0,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" )
-COMP( 1982, mbeepc,   mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" )
-COMP( 1985?,mbeepc85, mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" )
-COMP( 1983, mbee56,   mbee,		0,		mbee56,   mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" )
+COMP( 1982, mbee,     0,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" , 0)
+COMP( 1982, mbeepc,   mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" , 0)
+COMP( 1985?,mbeepc85, mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" , 0)
+COMP( 1983, mbee56,   mbee,		0,		mbee56,   mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" , 0)
 

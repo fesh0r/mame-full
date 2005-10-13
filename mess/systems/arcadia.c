@@ -474,7 +474,7 @@ static void init_arcadia(void)
 /*    YEAR	NAME		PARENT		COMPAT	MACHINE   INPUT     INIT		COMPANY		FULLNAME */
 // marketed from several firms/names
 
-CONSX(1982,	arcadia,	0,			0,		arcadia,  arcadia,  arcadia,	arcadia,	"Emerson",		"Arcadia 2001", GAME_IMPERFECT_SOUND )
+CONS(1982,	arcadia,	0,			0,		arcadia,  arcadia,  arcadia,	arcadia,	"Emerson",		"Arcadia 2001", GAME_IMPERFECT_SOUND )
 // schmid tvg 2000 (developer? PAL)
 
 // different cartridge connector
@@ -482,4 +482,4 @@ CONSX(1982,	arcadia,	0,			0,		arcadia,  arcadia,  arcadia,	arcadia,	"Emerson",		
 
 // different cartridge connector (same size as mpt03, but different pinout!)
 // 16 keys instead of 12
-CONSX(198?, vcg,		arcadia,	0,		arcadia,  vcg,		arcadia,	arcadia,	"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )
+CONS(198?, vcg,		arcadia,	0,		arcadia,  vcg,		arcadia,	arcadia,	"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )

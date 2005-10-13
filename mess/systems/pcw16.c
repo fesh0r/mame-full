@@ -1474,4 +1474,4 @@ SYSTEM_CONFIG_START(pcw16)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT	COMPAT	MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */
-COMP( 1995, pcw16,	  0,		0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")
+COMP( 1995, pcw16,	  0,		0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16", 0)

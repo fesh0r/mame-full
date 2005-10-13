@@ -279,4 +279,4 @@ SYSTEM_CONFIG_START(compis)
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	COMPAT MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */
-COMP(1985,	compis,		0,		0,     compis,	compis,	compis,	compis,	"Telenova", "Compis" )
+COMP(1985,	compis,		0,		0,     compis,	compis,	compis,	compis,	"Telenova", "Compis" , 0)

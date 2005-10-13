@@ -488,6 +488,6 @@ SYSTEM_CONFIG_END
 
 
 /*    YEAR  NAME       PARENT  COMPAT	MACHINE    INPUT     INIT     CONFIG,  COMPANY	FULLNAME */
-COMP( 1989, lviv,      0,      0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv" )
-COMP( 1989, lviva,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (alternate)" )
-COMP( 1986, lvivp,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (prototype)" )
+COMP( 1989, lviv,      0,      0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv" , 0)
+COMP( 1989, lviva,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (alternate)" , 0)
+COMP( 1986, lvivp,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (prototype)" , 0)

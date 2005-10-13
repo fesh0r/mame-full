@@ -977,5 +977,5 @@ SYSTEM_CONFIG_END
 
 
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY   FULLNAME */
-COMPX(1997,	avigo,	0,		0,		avigo,	avigo,	0,		avigo,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
+COMP(1997,	avigo,	0,		0,		avigo,	avigo,	0,		avigo,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
 

@@ -258,5 +258,5 @@ static void init_mk2(void)
 }
 
 /*    YEAR  NAME    PARENT	COMPAT	MACHINE INPUT   INIT    CONFIG    COMPANY   FULLNAME */
-CONS( 1979,	mk2,	0,		0,		mk2,	mk2,	mk2,	NULL,	  "Quelle International",  "Chess Champion MK II")
+CONS( 1979,	mk2,	0,		0,		mk2,	mk2,	mk2,	NULL,	  "Quelle International",  "Chess Champion MK II", 0)
 // second design sold (same computer/program?)

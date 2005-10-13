@@ -474,4 +474,4 @@ SYSTEM_CONFIG_START(coupe)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */
-COMP( 1989, coupe,	  0,		0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )
+COMP( 1989, coupe,	  0,		0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" , 0)

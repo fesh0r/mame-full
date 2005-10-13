@@ -753,5 +753,5 @@ SYSTEM_CONFIG_END
 
 
 /*	   YEAR	    NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY					FULLNAME */
-COMPX( 1988,	z88,	0,		0,		z88,		z88,		0,		z88,	"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
+COMP( 1988,	z88,	0,		0,		z88,		z88,		0,		z88,	"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
 

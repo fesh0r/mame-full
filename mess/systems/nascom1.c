@@ -357,8 +357,8 @@ SYSTEM_CONFIG_START(nascom2)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
-COMP( 1978,	nascom1,	0,			0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
-COMP( 1978,	nascom1a,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
-COMP( 1978,	nascom1b,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
-COMP( 1979,	nascom2,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
-COMP( 1979,	nascom2a,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )
+COMP( 1978,	nascom1,	0,			0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" , 0)
+COMP( 1978,	nascom1a,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" , 0)
+COMP( 1978,	nascom1b,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" , 0)
+COMP( 1979,	nascom2,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" , 0)
+COMP( 1979,	nascom2a,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" , 0)

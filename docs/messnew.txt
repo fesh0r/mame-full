@@ -26,7 +26,8 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- Merged COMPX/CONSX into COMP/CONS as per the new convetion in MAME.  [Nate
+  Woods]
 
 
 

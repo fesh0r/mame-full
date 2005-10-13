@@ -231,5 +231,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT	COMPAT	  MACHINE   INPUT     INIT	CONFIG		COMPANY			FULLNAME */
-CONS( 1978, astrocde, 0,	0,	  astrocde, astrocde, 0,	astrocde,	"Bally Manufacturing", "Bally Professional Arcade")
-CONS( 1977, astrocdw, astrocde, 0, astrocde, astrocde, 0,        astrocde,       "Bally Manufacturing", "Bally Computer System")
+CONS( 1978, astrocde, 0,	0,	  astrocde, astrocde, 0,	astrocde,	"Bally Manufacturing", "Bally Professional Arcade", 0)
+CONS( 1977, astrocdw, astrocde, 0, astrocde, astrocde, 0,        astrocde,       "Bally Manufacturing", "Bally Computer System", 0)

@@ -399,9 +399,9 @@ SYSTEM_CONFIG_START( primob )
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT MACHINE   INPUT  INIT     CONFIG COMPANY  FULLNAME */
-COMP ( 1984, primoa32, 0,        0,     primoa32, primo, primo32, primoa, "Microkey", "Primo A-32" )
-COMP ( 1984, primoa48, primoa32, 0,     primoa48, primo, primo48, primoa, "Microkey", "Primo A-48" )
-COMP ( 1984, primoa64, primoa32, 0,     primoa64, primo, primo64, primoa, "Microkey", "Primo A-64" )
-COMP ( 1984, primob32, primoa32, 0,     primob32, primo, primo32, primob, "Microkey", "Primo B-32" )
-COMP ( 1984, primob48, primoa32, 0,     primob48, primo, primo48, primob, "Microkey", "Primo B-48" )
-COMP ( 1984, primob64, primoa32, 0,     primob64, primo, primo64, primob, "Microkey", "Primo B-64" )
+COMP ( 1984, primoa32, 0,        0,     primoa32, primo, primo32, primoa, "Microkey", "Primo A-32" , 0)
+COMP ( 1984, primoa48, primoa32, 0,     primoa48, primo, primo48, primoa, "Microkey", "Primo A-48" , 0)
+COMP ( 1984, primoa64, primoa32, 0,     primoa64, primo, primo64, primoa, "Microkey", "Primo A-64" , 0)
+COMP ( 1984, primob32, primoa32, 0,     primob32, primo, primo32, primob, "Microkey", "Primo B-32" , 0)
+COMP ( 1984, primob48, primoa32, 0,     primob48, primo, primo48, primob, "Microkey", "Primo B-48" , 0)
+COMP ( 1984, primob64, primoa32, 0,     primob64, primo, primo64, primob, "Microkey", "Primo B-64" , 0)

@@ -406,4 +406,4 @@ SYSTEM_CONFIG_START(ti99_4p)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   COMPAT	MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */
-COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,"snug",		"SGCPU (a.k.a. 99/4P)" )
+COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,"snug",		"SGCPU (a.k.a. 99/4P)" , 0)

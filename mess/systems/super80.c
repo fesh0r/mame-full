@@ -364,4 +364,4 @@ SYSTEM_CONFIG_START(super80)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-COMP( 1981, super80,  0,		0,		super80,  super80,  0,        super80,	"Dick Smith",  "Super-80" )
+COMP( 1981, super80,  0,		0,		super80,  super80,  0,        super80,	"Dick Smith",  "Super-80" , 0)

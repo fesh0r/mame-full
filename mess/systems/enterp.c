@@ -607,6 +607,6 @@ SYSTEM_CONFIG_START(ep128)
 SYSTEM_CONFIG_END
 
 /*      YEAR  NAME		PARENT	COMPAT	MACHINE INPUT   INIT  CONFIG, COMPANY                 FULLNAME */
-COMPX( 1984, ep128,		0,		0,		ep128,	ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
-COMPX( 1984, ep128a,	ep128,	0,		ep128,	ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
+COMP( 1984, ep128,		0,		0,		ep128,	ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
+COMP( 1984, ep128a,	ep128,	0,		ep128,	ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
 

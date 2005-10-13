@@ -1770,11 +1770,11 @@ ROM_START(cpc464p)
 ROM_END
 
 /*      YEAR  NAME    PARENT	COMPAT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */
-COMP( 1984, cpc464,   0,		0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464")
-COMP( 1985, cpc664,   cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664")
-COMP( 1985, cpc6128,  cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMP( 1985, cpc6128f, cpc464,   0,      amstrad,  amstrad, 0, cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128 Azerty French Keyboard")
-COMP( 1990, cpc464p,  0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus")
-COMP( 1990, cpc6128p, 0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus")
-COMP( 1989, kccomp,   cpc464,	0,		kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact")
+COMP( 1984, cpc464,   0,		0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464", 0)
+COMP( 1985, cpc664,   cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664", 0)
+COMP( 1985, cpc6128,  cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128", 0)
+COMP( 1985, cpc6128f, cpc464,   0,      amstrad,  amstrad, 0, cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128 Azerty French Keyboard", 0)
+COMP( 1990, cpc464p,  0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus", 0)
+COMP( 1990, cpc6128p, 0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus", 0)
+COMP( 1989, kccomp,   cpc464,	0,		kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact", 0)
 

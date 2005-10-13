@@ -240,5 +240,5 @@ ROM_START(hp48g)
 ROM_END
 
 /*   YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
-COMP(1989,	hp48s,	0,		0,		hp48s,	hp48s,	hp48s,	NULL,	"Hewlett Packard",  "HP48S/SX")
-COMP(1993,	hp48g,	0,		0,		hp48g,	hp48s,	hp48g,	NULL,	"Hewlett Packard",  "HP48G/GX")
+COMP(1989,	hp48s,	0,		0,		hp48s,	hp48s,	hp48s,	NULL,	"Hewlett Packard",  "HP48S/SX", 0)
+COMP(1993,	hp48g,	0,		0,		hp48g,	hp48s,	hp48g,	NULL,	"Hewlett Packard",  "HP48G/GX", 0)

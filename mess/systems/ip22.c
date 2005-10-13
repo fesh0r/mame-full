@@ -1174,6 +1174,6 @@ SYSTEM_CONFIG_START( ip225015 )
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */
-COMPX( 1993, ip225015, 0,        0,        ip225015, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R5000, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
-COMPX( 1993, ip224613, 0,        0,        ip224613, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R4600, 133MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
-COMPX( 1994, ip244415, 0,        0,        ip244415, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indigo 2 (R4400, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
+COMP( 1993, ip225015, 0,        0,        ip225015, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R5000, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
+COMP( 1993, ip224613, 0,        0,        ip224613, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R4600, 133MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
+COMP( 1994, ip244415, 0,        0,        ip244415, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indigo 2 (R4400, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )

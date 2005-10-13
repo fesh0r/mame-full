@@ -200,5 +200,5 @@ SYSTEM_CONFIG_START(odyssey2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */
-COMPX( 1982, odyssey2, 0,		0,		odyssey2, odyssey2, odyssey2, odyssey2, "Magnavox", "Odyssey 2", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+COMP( 1982, odyssey2, 0,		0,		odyssey2, odyssey2, odyssey2, odyssey2, "Magnavox", "Odyssey 2", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 /* philips g7000/videopac */
