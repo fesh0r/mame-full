@@ -1081,8 +1081,8 @@ static struct YM3812interface ym3812_interface =
 
 #define MDRV_CPU_PC(mem, port, type, clock, vblankfunc)	\
 	MDRV_CPU_ADD_TAG("main", type, clock)				\
-	MDRV_CPU_PROGRAM_MAP(mem##_map, mem##_map)			\
-	MDRV_CPU_IO_MAP(port##_io, port##_io)				\
+	MDRV_CPU_PROGRAM_MAP(mem##_map, 0)			\
+	MDRV_CPU_IO_MAP(port##_io, 0)				\
 	MDRV_CPU_VBLANK_INT(vblankfunc, 4)					\
 	MDRV_CPU_CONFIG(i86_address_mask)
 
