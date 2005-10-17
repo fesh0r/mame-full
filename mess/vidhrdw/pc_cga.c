@@ -291,28 +291,31 @@ static VIDEO_START( pc_cga )
 	 * TODO: Cards which don't support Plantronics should repeat at 
 	 * BC000h */
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
-	switch(buswidth) {
-	case 8:
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_RAM );
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram_w );
-		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_r );
-		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_w );
-		break;
+	switch(buswidth)
+	{
+		case 8:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_BANK11 );
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram_w );
+			memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_r );
+			memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_w );
+			break;
 
-	case 32:
-		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA32_RAM );
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram32_w );
-		memory_install_read32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_r );
-		memory_install_write32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_w );
-		break;
+		case 32:
+			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA32_BANK11 );
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram32_w );
+			memory_install_read32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_r );
+			memory_install_write32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_w );
+			break;
 
-	default:
-		osd_die("CGA:  Bus width %d not supported\n", buswidth);
-		break;
+		default:
+			osd_die("CGA:  Bus width %d not supported\n", buswidth);
+			break;
 	}
 
-	videoram = memory_region(REGION_CPU1)+0xb8000;
+	videoram = auto_malloc(videoram_size);
 	videoram_size = 0x4000;
+	memory_set_bankptr(11, videoram);
+
 	return internal_pc_cga_video_start(M6845_PERSONALITY_GENUINE);
 }
 
