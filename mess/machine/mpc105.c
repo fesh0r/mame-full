@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "mpc105.h"
-#include "pci.h"
+#include "machine/pci.h"
 
 #define LOG_MPC105		1
 
@@ -76,7 +76,7 @@ static void mpc105_update_memory(void)
 
 
 
-static UINT32 mpc105_pci_read(int function, int offset)
+static UINT32 mpc105_pci_read(int function, int offset, UINT32 mem_mask)
 {
 	UINT32 result;
 
@@ -151,7 +151,7 @@ static UINT32 mpc105_pci_read(int function, int offset)
 
 
 
-static void mpc105_pci_write(int function, int offset, UINT32 data)
+static void mpc105_pci_write(int function, int offset, UINT32 data, UINT32 mem_mask)
 {
 	int i;
 

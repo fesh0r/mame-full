@@ -1,6 +1,6 @@
 /**********************************************************************
 
-	8237 DMA interface and emulation
+    8237 DMA interface and emulation
 
 **********************************************************************/
 
@@ -18,7 +18,7 @@ struct dma8237_interface
 	double bus_speed;
 
 	/* accessors to main memory */
-	UINT8 (*memory_read_func)(int channel, offs_t offset);
+	UINT8	(*memory_read_func)(int channel, offs_t offset);
 	void    (*memory_write_func)(int channel, offs_t offset, UINT8 data);
 
 	/* channel accesors */

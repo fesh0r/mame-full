@@ -179,6 +179,7 @@
 #include "machine/8042kbdc.h"
 #include "machine/pit8253.h"
 #include "includes/pcshare.h"
+#include "memconv.h"
 
 
 /***************************************************************************

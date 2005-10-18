@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	machine/pci.h
+    machine/pci.h
 
-	PCI bus
+    PCI bus
 
 ***************************************************************************/
 
@@ -13,8 +13,8 @@
 
 struct pci_device_info
 {
-	UINT32 (*read_callback)(int function, int reg);
-	void (*write_callback)(int function, int reg, UINT32 data);
+	UINT32 (*read_callback)(int function, int reg, UINT32 mem_mask);
+	void (*write_callback)(int function, int reg, UINT32 data, UINT32 mem_mask);
 };
 
 

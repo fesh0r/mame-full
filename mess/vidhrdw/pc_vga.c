@@ -35,6 +35,7 @@
 #include "vidhrdw/pc_video.h"
 #include "mscommon.h"
 #include "mess.h"
+#include "memconv.h"
 
 /***************************************************************************
 

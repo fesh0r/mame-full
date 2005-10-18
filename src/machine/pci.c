@@ -1,78 +1,78 @@
 /***************************************************************************
 
-	machine/pci.c
+    machine/pci.c
 
-	PCI bus
+    PCI bus
 
-	The PCI bus is a 32-bit bus introduced by Intel, so it is little endian
+    The PCI bus is a 32-bit bus introduced by Intel, so it is little endian
 
-	Control word:
-		bit 31:			Enable bit
-		bits 30-24:		Reserved
-		bits 23-16:		PCI bus number
-		bits 15-11:		PCI device number
-		bits 10- 8:		PCI function number
-		bits  7- 0:		Offset address
+    Control word:
+        bit 31:         Enable bit
+        bits 30-24:     Reserved
+        bits 23-16:     PCI bus number
+        bits 15-11:     PCI device number
+        bits 10- 8:     PCI function number
+        bits  7- 0:     Offset address
 
-	Standard PCI registers:
-		0x00	2	Vendor ID
-		0x02	2	Device ID
-		0x04	2	PCI Command
-		0x06	2	PCI Status
-		0x08	1	Revision ID
-		0x09	1	Programming Interface
-		0x0A	1	Subclass Code
-		0x0B	1	Class Code
+    Standard PCI registers:
+        0x00    2   Vendor ID
+        0x02    2   Device ID
+        0x04    2   PCI Command
+        0x06    2   PCI Status
+        0x08    1   Revision ID
+        0x09    1   Programming Interface
+        0x0A    1   Subclass Code
+        0x0B    1   Class Code
 
-	Class Code/Subclass Code/Programming Interface
-		0x00XXXX	Pre-PCI 2.0 devices
-		0x000000		Non-VGA device
-		0x000101		VGA device
-		0x01XXXX	Storage Controller
-		0x010000		SCSI
-		0x0101XX		IDE
-		0x0102XX		Floppy
-		0x0103XX		IPI
-		0x0104XX		RAID
-		0x0180XX		Other
-		0x02XXXX	Network Card
-		0x020000		Ethernet
-		0x020100		Tokenring
-		0x020200		FDDI
-		0x020300		ATM
-		0x028000		Other
-		0x03XXXX	Display Controller
-		0x030000		VGA
-		0x030001		8514 Compatible
-		0x030100		XGA
-		0x038000		Other
-		0x04XXXX	Multimedia
-		0x040000		Video
-		0x040100		Audio
-		0x048000		Other
-		0x05XXXX	Memory Controller
-		0x050000		RAM
-		0x050100		Flash
-		0x058000		Other
-		0x06XXXX	Bridge
-		0x060000		Host/PCI
-		0x060100		PCI/ISA
-		0x060200		PCI/EISA
-		0x060300		PCI/Micro Channel
-		0x060400		PCI/PCI
-		0x060500		PCI/PCMCIA
-		0x060600		PCI/NuBus
-		0x060700		PCI/CardBus
-		0x068000		Other
+    Class Code/Subclass Code/Programming Interface
+        0x00XXXX    Pre-PCI 2.0 devices
+        0x000000        Non-VGA device
+        0x000101        VGA device
+        0x01XXXX    Storage Controller
+        0x010000        SCSI
+        0x0101XX        IDE
+        0x0102XX        Floppy
+        0x0103XX        IPI
+        0x0104XX        RAID
+        0x0180XX        Other
+        0x02XXXX    Network Card
+        0x020000        Ethernet
+        0x020100        Tokenring
+        0x020200        FDDI
+        0x020300        ATM
+        0x028000        Other
+        0x03XXXX    Display Controller
+        0x030000        VGA
+        0x030001        8514 Compatible
+        0x030100        XGA
+        0x038000        Other
+        0x04XXXX    Multimedia
+        0x040000        Video
+        0x040100        Audio
+        0x048000        Other
+        0x05XXXX    Memory Controller
+        0x050000        RAM
+        0x050100        Flash
+        0x058000        Other
+        0x06XXXX    Bridge
+        0x060000        Host/PCI
+        0x060100        PCI/ISA
+        0x060200        PCI/EISA
+        0x060300        PCI/Micro Channel
+        0x060400        PCI/PCI
+        0x060500        PCI/PCMCIA
+        0x060600        PCI/NuBus
+        0x060700        PCI/CardBus
+        0x068000        Other
 
-	Information on PCI vendors can be found at http://www.pcidatabase.com/
+    Information on PCI vendors can be found at http://www.pcidatabase.com/
 
 ***************************************************************************/
 
 #include "machine/pci.h"
-#include "mess.h"
+#include "memconv.h"
 
-#define LOG_PCI	1
+#define LOG_PCI	0
 
 struct pci_device_entry
 {
@@ -129,7 +129,7 @@ READ32_HANDLER(pci_32le_r)
 			{
 				function = (pci_address >> 8) & 0x07;
 				reg = (pci_address >> 0) & 0xFC;
-				result = pci_current_device->callbacks.read_callback(function, reg);
+				result = pci_current_device->callbacks.read_callback(function, reg, mem_mask);
 			}
 			break;
 	}
@@ -183,7 +183,7 @@ WRITE32_HANDLER(pci_32le_w)
 			{
 				function = (pci_address >> 8) & 0x07;
 				reg = (pci_address >> 0) & 0xFC;
-				pci_current_device->callbacks.write_callback(function, reg, data);
+				pci_current_device->callbacks.write_callback(function, reg, data, mem_mask);
 			}
 			break;
 

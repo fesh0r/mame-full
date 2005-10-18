@@ -69,18 +69,6 @@ UINT32 hash_data_extract_crc32(const char *d);
 
 /***************************************************************************/
 
-UINT32 read32le_with_read8_handler(read8_handler handler, offs_t offset, UINT32 mem_mask);
-void write32le_with_write8_handler(write8_handler handler, offs_t offset, UINT32 data, UINT32 mem_mask);
-UINT64 read64be_with_read8_handler(read8_handler handler, offs_t offset, UINT64 mem_mask);
-void write64be_with_write8_handler(write8_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
-
-UINT64 read64le_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask);
-void write64le_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
-UINT64 read64be_with_32le_handler(read32_handler handler, offs_t offset, UINT64 mem_mask);
-void write64be_with_32le_handler(write32_handler handler, offs_t offset, UINT64 data, UINT64 mem_mask);
-
-/***************************************************************************/
-
 #if HAS_WAVE
 int tapecontrol(int selected);
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);

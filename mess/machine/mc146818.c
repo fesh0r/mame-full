@@ -73,6 +73,7 @@
 
 #include "mc146818.h"
 #include "mscommon.h"
+#include "memconv.h"
 
 
 #define LOG_MC146818		0

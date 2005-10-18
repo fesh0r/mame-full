@@ -55,6 +55,7 @@
 #include "vidhrdw/pc_cga.h"
 #include "vidhrdw/pc_video.h"
 #include "mscommon.h"
+#include "memconv.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
 

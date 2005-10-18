@@ -165,21 +165,17 @@ CFLAGS += -O0 -Werror -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fno-strict-aliasing \
-	-Werror -Wall -Wno-sign-compare -Wunused -Wno-unused-functions \
-	-Wpointer-arith -Wbad-function-cast -Wcast-align \
-	-Wstrict-prototypes -Wundef \
-	-Wformat-security -Wwrite-strings \
-	-Wdisabled-optimization -Wswitch \
-#	-Wredundant-decls
-#	-Wfloat-equal
-#	-Wunreachable-code -Wpadded
-#	-W had to remove because of the "missing initializer" warning
-#	-Wlarger-than-262144  \
-#	-Wcast-qual \
-#	-Wwrite-strings \
-#	-Wconversion \
-#	-Wmissing-prototypes \
-#	-Wmissing-declarations
+	-Werror -Wall \
+	-Wno-sign-compare \
+	-Wno-unused-functions \
+	-Wpointer-arith \
+	-Wbad-function-cast \
+	-Wcast-align \
+	-Wstrict-prototypes \
+	-Wundef \
+	-Wformat-security \
+	-Wwrite-strings \
+	-Wdeclaration-after-statement
 endif
 
 # the windows osd code at least cannot be compiled with -pedantic

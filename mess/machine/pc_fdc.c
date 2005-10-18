@@ -13,6 +13,7 @@
 
 #include "machine/pc_fdc.h"
 #include "machine/nec765.h"
+#include "memconv.h"
 
 
 /* if not 1, DACK and TC inputs to FDC are disabled, and DRQ and IRQ are held

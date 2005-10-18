@@ -569,7 +569,7 @@ $(OBJ)/bally.a:    \
 	$(OBJ)/mess/systems/astrocde.o
 
 $(OBJ)/pcshare.a:					\
-	$(OBJ)/mess/machine/8237dma.o	\
+	$(OBJ)/machine/8237dma.o	\
 	$(OBJ)/mess/machine/pic8259.o	\
 	$(OBJ)/mess/sndhrdw/pc.o		\
 	$(OBJ)/mess/sndhrdw/sblaster.o	\
@@ -912,7 +912,7 @@ $(OBJ)/primo.a:				\
 $(OBJ)/be.a:						\
 	$(OBJ)/mess/systems/bebox.o		\
 	$(OBJ)/mess/machine/bebox.o		\
-	$(OBJ)/mess/machine/pci.o		\
+	$(OBJ)/machine/pci.o		\
 	$(OBJ)/mess/machine/mpc105.o	\
 	$(OBJ)/mess/vidhrdw/cirrus.o	\
 	$(OBJ)/machine/intelfsh.o		\
@@ -981,7 +981,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/machine/am29f080.o \
 	$(OBJ)/mess/machine/rriot.o    \
 	$(OBJ)/mess/machine/riot6532.o \
-	$(OBJ)/mess/machine/pit8253.o  \
+	$(OBJ)/machine/pit8253.o  \
 	$(OBJ)/mess/machine/mc146818.o \
 	$(OBJ)/mess/machine/uart8250.o \
 	$(OBJ)/mess/machine/pc_mouse.o \

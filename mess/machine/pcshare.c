@@ -46,6 +46,7 @@
 
 #include "includes/pcshare.h"
 #include "mscommon.h"
+#include "memconv.h"
 
 #include "machine/8237dma.h"
 

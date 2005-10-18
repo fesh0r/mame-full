@@ -23,6 +23,7 @@
 #include "devices/harddriv.h"
 #include "formats/pc_dsk.h"
 #include "vidhrdw/cirrus.h"
+#include "memconv.h"
 
 
 static READ8_HANDLER(at_dma8237_1_r)  { return dma8237_1_r(offset / 2); }

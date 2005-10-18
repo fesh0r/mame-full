@@ -1,24 +1,25 @@
 /**********************************************************************
 
-	8237 DMA interface and emulation
+    8237 DMA interface and emulation
 
-	The DMA works like this:
-	(summarized from http://www.infran.ru/TechInfo/BSD/handbook258.html#410)
+    The DMA works like this:
+    (summarized from http://www.infran.ru/TechInfo/BSD/handbook258.html#410)
 
-	1.  The device asserts the DRQn line
-	2.  The DMA clears the TC (terminal count) line
-	3.  The DMA asserts the CPU's HRQ (halt request) line
-	4.  Upon acknowledgement of the halt, the DMA will let the device
-		know that it needs to send information by asserting the DACKn
-		line
-	5.  The DMA will read the byte from the device
-	6.  The device clears the DRQn line
-	7.  The DMA clears the CPU's HRQ line
-	8.  (steps 3-7 are repeated for every byte in the chain)
+    1.  The device asserts the DRQn line
+    2.  The DMA clears the TC (terminal count) line
+    3.  The DMA asserts the CPU's HRQ (halt request) line
+    4.  Upon acknowledgement of the halt, the DMA will let the device
+        know that it needs to send information by asserting the DACKn
+        line
+    5.  The DMA will read the byte from the device
+    6.  The device clears the DRQn line
+    7.  The DMA clears the CPU's HRQ line
+    8.  (steps 3-7 are repeated for every byte in the chain)
 
 **********************************************************************/
 
 #include "8237dma.h"
+#include "memconv.h"
 
 struct dma8237
 {
@@ -41,7 +42,7 @@ struct dma8237
 	UINT8 mask;
 
 	/* bits  0- 3 :  Terminal count for channels 0-3
-	 * bits  4- 7 :  Transfer in progress for channels 0-3 */
+     * bits  4- 7 :  Transfer in progress for channels 0-3 */
 	UINT8 status;
 };
 
@@ -156,7 +157,7 @@ static void dma8237_timerproc(int param)
 	int done;
 
 	done = dma8237_do_operation(which, channel);
-		
+
 	if (done)
 	{
 		dma[which].status &= ~(0x10 << channel);
@@ -191,7 +192,7 @@ static void dma8237_update_status(int which)
 			/* we do have a transfer in progress */
 			for (channel = 3; (pending_transfer & (1 << channel)) == 0; channel--)
 				;
-			
+
 			dma[which].status |= 0x10 << channel;
 			dma[which].status &= ~(0x01 << channel);
 
@@ -230,8 +231,6 @@ static void dma8237_update_status(int which)
 
 static void dma8237_verify(int which)
 {
-	assert(which >= 0);
-	assert(which < dma_count);
 }
 
 
@@ -261,8 +260,8 @@ static UINT8 dma8237_read(int which, offs_t offset)
 		prepare_msb_flip(which);
 
 		/* hack simulating refresh activity for 'ibmxt' BIOS; I do not know
-		 * why this is needed; but in any case, the ibmxt driver does not load
-		 * if this code is not present */
+         * why this is needed; but in any case, the ibmxt driver does not load
+         * if this code is not present */
 		mode = dma[which].chan[0].mode;
 		if ((DMA_MODE_OPERATION(mode) == 2) && (offset == 0))
 		{
@@ -406,11 +405,6 @@ static void dma8237_drq_write_callback(int param)
 void dma8237_drq_write(int which, int channel, int state)
 {
 	int param;
-	
-	assert(channel >= 0);
-	assert(channel < 4);
-	assert(which >= 0);
-	assert(which < dma_count);
 
 	param = (which << 3) | (channel << 1) | (state ? 1 : 0);
 	//timer_set(TIME_NOW, param, dma8237_drq_write_callback);

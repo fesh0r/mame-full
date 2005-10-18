@@ -39,6 +39,7 @@
 #include "formats/pc_dsk.h"
 
 #include "machine/8237dma.h"
+#include "memconv.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
 

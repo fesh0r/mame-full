@@ -12,6 +12,7 @@
 **********************************************************************/
 
 #include "machine/pic8259.h"
+#include "memconv.h"
 
 #define IRQ_COUNT	8
 

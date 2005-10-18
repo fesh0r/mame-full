@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "memconv.h"
 #include "machine/pit8253.h"
 #include "state.h"
 
@@ -26,7 +27,7 @@
 
 /***************************************************************************
 
-	Structures & macros
+    Structures & macros
 
 ***************************************************************************/
 
@@ -51,36 +52,36 @@
 
 struct pit8253_timer
 {
-	double clockin;					/* input clock frequency in	Hz */
+	double clockin;					/* input clock frequency in Hz */
 
-	void (*output_callback)(int);	/* callback	function for when output changes */
-	void (*freq_callback)(double);	/* callback	function for when output frequency changes */
+	void (*output_callback)(int);	/* callback function for when output changes */
+	void (*freq_callback)(double);	/* callback function for when output frequency changes */
 
-	mame_time last_updated;			/* time	when last updated */
-	double saved_time;				/* last_updated	relative to	time when state	saved/restored */
+	mame_time last_updated;			/* time when last updated */
+	double saved_time;				/* last_updated relative to time when state saved/restored */
 
-	mame_timer *outputtimer;		/* MAME	timer for output change	callback */
-	mame_timer *freqtimer;			/* MAME	timer for output frequency change callback */
+	mame_timer *outputtimer;		/* MAME timer for output change callback */
+	mame_timer *freqtimer;			/* MAME timer for output frequency change callback */
 
 	UINT16 value;					/* current counter value ("CE" in Intel docs) */
 	UINT16 latch;					/* latched counter value ("OL" in Intel docs) */
 	UINT16 count;					/* new counter value ("CR" in Intel docs) */
 	UINT8 control;					/* 6-bit control byte */
 	UINT8 status;					/* status byte - 8254 only */
-	UINT8 lowcount;					/* LSB of new counter value	for	16-bit writes */
-	int	rmsb;						/* 1 = Next	read is	MSB	of 16-bit value	*/
-	int	wmsb;						/* 1 = Next	write is MSB of	16-bit value */
-	int	output;						/* 0 = low,	1 =	high */
+	UINT8 lowcount;					/* LSB of new counter value for 16-bit writes */
+	int	rmsb;						/* 1 = Next read is MSB of 16-bit value */
+	int	wmsb;						/* 1 = Next write is MSB of 16-bit value */
+	int	output;						/* 0 = low, 1 = high */
 
-	int	gate;						/* gate	input (0 = low,	1 =	high) */
-	int	latched_count;				/* number of bytes of count	latched	*/
-	int	latched_status;				/* 1 = status latched (8254	only) */
-	int	null_count;					/* 1 = mode	control	or count written, 0	= count	loaded */
-	int	phase;						/* see phase definition	tables in simulate2(), below */
+	int	gate;						/* gate input (0 = low, 1 = high) */
+	int	latched_count;				/* number of bytes of count latched */
+	int	latched_status;				/* 1 = status latched (8254 only) */
+	int	null_count;					/* 1 = mode control or count written, 0 = count loaded */
+	int	phase;						/* see phase definition tables in simulate2(), below */
 
-	UINT32 cycles_to_output;		/* cycles until	output callback	called */
-	UINT32 cycles_to_freq;			/* cycles until	frequency callback called */
-	UINT32 freq_count;				/* counter period for periodic modes, 0	if counter non-periodic	*/
+	UINT32 cycles_to_output;		/* cycles until output callback called */
+	UINT32 cycles_to_freq;			/* cycles until frequency callback called */
+	UINT32 freq_count;				/* counter period for periodic modes, 0 if counter non-periodic */
 };
 
 struct pit8253
@@ -101,14 +102,12 @@ static struct pit8253 *pits;
 
 /***************************************************************************
 
-	Functions
+    Functions
 
 ***************************************************************************/
 
 static struct pit8253 *get_pit(int which)
 {
-	assert(which >=	0);
-	assert(which < pit_count);
 	return &pits[which];
 }
 
@@ -124,15 +123,15 @@ static struct pit8253_timer	*get_timer(struct pit8253 *pit,int which)
 
 static UINT32 decimal_from_bcd(UINT16 val)
 {
-	/* In BCD mode,	a nybble loaded	with value A-F counts down the same	as in
-	   binary mode,	but	wraps around to	9 instead of F after 0,	so loading the
-	   count register with 0xFFFF gives	a period of
-			  0xF  - for the units to count	down to	0
-	   +   10*0xF  - for the tens to count down	to 0
-	   +  100*0xF  - for the hundreds to count down	to 0
-	   + 1000*0xF  - for the thousands to count	down to	0
-	   = 16665 cycles
-	*/
+	/* In BCD mode, a nybble loaded with value A-F counts down the same as in
+       binary mode, but wraps around to 9 instead of F after 0, so loading the
+       count register with 0xFFFF gives a period of
+              0xF  - for the units to count down to 0
+       +   10*0xF  - for the tens to count down to 0
+       +  100*0xF  - for the hundreds to count down to 0
+       + 1000*0xF  - for the thousands to count down to 0
+       = 16665 cycles
+    */
 	return
 		((val>>12) & 0xF) *	 1000 +
 		((val>>	8) & 0xF) *	  100 +
@@ -149,14 +148,14 @@ static UINT32 adjusted_count(int bcd,UINT16	val)
 }
 
 
-/* This	function subtracts 1 from timer->value "cycles" times, taking into
-   account binary or BCD operation,	and	wrapping around	from 0 to 0xFFFF or
-   0x9999 as necessary.	*/
+/* This function subtracts 1 from timer->value "cycles" times, taking into
+   account binary or BCD operation, and wrapping around from 0 to 0xFFFF or
+   0x9999 as necessary. */
 static void	decrease_counter_value(struct pit8253_timer	*timer,UINT64 cycles)
 {
 	UINT16 value;
 	int units, tens, hundreds, thousands;
-	
+
 	if (CTRL_BCD(timer->control) ==	0)
 	{
 		timer->value -=	(cycles	& 0xFFFF);
@@ -178,7 +177,7 @@ static void	decrease_counter_value(struct pit8253_timer	*timer,UINT64 cycles)
 		cycles -= units;
 		units =	(10	- cycles%10)%10;
 
-		cycles =(cycles+9)/10; /* the +9	is so we get a carry if	cycles%10 wasn't 0 */
+		cycles =(cycles+9)/10; /* the +9    is so we get a carry if cycles%10 wasn't 0 */
 		if (cycles <= tens)
 		{
 			tens -=	cycles;
@@ -214,7 +213,7 @@ static double get_frequency(struct pit8253_timer *timer)
 }
 
 
-/* Call	the	frequency callback in "cycles" cycles */
+/* Call the frequency callback in "cycles" cycles */
 static void	freq_callback_in(struct	pit8253_timer *timer,UINT32	cycles)
 {
 	LOG2(("pit8253: freq_callback_in(): %d cycles\n",cycles));
@@ -264,7 +263,7 @@ static void	set_freq_count(struct pit8253_timer	*timer)
 }
 
 
-/* Call	the	output callback	in "cycles" cycles */
+/* Call the output callback in "cycles" cycles */
 static void	trigger_countdown(struct pit8253_timer *timer)
 {
 	LOG2(("pit8253: trigger_countdown()\n"));
@@ -291,7 +290,7 @@ static void	set_output(struct pit8253_timer	*timer,int output)
 }
 
 
-/* This	emulates timer "timer" for "elapsed_cycles" cycles and assumes no
+/* This emulates timer "timer" for "elapsed_cycles" cycles and assumes no
    callbacks occur during that time. */
 static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 {
@@ -310,24 +309,24 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 
 	switch (mode) {
 	case 0:
-		/* Mode	0: (Interrupt on Terminal Count)
+		/* Mode 0: (Interrupt on Terminal Count)
 
-		          +------------------
-		          |
-		----------+
-		  <- n+1 ->
+                  +------------------
+                  |
+        ----------+
+          <- n+1 ->
 
-		  ^
-		  +- counter load
+          ^
+          +- counter load
 
-		phase|output|length	 |value|next|comment
-		-----+------+--------+-----+----+----------------------------------
-			0|low   |infinity|     |1   |waiting for count
-			1|low   |1       |     |2   |internal delay	when counter loaded
-			2|low   |n       |n..1 |3   |counting down
-			3|high  |infinity|0..1 |3   |counting down
+        phase|output|length  |value|next|comment
+        -----+------+--------+-----+----+----------------------------------
+            0|low   |infinity|     |1   |waiting for count
+            1|low   |1       |     |2   |internal delay when counter loaded
+            2|low   |n       |n..1 |3   |counting down
+            3|high  |infinity|0..1 |3   |counting down
 
-		Gate level sensitive only. Low disables	counting, high enables it. */
+        Gate level sensitive only. Low disables counting, high enables it. */
 
 		if (timer->gate	== 0 ||	timer->phase ==	0)
 		{
@@ -351,7 +350,7 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 				}
 				else
 				{
-					/* Counter wrapped,	output goes	high */
+					/* Counter wrapped, output goes high */
 					elapsed_cycles -= adjusted_value;
 					timer->phase = 3;
 					timer->value = 0;
@@ -374,23 +373,23 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 
 
 	case 1:
-		/* Mode	1: (Hardware Retriggerable One-Shot	a.k.a. Programmable	One-Shot)
+		/* Mode 1: (Hardware Retriggerable One-Shot a.k.a. Programmable One-Shot)
 
-		--+	      +------------------
-		  |       |
-		  +-------+
-		  <-  n	 ->
+        --+       +------------------
+          |       |
+          +-------+
+          <-  n  ->
 
-		  ^
-		  +- trigger
+          ^
+          +- trigger
 
-		phase|output|length	 |value|next|comment
-		-----+------+--------+-----+----+----------------------------------
-			0|high	|infinity|0..1 |1	|counting down
-			1|low	|n		 |n..1 |0	|counting down
+        phase|output|length  |value|next|comment
+        -----+------+--------+-----+----+----------------------------------
+            0|high  |infinity|0..1 |1   |counting down
+            1|low   |n       |n..1 |0   |counting down
 
-		Gate rising-edge sensitive only.
-		Rising edge	initiates counting and resets output after next	clock. */
+        Gate rising-edge sensitive only.
+        Rising edge initiates counting and resets output after next clock. */
 
 		adjusted_value = adjusted_count(bcd,timer->value);
 		if (elapsed_cycles < adjusted_value)
@@ -401,7 +400,7 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 		}
 		else
 		{
-			/* Counter wrapped,	output goes	high */
+			/* Counter wrapped, output goes high */
 			elapsed_cycles -= adjusted_value;
 			timer->phase = 0;
 			timer->value = 0;
@@ -413,31 +412,31 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 
 
 	case 2:
-		/* Mode	2: (Rate Generator)
+		/* Mode 2: (Rate Generator)
 
-		--------------+	+---------+	+----
-		              | |         | |
-		              +-+         +-+
-		    <-    n	   -X-    n	   ->
-					  <1>
-			^
-			+- counter load	or trigger
+        --------------+ +---------+ +----
+                      | |         | |
+                      +-+         +-+
+            <-    n    -X-    n    ->
+                      <1>
+            ^
+            +- counter load or trigger
 
-		phase|output|length	 |value|next|comment
-		-----+------+--------+-----+----+----------------------------------
-			0|high	|infinity|	   |1	|waiting for count
-			1|v!=1	|n		 |n..1 |1	|counting down
+        phase|output|length  |value|next|comment
+        -----+------+--------+-----+----+----------------------------------
+            0|high  |infinity|     |1   |waiting for count
+            1|v!=1  |n       |n..1 |1   |counting down
 
-		Counter	rewrite	has	no effect until	repeated
+        Counter rewrite has no effect until repeated
 
-		Gate rising-edge and level sensitive.
-		Gate low disables counting and sets	output immediately high.
-		Rising-edge	reloads	count and initiates	counting
-		Gate high enables counting.	*/
+        Gate rising-edge and level sensitive.
+        Gate low disables counting and sets output immediately high.
+        Rising-edge reloads count and initiates counting
+        Gate high enables counting. */
 
 		if (timer->gate	== 0 ||	timer->phase ==	0)
 		{
-			/* Gate	low	or mode	control	write forces output	high */
+			/* Gate low or mode control write forces output high */
 			set_output(timer,1);
 			cycles_to_output = CYCLES_NEVER;
 		}
@@ -451,7 +450,7 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 			}
 			else
 			{
-				/* Counter wrapped around one or more times	*/
+				/* Counter wrapped around one or more times */
 				elapsed_cycles -= adjusted_value;
 				trigger_countdown(timer);
 				decrease_counter_value(timer,elapsed_cycles	% adjusted_count(bcd,timer->count));
@@ -464,30 +463,30 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 
 
 	case 3:
-		/* Mode	3: (Square Wave	Generator)
+		/* Mode 3: (Square Wave Generator)
 
-		----------------+			+-----------+			+----
-		                |           |           |           |
-		                +-----------+           +-----------+
-			<- (n+1)/2 -X-	 n/2   ->
-			^
-			+- counter load	or trigger
+        ----------------+           +-----------+           +----
+                        |           |           |           |
+                        +-----------+           +-----------+
+            <- (n+1)/2 -X-   n/2   ->
+            ^
+            +- counter load or trigger
 
-		phase|output|length	 |value|next|comment
-		-----+------+--------+-----+----+----------------------------------
-			0|high	|infinity|	   |1	|waiting for count
-			1|		|infinity|n..0 |1	|counting down double speed
+        phase|output|length  |value|next|comment
+        -----+------+--------+-----+----+----------------------------------
+            0|high  |infinity|     |1   |waiting for count
+            1|      |infinity|n..0 |1   |counting down double speed
 
-		Counter	rewrite	has	no effect until	repeated (output falling or	rising)
+        Counter rewrite has no effect until repeated (output falling or rising)
 
-		Gate rising-edge and level sensitive.
-		Gate low disables counting and sets	output immediately high.
-		Rising-edge	reloads	count and initiates	counting
-		Gate high enables counting.	*/
+        Gate rising-edge and level sensitive.
+        Gate low disables counting and sets output immediately high.
+        Rising-edge reloads count and initiates counting
+        Gate high enables counting. */
 
 		if (timer->gate	== 0 ||	timer->phase ==	0)
 		{
-			/* Gate	low	or mode	control	write forces output	high */
+			/* Gate low or mode control write forces output high */
 			set_output(timer,1);
 			cycles_to_output = CYCLES_NEVER;
 		}
@@ -501,7 +500,7 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 			}
 			else
 			{
-				/* Counter wrapped around one or more times	*/
+				/* Counter wrapped around one or more times */
 				elapsed_cycles -= ((adjusted_value+1)>>1);
 
 				set_output(timer,1 - timer->output);
@@ -511,7 +510,7 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 				adjusted_value = adjusted_count(bcd,timer->value);
 				if ((elapsed_cycles<<1)	>= adjusted_value)
 				{
-					/* Counter wrapped around an even number of	times */
+					/* Counter wrapped around an even number of times */
 					elapsed_cycles -= ((adjusted_value+1)>>1);
 
 					set_output(timer,1 - timer->output);
@@ -526,29 +525,29 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 
 	case 4:
 	case 5:
-		/* Mode	4: (Software Trigger Strobe)
-		   Mode	5: (Hardware Trigger Strobe)
+		/* Mode 4: (Software Trigger Strobe)
+           Mode 5: (Hardware Trigger Strobe)
 
-		--------------+	+--------------------
-		              | |
-		              +-+
-			<-	n+1	 ->
-			^		  <1>
-			+- counter load	(mode 4) or	trigger	(mode 5)
+        --------------+ +--------------------
+                      | |
+                      +-+
+            <-  n+1  ->
+            ^         <1>
+            +- counter load (mode 4) or trigger (mode 5)
 
-		phase|output|length	 |value|next|comment
-		-----+------+--------+-----+----+----------------------------------
-			0|high	|infinity|0..1 |0	|waiting for count
-			1|high	|1		 |	   |2	|internal delay	when counter loaded
-			2|high	|n		 |n..1 |3	|counting down
-			3|low	|1		 |0	   |0	|strobe
+        phase|output|length  |value|next|comment
+        -----+------+--------+-----+----+----------------------------------
+            0|high  |infinity|0..1 |0   |waiting for count
+            1|high  |1       |     |2   |internal delay when counter loaded
+            2|high  |n       |n..1 |3   |counting down
+            3|low   |1       |0    |0   |strobe
 
-		Mode 4 only: counter rewrite loads new counter
-		Mode 5 only: count not reloaded	immediately.
-		Mode control write doesn't stop count but sets output high
+        Mode 4 only: counter rewrite loads new counter
+        Mode 5 only: count not reloaded immediately.
+        Mode control write doesn't stop count but sets output high
 
-		Mode 4 only: Gate level	sensitive only.	Low	disables counting, high	enables	it.
-		Mode 5 only: Gate rising-edge sensitive	only. Rising edge initiates	counting */
+        Mode 4 only: Gate level sensitive only. Low disables counting, high enables it.
+        Mode 5 only: Gate rising-edge sensitive only. Rising edge initiates counting */
 
 		if (timer->gate	== 0 &&	mode ==	4)
 		{
@@ -613,8 +612,6 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 		break;
 	}
 
-	assert(cycles_to_output	!= 0);
-
 	if (timer->output_callback != NULL)
 	{
 		timer->cycles_to_output	= cycles_to_output;
@@ -634,22 +631,22 @@ static void	simulate2(struct pit8253_timer *timer,UINT64 elapsed_cycles)
 }
 
 
-/* This	emulates timer "timer" for "elapsed_cycles" cycles, broken down into
-   sections	punctuated by callbacks.
+/* This emulates timer "timer" for "elapsed_cycles" cycles, broken down into
+   sections punctuated by callbacks.
 
-   The loop	technically	should never execute even once.	It's here to eliminate
+   The loop technically should never execute even once. It's here to eliminate
    the following potential bug:
 
    1) The mame timer isn't perfectly accurate.
-   2) The output callback is executed too late,	after an update	which
-	  brings the timer's local time past the callback time.
-   3) A	short pulse	is skipped.
-   4) That short pulse would have triggered	an interrupt. The interrupt	is
-	  skipped.
+   2) The output callback is executed too late, after an update which
+      brings the timer's local time past the callback time.
+   3) A short pulse is skipped.
+   4) That short pulse would have triggered an interrupt. The interrupt is
+      skipped.
 
-   This	is a loop instead of an	"if" statement in case the mame timer is
+   This is a loop instead of an "if" statement in case the mame timer is
    inaccurate by more than one cycle, and the output changed multiple
-   times during	the	discrepancy. In	practice updates should	still be O(1).
+   times during the discrepancy. In practice updates should still be O(1).
 */
 static void	simulate(struct	pit8253_timer *timer,UINT64	elapsed_cycles)
 {
@@ -677,11 +674,11 @@ static void	simulate(struct	pit8253_timer *timer,UINT64	elapsed_cycles)
 }
 
 
-/* This	brings timer "timer" up to date */
+/* This brings timer "timer" up to date */
 static void	update(struct pit8253_timer	*timer)
 {
-	/* With	the	82C54's maximum clockin of 10MHz, 64 bits is nearly 60,000
-	   years of	time. Should be	enough for now.	*/
+	/* With the 82C54's maximum clockin of 10MHz, 64 bits is nearly 60,000
+       years of time. Should be enough for now. */
 	mame_time now =	mame_timer_get_time();
 	mame_time elapsed_time = sub_mame_times(now,timer->last_updated);
 	UINT64 elapsed_cycles =	mame_time_to_double(elapsed_time) *	timer->clockin;
@@ -708,9 +705,9 @@ void pit8253_reset(int which)
 	for	(i = 0;	i <	MAX_TIMER; i++)
 	{
 		timer =	get_timer(pit,i);
-		/* According to	Intel's 8254 docs, the state of a timer is undefined
-		   until the first mode	control	word is	written. Here we define	this
-		   undefined behaviour */
+		/* According to Intel's 8254 docs, the state of a timer is undefined
+           until the first mode control word is written. Here we define this
+           undefined behaviour */
 		timer->control = timer->status = 0x30;
 		timer->rmsb	= timer->wmsb =	0;
 		timer->count = timer->value	= timer->latch = 0;
@@ -735,7 +732,7 @@ static void freqcallback(int param)
 	UINT64 cycles =	timer->cycles_to_freq;
 	double t;
 
-	LOG2(("pit8253: freqcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,cycles));
+	LOG2(("pit8253: freqcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,(UINT32)cycles));
 
 	simulate(timer,cycles);
 
@@ -756,7 +753,7 @@ static void outputcallback(int param)
 	UINT64 cycles =	timer->cycles_to_output;
 	double t;
 
-	LOG2(("pit8253: outputcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,cycles));
+	LOG2(("pit8253: outputcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,(UINT32)cycles));
 
 	simulate(timer,cycles);
 
@@ -789,8 +786,8 @@ static void	postload(void)
 		{
 			timer =	get_timer(pit,timerno);
 
-			/* Adjust for the fact that	the	value returned by
-			   mame_timer_get_time() is	discontinuous over a save and restore. */
+			/* Adjust for the fact that the value returned by
+               mame_timer_get_time() is discontinuous over a save and restore. */
 
 			timer->saved_time =	mame_time_to_double(sub_mame_times(now,timer->last_updated));
 		}
@@ -816,8 +813,8 @@ static void	presave(void)
 		{
 			timer =	get_timer(pit,timerno);
 
-			/* Adjust for the fact that	the	value returned by
-			   mame_timer_get_time() is	discontinuous over a save and restore. */
+			/* Adjust for the fact that the value returned by
+               mame_timer_get_time() is discontinuous over a save and restore. */
 
 			timer->last_updated	= add_mame_times(double_to_mame_time(timer->saved_time),now);
 		}
@@ -873,7 +870,7 @@ int	pit8253_init(int count,	const struct pit8253_config *config)
 				mame_timer_adjust(timer->freqtimer,	time_never,	i |	(timerno<<4), time_zero);
 			}
 
-			/* set up state	save values	*/
+			/* set up state save values */
 			state_save_register_double("pit8253", n, "clockin",          &timer->clockin,          1);
 			state_save_register_UINT8 ("pit8253", n, "control",          &timer->control,          1);
 			state_save_register_UINT8 ("pit8253", n, "status",           &timer->status,           1);
@@ -914,9 +911,9 @@ error:
 }
 
 
-/* We recycle bit 0	of timer->value	to hold	the	phase in mode 3	when count is
-   odd.	Since read commands	in mode	3 always return	even numbers, we need to
-   mask	this bit off. */
+/* We recycle bit 0 of timer->value to hold the phase in mode 3 when count is
+   odd. Since read commands in mode 3 always return even numbers, we need to
+   mask this bit off. */
 static UINT16 masked_value(struct pit8253_timer	*timer)
 {
 	LOG2(("pit8253: masked_value\n"));
@@ -926,10 +923,10 @@ static UINT16 masked_value(struct pit8253_timer	*timer)
 	return timer->value;
 }
 
-/* Reads only affect the following bits	of the counter state:
-	 latched_status
-	 latched_count
-	 rmsb
+/* Reads only affect the following bits of the counter state:
+     latched_status
+     latched_count
+     rmsb
   so they don't affect any timer operations except other reads. */
 static UINT8 pit8253_read(int	which,offs_t offset)
 {
@@ -942,7 +939,7 @@ static UINT8 pit8253_read(int	which,offs_t offset)
 
 	if (timer == NULL)
 	{
-		/* Reading mode	control	register is	illegal	according to docs */
+		/* Reading mode control register is illegal according to docs */
 		/* Experimentally determined: reading it returns 0 */
 		data = 0;
 	}
@@ -952,7 +949,7 @@ static UINT8 pit8253_read(int	which,offs_t offset)
 
 		if (timer->latched_status)
 		{
-			/* Read	status register	(8254 only)	*/
+			/* Read status register (8254 only) */
 			data = timer->status;
 			timer->latched_status =	0;
 		}
@@ -960,7 +957,7 @@ static UINT8 pit8253_read(int	which,offs_t offset)
 		{
 			if (timer->latched_count !=	0)
 			{
-				/* Read	back latched count */
+				/* Read back latched count */
 				data = (timer->latch >>	(timer->rmsb !=	0 ?	8 :	0))	& 0xff;
 				timer->rmsb	= 1	- timer->rmsb;
 				--timer->latched_count;
@@ -968,27 +965,26 @@ static UINT8 pit8253_read(int	which,offs_t offset)
 			else {
 				value =	masked_value(timer);
 
-				/* Read	back current count */
+				/* Read back current count */
 				switch(CTRL_ACCESS(timer->control))	{
 				case 0:
 				default:
-					/* This	should never happen	*/
-					assert(false);
+					/* This should never happen */
 					data = 0; /* Appease compiler */
 					break;
 
 				case 1:
-					/* read	counter	bits 0-7 only */
+					/* read counter bits 0-7 only */
 					data = (value >> 0)	& 0xff;
 					break;
 
 				case 2:
-					/* read	counter	bits 8-15 only */
+					/* read counter bits 8-15 only */
 					data = (value >> 8)	& 0xff;
 					break;
 
 				case 3:
-					/* read	bits 0-7 first,	then 8-15 */
+					/* read bits 0-7 first, then 8-15 */
 					data = (value >> (timer->rmsb != 0 ? 8 : 0)) & 0xff;
 					timer->rmsb	= 1	- timer->rmsb;
 					break;
@@ -1002,7 +998,7 @@ static UINT8 pit8253_read(int	which,offs_t offset)
 }
 
 
-/* Loads a new value from the bus to the count register	(CR) */
+/* Loads a new value from the bus to the count register (CR) */
 static void	load_count(struct pit8253_timer	*timer,	UINT16 newcount)
 {
 	int	mode = CTRL_MODE(timer->control);
@@ -1011,8 +1007,8 @@ static void	load_count(struct pit8253_timer	*timer,	UINT16 newcount)
 
 	if (newcount ==	1)
 	{
-		/* Count of	1 is illegal in	modes 2	and	3. What	happens	here was
-		   determined experimentally. */
+		/* Count of 1 is illegal in modes 2 and 3. What happens here was
+           determined experimentally. */
 		if (mode ==	2)
 			newcount = 2;
 		if (mode ==	3)
@@ -1056,7 +1052,7 @@ static void	readback(struct	pit8253_timer *timer,int command)
 
 	if ((command & 1) == 0)
 	{
-		/* readback	status command */
+		/* readback status command */
 		if (timer->latched_status == 0)
 		{
 			timer->status =	timer->control | (timer->output	!= 0 ? 0x80	: 0) | (timer->null_count != 0 ? 0x40 :	0);
@@ -1065,18 +1061,17 @@ static void	readback(struct	pit8253_timer *timer,int command)
 		timer->latched_status =	1;
 	}
 	/* Experimentally determined: the read latch command seems to have no
-	   effect if we're halfway through a 16-bit read */
+       effect if we're halfway through a 16-bit read */
 	if ((command & 2) == 0 && timer->rmsb == 0)
 	{
-		/* readback	count command */
+		/* readback count command */
 
 		if (timer->latched_count ==	0)
 		{
 			value =	masked_value(timer);
 			switch(CTRL_ACCESS(timer->control))	{
 			case 0:
-				/* This	should never happen	*/
-				assert(false);
+				/* This should never happen */
 				break;
 
 			case 1:
@@ -1086,13 +1081,13 @@ static void	readback(struct	pit8253_timer *timer,int command)
 				break;
 
 			case 2:
-				/* read	bits 8-15 only */
+				/* read bits 8-15 only */
 				timer->latch = (value &	0xff00)	| ((value >> 8)	& 0xff);
 				timer->latched_count = 1;
 				break;
 
 			case 3:
-				/* latch all 16	bits */
+				/* latch all 16 bits */
 				timer->latch = value;
 				timer->latched_count = 2;
 				break;
@@ -1111,17 +1106,17 @@ static void	pit8253_write(int which, offs_t	offset,	int	data)
 	LOG2(("pit8253_write(): PIT #%d offset=%d data=0x%02x\n", which, (int) offset, (unsigned) data));
 
 	if (timer == NULL) {
-		/* Write to	mode control register */
+		/* Write to mode control register */
 		timer =	get_timer(pit, (data >>	6) & 3);
 		if (timer == NULL)
 		{
-			/* Readback	command. Illegal on	8253 */
-			/* Todo: find out what (if anything) the 8253 hardware actually	does here. */
+			/* Readback command. Illegal on 8253 */
+			/* Todo: find out what (if anything) the 8253 hardware actually does here. */
 			if (pit->config->type == TYPE8254)
 			{
 				LOG1(("pit8253_write(): PIT #%d readback %02x\n", which, data & 0x3f));
 
-				/* Bit 0 of	data must be 0.	Todo: find out what	the	hardware does if it	isn't. */
+				/* Bit 0 of data must be 0. Todo: find out what the hardware does if it isn't. */
 				read_command = (data >>	4) & 3;
 				if ((data &	2) != 0)
 					readback(get_timer(pit,0),read_command);
@@ -1140,7 +1135,7 @@ static void	pit8253_write(int which, offs_t	offset,	int	data)
 			LOG1(("pit8253_write(): PIT #%d timer=%d readback\n", which, (data >> 6) & 3));
 
 			/* Latch current timer value */
-			/* Experimentally verified:	this command does not affect the mode control register */
+			/* Experimentally verified: this command does not affect the mode control register */
 			readback(timer,1);
 		}
 		else {
@@ -1149,7 +1144,7 @@ static void	pit8253_write(int which, offs_t	offset,	int	data)
 			timer->control = (data & 0x3f);
 			timer->null_count =	1;
 			timer->wmsb	= timer->rmsb =	0;
-			/* Phase 0 is always the phase after a mode	control	write */
+			/* Phase 0 is always the phase after a mode control write */
 			timer->phase = 0;
 			set_output(timer,1);
 			set_freq_count(timer);
@@ -1161,22 +1156,21 @@ static void	pit8253_write(int which, offs_t	offset,	int	data)
 
 		switch(CTRL_ACCESS(timer->control))	{
 		case 0:
-			/* This	should never happen	*/
-			assert(false);
+			/* This should never happen */
 			break;
 
 		case 1:
-			/* read/write counter bits 0-7 only	*/
+			/* read/write counter bits 0-7 only */
 			load_count(timer,data);
 			break;
 
 		case 2:
-			/* read/write counter bits 8-15	only */
+			/* read/write counter bits 8-15 only */
 			load_count(timer,data << 8);
 			break;
 
 		case 3:
-			/* read/write bits 0-7 first, then 8-15	*/
+			/* read/write bits 0-7 first, then 8-15 */
 			if (timer->wmsb	!= 0)
 			{
 				load_count(timer,timer->lowcount | (data <<	8));
@@ -1187,8 +1181,8 @@ static void	pit8253_write(int which, offs_t	offset,	int	data)
 				if (CTRL_MODE(timer->control) == 0)
 				{
 					/* The Intel docs say that writing the MSB in mode 0, phase
-					   2 won't stop the count, but this was experimentally
-					   determined to be	false. */
+                       2 won't stop the count, but this was experimentally
+                       determined to be false. */
 					timer->phase = 0;
 				}
 			}
@@ -1236,7 +1230,6 @@ int	pit8253_get_frequency(int which, int timerno)
 {
 	struct pit8253_timer *timer	= get_timer(get_pit(which),timerno);
 
-	assert(timer !=	NULL);
 	update(timer);
 	return get_frequency(timer);
 }
@@ -1248,7 +1241,6 @@ int	pit8253_get_output(int which, int timerno)
 	struct pit8253_timer *timer	= get_timer(get_pit(which),timerno);
 	int	result;
 
-	assert(timer !=	NULL);
 	update(timer);
 	result = timer->output;
 	LOG2(("pit8253_get_output(): PIT #%d timer=%d result=%d\n", which, timerno, result));
@@ -1263,7 +1255,6 @@ void pit8253_set_clockin(int which,	int	timerno, double	new_clockin)
 
 	LOG2(("pit8253_set_clockin(): PIT #%d timer=%d, clockin = %lf\n", which, (int) timerno,new_clockin));
 
-	assert(timer !=	NULL);
 	update(timer);
 	timer->clockin = new_clockin;
 	update(timer);

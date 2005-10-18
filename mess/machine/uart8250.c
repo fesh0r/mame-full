@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "machine/uart8250.h"
 #include "includes/pc_mouse.h"
+#include "memconv.h"
 
 
 #define LOG(LEVEL,N,M,A)  \

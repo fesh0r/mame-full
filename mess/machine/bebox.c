@@ -103,6 +103,7 @@
 #include "machine/intelfsh.h"
 #include "machine/8042kbdc.h"
 #include "machine/53c810.h"
+#include "memconv.h"
 
 #define LOG_CPUIMASK	1
 #define LOG_UART		1
@@ -869,7 +870,7 @@ static void scsi53c810_dma_callback(UINT32 src, UINT32 dst, int length, int byte
 }
 
 
-static UINT32 scsi53c810_pci_read(int function, int offset)
+static UINT32 scsi53c810_pci_read(int function, int offset, UINT32 mem_mask)
 {
 	UINT32 result = 0;
 
@@ -894,7 +895,7 @@ static UINT32 scsi53c810_pci_read(int function, int offset)
 }
 
 
-static void scsi53c810_pci_write(int function, int offset, UINT32 data)
+static void scsi53c810_pci_write(int function, int offset, UINT32 data, UINT32 mem_mask)
 {
 	offs_t addr;
 
