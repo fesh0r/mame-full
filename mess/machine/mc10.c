@@ -125,7 +125,7 @@ WRITE8_HANDLER ( mc10_port2_w )
  * Video hardware
  * -------------------------------------------------- */
 
-int video_start_mc10(void)
+VIDEO_START( mc10 )
 {
 	extern void dragon_charproc(UINT8 c);
 	struct m6847_init_params p;
@@ -133,10 +133,10 @@ int video_start_mc10(void)
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_ORIGINAL_NTSC;
 	p.artifactdipswitch = 7;
-	p.ram = memory_region(REGION_CPU1);
-	p.ramsize = 0x8000;
+	p.ram = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x4000);
+	p.ramsize = 0x1000;
 	p.charproc = dragon_charproc;
-	p.initial_video_offset = 0x4000;
+	p.initial_video_offset = 0;
 
 	return video_start_m6847(&p);
 }
@@ -166,9 +166,7 @@ WRITE8_HANDLER ( mc10_ram_w )
 {
 	UINT8 *ram;
 
-	offset += 0x4000;
-
-	ram = memory_region(REGION_CPU1);
+	ram = (UINT8 *) memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x4000);
 	if (ram[offset] != data)
 	{
 		m6847_touch_vram(offset);

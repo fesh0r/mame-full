@@ -74,6 +74,7 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 #include "devices/printer.h"
 #include "devices/cassette.h"
 #include "image.h"
+#include "state.h"
 #include "includes/wd179x.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
@@ -81,7 +82,7 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
 static UINT32 coco3_mmu[16];
-static int coco3_gimereg[8];
+static UINT8 coco3_gimereg[8];
 static int coco3_interupt_line;
 static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
@@ -2577,7 +2578,17 @@ DRIVER_INIT( coco )
 #endif
 }
 
+static void coco3_state_postload(void)
+{
+	coco3_mmu_update(0, 8);
+}
 
+DRIVER_INIT( coco3 )
+{
+	state_save_register_UINT32("coco3", 0, "mmu", coco3_mmu, sizeof(coco3_mmu) / sizeof(coco3_mmu[0]));
+	state_save_register_UINT8("coco3", 0, "gimereg", coco3_gimereg, sizeof(coco3_gimereg) / sizeof(coco3_gimereg[0]));
+	state_save_register_func_postload(coco3_state_postload);
+}
 
 /***************************************************************************
   OS9 Syscalls for disassembly

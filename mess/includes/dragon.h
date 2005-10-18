@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	dragon.h
+
+	CoCo/Dragon code
+
+*********************************************************************/
+
 #ifndef DRAGON_H
 #define DRAGON_H
 
@@ -85,6 +93,7 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom);
  * ----------------------------------------------------------------------- */
 
 DRIVER_INIT( coco );
+DRIVER_INIT( coco3 );
 MACHINE_INIT( dragon32 );
 MACHINE_INIT( dragon64 );
 MACHINE_INIT( dgnalpha );
