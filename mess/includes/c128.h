@@ -86,20 +86,18 @@ WRITE8_HANDLER(c128_write_1000);
 WRITE8_HANDLER(c128_write_4000);
 WRITE8_HANDLER(c128_write_8000);
 WRITE8_HANDLER(c128_write_a000);
+WRITE8_HANDLER(c128_write_c000);
 WRITE8_HANDLER(c128_write_d000);
 WRITE8_HANDLER(c128_write_e000);
 WRITE8_HANDLER(c128_write_ff00);
 WRITE8_HANDLER(c128_write_ff05);
 
-extern void c128_driver_init (void);
-extern void c128pal_driver_init (void);
-extern void c128_driver_shutdown (void);
+extern DRIVER_INIT( c128 );
+extern DRIVER_INIT( c128pal );
 extern MACHINE_INIT( c128 );
 
 extern VIDEO_START( c128 );
 extern VIDEO_UPDATE( c128 );
-
-extern void c128_state(void);
 
 /* private area */
 extern int c128;					   /* computer is commodore c128 */

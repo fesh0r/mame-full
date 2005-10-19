@@ -44,7 +44,7 @@ static mame_file *rom_fp[2] = {0};
  * 7 ack input edge ready for next datum
  */
 
-static UINT8 port6529, port7501, ddr7501;
+static UINT8 port6529;
 
 static int lowrom = 0, highrom = 0;
 
@@ -83,21 +83,10 @@ static int c16_rom_load(mess_image *img);
   p6 serial clock in
   p7 serial data in, serial bus 5
  */
-WRITE8_HANDLER(c16_m7501_port_w)
+void c16_m7501_port_write(UINT8 data)
 {
 	int dat, atn, clk;
 
-	if (offset)
-	{
-		if (port7501 != data)
-			port7501 = data;
-	}
-	else
-	{
-		if (ddr7501 != data)
-			ddr7501 = data;
-	}
-	data = (port7501 & ddr7501) | (ddr7501 ^ 0xff);
 	/* bit zero then output 0 */
 	cbm_serial_atn_write (atn = !(data & 4));
 	cbm_serial_clock_write (clk = !(data & 2));
@@ -106,31 +95,28 @@ WRITE8_HANDLER(c16_m7501_port_w)
 	vc20_tape_motor (data & 8);
 }
 
- READ8_HANDLER(c16_m7501_port_r)
+UINT8 c16_m7501_port_read(void)
 {
-	if (offset)
-	{
-		int data = (ddr7501 & port7501) | (ddr7501 ^ 0xff);
+	UINT8 data = 0xFF;
+	UINT8 c16_port7501 = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT);
 
-		if (!(ddr7501 & 0x80)
-			&& (((ddr7501 & 1) && (port7501 & 1)) || !cbm_serial_data_read ()))
-			data &= ~0x80;
-		if (!(ddr7501 & 0x40)
-			&& (((ddr7501 & 2) && (port7501 & 2)) || !cbm_serial_clock_read ()))
-			data &= ~0x40;
-		if (!(ddr7501 & 0x10) && !vc20_tape_read ())
-			data &= ~0x10;
-/*      data&=~0x20; //port bit not in pinout */
-		return data;
-	}
-	else
-	{
-		return ddr7501;
-	}
+	if ((c16_port7501 & 0x01) || !cbm_serial_data_read())
+		data &= ~0x80;
+
+	if ((c16_port7501 & 0x02) || !cbm_serial_clock_read())
+		data &= ~0x40;
+
+	if (!vc20_tape_read())
+		data &= ~0x10;
+
+/*	data &= ~0x20; //port bit not in pinout */
+	return data;
 }
 
 static void c16_bankswitch (void)
 {
+	memory_set_bankptr(9, c16_memory);
+
 	switch (lowrom)
 	{
 	case 0:
@@ -468,6 +454,11 @@ static void c16_common_driver_init (void)
 #endif
 	C1551_CONFIG config= { 1 };
 
+	/* configure the M7501 port */
+	cpunum_set_info_fct(0, CPUINFO_PTR_M6510_PORTREAD, (genf *) c16_m7501_port_read);
+	cpunum_set_info_fct(0, CPUINFO_PTR_M6510_PORTWRITE, (genf *) c16_m7501_port_write);
+
+	c16_memory = memory_region(REGION_CPU1);
 	c16_select_roms (0, 0);
 	c16_switch_to_rom (0, 0);
 
@@ -590,13 +581,6 @@ MACHINE_INIT( c16 )
 			memory_set_bankptr (5, c16_memory);
 			memory_set_bankptr (6, c16_memory);
 			memory_set_bankptr (7, c16_memory);
-#ifdef NEW_BANKHANDLER
-			/* causes problems to do this */
-			/* seeable with c16 and 32k ram extension */
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x8000, 0xbfff, 0, 0, MWA8_BANK6);
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x4000, 0x7fff, 0, 0, MWA8_BANK5);
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xc000, 0xfcff, 0, 0, MWA8_BANK7);
-#endif
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff20, 0xff3d, 0, 0, c16_write_3f20);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff40, 0xffff, 0, 0, c16_write_3f40);
 			if (SIDCARD_HACK) {
@@ -605,21 +589,11 @@ MACHINE_INIT( c16 )
 			ted7360_set_dma (ted7360_dma_read_16k, ted7360_dma_read_rom);
 			break;
 		case MEMORY32K:
-#ifdef NEW_BANKHANDLER
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x4000, 0x7fff, 0, 0, MWA8_RAM);
-			memory_set_bankptr (5, c16_memory);
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0x8000, 0xfcff, 0, 0, MWA8_BANK5);
-			memory_set_bankptr (6, (c16_memory + 0x7f20));
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff20, 0xff3d, 0, 0, MWA8_BANK6);
-			memory_set_bankptr (7, (c16_memory + 0x7f40));
-			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff40, 0xffff, 0, 0, MWA8_BANK7);
-#else
 			memory_set_bankptr (5, c16_memory + 0x4000);
 			memory_set_bankptr (6, c16_memory);
 			memory_set_bankptr (7, c16_memory + 0x4000);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff20, 0xff3d, 0, 0, c16_write_7f20);
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xff40, 0xffff, 0, 0, c16_write_7f40);
-#endif
 			ted7360_set_dma (ted7360_dma_read_32k, ted7360_dma_read_rom);
 			if (SIDCARD_HACK) {
 				memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xd400, 0xd41f, 0, 0, c16_sidcart_32k);

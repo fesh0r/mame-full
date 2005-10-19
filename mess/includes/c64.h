@@ -218,9 +218,10 @@ extern UINT8 *c64_kernal;
 extern UINT8 *c64_chargen;
 extern UINT8 *c64_memory;
 
-extern WRITE8_HANDLER ( c64_m6510_port_w );
-extern  READ8_HANDLER  ( c64_m6510_port_r );
- READ8_HANDLER ( c64_colorram_read );
+UINT8 c64_m6510_port_read(void);
+void c64_m6510_port_write(UINT8 data);
+
+READ8_HANDLER ( c64_colorram_read );
 WRITE8_HANDLER ( c64_colorram_write );
 
 extern void c64_driver_init (void);
@@ -259,7 +260,6 @@ extern UINT8 c64_keyline[10];
 extern int c128_va1617;
 extern UINT8 *c64_vicaddr, *c128_vicaddr;
 extern UINT8 c64_game, c64_exrom;
-extern UINT8 c64_port6510, c64_ddr6510;
 extern struct cia6526_interface c64_cia0, c64_cia1;
 
 #endif

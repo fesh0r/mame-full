@@ -83,16 +83,23 @@ static  READ8_HANDLER(c128_dma8726_port_r)
 }
 
 WRITE8_HANDLER( c128_mmu8722_port_w );
- READ8_HANDLER( c128_mmu8722_port_r );
+READ8_HANDLER( c128_mmu8722_port_r );
+
 WRITE8_HANDLER( c128_write_d000 )
 {
-	if (!c128_write_io) {
+	UINT8 c64_port6510 = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT);
+
+	if (!c128_write_io)
+	{
 		if (offset + 0xd000 >= c128_ram_top)
 			c64_memory[0xd000 + offset] = data;
 		else
 			c128_ram[0xd000 + offset] = data;
-	} else {
-		switch ((offset&0xf00)>>8) {
+	}
+	else
+	{
+		switch ((offset&0xf00)>>8)
+		{
 		case 0:case 1: case 2: case 3:
 			vic2_port_w (offset & 0x3ff, data);
 			break;
@@ -107,9 +114,9 @@ WRITE8_HANDLER( c128_write_d000 )
 			break;
 		case 8: case 9: case 0xa: case 0xb:
 		    if (c64mode)
-			c64_colorram[(offset & 0x3ff)] = data | 0xf0;
+				c64_colorram[(offset & 0x3ff)] = data | 0xf0;
 		    else
-			c64_colorram[(offset & 0x3ff)|((c64_port6510&3)<<10)] = data | 0xf0; // maybe all 8 bit connected!
+				c64_colorram[(offset & 0x3ff)|((c64_port6510&3)<<10)] = data | 0xf0; // maybe all 8 bit connected!
 		    break;
 		case 0xc:
 			cia6526_0_port_w (offset & 0xff, data);
@@ -163,7 +170,7 @@ void c128_bankswitch_64 (int reset)
 	if (!c64mode)
 		return;
 
-	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
+	data = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT) & 7;
 	if ((data == old)&&(exrom==c64_exrom)&&(game==c64_game)&&!reset)
 		return;
 
@@ -669,6 +676,12 @@ WRITE8_HANDLER( c128_write_a000 )
 		c128_ram[0xa000 + offset] = data;
 }
 
+WRITE8_HANDLER( c128_write_c000 )
+{
+	if (c128_ram!=NULL)
+		c128_ram[0xc000 + offset] = data;
+}
+
 WRITE8_HANDLER( c128_write_e000 )
 {
 	if (offset + 0xe000 >= c128_ram_top)
@@ -700,6 +713,8 @@ WRITE8_HANDLER( c128_write_ff05 )
  */
 static int c128_dma_read(int offset)
 {
+	UINT8 c64_port6510 = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT);
+
 	/* main memory configuration to include */
 	if (c64mode)
 	{
@@ -721,14 +736,22 @@ static int c128_dma_read(int offset)
 
 static int c128_dma_read_color (int offset)
 {
-    if (c64mode) return c64_colorram[offset & 0x3ff] & 0xf;
-    return c64_colorram[(offset & 0x3ff)|((c64_port6510&0x3)<<10)] & 0xf;
+	UINT8 c64_port6510 = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT);
+
+	if (c64mode)
+		return c64_colorram[offset & 0x3ff] & 0xf;
+	else
+		return c64_colorram[(offset & 0x3ff)|((c64_port6510&0x3)<<10)] & 0xf;
 }
 
 static void c128_common_driver_init (void)
 {
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	int i;
+
+	/* configure the M6510 port */
+	cpunum_set_info_fct(1, CPUINFO_PTR_M6510_PORTREAD, (genf *) c64_m6510_port_read);
+	cpunum_set_info_fct(1, CPUINFO_PTR_M6510_PORTWRITE, (genf *) c64_m6510_port_write);
 
 	c128_basic = memory_region(REGION_CPU1)+0x100000;
 	c64_basic = memory_region(REGION_CPU1)+0x108000;
@@ -746,7 +769,6 @@ static void c128_common_driver_init (void)
 	for (i=0; i<0x100; i++)
 		gfx[i]=i;
 
-	memset(c64_memory, 0xff, 0x100000);
 	c128 = 1;
 	vc20_tape_open (c64_tape_read);
 
@@ -758,7 +780,7 @@ static void c128_common_driver_init (void)
 	cia6526_config (1, &c64_cia1);
 }
 
-void c128_driver_init (void)
+DRIVER_INIT( c128 )
 {
 	c128_common_driver_init ();
 	vic6567_init (1, c64_pal,
@@ -768,7 +790,7 @@ void c128_driver_init (void)
 	vdc8563_set_rastering(1);
 }
 
-void c128pal_driver_init (void)
+DRIVER_INIT( c128pal )
 {
 	c64_pal = 1;
 	c128_common_driver_init ();
@@ -777,11 +799,6 @@ void c128pal_driver_init (void)
 	vic2_set_rastering(1);
 	vdc8563_init(0);
 	vdc8563_set_rastering(0);
-}
-
-void c128_driver_shutdown (void)
-{
-	vc20_tape_close ();
 }
 
 MACHINE_INIT( c128 )

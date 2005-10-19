@@ -134,8 +134,8 @@
 
 extern UINT8 *c16_memory;
 
-extern WRITE8_HANDLER(c16_m7501_port_w);
-extern  READ8_HANDLER(c16_m7501_port_r);
+UINT8 c16_m7501_port_read(void);
+void c16_m7501_port_write(UINT8 data);
 
 extern WRITE8_HANDLER(c16_6551_port_w);
 extern  READ8_HANDLER(c16_6551_port_r);

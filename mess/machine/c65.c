@@ -629,7 +629,7 @@ void c65_bankswitch (void)
 	read8_handler rh4, rh8;
 	write8_handler wh5, wh9;
 
-	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
+	data = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT);
 	if (data == old)
 		return;
 
@@ -804,7 +804,8 @@ void c65pal_driver_init (void)
 
 MACHINE_INIT( c65 )
 {
-	memset(c64_memory+0x40000, 0xff, 0xc0000);
+	/* clear upper memory */
+	memset(memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x80000), 0xff, 0x80000);
 
 	sndti_reset(SOUND_SID8580, 0);
 	sndti_reset(SOUND_SID8580, 1);
@@ -815,8 +816,6 @@ MACHINE_INIT( c65 )
 	cia6526_reset ();
 	c64_vicaddr = c64_memory;
 
-	c64_port6510 = 0xff;
-	c64_ddr6510 = 0;
 	c64mode = 0;
 
 	c64_rom_recognition ();

@@ -55,7 +55,6 @@ int c64_pal = 0;
 UINT8 c64_game=1, c64_exrom=1;
 
 /* cpu port */
-UINT8 c64_port6510, c64_ddr6510;
 int c128_va1617;
 UINT8 *c64_vicaddr, *c128_vicaddr;
 UINT8 *c64_memory;
@@ -569,7 +568,7 @@ static void c64_bankswitch (int reset)
 	static int old = -1, exrom, game;
 	int data, loram, hiram, charen;
 
-	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
+	data = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_M6510_PORT) & 7;
 	if ((data == old)&&(exrom==c64_exrom)&&(game==c64_game)&&!reset) return;
 
 	DBG_LOG (1, "bankswitch", ("%d\n", data & 7));
@@ -664,19 +663,8 @@ static void c64_bankswitch (int reset)
   p5 output cassette motor
   p6,7 not available on M6510
  */
-WRITE8_HANDLER(c64_m6510_port_w)
+void c64_m6510_port_write(UINT8 data)
 {
-	if (offset)
-	{
-		if (c64_port6510 != data)
-			c64_port6510 = data;
-	}
-	else
-	{
-		if (c64_ddr6510 != data)
-			c64_ddr6510 = data;
-	}
-	data = (c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff);
 	if (c64_tape_on)
 	{
 		vc20_tape_write (!(data & 8));
@@ -693,24 +681,17 @@ WRITE8_HANDLER(c64_m6510_port_w)
 		c64_bankswitch (0);
 }
 
- READ8_HANDLER(c64_m6510_port_r)
+UINT8 c64_m6510_port_read(void)
 {
-	if (offset)
-	{
-		int data = (c64_ddr6510 & c64_port6510) | (c64_ddr6510 ^ 0xff);
+	UINT8 data = 0xFF;
 
-		if (c64_tape_on && !(c64_ddr6510 & 0x10) && !vc20_tape_switch ())
-			data &= ~0x10;
-		if (c128 && !c128_capslock_r ())
-			data &= ~0x40;
-		if (c65 && C65_KEY_DIN)
-			data &= ~0x40; /*? */
-		return data;
-	}
-	else
-	{
-		return c64_ddr6510;
-	}
+	if (c64_tape_on && !vc20_tape_switch ())
+		data &= ~0x10;
+	if (c128 && !c128_capslock_r ())
+		data &= ~0x40;
+	if (c65 && C65_KEY_DIN)
+		data &= ~0x40; /*? */
+	return data;
 }
 
 int c64_paddle_read (int which)
@@ -797,6 +778,10 @@ static int c64_dma_read_color (int offset)
 
 static void c64_common_driver_init (void)
 {
+	/* configure the M6510 port */
+	cpunum_set_info_fct(0, CPUINFO_PTR_M6510_PORTREAD, (genf *) c64_m6510_port_read);
+	cpunum_set_info_fct(0, CPUINFO_PTR_M6510_PORTWRITE, (genf *) c64_m6510_port_write);
+
 	/*    memset(c64_memory, 0, 0xfd00); */
 	if (!ultimax) {
 		c64_basic=memory_region(REGION_CPU1)+0x10000;
@@ -897,8 +882,6 @@ void c64_common_init_machine (void)
 	}
 	c64_vicaddr = c64_memory;
 	vicirq = cia0irq = 0;
-	c64_port6510 = 0xff;
-	c64_ddr6510 = 0;
 }
 
 MACHINE_INIT( c64 )
