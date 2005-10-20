@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "mscommon.h"
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "includes/ibmpc.h"
 
 #define VERBOSE_PIO 0		/* PIO (keyboard controller) */

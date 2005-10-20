@@ -16,7 +16,7 @@
 #include "vidhrdw/pc_cga.h"
 
 #include "machine/pit8253.h"
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "machine/8042kbdc.h"
 #include "includes/at.h"
 #include "machine/pckeybrd.h"

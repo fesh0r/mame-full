@@ -2,7 +2,7 @@
 
 #include "machine/pckeybrd.h"
 
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "includes/tandy1t.h"
 
 

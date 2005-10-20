@@ -53,7 +53,7 @@
 #include "includes/at.h"
 #include "machine/8042kbdc.h"
 #include "includes/ps2.h"
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "vidhrdw/newport.h"
 #include "machine/wd33c93.h"
 #include "devices/harddriv.h"

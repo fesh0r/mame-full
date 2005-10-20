@@ -1,7 +1,7 @@
 #include "driver.h"
 
 #include "machine/pit8253.h"
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "includes/amstr_pc.h"
 #include "includes/pclpt.h"
 #include "vidhrdw/pc_vga.h"

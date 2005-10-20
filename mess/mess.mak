@@ -570,12 +570,12 @@ $(OBJ)/bally.a:    \
 
 $(OBJ)/pcshare.a:					\
 	$(OBJ)/machine/8237dma.o	\
-	$(OBJ)/mess/machine/pic8259.o	\
+	$(OBJ)/machine/pic8259.o	\
+	$(OBJ)/machine/pcshare.o	\
 	$(OBJ)/mess/sndhrdw/pc.o		\
 	$(OBJ)/mess/sndhrdw/sblaster.o	\
 	$(OBJ)/mess/machine/pc_fdc.o	\
 	$(OBJ)/mess/machine/pc_hdc.o	\
-	$(OBJ)/mess/machine/pcshare.o	\
 	$(OBJ)/mess/vidhrdw/pc_video.o	\
 	$(OBJ)/mess/vidhrdw/pc_mda.o	\
 	$(OBJ)/mess/vidhrdw/pc_cga.o	\
@@ -593,8 +593,8 @@ $(OBJ)/pc.a:	   \
 	$(OBJ)/mess/vidhrdw/pc_t1t.o	 
 
 $(OBJ)/at.a:	   \
+	$(OBJ)/machine/8042kbdc.o    \
 	$(OBJ)/mess/machine/pc_ide.o   \
-	$(OBJ)/mess/machine/8042kbdc.o    \
 	$(OBJ)/mess/machine/ps2.o	 \
 	$(OBJ)/mess/machine/at.o       \
 	$(OBJ)/mess/systems/at.o
@@ -982,12 +982,12 @@ COREOBJS +=							\
 	$(OBJ)/mess/machine/rriot.o    \
 	$(OBJ)/mess/machine/riot6532.o \
 	$(OBJ)/machine/pit8253.o  \
-	$(OBJ)/mess/machine/mc146818.o \
+	$(OBJ)/machine/mc146818.o \
 	$(OBJ)/mess/machine/uart8250.o \
 	$(OBJ)/mess/machine/pc_mouse.o \
 	$(OBJ)/mess/machine/pclpt.o    \
 	$(OBJ)/mess/machine/centroni.o \
-	$(OBJ)/mess/machine/pckeybrd.o \
+	$(OBJ)/machine/pckeybrd.o \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \

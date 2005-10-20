@@ -32,7 +32,7 @@
 #include "machine/8042kbdc.h"
 #include "includes/ps2.h"
 
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 
 #include "devices/mflopimg.h"
 #include "devices/harddriv.h"

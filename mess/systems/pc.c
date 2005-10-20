@@ -44,7 +44,7 @@
 #include "includes/amstr_pc.h"
 #include "includes/ibmpc.h"
 
-#include "includes/pcshare.h"
+#include "machine/pcshare.h"
 #include "includes/pc.h"
 
 #include "machine/pc_hdc.h"
