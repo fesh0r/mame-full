@@ -2,8 +2,7 @@
 *
 *   SGI IP22 Indigo2/Indy workstation
 *
-*   Todo: MIPS core needs TLB support
-*         Figure out why Linux kernel hangs
+*   Todo: Fix tod clock set problem
 *         Fix NVRAM saving
 *         Fix SCSI DMA to handle chains properly
 *         Probably many more things
@@ -30,14 +29,9 @@
 *      linux-2.6.6/include/asm-mips/sgi/hpc3.h
 *    NetBSD: http://www.netbsd.org/
 * 
-* Gentoo LiveCD boot instructions:
-*     mess -cdrom gentoo.chd ip225015
-*     drop into the monitor
-*     setenv OSLoadFilename ip22r5k
-*     setenv OSLoader ip22
-*     setenv SystemPartition dksc(0,4,8)
-*     setenv OSLoadPartition dksc(0,4,7)
-*     boot -f ip22
+* Gentoo LiveCD r4 boot instructions:
+*     mess -cdrom gentoor4.chd ip225015
+*     at the menu, choose "install system software" (missing some MIPS opcodes)
 *
 * IRIX boot instructions:
 *     mess -cdrom irix656inst1.chd ip225015
@@ -747,39 +741,18 @@ static ADDRESS_MAP_START( ip225015_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE( 0x0a000000, 0x0a7fffff ) AM_RAM AM_SHARE(7)
 	AM_RANGE( 0x0c000000, 0x0c7fffff ) AM_RAM AM_SHARE(8)
 	AM_RANGE( 0x10000000, 0x107fffff ) AM_RAM AM_SHARE(9)
-	AM_RANGE( 0x1fa00000, 0x1fa1ffff ) AM_READWRITE( mc_r, mc_w ) AM_SHARE(3)
-	AM_RANGE( 0x1fb90000, 0x1fb9ffff ) AM_READWRITE( hpc3_hd_enet_r, hpc3_hd_enet_w ) AM_SHARE(11)
-	AM_RANGE( 0x1fbc0000, 0x1fbc7fff ) AM_READWRITE( hpc3_hd0_r, hpc3_hd0_w ) AM_SHARE(12)
-	AM_RANGE( 0x1fbd9000, 0x1fbd93ff ) AM_READWRITE( hpc3_unk_r, hpc3_unk_w ) AM_SHARE(13)
-	AM_RANGE( 0x1fbd9800, 0x1fbd9bff ) AM_READWRITE( pio4_r, pio4_w ) AM_SHARE(4)
-	AM_RANGE( 0x1fbe0000, 0x1fbe04ff ) AM_READWRITE( rtc_r, rtc_w ) AM_SHARE(13)
+	AM_RANGE( 0x17f00000, 0x17ffffff ) AM_RAM AM_SHARE(11)
+	AM_RANGE( 0x1f0f0000, 0x1f0f1fff ) AM_READWRITE( newport_rex3_r, newport_rex3_w )
+	AM_RANGE( 0x1fa00000, 0x1fa1ffff ) AM_READWRITE( mc_r, mc_w )
+	AM_RANGE( 0x1fb90000, 0x1fb9ffff ) AM_READWRITE( hpc3_hd_enet_r, hpc3_hd_enet_w )
+	AM_RANGE( 0x1fbb0000, 0x1fbbffff ) AM_RAM
+	AM_RANGE( 0x1fbc0000, 0x1fbc7fff ) AM_READWRITE( hpc3_hd0_r, hpc3_hd0_w )
+	AM_RANGE( 0x1fbd9000, 0x1fbd93ff ) AM_READWRITE( hpc3_unk_r, hpc3_unk_w )
+	AM_RANGE( 0x1fbd9800, 0x1fbd9bff ) AM_READWRITE( pio4_r, pio4_w )
+	AM_RANGE( 0x1fbe0000, 0x1fbe04ff ) AM_READWRITE( rtc_r, rtc_w )
 	AM_RANGE( 0x1fc00000, 0x1fc7ffff ) AM_ROM AM_SHARE(2) AM_REGION( REGION_USER1, 0 )
 	AM_RANGE( 0x20000000, 0x203fffff ) AM_RAM AM_SHARE(5)
 	AM_RANGE( 0x22000000, 0x223fffff ) AM_RAM AM_SHARE(6)
-	AM_RANGE( 0x80000000, 0x8007ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0x88000000, 0x8807ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0x88080000, 0x88ffffff ) AM_RAM AM_SHARE(5)
-	AM_RANGE( 0x89000000, 0x897fffff ) AM_RAM AM_SHARE(6)
-	AM_RANGE( 0x8a000000, 0x8a7fffff ) AM_RAM AM_SHARE(7)
-	AM_RANGE( 0x8c000000, 0x8c7fffff ) AM_RAM AM_SHARE(8)
-	AM_RANGE( 0x90000000, 0x907fffff ) AM_RAM AM_SHARE(9)
-	AM_RANGE( 0x9fc00000, 0x9fc7ffff ) AM_ROM AM_SHARE(2) AM_REGION( REGION_USER1, 0 )
-	AM_RANGE( 0xa0000000, 0xa007ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0xa8000000, 0xa807ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0xa8080000, 0xa8ffffff ) AM_RAM AM_SHARE(5)
-	AM_RANGE( 0xa9000000, 0xa97fffff ) AM_RAM AM_SHARE(6)
-	AM_RANGE( 0xaa000000, 0xaa7fffff ) AM_RAM AM_SHARE(7)
-	AM_RANGE( 0xac000000, 0xac7fffff ) AM_RAM AM_SHARE(8)
-	AM_RANGE( 0xb0000000, 0xb07fffff ) AM_RAM AM_SHARE(9)
-	AM_RANGE( 0xbf0f0000, 0xbf0f1fff ) AM_READWRITE( newport_rex3_r, newport_rex3_w )
-	AM_RANGE( 0xbf06a07c, 0xbf06a07f ) AM_READ( ffffffff_r )
-	AM_RANGE( 0xbfa00000, 0xbfa1ffff ) AM_READWRITE( mc_r, mc_w ) AM_SHARE(3)
-	AM_RANGE( 0xbfb90000, 0xbfb9ffff ) AM_READWRITE( hpc3_hd_enet_r, hpc3_hd_enet_w ) AM_SHARE(11)
-	AM_RANGE( 0xbfbc0000, 0xbfbc7fff ) AM_READWRITE( hpc3_hd0_r, hpc3_hd0_w ) AM_SHARE(12)
-	AM_RANGE( 0xbfbd9000, 0xbfbd93ff ) AM_READWRITE( hpc3_unk_r, hpc3_unk_w ) AM_SHARE(13)
-	AM_RANGE( 0xbfbd9800, 0xbfbd9bff ) AM_READWRITE( pio4_r, pio4_w ) AM_SHARE(4)
-	AM_RANGE( 0xbfbe0000, 0xbfbe04ff ) AM_READWRITE( rtc_r, rtc_w ) AM_SHARE(13)
-	AM_RANGE( 0xbfc00000, 0xbfc7ffff ) AM_ROM AM_SHARE(2) /* BIOS Mirror */
 ADDRESS_MAP_END
 
 UINT32 nIntCounter;

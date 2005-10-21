@@ -15,7 +15,7 @@
 #include "driver.h"
 #include "vidhrdw/newport.h"
 
-#define VERBOSE_LEVEL ( 2 )
+#define VERBOSE_LEVEL ( 0 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
