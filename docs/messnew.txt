@@ -11,6 +11,11 @@ System Driver Changes:
 - [MTX512] Fixed regression introduced in 0.96.  (previous fix was not fully
   committed properly) [Gerco Ballintijn]
 
+- [MTX512] Fixed BASIC loading routine.  (bug #754) [Gerco Ballintijn]
+
+- [MTX512] Added stub calls for the MTX parallel printer port.  (bug #755)
+  [Gerco Ballintijn]
+
 
 
 User Interface Changes:

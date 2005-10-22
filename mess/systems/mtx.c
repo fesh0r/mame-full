@@ -40,6 +40,11 @@ static WRITE8_HANDLER ( mtx_psg_w )
 	SN76496_0_w(offset,data);
 }
 
+static  READ8_HANDLER ( mtx_prt_r )
+{
+	return 2; /* OK */
+}
+
 static  READ8_HANDLER ( mtx_vdp_r )
 {
 	if (offset & 0x01)
@@ -547,7 +552,7 @@ static WRITE8_HANDLER ( mtx_trap_write )
 				for(i=14; i>0 && filename[i] == 0x20;i--);
 
 				filename[i + 1] = '\0';
-				logerror("%s\n", filename);
+				logerror("save '%s'\n", filename);
 				if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,1)) != 0)
 				{
 					mame_fwrite(f,mtx_savebuffer,mtx_saveindex);
@@ -567,8 +572,10 @@ static WRITE8_HANDLER ( mtx_trap_write )
 					{
 						filename[i] = mtx_peek(0xc002 + i);
 					}
-					for(i=15; i>0 && filename[i] == 0x20;i--)
-						filename[i+1] = '\0';
+					for(i=14; i>0 && filename[i] == 0x20;i--);
+
+					filename[i+1] = '\0';
+					logerror("load '%s'\n", filename);
 					if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,0)) != 0)
 					{
 						filesize=mame_fsize(f);
@@ -692,6 +699,7 @@ ADDRESS_MAP_START( mtx_readport , ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0x01, 0x02) AM_READ( mtx_vdp_r )
 	AM_RANGE( 0x03, 0x03) AM_READ( mtx_psg_r )
+	AM_RANGE( 0x04, 0x04) AM_READ( mtx_prt_r )
 	AM_RANGE( 0x05, 0x05) AM_READ( mtx_key_lo_r )
 	AM_RANGE( 0x06, 0x06) AM_READ( mtx_key_hi_r )
 	AM_RANGE( 0x08, 0x0b) AM_READ( mtx_ctc_r )
