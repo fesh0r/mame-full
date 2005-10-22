@@ -698,6 +698,7 @@ ADDRESS_MAP_START( mtx_readport , ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( mtx_writeport , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0x00, 0x00) AM_WRITE( mtx_bankswitch_w )
 	AM_RANGE( 0x01, 0x02) AM_WRITE( mtx_vdp_w )
 	AM_RANGE( 0x05, 0x05) AM_WRITE( mtx_sense_w )
