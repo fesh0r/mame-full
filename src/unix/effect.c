@@ -13,12 +13,6 @@
 #include "effect.h"
 
 /* defines/ enums */
-#define RMASK16_INV(P) ((P) & 0x07ff)
-#define GMASK16_INV(P) ((P) & 0xf81f)
-#define BMASK16_INV(P) ((P) & 0xffe0)
-#define RMASK32_INV(P) ((P) & 0x0000ffff)
-#define GMASK32_INV(P) ((P) & 0x00ff00ff)
-#define BMASK32_INV(P) ((P) & 0x00ffff00)
 #define SYSDEP_DISPLAY_EFFECT_MODES (EFFECT_COLOR_FORMATS*3) /* 15,16,32 src */
 /* We differentiate between 6 different destination types */
 enum { EFFECT_UNKNOWN = -1, EFFECT_15, EFFECT_16, EFFECT_24, EFFECT_32,
@@ -395,6 +389,7 @@ blit_func_p sysdep_display_effect_open(void)
   };
   int effect_index = EFFECT_UNKNOWN;
   int need_yuv_lookup = 0;
+  int is_bgr = 0;
 #ifdef EFFECT_MMX_ASM
   static int first_time = 1;
   
@@ -467,42 +462,85 @@ blit_func_p sysdep_display_effect_open(void)
            (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         effect_index = EFFECT_15;
-      if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+      else if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0x1F      )) &&
+           (sysdep_display_properties.palette_info.green_mask == (0x1F << 10)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0x1F <<  5)))
+      {
+        effect_index = EFFECT_15;
+        is_bgr = 1;
+      }
+      else if ( (sysdep_display_properties.palette_info.bpp == 16) &&
            (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
            (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         effect_index = EFFECT_16;
-      if ( (sysdep_display_properties.palette_info.bpp == 24) &&
+      else if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0x1F      )) &&
+           (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0x1F << 11)))
+      {
+        effect_index = EFFECT_16;
+        is_bgr = 1;
+      }
+      else if ( (sysdep_display_properties.palette_info.bpp == 24) &&
            (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
            (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
         effect_index = EFFECT_24;
-      if ( (sysdep_display_properties.palette_info.bpp == 32) &&
+      else if ( (sysdep_display_properties.palette_info.bpp == 24) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0xFF      )) &&
+           (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0xFF << 16)))
+      {
+        effect_index = EFFECT_24;
+        is_bgr = 1;
+      }
+      else if ( (sysdep_display_properties.palette_info.bpp == 32) &&
            (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
            (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
         effect_index = EFFECT_32;
+      else if ( (sysdep_display_properties.palette_info.bpp == 32) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0xFF      )) &&
+           (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0xFF << 16)))
+      {
+        effect_index = EFFECT_32;
+        is_bgr = 1;
+      }
   }
 
   if (effect_index == EFFECT_UNKNOWN)
   {
+    /* Hmm, unknown color format, see if we will be able to go through
+       the lookup and do normal blitting for RGB dests */
     if ((sysdep_display_properties.palette_info.fourcc_format == 0) &&
-        (sysdep_display_properties.palette_info.bpp == 16) &&
         (sysdep_display_params.depth <= 16))
     {
-      if (sysdep_display_params.effect)
-      {
-        fprintf(stderr, "Warning: Your current color format is not supported by the effect code, disabling effects\n");
-        sysdep_display_params.effect = 0;
-      }
-      effect_index = EFFECT_16;
+      if  (sysdep_display_properties.palette_info.bpp == 16)
+        effect_index = EFFECT_16;
+      if  (sysdep_display_properties.palette_info.bpp == 24)
+        effect_index = EFFECT_24;
+      if  (sysdep_display_properties.palette_info.bpp == 32)
+        effect_index = EFFECT_32;
     }
-    else
+    if ((effect_index != EFFECT_UNKNOWN) && sysdep_display_params.effect)
     {
-      fprintf(stderr, "Error: the required colordepth is not supported with your display settings\n");
-      return NULL;
+      fprintf(stderr, "Warning: Your current color format is not supported by the effect code, disabling effects\n");
+      sysdep_display_params.effect = 0;
     }
   }
+  /* We can't handle 32 bits sources when blitting to bgr (yet) */  
+  if (is_bgr && (sysdep_display_params.depth == 32))
+    effect_index = EFFECT_UNKNOWN;
+  /* If we haven't found a usuable blit type, bail :( */
+  if (effect_index == EFFECT_UNKNOWN)
+  {
+    fprintf(stderr, "Error: the required colordepth is not supported with your display settings\n");
+    return NULL;
+  }
+
   effect_index += (sysdep_display_params.depth / 16) * EFFECT_COLOR_FORMATS;
   effect_index += sysdep_display_params.effect * 3 * EFFECT_COLOR_FORMATS;
 
@@ -539,24 +577,52 @@ blit_func_p sysdep_display_effect_open(void)
         switch(effect_index%EFFECT_COLOR_FORMATS)
         {
           case EFFECT_15:
-            for(r=0; r<32; r++)
-              for(g=0; g<32; g++)
-                for(b=0; b<32; b++)
-                {
-                  RGB2YUV(r*8,g*8,b*8,y,u,v);
-                  effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
-                    (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
-                }
+            if(!is_bgr)
+            {
+              for(r=0; r<32; r++)
+                for(g=0; g<32; g++)
+                  for(b=0; b<32; b++)
+                  {
+                    RGB2YUV(r*8,g*8,b*8,y,u,v);
+                    effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
+                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  }
+            }
+            else
+            {
+              for(r=0; r<32; r++)
+                for(g=0; g<32; g++)
+                  for(b=0; b<32; b++)
+                  {
+                    RGB2YUV(r*8,g*8,b*8,y,u,v);
+                    effect_rgb2yuv[(b<<10)|(g<<5)|r] = YUV_TO_XQ2X_YUV(
+                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  }
+            }
             break;
           case EFFECT_16:
-            for(r=0; r<32; r++)
-              for(g=0; g<64; g++)
-                for(b=0; b<32; b++)
-                {
-                  RGB2YUV(r*8,g*4,b*8,y,u,v);
-                  effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
-                    (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
-                }
+            if(!is_bgr)
+            {
+              for(r=0; r<32; r++)
+                for(g=0; g<64; g++)
+                  for(b=0; b<32; b++)
+                  {
+                    RGB2YUV(r*8,g*4,b*8,y,u,v);
+                    effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
+                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  }
+            }
+            else
+            {
+              for(r=0; r<32; r++)
+                for(g=0; g<64; g++)
+                  for(b=0; b<32; b++)
+                  {
+                    RGB2YUV(r*8,g*4,b*8,y,u,v);
+                    effect_rgb2yuv[(b<<11)|(g<<5)|r] = YUV_TO_XQ2X_YUV(
+                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  }
+            }
             break;
         }
       }
@@ -582,9 +648,18 @@ blit_func_p sysdep_display_effect_open(void)
       orig_palette_info_saved = 1;
       memset(&(sysdep_display_properties.palette_info), 0,
         sizeof(struct sysdep_palette_info));
-      sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
-      sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
-      sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
+      if (!is_bgr)
+      {
+        sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
+        sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
+        sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
+      }
+      else
+      {
+        sysdep_display_properties.palette_info.red_mask   = 0x000000FF;
+        sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
+        sysdep_display_properties.palette_info.blue_mask  = 0x00FF0000;
+      }
       if((effect_index%EFFECT_COLOR_FORMATS) == EFFECT_YUY2)
         need_yuv_lookup = 1;
       break;
