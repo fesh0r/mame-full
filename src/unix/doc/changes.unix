@@ -2,9 +2,21 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.100.1, 21 September 2005
-	- Everything from MAME 0.100 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.100 (http://x.mame.net/changes-mess.html).
+Release 0.100.1, 22 October 2005
+	- Everything from MAME 0.101 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.101 (http://x.mame.net/changes-mess.html).
+	- The messtest application builds again.
+	- When the LIRC configuration cannot be read, the joystick polling code no 
+	  longer tries to use LIRC.  This fixes a crash that occurs under memory 
+	  pressure.  (Paul "TBBle" Hampson)
+	- Enabling full keyboard emulation in the classic MESS UI once again 
+	  prevents keys such as P and Esc from being intercepted by the emulation 
+	  core.
+	- Added support for BGR visuals to the blit core for, e.g., Solaris.  (Hans 
+	  de Goede)
+
+Release 0.100, 21 September 2005
+	- Everything from MAME 0.100 and MESS 0.100.
 	- Using "make install" no longer strips debug symbols from the 
 	  executables.
 	- Improved support for OpenBSD, including fixing audio on 8-bit sound 
