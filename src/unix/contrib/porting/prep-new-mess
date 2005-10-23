@@ -40,6 +40,7 @@ if [ -n "$D2U" ]; then
 	$D2U `find . -name "*.vc" -print` 2> /dev/null
 	$D2U `find . -name "*.wce" -print` 2> /dev/null
 	$D2U `find . -name "*.xml" -print` 2> /dev/null
+	$D2U `find . -name "*.cfg" -print` 2> /dev/null
 	$D2U makefile.mes 2> /dev/null
 	$D2U makefile.vc 2> /dev/null
 	$D2U sysinfo.dat 2> /dev/null
