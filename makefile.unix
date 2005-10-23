@@ -50,13 +50,15 @@ TARGET = mame
 # BROKEN)
 # XMAME_NET = 1
 
-# Uncomment to use DRC MIPS3 engine
+# Uncomment to use DRC MIPS3 engine (faster emulation, but only works on x86-
+# compatible CPUs).
 # X86_MIPS3_DRC = 1
 
-# Uncomment to use DRC PowerPC engine
+# Uncomment to use DRC PowerPC engine (faster emulation, but only works on x86-
+# compatible CPUs).
 # X86_PPC_DRC = 1
 
-# Uncomment if you'd like to disable effects.  This can considerably speep 
+# Uncomment if you'd like to disable effects.  This can considerably speed 
 # up compilation of the blit files.
 # DISABLE_EFFECTS = 1
 
@@ -284,6 +286,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -march=athlon-xp
   # CFLAGS += -march=athlon-mp
   # CFLAGS += -march=athlon-4
+  # CFLAGS += -march=athlon64
 
   # x86 SIMD options that work only with newer versions of GCC:
   # CFLAGS += -mfpmath=sse
@@ -450,13 +453,13 @@ INSTALL =              /usr/bin/install
 INSTALL_USER =         root
 INSTALL_GROUP =        bin
 
-INSTALL_PROGRAM_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
-INSTALL_MAN_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
-INSTALL_DATA_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
-INSTALL_PROGRAM =	$(INSTALL) -c -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  555
-INSTALL_PROGRAM_SUID =	$(INSTALL) -c -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 4555
-INSTALL_MAN =		$(INSTALL) -c    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  444
-INSTALL_DATA =		$(INSTALL) -c    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
+INSTALL_PROGRAM_DIR =	$(INSTALL) -d -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
+INSTALL_MAN_DIR =	$(INSTALL) -d -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
+INSTALL_DATA_DIR =	$(INSTALL) -d -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
+INSTALL_PROGRAM =	$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  555
+INSTALL_PROGRAM_SUID =	$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 4555
+INSTALL_MAN =		$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  444
+INSTALL_DATA =		$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
 
 
 ###########################################################################
