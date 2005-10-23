@@ -724,9 +724,9 @@ static void update_palette(mame_display *display, int force_dirty)
 
 static void update_debug_display(mame_display *display)
 {
-        rectangle vis_area;
-        rectangle dirty_area;
-        
+	rectangle vis_area;
+	rectangle dirty_area;
+
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
@@ -762,7 +762,7 @@ static void update_debug_display(mame_display *display)
 	dirty_area.min_y = 0;
 	dirty_area.max_y = options.debug_height - 1;
 	sysdep_display_update(display->debug_bitmap, &vis_area,
-          &dirty_area, debug_palette, 0, 0);
+			&dirty_area, debug_palette, 0, 0);
 }
 
 static void update_effect(void)
@@ -871,17 +871,16 @@ void change_debugger_focus(int new_debugger_focus)
 		debugger_has_focus = new_debugger_focus;
 		if (new_debugger_focus)
 		{
-		        if((sysdep_display_change_params(&debug_params) &
-		            SYSDEP_DISPLAY_PROPERTIES_CHANGED) &&
-                           normal_palette)
-                        {
-                                sysdep_palette_destroy(normal_palette);
-                                normal_palette = NULL;
-                        }
-                }
+			if((sysdep_display_change_params(&debug_params) &
+						SYSDEP_DISPLAY_PROPERTIES_CHANGED) &&
+					normal_palette)
+			{
+				sysdep_palette_destroy(normal_palette);
+				normal_palette = NULL;
+			}
+		}
 		else
-		        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                  
+			normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
 	}
 }
 
