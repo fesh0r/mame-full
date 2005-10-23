@@ -8,7 +8,7 @@
 
 #include "sgi.h"
 
-#define VERBOSE_LEVEL ( 2 )
+#define VERBOSE_LEVEL ( 1 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
@@ -355,12 +355,12 @@ WRITE32_HANDLER( mc_w )
 		break;
 	case 0x00c0:
 	case 0x00c4:
-		verboselog( 2, "Memory Configuration Register 0 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 1, "Memory Configuration Register 0 Write: %08x (%08x)\n", data, mem_mask );
 		nMC_MemCfg0 = data;
 		break;
 	case 0x00c8:
 	case 0x00cc:
-		verboselog( 2, "Memory Configuration Register 1 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 1, "Memory Configuration Register 1 Write: %08x (%08x)\n", data, mem_mask );
 		nMC_MemCfg1 = data;
 		break;
 	case 0x00d0:
@@ -569,4 +569,10 @@ void mc_init()
 	nMC_DMAZoomByteCnt = 0;
 	tMC_UpdateTimer = timer_alloc( mc_update );
 	timer_adjust( tMC_UpdateTimer, TIME_IN_SEC(1.0/10000.0), 0, TIME_IN_SEC(1.0/10000.0) );
+
+	// if Indigo2, ID appropriately
+	if (!strcmp(Machine->gamedrv->name, "ip244415"))
+	{
+		nMC_SysID = 0x11;	// rev. B MC, EISA bus present
+	}
 }

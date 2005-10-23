@@ -55,6 +55,8 @@
 
 #define VERBOSE_LEVEL ( -1 )
 
+static UINT32 *ip22_mainram;
+
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
 	if( VERBOSE_LEVEL >= n_level )
@@ -733,26 +735,39 @@ static READ32_HANDLER( ffffffff_r )
 	return 0xffffffff;
 }
 
+// a bit hackish, but makes the memory detection work properly and allows a big cleanup of the mapping
+static WRITE32_HANDLER( ip22_write_ram )
+{
+	// if banks 2 or 3 are enabled, do nothing, we don't support that much memory
+	if (mc_r(0xc8/4, 0xffffffff) & 0x10001000)
+	{
+		// a random perturbation so the memory test fails
+		data ^= 0xffffffff;
+	}
+
+	// if banks 0 or 1 have 2 subbanks, also kill it, we only want 128 MB
+	if (mc_r(0xc0/4, 0xffffffff) & 0x40004000)
+	{
+		// a random perturbation so the memory test fails
+		data ^= 0xffffffff;
+	}
+
+	COMBINE_DATA(&ip22_mainram[offset]);
+}
+
 static ADDRESS_MAP_START( ip225015_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE( 0x00000000, 0x0007ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0x08000000, 0x0807ffff ) AM_RAM AM_SHARE(10)
-	AM_RANGE( 0x08080000, 0x08ffffff ) AM_RAM AM_SHARE(5)
-	AM_RANGE( 0x09000000, 0x097fffff ) AM_RAM AM_SHARE(6)
-	AM_RANGE( 0x0a000000, 0x0a7fffff ) AM_RAM AM_SHARE(7)
-	AM_RANGE( 0x0c000000, 0x0c7fffff ) AM_RAM AM_SHARE(8)
-	AM_RANGE( 0x10000000, 0x107fffff ) AM_RAM AM_SHARE(9)
-	AM_RANGE( 0x17f00000, 0x17ffffff ) AM_RAM AM_SHARE(11)
+	AM_RANGE( 0x00000000, 0x0007ffff ) AM_READWRITE( MRA32_BANK1, MWA32_BANK1 )	/* mirror of first 512k of main RAM */
+	AM_RANGE( 0x08000000, 0x0fffffff ) AM_RAM AM_SHARE(1) AM_BASE( &ip22_mainram ) AM_WRITE(ip22_write_ram)		/* 128 MB of main RAM */
 	AM_RANGE( 0x1f0f0000, 0x1f0f1fff ) AM_READWRITE( newport_rex3_r, newport_rex3_w )
 	AM_RANGE( 0x1fa00000, 0x1fa1ffff ) AM_READWRITE( mc_r, mc_w )
 	AM_RANGE( 0x1fb90000, 0x1fb9ffff ) AM_READWRITE( hpc3_hd_enet_r, hpc3_hd_enet_w )
-	AM_RANGE( 0x1fbb0000, 0x1fbbffff ) AM_RAM
+	AM_RANGE( 0x1fbb0000, 0x1fbb0003 ) AM_RAM 	/* unknown, but read a lot and discarded */
 	AM_RANGE( 0x1fbc0000, 0x1fbc7fff ) AM_READWRITE( hpc3_hd0_r, hpc3_hd0_w )
 	AM_RANGE( 0x1fbd9000, 0x1fbd93ff ) AM_READWRITE( hpc3_unk_r, hpc3_unk_w )
 	AM_RANGE( 0x1fbd9800, 0x1fbd9bff ) AM_READWRITE( pio4_r, pio4_w )
 	AM_RANGE( 0x1fbe0000, 0x1fbe04ff ) AM_READWRITE( rtc_r, rtc_w )
-	AM_RANGE( 0x1fc00000, 0x1fc7ffff ) AM_ROM AM_SHARE(2) AM_REGION( REGION_USER1, 0 )
-	AM_RANGE( 0x20000000, 0x203fffff ) AM_RAM AM_SHARE(5)
-	AM_RANGE( 0x22000000, 0x223fffff ) AM_RAM AM_SHARE(6)
+	AM_RANGE( 0x1fc00000, 0x1fc7ffff ) AM_ROM AM_REGION( REGION_USER1, 0 )
+	AM_RANGE( 0x20000000, 0x27ffffff ) AM_RAM AM_SHARE(1) AM_WRITE(ip22_write_ram)
 ADDRESS_MAP_END
 
 UINT32 nIntCounter;
@@ -775,6 +790,9 @@ static MACHINE_INIT( ip225015 )
 	RTC_REGISTERD = 0x80;
 
 	timer_set(TIME_IN_MSEC(1), 0, ip22_timer);
+
+	// set up low RAM mirror
+	memory_set_bankptr(1, ip22_mainram);
 }
 
 static void dump_chain(UINT32 ch_base)
@@ -867,13 +885,12 @@ static void scsi_irq(int state)
 				int words, sptr, twords;
 		
 				words = wd33c93_get_dma_count();
-
 				words /= 4;
 
 				wptr = program_read_dword(nHPC_SCSI0Descriptor);
 				sptr = 0;
 
-				printf("DMA from device: %d bytes @ %x\n", words, wptr);
+				printf("DMA from device: %d words @ %x\n", words, wptr);
 
 				dump_chain(nHPC_SCSI0Descriptor);
 
@@ -1047,7 +1064,7 @@ static void rtc_update(void)
 static INTERRUPT_GEN( ip22_vbl )
 {
 	nIntCounter++;
-	if(1) // nIntCounter == 60 )
+//	if( nIntCounter == 60 )
 	{
 		nIntCounter = 0;
 		rtc_update();
