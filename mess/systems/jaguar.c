@@ -10,34 +10,34 @@
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
-	========================================================================
-	MAIN CPU
-	========================================================================
+    ========================================================================
+    MAIN CPU
+    ========================================================================
 
-	------------------------------------------------------------
-	000000-3FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 0
-	400000-7FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 1
-	F00000-F000FF   R/W   xxxxxxxx xxxxxxxx   Tom Internal Registers
-	F00400-F005FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table A
-	F00600-F007FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table B
-	F00800-F00D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer A
-	F01000-F0159F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer B
-	F01800-F01D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer currently selected
-	F02000-F021FF   R/W   xxxxxxxx xxxxxxxx   GPU control registers
-	F02200-F022FF   R/W   xxxxxxxx xxxxxxxx   Blitter registers
-	F03000-F03FFF   R/W   xxxxxxxx xxxxxxxx   Local GPU RAM
-	F08800-F08D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer A
-	F09000-F0959F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer B
-	F09800-F09D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer currently selected
-	F0B000-F0BFFF   R/W   xxxxxxxx xxxxxxxx   32-bit access to local GPU RAM
-	F10000-F13FFF   R/W   xxxxxxxx xxxxxxxx   Jerry
-	F14000-F17FFF   R/W   xxxxxxxx xxxxxxxx   Joysticks and GPIO0-5
-	F18000-F1AFFF   R/W   xxxxxxxx xxxxxxxx   Jerry DSP
-	F1B000-F1CFFF   R/W   xxxxxxxx xxxxxxxx   Local DSP RAM
-	F1D000-F1DFFF   R     xxxxxxxx xxxxxxxx   Wavetable ROM
-	------------------------------------------------------------
+    ------------------------------------------------------------
+    000000-3FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 0
+    400000-7FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 1
+    F00000-F000FF   R/W   xxxxxxxx xxxxxxxx   Tom Internal Registers
+    F00400-F005FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table A
+    F00600-F007FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table B
+    F00800-F00D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer A
+    F01000-F0159F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer B
+    F01800-F01D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer currently selected
+    F02000-F021FF   R/W   xxxxxxxx xxxxxxxx   GPU control registers
+    F02200-F022FF   R/W   xxxxxxxx xxxxxxxx   Blitter registers
+    F03000-F03FFF   R/W   xxxxxxxx xxxxxxxx   Local GPU RAM
+    F08800-F08D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer A
+    F09000-F0959F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer B
+    F09800-F09D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer currently selected
+    F0B000-F0BFFF   R/W   xxxxxxxx xxxxxxxx   32-bit access to local GPU RAM
+    F10000-F13FFF   R/W   xxxxxxxx xxxxxxxx   Jerry
+    F14000-F17FFF   R/W   xxxxxxxx xxxxxxxx   Joysticks and GPIO0-5
+    F18000-F1AFFF   R/W   xxxxxxxx xxxxxxxx   Jerry DSP
+    F1B000-F1CFFF   R/W   xxxxxxxx xxxxxxxx   Local DSP RAM
+    F1D000-F1DFFF   R     xxxxxxxx xxxxxxxx   Wavetable ROM
+    ------------------------------------------------------------
 
 ***************************************************************************/
 
@@ -100,10 +100,11 @@ static MACHINE_INIT( jaguar )
 
 	*((UINT32 *) jaguar_gpu_ram) = 0x3d0dead;
 
-	memset(jaguar_shared_ram, 0, 0x400000);
+	memset(jaguar_shared_ram, 0, 0x200000);
 	memcpy(jaguar_shared_ram, rom_base, 0x10);
 	rom_base[0x53c / 4] = 0x67000002;
 
+#if 0
 	/* set up main CPU RAM/ROM banks */
 	memory_set_bankptr(3, jaguar_gpu_ram);
 
@@ -113,9 +114,10 @@ static MACHINE_INIT( jaguar )
 	memory_set_bankptr(12, jaguar_gpu_ram);
 	memory_set_bankptr(13, jaguar_dsp_ram);
 	memory_set_bankptr(14, jaguar_shared_ram);
+#endif
 	memory_set_bankptr(15, cart_base);
 	memory_set_bankptr(16, rom_base);
-	memory_set_bankptr(17, jaguar_gpu_ram);
+//	memory_set_bankptr(17, jaguar_gpu_ram);
 
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
@@ -135,7 +137,7 @@ static MACHINE_INIT( jaguar )
 
 /*************************************
  *
- *	32-bit access to the GPU
+ *  32-bit access to the GPU
  *
  *************************************/
 
@@ -154,7 +156,7 @@ static WRITE32_HANDLER( gpuctrl_w )
 
 /*************************************
  *
- *	32-bit access to the DSP
+ *  32-bit access to the DSP
  *
  *************************************/
 
@@ -173,7 +175,7 @@ static WRITE32_HANDLER( dspctrl_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *	Information from "The Jaguar Underground Documentation"
  *	by Klaus and Nat!
@@ -276,45 +278,42 @@ static WRITE32_HANDLER( joystick_w )
  *************************************/
 
 
-static ADDRESS_MAP_START( jaguar_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_MIRROR(0x200000)
+static ADDRESS_MAP_START( jaguar_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_SHARE(1) AM_MIRROR(0x200000)
 	AM_RANGE(0x800000, 0xdfffff) AM_ROM AM_BASE(&cart_base) AM_SIZE(&cart_size)
 	AM_RANGE(0xe00000, 0xe1ffff) AM_ROM AM_BASE(&rom_base) AM_SIZE(&rom_size)
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
-	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_BASE(&jaguar_gpu_clut)
+	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_BASE(&jaguar_gpu_clut) AM_SHARE(2)
 	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
 	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
-	AM_RANGE(0xf03000, 0xf03fff) AM_RAM AM_BASE(&jaguar_gpu_ram)
-	AM_RANGE(0xf0b000, 0xf0bfff) AM_RAMBANK(3)
+	AM_RANGE(0xf03000, 0xf03fff) AM_MIRROR(0x008000) AM_RAM AM_BASE(&jaguar_gpu_ram) AM_SHARE(3)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0xf14000, 0xf14003) AM_READWRITE(joystick_r, joystick_w)
 	AM_RANGE(0xf16000, 0xf1600b) AM_READ(cojag_gun_input_r)	// GPI02
 //	AM_RANGE(0xf17800, 0xf17803) AM_WRITE(latch_w)	// GPI04
 	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
 	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAM AM_BASE(&jaguar_dsp_ram)
+	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAM AM_BASE(&jaguar_dsp_ram) AM_SHARE(4)
 ADDRESS_MAP_END
 
 
 
 /*************************************
  *
- *	GPU memory handlers
+ *  GPU memory handlers
  *
  *************************************/
 
-static ADDRESS_MAP_START( gpu_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_RAMBANK(10)
-	AM_RANGE(0x200000, 0x3fffff) AM_RAMBANK(14)
+static ADDRESS_MAP_START( gpu_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_SHARE(1) AM_MIRROR(0x200000)
 	AM_RANGE(0x800000, 0xdfffff) AM_ROMBANK(15)
 	AM_RANGE(0xe00000, 0xe1ffff) AM_ROMBANK(16)
 
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
-	AM_RANGE(0xf00400, 0xf007ff) AM_RAMBANK(11)
+	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_SHARE(2)
 	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
 	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
-	AM_RANGE(0xf03000, 0xf03fff) AM_RAMBANK(12)
-	AM_RANGE(0xf0b000, 0xf0bfff) AM_RAMBANK(17)
+	AM_RANGE(0xf03000, 0xf03fff) AM_RAM AM_SHARE(3) AM_MIRROR(0x008000)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 ADDRESS_MAP_END
 
@@ -322,19 +321,18 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	DSP memory handlers
+ *  DSP memory handlers
  *
  *************************************/
 
-static ADDRESS_MAP_START( dsp_mem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_RAMBANK(10)
-	AM_RANGE(0x200000, 0x3fffff) AM_RAMBANK(14)
+static ADDRESS_MAP_START( dsp_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_SHARE(1) AM_MIRROR(0x200000)
 	AM_RANGE(0x800000, 0xdfffff) AM_ROMBANK(15)
 	AM_RANGE(0xe00000, 0xe1ffff) AM_ROMBANK(16)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
 	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAMBANK(13)
+	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAM AM_SHARE(4)
 	AM_RANGE(0xf1d000, 0xf1dfff) AM_ROM AM_BASE(&jaguar_wave_rom)
 ADDRESS_MAP_END
 
@@ -446,15 +444,15 @@ MACHINE_DRIVER_START( jaguar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 13295000)
-	MDRV_CPU_PROGRAM_MAP(jaguar_mem, 0)
+	MDRV_CPU_PROGRAM_MAP(jaguar_map,0)
 
 	MDRV_CPU_ADD(JAGUARGPU, 52000000/2)
 	MDRV_CPU_CONFIG(gpu_config)
-	MDRV_CPU_PROGRAM_MAP(gpu_mem, 0)
+	MDRV_CPU_PROGRAM_MAP(gpu_map,0)
 
 	MDRV_CPU_ADD(JAGUARDSP, 52000000/2)
 	MDRV_CPU_CONFIG(dsp_config)
-	MDRV_CPU_PROGRAM_MAP(dsp_mem, 0)
+	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -472,8 +470,10 @@ MACHINE_DRIVER_START( jaguar )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
