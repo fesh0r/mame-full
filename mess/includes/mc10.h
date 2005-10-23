@@ -9,15 +9,14 @@
 #ifndef MC10_H
 #define MC10_H
 
-extern void mc10_init_machine(void);
-extern READ8_HANDLER ( mc10_bfff_r );
-extern WRITE8_HANDLER ( mc10_bfff_w );
-extern READ8_HANDLER ( mc10_port1_r );
-extern READ8_HANDLER ( mc10_port2_r );
-extern WRITE8_HANDLER ( mc10_port1_w );
-extern WRITE8_HANDLER ( mc10_port2_w );
+DRIVER_INIT( mc10 );
+READ8_HANDLER ( mc10_bfff_r );
+WRITE8_HANDLER ( mc10_bfff_w );
+READ8_HANDLER ( mc10_port1_r );
+READ8_HANDLER ( mc10_port2_r );
+WRITE8_HANDLER ( mc10_port1_w );
+WRITE8_HANDLER ( mc10_port2_w );
 
-extern VIDEO_START( mc10 );
-extern WRITE8_HANDLER ( mc10_ram_w );
+VIDEO_START( mc10 );
 
 #endif /* MC10_H */

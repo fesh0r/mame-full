@@ -19,10 +19,7 @@
 
 static ADDRESS_MAP_START( mc10_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0100, 0x3fff) AM_NOP		/* unused */
-	AM_RANGE(0x4000, 0x4fff) AM_READWRITE(MRA8_RAM, mc10_ram_w)
-//	AM_RANGE(0x5000, 0xbffe) AM_RAM		/* expansion RAM */
 	AM_RANGE(0xbfff, 0xbfff) AM_READWRITE(mc10_bfff_r, mc10_bfff_w)
-//	AM_RANGE(0xc000, 0xdfff) AM_ROM		/* expansion ROM */
 	AM_RANGE(0xe000, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x0000)		/* ROM */
 ADDRESS_MAP_END
 
@@ -159,8 +156,11 @@ static void mc10_cassette_getinfo(struct IODevice *dev)
 
 SYSTEM_CONFIG_START(mc10)
 	CONFIG_DEVICE( mc10_cassette_getinfo )
+	CONFIG_RAM_DEFAULT	(4 * 1024)
+	CONFIG_RAM			(16 * 1024)
+	CONFIG_RAM			(32 * 1024)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */
-COMP( 1983, mc10,     0,		0,		mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" , 0)
+COMP( 1983, mc10,     0,		0,		mc10,     mc10,     mc10,     mc10,    "Tandy Radio Shack",  "MC-10" , 0)
 

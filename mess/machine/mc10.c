@@ -133,8 +133,8 @@ VIDEO_START( mc10 )
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_ORIGINAL_NTSC;
 	p.artifactdipswitch = 7;
-	p.ram = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x4000);
-	p.ramsize = 0x1000;
+	p.ram = mess_ram;
+	p.ramsize = mess_ram_size;
 	p.charproc = dragon_charproc;
 	p.initial_video_offset = 0;
 
@@ -162,14 +162,25 @@ WRITE8_HANDLER ( mc10_bfff_w )
 	schedule_full_refresh();
 }
 
-WRITE8_HANDLER ( mc10_ram_w )
-{
-	UINT8 *ram;
 
-	ram = (UINT8 *) memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x4000);
-	if (ram[offset] != data)
+
+static WRITE8_HANDLER ( mc10_ram_w )
+{
+	if (mess_ram[offset] != data)
 	{
 		m6847_touch_vram(offset);
-		ram[offset] = data;
+		mess_ram[offset] = data;
 	}
 }
+
+
+
+DRIVER_INIT( mc10 )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1,
+		0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1,
+		0, 0, mc10_ram_w);
+	memory_set_bankptr(1, mess_ram);
+}
+
