@@ -649,12 +649,14 @@ int osd_input_initpre(void)
 	if(lirc_readconfig(lircrc,&config,NULL)==0)
 	{
 		printf("Success reading lircrc!\n");
-	}
-	fcntl(sock,F_SETOWN,getpid());
-	flags=fcntl(sock,F_GETFL,0);
-	if(flags!=-1)
-	{
-		fcntl(sock,F_SETFL,flags|O_NONBLOCK);
+		fcntl(sock,F_SETOWN,getpid());
+		flags=fcntl(sock,F_GETFL,0);
+		if(flags!=-1)
+		{
+			fcntl(sock,F_SETFL,flags|O_NONBLOCK);
+		}
+	} else {
+		config = NULL;
 	}
 #endif
 #ifdef USE_LIGHTGUN_ABS_EVENT
@@ -1610,30 +1612,32 @@ void osd_poll_joysticks(void)
 	int ret;
 	/*printf("%s\n","Polling...");*/
 	/* Poll lirc */
-	lirc_nextcode(&code);
-	if (lirc_pressed != 0) 
-		lirc_pressed++;
-	if (code!=NULL) 
-	{
-		while((ret=lirc_code2char(config,code,&c))==0 && c!=NULL)
-		{
-			printf("Received command \"%s\"\n",c);
-			struct sysdep_display_keyboard_event event;
-			event.press = 1;
-			event.scancode = atoi(c);
+	if (config != NULL) {
+		lirc_nextcode(&code);
+		if (lirc_pressed != 0) 
 			lirc_pressed++;
-			lirc_scancode = event.scancode;
-			xmame_keyboard_register_event(&event);
-			if (lirc_pressed > MIN_LIRC_WAIT)
+		if (code!=NULL) 
+		{
+			while((ret=lirc_code2char(config,code,&c))==0 && c!=NULL)
 			{
-				event.press = 0;
-				event.scancode = lirc_scancode;
-				lirc_pressed = 0;
+				printf("Received command \"%s\"\n",c);
+				struct sysdep_display_keyboard_event event;
+				event.press = 1;
+				event.scancode = atoi(c);
+				lirc_pressed++;
+				lirc_scancode = event.scancode;
 				xmame_keyboard_register_event(&event);
+				if (lirc_pressed > MIN_LIRC_WAIT)
+				{
+					event.press = 0;
+					event.scancode = lirc_scancode;
+					lirc_pressed = 0;
+					xmame_keyboard_register_event(&event);
+				}
 			}
+			free(code);
+/*			if(ret==-1) break;*/
 		}
-		free(code);
-/*		if(ret==-1) break;*/
 	}
 	/* End lirc poll */
 #endif
