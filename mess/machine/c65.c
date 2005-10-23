@@ -35,36 +35,22 @@ UINT8 *c65_interface;
 /* processor has only 1 mega address space !? */
 /* and system 8 megabyte */
 /* dma controller and bankswitch hardware ?*/
-static  READ8_HANDLER(c65_read_mem)
+static READ8_HANDLER(c65_read_mem)
 {
-	int data=0;
-
-	if (offset<0x800000)
-		data=c64_memory[offset];
-
-#if 0
-	if (offset<0x100000)
-	else data=c64_memory[offset];
-#endif
-
-	return data;
+	UINT8 result;
+	if (offset <= 0x0FFFF)
+		result = c64_memory[offset];
+	else
+		result = program_read_byte(offset);
+	return result;
 }
 
 static WRITE8_HANDLER(c65_write_mem)
 {
-	if (offset<0x20000)
-		c64_memory[offset]=data;
-	else if (offset<0x80000) ;
-	else if (offset<0x100000) {
-		if (C65_MAIN_MEMORY==C65_512KB) c64_memory[offset]=data;
-	} else if (offset<0x400000) ;
-	else if (offset<0x800000) {
-		if (C65_MAIN_MEMORY==C65_4096KB) c64_memory[offset]=data;
-	}
-#if 0
-	if (offset<0x100000) program_write_byte_8(offset,data);
-	else c64_memory[offset]=data;
-#endif
+	if (offset <= 0x0FFFF)
+		c64_memory[offset] = data;
+	else
+		program_write_byte(offset, data);
 }
 
 static struct {
@@ -514,7 +500,7 @@ static WRITE8_HANDLER ( c65_write_io_dc00 )
 	}
 }
 
-static  READ8_HANDLER ( c65_read_io )
+static READ8_HANDLER ( c65_read_io )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -549,7 +535,7 @@ static  READ8_HANDLER ( c65_read_io )
 	return 0xff;
 }
 
-static  READ8_HANDLER ( c65_read_io_dc00 )
+static READ8_HANDLER ( c65_read_io_dc00 )
 {
 	switch(offset&0x300) {
 	case 0x000:
@@ -769,8 +755,15 @@ static int c65_dma_read_color (int offset)
 
 static void c65_common_driver_init (void)
 {
-	c65=1;
-	c64_tape_on=0;
+	c64_memory = auto_malloc(0x10000);
+	memory_set_bankptr(11, c64_memory + 0x00000);
+	memory_set_bankptr(12, c64_memory + 0x08000);
+	memory_set_bankptr(13, c64_memory + 0x0a000);
+	memory_set_bankptr(14, c64_memory + 0x0c000);
+	memory_set_bankptr(15, c64_memory + 0x0e000);
+
+	c65 = 1;
+	c64_tape_on = 0;
 	/*memset(c64_memory+0x40000, 0, 0x800000-0x40000); */
 
 	cia6526_init();
