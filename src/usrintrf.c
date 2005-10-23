@@ -339,11 +339,6 @@ static UINT32 menu_file_manager(UINT32 state);
 static UINT32 menu_tape_control(UINT32 state);
 #endif
 
-/* XMAME-specific */
-extern int rapidfire_enable;
-int setrapidfire(int selected);
-static UINT32 menu_rapidfire(UINT32 state);
-
 static int sprintf_game_info(char *buf);
 
 
@@ -627,7 +622,7 @@ void CLIB_DECL ui_popup(const char *text,...)
 	int seconds;
 	va_list arg;
 	va_start(arg,text);
-	vsnprintf(popup_text,sizeof(popup_text),text,arg);
+	vsprintf(popup_text,text,arg);
 	va_end(arg);
 	seconds = strlen(popup_text) / 40 + 2;
 	popup_text_counter = seconds * Machine->refresh_rate;
@@ -638,7 +633,7 @@ void CLIB_DECL ui_popup_time(int seconds, const char *text,...)
 {
 	va_list arg;
 	va_start(arg,text);
-	vsnprintf(popup_text,sizeof(popup_text),text,arg);
+	vsprintf(popup_text,text,arg);
 	va_end(arg);
 	popup_text_counter = seconds * Machine->refresh_rate;
 }
@@ -1408,10 +1403,6 @@ do { \
 	/* add memory card menu */
 	if (memcard_intf.create != NULL && memcard_intf.load != NULL && memcard_intf.save != NULL && memcard_intf.eject != NULL)
 		ADD_MENU(UI_memorycard, menu_memory_card, 0);
-
-	/* XMAME-specific */
-	if (rapidfire_enable != 0)
-   	        ADD_MENU(UI_rapidfire, menu_rapidfire, 1);
 
 	/* add reset and exit menus */
 	ADD_MENU(UI_resetgame, menu_reset_game, 0);
@@ -2331,22 +2322,6 @@ static UINT32 menu_tape_control(UINT32 state)
 	return result;
 }
 #endif
-
-
-
-/*************************************
- *
- *  XMAME-specific menu(s)
- *
- *************************************/
-
-static UINT32 menu_rapidfire(UINT32 state)
-{
-	int result = setrapidfire(state);
-	if (result == 0)
-	        return ui_menu_stack_pop();
-	return result;
-}
 
 
 
