@@ -125,84 +125,46 @@ when problems start with -log and look into error.log file
 #include "includes/cbmieeeb.h"
 /*#include "includes/vc1541.h" */
 
-static ADDRESS_MAP_START( pet_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x8000, 0x83ff) AM_READ( MRA8_RAM )
-	AM_RANGE(0xa000, 0xe7ff) AM_READ( MRA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_READ( pia_0_r )
-	AM_RANGE(0xe820, 0xe823) AM_READ( pia_1_r )
-	AM_RANGE(0xe840, 0xe84f) AM_READ( via_0_r )
+static ADDRESS_MAP_START(pet_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
+	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0xa000, 0xe7ff) AM_ROM
+	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0xe840, 0xe84f) AM_READWRITE(via_0_r, via_0_w)
 /*	{0xe900, 0xe91f, cbm_ieee_state }, // for debugging */
-	AM_RANGE(0xf000, 0xffff) AM_READ( MRA8_ROM )
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pet_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE( MWA8_RAM) AM_BASE( &pet_memory)
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
-	AM_RANGE(0xa000, 0xe7ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_WRITE( pia_0_w )
-	AM_RANGE(0xe820, 0xe823) AM_WRITE( pia_1_w )
-	AM_RANGE(0xe840, 0xe84f) AM_WRITE( via_0_w )
-	AM_RANGE(0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+static ADDRESS_MAP_START( pet40_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
+	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0xa000, 0xe7ff) AM_ROM
+	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0xe840, 0xe84f) AM_READWRITE(via_0_r, via_0_w)
+	AM_RANGE(0xe880, 0xe881) AM_READWRITE(crtc6845_0_port_r, crtc6845_0_port_w)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pet40_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x8000, 0x83ff) AM_READ( MRA8_RAM )
-	AM_RANGE(0xa000, 0xe7ff) AM_READ( MRA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_READ( pia_0_r )
-	AM_RANGE(0xe820, 0xe823) AM_READ( pia_1_r )
-	AM_RANGE(0xe840, 0xe84f) AM_READ( via_0_r )
-	AM_RANGE(0xe880, 0xe881) AM_READ( crtc6845_0_port_r )
-	AM_RANGE(0xf000, 0xffff) AM_READ( MRA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pet40_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE( MWA8_RAM) AM_BASE( &pet_memory)
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
-	AM_RANGE(0xa000, 0xe7ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_WRITE( pia_0_w )
-	AM_RANGE(0xe820, 0xe823) AM_WRITE( pia_1_w )
-	AM_RANGE(0xe840, 0xe84f) AM_WRITE( via_0_w )
-	AM_RANGE(0xe880, 0xe881) AM_WRITE( crtc6845_0_port_w )
-	AM_RANGE(0xf000, 0xffff) AM_WRITE( MWA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pet80_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_READ( MRA8_RAM )
-	AM_RANGE(0x8000, 0x8fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE(0x9000, 0x9fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE(0xa000, 0xafff) AM_READ( MRA8_BANK3 )
-	AM_RANGE(0xb000, 0xbfff) AM_READ( MRA8_BANK4 )
-	AM_RANGE(0xc000, 0xe7ff) AM_READ( MRA8_BANK6 )
+static ADDRESS_MAP_START( pet80_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
+	AM_RANGE(0x8000, 0x8fff) AM_RAMBANK(1) AM_BASE(&videoram)
+	AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(2)
+	AM_RANGE(0xa000, 0xafff) AM_RAMBANK(3)
+	AM_RANGE(0xb000, 0xbfff) AM_RAMBANK(4)
+	AM_RANGE(0xc000, 0xe7ff) AM_RAMBANK(6)
 #if 1
-	AM_RANGE(0xe800, 0xefff) AM_READ( MRA8_BANK7 )
+	AM_RANGE(0xe800, 0xefff) AM_RAMBANK(7)
 #else
-	AM_RANGE(0xe810, 0xe813) AM_READ( pia_0_r )
-	AM_RANGE(0xe820, 0xe823) AM_READ( pia_1_r )
-	AM_RANGE(0xe840, 0xe84f) AM_READ( via_0_r )
-	AM_RANGE(0xe880, 0xe881) AM_READ( crtc6845_0_port_r )
+	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0xe840, 0xe84f) AM_READWRITE(via_0_r, via_0_w)
+	AM_RANGE(0xe880, 0xe881) AM_READWRITE(crtc6845_0_port_r, crtc6845_0_port_w)
 #endif
-	AM_RANGE(0xf000, 0xffff) AM_READ( MRA8_BANK8 )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pet80_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE( MWA8_RAM) AM_BASE( &pet_memory)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE( MWA8_BANK1) AM_BASE( &videoram )
-	AM_RANGE(0x9000, 0x9fff) AM_WRITE( MWA8_BANK2 )
-	AM_RANGE(0xa000, 0xafff) AM_WRITE( MWA8_BANK3 )
-	AM_RANGE(0xb000, 0xbfff) AM_WRITE( MWA8_BANK4 )
-	AM_RANGE(0xc000, 0xe7ff) AM_WRITE( MWA8_BANK6 )
-#if 1
-	AM_RANGE(0xe800, 0xefff) AM_WRITE( MWA8_BANK7 )
-#else
-	AM_RANGE(0xe810, 0xe813) AM_WRITE( pia_0_w )
-	AM_RANGE(0xe820, 0xe823) AM_WRITE( pia_1_w )
-	AM_RANGE(0xe840, 0xe84f) AM_WRITE( via_0_w )
-	AM_RANGE(0xe880, 0xe881) AM_WRITE( crtc6845_0_port_w )
-#endif
-	AM_RANGE(0xf000, 0xffef) AM_WRITE( MWA8_BANK8 )
-    AM_RANGE(0xfff1, 0xffff) AM_WRITE( MWA8_BANK9 )
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_BANK8)
+	AM_RANGE(0xf000, 0xffef) AM_WRITE(MWA8_BANK8)
+	AM_RANGE(0xfff1, 0xffff) AM_WRITE(MWA8_BANK9)
 ADDRESS_MAP_END
 
 
@@ -221,56 +183,31 @@ ADDRESS_MAP_END
         bit 7    1=enable system latch
 
 */
-static ADDRESS_MAP_START( superpet_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ( MRA8_RAM )
-	AM_RANGE(0xa000, 0xe7ff) AM_READ( MRA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_READ( pia_0_r )
-	AM_RANGE(0xe820, 0xe823) AM_READ( pia_1_r )
-	AM_RANGE(0xe840, 0xe84f) AM_READ( via_0_r )
-	AM_RANGE(0xe880, 0xe881) AM_READ( crtc6845_0_port_r )
+static ADDRESS_MAP_START( superpet_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0xa000, 0xe7ff) AM_ROM
+	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0xe840, 0xe84f) AM_READWRITE(via_0_r, via_0_w)
+	AM_RANGE(0xe880, 0xe881) AM_READWRITE(crtc6845_0_port_r, crtc6845_0_port_w)
 	/* 0xefe0, 0xefe3, mos 6702 */
 	/* 0xeff0, 0xeff3, acia6551 */
-	AM_RANGE(0xeff8, 0xefff) AM_READ( superpet_r )
-	AM_RANGE(0xf000, 0xffff) AM_READ( MRA8_ROM )
+	AM_RANGE(0xeff8, 0xefff) AM_READWRITE(superpet_r, superpet_w)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( superpet_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE( MWA8_RAM) AM_BASE( &pet_memory)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
-	AM_RANGE(0xa000, 0xe7ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_WRITE( pia_0_w )
-	AM_RANGE(0xe820, 0xe823) AM_WRITE( pia_1_w )
-	AM_RANGE(0xe840, 0xe84f) AM_WRITE( via_0_w )
-	AM_RANGE(0xe880, 0xe881) AM_WRITE( crtc6845_0_port_w )
-	AM_RANGE(0xeff8, 0xefff) AM_WRITE( superpet_w )
-	AM_RANGE(0xf000, 0xffff) AM_WRITE( MWA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( superpet_m6809_readmem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_READ( MRA8_BANK1)
-	AM_RANGE(0x8000, 0x87ff) AM_READ( MRA8_BANK2 )
-    AM_RANGE(0x9000, 0x9fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE(0xa000, 0xe7ff) AM_READ( MRA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_READ( pia_0_r )
-	AM_RANGE(0xe820, 0xe823) AM_READ( pia_1_r )
-	AM_RANGE(0xe840, 0xe84f) AM_READ( via_0_r )
-	AM_RANGE(0xe880, 0xe881) AM_READ( crtc6845_0_port_r )
-	AM_RANGE(0xeff8, 0xefff) AM_READ( superpet_r )
-	AM_RANGE(0xf000, 0xffff) AM_READ( MRA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( superpet_m6809_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE( MWA8_BANK1 ) /* same memory as m6502 */
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE( videoram_w ) /* same memory as m6502 */
-    AM_RANGE(0x9000, 0x9fff) AM_WRITE( MWA8_BANK3 ) /* 64 kbyte ram turned in */
-	AM_RANGE(0xa000, 0xe7ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE(0xe810, 0xe813) AM_WRITE( pia_0_w )
-	AM_RANGE(0xe820, 0xe823) AM_WRITE( pia_1_w )
-	AM_RANGE(0xe840, 0xe84f) AM_WRITE( via_0_w )
-	AM_RANGE(0xe880, 0xe881) AM_WRITE( crtc6845_0_port_w )
-	AM_RANGE(0xeff8, 0xefff) AM_WRITE( superpet_w )
-	AM_RANGE(0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+static ADDRESS_MAP_START( superpet_m6809_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)	/* same memory as m6502 */
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_BANK2, videoram_w)	/* same memory as m6502 */
+    AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(3)	/* 64 kbyte ram turned in */
+	AM_RANGE(0xa000, 0xe7ff) AM_ROM
+	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0xe840, 0xe84f) AM_READWRITE(via_0_r, via_0_w)
+	AM_RANGE(0xe880, 0xe881) AM_READWRITE(crtc6845_0_port_r, crtc6845_0_port_w)
+	AM_RANGE(0xeff8, 0xefff) AM_READWRITE(superpet_r, superpet_w)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -885,7 +822,7 @@ ROM_END
 static MACHINE_DRIVER_START( pet )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 7833600)        /* 7.8336 Mhz */
-	MDRV_CPU_PROGRAM_MAP(pet_readmem, pet_writemem)
+	MDRV_CPU_PROGRAM_MAP(pet_mem, 0)
 	MDRV_CPU_VBLANK_INT(pet_frame_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -910,7 +847,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( pet40 )
 	MDRV_IMPORT_FROM( pet )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( pet40_readmem, pet40_writemem )
+	MDRV_CPU_PROGRAM_MAP( pet40_mem, 0 )
 	MDRV_VIDEO_UPDATE( pet40 )
 MACHINE_DRIVER_END
 
@@ -924,7 +861,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( pet80 )
 	MDRV_IMPORT_FROM( pet )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( pet80_readmem, pet80_writemem )
+	MDRV_CPU_PROGRAM_MAP( pet80_mem, 0 )
 
     /* video hardware */
 #ifdef PET_TEST_CODE
@@ -948,11 +885,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( superpet )
 	MDRV_IMPORT_FROM( pet80 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( superpet_readmem, superpet_writemem )
+	MDRV_CPU_PROGRAM_MAP( superpet_mem, 0 )
 
 	/* m6809 cpu */
 	MDRV_CPU_ADD_TAG("main", M6809, 1000000)
-	MDRV_CPU_PROGRAM_MAP(superpet_m6809_readmem, superpet_m6809_writemem)
+	MDRV_CPU_PROGRAM_MAP(superpet_m6809_mem, 0)
 	MDRV_CPU_VBLANK_INT(pet_frame_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(50)
@@ -960,12 +897,6 @@ static MACHINE_DRIVER_START( superpet )
     /* video hardware */
 	MDRV_GFXDECODE( superpet_gfxdecodeinfo )
 MACHINE_DRIVER_END
-
-#define init_pet1 pet_basic1_driver_init
-#define init_pet pet_driver_init
-#define init_pet40 pet40_driver_init
-#define init_cbm80 cbm80_driver_init
-#define init_superpet superpet_driver_init
 
 #define rom_cbm30 rom_pet2
 #define rom_cbm30 rom_pet2
@@ -1018,7 +949,7 @@ SYSTEM_CONFIG_START(pet4)
 	CONFIG_DEVICE(pet_quickload_getinfo)
 SYSTEM_CONFIG_END
 
-/*	   YEAR 	NAME		COMPAT	PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */
+/*    YEAR  NAME		COMPAT	PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */
 COMP (1977,	pet,		0,		0,		pet,		pet,	 pet1,	  pet,		"Commodore Business Machines Co.",  "PET2001/CBM20xx Series (Basic 1)",            GAME_NO_SOUND)
 COMP (1979,	cbm30,		0,		pet,	pet,		pet,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2)",                    GAME_NO_SOUND)
 COMP (1979,	cbm30b, 	0,		pet,	pet,		petb,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2) (business keyboard)",GAME_NO_SOUND)

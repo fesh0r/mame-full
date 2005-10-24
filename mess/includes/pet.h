@@ -210,16 +210,16 @@ extern UINT8 *pet_videoram;
 extern UINT8 *superpet_memory;
 
 WRITE8_HANDLER(cbm8096_w);
-extern  READ8_HANDLER(superpet_r);
+extern READ8_HANDLER(superpet_r);
 extern WRITE8_HANDLER(superpet_w);
 
-extern void pet_driver_init (void);
-extern void pet_basic1_driver_init (void);
-extern void pet40_driver_init (void);
-extern void cbm80_driver_init (void);
-extern void superpet_driver_init(void);
-extern MACHINE_INIT( pet );
-extern INTERRUPT_GEN( pet_frame_interrupt );
+DRIVER_INIT( pet );
+DRIVER_INIT( pet1 );
+DRIVER_INIT( pet40 );
+DRIVER_INIT( cbm80 );
+DRIVER_INIT( superpet );
+MACHINE_INIT( pet );
+INTERRUPT_GEN( pet_frame_interrupt );
 
 void pet_rom_load(void);
 

@@ -444,43 +444,43 @@ static void pet_common_driver_init (void)
 	cbm_ieee_open();
 }
 
-void pet_driver_init (void)
+DRIVER_INIT( pet )
 {
 	pet_common_driver_init ();
 	pet_vh_init();
 }
 
-void pet_basic1_driver_init (void)
+DRIVER_INIT( pet1 )
 {
-	pet_basic1=1;
+	pet_basic1 = 1;
 	pet_common_driver_init ();
 	pet_vh_init();
 }
 
 static struct crtc6845_config crtc_pet= { 800000 /*?*/};
 
-void pet40_driver_init (void)
+DRIVER_INIT( pet40 )
 {
 	pet_common_driver_init ();
 	pet_vh_init();
 	crtc6845_init(&crtc_pet);
 }
 
-void cbm80_driver_init (void)
+DRIVER_INIT( cbm80 )
 {
-	cbm8096=1;
+	cbm8096 = 1;
 	pet_common_driver_init ();
-	videoram_size=0x800;
+	videoram_size = 0x800;
 	pet80_vh_init();
 	crtc6845_init(&crtc_pet);
 }
 
-void superpet_driver_init(void)
+DRIVER_INIT( superpet )
 {
-	superpet=1;
+	superpet = 1;
 	pet_common_driver_init ();
 
-	superpet_memory=memory_region(REGION_CPU2+0x10000);
+	superpet_memory = memory_region(REGION_CPU2+0x10000);
 
 	memory_set_bankptr(3, superpet_memory);
 	memory_set_context(1);
