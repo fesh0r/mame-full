@@ -1845,10 +1845,6 @@ static int allocate_memory(void)
 {
 	int cpunum, spacenum;
 
-	/* don't do it for drivers that don't have ROM (MESS needs this) */
-	if (Machine->gamedrv->rom == 0)
-		return 1;
-
 	/* loop over all CPUs and memory spaces */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
