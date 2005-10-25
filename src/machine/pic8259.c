@@ -1,13 +1,13 @@
 /**********************************************************************
 
-	8259 PIC interface and emulation
+    8259 PIC interface and emulation
 
-	The 8259 is a programmable interrupt controller used to multiplex
-	interrupts for x86 and other computers.  The chip is set up by
-	writing a series of Initialization Command Words (ICWs) after which
-	the chip is operational and capable of dispatching interrupts.  After
-	this, Operation Command Words (OCWs) can be written to control further
-	behavior.
+    The 8259 is a programmable interrupt controller used to multiplex
+    interrupts for x86 and other computers.  The chip is set up by
+    writing a series of Initialization Command Words (ICWs) after which
+    the chip is operational and capable of dispatching interrupts.  After
+    this, Operation Command Words (OCWs) can be written to control further
+    behavior.
 
 **********************************************************************/
 
@@ -100,7 +100,7 @@ static void pic8259_timerproc(int which)
 	UINT8 mask;
 
 	/* check the various IRQs */
-	for (irq = 0; irq < IRQ_COUNT; irq++) 
+	for (irq = 0; irq < IRQ_COUNT; irq++)
 	{
 		mask = 1 << irq;
 
@@ -145,7 +145,7 @@ void pic8259_set_irq_line(int which, int irq, int state)
 			if (LOG_GENERAL)
 				logerror("pic8259_set_irq_line(): PIC #%d set IRQ line #%d\n", which, irq);
 
-			pic[which].irq_lines |= 1 << irq;		
+			pic[which].irq_lines |= 1 << irq;
 			pic[which].pending |= 1 << irq;
 			pic8259_set_timer(which);
 		}
