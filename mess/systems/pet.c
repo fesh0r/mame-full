@@ -148,8 +148,8 @@ static ADDRESS_MAP_START( pet40_mem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pet80_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
-	AM_RANGE(0x8000, 0x8fff) AM_RAMBANK(1) AM_BASE(&videoram)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0x8fff) AM_RAMBANK(1)
 	AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(2)
 	AM_RANGE(0xa000, 0xafff) AM_RAMBANK(3)
 	AM_RANGE(0xb000, 0xbfff) AM_RAMBANK(4)
@@ -184,8 +184,8 @@ ADDRESS_MAP_END
 
 */
 static ADDRESS_MAP_START( superpet_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_SHARE(1) AM_BASE(&pet_memory)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_SHARE(2) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
@@ -198,9 +198,9 @@ static ADDRESS_MAP_START( superpet_mem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( superpet_m6809_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)	/* same memory as m6502 */
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_BANK2, videoram_w)	/* same memory as m6502 */
-    AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(3)	/* 64 kbyte ram turned in */
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_SHARE(1)	/* same memory as m6502 */
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_SHARE(2)	/* same memory as m6502 */
+    AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(1)	/* 64 kbyte ram turned in */
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
@@ -691,7 +691,7 @@ ROM_START (superpet)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
     ROM_LOAD ("901474.04", 0xe000, 0x800, CRC(abb000e7))
     ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
-	ROM_REGION (0x20000, REGION_CPU2, 0)
+	ROM_REGION (0x10000, REGION_CPU2, 0)
     ROM_LOAD ("901898.01", 0xa000, 0x1000, CRC(728a998b))
     ROM_LOAD ("901898.02", 0xb000, 0x1000, CRC(6beb7c62))
     ROM_LOAD ("901898.03", 0xc000, 0x1000, CRC(5db4983d))

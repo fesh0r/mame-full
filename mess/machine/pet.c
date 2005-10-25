@@ -392,28 +392,36 @@ WRITE8_HANDLER(cbm8096_w)
 	}
 }
 
- READ8_HANDLER(superpet_r)
+READ8_HANDLER(superpet_r)
 {
 	return 0xff;
 }
 
-extern WRITE8_HANDLER(superpet_w)
+WRITE8_HANDLER(superpet_w)
 {
-	switch (offset) {
-	case 6:case 7:
-		spet.rom=data&1;
+	switch (offset)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			/* 3: 1 pull down diagnostic pin on the userport
+			   1: 1 if jumpered programable ram r/w
+			   0: 0 if jumpered programable m6809, 1 m6502 selected */
+			break;
 
-		break;
-	case 4:case 5:
-		spet.bank=data&0xf;
-		memory_set_bankptr(3,superpet_memory+(spet.bank<<12));
-		/* 7 low writeprotects systemlatch */
-		break;
-	case 0:case 1:case 2:case 3:
-		/* 3: 1 pull down diagnostic pin on the userport
-		   1: 1 if jumpered programable ram r/w
-		   0: 0 if jumpered programable m6809, 1 m6502 selected */
-		break;
+		case 4:
+		case 5:
+			spet.bank = data & 0xf;
+			memory_configure_bank(1, 0, 16, superpet_memory, 0x1000);
+			memory_set_bank(1, spet.bank);
+			/* 7 low writeprotects systemlatch */
+			break;
+
+		case 6:
+		case 7:
+			spet.rom = data & 1;
+			break;
 	}
 }
 
@@ -457,7 +465,7 @@ DRIVER_INIT( pet1 )
 	pet_vh_init();
 }
 
-static struct crtc6845_config crtc_pet= { 800000 /*?*/};
+static struct crtc6845_config crtc_pet = { 800000 /*?*/};
 
 DRIVER_INIT( pet40 )
 {
@@ -469,7 +477,13 @@ DRIVER_INIT( pet40 )
 DRIVER_INIT( cbm80 )
 {
 	cbm8096 = 1;
+	pet_memory = memory_region(REGION_CPU1);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, MRA8_BANK10);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, MWA8_BANK10);
+	memory_set_bankptr(10, pet_memory);
+
 	pet_common_driver_init ();
+	videoram = &pet_memory[0x8000];
 	videoram_size = 0x800;
 	pet80_vh_init();
 	crtc6845_init(&crtc_pet);
@@ -480,14 +494,10 @@ DRIVER_INIT( superpet )
 	superpet = 1;
 	pet_common_driver_init ();
 
-	superpet_memory = memory_region(REGION_CPU2+0x10000);
+	superpet_memory = auto_malloc(0x10000);
 
-	memory_set_bankptr(3, superpet_memory);
-	memory_set_context(1);
-	memory_set_bankptr(1, pet_memory);
-	memory_set_bankptr(2, pet_memory+0x8000);
-	memory_set_bankptr(3, superpet_memory);
-	memory_set_context(0);
+	memory_configure_bank(1, 0, 16, superpet_memory, 0x1000);
+	memory_set_bank(1, 0);
 
 	superpet_vh_init();
 	crtc6845_init(&crtc_pet);
@@ -498,16 +508,20 @@ MACHINE_INIT( pet )
 	via_reset();
 	pia_reset();
 
-	if (superpet) {
-		spet.rom=0;
-		if (M6809_SELECT) {
+	if (superpet)
+	{
+		spet.rom = 0;
+		if (M6809_SELECT)
+		{
 			cpunum_set_input_line(0, INPUT_LINE_HALT, 1);
 			cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
-			pet_font=2;
-		} else {
+			pet_font = 2;
+		}
+		else
+		{
 			cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
 			cpunum_set_input_line(0, INPUT_LINE_HALT, 1);
-			pet_font=0;
+			pet_font = 0;
 		}
 	}
 
@@ -534,10 +548,14 @@ MACHINE_INIT( pet )
 		break;
 	}
 
-	if (cbm8096) {
-		if (CBM8096_MEMORY) {
+	if (cbm8096)
+	{
+		if (CBM8096_MEMORY)
+		{
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff0, 0xfff0, 0, 0, cbm8096_w);
-		} else {
+		}
+		else
+		{
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff0, 0xfff0, 0, 0, MWA8_NOP);
 		}
 		cbm8096_w(0,0);
