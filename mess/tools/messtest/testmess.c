@@ -16,15 +16,15 @@
 #include "pool.h"
 #include "sound/wavwrite.h"
 
-enum messtest_running_state
+typedef enum
 {
 	STATE_READY,
 	STATE_INCOMMAND,
 	STATE_ABORTED,
 	STATE_DONE
-};
+} messtest_running_state_t;
 
-enum messtest_command_type
+typedef enum
 {
 	MESSTEST_COMMAND_END,
 	MESSTEST_COMMAND_WAIT,
@@ -38,11 +38,11 @@ enum messtest_command_type
 	MESSTEST_COMMAND_IMAGE_PRELOAD,
 	MESSTEST_COMMAND_VERIFY_MEMORY,
 	MESSTEST_COMMAND_VERIFY_IMAGE
-};
+} messtest_command_type_t;
 
 struct messtest_command
 {
-	enum messtest_command_type command_type;
+	messtest_command_type_t command_type;
 	union
 	{
 		double wait_time;
@@ -95,16 +95,16 @@ struct messtest_specific_state
 	struct messtest_command current_command;
 };
 
-enum messtest_result
+typedef enum
 {
 	MESSTEST_RESULT_SUCCESS,
 	MESSTEST_RESULT_STARTFAILURE,
 	MESSTEST_RESULT_RUNTIMEFAILURE
-};
+} messtest_result_t;
 
 struct messtest_results
 {
-	enum messtest_result rc;
+	messtest_result_t rc;
 	UINT64 runtime_hash;	/* A value that is a hash taken from certain runtime parameters; used to detect different execution paths */
 };
 
@@ -113,7 +113,8 @@ struct messtest_results
 #define MESSTEST_ALWAYS_DUMP_SCREENSHOT		1
 
 
-static enum messtest_running_state state;
+static messtest_running_state_t state;
+static int had_failure;
 static double wait_target;
 static double final_time;
 static const struct messtest_command *current_command;
@@ -172,7 +173,10 @@ static void dump_screenshot(void)
 		}
 	}
 	if (is_blank)
+	{
+		had_failure = TRUE;
 		report_message(MSG_FAILURE, "Screenshot is blank");
+	}
 }
 
 
@@ -201,10 +205,10 @@ void CLIB_DECL osd_die(const char *text,...)
 
 
 
-static enum messtest_result run_test(int flags, struct messtest_results *results)
+static messtest_result_t run_test(int flags, struct messtest_results *results)
 {
 	int driver_num;
-	enum messtest_result rc;
+	messtest_result_t rc;
 	clock_t begin_time;
 	double real_run_time;
 
@@ -228,6 +232,7 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	test_flags = flags;
 	screenshot_num = 0;
 	runtime_hash = 0;
+	had_failure = FALSE;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
@@ -265,9 +270,18 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 			break;
 
 		case STATE_DONE:
-			report_message(MSG_INFO, "Test succeeded (real time %.2f; emu time %.2f [%i%%])",
-				real_run_time, final_time, (int) ((final_time / real_run_time) * 100));
-			rc = MESSTEST_RESULT_SUCCESS;
+			if (had_failure)
+			{
+				report_message(MSG_FAILURE, "Test failed (real time %.2f; emu time %.2f [%i%%])",
+					real_run_time, final_time, (int) ((final_time / real_run_time) * 100));
+				rc = MESSTEST_RESULT_RUNTIMEFAILURE;
+			}
+			else
+			{
+				report_message(MSG_INFO, "Test succeeded (real time %.2f; emu time %.2f [%i%%])",
+					real_run_time, final_time, (int) ((final_time / real_run_time) * 100));
+				rc = MESSTEST_RESULT_SUCCESS;
+			}
 			break;
 
 		default:
@@ -749,7 +763,7 @@ static void command_end(void)
 
 struct command_procmap_entry
 {
-	enum messtest_command_type command_type;
+	messtest_command_type_t command_type;
 	void (*proc)(void);
 };
 
@@ -1036,7 +1050,7 @@ static void node_screenshot(xml_data_node *node)
 
 
 
-static void node_image(xml_data_node *node, enum messtest_command_type command)
+static void node_image(xml_data_node *node, messtest_command_type_t command)
 {
 	xml_attribute_node *attr_node;
 	const char *s1;

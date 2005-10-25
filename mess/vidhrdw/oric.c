@@ -166,7 +166,7 @@ static void oric_vh_update_attribute(int c)
 			{
 				/* set screen memory base and standard charset location for this mode */
 				vh_state.read_addr = 0x0a000;
-				vh_state.char_base = memory_region(REGION_CPU1) + (unsigned long)0x09800; 
+				vh_state.char_base = oric_ram + (unsigned long)0x09800; 
 				
 				/* changing the mode also changes the position of the standard charset
 				and alternative charset */
@@ -176,7 +176,7 @@ static void oric_vh_update_attribute(int c)
 			{
 				/* set screen memory base and standard charset location for this mode */
 				vh_state.read_addr = 0x0bb80;
-				vh_state.char_base = memory_region(REGION_CPU1) + (unsigned long)0x0b400;
+				vh_state.char_base = oric_ram + (unsigned long)0x0b400;
 			
 				/* changing the mode also changes the position of the standard charset
 				and alternative charset */
@@ -236,7 +236,7 @@ VIDEO_UPDATE( oric )
 	unsigned long read_addr_base;
 	int hires_active;
 
-	RAM = memory_region(REGION_CPU1);
+	RAM = oric_ram;
 
 	/* set initial base */
 	read_addr_base = vh_state.read_addr;

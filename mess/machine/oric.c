@@ -32,6 +32,8 @@
 #include "sound/ay8910.h"
 #include "image.h"
 
+UINT8 *oric_ram;
+
 static int enable_logging = 0;
 /* static int save_done = 0; */
 
