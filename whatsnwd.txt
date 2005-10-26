@@ -1,3 +1,21 @@
+
+0.101
+
+- Removed skip_validitychecks [smf].
+
+
+==========================================================================
+
+
+0.100
+
+- Changed structs to typedefs [smf].
+
+- Removed options that no longer exist in the core [smf].
+
+
+==========================================================================
+
 0.99
 
 - Removed PAIR union as it's now in core [smf].
