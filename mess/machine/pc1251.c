@@ -123,62 +123,48 @@ bool pc1251_reset(void)
 }
 
 /* currently enough to save the external ram */
-static void pc1251_load(void)
+NVRAM_HANDLER( pc1251 )
 {
-	mame_file *file;
+	UINT8 *ram = memory_region(REGION_CPU1)+0x8000,
+		*cpu = sc61860_internal_ram();
 
-	UINT8 *ram = memory_region(REGION_CPU1)+0x8000;
-	UINT8 *cpu = sc61860_internal_ram();
-
-	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
-	if (!file)
+	if (read_or_write)
 	{
-		power = 0;
-		return;
+		mame_fwrite(file, cpu, 96);
+		mame_fwrite(file, ram, 0x4800);
 	}
-
-	mame_fread(file, cpu, 96);
-	mame_fread(file, ram, 0x4800);
-	mame_fclose(file);
-}
-
-static void pc1251_save(void)
-{
-	mame_file *file;
-	UINT8 *ram=memory_region(REGION_CPU1)+0x8000,
-		*cpu=sc61860_internal_ram();
-
-	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1))==NULL)
-		return;
-
-	mame_fwrite(file, cpu, 96);
-	mame_fwrite(file, ram, 0x4800);
-	mame_fclose(file);
+	else if (file)
+	{
+		mame_fread(file, cpu, 96);
+		mame_fread(file, ram, 0x4800);
+	}
+	else
+	{
+		memset(cpu, 0, 96);
+		memset(ram, 0, 0x4800);
+	}
 }
 
 static void pc1251_power_up(int param)
 {
-	power=0;
+	power = 0;
 }
 
 DRIVER_INIT( pc1251 )
 {
 	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
+	UINT8 *gfx = memory_region(REGION_GFX1);
 	for (i=0; i<128; i++) gfx[i]=i;
 
-	pc1251_load();
-	timer_pulse(1/500.0, 0,sc61860_2ms_tick);
-	timer_set(1,0,pc1251_power_up);
-}
+	timer_pulse(1/500.0, 0, sc61860_2ms_tick);
+	timer_set(1, 0, pc1251_power_up);
 
-MACHINE_INIT( pc1251 )
-{
 	// c600 b800 b000 a000 8000 tested	
 	// 4 kb memory feedback 512 bytes too few???
 	// 11 kb ram: program stored at 8000
 #if 1
-	memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xc7ff, 0, 0, MWA8_RAM);
+	memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xc7ff, 0, 0, MWA8_BANK1);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x8000);
 #else
 	if (PC1251_RAM11K)
 	{
@@ -206,10 +192,5 @@ MACHINE_INIT( pc1251 )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xca00, 0xcbff, 0, 0, MWA8_RAM);
 	}
 #endif
-}
-
-MACHINE_STOP( pc1251 )
-{
-	pc1251_save();
 }
 

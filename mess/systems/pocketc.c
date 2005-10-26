@@ -80,73 +80,39 @@
 /* special keys
    red c-ce and reset; warm boot, program NOT lost*/
 
-static ADDRESS_MAP_START( pc1401_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+static ADDRESS_MAP_START( pc1401_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_ROM
 	AM_RANGE( 0x2000, 0x47ff) AM_READ( MRA8_RAM )
-/*	{ 0x5000, 0x57ff, ? }, */
-	AM_RANGE( 0x6000, 0x67ff) AM_READ( pc1401_lcd_read )
-	AM_RANGE( 0x7000, 0x77ff) AM_READ( pc1401_lcd_read )
-	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pc1401_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
 /*	{ 0x2000, 0x3fff, MWA8_RAM }, // done in pc1401_machine_init */
-	AM_RANGE( 0x4000, 0x47ff) AM_WRITE( MWA8_RAM )
 /*	{ 0x5000, 0x57ff, ? }, */
-	AM_RANGE( 0x6000, 0x67ff) AM_WRITE( pc1401_lcd_write )
-	AM_RANGE( 0x7000, 0x77ff) AM_WRITE( pc1401_lcd_write )
-	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x6000, 0x67ff) AM_READWRITE( pc1401_lcd_read, pc1401_lcd_write ) AM_MIRROR(0x1000)
+	AM_RANGE( 0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pc1251_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+static ADDRESS_MAP_START( pc1251_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_ROM
 //	{ 0x2000, 0x3fff, MRA8_RAM },
-	AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0xa000, 0xcbff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0xf800, 0xf8ff) AM_READ( pc1251_lcd_read )
+	AM_RANGE( 0x4000, 0x7fff) AM_ROM
+	AM_RANGE( 0xa000, 0xcbff) AM_ROM
+	AM_RANGE( 0xf800, 0xf8ff) AM_READWRITE( pc1251_lcd_read, pc1251_lcd_write)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pc1251_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( MWA8_ROM )
-//	{ 0xa000, 0xcbff, MWA8_ROM }, // c600 b800 b000 a000 tested
-	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( pc1251_lcd_write )
+static ADDRESS_MAP_START( pc1350_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_ROM
+	AM_RANGE( 0x2000, 0x3fff) AM_RAM	/* ram card 16k */
+	AM_RANGE( 0x4000, 0x5fff) AM_RAM	/* ram card 16k oder 8k */
+	AM_RANGE( 0x6000, 0x6fff) AM_RAM
+	AM_RANGE( 0x7000, 0x7eff) AM_READWRITE( pc1350_lcd_read, pc1350_lcd_write )
+	AM_RANGE( 0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pc1350_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0x6000, 0x6fff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0x7000, 0x7eff) AM_READ( pc1350_lcd_read )
-	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
+static ADDRESS_MAP_START( pc1403_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_ROM
+	AM_RANGE( 0x3000, 0x30bf) AM_READWRITE( pc1403_lcd_read, pc1403_lcd_write )  
+	AM_RANGE( 0x3800, 0x3fff) AM_READWRITE( pc1403_asic_read, pc1403_asic_write )    
+	AM_RANGE( 0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE( 0xe000, 0xffff) AM_RAM
 ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pc1350_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_RAM ) /*ram card 16k */
-	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_RAM ) /*ram card 16k oder 8k */
-	AM_RANGE( 0x6000, 0x6fff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x7000, 0x7eff) AM_WRITE( pc1350_lcd_write )
-	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pc1403_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
-AM_RANGE( 0x3000, 0x30bf) AM_READ( pc1403_lcd_read )    
-AM_RANGE( 0x3800, 0x3fff) AM_READ( pc1403_asic_read )    
-AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_BANK1 )
-AM_RANGE( 0xe000,0xffff) AM_READ( MRA8_RAM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pc1403_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
-AM_RANGE( 0x3000, 0x30bf) AM_WRITE( pc1403_lcd_write )    
-AM_RANGE( 0x3800, 0x3fff) AM_WRITE( pc1403_asic_write )    
-AM_RANGE( 0xe000,0xffff) AM_WRITE( MWA8_RAM )
-ADDRESS_MAP_END
-
 
 
 #if 0
@@ -495,59 +461,59 @@ INPUT_PORTS_END
 
 static gfx_layout pc1401_charlayout =
 {
-        2,21,
-        128,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0,0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0,0 },
-        /* y offsets */
-        {
-			7, 7, 7,
-			6, 6, 6,
-			5, 5, 5,
-			4, 4, 4,
-			3, 3, 3,
-			2, 2, 2,
-			1, 1, 1
-        },
-        1*8
+	2,21,
+	128,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0,0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,0 },
+	/* y offsets */
+	{
+		7, 7, 7,
+		6, 6, 6,
+		5, 5, 5,
+		4, 4, 4,
+		3, 3, 3,
+		2, 2, 2,
+		1, 1, 1
+	},
+	1*8
 };
 
 static gfx_layout pc1251_charlayout =
 {
-        3,21,
-        128,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0, },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0,0,0 },
-        /* y offsets */
-        {
-			7, 7, 7,
-			6, 6, 6,
-			5, 5, 5,
-			4, 4, 4,
-			3, 3, 3,
-			2, 2, 2,
-			1, 1, 1
-        },
-        1*8
+	3,21,
+	128,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0, },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,0,0 },
+	/* y offsets */
+	{
+		7, 7, 7,
+		6, 6, 6,
+		5, 5, 5,
+		4, 4, 4,
+		3, 3, 3,
+		2, 2, 2,
+		1, 1, 1
+	},
+	1*8
 };
 
 static gfx_layout pc1350_charlayout =
 {
-        2,16,
-        256,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0,0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0 },
-        /* y offsets */
-        {
-			7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
-        },
-        1*8
+	2,16,
+	256,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0,0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0 },
+	/* y offsets */
+	{
+		7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
+	},
+	1*8
 };
 
 static gfx_decode pc1401_gfxdecodeinfo[] = {
@@ -575,15 +541,14 @@ static SC61860_CONFIG config={
 static MACHINE_DRIVER_START( pc1401 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", SC61860, 192000)        /* 7.8336 Mhz */
-	MDRV_CPU_PROGRAM_MAP(pc1401_readmem,pc1401_writemem)
+	MDRV_CPU_PROGRAM_MAP(pc1401_mem, 0)
 	MDRV_CPU_CONFIG(config)
 
 	MDRV_FRAMES_PER_SECOND(20)	/* very early and slow lcd */
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( pc1401 )
-	MDRV_MACHINE_STOP( pc1401 )
+	MDRV_NVRAM_HANDLER( pc1401 )
 
 	/*
 	   aim: show sharp with keyboard
@@ -609,7 +574,8 @@ static MACHINE_DRIVER_START( pc1401 )
 MACHINE_DRIVER_END
 
 
-static SC61860_CONFIG pc1251_config={
+static SC61860_CONFIG pc1251_config =
+{
     NULL, pc1251_brk, NULL,
     pc1251_ina, pc1251_outa,
     pc1251_inb, pc1251_outb,
@@ -619,11 +585,10 @@ static SC61860_CONFIG pc1251_config={
 static MACHINE_DRIVER_START( pc1251 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( pc1251_readmem,pc1251_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1251_mem, 0 )
 	MDRV_CPU_CONFIG( pc1251_config )
 
-	MDRV_MACHINE_INIT( pc1251 )
-	MDRV_MACHINE_STOP( pc1251 )
+	MDRV_NVRAM_HANDLER( pc1251 )
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(608, 300)
@@ -636,7 +601,8 @@ static MACHINE_DRIVER_START( pc1251 )
 MACHINE_DRIVER_END
 
 
-static SC61860_CONFIG pc1350_config={
+static SC61860_CONFIG pc1350_config =
+{
     NULL, pc1350_brk,NULL,
     pc1350_ina, pc1350_outa,
     pc1350_inb, pc1350_outb,
@@ -646,11 +612,11 @@ static SC61860_CONFIG pc1350_config={
 static MACHINE_DRIVER_START( pc1350 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( pc1350_readmem,pc1350_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1350_mem, 0 )
 	MDRV_CPU_CONFIG( pc1350_config )
 
 	MDRV_MACHINE_INIT( pc1350 )
-	MDRV_MACHINE_STOP( pc1350 )
+	MDRV_NVRAM_HANDLER( pc1350 )
 
 	/*
 	   aim: show sharp with keyboard
@@ -667,7 +633,8 @@ static MACHINE_DRIVER_START( pc1350 )
 MACHINE_DRIVER_END
 
 
-static SC61860_CONFIG pc1403_config={
+static SC61860_CONFIG pc1403_config =
+{
     NULL, pc1403_brk, NULL,
     pc1403_ina, pc1403_outa,
     NULL,NULL,
@@ -677,11 +644,10 @@ static SC61860_CONFIG pc1403_config={
 static MACHINE_DRIVER_START( pc1403 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_REPLACE( "main", SC61860, 256000 )
-	MDRV_CPU_PROGRAM_MAP( pc1403_readmem,pc1403_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1403_mem, 0 )
 	MDRV_CPU_CONFIG( pc1403_config )
 
-	MDRV_MACHINE_INIT( pc1403 )
-	MDRV_MACHINE_STOP( pc1403 )
+	MDRV_NVRAM_HANDLER( pc1403 )
 
 	/*
 	   aim: show sharp with keyboard

@@ -1,3 +1,14 @@
+/*********************************************************************
+
+	pc1251.h
+
+	Pocket Computer 1251
+
+*********************************************************************/
+
+#ifndef PC1251_H
+#define PC1251_H
+
 void pc1251_outa(int data);
 void pc1251_outb(int data);
 void pc1251_outc(int data);
@@ -7,14 +18,13 @@ bool pc1251_brk(void);
 int pc1251_ina(void);
 int pc1251_inb(void);
 
-extern DRIVER_INIT( pc1251 );
-extern MACHINE_INIT( pc1251 );
-extern MACHINE_STOP( pc1251 );
+DRIVER_INIT( pc1251 );
+NVRAM_HANDLER( pc1251 );
 
 /* in vidhrdw/pocketc.c */
-extern  READ8_HANDLER(pc1251_lcd_read);
-extern WRITE8_HANDLER(pc1251_lcd_write);
-extern VIDEO_UPDATE( pc1251 );
+READ8_HANDLER(pc1251_lcd_read);
+WRITE8_HANDLER(pc1251_lcd_write);
+VIDEO_UPDATE( pc1251 );
 
 /* in systems/pocketc.c */
 #define PC1251_SWITCH_MODE (input_port_0_r(0)&7)
@@ -84,3 +94,5 @@ extern VIDEO_UPDATE( pc1251 );
 #define PC1251_RAM11K (input_port_7_r(0)&0xc0)==0xc0
 
 #define PC1251_CONTRAST (input_port_7_r(0)&7)
+
+#endif /* PC1251_H */

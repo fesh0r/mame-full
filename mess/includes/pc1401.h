@@ -1,3 +1,14 @@
+/*********************************************************************
+
+	pc1401.h
+
+	Pocket Computer 1401
+
+*********************************************************************/
+
+#ifndef PC1401_H
+#define PC1401_H
+
 extern UINT8 pc1401_portc;
 bool pc1401_reset(void);
 bool pc1401_brk(void);
@@ -7,14 +18,13 @@ void pc1401_outc(int data);
 int pc1401_ina(void);
 int pc1401_inb(void);
 
-extern DRIVER_INIT( pc1401 );
-extern MACHINE_INIT( pc1401 );
-extern MACHINE_STOP( pc1401 );
+DRIVER_INIT( pc1401 );
+NVRAM_HANDLER( pc1401 );
 
 /* in vidhrdw/pocketc.c */
-extern  READ8_HANDLER(pc1401_lcd_read);
-extern WRITE8_HANDLER(pc1401_lcd_write);
-extern VIDEO_UPDATE( pc1401 );
+READ8_HANDLER(pc1401_lcd_read);
+WRITE8_HANDLER(pc1401_lcd_write);
+VIDEO_UPDATE( pc1401 );
 
 /* in systems/pocketc.c */
 #define KEY_OFF input_port_0_r(0)&0x80
@@ -110,3 +120,4 @@ extern VIDEO_UPDATE( pc1401 );
 #define RAM10K (input_port_10_r(0)&0xc0)==0x80
 #define CONTRAST (input_port_10_r(0)&7)
 
+#endif /* PC1401_H */

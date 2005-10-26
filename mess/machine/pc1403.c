@@ -202,34 +202,26 @@ bool pc1403_reset(void)
 }
 
 /* currently enough to save the external ram */
-static void pc1403_load(void)
+NVRAM_HANDLER( pc1403 )
 {
-	mame_file *file;
 	UINT8 *ram=memory_region(REGION_CPU1)+0x8000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0))==NULL) {
-		power=0;
-		return;
+	if (read_or_write)
+	{
+		mame_fwrite(file, cpu, 96);
+		mame_fwrite(file, ram, 0x8000);
 	}
-
-	mame_fread(file, cpu, 96);
-	mame_fread(file, ram, 0x8000);
-	mame_fclose(file);
-}
-
-static void pc1403_save(void)
-{
-	mame_file *file;
-	UINT8 *ram=memory_region(REGION_CPU1)+0x8000,
-		*cpu=sc61860_internal_ram();
-
-	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1))==NULL)
-		return;
-
-	mame_fwrite(file, cpu, 96);
-	mame_fwrite(file, ram, 0x8000);
-	mame_fclose(file);
+	else if (file)
+	{
+		mame_fread(file, cpu, 96);
+		mame_fread(file, ram, 0x8000);
+	}
+	else
+	{
+		memset(cpu, 0, 96);
+		memset(ram, 0, 0x8000);
+	}
 }
 
 static void pc1403_power_up(int param)
@@ -237,20 +229,16 @@ static void pc1403_power_up(int param)
 	power=0;
 }
 
-void init_pc1403(void)
+DRIVER_INIT( pc1403 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
 
 	for (i=0; i<128; i++) gfx[i]=i;
 
-	pc1403_load();
 	timer_pulse(1/500.0, 0,sc61860_2ms_tick);
 	timer_set(1,0,pc1403_power_up);
-}
 
-MACHINE_INIT( pc1403 )
-{
 	memory_set_bankptr(1, memory_region(REGION_USER1));
 	if (RAM32K)
 	{
@@ -262,10 +250,5 @@ MACHINE_INIT( pc1403 )
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MRA8_NOP);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MWA8_NOP);
 	}
-}
-
-MACHINE_STOP( pc1403 )
-{
-	pc1403_save();
 }
 
