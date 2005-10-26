@@ -75,8 +75,8 @@ int video_flipx;
 int video_flipy;
 int video_swapxy;
 
-static void bitblit_dummy( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy );
-void ( *bitblit )( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) = bitblit_dummy;
+static void bitblit_dummy( mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy );
+void ( *bitblit )( mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) = bitblit_dummy;
 
 extern const char *g_s_resolution;
 int gfx_depth;
@@ -2432,7 +2432,7 @@ static void update_visible_area(mame_display *display)
 //	osd_create_display
 //============================================================
 
-int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
+int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
 	mame_display dummy_display;
 
@@ -2571,7 +2571,7 @@ static void set_debugger_focus(mame_display *display, int debugger_has_focus)
 		else
 		{
 			/* silly way to clear the screen */
-			struct mame_bitmap *clrbitmap;
+			mame_bitmap *clrbitmap;
 
 			clrbitmap = bitmap_alloc_depth(gfx_display_columns,gfx_display_lines,display->debug_bitmap->depth);
 			if (clrbitmap)
@@ -2606,7 +2606,7 @@ static void set_debugger_focus(mame_display *display, int debugger_has_focus)
 }
 
 
-static void bitblit_dummy( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy )
+static void bitblit_dummy( mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy )
 {
 	logerror("msdos/video.c: undefined bitblit() function for %d x %d!\n",xmultiply,ymultiply);
 }
@@ -2674,7 +2674,7 @@ int osd_skip_this_frame(void)
 }
 
 
-const char *osd_get_fps_text(const struct performance_info *performance)
+const char *osd_get_fps_text(const performance_info *performance)
 {
 	static char buffer[1024];
 	char *dest = buffer;
@@ -2725,7 +2725,7 @@ void osd_set_leds(int state)
 //	win_orient_rect
 //============================================================
 
-void win_orient_rect(struct rectangle *_rect)
+void win_orient_rect(rectangle *_rect)
 {
 	int temp;
 
@@ -2912,7 +2912,7 @@ void osd_update_video_and_audio(mame_display *display)
 //			logerror( "game_bitmap_update %d %d %d %d\n", display->game_bitmap_update.min_x, display->game_bitmap_update.min_y, display->game_bitmap_update.max_x, display->game_bitmap_update.max_y );
 //			logerror( "%d %d %d %d %d %d\n", dstxoffs, dstyoffs, srcxoffs, srcyoffs, srcwidth, srcheight );
 			{
-				struct rectangle updatebounds = display->game_bitmap_update;
+				rectangle updatebounds = display->game_bitmap_update;
 
 				srcxoffs = 0;
 				srcyoffs = 0;
@@ -2968,7 +2968,7 @@ void osd_update_video_and_audio(mame_display *display)
 
 		if( throttle && autoframeskip && frameskip_counter == 0 )
 		{
-			const struct performance_info *performance = mame_get_performance_info();
+			const performance_info *performance = mame_get_performance_info();
 	
 			// if we're too fast, attempt to increase the frameskip
 			if (performance->game_speed_percent >= 99.5)
@@ -3098,10 +3098,10 @@ void osd_update_video_and_audio(mame_display *display)
 //	osd_override_snapshot
 //============================================================
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
 {
-	struct rectangle newbounds;
-	struct mame_bitmap *copy;
+	rectangle newbounds;
+	mame_bitmap *copy;
 	int x, y, w, h, t;
 
 	// if we can send it in raw, no need to override anything

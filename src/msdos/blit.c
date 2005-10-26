@@ -1362,7 +1362,7 @@ COPYLINE_TYPE( direct )
 COPYLINE_TYPE( palettized )
 
 
-#define BITBLIT( type ) void bitblit_##type( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) \
+#define BITBLIT( type ) void bitblit_##type( mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) \
 { \
 	int n_line; \
 	int n_lines; \

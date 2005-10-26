@@ -32,7 +32,7 @@ int steadykey;
 //#define MAX_POV				4
 
 // this will be filled in dynamically
-static struct OSCodeInfo	codelist[MAX_KEYS+MAX_JOY];
+static os_code_info			codelist[MAX_KEYS+MAX_JOY];
 static int					total_codes;
 
 // additional key data
@@ -89,7 +89,7 @@ static int calibration_target;
 // master keyboard translation table
 static struct
 {
-	os_code_t keycode;
+	os_code keycode;
 	int key;
 	int ascii;
 } msdos_key_trans_table[] =
@@ -632,7 +632,7 @@ static const char *msdos_mouse_button_name( int button )
 //	is_key_pressed
 //============================================================
 
-static int is_key_pressed(os_code_t keycode)
+static int is_key_pressed(os_code keycode)
 {
 	int allegrokey = ALLEGROKEY(keycode);
 
@@ -702,8 +702,8 @@ static void init_keycodes(void)
 			char *namecopy = malloc(strlen(keyname) + 1);
 			if (namecopy)
 			{
-				input_code_t standardcode;
-				os_code_t code;
+				input_code standardcode;
+				os_code code;
 				int entry;
 
 				// find the table entry, if there is one
@@ -736,7 +736,7 @@ static void init_keycodes(void)
 //	add_joylist_entry
 //============================================================
 
-static void add_joylist_entry(const char *name, os_code_t code, input_code_t standardcode)
+static void add_joylist_entry(const char *name, os_code code, input_code standardcode)
 {
 	// copy the name
 	char *namecopy = malloc(strlen(name) + 1);
@@ -850,7 +850,7 @@ static void init_joycodes(void)
 //	get_joycode_value
 //============================================================
 
-static INT32 get_joycode_value(os_code_t joycode)
+static INT32 get_joycode_value(os_code joycode)
 {
 	int joyindex = JOYINDEX(joycode);
 	int codetype = CODETYPE(joycode);
@@ -949,7 +949,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 //	osd_is_code_pressed
 //============================================================
 
-INT32 osd_get_code_value(os_code_t code)
+INT32 osd_get_code_value(os_code code)
 {
 	if (IS_KEYBOARD_CODE(code))
 		return is_key_pressed(code);
@@ -963,7 +963,7 @@ INT32 osd_get_code_value(os_code_t code)
 //	osd_get_code_list
 //============================================================
 
-const struct OSCodeInfo *osd_get_code_list(void)
+const os_code_info *osd_get_code_list(void)
 {
 	return codelist;
 }
