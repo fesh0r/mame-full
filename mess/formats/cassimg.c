@@ -554,7 +554,7 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 	{
 		logerror("cassette_put_samples(): Putting samples TIME=[%2.6g..%2.6g] INDEX=[%i..%i]\n",
 			time_index,				time_index + sample_period,
-			ranges.sample_first,	ranges.sample_last);
+			(int)ranges.sample_first,	(int)ranges.sample_last);
 	}
 
 	for (sample_index = ranges.sample_first; sample_index <= ranges.sample_last; sample_index++)
