@@ -2,6 +2,7 @@
 
 <test name="apple2e_000" driver="apple2e">
 	<wait time="20"/>
+	<checkblank/>
 </test>
 
 </tests>

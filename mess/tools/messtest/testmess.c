@@ -32,6 +32,7 @@ typedef enum
 	MESSTEST_COMMAND_RAWINPUT,
 	MESSTEST_COMMAND_SWITCH,
 	MESSTEST_COMMAND_SCREENSHOT,
+	MESSTEST_COMMAND_CHECKBLANK,
 	MESSTEST_COMMAND_IMAGE_CREATE,
 	MESSTEST_COMMAND_IMAGE_LOAD,
 	MESSTEST_COMMAND_IMAGE_PRECREATE,
@@ -136,7 +137,7 @@ static struct messtest_testcase current_testcase;
 
 
 
-static void dump_screenshot(void)
+static void dump_screenshot(int write_file)
 {
 	mame_file *fp;
 	char buf[128];
@@ -146,20 +147,23 @@ static void dump_screenshot(void)
 
 	bitmap = artwork_get_ui_bitmap();
 
-	/* dump a screenshot */
-	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-		(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
-		current_testcase.name, screenshot_num);
-	fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
-	if (fp)
+	if (write_file)
 	{
-		save_screen_snapshot_as(fp, bitmap);
-		mame_fclose(fp);
-		report_message(MSG_INFO, "Saved screenshot as %s", buf);
-	}
+		/* dump a screenshot */
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+			(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
+			current_testcase.name, screenshot_num);
+		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
+		if (fp)
+		{
+			save_screen_snapshot_as(fp, bitmap);
+			mame_fclose(fp);
+			report_message(MSG_INFO, "Saved screenshot as %s", buf);
+		}
 
-	if (screenshot_num >= 0)
-		screenshot_num++;
+		if (screenshot_num >= 0)
+			screenshot_num++;
+	}
 
 	/* check to see if bitmap is blank */
 	is_blank = 1;
@@ -484,7 +488,14 @@ static void command_rawinput(void)
 
 static void command_screenshot(void)
 {
-	dump_screenshot();
+	dump_screenshot(TRUE);
+}
+
+
+
+static void command_checkblank(void)
+{
+	dump_screenshot(FALSE);
 }
 
 
@@ -773,6 +784,7 @@ static const struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_INPUT,			command_input },
 	{ MESSTEST_COMMAND_RAWINPUT,		command_rawinput },
 	{ MESSTEST_COMMAND_SCREENSHOT,		command_screenshot },
+	{ MESSTEST_COMMAND_CHECKBLANK,		command_checkblank },
 	{ MESSTEST_COMMAND_SWITCH,			command_switch },
 	{ MESSTEST_COMMAND_IMAGE_PRELOAD,	command_image_preload },
 	{ MESSTEST_COMMAND_IMAGE_LOAD,		command_image_loadcreate },
@@ -840,7 +852,7 @@ void osd_update_video_and_audio(mame_display *display)
 			(current_command[0].command_type != MESSTEST_COMMAND_SCREENSHOT) &&
 			(current_command[1].command_type == MESSTEST_COMMAND_END))
 		{
-			dump_screenshot();
+			dump_screenshot(TRUE);
 		}
 
 		current_command++;
@@ -1040,6 +1052,21 @@ static void node_screenshot(xml_data_node *node)
 	/* <screenshot> - dumps a screenshot */
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
+}
+
+
+
+static void node_checkblank(xml_data_node *node)
+{
+	/* <checkblank> - checks to see if the screen is blank */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_CHECKBLANK;
 
 	if (!append_command())
 	{
@@ -1299,6 +1326,8 @@ void node_testmess(xml_data_node *node)
 			node_switch(child_node);
 		else if (!strcmp(child_node->name, "screenshot"))
 			node_screenshot(child_node);
+		else if (!strcmp(child_node->name, "checkblank"))
+			node_checkblank(child_node);
 		else if (!strcmp(child_node->name, "imagecreate"))
 			node_imagecreate(child_node);
 		else if (!strcmp(child_node->name, "imageload"))

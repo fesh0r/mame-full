@@ -2,6 +2,7 @@
 
 <test name="tmc600a_000" driver="tmc600a">
 	<wait time="5"/>
+	<checkblank/>
 </test>
 
 </tests>

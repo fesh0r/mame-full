@@ -1,6 +1,6 @@
 <tests>
 
-<test name="vic20_000" driver="vic20">
+<test name="pc1251_000" driver="pc1251">
 	<wait time="5"/>
 	<checkblank/>
 </test>

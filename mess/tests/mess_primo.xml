@@ -1,6 +1,6 @@
 <tests>
 
-<test name="vic20_000" driver="vic20">
+<test name="primoa32_000" driver="primoa32">
 	<wait time="5"/>
 	<checkblank/>
 </test>
