@@ -584,7 +584,7 @@ static READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
 	m6845_personality_t crtc_type;
 
-	crtc_type = readinputportbytag("crtc");
+	crtc_type = readinputportbytag_safe("crtc", 0);
 	crtc6845_set_personality(crtc_type);
 
 	/* if b14 = 0 : CRTC Read selected */
@@ -1064,8 +1064,9 @@ static int 	amstrad_cpu_acknowledge_int(int cpu)
 
 static VIDEO_EOF( amstrad )
 {
-	if ((readinputportbytag("multiface") & 0x02)!=0) {
-			multiface_stop();
+	if (readinputportbytag_safe("multiface", 0) & 0x02)
+	{
+		multiface_stop();
 	}
 }
 /* sets up for a machine reset

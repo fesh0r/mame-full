@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [KCCOMP] Fixed regression introduced in MESS 0.85-88. (bug #749)  [Nate Woods]
+
 - [MC10] Added multiple RAM configurations, and cleaned up driver.  [Nate Woods]
 
 - [MTX512] Fixed regression introduced in 0.96.  (previous fix was not fully
