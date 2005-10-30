@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.40 2005/10/13 13:29:53 npwoods Exp $
+  $Id: pc8801.c,v 1.41 2005/10/30 23:31:02 npwoods Exp $
 
 ***************************************************************************/
 
@@ -375,154 +375,88 @@ INPUT_PORTS_START( pc88sr )
 INPUT_PORTS_END
 
 
-ADDRESS_MAP_START( pc8801_readmem , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x5fff) AM_READ( MRA8_BANK1 )
-    AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_BANK2 )
-    AM_RANGE( 0x8000, 0x83ff) AM_READ( MRA8_BANK3 )
-    AM_RANGE( 0x8400, 0xbfff) AM_READ( MRA8_BANK4 )
-    AM_RANGE( 0xc000, 0xefff) AM_READ( MRA8_BANK5 )
-    AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_BANK6 )
+ADDRESS_MAP_START( pc8801_mem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE(0x0000, 0x5fff) AM_RAMBANK(1)
+    AM_RANGE(0x6000, 0x7fff) AM_RAMBANK(2)
+    AM_RANGE(0x8000, 0x83ff) AM_RAMBANK(3)
+    AM_RANGE(0x8400, 0xbfff) AM_RAMBANK(4)
+    AM_RANGE(0xc000, 0xefff) AM_RAMBANK(5)
+    AM_RANGE(0xf000, 0xffff) AM_RAMBANK(6)
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( pc8801_writemem , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x5fff) AM_WRITE( MWA8_BANK1 )
-    AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK2 )
-    AM_RANGE( 0x8000, 0x83ff) AM_WRITE( MWA8_BANK3 )
-    AM_RANGE( 0x8400, 0xbfff) AM_WRITE( MWA8_BANK4 )
-    AM_RANGE( 0xc000, 0xefff) AM_WRITE( MWA8_BANK5 )
-    AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_BANK6 )
-ADDRESS_MAP_END
-
-static  READ8_HANDLER ( pc8801_unknown_in )
-{
-  logerror ("pc8801 : read from unknown port 0x%.2x.\n",offset);
-  return 0xff;
-}
-
-ADDRESS_MAP_START( pc88sr_readport , ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x00, 0x00) AM_READ( input_port_0_r )  /* keyboard */
-    AM_RANGE( 0x01, 0x01) AM_READ( input_port_1_r )  /* keyboard */
-    AM_RANGE( 0x02, 0x02) AM_READ( input_port_2_r )  /* keyboard */
-    AM_RANGE( 0x03, 0x03) AM_READ( input_port_3_r )  /* keyboard */
-    AM_RANGE( 0x04, 0x04) AM_READ( input_port_4_r )  /* keyboard */
-    AM_RANGE( 0x05, 0x05) AM_READ( input_port_5_r )  /* keyboard */
-    AM_RANGE( 0x06, 0x06) AM_READ( input_port_6_r )  /* keyboard */
-    AM_RANGE( 0x07, 0x07) AM_READ( input_port_7_r )  /* keyboard */
-    AM_RANGE( 0x08, 0x08) AM_READ( input_port_8_r )  /* keyboard */
-    AM_RANGE( 0x09, 0x09) AM_READ( input_port_9_r )  /* keyboard */
-    AM_RANGE( 0x0a, 0x0a) AM_READ( input_port_10_r ) /* keyboard */
-    AM_RANGE( 0x0b, 0x0b) AM_READ( input_port_11_r ) /* keyboard */
-    AM_RANGE( 0x0c, 0x0c) AM_READ( input_port_12_r ) /* keyboard */
-    AM_RANGE( 0x0d, 0x0d) AM_READ( input_port_13_r ) /* keyboard */
-    AM_RANGE( 0x0e, 0x0e) AM_READ( input_port_14_r ) /* keyboard */
-    AM_RANGE( 0x0f, 0x0f) AM_READ( input_port_15_r ) /* keyboard */
-     /* { 0x20, 0x21, }, RS-232C and cassette (not yet) */
-    AM_RANGE( 0x30, 0x30) AM_READ( pc88sr_inport_30 ) /* DIP-SW1 */
-    AM_RANGE( 0x31, 0x31) AM_READ( pc88sr_inport_31 ) /* DIP-SW2 */
-    AM_RANGE( 0x32, 0x32) AM_READ( pc88sr_inport_32 )
-    AM_RANGE( 0x40, 0x40) AM_READ( pc88sr_inport_40 )
-    AM_RANGE( 0x44, 0x44) AM_READ( YM2203_status_port_0_r )
-    AM_RANGE( 0x45, 0x45) AM_READ( YM2203_read_port_0_r )
-    /* { 0x46, 0x47, }, OPNA extra port (not yet) */
-    AM_RANGE( 0x50, 0x51) AM_READ( pc8801_crtc_read )
-    AM_RANGE( 0x5c, 0x5c) AM_READ( pc8801_vramtest )
-    AM_RANGE( 0x60, 0x68) AM_READ( pc8801_dmac_read )
-    /* { 0x6e, 0x6e, }, CPU clock info (not yet) */
-    /* { 0x6f, 0x6f, }, RS-232C speed ctrl (not yet) */
-    AM_RANGE( 0x70, 0x70) AM_READ( pc8801_inport_70 )
-    AM_RANGE( 0x71, 0x71) AM_READ( pc88sr_inport_71 )
-    /* { 0x90, 0x9f, }, CD-ROM (unknown -- not yet) */
-    /* { 0xa0, 0xa3, }, music & network (unknown -- not yet) */
-    /* { 0xa8, 0xad, }, second sound board (not yet) */
-    /* { 0xb4, 0xb5, }, Video art board (unknown -- not yet) */
-    /* { 0xc1, 0xc1, }, (unknown -- not yet) */
-    /* { 0xc2, 0xcf, }, music (unknown -- not yet) */
-    /* { 0xd0, 0xd7, }, music & GP-IB (unknown -- not yet) */
-    /* { 0xd8, 0xd8, }, GP-IB (unknown -- not yet) */
-    /* { 0xdc, 0xdf, }, MODEM (unknown -- not yet) */
-    AM_RANGE( 0xe2, 0xe3) AM_READ( pc8801_read_extmem ) /* expand RAM select */
-    AM_RANGE( 0xe8, 0xeb) AM_READ( pc8801_read_kanji1 )
-    AM_RANGE( 0xec, 0xed) AM_READ( pc8801_read_kanji2 ) /* JIS level2 Kanji ROM */
-    /* { 0xf3, 0xf3, }, DMA floppy (unknown -- not yet) */
-    /* { 0xf4, 0xf7, }, DMA 5'floppy (may be not released) */
-    /* { 0xf8, 0xfb, }, DMA 8'floppy (unknown -- not yet) */
-    AM_RANGE( 0xfc, 0xff) AM_READ( ppi8255_0_r )
-
-    AM_RANGE( 0x00, 0xff) AM_READ( pc8801_unknown_in )
-ADDRESS_MAP_END
-
-static WRITE8_HANDLER ( pc8801_unknown_out )
-{
-  logerror ("pc8801 : write 0x%.2x to unknown port 0x%.2x.\n",data,offset);
-}
-
-ADDRESS_MAP_START( pc88sr_writeport , ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0x10, 0x10) AM_WRITE( pc8801_calender ) /* printer and clock and UOP3 */
-     /* { 0x20, 0x21, }, RS-232C and cassette (not yet) */
-    AM_RANGE( 0x30, 0x30) AM_WRITE( pc88sr_outport_30 )
-    AM_RANGE( 0x31, 0x31) AM_WRITE( pc88sr_outport_31 )
-    AM_RANGE( 0x32, 0x32) AM_WRITE( pc88sr_outport_32 )
-    AM_RANGE( 0x34, 0x35) AM_WRITE( pc88sr_ALU )
-    AM_RANGE( 0x40, 0x40) AM_WRITE( pc88sr_outport_40 )
-    AM_RANGE( 0x44, 0x44) AM_WRITE( YM2203_control_port_0_w )
-    AM_RANGE( 0x45, 0x45) AM_WRITE( YM2203_write_port_0_w )
-    /* { 0x46, 0x47, }, OPNA extra port (not yet) */
-    AM_RANGE( 0x50, 0x51) AM_WRITE( pc8801_crtc_write )
-    AM_RANGE( 0x52, 0x5b) AM_WRITE( pc8801_palette_out )
-    AM_RANGE( 0x5c, 0x5f) AM_WRITE( pc8801_vramsel )
-    AM_RANGE( 0x60, 0x68) AM_WRITE( pc8801_dmac_write )
-    /* { 0x6f, 0x6f, }, RS-232C speed ctrl (not yet) */
-    AM_RANGE( 0x70, 0x70) AM_WRITE( pc8801_outport_70 )
-    AM_RANGE( 0x71, 0x71) AM_WRITE( pc88sr_outport_71 )
-    AM_RANGE( 0x78, 0x78) AM_WRITE( pc8801_outport_78 ) /* text window increment */
-    /* { 0x90, 0x9f, }, CD-ROM (unknown -- not yet) */
-    /* { 0xa0, 0xa3, }, music & network (unknown -- not yet) */
-    /* { 0xa8, 0xad, }, second sound board (not yet) */
-    /* { 0xb4, 0xb5, }, Video art board (unknown -- not yet) */
-    /* { 0xc1, 0xc1, }, (unknown -- not yet) */
-    /* { 0xc2, 0xcf, }, music (unknown -- not yet) */
-    /* { 0xd0, 0xd7, }, music & GP-IB (unknown -- not yet) */
-    /* { 0xd8, 0xd8, }, GP-IB (unknown -- not yet) */
-    /* { 0xdc, 0xdf, }, MODEM (unknown -- not yet) */
-    AM_RANGE( 0xe2, 0xe3) AM_WRITE( pc8801_write_extmem ) /* expand RAM select */
-    AM_RANGE( 0xe4, 0xe4) AM_WRITE( pc8801_write_interrupt_level )
-    AM_RANGE( 0xe6, 0xe6) AM_WRITE( pc8801_write_interrupt_mask )
-    /* { 0xe7, 0xe7, }, (unknown -- not yet) */
-    AM_RANGE( 0xe8, 0xeb) AM_WRITE( pc8801_write_kanji1 )
-    AM_RANGE( 0xec, 0xed) AM_WRITE( pc8801_write_kanji2 ) /* JIS level2 Kanji ROM */
-    /* { 0xf0, 0xf1, }, Kana to Kanji dictionary ROM select (not yet) */
-    /* { 0xf3, 0xf3, }, DMA floppy (unknown -- not yet) */
-    /* { 0xf4, 0xf7, }, DMA 5'floppy (may be not released) */
-    /* { 0xf8, 0xfb, }, DMA 8'floppy (unknown -- not yet) */
-    AM_RANGE( 0xfc, 0xff) AM_WRITE( ppi8255_0_w )
-
-    AM_RANGE( 0x00, 0xff) AM_WRITE( pc8801_unknown_out )
+ADDRESS_MAP_START( pc88sr_io, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x00, 0x00) AM_READ( input_port_0_r )  /* keyboard */
+	AM_RANGE(0x01, 0x01) AM_READ( input_port_1_r )  /* keyboard */
+	AM_RANGE(0x02, 0x02) AM_READ( input_port_2_r )  /* keyboard */
+	AM_RANGE(0x03, 0x03) AM_READ( input_port_3_r )  /* keyboard */
+	AM_RANGE(0x04, 0x04) AM_READ( input_port_4_r )  /* keyboard */
+	AM_RANGE(0x05, 0x05) AM_READ( input_port_5_r )  /* keyboard */
+	AM_RANGE(0x06, 0x06) AM_READ( input_port_6_r )  /* keyboard */
+	AM_RANGE(0x07, 0x07) AM_READ( input_port_7_r )  /* keyboard */
+	AM_RANGE(0x08, 0x08) AM_READ( input_port_8_r )  /* keyboard */
+	AM_RANGE(0x09, 0x09) AM_READ( input_port_9_r )  /* keyboard */
+	AM_RANGE(0x0a, 0x0a) AM_READ( input_port_10_r ) /* keyboard */
+	AM_RANGE(0x0b, 0x0b) AM_READ( input_port_11_r ) /* keyboard */
+	AM_RANGE(0x0c, 0x0c) AM_READ( input_port_12_r ) /* keyboard */
+	AM_RANGE(0x0d, 0x0d) AM_READ( input_port_13_r ) /* keyboard */
+	AM_RANGE(0x0e, 0x0e) AM_READ( input_port_14_r ) /* keyboard */
+	AM_RANGE(0x0f, 0x0f) AM_READ( input_port_15_r ) /* keyboard */
+	AM_RANGE(0x10, 0x10) AM_WRITE( pc8801_calender ) /* printer and clock and UOP3 */
+	AM_RANGE(0x20, 0x21) AM_NOP	/* RS-232C and cassette (not yet) */
+	AM_RANGE(0x30, 0x30) AM_READWRITE( pc88sr_inport_30, pc88sr_outport_30 ) /* DIP-SW1 */
+	AM_RANGE(0x31, 0x31) AM_READWRITE( pc88sr_inport_31, pc88sr_outport_31 ) /* DIP-SW2 */
+	AM_RANGE(0x32, 0x32) AM_READWRITE( pc88sr_inport_32, pc88sr_outport_32 )
+	AM_RANGE(0x34, 0x35) AM_WRITE( pc88sr_ALU )
+	AM_RANGE(0x40, 0x40) AM_READWRITE( pc88sr_inport_40, pc88sr_outport_40 )
+	AM_RANGE(0x44, 0x44) AM_READWRITE( YM2203_status_port_0_r, YM2203_control_port_0_w )
+	AM_RANGE(0x45, 0x45) AM_READWRITE( YM2203_read_port_0_r, YM2203_write_port_0_w )
+	AM_RANGE(0x46, 0x47) AM_NOP	/* OPNA extra port (not yet) */
+	AM_RANGE(0x50, 0x51) AM_READWRITE( pc8801_crtc_read, pc8801_crtc_write )
+	AM_RANGE(0x52, 0x5b) AM_WRITE( pc8801_palette_out )
+	AM_RANGE(0x5c, 0x5c) AM_READ( pc8801_vramtest )
+	AM_RANGE(0x5c, 0x5f) AM_WRITE( pc8801_vramsel )
+	AM_RANGE(0x60, 0x68) AM_READWRITE( pc8801_dmac_read, pc8801_dmac_write )
+	AM_RANGE(0x6e, 0x6e) AM_NOP /* CPU clock info (not yet) */
+	AM_RANGE(0x6f, 0x6f) AM_NOP /* RS-232C speed ctrl (not yet) */
+	AM_RANGE(0x70, 0x70) AM_READWRITE( pc8801_inport_70, pc8801_outport_70 )
+	AM_RANGE(0x71, 0x71) AM_READWRITE( pc88sr_inport_71, pc88sr_outport_71 )
+	AM_RANGE(0x78, 0x78) AM_WRITE( pc8801_outport_78 ) /* text window increment */
+	AM_RANGE(0x90, 0x9f) AM_NOP /* CD-ROM (unknown -- not yet) */
+	AM_RANGE(0xa0, 0xa3) AM_NOP /* music & network (unknown -- not yet) */
+	AM_RANGE(0xa8, 0xad) AM_NOP /* second sound board (not yet) */
+	AM_RANGE(0xb4, 0xb5) AM_NOP /* Video art board (unknown -- not yet) */
+	AM_RANGE(0xc1, 0xc1) AM_NOP /* (unknown -- not yet) */
+	AM_RANGE(0xc2, 0xcf) AM_NOP /* music (unknown -- not yet) */
+	AM_RANGE(0xd0, 0xd7) AM_NOP /* music & GP-IB (unknown -- not yet) */
+	AM_RANGE(0xd8, 0xd8) AM_NOP /* GP-IB (unknown -- not yet) */
+	AM_RANGE(0xdc, 0xdf) AM_NOP /* MODEM (unknown -- not yet) */
+	AM_RANGE(0xe2, 0xe3) AM_READWRITE( pc8801_read_extmem, pc8801_write_extmem ) /* expand RAM select */
+	AM_RANGE(0xe8, 0xeb) AM_READWRITE( pc8801_read_kanji1, pc8801_write_kanji1 )
+	AM_RANGE(0xec, 0xed) AM_READWRITE( pc8801_read_kanji2, pc8801_write_kanji2 ) /* JIS level2 Kanji ROM */
+	AM_RANGE(0xf0, 0xf1) AM_NOP /* Kana to Kanji dictionary ROM select (not yet) */
+	AM_RANGE(0xf3, 0xf3) AM_NOP /* DMA floppy (unknown -- not yet) */
+	AM_RANGE(0xf4, 0xf7) AM_NOP /* DMA 5'floppy (may be not released) */
+	AM_RANGE(0xf8, 0xfb) AM_NOP /* DMA 8'floppy (unknown -- not yet) */
+	AM_RANGE(0xfc, 0xff) AM_READWRITE( ppi8255_0_r, ppi8255_0_w )
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( pc8801fd_interrupt )
 {
 }
 
-ADDRESS_MAP_START( pc8801fd_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_START( pc8801fd_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_ROM
+	AM_RANGE( 0x4000, 0x7fff) AM_RAM
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( pc8801fd_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( MWA8_RAM )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( pc8801fd_readport , ADDRESS_SPACE_IO, 8)
-	AM_RANGE( 0xf8, 0xf8) AM_READ( pc8801fd_nec765_tc )
-	AM_RANGE( 0xfa, 0xfa) AM_READ( nec765_status_r )
-	AM_RANGE( 0xfb, 0xfb) AM_READ( nec765_data_r )
-	AM_RANGE( 0xfc, 0xff) AM_READ( ppi8255_1_r )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( pc8801fd_writeport , ADDRESS_SPACE_IO, 8)
-    AM_RANGE( 0xfb, 0xfb) AM_WRITE( nec765_data_w )
-    AM_RANGE( 0xfc, 0xff) AM_WRITE( ppi8255_1_w )
+ADDRESS_MAP_START( pc8801fd_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	AM_RANGE(0xf8, 0xf8) AM_READ( pc8801fd_nec765_tc )
+	AM_RANGE(0xfa, 0xfa) AM_READ( nec765_status_r )
+	AM_RANGE(0xfb, 0xfb) AM_READWRITE( nec765_data_r, nec765_data_w )
+	AM_RANGE(0xfc, 0xff) AM_READWRITE( ppi8255_1_r, ppi8255_1_w )
 ADDRESS_MAP_END
 
 ROM_START (pc88srl)
@@ -572,14 +506,14 @@ static MACHINE_DRIVER_START( pc88srl )
 
 	/* main CPU */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        /* 4 Mhz */
-	MDRV_CPU_PROGRAM_MAP(pc8801_readmem,pc8801_writemem)
-	MDRV_CPU_IO_MAP(pc88sr_readport,pc88sr_writeport)
+	MDRV_CPU_PROGRAM_MAP(pc8801_mem, 0)
+	MDRV_CPU_IO_MAP(pc88sr_io, 0)
 	MDRV_CPU_VBLANK_INT(pc8801_interrupt,1)
 
 	/* sub CPU(5 inch floppy drive) */
 	MDRV_CPU_ADD_TAG("sub", Z80, 4000000)		/* 4 Mhz */
-	MDRV_CPU_PROGRAM_MAP(pc8801fd_readmem,pc8801fd_writemem)
-	MDRV_CPU_IO_MAP(pc8801fd_readport,pc8801fd_writeport)
+	MDRV_CPU_PROGRAM_MAP(pc8801fd_mem, 0)
+	MDRV_CPU_IO_MAP(pc8801fd_io, 0)
 	MDRV_CPU_VBLANK_INT(pc8801fd_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

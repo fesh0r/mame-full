@@ -15,6 +15,8 @@ System Driver Changes:
 
 - [COUPE] Fixed regression introduced in MESS 0.96. (bug #753)  [Nate Woods]
 
+- [EXIDY] Fixed regression introduced in MESS 0.96. (bug #760)  [Nate Woods]
+
 - [JUPITER] Fixed regression introduced in MESS 0.96. (bug #756)  [Nate Woods]
 
 - [KCCOMP] Fixed regression introduced in MESS 0.87. (bug #749)  [Nate Woods]
@@ -31,6 +33,8 @@ System Driver Changes:
 
 - [MTX512] Added stub calls for the MTX parallel printer port.  (bug #755)
   [Gerco Ballintijn]
+  
+- [PC8801] Fixed regressions introduced in MESS 0.96. (bug #759)  [Nate Woods] 
 
 
 

@@ -269,21 +269,6 @@ static MACHINE_INIT( exidy )
 
 }
 
-#if 0
-static  READ8_HANDLER(exidy_unmapped_r)
-{
-	logerror("unmapped r: %04x\r\n",offset);
-	return 0x0ff;
-}
-
-static WRITE8_HANDLER(exidy_unmapped_w)
-{
-	logerror("unmapped r: %04x %d\r\n", offset, data);
-}
-#endif
-
-
-
 static  READ8_HANDLER ( exidy_wd179x_r )
 {
 	switch (offset & 0x03)
@@ -325,29 +310,16 @@ static WRITE8_HANDLER ( exidy_wd179x_w )
 }
 
 
-ADDRESS_MAP_START( readmem_exidy , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x07fff) AM_READ( MRA8_RAM)		/* ram 32k machine */
-//	{0x08000, 0x0bbff, exidy_unmapped_r},
-	AM_RANGE(0x0bc00,0x0bcff) AM_READ( MRA8_ROM)
-//	{0x0bd00, 0x0bfff, exidy_unmapped_r},
-	AM_RANGE(0x0be00,0x0be03) AM_READ( exidy_wd179x_r)
+ADDRESS_MAP_START( exidy_mem , ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x7fff) AM_RAM		/* ram 32k machine */
+	AM_RANGE(0xbc00, 0xbcff) AM_ROM
+	AM_RANGE(0xbe00, 0xbe03) AM_READWRITE(exidy_wd179x_r, exidy_wd179x_w)
 
-	AM_RANGE(0x0c000, 0x0efff) AM_READ( MRA8_ROM)		/* rom pac */
-	AM_RANGE(0x0f000, 0x0f7ff) AM_READ( MRA8_RAM)		/* screen ram */	
-	AM_RANGE(0x0f800, 0x0fbff) AM_READ( MRA8_ROM)		/* char rom */
-	AM_RANGE(0x0fc00, 0x0ffff) AM_READ( MRA8_RAM)		/* programmable chars */
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( writemem_exidy , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x07fff) AM_WRITE( MWA8_RAM)		/* ram 32k machine */
-//	{0x08000, 0x0bbff, exidy_unmapped_w},
-//	{0x0bd00, 0x0bfff, exidy_unmapped_w},
-AM_RANGE(0x0be00, 0x0be03) AM_WRITE( exidy_wd179x_w)	
-AM_RANGE(0x0c000, 0x0efff) AM_WRITE( MWA8_ROM)			/* rom pac */	
-	AM_RANGE(0x0f000, 0x0f7ff) AM_WRITE( MWA8_RAM)		/* screen ram */
-	AM_RANGE(0x0f800, 0x0fbff) AM_WRITE( MWA8_ROM)		/* char rom */
-	AM_RANGE(0x0fc00, 0x0ffff) AM_WRITE( MWA8_RAM)		/* programmable chars */
+	AM_RANGE(0xc000, 0xefff) AM_ROM		/* rom pac */
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM		/* screen ram */	
+	AM_RANGE(0xf800, 0xfbff) AM_ROM		/* char rom */
+	AM_RANGE(0xfc00, 0xffff) AM_RAM		/* programmable chars */
 ADDRESS_MAP_END
 
 static WRITE8_HANDLER(exidy_fc_port_w)
@@ -601,19 +573,13 @@ static  READ8_HANDLER(exidy_ff_port_r)
 }
 
 
-ADDRESS_MAP_START( readport_exidy , ADDRESS_SPACE_IO, 8)
-//	{0x000, 0x0fb, exidy_unmapped_r},
-	AM_RANGE(0x0fc, 0x0fc) AM_READ( exidy_fc_port_r)
-	AM_RANGE(0x0fd, 0x0fd) AM_READ( exidy_fd_port_r)
-	AM_RANGE(0x0fe, 0x0fe) AM_READ( exidy_fe_port_r)
-	AM_RANGE(0x0ff, 0x0ff) AM_READ( exidy_ff_port_r)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( writeport_exidy , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0fc, 0x0fc) AM_WRITE( exidy_fc_port_w)
-	AM_RANGE(0x0fd, 0x0fd) AM_WRITE( exidy_fd_port_w)
-	AM_RANGE(0x0fe, 0x0fe) AM_WRITE( exidy_fe_port_w)
-	AM_RANGE(0x0ff, 0x0ff) AM_WRITE( exidy_ff_port_w)
+ADDRESS_MAP_START( exidy_io , ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0xfc, 0xfc) AM_READWRITE( exidy_fc_port_r, exidy_fc_port_w )
+	AM_RANGE(0xfd, 0xfd) AM_READWRITE( exidy_fd_port_r, exidy_fd_port_w )
+	AM_RANGE(0xfe, 0xfe) AM_READWRITE( exidy_fe_port_r, exidy_fe_port_w )
+	AM_RANGE(0xff, 0xff) AM_READWRITE( exidy_ff_port_r, exidy_ff_port_w )
 ADDRESS_MAP_END
 
 
@@ -749,8 +715,8 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( exidy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)        /* clock - not correct */
-	MDRV_CPU_PROGRAM_MAP(readmem_exidy,writemem_exidy)
-	MDRV_CPU_IO_MAP(readport_exidy,writeport_exidy)
+	MDRV_CPU_PROGRAM_MAP(exidy_mem, 0)
+	MDRV_CPU_IO_MAP(exidy_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(200)
 	MDRV_INTERLEAVE(1)
