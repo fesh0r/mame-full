@@ -944,8 +944,7 @@ static void a400_cartslot_getinfo(struct IODevice *dev)
 
 SYSTEM_CONFIG_START(a400)
 	CONFIG_IMPORT_FROM(atari)
-	CONFIG_RAM_DEFAULT(16 * 1024)
-	CONFIG_RAM        (40 * 1024)
+	CONFIG_RAM_DEFAULT(40 * 1024)
 	CONFIG_DEVICE(a400_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
@@ -991,5 +990,5 @@ COMP ( 1979, a400,	   0,		 0,		a400,		a800,	 atari, a400,	"Atari",  "Atari 400 (
 COMP ( 1979, a400pal,  a400,	 0,		a400pal,	a800,	 atari, a400,	"Atari",  "Atari 400 (PAL)" , 0)
 COMP ( 1979, a800,	   0,		 0,		a800,		a800,	 atari, a800,	"Atari",  "Atari 800 (NTSC)" , 0)
 COMP ( 1979, a800pal,  a800,	 0,		a800pal,	a800,	 atari,	a800,	"Atari",  "Atari 800 (PAL)" , 0)
-COMP( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 atari, a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
+COMP ( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 atari, a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
 CONS ( 1982, a5200,    0,		 0,		a5200,		a5200,	 atari, a5200,	"Atari",  "Atari 5200", 0)
