@@ -15,6 +15,8 @@ System Driver Changes:
 
 - [COUPE] Fixed regression introduced in MESS 0.96. (bug #753)  [Nate Woods]
 
+- [JUPITER] Fixed regression introduced in MESS 0.96. (bug #756)  [Nate Woods]
+
 - [KCCOMP] Fixed regression introduced in MESS 0.85-88. (bug #749)  [Nate
   Woods]
 
