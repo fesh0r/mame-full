@@ -34,18 +34,11 @@ Changes:
 #include "sound/saa1099.h"
 #include "sound/speaker.h"
 
-ADDRESS_MAP_START( coupe_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x3FFF) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0x4000, 0x7FFF) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0x8000, 0xBFFF) AM_READ( MRA8_BANK3 )
-	AM_RANGE( 0xC000, 0xFFFF) AM_READ( MRA8_BANK4 )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( coupe_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x3FFF) AM_WRITE( MWA8_BANK1 )
-	AM_RANGE( 0x4000, 0x7FFF) AM_WRITE( MWA8_BANK2 )
-	AM_RANGE( 0x8000, 0xBFFF) AM_WRITE( MWA8_BANK3 )
-	AM_RANGE( 0xC000, 0xFFFF) AM_WRITE( MWA8_BANK4 )
+ADDRESS_MAP_START( coupe_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3FFF) AM_RAMBANK(1)
+	AM_RANGE( 0x4000, 0x7FFF) AM_RAMBANK(2)
+	AM_RANGE( 0x8000, 0xBFFF) AM_RAMBANK(3)
+	AM_RANGE( 0xC000, 0xFFFF) AM_RAMBANK(4)
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( coupe_line_interrupt )
@@ -154,7 +147,7 @@ static unsigned char getSamKey2(unsigned char hi)
 }
 
 
-static  READ8_HANDLER( coupe_port_r )
+static READ8_HANDLER( coupe_port_r )
 {
     if (offset==SSND_ADDR)  /* Sound address request */
 		return SOUND_ADDR;
@@ -270,7 +263,6 @@ static WRITE8_HANDLER( coupe_port_w )
 }
 
 ADDRESS_MAP_START( coupe_io , ADDRESS_SPACE_IO, 8)	
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0x0000, 0x0ffff) AM_READWRITE( coupe_port_r, coupe_port_w )
 ADDRESS_MAP_END
 
@@ -416,7 +408,7 @@ static PALETTE_INIT( coupe )
 static MACHINE_DRIVER_START( coupe )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 6 Mhz */
-	MDRV_CPU_PROGRAM_MAP(coupe_readmem,coupe_writemem)
+	MDRV_CPU_PROGRAM_MAP(coupe_mem, 0)
 	MDRV_CPU_IO_MAP(coupe_io, 0)
 	MDRV_CPU_VBLANK_INT(coupe_line_interrupt, 192 + 10)	/* 192 scanlines + 10 lines of vblank (approx).. */
 	MDRV_FRAMES_PER_SECOND(50)
