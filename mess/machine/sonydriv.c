@@ -199,6 +199,8 @@ void sony_write_data(UINT8 data)
 
 static int sony_rpm(floppy *f, mess_image *cur_image)
 {
+	int result = 0;
+
 	/*
 	 * The Mac floppy controller was interesting in that its speed was adjusted
 	 * while the thing was running.  On the tracks closer to the rim, it was
@@ -216,13 +218,15 @@ static int sony_rpm(floppy *f, mess_image *cur_image)
 	 */
 
 	if (f->ext_speed_control)
-	{	/* 400k unit : rotation speed controlled by computer */
-		return rotation_speed;
+	{
+		/* 400k unit : rotation speed controlled by computer */
+		result = rotation_speed;
 	}
 	else
 	{	/* 800k unit : rotation speed controlled by drive */
 #if 1	/* Mac Plus */
-		static int speeds[] = {
+		static int speeds[] =
+		{
 			500,	/* 00-15:	timing value 117B (acceptable range {1135-11E9} */
 			550,	/* 16-31:	timing value ???? (acceptable range {12C6-138A} */
 			600,	/* 32-47:	timing value ???? (acceptable range {14A7-157F} */
@@ -231,7 +235,8 @@ static int sony_rpm(floppy *f, mess_image *cur_image)
 		};
 #else	/* Lisa 2 */
 		/* 237 + 1.3*(256-reg) */
-		static int speeds[] = {
+		static int speeds[] =
+		{
 			293,	/* 00-15:	timing value ???? (acceptable range {0330-0336} */
 			322,	/* 16-31:	timing value ???? (acceptable range {02ED-02F3} */
 			351,	/* 32-47:	timing value ???? (acceptable range {02A7-02AD} */
@@ -239,9 +244,10 @@ static int sony_rpm(floppy *f, mess_image *cur_image)
 			439		/* 64-79:	timing value ???? (acceptable range {021E-0222} */
 		};
 #endif
-
-		return speeds[floppy_drive_get_current_track(cur_image) / 16];
+		if (cur_image && image_exists(cur_image))
+			result = speeds[floppy_drive_get_current_track(cur_image) / 16];
 	}
+	return result;
 }
 
 int sony_read_status(void)

@@ -17,8 +17,9 @@ System Driver Changes:
 
 - [JUPITER] Fixed regression introduced in MESS 0.96. (bug #756)  [Nate Woods]
 
-- [KCCOMP] Fixed regression introduced in MESS 0.85-88. (bug #749)  [Nate
-  Woods]
+- [KCCOMP] Fixed regression introduced in MESS 0.87. (bug #749)  [Nate Woods]
+  
+- [LISA2] Fixed regression introduced in MESS 0.91.  (bug #757)  [Nate Woods]
 
 - [MC10] Added multiple RAM configurations, and cleaned up driver.  [Nate
   Woods]
