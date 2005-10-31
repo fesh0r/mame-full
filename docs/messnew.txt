@@ -36,7 +36,8 @@ System Driver Changes:
 
 - [NASCOM1] Fixed regression introduced in MESS 0.96. (bug #758)  [Nate Woods]
 
-- [PC8801] Fixed regressions introduced in MESS 0.96. (bug #759)  [Nate Woods]
+- [SPECTRUM] Fixed regression introduced in MESS 0.96. (bugs #726, #761)  [Nate
+  Woods]
 
 
 
