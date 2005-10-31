@@ -33,8 +33,10 @@ System Driver Changes:
 
 - [MTX512] Added stub calls for the MTX parallel printer port.  (bug #755)
   [Gerco Ballintijn]
-  
-- [PC8801] Fixed regressions introduced in MESS 0.96. (bug #759)  [Nate Woods] 
+
+- [NASCOM1] Fixed regression introduced in MESS 0.96. (bug #758)  [Nate Woods]
+
+- [PC8801] Fixed regressions introduced in MESS 0.96. (bug #759)  [Nate Woods]
 
 
 
