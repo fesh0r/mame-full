@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.41 2005/10/30 23:31:02 npwoods Exp $
+  $Id: pc8801.c,v 1.42 2005/10/31 13:36:28 npwoods Exp $
 
 ***************************************************************************/
 
@@ -433,6 +433,9 @@ ADDRESS_MAP_START( pc88sr_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0xd8, 0xd8) AM_NOP /* GP-IB (unknown -- not yet) */
 	AM_RANGE(0xdc, 0xdf) AM_NOP /* MODEM (unknown -- not yet) */
 	AM_RANGE(0xe2, 0xe3) AM_READWRITE( pc8801_read_extmem, pc8801_write_extmem ) /* expand RAM select */
+	AM_RANGE(0xe4, 0xe4) AM_WRITE( pc8801_write_interrupt_level )
+	AM_RANGE(0xe6, 0xe6) AM_WRITE( pc8801_write_interrupt_mask )
+	AM_RANGE(0xe7, 0xe7) AM_NOP /* (unknown -- not yet) */
 	AM_RANGE(0xe8, 0xeb) AM_READWRITE( pc8801_read_kanji1, pc8801_write_kanji1 )
 	AM_RANGE(0xec, 0xed) AM_READWRITE( pc8801_read_kanji2, pc8801_write_kanji2 ) /* JIS level2 Kanji ROM */
 	AM_RANGE(0xf0, 0xf1) AM_NOP /* Kana to Kanji dictionary ROM select (not yet) */

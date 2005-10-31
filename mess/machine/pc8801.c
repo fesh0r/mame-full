@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.25 2005/07/14 03:49:17 npwoods Exp $
+  $Id: pc8801.c,v 1.26 2005/10/31 13:36:29 npwoods Exp $
 
 ***************************************************************************/
 
@@ -102,39 +102,44 @@ static int interrupt_trig_reg;
 
 static void pc8801_update_interrupt(void)
 {
-  int level,i;
+	int level, i;
 
-  level=-1;
-  for(i=0;i<8;i++) {
-    if((interrupt_trig_reg & (1<<i))!=0) level=i;
-  }
-  if(level>=0 && level<interrupt_level_reg) {
-    cpunum_set_input_line (0, 0, HOLD_LINE);
-  }
+	level = -1;
+	for (i = 0; i < 8; i++)
+	{
+		if ((interrupt_trig_reg & (1<<i)) != 0)
+			level = i;
+	}
+	if (level >= 0 && level<interrupt_level_reg)
+	{
+		cpunum_set_input_line (0, 0, HOLD_LINE);
+	}
 }
 
 static int pc8801_interupt_callback (int cpu)
 {
-  int level,i;
+	int level, i;
 
-  level=0;
-  for(i=0;i<8;i++) {
-    if((interrupt_trig_reg & (1<<i))!=0) level=i;
-  }
-  interrupt_trig_reg &= ~(1<<level);
-  return level*2;
+	level = 0;
+	for (i = 0; i < 8; i++)
+	{
+		if ((interrupt_trig_reg & (1<<i))!=0)
+			level = i;
+	}
+	interrupt_trig_reg &= ~(1<<level);
+	return level*2;
 }
 
 WRITE8_HANDLER(pc8801_write_interrupt_level)
 {
-  interrupt_level_reg = data&0x0f;
-  pc8801_update_interrupt();
+	interrupt_level_reg = data&0x0f;
+	pc8801_update_interrupt();
 }
 
 WRITE8_HANDLER(pc8801_write_interrupt_mask)
 {
-  interrupt_mask_reg = ((data&0x01)<<2) | (data&0x02)
-    | ((data&0x04)>>2) | 0xf8;
+	interrupt_mask_reg = ((data&0x01)<<2) | (data&0x02)
+		| ((data&0x04)>>2) | 0xf8;
 }
 
 static void pc8801_raise_interrupt(int level)
@@ -537,28 +542,24 @@ WRITE8_HANDLER(pc88sr_outport_71)
 
 static void pc8801_init_bank(int hireso)
 {
-  int i,j;
-  int num80,num88,numIO;
-  unsigned char *e;
+	int i,j;
+	int num80,num88,numIO;
+	unsigned char *e;
 
-  RAMmode=0;
-  ROMmode=0;
-  maptvram=0;
-  no4throm=0;
-  no4throm2=0;
-  port71_save=0xff;
-  port32_save=0x80;
-  mainROM = memory_region(REGION_CPU1);
-  if(pc8801_mainRAM==NULL) {
-    if((pc8801_mainRAM = (UINT8*)malloc (0x10000))==NULL) {
-      logerror ("pc8801: out of memory!\n");
-      return;
-    }
-  }
-  memset(pc8801_mainRAM,0,0x10000);
-  extmem_ctrl[0]=extmem_ctrl[1]=0;
-  pc8801_update_bank();
-  pc8801_video_init(hireso);
+	RAMmode=0;
+	ROMmode=0;
+	maptvram=0;
+	no4throm=0;
+	no4throm2=0;
+	port71_save=0xff;
+	port32_save=0x80;
+	mainROM = memory_region(REGION_CPU1);
+	pc8801_mainRAM = (UINT8 *) auto_malloc (0x10000);
+	memset(pc8801_mainRAM, 0, 0x10000);
+
+	extmem_ctrl[0]=extmem_ctrl[1]=0;
+	pc8801_update_bank();
+	pc8801_video_init(hireso);
 
   if(extmem_mode!=input_port_19_r(0)) {
     extmem_mode=input_port_19_r(0);
