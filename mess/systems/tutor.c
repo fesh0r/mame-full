@@ -390,9 +390,9 @@ static WRITE8_HANDLER(tutor_printer_w)
 
 static ADDRESS_MAP_START(tutor_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	AM_RANGE(0x0000, 0x7fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/*system ROM*/
-	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)	/*BASIC ROM & cartridge ROM*/
-	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/*free for expansion, or cartridge ROM?*/
+	AM_RANGE(0x0000, 0x7fff) AM_ROM	/*system ROM*/
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)	/*BASIC ROM & cartridge ROM*/
+	AM_RANGE(0xc000, 0xdfff) AM_NOP	/*free for expansion, or cartridge ROM?*/
 
 	AM_RANGE(0xe000, 0xe000) AM_READWRITE(TMS9928A_vram_r, TMS9928A_vram_w)	/*VDP data*/
 	AM_RANGE(0xe002, 0xe002) AM_READWRITE(TMS9928A_register_r, TMS9928A_register_w)/*VDP status*/
@@ -401,7 +401,7 @@ static ADDRESS_MAP_START(tutor_memmap, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xe800, 0xe8ff) AM_READWRITE(tutor_printer_r, tutor_printer_w)	/*printer*/
 	AM_RANGE(0xee00, 0xeeff) AM_READWRITE(MRA8_NOP, tutor_cassette_w)		/*cassette interface*/
 
-	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/*free for expansion (and internal processor RAM)*/
+	AM_RANGE(0xf000, 0xffff) AM_NOP	/*free for expansion (and internal processor RAM)*/
 
 ADDRESS_MAP_END
 

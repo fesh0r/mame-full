@@ -4,7 +4,7 @@
 /* from machine/laser350.c */
 extern int laser_latch;
 
-void init_laser(void);
+DRIVER_INIT(laser);
 MACHINE_INIT( laser350 );
 MACHINE_INIT( laser500 );
 MACHINE_INIT( laser700 );
