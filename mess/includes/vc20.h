@@ -158,9 +158,10 @@ int vic6560_dma_read (int offset);
 DEVICE_INIT(vc20_rom);
 DEVICE_LOAD(vc20_rom);
 
-void vc20_driver_init (void);
-void vic20_driver_init (void);
-void vic20ieee_driver_init (void);
+DRIVER_INIT( vc20 );
+DRIVER_INIT( vic20 );
+DRIVER_INIT( vic20i );
+DRIVER_INIT( vic1001 );
 void vc20_driver_shutdown (void);
 
 MACHINE_INIT( vc20 );

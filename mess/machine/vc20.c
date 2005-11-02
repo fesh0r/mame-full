@@ -439,7 +439,7 @@ int vic6560_dma_read_color (int offset)
 int vic6560_dma_read (int offset)
 {
 	/* should read real system bus between 0x9000 and 0xa000 */
-	return vc20_memory[VIC6560ADDR2VC20ADDR (offset)];
+	return program_read_byte(VIC6560ADDR2VC20ADDR (offset));
 }
 
 static void vc20_memory_init(void)
@@ -507,19 +507,24 @@ void vc20_driver_shutdown (void)
 	vc20_tape_close ();
 }
 
-void vc20_driver_init (void)
+DRIVER_INIT( vc20 )
 {
 	vc20_common_driver_init ();
 	vic6561_init (vic6560_dma_read, vic6560_dma_read_color);
 }
 
-void vic20_driver_init (void)
+DRIVER_INIT( vic20 )
 {
 	vc20_common_driver_init ();
 	vic6560_init (vic6560_dma_read, vic6560_dma_read_color);
 }
 
-extern void vic20ieee_driver_init (void)
+DRIVER_INIT( vic1001 )
+{
+	init_vic20();
+}
+
+DRIVER_INIT( vic20i )
 {
 	ieee=1;
 	vc20_common_driver_init ();
