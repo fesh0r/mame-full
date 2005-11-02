@@ -32,51 +32,54 @@
 
 #define P2000M_707F_DISA	0x01
 
-static	struct
+static struct
 {
-	UINT8	port_101f;
-	UINT8	port_202f;
-	UINT8	port_303f;
-	UINT8	port_707f;
+	UINT8 port_101f;
+	UINT8 port_202f;
+	UINT8 port_303f;
+	UINT8 port_707f;
 } p2000t_ports;
 
- READ8_HANDLER (	p2000t_port_000f_r )
+READ8_HANDLER (	p2000t_port_000f_r )
 {
-	if (p2000t_ports.port_101f & P2000M_101F_KEYINT) {
+	if (p2000t_ports.port_101f & P2000M_101F_KEYINT)
+	{
 		return (readinputport (0) & readinputport (1) &
 		readinputport (2) & readinputport (3) &
 		readinputport (4) & readinputport (5) &
 		readinputport (6) & readinputport (7) &
 		readinputport (8) & readinputport (9));
-	} else if (offset < 10) {
+	}
+	else if (offset < 10)
+	{
 		return (readinputport (offset));
 	}
 	return (0xff);
 }
 
- READ8_HANDLER (	p2000t_port_202f_r ) { return (0xff); }
+READ8_HANDLER (	p2000t_port_202f_r ) { return (0xff); }
 
-WRITE8_HANDLER (	p2000t_port_101f_w )
+WRITE8_HANDLER ( p2000t_port_101f_w )
 {
 	p2000t_ports.port_101f = data;
 }
 
-WRITE8_HANDLER (	p2000t_port_303f_w )
+WRITE8_HANDLER ( p2000t_port_303f_w )
 {
 	p2000t_ports.port_303f = data;
 }
 
-WRITE8_HANDLER (	p2000t_port_505f_w )
+WRITE8_HANDLER ( p2000t_port_505f_w )
 {
 	speaker_level_w(0, data & 0x01);
 }
 
-WRITE8_HANDLER (	p2000t_port_707f_w )
+WRITE8_HANDLER ( p2000t_port_707f_w )
 {
 	p2000t_ports.port_707f = data;
 }
 
-WRITE8_HANDLER (	p2000t_port_888b_w ) {}
-WRITE8_HANDLER (	p2000t_port_8c90_w ) {}
-WRITE8_HANDLER (	p2000t_port_9494_w ) {}
+WRITE8_HANDLER ( p2000t_port_888b_w ) {}
+WRITE8_HANDLER ( p2000t_port_8c90_w ) {}
+WRITE8_HANDLER ( p2000t_port_9494_w ) {}
 

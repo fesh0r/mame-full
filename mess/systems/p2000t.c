@@ -49,36 +49,20 @@ ADDRESS_MAP_END
 
 /* Memory w/r functions */
 
-static ADDRESS_MAP_START( p2000t_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
-	AM_RANGE(0x1000, 0x4fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x5000, 0x57ff) AM_READ( videoram_r)
-	AM_RANGE(0x5800, 0x9fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0xa000, 0xffff) AM_READ( MRA8_NOP)
+static ADDRESS_MAP_START( p2000t_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+	AM_RANGE(0x1000, 0x4fff) AM_ROM
+	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x5800, 0x9fff) AM_RAM
+	AM_RANGE(0xa000, 0xffff) AM_NOP
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( p2000t_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_ROM)
-	AM_RANGE(0x1000, 0x4fff) AM_WRITE( MWA8_RAM)
-	AM_RANGE(0x5000, 0x57ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
-	AM_RANGE(0x5800, 0x9fff) AM_WRITE( MWA8_RAM)
-	AM_RANGE(0xa000, 0xffff) AM_WRITE( MWA8_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( p2000m_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
-	AM_RANGE(0x1000, 0x4fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x5000, 0x5fff) AM_READ( videoram_r)
-	AM_RANGE(0x6000, 0x9fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0xa000, 0xffff) AM_READ( MRA8_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( p2000m_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_ROM)
-	AM_RANGE(0x1000, 0x4fff) AM_WRITE( MWA8_RAM)
-	AM_RANGE(0x5000, 0x5fff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
-	AM_RANGE(0x6000, 0x9fff) AM_WRITE( MWA8_RAM)
-	AM_RANGE(0xa000, 0xffff) AM_WRITE( MWA8_NOP)
+static ADDRESS_MAP_START( p2000m_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+	AM_RANGE(0x1000, 0x4fff) AM_ROM
+	AM_RANGE(0x5000, 0x5fff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x6000, 0x9fff) AM_RAM
+	AM_RANGE(0xa000, 0xffff) AM_NOP
 ADDRESS_MAP_END
 
 /* graphics output */
@@ -107,7 +91,7 @@ static unsigned char p2000m_palette[2 * 3] =
 	0xff, 0xff, 0xff
 };
 
-static	unsigned	short	p2000m_colortable[2 * 2] =
+static unsigned short p2000m_colortable[2 * 2] =
 {
 	1,0, 0,1
 };
@@ -224,7 +208,7 @@ static INTERRUPT_GEN( p2000_interrupt )
 static MACHINE_DRIVER_START( p2000t )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_PROGRAM_MAP(p2000t_readmem, p2000t_writemem)
+	MDRV_CPU_PROGRAM_MAP(p2000t_mem, 0)
 	MDRV_CPU_IO_MAP(p2000t_io, 0)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 
@@ -242,7 +226,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( p2000m )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_PROGRAM_MAP(p2000m_readmem, p2000m_writemem)
+	MDRV_CPU_PROGRAM_MAP(p2000m_mem, 0)
 	MDRV_CPU_IO_MAP(p2000t_io, 0)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
