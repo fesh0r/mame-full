@@ -307,69 +307,37 @@ INPUT_PORTS_START( intvkbd )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_7_PAD)
 INPUT_PORTS_END
 
-static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x0000, 0x003f) AM_READ( stic_r )
-    AM_RANGE(0x0100, 0x01ef) AM_READ( intv_ram8_r )
-    AM_RANGE(0x01f0, 0x01ff) AM_READ( AY8914_directread_port_0_lsb_r )
- 	AM_RANGE(0x0200, 0x035f) AM_READ( intv_ram16_r )
-	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA16_ROM )		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_READ( MRA16_ROM ) 		/* GROM,     8-bits wide */
-	AM_RANGE(0x3800, 0x39ff) AM_READ( intv_gram_r )		/* GRAM,     8-bits wide */
-	AM_RANGE(0x4800, 0x7fff) AM_READ( MRA16_ROM )		/* Cartridges? */
+static ADDRESS_MAP_START( intv_mem , ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x0000, 0x003f) AM_READWRITE( stic_r, stic_w )
+    AM_RANGE(0x0100, 0x01ef) AM_READWRITE( intv_ram8_r, intv_ram8_w )
+    AM_RANGE(0x01f0, 0x01ff) AM_READWRITE( AY8914_directread_port_0_lsb_r, AY8914_directwrite_port_0_lsb_w )
+ 	AM_RANGE(0x0200, 0x035f) AM_READWRITE( intv_ram16_r, intv_ram16_w )
+	AM_RANGE(0x1000, 0x1fff) AM_ROM		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_ROM 		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_READWRITE( intv_gram_r, intv_gram_w )		/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x7fff) AM_ROM		/* Cartridges? */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x0000, 0x003f) AM_WRITE( stic_w )
-    AM_RANGE(0x0100, 0x01ef) AM_WRITE( intv_ram8_w )
-    AM_RANGE(0x01f0, 0x01ff) AM_WRITE( AY8914_directwrite_port_0_lsb_w )
-	AM_RANGE(0x0200, 0x035f) AM_WRITE( intv_ram16_w )
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA16_ROM ) 		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE( MWA16_ROM )		/* GROM,     8-bits wide */
-	AM_RANGE(0x3800, 0x39ff) AM_WRITE( intv_gram_w )	/* GRAM,     8-bits wide */
-	AM_RANGE(0x4800, 0x7fff) AM_WRITE( MWA16_ROM )		/* Cartridges? */
+static ADDRESS_MAP_START( intvkbd_mem , ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x0000, 0x003f) AM_READWRITE( stic_r, stic_w )
+    AM_RANGE(0x0100, 0x01ef) AM_READWRITE( intv_ram8_r, intv_ram8_w )
+    AM_RANGE(0x01f0, 0x01ff) AM_READWRITE( AY8914_directread_port_0_lsb_r, AY8914_directwrite_port_0_lsb_w )
+ 	AM_RANGE(0x0200, 0x035f) AM_READWRITE( intv_ram16_r, intv_ram16_w )
+	AM_RANGE(0x1000, 0x1fff) AM_ROM		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_ROM		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_READWRITE( intv_gram_r, intv_gram_w )		/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x6fff) AM_ROM		/* Cartridges? */
+	AM_RANGE(0x7000, 0x7fff) AM_ROM		/* Keyboard ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE( intvkbd_dualport16_r, intvkbd_dualport16_w )	/* Dual-port RAM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_kbd , ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x0000, 0x003f) AM_READ( stic_r )
-    AM_RANGE(0x0100, 0x01ef) AM_READ( intv_ram8_r )
-    AM_RANGE(0x01f0, 0x01ff) AM_READ( AY8914_directread_port_0_lsb_r )
- 	AM_RANGE(0x0200, 0x035f) AM_READ( intv_ram16_r )
-	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA16_ROM )		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_READ( MRA16_ROM ) 		/* GROM,     8-bits wide */
-	AM_RANGE(0x3800, 0x39ff) AM_READ( intv_gram_r )		/* GRAM,     8-bits wide */
-	AM_RANGE(0x4800, 0x6fff) AM_READ( MRA16_ROM )		/* Cartridges? */
-	AM_RANGE(0x7000, 0x7fff) AM_READ( MRA16_ROM )		/* Keyboard ROM */
-	AM_RANGE(0x8000, 0xbfff) AM_READ( intvkbd_dualport16_r )	/* Dual-port RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_kbd , ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x0000, 0x003f) AM_WRITE( stic_w )
-    AM_RANGE(0x0100, 0x01ef) AM_WRITE( intv_ram8_w )
-    AM_RANGE(0x01f0, 0x01ff) AM_WRITE( AY8914_directwrite_port_0_lsb_w )
-	AM_RANGE(0x0200, 0x035f) AM_WRITE( intv_ram16_w )
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA16_ROM ) 		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE( MWA16_ROM )		/* GROM,     8-bits wide */
-	AM_RANGE(0x3800, 0x39ff) AM_WRITE( intv_gram_w )	/* GRAM,     8-bits wide */
-	AM_RANGE(0x4800, 0x6fff) AM_WRITE( MWA16_ROM )		/* Cartridges? */
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE( MWA16_ROM )		/* Keyboard ROM */
-	AM_RANGE(0x8000, 0xbfff) AM_WRITE( intvkbd_dualport16_w )	/* Dual-port RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readmem2 , ADDRESS_SPACE_PROGRAM, 8)
+static ADDRESS_MAP_START( intv2_mem , ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )  /* Required because of probing */
-	AM_RANGE( 0x0000, 0x3fff) AM_READ( intvkbd_dualport8_lsb_r ) /* Dual-port RAM */
-	AM_RANGE( 0x4000, 0x7fff) AM_READ( intvkbd_dualport8_msb_r ) /* Dual-port RAM */
-	AM_RANGE( 0xb7f8, 0xb7ff) AM_READ( MRA8_RAM ) /* ??? */
-	AM_RANGE( 0xb800, 0xbfff) AM_READ( &videoram_r ) /* Text Display */
-	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem2 , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( intvkbd_dualport8_lsb_w ) /* Dual-port RAM */
-	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( intvkbd_dualport8_msb_w ) /* Dual-port RAM */
-	AM_RANGE( 0xb7f8, 0xb7ff) AM_WRITE( MWA8_RAM ) /* ??? */
-	AM_RANGE( 0xb800, 0xbfff) AM_WRITE( &videoram_w ) /* Text Display */
-	AM_RANGE( 0xc000, 0xffff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x0000, 0x3fff) AM_READWRITE( intvkbd_dualport8_lsb_r, intvkbd_dualport8_lsb_w ) /* Dual-port RAM */
+	AM_RANGE( 0x4000, 0x7fff) AM_READWRITE( intvkbd_dualport8_msb_r, intvkbd_dualport8_msb_w ) /* Dual-port RAM */
+	AM_RANGE( 0xb7f8, 0xb7ff) AM_RAM	/* ??? */
+	AM_RANGE( 0xb800, 0xbfff) AM_READWRITE( videoram_r, videoram_w ) /* Text Display */
+	AM_RANGE( 0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( intv_interrupt2 )
@@ -380,7 +348,7 @@ static INTERRUPT_GEN( intv_interrupt2 )
 static MACHINE_DRIVER_START( intv )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", CP1610, 3579545/4)        /* Colorburst/4 */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(intv_mem, 0)
 	MDRV_CPU_VBLANK_INT(intv_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(59.92)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -411,10 +379,10 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( intvkbd )
 	MDRV_IMPORT_FROM( intv )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP(readmem_kbd,writemem_kbd)
+	MDRV_CPU_PROGRAM_MAP(intvkbd_mem, 0)
 
 	MDRV_CPU_ADD(M6502, 3579545/2)	/* Colorburst/2 */
-	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(intv2_mem, 0)
 	MDRV_CPU_VBLANK_INT(intv_interrupt2,1)
 
 	MDRV_INTERLEAVE(100)
