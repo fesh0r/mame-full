@@ -101,12 +101,20 @@ enum
 };
 
 
-static void machine_init_tutor(void)
+static DRIVER_INIT(tutor)
+{
+	tape_interrupt_timer = timer_alloc(tape_interrupt_handler);
+
+	memory_configure_bank(1, 0, 1, memory_region(REGION_CPU1) + basic_base, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_CPU1) + cartridge_base, 0);
+	memory_set_bank(1, 0);
+}
+
+static MACHINE_INIT(tutor)
 {
 	cartridge_enable = 0;
 
 	tape_interrupt_enable = 0;
-	tape_interrupt_timer = timer_alloc(tape_interrupt_handler);
 
 	printer_data = 0;
 	printer_strobe = 0;
@@ -194,13 +202,13 @@ static WRITE8_HANDLER(tutor_mapper_w)
 	case 0x08:
 		/* disable cartridge ROM, enable BASIC ROM at base >8000 */
 		cartridge_enable = 0;
-		memory_set_bankptr(1, memory_region(REGION_CPU1) + basic_base);
+		memory_set_bank(1, 0);
 		break;
 
 	case 0x0c:
 		/* enable cartridge ROM, disable BASIC ROM at base >8000 */
 		cartridge_enable = 1;
-		memory_set_bankptr(1, memory_region(REGION_CPU1) + cartridge_base);
+		memory_set_bank(1, 1);
 		break;
 
 	default:
@@ -635,4 +643,4 @@ SYSTEM_CONFIG_START(tutor)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT		COMPAT	MACHINE		INPUT	INIT	CONFIG		COMPANY		FULLNAME */
-COMP(	1983?,	tutor,	0,			0,		tutor,		tutor,	NULL,	tutor,		"Tomy",		"Tomy Tutor" , 0)
+COMP(	1983?,	tutor,	0,			0,		tutor,		tutor,	tutor,	tutor,		"Tomy",		"Tomy Tutor" , 0)
