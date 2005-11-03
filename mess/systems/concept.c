@@ -36,15 +36,13 @@
 #include "devices/harddriv.h"
 
 static ADDRESS_MAP_START(concept_memmap, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x000000, 0x000007) AM_ROM AM_REGION(REGION_CPU1, 0x010000) 	/* boot ROM mirror */
+	AM_RANGE(0x000008, 0x000fff) AM_RAM										/* static RAM */
+	AM_RANGE(0x010000, 0x011fff) AM_ROM AM_REGION(REGION_CPU1, 0x010000)	/* boot ROM */
+	AM_RANGE(0x020000, 0x021fff) AM_ROM										/* macsbugs ROM (optional) */
+	AM_RANGE(0x030000, 0x03ffff) AM_READWRITE(concept_io_r,concept_io_w)	/* I/O space */
 
-	AM_RANGE(0x000000, 0x000007) AM_READWRITE(MRA16_BANK1, MWA16_ROM)	/* boot ROM mirror */
-	AM_RANGE(0x000008, 0x000fff) AM_READWRITE(MRA16_RAM, MWA16_RAM)		/* static RAM */
-	AM_RANGE(0x010000, 0x011fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* boot ROM */
-	AM_RANGE(0x020000, 0x021fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* macsbugs ROM (optional) */
-	AM_RANGE(0x030000, 0x03ffff) AM_READWRITE(concept_io_r,concept_io_w)/* I/O space */
-
-	AM_RANGE(0x080000, 0x0fffff) AM_READWRITE(/*MRA16_BANK2, MWA16_BANK2*/MRA16_RAM, MWA16_RAM)	/* DRAM */
-
+	AM_RANGE(0x080000, 0x0fffff) AM_RAM AM_BASE(&videoram16)/* AM_RAMBANK(2) */	/* DRAM */
 ADDRESS_MAP_END
 
 /* init with simple, fixed, B/W palette */

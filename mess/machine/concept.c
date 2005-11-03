@@ -84,8 +84,6 @@ static void concept_hdc_init(int slot);
 
 MACHINE_INIT(concept)
 {
-	memory_set_bankptr(1, memory_region(REGION_CPU1) + rom0_base);
-
 	/* initialize int state */
 	pending_interrupts = 0;
 
@@ -128,16 +126,16 @@ VIDEO_UPDATE(concept)
 {
 	UINT16 *v;
 	int x, y;
-	UINT8 line_buffer[720];
+	UINT16 *line;
 	/* resolution is 720*560 */
 
-	v = /*videoram_ptr*/ (UINT16 *) (memory_region(REGION_CPU1) + 0x80000);
+	v = /*videoram_ptr*/ (UINT16 *) videoram16;
 
 	for (y = 0; y < 560; y++)
 	{
+		line = (UINT16 *) bitmap->line[560-1-y];
 		for (x = 0; x < 720; x++)
-			line_buffer[720-1-x] = (v[(x+48+y*768)>>4] & (0x8000 >> ((x+48+y*768) & 0xf))) ? 1 : 0;
-		draw_scanline8(bitmap, 0, (560-1-y), 720, line_buffer, Machine->pens, -1);
+			line[720-1-x] = (v[(x+48+y*768)>>4] & (0x8000 >> ((x+48+y*768) & 0xf))) ? 1 : 0;
 	}
 }
 

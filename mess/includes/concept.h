@@ -6,11 +6,6 @@
 
 enum
 {
-	rom0_base = 0x10000
-};
-
-enum
-{
 	input_port_keyboard_concept = 0,
 	dipswitch_port_concept = 6,
 	display_orientation_concept = 7
