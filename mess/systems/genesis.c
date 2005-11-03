@@ -39,12 +39,6 @@ Gareth S. Long
 In Memory Of Haruki Ikeda
 
 ***************************************************************************/
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
 
 #include "driver.h"
 #include "sound/2612intf.h"
