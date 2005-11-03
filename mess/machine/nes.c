@@ -49,6 +49,12 @@ static void init_nes_core (void)
 	nes.vram = memory_region(REGION_GFX2);
 	nes.wram = memory_region(REGION_USER1);
 
+	/* Brutal hack put in as a consequence of the new memory system; we really
+	 * need to fix the NES code */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x07ff, 0, 0x1800, MRA8_BANK10);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x07ff, 0, 0x1800, MWA8_BANK10);
+	memory_set_bankptr(10, nes.rom);
+
 	battery_ram = nes.wram;
 
 	/* Set up the memory handlers for the mapper */
