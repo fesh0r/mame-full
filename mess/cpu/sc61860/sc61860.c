@@ -110,17 +110,6 @@ void sc61860_2ms_tick(int param)
 	sc61860.timer.t2ms=!sc61860.timer.t2ms;
 }
 
-
- READ8_HANDLER(sc61860_internal_r)
-{
-	return sc61860.ram[offset];
-}
-
-WRITE8_HANDLER(sc61860_internal_w)
-{
-	sc61860.ram[offset]=data;
-}
-
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
@@ -139,11 +128,13 @@ static void sc61860_reset(void *param)
 	change_pc(sc61860.pc);
 }
 
+#ifndef MAME_DEBUG
 static unsigned sc61860_dasm(char *buffer, unsigned pc)
 {
 	sprintf( buffer, "$%X", cpu_readop(pc) );
 	return 1;
 }
+#endif /* MAME_DEBUG */
 
 static void sc61860_init(void)
 {

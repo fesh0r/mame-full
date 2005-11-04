@@ -166,6 +166,7 @@ static void dump_screenshot(int write_file)
 	}
 
 	/* check to see if bitmap is blank */
+	bitmap = Machine->scrbitmap;
 	is_blank = 1;
 	color = bitmap->read(bitmap, 0, 0);
 	for (y = 0; is_blank && (y < bitmap->height); y++)
