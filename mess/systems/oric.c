@@ -26,6 +26,8 @@
 #include "formats/ap2_dsk.h"
 #include "formats/oric_tap.h"
 #include "sound/ay8910.h"
+#include "machine/6522via.h"
+#include "includes/6551.h"
 
 #include "includes/apple2.h"
 
@@ -65,10 +67,13 @@ ADDRESS_MAP_END
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
 static ADDRESS_MAP_START(telestrat_mem, ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x02FF) AM_RAM
-    AM_RANGE( 0x0300, 0x03ff) AM_READWRITE( telestrat_IO_r, telestrat_IO_w )
-    AM_RANGE( 0x0400, 0xBFFF) AM_RAM
-    AM_RANGE( 0xc000, 0xffff) AM_READWRITE( MRA8_BANK1, MWA8_BANK2 )
+	AM_RANGE( 0x0000, 0x02ff) AM_RAM
+	AM_RANGE( 0x0300, 0x030f) AM_READWRITE( via_0_r, via_0_w )
+	AM_RANGE( 0x0310, 0x031b) AM_READWRITE( oric_microdisc_r, oric_microdisc_w )
+	AM_RANGE( 0x031c, 0x031f) AM_READWRITE( acia_6551_r, acia_6551_w )
+	AM_RANGE( 0x0320, 0x032f) AM_READWRITE( via_1_r, via_1_w )
+	AM_RANGE( 0x0400, 0xbfff) AM_RAM
+	AM_RANGE( 0xc000, 0xffff) AM_READWRITE( MRA8_BANK1, MWA8_BANK2 )
 ADDRESS_MAP_END
 
 
@@ -446,7 +451,6 @@ static MACHINE_DRIVER_START( oric )
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( oric )
-	MDRV_MACHINE_STOP( oric )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -475,7 +479,6 @@ static MACHINE_DRIVER_START( telstrat)
 	MDRV_CPU_PROGRAM_MAP( telestrat_mem, 0 )
 
 	MDRV_MACHINE_INIT( telestrat )
-	MDRV_MACHINE_STOP( telestrat )
 MACHINE_DRIVER_END
 
 

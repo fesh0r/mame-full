@@ -166,7 +166,10 @@ static void oric_vh_update_attribute(int c)
 			{
 				/* set screen memory base and standard charset location for this mode */
 				vh_state.read_addr = 0x0a000;
-				vh_state.char_base = oric_ram + (unsigned long)0x09800; 
+				if (oric_ram)
+					vh_state.char_base = oric_ram + (unsigned long)0x09800; 
+				else
+					vh_state.char_base = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x09800);
 				
 				/* changing the mode also changes the position of the standard charset
 				and alternative charset */
@@ -176,7 +179,10 @@ static void oric_vh_update_attribute(int c)
 			{
 				/* set screen memory base and standard charset location for this mode */
 				vh_state.read_addr = 0x0bb80;
-				vh_state.char_base = oric_ram + (unsigned long)0x0b400;
+				if (oric_ram)
+					vh_state.char_base = oric_ram + (unsigned long)0x0b400;
+				else
+					vh_state.char_base = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x0b400);
 			
 				/* changing the mode also changes the position of the standard charset
 				and alternative charset */
@@ -294,7 +300,7 @@ VIDEO_UPDATE( oric )
 			}
 
 			/* fetch data */
-			c = RAM[read_addr];
+			c = RAM ? RAM[read_addr] : program_read_byte_8(read_addr);
 
 			/* if bits 6 and 5 are zero, the byte contains a serial attribute */
 			if ((c & ((1<<6) | (1<<5)))==0)

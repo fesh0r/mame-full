@@ -938,7 +938,7 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 
 
 
-static  READ8_HANDLER (oric_microdisc_r)
+READ8_HANDLER (oric_microdisc_r)
 {
 	unsigned char data = 0x0ff;
 
@@ -975,7 +975,7 @@ static  READ8_HANDLER (oric_microdisc_r)
 	return data;
 }
 
-static WRITE8_HANDLER(oric_microdisc_w)
+WRITE8_HANDLER(oric_microdisc_w)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1111,11 +1111,6 @@ static void oric_common_init_machine(void)
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
     via_set_input_ca1(0, 1);
-
-
-#ifdef ORIC_DUMP_RAM
-	previous_input_port5 = readinputport(5);
-#endif
 }
 
 MACHINE_INIT( oric )
@@ -1189,17 +1184,7 @@ MACHINE_INIT( oric )
 
 
 
-MACHINE_STOP( oric )
-{
-#ifdef ORIC_DUMP_RAM
-	oric_dump_ram();
-#endif
-
-	oric_ram_0x0c000 = NULL;
-}
-
-
- READ8_HANDLER ( oric_IO_r )
+READ8_HANDLER ( oric_IO_r )
 {
 #if 0
 	switch (readinputport(9) & 0x07)
@@ -1528,76 +1513,3 @@ MACHINE_INIT( telestrat )
 
 	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
 }
-
-MACHINE_STOP( telestrat )
-{
-	int i;
-
-	/* this supports different cartridges now. In the init machine
-	a cartridge is hard-coded, but if other cartridges exist it could
-	be changed above */
-	for (i=0; i<8; i++)
-	{
-		if (telestrat_blocks[i].MemType == TELESTRAT_MEM_BLOCK_RAM)
-			telestrat_blocks[i].ptr = NULL;
-	}
-	machine_stop_oric();
-}
-
-
-WRITE8_HANDLER(telestrat_IO_w)
-{
-	if (offset<0x010)
-	{
-		via_0_w(offset & 0x0f,data);
-		return;
-	}
-
-	if ((offset>=0x020) && (offset<=0x02f))
-	{
-		via_1_w(offset & 0x0f,data);
-		return;
-	}
-
-	if ((offset>=0x010) && (offset<=0x01b))
-	{
-		oric_microdisc_w(offset & 0x0f, data);
-		return;
-	}
-
-	if ((offset>=0x01c) && (offset<=0x01f))
-	{
-		acia_6551_w(offset, data);
-		return;
-	}
-
-	logerror("null write %04x %02x\n",offset,data);
-
-}
-
- READ8_HANDLER(telestrat_IO_r)
-{
-	if (offset<0x010)
-	{
-		return via_0_r(offset & 0x0f);
-	}
-
-	if ((offset>=0x020) && (offset<=0x02f))
-	{
-		return via_1_r(offset & 0x0f);
-	}
-
-	if ((offset>=0x010) && (offset<=0x01b))
-	{
-		return oric_microdisc_r(offset & 0x0f);
-	}
-
-	if ((offset>=0x01c) && (offset<=0x01f))
-	{
-		return acia_6551_r(offset);
-	}
-
-	logerror("null read %04x\n",offset);
-	return 0x0ff;
-}
-
