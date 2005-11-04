@@ -1,51 +1,58 @@
 /******************************************************************************
  PeT mess@utanet.at 2000,2001
 ******************************************************************************/
+
 #include <assert.h>
+
 #include "includes/lynx.h"
 #include "cpu/m6502/m6502.h"
+#include "state.h"
 
-UINT16 lynx_granularity=1;
+UINT16 lynx_granularity = 1;
 static int lynx_line;
 
-typedef struct {
-    union {
-	UINT8 data[0x100];
-	struct {
-	    struct { UINT8 l, h; } 
-	    // eng used by the blitter engine
-	    // scb written by the blitter scb blocks to engine expander
-	    //     used by the engine
-	    //     might be used directly by software!
-	    eng1, eng2,		
-		h_offset, v_offset, vidbas, colbas,
-		eng3, eng4, 
-		scb1, scb2, scb3, scb4, scb5, scb6,
-		eng5, eng6, eng7, eng8,
-		colloff,
-		eng9,
-		hsizoff, vsizoff,
-		eng10, eng11;
-	    UINT8 res[0x20];
-	    UINT8 used[2];
-	    UINT8 D,C,B,A,P,N;
-	    UINT8 res1[8];
-	    UINT8 H,G,F,E;
-	    UINT8 res2[8];
-	    UINT8 M,L,K,J;
-	    UINT8 res3[0x21];
-	    UINT8 SPRG0;
-	    UINT8 SPRSYS;
-	} s;
+typedef struct
+{
+    union
+	{
+		UINT8 data[0x100];
+		struct
+		{
+			struct { UINT8 l, h; } 
+			// eng used by the blitter engine
+			// scb written by the blitter scb blocks to engine expander
+			//     used by the engine
+			//     might be used directly by software!
+			eng1, eng2,		
+			h_offset, v_offset, vidbas, colbas,
+			eng3, eng4, 
+			scb1, scb2, scb3, scb4, scb5, scb6,
+			eng5, eng6, eng7, eng8,
+			colloff,
+			eng9,
+			hsizoff, vsizoff,
+			eng10, eng11;
+			UINT8 res[0x20];
+			UINT8 used[2];
+			UINT8 D,C,B,A,P,N;
+			UINT8 res1[8];
+			UINT8 H,G,F,E;
+			UINT8 res2[8];
+			UINT8 M,L,K,J;
+			UINT8 res3[0x21];
+			UINT8 SPRG0;
+			UINT8 SPRSYS;
+		} s;
     } u;
     bool accumulate_overflow;    
     UINT8 high;
     int low;
 } SUZY;
 
-static SUZY suzy={ { { 0 } } };
+static SUZY suzy;
 
-static struct {
+static struct
+{
     UINT8 *mem;
     // global
     UINT16 screen;
@@ -67,6 +74,13 @@ static struct {
     int memory_accesses;
     double time;
 } blitter;
+
+UINT8 *lynx_mem_fc00;
+UINT8 *lynx_mem_fd00;
+UINT8 *lynx_mem_fe00;
+UINT8 *lynx_mem_fffa;
+
+static UINT8 lynx_memory_config;
 
 #define GET_WORD(mem, index) ((mem)[(index)]|((mem)[(index)+1]<<8))
 
@@ -516,7 +530,7 @@ static void lynx_blitter(void)
     int i; int o;int colors;
     
     blitter.memory_accesses=0;
-    blitter.mem=memory_region(REGION_CPU1);
+    blitter.mem = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x0000);
     blitter.colbuf=GET_WORD(suzy.u.data, 0xa);
     blitter.screen=GET_WORD(suzy.u.data, 8);
     blitter.xoff=GET_WORD(suzy.u.data,4);
@@ -1121,27 +1135,34 @@ WRITE8_HANDLER(mikey_write)
     }
 }
 
-WRITE8_HANDLER( lynx_memory_config )
+READ8_HANDLER( lynx_memory_config_r )
+{
+	return lynx_memory_config;
+}
+
+WRITE8_HANDLER( lynx_memory_config_w )
 {
     /* bit 7: hispeed, uses page mode accesses (4 instead of 5 cycles )
      * when these are safe in the cpu */
-    memory_region(REGION_CPU1)[0xfff9]=data;
+    lynx_memory_config = data;
 
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MRA8_RAM : suzy_read);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MWA8_RAM : suzy_write);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MRA8_RAM : mikey_read);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MWA8_RAM : mikey_write);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfff7, 0, 0, (data & 4) ? MRA8_RAM : MRA8_BANK3);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfffa, 0xffff, 0, 0, (data & 8) ? MRA8_RAM : MRA8_BANK4);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MRA8_BANK1 : suzy_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MWA8_BANK1 : suzy_write);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MRA8_BANK2 : mikey_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MWA8_BANK2 : mikey_write);
 
-	memory_set_bankptr(3, memory_region(REGION_CPU1) + 0x10000);
-	memory_set_bankptr(4, memory_region(REGION_CPU1) + 0x101fa);
+	if (data & 1)
+		memory_set_bankptr(1, lynx_mem_fc00);
+	if (data & 2)
+		memory_set_bankptr(2, lynx_mem_fd00);
+	memory_set_bank(3, (data & 4) ? 1 : 0);
+	memory_set_bank(4, (data & 8) ? 1 : 0);
 }
 
 MACHINE_INIT( lynx )
 {
 	int i;
-	lynx_memory_config(0,0);
+	lynx_memory_config_w(0, 0);
 
 	cpunum_set_input_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
 
@@ -1166,3 +1187,23 @@ MACHINE_INIT( lynx )
 	lynx_timer_write(lynx_timer+2, 1, 0x10|0x8|7);
 #endif
 }
+
+static void lynx_postload(void)
+{
+	lynx_memory_config_w(0, lynx_memory_config);
+}
+
+DRIVER_INIT( lynx )
+{
+	state_save_register_UINT8("lynx", 0, "lynx_memory_config", &lynx_memory_config, 1);
+	state_save_register_UINT8("lynx", 0, "lynx_fe00", lynx_mem_fe00, 0x200);
+	state_save_register_func_postload(lynx_postload);
+
+	memory_configure_bank(3, 0, 1, memory_region(REGION_CPU1) + 0x0000, 0);
+	memory_configure_bank(3, 1, 1, lynx_mem_fe00, 0);
+	memory_configure_bank(4, 0, 1, memory_region(REGION_CPU1) + 0x01fa, 0);
+	memory_configure_bank(4, 1, 1, lynx_mem_fffa, 0);
+
+	memset(&suzy, 0, sizeof(suzy));
+}
+

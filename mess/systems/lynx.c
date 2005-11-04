@@ -14,29 +14,21 @@
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
 #include "includes/lynx.h"
+#include "vidhrdw/generic.h"
 
 static int rotate=0;
 int lynx_rotate;
 static int lynx_line_y;
 UINT32 lynx_palette[0x10];
-static mame_bitmap *lynx_bitmap;
 
-static ADDRESS_MAP_START( lynx_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0xfbff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0xfc00, 0xfcff) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0xfd00, 0xfdff) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0xfe00, 0xfff7) AM_READ( MRA8_BANK3 )
-	AM_RANGE( 0xfff8, 0xfff9) AM_READ( MRA8_RAM )
-    AM_RANGE( 0xfffa, 0xffff) AM_READ( MRA8_BANK4 )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( lynx_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0xfbff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0xfc00, 0xfcff) AM_WRITE( MWA8_BANK1 )
-	AM_RANGE( 0xfd00, 0xfdff) AM_WRITE( MWA8_BANK2 )
-	AM_RANGE( 0xfe00, 0xfff8) AM_WRITE( MWA8_RAM )
-    AM_RANGE( 0xfff9, 0xfff9) AM_WRITE( lynx_memory_config )
-    AM_RANGE( 0xfffa, 0xffff) AM_WRITE( MWA8_RAM )
+static ADDRESS_MAP_START( lynx_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0xfbff) AM_RAM
+	AM_RANGE(0xfc00, 0xfcff) AM_RAM AM_BASE(&lynx_mem_fc00)
+	AM_RANGE(0xfd00, 0xfdff) AM_RAM AM_BASE(&lynx_mem_fd00)
+	AM_RANGE(0xfe00, 0xfff7) AM_READWRITE( MRA8_BANK3, MWA8_RAM ) AM_BASE(&lynx_mem_fe00)
+	AM_RANGE(0xfff8, 0xfff8) AM_RAM
+	AM_RANGE(0xfff9, 0xfff9) AM_READWRITE( lynx_memory_config_r, lynx_memory_config_w )
+	AM_RANGE(0xfffa, 0xffff) AM_READWRITE( MRA8_BANK4, MWA8_RAM ) AM_BASE(&lynx_mem_fffa)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( lynx )
@@ -67,12 +59,6 @@ static INTERRUPT_GEN( lynx_frame_int )
 		lynx_rotate=readinputport(2)&3;
 }
 
-static VIDEO_START( lynx )
-{
-	lynx_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-    return 0;
-}
-
 /*
 DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 
@@ -88,7 +74,7 @@ void lynx_draw_lines(int newline)
 	int h,w;
 	int x, yend;
 	UINT16 j; // clipping needed!
-	UINT8 *mem=memory_region(REGION_CPU1);
+	UINT8 byte;
 
 	if (osd_skip_this_frame()) newline=-1;
 
@@ -122,8 +108,9 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					plot_pixel(lynx_bitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
-					plot_pixel(lynx_bitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
+					byte = program_read_byte_8(j);
+					plot_pixel(tmpbitmap, lynx_line_y, x + 1, lynx_palette[byte>>4]);
+					plot_pixel(tmpbitmap, lynx_line_y, x + 0, lynx_palette[byte&0xf]);
 				}
 			}
 		}
@@ -133,8 +120,9 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=0;x<160;j++,x+=2)
 				{
-					plot_pixel(lynx_bitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
-					plot_pixel(lynx_bitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
+					byte = program_read_byte_8(j);
+					plot_pixel(tmpbitmap, 102-1-lynx_line_y, x + 0, lynx_palette[byte>>4]);
+					plot_pixel(tmpbitmap, 102-1-lynx_line_y, x + 1, lynx_palette[byte&0xf]);
 				}
 			}
 		}
@@ -148,8 +136,9 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					plot_pixel(lynx_bitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
-					plot_pixel(lynx_bitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
+					byte = program_read_byte_8(j);
+					plot_pixel(tmpbitmap, x + 1, 102-1-lynx_line_y, lynx_palette[byte>>4]);
+					plot_pixel(tmpbitmap, x + 0, 102-1-lynx_line_y, lynx_palette[byte&0xf]);
 				}
 			}
 		}
@@ -159,8 +148,9 @@ void lynx_draw_lines(int newline)
 			{
 				for (x=0;x<160;j++,x+=2)
 				{
-					plot_pixel(lynx_bitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
-					plot_pixel(lynx_bitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
+					byte = program_read_byte_8(j);
+					plot_pixel(tmpbitmap, x + 0, lynx_line_y, lynx_palette[byte>>4]);
+					plot_pixel(tmpbitmap, x + 1, lynx_line_y, lynx_palette[byte&0xf]);
 				}
 			}
 		}
@@ -175,12 +165,6 @@ void lynx_draw_lines(int newline)
 			set_visible_area(0,width-1,0, height-1);
 		}
 	}
-}
-
-static VIDEO_UPDATE( lynx )
-{
-	copybitmap(bitmap, lynx_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
-	lynx_audio_debug(bitmap);
 }
 
 static PALETTE_INIT( lynx )
@@ -210,7 +194,7 @@ struct CustomSound_interface lynx2_sound_interface =
 static MACHINE_DRIVER_START( lynx )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M65SC02, 4000000)        /* vti core, integrated in vlsi, stz, but not bbr bbs */
-	MDRV_CPU_PROGRAM_MAP(lynx_readmem,lynx_writemem)
+	MDRV_CPU_PROGRAM_MAP(lynx_mem, 0)
 	MDRV_CPU_VBLANK_INT(lynx_frame_int, 1)
 	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -227,8 +211,8 @@ static MACHINE_DRIVER_START( lynx )
 	MDRV_COLORTABLE_LENGTH(0)
 	MDRV_PALETTE_INIT( lynx )
 
-	MDRV_VIDEO_START( lynx )
-	MDRV_VIDEO_UPDATE( lynx )
+	MDRV_VIDEO_START( generic_bitmapped )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -256,8 +240,8 @@ MACHINE_DRIVER_END
    these 2 dumps differ only in this byte!
 */
 ROM_START(lynx)
-	ROM_REGION(0x10200,REGION_CPU1, 0)
-	ROM_LOAD("lynx.bin", 0x10000, 0x200, CRC(e1ffecb6) SHA1(de60f2263851bbe10e5801ef8f6c357a4bc077e6))
+	ROM_REGION(0x200,REGION_CPU1, 0)
+	ROM_LOAD("lynx.bin", 0, 0x200, CRC(e1ffecb6) SHA1(de60f2263851bbe10e5801ef8f6c357a4bc077e6))
 	ROM_REGION(0x100,REGION_GFX1, 0)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
@@ -410,15 +394,6 @@ SYSTEM_CONFIG_END
   Game driver(s)
 
 ***************************************************************************/
-
-static DRIVER_INIT( lynx )
-{
-	int i;
-	UINT8 *gfx = memory_region(REGION_GFX1);
-
-	for (i=0; i<256; i++)
-		gfx[i]=i;
-}
 
 /*    YEAR  NAME      PARENT    COMPAT	MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
 CONS( 1989, lynx,	  0, 		0,		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)

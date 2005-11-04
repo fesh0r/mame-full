@@ -129,22 +129,6 @@ void lynx_audio_count_down(int nr)
     This->count--;
 }
 
-void lynx_audio_debug(mame_bitmap *bitmap)
-{
-    char str[40];
-    sprintf(str,"%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
-	    lynx_audio[0].reg.data[0],
-	    lynx_audio[0].reg.data[1],
-	    lynx_audio[0].reg.data[2],
-	    lynx_audio[0].reg.data[3],
-	    lynx_audio[0].reg.data[4],
-	    lynx_audio[0].reg.data[5],
-	    lynx_audio[0].reg.data[6],
-	    lynx_audio[0].reg.data[7]);
-
-//    ui_text(bitmap, str, 0,0);
-}
-
 static void lynx_audio_shift(LYNX_AUDIO *channel)
 {
     channel->shifter=((channel->shifter<<1)&0x3ff)

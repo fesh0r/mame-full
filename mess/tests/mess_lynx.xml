@@ -1,0 +1,8 @@
+<tests>
+
+<test name="lynx_000" driver="lynx">
+	<wait time="5"/>
+	<checkblank/>
+</test>
+
+</tests>
