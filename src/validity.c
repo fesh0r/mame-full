@@ -889,7 +889,7 @@ int mame_validitychecks(void)
 
 #ifndef MAME_DEBUG
 		/* non-debug builds only care about games in the same driver */
-		if (strcmp(Machine->gamedrv->source_file, driver->source_file) != 0)
+		if (Machine->gamedrv && strcmp(Machine->gamedrv->source_file, driver->source_file) != 0)
 			continue;
 #endif
 
