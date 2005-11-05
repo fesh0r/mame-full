@@ -173,26 +173,26 @@ INPUT_PORTS_END
 
 static gfx_layout charlayout =
 {
-    FW, FH,         /* 8*16 characters */
-    4 * 256,        /* 4 * 256 characters */
-    1,              /* 1 bits per pixel */
-    { 0 },          /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0, 1, 2, 3, 4, 5, 6, 7,
-      8, 9,10,11,12,13,14,15,
-     16,17,18,19,20,21,22,23,
-     24,25,26,27,28,29,30,31 },
-    /* y offsets */
-    { 0*FW, 1*FW, 2*FW, 3*FW, 4*FW, 5*FW, 6*FW, 7*FW,
-      8*FW, 9*FW,10*FW,11*FW,12*FW,13*FW,14*FW,15*FW,
-     16*FW,17*FW,18*FW,19*FW,20*FW,21*FW,22*FW,23*FW,
-     24*FW,25*FW,26*FW,27*FW,28*FW,29*FW,30*FW,31*FW },
-    FW * FH         /* every char takes 16 bytes */
+	FW, FH,         /* 8*16 characters */
+	4 * 256,        /* 4 * 256 characters */
+	1,              /* 1 bits per pixel */
+	{ 0 },          /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+		8, 9,10,11,12,13,14,15,
+		16,17,18,19,20,21,22,23,
+		24,25,26,27,28,29,30,31 },
+	/* y offsets */
+	{ 0*FW, 1*FW, 2*FW, 3*FW, 4*FW, 5*FW, 6*FW, 7*FW,
+		8*FW, 9*FW,10*FW,11*FW,12*FW,13*FW,14*FW,15*FW,
+		16*FW,17*FW,18*FW,19*FW,20*FW,21*FW,22*FW,23*FW,
+		24*FW,25*FW,26*FW,27*FW,28*FW,29*FW,30*FW,31*FW },
+	FW * FH         /* every char takes 16 bytes */
 };
 
 static gfx_decode gfxdecodeinfo[] =
 {
-    { 1, 0, &charlayout, 0, 4},
+	{ REGION_GFX1, 0, &charlayout, 0, 4},
 	{-1}
 };   /* end of array */
 

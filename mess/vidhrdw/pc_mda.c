@@ -47,7 +47,7 @@ gfx_layout pc_mda_charlayout =
 
 gfx_decode pc_mda_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &pc_mda_charlayout,		0, 256 },
+	{ REGION_GFX1, 0x0000, &pc_mda_charlayout,		0, 256 },
     { -1 } /* end of array */
 };
 

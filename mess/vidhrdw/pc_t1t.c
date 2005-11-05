@@ -101,7 +101,7 @@ static gfx_decode t1000hx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xfc0a8, &t1t_charlayout,			0,				128 },	/* single width */
-	{ 1,  0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
+	{ REGION_GFX1,  0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
     { -1 } /* end of array */
 };
 
@@ -109,7 +109,7 @@ static gfx_decode t1000sx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xf40a3, &t1t_charlayout,			0,				128 },	/* single width */
-	{ 1,  0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
+	{ REGION_GFX1,  0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
     { -1 } /* end of array */
 };
 

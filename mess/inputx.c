@@ -479,7 +479,7 @@ int inputx_validitycheck(const game_driver *gamedrv)
 
 			begin_resource_tracking();
 
-			input_ports = input_port_allocate(gamedrv->construct_ipt);
+			input_ports = input_port_allocate(gamedrv->construct_ipt, NULL);
 			assert(input_ports);
 
 			build_codes(input_ports, codes, FALSE);

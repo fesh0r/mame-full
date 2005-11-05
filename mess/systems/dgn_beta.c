@@ -60,7 +60,8 @@ unsigned char dgnbeta_palette[] =
 	0,0x80,0, /* green */
 };
 
-static unsigned short dgnbeta_colortable[][2] = {
+static unsigned short dgnbeta_colortable[][2] =
+{
 	{ 0, 1 },
 	/* reverse */
 	{ 1, 0 }
@@ -68,20 +69,21 @@ static unsigned short dgnbeta_colortable[][2] = {
 
 static gfx_layout dgnbeta_charlayout =
 {
-        8,9,
-        256,                    /* 512 characters */
-        1,                      /* 1 bits per pixel */
-        { 0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0,1,2,3,4,5,6,7,8,9 },
-        /* y offsets */
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8,},
-        16*8			/* Each char is 16 bytes apart */
+	8,9,
+	256,                    /* 512 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,8,9 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8,},
+	16*8			/* Each char is 16 bytes apart */
 };
 
-static gfx_decode dgnbeta_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &dgnbeta_charlayout,                     0, 1 },
-        { -1 } /* end of array */
+static gfx_decode dgnbeta_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &dgnbeta_charlayout,                     0, 1 },
+	{ -1 } /* end of array */
 };
 
 /*

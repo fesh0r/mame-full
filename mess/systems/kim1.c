@@ -176,8 +176,8 @@ static gfx_layout key_layout =
 
 static gfx_decode gfxdecodeinfo[] =
 {
-	{ 1, 0, &led_layout, 0, 16 },
-	{ 2, 0, &key_layout, 16*2, 2 },
+	{ REGION_GFX1, 0, &led_layout, 0, 16 },
+	{ REGION_GFX2, 0, &key_layout, 16*2, 2 },
 	{ -1 } /* end of array */
 };
 

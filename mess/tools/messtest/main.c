@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	sndintrf_init();
 	
 	/* run MAME's validity checks; if these fail cop out now */
-	if (mame_validitychecks(-1))
+	if (mame_validitychecks())
 		goto done;
 	/* run Imgtool's validity checks; if these fail cop out now */
 	if (imgtool_validitychecks())

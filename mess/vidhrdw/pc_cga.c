@@ -151,26 +151,26 @@ unsigned short cga_colortable[] =
 gfx_layout CGA_charlayout =
 {
 	8,16,					/* 8 x 16 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0,1,2,3,4,5,6,7 },
-    /* y offsets */
+	256,                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
 	{ 0*8,1*8,2*8,3*8,
-	  4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,
-	  4*8,5*8,6*8,7*8 },
-    8*8                     /* every char takes 8 bytes */
+		4*8,5*8,6*8,7*8,
+		0*8,1*8,2*8,3*8,
+		4*8,5*8,6*8,7*8 },
+	8*8                     /* every char takes 8 bytes */
 };
 
 static gfx_decode CGA_gfxdecodeinfo[] =
 {
 /* Support up to four CGA fonts */
-	{ 1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */
-	{ 1, 0x0800, &CGA_charlayout,              0, 256 },   /* Font 1 */
-	{ 1, 0x1000, &CGA_charlayout,              0, 256 },   /* Font 2 */
-	{ 1, 0x1800, &CGA_charlayout,              0, 256 },   /* Font 3*/
+	{ REGION_GFX1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */
+	{ REGION_GFX1, 0x0800, &CGA_charlayout,              0, 256 },   /* Font 1 */
+	{ REGION_GFX1, 0x1000, &CGA_charlayout,              0, 256 },   /* Font 2 */
+	{ REGION_GFX1, 0x1800, &CGA_charlayout,              0, 256 },   /* Font 3*/
     { -1 } /* end of array */
 };
 

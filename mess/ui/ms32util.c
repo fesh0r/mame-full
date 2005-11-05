@@ -21,7 +21,7 @@ BOOL DriverUsesMouse(int driver_index)
 		return FALSE;
 		
 	begin_resource_tracking();
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
+	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt, NULL);
 
 	while (1)
 	{

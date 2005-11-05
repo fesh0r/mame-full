@@ -12,17 +12,17 @@ static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height, stru
 gfx_layout europc_cga_charlayout =
 {
 	8,16,					/* 8 x 32 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0,1,2,3,4,5,6,7 },
-    /* y offsets */
+	256,                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
 	{ 0*8,1*8,2*8,3*8,
-	  4*8,5*8,6*8,7*8,
-	  8*8,9*8,10*8,11*8,
-	  12*8,13*8,14*8,15*8 },
-    8*16                     /* every char takes 8 bytes */
+		4*8,5*8,6*8,7*8,
+		8*8,9*8,10*8,11*8,
+		12*8,13*8,14*8,15*8 },
+	8*16                     /* every char takes 8 bytes */
 };
 
 gfx_layout europc_mda_charlayout =
@@ -61,46 +61,46 @@ gfx_layout pc200_mda_charlayout =
 
 gfx_layout pc200_cga_charlayout =
 {
-    8,16,               /* 8 x 16 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0,1,2,3,4,5,6,7 },
-    /* y offsets */
-        { 0*8,1*8,2*8,3*8,
-          4*8,5*8,6*8,7*8,
-          0*8,1*8,2*8,3*8,
-          4*8,5*8,6*8,7*8 },
-    8*16                     /* every char takes 16 bytes */
+	8,16,               /* 8 x 16 characters */
+	256,                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+		{ 0*8,1*8,2*8,3*8,
+			4*8,5*8,6*8,7*8,
+			0*8,1*8,2*8,3*8,
+			4*8,5*8,6*8,7*8 },
+	8*16                     /* every char takes 16 bytes */
 };
 
 
 gfx_decode europc_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
-	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
-	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
-	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
-	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
+	{ REGION_GFX1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ REGION_GFX1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ REGION_GFX1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ REGION_GFX1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
     { -1 } /* end of array */
 };
 
 gfx_decode aga_gfxdecodeinfo[] =
 {
 /* The four CGA fonts */
-	{ 1, 0x1000, &pc200_cga_charlayout,		   0, 256 },   /* single width */
-	{ 1, 0x3000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
-	{ 1, 0x5000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
-	{ 1, 0x7000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ REGION_GFX1, 0x1000, &pc200_cga_charlayout,		   0, 256 },   /* single width */
+	{ REGION_GFX1, 0x3000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ REGION_GFX1, 0x5000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ REGION_GFX1, 0x7000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
 /* The four MDA fonts */
-	{ 1, 0x0000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x2000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x4000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x6000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x0000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x2000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x4000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ REGION_GFX1, 0x6000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
     { -1 } /* end of array */
 };
 

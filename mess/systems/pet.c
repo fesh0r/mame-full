@@ -512,51 +512,54 @@ static unsigned short pet_colortable[][2] = {
 
 static gfx_layout pet_charlayout =
 {
-        8,8,
-        256,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0,1,2,3,4,5,6,7 },
-        /* y offsets */
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-        },
-        8*8
+	8,8,
+	256,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	},
+	8*8
 };
 
 static gfx_layout pet80_charlayout =
 {
-        8,16,
-        256,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 0,1,2,3,4,5,6,7 },
-        /* y offsets */
-        {
-			0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
-        },
-        8*16
+	8,16,
+	256,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+	{
+		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
 };
 
-static gfx_decode pet_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &pet_charlayout,                     0, 1 },
-	{ 1, 0x0800, &pet_charlayout,                     0, 1 },
+static gfx_decode pet_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &pet_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x0800, &pet_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
-static gfx_decode pet80_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &pet80_charlayout,                     0, 1 },
-	{ 1, 0x1000, &pet80_charlayout,                     0, 1 },
+static gfx_decode pet80_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x1000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
-static gfx_decode superpet_gfxdecodeinfo[] = {
-	{ 2, 0x0000, &pet80_charlayout,                     0, 1 },
-	{ 2, 0x1000, &pet80_charlayout,                     0, 1 },
-	{ 2, 0x2000, &pet80_charlayout,                     0, 1 },
-	{ 2, 0x3000, &pet80_charlayout,                     0, 1 },
+static gfx_decode superpet_gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0x0000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX2, 0x1000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX2, 0x2000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX2, 0x3000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
@@ -700,6 +703,7 @@ ROM_START (superpet)
     ROM_LOAD ("901898.05", 0xf000, 0x1000, CRC(f42df0cb))
 	ROM_REGION (0x4000, REGION_GFX1, 0)
     ROM_LOAD ("901640.01", 0x0000, 0x1000, CRC(ee8229c4))
+	ROM_REGION (0x4000, REGION_GFX2, 0)
 ROM_END
 
 /* swedish m6809 roms needed */
