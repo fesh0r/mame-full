@@ -115,7 +115,7 @@ static char keyboard[8][10][8] = {
 	},
 };
 
-void init_kaypro(void)
+DRIVER_INIT( kaypro )
 {
 	UINT8 * gfx = memory_region(REGION_GFX1);
 	int i;
@@ -128,6 +128,8 @@ void init_kaypro(void)
 	/* copy font inverted */
 	for( i = 0; i < 0x2000; i++ )
 		gfx[0x2000 + i] = gfx[i] ^ 0xff;
+
+	cpm_init(4, disk_ids);
 }
 
 MACHINE_INIT( kaypro )
@@ -135,7 +137,6 @@ MACHINE_INIT( kaypro )
 	/* disable CapsLock LED initially */
 	set_led_status(1, 1);
 	set_led_status(1, 0);
-	cpm_init(4, disk_ids);
 }
 
 MACHINE_STOP( kaypro )

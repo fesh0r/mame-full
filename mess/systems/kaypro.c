@@ -14,7 +14,7 @@
 #include "devices/basicdsk.h"
 
 static ADDRESS_MAP_START( kaypro_mem , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0xffff) AM_RAM
+	AM_RANGE( 0x0000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( kaypro_io , ADDRESS_SPACE_IO, 8)
