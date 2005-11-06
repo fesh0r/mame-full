@@ -68,6 +68,7 @@ struct messtest_command
 			const char *format;
 			iodevice_t device_type;
 			int device_slot;
+			const char *device_tag;
 		} image_args;
 		struct
 		{
@@ -546,6 +547,7 @@ static void command_image_loadcreate(void)
 	mess_image *image;
 	int device_type;
 	int device_slot;
+	const char *device_tag;
 	int i, format_index = 0;
 	const char *filename;
 	const char *format;
@@ -555,9 +557,13 @@ static void command_image_loadcreate(void)
 
 	device_slot = current_command->u.image_args.device_slot;
 	device_type = current_command->u.image_args.device_type;
+	device_tag = current_command->u.image_args.device_tag;
 
 	/* look up the image slot */
-	image = image_from_devtype_and_index(device_type, device_slot);
+	if (device_tag)
+		image = image_from_devtag_and_index(device_tag, device_slot);
+	else
+		image = image_from_devtype_and_index(device_type, device_slot);
 	if (!image)
 	{
 		state = STATE_ABORTED;
@@ -1081,10 +1087,7 @@ static void node_checkblank(xml_data_node *node)
 static void node_image(xml_data_node *node, messtest_command_type_t command)
 {
 	xml_attribute_node *attr_node;
-	const char *s1;
 	const char *s2;
-	const char *s3;
-	const char *s4;
 	int preload, device_type;
 
 	memset(&new_command, 0, sizeof(new_command));
@@ -1098,7 +1101,7 @@ static void node_image(xml_data_node *node, messtest_command_type_t command)
 
 	/* 'filename' attribute */
 	attr_node = xml_get_attribute(node, "filename");
-	s1 = attr_node ? attr_node->value : NULL;
+	new_command.u.image_args.filename = attr_node ? attr_node->value : NULL;
 
 	/* 'type' attribute */
 	attr_node = xml_get_attribute(node, "type");
@@ -1115,20 +1118,20 @@ static void node_image(xml_data_node *node, messtest_command_type_t command)
 		error_baddevicetype(s2);
 		return;
 	}
+	new_command.u.image_args.device_type = device_type;
 	
 	/* 'slot' attribute */
 	attr_node = xml_get_attribute(node, "slot");
-	s3 = attr_node ? attr_node->value : NULL;
+	new_command.u.image_args.device_slot = attr_node ? atoi(attr_node->value) : 0;
 
 	/* 'format' attribute */
 	format_index = 0;
 	attr_node = xml_get_attribute(node, "format");
-	s4 = attr_node ? attr_node->value : NULL;
+	new_command.u.image_args.format = attr_node ? attr_node->value : NULL;
 
-	new_command.u.image_args.filename = s1;
-	new_command.u.image_args.device_type = device_type;
-	new_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
-	new_command.u.image_args.format = s4;
+	/* 'tag' attribute */
+	attr_node = xml_get_attribute(node, "tag");
+	new_command.u.image_args.device_tag = attr_node ? attr_node->value : NULL;
 
 	if (!append_command())
 	{
