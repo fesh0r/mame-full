@@ -49,28 +49,30 @@ void gameboy_sound_w(int offset, int data);
 #define SRAM		0x10	/* Cartridge has SRAM                            */
 #define UNKNOWN		0x80	/* Cartridge is of an unknown type               */
 
-extern UINT8 *gb_ram;
+extern UINT8 gb_ie;
+extern UINT8 gb_io[];
+#define JOYPAD  gb_io[0x00] /* Joystick: 1.1.P15.P14.P13.P12.P11.P10		 */
+#define SIODATA gb_io[0x01] /* Serial IO data buffer 					 */
+#define SIOCONT gb_io[0x02] /* Serial IO control register				 */
+#define DIVREG  gb_io[0x04] /* Divider register (???)					 */
+#define TIMECNT gb_io[0x05] /* Timer counter. Gen. int. when it overflows */
+#define TIMEMOD gb_io[0x06] /* New value of TimeCount after it overflows  */
+#define TIMEFRQ gb_io[0x07] /* Timer frequency and start/stop switch 	 */
+#define IFLAGS  gb_io[0x0F] /* Interrupt flags: 0.0.0.JST.SIO.TIM.LCD.VBL */
+#define ISWITCH gb_ie /* Switches to enable/disable interrupts 	 */
 
-#define JOYPAD  gb_ram[0xFF00] /* Joystick: 1.1.P15.P14.P13.P12.P11.P10		 */
-#define SIODATA gb_ram[0xFF01] /* Serial IO data buffer 					 */
-#define SIOCONT gb_ram[0xFF02] /* Serial IO control register				 */
-#define DIVREG  gb_ram[0xFF04] /* Divider register (???)					 */
-#define TIMECNT gb_ram[0xFF05] /* Timer counter. Gen. int. when it overflows */
-#define TIMEMOD gb_ram[0xFF06] /* New value of TimeCount after it overflows  */
-#define TIMEFRQ gb_ram[0xFF07] /* Timer frequency and start/stop switch 	 */
-#define IFLAGS  gb_ram[0xFF0F] /* Interrupt flags: 0.0.0.JST.SIO.TIM.LCD.VBL */
-#define ISWITCH gb_ram[0xFFFF] /* Switches to enable/disable interrupts 	 */
-#define LCDCONT gb_ram[0xFF40] /* LCD control register						 */
-#define LCDSTAT gb_ram[0xFF41] /* LCD status register						 */
-#define SCROLLY gb_ram[0xFF42] /* Starting Y position of the background 	 */
-#define SCROLLX gb_ram[0xFF43] /* Starting X position of the background 	 */
-#define CURLINE gb_ram[0xFF44] /* Current screen line being scanned 		 */
-#define CMPLINE gb_ram[0xFF45] /* Gen. int. when scan reaches this line 	 */
-#define BGRDPAL gb_ram[0xFF47] /* Background palette						 */
-#define SPR0PAL gb_ram[0xFF48] /* Sprite palette #0 						 */
-#define SPR1PAL gb_ram[0xFF49] /* Sprite palette #1 						 */
-#define WNDPOSY gb_ram[0xFF4A] /* Window Y position 						 */
-#define WNDPOSX gb_ram[0xFF4B] /* Window X position 						 */
+extern UINT8 gb_vid_regs[];
+#define LCDCONT gb_vid_regs[0x0] /* LCD control register						 */
+#define LCDSTAT gb_vid_regs[0x1] /* LCD status register						 */
+#define SCROLLY gb_vid_regs[0x2] /* Starting Y position of the background 	 */
+#define SCROLLX gb_vid_regs[0x3] /* Starting X position of the background 	 */
+#define CURLINE gb_vid_regs[0x4] /* Current screen line being scanned 		 */
+#define CMPLINE gb_vid_regs[0x5] /* Gen. int. when scan reaches this line 	 */
+#define BGRDPAL gb_vid_regs[0x7] /* Background palette						 */
+#define SPR0PAL gb_vid_regs[0x8] /* Sprite palette #0 						 */
+#define SPR1PAL gb_vid_regs[0x9] /* Sprite palette #1 						 */
+#define WNDPOSY gb_vid_regs[0xA] /* Window Y position 						 */
+#define WNDPOSX gb_vid_regs[0xB] /* Window X position 						 */
 
 #define OAM						0xFE00
 #define VRAM					0x8000
@@ -101,6 +103,7 @@ extern WRITE8_HANDLER( gb_ram_enable );
 extern WRITE8_HANDLER( gb_io_w );
 extern  READ8_HANDLER ( gb_io_r );
 extern WRITE8_HANDLER( gb_bios_w );
+extern READ8_HANDLER( gb_ie_r );
 extern WRITE8_HANDLER( gb_ie_w );
 extern DEVICE_INIT(gb_cart);
 extern DEVICE_LOAD(gb_cart);
@@ -114,13 +117,17 @@ extern MACHINE_STOP( gb );
 extern MACHINE_INIT( gbpocket );
 
 /* from vidhrdw/gb.c */
+extern READ8_HANDLER( gb_video_r );
 extern WRITE8_HANDLER( gb_video_w );
 extern VIDEO_START( gb );
 extern VIDEO_UPDATE( gb );
 void gb_refresh_scanline(void);
 EXTERN double lcd_time;
 /* Custom Sound Interface */
+extern READ8_HANDLER( gb_sound_r );
 extern WRITE8_HANDLER( gb_sound_w );
+extern READ8_HANDLER( gb_wave_r );
+extern WRITE8_HANDLER( gb_wave_w );
 void *gameboy_sh_start(int clock, const struct CustomSound_interface *config);
 
 /* -- Super GameBoy specific -- */
@@ -142,16 +149,16 @@ void sgb_refresh_scanline(void);
 void sgb_refresh_border(void);
 
 /* -- GameBoy Color specific -- */
-#define KEY1    gb_ram[0xFF4D]		/* Prepare speed switch					*/
-#define HDMA1   gb_ram[0xFF51]		/* HDMA source high byte				*/
-#define HDMA2   gb_ram[0xFF52]		/* HDMA source low byte					*/
-#define HDMA3   gb_ram[0xFF53]		/* HDMA destination high byte			*/
-#define HDMA4   gb_ram[0xFF54]		/* HDMA destination low byte			*/
-#define HDMA5   gb_ram[0xFF55]		/* HDMA length/mode/start				*/
-#define GBCBCPS gb_ram[0xFF68]		/* Backgound palette spec				*/
-#define GBCBCPD gb_ram[0xFF69]		/* Backgound palette data				*/
-#define GBCOCPS gb_ram[0xFF6A]		/* Object palette spec					*/
-#define GBCOCPD gb_ram[0xFF6B]		/* Object palette data					*/
+#define KEY1    gb_vid_regs[0x0D]		/* Prepare speed switch					*/
+#define HDMA1   gb_vid_regs[0x11]		/* HDMA source high byte				*/
+#define HDMA2   gb_vid_regs[0x12]		/* HDMA source low byte					*/
+#define HDMA3   gb_vid_regs[0x13]		/* HDMA destination high byte			*/
+#define HDMA4   gb_vid_regs[0x14]		/* HDMA destination low byte			*/
+#define HDMA5   gb_vid_regs[0x15]		/* HDMA length/mode/start				*/
+#define GBCBCPS gb_vid_regs[0x28]		/* Backgound palette spec				*/
+#define GBCBCPD gb_vid_regs[0x29]		/* Backgound palette data				*/
+#define GBCOCPS gb_vid_regs[0x2A]		/* Object palette spec					*/
+#define GBCOCPD gb_vid_regs[0x2B]		/* Object palette data					*/
 #define GBC_MODE_GBC		1		/* GBC is in colour mode				*/
 #define GBC_MODE_MONO		2		/* GBC is in mono mode					*/
 #define GBC_PAL_OBJ_OFFSET	32		/* Object palette offset				*/

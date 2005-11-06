@@ -42,27 +42,43 @@
 #include "driver.h"
 #include "includes/gb.h"
 
-#define NR10 0xFF10
-#define NR11 0xFF11
-#define NR12 0xFF12
-#define NR13 0xFF13
-#define NR14 0xFF14
-#define NR21 0xFF16
-#define NR22 0xFF17
-#define NR23 0xFF18
-#define NR24 0xFF19
-#define NR30 0xFF1A
-#define NR31 0xFF1B
-#define NR32 0xFF1C
-#define NR33 0xFF1D
-#define NR34 0xFF1E
-#define NR41 0xFF20
-#define NR42 0xFF21
-#define NR43 0xFF22
-#define NR44 0xFF23
-#define NR50 0xFF24
-#define NR51 0xFF25
-#define NR52 0xFF26
+#define NR10 0x00
+#define NR11 0x01
+#define NR12 0x02
+#define NR13 0x03
+#define NR14 0x04
+#define NR21 0x06
+#define NR22 0x07
+#define NR23 0x08
+#define NR24 0x09
+#define NR30 0x0A
+#define NR31 0x0B
+#define NR32 0x0C
+#define NR33 0x0D
+#define NR34 0x0E
+#define NR41 0x10
+#define NR42 0x11
+#define NR43 0x12
+#define NR44 0x13
+#define NR50 0x14
+#define NR51 0x15
+#define NR52 0x16
+#define AUD3W0 0x20
+#define AUD3W1 0x21
+#define AUD3W2 0x22
+#define AUD3W3 0x23
+#define AUD3W4 0x24
+#define AUD3W5 0x25
+#define AUD3W6 0x26
+#define AUD3W7 0x27
+#define AUD3W8 0x28
+#define AUD3W9 0x29
+#define AUD3WA 0x2A
+#define AUD3WB 0x2B
+#define AUD3WC 0x2C
+#define AUD3WD 0x2D
+#define AUD3WE 0x2E
+#define AUD3WF 0x2F
 
 #define LEFT 1
 #define RIGHT 2
@@ -136,25 +152,37 @@ static struct SOUND  snd_3;
 static struct SOUND  snd_4;
 static struct SOUNDC snd_control;
 
+static UINT8 snd_regs[0x30];
+
 static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length);
 
 
-
-WRITE8_HANDLER( gb_sound_w )
+READ8_HANDLER( gb_wave_r )
 {
-	offset += 0xFF10;
+	return snd_regs[ AUD3W0 + offset ];
+}
 
-	/* change in registers so update first */
-	stream_update(channel, 0);
+WRITE8_HANDLER( gb_wave_w )
+{
+	snd_regs[ AUD3W0 + offset ] = data;
+}
 
-	/* Only register NR52 is accessible if the sound controller is disabled */
-	if( !snd_control.on && offset != NR52 )
-	{
-		return;
+READ8_HANDLER( gb_sound_r )
+{
+	switch( offset ) {
+	case 0x05:
+	case 0x0F:
+		return 0xFF;
+	case NR52:
+		return 0x70 | snd_regs[offset];
+	default:
+		return snd_regs[offset];
 	}
+}
 
+void gb_sound_w_internal(int offset, UINT8 data ) {
 	/* Store the value */
-	gb_ram[offset] = data;
+	snd_regs[offset] = data;
 
 	switch( offset )
 	{
@@ -176,12 +204,12 @@ WRITE8_HANDLER( gb_sound_w )
 		snd_1.env_length = env_length_table[data & 0x7];
 		break;
 	case NR13: /* Frequency lo (R/W) */
-		snd_1.frequency = ((gb_ram[NR14]&0x7)<<8) | gb_ram[NR13];
+		snd_1.frequency = ((snd_regs[NR14]&0x7)<<8) | snd_regs[NR13];
 		snd_1.period = period_table[snd_1.frequency];
 		break;
 	case NR14: /* Frequency hi / Initialize (R/W) */
 		snd_1.mode = (data & 0x40) >> 6;
-		snd_1.frequency = ((gb_ram[NR14]&0x7)<<8) | gb_ram[NR13];
+		snd_1.frequency = ((snd_regs[NR14]&0x7)<<8) | snd_regs[NR13];
 		snd_1.period = period_table[snd_1.frequency];
 		if( data & 0x80 )
 		{
@@ -189,11 +217,11 @@ WRITE8_HANDLER( gb_sound_w )
 				snd_1.pos = 0;
 			snd_1.on = 1;
 			snd_1.count = 0;
-			snd_1.env_value = gb_ram[NR12] >> 4;
+			snd_1.env_value = snd_regs[NR12] >> 4;
 			snd_1.env_count = 0;
 			snd_1.swp_count = 0;
 			snd_1.signal = 0x1;
-			gb_ram[NR52] |= 0x1;
+			snd_regs[NR52] |= 0x1;
 		}
 		break;
 
@@ -209,21 +237,21 @@ WRITE8_HANDLER( gb_sound_w )
 		snd_2.env_length = env_length_table[data & 0x7];
 		break;
 	case NR23: /* Frequency lo (R/W) */
-		snd_2.period = period_table[((gb_ram[NR24]&0x7)<<8) | gb_ram[NR23]];
+		snd_2.period = period_table[((snd_regs[NR24]&0x7)<<8) | snd_regs[NR23]];
 		break;
 	case NR24: /* Frequency hi / Initialize (R/W) */
 		snd_2.mode = (data & 0x40) >> 6;
-		snd_2.period = period_table[((gb_ram[NR24]&0x7)<<8) | gb_ram[NR23]];
+		snd_2.period = period_table[((snd_regs[NR24]&0x7)<<8) | snd_regs[NR23]];
 		if( data & 0x80 )
 		{
 			if( !snd_2.on )
 				snd_2.pos = 0;
 			snd_2.on = 1;
 			snd_2.count = 0;
-			snd_2.env_value = gb_ram[NR22] >> 4;
+			snd_2.env_value = snd_regs[NR22] >> 4;
 			snd_2.env_count = 0;
 			snd_2.signal = 0x1;
-			gb_ram[NR52] |= 0x2;
+			snd_regs[NR52] |= 0x2;
 		}
 		break;
 
@@ -238,11 +266,11 @@ WRITE8_HANDLER( gb_sound_w )
 		snd_3.level = (data & 0x60) >> 5;
 		break;
 	case NR33: /* Frequency lo (W) */
-		snd_3.period = period_mode3_table[((gb_ram[NR34]&0x7)<<8) + gb_ram[NR33]];
+		snd_3.period = period_mode3_table[((snd_regs[NR34]&0x7)<<8) + snd_regs[NR33]];
 		break;
 	case NR34: /* Frequency hi / Initialize (W) */
 		snd_3.mode = (data & 0x40) >> 6;
-		snd_3.period = period_mode3_table[((gb_ram[NR34]&0x7)<<8) + gb_ram[NR33]];
+		snd_3.period = period_mode3_table[((snd_regs[NR34]&0x7)<<8) + snd_regs[NR33]];
 		if( data & 0x80 )
 		{
 			if( !snd_3.on )
@@ -255,7 +283,7 @@ WRITE8_HANDLER( gb_sound_w )
 			snd_3.count = 0;
 			snd_3.duty = 1;
 			snd_3.dutycount = 0;
-			gb_ram[NR52] |= 0x4;
+			snd_regs[NR52] |= 0x4;
 		}
 		break;
 
@@ -281,11 +309,11 @@ WRITE8_HANDLER( gb_sound_w )
 				snd_4.pos = 0;
 			snd_4.on = 1;
 			snd_4.count = 0;
-			snd_4.env_value = gb_ram[NR42] >> 4;
+			snd_4.env_value = snd_regs[NR42] >> 4;
 			snd_4.env_count = 0;
 			snd_4.signal = rand();
 			snd_4.ply_value = 0x7fff;
-			gb_ram[NR52] |= 0x8;
+			snd_regs[NR52] |= 0x8;
 		}
 		break;
 
@@ -310,14 +338,50 @@ WRITE8_HANDLER( gb_sound_w )
 		snd_control.on = (data & 0x80) >> 7;
 		if( !snd_control.on )
 		{
+			gb_sound_w_internal( NR10, 0x80 );
+			gb_sound_w_internal( NR11, 0x3F );
+			gb_sound_w_internal( NR12, 0x00 );
+			gb_sound_w_internal( NR13, 0xFE );
+			gb_sound_w_internal( NR14, 0xBF );
+//			gb_sound_w_internal( NR20, 0xFF );
+			gb_sound_w_internal( NR21, 0x3F );
+			gb_sound_w_internal( NR22, 0x00 );
+			gb_sound_w_internal( NR23, 0xFF );
+			gb_sound_w_internal( NR24, 0xBF );
+			gb_sound_w_internal( NR30, 0x7F );
+			gb_sound_w_internal( NR31, 0xFF );
+			gb_sound_w_internal( NR32, 0x9F );
+			gb_sound_w_internal( NR33, 0xFF );
+			gb_sound_w_internal( NR34, 0xBF );
+//			gb_sound_w_internal( NR40, 0xFF );
+			gb_sound_w_internal( NR41, 0xFF );
+			gb_sound_w_internal( NR42, 0x00 );
+			gb_sound_w_internal( NR43, 0x00 );
+			gb_sound_w_internal( NR44, 0xBF );
+			gb_sound_w_internal( NR50, 0x00 );
+			gb_sound_w_internal( NR51, 0x00 );
 			snd_1.on = 0;
 			snd_2.on = 0;
 			snd_3.on = 0;
 			snd_4.on = 0;
-			gb_ram[offset] = 0;
+			snd_regs[offset] = 0;
 		}
 		break;
 	}
+}
+
+WRITE8_HANDLER( gb_sound_w )
+{
+	/* change in registers so update first */
+	stream_update(channel, 0);
+
+	/* Only register NR52 is accessible if the sound controller is disabled */
+	if( !snd_control.on && offset != NR52 )
+	{
+		return;
+	}
+
+	gb_sound_w_internal( offset, data );
 }
 
 
@@ -351,7 +415,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 				if( snd_1.count >= snd_1.length )
 				{
 					snd_1.on = 0;
-					gb_ram[NR52] &= 0xFE;
+					snd_regs[NR52] &= 0xFE;
 				}
 			}
 
@@ -381,7 +445,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 						if( snd_1.frequency <= 0 )
 						{
 							snd_1.on = 0;
-							gb_ram[NR52] &= 0xFE;
+							snd_regs[NR52] &= 0xFE;
 						}
 					}
 					else
@@ -424,7 +488,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 				if( snd_2.count >= snd_2.length )
 				{
 					snd_2.on = 0;
-					gb_ram[NR52] &= 0xFD;
+					snd_regs[NR52] &= 0xFD;
 				}
 			}
 
@@ -454,7 +518,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 			/* NOTE: This is extremely close, but not quite right.
 			   The problem is for GB frequencies above 2000 the frequency gets
 			   clipped. This is caused because snd_3.pos is never 0 at the test.*/
-			sample = gb_ram[0xFF30 + (snd_3.offset/2)];
+			sample = snd_regs[AUD3W0 + (snd_3.offset/2)];
 			if( !(snd_3.offset % 2) )
 			{
 				sample >>= 4;
@@ -490,7 +554,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 				if( snd_3.count >= snd_3.length )
 				{
 					snd_3.on = 0;
-					gb_ram[NR52] &= 0xFB;
+					snd_regs[NR52] &= 0xFB;
 				}
 			}
 
@@ -533,7 +597,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 				if( snd_4.count >= snd_4.length )
 				{
 					snd_4.on = 0;
-					gb_ram[NR52] &= 0xF7;
+					snd_regs[NR52] &= 0xF7;
 				}
 			}
 
@@ -570,7 +634,7 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 		*(buffer[1]++) = right;
 	}
 
-	gb_ram[NR52] = (gb_ram[NR52]&0xf0) | snd_1.on | (snd_2.on << 1) | (snd_3.on << 2) | (snd_4.on << 3);
+	snd_regs[NR52] = (snd_regs[NR52]&0xf0) | snd_1.on | (snd_2.on << 1) | (snd_3.on << 2) | (snd_4.on << 3);
 }
 
 
@@ -621,6 +685,24 @@ void *gameboy_sh_start(int clock, const struct CustomSound_interface *config)
 	{
 		length_mode3_table[I] = ((256 - I) * ((1 << FIXED_POINT)/256) * rate) >> FIXED_POINT;
 	}
+
+	gb_sound_w_internal( NR52, 0x00 );
+	snd_regs[AUD3W0] = 0xac;
+	snd_regs[AUD3W1] = 0xdd;
+	snd_regs[AUD3W2] = 0xda;
+	snd_regs[AUD3W3] = 0x48;
+	snd_regs[AUD3W4] = 0x36;
+	snd_regs[AUD3W5] = 0x02;
+	snd_regs[AUD3W6] = 0xcf;
+	snd_regs[AUD3W7] = 0x16;
+	snd_regs[AUD3W8] = 0x2c;
+	snd_regs[AUD3W9] = 0x04;
+	snd_regs[AUD3WA] = 0xe5;
+	snd_regs[AUD3WB] = 0x2c;
+	snd_regs[AUD3WC] = 0xac;
+	snd_regs[AUD3WD] = 0xdd;
+	snd_regs[AUD3WE] = 0xda;
+	snd_regs[AUD3WF] = 0x48;
 
 	return (void *) ~0;
 }

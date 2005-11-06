@@ -39,13 +39,16 @@
 #include "includes/gb.h"
 #include "image.h"
 
+#define MAX_ROMBANK 512
+#define MAX_RAMBANK 256
+
 static UINT16 MBCType;				   /* MBC type: 0 for none                        */
 static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
-static UINT8 *ROMMap[512];			   /* Addresses of ROM banks                      */
+static UINT8 *ROMMap[MAX_ROMBANK];		   /* Addresses of ROM banks                      */
 static UINT16 ROMBank;				   /* Number of ROM bank currently used           */
 static UINT8 ROMMask;				   /* Mask for the ROM bank number                */
 static UINT16 ROMBanks;				   /* Total number of ROM banks                   */
-static UINT8 *RAMMap[256];			   /* Addresses of RAM banks                      */
+static UINT8 *RAMMap[MAX_RAMBANK];		   /* Addresses of RAM banks                      */
 static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
 static UINT8 RAMBanks;				   /* Total number of RAM banks                   */
@@ -58,7 +61,12 @@ static UINT8 GBC_RAMBank;			   /* (GBC) Number of RAM bank currently used     */
 UINT8 *GBC_VRAMMap[2];				   /* (GBC) Addressses of video RAM banks         */
 UINT8 GBC_VRAMBank;					   /* (GBC) Number of video RAM bank currently used */
 static UINT8 sgb_atf_data[4050];	   /* (SGB) Attribute files                       */
-UINT8 *gb_ram;
+UINT8 *gb_cart = NULL;
+UINT8 *gb_cart_ram = NULL;
+UINT8 *gb_vram = NULL;				/* points to start of VRAM area */
+UINT8 gb_io[0x10];
+UINT8 gb_vid_regs[0x40];
+UINT8 gb_ie;
 
 void (*refresh_scanline)(void);
 
@@ -86,51 +94,25 @@ static void gb_init_regs(void)
 	gb_video_w( 0x7, 0xFC );	/* BGRDPAL */
 	gb_video_w( 0x8, 0xFC );	/* SPR0PAL */
 	gb_video_w( 0x9, 0xFC );	/* SPR1PAL */
-
-	gb_sound_w(0x16,0xF1);		/*Gameboy, F0 for SGB*/ /* set this first */
-	gb_sound_w(0x00,0x80);
-	gb_sound_w(0x01,0xBF);
-	gb_sound_w(0x02,0xF3);
-	gb_sound_w(0x04,0x3F);		/* NOTE: Should be 0xBF but it causes a tone at startup */
-	gb_sound_w(0x06,0x3F);
-	gb_sound_w(0x07,0x00);
-	gb_sound_w(0x09,0xBF);
-	gb_sound_w(0x0A,0x7F);
-	gb_sound_w(0x0B,0xFF);
-	gb_sound_w(0x0C,0x9F);
-	gb_sound_w(0x0E,0xBF);
-	gb_sound_w(0x10,0xFF);
-	gb_sound_w(0x11,0x00);
-	gb_sound_w(0x12,0x00);
-	gb_sound_w(0x13,0xBF);
-	gb_sound_w(0x14,0x77);
-	gb_sound_w(0x15,0xF3);
 }
 
 static void gb_init(void)
 {
 	int ii;
 
+        gb_vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0x8000 );
+
 	/* Initialize the memory banks */
 	MBC1Mode = 0;
 	MBC3RTCBank = 0;
 	ROMBank = 1;
 	RAMBank = 0;
-	memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : memory_region(REGION_CPU1) + 0x4000);
 	if ( MBCType != MEGADUCK ) {
-		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : memory_region(REGION_CPU1) + 0xA000);
 	} else {
 		memory_set_bankptr( 10, ROMMap[0] );
 	}
-
-//	/* Initialize the registers */
-//	LCDSTAT = 0x00;
-//	CURLINE = CMPLINE = 0x00;
-//	IFLAGS = ISWITCH = 0x00;
-//	SIODATA = 0x00;
-//	SIOCONT = 0x7E;
-//	SCROLLX = SCROLLY = 0x00;
-//	WNDPOSX = WNDPOSY = 0x00;
 
 	/* Initialize palette arrays */
 	for( ii = 0; ii < 4; ii++ )
@@ -177,15 +159,17 @@ static void gb_init(void)
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xB000, 0xB000, 0, 0, megaduck_rom_bank_select_type2 );
 			break;
 	}
+
+	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
 }
 
 MACHINE_INIT( gb )
 {
-        /* Enable BIOS rom */
-        memory_set_bankptr(5, gb_ram + 0x10000);
-        memory_set_bankptr(10, gb_ram + 0x0100);
+        gb_init();
 
-	gb_init();
+        /* Enable BIOS rom */
+        memory_set_bankptr(5, memory_region(REGION_CPU1) + 0x10000);
+        memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : memory_region(REGION_CPU1) + 0x0100);
 
 	/* set the scanline refresh function */
 	refresh_scanline = gb_refresh_scanline;
@@ -196,6 +180,8 @@ MACHINE_INIT( sgb )
 	gb_init();
 
 	gb_init_regs();
+
+	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : memory_region(REGION_CPU1) );
 
 	sgb_tile_data = (UINT8 *)memory_region( REGION_GFX1 );
 	memset( sgb_tile_data, 0, 0x2000 );
@@ -211,8 +197,8 @@ MACHINE_INIT( sgb )
 	   For some reason that I haven't figured out, they store the tile
 	   data differently.  Hacks will go once I figure it out */
 	sgb_hack = 0;
-	if( strncmp( (const char*)(gb_ram + 0x134), "DONKEYKONGLAND 2", 16 ) == 0 ||
-		strncmp( (const char*)(gb_ram + 0x134), "DONKEYKONGLAND 3", 16 ) == 0 )
+	if( strncmp( (const char*)(gb_cart + 0x134), "DONKEYKONGLAND 2", 16 ) == 0 ||
+		strncmp( (const char*)(gb_cart + 0x134), "DONKEYKONGLAND 3", 16 ) == 0 )
 	{
 		sgb_hack = 1;
 	}
@@ -227,6 +213,10 @@ MACHINE_INIT( gbpocket )
 
 	gb_init_regs();
 
+	/* Enable BIOS rom */
+	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : memory_region(REGION_CPU1) );
+	memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : memory_region(REGION_CPU1) + 0x0100);
+
 	/* set the scanline refresh function */
 	refresh_scanline = gb_refresh_scanline;
 }
@@ -238,6 +228,8 @@ MACHINE_INIT( gbc )
 	gb_init();
 
 	gb_init_regs();
+
+	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : memory_region(REGION_CPU1) );
 
 	/* Allocate memory for internal ram */
 	for( ii = 0; ii < 8; ii++ )
@@ -282,7 +274,7 @@ MACHINE_INIT( gbc )
 	gb_io_w( 0x77, 0x00 );
 
 	/* Are we in colour or mono mode? */
-	if( gb_ram[0x143] == 0x80 || gb_ram[0x143] == 0xC0 )
+	if( gb_cart[0x143] == 0x80 || gb_cart[0x143] == 0xC0 )
 		gbc_mode = GBC_MODE_GBC;
 	else
 		gbc_mode = GBC_MODE_MONO;
@@ -296,8 +288,7 @@ MACHINE_INIT( gbc )
 
 MACHINE_STOP( gb )
 {
-	int I;
-	UINT8 *battery_ram, *ptr;
+/*	int I; */
 
 	/* Don't save if there was no battery */
 	if( !(CartType & BATTERY) )
@@ -306,19 +297,7 @@ MACHINE_STOP( gb )
 	/* NOTE: The reason we save the carts RAM this way instead of using MAME's
 	   built in macros is because they force the filename to be the name of
 	   the machine.  We need to have a separate name for each game. */
-	battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
-	if( battery_ram )
-	{
-		ptr = battery_ram;
-		for( I = 0; I < RAMBanks; I++ )
-		{
-			memcpy( ptr, RAMMap[I], 0x2000 );
-			ptr += 0x2000;
-		}
-		image_battery_save(image_from_devtype_and_index(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
-
-		free( battery_ram );
-	}
+	image_battery_save(image_from_devtype_and_index(IO_CARTSLOT, 0), gb_cart_ram, RAMBanks * 0x2000 );
 
 	/* FIXME: We should release memory here, but this function is called upon reset
 	   and we don't reload the rom, so we're going to have to leak for now. */
@@ -343,7 +322,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc1 )
 
 		ROMBank = data & 0x1F; /* Only uses lower 5 bits */
 		/* Switch banks */
-		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] );
 	}
 }
 
@@ -360,7 +339,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc2 )
 		if( offset & 0x0100 )
 			ROMBank = data;
 		/* Switch banks */
-		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] );
 	}
 }
 
@@ -375,7 +354,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc3 )
 
 		ROMBank = data;
 		/* Switch banks */
-		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] );
 	}
 }
 
@@ -394,7 +373,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc5 )
 			ROMBank = (ROMBank & 0xFF ) | ((UINT16)(data & 0x1) << 8);
 		}
 		/* Switch banks */
-		memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		memory_set_bankptr (1, ROMMap[ROMBank] );
 	}
 }
 
@@ -408,7 +387,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 		{
 			/* Select the upper bits of the ROMMask */
 			ROMBank |= data << 5;
-			memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+			memory_set_bankptr (1, ROMMap[ROMBank] );
 			return;
 		}
 		else
@@ -416,7 +395,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 			RAMBank = data;
 		}
 		/* Switch banks */
-		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] );
 	}
 }
 
@@ -436,7 +415,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc3 )
 			RAMBank = data & 0x3;
 		}
 		/* Switch banks */
-		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] );
 	}
 }
 
@@ -451,7 +430,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc5 )
 		}
 		RAMBank = data;
 		/* Switch banks */
-		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+		memory_set_bankptr (2, RAMMap[RAMBank] );
 	}
 }
 
@@ -488,20 +467,18 @@ WRITE8_HANDLER ( gb_io_w )
 {
 	static UINT8 timer_shifts[4] = {10, 4, 6, 8};
 
-	offset += 0xFF00;
-
 	switch (offset)
 	{
-	case 0xFF00:						/* JOYP - Joypad */
+	case 0x00:						/* JOYP - Joypad */
 		JOYPAD = 0xCF | data;
 		if (!(data & 0x20))
 			JOYPAD &= (readinputport (0) >> 4) | 0xF0;
 		if (!(data & 0x10))
 			JOYPAD &= readinputport (0) | 0xF0;
 		return;
-	case 0xFF01:						/* SB - Serial transfer data */
+	case 0x01:						/* SB - Serial transfer data */
 		break;
-	case 0xFF02:						/* SC - SIO control */
+	case 0x02:						/* SC - SIO control */
 		if ((data & 0x81) == 0x81)		/* internal clock && enable */
 		{
 			SIODATA = 0xFF;
@@ -510,28 +487,28 @@ WRITE8_HANDLER ( gb_io_w )
 		else							/* external clock || disable */
 			SIOCount = 0;
 		break;
-	case 0xFF04:						/* DIV - Divider register */
+	case 0x04:						/* DIV - Divider register */
 		gb_divcount = 0;
 		return;
-	case 0xFF05:						/* TIMA - Timer counter */
+	case 0x05:						/* TIMA - Timer counter */
 		gb_timer_count = data << gb_timer_shift;
 		break;
-	case 0xFF07:						/* TAC - Timer control */
+	case 0x07:						/* TAC - Timer control */
 		gb_timer_shift = timer_shifts[data & 0x03];
 		data |= 0xF8;
 		break;
-	case 0xFF0F:						/* IF - Interrupt flag */
+	case 0x0F:						/* IF - Interrupt flag */
 		data &= 0x1F;
 		break;
 	}
 
-	gb_ram [offset] = data;
+	gb_io [offset] = data;
 }
 
 WRITE8_HANDLER ( gb_bios_w )
 {
 	/* disable BIOS ROM */
-	memory_set_bankptr(5, gb_ram);
+	memory_set_bankptr(5, ROMMap[0]);
 }
 
 #ifdef MAME_DEBUG
@@ -949,9 +926,9 @@ WRITE8_HANDLER ( sgb_io_w )
 								break;
 							case 0x13:	/* CHR_TRN */
 								if( sgb_data[1] & 0x1 )
-									memcpy( sgb_tile_data + 4096, gb_ram + 0x8800, 4096 );
+									memcpy( sgb_tile_data + 4096, gb_vram + 0x0800, 4096 );
 								else
-									memcpy( sgb_tile_data, gb_ram + 0x8800, 4096 );
+									memcpy( sgb_tile_data, gb_vram + 0x0800, 4096 );
 								break;
 							case 0x14:	/* PCT_TRN */
 								{
@@ -959,7 +936,7 @@ WRITE8_HANDLER ( sgb_io_w )
 									UINT16 col;
 									if( sgb_hack )
 									{
-										memcpy( sgb_tile_map, gb_ram + 0x9000, 2048 );
+										memcpy( sgb_tile_map, gb_vram + 0x1000, 2048 );
 										for( I = 0; I < 64; I++ )
 										{
 											col = program_read_byte_8 (0x8800 + (I*2));
@@ -969,7 +946,7 @@ WRITE8_HANDLER ( sgb_io_w )
 									}
 									else /* Do things normally */
 									{
-										memcpy( sgb_tile_map, gb_ram + 0x8800, 2048 );
+										memcpy( sgb_tile_map, gb_vram + 0x0800, 2048 );
 										for( I = 0; I < 64; I++ )
 										{
 											col = program_read_byte_8 (0x9000 + (I*2));
@@ -980,7 +957,7 @@ WRITE8_HANDLER ( sgb_io_w )
 								}
 								break;
 							case 0x15:	/* ATTR_TRN */
-								memcpy( sgb_atf_data, gb_ram + 0x8800, 4050 );
+								memcpy( sgb_atf_data, gb_vram + 0x0800, 4050 );
 								break;
 							case 0x16:	/* ATTR_SET */
 								{
@@ -1056,96 +1033,37 @@ WRITE8_HANDLER ( sgb_io_w )
 			return;
 	}
 
-	gb_ram [offset] = data;
+	gb_io[offset] = data;
 }
 
 /* Interrupt Enable register */
+READ8_HANDLER( gb_ie_r )
+{
+	return gb_ie;
+}
+
 WRITE8_HANDLER ( gb_ie_w )
 {
-	gb_ram[0xFFFF] = data & 0x1F;
+	gb_ie = data & 0x1F;
 }
 
 /* IO read */
- READ8_HANDLER ( gb_io_r )
+READ8_HANDLER ( gb_io_r )
 {
-	offset += 0xFF00;
-
 	switch(offset)
 	{
-		case 0xFF04:
+		case 0x04:
 			return ((gb_divcount >> 8) & 0xFF);
-		case 0xFF05:
+		case 0x05:
 			return (gb_timer_count >> gb_timer_shift);
-		case 0xFF00:
-		case 0xFF01:
-		case 0xFF02:
-		case 0xFF03:
-		case 0xFF06:
-		case 0xFF07:
-		case 0xFF0F:
-		case 0xFF10:
-		case 0xFF11:
-		case 0xFF12:
-		case 0xFF13:
-		case 0xFF14:
-		case 0xFF16:
-		case 0xFF17:
-		case 0xFF18:
-		case 0xFF19:
-		case 0xFF1A:
-		case 0xFF1B:
-		case 0xFF1C:
-		case 0xFF1D:
-		case 0xFF1E:
-		case 0xFF20:
-		case 0xFF21:
-		case 0xFF22:
-		case 0xFF23:
-		case 0xFF24:
-		case 0xFF25:
-		case 0xFF26:
-		case 0xFF30:
-		case 0xFF31:
-		case 0xFF32:
-		case 0xFF33:
-		case 0xFF34:
-		case 0xFF35:
-		case 0xFF36:
-		case 0xFF37:
-		case 0xFF38:
-		case 0xFF39:
-		case 0xFF3A:
-		case 0xFF3B:
-		case 0xFF3C:
-		case 0xFF3D:
-		case 0xFF3E:
-		case 0xFF3F:
-		case 0xFF40:
-		case 0xFF41:
-		case 0xFF42:
-		case 0xFF43:
-		case 0xFF44:
-		case 0xFF45:
-		case 0xFF47:
-		case 0xFF48:
-		case 0xFF49:
-		case 0xFF4A:
-		case 0xFF4B:
-		/* GBC specific */
-		case 0xFF4D:
-		case 0xFF4F:
-		case 0xFF51:
-		case 0xFF52:
-		case 0xFF53:
-		case 0xFF54:
-		case 0xFF55:
-		case 0xFF56:
-		case 0xFF68:
-		case 0xFF69:
-		case 0xFF6A:
-		case 0xFF6B:
-		case 0xFF70:
-			return gb_ram[offset];
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x06:
+		case 0x07:
+		case 0x0F:
+			return gb_io[offset];
 		default:
 			/* It seems unsupported registers return 0xFF */
 			return 0xFF;
@@ -1156,14 +1074,20 @@ DEVICE_INIT(gb_cart)
 {
 	int I;
 
-	gb_ram = memory_region(REGION_CPU1);
-        memset (gb_ram, 0, 0x10000);
-	memset (gb_ram, 0xFF, 0x4000);
-
-	for(I = 0; I < 256; I++) {
-		RAMMap[I] = ROMMap[I] = NULL;
+	if ( gb_cart != NULL ) {
+		free( gb_cart );
+		gb_cart = NULL;
 	}
-	ROMMap[0] = gb_ram;
+
+	memset (memory_region(REGION_CPU1), 0xFF, 0x8000);
+	memset (memory_region(REGION_CPU1) + 0x8000, 0, 0x8000);
+
+	for(I = 0; I < MAX_ROMBANK; I++) {
+		ROMMap[I] = memory_region(REGION_CPU1);
+	}
+	for(I = 0; I < MAX_RAMBANK; I++) {
+		RAMMap[I] = memory_region(REGION_CPU1) + 0xA000;
+	}
 	ROMBanks = 0;
 	RAMBanks = 0;
 	MBCType = NONE;
@@ -1300,41 +1224,48 @@ DEVICE_LOAD(gb_cart)
 		{0x0000, NULL}
 	};
 
-	int Checksum, I, J;
+	int Checksum, I, J, filesize;
 	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
 
-//	if( new_memory_region(REGION_CPU1, 0x10000,0) )
-//	{
-//		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
-//		return INIT_FAIL;
-//	}
+	filesize = image_length(image);
 
-	gb_ram = memory_region(REGION_CPU1);
-	memset (gb_ram, 0, 0x10000);
-
-	J = image_length(image) % 0x4000;
-
-	if (J == 512)
-	{
-		logerror("ROM-header found skipping\n");
-		mame_fread (file, gb_ram, 512);
+	/* Check for presence of a header, and skip that header */
+	J = filesize % 0x4000;
+	if ( J == 512 ) {
+		logerror( "Rom-header found, skipping\n" );
+		mame_fseek( file, J, SEEK_SET );
+		filesize -= 512;
 	}
 
-	if (mame_fread (file, gb_ram, 0x4000) != 0x4000)
-	{
-		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
+	/* Verify that the file contains 16kb blocks */
+	if ( ( filesize == 0 ) || ( ( filesize % 0x4000 ) != 0 ) ) {
+		logerror( "Error loading cartridge: Invalid rom file: %s.\n", image_filename(image) );
 		return INIT_FAIL;
 	}
 
-	ROMMap[0] = gb_ram;
-	ROMBanks = 2 << gb_ram[0x0148];
-	RAMBanks = rambanks[gb_ram[0x0149] & 3];
-	Checksum = ((UINT16) gb_ram[0x014E] << 8) + gb_ram[0x014F];
+	/* Release any previously claimed memory */
+	if ( gb_cart != NULL ) {
+		free( gb_cart );
+		gb_cart = NULL;
+	}
+	/* Claim memory */
+	gb_cart = malloc( filesize );
+	if ( gb_cart == NULL ) {
+		logerror( "Error loading cartridge: Memory allocation failed reading roms!\n" );
+		return INIT_FAIL;
+	}
+
+	/* Read cartridge */
+	if ( mame_fread( file, gb_cart, filesize ) != filesize ) {
+		logerror( "Error loading cartridge: Unable to read from file: %s.\n", image_filename(image) );
+		return INIT_FAIL;
+	}
+
 	/* Fill in our cart details */
-	switch( gb_ram[0x0147] )
+	switch( gb_cart[0x0147] )
 	{
 		case 0x00:
 			MBCType = NONE;
@@ -1430,70 +1361,62 @@ DEVICE_LOAD(gb_cart)
 		return INIT_FAIL;
 	}
 
+        ROMBanks = 2 << gb_cart[0x0148];
+	if ( ( ROMBanks * 0x4000 ) != filesize ) {
+		logerror( "Error loading cartridge: Filesize and reported ROM banks don't match.\n" );
+		return INIT_FAIL;
+	}
+
+        RAMBanks = rambanks[gb_cart[0x0149] & 3];
+
+	/* Calculate and check checksum */
+        Checksum = ((UINT16) gb_cart[0x014E] << 8) + gb_cart[0x014F];
+        Checksum += gb_cart[0x014E] + gb_cart[0x014F];
+        for (I = 0; I < filesize; I++)
+        {
+                Checksum -= gb_cart[I];
+        }
+        if (CheckCRC && (Checksum & 0xFFFF))
+        {
+                logerror("Error loading cartridge: Checksum is wrong.");
+                return INIT_FAIL;
+        }
+
+	/* Initialize ROMMap pointers */
+        for (I = 0; I < ROMBanks; I++)
+        {
+                ROMMap[I] = gb_cart + ( I * 0x4000 );
+        }
+
 	/* Log cart information */
 	{
 		const char *P;
 		char S[50];
 
-		strncpy (S, (char *)&gb_ram[0x0134], 16);
+		strncpy (S, (char *)&gb_cart[0x0134], 16);
 		S[16] = '\0';
 		logerror("Cart Information\n");
 		logerror("\tName:             %s\n", S);
-		logerror("\tType:             %s [0x%2X]\n", CartTypes[gb_ram[0x0147]], gb_ram[0x0147] );
-		logerror("\tGameBoy:          %s\n", (gb_ram[0x0143] == 0xc0) ? "No" : "Yes" );
-		logerror("\tSuper GB:         %s [0x%2X]\n", (gb_ram[0x0146] == 0x03) ? "Yes" : "No", gb_ram[0x0146] );
-		logerror("\tColor GB:         %s [0x%2X]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
-		logerror("\tROM Size:         %d 16kB Banks [0x%2X]\n", ROMBanks, gb_ram[0x0148]);
-		J = (gb_ram[0x0149] & 0x03) * 2;
+		logerror("\tType:             %s [0x%2X]\n", CartTypes[gb_cart[0x0147]], gb_cart[0x0147] );
+		logerror("\tGameBoy:          %s\n", (gb_cart[0x0143] == 0xc0) ? "No" : "Yes" );
+		logerror("\tSuper GB:         %s [0x%2X]\n", (gb_cart[0x0146] == 0x03) ? "Yes" : "No", gb_cart[0x0146] );
+		logerror("\tColor GB:         %s [0x%2X]\n", (gb_cart[0x0143] == 0x80 || gb_cart[0x0143] == 0xc0) ? "Yes" : "No", gb_cart[0x0143] );
+		logerror("\tROM Size:         %d 16kB Banks [0x%2X]\n", ROMBanks, gb_cart[0x0148]);
+		J = (gb_cart[0x0149] & 0x03) * 2;
 		J = J ? (1 << (J - 1)) : 0;
-		logerror("\tRAM Size:         %d kB [0x%2X]\n", J, gb_ram[0x0149]);
-		logerror("\tLicense code:     0x%2X%2X\n", gb_ram[0x0145], gb_ram[0x0144] );
-		J = ((UINT16) gb_ram[0x014B] << 8) + gb_ram[0x014A];
+		logerror("\tRAM Size:         %d kB [0x%2X]\n", J, gb_cart[0x0149]);
+		logerror("\tLicense code:     0x%2X%2X\n", gb_cart[0x0145], gb_cart[0x0144] );
+		J = ((UINT16) gb_cart[0x014B] << 8) + gb_cart[0x014A];
 		for (I = 0, P = NULL; !P && Companies[I].Name; I++)
 			if (J == Companies[I].Code)
 				P = Companies[I].Name;
 		logerror("\tManufacturer ID:  0x%2X", J);
 		logerror(" [%s]\n", P ? P : "?");
-		logerror("\tVersion Number:   0x%2X\n", gb_ram[0x014C]);
-		logerror("\tComplement Check: 0x%2X\n", gb_ram[0x014D]);
-		logerror("\tChecksum:         0x%2X\n", Checksum);
-		J = ((UINT16) gb_ram[0x0103] << 8) + gb_ram[0x0102];
+		logerror("\tVersion Number:   0x%2X\n", gb_cart[0x014C]);
+		logerror("\tComplement Check: 0x%2X\n", gb_cart[0x014D]);
+		logerror("\tChecksum:         0x%2X\n", ( ( gb_cart[0x014E] << 8 ) + gb_cart[0x014F] ) );
+		J = ((UINT16) gb_cart[0x0103] << 8) + gb_cart[0x0102];
 		logerror("\tStart Address:    0x%2X\n", J);
-	}
-
-	Checksum += gb_ram[0x014E] + gb_ram[0x014F];
-	for (I = 0; I < 0x4000; I++)
-		Checksum -= gb_ram[I];
-
-	for (I = 1; I < ROMBanks; I++)
-	{
-		if ((ROMMap[I] = malloc (0x4000)))
-		{
-			if (mame_fread (file, ROMMap[I], 0x4000) == 0x4000)
-			{
-				for (J = 0; J < 0x4000; J++)
-					Checksum -= ROMMap[I][J];
-			}
-			else
-			{
-				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
-				break;
-			}
-		}
-		else
-		{
-			logerror("Error loading cartridge: Unable to allocate memory.\n");
-			break;
-		}
-	}
-
-	if (I < ROMBanks)
-		return INIT_FAIL;
-
-	if (CheckCRC && (Checksum & 0xFFFF))
-	{
-		logerror("Error loading cartridge: Checksum is wrong.");
-		return INIT_FAIL;
 	}
 
 	/* MBC2 has 512 * 4bits (8kb) internal RAM */
@@ -1502,34 +1425,28 @@ DEVICE_LOAD(gb_cart)
 
 	if (RAMBanks && MBCType)
 	{
+		/* Release any previously claimed memory */
+		if ( gb_cart_ram != NULL ) {
+			free( gb_cart_ram );
+			gb_cart_ram = NULL;
+		}
+		/* Claim memory */
+		gb_cart_ram = malloc( RAMBanks * 0x2000 );
+		if ( gb_cart_ram == NULL ) {
+			logerror( "Error loading cartridge: Unable to allocate memory.\n" );
+			return INIT_FAIL;
+		}
+
 		for (I = 0; I < RAMBanks; I++)
 		{
-			if ((RAMMap[I] = malloc (0x2000)))
-				memset (RAMMap[I], 0, 0x2000);
-			else
-			{
-				logerror("Error loading cartridge: Unable to allocate memory.\n");
-				return INIT_FAIL;
-			}
+			RAMMap[I] = gb_cart_ram + ( I * 0x2000 );
 		}
 	}
 
 	/* Load the saved RAM if this cart has a battery */
 	if( CartType & BATTERY )
 	{
-		UINT8 *battery_ram, *ptr;
-		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
-		if( battery_ram )
-		{
-			image_battery_load( image, battery_ram, RAMBanks * 0x2000 );
-			ptr = battery_ram;
-			for( I = 0; I < RAMBanks; I++ )
-			{
-				memcpy( RAMMap[I], ptr, 0x2000 );
-				ptr += 0x2000;
-			}
-			free( battery_ram );
-		}
+		image_battery_load( image, gb_cart_ram, RAMBanks * 0x2000 );
 	}
 
 	/* Build rom bank Mask */
@@ -1541,7 +1458,7 @@ DEVICE_LOAD(gb_cart)
 		ROMMask = I - 1;
 	}
 	/* Build ram bank Mask */
-	if (!RAMMap[0])
+	if (!RAMBanks)
 		RAMMask = 0;
 	else
 	{
@@ -1662,52 +1579,60 @@ void gbc_hdma(UINT16 length)
 	}
 }
 
+READ8_HANDLER( gb_video_r )
+{
+	switch( offset ) {
+	case 0x06:
+		return 0xFF;
+	default:
+		return gb_vid_regs[offset];
+	}
+}
+
 WRITE8_HANDLER ( gb_video_w )
 {
-	offset += 0xFF40;
-
 	switch (offset)
 	{
-	case 0xFF40:						/* LCDC - LCD Control */
-		gb_chrgen = gb_ram + ((data & 0x10) ? 0x8000 : 0x8800);
+	case 0x00:						/* LCDC - LCD Control */
+		gb_chrgen = gb_vram + ((data & 0x10) ? 0x0000 : 0x0800);
 		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-		gb_bgdtab = gb_ram + ((data & 0x08) ? 0x9C00 : 0x9800);
-		gb_wndtab = gb_ram + ((data & 0x40) ? 0x9C00 : 0x9800);
+		gb_bgdtab = gb_vram + ((data & 0x08) ? 0x1C00 : 0x1800 );
+		gb_wndtab = gb_vram + ((data * 0x40) ? 0x1C00 : 0x1800 );
 		break;
-	case 0xFF41:						/* STAT - LCD Status */
+	case 0x01:						/* STAT - LCD Status */
 		data = (data & 0xF8) | (LCDSTAT & 0x07);
 		break;
-	case 0xFF44:						/* LY - LCD Y-coordinate */
+	case 0x04:						/* LY - LCD Y-coordinate */
 		data = 0;
 		break;
-	case 0xFF46:						/* DMA - DMA Transfer and Start Address */
+	case 0x06:						/* DMA - DMA Transfer and Start Address */
 		{
-			UINT8 *P = gb_ram + 0xFE00;
+			UINT8 *P = memory_get_write_ptr(0, ADDRESS_SPACE_PROGRAM, 0xFE00 );
 			offset = (UINT16) data << 8;
 			for (data = 0; data < 0xA0; data++)
 				*P++ = program_read_byte_8 (offset++);
 		}
 		return;
-	case 0xFF47:						/* BGP - Background Palette */
+	case 0x07:						/* BGP - Background Palette */
 		gb_bpal[0] = data & 0x3;
 		gb_bpal[1] = (data & 0xC) >> 2;
 		gb_bpal[2] = (data & 0x30) >> 4;
 		gb_bpal[3] = (data & 0xC0) >> 6;
 		break;
-	case 0xFF48:						/* OBP0 - Object Palette 0 */
+	case 0x08:						/* OBP0 - Object Palette 0 */
 		gb_spal0[0] = data & 0x3;
 		gb_spal0[1] = (data & 0xC) >> 2;
 		gb_spal0[2] = (data & 0x30) >> 4;
 		gb_spal0[3] = (data & 0xC0) >> 6;
 		break;
-	case 0xFF49:						/* OBP1 - Object Palette 1 */
+	case 0x09:						/* OBP1 - Object Palette 1 */
 		gb_spal1[0] = data & 0x3;
 		gb_spal1[1] = (data & 0xC) >> 2;
 		gb_spal1[2] = (data & 0x30) >> 4;
 		gb_spal1[3] = (data & 0xC0) >> 6;
 		break;
 	}
-	gb_ram [offset] = data;
+	gb_vid_regs[ offset ] = data;
 }
 
 WRITE8_HANDLER ( gbc_video_w )
@@ -1715,11 +1640,9 @@ WRITE8_HANDLER ( gbc_video_w )
 	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
 	static UINT16 BP = 0, OP = 0;
 
-	offset += 0xFF40;
-
 	switch( offset )
 	{
-		case 0xFF40:	/* LCDC - LCD Control */
+		case 0x00:	/* LCDC - LCD Control */
 			gb_chrgen = GBC_VRAMMap[0] + ((data & 0x10) ? 0x0000 : 0x0800);
 			gbc_chrgen = GBC_VRAMMap[1] + ((data & 0x10) ? 0x0000 : 0x0800);
 			gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
@@ -1728,7 +1651,7 @@ WRITE8_HANDLER ( gbc_video_w )
 			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
 			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
 			break;
-		case 0xFF47:	/* BGP - GB background palette */
+		case 0x07:	/* BGP - GB background palette */
 			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
 			{
 				Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
@@ -1737,7 +1660,7 @@ WRITE8_HANDLER ( gbc_video_w )
 				Machine->remapped_colortable[3] = gbc_to_gb_pal[(data & 0xC0) >> 6];
 			}
 			break;
-		case 0xFF48:	/* OBP0 - GB Object 0 palette */
+		case 0x08:	/* OBP0 - GB Object 0 palette */
 			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
 			{
 				Machine->remapped_colortable[4] = gbc_to_gb_pal[(data & 0x03)];
@@ -1746,7 +1669,7 @@ WRITE8_HANDLER ( gbc_video_w )
 				Machine->remapped_colortable[7] = gbc_to_gb_pal[(data & 0xC0) >> 6];
 			}
 			break;
-		case 0xFF49:	/* OBP1 - GB Object 1 palette */
+		case 0x09:	/* OBP1 - GB Object 1 palette */
 			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
 			{
 				Machine->remapped_colortable[8] = gbc_to_gb_pal[(data & 0x03)];
@@ -1755,33 +1678,33 @@ WRITE8_HANDLER ( gbc_video_w )
 				Machine->remapped_colortable[11] = gbc_to_gb_pal[(data & 0xC0) >> 6];
 			}
 			break;
-		case 0xFF4D:	/* KEY1 - Prepare speed switch */
+		case 0x0D:	/* KEY1 - Prepare speed switch */
 			if( data & 0x1 )
 			{
-				data = (gb_ram[offset] & 0x80)?0x00:0x80;
+				data = (gb_vid_regs[offset] & 0x80)?0x00:0x80;
 /*				cpunum_set_clockscale( 0, (data & 0x80)?2.0:1.0 );*/
 #ifdef V_GENERAL
 				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
 #endif /* V_GENERAL */
 			}
 			break;
-		case 0xFF4F:	/* VBK - VRAM bank select */
+		case 0x0F:	/* VBK - VRAM bank select */
 			GBC_VRAMBank = data & 0x1;
 			memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);
 			data |= 0xFE;
 			break;
-		case 0xFF51:	/* HDMA1 - HBL General DMA - Source High */
+		case 0x11:	/* HDMA1 - HBL General DMA - Source High */
 			break;
-		case 0xFF52:	/* HDMA2 - HBL General DMA - Source Low */
+		case 0x12:	/* HDMA2 - HBL General DMA - Source Low */
 			data &= 0xF0;
 			break;
-		case 0xFF53:	/* HDMA3 - HBL General DMA - Destination High */
+		case 0x13:	/* HDMA3 - HBL General DMA - Destination High */
 			data &= 0x1F;
 			break;
-		case 0xFF54:	/* HDMA4 - HBL General DMA - Destination Low */
+		case 0x14:	/* HDMA4 - HBL General DMA - Destination Low */
 			data &= 0xF0;
 			break;
-		case 0xFF55:	/* HDMA5 - HBL General DMA - Mode, Length */
+		case 0x15:	/* HDMA5 - HBL General DMA - Mode, Length */
 			if( !(data & 0x80) )
 			{
 				if( gbc_hdma_enabled )
@@ -1804,10 +1727,10 @@ WRITE8_HANDLER ( gbc_video_w )
 				data &= 0x7f;
 			}
 			break;
-		case 0xFF56:	/* RP - Infrared port */
-		case 0xFF68:	/* BCPS - Background palette specification */
+		case 0x16:	/* RP - Infrared port */
+		case 0x28:	/* BCPS - Background palette specification */
 			break;
-		case 0xFF69:	/* BCPD - background palette data */
+		case 0x29:	/* BCPD - background palette data */
 			if( GBCBCPS & 0x1 )
 				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((UINT16)(data & 0x7f) << 8) | BP;
 			else
@@ -1818,9 +1741,9 @@ WRITE8_HANDLER ( gbc_video_w )
 				GBCBCPS &= 0xBF;
 			}
 			break;
-		case 0xFF6A:	/* OCPS - Object palette specification */
+		case 0x2A:	/* OCPS - Object palette specification */
 			break;
-		case 0xFF6B:	/* OCPD - Object palette data */
+		case 0x2B:	/* OCPD - Object palette data */
 			if( GBCOCPS & 0x1 )
 				Machine->remapped_colortable[GBC_PAL_OBJ_OFFSET + ((GBCOCPS & 0x3e) >> 1)] = ((UINT16)(data & 0x7f) << 8) | OP;
 			else
@@ -1831,27 +1754,27 @@ WRITE8_HANDLER ( gbc_video_w )
 				GBCOCPS &= 0xBF;
 			}
 			break;
-		case 0xFF70:	/* SVBK - RAM bank select */
+		case 0x30:	/* SVBK - RAM bank select */
 			GBC_RAMBank = data & 0x7;
 			memory_set_bankptr (3, GBC_RAMMap[GBC_RAMBank]);
 			break;
 		/* Undocumented registers */
-		case 0xFF6C:
-		case 0xFF72:
-		case 0xFF73:
-		case 0xFF74:
-		case 0xFF75:
-		case 0xFF76:
-		case 0xFF77:
+		case 0x2C:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
 			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
 			return;
 		default:
 			/* we didn't handle the write, so pass it to the GB handler */
-			gb_video_w( offset - 0xFF40, data );
+			gb_video_w( offset, data );
 			return;
 	}
 
-	gb_ram [offset] = data;
+	gb_vid_regs[offset] = data;
 }
 
 /****************************************************************************
@@ -1894,8 +1817,8 @@ MACHINE_INIT( megaduck )
 		offset ^= 0x0C;
 	}
 	if ( offset )
-		return gb_ram[offset + 0xFF40];
-	data = gb_ram[offset + 0xFF40];
+		return gb_vid_regs[offset];
+	data = gb_vid_regs[offset];
 	return (data&0xB1) | ((data&0x40)>>3) | ((data&0x0C)>>1) | ((data&0x02)<<5);
 }
 
@@ -1929,7 +1852,6 @@ WRITE8_HANDLER( megaduck_sound_w1 )
 		case 0x0D:
 		case 0x0E:
 		case 0x0F:
-			gb_ram[0xFF10 + offset] = data;
 			break;
 	}
 }
@@ -1939,7 +1861,7 @@ static UINT8 megaduck_sound_offsets[16] = { 0, 2, 1, 3, 4, 6, 5, 7, 8, 9, 0x0A, 
 /* this one needs some work */
  READ8_HANDLER( megaduck_sound_r1 )
 {
-	return gb_ram[0xFF10 + megaduck_sound_offsets[offset]];
+	return gb_sound_r( megaduck_sound_offsets[offset] );
 }
 
 WRITE8_HANDLER( megaduck_sound_w2 )
@@ -1961,14 +1883,13 @@ WRITE8_HANDLER( megaduck_sound_w2 )
 		case 0x0D:
 		case 0x0E:
 		case 0x0F:
-			gb_ram[0xFF10 + offset] = data;
 			break;
 	}
 }
 
- READ8_HANDLER( megaduck_sound_r2 )
+READ8_HANDLER( megaduck_sound_r2 )
 {
-	return gb_ram[0xFF20 + megaduck_sound_offsets[offset]];
+	return gb_sound_r(0x10 + megaduck_sound_offsets[offset]);
 }
 
 WRITE8_HANDLER( megaduck_rom_bank_select_type1 )
@@ -1996,56 +1917,52 @@ WRITE8_HANDLER( megaduck_rom_bank_select_type2 )
 
 DEVICE_LOAD(megaduck_cart)
 {
-	int I;
+	int I, filesize;
 
-	for (I = 0; I < 256; I++)
-		RAMMap[I] = ROMMap[I] = NULL;
+	for (I = 0; I < MAX_ROMBANK; I++)
+		ROMMap[I] = NULL;
+	for (I = 0; I < MAX_RAMBANK; I++)
+		RAMMap[I] = NULL;
 
-	if( new_memory_region(REGION_CPU1, 0x10000,0) )
-	{
-		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
+	memset (memory_region(REGION_CPU1), 0xFF, 0x8000);
+	memset (memory_region(REGION_CPU1) + 0x8000, 0, 0x8000);
+
+	filesize = image_length(image);
+	ROMBanks = filesize / 0x4000;
+
+	if ( ( filesize == 0 ) || ( ( filesize % 0x4000 ) != 0 ) ) {
+		logerror( "Error loading cartridge: Invalid rom file: %s.\n", image_filename(image) );
 		return INIT_FAIL;
 	}
 
-	gb_ram = memory_region(REGION_CPU1);
-	memset (gb_ram, 0, 0x10000);
+	/* Release any previously claimed memory */
+	if ( gb_cart != NULL ) {
+		free( gb_cart );
+		gb_cart = NULL;
+	}
+	/* Claim memory */
+	gb_cart = malloc( filesize );
+	if ( gb_cart == NULL ) {
+		logerror( "Error loading cartridge: Memory allocation failed while reading rom!\n" );
+		return INIT_FAIL;
+	}
 
-	ROMBanks = image_length(image) / 0x4000;
-
-	if (mame_fread (file, gb_ram, 0x4000) != 0x4000)
-	{
+	/* Read cartridge */
+	if (mame_fread (file, gb_cart, filesize) != filesize) {
 		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
 		return INIT_FAIL;
 	}
 
-	ROMMap[0] = gb_ram;
-
 	/* Log cart information */
 	{
 		logerror("Cart Information\n");
-		logerror("\tName:             blah\n");
 		logerror("\tRom Banks:        %d\n", ROMBanks);
 	}
 
-	for (I = 1; I < ROMBanks; I++)
+	for (I = 0; I < ROMBanks; I++)
 	{
-		if ((ROMMap[I] = malloc (0x4000)))
-		{
-			if ( mame_fread( file, ROMMap[I], 0x4000) !=  0x4000 )
-			{
-				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
-				break;
-			}
-		}
-		else
-		{
-			logerror("Error loading cartridge: Unable to allocate memory.\n");
-			break;
-		}
+		ROMMap[I] = gb_cart + ( I * 0x4000 );
 	}
-
-	if (I < ROMBanks)
-		return INIT_FAIL;
 
 	/* Build rom bank Mask */
 	if (ROMBanks < 3)

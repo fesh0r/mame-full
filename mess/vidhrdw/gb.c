@@ -18,7 +18,7 @@ static UINT8 bg_zbuf[160];
 INLINE void gb_update_sprites (void)
 {
 	mame_bitmap *bitmap = tmpbitmap;
-	UINT8 height, tilemask, line, *oam;
+	UINT8 height, tilemask, line, *oam, *vram;
 	int i, yindex;
 
 	if (LCDCONT & 0x04)
@@ -35,7 +35,8 @@ INLINE void gb_update_sprites (void)
 	yindex = CURLINE;
 	line = CURLINE + 16;
 
-	oam = &gb_ram[OAM + 39 * 4];
+	oam = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, OAM + 39*4);
+	vram = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, VRAM );
 	for (i = 39; i >= 0; i--)
 	{
 		/* if sprite is on current line && x-coordinate && x-coordinate is < 168 */
@@ -43,21 +44,19 @@ INLINE void gb_update_sprites (void)
 		{
 			UINT16 data;
 			UINT8 bit, *spal;
-			int xindex;
+			int xindex, adr;
 
 			spal = (oam[3] & 0x10) ? gb_spal1 : gb_spal0;
 			xindex = oam[1] - 8;
 			if (oam[3] & 0x40)		   /* flip y ? */
 			{
-				data = *((UINT16 *) &gb_ram[VRAM + (oam[2] & tilemask) * 16 + (height - 1 - line + oam[0]) * 2]);
+				adr = (oam[2] & tilemask) * 16 + (height - 1 - line + oam[0]) * 2;
 			}
 			else
 			{
-				data = *((UINT16 *) &gb_ram[VRAM + (oam[2] & tilemask) * 16 + (line - oam[0]) * 2]);
+				adr = (oam[2] & tilemask) * 16 + (line - oam[0]) * 2;
 			}
-#ifndef LSB_FIRST
-			data = (data << 8) | (data >> 8);
-#endif
+			data = (vram[adr + 1] << 8) | vram[adr];
 
 			switch (oam[3] & 0xA0)
 			{
@@ -239,7 +238,7 @@ void gb_refresh_scanline (void)
 INLINE void sgb_update_sprites (void)
 {
 	mame_bitmap *bitmap = tmpbitmap;
-	UINT8 height, tilemask, line, *oam, pal;
+	UINT8 height, tilemask, line, *oam, *vram, pal;
 	INT16 i, yindex;
 
 	if (LCDCONT & 0x04)
@@ -257,7 +256,8 @@ INLINE void sgb_update_sprites (void)
 	yindex = CURLINE + SGB_YOFFSET;
 	line = CURLINE + 16;
 
-	oam = &gb_ram[OAM + 39 * 4];
+	oam = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, OAM + 39*4);
+	vram = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, VRAM );
 	for (i = 39; i >= 0; i--)
 	{
 		/* if sprite is on current line && x-coordinate && x-coordinate is < 168 */
@@ -266,20 +266,19 @@ INLINE void sgb_update_sprites (void)
 			UINT16 data;
 			UINT8 bit, *spal;
 			INT16 xindex;
+			int adr;
 
 			spal = (oam[3] & 0x10) ? gb_spal1 : gb_spal0;
 			xindex = oam[1] - 8;
 			if (oam[3] & 0x40)		   /* flip y ? */
 			{
-				data = *((UINT16 *) &gb_ram[VRAM + (oam[2] & tilemask) * 16 + (height - 1 - line + oam[0]) * 2]);
+				adr = (oam[2] & tilemask) * 16 + (height -1 - line + oam[0]) * 2;
 			}
 			else
 			{
-				data = *((UINT16 *) &gb_ram[VRAM + (oam[2] & tilemask) * 16 + (line - oam[0]) * 2]);
+				adr = (oam[2] & tilemask) * 16 + (line - oam[0]) * 2;
 			}
-#ifndef LSB_FIRST
-			data = (data << 8) | (data >> 8);
-#endif
+			data = (vram[adr + 1] << 8) | vram[adr];
 
 			/* Find the palette to use */
 			pal = sgb_pal_map[(xindex >> 3)][((yindex - SGB_YOFFSET) >> 3)] << 2;
@@ -585,7 +584,7 @@ INLINE void gbc_update_sprites (void)
 	yindex = CURLINE;
 	line = CURLINE + 16;
 
-	oam = &gb_ram[OAM + 39 * 4];
+	oam = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, OAM + 39*4);
 	for (i = 39; i >= 0; i--)
 	{
 		/* if sprite is on current line && x-coordinate && x-coordinate is < 168 */
