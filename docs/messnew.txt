@@ -63,6 +63,9 @@ Source Changes:
 - Merged COMPX/CONSX into COMP/CONS as per the new convention in MAME.  [Nate
   Woods]
 
+- Fixed crash when launching console games without required cartridges.  (bug
+  #746) [Nate Woods]
+
 - [Messtest] Now fully errors out when a blank screenshot is generated.  [Nate
   Woods]
 

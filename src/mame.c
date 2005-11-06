@@ -355,7 +355,6 @@ int run_game(int game)
 		/* then finish setting up our local machine */
 		if (init_machine())
 		{
-			shutdown_machine();
 			bail_and_print("Unable to initialize machine emulation");
 		}
 		else
