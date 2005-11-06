@@ -400,7 +400,7 @@ MACHINE_DRIVER_END
 ******************************************************************************/
 
 ROM_START(laser110)
-    ROM_REGION(0x10000, REGION_CPU1, 0)
+    ROM_REGION(0x6800, REGION_CPU1, 0)
     ROM_LOAD(         "vtechv12.lo",  0x0000, 0x2000, CRC(99412d43) SHA1(6aed8872a0818be8e1b08ecdfd92acbe57a3c96d))
     ROM_LOAD(         "vtechv12.hi",  0x2000, 0x2000, CRC(e4c24e8b) SHA1(9d8fb3d24f3d4175b485cf081a2d5b98158ab2fb))
     ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
@@ -413,7 +413,7 @@ ROM_END
 #define rom_tx8000      rom_laser110
 
 ROM_START(laser210)
-    ROM_REGION(0x10000, REGION_CPU1, 0)
+    ROM_REGION(0x6800, REGION_CPU1, 0)
     ROM_LOAD(         "vtechv20.lo",  0x0000, 0x2000, CRC(cc854fe9) SHA1(6e66a309b8e6dc4f5b0b44e1ba5f680467353d66))
     ROM_LOAD(         "vtechv20.hi",  0x2000, 0x2000, CRC(7060f91a) SHA1(8f3c8f24f97ebb98f3c88d4e4ba1f91ffd563440))
     ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
@@ -423,7 +423,7 @@ ROM_END
 #define rom_vz200       rom_laser210
 
 ROM_START(laser310)
-    ROM_REGION(0x10000, REGION_CPU1, 0)
+    ROM_REGION(0x6800, REGION_CPU1, 0)
     ROM_LOAD(         "vtechv20.rom", 0x0000, 0x4000, CRC(613de12c) SHA1(f216c266bc09b0dbdbad720796e5ea9bc7d91e53))
     ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
 ROM_END
@@ -431,7 +431,7 @@ ROM_END
 #define rom_vz300       rom_laser310
 
 ROM_START(las31021)
-    ROM_REGION(0x10000, REGION_CPU1, 0)
+    ROM_REGION(0x6800, REGION_CPU1, 0)
     ROM_LOAD(         "vtechv21.rom", 0x0000, 0x4000, CRC(f7df980f) SHA1(5ba14a7a2eedca331b033901080fa5d205e245ea))
     ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
 ROM_END

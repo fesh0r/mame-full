@@ -166,37 +166,39 @@ static mess_image *cassette_device_image(void)
 
 static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapshot_size)
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	UINT16 start, end;
+	UINT16 start, end, i;
 
     start = vtech1_snapshot_data[22] + 256 * vtech1_snapshot_data[23];
 	/* skip loading address */
 	end = start + vtech1_snapshot_size - 24;
     if (vtech1_snapshot_data[21] == 0xf0)
 	{
-		memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+		for (i = start; i < end; i++)
+			program_write_byte_8(i, vtech1_snapshot_data[24 + i - start]);
+
 		// sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
 		// vtech1_frame_time = (int)Machine->drv->frames_per_second;
 		logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
         /* patch BASIC variables */
-		RAM[0x78a4] = start % 256;
-		RAM[0x78a5] = start / 256;
-		RAM[0x78f9] = end % 256;
-		RAM[0x78fa] = end / 256;
-		RAM[0x78fb] = end % 256;
-		RAM[0x78fc] = end / 256;
-		RAM[0x78fd] = end % 256;
-		RAM[0x78fe] = end / 256;
+		program_write_byte_8(0x78a4, start % 256);
+		program_write_byte_8(0x78a5, start / 256);
+		program_write_byte_8(0x78f9, end % 256);
+		program_write_byte_8(0x78fa, end / 256);
+		program_write_byte_8(0x78fb, end % 256);
+		program_write_byte_8(0x78fc, end / 256);
+		program_write_byte_8(0x78fd, end % 256);
+		program_write_byte_8(0x78fe, end / 256);
     }
 	else
 	{
-		memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+		for (i = start; i < end; i++)
+			program_write_byte_8(i, vtech1_snapshot_data[24 + i - start]);
         // sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
         // vtech1_frame_time = (int)Machine->drv->frames_per_second;
 		logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
         /* set USR() address */
-		RAM[0x788e] = start % 256;
-		RAM[0x788f] = start / 256;
+		program_write_byte_8(0x788e, start % 256);
+		program_write_byte_8(0x788f, start / 256);
     }
 }
 

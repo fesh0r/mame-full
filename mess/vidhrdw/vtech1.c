@@ -54,8 +54,8 @@ VIDEO_START( vtech1 )
 
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_ORIGINAL_PAL;
-	p.ram = memory_region(REGION_CPU1) + 0x7000;
-	p.ramsize = 0x10000;
+	p.ram = videoram;
+	p.ramsize = videoram_size;
 	p.charproc = vtech1_charproc;
 
 	if (video_start_m6847(&p))
