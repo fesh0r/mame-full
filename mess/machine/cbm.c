@@ -7,15 +7,14 @@
 
 UINT8 *cbmb_memory;
 
-static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapshot_size, UINT8 *memory,
-	void (*cbmloadsnap)(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length))
+static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapshot_size,
+	offs_t offset, void (*cbm_sethiaddress)(UINT16 hiaddress))
 {
 	char buffer[7];
 	UINT8 *data = NULL;
 	UINT32 bytesread;
 	UINT16 address = 0;
-
-	assert(memory);
+	int i;
 
 	if (!file_type)
 		goto error;
@@ -50,7 +49,10 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	if (bytesread != snapshot_size)
 		goto error;
 
-	cbmloadsnap(memory, data, address, address + snapshot_size, snapshot_size);
+	for (i = 0; i < snapshot_size; i++)
+		program_write_byte(address + i + offset, data[i]);
+
+	cbm_sethiaddress(address + snapshot_size);
 	free(data);
 	return INIT_PASS;
 
@@ -60,94 +62,86 @@ error:
 	return INIT_FAIL;
 }
 
-static void cbm_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+static void cbm_quick_sethiaddress(UINT16 hiaddress)
 {
-	memcpy(memory + address, data, length);
-	memory[0x31] = memory[0x2f] = memory[0x2d] = hiaddress & 0xff;
-	memory[0x32] = memory[0x30] = memory[0x2e] = hiaddress >> 8;
+	program_write_byte(0x31, hiaddress & 0xff);
+	program_write_byte(0x2f, hiaddress & 0xff);
+	program_write_byte(0x2d, hiaddress & 0xff);
+	program_write_byte(0x32, hiaddress >> 8);
+	program_write_byte(0x30, hiaddress >> 8);
+	program_write_byte(0x2e, hiaddress >> 8);
 }
 
 QUICKLOAD_LOAD( cbm_c16 )
 {
-	extern UINT8 *c16_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, c16_memory, cbm_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm_c64 )
 {
-	extern UINT8 *c64_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, c64_memory, cbm_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm_vc20 )
 {
-	extern UINT8 *vc20_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, vc20_memory, cbm_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
-static void cbm_pet_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+static void cbm_pet_quick_sethiaddress(UINT16 hiaddress)
 {
-	memcpy(memory + address, data, length);
-	memory[0x2e] = memory[0x2c] = memory[0x2a] = hiaddress & 0xff;
-	memory[0x2f] = memory[0x2d] = memory[0x2b] = hiaddress >> 8;
+	program_write_byte(0x2e, hiaddress & 0xff);
+	program_write_byte(0x2c, hiaddress & 0xff);
+	program_write_byte(0x2a, hiaddress & 0xff);
+	program_write_byte(0x2f, hiaddress >> 8);
+	program_write_byte(0x2d, hiaddress >> 8);
+	program_write_byte(0x2b, hiaddress >> 8);
 }
 
 QUICKLOAD_LOAD( cbm_pet )
 {
-	extern UINT8 *pet_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, pet_memory, cbm_pet_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_pet_quick_sethiaddress);
 }
 
-static void cbm_pet1_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+static void cbm_pet1_quick_sethiaddress(UINT16 hiaddress)
 {
-	memcpy(memory + address, data, length);
-	memory[0x80] = memory[0x7e] = memory[0x7c] = hiaddress & 0xff;
-	memory[0x81] = memory[0x7f] = memory[0x7d] = hiaddress >> 8;
+	program_write_byte(0x80, hiaddress & 0xff);
+	program_write_byte(0x7e, hiaddress & 0xff);
+	program_write_byte(0x7c, hiaddress & 0xff);
+	program_write_byte(0x81, hiaddress >> 8);
+	program_write_byte(0x7f, hiaddress >> 8);
+	program_write_byte(0x7d, hiaddress >> 8);
 }
 
 QUICKLOAD_LOAD( cbm_pet1 )
 {
-	extern UINT8 *pet_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, pet_memory, cbm_pet1_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_pet1_quick_sethiaddress);
 }
 
-static void cbmb_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+static void cbmb_quick_sethiaddress(UINT16 hiaddress)
 {
-	memcpy(memory + address + 0x10000, data, length);
-	memory[0xf0046] = hiaddress & 0xff;
-	memory[0xf0047] = hiaddress >> 8;
+	program_write_byte(0xf0046, hiaddress & 0xff);
+	program_write_byte(0xf0047, hiaddress >> 8);
 }
 
 QUICKLOAD_LOAD( cbmb )
 {
-	extern UINT8 *cbmb_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, cbmb_memory, cbmb_quick_open);
-}
-
-static void cbm500_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
-{
-	memcpy(memory + address, data, length);
-	memory[0xf0046] = hiaddress & 0xff;
-	memory[0xf0047] = hiaddress >> 8;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0x10000, cbmb_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm500 )
 {
-	extern UINT8 *cbmb_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, cbmb_memory, cbm500_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbmb_quick_sethiaddress);
 }
 
-static void cbm_c65_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+static void cbm_c65_quick_sethiaddress(UINT16 hiaddress)
 {
-	memcpy(memory + address, data, length);
-	memory[0x82] = hiaddress & 0xff;
-	memory[0x83] = hiaddress >> 8;
+	program_write_byte(0x82, hiaddress & 0xff);
+	program_write_byte(0x83, hiaddress >> 8);
 }
 
 QUICKLOAD_LOAD( cbm_c65 )
 {
-	extern UINT8 *c64_memory;
-	return general_cbm_loadsnap(fp, file_type, quickload_size, c64_memory, cbm_c65_quick_open);
+	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_c65_quick_sethiaddress);
 }
 
 /* ----------------------------------------------------------------------- */
