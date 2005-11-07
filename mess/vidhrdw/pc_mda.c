@@ -187,6 +187,28 @@ void pc_mda_europc_init(void)
 
 VIDEO_START( pc_mda )
 {
+	int buswidth;
+
+	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
+	switch(buswidth)
+	{
+		case 8:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, MRA8_BANK11 );
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc_video_videoram_w );
+			memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_r );
+			memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_w );
+			break;
+
+		default:
+			osd_die("MDA:  Bus width %d not supported\n", buswidth);
+			break;
+	}
+
+
+	videoram_size = 0x10000;
+	videoram = auto_malloc(videoram_size);
+	memory_set_bankptr(11, videoram);
+
 	pc_mda_init_video();
 	return pc_video_start(&config, pc_mda_choosevideomode, videoram_size) ? INIT_PASS : INIT_FAIL;
 }

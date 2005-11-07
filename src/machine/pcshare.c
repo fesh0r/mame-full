@@ -497,25 +497,6 @@ void init_pc_common(UINT32 flags)
 
 
 #ifdef MESS
-void pc_mda_init(void)
-{
-	/* Get this out of the way of possibly big character ROMs */
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
-	int i;
-    /* just a plain bit pattern for graphics data generation */
-    for (i = 0; i < 256; i++)
-		gfx[i] = i;
-
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, MRA8_RAM );
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc_video_videoram_w );
-	videoram = memory_region(REGION_CPU1)+0xb0000;
-	videoram_size = 0x10000;
-
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_r );
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_w );
-}
-
-
 
 /***********************************/
 /* PC interface to PC COM hardware */

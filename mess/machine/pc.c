@@ -61,7 +61,6 @@ DRIVER_INIT( bondwell )
 
 DRIVER_INIT( pcmda )
 {
-	pc_mda_init();
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
