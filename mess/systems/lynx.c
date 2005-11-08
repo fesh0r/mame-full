@@ -22,7 +22,7 @@ static int lynx_line_y;
 UINT32 lynx_palette[0x10];
 
 static ADDRESS_MAP_START( lynx_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0xfbff) AM_RAM
+	AM_RANGE(0x0000, 0xfbff) AM_RAM AM_BASE(&lynx_mem_0000)
 	AM_RANGE(0xfc00, 0xfcff) AM_RAM AM_BASE(&lynx_mem_fc00)
 	AM_RANGE(0xfd00, 0xfdff) AM_RAM AM_BASE(&lynx_mem_fd00)
 	AM_RANGE(0xfe00, 0xfff7) AM_READWRITE( MRA8_BANK3, MWA8_RAM ) AM_BASE(&lynx_mem_fe00)
@@ -59,6 +59,22 @@ static INTERRUPT_GEN( lynx_frame_int )
 		lynx_rotate=readinputport(2)&3;
 }
 
+static UINT8 lynx_read_vram(UINT16 address)
+{
+	UINT8 result = 0x00;
+	if (address <= 0xfbff)
+		result = lynx_mem_0000[address - 0x0000];
+	else if (address <= 0xfcff)
+		result = lynx_mem_fc00[address - 0xfc00];
+	else if (address <= 0xfdff)
+		result = lynx_mem_fd00[address - 0xfd00];
+	else if (address <= 0xfff7)
+		result = lynx_mem_fe00[address - 0xfe00];
+	else if (address >= 0xfffa)
+		result = lynx_mem_fffa[address - 0xfffa];
+	return result;
+}
+
 /*
 DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 
@@ -75,6 +91,7 @@ void lynx_draw_lines(int newline)
 	int x, yend;
 	UINT16 j; // clipping needed!
 	UINT8 byte;
+	UINT16 *line;
 
 	if (osd_skip_this_frame()) newline=-1;
 
@@ -106,11 +123,12 @@ void lynx_draw_lines(int newline)
 		{
 			for (;lynx_line_y<yend;lynx_line_y++)
 			{
+				line = (UINT16 *) tmpbitmap->line[lynx_line_y];
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					byte = program_read_byte_8(j);
-					plot_pixel(tmpbitmap, lynx_line_y, x + 1, lynx_palette[byte>>4]);
-					plot_pixel(tmpbitmap, lynx_line_y, x + 0, lynx_palette[byte&0xf]);
+					byte = lynx_read_vram(j);
+					line[x + 1] = lynx_palette[(byte >> 4) & 0x0f];
+					line[x + 0] = lynx_palette[(byte >> 0) & 0x0f];
 				}
 			}
 		}
@@ -118,11 +136,12 @@ void lynx_draw_lines(int newline)
 		{
 			for (;lynx_line_y<yend;lynx_line_y++)
 			{
+				line = (UINT16 *) tmpbitmap->line[102-1-lynx_line_y];
 				for (x=0;x<160;j++,x+=2)
 				{
-					byte = program_read_byte_8(j);
-					plot_pixel(tmpbitmap, 102-1-lynx_line_y, x + 0, lynx_palette[byte>>4]);
-					plot_pixel(tmpbitmap, 102-1-lynx_line_y, x + 1, lynx_palette[byte&0xf]);
+					byte = lynx_read_vram(j);
+					line[x + 0] = lynx_palette[(byte >> 4) & 0x0f];
+					line[x + 1] = lynx_palette[(byte >> 0) & 0x0f];
 				}
 			}
 		}
@@ -134,11 +153,12 @@ void lynx_draw_lines(int newline)
 		{
 			for (;lynx_line_y<yend;lynx_line_y++)
 			{
+				line = (UINT16 *) tmpbitmap->line[102-1-lynx_line_y];
 				for (x=160-2;x>=0;j++,x-=2)
 				{
-					byte = program_read_byte_8(j);
-					plot_pixel(tmpbitmap, x + 1, 102-1-lynx_line_y, lynx_palette[byte>>4]);
-					plot_pixel(tmpbitmap, x + 0, 102-1-lynx_line_y, lynx_palette[byte&0xf]);
+					byte = lynx_read_vram(j);
+					line[x + 1] = lynx_palette[(byte >> 4) & 0x0f];
+					line[x + 0] = lynx_palette[(byte >> 0) & 0x0f];
 				}
 			}
 		}
@@ -146,11 +166,12 @@ void lynx_draw_lines(int newline)
 		{
 			for (;lynx_line_y<yend;lynx_line_y++)
 			{
+				line = (UINT16 *) tmpbitmap->line[lynx_line_y];
 				for (x=0;x<160;j++,x+=2)
 				{
-					byte = program_read_byte_8(j);
-					plot_pixel(tmpbitmap, x + 0, lynx_line_y, lynx_palette[byte>>4]);
-					plot_pixel(tmpbitmap, x + 1, lynx_line_y, lynx_palette[byte&0xf]);
+					byte = lynx_read_vram(j);
+					line[x + 0] = lynx_palette[(byte >> 4) & 0x0f];
+					line[x + 1] = lynx_palette[(byte >> 0) & 0x0f];
 				}
 			}
 		}

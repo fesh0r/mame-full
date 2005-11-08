@@ -75,6 +75,7 @@ static struct
     double time;
 } blitter;
 
+UINT8 *lynx_mem_0000;
 UINT8 *lynx_mem_fc00;
 UINT8 *lynx_mem_fd00;
 UINT8 *lynx_mem_fe00;
