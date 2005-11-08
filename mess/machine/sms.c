@@ -4,10 +4,6 @@
 #include "includes/sms.h"
 #include "sound/2413intf.h"
 
-#ifndef MIN
-#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
-#endif /* MIN */
-
 UINT8 smsRomPageCount;
 UINT8 smsBiosPageCount;
 UINT8 smsFMDetect;
@@ -17,6 +13,10 @@ int systemType;
 
 UINT8 biosPort;
 
+UINT8 *BIOS;
+UINT8 *ROM;
+
+UINT8 sms_mapper[4];
 UINT8 smsNVRam[NVRAM_SIZE];
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
@@ -92,18 +92,20 @@ WRITE8_HANDLER(sms_YM2413_data_port_0_w) {
 	return (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80));
 }
 
+ READ8_HANDLER(sms_mapper_r)
+{
+	return sms_mapper[offset];
+}
+
 WRITE8_HANDLER(sms_mapper_w)
 {
 	int page;
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	UINT8 *USER_RAM;
+	UINT8 *SOURCE;
 	size_t user_ram_size;
 
 	offset &= 3;
 
-	RAM[0xDFFC + offset] = data;
-	RAM[0xFFFC + offset] = data;
-
+	sms_mapper[offset] = data;
 
 	if (biosPort & IO_BIOS_ROM)
 	{
@@ -111,9 +113,9 @@ WRITE8_HANDLER(sms_mapper_w)
 		{
 			page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
 
-			USER_RAM = memory_region(REGION_USER2);
-			if (USER_RAM == NULL)
+			if ( ! ROM )
 				return;
+			SOURCE = ROM;
 			user_ram_size = memory_region_length(REGION_USER2);
 		}
 		else
@@ -126,13 +128,10 @@ WRITE8_HANDLER(sms_mapper_w)
 	{
 		page = (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0;
 
-		USER_RAM = memory_region(REGION_USER1);
-		if (!USER_RAM)
+		if ( ! BIOS )
 			return;
 
-		if (((page + 1) * 0x4000) > memory_region_length(REGION_USER1))
-			return;
-
+		SOURCE = BIOS;
 		user_ram_size = memory_region_length(REGION_USER1);
 	}
 
@@ -145,44 +144,44 @@ WRITE8_HANDLER(sms_mapper_w)
 #ifdef LOG_PAGING
 					logerror("ram 1 paged.\n");
 #endif
-					memcpy(&RAM[0x8000], &smsNVRam[0x4000], 0x4000);
+					memory_set_bankptr( 4, smsNVRam + 0x4000 );
 				} else {
 #ifdef LOG_PAGING
 					logerror("ram 0 paged.\n");
 #endif
-					memcpy(&RAM[0x8000], &smsNVRam[0x0000], 0x4000);
+					memory_set_bankptr( 4, smsNVRam );
 				}
 			} else { /* it's rom */
 				if (biosPort & IO_BIOS_ROM) {
-					page = (smsRomPageCount > 0) ? RAM[0xFFFF] % smsRomPageCount : 0;
+					page = (smsRomPageCount > 0) ? sms_mapper[3] % smsRomPageCount : 0;
 				} else {
-					page = (smsBiosPageCount > 0) ? RAM[0xFFFF] % smsBiosPageCount : 0;
+					page = (smsBiosPageCount > 0) ? sms_mapper[3] % smsBiosPageCount : 0;
 				}
 #ifdef LOG_PAGING
 				logerror("rom 2 paged in %x.\n", page);
 #endif
-				memcpy(&RAM[0x8000], &USER_RAM[0x0000 + (page * 0x4000)], 0x4000);
+				memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
 			}
 			break;
 		case 1: /* Select 16k ROM bank for 0400-3FFF */
 #ifdef LOG_PAGING
 			logerror("rom 0 paged in %x.\n", page);
 #endif
-			memcpy(&RAM[0x0400], &USER_RAM[0x0000 + ((page * 0x4000) + 0x0400)], 0x3C00);
+			memory_set_bankptr( 2, SOURCE + ( page * 0x4000 ) + 0x0400 );
 			break;
 		case 2: /* Select 16k ROM bank for 4000-7FFF */
 #ifdef LOG_PAGING
 			logerror("rom 1 paged in %x.\n", page);
 #endif
-			memcpy(&RAM[0x4000], &USER_RAM[0x0000 + (page * 0x4000)], 0x4000);
+			memory_set_bankptr( 3, SOURCE + ( page * 0x4000 ) );
 			break;
 		case 3: /* Select 16k ROM bank for 8000-BFFF */
 			/* Is it ram or rom? */
-			if (!(RAM[0xFFFC] & 0x08)) { /* it's rom */
+			if (!(sms_mapper[0] & 0x08)) { /* it's rom */
 #ifdef LOG_PAGING
 				logerror("rom 2 paged in %x.\n", page);
 #endif
-				memcpy(&RAM[0x8000], &USER_RAM[0x0000 + (page * 0x4000)], 0x4000);
+				memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
 			}
 			break;
 	}
@@ -198,17 +197,15 @@ WRITE8_HANDLER(sms_bios_w) {
 
 WRITE8_HANDLER(sms_cartram_w) {
 	int page;
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	UINT8 *USER_RAM;
+	UINT8 *SOURCE;
 
-	if (RAM[0xFFFC] & 0x08) {
+	if (sms_mapper[0] & 0x08) {
 		logerror("write %02X to cartram at offset #%04X\n", data, offset);
-		if (RAM[0xFFFC] & 0x04) {
+		if (sms_mapper[0] & 0x04) {
 			smsNVRam[offset + 0x4000] = data;
 		} else {
 			smsNVRam[offset] = data;
 		}
-		RAM[offset + 0x8000] = data;
 	} else {
 		if (offset == 0) { /* Codemasters mapper */
 			if (biosPort & IO_BIOS_ROM) {
@@ -216,11 +213,10 @@ WRITE8_HANDLER(sms_cartram_w) {
 			} else {
 				page = (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0;
 			}
-			USER_RAM = (biosPort & IO_BIOS_ROM) ? memory_region(REGION_USER2) : memory_region(REGION_USER1);
-			if (USER_RAM == NULL) {
+			SOURCE = (biosPort & IO_BIOS_ROM) ? ROM : BIOS;
+			if ( ! SOURCE )
 				return;
-			}
-			memcpy(&RAM[0x8000], &USER_RAM[0x0000 + (page * 0x4000)], 0x4000);
+			memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
 #ifdef LOG_PAGING
 			logerror("rom 2 paged in %x codemasters.\n", page);
 #endif
@@ -299,10 +295,10 @@ NVRAM_HANDLER(sms) {
 	if (file) {
 		if (read_or_write) {
 			if (smsNVRAMSaved) {
-				mame_fwrite(file, &smsNVRam[0x0000], sizeof(UINT8) * NVRAM_SIZE);
+				mame_fwrite(file, smsNVRam, sizeof(UINT8) * NVRAM_SIZE);
 			}
 		} else {
-			mame_fread(file, &smsNVRam[0x0000], sizeof(UINT8) * NVRAM_SIZE);
+			mame_fread(file, smsNVRam, sizeof(UINT8) * NVRAM_SIZE);
 		}
 	} else {
 		/* initially zero out SRAM */
@@ -312,47 +308,43 @@ NVRAM_HANDLER(sms) {
 
 void setup_rom(void)
 {
-	UINT8 *RAM;
-	UINT8 *USER_RAM;
-	size_t memregion_length;
+	BIOS = memory_region(REGION_USER1);
+	ROM = memory_region(REGION_USER2);
+
+	smsBiosPageCount = ( BIOS ? memory_region_length(REGION_USER1) / 0x4000 : 0 );
+	smsRomPageCount = ( ROM ? memory_region_length(REGION_USER2) / 0x4000 : 0 );
 
 	/* Load up first 32K of image */
-	RAM = memory_region(REGION_CPU1);
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) );
+	memory_set_bankptr( 2, memory_region(REGION_CPU1) + 0x0400 );
+	memory_set_bankptr( 3, memory_region(REGION_CPU1) + 0x4000 );
+	memory_set_bankptr( 4, memory_region(REGION_CPU1) + 0x8000 );
+
 	if (!(biosPort & IO_BIOS_ROM))
 	{
 		if (IS_GG_UE || IS_GG_J)
 		{
-			USER_RAM = memory_region(REGION_USER2);
-			if (!USER_RAM)
+			if ( ! ROM )
 				return;
 
-			memregion_length = memory_region_length(REGION_USER2);
-			smsBiosPageCount = 0;
-			smsRomPageCount = memregion_length / 0x4000;
-
-			memcpy(&RAM[0x0000], &USER_RAM[0x0000], MIN(0x4000, memregion_length));			/* Only the first 2 banks are paged in */
-			if (memregion_length >= 0x4000)
-				memcpy(&RAM[0x4000], &USER_RAM[0x4000], MIN(0x4000, memregion_length - 0x4000));
+			memory_set_bankptr( 1, ROM );			/* first 2 bank are switched in */
+			memory_set_bankptr( 2, ROM + 0x0400 );
+			memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
 			logerror("bios general loaded.\n");
 		}
 		else if (IS_GG_MAJ_UE || IS_GG_MAJ_J)
 		{
-			USER_RAM = memory_region(REGION_USER1);
-			if (!USER_RAM)
+			if ( ! BIOS )
 				return;
 
-			smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
-
-			memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x0400);
+			memory_set_bankptr( 1, BIOS );
 			logerror("bios 0x0400 loaded.\n");
 
-			USER_RAM = memory_region(REGION_USER2);
-			if (!USER_RAM)
+			if ( ! ROM )
 				return;
 
-			smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
-			memcpy(&RAM[0x0400], &USER_RAM[0x0400], 0x3C00);			/* Only the first 2 banks are paged in */
-			memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+			memory_set_bankptr( 2, ROM + 0x0400 );
+			memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
 			logerror("bios general loaded.\n");
 		}
 		else
@@ -367,12 +359,11 @@ void setup_rom(void)
 					case CONSOLE_SMS_J_V21:
 					case CONSOLE_SMS_J_M3:
 					case CONSOLE_SMS_J_SS:
-						USER_RAM = memory_region(REGION_USER1);
-						if (!USER_RAM)
+						if ( ! BIOS )
 							return;
 
-						smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
-						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x2000);
+						memory_set_bankptr( 1, BIOS );
+						memory_set_bankptr( 2, BIOS + 0x0400 );
 						logerror("bios 0x2000 loaded.\n");
 						break;
 					case CONSOLE_SMS_U_ALEX:
@@ -385,23 +376,21 @@ void setup_rom(void)
 					case CONSOLE_SMS_E_HO_V34:
 //					case CONSOLE_SMS_U_MD_3D:
 //					case CONSOLE_SMS_E_MD_3D:
-						USER_RAM = memory_region(REGION_USER1);
-						if (!USER_RAM)
+						if ( ! BIOS )
 							return;
 
-						smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
-						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
-						memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+						memory_set_bankptr( 1, BIOS );
+						memory_set_bankptr( 2, BIOS + 0x0400 );
+						memory_set_bankptr( 3, BIOS + 0x4000 );
 						logerror("bios full loaded.\n");
 						break;
 					case CONSOLE_SMS:
-						USER_RAM = memory_region(REGION_USER2);
-						if (!USER_RAM)
+						if ( ! ROM )
 							return;
 
-						smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
-						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
-						memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+						memory_set_bankptr( 1, ROM );
+						memory_set_bankptr( 2, ROM + 0x0400 );
+						memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1 ) ? 0x4000 : 0 ) );
 						logerror("bios general loaded.\n");
 						break;
 				}
@@ -433,26 +422,21 @@ void setup_rom(void)
 				if (!(biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION) && (biosPort & IO_CARD))
 				{
 					/* Load up first 32K of image */
-					USER_RAM = memory_region(REGION_USER2);
-					if (!USER_RAM)
+					if ( ! ROM )
 						return;
 
-					memregion_length = memory_region_length(REGION_USER2);
-					smsRomPageCount = memregion_length / 0x4000;
-					memcpy(&RAM[0x0000], &USER_RAM[0x0000], MIN(0x4000, memregion_length));			/* Only the first 2 banks are paged in */
-					if (memregion_length >= 0x4000)
-						memcpy(&RAM[0x4000], &USER_RAM[0x4000], MIN(0x4000, memregion_length - 0x4000));
+					memory_set_bankptr( 1, ROM );
+					memory_set_bankptr( 2, ROM + 0x0400 );
+					memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
 					logerror("cart full loaded.\n");
 				}
 				else if (!(biosPort & IO_CARD) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION))
 				{
 					/* Clear out card rom */
-					memset(RAM, 0, sizeof(UINT8) * 0x8000);
 				}
 				else if (!(biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD))
 				{
 					/* Clear out expansion rom */
-					memset(RAM, 0, sizeof(UINT8) * 0x8000);
 				}
 				break;
 
@@ -461,27 +445,26 @@ void setup_rom(void)
 			case CONSOLE_GG_MAJ_UE:
 			case CONSOLE_GG_MAJ_J:
 				/* Load up first 32K of image */
-				USER_RAM = memory_region(REGION_USER2);
-				if (!USER_RAM)
+				if ( ! ROM )
 					return;
 
-				smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
-				memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
-				memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+				memory_set_bankptr( 1, ROM );
+				memory_set_bankptr( 2, ROM + 0x0400 );
+				memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
 				logerror("cart full loaded.\n");
 				break;
 		}
 	}
 }
 
-static int sms_verify_cart(char * magic, int size) {
+static int sms_verify_cart(UINT8 *magic, int size) {
 	int retval;
 
 	retval = IMAGE_VERIFY_FAIL;
 
 	/* Verify the file is a valid image - check $7ff0 for "TMR SEGA" */
 	if (size >= 0x8000) {
-		if (!strncmp(&magic[0x7FF0], "TMR SEGA", 8)) {
+		if (!strncmp((char*)&magic[0x7FF0], "TMR SEGA", 8)) {
 			/* Technically, it should be this, but remove for now until verified:
 			if (!strcmp(sysname, "gamegear")) {
 				if ((unsigned char)magic[0x7FFD] < 0x50)
@@ -516,11 +499,8 @@ static int sms_verify_cart(char * magic, int size) {
 	return retval;
 }
 
-DEVICE_LOAD( sms_cart )
+DEVICE_INIT( sms_cart )
 {
-	int size;
-	UINT8 *USER_RAM, *RAM;
-
 	if (!strcmp(Machine->gamedrv->name, "sms")) {
 		systemType = CONSOLE_SMS;
 	} else if (!strcmp(Machine->gamedrv->name, "smspal")) {
@@ -569,8 +549,21 @@ DEVICE_LOAD( sms_cart )
 		systemType = CONSOLE_GG_MAJ_J;
 	} else {
 		logerror("Invalid system name.\n");
-		return (INIT_FAIL);
+		return INIT_FAIL;
 	}
+
+	biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
+	if (IS_SMS || IS_SMS_PAL) {
+		biosPort &= ~(IO_CARTRIDGE);
+		biosPort |= IO_BIOS_ROM;
+	}
+
+	return INIT_PASS;
+}
+
+DEVICE_LOAD( sms_cart )
+{
+	int size;
 
 	/* Get file size */
 	size = mame_fsize(file);
@@ -582,37 +575,31 @@ DEVICE_LOAD( sms_cart )
 		size -= 512;
 	}
 
-	/* Get base of CPU1 memory region */
-	if (new_memory_region(REGION_USER2, size, ROM_REQUIRED)) {
-		logerror("Memory allocation failed reading roms!\n");
-		return (INIT_FAIL);
+	if ( ! size ) {
+		logerror("ROM image too small!\n");
+		return INIT_FAIL;
 	}
-	USER_RAM = memory_region(REGION_USER2);
+
+	/* Create a new memory region to hold the ROM. */
+	/* Make sure the region holds only complete (0x4000) rom banks */
+	if (new_memory_region(REGION_USER2, ((size&0x3FFF) ? (((size>>14)+1)<<14) : size), ROM_REQUIRED)) {
+		logerror("Memory allocation failed reading roms!\n");
+		return INIT_FAIL;
+	}
+	ROM = memory_region(REGION_USER2);
 
 	/* Load ROM banks */
-	size = mame_fread(file, &USER_RAM[0x0000], size);
+	size = mame_fread(file, ROM, size);
 
 	/* check the image */
 	if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {
-		if (sms_verify_cart((char*)&USER_RAM[0x0000], size) == IMAGE_VERIFY_FAIL) {
+		if (sms_verify_cart(ROM, size) == IMAGE_VERIFY_FAIL) {
 			logerror("Invalid Image\n");
 			return INIT_FAIL;
 		}
 	}
 
-	biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
-	if (IS_SMS || IS_SMS_PAL) {
-		biosPort &= ~(IO_CARTRIDGE);
-		biosPort |= IO_BIOS_ROM;
-	}
-
-	/* initially zero out CPU_RAM */
-	RAM = memory_region(REGION_CPU1);
-	memset(RAM, 0, sizeof(UINT8) * CPU_ADDRESSABLE_SIZE);
-
-	setup_rom();
-
-	return (INIT_PASS);
+	return INIT_PASS;
 }
 
 MACHINE_INIT(sms)
@@ -621,5 +608,9 @@ MACHINE_INIT(sms)
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
 		smsFMDetect = 0x01;
 	}
+
+	memset( memory_region(REGION_CPU1), 0xff, 0x10000 );
+
+	setup_rom();
 }
 

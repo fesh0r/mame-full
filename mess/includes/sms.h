@@ -75,6 +75,7 @@ WRITE8_HANDLER(sms_YM2413_data_port_0_w);
 WRITE8_HANDLER(sms_version_w);
  READ8_HANDLER(sms_version_r);
 WRITE8_HANDLER(sms_mapper_w);
+ READ8_HANDLER(sms_mapper_r);
 WRITE8_HANDLER(sms_bios_w);
 WRITE8_HANDLER(gg_sio_w);
  READ8_HANDLER(gg_sio_r);
@@ -84,6 +85,7 @@ WRITE8_HANDLER(gg_psg_w);
 
 void setup_rom(void);
 
+DEVICE_INIT( sms_cart );
 DEVICE_LOAD( sms_cart );
 
 MACHINE_INIT(sms);

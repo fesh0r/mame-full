@@ -44,11 +44,13 @@
 #include "devices/cartslot.h"
 
 static ADDRESS_MAP_START( sms_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3FFF) AM_ROM									/* ROM bank #1 */
-	AM_RANGE(0x4000, 0x7FFF) AM_ROM									/* ROM bank #2 */
-	AM_RANGE(0x8000, 0xBFFF) AM_READWRITE(MRA8_RAM, sms_cartram_w)	/* ROM bank #3 / On-cart RAM */
-	AM_RANGE(0xC000, 0xDFFB) AM_MIRROR(0x2000) AM_RAM				/* RAM (mirror at 0xE000) */
-	AM_RANGE(0xDFFC, 0xDFFF) AM_MIRROR(0x2000) AM_READWRITE(MRA8_RAM, sms_mapper_w)	/* Bankswitch control (mirrored at 0xDFFC???) */
+	AM_RANGE(0x0000, 0x03FF) AM_ROMBANK(1)					/* First 0x0400 part always points to first page */
+	AM_RANGE(0x0400, 0x3FFF) AM_ROMBANK(2)					/* switchable rom bank */
+	AM_RANGE(0x4000, 0x7FFF) AM_ROMBANK(3)					/* switchable rom bank */
+	AM_RANGE(0x8000, 0xBFFF) AM_READWRITE(MRA8_BANK4, sms_cartram_w)	/* ROM bank / on-cart RAM */
+	AM_RANGE(0xC000, 0xDFFB) AM_MIRROR(0x2000) AM_RAM			/* RAM (mirror at 0xE000) */
+	AM_RANGE(0xDFFC, 0xDFFF) AM_MIRROR(0x2000)
+	                         AM_READWRITE(sms_mapper_r, sms_mapper_w)	/* Bankswitch control (mirrored at 0xDFFC) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sms_io, ADDRESS_SPACE_IO, 8 )
@@ -224,13 +226,13 @@ ROM_END
 
 ROM_START(smsj21)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13))
 ROM_END
 
 ROM_START(smsm3)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13))
 ROM_END
 
@@ -238,25 +240,25 @@ ROM_END
 
 ROM_START(smsu13)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC))
 ROM_END
 
 ROM_START(smse13)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC))
 ROM_END
 
 ROM_START(smsu13h)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54))
 ROM_END
 
 ROM_START(smse13h)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54))
 ROM_END
 
@@ -316,7 +318,7 @@ ROM_END
 
 ROM_START(gamg)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1,0)
-	ROM_REGION(0x0400, REGION_USER1, 0)
+	ROM_REGION(0x4000, REGION_USER1, 0)
 	ROM_LOAD("majbios.rom", 0x0000, 0x0400, CRC(0EBEA9D4))
 ROM_END
 
@@ -329,6 +331,7 @@ static void sms_cartslot_getinfo(struct IODevice *dev)
 	dev->count = 1;
 	dev->file_extensions = "sms\0";
 	dev->must_be_loaded = 1;
+	dev->init = device_init_sms_cart;
 	dev->load = device_load_sms_cart;
 }
 
@@ -338,11 +341,8 @@ SYSTEM_CONFIG_END
 
 static void smso_cartslot_getinfo(struct IODevice *dev)
 {
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "sms\0";
-	dev->load = device_load_sms_cart;
+	sms_cartslot_getinfo(dev);
+	dev->must_be_loaded = 0;
 }
 
 SYSTEM_CONFIG_START(smso)
@@ -351,12 +351,8 @@ SYSTEM_CONFIG_END
 
 static void gamegear_cartslot_getinfo(struct IODevice *dev)
 {
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
+	sms_cartslot_getinfo(dev);
 	dev->file_extensions = "gg\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_sms_cart;
 }
 
 SYSTEM_CONFIG_START(gamegear)
@@ -365,11 +361,8 @@ SYSTEM_CONFIG_END
 
 static void gamegearo_cartslot_getinfo(struct IODevice *dev)
 {
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "gg\0";
-	dev->load = device_load_sms_cart;
+	gamegear_cartslot_getinfo(dev);
+	dev->must_be_loaded = 0;
 }
 
 SYSTEM_CONFIG_START(gamegearo)
