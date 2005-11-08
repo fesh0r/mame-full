@@ -440,6 +440,7 @@ int mess_validitychecks(void)
 	const char *name;
 	const char *s1;
 	const char *s2;
+	input_port_entry *inputports = NULL;
 	extern int device_valididtychecks(void);
 	extern const char *mess_default_text[];
 
@@ -457,7 +458,6 @@ int mess_validitychecks(void)
 	/* MESS specific driver validity checks */
 	for (i = 0; drivers[i]; i++)
 	{
-		begin_resource_tracking();
 		devices = devices_allocate(drivers[i]);
 
 		/* make sure that there are no clones that reference nonexistant drivers */
@@ -586,17 +586,21 @@ int mess_validitychecks(void)
 		ram_option_count(drivers[i]);
 
 		/* make sure that our input system likes this driver */
-		if (inputx_validitycheck(drivers[i]))
+		if (inputx_validitycheck(drivers[i], &inputports))
 			error = 1;
 
-		end_resource_tracking();
+		free(devices);
+		devices = NULL;
 	}
 
-	if (inputx_validitycheck(NULL))
+	/* call other validity checks */
+	if (inputx_validitycheck(NULL, &inputports))
 		error = 1;
 	if (device_valididtychecks())
 		error = 1;
+
 #ifdef WIN32
+	/* MESS on windows has its own validity checks */
 	{
 		extern int win_mess_validitychecks(void);
 		if (win_mess_validitychecks())

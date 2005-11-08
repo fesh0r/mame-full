@@ -460,7 +460,7 @@ done:
 
 ***************************************************************************/
 
-int inputx_validitycheck(const game_driver *gamedrv)
+int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 {
 	char buf[CODE_BUFFER_SIZE];
 	struct InputCode *codes;
@@ -477,10 +477,9 @@ int inputx_validitycheck(const game_driver *gamedrv)
 		{
 			codes = (struct InputCode *) buf;
 
-			begin_resource_tracking();
-
-			input_ports = input_port_allocate(gamedrv->construct_ipt, NULL);
-			assert(input_ports);
+			/* allocate the input ports */
+			*memory = input_port_allocate(gamedrv->construct_ipt, *memory);
+			input_ports = *memory;
 
 			build_codes(input_ports, codes, FALSE);
 
@@ -505,7 +504,6 @@ int inputx_validitycheck(const game_driver *gamedrv)
 					}
 				}
 			}
-			end_resource_tracking();
 		}
 	}
 	else

@@ -87,7 +87,7 @@ void inputx_init(void);
 void inputx_update(void);
 void inputx_handle_mess_extensions(input_port_entry *ipt);
 
-int inputx_validitycheck(const game_driver *gamedrv);
+int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory);
 
 /* these can be called from FEs */
 int inputx_can_post(void);

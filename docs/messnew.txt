@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [A400/A400PAL/A800PAL] Fixed regressions introduced in MESS 0.83. (bug #748)
   [Nate Woods]
+  
+- [ABC802] Fixed crash.  (bug #763)  [Nate Woods]
 
 - [CGENIE] Fixed regression introduced in MESS 0.96. (bug #752)  [Nate Woods]
 
