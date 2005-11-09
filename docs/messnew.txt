@@ -13,6 +13,8 @@ System Driver Changes:
   
 - [ABC802] Fixed crash.  (bug #763)  [Nate Woods]
 
+- [C16] Implemented RAM configuration support.  [Nate Woods]
+
 - [CGENIE] Fixed regression introduced in MESS 0.96. (bug #752)  [Nate Woods]
 
 - [COUPE] Fixed regression introduced in MESS 0.96. (bug #753)  [Nate Woods]
