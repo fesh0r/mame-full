@@ -49,8 +49,8 @@ static ADDRESS_MAP_START( sms_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x7FFF) AM_ROMBANK(3)					/* switchable rom bank */
 	AM_RANGE(0x8000, 0xBFFF) AM_READWRITE(MRA8_BANK4, sms_cartram_w)	/* ROM bank / on-cart RAM */
 	AM_RANGE(0xC000, 0xDFFB) AM_MIRROR(0x2000) AM_RAM			/* RAM (mirror at 0xE000) */
-	AM_RANGE(0xDFFC, 0xDFFF) AM_MIRROR(0x2000)
-	                         AM_READWRITE(sms_mapper_r, sms_mapper_w)	/* Bankswitch control (mirrored at 0xDFFC) */
+	AM_RANGE(0xDFFC, 0xDFFF) AM_RAM						/* RAM "underneath" frame registers */
+	AM_RANGE(0xFFFC, 0xFFFF) AM_READWRITE(sms_mapper_r, sms_mapper_w)	/* Bankswitch control */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sms_io, ADDRESS_SPACE_IO, 8 )
@@ -227,13 +227,13 @@ ROM_END
 ROM_START(smsj21)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13))
+	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13) SHA1(a8c1b39a2e41137835eda6a5de6d46dd9fadbaf2))
 ROM_END
 
 ROM_START(smsm3)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13))
+	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13) SHA1(a8c1b39a2e41137835eda6a5de6d46dd9fadbaf2))
 ROM_END
 
 #define rom_smsss rom_smsj21
@@ -241,73 +241,73 @@ ROM_END
 ROM_START(smsu13)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC))
+	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7))
 ROM_END
 
 ROM_START(smse13)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC))
+	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7))
 ROM_END
 
 ROM_START(smsu13h)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54))
+	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC) SHA1(083ce08bff13b3530371c6021dc740f1cfc78e0c))
 ROM_END
 
 ROM_START(smse13h)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54))
+	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC) SHA1(083ce08bff13b3530371c6021dc740f1cfc78e0c))
 ROM_END
 
 ROM_START(smsuam)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA))
+	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051))
 ROM_END
 
 ROM_START(smseam)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA))
+	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051))
 ROM_END
 
 ROM_START(smsesh)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x40000, REGION_USER1, 0)
-	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B))
+	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df))
 ROM_END
 
 ROM_START(smsbsh)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x40000, REGION_USER1, 0)
-	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B))
+	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df))
 ROM_END
 
 ROM_START(smsuhs24)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385))
+	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517))
 ROM_END
 
 ROM_START(smsehs24)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385))
+	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517))
 ROM_END
 
 ROM_START(smsuh34)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6))
+	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e))
 ROM_END
 
 ROM_START(smseh34)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6))
+	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e))
 ROM_END
 
 ROM_START(gamegear)
@@ -379,6 +379,9 @@ SYSTEM_CONFIG_END
 CONS(	1987,	sms,		0,			0,			sms,		sms,	0,		sms,		"Sega",			"Master System - (NTSC)" , 0)
 CONS(	1986,	smsu13,		sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) US/European BIOS v1.3" , 0)
 CONS(	1986,	smse13,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) US/European BIOS v1.3" , 0)
+/* Systems smsu13h and smse13h are hacked bios which can only play the maze game. */
+/* The code to check for the presence of a cartridge is never executed, so they */
+/* will never play anything but the maze game. */
 CONS(	1986,	smsu13h,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) Hacked US/European BIOS v1.3" , 0)
 CONS(	1986,	smse13h,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) Hacked US/European BIOS v1.3" , 0)
 /* next two systems are disabled because of missing bios roms */
@@ -393,7 +396,7 @@ CONS(	1988,	smsehs24,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master Syste
 CONS(	1988,	smsuh34,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) US/European BIOS v3.4 with Hang On" , 0)
 CONS(	1988,	smseh34,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) US/European BIOS v3.4 with Hang On" , 0)
 CONS(	1985,	smspal,		sms,		0,			smspal,		sms,	0,		sms,		"Sega",			"Master System - (PAL)" , 0)
-CONS(	1985,	smsj21,		sms,		0,			smsj21,		sms,	0,		sms,		"Sega",			"Master System - (PAL) Japanese SMS BIOS v2.1" , 0)
+CONS(	1985,	smsj21,		sms,		0,			smsj21,		sms,	0,		smso,		"Sega",			"Master System - (PAL) Japanese SMS BIOS v2.1" , 0)
 CONS(	1984,	smsm3,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Mark III - (PAL) Japanese SMS BIOS v2.1" , 0)
 CONS(	198?,	smsss,		sms,		0,			smsj21,		sms,	0,		smso,		"Samsung",		"Gamboy - (PAL) Japanese SMS BIOS v2.1" , 0)
 CONS(	1990,	gamegear,	0,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - European/American" , 0)

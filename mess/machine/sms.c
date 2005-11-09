@@ -8,6 +8,7 @@ UINT8 smsRomPageCount;
 UINT8 smsBiosPageCount;
 UINT8 smsFMDetect;
 UINT8 smsVersion;
+int smsPaused;
 
 int systemType;
 
@@ -16,7 +17,7 @@ UINT8 biosPort;
 UINT8 *BIOS;
 UINT8 *ROM;
 
-UINT8 sms_mapper[4];
+UINT8 *sms_mapper;
 UINT8 smsNVRam[NVRAM_SIZE];
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
@@ -67,6 +68,16 @@ WRITE8_HANDLER(sms_version_w) {
 }
 
  READ8_HANDLER(sms_input_port_0_r) {
+	if ( ! IS_GG_ANY ) {
+		if ( !(readinputport(2) & 0x80) && !smsPaused ) {
+			smsPaused = 1;
+			cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
+		} else {
+			smsPaused = 0;
+		}
+	}
+
 	if (biosPort & IO_CHIP) {
 		return (0xFF);
 	} else {
@@ -610,6 +621,8 @@ MACHINE_INIT(sms)
 	}
 
 	memset( memory_region(REGION_CPU1), 0xff, 0x10000 );
+
+	sms_mapper = memory_get_write_ptr( 0, ADDRESS_SPACE_PROGRAM, 0xDFFC );
 
 	setup_rom();
 }
