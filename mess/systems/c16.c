@@ -283,7 +283,7 @@ static ADDRESS_MAP_START( plus4_writemem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff00, 0xff1f) AM_WRITE( ted7360_port_w)
 	AM_RANGE(0xff20, 0xff3d) AM_WRITE( MWA8_RAM)
 	AM_RANGE(0xff3e, 0xff3e) AM_WRITE( c16_switch_to_rom)
-	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( plus4_switch_to_ram)
+	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( c16_switch_to_ram)
 	AM_RANGE(0xff40, 0xffff) AM_WRITE( MWA8_RAM)
 //	{0x10000, 0x3ffff, MWA8_ROM},
 ADDRESS_MAP_END
@@ -324,7 +324,7 @@ static ADDRESS_MAP_START( c364_writemem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff00, 0xff1f) AM_WRITE( ted7360_port_w)
 	AM_RANGE(0xff20, 0xff3d) AM_WRITE( MWA8_RAM)
 	AM_RANGE(0xff3e, 0xff3e) AM_WRITE( c16_switch_to_rom)
-	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( plus4_switch_to_ram)
+	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( c16_switch_to_ram)
 	AM_RANGE(0xff40, 0xffff) AM_WRITE( MWA8_RAM)
 //	{0x10000, 0x3ffff, MWA8_ROM},
 ADDRESS_MAP_END
@@ -465,10 +465,6 @@ INPUT_PORTS_START (c16)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
-	PORT_DIPNAME (3, 3, "Memory")
-	PORT_DIPSETTING (0, "16 KByte")
-	PORT_DIPSETTING (2, "32 KByte")
-	PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
 
 INPUT_PORTS_START (c16c)
@@ -486,10 +482,6 @@ INPUT_PORTS_START (c16c)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
-	PORT_DIPNAME (3, 3, "Memory")
-	PORT_DIPSETTING (0, "16 KByte")
-	PORT_DIPSETTING (2, "32 KByte")
-	PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
 
 INPUT_PORTS_START (c16v)
@@ -507,10 +499,6 @@ INPUT_PORTS_START (c16v)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
-	PORT_DIPNAME (3, 3, "Memory")
-	PORT_DIPSETTING (0, "16 KByte")
-	PORT_DIPSETTING (2, "32 KByte")
-	PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
 
 INPUT_PORTS_START (plus4)
@@ -534,7 +522,6 @@ INPUT_PORTS_START (plus4)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 INPUT_PORTS_START (plus4c)
@@ -552,7 +539,6 @@ INPUT_PORTS_START (plus4c)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 INPUT_PORTS_START (plus4v)
@@ -570,7 +556,6 @@ INPUT_PORTS_START (plus4v)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 #if 0
@@ -595,7 +580,6 @@ INPUT_PORTS_START (c364)
 	PORT_DIPSETTING( 0x40, DEF_STR(On) )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x8, IPT_UNUSED) 	   /* 364 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 	 /* numeric block
 		hardware wired to other keys?
 		@ + - =
@@ -828,6 +812,9 @@ SYSTEM_CONFIG_START(c16)
 	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 	CONFIG_DEVICE(c16_quickload_getinfo)
 	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM(32 * 1024)
+	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16c)
@@ -835,6 +822,9 @@ SYSTEM_CONFIG_START(c16c)
 	CONFIG_DEVICE(c16_quickload_getinfo)
 	CONFIG_DEVICE(vc20tape_device_getinfo)
 	CONFIG_DEVICE(c1551_device_getinfo)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM(32 * 1024)
+	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16v)
@@ -842,14 +832,41 @@ SYSTEM_CONFIG_START(c16v)
 	CONFIG_DEVICE(c16_quickload_getinfo)
 	CONFIG_DEVICE(vc20tape_device_getinfo)
 	CONFIG_DEVICE(vc1541_device_getinfo)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM(32 * 1024)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(plus)
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(plusc)
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(c1551_device_getinfo)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(plusv)
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(vc1541_device_getinfo)
+	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */
 COMP ( 1984,	c16,	0,		0,		c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)", 0)
 COMP ( 1984,	c16hun, c16,	0,		c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16 Novotrade (PAL, Hungarian Character Set)", 0)
 COMP ( 1984,	c16c,	c16,	0,		c16c,	c16c,	c16,	c16c,    "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
-COMP ( 1984,	plus4,	c16,	0,		plus4,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC)", 0)
-COMP ( 1984,	plus4c, c16,	0,		plus4c, plus4c, plus4,	c16c,    "Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
-COMP ( 1984,	c364,	c16,	0,		c364,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
+COMP ( 1984,	plus4,	c16,	0,		plus4,	plus4,	plus4,	plus,    "Commodore Business Machines Co.",      "Commodore +4 (NTSC)", 0)
+COMP ( 1984,	plus4c, c16,	0,		plus4c, plus4c, plus4,	plusc,   "Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
+COMP ( 1984,	c364,	c16,	0,		c364,	plus4,	plus4,	plusv,   "Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
 COMP ( 1984,	c16v,	c16,	0,		c16v,	c16v,	c16,	c16v,    "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
-COMP ( 1984,	plus4v, c16,	0,		plus4v, plus4v, plus4,	c16v,    "Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)
+COMP ( 1984,	plus4v, c16,	0,		plus4v, plus4v, plus4,	plusv,   "Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)

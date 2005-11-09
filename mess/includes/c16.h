@@ -127,11 +127,6 @@
 #define TYPE_PLUS4 ((input_port_9_r(0)&0xc)==4)
 #define TYPE_364 ((input_port_9_r(0)&0xc)==8)
 
-#define DIPMEMORY (input_port_9_r(0)&3)
-#define MEMORY16K (0)
-#define MEMORY32K (2)
-#define MEMORY64K (3)
-
 extern UINT8 *c16_memory;
 
 UINT8 c16_m7501_port_read(void);
@@ -164,7 +159,6 @@ extern  READ8_HANDLER(c16_iec8_port_r);
 extern WRITE8_HANDLER(c16_select_roms);
 extern WRITE8_HANDLER(c16_switch_to_rom);
 extern WRITE8_HANDLER(c16_switch_to_ram);
-extern WRITE8_HANDLER(plus4_switch_to_ram);
 
 /* ted reads */
 extern int c16_read_keyboard (int databus);
