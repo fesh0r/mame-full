@@ -18,8 +18,6 @@ extern int systemType;
 #define CONSOLE_SMS									0
 #define CONSOLE_SMS_U_V13						1
 #define CONSOLE_SMS_E_V13						2
-#define CONSOLE_SMS_U_HACK_V13			3
-#define CONSOLE_SMS_E_HACK_V13			4
 #define CONSOLE_SMS_U_ALEX					5
 #define CONSOLE_SMS_E_ALEX					6
 #define CONSOLE_SMS_E_SONIC					7
@@ -42,8 +40,6 @@ extern int systemType;
 #define IS_SMS											(systemType == CONSOLE_SMS)
 #define IS_SMS_U_V13								(systemType == CONSOLE_SMS_U_V13)
 #define IS_SMS_E_V13								(systemType == CONSOLE_SMS_E_V13)
-#define IS_SMS_U_HACK_V13						(systemType == CONSOLE_SMS_U_HACK_V13)
-#define IS_SMS_E_HACK_V13						(systemType == CONSOLE_SMS_E_HACK_V13)
 #define IS_SMS_U_ALEX								(systemType == CONSOLE_SMS_U_ALEX)
 #define IS_SMS_E_ALEX								(systemType == CONSOLE_SMS_E_ALEX)
 #define IS_SMS_E_SONIC							(systemType == CONSOLE_SMS_E_SONIC)

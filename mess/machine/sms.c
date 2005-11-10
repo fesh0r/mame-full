@@ -118,9 +118,9 @@ WRITE8_HANDLER(sms_mapper_w)
 
 	sms_mapper[offset] = data;
 
-	if (biosPort & IO_BIOS_ROM)
+	if (biosPort & IO_BIOS_ROM || IS_GG_ANY )
 	{
-		if (!(biosPort & IO_CARTRIDGE))
+		if (!(biosPort & IO_CARTRIDGE) || IS_GG_ANY )
 		{
 			page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
 
@@ -269,7 +269,6 @@ WRITE8_HANDLER(gg_sio_w) {
 
 	switch(offset & 7) {
 		case 0x00: /* Parallel Data */
-			return ggSIO[0];
 			break;
 		case 0x01: /* Data Direction/ NMI Enable */
 			break;
@@ -281,7 +280,7 @@ WRITE8_HANDLER(gg_sio_w) {
 			break;
 	}
 
-	return (0x00);
+	return ggSIO[offset];
 }
 
  READ8_HANDLER(gg_psg_r) {
@@ -365,8 +364,6 @@ void setup_rom(void)
 				switch (systemType) {
 					case CONSOLE_SMS_U_V13:
 					case CONSOLE_SMS_E_V13:
-					case CONSOLE_SMS_U_HACK_V13:
-					case CONSOLE_SMS_E_HACK_V13:
 					case CONSOLE_SMS_J_V21:
 					case CONSOLE_SMS_J_M3:
 					case CONSOLE_SMS_J_SS:
@@ -413,8 +410,6 @@ void setup_rom(void)
 		switch (systemType) {
 			case CONSOLE_SMS_U_V13:
 			case CONSOLE_SMS_E_V13:
-			case CONSOLE_SMS_U_HACK_V13:
-			case CONSOLE_SMS_E_HACK_V13:
 			case CONSOLE_SMS_J_V21:
 			case CONSOLE_SMS_J_M3:
 			case CONSOLE_SMS_J_SS:
@@ -520,10 +515,6 @@ DEVICE_INIT( sms_cart )
 		systemType = CONSOLE_SMS_U_V13;
 	} else if (!strcmp(Machine->gamedrv->name, "smse13")) {
 		systemType = CONSOLE_SMS_E_V13;
-	} else if (!strcmp(Machine->gamedrv->name, "smsu13h")) {
-		systemType = CONSOLE_SMS_U_HACK_V13;
-	} else if (!strcmp(Machine->gamedrv->name, "smse13h")) {
-		systemType = CONSOLE_SMS_E_HACK_V13;
 	} else if (!strcmp(Machine->gamedrv->name, "smsuam")) {
 		systemType = CONSOLE_SMS_U_ALEX;
 	} else if (!strcmp(Machine->gamedrv->name, "smseam")) {
@@ -623,6 +614,13 @@ MACHINE_INIT(sms)
 	memset( memory_region(REGION_CPU1), 0xff, 0x10000 );
 
 	sms_mapper = memory_get_write_ptr( 0, ADDRESS_SPACE_PROGRAM, 0xDFFC );
+
+	/* Initialize SIO stuff for GG */
+	ggSIO[0] = 0x7F;
+	ggSIO[1] = 0xFF;
+	ggSIO[2] = 0x00;
+	ggSIO[3] = 0xFF;
+	ggSIO[4] = 0x00;
 
 	setup_rom();
 }

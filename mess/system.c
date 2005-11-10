@@ -132,8 +132,6 @@ const game_driver *test_drivers[] =
 	DRIVER( smsss )		/* Sega Master System								*/
 	DRIVER( smsu13 )	/* Sega Master System								*/
 	DRIVER( smse13 )	/* Sega Master System								*/
-	DRIVER( smsu13h )	/* Sega Master System								*/
-	DRIVER( smse13h )	/* Sega Master System								*/
 	DRIVER( smsuam )	/* Sega Master System								*/
 	DRIVER( smseam )	/* Sega Master System								*/
 	DRIVER( smsesh )	/* Sega Master System								*/

@@ -250,18 +250,6 @@ ROM_START(smse13)
 	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7))
 ROM_END
 
-ROM_START(smsu13h)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC) SHA1(083ce08bff13b3530371c6021dc740f1cfc78e0c))
-ROM_END
-
-ROM_START(smse13h)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13.rom", 0x0000, 0x2000, CRC(5AD6EDAC) SHA1(083ce08bff13b3530371c6021dc740f1cfc78e0c))
-ROM_END
-
 ROM_START(smsuam)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x20000, REGION_USER1, 0)
@@ -379,12 +367,6 @@ SYSTEM_CONFIG_END
 CONS(	1987,	sms,		0,			0,			sms,		sms,	0,		sms,		"Sega",			"Master System - (NTSC)" , 0)
 CONS(	1986,	smsu13,		sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) US/European BIOS v1.3" , 0)
 CONS(	1986,	smse13,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) US/European BIOS v1.3" , 0)
-/* Systems smsu13h and smse13h are hacked bios which can only play the maze game. */
-/* The code to check for the presence of a cartridge is never executed, so they */
-/* will never play anything but the maze game. */
-CONS(	1986,	smsu13h,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) Hacked US/European BIOS v1.3" , 0)
-CONS(	1986,	smse13h,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) Hacked US/European BIOS v1.3" , 0)
-/* next two systems are disabled because of missing bios roms */
 //CONS(	1986,	smsumd3d,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Super Master System - (NTSC) US/European Missile Defense 3D BIOS" , 0)
 //CONS(	1986,	smsemd3d,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Super Master System - (PAL) US/European Missile Defense 3D BIOS" , 0)
 CONS(	1990,	smsuam,		sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System II - (NTSC) US/European BIOS with Alex Kidd in Miracle World" , 0)
