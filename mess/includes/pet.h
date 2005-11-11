@@ -194,12 +194,6 @@ extern int pet_font;
 
 #define BUSINESS_KEYBOARD (input_port_5_word_r(0,0)&0x200)
 
-#define MEMORY (input_port_5_word_r(0,0)&0x180)
-#define MEMORY_4 0
-#define MEMORY_8 0x80
-#define MEMORY_16 0x100
-#define MEMORY_32 0x180
-
 #define CBM8096_MEMORY (input_port_5_r(0)&8)
 #define M6809_SELECT (input_port_5_r(0)&4)
 #define IEEE8ON (input_port_5_r(0)&2)

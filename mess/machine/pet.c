@@ -136,44 +136,34 @@ static  READ8_HANDLER ( pet_pia1_cb1_read )
 	return cbm_ieee_srq_r();
 }
 
-static struct pia6821_interface pet_pia0={
-#if 0
-	int (*in_a_func)(int offset);
-	int (*in_b_func)(int offset);
-	int (*in_ca1_func)(int offset);
-	int (*in_cb1_func)(int offset);
-	int (*in_ca2_func)(int offset);
-	int (*in_cb2_func)(int offset);
-	void (*out_a_func)(int offset, int val);
-	void (*out_b_func)(int offset, int val);
-	void (*out_ca2_func)(int offset, int val);
-	void (*out_cb2_func)(int offset, int val);
-	void (*irq_a_func)(int state);
-	void (*irq_b_func)(int state);
-#endif
-	pet_pia0_port_a_read,
-	pet_pia0_port_b_read,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	pet_pia0_port_a_write,
-	NULL,
-	pet_pia0_ca2_out,
-	NULL,
-	NULL,
-	pet_irq
-}, pet_pia1= {
-	pet_pia1_port_a_read,
-	NULL,
-    pet_pia1_ca1_read,
-    pet_pia1_cb1_read,
-	NULL,
-	NULL,
-	NULL,
-    pet_pia1_port_b_write,
-    pet_pia1_ca2_write,
-    pet_pia1_cb2_write,
+static struct pia6821_interface pet_pia0 =
+{
+	pet_pia0_port_a_read,		/* in_a_func */
+	pet_pia0_port_b_read,		/* in_b_func */
+	NULL,						/* in_ca1_func */
+	NULL,						/* in_cb1_func */
+	NULL,						/* in_ca2_func */
+	NULL,						/* in_cb2_func */
+	pet_pia0_port_a_write,		/* out_a_func */
+	NULL,						/* out_b_func */
+	pet_pia0_ca2_out,			/* out_ca2_func */
+	NULL,						/* out_cb2_func */
+	NULL,						/* irq_a_func */
+	pet_irq						/* irq_b_func */
+};
+
+static struct pia6821_interface pet_pia1 =
+{
+	pet_pia1_port_a_read,		/* in_a_func */
+	NULL,						/* in_b_func */
+    pet_pia1_ca1_read,			/* in_ca1_func */
+    pet_pia1_cb1_read,			/* in_cb1_func */
+	NULL,						/* in_ca2_func */
+	NULL,						/* in_cb2_func */
+	NULL,						/* out_a_func */
+    pet_pia1_port_b_write,		/* out_b_func */
+    pet_pia1_ca2_write,			/* out_ca2_func */
+    pet_pia1_cb2_write,			/* out_cb2_func */
 };
 
 static WRITE8_HANDLER( pet_address_line_11 )
@@ -216,33 +206,17 @@ static WRITE8_HANDLER( pet_via_port_b_w )
 }
 
 
-static struct via6522_interface pet_via={
-#if 0
-	int (*in_a_func)(int offset);
-	int (*in_b_func)(int offset);
-	int (*in_ca1_func)(int offset);
-	int (*in_cb1_func)(int offset);
-	int (*in_ca2_func)(int offset);
-	int (*in_cb2_func)(int offset);
-	void (*out_a_func)(int offset, int val);
-	void (*out_b_func)(int offset, int val);
-	void (*out_ca2_func)(int offset, int val);
-	void (*out_cb2_func)(int offset, int val);
-	void (*irq_func)(int state);
-
-    /* kludges for the Vectrex */
-	void (*out_shift_func)(int val);
-	void (*t2_callback)(double time);
-#endif
-	NULL,
-	pet_via_port_b_r,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	pet_via_port_b_w,
-	pet_address_line_11
+static struct via6522_interface pet_via = 
+{
+	NULL,					/* in_a_func */
+	pet_via_port_b_r,		/* in_b_func */
+	NULL,					/* in_ca1_func */
+	NULL,					/* in_cb1_func */
+	NULL,					/* in_ca2_func */
+	NULL,					/* in_cb2_func */
+	NULL,					/* out_a_func */
+	pet_via_port_b_w,		/* out_b_func */
+	pet_address_line_11		/* out_ca2_func */
 };
 
 static struct {
@@ -436,11 +410,27 @@ static void pet_interrupt(int param)
 static void pet_common_driver_init (void)
 {
 	int i;
+
+	/* BIG HACK; need to phase out this retarded memory management */
+	if (!pet_memory)
+		pet_memory = mess_ram;
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, 0, MRA8_BANK10);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, 0, MWA8_BANK10);
+	memory_set_bankptr(10, pet_memory);
+
+	if (mess_ram_size < 0x8000)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, mess_ram_size, 0x7FFF, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, mess_ram_size, 0x7FFF, 0, 0, MWA8_NOP);
+	}
+
 	/* 2114 poweron ? 64 x 0xff, 64x 0, and so on */
-	for (i=0; i<0x8000; i+=0x40) {
+	for (i = 0; i < mess_ram_size; i += 0x40)
+	{
 		memset (pet_memory + i, i & 0x40 ? 0 : 0xff, 0x40);
 	}
-	memset(pet_memory+0xe800, 0xff, 0x800);
+	memset(pet_memory + 0xe800, 0xff, 0x800);
 
 	/* pet clock */
 	timer_pulse(0.01, 0, pet_interrupt);
@@ -478,9 +468,6 @@ DRIVER_INIT( cbm80 )
 {
 	cbm8096 = 1;
 	pet_memory = memory_region(REGION_CPU1);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, MRA8_BANK10);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, MWA8_BANK10);
-	memory_set_bankptr(10, pet_memory);
 
 	pet_common_driver_init ();
 	videoram = &pet_memory[0x8000];
@@ -523,29 +510,6 @@ MACHINE_INIT( pet )
 			cpunum_set_input_line(0, INPUT_LINE_HALT, 1);
 			pet_font = 0;
 		}
-	}
-
-	switch (MEMORY) {
-	case MEMORY_4:
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
-		break;
-	case MEMORY_8:
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
-		break;
-	case MEMORY_16:
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
-		break;
-	case MEMORY_32:
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_RAM);
-		break;
 	}
 
 	if (cbm8096)

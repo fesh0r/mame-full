@@ -126,7 +126,6 @@ when problems start with -log and look into error.log file
 /*#include "includes/vc1541.h" */
 
 static ADDRESS_MAP_START(pet_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
 	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
@@ -137,7 +136,6 @@ static ADDRESS_MAP_START(pet_mem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pet40_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_BASE(&pet_memory)
 	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
@@ -148,7 +146,6 @@ static ADDRESS_MAP_START( pet40_mem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pet80_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM
 	AM_RANGE(0x8000, 0x8fff) AM_RAMBANK(1)
 	AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(2)
 	AM_RANGE(0xa000, 0xafff) AM_RAMBANK(3)
@@ -933,12 +930,20 @@ SYSTEM_CONFIG_START(pet)
 	CONFIG_DEVICE(pet_cbmcartslot_getinfo)
 	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 	CONFIG_DEVICE(pet1_quickload_getinfo)
+	CONFIG_RAM(4 * 1024)
+	CONFIG_RAM(8 * 1024)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM_DEFAULT(32 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(pet2)
 	CONFIG_DEVICE(pet_cbmcartslot_getinfo)
 	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 	CONFIG_DEVICE(pet_quickload_getinfo)
+	CONFIG_RAM(4 * 1024)
+	CONFIG_RAM(8 * 1024)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM_DEFAULT(32 * 1024)
 SYSTEM_CONFIG_END
 
 static void pet4_cbmcartslot_getinfo(struct IODevice *dev)
@@ -951,6 +956,17 @@ SYSTEM_CONFIG_START(pet4)
 	CONFIG_DEVICE(pet4_cbmcartslot_getinfo)
 	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 	CONFIG_DEVICE(pet_quickload_getinfo)
+	CONFIG_RAM(4 * 1024)
+	CONFIG_RAM(8 * 1024)
+	CONFIG_RAM(16 * 1024)
+	CONFIG_RAM_DEFAULT(32 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(pet4_32)
+	CONFIG_DEVICE(pet4_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(pet_quickload_getinfo)
+	CONFIG_RAM_DEFAULT(32 * 1024)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME		COMPAT	PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */
@@ -960,11 +976,11 @@ COMP (1979,	cbm30b, 	0,		pet,	pet,		petb,	 pet,	  pet2,		"Commodore Business Mac
 COMP (1982,	cbm40,		0,		pet,	pet40,		pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 60Hz",              GAME_NO_SOUND)
 COMP (1982,	cbm40pal,	0,		pet,	pet40pal,	pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 50Hz",              GAME_NO_SOUND)
 COMP (1979,	cbm40b, 	0,		pet,	pet,		petb,	 pet,	  pet4,		"Commodore Business Machines Co.",  "Commodore 40xx THIN (business keyboard)",     GAME_NO_SOUND)
-COMP (1981,	cbm80,		0,		pet,	pet80,		cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 60Hz",                         GAME_NO_SOUND)
-COMP (1981,	cbm80pal,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 50Hz",                         GAME_NO_SOUND)
-COMP (1981,	cbm80ger,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx German (50Hz)",                GAME_NO_SOUND)
-COMP (1981,	cbm80swe,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx Swedish (50Hz)",               GAME_NO_SOUND)
-COMP (1981,	superpet,	0,		pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "Commodore SP9000/MMF9000 (50Hz)",             GAME_NO_SOUND|GAME_NOT_WORKING)
+COMP (1981,	cbm80,		0,		pet,	pet80,		cbm8096, cbm80,   pet4_32,	"Commodore Business Machines Co.",  "Commodore 80xx 60Hz",                         GAME_NO_SOUND)
+COMP (1981,	cbm80pal,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4_32,	"Commodore Business Machines Co.",  "Commodore 80xx 50Hz",                         GAME_NO_SOUND)
+COMP (1981,	cbm80ger,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4_32,	"Commodore Business Machines Co.",  "Commodore 80xx German (50Hz)",                GAME_NO_SOUND)
+COMP (1981,	cbm80swe,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4_32,	"Commodore Business Machines Co.",  "Commodore 80xx Swedish (50Hz)",               GAME_NO_SOUND)
+COMP (1981,	superpet,	0,		pet,	superpet,	superpet,superpet,pet4_32,	"Commodore Business Machines Co.",  "Commodore SP9000/MMF9000 (50Hz)",             GAME_NO_SOUND|GAME_NOT_WORKING)
 
 // please leave the following as testdriver only
 COMP (198?, 	mmf9000,	0,		pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "MMF9000 (50Hz) Swedish", 0)
