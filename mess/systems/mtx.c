@@ -14,7 +14,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "devices/cartslot.h"
-#include "cpu/z80/z80daisy.h"
+#include "devices/printer.h"
 
 unsigned char key_sense;
 int mtx_loadsize;
@@ -28,7 +28,21 @@ static unsigned char *mtx_loadbuffer = NULL;
 static unsigned char *mtx_savebuffer = NULL;
 static unsigned char *mtx_commonram = NULL;
 
+static char mtx_prt_strobe = 0;
+static char mtx_prt_data = 0;
+
+
 #define MTX_SYSTEM_CLOCK		4000000
+
+#define MTX_PRT_BUSY		1
+#define MTX_PRT_NOERROR		2
+#define MTX_PRT_EMPTY		4
+#define MTX_PRT_SELECTED	8
+
+
+static WRITE8_HANDLER ( mtx_cst_w )
+{
+}
 
 static  READ8_HANDLER ( mtx_psg_r )
 {
@@ -40,9 +54,32 @@ static WRITE8_HANDLER ( mtx_psg_w )
 	SN76496_0_w(offset,data);
 }
 
+static mess_image * mtx_printer_image (void)
+{
+	return image_from_devtype_and_index (IO_PRINTER, 0);
+}
+
+static  READ8_HANDLER ( mtx_strobe_r )
+{
+	if (mtx_prt_strobe == 0)
+		printer_output (mtx_printer_image (), mtx_prt_data);
+
+	mtx_prt_strobe = 1;
+
+	return 0;
+}
+
 static  READ8_HANDLER ( mtx_prt_r )
 {
-	return 2; /* OK */
+	mtx_prt_strobe = 0;
+
+	return MTX_PRT_NOERROR | (printer_status (mtx_printer_image (), 0)
+			? MTX_PRT_SELECTED : 0);
+}
+
+static  WRITE8_HANDLER ( mtx_prt_w )
+{
+	mtx_prt_data = data;
 }
 
 static  READ8_HANDLER ( mtx_vdp_r )
@@ -155,10 +192,10 @@ static z80ctc_interface	mtx_ctc_intf =
 	1,
 	{MTX_SYSTEM_CLOCK},
 	{0},
-        {mtx_ctc_interrupt},
+	{mtx_ctc_interrupt},
 	{0},
 	{0},
-    {0}
+	{0}
 };
 
 static WRITE8_HANDLER ( mtx_bankswitch_w )
@@ -635,6 +672,12 @@ static WRITE8_HANDLER ( mtx_trap_write )
 	}
 }
 
+static void mtx_printer_getinfo(struct IODevice *dev)
+{
+	printer_device_getinfo (dev);
+	dev->count = 1;
+}
+
 static MACHINE_INIT( mtx512 )
 {
 	unsigned char *romoffset;
@@ -709,10 +752,10 @@ ADDRESS_MAP_END
 
 ADDRESS_MAP_START( mtx_io, ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
-	AM_RANGE( 0x00, 0x00) AM_WRITE( mtx_bankswitch_w )
+	AM_RANGE( 0x00, 0x00) AM_READWRITE( mtx_strobe_r, mtx_bankswitch_w )
 	AM_RANGE( 0x01, 0x02) AM_READWRITE( mtx_vdp_r, mtx_vdp_w )
-	AM_RANGE( 0x03, 0x03) AM_READ( mtx_psg_r )
-	AM_RANGE( 0x04, 0x04) AM_READ( mtx_prt_r )
+	AM_RANGE( 0x03, 0x03) AM_READWRITE( mtx_psg_r, mtx_cst_w )
+	AM_RANGE( 0x04, 0x04) AM_READWRITE( mtx_prt_r, mtx_prt_w )
 	AM_RANGE( 0x05, 0x05) AM_READWRITE( mtx_key_lo_r, mtx_sense_w )
 	AM_RANGE( 0x06, 0x06) AM_READWRITE( mtx_key_hi_r, mtx_psg_w )
 	AM_RANGE( 0x08, 0x0b) AM_READWRITE( mtx_ctc_r, mtx_ctc_w )
@@ -876,6 +919,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(mtx512)
 	CONFIG_RAM_DEFAULT(512 * 1024)
+	CONFIG_DEVICE(mtx_printer_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
