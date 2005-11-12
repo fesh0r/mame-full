@@ -430,7 +430,6 @@ static void pet_common_driver_init (void)
 	{
 		memset (pet_memory + i, i & 0x40 ? 0 : 0xff, 0x40);
 	}
-	memset(pet_memory + 0xe800, 0xff, 0x800);
 
 	/* pet clock */
 	timer_pulse(0.01, 0, pet_interrupt);

@@ -72,19 +72,14 @@ void superpet_vh_init (void)
 VIDEO_UPDATE( pet )
 {
 	int x, y, i;
-	int full_refresh = 1;
 
-	if (full_refresh) {
-		memset(dirtybuffer, 1, videoram_size);
-	}
-	for (y=0, i=0; y<25;y++) {
-		for (x=0;x<40;x++, i++) {
-			if (dirtybuffer[i]) {
-				drawgfx(bitmap,Machine->gfx[pet_font],
-						videoram[i], 0, 0, 0, 8*x,8*y,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-				dirtybuffer[i]=0;
-			}
+	for (y=0, i=0; y<25;y++)
+	{
+		for (x=0;x<40;x++, i++)
+		{
+			drawgfx(bitmap,Machine->gfx[pet_font],
+					videoram[i], 0, 0, 0, 8*x,8*y,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -97,19 +92,14 @@ VIDEO_UPDATE( pet40 )
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);
 	int start=crtc6845_get_start(crtc6845)&0x3ff;
-	int full_refresh = 1;
 
-	if (full_refresh) {
-		memset(dirtybuffer, 1, videoram_size);
-	}
-	for (y=0, i=start; y<h;y++) {
-		for (x=0;x<w;x++, i=(i+1)&0x3ff) {
-			if (dirtybuffer[i]) {
-				drawgfx(bitmap,Machine->gfx[pet_font],
-						videoram[i], 0, 0, 0, 8*x,height*y,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-				dirtybuffer[i]=0;
-			}
+	for (y=0, i=start; y<h;y++)
+	{
+		for (x=0;x<w;x++, i=(i+1)&0x3ff)
+		{
+			drawgfx(bitmap,Machine->gfx[pet_font],
+					videoram[i], 0, 0, 0, 8*x,height*y,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -124,28 +114,22 @@ VIDEO_UPDATE( pet80 )
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);
 	int start=crtc6845_get_start(crtc6845)&0x3ff;
-	int full_refresh = 1;
 
-	rect.min_x=Machine->visible_area.min_x;
-	rect.max_x=Machine->visible_area.max_x;
-	if (full_refresh) {
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	rect.min_x = Machine->visible_area.min_x;
+	rect.max_x = Machine->visible_area.max_x;
+
 	for (y=0, rect.min_y=0, rect.max_y=height-1, i=start; y<h;
-		 y++, rect.min_y+=height, rect.max_y+=height) {
-		for (x=0; x<w; x++, i=(i+1)&0x3ff) {
-			if (dirtybuffer[2*i]) {
-				drawgfx(bitmap,Machine->gfx[pet_font],
-						videoram[2*i], 0, 0, 0, 16*x,height*y,
-						&rect,TRANSPARENCY_NONE,0);
-				dirtybuffer[2*i]=0;
-			}
-			if (dirtybuffer[2*i+1]) {
-				drawgfx(bitmap,Machine->gfx[pet_font],
-						videoram[2*i+1], 0, 0, 0, 16*x+8,height*y,
-						&rect,TRANSPARENCY_NONE,0);
-				dirtybuffer[2*i+1]=0;
-			}
+		 y++, rect.min_y+=height, rect.max_y+=height)
+	{
+		for (x=0; x<w; x++, i=(i+1)&0x3ff)
+		{
+			drawgfx(bitmap,Machine->gfx[pet_font],
+					videoram[2*i], 0, 0, 0, 16*x,height*y,
+					&rect,TRANSPARENCY_NONE,0);
+
+			drawgfx(bitmap,Machine->gfx[pet_font],
+					videoram[2*i+1], 0, 0, 0, 16*x+8,height*y,
+					&rect,TRANSPARENCY_NONE,0);
 		}
 	}
 }

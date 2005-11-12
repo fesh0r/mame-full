@@ -126,7 +126,7 @@ when problems start with -log and look into error.log file
 /*#include "includes/vc1541.h" */
 
 static ADDRESS_MAP_START(pet_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0x8000, 0x83ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size )
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
@@ -136,7 +136,7 @@ static ADDRESS_MAP_START(pet_mem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pet40_mem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size )
+	AM_RANGE(0x8000, 0x83ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size )
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
@@ -182,7 +182,7 @@ ADDRESS_MAP_END
 */
 static ADDRESS_MAP_START( superpet_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_SHARE(1) AM_BASE(&pet_memory)
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_SHARE(2) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8000, 0x87ff) AM_RAM AM_SHARE(2) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xe820, 0xe823) AM_READWRITE(pia_1_r, pia_1_w)
@@ -196,7 +196,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( superpet_m6809_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_SHARE(1)	/* same memory as m6502 */
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_SHARE(2)	/* same memory as m6502 */
+	AM_RANGE(0x8000, 0x87ff) AM_RAM AM_SHARE(2)	/* same memory as m6502 */
     AM_RANGE(0x9000, 0x9fff) AM_RAMBANK(1)	/* 64 kbyte ram turned in */
 	AM_RANGE(0xa000, 0xe7ff) AM_ROM
 	AM_RANGE(0xe810, 0xe813) AM_READWRITE(pia_0_r, pia_0_w)
@@ -553,10 +553,10 @@ static gfx_decode pet80_gfxdecodeinfo[] =
 
 static gfx_decode superpet_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0x0000, &pet80_charlayout,                     0, 1 },
-	{ REGION_GFX2, 0x1000, &pet80_charlayout,                     0, 1 },
-	{ REGION_GFX2, 0x2000, &pet80_charlayout,                     0, 1 },
-	{ REGION_GFX2, 0x3000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x0000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x1000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x2000, &pet80_charlayout,                     0, 1 },
+	{ REGION_GFX1, 0x3000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
@@ -700,7 +700,6 @@ ROM_START (superpet)
     ROM_LOAD ("901898.05", 0xf000, 0x1000, CRC(f42df0cb))
 	ROM_REGION (0x4000, REGION_GFX1, 0)
     ROM_LOAD ("901640.01", 0x0000, 0x1000, CRC(ee8229c4))
-	ROM_REGION (0x4000, REGION_GFX2, 0)
 ROM_END
 
 /* swedish m6809 roms needed */
