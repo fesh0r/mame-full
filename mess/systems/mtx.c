@@ -17,14 +17,14 @@
 #include "cpu/z80/z80daisy.h"
 
 unsigned char key_sense;
-int mtx_loadindex;
+int mtx_loadsize;
 int mtx_saveindex;
 
 unsigned char relcpmh;
 unsigned char rampage;
 unsigned char rompage;
 
-static unsigned char *mtx_tapebuffer = NULL;
+static unsigned char *mtx_loadbuffer = NULL;
 static unsigned char *mtx_savebuffer = NULL;
 static unsigned char *mtx_commonram = NULL;
 
@@ -146,7 +146,8 @@ static  READ8_HANDLER ( mtx_ctc_r )
 static WRITE8_HANDLER ( mtx_ctc_w )
 {
 	//logerror("CTC W: %02x\r\n",data);
-	z80ctc_0_w(offset,data);
+	if (offset < 3)
+		z80ctc_0_w(offset,data);
 }
 
 static z80ctc_interface	mtx_ctc_intf =
@@ -493,122 +494,144 @@ static void mtx_poke(int address, unsigned char data)
 
 }
 
+/*
+ * A filename is at most 14 characters long, always ending with a space.
+ * The save file can be at most 65536 long.
+ * Note: the empty string is saved as a single space.
+ */
+static void mtx_save_hack(int start, int length)
+{
+	int i;
+	int saved = 0;
+	mame_file *f;
+	static char filename[16] = "";
+
+//	logerror("mtx_save_hack: start=%#x  length=%#x (%d)  index=%#x (%d)\n",
+//			start, length, length, mtx_saveindex, mtx_saveindex);
+
+	if ((start > 0xc000) && (length == 20))
+	{
+		for (i = 0; i < 18; i++)
+			mtx_savebuffer[i] = mtx_peek(start + i);
+
+		mtx_saveindex = 18;
+
+		memcpy(filename, mtx_savebuffer + 1, 15);
+
+		for (i = 14; i > 0 && filename[i] == 0x20; i--)
+			;
+
+		filename[i + 1] = '\0';
+	}
+	else
+	{
+		if (mtx_saveindex + length > 65536)
+			length = 65536 - mtx_saveindex;
+
+		for (i = 0; i < length; i++)
+			mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
+
+		mtx_saveindex += length;
+	}
+
+	if (start == 0xc000)
+	{
+		logerror("saving buffer into '%s', ", filename);
+
+		if ((f = mame_fopen(Machine->gamedrv->name, filename,
+						FILETYPE_IMAGE, 1)) != 0)
+		{
+			saved = mame_fwrite(f, mtx_savebuffer, mtx_saveindex);
+			mame_fclose(f);
+		}
+
+		logerror("saved %d bytes\n", saved);
+		filename[0] = '\0';
+	}
+}
+
+/*
+ * A filename is at most 14 characters long, ending with a space.
+ * At most 65536 bytes are loaded from the file.
+ * Note: the empty string is loaded as a single space (ugly),
+ *       not the 'next' file.
+ */
+static void mtx_load_hack(int start, int length)
+{
+	int i;
+	int filesize;
+	mame_file *f;
+	static char filename[16] = "";
+
+//	logerror("mtx_load_hack: start=%#x  length=%#x (%d)  size=%#x (%d)\n",
+//			start, length, length, mtx_loadsize, mtx_loadsize);
+
+	if ((start > 0xc000) && (length == 18) && (mtx_loadsize <= 0))
+	{
+		for (i = 0; i < 15; i++)
+			filename[i] = mtx_peek(start - 0xf + i);
+
+		for (i = 14; i > 0 && filename[i] == 0x20; i--)
+			;
+
+		filename[i+1] = '\0';
+		logerror("loading '%s' into buffer, ", filename);
+		if ((f = mame_fopen(Machine->gamedrv->name, filename,
+						FILETYPE_IMAGE, 0)) != 0)
+		{
+			filesize = mame_fsize(f);
+			if (filesize > 65536)
+				filesize = 65536;
+
+			mtx_loadsize = mame_fread(f, mtx_loadbuffer, filesize);
+			mame_fclose(f);
+		}
+
+		logerror("loaded %d bytes\n", mtx_loadsize);
+	}
+
+	if (mtx_loadsize > 0)
+	{
+		if (length > mtx_loadsize)
+		{
+			logerror("file '%s' is too short\n", filename);
+			length = mtx_loadsize;
+		}
+
+		for (i = 0; i < length; i++)
+			mtx_poke(start + i, mtx_loadbuffer[i]);
+
+		memcpy(mtx_loadbuffer, mtx_loadbuffer + length,
+				mtx_loadsize - length);
+		mtx_loadsize -= length;
+	}
+}
+
+static void mtx_verify_hack(int start, int length)
+{
+	// logerror("mtx_verify_hack:  start=0x%x  length=0x%x (%d)  not implemented\n", start, length, length);
+}
+
 static WRITE8_HANDLER ( mtx_trap_write )
 {
 	int pc;
+	int start;
+	int length;
 
 	pc = activecpu_get_reg(Z80_PC);
-
-	if((offset == 0x0aae) & (pc == 0x0ab1))
+	if((offset == 0x0aae) && (pc == 0x0ab1))
 	{
-		int start;
-		int length;
-		int filesize = 0;
-
-		mame_file *f;
-		static char filename[64];
-
 		start = activecpu_get_reg(Z80_HL);
 		length = activecpu_get_reg(Z80_DE);
 
-					//logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x index 0x%04x\n", pc, start, length, mess_ram[0xfd67], mess_ram[0xfd68], mtx_loadindex);
+		// logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x index 0x%04x\n", pc, start, length, mess_ram[0xfd67], mess_ram[0xfd68], mtx_loadsize);
 
 		if(mtx_peek(0xfd68) == 0)
-		{
-			//save
-			if((start == 0xc001) && (length == 0x14))
-			{
-				//memcpy(mtx_savebuffer, mess_ram + start, 0x12);
-				int i;
-				for(i=0;i <= 0x12;i++)
-				{
-					mtx_savebuffer[i] = mtx_peek(start + i);
-				}
-
-				mtx_saveindex = 0x12;
-			}
-			else
-			{
-				//memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
-				int i;
-				for(i=0;i <= length;i++)
-				{
-					mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
-				}
-
-				mtx_saveindex+=length;
-			}
-			if(start == 0xc000)
-			{
-				int i;
-
-				for(i=0;i<=15;i++)
-				{
-					filename[i] = mtx_savebuffer[1 + i];
-				}
-
-				//    logerror("Writing Header Filename ");
-
-				for(i=14; i>0 && filename[i] == 0x20;i--);
-
-				filename[i + 1] = '\0';
-				logerror("save '%s'\n", filename);
-				if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,1)) != 0)
-				{
-					mame_fwrite(f,mtx_savebuffer,mtx_saveindex);
-					mame_fclose(f);
-				}
-			}
-		}
+			mtx_save_hack(start, length);
+		else if(mtx_peek(0xfd67) == 0)
+			mtx_load_hack(start, length);
 		else
-		{
-			if(mtx_peek(0xfd67) == 0)
-			{
-				//load
-				if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
-				{
-					int i;
-					for(i=0;i<=15;i++)
-					{
-						filename[i] = mtx_peek(0xc002 + i);
-					}
-					for(i=14; i>0 && filename[i] == 0x20;i--);
-
-					filename[i+1] = '\0';
-					logerror("load '%s'\n", filename);
-					if ((f = mame_fopen(Machine->gamedrv->name, filename,FILETYPE_IMAGE,0)) != 0)
-					{
-						filesize=mame_fsize(f);
-						mtx_loadindex = filesize;
-						// check for buffer overflow....
-						if(filesize<65536)
-						{
-							mame_fread(f,mtx_tapebuffer,filesize);
-						}
-						mame_fclose(f);
-					}
-				}
-
-				if(filesize<65536)
-				{
-					//memcpy(ramoffset, mtx_tapebuffer, length);
-					int i;
-					unsigned char v;
-					for(i=0;i <= length;i++)
-					{
-						v = mtx_tapebuffer[i];
-						mtx_poke(start + i, v);
-					}
-
-					memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
-						mtx_loadindex -= length;
-				}
-			}
-			else
-			{
-				//verify
-			}
-		}
+			mtx_verify_hack(start, length);
 	}
 }
 
@@ -621,10 +644,10 @@ static MACHINE_INIT( mtx512 )
 		return;
 	memset(mtx_commonram, 0, 16384);
 
-	mtx_tapebuffer = (unsigned char *)auto_malloc(65536);
-	if(!mtx_tapebuffer)
+	mtx_loadbuffer = (unsigned char *)auto_malloc(65536);
+	if(!mtx_loadbuffer)
 		return;
-	memset(mtx_tapebuffer, 0, 65536);
+	memset(mtx_loadbuffer, 0, 65536);
 
 	mtx_savebuffer = (unsigned char *)auto_malloc(65536);
 	if(!mtx_savebuffer)
@@ -664,7 +687,7 @@ static MACHINE_INIT( mtx512 )
 	memory_set_bankptr(8, mtx_commonram + 0x2000);
 	memory_set_bankptr(16, mtx_commonram + 0x2000);
 
-	mtx_loadindex = 0;
+	mtx_loadsize = 0;
 	mtx_saveindex = 0;
 }
 
@@ -673,45 +696,26 @@ static INTERRUPT_GEN( mtx_interrupt )
 	TMS9928A_interrupt();
 }
 
-ADDRESS_MAP_START( mtx_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_BANK4 )
-	AM_RANGE( 0x8000, 0x9fff) AM_READ( MRA8_BANK5 )
-	AM_RANGE( 0xa000, 0xbfff) AM_READ( MRA8_BANK6 )
-	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_BANK7 )
-	AM_RANGE( 0xe000, 0xffff) AM_READ( MRA8_BANK8 )
+ADDRESS_MAP_START( mtx_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READWRITE( MRA8_BANK1, mtx_trap_write )
+	AM_RANGE( 0x2000, 0x3fff) AM_READWRITE( MRA8_BANK2, MWA8_NOP )
+	AM_RANGE( 0x4000, 0x5fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK11 )
+	AM_RANGE( 0x6000, 0x7fff) AM_READWRITE( MRA8_BANK4, MWA8_BANK12 )
+	AM_RANGE( 0x8000, 0x9fff) AM_READWRITE( MRA8_BANK5, MWA8_BANK13 )
+	AM_RANGE( 0xa000, 0xbfff) AM_READWRITE( MRA8_BANK6, MWA8_BANK14 )
+	AM_RANGE( 0xc000, 0xdfff) AM_READWRITE( MRA8_BANK7, MWA8_BANK15 )
+	AM_RANGE( 0xe000, 0xffff) AM_READWRITE( MRA8_BANK8, MWA8_BANK16 )
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( mtx_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( mtx_trap_write )
-	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_NOP )
-	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_BANK11 )
-	AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK12 )
-	AM_RANGE( 0x8000, 0x9fff) AM_WRITE( MWA8_BANK13 )
-	AM_RANGE( 0xa000, 0xbfff) AM_WRITE( MWA8_BANK14 )
-	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_BANK15 )
-	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_BANK16 )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( mtx_readport , ADDRESS_SPACE_IO, 8)
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
-	AM_RANGE( 0x01, 0x02) AM_READ( mtx_vdp_r )
-	AM_RANGE( 0x03, 0x03) AM_READ( mtx_psg_r )
-	AM_RANGE( 0x04, 0x04) AM_READ( mtx_prt_r )
-	AM_RANGE( 0x05, 0x05) AM_READ( mtx_key_lo_r )
-	AM_RANGE( 0x06, 0x06) AM_READ( mtx_key_hi_r )
-	AM_RANGE( 0x08, 0x0b) AM_READ( mtx_ctc_r )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( mtx_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_START( mtx_io, ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE( 0x00, 0x00) AM_WRITE( mtx_bankswitch_w )
-	AM_RANGE( 0x01, 0x02) AM_WRITE( mtx_vdp_w )
-	AM_RANGE( 0x05, 0x05) AM_WRITE( mtx_sense_w )
-	AM_RANGE( 0x06, 0x06) AM_WRITE( mtx_psg_w )
-	AM_RANGE( 0x08, 0x0a) AM_WRITE( mtx_ctc_w )
+	AM_RANGE( 0x01, 0x02) AM_READWRITE( mtx_vdp_r, mtx_vdp_w )
+	AM_RANGE( 0x03, 0x03) AM_READ( mtx_psg_r )
+	AM_RANGE( 0x04, 0x04) AM_READ( mtx_prt_r )
+	AM_RANGE( 0x05, 0x05) AM_READWRITE( mtx_key_lo_r, mtx_sense_w )
+	AM_RANGE( 0x06, 0x06) AM_READWRITE( mtx_key_hi_r, mtx_psg_w )
+	AM_RANGE( 0x08, 0x0b) AM_READWRITE( mtx_ctc_r, mtx_ctc_w )
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( mtx512 )
@@ -844,8 +848,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( mtx512 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MTX_SYSTEM_CLOCK)
-	MDRV_CPU_PROGRAM_MAP(mtx_readmem, mtx_writemem)
-	MDRV_CPU_IO_MAP(mtx_readport, mtx_writeport)
+	MDRV_CPU_PROGRAM_MAP(mtx_mem, 0)
+	MDRV_CPU_IO_MAP(mtx_io, 0)
 	MDRV_CPU_VBLANK_INT(mtx_interrupt, 1)
 	MDRV_CPU_CONFIG(mtx_daisy_chain)
 	MDRV_FRAMES_PER_SECOND(50)
