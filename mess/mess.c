@@ -607,5 +607,14 @@ int mess_validitychecks(void)
 			error = 1;
 	}
 #endif /* WIN32 */
+
+	/* now that we are completed, re-expand the actual driver to compensate
+	 * for the tms9928a hack */
+	if (Machine && Machine->gamedrv)
+	{
+		machine_config drv;
+		expand_machine_driver(Machine->gamedrv->drv, &drv);
+	}
+
 	return error;
 }
