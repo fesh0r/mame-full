@@ -54,6 +54,8 @@ System Driver Changes:
 
 - [Z88] Fixed regression introduced in MESS 0.96. (bug #762)  [Nate Woods]
 
+- [ZX] Implemented RAM configuration support.  [Nate Woods]
+
 
 
 User Interface Changes:

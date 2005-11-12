@@ -15,29 +15,17 @@
 #define	DEBUG_ZX81_PORTS	1
 #define DEBUG_ZX81_VSYNC	1
 
-#if DEBUG_ZX81_PORTS
-	#define LOG_ZX81_IOR(_comment) logerror ("ZX81 IOR: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment)
-	#define LOG_ZX81_IOW(_comment) logerror ("ZX81 IOW: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment)
-#else
-	#define LOG_ZX81_IOR(_comment)
-	#define LOG_ZX81_IOW(_comment)
-#endif
-
-#if DEBUG_ZX81_VSYNC
-	#define LOG_ZX81_VSYNC logerror ("VSYNC starts in scanline: %d\n", cpu_getscanline())
-#else
-	#define LOG_ZX81_VSYNC
-#endif
+#define LOG_ZX81_IOR(_comment) { if (DEBUG_ZX81_PORTS) logerror("ZX81 IOR: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment); }
+#define LOG_ZX81_IOW(_comment) { if (DEBUG_ZX81_PORTS) logerror("ZX81 IOW: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment); }
+#define LOG_ZX81_VSYNC { if (DEBUG_ZX81_VSYNC) logerror("VSYNC starts in scanline: %d\n", cpu_getscanline()); }
 
 static UINT8 zx_tape_bit = 0x80;
 
 DRIVER_INIT ( zx )
 {
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
-
-	for (i = 0; i < 256; i++)
-		gfx[i] = i;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1, 0, 0x8000, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1, 0, 0x8000, MWA8_BANK1);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x4000);
 }
 
 static OPBASE_HANDLER ( zx_setopbase )
@@ -50,7 +38,7 @@ static OPBASE_HANDLER ( zx_setopbase )
 static OPBASE_HANDLER ( pc8300_setopbase )
 {
 	if (address & 0x8000)
-		return zx_ula_r(address, REGION_GFX2);
+		return zx_ula_r(address, REGION_GFX1);
 	return address;
 }
 
@@ -62,38 +50,17 @@ static void common_init_machine ( void )
 
 MACHINE_INIT ( zx80 )
 {
-	if (readinputport(0) & 0x80)
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_RAM);
-	}
-	else
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_NOP);
-	}
 	common_init_machine();
 }
 
 MACHINE_INIT ( zx81 )
 {
-	if (readinputport(0) & 0x80)
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_RAM);
-	}
-	else
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_NOP);
-	}
 	common_init_machine();
 }
 
 MACHINE_INIT ( pc8300 )
 {
-	memory_set_opbase_handler(0, pc8300_setopbase);
-	zx_tape_bit = 0x00;
+	common_init_machine();
 }
 
 static void zx_tape_pulse (int param)

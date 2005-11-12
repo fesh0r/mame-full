@@ -33,13 +33,11 @@
 
 ADDRESS_MAP_START( zx80_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_ROM
-	AM_RANGE(0x4000, 0x43ff) AM_RAM
 	AM_RANGE(0x8000, 0xffff) AM_NOP
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( zx81_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_ROM
-	AM_RANGE(0x4000, 0x43ff) AM_RAM
 	AM_RANGE(0x8000, 0xffff) AM_NOP
 ADDRESS_MAP_END
 
@@ -50,18 +48,13 @@ ADDRESS_MAP_START( pc8300_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( zx80_io_map, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) ) 
 	AM_RANGE(0x0000, 0xffff) AM_READWRITE(zx_io_r, zx_io_w)
 ADDRESS_MAP_END
 
 /* Input Ports */
 
 INPUT_PORTS_START( zx80 )
-    PORT_START_TAG("IN0")
-	PORT_DIPNAME( 0x80, 0x00, "16K RAM module" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BIT( 0x7e, 0x0f, IPT_UNUSED )
+	PORT_START_TAG("IN0")
 
 	PORT_START_TAG("IN1")	// KEY ROW 0
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("SHIFT") PORT_CODE(KEYCODE_LSHIFT) PORT_CHAR(UCHAR_SHIFT_1)
@@ -310,19 +303,6 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout zx_pixel_layout =
-{
-	8, 1,							   /* 8x1 pixels */
-	256,							   /* 256 codes */
-	1,								   /* 1 bit per pixel */
-	{0},							   /* no bitplanes */
-	/* x offsets */
-	{0, 1, 2, 3, 4, 5, 6, 7},
-	/* y offsets */
-	{0},
-	8								   /* one byte per code */
-};
-
 static gfx_layout zx_char_layout =
 {
 	8, 8,							   /* 8x8 pixels */
@@ -340,29 +320,25 @@ static gfx_layout zx_char_layout =
 
 static gfx_decode zx80_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_CPU1, 0x0e00, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
 static gfx_decode zx81_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
 	{ REGION_CPU1, 0x1e00, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
 static gfx_decode pc8300_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
-	{ REGION_GFX2, 0x0000, &zx_char_layout,  0, 2 },
+	{ REGION_GFX1, 0x0000, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
 static gfx_decode pow3000_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &zx_pixel_layout, 0, 2 },
-	{ REGION_GFX2, 0x0000, &zx_char_layout,  0, 2 },
+	{ REGION_GFX1, 0x0000, &zx_char_layout,  0, 2 },
 	{ -1 }
 };
 
@@ -505,75 +481,48 @@ MACHINE_DRIVER_END
 ROM_START(zx80)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "zx80.rom", 0x0000, 0x1000, CRC(4c7fc597) SHA1(b6769a3197c77009e0933e038c15b43cf4c98c7a) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END
 
 ROM_START(aszmic)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "aszmic.rom", 0x0000, 0x1000, CRC(6c123536) SHA1(720867cbfafafc8c7438bbc325a77eaef571e5c0) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END
 
 ROM_START(zx81)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "zx81.rom", 0x0000, 0x2000, CRC(fcbbd617) SHA1(a0ade36540561cc1691bb6f0c42ceae12484a102) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END                                                                                                                                       
 
 ROM_START(zx81a)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "zx81a.rom", 0x0000, 0x2000, CRC(4b1dd6eb) SHA1(7b143ee964e9ada89d1f9e88f0bd48d919184cfc) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END
 
 ROM_START(zx81b)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "zx81b.rom", 0x0000, 0x2000, CRC(522c37b8) SHA1(c6d8e06cb936989f6e1cc7a56d1f092da854a515) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END                                                                                                                                       
 
 ROM_START(h4th)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "h4th.rom", 0x0000, 0x2000, CRC(257d5a32) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END                                                                                                                                       
 
 ROM_START(tree4th)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "tree4th.rom", 0x0000, 0x2000, CRC(71616238) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END                                                                                                                                       
 
 ROM_START(ts1000)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "zx81a.rom", 0x0000, 0x2000, CRC(4b1dd6eb) SHA1(7b143ee964e9ada89d1f9e88f0bd48d919184cfc) )
-
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
 ROM_END
 
 ROM_START(pc8300)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD( "8300_org.rom", 0x0000, 0x2000, CRC(a350f2b1) SHA1(6a9be484556cc27a9cd9d71085d2027c6243333f) )
 
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
-
-	ROM_REGION( 0x200, REGION_GFX2, 0 )
+	ROM_REGION( 0x200, REGION_GFX1, 0 )
 	ROM_LOAD( "8300_fnt.bin",0x0000, 0x0200, CRC(6bd0408c) SHA1(34a7a5afee511dc8bba28eccf305c873d80a557a) )
 ROM_END
 
@@ -581,10 +530,7 @@ ROM_START(pow3000)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD("pow3000.rom", 0x0000, 0x2000, CRC(8a49b2c3) SHA1(9b22daf2f3a991aa6a358ef95b091654c3ca1bdf) )
 
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
-
-	ROM_REGION( 0x200, REGION_GFX2, 0 )
+	ROM_REGION( 0x200, REGION_GFX1, 0 )
 	ROM_LOAD( "pow3000.chr", 0x0000, 0x0200, CRC(1c42fe46) SHA1(5b30ba77c8f57065d106db69964c9ff2e4221760) )
 ROM_END
 
@@ -592,10 +538,7 @@ ROM_START(lambda)
 	ROM_REGION( 0x10000, REGION_CPU1,0 )
 	ROM_LOAD("lambda.rom", 0x0000, 0x2000, CRC(8a49b2c3) SHA1(9b22daf2f3a991aa6a358ef95b091654c3ca1bdf) )
 
-	ROM_REGION( 0x100, REGION_GFX1, 0 )
-	// filled in by zx_init_driver
-
-	ROM_REGION( 0x200, REGION_GFX2, 0 )
+	ROM_REGION( 0x200, REGION_GFX1, 0 )
 	ROM_LOAD( "8300_fnt.bin", 0x0000, 0x0200, CRC(6bd0408c) SHA1(34a7a5afee511dc8bba28eccf305c873d80a557a) )
 ROM_END                                                                                                                                       
 
@@ -616,6 +559,8 @@ static void zx80_cassette_getinfo(struct IODevice *dev)
 
 SYSTEM_CONFIG_START(zx80)
 	CONFIG_DEVICE(zx80_cassette_getinfo)
+	CONFIG_RAM_DEFAULT(1 * 1024)
+	CONFIG_RAM(16 * 1024)
 SYSTEM_CONFIG_END
 
 static void zx81_cassette_getinfo(struct IODevice *dev)
@@ -627,19 +572,26 @@ static void zx81_cassette_getinfo(struct IODevice *dev)
 
 SYSTEM_CONFIG_START(zx81)
 	CONFIG_DEVICE(zx81_cassette_getinfo)
+	CONFIG_RAM_DEFAULT(1 * 1024)
+	CONFIG_RAM(16 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(pc8300)
+	CONFIG_DEVICE(zx81_cassette_getinfo)
+	CONFIG_RAM_DEFAULT(16 * 1024)
 SYSTEM_CONFIG_END
 
 /* Game Drivers */
 
-//	YEAR	NAME	 PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY				FULLNAME
-COMP (	1980,	zx80,    0,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX-80" , 0)
-COMP (	1981,	aszmic,  zx80,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX.Aszmic" , 0)
-COMP (	1981,	zx81,    0,	0,	zx81,	zx81,   zx,	zx81,	"Sinclair Research",		"ZX-81" , 0)
-COMP (	198?,	zx81a,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (2nd rev)" , 0)
-COMP (	198?,	zx81b,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (3rd rev)" , 0)
-COMP(	198?,	h4th,	zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Forth by David Husband",	GAME_NOT_WORKING)
-COMP(	198?,	tree4th,zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Tree-Forth by Tree Systems",	GAME_NOT_WORKING)
-COMP (	1982,	ts1000,  zx81,	0,	ts1000,	zx81,	zx,	zx81,	"Timex Sinclair",		"Timex Sinclair 1000" , 0)
-COMP (	1984,	pc8300,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Your Computer",		"PC8300" , 0)
-COMP (	1983,	pow3000, zx81,	0,	pow3000,pow3000,zx,	zx81,	"Creon Enterprises",		"Power 3000" , 0)
-COMP (	1982,	lambda,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Lambda Electronics Ltd",	"Lambda 8300" , 0)
+//   YEAR   NAME     PARENT	COMPAT  MACHINE	INPUT	INIT	CONFIG	COMPANY				FULLNAME
+COMP(1980,	zx80,    0,     0,      zx80,   zx80,	zx,     zx80,	"Sinclair Research",		"ZX-80" , 0)
+COMP(1981,	aszmic,  zx80,	0,      zx80,	zx80,   zx,     zx80,	"Sinclair Research",		"ZX.Aszmic" , 0)
+COMP(1981,	zx81,    0,     0,      zx81,   zx81,   zx,     zx81,	"Sinclair Research",		"ZX-81" , 0)
+COMP(198?,	zx81a,   zx81,	0,	    zx81,	zx81,	zx,     zx81,	"Sinclair Research",		"ZX-81 (2nd rev)" , 0)
+COMP(198?,	zx81b,   zx81,	0,      zx81,	zx81,	zx,     zx81,	"Sinclair Research",		"ZX-81 (3rd rev)" , 0)
+COMP(198?,	h4th,    zx81,	0,      zx81,	zx81,	zx,     zx81,	"Sinclair Research",		"Sinclair ZX-81 Forth by David Husband",	GAME_NOT_WORKING)
+COMP(198?,	tree4th, zx81,	0,      zx81,	zx81,	zx,	    zx81,	"Sinclair Research",		"Sinclair ZX-81 Tree-Forth by Tree Systems",	GAME_NOT_WORKING)
+COMP(1982,	ts1000,  zx81,	0,      ts1000,	zx81,	zx,	    zx81,	"Timex Sinclair",		"Timex Sinclair 1000" , 0)
+COMP(1984,	pc8300,  zx81,	0,      pc8300,	pow3000,zx,     pc8300,	"Your Computer",		"PC8300" , 0)
+COMP(1983,	pow3000, zx81,	0,      pow3000,pow3000,zx,     pc8300,	"Creon Enterprises",		"Power 3000" , 0)
+COMP(1982,	lambda,  zx81,	0,      pc8300,	pow3000,zx,     zx81,	"Lambda Electronics Ltd",	"Lambda 8300" , 0)

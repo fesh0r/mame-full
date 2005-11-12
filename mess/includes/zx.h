@@ -1,23 +1,23 @@
 /* from machine/zx80.c */
-extern DRIVER_INIT( zx );
-extern MACHINE_INIT( zx80 );
-extern MACHINE_INIT( zx81 );
-extern MACHINE_INIT( pc8300 );
-extern MACHINE_INIT( pow3000 );
+DRIVER_INIT( zx );
+MACHINE_INIT( zx80 );
+MACHINE_INIT( zx81 );
+MACHINE_INIT( pc8300 );
+MACHINE_INIT( pow3000 );
 
-extern READ8_HANDLER ( zx_io_r );
-extern WRITE8_HANDLER ( zx_io_w );
+READ8_HANDLER ( zx_io_r );
+WRITE8_HANDLER ( zx_io_w );
 
-extern READ8_HANDLER ( pow3000_io_r );
+READ8_HANDLER ( pow3000_io_r );
 
 /* from vidhrdw/zx80.c */
-extern int zx_ula_scanline(void);
-extern VIDEO_START( zx );
-extern VIDEO_UPDATE( zx );
+int zx_ula_scanline(void);
+VIDEO_START( zx );
+VIDEO_UPDATE( zx );
 
 /* from vidhrdw/zx.c */
-extern void zx_ula_bkgnd(int color);
-extern int zx_ula_r(int offs, int region);
+void zx_ula_bkgnd(int color);
+int zx_ula_r(int offs, int region);
 
 extern mame_timer *ula_nmi;
 extern int ula_irq_active;

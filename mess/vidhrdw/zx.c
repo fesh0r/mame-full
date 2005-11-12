@@ -4,6 +4,16 @@
     video hardware
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
+	The ZX has a very unorthodox video RAM system.  To start a scanline,
+	the CPU must jump to video RAM at 0xC000, which is a mirror of the
+	RAM at 0x4000.  The video chip (ULA?) pulls a switcharoo and changes
+	the video bytes as they are fetched by the CPU.
+
+	The video chip draws the scanline until a HALT instruction (0x76) is
+	reached, which indicates no further video RAM for this scanline.  Any
+	other video byte is used to generate a tile and at the same time, 
+	appears to the CPU as a NOP (0x00) instruction.
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -122,6 +132,7 @@ int zx_ula_r(int offs, int region)
 	mame_bitmap *bitmap = Machine->scrbitmap;
 	int x, y, chr, data, ireg, rreg, cycles, offs0 = offs, halted = 0;
 	UINT8 *chrgen, *rom = memory_region(REGION_CPU1);
+	UINT16 *scanline;
 
 	if (!ula_irq_active)
 	{
@@ -135,6 +146,7 @@ int zx_ula_r(int offs, int region)
 		cycles = 4 * (64 - (rreg & 63));
 		timer_set(TIME_IN_CYCLES(cycles, 0), 0, zx_ula_irq);
 		ula_irq_active = 1;
+		scanline = (UINT16 *) bitmap->line[y];
 
 		for (x = 0; x < 256; x += 8)
 		{
@@ -145,7 +157,7 @@ int zx_ula_r(int offs, int region)
 			{
 				halted = 1;
 				rom[offs] = chr;
-			data = 0x00;
+				data = 0x00;
 			}
 			else
 			{
@@ -155,7 +167,15 @@ int zx_ula_r(int offs, int region)
 					data ^= 0xff;
 				offs++;
 			}
-			drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+
+			scanline[x + 0] = (data >> 7) & 1;
+			scanline[x + 1] = (data >> 6) & 1;
+			scanline[x + 2] = (data >> 5) & 1;
+			scanline[x + 3] = (data >> 4) & 1;
+			scanline[x + 4] = (data >> 3) & 1;
+			scanline[x + 5] = (data >> 2) & 1;
+			scanline[x + 6] = (data >> 1) & 1;
+			scanline[x + 7] = (data >> 0) & 1;
 		}
 	}
 
