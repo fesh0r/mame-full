@@ -16,6 +16,8 @@
 /** reset all registers instead                             **/
 /** of just AF.                            Wilbert Pol 2004 **/
 /**                                                         **/
+/** TODO: Check cycle counts when leaving HALT state        **/
+/**                                                         **/
 /*************************************************************/
 #include <stdio.h>
 #include <string.h>
@@ -56,6 +58,8 @@ typedef struct {
 	int enable;
 	int irq_state;
 	int (*irq_callback)(int irqline);
+	int leavingHALT;
+	int doHALTbug;
 } z80gb_16BitRegs;
 
 #ifdef LSB_FIRST
@@ -170,6 +174,8 @@ static void z80gb_reset (void *param)
 
 //FIXME, use this in gb_machine_init!     state->TimerShift=32;
 	CheckInterrupts = 0;
+	Regs.w.leavingHALT = 0;
+	Regs.w.doHALTbug = 0;
 }
 
 static void z80gb_exit(void)
@@ -181,18 +187,15 @@ INLINE void z80gb_ProcessInterrupts (void)
 
 	if (CheckInterrupts && (Regs.w.enable & IME))
 	{
-			UINT8 irq;
+		UINT8 irq;
+		CheckInterrupts = 0;
+		irq = ISWITCH & IFLAGS;
 
-			CheckInterrupts = 0;
-
-			irq = ISWITCH & IFLAGS;
-
-			/*
-			logerror("Attempting to process Z80GB Interrupt IRQ $%02X\n", irq);
-			logerror("Attempting to process Z80GB Interrupt ISWITCH $%02X\n", ISWITCH);
-			logerror("Attempting to process Z80GB Interrupt IFLAGS $%02X\n", IFLAGS);
-			*/
-
+		/*
+		logerror("Attempting to process Z80GB Interrupt IRQ $%02X\n", irq);
+		logerror("Attempting to process Z80GB Interrupt ISWITCH $%02X\n", ISWITCH);
+		logerror("Attempting to process Z80GB Interrupt IFLAGS $%02X\n", IFLAGS);
+		*/
 
 		if (irq)
 		{
@@ -201,16 +204,16 @@ INLINE void z80gb_ProcessInterrupts (void)
 			logerror("Z80GB Interrupt IRQ $%02X\n", irq);
 			*/
 
-			while( irqline < 5 )
+			for( ; irqline < 5; irqline++ )
 			{
 				if( irq & (1<<irqline) )
 				{
 					if( Regs.w.irq_callback )
-						(*Regs.w.irq_callback)(irqline);
-                    if (Regs.w.enable & HALTED)
+							(*Regs.w.irq_callback)(irqline);
+					if (Regs.w.enable & HALTED)
 					{
 						Regs.w.enable &= ~HALTED;
-						Regs.w.PC += 1;
+						Regs.w.leavingHALT++;
 					}
 					Regs.w.enable &= ~IME;
 					IFLAGS &= ~(1 << irqline);
@@ -221,7 +224,6 @@ INLINE void z80gb_ProcessInterrupts (void)
 					/*logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );*/
 					return;
 				}
-				irqline++;
 			}
 		}
 	}
@@ -242,11 +244,19 @@ static int z80gb_execute (int cycles)
 		CALL_MAME_DEBUG;
 		ICycles = 0;
 		z80gb_ProcessInterrupts ();
-		x = mem_ReadByte (Regs.w.PC++);
-		ICycles += Cycles[x];
-		switch (x)
-		{
+		if ( Regs.w.enable & HALTED ) {
+			ICycles += Cycles[0x76];
+		} else {
+			x = mem_ReadByte (Regs.w.PC++);
+			if ( Regs.w.doHALTbug ) {
+				Regs.w.PC--;
+				Regs.w.doHALTbug = 0;
+			}
+			ICycles += Cycles[x];
+			switch (x)
+			{
 #include "opc_main.h"
+			}
 		}
 		z80gb_ICount -= ICycles;
 		gb_divcount += ICycles;

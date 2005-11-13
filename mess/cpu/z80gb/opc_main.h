@@ -767,19 +767,28 @@ case 0x75: /*	   LD (HL),L */
   mem_WriteByte (Regs.w.HL, Regs.b.L);
   break;
 case 0x76: /*	   HALT */
-  {
-	UINT32 skip_cycles;
-	Regs.w.enable |= HALTED;
-    CheckInterrupts = 1;
-    Regs.w.PC--;
+  if ( Regs.w.leavingHALT ) {
+	Regs.w.leavingHALT--;
+  } else {
+	if ( Regs.w.enable & IME ) {
+		UINT32 skip_cycles;
+		CheckInterrupts = 1;
+		Regs.w.enable |= HALTED;
+		Regs.w.PC--;
     
-    /* Calculate nr of cycles which can be skipped */
-	skip_cycles = (0x100 << gb_timer_shift) - gb_timer_count;
-	if (skip_cycles > z80gb_ICount) skip_cycles = z80gb_ICount;
+		/* Calculate nr of cycles which can be skipped */
+		skip_cycles = (0x100 << gb_timer_shift) - gb_timer_count;
+		if (skip_cycles > z80gb_ICount) skip_cycles = z80gb_ICount;
     
-    /* round cycles to multiple of 4 always round upwards */
-	skip_cycles = (skip_cycles+3) & ~3;
-	if (skip_cycles > ICycles) ICycles += skip_cycles - ICycles;
+		/* round cycles to multiple of 4 always round upwards */
+		skip_cycles = (skip_cycles+3) & ~3;
+		if (skip_cycles > ICycles) ICycles += skip_cycles - ICycles;
+	} else {
+		/* check for pending interrupts to perform the HALT bug */
+		if ( ISWITCH & IFLAGS ) {
+			Regs.w.doHALTbug = 1;
+		}
+	}
   }
   break;
 case 0x77: /*	   LD (HL),A */
