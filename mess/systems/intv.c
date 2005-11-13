@@ -312,8 +312,8 @@ static ADDRESS_MAP_START( intv_mem , ADDRESS_SPACE_PROGRAM, 16)
     AM_RANGE(0x0100, 0x01ef) AM_READWRITE( intv_ram8_r, intv_ram8_w )
     AM_RANGE(0x01f0, 0x01ff) AM_READWRITE( AY8914_directread_port_0_lsb_r, AY8914_directwrite_port_0_lsb_w )
  	AM_RANGE(0x0200, 0x035f) AM_READWRITE( intv_ram16_r, intv_ram16_w )
-	AM_RANGE(0x1000, 0x1fff) AM_ROM		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_ROM 		/* GROM,     8-bits wide */
+	AM_RANGE(0x1000, 0x1fff) AM_ROM	AM_REGION(REGION_CPU1, 0x1000<<1)	/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_ROM	AM_REGION(REGION_CPU1, 0x3000<<1)	/* GROM,     8-bits wide */
 	AM_RANGE(0x3800, 0x39ff) AM_READWRITE( intv_gram_r, intv_gram_w )		/* GRAM,     8-bits wide */
 	AM_RANGE(0x4800, 0x7fff) AM_ROM		/* Cartridges? */
 ADDRESS_MAP_END
@@ -323,18 +323,18 @@ static ADDRESS_MAP_START( intvkbd_mem , ADDRESS_SPACE_PROGRAM, 16)
     AM_RANGE(0x0100, 0x01ef) AM_READWRITE( intv_ram8_r, intv_ram8_w )
     AM_RANGE(0x01f0, 0x01ff) AM_READWRITE( AY8914_directread_port_0_lsb_r, AY8914_directwrite_port_0_lsb_w )
  	AM_RANGE(0x0200, 0x035f) AM_READWRITE( intv_ram16_r, intv_ram16_w )
-	AM_RANGE(0x1000, 0x1fff) AM_ROM		/* Exec ROM, 10-bits wide */
-	AM_RANGE(0x3000, 0x37ff) AM_ROM		/* GROM,     8-bits wide */
-	AM_RANGE(0x3800, 0x39ff) AM_READWRITE( intv_gram_r, intv_gram_w )		/* GRAM,     8-bits wide */
+	AM_RANGE(0x1000, 0x1fff) AM_ROM	AM_REGION(REGION_CPU1, 0x1000<<1)	/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_ROM	AM_REGION(REGION_CPU1, 0x3000<<1)	/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_READWRITE( intv_gram_r, intv_gram_w )	/* GRAM,     8-bits wide */
 	AM_RANGE(0x4800, 0x6fff) AM_ROM		/* Cartridges? */
-	AM_RANGE(0x7000, 0x7fff) AM_ROM		/* Keyboard ROM */
-	AM_RANGE(0x8000, 0xbfff) AM_READWRITE( intvkbd_dualport16_r, intvkbd_dualport16_w )	/* Dual-port RAM */
+	AM_RANGE(0x7000, 0x7fff) AM_ROM	AM_REGION(REGION_CPU1, 0x7000<<1)	/* Keyboard ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE( MRA16_RAM, intvkbd_dualport16_w ) AM_BASE(&intvkbd_dualport_ram)	/* Dual-port RAM */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( intv2_mem , ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )  /* Required because of probing */
-	AM_RANGE( 0x0000, 0x3fff) AM_READWRITE( intvkbd_dualport8_lsb_r, intvkbd_dualport8_lsb_w ) /* Dual-port RAM */
-	AM_RANGE( 0x4000, 0x7fff) AM_READWRITE( intvkbd_dualport8_msb_r, intvkbd_dualport8_msb_w ) /* Dual-port RAM */
+	AM_RANGE( 0x0000, 0x3fff) AM_READWRITE( intvkbd_dualport8_lsb_r, intvkbd_dualport8_lsb_w )	/* Dual-port RAM */
+	AM_RANGE( 0x4000, 0x7fff) AM_READWRITE( intvkbd_dualport8_msb_r, intvkbd_dualport8_msb_w )	/* Dual-port RAM */
 	AM_RANGE( 0xb7f8, 0xb7ff) AM_RAM	/* ??? */
 	AM_RANGE( 0xb800, 0xbfff) AM_READWRITE( videoram_r, videoram_w ) /* Text Display */
 	AM_RANGE( 0xc000, 0xffff) AM_ROM
@@ -395,33 +395,32 @@ MACHINE_DRIVER_END
 
 ROM_START(intv)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)
-		ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, CRC(cbce86f7) SHA1(5a65b922b562cb1f57dab51b73151283f0e20c7a))
-		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
+	ROM_LOAD16_WORD( "exec.bin", (0x1000<<1)+0, 0x2000, CRC(cbce86f7) SHA1(5a65b922b562cb1f57dab51b73151283f0e20c7a))
+	ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
 ROM_END
 
 ROM_START(intvsrs)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)
-		ROM_LOAD16_WORD( "searsexc.bin", 0x1000<<1, 0x2000, CRC(ea552a22) SHA1(834339de056d42a35571cae7fd5b04d1344001e9))
-		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
+	ROM_LOAD16_WORD( "searsexc.bin", (0x1000<<1)+0, 0x2000, CRC(ea552a22) SHA1(834339de056d42a35571cae7fd5b04d1344001e9))
+	ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
 ROM_END
 
 ROM_START(intvkbd)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)
-		ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, CRC(cbce86f7) SHA1(5a65b922b562cb1f57dab51b73151283f0e20c7a))
-		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
-		ROM_LOAD16_WORD( "024.u60",  0x7000<<1, 0x1000, CRC(4f7998ec) SHA1(ec006d0ae9002e9d56d83a71f5f2eddd6a456a40))
-		ROM_LOAD16_BYTE( "4d72.u62", 0x7800<<1, 0x0800, CRC(aa57c594) SHA1(741860d489d90f5882ca53daa3169b6abacdf130))
-		ROM_LOAD16_BYTE( "4d71.u63", (0x7800<<1)+1, 0x0800, CRC(069b2f0b) SHA1(070850bb32f8474107cc52c5183cfaa32d640f9a))
+	ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, CRC(cbce86f7) SHA1(5a65b922b562cb1f57dab51b73151283f0e20c7a))
+	ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, CRC(683a4158) SHA1(f9608bb4ad1cfe3640d02844c7ad8e0bcd974917))
+	ROM_LOAD16_WORD( "024.u60",  0x7000<<1, 0x1000, CRC(4f7998ec) SHA1(ec006d0ae9002e9d56d83a71f5f2eddd6a456a40))
+	ROM_LOAD16_BYTE( "4d72.u62", 0x7800<<1, 0x0800, CRC(aa57c594) SHA1(741860d489d90f5882ca53daa3169b6abacdf130))
+	ROM_LOAD16_BYTE( "4d71.u63", (0x7800<<1)+1, 0x0800, CRC(069b2f0b) SHA1(070850bb32f8474107cc52c5183cfaa32d640f9a))
 
 	ROM_REGION(0x10000,REGION_CPU2,0)
-		ROM_LOAD( "0104.u20",  0xc000, 0x1000, CRC(5c6f1256) SHA1(271931fb354dfae6a1a5697ee888924a89a15ca8))
-		ROM_RELOAD( 0xe000, 0x1000 )
-		ROM_LOAD("cpu2d.u21",  0xd000, 0x1000, CRC(2c2dba33) SHA1(0db5d177fec3f8ae89abeef2e6900ad4f3460266))
-		ROM_RELOAD( 0xf000, 0x1000 )
+	ROM_LOAD( "0104.u20",  0xc000, 0x1000, CRC(5c6f1256) SHA1(271931fb354dfae6a1a5697ee888924a89a15ca8))
+	ROM_RELOAD( 0xe000, 0x1000 )
+	ROM_LOAD("cpu2d.u21",  0xd000, 0x1000, CRC(2c2dba33) SHA1(0db5d177fec3f8ae89abeef2e6900ad4f3460266))
+	ROM_RELOAD( 0xf000, 0x1000 )
 
 	ROM_REGION(0x00800,REGION_GFX1,0)
-		ROM_LOAD( "4c52.u34",  0x0000, 0x0800, CRC(cbeb2e96) SHA1(f0e17adcd278fb376c9f90833c7fbbb60193dbe3))
-
+	ROM_LOAD( "4c52.u34",  0x0000, 0x0800, CRC(cbeb2e96) SHA1(f0e17adcd278fb376c9f90833c7fbbb60193dbe3))
 ROM_END
 
 static void intv_cartslot_getinfo(struct IODevice *dev)

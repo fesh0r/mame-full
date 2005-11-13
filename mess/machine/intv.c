@@ -8,48 +8,30 @@ UINT8 intv_gramdirty;
 UINT8 intv_gram[512];
 UINT8 intv_gramdirtybytes[512];
 
-static unsigned int intvkbd_dualport_ram[0x4000];
-
-READ16_HANDLER ( intvkbd_dualport16_r )
-{
-	//if (offset == 0x6c)
-		//logerror("---read() = %04x\n",intvkbd_dualport_ram[offset]);
-	return intvkbd_dualport_ram[offset];
-}
+UINT16 *intvkbd_dualport_ram;
 
 WRITE16_HANDLER ( intvkbd_dualport16_w )
 {
 	unsigned char *RAM;
 
-	//if (offset == 0x6c)
-		//logerror("---write() = %04x\n",data);
-	intvkbd_dualport_ram[offset] = data;
+	COMBINE_DATA(&intvkbd_dualport_ram[offset]);
 
 	/* copy the LSB over to the 6502 OP RAM, in case they are opcodes */
 	RAM	 = memory_region(REGION_CPU2);
-	RAM[offset] = data&0xff;
+	RAM[offset] = (UINT8) (data >> 0);
 }
 
- READ8_HANDLER ( intvkbd_dualport8_lsb_r )
+READ8_HANDLER ( intvkbd_dualport8_lsb_r )
 {
-	//if (offset == 0x6c)
-		//logerror("---lsb_r() = %02x\n",intvkbd_dualport_ram[offset]&0xff);
-	unsigned char *RAM;
-
-	RAM	 = memory_region(REGION_CPU2);
-	return RAM[offset]&0xff;
-	//return intvkbd_dualport_ram[offset]&0xff;
+	return (UINT8) (intvkbd_dualport_ram[offset] >> 0);
 }
 
 WRITE8_HANDLER ( intvkbd_dualport8_lsb_w )
 {
-	UINT16 mask;
 	unsigned char *RAM;
 
-	//if (offset == 0x6c)
-		//logerror("---lsb_w() = %02x\n",data);
-	mask = intvkbd_dualport_ram[offset] & 0xff00;
-	intvkbd_dualport_ram[offset] = mask | data;
+	intvkbd_dualport_ram[offset] &= ~0x00FF;
+	intvkbd_dualport_ram[offset] |= ((UINT16) data) << 0;
 
 	/* copy over to the 6502 OP RAM, in case they are opcodes */
 	RAM	 = memory_region(REGION_CPU2);
@@ -62,7 +44,7 @@ static int sr1_int_pending;
 
 int intvkbd_text_blanked;
 
- READ8_HANDLER ( intvkbd_dualport8_msb_r )
+READ8_HANDLER ( intvkbd_dualport8_msb_r )
 {
 	unsigned char rv;
 
