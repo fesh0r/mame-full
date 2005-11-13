@@ -424,28 +424,36 @@ static int c65_fdc_r(int offset)
 */
 static struct {
 	UINT8 reg;
-} expansion_ram= {0};
-static  READ8_HANDLER(c65_ram_expansion_r)
+} expansion_ram = {0};
+
+static READ8_HANDLER(c65_ram_expansion_r)
 {
-	int data=0xff;
-	if (C65_MAIN_MEMORY==C65_4096KB)
-		data=expansion_ram.reg;
-	DBG_LOG (1, "expansion read", ("%.5x %.2x %.2x\n", activecpu_get_pc(),offset,data));
+	UINT8 data = 0xff;
+	if (mess_ram_size > (128 * 1024))
+		data = expansion_ram.reg;
 	return data;
 }
 
 static WRITE8_HANDLER(c65_ram_expansion_w)
 {
-	DBG_LOG (1, "expansion write", ("%.5x %.2x %.2x\n", activecpu_get_pc(), offset, data));
-	expansion_ram.reg=data;
+	offs_t expansion_ram_begin;
+	offs_t expansion_ram_end;
 
-#if 0
-	if ( (data==0)&&(C65_MAIN_MEMORY==C65_512KB) ) {
-		memory_set_bankhandler_w (16, 0, MWA8_BANK16);
-	} else {
-		memory_set_bankhandler_w (16, 0, MWA8_NOP);
+	if (mess_ram_size > (128 * 1024))
+	{
+		expansion_ram.reg = data;
+
+		expansion_ram_begin = 0x80000;
+		expansion_ram_end = 0x80000 + (mess_ram_size - 128*1024) - 1;
+
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, expansion_ram_begin, expansion_ram_end,
+			0, 0, (data == 0x00) ? MRA8_BANK16 : MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, expansion_ram_begin, expansion_ram_end,
+			0, 0, (data == 0x00) ? MWA8_BANK16 : MWA8_NOP);
+
+		if (data == 0x00)
+			memory_set_bankptr(16, mess_ram + 128*1024);
 	}
-#endif
 }
 
 static WRITE8_HANDLER ( c65_write_io )
@@ -798,7 +806,7 @@ void c65pal_driver_init (void)
 MACHINE_INIT( c65 )
 {
 	/* clear upper memory */
-	memset(memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, 0x80000), 0xff, 0x80000);
+	memset(mess_ram + 128*1024, 0xff, mess_ram_size -  128*1024);
 
 	sndti_reset(SOUND_SID8580, 0);
 	sndti_reset(SOUND_SID8580, 1);

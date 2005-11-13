@@ -5,10 +5,6 @@
 
 #include "c64.h"
 
-#define C65_MAIN_MEMORY (input_port_8_word_r(0,0)&0x300)
-#define C65_512KB (0x100)
-#define C65_4096KB (0x200)
-
 #define C65_KEY_TAB (input_port_10_word_r(0,0)&0x8000)
 #define C65_KEY_CTRL (input_port_10_word_r(0,0)&1)
 
