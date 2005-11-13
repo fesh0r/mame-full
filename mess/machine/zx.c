@@ -42,25 +42,25 @@ static OPBASE_HANDLER ( pc8300_setopbase )
 	return address;
 }
 
-static void common_init_machine ( void )
+static void common_init_machine(opbase_handler setopbase)
 {
-	memory_set_opbase_handler(0, zx_setopbase);
+	memory_set_opbase_handler(0, setopbase);
 	zx_tape_bit = 0x80;
 }
 
 MACHINE_INIT ( zx80 )
 {
-	common_init_machine();
+	common_init_machine(zx_setopbase);
 }
 
 MACHINE_INIT ( zx81 )
 {
-	common_init_machine();
+	common_init_machine(zx_setopbase);
 }
 
 MACHINE_INIT ( pc8300 )
 {
-	common_init_machine();
+	common_init_machine(pc8300_setopbase);
 }
 
 static void zx_tape_pulse (int param)
