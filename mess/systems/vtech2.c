@@ -577,7 +577,7 @@ SYSTEM_CONFIG_START(laser)
 	CONFIG_DEVICE(laser_floppy_getinfo)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	 NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
+/*	  YEAR	 NAME      PARENT    COMPAT MACHINE   INPUT	    INIT      CONFIG    COMPANY	             FULLNAME */
 COMP( 1984?, laser350, 0,		 0,		laser350, laser350, laser,    laser,	"Video Technology",  "Laser 350" , 0)
 COMP( 1984?, laser500, laser350, 0,		laser500, laser500, laser,    laser,	"Video Technology",  "Laser 500" , 0)
 COMP( 1984?, laser700, laser350, 0,		laser700, laser500, laser,    laser,	"Video Technology",  "Laser 700" , 0)
