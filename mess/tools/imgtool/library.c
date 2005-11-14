@@ -54,7 +54,7 @@ const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
 
 	for (m = library->first; m; m = m->next)
 	{
-		if (!stricmp(m->name, module))
+		if (!mame_stricmp(m->name, module))
 		{
 			previous = m->previous ? &m->previous->next : &library->first;
 			next = m->next ? &m->next->previous : &library->last;
@@ -80,7 +80,7 @@ static int module_compare(const struct ImageModule *m1,
 			rc = strcmp(m1->name, m2->name);
 			break;
 		case ITLS_DESCRIPTION:
-			rc = stricmp(m1->name, m2->name);
+			rc = mame_stricmp(m1->name, m2->name);
 			break;
 	}
 	return rc;

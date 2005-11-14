@@ -2600,7 +2600,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 				{
 					for (drv = drivers[nGameIndex]; drv; drv = drv->clone_of)
 					{
-						if (!stricmp(drv->name, szFileName))
+						if (!mame_stricmp(drv->name, szFileName))
 						{
 							if (pfnGetAuditResults(nGameIndex) != UNKNOWN)
 							{
@@ -5160,7 +5160,7 @@ static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_
 	switch (sort_subitem)
 	{
 	case COLUMN_GAMES:
-		value = stricmp(ModifyThe(drivers[index1]->description),
+		value = mame_stricmp(ModifyThe(drivers[index1]->description),
 						ModifyThe(drivers[index2]->description));
 		break;
 
@@ -5235,14 +5235,14 @@ static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_
 		break;
 
 	case COLUMN_DIRECTORY:
-		value = stricmp(drivers[index1]->name, drivers[index2]->name);
+		value = mame_stricmp(drivers[index1]->name, drivers[index2]->name);
 		break;
 
    	case COLUMN_SRCDRIVERS:
-		if (stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12) == 0)
+		if (mame_stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12) == 0)
 			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
-		value = stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12);
+		value = mame_stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12);
 		break;
 	case COLUMN_PLAYTIME:
 	   value = GetPlayTime(index1) - GetPlayTime(index2);
@@ -5280,17 +5280,17 @@ static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_
 	   break;
 
 	case COLUMN_MANUFACTURER:
-		if (stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer) == 0)
+		if (mame_stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer) == 0)
 			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
-		value = stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer);
+		value = mame_stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer);
 		break;
 
 	case COLUMN_YEAR:
-		if (stricmp(drivers[index1]->year, drivers[index2]->year) == 0)
+		if (mame_stricmp(drivers[index1]->year, drivers[index2]->year) == 0)
 			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
-		value = stricmp(drivers[index1]->year, drivers[index2]->year);
+		value = mame_stricmp(drivers[index1]->year, drivers[index2]->year);
 		break;
 
 	case COLUMN_CLONE:
@@ -5310,7 +5310,7 @@ static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_
 		else if (name1 == NULL)
 			value = 1;
 		else
-			value = stricmp(name1, name2);
+			value = mame_stricmp(name1, name2);
 		break;
 
 	default :

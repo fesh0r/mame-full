@@ -276,11 +276,11 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 ifeq ($(MAMEOS),windows)
 
 # primary target
-$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE)
+$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE) $(OSDBGOBJS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	@dllwrap --image-base=0x10080000 --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) $(RESFILE) $(MAPFLAGS)
+	@dllwrap --image-base=0x10080000 --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(OSDBGOBJS) $(LIBS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE) $(MAPFLAGS)
 
 # gui target
 $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
@@ -309,25 +309,25 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-xml2info$(EXE): $(OBJ)/xml2info.o $(OBJ)/libexpat.a
+xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT) $(OSDBGOBJS)
 	@echo Linking $@...
-	$(CC) -O1 -o xml2info$(EXE) $^ -Xlinker $(OBJ)/libexpat.a
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-dat2html$(EXE): $(DAT2HTML_OBJS)
+dat2html$(EXE): $(DAT2HTML_OBJS) $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 
-messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o
+messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 
-imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS)
+imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
 wimgtool$(EXE): \
 		$(WIMGTOOL_OBJS)						\
@@ -424,9 +424,9 @@ endif
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 
 # generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
+$(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 

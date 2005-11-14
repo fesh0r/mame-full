@@ -185,7 +185,7 @@ static int svi_cas_image_readfile(imgtool_image *img, const char *fname, imgtool
 	UINT32	temp32;
 	int wavlen, offset;
 
-	if (stricmp (fname, image->file_name) )
+	if (mame_stricmp (fname, image->file_name) )
 		return IMGTOOLERR_MODULENOTFOUND;
 
 	wavdata = image->wavdata;

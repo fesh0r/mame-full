@@ -188,7 +188,7 @@ int artwork_get_inputscreen_customizations(png_info *png, int cust_type,
 						continue;
 					*p = '\0';
 					if (section)
-						enabled = !stricmp(current_section, section);
+						enabled = !mame_stricmp(current_section, section);
 					continue;
 				}
 

@@ -1,4 +1,4 @@
-0.101.1
+0.102
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -49,6 +49,10 @@ System Driver Changes:
 
 - [PET] Implemented RAM configuration support.  [Nate Woods]
 
+- [SGI] Improved emulation of the system ASICs, improved Newport video
+  emulation, improved WD33c93 SCSI emulation, preliminary sound.  All three
+  systems in ip22.c now start up OK.  [R. Belmont, Ryan Holtz]
+
 - [SMS] Various fixes.  (bugs #765, #766)  [Wilbert Pol]
 
 - [SMS] Removed hacked drivers smsu13h and smse13h. [Wilbert Pol]
@@ -76,7 +80,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.101u5.  This incorporates all features of the
+- The core is based on MAME 0.102.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Merged COMPX/CONSX into COMP/CONS as per the new convention in MAME.  [Nate

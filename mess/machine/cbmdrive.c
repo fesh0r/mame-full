@@ -107,7 +107,7 @@ static int d64_find (CBM_Drive * drive, unsigned char *name)
 		{
 			if (drive->image[pos + i] & 0x80)
 			{
-				if (stricmp ((char *) name, (char *) "*") == 0)
+				if (mame_stricmp ((char *) name, (char *) "*") == 0)
 					return pos + i;
 				if (cbm_compareNames (name, drive->image + pos + i + 3))
 					return pos + i;
@@ -315,7 +315,7 @@ static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
 
 	/* name eventuell mit 0xa0 auffuellen */
 
-	if (stricmp ((char *) name, (char *) "$") == 0)
+	if (mame_stricmp ((char *) name, (char *) "$") == 0)
 	{
 		d64_read_directory (c1551);
 	}

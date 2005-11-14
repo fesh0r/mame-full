@@ -15,9 +15,9 @@
 #define STRCONV_H
 
 #include <windows.h>
-#include <malloc.h>
 
 #ifdef __GNUC__
+#include <malloc.h>
 #if (__GNUC__ < 3)
 #define UNEXPECTED_(exp)	(exp)
 #else

@@ -922,9 +922,9 @@ static DEVICE_LOAD(vc20_tape)
 	if (!cp)
 		return INIT_FAIL;
 
-	if (stricmp (cp, "wav") == 0)
+	if (mame_stricmp (cp, "wav") == 0)
 		vc20_wav_open(image, file);
-	else if (stricmp (cp, "prg") == 0)
+	else if (mame_stricmp (cp, "prg") == 0)
 		vc20_prg_open(image, file);
 	else
 		return INIT_FAIL;

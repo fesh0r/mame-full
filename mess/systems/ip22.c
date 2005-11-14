@@ -28,10 +28,12 @@
 *      linux-2.6.6/include/asm-mips/sgi/mc.h
 *      linux-2.6.6/include/asm-mips/sgi/hpc3.h
 *    NetBSD: http://www.netbsd.org/
+*    gxemul: http://gavare.se/gxemul/
 * 
-* Gentoo LiveCD r4 boot instructions:
-*     mess -cdrom gentoor4.chd ip225015
-*     at the menu, choose "install system software" (missing some MIPS opcodes)
+* Gentoo LiveCD r5 boot instructions:
+*     mess -cdrom gentoor5.chd ip225015
+*     enter the command interpreter and type "sashARCS".  press enter and 
+*     it'll autoboot.
 *
 * IRIX boot instructions:
 *     mess -cdrom irix656inst1.chd ip225015
@@ -46,14 +48,17 @@
 #include "includes/pc_mouse.h"
 #include "includes/at.h"
 #include "machine/8042kbdc.h"
+#include "machine/pit8253.h"
 #include "includes/ps2.h"
 #include "machine/pcshare.h"
+#include "includes/pclpt.h"
 #include "vidhrdw/newport.h"
 #include "machine/wd33c93.h"
 #include "devices/harddriv.h"
 #include "devices/chd_cd.h"
+#include "sound/dmadac.h"
 
-#define VERBOSE_LEVEL ( -1 )
+#define VERBOSE_LEVEL ( 0 )
 
 static UINT32 *ip22_mainram;
 
@@ -66,7 +71,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		va_start( v, s_fmt );
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
-//		logerror( "%08x: %s", activecpu_get_pc(), buf );
+		logerror( "%08x: %s", activecpu_get_pc(), buf );
 	}
 }
 
@@ -75,6 +80,26 @@ UINT8 nRTC_UserRAM[0x200];
 UINT8 nRTC_RAM[0x800];
 
 static UINT32 nHPC_SCSI0Descriptor, nHPC_SCSI0DMACtrl;
+
+static const struct pit8253_config ip22_pit8254_config =
+{
+	TYPE8254,
+	{
+		{
+			1000000,				/* Timer 0: 1MHz */
+			NULL,
+			NULL
+		}, {
+			1000000,				/* Timer 1: 1MHz */
+			NULL,
+			NULL
+		}, {
+			1000000,				/* Timer 2: 1MHz */
+			NULL,
+			NULL
+		}
+	}
+};
 
 static NVRAM_HANDLER( ip22 )
 {
@@ -99,18 +124,100 @@ static NVRAM_HANDLER( ip22 )
 #define RTC_SECOND	nRTC_RAM[0x06]
 #define RTC_HUNDREDTH	nRTC_RAM[0x05]
 
-static UINT32 ioc_regs[64];
+// interrupt sources handled by INT3
+#define INT3_LOCAL0_FIFO	(0x01)
+#define INT3_LOCAL0_SCSI0	(0x02)
+#define INT3_LOCAL0_SCSI1	(0x04)
+#define INT3_LOCAL0_ETHERNET	(0x08)
+#define INT3_LOCAL0_MC_DMA	(0x10)
+#define INT3_LOCAL0_PARALLEL	(0x20)
+#define INT3_LOCAL0_GRAPHICS	(0x40)
+#define INT3_LOCAL0_MAPPABLE0	(0x80)
 
-static READ32_HANDLER( pio4_r )
+#define INT3_LOCAL1_GP0		(0x01)
+#define INT3_LOCAL1_PANEL	(0x02)
+#define INT3_LOCAL1_GP2		(0x04)
+#define INT3_LOCAL1_MAPPABLE1   (0x08)
+#define INT3_LOCAL1_HPC_DMA    	(0x10)
+#define INT3_LOCAL1_AC_FAIL     (0x20)
+#define INT3_LOCAL1_VSYNC 	(0x40)
+#define INT3_LOCAL1_RETRACE	(0x80)
+
+static UINT32 int3_regs[64];
+/*static UINT8 nIOC_ParCntl;*/
+static UINT32 nIOC_ParReadCnt;
+
+// raise a local0 interrupt
+static void int3_raise_local0_irq(UINT8 source_mask)
 {
+	// signal the interrupt is pending
+	int3_regs[0] |= source_mask;
+
+	// if it's not masked, also assert it now at the CPU
+	if (int3_regs[1] & source_mask)
+	{
+		cpunum_set_input_line(0, MIPS3_IRQ0, ASSERT_LINE);
+	}
+}
+
+// lower a local0 interrupt
+static void int3_lower_local0_irq(UINT8 source_mask)
+{
+	int3_regs[0] &= ~source_mask;
+}
+
+// raise a local1 interrupt
+static void int3_raise_local1_irq(UINT8 source_mask)
+{
+	// signal the interrupt is pending
+	int3_regs[2] |= source_mask;
+
+	// if it's not masked, also assert it now at the CPU
+	if (int3_regs[2] & source_mask)
+	{
+		cpunum_set_input_line(0, MIPS3_IRQ1, ASSERT_LINE);
+	}
+}
+
+// lower a local1 interrupt
+static void int3_lower_local1_irq(UINT8 source_mask)
+{
+	int3_regs[2] &= ~source_mask;
+}
+
+static READ32_HANDLER( hpc3_pbus6_r )
+{
+	UINT8 ret8;
 	switch( offset )
 	{
+	case 0x004/4:
+		ret8 = pc_parallelport0_r(2) ^ 0x0d;
+		verboselog( 0, "Parallel Control Read: %02x\n", ret8 );
+		return ret8;
+		break;
+	case 0x008/4:
+//		if( nIOC_ParReadCnt > 7 )
+//		{
+//			ret8 = 0x40;
+//		}
+//		else
+//		{
+			ret8 = pc_parallelport0_r(1) ^ 0x80;
+//			nIOC_ParReadCnt++;
+//		}
+		verboselog( 0, "Parallel Status Read: %02x\n", ret8 );
+		return ret8;
+		break;
 	case 0x030/4:
 		verboselog( 2, "Serial 1 Command Transfer Read, 0x1fbd9830: %02x\n", 0x04 );
 		switch(activecpu_get_pc())
 		{
-			case 0x9fc204c8:	// normal core returns this
-			case 0x9fc204c4:	// DRC core returns this
+			case 0x9fc1d9e4:	// interpreter (ip244415)
+			case 0x9fc1d9e0:	// DRC (ip244415)
+			case 0x9fc1f8e0:	// interpreter (ip224613)
+			case 0x9fc1f8dc:	// DRC (ip224613)
+			case 0x9fc204c8:	// interpreter (ip225015)
+			case 0x9fc204c4:	// DRC (ip225015)
 				return 0x00000005;
 		}
 		return 0x00000004;
@@ -140,26 +247,47 @@ static READ32_HANDLER( pio4_r )
 	case 0xa4/4:
 	case 0xa8/4:
 	case 0xac/4:
+//		printf("INT3: r @ %x mask %08x (PC=%x)\n", offset*4, mem_mask, activecpu_get_pc());
+		return int3_regs[offset-0x80/4];
+		break;
 	case 0xb0/4:
+		ret8 = pit8253_0_r(0);
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 0 Register Read: 0x%02x (%08x)\n", ret8, mem_mask );
+		return ret8;
+		break;
 	case 0xb4/4:
+		ret8 = pit8253_0_r(1);
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 1 Register Read: 0x%02x (%08x)\n", ret8, mem_mask );
+		return ret8;
+		break;
 	case 0xb8/4:
+		ret8 = pit8253_0_r(2);
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 2 Register Read: 0x%02x (%08x)\n", ret8, mem_mask );
+		return ret8;
+		break;
 	case 0xbc/4:
-//		printf("INT3: r @ %d mask %08x\n", offset*4, mem_mask);
-		return ioc_regs[offset-0x80];
+		ret8 = pit8253_0_r(3);
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Control Word Register Read: 0x%02x (%08x)\n", ret8, mem_mask );
+		return ret8;
 		break;
 	default:
-//		printf("Unknown PIO4 Read: %08x (%08x) (PC=%x)\n", 0x1fbd9800 + ( offset << 2 ), mem_mask, activecpu_get_pc() );
+		verboselog( 0, "Unknown HPC PBUS6 Read: 0x%08x (%08x)\n", 0x1fbd9800 + ( offset << 2 ), mem_mask );
 		return 0;
 		break;
 	}
 	return 0;
 }
 
-static WRITE32_HANDLER( pio4_w )
+static WRITE32_HANDLER( hpc3_pbus6_w )
 {
 	char cChar;
 	switch( offset )
 	{
+	case 0x004/4:
+		verboselog( 0, "Parallel Control Write: %08x\n", data );
+		pc_parallelport0_w(2, data ^ 0x0d);
+//		nIOC_ParCntl = data;
+		break;
 	case 0x030/4:
 		if( ( data & 0x000000ff ) >= 0x20 )
 		{
@@ -206,12 +334,43 @@ static WRITE32_HANDLER( pio4_w )
 	case 0x9c/4:
 	case 0xa0/4:
 	case 0xa4/4:
-//		printf("INT3: w %x to %d mask %08x\n", data, offset*4, mem_mask);
-		ioc_regs[offset-0x80] = data;
-		break;
+//		printf("INT3: w %x to %x (reg %d) mask %08x (PC=%x)\n", data, offset*4, offset-0x80/4, mem_mask, activecpu_get_pc());
+		int3_regs[offset-0x80/4] = data;
 
+		// if no local0 interrupts now, clear the input to the CPU
+		if ((int3_regs[0] & int3_regs[1]) == 0)
+		{
+			cpunum_set_input_line(0, MIPS3_IRQ0, CLEAR_LINE);
+		}
+
+		// if no local1 interrupts now, clear the input to the CPU
+		if ((int3_regs[2] & int3_regs[3]) == 0)
+		{
+			cpunum_set_input_line(0, MIPS3_IRQ1, CLEAR_LINE);
+		}
+		break;
+	case 0xb0/4:
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 0 Register Write: 0x%08x (%08x)\n", data, mem_mask );
+		pit8253_0_w(0, data & 0x000000ff);
+		return;
+		break;
+	case 0xb4/4:
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 1 Register Write: 0x%08x (%08x)\n", data, mem_mask );
+		pit8253_0_w(1, data & 0x000000ff);
+		return;
+		break;
+	case 0xb8/4:
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Counter 2 Register Write: 0x%08x (%08x)\n", data, mem_mask );
+		pit8253_0_w(2, data & 0x000000ff);
+		return;
+		break;
+	case 0xbc/4:
+		verboselog( 0, "HPC PBUS6 IOC4 Timer Control Word Register Write: 0x%08x (%08x)\n", data, mem_mask );
+		pit8253_0_w(3, data & 0x000000ff);
+		return;
+		break;
 	default:
-//		printf("Unknown PIO4 write: %08x (%08x): %08x\n", 0x1fbd9800 + ( offset << 2 ), mem_mask, data );
+		verboselog( 0, "Unknown HPC PBUS6 Write: 0x%08x: 0x%08x (%08x)\n", 0x1fbd9800 + ( offset << 2 ), data, mem_mask );
 		break;
 	}
 }
@@ -243,7 +402,7 @@ static READ32_HANDLER( hpc3_hd_enet_r )
 		return nHPC3_enetr_nbdp;
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 ENET/HDx Read: %08x (%08x)\n", 0x1fb90000 + ( offset << 2 ), mem_mask );
+		verboselog( 0, "Unknown HPC3 ENET/HDx Read: %08x (%08x)\n", 0x1fb90000 + ( offset << 2 ), mem_mask );
 		return 0;
 		break;
 	}
@@ -271,7 +430,7 @@ static WRITE32_HANDLER( hpc3_hd_enet_w )
 		nHPC3_enetr_nbdp = data;
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 ENET/HDx write: %08x (%08x): %08x\n", 0x1fb90000 + ( offset << 2 ), mem_mask, data );
+		verboselog( 0, "Unknown HPC3 ENET/HDx write: %08x (%08x): %08x\n", 0x1fb90000 + ( offset << 2 ), mem_mask, data );
 		break;
 	}
 }
@@ -281,6 +440,7 @@ static READ32_HANDLER( hpc3_hd0_r )
 	switch( offset )
 	{
 	case 0x0000/4:
+	case 0x4000/4:
 //		verboselog( 2, "HPC3 HD0 Status Read: %08x (%08x): %08x\n", 0x1fb90000 + ( offset << 2), mem_mask, nHPC3_hd0_regs[0x17] );
 		if (!(mem_mask & 0x000000ff))
 		{
@@ -292,6 +452,7 @@ static READ32_HANDLER( hpc3_hd0_r )
 		}
 		break;
 	case 0x0004/4:
+	case 0x4004/4:
 //		verboselog( 2, "HPC3 HD0 Register Read: %08x (%08x): %08x\n", 0x1fb90000 + ( offset << 2), mem_mask, nHPC3_hd0_regs[nHPC3_hd0_register] );
 		if (!(mem_mask & 0x000000ff))
 		{
@@ -303,7 +464,7 @@ static READ32_HANDLER( hpc3_hd0_r )
 		}
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 HD0 Read: %08x (%08x)\n", 0x1fbc0000 + ( offset << 2 ), mem_mask );
+		verboselog( 0, "Unknown HPC3 HD0 Read: %08x (%08x) [%x] PC=%x\n", 0x1fbc0000 + ( offset << 2 ), mem_mask, offset, activecpu_get_pc() );
 		return 0;
 		break;
 	}
@@ -315,6 +476,7 @@ static WRITE32_HANDLER( hpc3_hd0_w )
 	switch( offset )
 	{
 	case 0x0000/4:
+	case 0x4000/4:
 //		verboselog( 2, "HPC3 HD0 Register Select Write: %08x\n", data );
 		if (!(mem_mask & 0x000000ff))
 		{
@@ -322,6 +484,7 @@ static WRITE32_HANDLER( hpc3_hd0_w )
 		}
 		break;
 	case 0x0004/4:
+	case 0x4004/4:
 //		verboselog( 2, "HPC3 HD0 Register %d Write: %08x\n", nHPC3_hd0_register, data );
 		if (!(mem_mask & 0x000000ff))
 		{
@@ -329,7 +492,7 @@ static WRITE32_HANDLER( hpc3_hd0_w )
 		}
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 HD0 Write: %08x (%08x): %08x\n", 0x1fbc0000 + ( offset << 2 ), mem_mask, data );
+		verboselog( 0, "Unknown HPC3 HD0 Write: %08x (%08x): %08x\n", 0x1fbc0000 + ( offset << 2 ), mem_mask, data );
 		break;
 	}
 }
@@ -338,12 +501,12 @@ UINT32 nHPC3_unk0;
 UINT32 nHPC3_unk1;
 UINT32 nHPC3_IC_Unk0;
 
-static READ32_HANDLER( hpc3_unk_r )
+static READ32_HANDLER( hpc3_pbus4_r )
 {
 	switch( offset )
 	{
 	case 0x0004/4:
-		verboselog( 2, "HPC3 PIO4 Unknown 0 Read: (%08x): %08x\n", mem_mask, nHPC3_unk0 );
+		verboselog( 2, "HPC3 PBUS4 Unknown 0 Read: (%08x): %08x\n", mem_mask, nHPC3_unk0 );
 		return nHPC3_unk0;
 		break;
 	case 0x000c/4:
@@ -351,23 +514,23 @@ static READ32_HANDLER( hpc3_unk_r )
 		return nHPC3_IC_Unk0;
 		break;
 	case 0x0014/4:
-		verboselog( 2, "HPC3 PIO4 Unknown 1 Read: (%08x): %08x\n", mem_mask, nHPC3_unk1 );
+		verboselog( 2, "HPC3 PBUS4 Unknown 1 Read: (%08x): %08x\n", mem_mask, nHPC3_unk1 );
 		return nHPC3_unk1;
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 PIO4 Read: %08x (%08x)\n", 0x1fbd9000 + ( offset << 2 ), mem_mask );
+		verboselog( 0, "Unknown HPC3 PBUS4 Read: %08x (%08x)\n", 0x1fbd9000 + ( offset << 2 ), mem_mask );
 		return 0;
 		break;
 	}
 	return 0;
 }
 
-static WRITE32_HANDLER( hpc3_unk_w )
+static WRITE32_HANDLER( hpc3_pbus4_w )
 {
 	switch( offset )
 	{
 	case 0x0004/4:
-		verboselog( 2, "HPC3 PIO4 Unknown 0 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 2, "HPC3 PBUS4 Unknown 0 Write: %08x (%08x)\n", data, mem_mask );
 		nHPC3_unk0 = data;
 		break;
 	case 0x000c/4:
@@ -375,11 +538,11 @@ static WRITE32_HANDLER( hpc3_unk_w )
 		nHPC3_IC_Unk0 = data;
 		break;
 	case 0x0014/4:
-		verboselog( 2, "HPC3 PIO4 Unknown 1 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 2, "HPC3 PBUS4 Unknown 1 Write: %08x (%08x)\n", data, mem_mask );
 		nHPC3_unk1 = data;
 		break;
 	default:
-		verboselog( 2, "Unknown HPC3 PIO4 Write: %08x (%08x): %08x\n", 0x1fbd9000 + ( offset << 2 ), mem_mask, data );
+		verboselog( 0, "Unknown HPC3 PBUS4 Write: %08x (%08x): %08x\n", 0x1fbd9000 + ( offset << 2 ), mem_mask, data );
 		break;
 	}
 }
@@ -751,8 +914,284 @@ static WRITE32_HANDLER( ip22_write_ram )
 		// a random perturbation so the memory test fails
 		data ^= 0xffffffff;
 	}
-
 	COMBINE_DATA(&ip22_mainram[offset]);
+}
+
+UINT32 nHAL2_IAR;
+UINT32 nHAL2_IDR[4];
+
+#define H2_IAR_TYPE			0xf000
+#define H2_IAR_NUM			0x0f00
+#define H2_IAR_ACCESS_SEL	0x0080
+#define H2_IAR_PARAM		0x000c
+#define H2_IAR_RB_INDEX		0x0003
+
+#define H2_ISR_TSTATUS		0x01
+#define H2_ISR_USTATUS		0x02
+#define H2_ISR_QUAD_MODE	0x04
+#define H2_ISR_GLOBAL_RESET	0x08
+#define H2_ISR_CODEC_RESET	0x10
+
+static READ32_HANDLER( hal2_r )
+{
+	switch( offset )
+	{
+	case 0x0010/4:
+		verboselog( 0, "HAL2 Status read: 0x0004\n", 0x0004 );
+		return 0x0004;
+		break;
+	case 0x0020/4:
+		verboselog( 0, "HAL2 Revision read: 0x4011\n", 0x4011 );
+		return 0x4011;
+		break;
+	}
+	verboselog( 0, "Unknown HAL2 read: 0x%08x (%08x)\n", 0x1fbd8000 + offset*4, mem_mask );
+	return 0;
+}
+
+static WRITE32_HANDLER( hal2_w )
+{
+	switch( offset )
+	{
+	case 0x0010/4:
+		verboselog( 0, "HAL2 Status Write: 0x%08x (%08x)\n", data, mem_mask );
+		if( data & H2_ISR_GLOBAL_RESET )
+		{
+			verboselog( 0, "    HAL2 Global Reset\n" );
+		}
+		if( data & H2_ISR_CODEC_RESET )
+		{
+			verboselog( 0, "    HAL2 Codec Reset\n" );
+		}
+		break;
+	case 0x0030/4:
+		verboselog( 0, "HAL2 Indirect Address Register Write: 0x%08x (%08x)\n", data, mem_mask );
+		nHAL2_IAR = data;
+		switch( data & H2_IAR_TYPE )
+		{
+		case 0x1000:
+			verboselog( 0, "    DMA Port\n" );
+			switch( data & H2_IAR_NUM )
+			{
+			case 0x0100:
+				verboselog( 0, "        Synth In\n" );
+				break;
+			case 0x0200:
+				verboselog( 0, "        AES In\n" );
+				break;
+			case 0x0300:
+				verboselog( 0, "        AES Out\n" );
+				break;
+			case 0x0400:
+				verboselog( 0, "        DAC Out\n" );
+				break;
+			case 0x0500:
+				verboselog( 0, "        ADC Out\n" );
+				break;
+			case 0x0600:
+				verboselog( 0, "        Synth Control\n" );
+				break;
+			}
+			break;
+		case 0x2000:
+			verboselog( 0, "    Bresenham\n" );
+			switch( data & H2_IAR_NUM )
+			{
+			case 0x0100:
+				verboselog( 0, "        Bresenham Clock Gen 1\n" );
+				break;
+			case 0x0200:
+				verboselog( 0, "        Bresenham Clock Gen 2\n" );
+				break;
+			case 0x0300:
+				verboselog( 0, "        Bresenham Clock Gen 3\n" );
+				break;
+			}
+			break;
+		case 0x3000:
+			verboselog( 0, "    Unix Timer\n" );
+			switch( data & H2_IAR_NUM )
+			{
+			case 0x0100:
+				verboselog( 0, "        Unix Timer\n" );
+				break;
+			}
+			break;
+		case 0x9000:
+			verboselog( 0, "    Global DMA Control\n" );
+			switch( data & H2_IAR_NUM )
+			{
+			case 0x0100:
+				verboselog( 0, "        DMA Control\n" );
+				break;
+			}
+			break;
+		}
+		switch( data & H2_IAR_ACCESS_SEL )
+		{
+		case 0x0000:
+			verboselog( 0, "    Write\n" );
+			break;
+		case 0x0080:
+			verboselog( 0, "    Read\n" );
+			break;
+		}
+		verboselog( 0, "    Parameter: %01x\n", ( data & H2_IAR_PARAM ) >> 2 );
+		return;
+		verboselog( 0, "    Read Back Index: %01x\n", ( data & H2_IAR_RB_INDEX ) );
+		break;
+	case 0x0040/4:
+		verboselog( 0, "HAL2 Indirect Data Register 0 Write: 0x%08x (%08x)\n", data, mem_mask );
+		nHAL2_IDR[0] = data;
+		return;
+		break;
+	case 0x0050/4:
+		verboselog( 0, "HAL2 Indirect Data Register 1 Write: 0x%08x (%08x)\n", data, mem_mask );
+		nHAL2_IDR[1] = data;
+		return;
+		break;
+	case 0x0060/4:
+		verboselog( 0, "HAL2 Indirect Data Register 2 Write: 0x%08x (%08x)\n", data, mem_mask );
+		nHAL2_IDR[2] = data;
+		return;
+		break;
+	case 0x0070/4:
+		verboselog( 0, "HAL2 Indirect Data Register 3 Write: 0x%08x (%08x)\n", data, mem_mask );
+		nHAL2_IDR[3] = data;
+		return;
+		break;
+	}
+	verboselog( 0, "Unknown HAL2 write: 0x%08x: 0x%08x (%08x)\n", 0x1fbd8000 + offset*4, data, mem_mask );
+}
+
+#define PBUS_CTRL_ENDIAN		0x00000002
+#define PBUS_CTRL_RECV			0x00000004
+#define PBUS_CTRL_FLUSH			0x00000008
+#define PBUS_CTRL_DMASTART		0x00000010
+#define PBUS_CTRL_LOAD_EN		0x00000020
+#define PBUS_CTRL_REALTIME		0x00000040
+#define PBUS_CTRL_HIGHWATER		0x0000ff00
+#define PBUS_CTRL_FIFO_BEG		0x003f0000
+#define PBUS_CTRL_FIFO_END		0x3f000000
+
+#define PBUS_DMADESC_EOX		0x80000000
+#define PBUS_DMADESC_EOXP		0x40000000
+#define PBUS_DMADESC_XIE		0x20000000
+#define PBUS_DMADESC_IPG		0x00ff0000
+#define PBUS_DMADESC_TXD		0x00008000
+#define PBUS_DMADESC_BC			0x00003fff
+
+UINT8 nPBUS_DMA_Active;
+UINT32 nPBUS_DMA_CurPtr;
+UINT32 nPBUS_DMA_DescPtr;
+UINT32 nPBUS_DMA_NextPtr;
+UINT32 nPBUS_DMA_WordsLeft;
+
+static void ip22_dma(int refcon)
+{
+	if( nPBUS_DMA_Active )
+	{
+		INT16 temp16;
+//		printf( "nPBUS_DMA_CurPtr - 0x08000000/4 = %08x\n", (nPBUS_DMA_CurPtr - 0x08000000)/4 );
+		verboselog( 0, "nPBUS_DMA_CurPtr - 0x08000000/4 = %08x\n", (nPBUS_DMA_CurPtr - 0x08000000)/4 );
+		temp16 = ( ip22_mainram[(nPBUS_DMA_CurPtr - 0x08000000)/4] & 0xffff0000 ) >> 16;
+		temp16 = ( ( temp16 & 0xff00 ) >> 8 ) | ( ( temp16 & 0x00ff ) << 8 );
+		dmadac_transfer(0, 1, 1, 1, 1, &temp16);
+		nPBUS_DMA_CurPtr += 4;
+		nPBUS_DMA_WordsLeft -= 4;
+
+		if( nPBUS_DMA_WordsLeft == 0 )
+		{
+			if( nPBUS_DMA_NextPtr != 0 )
+			{
+				nPBUS_DMA_DescPtr = nPBUS_DMA_NextPtr;
+				nPBUS_DMA_CurPtr = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4];
+				nPBUS_DMA_WordsLeft = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4+1];
+				nPBUS_DMA_NextPtr = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4+2];
+			}
+			else
+			{
+				nPBUS_DMA_Active = 0;
+				return;
+			}
+		}
+		timer_set(TIME_IN_HZ(44100), 0, ip22_dma);
+	}
+}
+
+static READ32_HANDLER( hpc3_pbusdma_r )
+{
+	UINT32 channel = offset / (0x2000/4);
+	verboselog( 0, "PBUS DMA Channel %d Read: 0x%08x (%08x)\n", channel, 0x1fb80000 + offset*4, mem_mask );
+	return 0;
+}
+
+static WRITE32_HANDLER( hpc3_pbusdma_w )
+{
+	UINT32 channel = offset / (0x2000/4);
+	switch( offset & 0x07ff )
+	{
+	case 0x0000/4:
+		verboselog( 0, "PBUS DMA Channel %d Buffer Pointer Write: 0x%08x\n", channel, data );
+		return;
+		break;
+	case 0x0004/4:
+		verboselog( 0, "PBUS DMA Channel %d Descriptor Pointer Write: 0x%08x\n", channel, data );
+		if( channel == 1 )
+		{
+			nPBUS_DMA_DescPtr = data;
+			nPBUS_DMA_CurPtr = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4];
+			nPBUS_DMA_WordsLeft = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4+1];
+			nPBUS_DMA_NextPtr = ip22_mainram[(nPBUS_DMA_DescPtr - 0x08000000)/4+2];
+			verboselog( 0, "nPBUS_DMA_DescPtr = %08x\n", nPBUS_DMA_DescPtr );
+			verboselog( 0, "nPBUS_DMA_CurPtr = %08x\n", nPBUS_DMA_CurPtr );
+			verboselog( 0, "nPBUS_DMA_WordsLeft = %08x\n", nPBUS_DMA_WordsLeft );
+			verboselog( 0, "nPBUS_DMA_NextPtr = %08x\n", nPBUS_DMA_NextPtr );
+		}
+		return;
+		break;
+	case 0x1000/4:
+		verboselog( 0, "PBUS DMA Channel %d Control Register Write: 0x%08x\n", channel, data );
+		if( data & PBUS_CTRL_ENDIAN )
+		{
+			verboselog( 0, "    Little Endian\n" );
+		}
+		else
+		{
+			verboselog( 0, "    Big Endian\n" );
+		}
+		if( data & PBUS_CTRL_RECV )
+		{
+			verboselog( 0, "    RX DMA\n" );
+		}
+		else
+		{
+			verboselog( 0, "    TX DMA\n" );
+		}
+		if( data & PBUS_CTRL_FLUSH )
+		{
+			verboselog( 0, "    Flush for RX\n" );
+		}
+		if( data & PBUS_CTRL_DMASTART )
+		{
+			verboselog( 0, "    Start DMA\n" );
+		}
+		if( data & PBUS_CTRL_LOAD_EN )
+		{
+			verboselog( 0, "    Load Enable\n" );
+		}
+		verboselog( 0, "    High Water Mark: %04x bytes\n", ( data & PBUS_CTRL_HIGHWATER ) >> 8 );
+		verboselog( 0, "    FIFO Begin: Row %04x\n", ( data & PBUS_CTRL_FIFO_BEG ) >> 16 );
+		verboselog( 0, "    FIFO End: Rowe %04x\n", ( data & PBUS_CTRL_FIFO_END ) >> 24 );
+		if( ( data & PBUS_CTRL_DMASTART ) || ( data & PBUS_CTRL_LOAD_EN ) )
+		{
+			timer_set(TIME_IN_HZ(44100), 0, ip22_dma);
+			nPBUS_DMA_Active = 1;
+		}
+		return;
+		break;
+	}
+	verboselog( 0, "Unknown PBUS DMA Channel %d Write: 0x%08x: 0x%08x (%08x)\n", channel, 0x1fb80000 + offset*4, data, mem_mask );
 }
 
 static ADDRESS_MAP_START( ip225015_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -763,8 +1202,10 @@ static ADDRESS_MAP_START( ip225015_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE( 0x1fb90000, 0x1fb9ffff ) AM_READWRITE( hpc3_hd_enet_r, hpc3_hd_enet_w )
 	AM_RANGE( 0x1fbb0000, 0x1fbb0003 ) AM_RAM 	/* unknown, but read a lot and discarded */
 	AM_RANGE( 0x1fbc0000, 0x1fbc7fff ) AM_READWRITE( hpc3_hd0_r, hpc3_hd0_w )
-	AM_RANGE( 0x1fbd9000, 0x1fbd93ff ) AM_READWRITE( hpc3_unk_r, hpc3_unk_w )
-	AM_RANGE( 0x1fbd9800, 0x1fbd9bff ) AM_READWRITE( pio4_r, pio4_w )
+	AM_RANGE( 0x1fb80000, 0x1fb8ffff ) AM_READWRITE( hpc3_pbusdma_r, hpc3_pbusdma_w )
+	AM_RANGE( 0x1fbd8000, 0x1fbd83ff ) AM_READWRITE( hal2_r, hal2_w )
+	AM_RANGE( 0x1fbd9000, 0x1fbd93ff ) AM_READWRITE( hpc3_pbus4_r, hpc3_pbus4_w )
+	AM_RANGE( 0x1fbd9800, 0x1fbd9bff ) AM_READWRITE( hpc3_pbus6_r, hpc3_pbus6_w )
 	AM_RANGE( 0x1fbe0000, 0x1fbe04ff ) AM_READWRITE( rtc_r, rtc_w )
 	AM_RANGE( 0x1fc00000, 0x1fc7ffff ) AM_ROM AM_REGION( REGION_USER1, 0 )
 	AM_RANGE( 0x20000000, 0x27ffffff ) AM_RAM AM_SHARE(1) AM_WRITE(ip22_write_ram)
@@ -793,11 +1234,16 @@ static MACHINE_INIT( ip225015 )
 
 	// set up low RAM mirror
 	memory_set_bankptr(1, ip22_mainram);
+
+	nPBUS_DMA_Active = 0;
+
+	dmadac_set_frequency(0, 1, 44100);
+	dmadac_enable(0, 1, 1);
 }
 
 static void dump_chain(UINT32 ch_base)
 {
-	printf("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
+//	printf("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
 
 	if ((program_read_dword(ch_base+8) != 0) && !(program_read_dword(ch_base+4) & 0x80000000))
 	{
@@ -890,7 +1336,7 @@ static void scsi_irq(int state)
 				wptr = program_read_dword(nHPC_SCSI0Descriptor);
 				sptr = 0;
 
-				printf("DMA from device: %d words @ %x\n", words, wptr);
+//				printf("DMA from device: %d words @ %x\n", words, wptr);
 
 				dump_chain(nHPC_SCSI0Descriptor);
 
@@ -952,11 +1398,12 @@ static void scsi_irq(int state)
 		// clear HPC3 DMA active flag
 		nHPC_SCSI0DMACtrl &= ~HPC3_DMACTRL_ENABLE;
 
-		cpunum_set_input_line(0, MIPS3_IRQ0 + 8 + 1, ASSERT_LINE);
+		// set the interrupt
+		int3_raise_local0_irq(INT3_LOCAL0_SCSI0);
 	}
 	else
 	{
-		cpunum_set_input_line(0, MIPS3_IRQ0 + 8 + 1, CLEAR_LINE);
+		int3_lower_local0_irq(INT3_LOCAL0_SCSI0);
 	}
 }
 
@@ -981,11 +1428,14 @@ static DRIVER_INIT( ip225015 )
 
 	// IP22 uses 2 pieces of PC-compatible hardware: the 8042 PS/2 keyboard/mouse
 	// interface and the 8254 PIT.  Both are licensed cores embedded in the IOC custom chip.
-	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_TIMER_8254);
+	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_TIMER_NONE );
 	kbdc8042_init(&at8042);
+	pit8253_init(1, &ip22_pit8254_config);
 
 	// SCSI init
 	wd33c93_init(&scsi_intf);
+
+	nIOC_ParReadCnt = 0;
 }
 
 INPUT_PORTS_START( ip225015 )
@@ -1132,6 +1582,11 @@ MACHINE_DRIVER_START( ip225015 )
 
 	MDRV_VIDEO_START( newport )
 	MDRV_VIDEO_UPDATE( newport )
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( ip224613 )
@@ -1161,9 +1616,12 @@ ROM_END
 
 SYSTEM_CONFIG_START( ip225015 )
 	CONFIG_DEVICE(ip22_chdcd_getinfo)
+	CONFIG_QUEUE_CHARS( at_keyboard )
+	CONFIG_ACCEPT_CHAR( at_keyboard )
+	CONFIG_CHARQUEUE_EMPTY( at_keyboard )
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */
-COMP( 1993, ip225015, 0,        0,        ip225015, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R5000, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
-COMP( 1993, ip224613, 0,        0,        ip224613, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R4600, 133MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
-COMP( 1994, ip244415, 0,        0,        ip244415, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indigo 2 (R4400, 150MHz)", GAME_NOT_WORKING | GAME_NO_SOUND )
+COMP( 1993, ip225015, 0,        0,        ip225015, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R5000, 150MHz)", GAME_NOT_WORKING )
+COMP( 1993, ip224613, 0,        0,        ip224613, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indy (R4600, 133MHz)", GAME_NOT_WORKING )
+COMP( 1994, ip244415, 0,        0,        ip244415, ip225015, ip225015, ip225015, "Silicon Graphics, Inc", "Indigo2 (R4400, 150MHz)", GAME_NOT_WORKING )

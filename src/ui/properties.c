@@ -1649,7 +1649,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 				strcat(digital, buffer);
 			}
 		}
-		if (stricmp (digital,o->digital) != 0)
+		if (mame_stricmp (digital,o->digital) != 0)
 		{
 			// save the new setting
 			FreeIfAllocated(&o->digital);
@@ -1677,7 +1677,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	/* video */
 
 	/* get desired resolution */
-	if (!stricmp(o->resolution, "auto"))
+	if (!mame_stricmp(o->resolution, "auto"))
 	{
 		w = h = 0;
 	}
@@ -1993,7 +1993,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		{
 			ComboBox_GetLBText(hCtrl, nCount, buf);
 
-			if (stricmp (buf,o->ctrlr) == 0)
+			if (mame_stricmp (buf,o->ctrlr) == 0)
 			{
 				g_nInputIndex = nCount;
 			}
@@ -2514,12 +2514,12 @@ static void ResetDataMap(void)
 	}
 
 	// if no controller type was specified or it was standard
-	if (pGameOpts->ctrlr == NULL || stricmp(pGameOpts->ctrlr,"Standard") == 0)
+	if (pGameOpts->ctrlr == NULL || mame_stricmp(pGameOpts->ctrlr,"Standard") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->ctrlr);
 		pGameOpts->ctrlr = strdup("");
 	}
-	if (pGameOpts->screen == NULL || stricmp(pGameOpts->screen,"") == 0)
+	if (pGameOpts->screen == NULL || mame_stricmp(pGameOpts->screen,"") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->screen);
 		pGameOpts->screen = strdup("");
@@ -2539,7 +2539,7 @@ static void ResetDataMap(void)
 		{
 			if( !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) )
 			{
-				if ( stricmp(pGameOpts->screen,dd.DeviceName) == 0 )
+				if ( mame_stricmp(pGameOpts->screen,dd.DeviceName) == 0 )
 					g_nScreenIndex = i;
 			}
 		}
@@ -2570,49 +2570,49 @@ static void ResetDataMap(void)
 	g_nEffectIndex = 0;
 	for (i = 0; i < NUMEFFECTS; i++)
 	{
-		if (!stricmp(pGameOpts->effect, g_ComboBoxEffect[i].m_pData))
+		if (!mame_stricmp(pGameOpts->effect, g_ComboBoxEffect[i].m_pData))
 			g_nEffectIndex = i;
 	}
 	g_nLedmodeIndex = 0;
 	for (i = 0; i < NUMLEDMODES; i++)
 	{
-		if (!stricmp(pGameOpts->ledmode, g_ComboBoxLedmode[i].m_pData))
+		if (!mame_stricmp(pGameOpts->ledmode, g_ComboBoxLedmode[i].m_pData))
 			g_nLedmodeIndex = i;
 	}
 	g_nPaddleIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->paddle, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->paddle, g_ComboBoxDevice[i].m_pData))
 			g_nPaddleIndex = i;
 	}
 	g_nADStickIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->adstick, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->adstick, g_ComboBoxDevice[i].m_pData))
 			g_nADStickIndex = i;
 	}
 	g_nPedalIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->pedal, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->pedal, g_ComboBoxDevice[i].m_pData))
 			g_nPedalIndex = i;
 	}
 	g_nDialIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->dial, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->dial, g_ComboBoxDevice[i].m_pData))
 			g_nDialIndex = i;
 	}
 	g_nTrackballIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->trackball, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->trackball, g_ComboBoxDevice[i].m_pData))
 			g_nTrackballIndex = i;
 	}
 	g_nLightgunIndex = 0;
 	for (i = 0; i < NUMDEVICES; i++)
 	{
-		if (!stricmp(pGameOpts->lightgun_device, g_ComboBoxDevice[i].m_pData))
+		if (!mame_stricmp(pGameOpts->lightgun_device, g_ComboBoxDevice[i].m_pData))
 			g_nLightgunIndex = i;
 	}
 

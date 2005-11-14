@@ -61,8 +61,8 @@ enum
 	SBIC_count_hi = 18,	
 	SBIC_count_med = 19,	
 	SBIC_count_lo = 20,	
-	SBIC_selid = 21,	// est ID (33c93 is initiator)
-	SBIC_rselid = 22,	// ource ID (33c93 is target)
+	SBIC_selid = 21,	// dest ID (33c93 is initiator)
+	SBIC_rselid = 22,	// source ID (33c93 is target)
 	SBIC_csr = 23,		// CSI status
 	SBIC_cmd = 24,		
 	SBIC_data = 25,		
@@ -106,6 +106,11 @@ static void wd33c93_irq( int cmdtype )
 			n33C93_Registers[ SBIC_cmd_phase ] = 0x60; // command successfully completed
 			break;
 
+		case 2: // select w/ATN, no transfer
+			n33C93_Registers[ SBIC_csr ] = SBIC_CSR_Selected;
+			n33C93_Registers[ SBIC_cmd_phase ] = 0x10; // target selected
+			break;
+
 		default:
 			break;
 	}
@@ -136,7 +141,7 @@ WRITE8_HANDLER(wd33c93_w)
 		break;
 	case 1:
 		n33C93_Data = data;
-//		printf("%x to WD register %x (PC=%x)\n", data, n33C93_RegisterSelect, activecpu_get_pc());
+//		logerror("%x to WD register %x (PC=%x)\n", data, n33C93_RegisterSelect, activecpu_get_pc());
 		if( n33C93_RegisterSelect <= 0x16 )
 		{
 			n33C93_Registers[ n33C93_RegisterSelect ] = data;
@@ -162,17 +167,22 @@ WRITE8_HANDLER(wd33c93_w)
 
 				wd33c93_immediate_irq();
 
-				printf("WD: Reset controller\n");
+				logerror("WD: Reset controller\n");
+				break;
+			case 0x01: /* Abort */
+				logerror("WD: Abort\n");
+				wd33c93_immediate_irq();
 				break;
 			case 0x04: /* Disconnect */
-				printf("WD: Disconnect\n");
+				logerror("WD: Disconnect\n");
 				n33C93_Registers[ SBIC_aux_status ] &= ~(SBIC_AuxStat_CIP | SBIC_AuxStat_BSY);
 				break;
 			case 0x06: /* Select with ATN */
-				printf("WD: Select with ATN: ID %d (SCSI cmd %02x)\n", n33C93_Registers[ SBIC_selid ]&7, n33C93_Registers[3]);
+				logerror("WD: Select with ATN: ID %d (SCSI cmd %02x)\n", n33C93_Registers[ SBIC_selid ]&7, n33C93_Registers[3]);
 
 				last_id = n33C93_Registers[ SBIC_selid ] & 7;
 
+				// we don't support this at this time
 				n33C93_Registers[ SBIC_csr ] = 0x42;	// SEL_TimeOut
 				n33C93_Registers[ SBIC_cmd_phase ] = 0x00; // no device selected
 
@@ -181,7 +191,7 @@ WRITE8_HANDLER(wd33c93_w)
 				wd33c93_immediate_irq();
 				break;
 			case 0x08: /* Select with ATN and transfer */
-				printf("WD: Select with ATN and transfer: ID %d (SCSI cmd %02x)\n", n33C93_Registers[ SBIC_selid ]&7, n33C93_Registers[3]);
+				logerror("WD: Select with ATN and transfer: ID %d (SCSI cmd %02x)\n", n33C93_Registers[ SBIC_selid ]&7, n33C93_Registers[3]);
 
 				last_id = n33C93_Registers[ SBIC_selid ] & 7;
 
@@ -210,19 +220,19 @@ WRITE8_HANDLER(wd33c93_w)
 				}
 				break;
 			default:
-				printf( "Unknown SCSI controller command: %02x (PC=%x)\n", n33C93_Data, activecpu_get_pc() );
+				logerror( "Unknown SCSI controller command: %02x (PC=%x)\n", n33C93_Data, activecpu_get_pc() );
 				break;
 			}
 		}
 		else if ( n33C93_RegisterSelect == SBIC_data)
 		{
-//			printf("Write %02x to SBIC data (PC=%x)\n", n33C93_Data, activecpu_get_pc());
+//			logerror("Write %02x to SBIC data (PC=%x)\n", n33C93_Data, activecpu_get_pc());
 		}
 
 		n33C93_RegisterSelect++;
 		break;
 	default:
-//		printf("ERROR: unk 33c93 W offset %d\n", offset);
+//		logerror("ERROR: unk 33c93 W offset %d\n", offset);
 		break;
 	}
 }
@@ -235,11 +245,11 @@ READ8_HANDLER(wd33c93_r)
 	{
 	case 0:
 //		if (activecpu_get_pc() != 0xbfc167d8)
-//			printf("Read WD aux status = %x (PC=%x)\n", n33C93_Registers[ SBIC_aux_status ], activecpu_get_pc());
+//			logerror("Read WD aux status = %x (PC=%x)\n", n33C93_Registers[ SBIC_aux_status ], activecpu_get_pc());
 		rv = n33C93_Registers[ SBIC_aux_status ];
 		break;
 	case 1:
-		//printf("Read WD register %x = %x (PC=%x)\n", n33C93_RegisterSelect, n33C93_Registers[ n33C93_RegisterSelect ], activecpu_get_pc());
+//		logerror("Read WD register %x = %x (PC=%x)\n", n33C93_RegisterSelect, n33C93_Registers[ n33C93_RegisterSelect ], activecpu_get_pc());
 
 		// ack IRQ on status read
 		if (n33C93_RegisterSelect == SBIC_csr)
@@ -255,7 +265,7 @@ READ8_HANDLER(wd33c93_r)
 		n33C93_RegisterSelect++;
 		break;
 	default:
-//		printf("ERROR: unk 33c93 R offset %d\n", offset);
+//		logerror("ERROR: unk 33c93 R offset %d\n", offset);
 		break;
 	}
 
@@ -314,7 +324,6 @@ void *wd33c93_get_device(int id)
 
 	if (devices[id].handler)
 	{
-		logerror("wd33c93: fetching dev pointer for SCSI ID %d\n", id);
 		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (UINT8 *)&ret);
 
 		return ret;

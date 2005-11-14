@@ -10,6 +10,18 @@
 	- XMAP9: Final display generator
 	- CMAP: Palette mapper
 	- VC2: Video timing controller / CRTC
+
+	Taken from the Linux Newport driver, slave addresses for Newport devices are:
+			VC2			0
+			Both CMAPs	1
+			CMAP 0		2
+			CMAP 1		3
+			Both XMAPs	4
+			XMAP 0		5
+			XMAP 1		6
+			RAMDAC		7
+			VIDEO (CC1)	8
+			VIDEO (AB1)	9
 */
 
 #include "driver.h"
@@ -32,14 +44,18 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 
 static READ32_HANDLER( newport_cmap0_r );
 static WRITE32_HANDLER( newport_cmap0_w );
+static READ32_HANDLER( newport_cmap1_r );
 static READ32_HANDLER( newport_xmap0_r );
 static WRITE32_HANDLER( newport_xmap0_w );
 static READ32_HANDLER( newport_xmap1_r );
 static WRITE32_HANDLER( newport_xmap1_w );
+static READ32_HANDLER( newport_vc2_r );
 static WRITE32_HANDLER( newport_vc2_w );
 
-static UINT16 nVC2_Register[0x20];
+static UINT16 nVC2_Register[0x21];
 static UINT16 nVC2_RAM[0x8000];
+static UINT8 nVC2_RegIdx;
+static UINT16 nVC2_RegData;
 
 #define VC2_VIDENTRY		nVC2_Register[0x00]
 #define VC2_CURENTRY		nVC2_Register[0x01]
@@ -149,6 +165,10 @@ static UINT32 nREX3_XYWin;
 static UINT32 nREX3_ClipMode;
 static UINT32 nREX3_Config;
 static UINT32 nREX3_Status;
+static UINT8 nREX3_XFerWidth;
+/*static UINT32 nREX3_CurrentX;
+static UINT32 nREX3_CurrentY;*/
+static UINT32 nREX3_Kludge_SkipLine;
 
 static UINT32 *video_base;
 
@@ -160,6 +180,7 @@ VIDEO_START( newport )
 	nREX3_DrawMode0 = 0x00000000;
 	nREX3_DrawMode1 = 0x3002f001;
 	nREX3_DCBMode = 0x00000780;
+	nREX3_Kludge_SkipLine = 0;
 	video_base = auto_malloc( (1280+64) * (1024+64) * 4 );
 	if( video_base == NULL )
 	{
@@ -217,8 +238,31 @@ static READ32_HANDLER( newport_cmap0_r )
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0x04:
-		verboselog( 2, "Unknown CMAP0 Register 4 Read: %08x\n", 0x00000008 );
+		verboselog( 2, "CMAP0 Status Read: %08x\n", 0x00000008 );
 		return 0x00000008;
+		break;
+	case 0x06: /* Revision */
+		verboselog( 2, "CMAP0 Revision Read: CMAP Rev 1, Board Rev 2, 8bpp\n" );
+		return 0x000000a1;
+		break;
+	default:
+		verboselog( 2, "Unknown CMAP0 Register %d Read\n", nREX3_DCBRegSelect );
+		return 0x00000000;
+		break;
+	}
+}
+
+static READ32_HANDLER( newport_cmap1_r )
+{
+	switch( nREX3_DCBRegSelect )
+	{
+	case 0x04:
+		verboselog( 2, "CMAP1 Status Read: %08x\n", 0x00000008 );
+		return 0x00000008;
+		break;
+	case 0x06: /* Revision */
+		verboselog( 2, "CMAP1 Revision Read: CMAP Rev 1, Board Rev 2, 8bpp\n" );
+		return 0x000000a1;
 		break;
 	default:
 		verboselog( 2, "Unknown CMAP0 Register %d Read\n", nREX3_DCBRegSelect );
@@ -415,10 +459,67 @@ static WRITE32_HANDLER( newport_xmap1_w )
 	}
 }
 
+static READ32_HANDLER( newport_vc2_r )
+{
+	UINT16 ret16;
+	switch( nREX3_DCBRegSelect )
+	{
+	case 0x01: /* Register Read */
+		verboselog( 2, "VC2 Register Read: %02x, %08x\n", nVC2_RegIdx, nVC2_Register[nVC2_RegIdx] );
+		return nVC2_Register[nVC2_RegIdx];
+		break;
+	case 0x03: /* RAM Read */
+		verboselog( 2, "VC2 RAM Read: %04x = %08x\n", VC2_RAMADDR, nVC2_RAM[VC2_RAMADDR] );
+		ret16 = nVC2_RAM[VC2_RAMADDR];
+		VC2_RAMADDR++;
+		if( VC2_RAMADDR == 0x8000 )
+		{
+			VC2_RAMADDR = 0x0000;
+		}
+		return ret16;
+		break;
+	default:
+		verboselog( 2, "Unknown VC2 Register Read: %02x\n", nREX3_DCBRegSelect );
+		return 0;
+		break;
+	}
+	return 0;
+}
+
 static WRITE32_HANDLER( newport_vc2_w )
 {
-	UINT8 nVC2_RegIdx;
-	UINT16 nVC2_RegData;
+	switch( nREX3_XFerWidth )
+	{
+	case 0x01: /* Register Select */
+		switch( nREX3_DCBRegSelect )
+		{
+		case 0x00:
+			nVC2_RegIdx = ( data & 0x000000ff ) >> 0;
+			verboselog( 2, "VC2 Register Select: %02x\n", nVC2_RegIdx );
+			break;
+		default:
+			verboselog( 2, "Unknown VC2 Register Select: DCB Register %02x, data = 0x%08x\n", nREX3_DCBRegSelect, data );
+			break;
+		}
+		break;
+	case 0x02: /* RAM Write */
+		switch( nREX3_DCBRegSelect )
+		{
+		case 0x03:
+			verboselog( 2, "VC2 RAM Write: %04x = %08x\n", VC2_RAMADDR, data & 0x0000ffff );
+			nVC2_RAM[VC2_RAMADDR] = data & 0x0000ffff;
+			VC2_RAMADDR++;
+			if( VC2_RAMADDR == 0x8000 )
+			{
+				VC2_RAMADDR = 0x0000;
+			}
+			break;
+		default:
+			verboselog( 2, "Unknown 2-byte Write: DCB Register %02x, data = 0x%08x\n", nREX3_DCBRegSelect, data );
+			break;
+		}
+		break;
+	case 0x03: /* Register Write */
 	switch( nREX3_DCBRegSelect )
 	{
 	case 0x00:
@@ -480,28 +581,21 @@ static WRITE32_HANDLER( newport_vc2_w )
 			break;
 		case 0x1f:
 			verboselog( 2, "    Configuration:        %04x\n", nVC2_RegData );
+				nVC2_Register[0x20] = nVC2_RegData;
 			break;
 		default:
 			verboselog( 2, "    Unknown VC2 Register: %04x\n", nVC2_RegData );
 			break;
 		}
-		nVC2_Register[ ( data & 0xff000000 ) >> 24 ] = ( data & 0x00ffff00 ) >> 8;
+			nVC2_Register[nVC2_RegIdx] = nVC2_RegData;
 		break;
-	case 0x01:
+		default:
+			verboselog( 2, "Unknown VC2 Register Write: %02x = %08x\n", nREX3_DCBRegSelect, data );
 		break;
-	case 0x02:
-		break;
-	case 0x03:
-		verboselog( 2, "VC2 RAM Write: %04x = %08x\n", VC2_RAMADDR, data & 0x0000ffff );
-		nVC2_RAM[VC2_RAMADDR] = data & 0x0000ffff;
-		VC2_RAMADDR++;
-		if( VC2_RAMADDR == 0x8000 )
-		{
-			VC2_RAMADDR = 0x0000;
 		}
 		break;
 	default:
-		verboselog( 2, "Unknown VC2 Register Write: %02x = %08x\n", nREX3_DCBRegSelect, data );
+		verboselog( 2, "Unknown VC2 XFer Width: Width %02x, DCB Register %02x, Value 0x%08x\n", nREX3_XFerWidth, nREX3_DCBRegSelect, data );
 		break;
 	}
 }
@@ -774,11 +868,14 @@ READ32_HANDLER( newport_rex3_r )
 	case 0x0a40/4:
 		switch( nREX3_DCBSlvSelect )
 		{
-//		case 0x00:
-//			return newport_vc2_r( 0, mem_mask );
-//			break;
+		case 0x00:
+			return newport_vc2_r( 0, mem_mask );
+			break;
 		case 0x02:
 			return newport_cmap0_r( 0, mem_mask );
+			break;
+		case 0x03:
+			return newport_cmap1_r( 0, mem_mask );
 			break;
 		case 0x05:
 			return newport_xmap0_r( 0, mem_mask );
@@ -856,7 +953,7 @@ READ32_HANDLER( newport_rex3_r )
 		return 0x00000001;
 		break;
 	default:
-		verboselog( 2, "Unknown REX3 Read: %08x (%08x)\n", 0xbf0f0000 + ( offset << 2 ), mem_mask );
+		verboselog( 2, "Unknown REX3 Read: %08x (%08x)\n", 0x1f0f0000 + ( offset << 2 ), mem_mask );
 		return 0;
 		break;
 	}
@@ -880,8 +977,26 @@ static void DoREX3Command(void)
 
 	switch( nCommand )
 	{
+	case 0x00000110:
+		nX = nStartX;
+		nY = nStartY;
+		verboselog( 3, "Tux Logo Draw: %04x, %04x = %08x\n", nX, nY, nCMAP0_Palette[ ( nREX3_HostDataPortMSW & 0xff000000 ) >> 24 ] );
+//		nREX3_Kludge_SkipLine = 1;
+		nREX3_BresOctInc1 = 0;
+		video_base[ nY*(1280+64) + nX ] = nCMAP0_Palette[ ( nREX3_HostDataPortMSW & 0xff000000 ) >> 24 ];
+		nX++;
+		if( nX > ( ( nREX3_XYEndI & 0xffff0000 ) >> 16 ) )
+		{
+			nY++;
+			nX = nREX3_XSave;
+		}
+		nREX3_XYStartI = ( nX << 16 ) | nY;
+		nREX3_XStartI = nX;
+		nREX3_XStart = 0 | ( ( nREX3_XYStartI & 0xffff0000 ) >>  5 );
+		nREX3_YStart = 0 | ( ( nREX3_XYStartI & 0x0000ffff ) << 11 );
+		break;
 	case 0x0000011e:
-		verboselog( 2, "Block draw: %04x, %04x to %04x, %04x = %08x\n", nStartX, nStartY, nEndX, nEndY, nCMAP0_Palette[ nREX3_ZeroFract ] );
+		verboselog( 3, "Block draw: %04x, %04x to %04x, %04x = %08x\n", nStartX, nStartY, nEndX, nEndY, nCMAP0_Palette[ nREX3_ZeroFract ] );
 		for( nY = nStartY; nY <= nEndY; nY++ )
 		{
 			verboselog( 3, "Pixel: %04x, %04x = %08x\n", nStartX, nY, nCMAP0_Palette[ nREX3_ZeroFract ] );
@@ -892,7 +1007,9 @@ static void DoREX3Command(void)
 		}
 		break;
 	case 0x00000119:
-		verboselog( 2, "Pattern Line Draw: %08x at %04x, %04x color %08x\n", nREX3_ZPattern, nREX3_XYStartI >> 16, nREX3_XYStartI & 0x0000ffff, nCMAP0_Palette[ nREX3_ZeroFract ] );
+		if( !nREX3_Kludge_SkipLine )
+		{
+			verboselog( 3, "Pattern Line Draw: %08x at %04x, %04x color %08x\n", nREX3_ZPattern, nREX3_XYStartI >> 16, nREX3_XYStartI & 0x0000ffff, nCMAP0_Palette[ nREX3_ZeroFract ] );
 		for( nX = nStartX; nX <= nEndX && nX < ( nStartX + 32 ); nX++ )
 		{
 			if( nREX3_ZPattern & ( 1 << ( 31 - ( nX - nStartX ) ) ) )
@@ -900,16 +1017,17 @@ static void DoREX3Command(void)
 				video_base[ nStartY*(1280+64) + nX ] = nCMAP0_Palette[ nREX3_ZeroFract ];
 			}
 		}
-		if( nEndY < nStartY )
+			if( nREX3_BresOctInc1 & 0x01000000 )
 		{
 			nStartY--;
 		}
-		else if( nEndY > nStartY )
+			else
 		{
 			nStartY++;
 		}
 		nREX3_XYStartI = ( nStartX << 16 ) | nStartY;
 		nREX3_YStart = 0 | ( ( nREX3_XYStartI & 0x0000ffff ) << 11 );
+		}
 		break;
 	case 0x0000019e:
 		nMoveX = (INT16)( ( nREX3_XYMove >> 16 ) & 0x0000ffff );
@@ -936,10 +1054,6 @@ WRITE32_HANDLER( newport_rex3_w )
 	{
 		verboselog( 2, "Start Cmd\n" );
 	}
-//	if( offset >= ( 0x0800 / 4 ) )
-//	{
-//		verboselog( 2, "%08x:\n", 0xbf0f0000 + ( offset << 2 ) );
-//	}
 	switch( offset )
 	{
 	case 0x0000/4:
@@ -1176,6 +1290,8 @@ WRITE32_HANDLER( newport_rex3_w )
 		verboselog( 2, "    Enable CI Clamping: %d\n", ( data & 0x00200000 ) >> 21 );
 		verboselog( 2, "    Enable End Filter:  %d\n", ( data & 0x00400000 ) >> 22 );
 		verboselog( 2, "    Enable Y+2 Stride:  %d\n", ( data & 0x00800000 ) >> 23 );
+		nREX3_DrawMode0 = data;
+		break;
 	case 0x0804/4:
 		verboselog( 2, "REX3 Draw Mode 0 Write: %08x\n", data );
 		nREX3_DrawMode0 = data;
@@ -1364,7 +1480,7 @@ WRITE32_HANDLER( newport_rex3_w )
 	case 0x0950/4:
 		verboselog( 2, "REX3 XYStart (integer) Write: %08x\n", data );
 		nREX3_XYStartI = data;
-		nREX3_XStartI = data & 0x0000ffff;
+		nREX3_XStartI = ( data & 0xffff0000 ) >> 16;
 		nREX3_XSave = nREX3_XStartI;
 		nREX3_XStart = 0 | ( ( nREX3_XYStartI & 0xffff0000 ) >>  5 );
 		nREX3_YStart = 0 | ( ( nREX3_XYStartI & 0x0000ffff ) << 11 );
@@ -1496,8 +1612,12 @@ WRITE32_HANDLER( newport_rex3_w )
 		break;
 	case 0x0230/4:
 	case 0x0a30/4:
-		verboselog( 2, "REX3 Host Data Port MSW Write: %08x\n", data );
+		verboselog( 3, "REX3 Host Data Port MSW Write: %08x\n", data );
 		nREX3_HostDataPortMSW = data;
+		if( offset & 0x00000200 )
+		{
+			DoREX3Command();
+		}
 		break;
 	case 0x0234/4:
 	case 0x0a34/4:
@@ -1511,15 +1631,19 @@ WRITE32_HANDLER( newport_rex3_w )
 		{
 		case 0x00:
 			verboselog( 2, "    Transfer Width:     4 bytes\n" );
+			nREX3_XFerWidth = 4;
 			break;
 		case 0x01:
 			verboselog( 2, "    Transfer Width:     1 bytes\n" );
+			nREX3_XFerWidth = 1;
 			break;
 		case 0x02:
 			verboselog( 2, "    Transfer Width:     2 bytes\n" );
+			nREX3_XFerWidth = 2;
 			break;
 		case 0x03:
 			verboselog( 2, "    Transfer Width:     3 bytes\n" );
+			nREX3_XFerWidth = 3;
 			break;
 		}
 		verboselog( 2, "    DCB Reg Select Adr: %d\n", ( data & 0x00000070 ) >> 4 );

@@ -209,7 +209,7 @@ static int requested_device_type(char *tchar)
 
 		for (i = 1; i < IO_COUNT; i++)
 		{
-			if (!stricmp(tchar, device_typename(i)) || !stricmp(tchar, device_brieftypename(i)))
+			if (!mame_stricmp(tchar, device_typename(i)) || !mame_stricmp(tchar, device_brieftypename(i)))
 			{
 				device = i;
 				break;

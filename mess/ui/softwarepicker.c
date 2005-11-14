@@ -383,7 +383,7 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 			s = pDevice->file_extensions;
 			if (s)
 			{
-				while(*s && stricmp(pszExtension, s))
+				while(*s && mame_stricmp(pszExtension, s))
 					s += strlen(s) + 1;
 				if (*s)
 					break;

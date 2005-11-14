@@ -129,12 +129,12 @@ READ32_HANDLER( mc_r )
 		break;
 	case 0x00c0:
 	case 0x00c4:
-		verboselog( 2, "Memory Configuration Register 0 Read: %08x (%08x)\n", nMC_MemCfg0, mem_mask );
+		verboselog( 3, "Memory Configuration Register 0 Read: %08x (%08x)\n", nMC_MemCfg0, mem_mask );
 		return nMC_MemCfg0;
 		break;
 	case 0x00c8:
 	case 0x00cc:
-		verboselog( 2, "Memory Configuration Register 1 Read: %08x (%08x)\n", nMC_MemCfg1, mem_mask );
+		verboselog( 3, "Memory Configuration Register 1 Read: %08x (%08x)\n", nMC_MemCfg1, mem_mask );
 		return nMC_MemCfg1;
 		break;
 	case 0x00d0:
@@ -250,34 +250,34 @@ READ32_HANDLER( mc_r )
 	case 0x2004:
 	case 0x2008:
 	case 0x200c:
-		verboselog( 2, "DMA Memory Address Read: %08x (%08x)\n", nMC_DMAMemAddr, mem_mask );
+		verboselog( 0, "DMA Memory Address Read: %08x (%08x)\n", nMC_DMAMemAddr, mem_mask );
 		return nMC_DMAMemAddr;
 		break;
 	case 0x2010:
 	case 0x2014:
-		verboselog( 2, "DMA Line Count and Width Read: %08x (%08x)\n", nMC_DMALineCntWidth, mem_mask );
+		verboselog( 0, "DMA Line Count and Width Read: %08x (%08x)\n", nMC_DMALineCntWidth, mem_mask );
 		return nMC_DMALineCntWidth;
 		break;
 	case 0x2018:
 	case 0x201c:
-		verboselog( 2, "DMA Line Zoom and Stride Read: %08x (%08x)\n", nMC_DMALineZoomStride, mem_mask );
+		verboselog( 0, "DMA Line Zoom and Stride Read: %08x (%08x)\n", nMC_DMALineZoomStride, mem_mask );
 		return nMC_DMALineZoomStride;
 		break;
 	case 0x2020:
 	case 0x2024:
 	case 0x2028:
 	case 0x202c:
-		verboselog( 2, "DMA GIO64 Address Read: %08x (%08x)\n", nMC_DMAGIO64Addr, mem_mask );
+		verboselog( 0, "DMA GIO64 Address Read: %08x (%08x)\n", nMC_DMAGIO64Addr, mem_mask );
 		return nMC_DMAGIO64Addr;
 		break;
 	case 0x2030:
 	case 0x2034:
-		verboselog( 2, "DMA Mode Write: %08x (%08x)\n", nMC_DMAMode, mem_mask );
+		verboselog( 0, "DMA Mode Write: %08x (%08x)\n", nMC_DMAMode, mem_mask );
 		return nMC_DMAMode;
 		break;
 	case 0x2038:
 	case 0x203c:
-		verboselog( 2, "DMA Zoom Count Read: %08x (%08x)\n", nMC_DMAZoomByteCnt, mem_mask );
+		verboselog( 0, "DMA Zoom Count Read: %08x (%08x)\n", nMC_DMAZoomByteCnt, mem_mask );
 		return nMC_DMAZoomByteCnt;
 		break;
 //	case 0x2040:
@@ -288,7 +288,7 @@ READ32_HANDLER( mc_r )
 //		break;
 	case 0x2048:
 	case 0x204c:
-		verboselog( 2, "VDMA Running Read: %08x (%08x)\n", nMC_DMARunning, mem_mask );
+		verboselog( 0, "VDMA Running Read: %08x (%08x)\n", nMC_DMARunning, mem_mask );
 		if( nMC_DMARunning == 1 )
 		{
 			nMC_DMARunning = 0;
@@ -355,12 +355,12 @@ WRITE32_HANDLER( mc_w )
 		break;
 	case 0x00c0:
 	case 0x00c4:
-		verboselog( 1, "Memory Configuration Register 0 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 3, "Memory Configuration Register 0 Write: %08x (%08x)\n", data, mem_mask );
 		nMC_MemCfg0 = data;
 		break;
 	case 0x00c8:
 	case 0x00cc:
-		verboselog( 1, "Memory Configuration Register 1 Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 3, "Memory Configuration Register 1 Write: %08x (%08x)\n", data, mem_mask );
 		nMC_MemCfg1 = data;
 		break;
 	case 0x00d0:
@@ -410,105 +410,105 @@ WRITE32_HANDLER( mc_w )
 		break;
 	case 0x0160:
 	case 0x0164:
-		verboselog( 2, "DMA Interrupt Cause Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Interrupt Cause Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAIntrCause = data;
 		break;
 	case 0x0168:
 	case 0x016c:
-		verboselog( 2, "DMA Control Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Control Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAControl = data;
 		break;
 	case 0x0180:
 	case 0x0184:
-		verboselog( 2, "DMA TLB Entry 0 High Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 0 High Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry0Hi = data;
 		break;
 	case 0x0188:
 	case 0x018c:
-		verboselog( 2, "DMA TLB Entry 0 Low Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 0 Low Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry0Lo = data;
 		break;
 	case 0x0190:
 	case 0x0194:
-		verboselog( 2, "DMA TLB Entry 1 High Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 1 High Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry1Hi = data;
 		break;
 	case 0x0198:
 	case 0x019c:
-		verboselog( 2, "DMA TLB Entry 1 Low Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 1 Low Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry1Lo = data;
 		break;
 	case 0x01a0:
 	case 0x01a4:
-		verboselog( 2, "DMA TLB Entry 2 High Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 2 High Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry2Hi = data;
 		break;
 	case 0x01a8:
 	case 0x01ac:
-		verboselog( 2, "DMA TLB Entry 2 Low Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 2 Low Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry2Lo = data;
 		break;
 	case 0x01b0:
 	case 0x01b4:
-		verboselog( 2, "DMA TLB Entry 3 High Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 3 High Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry3Hi = data;
 		break;
 	case 0x01b8:
 	case 0x01bc:
-		verboselog( 2, "DMA TLB Entry 3 Low Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA TLB Entry 3 Low Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMATLBEntry3Lo = data;
 		break;
 	case 0x2000:
 	case 0x2004:
-		verboselog( 2, "DMA Memory Address Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Memory Address Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAMemAddr = data;
 		break;
 	case 0x2008:
 	case 0x200c:
-		verboselog( 2, "DMA Memory Address + Default Params Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Memory Address + Default Params Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAMemAddr = data;
 		break;
 	case 0x2010:
 	case 0x2014:
-		verboselog( 2, "DMA Line Count and Width Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Line Count and Width Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMALineCntWidth = data;
 		break;
 	case 0x2018:
 	case 0x201c:
-		verboselog( 2, "DMA Line Zoom and Stride Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Line Zoom and Stride Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMALineZoomStride = data;
 		break;
 	case 0x2020:
 	case 0x2024:
-		verboselog( 2, "DMA GIO64 Address Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA GIO64 Address Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAGIO64Addr = data;
 		break;
 	case 0x2028:
 	case 0x202c:
-		verboselog( 2, "DMA GIO64 Address Write + Start DMA: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA GIO64 Address Write + Start DMA: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAGIO64Addr = data;
 		// Start DMA
 		nMC_DMARunning = 1;
 		break;
 	case 0x2030:
 	case 0x2034:
-		verboselog( 2, "DMA Mode Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Mode Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAMode = data;
 		break;
 	case 0x2038:
 	case 0x203c:
-		verboselog( 2, "DMA Zoom Count + Byte Count Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Zoom Count + Byte Count Write: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAZoomByteCnt = data;
 		break;
 	case 0x2040:
 	case 0x2044:
-		verboselog( 2, "DMA Start Write: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA Start Write: %08x (%08x)\n", data, mem_mask );
 		// Start DMA
 		nMC_DMARunning = 1;
 		break;
 	case 0x2070:
 	case 0x2074:
-		verboselog( 2, "DMA GIO64 Address Write + Default Params Write + Start DMA: %08x (%08x)\n", data, mem_mask );
+		verboselog( 0, "DMA GIO64 Address Write + Default Params Write + Start DMA: %08x (%08x)\n", data, mem_mask );
 		nMC_DMAGIO64Addr = data;
 		// Start DMA
 		nMC_DMARunning = 1;

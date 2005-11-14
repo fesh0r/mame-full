@@ -836,7 +836,7 @@ int CLIB_DECL main(int argc, char *argv[])
 		for (i = 0; i < (sizeof(cmds) / sizeof(cmds[0])); i++)
 		{
 			c = &cmds[i];
-			if (!stricmp(c->name, argv[1]))
+			if (!mame_stricmp(c->name, argv[1]))
 			{
 				/* check argument count */
 				if (c->minargs > (argc - 2))

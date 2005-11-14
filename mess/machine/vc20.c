@@ -628,13 +628,13 @@ static int vc20_rom_id(mess_image *img, mame_file *romfile)
 	cp = image_filetype(img);
 	if (cp)
 	{
-		if ((stricmp (cp, "a0") == 0)
-			|| (stricmp (cp, "20") == 0)
-			|| (stricmp (cp, "40") == 0)
-			|| (stricmp (cp, "60") == 0)
-			|| (stricmp (cp, "bin") == 0)
-			|| (stricmp (cp, "rom") == 0)
-			|| (stricmp (cp, "prg") == 0))
+		if ((mame_stricmp (cp, "a0") == 0)
+			|| (mame_stricmp (cp, "20") == 0)
+			|| (mame_stricmp (cp, "40") == 0)
+			|| (mame_stricmp (cp, "60") == 0)
+			|| (mame_stricmp (cp, "bin") == 0)
+			|| (mame_stricmp (cp, "rom") == 0)
+			|| (mame_stricmp (cp, "prg") == 0))
 			retval = 1;
 	}
 
@@ -688,7 +688,7 @@ DEVICE_LOAD(vc20_rom)
 		}
 		else
 		{
-			if (stricmp (cp, "prg") == 0)
+			if (mame_stricmp (cp, "prg") == 0)
 			{
 				unsigned short in;
 

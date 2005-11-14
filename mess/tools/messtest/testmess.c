@@ -367,7 +367,7 @@ static void find_switch(const char *switch_name, const char *switch_setting,
 	while(in->type != IPT_END)
 	{
 		if (in->type == switch_type && input_port_active(in)
-			&& input_port_name(in) && !stricmp(input_port_name(in), switch_name))
+			&& input_port_name(in) && !mame_stricmp(input_port_name(in), switch_name))
 			break;
 		in++;
 	}
@@ -379,7 +379,7 @@ static void find_switch(const char *switch_name, const char *switch_setting,
 	in++;
 	while(in->type == switch_setting_type)
 	{
-		if (input_port_active(in) && input_port_name(in) && !stricmp(input_port_name(in), switch_setting))
+		if (input_port_active(in) && input_port_name(in) && !mame_stricmp(input_port_name(in), switch_setting))
 			break;
 		in++;
 	}

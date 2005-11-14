@@ -335,7 +335,7 @@ optreserr_t option_resolution_add_param(option_resolution *resolution, const cha
 	case OPTIONTYPE_ENUM_BEGIN:
 		for (i = 1; entry->guide_entry[i].option_type == OPTIONTYPE_ENUM_VALUE; i++)
 		{
-			if (!stricmp(value, entry->guide_entry[i].identifier))
+			if (!mame_stricmp(value, entry->guide_entry[i].identifier))
 			{
 				entry->u.int_value = entry->guide_entry[i].parameter;
 				entry->state = RESOLUTION_ENTRY_STATE_SPECIFIED;

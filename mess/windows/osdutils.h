@@ -2,7 +2,6 @@
 #include <string.h>
 #endif
 
-#define strcmpi		stricmp
 #define strncmpi	strnicmp
 
 /* some irritating redefinitions */

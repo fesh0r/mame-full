@@ -19,11 +19,11 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	if (!file_type)
 		goto error;
 
-	if (!stricmp(file_type, "prg"))
+	if (!mame_stricmp(file_type, "prg"))
 	{
 		/* prg files */
 	}
-	else if (!stricmp(file_type, "p00"))
+	else if (!mame_stricmp(file_type, "p00"))
 	{
 		/* p00 files */
 		if (mame_fread(fp, buffer, sizeof(buffer)) != sizeof(buffer))
@@ -196,7 +196,7 @@ static DEVICE_LOAD(cbm_rom)
 	size = mame_fsize (file);
 
 	filetype = image_filetype(image);
-	if (filetype && !stricmp(filetype, "prg"))
+	if (filetype && !mame_stricmp(filetype, "prg"))
 	{
 		unsigned short in;
 
@@ -216,7 +216,7 @@ static DEVICE_LOAD(cbm_rom)
 		if (read_ != size)
 			return INIT_FAIL;
 	}
-	else if (filetype && !stricmp (filetype, "crt"))
+	else if (filetype && !mame_stricmp (filetype, "crt"))
 	{
 		unsigned short in;
 		mame_fseek (file, 0x18, SEEK_SET);
@@ -260,35 +260,35 @@ static DEVICE_LOAD(cbm_rom)
 	}
 	else if (filetype)
 	{
-		if (stricmp(filetype, "lo") == 0)
+		if (mame_stricmp(filetype, "lo") == 0)
 			adr = CBM_ROM_ADDR_LO;
-		else if (stricmp (filetype, "hi") == 0)
+		else if (mame_stricmp (filetype, "hi") == 0)
 			adr = CBM_ROM_ADDR_HI;
-		else if (stricmp (filetype, "10") == 0)
+		else if (mame_stricmp (filetype, "10") == 0)
 			adr = 0x1000;
-		else if (stricmp (filetype, "20") == 0)
+		else if (mame_stricmp (filetype, "20") == 0)
 			adr = 0x2000;
-		else if (stricmp (filetype, "30") == 0)
+		else if (mame_stricmp (filetype, "30") == 0)
 			adr = 0x3000;
-		else if (stricmp (filetype, "40") == 0)
+		else if (mame_stricmp (filetype, "40") == 0)
 			adr = 0x4000;
-		else if (stricmp (filetype, "50") == 0)
+		else if (mame_stricmp (filetype, "50") == 0)
 			adr = 0x5000;
-		else if (stricmp (filetype, "60") == 0)
+		else if (mame_stricmp (filetype, "60") == 0)
 			adr = 0x6000;
-		else if (stricmp (filetype, "70") == 0)
+		else if (mame_stricmp (filetype, "70") == 0)
 			adr = 0x7000;
-		else if (stricmp (filetype, "80") == 0)
+		else if (mame_stricmp (filetype, "80") == 0)
 			adr = 0x8000;
-		else if (stricmp (filetype, "90") == 0)
+		else if (mame_stricmp (filetype, "90") == 0)
 			adr = 0x9000;
-		else if (stricmp (filetype, "a0") == 0)
+		else if (mame_stricmp (filetype, "a0") == 0)
 			adr = 0xa000;
-		else if (stricmp (filetype, "b0") == 0)
+		else if (mame_stricmp (filetype, "b0") == 0)
 			adr = 0xb000;
-		else if (stricmp (filetype, "e0") == 0)
+		else if (mame_stricmp (filetype, "e0") == 0)
 			adr = 0xe000;
-		else if (stricmp (filetype, "f0") == 0)
+		else if (mame_stricmp (filetype, "f0") == 0)
 			adr = 0xf000;
 		else
 			adr = CBM_ROM_ADDR_UNKNOWN;

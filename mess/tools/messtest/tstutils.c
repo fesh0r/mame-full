@@ -57,7 +57,7 @@ static const struct
 int memory_region_from_string(const char *region_name)
 {
 	int i;
-	for (i = 0; region_map[i].name && stricmp(region_map[i].name, region_name); i++)
+	for (i = 0; region_map[i].name && mame_stricmp(region_map[i].name, region_name); i++)
 		;
 	return region_map[i].region;
 }

@@ -2634,7 +2634,7 @@ static void D3DEffectDecodeString(const char *str,void *data)
 
 	for (i=0;i<MAX_D3D_EFFECTS;i++)
 	{
-		if (stricmp(GetD3DEffectShortName(i),str) == 0)
+		if (mame_stricmp(GetD3DEffectShortName(i),str) == 0)
 		{
 			*(int *)data = i;
 			return;
@@ -2658,7 +2658,7 @@ static void D3DPrescaleDecodeString(const char *str,void *data)
 
 	for (i=0;i<MAX_D3D_PRESCALE;i++)
 	{
-		if (stricmp(GetD3DPrescaleShortName(i),str) == 0)
+		if (mame_stricmp(GetD3DPrescaleShortName(i),str) == 0)
 		{
 			*(int *)data = i;
 			return;
@@ -2682,7 +2682,7 @@ static void CleanStretchDecodeString(const char *str,void *data)
 
 	for (i=0;i<MAX_CLEAN_STRETCH;i++)
 	{
-		if (stricmp(GetCleanStretchShortName(i),str) == 0)
+		if (mame_stricmp(GetCleanStretchShortName(i),str) == 0)
 		{
 			*(int *)data = i;
 			return;

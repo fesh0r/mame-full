@@ -105,7 +105,7 @@ static imgtoolerr_t lookup_rsdos_file(imgtool_image *f, const char *fname, struc
 		if (ent->fname[0] != -1)
 			get_dirent_fname(fnamebuf, ent);
 	}
-	while((ent->fname[0] != -1) && stricmp(fnamebuf, fname));
+	while((ent->fname[0] != -1) && mame_stricmp(fnamebuf, fname));
 
 	if (ent->fname[0] == -1)
 		return IMGTOOLERR_FILENOTFOUND;

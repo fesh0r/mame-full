@@ -163,9 +163,9 @@ static int rom16_image_readfile(imgtool_image *img, const char *fname, imgtool_s
 	int pos;
 	int i;
 
-	if (stricmp(fname, "even")==0) {
+	if (mame_stricmp(fname, "even")==0) {
 		pos=0;
-	} else if (stricmp(fname,"odd")==0) {
+	} else if (mame_stricmp(fname,"odd")==0) {
 		pos=1;
 	} else {
 		return IMGTOOLERR_MODULENOTFOUND;
@@ -189,9 +189,9 @@ static int rom16_image_writefile(imgtool_image *img, const char *fname, imgtool_
 
 	size=stream_size(sourcef);
 	if (size*2!=image->size) return IMGTOOLERR_READERROR;
-	if (stricmp(fname, "even")==0) {
+	if (mame_stricmp(fname, "even")==0) {
 		pos=0;
-	} else if (stricmp(fname,"odd")==0) {
+	} else if (mame_stricmp(fname,"odd")==0) {
 		pos=1;
 	} else {
 		return IMGTOOLERR_MODULENOTFOUND;

@@ -1087,7 +1087,7 @@ char *mess_try_image_file_as_zip(int pathindex, const char *path,
 		goto done;
 
 	ext = strrchr(name, '.');
-	is_zip = (ext && !stricmp(ext, ".zip"));
+	is_zip = (ext && !mame_stricmp(ext, ".zip"));
 
 	if (is_zip)
 	{
@@ -1146,7 +1146,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		if (img->fp && (read_or_write == OSD_FOPEN_READ))
 		{
 			lpExt = strrchr( img->name, '.' );
-			if (lpExt && (stricmp( lpExt, ".ZIP" ) == 0))
+			if (lpExt && (mame_stricmp( lpExt, ".ZIP" ) == 0))
 			{
 				int pathindex;
 				int pathcount = osd_get_path_count(filetype);
@@ -1196,7 +1196,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 								ext = dev->file_extensions;
 								while(*ext)
 								{
-									if( stricmp( lpExt, ext ) == 0 )
+									if( mame_stricmp( lpExt, ext ) == 0 )
 									{
 										if( newname )
 										{

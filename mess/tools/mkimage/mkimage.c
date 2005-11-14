@@ -94,7 +94,7 @@ char buff[4096];
 		usage();
 		exit(1);
 	}
-	if (!stricmp(av[1], "-list"))
+	if (!mame_stricmp(av[1], "-list"))
 	{
 		for (i = 0; formats[i].id; i++)
 			printf("%s\t%s\n", formats[i].id, formats[i].name);
@@ -107,7 +107,7 @@ char buff[4096];
     }
 	for (i = 0; formats[i].id; i++)
 	{
-		if (!stricmp(formats[i].id, av[1]))
+		if (!mame_stricmp(formats[i].id, av[1]))
 			break;
 	}
 	if (!formats[i].id)

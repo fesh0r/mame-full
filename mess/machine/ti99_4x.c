@@ -509,27 +509,27 @@ DEVICE_LOAD( ti99_cart )
 
 	if (ch)
 	{
-		if ((! stricmp(ch2, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
+		if ((! mame_stricmp(ch2, "g.bin")) || (! mame_stricmp(ch, ".grom")) || (! mame_stricmp(ch, ".g")))
 		{
 			/* grom */
 			type = SLOT_GROM;
 		}
-		else if ((! stricmp(ch2, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
+		else if ((! mame_stricmp(ch2, "c.bin")) || (! mame_stricmp(ch, ".crom")) || (! mame_stricmp(ch, ".c")))
 		{
 			/* rom first page */
 			type = SLOT_CROM;
 		}
-		else if ((! stricmp(ch2, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
+		else if ((! mame_stricmp(ch2, "d.bin")) || (! mame_stricmp(ch, ".drom")) || (! mame_stricmp(ch, ".d")))
 		{
 			/* rom second page */
 			type = SLOT_DROM;
 		}
-		else if ((! stricmp(ch2, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
+		else if ((! mame_stricmp(ch2, "m.bin")) || (! mame_stricmp(ch, ".mrom")) || (! mame_stricmp(ch, ".m")))
 		{
 			/* rom minimemory  */
 			type = SLOT_MINIMEM;
 		}
-		else if ((! stricmp(ch2, "b.bin")) || (! stricmp(ch, ".brom")) || (! stricmp(ch, ".b")))
+		else if ((! mame_stricmp(ch2, "b.bin")) || (! mame_stricmp(ch, ".brom")) || (! mame_stricmp(ch, ".b")))
 		{
 			/* rom MBX  */
 			type = SLOT_MBX;

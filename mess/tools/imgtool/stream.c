@@ -121,7 +121,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 
 	/* maybe we are just a ZIP? */
 	ext = strrchr(fname, '.');
-	if (ext && !stricmp(ext, ".zip"))
+	if (ext && !mame_stricmp(ext, ".zip"))
 		return stream_open_zip(fname, NULL, read_or_write);
 
 	f = fopen(fname, write_modes[read_or_write]);

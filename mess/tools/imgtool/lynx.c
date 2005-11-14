@@ -247,7 +247,7 @@ static LYNX_ENTRY* lynx_image_findfile(lynx_image *image, const char *fname)
 	int i;
 
 	for (i=0; i<image->count; i++) {
-		if (!stricmp(fname, image->entries[i].name) ) return image->entries+i;
+		if (!mame_stricmp(fname, image->entries[i].name) ) return image->entries+i;
 	}
 	return NULL;
 }

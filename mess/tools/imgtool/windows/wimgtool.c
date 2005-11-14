@@ -254,7 +254,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 		icon_index = 2;
 		for (i = 0; i < size; i += strlen(&ptr[i]) + 1)
 		{
-			if (!stricmp(&ptr[i], extension))
+			if (!mame_stricmp(&ptr[i], extension))
 				break;
 			icon_index++;
 		}

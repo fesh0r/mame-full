@@ -605,9 +605,9 @@ static int c16_rom_id(mess_image *img, mame_file *romfile)
 	}
 	else if ((cp = strrchr (name, '.')) != NULL)
 	{
-		if ((stricmp (cp + 1, "rom") == 0) || (stricmp (cp + 1, "prg") == 0)
-			|| (stricmp (cp + 1, "bin") == 0)
-			|| (stricmp (cp + 1, "lo") == 0) || (stricmp (cp + 1, "hi") == 0))
+		if ((mame_stricmp (cp + 1, "rom") == 0) || (mame_stricmp (cp + 1, "prg") == 0)
+			|| (mame_stricmp (cp + 1, "bin") == 0)
+			|| (mame_stricmp (cp + 1, "lo") == 0) || (mame_stricmp (cp + 1, "hi") == 0))
 			retval = 1;
 	}
 
@@ -647,7 +647,7 @@ static int c16_rom_load(mess_image *img)
 	size = mame_fsize (fp);
 
 	filetype = image_filetype(img);	
-	if (filetype && !stricmp (filetype, "prg"))
+	if (filetype && !mame_stricmp (filetype, "prg"))
 	{
 		unsigned short in;
 

@@ -347,11 +347,11 @@ DIRENTOBJS = $(OBJ)/mess/ui/dirent.o
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
-$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RESFILE)
+$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fr$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
-	$(LD) -dll -base:0x10040000 $(LDFLAGS) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RESFILE)
+	$(LD) -dll -base:0x10040000 $(LDFLAGS) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
 ifdef BSCMAKE
 	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr)
 endif
@@ -397,7 +397,7 @@ dat2html$(EXE): $(DAT2HTML_OBJS) $(PLATFORM_TOOL_OBJS) $(OBJ)/mess/ui/dirent.o
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ -out:$@
 
-messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/mess/ui/dirent.o
+messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/mess/ui/dirent.o $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ -out:$@
 
@@ -503,9 +503,9 @@ $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 
 # generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
+$(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGS) -Fe$@ -Fo$(OBJ)/cpu/m68000/ $<
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -out:$@
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 

@@ -32,7 +32,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 	const char *shortname;
 
 	/* -listdevices */
-	if (!stricmp(arg, "-listdevices"))
+	if (!mame_stricmp(arg, "-listdevices"))
 	{
 		i = 0;
 		j = 0;
@@ -83,7 +83,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 	}
 
 	/* -listtext */
-	else if (!stricmp(arg, "-listtext"))
+	else if (!mame_stricmp(arg, "-listtext"))
 	{
 		printf("                   ==========================================\n" );
 		printf("                    M.E.S.S.  -  Multi-Emulator Super System\n"  );
@@ -357,7 +357,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 
 	}
 
-    else if (!stricmp(arg, "-createdir"))
+    else if (!mame_stricmp(arg, "-createdir"))
 	{
 	/***************************************************/
 	/* To create the SOFTWARE directories */

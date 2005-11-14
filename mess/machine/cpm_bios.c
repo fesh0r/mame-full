@@ -319,7 +319,7 @@ int cpm_disk_select_format(int d, const char *id)
 	if (VERBOSE)
 		logerror("CPM search format '%s'\n", id);
 
-	for (i = 0; formats[i].id && stricmp(formats[i].id, id); i++)
+	for (i = 0; formats[i].id && mame_stricmp(formats[i].id, id); i++)
 		;
 
 	if (!formats[i].id)
@@ -336,7 +336,7 @@ int cpm_disk_select_format(int d, const char *id)
 			logerror("CPM search format '%s' for '%s'\n", formats[i].ref, id);
 
 		/* search for the referred id */
-		for (j = 0; formats[j].id && stricmp(formats[j].id, formats[i].ref); j++)
+		for (j = 0; formats[j].id && mame_stricmp(formats[j].id, formats[i].ref); j++)
 			;
 		if (!formats[j].id)
 		{

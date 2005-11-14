@@ -3,8 +3,8 @@
 #include "driver.h"
 #include "53c810.h"
 
-#define DMA_MAX_ICOUNT	512	/* Maximum number of DMA Scripts opcodes to run */
-#define DASM_OPCODES 1
+#define DMA_MAX_ICOUNT	512		/* Maximum number of DMA Scripts opcodes to run */
+#define DASM_OPCODES 0
 
 typedef struct
 {
@@ -276,12 +276,12 @@ static void dmaop_clear(void)
 
 static void dmaop_move_from_sfbr(void)
 {
-	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented in target mode\n");	
+	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented in target mode\n");
 }
 
 static void dmaop_move_to_sfbr(void)
 {
-	osd_die("LSI53C810: dmaop_move_to_sfbr not implemented\n");	
+	osd_die("LSI53C810: dmaop_move_to_sfbr not implemented\n");
 }
 
 static void dmaop_read_modify_write(void)
@@ -293,12 +293,12 @@ static int scripts_compute_branch(void)
 {
 	int dtest, ptest, wanted, passed;
 
-//		  |jump if true
-// 878b0000	  ||compare data
+//        |jump if true
+// 878b0000   ||compare data
 // 1000 0111 1000 1011 0000 0000 0000 0000
-//	 |   |rel   ||wait valid phase
-//	 |	    |compare phase
-//	 |desired phase: message in
+//   |   |rel   ||wait valid phase
+//   |      |compare phase
+//   |desired phase: message in
 
 	if (lsi810.dcmd & 0x00200000)
 	{
@@ -313,7 +313,7 @@ static int scripts_compute_branch(void)
 	// set desired result to take jump
 	wanted = (lsi810.dcmd & 0x00080000) ? 1 : 0;
 	// default to passing the tests in case they're disabled
-	dtest = ptest = wanted;	
+	dtest = ptest = wanted;
 
 	// phase test?
 	if (lsi810.dcmd & 0x00020000)
@@ -325,7 +325,7 @@ static int scripts_compute_branch(void)
 		{
 			ptest = 1;
 		}
-		else
+	else
 		{
 			ptest = 0;
 		}
@@ -335,7 +335,7 @@ static int scripts_compute_branch(void)
 	if (lsi810.dcmd & 0x00040000)
 	{
 		logerror("53c810: data test.  target: %x [not yet implemented]\n", lsi810.dcmd&0xff);
-	}
+}
 
 	// if all conditions go, take the jump
 	passed = 0;
@@ -346,7 +346,7 @@ static int scripts_compute_branch(void)
 
 	logerror("53c810: phase test %d  data test %d  wanted %d => pass %d\n", ptest, dtest, wanted, passed);
 
-	return passed;	
+	return passed;
 }
 
 static UINT32 scripts_get_jump_dest(void)
@@ -367,7 +367,7 @@ static UINT32 scripts_get_jump_dest(void)
 
 		logerror("dsps = %x, dsp = %x\n", dsps, lsi810.dsp);
 		dsps += lsi810.dsp;
-	}
+}
 
 	dest = (UINT32)dsps;
 
@@ -379,7 +379,7 @@ static UINT32 scripts_get_jump_dest(void)
 static void dmaop_jump(void)
 {
 	if (scripts_compute_branch())
-	{
+{
 		lsi810.dsp = scripts_get_jump_dest();
 	}
 	else

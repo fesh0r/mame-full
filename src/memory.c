@@ -1156,7 +1156,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 				if (!IS_AMENTRY_EXTENDED(map) && HANDLER_IS_ROM(map->read.handler) && !map->region)
 				{
 					map->region = REGION_CPU1 + cpunum;
-					map->region_offs = map->start;
+					map->region_offs = SPACE_SHIFT(space, map->start);
 				}
 
 		/* convert region-relative entries to their memory pointers */
