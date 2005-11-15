@@ -40,22 +40,6 @@ void rtrim(char *buf)
 	}
 }
 
-#ifndef strcmpi
-int strcmpi(const char *dst, const char *src)
-{
-	int result = 0;
-
-	while( !result && *src && *dst )
-	{
-		result = tolower(*dst) - tolower(*src);
-		src++;
-		dst++;
-	}
-	return result;
-}
-#endif /* strcmpi */
-
-
 #ifndef strncmpi
 int strncmpi(const char *dst, const char *src, size_t n)
 {
@@ -164,7 +148,7 @@ int findextension(const char *extensions, const char *ext)
 
 	while(*extensions)
 	{
-		if (!strcmpi(extensions, ext))
+		if (!mame_stricmp(extensions, ext))
 			return 1;
 		extensions += strlen(extensions) + 1;
 	}

@@ -67,7 +67,7 @@ int device_typeid(const char *name)
 	int i;
 	for (i = 0; i < sizeof(device_info_array) / sizeof(device_info_array[0]); i++)
 	{
-		if (!strcmpi(name, device_info_array[i].name) || !strcmpi(name, device_info_array[i].shortname))
+		if (!mame_stricmp(name, device_info_array[i].name) || !mame_stricmp(name, device_info_array[i].shortname))
 			return i;
 	}
 	return -1;

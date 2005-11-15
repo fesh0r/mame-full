@@ -106,7 +106,7 @@ SNAPSHOT_LOAD(spectrum)
 
 	mame_fread(fp, snapshot_data, snapshot_size);
 
-	if (!strcmpi(file_type, "sna"))
+	if (!mame_stricmp(file_type, "sna"))
 	{
 		if ((snapshot_size != 49179) && (snapshot_size != 131103) && (snapshot_size != 14787))
 		{
@@ -115,7 +115,7 @@ SNAPSHOT_LOAD(spectrum)
 		}
 		spectrum_setup_sna(snapshot_data, snapshot_size);
 	}
-	else if (!strcmpi(file_type, "sp"))
+	else if (!mame_stricmp(file_type, "sp"))
 	{
 		if (snapshot_data[0]!='S' && snapshot_data[1]!='P')
 		{

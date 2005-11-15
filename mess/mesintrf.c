@@ -145,7 +145,7 @@ int ui_sprintf_image_info(char *buf)
 
 				/* display long filename, if present and doesn't correspond to name */
 				info = image_longname(img);
-				if (info && (!base_filename_noextension || strcmpi(info, base_filename_noextension)))
+				if (info && (!base_filename_noextension || mame_stricmp(info, base_filename_noextension)))
 					dst += sprintf(dst,"%s\n", info);
 
 				/* display manufacturer, if available */

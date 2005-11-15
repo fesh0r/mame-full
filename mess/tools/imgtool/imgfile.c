@@ -421,7 +421,7 @@ imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesiz
 		if (err)
 			goto done;
 
-		if (!strcmpi(fname, ent.filename))
+		if (!mame_stricmp(fname, ent.filename))
 		{
 			*filesize = ent.filesize;
 			goto done;

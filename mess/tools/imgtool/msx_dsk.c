@@ -327,7 +327,7 @@ static int msx_dsk_image_readfile(imgtool_image *img, const char *fname, imgtool
 			while ( (fname[offset] >= '0') || (fname[offset] <= '9') )
 				disks = disks * 10 + (fname[offset++] - '0');
 
-			if (strcmpi (fname + offset, ".dsk") )
+			if (mame_stricmp (fname + offset, ".dsk") )
 				return IMGTOOLERR_MODULENOTFOUND;
 
 			if ( (disks < 1) || (disks > image->disks) )

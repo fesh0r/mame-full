@@ -221,7 +221,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	/* lookup driver */
 	for (driver_num = 0; drivers[driver_num]; driver_num++)
 	{
-		if (!strcmpi(current_testcase.driver, drivers[driver_num]->name))
+		if (!mame_stricmp(current_testcase.driver, drivers[driver_num]->name))
 			break;
 	}
 

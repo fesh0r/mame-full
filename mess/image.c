@@ -235,7 +235,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 
 	/* is this a ZIP file? */
 	s = strrchr(img->name, '.');
-	if (s && !strcmpi(s, ".ZIP"))
+	if (s && !mame_stricmp(s, ".ZIP"))
 	{
 		/* ZIP files are writeable */
 		writeable = 0;

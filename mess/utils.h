@@ -37,20 +37,15 @@ char *strncatz(char *dest, const char *source, size_t len);
 void rtrim(char *buf);
 
 /* -----------------------------------------------------------------------
- * strcmpi
  * strncmpi
  *
  * Case insensitive compares.  If your platform has this function then
  * #define it in "osdutils.h"
  * ----------------------------------------------------------------------- */
 
-#ifndef strcmpi
-int strcmpi(const char *dst, const char *src);
-#endif /* strcmpi */
-
 #ifndef strncmpi
 int strncmpi(const char *dst, const char *src, size_t n);
-#endif /* strcmpi */
+#endif /* strncmpi */
 
 /* -----------------------------------------------------------------------
  * osd_basename
