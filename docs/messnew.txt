@@ -60,6 +60,8 @@ System Driver Changes:
 - [SPECTRUM] Fixed regression introduced in MESS 0.96. (bugs #726, #761)  [Nate
   Woods]
 
+- [SVISION] Fixed regression on 32KB cartridges. (bug #776)  [Nate Woods]
+
 - [Z88] Fixed regression introduced in MESS 0.96. (bug #762)  [Nate Woods]
 
 - [ZX] Implemented RAM configuration support.  [Nate Woods]

@@ -369,7 +369,7 @@ ROM_END
 
 static DEVICE_LOAD( svision_cart )
 {
-	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x10000, CARTLOAD_MUSTBEPOWEROFTWO);
+	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x10000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
 }
 
 static void svision_cartslot_getinfo(struct IODevice *dev)
