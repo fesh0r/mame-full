@@ -89,6 +89,8 @@ Source Changes:
 - Fixed crash when launching console games without required cartridges.  (bug
   #746) [Nate Woods]
 
+- Added RAM configuration info to -listxml.  [Nate Woods]
+
 - [Messtest] Now fully errors out when a blank screenshot is generated.  [Nate
   Woods]
 
