@@ -5590,8 +5590,6 @@ Improving the tape support, because at the moment it is just a hack.
 Improve the TMS99x8 driver (appears the dirtyrect handling there is not
 quite right)
 
-RELCPMH Mode (CP/M Memory configuration)
-
 Support for additional ROMs
 
 No Cassette Save support.

@@ -43,6 +43,8 @@ System Driver Changes:
 - [MTX512] Added stub calls for the MTX parallel printer port.  (bug #755)
   [Gerco Ballintijn]
 
+- [MTX512] Fixed memory management.  (bug #770)  [Gerco Ballintijn]
+
 - [MTX512] Added printer support.  (bug #774)  [Gerco Ballintijn]
 
 - [NASCOM1] Fixed regression introduced in MESS 0.96. (bug #758)  [Nate Woods]

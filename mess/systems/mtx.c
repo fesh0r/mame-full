@@ -1,8 +1,26 @@
 /*
 ** mtx.c : driver for Memotech MTX512
+** 
+** The memory address space of the MTX512 is divided into 8 banks,
+** with a size of 8KB each. These banks are mapped differently based
+** upon the memory model, selected ROM and RAM page, and the amount
+** of available RAM memory. There are two memory models: a ROM-based
+** model and a CPM model. The memory model, ROM, and RAM page are
+** selected at IO port 0 (i.e., with out (0),a)
 **
+** In the ROM-based model, bank 1 en bank 2 map to ROM images. Bank 1
+** maps to the OSROM image; bank2 maps to either the BASICROM image
+** or the ASSEMROM image, depending on the selected ROM page. The
+** available RAM is allocated to the banks from top to bottom. Bank 8
+** and bank 7, always start at offset 0x0 and 0x2000, respectively.
+** Bank 6, 5, 4, and 3 are mapped depending on the selected RAM page
+** and the available memory.
 **
-**
+** In the CPM model, all banks map to RAM memory. The available RAM
+** is (again) allocated from top to bottom. Bank 8 and bank 7, always
+** start at offset 0x0 and 0x2000, respectively. Bank 6, 5, 4, 3, 2,
+** and 1 are mapped depending on the read-only memory register and
+** the avaiable memory.
 */
 
 #include "driver.h"
@@ -16,21 +34,6 @@
 #include "devices/cartslot.h"
 #include "devices/printer.h"
 
-unsigned char key_sense;
-int mtx_loadsize;
-int mtx_saveindex;
-
-unsigned char relcpmh;
-unsigned char rampage;
-unsigned char rompage;
-
-static unsigned char *mtx_loadbuffer = NULL;
-static unsigned char *mtx_savebuffer = NULL;
-static unsigned char *mtx_commonram = NULL;
-
-static char mtx_prt_strobe = 0;
-static char mtx_prt_data = 0;
-
 
 #define MTX_SYSTEM_CLOCK		4000000
 
@@ -38,6 +41,24 @@ static char mtx_prt_data = 0;
 #define MTX_PRT_NOERROR		2
 #define MTX_PRT_EMPTY		4
 #define MTX_PRT_SELECTED	8
+
+
+static unsigned char key_sense;
+
+static unsigned char mtx_relcpmh;
+static unsigned char mtx_rampage;
+static unsigned char mtx_rompage;
+
+static unsigned char * mtx_null_mem = NULL;
+static unsigned char * mtx_zero_mem = NULL;
+
+static char mtx_prt_strobe = 0;
+static char mtx_prt_data = 0;
+
+static unsigned char * mtx_loadbuffer = NULL;
+static unsigned char * mtx_savebuffer = NULL;
+static int mtx_loadsize;
+static int mtx_saveindex;
 
 
 static WRITE8_HANDLER ( mtx_cst_w )
@@ -198,337 +219,164 @@ static z80ctc_interface	mtx_ctc_intf =
 	{0}
 };
 
+static void mtx_set_bank_offsets (unsigned int bank1, unsigned int bank2, 
+	                          unsigned int bank3, unsigned int bank4,
+	                          unsigned int bank5, unsigned int bank6,
+	                          unsigned int bank7, unsigned int bank8)
+{
+	unsigned char * romimage;
+
+//	logerror ("CPM %d  RAM %x  ROM %x\n", mtx_relcpmh,
+//			mtx_rampage, mtx_rompage);
+//	logerror ("map: [0000] %04x [2000] %04x [4000] %04x [6000] %04x\n",
+//			bank1, bank2, bank3, bank4);
+//	logerror ("     [8000] %04x [a000] %04x [c000] %04x [e000] %04x\n",
+//			bank5, bank6, bank7, bank8);
+
+	romimage = memory_region (REGION_CPU1);
+
+	if (mtx_relcpmh) {
+		memory_set_bankptr (1, mess_ram + bank1);
+		// bank 9 is handled by the mtx_trap_write function
+		memory_set_bankptr (2, mess_ram + bank2);
+		memory_set_bankptr (10, mess_ram + bank2);
+	} else {
+		memory_set_bankptr (1, romimage + bank1);
+		// bank is 9 handled by the mtx_trap_write function
+		memory_set_bankptr (2, romimage + bank2);
+		memory_set_bankptr (10, mtx_null_mem);
+	}
+
+	if (bank3 < mess_ram_size) {
+		memory_set_bankptr (3, mess_ram + bank3);
+		memory_set_bankptr (11, mess_ram + bank3);
+        } else {
+		memory_set_bankptr (3, mtx_null_mem);
+		memory_set_bankptr (11, mtx_zero_mem);
+        }
+
+	if (bank4 < mess_ram_size) {
+		memory_set_bankptr (4, mess_ram + bank4);
+		memory_set_bankptr (12, mess_ram + bank4);
+        } else {
+		memory_set_bankptr (4, mtx_null_mem);
+		memory_set_bankptr (12, mtx_zero_mem);
+        }
+
+	if (bank5 < mess_ram_size) {
+		memory_set_bankptr (5, mess_ram + bank5);
+		memory_set_bankptr (13, mess_ram + bank5);
+        } else {
+		memory_set_bankptr (5, mtx_null_mem);
+		memory_set_bankptr (13, mtx_zero_mem);
+        }
+
+	if (bank6 < mess_ram_size) {
+		memory_set_bankptr (6, mess_ram + bank6);
+		memory_set_bankptr (14, mess_ram + bank6);
+        } else {
+		memory_set_bankptr (6, mtx_null_mem);
+		memory_set_bankptr (14, mtx_zero_mem);
+        }
+
+	memory_set_bankptr (7, mess_ram + bank7);
+	memory_set_bankptr (15, mess_ram + bank7);
+
+	memory_set_bankptr (8, mess_ram + bank8);
+	memory_set_bankptr (16, mess_ram + bank8);
+}
+
 static WRITE8_HANDLER ( mtx_bankswitch_w )
 {
+	unsigned int bank1, bank2, bank3, bank4;
+	unsigned int bank5, bank6, bank7, bank8;
 
-	unsigned char *romoffset;
+	mtx_relcpmh = (data & 0x80) >> 7;
+	mtx_rampage = (data & 0x0f);
+	mtx_rompage = (data & 0x70) >> 4;
 
-	unsigned int bank1, bank2, bank3, bank4, bank5, bank6;
-
-	bank1 = 0;
-	bank2 = 0;
-	bank3 = 0;
-	bank4 = 0;
-	bank5 = 0;
-	bank6 = 0;
-
-	// todo: cpm RAM mode (relcpmh)
-
-	relcpmh = (data & 0x80) >> 7;
-	rampage = (data & 0x0f);
-	rompage = (data & 0x70) >> 4;
-
-	switch(rompage)
-	{
-		case 0:
-			bank1=0;
-			bank2=0x2000;
-			break;
-		case 1:
-			bank1=0;
-			bank2=0x4000;
-			break;
+	if (mtx_relcpmh) {
+		bank1 = 0xe000 + mtx_rampage * 0xc000;
+		bank2 = 0xc000 + mtx_rampage * 0xc000;
+		bank3 = 0xa000 + mtx_rampage * 0xc000;
+		bank4 = 0x8000 + mtx_rampage * 0xc000;
+		bank5 = 0x6000 + mtx_rampage * 0xc000;
+		bank6 = 0x4000 + mtx_rampage * 0xc000;
+	} else {
+		bank1 = 0x0;
+		bank2 = 0x2000 + mtx_rompage * 0x2000;
+		bank3 = 0xa000 + mtx_rampage * 0x8000;
+		bank4 = 0x8000 + mtx_rampage * 0x8000;
+		bank5 = 0x6000 + mtx_rampage * 0x8000;
+		bank6 = 0x4000 + mtx_rampage * 0x8000;
 	}
 
-	switch(rampage)
-	{
-		case 0:
-			bank3=0x6000;
-			bank4=0x4000;
-			bank5=0x2000;
-			bank6=0;
-			break;
+	bank7 = 0x2000;
+	bank8 = 0x0;
 
-		case 1:
-			bank3=0xe000;
-			bank4=0xc000;
-			bank5=0xa000;
-			bank6=0x8000;
-			break;
-
-		case 2:
-			bank3=0x16000;
-			bank4=0x14000;
-			bank5=0x12000;
-			bank6=0x10000;
-			break;
-
-		case 3:
-			bank3=0x1e000;
-			bank4=0x1c000;
-			bank5=0x1a000;
-			bank6=0x18000;
-			break;
-
-		case 4:
-			bank3=0x26000;
-			bank4=0x24000;
-			bank5=0x22000;
-			bank6=0x20000;
-			break;
-
-		case 5:
-			bank3=0x2e000;
-			bank4=0x2c000;
-			bank5=0x2a000;
-			bank6=0x28000;
-			break;
-
-		case 6:
-			bank3=0x36000;
-			bank4=0x34000;
-			bank5=0x32000;
-			bank6=0x30000;
-			break;
-
-		case 7:
-			bank3=0x3e000;
-			bank4=0x3c000;
-			bank5=0x3a000;
-			bank6=0x38000;
-			break;
-
-		case 8:
-			bank3=0x46000;
-			bank4=0x44000;
-			bank5=0x42000;
-			bank6=0x40000;
-			break;
-
-		case 9:
-			bank3=0x4e000;
-			bank4=0x4c000;
-			bank5=0x4a000;
-			bank6=0x48000;
-			break;
-
-		case 10:
-			bank3=0x56000;
-			bank4=0x54000;
-			bank5=0x52000;
-			bank6=0x50000;
-			break;
-
-		case 11:
-			bank3=0x5e000;
-			bank4=0x5c000;
-			bank5=0x5a000;
-			bank6=0x58000;
-			break;
-
-		case 12:
-			bank3=0x66000;
-			bank4=0x64000;
-			bank5=0x62000;
-			bank6=0x60000;
-			break;
-
-		case 13:
-			bank3=0x6e000;
-			bank4=0x6c000;
-			bank5=0x6a000;
-			bank6=0x68000;
-			break;
-
-		case 14:
-			bank3=0x76000;
-			bank4=0x74000;
-			bank5=0x72000;
-			bank6=0x70000;
-			break;
-
-		case 15:
-			bank3=0x7e000;
-			bank4=0x7c000;
-			bank5=0x7a000;
-			bank6=0x78000;
-			break;
-
-	}
-
-	// bankswitcherooney type thing (tm)
-
-	romoffset = memory_region(REGION_CPU1) + 0x10000 + bank1;
-	memory_set_bankptr(1, romoffset);
-	romoffset = memory_region(REGION_CPU1) + 0x10000 + bank2;
-	memory_set_bankptr(2, romoffset);
-
-	memory_set_bankptr(3, mess_ram + bank3);
-	memory_set_bankptr(11, mess_ram + bank3);
-
-	memory_set_bankptr(4, mess_ram + bank4);
-	memory_set_bankptr(12, mess_ram + bank4);
-
-	memory_set_bankptr(5, mess_ram + bank5);
-	memory_set_bankptr(13, mess_ram + bank5);
-
-	memory_set_bankptr(6, mess_ram + bank6);
-	memory_set_bankptr(14, mess_ram + bank6);
-
+	mtx_set_bank_offsets (bank1, bank2, bank3, bank4,
+                              bank5, bank6, bank7, bank8);
 }
 
-static unsigned char mtx_peek(int address)
+static void mtx_virt_to_phys (const char * what, int vaddress,
+		int * ramspace, int * paddress)
 {
-	int base_address = 0;
-	unsigned char rtn = 0;
-	int offset = address & 0x1fff;
+	int offset = vaddress & 0x1fff;
+	int vbase  = vaddress & ~0x1fff;
+	int pbase = 0x20000;
 
-	switch(rampage)
-	{
-		case 0:
-			base_address=0;
-			break;
+	*ramspace = mtx_relcpmh || vaddress >= 0x4000;
 
-		case 1:
-			base_address=0x8000;
-			break;
+	if (0xc000 <= vaddress && vaddress < 0x10000)
+		pbase = 0xe000 - vbase;
+	else if (mtx_relcpmh)
+		pbase = 0xe000 - vbase + mtx_rampage * 0xc000;
+	else if (0 <= vaddress && vaddress < 0x2000)
+		pbase = 0;
+	else if (0x2000 <= vaddress && vaddress < 0x4000)
+		pbase = 0x2000 + mtx_rompage * 0x2000;
+	else if (0x4000 <= vaddress && vaddress < 0xc000)
+		pbase = (0xe000 - vbase) + mtx_rampage * 0x8000;
 
-		case 2:
-			base_address=0x10000;
-			break;
+	*paddress = pbase + offset;
 
-		case 3:
-			base_address=0x18000;
-			break;
-
-		case 4:
-			base_address=0x20000;
-			break;
-
-		case 5:
-			base_address=0x28000;
-			break;
-
-		case 6:
-			base_address=0x30000;
-			break;
-
-		case 7:
-			base_address=0x38000;
-			break;
-
-		case 8:
-			base_address=0x40000;
-			break;
-
-		case 9:
-			base_address=0x48000;
-			break;
-
-		case 10:
-			base_address=0x50000;
-			break;
-
-		case 11:
-			base_address=0x58000;
-			break;
-
-		case 12:
-			base_address=0x60000;
-			break;
-
-		case 13:
-			base_address=0x68000;
-			break;
-
-		case 14:
-			base_address=0x70000;
-			break;
-
-		case 15:
-			base_address=0x78000;
-			break;
-
-	}
-
-	if(address>=0x4000 && address<=0x5fff) rtn = mess_ram[base_address + 0x6000 + offset];
-	if(address>=0x6000 && address<=0x7fff) rtn = mess_ram[base_address + 0x4000 + offset];
-	if(address>=0x8000 && address<=0x9fff) rtn = mess_ram[base_address + 0x2000 + offset];
-	if(address>=0xa000 && address<=0xbfff) rtn = mess_ram[base_address + offset];
-	if(address>=0xc000 && address<=0xffff) rtn = mtx_commonram[address - 0xc000];
-return(rtn);
-
+//	logerror ("%s (%d,%d,%d,%04x) -> (%d,%06x)\n", what,
+//			mtx_relcpmh, mtx_rompage, mtx_rampage, vaddress,
+//			*ramspace, *paddress);
 }
 
-static void mtx_poke(int address, unsigned char data)
+static unsigned char mtx_peek (int vaddress)
 {
-	int base_address = 0;
-	int offset = address & 0x1fff;
+	unsigned char * romimage;
+	int ramspace;
+	int paddress;
 
-	switch(rampage)
-	{
-		case 0:
-			base_address=0;
-			break;
+	romimage = memory_region (REGION_CPU1);
+	mtx_virt_to_phys ("peek", vaddress, &ramspace, &paddress);
 
-		case 1:
-			base_address=0x8000;
-			break;
-
-		case 2:
-			base_address=0x10000;
-			break;
-
-		case 3:
-			base_address=0x18000;
-			break;
-
-		case 4:
-			base_address=0x20000;
-			break;
-
-		case 5:
-			base_address=0x28000;
-			break;
-
-		case 6:
-			base_address=0x30000;
-			break;
-
-		case 7:
-			base_address=0x38000;
-			break;
-
-		case 8:
-			base_address=0x40000;
-			break;
-
-		case 9:
-			base_address=0x48000;
-			break;
-
-		case 10:
-			base_address=0x50000;
-			break;
-
-		case 11:
-			base_address=0x58000;
-			break;
-
-		case 12:
-			base_address=0x60000;
-			break;
-
-		case 13:
-			base_address=0x68000;
-			break;
-
-		case 14:
-			base_address=0x70000;
-			break;
-
-		case 15:
-			base_address=0x78000;
-			break;
-
+	if (paddress > mess_ram_size) {
+		logerror ("peek into non-existing memory\n");
+		return 0;
 	}
 
-	if(address>=0x4000 && address<=0x5fff) mess_ram[base_address + 0x6000 + offset] = data;
-	if(address>=0x6000 && address<=0x7fff) mess_ram[base_address + 0x4000 + offset] = data;
-	if(address>=0x8000 && address<=0x9fff) mess_ram[base_address + 0x2000 + offset] = data;
-	if(address>=0xa000 && address<=0xbfff) mess_ram[base_address + offset] = data;
-	if(address>=0xc000 && address<=0xffff) mtx_commonram[address - 0xc000] = data;
+	if (ramspace)
+		return mess_ram[paddress];
+	else 
+		return romimage[paddress];
+}
 
+static void mtx_poke (int vaddress, unsigned char data)
+{
+	int ramspace;
+	int paddress;
+
+	mtx_virt_to_phys ("poke", vaddress, &ramspace, &paddress);
+	if (!ramspace)
+		logerror ("poke into the ROM address space\n");
+	else if (paddress >= mess_ram_size)
+		logerror ("poke into non-existing RAM\n");
+	else
+    		mess_ram[paddress] = data;
 }
 
 /*
@@ -655,6 +503,12 @@ static WRITE8_HANDLER ( mtx_trap_write )
 	int start;
 	int length;
 
+	if (mtx_relcpmh)
+	{
+		mtx_poke (offset, data);
+		return;
+	}
+
 	pc = activecpu_get_reg(Z80_PC);
 	if((offset == 0x0aae) && (pc == 0x0ab1))
 	{
@@ -680,55 +534,44 @@ static void mtx_printer_getinfo(struct IODevice *dev)
 
 static MACHINE_INIT( mtx512 )
 {
-	unsigned char *romoffset;
+	unsigned char * romimage;
 
-	mtx_commonram = (unsigned char *)auto_malloc(16384);
-	if(!mtx_commonram)
+	mtx_null_mem = (unsigned char *) auto_malloc (16384);
+	if (!mtx_null_mem)
 		return;
-	memset(mtx_commonram, 0, 16384);
 
-	mtx_loadbuffer = (unsigned char *)auto_malloc(65536);
-	if(!mtx_loadbuffer)
+	mtx_zero_mem = (unsigned char *) auto_malloc (16384);
+	if (!mtx_zero_mem)
 		return;
-	memset(mtx_loadbuffer, 0, 65536);
 
-	mtx_savebuffer = (unsigned char *)auto_malloc(65536);
-	if(!mtx_savebuffer)
+	mtx_loadbuffer = (unsigned char *) auto_malloc (65536);
+	if (!mtx_loadbuffer)
 		return;
-	memset(mtx_savebuffer, 0, 65536);
 
-	z80ctc_init(&mtx_ctc_intf);
+	mtx_savebuffer = (unsigned char *) auto_malloc (65536);
+	if (!mtx_savebuffer)
+		return;
 
-	// set up memory configuration
+	memset (mtx_null_mem, 0, 16384);
+	memset (mtx_zero_mem, 0, 16384);
+	memset (mtx_loadbuffer, 0, 65536);
+	memset (mtx_savebuffer, 0, 65536);
 
-	romoffset = memory_region(REGION_CPU1) + 0x10000;
+	z80ctc_init (&mtx_ctc_intf);
 
-	//Patch the Rom (Sneaky........ Who needs to trap opcodes?)
-	romoffset[0x0aae] = 0x32;	// ld ($0aae),a
-	romoffset[0x0aaf] = 0xae;
-	romoffset[0x0ab0] = 0x0a;
-	romoffset[0x0ab1] = 0xc9;	// ret
-	memory_set_bankptr(1, romoffset);
-	romoffset = memory_region(REGION_CPU1) + 0x12000;
-	memory_set_bankptr(2, romoffset);
+	// Patch the Rom (Sneaky........ Who needs to trap opcodes?)
+	romimage = memory_region(REGION_CPU1);
+	romimage[0x0aae] = 0x32;	// ld ($0aae),a
+	romimage[0x0aaf] = 0xae;
+	romimage[0x0ab0] = 0x0a;
+	romimage[0x0ab1] = 0xc9;	// ret
 
-	memory_set_bankptr(3, mess_ram + 0x6000);
-	memory_set_bankptr(11, mess_ram + 0x6000);
-
-	memory_set_bankptr(4, mess_ram + 0x4000);
-	memory_set_bankptr(12, mess_ram + 0x4000);
-
-	memory_set_bankptr(5, mess_ram + 0x2000);
-	memory_set_bankptr(13, mess_ram + 0x2000);
-
-	memory_set_bankptr(6, mess_ram);
-	memory_set_bankptr(14, mess_ram);
-
-	memory_set_bankptr(7, mtx_commonram);
-	memory_set_bankptr(15, mtx_commonram);
-
-	memory_set_bankptr(8, mtx_commonram + 0x2000);
-	memory_set_bankptr(16, mtx_commonram + 0x2000);
+	// Set up the starting memory configuration
+	mtx_relcpmh = 0;
+	mtx_rampage = 0;
+	mtx_rompage = 0;
+	mtx_set_bank_offsets (0, 0x2000, 0xa0000, 0x8000,
+			      0x6000, 0x4000, 0x2000, 0);
 
 	mtx_loadsize = 0;
 	mtx_saveindex = 0;
@@ -741,7 +584,7 @@ static INTERRUPT_GEN( mtx_interrupt )
 
 ADDRESS_MAP_START( mtx_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x1fff) AM_READWRITE( MRA8_BANK1, mtx_trap_write )
-	AM_RANGE( 0x2000, 0x3fff) AM_READWRITE( MRA8_BANK2, MWA8_NOP )
+	AM_RANGE( 0x2000, 0x3fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK10 )
 	AM_RANGE( 0x4000, 0x5fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK11 )
 	AM_RANGE( 0x6000, 0x7fff) AM_READWRITE( MRA8_BANK4, MWA8_BANK12 )
 	AM_RANGE( 0x8000, 0x9fff) AM_READWRITE( MRA8_BANK5, MWA8_BANK13 )
@@ -875,6 +718,7 @@ INPUT_PORTS_START( mtx512 )
 
 INPUT_PORTS_END
 
+
 static struct z80_irq_daisy_chain mtx_daisy_chain[] =
 {
 	{z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0},
@@ -911,14 +755,29 @@ static MACHINE_DRIVER_START( mtx512 )
 MACHINE_DRIVER_END
 
 ROM_START (mtx512)
-	ROM_REGION (0x20000, REGION_CPU1,0)
-	ROM_LOAD ("osrom", 0x10000, 0x2000, CRC(9ca858cc) SHA1(3804503a58f0bcdea96bb6488833782ebd03976d))
-	ROM_LOAD ("basicrom", 0x12000, 0x2000, CRC(87b4e59c) SHA1(c49782a82a7f068c1195cd967882ba9edd546eaf))
-	ROM_LOAD ("assemrom", 0x14000, 0x2000, CRC(9d7538c3) SHA1(d1882c4ea61a68b1715bd634ded5603e18a99c5f))
+	ROM_REGION (0x6000, REGION_CPU1, 0)
+	ROM_LOAD ("osrom", 0x0, 0x2000, CRC(9ca858cc) SHA1(3804503a58f0bcdea96bb6488833782ebd03976d))
+	ROM_LOAD ("basicrom", 0x2000, 0x2000, CRC(87b4e59c) SHA1(c49782a82a7f068c1195cd967882ba9edd546eaf))
+	ROM_LOAD ("assemrom", 0x4000, 0x2000, CRC(9d7538c3) SHA1(d1882c4ea61a68b1715bd634ded5603e18a99c5f))
 ROM_END
 
 SYSTEM_CONFIG_START(mtx512)
-	CONFIG_RAM_DEFAULT(512 * 1024)
+	CONFIG_RAM(32 * 1024)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_RAM(96 * 1024)
+	CONFIG_RAM(128 * 1024)
+	CONFIG_RAM(160 * 1024)
+	CONFIG_RAM(192 * 1024)
+	CONFIG_RAM(224 * 1024)
+	CONFIG_RAM(256 * 1024)
+	CONFIG_RAM(288 * 1024)
+	CONFIG_RAM(320 * 1024)
+	CONFIG_RAM(352 * 1024)
+	CONFIG_RAM(384 * 1024)
+	CONFIG_RAM(416 * 1024)
+	CONFIG_RAM(448 * 1024)
+	CONFIG_RAM(480 * 1024)
+	CONFIG_RAM(512 * 1024)
 	CONFIG_DEVICE(mtx_printer_getinfo)
 SYSTEM_CONFIG_END
 
