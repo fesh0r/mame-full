@@ -280,7 +280,7 @@ $(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE) $(OSDBGOBJS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	@dllwrap --image-base=0x10080000 --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(OSDBGOBJS) $(LIBS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE) $(MAPFLAGS)
+	@dllwrap --image-base=0x10080000 --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OSDBGLDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(OSDBGOBJS) $(LIBS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE) $(MAPFLAGS)
 
 # gui target
 $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
@@ -329,11 +329,9 @@ imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
-wimgtool$(EXE): \
-		$(WIMGTOOL_OBJS)						\
-		$(PLATFORM_TOOL_OBJS)
+wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
