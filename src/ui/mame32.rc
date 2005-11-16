@@ -47,7 +47,7 @@ BEGIN
     BEGIN
 #ifdef MESS
         MENUITEM "&About MESS",               ID_ABOUT
-f#else
+#else
         MENUITEM "&About MAME32",               ID_ABOUT
 #endif
     END
