@@ -213,7 +213,7 @@ MACHINE_INIT( gbpocket )
 
 	gb_init_regs();
 
-	/* Enable BIOS rom */
+	/* Enable BIOS rom if we have one */
 	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : memory_region(REGION_CPU1) );
 	memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : memory_region(REGION_CPU1) + 0x0100);
 
@@ -1484,16 +1484,6 @@ void gb_scanline_interrupt (void)
 	/* The rest only makes sense if the display is enabled */
 	if (LCDCONT & 0x80)
 	{
-		if (CURLINE == CMPLINE)
-		{
-			LCDSTAT |= 0x04;
-			/* Generate lcd interrupt if requested */
-			if( LCDSTAT & 0x40 )
-				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-		}
-		else
-			LCDSTAT &= 0xFB;
-
 		if (CURLINE < 144)
 		{
 			/* Set Mode 2 lcdstate */
@@ -1522,6 +1512,16 @@ void gb_scanline_interrupt (void)
 			}
 		}
 		CURLINE = (CURLINE + 1) % 154;
+
+		if ( CURLINE == CMPLINE )
+		{
+			LCDSTAT |= 0x04;
+			/* Generate lcd interrupt if requested */
+			if ( LCDSTAT & 0x40 )
+				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+		}
+		else
+			LCDSTAT &= 0xFB;
 	}
 
 	/* Generate serial IO interrupt */
@@ -1584,6 +1584,9 @@ READ8_HANDLER( gb_video_r )
 	switch( offset ) {
 	case 0x06:
 		return 0xFF;
+	case 0x36:
+	case 0x37:
+		return 0;
 	default:
 		return gb_vid_regs[offset];
 	}
@@ -1760,10 +1763,21 @@ WRITE8_HANDLER ( gbc_video_w )
 			break;
 		/* Undocumented registers */
 		case 0x2C:
+			/* bit 0 can be read/written */
+			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
+			data = 0xfe | (data & 0x01);
+			break;
 		case 0x32:
 		case 0x33:
 		case 0x34:
+			/* whole byte can be read/written */
+			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
+			break;
 		case 0x35:
+			/* bit 4-6 can be read/written */
+			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
+			data = 0x8f | (data & 0x70);
+			break;
 		case 0x36:
 		case 0x37:
 			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
