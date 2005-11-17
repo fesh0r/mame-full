@@ -160,6 +160,7 @@ static void gb_init(void)
 			break;
 	}
 
+	gb_vid_regs[0x01] = 0x80;
 	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
 }
 
@@ -1538,21 +1539,29 @@ void gb_scanline_interrupt (void)
 
 void gb_scanline_interrupt_set_mode0 (int param)
 {
-	/* Set Mode 0 lcdstate */
-	LCDSTAT &= 0xFC;
-	/* Generate lcd interrupt if requested */
-	if( LCDSTAT & 0x08 )
-		cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+	/* only perform mode changes when LCD controller is still on */
+	if (LCDCONT & 0x80)
+	{
+		/* Set Mode 0 lcdstate */
+		LCDSTAT &= 0xFC;
+		/* Generate lcd interrupt if requested */
+		if( LCDSTAT & 0x08 )
+			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 
-	/* Check for HBLANK DMA */
-	if( gbc_hdma_enabled && (CURLINE < 144) )
-		gbc_hdma(0x10);
+		/* Check for HBLANK DMA */
+		if( gbc_hdma_enabled && (CURLINE < 144) )
+			gbc_hdma(0x10);
+	}
 }
 
 void gb_scanline_interrupt_set_mode3 (int param)
 {
-	/* Set Mode 3 lcdstate */
-	LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
+	/* only perform mode changes when LCD controller is still on */
+	if (LCDCONT & 0x80)
+	{
+		/* Set Mode 3 lcdstate */
+		LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
+	}
 }
 
 void gbc_hdma(UINT16 length)
@@ -1601,6 +1610,10 @@ WRITE8_HANDLER ( gb_video_w )
 		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
 		gb_bgdtab = gb_vram + ((data & 0x08) ? 0x1C00 : 0x1800 );
 		gb_wndtab = gb_vram + ((data * 0x40) ? 0x1C00 : 0x1800 );
+		/* if LCD controller is switched off, set STAT to 00 */
+		if ( ! ( data & 0x80 ) ) {
+			LCDSTAT &= ~0x03;
+		}
 		break;
 	case 0x01:						/* STAT - LCD Status */
 		data = (data & 0xF8) | (LCDSTAT & 0x07);
