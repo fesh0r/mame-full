@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
+  [Wilbert Pol]
 
 
 
