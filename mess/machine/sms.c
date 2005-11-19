@@ -17,7 +17,8 @@ UINT8 biosPort;
 UINT8 *BIOS;
 UINT8 *ROM;
 
-UINT8 *sms_mapper;
+UINT8 *sms_mapper_ram;
+UINT8 sms_mapper[4];
 UINT8 smsNVRam[NVRAM_SIZE];
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
@@ -117,6 +118,7 @@ WRITE8_HANDLER(sms_mapper_w)
 	offset &= 3;
 
 	sms_mapper[offset] = data;
+	sms_mapper_ram[offset] = data;
 
 	if (biosPort & IO_BIOS_ROM || IS_GG_ANY )
 	{
@@ -613,7 +615,7 @@ MACHINE_INIT(sms)
 
 	memset( memory_region(REGION_CPU1), 0xff, 0x10000 );
 
-	sms_mapper = memory_get_write_ptr( 0, ADDRESS_SPACE_PROGRAM, 0xDFFC );
+	sms_mapper_ram = memory_get_write_ptr( 0, ADDRESS_SPACE_PROGRAM, 0xDFFC );
 
 	/* Initialize SIO stuff for GG */
 	ggSIO[0] = 0x7F;
