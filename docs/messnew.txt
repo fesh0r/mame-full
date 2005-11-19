@@ -16,7 +16,7 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - [Windows GUI] Fixed a bug that prevented column width changes in the
-  software picker from being saved.  [Nate Woods]
+  software picker from being saved.  (bug #589) [Nate Woods]
 
 
 
