@@ -1666,6 +1666,10 @@ WRITE8_HANDLER ( gbc_video_w )
 			gbc_bgdtab = GBC_VRAMMap[1] + ((data & 0x08) ? 0x1C00 : 0x1800);
 			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
 			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
+			/* if LCD controller is switched off, set STAT to 00 */
+			if ( ! ( data & 0x80 ) ) {
+				LCDSTAT &= ~0x03;
+			}
 			break;
 		case 0x07:	/* BGP - GB background palette */
 			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
