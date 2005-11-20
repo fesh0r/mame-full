@@ -20,6 +20,9 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug that prevented column width changes in the
   software picker from being saved.  (bug #589) [Nate Woods]
 
+- [Windows GUI] Fixed a bug that caused "ghost filenames" to be introduced
+  when using images with spaces in the filename.  (bug #784) [Nate Woods]
+
 
 
 Imgtool Changes:
