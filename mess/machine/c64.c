@@ -34,14 +34,9 @@
 #include "includes/c64.h"
 
 unsigned char c65_keyline = { 0xff };
-int c65=0;
 UINT8 c65_6511_port=0xff;
 
-/* computer is a c128 */
-int c128 = 0;
-
-UINT8 c128_keyline[3] =
-{0xff, 0xff, 0xff};
+UINT8 c128_keyline[3] = {0xff, 0xff, 0xff};
 
 
 /* keyboard lines */
@@ -80,28 +75,39 @@ static UINT8 cia0porta, cia0portb;
 static UINT8 serial_clock, serial_data, serial_atn;
 static UINT8 vicirq = 0, cia0irq = 0, cia1irq = 0;
 
+static int is_c65(void)
+{
+	return !strncmp(Machine->gamedrv->name, "c65", 3);
+}
+
+static int is_c128(void)
+{
+	return !strncmp(Machine->gamedrv->name, "c128", 4);
+}
+
 static void c64_nmi(void)
 {
-    static int nmilevel = 0;
-    if (nmilevel != KEY_RESTORE||cia1irq)
-    {
-	if (c128) {
-	    if (cpu_getactivecpu()==0) 
+	static int nmilevel = 0;
+	if (nmilevel != KEY_RESTORE||cia1irq)
+	{
+		if (is_c128())
 		{
-			/* z80 */
-			cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
-	    }
+			if (cpu_getactivecpu()==0) 
+			{
+				/* z80 */
+				cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
+			}
+			else
+			{
+				cpunum_set_input_line(1, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
+			}
+		}
 		else
 		{
-			cpunum_set_input_line(1, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
-	    }
+			cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
+		}
+		nmilevel = KEY_RESTORE||cia1irq;
 	}
-	else
-	{
-	    cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
-	}
-	nmilevel = KEY_RESTORE||cia1irq;
-    }
 }
 
 
@@ -244,18 +250,19 @@ int c64_cia0_port_b_r (int offset)
     if (JOYSTICK_SWAP) value &= c64_keyline[9];
     else value &= c64_keyline[8];
 
-    if (c128)
+    if (is_c128())
     {
-	if (!vic2e_k0_r ())
-	    value &= c128_keyline[0];
-	if (!vic2e_k1_r ())
-	    value &= c128_keyline[1];
-	if (!vic2e_k2_r ())
-	    value &= c128_keyline[2];
+		if (!vic2e_k0_r ())
+			value &= c128_keyline[0];
+		if (!vic2e_k1_r ())
+			value &= c128_keyline[1];
+		if (!vic2e_k2_r ())
+			value &= c128_keyline[2];
     }
-    if (c65) {
-	if (!(c65_6511_port&2))
-	    value&=c65_keyline;
+    if (is_c65())
+	{
+		if (!(c65_6511_port&2))
+			value&=c65_keyline;
     }
 
     return value;
@@ -279,13 +286,19 @@ static void c64_irq (int level)
 	if (level != old_level)
 	{
 		DBG_LOG (3, "mos6510", ("irq %s\n", level ? "start" : "end"));
-		if (c128) {
-			if (0&&(cpu_getactivecpu()==0)) {
+		if (is_c128())
+		{
+			if (0&&(cpu_getactivecpu()==0))
+			{
 				cpunum_set_input_line (0, 0, level);
-			} else {
+			}
+			else
+			{
 				cpunum_set_input_line (1, M6510_IRQ_LINE, level);
 			}
-		} else {
+		}
+		else
+		{
 			cpunum_set_input_line (0, M6510_IRQ_LINE, level);
 		}
 		old_level = level;
@@ -353,14 +366,14 @@ int c64_cia1_port_a_r (int offset)
 
 static void c64_cia1_port_a_w (int offset, int data)
 {
-	static int helper[4] =
-	{0xc000, 0x8000, 0x4000, 0x0000};
+	static int helper[4] = {0xc000, 0x8000, 0x4000, 0x0000};
 
 	cbm_serial_clock_write (serial_clock = !(data & 0x10));
 	cbm_serial_data_write (serial_data = !(data & 0x20));
 	cbm_serial_atn_write (serial_atn = !(data & 8));
 	c64_vicaddr = c64_memory + helper[data & 3];
-	if (c128) {
+	if (is_c128())
+	{
 		c128_vicaddr = c64_memory + helper[data & 3] + c128_va1617;
 	}
 }
@@ -409,18 +422,19 @@ static void c64_robocop2_w(int offset, int value)
 	roml=cbm_rom[value&0xf].chip;
 	romh=cbm_rom[(value&0xf)+0x10].chip;
 	if (value & 0x80)
-		{
-			c64_game = value & 0x10;
-			c64_exrom = 1;
-		}
+	{
+		c64_game = value & 0x10;
+		c64_exrom = 1;
+	}
 	else
-		{
-			c64_game = c64_exrom = 1;
-		}
-	if (c128)
-		c128_bankswitch_64 (0);
+	{
+		c64_game = c64_exrom = 1;
+	}
+
+	if (is_c128())
+		c128_bankswitch_64(0);
 	else
-		c64_bankswitch (0);
+		c64_bankswitch(0);
 }
 
 static void c64_supergames_w(int offset, int value)
@@ -432,19 +446,20 @@ static void c64_supergames_w(int offset, int value)
 	roml=cbm_rom[value&3].chip;
 	romh=cbm_rom[value&3].chip+0x2000;
 	if (value & 4)
-		{
-			c64_game = 0;
-			c64_exrom = 1;
-		}
+	{
+		c64_game = 0;
+		c64_exrom = 1;
+	}
 	else
-		{
-			c64_game = c64_exrom = 1;
-		}
+	{
+		c64_game = c64_exrom = 1;
+	}
 	if (value == 0xc)
-		{
-			c64_game = c64_exrom = 0;
-		}
-	if (c128)
+	{
+		c64_game = c64_exrom = 0;
+	}
+
+	if (is_c128())
 		c128_bankswitch_64 (0);
 	else
 		c64_bankswitch (0);
@@ -670,9 +685,9 @@ void c64_m6510_port_write(UINT8 data)
 		vc20_tape_write (!(data & 8));
 		vc20_tape_motor (data & 0x20);
 	}
-	if (c128)
+	if (is_c128())
 		c128_bankswitch_64 (0);
-	else if (c65)
+	else if (is_c65())
 	{
 		// NPW 8-Feb-2004 - Don't know why I have to do this
 		//c65_bankswitch();
@@ -687,9 +702,9 @@ UINT8 c64_m6510_port_read(void)
 
 	if (c64_tape_on && !vc20_tape_switch ())
 		data &= ~0x10;
-	if (c128 && !c128_capslock_r ())
+	if (is_c128() && !c128_capslock_r ())
 		data &= ~0x40;
-	if (c65 && C65_KEY_DIN)
+	if (is_c65() && C65_KEY_DIN)
 		data &= ~0x40; /*? */
 	return data;
 }
@@ -876,8 +891,8 @@ void c64_common_init_machine (void)
 	if (c64_cia1_on)
 	{
 		cbm_serial_reset_write (0);
-		cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, c65?10:8);
-		cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, c65?11:9);
+		cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, is_c65() ? 10 : 8);
+		cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, is_c65() ? 11 : 9);
 		serial_clock = serial_data = serial_atn = 1;
 	}
 	c64_vicaddr = c64_memory;
@@ -891,7 +906,7 @@ MACHINE_INIT( c64 )
 	c64_rom_recognition ();
 	c64_rom_load();
 
-	if (c128)
+	if (is_c128())
 		c128_bankswitch_64 (1);
 	if (!ultimax)
 		c64_bankswitch (1);
@@ -1032,13 +1047,18 @@ INTERRUPT_GEN( c64_frame_interrupt )
 
 	c64_nmi();
 
-	if (c128) {
-		if (MONITOR_TV!=monitor) {
-			if (MONITOR_TV) {
+	if (is_c128())
+	{
+		if (MONITOR_TV!=monitor)
+		{
+			if (MONITOR_TV)
+			{
 				vic2_set_rastering(0);
 				vdc8563_set_rastering(1);
 				set_visible_area(0,655,0,215);
-			} else {
+			}
+			else
+			{
 				vic2_set_rastering(1);
 				vdc8563_set_rastering(0);
 				set_visible_area(0,335,0,215);
@@ -1048,7 +1068,8 @@ INTERRUPT_GEN( c64_frame_interrupt )
 	}
 
 	value = 0xff;
-	if (c128) {
+	if (is_c128())
+	{
 		if (C128_KEY_CURSOR_DOWN)
 			value &= ~0x80;
 		if (C128_KEY_F5)
@@ -1061,7 +1082,7 @@ INTERRUPT_GEN( c64_frame_interrupt )
 			value &= ~8;
 		if (C128_KEY_CURSOR_RIGHT)
 			value &= ~4;
-	} else if (c65) {
+	} else if (is_c65()) {
 		if (C65_KEY_CURSOR_DOWN)
 			value &= ~0x80;
 		if (C65_KEY_F5)
@@ -1191,13 +1212,18 @@ INTERRUPT_GEN( c64_frame_interrupt )
 		value &= ~0x40;
 	if (KEY_EQUALS)
 		value &= ~0x20;
-	if (c128) {
+	if (is_c128())
+	{
 		if (C128_KEY_RIGHT_SHIFT)
 		value &= ~0x10;
-	} else if (c65) {
+	}
+	else if (is_c65())
+	{
 		if (C65_KEY_RIGHT_SHIFT)
 		value &= ~0x10;
-	} else {
+	}
+	else
+	{
 		if (KEY_RIGHT_SHIFT)
 		value &= ~0x10;
 	}
@@ -1212,7 +1238,7 @@ INTERRUPT_GEN( c64_frame_interrupt )
 	c64_keyline[6] = value;
 
 	value = 0xff;
-	if (c65) {
+	if (is_c65()) {
 		if (C65_KEY_STOP)
 			value &= ~0x80;
 		if (C65_KEY_SPACE)
@@ -1287,7 +1313,8 @@ INTERRUPT_GEN( c64_frame_interrupt )
 	}
 	c64_keyline[9] = value2;
 
-	if ( c128 ) {
+	if (is_c128())
+	{
 		value = 0xff;
 		if (KEY_NUM1)
 			value &= ~0x80;
@@ -1346,7 +1373,7 @@ INTERRUPT_GEN( c64_frame_interrupt )
 		c128_keyline[2] = value;
 	}
 
-	if (c65) {
+	if (is_c65()) {
 		value = 0xff;
 		if (C65_KEY_ESCAPE)
 			value &= ~0x80;

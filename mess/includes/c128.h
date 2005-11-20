@@ -100,7 +100,6 @@ extern VIDEO_START( c128 );
 extern VIDEO_UPDATE( c128 );
 
 /* private area */
-extern int c128;					   /* computer is commodore c128 */
 extern UINT8 c128_keyline[3];
 
 void c128_bankswitch_64 (int reset);

@@ -52,7 +52,6 @@ extern MACHINE_INIT( c65 );
 void c65_state (void);
 
 extern UINT8 c65_keyline;
-extern int c65;
 extern UINT8 c65_6511_port;
 
 #endif

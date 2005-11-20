@@ -770,7 +770,6 @@ static void c65_common_driver_init (void)
 	memory_set_bankptr(14, c64_memory + 0x0c000);
 	memory_set_bankptr(15, c64_memory + 0x0e000);
 
-	c65 = 1;
 	c64_tape_on = 0;
 	/*memset(c64_memory+0x40000, 0, 0x800000-0x40000); */
 

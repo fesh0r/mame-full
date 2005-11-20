@@ -784,7 +784,6 @@ static void c128_common_driver_init (void)
 	for (i=0; i<0x100; i++)
 		gfx[i]=i;
 
-	c128 = 1;
 	vc20_tape_open (c64_tape_read);
 
 	cia6526_init();
