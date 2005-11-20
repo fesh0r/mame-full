@@ -70,7 +70,6 @@ UINT8 gb_ie;
 
 void (*refresh_scanline)(void);
 
-#define CheckCRC 1
 #ifdef MAME_DEBUG
 /* #define V_GENERAL*/		/* Display general debug information */
 /* #define V_BANK*/			/* Display bank switching debug information */
@@ -1362,10 +1361,9 @@ DEVICE_LOAD(gb_cart)
 		return INIT_FAIL;
 	}
 
-        ROMBanks = 2 << gb_cart[0x0148];
-	if ( ( ROMBanks * 0x4000 ) != filesize ) {
-		logerror( "Error loading cartridge: Filesize and reported ROM banks don't match.\n" );
-		return INIT_FAIL;
+	ROMBanks = filesize / 0x4000;
+	if ( ROMBanks != ( 2 << gb_cart[0x0148] ) ) {
+		logerror( "Warning loading cartridge: Filesize and reported ROM banks don't match.\n" );
 	}
 
         RAMBanks = rambanks[gb_cart[0x0149] & 3];
@@ -1377,10 +1375,9 @@ DEVICE_LOAD(gb_cart)
         {
                 Checksum -= gb_cart[I];
         }
-        if (CheckCRC && (Checksum & 0xFFFF))
+        if (Checksum & 0xFFFF)
         {
-                logerror("Error loading cartridge: Checksum is wrong.");
-                return INIT_FAIL;
+                logerror("Warning loading cartridge: Checksum is wrong.");
         }
 
 	/* Initialize ROMMap pointers */
