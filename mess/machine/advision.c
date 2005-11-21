@@ -27,12 +27,6 @@ MACHINE_INIT( advision )
     advision_videoenable = 0;
 }
 
-DEVICE_LOAD( advision_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0, 4096, 4096, 0);
-}
-
-
 /****** External RAM ******************************/
 
  READ8_HANDLER ( advision_MAINRAM_r )

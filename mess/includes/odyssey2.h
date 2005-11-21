@@ -6,7 +6,6 @@ extern int odyssey2_videobank;
 
 DRIVER_INIT( odyssey2 );
 MACHINE_INIT( odyssey2 );
-DEVICE_LOAD( odyssey2_cart );
 
 
 /* vidhrdw/odyssey2.c */

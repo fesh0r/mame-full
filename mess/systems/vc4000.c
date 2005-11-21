@@ -210,26 +210,13 @@ MACHINE_DRIVER_END
 
 ROM_START(vc4000)
 	ROM_REGION(0x8000,REGION_CPU1, 0)
+	ROM_CART_LOAD(0, "bin\0", 0x0000, 0x8000, ROM_NOMIRROR)
+
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static DEVICE_LOAD( vc4000_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0, 0x0001, memory_region_length(REGION_CPU1), 0);
-}
-
-static void vc4000_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_vc4000_cart;
-}
-
 SYSTEM_CONFIG_START(vc4000)
-	CONFIG_DEVICE(vc4000_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

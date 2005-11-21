@@ -2082,49 +2082,58 @@ MACHINE_DRIVER_END
 ROM_START(spectrum)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("spectrum.rom", 0x0000, 0x4000, CRC(ddee531f))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specbusy)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-busy.rom", 0x0000, 0x4000, CRC(1511cddb))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpsch)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-psych.rom", 0x0000, 0x4000, CRC(cd60b589))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specgrot)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-groot.rom", 0x0000, 0x4000, CRC(abf18c45))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specimc)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-imc.rom", 0x0000, 0x4000, CRC(d1be99ee))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(speclec)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("80-lec.rom", 0x0000, 0x4000, CRC(5b5c92b1))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(spec128)
-		ROM_REGION(0x18000,REGION_CPU1,0)
+	ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zx128_0.rom",0x10000,0x4000, CRC(e76799d2))
 	ROM_LOAD("zx128_1.rom",0x14000,0x4000, CRC(b96a36be))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(spec128s)
-		ROM_REGION(0x18000,REGION_CPU1,0)
+	ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zx128s0.rom",0x10000,0x4000, CRC(453d86b2))
 	ROM_LOAD("zx128s1.rom",0x14000,0x4000, CRC(6010e796))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpls2)
-		ROM_REGION(0x18000,REGION_CPU1,0)
+	ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zxp2_0.rom",0x10000,0x4000, CRC(5d2e8c66))
 	ROM_LOAD("zxp2_1.rom",0x14000,0x4000, CRC(98b1320b))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpl2a)
@@ -2133,6 +2142,7 @@ ROM_START(specpl2a)
 	ROM_LOAD("p2a41_1.rom",0x14000,0x4000, CRC(a7916b3f))
 	ROM_LOAD("p2a41_2.rom",0x18000,0x4000, CRC(c9a0b748))
 	ROM_LOAD("p2a41_3.rom",0x1c000,0x4000, CRC(b88fd6e3))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpls3)
@@ -2141,31 +2151,37 @@ ROM_START(specpls3)
 	ROM_LOAD("pl3-1.rom",0x14000,0x4000, CRC(f1d1d99e))
 	ROM_LOAD("pl3-2.rom",0x18000,0x4000, CRC(3dbf351d))
 	ROM_LOAD("pl3-3.rom",0x1c000,0x4000, CRC(04448eaa))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpls4)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("plus4.rom",0x0000,0x4000, CRC(7e0f47cb))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(tk90x)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("tk90x.rom",0x0000,0x4000, CRC(3e785f6f))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(tk95)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("tk95.rom",0x0000,0x4000, CRC(17368e07))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(inves)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("inves.rom",0x0000,0x4000, CRC(8ff7a4d1))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(tc2048)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("tc2048.rom",0x0000,0x4000, CRC(f1b5fa67))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(ts2068)
@@ -2184,12 +2200,14 @@ ROM_START(specp2fr)
 	ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("plus2fr0.rom",0x10000,0x4000, CRC(c684c535))
 	ROM_LOAD("plus2fr1.rom",0x14000,0x4000, CRC(f5e509c5))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specp2sp)
 	ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("plus2sp0.rom",0x10000,0x4000, CRC(e807d06e))
 	ROM_LOAD("plus2sp1.rom",0x14000,0x4000, CRC(41981d4b))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specp3sp)
@@ -2198,18 +2216,21 @@ ROM_START(specp3sp)
 	ROM_LOAD("plus3sp1.rom",0x14000,0x4000, CRC(a8ac4966))
 	ROM_LOAD("plus3sp2.rom",0x18000,0x4000, CRC(f6bb0296))
 	ROM_LOAD("plus3sp3.rom",0x1c000,0x4000, CRC(f6d25389))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specpl3e)
 	ROM_REGION(0x20000,REGION_CPU1,0)
 	ROM_LOAD("roma-en.rom",0x10000,0x8000, CRC(2d533344))
 	ROM_LOAD("romb-en.rom",0x18000,0x8000, CRC(ef8d5d92))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(specp3es)
 	ROM_REGION(0x20000,REGION_CPU1,0)
 	ROM_LOAD("roma-es.rom",0x10000,0x8000, CRC(ba694b4b))
 	ROM_LOAD("romb-es.rom",0x18000,0x8000, CRC(61ed94db))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(scorpion)
@@ -2218,10 +2239,12 @@ ROM_START(scorpion)
 	ROM_LOAD("scorp1.rom",0x014000, 0x4000, CRC(9d513013))
 	ROM_LOAD("scorp2.rom",0x018000, 0x4000, CRC(fd0d3ce1))
 	ROM_LOAD("scorp3.rom",0x01c000, 0x4000, CRC(1fe1d003))
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 ROM_START(pentagon)
-		ROM_REGION(0x020000, REGION_CPU1, 0)
+	ROM_REGION(0x020000, REGION_CPU1, 0)
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x4000, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 static void spectrum_common_cassette_getinfo(struct IODevice *dev)
@@ -2251,18 +2274,9 @@ SYSTEM_CONFIG_START(spectrum_common)
 	CONFIG_DEVICE(spectrum_common_quickload_getinfo)
 SYSTEM_CONFIG_END
 
-static void spectrum_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "rom\0";
-	dev->load = device_load_spectrum_cart;
-}
-
 SYSTEM_CONFIG_START(spectrum)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE(spectrum_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 static void specpls3_floppy_getinfo(struct IODevice *dev)
@@ -2298,20 +2312,20 @@ SYSTEM_CONFIG_START(tc2048)
 	CONFIG_RAM_DEFAULT(48 * 1024)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
-COMP ( 1982, spectrum, 0,        0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum" , 0)
+/*    YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
+COMP( 1982, spectrum, 0,        0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum" , 0)
 COMP( 2000, specpls4, spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum +4", GAME_COMPUTER_MODIFIED )
 COMP( 1994, specbusy, spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum (BusySoft Upgrade v1.18)", GAME_COMPUTER_MODIFIED )
 COMP( ????, specpsch, spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum (Maly's Psycho Upgrade)", GAME_COMPUTER_MODIFIED )
 COMP( ????, specgrot, spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum (De Groot's Upgrade)", GAME_COMPUTER_MODIFIED )
 COMP( 1985, specimc,  spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum (Collier's Upgrade)", GAME_COMPUTER_MODIFIED )
 COMP( 1987, speclec,  spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Sinclair Research",	"ZX Spectrum (LEC Upgrade)", GAME_COMPUTER_MODIFIED )
-COMP ( 1986, inves,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Investronica",	"Inves Spectrum 48K+" , 0)
-COMP ( 1985, tk90x,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-90x Color Computer" , 0)
-COMP ( 1986, tk95,     spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-95 Color Computer" , 0)
-COMP ( 1984, tc2048,   spectrum, 0,		tc2048,			spectrum,	0,		tc2048,		"Timex of Portugal",	"TC-2048" , 0)
-COMP ( 1983, ts2068,   spectrum, 0,		ts2068,			spectrum,	0,		ts2068,		"Timex Sinclair",	"TS-2068" , 0)
-COMP ( 1986, uk2086,   spectrum, 0,		uk2086,			spectrum,	0,		ts2068,		"Unipolbrit",	"UK-2086 ver. 1.2" , 0)
+COMP( 1986, inves,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Investronica",	"Inves Spectrum 48K+" , 0)
+COMP( 1985, tk90x,    spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-90x Color Computer" , 0)
+COMP( 1986, tk95,     spectrum, 0,		spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-95 Color Computer" , 0)
+COMP( 1984, tc2048,   spectrum, 0,		tc2048,			spectrum,	0,		tc2048,		"Timex of Portugal",	"TC-2048" , 0)
+COMP( 1983, ts2068,   spectrum, 0,		ts2068,			spectrum,	0,		ts2068,		"Timex Sinclair",	"TS-2068" , 0)
+COMP( 1986, uk2086,   spectrum, 0,		uk2086,			spectrum,	0,		ts2068,		"Unipolbrit",	"UK-2086 ver. 1.2" , 0)
 
 COMP( 1986, spec128,  0,		 0,		spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMP( 1985, spec128s, spec128,  0,		spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)

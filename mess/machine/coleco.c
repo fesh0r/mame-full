@@ -30,13 +30,7 @@ int coleco_cart_verify(const UINT8 *cartdata, size_t size)
 	return retval;
 }
 
-DEVICE_LOAD( coleco_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x8000, 0x0001, 0x8000, 0);
-}
-
-
- READ8_HANDLER ( coleco_paddle_r )
+READ8_HANDLER ( coleco_paddle_r )
 {
 	/* Player 1 */
 	if ((offset & 0x02)==0)

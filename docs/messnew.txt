@@ -33,7 +33,13 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- Changed generic cartridge loading so that a ROM_LOAD_CART declaration can
+  be placed in a ROM_REGION.  This change makes cartridge loading be specified
+  similar to BIOS loading, and makes things cleaner and more declarative.
+  [Nate Woods]
+  
+- Added mandatory attribute to the device tags on the -listxml data.  [Nate
+  Woods]
 
 
 

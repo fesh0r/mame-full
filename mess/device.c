@@ -115,6 +115,9 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
 	int count, i;
 	struct IODevice *devices = NULL;
+	extern const game_driver *cartslot_gamedriver_hack;
+
+	cartslot_gamedriver_hack = gamedrv;
 
 	memset(handlers, 0, sizeof(handlers));
 	memset(count_overrides, 0, sizeof(count_overrides));
@@ -166,11 +169,13 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 		}
 	}
 
+	cartslot_gamedriver_hack = NULL;
 	return devices;
 
 error:
 	if (devices)
 		free(devices);
+	cartslot_gamedriver_hack = NULL;
 	return NULL;
 }
 

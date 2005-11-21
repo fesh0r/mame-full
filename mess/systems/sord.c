@@ -319,11 +319,6 @@ static ppi8255_interface sord_ppi8255_interface =
 /*********************************************************************************************/
 
 
-static DEVICE_LOAD( sord_cartslot )
-{
-	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x5000, 0);
-}
-
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
@@ -694,6 +689,7 @@ ROM_START(sordm5)
 	ROM_REGION(0x010000, REGION_CPU1, 0)
 	ROM_LOAD("sordint.rom",0x0000, 0x02000, CRC(78848d39))
 	ROM_REGION(0x5000, REGION_USER1, 0)
+	ROM_CART_LOAD(0, "rom\0", 0x0000, 0x5000, ROM_NOMIRROR)
 ROM_END
 
 
@@ -728,21 +724,11 @@ static void sordm5_cassette_getinfo(struct IODevice *dev)
 	dev->count = 1;
 }
 
-static void sordm5_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "rom\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_sord_cartslot;
-}
-
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE(sordm5_printer_getinfo)
 	CONFIG_DEVICE(sordm5_cassette_getinfo)
-	CONFIG_DEVICE(sordm5_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 static void srdm5fd5_floppy_getinfo(struct IODevice *dev)

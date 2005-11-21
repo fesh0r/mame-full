@@ -37,14 +37,6 @@ MACHINE_INIT( odyssey2 )
 
 
 
-DEVICE_LOAD( odyssey2_cart )
-{
-	/* non banked carts */
-	return cartslot_load_generic(file, REGION_USER1, 0, 0x0001, 0x2000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
-}
-
-
-
 /****** External RAM ******************************/
 
 READ8_HANDLER( odyssey2_bus_r )

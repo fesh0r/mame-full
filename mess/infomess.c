@@ -53,9 +53,16 @@ void print_game_device(FILE* out, const game_driver* game)
 	{
 		while(dev->type < IO_COUNT)
 		{
-			fprintf(out, "\t\t<device");
-			fprintf(out, " name=\"%s\"", normalize_string(device_typename(dev->type)));
-			fprintf(out, ">\n");
+			if (dev->must_be_loaded)
+			{
+				fprintf(out, "\t\t<device name=\"%s\" mandatory=\"1\">\n",
+					normalize_string(device_typename(dev->type)));
+			}
+			else
+			{
+				fprintf(out, "\t\t<device name=\"%s\">\n",
+					normalize_string(device_typename(dev->type)));
+			}
 
 			if (dev->file_extensions)
 			{

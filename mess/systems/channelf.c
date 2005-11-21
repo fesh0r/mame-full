@@ -51,11 +51,6 @@ static UINT8 port_read_with_latch(UINT8 ext, UINT8 latch_state)
 	return (~ext | latch_state);
 }
 
-static DEVICE_LOAD( channelf_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x2000, 0);
-}
-
 static  READ8_HANDLER( channelf_port_0_r )
 {
 	return port_read_with_latch(readinputport(0),latch[0]);
@@ -281,21 +276,13 @@ MACHINE_DRIVER_END
 
 ROM_START(channelf)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-		ROM_LOAD("sl31253.rom",  0x0000, 0x0400, CRC(04694ed9) SHA1(81193965a374d77b99b4743d317824b53c3e3c78))
-		ROM_LOAD("sl31254.rom",  0x0400, 0x0400, CRC(9c047ba3) SHA1(8f70d1b74483ba3a37e86cf16c849d601a8c3d2c))
+	ROM_LOAD("sl31253.rom",   0x0000, 0x0400, CRC(04694ed9) SHA1(81193965a374d77b99b4743d317824b53c3e3c78))
+	ROM_LOAD("sl31254.rom",   0x0400, 0x0400, CRC(9c047ba3) SHA1(8f70d1b74483ba3a37e86cf16c849d601a8c3d2c))
+	ROM_CART_LOAD(0, "bin\0", 0x0800, 0x2000, ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
-static void channelf_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0";
-	dev->load = device_load_channelf_cart;
-}
-
 SYSTEM_CONFIG_START(channelf)
-	CONFIG_DEVICE(channelf_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

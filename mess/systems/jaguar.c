@@ -488,7 +488,8 @@ MACHINE_DRIVER_END
 
 ROM_START( jaguar )
 	ROM_REGION( 0xe20000, REGION_CPU1, 0 )  /* 4MB for RAM at 0 */
-	ROM_LOAD16_WORD( "jagboot.rom", 0xe00000, 0x20000, CRC(fb731aaa) SHA1(f8991b0c385f4e5002fa2a7e2f5e61e8c5213356))
+	ROM_LOAD16_WORD( "jagboot.rom",          0xe00000, 0x020000, CRC(fb731aaa) SHA1(f8991b0c385f4e5002fa2a7e2f5e61e8c5213356))
+	ROM_CART_LOAD(0, "jag\0abs\0bin\0rom\0", 0x800000, 0x600000, ROM_NOMIRROR)
 ROM_END
 
 
@@ -515,21 +516,6 @@ static DRIVER_INIT( jaguar )
 	cojag_sound_init();
 }
 
-static DEVICE_LOAD( jaguar_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, CARTLOAD_32BIT_BE);
-}
-
-static void jaguar_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "jag\0abs\0bin\0rom\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_jaguar_cart;
-}
-
 static QUICKLOAD_LOAD( jaguar )
 {
 	offs_t quickload_begin = 0x4000;
@@ -547,7 +533,7 @@ static void jaguar_quickload_getinfo(struct IODevice *dev)
 }
 
 SYSTEM_CONFIG_START(jaguar)
-	CONFIG_DEVICE(jaguar_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 	CONFIG_DEVICE(jaguar_quickload_getinfo)
 SYSTEM_CONFIG_END
 

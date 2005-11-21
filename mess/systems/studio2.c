@@ -275,6 +275,7 @@ MACHINE_DRIVER_END
 ROM_START(studio2)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
 	ROM_LOAD("studio2.rom", 0x0000, 0x800, CRC(a494b339))
+	ROM_CART_LOAD(0, "bin\0", 0x0400, 0xfc00, ROM_NOMIRROR)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
@@ -287,25 +288,11 @@ ROM_END
 
 /* System Configuration */
 
-static DEVICE_LOAD( studio2_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
-}
-
-static void studio2_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0";
-	dev->load = device_load_studio2_cart;
-}
-
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE(studio2_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 /* Driver Initialization */

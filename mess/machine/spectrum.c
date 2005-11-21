@@ -1083,12 +1083,6 @@ QUICKLOAD_LOAD(spectrum)
 	return INIT_PASS;
 }
 
-DEVICE_LOAD( spectrum_cart )
-{
-	/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
-	return cartslot_load_generic(file, REGION_CPU1, 0, 0x4000, 0x4000, 0);
-}
-
 DEVICE_LOAD( timex_cart )
 {
 	int file_size;

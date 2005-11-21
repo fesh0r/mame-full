@@ -38,11 +38,6 @@ int adam_cart_verify(const UINT8 *cartdata, size_t size)
 	return retval;
 }
 
-DEVICE_LOAD( adam_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x28000, 0x0001, 0x8000, 0);
-}
-
 DEVICE_LOAD( adam_floppy )
 {
 	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)

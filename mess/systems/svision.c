@@ -347,7 +347,9 @@ MACHINE_DRIVER_END
 
 ROM_START(svision)
 	ROM_REGION( 0x8000, REGION_CPU1, 0)
+
 	ROM_REGION(0x10000, REGION_USER1, 0)
+	ROM_CART_LOAD(0, "bin\0ws\0sv\0", 0x0000, 0x10000, ROM_MIRROR)
 ROM_END
 
 /* deltahero
@@ -367,23 +369,8 @@ ROM_END
  dd6a clear 0x2000 at ($57/58) (0x4000)
  */
 
-static DEVICE_LOAD( svision_cart )
-{
-	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x10000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
-}
-
-static void svision_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0ws\0sv\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_svision_cart;
-}
-
 SYSTEM_CONFIG_START(svision)
-	CONFIG_DEVICE(svision_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

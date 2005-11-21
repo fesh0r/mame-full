@@ -15,7 +15,6 @@ TIMEX_CART_TYPE;
 extern TIMEX_CART_TYPE timex_cart_type;
 extern UINT8 timex_cart_chunks;
 extern UINT8 * timex_cart_data;
-DEVICE_LOAD( spectrum_cart );
 
 DEVICE_LOAD( timex_cart );
 DEVICE_UNLOAD( timex_cart );

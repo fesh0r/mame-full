@@ -17,7 +17,6 @@ void exploreKeyboard(void);
 void set_memory_banks(void);
 void resetPCB(void);
 
-DEVICE_LOAD( adam_cart );
 DEVICE_LOAD( adam_floppy );
 DEVICE_UNLOAD( adam_floppy );
 

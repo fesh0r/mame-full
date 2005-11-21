@@ -5,7 +5,6 @@
 
 /* machine/coleco.c */
 int coleco_cart_verify(const UINT8 *buf, size_t size);
-DEVICE_LOAD( coleco_cart );
 
  READ8_HANDLER  ( coleco_paddle_r );
 WRITE8_HANDLER ( coleco_paddle_toggle_off );

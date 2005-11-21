@@ -296,8 +296,8 @@ ROM_START( primoa32 )
 	ROM_LOAD( "a32_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
 	ROM_LOAD( "a32_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
 	ROM_LOAD( "a32_4.rom", 0x13000, 0x1000, CRC(70f84bc8) )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 ROM_START( primoa48 )
@@ -306,8 +306,8 @@ ROM_START( primoa48 )
 	ROM_LOAD( "a48_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
 	ROM_LOAD( "a48_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
 	ROM_LOAD( "a48_4.rom", 0x13000, 0x1000, CRC(e4d0c452) )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 ROM_START( primoa64 )
@@ -316,29 +316,29 @@ ROM_START( primoa64 )
 	ROM_LOAD( "a64_2.rom", 0x11000, 0x1000, CRC(81a8a0fb) )
 	ROM_LOAD( "a64_3.rom", 0x12000, 0x1000, CRC(a97de2f5) )
 	ROM_LOAD( "a64_4.rom", 0x13000, 0x1000, CRC(e4d0c452) )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 ROM_START( primob32 )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "b32.rom", 0x10000, 0x4000, NO_DUMP )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 ROM_START( primob48 )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "b48.rom", 0x10000, 0x4000, NO_DUMP )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 ROM_START( primob64 )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "b64.rom", 0x10000, 0x4000, CRC(73305e4d) )
-	ROM_FILL( 0x14000, 0x4000, 0xff )
-	ROM_FILL( 0x18000, 0x4000, 0xff )
+	ROM_CART_LOAD(1, "rom\0", 0x14000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
+	ROM_CART_LOAD(0, "rom\0", 0x18000, 0x4000, ROM_FILL_FF | ROM_OPTIONAL)
 ROM_END
 
 static struct CassetteOptions primo_cassette_options = {
@@ -372,11 +372,7 @@ static void primo_cartslot_getinfo(struct IODevice *dev)
 {
 	/* cartslot */
 	cartslot_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "rom\0";
 	dev->name = device_name_cartslot_primo;
-	dev->load = device_load_cartslot_primo;
-	dev->unload = device_unload_cartslot_primo;
 }
 
 static void primo_floppy_getinfo(struct IODevice *dev)

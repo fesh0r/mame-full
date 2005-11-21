@@ -434,11 +434,6 @@ DEVICE_LOAD( cgenie_floppy )
 	return INIT_PASS;
 }
 
-DEVICE_LOAD( cgenie_cart )
-{
-	return cartslot_load_generic(file, REGION_CPU1, 0x12000, 0x0000, 0x1000, 0);
-}
-
 /*************************************
  *
  *				Tape emulation.

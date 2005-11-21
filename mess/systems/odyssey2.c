@@ -182,21 +182,13 @@ ROM_START (odyssey2)
     ROM_REGION(0x10000,REGION_CPU1,0)    /* safer for the memory handler/bankswitching??? */
     ROM_LOAD ("o2bios.rom", 0x0000, 0x0400, CRC(8016a315) SHA1(b2e1955d957a475de2411770452eff4ea19f4cee))
     ROM_REGION(0x100, REGION_GFX1, 0)
+
     ROM_REGION(0x2000, REGION_USER1, 0)
+	ROM_CART_LOAD(0, "bin\0", 0x0000, 0x2000, ROM_MIRROR)
 ROM_END
 
-static void odyssey2_cartslot_getinfo(struct IODevice *dev)
-{
-	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_odyssey2_cart;
-}
-
 SYSTEM_CONFIG_START(odyssey2)
-	CONFIG_DEVICE(odyssey2_cartslot_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */

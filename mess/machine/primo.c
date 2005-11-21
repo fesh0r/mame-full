@@ -378,15 +378,3 @@ const char *device_name_cartslot_primo(const struct IODevice *dev, int id, char 
 	snprintf(buf, bufsize, "EPROM Expansion Bank #%d", id + 1);
 	return buf;
 }
-
-DEVICE_LOAD( cartslot_primo )
-{
-	int id = image_index_in_device(image);
-	return cartslot_load_generic (file, REGION_CPU1, id ? 0x14000 : 0x18000, 0, 0x4000, 0);
-}
-
-DEVICE_UNLOAD( cartslot_primo )
-{
-	int id = image_index_in_device(image);
-	memset (memory_region(REGION_CPU1) + (id ? 0x14000 : 0x18000), 0x4000, 0xff);
-}

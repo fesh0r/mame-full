@@ -1,6 +1,5 @@
 extern UINT8 *cgenie_fontram;
 
-DEVICE_LOAD( cgenie_cart );
 DEVICE_LOAD( cgenie_cassette );
 DEVICE_LOAD( cgenie_floppy );
 
