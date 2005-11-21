@@ -194,7 +194,7 @@ static z80gbdasm mnemonic_main[256]= {
 	{_0, zDB,"ec"},     {_0, zDB,"ed"},     {_0, zXOR,"B"},     {_JP,zRST,"V"},
 	{_RM,zLD,"a,(F)"},  {_0, zPOP,"af"},    {_RM,zLD,"a,(C)"},  {_0, zDI,0},
 	{_0, zDB,"f4"},     {_0, zPUSH,"af"},   {_0, zOR,"B"},      {_JP,zRST,"V"},
-	{_0, zLD,"sp,hl+B"},{_0, zLD,"sp,hl"},  {_RM,zLD,"a,(W)"},  {_0, zEI,0},
+	{_0, zLD,"hl,sp+B"},{_0, zLD,"sp,hl"},  {_RM,zLD,"a,(W)"},  {_0, zEI,0},
 	{_0, zDB,"fc"},     {_0, zDB,"fd"},     {_0, zCP,"B"},      {_JP,zRST,"V"}
 };
 
