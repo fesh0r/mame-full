@@ -219,6 +219,12 @@ static z80ctc_interface	mtx_ctc_intf =
 	{0}
 };
 
+static void mtx_tms9929A_interrupt (int data)
+{
+//	logerror ("tms9929A_interrupt: %d\n", data);
+	z80ctc_0_trg0_w (0, data ? 0 : 1);
+}
+
 static void mtx_set_bank_offsets (unsigned int bank1, unsigned int bank2, 
 	                          unsigned int bank3, unsigned int bank4,
 	                          unsigned int bank5, unsigned int bank6,
@@ -729,7 +735,7 @@ static const TMS9928a_interface tms9928a_interface =
 {
 	TMS9929A,
 	0x4000,
-	NULL
+	mtx_tms9929A_interrupt
 };
 
 static MACHINE_DRIVER_START( mtx512 )
@@ -745,7 +751,7 @@ static MACHINE_DRIVER_START( mtx512 )
 
 	MDRV_MACHINE_INIT( mtx512 )
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
