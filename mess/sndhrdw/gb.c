@@ -159,7 +159,8 @@ static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t
 
 READ8_HANDLER( gb_wave_r )
 {
-	return snd_regs[ AUD3W0 + offset ];
+	/* TODO: properly emulate scrambling of wave ram area when playback is active */
+	return ( snd_regs[ AUD3W0 + offset ] | snd_3.on );
 }
 
 WRITE8_HANDLER( gb_wave_w )

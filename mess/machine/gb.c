@@ -347,10 +347,11 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc3 )
 {
 	if( ROMMask )
 	{
-		data &= ROMMask;
 		/* Selecting bank 0 == selecting bank 1 */
 		if( data == 0 )
 			data = 1;
+
+		data &= ROMMask;
 
 		ROMBank = data;
 		/* Switch banks */
@@ -1225,6 +1226,7 @@ DEVICE_LOAD(gb_cart)
 	};
 
 	int Checksum, I, J, filesize;
+	UINT16 reported_rom_banks;
 	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
@@ -1362,7 +1364,26 @@ DEVICE_LOAD(gb_cart)
 	}
 
 	ROMBanks = filesize / 0x4000;
-	if ( ROMBanks != ( 2 << gb_cart[0x0148] ) ) {
+	switch( gb_cart[0x0148] ) {
+	case 0x52:
+		reported_rom_banks = 72;
+		break;
+	case 0x53:
+		reported_rom_banks = 80;
+		break;
+	case 0x54:
+		reported_rom_banks = 96;
+		break;
+	case 0x00: case 0x01: case 0x02: case 0x03:
+	case 0x04: case 0x05: case 0x06: case 0x07:
+		reported_rom_banks = 2 << gb_cart[0x0148];
+		break;
+	default:
+		logerror( "Warning loading cartridge: Unknown ROM size in header.\n" );
+		reported_rom_banks = 256;
+		break;
+	}
+	if ( ROMBanks != reported_rom_banks ) {
 		logerror( "Warning loading cartridge: Filesize and reported ROM banks don't match.\n" );
 	}
 
@@ -1448,7 +1469,7 @@ DEVICE_LOAD(gb_cart)
 	}
 
 	/* Build rom bank Mask */
-	if (ROMBanks < 3)
+	if ( ! reported_rom_banks )
 		ROMMask = 0;
 	else
 	{
