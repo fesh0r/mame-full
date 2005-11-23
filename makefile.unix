@@ -126,7 +126,7 @@ CFLAGS =
 CFLAGS = -O2 -Wall -Wno-unused
 
 # GCC on x86 with some optimizations
-# CFLAGS = -O2 -Wall -Wno-unused -mcpu=i686 -fomit-frame-pointer \
+# CFLAGS = -O2 -Wall -Wno-unused -mtune=i686 -fomit-frame-pointer \
 #  -fstrict-aliasing -fstrength-reduce -ffast-math
 
 # GCC 3.4.x and newer on x86 with some optimizations
@@ -183,11 +183,17 @@ ifneq (,$(findstring gcc,$(CC)))
   # Warnings
   #########################################################################
   
+  # Check for C89 + GNU extensions compliance.
+  # CFLAGS += -std=gnu89
+
   # Show all warnings.
   # CFLAGS += -Wall
 
   # Don't warn about unused variables.
   # CFLAGS += -Wno-unused
+
+  # Warn about declarations after statements.
+  # CFLAGS += -Wdeclaration-after-statement
 
 
   #########################################################################
@@ -260,11 +266,11 @@ ifneq (,$(findstring gcc,$(CC)))
   
   # Note that -march may produce an executable that won't run on lesser 
   # CPUs.  If you're aiming for portability across an entire architecture, 
-  # use -mcpu instead.  For example, -mcpu=pentiumpro will produce an 
+  # use -mtune instead.  For example, -mtune=pentiumpro will produce an 
   # executable that (in theory) should be optimized for a PentiumPro 
   # system, but it will still run on a 386.
-  # Note: As of GCC 3.4.x, -mcpu is deprecated, and you should use 
-  # -mtune instead.
+  # Note: For older versions of GCC, you may have to use -mcpu instead of 
+  # -mtune.
 
   # x86 options that work with any version of GCC:
   # CFLAGS += -march=i386
@@ -276,17 +282,30 @@ ifneq (,$(findstring gcc,$(CC)))
 
   # x86 options that work only with newer versions of GCC:
   # CFLAGS += -march=pentium-mmx
+  # CFLAGS += -march=pentium2
   # CFLAGS += -march=pentium3
+  # CFLAGS += -march=pentium3m
+  # CFLAGS += -march=pentium-m
   # CFLAGS += -march=pentium4
+  # CFLAGS += -march=pentium4m
+  # CFLAGS += -march=prescott
+  # CFLAGS += -march=nocona
   # CFLAGS += -march=k6
   # CFLAGS += -march=k6-2
   # CFLAGS += -march=k6-3
   # CFLAGS += -march=athlon
   # CFLAGS += -march=athlon-tbird
+  # CFLAGS += -march=athlon-4
   # CFLAGS += -march=athlon-xp
   # CFLAGS += -march=athlon-mp
-  # CFLAGS += -march=athlon-4
+  # CFLAGS += -march=k8
+  # CFLAGS += -march=opteron
   # CFLAGS += -march=athlon64
+  # CFLAGS += -march=athlon-fx
+  # CFLAGS += -march=winchip-c6
+  # CFLAGS += -march=winchip-2
+  # CFLAGS += -march=c3
+  # CFLAGS += -march=c3-2
 
   # x86 SIMD options that work only with newer versions of GCC:
   # CFLAGS += -mfpmath=sse
@@ -543,6 +562,9 @@ MY_CPU = i386
 # Opteron/Athlon64
 # MY_CPU = amd64
 
+# Intel EM64T
+# MY_CPU = em64t
+
 # DEC Alpha
 # MY_CPU = alpha
 
@@ -552,7 +574,7 @@ MY_CPU = i386
 # Generic RISC (PowerPC, SPARC, HPPA, IBM)
 # MY_CPU = risc
 
-# Generic RISC, LSB-first (RISC (Ultrix machines) & PlayStation2)
+# Generic RISC, LSB-first (RISC Ultrix machines & PlayStation2)
 # MY_CPU = risc_lsb
 
 # MIPS (generic RISC + SGI compiler bug workarounds)
