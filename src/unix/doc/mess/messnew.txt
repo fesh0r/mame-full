@@ -1,3 +1,153 @@
+0.102
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [A400/A400PAL/A800PAL] Fixed regressions introduced in MESS 0.83. (bug #748)
+  [Nate Woods]
+  
+- [ABC802] Fixed crash.  (bug #763)  [Nate Woods]
+
+- [C16] Implemented RAM configuration support.  [Nate Woods]
+
+- [C65] Implemented RAM configuration support.  [Nate Woods]
+
+- [CGENIE] Fixed regression introduced in MESS 0.96. (bug #752)  [Nate Woods]
+
+- [COUPE] Fixed regression introduced in MESS 0.96. (bug #753)  [Nate Woods]
+
+- [EXIDY] Fixed regression introduced in MESS 0.96. (bug #760)  [Nate Woods]
+
+- [GG] Fixed regression introduced in MESS 0.95. (bug #705) [Wilbert Pol]
+
+- [JUPITER] Fixed regression introduced in MESS 0.96. (bug #756)  [Nate Woods]
+
+- [KCCOMP] Fixed regression introduced in MESS 0.87. (bug #749)  [Nate Woods]
+  
+- [LISA2] Fixed regression introduced in MESS 0.91.  (bug #757)  [Nate Woods]
+
+- [MC10] Added multiple RAM configurations, and cleaned up driver.  [Nate
+  Woods]
+
+- [MTX512] Fixed regression introduced in 0.96.  (previous fix was not fully
+  committed properly) [Gerco Ballintijn]
+
+- [MTX512] Fixed BASIC loading routines.  (bugs #754, bug #769) [Gerco
+  Ballintijn]
+
+- [MTX512] Added stub calls for the MTX parallel printer port.  (bug #755)
+  [Gerco Ballintijn]
+
+- [MTX512] Fixed memory management.  (bug #770)  [Gerco Ballintijn]
+
+- [MTX512] Added printer support.  (bug #774)  [Gerco Ballintijn]
+
+- [NASCOM1] Fixed regression introduced in MESS 0.96. (bug #758)  [Nate Woods]
+
+- [PET] Implemented RAM configuration support.  [Nate Woods]
+
+- [SGI] Improved emulation of the system ASICs, improved Newport video
+  emulation, improved WD33c93 SCSI emulation, preliminary sound.  All three
+  systems in ip22.c now start up OK.  [R. Belmont, Ryan Holtz]
+
+- [SMS] Various fixes.  (bugs #765, #766)  [Wilbert Pol]
+
+- [SMS] Removed hacked drivers smsu13h and smse13h. [Wilbert Pol]
+
+- [SPECTRUM] Fixed regression introduced in MESS 0.96. (bugs #726, #761)  [Nate
+  Woods]
+
+- [SVISION] Fixed regression on 32KB cartridges. (bug #776)  [Nate Woods]
+
+- [VECTREX] Specified aspect ratio. (bug #777) [Nate Woods]
+
+- [Z88] Fixed regression introduced in MESS 0.96. (bug #762)  [Nate Woods]
+
+- [ZX] Implemented RAM configuration support.  [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.102.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Merged COMPX/CONSX into COMP/CONS as per the new convention in MAME.  [Nate
+  Woods]
+
+- Fixed crash when launching console games without required cartridges.  (bug
+  #746) [Nate Woods]
+
+- Added RAM configuration info to -listxml.  [Nate Woods]
+
+- [Messtest] Now fully errors out when a blank screenshot is generated.  [Nate
+  Woods]
+
+
+
+0.101
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- AT 486 [Nate Woods]
+- Spectravideo SVI-603 Coleco Game Adapter [Tomas Karlsson]
+
+
+
+System Driver Changes:
+----------------------
+- [COCO3] Fixed assertion failure when using the zero/infinite scanlines video
+  mode.  [Nate Woods]
+
+- [MTX512] Fixed regression introduced in 0.96.  [Gerco Ballintijn]
+
+- [SNES] SPC, APU and DSP bug fixes; sound now works in some games.
+  [R Belmont]
+
+- [SNES] Changed SNES default key mapping to make a bit more sense.
+  [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows GUI] Fixed a regression that prevented sysinfo.dat from being
+  properly recognized.  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.101.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Fixed crashes when running deviceless systems. [Nate Woods]
+  
+
+
 0.100
 
 New System Drivers Supported (in no particular order):
@@ -18,7 +168,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows] Fixed a regression in the new UI that prevented the "Show FPS"
+  function from working.  [Nate Woods]
 
 
 
@@ -50,6 +201,8 @@ Source Changes:
   Woods]
 
 - Fixed cassette audio sound regression introduced in MESS 0.93.  [Nate Woods]
+
+- Fixed and cleaned up mouse code.  (bug #747) [Nathan Lineback and Nate Woods]
 
 - [Windows] Added a -skip_warnings option.  [Nate Woods]
 
@@ -103,7 +256,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [CONCEPT] Fixed a variety of crashes.  [Raphael Nabet]
 
 
 

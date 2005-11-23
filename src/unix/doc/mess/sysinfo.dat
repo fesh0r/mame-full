@@ -5563,22 +5563,22 @@ Memotech MTX512
 Usage:
 
 
-currently, the driver requires cassette images to be stored
-in the following directory - 
+Currently, the driver requires cassette images to be stored in the following
+directory - 
 
-roms\mtx512
+software\mtx512
 
-the cassette image is a flat binary image with the first 0x12 bytes being the
+The cassette image is a flat binary image with the first 0x12 bytes being the
 original mtx header and the rest being the file data.
 
-A note about cassette naming schemes - so long as the filename of the cassette image is the same 
-as that stored in the header, you should be alright.
+A note about cassette naming schemes - so long as the filename of the cassette
+image is the same as that stored in the header, you should be alright.
 
+To load and run a tape image, just type LOAD "<image name>" at the Ready Prompt.
+To save a (BASIC) program, just type SAVE "<image name>" at the Ready Prompt.
 
-To run a tape image just type LOAD"<image name>" at the Ready Prompt.
-
-MTX basic is pretty much a standard dialect, so you should have no problems
-using it, but graphic handling etc is a bit esoteric.
+MTX BASIC is pretty much a standard dialect, so you should have no problems
+using it, but its graphic handling etc. is a bit esoteric.
 
 
 
@@ -5590,14 +5590,11 @@ Improving the tape support, because at the moment it is just a hack.
 Improve the TMS99x8 driver (appears the dirtyrect handling there is not
 quite right)
 
-RELCPMH Mode (CP/M Memory configuration)
-
 Support for additional ROMs
 
 No Cassette Save support.
 
 No Printer support
-
 
 $end
 
