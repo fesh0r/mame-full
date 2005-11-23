@@ -751,8 +751,8 @@ static void updatekeyboard(void)
 	i = sysdep_display_update_keyboard();
 	if (i & SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST)
 		xmame_keyboard_clear();
-        if (i & SYSDEP_DISPLAY_QUIT_REQUESTED)
-                trying_to_quit = 1;
+	if (i & SYSDEP_DISPLAY_QUIT_REQUESTED)
+		trying_to_quit = 1;
 
 	/* see if any keys have changed state */
 	for (i = 0; i < KEY_CODES; i++)
@@ -832,12 +832,6 @@ int osd_readkey_unicode(int flush)
 
 void osd_pause(int paused)
 {
-	/*
-	 * Clear the keyboard state when the emulation is unpaused.  This prevents 
-	 * keystrokes from bleeding over from the onscreen display.
-	 */
-	if (!paused)
-		memset(key, 0, KEY_CODES);
 }
 
 static void update_joystick_axes(void)
@@ -1694,7 +1688,7 @@ void osd_poll_joysticks(void)
 
 
 /*============================================================ */
-/*	osd_is_code_pressed */
+/*	osd_get_code_value */
 /*============================================================ */
 
 INT32 osd_get_code_value(os_code code)
