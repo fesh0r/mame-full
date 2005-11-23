@@ -106,8 +106,8 @@ struct rc_option alsa_dsp_opts[] = {
 	  NULL,    0,      0,    alsa_pcm_list,
 	  "List available pcm devices" },
 	{ "alsa-buffer", "abuf",  rc_int,       &buffer_time,
-	  "250000",      0,    0,    NULL,
-	  "Set the buffer size [micro sec] (default: 250000)" },
+	  "50000",      0,    0,    NULL,
+	  "Set the buffer size [micro sec] (default: 50000)" },
 	{ NULL,    NULL,     rc_end,   NULL,
 	  NULL,    0,      0,    NULL,
 	  NULL }
