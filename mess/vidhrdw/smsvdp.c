@@ -14,6 +14,7 @@ UINT8 smsCRAM[SMS_CRAM_SIZE];
 UINT8 VRAM[VRAM_SIZE];
 UINT8 *lineCollisionBuffer;
 UINT8 *spriteCache;
+UINT8 reg9copy;
 
 int addr;
 int code;
@@ -267,6 +268,7 @@ INTERRUPT_GEN(sms) {
 		/* We start a new frame, so reset line count down counter */
 		if (currentLine == 0x00) {
 			lineCountDownCounter = reg[0x0A];
+			reg9copy = reg[0x09];
 		}
 
 		/* must be mode 4 */
@@ -295,6 +297,7 @@ INTERRUPT_GEN(sms) {
 		/* We start a new frame, so reset line count down counter */
 		if (currentLine == 0x00) {
 			lineCountDownCounter = reg[0x0A];
+			reg9copy = reg[0x09];
 		}
 
 		/* must be mode 4 */
@@ -551,7 +554,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	int spriteX, spriteY, spriteLine, spriteTileSelected, spriteHeight;
 	int spriteBuffer[8], spriteBufferCount, spriteBufferIndex;
 	int bitPlane0, bitPlane1, bitPlane2, bitPlane3;
-	UINT16 *nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0E) << 10) & 0x3800) + ((((line + reg[0x09]) % 224) >> 3) << 6)]);
+	UINT16 *nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0E) << 10) & 0x3800) + ((((line + reg9copy) % 224) >> 3) << 6)]);
 	UINT8 *spriteTable = (UINT8 *) &(VRAM[(reg[0x05] << 7) & 0x3F00]);
 	rectangle rec;
 
@@ -625,9 +628,9 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		/* Rightmost 8 columns for SMS (or 2 columns for GG) not affected by */
 		/* vertical scrolling when bit 7 of reg[0x00] is set */
 		if (IS_GG_ANY) {
-			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 29)) ? 0 : (reg[0x09]) % 224);
+			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 29)) ? 0 : (reg9copy) % 224);
 		} else {
-			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 23)) ? 0 : (reg[0x09]) % 224);
+			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 23)) ? 0 : (reg9copy) % 224);
 		}
 
 		#ifndef LSB_FIRST
