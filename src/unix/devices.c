@@ -27,9 +27,14 @@
 #include "sysdep/rc.h"
 #include "sysdep/fifo.h"
 #include "sysdep/sysdep_display.h"
+
 #ifdef LIRC
-	#include <fcntl.h>
-	#include <lirc/lirc_client.h>
+#include <fcntl.h>
+#include <lirc/lirc_client.h>
+#endif
+
+#ifdef MESS
+#include "mesintrf.h"
 #endif
 
 enum
@@ -781,6 +786,8 @@ static void updatekeyboard(void)
 
 static int is_key_pressed(int keycode)
 {
+	static int ui_was_setup_active = 0;
+
 	/* blames to the dos-people who want to check key states before
 	   the display (and under X thus the keyboard) is initialised */
 	if (!kbd_fifo)
@@ -790,6 +797,15 @@ static int is_key_pressed(int keycode)
 		return 0;
 
 	updatekeyboard();
+
+	/*
+	 * Clear the keyboard buffer if the setup menu was active but now isn't.  
+	 * This prevents the key press that closes the menu from bleeding over into 
+	 * the emulation.
+	 */ 
+	if (ui_was_setup_active && !ui_is_setup_active())
+		xmame_keyboard_clear();
+	ui_was_setup_active = ui_is_setup_active();
 
 	/* special case: if we're trying to quit, fake up/down/up/down */
 	if (keycode == KEY_ESC && trying_to_quit)
