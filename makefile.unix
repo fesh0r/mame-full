@@ -58,6 +58,10 @@ TARGET = mame
 # compatible CPUs).
 # X86_PPC_DRC = 1
 
+# Uncomment to use DRC Voodoo rasterizers (faster emulation, but only works on 
+# x86-compatible CPUs).
+# X86_VOODOO_DRC = 1
+
 # Uncomment if you'd like to disable effects.  This can considerably speed 
 # up compilation of the blit files.
 # DISABLE_EFFECTS = 1

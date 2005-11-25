@@ -207,6 +207,10 @@ ifdef NEW_DEBUGGER
 CFLAGS += -DNEW_DEBUGGER
 endif
 
+ifdef X86_VOODOO_DRC
+DEFS += -DVOODOO_DRC
+endif
+
 all: maketree $(NAME).$(DISPLAY_METHOD) extra
 
 # CPU core include paths
