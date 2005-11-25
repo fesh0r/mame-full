@@ -16,7 +16,7 @@
   r=(x);  \
   f=(UINT8)((Regs.b.F&FLAG_C)|FLAG_N); \
   if( r==0 )       f|=FLAG_Z; \
-  if( (r&0xF)==0 ) f|=FLAG_H; \
+  if( (r&0xF)==0xF ) f|=FLAG_H; \
   Regs.b.F=f; \
 }
 
