@@ -34,7 +34,7 @@ enum e_mnemonics
 	zPOP,  zPUSH, zRES,  zRET,	zRETI, zRL,   zRLA,
 	zRLC,  zRLCA, zRR,	 zRRA,	zRRC,  zRRCA, zRST,
 	zSBC,  zSCF,  zSET,  zSLA,	zSLL,  zSRA,  zSRL,
-	zSTOP, zSUB,  zXOR
+	zSTOP, zSUB,  zXOR,  zSWAP
 };
 
 static const char *s_mnemonic[] =
@@ -45,7 +45,7 @@ static const char *s_mnemonic[] =
 	"pop", "push","res", "ret", "reti","rl",  "rla",
 	"rlc", "rlca","rr",  "rra", "rrc", "rrca","rst",
 	"sbc", "scf", "set", "sla", "sll", "sra", "srl",
-	"stop","sub", "xor"
+	"stop","sub", "xor", "swap"
 };
 
 typedef struct
@@ -77,8 +77,8 @@ static z80gbdasm mnemonic_cb[256] = {
 	{_0, zSLA,"h"},     {_0, zSLA,"l"},     {_RW,zSLA,"(hl)"},  {_0, zSLA,"a"},
 	{_0, zSRA,"b"},     {_0, zSRA,"c"},     {_0, zSRA,"d"},     {_0, zSRA,"e"},
 	{_0, zSRA,"h"},     {_0, zSRA,"l"},     {_RW,zSRA,"(hl)"},  {_0, zSRA,"a"},
-	{_0, zSLL,"b"},     {_0, zSLL,"c"},     {_0, zSLL,"d"},     {_0, zSLL,"e"},
-	{_0, zSLL,"h"},     {_0, zSLL,"l"},     {_RW,zSLL,"(hl)"},  {_0, zSLL,"a"},
+	{_0, zSWAP,"b"},    {_0, zSWAP,"c"},    {_0, zSWAP,"d"},    {_0, zSWAP,"e"},
+	{_0, zSWAP,"h"},    {_0, zSWAP,"l"},    {_RW,zSWAP,"(hl)"}, {_0, zSWAP,"a"},
 	{_0, zSRL,"b"},     {_0, zSRL,"c"},     {_0, zSRL,"d"},     {_0, zSRL,"e"},
 	{_0, zSRL,"h"},     {_0, zSRL,"l"},     {_RW,zSRL,"(hl)"},  {_0, zSRL,"a"},
 	{_0, zBIT,"0,b"},   {_0, zBIT,"0,c"},   {_0, zBIT,"0,d"},   {_0, zBIT,"0,e"},
