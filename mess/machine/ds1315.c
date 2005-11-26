@@ -134,7 +134,7 @@ static void ds1315_fill_raw_data( void )
 	raw[4] = dec_2_bcd(tmtime->tm_wday);
 	raw[5] = dec_2_bcd(tmtime->tm_mday);
 	raw[6] = dec_2_bcd(tmtime->tm_mon+1);
-	raw[7] = dec_2_bcd(tmtime->tm_year%100);
+	raw[7] = dec_2_bcd(tmtime->tm_year); /* Epoch is 1900 */
 
 	/* Ok now we have the raw bcd bytes. Now we need to push them into our bit array */
 	
