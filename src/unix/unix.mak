@@ -596,7 +596,7 @@ dat2html: $(DAT2HTML_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
 
-imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
+imgtool: $(IMGTOOL_OBJS) $(ZLIB) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
