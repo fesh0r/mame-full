@@ -40,6 +40,15 @@ static imgtoolerr_t markerrorsource(imgtoolerr_t err)
 
 
 
+static void internal_error(const struct ImageModule *module, const char *message)
+{
+#ifdef MAME_DEBUG
+	logerror("%s: %s\n", module->name, message);
+#endif
+}
+
+
+
 static imgtoolerr_t internal_open(const struct ImageModule *module, const char *fname,
 	int read_or_write, option_resolution *createopts, imgtool_image **outimg)
 {
@@ -307,12 +316,20 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 
 	/* don't trust the module! */
 	if (!module->supports_creation_time && (ent->creation_time != 0))
+	{
+		internal_error(module, "next_enum() specified creation_time, which is marked as unsupported by this module");
 		return IMGTOOLERR_UNEXPECTED;
+	}
 	if (!module->supports_lastmodified_time && (ent->lastmodified_time != 0))
+	{
+		internal_error(module, "next_enum() specified lastmodified_time, which is marked as unsupported by this module");
 		return IMGTOOLERR_UNEXPECTED;
+	}
 	if (!module->path_separator && ent->directory)
+	{
+		internal_error(module, "next_enum() returned a directory, which is marked as unsupported by this module");
 		return IMGTOOLERR_UNEXPECTED;
-
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 

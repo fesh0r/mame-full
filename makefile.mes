@@ -325,11 +325,11 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 
-imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS)
+imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
-wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS)
+wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
