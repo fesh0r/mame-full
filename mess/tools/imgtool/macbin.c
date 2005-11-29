@@ -45,7 +45,9 @@
 *****************************************************************************/
 
 #include <string.h>
+
 #include "imgtool.h"
+#include "macutil.h"
 
 static time_t mac_crack_time(UINT32 t)
 {
@@ -82,26 +84,26 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	imgtoolerr_t err;
 	UINT8 header[126];
 	const char *basename;
-	int i, len;
+	int i;
 
-	UINT32 type_code;
-	UINT32 creator_code;
-	UINT16 finder_flags;
-	UINT16 coord_x;
-	UINT16 coord_y;
-	UINT16 finder_folder;
-	UINT8 script_code;
-	UINT8 extended_flags;
+	UINT32 type_code = 0x3F3F3F3F;
+	UINT32 creator_code = 0x3F3F3F3F;
+	UINT16 finder_flags = 0;
+	UINT16 coord_x = 0;
+	UINT16 coord_y = 0;
+	UINT16 finder_folder = 0;
+	UINT8 script_code = 0;
+	UINT8 extended_flags = 0;
 
 	imgtool_forkent fork_entries[4];
 	const imgtool_forkent *data_fork = NULL;
 	const imgtool_forkent *resource_fork = NULL;
-	UINT32 creation_time;
-	UINT32 lastmodified_time;
+	UINT32 creation_time = 0;
+	UINT32 lastmodified_time = 0;
 	imgtool_attribute attr_values[10];
 
 	/* get the forks */
-	err = img_listforks(image, filename, fork_entries, sizeof(fork_entries));
+	err = img_module(image)->list_forks(image, filename, fork_entries, sizeof(fork_entries));
 	if (err)
 		return err;
 	for (i = 0; fork_entries[i].type != FORK_END; i++)
@@ -113,32 +115,30 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	}
 
 	/* get the attributes */
-	err = img_module(image)->get_attrs(image, filename, attrs, attr_values);
-	if (err)
-		return err;
-	creation_time     = mac_setup_time(attr_values[0].t);
-	lastmodified_time = mac_setup_time(attr_values[1].t);
-	type_code         = attr_values[2].i;
-	creator_code      = attr_values[3].i;
-	finder_flags      = attr_values[4].i;
-	coord_x           = attr_values[5].i;
-	coord_y           = attr_values[6].i;
-	finder_folder     = attr_values[7].i;
-	script_code       = attr_values[8].i;
-	extended_flags    = attr_values[9].i;
+	if (img_module(image)->get_attrs)
+	{
+		err = img_module(image)->get_attrs(image, filename, attrs, attr_values);
+		if (err)
+			return err;
+		creation_time     = mac_setup_time(attr_values[0].t);
+		lastmodified_time = mac_setup_time(attr_values[1].t);
+		type_code         = attr_values[2].i;
+		creator_code      = attr_values[3].i;
+		finder_flags      = attr_values[4].i;
+		coord_x           = attr_values[5].i;
+		coord_y           = attr_values[6].i;
+		finder_folder     = attr_values[7].i;
+		script_code       = attr_values[8].i;
+		extended_flags    = attr_values[9].i;
+	}
 
 	memset(header, 0, sizeof(header));
 
 	/* place filename */
 	basename = filename;
-	for (i = 0; filename[i]; i++)
-	{
-		if ((filename[i] == ':') || (filename[i] == '/'))
-			basename = filename + 1;
-	}
-	len = MIN(&filename[i] - basename, 63);
-	memcpy(&header[2], filename, len);
-	header[1] = len;
+	while(basename[strlen(basename) + 1])
+		basename += strlen(basename) + 1;
+	pascal_from_c_string((unsigned char *) &header[1], 64, basename);
 
 	place_integer_be(header,  65, 4, type_code);
 	place_integer_be(header,  69, 4, creator_code);

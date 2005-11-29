@@ -31,4 +31,6 @@ imgtoolerr_t mac_identify_fork(const char *fork_string, mac_fork_t *fork_num);
 
 void mac_suggest_transfer(mac_filecategory_t file_category, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 
+void pascal_from_c_string(unsigned char *pstring, size_t pstring_len, const char *cstring);
+
 #endif /* MACUTIL_H */

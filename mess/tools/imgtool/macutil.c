@@ -47,3 +47,17 @@ void mac_suggest_transfer(mac_filecategory_t file_category, imgtool_transfer_sug
 }
 
 
+
+void pascal_from_c_string(unsigned char *pstring, size_t pstring_len, const char *cstring)
+{
+	size_t cstring_len, i;
+
+	cstring_len = strlen(cstring);
+	pstring[0] = MIN(cstring_len, pstring_len - 1);
+
+	for (i = 0; i < pstring[0]; i++)
+		pstring[1 + i] = cstring[i];
+	while(i < pstring_len - 1)
+		pstring[1 + i++] = '\0';
+}
+
