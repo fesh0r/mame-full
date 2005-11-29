@@ -49,20 +49,6 @@
 #include "imgtool.h"
 #include "macutil.h"
 
-static time_t mac_crack_time(UINT32 t)
-{
-	/* not sure if this is correct... */
-	return t - (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
-}
-
-
-
-static UINT32 mac_setup_time(time_t t)
-{
-	/* not sure if this is correct... */
-	return t + (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
-}
-
 
 
 static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)

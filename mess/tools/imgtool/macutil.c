@@ -10,6 +10,22 @@
 #include "macutil.h"
 
 
+time_t mac_crack_time(UINT32 t)
+{
+	/* not sure if this is correct... */
+	return t - (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
+}
+
+
+
+UINT32 mac_setup_time(time_t t)
+{
+	/* not sure if this is correct... */
+	return t + (((1970 - 1904) * 365) + 17) * 24 * 60 * 60;
+}
+
+
+
 imgtoolerr_t mac_identify_fork(const char *fork_string, mac_fork_t *fork_num)
 {
 	if (!strcmp(fork_string, ""))
