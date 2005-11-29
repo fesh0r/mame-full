@@ -125,6 +125,7 @@
 #include "formats/ap2_dsk.h"
 #include "formats/ap_dsk35.h"
 #include "iflopimg.h"
+#include "macutil.h"
 
 #define	ROOTDIR_BLOCK			2
 #define BLOCK_SIZE				512
@@ -266,19 +267,6 @@ static struct prodos_diskinfo *get_prodos_info(imgtool_image *image)
 	struct prodos_diskinfo *info;
 	info = (struct prodos_diskinfo *) imgtool_floppy_extrabytes(image);
 	return info;
-}
-
-
-
-static int identify_fork(const char *fork_string, int *fork_num)
-{
-	if (*fork_string == '\0')
-		*fork_num = 0;
-	else if (!strcmp(fork_string, "RESOURCE_FORK"))
-		*fork_num = 1;
-	else
-		return IMGTOOLERR_FORKNOTFOUND;
-	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -817,7 +805,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	UINT32 offset;
 	UINT8 buffer[BLOCK_SIZE];
 	const UINT8 *info_ptr;
-	int fork_num;
+	mac_fork_t fork_num;
 
 	di = get_prodos_info(image);
 	memset(ent, 0, sizeof(*ent));
@@ -950,7 +938,7 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 	UINT32 offset;
 	size_t finfo_offset;
 	UINT8 buffer[BLOCK_SIZE];
-	int fork_num;
+	mac_fork_t fork_num;
 	int needs_finfo = FALSE;
 	int needs_xfinfo = FALSE;
 	UINT8 *info_ptr;
@@ -1718,7 +1706,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	struct prodos_dirent ent;
 	UINT16 key_pointer;
 	int nest_level;
-	int fork_num;
+	mac_fork_t fork_num;
 
 	err = prodos_lookup_path(image, filename, CREATE_NONE, NULL, &ent);
 	if (err)
@@ -1727,7 +1715,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = identify_fork(fork, &fork_num);
+	err = mac_identify_fork(fork, &fork_num);
 	if (err)
 		return err;
 
@@ -1757,7 +1745,7 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	struct prodos_dirent ent;
 	struct prodos_direnum direnum;
 	UINT64 file_size;
-	int fork_num;
+	mac_fork_t fork_num;
 
 	file_size = stream_size(sourcef);
 
@@ -1769,7 +1757,7 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = identify_fork(fork, &fork_num);
+	err = mac_identify_fork(fork, &fork_num);
 	if (err)
 		return err;
 
@@ -2133,7 +2121,7 @@ static imgtoolerr_t prodos_diskimage_suggesttransfer(imgtool_image *image, const
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
-	int is_extended = FALSE;
+	mac_filecategory_t file_category = MAC_FILECATEGORY_DATA;
 
 	if (path)
 	{
@@ -2141,29 +2129,11 @@ static imgtoolerr_t prodos_diskimage_suggesttransfer(imgtool_image *image, const
 		if (err)
 			return err;
 
-		is_extended = is_extendedfile_storagetype(ent.storage_type);
+		file_category = is_extendedfile_storagetype(ent.storage_type)
+			? MAC_FILECATEGORY_FORKED : MAC_FILECATEGORY_DATA;
 	}
 
-	suggestions[0].viability = !is_extended ? SUGGESTION_POSSIBLE : SUGGESTION_RECOMMENDED;
-	suggestions[0].filter = filter_macbinary_getinfo;
-	suggestions[0].fork = NULL;
-	suggestions[0].description = NULL;
-
-	suggestions[1].viability = SUGGESTION_POSSIBLE;
-	suggestions[1].filter = filter_eoln_getinfo;
-	suggestions[1].fork = NULL;
-	suggestions[1].description = NULL;
-
-	suggestions[2].viability = !is_extended ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
-	suggestions[2].filter = NULL;
-	suggestions[2].fork = "";
-	suggestions[2].description = "Raw (data fork)";
-
-	suggestions[3].viability = SUGGESTION_POSSIBLE;
-	suggestions[3].filter = NULL;
-	suggestions[3].fork = "RESOURCE_FORK";
-	suggestions[3].description = "Raw (resource fork)";
-
+	mac_suggest_transfer(file_category, suggestions, suggestions_length);
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -2174,7 +2144,7 @@ static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 	size_t chain_pos = 0;
-	int fork_num;
+	mac_fork_t fork_num;
 
 	err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
 	if (err)

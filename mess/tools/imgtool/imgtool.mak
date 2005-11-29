@@ -39,6 +39,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/concept.o		\
 	$(OBJ)/mess/tools/imgtool/fat.o			\
 	$(OBJ)/mess/tools/imgtool/prodos.o		\
+	$(OBJ)/mess/tools/imgtool/macutil.o		\
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \

@@ -1,13 +1,16 @@
-/*
-	Handlers for macintosh images (MFS and HFS formats).
+/****************************************************************************
+
+	mac.c
+
+	Handlers for Classic MacOS images (MFS and HFS formats).
 
 	Raphael Nabet, 2003
 
 	TODO:
 	* add support for HFS write
-*/
 
-/*
+*****************************************************************************
+
 	terminology:
 	disk block: 512-byte logical block.  With sectors of 512 bytes, one logical
 		block is equivalent to one sector; when the sector size is not 512
@@ -56,12 +59,14 @@
 	usually, k = 2, m = 3, n = 16, p = 799 (SSDD 3.5" floppy)
 	with DSDD 3.5" floppy, I assume that p = 1599, but I don't know the other
 	values
-*/
+
+*****************************************************************************/
 
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+
 #include "osdepend.h"
 #include "imgtoolx.h"
 
@@ -1551,9 +1556,7 @@ static imgtoolerr_t mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac
 static imgtoolerr_t mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 {
 	UINT32 block;
-#if TAG_EXTRA_CHECKS
 	floppy_tag_record tag;
-#endif
 	int run_len;
 	imgtoolerr_t errorcode = IMGTOOLERR_SUCCESS;
 
@@ -1581,22 +1584,24 @@ static imgtoolerr_t mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 			if (errorcode)
 				return errorcode;
 			fileref->reload_buf = FALSE;
-#if TAG_EXTRA_CHECKS
-			/* optional check */
-			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
-			{
-				errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
-				if (errorcode)
-					return errorcode;
 
-				if ((get_UINT32BE(tag.fileID) != fileref->fileID)
-					|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
-					|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+			if (TAG_EXTRA_CHECKS)
+			{
+				/* optional check */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 				{
-					return IMGTOOLERR_CORRUPTIMAGE;
+					errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+					if (errorcode)
+						return errorcode;
+
+					if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+						|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+						|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+					{
+						return IMGTOOLERR_CORRUPTIMAGE;
+					}
 				}
 			}
-#endif
 		}
 		run_len = 512 - (fileref->crPs % 512);
 		if (run_len > len)
@@ -1649,22 +1654,24 @@ static imgtoolerr_t mac_file_write(mac_fileref *fileref, UINT32 len, const void 
 		}
 		if (errorcode)
 			return errorcode;
-#if TAG_CHECKS
-		/* optional check */
-		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+		if (TAG_CHECKS)
 		{
-			errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
-			if (errorcode)
-				return errorcode;
-
-			if ((get_UINT32BE(tag.fileID) != fileref->fileID)
-				|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
-				|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 			{
-				return IMGTOOLERR_CORRUPTIMAGE;
+				errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+				if (errorcode)
+					return errorcode;
+
+				if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+					|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+					|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+				{
+					return IMGTOOLERR_CORRUPTIMAGE;
+				}
 			}
 		}
-#endif
+
 		if (fileref->reload_buf)
 		{
 			errorcode = image_read_block(&fileref->l2_img->l1_img, block, fileref->block_buffer);
@@ -1683,11 +1690,12 @@ static imgtoolerr_t mac_file_write(mac_fileref *fileref, UINT32 len, const void 
 		/* update tag data */
 		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 		{
-#if !TAG_CHECKS
-			errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
-			if (errorcode)
-				return errorcode;
-#endif
+			if (!TAG_CHECKS)
+			{
+				errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+				if (errorcode)
+					return errorcode;
+			}
 
 			switch (fileref->l2_img->format)
 			{
@@ -2669,24 +2677,26 @@ static imgtoolerr_t mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT3
 	{
 		if (mfs_get_ABlink(fileref->l2_img, i) == 0)
 		{
-#if TAG_CHECKS
-			/* optional check */
-			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			if (TAG_CHECKS)
 			{
-				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				/* optional check */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 				{
-					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
-					if (errorcode)
-						return errorcode;
-
-					if (get_UINT32BE(tag.fileID) != 0)
+					for (j=0; j<fileref->l2_img->blocksperAB; j++)
 					{
-						/*return IMGTOOLERR_CORRUPTIMAGE;*/
-						goto corrupt_free_block;
+						errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+						if (errorcode)
+							return errorcode;
+
+						if (get_UINT32BE(tag.fileID) != 0)
+						{
+							/*return IMGTOOLERR_CORRUPTIMAGE;*/
+							goto corrupt_free_block;
+						}
 					}
 				}
 			}
-#endif
+
 			free_ABs++;
 		}
 corrupt_free_block:
@@ -2702,24 +2712,26 @@ corrupt_free_block:
 		/* append free ABs after last AB */
 		for (i=lastAB+1; (mfs_get_ABlink(fileref->l2_img, i) == 0) && (allocABs > 0) && (i < numABs); i++)
 		{
-#if TAG_CHECKS
-			/* optional check */
-			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			if (TAG_CHECKS)
 			{
-				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				/* optional check */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 				{
-					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
-					if (errorcode)
-						return errorcode;
-
-					if (get_UINT32BE(tag.fileID) != 0)
+					for (j=0; j<fileref->l2_img->blocksperAB; j++)
 					{
-						/*return IMGTOOLERR_CORRUPTIMAGE;*/
-						goto corrupt_free_block2;
+						errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+						if (errorcode)
+							return errorcode;
+
+						if (get_UINT32BE(tag.fileID) != 0)
+						{
+							/*return IMGTOOLERR_CORRUPTIMAGE;*/
+							goto corrupt_free_block2;
+						}
 					}
 				}
 			}
-#endif
+
 			mfs_set_ABlink(fileref->l2_img, lastAB, i+2);
 			lastAB = i;
 			allocABs--;
@@ -2749,24 +2761,26 @@ corrupt_free_block2:
 				extentABlen = 0;
 				while ((i<numABs) && (mfs_get_ABlink(fileref->l2_img, i) == 0))
 				{
-#if TAG_CHECKS
-					/* optional check */
-					if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+					if (TAG_CHECKS)
 					{
-						for (j=0; j<fileref->l2_img->blocksperAB; j++)
+						/* optional check */
+						if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
 						{
-							errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
-							if (errorcode)
-								return errorcode;
-
-							if (get_UINT32BE(tag.fileID) != 0)
+							for (j=0; j<fileref->l2_img->blocksperAB; j++)
 							{
-								/*return IMGTOOLERR_CORRUPTIMAGE;*/
-								goto corrupt_free_block3;
+								errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+								if (errorcode)
+									return errorcode;
+
+								if (get_UINT32BE(tag.fileID) != 0)
+								{
+									/*return IMGTOOLERR_CORRUPTIMAGE;*/
+									goto corrupt_free_block3;
+								}
 							}
 						}
 					}
-#endif
+
 					extentABlen++;
 					i++;
 				}
@@ -2907,25 +2921,27 @@ static imgtoolerr_t mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 			/* 0 -> empty block: there is no way an empty block could make it
 			into the link chain!!! */
 			return IMGTOOLERR_CORRUPTIMAGE;
-#if TAG_CHECKS
-		/* optional check */
-		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
-		{
-			for (j=0; j<fileref->l2_img->blocksperAB; j++)
-			{
-				errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
-				if (errorcode)
-					return errorcode;
 
-				if ((get_UINT32BE(tag.fileID) != fileref->fileID)
-					|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
-					|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+		if (TAG_CHECKS)
+		{
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				for (j=0; j<fileref->l2_img->blocksperAB; j++)
 				{
-					return IMGTOOLERR_CORRUPTIMAGE;
+					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
+					if (errorcode)
+						return errorcode;
+
+					if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+						|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+						|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+					{
+						return IMGTOOLERR_CORRUPTIMAGE;
+					}
 				}
 			}
 		}
-#endif
 	}
 
 	if (i == newABeof)
@@ -2955,25 +2971,28 @@ static imgtoolerr_t mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 				}
 				return IMGTOOLERR_CORRUPTIMAGE;
 			}
-#if TAG_CHECKS
-			/* optional check */
-			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
-			{
-				for (j=0; j<fileref->l2_img->blocksperAB; j++)
-				{
-					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
-					if (errorcode)
-						return errorcode;
 
-					if ((get_UINT32BE(tag.fileID) != fileref->fileID)
-						|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
-						|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+			if (TAG_CHECKS)
+			{
+				/* optional check */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+				{
+					for (j=0; j<fileref->l2_img->blocksperAB; j++)
 					{
-						return IMGTOOLERR_CORRUPTIMAGE;
+						errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
+						if (errorcode)
+							return errorcode;
+
+						if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+							|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+							|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+						{
+							return IMGTOOLERR_CORRUPTIMAGE;
+						}
 					}
 				}
 			}
-#endif
+
 			mfs_set_ABlink(fileref->l2_img, AB_address, 0);
 			fileref->l2_img->freeABs++;
 			MDB_dirty = 1;
@@ -4040,12 +4059,13 @@ static imgtoolerr_t BT_open(mac_BTref *BTref, int (*key_compare_func)(const void
 	if (!BTref->node_buf)
 		return IMGTOOLERR_OUTOFMEMORY;
 
-#if BTREE_CHECKS
-	/* optional: check integrity of B-tree */
-	errorcode = BT_check(BTref, is_extent);
-	if (errorcode)
-		return errorcode;
-#endif
+	if (BTREE_CHECKS)
+	{
+		/* optional: check integrity of B-tree */
+		errorcode = BT_check(BTref, is_extent);
+		if (errorcode)
+			return errorcode;
+	}
 
 	return IMGTOOLERR_SUCCESS;
 }

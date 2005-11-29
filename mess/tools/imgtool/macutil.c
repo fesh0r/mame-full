@@ -1,0 +1,49 @@
+/****************************************************************************
+
+	macutil.c
+
+	Imgtool Utility code for manipulating certain Apple/Mac data structures
+	and conventions
+
+*****************************************************************************/
+
+#include "macutil.h"
+
+
+imgtoolerr_t mac_identify_fork(const char *fork_string, mac_fork_t *fork_num)
+{
+	if (!strcmp(fork_string, ""))
+		*fork_num = MAC_FORK_DATA;
+	else if (!strcmp(fork_string, "RESOURCE_FORK"))
+		*fork_num = MAC_FORK_RESOURCE;
+	else
+		return IMGTOOLERR_FORKNOTFOUND;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+void mac_suggest_transfer(mac_filecategory_t file_category, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+{
+	suggestions[0].viability = (file_category == MAC_FILECATEGORY_FORKED) ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
+	suggestions[0].filter = filter_macbinary_getinfo;
+	suggestions[0].fork = NULL;
+	suggestions[0].description = NULL;
+
+	suggestions[1].viability = (file_category == MAC_FILECATEGORY_TEXT) ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
+	suggestions[1].filter = filter_eoln_getinfo;
+	suggestions[1].fork = NULL;
+	suggestions[1].description = NULL;
+
+	suggestions[2].viability = (file_category == MAC_FILECATEGORY_DATA) ? SUGGESTION_RECOMMENDED : SUGGESTION_POSSIBLE;
+	suggestions[2].filter = NULL;
+	suggestions[2].fork = "";
+	suggestions[2].description = "Raw (data fork)";
+
+	suggestions[3].viability = SUGGESTION_POSSIBLE;
+	suggestions[3].filter = NULL;
+	suggestions[3].fork = "RESOURCE_FORK";
+	suggestions[3].description = "Raw (resource fork)";
+}
+
+
