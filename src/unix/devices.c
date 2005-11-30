@@ -33,10 +33,6 @@
 #include <lirc/lirc_client.h>
 #endif
 
-#ifdef MESS
-#include "mesintrf.h"
-#endif
-
 enum
 {
 	AXIS_TYPE_INVALID = 0,
