@@ -919,24 +919,35 @@ static void menu_insert(HWND window)
 	const char *fork = NULL;
 	struct transfer_suggestion_info suggestion_info;
 	int use_suggestion_info;
+	imgtool_stream *stream = NULL;
 	filter_getinfoproc filter = NULL;
 
 	info = get_wimgtool_info(window);
 
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = window;
 	ofn.lpstrFile = host_filename;
 	ofn.nMaxFile = sizeof(host_filename) / sizeof(host_filename[0]);
-	ofn.Flags |= OFN_FILEMUSTEXIST;
+	ofn.Flags = OFN_FILEMUSTEXIST | OFN_EXPLORER;
 	if (!GetOpenFileName(&ofn))
 	{
 		err = 0;
 		goto done;
 	}
 
+	/* we need to open the stream at this point, so that we can suggest the transfer */
+	stream = stream_open(T2U(ofn.lpstrFile), OSD_FOPEN_READ);
+	if (!stream)
+	{
+		err = IMGTOOLERR_FILENOTFOUND;
+		goto done;
+	}
+
 	module = img_module(info->image);
 
-	img_suggesttransfer(info->image, NULL, suggestion_info.suggestions,
+	/* figure out which filters are appropriate for this file */
+	img_suggesttransfer(info->image, NULL, stream, suggestion_info.suggestions,
 		sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]));
 
 	/* do we need to show an option dialog? */
@@ -968,7 +979,7 @@ static void menu_insert(HWND window)
 		image_filename = s2;
 	}
 
-	err = img_putfile(info->image, image_filename, fork, ofn.lpstrFile, opts, filter);
+	err = img_writefile(info->image, image_filename, fork, stream, opts, filter);
 	if (err)
 		goto done;
 
@@ -1062,7 +1073,7 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	// try suggesting some filters (only if doing a single file)
 	if (!entry->directory)
 	{
-		img_suggesttransfer(info->image, filename, suggestion_info.suggestions,
+		img_suggesttransfer(info->image, filename, NULL, suggestion_info.suggestions,
 			sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]));
 
 		suggestion_info.selected = 0;
@@ -1084,6 +1095,7 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	// set up the OPENFILENAME struct
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = window;
 	ofn.Flags = OFN_EXPLORER;
 	ofn.lpstrFile = host_filename;
 	ofn.lpstrFilter = TEXT("All files (*.*)\0*.*\0");
