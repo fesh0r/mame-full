@@ -127,29 +127,24 @@ CFLAGS =
 ###########################################################################
 
 # GCC on x86
-CFLAGS = -O2 -Wall -Wno-unused
+CFLAGS = -O2
 
 # GCC on x86 with some optimizations
-# CFLAGS = -O2 -Wall -Wno-unused -mtune=i686 -fomit-frame-pointer \
-#  -fstrict-aliasing -fstrength-reduce -ffast-math
-
-# GCC 3.4.x and newer on x86 with some optimizations
-# CFLAGS = -O2 -Wall -Wno-unused -mtune=i686 -fomit-frame-pointer \
-#  -fstrict-aliasing -fstrength-reduce -ffast-math
+# CFLAGS = -O2 -mtune=i686 -fomit-frame-pointer -fstrength-reduce -ffast-math
 
 # GCC on Linux/PowerPC
-# CFLAGS = -O2 -Wall -Wno-unused -funroll-loops -fstrength-reduce \
-#  -fomit-frame-pointer -ffast-math -fsigned-char -mlongcall
+# CFLAGS = -O2 -funroll-loops -fstrength-reduce -fomit-frame-pointer \
+# 	-ffast-math -fsigned-char -mlongcall
 
 # GCC on OpenStep/Intel
-# CFLAGS = -O2 -Wall -Wno-unused -finline-functions -ffast-math \
-#  -fstrength-reduce -traditional-cpp
+# CFLAGS = -O2 -finline-functions -ffast-math -fstrength-reduce \
+# 	-traditional-cpp
 
 # GCC on OpenStep/PPC or Mac OS X.  If you get immediate errors when you 
 # build on OS X, remove the -traditional-cpp flag; it caused problems for 
 # me on OS X 10.3 with GCC 3.3.
-# CFLAGS = -O2 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
-#  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
+# CFLAGS = -O2 -funroll-loops -traditional-cpp -fstrength-reduce 
+# 	-fomit-frame-pointer -ffast-math -fsigned-char
 
 # IRIX MIPSpro R5+K without IPA
 # CFLAGS = -n32 -mips4 -O3 -OPT:Olimit=0
@@ -165,9 +160,9 @@ CFLAGS = -O2 -Wall -Wno-unused
 # CFLAGS = -fullwarn -n32 -mips3 -Ofast -OPT:Olimit=0 -IPA
 
 # PlayStation2 Linux
-# CFLAGS = -O2 -mcpu=r5900 -Wall -Wno-unused -fsingle-precision-constant \
-#  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char -pipe \
-#  -malign-loops=2 -malign-jumps=2 -funroll-loops
+# CFLAGS = -O2 -mcpu=r5900 -fsingle-precision-constant -fstrength-reduce \
+# 	-fomit-frame-pointer -ffast-math -fsigned-char -pipe -malign-loops=2 
+# 	-malign-jumps=2 -funroll-loops
 
 ifneq (,$(findstring gcc,$(CC)))
 
@@ -188,16 +183,19 @@ ifneq (,$(findstring gcc,$(CC)))
   #########################################################################
   
   # Check for C89 + GNU extensions compliance.
-  # CFLAGS += -std=gnu89
+  CFLAGS += -std=gnu89
 
   # Show all warnings.
-  # CFLAGS += -Wall
+  CFLAGS += -Wall
 
   # Don't warn about unused variables.
-  # CFLAGS += -Wno-unused
+  CFLAGS += -Wno-unused
 
   # Warn about declarations after statements.
-  # CFLAGS += -Wdeclaration-after-statement
+  CFLAGS += -Wdeclaration-after-statement
+
+  # Don't warn about code that might break strict aliasing rules. 
+  # CFLAGS += -Wno-strict-aliasing
 
 
   #########################################################################
@@ -242,7 +240,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -fomit-frame-pointer
 
   # Use with GCC 2.95.1 and above for a nice speedup.  For GCC 3.0 and
-  # above, this is automatically turned on by -O2 and above.
+  # up, this is automatically turned on by -O2 and higher.
   # CFLAGS += -fstrict-aliasing
 
   # Use with EGCS 1.1.x and GCC 2.95; otherwise, xmame compilation will 
@@ -511,10 +509,8 @@ INSTALL_DATA =		$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
 # :-(
 HAVE_GETTIMEOFDAY = 1
 
-# Does your system support the mprotect() function?  If so, enable this if 
-# you're having problems using X86_MIPS3_DRC on an OS and CPU that supports the 
-# NO_EXECUTE bit (currently only 64-bit AMD chips).
-# HAVE_MPROTECT = 1
+# Does your system support the mmap() function?  If not, disable this.
+HAVE_MMAP = 1
 
 # Most UNIX-like systems use LF for an end-of-line.  Set this to 1 for CR, 2 
 # for LF, or 3 for CR/LF.
