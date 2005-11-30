@@ -927,6 +927,7 @@ static void menu_insert(HWND window)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = host_filename;
 	ofn.nMaxFile = sizeof(host_filename) / sizeof(host_filename[0]);
+	ofn.Flags |= OFN_FILEMUSTEXIST;
 	if (!GetOpenFileName(&ofn))
 	{
 		err = 0;
