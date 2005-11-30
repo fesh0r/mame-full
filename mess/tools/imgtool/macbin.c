@@ -199,6 +199,7 @@ static imgtoolerr_t write_fork(imgtool_image *image, const char *filename, const
 		if (len < fork_len)
 			stream_fill(mem_stream, 0, fork_len);
 
+		stream_seek(mem_stream, 0, SEEK_SET);
 		err = img_module(image)->write_file(image, filename, fork, mem_stream, opts);
 		if (err)
 			goto done;
