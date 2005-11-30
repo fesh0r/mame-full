@@ -544,11 +544,14 @@ imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, im
 
 
 
-imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path,
+	imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t err;
-	int i;
+	int i, j;
 	char *alloc_path = NULL;
+	imgtoolerr_t (*check_stream)(imgtool_stream *stream, imgtool_suggestion_viability_t *viability);
+	size_t position;
 
 	/* clear out buffer */
 	memset(suggestions, 0, sizeof(*suggestions) * suggestions_length);
@@ -570,21 +573,52 @@ imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool
 		}
 	}
 
+	/* invoke the module's suggest call */
 	err = image->module->suggest_transfer(image, path, suggestions, suggestions_length);
 	if (err)
 		goto done;
 
-	/* fill in any missing descriptions */
-	for (i = 0; suggestions[i].viability; i++)
+	/* Loop on resulting suggestions, and do the following:
+	 * 1.  Call check_stream if present, and remove disqualified streams
+	 * 2.  Fill in missing descriptions
+	 */
+	i = j = 0;
+	while(suggestions[i].viability)
 	{
-		if (!suggestions[i].description)
+		if (stream && suggestions[i].filter)
 		{
-			if (suggestions[i].filter)
-				suggestions[i].description = filter_get_info_string(suggestions[i].filter, FILTINFO_STR_HUMANNAME);
-			else
-				suggestions[i].description = "Raw";
+			check_stream = (imgtoolerr_t (*)(imgtool_stream *, imgtool_suggestion_viability_t *)) filter_get_info_fct(suggestions[i].filter, FILTINFO_PTR_CHECKSTREAM);
+			if (check_stream)
+			{
+				position = stream_tell(stream);
+				err = check_stream(stream, &suggestions[i].viability);
+				stream_seek(stream, position, SEEK_SET);
+				if (err)
+					goto done;
+			}
 		}
+
+		/* the check_stream proc can remove the option by clearing out the viability */
+		if (suggestions[i].viability)
+		{
+			/* we may have to move this suggestion, if one was removed */
+			if (i != j)
+				memcpy(&suggestions[j], &suggestions[i], sizeof(*suggestions));
+
+			/* if the description is missing, fill it in */
+			if (!suggestions[j].description)
+			{
+				if (suggestions[j].filter)
+					suggestions[j].description = filter_get_info_string(suggestions[i].filter, FILTINFO_STR_HUMANNAME);
+				else
+					suggestions[j].description = "Raw";
+			}
+
+			j++;
+		}
+		i++;
 	}
+	suggestions[j].viability = 0;
 
 done:
 	if (alloc_path)

@@ -306,9 +306,11 @@ imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, im
  *
  * Parameters:
  *		image:				The image to read from
- *		path:				The path to the directory to delete
+ *		path:				The path to the file on the image; can be NULL
+ *		stream:				Stream on local computer to check; can be NULL
  */
-imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
+imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path,
+	imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 
 /* img_getchain
  * img_getchain_string

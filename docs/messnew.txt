@@ -27,9 +27,12 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- Implemented a feature that allows filters to qualify files, to see if they
+  are appropriate for any given filter.  [Nate Woods]
+
 - [Windows Imgtool] The insert file dialog will no longer let the user specify
   a file that does not exist (which was allowed, but eventually resulted in an
-  error.)  [Nate Woods]
+  error.)  Also, fixed a few cosmetic errors.  [Nate Woods]
 
 
 

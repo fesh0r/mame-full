@@ -27,6 +27,13 @@ typedef struct _imgtool_image imgtool_image;
 typedef struct _imgtool_imageenum imgtool_imageenum;
 typedef struct _imgtool_library imgtool_library;
 
+typedef enum
+{
+	SUGGESTION_END,
+	SUGGESTION_POSSIBLE,
+	SUGGESTION_RECOMMENDED
+} imgtool_suggestion_viability_t;
+
 union filterinfo
 {
 	INT64	i;											/* generic integers */
@@ -36,6 +43,7 @@ union filterinfo
 
 	imgtoolerr_t (*read_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
 	imgtoolerr_t (*write_file)(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t (*check_stream)(imgtool_stream *stream, imgtool_suggestion_viability_t *viability);
 };
 
 typedef void (*filter_getinfoproc)(UINT32 state, union filterinfo *info);
@@ -81,13 +89,6 @@ typedef struct
 	UINT64 size;
 	char forkname[64];
 } imgtool_forkent;
-
-typedef enum
-{
-	SUGGESTION_END,
-	SUGGESTION_POSSIBLE,
-	SUGGESTION_RECOMMENDED
-} imgtool_suggestion_viability_t;
 
 typedef struct
 {

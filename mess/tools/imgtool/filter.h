@@ -28,6 +28,7 @@ enum
 	FILTINFO_PTR_FIRST = 0x10000,
 	FILTINFO_PTR_READFILE,
 	FILTINFO_PTR_WRITEFILE,
+	FILTINFO_PTR_CHECKSTREAM,
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	FILTINFO_STR_FIRST = 0x20000,

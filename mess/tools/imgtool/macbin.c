@@ -51,6 +51,15 @@
 
 
 
+static UINT32 pad128(UINT32 length)
+{
+	if (length % 128)
+		length += 128 - (length % 128);
+	return length;
+}
+
+
+
 static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	static const UINT32 attrs[] =
@@ -68,7 +77,7 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 		0
 	};
 	imgtoolerr_t err;
-	UINT8 header[126];
+	UINT8 header[128];
 	const char *basename;
 	int i;
 
@@ -151,6 +160,8 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 		err = img_module(image)->read_file(image, filename, "", destf);
 		if (err)
 			return err;
+
+		stream_fill(destf, 0, pad128(data_fork->size));
 	}
 	
 	if (resource_fork)
@@ -158,6 +169,8 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 		err = img_module(image)->read_file(image, filename, "RESOURCE_FORK", destf);
 		if (err)
 			return err;
+
+		stream_fill(destf, 0, pad128(resource_fork->size));
 	}
 
 	return IMGTOOLERR_SUCCESS;
@@ -216,11 +229,10 @@ static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filena
 		0
 	};
 	imgtoolerr_t err;
-	UINT8 header[126];
+	UINT8 header[128];
 	UINT32 datafork_size;
 	UINT32 resourcefork_size;
 	UINT64 total_size;
-	UINT64 header_size;
 	UINT32 creation_time;
 	UINT32 lastmodified_time;
 	int version;
@@ -235,10 +247,11 @@ static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filena
 	UINT8 script_code = 0;
 	UINT8 extended_flags = 0;
 
+	/* read in the header */
 	memset(header, 0, sizeof(header));
 	stream_read(sourcef, header, sizeof(header));
 
-	/* check magic bytes */
+	/* check magic and zero fill bytes */
 	if (header[0] != 0x00)
 		return IMGTOOLERR_CORRUPTFILE;
 	if (header[74] != 0x00)
@@ -249,27 +262,39 @@ static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filena
 	datafork_size = pick_integer_be(header, 83, 4);
 	resourcefork_size = pick_integer_be(header, 87, 4);
 	total_size = stream_size(sourcef);
-	header_size = total_size - datafork_size - resourcefork_size;
 
-	if (header_size == 101)
+	/* size of a MacBinary header is always 128 bytes */
+	if (total_size - pad128(datafork_size) - pad128(resourcefork_size) != 128)
+		return IMGTOOLERR_CORRUPTFILE;
+
+	/* check filename length byte */
+	if ((header[1] <= 0x00) || (header[1] > 0x3F))
+		return IMGTOOLERR_CORRUPTFILE;
+
+	/* check the CRC */
+	if (pick_integer_be(header, 124, 2) != ccitt_crc16(0, header, 124))
 	{
+		/* the CRC does not match; this file is MacBinary I */
 		version = 1;
 	}
-	else if (header_size == 126)
+	else if (pick_integer_be(header, 102, 4) != 0x6D42494E)
 	{
-		/* MacBinary II or MacBinary III? */
-		if (header[122] >= 0x82)
-			version = 3;			
-		else
-			version = 2;
+		/* did not see 'mBIN'; this file is MacBinary II */
+		if (header[122] < 0x81)
+			return IMGTOOLERR_CORRUPTFILE;
+		if (header[123] < 0x81)
+			return IMGTOOLERR_CORRUPTFILE;
+		version = 2;
 	}
 	else
 	{
-		return IMGTOOLERR_CORRUPTFILE;
+		/* we did see 'mBIN'; this file is MacBinary III */
+		if (header[122] < 0x82)
+			return IMGTOOLERR_CORRUPTFILE;
+		if (header[123] < 0x81)
+			return IMGTOOLERR_CORRUPTFILE;
+		version = 3;
 	}
-
-	if ((header[1] <= 0x00) || (header[1] > 0x3F))
-		return IMGTOOLERR_CORRUPTFILE;
 
 	type_code         = pick_integer_be(header, 65, 4);
 	creator_code      = pick_integer_be(header, 69, 4);
@@ -280,50 +305,55 @@ static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filena
 	creation_time     = pick_integer_be(header, 91, 4);
 	lastmodified_time = pick_integer_be(header, 95, 4);
 
-	if (version >= 2)
+	if (image)
 	{
-		if (header[123] > 0x82)
-			return IMGTOOLERR_CORRUPTFILE;
+		/* write out both forks */
+		err = write_fork(image, filename, "", sourcef, sizeof(header), datafork_size, opts);
+		if (err)
+			return err;
+		err = write_fork(image, filename, "RESOURCE_FORK", sourcef, sizeof(header) + pad128(datafork_size), resourcefork_size, opts);
+		if (err)
+			return err;
 
-		if (pick_integer_be(header, 124, 2) != ccitt_crc16(0, header, 124))
-			return IMGTOOLERR_CORRUPTFILE;
+		/* set up attributes */
+		attr_values[0].t = mac_crack_time(creation_time);
+		attr_values[1].t = mac_crack_time(lastmodified_time);
+		attr_values[2].i = type_code;
+		attr_values[3].i = creator_code;
+		attr_values[4].i = finder_flags;
+		attr_values[5].i = coord_x;
+		attr_values[6].i = coord_y;
+		attr_values[7].i = finder_folder;
+		attr_values[8].i = script_code;
+		attr_values[9].i = extended_flags;
+
+		err = img_module(image)->set_attrs(image, filename, attrs, attr_values);
+		if (err)
+			return err;
 	}
-
-	if (version >= 3)
-	{
-		/* MacBinary III specific */
-		if (pick_integer_be(header, 102, 4) != 0x6D42494E)
-			return IMGTOOLERR_CORRUPTFILE;
-
-		script_code = pick_integer_be(header, 106, 1);
-		extended_flags = pick_integer_be(header, 107, 1);
-	}
-
-	/* write out both forks */
-	err = write_fork(image, filename, "", sourcef, header_size, datafork_size, opts);
-	if (err)
-		return err;
-	err = write_fork(image, filename, "RESOURCE_FORK", sourcef, header_size + datafork_size, resourcefork_size, opts);
-	if (err)
-		return err;
-
-	/* set up attributes */
-	attr_values[0].t = mac_crack_time(creation_time);
-	attr_values[1].t = mac_crack_time(lastmodified_time);
-	attr_values[2].i = type_code;
-	attr_values[3].i = creator_code;
-	attr_values[4].i = finder_flags;
-	attr_values[5].i = coord_x;
-	attr_values[6].i = coord_y;
-	attr_values[7].i = finder_folder;
-	attr_values[8].i = script_code;
-	attr_values[9].i = extended_flags;
-
-	err = img_module(image)->set_attrs(image, filename, attrs, attr_values);
-	if (err)
-		return err;
 
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t macbinary_checkstream(imgtool_stream *stream, imgtool_suggestion_viability_t *viability)
+{
+	imgtoolerr_t err;
+
+	err = macbinary_writefile(NULL, NULL, NULL, stream, NULL);
+	if (err == IMGTOOLERR_CORRUPTFILE)
+	{
+		/* the filter returned corrupt; this is not a valid file */
+		*viability = SUGGESTION_END;
+		err = IMGTOOLERR_SUCCESS;
+	}
+	else if (err == IMGTOOLERR_SUCCESS)
+	{
+		/* success; lets recommend this filter */
+		*viability = SUGGESTION_RECOMMENDED;
+	}
+	return err;
 }
 
 
@@ -337,5 +367,6 @@ void filter_macbinary_getinfo(UINT32 state, union filterinfo *info)
 		case FILTINFO_STR_EXTENSION:	info->s = "bin"; break;
 		case FILTINFO_PTR_READFILE:		info->read_file = macbinary_readfile; break;
 		case FILTINFO_PTR_WRITEFILE:	info->write_file = macbinary_writefile; break;
+		case FILTINFO_PTR_CHECKSTREAM:	info->check_stream = macbinary_checkstream; break;
 	}
 }
