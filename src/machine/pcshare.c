@@ -1,22 +1,22 @@
 /***************************************************************************
 
-	machine/pc.c
+    machine/pc.c
 
-	Functions to emulate general aspects of the machine
-	(RAM, ROM, interrupts, I/O ports)
+    Functions to emulate general aspects of the machine
+    (RAM, ROM, interrupts, I/O ports)
 
-	The information herein is heavily based on
-	'Ralph Browns Interrupt List'
-	Release 52, Last Change 20oct96
+    The information herein is heavily based on
+    'Ralph Browns Interrupt List'
+    Release 52, Last Change 20oct96
 
-	TODO:
-	clean up (maybe split) the different pieces of hardware
-	PIC, PIT, DMA... add support for LPT, COM (almost done)
-	emulation of a serial mouse on a COM port (almost done)
-	support for Game Controller port at 0x0201
-	support for XT harddisk (under the way, see machine/pc_hdc.c)
-	whatever 'hardware' comes to mind,
-	maybe SoundBlaster? EGA? VGA?
+    TODO:
+    clean up (maybe split) the different pieces of hardware
+    PIC, PIT, DMA... add support for LPT, COM (almost done)
+    emulation of a serial mouse on a COM port (almost done)
+    support for Game Controller port at 0x0201
+    support for XT harddisk (under the way, see machine/pc_hdc.c)
+    whatever 'hardware' comes to mind,
+    maybe SoundBlaster? EGA? VGA?
 
 ***************************************************************************/
 
@@ -148,9 +148,9 @@ static void pc_timer0_w(int state)
 
 
 /*
- * timer0	heartbeat IRQ
- * timer1	DRAM refresh (ignored)
- * timer2	PIO port C pin 4 and speaker polling
+ * timer0   heartbeat IRQ
+ * timer1   DRAM refresh (ignored)
+ * timer2   PIO port C pin 4 and speaker polling
  */
 static const struct pit8253_config pc_pit8253_config =
 {
@@ -240,7 +240,7 @@ static CENTRONICS_CONFIG cent_config[3]={
 
 /*************************************************************************
  *
- *		PC DMA stuff
+ *      PC DMA stuff
  *
  *************************************************************************/
 
@@ -301,7 +301,7 @@ WRITE8_HANDLER(at_page8_w)
 {
 	at_pages[offset % 0x10] = data;
 
-	if (LOG_PORT80 && (offset == 0))	
+	if (LOG_PORT80 && (offset == 0))
 		logerror(" at_page8_w(): Port 80h <== 0x%02x (PC=0x%08x)\n", data, (unsigned) activecpu_get_reg(REG_PC));
 
 	switch(offset % 8) {
