@@ -158,6 +158,13 @@ static void node_putfile(struct imgtooltest_state *state, xml_data_node *node)
 	imgtool_stream *stream;
 	mess_pile pile;
 
+	if (!state->image)
+	{
+		state->failed = 1;
+		report_message(MSG_FAILURE, "Image not loaded");
+		return;
+	}
+
 	get_file_params(node, &filename, &fork, &filter);
 	if (!filename)
 		return;
@@ -206,6 +213,13 @@ static void node_checkfile(struct imgtooltest_state *state, xml_data_node *node)
 	UINT64 stream_sz;
 	const void *stream_ptr;
 	mess_pile pile;
+
+	if (!state->image)
+	{
+		state->failed = 1;
+		report_message(MSG_FAILURE, "Image not loaded");
+		return;
+	}
 
 	get_file_params(node, &filename, &fork, &filter);
 	if (!filename)
@@ -272,10 +286,10 @@ static void node_checkdirectory(struct imgtooltest_state *state, xml_data_node *
 
 	if (!state->image)
 	{
+		state->failed = 1;
 		report_message(MSG_FAILURE, "Image not loaded");
 		return;
 	}
-
 
 	attr_node = xml_get_attribute(node, "path");
 	filename = attr_node ? attr_node->value : "";
@@ -367,6 +381,13 @@ static void node_deletefile(struct imgtooltest_state *state, xml_data_node *node
 {
 	imgtoolerr_t err;
 	xml_attribute_node *attr_node;
+
+	if (!state->image)
+	{
+		state->failed = 1;
+		report_message(MSG_FAILURE, "Image not loaded");
+		return;
+	}
 
 	attr_node = xml_get_attribute(node, "name");
 	if (!attr_node)
