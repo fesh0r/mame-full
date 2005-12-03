@@ -581,6 +581,8 @@ static WRITE32_HANDLER( hpc3_pbus4_w )
 
 static READ32_HANDLER( rtc_r )
 {
+//	printf("RTC_R: offset %x = %x (PC=%x)\n", offset, nRTC_Regs[offset], activecpu_get_pc());
+
 	if( offset <= 0x0d )
 	{
 		switch( offset )
@@ -745,6 +747,8 @@ static READ32_HANDLER( rtc_r )
 static WRITE32_HANDLER( rtc_w )
 {
 	RTC_WRITECNT++;
+
+//	printf("RTC_W: offset %x => %x (PC=%x)\n", data, offset, activecpu_get_pc());
 
 	if( offset <= 0x0d )
 	{
@@ -1409,8 +1413,9 @@ static void scsi_irq(int state)
 
 static SCSIConfigTable dev_table =
 {
-        1,                                      /* 1 SCSI device */
-        { { SCSI_ID_4, 0, SCSI_DEVICE_CDROM } } /* SCSI ID 4, using CHD 0, and it's a CD-ROM */
+        2,                                      /* 1 SCSI device */
+        { { SCSI_ID_4, 0, SCSI_DEVICE_CDROM },  /* SCSI ID 4, using CD 0, and it's a CD-ROM */ 
+	  { SCSI_ID_2, 0, SCSI_DEVICE_CDROM } } /* SCSI ID 2, using HD 0, and it's a CD-ROM */ 
 };
 
 static struct WD33C93interface scsi_intf =
@@ -1563,6 +1568,20 @@ static void ip22_chdcd_getinfo(struct IODevice *dev)
 	dev->unload = device_unload_ip22_chdcd;
 }
 
+static void ip22_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	dev->type = IO_HARDDISK;
+	dev->count = 2;
+	dev->file_extensions = "chd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_mess_hd;
+	dev->load = device_load_mess_hd;
+	dev->unload = device_unload_mess_hd;
+}
+
 MACHINE_DRIVER_START( ip225015 )
 	MDRV_CPU_ADD_TAG( "main", R5000BE, 50000000*3 )
 	MDRV_CPU_CONFIG( config )
@@ -1616,6 +1635,7 @@ ROM_END
 
 SYSTEM_CONFIG_START( ip225015 )
 	CONFIG_DEVICE(ip22_chdcd_getinfo)
+	CONFIG_DEVICE(ip22_harddisk_getinfo)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )
 	CONFIG_CHARQUEUE_EMPTY( at_keyboard )

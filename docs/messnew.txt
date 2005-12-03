@@ -13,6 +13,13 @@ System Driver Changes:
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
   [Wilbert Pol]
 
+- [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
+
+- [SNES] Fixed save RAM to store and save properly, improved memory mapping
+  improved raster timing, added HIRQ support and better VIRQ support,
+  improved joypad support, DSP-1 support (including all subtypes), Counter
+  latching support, fixed OAM read/write.  [R. Belmont]
+  
 
 
 User Interface Changes:

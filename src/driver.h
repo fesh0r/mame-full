@@ -76,7 +76,6 @@
 #include "messdrv.h"
 #endif
 
-
 /***************************************************************************
 
     Macros for building machine drivers
