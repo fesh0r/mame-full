@@ -15,11 +15,11 @@ ernesto@imagina.com
 #include "inputx.h"
 
 static ADDRESS_MAP_START(amiga_mem, ADDRESS_SPACE_PROGRAM, 16)
-    AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(3)										/* Chip Ram - 1Mb / 512k */
+    AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(3)			/* Chip Ram - 1Mb / 512k */
     AM_RANGE( 0xbfd000, 0xbfefff) AM_READWRITE( amiga_cia_r, amiga_cia_w )			/* 8510's CIA A and CIA B */
 //  { 0xc00000, 0xd7ffff, MRA8_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
     AM_RANGE( 0xdbf000, 0xdfffff) AM_READWRITE( amiga_custom_r, amiga_custom_w )	/* Custom Chips */
-    AM_RANGE( 0xf80000, 0xffffff) AM_ROMBANK(1)										/* System ROM - mirror */
+    AM_RANGE( 0xf80000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)					/* System ROM - mirror */
 ADDRESS_MAP_END
 
 /**************************************************************************
@@ -118,8 +118,9 @@ static void amiga_cia_0_portA_w( int data )
 	else if ( ((data & 1) == 0))
 	{
 		/* overlay disabled, map RAM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK4 );
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_BANK4 );
+		memory_set_bankptr(4, memory_region(REGION_CPU1));
 	}
 
 	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
@@ -211,7 +212,6 @@ static DRIVER_INIT( amiga )
 	amiga_machine_config(&amiga_intf);
 
 	/* set up memory */
-	memory_set_bankptr(1, memory_region(REGION_USER1));
 	memory_set_bankptr(3, memory_region(REGION_USER1));
 }
 

@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #809) [Nate Woods]
+
 - [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
 
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
