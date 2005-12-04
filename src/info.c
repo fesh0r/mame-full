@@ -918,7 +918,7 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
 		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
 #else
 		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
@@ -997,8 +997,10 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 #ifdef MESS
 		"\t\t<!ELEMENT device (extension*)>\n"
 		"\t\t\t<!ATTLIST device name CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST device mandatory CDATA #IMPLIED>\n"
 		"\t\t\t<!ELEMENT extension EMPTY>\n"
 		"\t\t\t\t<!ATTLIST extension name CDATA #REQUIRED>\n"
+		"\t\t<!ELEMENT ramoption (#PCDATA)>\n"
 #endif
 		"]>\n\n"
 		"<" XML_ROOT " build=\"%s\">\n",
