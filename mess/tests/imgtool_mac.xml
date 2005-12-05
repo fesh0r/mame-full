@@ -1,0 +1,38 @@
+<tests>
+
+<imgtooltest name="mac_001">
+	<!-- Basic Mac tests -->
+	<createimage driver="apple35_dc_mac"/>
+	<checkdirectory/>
+
+	<putfile name="FOO.TXT">'Hello World!'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+
+	<putfile name="BAR.TXT">'Dingus!'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+		<entry name="BAR.TXT" size="7"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+	<checkfile name="BAR.TXT">'Dingus!'</checkfile>
+
+	<putfile name="FOO.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+		<entry name="BAR.TXT" size="7"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
+	<checkfile name="BAR.TXT">'Dingus!'</checkfile>
+<!--
+	<deletefile name="BAR.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
+-->
+</imgtooltest>
+
+</tests>

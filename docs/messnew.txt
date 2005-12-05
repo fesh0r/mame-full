@@ -39,7 +39,9 @@ Imgtool Changes:
 - Implemented a feature that allows filters to qualify files, to see if they
   are appropriate for any given filter.  [Nate Woods]
 
-- Updated Mac module to support directories and filters.  [Nate Woods]
+- Updated Mac module; moved to floppy abstraction system, as well as support
+  for directories and filters.  MFS disk image creation now works.  [Nate
+  Woods]
 
 - [Windows Imgtool] The insert file dialog will no longer let the user specify
   a file that does not exist (which was allowed, but eventually resulted in an

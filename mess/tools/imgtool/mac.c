@@ -60,6 +60,29 @@
 	with DSDD 3.5" floppy, I assume that p = 1599, but I don't know the other
 	values
 
+
+	Master Directory Block:
+
+	Offset  Length  Description
+	------  ------  -----------
+	     0       2  Volume Signature
+		 2       4  Creation Date
+		 6       4  Last Modification Date
+	    10       2  Volume Attributes
+		12       2  Number of Files In Root Directory
+		14       2  First Block of Volume Bitmap
+	   ...
+
+	Links:
+		http://developer.apple.com/documentation/mac/Files/Files-99.html
+		http://developer.apple.com/documentation/mac/Files/Files-100.html
+		http://developer.apple.com/documentation/mac/Files/Files-101.html
+		http://developer.apple.com/documentation/mac/Files/Files-102.html
+		http://developer.apple.com/documentation/mac/Files/Files-103.html
+		http://developer.apple.com/documentation/mac/Files/Files-104.html
+		http://developer.apple.com/documentation/mac/Files/Files-105.html
+		http://developer.apple.com/documentation/mac/Files/Files-106.html
+
 *****************************************************************************/
 
 #include <ctype.h>
@@ -70,6 +93,8 @@
 #include "osdepend.h"
 #include "imgtoolx.h"
 #include "macutil.h"
+#include "iflopimg.h"
+#include "formats/ap_dsk35.h"
 
 /* if 1, check consistency of B-Tree (most of the checks will eventually be
 	suppressed when the image is opened as read-only and only enabled when
@@ -138,7 +163,7 @@ INLINE void set_UINT32BE(UINT32BE *word, UINT32 data)
 }
 
 /*
-	Macintosh string: first byte is lenght
+	Macintosh string: first byte is length
 */
 typedef UINT8 mac_str27[28];
 typedef UINT8 mac_str31[32];
@@ -302,8 +327,8 @@ enum
 	'%25'.
 
 	dst (O): C string
-	n (I): lenght of buffer pointed to by dst
-	src (I): macintosh string (first byte is lenght)
+	n (I): length of buffer pointed to by dst
+	src (I): macintosh string (first byte is length)
 */
 static void mac_to_c_strncpy(char *dst, int n, UINT8 *src)
 {
@@ -353,9 +378,9 @@ exit:
 	using the "%00" sequence.  To avoid any ambiguity, '%' is escaped with
 	'%25'.
 
-	dst (O): macintosh string (first byte is lenght)
+	dst (O): macintosh string (first byte is length)
 	src (I): C string
-	n (I): lenght of string pointed to by src
+	n (I): length of string pointed to by src
 */
 static void c_to_mac_strncpy(mac_str255 dst, const char *src, int n)
 {
@@ -544,7 +569,7 @@ static int mac_stricmp(const UINT8 *s1, const UINT8 *s2)
 	Copy a macintosh string
 
 	dst (O): dest macintosh string
-	src (I): source macintosh string (first byte is lenght)
+	src (I): source macintosh string (first byte is length)
 
 	Return a zero if s1 and s2 are equal, a negative value if s1 is less than
 	s2, and a positive value if s1 is greater than s2.
@@ -560,8 +585,8 @@ INLINE void mac_strcpy(UINT8 *dest, const UINT8 *src)
 	Copy a macintosh string
 
 	dst (O): dest macintosh string
-	n (I): max string lenght for dest (range 0-255, buffer lenght + 1)
-	src (I): source macintosh string (first byte is lenght)
+	n (I): max string length for dest (range 0-255, buffer length + 1)
+	src (I): source macintosh string (first byte is length)
 */
 static void mac_strncpy(UINT8 *dest, int n, const UINT8 *src)
 {
@@ -575,192 +600,11 @@ static void mac_strncpy(UINT8 *dest, int n, const UINT8 *src)
 }
 
 /*
-	check_fname()
-
-	Check a file name.
-
-	filename (I): file name (macintosh string)
-
-	Return non-zero if the file name is invalid.
-
-	TODO: how about script codes in HFS???
-*/
-static int check_fname(const UINT8 *filename)
-{
-	size_t len = filename[0];
-	int i;
-
-#if 0
-	/* lenght >31 is incorrect with HFS, but not MFS */
-	if (len > 31)
-		return 1;
-#endif
-
-	/* check and copy file name */
-	for (i=0; i<len; i++)
-	{
-		switch (filename[i+1])
-		{
-		case ':':
-			/* illegal character */
-			return 1;
-		default:
-			/* all other characters are legal (though control characters,
-			particularly NUL characters, are not recommended) */
-			break;
-		}
-	}
-
-	return 0;
-}
-
-/*
-	Check a file path.
-
-	fpath (I): file path (C string)
-
-	Return non-zero if the file path is invalid.
-
-	TODO: how about foreign scripts in HFS???
-*/
-static int check_fpath(const char *fpath)
-{
-	const char *element_start, *element_end;
-	int element_len;
-	int i, mac_element_len;
-	int level;
-
-
-	/* check that each path element has an acceptable lenght */
-	element_start = fpath;
-	level = 0;
-	do
-	{
-		/* find next path element */
-		element_end = strchr(element_start, ':');
-		element_len = element_end ? (element_end - element_start) : strlen(element_start);
-		/* compute element len after decoding */
-		mac_element_len = 0;
-		i=0;
-		while (i<element_len)
-		{
-			switch (element_start[i])
-			{
-			case '%':
-				if (isxdigit(element_start[i+1]) && isxdigit(element_start[i+2]))
-					i += 3;
-				else
-					return 1;
-				break;
-
-			default:
-				i++;
-				break;
-			}
-			mac_element_len++;
-		}
-		if (element_len > 255/*31*/)
-			return 1;
-
-		/* iterate */
-		if (element_end)
-			element_start = element_end+1;
-		else
-			element_start = NULL;
-
-		if (element_len == 0)
-		{	/* '::' refers to parent dir, ':::' to the parent's parent, etc */
-			level--;
-			if (level < 0)
-				return 1;
-		}
-		else
-			level++;
-	}
-	while (element_start);
-
-	return 0;
-}
-
-/*
-	mac_GetDateTime
-
-	Returns macintosh clock, i.e. number of seconds elapsed since January 1st
-	1904
-*/
-static UINT32 mac_GetDateTime(void)
-{
-	/* All these functions should be ANSI */
-	time_t cur_time = time(NULL);
-	struct tm base_expanded_time =
-	{
-		0,	/* seconds */
-		0,	/* minutes */
-		0,	/* hours */
-		1,	/* day of the month */
-		0,	/* months */
-		4,	/* years after 1900 */
-		0,	/* days after sunday - ignored */
-		0,	/* days after january the 1st - ignored */
-		-1	/* DST flag - we tell it is indeterminate cause it might be on in the southern hemisphere */
-	};
-	time_t base_time = mktime(&base_expanded_time);
-	double diff_time = difftime(cur_time, base_time);
-
-	/* we cast to UINT64 because the conversion from UINT64 to UINT32 will
-	cause wrap-around, whereas direct conversion from double to UINT32 may
-	cause overflow */
-	return (UINT32) (UINT64) diff_time;
-}
-
-#if 0
-#pragma mark -
-#pragma mark DISK IMAGE ROUTINES
-#endif
-/*
-	Low-level disk routines: the disk is implemented as a succession of
-	512-byte blocks addressed by block index.
-*/
-
-/*
-	header of diskcopy 4.2 images
-*/
-typedef struct diskcopy_header_t
-{
-	UINT8    diskName[64];	/* name of the disk */
-	UINT32BE dataSize;		/* total size of data for all sectors (512*number_of_sectors) */
-	UINT32BE tagSize;		/* total size of tag data for all sectors
-								(12*number_of_sectors for GCR 3.5" floppies,
-								20*number_of_sectors for HD20, 0 otherwise) */
-	UINT32BE dataChecksum;	/* CRC32 checksum of all sector data */
-	UINT32BE tagChecksum;	/* CRC32 checksum of all tag data */
-	UINT8    diskFormat;	/* 0 = 400K, 1 = 800K, 2 = 720K, 3 = 1440K  (other values reserved) */
-	UINT8    formatByte;	/* should be $00 Apple II, $01 Lisa, $02 Mac MFS ??? */
-							/* $12 = 400K, $22 = >400K Macintosh (DiskCopy uses this value for
-							   all Apple II disks not 800K in size, and even for some of those),
-							   $24 = 800K Apple II disk */
-	UINT16BE private;		/* always $0100 (otherwise, the file may be in a different format. */
-} diskcopy_header_t;
-
-/*
 	disk image reference
 */
 typedef struct mac_l1_imgref
 {
-	imgtool_stream *f;			/* imgtool file reference */
-	UINT32 num_blocks;			/* total number of 512-byte blocks */
-	UINT32 tagbytesperblock;	/* number of tag bytes per block */
-	UINT32 tag_offset;			/* file offset to tag data */
-	enum { bare, apple_diskcopy } format;	/* disk image format */
-	/*union
-	{
-		struct
-		{
-		} bare;
-		struct
-		{
-		} apple_diskcopy;
-	} u;*/
+	imgtool_image *image;
 } mac_l1_imgref;
 
 /*
@@ -773,56 +617,31 @@ typedef struct mac_l1_imgref
 
 	Return imgtool error code
 */
-static imgtoolerr_t floppy_image_open(imgtool_stream *f, mac_l1_imgref *image)
+static imgtoolerr_t floppy_image_open(imgtool_image *img, mac_l1_imgref *image)
 {
-	diskcopy_header_t header;
-
-	image->f = f;
-
-	image->format = bare;	/* default */
-
-	/* read image header */
-	if (stream_read(image->f, & header, sizeof(header)) == sizeof(header))
-	{
-		UINT32 dataSize = get_UINT32BE(header.dataSize);
-		UINT32 tagSize = get_UINT32BE(header.tagSize);
-
-		/* various checks to make sure it is diskcopy: */
-		if ((header.diskName[0] <= 63)
-				&& (stream_size(image->f) == (dataSize + tagSize + 84))
-				&& (get_UINT16BE(header.private) == 0x0100))
-		{
-			image->format = apple_diskcopy;
-
-			if (dataSize % 512)
-				return IMGTOOLERR_CORRUPTIMAGE;
-			image->num_blocks = dataSize/512;
-			if (tagSize % image->num_blocks)
-			{
-				image->tagbytesperblock = 0;
-				image->tag_offset = 0;
-			}
-			else
-			{
-				image->tagbytesperblock = tagSize / image->num_blocks;
-				image->tag_offset = dataSize + 84;
-			}
-		}
-	}
-
-	if (image->format == bare)
-	{
-		long image_len = stream_size(image->f);
-
-		if (image_len % 512)
-			return IMGTOOLERR_CORRUPTIMAGE;
-		image->num_blocks = image_len/512;
-		image->tagbytesperblock = 0;
-		image->tag_offset = 0;
-	}
-
+	image->image = img;
 	return IMGTOOLERR_SUCCESS;
 }
+
+static imgtoolerr_t mac_find_block(mac_l1_imgref *image, int block,
+	UINT32 *track, UINT32 *head, UINT32 *sector)
+{
+	int sides = 1;
+
+	*track = 0;
+	while(block >= (apple35_tracklen_800kb[*track] * sides))
+	{
+		block -= (apple35_tracklen_800kb[(*track)++] * sides);
+		if (*track >= 80)
+			return IMGTOOLERR_SEEKERROR;
+	}
+
+	*head = block / apple35_tracklen_800kb[*track];
+	*sector = block % apple35_tracklen_800kb[*track];
+	return IMGTOOLERR_SUCCESS;
+}
+
+
 
 /*
 	image_read_block()
@@ -837,14 +656,17 @@ static imgtoolerr_t floppy_image_open(imgtool_stream *f, mac_l1_imgref *image)
 */
 static imgtoolerr_t image_read_block(mac_l1_imgref *image, UINT32 block, void *dest)
 {
-	if (block > image->num_blocks)
-		return IMGTOOLERR_UNEXPECTED;
+	imgtoolerr_t err;
+	floperr_t ferr;
+	UINT32 track, head, sector;
 
-	if (stream_seek(image->f, (image->format == apple_diskcopy) ? block*512 + 84 : block*512, SEEK_SET))
-		return IMGTOOLERR_READERROR;
+	err = mac_find_block(image, block, &track, &head, &sector);
+	if (err)
+		return err;
 
-	if (stream_read(image->f, dest, 512) != 512)
-		return IMGTOOLERR_READERROR;
+	ferr = floppy_read_sector(imgtool_floppy(image->image), head, track, sector, 0, dest, 512);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -862,14 +684,17 @@ static imgtoolerr_t image_read_block(mac_l1_imgref *image, UINT32 block, void *d
 */
 static imgtoolerr_t image_write_block(mac_l1_imgref *image, UINT32 block, const void *src)
 {
-	if (block > image->num_blocks)
-		return IMGTOOLERR_UNEXPECTED;
+	imgtoolerr_t err;
+	floperr_t ferr;
+	UINT32 track, head, sector;
 
-	if (stream_seek(image->f, (image->format == apple_diskcopy) ? block*512 + 84 : block*512, SEEK_SET))
-		return IMGTOOLERR_WRITEERROR;
+	err = mac_find_block(image, block, &track, &head, &sector);
+	if (err)
+		return err;
 
-	if (stream_write(image->f, src, 512) != 512)
-		return IMGTOOLERR_WRITEERROR;
+	ferr = floppy_write_sector(imgtool_floppy(image->image), head, track, sector, 0, src, 512);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -877,15 +702,15 @@ static imgtoolerr_t image_write_block(mac_l1_imgref *image, UINT32 block, const 
 /*
 	image_get_tag_len()
 
-	Get lenght of tag data (12 for GCR floppies, 20 for HD20, 0 otherwise)
+	Get length of tag data (12 for GCR floppies, 20 for HD20, 0 otherwise)
 
 	image (I/O): level-1 image reference
 
-	Return tag lenght
+	Return tag length
 */
 INLINE int image_get_tag_len(mac_l1_imgref *image)
 {
-	return image->tagbytesperblock;
+	return 0;
 }
 
 
@@ -903,21 +728,7 @@ INLINE int image_get_tag_len(mac_l1_imgref *image)
 */
 static imgtoolerr_t image_read_tag(mac_l1_imgref *image, UINT32 block, void *dest)
 {
-	if (block > image->num_blocks)
-		return IMGTOOLERR_UNEXPECTED;
-
-	/* check that there is tag data in the image */
-	if (image->tagbytesperblock == 0)
-		return IMGTOOLERR_UNEXPECTED;
-
-	/* read tag data from disk image */
-	if (stream_seek(image->f, image->tag_offset + block*image->tagbytesperblock, SEEK_SET))
-		return IMGTOOLERR_READERROR;
-
-	if (stream_read(image->f, dest, image->tagbytesperblock) != image->tagbytesperblock)
-		return IMGTOOLERR_READERROR;
-
-	return IMGTOOLERR_SUCCESS;
+	return IMGTOOLERR_UNEXPECTED;
 }
 
 /*
@@ -933,21 +744,7 @@ static imgtoolerr_t image_read_tag(mac_l1_imgref *image, UINT32 block, void *des
 */
 static imgtoolerr_t image_write_tag(mac_l1_imgref *image, UINT32 block, const void *src)
 {
-	if (block > image->num_blocks)
-		return IMGTOOLERR_UNEXPECTED;
-
-	/* check that there is tag data in the image */
-	if (image->tagbytesperblock == 0)
-		return IMGTOOLERR_UNEXPECTED;
-
-	/* read tag data from disk image */
-	if (stream_seek(image->f, image->tag_offset + block*image->tagbytesperblock, SEEK_SET))
-		return IMGTOOLERR_WRITEERROR;
-
-	if (stream_write(image->f, src, image->tagbytesperblock) != image->tagbytesperblock)
-		return IMGTOOLERR_WRITEERROR;
-
-	return IMGTOOLERR_SUCCESS;
+	return IMGTOOLERR_UNEXPECTED;
 }
 
 #if 0
@@ -1054,7 +851,7 @@ typedef struct mac_BTref
 	UINT32 firstLeafNode;	/* node number of first leaf node */
 	UINT32 attributes;		/* persistent attributes about the tree */
 	UINT16 treeDepth;		/* maximum height (usually leaf nodes) */
-	UINT16 maxKeyLength;	/* maximum key lenght */
+	UINT16 maxKeyLength;	/* maximum key length */
 
 	/* function to compare keys during tree searches */
 	int (*key_compare_func)(const void *key1, const void *key2);
@@ -1124,7 +921,7 @@ typedef struct mfs_mdb
 	UINT16BE nmFls;			/* number of files in directory */
 	UINT16BE dirSt;			/* first block of directory */
 
-	UINT16BE blLn;			/* lenght of directory in blocks (0x000C) */
+	UINT16BE blLn;			/* length of directory in blocks (0x000C) */
 	UINT16BE nmAlBlks;		/* number of allocation blocks in volume (0x0187) */
 	UINT32BE alBlkSiz;		/* size (in bytes) of allocation blocks (0x00000400) */
 	UINT32BE clpSiz;		/* default clump size - number of bytes to allocate
@@ -1278,7 +1075,7 @@ static imgtoolerr_t mfs_dir_update(mac_fileref *fileref);
 
 static mac_l2_imgref *get_imgref(imgtool_image *img)
 {
-	return (mac_l2_imgref *) img_extrabytes(img);
+	return (mac_l2_imgref *) imgtool_floppy_extrabytes(img);
 }
 
 
@@ -1308,21 +1105,27 @@ static imgtoolerr_t mac_image_open(mac_l2_imgref *l2_img)
 	{
 	case 0xd2d7:
 		l2_img->format = L2I_MFS;
-		return mfs_image_open(l2_img, &buf);
+		err = mfs_image_open(l2_img, &buf);
+		break;
 
 	case 0x4244:
 		l2_img->format = L2I_HFS;
-		return hfs_image_open(l2_img, &buf);
+		err = hfs_image_open(l2_img, &buf);
+		break;
 
 	case 0x484b:
 		/* HFS+ is not supported */
 		/* Note that we should normally not see this with HFS+ volumes, because
 		HFS+ volumes are usually embedded in a HFS volume... */
-		return IMGTOOLERR_UNIMPLEMENTED;
-	}
+		err = IMGTOOLERR_UNIMPLEMENTED;
+		break;
 
-	/* default case: sigWord has no legal value */
-	return IMGTOOLERR_CORRUPTIMAGE;
+	default:
+		/* default case: sigWord has no legal value */
+		err = IMGTOOLERR_CORRUPTIMAGE;
+		break;
+	}
+	return err;
 }
 
 /*
@@ -1570,7 +1373,7 @@ static imgtoolerr_t mac_file_write(mac_fileref *fileref, UINT32 len, const void 
 			switch (fileref->l2_img->format)
 			{
 			case L2I_MFS:
-				set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+				set_UINT32BE(&tag.wrCnt, mac_time_now());
 				break;
 
 			case L2I_HFS:
@@ -1691,7 +1494,7 @@ static imgtoolerr_t mac_file_seteof(mac_fileref *fileref, UINT32 newEof)
 /*
 	directory entry for use in the directory file
 
-	Note the structure is variable lenght.  It is always word-aligned, and
+	Note the structure is variable length.  It is always word-aligned, and
 	cannot cross block boundaries.
 
 	Note that the directory does not seem to be sorted: the order in which
@@ -1720,7 +1523,7 @@ typedef struct mfs_dir_entry
 	UINT32BE createDate;		/* date and time of creation */
 	UINT32BE modifyDate;		/* date and time of last modification */
 
-	UINT8    name[1];			/* first char is lenght of file name */
+	UINT8    name[1];			/* first char is length of file name */
 								/* next chars are file name - 255 chars at most */
 								/* IIRC, Finder 7 only supports 31 chars,
 								wheareas earlier versions support 63 chars */
@@ -1755,7 +1558,7 @@ typedef struct mfs_FOBJ
 		{
 			UINT16BE item_count;	/* number of items (folders and files) in
 										this folder */
-			UINT32BE item_descs[1];	/* this variable-lenght array has
+			UINT32BE item_descs[1];	/* this variable-length array has
 										item_count entries - meaning of entry is unknown */
 		} v1;
 		struct
@@ -1765,7 +1568,7 @@ typedef struct mfs_FOBJ
 			UINT16BE item_count;	/* number of items (folders and files) in
 										this folder */
 			UINT8 unknown1[20];		/* ??? */
-			UINT8 name[1];			/* variable-lenght macintosh string */
+			UINT8 name[1];			/* variable-length macintosh string */
 		} v2;
 	} u;
 } mfs_FOBJ;
@@ -1809,7 +1612,7 @@ static imgtoolerr_t mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
 	l2_img->u.mfs.dir_blk_len = get_UINT16BE(buf->mfs_mdb.blLn);
 
 	l2_img->numABs = get_UINT16BE(buf->mfs_mdb.nmAlBlks);
-	if (get_UINT32BE(buf->mfs_mdb.alBlkSiz) % 512)
+	if ((get_UINT32BE(buf->mfs_mdb.alBlkSiz) % 512) || (get_UINT32BE(buf->mfs_mdb.alBlkSiz) == 0))
 		return IMGTOOLERR_CORRUPTIMAGE;
 	l2_img->blocksperAB = get_UINT32BE(buf->mfs_mdb.alBlkSiz) / 512;
 	l2_img->u.mfs.ABStart = get_UINT16BE(buf->mfs_mdb.alBlSt);
@@ -2112,7 +1915,7 @@ static imgtoolerr_t mfs_dir_insert(mac_l2_imgref *l2_img, mfs_dirref *dirref, co
 			set_UINT16BE(&cur_dir_entry->rsrcStartBlock, 1);
 			set_UINT32BE(&cur_dir_entry->rsrcLogicalSize, 0);
 			set_UINT32BE(&cur_dir_entry->rsrcPhysicalSize, 0);
-			cur_date = mac_GetDateTime();
+			cur_date = mac_time_now();
 			set_UINT32BE(&cur_dir_entry->createDate, cur_date);
 			set_UINT32BE(&cur_dir_entry->modifyDate, cur_date);
 			mac_strcpy(cur_dir_entry->name, new_fname);
@@ -2622,14 +2425,14 @@ corrupt_free_block2:
 
 	while (allocABs)
 	{
-		/* find smallest data block at least nb_alloc_physrecs in lenght, and largest data block less than nb_alloc_physrecs in lenght */
+		/* find smallest data block at least nb_alloc_physrecs in length, and largest data block less than nb_alloc_physrecs in length */
 		firstBestExtentABlen = INT_MAX;
 		secondBestExtentABlen = 0;
 		for (i=0; i<numABs; i++)
 		{
 			if (mfs_get_ABlink(fileref->l2_img, i) == 0)
 			{	/* found one free block */
-				/* compute its lenght */
+				/* compute its length */
 				extentBaseAB = i;
 				extentABlen = 0;
 				while ((i<numABs) && (mfs_get_ABlink(fileref->l2_img, i) == 0))
@@ -2697,7 +2500,7 @@ corrupt_free_block3:
 					for (j=0; j<fileref->l2_img->blocksperAB; j++)
 					{
 						set_UINT16BE(&tag.fblock, fblock & 0xffff);
-						set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+						set_UINT32BE(&tag.wrCnt, mac_time_now());
 						err = image_write_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + lastAB * fileref->l2_img->blocksperAB + j, &tag);
 						if (err)
 						{
@@ -2735,7 +2538,7 @@ corrupt_free_block3:
 					for (j=0; j<fileref->l2_img->blocksperAB; j++)
 					{
 						set_UINT16BE(&tag.fblock, fblock & 0xffff);
-						set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+						set_UINT32BE(&tag.wrCnt, mac_time_now());
 						err = image_write_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + lastAB * fileref->l2_img->blocksperAB + j, &tag);
 						if (err)
 						{
@@ -2969,7 +2772,7 @@ typedef struct hfs_catKey
 	UINT32BE parID;			/* parent directory ID */
 	mac_str31 cName;		/* catalog node name */
 							/* note that in index nodes, it is a mac_str31, but
-								in leaf keys it's a variable-lenght string */
+								in leaf keys it's a variable-length string */
 } hfs_catKey;
 
 /*
@@ -3316,7 +3119,7 @@ static void hfs_image_close(mac_l2_imgref *l2_img)
 	l2_img (I/O): level-2 image reference
 	rec_raw (I): pointer to record key and data, as returned by
 		BT_node_get_keyed_record
-	rec_len (I): total lenght of record, as returned by
+	rec_len (I): total length of record, as returned by
 		BT_node_get_keyed_record
 	rec_key (O): set to point to record key
 	rec_data (O): set to point to record data
@@ -3842,7 +3645,7 @@ typedef struct BTHeaderRecord
 	UINT32BE firstLeafNode;	/* node number of first leaf node */
 	UINT32BE lastLeafNode;	/* node number of last leaf node */
 	UINT16BE nodeSize;		/* size of a node, in bytes */
-	UINT16BE maxKeyLength;	/* maximum lenght of data (index + leaf) record keys;
+	UINT16BE maxKeyLength;	/* maximum length of data (index + leaf) record keys;
 								length of all index record keys if
 								btha_variableIndexKeysMask attribute flag is not set */
 	UINT32BE totalNodes;	/* total number of nodes in tree */
@@ -3897,9 +3700,9 @@ static imgtoolerr_t BT_open(mac_BTref *BTref, int (*key_compare_func)(const void
 		return IMGTOOLERR_CORRUPTIMAGE;	/* right??? */
 
 	/* CHEESY HACK: we assume that the header record immediately follows the
-	node header.  This is because we need to know the node lenght to know where
+	node header.  This is because we need to know the node length to know where
 	the record pointers are located, but we need to read the header record to
-	know the node lenght. */
+	know the node length. */
 	err = mac_file_read(&BTref->fileref, sizeof(header_rec), &header_rec);
 	if (err)
 		return err;
@@ -3984,7 +3787,7 @@ static imgtoolerr_t BT_read_node(mac_BTref *BTref, UINT32 node_ID, int expected_
 	node_buf (I): buffer with the node the record should be extracted from
 	recnum (I): index of record to read
 	rec_ptr (O): set to point to start of record (key + data)
-	rec_len (O): set to total lenght of record (key + data)
+	rec_len (O): set to total length of record (key + data)
 
 	Return imgtool error code
 */
@@ -4023,7 +3826,7 @@ static imgtoolerr_t BT_node_get_record(mac_BTref *BTref, void *node_buf, unsigne
 	node_is_index (I): TRUE if node is index node
 	recnum (I): index of record to read
 	rec_ptr (O): set to point to start of record (key + data)
-	rec_len (O): set to total lenght of record (key + data)
+	rec_len (O): set to total length of record (key + data)
 
 	Return imgtool error code
 */
@@ -4070,9 +3873,9 @@ static imgtoolerr_t BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, i
 
 	BTref (I/O): open B-tree file handle
 	rec_ptr (I): point to start of record (key + data)
-	rec_len (I): total lenght of record (key + data)
+	rec_len (I): total length of record (key + data)
 	data_ptr (O): set to point to record data
-	data_len (O): set to lenght of record data
+	data_len (O): set to length of record data
 
 	Return imgtool error code
 */
@@ -4183,7 +3986,7 @@ static imgtoolerr_t BT_check(mac_BTref *BTref, int is_extent)
 		return err;
 	header_rec = (BTHeaderRecord *)rec1;
 
-	/* check lenght of header record */
+	/* check length of header record */
 	if (rec1_len < sizeof(BTHeaderRecord))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
@@ -4194,7 +3997,7 @@ static imgtoolerr_t BT_check(mac_BTref *BTref, int is_extent)
 	lastLeafNode = get_UINT32BE(header_rec->lastLeafNode);
 	freeNodes = get_UINT32BE(header_rec->freeNodes);
 
-	/* check file lenght */
+	/* check file length */
 	if ((BTref->nodeSize * totalNodes) > BTref->fileref.pLen)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
@@ -5208,7 +5011,7 @@ static imgtoolerr_t resfile_get_resname(mac_resfileref *resfileref, const rsrc_r
 	if (err)
 		return err;
 
-	/* get string lenght */
+	/* get string length */
 	err = mac_file_read(&resfileref->fileref, 1, &len);
 	if (err)
 		return err;
@@ -5226,12 +5029,12 @@ static imgtoolerr_t resfile_get_resname(mac_resfileref *resfileref, const rsrc_r
 /*
 	resfile_get_reslen
 
-	Get the data lenght for a given resource.
+	Get the data length for a given resource.
 
 	resfileref (I/O): open resource file handle
 	entry (I): resource entry in the resource map (returned by
 		resfile_get_entry)
-	len (O): resource lenght
+	len (O): resource length
 
 	Return imgtool error code
 */
@@ -5248,7 +5051,7 @@ static imgtoolerr_t resfile_get_reslen(mac_resfileref *resfileref, const rsrc_re
 	if (err)
 		return err;
 
-	/* get data lenght */
+	/* get data length */
 	err = mac_file_read(&resfileref->fileref, sizeof(llen), &llen);
 	if (err)
 		return err;
@@ -5267,7 +5070,7 @@ static imgtoolerr_t resfile_get_reslen(mac_resfileref *resfileref, const rsrc_re
 	entry (I): resource entry in the resource map (returned by
 		resfile_get_entry)
 	offset (I): offset the data should be read from, usually 0
-	len (I): lenght of the data to read, usually the value returned by
+	len (I): length of the data to read, usually the value returned by
 		resfile_get_reslen
 	dest (O): resource data
 
@@ -5286,7 +5089,7 @@ static imgtoolerr_t resfile_get_resdata(mac_resfileref *resfileref, const rsrc_r
 	if (err)
 		return err;
 
-	/* get data lenght */
+	/* get data length */
 	err = mac_file_read(&resfileref->fileref, sizeof(llen), &llen);
 	if (err)
 		return err;
@@ -5414,7 +5217,7 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 #pragma mark IMGTOOL MODULE IMPLEMENTATION
 #endif
 
-static imgtoolerr_t mac_image_init(imgtool_image *image, imgtool_stream *f);
+static imgtoolerr_t mac_image_init(imgtool_image *image);
 static void mac_image_exit(imgtool_image *img);
 static void mac_image_info(imgtool_image *img, char *string, size_t len);
 static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path);
@@ -5423,18 +5226,16 @@ static void mac_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
 static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
 static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
-/*static imgtoolerr_t mac_image_deletefile(imgtool_image *img, const char *filename);
-static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
 /*
 	Open a file as a mfs/hfs image (common code).
 */
-static imgtoolerr_t mac_image_init(imgtool_image *img, imgtool_stream *f)
+static imgtoolerr_t mac_image_init(imgtool_image *img)
 {
 	mac_l2_imgref *image = get_imgref(img);
 	imgtoolerr_t err;
 
-	err = floppy_image_open(f, &image->l1_img);
+	err = floppy_image_open(img, &image->l1_img);
 	if (err)
 		return err;
 
@@ -5449,6 +5250,68 @@ static void mac_image_exit(imgtool_image *img)
 	mac_l2_imgref *image = get_imgref(img);
 
 	mac_image_close(image);
+}
+
+static imgtoolerr_t mac_image_create(imgtool_image *image, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[512];
+	UINT32 heads, tracks, sector_bytes, i;
+	UINT32 total_disk_blocks, total_allocation_blocks, allocation_block_size;
+	UINT32 free_allocation_blocks;
+	UINT16 signature_word;
+
+	get_imgref(image)->l1_img.image = image;
+
+	heads = option_resolution_lookup_int(opts, 'H');
+	tracks = option_resolution_lookup_int(opts, 'T');
+	sector_bytes = option_resolution_lookup_int(opts, 'L');
+
+	if (sector_bytes != 512)
+		return IMGTOOLERR_UNEXPECTED;
+
+	switch(heads)
+	{
+		case 1:
+			signature_word = 0xd2d7;	/* MFS */
+			break;
+		case 2:
+			signature_word = 0x4244;	/* HFS */
+			break;
+		default:
+			return IMGTOOLERR_UNEXPECTED;
+	}
+
+	/* computation */
+	allocation_block_size = 1024;
+	total_disk_blocks = 0;
+	for (i = 0; i < tracks; i++)
+		total_disk_blocks += heads * apple35_tracklen_800kb[i] * sector_bytes / 512;
+	total_allocation_blocks = total_disk_blocks / (allocation_block_size / 512);
+	free_allocation_blocks = total_allocation_blocks - 3;
+
+	/* write master directory block */
+	memset(buffer, 0, sizeof(buffer));
+	place_integer_be(buffer,  0, 2, signature_word);			/* signature */
+	place_integer_be(buffer,  2, 4, mac_time_now());			/* creation date */
+	place_integer_be(buffer,  6, 4, mac_time_now());			/* last modified date */
+	place_integer_be(buffer, 10, 2, 0);							/* volume attributes */
+	place_integer_be(buffer, 12, 2, 0);							/* number of files in directory */
+	place_integer_be(buffer, 14, 2, 4);							/* first block of directory */
+	place_integer_be(buffer, 16, 2, 12);						/* length of directory in blocks */
+	place_integer_be(buffer, 18, 2, total_allocation_blocks);	/* allocation blocks on volume count */
+	place_integer_be(buffer, 20, 4, allocation_block_size);		/* allocation block size */
+	place_integer_be(buffer, 24, 4, 8192);						/* default clumping size */
+	place_integer_be(buffer, 28, 2, 16);						/* first allocation block on volume */
+	place_integer_be(buffer, 30, 4, 2);							/* next unused catalog node */
+	place_integer_be(buffer, 34, 2, free_allocation_blocks);	/* free allocation block count */
+	pascal_from_c_string(&buffer[36], 28, "Untitled");			/* volume title */
+
+	err = image_write_block(&get_imgref(image)->l1_img, 2, buffer);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -5564,7 +5427,7 @@ static imgtoolerr_t mfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	dest (O): destination buffer
 	dest_cur_pos (I/O): current position in destination buffer (buffer is
 		filled from end to start)
-	dest_max_len (I): lenght of destination buffer (use lenght minus one if you
+	dest_max_len (I): length of destination buffer (use length minus one if you
 		want to preserve a trailing NUL character)
 	src (I): source C string
 */
@@ -5848,7 +5711,7 @@ static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, c
 	set_UINT32BE(&cat_info.flFinderInfo.type, 0x3F3F3F3F);
 	set_UINT32BE(&cat_info.flFinderInfo.creator, 0x3F3F3F3F);
 	fork_len = stream_size(sourcef);
-	/*comment[0] = get_UINT16BE(header.comment_len);*/	/* comment lenght */
+	/*comment[0] = get_UINT16BE(header.comment_len);*/	/* comment length */
 	/* Next two fields are set to 0 with MFS volumes.  IIRC, 0 normally
 	means system script: I don't think MFS stores the file name script code
 	anywhere on disk, so it should be a reasonable approximation. */
@@ -6095,44 +5958,32 @@ static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *pa
 
 
 
-imgtoolerr_t mac_createmodule(imgtool_library *library)
+static imgtoolerr_t mac_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
-	imgtoolerr_t err;
-	struct ImageModule *module;
+	module->open_is_strict				= 1;
+	module->image_extra_bytes			+= sizeof(struct mac_l2_imgref);
+	module->imageenum_extra_bytes		+= sizeof(struct mac_iterator);
+	module->eoln						= EOLN_CR;
+	module->path_separator				= ':';
 
-	err = imgtool_library_createmodule(library, "mac", &module);
-	if (err)
-		return err;
-
-	module->description				= "Macintosh disk image (MFS & HFS)";
-	module->extensions				= "image\0img\0dsk\0";
-	module->eoln					= EOLN_CR;
-
-	module->image_extra_bytes		= sizeof(struct mac_l2_imgref);
-	module->imageenum_extra_bytes	= sizeof(mac_iterator);
-	module->open					= mac_image_init;
-	module->close					= mac_image_exit;
-	module->info					= mac_image_info;
-	module->begin_enum				= mac_image_beginenum;
-	module->next_enum				= mac_image_nextenum;
-	module->free_space				= mac_image_freespace;
-	module->read_file				= mac_image_readfile;
-	module->write_file				= mac_image_writefile;
-	module->list_forks				= mac_image_listforks;
-	module->get_attrs				= mac_image_getattrs;
-	module->set_attrs				= mac_image_setattrs;
-	module->suggest_transfer		= mac_image_suggesttransfer;
-	module->path_separator			= ':';
-
-	/*module->delete_file				= mac_image_deletefile;
-	module->create					= mac_image_create;*/
-
-	/*module->createimage_optguide	= ...;
-	module->createimage_optspec		= ...;
-	module->writefile_optguide		= ...;
-	module->writefile_optspec		= ...;*/
-	/*module->extra					= NULL;*/
-
+	module->open						= mac_image_init;
+	module->create						= mac_image_create;
+/*	module->close						= mac_image_exit; */
+/*	module->info						= mac_image_info; */
+	module->begin_enum					= mac_image_beginenum;
+	module->next_enum					= mac_image_nextenum;
+	module->free_space					= mac_image_freespace;
+	module->read_file					= mac_image_readfile;
+	module->write_file					= mac_image_writefile;
+	module->list_forks					= mac_image_listforks;
+	module->get_attrs					= mac_image_getattrs;
+	module->set_attrs					= mac_image_setattrs;
+	module->suggest_transfer			= mac_image_suggesttransfer;
 	return IMGTOOLERR_SUCCESS;
 }
+
+
+
+FLOPPYMODULE(mac, "Mac Floppy", apple35_mac, mac_module_populate)
+
 

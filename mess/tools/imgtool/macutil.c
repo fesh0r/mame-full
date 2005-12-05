@@ -26,6 +26,15 @@ UINT32 mac_setup_time(time_t t)
 
 
 
+UINT32 mac_time_now(void)
+{
+	time_t now;
+	time(&now);
+	return mac_setup_time(now);
+}
+
+
+
 imgtoolerr_t mac_identify_fork(const char *fork_string, mac_fork_t *fork_num)
 {
 	if (!strcmp(fork_string, ""))
