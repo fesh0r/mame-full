@@ -82,6 +82,7 @@
 		http://developer.apple.com/documentation/mac/Files/Files-104.html
 		http://developer.apple.com/documentation/mac/Files/Files-105.html
 		http://developer.apple.com/documentation/mac/Files/Files-106.html
+		http://developer.apple.com/documentation/mac/Devices/Devices-121.html#MARKER-2-169
 
 *****************************************************************************/
 
@@ -605,33 +606,18 @@ static void mac_strncpy(UINT8 *dest, int n, const UINT8 *src)
 typedef struct mac_l1_imgref
 {
 	imgtool_image *image;
+	UINT32 heads;
 } mac_l1_imgref;
 
-/*
-	floppy_image_open()
 
-	Open a macintosh disk image
-
-	f (I): open imgtool file reference
-	image (O): level-1 image reference to open
-
-	Return imgtool error code
-*/
-static imgtoolerr_t floppy_image_open(imgtool_image *img, mac_l1_imgref *image)
-{
-	image->image = img;
-	return IMGTOOLERR_SUCCESS;
-}
 
 static imgtoolerr_t mac_find_block(mac_l1_imgref *image, int block,
 	UINT32 *track, UINT32 *head, UINT32 *sector)
 {
-	int sides = 1;
-
 	*track = 0;
-	while(block >= (apple35_tracklen_800kb[*track] * sides))
+	while(block >= (apple35_tracklen_800kb[*track] * image->heads))
 	{
-		block -= (apple35_tracklen_800kb[(*track)++] * sides);
+		block -= (apple35_tracklen_800kb[(*track)++] * image->heads);
 		if (*track >= 80)
 			return IMGTOOLERR_SEEKERROR;
 	}
@@ -1061,8 +1047,6 @@ typedef struct floppy_tag_record
 								/* (DV17 says "disk block number", but it cannot be true) */
 } floppy_tag_record;
 
-static imgtoolerr_t mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
-static imgtoolerr_t hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
 static void hfs_image_close(mac_l2_imgref *l2_img);
 static imgtoolerr_t mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
 static imgtoolerr_t hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
@@ -1079,54 +1063,6 @@ static mac_l2_imgref *get_imgref(imgtool_image *img)
 }
 
 
-
-/*
-	mac_image_open
-
-	Open a macintosh image.
-
-	l2_img (I/O): level-2 image reference to open (l1_img field must be
-		initialized)
-
-	Return imgtool error code
-*/
-static imgtoolerr_t mac_image_open(mac_l2_imgref *l2_img)
-{
-	img_open_buf buf;
-	imgtoolerr_t err;
-
-	/* read MDB */
-	err = image_read_block(&l2_img->l1_img, 2, &buf.raw);
-	if (err)
-		return err;
-
-	/* guess format from value in sigWord */
-	switch ((buf.raw[0] << 8) | buf.raw[1])
-	{
-	case 0xd2d7:
-		l2_img->format = L2I_MFS;
-		err = mfs_image_open(l2_img, &buf);
-		break;
-
-	case 0x4244:
-		l2_img->format = L2I_HFS;
-		err = hfs_image_open(l2_img, &buf);
-		break;
-
-	case 0x484b:
-		/* HFS+ is not supported */
-		/* Note that we should normally not see this with HFS+ volumes, because
-		HFS+ volumes are usually embedded in a HFS volume... */
-		err = IMGTOOLERR_UNIMPLEMENTED;
-		break;
-
-	default:
-		/* default case: sigWord has no legal value */
-		err = IMGTOOLERR_CORRUPTIMAGE;
-		break;
-	}
-	return err;
-}
 
 /*
 	mac_image_close
@@ -1585,6 +1521,60 @@ typedef struct mfs_dirref
 	UINT8 block_buffer[512];		/* buffer with current directory block */
 } mfs_dirref;
 
+
+
+static imgtoolerr_t mfs_image_create(imgtool_image *image, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[512];
+	UINT32 heads, tracks, sector_bytes, i;
+	UINT32 total_disk_blocks, total_allocation_blocks, allocation_block_size;
+	UINT32 free_allocation_blocks;
+
+	heads = option_resolution_lookup_int(opts, 'H');
+	tracks = option_resolution_lookup_int(opts, 'T');
+	sector_bytes = option_resolution_lookup_int(opts, 'L');
+
+	get_imgref(image)->l1_img.image = image;
+	get_imgref(image)->l1_img.heads = heads;
+
+	if (sector_bytes != 512)
+		return IMGTOOLERR_UNEXPECTED;
+
+	/* computation */
+	allocation_block_size = 1024;
+	total_disk_blocks = 0;
+	for (i = 0; i < tracks; i++)
+		total_disk_blocks += heads * apple35_tracklen_800kb[i] * sector_bytes / 512;
+	total_allocation_blocks = total_disk_blocks / (allocation_block_size / 512);
+	free_allocation_blocks = total_allocation_blocks - 3;
+
+	/* write master directory block */
+	memset(buffer, 0, sizeof(buffer));
+	place_integer_be(buffer,  0, 2, 0xd2d7);					/* signature */
+	place_integer_be(buffer,  2, 4, mac_time_now());			/* creation date */
+	place_integer_be(buffer,  6, 4, mac_time_now());			/* last modified date */
+	place_integer_be(buffer, 10, 2, 0);							/* volume attributes */
+	place_integer_be(buffer, 12, 2, 0);							/* number of files in directory */
+	place_integer_be(buffer, 14, 2, 4);							/* first block of directory */
+	place_integer_be(buffer, 16, 2, 12);						/* length of directory in blocks */
+	place_integer_be(buffer, 18, 2, total_allocation_blocks);	/* allocation blocks on volume count */
+	place_integer_be(buffer, 20, 4, allocation_block_size);		/* allocation block size */
+	place_integer_be(buffer, 24, 4, 8192);						/* default clumping size */
+	place_integer_be(buffer, 28, 2, 16);						/* first allocation block on volume */
+	place_integer_be(buffer, 30, 4, 2);							/* next unused catalog node */
+	place_integer_be(buffer, 34, 2, free_allocation_blocks);	/* free allocation block count */
+	pascal_from_c_string(&buffer[36], 28, "Untitled");			/* volume title */
+
+	err = image_write_block(&get_imgref(image)->l1_img, 2, buffer);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 /*
 	mfs_image_open
 
@@ -1597,12 +1587,25 @@ typedef struct mfs_dirref
 
 	Return imgtool error code
 */
-static imgtoolerr_t mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
+static imgtoolerr_t mfs_image_open(imgtool_image *image)
 {
 	imgtoolerr_t err;
+	mac_l2_imgref *l2_img;
+	img_open_buf buf_local;
+	img_open_buf *buf;
 
-	assert(l2_img->format == L2I_MFS);
+	l2_img = get_imgref(image);
+	l2_img->l1_img.image = image;
+	l2_img->l1_img.heads = 1;
+	l2_img->format = L2I_MFS;
 
+	/* read MDB */
+	err = image_read_block(&l2_img->l1_img, 2, &buf_local.raw);
+	if (err)
+		return err;
+	buf = &buf_local;
+
+	/* check signature word */
 	if ((buf->mfs_mdb.sigWord[0] != 0xd2) || (buf->mfs_mdb.sigWord[1] != 0xd7)
 			|| (buf->mfs_mdb.VN[0] > 27))
 		return IMGTOOLERR_CORRUPTIMAGE;
@@ -3009,12 +3012,25 @@ static int hfs_catKey_compare(const void *p1, const void *p2)
 
 	Return imgtool error code
 */
-static imgtoolerr_t hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
+static imgtoolerr_t hfs_image_open(imgtool_image *image)
 {
 	imgtoolerr_t err;
+	mac_l2_imgref *l2_img;
+	img_open_buf buf_local;
+	img_open_buf *buf;
 
-	assert(l2_img->format == L2I_HFS);
+	l2_img = get_imgref(image);
+	l2_img->l1_img.image = image;
+	l2_img->l1_img.heads = 2;
+	l2_img->format = L2I_HFS;
 
+	/* read MDB */
+	err = image_read_block(&l2_img->l1_img, 2, &buf_local.raw);
+	if (err)
+		return err;
+	buf = &buf_local;
+
+	/* check signature word */
 	if ((buf->hfs_mdb.sigWord[0] != 0x42) || (buf->hfs_mdb.sigWord[1] != 0x44)
 			|| (buf->hfs_mdb.VN[0] > 27))
 		return IMGTOOLERR_CORRUPTIMAGE;
@@ -5217,7 +5233,6 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 #pragma mark IMGTOOL MODULE IMPLEMENTATION
 #endif
 
-static imgtoolerr_t mac_image_init(imgtool_image *image);
 static void mac_image_exit(imgtool_image *img);
 static void mac_image_info(imgtool_image *img, char *string, size_t len);
 static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path);
@@ -5228,21 +5243,6 @@ static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename,
 static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 
 /*
-	Open a file as a mfs/hfs image (common code).
-*/
-static imgtoolerr_t mac_image_init(imgtool_image *img)
-{
-	mac_l2_imgref *image = get_imgref(img);
-	imgtoolerr_t err;
-
-	err = floppy_image_open(img, &image->l1_img);
-	if (err)
-		return err;
-
-	return mac_image_open(image);
-}
-
-/*
 	close a mfs/hfs image
 */
 static void mac_image_exit(imgtool_image *img)
@@ -5250,68 +5250,6 @@ static void mac_image_exit(imgtool_image *img)
 	mac_l2_imgref *image = get_imgref(img);
 
 	mac_image_close(image);
-}
-
-static imgtoolerr_t mac_image_create(imgtool_image *image, option_resolution *opts)
-{
-	imgtoolerr_t err;
-	UINT8 buffer[512];
-	UINT32 heads, tracks, sector_bytes, i;
-	UINT32 total_disk_blocks, total_allocation_blocks, allocation_block_size;
-	UINT32 free_allocation_blocks;
-	UINT16 signature_word;
-
-	get_imgref(image)->l1_img.image = image;
-
-	heads = option_resolution_lookup_int(opts, 'H');
-	tracks = option_resolution_lookup_int(opts, 'T');
-	sector_bytes = option_resolution_lookup_int(opts, 'L');
-
-	if (sector_bytes != 512)
-		return IMGTOOLERR_UNEXPECTED;
-
-	switch(heads)
-	{
-		case 1:
-			signature_word = 0xd2d7;	/* MFS */
-			break;
-		case 2:
-			signature_word = 0x4244;	/* HFS */
-			break;
-		default:
-			return IMGTOOLERR_UNEXPECTED;
-	}
-
-	/* computation */
-	allocation_block_size = 1024;
-	total_disk_blocks = 0;
-	for (i = 0; i < tracks; i++)
-		total_disk_blocks += heads * apple35_tracklen_800kb[i] * sector_bytes / 512;
-	total_allocation_blocks = total_disk_blocks / (allocation_block_size / 512);
-	free_allocation_blocks = total_allocation_blocks - 3;
-
-	/* write master directory block */
-	memset(buffer, 0, sizeof(buffer));
-	place_integer_be(buffer,  0, 2, signature_word);			/* signature */
-	place_integer_be(buffer,  2, 4, mac_time_now());			/* creation date */
-	place_integer_be(buffer,  6, 4, mac_time_now());			/* last modified date */
-	place_integer_be(buffer, 10, 2, 0);							/* volume attributes */
-	place_integer_be(buffer, 12, 2, 0);							/* number of files in directory */
-	place_integer_be(buffer, 14, 2, 4);							/* first block of directory */
-	place_integer_be(buffer, 16, 2, 12);						/* length of directory in blocks */
-	place_integer_be(buffer, 18, 2, total_allocation_blocks);	/* allocation blocks on volume count */
-	place_integer_be(buffer, 20, 4, allocation_block_size);		/* allocation block size */
-	place_integer_be(buffer, 24, 4, 8192);						/* default clumping size */
-	place_integer_be(buffer, 28, 2, 16);						/* first allocation block on volume */
-	place_integer_be(buffer, 30, 4, 2);							/* next unused catalog node */
-	place_integer_be(buffer, 34, 2, free_allocation_blocks);	/* free allocation block count */
-	pascal_from_c_string(&buffer[36], 28, "Untitled");			/* volume title */
-
-	err = image_write_block(&get_imgref(image)->l1_img, 2, buffer);
-	if (err)
-		return err;
-
-	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -5966,15 +5904,12 @@ static imgtoolerr_t mac_module_populate(imgtool_library *library, struct Imgtool
 	module->eoln						= EOLN_CR;
 	module->path_separator				= ':';
 
-	module->open						= mac_image_init;
-	module->create						= mac_image_create;
 /*	module->close						= mac_image_exit; */
-/*	module->info						= mac_image_info; */
+	module->info						= mac_image_info;
 	module->begin_enum					= mac_image_beginenum;
 	module->next_enum					= mac_image_nextenum;
 	module->free_space					= mac_image_freespace;
 	module->read_file					= mac_image_readfile;
-	module->write_file					= mac_image_writefile;
 	module->list_forks					= mac_image_listforks;
 	module->get_attrs					= mac_image_getattrs;
 	module->set_attrs					= mac_image_setattrs;
@@ -5984,6 +5919,25 @@ static imgtoolerr_t mac_module_populate(imgtool_library *library, struct Imgtool
 
 
 
-FLOPPYMODULE(mac, "Mac Floppy", apple35_mac, mac_module_populate)
+static imgtoolerr_t mac_mfs_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+{
+	module->create						= mfs_image_create;
+	module->open						= mfs_image_open;
+	module->write_file					= mac_image_writefile;
+	return mac_module_populate(library, module);
+}
+
+
+
+static imgtoolerr_t mac_hfs_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+{
+	module->open						= hfs_image_open;
+	return mac_module_populate(library, module);
+}
+
+
+
+FLOPPYMODULE(mac_mfs, "Mac MFS Floppy", apple35_mac, mac_mfs_module_populate)
+FLOPPYMODULE(mac_hfs, "Mac HFS Floppy", apple35_mac, mac_hfs_module_populate)
 
 

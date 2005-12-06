@@ -36,6 +36,7 @@ struct ImgtoolFloppyCallbacks
 
 	imgtoolerr_t	(*create)		(imgtool_image *image, option_resolution *opts);
 	imgtoolerr_t	(*open)			(imgtool_image *image);
+	void			(*info)			(imgtool_image *image, char *string, size_t len);
 	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
 	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(imgtool_imageenum *enumeration);

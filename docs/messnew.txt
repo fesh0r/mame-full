@@ -47,6 +47,9 @@ Imgtool Changes:
   a file that does not exist (which was allowed, but eventually resulted in an
   error.)  Also, fixed a few cosmetic errors.  [Nate Woods]
 
+- [Windows Imgtool] The disk title is now displayed on the title bar, if
+  present.  [Nate Woods]
+
 
 
 Source Changes:

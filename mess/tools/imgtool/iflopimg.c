@@ -309,6 +309,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			module->tracks_are_called_cylinders	= floppy_callbacks.tracks_are_called_cylinders;
 			module->writing_untested			= floppy_callbacks.writing_untested;
 			module->creation_untested			= floppy_callbacks.creation_untested;
+			module->info						= floppy_callbacks.info;
 			module->begin_enum					= floppy_callbacks.begin_enum;
 			module->next_enum					= floppy_callbacks.next_enum;
 			module->close_enum					= floppy_callbacks.close_enum;

@@ -415,7 +415,10 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	int column_index = 0;
 	int i;
 	char buf[256];
-	TCHAR file_title[MAX_PATH];
+	char imageinfo_buf[256];
+	const char *imageinfo = NULL;
+	TCHAR file_title_buf[MAX_PATH];
+	LPCTSTR file_title;
 	const char *statusbar_text[2];
 	struct imgtool_module_features features;
 
@@ -430,11 +433,42 @@ static imgtoolerr_t full_refresh_image(HWND window)
 
 	if (info->filename)
 	{
-		GetFileTitle(U2T(info->filename), file_title, sizeof(file_title) / sizeof(file_title[0]));
+		// get file title from Windows
+		GetFileTitle(U2T(info->filename), file_title_buf, sizeof(file_title_buf)
+			/ sizeof(file_title_buf[0]));
+		file_title = T2U(file_title_buf);
 
-		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-			(info->current_directory && info->current_directory[0]) ? "%s - %s" : "%s",
-			T2U(file_title), info->current_directory);
+		// get info from image
+		if (info->image && (img_info(info->image, imageinfo_buf, sizeof(imageinfo_buf)
+			/ sizeof(imageinfo_buf[0])) == IMGTOOLERR_SUCCESS))
+		{
+			if (imageinfo_buf[0])
+				imageinfo = imageinfo_buf;
+		}
+
+		// combine all of this into a title bar
+		if (info->current_directory && info->current_directory[0])
+		{
+			// has a current directory
+			if (imageinfo)
+			{
+				snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+					"%s (\"%s\") - %s", file_title, imageinfo, info->current_directory);
+			}
+			else
+			{
+				snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+					"%s - %s", file_title, info->current_directory);
+			}
+		}
+		else
+		{
+			// no current directory
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				imageinfo ? "%s (\"%s\")" : "%s",
+				file_title, imageinfo);
+		}
+
 		statusbar_text[0] = osd_basename((char *) info->filename);
 		statusbar_text[1] = module->description;
 	}

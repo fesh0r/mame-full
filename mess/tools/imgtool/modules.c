@@ -89,7 +89,8 @@ error:
 #else /* MODULES_RECURSIVE */
 
 MODULE(concept)
-MODULE(mac)
+MODULE(mac_mfs)
+MODULE(mac_hfs)
 MODULE(mess_hd)
 MODULE(rsdos)
 MODULE(os9)

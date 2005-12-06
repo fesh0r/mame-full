@@ -2,7 +2,7 @@
 
 <imgtooltest name="mac_001">
 	<!-- Basic Mac tests -->
-	<createimage driver="apple35_dc_mac"/>
+	<createimage driver="apple35_dc_mac_mfs"/>
 	<checkdirectory/>
 
 	<putfile name="Foo">'Hello World!'</putfile>
@@ -37,7 +37,7 @@
 
 <imgtooltest name="mac_002">
 	<!-- Testing larger files -->
-	<createimage driver="apple35_dc_mac"/>
+	<createimage driver="apple35_dc_mac_mfs"/>
 
 	<putfile name="Foo">'Abcdefg' * 111</putfile>
 	<checkdirectory>
@@ -64,7 +64,7 @@
 
 <imgtooltest name="mac_003">
 	<!-- Testing many files -->
-	<createimage driver="apple35_dc_mac"/>
+	<createimage driver="apple35_dc_mac_mfs"/>
 
 	<putfile name="1 File"/>
 	<putfile name="2 File"/>
