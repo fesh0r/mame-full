@@ -531,7 +531,9 @@ ROM_START(snes)
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
 	ROM_REGION(0x100,           REGION_USER5, 0)		/* IPL ROM */
-	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0))	/* boot rom */
+	ROM_REGION(0x800,           REGION_USER6, 0)		/* add-on chip ROMs (DSP, SFX, etc) */
+        ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
 ROM_END
 
 ROM_START(snespal)
@@ -541,7 +543,9 @@ ROM_START(snespal)
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
 	ROM_REGION(0x100,           REGION_USER5, 0)		/* IPL ROM */
-	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0))	/* boot rom */
+	ROM_REGION(0x800,           REGION_USER6, 0)		/* add-on chip ROMs (DSP, SFX, etc) */
+        ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
