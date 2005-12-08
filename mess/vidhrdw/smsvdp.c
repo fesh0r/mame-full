@@ -260,63 +260,32 @@ INTERRUPT_GEN(sms) {
 	int irqAt;
 	int maxLine;
 
+	/* 192-line display */
+	irqAt = 0x00;
+
 	/* Is it NTSC */
 	if (IS_NTSC) {
 		/* Bump scanline counter */
 		currentLine = (currentLine + 1) % NTSC_Y_PIXELS;
-
-		/* We start a new frame, so reset line count down counter */
-		if (currentLine == 0x00) {
-			lineCountDownCounter = reg[0x0A];
-			reg9copy = reg[0x09];
-		}
-
-		/* must be mode 4 */
-		if (reg[0x00] & 0x04) {
-			if (IS_GG_ANY) {
-				if (reg[0x00] & 0x02) {
-					/* Is it 224-line display */
-					if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-						irqAt = 0x01;
-						logerror("mode 4\n");
-					} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-						/* 240-line display */
-						irqAt = 0x02;
-					}
-				}
-			}
-		}
-
-		/* 192-line display */
-		irqAt = 0x00;
 	} else {
 		/* It must be PAL */
 		/* Bump scanline counter */
 		currentLine = (currentLine + 1) % PAL_Y_PIXELS;
+	}
 
-		/* We start a new frame, so reset line count down counter */
-		if (currentLine == 0x00) {
-			lineCountDownCounter = reg[0x0A];
-			reg9copy = reg[0x09];
-		}
-
-		/* must be mode 4 */
-		if (reg[0x00] & 0x04) {
-			if (IS_GG_ANY) {
-				if (reg[0x00] & 0x02) {
-					/* Is it 224-line display */
-					if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-						irqAt = 0x01;
-					} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-						/* 240-line display */
-						irqAt = 0x02;
-					}
+	/* must be mode 4 */
+	if (reg[0x00] & 0x04) {
+		if (IS_GG_ANY) {
+			if (reg[0x00] & 0x02) {
+				/* Is it 224-line display */
+				if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
+					irqAt = 0x01;
+				} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
+					/* 240-line display */
+					irqAt = 0x02;
 				}
 			}
 		}
-
-		/* 192-line display */
-		irqAt = 0x00;
 	}
 
 	if (currentLine <= irqAtLines[irqAt]) {
@@ -324,8 +293,10 @@ INTERRUPT_GEN(sms) {
 			statusReg |= STATUS_VINT;
 		}
 
+		/* We start a new frame, so reset line count down counter */
 		if (currentLine == 0x00) {
 			lineCountDownCounter = reg[0x0A];
+			reg9copy = reg[0x09];
 		}
 
 		if (lineCountDownCounter == 0x00) {
@@ -558,18 +529,18 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	UINT8 *spriteTable = (UINT8 *) &(VRAM[(reg[0x05] << 7) & 0x3F00]);
 	rectangle rec;
 
-	rec = Machine->visible_area;
 	pixelPlotY = line;
 	pixelOffsetX = 0;
 	if (!(IS_GG_ANY)) {
-		pixelPlotY += (rec.min_y + TOP_192_BORDER);
-		pixelOffsetX = rec.min_x + LBORDER_X_PIXELS;
+		pixelPlotY += TOP_192_BORDER;
+		pixelOffsetX = LBORDER_X_PIXELS;
 	}
 
 	/* Check if display is disabled */
 	if (!(reg[0x01] & 0x40)) {
 		/* set whole line to reg[0x07] color */
-		rec = Machine->visible_area;
+		rec.min_x = 0;
+		rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
 		rec.min_y = rec.max_y = pixelPlotY;
 		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 
@@ -580,7 +551,8 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	if (!(IS_GG_ANY)) {
 		if (line >= 192 && line < (192 + BOTTOM_192_BORDER)) {
 			/* Draw bottom border */
-			rec = Machine->visible_area;
+			rec.min_x = 0;
+			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
 			rec.min_y = rec.max_y = pixelPlotY;
 			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 
@@ -591,21 +563,22 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		}
 		if (line >= (192 + BOTTOM_192_BORDER + 19) && line < (192 + BOTTOM_192_BORDER + 19 + TOP_192_BORDER)) {
 			/* Draw top border */
-			rec = Machine->visible_area;
-			rec.min_y = rec.max_y = line + rec.min_y - (192 + BOTTOM_192_BORDER + 19);
+			rec.min_x = 0;
+			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
+			rec.min_y = rec.max_y = line - (192 + BOTTOM_192_BORDER + 19);
 			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 
 			return;
 		}
 		/* Draw left border */
-		rec = Machine->visible_area;
 		rec.min_y = rec.max_y = pixelPlotY;
-		rec.max_x = rec.min_x + LBORDER_X_PIXELS;
+		rec.min_x = 0;
+		rec.max_x = LBORDER_X_PIXELS - 1;
 		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 		/* Draw right border */
-		rec = Machine->visible_area;
 		rec.min_y = rec.max_y = pixelPlotY;
-		rec.min_x = rec.max_x - RBORDER_X_PIXELS;
+		rec.min_x = LBORDER_X_PIXELS + 256;
+		rec.min_x = rec.min_x + RBORDER_X_PIXELS - 1;
 		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 	}
 
@@ -806,10 +779,9 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	/* Fill column 0 with overscan color from reg[0x07]	 (SMS Only) */
 	if (!IS_GG_ANY) {
 		if (reg[0x00] & 0x20) {
-			rec = Machine->visible_area;
 			rec.min_y = rec.max_y = pixelPlotY;
-			rec.min_x += LBORDER_X_PIXELS;
-			rec.max_x = rec.min_x + 8;
+			rec.min_x = LBORDER_X_PIXELS;
+			rec.max_x = rec.min_x + 7;
 			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 		}
 	}
