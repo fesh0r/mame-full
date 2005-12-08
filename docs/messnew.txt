@@ -15,6 +15,9 @@ System Driver Changes:
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
   [Wilbert Pol]
 
+- [NES] PPU enhancements and implemented some undocuments N2A03 opcodes. (bugs
+  #810, #811) [Rob Bohms]
+
 - [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
 
 - [SNES] Fixed save RAM to store and save properly, improved memory mapping
