@@ -107,8 +107,12 @@ NVRAM_HANDLER(sms);
 #define PAL_224_BBORDER_Y_PIXELS		(0x20)					/* 32 lines */
 #define PAL_240_TBORDER_Y_PIXELS		(0x1E)					/* 30 lines */
 #define PAL_240_BBORDER_Y_PIXELS		(0x18)					/* 24 lines */
-#define TOP_192_BORDER							(IS_NTSC ? NTSC_192_TBORDER_Y_PIXELS : PAL_192_TBORDER_Y_PIXELS)
-#define BOTTOM_192_BORDER						(IS_NTSC ? NTSC_192_BBORDER_Y_PIXELS : PAL_192_BBORDER_Y_PIXELS)
+
+/* Hard coded top and bottom borders for ease of reference */
+/* using 11 works for both NTSC and PAL */
+#define TBORDER_Y_PIXELS			(0x0B)					/* 11 lines */
+#define BBORDER_Y_PIXELS			(0x0B)					/* 11 lines */
+#define MAX_X_PIXELS				(PAL_X_PIXELS > NTSC_X_PIXELS ? PAL_X_PIXELS : NTSC_X_PIXELS)
 
 #define GG_CRAM_SIZE				(0x40)	/* 32 colors x 2 bytes per color = 64 bytes */
 #define SMS_CRAM_SIZE				(0x20)	/* 32 colors x 1 bytes per color = 32 bytes */

@@ -30,9 +30,15 @@ UINT8 isSMSCRAMDirty[SMS_CRAM_SIZE];
 int currentLine;
 int lineCountDownCounter;
 int irqState;			/* The status of the IRQ line, as seen by the VDP */
+int y_pixels;			/* 192, 224, 240 */
+int start_blanking;		/* when is the transition from bottom border area to blanking area */
+int start_top_border;		/* when is the transition from blanking area to top border area */
+int max_y_pixels;		/* full range of y counter */
 
 mame_bitmap *prevBitMap;
 int prevBitMapSaved;
+
+UINT8 *vcnt_lookup;
 
 /* NTSC 192 lines precalculated return values from the V counter */
 static UINT8 vcnt_ntsc_192[NTSC_Y_PIXELS] = {
@@ -169,56 +175,66 @@ static UINT8 vcnt_pal_240[PAL_Y_PIXELS] = {
 	0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
 };
 
- READ8_HANDLER(sms_vdp_curline_r) {
-	/* Is it NTSC */
-	if (IS_NTSC) {
-		/* must be mode 4 */
-		if (reg[0x00] & 0x04) {
-			if (IS_GG_ANY) {
-				if (reg[0x00] & 0x02) {
-					/* Is it 224-line display */
-					if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-						return vcnt_ntsc_224[currentLine];
-					} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-						/* 240-line display */
-						return vcnt_ntsc_240[currentLine];
-					}
-				}
-			}
+static void set_display_settings( void ) {
+	y_pixels = 192;
+	if (reg[0x00] & 0x02) {
+		/* Is it 224-line display */
+		if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
+			y_pixels = 224;
+		} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
+			/* 240-line display */
+			y_pixels = 240;
 		}
-		/* 192-line display */
-		return vcnt_ntsc_192[currentLine];
-	} else {
-		/* It must be PAL */
-		if (reg[0x00] & 0x04) {
-			if (IS_GG_ANY) {
-				if (reg[0x00] & 0x02) {
-					/* Is it 224-line display */
-					if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-						return vcnt_pal_224[currentLine];
-					} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-						/* 240-line display */
-						return vcnt_pal_240[currentLine];
-					}
-				}
-			}
-		}
-		/* 192-line display */
-		return vcnt_pal_192[currentLine];
 	}
+	if ( IS_NTSC ) {
+		switch( y_pixels ) {
+		case 192:
+			vcnt_lookup = vcnt_ntsc_192;
+			start_blanking = y_pixels + NTSC_192_BBORDER_Y_PIXELS;
+			break;
+		case 224:
+			vcnt_lookup = vcnt_ntsc_224;
+			start_blanking = y_pixels + NTSC_224_BBORDER_Y_PIXELS;
+			break;
+		case 240:
+			vcnt_lookup = vcnt_ntsc_240;
+			start_blanking = y_pixels + 1;
+			break;
+		}
+		max_y_pixels = NTSC_Y_PIXELS;
+	} else {
+		switch( y_pixels ) {
+		case 192:
+			vcnt_lookup = vcnt_pal_192;
+			start_blanking = y_pixels + PAL_192_BBORDER_Y_PIXELS;
+			break;
+		case 224:
+			vcnt_lookup = vcnt_pal_224;
+			start_blanking = y_pixels + PAL_224_BBORDER_Y_PIXELS;
+			break;
+		case 240:
+			vcnt_lookup = vcnt_pal_240;
+			start_blanking = y_pixels + PAL_240_BBORDER_Y_PIXELS;
+			break;
+		}
+		max_y_pixels = PAL_Y_PIXELS;
+	}
+	start_top_border = start_blanking + 19;
+	set_visible_area( LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
+}
+
+ READ8_HANDLER(sms_vdp_curline_r) {
+	return vcnt_lookup[currentLine];
 }
 
 VIDEO_START(sms) {
 	/* Clear RAM */
 	memset(reg, 0, NUM_OF_REGISTER);
 	isCRAMDirty = 1;
-	if (IS_GG_ANY) {
-		memset(ggCRAM, 0, GG_CRAM_SIZE);
-		memset(isGGCRAMDirty, 1, GG_CRAM_SIZE);
-	} else {
-		memset(smsCRAM, 0, SMS_CRAM_SIZE);
-		memset(isSMSCRAMDirty, 1, SMS_CRAM_SIZE);
-	}
+	memset(ggCRAM, 0, GG_CRAM_SIZE);
+	memset(isGGCRAMDirty, 1, GG_CRAM_SIZE);
+	memset(smsCRAM, 0, SMS_CRAM_SIZE);
+	memset(isSMSCRAMDirty, 1, SMS_CRAM_SIZE);
 	memset(VRAM, 0, VRAM_SIZE);
 	reg[0x02] = 0x0E;			/* power up default */
 
@@ -226,13 +242,8 @@ VIDEO_START(sms) {
 	addr = code = pending = latch = buffer = statusReg = \
 	currentLine = lineCountDownCounter = irqState = 0;
 
-	if (IS_NTSC) {
-		lineCollisionBuffer = auto_malloc(NTSC_X_PIXELS);
-		spriteCache = auto_malloc(NTSC_X_PIXELS * 16);
-	} else {
-		lineCollisionBuffer = auto_malloc(PAL_X_PIXELS);
-		spriteCache = auto_malloc(PAL_X_PIXELS * 16);
-	}
+	lineCollisionBuffer = auto_malloc(MAX_X_PIXELS);
+	spriteCache = auto_malloc(MAX_X_PIXELS * 16);
 	if (!lineCollisionBuffer) {
 		return (1);
 	}
@@ -252,16 +263,13 @@ VIDEO_START(sms) {
 		return (1);
 	}
 
+	set_display_settings();
+
 	return (0);
 }
 
 INTERRUPT_GEN(sms) {
-	static UINT8 irqAtLines[3] = { 0xC1, 0xE1, 0xF1 };
-	int irqAt;
 	int maxLine;
-
-	/* 192-line display */
-	irqAt = 0x00;
 
 	/* Is it NTSC */
 	if (IS_NTSC) {
@@ -273,23 +281,8 @@ INTERRUPT_GEN(sms) {
 		currentLine = (currentLine + 1) % PAL_Y_PIXELS;
 	}
 
-	/* must be mode 4 */
-	if (reg[0x00] & 0x04) {
-		if (IS_GG_ANY) {
-			if (reg[0x00] & 0x02) {
-				/* Is it 224-line display */
-				if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-					irqAt = 0x01;
-				} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-					/* 240-line display */
-					irqAt = 0x02;
-				}
-			}
-		}
-	}
-
-	if (currentLine <= irqAtLines[irqAt]) {
-		if (currentLine == irqAtLines[irqAt]) {
+	if (currentLine <= y_pixels + 1) {
+		if (currentLine == y_pixels + 1) {
 			statusReg |= STATUS_VINT;
 		}
 
@@ -448,13 +441,17 @@ WRITE8_HANDLER(sms_vdp_ctrl_w) {
 
 	if (pending == 0) {
 		latch = data;
+		/* SMS 2 & GG behaviour. Seems like the latched data is passed straight through */
+                /* to the address register. Cosmic Spacehead needs this, among others */
+		addr = ( addr & 0xff00 ) | latch;
 		pending = 1;
 	} else {
 		/* Clear pending write flag */
 		pending = 0;
 
 		code = (data >> 6) & 0x03;
-		addr = ((data & 0x3F) << 8) | latch;
+//		addr = ((data & 0x3F) << 8) | latch;
+		addr = ( addr & 0xff ) | ( data << 8 );
 #ifdef LOG_REG
 		logerror("code = %x, addr = %x\n", code, addr);
 #endif
@@ -466,6 +463,11 @@ WRITE8_HANDLER(sms_vdp_ctrl_w) {
 			if (regNum == 0 && latch & 0x02) {
 				logerror("overscan enabled.\n");
 			}
+
+			if ( regNum == 0 || regNum == 1 ) {
+				set_display_settings();
+			}
+
 #ifdef LOG_REG
 			logerror("r%x = %x\n", regNum, latch);
 #endif
@@ -529,10 +531,14 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	UINT8 *spriteTable = (UINT8 *) &(VRAM[(reg[0x05] << 7) & 0x3F00]);
 	rectangle rec;
 
+	if ( y_pixels != 192 ) {
+		nameTable = (UINT16 *) &(VRAM[0x3700 + ((((line + reg9copy) % 256) >> 3 ) << 6)]);
+	}
+
 	pixelPlotY = line;
 	pixelOffsetX = 0;
 	if (!(IS_GG_ANY)) {
-		pixelPlotY += TOP_192_BORDER;
+		pixelPlotY += TBORDER_Y_PIXELS;
 		pixelOffsetX = LBORDER_X_PIXELS;
 	}
 
@@ -549,25 +555,28 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 
 	/* Only SMS have border */
 	if (!(IS_GG_ANY)) {
-		if (line >= 192 && line < (192 + BOTTOM_192_BORDER)) {
+		if (line >= y_pixels && line < start_blanking) {
 			/* Draw bottom border */
 			rec.min_x = 0;
 			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
 			rec.min_y = rec.max_y = pixelPlotY;
-			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-
+			/* draw no more than 11 bottom border lines */
+			if ( line - y_pixels < 11 ) {
+				fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
+			}
 			return;
 		}
-		if (line >= (192 + BOTTOM_192_BORDER) && line < (192 + BOTTOM_192_BORDER + 19)) {
+		if (line >= start_blanking && line < start_top_border) {
 			return;
 		}
-		if (line >= (192 + BOTTOM_192_BORDER + 19) && line < (192 + BOTTOM_192_BORDER + 19 + TOP_192_BORDER)) {
+		if (line >= start_top_border && line < max_y_pixels) {
 			/* Draw top border */
 			rec.min_x = 0;
 			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
-			rec.min_y = rec.max_y = line - (192 + BOTTOM_192_BORDER + 19);
-			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-
+			rec.min_y = rec.max_y = 10 - (line - start_top_border);
+			if ( line - start_top_border < 11 ) {
+				fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
+			}
 			return;
 		}
 		/* Draw left border */
@@ -661,7 +670,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		spriteHeight <<= 1;
 	}
 	spriteBufferCount = 0;
-	for (spriteIndex = 0; (spriteIndex < 64) && (spriteTable[spriteIndex] != 0xD0) && (spriteBufferCount < 8); spriteIndex++) {
+	for (spriteIndex = 0; (spriteIndex < 64) && (spriteTable[spriteIndex] != 0xD0 || y_pixels != 192) && (spriteBufferCount < 8); spriteIndex++) {
 		spriteY = spriteTable[spriteIndex] + 1; /* sprite y position starts at line 1 */
 		if (spriteY > 240) {
 			spriteY -= 256; /* wrap from top if y position is > 240 */
@@ -677,7 +686,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		}
 	}
 	/* Is it NTSC */
-	memset(lineCollisionBuffer, 0, (IS_NTSC) ? NTSC_X_PIXELS : PAL_X_PIXELS);
+	memset(lineCollisionBuffer, 0, MAX_X_PIXELS);
 	spriteBufferCount--;
 	for (spriteBufferIndex = spriteBufferCount; spriteBufferIndex >= 0; spriteBufferIndex--) {
 		spriteIndex = spriteBuffer[spriteBufferIndex];
@@ -723,10 +732,10 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 				/* sprite doubling is enabled */
 				pixelPlotX = spriteX + (pixelX << 1) + pixelOffsetX;
 				if (spriteLine < (spriteHeight >> 1)) {
-					spriteCache[pixelPlotX + (((IS_NTSC) ? NTSC_X_PIXELS : PAL_X_PIXELS) * spriteLine)] = penSelected;
+					spriteCache[pixelPlotX + ( MAX_X_PIXELS * spriteLine)] = penSelected;
 				}
 
-				penSelected = pixelPlotX + (((IS_NTSC) ? NTSC_X_PIXELS : PAL_X_PIXELS) * ((spriteLine & 0xFE) >> 1));
+				penSelected = pixelPlotX + (MAX_X_PIXELS * ((spriteLine & 0xFE) >> 1));
 				if (spriteCache[penSelected] == 0x10) {		/* Transparent pallette so skip draw */
 					continue;
 				}
