@@ -532,7 +532,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	rectangle rec;
 
 	if ( y_pixels != 192 ) {
-		nameTable = (UINT16 *) &(VRAM[0x3700 + ((((line + reg9copy) % 256) >> 3 ) << 6)]);
+		nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0C) << 10) | 0x0700) + ((((line + reg9copy) % 256) >> 3 ) << 6)]);
 	}
 
 	pixelPlotY = line;
