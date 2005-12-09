@@ -731,6 +731,12 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 			if (reg[0x01] & 0x01) {
 				/* sprite doubling is enabled */
 				pixelPlotX = spriteX + (pixelX << 1) + pixelOffsetX;
+
+				/* check to prevent going outside of active display area */
+				if ( ( pixelPlotX - pixelOffsetX ) > 256 ) {
+					continue;
+				}
+
 				if (spriteLine < (spriteHeight >> 1)) {
 					spriteCache[pixelPlotX + ( MAX_X_PIXELS * spriteLine)] = penSelected;
 				}
@@ -768,6 +774,12 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 				}
 
 				pixelPlotX = spriteX + pixelX + pixelOffsetX;
+
+				/* check to prevent going outside of active display area */
+				if ( ( pixelPlotX - pixelOffsetX ) > 256 ) {
+					continue;
+				}
+
 				if (!prioritySelected[(((xScroll & 0x07) + pixelPlotX - pixelOffsetX) / 8) & 0x1F]) {
 					plot_pixel(bitmap, pixelPlotX, pixelPlotY, Machine->pens[penSelected]);
 				} else {
