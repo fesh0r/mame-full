@@ -8,6 +8,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+#define PRIORITY_BIT		0x1000
+
 UINT8 reg[NUM_OF_REGISTER];
 UINT8 ggCRAM[GG_CRAM_SIZE];
 UINT8 smsCRAM[SMS_CRAM_SIZE];
@@ -523,7 +525,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	int tileColumn;
 	int xScroll, yScroll, xScrollStartColumn;
 	int spriteIndex;
-	int pixelX, pixelPlotX, pixelPlotY, pixelOffsetX, prioritySelected[33];
+	int pixelX, pixelPlotX, pixelPlotY, pixelOffsetX, prioritySelected[256];
 	int spriteX, spriteY, spriteLine, spriteTileSelected, spriteHeight;
 	int spriteBuffer[8], spriteBufferCount, spriteBufferIndex;
 	int bitPlane0, bitPlane1, bitPlane2, bitPlane3;
@@ -604,7 +606,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	/* Draw background layer */
 	for (tileColumn = 0; tileColumn < 33; tileColumn++) {
 		UINT16 tileData;
-		int tileSelected, palletteSelected, horizSelected, vertSelected;
+		int tileSelected, palletteSelected, horizSelected, vertSelected, prioritySelect;
 		int tileLine;
 
 		/* Rightmost 8 columns for SMS (or 2 columns for GG) not affected by */
@@ -622,7 +624,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		#endif
 
 		tileSelected = (tileData & 0x01FF);
-		prioritySelected[tileColumn] = (tileData >> 12) & 0x01;
+		prioritySelect = tileData & PRIORITY_BIT;
 		palletteSelected = (tileData >> 11) & 0x01;
 		vertSelected = (tileData >> 10) & 0x01;
 		horizSelected = (tileData >> 9) & 0x01;
@@ -659,6 +661,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 			if (pixelPlotX >= 0 && pixelPlotX < 256) {
 //				logerror("%x %x\n", pixelPlotX + pixelOffsetX, pixelPlotY);
 				plot_pixel(bitmap, pixelPlotX + pixelOffsetX, pixelPlotY, Machine->pens[penSelected]);
+				prioritySelected[pixelPlotX] = prioritySelect | ( penSelected & 0x0F );
 			}
 		}
 	}
@@ -730,10 +733,10 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 
 			if (reg[0x01] & 0x01) {
 				/* sprite doubling is enabled */
-				pixelPlotX = spriteX + (pixelX << 1) + pixelOffsetX;
+				pixelPlotX = spriteX + (pixelX << 1);
 
 				/* check to prevent going outside of active display area */
-				if ( ( pixelPlotX - pixelOffsetX ) > 256 ) {
+				if ( pixelPlotX > 256 ) {
 					continue;
 				}
 
@@ -745,15 +748,15 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 				if (spriteCache[penSelected] == 0x10) {		/* Transparent pallette so skip draw */
 					continue;
 				}
-				if (!prioritySelected[(((xScroll & 0x07) + pixelPlotX - pixelOffsetX) / 8) & 0x1F]) {
-					plot_pixel(bitmap, pixelPlotX, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
-					plot_pixel(bitmap, pixelPlotX + 1, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
+				if ( ! ( prioritySelected[pixelPlotX] & PRIORITY_BIT ) ) {
+					plot_pixel(bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
+					plot_pixel(bitmap, pixelOffsetX + pixelPlotX + 1, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
 				} else {
-					if (read_pixel(bitmap, pixelPlotX, pixelPlotY) == Machine->pens[0x00]) {
-						plot_pixel(bitmap, pixelPlotX, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
+					if ( prioritySelected[pixelPlotX] == PRIORITY_BIT ) {
+						plot_pixel(bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
 					}
-					if (read_pixel(bitmap, pixelPlotX + 1, pixelPlotY) == Machine->pens[0x00]) {
-						plot_pixel(bitmap, pixelPlotX + 1, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
+					if ( prioritySelected[pixelPlotX + 1] == PRIORITY_BIT ) {
+						plot_pixel(bitmap, pixelOffsetX + pixelPlotX + 1, pixelPlotY, Machine->pens[spriteCache[penSelected]]);
 					}
 				}
 				if (lineCollisionBuffer[pixelPlotX] != 1) {
@@ -773,18 +776,18 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 					continue;
 				}
 
-				pixelPlotX = spriteX + pixelX + pixelOffsetX;
+				pixelPlotX = spriteX + pixelX;
 
 				/* check to prevent going outside of active display area */
-				if ( ( pixelPlotX - pixelOffsetX ) > 256 ) {
+				if ( pixelPlotX > 256 ) {
 					continue;
 				}
 
-				if (!prioritySelected[(((xScroll & 0x07) + pixelPlotX - pixelOffsetX) / 8) & 0x1F]) {
-					plot_pixel(bitmap, pixelPlotX, pixelPlotY, Machine->pens[penSelected]);
+				if ( ! ( prioritySelected[pixelPlotX] & PRIORITY_BIT ) ) {
+					plot_pixel(bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[penSelected]);
 				} else {
-					if (read_pixel(bitmap, pixelPlotX, pixelPlotY) == Machine->pens[0x00]) {
-						plot_pixel(bitmap, pixelPlotX, pixelPlotY, Machine->pens[penSelected]);
+					if ( prioritySelected[pixelPlotX] == PRIORITY_BIT ) {
+						plot_pixel(bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[penSelected]);
 					}
 				}
 				if (lineCollisionBuffer[pixelPlotX] != 1) {
