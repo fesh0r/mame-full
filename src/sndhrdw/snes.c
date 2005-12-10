@@ -1201,7 +1201,7 @@ READ8_HANDLER( snes_dsp_io_r )
 	}
 #endif
 
-	return DSPregs[offset];
+	return DSPregs[offset & 0x7f];
 }
 
 WRITE8_HANDLER( snes_dsp_io_w )
@@ -1228,7 +1228,7 @@ READ8_HANDLER( spc_io_r )
 		case 0x2:		/* Register address */
 			return spc_ram[0xf2];
 		case 0x3:		/* Register data */
-			return snes_dsp_io_r( spc_ram[0xf2]&0x7f );
+			return snes_dsp_io_r( spc_ram[0xf2] );
 		case 0x4:		/* Port 0 */
 		case 0x5:		/* Port 1 */
 		case 0x6:		/* Port 2 */

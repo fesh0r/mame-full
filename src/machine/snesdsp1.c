@@ -17,8 +17,8 @@ static UINT8 dsp1_in[32], dsp1_out[16];
 #define DSP1_VERSION 0x0102
 
 // 1FH - Memory Dump (DSP1B Data ROM)
-// Input 	byte(1FH) integer(Undefined)
-// Output 	integer[1024] 	
+// Input    byte(1FH) integer(Undefined)
+// Output   integer[1024]
 
 static UINT16 DSP1ROM[1024];
 
@@ -124,7 +124,7 @@ void InitDSP1(void)
 	unsigned char *dspin = memory_region(REGION_USER6);
 
 	dsp1_waitcmd = dsp1_first_parm = 1;
-	
+
 	for (i=0; i<INCR; i++)
 	{
 		CosTable2[i] = (cos((double)(2*PI*i/INCR)));
@@ -134,7 +134,7 @@ void InitDSP1(void)
 	// expand the DSP-1 data ROM
 	for (i = 0; i < 2048; i+=2)
 	{
-		DSP1ROM[i/2] = dspin[i]<<8 | dspin[i+1];		
+		DSP1ROM[i/2] = dspin[i]<<8 | dspin[i+1];
 	}
 }
 
@@ -152,7 +152,7 @@ static INT16 SinAzs;
 static INT16 CosAzs;
 
 // Clipped Zenith angle
-static INT16 SinAZS; 
+static INT16 SinAZS;
 static INT16 CosAZS;
 static INT16 SecAZS_C1;
 static INT16 SecAZS_E1;
@@ -167,7 +167,7 @@ static INT16 DSP1_Sin(INT16 Angle)
 		if (Angle == -32768) return 0;
 		return -DSP1_Sin(-Angle);
 	}
-	
+
 	S = DSP1_SinTable[Angle >> 8] + (DSP1_MulTable[Angle & 0xff] * DSP1_SinTable[0x40 + (Angle >> 8)] >> 15);
 	if (S > 32767) S = 32767;
 	return (INT16) S;
@@ -192,23 +192,23 @@ static void DSP1_Normalize(INT16 m, INT16 *Coefficient, INT16 *Exponent)
 	INT16 e = 0;
 
 	if (m < 0)
-		while ((m & i) && i) 
+		while ((m & i) && i)
 		{
 			i >>= 1;
 			e++;
 		}
 	else
-		while (!(m & i) && i) 
+		while (!(m & i) && i)
 		{
 			i >>= 1;
 			e++;
 		}
-		
+
 	if (e > 0)
 		*Coefficient = m * DSP1ROM[0x0021 + e] << 1;
 	else
 		*Coefficient = m;
-		
+
 	*Exponent -= e;
 }
 
@@ -220,18 +220,18 @@ static void DSP1_NormalizeDouble(int Product, INT16 *Coefficient, INT16 *Exponen
 	INT16 e = 0;
 
 	if (m < 0)
-		while ((m & i) && i) 
-		{ 
-			i >>= 1; 
-			e++; 
-		}
-	else
-		while (!(m & i) && i) 
+		while ((m & i) && i)
 		{
 			i >>= 1;
 			e++;
 		}
-		
+	else
+		while (!(m & i) && i)
+		{
+			i >>= 1;
+			e++;
+		}
+
 	if (e > 0)
 	{
 		*Coefficient = m * DSP1ROM[0x0021 + e] << 1;
@@ -243,13 +243,13 @@ static void DSP1_NormalizeDouble(int Product, INT16 *Coefficient, INT16 *Exponen
 			i = 0x4000;
 
 			if (m < 0)
-				while ((n & i) && i) 
+				while ((n & i) && i)
 				{
 					i >>= 1;
 					e++;
 				}
 			else
-				while (!(n & i) && i) 
+				while (!(n & i) && i)
 				{
 					i >>= 1;
 					e++;
@@ -263,7 +263,7 @@ static void DSP1_NormalizeDouble(int Product, INT16 *Coefficient, INT16 *Exponen
 	}
 	else
 		*Coefficient = m;
-		
+
 	*Exponent = e;
 }
 
@@ -278,8 +278,8 @@ static INT16 DSP1_Truncate(INT16 C, INT16 E)
 }
 
 // 00H - 16-bit Multiplication (Bit Perfect)
-// Input 	byte(00H) integer(Multiplicand) integer(Multiplier)
-// Output 	integer(Product)
+// Input    byte(00H) integer(Multiplicand) integer(Multiplier)
+// Output   integer(Product)
 
 void DSP1_Multiply(INT16 Multiplicand, INT16 Multiplier, INT16 *Product)
 {
@@ -287,8 +287,8 @@ void DSP1_Multiply(INT16 Multiplicand, INT16 Multiplier, INT16 *Product)
 }
 
 // 20H - 16-bit Multiplication (Bit Perfect)
-// Input 	byte(20H) integer(Multiplicand) integer(Multiplier)
-// Output 	integer(Product)
+// Input    byte(20H) integer(Multiplicand) integer(Multiplier)
+// Output   integer(Product)
 
 void DSP1_Multiply1(INT16 Multiplicand, INT16 Multiplier, INT16 *Product)
 {
@@ -296,8 +296,8 @@ void DSP1_Multiply1(INT16 Multiplicand, INT16 Multiplier, INT16 *Product)
 }
 
 // 10H - Inverse Calculation (Bit Perfect)
-// Input 	byte(10H) integer(Coefficient) integer(Exponent)
-// Output 	integer(Coefficient) integer(Exponent)
+// Input    byte(10H) integer(Coefficient) integer(Exponent)
+// Output   integer(Coefficient) integer(Exponent)
 
 void DSP1_Inverse(INT16 Coefficient, INT16 Exponent, INT16 *iCoefficient, INT16 *iExponent)
 {
@@ -313,12 +313,12 @@ void DSP1_Inverse(INT16 Coefficient, INT16 Exponent, INT16 *iCoefficient, INT16 
 
 		// Step Two: Remove Sign
 		if (Coefficient < 0)
-		{		
+		{
 			if (Coefficient < -32767) Coefficient = -32767;
 			Coefficient = -Coefficient;
 			Sign = -1;
 		}
-		
+
 		// Step Three: Normalize
 		while (Coefficient <  0x4000)
 		{
@@ -326,7 +326,7 @@ void DSP1_Inverse(INT16 Coefficient, INT16 Exponent, INT16 *iCoefficient, INT16 
 			Exponent--;
 		}
 
-		// Step Four: Special Case 
+		// Step Four: Special Case
 		if (Coefficient == 0x4000)
 			if (Sign == 1) *iCoefficient = 0x7fff;
 			else  {
@@ -349,8 +349,8 @@ void DSP1_Inverse(INT16 Coefficient, INT16 Exponent, INT16 *iCoefficient, INT16 
 }
 
 // 04H - Trigonometric Calculation (Bit Perfect)
-// Input 	byte(04H) integer(Angle) integer(Radius)
-// Output 	integer(Sine) integer(Cosine)
+// Input    byte(04H) integer(Angle) integer(Radius)
+// Output   integer(Sine) integer(Cosine)
 
 void DSP1_Triangle(INT16 Angle, INT16 Radius, INT16 *S, INT16 *C)
 {
@@ -359,8 +359,8 @@ void DSP1_Triangle(INT16 Angle, INT16 Radius, INT16 *S, INT16 *C)
 }
 
 // 08H - Vector Size Calculation (Bit Perfect)
-// Input 	byte(08H) integer(X) integer(Y) integer(Z)
-// Output 	double(Radius)
+// Input    byte(08H) integer(X) integer(Y) integer(Z)
+// Output   double(Radius)
 
 void DSP1_Radius(INT16 X, INT16 Y, INT16 Z, int *Radius)
 {
@@ -368,8 +368,8 @@ void DSP1_Radius(INT16 X, INT16 Y, INT16 Z, int *Radius)
 }
 
 // 18H - Vector Size Comparison (Bit Perfect)
-// Input 	byte(18H) integer(X) integer(Y) integer(Z) integer(Radius)
-// Output 	integer(Range)
+// Input    byte(18H) integer(X) integer(Y) integer(Z) integer(Radius)
+// Output   integer(Range)
 
 void DSP1_Range(INT16 X, INT16 Y, INT16 Z, INT16 Radius, INT16 *Range)
 {
@@ -377,8 +377,8 @@ void DSP1_Range(INT16 X, INT16 Y, INT16 Z, INT16 Radius, INT16 *Range)
 }
 
 // 38H - Vector Size Comparison (Bit Perfect)
-// Input 	byte(38H) integer(X) integer(Y) integer(Z) integer(Radius)
-// Output 	integer(Range)
+// Input    byte(38H) integer(X) integer(Y) integer(Z) integer(Radius)
+// Output   integer(Range)
 
 void DSP1_Range1(INT16 X, INT16 Y, INT16 Z, INT16 Radius, INT16 *Range)
 {
@@ -386,8 +386,8 @@ void DSP1_Range1(INT16 X, INT16 Y, INT16 Z, INT16 Radius, INT16 *Range)
 }
 
 // 28H - Vector Absolute Value Calculation (Bit Perfect)
-// Input 	byte(28H) integer(X) integer(Y) integer(Z)
-// Output 	integer(Distance)
+// Input    byte(28H) integer(X) integer(Y) integer(Z)
+// Output   integer(Distance)
 
 void DSP1_Distance(INT16 X, INT16 Y, INT16 Z, INT16 *Distance)
 {
@@ -404,19 +404,19 @@ void DSP1_Distance(INT16 X, INT16 Y, INT16 Z, INT16 *Distance)
 
 		Node1 = DSP1ROM[0x00d5 + Pos];
 		Node2 = DSP1ROM[0x00d6 + Pos];
-		
-		*Distance = ((Node2 - Node1) * (C & 0x1ff) >> 9) + Node1; 
-		
+
+		*Distance = ((Node2 - Node1) * (C & 0x1ff) >> 9) + Node1;
+
 #if DSP1_VERSION < 0x0102
 		if (Pos & 1) *Distance -= (Node2 - Node1);
-#endif	
+#endif
 		*Distance >>= (E >> 1);
 	}
 }
 
 // 0CH - 2D Coordinate Rotation (Bit Perfect)
-// Input 	byte(0CH) integer(Angle) integer(X) integer(Y)
-// Output 	integer(X) integer(Y)
+// Input    byte(0CH) integer(Angle) integer(X) integer(Y)
+// Output   integer(X) integer(Y)
 
 void DSP1_Rotate(INT16 Angle, INT16 X1, INT16 Y1, INT16 *X2, INT16 *Y2)
 {
@@ -425,8 +425,8 @@ void DSP1_Rotate(INT16 Angle, INT16 X1, INT16 Y1, INT16 *X2, INT16 *Y2)
 }
 
 // 1CH - 3D Coordinate Rotation (Bit Perfect)
-// Input 	byte(1CH) integer(Az) integer(Ay) integer(Ax) integer(X) integer(Y) integer(Z)
-// Output 	integer(X) integer(Y) integer(Z)
+// Input    byte(1CH) integer(Az) integer(Ay) integer(Ax) integer(X) integer(Y) integer(Z)
+// Output   integer(X) integer(Y) integer(Z)
 
 void DSP1_Polar(INT16 Az, INT16 Ay, INT16 Ax, INT16 X1, INT16 Y1, INT16 Z1, INT16 *X2, INT16 *Y2, INT16 *Z2)
 {
@@ -449,13 +449,13 @@ void DSP1_Polar(INT16 Az, INT16 Ay, INT16 Ax, INT16 X1, INT16 Y1, INT16 Z1, INT1
 }
 
 // 02H - Projection Parameter Setting (Bit Perfect)
-// Input 	byte(02H) integer(Fx) integer(Fy) integer(Fz) integer(Lfe) integer(Les) integer(Aas) integer(Azs)
-// Output 	integer(Vof) integer(Vva) integer(Cx) integer(Cy)
+// Input    byte(02H) integer(Fx) integer(Fy) integer(Fz) integer(Lfe) integer(Les) integer(Aas) integer(Azs)
+// Output   integer(Vof) integer(Vva) integer(Cx) integer(Cy)
 
 const INT16 MaxAZS_Exp[16] = {
-	0x38b4, 0x38b7, 0x38ba, 0x38be, 0x38c0, 0x38c4, 0x38c7, 0x38ca,	
+	0x38b4, 0x38b7, 0x38ba, 0x38be, 0x38c0, 0x38c4, 0x38c7, 0x38ca,
 	0x38ce, 0x38d0, 0x38d4, 0x38d7, 0x38da, 0x38dd, 0x38e0, 0x38e4
-};		
+};
 
 static INT16 FxParm, FyParm, FzParm, AasParm, AzsParm, LfeParm, LesParm;
 
@@ -489,7 +489,7 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 
 	E = 0;
 	DSP1_Normalize(Fz + (Lfe * (CosAzs * 0x7fff >> 15) >> 15), &C, &E);
-	
+
 	VPlane_C = C;
 	VPlane_E = E;
 
@@ -507,7 +507,7 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 	SinAZS = DSP1_Sin(AZS);
 	CosAZS = DSP1_Cos(AZS);
 
-	DSP1_Inverse(CosAZS, 0, &SecAZS_C1, &SecAZS_E1);	
+	DSP1_Inverse(CosAZS, 0, &SecAZS_C1, &SecAZS_E1);
 	DSP1_Normalize(C * SecAZS_C1 >> 15, &C, &E);
 	E += SecAZS_E1;
 
@@ -515,17 +515,17 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 
 	CentreX += C * SinAas >> 15;
 	CentreY -= C * CosAas >> 15;
-	
+
 	*Cx = CentreX;
 	*Cy = CentreY;
 
 	// Raster number of imaginary center and horizontal line
 	*Vof = 0;
 
-	if ((Azs != AZS) || (Azs == MaxAZS)) 
+	if ((Azs != AZS) || (Azs == MaxAZS))
 	{
-		if (Azs == -32768) Azs = -32767;	
-	
+		if (Azs == -32768) Azs = -32767;
+
 		C = Azs - MaxAZS;
 		if (C >= 0) C--;
 		Aux = ~(C << 2);
@@ -554,8 +554,8 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 }
 
 // 06H - Object Projection Calculation
-// Input 	byte(06H) integer(X) integer(Y) integer(Z)
-// Output 	integer(H) integer(V) integer(M)
+// Input    byte(06H) integer(X) integer(Y) integer(Z)
+// Output   integer(H) integer(V) integer(M)
 
 void DSP1_Project(INT16 X, INT16 Y, INT16 Z, INT16 *H, INT16 *V, UINT16 *M)
 {
@@ -611,8 +611,8 @@ void DSP1_Project(INT16 X, INT16 Y, INT16 Z, INT16 *H, INT16 *V, UINT16 *M)
 }
 
 // 0AH - Raster Data Calculation (Bit Perfect)
-// Input 	byte(0AH) integer(Vs)
-// Output 	integer(An) integer(Bn) integer(Cn) integer(Dn)
+// Input    byte(0AH) integer(Vs)
+// Output   integer(An) integer(Bn) integer(Cn) integer(Dn)
 
 void DSP1_Raster(INT16 Vs, INT16 *An, INT16 *Bn, INT16 *Cn, INT16 *Dn)
 {
@@ -640,8 +640,8 @@ void DSP1_Raster(INT16 Vs, INT16 *An, INT16 *Bn, INT16 *Cn, INT16 *Dn)
 }
 
 // 0EH - Coordinate Calculation of a Selected Point on the Screen (Bit Perfect)
-// Input 	byte(0EH) integer(H) integer(V)
-// Output 	integer(X) integer(Y)
+// Input    byte(0EH) integer(H) integer(V)
+// Output   integer(X) integer(Y)
 
 void DSP1_Target(INT16 H, INT16 V, INT16 *X, INT16 *Y)
 {
@@ -673,8 +673,8 @@ void DSP1_Target(INT16 H, INT16 V, INT16 *X, INT16 *Y)
 }
 
 // 01H - Set Attitude A (Bit Perfect)
-// Input 	byte(01H) integer(M) integer(Az) integer(Ay) integer(Ax)
-// Output 	None
+// Input    byte(01H) integer(M) integer(Az) integer(Ay) integer(Ax)
+// Output   None
 
 INT16 MatrixA[3][3];
 
@@ -703,8 +703,8 @@ void DSP1_Attitude_A(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 }
 
 // 11H - Set Attitude B (Bit Perfect)
-// Input 	byte(11H) integer(M) integer(Az) integer(Ay) integer(Ax)
-// Output 	None
+// Input    byte(11H) integer(M) integer(Az) integer(Ay) integer(Ax)
+// Output   None
 
 INT16 MatrixB[3][3];
 
@@ -733,8 +733,8 @@ void DSP1_Attitude_B(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 }
 
 // 21H - Set Attitude C (Bit Perfect)
-// Input 	byte(21H) integer(M) integer(Az) integer(Ay) integer(Ax)
-// Output 	None
+// Input    byte(21H) integer(M) integer(Az) integer(Ay) integer(Ax)
+// Output   None
 
 INT16 MatrixC[3][3];
 
@@ -763,8 +763,8 @@ void DSP1_Attitude_C(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 }
 
 // 0DH - Convert from Global to Object Coordinates A (Bit Perfect)
-// Input 	byte(0DH) integer(X) integer(Y) integer(Z)
-// Output 	integer(F) integer(L) integer(U)
+// Input    byte(0DH) integer(X) integer(Y) integer(Z)
+// Output   integer(F) integer(L) integer(U)
 
 void DSP1_Objective_A(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 {
@@ -774,8 +774,8 @@ void DSP1_Objective_A(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 }
 
 // 1DH - Convert from Global to Object Coordinates B (Bit Perfect)
-// Input 	byte(1DH) integer(X) integer(Y) integer(Z)
-// Output 	integer(F) integer(L) integer(U)
+// Input    byte(1DH) integer(X) integer(Y) integer(Z)
+// Output   integer(F) integer(L) integer(U)
 
 void DSP1_Objective_B(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 {
@@ -785,8 +785,8 @@ void DSP1_Objective_B(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 }
 
 // 2DH - Convert from Global to Object Coordinates C (Bit Perfect)
-// Input 	byte(2DH) integer(X) integer(Y) integer(Z)
-// Output 	integer(F) integer(L) integer(U)
+// Input    byte(2DH) integer(X) integer(Y) integer(Z)
+// Output   integer(F) integer(L) integer(U)
 
 void DSP1_Objective_C(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 {
@@ -796,8 +796,8 @@ void DSP1_Objective_C(INT16 X, INT16 Y, INT16 Z, INT16 *F, INT16 *L, INT16 *U)
 }
 
 // 03H - Conversion from Object to Global Coordinates A (Bit Perfect)
-// Input 	byte(03H) integer(F) integer(L) integer(U)
-// Output 	integer(X) integer(Y) integer(Z)
+// Input    byte(03H) integer(F) integer(L) integer(U)
+// Output   integer(X) integer(Y) integer(Z)
 
 void DSP1_Subjective_A(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 {
@@ -807,8 +807,8 @@ void DSP1_Subjective_A(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 }
 
 // 13H - Conversion from Object to Global Coordinates B (Bit Perfect)
-// Input 	byte(13H) integer(F) integer(L) integer(U)
-// Output 	integer(X) integer(Y) integer(Z)
+// Input    byte(13H) integer(F) integer(L) integer(U)
+// Output   integer(X) integer(Y) integer(Z)
 
 void DSP1_Subjective_B(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 {
@@ -818,8 +818,8 @@ void DSP1_Subjective_B(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 }
 
 // 23H - Conversion from Object to Global Coordinates C (Bit Perfect)
-// Input 	byte(23H) integer(F) integer(L) integer(U)
-// Output 	integer(X) integer(Y) integer(Z)
+// Input    byte(23H) integer(F) integer(L) integer(U)
+// Output   integer(X) integer(Y) integer(Z)
 
 void DSP1_Subjective_C(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 {
@@ -829,8 +829,8 @@ void DSP1_Subjective_C(INT16 F, INT16 L, INT16 U, INT16 *X, INT16 *Y, INT16 *Z)
 }
 
 // 0BH - Calculation of Inner Product with Forward Attitude A and a Vector (Bit Perfect)
-// Input 	byte(0BH) integer(X) integer(Y) integer(Z)
-// Output 	integer(S)
+// Input    byte(0BH) integer(X) integer(Y) integer(Z)
+// Output   integer(S)
 
 void DSP1_Scalar_A(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 {
@@ -838,8 +838,8 @@ void DSP1_Scalar_A(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 }
 
 // 1BH - Calculation of Inner Product with Forward Attitude B and a Vector (Bit Perfect)
-// Input 	byte(1BH) integer(X) integer(Y) integer(Z)
-// Output 	integer(S)
+// Input    byte(1BH) integer(X) integer(Y) integer(Z)
+// Output   integer(S)
 
 void DSP1_Scalar_B(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 {
@@ -847,8 +847,8 @@ void DSP1_Scalar_B(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 }
 
 // 2BH - Calculation of Inner Product with Forward Attitude C and a Vector (Bit Perfect)
-// Input 	byte(2BH) integer(X) integer(Y) integer(Z)
-// Output 	integer(S)
+// Input    byte(2BH) integer(X) integer(Y) integer(Z)
+// Output   integer(S)
 
 void DSP1_Scalar_C(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 {
@@ -856,8 +856,8 @@ void DSP1_Scalar_C(INT16 X, INT16 Y, INT16 Z, INT16 *S)
 }
 
 // 14H - 3D Angle Rotation (Bit Perfect)
-// Input 	byte(14H) integer(Az) integer(Ax) integer(Ay) integer(U) integer(F) integer(L)
-// Output 	integer(Rz) integer(Rx) integer(Ry)
+// Input    byte(14H) integer(Az) integer(Ax) integer(Ay) integer(U) integer(F) integer(L)
+// Output   integer(Rz) integer(Rx) integer(Ry)
 
 void DSP1_Gyrate(INT16 Az, INT16 Ax, INT16 Ay, INT16 U, INT16 F, INT16 L, INT16 *Rz, INT16 *Rx, INT16 *Ry)
 {
@@ -867,11 +867,11 @@ void DSP1_Gyrate(INT16 Az, INT16 Ax, INT16 Ay, INT16 U, INT16 F, INT16 L, INT16 
 
 	// Rotation Around Z
 	DSP1_NormalizeDouble(U * DSP1_Cos(Ay) - F * DSP1_Sin(Ay), &C, &E);
-	
+
 	E = ESec - E;
-	
+
 	DSP1_Normalize(C * CSec >> 15, &C, &E);
-		
+
 	*Rz = Az + DSP1_Truncate(C, E);
 
 	// Rotation Around X
@@ -885,13 +885,13 @@ void DSP1_Gyrate(INT16 Az, INT16 Ax, INT16 Ay, INT16 U, INT16 F, INT16 L, INT16 
 	DSP1_Normalize(DSP1_Sin(Ax), &CSin, &E);
 
 	DSP1_Normalize(-(C * (CSec * CSin >> 15) >> 15), &C, &E);
-	
+
 	*Ry = Ay + DSP1_Truncate(C, E) + L;
 }
 
 // 0FH - Memory Test (Bit Perfect)
-// Input 	byte(0FH) integer(Size)
-// Output 	integer(Result)
+// Input    byte(0FH) integer(Size)
+// Output   integer(Result)
 
 void DSP1_MemoryTest(INT16 Size, INT16 *Result)
 {
@@ -899,8 +899,8 @@ void DSP1_MemoryTest(INT16 Size, INT16 *Result)
 }
 
 // 2FH - Memory Size Calculation (Bit Perfect)
-// Input 	byte(2FH) integer(Undefined)
-// Output 	integer(Size) 	
+// Input    byte(2FH) integer(Undefined)
+// Output   integer(Size)
 
 void DSP1_MemorySize(INT16 *Size)
 {
@@ -954,18 +954,18 @@ static UINT8 dsp1_read(UINT16 address)
 				}
 			}
 			dsp1_waitcmd = 1;
-//			printf("dsp_r: %02x\n", temp);
+//          printf("dsp_r: %02x\n", temp);
 			return temp;
 		}
 		else
 		{
-//			printf("dsp_r: %02x\n", 0xff);
+//          printf("dsp_r: %02x\n", 0xff);
 			return 0xff;	// indicate "no data"
 		}
 	}
 
 	// status register
-//	printf("dsp_r: %02x\n", 0x80);
+//  printf("dsp_r: %02x\n", 0x80);
 	return 0x80;
 }
 
@@ -974,7 +974,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 	// check data vs. status
 	if (((address & 0xf000) == 0x6000) || ((address & 0x7fff) < 0x4000))
 	{
-//		printf("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
+//      printf("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
 
 		if (((dsp1_cur_cmd == 0x0a) || (dsp1_cur_cmd == 0x1a)) && (dsp1_out_cnt != 0))
 		{
@@ -1028,7 +1028,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 					dsp1_waitcmd = 1;
 					dsp1_first_parm = 1;
 					break;
-			} 
+			}
 
 			// that gives us parameter lengths in words, convert to bytes
 			dsp1_in_cnt *= 2;
@@ -1078,7 +1078,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 						case 0x12:
 						case 0x22:
 						case 0x32:
-							DSP1_Parameter(dsp1_in[0]|dsp1_in[1]<<8, dsp1_in[2]|dsp1_in[3]<<8, dsp1_in[4]|dsp1_in[5]<<8, dsp1_in[6]|dsp1_in[7]<<8, 
+							DSP1_Parameter(dsp1_in[0]|dsp1_in[1]<<8, dsp1_in[2]|dsp1_in[3]<<8, dsp1_in[4]|dsp1_in[5]<<8, dsp1_in[6]|dsp1_in[7]<<8,
 								       dsp1_in[8]|dsp1_in[9]<<8, dsp1_in[10]|dsp1_in[11]<<8, dsp1_in[12]|dsp1_in[13]<<8, &tr, &tr1, &tr2, &tr3);
 							dsp1_out_cnt = 8;
 							break;
@@ -1174,7 +1174,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 
 						case 0x14:
 						case 0x34:
-							DSP1_Gyrate(dsp1_in[0]|dsp1_in[1]<<8, dsp1_in[2]|dsp1_in[3]<<8, dsp1_in[4]|dsp1_in[5]<<8, dsp1_in[6]|dsp1_in[7]<<8, 
+							DSP1_Gyrate(dsp1_in[0]|dsp1_in[1]<<8, dsp1_in[2]|dsp1_in[3]<<8, dsp1_in[4]|dsp1_in[5]<<8, dsp1_in[6]|dsp1_in[7]<<8,
 								       dsp1_in[8]|dsp1_in[9]<<8, dsp1_in[10]|dsp1_in[11]<<8, &tr, &tr1, &tr2);
 							dsp1_out_cnt = 6;
 							break;

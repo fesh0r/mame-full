@@ -326,7 +326,7 @@ static void snes_init_ram(void)
 	if( Machine->drv->frames_per_second == 60 )
 	{
 		snes_ppu.beam.current_vert = SNES_MAX_LINES_NTSC;
-	}	
+	}
 	else
 	{
 		snes_ppu.beam.current_vert = SNES_MAX_LINES_PAL;
@@ -668,7 +668,7 @@ READ8_HANDLER( snes_r_io )
 			{
 				int oam_addr = snes_ppu.oam.address;
 
-				if (oam_addr & 0x100) 
+				if (oam_addr & 0x100)
 				{
 					oam_addr &= 0x10f;
 				}
@@ -838,8 +838,8 @@ READ8_HANDLER( snes_r_io )
 			return value;
 		case HVBJOY:		/* H/V blank and joypad controller enable */
 			// electronics test says hcounter 272 is start of hblank, which is beampos 363
-//			if (cpu_gethorzbeampos() >= 363) snes_ram[offset] |= 0x40;
-//				else snes_ram[offset] &= ~0x40;
+//          if (cpu_gethorzbeampos() >= 363) snes_ram[offset] |= 0x40;
+//              else snes_ram[offset] &= ~0x40;
 			return snes_ram[offset];
 		case RDIO:			/* Programmable I/O port - echos back what's written to WRIO */
 			return snes_ram[WRIO];
@@ -914,7 +914,7 @@ WRITE8_HANDLER( snes_w_io )
 	// APU is mirrored from 2140 to 217f
 	if (offset >= APU00 && offset < WMDATA)
 	{
-//	        printf("816: %02x to APU @ %d\n", data, offset&3);
+//          printf("816: %02x to APU @ %d\n", data, offset&3);
 	     	spc_port_in[offset & 0x3] = data;
 		cpu_boost_interleave(0, TIME_IN_USEC(20));
 		return;
@@ -1361,7 +1361,7 @@ WRITE8_HANDLER( snes_w_io )
 		case MEMSEL:	/* Access cycle designation in memory (2) area */
 			/* FIXME: Need to adjust the speed only during access of banks 0x80+
              * Currently we are just increasing it no matter what */
-//			cpunum_set_clockscale( 0, (data & 0x1) ? 1.335820896 : 1.0 );
+//          cpunum_set_clockscale( 0, (data & 0x1) ? 1.335820896 : 1.0 );
 #ifdef SNES_DBG_REG_W
 			if( (data & 0x1) != (snes_ram[MEMSEL] & 0x1) )
 				printf( "CPU speed: %f Mhz\n", (data & 0x1) ? 3.58 : 2.68 );

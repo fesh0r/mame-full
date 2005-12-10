@@ -740,7 +740,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 				FLAG_Z = REGISTER_A = MAKE_UINT_16(tmp16);					\
 				FLAG_N = NFLAG_16(REGISTER_A);								\
 			}
-			
+
 #endif
 
 
