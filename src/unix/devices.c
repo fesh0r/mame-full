@@ -63,6 +63,7 @@ static struct lirc_config *config;
 static int lirc_pressed = 0;
 static int lirc_scancode;
 static char *lircrc;
+static int lirc_enable;
 #define MIN_LIRC_WAIT 4
 #endif
 /*============================================================ */
@@ -140,6 +141,7 @@ struct rc_option input_opts[] =
 #endif
 #ifdef LIRC
 	{ "lircrc", NULL, rc_string, &lircrc, 0, 0, 0, NULL, "LIRC config file" },
+	{ "lirc", NULL, rc_bool, &lirc_enable, "1", 0, 0, NULL, "Enable/disable LIRC support" },
 #endif
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "Enable steadykey support" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "Minimal analog value for digital input" },
@@ -644,20 +646,25 @@ int osd_input_initpre(void)
 	/* LIRC stuff */
 	int sock;
 	int flags;
-	sock=lirc_init("xmame",1);
-/*	if(lirc_init("xmame",1)==-1) exit(EXIT_FAILURE); */
 
-	if(lirc_readconfig(lircrc,&config,NULL)==0)
+	if (lirc_enable)
 	{
-		printf("Success reading lircrc!\n");
-		fcntl(sock,F_SETOWN,getpid());
-		flags=fcntl(sock,F_GETFL,0);
-		if(flags!=-1)
+		sock=lirc_init("xmame",1);
+		if((sock != -1) && (lirc_readconfig(lircrc,&config,NULL) == 0))
 		{
-			fcntl(sock,F_SETFL,flags|O_NONBLOCK);
+			printf("Success reading lircrc!\n");
+			fcntl(sock,F_SETOWN,getpid());
+			flags=fcntl(sock,F_GETFL,0);
+			if(flags!=-1)
+			{
+				fcntl(sock,F_SETFL,flags|O_NONBLOCK);
+			}
 		}
-	} else {
-		config = NULL;
+		else
+		{
+			printf("LIRC disabled\n");
+			lirc_enable = 0;
+		}
 	}
 #endif
 #ifdef USE_LIGHTGUN_ABS_EVENT
@@ -1618,7 +1625,7 @@ void osd_poll_joysticks(void)
 	int ret;
 	/*printf("%s\n","Polling...");*/
 	/* Poll lirc */
-	if (config != NULL) {
+	if (lirc_enable) {
 		lirc_nextcode(&code);
 		if (lirc_pressed != 0) 
 			lirc_pressed++;
