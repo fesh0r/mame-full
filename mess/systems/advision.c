@@ -20,6 +20,7 @@ T1	Mirror sync pulse
 
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
+#include "cpu/cop411/cop411.h"
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
 #include "devices/cartslot.h"
@@ -28,6 +29,10 @@ static ADDRESS_MAP_START(advision_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x03FF) AM_READWRITE(MRA8_BANK1, MWA8_ROM)
 	AM_RANGE(0x0400, 0x0fff) AM_ROM
 	AM_RANGE(0x2000, 0x23ff) AM_RAM	/* MAINRAM four banks */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START(advision_sound_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03FF) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -39,6 +44,12 @@ static ADDRESS_MAP_START(advision_ports, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(I8039_t1, I8039_t1)	AM_READ(advision_gett1)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START(advision_sound_ports, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x00, 0xFF)			AM_RAM
+	AM_RANGE(COP411_L, COP411_L)    AM_READ(advision_getL)
+	AM_RANGE(COP411_G, COP411_G) 	AM_WRITE(advision_putG)
+	AM_RANGE(COP411_D, COP411_D)    AM_WRITE(advision_putD)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( advision )
 	PORT_START      /* IN0 */
@@ -58,9 +69,13 @@ static MACHINE_DRIVER_START( advision )
 	MDRV_CPU_PROGRAM_MAP(advision_mem, 0)
 	MDRV_CPU_IO_MAP(advision_ports, 0)
 
+	MDRV_CPU_ADD(COP411, 52631)
+	MDRV_CPU_PROGRAM_MAP(advision_sound_mem,0)
+	MDRV_CPU_IO_MAP(advision_sound_ports,0)
+
 	MDRV_FRAMES_PER_SECOND(8*15)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
+	MDRV_INTERLEAVE(10)
 
 	MDRV_MACHINE_INIT( advision )
 
@@ -74,12 +89,19 @@ static MACHINE_DRIVER_START( advision )
 
 	MDRV_VIDEO_START(advision)
 	MDRV_VIDEO_UPDATE(advision)
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START (advision)
 	ROM_REGION(0x2800,REGION_CPU1, 0)
     ROM_LOAD ("avbios.rom", 0x1000, 0x400, CRC(279e33d1) SHA1(bf7b0663e9125c9bfb950232eab627d9dbda8460))
 	ROM_CART_LOAD(0, "bin\0", 0x0000, 0x1000, ROM_NOMIRROR | ROM_FULLSIZE)
+	ROM_REGION(0x400,REGION_CPU2, 0)
+	ROM_LOAD ("avsound.bin",0,0x200,CRC(81e95975) SHA1(8b6f8c30dd3e9d8e43f1ea20fba2361b383790eb))
 ROM_END
 
 SYSTEM_CONFIG_START(advision)
@@ -93,5 +115,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG		COMPANY   FULLNAME */
-CONS(1982, advision,	0,		0,		advision, advision,	0,		advision,	"Entex",  "Adventurevision", GAME_NO_SOUND )
+CONS(1982, advision,	0,		0,		advision, advision,	0,		advision,	"Entex",  "Adventurevision", 0 )
 

@@ -1,5 +1,17 @@
 # Rules for MESS CPU's
 
+CPU=$(strip $(findstring COP411@,$(CPUS)))
+ifneq ($(CPU),)
+COP411D = mess/cpu/cop411
+OBJDIRS += $(OBJ)/$(COP411D)
+CPUDEFS += -DHAS_COP411=1
+CPUOBJS += $(OBJ)/$(COP411D)/cop411.o
+DBGOBJS += $(OBJ)/$(COP411D)/cop411ds.o
+$(OBJ)/$(COP411D)/cop411.o: $(COP411D)/cop411.c $(COP411D)/cop411.h
+else
+CPUDEFS += -DHAS_COP411=0
+endif
+
 CPU=$(strip $(findstring APEXC@,$(CPUS)))
 ifneq ($(CPU),)
 APEXCD = mess/cpu/apexc

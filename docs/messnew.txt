@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [ADVISION] Added sound support.  [Dan Boris]
+
 - [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #801) [Nate Woods]
 
 - [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]

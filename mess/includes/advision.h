@@ -14,6 +14,12 @@ READ8_HANDLER ( advision_gett0 );
 READ8_HANDLER ( advision_gett1 );
 
 
+READ8_HANDLER ( advision_getL );
+WRITE8_HANDLER ( advision_putG );
+WRITE8_HANDLER ( advision_putD );
+
+
+
 /* vidhrdw/advision.c */
 extern int advision_vh_hpos;
 
