@@ -224,7 +224,7 @@ WRITE8_HANDLER(sms_cartram_w) {
 			if (biosPort & IO_BIOS_ROM) {
 				page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
 			} else {
-				page = (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0;
+				return;
 			}
 			SOURCE = (biosPort & IO_BIOS_ROM) ? ROM : BIOS;
 			if ( ! SOURCE )
@@ -232,6 +232,19 @@ WRITE8_HANDLER(sms_cartram_w) {
 			memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
 #ifdef LOG_PAGING
 			logerror("rom 2 paged in %x codemasters.\n", page);
+#endif
+		} else if (offset == 0x2000) { /* Dodgeball King mapper */
+			if (biosPort & IO_BIOS_ROM) {
+				page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
+			} else {
+				return;
+			}
+			SOURCE = (biosPort & IO_BIOS_ROM) ? ROM : BIOS;
+			if ( !SOURCE )
+				return;
+			memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
+#ifdef LOG_PAGING
+			logerror("rom 2 paged in %x dodgeball king.\n", page);
 #endif
 		} else {
 			logerror("INVALID write %02X to cartram at offset #%04X\n", data, offset);
@@ -598,8 +611,7 @@ DEVICE_LOAD( sms_cart )
 	/* check the image */
 	if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {
 		if (sms_verify_cart(ROM, size) == IMAGE_VERIFY_FAIL) {
-			logerror("Invalid Image\n");
-			return INIT_FAIL;
+			logerror("Warning loading image: sms_verify_cart failed\n");
 		}
 	}
 
