@@ -14,6 +14,8 @@ System Driver Changes:
 
 - [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
 
+- [DGNBETA] Implemented MMU, keyboard and floppy support.  [Phill Harvey-Smith]
+
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
   [Wilbert Pol]
 
