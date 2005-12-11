@@ -46,6 +46,8 @@ WRITE8_HANDLER(gg_psg_w);
 
 void setup_rom(void);
 
+void check_pause_button( void );
+
 DEVICE_INIT( sms_cart );
 DEVICE_LOAD( sms_cart );
 

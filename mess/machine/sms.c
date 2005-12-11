@@ -69,17 +69,21 @@ WRITE8_HANDLER(sms_version_w) {
 	return (temp);
 }
 
- READ8_HANDLER(sms_input_port_0_r) {
+void check_pause_button( void ) {
 	if ( ! IS_GAMEGEAR ) {
-		if ( !(readinputport(2) & 0x80) && !smsPaused ) {
+		if ( ! (readinputport(2) & 0x80) ) {
+			if ( ! smsPaused ) {
+				cpunum_set_input_line( 0, INPUT_LINE_NMI, ASSERT_LINE );
+				cpunum_set_input_line( 0, INPUT_LINE_NMI, CLEAR_LINE );
+			}
 			smsPaused = 1;
-			cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
-			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		} else {
 			smsPaused = 0;
 		}
 	}
+}
 
+ READ8_HANDLER(sms_input_port_0_r) {
 	if (biosPort & IO_CHIP) {
 		return (0xFF);
 	} else {

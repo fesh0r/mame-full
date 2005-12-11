@@ -305,6 +305,10 @@ INTERRUPT_GEN(sms) {
 			irqState = 1;
 			cpunum_set_input_line(0, 0, ASSERT_LINE);
 		}
+
+		if ( currentLine == 112 ) {
+			check_pause_button();
+		}
 	} else {
 		lineCountDownCounter = reg[0x0A];
 
