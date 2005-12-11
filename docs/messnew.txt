@@ -19,8 +19,8 @@ System Driver Changes:
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
   [Wilbert Pol]
 
-- [NES] PPU enhancements and implemented some undocuments N2A03 opcodes. (bugs
-  #810, #811) [Rob Bohms]
+- [NES] PPU, palette reading and sprite handling enhancements and implemented
+  some undocumented N2A03 opcodes. (bugs #810, #811) [Rob Bohms]
 
 - [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
 
@@ -49,6 +49,9 @@ Imgtool Changes:
 - Updated Mac module; moved to floppy abstraction system, as well as support
   for directories and filters.  MFS disk image creation now works.  [Nate
   Woods]
+
+- Added support for modules to specify specific for icons.  Enhanced the Mac
+  module to support this feature.  [Nate Woods]
 
 - [Windows Imgtool] The insert file dialog will no longer let the user specify
   a file that does not exist (which was allowed, but eventually resulted in an

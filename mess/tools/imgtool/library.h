@@ -132,6 +132,14 @@ typedef union
 	time_t	t;
 } imgtool_attribute;
 
+typedef struct
+{
+	unsigned icon16x16_specified : 1;
+	unsigned icon32x32_specified : 1;
+	UINT32 icon16x16[16][16];
+	UINT32 icon32x32[32][32];
+} imgtool_iconinfo;
+
 struct ImageModule
 {
 	struct ImageModule *previous;
@@ -173,6 +181,7 @@ struct ImageModule
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*get_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
 	imgtoolerr_t	(*set_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+	imgtoolerr_t	(*get_iconinfo)	(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
 	imgtoolerr_t	(*suggest_transfer)(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);

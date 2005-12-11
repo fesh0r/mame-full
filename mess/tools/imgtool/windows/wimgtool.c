@@ -176,6 +176,91 @@ void wimgtool_report_error(HWND window, imgtoolerr_t err, const char *imagename,
 
 
 
+static HICON create_icon(int width, int height, const UINT32 *icondata)
+{
+	HICON icon = NULL;
+	BYTE *color_bits, *mask_bits;
+	HBITMAP color_bitmap = NULL, mask_bitmap = NULL;
+	ICONINFO iconinfo;
+	UINT32 pixel;
+	UINT8 mask;
+	int x, y;
+
+	color_bits = alloca(width * height / 8);
+	mask_bits = alloca(width * height / 8);
+
+	// convert our icons to the fo
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			mask = 1 << (x % 8);
+			pixel = icondata[y * width + x];
+
+			/* foreground icon */
+			if (pixel & 0x00ffffff)
+				color_bits[(y * width + x) / 8] |= mask;
+			else
+				color_bits[(y * width + x) / 8] &= ~mask;
+
+			/* mask */
+			if (pixel & 0x80000000)
+				mask_bits[(y * width + x) / 8] &= ~mask;
+			else
+				mask_bits[(y * width + x) / 8] |= mask;
+		}
+	}
+
+	// create the GDI bitmaps
+	color_bitmap = CreateBitmap(width, height, 1, 1, color_bits);
+	if (!color_bitmap)
+		goto done;
+	mask_bitmap = CreateBitmap(width, height, 1, 1, mask_bits);
+	if (!mask_bitmap)
+		goto done;
+
+	// actually create the icon
+	memset(&iconinfo, 0, sizeof(iconinfo));
+	iconinfo.fIcon = TRUE;
+	iconinfo.hbmColor = color_bitmap;
+	iconinfo.hbmMask = mask_bitmap;
+	icon = CreateIconIndirect(&iconinfo);
+
+done:
+	if (color_bitmap)
+		DeleteObject(color_bitmap);
+	if (mask_bitmap)
+		DeleteObject(mask_bitmap);
+	return icon;
+}
+
+
+
+static imgtoolerr_t hicons_from_imgtool_icon(const imgtool_iconinfo *iconinfo,
+    HICON *icon16x16, HICON *icon32x32)
+{
+	*icon16x16 = NULL;
+	*icon32x32 = NULL;
+
+	if (iconinfo->icon16x16_specified)
+	{
+	    *icon16x16 = create_icon(16, 16, (const UINT32 *) iconinfo->icon16x16);
+		if (!*icon16x16)
+	        return IMGTOOLERR_OUTOFMEMORY;
+	}
+
+	if (iconinfo->icon32x32_specified)
+	{
+	    *icon32x32 = create_icon(32, 32, (const UINT32 *) iconinfo->icon32x32);
+		if (!*icon32x32)
+	        return IMGTOOLERR_OUTOFMEMORY;
+	}
+
+    return IMGTOOLERR_SUCCESS;
+}
+
+
+
 #define FOLDER_ICON	((const char *) ~0)
 
 static int append_associated_icon(HWND window, const char *extension)
@@ -229,9 +314,10 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	int new_index, column_index;
 	struct wimgtool_info *info;
 	TCHAR buffer[32];
-	int icon_index;
+	int icon_index = -1;
 	const char *extension;
 	const char *ptr;
+	const char *s;
 	size_t size, i;
 	struct imgtool_module_features features;
 	struct tm *local_time;
@@ -239,35 +325,64 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	info = get_wimgtool_info(window);
 	features = img_get_module_features(img_module(info->image));
 
-	if (entry->directory)
+	/* try to get a custom icon */
+	if (features.supports_geticoninfo)
 	{
-		icon_index = info->directory_icon_index;
-	}
-	else
-	{
-		extension = strrchr(entry->filename, '.');
-		if (!extension)
-			extension = ".bin";
+		char buf[256];
+		HICON icon16x16, icon32x32;
+		imgtool_iconinfo iconinfo;
 
-		ptr = pile_getptr(&info->iconlist_extensions);
-		size = pile_size(&info->iconlist_extensions);
-		icon_index = 2;
-		for (i = 0; i < size; i += strlen(&ptr[i]) + 1)
+		sprintf(buf, "%s%s", info->current_directory, entry->filename);
+		img_geticoninfo(info->image, buf, &iconinfo);
+
+		hicons_from_imgtool_icon(&iconinfo, &icon16x16, &icon32x32);
+		if (icon16x16 || icon32x32)
 		{
-			if (!mame_stricmp(&ptr[i], extension))
-				break;
-			icon_index++;
+			icon_index = ImageList_AddIcon(info->iconlist_normal, icon32x32);
+			ImageList_AddIcon(info->iconlist_small, icon32x32);
 		}
+	}
 
-		if (i >= size)
+	if (icon_index < 0)
+	{
+		if (entry->directory)
 		{
-			icon_index = append_associated_icon(window, extension);
-			if (icon_index < 0)
-				return IMGTOOLERR_UNEXPECTED;
-			if (pile_puts(&info->iconlist_extensions, extension))
-				return IMGTOOLERR_OUTOFMEMORY;
-			if (pile_putc(&info->iconlist_extensions, '\0'))
-				return IMGTOOLERR_OUTOFMEMORY;
+			icon_index = info->directory_icon_index;
+		}
+		else
+		{
+			extension = strrchr(entry->filename, '.');
+			if (!extension)
+				extension = ".bin";
+
+			ptr = pile_getptr(&info->iconlist_extensions);
+			size = pile_size(&info->iconlist_extensions);
+			icon_index = -1;
+
+			i = 0;
+			while(i < size)
+			{
+				s = &ptr[i];
+				i += strlen(&ptr[i]) + 1;
+				memcpy(&icon_index, &ptr[i], sizeof(icon_index));
+				i += sizeof(icon_index);
+
+				if (!mame_stricmp(s, extension))
+					break;
+			}
+
+			if (i >= size)
+			{
+				icon_index = append_associated_icon(window, extension);
+				if (icon_index < 0)
+					return IMGTOOLERR_UNEXPECTED;
+				if (pile_puts(&info->iconlist_extensions, extension))
+					return IMGTOOLERR_OUTOFMEMORY;
+				if (pile_putc(&info->iconlist_extensions, '\0'))
+					return IMGTOOLERR_OUTOFMEMORY;
+				if (pile_write(&info->iconlist_extensions, &icon_index, sizeof(icon_index)))
+					return IMGTOOLERR_OUTOFMEMORY;
+			}
 		}
 	}
 

@@ -51,6 +51,8 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 		features.supports_writesector = 1;
 	if (module->list_forks)
 		features.supports_forks = 1;
+	if (module->get_iconinfo)
+		features.supports_geticoninfo = 1;
 	if (!features.supports_writing && !features.supports_createdir && !features.supports_deletefile && !features.supports_deletedir)
 		features.is_read_only = 1;
 	return features;

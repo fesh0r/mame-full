@@ -544,6 +544,42 @@ imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, im
 
 
 
+imgtoolerr_t img_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+
+	if (!image->module->get_iconinfo)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (image->module->path_separator)
+	{
+		if (path)
+		{
+			err = cannonicalize_path(image, FALSE, &path, &alloc_path);
+			if (err)
+				goto done;
+		}
+	}
+
+	memset(iconinfo, 0, sizeof(*iconinfo));
+	err = image->module->get_iconinfo(image, path, iconinfo);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
 imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path,
 	imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {

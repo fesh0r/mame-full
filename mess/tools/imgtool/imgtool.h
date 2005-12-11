@@ -289,8 +289,8 @@ imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
  *		Gets or sets attributes on a file
  *
  * Parameters:
- *		img:				The image to read from
- *		path:				The path to the directory to delete
+ *		image:				The image to read from
+ *		path:				The path to the file to query
  *		attrs:				The list of attributes on the file
  *		values:				Values to get or store
  */
@@ -298,6 +298,19 @@ imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *
 imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
 imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value);
 imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value);
+
+
+/* img_geticoninfo
+ *
+ * Description:
+ *		Gets or sets attributes on a file
+ *
+ * Parameters:
+ *		image:				The image to read from
+ *		path:				The path to the file to query
+ *		iconinfo:			Icon info to retrieve
+ */
+imgtoolerr_t img_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
 
 /* img_suggesttransfer
  *
@@ -403,6 +416,7 @@ struct imgtool_module_features
 	unsigned int supports_readsector : 1;
 	unsigned int supports_writesector : 1;
 	unsigned int supports_forks : 1;
+	unsigned int supports_geticoninfo : 1;
 	unsigned int is_read_only : 1;
 };
 

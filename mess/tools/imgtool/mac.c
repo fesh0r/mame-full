@@ -83,6 +83,7 @@
 		http://developer.apple.com/documentation/mac/Files/Files-105.html
 		http://developer.apple.com/documentation/mac/Files/Files-106.html
 		http://developer.apple.com/documentation/mac/Devices/Devices-121.html#MARKER-2-169
+		http://developer.apple.com/documentation/mac/MoreToolbox/MoreToolbox-99.html
 
 *****************************************************************************/
 
@@ -5869,6 +5870,299 @@ static imgtoolerr_t mac_image_setattrs(imgtool_image *img, const char *path, con
 
 
 
+/*************************************
+ *
+ *  Our very own resource manager
+ *
+ *************************************/
+
+static const void *mac_walk_resources(const void *resource_fork, size_t resource_fork_length,
+	UINT32 resource_type,
+	int (*discriminator)(const void *resource, UINT16 id, UINT32 length, void *param_),
+	void *param, UINT16 *resource_id, UINT32 *resource_length)
+{
+	UINT32 resource_data_offset, resource_data_length;
+	UINT32 resource_map_offset, resource_map_length;
+	UINT32 resource_typelist_count, resource_typelist_offset;
+	UINT32 resource_entry_offset, resource_entry_count;
+	UINT32 i, this_resource_type;
+	UINT32 this_resource_data, this_resource_length;
+	UINT16 this_resource_id;
+	const void *this_resource_ptr;
+
+	if (resource_fork_length < 16)
+		return NULL;
+
+	/* read resource header; its ok if anything past this point fails */
+	resource_data_offset = pick_integer_be(resource_fork,  0, 4);
+	resource_map_offset  = pick_integer_be(resource_fork,  4, 4);
+	resource_data_length = pick_integer_be(resource_fork,  8, 4);
+	resource_map_length  = pick_integer_be(resource_fork, 12, 4);
+	if ((resource_data_offset + resource_data_length) > resource_fork_length)
+		return NULL;
+	if ((resource_map_offset + resource_map_length) > resource_fork_length)
+		return NULL;
+	if (resource_map_length < 30)
+		return NULL;
+
+	/* read resource map and locate the resource type list */
+	resource_typelist_offset = pick_integer_be(resource_fork,
+		resource_map_offset + 24, 2) + resource_map_offset;
+	if ((resource_typelist_offset + 2) > resource_fork_length)
+		return NULL;
+	resource_typelist_count = pick_integer_be(resource_fork,
+		resource_typelist_offset, 2) + 1;
+	if ((resource_typelist_offset + resource_typelist_count * 16 + 2) > resource_fork_length)
+		return NULL;
+
+	/* scan the resource type list and locate the entries for this type */
+	resource_entry_count = 0;
+	resource_entry_offset = 0;
+	for (i = 0; i < resource_typelist_count; i++)
+	{
+		this_resource_type = pick_integer_be(resource_fork, resource_typelist_offset
+			+ (i * 8) + 2 + 0, 4);
+		if (this_resource_type == resource_type)
+		{
+			resource_entry_count = pick_integer_be(resource_fork, resource_typelist_offset
+				+ (i * 8) + 2 + 4, 2) + 1;
+			resource_entry_offset = pick_integer_be(resource_fork, resource_typelist_offset
+				+ (i * 8) + 2 + 6, 2) + resource_typelist_offset;
+			break;
+		}
+	}
+
+	/* scan the resource entries, and find the correct resource */
+	for (i = 0; i < resource_entry_count; i++)
+	{
+		this_resource_id = pick_integer_be(resource_fork, resource_entry_offset
+			+ (i * 12) + 0, 2);
+		this_resource_data = pick_integer_be(resource_fork, resource_entry_offset
+			+ (i * 12) + 5, 3) + resource_data_offset;
+		if ((this_resource_data + 4) > resource_fork_length)
+			return NULL;
+
+		/* gauge the length */
+		this_resource_length = pick_integer_be(resource_fork, this_resource_data, 4);
+		this_resource_data += 4;
+		if ((this_resource_data + this_resource_length) > resource_fork_length)
+			return NULL;
+
+		this_resource_ptr = ((const UINT8 *) resource_fork) + this_resource_data;
+		if (discriminator(this_resource_ptr, this_resource_id,
+			this_resource_length, param))
+		{
+			if (resource_length)
+				*resource_length = this_resource_length;
+			if (resource_id)
+				*resource_id = this_resource_id;
+			return this_resource_ptr;
+		}
+	}
+
+	return NULL;
+}
+
+
+
+static int get_resource_discriminator(const void *resource, UINT16 id, UINT32 length, void *param)
+{
+	const UINT16 *id_ptr = (const UINT16 *) param;
+	return id == *id_ptr;
+}
+
+
+
+static const void *mac_get_resource(const void *resource_fork, size_t resource_fork_length,
+	UINT32 resource_type, UINT16 resource_id, UINT32 *resource_length)
+{
+	return mac_walk_resources(resource_fork, resource_fork_length,
+		resource_type, get_resource_discriminator, &resource_id, NULL, resource_length);
+}
+
+
+
+/*************************************
+ *
+ *  Custom icons
+ *
+ *************************************/
+
+static int bundle_discriminator(const void *resource, UINT16 id, UINT32 length, void *param)
+{
+	UINT32 this_creator_code = pick_integer_be(resource, 0, 4);
+	UINT32 desired_creator_code = *((UINT32 *) param);
+	return this_creator_code == desired_creator_code;
+}
+
+
+
+static void load_icon(UINT32 *dest, const UINT8 *src, int width, int height)
+{
+	int y, x;
+	UINT8 b;
+	UINT32 pixel;
+
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			/* first check mask bit */
+			b = src[(y * (width / 8)) + (x / 8) + 128];
+			if ((b >> (x % 8)) & 1)
+			{
+				/* mask is ok; check the actual icon */
+				b = src[(y * (width / 8)) + (x / 8)];
+				pixel = ((b >> (x % 8)) & 1) ? 0xFF000000 : 0xFFFFFFFF;
+			}
+			else
+			{
+				/* masked out; nothing */
+				pixel = 0;
+			}
+
+			dest[y * width + x] = pixel;
+		}
+	}
+}
+
+
+
+static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo)
+{
+	imgtoolerr_t err;
+	static const UINT32 attrs[2] = { IMGTOOLATTR_INT_MAC_TYPE, IMGTOOLATTR_INT_MAC_CREATOR };
+	imgtool_attribute attr_values[2];
+	UINT32 type_code, creator_code;
+	imgtool_stream *stream = NULL;
+	const void *resource_fork;
+	UINT64 resource_fork_length;
+	const void *bundle;
+	UINT32 bundle_length, pos, fref_pos, icn_pos, i;
+	UINT16 local_id, resource_id;
+	UINT32 fref_bundleentry_length, icn_bundleentry_length;
+	const void *fref;
+	UINT32 resource_length;
+	const UINT8 *icon;
+
+	/* first retrieve type and creator code */
+	err = mac_image_getattrs(image, path, attrs, attr_values);
+	if (err)
+		goto done;
+	type_code = (UINT32) attr_values[0].i;
+	creator_code = (UINT32) attr_values[1].i;
+
+	/* for files that are not of type 'APPL', attempt to retrieve resources
+	 * from the desktop file */
+	if (type_code != 0x4150504C)
+		path = "Desktop\0";
+
+	stream = stream_open_mem(NULL, 0);
+	if (!stream)
+	{
+		err = IMGTOOLERR_SUCCESS;
+		goto done;
+	}
+
+	/* read in the resource fork */
+	err = mac_image_readfile(image, path, "RESOURCE_FORK", stream);
+	if (err)
+		goto done;
+	resource_fork = stream_getptr(stream);
+	resource_fork_length = stream_size(stream);
+
+	/* attempt to look up the bundle */
+	bundle = mac_walk_resources(resource_fork, resource_fork_length, /* BNDL */ 0x424E444C,
+		bundle_discriminator, &creator_code, NULL, &bundle_length);
+	if (!bundle)
+		goto done;
+
+	/* find the FREF and the icon family */
+	pos = 8;
+	fref_pos = icn_pos = 0;
+	fref_bundleentry_length = icn_bundleentry_length = 0;
+	while((pos + 10) <= bundle_length)
+	{
+		UINT32 this_bundleentry_type = pick_integer_be(bundle, pos + 0, 4);
+		UINT32 this_bundleentry_length = pick_integer_be(bundle, pos + 4, 2) + 1;
+
+		if (this_bundleentry_type == /* FREF */ 0x46524546)
+		{
+			fref_pos = pos;
+			fref_bundleentry_length = this_bundleentry_length;
+		}
+		if (this_bundleentry_type == /* ICN# */ 0x49434E23)
+		{
+			icn_pos = pos;
+			icn_bundleentry_length = this_bundleentry_length;
+		}
+		pos += 6 + this_bundleentry_length * 4;
+	}
+	if (!fref_pos || !icn_pos)
+		goto done;
+
+	/* look up the FREF */
+	for (i = 0; i < fref_bundleentry_length; i++)
+	{
+		local_id = pick_integer_be(bundle, fref_pos + (i * 4) + 6, 2);
+		resource_id = pick_integer_be(bundle, fref_pos + (i * 4) + 8, 2);
+
+		fref = mac_get_resource(resource_fork, resource_fork_length,
+			/* FREF */ 0x46524546, resource_id, &resource_length);
+		if (fref && (resource_length >= 7))
+		{
+			if (pick_integer_be(fref, 0, 4) == type_code)
+				break;
+		}
+	}
+	if (i >= fref_bundleentry_length)
+		goto done;
+
+	/* now look up the icon family */
+	resource_id = 0;
+	for (i = 0; i < icn_bundleentry_length; i++)
+	{
+		if (pick_integer_be(bundle, icn_pos + (i * 4) + 6, 2) == local_id)
+		{
+			resource_id = pick_integer_be(bundle, icn_pos + (i * 4) + 8, 2);
+			break;
+		}
+	}
+	if (i >= icn_bundleentry_length)
+		goto done;
+
+	/* fetch ICN# resource */
+	icon = mac_get_resource(resource_fork, resource_fork_length,
+		/* ICN# */ 0x49434E23, resource_id, &resource_length);
+	if (icon && (resource_length == 256))
+	{
+		iconinfo->icon32x32_specified = 1;
+		load_icon((UINT32 *) iconinfo->icon32x32, icon, 32, 32);
+	}
+
+	/* fetch ics# resource */
+	icon = mac_get_resource(resource_fork, resource_fork_length,
+		/* ics# */ 0x69637323, resource_id, &resource_length);
+	if (icon && (resource_length == 64))
+	{
+		iconinfo->icon16x16_specified = 1;
+		load_icon((UINT32 *) iconinfo->icon16x16, icon, 16, 16);
+	}
+
+done:
+	if (stream)
+		stream_close(stream);
+	return err;
+}
+
+
+
+/*************************************
+ *
+ *  File transfer suggestions
+ *
+ *************************************/
+
 static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t err;
@@ -5896,6 +6190,12 @@ static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *pa
 
 
 
+/*************************************
+ *
+ *  Module population
+ *
+ *************************************/
+
 static imgtoolerr_t mac_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->open_is_strict				= 1;
@@ -5913,6 +6213,7 @@ static imgtoolerr_t mac_module_populate(imgtool_library *library, struct Imgtool
 	module->list_forks					= mac_image_listforks;
 	module->get_attrs					= mac_image_getattrs;
 	module->set_attrs					= mac_image_setattrs;
+	module->get_iconinfo				= mac_image_geticoninfo;
 	module->suggest_transfer			= mac_image_suggesttransfer;
 	return IMGTOOLERR_SUCCESS;
 }
