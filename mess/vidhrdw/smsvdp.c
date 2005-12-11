@@ -318,7 +318,7 @@ INTERRUPT_GEN(sms) {
 #ifdef LOG_CURLINE
 		logerror("l %04x, pc: %04x\n", currentLine, activecpu_get_pc());
 #endif
-		if (IS_GG_ANY) {
+		if ( IS_GAMEGEAR ) {
 			if ((currentLine >= Machine->visible_area.min_y) && (currentLine <= Machine->visible_area.max_y)) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
@@ -340,9 +340,9 @@ INTERRUPT_GEN(sms) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
 				if (code_pressed(KEYCODE_T)) {
-					sms_show_tile_line(tmpbitmap, currentLine, 0);
+					sms_show_tile_line(tmpbitmap, currentLine - TBORDER_Y_PIXELS, 0);
 				} else if (code_pressed(KEYCODE_Y)) {
-					sms_show_tile_line(tmpbitmap, currentLine, 1);
+					sms_show_tile_line(tmpbitmap, currentLine - TBORDER_Y_PIXELS, 1);
 				} else {
 #endif
 					sms_refresh_line(tmpbitmap, currentLine);
@@ -412,14 +412,14 @@ WRITE8_HANDLER(sms_vdp_data_w) {
 		}
 		break;
 		case 0x03: {
-			int address = IS_GG_ANY ? (addr & 0x3F) : (addr & 0x1F);
-			int _index	= IS_GG_ANY ? ((addr & 0x3E) >> 1) : (addr & 0x1F);
+			int address = IS_GAMEGEAR ? (addr & 0x3F) : (addr & 0x1F);
+			int _index	= IS_GAMEGEAR ? ((addr & 0x3E) >> 1) : (addr & 0x1F);
 
 #ifdef LOG_REG
 			logerror("CRAM[%x] = %x\n", address, data);
 #endif
 
-			if (IS_GG_ANY) {
+			if ( IS_GAMEGEAR ) {
 				if (data != ggCRAM[address]) {
 					ggCRAM[address] = data;
 					isGGCRAMDirty[_index] = isCRAMDirty = 1;
@@ -492,7 +492,7 @@ void sms_show_tile_line(mame_bitmap *bitmap, int line, int palletteSelected) {
 	for (tileColumn = 0; tileColumn < 32; tileColumn++) {
 		if ((tileColumn + (32 * tileRow)) > 448) {
 			for (pixelX = 0; pixelX < 8 ; pixelX++) {
-				plot_pixel(bitmap, (tileColumn << 3) + pixelX, line, Machine->pens[BACKDROP_COLOR]);
+				plot_pixel(bitmap, LBORDER_X_PIXELS + (tileColumn << 3) + pixelX, line, Machine->pens[BACKDROP_COLOR]);
 			}
 		} else {
 			bitPlane0 = VRAM[(((tileColumn + (32 * tileRow)) << 5) + ((line & 0x07) << 2)) + 0x00];
@@ -514,7 +514,7 @@ void sms_show_tile_line(mame_bitmap *bitmap, int line, int palletteSelected) {
 					penSelected |= 0x10;
 				}
 
-				plot_pixel(bitmap, (tileColumn << 3) + pixelX, line, Machine->pens[penSelected]);
+				plot_pixel(bitmap, LBORDER_X_PIXELS + (tileColumn << 3) + pixelX, line, Machine->pens[penSelected]);
 			}
 		}
 	}
@@ -539,7 +539,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 
 	pixelPlotY = line;
 	pixelOffsetX = 0;
-	if (!(IS_GG_ANY)) {
+	if ( ! IS_GAMEGEAR ) {
 		pixelPlotY += TBORDER_Y_PIXELS;
 		pixelOffsetX = LBORDER_X_PIXELS;
 	}
@@ -556,7 +556,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	}
 
 	/* Only SMS have border */
-	if (!(IS_GG_ANY)) {
+	if ( ! IS_GAMEGEAR ) {
 		if (line >= y_pixels && line < start_blanking) {
 			/* Draw bottom border */
 			rec.min_x = 0;
@@ -595,7 +595,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 
 	/* if top 2 rows of screen not affected by horizontal scrolling, then xScroll = 0 */
 	/* else xScroll = reg[0x08] (SMS Only)                                            */
-	if (IS_GG_ANY) {
+	if ( IS_GAMEGEAR ) {
 		xScroll = 0x0100 - reg[0x08];
 	} else {
 		xScroll = (((reg[0x00] & 0x40) && (line < 16)) ? 0 : 0x0100 - reg[0x08]);
@@ -611,7 +611,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 
 		/* Rightmost 8 columns for SMS (or 2 columns for GG) not affected by */
 		/* vertical scrolling when bit 7 of reg[0x00] is set */
-		if (IS_GG_ANY) {
+		if ( IS_GAMEGEAR ) {
 			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 29)) ? 0 : (reg9copy) % 224);
 		} else {
 			yScroll = (((reg[0x00] & 0x80) && (tileColumn > 23)) ? 0 : (reg9copy) % 224);
@@ -801,7 +801,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	}
 
 	/* Fill column 0 with overscan color from reg[0x07]	 (SMS Only) */
-	if (!IS_GG_ANY) {
+	if ( ! IS_GAMEGEAR ) {
 		if (reg[0x00] & 0x20) {
 			rec.min_y = rec.max_y = pixelPlotY;
 			rec.min_x = LBORDER_X_PIXELS;
@@ -820,7 +820,7 @@ void sms_update_palette(void) {
 	}
 	isCRAMDirty = 0;
 
-	if (IS_GG_ANY) {
+	if ( IS_GAMEGEAR ) {
 		for (i = 0; i < (GG_CRAM_SIZE >> 1); i += 1) {
 			if (isGGCRAMDirty[i] == 1) {
 				isGGCRAMDirty[i] = 0;

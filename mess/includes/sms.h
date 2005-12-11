@@ -9,56 +9,21 @@
 #define NVRAM_SIZE								(0x8000)
 #define CPU_ADDRESSABLE_SIZE			(0x10000)
 
-/* Global data */
 
-extern UINT8 smsFMDetect;
-extern UINT8 smsVersion;
-extern int systemType;
+#define FLAG_GAMEGEAR			0x00010000
+#define FLAG_BIOS_0400			0x00020000
+#define FLAG_BIOS_2000			0x00040000
+#define FLAG_BIOS_FULL			0x00080000
+#define FLAG_FM				0x00100000
+#define FLAG_REGION_JAPAN		0x00200000
 
-#define CONSOLE_SMS									0
-#define CONSOLE_SMS_U_V13						1
-#define CONSOLE_SMS_E_V13						2
-#define CONSOLE_SMS_U_ALEX					5
-#define CONSOLE_SMS_E_ALEX					6
-#define CONSOLE_SMS_E_SONIC					7
-#define CONSOLE_SMS_B_SONIC					8
-#define CONSOLE_SMS_U_HOSH_V24			9
-#define CONSOLE_SMS_E_HOSH_V24			10
-#define CONSOLE_SMS_U_HO_V34				11
-#define CONSOLE_SMS_E_HO_V34				12
-#define CONSOLE_SMS_U_MD_3D					13
-#define CONSOLE_SMS_E_MD_3D					14
-#define CONSOLE_SMS_PAL							20
-#define CONSOLE_SMS_J_V21						21
-#define CONSOLE_SMS_J_M3						22
-#define CONSOLE_SMS_J_SS						23
-#define CONSOLE_GG_UE								30
-#define CONSOLE_GG_J								31
-#define CONSOLE_GG_MAJ_UE						32
-#define CONSOLE_GG_MAJ_J						33
-
-#define IS_SMS											(systemType == CONSOLE_SMS)
-#define IS_SMS_U_V13								(systemType == CONSOLE_SMS_U_V13)
-#define IS_SMS_E_V13								(systemType == CONSOLE_SMS_E_V13)
-#define IS_SMS_U_ALEX								(systemType == CONSOLE_SMS_U_ALEX)
-#define IS_SMS_E_ALEX								(systemType == CONSOLE_SMS_E_ALEX)
-#define IS_SMS_E_SONIC							(systemType == CONSOLE_SMS_E_SONIC)
-#define IS_SMS_B_SONIC							(systemType == CONSOLE_SMS_B_SONIC)
-#define IS_SMS_U_HOSH_V24						(systemType == CONSOLE_SMS_U_HOSH_V24)
-#define IS_SMS_E_HOSH_V24						(systemType == CONSOLE_SMS_E_HOSH_V24)
-#define IS_SMS_U_HO_V34							(systemType == CONSOLE_SMS_U_HO_V34)
-#define IS_SMS_E_HO_V34							(systemType == CONSOLE_SMS_E_HO_V34)
-#define IS_SMS_U_MD_3D							(systemType == CONSOLE_SMS_U_MD_3D)
-#define IS_SMS_E_MD_3D							(systemType == CONSOLE_SMS_E_MD_3D)
-#define IS_SMS_PAL									(systemType == CONSOLE_SMS_PAL)
-#define IS_SMS_J_V21								(systemType == CONSOLE_SMS_J_V21)
-#define IS_SMS_J_M3									(systemType == CONSOLE_SMS_J_M3)
-#define IS_SMS_J_SS									(systemType == CONSOLE_SMS_J_SS)
-#define IS_GG_UE										(systemType == CONSOLE_GG_UE)
-#define IS_GG_J											(systemType == CONSOLE_GG_J)
-#define IS_GG_MAJ_UE								(systemType == CONSOLE_GG_MAJ_UE)
-#define IS_GG_MAJ_J									(systemType == CONSOLE_GG_MAJ_J)
-#define IS_GG_ANY										(IS_GG_UE || IS_GG_J || IS_GG_MAJ_UE || IS_GG_MAJ_J)
+#define IS_GAMEGEAR			( Machine->gamedrv->flags & FLAG_GAMEGEAR )
+#define HAS_BIOS_0400			( Machine->gamedrv->flags & FLAG_BIOS_0400 )
+#define HAS_BIOS_2000			( Machine->gamedrv->flags & FLAG_BIOS_2000 )
+#define HAS_BIOS_FULL			( Machine->gamedrv->flags & FLAG_BIOS_FULL )
+#define HAS_BIOS			( Machine->gamedrv->flags & ( FLAG_BIOS_0400 | FLAG_BIOS_2000 | FLAG_BIOS_FULL ) )
+#define HAS_FM				( Machine->gamedrv->flags & FLAG_FM )
+#define IS_REGION_JAPAN			( Machine->gamedrv->flags & FLAG_REGION_JAPAN )
 
 /* Function prototypes */
 

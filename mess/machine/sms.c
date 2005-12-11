@@ -10,8 +10,6 @@ UINT8 smsFMDetect;
 UINT8 smsVersion;
 int smsPaused;
 
-int systemType;
-
 UINT8 biosPort;
 
 UINT8 *BIOS;
@@ -19,12 +17,15 @@ UINT8 *ROM;
 
 UINT8 *sms_mapper_ram;
 UINT8 sms_mapper[4];
+UINT8 *sms_banking_bios[5]; /* we are going to use 1-4, same as bank numbers */
+UINT8 *sms_banking_cart[5]; /* we are going to use 1-4, same as bank numbers */
+UINT8 *sms_banking_none[5]; /* we are going to use 1-4, same as bank numbers */
 UINT8 smsNVRam[NVRAM_SIZE];
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
 
 WRITE8_HANDLER(sms_fm_detect_w) {
-	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
+	if ( HAS_FM ) {
 		smsFMDetect = (data & 0x01);
 	}
 }
@@ -34,7 +35,7 @@ WRITE8_HANDLER(sms_fm_detect_w) {
 		return (0xFF);
 	}
 
-	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
+	if ( HAS_FM ) {
 		return smsFMDetect;
 	} else {
 		return readinputport(0);
@@ -58,7 +59,7 @@ WRITE8_HANDLER(sms_version_w) {
 	temp = (smsVersion & 0x80) | (smsVersion & 0x20) << 1;
 
 	/* Inverse version detect value for Japanese machines */
-	if (IS_SMS_J_V21 || IS_SMS_J_M3 || IS_SMS_J_SS) {
+	if ( IS_REGION_JAPAN ) {
 		temp ^= 0xC0;
 	}
 
@@ -69,7 +70,7 @@ WRITE8_HANDLER(sms_version_w) {
 }
 
  READ8_HANDLER(sms_input_port_0_r) {
-	if ( ! IS_GG_ANY ) {
+	if ( ! IS_GAMEGEAR ) {
 		if ( !(readinputport(2) & 0x80) && !smsPaused ) {
 			smsPaused = 1;
 			cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
@@ -87,21 +88,21 @@ WRITE8_HANDLER(sms_version_w) {
 }
 
 WRITE8_HANDLER(sms_YM2413_register_port_0_w) {
-	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
+	if ( HAS_FM ) {
 		YM2413_register_port_0_w(offset, (data & 0x3F));
 	}
 }
 
 WRITE8_HANDLER(sms_YM2413_data_port_0_w) {
-	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
+	if ( HAS_FM ) {
 		logerror("data_port_0_w %x %x\n", offset, data);
 		YM2413_data_port_0_w(offset, data);
 	}
 }
 
  READ8_HANDLER(gg_input_port_2_r) {
-	//logerror("joy 2 read, val: %02x, pc: %04x\n", (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80)), activecpu_get_pc());
-	return (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80));
+	//logerror("joy 2 read, val: %02x, pc: %04x\n", (( IS_REGION_JAPAN ? 0x00 : 0x40) | (readinputport(2) & 0x80)), activecpu_get_pc());
+	return (( IS_REGION_JAPAN ? 0x00 : 0x40 ) | (readinputport(2) & 0x80));
 }
 
  READ8_HANDLER(sms_mapper_r)
@@ -112,24 +113,34 @@ WRITE8_HANDLER(sms_YM2413_data_port_0_w) {
 WRITE8_HANDLER(sms_mapper_w)
 {
 	int page;
+	UINT8 *SOURCE_BIOS;
+	UINT8 *SOURCE_CART;
 	UINT8 *SOURCE;
-	size_t user_ram_size;
 
 	offset &= 3;
 
 	sms_mapper[offset] = data;
 	sms_mapper_ram[offset] = data;
 
-	if (biosPort & IO_BIOS_ROM || IS_GG_ANY )
+	if ( ROM ) {
+		SOURCE_CART = ROM + ( (smsRomPageCount > 0) ? data % smsRomPageCount : 0 ) * 0x4000;
+	} else {
+		SOURCE_CART = memory_region(REGION_CPU1);
+	}
+	if ( BIOS ) {
+		SOURCE_BIOS = BIOS + ( (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0 ) * 0x4000;
+	} else {
+		SOURCE_BIOS = memory_region(REGION_CPU1);
+	}
+
+	if (biosPort & IO_BIOS_ROM || IS_GAMEGEAR )
 	{
-		if (!(biosPort & IO_CARTRIDGE) || IS_GG_ANY )
+		if (!(biosPort & IO_CARTRIDGE) || IS_GAMEGEAR )
 		{
 			page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
-
 			if ( ! ROM )
 				return;
-			SOURCE = ROM;
-			user_ram_size = memory_region_length(REGION_USER2);
+			SOURCE = SOURCE_CART;
 		}
 		else
 		{
@@ -140,12 +151,9 @@ WRITE8_HANDLER(sms_mapper_w)
 	else
 	{
 		page = (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0;
-
 		if ( ! BIOS )
 			return;
-
-		SOURCE = BIOS;
-		user_ram_size = memory_region_length(REGION_USER1);
+		SOURCE = SOURCE_BIOS;
 	}
 
 	switch(offset) {
@@ -157,36 +165,53 @@ WRITE8_HANDLER(sms_mapper_w)
 #ifdef LOG_PAGING
 					logerror("ram 1 paged.\n");
 #endif
-					memory_set_bankptr( 4, smsNVRam + 0x4000 );
+					SOURCE = smsNVRam + 0x4000;
 				} else {
 #ifdef LOG_PAGING
 					logerror("ram 0 paged.\n");
 #endif
-					memory_set_bankptr( 4, smsNVRam );
+					SOURCE = smsNVRam;
 				}
+				sms_banking_bios[4] = SOURCE;
+				sms_banking_cart[4] = SOURCE;
+				memory_set_bankptr( 4, SOURCE );
 			} else { /* it's rom */
+				if ( ROM ) {
+					SOURCE_CART = ROM + ( (smsRomPageCount > 0) ? sms_mapper[3] % smsRomPageCount : 0 ) * 0x4000;
+					sms_banking_cart[4] = SOURCE_CART;
+				}
+				if ( BIOS ) {
+					SOURCE_BIOS = BIOS + ( (smsBiosPageCount > 0) ? sms_mapper[3] % smsBiosPageCount : 0 ) * 0x4000;
+					sms_banking_bios[4] = SOURCE_BIOS;
+				}
 				if (biosPort & IO_BIOS_ROM) {
 					page = (smsRomPageCount > 0) ? sms_mapper[3] % smsRomPageCount : 0;
+					SOURCE = sms_banking_cart[4];
 				} else {
 					page = (smsBiosPageCount > 0) ? sms_mapper[3] % smsBiosPageCount : 0;
+					SOURCE = sms_banking_bios[4];
 				}
 #ifdef LOG_PAGING
 				logerror("rom 2 paged in %x.\n", page);
 #endif
-				memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
+				memory_set_bankptr( 4, SOURCE );
 			}
 			break;
 		case 1: /* Select 16k ROM bank for 0400-3FFF */
 #ifdef LOG_PAGING
 			logerror("rom 0 paged in %x.\n", page);
 #endif
-			memory_set_bankptr( 2, SOURCE + ( page * 0x4000 ) + 0x0400 );
+			sms_banking_bios[2] = SOURCE_BIOS + 0x0400;
+			sms_banking_cart[2] = SOURCE_CART + 0x0400;
+			memory_set_bankptr( 2, SOURCE + 0x0400 );
 			break;
 		case 2: /* Select 16k ROM bank for 4000-7FFF */
 #ifdef LOG_PAGING
 			logerror("rom 1 paged in %x.\n", page);
 #endif
-			memory_set_bankptr( 3, SOURCE + ( page * 0x4000 ) );
+			sms_banking_bios[3] = SOURCE_BIOS;
+			sms_banking_cart[3] = SOURCE_CART;
+			memory_set_bankptr( 3, SOURCE );
 			break;
 		case 3: /* Select 16k ROM bank for 8000-BFFF */
 			/* Is it ram or rom? */
@@ -194,7 +219,9 @@ WRITE8_HANDLER(sms_mapper_w)
 #ifdef LOG_PAGING
 				logerror("rom 2 paged in %x.\n", page);
 #endif
-				memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
+				sms_banking_bios[4] = SOURCE_BIOS;
+				sms_banking_cart[4] = SOURCE_CART;
+				memory_set_bankptr( 4, SOURCE );
 			}
 			break;
 	}
@@ -210,7 +237,6 @@ WRITE8_HANDLER(sms_bios_w) {
 
 WRITE8_HANDLER(sms_cartram_w) {
 	int page;
-	UINT8 *SOURCE;
 
 	if (sms_mapper[0] & 0x08) {
 		logerror("write %02X to cartram at offset #%04X\n", data, offset);
@@ -226,10 +252,10 @@ WRITE8_HANDLER(sms_cartram_w) {
 			} else {
 				return;
 			}
-			SOURCE = (biosPort & IO_BIOS_ROM) ? ROM : BIOS;
-			if ( ! SOURCE )
+			if ( ! ROM )
 				return;
-			memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
+			sms_banking_cart[4] = ROM + page * 0x4000;
+			memory_set_bankptr( 4, sms_banking_cart[4] );
 #ifdef LOG_PAGING
 			logerror("rom 2 paged in %x codemasters.\n", page);
 #endif
@@ -239,10 +265,10 @@ WRITE8_HANDLER(sms_cartram_w) {
 			} else {
 				return;
 			}
-			SOURCE = (biosPort & IO_BIOS_ROM) ? ROM : BIOS;
-			if ( !SOURCE )
+			if ( ! ROM )
 				return;
-			memory_set_bankptr( 4, SOURCE + ( page * 0x4000 ) );
+			sms_banking_cart[4] = ROM + page * 0x4000;
+			memory_set_bankptr( 4, sms_banking_cart[4] );
 #ifdef LOG_PAGING
 			logerror("rom 2 paged in %x dodgeball king.\n", page);
 #endif
@@ -333,147 +359,52 @@ NVRAM_HANDLER(sms) {
 
 void setup_rom(void)
 {
-	BIOS = memory_region(REGION_USER1);
-	ROM = memory_region(REGION_USER2);
+	/* 1. set up bank pointers to point to nothing */
+	memory_set_bankptr( 1, sms_banking_none[1] );
+	memory_set_bankptr( 2, sms_banking_none[2] );
+	memory_set_bankptr( 3, sms_banking_none[3] );
+	memory_set_bankptr( 4, sms_banking_none[4] );
 
-	smsBiosPageCount = ( BIOS ? memory_region_length(REGION_USER1) / 0x4000 : 0 );
-	smsRomPageCount = ( ROM ? memory_region_length(REGION_USER2) / 0x4000 : 0 );
-
-	/* Load up first 32K of image */
-	memory_set_bankptr( 1, memory_region(REGION_CPU1) );
-	memory_set_bankptr( 2, memory_region(REGION_CPU1) + 0x0400 );
-	memory_set_bankptr( 3, memory_region(REGION_CPU1) + 0x4000 );
-	memory_set_bankptr( 4, memory_region(REGION_CPU1) + 0x8000 );
-
-	if (!(biosPort & IO_BIOS_ROM))
-	{
-		if (IS_GG_UE || IS_GG_J)
-		{
-			if ( ! ROM )
-				return;
-
-			memory_set_bankptr( 1, ROM );			/* first 2 bank are switched in */
-			memory_set_bankptr( 2, ROM + 0x0400 );
-			memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
-			logerror("bios general loaded.\n");
-		}
-		else if (IS_GG_MAJ_UE || IS_GG_MAJ_J)
-		{
-			if ( ! BIOS )
-				return;
-
-			memory_set_bankptr( 1, BIOS );
-			logerror("bios 0x0400 loaded.\n");
-
-			if ( ! ROM )
-				return;
-
-			memory_set_bankptr( 2, ROM + 0x0400 );
-			memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
-			logerror("bios general loaded.\n");
-		}
-		else
-		{
-			if ((biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD))
-			{
-				switch (systemType) {
-					case CONSOLE_SMS_U_V13:
-					case CONSOLE_SMS_E_V13:
-					case CONSOLE_SMS_J_V21:
-					case CONSOLE_SMS_J_M3:
-					case CONSOLE_SMS_J_SS:
-						if ( ! BIOS )
-							return;
-
-						memory_set_bankptr( 1, BIOS );
-						memory_set_bankptr( 2, BIOS + 0x0400 );
-						logerror("bios 0x2000 loaded.\n");
-						break;
-					case CONSOLE_SMS_U_ALEX:
-					case CONSOLE_SMS_E_ALEX:
-					case CONSOLE_SMS_E_SONIC:
-					case CONSOLE_SMS_B_SONIC:
-					case CONSOLE_SMS_U_HOSH_V24:
-					case CONSOLE_SMS_E_HOSH_V24:
-					case CONSOLE_SMS_U_HO_V34:
-					case CONSOLE_SMS_E_HO_V34:
-//					case CONSOLE_SMS_U_MD_3D:
-//					case CONSOLE_SMS_E_MD_3D:
-						if ( ! BIOS )
-							return;
-
-						memory_set_bankptr( 1, BIOS );
-						memory_set_bankptr( 2, BIOS + 0x0400 );
-						memory_set_bankptr( 3, BIOS + 0x4000 );
-						logerror("bios full loaded.\n");
-						break;
-					case CONSOLE_SMS:
-						if ( ! ROM )
-							return;
-
-						memory_set_bankptr( 1, ROM );
-						memory_set_bankptr( 2, ROM + 0x0400 );
-						memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1 ) ? 0x4000 : 0 ) );
-						logerror("bios general loaded.\n");
-						break;
-				}
-			}
-		}
+	/* 2. check and set up expansion port */
+	if (!(biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD)) {
+		/* TODO: Implement me */
+		logerror( "Switching to unsupported expansion port.\n" );
 	}
-	else
-	{
-		switch (systemType) {
-			case CONSOLE_SMS_U_V13:
-			case CONSOLE_SMS_E_V13:
-			case CONSOLE_SMS_J_V21:
-			case CONSOLE_SMS_J_M3:
-			case CONSOLE_SMS_J_SS:
-			case CONSOLE_SMS_U_ALEX:
-			case CONSOLE_SMS_E_ALEX:
-			case CONSOLE_SMS_E_SONIC:
-			case CONSOLE_SMS_B_SONIC:
-			case CONSOLE_SMS_U_HOSH_V24:
-			case CONSOLE_SMS_E_HOSH_V24:
-			case CONSOLE_SMS_U_HO_V34:
-			case CONSOLE_SMS_E_HO_V34:
-			case CONSOLE_SMS_U_MD_3D:
-			case CONSOLE_SMS_E_MD_3D:
-			case CONSOLE_SMS:
-			case CONSOLE_SMS_PAL:
-				if (!(biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION) && (biosPort & IO_CARD))
-				{
-					/* Load up first 32K of image */
-					if ( ! ROM )
-						return;
 
-					memory_set_bankptr( 1, ROM );
-					memory_set_bankptr( 2, ROM + 0x0400 );
-					memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
-					logerror("cart full loaded.\n");
-				}
-				else if (!(biosPort & IO_CARD) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION))
-				{
-					/* Clear out card rom */
-				}
-				else if (!(biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD))
-				{
-					/* Clear out expansion rom */
-				}
-				break;
+	/* 3. check and set up card rom */
+	if (!(biosPort & IO_CARD) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION)) {
+		/* TODO: Implement me */
+		logerror( "Switching to unsupported card rom port.\n" );
+	}
 
-			case CONSOLE_GG_UE:
-			case CONSOLE_GG_J:
-			case CONSOLE_GG_MAJ_UE:
-			case CONSOLE_GG_MAJ_J:
-				/* Load up first 32K of image */
-				if ( ! ROM )
-					return;
+	/* 4. check and set up cartridge rom */
+	if ( ( !(biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION) && (biosPort & IO_CARD) ) || IS_GAMEGEAR ) {
+		memory_set_bankptr( 1, sms_banking_cart[1] );
+		memory_set_bankptr( 2, sms_banking_cart[2] );
+		memory_set_bankptr( 3, sms_banking_cart[3] );
+		memory_set_bankptr( 4, sms_banking_cart[4] );
+		logerror( "Switched in cartridge rom.\n" );
+	}
 
-				memory_set_bankptr( 1, ROM );
-				memory_set_bankptr( 2, ROM + 0x0400 );
-				memory_set_bankptr( 3, ROM + ( (smsRomPageCount > 1) ? 0x4000 : 0 ) );
-				logerror("cart full loaded.\n");
-				break;
+	/* 5. check and set up bios rom */
+	if ( !(biosPort & IO_BIOS_ROM) ) {
+		/* 0x0400 bioses */
+		if ( HAS_BIOS_0400 ) {
+			memory_set_bankptr( 1, sms_banking_bios[1] );
+			logerror( "Switched in 0x0400 bios.\n" );
+		}
+		/* 0x2000 bioses */
+		if ( HAS_BIOS_2000 ) {
+			memory_set_bankptr( 1, sms_banking_bios[1] );
+			memory_set_bankptr( 2, sms_banking_bios[2] );
+			logerror( "Switched in 0x2000 bios.\n" );
+		}
+		if ( HAS_BIOS_FULL ) {
+			memory_set_bankptr( 1, sms_banking_bios[1] );
+			memory_set_bankptr( 2, sms_banking_bios[2] );
+			memory_set_bankptr( 3, sms_banking_bios[3] );
+			memory_set_bankptr( 4, sms_banking_bios[4] );
+			logerror( "Switched in full bios.\n" );
 		}
 	}
 }
@@ -522,55 +453,8 @@ static int sms_verify_cart(UINT8 *magic, int size) {
 
 DEVICE_INIT( sms_cart )
 {
-	if (!strcmp(Machine->gamedrv->name, "sms")) {
-		systemType = CONSOLE_SMS;
-	} else if (!strcmp(Machine->gamedrv->name, "smspal")) {
-		systemType = CONSOLE_SMS_PAL;
-	} else if (!strcmp(Machine->gamedrv->name, "smsu13")) {
-		systemType = CONSOLE_SMS_U_V13;
-	} else if (!strcmp(Machine->gamedrv->name, "smse13")) {
-		systemType = CONSOLE_SMS_E_V13;
-	} else if (!strcmp(Machine->gamedrv->name, "smsuam")) {
-		systemType = CONSOLE_SMS_U_ALEX;
-	} else if (!strcmp(Machine->gamedrv->name, "smseam")) {
-		systemType = CONSOLE_SMS_E_ALEX;
-	} else if (!strcmp(Machine->gamedrv->name, "smsesh")) {
-		systemType = CONSOLE_SMS_E_SONIC;
-	} else if (!strcmp(Machine->gamedrv->name, "smsbsh")) {
-		systemType = CONSOLE_SMS_B_SONIC;
-	} else if (!strcmp(Machine->gamedrv->name, "smsumd3d")) {
-		systemType = CONSOLE_SMS_U_MD_3D;
-	} else if (!strcmp(Machine->gamedrv->name, "smsemd3d")) {
-		systemType = CONSOLE_SMS_E_MD_3D;
-	} else if (!strcmp(Machine->gamedrv->name, "smsuhs24")) {
-		systemType = CONSOLE_SMS_U_HOSH_V24;
-	} else if (!strcmp(Machine->gamedrv->name, "smsehs24")) {
-		systemType = CONSOLE_SMS_E_HOSH_V24;
-	} else if (!strcmp(Machine->gamedrv->name, "smsuh34")) {
-		systemType = CONSOLE_SMS_U_HO_V34;
-	} else if (!strcmp(Machine->gamedrv->name, "smseh34")) {
-		systemType = CONSOLE_SMS_E_HO_V34;
-	} else if (!strcmp(Machine->gamedrv->name, "smsj21")) {
-		systemType = CONSOLE_SMS_J_V21;
-	} else if (!strcmp(Machine->gamedrv->name, "smsm3")) {
-		systemType = CONSOLE_SMS_J_M3;
-	} else if (!strcmp(Machine->gamedrv->name, "smsss")) {
-		systemType = CONSOLE_SMS_J_SS;
-	} else if (!strcmp(Machine->gamedrv->name, "gamegear")) {
-		systemType = CONSOLE_GG_UE;
-	} else if (!strcmp(Machine->gamedrv->name, "gamegj")) {
-		systemType = CONSOLE_GG_J;
-	} else if (!strcmp(Machine->gamedrv->name, "gamg")) {
-		systemType = CONSOLE_GG_MAJ_UE;
-	} else if (!strcmp(Machine->gamedrv->name, "gamgj")) {
-		systemType = CONSOLE_GG_MAJ_J;
-	} else {
-		logerror("Invalid system name.\n");
-		return INIT_FAIL;
-	}
-
 	biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
-	if (IS_SMS || IS_SMS_PAL) {
+	if ( ! IS_GAMEGEAR && ! HAS_BIOS ) {
 		biosPort &= ~(IO_CARTRIDGE);
 		biosPort |= IO_BIOS_ROM;
 	}
@@ -609,7 +493,7 @@ DEVICE_LOAD( sms_cart )
 	size = mame_fread(file, ROM, size);
 
 	/* check the image */
-	if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {
+	if ( ! HAS_BIOS ) {
 		if (sms_verify_cart(ROM, size) == IMAGE_VERIFY_FAIL) {
 			logerror("Warning loading image: sms_verify_cart failed\n");
 		}
@@ -618,10 +502,37 @@ DEVICE_LOAD( sms_cart )
 	return INIT_PASS;
 }
 
+static void setup_banks( void ) {
+	sms_banking_bios[1] = sms_banking_cart[1] = sms_banking_none[1] = memory_region(REGION_CPU1);
+	sms_banking_bios[2] = sms_banking_cart[2] = sms_banking_none[2] = memory_region(REGION_CPU1) + 0x0400;
+	sms_banking_bios[3] = sms_banking_cart[3] = sms_banking_none[3] = memory_region(REGION_CPU1) + 0x4000;
+	sms_banking_bios[4] = sms_banking_cart[4] = sms_banking_none[4] = memory_region(REGION_CPU1) + 0x8000;
+
+	BIOS = memory_region(REGION_USER1);
+	ROM = memory_region(REGION_USER2);
+
+	smsBiosPageCount = ( BIOS ? memory_region_length(REGION_USER1) / 0x4000 : 0 );
+	smsRomPageCount = ( ROM ? memory_region_length(REGION_USER2) / 0x4000 : 0 );
+
+	if ( ROM ) {
+		sms_banking_cart[1] = ROM;
+		sms_banking_cart[2] = ROM + 0x0400;
+		sms_banking_cart[3] = ROM + ( ( 1 < smsRomPageCount ) ? 0x4000 : 0 );
+		sms_banking_cart[4] = ROM + ( ( 2 < smsRomPageCount ) ? 0x8000 : 0 );
+	}
+
+	if ( BIOS ) {
+		sms_banking_bios[1] = BIOS;
+		sms_banking_bios[2] = BIOS + 0x0400;
+		sms_banking_bios[3] = BIOS + ( ( 1 < smsBiosPageCount) ? 0x4000 : 0 );
+		sms_banking_bios[4] = BIOS + ( ( 2 < smsBiosPageCount) ? 0x8000 : 0 );
+	}
+}
+
 MACHINE_INIT(sms)
 {
 	smsVersion = 0x00;
-	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
+	if ( HAS_FM ) {
 		smsFMDetect = 0x01;
 	}
 
@@ -635,6 +546,8 @@ MACHINE_INIT(sms)
 	ggSIO[2] = 0x00;
 	ggSIO[3] = 0xFF;
 	ggSIO[4] = 0x00;
+
+	setup_banks();
 
 	setup_rom();
 }
