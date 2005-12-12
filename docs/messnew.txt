@@ -19,8 +19,8 @@ System Driver Changes:
 - [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
   [Wilbert Pol]
 
-- [NES] PPU, palette reading and sprite handling enhancements and implemented
-  some undocumented N2A03 opcodes. (bugs #810, #811) [Rob Bohms]
+- [NES] PPU, palette reading, mapper and sprite handling enhancements and
+  implemented some undocumented N2A03 opcodes. (bugs #810, #811) [Rob Bohms]
 
 - [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
 

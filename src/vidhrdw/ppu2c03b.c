@@ -302,6 +302,8 @@ static void draw_background( const int num, UINT8 *line_priority )
 	const pen_t *paldata;
 	const UINT8 *sd;
 
+	int tilecount=0;
+
 	/* setup the color mask and colortable to use */
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_DISPLAY_MONO )
 	{
@@ -332,7 +334,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 	dest = ((UINT16 *) bitmap->base) + (bitmap->rowpixels * scanline) + start_x;
 
 	/* draw the 32 or 33 tiles that make up a line */
-	while ( start_x < VISIBLE_SCREEN_WIDTH )
+	while ( tilecount <34)
 	{
 		int color_byte;
 		int color_bits;
@@ -363,40 +365,43 @@ static void draw_background( const int num, UINT8 *line_priority )
 			(*ppu_latch)(( tile_page << 10 ) | ( page2 << 4 ));
 		}
 
-		paldata = &color_table[ 4 * ( ( ( color_byte >> color_bits ) & 0x03 ) ) ];
-		start = ( index2 % total_elements ) * char_modulo + scroll_y_fine * line_modulo;
-		sd = &gfx_data[start];
-
-		/* render the pixel */
-		for( i = 0; i < 8; i++ )
+		if(start_x < VISIBLE_SCREEN_WIDTH )
 		{
-			if ( ( start_x+i ) >= 0 && ( start_x+i ) < VISIBLE_SCREEN_WIDTH )
+			paldata = &color_table[ 4 * ( ( ( color_byte >> color_bits ) & 0x03 ) ) ];
+			start = ( index2 % total_elements ) * char_modulo + scroll_y_fine * line_modulo;
+			sd = &gfx_data[start];
+
+			/* render the pixel */
+			for( i = 0; i < 8; i++ )
 			{
-				if ( sd[i] )
+				if ( ( start_x+i ) >= 0 && ( start_x+i ) < VISIBLE_SCREEN_WIDTH )
 				{
-					pen = paldata[sd[i]];
-					line_priority[ start_x+i ] |= 0x02;
+					if ( sd[i] )
+					{
+						pen = paldata[sd[i]];
+						line_priority[ start_x+i ] |= 0x02;
+					}
+					else
+					{
+						pen = back_pen;
+					}
+					*dest = pen;
 				}
-				else
-				{
-					pen = back_pen;
-				}
-				*dest = pen;
+				dest++;
 			}
-			dest++;
-		}
 
-		start_x += 8;
+			start_x += 8;
 
-		/* move to next tile over and toggle the horizontal name table if necessary */
-		x++;
-		if ( x > 31 )
-		{
-			x = 0;
-			tile_index ^= 0x400;
+			/* move to next tile over and toggle the horizontal name table if necessary */
+			x++;
+			if ( x > 31 )
+			{
+				x = 0;
+				tile_index ^= 0x400;
+			}
 		}
+		tilecount++;
 	}
-
 	/* if the left 8 pixels for the background are off, blank 'em */
 	if ( !( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_BACKGROUND_L8 ) )
 	{
@@ -407,7 +412,6 @@ static void draw_background( const int num, UINT8 *line_priority )
 			line_priority[ i ] ^= 0x02;
 		}
 	}
-
 	/* done updating, whew */
 }
 
@@ -647,13 +651,6 @@ static void render_scanline( int num )
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_BACKGROUND )
 		draw_background( num, line_priority );
 
-	/* if sprites are hidden in the leftmost column, fake a priority flag to mask them */
-//	if ( !( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_SPRITES_L8 ) )
-//	{
-//		for ( i = 0; i < 8; i++ )
-//			line_priority[i] |= 0x01;
-//	}
-
 	/* if sprites are on, draw them */
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_SPRITES )
 		draw_sprites( num, line_priority );
@@ -881,7 +878,7 @@ int ppu2c03b_r( int num, int offset )
 	}
 
 	/* now, see wich register to read */
-	switch( offset )
+	switch( offset & 7 )
 	{
 		case PPU_STATUS:
 			ret = chips[num].regs[PPU_STATUS];
@@ -946,7 +943,7 @@ void ppu2c03b_w( int num, int offset, int data )
 /*      return; */
 	}
 
-	switch( offset )
+	switch( offset & 7 )
 	{
 		case PPU_CONTROL0:
 			chips[num].regs[PPU_CONTROL0] = data;

@@ -1397,7 +1397,7 @@ static WRITE8_HANDLER( mapper9_w )
 			logerror("MMC2 VROM switch #2 (high): %02x\n", data);
 			break;
 		case 0x7000:
-			if (data)
+			if (data&1)
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
@@ -1408,6 +1408,79 @@ static WRITE8_HANDLER( mapper9_w )
 	}
 }
 #endif
+
+static void mapper9_latch (offs_t offset)
+{
+	if ((offset & 0x3ff0) == 0x0fd0)
+	{
+		logerror ("mapper9 vrom latch switch (bank 0 low): %02x\n", MMC2_bank0);
+		MMC2_bank0_latch = 0xfd;
+		chr4_0 (MMC2_bank0);
+	}
+	else if ((offset & 0x3ff0) == 0x0fe0)
+	{
+		logerror ("mapper9 vrom latch switch (bank 0 high): %02x\n", MMC2_bank0_hi);
+		MMC2_bank0_latch = 0xfe;
+		chr4_0 (MMC2_bank0_hi);
+	}
+	else if ((offset & 0x3ff0) == 0x1fd0)
+	{
+		logerror ("mapper9 vrom latch switch (bank 1 low): %02x\n", MMC2_bank1);
+		MMC2_bank1_latch = 0xfd;
+		chr4_4 (MMC2_bank1);
+	}
+	else if ((offset & 0x3ff0) == 0x1fe0)
+	{
+		logerror ("mapper9 vrom latch switch (bank 0 high): %02x\n", MMC2_bank1_hi);
+		MMC2_bank1_latch = 0xfe;
+		chr4_4 (MMC2_bank1_hi);
+	}
+}
+
+static WRITE8_HANDLER( mapper9_w )
+{
+	switch (offset & 0x7000)
+	{
+		case 0x2000:
+			/* Switch the first 8k prg bank */
+			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
+			break;
+		case 0x3000:
+			MMC2_bank0 = data;
+			if (MMC2_bank0_latch == 0xfd)
+				chr4_0 (MMC2_bank0);
+			logerror("MMC2 VROM switch #1 (low): %02x\n", MMC2_bank0);
+			break;
+		case 0x4000:
+			MMC2_bank0_hi = data;
+			if (MMC2_bank0_latch == 0xfe)
+				chr4_0 (MMC2_bank0_hi);
+			logerror("MMC2 VROM switch #1 (high): %02x\n", MMC2_bank0_hi);
+			break;
+		case 0x5000:
+			MMC2_bank1 = data;
+			if (MMC2_bank1_latch == 0xfd)
+				chr4_4 (MMC2_bank1);
+			logerror("MMC2 VROM switch #2 (low): %02x\n", data);
+			break;
+		case 0x6000:
+			MMC2_bank1_hi = data;
+			if (MMC2_bank1_latch == 0xfe)
+				chr4_4 (MMC2_bank1_hi);
+			logerror("MMC2 VROM switch #2 (high): %02x\n", data);
+			break;
+		case 0x7000:
+			if (data&1)
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+			else
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+			break;
+		default:
+			logerror("MMC2 uncaught w: %04x:%02x\n", offset, data);
+			break;
+	}
+}
+
 
 static void mapper10_latch (offs_t offset)
 {
@@ -1442,35 +1515,35 @@ static WRITE8_HANDLER( mapper10_w )
 	switch (offset & 0x7000)
 	{
 		case 0x2000:
-			/* Switch the first 8k prg bank */
-			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
+			/* Switch the first 16k prg bank */
+			prg16_89ab(data);
 			break;
 		case 0x3000:
 			MMC2_bank0 = data;
 			if (MMC2_bank0_latch == 0xfd)
 				chr4_0 (MMC2_bank0);
-			logerror("MMC2 VROM switch #1 (low): %02x\n", MMC2_bank0);
+			logerror("MMC4 VROM switch #1 (low): %02x\n", MMC2_bank0);
 			break;
 		case 0x4000:
 			MMC2_bank0_hi = data;
 			if (MMC2_bank0_latch == 0xfe)
 				chr4_0 (MMC2_bank0_hi);
-			logerror("MMC2 VROM switch #1 (high): %02x\n", MMC2_bank0_hi);
+			logerror("MMC4 VROM switch #1 (high): %02x\n", MMC2_bank0_hi);
 			break;
 		case 0x5000:
 			MMC2_bank1 = data;
 			if (MMC2_bank1_latch == 0xfd)
 				chr4_4 (MMC2_bank1);
-			logerror("MMC2 VROM switch #2 (low): %02x\n", data);
+			logerror("MMC4 VROM switch #2 (low): %02x\n", data);
 			break;
 		case 0x6000:
 			MMC2_bank1_hi = data;
 			if (MMC2_bank1_latch == 0xfe)
 				chr4_4 (MMC2_bank1_hi);
-			logerror("MMC2 VROM switch #2 (high): %02x\n", data);
+			logerror("MMC4 VROM switch #2 (high): %02x\n", data);
 			break;
 		case 0x7000:
-			if (data)
+			if (data&1)
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
 				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
@@ -4245,8 +4318,8 @@ static mmc mmc_list[] =
 	{ 5, "MMC5",					mapper5_l_w, mapper5_l_r, NULL, mapper5_w, NULL, mapper5_irq },
 	{ 7, "ROM Switch",				NULL, NULL, NULL, mapper7_w, NULL, NULL },
 	{ 8, "FFE F3xxxx",				NULL, NULL, NULL, mapper8_w, NULL, NULL },
-//	{ 9, "MMC2",					NULL, NULL, NULL, mapper9_w, mapper9_latch, NULL},
-	{ 9, "MMC2",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL},
+	{ 9, "MMC2",					NULL, NULL, NULL, mapper9_w, mapper9_latch, NULL},
+//	{ 9, "MMC2",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL},
 	{ 10, "MMC4",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL },
 	{ 11, "Color Dreams Mapper",	NULL, NULL, NULL, mapper11_w, NULL, NULL },
 	{ 15, "100-in-1",				NULL, NULL, NULL, mapper15_w, NULL, NULL },
