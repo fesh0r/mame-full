@@ -360,15 +360,15 @@ static imgtoolerr_t prodos_find_block_35(imgtool_image *image, int block,
 	int sides = 2;
 
 	*track = 0;
-	while(block >= (apple35_tracklen_800kb[*track] * sides))
+	while(block >= (apple35_sectors_per_track(imgtool_floppy(image), *track) * sides))
 	{
-		block -= (apple35_tracklen_800kb[(*track)++] * sides);
+		block -= (apple35_sectors_per_track(imgtool_floppy(image), (*track)++) * sides);
 		if (*track >= 80)
 			return IMGTOOLERR_SEEKERROR;
 	}
 
-	*head = block / apple35_tracklen_800kb[*track];
-	*sector = block % apple35_tracklen_800kb[*track];
+	*head = block / apple35_sectors_per_track(imgtool_floppy(image), *track);
+	*sector = block % apple35_sectors_per_track(imgtool_floppy(image), *track);
 	return IMGTOOLERR_SUCCESS;
 }
 

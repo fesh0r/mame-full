@@ -616,15 +616,15 @@ static imgtoolerr_t mac_find_block(mac_l1_imgref *image, int block,
 	UINT32 *track, UINT32 *head, UINT32 *sector)
 {
 	*track = 0;
-	while(block >= (apple35_tracklen_800kb[*track] * image->heads))
+	while(block >= (apple35_sectors_per_track(imgtool_floppy(image->image), *track) * image->heads))
 	{
-		block -= (apple35_tracklen_800kb[(*track)++] * image->heads);
+		block -= (apple35_sectors_per_track(imgtool_floppy(image->image), (*track)++) * image->heads);
 		if (*track >= 80)
 			return IMGTOOLERR_SEEKERROR;
 	}
 
-	*head = block / apple35_tracklen_800kb[*track];
-	*sector = block % apple35_tracklen_800kb[*track];
+	*head = block / apple35_sectors_per_track(imgtool_floppy(image->image), *track);
+	*sector = block % apple35_sectors_per_track(imgtool_floppy(image->image), *track);
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1546,7 +1546,7 @@ static imgtoolerr_t mfs_image_create(imgtool_image *image, option_resolution *op
 	allocation_block_size = 1024;
 	total_disk_blocks = 0;
 	for (i = 0; i < tracks; i++)
-		total_disk_blocks += heads * apple35_tracklen_800kb[i] * sector_bytes / 512;
+		total_disk_blocks += heads * apple35_sectors_per_track(imgtool_floppy(image), i) * sector_bytes / 512;
 	total_allocation_blocks = total_disk_blocks / (allocation_block_size / 512);
 	free_allocation_blocks = total_allocation_blocks - 3;
 
