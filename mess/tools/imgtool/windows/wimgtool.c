@@ -178,6 +178,7 @@ void wimgtool_report_error(HWND window, imgtoolerr_t err, const char *imagename,
 
 static HICON create_icon(int width, int height, const UINT32 *icondata)
 {
+	HDC dc = NULL;
 	HICON icon = NULL;
 	BYTE *color_bits, *mask_bits;
 	HBITMAP color_bitmap = NULL, mask_bitmap = NULL;
@@ -185,39 +186,55 @@ static HICON create_icon(int width, int height, const UINT32 *icondata)
 	UINT32 pixel;
 	UINT8 mask;
 	int x, y;
+	BITMAPINFO bmi;
 
-	color_bits = alloca(width * height / 8);
-	mask_bits = alloca(width * height / 8);
+	// we need a device context
+	dc = CreateCompatibleDC(NULL);
+	if (!dc)
+		goto done;
 
-	// convert our icons to the fo
+	// create foreground bitmap
+	memset(&bmi, 0, sizeof(bmi));
+	bmi.bmiHeader.biWidth = width;
+	bmi.bmiHeader.biHeight = height;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 24;
+	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+	color_bitmap = CreateDIBSection(dc, &bmi, DIB_RGB_COLORS, (void **) &color_bits, NULL, 0);
+	if (!color_bitmap)
+		goto done;
+
+	// create mask bitmap
+	memset(&bmi, 0, sizeof(bmi));
+	bmi.bmiHeader.biWidth = width;
+	bmi.bmiHeader.biHeight = height;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 1;
+	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+	mask_bitmap = CreateDIBSection(dc, &bmi, DIB_RGB_COLORS, (void **) &mask_bits, NULL, 0);
+	if (!color_bitmap)
+		goto done;
+
+	// transfer data from our structure to the bitmaps
 	for (y = 0; y < height; y++)
 	{
 		for (x = 0; x < width; x++)
 		{
-			mask = 1 << (x % 8);
+			mask = 1 << (7 - (x % 8));
 			pixel = icondata[y * width + x];
 
-			/* foreground icon */
-			if (pixel & 0x00ffffff)
-				color_bits[(y * width + x) / 8] |= mask;
-			else
-				color_bits[(y * width + x) / 8] &= ~mask;
+			// foreground icon
+			color_bits[((height - y - 1) * width + x) * 3 + 0] = (pixel >> 16);
+			color_bits[((height - y - 1) * width + x) * 3 + 1] = (pixel >>  8);
+			color_bits[((height - y - 1) * width + x) * 3 + 2] = (pixel >>  0);
 
-			/* mask */
+			// mask
 			if (pixel & 0x80000000)
-				mask_bits[(y * width + x) / 8] &= ~mask;
+				mask_bits[((height - y - 1) * width + x) / 8] &= ~mask;
 			else
-				mask_bits[(y * width + x) / 8] |= mask;
+				mask_bits[((height - y - 1) * width + x) / 8] |= mask;
 		}
 	}
-
-	// create the GDI bitmaps
-	color_bitmap = CreateBitmap(width, height, 1, 1, color_bits);
-	if (!color_bitmap)
-		goto done;
-	mask_bitmap = CreateBitmap(width, height, 1, 1, mask_bits);
-	if (!mask_bitmap)
-		goto done;
 
 	// actually create the icon
 	memset(&iconinfo, 0, sizeof(iconinfo));
@@ -231,6 +248,8 @@ done:
 		DeleteObject(color_bitmap);
 	if (mask_bitmap)
 		DeleteObject(mask_bitmap);
+	if (dc)
+		DeleteDC(dc);
 	return icon;
 }
 

@@ -5997,33 +5997,50 @@ static int bundle_discriminator(const void *resource, UINT16 id, UINT32 length, 
 
 
 
-static void load_icon(UINT32 *dest, const UINT8 *src, int width, int height)
+static int load_icon(UINT32 *dest, const void *resource_fork, UINT64 resource_fork_length,
+	UINT32 resource_type, UINT16 resource_id, int width, int height, int bpp, int has_mask)
 {
+	int success = FALSE;
 	int y, x;
 	UINT8 b;
 	UINT32 pixel;
+	const UINT8 *src;
+	UINT32 resource_length;
+	UINT32 frame_length;
+	UINT32 total_length;
 
-	for (y = 0; y < height; y++)
+	frame_length = width * height * bpp / 8;
+	total_length = frame_length * (has_mask ? 2 : 1);
+
+	/* attempt to fetch resource */
+	src = mac_get_resource(resource_fork, resource_fork_length, resource_type,
+		resource_id, &resource_length);
+	if (src && (resource_length == total_length))
 	{
-		for (x = 0; x < width; x++)
+		for (y = 0; y < height; y++)
 		{
-			/* first check mask bit */
-			b = src[(y * (width / 8)) + (x / 8) + 128];
-			if ((b >> (x % 8)) & 1)
+			for (x = 0; x < width; x++)
 			{
-				/* mask is ok; check the actual icon */
-				b = src[(y * (width / 8)) + (x / 8)];
-				pixel = ((b >> (x % 8)) & 1) ? 0xFF000000 : 0xFFFFFFFF;
-			}
-			else
-			{
-				/* masked out; nothing */
-				pixel = 0;
-			}
+				/* first check mask bit */
+				b = src[(y * (width / 8)) + (x / 8) + frame_length];
+				if ((b >> (7 - (x % 8))) & 1)
+				{
+					/* mask is ok; check the actual icon */
+					b = src[(y * (width / 8)) + (x / 8)];
+					pixel = ((b >> (7 - (x % 8))) & 1) ? 0xFF000000 : 0xFFFFFFFF;
+				}
+				else
+				{
+					/* masked out; nothing */
+					pixel = 0;
+				}
 
-			dest[y * width + x] = pixel;
+				dest[y * width + x] = pixel;
+			}
 		}
+		success = TRUE;
 	}
+	return success;
 }
 
 
@@ -6043,7 +6060,6 @@ static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path
 	UINT32 fref_bundleentry_length, icn_bundleentry_length;
 	const void *fref;
 	UINT32 resource_length;
-	const UINT8 *icon;
 
 	/* first retrieve type and creator code */
 	err = mac_image_getattrs(image, path, attrs, attr_values);
@@ -6132,21 +6148,17 @@ static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path
 		goto done;
 
 	/* fetch ICN# resource */
-	icon = mac_get_resource(resource_fork, resource_fork_length,
-		/* ICN# */ 0x49434E23, resource_id, &resource_length);
-	if (icon && (resource_length == 256))
+	if (load_icon((UINT32 *) iconinfo->icon32x32, resource_fork, resource_fork_length,
+		/* ICN# */ 0x49434E23, resource_id, 32, 32, 1, TRUE))
 	{
 		iconinfo->icon32x32_specified = 1;
-		load_icon((UINT32 *) iconinfo->icon32x32, icon, 32, 32);
 	}
 
 	/* fetch ics# resource */
-	icon = mac_get_resource(resource_fork, resource_fork_length,
-		/* ics# */ 0x69637323, resource_id, &resource_length);
-	if (icon && (resource_length == 64))
+	if (load_icon((UINT32 *) iconinfo->icon16x16, resource_fork, resource_fork_length,
+		/* ics# */ 0x69637323, resource_id, 16, 16, 1, TRUE))
 	{
 		iconinfo->icon16x16_specified = 1;
-		load_icon((UINT32 *) iconinfo->icon16x16, icon, 16, 16);
 	}
 
 done:
