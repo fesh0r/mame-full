@@ -283,8 +283,8 @@ INTERRUPT_GEN(sms) {
 		currentLine = (currentLine + 1) % PAL_Y_PIXELS;
 	}
 
-	if (currentLine <= y_pixels + 1) {
-		if (currentLine == y_pixels + 1) {
+	if (currentLine <= y_pixels) {
+		if (currentLine == y_pixels) {
 			statusReg |= STATUS_VINT;
 		}
 
