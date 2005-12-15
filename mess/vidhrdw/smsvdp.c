@@ -477,7 +477,7 @@ WRITE8_HANDLER(sms_vdp_ctrl_w) {
 #ifdef LOG_REG
 			logerror("r%x = %x\n", regNum, latch);
 #endif
-			addr = code = 0;
+			code = 0;
 		} else if (code == 0x00) {
 			buffer = VRAM[(addr & 0x3FFF)];
 			addr += 1;
