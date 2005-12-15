@@ -387,7 +387,7 @@ INTERRUPT_GEN(sms) {
 	logerror("CTRL read\n");
 #endif
 
-	statusReg &= ~(STATUS_VINT | STATUS_HINT | STATUS_SPRCOL);
+	statusReg &= ~( STATUS_VINT | STATUS_SPROVR | STATUS_SPRCOL | STATUS_HINT );
 
 	if (irqState == 1) {
 		irqState = 0;
@@ -677,7 +677,7 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		spriteHeight <<= 1;
 	}
 	spriteBufferCount = 0;
-	for (spriteIndex = 0; (spriteIndex < 64) && (spriteTable[spriteIndex] != 0xD0 || y_pixels != 192) && (spriteBufferCount < 8); spriteIndex++) {
+	for (spriteIndex = 0; (spriteIndex < 64) && (spriteTable[spriteIndex] != 0xD0 || y_pixels != 192) && (spriteBufferCount < 9); spriteIndex++) {
 		spriteY = spriteTable[spriteIndex] + 1; /* sprite y position starts at line 1 */
 		if (spriteY > 240) {
 			spriteY -= 256; /* wrap from top if y position is > 240 */
@@ -685,12 +685,15 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 		if ((line >= spriteY) && (line < (spriteY + spriteHeight))) {
 			if (spriteBufferCount < 8) {
 				spriteBuffer[spriteBufferCount] = spriteIndex;
-				spriteBufferCount++;
 			} else {
-				/* too many sprites per line */
-				statusReg |= STATUS_HINT;
+				/* Too many sprites per line */
+				statusReg |= STATUS_SPROVR;
 			}
+			spriteBufferCount++;
 		}
+	}
+	if ( spriteBufferCount > 8 ) {
+		spriteBufferCount = 8;
 	}
 	/* Is it NTSC */
 	memset(lineCollisionBuffer, 0, MAX_X_PIXELS);

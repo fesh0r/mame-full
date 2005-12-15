@@ -89,8 +89,9 @@ NVRAM_HANDLER(sms);
 #define NUM_OF_REGISTER			(0x10)	/* 16 registers */
 
 #define STATUS_VINT					(0x80)	/* Pending vertical interrupt flag */
-#define STATUS_HINT					(0x40)	/* Pending horizontal interrupt flag */
-#define STATUS_SPRCOL				(0x20)	/* Object collision flag */
+#define STATUS_SPROVR					(0x40)	/* Sprite overflow flag */
+#define STATUS_SPRCOL					(0x20)	/* Object collision flag */
+#define STATUS_HINT					(0x02)	/* Pending horizontal interrupt flag */
 
 #define IO_EXPANSION				(0x80)	/* Expansion slot enable (1= disabled, 0= enabled) */
 #define IO_CARTRIDGE				(0x40)	/* Cartridge slot enable (1= disabled, 0= enabled) */
