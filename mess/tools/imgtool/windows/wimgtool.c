@@ -224,9 +224,9 @@ static HICON create_icon(int width, int height, const UINT32 *icondata)
 			pixel = icondata[y * width + x];
 
 			// foreground icon
-			color_bits[((height - y - 1) * width + x) * 3 + 0] = (pixel >> 16);
+			color_bits[((height - y - 1) * width + x) * 3 + 2] = (pixel >> 16);
 			color_bits[((height - y - 1) * width + x) * 3 + 1] = (pixel >>  8);
-			color_bits[((height - y - 1) * width + x) * 3 + 2] = (pixel >>  0);
+			color_bits[((height - y - 1) * width + x) * 3 + 0] = (pixel >>  0);
 
 			// mask
 			if (pixel & 0x80000000)
