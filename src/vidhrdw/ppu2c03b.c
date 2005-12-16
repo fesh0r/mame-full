@@ -83,10 +83,6 @@ void (*ppu_latch)( offs_t offset );
  *************************************/
 void ppu2c03b_init_palette( int first_entry ) {
 
-#ifndef M_PI
-#define M_PI 			(3.14159265358979323846L)
-#endif
-
 	/* This routine builds a palette using a transformation from */
 	/* the YUV (Y, B-Y, R-Y) to the RGB color space */
 
