@@ -378,10 +378,8 @@ static WRITE8_HANDLER( ram_8w_w )
 
 static WRITE8_HANDLER( sprite_dma_w )
 {
-	int source = ( data & 7 ) * 0x100;
-	cpuintrf_push_context(0);
-	ppu2c03b_spriteram_dma( 0, source );
-	cpuintrf_pop_context();
+	int source = ( data & 7 );
+	ppu2c03b_spriteram_dma(source );
 }
 
 static NVRAM_HANDLER( playch10 )

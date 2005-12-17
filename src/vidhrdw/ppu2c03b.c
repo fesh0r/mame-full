@@ -1132,7 +1132,7 @@ void ppu2c03b_w( int num, int offset, int data )
  *  Sprite DMA
  *
  *************************************/
-void ppu2c03b_spriteram_dma( int num, const UINT8 page )
+void ppu2c03b_spriteram_dma(const UINT8 page )
 {
 	int i;
 	int address=page<<8;
@@ -1143,7 +1143,7 @@ void ppu2c03b_spriteram_dma( int num, const UINT8 page )
 		UINT8 t=program_read_byte_8(address+i);
 		program_write_byte_8(0x2000+PPU_SPRITE_DATA, t);
 	}
-	cpu_spinuntil_time(TIME_IN_CYCLES(513, num));
+	activecpu_adjust_icount(-513);
 }
 
 /*************************************

@@ -222,9 +222,7 @@ gfx_layout nes_vram_charlayout =
 
 static WRITE8_HANDLER(nes_vh_sprite_dma_w)
 {
-	cpuintrf_push_context(0);
-	ppu2c03b_spriteram_dma(0, data);
-	cpuintrf_pop_context();
+	ppu2c03b_spriteram_dma(data);
 }
 
 static struct NESinterface nes_interface =
