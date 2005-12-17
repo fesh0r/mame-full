@@ -11,7 +11,6 @@
 
  - PSG control for Game Gear (needs custom SN76489 with stereo output for each channel)
  - SIO interface for Game Gear (needs netplay, I guess)
- - TMS9928A support for 'f16ffight.sms'
  - SMS lightgun support
  - LCD persistence emulation for GG
  - SMS 3D glass support

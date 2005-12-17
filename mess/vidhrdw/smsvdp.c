@@ -36,6 +36,7 @@ int y_pixels;			/* 192, 224, 240 */
 int start_blanking;		/* when is the transition from bottom border area to blanking area */
 int start_top_border;		/* when is the transition from blanking area to top border area */
 int max_y_pixels;		/* full range of y counter */
+int vdp_mode;			/* current mode of the VDP: 0,1,2,3,4 */
 
 mame_bitmap *prevBitMap;
 int prevBitMapSaved;
@@ -178,14 +179,39 @@ static UINT8 vcnt_pal_240[PAL_Y_PIXELS] = {
 };
 
 static void set_display_settings( void ) {
+	int M1, M2, M3, M4;
+	M1 = reg[0x01] & 0x10;
+	M2 = reg[0x00] & 0x02;
+	M3 = reg[0x01] & 0x08;
+	M4 = reg[0x00] & 0x04;
 	y_pixels = 192;
-	if (reg[0x00] & 0x02) {
-		/* Is it 224-line display */
-		if ((reg[0x01] & 0x10) && !(reg[0x01] & 0x08)) {
-			y_pixels = 224;
-		} else if (!(reg[0x01] & 0x10) && (reg[0x01] & 0x08)) {
-			/* 240-line display */
-			y_pixels = 240;
+	if ( M4 ) {
+		/* mode 4 */
+		vdp_mode = 4;
+		if ( M2 ) {
+			/* Is it 224-line display */
+			if ( M1 && ! M3 ) {
+				y_pixels = 224;
+			} else if ( ! M1 && M3 ) {
+				/* 240-line display */
+				y_pixels = 240;
+			}
+		}
+	} else {
+		/* original TMS9918 mode */
+//		if ( ! M1 && ! M2 && ! M3 ) {
+//			vdp_mode = 0;
+//		} else
+//		if ( M1 && ! M2 && ! M3 ) {
+//			vdp_mode = 1;
+//		} else
+		if ( ! M1 && M2 && ! M3 ) {
+			vdp_mode = 2;
+//		} else
+//		if ( ! M1 && ! M2 && M3 ) {
+//			vdp_mode = 3;
+		} else {
+			logerror( "Unknown video mode detected (M1=%c, M2=%c, M3=%c, M4=%c)\n", M1 ? '1' : '0', M2 ? '1' : '0', M3 ? '1' : '0', M4 ? '1' : '0');
 		}
 	}
 	if ( IS_NTSC ) {
@@ -222,7 +248,10 @@ static void set_display_settings( void ) {
 		max_y_pixels = PAL_Y_PIXELS;
 	}
 	start_top_border = start_blanking + 19;
-	set_visible_area( LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
+	if ( ! IS_GAMEGEAR ) {
+		set_visible_area( LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
+	}
+	isCRAMDirty = 1;
 }
 
  READ8_HANDLER(sms_vdp_curline_r) {
@@ -525,76 +554,19 @@ void sms_show_tile_line(mame_bitmap *bitmap, int line, int palletteSelected) {
 }
 #endif
 
-void sms_refresh_line(mame_bitmap *bitmap, int line) {
+void sms_refresh_line_mode4(mame_bitmap *bitmap, int line, int pixelPlotY, int pixelOffsetX) {
 	int tileColumn;
 	int xScroll, yScroll, xScrollStartColumn;
 	int spriteIndex;
-	int pixelX, pixelPlotX, pixelPlotY, pixelOffsetX, prioritySelected[256];
+	int pixelX, pixelPlotX, prioritySelected[256];
 	int spriteX, spriteY, spriteLine, spriteTileSelected, spriteHeight;
 	int spriteBuffer[8], spriteBufferCount, spriteBufferIndex;
 	int bitPlane0, bitPlane1, bitPlane2, bitPlane3;
 	UINT16 *nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0E) << 10) & 0x3800) + ((((line + reg9copy) % 224) >> 3) << 6)]);
 	UINT8 *spriteTable = (UINT8 *) &(VRAM[(reg[0x05] << 7) & 0x3F00]);
-	rectangle rec;
 
 	if ( y_pixels != 192 ) {
 		nameTable = (UINT16 *) &(VRAM[(((reg[0x02] & 0x0C) << 10) | 0x0700) + ((((line + reg9copy) % 256) >> 3 ) << 6)]);
-	}
-
-	pixelPlotY = line;
-	pixelOffsetX = 0;
-	if ( ! IS_GAMEGEAR ) {
-		pixelPlotY += TBORDER_Y_PIXELS;
-		pixelOffsetX = LBORDER_X_PIXELS;
-	}
-
-	/* Check if display is disabled */
-	if (!(reg[0x01] & 0x40)) {
-		/* set whole line to reg[0x07] color */
-		rec.min_x = 0;
-		rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
-		rec.min_y = rec.max_y = pixelPlotY;
-		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-
-		return;
-	}
-
-	/* Only SMS have border */
-	if ( ! IS_GAMEGEAR ) {
-		if (line >= y_pixels && line < start_blanking) {
-			/* Draw bottom border */
-			rec.min_x = 0;
-			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
-			rec.min_y = rec.max_y = pixelPlotY;
-			/* draw no more than 11 bottom border lines */
-			if ( line - y_pixels < 11 ) {
-				fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-			}
-			return;
-		}
-		if (line >= start_blanking && line < start_top_border) {
-			return;
-		}
-		if (line >= start_top_border && line < max_y_pixels) {
-			/* Draw top border */
-			rec.min_x = 0;
-			rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
-			rec.min_y = rec.max_y = 10 - (line - start_top_border);
-			if ( line - start_top_border < 11 ) {
-				fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-			}
-			return;
-		}
-		/* Draw left border */
-		rec.min_y = rec.max_y = pixelPlotY;
-		rec.min_x = 0;
-		rec.max_x = LBORDER_X_PIXELS - 1;
-		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
-		/* Draw right border */
-		rec.min_y = rec.max_y = pixelPlotY;
-		rec.min_x = LBORDER_X_PIXELS + 256;
-		rec.min_x = rec.min_x + RBORDER_X_PIXELS - 1;
-		fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 	}
 
 	/* if top 2 rows of screen not affected by horizontal scrolling, then xScroll = 0 */
@@ -810,11 +782,220 @@ void sms_refresh_line(mame_bitmap *bitmap, int line) {
 	/* Fill column 0 with overscan color from reg[0x07]	 (SMS Only) */
 	if ( ! IS_GAMEGEAR ) {
 		if (reg[0x00] & 0x20) {
+			rectangle rec;
 			rec.min_y = rec.max_y = pixelPlotY;
 			rec.min_x = LBORDER_X_PIXELS;
 			rec.max_x = rec.min_x + 7;
 			fillbitmap(bitmap, Machine->pens[BACKDROP_COLOR], &rec);
 		}
+	}
+}
+
+void sms_refresh_line_mode2(mame_bitmap *bitmap, int line, int pixelPlotY, int pixelOffsetX) {
+	int tileColumn;
+	int pixelX, pixelPlotX;
+	int spriteHeight, spriteBufferCount, spriteIndex, spriteY, spriteBuffer[4], spriteBufferIndex;
+	UINT8 *nameTable, *colorTable, *patternTable, *spriteTable, *spritePatternTable;
+	int patternMask, colorMask, patternOffset;
+
+	/* Draw background layer */
+	nameTable = VRAM + ( ( reg[0x02] & 0x0F ) << 10 ) + ( ( line >> 3 ) * 32 );
+	colorTable = VRAM + ( ( reg[0x03] & 0x80 ) << 6 );
+	colorMask = ( ( reg[0x03] & 0x7F ) << 3 ) | 0x07;
+	patternTable = VRAM + ( ( reg[0x04] & 0x04 ) << 11 );
+	patternMask = ( ( reg[0x04] & 0x03 ) << 8 ) | 0xFF;
+	patternOffset = ( line & 0xC0 ) << 2;
+	for ( tileColumn = 0; tileColumn < 32; tileColumn++ ) {
+		UINT8 pattern;
+		UINT8 colors;
+		pattern = patternTable[ ( ( ( patternOffset + nameTable[tileColumn] ) & patternMask ) * 8 ) + ( line & 0x07 ) ];
+		colors = colorTable[ ( ( ( patternOffset + nameTable[tileColumn] ) & colorMask ) * 8 ) + ( line & 0x07 ) ];
+		for ( pixelX = 0; pixelX < 8; pixelX++ ) {
+			int penSelected;
+			if ( pattern & ( 1 << ( 7 - pixelX ) ) ) {
+				penSelected = colors >> 4;
+			} else {
+				penSelected = colors & 0x0F;
+			} 
+			if ( ! penSelected ) {
+				penSelected = BACKDROP_COLOR;
+			}
+			pixelPlotX = ( tileColumn << 3 ) + pixelX;
+			plot_pixel( bitmap, pixelPlotX + pixelOffsetX, pixelPlotY, Machine->pens[penSelected] );
+		}
+	}
+
+	/* Draw sprite layer */
+	spriteTable = VRAM + ( ( reg[0x05] & 0x7F ) << 7 );
+	spritePatternTable = VRAM + ( ( reg[0x06] & 0x07 ) << 11 );
+	spriteHeight = ( reg[0x01] & 0x03 ? 16 : 8 ); /* check if either MAG or SI is set */
+	spriteBufferCount = 0;
+	for ( spriteIndex = 0; (spriteIndex < 32*4 ) && ( spriteTable[spriteIndex * 4] != 0xD0 ) && ( spriteBufferCount < 5); spriteIndex+= 4 ) {
+		spriteY = spriteTable[spriteIndex] + 1;
+		if ( spriteY > 240 ) {
+			spriteY -= 256;
+		}
+		if ( ( line >= spriteY ) && ( line < ( spriteY + spriteHeight ) ) ) {
+			if ( spriteBufferCount < 5 ) {
+				spriteBuffer[spriteBufferCount] = spriteIndex;
+			} else {
+				/* Too many sprites per line */
+				statusReg |= STATUS_SPROVR;
+			}
+			spriteBufferCount++;
+		}
+	}
+	if ( spriteBufferCount > 4 ) {
+		spriteBufferCount = 4;
+	}
+	memset( lineCollisionBuffer, 0, MAX_X_PIXELS );
+	spriteBufferCount--;
+	for ( spriteBufferIndex = spriteBufferCount; spriteBufferIndex >= 0; spriteBufferIndex-- ) {
+		int penSelected;
+		int spriteLine, pixelX, spriteX, spriteTileSelected;
+		UINT8 pattern;
+		spriteIndex = spriteBuffer[ spriteBufferIndex ];
+		spriteY = spriteTable[ spriteIndex ] + 1;
+		if ( spriteY > 240 ) {
+			spriteY -= 256;
+		}
+		spriteX = spriteTable[ spriteIndex + 1 ];
+		penSelected = spriteTable[ spriteIndex + 3 ] & 0x0F;
+		if ( spriteTable[ spriteIndex + 3 ] & 0x80 ) {
+			spriteX -= 32;
+		}
+		spriteTileSelected = spriteTable[ spriteIndex + 2 ];
+		spriteLine = line - spriteY;
+		if ( reg[0x01] & 0x01 ) {
+			spriteLine >> 1;
+		}
+		if ( reg[0x01] & 0x02 ) {
+			spriteTileSelected &= 0xFC;
+			if ( spriteLine > 0x07 ) {
+				spriteTileSelected += 1;
+				spriteLine -= 8;
+			}
+		}
+		pattern = spritePatternTable[ spriteTileSelected * 8 + spriteLine ];
+		for ( pixelX = 0; pixelX < 8; pixelX++ ) {
+			if ( reg[0x01] & 0x01 ) {
+				pixelPlotX = spriteX + pixelX * 2;
+				if ( pixelPlotX < 0 || pixelPlotX > 255 ) {
+					continue;
+				}
+				if ( penSelected && ( pattern & ( 1 << ( 7 - pixelX ) ) ) ) {
+					plot_pixel( bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[penSelected] );
+					if ( lineCollisionBuffer[pixelPlotX] != 1 ) {
+						lineCollisionBuffer[pixelPlotX] = 1;
+					} else {
+						statusReg |= STATUS_SPRCOL;
+					}
+					plot_pixel( bitmap, pixelOffsetX + pixelPlotX + 1, pixelPlotY, Machine->pens[penSelected] );
+					if ( lineCollisionBuffer[pixelPlotX + 1] != 1 ) {
+						lineCollisionBuffer[pixelPlotX + 1] = 1;
+					} else {
+						statusReg |= STATUS_SPRCOL;
+					}
+				}
+			} else {
+				pixelPlotX = spriteX + pixelX;
+				if ( pixelPlotX < 0 || pixelPlotX > 255 ) {
+					continue;
+				}
+				if ( penSelected && ( pattern & ( 1 << ( 7 - pixelX ) ) ) ) {
+					plot_pixel( bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[penSelected] );
+					if ( lineCollisionBuffer[pixelPlotX] != 1 ) {
+						lineCollisionBuffer[pixelPlotX] = 1;
+					} else {
+						statusReg |= STATUS_SPRCOL;
+					}
+				}
+			}
+		}
+		if ( reg[0x01] & 0x02 ) {
+			spriteTileSelected += 2;
+			pattern = spritePatternTable[ spriteTileSelected * 8 + spriteLine ];
+			spriteX += 8;
+			for ( pixelX = 0; pixelX < 8; pixelX++ ) {
+				pixelPlotX = spriteX + pixelX;
+				if ( pixelPlotX < 0 || pixelPlotX > 255 ) {
+					continue;
+				}
+				if ( penSelected && ( pattern & ( 1 << ( 7 - pixelX ) ) ) ) {
+					plot_pixel( bitmap, pixelOffsetX + pixelPlotX, pixelPlotY, Machine->pens[penSelected] );
+					if ( lineCollisionBuffer[pixelPlotX] != 1 ) {
+						lineCollisionBuffer[pixelPlotX] = 1;
+					} else {
+						statusReg |= STATUS_SPRCOL;
+					}
+				}
+			}
+		}
+	}
+}
+
+void sms_refresh_line( mame_bitmap *bitmap, int line ) {
+	int pixelPlotY = line;
+	int pixelOffsetX = 0;
+
+	if ( ! IS_GAMEGEAR ) {
+		pixelPlotY += TBORDER_Y_PIXELS;
+		pixelOffsetX = LBORDER_X_PIXELS;
+	}
+
+	/* Check if display is disabled */
+	if ( ! ( reg[0x01] & 0x40 ) ) {
+		rectangle rec;
+		/* set whole line to backdrop color */
+		rec.min_x = 0;
+		rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
+		rec.min_y = rec.max_y = pixelPlotY;
+		fillbitmap( bitmap, Machine->pens[BACKDROP_COLOR], &rec );
+		return;
+	}
+
+	/* Only SMS has border */
+	if ( ! IS_GAMEGEAR ) {
+		rectangle rec;
+		if ( line >= y_pixels && line < start_blanking ) {
+			/* Bottom border; draw no more than 11 lines */
+			if ( line - y_pixels < 11 ) {
+				rec.min_x = 0;
+				rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
+				rec.min_y = rec.max_y = pixelPlotY;
+				fillbitmap( bitmap, Machine->pens[BACKDROP_COLOR], &rec );
+			}
+			return;
+		}
+		if ( line >= start_blanking && line < start_top_border ) {
+			return;
+		}
+		if ( line >= start_top_border && line < max_y_pixels ) {
+			/* Top border; draw no more than 11 lines */
+			if ( line - start_top_border < 11 ) {
+				rec.min_x = 0;
+				rec.max_x = LBORDER_X_PIXELS + 255 + RBORDER_X_PIXELS;
+				rec.min_y = rec.max_y = 10 - ( line - start_top_border );
+				fillbitmap( bitmap, Machine->pens[BACKDROP_COLOR], &rec );
+				return;
+			}
+		}
+		/* Draw left border */
+		rec.min_y = rec.max_y = pixelPlotY;
+		rec.min_x = 0;
+		rec.max_x = LBORDER_X_PIXELS - 1;
+		fillbitmap( bitmap, Machine->pens[BACKDROP_COLOR], &rec );
+		/* Draw right border */
+		rec.min_y = rec.max_y = pixelPlotY;
+		rec.min_x = LBORDER_X_PIXELS + 256;
+		rec.max_x = rec.min_x + RBORDER_X_PIXELS - 1;
+		fillbitmap( bitmap, Machine->pens[BACKDROP_COLOR], &rec );
+	}
+
+	if ( vdp_mode == 2 ) {
+		sms_refresh_line_mode2( bitmap, line, pixelPlotY, pixelOffsetX );
+	} else {
+		sms_refresh_line_mode4( bitmap, line, pixelPlotY, pixelOffsetX );
 	}
 }
 
@@ -826,6 +1007,29 @@ void sms_update_palette(void) {
 		return;
 	}
 	isCRAMDirty = 0;
+
+	if ( vdp_mode != 4 ) {
+#ifdef LOG_COLOR
+		logerror( "Switched palette to TMS9918 palette\n" );
+#endif
+		palette_set_color( 0,   0,   0,   0 );
+		palette_set_color( 1,   0,   0,   0 );
+		palette_set_color( 2,  33, 200,  66 );
+		palette_set_color( 3,  94, 220, 120 );
+		palette_set_color( 4,  84,  85, 237 );
+		palette_set_color( 5, 125, 118, 252 );
+		palette_set_color( 6, 212,  82,  77 );
+		palette_set_color( 7,  66, 235, 245 );
+		palette_set_color( 8, 252,  85,  84 );
+		palette_set_color( 9, 255, 121, 120 );
+		palette_set_color(10, 212, 193,  84 );
+		palette_set_color(11, 230, 206, 128 );
+		palette_set_color(12,  33, 176,  59 );
+		palette_set_color(13, 201,  91, 186 );
+		palette_set_color(14, 204, 204, 204 );
+		palette_set_color(15, 255, 255, 255 );
+		return;
+	}
 
 	if ( IS_GAMEGEAR ) {
 		for (i = 0; i < (GG_CRAM_SIZE >> 1); i += 1) {

@@ -7724,8 +7724,6 @@ This driver runs just about everything!
 
 To do (see source):
 
-TMS9928A support for 'f16ffight.sms'
-
 SMS lightgun support
 
 SMS 3D glass support
