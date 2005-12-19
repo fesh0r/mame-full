@@ -21,20 +21,34 @@
 
 unsigned char *battery_ram;
 
-static  READ8_HANDLER ( nes_bogus_r )
+static READ8_HANDLER( psg_4015_r )
 {
-    static int val = 0xff;
-    val ^= 0xff;
-    return val;
+	return NESPSG_0_r(0x15);
+}
+
+static WRITE8_HANDLER( psg_4015_w )
+{
+	NESPSG_0_w(0x15, data);
+}
+
+static WRITE8_HANDLER( psg_4017_w )
+{
+	NESPSG_0_w(0x17, data);
+}
+
+static WRITE8_HANDLER(nes_vh_sprite_dma_w)
+{
+	ppu2c03b_spriteram_dma(data);
 }
 
 static ADDRESS_MAP_START( nes_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM		AM_MIRROR(0x1800)	/* RAM */
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_0_r,     ppu2c03b_0_w)		/* PPU registers */
-	AM_RANGE(0x4000, 0x4015) AM_WRITE(NESPSG_0_w)
-	AM_RANGE(0x4015, 0x4015) AM_READ(nes_bogus_r)			/* ?? sound status ?? */
+	AM_RANGE(0x4000, 0x4013) AM_READWRITE(NESPSG_0_r, NESPSG_0_w)			/* PSG primary registers */
+	AM_RANGE(0x4014, 0x4014) AM_WRITE(nes_vh_sprite_dma_w)				/* stupid address space hole */
+	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg_4015_r, psg_4015_w)			/* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(nes_IN0_r,        nes_IN0_w)			/* IN0 - input port 1 */
-	AM_RANGE(0x4017, 0x4017) AM_READWRITE(nes_IN1_r,        nes_IN1_w)			/* IN1 - input port 2 */
+	AM_RANGE(0x4017, 0x4017) AM_READWRITE(nes_IN1_r,        psg_4017_w)		/* IN1 - input port 2 / PSG second control register */
 	AM_RANGE(0x4100, 0x5fff) AM_READWRITE(nes_low_mapper_r, nes_low_mapper_w)	/* Perform unholy acts on the machine */
 ADDRESS_MAP_END
 
@@ -219,24 +233,14 @@ gfx_layout nes_vram_charlayout =
     16*8    /* every char takes 16 consecutive bytes */
 };
 
-
-static WRITE8_HANDLER(nes_vh_sprite_dma_w)
-{
-	ppu2c03b_spriteram_dma(data);
-}
-
 static struct NESinterface nes_interface =
 {
-	0, 0,
-	nes_vh_sprite_dma_w,
-	NULL
+	0
 };
 
 static struct NESinterface nespal_interface =
 {
-	0, 0,
-	nes_vh_sprite_dma_w,
-	NULL
+	0
 };
 
 ROM_START( nes )

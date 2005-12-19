@@ -22,6 +22,8 @@ System Driver Changes:
 - [NES] PPU, palette reading, mapper and sprite handling enhancements and
   implemented some undocumented N2A03 opcodes. (bugs #810, #811) [Rob Bohms]
 
+- [NES] Switched to use the MAME NES APU implementation.  [R. Belmont]
+
 - [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
 
 - [SNES] Fixed save RAM to store and save properly, improved memory mapping
@@ -74,6 +76,8 @@ Source Changes:
   
 - Added mandatory attribute to the device tags on the -listxml data.  [Nate
   Woods]
+
+- [Messtest] Added a trace command, to emit debug traces.  [Nate Woods]
 
 
 

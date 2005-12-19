@@ -38,7 +38,8 @@ typedef enum
 	MESSTEST_COMMAND_IMAGE_PRECREATE,
 	MESSTEST_COMMAND_IMAGE_PRELOAD,
 	MESSTEST_COMMAND_VERIFY_MEMORY,
-	MESSTEST_COMMAND_VERIFY_IMAGE
+	MESSTEST_COMMAND_VERIFY_IMAGE,
+	MESSTEST_COMMAND_TRACE
 } messtest_command_type_t;
 
 struct messtest_command
@@ -127,6 +128,7 @@ static UINT64 runtime_hash;
 static void *wavptr;
 static UINT32 samples_this_frame;
 static jmp_buf die_jmpbuf;
+static int seen_first_update;
 
 /* command list */
 static mess_pile command_pile;
@@ -239,6 +241,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	screenshot_num = 0;
 	runtime_hash = 0;
 	had_failure = FALSE;
+	seen_first_update = FALSE;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
@@ -250,6 +253,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	options.vector_intensity = 1.5;
 	options.use_artwork = 1;
 	options.samplerate = 44100;
+	options.mame_debug = 1;
 
 	/* preload any needed images */
 	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
@@ -645,7 +649,7 @@ static void command_image_loadcreate(void)
 
 
 
-static void command_image_verify_memory(void)
+static void command_verify_memory(void)
 {
 	int i = 0;
 	offs_t offset, offset_start, offset_end;
@@ -710,7 +714,7 @@ static void command_image_verify_memory(void)
 
 
 
-static void command_image_verify_image(void)
+static void command_verify_image(void)
 {
 	const UINT8 *verify_data;
 	size_t verify_data_size;
@@ -768,6 +772,35 @@ static void command_image_verify_image(void)
 
 
 
+static void command_trace(void)
+{
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	int cpunum;
+	FILE *file;
+	char filename[256];
+
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
+		if (cpu_gettotalcpu() == 1)
+			snprintf(filename, sizeof(filename) / sizeof(filename[0]), "_%s.tr", current_testcase.name);
+		else
+			snprintf(filename, sizeof(filename) / sizeof(filename[0]), "_%s.%d.tr", current_testcase.name, cpunum);
+
+		file = fopen(filename, "w");
+		if (file)
+		{
+			report_message(MSG_INFO, "Tracing CPU #%d: %s", cpunum, filename);
+			debug_cpu_trace(cpunum, file, FALSE, NULL);
+		}
+	}
+#else
+	state = STATE_ABORTED;
+	report_message(MSG_FAILURE, "Cannot trace; debugger not present");
+#endif
+}
+
+
+
 static void command_end(void)
 {
 	/* at the end of our test */
@@ -796,8 +829,9 @@ static const struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_IMAGE_PRELOAD,	command_image_preload },
 	{ MESSTEST_COMMAND_IMAGE_LOAD,		command_image_loadcreate },
 	{ MESSTEST_COMMAND_IMAGE_CREATE,	command_image_loadcreate },
-	{ MESSTEST_COMMAND_VERIFY_MEMORY,	command_image_verify_memory },
-	{ MESSTEST_COMMAND_VERIFY_IMAGE,	command_image_verify_image },
+	{ MESSTEST_COMMAND_VERIFY_MEMORY,	command_verify_memory },
+	{ MESSTEST_COMMAND_VERIFY_IMAGE,	command_verify_image },
+	{ MESSTEST_COMMAND_TRACE,			command_trace },
 	{ MESSTEST_COMMAND_END,				command_end }
 };
 
@@ -813,6 +847,13 @@ void osd_update_video_and_audio(mame_display *display)
 	{
 		ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
 			display->game_visible_area.max_x, display->game_visible_area.max_y);
+	}
+
+	/* is this the first update?  if so, eat it */
+	if (!seen_first_update)
+	{
+		seen_first_update = TRUE;
+		return;
 	}
 
 	/* if we have already aborted or completed, our work is done */
@@ -1281,6 +1322,21 @@ static void verify_end_handler(const void *buffer, size_t size)
 
 
 
+static void node_trace(xml_data_node *node)
+{
+	/* <trace> - emit a trace file */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_TRACE;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
+}
+
+
+
 void node_testmess(xml_data_node *node)
 {
 	xml_data_node *child_node;
@@ -1340,6 +1396,8 @@ void node_testmess(xml_data_node *node)
 			node_memverify(child_node);
 		else if (!strcmp(child_node->name, "imageverify"))
 			node_imageverify(child_node);
+		else if (!strcmp(child_node->name, "trace"))
+			node_trace(child_node);
 	}
 
 	memset(&new_command, 0, sizeof(new_command));
