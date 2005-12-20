@@ -16,7 +16,7 @@
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
 #include "devices/cartslot.h"
-#include "sound/nesintf.h"
+#include "sound/nes_apu.h"
 #include "inputx.h"
 
 unsigned char *battery_ram;

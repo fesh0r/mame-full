@@ -26,6 +26,7 @@
 #include "driver.h"
 #include "includes/nes.h"
 #include "nes_mmc.h"
+#include "sound/nes_apu.h"
 
 #define LOG_MMC	1
 #define LOG_FDS	1
@@ -77,11 +78,6 @@ int MMC5_vram_control;
 static int mapper41_chr, mapper41_reg2;
 
 static int mapper_warning;
-
-static WRITE8_HANDLER(NESPSG_0_w)
-{
-	/* My life is falling to pieces... Somebody put me together */
-}
 
 WRITE8_HANDLER( nes_low_mapper_w )
 {
