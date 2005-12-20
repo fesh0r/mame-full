@@ -16,6 +16,10 @@
 #include "pool.h"
 #include "sound/wavwrite.h"
 
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
+#endif
+
 typedef enum
 {
 	STATE_READY,
