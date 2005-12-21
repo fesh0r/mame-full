@@ -1,13 +1,13 @@
 /*
 	TODO:
 	. 5 has some issues, RAM banking needs hardware flags to determine size
-	. 9 & 10 have minor probs
+	. 9 & 10 have minor probs: needs PPU to emulate sprite caching Most visible on Punch-Out! (9)
+	. 13 needs banked VRAM. -see Videomation
 	. 64 has some IRQ problems - see Skull & Crossbones
-	. 67 vrom problems
-	. 70 (ark2j) starts on round 0 - is this right?
-	. 72 is preliminary
-	. 82 has chr-rom banking problems
-	. 97 is preliminary
+	. 67 display issues, but vrom fixed
+	. 70 (ark2j) starts on round 0 - is this right? Yep!
+	. 82 has chr-rom banking problems. Also mapper is in the middle of sram, which is unemulated.
+	. 96 is preliminary.
 	. 118 mirroring is a guess, chr-rom banking is likely different
 	. 228 seems wrong
 	. 229 is preliminary
@@ -285,6 +285,47 @@ static void chr2_6 (int bank)
 	bank &= ((nes.chr_chunks << 2) - 1);
 	ppu2c03b_set_videorom_bank(0, 6, 2, bank, 128);
 }
+static void chr1_0 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 0, 1, bank, 64);
+}
+static void chr1_1 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 1, 1, bank, 64);
+}
+static void chr1_2 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 2, 1, bank, 64);
+}
+static void chr1_3 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 3, 1, bank, 64);
+}
+static void chr1_4 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 4, 1, bank, 64);
+}
+static void chr1_5 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 5, 1, bank, 64);
+}
+static void chr1_6 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 6, 1, bank, 64);
+}
+static void chr1_7 (int bank)
+{
+	bank &= ((nes.chr_chunks << 3) - 1);
+	ppu2c03b_set_videorom_bank(0, 7, 1, bank, 64);
+}
+
 
 static WRITE8_HANDLER( mapper1_w )
 {
@@ -598,7 +639,8 @@ static WRITE8_HANDLER( mapper4_w )
 
 //	logerror("mapper4_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
-	switch (offset & 0x7001)
+	//only bits 14,13, and 0 matter for offset!
+	switch (offset & 0x6001)
 	{
 		case 0x0000: /* $8000 */
 			MMC3_cmd = data;
@@ -710,7 +752,8 @@ static WRITE8_HANDLER( mapper118_w )
 
 //	logerror("mapper4_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
-	switch (offset & 0x7001)
+	//uses just bits 14, 13, and 0
+	switch (offset & 0x6001)
 	{
 		case 0x0000: /* $8000 */
 			MMC3_cmd = data;
@@ -1354,60 +1397,6 @@ static WRITE8_HANDLER( mapper8_w )
 	memory_set_bankptr (2, &nes.rom[data * 0x4000 + 0x12000]);
 }
 
-#if 0
-void mapper9_latch (int offset)
-{
-	if (((offset & 0x3ff0) == 0x0fd0) || ((offset & 0x3ff0) == 0x1fd0))
-	{
-		logerror ("mapper9 vrom switch (latch low): %02x\n", MMC2_bank1);
-		MMC2_bank1_latch = 0xfd;
-		chr4_4 (MMC2_bank1);
-	}
-	else if (((offset & 0x3ff0) == 0x0fe0) || ((offset & 0x3ff0) == 0x1fe0))
-	{
-		logerror ("mapper9 vrom switch (latch high): %02x\n", MMC2_bank1_hi);
-		MMC2_bank1_latch = 0xfe;
-		chr4_4 (MMC2_bank1_hi);
-	}
-}
-
-static WRITE8_HANDLER( mapper9_w )
-{
-	switch (offset & 0x7000)
-	{
-		case 0x2000:
-			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
-			break;
-		case 0x3000:
-		case 0x4000:
-			MMC2_bank0 = data;
-			chr4_0 (MMC2_bank0);
-			logerror("MMC2 VROM switch #1 (low): %02x\n", MMC2_bank0);
-			break;
-		case 0x5000:
-			MMC2_bank1 = data;
-			if (MMC2_bank1_latch == 0xfd)
-				chr4_4 (MMC2_bank1);
-			logerror("MMC2 VROM switch #2 (low): %02x\n", data);
-			break;
-		case 0x6000:
-			MMC2_bank1_hi = data;
-			if (MMC2_bank1_latch == 0xfe)
-				chr4_4 (MMC2_bank1_hi);
-			logerror("MMC2 VROM switch #2 (high): %02x\n", data);
-			break;
-		case 0x7000:
-			if (data&1)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
-			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-			break;
-		default:
-			logerror("MMC2 uncaught w: %04x:%02x\n", offset, data);
-			break;
-	}
-}
-#endif
 
 static void mapper9_latch (offs_t offset)
 {
@@ -1443,7 +1432,7 @@ static WRITE8_HANDLER( mapper9_w )
 	{
 		case 0x2000:
 			/* Switch the first 8k prg bank */
-			memory_set_bankptr (1, &nes.rom[data * 0x2000 + 0x10000]);
+			prg8_89(data);
 			break;
 		case 0x3000:
 			MMC2_bank0 = data;
@@ -1565,6 +1554,15 @@ static WRITE8_HANDLER( mapper11_w )
 	/* Switch 32k prg bank */
 	prg32 (data & 0x0f);
 }
+static WRITE8_HANDLER( mapper13_w )
+{
+#ifdef LOG_MMC
+	logerror("* Mapper 13 switch, data: %02x\n", data );
+#endif
+	//this is a place-holder call.
+	//mapper doesn't work because CHR-RAM is not mapped.
+	chr4_4 (data);
+}
 
 static WRITE8_HANDLER( mapper15_w )
 {
@@ -1628,9 +1626,30 @@ static WRITE8_HANDLER( mapper16_w )
 
 	switch (offset & 0x000f)
 	{
-		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-			/* Switch 1k VROM at $0000 - $1fff */
-			ppu2c03b_set_videorom_bank(0, offset & 0x0f, 1, data, 64);
+		//use new utility functions for bounds checks!
+		case 0:
+			chr1_0(data);
+			break;
+		case 1:
+			chr1_1(data);
+			break;
+		case 2:
+			chr1_2(data);
+			break;
+		case 3:
+			chr1_3(data);
+			break;
+		case 4:
+			chr1_4(data);
+			break;
+		case 5:
+			chr1_5(data);
+			break;
+		case 6:
+			chr1_6(data);
+			break;
+		case 7:
+			chr1_7(data);
 			break;
 		case 8:
 			/* Switch 16k bank at $8000 */
@@ -3126,7 +3145,7 @@ static WRITE8_HANDLER( mapper67_w )
 //	logerror("mapper67_w, offset %04x, data: %02x\n", offset, data);
 	switch (offset & 0x7801)
 	{
-//		case 0x0000: /* IRQ disable? */
+//		case 0x0000: /* IRQ acknowledge */
 //			IRQ_enable = 0;
 //			break;
 		case 0x0800:
@@ -3141,7 +3160,7 @@ static WRITE8_HANDLER( mapper67_w )
 		case 0x3800:
 			chr2_6 (data);
 			break;
-//		case 0x4800:
+		case 0x4800:
 //			nes_vram[5] = data * 64;
 //			break;
 		case 0x4801:
@@ -3149,16 +3168,24 @@ static WRITE8_HANDLER( mapper67_w )
 			IRQ_count = IRQ_count_latch;
 			IRQ_count_latch = data;
 			break;
-//		case 0x5800:
+		case 0x5800:
 //			chr4_0 (data);
 //			break;
 		case 0x5801:
 			IRQ_enable = data;
 			break;
-//		case 0x6800:
-//			chr4_4 (data);
-//			break;
+		case 0x6800:
+		case 0x6801:
+			switch(data&3)
+			{
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+			}
+			break;
 		case 0x7800:
+		case 0x7801:
 			prg16_89ab (data);
 			break;
 		default:
@@ -3356,12 +3383,12 @@ static WRITE8_HANDLER( mapper71_w )
 static WRITE8_HANDLER( mapper72_w )
 {
 	logerror("mapper72_w, offset %04x, data: %02x\n", offset, data);
-	/* This routine is busted */
 
-//	prg32 ((data & 0xf0) >> 4);
-//	prg16_89ab (data & 0x0f);
-//	prg16_89ab ((data & 0xf0) >> 4);
-//	chr8 (data & 0x0f);
+	if(data&0x80)
+		prg16_89ab (data & 0x0f);
+	if(data&0x40)
+		chr8 (data & 0x0f);
+
 }
 
 static WRITE8_HANDLER( mapper73_w )
@@ -3425,6 +3452,30 @@ static WRITE8_HANDLER( mapper75_w )
 	}
 }
 
+static WRITE8_HANDLER( mapper76_w )
+{
+	static int cmd=0;
+	logerror("mapper76_w, offset: %04x, data: %02x\n", offset, data);
+	switch(offset&0x7001)
+	{
+	case 0: cmd=data;break;
+	case 1:
+		{
+			switch(cmd&7)
+			{
+			case 2:chr2_0(data);break;
+			case 3:chr2_2(data);break;
+			case 4:chr2_4(data);break;
+			case 5:chr2_6(data);break;
+			case 6:(cmd&0x40)?prg8_cd(data):prg8_89(data);break;
+			case 7:prg8_ab(data);break;
+			default:logerror("mapper76 unsupported command: %02x, data: %02x\n", cmd, data);break;
+			}
+		}
+	case 0x2000: (data&1)?ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ):ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);break;
+	default: logerror("mapper76 unmapped write, offset: %04x, data: %02x\n", offset, data);break;
+	}
+}
 static WRITE8_HANDLER( mapper77_w )
 {
 
@@ -3588,7 +3639,8 @@ static WRITE8_HANDLER( mapper82_m_w )
 			ppu2c03b_set_videorom_bank(0, 7 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef6:
-			vrom_switch = !((data & 0x02) << 1);
+			//doc says 1= swapped. Causes in-game issues, but mostly fixes title screen
+			vrom_switch = ((data & 0x02) << 1);
 			break;
 
 		case 0x1efa:
@@ -3714,6 +3766,16 @@ static WRITE8_HANDLER( mapper87_m_w )
 	/* TODO: verify */
 	chr8 (data >> 1);
 }
+static WRITE8_HANDLER( mapper89_w )
+{
+	int chr;
+	logerror("mapper89_m_w %04x:%02x\n", offset, data);
+	prg16_89ab((data>>4)&7);
+	chr=(data&7)|((data&0x80)?8:0);
+	chr8(chr);
+	(data&8)?ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH):ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+
+}
 
 static WRITE8_HANDLER( mapper91_m_w )
 {
@@ -3741,6 +3803,16 @@ static WRITE8_HANDLER( mapper91_m_w )
 			logerror("mapper91_m_w uncaught addr: %04x value: %02x\n", offset + 0x6000, data);
 			break;
 	}
+}
+static WRITE8_HANDLER( mapper92_w )
+{
+	logerror("mapper92_w, offset %04x, data: %02x\n", offset, data);
+
+	if(data&0x80)
+		prg16_cdef (data & 0x0f);
+	if(data&0x40)
+		chr8 (data & 0x0f);
+
 }
 
 static WRITE8_HANDLER( mapper93_m_w )
@@ -3790,7 +3862,20 @@ static WRITE8_HANDLER( mapper95_w )
 			break;
 	}
 }
+static WRITE8_HANDLER( mapper96_w )
+{
+	prg32 (data);
+}
 
+static WRITE8_HANDLER( mapper97_w )
+{
+	if(offset&0x4000)
+		return;
+	if(data&0x80)
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+	else ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+	prg16_cdef(data&0x0F);
+}
 static WRITE8_HANDLER( mapper101_m_w )
 {
 #ifdef LOG_MMC
@@ -3807,6 +3892,69 @@ static WRITE8_HANDLER( mapper101_w )
 #endif
 
 	/* ??? */
+}
+static WRITE8_HANDLER( mapper113_l_w )
+{
+#ifdef LOG_MMC
+	logerror("mapper113_w %04x:%02x\n", offset, data);
+#endif
+	//I think this is the right value
+	if(offset>0xFF)
+		return;
+	prg32(data>>3);
+	chr8(data&7);
+}
+static WRITE8_HANDLER( mapper133_l_w )
+{
+#ifdef LOG_MMC
+	logerror("mapper133_w %04x:%02x\n", offset, data);
+#endif
+	//I think this is the right value
+	if(offset!=0x20)
+		return;
+	prg32(data>>2);
+	chr8(data&3);
+}
+
+static WRITE8_HANDLER( mapper144_w )
+{
+#ifdef LOG_MMC
+	logerror("* Mapper 144 switch, data: %02x\n", data);
+#endif
+
+	//just like mapper 11, except bit 0 taken from ROM
+	//and 0x8000 ignored?
+
+	if(0==(offset&0x7FFF))
+		return;
+
+	data = data|(program_read_byte_8(offset)&1);
+
+	/* Switch 8k VROM bank */
+	chr8 (data >> 4);
+
+	/* Switch 32k prg bank */
+	prg32 (data & 0x07);
+}
+static WRITE8_HANDLER( mapper180_w )
+{
+#ifdef LOG_MMC
+	logerror("* Mapper 180 switch, data: %02x\n", data);
+#endif
+
+	prg16_cdef(data&7);
+}
+static WRITE8_HANDLER( mapper184_m_w )
+{
+#ifdef LOG_MMC
+	logerror("* Mapper 184 switch, data: %02x\n", data);
+#endif
+
+	if(0==offset)
+	{
+		chr4_0(data&0x0F);
+		chr4_4((data>>4));
+	}
 }
 
 static WRITE8_HANDLER( mapper225_w )
@@ -4091,6 +4239,7 @@ int mapper_reset (int mapperNum)
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
+		case 13:
 		case 3:
 			/* Doesn't bank-switch */
 			prg32(0);
@@ -4123,6 +4272,7 @@ int mapper_reset (int mapperNum)
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
+		case 96:
 		case 8:
 			/* Switches 16k banks at $8000, 1st 2 16k banks loaded on reset */
 			prg32(0);
@@ -4134,10 +4284,11 @@ int mapper_reset (int mapperNum)
 			MMC2_bank0 = MMC2_bank1 = 0;
 			MMC2_bank0_hi = MMC2_bank1_hi = 0;
 			MMC2_bank0_latch = MMC2_bank1_latch = 0xfe;
-			memory_set_bankptr (1, &nes.rom[0x10000]);
-			memory_set_bankptr (2, &nes.rom[(nes.prg_chunks-2) * 0x4000 + 0x12000]);
-			memory_set_bankptr (3, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
-			memory_set_bankptr (4, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x12000]);
+			prg8_89(0);
+			//ugly hack to deal with iNES header usage of chunk count.
+			prg8_ab((nes.prg_chunks<<1)-3);
+			prg8_cd((nes.prg_chunks<<1)-2);
+			prg8_ef((nes.prg_chunks<<1)-1);
 			break;
 		case 10:
 			/* Reset VROM latches */
@@ -4149,8 +4300,7 @@ int mapper_reset (int mapperNum)
 			break;
 		case 11:
 			/* Switches 32k banks, 1st 32k bank loaded on reset (?) May be more like mapper 7... */
-			prg16_89ab (0);
-			prg16_cdef (nes.prg_chunks-1);
+			prg32(0);
 			break;
 		case 15:
 			/* Can switch 8k prg banks */
@@ -4236,10 +4386,21 @@ int mapper_reset (int mapperNum)
 		case 72:
 		case 77:
 		case 78:
+		case 92:
 			IRQ_enable = IRQ_enable_latch = 0;
 			IRQ_count = IRQ_count_latch = 0;
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
+			break;
+		case 76:
+			prg8_89(0);
+			prg8_ab(1);
+			//cd is bankable, but this should init all banks just fine.
+			prg16_cdef(nes.prg_chunks-1);
+			chr2_0(0);
+			chr2_2(1);
+			chr2_4(2);
+			chr2_6(3);
 			break;
 		case 79:
 			/* Mirroring always horizontal...? */
@@ -4259,29 +4420,39 @@ int mapper_reset (int mapperNum)
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
+		case 89:
+			prg16_89ab(0);
+			prg16_cdef(nes.prg_chunks-1);
+			ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+			break;
+
 		case 91:
 			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-//			memory_set_bankptr (1, &nes.rom[0x10000]);
-//			memory_set_bankptr (2, &nes.rom[0x12000]);
 			prg16_89ab (nes.prg_chunks-1);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
 		case 93:
 		case 94:
 		case 95:
-		case 96:
 		case 101:
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
 		case 97:
-//			memory_set_bankptr (1, &nes.rom[0x10000]);
-//			memory_set_bankptr (2, &nes.rom[0x12000]);
-//			memory_set_bankptr (3, &nes.rom[0x14000]);
-//			memory_set_bankptr (4, &nes.rom[0x16000]);
-			prg16_89ab (nes.prg_chunks-2);
+			prg16_89ab (nes.prg_chunks-1);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
+		case 113:
+		case 133:
+			prg32(0);
+			break;
+		case 184:
+		case 144:
+			prg32(0);
+			break;
+		case 180:
+			prg16_89ab(0);
+			prg16_cdef(0);
 		case 225:
 		case 226:
 		case 227:
@@ -4319,9 +4490,9 @@ static mmc mmc_list[] =
 	{ 7, "ROM Switch",				NULL, NULL, NULL, mapper7_w, NULL, NULL },
 	{ 8, "FFE F3xxxx",				NULL, NULL, NULL, mapper8_w, NULL, NULL },
 	{ 9, "MMC2",					NULL, NULL, NULL, mapper9_w, mapper9_latch, NULL},
-//	{ 9, "MMC2",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL},
 	{ 10, "MMC4",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL },
 	{ 11, "Color Dreams Mapper",	NULL, NULL, NULL, mapper11_w, NULL, NULL },
+	{ 13, "CP-ROM",					NULL, NULL,	NULL, mapper13_w, NULL, NULL }, //needs CHR-RAM hooked up
 	{ 15, "100-in-1",				NULL, NULL, NULL, mapper15_w, NULL, NULL },
 	{ 16, "Bandai",					NULL, NULL, mapper16_w, mapper16_w, NULL, bandai_irq },
 	{ 17, "FFE F8xxx",				mapper17_l_w, NULL, NULL, NULL, NULL, mapper4_irq },
@@ -4351,6 +4522,7 @@ static mmc mmc_list[] =
 	{ 72, "74161/32 Jaleco",		NULL, NULL, NULL, mapper72_w, NULL, NULL },
 	{ 73, "Konami VRC 3",			NULL, NULL, NULL, mapper73_w, NULL, konami_irq },
 	{ 75, "Konami VRC 1",			NULL, NULL, NULL, mapper75_w, NULL, NULL },
+	{ 76, "Namco 109",				NULL, NULL, NULL, mapper76_w, NULL, NULL },
 	{ 77, "74161/32 ?",				NULL, NULL, NULL, mapper77_w, NULL, NULL },
 	{ 78, "74161/32 Irem",			NULL, NULL, NULL, mapper78_w, NULL, NULL },
 	{ 79, "Nina-3 (AVE)",			mapper79_l_w, NULL, mapper79_w, mapper79_w, NULL, NULL },
@@ -4359,21 +4531,28 @@ static mmc mmc_list[] =
 // 83
 	{ 84, "Pasofami",				NULL, NULL, NULL, NULL, NULL, NULL },
 	{ 85, "Konami VRC 7",			NULL, NULL, NULL, konami_vrc7_w, NULL, konami_irq },
-	{ 86, "?",				NULL, NULL, NULL, mapper86_w, NULL, NULL },
+	{ 86, "Jaleco Early Mapper 2",				NULL, NULL, NULL, mapper86_w, NULL, NULL },
 	{ 87, "74161/32 VROM sw-a",		NULL, NULL, mapper87_m_w, NULL, NULL, NULL },
 	{ 88, "Namco 118",				NULL, NULL, NULL, mapper4_w, NULL, mapper4_irq },
+	{ 89, "Sunsoft Early",			NULL, NULL, NULL, mapper89_w, NULL, NULL },
 // 90 - pirate mapper
 	{ 91, "HK-SF3 (bootleg)",		NULL, NULL, mapper91_m_w, NULL, NULL, NULL },
+	{ 92, "Jaleco Early Mapper 1",	NULL, NULL, NULL, mapper92_w, NULL, NULL },
 	{ 93, "Sunsoft LS161",			NULL, NULL, mapper93_m_w, mapper93_w, NULL, NULL },
 	{ 94, "Capcom LS161",			NULL, NULL, NULL, mapper94_w, NULL, NULL },
 	{ 95, "Namco ??",				NULL, NULL, NULL, mapper95_w, NULL, NULL },
-	{ 96, "??",			NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 97, "??",			NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 96, "74161/32",			NULL, NULL, NULL, mapper96_w, NULL, NULL },
+	{ 97, "Irem - PRG HI",			NULL, NULL, NULL, mapper97_w, NULL, NULL },
 // 99 - vs. system
 // 100 - images hacked to work with nesticle
 	{ 101, "?? LS161",				NULL, NULL, mapper101_m_w, mapper101_w, NULL, NULL },
+	{ 113, "Sachen/Hacker/Nina",	mapper113_l_w, NULL, NULL, NULL, NULL, NULL },
 	{ 118, "MMC3?",					NULL, NULL, NULL, mapper118_w, NULL, mapper4_irq },
 // 119 - Pinbot
+	{ 133, "Sachen",				mapper133_l_w, NULL, NULL, NULL, NULL, NULL },
+	{ 144, "AGCI 50282",			NULL, NULL, NULL, mapper144_w, NULL, NULL }, //Death Race only
+	{ 180, "Nihon Bussan - PRG HI",	NULL, NULL, NULL, mapper180_w, NULL, NULL },
+	{ 184, "Sunsoft VROM/4K",		NULL, NULL, mapper184_m_w, NULL, NULL, NULL },
 	{ 225, "72-in-1 bootleg",		NULL, NULL, NULL, mapper225_w, NULL, NULL },
 	{ 226, "76-in-1 bootleg",		NULL, NULL, NULL, mapper226_w, NULL, NULL },
 	{ 227, "1200-in-1 bootleg",		NULL, NULL, NULL, mapper227_w, NULL, NULL },

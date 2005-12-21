@@ -867,7 +867,7 @@ void sms_refresh_line_mode2(mame_bitmap *bitmap, int line, int pixelPlotY, int p
 		spriteTileSelected = spriteTable[ spriteIndex + 2 ];
 		spriteLine = line - spriteY;
 		if ( reg[0x01] & 0x01 ) {
-			spriteLine >> 1;
+			/* spriteLine >> 1; */	/* warning: statement with no effect */
 		}
 		if ( reg[0x01] & 0x02 ) {
 			spriteTileSelected &= 0xFC;
