@@ -41,6 +41,10 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug that caused "ghost filenames" to be introduced
   when using images with spaces in the filename.  (bug #784) [Nate Woods]
 
+- [Windows GUI] Fixed a bug that could cause clones to not be ran due to
+  software settings "spilling" over onto the clones.  (bug #704) [Oliver
+  Stoeneberg]  
+
 
 
 Imgtool Changes:

@@ -3119,7 +3119,7 @@ BOOL GetGameUsesDefaultsMem(int driver_index)
 
 void SaveGameOptions(int driver_index)
 {
-	BOOL options_different = FALSE;
+	BOOL options_different = TRUE;
 	options_type Opts;
 	int nParentIndex= -1;
 	if( driver_index >= 0)
@@ -3144,17 +3144,18 @@ void SaveGameOptions(int driver_index)
 		options_different = !AreOptionsEqual(regGameOpts, &game_options[driver_index], &Opts);
 	}
 
-	SaveSettingsFile(driver_index | SETTINGS_FILE_GAME,
-		&game_options[driver_index],
-		&Opts,
-		regGameOpts);
+	if( options_different ) {
+		SaveSettingsFile(driver_index | SETTINGS_FILE_GAME,
+			&game_options[driver_index],
+			&Opts,
+			regGameOpts);
+	}
 }
 
 void SaveFolderOptions(int folder_index, int game_index)
 {
 	DWORD nSettingsFile;
 	int redirect_index = 0;
-	BOOL options_different = FALSE;
 	options_type *pOpts;
 	options_type Opts;
 
@@ -3170,12 +3171,13 @@ void SaveFolderOptions(int folder_index, int game_index)
 	if( redirect_index < 0)
 		return;
 
-	options_different = !AreOptionsEqual(regGameOpts, &folder_options[redirect_index], pOpts);
-
-	//Find the Title
-	nSettingsFile = GetFolderSettingsFileID(folder_index);
-
-	SaveSettingsFile(nSettingsFile, &folder_options[redirect_index], pOpts, regGameOpts);
+	if( !AreOptionsEqual(regGameOpts, &folder_options[redirect_index], pOpts) ) 
+	{
+		//Find the Title
+		nSettingsFile = GetFolderSettingsFileID(folder_index);
+	
+		SaveSettingsFile(nSettingsFile, &folder_options[redirect_index], pOpts, regGameOpts);
+	}
 }
 
 
