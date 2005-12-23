@@ -532,7 +532,7 @@ INLINE void apu_regwrite(struct nesapu_info *info,int address, uint8 value)
       break;
 
    case APU_IRQCTRL:
-      break;
+   	break;
 
    case APU_SMASK:
       if (value & 0x01)
@@ -715,16 +715,16 @@ void nesapu_get_info(void *token, UINT32 state, union sndinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case SNDINFO_PTR_SET_INFO:						info->set_info = nesapu_set_info;		break;
-		case SNDINFO_PTR_START:							info->start = nesapu_start;				break;
-		case SNDINFO_PTR_STOP:							/* Nothing */							break;
-		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+		case SNDINFO_PTR_SET_INFO:						info->set_info = nesapu_set_info;       break;
+		case SNDINFO_PTR_START:							info->start = nesapu_start;		break;
+		case SNDINFO_PTR_STOP:							/* Nothing */				break;
+		case SNDINFO_PTR_RESET:							/* Nothing */				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case SNDINFO_STR_NAME:						info->s = "N2A03";				break;
 		case SNDINFO_STR_CORE_FAMILY:					info->s = "Nintendo custom";			break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
-		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";				break;
+		case SNDINFO_STR_CORE_FILE:					info->s = __FILE__;		      		break;
 		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005, The MAME Team";  break;
 	}
 }

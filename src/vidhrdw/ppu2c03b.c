@@ -631,7 +631,7 @@ static void render_scanline( int num )
 {
 	UINT8	line_priority[VISIBLE_SCREEN_WIDTH];
 	int		*ppu_regs = &chips[num].regs[0];
-//	int 	i;
+//  int     i;
 	int		refresh_data = chips[num].refresh_data;
 
 	/* lets see how long it takes */
