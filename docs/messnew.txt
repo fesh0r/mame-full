@@ -81,6 +81,8 @@ Source Changes:
 - Added mandatory attribute to the device tags on the -listxml data.  [Nate
   Woods]
 
+- Pruned out some redundant PORT_NAME declarations.  [Justin Kerk]
+
 - [Messtest] Added a trace command, to emit debug traces.  [Nate Woods]
 
 
