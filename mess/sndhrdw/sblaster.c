@@ -67,9 +67,9 @@ static struct {
 	void *timer;
 } blaster={ {0} } ;
 
-void soundblaster_config(SOUNDBLASTER_CONFIG *config)
+void soundblaster_config(const SOUNDBLASTER_CONFIG *config)
 {
-	blaster.config=*config;
+	blaster.config = *config;
 }
 
 void soundblaster_reset(void)

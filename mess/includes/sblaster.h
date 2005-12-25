@@ -23,7 +23,7 @@ typedef struct {
 	struct { UINT8 major, minor; } version;
 } SOUNDBLASTER_CONFIG;
 
-void soundblaster_config(SOUNDBLASTER_CONFIG *config);
+void soundblaster_config(const SOUNDBLASTER_CONFIG *config);
 void soundblaster_reset(void);
 
 //        { SOUND_CUSTOM, &soundblaster_interface },

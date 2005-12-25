@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #801) [Nate Woods]
 
+- [AT486] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
+
 - [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
 
 - [DGNBETA] Implemented MMU, keyboard and floppy support.  [Phill Harvey-Smith]
