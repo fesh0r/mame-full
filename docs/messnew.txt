@@ -61,6 +61,10 @@ Imgtool Changes:
 - Added support for modules to specify specific for icons.  Enhanced the Mac
   module to support this feature.  [Nate Woods]
 
+- [Imgtool] Changed the Imgtool "put" command to require a destination
+  argument, like the UNIX "cp" command.  This is so that a directory argument
+  can be properly specified.  [Nate Woods]
+
 - [Windows Imgtool] The insert file dialog will no longer let the user specify
   a file that does not exist (which was allowed, but eventually resulted in an
   error.)  Also, fixed a few cosmetic errors.  [Nate Woods]
