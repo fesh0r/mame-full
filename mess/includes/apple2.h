@@ -9,7 +9,7 @@
 #ifndef APPLE2_H
 #define APPLE2_H
 
-#include <mame.h>
+#include "mame.h"
 #include "machine/ay3600.h"
 
 /* -----------------------------------------------------------------------

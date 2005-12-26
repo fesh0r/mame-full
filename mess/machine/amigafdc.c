@@ -4,7 +4,7 @@
 
 ***************************************************************************/
 
-#include <mame.h>
+#include "mame.h"
 #include "amiga.h"
 #include "amigafdc.h"
 

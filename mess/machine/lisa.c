@@ -1161,10 +1161,7 @@ MACHINE_INIT( lisa )
 	memory_set_opbase_handler(0, lisa_OPbaseoverride);
 	memory_set_opbase_handler(1, lisa_fdc_OPbaseoverride);
 
-	/* swap to the CPU's context */
-	cpuintrf_push_context(0);
-	m68k_set_reset_instr_callback(/*lisa_reset_instr_callback*/NULL);
-	cpuintrf_pop_context();
+	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)/*lisa_reset_instr_callback*/NULL);
 
 	/* init MMU */
 
