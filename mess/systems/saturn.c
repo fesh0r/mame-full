@@ -1,1948 +1,2458 @@
-/*
-   Sega Saturn Driver
-   Copyright James Forshaw (TyRaNiD@totalise.net) July 2001
+/* Sega Saturn
 
-   Almost total rewrite. Uses the basic memory model from
-   old saturn driver by Juergen Buchmueller <pullmoll@t-online.de>,
-   although its been fixed up to work with the new mame memory model
-   and to correct a few errors. Little else has survived.
+Driver by David Haywood,Angelo Salese,Olivier Galibert & Mariusz Wojcieszek
+SCSP driver provided by R.Belmont,based on ElSemi's SCSP sound chip emulator
+CD Block driver provided by ANY,based on sthief original emulator
+Many thanks to Guru,Fabien & Runik for the help given.
 
-   Memory Map
+MESS conversion by R. Belmont
 
-   0x0000000 > 0x0080000		: Boot (IPL) ROM
-   0x0100000 > 0x0100080		: SMPC register area
-   0x0180000 > 0x018ffff		: Backup RAM
-   0x0180001 > 0x019ffff		: Backup RAM   Shadow
-   0x0200000 > 0x0300000		: 1 MB of DRAM (Lower Work RAM)
-   0x1000000 > 0x1000004		: Slave SH2 communication register
-   0x1800000 > 0x1800004		: Master SH2 communication register
-   0x2000000 > 0x4000000		: Expansion area (RAM cart etc.)
-   0x5890000 > 0x5900000		: CDROM interface region
-   0x5A00000 > 0x5B00EE4		: SCSP region
-   0x5C00000 > 0x5CC0000		: VDP1 VRAM and frame buffer
-   0x5D00000 > 0x5D00018		: VDP1 registers
-   0x5E00000 > 0x5E80000		: VDP2 VRAM
-   0x5F00000 > 0x5F01000		: VDP2 CRAM
-   0x5F80000 > 0x5F80120		: VDP2 registers
-   0x5FE0000 > 0x5FE00D0		: SCU registers
-   0x6000000 > 0x6100000		: 1 MB SDRAM (Upper Work RAM)
+Hardware overview:
+------------------
+-two SH-2 CPUs,in a master/slave configuration.The master cpu is used to
+boot-up and to do the most of the work,the slave one does extra work that could be
+too much for a single cpu.They both shares all the existant devices;
+-a M68000 CPU,used to drive sound(the SCSP chip).The program is uploaded via the
+SH-2 cpus;
+-a SMPC (System Manager & Peripheral Control),used to drive all the
+devices on the board;
+-a SCU (System Control Unit),mainly used to do DMA operations and to drive interrupts,it
+also has a DSP;
+-an (optional for the ST-V) SH-1 CPU,used to be the CD driver;
+-An A-Bus,where the cart ROM area is located;
+-A B-Bus,where the Video Hardware & the SCU sections are located;
+-Two VDPs chips(named as 1 & 2),used for the video section:
+ -VDP1 is used to render sprites & polygons.
+ -VDP2 is for the tilemap system,there are:
+ 4 effective normal layers;
+ 2 roz layers;
+ 1 back layer;
+ 1 line layer;
+ The VDP2 is capable of the following things (in order):
+ -dynamic resolution (up to 704x512) & various interlacing modes;
+ -mosaic process;
+ -scrolling,scaling,horizontal & vertical cell scrolling & linescroll for the
+  normal planes, the roz ones can also rotate;
+ -versatile window system,used for various effects;
+ -alpha-blending,refered as Color Calculation in the docs;
+ -shadow effects;
+ -global rgb brightness control,separate for every plane;
 
-   SH2 specific areas (are local to each CPU)
-   0xC0000000 > 0xC0000200		: Cache RAM
-   0xFFFFFE00 > 0xFFFFFFFF		: CPU module registers
+Memory map:
+-----------
 
-   Main Processors 2 x Hitachi SH2 7604 RISC chips
-   Clock speeds	At 320 pixels per scanline
-       NTSC - 26.8741 MHz
-       PAL  - 26.6875 MHz
-       At 352 pixels per scanline
-       NTSC - 28.6364 MHz
-       PAL  - 28.4375 MHz
-   Connected as master - slave.
+0x00000000, 0x0007ffff  BIOS ROM
+0x00080000, 0x000fffff  Unused
+0x00100000, 0x00100080  SMPC
+0x00100080, 0x0017ffff  Unused
+0x00180000, 0x0018ffff  Back Up Ram
+0x00190000, 0x001fffff  Unused
+0x00200000, 0x002fffff  Work Ram-L
+0x00300000, 0x00ffffff  Unused
+0x01000000, 0x01000003  MINIT
+0x01000004, 0x017fffff  Unused
+0x01800000, 0x01800003  SINIT
+0x01800004, 0x01ffffff  Unused
+0x02000000, 0x03ffffff  A-BUS CS0
+0x04000000, 0x04ffffff  A-BUS CS1
+0x05000000, 0x057fffff  A-BUS DUMMY
+0x05800000, 0x058fffff  A-BUS CS2
+0x05900000, 0x059fffff  Unused
+0x05a00000, 0x05b00ee3  Sound Region
+0x05b00ee4, 0x05bfffff  Unused
+0x05c00000, 0x05cbffff  VDP 1
+0x05cc0000, 0x05cfffff  Unused
+0x05d00000, 0x05d00017  VDP 1 regs
+0x05d00018, 0x05dfffff  Unused
+0x05e00000, 0x05e7ffff  VDP2
+0x05e80000, 0x05efffff  VDP2 Extra RAM,accessible thru the VRAMSZ register
+0x05f00000, 0x05f00fff  VDP2 Color RAM
+0x05f01000, 0x05f7ffff  Unused
+0x05f80000  0x05f8011f  VDP2 regs
+0x05f80120, 0x05fdffff  Unused
+0x05fe0000, 0x05fe00cf  SCU regs
+0x05fe00d0, 0x05ffffff  Unused
+0x06000000, 0x060fffff  Work Ram-H
+0x06100000, 0x07ffffff  Unused
 
-   Supplementary Maths processor: DSP.
-   Main Memory: 1 Megabyte of SDRAM and 1 Megabyte of DRAM
-   Backup RAM: 64Kb battery backed SRAM
-   Boot ROM: 512Kb-boot ROM
-   Video Hardware: 2 VDP (video display processors) chip sets, VDP1 Draw
-   Sprites, lines, warped sprites (quads), VDP2 controls background graphics.
+*the unused locations aren't known if they are really unused or not,needs verification,most
+of them seem just mirrors of the previous valid memory allocated.
 
-   VDP1 can display sprites in colour depths of 4,8,15 bits per pixel. Number of
-   sprites limited only by sizes and VRAM limitations. Can perform on chip
-   gouroud shading on sprites and rotate sprite frame buffer. Not much point
-   indicating maximum polygon counts as its extremely misleading.
-   VRAM: 512Kb
+ToDo / Notes:
+-------------
 
-   VDP2 can display up to 5 play-fields (although generally not simultaneously),
-   rotated background support. Colour depths of 4,8,15,24 bits per pixel and can
-   do special effects such as transparency, sprite shadowing, half-toning, line
-   scroll, line-colour mapping.
-   VRAM: 512Kb
+-To enter into an Advanced Test Mode,keep pressed the Test Button (F2) on the start-up.
 
-   Selection of NTSC display resolutions
+(Main issues)
+-complete the Master/Slave communication.
+-clean up the IC13 rom loading.
+-Clean-ups and split the various chips(SCU,SMPC)into their respective files.
+-CD block:complete it & add proper CD image support into MAME.
+-the Cart-Dev mode...we need the proper ST-V Cart-Dev bios to be dumped in order to
+ make this work,but probably this will never be done...
+-fix some strange sound cpu memory accesses,there are various issues about this.
+-finish the DSP core.
+-Complete the window system in VDP2 (Still in progress).
+-Add the RS232c interface (serial port),needed by fhboxers.
+-(PCB owners) check if the clocks documented in the manuals are really right for ST-V.
+-SCSP to master irq: see if there is a sound cpu mask bit.
+-Does the cpunum_set_clock really works?Investigate.
+-We need to check every game if can be completed or there are any hanging/crash/protection
+ issues on them.
+-Memo: Some tests done on the original & working PCB,to be implemented:
+ -The AD-Stick returns 0x00 or a similar value.
+ -The Ports E,F & G must return 0xff
+ -The regular BIOS tests (Memory Test) changes his background color at some point to
+  several gradients of red,green and blue.Current implementation remains black.I dunno
+  if this is a framebuffer write or a funky transparency issue (i.e TRANSPARENT_NONE
+  should instead show the back layer).
+ -RBG0 rotating can be checked on the "Advanced Test" menu thru the VDP1/VDP2 check.
+  It rotates clockwise IIRC.Also the ST-V logo when the game is in Multi mode rotates too.
+ -The MIDI communication check fails even on a ST-V board,somebody needs to check if there
+  is a MIDI port on the real PCB...
 
-   320x224 @ 60Hz
-   352x224 @ 60Hz
-   640x224 @ 60Hz
-   640x448 @ 30Hz
-   704x480 @ 30Hz
+(per-game issues)
+-groovef: hangs soon after loaded,caused by two memory addresses in the Work RAM-H range.
+ Kludged for now to work.
+-various: find idle skip if possible.
+-suikoenb/shanhigw + others: why do we get 2 credits on startup with sound enabled?
+-colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
+ on SMPC or controls fail
+-mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
+-bakubaku/colmns97/vfkids: no sound? Caused by missing irq?
+-myfairld: Doesn't work with -sound enabled because of a sound ram check at relative
+ addresses of $700/$710/$720/$730,so I'm not removing the NOT_WORKING flag due of that.Also
+ Micronet programmers had the "great" idea to *not* use the ST-V input standards,infact
+ joystick panel is mapped with input_port(10) instead of input_port(2),so for now use
+ the mahjong panel instead.
+-kiwames: the VDP1 sprites refresh is too slow,causing the "Draw by request" mode to
+ flicker.Moved back to default ATM...
+-pblbeach: Sprites are offset, because it doesn't clear vdp1 local coordinates set by bios,
+ I guess that they are cleared when some vdp1 register is written (kludged for now)
+-decathlt: Is currently using a strange protection DMA abus control,and it uses some sort of RLE
+ compression/encryption that serves as a gfxdecode.
+-vmahjong: the vdp1 textures are too dark(women).
+-findlove: controls doesn't work?
+-Weird design choices:
+ introdon: has the working button as BUTTON2 and not BUTTON1
+ batmanfr: BUTTON1 isn't used at all.
+-seabass: Player sprite is corrupt/missing during movements,caused
+ by incomplete framebuffer switching.
+-sss: Missing backgrounds during gameplay. <- seems just too dark (night),probably
+ just the positioning isn't correct...
+-elandore: Polygons structures/textures aren't right in gameplay,known as protection
+ for the humans structures,imperfect VDP1 emulation for the dragons.
+-hanagumi: ending screens have corrupt graphics. (*untested*)
+-znpwfv: missing Gouraud shading on distorted sprites and polygons
+-znpwfv,twcup98: missing "two screens" mode in RBG emulation
+-batmanfr: Missing sound,caused by an extra ADSP chip which is on the cart.The CPU is a
+ ADSP-2181,and it's the same used by NBA Jam Extreme (ZN game).
+-twcup98: missing Tecmo logo
+-vfremix: hangs after second match
+-sokyugrt: gameplay seems to be not smooth, timing?
+-Here's the list of unmapped read/writes:
+*<all games>
+cpu #0 (PC=0000365C): unmapped program memory dword write to 057FFFFC = 000D0000 & FFFF0000
+cpu #0 (PC=00003654): unmapped program memory dword write to 057FFFFC = 000C0000 & FFFF0000
+*bakubaku:
+cpu #0 (PC=0601022E): unmapped program memory dword write to 02000000 = 00000000 & FFFFFFFF
+cpu #0 (PC=0601023A): unmapped program memory dword write to 02000000 = 00000000 & FFFFFFFF
 
-   SCU: System control unit. Control memory mapping, contains 3 DMA
-   channels, interfaces SH2 processors to DSP co-processor, handles and
-   masks hardware interrupts.
-
-   SMPC: Interfaces to peripherals, performs system management tasks (built in
-   clock, system reset).
-
-   SCSP: Custom sound processing module including MC68000 microprocessor
-   and effects DSP.
-
-   CDROM: Maximum 2x speed (300 k/sec) CLV. Custom interface controlled by
-   Hitachi SH1 processor. 512 Kb Buffer RAM.
-
-   -= Current State Infomation =-
-   Bios starts requesting pad data so maybe we are now in the time set area ????
-   Need to emulate pad system, add more interrupts and get some grafix working so we
-   can see exactly where we are at this current time.
-   Currently locks up waiting on (i guess) a response from the 68k cpu. Probably need to
-   emulate this shortly.
-
-   -= UPDATES =-
-
-   01/07/2001 - Added priliminary vdp2 drawing code.
-   25/06/2001 - Added register names for vdp1/2. Not included yet. Added support for vdp2 reg
-   read/write. Added all my bios images.
-   23/06/2001 - Had to modify sh2.c to get interrupts working. Bios starts resquesting pad data
-   till the sound system causes a lock.. Included a small hack to bypass this lock but then
-   it blocks somewhere else. Waiting on another interrupt ?????
-   20/06/2001 - Made smpc return timer not set. Starts writing stuff to vdp ram. Started adding
-   prelim HBlank support. Using HBlank timing to control VBlank timing (makes scu timers easier)
-   19/06/2001 - Added simple smpc and cd commands.
-   18/06/2001 - Bug in the original driver memory map. SMPC allocated a few meg instead of
-   0x80 bytes :)
-   17/06/2001 - Added all main ram areas. Should work ok for now.
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "machine/eeprom.h"
 #include "cpu/sh2/sh2.h"
+#include "machine/stvcd.h"
+#include "machine/scudsp.h"
+#include "sound/scsp.h"
+#include "devices/chd_cd.h"
+#include <time.h>
 
-#ifndef VERBOSE
-#define VERBOSE 0
-#endif
+extern UINT32* stv_vdp2_regs;
+extern UINT32* stv_vdp2_vram;
+extern UINT32* stv_vdp2_cram;
+extern UINT32* stv_vdp1_vram;
 
-#define DISP_MEM 0 /* define to log memory access to all non work ram areas */
-#define DISP_VDP1 0 /* define to log vdp1 command execution */
+#define USE_SLAVE 1
 
-#if VERBOSE
-#define LOG(x)  logerror x
+#ifdef MAME_DEBUG
+#define LOG_CDB  1
+#define LOG_SMPC 0
+#define LOG_SCU  0
+#define LOG_IRQ  0
 #else
-#define LOG(x)  /* x */
+#define LOG_CDB  0
+#define LOG_SMPC 0
+#define LOG_SCU  0
+#define LOG_IRQ  0
 #endif
 
-#define PAL 0       /* Set to 1 for PAL mode. Must be set to 1 for euro bios */
+#define MASTER_CLOCK_352 57272800
+#define MASTER_CLOCK_320 53748200
 
-static UINT32 *mem; /* Base memory pointer */
-static UINT16 *sound_base;
-static UINT32 *fb1_ram_base;
-static UINT32 *workl_ram_base;
-static UINT32 *vdp1_ram_base;
-static UINT32 *vdp2_ram_base;
-static UINT32 *color_ram_base;
-static UINT32 *workh_ram_base;
-static UINT32 *back_ram_base;
-//static int saturn_video_dirty = 1;
+/**************************************************************************************/
+/*to be added into a stv Header file,remember to remove all the static...*/
+
+static UINT8 *smpc_ram;
+//static void stv_dump_ram(void);
+
+UINT32* stv_workram_l;
+UINT32* stv_workram_h;
+UINT32* stv_backupram;
+UINT32* stv_scu;
+static UINT32* ioga;
+static UINT16* scsp_regs;
+static UINT16* sound_ram;
+
+int stv_vblank,stv_hblank;
+int stv_enable_slave_sh2;
+/*SMPC stuff*/
+static UINT8 NMI_reset;
+static void system_reset(void);
+static UINT8 en_68k;
+/*SCU stuff*/
+static int 	  timer_0;			/* Counter for Timer 0 irq*/
+static int    timer_1;          /* Counter for Timer 1 irq*/
+/*Maybe add these in a struct...*/
+static UINT32 scu_src_0,		/* Source DMA lv 0 address*/
+			  scu_src_1,		/* lv 1*/
+			  scu_src_2,		/* lv 2*/
+			  scu_dst_0,		/* Destination DMA lv 0 address*/
+			  scu_dst_1,		/* lv 1*/
+			  scu_dst_2,		/* lv 2*/
+			  scu_src_add_0,	/* Source Addition for DMA lv 0*/
+			  scu_src_add_1,	/* lv 1*/
+			  scu_src_add_2,	/* lv 2*/
+			  scu_dst_add_0,	/* Destination Addition for DMA lv 0*/
+			  scu_dst_add_1,	/* lv 1*/
+			  scu_dst_add_2;	/* lv 2*/
+static INT32  scu_size_0,		/* Transfer DMA size lv 0*/
+			  scu_size_1,		/* lv 1*/
+			  scu_size_2;		/* lv 2*/
+
+static void dma_direct_lv0(void);	/*DMA level 0 direct transfer function*/
+static void dma_direct_lv1(void);   /*DMA level 1 direct transfer function*/
+static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
+static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
+static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
+static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
+
+
+int minit_boost,sinit_boost;
+double minit_boost_timeslice, sinit_boost_timeslice;
+
+static int scanline;
+
+
+/*A-Bus IRQ checks,where they could be located these?*/
+#define ABUSIRQ(_irq_,_vector_,_mask_) \
+	if(!(stv_scu[40] & _mask_)) { cpunum_set_input_line_and_vector(0, _irq_, HOLD_LINE , _vector_); }
+#if 0
+if(stv_scu[42] & 1)//IRQ ACK
+{
+	ABUSIRQ(7,0x50,0x00010000);
+	ABUSIRQ(7,0x51,0x00020000);
+	ABUSIRQ(7,0x52,0x00040000);
+	ABUSIRQ(7,0x53,0x00080000);
+	ABUSIRQ(4,0x54,0x00100000);
+	ABUSIRQ(4,0x55,0x00200000);
+	ABUSIRQ(4,0x56,0x00400000);
+	ABUSIRQ(4,0x57,0x00800000);
+	ABUSIRQ(1,0x58,0x01000000);
+	ABUSIRQ(1,0x59,0x02000000);
+	ABUSIRQ(1,0x5a,0x04000000);
+	ABUSIRQ(1,0x5b,0x08000000);
+	ABUSIRQ(1,0x5c,0x10000000);
+	ABUSIRQ(1,0x5d,0x20000000);
+	ABUSIRQ(1,0x5e,0x40000000);
+	ABUSIRQ(1,0x5f,0x80000000);
+}
+#endif
+
+/**************************************************************************************/
 
 /*
-   Define memory bases. Note these are byte locations and widths
-   Divide by 4 to get location in mem array
+
+CD Block / SH-1 Handling
+
 */
 
- #define SATURN_ROM_BASE         0x00000000
- #define SATURN_ROM_SIZE         0x00080000
- #define SATURN_WORKL_RAM_BASE   0x00080000
- #define SATURN_WORKL_RAM_SIZE   0x00100000
- #define SATURN_WORKH_RAM_BASE   0x00180000
- #define SATURN_WORKH_RAM_SIZE   0x00100000
+/* SMPC
+ System Manager and Peripheral Control
 
- #define SATURN_VDP1_RAM_BASE    0x00280000
- #define SATURN_VDP1_RAM_SIZE    0x00080000
- #define SATURN_VDP2_RAM_BASE    0x00300000
- #define SATURN_VDP2_RAM_SIZE    0x00080000
- #define SATURN_FB1_RAM_BASE     0x00380000
- #define SATURN_FB1_RAM_SIZE     0x00040000
-#define SATURN_FB2_RAM_BASE     0x003c0000
-#define SATURN_FB2_RAM_SIZE     0x00040000
- #define SATURN_COLOR_RAM_BASE   0x00400000
- #define SATURN_COLOR_RAM_SIZE   0x00001000
- #define SATURN_BACK_RAM_BASE    0x00401000
- #define SATURN_BACK_RAM_SIZE    0x00020000
+*/
+/* SMPC Addresses
 
-#define SATURN_SCR_WIDTH    704
-#define SATURN_SCR_HEIGHT   512
+00
+01 -w  Input Register 0 (IREG)
+02
+03 -w  Input Register 1
+04
+05 -w  Input Register 2
+06
+07 -w  Input Register 3
+08
+09 -w  Input Register 4
+0a
+0b -w  Input Register 5
+0c
+0d -w  Input Register 6
+0e
+0f
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+1a
+1b
+1c
+1d
+1e
+1f -w  Command Register (COMREG)
+20
+21 r-  Output Register 0 (OREG)
+22
+23 r-  Output Register 1
+24
+25 r-  Output Register 2
+26
+27 r-  Output Register 3
+28
+29 r-  Output Register 4
+2a
+2b r-  Output Register 5
+2c
+2d r-  Output Register 6
+2e
+2f r-  Output Register 7
+30
+31 r-  Output Register 8
+32
+33 r-  Output Register 9
+34
+35 r-  Output Register 10
+36
+37 r-  Output Register 11
+38
+39 r-  Output Register 12
+3a
+3b r-  Output Register 13
+3c
+3d r-  Output Register 14
+3e
+3f r-  Output Register 15
+40
+41 r-  Output Register 16
+42
+43 r-  Output Register 17
+44
+45 r-  Output Register 18
+46
+47 r-  Output Register 19
+48
+49 r-  Output Register 20
+4a
+4b r-  Output Register 21
+4c
+4d r-  Output Register 22
+4e
+4f r-  Output Register 23
+50
+51 r-  Output Register 24
+52
+53 r-  Output Register 25
+54
+55 r-  Output Register 26
+56
+57 r-  Output Register 27
+58
+59 r-  Output Register 28
+5a
+5b r-  Output Register 29
+5c
+5d r-  Output Register 30
+5e
+5f r-  Output Register 31
+60
+61 r-  SR
+62
+63 rw  SF
+64
+65
+66
+67
+68
+69
+6a
+6b
+6c
+6d
+6e
+6f
+70
+71
+72
+73
+74
+75 rw PDR1
+76
+77 rw PDR2
+78
+79 -w DDR1
+7a
+7b -w DDR2
+7c
+7d -w IOSEL2/1
+7e
+7f -w EXLE2/1
+*/
+UINT8 IOSEL1;
+UINT8 IOSEL2;
+UINT8 EXLE1;
+UINT8 EXLE2;
+UINT8 PDR1;
+UINT8 PDR2;
 
-#ifdef LSB_FIRST
-#define SWAP_WORDS(x) (((x)<<16) | ((x)>>16)) /* Swaps over words so its easier to interface 32 and 16 bit datas */
-#else
-#define SWAP_WORDS(x) (x) /* On MSB systems no need to swap */
-#endif
+#define SH2_DIRECT_MODE_PORT_1 IOSEL1 = 1
+#define SH2_DIRECT_MODE_PORT_2 IOSEL2 = 1
+#define SMPC_CONTROL_MODE_PORT_1 IOSEL1 = 0
+#define SMPC_CONTROL_MODE_PORT_2 IOSEL2 = 0
 
-/* Memory handlers */
-/* Read handler get offset (byte offset / 4) and mem_mask (all bits required are 0) */
-/* Write handler get data, offset and mem_mask */
-
-#ifdef UNNEEDED
-READ32_HANDLER( saturn_workh_ram_r )
+int DectoBCD(int num)
 {
-  /*offs_t ea;
+	int i, cnt = 0, tmp, res = 0;
 
-  ea = (SATURN_WORKH_RAM_BASE / 4) + offset;*/
-  return workh_ram_base[offset] & (~mem_mask);
-}
-
-WRITE32_HANDLER( saturn_workh_ram_w )
-{
-
-  workh_ram_base[offset] = (workh_ram_base[offset] & mem_mask) | data;
-}
-#endif
-
-static READ32_HANDLER( saturn_sound_ram_r )
-{
-
-#if DISP_MEM
-  logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
-#endif
-
-  return ((sound_base[(offset<<1)] << 16) | (sound_base[(offset<<1)+1])) & (~mem_mask);
-
-}
-
-static WRITE32_HANDLER( saturn_sound_ram_w )
-{
-
-  UINT16 *sb_temp = &sound_base[(offset<<1)];
-#if DISP_MEM
-  logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
-#endif
-
-  *sb_temp = (*sb_temp & (mem_mask >> 16)) | (data >> 16);
-  sb_temp++;
-  *sb_temp = (*sb_temp & mem_mask) | data;
-}
-
-static READ32_HANDLER( saturn_vdp1_ram_r )
-{
-  /*offs_t ea;*/
-
-#if DISP_MEM
-  logerror("vdp1ram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
-#endif
-
-  /*ea = (SATURN_VDP1_RAM_BASE / 4) + offset;*/
-  return vdp1_ram_base[offset] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_vdp1_ram_w )
-{
-
-#if DISP_MEM
-  logerror("vdp1ram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
-#endif
-
-  vdp1_ram_base[offset] = (vdp1_ram_base[offset] & mem_mask) | data;
-}
-
-static READ32_HANDLER( saturn_vdp2_ram_r )
-{
-  /*offs_t ea;*/
-
-#if DISP_MEM
-  logerror("vdp2ram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
-#endif
-
-  /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
-  return vdp2_ram_base[offset] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_vdp2_ram_w )
-{
-  /* offs_t ea;*/
-
-#if DISP_MEM
-  logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
-#endif
-
-  /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
-  vdp2_ram_base[offset] = (vdp2_ram_base[offset] & mem_mask) | data;
-}
-
-static READ32_HANDLER( saturn_fb1_ram_r )
-{
-  /* offs_t ea;*/
-
-#if DISP_MEM
-  logerror("fb1_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
-#endif
-
-  /* ea = (SATURN_FB1_RAM_BASE / 4) + offset;*/
-  return fb1_ram_base[offset] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_fb1_ram_w )
-{
-	logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
-	fb1_ram_base[offset] = (fb1_ram_base[offset] & mem_mask) | data;
-}
-
-/* FB2 not mapped directly */
-#if 0
-static READ32_HANDLER( saturn_fb2_ram_r )
-{
-	offs_t ea;
-
-	logerror("fb2_r offset=%08lX mem_mask=%08lX\n", (long) offset, (long) mem_mask);
-
-	ea = (SATURN_FB2_RAM_BASE / 4) + offset;
-	return mem[ea] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_fb2_ram_w )
-{
-	offs_t ea;
-
-	logerror("fb2_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
-
-	ea = (SATURN_FB2_RAM_BASE / 4) + offset;
-	mem[ea] = (mem[ea] & mem_mask) | data;
-}
-#endif
-/* END FB2 */
-
-static READ32_HANDLER( saturn_color_ram_r )
-
-{
-  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n", (long) offset, (long) mem_mask, (long) activecpu_get_reg(SH2_PC));
-
-  return color_ram_base[offset] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_color_ram_w )
-{
-  /* offs_t ea;*/
-
-#if DISP_MEM
-  logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
-#endif
-
-  /*ea = (SATURN_COLOR_RAM_BASE / 4) + offset;*/
-  color_ram_base[offset] = (color_ram_base[offset] & mem_mask) | data;
-}
-
-static READ32_HANDLER( saturn_back_ram_r )
-{
-
-#if DISP_MEM
-  logerror("backram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
-#endif
-if (offset >= 0x4000) offset -= 0x4000; /* do the shadow RAM offsets */
-  return back_ram_base[offset] & (~mem_mask);
-}
-
-static WRITE32_HANDLER( saturn_back_ram_w )
-{
-
-#if DISP_MEM
-  logerror("backram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
-#endif
-
-if (offset >= 0x4000) offset -= 0x4000; /* do the shadow RAM offsets */
-back_ram_base[offset] = (back_ram_base[offset] & mem_mask) | data;
-}
-
-/****************************************************************
- *  SMPC Handler                                                *
- ****************************************************************/
-
-struct _smpc_state /* Holds infomation on the current state of the smpc */
-
-{
-  UINT8 smem[4];      /* Internal SRAM memory */
-  int reset_disable;  /* Is reset disabled? */
-  int set_timer;      /* Should the timer be set on boot ? */
-  UINT8 smpc_regs[0x80];
-} smpc_state;
-
-/* Defines to access regsiters at known locations */
-
-#define COMMREG (0x1F)
-#define STATUSR (0x61)
-#define STATUSF (0x63)
-#define IREG(x) (((x)<<1) + 1)
-#define OREG(x) (((x)<<1) + 0x21)
-#define PDR1    (0x75)
-#define DDR1    (0x79)
-#define PDR2    (0x77)
-#define DDR2    (0x7B)
-#define IOSEL   (0x7D)
-#define EXEL    (0x7F)
-
-#define SET_TIMER 1    /* Set to 1 to indicate timer must be set */
-
-static void reset_smpc(void)
-
-     /* Reset SMPC system */
-
-{
-  memset(smpc_state.smpc_regs,0,0x80); /* Clear SMPC regs */
-  smpc_state.smpc_regs[STATUSF] = 1;   /* Initially set to 1 ?? */
-  memset(smpc_state.smem,0,4);
-  smpc_state.reset_disable = 1;  /* Initially reset is disabled */
-  smpc_state.set_timer = SET_TIMER; /* Setup set timer state */
-}
-
-static void smpc_execcomm(int commcode)
-
-     /* Function to execute a smpc command when COMMREG is written to */
-
-{
-  /*  if(smpc_state.smpc_regs[STATUSF]) If status flag set (can only execute here, not) */
-
-    {
-      switch(commcode)
+	while (num > 0) 
 	{
-	case 0x1A :
-	  smpc_state.reset_disable = 1; /* Disable reset */
-	  logerror("smpc - Reset Disable (0x1A)\n");
-	  break;
-	case 0x19 :
-	  smpc_state.reset_disable = 0; /* Enable reset */
-	  logerror("smpc - Reset Enable (0x19)\n");
-	  break;
-	case 0x10 :
-	  smpc_state.smpc_regs[STATUSR] = 0x40; /* No data remaining, reset off */
-	  smpc_state.smpc_regs[OREG(0)] = smpc_state.set_timer << 7 | smpc_state.reset_disable << 6;
-	  smpc_state.smpc_regs[OREG(1)] = 0x20;
-	  smpc_state.smpc_regs[OREG(2)] = 0x01;
-	  smpc_state.smpc_regs[OREG(3)] = 0x01;
-	  smpc_state.smpc_regs[OREG(4)] = 0x11;
-	  smpc_state.smpc_regs[OREG(5)] = 0x11;
-	  smpc_state.smpc_regs[OREG(6)] = 0x11;
-	  smpc_state.smpc_regs[OREG(7)] = 0x11;
-	  smpc_state.smpc_regs[OREG(8)] = 0;
-	  smpc_state.smpc_regs[OREG(9)] = 0x1;
-	  smpc_state.smpc_regs[OREG(10)] = 0;
-	  smpc_state.smpc_regs[OREG(11)] = 0;
-	  smpc_state.smpc_regs[OREG(12)] = 0;
-	  smpc_state.smpc_regs[OREG(13)] = 0;
-	  smpc_state.smpc_regs[OREG(14)] = 0;
-	  smpc_state.smpc_regs[OREG(15)] = 0;
-	  logerror("smpc - Int Back (0x10)\n");
-	  break;
-	case 0x2:
-	  printf /*logerror*/ ("smpc - Slave SH-2 ON (0x2)\n");
-	  break;
-	case 0x0:
-	  printf /*logerror*/ ("smpc - Master SH-2 ON (0x0)\n");
-	  break;
-	case 0x3:
-	  printf /*logerror*/ ("smpc - Slave SH-2 OFF (0x3)\n");
-	  break;
-	case 0x7 :
-	  printf /*logerror*/ ("smpc - Sound OFF (0x7)\n");
-	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
-	  break;
-	case 0x6 :
-	  printf /*logerror*/("smpc - Sound ON (0x6)\n");
-	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
-	  cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-	  cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
-	  break;
-	case 0xD :
-	  logerror("smpc - Reset System (0xD)\n");
-	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
-	  cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
-	  cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
-	  break;
+		tmp = num;
+		while (tmp >= 10) tmp %= 10;
+		for (i=0; i<cnt; i++)
+			tmp *= 16;
+		res += tmp;
+		cnt++;
+		num /= 10;
 	}
-      smpc_state.smpc_regs[OREG(31)] = commcode;
-      smpc_state.smpc_regs[STATUSF]  = 0;
-    }
+
+	return res;
 }
 
-static READ32_HANDLER( saturn_smpc_r )   /* SMPC */
+static void system_reset()
 {
-  UINT32 ret_val = 0;
-  int loop;
-  UINT32 temp_mask;
+	/*Only backup ram and SMPC ram are retained after that this command is issued.*/
+	memset(stv_scu      ,0x00,0x000100);
+	memset(scsp_regs    ,0x00,0x001000);
+	memset(sound_ram    ,0x00,0x080000);
+	memset(stv_workram_h,0x00,0x100000);
+	memset(stv_workram_l,0x00,0x100000);
+	memset(stv_vdp2_regs,0x00,0x040000);
+	memset(stv_vdp2_vram,0x00,0x100000);
+	memset(stv_vdp2_cram,0x00,0x080000);
+	//vdp1
+	//A-Bus
+	/*Order is surely wrong but whatever...*/
+}
 
-  ret_val  = smpc_state.smpc_regs[offset<<2] << 24;      /* Hopefully will reconstruct long word */
-  ret_val |= smpc_state.smpc_regs[(offset<<2)+1] << 16;  /* independant of endian from bytes     */
-  ret_val |= smpc_state.smpc_regs[(offset<<2)+2] << 8;
-  ret_val |= smpc_state.smpc_regs[(offset<<2)+3];
+static UINT8 stv_SMPC_r8 (int offset)
+{
+	int return_data;
 
-  /* SMPC regs only on odd address values so could remove two statements */
 
-  /* Log data accesses */
+	return_data = smpc_ram[offset];
 
-  temp_mask = 0xFF000000; /* Setup to check MSB of mask */
-  for(loop = 0;loop < 4;loop++)
-    {
-      if(!(mem_mask & temp_mask)) /* If not masked we can write a byte */
+	if ((offset == 0x61))
+		return_data = 0x00;	// must be clear for Saturn BIOS to boot
+
+	if (offset == 0x75)//PDR1 read
+		return_data = 0xff; //readinputport(0);
+
+	if (offset == 0x77)//PDR2 read
+		return_data=  0xff; // | EEPROM_read_bit());
+
+	if (offset == 0x33) return_data = 1;	// region code (1=japan, 4=US, 12=Europe)
+
+	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;//???
+
+	//if(LOG_SMPC) logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
+
+
+	return return_data;
+}
+
+static void stv_SMPC_w8 (int offset, UINT8 data)
+{
+	time_t ltime;
+	struct tm *today;
+	time(&ltime);
+	today = localtime(&ltime);
+
+//  if(LOG_SMPC) logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
+	smpc_ram[offset] = data;
+
+	if(offset == 0x75)
 	{
-	  UINT32 ea;
-	  UINT32 d;
+		EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
+		EEPROM_write_bit(data & 0x10);
+		EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
 
-	  ea = (offset*4) + loop;
-	  d = (ret_val >> (8*(3-loop))) & 0xFF;
 
-	  /* Log smpc read - should be turned off when not needed */
+//      if (data & 0x01)
+//          if(LOG_SMPC) logerror("bit 0 active\n");
+//      if (data & 0x02)
+//          if(LOG_SMPC) logerror("bit 1 active\n");
+//      if (data & 0x10)
+			//if(LOG_SMPC) logerror("bit 4 active\n");//LOT
+		//if(LOG_SMPC) logerror("SMPC: ram [0x75] = %02x\n",smpc_ram[0x75]);
+		PDR1 = (data & 0x60);
+	}
 
-	  if((ea >= IREG(0)) && (ea <= IREG(7)))
-	    {
-	      logerror("smpc_r IREG%01d -> %02lX - PC=%08lX\n", (int) (ea-IREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
-	    }
-	  else
-	    if((ea >= OREG(0)) && (ea <= OREG(31)))
+	if(offset == 0x77)
+	{
+		/*
+            ACTIVE LOW
+            bit 4(0x10) - Enable Sound System
+        */
+		//ui_popup("PDR2 = %02x",smpc_ram[0x77]);
+		if(!(smpc_ram[0x77] & 0x10))
 		{
-		  logerror("smpc_r OREG%01d -> %02lX - PC=%08lX\n", (int) (ea-OREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
+			if(LOG_SMPC) logerror("SMPC: M68k on\n");
+			cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+			en_68k = 1;
 		}
-	    else
-	      {
-		switch(ea) /* See if the write is significant */
-		  {
-		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n", (long) ea, (long) d, (long) activecpu_get_reg(SH2_PC));
-		  }
-	      }
-	}
-      temp_mask >>= 8;
-    }
-
-  return ret_val & ~mem_mask;
-}
-
-static WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
-{
-  int loop;
-  UINT32 temp_mask;
-
-  //  logerror("smpc_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
-  temp_mask = 0xFF000000; /* Setup to check MSB of mask */
-  for(loop = 0;loop < 4;loop++)
-    {
-      if(!(mem_mask & temp_mask)) /* If not masked we can write a byte */
-	{
-	  UINT32 ea;
-	  UINT32 d;
-
-	  ea = (offset*4) + loop;
-	  d = (data >> (8*(3-loop))) & 0xFF;
-
-	  /* work out what register has been set and execute command etc */
-
-	  smpc_state.smpc_regs[ea] = d;
-	  switch(ea)
-	    {
-	    case COMMREG :
-	      smpc_execcomm(d); /* If a write to commreg, execute command */
-	      break;
-	    }
-
-	  /* Log smpc write - should be turned off when not needed */
-
-	  if((ea >= IREG(0)) && (ea <= IREG(7)))
-	    {
-	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n", (int) (ea-IREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
-	    }
-	  else
-	    if((ea >= OREG(0)) && (ea <= OREG(31)))
+		else
 		{
-		  logerror("smpc_w OREG%01d <- %02lX - PC=%08lX\n", (int) (ea-OREG(0))/2, (long) d, (long) activecpu_get_reg(SH2_PC));
+			if(LOG_SMPC) logerror("SMPC: M68k off\n");
+			cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+			en_68k = 0;
 		}
-	    else
-	      {
-		switch(ea) /* See if the write is significant */
-		  {
-		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
-		    break;
-		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d, (unsigned int) activecpu_get_reg(SH2_PC));
-		  }
-	      }
+		//if(LOG_SMPC) logerror("SMPC: ram [0x77] = %02x\n",smpc_ram[0x77]);
+		PDR2 = (data & 0x60);
 	}
-      temp_mask >>= 8;
+
+	if(offset == 0x7d)
+	{
+		if(smpc_ram[0x7d] & 1)
+			SH2_DIRECT_MODE_PORT_1;
+		else
+			SMPC_CONTROL_MODE_PORT_1;
+
+		if(smpc_ram[0x7d] & 2)
+			SH2_DIRECT_MODE_PORT_2;
+		else
+			SMPC_CONTROL_MODE_PORT_2;
+	}
+
+	if(offset == 0x7f)
+	{
+		//enable PAD irq & VDP2 external latch for port 1/2
+		EXLE1 = smpc_ram[0x7f] & 1 ? 1 : 0;
+		EXLE2 = smpc_ram[0x7f] & 2 ? 1 : 0;
+		if(EXLE1 || EXLE2)
+			if(!(stv_scu[40] & 0x0100)) /*Pad irq*/
+			{
+				if(LOG_SMPC) logerror ("Interrupt: PAD irq at scanline %04x, Vector 0x48 Level 0x08\n",scanline);
+				cpunum_set_input_line_and_vector(0, 8, HOLD_LINE , 0x48);
+			}
+	}
+
+	if (offset == 0x1f)
+	{
+		switch (data)
+		{
+			case 0x00:
+				if(LOG_SMPC) logerror ("SMPC: Master ON\n");
+				smpc_ram[0x5f]=0x00;
+				break;
+			//in theory 0x01 is for Master OFF,but obviously is not used.
+			case 0x02:
+				if(LOG_SMPC) logerror ("SMPC: Slave ON\n");
+				smpc_ram[0x5f]=0x02;
+				#if USE_SLAVE
+				stv_enable_slave_sh2 = 1;
+				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+				#endif
+				break;
+			case 0x03:
+				if(LOG_SMPC) logerror ("SMPC: Slave OFF\n");
+				smpc_ram[0x5f]=0x03;
+				stv_enable_slave_sh2 = 0;
+				cpu_trigger(1000);
+				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+				break;
+			case 0x06:
+				if(LOG_SMPC) logerror ("SMPC: Sound ON\n");
+				/* wrong? */
+				smpc_ram[0x5f]=0x06;
+				cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+				break;
+			case 0x07:
+				if(LOG_SMPC) logerror ("SMPC: Sound OFF\n");
+				smpc_ram[0x5f]=0x07;
+				break;
+			/*CD (SH-1) ON/OFF,guess that this is needed for Sports Fishing games...*/
+			//case 0x08:
+			//case 0x09:
+			case 0x0d:
+				if(LOG_SMPC) logerror ("SMPC: System Reset\n");
+				smpc_ram[0x5f]=0x0d;
+				cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
+				system_reset();
+				break;
+			case 0x0e:
+				if(LOG_SMPC) logerror ("SMPC: Change Clock to 352\n");
+				smpc_ram[0x5f]=0x0e;
+				cpunum_set_clock(0, MASTER_CLOCK_352/2);
+				cpunum_set_clock(1, MASTER_CLOCK_352/2);
+				cpunum_set_clock(2, MASTER_CLOCK_352/5);
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
+				break;
+			case 0x0f:
+				if(LOG_SMPC) logerror ("SMPC: Change Clock to 320\n");
+				smpc_ram[0x5f]=0x0f;
+				cpunum_set_clock(0, MASTER_CLOCK_320/2);
+				cpunum_set_clock(1, MASTER_CLOCK_320/2);
+				cpunum_set_clock(2, MASTER_CLOCK_320/5);
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
+				break;
+			/*"Interrupt Back"*/
+			case 0x10:
+				if(LOG_SMPC) logerror ("SMPC: Status Acquire\n");
+				smpc_ram[0x5f]=0x10;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+			  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
+		    	smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
+	    		smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
+		    	smpc_ram[0x29] = DectoBCD(today->tm_mday);
+		    	smpc_ram[0x2b] = DectoBCD(today->tm_hour);
+		    	smpc_ram[0x2d] = DectoBCD(today->tm_min);
+		    	smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+
+				smpc_ram[0x31]=0x00;  //?
+
+				//smpc_ram[0x33]=readinputport(7);
+
+				smpc_ram[0x35]=0x00;
+				smpc_ram[0x37]=0x00;
+
+				smpc_ram[0x39]=0xff;
+				smpc_ram[0x3b]=0xff;
+				smpc_ram[0x3d]=0xff;
+				smpc_ram[0x3f]=0xff;
+				smpc_ram[0x41]=0xff;
+				smpc_ram[0x43]=0xff;
+				smpc_ram[0x45]=0xff;
+				smpc_ram[0x47]=0xff;
+				smpc_ram[0x49]=0xff;
+				smpc_ram[0x4b]=0xff;
+				smpc_ram[0x4d]=0xff;
+				smpc_ram[0x4f]=0xff;
+				smpc_ram[0x51]=0xff;
+				smpc_ram[0x53]=0xff;
+				smpc_ram[0x55]=0xff;
+				smpc_ram[0x57]=0xff;
+				smpc_ram[0x59]=0xff;
+				smpc_ram[0x5b]=0xff;
+				smpc_ram[0x5d]=0xff;
+
+			//  /*This is for RTC,cartridge code and similar stuff...*/
+			//  if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/ /* we can't check this .. breaks controls .. probably issues elsewhere? */
+				{
+					if(LOG_SMPC) logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
+					cpunum_set_input_line_and_vector(0, 8, HOLD_LINE , 0x47);
+				}
+			break;
+			/* RTC write*/
+			case 0x16:
+				if(LOG_SMPC) logerror("SMPC: RTC write\n");
+				smpc_ram[0x2f] = smpc_ram[0x0d];
+				smpc_ram[0x2d] = smpc_ram[0x0b];
+				smpc_ram[0x2b] = smpc_ram[0x09];
+				smpc_ram[0x29] = smpc_ram[0x07];
+				smpc_ram[0x27] = smpc_ram[0x05];
+				smpc_ram[0x25] = smpc_ram[0x03];
+				smpc_ram[0x23] = smpc_ram[0x01];
+				smpc_ram[0x5f]=0x16;
+			break;
+			/* SMPC memory setting*/
+			case 0x17:
+				if(LOG_SMPC) logerror ("SMPC: memory setting\n");
+				smpc_ram[0x5f]=0x17;
+			break;
+			case 0x18:
+				if(LOG_SMPC) logerror ("SMPC: NMI request\n");
+				smpc_ram[0x5f]=0x18;
+				/*NMI is unconditionally requested?*/
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+				break;
+			case 0x19:
+				if(LOG_SMPC) logerror ("SMPC: NMI Enable\n");
+				smpc_ram[0x5f]=0x19;
+				NMI_reset = 0;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+				break;
+			case 0x1a:
+				if(LOG_SMPC) logerror ("SMPC: NMI Disable\n");
+				smpc_ram[0x5f]=0x1a;
+				NMI_reset = 1;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+
+				break;
+			default:
+				if(LOG_SMPC) logerror ("cpu #%d (PC=%08X) SMPC: undocumented Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
+		}
+
+		// we've processed the command, clear status flag
+		smpc_ram[0x63] = 0x00;
+		/*TODO:emulate the timing of each command...*/
+	}
+}
+
+
+static READ32_HANDLER ( stv_SMPC_r32 )
+{
+	int byte = 0;
+	int readdata = 0;
+	/* registers are all byte accesses, convert here */
+	offset = offset << 2; // multiply offset by 4
+
+	if (!(mem_mask & 0xff000000))	{ byte = 0; readdata = stv_SMPC_r8(offset+byte) << 24; }
+	if (!(mem_mask & 0x00ff0000))	{ byte = 1; readdata = stv_SMPC_r8(offset+byte) << 16; }
+	if (!(mem_mask & 0x0000ff00))	{ byte = 2; readdata = stv_SMPC_r8(offset+byte) << 8;  }
+	if (!(mem_mask & 0x000000ff))	{ byte = 3; readdata = stv_SMPC_r8(offset+byte) << 0;  }
+
+	return readdata;
+}
+
+
+static WRITE32_HANDLER ( stv_SMPC_w32 )
+{
+	int byte = 0;
+	int writedata = 0;
+	/* registers are all byte accesses, convert here so we can use the data more easily later */
+	offset = offset << 2; // multiply offset by 4
+
+	if (!(mem_mask & 0xff000000))	{ byte = 0; writedata = data >> 24; }
+	if (!(mem_mask & 0x00ff0000))	{ byte = 1; writedata = data >> 16; }
+	if (!(mem_mask & 0x0000ff00))	{ byte = 2; writedata = data >> 8;  }
+	if (!(mem_mask & 0x000000ff))	{ byte = 3; writedata = data >> 0;  }
+
+	writedata &= 0xff;
+
+	offset += byte;
+
+	stv_SMPC_w8(offset,writedata);
+}
+
+
+/*
+(Preliminary) explaination about this:
+VBLANK-OUT is used at the start of the vblank period.It also sets the timer zero
+variable to 0.
+If the Timer Compare register is zero too,the Timer 0 irq is triggered.
+
+HBLANK-IN is used at the end of each scanline except when in VBLANK-IN/OUT periods.
+
+The timer 0 is also incremented by one at each HBLANK and checked with the value
+of the Timer Compare register;if equal,the timer 0 irq is triggered here too.
+Notice that the timer 0 compare register can be more than the VBLANK maximum range,in
+this case the timer 0 irq is simply never triggered.This is a known Sega Saturn/ST-V "bug".
+
+VBLANK-IN is used at the end of the vblank period.
+
+SCU register[36] is the timer zero compare register.
+SCU register[40] is for IRQ masking.
+*/
+
+/* to do, update bios idle skips so they work better with this arrangement.. */
+
+
+static INTERRUPT_GEN( stv_interrupt )
+{
+	scanline = 261-cpu_getiloops();
+
+	stv_hblank = 0;
+
+	if(scanline == 0)
+	{
+		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
+		{
+			if(LOG_IRQ) logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
+			cpunum_set_input_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
+		}
+		stv_vblank = 0;
+	}
+	else if(scanline <= 223 && scanline >= 1)/*Correct?*/
+	{
+		timer_0++;
+		timer_1++;
+		stv_hblank = 1;
+		/*TODO: check this...*/
+		/*Timer 1 handling*/
+		if((stv_scu[38] & 1))
+		{
+			if((!(stv_scu[40] & 0x10)) && (!(stv_scu[38] & 0x80)))
+			{
+				if(LOG_IRQ) logerror ("Interrupt: Timer 1 at scanline %04x, Vector 0x44 Level 0x0b\n",scanline);
+				cpunum_set_input_line_and_vector(0, 0xb, HOLD_LINE, 0x44 );
+			}
+			else if((!(stv_scu[40] & 0x10)) && (stv_scu[38] & 0x80))
+			{
+				if(timer_1 == (stv_scu[36] & 0x1ff))
+				{
+					if(LOG_IRQ) logerror ("Interrupt: Timer 1 at scanline %04x, Vector 0x44 Level 0x0b\n",scanline);
+					cpunum_set_input_line_and_vector(0, 0xb, HOLD_LINE, 0x44 );
+				}
+			}
+		}
+		if(timer_0 == (stv_scu[36] & 0x1ff))
+		{
+			if(!(stv_scu[40] & 8))/*Timer 0*/
+			{
+				if(LOG_IRQ) logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+			}
+		}
+
+		/*TODO:use this *at the end* of the draw line.*/
+		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
+		{
+			if(LOG_IRQ) logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
+			cpunum_set_input_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
+		}
+	}
+	else if(scanline == 224)
+	{
+		timer_0 = 0;
+		timer_1 = 0;
+
+		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
+		{
+			if(LOG_IRQ) logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
+			cpunum_set_input_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
+		}
+		stv_vblank = 1;
+
+		if(timer_0 == (stv_scu[36] & 0x1ff))
+		{
+			if(!(stv_scu[40] & 8))/*Timer 0*/
+			{
+				if(LOG_IRQ) logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+			}
+		}
+		if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
+			cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
+	}
+}
+
+/*
+I/O overview:
+    PORT-A  1st player inputs
+    PORT-B  2nd player inputs
+    PORT-C  system input
+    PORT-D  system output
+    PORT-E  I/O 1
+    PORT-F  I/O 2
+    PORT-G  I/O 3
+    PORT-AD AD-Stick inputs?(Fake for now...)
+    SERIAL COM
+
+offsets:
+    0h PORT-A
+    0l PORT-B
+    1h PORT-C
+    1l PORT-D
+    2h PORT-E
+    2l PORT-F (extra button layout)
+    3h PORT-G
+    3l
+    4h PORT-SEL
+    4l
+    5h SERIAL COM WRITE
+    5l
+    6h SERIAL COM READ
+    6l
+    7h
+    7l PORT-AD
+*/
+static UINT8 port_ad[] =
+{
+	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
+};
+
+static UINT8 port_sel,mux_data;
+
+#define HI_WORD_ACCESS (mem_mask & 0x00ff0000) == 0
+#define LO_WORD_ACCESS (mem_mask & 0x000000ff) == 0
+
+READ32_HANDLER ( stv_io_r32 )
+{
+	static int i= -1;
+
+	switch(offset)
+	{
+		case 0:
+		switch(port_sel)
+		{
+			case 0x77: return 0xff000000|(readinputport(2) << 16) |0x0000ff00|(readinputport(3));
+			case 0x67:
+			{
+				switch(mux_data)
+				{
+					/*Mahjong panel interface,bit wise(ACTIVE LOW)*/
+					case 0xfe:	return 0xff000000 | (readinputport(7)  << 16) | 0x0000ff00 | (readinputport(12));
+					case 0xfd:  return 0xff000000 | (readinputport(8)  << 16) | 0x0000ff00 | (readinputport(13));
+					case 0xfb:	return 0xff000000 | (readinputport(9)  << 16) | 0x0000ff00 | (readinputport(14));
+					case 0xf7:	return 0xff000000 | (readinputport(10) << 16) | 0x0000ff00 | (readinputport(15));
+					case 0xef:  return 0xff000000 | (readinputport(11) << 16) | 0x0000ff00 | (readinputport(16));
+					/*Joystick panel*/
+					default:
+					//ui_popup("%02x MUX DATA",mux_data);
+				    return (readinputport(2) << 16) | (readinputport(3));
+				}
+			}
+			//default:
+			default:
+			//ui_popup("%02x PORT SEL",port_sel);
+			return (readinputport(2) << 16) | (readinputport(3));
+		}
+		case 1:
+		return (readinputport(4) << 16) | (ioga[1]);
+		case 2:
+		switch(port_sel)
+		{
+			case 0x77:	return (readinputport(5) << 16) | (readinputport(6));
+			case 0x67:	return 0xffffffff;/**/
+			case 0x20:  return 0xffff0000 | (ioga[2] & 0xffff);
+			case 0x10:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
+			case 0x60:  return 0xffffffff;/**/
+			default:
+			//ui_popup("offs: 2 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
+		case 3:
+		switch(port_sel)
+		{
+			case 0x60:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
+			default:
+			//ui_popup("offs: 3 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
+		case 6:
+		switch(port_sel)
+		{
+			case 0x60:  return ioga[5];
+			default:
+			//ui_popup("offs: 6 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
+		case 7:
+		ui_popup("Read from PORT_AD");
+		i++;
+		return port_ad[i & 7];
+		default:
+		return ioga[offset];
+	}
+}
+
+WRITE32_HANDLER ( stv_io_w32 )
+{
+	switch(offset)
+	{
+		case 1:
+			if(LO_WORD_ACCESS)
+			{
+				/*Why does the BIOS tests these as ACTIVE HIGH?A program bug?*/
+				ioga[1] = (data) & 0xff;
+				coin_counter_w(0,~data & 0x01);
+				coin_counter_w(1,~data & 0x02);
+				coin_lockout_w(0,~data & 0x04);
+				coin_lockout_w(1,~data & 0x08);
+				/*
+                other bits reserved
+                */
+			}
+		break;
+		case 2:
+			if(HI_WORD_ACCESS)
+			{
+				ioga[2] = data >> 16;
+				mux_data = ioga[2];
+			}
+			else if(LO_WORD_ACCESS)
+				ioga[2] = data;
+		break;
+		case 3:
+			if(HI_WORD_ACCESS)
+				ioga[3] = data;
+		break;
+		case 4:
+			if(HI_WORD_ACCESS)
+				port_sel = (data & 0xffff0000) >> 16;
+		break;
+		case 5:
+			if(HI_WORD_ACCESS)
+				ioga[5] = data;
+		break;
+	}
+}
+
+/*
+
+SCU Handling
+
+*/
+
+/**********************************************************************************
+SCU Register Table
+offset,relative address
+Registers are in long words.
+===================================================================================
+0     0000  Level 0 DMA Set Register
+1     0004
+2     0008
+3     000c
+4     0010
+5     0014
+6     0018
+7     001c
+8     0020  Level 1 DMA Set Register
+9     0024
+10    0028
+11    002c
+12    0030
+13    0034
+14    0038
+15    003c
+16    0040  Level 2 DMA Set Register
+17    0044
+18    0048
+19    004c
+20    0050
+21    0054
+22    0058
+23    005c
+24    0060  DMA Forced Stop
+25    0064
+26    0068
+27    006c
+28    0070  <Free>
+29    0074
+30    0078
+31    007c  DMA Status Register
+32    0080  DSP Program Control Port
+33    0084  DSP Program RAM Data Port
+34    0088  DSP Data RAM Address Port
+35    008c  DSP Data RAM Data Port
+36    0090  Timer 0 Compare Register
+37    0094  Timer 1 Set Data Register
+38    0098  Timer 1 Mode Register
+39    009c  <Free>
+40    00a0  Interrupt Mask Register
+41    00a4  Interrupt Status Register
+42    00a8  A-Bus Interrupt Acknowledge
+43    00ac  <Free>
+44    00b0  A-Bus Set Register
+45    00b4
+46    00b8  A-Bus Refresh Register
+47    00bc  <Free>
+48    00c0
+49    00c4  SCU SDRAM Select Register
+50    00c8  SCU Version Register
+51    00cc  <Free>
+52    00cf
+===================================================================================
+DMA Status Register(32-bit):
+xxxx xxxx x--- xx-- xx-- xx-- xx-- xx-- UNUSED
+---- ---- -x-- ---- ---- ---- ---- ---- DMA DSP-Bus access
+---- ---- --x- ---- ---- ---- ---- ---- DMA B-Bus access
+---- ---- ---x ---- ---- ---- ---- ---- DMA A-Bus access
+---- ---- ---- --x- ---- ---- ---- ---- DMA lv 1 interrupt
+---- ---- ---- ---x ---- ---- ---- ---- DMA lv 0 interrupt
+---- ---- ---- ---- --x- ---- ---- ---- DMA lv 2 in stand-by
+---- ---- ---- ---- ---x ---- ---- ---- DMA lv 2 in operation
+---- ---- ---- ---- ---- --x- ---- ---- DMA lv 1 in stand-by
+---- ---- ---- ---- ---- ---x ---- ---- DMA lv 1 in operation
+---- ---- ---- ---- ---- ---- --x- ---- DMA lv 0 in stand-by
+---- ---- ---- ---- ---- ---- ---x ---- DMA lv 0 in operation
+---- ---- ---- ---- ---- ---- ---- --x- DSP side DMA in stand-by
+---- ---- ---- ---- ---- ---- ---- ---x DSP side DMA in operation
+
+**********************************************************************************/
+/*
+DMA TODO:
+-Verify if there are any kind of bugs,do clean-ups,use better comments
+ and macroize for better reading...
+-Add timings(but how fast are each DMA?).
+-Add level priority & DMA status register.
+-Add DMA start factor conditions that are different than 7.
+-Add byte data type transfer.
+-Set boundaries.
+*/
+
+#define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
+#define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
+#define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
+#define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
+
+#define DMA_STATUS				(stv_scu[31])
+/*These macros sets the various DMA status flags.*/
+#define D0MV_1	if(!(DMA_STATUS & 0x10))    DMA_STATUS^=0x10
+#define D1MV_1	if(!(DMA_STATUS & 0x100))   DMA_STATUS^=0x100
+#define D2MV_1	if(!(DMA_STATUS & 0x1000))  DMA_STATUS^=0x1000
+#define D0MV_0	if(DMA_STATUS & 0x10) 	    DMA_STATUS^=0x10
+#define D1MV_0	if(DMA_STATUS & 0x100) 	    DMA_STATUS^=0x100
+#define D2MV_0	if(DMA_STATUS & 0x1000)     DMA_STATUS^=0x1000
+
+UINT32 scu_index_0,scu_index_1,scu_index_2;
+static UINT8 scsp_to_main_irq;
+
+static UINT32 scu_add_tmp;
+
+/*For area checking*/
+#define ABUS(_lv_)       ((scu_##_lv_ & 0x07ffffff) >= 0x02000000) && ((scu_##_lv_ & 0x07ffffff) <= 0x04ffffff)
+#define BBUS(_lv_)       ((scu_##_lv_ & 0x07ffffff) >= 0x05a00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05ffffff)
+#define VDP1_REGS(_lv_)  ((scu_##_lv_ & 0x07ffffff) >= 0x05d00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05dfffff)
+#define VDP2(_lv_)       ((scu_##_lv_ & 0x07ffffff) >= 0x05e00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05fdffff)
+#define WORK_RAM_L(_lv_) ((scu_##_lv_ & 0x07ffffff) >= 0x00200000) && ((scu_##_lv_ & 0x07ffffff) <= 0x002fffff)
+#define WORK_RAM_H(_lv_) ((scu_##_lv_ & 0x07ffffff) >= 0x06000000) && ((scu_##_lv_ & 0x07ffffff) <= 0x060fffff)
+#define SOUND_RAM(_lv_)  ((scu_##_lv_ & 0x07ffffff) >= 0x05a00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05afffff)
+
+READ32_HANDLER( stv_scu_r32 )
+{
+	/*TODO: write only registers must return 0...*/
+	//ui_popup("%02x",DMA_STATUS);
+	//if (offset == 23)
+	//{
+		//Super Major League reads here???
+	//}
+
+	// Saturn BIOS needs this (need to investigate further)
+	if (offset == 32)
+	{
+		return 0x00100000;
+	}
+
+	if (offset == 31)
+	{
+		if(LOG_SCU) logerror("(PC=%08x) DMA status reg read\n",activecpu_get_pc());
+		return stv_scu[offset];
+	}
+	else if ( offset == 35 )
+	{
+        if(LOG_SCU) logerror( "DSP mem read at %08X\n", stv_scu[34]);
+        return dsp_ram_addr_r();
     }
-}
-
-static READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
-{
-	logerror("cs0_r offset=%08lX mem_mask=%08lX\n", (long) offset*4, (long) mem_mask);
-
-	return 0xa5a5a5a5 & ~mem_mask;
-}
-
-static WRITE32_HANDLER( saturn_cs0_w )   /* CS0 */
-{
-}
-
-static READ32_HANDLER( saturn_cs1_r )	  /* CS1 */
-{
-  return 0xa5a5a5a5 & ~mem_mask;
-}
-
-static WRITE32_HANDLER( saturn_cs1_w )   /* CS1 */
-{
-}
-
-static READ32_HANDLER( saturn_cs2_r )	  /* CS2 */
-{
-  return 0xa5a5a5a5 & ~mem_mask;
-}
-
-static WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
-{
-}
-
-/* SCU Handler */
-
-static const char *scu_regnames[0x34] = {"DMA0 Read     ",     /* 0x00 */
-					 "DMA0 Write    ",     /* 0x04 */
-					 "DMA0 Count    ",     /* 0x08 */
-					 "DMA0 Addr add ",     /* 0x0C */
-					 "DMA0 Enable   ",     /* 0x10 */
-					 "DMA0 Mode     ",     /* 0x14 */
-					 "X18           ",     /* 0x18 */
-					 "X1C           ",     /* 0x1C */
-					 "DMA1 Read     ",     /* 0x20 */
-					 "DMA1 Write    ",     /* 0x24 */
-					 "DMA1 Count    ",     /* 0x28 */
-					 "DMA1 Addr add ",     /* 0x2C */
-					 "DMA1 Enable   ",     /* 0x30 */
-					 "DMA1 Mode     ",     /* 0x34 */
-					 "X38           ",     /* 0x38 */
-					 "X3C           ",     /* 0x3C */
-					 "DMA2 Read     ",     /* 0x40 */
-					 "DMA2 Write    ",     /* 0x44 */
-					 "DMA2 Count    ",     /* 0x48 */
-					 "DMA2 Addr add ",     /* 0x4C */
-					 "DMA2 Enable   ",     /* 0x50 */
-					 "DMA2 Mode     ",     /* 0x54 */
-					 "X58           ",     /* 0x58 */
-					 "X5C           ",     /* 0x5C */
-					 "X60           ",     /* DMA force stop. Doesn't exist */
-					 "X64           ",
-					 "X68           ",
-					 "X6C           ",
-					 "X70           ",
-					 "X74           ",
-					 "X78           ",
-					 "X7C           ",
-					 "DSP Ctrl Port ",
-					 "DSP Prog RAM  ",
-					 "DSP Data Addr ",
-					 "DSP Data Data ",
-					 "Timer0 Compare",
-					 "Timer1 Set    ",
-					 "Timer1 Mode   ",
-					 "X9C           ",
-					 "Int Mask      ",
-					 "Int Stat      ",
-					 "A-Bus IntAck  ",
-					 "XAC           ",
-					 "A-Bus Set 0   ",
-					 "A-Bus Set 1   ",
-					 "A-Bus Refresh ",
-					 "XBC           ",
-					 "XC0           ",
-					 "SDRAM select  ",
-					 "SCU Version   ",
-					 "XCC           "};
-
-
-UINT32 scu_regs[0x34]; /* SCU register block */
-static const char *int_names[16] = {
-  "VBlank-IN", "VBlank-OUT", "HBlank-IN", "Timer 0",
-  "Timer 1", "DSP", "Sound", "SMPC", "PAD",
-  "DMA Level 2", "DMA Level 1", "DMA Level 0",
-  "DMA Illegal", "Sprite END", "Illegal", "A-Bus" };
-
-enum
-
-{
-  VBLANK_IN_INT,
-  VBLANK_OUT_INT,
-  HBLANK_IN_INT,
-  TIMER_0_INT,
-  TIMER_1_INT,
-  DSP_INT,
-  SOUND_INT,
-  SMPC_INT,
-  PAD_INT,
-  DMA2_INT,
-  DMA1_INT,
-  DMA0_INT,
-  DMA_ILL_INT,
-  SPRITE_INT,
-  ILLEGAL_INT,
-  ABUS_INT
-};
-
-static void reset_scu(void)
-
-{
-  memset(scu_regs,0,0x34*4);
-  scu_regs[0x28] = 0xffffffff;
-}
-
-static READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
-
-{
-  // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],activecpu_get_reg(SH2_PC));
-  return scu_regs[offset] & ~mem_mask;
-}
- 
-static int scu_irq_line[16] = /* Indicates what irq pin is to be used for each int */
-{
-    0, 1, 2, 3, 4, 5, 6, 7,
-    7, 6, 6, 6, 6, 5, 5, 5
-};
-
-static int scu_irq_levels[16] =
-{
-    15, 14, 13, 12, 11, 10,  9,  8,
-     8,  6,  6,  5,  3,  2,  0,  0
-};
-
-static void scu_set_imask(void)
-{
-    int irq;
-    LOG(("saturn_scu_w    interrupt mask change:"));
-    for (irq = 0; irq < 16; irq++)
+    else if( offset == 41)
     {
-        if ((scu_regs[0x28] & (1 <<irq)) == 0)
-            logerror(" %s,", int_names[irq]);
-        else
-	  cpunum_set_input_line(0, scu_irq_line[irq], CLEAR_LINE);
-    }
-    LOG(("\n"));
-}
-
-static void scu_pulse_interrupt(int irq)
-{
-    if (irq >= ABUS_INT)
-    {
-        LOG(("scu    pulsed abus irq\n"));
-    }
+		logerror("(PC=%08x) IRQ status reg read\n",activecpu_get_pc());
+		/*TODO:for now we're activating everything here,but we need to return the proper active irqs*/
+		return 0xffffffff;
+	}
+	else if( offset == 50 )
+	{
+		logerror("(PC=%08x) SCU version reg read\n",activecpu_get_pc());
+		return 0x00000000;/*SCU Version 0*/
+	}
     else
     {
-        LOG(("scu    IRQ #%d", irq));
-        if ((scu_regs[0x28] & (1 << irq)) == 0)
-        {
-            LOG((" - pulsed"));
-            cpunum_set_input_line_vector(0, scu_irq_line[irq], 0x40 + irq + (scu_irq_levels[irq] << 8)); 
-            cpunum_set_input_line(0, scu_irq_line[irq], HOLD_LINE);
-        }
-        else
-        {
-            LOG((" - masked"));
-        }
-        LOG(("\n"));
-    }
+    	if(LOG_SCU) logerror("(PC=%08x) SCU reg read at %d = %08x\n",activecpu_get_pc(),offset,stv_scu[offset]);
+    	return stv_scu[offset];
+   	}
 }
 
-static WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
+WRITE32_HANDLER( stv_scu_w32 )
 {
-	logerror("scu_w %s - data = %08lX - PC=%08lX\n", scu_regnames[offset], (long) data, (long) activecpu_get_reg(SH2_PC));
-	scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
-	if (offset == 0x28) scu_set_imask();
-}
+	COMBINE_DATA(&stv_scu[offset]);
 
-static const char *cd_regnames[0xA] = {"X0",
-				       "X4",
-				       "HIRQ",
-				       "HIRQ Mask",
-				       "X10",
-				       "X14",
-				       "CR1",
-				       "CR2",
-				       "CR3",
-				       "CR4"};
-
-UINT32 cd_regs[0xA];
-UINT32 periodic; /* Currently a hack to bypass bios area */
-
-#define CD_HIRQ     0x2
-#define CD_HIRQMASK 0x3
-#define CD_CR1      0x6
-#define CD_CR2      0x7
-#define CD_CR3      0x8
-#define CD_CR4      0x9
-
-static void reset_cd(void)
-
-{
-  cd_regs[CD_CR1]  =  'C' << 16;
-  cd_regs[CD_CR2]  = ('D' << 24) | ('B' << 16);
-  cd_regs[CD_CR3]  = ('L' << 24) | ('O' << 16);
-  cd_regs[CD_CR4]  = ('C' << 24) | ('K' << 16);
-  cd_regs[CD_HIRQ] = 1;
-  cd_regs[CD_HIRQMASK] = 0xBE1;
-  periodic = 0; /* This will toggle every other read so that bios will execute */
-}
-
-static void cd_execcomm(void)
-
-{
-  int command;
-
-  command = cd_regs[CD_CR1] >> 24; /* Shift down command code to low byte */
-
-  switch(command)
-    {
-    case 0x0 : /* Command 0x00 - Get Status */
-      cd_regs[CD_CR1] = 0x07FF0000; /* Return no disc status for now */
-      cd_regs[CD_CR2] = 0xFFFF0000;
-      cd_regs[CD_CR3] = 0xFFFF0000;
-      cd_regs[CD_CR4] = 0xFFFF0000;
-      logerror("cd - Get Status (0x00)\n");
-      break;
-    case 0x1 : /* Command 0x01 - Get Hardware Info */
-      cd_regs[CD_CR1] = 0x07000000;
-      cd_regs[CD_CR2] = 0x00000000;
-      cd_regs[CD_CR3] = 0x00000000;
-      cd_regs[CD_CR4] = 0x00000000;
-      logerror("cd - Get Hardware Info\n");
-      break;
-    }
-}
-
-static READ32_HANDLER( saturn_cd_r )	 /* CD */
-{
-	if(offset < 0xA)
+	switch(offset)
 	{
-		logerror("cd_r %s - data = %04lX - PC=%08lX\n",
-			cd_regnames[offset],
-			(long) cd_regs[offset] >> 16,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-	else
-	{
-		logerror("cd_r offset=%08lX mem_mask=%08lX - PC=%08lX\n",
-			(long) offset*4,
-			(long) mem_mask,
-			(long) activecpu_get_reg(SH2_PC));
-	}
+		/*LV 0 DMA*/
+		case 0:	scu_src_0  = ((stv_scu[0] & 0x07ffffff) >> 0); break;
+		case 1:	scu_dst_0  = ((stv_scu[1] & 0x07ffffff) >> 0); break;
+		case 2: scu_size_0 = ((stv_scu[2] & 0x000fffff) >> 0); break;
+		case 3:
+			/*Read address add value for DMA lv 0*/
+			if(stv_scu[3] & 0x100)
+				scu_src_add_0 = 4;
+			else
+				scu_src_add_0 = 1;
 
-	if(offset < 0xA)
-	{
-		if(offset == CD_CR1)
-		{
-			if(periodic) /* Hack to indicate periodic response while cd system not finished */
+			/*Write address add value for DMA lv 0*/
+			switch(stv_scu[3] & 7)
 			{
-				periodic = 0;
-				return (cd_regs[offset] & ~mem_mask) | 0x10000000;
+				case 0: scu_dst_add_0 = 2;   break;
+				case 1: scu_dst_add_0 = 4;   break;
+				case 2: scu_dst_add_0 = 8;   break;
+				case 3: scu_dst_add_0 = 16;  break;
+				case 4: scu_dst_add_0 = 32;  break;
+				case 5: scu_dst_add_0 = 64;  break;
+				case 6: scu_dst_add_0 = 128; break;
+				case 7: scu_dst_add_0 = 256; break;
 			}
+			break;
+		case 4:
+/*
+-stv_scu[4] bit 0 is DMA starting bit.
+    Used when the start factor is 7.Toggle after execution.
+-stv_scu[4] bit 8 is DMA Enable bit.
+    This is an execution mask flag.
+-stv_scu[5] bit 0,bit 1 and bit 2 is DMA starting factor.
+    It must be 7 for this specific condition.
+-stv_scu[5] bit 24 is Indirect Mode/Direct Mode (0/1).
+*/
+		if(stv_scu[4] & 1 && ((stv_scu[5] & 7) == 7) && stv_scu[4] & 0x100)
+		{
+			if(DIRECT_MODE(0)) { dma_direct_lv0(); }
+			else			   { dma_indirect_lv0(); }
+
+			stv_scu[4]^=1;//disable starting bit.
+
+			/*Sound IRQ*/
+			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
+			{
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				logerror("SCSP: Main CPU interrupt\n");
+				#if 0
+				if((scu_dst_0 & 0x7ffffff) != 0x05a00000)
+				{
+					if(!(stv_scu[40] & 0x1000))
+					{
+						cpunum_set_input_line_and_vector(0, 3, HOLD_LINE, 0x4c);
+						logerror("SCU: Illegal DMA interrupt\n");
+					}
+				}
+				#endif
+			}
+		}
+		break;
+		case 5:
+		if(INDIRECT_MODE(0))
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 0 set\n");
+			if(!DWUP(0)) scu_index_0 = scu_dst_0;
+		}
+
+		/*Start factor enable bits,bit 2,bit 1 and bit 0*/
+		if((stv_scu[5] & 7) != 7)
+			if(LOG_SCU) logerror("Start factor chosen for lv 0 = %d\n",stv_scu[5] & 7);
+		break;
+		/*LV 1 DMA*/
+		case 8:	 scu_src_1  = ((stv_scu[8] &  0x07ffffff) >> 0);  break;
+		case 9:	 scu_dst_1  = ((stv_scu[9] &  0x07ffffff) >> 0);  break;
+		case 10: scu_size_1 = ((stv_scu[10] & 0x00001fff) >> 0);  break;
+		case 11:
+		/*Read address add value for DMA lv 1*/
+		if(stv_scu[11] & 0x100)
+			scu_src_add_1 = 4;
+		else
+			scu_src_add_1 = 1;
+
+		/*Write address add value for DMA lv 1*/
+		switch(stv_scu[11] & 7)
+		{
+			case 0: scu_dst_add_1 = 2;   break;
+			case 1: scu_dst_add_1 = 4;   break;
+			case 2: scu_dst_add_1 = 8;   break;
+			case 3: scu_dst_add_1 = 16;  break;
+			case 4: scu_dst_add_1 = 32;  break;
+			case 5: scu_dst_add_1 = 64;  break;
+			case 6: scu_dst_add_1 = 128; break;
+			case 7: scu_dst_add_1 = 256; break;
+		}
+		break;
+		case 12:
+		if(stv_scu[12] & 1 && ((stv_scu[13] & 7) == 7) && stv_scu[12] & 0x100)
+		{
+			if(DIRECT_MODE(1)) { dma_direct_lv1(); }
+			else			   { dma_indirect_lv1(); }
+
+			stv_scu[12]^=1;
+
+			/*Sound IRQ*/
+			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
+			{
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				logerror("SCSP: Main CPU interrupt\n");
+			}
+		}
+		break;
+		case 13:
+		if(INDIRECT_MODE(1))
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 1 set\n");
+			if(!DWUP(1)) scu_index_1 = scu_dst_1;
+		}
+
+		if((stv_scu[13] & 7) != 7)
+			if(LOG_SCU) logerror("Start factor chosen for lv 1 = %d\n",stv_scu[13] & 7);
+		break;
+		/*LV 2 DMA*/
+		case 16: scu_src_2  = ((stv_scu[16] & 0x07ffffff) >> 0);  break;
+		case 17: scu_dst_2  = ((stv_scu[17] & 0x07ffffff) >> 0);  break;
+		case 18: scu_size_2 = ((stv_scu[18] & 0x00001fff) >> 0);  break;
+		case 19:
+		/*Read address add value for DMA lv 2*/
+		if(stv_scu[19] & 0x100)
+			scu_src_add_2 = 4;
+		else
+			scu_src_add_2 = 1;
+
+		/*Write address add value for DMA lv 2*/
+		switch(stv_scu[19] & 7)
+		{
+			case 0: scu_dst_add_2 = 2;   break;
+			case 1: scu_dst_add_2 = 4;   break;
+			case 2: scu_dst_add_2 = 8;   break;
+			case 3: scu_dst_add_2 = 16;  break;
+			case 4: scu_dst_add_2 = 32;  break;
+			case 5: scu_dst_add_2 = 64;  break;
+			case 6: scu_dst_add_2 = 128; break;
+			case 7: scu_dst_add_2 = 256; break;
+		}
+		break;
+		case 20:
+		if(stv_scu[20] & 1 && ((stv_scu[21] & 7) == 7) && stv_scu[20] & 0x100)
+		{
+			if(DIRECT_MODE(2)) { dma_direct_lv2(); }
+			else			   { dma_indirect_lv2(); }
+
+			stv_scu[20]^=1;
+
+			/*Sound IRQ*/
+			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
+			{
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				logerror("SCSP: Main CPU interrupt\n");
+			}
+		}
+		break;
+		case 21:
+		if(INDIRECT_MODE(2))
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 2 set\n");
+			if(!DWUP(2)) scu_index_2 = scu_dst_2;
+		}
+
+		if((stv_scu[21] & 7) != 7)
+			if(LOG_SCU) logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
+		break;
+		case 24:
+		if(LOG_SCU) logerror("DMA Forced Stop Register set = %02x\n",stv_scu[24]);
+		break;
+		case 31: if(LOG_SCU) logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
+		/*DSP section*/
+		/*Use functions so it is easier to work out*/
+		case 32:
+		dsp_prg_ctrl(data);
+		if(LOG_SCU) logerror("SCU DSP: Program Control Port Access %08x\n",data);
+		break;
+		case 33:
+		dsp_prg_data(data);
+		if(LOG_SCU) logerror("SCU DSP: Program RAM Data Port Access %08x\n",data);
+		break;
+		case 34:
+		dsp_ram_addr_ctrl(data);
+		if(LOG_SCU) logerror("SCU DSP: Data RAM Address Port Access %08x\n",data);
+		break;
+		case 35:
+		dsp_ram_addr_w(data);
+		if(LOG_SCU) logerror("SCU DSP: Data RAM Data Port Access %08x\n",data);
+		break;
+		case 36: if(LOG_SCU) logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
+		case 37: if(LOG_SCU) logerror("timer 1 set data = %08x\n",stv_scu[37]); break;
+		case 38: if(LOG_SCU) logerror("timer 1 mode data = %08x\n",stv_scu[38]); break;
+		case 40:
+		/*An interrupt is masked when his specific bit is 1.*/
+		/*Are bit 16-bit 31 for External A-Bus irq mask like the status register?*/
+		/*What is 0x00000080 setting?Is it valid?*/
+
+		/*Take out the common settings to keep logging quiet.*/
+		if(stv_scu[40] != 0xfffffffe &&
+		   stv_scu[40] != 0xfffffffc &&
+		   stv_scu[40] != 0xffffffff)
+		{
+			if(LOG_SCU) logerror("cpu #%d (PC=%08X) IRQ mask reg set %08x = %d%d%d%d|%d%d%d%d|%d%d%d%d|%d%d%d%d\n",
+			cpu_getactivecpu(), activecpu_get_pc(),
+			stv_scu[offset],
+			stv_scu[offset] & 0x8000 ? 1 : 0, /*A-Bus irq*/
+			stv_scu[offset] & 0x4000 ? 1 : 0, /*<reserved>*/
+			stv_scu[offset] & 0x2000 ? 1 : 0, /*Sprite draw end irq(VDP1)*/
+			stv_scu[offset] & 0x1000 ? 1 : 0, /*Illegal DMA irq*/
+			stv_scu[offset] & 0x0800 ? 1 : 0, /*Lv 0 DMA end irq*/
+			stv_scu[offset] & 0x0400 ? 1 : 0, /*Lv 1 DMA end irq*/
+			stv_scu[offset] & 0x0200 ? 1 : 0, /*Lv 2 DMA end irq*/
+			stv_scu[offset] & 0x0100 ? 1 : 0, /*PAD irq*/
+			stv_scu[offset] & 0x0080 ? 1 : 0, /*System Manager(SMPC) irq*/
+			stv_scu[offset] & 0x0040 ? 1 : 0, /*Snd req*/
+			stv_scu[offset] & 0x0020 ? 1 : 0, /*DSP irq end*/
+			stv_scu[offset] & 0x0010 ? 1 : 0, /*Timer 1 irq*/
+			stv_scu[offset] & 0x0008 ? 1 : 0, /*Timer 0 irq*/
+			stv_scu[offset] & 0x0004 ? 1 : 0, /*HBlank-IN*/
+			stv_scu[offset] & 0x0002 ? 1 : 0, /*VBlank-OUT*/
+			stv_scu[offset] & 0x0001 ? 1 : 0);/*VBlank-IN*/
+		}
+		break;
+		case 41:
+		/*This is r/w by introdon...*/
+		if(LOG_SCU) logerror("IRQ status reg set:%08x\n",stv_scu[41]);
+		break;
+		case 42: if(LOG_SCU) logerror("A-Bus IRQ ACK %08x\n",stv_scu[42]); break;
+		case 49: if(LOG_SCU) logerror("SCU SDRAM set: %02x\n",stv_scu[49]); break;
+		default: if(LOG_SCU) logerror("Warning: unused SCU reg set %d = %08x\n",offset,data);
+	}
+}
+
+static void dma_direct_lv0()
+{
+	static UINT32 tmp_src,tmp_dst,tmp_size;
+	if(LOG_SCU) logerror("DMA lv 0 transfer START\n"
+			             "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+
+	D0MV_1;
+
+	if(scu_size_0 == 0) scu_size_0 = 0x00100000;
+
+	scsp_to_main_irq = 0;
+
+	/*set here the boundaries checks*/
+	/*...*/
+
+	if(SOUND_RAM(dst_0))
+	{
+		logerror("Sound RAM DMA write\n");
+		scsp_to_main_irq = 1;
+	}
+
+	if((scu_dst_add_0 != scu_src_add_0) && (ABUS(src_0)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = scu_src_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these three*/
+	if(ABUS(dst_0))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_0))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP2(src_0))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_0))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = scu_src_add_0 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(DRUP(0))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_src_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	if (WORK_RAM_H(dst_0) && (scu_dst_add_0 != 4))
+	{
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	tmp_size = scu_size_0;
+	if(!(DRUP(0))) tmp_src = scu_src_0;
+	if(!(DWUP(0))) tmp_dst = scu_dst_0;
+
+	for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
+	{
+		if(scu_dst_add_0 == 2)
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+		else if(scu_dst_add_0 == 8)
+		{
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+2,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+4,program_read_word(scu_src_0+2));
+			program_write_word(scu_dst_0+6,program_read_word(scu_src_0+2));
+		}
+		else
+		{
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+2,program_read_word(scu_src_0+2));
+		}
+
+		scu_dst_0+=scu_dst_add_0;
+		scu_src_0+=scu_src_add_0;
+	}
+
+	scu_size_0 = tmp_size;
+	if(!(DRUP(0))) scu_src_0 = tmp_src;
+	if(!(DWUP(0))) scu_dst_0 = tmp_dst;
+
+	if(LOG_SCU) logerror("DMA transfer END\n");
+	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_0 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_0 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
+
+	D0MV_0;
+}
+
+static void dma_direct_lv1()
+{
+	static UINT32 tmp_src,tmp_dst,tmp_size;
+	if(LOG_SCU) logerror("DMA lv 1 transfer START\n"
+			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+	D1MV_1;
+
+	if(scu_size_1 == 0) scu_size_1 = 0x00002000;
+
+	scsp_to_main_irq = 0;
+
+	/*set here the boundaries checks*/
+	/*...*/
+
+	if(SOUND_RAM(dst_1))
+	{
+		logerror("Sound RAM DMA write\n");
+		scsp_to_main_irq = 1;
+	}
+
+	if((scu_dst_add_1 != scu_src_add_1) && (ABUS(src_1)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_dst_add_1 = scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these ones*/
+	if(ABUS(dst_1))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_1))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_1))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_dst_add_1 = scu_src_add_1 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(VDP2(src_1))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(DRUP(1))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	if (WORK_RAM_H(dst_1) && (scu_dst_add_1 != 4))
+	{
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	tmp_size = scu_size_1;
+	if(!(DRUP(1))) tmp_src = scu_src_1;
+	if(!(DWUP(1))) tmp_dst = scu_dst_1;
+
+	for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
+	{
+		if(scu_dst_add_1 == 2)
+			program_write_word(scu_dst_1,program_read_word(scu_src_1));
+		else
+		{
+			program_write_word(scu_dst_1,program_read_word(scu_src_1));
+			program_write_word(scu_dst_1+2,program_read_word(scu_src_1+2));
+		}
+
+		scu_dst_1+=scu_dst_add_1;
+		scu_src_1+=scu_src_add_1;
+	}
+
+	scu_size_1 = tmp_size;
+	if(!(DRUP(1))) scu_src_1 = tmp_src;
+	if(!(DWUP(1))) scu_dst_1 = tmp_dst;
+
+	if(LOG_SCU) logerror("DMA transfer END\n");
+	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_1 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_1 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
+
+	D1MV_0;
+}
+
+static void dma_direct_lv2()
+{
+	static UINT32 tmp_src,tmp_dst,tmp_size;
+	if(LOG_SCU) logerror("DMA lv 2 transfer START\n"
+			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
+	D2MV_1;
+
+	scsp_to_main_irq = 0;
+
+	if(scu_size_2 == 0) scu_size_2 = 0x00002000;
+
+	/*set here the boundaries checks*/
+	/*...*/
+
+	if(SOUND_RAM(dst_2))
+	{
+		logerror("Sound RAM DMA write\n");
+		scsp_to_main_irq = 1;
+	}
+
+	if((scu_dst_add_2 != scu_src_add_2) && (ABUS(src_2)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_dst_add_2 = scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these ones*/
+	if(ABUS(dst_2))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_2))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_2))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_dst_add_2 = scu_src_add_2 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(VDP2(src_2))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(DRUP(2))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	if (WORK_RAM_H(dst_2) && (scu_dst_add_2 != 4))
+	{
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	tmp_size = scu_size_2;
+	if(!(DRUP(2))) tmp_src = scu_src_2;
+	if(!(DWUP(2))) tmp_dst = scu_dst_2;
+
+	for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
+	{
+		if(scu_dst_add_2 == 2)
+			program_write_word(scu_dst_2,program_read_word(scu_src_2));
+		else
+		{
+			program_write_word(scu_dst_2,program_read_word(scu_src_2));
+			program_write_word(scu_dst_2+2,program_read_word(scu_src_2+2));
+		}
+
+		scu_dst_2+=scu_dst_add_2;
+		scu_src_2+=scu_src_add_2;
+	}
+
+	scu_size_2 = tmp_size;
+	if(!(DRUP(2))) scu_src_2 = tmp_src;
+	if(!(DWUP(2))) scu_dst_2 = tmp_dst;
+
+	if(LOG_SCU) logerror("DMA transfer END\n");
+	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_2 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_2 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
+
+	D2MV_0;
+}
+
+static void dma_indirect_lv0()
+{
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
+	UINT32 tmp_src;
+
+	D0MV_1;
+
+	scsp_to_main_irq = 0;
+
+	if(scu_index_0 == 0) { scu_index_0 = scu_dst_0; }
+
+	do{
+		tmp_src = scu_index_0;
+
+		/*Thanks for Runik of Saturnin for pointing this out...*/
+		scu_size_0 = program_read_dword(scu_index_0);
+		scu_src_0 =  program_read_dword(scu_index_0+8);
+		scu_dst_0 =  program_read_dword(scu_index_0+4);
+
+		/*Indirect Mode end factor*/
+		if(scu_src_0 & 0x80000000)
+			job_done = 1;
+
+		if(SOUND_RAM(dst_0))
+		{
+			logerror("Sound RAM DMA write\n");
+			scsp_to_main_irq = 1;
+		}
+
+		if(LOG_SCU) logerror("DMA lv 0 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+
+		//guess,but I believe it's right.
+		scu_src_0 &=0x07ffffff;
+		scu_dst_0 &=0x07ffffff;
+		scu_size_0 &=0xfffff;
+
+		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
+		{
+			if(scu_dst_add_0 == 2)
+				program_write_word(scu_dst_0,program_read_word(scu_src_0));
 			else
 			{
-				periodic = 1;
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+                  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+                  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+                  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+                  should be different, I don't know */
+				program_write_word(scu_dst_0,program_read_word(scu_src_0));
+				program_write_word(scu_dst_0+2,program_read_word(scu_src_0+2));
 			}
+			scu_dst_0+=scu_dst_add_0;
+			scu_src_0+=scu_src_add_0;
 		}
-		return cd_regs[offset] & ~mem_mask;
-	}
-	else
-		return 0xa5a5a5a5 & ~mem_mask;
+
+		//if(DRUP(0))   program_write_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
+		//if(DWUP(0)) program_write_dword(tmp_src+4,scu_dst_0);
+
+		scu_index_0 = tmp_src+0xc;
+
+	}while(job_done == 0);
+
+	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	D0MV_0;
 }
 
-static WRITE32_HANDLER( saturn_cd_w )	 /* CD */
+static void dma_indirect_lv1()
 {
-  if(offset < 0xA)
-    {
-      logerror("cd_w %s - data = %04lX - PC=%08lX\n",cd_regnames[offset], (long) data >> 16, (long) activecpu_get_reg(SH2_PC));
-    }
-  else
-    {
-      logerror("cd_w offset=%08lX data=%08lX mem_mask=%08lX - PC=%08lX\n", (long) offset*4, (long) data, (long) mem_mask, (long) activecpu_get_reg(SH2_PC));
-    }
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
+	UINT32 tmp_src;
 
-  if(offset < 0xA)
-    {
-      switch(offset)
-	{
-	case CD_HIRQ :
-	  cd_regs[offset] = ((cd_regs[offset] & mem_mask) & ~data) | 0x00010000;
-	  break; /* Case 2 HIRQ register - writing a 1 clears state*/
-	case CD_CR4  :
-	  cd_regs[offset] = (cd_regs[offset] & mem_mask) | data;
-	  cd_execcomm(); /* When CR4 written execute command */
-	  break;
-	default:
-	  cd_regs[offset] = (cd_regs[offset] & mem_mask) | data;
-	}
-    }
-}
+	D1MV_1;
 
-/********************************************************
- *  FRT master                                          *
- ********************************************************/
+	scsp_to_main_irq = 0;
 
-static READ32_HANDLER( saturn_minit_r )  /* MINIT */
-{
-	return 0xa5a5a5a5 & ~mem_mask;
-}
+	if(scu_index_1 == 0) { scu_index_1 = scu_dst_1; }
 
-static WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
-{
-	logerror("minit_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset, (long) data, (long) mem_mask);
-}
+	do{
+		tmp_src = scu_index_1;
 
-/********************************************************
- *  FRT slave
- ********************************************************/
-static READ32_HANDLER( saturn_sinit_r )  /* SINIT */
-{
-  return 0xa5a5a5a5 & ~mem_mask;
-}
+		scu_size_1 = program_read_dword(scu_index_1);
+		scu_src_1 =  program_read_dword(scu_index_1+8);
+		scu_dst_1 =  program_read_dword(scu_index_1+4);
 
-static WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
-{
-	logerror("sinit_w offset=%08lX data=%08lX mem_mask=%08lX\n",
-		(long) offset,
-		(long) data,
-		(long) mem_mask);
-}
+		/*Indirect Mode end factor*/
+		if(scu_src_1 & 0x80000000)
+			job_done = 1;
 
-/********************************************************
- *  DSP
- ********************************************************/
-static READ32_HANDLER( saturn_dsp_r )	 /* DSP */
-{
-	logerror("dsp_r offset=%08lX mem_mask=%08lX\n",
-		(long) offset*4,
-		(long) mem_mask);
-
-	return 0xa5a5a5a5 & ~mem_mask;
-}
-
-static WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
-{
-	logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n", (long) offset*4, (long) data, (long) mem_mask);
-}
-
-/********************************************************
- *  VDP1                                                *
- ********************************************************/
-
-static mame_bitmap *saturn_bitmap[2];
-int video_w; /* indicates which bitmap is currently displayed and which is drawn */
-
-struct _vdp1_state
-
-{
-  UINT16 vdp1_regs[0xC];
-  UINT32 localx,localy;  /* Local x and y coordinates */
-} vdp1_state;
-
-static const char *vdp1_regnames[] =
-
-{
-  "TV Mode Selection            ",
-  "Frame Buffer Switch          ",
-  "Plot Trigger                 ",
-  "Erase/Write Data             ",
-  "Erase/Write Upper Left coord ",
-  "Erase/Write Lower Right coord",
-  "Plot Abnormal End            ",
-  "Reserved                     ",
-  "Transfer End Status          ",
-  "Last Operation Addr          ",
-  "Current Operation Addr       ",
-  "Mode Status                  "
-};
-
-static void reset_vdp1(void)
-
-{
-  memset(vdp1_state.vdp1_regs,0,0xC<<1);
-}
-
-static void cmd0(UINT32 comm, unsigned short *fb)
-{
-	UINT32 *vram;
-	short x,y;
-	UINT32 color_mode;
-	UINT32 color_bank;
-	UINT32 char_addr;
-	UINT32 width,height;
-	int loopx,loopy;
-
-	vram = vdp1_ram_base;
-	comm = comm * 8;
-
-	color_mode = (vram[comm + 1] >> 19) & 0x7; /* Pull out parameter infomation */
-	color_bank = (vram[comm + 1] & 0xFFFF);
-	char_addr  = (vram[comm + 2] >> 16) * 8;
-	width      = ((vram[comm + 2] & 0xFFFF) >> 8) * 8;
-	height     = ((vram[comm + 2] & 0xFFFF) & 0xFF);
-	x = (short) (vram[comm + 3] >> 16); /* Cast as short to preserve sign */
-	y = (short) (vram[comm + 3] & 0xFFFF);
-
-	logerror("Colour Mode  = %d\n", color_mode);
-	logerror("Colour Bank  = %08lX\n", (long) color_bank);
-	logerror("Char Addr    = %08lX\n", (long) char_addr);
-	logerror("Width,Height = %ld,%ld\n", (long) width, (long) height);
-	logerror("X,Y = %d,%d\n",x,y);
-
-	vram = vram + (char_addr / 4);
-	x = x + vdp1_state.localx;
-	y = y + vdp1_state.localy;
-
-	height += y;
-	width += x;
-
-	if (color_mode == 5) {
-		for(loopy = y;loopy < height;loopy++)	{
-    		for(loopx = x;loopx < width;loopx+=2) {
-
-			UINT32 colour;
-
-			colour = *vram++;
-			if(colour >> 16) {
- 		   		plot_pixel(saturn_bitmap[video_w],loopx,
-					loopy,Machine->pens[(colour>>16) & 0x7FFF]);
-			}
-			if(colour & 0xFFFF) {
-				plot_pixel(saturn_bitmap[video_w],loopx+1,
-					loopy,Machine->pens[colour&0x7FFF]);
-			}
-			}
-		}
-	}
-}
-
-static void execute_vdp1(void)
-{
-	/* Execute the vdp1 command set */
-	UINT32 *base;
-	UINT32 command;
-	UINT32 temp;
-	unsigned short fb[512*256];
-
-	logerror("vdp1 execute command\n");
-
-	base = vdp1_ram_base;
-	command = 0;
-
-	while(!(*base & 0x80000000))
-	{
-		switch((*base >> 16) & 0xF) /* Select command code */
-	{
-	case 0 : logerror("%08lX - Normal Sprite Draw\n", (long) command);
-		cmd0(command,fb);
-		break;
-	case 1 : logerror("%08lX - Scaled Sprite Draw\n", (long) command);
-		break;
-	case 2 : logerror("%08lX - Distorted Sprite Draw\n", (long) command);
-		break;
-	case 4 : logerror("%08lX - Polygon Draw\n", (long) command);
-		break;
-	case 5 : logerror("%08lX - Polyline Draw\n", (long) command);
-		break;
-	case 6 : logerror("%08lX - Line Draw\n", (long) command);
-		break;
-	case 8 : logerror("%08lX - Set User Clip\n", (long) command);
-		break;
-	case 9 :
-		temp = *(base + 5);
-		logerror("%08lX - Set System Clip (%ld,%ld)\n", (long) command, (long) temp>>16, (long) temp&0xFFFF);
-		break;
-	case 10:
-		temp = *(base + 3);
-		logerror("%08lX - Local Coordinates (%ld,%ld)\n", (long) command, (long) temp>>16, (long) temp&0xFFFF);
-		vdp1_state.localx = temp >> 16;
-		vdp1_state.localy = temp & 0xFFFF;
-		break;
-	}
-		base += (0x20/4);
-		command++;
-	}
-	logerror("vdp1 execute end\n");
-}
-
-static READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
-{
-  UINT32 ret_val;
-
-  ret_val = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
-  ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
-
-  /* logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
-  if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
-    {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n", vdp1_regnames[offset<<1], (long) ret_val & 0xFFFF, (long) activecpu_get_reg(SH2_PC));
-    }
-  if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
-    {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n", vdp1_regnames[(offset<<1)+1], (long) ret_val >> 16, (long) activecpu_get_reg(SH2_PC));
-    }
-
-  return SWAP_WORDS(ret_val);
-}
-
-static WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
-{
-	UINT32 olddata;
-
-	/*  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
-	if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
-	{
-		logerror("vdp1_w %s data=%04lX : PC=%08lX\n",
-			vdp1_regnames[offset<<1],
-			(long) data >> 16,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-	if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
-	{
-		logerror("vdp1_w %s data=%04lX : PC=%08lX\n",
-			vdp1_regnames[(offset<<1)+1],
-			(long) data & 0xFFFF,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-
-	olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
-	olddata &= SWAP_WORDS(mem_mask);
-	olddata |= SWAP_WORDS(data);
-
-	*(((UINT32 *) vdp1_state.vdp1_regs) + offset) = olddata;
-}
-
-/********************************************************
- *  VDP2                                                *
- ********************************************************/
-
-#define SCREEN_LINES 224 /* How many lines are actually displayed */
-#define MAX_LINES 256 /* Max lines including blanked - NTSC res - PAL higher*/
-#define FRAME_TIME 477273 /* Clock cycles per frame (~60Hz) */
-#define LINE_TIME  (FRAME_TIME/MAX_LINES)   /* Approx cycles per line (~FRAME_TIME / 512) */
-
-struct _vdp2_state
-
-{
-  UINT16 vdp2_regs[0x90];
-} vdp2_state;
-
-UINT32 HBlankCount;
-UINT32 InVBlank;   /* Are we in vertical blanking ? */
-void timer_hblank(int param);
-
-static const char *vdp2_regnames[] =
-
-{
-  "TV Screen Mode                                  ",
-  "Ext Signal Enable                               ",
-  "Screen Status                                   ",
-  "VRAM Size                                       ",
-  "H-Counter                                       ",
-  "V-Counter                                       ",
-  "Reserved                                        ",
-  "RAM Control                                     ",
-  "VRAM Cycle (BANK A0) L                          ",
-  "VRAM Cycle (BANK A0) U                          ",
-  "VRAM Cycle (BANK A1) L                          ",
-  "VRAM Cycle (BANK A1) U                          ",
-  "VRAM Cycle (BANK B0) L                          ",
-  "VRAM Cycle (BANK B0) U                          ",
-  "VRAM Cycle (BANK B1) L                          ",
-  "VRAM Cycle (BANK B1) U                          ",
-  "Screen Display Enable                           ",
-  "Mosaic Control                                  ",
-  "Special Func Code Sel                           ",
-  "Special Func Code                               ",
-  "Char Control (NBG0, NBG1)                       ",
-  "Char Control (NBG2, NBG3, RBG0)                 ",
-  "Bitmap Pal No (NBG0, NBG1)                      ",
-  "Bitmap Pal No (RBG0)                            ",
-  "Pattern Name Ctrl (NBG0)                        ",
-  "Pattern Name Ctrl (NBG1)                        ",
-  "Pattern Name Ctrl (NBG2)                        ",
-  "Pattern Name Ctrl (NBG3)                        ",
-  "Pattern Name Ctrl (RGB0)                        ",
-  "Plane Size                                      ",
-  "Map Offs (NBG0-NBG3)                            ",
-  "Map Offs (Rotation Param A,B)                   ",
-  "Map (NBG0, Plane A,B)                           ",
-  "Map (NBG0, Plane C,D)                           ",
-  "Map (NBG1, Plane A,B)                           ",
-  "Map (NBG1, Plane C,D)                           ",
-  "Map (NBG2, Plane A,B)                           ",
-  "Map (NBG2, Plane C,D)                           ",
-  "Map (NBG3, Plane A,B)                           ",
-  "Map (NBG3, Plane C,D)                           ",
-  "Map (Rotation Param A, Plane A,B)               ",
-  "Map (Rotation Param A, Plane C,D)               ",
-  "Map (Rotation Param A, Plane E,F)               ",
-  "Map (Rotation Param A, Plane G,H)               ",
-  "Map (Rotation Param A, Plane I,J)               ",
-  "Map (Rotation Param A, Plane K,L)               ",
-  "Map (Rotation Param A, Plane M,N)               ",
-  "Map (Rotation Param A, Plane O,P)               ",
-  "Map (Rotation Param B, Plane A,B)               ",
-  "Map (Rotation Param B, Plane C,D)               ",
-  "Map (Rotation Param B, Plane E,F)               ",
-  "Map (Rotation Param B, Plane G,H)               ",
-  "Map (Rotation Param B, Plane I,J)               ",
-  "Map (Rotation Param B, Plane K,L)               ",
-  "Map (Rotation Param B, Plane M,N)               ",
-  "Map (Rotation Param B, Plane O,P)               ",
-  "Scr Scrl Val (NBG0, Horiz Integer Part)         ",
-  "Scr Scrl Val (NBG0, Horiz Fraction Part)        ",
-  "Scr Scrl Val (NBG0, Vert Integer Part)          ",
-  "Scr Scrl Val (NBG0, Vert Fraction Part)         ",
-  "Coord Inc (NBG0, Horiz Integer Part)            ",
-  "Coord Inc (NBG0, Horiz Fraction Part)           ",
-  "Coord Inc (NBG0, Vert Integer Part)             ",
-  "Coord Inc (NBG0, Vert Fraction Part)            ",
-  "Scr Scrl Val (NBG1, Horiz Integer Part)         ",
-  "Scr Scrl Val (NBG1, Horiz Fraction Part)        ",
-  "Scr Scrl Val (NBG1, Vert Integer Part)          ",
-  "Scr Scrl Val (NBG1, Vert Fraction Part)         ",
-  "Coord Inc (NBG1, Horiz Integer Part)            ",
-  "Coord Inc (NBG1, Horiz Fraction Part)           ",
-  "Coord Inc (NBG1, Vert Integer Part)             ",
-  "Coord Inc (NBG1, Vert Fraction Part)            ",
-  "Scr Scrl Val (NBG2, Horizontal)                 ",
-  "Scr Scrl Val (NBG2, Vertical)                   ",
-  "Scr Scrl Val (NBG3, Horizontal)                 ",
-  "Scr Scrl Val (NBG3, Vertical)                   ",
-  "Reduction Enable                                ",
-  "Line, Vert Cell Scroll (NBG0, NBG1)             ",
-  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) U         ",
-  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) L         ",
-  "Line Scrl Tbl Addr (NBG0) U                     ",
-  "Line Scrl Tbl Addr (NBG0) L                     ",
-  "Line Scrl Tbl Addr (NBG1) U                     ",
-  "Line Scrl Tbl Addr (NBG1) L                     ",
-  "Line Colour Scr Table Addr U                    ",
-  "Line Colour Scr Table Addr L                    ",
-  "Back Scr Tbl Addr U                             ",
-  "Back Scr Tbl Addr L                             ",
-  "Rotation Param Mode                             ",
-  "Rotation Param Read Ctrl                        ",
-  "Co-efficient Tbl Ctrl                           ",
-  "Co-efficient Tbl Addr Offs (Rot Param A,B)      ",
-  "Screen Over Pattern Name (Rot Param A)          ",
-  "Screen Over Pattern Name (Rot Param B)          ",
-  "Rot Param Tbl Addr (Rot Param A,B) U            ",
-  "Rot Param Tbl Addr (Rot Param A,B) L            ",
-  "Window Pos (W0, Horiz Start)                    ",
-  "Window Pos (W0, Vert Start)                     ",
-  "Window Pos (W0, Horiz End)                      ",
-  "Window Pos (W0, Vert End)                       ",
-  "Window Pos (W1, Horiz Start)                    ",
-  "Window Pos (W1, Vert Start)                     ",
-  "Window Pos (W1, Horiz End)                      ",
-  "Window Pos (W1, Vert End)                       ",
-  "Window Ctrl (NBG0, NBG1)                        ",
-  "Window Ctrl (NBG2, NBG3)                        ",
-  "Window Ctrl (RBG0, SPRITE)                      ",
-  "Window Ctrl (Param Win, Colour Calc Win)        ",
-  "Line Win Tbl Addr (W0) U                        ",
-  "Line Win Tbl Addr (W0) L                        ",
-  "Line Win Tbl Addr (W1) U                        ",
-  "Line Win Tbl Addr (W1) L                        ",
-  "Sprite Ctrl                                     ",
-  "Shadow Ctrl                                     ",
-  "Colour RAM Addr Offs (NBG0-NBG3)                ",
-  "Colour RAM Addr Offs (RBG0, SPRITE)             ",
-  "Line Colour Scr Enable                          ",
-  "Special Priority Mode                           ",
-  "Colour Calc Ctrl                                ",
-  "Special Colour Calc Mode                        ",
-  "Priority No (SPRITE 0,1)                        ",
-  "Priority No (SPRITE 2,3)                        ",
-  "Priority No (SPRITE 4,5)                        ",
-  "Priority No (SPRITE 6,7)                        ",
-  "Priority No (NBG0, NBG1)                        ",
-  "Priority No (NBG2, NBG3)                        ",
-  "Priority No (RGB0)                              ",
-  "Reserved                                        ",
-  "Colour Calc Ratio (SPRITE 0,1)                  ",
-  "Colour Calc Ratio (SPRITE 2,3)                  ",
-  "Colour Calc Ratio (SPRITE 4,5)                  ",
-  "Colour Calc Ratio (SPRITE 6,7)                  ",
-  "Colour Calc Ratio (NBG0, NBG1)                  ",
-  "Colour Calc Ratio (NBG2, NBG3)                  ",
-  "Colour Calc Ratio (RBG0)                        ",
-  "Colour Calc Ratio (Line Colour Scr, Back Screen)",
-  "Colour Offs Enable                              ",
-  "Colour Offs Select                              ",
-  "Colour Offs A (RED)                             ",
-  "Colour Offs A (GREEN)                           ",
-  "Colour Offs A (BLUE)                            ",
-  "Colour Offs B (RED)                             ",
-  "Colour Offs B (GREEN)                           ",
-  "Colour Offs B (BLUE)                            "
-};
-
-static void reset_vdp2(void)
-{
-	HBlankCount = 0;
-	timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
-	InVBlank = 0;
-	memset(vdp2_state.vdp2_regs,0,0x90*2);
-}
-
-static void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
-
-     /* Draws a 1Hx1V cell in 8bit colour */
-
-{
-  unsigned int loop;
-  UINT32 vrtmp;
-
-  for(loop = 0;loop < 16;loop+=2)
-    {
-	  vrtmp = *vram_base++;
-      *display++ = (vrtmp >> 24); //& 0xFF;
-      *display++ = (vrtmp >> 16); //& 0xFF;
-      *display++ = (vrtmp >> 8); //& 0xFF;
-      *display++ = (vrtmp); //& 0xFF;
-
-	  vrtmp = *vram_base++;
-      *display++ = (vrtmp >> 24); //& 0xFF;
-      *display++ = (vrtmp >> 16); //& 0xFF;
-      *display++ = (vrtmp >> 8); //& 0xFF;
-      *display++ = (vrtmp); //& 0xFF;
-
-      display += (pitch-8);
-    }
-}
-
-static void render_plane(unsigned char *buffer,int pal,int trans)
-
-{
-  mame_bitmap *bitmap = saturn_bitmap[video_w];
-  int loopx,loopy;
-  int col;
-  UINT32 *memt;
-
-  pal = ((pal * 0x200) / 4);
-  memt = &color_ram_base[pal]; /* &mem[SATURN_COLOR_RAM_BASE/4 + pal]; */
-
-  if(!trans)
-    {
-      for(loopy = 0;loopy < 512;loopy++)
-	{
-	  for(loopx = 0;loopx < 512;loopx++)
-	    {
-	      col = *buffer++;
-	      if(col & 1) {
-			  col =  memt[col/2] & 0x7FFF;
-		  } else {
-			  col = (memt[col/2] >> 16) & 0x7FFF;
-		  }
-	      plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
-	    }
-	}
-    }
-  else
-    {
-      for(loopy = 0;loopy < 512;loopy++)
-	{
-	  for(loopx = 0;loopx < 512;loopx++)
-	    {
-	      col = *buffer++;
-	      if(col)
+		if(SOUND_RAM(dst_1))
 		{
-		  if(col & 1)
-		    {
-		      col = memt[col/2] & 0x7FFF;
-		    }
-		  else
-		    {
-		      col = (memt[col/2] >> 16) & 0x7FFF;
-		    }
-		  plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
+			logerror("Sound RAM DMA write\n");
+			scsp_to_main_irq = 1;
 		}
-	    }
-	}
-    }
-}
 
-static void draw_nbg3(void)
+		if(LOG_SCU) logerror("DMA lv 1 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
 
-{
-  UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
-  UINT16 *regs;
-  unsigned char frame[512*512]; /* Temporary frame display */
-  int loopx,loopy;
-  UINT32 *pattern;
-  static UINT32 pathi,patlo = 0xffffffff;
+		//guess,but I believe it's right.
+		scu_src_1 &=0x07ffffff;
+		scu_dst_1 &=0x07ffffff;
+		scu_size_1 &=0xffff;
 
-  regs = vdp2_state.vdp2_regs;
 
-  planea_addr = (regs[0x4C>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0); /* Get plane start addresses */
-  planeb_addr = ((regs[0x4C>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-  planec_addr = (regs[0x4E>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-  planed_addr = ((regs[0x4E>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-
-  planea_addr <<= 14; /* *= 0x4000 */
-  planeb_addr <<= 14;
-  planec_addr <<= 14;
-  planed_addr <<= 14;
-
-  logerror("NBG3 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",
-	  (long) planea_addr,
-	  (long) planeb_addr,
-	  (long) planec_addr,
-	  (long) planed_addr);
-
-  pattern = &vdp2_ram_base[planea_addr/4];
-
-  for(loopy = 0;loopy < 64;loopy++)
-    {
-      for(loopx = 0;loopx < 64;loopx++)
-	{
-	  UINT32 pat_no;
-
-	  pat_no = *pattern++;
-		if (patlo > pat_no) { patlo = pat_no; printf("new Pattern Low bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
-		if (pathi < pat_no) { pathi = pat_no; /*printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);*/}
-
-	  if (pat_no+1 < 4000) {
-		  draw_1s8(&vdp2_ram_base[pat_no*8],&frame[loopy*4096 + loopx*8],512);
-	   } else {
-		   printf("bye bye\n");
-	   }
-	   /* note to Tyra: on crashing, loopx is 32, and planea_addr is 0, so is the reg[4c>>1], */
-	   /* suspect the BIOS is switching resolutions to 1/2 what this function expects */
-	   /* also, why do you compute unused plane addrs in this function? */
-	}
-    }
-  render_plane(frame,3,0);
-  /*  {
-    FILE *fp;
-    fp = fopen("nbg3.bin","wb");
-    fwrite(frame,512,512,fp);
-    fclose(fp);
-    }*/
-}
-
-static void draw_nbg2(void)
-
-{
-  UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
-  UINT16 *regs;
-  unsigned char frame[512*512];
-  int loopx,loopy;
-  UINT32 *pattern;
-
-  regs = vdp2_state.vdp2_regs;
-
-  planea_addr = (regs[0x48>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0); /* Get plane start addresses */
-  planeb_addr = ((regs[0x48>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-  planec_addr = (regs[0x4A>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-  planed_addr = ((regs[0x4A>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
-
-  planea_addr <<= 14; /* *= 0x4000 */
-  planeb_addr <<= 14;
-  planec_addr <<= 14;
-  planed_addr <<= 14;
-
-  logerror("NBG2 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",
-	  (long) planea_addr,
-	  (long) planeb_addr,
-	  (long) planec_addr,
-	  (long) planed_addr);
-
-  pattern = &vdp2_ram_base[planea_addr/4];
-
-  for(loopy = 0;loopy < 64;loopy++)
-    {
-      for(loopx = 0;loopx < 64;loopx++)
-	{
-	  UINT32 pat_no;
-
-	  pat_no = *pattern++;
-	  draw_1s8(&vdp2_ram_base[pat_no*8],&frame[loopy*4096 + loopx*8],512);
-	}
-    }
-  render_plane(frame,2,1);
-  /*  {
-    FILE *fp;
-    fp = fopen("nbg2.bin","wb");
-    fwrite(frame,512,512,fp);
-    fclose(fp);
-    }*/
-}
-
-void timer_hblank(int param)
-
-     /*
-	Called everytime we need a HBlank. Easier to count this and call VBlanks than do vblanks
-	as SCU timers require timings based of this.
-     */
-
-{
-  //  logerror("HBlank Interrupt %ld\n",HBlankCount); /* Logging hblanks is abit of a waste :) */
-  timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank); /* Reset timer */
-  HBlankCount++;
-  if((HBlankCount > SCREEN_LINES) && (!InVBlank))
-    {
-      /* We are going into vertical blanking area */
-      /* Execute VBlank-IN interrupt */
-      InVBlank = 1;
-      scu_pulse_interrupt(VBLANK_IN_INT);
-      //logerror("VBlankIN\n");
-    }
-  else
-    {
-      if(HBlankCount >= MAX_LINES)
-	{
-	  /* We are coming out of Vblank */
-	  /* Setup up VBlank-OUT Interrupt */
-	  InVBlank = 0;
-	  HBlankCount = 0; /* Reset hblank counter */
-	  scu_pulse_interrupt(VBLANK_OUT_INT);
-
-	  /* Draw display */
-	  if(vdp2_state.vdp2_regs[0] & 0x8000)
-	    {
-	      draw_nbg3();
-	      draw_nbg2();
-	      execute_vdp1();
-	      //  logerror("Drawing screen\n");
-	    }
-	  else
-	    {
-	      fillbitmap(saturn_bitmap[video_w & 1],Machine->pens[0],NULL);
-	      //	      logerror("Clearing bitmap\n");
-	    }
-	  video_w ^= 1; /* Flip write buffers over */
-	  //	  logerror("VBlankOUT %08lX %01X\n",vdp2_state.vdp2_regs[0],video_w);
-	}
-      else
-	{
-	  /* Issue H-Blank (bit of a hack :P) */
-	}
-    }
-}
-
-/*
-static void dump_vdp2(void)
-
-{
-  FILE *fp;
-  int loop;
-
-  fp = fopen("vdp2.bin","wb");
-  if(fp != NULL)
-    {
-      for(loop = 0;loop < 0x20000;loop++)
-	{
-	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 24) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 16) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 8) & 0xFF,fp);
-	  putc(mem[loop + (SATURN_VDP2_RAM_BASE/4)] & 0xFF,fp);
-	}
-      fclose(fp);
-    }
-
-  fp = fopen("colorram.bin","wb");
-  if(fp != NULL)
-    {
-      for(loop = 0;loop < (0x1000/4);loop++)
-	{
-	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 24) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 16) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 8) & 0xFF,fp);
-	  putc(mem[loop + (SATURN_COLOR_RAM_BASE/4)] & 0xFF,fp);
-	}
-      fclose(fp);
-    }
-  fp = fopen("vdp1.bin","wb");
-  if(fp != NULL)
-    {
-      for(loop = 0;loop < 0x20000;loop++)
-	{
-	  putc((vdp1_ram_base[loop] >> 24) & 0xFF,fp);
-	  putc((vdp1_ram_base[loop] >> 16) & 0xFF,fp);
-	  putc((vdp1_ram_base[loop] >> 8)  & 0xFF,fp);
-	  putc((vdp1_ram_base[loop]     )  & 0xFF,fp);
-	}
-      fclose(fp);
-    }
-}
-
-static void draw_pal(void)
-
-{
-  UINT32 loopx,loopy,col;
-  int rectx,recty;
-
-  for(loopy = 0;loopy < 32;loopy++)
-    for(loopx = 0;loopx < 32;loopx++)
-      {
-	col = loopy * 32 + loopx;
-	if(col & 1)
-	  {
-	    col = color_ram_base[col/2] & 0x7FFF;
-	  }
-	else
-	  {
-	    col = (color_ram_base[col/2] >> 16) & 0x7FFF;
-	  }
-
-	logerror("pal %08lX = %08lX\n",loopy*32 + loopx,col);
-	for(recty = 0;recty < 16;recty++)
-	  for(rectx = 0;rectx < 16;rectx++)
-	    plot_pixel(saturn_bitmap[video_w],loopx*16 + rectx,loopy*16 + recty,Machine->pens[col]);
-      }
-}
-*/
-
-static READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
-{
-  UINT32 ret_val;
-
-  ret_val = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
-
-#if PAL
-  if(offset == 0x1)
-    {
-      ret_val |= 0x00010000;
-    }
-#endif
-
-	ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
-
-	/*  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
-	if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
-	{
-		logerror("vdp2_r %s data=%04lX : PC=%08lX\n",
-			vdp2_regnames[offset<<1],
-			(long) ret_val & 0xFFFF,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-	if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
-	{
-		logerror("vdp2_r %s data=%04lX : PC=%08lX\n",
-			vdp2_regnames[(offset<<1)+1],
-			(long) ret_val >> 16,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-	return SWAP_WORDS(ret_val);
-}
-
-static WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
-{
-	UINT32 olddata;
-
-	/* logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
-	if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
-	{
-		logerror("vdp2_w %s data=%04lX : PC=%08lX\n",
-			vdp2_regnames[offset<<1],
-			(long) data >> 16,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-	if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
-	{
-		logerror("vdp2_w %s data=%04lX : PC=%08lX\n",
-			vdp2_regnames[(offset<<1)+1],
-			(long) data & 0xFFFF,
-			(long) activecpu_get_reg(SH2_PC));
-	}
-
-	olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
-	olddata &= SWAP_WORDS(mem_mask);
-	olddata |= SWAP_WORDS(data);
-
-	*(((UINT32 *) vdp2_state.vdp2_regs) + offset) = olddata;
-
-	if(offset == 0)
-	{
-		if(data & 0x80000000)
+		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 		{
-			logerror("vdp_w Screen Enabled\n");
-			/*	  dump_vdp2();
-			video_w = 0;
-			draw_nbg3();
-			draw_nbg2();
-			execute_vdp1();
-			video_w = 1;
-			draw_nbg3();
-			draw_nbg2();
-			execute_vdp1();*/
-			//draw_pal();
+
+			if(scu_dst_add_1 == 2)
+				program_write_word(scu_dst_1,program_read_word(scu_src_1));
+			else
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+                  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+                  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+                  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+                  should be different, I don't know */
+				program_write_word(scu_dst_1,program_read_word(scu_src_1));
+				program_write_word(scu_dst_1+2,program_read_word(scu_src_1+2));
+			}
+			scu_dst_1+=scu_dst_add_1;
+			scu_src_1+=scu_src_add_1;
 		}
-	}
+
+		//if(DRUP(1))   program_write_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
+		//if(DWUP(1)) program_write_dword(tmp_src+4,scu_dst_1);
+
+		scu_index_1 = tmp_src+0xc;
+
+	}while(job_done == 0);
+
+	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	D1MV_0;
 }
 
-/* 68k handlers */
-
-static READ16_HANDLER( dsp_68k_r )
-
+static void dma_indirect_lv2()
 {
-	logerror("16 bit DSP READ offset %08x mask %08x\n",(UINT32)offset,(UINT32)mem_mask);
-  return 0xdeed;
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
+	UINT32 tmp_src;
+
+	D2MV_1;
+
+	scsp_to_main_irq = 0;
+
+	if(scu_index_2 == 0) { scu_index_2 = scu_dst_2; }
+
+	do{
+		tmp_src = scu_index_2;
+
+		scu_size_2 = program_read_dword(scu_index_2);
+		scu_src_2 =  program_read_dword(scu_index_2+8);
+		scu_dst_2 =  program_read_dword(scu_index_2+4);
+
+		/*Indirect Mode end factor*/
+		if(scu_src_2 & 0x80000000)
+			job_done = 1;
+
+		if(SOUND_RAM(dst_2))
+		{
+			logerror("Sound RAM DMA write\n");
+			scsp_to_main_irq = 1;
+		}
+
+		if(LOG_SCU) logerror("DMA lv 2 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
+		//guess,but I believe it's right.
+		scu_src_2 &=0x07ffffff;
+		scu_dst_2 &=0x07ffffff;
+		scu_size_2 &=0xffff;
+
+		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
+		{
+			if(scu_dst_add_2 == 2)
+				program_write_word(scu_dst_2,program_read_word(scu_src_2));
+			else
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+                  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+                  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+                  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+                  should be different, I don't know */
+				program_write_word(scu_dst_2,program_read_word(scu_src_2));
+				program_write_word(scu_dst_2+2,program_read_word(scu_src_2+2));
+			}
+
+			scu_dst_2+=scu_dst_add_2;
+			scu_src_2+=scu_src_add_2;
+		}
+
+		//if(DRUP(2))   program_write_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
+		//if(DWUP(2)) program_write_dword(tmp_src+4,scu_dst_2);
+
+		scu_index_2 = tmp_src+0xc;
+
+	}while(job_done == 0);
+
+	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	D2MV_0;
 }
 
-static WRITE16_HANDLER( dsp_68k_w )
 
+/**************************************************************************************/
+
+WRITE32_HANDLER( stv_sh2_soundram_w )
 {
-	logerror("16 bit DSP WRITE offset %08x mask %08x data %08x\n",(UINT32)offset,(UINT32)mem_mask,(UINT32)data);
+	COMBINE_DATA(sound_ram+offset*2+1);
+	data >>= 16;
+	mem_mask >>= 16;
+	COMBINE_DATA(sound_ram+offset*2);
 }
 
-/********************************************************
- *  Main Machine Code                                   *
- ********************************************************/
-
-static MACHINE_INIT( saturn )
+READ32_HANDLER( stv_sh2_soundram_r )
 {
-	int i;
-	UINT32 *mem2;
-	int mem_length;
-
-	mem = (UINT32 *) memory_region(REGION_CPU1);
-	mem2 = (UINT32 *) memory_region(REGION_CPU2);
-	fb1_ram_base = (UINT32 *) &mem[SATURN_FB1_RAM_BASE/4];
-	workl_ram_base = (UINT32 *) &mem[SATURN_WORKL_RAM_BASE/4];
-	vdp1_ram_base = (UINT32 *) &mem[SATURN_VDP1_RAM_BASE/4];
-	color_ram_base = (UINT32 *) &mem[SATURN_COLOR_RAM_BASE/4];
-	workh_ram_base = (UINT32 *) &mem[SATURN_WORKH_RAM_BASE/4];
-	vdp2_ram_base = (UINT32 *) &mem[SATURN_VDP2_RAM_BASE/4];
-	back_ram_base = (UINT32 *) &mem[SATURN_BACK_RAM_BASE/4];
-
-	/* Copy bios rom into second cpu area */
-	memcpy(mem2,mem,SATURN_ROM_SIZE);
-
-	mem_length = (memory_region_length(REGION_CPU1) - SATURN_ROM_SIZE) / 4;
-
-	for (i = (SATURN_ROM_SIZE/4);i < mem_length; i++)
-	{
-		mem[i] = 0; /* Clear RAM */
-	}
-
-	sound_base = (UINT16 *) memory_region(REGION_CPU3); /*
-	Setup reset vector
-	for 68k stupidity */
-
-	*(sound_base + 0) = 0;
-	*(sound_base + 1) = 0x1000;
-	*(sound_base + 2) = 0;
-	*(sound_base + 3) = 8;
-	*(sound_base + 4) = 0x60fe;
-
-	/* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
-
-	for (i = 0; i < 2; i++)
-	{
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x0007ffff, 0, 0, MRA32_ROM );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x0007ffff, 0, 0, MWA32_ROM );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00100000, 0x0010007f, 0, 0, saturn_smpc_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00100000, 0x0010007f, 0, 0, saturn_smpc_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00180000, 0x0019ffff, 0, 0, saturn_back_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00180000, 0x0019ffff, 0, 0, saturn_back_ram_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00200000, 0x002fffff, 0, 0, MRA32_BANK1 /*saturn_workl_ram_r*/ );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x00200000, 0x002fffff, 0, 0, MWA32_BANK1 /*saturn_workl_ram_w*/ );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x01000000, 0x01000003, 0, 0, saturn_minit_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x01000000, 0x01000003, 0, 0, saturn_minit_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x01800000, 0x01800003, 0, 0, saturn_sinit_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x01800000, 0x01800003, 0, 0, saturn_sinit_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x02000000, 0x03ffffff, 0, 0, saturn_cs0_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x02000000, 0x03ffffff, 0, 0, saturn_cs0_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x04000000, 0x04ffffff, 0, 0, saturn_cs1_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x04000000, 0x04ffffff, 0, 0, saturn_cs1_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05000000, 0x057fffff, 0, 0, saturn_cs2_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05000000, 0x057fffff, 0, 0, saturn_cs2_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05890000, 0x0589ffff, 0, 0, saturn_cd_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05890000, 0x0589ffff, 0, 0, saturn_cd_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05a00000, 0x05a7ffff, 0, 0, saturn_sound_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05a00000, 0x05a7ffff, 0, 0, saturn_sound_ram_w );
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05a80000, 0x05afffff, 0, 0, MRA32_NOP );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05a80000, 0x05afffff, 0, 0, MWA32_NOP );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05b00000, 0x05b00ee3, 0, 0, saturn_dsp_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05b00000, 0x05b00ee3, 0, 0, saturn_dsp_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05c00000, 0x05c7ffff, 0, 0, saturn_vdp1_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05c00000, 0x05c7ffff, 0, 0, saturn_vdp1_ram_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05c80000, 0x05cbffff, 0, 0, saturn_fb1_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05c80000, 0x05cbffff, 0, 0, saturn_fb1_ram_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05d00000, 0x05d00017, 0, 0, saturn_vdp1_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05d00000, 0x05d00017, 0, 0, saturn_vdp1_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05e00000, 0x05e7ffff, 0, 0, saturn_vdp2_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05e00000, 0x05e7ffff, 0, 0, saturn_vdp2_ram_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05f00000, 0x05f00fff, 0, 0, saturn_color_ram_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05f00000, 0x05f00fff, 0, 0, saturn_color_ram_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05f80000, 0x05f8011f, 0, 0, saturn_vdp2_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05f80000, 0x05f8011f, 0, 0, saturn_vdp2_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05fe0000, 0x05fe00cf, 0, 0, saturn_scu_r );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x05fe0000, 0x05fe00cf, 0, 0, saturn_scu_w );
-
-		memory_install_read32_handler (i, ADDRESS_SPACE_PROGRAM, 0x06000000, 0x060fffff, 0, 0, MRA32_BANK2 );
-		memory_install_write32_handler (i, ADDRESS_SPACE_PROGRAM, 0x06000000, 0x060fffff, 0, 0, MWA32_BANK2 );
-	}
-
-	memory_install_read16_handler(2, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK3);
-	memory_install_write16_handler(2, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_BANK3);
-	memory_install_read16_handler(2, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100ee3, 0, 0, dsp_68k_r);
-	memory_install_write16_handler(2, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100ee3, 0, 0, dsp_68k_w);
-
-	memory_set_bankptr(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
-	memory_set_bankptr(2, (UINT8 *) workh_ram_base);
-	memory_set_bankptr(3, (UINT8 *) sound_base);
-/*  memory_set_bankptr(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
-  memory_set_bankptr(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
-  memory_set_bankptr(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
-  memory_set_bankptr(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
-  memory_set_bankptr(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
-  memory_set_bankptr(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);*/
+	return (sound_ram[offset*2]<<16)|sound_ram[offset*2+1];
 }
 
-static DRIVER_INIT( saturn )
+static READ32_HANDLER( stv_scsp_regs_r32 )
 {
-	reset_smpc();
-	reset_cd();
-	reset_scu();
-	reset_vdp1();
-	reset_vdp2();
+	offset <<= 1;
+	return (SCSP_0_r(offset+1, 0xffff) | (SCSP_0_r(offset, 0xffff)<<16));
 }
 
-static VIDEO_START( saturn )
+static WRITE32_HANDLER( stv_scsp_regs_w32 )
 {
-	logerror("saturn_vh_start\n");
-	saturn_bitmap[0] = auto_bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
-	saturn_bitmap[1] = auto_bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+	offset <<= 1;
+	SCSP_0_w(offset, data>>16, mem_mask >> 16);
+	SCSP_0_w(offset+1, data, mem_mask);
+}
 
-	if((!saturn_bitmap[0]) || (!saturn_bitmap[1]))
-		return 1;
+/* communication,SLAVE CPU acquires data from the MASTER CPU and triggers an irq.  *
+ * Enter into Radiant Silver Gun specific menu for a test...                       */
+static WRITE32_HANDLER( minit_w )
+{
+	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
+	cpu_boost_interleave(minit_boost_timeslice, TIME_IN_USEC(minit_boost));
+	cpu_trigger(1000);
+	cpunum_set_info_int(1, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
+}
 
-	fillbitmap(saturn_bitmap[0],Machine->pens[0x7FFF],NULL);
-	fillbitmap(saturn_bitmap[1],Machine->pens[0],NULL);
-	video_w = 0;
+static WRITE32_HANDLER( sinit_w )
+{
+	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
+	cpu_boost_interleave(sinit_boost_timeslice, TIME_IN_USEC(sinit_boost));
+	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
+}
 
+extern WRITE32_HANDLER ( stv_vdp2_vram_w );
+extern READ32_HANDLER ( stv_vdp2_vram_r );
+
+extern WRITE32_HANDLER ( stv_vdp2_cram_w );
+extern READ32_HANDLER ( stv_vdp2_cram_r );
+
+extern WRITE32_HANDLER ( stv_vdp2_regs_w );
+extern READ32_HANDLER ( stv_vdp2_regs_r );
+
+extern VIDEO_START ( stv_vdp2 );
+extern VIDEO_UPDATE( stv_vdp2 );
+
+extern READ32_HANDLER( stv_vdp1_regs_r );
+extern WRITE32_HANDLER( stv_vdp1_regs_w );
+extern READ32_HANDLER ( stv_vdp1_vram_r );
+extern WRITE32_HANDLER ( stv_vdp1_vram_w );
+
+extern WRITE32_HANDLER ( stv_vdp1_framebuffer0_w );
+extern READ32_HANDLER ( stv_vdp1_framebuffer0_r );
+
+extern WRITE32_HANDLER ( stv_vdp1_framebuffer1_w );
+extern READ32_HANDLER ( stv_vdp1_framebuffer1_r );
+
+static READ32_HANDLER( stv_sh2_random_r )
+{
+	return 0xffffffff;
+}
+
+static READ32_HANDLER( saturn_unk_r )
+{
 	return 0;
 }
 
-
-static VIDEO_UPDATE( saturn )
-{
-	//  logerror("saturn_vh_screenrefresh\n");
-	if(saturn_bitmap[video_w])
-	{
-		copybitmap(bitmap, saturn_bitmap[video_w], 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
-	}
-}
-
-/*
-   all read/write mem's are setup in init functions
-   These are stubs so that mame doesn't segfault on NULL pointer access. doh :)
-*/
-
 static ADDRESS_MAP_START( saturn_mem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_ROM   // bios
+	AM_RANGE(0x00100000, 0x0010007f) AM_READWRITE(stv_SMPC_r32, stv_SMPC_w32)
+	AM_RANGE(0x00200000, 0x002fffff) AM_RAM AM_MIRROR(0x100000) AM_SHARE(2) AM_BASE(&stv_workram_l)
+	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
+	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
+//  AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x00080000)
+	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
+	AM_RANGE(0x02000000, 0x04ffffef) AM_READNOP AM_WRITENOP	// cartridge space
+	AM_RANGE(0x04fffff0, 0x04ffffff) AM_READNOP AM_WRITENOP //WRITE(a_bus_ctrl_r,a_bus_ctrl_w)
+	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(stvcd_r, stvcd_w)
+	/* Sound */
+	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
+	//AM_RANGE(0x05a80000, 0x05afffff) AM_READ(stv_sh2_random_r)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_READWRITE(stv_scsp_regs_r32, stv_scsp_regs_w32)
+	/* VDP1 */
+	/*0x05c00000-0x05c7ffff VRAM*/
+	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
+	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
+	/*0x05d00000-0x05d7ffff VDP1 Regs */
+	AM_RANGE(0x05c00000, 0x05c7ffff) AM_READWRITE(stv_vdp1_vram_r, stv_vdp1_vram_w)
+	AM_RANGE(0x05c80000, 0x05cbffff) AM_READWRITE(stv_vdp1_framebuffer0_r, stv_vdp1_framebuffer0_w)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_READWRITE(stv_vdp1_regs_r, stv_vdp1_regs_w)
+	AM_RANGE(0x05e00000, 0x05efffff) AM_READWRITE(stv_vdp2_vram_r, stv_vdp2_vram_w)
+	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READWRITE(stv_vdp2_cram_r, stv_vdp2_cram_w)
+	AM_RANGE(0x05f80000, 0x05fbffff) AM_READWRITE(stv_vdp2_regs_r, stv_vdp2_regs_w)
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READWRITE(stv_scu_r32, stv_scu_w32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_RAM AM_MIRROR(0x01f00000) AM_SHARE(3) AM_BASE(&stv_workram_h)
 ADDRESS_MAP_END
-
-INPUT_PORTS_START( saturn )
-	PORT_START /* DIP switches */
-	PORT_BIT(0xff, 0xff, IPT_UNUSED)
-INPUT_PORTS_END
 
 static ADDRESS_MAP_START( sound_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_REGION(REGION_CPU3, 0) AM_BASE(&sound_ram)
+	AM_RANGE(0x100000, 0x100fff) AM_READWRITE(SCSP_0_r, SCSP_0_w)
 ADDRESS_MAP_END
 
-static PALETTE_INIT( saturn )
+#define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_##_b1_         ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_##_b2_         ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_##_b3_         ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_##_b4_         ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(_n_) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(_n_)
+
+INPUT_PORTS_START( saturn )
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "PDR1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "PDR2" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+/*
+    PORT_START
+    STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+    PORT_START
+    STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+*/
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("1P Push Switch") PORT_CODE(KEYCODE_7)
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("2P Push Switch") PORT_CODE(KEYCODE_8)
+
+	/*This *might* be unused...*/
+	PORT_START
+	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*Extra button layout,used by Power Instinct 3 & Suikoenbu*/
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*We don't need these,AFAIK the country code doesn't work either...*/
+	#if 0
+	PORT_START							//7
+	PORT_DIPNAME( 0x0f, 0x01, "Country" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x02, "Asia Ntsc" )
+	PORT_DIPSETTING(    0x04, DEF_STR( USA ) )
+	PORT_DIPSETTING(    0x08, "Sud America Ntsc" )
+	PORT_DIPSETTING(    0x06, "Korea" )
+	PORT_DIPSETTING(    0x0a, "Asia Pal" )
+	PORT_DIPSETTING(    0x0c, "Europe/Other Pal" )
+	PORT_DIPSETTING(    0x0d, "Sud America Pal" )
+
+	PORT_START	/* Pad data 1a */
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("B") PORT_CODE(KEYCODE_U)
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("C") PORT_CODE(KEYCODE_Y)
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("A") PORT_CODE(KEYCODE_T)
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Start") PORT_CODE(KEYCODE_O)
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Up") PORT_CODE(KEYCODE_I)
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Down") PORT_CODE(KEYCODE_K)
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Left") PORT_CODE(KEYCODE_J)
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Right") PORT_CODE(KEYCODE_L)
+
+	PORT_START	/* Pad data 1b */
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("L trig") PORT_CODE(KEYCODE_A)
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Z") PORT_CODE(KEYCODE_Q)
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Y") PORT_CODE(KEYCODE_W)
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("X") PORT_CODE(KEYCODE_E)
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("R trig") PORT_CODE(KEYCODE_S)
+	#endif
+INPUT_PORTS_END
+
+DRIVER_INIT ( saturn )
 {
-	/*Setup the internal palette to 15bit colour */
-	int i;
+	time_t ltime;
+	struct tm *today;
+	time(&ltime);
+	today = localtime(&ltime);
 
-	for ( i = 0; i < 0x8000; i++ )
-	{
-		int r, g, b;
+	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
+	minit_boost = 400;
+	sinit_boost = 400;
+	minit_boost_timeslice = 0;
+	sinit_boost_timeslice = 0;
 
-		r = (( i >> 10 ) & 0x1f) << 3;
-		g = (( i >> 5 ) & 0x1f) << 3;
-		b = (i & 0x1f) << 3;
+	smpc_ram = auto_malloc (0x80);
+	stv_scu = auto_malloc (0x100);
+	scsp_regs = auto_malloc (0x1000);
 
-		palette_set_color(i, b, g, r);
-
-		colortable[i] = i;
-	}
-
-	logerror("saturn_init_palette\n");
+  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
+    smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
+    smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
+    smpc_ram[0x29] = DectoBCD(today->tm_mday);
+    smpc_ram[0x2b] = DectoBCD(today->tm_hour);
+    smpc_ram[0x2d] = DectoBCD(today->tm_min);
+    smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+    smpc_ram[0x31] = 0x00; //CTG1=0 CTG0=0 (correct??)
+//  smpc_ram[0x33] = readinputport(7);
+ 	smpc_ram[0x5f] = 0x10;
 }
 
+MACHINE_INIT( saturn )
+{
+	// don't let the slave cpu and the 68k go anywhere
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	stv_enable_slave_sh2 = 0;
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+
+	timer_0 = 0;
+	timer_1 = 0;
+	en_68k = 0;
+	NMI_reset = 1;
+	smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+
+	cpunum_set_clock(0, MASTER_CLOCK_320/2);
+	cpunum_set_clock(1, MASTER_CLOCK_320/2);
+	cpunum_set_clock(2, MASTER_CLOCK_320/5);
+
+	stvcd_reset();
+}
+
+static const gfx_layout tiles8x8x4_layout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
+};
+
+static const gfx_layout tiles16x16x4_layout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28,
+	  32*8+0, 32*8+4, 32*8+8, 32*8+12, 32*8+16, 32*8+20, 32*8+24, 32*8+28,
+
+	  },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  32*16, 32*17,32*18, 32*19,32*20,32*21,32*22,32*23
+
+	  },
+	32*32
+};
+
+static const gfx_layout tiles8x8x8_layout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	64*8
+};
+
+static const gfx_layout tiles16x16x8_layout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56,
+	64*8+0, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8
+
+	},
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+	64*16, 64*17, 64*18, 64*19, 64*20, 64*21, 64*22, 64*23
+	},
+	128*16
+};
+
+
+
+
+static const gfx_decode gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, (0x80*(2+1))  },
+	{ REGION_GFX1, 0, &tiles16x16x4_layout, 0x00, (0x80*(2+1))  },
+	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, (0x08*(2+1))  },
+	{ REGION_GFX1, 0, &tiles16x16x8_layout, 0x00, (0x08*(2+1))  },
+
+	/* vdp1 .. pointless for drawing but can help us debug */
+	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ REGION_GFX2, 0, &tiles16x16x4_layout, 0x00, 0x100  },
+	{ REGION_GFX2, 0, &tiles8x8x8_layout,   0x00, 0x20  },
+	{ REGION_GFX2, 0, &tiles16x16x8_layout, 0x00, 0x20  },
+
+	{ -1 } /* end of array */
+};
+
+struct sh2_config sh2_conf_master = { 0 };
+struct sh2_config sh2_conf_slave  = { 1 };
+
+static int scsp_last_line = 0;
+
+static void scsp_irq(int irq)
+{
+	// don't bother the 68k if it's off
+	if (!en_68k)
+	{
+		return;
+	}
+
+	if (irq)
+	{
+		scsp_last_line = irq;
+		cpunum_set_input_line(2, irq, ASSERT_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(2, scsp_last_line, CLEAR_LINE);
+	}
+}
+
+static struct SCSPinterface scsp_interface =
+{
+	REGION_CPU3,
+	0,
+	scsp_irq
+};
 
 static MACHINE_DRIVER_START( saturn )
+
 	/* basic machine hardware */
-	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
+	MDRV_CPU_ADD(SH2, MASTER_CLOCK_352/2) // 28.6364 MHz
 	MDRV_CPU_PROGRAM_MAP(saturn_mem, 0)
-	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
+	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
+	MDRV_CPU_CONFIG(sh2_conf_master)
+
+	MDRV_CPU_ADD(SH2, MASTER_CLOCK_352/2) // 28.6364 MHz
 	MDRV_CPU_PROGRAM_MAP(saturn_mem, 0)
-	MDRV_CPU_ADD(M68000, 11300000)		/* Sound CPU; 11.3mhz (MC68000-12)*/
+	MDRV_CPU_CONFIG(sh2_conf_slave)
+
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK_352/5) //11.46 MHz
 	MDRV_CPU_PROGRAM_MAP(sound_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
+	MDRV_VBLANK_DURATION(192);	// guess, needed to force video update after V-Blank OUT interrupt
 
-	MDRV_MACHINE_INIT( saturn )
+	MDRV_MACHINE_INIT(saturn)
 
-    /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT)
-	MDRV_VISIBLE_AREA(0, SATURN_SCR_WIDTH-1, 0, SATURN_SCR_HEIGHT-1)
-	MDRV_PALETTE_LENGTH(32768)
-	MDRV_COLORTABLE_LENGTH(32768)
-	MDRV_PALETTE_INIT( saturn )
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
+	MDRV_SCREEN_SIZE(1024, 1024)
+	MDRV_VISIBLE_AREA(0*8, 703, 0*8, 512) // we need to use a resolution as high as the max size it can change to
+	MDRV_PALETTE_LENGTH(2048+(2048*2))//standard palette + extra memory for rgb brightness.
+	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_START( saturn )
-	MDRV_VIDEO_UPDATE( saturn )
+	MDRV_VIDEO_START(stv_vdp2)
+	MDRV_VIDEO_UPDATE(stv_vdp2)
+
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(SCSP, 0)
+	MDRV_SOUND_CONFIG(scsp_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
-
 ROM_START(saturn)
-     ROM_REGION(0x00421000, REGION_CPU1,0)
-     /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, CRC(2ABA43C2)) */
-     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, CRC(224b752c))
-     /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, CRC(4AFCF0FA)) */
-     /*Make sure you set the PAL define to 1 otherwise euro bios will lock badly */
-
-     /* STV Bios Note these are in correct endian order. not byte swapped versions */
-     /* ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, CRC(574FD2C3))*/
-     /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, CRC(BF7DBDD7)) */
-     ROM_REGION(0x00080000, REGION_CPU2,0)
-     ROM_REGION(0x00080000, REGION_CPU3,0)
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, CRC(224b752c))
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
+	ROM_COPY( REGION_CPU1,0,0,0x080000)
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
 ROM_END
+
+ROM_START(saturnus)
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_LOAD("sega_us.bin", 0x00000000, 0x00080000, CRC(f90f0089))
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
+	ROM_COPY( REGION_CPU1,0,0,0x080000)
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
+ROM_END
+
+ROM_START(saturneu)
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_LOAD("sega_eu.bin", 0x00000000, 0x00080000, CRC(4afcf0fa))
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
+	ROM_COPY( REGION_CPU1,0,0,0x080000)
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
+ROM_END
+
+static DEVICE_INIT( saturn_chdcd )
+{
+	return device_init_mess_cd(image);
+}
+
+static DEVICE_LOAD( saturn_chdcd )
+{
+	return device_load_mess_cd(image, file);
+}
+
+static DEVICE_UNLOAD( saturn_chdcd )
+{
+	device_unload_mess_cd(image);
+}
+
+static const char *saturn_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
+{
+	snprintf(buf, bufsize, "CD-ROM");
+	return buf;
+}
+
+static void saturn_chdcd_getinfo(struct IODevice *dev)
+{
+	/* CHD CD-ROM */
+	dev->type = IO_CDROM;
+	dev->name = saturn_cdrom_getname;
+	dev->count = 1;
+	dev->file_extensions = "chd\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = device_init_saturn_chdcd;
+	dev->load = device_load_saturn_chdcd;
+	dev->unload = device_unload_saturn_chdcd;
+}
+
+SYSTEM_CONFIG_START( saturn )
+	CONFIG_DEVICE(saturn_chdcd_getinfo)
+SYSTEM_CONFIG_END
 
 /***************************************************************************
 
@@ -1951,5 +2461,8 @@ ROM_END
 ***************************************************************************/
 
 /*    YEAR  NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-CONS(1994, saturn,	0,	0,	saturn,	saturn,	saturn,	NULL,	"Sega",	"Saturn", GAME_NOT_WORKING)
+CONS(1994, saturn,	0,	0,	saturn,	saturn,	saturn,	saturn,	"Sega",	"Saturn (Japan v1.01)", GAME_NOT_WORKING)
+CONS(1994, saturnus,	0,	0,	saturn,	saturn,	saturn,	saturn,	"Sega",	"Saturn (US)", GAME_NOT_WORKING)
+CONS(1994, saturneu,	0,	0,	saturn,	saturn,	saturn,	saturn,	"Sega",	"Saturn (Europe)", GAME_NOT_WORKING)
+
 

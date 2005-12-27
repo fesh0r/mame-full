@@ -341,6 +341,11 @@ $(OBJ)/sega.a:						\
 	$(OBJ)/mess/machine/genesis.o	\
 	$(OBJ)/mess/systems/genesis.o	\
 	$(OBJ)/mess/systems/saturn.o	\
+	$(OBJ)/machine/stvcd.o			\
+	$(OBJ)/machine/scudsp.o			\
+	$(OBJ)/vidhrdw/stvvdp1.o		\
+	$(OBJ)/vidhrdw/stvvdp2.o		\
+	$(OBJ)/sound/scsp.o				\
 	$(OBJ)/mess/vidhrdw/smsvdp.o	\
 	$(OBJ)/mess/machine/sms.o		\
 	$(OBJ)/mess/systems/sms.o

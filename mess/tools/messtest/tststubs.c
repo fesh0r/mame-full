@@ -1,7 +1,12 @@
 #include <stdlib.h>
 #include "mame.h"
+
 #ifdef WIN32
 #include <windows.h>
+#endif
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
 #endif
 
 int osd_init(void)
