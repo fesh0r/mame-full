@@ -105,7 +105,9 @@ WRITE8_HANDLER ( pce_joystick_w )
 
  READ8_HANDLER ( pce_joystick_r )
 {
-    int data = readinputport(0);
-    if(joystick_data_select) data >>= 4;
-    return (data);
+	int data = readinputport(0);
+	if(joystick_data_select) data >>= 4;
+	/* Bit 6 is reset in US consoles?? */
+	data &= ~0x40;
+	return (data);
 }
