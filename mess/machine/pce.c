@@ -6,7 +6,7 @@
 #include "image.h"
 
 /* the largest possible cartridge image, excluding special games */
-#define PCE_ROM_MAXSIZE  (0x2000 * 256 + 512)
+#define PCE_ROM_MAXSIZE  (0x2000 * 256)
 
 /* system RAM */
 unsigned char *pce_user_ram;    /* scratch RAM at F8 */
@@ -23,25 +23,45 @@ DEVICE_LOAD(pce_cart)
 {
 	int size;
 	unsigned char *ROM;
-	logerror("*** pce_load_rom : %s\n", image_filename(image));
+	logerror("*** DEVICE_LOAD(pce_cart) : %s\n", image_filename(image));
 
-    /* open file to get size */
+	/* open file to get size */
 	if( new_memory_region(REGION_CPU1,PCE_ROM_MAXSIZE,0) )
 		return 1;
 	ROM = memory_region(REGION_CPU1);
-    size = mame_fread(file, ROM, PCE_ROM_MAXSIZE);
 
-    /* position back at start of file */
-    mame_fseek(file, 0, SEEK_SET);
+	size = image_length( image );
 
-    /* handle header accordingly */
-    if((size/512)&1)
-    {
-        logerror("*** pce_load_rom : Header present\n");
-        size -= 512;
-        mame_fseek(file, 512, SEEK_SET);
-    }
-    size = mame_fread(file, ROM, size);
+	/* handle header accordingly */
+	if((size/512)&1)
+	{
+		logerror("*** DEVICE_LOAD(pce_cart) : Header present\n");
+		size -= 512;
+		mame_fseek(file, 512, SEEK_SET);
+	}
+	if ( size > PCE_ROM_MAXSIZE ) {
+		size = PCE_ROM_MAXSIZE;
+	}
+
+	size = mame_fread(file, ROM, size);
+
+	if ( ROM[0x1FFF] < 0xE0 ) {
+		int i;
+		UINT8 decrypted[256];
+
+		logerror( "*** DEVICE_LOAD(pce_cart) : ROM image seems encrypted, decrypting...\n" );
+
+		/* Initialize decryption table */
+		for( i = 0; i < 256; i++ ) {
+			decrypted[i] = ( ( i & 0x01 ) << 7 ) | ( ( i & 0x02 ) << 5 ) | ( ( i & 0x04 ) << 3 ) | ( ( i & 0x08 ) << 1 ) | ( ( i & 0x10 ) >> 1 ) | ( ( i & 0x20 ) >> 3 ) | ( ( i & 0x40 ) >> 5 ) | ( ( i & 0x80 ) >> 7 );
+		}
+
+		/* Decrypt ROM image */
+		for( i = 0; i < size; i++ ) {
+			ROM[i] = decrypted[ROM[i]];
+		}
+	}
+
 	return 0;
 }
 
