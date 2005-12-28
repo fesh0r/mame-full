@@ -7749,19 +7749,19 @@ included a CD-ROM expansion.
 
 Features:
 
-CPU: Custom 16-bit - 65C816 at 3.58 MHz (Machine adjustable to 3.58, 2.68, and 1.79 Mhz)
+CPU: Custom 16-bit - 65C816 at 3.58 MHz (Variable memory access speeds of 3.58, 2.68, and 1.79 Mhz)
 
 Co-processor: None (DSP and SuperFX were inside the cartridge of selected games )
 
-RAM: (?)
+RAM: 128 KB
 
-Video RAM: (?)
+Video RAM: 64KB
 
-Color Palette: 32,768; 256 max on screen
+Color Palette: 32,768; 256 entry palette, writable during h-blank. up to 11-bit direct color mode.
 
-Maximum Screen Resolution: 512 x 448 pixels
+Maximum Screen Resolution: 512 x 448 pixels (has unused 512x478 mode)
 
-Max # of sprites: 128, 32 per scanline
+Max # of sprites: 128, 32 per scanline, limited to 34 tiles per line
 
 Max and Min Sprite Size: 64 x 64 pixels; 8 x 8 pixels
 
@@ -7771,22 +7771,21 @@ Sound channels: 8 ADPCM with 64 Kb Ram
 
 Sound Processor: Sony SPC700 ("wavetable-like" music, near 16-bit sound quality playback(CD) & Q-Sound surround sound.)
 
-Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the largest game)
+Cart Size: 2Mbit - 128 Megabit Max.
+           Tales of Phantasia and Star Ocean, at 48 Mbit, are the largest.
+           Tengai Makyo Zero and Dai Kaiju Monogatari are each 40 Mbit.
 
 Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
 
 
-
 MESS Emulation State:
 
-This driver is preliminary and most images will not work. Super Mario World (US version) is playable.
+This driver is immature and many images will not work. Super Mario World (US version) is playable. The DSP-1 in-cart coprocessor is emulated.
 
 
 To do (see source):
 
-Emulate extra chips - superfx, dsp2, sa-1 etc.
-
-Add sound emulation. Currently the SPC700 is emulated, but that's it.
+Emulate extra chips - superfx, DSP-2, 3, and 4, SETA ST-010, ST-011, ST-0018, SPC7110, S-DD1, SA-1, Cx4, and OBC1
 
 Add horizontal mosaic, hi-res. interlaced etc to video emulation.
 
@@ -7805,9 +7804,11 @@ Emulators:
 
 ZSNES - http://www.zsnes.com/
 
-SNEeSe - 
+SNEeSe - http://www.emuunlim.com/sneese/
 
 Snes9x - http://www.snes9x.com
+
+BSNES - http://byuu.org/
 
 $end
 

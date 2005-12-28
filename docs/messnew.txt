@@ -26,6 +26,8 @@ System Driver Changes:
 
 - [NES] Switched to use the MAME NES APU implementation.  [R. Belmont]
 
+- [PCE] Added imperfect sound.  [Rob Bohms]
+
 - [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
 
 - [SNES] Fixed save RAM to store and save properly, improved memory mapping

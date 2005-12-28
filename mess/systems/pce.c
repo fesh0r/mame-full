@@ -15,7 +15,7 @@
 #include "cpu/h6280/h6280.h"
 #include "includes/pce.h"
 #include "devices/cartslot.h"
-
+#include "sound/c6280.h"
 static INTERRUPT_GEN( pce_interrupt )
 {
     int ret = 0;
@@ -101,11 +101,11 @@ ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x000000, 0x1EDFFF) AM_ROM
 	AM_RANGE( 0x1EE000, 0x1EFFFF) AM_RAM
 	AM_RANGE( 0x1F0000, 0x1F1FFF) AM_RAM	AM_BASE( &pce_user_ram )
-	AM_RANGE( 0x1FE000, 0x1FE003) AM_READWRITE( vdc_r, vdc_w )
-	AM_RANGE( 0x1FE400, 0x1FE407) AM_READWRITE( vce_r, vce_w )
-	AM_RANGE( 0x1FE800, 0x1FE80F) AM_READWRITE( pce_psg_r, pce_psg_w )
-	AM_RANGE( 0x1FEC00, 0x1FEC01) AM_READWRITE( pce_timer_r, pce_timer_w )
-	AM_RANGE( 0x1FF000, 0x1FF000) AM_READWRITE( pce_joystick_r, pce_joystick_w )
+	AM_RANGE( 0x1FE000, 0x1FE3FF) AM_READWRITE( vdc_r, vdc_w )
+	AM_RANGE( 0x1FE400, 0x1FE7FF) AM_READWRITE( vce_r, vce_w )
+	AM_RANGE( 0x1FE800, 0x1FEBFF) AM_READWRITE( pce_psg_r, C6280_0_w )
+	AM_RANGE( 0x1FEC00, 0x1FEEFF) AM_READWRITE( pce_timer_r, pce_timer_w )
+	AM_RANGE( 0x1FF000, 0x1FF3FF) AM_READWRITE( pce_joystick_r, pce_joystick_w )
 	AM_RANGE( 0x1FF402, 0x1FF403) AM_READWRITE( pce_irq_r, pce_irq_w )
 ADDRESS_MAP_END
 
@@ -192,6 +192,10 @@ static MACHINE_DRIVER_START( pce )
 	MDRV_VIDEO_UPDATE( pce )
 
 	MDRV_NVRAM_HANDLER( pce )
+	MDRV_SPEAKER_STANDARD_STEREO("left","right")
+	MDRV_SOUND_ADD(C6280, 21477270/6)
+	MDRV_SOUND_ROUTE(0, "left", 1.00)
+	MDRV_SOUND_ROUTE(1, "right", 1.00)
 MACHINE_DRIVER_END
 
 static void pce_cartslot_getinfo(struct IODevice *dev)
@@ -217,5 +221,5 @@ SYSTEM_CONFIG_END
 #define rom_pce NULL
 
 /*	   YEAR  NAME	   PARENT	COMPAT	MACHINE	INPUT	 INIT	CONFIG  COMPANY	 FULLNAME */
-CONS( 1987, pce,	   0,		0,		pce,	pce, 	 0,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_NO_SOUND )
+CONS( 1987, pce,	   0,		0,		pce,	pce, 	 0,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 
