@@ -79,15 +79,6 @@ static  READ8_HANDLER ( pce_irq_r )
     return 0x00;
 }
 
-static WRITE8_HANDLER ( pce_timer_w )
-{
-}
-
-static  READ8_HANDLER ( pce_timer_r )
-{
-    return 0x00;
-}
-
 static WRITE8_HANDLER ( pce_psg_w )
 {
 }
@@ -104,7 +95,7 @@ ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x1FE000, 0x1FE3FF) AM_READWRITE( vdc_r, vdc_w )
 	AM_RANGE( 0x1FE400, 0x1FE7FF) AM_READWRITE( vce_r, vce_w )
 	AM_RANGE( 0x1FE800, 0x1FEBFF) AM_READWRITE( pce_psg_r, C6280_0_w )
-	AM_RANGE( 0x1FEC00, 0x1FEEFF) AM_READWRITE( pce_timer_r, pce_timer_w )
+	AM_RANGE( 0x1FEC00, 0x1FEEFF) AM_READWRITE( H6280_timer_r, H6280_timer_w )
 	AM_RANGE( 0x1FF000, 0x1FF3FF) AM_READWRITE( pce_joystick_r, pce_joystick_w )
 	AM_RANGE( 0x1FF402, 0x1FF403) AM_READWRITE( pce_irq_r, pce_irq_w )
 ADDRESS_MAP_END
