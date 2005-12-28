@@ -723,6 +723,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	place_integer_le(header, 26, 2, heads);
 	place_integer_le(header, 28, 4, hidden_sectors);
 	place_integer_le(header, 32, 4, (UINT32) (total_sectors >> 16));
+	place_integer_le(header, 36, 1, 0xFF);
 	place_integer_le(header, 38, 1, 0x28);
 	place_integer_le(header, 39, 4, rand());
 	memcpy(&header[43], "           ", 11);
@@ -2035,12 +2036,65 @@ static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 
 
 
+static imgtoolerr_t fat_read_bootblock(imgtool_image *image, imgtool_stream *stream)
+{
+	imgtoolerr_t err;
+	UINT8 block[FAT_SECLEN];
+
+	err = fat_read_sector(image, 0, 0, block, sizeof(block));
+	if (err)
+		return err;
+
+	stream_write(stream, block, sizeof(block));
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_write_bootblock(imgtool_image *image, imgtool_stream *stream)
+{
+	imgtoolerr_t err;
+	UINT8 block[FAT_SECLEN];
+	UINT8 new_block[FAT_SECLEN];
+
+	if (stream_size(stream) != sizeof(new_block))
+		return IMGTOOLERR_UNEXPECTED;
+	stream_read(stream, new_block, sizeof(new_block));
+
+	if (new_block[510] != 0x55)
+		return IMGTOOLERR_UNEXPECTED;
+	if (new_block[511] != 0xAA)
+		return IMGTOOLERR_UNEXPECTED;
+
+	/* read current boot sector */
+	err = fat_read_sector(image, 0, 0, block, sizeof(block));
+	if (err)
+		return err;
+
+	/* merge in the new stuff */
+	memcpy(&block[ 0], &new_block[ 0],   3);
+	memcpy(&block[62], &new_block[62], 448);
+
+	/* and write it out */
+	err = fat_write_sector(image, 0, 0, block, sizeof(block));
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	struct fat_file file;
 	size_t bytes_read;
 	char buffer[1024];
+
+	/* special case for bootblock */
+	if (filename == FILENAME_BOOTBLOCK)
+		return fat_read_bootblock(image, destf);
 
 	err = fat_lookup_path(image, filename, CREATE_NONE, &file);
 	if (err)
@@ -2069,6 +2123,10 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 	struct fat_file file;
 	UINT32 bytes_left, len;
 	char buffer[1024];
+
+	/* special case for bootblock */
+	if (filename == FILENAME_BOOTBLOCK)
+		return fat_write_bootblock(image, sourcef);
 
 	err = fat_lookup_path(image, filename, CREATE_FILE, &file);
 	if (err)
@@ -2214,6 +2272,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->open_is_strict				= 1;
 	module->supports_creation_time		= 1;
 	module->supports_lastmodified_time	= 1;
+	module->supports_bootblock			= 1;
 	module->path_separator				= '\\';
 	module->alternate_path_separator	= '/';
 	module->eoln						= EOLN_CRLF;
@@ -2384,6 +2443,7 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 	module->supports_creation_time		= 1;
 	module->supports_lastmodified_time	= 1;
 	module->tracks_are_called_cylinders	= 1;
+	module->supports_bootblock			= 1;
 	module->path_separator				= '\\';
 	module->alternate_path_separator	= '/';
 	module->eoln						= EOLN_CRLF;

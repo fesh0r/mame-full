@@ -67,6 +67,10 @@ Imgtool Changes:
   argument, like the UNIX "cp" command.  This is so that a directory argument
   can be properly specified.  [Nate Woods]
 
+- [Imgtool] Added the ability to get and put the boot block, as if it was a
+  file called "??BOOT??".  The FAT module has been enhanced to support this
+  feature.  [Nate Woods]
+
 - [Windows Imgtool] The insert file dialog will no longer let the user specify
   a file that does not exist (which was allowed, but eventually resulted in an
   error.)  Also, fixed a few cosmetic errors.  [Nate Woods]

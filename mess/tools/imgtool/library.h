@@ -165,6 +165,7 @@ struct ImageModule
 	unsigned int tracks_are_called_cylinders : 1;	/* used for hard drivers */
 	unsigned int writing_untested : 1;				/* used when we support writing, but not in main build */
 	unsigned int creation_untested : 1;				/* used when we support creation, but not in main build */
+	unsigned int supports_bootblock : 1;			/* this module supports loading/storing the boot block */
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);

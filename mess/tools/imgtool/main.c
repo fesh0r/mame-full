@@ -163,6 +163,17 @@ void reporterror(imgtoolerr_t err, const struct command *c, const char *format, 
 
 
 
+static const char *interpret_filename(const char *filename)
+{
+	if (!strcmp(filename, "??BOOT??")
+			|| !strcmp(filename, "\'??BOOT??\'")
+			|| !strcmp(filename, "\"??BOOT??\""))
+		filename = FILENAME_BOOTBLOCK;
+	return filename;
+}
+
+
+
 /* ----------------------------------------------------------------------- */
 
 static int cmd_dir(const struct command *c, int argc, char *argv[])
@@ -230,31 +241,37 @@ done:
 static int cmd_get(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	imgtool_image *image;
-	char *newfname;
-	int unnamedargs;
+	imgtool_image *image = NULL;
+	const char *filename;
+	char *new_filename;
+	int unnamedargs = 0;
 	filter_getinfoproc filter;
 	const char *fork;
 
 	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &image);
 	if (err)
-		goto error;
+		goto done;
+
+	filename = interpret_filename(argv[2]);
 
 	unnamedargs = parse_options(argc, argv, 3, 4, NULL, &filter, &fork);
 	if (unnamedargs < 0)
-		return -1;
-	newfname = (unnamedargs == 4) ? argv[3] : NULL;
+		goto done;
 
-	err = img_getfile(image, argv[2], fork, newfname, filter);
-	img_close(image);
+	new_filename = (unnamedargs == 4) ? argv[3] : NULL;
+
+	err = img_getfile(image, filename, fork, new_filename, filter);
 	if (err)
-		goto error;
+		goto done;
 
-	return 0;
+	err = IMGTOOLERR_SUCCESS;
 
-error:
-	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
-	return -1;
+done:
+	if (err)
+		reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
+	if (image)
+		img_close(image);
+	return (err || (unnamedargs < 0)) ? -1 : 0;
 }
 
 
@@ -296,7 +313,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 		return -1;
 
 	/* pick out which args are filenames, and which one is the destination */
-	new_filename = argv[unnamedargs - 1];
+	new_filename = interpret_filename(argv[unnamedargs - 1]);
 	filename_list = &argv[2];
 	filename_count = unnamedargs - 3;
 

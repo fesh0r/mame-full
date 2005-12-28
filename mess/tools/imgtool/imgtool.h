@@ -29,6 +29,8 @@ typedef const struct ImageModule *ImageModuleConstPtr;
 #define EOLN_LF		"\x0a"
 #define EOLN_CRLF	"\x0d\x0a"
 
+#define FILENAME_BOOTBLOCK	((const char *) 1)
+
 /* ---------------------------------------------------------------------------
  * Image calls
  *
