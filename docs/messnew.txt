@@ -12,6 +12,9 @@ System Driver Changes:
 
 - [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #801) [Nate Woods]
 
+- [ARCADIA] Added support for 12k cartridges, fixed a buffer overrun and
+  enhanced sound generation.  [Irving Gould]
+
 - [AT486] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
 
 - [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]

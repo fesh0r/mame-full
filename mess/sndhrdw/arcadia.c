@@ -36,7 +36,7 @@ void arcadia_soundport_w (int offset, int data)
 	    arcadia_sound.pos = 0;
 	    arcadia_sound.level = TRUE;
 	    // frequency 7874/(data+1)
-	    arcadia_sound.size=options.samplerate*(data+1)/7874;
+            arcadia_sound.size=options.samplerate*((data&0x7f)+1)/7874;
 	    break;
 	}
 }

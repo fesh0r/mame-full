@@ -656,20 +656,24 @@ INLINE void arcadia_draw_char(mame_bitmap *bitmap, UINT8 *ch, int color,
 	    b=ch[k];
 	    arcadia_video.bg[y][x>>3]|=b>>(x&7);
 	    arcadia_video.bg[y][(x>>3)+1]|=b<<(8-(x&7));
-	    arcadia_video.bg[y+1][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+1][(x>>3)+1]|=b<<(8-(x&7));
-	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y,
-		    0, TRANSPARENCY_NONE,0);
-	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y+1,
-		    0, TRANSPARENCY_NONE,0);
+
+            if (y+1<bitmap->height) {
+                arcadia_video.bg[y+1][x>>3]|=b>>(x&7);
+                arcadia_video.bg[y+1][(x>>3)+1]|=b<<(8-(x&7));
+                drawgfx(bitmap, Machine->gfx[0], b,0,
+                        0,0,x,y,
+                        0, TRANSPARENCY_NONE,0);
+                drawgfx(bitmap, Machine->gfx[0], b,0,
+                        0,0,x,y+1,
+                        0, TRANSPARENCY_NONE,0);
+            }
 	}
     } else {
 	for (k=0; (k<8)&&(y<bitmap->height); k++, y++) {
 	    b=ch[k];
-	    arcadia_video.bg[y][x>>3]|=b>>(x&7);
+            arcadia_video.bg[y][x>>3]|=b>>(x&7);
 	    arcadia_video.bg[y][(x>>3)+1]|=b<<(8-(x&7));
+
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
 		    0,0,x,y,
 		    0, TRANSPARENCY_NONE,0);

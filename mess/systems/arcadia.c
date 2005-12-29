@@ -11,25 +11,16 @@
 #include "includes/arcadia.h"
 #include "devices/cartslot.h"
 
-static ADDRESS_MAP_START( arcadia_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x0fff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0x1800, 0x1aff) AM_READ( arcadia_video_r )
-	AM_RANGE( 0x2000, 0x2fff) AM_READ( MRA8_ROM )
+static ADDRESS_MAP_START( arcadia_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x0fff) AM_ROM
+	AM_RANGE( 0x1800, 0x1aff) AM_READWRITE( arcadia_video_r, arcadia_video_w )
+	AM_RANGE( 0x2000, 0x2fff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( arcadia_writemem , ADDRESS_SPACE_PROGRAM, 8)
-//	{ 0x0000, 0x0fff, MWA8_ROM },
-	AM_RANGE( 0x1800, 0x1aff) AM_WRITE( arcadia_video_w )
-//	{ 0x2000, 0x2fff, MWA8_ROM },
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( arcadia_readport , ADDRESS_SPACE_IO, 8)
+static ADDRESS_MAP_START( arcadia_io, ADDRESS_SPACE_IO, 8)
 //{ S2650_CTRL_PORT,S2650_CTRL_PORT, },
 //{ S2650_DATA_PORT,S2650_DATA_PORT, },
-AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( arcadia_vsync_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( arcadia_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( arcadia_vsync_r)
 ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
@@ -231,8 +222,8 @@ static PALETTE_INIT( arcadia )
 static MACHINE_DRIVER_START( arcadia )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", S2650, 3580000/3)        /* 1.796 Mhz */
-	MDRV_CPU_PROGRAM_MAP(arcadia_readmem,arcadia_writemem)
-	MDRV_CPU_IO_MAP(arcadia_readport,arcadia_writeport)
+	MDRV_CPU_PROGRAM_MAP(arcadia_mem, 0)
+	MDRV_CPU_IO_MAP(arcadia_io, 0)
 	MDRV_CPU_PERIODIC_INT(arcadia_video_line, TIME_IN_HZ(262*60))
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -284,13 +275,14 @@ static DEVICE_LOAD( arcadia_cart )
 
 	if (size > 0x1000)
 		memmove(rom + 0x2000, rom + 0x1000, size - 0x1000);
+        if (size > 0x2000)
+                memmove(rom + 0x4000, rom + 0x3000, size - 0x2000);
 
 #if 1
 	// golf cartridge support
 	// 4kbyte at 0x0000
 	// 2kbyte at 0x4000
-	if (size<=0x2000) memcpy (rom+0x3000, rom+0x2000, 0x1000);
-	if (size<=0x3000) memcpy (rom+0x4000, rom+0x2000, 0x2000);
+        if (size<=0x2000) memcpy (rom+0x4000, rom+0x2000, 0x1000);
 #else
 	/* this is a testpatch for the golf cartridge
 	   so it could be burned in a arcadia 2001 cartridge
@@ -298,16 +290,27 @@ static DEVICE_LOAD( arcadia_cart )
 	// not enough yet (some pointers stored as data?)
 	struct { UINT16 address; UINT8 old; UINT8 neu; }
 	patch[]= {
-	    { 0x0077,0x40,0x20 },
-	    { 0x011e,0x40,0x20 },
-	    { 0x0348,0x40,0x20 },
-	    { 0x03be,0x40,0x20 },
-	    { 0x04ce,0x40,0x20 },
-	    { 0x04da,0x40,0x20 },
-	    { 0x0617,0x40,0x20 },
-	    { 0x0efb,0x40,0x20 },
-	    { 0x0f00,0x40,0x20 },
-	    { 0x0f12,0x40,0x20 }
+		{ 0x0077,0x40,0x20 },
+		{ 0x011e,0x40,0x20 },
+		{ 0x0348,0x40,0x20 },
+		{ 0x03be,0x40,0x20 },
+		{ 0x04ce,0x40,0x20 },
+		{ 0x04da,0x40,0x20 },
+		{ 0x0562,0x42,0x22 },
+		{ 0x0617,0x40,0x20 },
+		{ 0x0822,0x40,0x20 },
+		{ 0x095e,0x42,0x22 },
+		{ 0x09d3,0x42,0x22 },
+		{ 0x0bb0,0x42,0x22 },
+		{ 0x0efb,0x40,0x20 },
+		{ 0x0ec1,0x43,0x23 },
+		{ 0x0f00,0x40,0x20 },
+		{ 0x0f12,0x40,0x20 },
+		{ 0x0ff5,0x43,0x23 },
+		{ 0x0ff7,0x41,0x21 },
+		{ 0x0ff9,0x40,0x20 },
+		{ 0x0ffb,0x41,0x21 },
+		{ 0x20ec,0x42,0x22 }
 	};
 	for (int i=0; i<ARRAY_LENGTH(patch); i++) {
 	    assert(rom[patch[i].address]==patch[i].old);
