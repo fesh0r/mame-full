@@ -5,8 +5,8 @@
 #include "includes/pce.h"
 #include "image.h"
 
-/* the largest possible cartridge image, excluding special games */
-#define PCE_ROM_MAXSIZE  (0x2000 * 256)
+/* the largest possible cartridge image (street fighter 2 - 2.5MB) */
+#define PCE_ROM_MAXSIZE  (0x280000)
 
 /* system RAM */
 unsigned char *pce_user_ram;    /* scratch RAM at F8 */
@@ -22,6 +22,7 @@ static int joystick_data_select;        /* which nibble of joystick data we want
 DEVICE_LOAD(pce_cart)
 {
 	int size;
+	int split_rom = 0;
 	unsigned char *ROM;
 	logerror("*** DEVICE_LOAD(pce_cart) : %s\n", image_filename(image));
 
@@ -43,7 +44,7 @@ DEVICE_LOAD(pce_cart)
 		size = PCE_ROM_MAXSIZE;
 	}
 
-	size = mame_fread(file, ROM, size);
+	mame_fread(file, ROM, size);
 
 	if ( ROM[0x1FFF] < 0xE0 ) {
 		int i;
@@ -59,6 +60,33 @@ DEVICE_LOAD(pce_cart)
 		/* Decrypt ROM image */
 		for( i = 0; i < size; i++ ) {
 			ROM[i] = decrypted[ROM[i]];
+		}
+	}
+
+	/* check if we're dealing with a split rom image */
+	/* TODO: Add support for checking for 512KB split roms */
+	if ( size == 384 * 1024 ) {
+		split_rom = 1;
+	}
+
+	/* set up the memory for a split rom image */
+	if ( split_rom ) {
+		/* Set up ROM address space as follows:          */
+		/* 000000 - 03FFFF : ROM data 000000 - 03FFFF    */
+		/* 040000 - 07FFFF : ROM data 000000 - 03FFFF    */
+		/* 080000 - 0BFFFF : ROM data 040000 - 07FFFF    */
+		/* 0C0000 - 0FFFFF : ROM data 040000 - 07FFFF    */
+		memcpy( ROM + 0x080000, ROM + 0x040000, 0x040000 );	/* Set up 080000 - 0BFFFF region */
+		memcpy( ROM + 0x0C0000, ROM + 0x040000, 0x040000 );	/* Set up 0C0000 - 0FFFFF region */
+		memcpy( ROM + 0x040000, ROM, 0x040000 );		/* Set up 040000 - 07FFFF region */
+	} else {
+		/* mirror 256KB rom data */
+		if ( size <= 0x040000 ) {
+			memcpy( ROM + 0x040000, ROM, 0x040000 );
+		}
+		/* mirror 512KB rom data */
+		if ( size <= 0x080000 ) {
+			memcpy( ROM + 0x080000, ROM, 0x080000 );
 		}
 	}
 
