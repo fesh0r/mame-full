@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #801) [Nate Woods]
 
+- [APPLE2P] Fixed BIOS.  (bug #820) [Nick Westgate]
+
 - [ARCADIA] Added support for 12k cartridges, fixed a buffer overrun and
   enhanced sound generation.  [Irving Gould]
 
@@ -92,6 +94,8 @@ Source Changes:
   be placed in a ROM_REGION.  This change makes cartridge loading be specified
   similar to BIOS loading, and makes things cleaner and more declarative.
   [Nate Woods]
+ 
+- Makefile tweaks.  (bug #819) [Oliver Stoeneberg]
   
 - Added mandatory attribute to the device tags on the -listxml data.  [Nate
   Woods]
