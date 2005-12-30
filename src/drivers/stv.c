@@ -146,7 +146,6 @@ ToDo / Notes:
  for the humans structures,imperfect VDP1 emulation for the dragons.
 -hanagumi: ending screens have corrupt graphics. (*untested*)
 -znpwfv: missing Gouraud shading on distorted sprites and polygons
--znpwfv,twcup98: missing "two screens" mode in RBG emulation
 -batmanfr: Missing sound,caused by an extra ADSP chip which is on the cart.The CPU is a
  ADSP-2181,and it's the same used by NBA Jam Extreme (ZN game).
 -twcup98: missing Tecmo logo
@@ -236,6 +235,7 @@ DRIVER_INIT(pblbeach);
 DRIVER_INIT(shanhigw);
 DRIVER_INIT(finlarch);
 DRIVER_INIT(elandore);
+DRIVER_INIT(rsgun);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -967,6 +967,20 @@ READ32_HANDLER ( stv_io_r32 )
 					//ui_popup("%02x MUX DATA",mux_data);
 				    return (readinputport(2) << 16) | (readinputport(3));
 				}
+			}
+			case 0x47:
+			{
+				int data1 = 0, data2 = 0;
+
+				/* Critter Crusher */
+				data1 = readinputport(7);
+				data1 = BITSWAP8(data1, 2, 3, 0, 1, 6, 7, 5, 4) & 0xf3;
+				data1 |= (readinputport(2) & 1) ? 0x0 : 0x4;
+				data2 = readinputport(8);
+				data2 = BITSWAP8(data2, 2, 3, 0, 1, 6, 7, 5, 4) & 0xf3;
+				data2 |= (readinputport(2) & 1) ? 0x0 : 0x4;
+
+				return 0xff000000 | data1 << 16 | 0x0000ff00 | data2;
 			}
 			//default:
 			default:
@@ -2484,6 +2498,100 @@ INPUT_PORTS_START( stv )
 	#endif
 INPUT_PORTS_END
 
+INPUT_PORTS_START( critcrsh )
+	PORT_START /* 0 */
+	PORT_DIPNAME( 0x01, 0x01, "PDR1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* 1 */
+	PORT_DIPNAME( 0x01, 0x01, "PDR2" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* 2 */
+	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START /* 3 */
+	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START /* 4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("1P Push Switch") PORT_CODE(KEYCODE_7)
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("2P Push Switch") PORT_CODE(KEYCODE_8)
+
+	/*This *might* be unused...*/
+	PORT_START /* 5 */
+	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*Extra button layout,used by Power Instinct 3 & Suikoenbu*/
+	PORT_START /* 6 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/* IN 7 */
+	PORT_START /* mask default type                     sens delta min max */
+	PORT_BIT( 0x3f, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0x3f) PORT_SENSITIVITY(1) PORT_KEYDELTA(1) PORT_PLAYER(1)
+
+	/* IN 8 */
+	PORT_START
+	PORT_BIT( 0x3f, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x0,0x3f) PORT_SENSITIVITY(1) PORT_KEYDELTA(1) PORT_PLAYER(1)
+
+INPUT_PORTS_END
+
 /*Same as the regular one,but with an additional & optional mahjong panel*/
 INPUT_PORTS_START( stvmp )
 	PORT_START
@@ -2907,6 +3015,20 @@ static struct SCSPinterface scsp_interface =
 	scsp_irq
 };
 
+static VIDEO_UPDATE(critcrsh)
+{
+	int gun_x, gun_y;
+	video_update_stv_vdp2(screen, bitmap, cliprect);
+	gun_x = readinputport(7);
+	gun_y = readinputport(8);
+	if ( gun_y <= 46 )
+		draw_crosshair(bitmap,
+					  readinputport(7)*Machine->visible_area.max_x/64,
+					  readinputport(8)*Machine->visible_area.max_y/46,
+					  cliprect,
+					  0);
+}
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
@@ -2944,6 +3066,11 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_SOUND_CONFIG(scsp_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( critcrsh )
+	MDRV_IMPORT_FROM( stv )
+	MDRV_VIDEO_UPDATE( critcrsh )
 MACHINE_DRIVER_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
@@ -3777,6 +3904,44 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) SHA1(2c9f4c078afec55964b5c2a4d00f5c43f2661a04) )
 ROM_END
 
+/*
+Critter Crusher EXP
+Sega, 1995.
+
+This is a cart for Sega STV system. The game involves hitting 'critters' on
+screen with a rubber/plastic hammer. The cab has a large LED display to show how many
+'critters' were hit. The hammer positioning might work like a lightgun and the 'hitting'
+may be like pulling the lightgun trigger?
+
+The ROM cart appears to be a re-used Virtua Fighter Remix cart??
+On top there is one 27C040 EPROM, EPR-18821 @ IC13
+6 maskROMs, MPR-17945 to MPR-17950 (already dumped, known Virtua Fighter Remix ROMs)
+On the other side of the PCB are 2 more maskROMs, MPR-18788 @ IC9 and MPR-18789 @ IC8
+
+*/
+
+ROM_START( critcrsh )
+	STV_BIOS
+
+	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_LOAD( "epr-18821.ic13",  0x0000000, 0x0080000, CRC(9a6658e2) SHA1(16dbae3d9ab584713afcb403f89fe71049609245) )
+	ROM_RELOAD ( 0x0080000, 0x0080000 )
+	ROM_RELOAD ( 0x0100000, 0x0080000 )
+	ROM_RELOAD ( 0x0180000, 0x0080000 )
+	ROM_RELOAD ( 0x0200000, 0x0080000 )
+	ROM_RELOAD ( 0x0280000, 0x0080000 )
+	ROM_RELOAD ( 0x0300000, 0x0080000 )
+	ROM_RELOAD ( 0x0380000, 0x0080000 )
+//  ROM_LOAD16_WORD_SWAP( "mpr17946.2",    0x0400000, 0x0400000, CRC(4cb245f7) SHA1(363d9936b27043b5858c956a45736ac05aefc54e) ) // good
+//  ROM_LOAD16_WORD_SWAP( "mpr17947.3",    0x0800000, 0x0400000, CRC(fef4a9fb) SHA1(1b4bd095962db769da17d3644df10f62d041e914) ) // good
+//  ROM_LOAD16_WORD_SWAP( "mpr17948.4",    0x0c00000, 0x0400000, CRC(3e2b251a) SHA1(be6191c18727d7cbc6399fd4c1aaae59304af30c) ) // good
+//  ROM_LOAD16_WORD_SWAP( "mpr17949.5",    0x1000000, 0x0400000, CRC(b2ecea25) SHA1(320c0e7ce34e81e2fe6400cbeb2cb3ca74426cc8) ) // good
+//  ROM_LOAD16_WORD_SWAP( "mpr17950.6",    0x1400000, 0x0400000, CRC(5b1f981d) SHA1(693b5744d210a2ac8b77e7c8c87f07ca859f8aed) ) // good
+//  ROM_LOAD16_WORD_SWAP( "mpr17945.1",    0x1800000, 0x0200000, CRC(03ede188) SHA1(849c7fab5b97e043fea3deb8df6cc195ccced0e0) ) // good
+	ROM_LOAD16_WORD_SWAP( "mpr-18789.ic8", 0x1c00000, 0x0400000, CRC(b388616f) SHA1(0b2c5a547c3a6a8fb9f4ca54336cf6dc9adb8c6a) ) // good
+	ROM_LOAD16_WORD_SWAP( "mpr-18788.ic9", 0x2000000, 0x0400000, CRC(feae5867) SHA1(7d2e47d5ab18700a246d53fdb7872a905cdac55a) ) // good
+ROM_END
+
 ROM_START( sfish2 )
 //  STV_BIOS // - sports fishing 2 uses its own bios
 
@@ -3891,6 +4056,7 @@ GAMEB( 1998, othellos,  stvbios, stvbios, stv, stv,  othellos,  ROT0,   "Success
 GAMEB( 1995, pblbeach,  stvbios, stvbios, stv, stv,  pblbeach,  ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				  "Princess Clara Daisakusen (J 960910 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				  "Puyo Puyo Sun (J 961115 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1998, rsgun,     stvbios, stvbios, stv, stv,  rsgun,     ROT0,   "Treasure",   				  "Radiant Silvergun (JUET 980523 V1.000)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEB( 1996, sassisu,   stvbios, stvbios, stv, stv,  sassisu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, seabass,   stvbios, stvbios, stv, stv,  seabass,   ROT0,   "A wave inc. (Able license)","Sea Bass Fishing (JUET 971110 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, shanhigw,  stvbios, stvbios, stv, stv,  shanhigw,	ROT0,   "Sunsoft / Activision", 	  "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -3912,9 +4078,10 @@ GAMEB( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft
 GAMEB( 1998, twcup98,   stvbios, stvbios, stv, stv,  twcup98,   ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // player movement
 GAMEB( 1997, znpwfv,    stvbios, stvbios, stv, stv,  znpwfv,    ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
+GAMEB( 1995, critcrsh,  stvbios, stvbios, critcrsh, critcrsh, ic13, ROT0, "Sega", 	     			  "Critter Crusher (EA 951204 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+
 /* Doing Something.. but not enough yet */
 GAMEB( 1998, elandore,  stvbios, stvbios, stv, stv,  elandore,  ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
-GAMEB( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0,   "Treasure",   				  "Radiant Silvergun (JUET 980523 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1995, vfremix,   stvbios, stvbios, stv, stv,  vfremix,   ROT0,   "Sega", 	     			  "Virtua Fighter Remix (JUETBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,  	 ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

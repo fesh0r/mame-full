@@ -1,4 +1,4 @@
-0.102.1
+0.103
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -87,7 +87,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.102u5.  This incorporates all features of the
+- The core is based on MAME 0.103.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed generic cartridge loading so that a ROM_LOAD_CART declaration can

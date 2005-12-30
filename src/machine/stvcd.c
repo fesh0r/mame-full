@@ -2,15 +2,15 @@
 
   machine/stvcd.c - Sega Saturn and ST-V CD-ROM handling
 
-  Rewritten Dec. 2005 by R. Belmont, based on the abandoned "Sim" 
+  Rewritten Dec. 2005 by R. Belmont, based on the abandoned "Sim"
   Saturn/ST-V emulator by RB & The_Author.
 
-  Status: this is sufficient for the Saturn BIOS to recognize and 
-  boot discs but actual games demand a lot more than this 
-  implementation has to give at the moment.  In particular, 
+  Status: this is sufficient for the Saturn BIOS to recognize and
+  boot discs but actual games demand a lot more than this
+  implementation has to give at the moment.  In particular,
   buffer handling is a sick hack and filters need to be supported
   (fixes for both are in progress).
-  
+
   Information sources:
   - Tyranid's document
   - A commented disassembly I made of the Saturn BIOS's CD code
@@ -22,7 +22,7 @@
   ------------------------------------------------------------
 
   Stuff we know about the CD protocol will collect here.
-  
+
   Top byte of CR1 is always status.
   This status is the same for all commands.
 
@@ -30,7 +30,7 @@
 
   Address is mostly in terms of FAD (Frame ADdress).
   FAD is absolute number of frames from the start of the disc.
-  In other words, FAD = LBA + 150; FAD is the same units as 
+  In other words, FAD = LBA + 150; FAD is the same units as
   LBA except it counts starting at absolute zero instead of
   the first sector (00:02:00 in MSF format).
 
@@ -132,17 +132,17 @@ enum
 // HIRQ definitions
 #define CMOK 0x0001 // command ok / ready for new command
 #define DRDY 0x0002 // drive ready
-#define CSCT 0x0004 // 
+#define CSCT 0x0004 //
 #define BFUL 0x0008 // buffer full
 #define PEND 0x0010 // command pending
 #define DCHG 0x0020 // disc change / tray open
 #define ESEL 0x0040 // soft reset, end of blah
-#define EHST 0x0080 // 
-#define ECPY 0x0100 // 
+#define EHST 0x0080 //
+#define ECPY 0x0100 //
 #define EFLS 0x0200 // stop execution of cd block filesystem
 #define SCDQ 0x0400 // subcode Q renewal complete
 #define MPED 0x0800 // MPEG
-#define MPCM 0x1000 // MPEG 
+#define MPCM 0x1000 // MPEG
 #define MPST 0x2000 // MPEG
 
 // CD status (hi byte of CR1) definitions:
@@ -216,7 +216,7 @@ static UINT16 cd_readWord(UINT32 addr)
 	{
 		case 0x0008:	// read HIRQ register
 			hirqreg &= ~DCHG;	// always clear bit 6 (tray open)
-//			logerror("CD: R HIRR (%04x) (PC=%x)\n", hirqreg,   activecpu_get_pc());
+//          logerror("CD: R HIRR (%04x) (PC=%x)\n", hirqreg,   activecpu_get_pc());
 			rv = hirqreg;
 
 			if (buffull) rv |= BFUL;
@@ -226,7 +226,7 @@ static UINT16 cd_readWord(UINT32 addr)
 			break;
 
 		case 0x000C:
-//			logerror("CD:\tRW HIRM (%04x)  (PC=%x)", hirqmask,   activecpu_get_pc());
+//          logerror("CD:\tRW HIRM (%04x)  (PC=%x)", hirqmask,   activecpu_get_pc());
 			return hirqmask;
 			break;
 
@@ -244,19 +244,19 @@ static UINT16 cd_readWord(UINT32 addr)
 				cr1 = 0;
 				cd_stat = CD_STAT_PAUSE;
 			}
-//			logerror("CD: R CR1 (%04x)  (PC=%x HIRR=%04x)\n", rv, activecpu_get_pc(), hirqreg);
+//          logerror("CD: R CR1 (%04x)  (PC=%x HIRR=%04x)\n", rv, activecpu_get_pc(), hirqreg);
 			return rv;
 			break;
 
 		case 0x001c:
-//			logerror("CD: R CR2 (%04x)  (PC=%x HIRR=%04x)\n", cr2,   activecpu_get_pc(), hirqreg);
+//          logerror("CD: R CR2 (%04x)  (PC=%x HIRR=%04x)\n", cr2,   activecpu_get_pc(), hirqreg);
 			return cr2;
 			break;
 
 		case 0x0020:
-//			logerror("CD: R CR3 (%04x)  (PC=%x HIRR=%04x)\n", cr3,   activecpu_get_pc(), hirqreg);
+//          logerror("CD: R CR3 (%04x)  (PC=%x HIRR=%04x)\n", cr3,   activecpu_get_pc(), hirqreg);
 #if 0
-			if (cd_stat & CD_STAT_PERI)	   	// for periodic responses, return 
+			if (cd_stat & CD_STAT_PERI)	   	// for periodic responses, return
 			{								// the disc position
 				cr3 = (cd_curfad>>16)&0xff;
 				cr4 = (cd_curfad & 0xffff);
@@ -266,7 +266,7 @@ static UINT16 cd_readWord(UINT32 addr)
 			break;
 
 		case 0x0024:
-//			logerror("CD: R CR4 (%04x)  (PC=%x HIRR=%04x)\n", cr4,   activecpu_get_pc(), hirqreg);
+//          logerror("CD: R CR4 (%04x)  (PC=%x HIRR=%04x)\n", cr4,   activecpu_get_pc(), hirqreg);
 			rv = cr4;
 			if (state == STATE_HWINFO)
 			{
@@ -284,7 +284,7 @@ static UINT16 cd_readWord(UINT32 addr)
 		case 0x8000:
 			wordsread++;
 			rv = databuf[dbufptr]<<8 | databuf[dbufptr+1];
-//			logerror( "CD: RW %04x DATA (PC=%x)\n", rv,   activecpu_get_pc()); 
+//          logerror( "CD: RW %04x DATA (PC=%x)\n", rv,   activecpu_get_pc());
 			if (dbufptr < (512*1024))
 			{
 				dbufptr += 2;
@@ -316,7 +316,7 @@ static UINT32 cd_readLong(UINT32 addr)
 
 			rv = databuf[dbufptr]<<24 | databuf[dbufptr+1]<<16 | databuf[dbufptr+2]<<8 | databuf[dbufptr+3];
 
-//			logerror( "CD: RL %08x DATA (PC=%x)", rv,   activecpu_get_pc()); 
+//          logerror( "CD: RL %08x DATA (PC=%x)", rv,   activecpu_get_pc());
 			if (dbufptr < (512*1024))
 			{
 				dbufptr += 4;
@@ -342,28 +342,28 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 	switch(addr & 0xffff)
 	{
 	case 0x0008:
-//		logerror("CD: W HIRR %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W HIRR %04x (PC=%x)\n", data,   activecpu_get_pc());
 		hirqreg |= data;	// never let write to HIRQ clear things (?)
 		return;
 	case 0x000C:
-//		logerror("CD: W HIRM %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W HIRM %04x (PC=%x)\n", data,   activecpu_get_pc());
 		hirqmask = data;
 		return;
 	case 0x0018:
-//		logerror("CD: W CR1 %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W CR1 %04x (PC=%x)\n", data,   activecpu_get_pc());
 		cr1 = data;
 		cd_stat &= ~CD_STAT_PERI;
 		break;
 	case 0x001c:
-//		logerror("CD: W CR2 %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W CR2 %04x (PC=%x)\n", data,   activecpu_get_pc());
 		cr2 = data;
 		break;
 	case 0x0020:
-//		logerror("CD: W CR3 %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W CR3 %04x (PC=%x)\n", data,   activecpu_get_pc());
 		cr3 = data;
 		break;
 	case 0x0024:
-//		logerror("CD: W CR4 %04x (PC=%x)\n", data,   activecpu_get_pc());
+//      logerror("CD: W CR4 %04x (PC=%x)\n", data,   activecpu_get_pc());
 		cr4 = data;
 		switch (cr1 & 0xff00)
 		{
@@ -389,7 +389,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 			cr4 = 0x0400;
 			state = STATE_HWINFO;
 			break;
-	
+
 		case 0x200:	// Get TOC
 			logerror( "CD: Get TOC (PC=%x)\n",   activecpu_get_pc());
 			cd_readTOC();
@@ -532,7 +532,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 					}
 				}
 
-	//			cd_stat = CD_STAT_PAUSE;
+	//          cd_stat = CD_STAT_PAUSE;
 				hirqreg |= (CMOK|ESEL);
 			}
 			break;
@@ -680,11 +680,11 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 			hirqreg |= (CMOK|ESEL|EFLS|SCDQ|DRDY);
 			in_buffer = 0;	// zap sector data here
 
-			// go ahead and read more.  GFS uses this for Nw mode on 
+			// go ahead and read more.  GFS uses this for Nw mode on
 			// multiblock reads.
 			fadstoplay = 6;	// go 6 sectors at a time - oughta beat the timeout
 			cd_playdata();
-//			logerror(  "Got next sector (curFAD=%ld), in_buffer = %ld", cd_curfad, in_buffer);
+//          logerror(  "Got next sector (curFAD=%ld), in_buffer = %ld", cd_curfad, in_buffer);
 			break;
 
 		case 0x6300:	// get then delete sector data
@@ -728,7 +728,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 			hirqreg |= (CMOK|DRDY);
 			cr2 = numfiles;	// # of files in directory
 			cr3 = 0x0100;	// report directory held
-			cr4 = firstfile;	// first file id 
+			cr4 = firstfile;	// first file id
 			break;
 
 		case 0x7300:	// Get File Info
@@ -760,15 +760,15 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 				// first 4 bytes = FAD
 				databuf[(508*1024)] =   (curdir[temp].firstfad>>24)&0xff;
 				databuf[(508*1024)+1] = (curdir[temp].firstfad>>16)&0xff;
-				databuf[(508*1024)+2] = (curdir[temp].firstfad>>8)&0xff; 
-				databuf[(508*1024)+3] = (curdir[temp].firstfad&0xff);    
+				databuf[(508*1024)+2] = (curdir[temp].firstfad>>8)&0xff;
+				databuf[(508*1024)+3] = (curdir[temp].firstfad&0xff);
 		 		// second 4 bytes = length of file
 				databuf[(508*1024)+4] = (curdir[temp].length>>24)&0xff;
 				databuf[(508*1024)+5] = (curdir[temp].length>>16)&0xff;
 				databuf[(508*1024)+6] = (curdir[temp].length>>8)&0xff;
 				databuf[(508*1024)+7] = (curdir[temp].length&0xff);
 
-				databuf[(508*1024)+8] = 0x00;	
+				databuf[(508*1024)+8] = 0x00;
 				databuf[(508*1024)+9] = 0x00;
 				databuf[(508*1024)+10] = temp;
 				databuf[(508*1024)+11] = curdir[temp].flags;
@@ -833,7 +833,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 			hirqreg |= (CMOK|DRDY);
 			break;
 		}
-//		scu_cdinterrupt();
+//      scu_cdinterrupt();
 		break;
 	default:
 		logerror("CD: WW %08x %04x (PC=%x)\n", addr, data, activecpu_get_pc());
@@ -943,7 +943,7 @@ static void read_new_dir(unsigned long fileno)
 					case 0xff:
 						cfad = 200;
 						break;
-				}	
+				}
 			}
 		}
 
@@ -956,7 +956,7 @@ static void read_new_dir(unsigned long fileno)
 			// parse root entry
 			curroot.firstfad = sect[158] | (sect[159]<<8) | (sect[160]<<16) | (sect[161]<<24);
 			curroot.firstfad += 150;
-			curroot.length = sect[166] | (sect[167]<<8) | (sect[168]<<16) | (sect[169]<<24); 
+			curroot.length = sect[166] | (sect[167]<<8) | (sect[168]<<16) | (sect[169]<<24);
 			curroot.flags = sect[181];
 			for (i = 0; i < sect[188]; i++)
 			{
@@ -1029,7 +1029,7 @@ static void make_dir_current(unsigned long fad)
 	{
 		curentry->firstfad = sect[nextent+2] | (sect[nextent+3]<<8) | (sect[nextent+4]<<16) | (sect[nextent+5]<<24);
 		curentry->firstfad += 150;
-		curentry->length = sect[nextent+10] | (sect[nextent+11]<<8) | (sect[nextent+12]<<16) | (sect[nextent+13]<<24); 
+		curentry->length = sect[nextent+10] | (sect[nextent+11]<<8) | (sect[nextent+12]<<16) | (sect[nextent+13]<<24);
 		curentry->flags = sect[nextent+25];
 		for (i = 0; i < sect[nextent+32]; i++)
 		{
@@ -1073,7 +1073,7 @@ static void cd_readTOC(void)
 	// top nibble of first byte is CTRL info
 	// low nibble is ADR
 	// next 3 bytes are FAD address (LBA + 150)
-	// there are always 99 track entries (0-98) 
+	// there are always 99 track entries (0-98)
 	// unused tracks are ffffffff.
 	// entries 99-101 are metadata
 
@@ -1082,7 +1082,7 @@ static void cd_readTOC(void)
 	for (i = 0; i < ntrks; i++)
 	{
 		int fad;
-	
+
 		if (cdrom)
 		{
 			databuf[tocptr] = cdrom_get_adr_control(cdrom, i)<<4 | 0x01;
@@ -1090,7 +1090,7 @@ static void cd_readTOC(void)
 
 		if (cdrom)
 		{
-			fad = cdrom_get_track_start(cdrom, i, 0) + 150;					
+			fad = cdrom_get_track_start(cdrom, i, 0) + 150;
 		}
 		else
 		{
@@ -1102,7 +1102,7 @@ static void cd_readTOC(void)
 		databuf[tocptr+1] = (fad>>16)&0xff;
 		databuf[tocptr+2] = (fad>>8)&0xff;
 		databuf[tocptr+3] = fad&0xff;
-	
+
 		tocptr += 4;
 	}
 
@@ -1142,7 +1142,7 @@ static void cd_playdata(void)
 	{
 		while (fadstoplay)
 		{
-//			logerror(  "cd_playdata: Reading FAD %d", cd_curfad);
+//          logerror(  "cd_playdata: Reading FAD %d", cd_curfad);
 
 			if (cdrom)
 			{
