@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [PCE] Various improvements; removed GAME_NOT_WORKING flag.  [Rob Bohms and
+  Charles MacDonald]
   
 
 

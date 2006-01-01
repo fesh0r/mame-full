@@ -11,6 +11,8 @@
 /* system RAM */
 unsigned char *pce_user_ram;    /* scratch RAM at F8 */
 
+struct pce_struct pce;
+
 /* joystick related data*/
 
 #define JOY_CLOCK   0x01
@@ -110,6 +112,10 @@ NVRAM_HANDLER( pce )
 	}
 }
 
+DRIVER_INIT( pce )
+{
+/* STUB FUNCTION: should initialize input bits */
+}
 
 /* todo: how many input ports does the PCE have? */
 WRITE8_HANDLER ( pce_joystick_w )

@@ -12,7 +12,7 @@ VDC vdc;
 
 void pce_refresh_line(int line);
 void pce_refresh_sprites(int line);
-
+void vdc_do_dma(void);
 
 VIDEO_START( pce )
 {
@@ -51,6 +51,35 @@ VIDEO_UPDATE( pce )
 
     /* copy our rendering buffer to the display */
     copybitmap (bitmap,vdc.bmp,0,0,0,0,&pce_visible_area,TRANSPARENCY_NONE,0);
+}
+
+void vram_write(offs_t offset, UINT8 data)
+{
+    if(offset & 0x10000)
+    {
+        logerror("Write to VRAM offset %05X\n", offset);
+        return;
+    }
+    else
+    {
+		vdc.vram[offset] = data;
+	}
+}
+
+UINT8 vram_read(offs_t offset)
+{
+    UINT8 temp;
+
+    if(offset & 0x10000)
+    {
+        temp = 0x00;
+    }
+    else
+    {
+        temp = vdc.vram[offset];
+    }
+
+    return temp;
 }
 
 
@@ -106,10 +135,14 @@ WRITE8_HANDLER ( vdc_w )
                      break;
 
                 case CR:
-                     {
-                        static unsigned char inctab[] = {1, 32, 64, 128};
+                    {
+						static unsigned char inctab[] = {1, 32, 64, 128};
                         vdc.inc = inctab[(data >> 3) & 3];
-                     }
+                     	if(vdc.vdc_data[CR].w&CR_OV)
+							logerror("Missing Overflow Interrupt\n");
+						if(vdc.vdc_data[CR].w&CR_CC)
+							logerror("Missing Sprite 0 Hit Interrupt\n");
+					}
                      break;
 
                 case VDW:
@@ -124,7 +157,7 @@ WRITE8_HANDLER ( vdc_w )
                      break;
 
                 case LENR:
-//                   logerror("LENR MSB = %02X\n", data);
+      	         vdc_do_dma();
                      break;
                 case SOUR:
 //                   logerror("SOUR MSB = %02X\n", data);
@@ -240,7 +273,7 @@ void pce_refresh_line(int line)
     static int width_table[4] = {5, 6, 7, 7};
 
     int center_x = ((360/2) - (vdc.physical_width/2));
-    int center_y = ((256/2) - (vdc.physical_height/2));
+ //   int center_y = ((256/2) - (vdc.physical_height/2));
 
     int scroll_y = (vdc.vdc_data[BYR].w & 0x01FF);
     int scroll_x = (vdc.vdc_data[BXR].w & 0x03FF);
@@ -259,7 +292,7 @@ void pce_refresh_line(int line)
     int v_width =        width_table[(vdc.vdc_data[MWR].w >> 4) & 3];
 
     /* our line buffer */
-    UINT8 line_buffer[(0x40 << 3) + 8];
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
 #ifdef MAME_DEBUG
 	int line_buffer_size;
 #endif
@@ -300,10 +333,10 @@ void pce_refresh_line(int line)
 			/* byte-offset within the VRAM space                     */
 			cell_pattern_index = (bat[nt_index] & 0x0FFF) << 5;
 
-			b0 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x00];
-			b1 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x01];
-			b2 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x10];
-			b3 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x11];
+			b0 = vram_read((cell_pattern_index) + (v_row << 1) + 0x00);
+			b1 = vram_read((cell_pattern_index) + (v_row << 1) + 0x01);
+			b2 = vram_read((cell_pattern_index) + (v_row << 1) + 0x10);
+			b3 = vram_read((cell_pattern_index) + (v_row << 1) + 0x11);
 
 			for(x=0;x<8;x++)
 			{
@@ -325,8 +358,6 @@ void pce_refresh_line(int line)
 			pce_refresh_sprites(line);
 		}
 	}
-
-	draw_scanline8(vdc.bmp, (center_x-8)+(8-(scroll_x & 7)), center_y+line, vdc.physical_width, line_buffer, Machine->pens, -1);
 }
 
 
@@ -335,15 +366,22 @@ static void conv_obj(int i, int l, int hf, int vf, char *buf)
 {
     int b0, b1, b2, b3, i0, i1, i2, i3, x;
     int xi;
-    UINT16 *ptr = (UINT16 *)&(vdc.vram[0]);
+	int tmp;
+
 
     l &= 0x0F;
     if(vf) l = (15 - l);
 
-    b0 = ptr[(i << 5) + l + 0x00];
-    b1 = ptr[(i << 5) + l + 0x10];
-    b2 = ptr[(i << 5) + l + 0x20];
-    b3 = ptr[(i << 5) + l + 0x30];
+	tmp = l + ( i << 5);
+
+    b0 = vram_read((tmp + 0x00)<<1);
+    b0 |= vram_read(((tmp + 0x00)<<1)+1)<<8;
+	b1 = vram_read((tmp + 0x10)<<1);
+	b1 |= vram_read(((tmp + 0x10)<<1)+1)<<8;
+    b2 = vram_read((tmp + 0x20)<<1);
+    b2 |= vram_read(((tmp + 0x20)<<1)+1)<<8;
+	b3 = vram_read((tmp + 0x30)<<1);
+	b3 |= vram_read(((tmp + 0x30)<<1)+1)<<8;
 
     for(x=0;x<16;x++)
     {
@@ -362,24 +400,30 @@ void pce_refresh_sprites(int line)
     static int cgy_table[] = {16, 32, 64, 64};
 
     int center_x = ((360/2) - (vdc.physical_width/2));
-    int center_y = ((256/2) - (vdc.physical_height/2));
+//    int center_y = ((256/2) - (vdc.physical_height/2));
 
     int obj_x, obj_y, obj_i, obj_a;
     int obj_w, obj_h, obj_l, cgypos;
     int hf, vf;
     int cgx, cgy, palette;
+	int priority;
     int i, x, c /*, b*/;
     char buf[16];
 
-    UINT8 *line_buffer;
-	
-	line_buffer = malloc(vdc.physical_width);
+	UINT8 sprites_drawn=0;
+	UINT16 *line_buffer=((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+
+	/* 0 -> no sprite pixels drawn, otherwise is sprite #+1 */
+	UINT8 drawn[(0x40 << 3) + 32];
 	if (!line_buffer)
 		return;
 
     if ((vdc.vdc_data[DVSSR].w & 0x8000) == 0)
 	{
-		for(i=63; i>=-1; i--)
+		//clear our sprite-to-sprite clipping buffer.
+		memset(drawn, 0, (0x40 << 3) + 32);
+		/* count up: Highest priority is Sprite 0 */ 
+		for(i=0; i<64; i++)
 		{
 			obj_y = (vdc.sprite_ram[(i<<2)+0] & 0x03FF) - 64;
 			obj_x = (vdc.sprite_ram[(i<<2)+1] & 0x03FF) - 32;
@@ -387,21 +431,30 @@ void pce_refresh_sprites(int line)
 			if ((obj_y == -64) || (obj_y > line)) continue;
 			if ((obj_x == -32) || (obj_x > vdc.physical_width)) continue;
 
+
 			obj_a = (vdc.sprite_ram[(i<<2)+3]);
 
 	//      if ((obj_a & 0x80) == 0) continue;
 
-			cgx   = (obj_a >> 8) & 1;   /* sprite width */
-			cgy   = (obj_a >> 12) & 3;  /* sprite height */
-			hf    = (obj_a >> 11) & 1;  /* horizontal flip */
-			vf    = (obj_a >> 15) & 1;  /* vertical flip */
+			cgx   = (obj_a >> 8) & 1;   /* sprite width */ 
+			cgy   = (obj_a >> 12) & 3;  /* sprite height */ 
+			hf    = (obj_a >> 11) & 1;  /* horizontal flip */ 
+			vf    = (obj_a >> 15) & 1;  /* vertical flip */ 
 			palette = (obj_a & 0x000F);
+			priority = (obj_a >> 7) & 1;   /* why was this not emulated? */ 
 
 			obj_i = (vdc.sprite_ram[(i<<2)+2] & 0x07FE);
 
 			obj_w = cgx_table[cgx];
 			obj_h = cgy_table[cgy];
 			obj_l = (line - obj_y);
+
+			//no need to draw an object that's ABOVE where we are.
+			if((obj_y + obj_h)<line) continue;
+
+			sprites_drawn++;
+			if(sprites_drawn > 16) continue;  /* Should cause an interrupt */ 
+
 
 			if (obj_l < obj_h)
 			{
@@ -413,8 +466,24 @@ void pce_refresh_sprites(int line)
 					conv_obj(obj_i + (cgypos << 2), obj_l, hf, vf, buf);
 					for(x=0;x<16;x++)
 					{
-						c = buf[x];
-						if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+						if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
+						{
+							c = buf[x];
+							if(c)
+							{
+								if(!drawn[obj_x+x])
+								{
+									if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
+										line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+									drawn[obj_x + x]=i+1;
+								}
+								else if (drawn[obj_x+x]==1)
+								{
+//									cpunum_set_input_line(0, 0, ASSERT_LINE);
+//									vdc.status|=VDC_CR;
+								}
+							}
+						}
 					}
 				}
 				else
@@ -422,21 +491,88 @@ void pce_refresh_sprites(int line)
 					conv_obj(obj_i + (cgypos << 2) + (hf ? 2 : 0), obj_l, hf, vf, buf);
 					for(x=0;x<16;x++)
 					{
-						c = buf[x];
-						if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+						if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
+						{
+							c = buf[x];
+							if(c)
+							{
+								if(!drawn[obj_x+x])
+								{
+									if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
+										line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+									drawn[obj_x + x]=i+1;
+								}
+								else if (drawn[obj_x+x]==1)
+								{
+//									cpunum_set_input_line(0, 0, ASSERT_LINE);
+//									vdc.status|=VDC_CR;
+								}
+							}
+						}
 					}
 
 					conv_obj(obj_i + (cgypos << 2) + (hf ? 0 : 2), obj_l, hf, vf, buf);
 					for(x=0;x<16;x++)
 					{
-						c = buf[x];
-						if(c) line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
+						if(((obj_x + 0x10 + x)<(vdc.physical_width))&&((obj_x + 0x10 + x)>=0))
+						{
+							c = buf[x];
+							if(c)
+							{
+								if(!drawn[obj_x+0x10+x])
+								{
+									if(priority || (line_buffer[obj_x + 0x10 + x] == Machine->pens[0]))
+										line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
+									drawn[obj_x + 0x10 + x]=i+1;
+								}
+								else if (drawn[obj_x+0x10+x]==1)
+								{
+//									cpunum_set_input_line(0, 0, ASSERT_LINE);
+//									vdc.status|=VDC_CR;
+								}
+							}
+						}
 					}
 				}
 			}
 		}
 	}
+}
 
-	draw_scanline8(vdc.bmp, center_x, center_y+line, vdc.physical_width, line_buffer, Machine->pens, -1);
-	free(line_buffer);
+void vdc_do_dma(void)
+{
+	int src = vdc.vdc_data[SOUR].w;
+	int dst = vdc.vdc_data[DESR].w;
+	int len = vdc.vdc_data[LENR].w;
+	
+	int did = (vdc.vdc_data[DCR].w >> 3) & 1;
+	int sid = (vdc.vdc_data[DCR].w >> 2) & 1;
+	int dvc = (vdc.vdc_data[DCR].w >> 1) & 1;
+	
+	do {
+		UINT8 l, h;
+
+		l = vram_read(src<<1);
+		h = vram_read((src<<1) + 1);
+
+		vram_write(dst<<1,l);
+		vram_write(1+(dst<<1),h);
+
+		if(sid) src = (src - 1) & 0xFFFF;
+		else	src = (src + 1) & 0xFFFF;
+		
+		if(did) dst = (dst - 1) & 0xFFFF;
+		else	dst = (dst + 1) & 0xFFFF;
+		
+		len = (len - 1) & 0xFFFF;
+		
+	} while (len != 0x0000);
+	
+	vdc.status |= VDC_DV;
+	
+	if(dvc)
+	{
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
+	}
+	
 }
