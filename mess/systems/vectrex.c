@@ -18,7 +18,7 @@ Bruce Tomlin (hardware info)
 
 ADDRESS_MAP_START( vectrex_map , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x7fff) AM_ROM
-	AM_RANGE( 0xc800, 0xcbff) AM_RAM AM_MIRROR( 0x0400 )
+	AM_RANGE( 0xc800, 0xcbff) AM_RAM AM_MIRROR( 0x0400 ) AM_BASE(&vectrex_ram_base) AM_SIZE(&vectrex_ram_size)
 	AM_RANGE( 0xd000, 0xd7ff) AM_READWRITE( via_0_r, via_0_w )
 	AM_RANGE( 0xe000, 0xffff) AM_ROM
 ADDRESS_MAP_END

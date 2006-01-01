@@ -19,6 +19,8 @@ extern unsigned char vectrex_via_out[2];
 extern double imager_freq;
 extern mame_timer *imager_timer;
 extern int vectrex_lightpen_port;
+extern UINT8 *vectrex_ram_base;
+extern size_t vectrex_ram_size;
 
 void vectrex_imager_right_eye (int param);
 void vectrex_configuration(void);

@@ -26,6 +26,8 @@ int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
 double imager_freq;
 mame_timer *imager_timer;
 int vectrex_lightpen_port=0;
+UINT8 *vectrex_ram_base;
+size_t vectrex_ram_size;
 
 /*********************************************************************
   Local variables
@@ -63,12 +65,6 @@ static int vectrex_verify_cart (char *data)
  *********************************************************************/
 DEVICE_LOAD( vectrex_cart )
 {
-	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
-	 * in Minestorm where the exec-rom attempts to access a vector list here.
-	 * 1 signals the end of the vector list.
-	 */
-	memset (memory_region(REGION_CPU1), 1, 0x8000);
-
 	if (file)
 	{
 		mame_fread (file, memory_region(REGION_CPU1), 0x8000);
@@ -290,7 +286,6 @@ WRITE8_HANDLER ( vectrex_psg_port_w )
 			ang_acc = (50.0 - 1.55 * imager_freq) / MMI;
 			imager_freq += ang_acc * pwl + DAMPC*imager_freq/MMI * wavel;
 
-//			printf ("imager_freq: %f anregung %f\n",imager_freq, 1.0/wavel);
 			if (imager_freq > 1)
 				timer_adjust (imager_timer, MIN(1.0/imager_freq, timer_timeleft(imager_timer)), 2, 1.0/imager_freq);
 		}
@@ -304,5 +299,19 @@ WRITE8_HANDLER ( vectrex_psg_port_w )
 
 DRIVER_INIT( vectrex )
 {
+	int i;
+
+	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
+	 * in Minestorm where the exec-rom attempts to access a vector list here.
+	 * 1 signals the end of the vector list.
+	 */
+	if (vectrex_verify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
+	{
+		memset (memory_region(REGION_CPU1), 1, 0x8000);
+	}
+
 	artwork_use_device_art(image_from_devtype_and_index(IO_CARTSLOT, 0), "mine");
+	
+	for (i = 0; i < vectrex_ram_size; i++)
+		vectrex_ram_base[i] = rand();
 }
