@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [PC] Fixed PC keyboard ESC char code (it is now 27; used to be 26).  [Nate
+  Woods]
+
 - [PCE] Various improvements; removed GAME_NOT_WORKING flag.  [Rob Bohms and
   Charles MacDonald]
   
@@ -27,7 +30,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- Added a "input" command to the debugger.  [Nate Woods]
 
 
 

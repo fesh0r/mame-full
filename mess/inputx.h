@@ -110,6 +110,10 @@ void inputx_post_utf8(const char *text);
 void inputx_post_utf8_rate(const char *text, mame_time rate);
 void inputx_postn_utf8(const char *text, size_t text_len);
 void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate);
+void inputx_post_coded(const char *text);
+void inputx_post_coded_rate(const char *text, mame_time rate);
+void inputx_postn_coded(const char *text, size_t text_len);
+void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate);
 
 /* miscellaneous functions */
 int input_classify_port(const input_port_entry *in);
