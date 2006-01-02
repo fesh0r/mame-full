@@ -1,15 +1,15 @@
 #############################################################################
-# MESS main makefile														#
-#																			#
-# MESS build commands:														#
-#																			#
-#	Command							Executable		Optimization			#
-#	------------------------------	--------------	------------			#
-#	make -f makefile.mes			mess.exe		Pentium					#
-#	make -f makefile.mes DEBUG=1	messd.exe		N/A						#
-#	make -f makefile.mes ATHLON=1	messat.exe		Athlon					#
-#	make -f makefile.mes K6=1		messk6.exe		K6						#
-#	make -f makefile.mes P4=1		messp4.exe		Pentium 4				#
+# MESS main makefile                                                        #
+#                                                                           #
+# MESS build commands:                                                      #
+#                                                                           #
+#   Command                         Executable      Optimization            #
+#   ------------------------------  --------------  ------------            #
+#   make -f makefile.mes            mess.exe        Pentium                 #
+#   make -f makefile.mes DEBUG=1    messd.exe       N/A                     #
+#   make -f makefile.mes ATHLON=1   messat.exe      Athlon                  #
+#   make -f makefile.mes K6=1       messk6.exe      K6                      #
+#   make -f makefile.mes P4=1       messp4.exe      Pentium 4               #
 #############################################################################
 
 

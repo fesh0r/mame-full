@@ -100,6 +100,66 @@ static UINT8 *buffer;					/* data buffer */
 static UINT8 *ptr = 0;					/* data pointer */
 static UINT8 hdc_control;
 
+static const char *hdc_command_names[] =
+{
+	"CMD_TESTREADY",		/* 0x00 */
+	"CMD_RECALIBRATE",		/* 0x01 */
+	NULL,					/* 0x02 */
+	"CMD_SENSE",			/* 0x03 */
+	"CMD_FORMATDRV",		/* 0x04 */
+	"CMD_VERIFY",			/* 0x05 */
+	"CMD_FORMATTRK",		/* 0x06 */
+	"CMD_FORMATBAD",		/* 0x07 */
+	"CMD_READ",				/* 0x08 */
+	NULL,					/* 0x09 */
+	"CMD_WRITE",			/* 0x0A */
+	"CMD_SEEK",				/* 0x0B */
+	"CMD_SETPARAM",			/* 0x0C */
+	"CMD_GETECC",			/* 0x0D */
+	"CMD_READSBUFF",		/* 0x0E */
+	"CMD_WRITESBUFF",		/* 0x0F */
+
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x10-0x17 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x18-0x1F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x20-0x27 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x28-0x2F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x30-0x37 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x38-0x3F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x40-0x47 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x48-0x4F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x50-0x57 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x58-0x5F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x60-0x67 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x68-0x6F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x70-0x77 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x78-0x7F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x80-0x87 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x88-0x8F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x90-0x97 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x98-0x9F */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xA0-0xA7 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xA8-0xAF */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xB0-0xB7 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xB8-0xBF */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xC0-0xC7 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xC8-0xCF */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xD0-0xD7 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xD8-0xDF */ 
+
+	"CMD_RAMDIAG",			/* 0xE0 */
+	NULL,					/* 0xE1 */
+	NULL,					/* 0xE2 */
+	"CMD_DRIVEDIAG",		/* 0xE3 */
+	"CMD_INTERNDIAG",		/* 0xE4 */
+	"CMD_READLONG",			/* 0xE5 */
+	"CMD_WRITELONG",		/* 0xE6 */
+	NULL,					/* 0xE7 */
+
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xE8-0xEF */ 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0xF0-0xF7 */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL  /* 0xF8-0xFF */ 
+};
+
 
 static void pc_hdc_command(int n);
 
@@ -394,6 +454,7 @@ static int test_ready(int n)
 static void pc_hdc_command(int n)
 {
 	UINT8 cmd;
+	const char *command_name;
 
 	csb[n] = 0x00;
 	error[n] = 0;
@@ -402,7 +463,11 @@ static void pc_hdc_command(int n)
 	cmd = buffer[0];
 
 	if (LOG_HDC_STATUS)
-		logerror("pc_hdc_command(): Executing command; pc=0x%08x cmd=0x%02x drv=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), cmd, drv);
+	{
+		command_name = hdc_command_names[cmd] ? hdc_command_names[cmd] : "Unknown";
+		logerror("pc_hdc_command(): Executing command; pc=0x%08x cmd=0x%02x (%s) drv=%d\n",
+			(unsigned) cpunum_get_reg(0, REG_PC), cmd, command_name, drv);
+	}
 
 	switch (cmd)
 	{
@@ -608,9 +673,9 @@ static void pc_hdc_control_w(int n, int data)
 
 
 
-static int pc_hdc_data_r(int n)
+static UINT8 pc_hdc_data_r(int n)
 {
-	int data = 0xff;
+	UINT8 data = 0xff;
 	if( data_cnt )
 	{
 		data = *ptr++;
@@ -628,7 +693,7 @@ static int pc_hdc_data_r(int n)
 
 
 
-static int  pc_hdc_status_r(int n)
+static UINT8 pc_hdc_status_r(int n)
 {
 	int data = status[n];
 	return data;
@@ -636,7 +701,7 @@ static int  pc_hdc_status_r(int n)
 
 
 
-static int  pc_hdc_dipswitch_r(int n)
+static UINT8 pc_hdc_dipswitch_r(int n)
 {
 	int data = dip[n];
 	return data;
@@ -651,9 +716,9 @@ static int  pc_hdc_dipswitch_r(int n)
  *
  *************************************************************************/
 
-static int pc_HDC_r(int chip, int offs)
+static UINT8 pc_HDC_r(int chip, offs_t offs)
 {
-	int data = 0xff;
+	UINT8 data = 0xff;
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file(chip<<1) )
 		return data;
 	switch( offs )
@@ -672,7 +737,7 @@ static int pc_HDC_r(int chip, int offs)
 
 
 
-static void pc_HDC_w(int chip, int offs, int data)
+static void pc_HDC_w(int chip, offs_t offs, UINT8 data)
 {
 	if (LOG_HDC_CALL)
 		logerror("pc_HDC_w(): chip=%d offs=%d data=0x%02x\n", chip, offs, data);
