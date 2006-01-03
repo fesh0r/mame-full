@@ -25,6 +25,7 @@ DEVICE_LOAD(pce_cart)
 {
 	int size;
 	int split_rom = 0;
+	const char *extrainfo;
 	unsigned char *ROM;
 	logerror("*** DEVICE_LOAD(pce_cart) : %s\n", image_filename(image));
 
@@ -48,6 +49,14 @@ DEVICE_LOAD(pce_cart)
 
 	mame_fread(file, ROM, size);
 
+	extrainfo = image_extrainfo( image );
+	if ( extrainfo ) {
+		logerror( "extrainfo: %s\n", extrainfo );
+		if ( strstr( extrainfo, "ROM_SPLIT" ) ) {
+			split_rom = 1;
+		}
+	}
+
 	if ( ROM[0x1FFF] < 0xE0 ) {
 		int i;
 		UINT8 decrypted[256];
@@ -66,13 +75,13 @@ DEVICE_LOAD(pce_cart)
 	}
 
 	/* check if we're dealing with a split rom image */
-	/* TODO: Add support for checking for 512KB split roms */
 	if ( size == 384 * 1024 ) {
 		split_rom = 1;
 	}
 
 	/* set up the memory for a split rom image */
 	if ( split_rom ) {
+		logerror( "Split rom detected, setting up memory accordingly\n" );
 		/* Set up ROM address space as follows:          */
 		/* 000000 - 03FFFF : ROM data 000000 - 03FFFF    */
 		/* 040000 - 07FFFF : ROM data 000000 - 03FFFF    */
