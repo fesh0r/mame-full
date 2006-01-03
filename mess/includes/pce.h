@@ -9,6 +9,8 @@
 #ifndef PCE_H
 #define PCE_H
 
+#define PCE_HEADER_SIZE		512
+
 /* from machine\pce.c */
 extern unsigned char *pce_user_ram; /* scratch RAM at F8 */
 DEVICE_LOAD(pce_cart);

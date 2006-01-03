@@ -97,7 +97,7 @@ static  READ8_HANDLER ( pce_psg_r )
 ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x000000, 0x1EDFFF) AM_ROM
 	AM_RANGE( 0x1EE000, 0x1EFFFF) AM_RAM
-	AM_RANGE( 0x1F0000, 0x1F1FFF) AM_RAM	AM_BASE( &pce_user_ram )
+	AM_RANGE( 0x1F0000, 0x1F1FFF) AM_RAM AM_MIRROR(0x6000) AM_BASE( &pce_user_ram )
 	AM_RANGE( 0x1FE000, 0x1FE3FF) AM_READWRITE( vdc_r, vdc_w )
 	AM_RANGE( 0x1FE400, 0x1FE7FF) AM_READWRITE( vce_r, vce_w )
 	AM_RANGE( 0x1FE800, 0x1FEBFF) AM_READWRITE( pce_psg_r, C6280_0_w )
@@ -195,6 +195,16 @@ static MACHINE_DRIVER_START( pce )
 	MDRV_SOUND_ROUTE(1, "right", 1.00)
 MACHINE_DRIVER_END
 
+static void pce_partialhash(char *dest, const unsigned char *data,
+        unsigned long length, unsigned int functions)
+{
+        if ( ( length <= PCE_HEADER_SIZE ) || ( length & PCE_HEADER_SIZE ) ) {
+	        hash_compute(dest, &data[PCE_HEADER_SIZE], length - PCE_HEADER_SIZE, functions);
+	} else {
+		hash_compute(dest, data, length, functions);
+	}
+}
+
 static void pce_cartslot_getinfo(struct IODevice *dev)
 {
 	/* cartslot */
@@ -203,6 +213,7 @@ static void pce_cartslot_getinfo(struct IODevice *dev)
 	dev->file_extensions = "pce\0";
 	dev->must_be_loaded = 1;
 	dev->load = device_load_pce_cart;
+	dev->partialhash = pce_partialhash;
 }
 
 SYSTEM_CONFIG_START(pce)
