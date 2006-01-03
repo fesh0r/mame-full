@@ -77,6 +77,8 @@ DEVICE_LOAD(pce_cart)
 	/* check if we're dealing with a split rom image */
 	if ( size == 384 * 1024 ) {
 		split_rom = 1;
+		/* Mirror the upper 128KB part of the image */
+		memcpy( ROM + 0x060000, ROM + 0x040000, 0x020000 );	/* Set up 060000 - 07FFFF mirror */
 	}
 
 	/* set up the memory for a split rom image */
