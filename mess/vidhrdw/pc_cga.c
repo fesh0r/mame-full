@@ -313,8 +313,10 @@ static VIDEO_START( pc_cga )
 			break;
 	}
 
-	videoram_size = 0x4000;
-	videoram = auto_malloc(videoram_size);
+	if (videoram_size == 0)
+		videoram_size = 0x4000;
+	if (!videoram)
+		videoram = auto_malloc(videoram_size);
 	memory_set_bankptr(11, videoram);
 
 	return internal_pc_cga_video_start(M6845_PERSONALITY_GENUINE);

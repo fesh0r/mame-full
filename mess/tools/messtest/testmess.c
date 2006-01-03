@@ -15,6 +15,7 @@
 #include "pile.h"
 #include "pool.h"
 #include "sound/wavwrite.h"
+#include "vidhrdw/generic.h"
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcpu.h"
@@ -246,6 +247,9 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	runtime_hash = 0;
 	had_failure = FALSE;
 	seen_first_update = FALSE;
+	videoram = NULL;
+	videoram_size = 0;
+	dirtybuffer = NULL;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
