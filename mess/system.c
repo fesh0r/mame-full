@@ -775,7 +775,9 @@ TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 
 	/* Sony */
 	DRIVER( psx )
+	DRIVER( psxj11 )
 	DRIVER( psxe20 )
+	DRIVER( psxj21 )
 	DRIVER( psxa22 )
 	DRIVER( psxe22 )
 	DRIVER( psxj22 )
