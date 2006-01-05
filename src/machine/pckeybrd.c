@@ -1,9 +1,9 @@
 /* PC-AT Keyboard emulation */
 
-/* Todo: (added by KT 22-Jun-2000 
-	1. Check scancodes I have added are the actual scancodes for set 2 or 3.
-	2. Check how codes are changed based on Shift/Control states for those sets
-	   that require it - info in Help PC! 
+/* Todo: (added by KT 22-Jun-2000
+    1. Check scancodes I have added are the actual scancodes for set 2 or 3.
+    2. Check how codes are changed based on Shift/Control states for those sets
+       that require it - info in Help PC!
 
 */
 
@@ -17,22 +17,22 @@
 
 
 /*
-	The PS/2 models have three make/break scan code sets.  The first
-	  set matches the PC & XT make/break scan code set and is the one
-	  listed here.	Scan code sets are selected by writing the value F0
-	  to the keyboard via the ~8042~ (port 60h).  The following is a brief
-	  description of the scan code sets (see the PS/2 Technical Reference
-	  manuals for more information on scan code sets 2 and 3):
+    The PS/2 models have three make/break scan code sets.  The first
+      set matches the PC & XT make/break scan code set and is the one
+      listed here.  Scan code sets are selected by writing the value F0
+      to the keyboard via the ~8042~ (port 60h).  The following is a brief
+      description of the scan code sets (see the PS/2 Technical Reference
+      manuals for more information on scan code sets 2 and 3):
 
     *  set 1, each key has a base scan code.  Some keys generate
-	   extra scan codes to generate artificial shift states.  This
-	   is similar to the standard scan code set used on the PC and XT.
+       extra scan codes to generate artificial shift states.  This
+       is similar to the standard scan code set used on the PC and XT.
     *  set 2, each key sends one make scan code and two break scan
-	   codes bytes (F0 followed by the make code).	This scan code
-	   set is available on the IBM AT also.
+       codes bytes (F0 followed by the make code).  This scan code
+       set is available on the IBM AT also.
     *  set 3, each key sends one make scan code and two break scan
-	   codes bytes (F0 followed by the make code) and no keys are
-	   altered by Shift/Alt/Ctrl keys.
+       codes bytes (F0 followed by the make code) and no keys are
+       altered by Shift/Alt/Ctrl keys.
     *  typematic scan codes are the same as the make scan code
 
 */
@@ -159,7 +159,7 @@ static int at_keyboard_scancode_set_2_3[]=
 #define AT_KEYBOARD_QUEUE_MAXSIZE	256
 
 typedef struct at_keyboard
-{	
+{
 	AT_KEYBOARD_TYPE type;
 	int on;
 	UINT8 delay;   /* 240/60 -> 0,25s */
@@ -168,7 +168,7 @@ typedef struct at_keyboard
 	UINT8 queue[AT_KEYBOARD_QUEUE_MAXSIZE];
 	UINT8 head;
 	UINT8 tail;
-	UINT8 make[128];	
+	UINT8 make[128];
 
 	int input_state;
 	int scan_code_set;
@@ -185,7 +185,7 @@ typedef struct extended_keyboard_code
 } extended_keyboard_code;
 
 
-static extended_keyboard_code keyboard_mf2_code[0x10][2/*numlock off, on*/]={ 
+static extended_keyboard_code keyboard_mf2_code[0x10][2/*numlock off, on*/]={
 	{	{ "\xe0\x1c", "\xe0\x9c" } }, // keypad enter
 	{	{ "\xe0\x1d", "\xe0\x9d" } }, // right control
 	{	{ "\xe0\x35", "\xe0\xb5" } },
@@ -289,7 +289,7 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 		"\xe1\x14\x77\xe1\xf0\x14\xf0\x77",
 		0, /*?? I don't know the break sequence */
 	}
-	
+
 };
 
 static void at_keyboard_queue_insert(UINT8 data);
@@ -393,9 +393,9 @@ static void at_keyboard_standard_scancode_insert(int our_code, int pressed)
 		case 1:
 		{
 			/* the original code was designed for this set, and there is
-			a 1:1 correspondance for the scancodes */
+            a 1:1 correspondance for the scancodes */
 			scancode = our_code;
-		
+
 			if (!pressed)
 			{
 				/* adjust code for break code */
@@ -475,7 +475,7 @@ static void at_keyboard_extended_scancode_insert(int code, int pressed)
 
 
 /**************************************************************************
- *	scan keys and stuff make/break codes
+ *  scan keys and stuff make/break codes
  **************************************************************************/
 void at_keyboard_polling(void)
 {
@@ -503,7 +503,7 @@ void at_keyboard_polling(void)
 				else
 				{
 					keyboard.make[i] += 1;
-					
+
 					if( keyboard.make[i] == keyboard.delay )
 					{
 						at_keyboard_standard_scancode_insert(i, 1);
@@ -537,9 +537,9 @@ void at_keyboard_polling(void)
 					if( keyboard.make[i] == 0 )
 					{
 						keyboard.make[i] = 1;
-						
+
 						at_keyboard_extended_scancode_insert(i,1);
-						
+
 					}
 					else
 					{
@@ -553,7 +553,7 @@ void at_keyboard_polling(void)
 							if( keyboard.make[i] == keyboard.delay + keyboard.repeat )
 							{
 								keyboard.make[i]=keyboard.delay;
-								
+
 								at_keyboard_extended_scancode_insert(i, 1);
 							}
 						}
@@ -564,7 +564,7 @@ void at_keyboard_polling(void)
 					if( keyboard.make[i] )
 					{
 						keyboard.make[i] = 0;
-						
+
 						at_keyboard_extended_scancode_insert(i,0);
 					}
 				}
@@ -598,47 +598,47 @@ static void at_clear_buffer_and_acknowledge(void)
 /* From Ralf Browns Interrupt list:
 
 Values for keyboard commands (data also goes to PORT 0060h):
-Value	Count	Description
- EDh	double	set/reset mode indicators Caps Num Scrl
-		bit 2 = CapsLk, bit 1 = NumLk, bit 0 = ScrlLk
-		all other bits must be zero.
- EEh	sngl	diagnostic echo. returns EEh.
- EFh	sngl	NOP (No OPeration). reserved for future use
- EF+26h	double	[Cherry MF2 G80-1501HAD] read 256 bytes of chipcard data
-		keyboard must be disabled before this and has to
-		be enabled after finished.
- F0h	double	get/set scan code set
-		00h get current set
-		01h scancode set 1 (PCs and PS/2 mod 30, except Type 2 ctrlr)
+Value   Count   Description
+ EDh    double  set/reset mode indicators Caps Num Scrl
+        bit 2 = CapsLk, bit 1 = NumLk, bit 0 = ScrlLk
+        all other bits must be zero.
+ EEh    sngl    diagnostic echo. returns EEh.
+ EFh    sngl    NOP (No OPeration). reserved for future use
+ EF+26h double  [Cherry MF2 G80-1501HAD] read 256 bytes of chipcard data
+        keyboard must be disabled before this and has to
+        be enabled after finished.
+ F0h    double  get/set scan code set
+        00h get current set
+        01h scancode set 1 (PCs and PS/2 mod 30, except Type 2 ctrlr)
 
-		02h scancode set 2 (ATs, PS/2, default)
-		03h scancode set 3
- F2h	sngl	read keyboard ID (read two ID bytes)
-		AT keyboards returns FA (ACK)
-		MF2 returns AB 41 (translation) or
-			    AB 83 (pass through)
- F3h	double	set typematic rate/delay
-		format of the second byte:
-		bit7=0 : reserved
-		bit6-5 : typemativ delay
-			 00b=250ms     10b= 750ms
-			 01b=500ms     11b=1000ms
-		bit4-0 : typematic rate (see #P050)
- F4h	sngl	enable keyboard
- F5h	sngl	disable keyboard. set default parameters (no keyboard scanning)
- F6h	sngl	set default parameters
- F7h	sngl	[MCA] set all keys to typematic (scancode set 3)
+        02h scancode set 2 (ATs, PS/2, default)
+        03h scancode set 3
+ F2h    sngl    read keyboard ID (read two ID bytes)
+        AT keyboards returns FA (ACK)
+        MF2 returns AB 41 (translation) or
+                AB 83 (pass through)
+ F3h    double  set typematic rate/delay
+        format of the second byte:
+        bit7=0 : reserved
+        bit6-5 : typemativ delay
+             00b=250ms     10b= 750ms
+             01b=500ms     11b=1000ms
+        bit4-0 : typematic rate (see #P050)
+ F4h    sngl    enable keyboard
+ F5h    sngl    disable keyboard. set default parameters (no keyboard scanning)
+ F6h    sngl    set default parameters
+ F7h    sngl    [MCA] set all keys to typematic (scancode set 3)
 
- F8h	sngl	[MCA] set all keys to make/release
- F9h	sngl	[MCA] set all keys to make only
- FAh	sngl	[MCA] set all keys to typematic/make/release
- FBh	sngl	[MCA] set al keys to typematic
- FCh	double	[MCA] set specific key to make/release
- FDh	double	[MCA] set specific key to make only
- FEh	sngl	resend last scancode
- FFh	sngl	perform internal power-on reset function
-Note:	each command is acknowledged by FAh (ACK), if not mentioned otherwise.
-	  See PORT 0060h-R for details.
+ F8h    sngl    [MCA] set all keys to make/release
+ F9h    sngl    [MCA] set all keys to make only
+ FAh    sngl    [MCA] set all keys to typematic/make/release
+ FBh    sngl    [MCA] set al keys to typematic
+ FCh    double  [MCA] set specific key to make/release
+ FDh    double  [MCA] set specific key to make only
+ FEh    sngl    resend last scancode
+ FFh    sngl    perform internal power-on reset function
+Note:   each command is acknowledged by FAh (ACK), if not mentioned otherwise.
+      See PORT 0060h-R for details.
 SeeAlso: #P046
 */
 
@@ -707,24 +707,24 @@ void at_keyboard_write(UINT8 data)
 				keyboard.on=1;
 				break;
 			case 0xfe: // resend
-				// should not happen, for now send 0 
+				// should not happen, for now send 0
 				at_keyboard_queue_insert(0);	//keyboard.last_code);
 				break;
 			case 0xff: // reset
 				/* it doesn't state this in the docs I have read, but I assume
-				that the keyboard input buffer is cleared. The PCW16 sends &ff,
-				and requires that 0x0fa is the first byte to be read */
-					
+                that the keyboard input buffer is cleared. The PCW16 sends &ff,
+                and requires that 0x0fa is the first byte to be read */
+
 				at_clear_buffer_and_acknowledge();
 
-	//			/* acknowledge */
-	//			at_keyboard_queue_insert(0xfa);
+	//          /* acknowledge */
+	//          at_keyboard_queue_insert(0xfa);
 				/* BAT completion code */
 				at_keyboard_queue_insert(0xaa);
 				break;
 			}
 			break;
-		case 1: 
+		case 1:
 			/* code received */
 			keyboard.input_state=0;
 
@@ -738,10 +738,10 @@ void at_keyboard_write(UINT8 data)
 			{
 				/* send acknowledge */
 				at_keyboard_queue_insert(0x0fa);
-			
+
 				/* led  bits */
 				/* bits: 0 scroll lock, 1 num lock, 2 capslock */
-				
+
 				/* led's in same order as my keyboard leds. */
 				/* num lock, caps lock, scroll lock */
 				set_led_status(2, (data & 0x01));
@@ -762,10 +762,10 @@ void at_keyboard_write(UINT8 data)
 			else
 			{
 				/* 00  return byte indicating scan code set in use
-				01  select scan code set 1  (used on PC & XT)
-				02  select scan code set 2
-				03  select scan code set 3
-				*/
+                01  select scan code set 1  (used on PC & XT)
+                02  select scan code set 2
+                03  select scan code set 3
+                */
 
 				if (data == 0x00)
 				{
@@ -776,12 +776,12 @@ void at_keyboard_write(UINT8 data)
 					keyboard.scan_code_set = data;
 				}
 			}
-		
+
 			break;
 		case 3:
 			/* 6,5: 250ms, 500ms, 750ms, 1s */
 			/* 4..0: 30 26.7 .... 2 chars/s*/
-		
+
 			/* command? */
 			keyboard.input_state=0;
 			if (data & 0x080)
