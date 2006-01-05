@@ -31,6 +31,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.103u1.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Added a "input" command to the debugger.  [Nate Woods]
 
 

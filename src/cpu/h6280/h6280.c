@@ -57,28 +57,28 @@
         Changed timer to be single shot - fixes Crude Buster music in level 1.
 
     Changelog, version 1.08, 8/11/05: (Charles MacDonald)
-    
+
         Changed timer implementation, no longer single shot and reading the
         timer registers returns the count only. Fixes the following:
-        - Mesopotamia: Music tempo & in-game timer 
+        - Mesopotamia: Music tempo & in-game timer
         - Dragon Saber: DDA effects
         - Magical Chase: Music tempo and speed regulation
         - Cadash: Allows the first level to start
         - Turrican: Allows the game to start
-        
+
         Changed PLX and PLY to set NZ flags. Fixes:
         - Afterburner: Graphics unpacking
         - Aoi Blink: Collision detection with background
-        
+
         Fixed the decimal version of ADC/SBC to *not* update the V flag,
         only the binary ones do.
-        
+
         Fixed B flag handling so it is always set outside of an interrupt;
         even after being set by PLP and RTI.
-        
-        Fixed P state after reset to set I and B, leaving T, D cleared and 
+
+        Fixed P state after reset to set I and B, leaving T, D cleared and
         NVZC randomized (cleared in this case).
-        
+
         Fixed interrupt processing order (Timer has highest priority followed
         by IRQ1 and finally IRQ2).
 

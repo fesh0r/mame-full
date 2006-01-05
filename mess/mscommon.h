@@ -64,27 +64,6 @@ void draw_led(mame_bitmap *bitmap, const char *led, int valueorcolor, int x, int
  */
 extern const char *radius_2_led;
 
-/***************************************************************************
-
-	Binary coded decimal
-
-***************************************************************************/
-
-int bcd_adjust(int value);
-int dec_2_bcd(int a);
-int bcd_2_dec(int a);
-
-/***************************************************************************
-
-	Gregorian calendar code
-
-***************************************************************************/
-
-int	gregorian_is_leap_year(int year);
-
-/* months are one counted */
-int gregorian_days_in_month(int month, int year);
-
 /**************************************************************************/
 
 #ifdef __cplusplus

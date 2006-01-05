@@ -136,6 +136,7 @@ static int ppc_is_protected(UINT32 pp, int flags)
 
 static int ppc_translate_address(offs_t *addr_ptr, int flags)
 {
+#ifdef MESS
 	const BATENT *bat;
 	UINT32 address;
 	UINT32 sr, vsid, hash;
@@ -275,6 +276,10 @@ exception:
 		}
 	}
 	return 0;
+#else
+	/* MMU not enabled in MAME; model3 drivers don't work properly */
+	return 1;
+#endif
 }
 
 static int ppc_translate_address_cb(int space, offs_t *addr)
