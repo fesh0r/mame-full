@@ -10,7 +10,6 @@
 
 /**********************************************************************
           To-Do List:
-- fix PSG reads
 - convert h6280-based drivers to internal memory map for the I/O region
 - add and test sprite collision and overflow interrupts
 - fix RCR interrupt
@@ -20,7 +19,7 @@
 - Add CD support
 - SuperGrafix Driver
 - Banking for SF2 (and others?)
-- better use of vram access functions
+- Add 263 line mode
 **********************************************************************/
 
 #include <assert.h>
@@ -83,24 +82,13 @@ static INTERRUPT_GEN( pce_interrupt )
 		cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
-/* stubs for the irq/psg/timer code */
-
-static WRITE8_HANDLER ( pce_psg_w )
-{
-}
-
-static  READ8_HANDLER ( pce_psg_r )
-{
-    return 0x00;
-}
-
 ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x000000, 0x1EDFFF) AM_ROM
 	AM_RANGE( 0x1EE000, 0x1EFFFF) AM_RAM
 	AM_RANGE( 0x1F0000, 0x1F1FFF) AM_RAM AM_MIRROR(0x6000) AM_BASE( &pce_user_ram )
 	AM_RANGE( 0x1FE000, 0x1FE3FF) AM_READWRITE( vdc_r, vdc_w )
 	AM_RANGE( 0x1FE400, 0x1FE7FF) AM_READWRITE( vce_r, vce_w )
-	AM_RANGE( 0x1FE800, 0x1FEBFF) AM_READWRITE( pce_psg_r, C6280_0_w )
+	AM_RANGE( 0x1FE800, 0x1FEBFF) AM_READWRITE( C6280_r, C6280_0_w )
 	AM_RANGE( 0x1FEC00, 0x1FEFFF) AM_READWRITE( H6280_timer_r, H6280_timer_w )
 	AM_RANGE( 0x1FF000, 0x1FF3FF) AM_READWRITE( pce_joystick_r, pce_joystick_w )
 	AM_RANGE( 0x1FF400, 0x1FF7FF) AM_READWRITE( H6280_irq_status_r, H6280_irq_status_w )
@@ -227,7 +215,9 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 #define rom_pce NULL
+#define rom_tg16 NULL
 
 /*	   YEAR  NAME	   PARENT	COMPAT	MACHINE	INPUT	 INIT	CONFIG  COMPANY	 FULLNAME */
-CONS( 1987, pce,	   0,		0,		pce,	pce, 	 pce,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+CONS( 1987, pce,	   0,		0,		pce,	pce, 	 pce,		pce,	"Nippon Electronic Company", "PC Engine", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+CONS( 1989, tg16,	   pce,		0,		pce,	pce, 	 tg16,		pce,	"Nippon Electronic Company", "TurboGrafx 16", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 

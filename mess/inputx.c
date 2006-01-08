@@ -951,7 +951,7 @@ int inputx_is_posting(void)
 
 void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 {
-	size_t i, j, key_len;
+	size_t i, j, key_len, increment;
 	unicode_char_t ch;
 
 	static const struct
@@ -993,6 +993,7 @@ void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 	while(i < text_len)
 	{
 		ch = text[i];
+		increment = 1;
 
 		if (ch == '{')
 		{
@@ -1004,18 +1005,15 @@ void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 					if (!memcmp(codes[j].key, &text[i + 1], key_len) && (text[i + key_len + 1] == '}'))
 					{
 						ch = codes[j].code;
-						i += key_len + 2;
+						increment = key_len + 2;
 					}
 				}
 			}
 		}
-		else
-		{
-			i++;
-		}
 
 		if (ch)
 			inputx_postc_rate(ch, rate);
+		i += increment;
 	}
 }
 

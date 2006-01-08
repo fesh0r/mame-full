@@ -24,6 +24,8 @@ WRITE8_HANDLER ( pce_joystick_w );
 #define PCE_JOY_SIG			0x40
 #define NO_CD_SIG			0x80
 #define CD_SIG				0x00
+/* these might be used to indicate something, but they always seem to return 1 */
+#define CONST_SIG			0x30
 
 struct pce_struct
 {
@@ -31,4 +33,5 @@ struct pce_struct
 };
 extern struct pce_struct pce;
 DRIVER_INIT( pce );
+DRIVER_INIT( tg16 );
 #endif

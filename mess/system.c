@@ -164,7 +164,8 @@ TESTDRIVER( studio2 )	/* Studio II										*/
 	DRIVER( fnvision )  /* Coleco FunVision                                 */
 
 	/* NEC */
-	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
+	DRIVER( pce )		/* PC/Engine NEC 1987-1993		*/
+	DRIVER( tg16 )		/* Turbo Grafix-16  NEC 1989-1993		*/
 
 	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
 TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/

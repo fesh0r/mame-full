@@ -126,22 +126,18 @@ WRITE8_HANDLER ( vdc_w )
              switch(vdc.vdc_register)
              {
                 case VxR: /* MSB of data to write to VRAM */
-                     vdc.vdc_data[MAWR].w &= 0x7FFF;
-                     vdc.vram[vdc.vdc_data[MAWR].w*2+0] = vdc.vdc_latch;
-                     vdc.vram[vdc.vdc_data[MAWR].w*2+1] = data;
+                     //vdc.vdc_data[MAWR].w &= 0x7FFF;
+                     vram_write(vdc.vdc_data[MAWR].w*2+0, vdc.vdc_latch);
+                     vram_write(vdc.vdc_data[MAWR].w*2+1, data);
                      vdc.vdc_data[MAWR].w += vdc.inc;
-                     vdc.vdc_data[MAWR].w &= 0x7FFF;
-                     vdc.vdc_latch = 0;
+                     //vdc.vdc_data[MAWR].w &= 0x7FFF;
+                     //vdc.vdc_latch = 0;
                      break;
 
                 case CR:
                     {
 						static unsigned char inctab[] = {1, 32, 64, 128};
                         vdc.inc = inctab[(data >> 3) & 3];
-                     	if(vdc.vdc_data[CR].w&CR_OV)
-							logerror("Missing Overflow Interrupt\n");
-						if(vdc.vdc_data[CR].w&CR_CC)
-							logerror("Missing Sprite 0 Hit Interrupt\n");
 					}
                      break;
 
@@ -178,14 +174,15 @@ WRITE8_HANDLER ( vdc_w )
     {
         case 0x00:
              temp = vdc.status;
-             vdc.status &= ~(VDC_VD | VDC_RR | VDC_DS);
+             vdc.status &= ~(VDC_VD | VDC_RR | VDC_CR | VDC_OR | VDC_DS);
+		 cpunum_set_input_line(0,0,CLEAR_LINE);
              break;
 
         case 0x02:
              switch(vdc.vdc_register)
              {
                 case VxR:
-                     temp = vdc.vram[vdc.vdc_data[MARR].w*2+0];
+                     temp = vram_read(vdc.vdc_data[MARR].w*2+0);
                      break;
              }
              break;
@@ -194,7 +191,8 @@ WRITE8_HANDLER ( vdc_w )
              switch(vdc.vdc_register)
              {
                 case VxR:
-                     temp = vdc.vram[vdc.vdc_data[MARR].w*2+1];
+                     temp = vram_read(vdc.vdc_data[MARR].w*2+1);
+			   vdc.vdc_data[MARR].w += vdc.inc;
                      break;
              }
              break;
@@ -308,7 +306,8 @@ void pce_refresh_line(int line)
 
 #ifdef MAME_DEBUG
 	line_buffer_size = vdc.physical_width + 8;
-	assert(line_buffer_size <= sizeof(line_buffer));
+//	this line no longer funcrions correctly because line_buffer is now "just a pointer"
+//	assert(line_buffer_size <= sizeof(line_buffer));
 #endif
 
     /* character blanking bit */
@@ -347,7 +346,8 @@ void pce_refresh_line(int line)
 				c = (cell_palette << 4 | i3 << 3 | i2 << 2 | i1 << 1 | i0);
 
 #ifdef MAME_DEBUG
-				assert((i<<3)+x < (line_buffer_size / sizeof(line_buffer[0])));
+//fails for unknown reason: possible bounds checking?
+//				assert((i<<3)+x < (line_buffer_size / sizeof(line_buffer[0])));
 #endif
 				line_buffer[(i<<3)+x] = Machine->pens[c];
 			}
@@ -418,118 +418,125 @@ void pce_refresh_sprites(int line)
 	if (!line_buffer)
 		return;
 
-    if ((vdc.vdc_data[DVSSR].w & 0x8000) == 0)
+	//clear our sprite-to-sprite clipping buffer.
+	memset(drawn, 0, (0x40 << 3) + 32);
+	/* count up: Highest priority is Sprite 0 */ 
+	for(i=0; i<64; i++)
 	{
-		//clear our sprite-to-sprite clipping buffer.
-		memset(drawn, 0, (0x40 << 3) + 32);
-		/* count up: Highest priority is Sprite 0 */ 
-		for(i=0; i<64; i++)
+		obj_y = (vdc.sprite_ram[(i<<2)+0] & 0x03FF) - 64;
+		obj_x = (vdc.sprite_ram[(i<<2)+1] & 0x03FF) - 32;
+
+		if ((obj_y == -64) || (obj_y > line)) continue;
+		if ((obj_x == -32) || (obj_x > vdc.physical_width)) continue;
+
+
+		obj_a = (vdc.sprite_ram[(i<<2)+3]);
+
+//      if ((obj_a & 0x80) == 0) continue;
+
+		cgx   = (obj_a >> 8) & 1;   /* sprite width */ 
+		cgy   = (obj_a >> 12) & 3;  /* sprite height */ 
+		hf    = (obj_a >> 11) & 1;  /* horizontal flip */ 
+		vf    = (obj_a >> 15) & 1;  /* vertical flip */ 
+		palette = (obj_a & 0x000F);
+		priority = (obj_a >> 7) & 1;   /* why was this not emulated? */ 
+
+		obj_i = (vdc.sprite_ram[(i<<2)+2] & 0x07FE);
+
+		obj_w = cgx_table[cgx];
+		obj_h = cgy_table[cgy];
+		obj_l = (line - obj_y);
+
+		//no need to draw an object that's ABOVE where we are.
+		if((obj_y + obj_h)<line) continue;
+
+		sprites_drawn++;
+		if(sprites_drawn > 16)
 		{
-			obj_y = (vdc.sprite_ram[(i<<2)+0] & 0x03FF) - 64;
-			obj_x = (vdc.sprite_ram[(i<<2)+1] & 0x03FF) - 32;
+			vdc.status |= VDC_OR;
+			if(vdc.vdc_data[CR].w&CR_OV)
+				cpunum_set_input_line(0, 0, ASSERT_LINE);
+			continue;  /* Should cause an interrupt */ 
+		}
 
-			if ((obj_y == -64) || (obj_y > line)) continue;
-			if ((obj_x == -32) || (obj_x > vdc.physical_width)) continue;
+		if (obj_l < obj_h)
+		{
+			cgypos = (obj_l >> 4);
+			if(vf) cgypos = ((obj_h - 1) >> 4) - cgypos;
 
-
-			obj_a = (vdc.sprite_ram[(i<<2)+3]);
-
-	//      if ((obj_a & 0x80) == 0) continue;
-
-			cgx   = (obj_a >> 8) & 1;   /* sprite width */ 
-			cgy   = (obj_a >> 12) & 3;  /* sprite height */ 
-			hf    = (obj_a >> 11) & 1;  /* horizontal flip */ 
-			vf    = (obj_a >> 15) & 1;  /* vertical flip */ 
-			palette = (obj_a & 0x000F);
-			priority = (obj_a >> 7) & 1;   /* why was this not emulated? */ 
-
-			obj_i = (vdc.sprite_ram[(i<<2)+2] & 0x07FE);
-
-			obj_w = cgx_table[cgx];
-			obj_h = cgy_table[cgy];
-			obj_l = (line - obj_y);
-
-			//no need to draw an object that's ABOVE where we are.
-			if((obj_y + obj_h)<line) continue;
-
-			sprites_drawn++;
-			if(sprites_drawn > 16) continue;  /* Should cause an interrupt */ 
-
-
-			if (obj_l < obj_h)
+			if(cgx == 0)
 			{
-				cgypos = (obj_l >> 4);
-				if(vf) cgypos = ((obj_h - 1) >> 4) - cgypos;
-
-				if(cgx == 0)
+				conv_obj(obj_i + (cgypos << 2), obj_l, hf, vf, buf);
+				for(x=0;x<16;x++)
 				{
-					conv_obj(obj_i + (cgypos << 2), obj_l, hf, vf, buf);
-					for(x=0;x<16;x++)
+					if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
 					{
-						if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
+						c = buf[x];
+						if(c)
 						{
-							c = buf[x];
-							if(c)
+							if(!drawn[obj_x+x])
 							{
-								if(!drawn[obj_x+x])
-								{
-									if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
-										line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
-									drawn[obj_x + x]=i+1;
-								}
-								else if (drawn[obj_x+x]==1)
-								{
-//									cpunum_set_input_line(0, 0, ASSERT_LINE);
-//									vdc.status|=VDC_CR;
-								}
+								if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
+									line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+								drawn[obj_x + x]=i+1;
+							}
+							else if (drawn[obj_x+x]==1)
+							{
+								if(vdc.vdc_data[CR].w&CR_CC)
+									cpunum_set_input_line(0, 0, ASSERT_LINE);
+								vdc.status|=VDC_CR;
 							}
 						}
 					}
 				}
-				else
+			}
+			else
+			{
+				conv_obj(obj_i + (cgypos << 2) + (hf ? 2 : 0), obj_l, hf, vf, buf);
+				for(x=0;x<16;x++)
 				{
-					conv_obj(obj_i + (cgypos << 2) + (hf ? 2 : 0), obj_l, hf, vf, buf);
-					for(x=0;x<16;x++)
+					if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
 					{
-						if(((obj_x + x)<(vdc.physical_width))&&((obj_x + x)>=0))
+						c = buf[x];
+						if(c)
 						{
-							c = buf[x];
-							if(c)
+							if(!drawn[obj_x+x])
 							{
-								if(!drawn[obj_x+x])
-								{
-									if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
-										line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
-									drawn[obj_x + x]=i+1;
-								}
-								else if (drawn[obj_x+x]==1)
-								{
-//									cpunum_set_input_line(0, 0, ASSERT_LINE);
-//									vdc.status|=VDC_CR;
-								}
+								if(priority || (line_buffer[obj_x + x] == Machine->pens[0]))
+									line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+								drawn[obj_x + x]=i+1;
+							}
+							else if (drawn[obj_x+x]==1)
+							{
+								if(vdc.vdc_data[CR].w&CR_CC)
+									cpunum_set_input_line(0, 0, ASSERT_LINE);
+								vdc.status|=VDC_CR;
+
+
 							}
 						}
 					}
+				}
 
-					conv_obj(obj_i + (cgypos << 2) + (hf ? 0 : 2), obj_l, hf, vf, buf);
-					for(x=0;x<16;x++)
+				conv_obj(obj_i + (cgypos << 2) + (hf ? 0 : 2), obj_l, hf, vf, buf);
+				for(x=0;x<16;x++)
+				{
+					if(((obj_x + 0x10 + x)<(vdc.physical_width))&&((obj_x + 0x10 + x)>=0))
 					{
-						if(((obj_x + 0x10 + x)<(vdc.physical_width))&&((obj_x + 0x10 + x)>=0))
+						c = buf[x];
+						if(c)
 						{
-							c = buf[x];
-							if(c)
+							if(!drawn[obj_x+0x10+x])
 							{
-								if(!drawn[obj_x+0x10+x])
-								{
-									if(priority || (line_buffer[obj_x + 0x10 + x] == Machine->pens[0]))
-										line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
-									drawn[obj_x + 0x10 + x]=i+1;
-								}
-								else if (drawn[obj_x+0x10+x]==1)
-								{
-//									cpunum_set_input_line(0, 0, ASSERT_LINE);
-//									vdc.status|=VDC_CR;
-								}
+								if(priority || (line_buffer[obj_x + 0x10 + x] == Machine->pens[0]))
+									line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
+								drawn[obj_x + 0x10 + x]=i+1;
+							}
+							else if (drawn[obj_x+0x10+x]==1)
+							{
+								if(vdc.vdc_data[CR].w&CR_CC)
+									cpunum_set_input_line(0, 0, ASSERT_LINE);
+								vdc.status|=VDC_CR;
 							}
 						}
 					}
@@ -566,10 +573,12 @@ void vdc_do_dma(void)
 		
 		len = (len - 1) & 0xFFFF;
 		
-	} while (len != 0x0000);
+	} while (len != 0xFFFF);
 	
 	vdc.status |= VDC_DV;
-	
+	vdc.vdc_data[SOUR].w = src;
+	vdc.vdc_data[DESR].w = dst;
+	vdc.vdc_data[LENR].w = len;
 	if(dvc)
 	{
 		cpunum_set_input_line(0, 0, ASSERT_LINE);

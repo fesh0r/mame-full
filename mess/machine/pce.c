@@ -125,7 +125,12 @@ NVRAM_HANDLER( pce )
 
 DRIVER_INIT( pce )
 {
-/* STUB FUNCTION: should initialize input bits */
+	pce.io_port_options = NO_CD_SIG | PCE_JOY_SIG | CONST_SIG;
+}
+
+DRIVER_INIT( tg16 )
+{
+	pce.io_port_options = NO_CD_SIG | TG_16_JOY_SIG | CONST_SIG;
 }
 
 /* todo: how many input ports does the PCE have? */
@@ -150,9 +155,12 @@ WRITE8_HANDLER ( pce_joystick_w )
 
  READ8_HANDLER ( pce_joystick_r )
 {
+	UINT8 ret;
 	int data = readinputport(0);
 	if(joystick_data_select) data >>= 4;
-	/* Bit 6 is reset in US consoles?? */
-	data &= ~0x40;
-	return (data);
+	ret = (data & 0x0F) | pce.io_port_options;
+#ifdef UNIFIED_PCE
+	ret &= ~0x40;
+#endif
+	return (ret);
 }
