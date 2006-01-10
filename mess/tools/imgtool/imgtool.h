@@ -372,6 +372,13 @@ imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head,
 imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
 	UINT32 sector, const void *buffer, size_t len);
 
+/* img_malloc
+ *
+ * Description:
+ *		Allocates memory off of an image
+ */
+void *img_malloc(imgtool_image *image, size_t size);
+
 /* img_module
  * img_enum_module
  *

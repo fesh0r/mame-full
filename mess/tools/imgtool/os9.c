@@ -41,8 +41,7 @@ struct os9_diskinfo
 	unsigned int octal_track_density : 1;
 
 	char name[33];
-
-	UINT8 allocation_bitmap[1024];
+	UINT8 *allocation_bitmap;
 };
 
 
@@ -576,10 +575,11 @@ done:
 
 static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 {
+	imgtoolerr_t err;
+	floperr_t ferr;
 	struct os9_diskinfo *info;
 	UINT32 track_size_in_sectors, attributes, i;
 	UINT8 header[256];
-	floperr_t ferr;
 	UINT32 allocation_bitmap_lsns;
 	UINT8 b, mask;
 
@@ -620,8 +620,10 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* is the allocation bitmap too big? */
-	if (info->allocation_bitmap_bytes > sizeof(info->allocation_bitmap))
-		return IMGTOOLERR_CORRUPTIMAGE;
+	info->allocation_bitmap = img_malloc(image, info->allocation_bitmap_bytes);
+	if (!info->allocation_bitmap)
+		return IMGTOOLERR_OUTOFMEMORY;
+	memset(info->allocation_bitmap, 0, info->allocation_bitmap_bytes);
 
 	/* sectors per track and track size dont jive? */
 	if (info->sectors_per_track != track_size_in_sectors)
@@ -636,10 +638,13 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* read the allocation bitmap */
-	ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 2, 0, info->allocation_bitmap,
-		info->allocation_bitmap_bytes);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
+	for (i = 0; i < allocation_bitmap_lsns; i++)
+	{
+		err = os9_read_lsn(image, 1 + i, 0, &info->allocation_bitmap[i * info->sector_size],
+			MIN(info->allocation_bitmap_bytes - (i * info->sector_size), info->sector_size));
+		if (err)
+			return err;
+	}
 
 	/* check to make sure that the allocation bitmap and root sector are reserved */
 	for (i = 0; i <= allocation_bitmap_lsns; i++)
