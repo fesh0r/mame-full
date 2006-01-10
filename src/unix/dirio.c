@@ -184,7 +184,7 @@ const char *osd_get_cwd(void)
 #else
 	getcwd(cwd, MAXPATHL);
 #endif
-	strcat(cwd, "/");
+	strncat(cwd, "/", sizeof(cwd) - strlen(cwd) - 1);
 	return cwd;
 }
 

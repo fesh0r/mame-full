@@ -614,7 +614,7 @@ int xmame_config_init(int argc, char *argv[])
 		inp_header inp_header;
 
 		memset(&inp_header, '\0', sizeof(inp_header));
-		strcpy(inp_header.name, drivers[game_index]->name);
+		strncpy(inp_header.name, drivers[game_index]->name, sizeof(inp_header.name) - 1);
 		mame_fwrite(options.record, &inp_header, sizeof(inp_header));
 	}
 

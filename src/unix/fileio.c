@@ -433,7 +433,7 @@ static const char *get_path_for_filetype(int filetype, int pathindex, int *count
 /*	compose_path */
 /*============================================================ */
 
-static void compose_path(char *output, int pathtype, int pathindex, const char *filename)
+static void compose_path(char *output, size_t outputlen, int pathtype, int pathindex, const char *filename)
 {
 	const char *basepath = get_path_for_filetype(pathtype, pathindex, NULL);
 	char *p;
@@ -446,10 +446,10 @@ static void compose_path(char *output, int pathtype, int pathindex, const char *
 	/* compose the full path */
 	*output = 0;
 	if (basepath)
-		strcat(output, basepath);
+		strncat(output, basepath, outputlen - strlen(output) - 1);
 	if (*output && !is_pathsep(output[strlen(output) - 1]))
-		strcat(output, "/");
-	strcat(output, filename);
+		strncat(output, "/", outputlen - strlen(output) - 1);
+	strncat(output, filename, outputlen - strlen(output) - 1);
 
 	/* convert backslashes to forward slashes */
 	for (p = output; *p; p++)
@@ -484,7 +484,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 	char fullpath[1024];
 
 	/* compose the full path */
-	compose_path(fullpath, pathtype, pathindex, filename);
+	compose_path(fullpath, sizeof(fullpath), pathtype, pathindex, filename);
 
 	/* get the file attributes */
 	if (stat(fullpath, &buf))
@@ -524,7 +524,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	memset(file, 0, sizeof(*file));
 
 	/* compose the full path */
-	compose_path(fullpath, pathtype, pathindex, filename);
+	compose_path(fullpath, sizeof(fullpath), pathtype, pathindex, filename);
 
 	/* attempt to open the file */
 	file->fileptr = fopen(fullpath, mode);
@@ -724,7 +724,7 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 	char fullpath[1024];
 
 	/* compose the full path */
-	compose_path(fullpath, pathtype, pathindex, dirname);
+	compose_path(fullpath, sizeof(fullpath), pathtype, pathindex, dirname);
 
 	return check_and_create_dir(fullpath) ? 0 : 1;
 }
