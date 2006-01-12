@@ -23,6 +23,15 @@
 #include "image.h"
 #endif
 
+#ifdef _POSIX_VERSION
+#define OFF_T off_t
+#define FSEEK fseeko
+#define FTELL ftello
+#else
+#define OFF_T long
+#define FSEEK fseek
+#define FTELL ftell
+#endif
 
 #define VERBOSE				0
 
@@ -58,11 +67,11 @@ struct pathdata
 struct _osd_file
 {
 	FILE		*fileptr;
-	long		filepos;
-	long		end;
-	long		offset;
-	long		bufferbase;
-	long		bufferbytes;
+	OFF_T		filepos;
+	OFF_T		end;
+	OFF_T		offset;
+	OFF_T		bufferbase;
+	size_t		bufferbytes;
 	unsigned char	buffer[FILE_BUFFER_SIZE];
 };
 
@@ -510,7 +519,6 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	char fullpath[1024];
 	osd_file *file;
 	int i;
-	int offs;
 
 	/* find an empty file pointer */
 	for (i = 0; i < MAX_OPEN_FILES; i++)
@@ -544,9 +552,9 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	}
 
 	/* get the file size */
-	offs = fseek(file->fileptr, 0, SEEK_END);
-	file->end = ftell(file->fileptr);
-	fseek(file->fileptr, offs, SEEK_SET);
+	FSEEK(file->fileptr, 0, SEEK_END);
+	file->end = FTELL(file->fileptr);
+	rewind(file->fileptr);
 	return file;
 }
 
@@ -562,9 +570,15 @@ int osd_fseek(osd_file *file, INT64 offset, int whence)
 	switch (whence)
 	{
 		default:
-		case SEEK_SET:	file->offset = offset;				break;
-		case SEEK_CUR:	file->offset += offset;				break;
-		case SEEK_END:	file->offset = file->end + offset;	break;
+		case SEEK_SET:
+			file->offset = offset;
+			break;
+		case SEEK_CUR:
+			file->offset += offset;
+			break;
+		case SEEK_END:
+			file->offset = file->end + offset;
+			break;
 	}
 	return 0;
 }
@@ -602,6 +616,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 	UINT32 bytes_left = length;
 	int bytes_to_copy;
 	int result;
+	size_t read;
 
 	/* handle data from within the buffer */
 	if (file->offset >= file->bufferbase && file->offset < file->bufferbase + file->bufferbytes)
@@ -625,10 +640,10 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 	/* attempt to seek to the current location if we're not there already */
 	if (file->offset != file->filepos)
 	{
-		result = fseek(file->fileptr, file->offset, SEEK_SET);
+		result = FSEEK(file->fileptr, file->offset, SEEK_SET);
 		if (result && errno)
 		{
-			file->filepos = ~0;
+			file->filepos = ~(OFF_T)0;
 			return length - bytes_left;
 		}
 		file->filepos = file->offset;
@@ -659,12 +674,12 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 	else
 	{
 		/* do the read */
-		result = fread(buffer, sizeof(unsigned char), bytes_left, file->fileptr);
-		file->filepos += result;
+		read = fread(buffer, sizeof(unsigned char), bytes_left, file->fileptr);
+		file->filepos += read;
 
 		/* adjust the pointers and return */
-		file->offset += result;
-		bytes_left -= result;
+		file->offset += read;
+		bytes_left -= read;
 		return length - bytes_left;
 	}
 }
@@ -678,24 +693,25 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 {
 	int result;
+	size_t written;
 
 	/* invalidate any buffered data */
 	file->bufferbytes = 0;
 
 	/* attempt to seek to the current location */
-	result = fseek(file->fileptr, file->offset, SEEK_SET);
+	result = FSEEK(file->fileptr, file->offset, SEEK_SET);
 	if (result && errno)
 		return 0;
 
 	/* do the write */
-	result = fwrite(buffer, sizeof(unsigned char), length, file->fileptr);
-	file->filepos += result;
+	written = fwrite(buffer, sizeof(unsigned char), length, file->fileptr);
+	file->filepos += written;
 
 	/* adjust the pointers */
-	file->offset += result;
+	file->offset += written;
 	if (file->offset > file->end)
 		file->end = file->offset;
-	return result;
+	return written;
 }
 
 
