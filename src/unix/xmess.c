@@ -198,9 +198,9 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 					if (strstr(name," ("))
 						*strstr(name," (") = 0;
 					if (strncmp(name,"The ",4) == 0)
-						snprintf(name_ref,"%s, The ",name+4,sizeof(name_ref) - 1);
+						snprintf(name_ref,sizeof(name_ref),"%s, The ",name+4);
 					else
-						snprintf(name_ref,"%s ",name,sizeof(name_ref) - 1);
+						snprintf(name_ref,sizeof(name_ref),"%s ",name);
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -368,7 +368,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 		int d=0;
 
 			/* ensure the roms directory exists! */
-			snprintf(buf,"%s %s","md",sys_rom_path,sizeof(buf));
+			snprintf(buf,sizeof(buf),"%s %s","md",sys_rom_path);
 			fprintf(stdout_file, "%s\n",buf);
 			system(buf);
 
@@ -376,7 +376,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 			while(drivers[d])
 			{
 				/* create the systems directory */
-				snprintf(buf,"%s %s\\%s","md",sys_rom_path,drivers[d]->name,sizeof(buf));
+				snprintf(buf,sizeof(buf),"%s %s\\%s","md",sys_rom_path,drivers[d]->name);
 				fprintf(stdout_file, "%s\n",buf);
 				system(buf);
 				d++;
