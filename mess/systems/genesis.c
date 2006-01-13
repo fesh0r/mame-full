@@ -492,7 +492,7 @@ static void genesis_cartslot_getinfo(struct IODevice *dev)
 	dev->file_extensions = "smd\0bin\0md\0";
 	dev->must_be_loaded = 1;
 	dev->load = device_load_genesis_cart;
-	dev->partialhash = NULL /*genesis_partialhash*/;
+	dev->partialhash = NULL; /*genesis_partialhash*/
 }
 
 SYSTEM_CONFIG_START(genesis)
