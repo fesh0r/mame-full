@@ -569,43 +569,34 @@ static void execute_input(int ref, int params, const char *param[])
 
 
 
+static void setup_keybuffer(void)
+{
+	inputx_timer = mame_timer_alloc(inputx_timerproc);
+	keybuffer = auto_malloc(sizeof(struct KeyBuffer));
+	memset(keybuffer, 0, sizeof(*keybuffer));
+}
+
+
+
 void inputx_init(void)
 {
-	struct SystemConfigurationParamBlock params;
-
 	codes = NULL;
 	inputx_timer = NULL;
 	queue_chars = NULL;
 	accept_char = NULL;
 	charqueue_empty = NULL;
+	keybuffer = NULL;
 
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		/* check driver for QUEUE_CHARS and/or ACCEPT_CHAR callbacks */
-		memset(&params, 0, sizeof(params));
-		if (Machine->gamedrv->sysconfig_ctor)
-			Machine->gamedrv->sysconfig_ctor(&params);
-		queue_chars = params.queue_chars;
-		accept_char = params.accept_char;
-		charqueue_empty = params.charqueue_empty;
-
-		keybuffer = auto_malloc(sizeof(struct KeyBuffer));
-		if (!keybuffer)
+		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
+		if (!codes)
 			goto error;
-		memset(keybuffer, 0, sizeof(*keybuffer));
+		if (!build_codes(Machine->input_ports, codes, TRUE))
+			goto error;
 
-		if (!queue_chars)
-		{
-			/* only need to compute codes if QUEUE_CHARS not present */
-			codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
-			if (!codes)
-				goto error;
-			if (!build_codes(Machine->input_ports, codes, TRUE))
-				goto error;
-		}
-
-		inputx_timer = mame_timer_alloc(inputx_timerproc);
+		setup_keybuffer();
 	}
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
@@ -616,9 +607,17 @@ void inputx_init(void)
 
 error:
 	codes = NULL;
-	keybuffer = NULL;
-	queue_chars = NULL;
-	accept_char = NULL;
+}
+
+void inputx_setup_natural_keyboard(
+	int (*queue_chars_)(const unicode_char_t *text, size_t text_len),
+	int (*accept_char_)(unicode_char_t ch),
+	int (*charqueue_empty_)(void))
+{
+	setup_keybuffer();
+	queue_chars = queue_chars_;
+	accept_char = accept_char_;
+	charqueue_empty = charqueue_empty_;
 }
 
 int inputx_can_post(void)

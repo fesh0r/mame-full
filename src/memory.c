@@ -881,6 +881,16 @@ void memory_set_debugger_access(int debugger)
     read handler for X-bit case
 -------------------------------------------------*/
 
+void *_memory_install_read_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_read_handler()\n");
+	install_mem_handler(space, 0, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+}
+
 UINT8 *_memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
@@ -918,6 +928,16 @@ UINT64 *_memory_install_read64_handler(int cpunum, int spacenum, offs_t start, o
     memory_install_writeX_handler - install dynamic
     write handler for X-bit case
 -------------------------------------------------*/
+
+void *_memory_install_write_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_write_handler()\n");
+	install_mem_handler(space, 1, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
 
 UINT8 *_memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name)
 {
@@ -958,6 +978,16 @@ UINT64 *_memory_install_write64_handler(int cpunum, int spacenum, offs_t start, 
     X-bit case
 -------------------------------------------------*/
 
+void *_memory_install_read_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_read_matchmask_handler()\n");
+	install_mem_handler(space, 0, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
 UINT8 *_memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
@@ -996,6 +1026,16 @@ UINT64 *_memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_
     install dynamic match/mask write handler for
     X-bit case
 -------------------------------------------------*/
+
+void *_memory_install_write_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_write_matchmask_handler()\n");
+	install_mem_handler(space, 1, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
+}
 
 UINT8 *_memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name)
 {
@@ -1380,6 +1420,8 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 	/* sanity check */
 	if (space->dbits != databits)
 		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
+	if (start > end)
+		osd_die("fatal: install_mem_handler called with start greater than end\n");
 
 	/* if we're installing a new bank, make sure we mark it */
 	if (HANDLER_IS_BANK(handler))

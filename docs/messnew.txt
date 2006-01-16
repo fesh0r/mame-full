@@ -10,6 +10,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AT] Cleaned up A20 gating.  [Nate Woods]
+
 - [PC] Fixed PC keyboard ESC char code (it is now 27; used to be 26).  [Nate
   Woods]
 
@@ -37,6 +39,11 @@ Source Changes:
   update to this core.  [MAME team]
 
 - Added a "input" command to the debugger.  [Nate Woods]
+
+- Cleaned up natural keyboard code.  No longer have QUEUE_CHARS/ACCEPT_CHARS
+  and CHARQUEUE_EMPTY; callbacks are now installed at runtime.  [Nate Woods]
+
+- Fixed a file manager memory allocation bug.  [Telengard]
 
 
 

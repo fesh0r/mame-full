@@ -859,8 +859,6 @@ static void apple2_floppy_getinfo(struct IODevice *dev)
 
 SYSTEM_CONFIG_START(apple2_common)
 	CONFIG_DEVICE(apple2_floppy_getinfo)
-	CONFIG_QUEUE_CHARS			( AY3600 )
-	CONFIG_ACCEPT_CHAR			( AY3600 )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2)

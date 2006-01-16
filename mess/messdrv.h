@@ -27,11 +27,6 @@ struct SystemConfigurationParamBlock
 	int default_ram_option;
 	UINT32 *ram_options;
 
-	/* for natural keyboard input */
-	int (*queue_chars)(const unicode_char_t *text, size_t text_len);
-	int (*accept_char)(unicode_char_t ch);
-	int (*charqueue_empty)(void);
-
 	/* device specification */
 	int device_slotcount;
 	device_getinfo_handler *device_handlers;
@@ -64,15 +59,6 @@ struct SystemConfigurationParamBlock
 		CONFIG_RAM(ram);																	\
 	}																						\
 
-#define CONFIG_QUEUE_CHARS(queue_chars_)													\
-	cfg->queue_chars = inputx_queue_chars_##queue_chars_;									\
-
-#define CONFIG_ACCEPT_CHAR(accept_char_)													\
-	cfg->accept_char = inputx_accept_char_##accept_char_;									\
-
-#define CONFIG_CHARQUEUE_EMPTY(charqueue_empty_)											\
-	cfg->charqueue_empty = inputx_charqueue_empty_##charqueue_empty_;						\
-
 #define CONFIG_DEVICE(getinfo)										\
 	if (cfg->device_position < cfg->device_slotcount)				\
 	{																\
@@ -86,17 +72,6 @@ struct SystemConfigurationParamBlock
 		cfg->device_countoverrides[cfg->device_position] = (count);	\
 		cfg->device_position++;										\
 	}																\
-
-/*****************************************************************************/
-
-#define QUEUE_CHARS(name)																	\
-	int inputx_queue_chars_##name(const unicode_char_t *text, size_t text_len)				\
-
-#define ACCEPT_CHAR(name)																	\
-	int inputx_accept_char_##name(unicode_char_t ch)										\
-
-#define CHARQUEUE_EMPTY(name)																	\
-	int inputx_charqueue_empty_##name(void)										\
 
 /******************************************************************************
  * MESS' version of the GAME() macros of MAME

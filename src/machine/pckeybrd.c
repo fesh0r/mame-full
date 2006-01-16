@@ -1,4 +1,13 @@
-/* PC-AT Keyboard emulation */
+/**********************************************************************
+
+    pckeybrd.c
+
+    PC-style keyboard emulation
+
+    This emulation is decoupled from the AT 8042 emulation used in the
+    IBM ATs and above
+
+**********************************************************************/
 
 /* Todo: (added by KT 22-Jun-2000
     1. Check scancodes I have added are the actual scancodes for set 2 or 3.
@@ -9,6 +18,10 @@
 
 #include "driver.h"
 #include "machine/pckeybrd.h"
+
+#ifdef MESS
+#include "inputx.h"
+#endif /* MESS */
 
 /* AT keyboard documentation comes from www.beyondlogic.org and HelpPC documentation */
 
@@ -173,7 +186,8 @@ typedef struct at_keyboard
 	int input_state;
 	int scan_code_set;
 	int last_code;
-	int input_port_base;
+
+	int ports[8];
 } at_keyboard;
 
 static at_keyboard keyboard;
@@ -295,16 +309,21 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 static void at_keyboard_queue_insert(UINT8 data);
 static int at_keyboard_queue_size(void);
 
+#ifdef MESS
+static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len);
+static int at_keyboard_accept_char(unicode_char_t ch);
+static int at_keyboard_charqueue_empty(void);
+#endif
+
 
 
 void at_keyboard_init(AT_KEYBOARD_TYPE type)
 {
+	int i;
+	char buf[32];
+
+	memset(&keyboard, 0, sizeof(keyboard));
 	keyboard.type = type;
-#ifdef MESS
-	keyboard.input_port_base = 4;
-#else
-	keyboard.input_port_base = 0;
-#endif
 	keyboard.on = 1;
 	keyboard.delay = 60;
 	keyboard.repeat = 8;
@@ -318,6 +337,19 @@ void at_keyboard_init(AT_KEYBOARD_TYPE type)
 	set_led_status(1, 0);
 
 	keyboard.scan_code_set = 3;
+
+	/* locate the keyboard ports */
+	for (i = 0; i < sizeof(keyboard.ports) / sizeof(keyboard.ports[0]); i++)
+	{
+		sprintf(buf, "pc_keyboard_%d", i);
+		keyboard.ports[i] = port_tag_to_index(buf);
+	}
+
+#ifdef MESS
+	inputx_setup_natural_keyboard(at_keyboard_queue_chars,
+		at_keyboard_accept_char,
+		at_keyboard_charqueue_empty);
+#endif
 }
 
 
@@ -337,15 +369,9 @@ void at_keyboard_reset(void)
 }
 
 /* set initial scan set */
-void	at_keyboard_set_scan_code_set(int set)
+void at_keyboard_set_scan_code_set(int set)
 {
 	keyboard.scan_code_set = set;
-}
-
-/* set base index for input ports */
-void at_keyboard_set_input_port_base(int base)
-{
-	keyboard.input_port_base = base;
 }
 
 
@@ -477,20 +503,27 @@ static void at_keyboard_extended_scancode_insert(int code, int pressed)
 /**************************************************************************
  *  scan keys and stuff make/break codes
  **************************************************************************/
+
+static UINT32 at_keyboard_readport(int port)
+{
+	UINT32 result = 0;
+	if (keyboard.ports[port] >= 0)
+		result = readinputport(keyboard.ports[port]);
+	return result;
+}
+
 void at_keyboard_polling(void)
 {
 	int i;
 
-#ifdef MESS
 	if (keyboard.on)
-#endif
 	{
 		/* add codes for keys that are set */
 		for( i = 0x01; i < 0x80; i++  )
 		{
 			if (i==0x60) i+=0x10; // keys 0x60..0x6f need special handling
 
-			if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
+			if( at_keyboard_readport(i/16) & (1 << (i & 15)) )
 			{
 				if( keyboard.make[i] == 0 )
 				{
@@ -532,7 +565,7 @@ void at_keyboard_polling(void)
 			/* extended scan-codes */
 			for( i = 0x60; i < 0x70; i++  )
 			{
-				if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
+				if( at_keyboard_readport(i/16) & (1 << (i & 15)) )
 				{
 					if( keyboard.make[i] == 0 )
 					{
@@ -942,10 +975,10 @@ static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
 }
 
 /***************************************************************************
-  QUEUE_CHARS( at_keyboard )
+  at_keyboard_queue_chars
 ***************************************************************************/
 
-QUEUE_CHARS( at_keyboard )
+static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len)
 {
 	int i;
 	UINT8 b;
@@ -1090,7 +1123,7 @@ INPUT_PORTS_END
 	PORT_BIT( bit, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1)
 
 INPUT_PORTS_START( at_keyboard )
-	PORT_START	/* IN4 */
+	PORT_START_TAG("pc_keyboard_0")
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
 	AT_KEYB_HELPER( 0x0002, "Esc",          KEYCODE_ESC         ) /* Esc                         01  81 */
 	AT_KEYB_HELPER( 0x0004, "1 !",          KEYCODE_1           ) /* 1                           02  82 */
@@ -1108,7 +1141,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE   ) /* Backspace                   0E  8E */
 	AT_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB         ) /* Tab                         0F  8F */
 		
-	PORT_START	/* IN5 */
+	PORT_START_TAG("pc_keyboard_1")
 	AT_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q           ) /* Q                           10  90 */
 	AT_KEYB_HELPER( 0x0002, "W",            KEYCODE_W           ) /* W                           11  91 */
 	AT_KEYB_HELPER( 0x0004, "E",            KEYCODE_E           ) /* E                           12  92 */
@@ -1126,7 +1159,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x4000, "A",            KEYCODE_A           ) /* A                           1E  9E */
 	AT_KEYB_HELPER( 0x8000, "S",            KEYCODE_S           ) /* S                           1F  9F */
 		
-	PORT_START	/* IN6 */
+	PORT_START_TAG("pc_keyboard_2")
 	AT_KEYB_HELPER( 0x0001, "D",            KEYCODE_D           ) /* D                           20  A0 */
 	AT_KEYB_HELPER( 0x0002, "F",            KEYCODE_F           ) /* F                           21  A1 */
 	AT_KEYB_HELPER( 0x0004, "G",            KEYCODE_G           ) /* G                           22  A2 */
@@ -1144,7 +1177,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x4000, "C",            KEYCODE_C           ) /* C                           2E  AE */
 	AT_KEYB_HELPER( 0x8000, "V",            KEYCODE_V           ) /* V                           2F  AF */
 		
-	PORT_START	/* IN7 */
+	PORT_START_TAG("pc_keyboard_3")
 	AT_KEYB_HELPER( 0x0001, "B",            KEYCODE_B           ) /* B                           30  B0 */
 	AT_KEYB_HELPER( 0x0002, "N",            KEYCODE_N           ) /* N                           31  B1 */
 	AT_KEYB_HELPER( 0x0004, "M",            KEYCODE_M           ) /* M                           32  B2 */
@@ -1162,7 +1195,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4          ) /* F4                          3E  BE */
 	AT_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5          ) /* F5                          3F  BF */
 		
-	PORT_START	/* IN8 */
+	PORT_START_TAG("pc_keyboard_4")
 	AT_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6          ) /* F6                          40  C0 */
 	AT_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7          ) /* F7                          41  C1 */
 	AT_KEYB_HELPER( 0x0004, "F8",           KEYCODE_F8          ) /* F8                          42  C2 */
@@ -1180,7 +1213,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD    ) /* Keypad +                    4E  CE */
 	AT_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD       ) /* Keypad 1  (End)             4F  CF */
 		
-	PORT_START	/* IN9 */
+	PORT_START_TAG("pc_keyboard_5")
 	AT_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD       ) /* Keypad 2  (Down arrow)      50  D0 */
 	AT_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD       ) /* Keypad 3  (PgDn)            51  D1 */
 	AT_KEYB_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD       ) /* Keypad 0  (Ins)             52  D2 */
@@ -1191,7 +1224,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x0100, "(MF2)F12",		KEYCODE_F12         ) /* F12                         58  D8 */
 	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
 		
-	PORT_START	/* IN10 */
+	PORT_START_TAG("pc_keyboard_6")
 	AT_KEYB_HELPER( 0x0001, "(MF2)KP Enter",		KEYCODE_ENTER_PAD   ) /* PAD Enter                   60  e0 */
 	AT_KEYB_HELPER( 0x0002, "(MF2)Right Control",	KEYCODE_RCONTROL    ) /* Right Control               61  e1 */
 	AT_KEYB_HELPER( 0x0004, "(MF2)KP /",			KEYCODE_SLASH_PAD   ) /* PAD Slash                   62  e2 */
@@ -1208,7 +1241,8 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "(MF2)Insert",			KEYCODE_INSERT      ) /* Insert                      6e  ee */
 	AT_KEYB_HELPER( 0x4000, "(MF2)Delete",			KEYCODE_DEL         ) /* Delete                      6f  ef */
 	AT_KEYB_HELPER( 0x8000, "(MF2)Pause",			KEYCODE_PAUSE       ) /* Pause                       65  e5 */
-	PORT_START	/* IN11 */
+
+	PORT_START_TAG("pc_keyboard_7")
 	AT_KEYB_HELPER( 0x0001, "Print Screen", KEYCODE_PRTSCR           ) /* Print Screen alternate      77  f7 */
 	PORT_BIT ( 0xfffe, 0x0000, IPT_UNUSED )
 INPUT_PORTS_END
@@ -1219,14 +1253,14 @@ INPUT_PORTS_END
   Inputx stuff
 ***************************************************************************/
 
-ACCEPT_CHAR( at_keyboard )
+static int at_keyboard_accept_char(unicode_char_t ch)
 {
 	return unicode_char_to_at_keycode(ch) != 0;
 }
 
 
 
-CHARQUEUE_EMPTY( at_keyboard )
+static int at_keyboard_charqueue_empty(void)
 {
 	return at_keyboard_queue_size() == 0;
 }

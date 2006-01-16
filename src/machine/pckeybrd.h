@@ -1,20 +1,16 @@
 /**********************************************************************
 
-	pckeybrd.h
+    pckeybrd.h
 
-	PC-style keyboard emulation
+    PC-style keyboard emulation
 
-	This emulation is decoupled from the AT 8042 emulation used in the
-	IBM ATs and above
+    This emulation is decoupled from the AT 8042 emulation used in the
+    IBM ATs and above
 
 **********************************************************************/
 
 #ifndef PCKEYBRD_H
 #define PCKEYBRD_H
-
-#ifdef MESS
-#include "inputx.h"
-#endif /* MESS */
 
 typedef enum
 {
@@ -30,13 +26,6 @@ int at_keyboard_read(void);
 void at_keyboard_write(UINT8 data);
 void at_keyboard_reset(void);
 void at_keyboard_set_scan_code_set(int set);
-void at_keyboard_set_input_port_base(int base);
-
-#ifdef MESS
-QUEUE_CHARS( at_keyboard );
-ACCEPT_CHAR( at_keyboard );
-CHARQUEUE_EMPTY( at_keyboard );
-#endif /* MESS */
 
 INPUT_PORTS_EXTERN( pc_keyboard );
 INPUT_PORTS_EXTERN( at_keyboard );

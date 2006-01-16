@@ -27,6 +27,9 @@
 
 static void AY3600_poll(int dummy);
 
+static int AY3600_keyboard_queue_chars(const unicode_char_t *text, size_t text_len);
+static int AY3600_keyboard_accept_char(unicode_char_t ch);
+
 static const unsigned char ay3600_key_remap_2[7*8][4] =
 {
 /*		  norm ctrl shft both */
@@ -314,6 +317,13 @@ int AY3600_init()
 	keywaiting = 0;
 	keycode = 0;
 	keystilldown = 0;
+
+#ifdef MESS
+	inputx_setup_natural_keyboard(AY3600_keyboard_queue_chars,
+		AY3600_keyboard_accept_char,
+		NULL);
+#endif
+
 	return 0;
 }
 
@@ -513,7 +523,7 @@ static UINT8 AY3600_get_keycode(unicode_char_t ch)
 
 
 
-QUEUE_CHARS( AY3600 )
+static int AY3600_keyboard_queue_chars(const unicode_char_t *text, size_t text_len)
 {
 	if (keywaiting)
 		return 0;
@@ -524,7 +534,8 @@ QUEUE_CHARS( AY3600 )
 
 
 
-ACCEPT_CHAR( AY3600 )
+static int AY3600_keyboard_accept_char(unicode_char_t ch)
 {
 	return AY3600_get_keycode(ch) != 0;
 }
+

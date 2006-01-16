@@ -57,6 +57,8 @@
 #include "sound/sn76496.h"
 #include "sound/3812intf.h"
 
+#include "inputx.h"
+
 #define ym3812_StdClock 3579545
 
 /*
@@ -1624,9 +1626,6 @@ SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_DEVICE(ibmpc_printer_getinfo)
 	CONFIG_DEVICE(ibmpc_floppy_getinfo)
 	CONFIG_DEVICE(ibmpc_harddisk_getinfo)
-	CONFIG_QUEUE_CHARS( at_keyboard )
-	CONFIG_ACCEPT_CHAR( at_keyboard )
-	CONFIG_CHARQUEUE_EMPTY( at_keyboard )
 SYSTEM_CONFIG_END
 
 /***************************************************************************

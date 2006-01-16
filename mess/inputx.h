@@ -87,6 +87,13 @@ void inputx_init(void);
 void inputx_update(void);
 void inputx_handle_mess_extensions(input_port_entry *ipt);
 
+/* called by drivers to setup natural keyboard support */
+void inputx_setup_natural_keyboard(
+	int (*queue_chars)(const unicode_char_t *text, size_t text_len),
+	int (*accept_char)(unicode_char_t ch),
+	int (*charqueue_empty)(void));
+
+/* run the validity checks */
 int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory);
 
 /* these can be called from FEs */
