@@ -43,7 +43,7 @@ Source Changes:
 - Cleaned up natural keyboard code.  No longer have QUEUE_CHARS/ACCEPT_CHARS
   and CHARQUEUE_EMPTY; callbacks are now installed at runtime.  [Nate Woods]
 
-- Fixed a file manager memory allocation bug.  [Telengard]
+- Fixed a file manager memory allocation bug.  [Brian Sturk]
 
 
 
