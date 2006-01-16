@@ -108,7 +108,7 @@
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
 #include "machine/applefdc.h"
-#include "machine/sonydriv.h"
+#include "devices/sonydriv.h"
 #include "machine/8530scc.h"
 #include "devices/flopdrv.h"
 #include "cpu/g65816/g65816.h"

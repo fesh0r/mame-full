@@ -19,7 +19,7 @@
 #include "machine/6522via.h"
 #include "machine/ay3600.h"
 #include "machine/applefdc.h"
-#include "machine/appldriv.h"
+#include "devices/appldriv.h"
 #include "includes/6551.h"
 
 UINT32 a3;

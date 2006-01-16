@@ -187,7 +187,7 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 #include "vidhrdw/generic.h"
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
-#include "machine/appldriv.h"
+#include "devices/appldriv.h"
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
 #include "sound/ay8910.h"

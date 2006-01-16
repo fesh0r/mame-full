@@ -321,8 +321,10 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			module->list_forks					= floppy_callbacks.list_forks;
 			module->create_dir					= floppy_callbacks.create_dir;
 			module->delete_dir					= floppy_callbacks.delete_dir;
+			module->list_attrs					= floppy_callbacks.list_attrs;
 			module->get_attrs					= floppy_callbacks.get_attrs;
 			module->set_attrs					= floppy_callbacks.set_attrs;
+			module->attr_name					= floppy_callbacks.attr_name;
 			module->get_iconinfo				= floppy_callbacks.get_iconinfo;
 			module->suggest_transfer			= floppy_callbacks.suggest_transfer;
 			module->get_chain					= floppy_callbacks.get_chain;

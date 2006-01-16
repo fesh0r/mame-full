@@ -489,6 +489,36 @@ done:
 
 
 
+imgtoolerr_t img_listattrs(imgtool_image *image, const char *path, UINT32 *attrs, size_t len)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	memset(attrs, 0, sizeof(*attrs) * len);
+
+	if (!image->module->list_attrs)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	err = cannonicalize_path(image, PATH_LEAVENULLALONE, &path, &alloc_path);
+	if (err)
+		goto done;
+
+	err = image->module->list_attrs(image, path, attrs, len);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
 imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values)
 {
 	imgtoolerr_t err;

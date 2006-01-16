@@ -43,7 +43,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/applefdc.h"
-#include "machine/sonydriv.h"
+#include "devices/sonydriv.h"
 #include "machine/ncr5380.h"
 #include "includes/mac.h"
 

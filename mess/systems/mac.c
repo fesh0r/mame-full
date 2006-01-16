@@ -39,7 +39,7 @@
 #include "inputx.h"
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
-#include "machine/sonydriv.h"
+#include "devices/sonydriv.h"
 #include "devices/harddriv.h"
 #include "includes/mac.h"
 #include "videomap.h"

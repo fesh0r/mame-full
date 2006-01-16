@@ -39,7 +39,7 @@
 #include "driver.h"
 #include "machine/6522via.h"
 #include "machine/applefdc.h"
-#include "machine/sonydriv.h"
+#include "devices/sonydriv.h"
 #include "machine/lisa.h"
 #include "cpu/m68000/m68k.h"
 #include "sound/speaker.h"

@@ -184,6 +184,77 @@ done:
 
 
 
+void img_attrname(const struct ImageModule *module, UINT32 attribute, const imgtool_attribute *attr_value,
+	char *buffer, size_t buffer_len)
+{
+	imgtoolerr_t err = IMGTOOLERR_UNIMPLEMENTED;
+
+	buffer[0] = '\0';
+
+	if (attr_value)
+	{
+		if (module->attr_name)
+			err = module->attr_name(attribute, attr_value, buffer, buffer_len);
+
+		if (err == IMGTOOLERR_UNIMPLEMENTED)
+		{
+			switch(attribute & 0xF0000)
+			{
+				case IMGTOOLATTR_INT_FIRST:
+					snprintf(buffer, buffer_len, "%d", (int) attr_value->i);
+					break;
+			}
+		}
+	}
+	else
+	{
+		switch(attribute)
+		{
+			case IMGTOOLATTR_INT_MAC_TYPE:
+				snprintf(buffer, buffer_len, "File type");
+				break;
+			case IMGTOOLATTR_INT_MAC_CREATOR:
+				snprintf(buffer, buffer_len, "File creator");
+				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFLAGS:
+				snprintf(buffer, buffer_len, "Finder flags");
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDX:
+				snprintf(buffer, buffer_len, "X coordinate");
+				break;
+			case IMGTOOLATTR_INT_MAC_COORDY:
+				snprintf(buffer, buffer_len, "Y coordinate");
+				break;
+			case IMGTOOLATTR_INT_MAC_FINDERFOLDER:
+				snprintf(buffer, buffer_len, "Finder folder");
+				break;
+			case IMGTOOLATTR_INT_MAC_ICONID:
+				snprintf(buffer, buffer_len, "Icon ID");
+				break;
+			case IMGTOOLATTR_INT_MAC_SCRIPTCODE:
+				snprintf(buffer, buffer_len, "Script code");
+				break;
+			case IMGTOOLATTR_INT_MAC_EXTENDEDFLAGS:
+				snprintf(buffer, buffer_len, "Extended flags");
+				break;
+			case IMGTOOLATTR_INT_MAC_COMMENTID:
+				snprintf(buffer, buffer_len, "Comment ID");
+				break;
+			case IMGTOOLATTR_INT_MAC_PUTAWAYDIRECTORY:
+				snprintf(buffer, buffer_len, "Putaway directory");
+				break;
+			case IMGTOOLATTR_TIME_CREATED:
+				snprintf(buffer, buffer_len, "Creation time");
+				break;
+			case IMGTOOLATTR_TIME_LASTMODIFIED:
+				snprintf(buffer, buffer_len, "Last modified time");
+				break;
+		}
+	}
+}
+
+
+
 /* ----------------------------------------------------------------------- */
 
 int imgtool_validitychecks(void)

@@ -20,8 +20,8 @@
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
 #include "includes/apple2gs.h"
-#include "machine/sonydriv.h"
-#include "machine/appldriv.h"
+#include "devices/sonydriv.h"
+#include "devices/appldriv.h"
 #include "sound/es5503.h"
 
 static gfx_layout apple2gs_text_layout =

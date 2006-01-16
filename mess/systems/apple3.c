@@ -16,7 +16,7 @@
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
 #include "machine/6522via.h"
-#include "machine/appldriv.h"
+#include "devices/appldriv.h"
 #include "inputx.h"
 
 

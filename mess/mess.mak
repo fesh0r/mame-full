@@ -498,8 +498,8 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/systems/lisa.o			\
 	$(OBJ)/mess/machine/applefdc.o		\
 	$(OBJ)/mess/machine/8530scc.o		\
-	$(OBJ)/mess/machine/sonydriv.o		\
-	$(OBJ)/mess/machine/appldriv.o		\
+	$(OBJ)/mess/devices/sonydriv.o		\
+	$(OBJ)/mess/devices/appldriv.o		\
 	$(OBJ)/mess/sndhrdw/mac.o			\
 	$(OBJ)/mess/vidhrdw/mac.o			\
 	$(OBJ)/mess/machine/mac.o			\

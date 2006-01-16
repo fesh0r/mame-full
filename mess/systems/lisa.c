@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/sonydriv.h"
+#include "devices/sonydriv.h"
 /*#include "machine/6522via.h"*/
 #include "machine/lisa.h"
 
