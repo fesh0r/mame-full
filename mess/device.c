@@ -150,7 +150,7 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 			devices[i].tag					= device_get_info_string(&devices[i].devclass, DEVINFO_STR_DEV_TAG);
 			devices[i].type					= device_get_info_int(&devices[i].devclass, DEVINFO_INT_TYPE);
 			devices[i].count				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_COUNT);
-			devices[i].file_extensions		= device_get_info_string(&devices[i].devclass, DEVINFO_STR_FILE_EXTENSIONS);
+			devices[i].file_extensions		= auto_strlistdup(device_get_info_string(&devices[i].devclass, DEVINFO_STR_FILE_EXTENSIONS));
 
 			devices[i].readable				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_READABLE) ? 1 : 0;
 			devices[i].writeable			= device_get_info_int(&devices[i].devclass, DEVINFO_INT_WRITEABLE) ? 1 : 0;

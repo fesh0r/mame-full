@@ -352,7 +352,7 @@ void machine_hard_reset(void)
 
 
 
-char *auto_strlistdup(char *strlist)
+char *auto_strlistdup(const char *strlist)
 {
 	int i;
 	char *s;

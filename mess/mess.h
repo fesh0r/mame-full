@@ -89,7 +89,7 @@ int devices_init(const game_driver *gamedrv);
 int devices_initialload(const game_driver *gamedrv, int ispreload);
 void devices_exit(void);
 
-char *auto_strlistdup(char *strlist);
+char *auto_strlistdup(const char *strlist);
 
 int register_device(iodevice_t type, const char *arg);
 

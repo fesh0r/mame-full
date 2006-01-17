@@ -629,7 +629,6 @@ static void tutor_cassette_getinfo(const device_class *devclass, UINT32 state, u
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_COUNT:							info->i = 1; break;
-		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
 
 		default:										cassette_device_getinfo(devclass, state, info); break;
 	}
