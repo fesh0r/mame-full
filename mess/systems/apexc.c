@@ -42,7 +42,7 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static DEVICE_LOAD(apexc_cylinder)
+static int device_load_apexc_cylinder(mess_image *image, mame_file *file)
 {
 	/* open file */
 	apexc_cylinder.fd = file;
@@ -72,7 +72,7 @@ static DEVICE_LOAD(apexc_cylinder)
 /*
 	Save RAM to cylinder image and close it
 */
-static DEVICE_UNLOAD(apexc_cylinder)
+static void device_unload_apexc_cylinder(mess_image *image)
 {
 	if (apexc_cylinder.fd && apexc_cylinder.writable)
 	{	/* save RAM contents */
@@ -169,7 +169,7 @@ static void apexc_get_open_mode(const struct IODevice *dev, int id,
 
 
 
-static DEVICE_INIT(apexc_tape)
+static int device_init_apexc_tape(mess_image *image)
 {
 	return INIT_PASS;
 }
@@ -179,7 +179,7 @@ static DEVICE_INIT(apexc_tape)
 /*
 	Open a tape image
 */
-static DEVICE_LOAD(apexc_tape)
+static int device_load_apexc_tape(mess_image *image, mame_file *file)
 {
 	int id = image_index_in_device(image);
 	tape *t = &apexc_tapes[id];
@@ -841,29 +841,45 @@ ROM_START(apexc)
 		/* space filled with our font */
 ROM_END
 
-static void apexc_cylinder_getinfo(struct IODevice *dev)
+static void apexc_cylinder_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cylinder */
-	dev->type = IO_CYLINDER;
-	dev->count = 1;
-	dev->file_extensions = "apc\0";
-	dev->reset_on_load = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->load = device_load_apexc_cylinder;
-	dev->unload = device_unload_apexc_cylinder;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CYLINDER; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_apexc_cylinder; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_apexc_cylinder; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "apc\0"; break;
+	}
 }
 
-static void apexc_punchtape_getinfo(struct IODevice *dev)
+static void apexc_punchtape_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* punchtape */
-	dev->type = IO_PUNCHTAPE;
-	dev->count = 2;
-	dev->file_extensions = "tap\0";
-	dev->getdispositions = apexc_get_open_mode;
-	dev->init = device_init_apexc_tape;
-	dev->load = device_load_apexc_tape;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PUNCHTAPE; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_apexc_tape; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_apexc_tape; break;
+		case DEVINFO_PTR_GET_DISPOSITIONS:				info->getdispositions = apexc_get_open_mode; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(apexc)

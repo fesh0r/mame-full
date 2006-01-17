@@ -525,18 +525,34 @@ ROM_START(prav8dda)
     ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, CRC(66309641) SHA1(9c2e82b3c4d385ade6215fcb89f8b92e6fd2bf4b))
 ROM_END
 
-static void oric_common_cassette_getinfo(struct IODevice *dev)
+static void oric_common_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, oric_cassette_formats, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) oric_cassette_formats; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void oric_common_printer_getinfo(struct IODevice *dev)
+static void oric_common_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(oric_common)
@@ -544,18 +560,26 @@ SYSTEM_CONFIG_START(oric_common)
 	CONFIG_DEVICE(oric_common_printer_getinfo)
 SYSTEM_CONFIG_END
 
-static void oric1_floppy_getinfo(struct IODevice *dev)
+static void oric1_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 4;
-	dev->file_extensions = "dsk\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->init = device_init_oric_floppy;
-	dev->load = device_load_oric_floppy;
-	/*dev->status = floppy_status;*/
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_oric_floppy; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_oric_floppy; break;
+		case DEVINFO_PTR_STATUS:						/* info->status = floppy_status; */ break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(oric1)
@@ -563,11 +587,19 @@ SYSTEM_CONFIG_START(oric1)
 	CONFIG_DEVICE(oric1_floppy_getinfo)
 SYSTEM_CONFIG_END
 
-static void prav8_floppy_getinfo(struct IODevice *dev)
+static void prav8_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_apple2);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_apple2; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(prav8)

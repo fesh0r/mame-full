@@ -1600,25 +1600,43 @@ ROM_START( pc1640 )
     ROM_LOAD("40045.bin",     0x00000, 0x02000, CRC(dd5e030f))
 ROM_END
 
-static void ibmpc_floppy_getinfo(struct IODevice *dev)
+static void ibmpc_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_pc);
-	dev->count = 2;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_pc; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ibmpc_printer_getinfo(struct IODevice *dev)
+static void ibmpc_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 3;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 3; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ibmpc_harddisk_getinfo(struct IODevice *dev)
+static void ibmpc_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* harddisk */
-	harddisk_device_getinfo(dev);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		default:										harddisk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(ibmpc)

@@ -481,16 +481,22 @@ int amiga_fdc_status_r( void ) {
 
 
 
-void amiga_floppy_getinfo(struct IODevice *dev)
+void amiga_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 4;
-	dev->file_extensions = "adf\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_amiga_fdc;
-	dev->load = device_load_amiga_fdc;
-}
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:					info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_COUNT:					info->i = 4; break;
+		case DEVINFO_INT_READABLE:				info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:				info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:				info->i = 0; break;
 
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:					info->init = device_init_amiga_fdc; break;
+		case DEVINFO_PTR_LOAD:					info->load = device_load_amiga_fdc; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:		info->s = "adf\0"; break;
+	}
+}

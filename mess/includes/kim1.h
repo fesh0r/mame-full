@@ -5,13 +5,13 @@
 DRIVER_INIT( kim1 );
 MACHINE_INIT( kim1 );
 
-void kim1_cassette_getinfo(struct IODevice *dev);
+void kim1_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 INTERRUPT_GEN( kim1_interrupt );
 
- READ8_HANDLER ( m6530_003_r );
- READ8_HANDLER ( m6530_002_r );
- READ8_HANDLER ( kim1_mirror_r );
+READ8_HANDLER ( m6530_003_r );
+READ8_HANDLER ( m6530_002_r );
+READ8_HANDLER ( kim1_mirror_r );
 
 WRITE8_HANDLER ( m6530_003_w );
 WRITE8_HANDLER ( m6530_002_w );

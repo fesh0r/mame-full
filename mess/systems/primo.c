@@ -347,39 +347,77 @@ static struct CassetteOptions primo_cassette_options = {
 	22050		/* sample frequency */
 };
 
-static void primo_cassette_getinfo(struct IODevice *dev)
+static void primo_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, primo_ptp_format, &primo_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) primo_ptp_format; break;
+		case DEVINFO_PTR_CASSETTE_OPTIONS:				info->p = (void *) &primo_cassette_options; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void primo_snapshot_getinfo(struct IODevice *dev)
+static void primo_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_primo, 0.0);
-	dev->file_extensions = "pss\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "pss\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_primo; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void primo_quickload_getinfo(struct IODevice *dev)
+static void primo_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* quickload */
-	quickload_device_getinfo(dev, quickload_load_primo, 0.0);
-	dev->file_extensions = "pp\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "pp\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_primo; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void primo_cartslot_getinfo(struct IODevice *dev)
+static void primo_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->name = device_name_cartslot_primo;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = device_name_cartslot_primo; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void primo_floppy_getinfo(struct IODevice *dev)
+static void primo_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	cbmfloppy_device_getinfo(dev);
-	dev->not_working = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_NOT_WORKING:					info->i = 1; break;
+
+		default:										cbmfloppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START( primoa )

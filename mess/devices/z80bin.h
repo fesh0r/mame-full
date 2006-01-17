@@ -10,6 +10,6 @@
 #ifndef Z80BIN_H
 #define Z80BIN_H
 
-void z80bin_quickload_getinfo(struct IODevice *dev);
+void z80bin_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #endif /* Z80BIN_H */

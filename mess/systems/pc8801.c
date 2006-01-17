@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.43 2005/12/24 02:53:21 npwoods Exp $
+  $Id: pc8801.c,v 1.44 2006/01/17 04:14:05 npwoods Exp $
 
 ***************************************************************************/
 
@@ -562,18 +562,26 @@ static MACHINE_DRIVER_START( pc88srh )
 	MDRV_VISIBLE_AREA(0, 640-1, 0, 400-1)
 MACHINE_DRIVER_END
 
-static void pc88_floppy_getinfo(struct IODevice *dev)
+static void pc88_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 2;
-	dev->file_extensions = "d88\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->init = device_init_d88image_floppy;
-	dev->load = device_load_d88image_floppy;
-	/*dev->status = floppy_status;*/
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_d88image_floppy; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_d88image_floppy; break;
+		case DEVINFO_PTR_STATUS:						/* info->status = floppy_status; */ break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "d88\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(pc88)

@@ -209,27 +209,44 @@ ROM_START (jupiter)
 	ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, CRC(4009f636) SHA1(98c5d4bcd74bcf014268cf4c00b2007ea5cc21f3))
 ROM_END
 
-static void jupiter_cartslot_getinfo(struct IODevice *dev)
+static void jupiter_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "ace\0";
-	dev->load = device_load_jupiter_ace;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_jupiter_ace; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "ace\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void jupiter_cassette_getinfo(struct IODevice *dev)
+static void jupiter_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "tap\0";
-	dev->reset_on_load = 1;
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->load = device_load_jupiter_tap;
-	dev->unload = device_unload_jupiter_tap;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_jupiter_tap; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_jupiter_tap; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(jupiter)

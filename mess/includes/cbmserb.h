@@ -3,7 +3,7 @@
 
 #include "cbmdrive.h"
 
-void cbmfloppy_device_getinfo(struct IODevice *dev);
+void cbmfloppy_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #define IEC 1
 #define SERIAL 2

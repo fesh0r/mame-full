@@ -233,7 +233,7 @@ static UINT64 mess_chd_length(chd_interface_file *file)
  *
  *************************************/
 
-DEVICE_INIT(mess_hd)
+int device_init_mess_hd(mess_image *image)
 {
 	struct mess_hd *hd;
 
@@ -318,14 +318,14 @@ error:
 
 
 
-DEVICE_LOAD(mess_hd)
+int device_load_mess_hd(mess_image *image, mame_file *file)
 {
 	return internal_load_mess_hd(image, NULL);
 }
 
 
 
-static DEVICE_CREATE(mess_hd)
+static int device_create_mess_hd(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
 {
 	int err;
 	char metadata[256];
@@ -362,7 +362,7 @@ error:
  *
  *************************************/
 
-DEVICE_UNLOAD(mess_hd)
+void device_unload_mess_hd(mess_image *image)
 {
 	struct mess_hd *hd = get_drive(image);
 	assert(hd->hard_disk_handle);
@@ -417,33 +417,31 @@ chd_file *mess_hd_get_chd_file(mess_image *image)
  *
  *************************************/
 
-void harddisk_device_getinfo(struct IODevice *iodev)
+void harddisk_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	iodev->createimage_options = auto_malloc(sizeof(*iodev->createimage_options) * 2);
-	if (!iodev->createimage_options)
+	switch(state)
 	{
-		iodev->error = 1;
-		return;
-	}
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:						info->i = IO_HARDDISK; break;
+		case DEVINFO_INT_READABLE:					info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:					info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:					info->i = 1; break;
+		case DEVINFO_INT_CREATE_OPTCOUNT:			info->i = 1; break;
 
-	iodev->type = IO_HARDDISK;
-	iodev->file_extensions = "chd\0hd\0";
-	iodev->readable = 1;
-	iodev->writeable = 1;
-	iodev->creatable = 1;
-	iodev->init = device_init_mess_hd;
-	iodev->load = device_load_mess_hd;
-	iodev->create = device_create_mess_hd;
-	iodev->unload = device_unload_mess_hd;
-	iodev->createimage_optguide = mess_hd_option_guide;
-	iodev->createimage_options[0].name = "chd";
-	iodev->createimage_options[0].description = "MAME/MESS CHD Hard drive";
-	iodev->createimage_options[0].extensions = iodev->file_extensions;
-	iodev->createimage_options[0].optspec = mess_hd_option_spec;
-	iodev->createimage_options[1].name = NULL;
-	iodev->createimage_options[1].description = NULL;
-	iodev->createimage_options[1].extensions = NULL;
-	iodev->createimage_options[1].optspec = NULL;
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:						info->init = device_init_mess_hd; break;
+		case DEVINFO_PTR_LOAD:						info->load = device_load_mess_hd; break;
+		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_mess_hd; break;
+		case DEVINFO_PTR_CREATE_OPTGUIDE:			info->p = (void *) mess_hd_option_guide; break;
+		case DEVINFO_PTR_CREATE_OPTSPEC+0:			info->p = (void *) mess_hd_option_spec;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = "chd\0hd\0"; break;
+		case DEVINFO_STR_CREATE_OPTNAME+0:			info->s = "chd"; break;
+		case DEVINFO_STR_CREATE_OPTDESC+0:			info->s = "MAME/MESS CHD Hard drive"; break;
+		case DEVINFO_STR_CREATE_OPTEXTS+0:			info->s = "chd\0hd\0"; break;
+	}
 }
 
 hard_disk_file *mess_hd_get_hard_disk_file_by_number(int drivenum)

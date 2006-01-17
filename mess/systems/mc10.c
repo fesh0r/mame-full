@@ -146,12 +146,22 @@ ROM_START(mc10)
 	ROM_LOAD("mc10.rom", 0x0000, 0x2000, CRC(11fda97e) SHA1(4afff2b4c120334481aab7b02c3552bf76f1bc43))
 ROM_END
 
-static void mc10_cassette_getinfo(struct IODevice *dev)
+static void mc10_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, coco_cassette_formats, NULL,
-		CASSETTE_PLAY);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) coco_cassette_formats; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_PLAY; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(mc10)

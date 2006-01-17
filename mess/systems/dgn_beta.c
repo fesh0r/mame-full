@@ -285,12 +285,20 @@ static const char *dgnbeta_floppy_getname(const struct IODevice *dev, int id, ch
 	return buf;
 }
 
-static void dgnbeta_floppy_getinfo(struct IODevice *dev)
+static void dgnbeta_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_coco);
-	dev->count = 4;
-	dev->name = dgnbeta_floppy_getname;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = dgnbeta_floppy_getname; break;
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_coco; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 static PALETTE_INIT( dgnbeta )

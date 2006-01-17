@@ -268,10 +268,16 @@ ROM_START( macxl )
 
 ROM_END
 
-static void lisa_floppy_getinfo(struct IODevice *dev)
+static void lisa_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES:		info->i = SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K; break;
+
+		default:										sonydriv_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(lisa)

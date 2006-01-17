@@ -264,11 +264,16 @@ ROM_START (colecob)
 	ROM_CART_LOAD(0, "rom\0col\0bin\0", 0x8000, 0x8000, ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
-static void coleco_cartslot_getinfo(struct IODevice *dev)
+static void coleco_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->imgverify = coleco_cart_verify;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_VERIFY:						info->imgverify = coleco_cart_verify; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(coleco)

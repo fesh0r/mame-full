@@ -1034,11 +1034,16 @@ ROM_PCW(pcw9256)
 ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
-static void generic_pcw_floppy_getinfo(struct IODevice *dev)
+static void generic_pcw_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacydsk_device_getinfo(dev);
-	dev->count = 2;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		default:										legacydsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(generic_pcw)

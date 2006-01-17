@@ -12,7 +12,13 @@
 #include "formats/cassimg.h"
 #include "image.h"
 
+enum
+{
+	DEVINFO_INT_CASSETTE_DEFAULT_STATE = DEVINFO_INT_DEV_SPECIFIC,
 
+	DEVINFO_PTR_CASSETTE_FORMATS = DEVINFO_PTR_DEV_SPECIFIC,
+	DEVINFO_PTR_CASSETTE_OPTIONS
+};
 
 typedef enum
 {
@@ -48,9 +54,6 @@ double cassette_get_length(mess_image *cassette);
 void cassette_seek(mess_image *cassette, double time, int origin);
 
 /* device specification */
-void cassette_device_getinfo(struct IODevice *iodev,
-	const struct CassetteFormat **formats,
-	const struct CassetteOptions *casopts,
-	cassette_state default_state);
+void cassette_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #endif /* CASSETTE_H */

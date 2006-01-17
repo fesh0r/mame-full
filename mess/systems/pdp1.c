@@ -468,42 +468,66 @@ ROM_START(pdp1)
 		/* space filled with our font */
 ROM_END
 
-static void pdp1_punchtape_getinfo(struct IODevice *dev)
+static void pdp1_punchtape_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* punchtape */
-	dev->type = IO_PUNCHTAPE;
-	dev->count = 2;
-	dev->file_extensions = "tap\0rim\0";
-	dev->getdispositions = pdp1_get_open_mode;
-	dev->init = device_init_pdp1_tape;
-	dev->load = device_load_pdp1_tape;
-	dev->unload = device_unload_pdp1_tape;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PUNCHTAPE; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_pdp1_tape; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_pdp1_tape; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_pdp1_tape; break;
+		case DEVINFO_PTR_GET_DISPOSITIONS:				info->getdispositions = pdp1_get_open_mode; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0rim\0"; break;
+	}
 }
 
-static void pdp1_printer_getinfo(struct IODevice *dev)
+static void pdp1_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	dev->type = IO_PRINTER;
-	dev->count = 1;
-	dev->file_extensions = "typ\0";
-	dev->readable = 0;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_pdp1_typewriter;
-	dev->unload = device_unload_pdp1_typewriter;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PRINTER; break;
+		case DEVINFO_INT_READABLE:						info->i = 0; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_pdp1_typewriter; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_pdp1_typewriter; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "typ\0"; break;
+	}
 }
 
-static void pdp1_cylinder_getinfo(struct IODevice *dev)
+static void pdp1_cylinder_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cylinder */
-	dev->type = IO_CYLINDER;
-	dev->count = 1;
-	dev->file_extensions = "drm\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->load = device_load_pdp1_drum;
-	dev->unload = device_unload_pdp1_drum;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CYLINDER; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_pdp1_drum; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_pdp1_drum; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "drm\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(pdp1)

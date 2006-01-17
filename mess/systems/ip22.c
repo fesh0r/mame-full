@@ -1532,54 +1532,47 @@ static struct mips3_config config =
 	32768	/* data cache size */
 };
 
-static DEVICE_INIT( ip22_chdcd )
-{
-	return device_init_mess_cd(image);
-}
-
-static DEVICE_LOAD( ip22_chdcd )
-{
-	return device_load_mess_cd(image, file);
-}
-
-static DEVICE_UNLOAD( ip22_chdcd )
-{
-	device_unload_mess_cd(image);
-}
-
 static const char *ip22_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
 	snprintf(buf, bufsize, "CD-ROM #%d", id + 1);
 	return buf;
 }
 
-static void ip22_chdcd_getinfo(struct IODevice *dev)
+static void ip22_chdcd_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* CHD CD-ROM */
-	dev->type = IO_CDROM;
-	dev->name = ip22_cdrom_getname;
-	dev->count = 4;
-	dev->file_extensions = "chd\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_ip22_chdcd;
-	dev->load = device_load_ip22_chdcd;
-	dev->unload = device_unload_ip22_chdcd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = ip22_cdrom_getname; break;
+
+		default: cdrom_device_getinfo(devclass, state, info);
+	}
 }
 
-static void ip22_harddisk_getinfo(struct IODevice *dev)
+static void ip22_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* harddisk */
-	dev->type = IO_HARDDISK;
-	dev->count = 2;
-	dev->file_extensions = "chd\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->init = device_init_mess_hd;
-	dev->load = device_load_mess_hd;
-	dev->unload = device_unload_mess_hd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_HARDDISK; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_mess_hd; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_mess_hd; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_mess_hd; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "chd\0"; break;
+	}
 }
 
 MACHINE_DRIVER_START( ip225015 )

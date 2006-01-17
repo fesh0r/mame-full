@@ -232,7 +232,7 @@ struct io_procs mess_ioprocs =
 /* ----------------------------------------------------------------------- */
 
 
-static DEVICE_INIT(floppy)
+static int device_init_floppy(mess_image *image)
 {
 	if (!image_alloctag(image, FLOPPY_TAG, sizeof(struct mess_flopimg)))
 		return INIT_FAIL;
@@ -255,8 +255,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 
 	/* figure out the floppy options */
 	dev = image_device(image);
-	assert(dev);
-	floppy_options = dev->user1;
+	floppy_options = device_get_info_ptr(&dev->devclass, DEVINFO_PTR_FLOPPY_OPTIONS);
 
 	if (image_has_been_created(image))
 	{
@@ -297,21 +296,21 @@ error:
 
 
 
-static DEVICE_LOAD(floppy)
+static int device_load_floppy(mess_image *image, mame_file *file)
 {
 	return internal_floppy_device_load(image, file, -1, NULL);
 }
 
 
 
-static DEVICE_CREATE(floppy)
+static int device_create_floppy(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
 {
 	return internal_floppy_device_load(image, file, create_format, create_args);
 }
 
 
 
-static DEVICE_UNLOAD(floppy)
+static void device_unload_floppy(mess_image *image)
 {
 	struct mess_flopimg *flopimg;
 	flopimg = image_lookuptag(image, FLOPPY_TAG);
@@ -352,6 +351,7 @@ void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 	
 			/* copy the extension */
 			strcpy(s, extension);
+			s[strlen(s) + 1] = '\0';
 		}
 
 		/* next extension */
@@ -391,56 +391,68 @@ void floppy_install_tracktranslate_proc(mess_image *image, int (*proc)(mess_imag
  *
  *************************************/
 
-void floppy_device_getinfo(struct IODevice *iodev, const struct FloppyFormat *floppy_options)
+void floppy_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
+	char *s;
 	int i, count;
-	char extbuf[256];
+	const struct FloppyFormat *floppy_options;
 
-	memset(extbuf, 0, sizeof(extbuf));
-	for (i = 0; floppy_options[i].construct; i++)
+	switch(state)
 	{
-		specify_extension(extbuf, sizeof(extbuf) / sizeof(extbuf[0]),
-			floppy_options[i].extensions);
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:				info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:			info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:			info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:
+			floppy_options = device_get_info_ptr(devclass, DEVINFO_PTR_FLOPPY_OPTIONS);
+			info->i = floppy_options->param_guidelines ? 1 : 0;
+			break;
+
+		case DEVINFO_INT_CREATE_OPTCOUNT:
+			/* count total floppy options */
+			floppy_options = device_get_info_ptr(devclass, DEVINFO_PTR_FLOPPY_OPTIONS);
+			for (count = 0; floppy_options[count].construct; count++)
+				;
+			info->i = count;
+			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:
+			floppy_options = device_get_info_ptr(devclass, DEVINFO_PTR_FLOPPY_OPTIONS);
+			s = device_temp_str();
+			info->s = s;
+			s[0] = '\0';
+			s[1] = '\0';
+			for (i = 0; floppy_options[i].construct; i++)
+				specify_extension(s, 256, floppy_options[i].extensions);
+			break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:				info->init = device_init_floppy; break;
+		case DEVINFO_PTR_LOAD:				info->load = device_load_floppy; break;
+		case DEVINFO_PTR_CREATE:			info->create = device_create_floppy; break;
+		case DEVINFO_PTR_UNLOAD:			info->unload = device_unload_floppy; break;
+		case DEVINFO_PTR_CREATE_OPTGUIDE:	info->p = (void *) floppy_option_guide; break;
+
+		default:
+			floppy_options = device_get_info_ptr(devclass, DEVINFO_PTR_FLOPPY_OPTIONS);
+			if ((state >= DEVINFO_STR_CREATE_OPTNAME) && (state < DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX))
+			{
+				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTNAME].name;
+			}
+			else if ((state >= DEVINFO_STR_CREATE_OPTDESC) && (state < DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX))
+			{
+				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTDESC].description;
+			}
+			else if ((state >= DEVINFO_STR_CREATE_OPTEXTS) && (state < DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX))
+			{
+				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTEXTS].extensions;
+			}
+			else if ((state >= DEVINFO_PTR_CREATE_OPTSPEC) && (state < DEVINFO_PTR_CREATE_OPTSPEC + DEVINFO_CREATE_OPTMAX))
+			{
+				info->p = (void *) floppy_options[state - DEVINFO_PTR_CREATE_OPTSPEC].param_guidelines;
+			}
+			break;
 	}
-	assert(extbuf[0]);
-	iodev->file_extensions = auto_strlistdup(extbuf);
-	if (!iodev->file_extensions)
-		goto error;
-
-	iodev->type = IO_FLOPPY;
-	iodev->readable = 1;
-	iodev->writeable = 1;
-	iodev->creatable = floppy_options->param_guidelines ? 1 : 0;
-	iodev->init = device_init_floppy;
-	iodev->load = device_load_floppy;
-	iodev->create = device_create_floppy;
-	iodev->unload = device_unload_floppy;
-	iodev->user1 = (void *) floppy_options;
-	iodev->createimage_optguide = floppy_option_guide;
-
-	/* count total floppy options */
-	for (count = 0; floppy_options[count].construct; count++)
-		;
-
-	iodev->createimage_options = auto_malloc((count + 1) *
-		sizeof(*iodev->createimage_options));
-	if (!iodev->createimage_options)
-		goto error;
-
-	for (i = 0; floppy_options[i].construct; i++)
-	{
-        iodev->createimage_options[i].name = floppy_options[i].name;
-        iodev->createimage_options[i].description = floppy_options[i].description;
-        iodev->createimage_options[i].extensions = floppy_options[i].extensions;
-        iodev->createimage_options[i].optspec = floppy_options[i].param_guidelines;
-	}
-	memset(&iodev->createimage_options[count], 0,
-		sizeof(iodev->createimage_options[count]));
-
-	return;
-
-error:
-	iodev->error = 1;
-	return;
 }
 

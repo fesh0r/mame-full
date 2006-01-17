@@ -13,16 +13,16 @@
 #include "image.h"
 #include "messdrv.h"
 
-DEVICE_INIT( mess_hd );
-DEVICE_LOAD( mess_hd );
-DEVICE_UNLOAD( mess_hd );
-
 const struct IODevice *mess_hd_device_specify(struct IODevice *iodev, int count);
+
+int device_init_mess_hd(mess_image *image);
+int device_load_mess_hd(mess_image *image, mame_file *file);
+void device_unload_mess_hd(mess_image *image);
 
 hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image);
 hard_disk_file *mess_hd_get_hard_disk_file_by_number(int drivenum);
 chd_file *mess_hd_get_chd_file(mess_image *image);
 
-void harddisk_device_getinfo(struct IODevice *iodev);
+void harddisk_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #endif /* MESS_HD_H */

@@ -12,8 +12,8 @@ extern struct discrete_sound_block sb2m600_discrete_interface[];
 READ8_HANDLER( osi_keyboard_r );
 WRITE8_HANDLER ( sb2m600b_keyboard_w );
 WRITE8_HANDLER ( uk101_keyboard_w );
-DEVICE_LOAD( sb2m600_cassette );
-DEVICE_UNLOAD( sb2m600_cassette );
+int device_load_sb2m600_cassette(mess_image *image, mame_file *file);
+void device_unload_sb2m600_cassette(mess_image *image);
 READ8_HANDLER( osi470_floppy_status_r );
 WRITE8_HANDLER( osi470_floppy_control_w );
 DRIVER_INIT( sb2m600 );
@@ -257,17 +257,25 @@ ROM_END
 
 /* System Configuration */
 
-static void sb2m600_cassette_getinfo(struct IODevice *dev)
+static void sb2m600_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "bas\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->load = device_load_sb2m600_cassette;
-	dev->unload = device_unload_sb2m600_cassette;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_sb2m600_cassette; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_sb2m600_cassette; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bas\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(sb2m600)

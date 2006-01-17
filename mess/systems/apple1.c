@@ -263,18 +263,32 @@ ROM_START(apple1)
 	ROM_LOAD("apple1.vid", 0x0000, 0x0200, CRC(a7e567fc) SHA1(b18aae0a2d4f92f5a7e22640719bbc4652f3f4ee))
 ROM_END
 
-static void apple1_snapshot_getinfo(struct IODevice *dev)
+static void apple1_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_apple1, 0.0);
-	dev->file_extensions = "snp\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "snp\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_apple1; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void apple1_cassette_getinfo(struct IODevice *dev)
+static void apple1_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, CASSETTE_STOPPED);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_STOPPED; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(apple1)

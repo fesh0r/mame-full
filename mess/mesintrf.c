@@ -96,7 +96,7 @@ void mess_ui_update(void)
 				for (id = 0; id < device_count(dev->type); id++)
 				{
 					mess_image *img = image_from_devtype_and_index(dev->type, id);
-					dev->display(img, NULL);
+					dev->display(img);
 				}
 			}
 		}

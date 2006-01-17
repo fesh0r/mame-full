@@ -138,25 +138,43 @@ ROM_START(bebox2)
 	ROM_LOAD( "bootnub.rom", 0x000000, 0x4000, CRC(5348d09a) SHA1(1b637a3d7a2b072aa128dd5c037bbb440d525c1a) )
 ROM_END
 
-static void bebox_floppy_getinfo(struct IODevice *dev)
+static void bebox_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_pc);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_pc; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void bebox_cdrom_getinfo(struct IODevice *dev)
+static void bebox_cdrom_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cdrom */
-	cdrom_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										cdrom_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void bebox_harddisk_getinfo(struct IODevice *dev)
+static void bebox_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* harddisk */
-	harddisk_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										harddisk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(bebox)

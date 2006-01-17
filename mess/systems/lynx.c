@@ -322,7 +322,7 @@ static void lynx_crc_keyword(mess_image *image)
     }
 }
 
-static DEVICE_LOAD( lynx_cart )
+static int device_load_lynx_cart(mess_image *image, mame_file *file)
 {
 	UINT8 *rom = memory_region(REGION_USER1);
 	int size;
@@ -388,21 +388,38 @@ static QUICKLOAD_LOAD( lynx )
 	return 0;
 }
 
-static void lynx_cartslot_getinfo(struct IODevice *dev)
+static void lynx_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "lnx\0";
-	dev->load = device_load_lynx_cart;
-	dev->partialhash = lynx_partialhash;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_lynx_cart; break;
+		case DEVINFO_PTR_PARTIAL_HASH:					info->partialhash = lynx_partialhash; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "lnx\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void lynx_quickload_getinfo(struct IODevice *dev)
+static void lynx_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* quickload */
-	quickload_device_getinfo(dev, quickload_load_lynx, 0.0);
-	dev->file_extensions = "o\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "o\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_lynx; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(lynx)

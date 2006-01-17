@@ -1089,38 +1089,51 @@ MACHINE_DRIVER_START( cpu_c1571 )
 MACHINE_DRIVER_END
 
 
-void vc1541_device_getinfo(struct IODevice *dev)
+void vc1541_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_FLOPPY;
-	dev->file_extensions = "d64\0";
-	dev->count = 1;
-	dev->reset_on_load = 1;
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->load = device_load_vc1541;
-	dev->unload = device_unload_vc1541;
-	dev->genf1 = (genf *) vc1541_config;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:					info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_COUNT:					info->i = 1; break;
+		case DEVINFO_INT_READABLE:				info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:				info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:				info->i = 0; break;
+		case DEVINFO_INT_RESET_ON_LOAD:			info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:					info->load = device_load_vc1541; break;
+		case DEVINFO_PTR_UNLOAD:				info->unload = device_unload_vc1541; break;
+		case DEVINFO_PTR_VC1541_CONFIG:			info->f = (genf *) vc1541_config; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:		info->s = "d64\0"; break;
+	}
 }
 
 
 
-void c2031_device_getinfo(struct IODevice *dev)
+void c2031_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	vc1541_device_getinfo(dev);
+	vc1541_device_getinfo(devclass, state, info);
 }
 
 
 
-void c1551_device_getinfo(struct IODevice *dev)
+void c1551_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	vc1541_device_getinfo(dev);
-	dev->genf1 = (genf *) c1551_config;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_VC1541_CONFIG:			info->f = (genf *) c1551_config; break;
+
+		default: vc1541_device_getinfo(devclass, state, info); break;
+	}
 }
 
 
 
-void c1571_device_getinfo(struct IODevice *dev)
+void c1571_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	vc1541_device_getinfo(dev);
+	vc1541_device_getinfo(devclass, state, info);
 }

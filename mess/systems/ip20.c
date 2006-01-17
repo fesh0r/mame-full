@@ -586,40 +586,25 @@ INPUT_PORTS_START( ip204415 )
 	PORT_BIT ( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-static DEVICE_INIT( ip20_chdcd )
-{
-	return device_init_mess_cd(image);
-}
-
-static DEVICE_LOAD( ip20_chdcd )
-{
-	return device_load_mess_cd(image, file);
-}
-
-static DEVICE_UNLOAD( ip20_chdcd )
-{
-	device_unload_mess_cd(image);
-}
-
 static const char *ip20_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
 	snprintf(buf, bufsize, "CD-ROM #%d", id + 1);
 	return buf;
 }
 
-static void ip20_chdcd_getinfo(struct IODevice *dev)
+static void ip20_chdcd_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* CHD CD-ROM */
-	dev->type = IO_CDROM;
-	dev->name = ip20_cdrom_getname;
-	dev->count = 4;
-	dev->file_extensions = "chd\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_ip20_chdcd;
-	dev->load = device_load_ip20_chdcd;
-	dev->unload = device_unload_ip20_chdcd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = ip20_cdrom_getname; break;
+
+		default: cdrom_device_getinfo(devclass, state, info);
+	}
 }
 
 static struct mips3_config config =

@@ -428,37 +428,71 @@ ROM_START (svi328c)
     ROM_LOAD ("svi806se.rom", 0x0000, 0x1000, CRC(daea8956) SHA1(3f16d5513ad35692488ae7d864f660e76c6e8ed3))
 ROM_END
 
-static void svi318_printer_getinfo(struct IODevice *dev)
+static void svi318_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void svi318_cassette_getinfo(struct IODevice *dev)
+static void svi318_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, svi_cassette_formats, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) svi_cassette_formats; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void svi318_cartslot_getinfo(struct IODevice *dev)
+static void svi318_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "rom\0";
-	dev->load = device_load_svi318_cart;
-	dev->unload = device_unload_svi318_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_svi318_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_svi318_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void svi318_floppy_getinfo(struct IODevice *dev)
+static void svi318_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacybasicdsk_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "dsk\0";
-	dev->load = device_load_svi318_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_svi318_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+
+		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(svi318)

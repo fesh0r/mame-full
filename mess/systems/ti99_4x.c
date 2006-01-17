@@ -816,101 +816,161 @@ ROM_END
  * are emulated.
  */
 
-static void ti99_4_cassette_getinfo(struct IODevice *dev)
+static void ti99_4_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
-	dev->count = 2;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ti99_4_cartslot_getinfo(struct IODevice *dev)
+static void ti99_4_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	dev->type = IO_CARTSLOT;
-	dev->count = 3;
-	dev->file_extensions = "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_ti99_cart;
-	dev->load = device_load_ti99_cart;
-	dev->unload = device_unload_ti99_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CARTSLOT; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 3; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_ti99_cart; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti99_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0"; break;
+	}
 }
 
-static void ti99_4_floppy_getinfo(struct IODevice *dev)
+static void ti99_4_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_ti99);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_ti99; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ti99_4_harddisk_getinfo(struct IODevice *dev)
+static void ti99_4_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* harddisk */
-	dev->type = IO_HARDDISK;
-	dev->count = 4;
-	dev->file_extensions = "hd\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->init = device_init_ti99_hd;
-	dev->load = device_load_ti99_hd;
-	dev->unload = device_unload_ti99_hd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_HARDDISK; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_ti99_hd; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti99_hd; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_hd; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "hd\0"; break;
+	}
 }
 
-static void ti99_4_parallel_getinfo(struct IODevice *dev)
+static void ti99_4_parallel_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* parallel */
-	dev->type = IO_PARALLEL;
-	dev->file_extensions = "\0";
-	dev->count = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_ti99_4_pio;
-	dev->unload = device_unload_ti99_4_pio;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PARALLEL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti99_4_pio; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_4_pio; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+	}
 }
 
-static void ti99_4_serial_getinfo(struct IODevice *dev)
+static void ti99_4_serial_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* serial */
-	dev->type = IO_SERIAL;
-	dev->file_extensions = "\0";
-	dev->count = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_ti99_4_rs232;
-	dev->unload = device_unload_ti99_4_rs232;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_SERIAL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti99_4_rs232; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_4_rs232; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+	}
 }
 
 #if 0
-static void ti99_4_quickload_getinfo(struct IODevice *dev)
+static void ti99_4_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* quickload */
-	dev->type = IO_QUICKLOAD;
-	dev->count = 1;
-	dev->reset_on_load = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_ti99_hsgpl;
-	dev->unload = device_unload_ti99_hsgpl;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_QUICKLOAD; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti99_hsgpl; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_hsgpl; break;
+	}
 }
 #endif
 
-static void ti99_4_memcard_getinfo(struct IODevice *dev)
+static void ti99_4_memcard_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* memcard */
-	dev->type = IO_MEMCARD;
-	dev->file_extensions = "\0";
-	dev->count = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->init = device_init_smartmedia;
-	dev->load = device_load_smartmedia;
-	dev->unload = device_unload_smartmedia;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_MEMCARD; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_smartmedia; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_smartmedia; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_smartmedia; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(ti99_4)

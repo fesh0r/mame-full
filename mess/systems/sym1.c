@@ -124,10 +124,15 @@ ROM_START(sym1)
 	ROM_RELOAD(0xf000, 0x1000)
 ROM_END
 
-static void sym1_cbmcartslot_getinfo(struct IODevice *dev)
+static void sym1_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cbmcartslot_device_getinfo(dev);
-	dev->file_extensions = "60\00080\0c0\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "60\00080\0c0\0"; break;
+
+		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(sym1)

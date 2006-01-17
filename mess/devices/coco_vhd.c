@@ -59,7 +59,7 @@ static mess_image *vhd_image(void)
 
 
 
-DEVICE_INIT(coco_vhd)
+static int device_init_coco_vhd(mess_image *image)
 {
 	vhdStatus = 2;	/* No VHD attached */
 	return INIT_PASS;
@@ -67,7 +67,7 @@ DEVICE_INIT(coco_vhd)
 
 
 
-DEVICE_LOAD(coco_vhd)
+static int device_load_coco_vhd(mess_image *image, mame_file *file)
 {
 	vhdStatus = 0xff; /* -1, Power on state */
 	logicalRecordNumber = 0;
@@ -196,16 +196,25 @@ static const char *coco_vhd_getname(const struct IODevice *dev, int id, char *bu
 
 
 
-void coco_vhd_device_getinfo(struct IODevice *dev)
+void coco_vhd_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_VHD;
-	dev->count = 1;
-	dev->file_extensions = "vhd\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->init = device_init_coco_vhd;
-	dev->load = device_load_coco_vhd;
-	dev->name = coco_vhd_getname;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_VHD; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_coco_vhd; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_coco_vhd; break;
+		case DEVINFO_PTR_GET_NAME:						info->name = coco_vhd_getname; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:						info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "vhd\0"; break;
+	}
 }
 

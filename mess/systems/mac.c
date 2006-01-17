@@ -270,30 +270,50 @@ ROM_START( macse )
 ROM_END
 
 
-static void mac128512_floppy_getinfo(struct IODevice *dev)
+static void mac128512_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K);
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES:		info->i = SONY_FLOPPY_ALLOW400K; break;
+
+		default:										sonydriv_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void mac_floppy_getinfo(struct IODevice *dev)
+static void mac_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES:		info->i = SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K; break;
+
+		default:										sonydriv_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void mac_harddisk_getinfo(struct IODevice *dev)
+static void mac_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* harddisk */
-	dev->type = IO_HARDDISK;
-	dev->count = 2;
-	dev->file_extensions = "chd\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->init = device_init_mess_hd;
-	dev->load = device_load_mess_hd;
-	dev->unload = device_unload_mess_hd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_HARDDISK; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_mess_hd; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_mess_hd; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_mess_hd; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "chd\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(mac128k)

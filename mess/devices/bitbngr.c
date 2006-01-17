@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	bitbngr.c
+
+	TRS style "bitbanger" serial port
+
+*********************************************************************/
+
 #include <math.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -27,8 +35,10 @@ static int bitbanger_init(mess_image *img)
 	int id = image_index_in_device(img);
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
+	const struct IODevice *dev;
 
-	config = (const struct bitbanger_config *) device_find(Machine->devices, IO_BITBANGER)->user1;
+	dev = image_device(img);
+	config = (const struct bitbanger_config *) device_get_info_ptr(&dev->devclass, DEVINFO_PTR_BITBANGER_CONFIG);
 
 	bi = (struct bitbanger_info *) auto_malloc(sizeof(struct bitbanger_info));
 	if (!bi)
@@ -156,16 +166,21 @@ void bitbanger_output(mess_image *img, int value)
 
 
 
-void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config)
+void bitbanger_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	iodev->type = IO_BITBANGER;
-	iodev->init = bitbanger_init;
-	iodev->file_extensions = "prn\0";
-	iodev->readable = 1;
-	iodev->writeable = 1;
-	iodev->creatable = 1;
-	iodev->user1 = (char *) config;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:						info->i = IO_BITBANGER; break;
+		case DEVINFO_INT_READABLE:					info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:					info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:						info->init = bitbanger_init; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = "prn\0"; break;
+	}
 }
-
-
-

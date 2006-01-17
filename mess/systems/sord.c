@@ -710,18 +710,34 @@ static FLOPPY_OPTIONS_START( sordm5 )
 		FIRST_SECTOR_ID([1]))
 FLOPPY_OPTIONS_END
 
-static void sordm5_printer_getinfo(struct IODevice *dev)
+static void sordm5_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void sordm5_cassette_getinfo(struct IODevice *dev)
+static void sordm5_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, sordm5_cassette_formats, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) sordm5_cassette_formats; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(sordm5)
@@ -731,11 +747,19 @@ SYSTEM_CONFIG_START(sordm5)
 	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
-static void srdm5fd5_floppy_getinfo(struct IODevice *dev)
+static void srdm5fd5_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_sordm5);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_sordm5; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(srdm5fd5)

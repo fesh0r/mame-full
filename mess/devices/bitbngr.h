@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	bitbngr.h
+
+	TRS style "bitbanger" serial port
+
+*********************************************************************/
+
 #ifndef BITBNGR_H
 #define BITBNGR_H
 
@@ -17,9 +25,12 @@ struct bitbanger_config
 
 #define IO_BITBANGER IO_PRINTER
 
+enum
+{
+	DEVINFO_PTR_BITBANGER_CONFIG = DEVINFO_PTR_DEV_SPECIFIC
+};
 
-
-void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config);
+void bitbanger_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 void bitbanger_output(mess_image *img, int value);
 
 #endif /* BITBNGR_H */

@@ -2093,37 +2093,71 @@ MSX_LAYOUT_INIT (phc35j)
 	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
 MSX_LAYOUT_END
 
-static void msx_floppy_getinfo(struct IODevice *dev)
+static void msx_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacybasicdsk_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "dsk\0";
-	dev->load = device_load_msx_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_msx_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+
+		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void msx_cartslot_getinfo(struct IODevice *dev)
+static void msx_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = MSX_MAX_CARTS;
-	dev->file_extensions = "mx1\0rom\0";
-	dev->load = device_load_msx_cart;
-	dev->unload = device_unload_msx_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = MSX_MAX_CARTS; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_msx_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_msx_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "mx1\0rom\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void msx_cassette_getinfo(struct IODevice *dev)
+static void msx_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, fmsx_cassette_formats, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) fmsx_cassette_formats; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void msx_printer_getinfo(struct IODevice *dev)
+static void msx_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(msx)

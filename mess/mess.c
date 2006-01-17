@@ -589,7 +589,6 @@ int mess_validitychecks(void)
 		if (inputx_validitycheck(drivers[i], &inputports))
 			error = 1;
 
-		free(devices);
 		devices = NULL;
 	}
 

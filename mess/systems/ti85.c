@@ -511,25 +511,41 @@ ROM_START (ti86grom)
 	ROM_LOAD ("ti86grom.bin", 0x10000, 0x40000, CRC(d2c67280))
 ROM_END
 
-static void ti85_snapshot_getinfo(struct IODevice *dev)
+static void ti85_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_ti8x, 0.0);
-	dev->file_extensions = "sav\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sav\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_ti8x; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ti85_serial_getinfo(struct IODevice *dev)
+static void ti85_serial_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* serial */
-	dev->type = IO_SERIAL;
-	dev->count = 1;
-	dev->file_extensions = "85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_ti85_serial;
-	dev->load = device_load_ti85_serial;
-	dev->unload = device_unload_ti85_serial;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_SERIAL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_ti85_serial; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti85_serial; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti85_serial; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(ti85)
@@ -537,25 +553,41 @@ SYSTEM_CONFIG_START(ti85)
 	CONFIG_DEVICE(ti85_snapshot_getinfo)
 SYSTEM_CONFIG_END
 
-static void ti86_snapshot_getinfo(struct IODevice *dev)
+static void ti86_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_ti8x, 0.0);
-	dev->file_extensions = "sav\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sav\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_ti8x; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void ti86_serial_getinfo(struct IODevice *dev)
+static void ti86_serial_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* serial */
-	dev->type = IO_SERIAL;
-	dev->count = 1;
-	dev->file_extensions = "86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_ti85_serial;
-	dev->load = device_load_ti85_serial;
-	dev->unload = device_unload_ti85_serial;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_SERIAL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_ti85_serial; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_ti85_serial; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti85_serial; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(ti86)

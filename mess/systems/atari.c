@@ -916,30 +916,47 @@ ROM_START(a5200)
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, CRC(4248d3e3) SHA1(6ad7a1e8c9fad486fbec9498cb48bf5bc3adc530))
 ROM_END
 
-static void atari_floppy_getinfo(struct IODevice *dev)
+static void atari_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 4;
-	dev->file_extensions = "atr\0dsk\0xfd\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_a800_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_a800_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "atr\0dsk\0xfd\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(atari)
 	CONFIG_DEVICE(atari_floppy_getinfo)
 SYSTEM_CONFIG_END
 
-static void a400_cartslot_getinfo(struct IODevice *dev)
+static void a400_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "rom\0bin\0";
-	dev->load = device_load_a800_cart;
-	dev->unload = device_unload_a800_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_a800_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a800_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(a400)
@@ -948,14 +965,23 @@ SYSTEM_CONFIG_START(a400)
 	CONFIG_DEVICE(a400_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void a800_cartslot_getinfo(struct IODevice *dev)
+static void a800_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "rom\0bin\0";
-	dev->load = device_load_a800_cart;
-	dev->unload = device_unload_a800_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_a800_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a800_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(a800)
@@ -964,14 +990,23 @@ SYSTEM_CONFIG_START(a800)
 	CONFIG_DEVICE(a800_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void a5200_cartslot_getinfo(struct IODevice *dev)
+static void a5200_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "rom\0bin\0a52\0";
-	dev->load = device_load_a5200_cart;
-	dev->unload = device_unload_a5200_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_a5200_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a5200_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0a52\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(a5200)

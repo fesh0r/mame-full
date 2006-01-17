@@ -2,9 +2,6 @@
 #include "mess.h"
 #include "mscommon.h"
 
-const game_driver *cartslot_gamedriver_hack;
-
-
 
 static int is_cart_roment(const rom_entry *roment)
 {
@@ -144,67 +141,77 @@ static int process_cartridge(mess_image *image, mame_file *file)
 
 
 
-static DEVICE_INIT(cartslot_specified)
+static int device_init_cartslot_specified(mess_image *image)
 {
 	process_cartridge(image, NULL);
 	return 0;
 }
 
-static DEVICE_LOAD(cartslot_specified)
+static int device_load_cartslot_specified(mess_image *image, mame_file *file)
 {
 	return process_cartridge(image, file);
 }
 
-static DEVICE_UNLOAD(cartslot_specified)
+static void device_unload_cartslot_specified(mess_image *image)
 {
 	process_cartridge(image, NULL);
 }
 
 
 
-void cartslot_device_getinfo(struct IODevice *iodev)
+void cartslot_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	const rom_entry *romrgn, *roment;
-	int position;
+	int position, count = 0, must_be_loaded = 0;
+	const char *file_extensions = "bin\0";
 	UINT32 flags;
 
-	/* specify basics */
-	iodev->type = IO_CARTSLOT;
-	iodev->file_extensions = "bin\0";
-	iodev->reset_on_load = 1;
-	iodev->load_at_init = 1;
-	iodev->readable = 1;
-
 	/* try to find ROM_CART_LOADs in the ROM declaration */
-	if (cartslot_gamedriver_hack)
+	romrgn = rom_first_region(devclass->gamedrv);
+	while(romrgn)
 	{
-		romrgn = rom_first_region(cartslot_gamedriver_hack);
-		while(romrgn)
+		roment = romrgn + 1;
+		while(!ROMENTRY_ISREGIONEND(roment))
 		{
-			roment = romrgn + 1;
-			while(!ROMENTRY_ISREGIONEND(roment))
+			if (is_cart_roment(roment) && !parse_rom_name(roment, &position, &file_extensions))
 			{
-				if (is_cart_roment(roment) && !parse_rom_name(roment, &position, &iodev->file_extensions))
+				flags = ROM_GETFLAGS(roment);
+
+				/* reject any unsupported flags */
+				if (flags & (ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK
+					| ROM_BITWIDTHMASK | ROM_BITSHIFTMASK
+					| ROM_INHERITFLAGSMASK | ROM_BIOSFLAGSMASK))
 				{
-					flags = ROM_GETFLAGS(roment);
-
-					/* reject any unsupported flags */
-					if (flags & (ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK
-						| ROM_BITWIDTHMASK | ROM_BITSHIFTMASK
-						| ROM_INHERITFLAGSMASK | ROM_BIOSFLAGSMASK))
-					{
-						osd_die("Unsupported ROM cart flags 0x%08X", flags);
-					}
-
-					iodev->count = MAX(position + 1, iodev->count);
-					iodev->init = device_init_cartslot_specified;
-					iodev->load = device_load_cartslot_specified;
-					iodev->unload = device_unload_cartslot_specified;
-					iodev->must_be_loaded = (flags & ROM_OPTIONAL) ? 0 : 1;
+					osd_die("Unsupported ROM cart flags 0x%08X", flags);
 				}
-				roment++;
+
+				count = MAX(position + 1, count);
+				must_be_loaded = (flags & ROM_OPTIONAL) ? 0 : 1;
 			}
-			romrgn = rom_next_region(romrgn);
+			roment++;
 		}
+		romrgn = rom_next_region(romrgn);
+	}
+
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:						info->i = count; break;
+		case DEVINFO_INT_TYPE:						info->i = IO_CARTSLOT; break;
+		case DEVINFO_INT_READABLE:					info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:					info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:					info->i = 0; break;
+		case DEVINFO_INT_RESET_ON_LOAD:				info->i = 1; break;
+		case DEVINFO_INT_LOAD_AT_INIT:				info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:			info->i = must_be_loaded; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:						info->init = device_init_cartslot_specified; break;
+		case DEVINFO_PTR_LOAD:						info->load = device_load_cartslot_specified; break;
+		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_cartslot_specified; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = file_extensions; break;
 	}
 }

@@ -429,25 +429,42 @@ ROM_START (cgenie)
 
 ROM_END
 
-static void cgenie_floppy_getinfo(struct IODevice *dev)
+static void cgenie_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacybasicdsk_device_getinfo(dev);
-	dev->count = 4;
-	dev->file_extensions = "dsk\0";
-	dev->load = device_load_cgenie_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_cgenie_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+
+		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void cgenie_cassette_getinfo(struct IODevice *dev)
+static void cgenie_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "cas\0";
-	dev->readable = 0;	/* INVALID */
-	dev->writeable = 0;	/* INVALID */
-	dev->creatable = 0;	/* INVALID */
-	dev->load = device_load_cgenie_cassette;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_cgenie_cassette; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cas\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(cgenie)

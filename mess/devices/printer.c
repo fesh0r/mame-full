@@ -29,13 +29,18 @@ void printer_output(mess_image *img, int data)
 
 
 
-void printer_device_getinfo(struct IODevice *iodev)
+void printer_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	iodev->type = IO_PRINTER;
-	iodev->file_extensions = "prn\0";
-	iodev->readable = 0;
-	iodev->writeable = 1;
-	iodev->creatable = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PRINTER; break;
+		case DEVINFO_INT_READABLE:						info->i = 0; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:						info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "prn\0"; break;
+	}
 }
-
-

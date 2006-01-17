@@ -312,13 +312,22 @@ static DEVICE_LOAD(cbm_rom)
 
 
 
-void cbmcartslot_device_getinfo(struct IODevice *dev)
+void cbmcartslot_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cartslot_device_getinfo(dev);
-	dev->file_extensions = "crt\0";
-	dev->count = 2;
-	dev->init = device_init_cbm_rom;
-	dev->load = device_load_cbm_rom;
-	dev->unload = device_unload_cbm_rom;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:					info->i = 2; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:		info->s = "crt\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:					info->init = device_init_cbm_rom; break;
+		case DEVINFO_PTR_LOAD:					info->load = device_load_cbm_rom; break;
+		case DEVINFO_PTR_UNLOAD:				info->unload = device_unload_cbm_rom; break;
+
+		default: cartslot_device_getinfo(devclass, state, info);
+	}
 }
 

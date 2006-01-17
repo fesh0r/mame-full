@@ -807,16 +807,32 @@ MACHINE_DRIVER_END
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
 
-static void c64_cbmcartslot_getinfo(struct IODevice *dev)
+static void c64_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cbmcartslot_device_getinfo(dev);
-	dev->file_extensions = "crt\080\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crt\080\0"; break;
+
+		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void c64_quickload_getinfo(struct IODevice *dev)
+static void c64_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	quickload_device_getinfo(dev, quickload_load_cbm_c64, CBM_QUICKLOAD_DELAY);
-	dev->file_extensions = "p00\0prg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_c64; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = CBM_QUICKLOAD_DELAY; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(c64)
@@ -832,11 +848,18 @@ SYSTEM_CONFIG_START(sx64)
 	CONFIG_DEVICE(vc1541_device_getinfo)
 SYSTEM_CONFIG_END
 
-static void ultimax_cbmcartslot_getinfo(struct IODevice *dev)
+static void ultimax_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cbmcartslot_device_getinfo(dev);
-	dev->must_be_loaded = 1;
-	dev->file_extensions = "crt\0e0\0f0\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crt\0e0\0f0\0"; break;
+
+		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(ultimax)

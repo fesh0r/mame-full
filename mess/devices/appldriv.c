@@ -24,10 +24,7 @@ struct apple525_disk
 	UINT8 track_data[APPLE2_NIBBLE_SIZE * APPLE2_SECTOR_COUNT];
 };
 
-static device_init_handler parent_init;
-static device_load_handler parent_load;
-static device_unload_handler parent_unload;
-
+static const device_class parent_devclass = { floppy_device_getinfo, NULL };
 static int apple525_enable_mask = 1;
 
 
@@ -173,10 +170,12 @@ static UINT8 apple525_process_byte(mess_image *img, int write_value)
 	struct apple525_disk *disk;
 	int spinfract_divisor;
 	int spinfract_dividend;
+	const struct IODevice *dev;
 
 	disk = (struct apple525_disk *) image_lookuptag(img, APPLE525TAG);
-	spinfract_dividend = (int) image_device(img)->user2;
-	spinfract_divisor = (int) image_device(img)->user3;
+	dev = image_device(img);
+	spinfract_dividend = (int) device_get_info_int(&dev->devclass, DEVINFO_INT_APPLE525_SPINFRACT_DIVIDEND);
+	spinfract_divisor = (int) device_get_info_int(&dev->devclass, DEVINFO_INT_APPLE525_SPINFRACT_DIVISOR);
 
 	/* no image initialized for that drive ? */
 	if (!image_exists(img))
@@ -275,18 +274,25 @@ int apple525_read_status(void)
 
 /* ----------------------------------------------------------------------- */
 
-static DEVICE_INIT( apple525_floppy )
+static int device_init_apple525_floppy(mess_image *image)
 {
+	device_init_handler parent_init;
+
 	if (!image_alloctag(image, APPLE525TAG, sizeof(struct apple525_disk)))
 		return INIT_FAIL;
+
+	parent_init = (device_init_handler) device_get_info_fct(&parent_devclass, DEVINFO_PTR_INIT);
 	return parent_init(image);
 }
 
 
 
-static DEVICE_LOAD( apple525_floppy )
+static int device_load_apple525_floppy(mess_image *image, mame_file *file)
 {
 	int result;
+	device_load_handler parent_load;
+
+	parent_load = (device_load_handler) device_get_info_fct(&parent_devclass, DEVINFO_PTR_LOAD);
 	result = parent_load(image, file);
 
 	floppy_drive_seek(image, -999);
@@ -296,28 +302,34 @@ static DEVICE_LOAD( apple525_floppy )
 
 
 
-static DEVICE_UNLOAD( apple525_floppy )
+static void device_unload_apple525_floppy(mess_image *image)
 {
+	device_unload_handler parent_unload;
+
 	apple525_save_current_track(image, TRUE);
+
+	parent_unload = (device_unload_handler) device_get_info_fct(&parent_devclass, DEVINFO_PTR_UNLOAD);
 	parent_unload(image);
 }
 
 
 
-void apple525_device_getinfo(struct IODevice *dev, int spinfract_dividend, int spinfract_divisor)
+void apple525_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	floppy_device_getinfo(dev, floppyoptions_apple2);
-	dev->count = 2;
-	dev->tag = APPLE525TAG;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:				info->i = 2; break;
 
-	parent_init = dev->init;
-	parent_load = dev->load;
-	parent_unload = dev->unload;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_TAG:			info->s = APPLE525TAG; break;
 
-	dev->init = device_init_apple525_floppy;
-	dev->load = device_load_apple525_floppy;
-	dev->unload = device_unload_apple525_floppy;
-	dev->user2 = (void *) spinfract_dividend;
-	dev->user3 = (void *) spinfract_divisor;
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:				info->init = device_init_apple525_floppy; break;
+		case DEVINFO_PTR_LOAD:				info->load = device_load_apple525_floppy; break;
+		case DEVINFO_PTR_UNLOAD:			info->unload = device_unload_apple525_floppy; break;
+		case DEVINFO_PTR_FLOPPY_OPTIONS:	info->p = (void *) floppyoptions_apple2; break;
+
+		default: floppy_device_getinfo(devclass, state, info); break;
+	}
 }
-

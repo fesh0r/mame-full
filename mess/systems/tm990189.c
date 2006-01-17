@@ -452,7 +452,7 @@ static void rs232_input_callback(int dummy)
 /*
 	Initialize rs232 unit and open image
 */
-static DEVICE_LOAD( tm990_189_rs232 )
+static int device_load_tm990_189_rs232(mess_image *image, mame_file *file)
 {
 	int id = image_index_in_device(image);
 
@@ -471,7 +471,7 @@ static DEVICE_LOAD( tm990_189_rs232 )
 /*
 	close a rs232 image
 */
-static DEVICE_UNLOAD( tm990_189_rs232 )
+static void device_unload_tm990_189_rs232(mess_image *image)
 {
 	int id = image_index_in_device(image);
 
@@ -968,24 +968,38 @@ INPUT_PORTS_START(tm990_189)
 
 INPUT_PORTS_END
 
-static void tm990_189_cassette_getinfo(struct IODevice *dev)
+static void tm990_189_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void tm990_189_serial_getinfo(struct IODevice *dev)
+static void tm990_189_serial_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* serial */
-	dev->type = IO_SERIAL;
-	dev->file_extensions = "\0";
-	dev->count = 1;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_tm990_189_rs232;
-	dev->unload = device_unload_tm990_189_rs232;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_SERIAL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_tm990_189_rs232; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tm990_189_rs232; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(tm990_189)

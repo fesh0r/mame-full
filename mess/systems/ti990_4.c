@@ -328,11 +328,19 @@ INPUT_PORTS_START(ti990_4)
 #endif
 INPUT_PORTS_END
 
-static void ti990_4_floppy_getinfo(struct IODevice *dev)
+static void ti990_4_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_fd800);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_fd800; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(ti990_4)

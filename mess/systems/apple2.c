@@ -850,11 +850,20 @@ ROM_START(apple2cp)
 ROM_END
 
 
-static void apple2_floppy_getinfo(struct IODevice *dev)
+static void apple2_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	apple525_device_getinfo(dev, 15, 16);
-	dev->name = apple2_floppy_getname;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = apple2_floppy_getname; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_APPLE525_SPINFRACT_DIVIDEND:	info->i = 15; break;
+		case DEVINFO_INT_APPLE525_SPINFRACT_DIVISOR:	info->i = 16; break;
+
+		default:										apple525_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(apple2_common)

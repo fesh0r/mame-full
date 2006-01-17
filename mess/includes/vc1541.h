@@ -32,10 +32,15 @@ typedef struct {
 int c1551_config(int id, int mode, C1551_CONFIG*config);
 #define c1551_reset vc1541_reset
 
-void vc1541_device_getinfo(struct IODevice *dev);
-void c2031_device_getinfo(struct IODevice *dev);
-void c1551_device_getinfo(struct IODevice *dev);
-void c1571_device_getinfo(struct IODevice *dev);
+enum
+{
+	DEVINFO_PTR_VC1541_CONFIG = DEVINFO_PTR_DEV_SPECIFIC
+};
+
+void vc1541_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
+void c2031_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
+void c1551_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
+void c1571_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 extern MACHINE_DRIVER_EXTERN( cpu_vc1540 );
 extern MACHINE_DRIVER_EXTERN( cpu_vc1541 );

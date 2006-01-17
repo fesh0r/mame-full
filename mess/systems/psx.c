@@ -903,11 +903,19 @@ ROM_START( psxa45 )
 	ROM_LOAD( "scph101.bin",  0x0000000, 0x080000, CRC(171bdcec) SHA1(dcffe16bd90a723499ad46c641424981338d8378) )
 ROM_END
 
-static void psx_quickload_getinfo(struct IODevice *dev)
+static void psx_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* quickload */
-	quickload_device_getinfo(dev, quickload_load_psx_exe_load, 0.0);
-	dev->file_extensions = "exe\0psx\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "exe\0psx\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_psx_exe_load; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START( psx )

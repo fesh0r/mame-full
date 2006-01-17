@@ -53,6 +53,8 @@
 #define LOG_SONY_EXTRA	0
 #endif
 
+static const device_class parent_devclass = { floppy_device_getinfo, NULL };
+
 /*
 	These lines are normally connected to the PHI0-PHI3 lines of the IWM
 */
@@ -487,33 +489,41 @@ void sony_set_speed(int speed)
 
 
 
-static device_unload_handler parent_unload;
-
-static DEVICE_UNLOAD(sonydriv_floppy)
+static void device_unload_sonydriv_floppy(mess_image *image)
 {
 	int id;
+	device_unload_handler parent_unload;
 	
 	id = image_index_in_device(image);
 	save_track_data(id);
 	memset(&sony_floppy[id], 0, sizeof(sony_floppy[id]));
 
+	parent_unload = (device_unload_handler) device_get_info_fct(&parent_devclass, DEVINFO_PTR_UNLOAD);
 	parent_unload(image);
 }
 
 
 
-void sonydriv_device_getinfo(struct IODevice *dev, int allowablesizes)
+void sonydriv_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	/* floppy */
-	floppy_device_getinfo(dev, (allowablesizes & SONY_FLOPPY_SUPPORT2IMG)
-		? floppyoptions_apple35_iigs : floppyoptions_apple35_mac);
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:				info->i = 2; break;
 
-	dev->tag = "sonydriv";
-	dev->type = IO_FLOPPY;
-	dev->count = 2;
-	dev->user4 = (void *) allowablesizes;
-	
-	parent_unload = dev->unload;
-	dev->unload = device_unload_sonydriv_floppy;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_TAG:			info->s = "sonydriv"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_UNLOAD:			info->unload = device_unload_sonydriv_floppy; break;
+		case DEVINFO_PTR_FLOPPY_OPTIONS:
+			if (device_get_info_int(devclass, DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES) & SONY_FLOPPY_SUPPORT2IMG)
+				info->p = (void *) floppyoptions_apple35_iigs;
+			else
+				info->p = (void *) floppyoptions_apple35_mac;
+			break;
+
+		default: floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 

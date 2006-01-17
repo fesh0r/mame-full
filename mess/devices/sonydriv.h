@@ -13,6 +13,11 @@
 #include "fileio.h"
 #include "image.h"
 
+enum
+{
+	DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES = DEVINFO_INT_DEV_SPECIFIC
+};
+
 /* defines for the allowablesizes param below */
 enum
 {
@@ -23,7 +28,7 @@ enum
 	SONY_FLOPPY_EXT_SPEED_CONTROL	= 0x8000	/* means the speed is controlled by computer */
 };
 
-void sonydriv_device_getinfo(struct IODevice *dev, int allowablesizes);
+void sonydriv_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 void sony_set_lines(UINT8 lines);
 void sony_set_enable_lines(int enable_mask);

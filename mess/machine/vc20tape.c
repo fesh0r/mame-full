@@ -903,7 +903,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-static DEVICE_LOAD(vc20_tape)
+static int device_load_vc20_tape(mess_image *image, mame_file *file)
 {
 	const char *cp;
 
@@ -931,7 +931,7 @@ static DEVICE_LOAD(vc20_tape)
 	return INIT_PASS;
 }
 
-static DEVICE_UNLOAD(vc20_tape)
+static void device_unload_vc20_tape(mess_image *image)
 {
 	vc20_tape_close();
 }
@@ -1089,12 +1089,20 @@ void vc20_tape_status (char *text, int size)
 
 
 
-void vc20tape_device_getinfo(struct IODevice *dev)
+void vc20tape_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "wav\0";
-	dev->load = device_load_vc20_tape;
-	dev->unload = device_unload_vc20_tape;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_vc20_tape; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_vc20_tape; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "wav\0"; break;
+	}
 }
 

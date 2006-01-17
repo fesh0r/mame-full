@@ -920,16 +920,24 @@ WRITE8_HANDLER ( kim1_mirror_w )
 	program_write_byte(offset & 0x1fff, data);
 }
 
-void kim1_cassette_getinfo(struct IODevice *dev)
+void kim1_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "kim1\0";
-	dev->reset_on_load = 1;
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->load = device_load_kim1_cassette;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_kim1_cassette; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "kim1\0"; break;
+	}
 }
 
 

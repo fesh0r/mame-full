@@ -687,18 +687,31 @@ ROM_START (adam)
 	//ROM_LOAD ("master68.rom", 0x0100, 0x0E4, CRC(619a47b8)) /* Replacement 6801 Master ROM */
 ROM_END
 
-static void adam_cartslot_getinfo(struct IODevice *dev)
+static void adam_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->imgverify = adam_cart_verify;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_VERIFY:						info->imgverify = adam_cart_verify; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void adam_floppy_getinfo(struct IODevice *dev)
+static void adam_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_adam);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_adam; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(adam)

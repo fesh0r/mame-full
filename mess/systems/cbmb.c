@@ -940,16 +940,32 @@ MACHINE_DRIVER_END
 #define init_cbm600pal cbm600pal_driver_init
 #define init_cbm700 cbm700_driver_init
 
-static void cbmb_cbmcartslot_getinfo(struct IODevice *dev)
+static void cbmb_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cbmcartslot_device_getinfo(dev);
-	dev->file_extensions = "crt\00010\00020\00040\00060\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crt\00010\00020\00040\00060\0"; break;
+
+		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void cbmb_quickload_getinfo(struct IODevice *dev)
+static void cbmb_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	quickload_device_getinfo(dev, quickload_load_cbmb, CBM_QUICKLOAD_DELAY);
-	dev->file_extensions = "p00\0prg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbmb; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = CBM_QUICKLOAD_DELAY; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(cbmb)
@@ -961,10 +977,21 @@ SYSTEM_CONFIG_START(cbmb)
 #endif
 SYSTEM_CONFIG_END
 
-static void cbm500_quickload_getinfo(struct IODevice *dev)
+static void cbm500_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	quickload_device_getinfo(dev, quickload_load_cbm500, CBM_QUICKLOAD_DELAY);
-	dev->file_extensions = "p00\0prg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm500; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = CBM_QUICKLOAD_DELAY; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(cbm500)

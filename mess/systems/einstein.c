@@ -1738,18 +1738,28 @@ ROM_START(einstei2)
 	ROM_LOAD("charrom.rom",0x012000, 0x0800, NO_DUMP)
 ROM_END
 
-static void einstein_printer_getinfo(struct IODevice *dev)
+static void einstein_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void einstein_floppy_getinfo(struct IODevice *dev)
+static void einstein_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacydsk_device_getinfo(dev);
-	dev->count = 4;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		default:										legacydsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(einstein)

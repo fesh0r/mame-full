@@ -103,7 +103,7 @@ void cbm_drive_1_config (int interface, int serialnr)
 
 
 
-static DEVICE_INIT(cbm_drive)
+static int device_init_cbm_drive(mess_image *image)
 {
 	int id = image_index_in_device(image);
 	if (id == 0)
@@ -111,7 +111,7 @@ static DEVICE_INIT(cbm_drive)
 	return INIT_PASS;
 }
 
-static DEVICE_EXIT(cbm_drive)
+static void device_exit_cbm_drive(mess_image *image)
 {
 	int id = image_index_in_device(image);
 	if (id == 0)
@@ -121,7 +121,7 @@ static DEVICE_EXIT(cbm_drive)
 
 
 /* open an d64 image */
-static DEVICE_LOAD(cbm_drive)
+static int device_load_cbm_drive(mess_image *image, mame_file *file)
 {
 	int size;
 	int id = image_index_in_device(image);
@@ -408,16 +408,24 @@ void cbm_drive_1_status (char *text, int size)
 	cbm_drive_status (cbm_drive + 1, text, size);
 }
 
-void cbmfloppy_device_getinfo(struct IODevice *dev)
+void cbmfloppy_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_FLOPPY;
-	dev->count = 2;
-	dev->file_extensions = "d64\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_cbm_drive;
-	dev->exit = device_exit_cbm_drive;
-	dev->load = device_load_cbm_drive;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_cbm_drive; break;
+		case DEVINFO_PTR_EXIT:							info->exit = device_exit_cbm_drive; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_cbm_drive; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "d64\0"; break;
+	}
 }
 

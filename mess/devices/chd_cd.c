@@ -215,7 +215,7 @@ static UINT64 mess_chd_length(chd_interface_file *file)
  *
  *************************************/
 
-DEVICE_INIT(mess_cd)
+int device_init_mess_cd(mess_image *image)
 {
 	struct mess_cd *cd;
 
@@ -276,14 +276,14 @@ error:
 
 
 
-DEVICE_LOAD(mess_cd)
+int device_load_mess_cd(mess_image *image, mame_file *file)
 {
 	return internal_load_mess_cd(image, NULL);
 }
 
 
 
-static DEVICE_CREATE(mess_cd)
+static int device_create_mess_cd(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
 {
 	return INIT_FAIL;   	// cd-roms are not writable
 }
@@ -298,7 +298,7 @@ static DEVICE_CREATE(mess_cd)
  *
  *************************************/
 
-DEVICE_UNLOAD(mess_cd)
+void device_unload_mess_cd(mess_image *image)
 {
 	struct mess_cd *cd = get_drive(image);
 	assert(cd->cdrom_handle);
@@ -343,33 +343,32 @@ chd_file *mess_cd_get_chd_file(mess_image *image)
  *
  *************************************/
 
-void cdrom_device_getinfo(struct IODevice *iodev)
+void cdrom_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	iodev->createimage_options = auto_malloc(sizeof(*iodev->createimage_options) * 2);
-	if (!iodev->createimage_options)
+	switch(state)
 	{
-		iodev->error = 1;
-		return;
-	}
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:						info->i = IO_CDROM; break;
+		case DEVINFO_INT_READABLE:					info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:					info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:					info->i = 0; break;
+		case DEVINFO_INT_CREATE_OPTCOUNT:			info->i = 1; break;
 
-	iodev->type = IO_CDROM;
-	iodev->file_extensions = "chd\0";
-	iodev->readable = 1;
-	iodev->writeable = 0;
-	iodev->creatable = 0;
-	iodev->init = device_init_mess_cd;
-	iodev->load = device_load_mess_cd;
-	iodev->create = device_create_mess_cd;
-	iodev->unload = device_unload_mess_cd;
-	iodev->createimage_optguide = mess_cd_option_guide;
-	iodev->createimage_options[0].name = "chdcd";
-	iodev->createimage_options[0].description = "MAME/MESS CHD CD-ROM drive";
-	iodev->createimage_options[0].extensions = iodev->file_extensions;
-	iodev->createimage_options[0].optspec = mess_cd_option_spec;
-	iodev->createimage_options[1].name = NULL;
-	iodev->createimage_options[1].description = NULL;
-	iodev->createimage_options[1].extensions = NULL;
-	iodev->createimage_options[1].optspec = NULL;
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:						info->init = device_init_mess_cd; break;
+		case DEVINFO_PTR_LOAD:						info->load = device_load_mess_cd; break;
+		case DEVINFO_PTR_CREATE:					info->create = device_create_mess_cd; break;
+		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_mess_cd; break;
+		case DEVINFO_PTR_CREATE_OPTGUIDE:			info->p = (void *) mess_cd_option_guide; break;
+		case DEVINFO_PTR_CREATE_OPTSPEC+0:			info->p = (void *) mess_cd_option_spec;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = "chd\0"; break;
+		case DEVINFO_STR_CREATE_OPTNAME+0:			info->s = "chdcd"; break;
+		case DEVINFO_STR_CREATE_OPTDESC+0:			info->s = "MAME/MESS CHD CD-ROM drive"; break;
+		case DEVINFO_STR_CREATE_OPTEXTS+0:			info->s = "chd\0"; break;
+	}
 }
 
 cdrom_file *mess_cd_get_cdrom_file_by_number(int drivenum)

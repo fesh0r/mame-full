@@ -154,11 +154,19 @@ ROM_START (galaxy)
 	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, CRC(5c3b5bb5) SHA1(19429a61dc5e55ddec3242a8f695e06dd7961f88))
 ROM_END
 
-static void galaxy_snapshot_getinfo(struct IODevice *dev)
+static void galaxy_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_galaxy, 0.0);
-	dev->file_extensions = "gal\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "gal\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_galaxy; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(galaxy)

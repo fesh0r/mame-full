@@ -3,6 +3,6 @@
 
 #include "messdrv.h"
 
-void legacydsk_device_getinfo(struct IODevice *dev);
+void legacydsk_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #endif /* DSK_H */

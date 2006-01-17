@@ -38,6 +38,9 @@ Source Changes:
 - The core is based on MAME 0.103u2.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- Changed how devices are specified.  The new system resembles how MAME CPU
+  and sound cores are specified.  [Nate Woods]
+
 - Added a "input" command to the debugger.  [Nate Woods]
 
 - Cleaned up natural keyboard code.  No longer have QUEUE_CHARS/ACCEPT_CHARS

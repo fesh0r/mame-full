@@ -239,11 +239,22 @@ ROM_START(dai)
 ROM_END
 
 
-static void dai_cassette_getinfo(struct IODevice *dev)
+static void dai_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, &dai_cassette_options, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_OPTIONS:				info->p = (void *) &dai_cassette_options; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(dai)

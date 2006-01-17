@@ -145,14 +145,14 @@ static READ8_HANDLER(read_keyboard)
 	return readinputport(offset);
 }
 
-static DEVICE_LOAD(tutor_cart)
+static int device_load_tutor_cart(mess_image *image, mame_file *file)
 {
 	mame_fread(file, memory_region(REGION_CPU1) + cartridge_base, 0x6000);
 
 	return INIT_PASS;
 }
 
-static DEVICE_UNLOAD(tutor_cart)
+static void device_unload_tutor_cart(mess_image *image)
 {
 	memset(memory_region(REGION_CPU1) + cartridge_base, 0, 0x6000);
 }
@@ -292,14 +292,14 @@ static WRITE8_HANDLER(tutor_cassette_w)
 	}
 }
 
-static DEVICE_LOAD(tutor_printer)
+static int device_load_tutor_printer(mess_image *image, mame_file *file)
 {
 	printer_fp = file;
 
 	return INIT_PASS;
 }
 
-static DEVICE_UNLOAD(tutor_printer)
+static void device_unload_tutor_printer(mess_image *image)
 {
 	printer_fp = NULL;
 }
@@ -603,34 +603,57 @@ ROM_START(tutor)
 	ROM_LOAD("tutor2.bin", 0x8000, 0x4000, CRC(05f228f5))      /* BASIC ROM */
 ROM_END
 
-static void tutor_cartslot_getinfo(struct IODevice *dev)
+static void tutor_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "\0";
-	dev->load = device_load_tutor_cart;
-	dev->unload = device_unload_tutor_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_tutor_cart; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tutor_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void tutor_cassette_getinfo(struct IODevice *dev)
+static void tutor_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = (cassette_state) -1; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void tutor_parallel_getinfo(struct IODevice *dev)
+static void tutor_parallel_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* parallel */
-	dev->type = IO_PARALLEL;
-	dev->file_extensions = "\0";
-	dev->count = 1;
-	dev->readable = 0;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->load = device_load_tutor_printer;
-	dev->unload = device_unload_tutor_printer;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_PARALLEL; break;
+		case DEVINFO_INT_READABLE:						info->i = 0; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_tutor_printer; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tutor_printer; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(tutor)

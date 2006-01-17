@@ -1752,36 +1752,58 @@ ROM_START(nc200)
         ROM_LOAD("nc200.rom", 0x010000, 0x080000, CRC(bb8180e7) SHA1(fb5c93b0a3e199202c6a12548d2617f7a09bae47))
 ROM_END
 
-static void nc_common_printer_getinfo(struct IODevice *dev)
+static void nc_common_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
-	printer_device_getinfo(dev);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		default:										printer_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void nc_common_cartslot_getinfo(struct IODevice *dev)
+static void nc_common_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "crd\0card\0";
-	dev->init = device_init_nc_pcmcia_card;
-	dev->load = device_load_nc_pcmcia_card;
-	dev->unload = device_unload_nc_pcmcia_card;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_nc_pcmcia_card; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_nc_pcmcia_card; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_nc_pcmcia_card; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crd\0card\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void nc_common_serial_getinfo(struct IODevice *dev)
+static void nc_common_serial_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* serial */
-	dev->type = IO_SERIAL;
-	dev->count = 1;
-	dev->file_extensions = "txt\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = serial_device_init;
-	dev->load = device_load_nc_serial;
-	dev->unload = serial_device_unload;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_SERIAL; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = serial_device_init; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_nc_serial; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = serial_device_unload; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "txt\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(nc_common)
@@ -1795,11 +1817,19 @@ SYSTEM_CONFIG_START(nc100)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
-static void nc200_floppy_getinfo(struct IODevice *dev)
+static void nc200_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_pc);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_pc; break;
+
+		default:										floppy_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(nc200)

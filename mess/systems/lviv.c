@@ -465,18 +465,37 @@ ROM_START(lvivp)
 	ROM_LOAD("lvive.bin", 0x10000, 0x4000, CRC(f171c282) SHA1(c7dc2bdb02400e6b5cdcc50040eb06f506a7ed84))
 ROM_END
 
-static void lviv_cassette_getinfo(struct IODevice *dev)
+static void lviv_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	cassette_device_getinfo(dev, lviv_lvt_format, NULL, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
-	dev->count = 1;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_CASSETTE_FORMATS:				info->p = (void *) lviv_lvt_format; break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED; break;
+
+		default:										cassette_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void lviv_snapshot_getinfo(struct IODevice *dev)
+static void lviv_snapshot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* snapshot */
-	snapshot_device_getinfo(dev, snapshot_load_lviv, 0.0);
-	dev->file_extensions = "sav\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sav\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_lviv; break;
+
+		default:										snapshot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(lviv)

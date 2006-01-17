@@ -792,19 +792,39 @@ MACHINE_DRIVER_END
 #define init_plus4v 	c16_driver_init
 #define init_c364		c16_driver_init
 
-static void c16cart_device_getinfo(struct IODevice *dev)
+static void c16cart_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cartslot_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "bin\0rom\0";
-	dev->load = device_load_c16_rom;
-	dev->unload = device_unload_c16_rom;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_c16_rom; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_c16_rom; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0rom\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void c16_quickload_getinfo(struct IODevice *dev)
+static void c16_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	quickload_device_getinfo(dev, quickload_load_cbm_c16, CBM_QUICKLOAD_DELAY);
-	dev->file_extensions = "p00\0prg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_c16; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = CBM_QUICKLOAD_DELAY; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(c16)

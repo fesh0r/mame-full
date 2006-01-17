@@ -2,7 +2,7 @@
 #define __VC20_TAPE_H_
 
 /* put this into your gamedriver */
-void vc20tape_device_getinfo(struct IODevice *dev);
+void vc20tape_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 /* the function which should be called by change on readline */
 extern void vc20_tape_open (void (*read_callback) (UINT32, UINT8));

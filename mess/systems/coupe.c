@@ -449,13 +449,22 @@ ROM_START(coupe)
 	ROM_LOAD("sam_rom1.rom", 0x4000, 0x4000, CRC(F031AED4) SHA1(a7f06facc6f0a3713215f4befc307914836706a4))
 ROM_END
 
-static void coupe_floppy_getinfo(struct IODevice *dev)
+static void coupe_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacybasicdsk_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "dsk\0";
-	dev->load = device_load_coupe_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_coupe_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+
+		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(coupe)

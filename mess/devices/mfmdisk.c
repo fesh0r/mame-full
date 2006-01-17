@@ -303,7 +303,7 @@ int	mfm_disk_id(int id)
 
 
 /* load image */
-DEVICE_LOAD( mfm_disk )
+int device_load_mfm_disk(mess_image *image, mame_file *file)
 {
 	UINT64 datasize;
 	struct mfm_disk_info *pDisk = get_disk(image);

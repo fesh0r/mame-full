@@ -2414,40 +2414,22 @@ ROM_START(saturneu)
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
 ROM_END
 
-static DEVICE_INIT( saturn_chdcd )
-{
-	return device_init_mess_cd(image);
-}
-
-static DEVICE_LOAD( saturn_chdcd )
-{
-	return device_load_mess_cd(image, file);
-}
-
-static DEVICE_UNLOAD( saturn_chdcd )
-{
-	device_unload_mess_cd(image);
-}
-
 static const char *saturn_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
 	snprintf(buf, bufsize, "CD-ROM");
 	return buf;
 }
 
-static void saturn_chdcd_getinfo(struct IODevice *dev)
+static void saturn_chdcd_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* CHD CD-ROM */
-	dev->type = IO_CDROM;
-	dev->name = saturn_cdrom_getname;
-	dev->count = 1;
-	dev->file_extensions = "chd\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->init = device_init_saturn_chdcd;
-	dev->load = device_load_saturn_chdcd;
-	dev->unload = device_unload_saturn_chdcd;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_GET_NAME:						info->name = saturn_cdrom_getname; break;
+
+		default: cdrom_device_getinfo(devclass, state, info);
+	}
 }
 
 SYSTEM_CONFIG_START( saturn )

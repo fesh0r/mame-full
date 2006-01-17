@@ -332,45 +332,69 @@ ROM_END
 
 #define rom_gamgj rom_gamg
 
-static void sms_cartslot_getinfo(struct IODevice *dev)
+static void sms_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "sms\0";
-	dev->must_be_loaded = 1;
-	dev->init = device_init_sms_cart;
-	dev->load = device_load_sms_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_sms_cart; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_sms_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sms\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(sms)
 	CONFIG_DEVICE(sms_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void smso_cartslot_getinfo(struct IODevice *dev)
+static void smso_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	sms_cartslot_getinfo(dev);
-	dev->must_be_loaded = 0;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 0; break;
+
+		default:										sms_cartslot_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(smso)
 	CONFIG_DEVICE(smso_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void gamegear_cartslot_getinfo(struct IODevice *dev)
+static void gamegear_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	sms_cartslot_getinfo(dev);
-	dev->file_extensions = "gg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "gg\0"; break;
+
+		default:										sms_cartslot_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(gamegear)
 	CONFIG_DEVICE(gamegear_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void gamegearo_cartslot_getinfo(struct IODevice *dev)
+static void gamegearo_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	gamegear_cartslot_getinfo(dev);
-	dev->must_be_loaded = 0;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 0; break;
+
+		default:										gamegear_cartslot_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(gamegearo)

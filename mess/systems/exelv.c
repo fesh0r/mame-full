@@ -81,7 +81,7 @@ static void exelv_hblank_interrupt(void)
 	return INIT_PASS;
 }
 
-static DEVICE_UNLOAD(exelv_cart)
+static void device_unload_exelv_cart(mess_image *image)
 {
 }*/
 

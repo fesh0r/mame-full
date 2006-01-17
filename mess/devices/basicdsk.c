@@ -83,13 +83,13 @@ static basicdsk *get_basicdsk(mess_image *img)
 	return &basicdsk_drives[drive];
 }
 
-DEVICE_INIT(basicdsk_floppy)
+int device_init_basicdsk_floppy(mess_image *image)
 {
 	return floppy_drive_init(image, &basicdsk_floppy_interface);
 }
 
 /* attempt to insert a disk into the drive specified with id */
-DEVICE_LOAD(basicdsk_floppy)
+int device_load_basicdsk_floppy(mess_image *image, mame_file *file)
 {
 	basicdsk *w = get_basicdsk(image);
 
@@ -108,7 +108,7 @@ DEVICE_LOAD(basicdsk_floppy)
 	return INIT_PASS;
 }
 
-DEVICE_UNLOAD(basicdsk_floppy)
+void device_unload_basicdsk_floppy(mess_image *image)
 {
 	basicdsk *w = get_basicdsk(image);
 	w->image_file = NULL;
@@ -585,15 +585,24 @@ static void basicdsk_read_sector_data_into_buffer(mess_image *img, int side, int
 
 
 
-void legacybasicdsk_device_getinfo(struct IODevice *dev)
+void legacybasicdsk_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	dev->type = IO_FLOPPY;
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 1;
-	dev->init = device_init_basicdsk_floppy;
-	dev->unload = device_unload_basicdsk_floppy;
-	/*dev->status = floppy_status;*/
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:						info->i = IO_FLOPPY; break;
+		case DEVINFO_INT_READABLE:					info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:					info->i = 1; break;
+		case DEVINFO_INT_CREATABLE:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:						info->init = device_init_basicdsk_floppy; break;
+		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_basicdsk_floppy; break;
+		case DEVINFO_PTR_STATUS:					/* info->status = floppy_status; */ break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+	}
 }
 
 

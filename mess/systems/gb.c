@@ -298,21 +298,35 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_PALETTE_INIT(gbc)
 MACHINE_DRIVER_END
 
-static void gameboy_cartslot_getinfo(struct IODevice *dev)
+static void gameboy_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "gb\0gmb\0cgb\0gbc\0sgb\0";
-	dev->must_be_loaded = 1;
-	dev->init = device_init_gb_cart;
-	dev->load = device_load_gb_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_gb_cart; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_gb_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "gb\0gmb\0cgb\0gbc\0sgb\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void gameboy_cartslot_getinfo_gb(struct IODevice *dev)
+static void gameboy_cartslot_getinfo_gb(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	gameboy_cartslot_getinfo(dev);
-	dev->must_be_loaded = 0;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 0; break;
+
+		default:										gameboy_cartslot_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(gameboy)
@@ -355,14 +369,23 @@ static MACHINE_DRIVER_START( megaduck )
 	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
-static void megaduck_cartslot_getinfo(struct IODevice *dev)
+static void megaduck_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "bin\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_megaduck_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_megaduck_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(megaduck)

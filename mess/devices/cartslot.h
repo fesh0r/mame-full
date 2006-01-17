@@ -21,6 +21,6 @@
 #define ROM_FILL_FF		0x00000004
 #define ROM_NOCLEAR		0x00000008
 
-void cartslot_device_getinfo(struct IODevice *iodev);
+void cartslot_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 
 #endif /* CARTSLOT_H */

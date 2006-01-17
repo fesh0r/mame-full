@@ -423,40 +423,64 @@ ROM_START(intvkbd)
 	ROM_LOAD( "4c52.u34",  0x0000, 0x0800, CRC(cbeb2e96) SHA1(f0e17adcd278fb376c9f90833c7fbbb60193dbe3))
 ROM_END
 
-static void intv_cartslot_getinfo(struct IODevice *dev)
+static void intv_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "int\0rom\0";
-	dev->must_be_loaded = 1;
-	dev->init = device_init_intv_cart;
-	dev->load = device_load_intv_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_intv_cart; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_intv_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "int\0rom\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(intv)
 	CONFIG_DEVICE(intv_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void intvkbd_cartslot_getinfo(struct IODevice *dev)
+static void intvkbd_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "int\0rom\0bin\0";
-	dev->load = device_load_intvkbd_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_intvkbd_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "int\0rom\0bin\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void intvkbd_cassette_getinfo(struct IODevice *dev)
+static void intvkbd_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "tap\0";
-	dev->reset_on_load = 1;
-	dev->readable = 0;	/* INVALID */
-	dev->writeable = 0;	/* INVALID */
-	dev->creatable = 0;	/* INVALID */
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0;	/* INVALID */ break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+	}
 }
 
 SYSTEM_CONFIG_START(intvkbd)

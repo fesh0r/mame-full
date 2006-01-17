@@ -777,19 +777,39 @@ static MACHINE_DRIVER_START( vc20v )
 #endif
 MACHINE_DRIVER_END
 
-static void cbmvc20_cartslot_getinfo(struct IODevice *dev)
+static void cbmvc20_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	cartslot_device_getinfo(dev);
-	dev->count = 2;
-	dev->file_extensions = "a0\00020\00040\00060\0rom\0bin\0";
-	dev->init = device_init_vc20_rom;
-	dev->load = device_load_vc20_rom;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 2; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_INIT:							info->init = device_init_vc20_rom; break;
+		case DEVINFO_PTR_LOAD:							info->load = device_load_vc20_rom; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "a0\00020\00040\00060\0rom\0bin\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
-static void vc20_quickload_getinfo(struct IODevice *dev)
+static void vc20_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
-	quickload_device_getinfo(dev, quickload_load_cbm_vc20, CBM_QUICKLOAD_DELAY);
-	dev->file_extensions = "p00\0prg\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_vc20; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = CBM_QUICKLOAD_DELAY; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(vc20)

@@ -176,14 +176,23 @@ static MACHINE_DRIVER_START( wscolor )
 	MDRV_PALETTE_LENGTH(4096)
 MACHINE_DRIVER_END
 
-static void wswan_cartslot_getinfo(struct IODevice *dev)
+static void wswan_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cartslot */
-	cartslot_device_getinfo(dev);
-	dev->count = 1;
-	dev->file_extensions = "ws\0wsc\0";
-	dev->must_be_loaded = 1;
-	dev->load = device_load_wswan_cart;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_wswan_cart; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "ws\0wsc\0"; break;
+
+		default:										cartslot_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(wswan)

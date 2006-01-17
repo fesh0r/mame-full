@@ -437,24 +437,43 @@ ROM_START(trs80m3)
 ROM_END
 
 
-static void trs80_cassette_getinfo(struct IODevice *dev)
+static void trs80_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* cassette */
-	dev->type = IO_CASSETTE;
-	dev->count = 1;
-	dev->file_extensions = "cas\0";
-	dev->readable = 1;
-	dev->writeable = 0;
-	dev->creatable = 0;
-	dev->load = device_load_trs80_cas;
-	dev->unload = device_unload_trs80_cas;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_TYPE:							info->i = IO_CASSETTE; break;
+		case DEVINFO_INT_READABLE:						info->i = 1; break;
+		case DEVINFO_INT_WRITEABLE:						info->i = 0; break;
+		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
+		case DEVINFO_INT_COUNT:							info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_trs80_cas; break;
+		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_trs80_cas; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cas\0"; break;
+	}
 }
 
-static void trs80_quickload_getinfo(struct IODevice *dev)
+static void trs80_quickload_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* quickload */
-	quickload_device_getinfo(dev, quickload_load_trs80_cmd, 0.5);
-	dev->file_extensions = "cmd\0";
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cmd\0"; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_trs80_cmd; break;
+
+		/* --- the following bits of info are returned as doubles --- */
+		case DEVINFO_FLOAT_QUICKLOAD_DELAY:				info->d = 0.5; break;
+
+		default:										quickload_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(trs80)
@@ -463,13 +482,22 @@ SYSTEM_CONFIG_START(trs80)
 SYSTEM_CONFIG_END
 
 
-static void trs8012_floppy_getinfo(struct IODevice *dev)
+static void trs8012_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
-	legacybasicdsk_device_getinfo(dev);
-	dev->count = 4;
-	dev->file_extensions = "dsk\0";
-	dev->load = device_load_trs80_floppy;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:							info->i = 4; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_LOAD:							info->load = device_load_trs80_floppy; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+
+		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
+	}
 }
 
 SYSTEM_CONFIG_START(trs8012)
