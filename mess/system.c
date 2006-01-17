@@ -189,7 +189,7 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
-	DRIVER( svision )	/* Super Vision	Handheld							*/
+	DRIVER( svision )	/* Supervision	Handheld							*/
 
 	/* INTERTON */
 	DRIVER( vc4000 )	/* Interton vc4000									*/
