@@ -2,8 +2,9 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Sony Playstation (scph3000 J v1.1 01/22/95)  [incog]
-- Sony Playstation (scph3500 J v2.1 07/17/95)  [incog]
+- Exidy Sorcerer (diskless) [Robert]
+- Sony Playstation (scph3000 J v1.1 01/22/95) [incog]
+- Sony Playstation (scph3500 J v2.1 07/17/95) [incog]
 - Turbo Grafix-16 [Rob Bohms]
 
 
@@ -14,6 +15,9 @@ System Driver Changes:
 
 - [PC] Fixed PC keyboard ESC char code (it is now 27; used to be 26).  [Nate
   Woods]
+
+- [EXIDY] Fixed keyboard, printer and video speed.  Added natural keyboard
+  support.  (bug #615) [Robert]
 
 - [PCE] Various improvements; removed GAME_NOT_WORKING flag.  [Rob Bohms and
   Charles MacDonald]

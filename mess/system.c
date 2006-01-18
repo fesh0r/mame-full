@@ -725,6 +725,7 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 
 	/*EXIDY INC */
 	DRIVER( exidy )		/* Sorcerer											*/
+	DRIVER( exidyd )	/* Sorcerer (diskless)								*/
 
 	/* GALAKSIJA */
 	DRIVER( galaxy )
