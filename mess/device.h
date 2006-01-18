@@ -20,6 +20,8 @@
  *
  *************************************/
 
+#define MAX_DEV_INSTANCES	5
+
 enum
 {
 	DEVINFO_CREATE_OPTMAX = 32,
@@ -70,6 +72,9 @@ enum
 	DEVINFO_STR_CREATE_OPTNAME,
 	DEVINFO_STR_CREATE_OPTDESC = DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX,
 	DEVINFO_STR_CREATE_OPTEXTS = DEVINFO_STR_CREATE_OPTDESC + DEVINFO_CREATE_OPTMAX,
+
+	DEVINFO_STR_NAME = DEVINFO_STR_CREATE_OPTEXTS + DEVINFO_CREATE_OPTMAX,
+	DEVINFO_STR_DESCRIPTION = DEVINFO_STR_NAME + MAX_DEV_INSTANCES,
 
 	DEVINFO_STR_DEV_SPECIFIC = 0x28000,					/* R/W: Device-specific values start here */
 
@@ -189,8 +194,6 @@ INLINE char *device_temp_str(void)
  *  Other
  *
  *************************************/
-
-#define MAX_DEV_INSTANCES	5
 
 typedef enum
 {

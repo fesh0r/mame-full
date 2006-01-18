@@ -938,6 +938,7 @@ COREOBJS +=							\
 	$(OBJ)/machine/idectrl.o		\
 	$(OBJ)/machine/6532riot.o		\
 	$(OBJ)/mess/mess.o				\
+	$(OBJ)/mess/mesvalid.o			\
 	$(OBJ)/mess/image.o				\
 	$(OBJ)/mess/system.o			\
 	$(OBJ)/mess/device.o			\

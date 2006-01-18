@@ -86,6 +86,14 @@ static const char *default_device_name(const struct IODevice *dev, int id,
 {
 	const char *name;
 
+	/* use the cool new device string technique */
+	name = device_get_info_string(&dev->devclass, DEVINFO_STR_DESCRIPTION+id);
+	if (name)
+	{
+		snprintf(buf, bufsize, "%s", name);
+		return buf;
+	}
+
 	name = ui_getstring((UI_cartridge - IO_CARTSLOT) + dev->type);
 	if (dev->count > 1)
 	{

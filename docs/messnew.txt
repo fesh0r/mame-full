@@ -48,6 +48,8 @@ Source Changes:
 
 - Fixed a file manager memory allocation bug.  [Brian Sturk]
 
+- Moved MESS validity code into a separate file.  [Nate Woods]
+
 
 
 0.103
