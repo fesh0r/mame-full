@@ -392,7 +392,7 @@ void cassette_device_getinfo(const device_class *devclass, UINT32 state, union d
 		case DEVINFO_PTR_CASSETTE_FORMATS:			info->p = cassette_default_formats; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;
 		case DEVINFO_STR_FILE_EXTENSIONS:
 			formats = device_get_info_ptr(devclass, DEVINFO_PTR_CASSETTE_FORMATS);
 
@@ -402,6 +402,12 @@ void cassette_device_getinfo(const device_class *devclass, UINT32 state, union d
 
 			for (i = 0; formats[i]; i++)
 				specify_extension(s, 256, formats[i]->extensions);
+
+			while(s[strlen(s) + 1] != '\0')
+			{
+				s += strlen(s);
+				*(s++) = ',';
+			}
 			break;
 	}
 }

@@ -2265,7 +2265,7 @@ static void spectrum_common_snapshot_getinfo(const device_class *devclass, UINT3
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sna\0z80\0sp\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "sna,z80,sp"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_spectrum; break;
@@ -2280,7 +2280,7 @@ static void spectrum_common_quickload_getinfo(const device_class *devclass, UINT
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "scr\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "scr"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_spectrum; break;
@@ -2330,7 +2330,7 @@ static void ts2068_cartslot_getinfo(const device_class *devclass, UINT32 state, 
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_timex_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dck\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dck"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

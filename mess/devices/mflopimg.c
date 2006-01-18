@@ -425,6 +425,11 @@ void floppy_device_getinfo(const device_class *devclass, UINT32 state, union dev
 			s[1] = '\0';
 			for (i = 0; floppy_options[i].construct; i++)
 				specify_extension(s, 256, floppy_options[i].extensions);
+			while(s[strlen(s) + 1] != '\0')
+			{
+				s += strlen(s);
+				*(s++) = ',';
+			}
 			break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */

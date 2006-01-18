@@ -322,7 +322,7 @@ void apple525_device_getinfo(const device_class *devclass, UINT32 state, union d
 		case DEVINFO_INT_COUNT:				info->i = 2; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_TAG:			info->s = APPLE525TAG; break;
+		case DEVINFO_STR_DEV_TAG:			strcpy(info->s = device_temp_str(), APPLE525TAG); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_INIT:				info->init = device_init_apple525_floppy; break;

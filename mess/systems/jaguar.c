@@ -531,7 +531,7 @@ static void jaguar_quickload_getinfo(const device_class *devclass, UINT32 state,
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "bin"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_jaguar; break;

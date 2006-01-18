@@ -464,7 +464,7 @@ static void kc85_quickload_getinfo(const device_class *devclass, UINT32 state, u
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "kcc\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "kcc"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_kc; break;
@@ -491,7 +491,7 @@ static void kc85d_floppy_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_LOAD:							info->load = device_load_kc85_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk"); break;
 
 		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
 	}

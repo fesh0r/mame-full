@@ -484,7 +484,7 @@ static void pdp1_punchtape_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_GET_DISPOSITIONS:				info->getdispositions = pdp1_get_open_mode; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0rim\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "tap,rim"); break;
 	}
 }
 
@@ -505,7 +505,7 @@ static void pdp1_printer_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_pdp1_typewriter; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "typ\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "typ"); break;
 	}
 }
 
@@ -526,7 +526,7 @@ static void pdp1_cylinder_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_pdp1_drum; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "drm\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "drm"); break;
 	}
 }
 

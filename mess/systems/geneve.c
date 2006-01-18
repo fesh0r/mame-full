@@ -571,7 +571,7 @@ static void geneve_harddisk_getinfo(const device_class *devclass, UINT32 state, 
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_hd; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "hd\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "hd"); break;
 	}
 }
 
@@ -592,7 +592,7 @@ static void geneve_parallel_getinfo(const device_class *devclass, UINT32 state, 
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_4_pio; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), ""); break;
 	}
 }
 
@@ -613,7 +613,7 @@ static void geneve_serial_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti99_4_rs232; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), ""); break;
 	}
 }
 
@@ -635,7 +635,7 @@ static void geneve_memcard_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_smartmedia; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), ""); break;
 	}
 }
 

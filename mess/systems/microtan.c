@@ -272,7 +272,7 @@ static void microtan_snapshot_getinfo(const device_class *devclass, UINT32 state
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "m65\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "m65"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_microtan; break;
@@ -290,7 +290,7 @@ static void microtan_quickload_getinfo(const device_class *devclass, UINT32 stat
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "hex\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "hex"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_microtan_hexfile; break;

@@ -517,7 +517,7 @@ static void snes_cartslot_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_LOAD:							info->load = device_load_snes_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "smc\0sfc\0fig\0swc\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "smc,sfc,fig,swc"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

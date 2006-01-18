@@ -292,7 +292,7 @@ static void atom_floppy_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_LOAD:							info->load = device_load_atom_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "ssd\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "ssd"); break;
 
 		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
 	}
@@ -316,7 +316,7 @@ static void atom_quickload_getinfo(const device_class *devclass, UINT32 state, u
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "atm\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "atm"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_atom; break;

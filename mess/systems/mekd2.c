@@ -214,7 +214,7 @@ static void mekd2_cartslot_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_LOAD:							info->load = device_load_mekd2_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "d2\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "d2"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

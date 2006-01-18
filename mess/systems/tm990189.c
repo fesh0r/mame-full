@@ -997,7 +997,7 @@ static void tm990_189_serial_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tm990_189_rs232; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), ""); break;
 	}
 }
 

@@ -517,7 +517,7 @@ static void ti85_snapshot_getinfo(const device_class *devclass, UINT32 state, un
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sav\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "sav"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_ti8x; break;
@@ -544,7 +544,7 @@ static void ti85_serial_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti85_serial; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "85p,85s,85i,85n,85c,85l,85k,85m,85v,85d,85e,85r,85g,85b"); break;
 	}
 }
 
@@ -559,7 +559,7 @@ static void ti86_snapshot_getinfo(const device_class *devclass, UINT32 state, un
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sav\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "sav"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_ti8x; break;
@@ -586,7 +586,7 @@ static void ti86_serial_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_ti85_serial; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "86p,86s,86i,86n,86c,86l,86k,86m,86v,86d,86e,86r,86g"); break;
 	}
 }
 

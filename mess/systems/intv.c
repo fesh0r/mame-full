@@ -437,7 +437,7 @@ static void intv_cartslot_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_LOAD:							info->load = device_load_intv_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "int\0rom\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "int,rom"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -459,7 +459,7 @@ static void intvkbd_cartslot_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_LOAD:							info->load = device_load_intvkbd_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "int\0rom\0bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "int,rom,bin"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -479,7 +479,7 @@ static void intvkbd_cassette_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_INT_RESET_ON_LOAD:					info->i = 1; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "tap"); break;
 	}
 }
 

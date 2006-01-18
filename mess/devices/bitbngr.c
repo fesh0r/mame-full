@@ -180,7 +180,7 @@ void bitbanger_device_getinfo(const device_class *devclass, UINT32 state, union 
 		case DEVINFO_PTR_INIT:						info->init = bitbanger_init; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
-		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = "prn\0"; break;
+		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			strcpy(info->s = device_temp_str(), "prn"); break;
 	}
 }

@@ -114,6 +114,8 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 	device_getinfo_handler handlers[64];
 	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
 	int createimage_optcount, count, i, j;
+	const char *file_extensions, *info_string;
+	char *converted_file_extensions;
 	struct IODevice *devices = NULL;
 
 	memset(handlers, 0, sizeof(handlers));
@@ -146,11 +148,24 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 		{
 			devices[i].devclass.get_info = handlers[i];
 			devices[i].devclass.gamedrv = gamedrv;
-
-			devices[i].tag					= device_get_info_string(&devices[i].devclass, DEVINFO_STR_DEV_TAG);
+			
+			/* convert file extensions from comma delimited to null delimited */
+			converted_file_extensions = NULL;
+			file_extensions = device_get_info_string(&devices[i].devclass, DEVINFO_STR_FILE_EXTENSIONS);
+			if (file_extensions)
+			{
+				converted_file_extensions = auto_malloc(strlen(file_extensions) + 2);
+				for (j = 0; file_extensions[j]; j++)
+					converted_file_extensions[j] = (file_extensions[j] != ',') ? file_extensions[j] : '\0';
+				converted_file_extensions[j + 0] = '\0';
+				converted_file_extensions[j + 1] = '\0';
+			}
+			
+			info_string = device_get_info_string(&devices[i].devclass, DEVINFO_STR_DEV_TAG);
+			devices[i].tag					= info_string ? auto_strdup(info_string) : NULL;
 			devices[i].type					= device_get_info_int(&devices[i].devclass, DEVINFO_INT_TYPE);
 			devices[i].count				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_COUNT);
-			devices[i].file_extensions		= auto_strlistdup(device_get_info_string(&devices[i].devclass, DEVINFO_STR_FILE_EXTENSIONS));
+			devices[i].file_extensions		= converted_file_extensions;
 
 			devices[i].readable				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_READABLE) ? 1 : 0;
 			devices[i].writeable			= device_get_info_int(&devices[i].devclass, DEVINFO_INT_WRITEABLE) ? 1 : 0;
@@ -185,9 +200,12 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 
 				for (j = 0; j < createimage_optcount; j++)
 				{
-					devices[i].createimage_options[j].name			= device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTNAME + j);
-					devices[i].createimage_options[j].description	= device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTDESC + j);
-					devices[i].createimage_options[j].extensions	= device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTEXTS + j);
+					info_string = device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTNAME + j);
+					devices[i].createimage_options[j].name			= info_string ? auto_strdup(info_string) : NULL;
+					info_string = device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTDESC + j);
+					devices[i].createimage_options[j].description	= info_string ? auto_strdup(info_string) : NULL;
+					info_string = device_get_info_string(&devices[i].devclass, DEVINFO_STR_CREATE_OPTEXTS + j);
+					devices[i].createimage_options[j].extensions	= info_string ? auto_strdup(info_string) : NULL;
 					devices[i].createimage_options[j].optspec		= device_get_info_ptr(&devices[i].devclass, DEVINFO_PTR_CREATE_OPTSPEC + j);
 				}
 

@@ -575,7 +575,7 @@ static void oric1_floppy_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_STATUS:						/* info->status = floppy_status; */ break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk"); break;
 	}
 }
 

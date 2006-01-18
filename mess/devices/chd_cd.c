@@ -363,11 +363,11 @@ void cdrom_device_getinfo(const device_class *devclass, UINT32 state, union devi
 		case DEVINFO_PTR_CREATE_OPTSPEC+0:			info->p = (void *) mess_cd_option_spec;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
-		case DEVINFO_STR_FILE_EXTENSIONS:			info->s = "chd\0"; break;
-		case DEVINFO_STR_CREATE_OPTNAME+0:			info->s = "chdcd"; break;
-		case DEVINFO_STR_CREATE_OPTDESC+0:			info->s = "MAME/MESS CHD CD-ROM drive"; break;
-		case DEVINFO_STR_CREATE_OPTEXTS+0:			info->s = "chd\0"; break;
+		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;
+		case DEVINFO_STR_FILE_EXTENSIONS:			strcpy(info->s = device_temp_str(), "chd"); break;
+		case DEVINFO_STR_CREATE_OPTNAME+0:			strcpy(info->s = device_temp_str(), "chdcd"); break;
+		case DEVINFO_STR_CREATE_OPTDESC+0:			strcpy(info->s = device_temp_str(), "MAME/MESS CHD CD-ROM drive"); break;
+		case DEVINFO_STR_CREATE_OPTEXTS+0:			strcpy(info->s = device_temp_str(), "chd\0"); break;
 	}
 }
 

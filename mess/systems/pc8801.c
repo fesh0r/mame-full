@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.44 2006/01/17 04:14:05 npwoods Exp $
+  $Id: pc8801.c,v 1.45 2006/01/18 01:30:30 npwoods Exp $
 
 ***************************************************************************/
 
@@ -580,7 +580,7 @@ static void pc88_floppy_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_STATUS:						/* info->status = floppy_status; */ break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "d88\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "d88"); break;
 	}
 }
 

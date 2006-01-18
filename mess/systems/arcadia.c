@@ -333,7 +333,7 @@ static void arcadia_cartslot_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_LOAD:							info->load = device_load_arcadia_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "bin"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

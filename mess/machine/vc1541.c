@@ -1107,7 +1107,7 @@ void vc1541_device_getinfo(const device_class *devclass, UINT32 state, union dev
 		case DEVINFO_PTR_VC1541_CONFIG:			info->f = (genf *) vc1541_config; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:		info->s = "d64\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:		strcpy(info->s = device_temp_str(), "d64"); break;
 	}
 }
 

@@ -312,7 +312,7 @@ static void mac_harddisk_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_mess_hd; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "chd\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "chd"); break;
 	}
 }
 

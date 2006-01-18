@@ -1706,7 +1706,7 @@ static void cpcplus_cartslot_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_LOAD:							info->load = device_load_amstrad_plus_cartridge; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cpr\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "cpr"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -1718,7 +1718,7 @@ static void cpcplus_snapshot_getinfo(const device_class *devclass, UINT32 state,
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "sna\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "sna"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_amstrad; break;

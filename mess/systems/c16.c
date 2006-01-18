@@ -804,7 +804,7 @@ static void c16cart_device_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_c16_rom; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0rom\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "bin,rom"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -815,7 +815,7 @@ static void c16_quickload_getinfo(const device_class *devclass, UINT32 state, un
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "p00,prg"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_c16; break;

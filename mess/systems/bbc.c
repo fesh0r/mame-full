@@ -769,7 +769,7 @@ static void bbc_cartslot_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_LOAD:							info->load = device_load_bbcb_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "rom"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -787,7 +787,7 @@ static void bbc_floppy_getinfo(const device_class *devclass, UINT32 state, union
 		case DEVINFO_PTR_LOAD:							info->load = device_load_bbc_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "ssd\0bbc\0img\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "ssd,bbc,img"); break;
 
 		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
 	}
@@ -802,7 +802,7 @@ static void bbc_cassette_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_INT_COUNT:							info->i = 1; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "wav\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "wav"); break;
 
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_MUTED; break;

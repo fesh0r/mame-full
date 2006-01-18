@@ -319,7 +319,7 @@ static void nascom1_cassette_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_nascom1_cassette; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "nas\0bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "nas,bin"); break;
 	}
 }
 
@@ -345,7 +345,7 @@ static void nascom2_cassette_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_nascom1_cassette; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cas\0nas\0bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "cas,nas,bin"); break;
 	}
 }
 

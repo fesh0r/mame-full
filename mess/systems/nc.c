@@ -1778,7 +1778,7 @@ static void nc_common_cartslot_getinfo(const device_class *devclass, UINT32 stat
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_nc_pcmcia_card; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crd\0card\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "crd,card"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -1802,7 +1802,7 @@ static void nc_common_serial_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_UNLOAD:						info->unload = serial_device_unload; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "txt\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "txt"); break;
 	}
 }
 

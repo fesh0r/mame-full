@@ -99,7 +99,7 @@ union devinfo
 	INT64	i;											/* generic integers */
 	void *	p;											/* generic pointers */
 	genf *  f;											/* generic function pointers */
-	const char *s;										/* generic strings */
+	char *s;											/* generic strings */
 	double	d;											/* generic floating points */
 
 	device_init_handler init;

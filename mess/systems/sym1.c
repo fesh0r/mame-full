@@ -129,7 +129,7 @@ static void sym1_cbmcartslot_getinfo(const device_class *devclass, UINT32 state,
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "60\00080\0c0\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "60,0080,c0"); break;
 
 		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
 	}

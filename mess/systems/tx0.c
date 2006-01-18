@@ -440,7 +440,7 @@ static void tx0_punchtape_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_GET_DISPOSITIONS:				info->getdispositions = tx0_tape_get_open_mode; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0rim\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "tap,rim"); break;
 	}
 }
 
@@ -461,7 +461,7 @@ static void tx0_printer_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tx0_typewriter; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "typ\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "typ"); break;
 	}
 }
 
@@ -483,7 +483,7 @@ static void tx0_magtape_getinfo(const device_class *devclass, UINT32 state, unio
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tx0_magtape; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "tap"); break;
 	}
 }
 

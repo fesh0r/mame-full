@@ -349,7 +349,7 @@ static void a7800_ntsc_cartslot_getinfo(const device_class *devclass, UINT32 sta
 		case DEVINFO_PTR_PARTIAL_HASH:					info->partialhash = a7800_partialhash; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "a78\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "a78"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -373,7 +373,7 @@ static void a7800_pal_cartslot_getinfo(const device_class *devclass, UINT32 stat
 		case DEVINFO_PTR_PARTIAL_HASH:					info->partialhash = a7800_partialhash; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "a78\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "a78"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

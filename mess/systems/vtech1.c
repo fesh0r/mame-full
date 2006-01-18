@@ -476,7 +476,7 @@ static void vtech1_snapshot_getinfo(const device_class *devclass, UINT32 state, 
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "vz\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "vz"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_SNAPSHOT_LOAD:					info->f = (genf *) snapshot_load_vtech1; break;
@@ -504,7 +504,7 @@ static void vtech1_floppy_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_LOAD:							info->load = device_load_vtech1_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk"); break;
 	}
 }
 

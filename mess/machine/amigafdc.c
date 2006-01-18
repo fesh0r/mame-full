@@ -497,6 +497,6 @@ void amiga_floppy_getinfo(const device_class *devclass, UINT32 state, union devi
 		case DEVINFO_PTR_LOAD:					info->load = device_load_amiga_fdc; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:		info->s = "adf\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:		strcpy(info->s = device_temp_str(), "adf"); break;
 	}
 }

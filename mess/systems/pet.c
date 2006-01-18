@@ -912,7 +912,7 @@ static void pet_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, 
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crt\0a0\0b0\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "crt,a0,b0"); break;
 
 		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -923,7 +923,7 @@ static void pet_quickload_getinfo(const device_class *devclass, UINT32 state, un
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "p00,prg"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_pet; break;
@@ -940,7 +940,7 @@ static void pet1_quickload_getinfo(const device_class *devclass, UINT32 state, u
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "p00\0prg\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "p00,prg"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_cbm_pet1; break;
@@ -977,7 +977,7 @@ static void pet4_cbmcartslot_getinfo(const device_class *devclass, UINT32 state,
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "crt\0a0\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "crt,a0"); break;
 
 		default:										cbmcartslot_device_getinfo(devclass, state, info); break;
 	}

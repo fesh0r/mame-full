@@ -312,7 +312,7 @@ static void gameboy_cartslot_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_LOAD:							info->load = device_load_gb_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "gb\0gmb\0cgb\0gbc\0sgb\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "gb,gmb,cgb,gbc,sgb"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -382,7 +382,7 @@ static void megaduck_cartslot_getinfo(const device_class *devclass, UINT32 state
 		case DEVINFO_PTR_LOAD:							info->load = device_load_megaduck_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "bin"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

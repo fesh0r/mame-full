@@ -859,7 +859,7 @@ static void apexc_cylinder_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_apexc_cylinder; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "apc\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "apc"); break;
 	}
 }
 
@@ -878,7 +878,7 @@ static void apexc_punchtape_getinfo(const device_class *devclass, UINT32 state, 
 		case DEVINFO_PTR_GET_DISPOSITIONS:				info->getdispositions = apexc_get_open_mode; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "tap\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "tap"); break;
 	}
 }
 

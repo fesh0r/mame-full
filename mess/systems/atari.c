@@ -932,7 +932,7 @@ static void atari_floppy_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_LOAD:							info->load = device_load_a800_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "atr\0dsk\0xfd\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "atr,dsk,xfd"); break;
 	}
 }
 
@@ -953,7 +953,7 @@ static void a400_cartslot_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a800_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "rom,bin"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -978,7 +978,7 @@ static void a800_cartslot_getinfo(const device_class *devclass, UINT32 state, un
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a800_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "rom,bin"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -1003,7 +1003,7 @@ static void a5200_cartslot_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_a5200_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "rom\0bin\0a52\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "rom,bin,a52"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

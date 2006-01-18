@@ -512,7 +512,7 @@ void sonydriv_device_getinfo(const device_class *devclass, UINT32 state, union d
 		case DEVINFO_INT_COUNT:				info->i = 2; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_TAG:			info->s = "sonydriv"; break;
+		case DEVINFO_STR_DEV_TAG:			strcpy(info->s = device_temp_str(), "sonydriv"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_UNLOAD:			info->unload = device_unload_sonydriv_floppy; break;

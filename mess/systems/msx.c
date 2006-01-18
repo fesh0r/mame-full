@@ -2105,7 +2105,7 @@ static void msx_floppy_getinfo(const device_class *devclass, UINT32 state, union
 		case DEVINFO_PTR_LOAD:							info->load = device_load_msx_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk"); break;
 
 		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
 	}
@@ -2124,7 +2124,7 @@ static void msx_cartslot_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_msx_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "mx1\0rom\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "mx1,rom"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}

@@ -936,7 +936,7 @@ void kim1_cassette_getinfo(const device_class *devclass, UINT32 state, union dev
 		case DEVINFO_PTR_LOAD:							info->load = device_load_kim1_cassette; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "kim1\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "kim1"); break;
 	}
 }
 

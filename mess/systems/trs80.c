@@ -454,7 +454,7 @@ static void trs80_cassette_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_trs80_cas; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cas\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "cas"); break;
 	}
 }
 
@@ -464,7 +464,7 @@ static void trs80_quickload_getinfo(const device_class *devclass, UINT32 state, 
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "cmd\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "cmd"); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_QUICKLOAD_LOAD:				info->f = (genf *) quickload_load_trs80_cmd; break;
@@ -494,7 +494,7 @@ static void trs8012_floppy_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_LOAD:							info->load = device_load_trs80_floppy; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk"); break;
 
 		default:										legacybasicdsk_device_getinfo(devclass, state, info); break;
 	}

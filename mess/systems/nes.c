@@ -325,7 +325,7 @@ static void nes_cartslot_getinfo(const device_class *devclass, UINT32 state, uni
 		case DEVINFO_PTR_PARTIAL_HASH:					info->partialhash = nes_partialhash; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "nes\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "nes"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -348,7 +348,7 @@ static void famicom_cartslot_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_PARTIAL_HASH:					info->partialhash = nes_partialhash; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "nes\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "nes"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
@@ -371,7 +371,7 @@ static void famicom_floppy_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_nes_disk; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				info->s = "dsk\0fds\0"; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "dsk,fds"); break;
 	}
 }
 

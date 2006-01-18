@@ -101,7 +101,7 @@ static void snapquick_device_getinfo(const device_class *devclass, UINT32 state,
 		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_snapquick; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_DEV_FILE:					info->s = __FILE__; break;
+		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;
 	}
 }
 
