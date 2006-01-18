@@ -2792,9 +2792,11 @@ $info=coleco
 $bio
 Coleco Industries ColecoVision
 
+
 Known Issues:
 
 None. This emulation runs most cartridges accurately. 
+
 
 EXTRA CONTROLLERS INFO:
 
@@ -2809,12 +2811,14 @@ Driving Controller is just a spinner on controller 1 socket similar to the one o
 Controller and Super Action Controllers so you can use Roller Controller or Super Action 
 Controllers to play games requiring Driving Controller.
 
+
 *Roller Controller. 
 Basically a trackball with four buttons (the two fire buttons from player 1 and the two fire 
 buttons from player 2). Only one Roller Controller can be used on a real ColecoVision.  Roller 
 Controller is connected to both controller sockets and both controllers are conected to the Roller
 Controller, it uses the spinner pins of both sockets to generate the X and Y signals (X from controller 1 
 and the Y from controller 2)
+
 
 *Super Action Controllers. 
 It is a hand controller with a keypad, four buttons (the two from
@@ -3415,6 +3419,21 @@ $end
 $info=Famicom
 $bio
 Nintendo Famicom (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=fnvision
+$bio
+FunVision(1981)
 
 
 Features:
@@ -5670,38 +5689,44 @@ Memotech MTX512
 Usage:
 
 
-Currently, the driver requires cassette images to be stored in the following
-directory - 
+The default emulation implements a MTX512 with 64K bytes RAM. However,
+the system supports memory sizes from 32K upto 512K, with 32K increments.
 
-software\mtx512
 
-The cassette image is a flat binary image with the first 0x12 bytes being the
-original mtx header and the rest being the file data.
+To load and run a tape image, just type LOAD "<image name>" at the Ready
+Prompt. To save a (BASIC) program, just type SAVE "<image name>" at the
+Ready Prompt.
 
-A note about cassette naming schemes - so long as the filename of the cassette
-image is the same as that stored in the header, you should be alright.
 
-To load and run a tape image, just type LOAD "<image name>" at the Ready Prompt.
-To save a (BASIC) program, just type SAVE "<image name>" at the Ready Prompt.
+The cassette image is a flat binary with the first 18 bytes being the
+original MTX tape header and the rest being the file data. The driver
+requires cassette images to be stored in the directory "...\software\mtx512".
+The filename of the cassette image should be the same as the name stored
+in the header, without the trailing spaces. This name can be found at
+offset 1 to 15 (starting at 0).
+
 
 MTX BASIC is pretty much a standard dialect, so you should have no problems
-using it, but its graphic handling etc. is a bit esoteric.
+using it, but its graphics and sound handling might be a bit esoteric.
 
 
 
 Known Issues:
 
 
-Improving the tape support, because at the moment it is just a hack.
+ - Limited Z80 CTC support (input channel connections are not emulated).
 
-Improve the TMS99x8 driver (appears the dirtyrect handling there is not
-quite right)
+ - No cassette device support; currently loading and saving is implemented by rewriting the ROM image (and there is no verify support).
 
-Support for additional ROMs
+ - No support for joysticks.
 
-No Cassette Save support.
+ - No support for additional ROMs.
 
-No Printer support
+ - No support for the communications board (e.g., RS-232 connections).
+
+ - No support for the FDX/HDX system.
+
+ - No support for the Node/Ring system.
 
 $end
 
