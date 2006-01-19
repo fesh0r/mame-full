@@ -11,20 +11,143 @@
 #include "ui_text.h"
 #include "inputx.h"
 
+
+static int validate_device(const device_class *devclass)
+{
+	int error = 0;
+	int is_invalid;
+	const char *s;
+	INT64 devcount;
+	char buf[256];
+	char *s1;
+	char *s2;
+	iodevice_t devtype;
+
+	/* critical information */
+	devtype = (iodevice_t) (int) device_get_info_int(devclass, DEVINFO_INT_TYPE);
+	devcount = device_get_info_int(devclass, DEVINFO_INT_COUNT);
+
+	/* sanity check device type */
+	if (devtype >= IO_COUNT)
+	{
+		printf("%s: invalid device type %i\n", devclass->gamedrv->name, (int) devtype);
+		error = 1;
+	}
+
+	/* sanity check device count */
+	if ((devcount <= 0) || (devcount > MAX_DEV_INSTANCES))
+	{
+		printf("%s: device type '%s' has an invalid device count %i\n", devclass->gamedrv->name, device_typename(devtype), (int) devcount);
+		error = 1;
+	}
+
+	/* File Extensions Checks
+	 * 
+	 * Checks the following
+	 *
+	 * 1.  Tests the integrity of the string list
+	 * 2.  Checks for duplicate extensions
+	 * 3.  Makes sure that all extensions are either lower case chars or numbers
+	 */
+	s = device_get_info_string(devclass, DEVINFO_STR_FILE_EXTENSIONS);
+	if (!s)
+	{
+		printf("%s: device type '%s' has null file extensions\n", devclass->gamedrv->name, device_typename(devtype));
+		error = 1;
+	}
+	else
+	{
+		memset(buf, 0, sizeof(buf));
+		strcpy(buf, s);
+
+		/* convert to be null delimited */
+		s1 = buf;
+		while(*s1)
+		{
+			if (*s1 == ',')
+				*s1 = '\0';
+			s1++;
+		}
+
+		s1 = buf;
+		while(*s1)
+		{
+			/* check for invalid chars */
+			is_invalid = 0;
+			for (s2 = s1; *s2; s2++)
+			{
+				if (!isdigit(*s2) && !islower(*s2))
+					is_invalid = 1;
+			}
+			if (is_invalid)
+			{
+				printf("%s: device type '%s' has an invalid extension '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
+				error = 1;
+			}
+			s2++;
+
+			/* check for dupes */
+			is_invalid = 0;
+			while(*s2)
+			{
+				if (!strcmp(s1, s2))
+					is_invalid = 1;
+				s2 += strlen(s2) + 1;
+			}
+			if (is_invalid)
+			{
+				printf("%s: device type '%s' has duplicate extensions '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
+				error = 1;
+			}
+
+			s1 += strlen(s1) + 1;
+		}
+	}
+
+	/* enforce certain rules for certain device types */
+	switch(devtype)
+	{
+		case IO_QUICKLOAD:
+		case IO_SNAPSHOT:
+			if (devcount != 1)
+			{
+				printf("%s: there can only be one instance of devices of type '%s'\n", devclass->gamedrv->name, device_typename(devtype));
+				error = 1;
+			}
+			/* fallthrough */
+
+		case IO_CARTSLOT:
+			if (!device_get_info_int(devclass, DEVINFO_INT_READABLE)
+				|| device_get_info_int(devclass, DEVINFO_INT_WRITEABLE)
+				|| device_get_info_int(devclass, DEVINFO_INT_CREATABLE))
+			{
+				printf("%s: devices of type '%s' has invalid open modes\n", devclass->gamedrv->name, device_typename(devtype));
+				error = 1;
+			}
+			break;
+			
+		default:
+			break;
+	}
+	return error;
+}
+
+
+
 int mess_validitychecks(void)
 {
 	int i, j;
-	int is_invalid;
 	int error = 0;
 	iodevice_t devtype;
 	struct IODevice *devices;
-	const struct IODevice *dev;
 	const char *name;
-	const char *s1;
-	const char *s2;
 	input_port_entry *inputports = NULL;
 	extern int device_valididtychecks(void);
 	extern const char *mess_default_text[];
+	struct SystemConfigurationParamBlock cfg;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	device_class devclass;
 
 	/* make sure that all of the UI_* strings are set for all devices */
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
@@ -78,89 +201,23 @@ int mess_validitychecks(void)
 			}
 		}
 
-		/* check device array */
-		for (j = 0; devices[j].type < IO_COUNT; j++)
+		/* check devices */
+		if (drivers[i]->sysconfig_ctor)
 		{
-			dev = &devices[j];
+			memset(&cfg, 0, sizeof(cfg));
+			memset(handlers, 0, sizeof(handlers));
+			cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+			cfg.device_handlers = handlers;
+			cfg.device_countoverrides = count_overrides;
+			drivers[i]->sysconfig_ctor(&cfg);
 
-			if (dev->type >= IO_COUNT)
+			for (j = 0; handlers[j]; j++)
 			{
-				printf("%s: invalid device type %i\n", drivers[i]->name, dev->type);
-				error = 1;
-			}
+				devclass.gamedrv = drivers[i];
+				devclass.get_info = handlers[j];
 
-			/* File Extensions Checks
-			 * 
-			 * Checks the following
-			 *
-			 * 1.  Tests the integrity of the string list
-			 * 2.  Checks for duplicate extensions
-			 * 3.  Makes sure that all extensions are either lower case chars or numbers
-			 */
-			if (!dev->file_extensions)
-			{
-				printf("%s: device type '%s' has null file extensions\n", drivers[i]->name, device_typename(dev->type));
-				error = 1;
-			}
-			else
-			{
-				s1 = dev->file_extensions;
-				while(*s1)
-				{
-					/* check for invalid chars */
-					is_invalid = 0;
-					for (s2 = s1; *s2; s2++)
-					{
-						if (!isdigit(*s2) && !islower(*s2))
-							is_invalid = 1;
-					}
-					if (is_invalid)
-					{
-						printf("%s: device type '%s' has an invalid extension '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
-						error = 1;
-					}
-					s2++;
-
-					/* check for dupes */
-					is_invalid = 0;
-					while(*s2)
-					{
-						if (!strcmp(s1, s2))
-							is_invalid = 1;
-						s2 += strlen(s2) + 1;
-					}
-					if (is_invalid)
-					{
-						printf("%s: device type '%s' has duplicate extensions '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
-						error = 1;
-					}
-
-					s1 += strlen(s1) + 1;
-				}
-			}
-
-			/* enforce certain rules for certain device types */
-			switch(dev->type)
-			{
-				case IO_QUICKLOAD:
-				case IO_SNAPSHOT:
-					if (dev->count != 1)
-					{
-						printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, device_typename(dev->type));
-						error = 1;
-					}
-					/* fallthrough */
-
-				case IO_CARTSLOT:
-					if (!dev->readable || dev->writeable || dev->creatable)
-					{
-						printf("%s: devices of type '%s' has invalid open modes\n", drivers[i]->name, device_typename(dev->type));
-						error = 1;
-					}
-					break;
-					
-				default:
-					break;
+				if (validate_device(&devclass))
+					error = 1;
 			}
 		}
 

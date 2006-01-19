@@ -207,9 +207,9 @@ void cartslot_device_getinfo(const device_class *devclass, UINT32 state, union d
 		case DEVINFO_INT_MUST_BE_LOADED:			info->i = must_be_loaded; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_INIT:						info->init = device_init_cartslot_specified; break;
-		case DEVINFO_PTR_LOAD:						info->load = device_load_cartslot_specified; break;
-		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_cartslot_specified; break;
+		case DEVINFO_PTR_INIT:						info->init = (count > 0) ? device_init_cartslot_specified : NULL; break;
+		case DEVINFO_PTR_LOAD:						info->load = (count > 0) ? device_load_cartslot_specified : NULL; break;
+		case DEVINFO_PTR_UNLOAD:					info->unload = (count > 0) ? device_unload_cartslot_specified : NULL; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;
