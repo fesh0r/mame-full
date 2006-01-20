@@ -719,33 +719,33 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
     CPU and offset
 -------------------------------------------------*/
 
-void *memory_get_op_ptr(int cpunum, offs_t offset)
+void *memory_get_op_ptr(int cpunum, offs_t offset, int arg)
 {
-	offs_t new_offset;
-	void *ptr;
-	UINT8 *saved_opcode_base;
-	UINT8 *saved_opcode_arg_base;
-	offs_t saved_opcode_mask;
-	offs_t saved_opcode_memory_min;
-	offs_t saved_opcode_memory_max;
-	UINT8 saved_opcode_entry;
+	addrspace_data *space = &cpudata[cpunum].space[ADDRESS_SPACE_PROGRAM];
+	void *ptr = NULL;
+	UINT8 entry;
 
+	/* if there is a custom mapper, use that */
 	if (cpudata[cpunum].opbase)
 	{
 		/* need to save opcode info */
-		saved_opcode_base = opcode_base;
-		saved_opcode_arg_base = opcode_arg_base;
-		saved_opcode_mask = opcode_mask;
-		saved_opcode_memory_min = opcode_memory_min;
-		saved_opcode_memory_max = opcode_memory_max;
-		saved_opcode_entry = opcode_entry;
+		UINT8 *saved_opcode_base = opcode_base;
+		UINT8 *saved_opcode_arg_base = opcode_arg_base;
+		offs_t saved_opcode_mask = opcode_mask;
+		offs_t saved_opcode_memory_min = opcode_memory_min;
+		offs_t saved_opcode_memory_max = opcode_memory_max;
+		UINT8 saved_opcode_entry = opcode_entry;
 
-		new_offset = (*cpudata[cpunum].opbase)(offset);
+		/* query the handler */
+		offs_t new_offset = (*cpudata[cpunum].opbase)(offset);
 
+		/* if it returns ~0, we use whatever data the handler set */
 		if (new_offset == ~0)
-			ptr = &opcode_base[offset];
+			ptr = arg ? &opcode_arg_base[offset] : &opcode_base[offset];
+
+		/* otherwise, we use the new offset in the generic case below */
 		else
-			ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, new_offset);
+			offset = new_offset;
 
 		/* restore opcode info */
 		opcode_base = saved_opcode_base;
@@ -754,12 +754,25 @@ void *memory_get_op_ptr(int cpunum, offs_t offset)
 		opcode_memory_min = saved_opcode_memory_min;
 		opcode_memory_max = saved_opcode_memory_max;
 		opcode_entry = saved_opcode_entry;
+
+		/* if we got our pointer, we're done */
+		if (ptr)
+			return ptr;
 	}
-	else
-	{
-		ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
-	}
-	return ptr;
+
+	/* perform the lookup */
+	offset &= space->mask;
+	entry = space->read.table[LEVEL1_INDEX(offset)];
+	if (entry >= SUBTABLE_BASE)
+		entry = space->read.table[LEVEL2_INDEX(entry, offset)];
+
+	/* if a non-RAM area, return NULL */
+	if (entry >= STATIC_RAM)
+		return NULL;
+
+	/* adjust the offset */
+	offset = (offset - space->read.handlers[entry].offset) & space->read.handlers[entry].mask;
+	return (arg && bankd_ptr[entry]) ? &bankd_ptr[entry][offset] : &bank_ptr[entry][offset];
 }
 
 

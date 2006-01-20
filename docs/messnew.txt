@@ -26,7 +26,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a bug that caused zip files where the file extension was
+  not all lowercase to not be recognized as such.  (bug #831) [Oliver
+  Stoenberg]
 
 
 
@@ -39,7 +41,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.103u2.  This incorporates all features of the
+- The core is based on MAME 0.103u3.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed how devices are specified.  The new system resembles how MAME CPU

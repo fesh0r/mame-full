@@ -928,7 +928,7 @@ void 		memory_set_decrypted_region(int cpunum, offs_t start, offs_t end, void *b
 /* ----- return a base pointer to memory ---- */
 void *		memory_get_read_ptr(int cpunum, int spacenum, offs_t offset);
 void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
-void *		memory_get_op_ptr(int cpunum, offs_t offset);
+void *		memory_get_op_ptr(int cpunum, offs_t offset, int arg);
 
 /* ----- memory banking ----- */
 void		memory_configure_bank(int banknum, int startentry, int numentries, void *base, offs_t stride);

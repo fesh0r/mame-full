@@ -486,7 +486,7 @@ static BOOL SoftwarePicker_InternalAddFile(HWND hwndPicker, LPCTSTR pszFilename,
 	zip_entry *pZipEnt;
 
 	s = _tcsrchr(pszFilename, '.');
-	if (s && (!_tcscmp(s, TEXT(".zip"))))
+	if (s && (!_tcsicmp(s, TEXT(".zip"))))
 	{
 		pZip = OpenZipFile(pszFilename);
 		if (pZip)
