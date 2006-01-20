@@ -22,7 +22,10 @@
 #if defined(__DECC) && defined(VMS)
 #include <unixlib.h>
 static char *vms_to_unix_buffer = NULL;
-static int convert_vms_to_unix(char *vms_dir_name);
+static int convert_vms_to_unix(char *vms_dir_name)
+{
+	vms_to_unix_buffer = vms_dir_name;
+}
 #endif
 
 /* #define FILEIO_DEBUG */
@@ -371,42 +374,17 @@ char *get_home_dir(void)
 		fprintf(stderr, "Who are you? Not found in passwd database!!\n");
 		return NULL;
 	}
-	if (!(s = malloc(strlen(pw->pw_dir) + 1)))
-	{
-		fprintf(stderr, "error: malloc faild for homedir string\n");
-		return NULL;
-	}
 
 /*
  * Convert The OpenVMS Formatted "$HOME" Directory Path Into Unix Format.
  */
 #if defined(__DECC) && defined(VMS)
-	vms_to_unix_buffer = NULL;
 	decc$from_vms(pw->pw_dir, convert_vms_to_unix, 1);
-	return vms_to_unix_buffer;
-}
-
-/*
- * Copy The Converted OpenVMS Directory Into Our "vms_to_unix_buffer" For Use.
- *
- */
-static int convert_vms_to_unix(char *vms_dir_name)
-{
-	if (vms_to_unix_buffer)
-	{
-		strcpy(vms_to_unix_buffer,vms_dir_name);
-	}
-	else
-	{
-		vms_to_unix_buffer = strdup(vms_dir_name);
-	}
-	return 0;
-}
-
+	if (!(s = strdup(vms_to_unix_buffer)))
 #else
-
-	strcpy(s, pw->pw_dir);
-   	return s;
-}
-
+	if (!(s = strdup(pw->pw_dir)))
 #endif
+		fprintf(stderr, "error: malloc failed for homedir string\n");
+
+	return s;
+}
