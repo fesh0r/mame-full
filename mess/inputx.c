@@ -587,6 +587,10 @@ void inputx_init(void)
 	charqueue_empty = NULL;
 	keybuffer = NULL;
 
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	debug_console_register_command("input", CMDFLAG_NONE, 0, 1, 1, execute_input);
+#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
+
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
@@ -598,11 +602,6 @@ void inputx_init(void)
 
 		setup_keybuffer();
 	}
-
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-	debug_console_register_command("input", CMDFLAG_NONE, 0, 1, 1, execute_input);
-#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
-
 	return;
 
 error:
