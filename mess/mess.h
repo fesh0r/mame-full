@@ -40,18 +40,8 @@ extern int devices_inited;
    use it in your private root makefile */
 /* #define MESS_DEBUG */
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-	#include <stdbool.h>
-#elif (! defined(__bool_true_false_are_defined)) && (! defined(__cplusplus))
-	#ifndef bool
-		#define bool int
-	#endif
-	#ifndef true
-		#define true 1
-	#endif
-	#ifndef false
-		#define false 0
-	#endif
+#ifndef bool
+#define bool int
 #endif
 
 /* Win32 defines this for vararg functions */

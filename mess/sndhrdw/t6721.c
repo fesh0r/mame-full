@@ -93,8 +93,8 @@ static void c364_speech_timer(int arg)
 	} else {
 		speech.endOfSample=
 				(memcmp(speech.sample.data,"\xff\xff\xff\xff\xff\xff",6)==0);
-		/*speech.endOfSample=true; */
-		speech.busy=false;
+		/*speech.endOfSample=TRUE; */
+		speech.busy=FALSE;
 	}
 }
 
@@ -114,19 +114,19 @@ WRITE8_HANDLER(c364_speech_w)
 			case 0:
 				switch (speech.command.data) {
 				case 9:case 0xb:
-					speech.playing=false;
+					speech.playing=FALSE;
 					break;
 				case 1: /* start */
 					timer_adjust(speech.timer, 0, 0, 1.0/8000);
-					speech.playing=true;
-					speech.endOfSample=false;
+					speech.playing=TRUE;
+					speech.endOfSample=FALSE;
 					speech.sampleindex=0;
 					break;
 				case 2:
-					speech.endOfSample=false;
-					/*speech.busy=false; */
+					speech.endOfSample=FALSE;
+					/*speech.busy=FALSE; */
 					timer_reset(speech.timer, TIME_NEVER);
-					speech.playing=false;
+					speech.playing=FALSE;
 					break;
 				case 5: /* set rate (in next nibble) */
 					speech.command.state=1;
@@ -163,7 +163,7 @@ WRITE8_HANDLER(c364_speech_w)
 							   speech.sample.data[5]));
 			speech.sample.index=0;
 			/*speech.endOfSample=false; */
-			speech.busy=true;
+			speech.busy=TRUE;
 			speech.state=0;
 		}
 		break;

@@ -38,14 +38,14 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 	memset(&vic2, 0, sizeof(vic2));
 
 	vic2.lines = VIC2_LINES;
-	vic2.vic3=true;
+	vic2.vic3 = TRUE;
 
 	vic2.dma_read = dma_read;
 	vic2.dma_read_color = dma_read_color;
 	vic2.interrupt = irq;
 	vic2.pal = pal;
 	vic2.port_changed = param_port_changed;
-	vic2.on = true;
+	vic2.on = TRUE;
 }
 
 WRITE8_HANDLER ( vic3_port_w )

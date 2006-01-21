@@ -150,8 +150,7 @@ bool sidEmuReset(SID6581 *This)
 	sidEmuSet2( &This->optr2 );
 	sidEmuSet2( &This->optr3 );
 
-
-	return true;
+	return TRUE;
 }
 
 
@@ -234,14 +233,14 @@ void sid6581_init (SID6581 *This)
 	This->PCMsid = (udword)(This->PCMfreq * (16777216.0 / This->clock));
 	This->PCMsidNoise = (udword)((This->clock*256.0)/This->PCMfreq);
 
-	This->filter.Enabled = true;
+	This->filter.Enabled = TRUE;
 
 	sidInitMixerEngine();
 	filterTableInit();
 
 	sidInitWaveformTables(This->type);
 
-	enveEmuInit(This->PCMfreq, true);
+	enveEmuInit(This->PCMfreq, TRUE);
 
 	MixerInit(0);
 

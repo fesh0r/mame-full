@@ -47,11 +47,11 @@ static void f3853_set_interrupt_request_line(void)
 		return;
 
 	if (f3853.external_enable&&!f3853.priority_line)
-		f3853.config.interrupt_request(INTERRUPT_VECTOR(true), true);
+		f3853.config.interrupt_request(INTERRUPT_VECTOR(TRUE), TRUE);
 	else if (f3853.timer_enable&&!f3853.priority_line&&f3853.request_flipflop)
-		f3853.config.interrupt_request(INTERRUPT_VECTOR(false), true);
+		f3853.config.interrupt_request(INTERRUPT_VECTOR(FALSE), TRUE);
 	else
-		f3853.config.interrupt_request(0, false);
+		f3853.config.interrupt_request(0, FALSE);
 }
 
 static void f3853_timer_callback(int param);
@@ -68,7 +68,7 @@ static void f3853_timer_callback(int param)
 {
     if (f3853.timer_enable)
 	{
-		f3853.request_flipflop = true;
+		f3853.request_flipflop = TRUE;
 		f3853_set_interrupt_request_line();
     }
     f3853_timer_start(0xfe);
@@ -82,8 +82,8 @@ void f3853_init(F3853_CONFIG *config)
 
 	for (i=254/*known to get 0xfe after 255 cycles*/; i>=0; i--)
 	{
-		bool o7=reg&0x80?true:false, o5=reg&0x20?true:false,
-			o4=reg&0x10?true:false, o3=reg&8?true:false;
+		bool o7=reg&0x80?TRUE:FALSE, o5=reg&0x20?TRUE:FALSE,
+			o4=reg&0x10?TRUE:FALSE, o3=reg&8?TRUE:FALSE;
 		f3853_value_to_cycle[reg]=i;
 		reg<<=1;
 		if (!((o7!=o5)!=(o4!=o3))) reg|=1;
@@ -91,8 +91,8 @@ void f3853_init(F3853_CONFIG *config)
 
 	f3853.config=*config;
 
-	f3853.priority_line=false;
-	f3853.external_interrupt_line=true;
+	f3853.priority_line=FALSE;
+	f3853.external_interrupt_line=TRUE;
 	f3853.timer = timer_alloc(f3853_timer_callback);
 }
 
@@ -104,8 +104,8 @@ void f3853_reset(void)
 void f3853_set_external_interrupt_in_line(bool level)
 {
     if (f3853.external_interrupt_line&&!level&& f3853.external_enable)
-	f3853.request_flipflop=true;
-    f3853.external_interrupt_line=level;
+	f3853.request_flipflop = TRUE;
+    f3853.external_interrupt_line = level;
     f3853_set_interrupt_request_line();
 }
 
@@ -147,7 +147,7 @@ WRITE8_HANDLER(f3853_w)
 		f3853_set_interrupt_request_line();
 		break;
 	case 3: //timer
-		f3853.request_flipflop=false;
+		f3853.request_flipflop=FALSE;
 		f3853_set_interrupt_request_line();
 		f3853_timer_start(data);
 		break;

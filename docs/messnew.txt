@@ -26,6 +26,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows] Fixed a bug that caused crashes if a dialog was presented, the
+  emulation reset, and a subsequent dialog presented.  (bug #834) [Nate Woods]
+
 - [Windows GUI] Fixed a bug that caused zip files where the file extension was
   not all lowercase to not be recognized as such.  (bug #831) [Oliver
   Stoenberg]

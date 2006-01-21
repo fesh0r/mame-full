@@ -253,7 +253,7 @@ void vic6567_init (int chip_vic2e, int pal,
 	vic2.interrupt = irq;
 	vic2.vic2e = chip_vic2e;
 	vic2.pal = pal;
-	vic2.on = true;
+	vic2.on = TRUE;
 }
 
 void vic2_set_rastering(int onoff)

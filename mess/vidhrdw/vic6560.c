@@ -140,7 +140,7 @@ static void vic656x_init (void)
 
 void vic6560_init (int (*dma_read) (int), int (*dma_read_color) (int))
 {
-	vic6560_pal = false;
+	vic6560_pal = FALSE;
 	vic_dma_read = dma_read;
 	vic_dma_read_color = dma_read_color;
 	vic656x_init ();
@@ -148,7 +148,7 @@ void vic6560_init (int (*dma_read) (int), int (*dma_read_color) (int))
 
 void vic6561_init (int (*dma_read) (int), int (*dma_read_color) (int))
 {
-	vic6560_pal = true;
+	vic6560_pal = TRUE;
 	vic_dma_read = dma_read;
 	vic_dma_read_color = dma_read_color;
 	vic656x_init ();

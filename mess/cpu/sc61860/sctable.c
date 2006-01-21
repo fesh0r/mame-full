@@ -49,8 +49,8 @@ static void sc61860_instruction(void)
 		case 41: sc61860_jump_rel_minus(!sc61860.zero);sc61860_ICount-=4;break;
 		case 42: sc61860_jump_rel_plus(!sc61860.carry);sc61860_ICount-=4;break;
 		case 43: sc61860_jump_rel_minus(!sc61860.carry);sc61860_ICount-=4;break;
-		case 44: sc61860_jump_rel_plus(true);sc61860_ICount-=4;break;
-		case 45: sc61860_jump_rel_minus(true);sc61860_ICount-=4;break;
+		case 44: sc61860_jump_rel_plus(TRUE);sc61860_ICount-=4;break;
+		case 45: sc61860_jump_rel_minus(TRUE);sc61860_ICount-=4;break;
 		case 47: sc61860_loop();sc61860_ICount-=7;break;
 		case 48: sc61860_load_imm_p(sc61860.ram[A]);sc61860_ICount-=2;break;
 		case 49: sc61860_load_imm_q(sc61860.ram[A]);sc61860_ICount-=2;break;
@@ -77,7 +77,7 @@ static void sc61860_instruction(void)
 		case 76: sc61860_in_a();sc61860_ICount-=2;break;
 		case 77: /*nopw*/;sc61860_ICount-=2;break;
 		case 78: sc61860_wait();sc61860_ICount-=6;break;
-		case 79: sc61860_wait_x(false);sc61860_ICount-=1;break;
+		case 79: sc61860_wait_x(FALSE);sc61860_ICount-=1;break;
 		case 80: sc61860_inc_p();sc61860_ICount-=2;break;
 		case 81: sc61860_dec_p();sc61860_ICount-=2;break;
 		case 82: sc61860_store_ext(A);sc61860_ICount-=2;break;
@@ -102,7 +102,7 @@ static void sc61860_instruction(void)
 		case 103: sc61860_cmp(A,READ_OP());sc61860_ICount-=4;break;
 		case 105: sc61860_execute_table_call();sc61860_ICount-=3;break;
 		case 107: sc61860_test_special();sc61860_ICount-=4;break;
-		case 111: sc61860_wait_x(true);sc61860_ICount-=1;break;
+		case 111: sc61860_wait_x(TRUE);sc61860_ICount-=1;break;
 		case 112: sc61860_add(sc61860.p,READ_OP());sc61860_ICount-=4;break;
 		case 113: sc61860_sub(sc61860.p,READ_OP());sc61860_ICount-=4;break;
 		case 116: sc61860_add(A,READ_OP());sc61860_ICount-=4;break;

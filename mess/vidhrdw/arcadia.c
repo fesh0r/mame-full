@@ -697,8 +697,8 @@ INLINE void arcadia_vh_draw_line(mame_bitmap *bitmap,
 	// alien invaders shield lines start with 0xc0
 	if ((ch&0x3f)==0) {
 	    switch (ch) {
-		case 0xc0: graphics=true;break;
-		case 0x40: graphics=false;break;
+		case 0xc0: graphics=TRUE;break;
+		case 0x40: graphics=FALSE;break;
 //		case 0x80:
 //			alien invaders shields are empty 0x80
 //		    ui_popup(5, "graphics code 0x80 used");
@@ -737,7 +737,7 @@ static void arcadia_draw_sprites(mame_bitmap *bitmap)
     arcadia_video.reg.d.collision_bg|=0xf;
     arcadia_video.reg.d.collision_sprite|=0x3f;
     for (i=0; i<4; i++) {
-	bool doublescan = false;
+	bool doublescan = FALSE;
 	if (arcadia_video.pos[i].y<=-YPOS) continue;
 	if (arcadia_video.pos[i].y>=bitmap->height-YPOS-8) continue;
 	if (arcadia_video.pos[i].x<=-XPOS) continue;
@@ -746,19 +746,19 @@ static void arcadia_draw_sprites(mame_bitmap *bitmap)
 	switch (i) {
 	case 0:
 	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal[3]>>3)&7];
-	    doublescan=arcadia_video.reg.d.pal[3]&0x80?false:true;
+	    doublescan=arcadia_video.reg.d.pal[3]&0x80?FALSE:TRUE;
 	    break;
 	case 1:
 	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal[3]&7];
-	    doublescan=arcadia_video.reg.d.pal[3]&0x40?false:true;
+	    doublescan=arcadia_video.reg.d.pal[3]&0x40?FALSE:TRUE;
 	    break;
 	case 2:
 	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal[2]>>3)&7];
-	    doublescan=arcadia_video.reg.d.pal[2]&0x80?false:true;
+	    doublescan=arcadia_video.reg.d.pal[2]&0x80?FALSE:TRUE;
 	    break;
 	case 3:
 	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal[2]&7];
-	    doublescan=arcadia_video.reg.d.pal[2]&0x40?false:true;
+	    doublescan=arcadia_video.reg.d.pal[2]&0x40?FALSE:TRUE;
 	    break;
 	}
 	for (k=0; k<8; k++) {

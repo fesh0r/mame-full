@@ -485,7 +485,7 @@ bool ted7360_rom;
 static int lines;
 static int timer1_active, timer2_active, timer3_active;
 static mame_timer *timer1, *timer2, *timer3;
-static bool cursor1 = false;
+static int cursor1 = FALSE;
 static read8_handler vic_dma_read;
 static read8_handler vic_dma_read_rom;
 static int chargenaddr, bitmapaddr, videoaddr;
@@ -602,7 +602,7 @@ INTERRUPT_GEN( ted7360_frame_interrupt )
 	if ((ted7360[0x1f] & 0xf) >= 0x0f)
 	{
 /*  if (count>=CURSORRATE) { */
-		cursor1 ^= true;
+		cursor1 ^= TRUE;
 		ted7360[0x1f] &= ~0xf;
 		count = 0;
 	}
