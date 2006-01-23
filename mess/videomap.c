@@ -444,10 +444,7 @@ static void general_invalidate(UINT8 inval_flags_mask, int scanline)
 	assert(scanline <= Machine->drv->screen_height);
 
 	/* figure out how soon our timer needs to go off */
-	if (scanline <= cpu_getscanline())
-		delay = time_zero;
-	else
-		delay = cpu_getscanlinetime_mt(scanline);
+	delay = cpu_getscanlinetime_mt(scanline);
 
 	/* if the timer is not set to wake in that time, set it to wake */
 	current_delay = mame_timer_timeleft(videomap_timer);
@@ -469,20 +466,7 @@ void videomap_invalidate_frameinfo()
 
 void videomap_invalidate_lineinfo()
 {
-	int scanline, horzbeampos, adjustment;
-
-	scanline = cpu_getscanline();
-	horzbeampos = cpu_gethorzbeampos();
-
-	if (scanline > Machine->drv->screen_height)
-		scanline = Machine->drv->screen_height;
-
-	assert(scanline >= 0);
-	assert(scanline <= Machine->drv->screen_height);
-
-	/* am I in the left side? adjustment is 0 if so; 1 otherwise*/
-	adjustment = (horzbeampos < (Machine->drv->screen_width / 2)) ? 0 : 1;
-	general_invalidate(FLAG_INVAL_LINEINFO, scanline + adjustment);
+	general_invalidate(FLAG_INVAL_LINEINFO, cpu_getscanline() + 1);
 }
 
 

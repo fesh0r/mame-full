@@ -13,6 +13,8 @@ System Driver Changes:
 ----------------------
 - [AT] Cleaned up A20 gating.  [Nate Woods]
 
+- [COCO3] Fixed a timing bug in video rendering.  (bug #743) [Nate Woods]
+
 - [PC] Fixed PC keyboard ESC char code (it is now 27; used to be 26).  [Nate
   Woods]
 
