@@ -188,8 +188,10 @@ static void apple2gs_floppy35_getinfo(const device_class *devclass, UINT32 state
 		case DEVINFO_INT_SONYDRIV_ALLOWABLE_SIZES:		info->i = SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K | SONY_FLOPPY_SUPPORT2IMG; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "s5d1"); break;
-		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "s5d2"); break;
+		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "slot5disk1"); break;
+		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "slot5disk2"); break;
+		case DEVINFO_STR_SHORT_NAME+0:					strcpy(info->s = device_temp_str(), "s5d1"); break;
+		case DEVINFO_STR_SHORT_NAME+1:					strcpy(info->s = device_temp_str(), "s5d2"); break;
 		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Slot 5 Disk #1"); break;
 		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "Slot 5 Disk #2"); break;
 
@@ -210,8 +212,10 @@ static void apple2gs_floppy525_getinfo(const device_class *devclass, UINT32 stat
 		case DEVINFO_INT_APPLE525_SPINFRACT_DIVISOR:	info->i = 16; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "s6d1"); break;
-		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "s6d2"); break;
+		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "slot6disk1"); break;
+		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "slot6disk2"); break;
+		case DEVINFO_STR_SHORT_NAME+0:					strcpy(info->s = device_temp_str(), "s6d1"); break;
+		case DEVINFO_STR_SHORT_NAME+1:					strcpy(info->s = device_temp_str(), "s6d2"); break;
 		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Slot 6 Disk #1"); break;
 		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "Slot 6 Disk #2"); break;
 
