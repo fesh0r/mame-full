@@ -366,13 +366,13 @@ int imgtool_validitychecks(void)
 						if (!guide_entry->identifier)
 						{
 							printf("imgtool module %s creation option %d has null identifier\n",
-								module->name, guide_entry - module->createimage_optguide);
+								module->name, (int) (guide_entry - module->createimage_optguide));
 							error = 1;
 						}
 						if (!guide_entry->display_name)
 						{
 							printf("imgtool module %s creation option %d has null display_name\n",
-								module->name, guide_entry - module->createimage_optguide);
+								module->name, (int) (guide_entry - module->createimage_optguide));
 							error = 1;
 						}
 					}
