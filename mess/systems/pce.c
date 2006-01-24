@@ -11,11 +11,10 @@
 /**********************************************************************
           To-Do List:
 - convert h6280-based drivers to internal memory map for the I/O region
-- add and test sprite collision and overflow interrupts
+- test sprite collision and overflow interrupts
+- sprite precaching
 - fix RCR interrupt
 - rewrite the base renderer loop
-- fix inputs
-- Make a TG-16 driver
 - Add CD support
 - SuperGrafix Driver
 - Banking for SF2 (and others?)
@@ -34,29 +33,138 @@ static INTERRUPT_GEN( pce_interrupt )
 {
     int ret = 0;
 
-    /* bump current scanline */
+    /* bump current scanline */ 
     vdc.curline = (vdc.curline + 1) % VDC_LPF;
+	vdc.current_segment_line++;
 
-    /* draw a line of the display */
-    if(vdc.curline < vdc.physical_height)
+	if(vdc.curline==0)
+	{
+		//state is now in the VDS region, nothing even tries to draw here.
+		vdc.top_blanking=(vdc.vdc_data[VPR].b.l&0x1F)+1;
+		vdc.top_overscan=(vdc.vdc_data[VPR].b.h)+2;
+		vdc.current_bitmap_line=0;
+		vdc.current_segment=STATE_TOPBLANK;
+		vdc.current_segment_line=0;
+		vdc.active_lines = vdc.physical_height = 1 + ( vdc.vdc_data[VDW].w & 0x01FF );
+		vdc.bottomfill=vdc.vdc_data[VCR].b.l;
+	}
+
+	switch(vdc.current_segment)
+	{
+	case STATE_TOPBLANK:
+		{
+			if(vdc.current_segment_line == vdc.top_blanking)
+			{
+				vdc.current_segment=STATE_TOPFILL;
+				vdc.current_segment_line=0;
+			}
+			break;
+		}
+	case STATE_TOPFILL:
+		{
+			if(vdc.current_segment_line == vdc.top_overscan)
+			{
+				vdc.current_segment=STATE_ACTIVE;
+				vdc.current_segment_line=0;
+				vdc.y_scroll = vdc.vdc_data[BYR].w;
+			}
+			break;
+		}
+	case STATE_ACTIVE:
+		{
+			if(vdc.current_segment_line == vdc.active_lines)
+			{
+				vdc.current_segment_line=0;
+				if(vdc.bottomfill != 0)
+				{
+					vdc.current_segment=STATE_BOTTOMFILL;
+					if(vdc.vdc_data[CR].w & CR_VR)
+					{
+						vdc.status |= VDC_VD;
+						ret = 1;
+					}				
+					
+					/* do VRAM > SATB DMA if the enable bit is set or the DVSSR reg. was written to */ 
+					if((vdc.vdc_data[DCR].w & DCR_DSR) || vdc.dvssr_write)
+					{
+						if(vdc.dvssr_write) vdc.dvssr_write = 0;
+						memcpy(&vdc.sprite_ram, &vdc.vram[vdc.vdc_data[DVSSR].w<<1], 512);
+						vdc.status |= VDC_DS;   /* set satb done flag */ 
+						
+						/* generate interrupt if needed */ 
+						if(vdc.vdc_data[DCR].w & DCR_DSC)
+							ret = 1;
+					}				
+					
+				}
+				else vdc.current_segment=STATE_TOPBLANK;
+			}
+			break;
+		}
+	case STATE_BOTTOMFILL:
+		{
+			if(vdc.current_segment_line == vdc.bottomfill)
+			{
+				vdc.current_segment_line=0;
+				vdc.current_segment=STATE_TOPBLANK;
+			}
+			break;
+		}
+
+	default:break;
+	}
+
+    /* draw a line of the display */ 
+    if(vdc.curline >= FIRST_VISIBLE && vdc.curline < (LAST_VISIBLE))
     {
-        pce_refresh_line(vdc.curline);
+        	switch(vdc.current_segment)
+			{
+			default:
+				draw_black_line(vdc.current_bitmap_line);
+				break;
+			case STATE_TOPFILL:
+			case STATE_BOTTOMFILL:
+				draw_overscan_line(vdc.current_bitmap_line);
+				break;
+			case STATE_ACTIVE:
+				pce_refresh_line(vdc.current_bitmap_line, vdc.current_segment_line);
+				break;
+			}
+			vdc.current_bitmap_line++;
+    }
+	else
+    {
+		//rendering can take place here, but it's never on screen!
+        	switch(vdc.current_segment)
+			{
+			default:
+				draw_black_line(243);
+				break;
+			case STATE_TOPFILL:
+			case STATE_BOTTOMFILL:
+				draw_overscan_line(243);
+				break;
+			case STATE_ACTIVE:
+				pce_refresh_line(243, vdc.current_segment_line);
+				break;
+			}
     }
 
-    /* generate interrupt on line compare if necessary*/
+
+    /* generate interrupt on line compare if necessary */
     if(vdc.vdc_data[CR].w & CR_RC)
-    if(vdc.curline == ((vdc.vdc_data[RCR].w & 0x03FF) - 64))
+		if(vdc.curline == (((vdc.vdc_data[RCR].w-64)+vdc.top_blanking+vdc.top_overscan)%263))
     {
         vdc.status |= VDC_RR;
         ret = 1;
     }
 
-    /* handle frame events */
-    if(vdc.curline == 256)
+    /* handle frame events */ 
+    if(vdc.curline == 261 && vdc.current_segment != STATE_BOTTOMFILL)
     {
-        vdc.status |= VDC_VD;   /* set vblank flag */
+        vdc.status |= VDC_VD;   /* set vblank flag */ 
 
-        /* do VRAM > SATB DMA if the enable bit is set or the DVSSR reg. was written to */
+        /* do VRAM > SATB DMA if the enable bit is set or the DVSSR reg. was written to */ 
         if((vdc.vdc_data[DCR].w & DCR_DSR) || vdc.dvssr_write)
         {
             if(vdc.dvssr_write) vdc.dvssr_write = 0;
@@ -64,22 +172,22 @@ static INTERRUPT_GEN( pce_interrupt )
 			assert(((vdc.vdc_data[DVSSR].w<<1) + 512) <= 0x10000);
 #endif
             memcpy(&vdc.sprite_ram, &vdc.vram[vdc.vdc_data[DVSSR].w<<1], 512);
-            vdc.status |= VDC_DS;   /* set satb done flag */
+            vdc.status |= VDC_DS;   /* set satb done flag */ 
 
-            /* generate interrupt if needed */
+            /* generate interrupt if needed */ 
             if(vdc.vdc_data[DCR].w & DCR_DSC)
             {
                 ret = 1;
             }
         }
 
-        if(vdc.vdc_data[CR].w & CR_VR)  /* generate IRQ1 if enabled */
+        if(vdc.vdc_data[CR].w & CR_VR)  /* generate IRQ1 if enabled */ 
         {
             ret = 1;
         }
     }
 	if (ret)
-		cpunum_set_input_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)

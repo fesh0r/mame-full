@@ -10,8 +10,7 @@ VDC vdc;
 
 /* Function prototypes */
 
-void pce_refresh_line(int line);
-void pce_refresh_sprites(int line);
+void pce_refresh_sprites(int bitmap_line, int line);
 void vdc_do_dma(void);
 
 VIDEO_START( pce )
@@ -53,6 +52,31 @@ VIDEO_UPDATE( pce )
     copybitmap (bitmap,vdc.bmp,0,0,0,0,&pce_visible_area,TRANSPARENCY_NONE,0);
 }
 
+void draw_black_line(int line)
+{
+/* don't know which pen is really black, so it currently uses BG pen 0*/
+	int i;
+    int center_x = ((360/2) - (vdc.physical_width/2));
+
+    /* our line buffer */ 
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+	
+	for(i=0; i<vdc.physical_width;i++)
+		line_buffer[i]=Machine->pens[0];
+}
+
+void draw_overscan_line(int line)
+{
+	int i;
+    int center_x = ((360/2) - (vdc.physical_width/2));
+
+    /* our line buffer */ 
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+	
+	for(i=0; i<vdc.physical_width;i++)
+		line_buffer[i]=Machine->pens[0x100];
+}
+
 void vram_write(offs_t offset, UINT8 data)
 {
     if(offset & 0x10000)
@@ -85,7 +109,7 @@ UINT8 vram_read(offs_t offset)
 
 WRITE8_HANDLER ( vdc_w )
 {
-    switch(offset)
+    switch(offset&3)
     {
         case 0x00: /* VDC register select */
              vdc.vdc_register = (data & 0x1F);
@@ -98,6 +122,11 @@ WRITE8_HANDLER ( vdc_w )
                 case VxR: /* LSB of data to write to VRAM */
                      vdc.vdc_latch = data;
                      break;
+
+		    case BYR:
+			if(vdc.current_segment == STATE_ACTIVE)
+				vdc.y_scroll=vdc.vdc_data[BYR].w;
+			break;
 
                 case HDR:
                      vdc.physical_width = ((data & 0x003F) + 1) << 3;
@@ -152,6 +181,11 @@ WRITE8_HANDLER ( vdc_w )
                      vdc.dvssr_write = 1;
                      break;
 
+		    case BYR:
+			if(vdc.current_segment == STATE_ACTIVE)
+				vdc.y_scroll=vdc.vdc_data[BYR].w;
+			break;
+
                 case LENR:
       	         vdc_do_dma();
                      break;
@@ -170,7 +204,7 @@ WRITE8_HANDLER ( vdc_w )
  READ8_HANDLER ( vdc_r )
 {
     int temp = 0;
-    switch(offset)
+    switch(offset&3)
     {
         case 0x00:
              temp = vdc.status;
@@ -266,19 +300,18 @@ WRITE8_HANDLER ( vce_w )
 }
 
 
-void pce_refresh_line(int line)
+void pce_refresh_line(int bitmap_line, int line)
 {
     static int width_table[4] = {5, 6, 7, 7};
 
     int center_x = ((360/2) - (vdc.physical_width/2));
- //   int center_y = ((256/2) - (vdc.physical_height/2));
 
-    int scroll_y = (vdc.vdc_data[BYR].w & 0x01FF);
+    int scroll_y = (vdc.y_scroll & 0x01FF);
     int scroll_x = (vdc.vdc_data[BXR].w & 0x03FF);
     int nt_index;
 
     /* is virtual map 32 or 64 characters tall ? (256 or 512 pixels) */
-    int v_line = (line + scroll_y) & (vdc.vdc_data[MWR].w & 0x0040 ? 0x1FF : 0x0FF);
+    int v_line = (scroll_y) & (vdc.vdc_data[MWR].w & 0x0040 ? 0x1FF : 0x0FF);
 
     /* row within character */
     int v_row = (v_line & 7);
@@ -290,7 +323,7 @@ void pce_refresh_line(int line)
     int v_width =        width_table[(vdc.vdc_data[MWR].w >> 4) & 3];
 
     /* our line buffer */
-    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * bitmap_line) + center_x;
 #ifdef MAME_DEBUG
 	int line_buffer_size;
 #endif
@@ -346,8 +379,8 @@ void pce_refresh_line(int line)
 				c = (cell_palette << 4 | i3 << 3 | i2 << 2 | i1 << 1 | i0);
 
 #ifdef MAME_DEBUG
-//fails for unknown reason: possible bounds checking?
-//				assert((i<<3)+x < (line_buffer_size / sizeof(line_buffer[0])));
+//apparently some kind of bounds check?
+				assert((i<<3)+x < (line_buffer_size));
 #endif
 				line_buffer[(i<<3)+x] = Machine->pens[c];
 			}
@@ -355,9 +388,10 @@ void pce_refresh_line(int line)
 
 		if(vdc.vdc_data[CR].w & CR_SB)
 		{
-			pce_refresh_sprites(line);
+			pce_refresh_sprites(bitmap_line, line);
 		}
 	}
+	vdc.y_scroll++;
 }
 
 
@@ -394,7 +428,7 @@ static void conv_obj(int i, int l, int hf, int vf, char *buf)
     }
 }
 
-void pce_refresh_sprites(int line)
+void pce_refresh_sprites(int bitmap_line, int line)
 {
     static int cgx_table[] = {16, 32};
     static int cgy_table[] = {16, 32, 64, 64};
@@ -411,7 +445,7 @@ void pce_refresh_sprites(int line)
     char buf[16];
 
 	UINT8 sprites_drawn=0;
-	UINT16 *line_buffer=((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+	UINT16 *line_buffer=((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * bitmap_line) + center_x;
 
 	/* 0 -> no sprite pixels drawn, otherwise is sprite #+1 */
 	UINT8 drawn[(0x40 << 3) + 32];

@@ -21,9 +21,11 @@ System Driver Changes:
 - [EXIDY] Fixed keyboard, printer and video speed.  Added natural keyboard
   support.  (bug #615) [Robert]
 
-- [PCE] Various improvements; removed GAME_NOT_WORKING flag.  [Rob Bohms and
-  Charles MacDonald]
-  
+- [PCE] Various improvements, updated renderer and removed GAME_NOT_WORKING
+  flag.  [Rob Bohms and Charles MacDonald]
+
+- [VTECH1] Fixed key definitions.  (bug #835) [Robert]
+
 
 
 User Interface Changes:

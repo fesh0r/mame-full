@@ -52,9 +52,24 @@ typedef union
   unsigned short int w;
 }pair;
 
-void pce_refresh_line(int line);
+void pce_refresh_line(int bitmap_line, int line);
 void vdc_write(int offset, int data);
 int vdc_read(int offset);
+void draw_black_line(int line);
+void draw_overscan_line(int line);
+void vdc_delayed_irq(int unused);
+
+/* VDC segments */
+#define STATE_TOPBLANK		0
+#define STATE_TOPFILL		1
+#define STATE_ACTIVE		2
+#define STATE_BOTTOMFILL	3
+
+/* define VCE frame specs, so some day  the emulator can behave right */
+#define FIRST_VISIBLE 14
+#define SYNC_AREA	   3
+#define BLANK_AREA     4
+#define LAST_VISIBLE  (VDC_LPF-SYNC_AREA-BLANK_AREA)
 
 /* the VDC context */
 
@@ -74,9 +89,15 @@ typedef struct
     pair vdc_data[32];
     int status;
     mame_bitmap *bmp;
+    int current_segment;
+    int current_segment_line;
+    int current_bitmap_line;
+    int y_scroll;
+    int top_blanking;
+    int top_overscan;
+    int active_lines;
+    int bottomfill;
 }VDC;
-
-
 
 
 /* from vidhrdw\vdc.c */
@@ -88,4 +109,3 @@ extern WRITE8_HANDLER ( vdc_w );
 extern  READ8_HANDLER ( vdc_r );
 extern WRITE8_HANDLER ( vce_w );
 extern  READ8_HANDLER ( vce_r );
-extern void pce_refresh_line(int line);
