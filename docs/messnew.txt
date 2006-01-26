@@ -48,7 +48,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.103u3.  This incorporates all features of the
+- The core is based on MAME 0.103u4.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed how devices are specified.  The new system resembles how MAME CPU
@@ -62,6 +62,8 @@ Source Changes:
 - Fixed a file manager memory allocation bug.  [Brian Sturk]
 
 - Moved MESS validity code into a separate file.  [Nate Woods]
+
+- Enhanced error reporting when loading images.  (bug #827)  [Nate Woods]
 
 
 

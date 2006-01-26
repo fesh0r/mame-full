@@ -791,7 +791,6 @@ static MACHINE_DRIVER_START( psxntsc )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -821,7 +820,6 @@ static MACHINE_DRIVER_START( psxpal )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
