@@ -75,6 +75,50 @@ int device_typeid(const char *name)
 
 
 
+static const char *internal_device_instancename(const device_class *devclass, int id,
+	UINT32 base, const char *(*get_dev_typename)(iodevice_t))
+{
+	iodevice_t type;
+	int count;
+	const char *result;
+	char *s;
+
+	/* retrieve info about the device instance */
+	result = device_get_info_string(devclass, base + id);
+	if (!result)
+	{
+		/* not specified? default to device names based on the device type */
+		type = (iodevice_t) (int) device_get_info_int(devclass, DEVINFO_INT_TYPE);
+		count = (int) device_get_info_int(devclass, DEVINFO_INT_COUNT);
+		result = get_dev_typename(type);
+
+		/* need to number if there is more than one device */
+		if (count > 1)
+		{
+			s = device_temp_str();
+			sprintf(s, "%s%d", result, id + 1);
+			result = s;
+		}
+	}
+	return result;
+}
+
+
+
+const char *device_instancename(const device_class *devclass, int id)
+{
+	return internal_device_instancename(devclass, id, DEVINFO_STR_NAME, device_typename);
+}
+
+
+
+const char *device_briefinstancename(const device_class *devclass, int id)
+{
+	return internal_device_instancename(devclass, id, DEVINFO_STR_SHORT_NAME, device_typename);
+}
+
+
+
 /*************************************
  *
  *	Device structure construction and destruction

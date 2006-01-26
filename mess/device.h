@@ -188,6 +188,9 @@ INLINE char *device_temp_str(void)
 	return cpuintrf_temp_str();
 }
 
+const char *device_instancename(const device_class *devclass, int id);
+const char *device_briefinstancename(const device_class *devclass, int id);
+
 
 
 /*************************************
