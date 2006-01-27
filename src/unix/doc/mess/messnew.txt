@@ -1,3 +1,111 @@
+0.103
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [ADVISION] Added sound support.  [Dan Boris]
+
+- [AMIGA] Fixed regression introduced in MESS 0.102.  (bug #801) [Nate Woods]
+
+- [APPLE2P] Fixed BIOS.  (bug #820) [Nick Westgate]
+
+- [ARCADIA] Added support for 12k cartridges, fixed a buffer overrun and
+  enhanced sound generation.  [Irving Gould]
+
+- [AT486] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
+
+- [C128] Fixed regressions introduced in MESS 0.102.  [Nate Woods]
+
+- [DGNBETA] Implemented MMU, keyboard and floppy support.  [Phill Harvey-Smith]
+
+- [GAMEBOY] Fixed several games that did not loard properly.  (bug #116)
+  [Wilbert Pol]
+
+- [NES] PPU, palette reading, mapper and sprite handling enhancements and
+  implemented some undocumented N2A03 opcodes. (bugs #810, #811) [Rob Bohms]
+
+- [NES] Switched to use the MAME NES APU implementation.  [R. Belmont]
+
+- [PCE] Added imperfect sound.  [Rob Bohms]
+
+- [SGI] Added a harddisk to the ip22 systems.  [R. Belmont]
+
+- [SNES] Fixed save RAM to store and save properly, improved memory mapping
+  improved raster timing, added HIRQ support and better VIRQ support,
+  improved joypad support, DSP-1 support (including all subtypes), Counter
+  latching support, fixed OAM read/write.  [R. Belmont]
+  
+
+
+User Interface Changes:
+-----------------------
+- [Windows GUI] Fixed a bug that prevented column width changes in the
+  software picker from being saved.  (bug #589) [Nate Woods]
+
+- [Windows GUI] Fixed a bug that caused "ghost filenames" to be introduced
+  when using images with spaces in the filename.  (bug #784) [Nate Woods]
+
+- [Windows GUI] Fixed a bug that could cause clones to not be ran due to
+  software settings "spilling" over onto the clones.  (bug #704) [Oliver
+  Stoeneberg]  
+
+
+
+Imgtool Changes:
+----------------
+- Implemented a feature that allows filters to qualify files, to see if they
+  are appropriate for any given filter.  [Nate Woods]
+
+- Updated Mac module; moved to floppy abstraction system, as well as support
+  for directories and filters.  MFS disk image creation now works.  [Nate
+  Woods]
+
+- Added support for modules to specify specific for icons.  Enhanced the Mac
+  module to support this feature.  [Nate Woods]
+
+- [Imgtool] Changed the Imgtool "put" command to require a destination
+  argument, like the UNIX "cp" command.  This is so that a directory argument
+  can be properly specified.  [Nate Woods]
+
+- [Imgtool] Added the ability to get and put the boot block, as if it was a
+  file called "??BOOT??".  The FAT module has been enhanced to support this
+  feature.  [Nate Woods]
+
+- [Windows Imgtool] The insert file dialog will no longer let the user specify
+  a file that does not exist (which was allowed, but eventually resulted in an
+  error.)  Also, fixed a few cosmetic errors.  [Nate Woods]
+
+- [Windows Imgtool] The disk title is now displayed on the title bar, if
+  present.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.103.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Changed generic cartridge loading so that a ROM_LOAD_CART declaration can
+  be placed in a ROM_REGION.  This change makes cartridge loading be specified
+  similar to BIOS loading, and makes things cleaner and more declarative.
+  [Nate Woods]
+ 
+- Makefile tweaks.  (bug #819) [Oliver Stoeneberg]
+  
+- Added mandatory attribute to the device tags on the -listxml data.  [Nate
+  Woods]
+
+- Pruned out some redundant PORT_NAME declarations.  [Justin Kerk]
+
+- [Messtest] Added a trace command, to emit debug traces.  [Nate Woods]
+
+
+
 0.102
 
 New System Drivers Supported (in no particular order):
@@ -4584,4 +4692,4 @@ Colecovision [Mike Balfour]
 NES [Brad Oliver]
 TRS-80 [Jurgen Buchmueller]
 Colour Genie [Juergen Buchmueller]
-Genesis [Gareth Long]
+Genesis [Gareth Long] 

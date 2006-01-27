@@ -373,7 +373,7 @@ int sysdep_display_check_effect_params(
 }
 
 /* called from sysdep_display_open;
- * returns a suitable blitfunctions and allocates the nescesarry buffers.
+ * returns a suitable blitfunctions and allocates the necessary buffers.
  *
  * The caller should call sysdep_display_effect_close() on failure and when
  * done, to free (partly) allocated buffers */
@@ -445,7 +445,7 @@ blit_func_p sysdep_display_effect_open(void)
     fprintf(stderr, "Error: could not allocate memory\n");
     return NULL;
   }
-  /* HDG: AFAIK this is not nescesarry 
+  /* HDG: AFAIK this is not necessary 
   memset(effect_dbbuf, 0, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4); */
 
   switch(sysdep_display_properties.palette_info.fourcc_format)

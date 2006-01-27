@@ -102,6 +102,9 @@ static struct rc_option opts2[] = {
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "Enable/disable cheat subsystem" },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "Skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
+#ifdef MESS
+	{ "skip_warnings", NULL, rc_bool, &options.skip_warnings, "0", 0, 0, NULL, "Skip displaying the warnings screen" },
+#endif
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
 	{ "autosave", NULL, rc_bool, &options.auto_save, "0", 0, 0, NULL, "Enable automatic restore at startup and save at exit" },
@@ -708,10 +711,10 @@ void show_usage(void)
 	fprintf(stdout, "\n"
 #ifdef MESS
 			"M.E.S.S. - Multi-Emulator Super System\n"
-			"Copyright (C) 1998-2005 by the MESS team\n"
+			"Copyright (C) 1998-2006 by the MESS team\n"
 #else
 			"M.A.M.E. - Multiple Arcade Machine Emulator\n"
-			"Copyright (C) 1997-2005 by Nicola Salmoria and the MAME Team\n"
+			"Copyright (C) 1997-2006 by Nicola Salmoria and the MAME Team\n"
 #endif
 			"%s port maintained by Lawrence Gold\n", NAME);
 }
