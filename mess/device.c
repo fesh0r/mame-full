@@ -165,7 +165,7 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 	struct SystemConfigurationParamBlock params;
 	device_getinfo_handler handlers[64];
 	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
-	int createimage_optcount, count, i, j;
+	int createimage_optcount, count, i, j, position;
 	const char *file_extensions, *info_string;
 	char *converted_file_extensions;
 	struct IODevice *devices = NULL;
@@ -192,6 +192,8 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 		goto error;
 	memset(devices, 0, count * sizeof(struct IODevice));
 
+	position = 0;
+
 	for (i = 0; i < count; i++)
 	{
 		devices[i].type = IO_COUNT;
@@ -217,6 +219,7 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 			devices[i].tag					= info_string ? auto_strdup(info_string) : NULL;
 			devices[i].type					= device_get_info_int(&devices[i].devclass, DEVINFO_INT_TYPE);
 			devices[i].count				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_COUNT);
+			devices[i].position				= position;
 			devices[i].file_extensions		= converted_file_extensions;
 
 			devices[i].readable				= device_get_info_int(&devices[i].devclass, DEVINFO_INT_READABLE) ? 1 : 0;
@@ -265,6 +268,8 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 				memset(&devices[i].createimage_options[createimage_optcount], 0,
 					sizeof(devices[i].createimage_options[createimage_optcount]));
 			}
+
+			position += devices[i].count;
 
 			/* overriding the count? */
 			if (count_overrides[i])

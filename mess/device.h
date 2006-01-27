@@ -236,6 +236,7 @@ struct IODevice
 	/* the basics */
 	const char *tag;
 	iodevice_t type;
+	int position;
 	int count;
 	const char *file_extensions;
 
