@@ -469,6 +469,40 @@ static void compose_path(char *output, size_t outputlen, int pathtype, int pathi
 
 
 /*============================================================ */
+/*  get_last_fileerror */
+/*============================================================ */
+
+static osd_file_error get_last_fileerror(void)
+{
+	osd_file_error error;
+
+	switch (errno)
+	{
+		case ENOMEM:
+			error = FILEERR_OUT_OF_MEMORY;
+			break;
+
+		case ENOENT:
+			error = FILEERR_NOT_FOUND;
+			break;
+
+		case EACCES:
+		case EAGAIN:
+		case EFAULT:
+		case EISDIR:
+		case EROFS:
+			error = FILEERR_ACCESS_DENIED;
+			break;
+
+		default:
+			error = FILEERR_FAILURE;
+			break;
+	}
+	return error;
+}
+
+
+/*============================================================ */
 /*	osd_get_path_count */
 /*============================================================ */
 
@@ -514,7 +548,8 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 /*	osd_fopen */
 /*============================================================ */
 
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename,
+		const char *mode, osd_file_error *error)
 {
 	char fullpath[1024];
 	osd_file *file;
@@ -525,7 +560,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 		if (openfile[i].fileptr == NULL)
 			break;
 	if (i == MAX_OPEN_FILES)
-		return NULL;
+		goto error;
 
 	/* zap the file record */
 	file = &openfile[i];
@@ -540,7 +575,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	{
 		/* if it's read-only, or if the path exists, then that's final */
 		if (!(strchr(mode, 'w')) || errno != EACCES)
-			return NULL;
+			goto error;
 
 		/* create the path and try again */
 		create_path(fullpath, 1);
@@ -548,14 +583,19 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 
 		/* if that doesn't work, we give up */
 		if (file->fileptr == NULL)
-			return NULL;
+			goto error;
 	}
 
 	/* get the file size */
 	FSEEK(file->fileptr, 0, SEEK_END);
 	file->end = FTELL(file->fileptr);
 	rewind(file->fileptr);
+	*error = FILEERR_SUCCESS;
 	return file;
+
+error:
+	*error = get_last_fileerror();
+	return NULL;
 }
 
 
