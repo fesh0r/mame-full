@@ -206,6 +206,7 @@ typedef struct
 	BOOL   skip_warnings;
 #endif
 	int bios;
+	BOOL   autosave;
 
 #ifdef MESS
 	struct mess_specific_options mess;
@@ -295,6 +296,7 @@ typedef struct
 	BOOL     skip_warnings;
 #endif
     BOOL     high_priority;
+    BOOL     autosave;
 
 	// Keyboard control of ui
     KeySeq   ui_key_up;

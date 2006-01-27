@@ -314,7 +314,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 102, 0, 0\0"
+            VALUE "FileVersion", "0, 104, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2005 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -325,7 +325,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 102, 0, 0\0"
+            VALUE "ProductVersion", "0, 104, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -895,6 +895,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,100,86,10,0,
                     HIDC_SKIP_GAME_INFO
 #endif
+    CONTROL         "Save game state on exit",IDC_ENABLE_AUTOSAVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,112,90,10,0,
+                    HIDC_ENABLE_AUTOSAVE
     CONTROL         "Use additional artwork",IDC_ARTWORK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,40,82,10,0,HIDC_ARTWORK
     CONTROL         "Backdrops",IDC_BACKDROPS,"Button",BS_AUTOCHECKBOX | 

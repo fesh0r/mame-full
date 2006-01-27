@@ -296,15 +296,15 @@ static const REG_OPTION regGameOpts[] =
 	{ "autoframeskip",          RO_BOOL,    offsetof(options_type, autoframeskip),                   "0" },
 	{ "frameskip",              RO_INT,     offsetof(options_type, frameskip),                       "0" },
 	{ "waitvsync",              RO_BOOL,    offsetof(options_type, wait_vsync),                      "0" },
-	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "0" },
+	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "1" },
 	{ "window",                 RO_BOOL,    offsetof(options_type, window_mode),                     "0" },
 	{ "ddraw",                  RO_BOOL,    offsetof(options_type, use_ddraw),                       "1" },
 	{ "hwstretch",              RO_BOOL,    offsetof(options_type, ddraw_stretch),                   "1" },
 	{ "resolution",             RO_STRING,  offsetof(options_type, resolution),                      "auto" },
 	{ "refresh",                RO_INT,     offsetof(options_type, gfx_refresh),                     "0" },
 	{ "scanlines",              RO_BOOL,    offsetof(options_type, scanlines),                       "0" },
-	{ "switchres",              RO_BOOL,    offsetof(options_type, switchres),                       "1" },
-	{ "switchbpp",              RO_BOOL,    offsetof(options_type, switchbpp),                       "1" },
+	{ "switchres",              RO_BOOL,    offsetof(options_type, switchres),                       "0" },
+	{ "switchbpp",              RO_BOOL,    offsetof(options_type, switchbpp),                       "0" },
 	{ "maximize",               RO_BOOL,    offsetof(options_type, maximize),                        "1" },
 	{ "keepaspect",             RO_BOOL,    offsetof(options_type, keepaspect),                      "1" },
 	{ "matchrefresh",           RO_BOOL,    offsetof(options_type, matchrefresh),                    "0" },
@@ -384,7 +384,7 @@ static const REG_OPTION regGameOpts[] =
 	{ "debug",                  RO_BOOL,    offsetof(options_type, mame_debug),                      "0" },
 	{ "log",                    RO_BOOL,    offsetof(options_type, errorlog),                        "0" },
 	{ "sleep",                  RO_BOOL,    offsetof(options_type, sleep),                           "0" },
-	{ "rdtsc",                  RO_BOOL,    offsetof(options_type, old_timing),                      "1" },
+	{ "rdtsc",                  RO_BOOL,    offsetof(options_type, old_timing),                      "0" },
 	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "0" },
 	{ "led_mode",               RO_STRING,  offsetof(options_type, ledmode),                         "ps/2" },
 	{ "high_priority",          RO_BOOL,    offsetof(options_type, high_priority),                   "0" },
@@ -393,6 +393,7 @@ static const REG_OPTION regGameOpts[] =
 	{ "skip_warnings",          RO_BOOL,    offsetof(options_type, skip_warnings),     "0" },
 #endif
 	{ "bios",                   RO_INT,     offsetof(options_type, bios),                            "0" },
+	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "0" },
 
 #ifdef MESS
 	/* mess options */

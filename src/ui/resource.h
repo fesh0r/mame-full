@@ -258,6 +258,7 @@
 #define IDC_LOAD_STATUS                 1173
 #define IDC_ERROR_TEXT                  1174
 #define IDC_ARTMISCTEXT                 1175
+#define IDC_ENABLE_AUTOSAVE             1176
 #define IDC_SKIP_GAME_INFO              1177
 #define IDC_PROP_SOURCE                 1178
 #define IDC_OLD_TIMING                  1179

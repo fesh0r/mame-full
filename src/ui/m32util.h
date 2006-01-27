@@ -42,6 +42,7 @@ BOOL DriverUsesRoms(int driver_index);
 BOOL DriverUsesSamples(int driver_index);
 BOOL DriverUsesTrackball(int driver_index);
 BOOL DriverUsesLightGun(int driver_index);
+BOOL DriverSupportsSaveState(int driver_index);
 
 void FlushFileCaches(void);
 
