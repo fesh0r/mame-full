@@ -276,24 +276,24 @@ BOOL LoadSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handl
 static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value)
 {
 	if (value[0] && !strchr(value,' '))
-		fprintf(fptr,"%s %s\n",key,value);
+		fprintf(fptr,"%-21s   %s\n",key,value);
 	else
-		fprintf(fptr,"%s \"%s\"\n",key,value);
+		fprintf(fptr,"%-21s   \"%s\"\n",key,value);
 }
 
 static void WriteIntOptionToFile(FILE *fptr,const char *key,int value)
 {
-	fprintf(fptr,"%s %i\n",key,value);
+	fprintf(fptr,"%-21s   %i\n",key,value);
 }
 
 static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value)
 {
-	fprintf(fptr,"%s %i\n",key,value ? 1 : 0);
+	fprintf(fptr,"%-21s   %i\n",key,value ? 1 : 0);
 }
 
 static void WriteColorOptionToFile(FILE *fptr,const char *key,COLORREF value)
 {
-	fprintf(fptr,"%s %i,%i,%i\n",key,(int)(value & 0xff),(int)((value >> 8) & 0xff),
+	fprintf(fptr,"%-21s   %i,%i,%i\n",key,(int)(value & 0xff),(int)((value >> 8) & 0xff),
 			(int)((value >> 16) & 0xff));
 }
 
