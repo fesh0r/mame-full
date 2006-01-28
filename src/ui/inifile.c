@@ -250,7 +250,7 @@ BOOL LoadSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handl
 					break;
 
 				case SH_MANUAL:
-					success = handlers[i].u.manual.parse(key, value_str);
+					success = handlers[i].u.manual.parse(nSettingsFile, key, value_str);
 					break;
 
 				default:
@@ -449,7 +449,7 @@ BOOL SaveSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handl
 				break;
 
 			case SH_MANUAL:
-				handlers[i].u.manual.emit(EmitCallback, (void *) fptr);
+				handlers[i].u.manual.emit(nSettingsFile, EmitCallback, (void *) fptr);
 				break;
 
 			default:

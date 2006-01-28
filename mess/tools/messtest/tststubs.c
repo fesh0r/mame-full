@@ -161,7 +161,7 @@ void osd_wait_for_debugger(void)
 }
 #endif
 
-int win_mess_validitychecks(void)
+int win_mess_config_init(void)
 {
 	return 0;
 }

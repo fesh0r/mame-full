@@ -74,8 +74,8 @@ struct SettingsHandler
 
 		struct
 		{
-			BOOL (*parse)(char *key, const char *value_str);
-			void (*emit)(void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param);
+			BOOL (*parse)(DWORD nSettingsFile, char *key, const char *value_str);
+			void (*emit)(DWORD nSettingsFile, void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param);
 		} manual;
 	} u;
 };
@@ -87,6 +87,7 @@ struct SettingsHandler
 #define SETTINGS_FILE_EXFOLDERPARENT	0x50000000
 #define SETTINGS_FILE_UI				0xE0000000
 #define SETTINGS_FILE_GLOBAL			0xF0000000
+#define SETTINGS_FILE_TYPEMASK			0xF0000000
 
 BOOL LoadSettingsFile(DWORD nSettingsFile, void *option_struct, const REG_OPTION *option_array);
 BOOL LoadSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handlers);

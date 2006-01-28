@@ -61,7 +61,7 @@ static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME);
 
 static void LoadFolderFilter(int folder_index,int filters);
 
-static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value);
+static BOOL LoadGameVariableOrFolderFilter(DWORD nSettingsFile, char *key,const char *value);
 static void LoadOptionsAndSettings(void);
 
 static void  ColumnEncodeString(void* data, char* str);
@@ -2808,7 +2808,7 @@ static void TabFlagsDecodeString(const char *str,void *data)
 	}
 }
 
-static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
+static BOOL LoadGameVariableOrFolderFilter(DWORD nSettingsFile, char *key,const char *value)
 {
 	int i;
 	int driver_index;
@@ -2956,7 +2956,7 @@ DWORD GetFolderFlags(int folder_index)
 	return 0;
 }
 
-static void EmitFolderFilters(void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
+static void EmitFolderFilters(DWORD nSettingsFile, void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
 {
 	int i;
 	char key[32];
@@ -2977,7 +2977,7 @@ static void EmitFolderFilters(void (*emit_callback)(void *param_, const char *ke
 
 
 
-static void EmitGameVariables(void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
+static void EmitGameVariables(DWORD nSettingsFile, void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
 {
 	int i, j;
 	int driver_index;
@@ -3123,6 +3123,7 @@ void SaveGameOptions(int driver_index)
 	BOOL options_different = TRUE;
 	options_type Opts;
 	int nParentIndex= -1;
+
 	if( driver_index >= 0)
 	{
 		if( DriverIsClone(driver_index) )

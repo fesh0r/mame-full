@@ -237,15 +237,6 @@ int mess_validitychecks(void)
 	if (device_valididtychecks())
 		error = 1;
 
-#ifdef WIN32
-	/* MESS on windows has its own validity checks */
-	{
-		extern int win_mess_validitychecks(void);
-		if (win_mess_validitychecks())
-			error = 1;
-	}
-#endif /* WIN32 */
-
 	/* now that we are completed, re-expand the actual driver to compensate
 	 * for the tms9928a hack */
 	if (Machine && Machine->gamedrv)
