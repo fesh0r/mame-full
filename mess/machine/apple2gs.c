@@ -631,7 +631,7 @@ static void adb_write_datareg(UINT8 data)
 			{
 				adb_state = ADBSTATE_INCOMMAND;
 				if (LOG_ADB)
-					logerror("adb_write_datareg(): in command length %d\n", adb_command_length);
+					logerror("adb_write_datareg(): in command length %u\n", (unsigned) adb_command_length);
 			}
 			break;
 
