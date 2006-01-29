@@ -114,7 +114,7 @@ const char *device_instancename(const device_class *devclass, int id)
 
 const char *device_briefinstancename(const device_class *devclass, int id)
 {
-	return internal_device_instancename(devclass, id, DEVINFO_STR_SHORT_NAME, device_typename);
+	return internal_device_instancename(devclass, id, DEVINFO_STR_SHORT_NAME, device_brieftypename);
 }
 
 

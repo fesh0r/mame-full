@@ -261,7 +261,7 @@ BOOL LoadSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handl
 		
 		if (!success)
 		{
-			dprintf("load game options found unknown option %s",key);
+			dprintf("load game options found unknown option %s\n", key);
 		}
 	}
 
