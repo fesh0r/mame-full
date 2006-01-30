@@ -1,12 +1,19 @@
+/***************************************************************************
+    
+	IBM AT Compatibles
 
-void init_atcga(void);
-#ifdef HAS_I386
-void init_at386(void);
-#endif
+***************************************************************************/
 
-void init_at_vga(void);
-void init_ps2m30286(void);
+#ifndef AT_H
+#define AT_H
 
-extern MACHINE_INIT( at );
-extern MACHINE_INIT( at_vga );
+DRIVER_INIT( atcga );
+DRIVER_INIT( at386 );
 
+DRIVER_INIT( at_vga );
+DRIVER_INIT( ps2m30286 );
+
+MACHINE_INIT( at );
+MACHINE_INIT( at_vga );
+
+#endif /* AT_H */
