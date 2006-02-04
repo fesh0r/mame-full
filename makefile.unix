@@ -192,7 +192,7 @@ ifneq (,$(findstring gcc,$(CC)))
   CFLAGS += -Wno-unused
 
   # Warn about declarations after statements.
-  CFLAGS += -Wdeclaration-after-statement
+  # CFLAGS += -Wdeclaration-after-statement
 
   # Don't warn about code that might break strict aliasing rules. 
   # CFLAGS += -Wno-strict-aliasing
@@ -211,6 +211,9 @@ ifneq (,$(findstring gcc,$(CC)))
 
   # Enable debugging (e.g., using gdb).
   # CFLAGS += -ggdb
+ 
+  # Enable gprof profiling.
+  # CFLAGS += -pg
 
 
   #########################################################################
@@ -509,7 +512,7 @@ INSTALL_DATA =		$(INSTALL) -c -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
 # :-(
 HAVE_GETTIMEOFDAY = 1
 
-# Does your system support the mmap() function?  If not, disable this.
+# Does your system support the mmap() function?  If not, comment this out.
 HAVE_MMAP = 1
 
 # Most UNIX-like systems use LF for an end-of-line.  Set this to 1 for CR, 2 
