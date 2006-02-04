@@ -153,10 +153,6 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/tools/messtest $(OBJ)/mess/tools/mkimage \
 	   $(OBJ)/mess/sound
 endif
-ifeq ($(TARGET), mage)
-OBJDIRS += $(OBJ)/mage/src/machine $(OBJ)/mage/src/vidhrdw $(OBJ)/mage/src/drivers \
-           $(OBJ)/mage/src/sndhrdw
-endif
 
 UNIX_OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
 
@@ -178,9 +174,14 @@ INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -Isrc/unix
 else
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
-ifeq ($(TARGET), mage)
-INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/includes -Isrc -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
-endif
+
+##############################################################################
+# Define standard libraries for CPU and sounds
+##############################################################################
+
+CPULIB = $(OBJ)/libcpu.a
+
+SOUNDLIB = $(OBJ)/libsound.a
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -221,27 +222,17 @@ PLATFORM_IMGTOOL_OBJS = $(OBJDIR)/dirio.o \
 			$(OBJDIR)/fileio.o \
 			$(OBJDIR)/sysdep/misc.o
 
-ifeq ($(TARGET), mage)
-include mage/src/core.mak
-else
 include src/core.mak
-endif
 
 ifeq ($(TARGET), mame)
 include src/$(TARGET).mak
-endif
-ifeq ($(TARGET), mage)
-include mage/src/$(TARGET).mak
 endif
 ifeq ($(TARGET), mess)
 include mess/$(TARGET).mak
 endif
 
-#ifeq ($(TARGET), mage)
-#include mage/src/rules.mak
-#else
-include src/rules.mak
-#endif
+include src/cpu/cpu.mak
+include src/sound/sound.mak
 
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
@@ -551,7 +542,7 @@ ifdef EFENCE
 MY_LIBS += -lefence
 endif
 
-OBJS += $(COREOBJS) $(DRVLIBS)
+OBJS += $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS)
 
 OSDEPEND = $(OBJDIR)/osdepend.a
 
@@ -616,7 +607,15 @@ messtest: $(OBJS) $(MESSTEST_OBJS) \
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
-#secondary libraries
+# library targets and dependencies
+$(CPULIB): $(CPUOBJS)
+
+ifdef DEBUG
+$(CPULIB): $(DBGOBJS)
+endif
+
+$(SOUNDLIB): $(SOUNDOBJS)
+
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o \
 	$(OBJ)/expat/xmltok.o
 
@@ -632,16 +631,9 @@ $(OBJ)/mess/%.o: mess/%.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 endif
 
-ifdef MAGE
-$(OBJ)/mage/src/%.o: mage/src/%.c
-	$(CC_COMMENT) @echo '[MAGE] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
-#else
-endif
 $(OBJ)/%.o: src/%.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
-#endif
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
