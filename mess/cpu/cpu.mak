@@ -1,7 +1,6 @@
 # Rules for MESS CPU's
 
-CPU=$(strip $(findstring COP411@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter COP411,$(CPUS)),)
 COP411D = mess/cpu/cop411
 OBJDIRS += $(OBJ)/$(COP411D)
 CPUDEFS += -DHAS_COP411=1
@@ -12,8 +11,7 @@ else
 CPUDEFS += -DHAS_COP411=0
 endif
 
-CPU=$(strip $(findstring APEXC@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter APEXC,$(CPUS)),)
 APEXCD = mess/cpu/apexc
 OBJDIRS += $(OBJ)/$(APEXCD)
 CPUDEFS += -DHAS_APEXC=1
@@ -25,8 +23,7 @@ CPUDEFS += -DHAS_APEXC=0
 endif
 
 
-CPU=$(strip $(findstring CDP1802@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter CDP1802,$(CPUS)),)
 CDPD = mess/cpu/cdp1802
 OBJDIRS += $(OBJ)/$(CDPD)
 CPUDEFS += -DHAS_CDP1802=1
@@ -38,8 +35,7 @@ CPUDEFS += -DHAS_CDP1802=0
 endif
 
 
-CPU=$(strip $(findstring CP1610@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter CP1610,$(CPUS)),)
 CPD = mess/cpu/cp1610
 OBJDIRS += $(OBJ)/$(CPD)
 CPUDEFS += -DHAS_CP1610=1
@@ -51,8 +47,7 @@ CPUDEFS += -DHAS_CP1610=0
 endif
 
 
-CPU=$(strip $(findstring F8@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter F8,$(CPUS)),)
 F8D = mess/cpu/f8
 OBJDIRS += $(OBJ)/$(F8D)
 CPUDEFS += -DHAS_F8=1
@@ -64,8 +59,7 @@ CPUDEFS += -DHAS_F8=0
 endif
 
 
-CPU=$(strip $(findstring LH5801@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter LH5801,$(CPUS)),)
 LHD = mess/cpu/lh5801
 OBJDIRS += $(OBJ)/$(LHD)
 CPUDEFS += -DHAS_LH5801=1
@@ -77,8 +71,7 @@ CPUDEFS += -DHAS_LH5801=0
 endif
 
 
-CPU=$(strip $(findstring PDP1@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter PDP1,$(CPUS)),)
 PDPD = mess/cpu/pdp1
 OBJDIRS += $(OBJ)/$(PDPD)
 CPUDEFS += -DHAS_PDP1=1
@@ -90,8 +83,7 @@ CPUDEFS += -DHAS_PDP1=0
 endif
 
 
-CPU=$(strip $(findstring SATURN@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter SATURN,$(CPUS)),)
 SATD = mess/cpu/saturn
 OBJDIRS += $(OBJ)/$(SATD)
 CPUDEFS += -DHAS_SATURN=1
@@ -103,8 +95,7 @@ CPUDEFS += -DHAS_SATURN=0
 endif
 
 
-CPU=$(strip $(findstring SC61860@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter SC61860,$(CPUS)),)
 SCD = mess/cpu/sc61860
 OBJDIRS += $(OBJ)/$(SCD)
 CPUDEFS += -DHAS_SC61860=1
@@ -116,8 +107,7 @@ CPUDEFS += -DHAS_SC61860=0
 endif
 
 
-CPU=$(strip $(findstring Z80GB@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter Z80GB,$(CPUS)),)
 GBD = mess/cpu/z80gb
 OBJDIRS += $(OBJ)/$(GBD)
 CPUDEFS += -DHAS_Z80GB=1
@@ -128,8 +118,7 @@ else
 CPUDEFS += -DHAS_Z80GB=0
 endif
 
-CPU=$(strip $(findstring TMS7000@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter TMS7000,$(CPUS)),)
 TM7D = mess/cpu/tms7000
 OBJDIRS += $(OBJ)/$(TM7D)
 CPUDEFS += -DHAS_TMS7000=1
@@ -141,8 +130,7 @@ else
 CPUDEFS += -DHAS_TMS7000=0
 endif
 
-CPU=$(strip $(findstring TMS7000_EXL@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter TMS7000_EXL,$(CPUS)),)
 TM7D = mess/cpu/tms7000
 OBJDIRS += $(OBJ)/$(TM7D)
 CPUDEFS += -DHAS_TMS7000_EXL=1
@@ -154,8 +142,7 @@ else
 CPUDEFS += -DHAS_TMS7000_EXL=0
 endif
 
-CPU=$(strip $(findstring TX0@,$(CPUS)))
-ifneq ($(CPU),)
+ifneq ($(filter TX0,$(CPUS)),)
 TX0D = mess/cpu/pdp1
 OBJDIRS += $(OBJ)/$(TX0D)
 CPUDEFS += -DHAS_TX0_64KW=1 -DHAS_TX0_8KW=1
@@ -166,63 +153,3 @@ $(OBJ)/$(TX0D)/tx0dasm.o:	$(TX0D)/tx0.h $(TX0D)/tx0dasm.c
 else
 CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_8KW=0
 endif
-
-
-
-
-
-
-
-
-
-
-
-
-SOUND=$(strip $(findstring BEEP@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_BEEP=1
-SOUNDOBJS += $(OBJ)/mess/sound/beep.o
-else
-SOUNDDEFS += -DHAS_BEEP=0
-endif
-
-SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SPEAKER=1
-SOUNDOBJS += $(OBJ)/mess/sound/speaker.o
-else
-SOUNDDEFS += -DHAS_SPEAKER=0
-endif
-
-SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_WAVE=1
-SOUNDOBJS += $(OBJ)/mess/sound/wave.o
-else
-SOUNDDEFS += -DHAS_WAVE=0
-endif
-
-SOUND=$(strip $(findstring SID6581@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SID6581=1
-SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sound/sidenvel.o $(OBJ)/mess/sound/sidvoice.o
-else
-SOUNDDEFS += -DHAS_SID6581=0
-endif
-
-SOUND=$(strip $(findstring SID8580@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SID8580=1
-SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sound/sidenvel.o $(OBJ)/mess/sound/sidvoice.o
-else
-SOUNDDEFS += -DHAS_SID8580=0
-endif
-
-SOUND=$(strip $(findstring ES5503@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_ES5503=1
-SOUNDOBJS += $(OBJ)/mess/sound/es5503.o
-else
-SOUNDDEFS += -DHAS_ES5503=0
-endif
-

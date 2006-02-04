@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "osdepend.h"
 #include "library.h"
 #include "pool.h"
 

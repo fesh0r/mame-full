@@ -599,3 +599,8 @@ int main(int argc, char *argv[])
 void CLIB_DECL logerror(const char *text,...)
 {
 }
+
+void CLIB_DECL osd_die(const char *text,...)
+{
+	exit(-1);
+}

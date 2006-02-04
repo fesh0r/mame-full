@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "osdepend.h"
 #include "pool.h"
 #include "utils.h"
 

@@ -13,24 +13,13 @@
 #include <assert.h>
 #include <limits.h>
 
+#include "osdepend.h"
 #include "formats/flopimg.h"
 #include "pool.h"
 #include "utils.h"
 
 #define TRACK_LOADED		0x01
 #define TRACK_DIRTY			0x02
-
-#ifndef MIN
-#define MIN(a,b)		(((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef TRUE
-#define TRUE		1
-#endif
-
-#ifndef FALSE
-#define FALSE		0
-#endif
 
 
 struct _floppy_image

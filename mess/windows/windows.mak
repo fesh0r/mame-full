@@ -1,4 +1,17 @@
-# nasm for Windows (but not cygwin) has a "w" at the end
+###########################################################################
+#
+#   windows.mak
+#
+#   Windows-specific makefile
+#
+###########################################################################
+
+
+#-------------------------------------------------
+# nasm for Windows (but not cygwin) has a "w"
+# at the end
+#-------------------------------------------------
+
 ifndef COMPILESYSTEM_CYGWIN
 ASM = @nasmw
 endif

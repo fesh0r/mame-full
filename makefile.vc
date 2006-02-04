@@ -234,6 +234,17 @@ ifdef GX_PATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(GX_PATH))\\$(WCEPLAT)
 endif
 
+
+#-------------------------------------------------
+# define standard libarires for CPU and sounds
+#-------------------------------------------------
+
+CPULIB = $(OBJ)/libcpu.a
+
+SOUNDLIB = $(OBJ)/libsound.a
+
+
+
 ifdef BUILD_EXPAT
 OBJDIRS += $(OBJ)/expat
 EXPAT = $(OBJ)/libexpat.a
@@ -314,10 +325,19 @@ PLATFORM_TOOL_OBJS =				\
 	$(OBJ)/windows/fileio.o
 	
 #####################################################################
+#-------------------------------------------------
+# 'all' target needs to go here, before the 
+# include files which define additional targets
+#-------------------------------------------------
+
+
 
 all:	maketree $(EMULATORCLI) $(EMULATORGUI) messtest$(EXE) messdocs$(EXE) chdman$(EXE) imgtool$(EXE) wimgtool$(EXE)
 
+#-------------------------------------------------
 # include the various .mak files
+#-------------------------------------------------
+
 include src/core.mak
 ifdef MESS
 include mess/$(TARGET).mak
@@ -325,14 +345,16 @@ include mess/tools/imgtool/windows/wimgtool.mak
 else
 include src/$(TARGET).mak
 endif
-include src/rules.mak
+include src/cpu/cpu.mak
+include src/sound/sound.mak
 ifeq ($(MAMEOS),windows)
 include mess/$(MAMEOS)/$(MAMEOS).mak
 else
 include src/$(MAMEOS)/$(MAMEOS).mak
 endif
 ifdef MESS
-include mess/rules_ms.mak
+include mess/cpu/cpu.mak
+include mess/sound/sound.mak
 endif
 
 ifdef DEBUG
@@ -347,11 +369,17 @@ DIRENTOBJS = $(OBJ)/mess/ui/dirent.o
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
-$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
+
+
+#-------------------------------------------------
+# executable targets and dependencies
+#-------------------------------------------------
+
+$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fr$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
-	$(LD) -dll -base:0x10040000 $(LDFLAGS) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
+	$(LD) -dll -base:0x10040000 $(LDFLAGS) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(OSDBGOBJS) $(RESFILE)
 ifdef BSCMAKE
 	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr)
 endif

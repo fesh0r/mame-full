@@ -73,6 +73,8 @@
 
 #include <stdio.h>
 #include <assert.h>
+
+#include "osdepend.h"
 #include "formats/ap_dsk35.h"
 #include "utils.h"
 #include "mamecore.h"

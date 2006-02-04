@@ -158,7 +158,8 @@ VIDEO_START( vic6560 )
 {
 	black = Machine->pens[0];
 	white = Machine->pens[1];
-	pointerelement = decodegfx (pointermask, &pointerlayout);
+	pointerelement = allocgfx(&pointerlayout);
+	decodegfx(pointerelement, pointermask, 0, 1);
 	pointerelement->colortable = pointercolortable;
 	pointercolortable[1] = Machine->pens[1];
 	pointercolortable[2] = Machine->pens[0];

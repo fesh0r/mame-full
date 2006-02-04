@@ -56,24 +56,22 @@ void draw_black_line(int line)
 {
 /* don't know which pen is really black, so it currently uses BG pen 0*/
 	int i;
-    int center_x = ((360/2) - (vdc.physical_width/2));
 
     /* our line buffer */ 
-    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line);
 	
-	for(i=0; i<vdc.physical_width;i++)
+	for(i=0; i<360;i++)
 		line_buffer[i]=Machine->pens[0];
 }
 
 void draw_overscan_line(int line)
 {
 	int i;
-    int center_x = ((360/2) - (vdc.physical_width/2));
 
     /* our line buffer */ 
-    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line) + center_x;
+    UINT16 *line_buffer = ((UINT16 *) vdc.bmp->base) + (vdc.bmp->rowpixels * line);
 	
-	for(i=0; i<vdc.physical_width;i++)
+	for(i=0; i<360;i++)
 		line_buffer[i]=Machine->pens[0x100];
 }
 
@@ -346,7 +344,7 @@ void pce_refresh_line(int bitmap_line, int line)
     /* character blanking bit */
     if(!(vdc.vdc_data[CR].w & CR_BB))
     {
-        memset(line_buffer, Machine->pens[0], vdc.physical_width);
+	  draw_black_line(bitmap_line);
     }
 	else
 	{
@@ -386,10 +384,11 @@ void pce_refresh_line(int bitmap_line, int line)
 			}
 		}
 
-		if(vdc.vdc_data[CR].w & CR_SB)
-		{
-			pce_refresh_sprites(bitmap_line, line);
-		}
+	}
+	/* Sprite rendering is independant of BG drawing! */
+	if(vdc.vdc_data[CR].w & CR_SB)
+	{
+		pce_refresh_sprites(bitmap_line, line);
 	}
 	vdc.y_scroll++;
 }

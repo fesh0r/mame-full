@@ -933,7 +933,8 @@ WRITE8_HANDLER ( ted7360_port_w )
 
 VIDEO_START( ted7360 )
 {
-	cursorelement = decodegfx (cursormask, &cursorlayout);
+	cursorelement = allocgfx(&cursorlayout);
+	decodegfx(cursorelement, cursormask, 0, 1);
 	cursorelement->colortable = cursorcolortable;
 	cursorcolortable[1] = Machine->pens[1];
 	cursorelement->total_colors = 2;

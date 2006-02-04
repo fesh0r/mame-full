@@ -10,21 +10,10 @@
 #include <assert.h>
 #include <time.h>
 
+#include "osdepend.h"
 #include "formats/coco_dsk.h"
 #include "formats/basicdsk.h"
 #include "utils.h"
-
-#ifndef MIN
-#define MIN(a,b)		(((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	1
-#endif
 
 /* ----------------------------------------------------------------------- 
  * JVC (Jeff Vavasour CoCo) format                                         

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "osdepend.h"
 #include "wavfile.h"
 #include "cassimg.h"
 #include "utils.h"

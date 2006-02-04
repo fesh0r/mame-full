@@ -18,7 +18,26 @@
 - Add CD support
 - SuperGrafix Driver
 - Banking for SF2 (and others?)
+- Add 6 button joystick support
 - Add 263 line mode
+- Sprite DMA should use vdc VRAM functions
+**********************************************************************/
+
+/**********************************************************************
+                          Known Bugs
+***********************************************************************
+- Afterburner 2 crashes: RTI to BRK, BRK vector -> BRK
+- TV Sports games freeze.
+- Adventure Island black screens: v-blank as pulse, not assert?
+- Street Fighter 2: missing letter on title screen
+- Deep Blue: missing graphics
+- Aero Blasters: no title screen
+- Darius Plus: locks up because of PC wrapping?
+- Cyber Knight: bad graphics
+- Rastan Saga 2: bad graphics
+- Ankuku Densetsu: graphics flake out during intro
+- Racing Damashii: windows lose borders, track misaligned
+- Violent Soldier: corruption on title screen
 **********************************************************************/
 
 #include <assert.h>
@@ -78,9 +97,10 @@ static INTERRUPT_GEN( pce_interrupt )
 				if(vdc.bottomfill != 0)
 				{
 					vdc.current_segment=STATE_BOTTOMFILL;
+					vdc.status |= VDC_VD;
 					if(vdc.vdc_data[CR].w & CR_VR)
 					{
-						vdc.status |= VDC_VD;
+						
 						ret = 1;
 					}				
 					
@@ -187,7 +207,7 @@ static INTERRUPT_GEN( pce_interrupt )
         }
     }
 	if (ret)
-		cpunum_set_input_line(0, 0, ASSERT_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 ADDRESS_MAP_START( pce_mem , ADDRESS_SPACE_PROGRAM, 8)

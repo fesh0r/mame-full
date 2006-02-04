@@ -23,6 +23,9 @@ UINT32 ui_menu_image_info(UINT32 state);
 /* file manager */
 int filemanager(int selected);
 
+/* tape control */
+int tapecontrol(int selected);
+
 #define machine_reset machine_hard_reset
 
 #endif /* MESINTRF_H */

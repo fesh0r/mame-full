@@ -115,9 +115,8 @@ void genesis_vdp_start (genvdp *current_vdp)
 //		return 1;
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[gfx_index] = decodegfx((UINT8 *)&current_vdp->genesis_vdp_vram,&charlayout);
-//	if (!Machine->gfx[gfx_index])
-//		return 1;
+	Machine->gfx[gfx_index] = allocgfx(&charlayout);
+	decodegfx(Machine->gfx[gfx_index] , (UINT8 *)&current_vdp->genesis_vdp_vram, 0, 1);
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
