@@ -635,6 +635,7 @@ void auto_free(void)
 	{
 		free(malloc_list);
 		malloc_list = NULL;
+		malloc_list_size = 0;
 	}
 }
 
