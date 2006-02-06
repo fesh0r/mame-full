@@ -6,6 +6,7 @@ New System Drivers Supported (in no particular order):
 - Sony Playstation (scph3000 J v1.1 01/22/95) [incog]
 - Sony Playstation (scph3500 J v2.1 07/17/95) [incog]
 - Turbo Grafix-16 [Rob Bohms]
+- Acorn Electron [Wilbert Pol]
 
 
 
