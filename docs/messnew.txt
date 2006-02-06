@@ -1,4 +1,4 @@
-0.103.1
+0.104
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -48,7 +48,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.103u5.  This incorporates all features of the
+- The core is based on MAME 0.104.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed how devices are specified.  The new system resembles how MAME CPU

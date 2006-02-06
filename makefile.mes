@@ -370,7 +370,6 @@ include mess/sound/sound.mak
 ifeq ($(MAMEOS),windows)
 include mess/tools/imgtool/windows/wimgtool.mak
 endif
-include src/rules.mak
 ifeq ($(MAMEOS),windows)
 include mess/$(MAMEOS)/$(MAMEOS).mak
 else
