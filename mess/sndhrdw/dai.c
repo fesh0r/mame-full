@@ -9,7 +9,6 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "sound/streams.h"
 #include "sound/custom.h"
 #include "machine/random.h"
 #include "machine/pit8253.h"

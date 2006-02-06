@@ -7,7 +7,6 @@
 
 #include <math.h>
 #include "osd_cpu.h"
-#include "sound/streams.h"
 #include "mame.h"
 
 #include "includes/arcadia.h"

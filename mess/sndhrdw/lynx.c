@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <math.h>
 #include "osd_cpu.h"
-#include "sound/streams.h"
+#include "streams.h"
 #include "mame.h"
 #include "timer.h"
 

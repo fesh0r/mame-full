@@ -5,9 +5,9 @@
 
   main part in vidhrdw
 ***************************************************************************/
+
 #include <math.h>
 #include "osd_cpu.h"
-#include "sound/streams.h"
 #include "mame.h"
 
 #define VERBOSE_DBG 1
