@@ -75,7 +75,6 @@ UINT8 *gz_ptr = NULL;
 
 static int uef_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
 	int	pos, size;
-	UINT8	*ptr = NULL;
 
 	if ( casdata[0] == 0x1f && casdata[1] == 0x8b ) {
 		int err;
@@ -205,7 +204,6 @@ static INT16* uef_cas_fill_bit( INT16 *buffer, int bit ) {
 static int uef_cas_fill_wave( INT16 *buffer, int length, UINT8 *bytes ) {
 	int pos;
 	INT16 *p = buffer;
-	UINT8 *ptr = NULL;
 
         if ( bytes[0] == 0x1f && bytes[1] == 0x8b ) {
 		if ( gz_ptr == NULL ) {
