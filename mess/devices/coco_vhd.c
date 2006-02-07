@@ -189,13 +189,6 @@ WRITE8_HANDLER(coco_vhd_io_w)
 
 
 
-static const char *coco_vhd_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
-{
-	return "Virtual Hard Disk";
-}
-
-
-
 void coco_vhd_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	switch(state)
@@ -210,11 +203,11 @@ void coco_vhd_device_getinfo(const device_class *devclass, UINT32 state, union d
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_INIT:							info->init = device_init_coco_vhd; break;
 		case DEVINFO_PTR_LOAD:							info->load = device_load_coco_vhd; break;
-		case DEVINFO_PTR_GET_NAME:						info->name = coco_vhd_getname; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case DEVINFO_STR_DEV_FILE:						strcpy(info->s = device_temp_str(), __FILE__); break;
 		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "vhd"); break;
+		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Virtual Hard Disk"); break;
 	}
 }
 

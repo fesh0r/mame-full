@@ -14,7 +14,6 @@ extern MACHINE_INIT( primob );
 extern INTERRUPT_GEN( primo_vblank_interrupt );
 extern SNAPSHOT_LOAD( primo );
 extern QUICKLOAD_LOAD( primo );
-extern const char *device_name_cartslot_primo(const struct IODevice *, int, char *, size_t);
 
 /* vidhrdw/pmd85.c */
 extern VIDEO_START( primo );

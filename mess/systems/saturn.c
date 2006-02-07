@@ -2414,20 +2414,11 @@ ROM_START(saturneu)
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
 ROM_END
 
-static const char *saturn_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
-{
-	snprintf(buf, bufsize, "CD-ROM");
-	return buf;
-}
-
 static void saturn_chdcd_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* CHD CD-ROM */
 	switch(state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_GET_NAME:						info->name = saturn_cdrom_getname; break;
-
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_COUNT:							info->i = 1; break;
 

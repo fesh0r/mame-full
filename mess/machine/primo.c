@@ -366,15 +366,3 @@ QUICKLOAD_LOAD( primo )
 	free(quickload_data);
 	return INIT_PASS;
 }
-
-/*******************************************************************************
-
-	EPROM expansion files (.rom)
-
-*******************************************************************************/
-
-const char *device_name_cartslot_primo(const struct IODevice *dev, int id, char *buf, size_t bufsize)
-{
-	snprintf(buf, bufsize, "EPROM Expansion Bank #%d", id + 1);
-	return buf;
-}

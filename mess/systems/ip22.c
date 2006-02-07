@@ -1532,12 +1532,6 @@ static struct mips3_config config =
 	32768	/* data cache size */
 };
 
-static const char *ip22_cdrom_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
-{
-	snprintf(buf, bufsize, "CD-ROM #%d", id + 1);
-	return buf;
-}
-
 static void ip22_chdcd_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* CHD CD-ROM */
@@ -1545,9 +1539,6 @@ static void ip22_chdcd_getinfo(const device_class *devclass, UINT32 state, union
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_COUNT:							info->i = 4; break;
-
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_GET_NAME:						info->name = ip22_cdrom_getname; break;
 
 		default: cdrom_device_getinfo(devclass, state, info);
 	}

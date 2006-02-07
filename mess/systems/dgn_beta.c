@@ -294,8 +294,21 @@ static void dgnbeta_floppy_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_INT_COUNT:							info->i = 4; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_GET_NAME:						info->name = dgnbeta_floppy_getname; break;
 		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_coco; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "floppydisk0"); break;
+		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "floppydisk1"); break;
+		case DEVINFO_STR_NAME+2:						strcpy(info->s = device_temp_str(), "floppydisk2"); break;
+		case DEVINFO_STR_NAME+3:						strcpy(info->s = device_temp_str(), "floppydisk3"); break;
+		case DEVINFO_STR_SHORT_NAME+0:					strcpy(info->s = device_temp_str(), "flop0"); break;
+		case DEVINFO_STR_SHORT_NAME+1:					strcpy(info->s = device_temp_str(), "flop1"); break;
+		case DEVINFO_STR_SHORT_NAME+2:					strcpy(info->s = device_temp_str(), "flop2"); break;
+		case DEVINFO_STR_SHORT_NAME+3:					strcpy(info->s = device_temp_str(), "flop3"); break;
+		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Floppy #0"); break;
+		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "Floppy #1"); break;
+		case DEVINFO_STR_DESCRIPTION+2:					strcpy(info->s = device_temp_str(), "Floppy #2"); break;
+		case DEVINFO_STR_DESCRIPTION+3:					strcpy(info->s = device_temp_str(), "Floppy #3"); break;
 
 		default:										floppy_device_getinfo(devclass, state, info); break;
 	}

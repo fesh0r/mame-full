@@ -629,12 +629,6 @@ PALETTE_INIT( apple2 )
 	memcpy(colortable, apple2_colortable, sizeof(apple2_colortable));
 }
 
-static const char *apple2_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
-{
-	snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
-	return buf;
-}
-
 static struct AY8910interface ay8910_interface =
 {
 	NULL
@@ -855,12 +849,17 @@ static void apple2_floppy_getinfo(const device_class *devclass, UINT32 state, un
 	/* floppy */
 	switch(state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_GET_NAME:						info->name = apple2_floppy_getname; break;
-
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_APPLE525_SPINFRACT_DIVIDEND:	info->i = 15; break;
 		case DEVINFO_INT_APPLE525_SPINFRACT_DIVISOR:	info->i = 16; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "slot6disk1"); break;
+		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "slot6disk2"); break;
+		case DEVINFO_STR_SHORT_NAME+0:					strcpy(info->s = device_temp_str(), "s6d1"); break;
+		case DEVINFO_STR_SHORT_NAME+1:					strcpy(info->s = device_temp_str(), "s6d2"); break;
+		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Slot 6 Disk #1"); break;
+		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "Slot 6 Disk #2"); break;
 
 		default:										apple525_device_getinfo(devclass, state, info); break;
 	}

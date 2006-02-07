@@ -401,8 +401,11 @@ static void primo_cartslot_getinfo(const device_class *devclass, UINT32 state, u
 	/* cartslot */
 	switch(state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_GET_NAME:						info->name = device_name_cartslot_primo; break;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "EPROM Expansion Bank #1"); break;
+		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "EPROM Expansion Bank #2"); break;
+		case DEVINFO_STR_DESCRIPTION+2:					strcpy(info->s = device_temp_str(), "EPROM Expansion Bank #3"); break;
+		case DEVINFO_STR_DESCRIPTION+3:					strcpy(info->s = device_temp_str(), "EPROM Expansion Bank #4"); break;
 
 		default:										cartslot_device_getinfo(devclass, state, info); break;
 	}
