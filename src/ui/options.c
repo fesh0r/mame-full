@@ -296,7 +296,11 @@ static const REG_OPTION regGameOpts[] =
 	{ "autoframeskip",          RO_BOOL,    offsetof(options_type, autoframeskip),                   "0" },
 	{ "frameskip",              RO_INT,     offsetof(options_type, frameskip),                       "0" },
 	{ "waitvsync",              RO_BOOL,    offsetof(options_type, wait_vsync),                      "0" },
+#ifdef MESS
+	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "0" },
+#else
 	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "1" },
+#endif
 	{ "window",                 RO_BOOL,    offsetof(options_type, window_mode),                     "0" },
 	{ "ddraw",                  RO_BOOL,    offsetof(options_type, use_ddraw),                       "1" },
 	{ "hwstretch",              RO_BOOL,    offsetof(options_type, ddraw_stretch),                   "1" },
