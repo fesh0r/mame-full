@@ -235,7 +235,8 @@ include src/cpu/cpu.mak
 include src/sound/sound.mak
 
 ifeq ($(TARGET), mess)
-include mess/rules_ms.mak
+include mess/cpu/cpu.mak
+include mess/sound/sound.mak
 endif
 
 ifdef DEBUG
