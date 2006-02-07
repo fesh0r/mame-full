@@ -937,7 +937,6 @@ $(OBJ)/be.a:						\
 COREOBJS +=							\
 	$(EXPAT)						\
 	$(ZLIB)							\
-	$(OBJ)/cheat.o					\
 	$(OBJ)/vidhrdw/tms9928a.o		\
 	$(OBJ)/machine/8255ppi.o		\
 	$(OBJ)/machine/random.o			\
