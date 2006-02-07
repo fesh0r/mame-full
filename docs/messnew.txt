@@ -1,3 +1,37 @@
+0.104.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- Changed how devices work.  Device command line options are now on a per
+  device basis, and now identify the index within a device.  Therefore, you
+  now might invoke MESS like this:
+  
+	mess mysystem -flop1 foo.dsk -flop2 bar.dsk
+	
+  Also, drivers now have the ability to specify the string to be used for the
+  command line option.  This allows multiple devices of the same type to be
+  viable.  [Nate Woods]
+
+
+
 0.104
 
 New System Drivers Supported (in no particular order):

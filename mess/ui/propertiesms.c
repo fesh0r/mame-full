@@ -422,88 +422,14 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const game_
 	return TRUE;
 }
 
-static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params)
-{
-	HWND hPrinterText, hPrinterCaption, hPrinterBrowse;
-	options_type *o = params->o;
-	char buf[MAX_PATH];
-	const char *s;
-
-	hPrinterText = GetDlgItem(hWnd, IDC_PRINTER_EDITTEXT);
-	hPrinterCaption = GetDlgItem(hWnd, IDC_PRINTER_CAPTION);
-	hPrinterBrowse = GetDlgItem(hWnd, IDC_PRINTER_BROWSE);
-	if (!hPrinterText || !hPrinterCaption|| !hPrinterBrowse)
-		return FALSE;
-
-	/* printer options? */
-	switch(msg) {
-	case CMSG_OPTIONSTOPROP:
-		if (!gamedrv || DriverHasDevice(gamedrv, IO_PRINTER))
-		{
-			/* we have printer options */
-			SetWindowText(hPrinterText, o->mess.software[IO_PRINTER]);
-		}
-		else
-		{
-			/* we do not have printer options */
-			ShowWindow(hPrinterText, SW_HIDE);
-			ShowWindow(hPrinterCaption, SW_HIDE);
-			ShowWindow(hPrinterBrowse, SW_HIDE);
-		}
-		break;
-
-	case CMSG_PROPTOOPTIONS:
-		GetWindowText(hPrinterText, buf, sizeof(buf) / sizeof(buf[0]));
-		s = o->mess.software[IO_PRINTER] ? o->mess.software[IO_PRINTER] : "";
-		if (strcmp(s, buf))
-		{
-			FreeIfAllocated(&o->mess.software[IO_PRINTER]);
-			o->mess.software[IO_PRINTER] = strdup(buf);
-			MarkChanged(hWnd);
-		}
-		break;
-
-	case CMSG_COMMAND:
-		switch(params->wID) {
-		case IDC_PRINTER_BROWSE:
-			{
-				OPENFILENAME ofn;
-				TCHAR path[MAX_PATH];
-				BOOL changed;
-
-				memset(&ofn, 0, sizeof(ofn));
-				path[0] = '\0';
-				ofn.lStructSize = sizeof(ofn);
-				ofn.hwndOwner = hWnd;
-				ofn.lpstrFile = path;
-				ofn.nMaxFile = sizeof(path) / sizeof(path[0]);
-				*(params->changed) = changed = GetSaveFileName(&ofn);
-				if (changed)
-					SetWindowText(hPrinterText, path);
-			}
-			break;
-
-		default:
-			return TRUE;
-		}
-		break;
-
-	default:
-		assert(0);
-		break;
-	}
-	return TRUE;
-}
-
 /* ------------------------------------------------------------------------ */
 
 typedef BOOL (*component_proc)(enum component_msg msg, HWND hWnd, const game_driver *gamedrv, struct component_param_block *params);
 
-static component_proc s_ComponentProcs[] =
+static const component_proc s_ComponentProcs[] =
 {
 	SoftwareDirectories_ComponentProc,
-	RamSize_ComponentProc,
-	Printer_ComponentProc
+	RamSize_ComponentProc
 };
 
 static BOOL InvokeComponentProcs(int nGame, enum component_msg msg, HWND hWnd, struct component_param_block *params)

@@ -40,9 +40,6 @@ BEGIN
     LTEXT           "RAM size",IDC_RAM_CAPTION,20,50,50,10
     COMBOBOX        IDC_RAM_COMBOBOX,70,50,100,76,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP
-	LTEXT			"Printer",IDC_PRINTER_CAPTION,20,70,50,10,SS_NOPREFIX
-	EDITTEXT		IDC_PRINTER_EDITTEXT,70,70,85,14, ES_AUTOHSCROLL | ES_LEFT,0
-	PUSHBUTTON		"Browse",IDC_PRINTER_BROWSE,158,70,40,14,0,0
 END
 
 /////////////////////////////////////////////////////////////////////////////

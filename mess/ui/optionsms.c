@@ -133,14 +133,17 @@ BOOL GetUseNewUI(int driver_index)
     return GetGameOptions(driver_index, -1)->mess.use_new_ui;
 }
 
-void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *software)
+void SetSelectedSoftware(int driver_index, int device_inst_index, const char *software)
 {
 	char *newsoftware;
 	options_type *o;
 
+	assert(device_inst_index >= 0);
+	assert(device_inst_index < (sizeof(o->mess.software) / sizeof(o->mess.software[0])));
+
 	if (LOG_SOFTWARE)
 	{
-		dprintf("SetSelectedSoftware(): driver_index=%d devtype=%d software='%s'\n", driver_index, devtype, software);
+		dprintf("SetSelectedSoftware(): driver_index=%d device_inst_index=%d software='%s'\n", driver_index, device_inst_index, software);
 	}
 
 	newsoftware = strdup(software ? software : "");
@@ -148,14 +151,20 @@ void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *softw
 		return;
 
 	o = GetGameOptions(driver_index, -1);
-	FreeIfAllocated(&o->mess.software[devtype]);
-	o->mess.software[devtype] = newsoftware;
+	FreeIfAllocated(&o->mess.software[device_inst_index]);
+	o->mess.software[device_inst_index] = newsoftware;
 }
 
-const char *GetSelectedSoftware(int driver_index, iodevice_t devtype)
+const char *GetSelectedSoftware(int driver_index, int device_inst_index)
 {
 	const char *software;
-	software = GetGameOptions(driver_index, -1)->mess.software[devtype];
+	options_type *o;
+
+	assert(device_inst_index >= 0);
+	assert(device_inst_index < (sizeof(o->mess.software) / sizeof(o->mess.software[0])));
+
+	o = GetGameOptions(driver_index, -1);
+	software = o->mess.software[device_inst_index];
 	return software ? software : "";
 }
 
@@ -197,5 +206,96 @@ void SetCurrentSoftwareTab(const char *shortname)
 const char *GetCurrentSoftwareTab(void)
 {
 	return settings.mess.software_tab;
+}
+
+
+
+BOOL LoadDeviceOption(DWORD nSettingsFile, char *key, const char *value_str)
+{
+	const game_driver *gamedrv;
+	struct SystemConfigurationParamBlock cfg;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	device_class devclass;
+	int game_index, dev, count, id, pos;
+
+	// locate the driver
+	game_index = nSettingsFile & ~SETTINGS_FILE_TYPEMASK;
+	gamedrv = drivers[game_index];
+
+	// retrieve getinfo handlers
+	memset(&cfg, 0, sizeof(cfg));
+	memset(handlers, 0, sizeof(handlers));
+	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+	cfg.device_handlers = handlers;
+	cfg.device_countoverrides = count_overrides;
+	gamedrv->sysconfig_ctor(&cfg);
+
+	pos = 0;
+
+	for (dev = 0; handlers[dev]; dev++)
+	{
+		devclass.gamedrv = gamedrv;
+		devclass.get_info = handlers[dev];
+
+		count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
+
+		for (id = 0; id < count; id++)
+		{
+			if (!mame_stricmp(key, device_instancename(&devclass, id))
+				|| !mame_stricmp(key, device_briefinstancename(&devclass, id)))
+			{
+				FreeIfAllocated(&game_options[game_index].mess.software[pos]);
+				game_options[game_index].mess.software[pos] = strdup(value_str);
+				return TRUE;
+			}
+			pos++;
+		}
+	}
+	return FALSE;
+}
+
+
+
+void SaveDeviceOption(DWORD nSettingsFile, void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param)
+{
+	const game_driver *gamedrv;
+	struct SystemConfigurationParamBlock cfg;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	device_class devclass;
+	int game_index, dev, count, id, pos;
+	const char *software;
+
+	// locate the driver
+	game_index = nSettingsFile & ~SETTINGS_FILE_TYPEMASK;
+	gamedrv = drivers[game_index];
+
+	// retrieve getinfo handlers
+	memset(&cfg, 0, sizeof(cfg));
+	memset(handlers, 0, sizeof(handlers));
+	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+	cfg.device_handlers = handlers;
+	cfg.device_countoverrides = count_overrides;
+	gamedrv->sysconfig_ctor(&cfg);
+
+	pos = 0;
+
+	for (dev = 0; handlers[dev]; dev++)
+	{
+		devclass.gamedrv = gamedrv;
+		devclass.get_info = handlers[dev];
+
+		count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
+
+		for (id = 0; id < count; id++)
+		{
+			software = game_options[game_index].mess.software[pos++];
+			if (software)
+			{
+				emit_callback(param, device_instancename(&devclass, id), software, NULL);
+			}
+		}
+	}
 }
 

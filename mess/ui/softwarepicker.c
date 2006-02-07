@@ -32,7 +32,7 @@
 
 struct FileInfo
 {
-	const struct IODevice *pDevice;
+	device_class devclass;
 
 	// hash information
 	char szHash[HASH_BUF_SIZE];
@@ -141,13 +141,17 @@ LPCTSTR SoftwarePicker_LookupFilename(HWND hwndPicker, int nIndex)
 
 
 
-const struct IODevice *SoftwarePicker_LookupDevice(HWND hwndPicker, int nIndex)
+device_class SoftwarePicker_LookupDevice(HWND hwndPicker, int nIndex)
 {
 	struct SoftwarePickerInfo *pPickerInfo;
 	pPickerInfo = GetSoftwarePickerInfo(hwndPicker);
 	if ((nIndex < 0) || (nIndex >= pPickerInfo->nIndexLength))
-		return NULL;
-	return pPickerInfo->ppIndex[nIndex]->pDevice;
+	{
+		device_class dummy;
+		memset(&dummy, 0, sizeof(dummy));
+		return dummy;
+	}
+	return pPickerInfo->ppIndex[nIndex]->devclass;
 }
 
 
@@ -168,15 +172,19 @@ int SoftwarePicker_LookupIndex(HWND hwndPicker, LPCTSTR pszFilename)
 
 
 
-int SoftwarePicker_GetImageType(HWND hwndPicker, int nIndex)
+iodevice_t SoftwarePicker_GetImageType(HWND hwndPicker, int nIndex)
 {
 	struct SoftwarePickerInfo *pPickerInfo;
+	const device_class *devclass;
+
 	pPickerInfo = GetSoftwarePickerInfo(hwndPicker);
 	if ((nIndex < 0) || (nIndex >= pPickerInfo->nIndexLength))
 		return -1;
-	if (!pPickerInfo->ppIndex[nIndex]->pDevice)
+
+	devclass = &pPickerInfo->ppIndex[nIndex]->devclass;
+	if (!devclass->gamedrv)
 		return -1;
-	return pPickerInfo->ppIndex[nIndex]->pDevice->type;
+	return (iodevice_t) (int) device_get_info_int(devclass, DEVINFO_INT_TYPE);
 }
 
 
@@ -232,12 +240,17 @@ static void ComputeFileHash(struct SoftwarePickerInfo *pPickerInfo,
 	struct FileInfo *pFileInfo, const unsigned char *pBuffer, unsigned int nLength)
 {
 	unsigned int nFunctions;
+	iodevice_t type;
+	device_partialhash_handler partialhash;
 
-	nFunctions = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
+	type = (iodevice_t) (int) device_get_info_int(&pFileInfo->devclass, DEVINFO_INT_TYPE);
+	partialhash = (device_partialhash_handler) device_get_info_fct(&pFileInfo->devclass, DEVINFO_PTR_PARTIAL_HASH);
 
-	if (pFileInfo->pDevice && pFileInfo->pDevice->partialhash)
+	nFunctions = hashfile_functions_used(pPickerInfo->pHashFile, type);
+
+	if (partialhash)
 	{
-		pFileInfo->pDevice->partialhash(pFileInfo->szHash, pBuffer, nLength, nFunctions);
+		partialhash(pFileInfo->szHash, pBuffer, nLength, nFunctions);
 	}
 	else
 	{
@@ -332,9 +345,9 @@ static void SoftwarePicker_RealizeHash(HWND hwndPicker, int nIndex)
 
 	if (pPickerInfo->pHashFile)
 	{
-		if (pFileInfo->pDevice && (pFileInfo->pDevice->type < IO_COUNT))
-	        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
-		nCalculatedHashes = hash_data_used_functions(pFileInfo->szHash);
+//		if (pFileInfo->pDevice && (pFileInfo->pDevice->type < IO_COUNT))
+//	        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
+//		nCalculatedHashes = hash_data_used_functions(pFileInfo->szHash);
 	}
 
 	if ((nHashFunctionsUsed & ~nCalculatedHashes) == 0)
@@ -362,6 +375,7 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	int nIndex, nSize;
 	LPCSTR pszExtension, s;
 	const struct IODevice *pDevice = NULL;
+	device_class devclass = {0,};
 
 	// first check to see if it is already here
 	if (SoftwarePicker_LookupIndex(hwndPicker, pszFilename) >= 0)
@@ -385,14 +399,17 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 				while(*s && mame_stricmp(pszExtension, s))
 					s += strlen(s) + 1;
 				if (*s)
+				{
+					devclass = pDevice->devclass;
 					break;
+				}
 			}
 			pDevice++;
 		}
 	}
 
 	// no device?  cop out unless bForce is on
-	if (!pDevice && !bForce)
+	if (!devclass.gamedrv && !bForce)
 		return TRUE;
 
 	// create the FileInfo structure
@@ -406,8 +423,8 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	_tcscpy(pInfo->szFilename, pszFilename);
 	
 	// set up device and CRC, if specified
-	pInfo->pDevice = pDevice;
-	if (pDevice && pDevice->partialhash)
+	pInfo->devclass = devclass;
+	if (device_get_info_fct(&devclass, DEVINFO_PTR_PARTIAL_HASH))
 		nCrc = 0;
 	if (nCrc != 0)
 		snprintf(pInfo->szHash, sizeof(pInfo->szHash) / sizeof(pInfo->szHash[0]), "c:%08x#", nCrc);
@@ -634,6 +651,7 @@ BOOL SoftwarePicker_Idle(HWND hwndPicker)
 	BOOL bSuccess;
 	int nCount;
 	BOOL bDone = FALSE;
+	iodevice_t type;
 
 	pPickerInfo = GetSoftwarePickerInfo(hwndPicker);
 
@@ -682,7 +700,8 @@ BOOL SoftwarePicker_Idle(HWND hwndPicker)
 		pFileInfo = pPickerInfo->ppIndex[pPickerInfo->nCurrentPosition];
 		if (!pFileInfo->bHashRealized)
 		{
-			if (hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type))
+			type = (iodevice_t) (int) device_get_info_int(&pFileInfo->devclass, DEVINFO_INT_TYPE);
+			if (hashfile_functions_used(pPickerInfo->pHashFile, type))
 			{
 				// only calculate the hash if it is appropriate for this device
 				if (!SoftwarePicker_CalculateHash(hwndPicker, pPickerInfo->nCurrentPosition))

@@ -267,7 +267,8 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
 	{
 		options.image_files[options.image_count].name = current_command->u.image_args.filename;
-		options.image_files[options.image_count].type = current_command->u.image_args.device_type;
+		options.image_files[options.image_count].device_type = current_command->u.image_args.device_type;
+		options.image_files[options.image_count].device_index = -1;
 		options.image_count++;
 		current_command++;
 	}

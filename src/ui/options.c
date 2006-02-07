@@ -403,35 +403,8 @@ static const REG_OPTION regGameOpts[] =
 	/* mess options */
 	{ "newui",                  RO_BOOL,    offsetof(options_type, mess.use_new_ui),                 "1" },
 	{ "ramsize",                RO_INT,     offsetof(options_type, mess.ram_size),                   NULL, OnlyOnGame },
-
-	{ "cartridge",              RO_STRING,  offsetof(options_type, mess.software[IO_CARTSLOT]),      "", OnlyOnGame },
-	{ "floppydisk",             RO_STRING,  offsetof(options_type, mess.software[IO_FLOPPY]),        "", OnlyOnGame },
-	{ "harddisk",               RO_STRING,  offsetof(options_type, mess.software[IO_HARDDISK]),      "", OnlyOnGame },
-	{ "cylinder",               RO_STRING,  offsetof(options_type, mess.software[IO_CYLINDER]),      "", OnlyOnGame },
-	{ "cassette",               RO_STRING,  offsetof(options_type, mess.software[IO_CASSETTE]),      "", OnlyOnGame },
-	{ "punchcard",              RO_STRING,  offsetof(options_type, mess.software[IO_PUNCHCARD]),     "", OnlyOnGame },
-	{ "punchtape",              RO_STRING,  offsetof(options_type, mess.software[IO_PUNCHTAPE]),     "", OnlyOnGame },
-	{ "printer",                RO_STRING,  offsetof(options_type, mess.software[IO_PRINTER]),       "", OnlyOnGame },
-	{ "serial",                 RO_STRING,  offsetof(options_type, mess.software[IO_SERIAL]),        "", OnlyOnGame },
-	{ "parallel",               RO_STRING,  offsetof(options_type, mess.software[IO_PARALLEL]),      "", OnlyOnGame },
-	{ "snapshot",               RO_STRING,  offsetof(options_type, mess.software[IO_SNAPSHOT]),      "", OnlyOnGame },
-	{ "quickload",              RO_STRING,  offsetof(options_type, mess.software[IO_QUICKLOAD]),     "", OnlyOnGame },
-	{ "memcard",                RO_STRING,  offsetof(options_type, mess.software[IO_MEMCARD]),       "", OnlyOnGame },
-
-	{ "cartridge_dir",          RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_CARTSLOT]),  "", OnlyOnGame },
-	{ "floppydisk_dir",         RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_FLOPPY]),    "", OnlyOnGame },
-	{ "harddisk_dir",           RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_HARDDISK]),  "", OnlyOnGame },
-	{ "cylinder_dir",           RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_CYLINDER]),  "", OnlyOnGame },
-	{ "cassette_dir",           RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_CASSETTE]),  "", OnlyOnGame },
-	{ "punchcard_dir",          RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_PUNCHCARD]), "", OnlyOnGame },
-	{ "punchtape_dir",          RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_PUNCHTAPE]), "", OnlyOnGame },
-	{ "printer_dir",            RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_PRINTER]),   "", OnlyOnGame },
-	{ "serial_dir",             RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_SERIAL]),    "", OnlyOnGame },
-	{ "parallel_dir",           RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_PARALLEL]),  "", OnlyOnGame },
-	{ "snapshot_dir",           RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_SNAPSHOT]),  "", OnlyOnGame },
-	{ "quickload_dir",          RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_QUICKLOAD]), "", OnlyOnGame },
-	{ "memcard_dir",            RO_STRING,  offsetof(options_type, mess.softwaredirs[IO_MEMCARD]),   "", OnlyOnGame },
 #endif /* MESS */
+
 	{ "" }
 };
 
@@ -972,7 +945,8 @@ options_type * GetSourceOptions(int driver_index )
 
 options_type * GetGameOptions(int driver_index, int folder_index )
 {
-	int parent_index;
+	int parent_index, setting;
+	struct SettingsHandler handlers[3];
 
 	assert(0 <= driver_index && driver_index < num_games);
 
@@ -995,7 +969,20 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	}
 
 	//last but not least, sync in game specific settings
-	LoadSettingsFile(driver_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
+	memset(handlers, 0, sizeof(handlers));
+	setting = 0;
+	handlers[setting].type = SH_OPTIONSTRUCT;
+	handlers[setting].u.option_struct.option_struct = (void *) &game_options[driver_index];
+	handlers[setting].u.option_struct.option_array = regGameOpts;
+	setting++;
+#ifdef MESS
+	handlers[setting].type = SH_MANUAL;
+	handlers[setting].u.manual.parse = LoadDeviceOption;
+	setting++;
+#endif // MESS
+	handlers[setting].type = SH_END;
+	
+	LoadSettingsFileEx(driver_index | SETTINGS_FILE_GAME, handlers);
 	return &game_options[driver_index];
 }
 
@@ -3127,6 +3114,8 @@ void SaveGameOptions(int driver_index)
 	BOOL options_different = TRUE;
 	options_type Opts;
 	int nParentIndex= -1;
+	struct SettingsHandler handlers[3];
+	int setting;
 
 	if( driver_index >= 0)
 	{
@@ -3150,11 +3139,44 @@ void SaveGameOptions(int driver_index)
 		options_different = !AreOptionsEqual(regGameOpts, &game_options[driver_index], &Opts);
 	}
 
-	if( options_different ) {
-		SaveSettingsFile(driver_index | SETTINGS_FILE_GAME,
-			&game_options[driver_index],
-			&Opts,
-			regGameOpts);
+#ifdef MESS
+	if (!options_different)
+	{
+		int i;
+		const options_type *o;
+
+		o = &game_options[driver_index];
+
+		for (i = 0; i < sizeof(o->mess.software) / sizeof(o->mess.software[0]); i++)
+		{
+			if (o->mess.software[i] && o->mess.software[i][0])
+			{
+				options_different = TRUE;
+				break;
+			}
+		}
+	}
+#endif // MESS
+
+	if (options_different)
+	{
+		memset(handlers, 0, sizeof(handlers));
+		setting = 0;
+		handlers[setting].type = SH_OPTIONSTRUCT;
+		handlers[setting].comment = "Options";
+		handlers[setting].u.option_struct.option_struct = (void *) &game_options[driver_index];
+		handlers[setting].u.option_struct.comparison_struct = &Opts;
+		handlers[setting].u.option_struct.option_array = regGameOpts;
+		setting++;
+#ifdef MESS
+		handlers[setting].type = SH_MANUAL;
+		handlers[setting].comment = "Devices";
+		handlers[setting].u.manual.emit = SaveDeviceOption;
+		setting++;
+#endif // MESS
+		handlers[setting].type = SH_END;
+
+		SaveSettingsFileEx(driver_index | SETTINGS_FILE_GAME, handlers);
 	}
 }
 

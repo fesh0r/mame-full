@@ -20,8 +20,7 @@ struct mess_specific_options
 {
 	BOOL   use_new_ui;
 	UINT32 ram_size;
-	char   *software[IO_COUNT];
-	char   *softwaredirs[IO_COUNT];
+	char   *software[64];
 };
 
 struct mess_specific_game_variables
@@ -65,14 +64,17 @@ void  SetSoftwareDirs(const char* paths);
 void SetCrcDir(const char *dir);
 const char *GetCrcDir(void);
 
-void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *software);
-const char *GetSelectedSoftware(int driver_index, iodevice_t devtype);
+void SetSelectedSoftware(int driver_index, int device_inst_index, const char *software);
+const char *GetSelectedSoftware(int driver_index, int device_inst_index);
 
 void SetExtraSoftwarePaths(int driver_index, const char *extra_paths);
 const char *GetExtraSoftwarePaths(int driver_index);
 
 void SetCurrentSoftwareTab(const char *shortname);
 const char *GetCurrentSoftwareTab(void);
+
+BOOL LoadDeviceOption(DWORD nSettingsFile, char *key, const char *value_str);
+void SaveDeviceOption(DWORD nSettingsFile, void (*emit_callback)(void *param_, const char *key, const char *value_str, const char *comment), void *param);
 
 #endif /* OPTIONSMS_H */
 

@@ -5,9 +5,9 @@
 //============================================================
 
 LPCTSTR SoftwarePicker_LookupFilename(HWND hwndPicker, int nIndex);
-const struct IODevice *SoftwarePicker_LookupDevice(HWND hwndPicker, int nIndex);
+device_class SoftwarePicker_LookupDevice(HWND hwndPicker, int nIndex);
 int SoftwarePicker_LookupIndex(HWND hwndPicker, LPCTSTR pszFilename);
-int SoftwarePicker_GetImageType(HWND hwndPicker, int nIndex);
+iodevice_t SoftwarePicker_GetImageType(HWND hwndPicker, int nIndex);
 BOOL SoftwarePicker_AddFile(HWND hwndPicker, LPCTSTR pszFilename);
 BOOL SoftwarePicker_AddDirectory(HWND hwndPicker, LPCTSTR pszDirectory);
 void SoftwarePicker_Clear(HWND hwndPicker);

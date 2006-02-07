@@ -36,11 +36,9 @@ int win_write_config;
 //	LOCAL VARIABLES
 //============================================================
 
-static char *dev_opts[IO_COUNT];
-static char *dev_dirs[IO_COUNT];
 static char *ramsize_opt;
+static char *dev_dirs[IO_COUNT];
 
-static int add_device(struct rc_option *option, const char *arg, int priority);
 static int specify_ram(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option mess_opts[] =
@@ -48,34 +46,6 @@ struct rc_option mess_opts[] =
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "newui",			"nu",   rc_bool,	&options.disable_normal_ui,	"1", 0, 0, NULL,			"use the new MESS UI" },
-	{ "cartridge",		"cart", rc_string,	&dev_opts[IO_CARTSLOT],		NULL, 0, 0, add_device,		"attach software to cartridge device" },
-	{ "floppydisk",		"flop", rc_string,	&dev_opts[IO_FLOPPY],		NULL, 0, 0, add_device,		"attach software to floppy disk device" },
-	{ "harddisk",		"hard", rc_string,	&dev_opts[IO_HARDDISK],		NULL, 0, 0, add_device,		"attach software to hard disk device" },
-	{ "cylinder",		"cyln", rc_string,	&dev_opts[IO_CYLINDER],		NULL, 0, 0, add_device,		"attach software to cylinder device" },
-	{ "cassette",		"cass", rc_string,	&dev_opts[IO_CASSETTE],		NULL, 0, 0, add_device,		"attach software to cassette device" },
-	{ "punchcard",		"pcrd", rc_string,	&dev_opts[IO_PUNCHCARD],	NULL, 0, 0, add_device,		"attach software to punch card device" },
-	{ "punchtape",		"ptap", rc_string,	&dev_opts[IO_PUNCHTAPE],	NULL, 0, 0, add_device,		"attach software to punch tape device" },
-	{ "printer",		"prin", rc_string,	&dev_opts[IO_PRINTER],		NULL, 0, 0, add_device,		"attach software to printer device" },
-	{ "serial",		"serl", rc_string,	&dev_opts[IO_SERIAL],		NULL, 0, 0, add_device,		"attach software to serial device" },
-	{ "parallel",		"parl", rc_string,	&dev_opts[IO_PARALLEL],		NULL, 0, 0, add_device,		"attach software to parallel device" },
-	{ "snapshot",		"dump", rc_string,	&dev_opts[IO_SNAPSHOT],		NULL, 0, 0, add_device,		"attach software to snapshot device" },
-	{ "quickload",		"quik", rc_string,	&dev_opts[IO_QUICKLOAD],	NULL, 0, 0, add_device,		"attach software to quickload device" },
-	{ "memcard",		"memc", rc_string,	&dev_opts[IO_MEMCARD],		NULL, 0, 0, add_device,		"attach image to memcard device" },
-        { "cdrom",              "cdrm", rc_string,      &dev_opts[IO_CDROM],            NULL, 0, 0, add_device,         "attach image to CD-ROM device" },
-	{ "cartridge_dir",	NULL,   rc_string,	&dev_dirs[IO_CARTSLOT],		NULL, 0, 0, NULL,			"default directory for cartridge devices" },
-	{ "floppydisk_dir",	NULL,   rc_string,	&dev_dirs[IO_FLOPPY],		NULL, 0, 0, NULL,			"default directory for floppy disk device" },
-	{ "harddisk_dir",	NULL,   rc_string,	&dev_dirs[IO_HARDDISK],		NULL, 0, 0, NULL,			"default directory for hard disk devices" },
-	{ "cylinder_dir",	NULL,   rc_string,	&dev_dirs[IO_CYLINDER],		NULL, 0, 0, NULL,			"default directory for cylinder devices" },
-	{ "cassette_dir",	NULL,   rc_string,	&dev_dirs[IO_CASSETTE],		NULL, 0, 0, NULL,			"default directory for cassette devices" },
-	{ "punchcard_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHCARD],	NULL, 0, 0, NULL,			"default directory for punch card devices" },
-	{ "punchtape_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHTAPE],	NULL, 0, 0, NULL,			"default directory for punch tape devices" },
-	{ "printer_dir",	NULL,   rc_string,	&dev_dirs[IO_PRINTER],		NULL, 0, 0, NULL,			"default directory for printer devices" },
-	{ "serial_dir",		NULL,   rc_string,	&dev_dirs[IO_SERIAL],		NULL, 0, 0, NULL,			"default directory for serial devices" },
-	{ "parallel_dir",	NULL,   rc_string,	&dev_dirs[IO_PARALLEL],		NULL, 0, 0, NULL,			"default directory for parallel devices" },
-	{ "snapshot_dir",	NULL,   rc_string,	&dev_dirs[IO_SNAPSHOT],		NULL, 0, 0, NULL,			"default directory for snapshot devices" },
-	{ "quickload_dir",	NULL,   rc_string,	&dev_dirs[IO_QUICKLOAD],	NULL, 0, 0, NULL,			"default directory for quickload devices" },
-	{ "memcard_dir",	NULL,   rc_string,	&dev_dirs[IO_MEMCARD],		NULL, 0, 0, NULL,			"default directory for memcard devices" },
-	{ "cdrom_dir",          NULL,   rc_string,      &dev_dirs[IO_CDROM],            NULL, 0, 0, NULL,                       "default directory for CD-ROM devices" },
 	{ "ramsize",		"ram",  rc_string,	&ramsize_opt,				NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
 	{ "threads",		"thr",  rc_int,		&win_task_count,			NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
 	{ "natural",		"nat",  rc_bool,	&win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
@@ -124,140 +94,6 @@ done:
 
 
 
-static int use_filename_quotes(const char *filename)
-{
-	while(*filename)
-	{
-		if (isspace(*filename))
-			return TRUE;
-		filename++;
-	}
-	return FALSE;
-}
-
-
-
-void osd_begin_final_unloading(void)
-{
-	int count, id;
-	size_t blocksize;
-	char *s;
-	mess_image *img;
-	const char *filename;
-	size_t len;
-	const struct IODevice *dev;
-
-	memset(dev_opts, 0, sizeof(dev_opts));
-
-	if (Machine->devices)
-	{
-		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
-		{
-			for (count = dev->count; count > 0; count--)
-			{
-				img = image_from_device_and_index(dev, count - 1);
-				if (image_exists(img))
-					break;
-			}
-
-			if (count > 0)
-			{
-				// compute length of string
-				blocksize = 0;
-				for (id = 0; id < count; id++)
-				{
-					img = image_from_device_and_index(dev, id);
-
-					if (image_exists(img))
-					{
-						filename = image_filename(img);
-						blocksize += strlen(filename);
-						if (use_filename_quotes(filename))
-							blocksize += 2;
-					}
-					blocksize++;
-				}
-
-				s = malloc(blocksize);
-				if (!s)
-					return;
-				*s = '\0';
-
-				for (id = 0; id < count; id++)
-				{
-					img = image_from_device_and_index(dev, id);
-
-					if (image_exists(img))
-					{
-						filename = image_filename(img);
-						if (use_filename_quotes(filename))
-							strcat(s, "\"");
-						strcat(s, filename);
-						if (use_filename_quotes(filename))
-							strcat(s, "\"");
-					}
-					if (id+1 < count)
-					{
-						len = strlen(s);
-						s[len+0] = IMAGE_SEPARATOR;
-						s[len+1] = '\0';
-					}
-				}
-
-				dev_opts[dev->type] = s;
-			}
-		}
-	}
-}
-
-/*	add_device() is called when the MESS CLI option has been identified
- *	This searches throught the devices{} struct array to grab the ID of the
- *	option, which then registers the device using register_device()
- */
-static int add_device(struct rc_option *option, const char *arg, int priority)
-{
-	int id;
-	char *myarg;
-	const char *s;
-	int result;
-
-
-	id = device_typeid(option->name);
-	if (id < 0)
-	{
-		/* If we get to here, log the error - This is mostly due to a mismatch in the array */
-		logerror("Command Line Option [-%s] not a valid device - ignoring\n", option->name);
-		return -1;
-	}
-
-	/* A match!  we now know the ID of the device */
-	option->priority = priority;
-
-	/* device registrations can be delimited */
-	while((s = strchr(arg, IMAGE_SEPARATOR)) != NULL)
-	{
-		if (arg == s)
-		{
-			myarg = NULL;
-		}
-		else
-		{
-			myarg = malloc(s - arg + 1);
-			if (!myarg)
-				return -1;
-			memcpy(myarg, arg, s - arg);
-			myarg[s - arg] = '\0';
-		}
-		result = register_device(id, myarg);
-		if (myarg)
-			free(myarg);
-		if (result)
-			return result;
-		arg = s + 1;
-	}
-	return register_device(id, arg);
-}
-
 static int specify_ram(struct rc_option *option, const char *arg, int priority)
 {
 	UINT32 specified_ram = 0;
@@ -275,12 +111,16 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 	return 0;
 }
 
+
+
 const char *get_devicedirectory(int dev)
 {
 	assert(dev >= 0);
 	assert(dev < IO_COUNT);
 	return dev_dirs[dev];
 }
+
+
 
 void set_devicedirectory(int dev, const char *dir)
 {
@@ -293,103 +133,220 @@ void set_devicedirectory(int dev, const char *dir)
 
 
 
-int win_mess_validitychecks(void)
+//============================================================
+//	Device options
+//============================================================
+
+struct device_rc_option
 {
-	int i;
-	int id_fromshortname;
-	int id_fromlongname;
-	int error = 0;
-	char buf[32];
-	int specified_devopts[IO_COUNT];
-	int specified_devdirs[IO_COUNT];
+	// options for the RC system
+	struct rc_option opts[2];
 
-	memset(specified_devopts, 0, sizeof(specified_devopts));
-	memset(specified_devdirs, 0, sizeof(specified_devdirs));
+	// device information
+	iodevice_t devtype;
+	const char *tag;
+	int index;
 
-	for (i = 0; i < sizeof(mess_opts) / sizeof(mess_opts[0]); i++)
+	// mounted file
+	char *filename;
+};
+
+struct device_type_options
+{
+	int count;
+	struct device_rc_option *opts[MAX_DEV_INSTANCES];
+};
+
+struct device_type_options *device_options;
+
+
+
+static int add_device(struct rc_option *option, const char *arg, int priority)
+{
+	struct device_rc_option *dev_option = (struct device_rc_option *) option;
+
+	// the user specified a device type
+	options.image_files[options.image_count].device_type = dev_option->devtype;
+	options.image_files[options.image_count].device_tag = dev_option->tag;
+	options.image_files[options.image_count].device_index = dev_option->index;
+	options.image_files[options.image_count].name = auto_strdup(arg);
+	options.image_count++;
+
+	return 0;
+}
+
+
+
+void device_dirs_load(int config_type, xml_data_node *parentnode)
+{
+	iodevice_t dev;
+
+	// on init, reset the directories
+	if (config_type == CONFIG_TYPE_INIT)
+		memset(dev_dirs, 0, sizeof(dev_dirs));
+
+	// only care about game-specific data
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	// might not have any data
+	if (!parentnode)
+		return;
+
+	for (dev = 0; dev < IO_COUNT; dev++)
 	{
-		if(mess_opts[i].func == add_device)
+	}
+}
+
+
+
+void device_dirs_save(int config_type, xml_data_node *parentnode)
+{
+	xml_data_node *node;
+	iodevice_t dev;
+
+	// only care about game-specific data
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	for (dev = 0; dev < IO_COUNT; dev++)
+	{
+		if (dev_dirs[dev])
 		{
-			id_fromlongname = device_typeid(mess_opts[i].name);
-			if (id_fromlongname < 0)
+			node = xml_add_child(parentnode, "device", NULL);
+			if (node)
 			{
-				printf("option -%s is supposed to load a device, but it does not\n", mess_opts[i].name);
-				error = 1;
+				xml_set_attribute(node, "type", device_typename(dev));
+				xml_set_attribute(node, "directory", dev_dirs[dev]);
 			}
-
-			id_fromshortname = device_typeid(mess_opts[i].shortname);
-			if (id_fromshortname < 0)
-			{
-				printf("option -%s is supposed to load a device, but it does not\n", mess_opts[i].shortname);
-				error = 1;
-			}
-
-			if (id_fromlongname != id_fromshortname)
-			{
-				printf("options -%s and -%s are supposed to map to the same device\n", mess_opts[i].name, mess_opts[i].shortname);
-				error = 1;
-			}
-
-			if ((((char **) mess_opts[i].dest) - dev_opts) != id_fromlongname)
-			{
-				printf("option -%s is pointed at the wrong dev_opt\n", mess_opts[i].name);
-				error = 1;
-			}
-
-			if (specified_devopts[id_fromlongname])
-			{
-				printf("option -%s is specified multiple times\n", mess_opts[i].name);
-				error = 1;
-			}
-			specified_devopts[id_fromlongname] = 1;
-		}
-		else if (mess_opts[i].name && strstr(mess_opts[i].name, "_dir"))
-		{
-			strncpyz(buf, mess_opts[i].name, sizeof(buf) / sizeof(buf[0]));
-			*strstr(buf, "_dir") = '\0';
-
-			id_fromlongname = device_typeid(buf);
-			if (id_fromlongname < 0)
-			{
-				printf("option -%s is supposed to represent a default device directory, but it doesn't\n", mess_opts[i].name);
-				error = 1;
-			}
-
-			if (mess_opts[i].shortname)
-			{
-				printf("option -%s is not supposed to represent a default device directory, but it does\n", mess_opts[i].shortname);
-				error = 1;
-			}
-
-			if ((((char **) mess_opts[i].dest) - dev_dirs) != id_fromlongname)
-			{
-				printf("option -%s is pointed at the wrong dev_dir\n", mess_opts[i].name);
-				error = 1;
-			}
-
-			if (specified_devdirs[id_fromlongname])
-			{
-				printf("option -%s is specified multiple times\n", mess_opts[i].name);
-				error = 1;
-			}
-			specified_devdirs[id_fromlongname] = 1;
 		}
 	}
+}
 
-	for (i = 0; i < IO_COUNT; i++)
+
+
+void win_add_mess_device_options(struct rc_struct *rc, const game_driver *gamedrv)
+{
+	struct SystemConfigurationParamBlock cfg;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	device_class devclass;
+	iodevice_t devtype;
+	int dev_count, dev, id, count;
+	struct device_rc_option *dev_option;
+	struct rc_option *opts;
+	const char *dev_name;
+	const char *dev_short_name;
+	const char *dev_tag;
+
+	// retrieve getinfo handlers
+	memset(&cfg, 0, sizeof(cfg));
+	memset(handlers, 0, sizeof(handlers));
+	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+	cfg.device_handlers = handlers;
+	cfg.device_countoverrides = count_overrides;
+	gamedrv->sysconfig_ctor(&cfg);
+
+	// count devides
+	for (dev_count = 0; handlers[dev_count]; dev_count++)
+		;
+
+	if (dev_count > 0)
 	{
-		if (!specified_devopts[i])
-		{
-			printf("device '%s' is not represented\n", device_typename(i));
-			error = 1;
-		}
+		// add a separator
+		opts = auto_malloc(sizeof(*opts) * 2);
+		memset(opts, 0, sizeof(*opts) * 2);
+		opts[0].name = "MESS devices";
+		opts[0].type = rc_seperator;
+		opts[1].type = rc_end;
+		rc_register(rc, opts);
 
-		if (!specified_devdirs[i])
+		// we need to save all options
+		device_options = auto_malloc(sizeof(*device_options) * dev_count);
+		memset(device_options, 0, sizeof(*device_options) * dev_count);
+
+		// list all options
+		for (dev = 0; dev < dev_count; dev++)
 		{
-			printf("device dir '%s' is not represented\n", device_typename(i));
-			error = 1;
+			devclass.gamedrv = gamedrv;
+			devclass.get_info = handlers[dev];
+
+			// retrieve info about the device
+			devtype = (iodevice_t) (int) device_get_info_int(&devclass, DEVINFO_INT_TYPE);
+			count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
+			dev_tag = device_get_info_string(&devclass, DEVINFO_STR_DEV_TAG);
+			if (dev_tag)
+				dev_tag = auto_strdup(dev_tag);
+
+			device_options[dev].count = count;
+
+			for (id = 0; id < count; id++)
+			{
+				// retrieve info about hte device instance
+				dev_name = device_instancename(&devclass, id);
+				dev_short_name = device_briefinstancename(&devclass, id);
+
+				// dynamically allocate the option
+				dev_option = auto_malloc(sizeof(*dev_option));
+				memset(dev_option, 0, sizeof(*dev_option));
+
+				// populate the options
+				dev_option->opts[0].name = auto_strdup(dev_name);
+				dev_option->opts[0].shortname = auto_strdup(dev_short_name);
+				dev_option->opts[0].type = rc_string;
+				dev_option->opts[0].func = add_device;
+				dev_option->opts[0].dest = &dev_option->filename;
+				dev_option->opts[1].type = rc_end;
+				dev_option->devtype = devtype;
+				dev_option->tag = dev_tag;
+				dev_option->index = id;
+
+				// register these options
+				device_options[dev].opts[id] = dev_option;
+				rc_register(rc, dev_option->opts);
+			}
 		}
 	}
+}
 
-	return error;
+
+
+void win_mess_config_init(void)
+{
+	config_register("device_directories", device_dirs_load, device_dirs_save);
+}
+
+
+
+void osd_begin_final_unloading(void)
+{
+	int opt = 0, i;
+	const struct IODevice *dev;
+	mess_image *image;
+	char **filename_ptr;
+
+	if (Machine->devices)
+	{
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+		{
+			for (i = 0; i < device_options[opt].count; i++)
+			{
+				// free existing string, if there
+				filename_ptr = &device_options[opt].opts[i]->filename;
+				if (*filename_ptr)
+				{
+					free(*filename_ptr);
+					*filename_ptr = NULL;
+				}
+
+				// locate image
+				image = image_from_device_and_index(dev, i);
+
+				// place new filename, if there
+				if (image)
+					*filename_ptr = strdup(image_filename(image));
+			}
+			opt++;
+		}
+	}
 }

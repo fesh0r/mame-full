@@ -375,88 +375,67 @@ static void MessUpdateSoftwareList(void)
 
 static BOOL MessApproveImageList(HWND hParent, int nGame)
 {
-	int i;
-	int nCount;
+	int i, nPos;
 	const struct IODevice *pDevice;
 	const game_driver *pDriver;
 	char szMessage[256];
 	LPCTSTR pszMessage;
 	LPCTSTR pszSoftware;
-
-	pDriver = drivers[nGame];
+	BOOL bResult = FALSE;
 
 	begin_resource_tracking();
-	pDevice = devices_allocate(pDriver);
-	if (!pDevice)
-		goto error;
 
+	pDriver = drivers[nGame];
+	pDevice = devices_allocate(pDriver);
+
+	nPos = 0;
 	while(pDevice->type < IO_COUNT)
 	{
-		// Count how many images are loaded
-		pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
-		nCount = 0;
-		if (pszSoftware[0])
+		// confirm any mandatory devices are loaded
+		if (pDevice->must_be_loaded)
 		{
-			nCount++;
-			for (i = 0; pszSoftware[i]; i++)
+			for (i = 0; i < pDevice->count; i++)
 			{
-				if (pszSoftware[i] == IMAGE_SEPARATOR)
-					nCount++;
+				pszSoftware = GetSelectedSoftware(nGame, nPos + i);
+				if (!pszSoftware || !*pszSoftware)
+				{
+					snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
+						"System '%s' requires that device %s must have an image to load\n",
+						pDriver->description,
+						device_typename(pDevice->type));
+					goto done;
+				}
 			}
 		}
 
-		// Must this device be loaded?
-		if (pDevice->must_be_loaded && (nCount < pDevice->count))
-		{
-			snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
-				"System '%s' requires that device %s must have an image to load\n",
-				pDriver->description,
-				device_typename(pDevice->type));
-			goto error;
-		}
-
-		// Too many images?
-		if (nCount > pDevice->count)
-		{
-			snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
-				"Too many images specified for system '%s'; cannot run emulation\n",
-				pDriver->description);
-			goto error;
-		}
+		nPos += pDevice->count;
 		pDevice++;
+	}
+	bResult = TRUE;
+
+done:
+	if (!bResult)
+	{
+		pszMessage = A2T(szMessage);
+		MessageBox(hParent, pszMessage, MAME32NAME, MB_OK);
 	}
 
 	end_resource_tracking();
-	return TRUE;
-
-error:
-	end_resource_tracking();
-	pszMessage = A2T(szMessage);
-	MessageBox(hParent, pszMessage, MAME32NAME, MB_OK);
-	return FALSE;
-}
-
-
-
-static BOOL IsSoftwarePaneDevice(int devtype)
-{
-	assert(devtype >= 0);
-	assert(devtype < IO_COUNT);
-	return devtype != IO_PRINTER;
+	return bResult;
 }
 
 
 
 // this is a wrapper call to wrap the idiosycracies of SetSelectedSoftware()
-static void InternalSetSelectedSoftware(int nGame, iodevice_t nDevType, const char *pszSoftware)
+static void InternalSetSelectedSoftware(int nGame, int nIndex, const char *pszSoftware)
 {
 	if (!pszSoftware)
 		pszSoftware = TEXT("");
 
 	// only call SetSelectedSoftware() if this value is different
-	if (strcmp(GetSelectedSoftware(nGame, nDevType), pszSoftware))
+	if (strcmp(GetSelectedSoftware(nGame, nIndex), pszSoftware))
 	{
-		SetSelectedSoftware(nGame, nDevType, pszSoftware);
+		SetSelectedSoftware(nGame, nIndex, pszSoftware);
 		SetGameUsesDefaults(nGame, FALSE);
 		SaveGameOptions(nGame);
 	}
@@ -465,121 +444,95 @@ static void InternalSetSelectedSoftware(int nGame, iodevice_t nDevType, const ch
 
 
 // Places the specified image in the specified slot; nID = -1 means don't matter
-static void MessSpecifyImage(int nGame, const struct IODevice *dev, int nID, LPCTSTR pszFilename)
+static void MessSpecifyImage(int nGame, const device_class *devclass, int nID, LPCTSTR pszFilename)
 {
-	LPCSTR pszSelection;
-	LPSTR pszSelectionCopy, pszNewSelection;
-	LPCSTR *ppszNewSelections;
-	LPSTR s;
-	int i, nLength;
-	int nSelectionCount, nNewSelectionCount;
+	const struct IODevice *devices;
+	const struct IODevice *dev;
+	const char *s;
+	int i;
 
-	assert(dev);
+	begin_resource_tracking();
+	devices = devices_allocate(devclass->gamedrv);
 
-	// normalize filename
-	if (!pszFilename)
-		pszFilename = TEXT("");
-	
-	// get the selection
-	pszSelection = GetSelectedSoftware(nGame, dev->type);
-
-	// copy the selection into something that we can modify
-	pszSelectionCopy = (LPSTR) alloca((strlen(pszSelection) + 1) * sizeof(*pszSelection));
-	strcpy(pszSelectionCopy, pszSelection);
-
-	// count number of selections and replace the IMAGE_SEPARATORs with NULs
-	s = pszSelectionCopy;
-	nSelectionCount = 0;
-	while(s && s[0])
+	for (dev = devices; dev->type < IO_COUNT; dev++)
 	{
-		nSelectionCount++;
-		s = strchr(s, IMAGE_SEPARATOR);
-		if (s)
-		{
-			*s = '\0';
-			s++;
-		}
-	}
-
-	if (nID < 0)
-		nID = nSelectionCount;
-
-	// Allocate an array of selection parts
-	nNewSelectionCount = MAX(nSelectionCount, nID + 1);
-	ppszNewSelections = (LPCSTR *) alloca(sizeof(*ppszNewSelections) * nNewSelectionCount);
-	s = pszSelectionCopy;
-	nLength = 0;
-	for (i = 0; i < nNewSelectionCount; i++)
-	{
-		if (i == nID)
-			ppszNewSelections[i] = pszFilename;
-		else if (s && s[0])
-			ppszNewSelections[i] = s;
-		else
-			ppszNewSelections[i] = TEXT("");
-		nLength += strlen(ppszNewSelections[i]) + 1;
-
-		if (s)
-			s += strlen(s) + 1;
-	}
-
-	// purge extraneous entries
-	while((nNewSelectionCount > 0) && !ppszNewSelections[nNewSelectionCount - 1][0])
-		nNewSelectionCount--;
-
-	// ...and finally assemble the new selection string
-	pszNewSelection = (LPSTR) alloca(nLength * sizeof(*pszNewSelection));
-	s = pszNewSelection;
-	s[0] = '\0';
-	for (i = 0; i < nNewSelectionCount; i++)
-	{
-		if (i > 0)
-			*(s++) = IMAGE_SEPARATOR;
-		strcpy(s, ppszNewSelections[i]);
-		s += strlen(s);
+		if (dev->devclass.get_info == devclass->get_info)
+			break;
 	}
 
 	if (LOG_SOFTWARE)
 	{
-		dprintf("MessSpecifyImage(): nID=%d pszFilename='%s'\n\t   pszSelection='%s'\n\tpszNewSelection='%s'\n",
-			nID, pszFilename, pszSelection, pszNewSelection);
+		dprintf("MessSpecifyImage(): nID=%d pszFilename='%s'\n", nID, pszFilename);
 	}
 
-	InternalSetSelectedSoftware(nGame, dev->type, pszNewSelection);
+	if (nID < 0)
+	{
+		// special case; first try to find existing image
+		for (i = 0; i < dev->count; i++)
+		{
+			s = GetSelectedSoftware(nGame, dev->position + i);
+			if (s && !_tcsicmp(s, pszFilename))
+			{
+				nID = i;
+				break;
+			}
+		}
+	}
+
+	if (nID < 0)
+	{
+		// still not found?  locate an empty slot
+		for (i = 0; i < dev->count; i++)
+		{
+			s = GetSelectedSoftware(nGame, dev->position + i);
+			if (!s || !*s || !_tcsicmp(s, pszFilename))
+			{
+				nID = i;
+				break;
+			}
+		}
+	}
+
+	if (nID >= 0)
+		InternalSetSelectedSoftware(nGame, dev->position + nID, pszFilename);
+
+	end_resource_tracking();
 }
 
 
 
-static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFilename)
+static void MessRemoveImage(int nGame, device_class devclass, LPCTSTR pszFilename)
 {
-	LPCTSTR pszSelection;
-	int i;
-	LPTSTR s;
-	LPTSTR pszMySelection;
-	TCHAR szNull[1] = { '\0' };
+	int i, nPos;
+	const struct IODevice *devices;
+	const struct IODevice *dev;
 
-	assert(dev);
-	assert(pszFilename);
-
-	// get the selection
-	pszSelection = GetSelectedSoftware(nGame, dev->type);
-	pszMySelection = (LPTSTR) alloca((_tcslen(pszSelection) + 1) * sizeof(TCHAR));
-	_tcscpy(pszMySelection, pszSelection);
-
-	// find the selection in question and remove it
-	i = 0;
-	while(*pszMySelection)
+	if (devclass.gamedrv)
 	{
-		s = _tcschr(pszMySelection, IMAGE_SEPARATOR);
-		if (s)
-			*s = '\0';
-		if (!_tcsicmp(pszMySelection, pszFilename))
+		begin_resource_tracking();
+		devices = devices_allocate(devclass.gamedrv);
+
+		nPos = 0;
+		for (dev = devices; dev->type < IO_COUNT; dev++)
 		{
-			MessSpecifyImage(nGame, dev, i, NULL);
-			break;
+			if (dev->devclass.get_info == devclass.get_info)
+				break;
+			nPos += dev->count;
 		}
-		pszMySelection = s ? s + 1 : szNull;
-		i++;
+
+		if (dev->type < IO_COUNT)
+		{
+			for (i = 0; i < dev->count; i++)
+			{
+				if (!_tcsicmp(pszFilename, GetSelectedSoftware(nGame, nPos + i)))
+				{
+					MessSpecifyImage(nGame, &devclass, nPos + i, NULL);
+					break;
+				}
+			}
+		}
+
+		end_resource_tracking();
 	}
 }
 
@@ -588,14 +541,12 @@ static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFi
 static void MessReadMountedSoftware(int nGame)
 {
 	HWND hwndSoftware;
-	int i;
+	int i, id, nPos;
 	LVFINDINFO lvfi;
-	LPTSTR apszSoftware[IO_COUNT];
 	const game_driver *pDriver;
 	const struct IODevice *pDeviceList;
 	const struct IODevice *pDevice;
 	LPCTSTR pszSoftware;
-	LPTSTR pszMySoftware, s;
 
 	begin_resource_tracking();
 
@@ -605,60 +556,38 @@ static void MessReadMountedSoftware(int nGame)
 	if (!pDeviceList)
 		goto done;
 
-	// first make our own copy of the selected software
-	memset(apszSoftware, 0, sizeof(apszSoftware));
-	for (pDevice = pDeviceList; pDevice->type < IO_COUNT; pDevice++)
-	{
-		if (!IsSoftwarePaneDevice(pDevice->type))
-			continue;
-
-		pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
-		if (pszSoftware && *pszSoftware)
-		{
-			pszMySoftware = (LPTSTR) alloca((_tcslen(pszSoftware) + 1) * sizeof(TCHAR));
-			_tcscpy(pszMySoftware, pszSoftware);
-			apszSoftware[pDevice->type] = pszMySoftware;
-		}
-
-		// clear out the existing entry
-		InternalSetSelectedSoftware(nGame, pDevice->type, "");
-	}
-
 	// Now clear everything out; this may call back into us but it should not
 	// be problematic
 	ListView_SetItemState(hwndSoftware, -1, 0, LVIS_SELECTED);
 
+	nPos = 0;
+
 	for (pDevice = pDeviceList; pDevice->type < IO_COUNT; pDevice++)
 	{
-		if (!IsSoftwarePaneDevice(pDevice->type))
-			continue;
-
-		pszMySoftware = apszSoftware[pDevice->type];
-		while(pszMySoftware)
+		for (id = 0; id < pDevice->count; id++)
 		{
-			s = _tcschr(pszMySoftware, IMAGE_SEPARATOR);
-			if (s)
-				*(s++) = '\0';
-			else
-				s = NULL;
-
-			i = SoftwarePicker_LookupIndex(hwndSoftware, pszMySoftware);
-			if (i < 0)
+			pszSoftware = GetSelectedSoftware(nGame, nPos);
+			if (pszSoftware && *pszSoftware)
 			{
-				SoftwarePicker_AddFile(hwndSoftware, pszMySoftware);
-				i = SoftwarePicker_LookupIndex(hwndSoftware, pszMySoftware);
+				i = SoftwarePicker_LookupIndex(hwndSoftware, pszSoftware);
+				if (i < 0)
+				{
+					SoftwarePicker_AddFile(hwndSoftware, pszSoftware);
+					i = SoftwarePicker_LookupIndex(hwndSoftware, pszSoftware);
+				}
+				if (i >= 0)
+				{
+					memset(&lvfi, 0, sizeof(lvfi));
+					lvfi.flags = LVFI_PARAM;
+					lvfi.lParam = i;
+					i = ListView_FindItem(hwndSoftware, -1, &lvfi);
+					ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
+				}
 			}
-			if (i >= 0)
-			{
-				memset(&lvfi, 0, sizeof(lvfi));
-				lvfi.flags = LVFI_PARAM;
-				lvfi.lParam = i;
-				i = ListView_FindItem(hwndSoftware, -1, &lvfi);
-				ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
-			}
-			pszMySoftware = s;
+			nPos++;
 		}
 	}
+
 
 done:
 	end_resource_tracking();
@@ -701,57 +630,11 @@ static void InitMessPicker(void)
 
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const game_driver *pDriver)
 {
-	const struct IODevice *pDevice;
-	int nGame;
-	LPCTSTR pszSoftware;
-	LPCTSTR pszOptionName;
-	LPTSTR pszMySoftware;
-	LPTSTR s;
-	TCHAR szNull[1] = { '\0' };
-
-	begin_resource_tracking();
-	nGame = Picker_GetSelectedItem(hwndList);
-	pDevice = devices_allocate(pDriver);
-	if (!pDevice)
-		goto done;
-
-	while(pDevice->type < IO_COUNT)
-	{
-		if (!pDevice->not_working)
-		{
-			pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
-			if (pszSoftware && *pszSoftware)
-			{
-				pszMySoftware = (LPTSTR) alloca((_tcslen(pszSoftware) + 1) * sizeof(TCHAR));
-				_tcscpy(pszMySoftware, pszSoftware);
-
-				pszOptionName = A2T(device_brieftypename(pDevice->type));
-
-				while(*pszMySoftware)
-				{
-					s = _tcschr(pszMySoftware, '|');
-					if (s)
-						*s = '\0';
-
-					sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", 
-						pszOptionName,
-						pszMySoftware);
-
-					pszMySoftware = s ? s + 1 : szNull;
-				}
-			}
-		}
-		pDevice++;
-	}
-
 	if ((pOpts->mess.ram_size != 0) && ram_is_valid_option(pDriver, pOpts->mess.ram_size))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->mess.ram_size);
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->mess.use_new_ui ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -writeconfig");
-
-done:
-	end_resource_tracking();
 }
 
 
@@ -974,7 +857,7 @@ static BOOL DevView_GetCreateFileName(HWND hwndDevView, const struct IODevice *d
 static void DevView_SetSelectedSoftware(HWND hwndDevView, int nGame,
 	const struct IODevice *dev, int nID, LPCTSTR pszFilename)
 {
-	MessSpecifyImage(nGame, dev, nID, pszFilename);
+	MessSpecifyImage(nGame, &dev->devclass, nID, pszFilename);
 	MessReadMountedSoftware(nGame);
 }
 
@@ -983,37 +866,7 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nGame,
 static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 	const struct IODevice *dev, int nID, LPTSTR pszBuffer, UINT nBufferLength)
 {
-	LPCSTR pszSelection, s;
-	
-	pszSelection = GetSelectedSoftware(nDriverIndex, dev->type);
-
-	// skip over irrelevant selections
-	while(pszSelection && pszSelection[0] && (nID > 0))
-	{
-		nID--;
-		pszSelection = strchr(pszSelection, IMAGE_SEPARATOR);
-		if (pszSelection)
-			pszSelection++;
-
-	}
-	if (!pszSelection || !pszSelection[0])
-	{
-		pszSelection = NULL;
-	}
-	else
-	{
-		s = strchr(pszSelection, IMAGE_SEPARATOR);
-		if (s)
-		{
-			// extract the filename, minus the comma
-			nBufferLength = MIN(nBufferLength, s - pszSelection);
-			memcpy(pszBuffer, pszSelection, nBufferLength * sizeof(*pszSelection));
-			if (nBufferLength)
-				pszBuffer[nBufferLength] = '\0';
-			pszSelection = pszBuffer;
-		}
-	}
-	return pszSelection;
+	return GetSelectedSoftware(nDriverIndex, dev->position + nID);
 }
 
 
@@ -1084,15 +937,14 @@ static int SoftwarePicker_GetItemImage(HWND hwndPicker, int nItem)
 static void SoftwarePicker_LeavingItem(HWND hwndSoftwarePicker, int nItem)
 {
 	int nGame;
-	const struct IODevice *pDevice;
+	device_class devclass;
 	LPCTSTR pszFullName;
 
 	nGame = Picker_GetSelectedItem(hwndList);
-	pDevice = SoftwarePicker_LookupDevice(hwndSoftwarePicker, nItem);
+	devclass = SoftwarePicker_LookupDevice(hwndSoftwarePicker, nItem);
 	pszFullName = SoftwarePicker_LookupFilename(hwndSoftwarePicker, nItem);
 
-	if (pDevice)
-		MessRemoveImage(nGame, pDevice, pszFullName);
+	MessRemoveImage(nGame, devclass, pszFullName);
 }
 
 
@@ -1103,7 +955,7 @@ static void SoftwarePicker_EnteringItem(HWND hwndSoftwarePicker, int nItem)
 	LPCTSTR pszName;
 	LPTSTR s;
 	int nGame;
-	const struct IODevice *pDevice;
+	device_class devclass;
 
 	nGame = Picker_GetSelectedItem(hwndList);
 
@@ -1113,10 +965,10 @@ static void SoftwarePicker_EnteringItem(HWND hwndSoftwarePicker, int nItem)
 	pszName = s ? s + 1 : pszFullName;
 
 	// Do the dirty work
-	pDevice = SoftwarePicker_LookupDevice(hwndSoftwarePicker, nItem);
-	if (!pDevice)
+	devclass = SoftwarePicker_LookupDevice(hwndSoftwarePicker, nItem);
+	if (!devclass.gamedrv)
 		return;
-	MessSpecifyImage(nGame, pDevice, -1, pszFullName);
+	MessSpecifyImage(nGame, &devclass, -1, pszFullName);
 
 	// Set up s_szSelecteItem, for the benefit of UpdateScreenShot()
 	strncpyz(s_szSelectedItem, pszName, sizeof(s_szSelectedItem) / sizeof(s_szSelectedItem[0]));
@@ -1304,7 +1156,6 @@ static void SoftwareTabView_OnSelectionChanged(void)
 	switch(nTab)
 	{
 		case 0:
-			MessReadMountedSoftware(Picker_GetSelectedItem(hwndList));
 			ShowWindow(hwndSoftwarePicker, SW_SHOW);
 			ShowWindow(hwndSoftwareDevView, SW_HIDE);
 			break;
