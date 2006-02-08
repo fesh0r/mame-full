@@ -297,13 +297,18 @@ SYSTEM_CONFIG_END
 
 /* Driver Initialization */
 
+static void setup_beep(int dummy) {
+	beep_set_state( 0, 0 );
+	beep_set_frequency( 0, 300 );
+}
+
 static DRIVER_INIT( studio2 )
 {
 	int i;
 	UINT8 *gfx = memory_region(REGION_GFX1);
 	for (i=0; i<256; i++)
 		gfx[i]=i;
-	beep_set_frequency(0, 300);
+	timer_set(0.0, 0, setup_beep);
 }
 
 static DRIVER_INIT( vip )
@@ -312,8 +317,8 @@ static DRIVER_INIT( vip )
 	UINT8 *gfx = memory_region(REGION_GFX1);
 	for (i=0; i<256; i++)
 		gfx[i]=i;
-	beep_set_frequency(0, 300);
 	memory_region(REGION_CPU1)[0x8022] = 0x3e; //bn3, default monitor
+	timer_set(0.0, 0, setup_beep);
 }
 
 /* Game Drivers */

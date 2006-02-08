@@ -87,7 +87,8 @@ void studio2_video_dma(int cycles)
 
 VIDEO_START( studio2 )
 {
-	studio2_video.state=1;
+	/* video chip is initially disabled */
+	studio2_video.state=0;
 	return 0;
 }
 
