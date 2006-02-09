@@ -44,7 +44,6 @@ CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
 OSOBJS += \
 	$(OBJ)/mess/windows/dirio.o		\
 	$(OBJ)/mess/windows/dirutils.o	\
-	$(OBJ)/mess/windows/messwin.o	\
 	$(OBJ)/mess/windows/configms.o	\
 	$(OBJ)/mess/windows/menu.o		\
 	$(OBJ)/mess/windows/opcntrl.o	\
