@@ -79,7 +79,6 @@ int devices_init(const game_driver *gamedrv);
 int devices_initialload(const game_driver *gamedrv, int ispreload);
 void devices_exit(void);
 
-char *auto_strlistdup(const char *strlist);
 void mess_config_init(void);
 
 enum

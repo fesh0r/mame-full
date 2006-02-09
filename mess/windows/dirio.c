@@ -6,7 +6,6 @@
 #include "unzip.h"
 #include "osdepend.h"
 #include "utils.h"
-#include "messwin.h"
 #include "strconv.h"
 
 /* ************************************************************************ */

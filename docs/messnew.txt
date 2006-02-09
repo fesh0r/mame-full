@@ -30,6 +30,9 @@ Source Changes:
   command line option.  This allows multiple devices of the same type to be
   viable.  [Nate Woods]
 
+- Eliminated the unknown and unused -listtext and -createdir command line
+  options.  [Nate Woods]
+
 
 
 0.104

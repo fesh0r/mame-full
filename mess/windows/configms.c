@@ -350,3 +350,16 @@ void osd_begin_final_unloading(void)
 		}
 	}
 }
+
+
+
+int osd_select_file(mess_image *img, char *filename)
+{
+	return 0;
+}
+
+
+
+void osd_image_load_status_changed(mess_image *img, int is_final_unload)
+{
+}

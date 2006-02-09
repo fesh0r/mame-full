@@ -411,12 +411,9 @@ static const REG_OPTION regGameOpts[] =
 // options in mame32.ini that we'll never override with with game-specific options
 static const REG_OPTION global_game_options[] =
 {
-	{"skip_gameinfo",           RO_BOOL,    offsetof(settings_type, skip_gameinfo),     "0" },
 #ifdef MESS
 	{"skip_warnings",           RO_BOOL,    offsetof(settings_type, skip_warnings),     "0" },
 #endif
-	{"high_priority",           RO_BOOL,    offsetof(settings_type, high_priority),     "0" },
-
 
 #ifdef MESS
 	{ "biospath",               RO_STRING,  offsetof(settings_type, romdirs),          "bios" },

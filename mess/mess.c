@@ -344,23 +344,6 @@ void machine_hard_reset(void)
 
 
 
-char *auto_strlistdup(const char *strlist)
-{
-	int i;
-	char *s;
-
-	for (i = 2; strlist[i - 2] || strlist[i - 1]; i++)
-		;
-	s = auto_malloc(i * sizeof(*strlist));
-	if (!s)
-		return NULL;
-
-	memcpy(s, strlist, i * sizeof(*strlist));
-	return s;
-}
-
-
-
 const game_driver *mess_next_compatible_driver(const game_driver *drv)
 {
 	if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
