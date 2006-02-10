@@ -8,7 +8,9 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
 #include "includes/mbee.h"
@@ -26,10 +28,9 @@ static void mbee_fdc_callback(int);
 
 static z80pio_interface pio_intf =
 {
-	1,					/* number of PIOs to emulate */
-	{ pio_interrupt },	/* callback when change interrupt status */
-	{ 0 },				/* portA ready active callback (do not support yet)*/
-	{ 0 }				/* portB ready active callback (do not support yet)*/
+	pio_interrupt,	/* callback when change interrupt status */
+	0,				/* portA ready active callback (do not support yet)*/
+	0				/* portB ready active callback (do not support yet)*/
 };
 
 static void pio_interrupt(int state)
@@ -39,7 +40,7 @@ static void pio_interrupt(int state)
 
 MACHINE_INIT( mbee )
 {
-	z80pio_init(&pio_intf);
+	z80pio_init(0, &pio_intf);
     wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
 }
 
@@ -58,9 +59,9 @@ static mess_image *cassette_device_image(void)
  * 6	speaker
  * 7	network interrupt
  */
- READ8_HANDLER ( mbee_pio_r )
+READ8_HANDLER ( mbee_pio_r )
 {
-    int data = z80pio_0_r(offset);
+    UINT8 data = (offset & 2) ? z80pio_c_r(0, offset & 1) : z80pio_d_r(0, offset & 1);
 	if( offset != 2 )
 		return data;
 
@@ -73,7 +74,11 @@ static mess_image *cassette_device_image(void)
 
 WRITE8_HANDLER ( mbee_pio_w )
 {
-    z80pio_0_w(offset,data);
+	if (offset & 2)
+		z80pio_c_w(0, offset & 1, data);
+	else
+		z80pio_d_w(0, offset & 1, data);
+
 	if( offset == 2 )
 	{
 		cassette_output(cassette_device_image(), (data & 0x02) ? -1.0 : +1.0);

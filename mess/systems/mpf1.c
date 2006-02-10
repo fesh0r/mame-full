@@ -29,7 +29,9 @@
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "cpu/z80/z80.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "mscommon.h"
 #include "inputx.h"
 
@@ -314,10 +316,9 @@ static void mpf1_pio_interrupt( int state )
 
 static z80pio_interface pio_intf = 
 {
-	1,
-	{ mpf1_pio_interrupt },
-	{ NULL },
-	{ NULL }
+	mpf1_pio_interrupt,
+	NULL,
+	NULL
 };
 
 /* Z80 CTC Interface */
@@ -442,7 +443,7 @@ static ppi8255_interface ppi8255_intf =
 static MACHINE_INIT( mpf1 )
 {
 	// PIO
-	z80pio_init(&pio_intf);
+	z80pio_init(0, &pio_intf);
 	z80pio_reset(0);
 
 	// CTC

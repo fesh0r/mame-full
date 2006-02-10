@@ -13,7 +13,9 @@
 
 #include "driver.h"
 #include "cpuintrf.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
 #include "includes/kc.h"

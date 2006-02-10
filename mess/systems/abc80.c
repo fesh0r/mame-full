@@ -69,7 +69,9 @@
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "devices/printer.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "sound/sn76477.h"
 
 static tilemap *bg_tilemap;
@@ -1010,10 +1012,9 @@ static void abc80_pio_interrupt( int state )
 
 static z80pio_interface abc80_pio_interface = 
 {
-	1,
-	{ abc80_pio_interrupt },
-	{ NULL },
-	{ NULL }
+	abc80_pio_interrupt,
+	NULL,
+	NULL
 };
 
 /* Sound Interfaces */
@@ -1062,7 +1063,7 @@ INTERRUPT_GEN( abc80_nmi_interrupt )
 
 static MACHINE_INIT( abc80 )
 {
-	z80pio_init(&abc80_pio_interface);
+	z80pio_init(0, &abc80_pio_interface);
 	z80pio_reset(0);
 }
 

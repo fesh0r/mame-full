@@ -942,7 +942,9 @@ COREOBJS +=							\
 	$(OBJ)/machine/random.o			\
 	$(OBJ)/machine/6522via.o		\
 	$(OBJ)/machine/6821pia.o		\
-	$(OBJ)/machine/z80fmly.o		\
+	$(OBJ)/machine/z80ctc.o			\
+	$(OBJ)/machine/z80pio.o			\
+	$(OBJ)/machine/z80sio.o			\
 	$(OBJ)/machine/idectrl.o		\
 	$(OBJ)/machine/6532riot.o		\
 	$(OBJ)/mess/mess.o				\

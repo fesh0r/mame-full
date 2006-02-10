@@ -25,7 +25,9 @@
 #include "cpu/z80/z80daisy.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "machine/8255ppi.h"
 #include "devices/cartslot.h"
 #include "devices/cassette.h"
@@ -327,16 +329,15 @@ static void sord_m5_ctc_interrupt(int state)
 
 static z80ctc_interface	sord_m5_ctc_intf =
 {
-	1,
-	{3800000},
-	{0},
-	{sord_m5_ctc_interrupt},
-	{0},
-	{0},
-    {0}
+	3800000,
+	0,
+	sord_m5_ctc_interrupt,
+	0,
+	0,
+    0
 };
 
-static  READ8_HANDLER ( sord_keyboard_r )
+static READ8_HANDLER ( sord_keyboard_r )
 {
 	return readinputport(offset);
 }
@@ -483,7 +484,7 @@ static void sordm5_video_interrupt_callback(int state)
 
 static MACHINE_INIT( sord_m5 )
 {
-	z80ctc_init(&sord_m5_ctc_intf);
+	z80ctc_init(0, &sord_m5_ctc_intf);
 
 	/* PI-5 interface connected to Sord M5 */
 	ppi8255_init(&sord_ppi8255_interface);

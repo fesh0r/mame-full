@@ -1,6 +1,8 @@
 #include "driver.h"
 #include "cpuintrf.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
 #include "devices/cassette.h"
@@ -1809,10 +1811,9 @@ static void kc85_pio_brdy_callback(int state)
 
 static z80pio_interface kc85_pio_intf =
 {
-	1,					/* number of PIOs to emulate */
-	{ kc85_pio_interrupt },	/* callback when change interrupt status */
-	{ kc85_pio_ardy_callback },	/* portA ready active callback */
-	{ kc85_pio_brdy_callback }	/* portB ready active callback */
+	kc85_pio_interrupt,		/* callback when change interrupt status */
+	kc85_pio_ardy_callback,	/* portA ready active callback */
+	kc85_pio_brdy_callback	/* portB ready active callback */
 };
 
 /* used in cassette write -> K0 */
@@ -1867,19 +1868,18 @@ static WRITE8_HANDLER(kc85_zc2_callback)
 
 static z80ctc_interface	kc85_ctc_intf =
 {
-	1,
-	{1379310.344828},
-	{0},
-    {kc85_ctc_interrupt},
-	{kc85_zc0_callback},
-	{kc85_zc1_callback},
-    {kc85_zc2_callback}
+	1379310.344828,
+	0,
+    kc85_ctc_interrupt,
+	kc85_zc0_callback,
+	kc85_zc1_callback,
+    kc85_zc2_callback
 };
 
 static void	kc85_common_init(void)
 {
-	z80pio_init(&kc85_pio_intf);
-	z80ctc_init(&kc85_ctc_intf);
+	z80pio_init(0, &kc85_pio_intf);
+	z80ctc_init(0, &kc85_ctc_intf);
 
 	z80ctc_reset(0);
 	z80pio_reset(0);

@@ -35,7 +35,9 @@
 
 #include <math.h>
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
 #include "includes/mbee.h"

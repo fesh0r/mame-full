@@ -473,13 +473,13 @@ int frontend_help (const char *gamename)
 
 	switch (list)  /* front-end utilities ;) */
 	{
-#ifdef MESS
+        #ifdef MESS
 		case LIST_MESSDEVICES:
 			/* send the gamename to MESS */
 			print_mess_devices(gamename);
 			return 0;
 			break;
-#endif
+		#endif
 
 		case LIST_FULL: /* games list with descriptions */
 			printf("Name:     Description:\n");

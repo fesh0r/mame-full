@@ -27,7 +27,9 @@
 #include "cpuintrf.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
@@ -210,13 +212,12 @@ static WRITE8_HANDLER ( mtx_ctc_w )
 
 static z80ctc_interface	mtx_ctc_intf =
 {
-	1,
-	{MTX_SYSTEM_CLOCK},
-	{0},
-	{mtx_ctc_interrupt},
-	{0},
-	{0},
-	{0}
+	MTX_SYSTEM_CLOCK,
+	0,
+	mtx_ctc_interrupt,
+	0,
+	0,
+	0
 };
 
 static void mtx_tms9929A_interrupt (int data)
@@ -568,7 +569,7 @@ static MACHINE_INIT( mtx512 )
 	memset (mtx_loadbuffer, 0, 65536);
 	memset (mtx_savebuffer, 0, 65536);
 
-	z80ctc_init (&mtx_ctc_intf);
+	z80ctc_init(0, &mtx_ctc_intf);
 
 	// Patch the Rom (Sneaky........ Who needs to trap opcodes?)
 	romimage = memory_region(REGION_CPU1);

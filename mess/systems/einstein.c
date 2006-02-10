@@ -79,7 +79,9 @@
 /* 7e = 0, read from fe, 7e = 1, read from fe */
 
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
@@ -386,13 +388,12 @@ static WRITE8_HANDLER(einstein_serial_receive_clock)
 
 static z80ctc_interface	einstein_ctc_intf =
 {
-	1,
-	{EINSTEIN_SYSTEM_CLOCK},
-	{0},
-	{einstein_ctc_interrupt},
-	{einstein_serial_transmit_clock},
-	{einstein_serial_receive_clock},
-    {z80ctc_0_trg3_w}
+	EINSTEIN_SYSTEM_CLOCK,
+	0,
+	einstein_ctc_interrupt,
+	einstein_serial_transmit_clock,
+	einstein_serial_receive_clock,
+    z80ctc_0_trg3_w
 };
 
 static void einstein_pio_ardy(int data)
@@ -412,10 +413,9 @@ static void einstein_pio_ardy(int data)
 
 static z80pio_interface einstein_pio_intf = 
 {
-	1,
-	{einstein_pio_interrupt},
-	{einstein_pio_ardy},
-	{NULL}
+	einstein_pio_interrupt,
+	einstein_pio_ardy,
+	NULL
 };
 
 /* not required for this interrupt source */
@@ -1384,8 +1384,8 @@ static MACHINE_INIT( einstein )
 	memory_set_bankptr(3, mess_ram);
 	memory_set_bankptr(4, mess_ram+0x02000);
 
-	z80ctc_init(&einstein_ctc_intf);
-	z80pio_init(&einstein_pio_intf);
+	z80ctc_init(0, &einstein_ctc_intf);
+	z80pio_init(0, &einstein_pio_intf);
 	msm8251_init(&einstein_msm8251_intf);
 
 	z80ctc_reset(0);
