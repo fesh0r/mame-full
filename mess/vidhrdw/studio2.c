@@ -35,9 +35,10 @@ void studio2_video_dma(int cycles)
 	case 0: // deactivated
 		break;
 	case 1:
-		studio2_video.count=COLUMNS-cycles;
-		studio2_video.state++;
-		cpunum_set_input_line(0, CDP1802_IRQ, PULSE_LINE);
+		studio2_video.count=29;
+		studio2_video.line=0;
+		studio2_video.state=10;
+		cpunum_set_input_line(0, CDP1802_IRQ_STATE, PULSE_LINE);
 		studio2_video.dma_activ=1;
 		break;
 	case 2:
@@ -50,9 +51,10 @@ void studio2_video_dma(int cycles)
 		break;
 	case 10:
 		studio2_video.count-=cycles;
-		if (studio2_video.count<0) {
-			for (i=0; i<8; i++) 
+		if (studio2_video.count<=0) {
+			for (i=0; i<8; i++) {
 				studio2_video.data[studio2_video.line][i]=cdp1802_dma_read();
+			}
 			studio2_video.count+=COLUMNS-8;
 			if (++studio2_video.line>=128) {
 				studio2_video.dma_activ=0;
@@ -64,7 +66,7 @@ void studio2_video_dma(int cycles)
 		break;
 	case 11:
 		studio2_video.count-=cycles;
-		if (studio2_video.count<0) {
+		if (studio2_video.count<=0) {
 // while dma_activ is high Register0 is corrected for doublescanning
 // after is it waiting for it going high again
 			studio2_video.dma_activ=1; 
@@ -75,7 +77,7 @@ void studio2_video_dma(int cycles)
 		break;
 	case 12:
 		studio2_video.count-=cycles;
-		if (studio2_video.count<0) {
+		if (studio2_video.count<=0) {
 			studio2_video.dma_activ=0; 
 			studio2_video.count+=COLUMNS;
 			studio2_video.state=11;
