@@ -31,7 +31,7 @@ Source Changes:
 	
   Also, drivers now have the ability to specify the string to be used for the
   command line option.  This allows multiple devices of the same type to be
-  viable.  [Nate Woods]
+  viable.  (bugs #711, #839) [Nate Woods]
 
 - Eliminated the unknown and unused -listtext and -createdir command line
   options.  [Nate Woods]
