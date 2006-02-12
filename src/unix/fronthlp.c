@@ -7,7 +7,7 @@
 #include "sound/samples.h"
 
 #ifdef MESS
-#include "xmess.h"
+#include "infomess.h"
 #endif
 
 static int frontend_list_clones(char *gamename);
@@ -30,7 +30,7 @@ enum {
 	LIST_SOURCEFILE, LIST_COLORS,
 #ifdef MESS
 	/* MESS-specific commands */
-	LIST_MESSDEVICES, LIST_MESSTEXT, LIST_MESSCREATEDIR,	
+	LIST_MESSDEVICES, 
 #endif
 	LIST_ROMSIZE, LIST_PALETTESIZE, LIST_ROMS, LIST_CRC, LIST_SHA1, 
 	LIST_MD5, LIST_SAMPLES, LIST_SAMDIR, 
@@ -57,8 +57,6 @@ struct rc_option frontend_list_opts[] = {
 	{ "listcolors", "lcol", rc_set_int, &list, NULL, LIST_COLORS, 0, NULL, "Like -list, with the number of colors used" },
 #ifdef MESS
 	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSDEVICES, 0, NULL, "list available devices" },
-	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSTEXT, 0, NULL, "list available file extensions" },
-	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSCREATEDIR, 0, NULL, NULL },
 #endif
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "Like -list, with the year and size of the roms used" },
 	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "Like -list, with the year and palette size of the roms used" },
@@ -541,27 +539,11 @@ int frontend_list(char *gamename)
 							drv.total_colors);
 					break;
 #ifdef MESS
-				case LIST_MESSTEXT: /* all mess specific calls here */
-					{
-						/* send the gamename and arg to mess.c */
-						list_mess_info(gamename, "-listtext", listclones);
-						return 0;
-						break;
-					}
 				case LIST_MESSDEVICES:
-					{
-						/* send the gamename and arg to mess.c */
-						list_mess_info(gamename, "-listdevices", listclones);
-						return 0;
-						break;
-					}
-				case LIST_MESSCREATEDIR:
-					{
-						/* send the gamename and arg to mess.c */
-						list_mess_info(gamename, "-createdir", listclones);
-						return 0;
-						break;
-					}
+					/* send the gamename to MESS */
+					print_mess_devices(gamename);
+					return 0;
+					break;
 #endif
 				case LIST_ROMSIZE:
 					{

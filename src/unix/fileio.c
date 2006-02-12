@@ -483,6 +483,7 @@ static osd_file_error get_last_fileerror(void)
 			break;
 
 		case ENOENT:
+		case ENOTDIR:
 			error = FILEERR_NOT_FOUND;
 			break;
 

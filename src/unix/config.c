@@ -51,8 +51,8 @@ static int config_handle_debug_size(struct rc_option *option, const char *arg,
 void show_usage(void);
 
 #ifdef MESS
-static int add_device(struct rc_option *option, const char *arg, int priority);
 static int specify_ram(struct rc_option *option, const char *arg, int priority);
+static void add_mess_device_options(struct rc_struct *rc, const game_driver *gamedrv);
 #endif
 
 /* OpenVMS doesn't support paths with a leading '.' character. */
@@ -78,20 +78,6 @@ static struct rc_option opts2[] = {
 #ifdef MESS
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "cartridge", "cart", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cartridge device" },
-	{ "floppydisk","flop", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to floppy disk device" },
-	{ "harddisk",  "hard", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to hard disk device" },
-	{ "cylinder",  "cyln", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cylinder device" },
-	{ "cassette",  "cass", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cassette device" },
-	{ "punchcard", "pcrd", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to punch card device" },
-	{ "punchtape", "ptap", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to punch tape device" },
-	{ "printer",   "prin", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to printer device" },
-	{ "serial",    "serl", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to serial device" },
-	{ "parallel",  "parl", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to parallel device" },
-	{ "snapshot",  "dump", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
-	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
-	{ "memcard", "memc", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach image to memcard device" },
-	{ "cdrom", "cdrm", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to CD-ROM device" },
 	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
 	{ "MAME Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -171,6 +157,8 @@ static int config_printf(const char *fmt, ...)
 
 static int config_handle_arg(char *arg)
 {
+	int i;
+
 	/* notice: for MESS game means system */
 	if (got_gamename)
 	{
@@ -188,11 +176,20 @@ static int config_handle_arg(char *arg)
 
 	gamename = arg;
 
-	if (!gamename || !strlen(gamename))
+	/* do we have a driver for this? */
+	for (i = 0; drivers[i]; i++)
 	{
-		fprintf(stderr, "error: no gamename given in %s\n", arg);
-		return -1;
+		if (mame_stricmp(gamename, drivers[i]->name) == 0)
+		{
+			game_index = i;
+			break;
+		}
 	}
+
+#ifdef MESS
+	if (game_index >= 0)
+		add_mess_device_options(rc, drivers[game_index]);
+#endif /* MESS */
 
 	got_gamename = 1;
 	return 0;
@@ -545,66 +542,6 @@ int xmame_config_init(int argc, char *argv[])
 			return OSD_NOT_OK;
 	}
 
-#ifdef MESS
-	/* set the image type if necessary */
-	for(i=0; i<options.image_count; i++)
-	{
-		if(options.image_files[i].type)
-		{
-			logerror("User specified %s for %s\n",
-					device_typename(options.image_files[i].type),
-					options.image_files[i].name);
-		}
-		else
-		{
-			char *ext;
-			char name[BUF_SIZE];
-			const struct IODevice *dev;
-
-			/* make a copy of the name */
-			strncpy(name, options.image_files[i].name, BUF_SIZE);
-			/* strncpy is buggy */
-			name[BUF_SIZE-1]=0;
-
-			/* get ext, skip .gz */
-			ext = strrchr(name, '.');
-			if (ext && !strcmp(ext, ".gz"))
-			{
-				*ext = 0;
-				ext = strrchr(name, '.');
-			}
-
-			/* Look up the filename extension in the drivers device list */
-			if (ext && (dev = Machine->devices))
-			{
-				ext++; /* skip the "." */
-
-				while (dev->type < IO_COUNT)
-				{
-					const char *dst = dev->file_extensions;
-					/* scan supported extensions for this device */
-					while (dst && *dst)
-					{
-						if (strcasecmp(dst,ext) == 0)
-						{
-							logerror("Extension match %s [%s] for %s\n",
-									device_typename(dev->type), dst,
-									options.image_files[i].name);
-
-							options.image_files[i].type = dev->type;
-						}
-						/* skip '\0' once in the list of extensions */
-						dst += strlen(dst) + 1;
-					}
-					dev++;
-				}
-			}
-			if(!options.image_files[i].type)
-				options.image_files[i].type = IO_CARTSLOT;
-		}
-	}
-#endif
-
 	if (recordname)
 	{
 		options.record = mame_fopen(recordname, 0, FILETYPE_INPUTLOG, 1);
@@ -721,26 +658,6 @@ void show_usage(void)
 
 #ifdef MESS
 
-/*	add_device() is called when the MESS CLI option has been identified
- *	This searches throught the devices{} struct array to grab the ID of the
- *	option, which then registers the device using register_device()
- */
-static int add_device(struct rc_option *option, const char *arg, int priority)
-{
-	int id;
-	id = device_typeid(option->name);
-	if (id < 0)
-	{
-		/* If we get to here, log the error - This is mostly due to a mismatch in the array */
-		logerror("Command Line Option [-%s] not a valid device - ignoring\n", option->name);
-		return -1;
-	}
-
-	/* A match!  we now know the ID of the device */
-	option->priority = priority;
-	return register_device(id, arg);
-}
-
 static int specify_ram(struct rc_option *option, const char *arg, int priority)
 {
 	UINT32 specified_ram = 0;
@@ -756,6 +673,136 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 	}
 	options.ram = specified_ram;
 	return 0;
+}
+
+
+
+/*============================================================ */
+/*	Device options */
+/*============================================================ */
+
+struct device_rc_option
+{
+	// options for the RC system
+	struct rc_option opts[2];
+
+	// device information
+	iodevice_t devtype;
+	const char *tag;
+	int index;
+
+	// mounted file
+	char *filename;
+};
+
+struct device_type_options
+{
+	int count;
+	struct device_rc_option *opts[MAX_DEV_INSTANCES];
+};
+
+struct device_type_options *device_options;
+
+
+
+static int add_device(struct rc_option *option, const char *arg, int priority)
+{
+	struct device_rc_option *dev_option = (struct device_rc_option *) option;
+
+	// the user specified a device type
+	options.image_files[options.image_count].device_type = dev_option->devtype;
+	options.image_files[options.image_count].device_tag = dev_option->tag;
+	options.image_files[options.image_count].device_index = dev_option->index;
+	options.image_files[options.image_count].name = auto_strdup(arg);
+	options.image_count++;
+
+	return 0;
+}
+
+
+
+static void add_mess_device_options(struct rc_struct *rc, const game_driver *gamedrv)
+{
+	struct SystemConfigurationParamBlock cfg;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	device_class devclass;
+	iodevice_t devtype;
+	int dev_count, dev, id, count;
+	struct device_rc_option *dev_option;
+	struct rc_option *opts;
+	const char *dev_name;
+	const char *dev_short_name;
+	const char *dev_tag;
+
+	// retrieve getinfo handlers
+	memset(&cfg, 0, sizeof(cfg));
+	memset(handlers, 0, sizeof(handlers));
+	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+	cfg.device_handlers = handlers;
+	cfg.device_countoverrides = count_overrides;
+	gamedrv->sysconfig_ctor(&cfg);
+
+	// count devides
+	for (dev_count = 0; handlers[dev_count]; dev_count++)
+		;
+
+	if (dev_count > 0)
+	{
+		// add a separator
+		opts = auto_malloc(sizeof(*opts) * 2);
+		memset(opts, 0, sizeof(*opts) * 2);
+		opts[0].name = "MESS devices";
+		opts[0].type = rc_seperator;
+		opts[1].type = rc_end;
+		rc_register(rc, opts);
+
+		// we need to save all options
+		device_options = auto_malloc(sizeof(*device_options) * dev_count);
+		memset(device_options, 0, sizeof(*device_options) * dev_count);
+
+		// list all options
+		for (dev = 0; dev < dev_count; dev++)
+		{
+			devclass.gamedrv = gamedrv;
+			devclass.get_info = handlers[dev];
+
+			// retrieve info about the device
+			devtype = (iodevice_t) (int) device_get_info_int(&devclass, DEVINFO_INT_TYPE);
+			count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
+			dev_tag = device_get_info_string(&devclass, DEVINFO_STR_DEV_TAG);
+			if (dev_tag)
+				dev_tag = auto_strdup(dev_tag);
+
+			device_options[dev].count = count;
+
+			for (id = 0; id < count; id++)
+			{
+				// retrieve info about hte device instance
+				dev_name = device_instancename(&devclass, id);
+				dev_short_name = device_briefinstancename(&devclass, id);
+
+				// dynamically allocate the option
+				dev_option = auto_malloc(sizeof(*dev_option));
+				memset(dev_option, 0, sizeof(*dev_option));
+
+				// populate the options
+				dev_option->opts[0].name = auto_strdup(dev_name);
+				dev_option->opts[0].shortname = auto_strdup(dev_short_name);
+				dev_option->opts[0].type = rc_string;
+				dev_option->opts[0].func = add_device;
+				dev_option->opts[0].dest = &dev_option->filename;
+				dev_option->opts[1].type = rc_end;
+				dev_option->devtype = devtype;
+				dev_option->tag = dev_tag;
+				dev_option->index = id;
+
+				// register these options
+				device_options[dev].opts[id] = dev_option;
+				rc_register(rc, dev_option->opts);
+			}
+		}
+	}
 }
 
 #endif
@@ -809,6 +856,37 @@ void osd_die(const char *text,...)
 	exit(-1);
 }
 
+
+
 void osd_begin_final_unloading(void)
 {
+	int opt = 0, i;
+	const struct IODevice *dev;
+	mess_image *image;
+	char **filename_ptr;
+
+	if (Machine->devices)
+	{
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+		{
+			for (i = 0; i < device_options[opt].count; i++)
+			{
+				// free existing string, if there
+				filename_ptr = &device_options[opt].opts[i]->filename;
+				if (*filename_ptr)
+				{
+					free(*filename_ptr);
+					*filename_ptr = NULL;
+				}
+
+				// locate image
+				image = image_from_device_and_index(dev, i);
+
+				// place new filename, if there
+				if (image)
+					*filename_ptr = strdup(image_filename(image));
+			}
+			opt++;
+		}
+	}
 }
