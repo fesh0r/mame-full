@@ -84,7 +84,6 @@ Atari Historical Society - www.atari-history.com/a2600.html
 
 MESS Emulation State:
 
-
 1) Restricted to 2KB and 4KB carts
 
 2) Supports NTSC games only
@@ -94,6 +93,19 @@ MESS Emulation State:
 4) No support for keypad controls
 
 5) Dip switch used to select joystick or paddles
+
+
+Other emulators:
+
+PCAE (PC Atari Emulator) - http://www.classicgaming.com/pcae/
+
+z26 - http://www.whimsey.com/z26/
+
+x26 (z26 front-end) - http://www.wintersolace.com/
+
+Stella - http://stella.sourceforge.net/
+
+StellaX - http://www.emuunlim.com/stellax/
 
 $end
 
@@ -125,8 +137,20 @@ implemented several years after on the Commodore Amiga. It offered high graphic 
 lots of colors and great sound capabilities, more than other computers could do then! The 
 two models had same characteristics, the 400 is the low-cost version, it has only 16 KB 
 (instead of 48 KB), one cartridge port (two for the 800) and a membrane keyboard (a 
-typewriter style keyboard one for the 800). 
+typewriter style keyboard one for the 800).
 
+
+Emulators:
+
+Atari800 (Unix, Amiga, MS-DOS, Atari TT/Falcon, SDL, WinCE) - http://atari800.sourceforge.net/
+
+Atari++ - http://www.math.tu-berlin.de/~thor/atari++/
+
+Atari800Win PLus - http://www.a800win.atari-area.prv.pl/
+
+Raibow (historical) - http://www.chrislam.co.uk/ 
+
+PC Xformer (historical)
 
 $end
 
@@ -159,10 +183,23 @@ joysticks which offered a full 360 degrees of mobility, were both innovative and
 Other controller features included a keypad, and a ahead-of-it's-time pause button.
 
 
-The Atari 5200 suffered from it's initial incompatibility with the VCS/2600 (an adapter was 
-later released) and fierce competition from Coleco. When Warner Communications sold Atari 
+The Atari 5200 suffered from it's initial incompatibility with the VCS/2600 (an adapter was later released) and fierce competition from Coleco. When Warner Communications sold Atari 
 Corp. to the Tramiels in 1984, they quickly removed it from the market.
 
+
+Emulators:
+
+Jum52 (Jum's A5200 Emulator) - http://www.geocities.com/james7780/emulators/emu5200.html
+
+Because of it's hardware similarity to 400/800/XL/XE computers line - 5200 emulation is also included in:
+
+Atari800 - http://atari800.sourceforge.net/
+
+Atari++ - http://www.math.tu-berlin.de/~thor/atari++/
+
+Atari800Win PLus - http://www.a800win.atari-area.prv.pl/
+
+Raibow - http://www.chrislam.co.uk/ 
 
 $end
 
@@ -212,6 +249,15 @@ called was infuriated and informed the former production line manager that Atari
 would be in contact with him. He never heard from Atari again."
 
 
+Links:
+
+www.Atari7800.org
+
+
+Emulators:
+
+EMU7800 - http://emu7800.sourceforge.net/
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -248,6 +294,18 @@ two models had same characteristics, the 400 is the low-cost version, it has onl
 (instead of 48 KB), one cartridge port (two for the 800) and a membrane keyboard (a 
 typewriter style keyboard one for the 800). 
 
+
+Emulators:
+
+Atari800 (Unix, Amiga, MS-DOS, Atari TT/Falcon, SDL, WinCE) - http://atari800.sourceforge.net/
+
+Atari++ - http://www.math.tu-berlin.de/~thor/atari++/
+
+Atari800Win PLus - http://www.a800win.atari-area.prv.pl/
+
+Raibow (historical) - http://www.chrislam.co.uk/ 
+
+PC Xformer (historical)
 
 $end
 
@@ -2734,9 +2792,11 @@ $info=coleco
 $bio
 Coleco Industries ColecoVision
 
+
 Known Issues:
 
 None. This emulation runs most cartridges accurately. 
+
 
 EXTRA CONTROLLERS INFO:
 
@@ -2751,12 +2811,14 @@ Driving Controller is just a spinner on controller 1 socket similar to the one o
 Controller and Super Action Controllers so you can use Roller Controller or Super Action 
 Controllers to play games requiring Driving Controller.
 
+
 *Roller Controller. 
 Basically a trackball with four buttons (the two fire buttons from player 1 and the two fire 
 buttons from player 2). Only one Roller Controller can be used on a real ColecoVision.  Roller 
 Controller is connected to both controller sockets and both controllers are conected to the Roller
 Controller, it uses the spinner pins of both sockets to generate the X and Y signals (X from controller 1 
 and the Y from controller 2)
+
 
 *Super Action Controllers. 
 It is a hand controller with a keypad, four buttons (the two from
@@ -3357,6 +3419,21 @@ $end
 $info=Famicom
 $bio
 Nintendo Famicom (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=fnvision
+$bio
+FunVision(1981)
 
 
 Features:
@@ -4259,7 +4336,15 @@ MESS Emulation State:
 
 Preliminary driver.
 
-  
+
+Emulators:
+
+Project Tempest - http://pt.emuunlim.com/
+
+Virtual Jaguar - http://icculus.org/virtualjaguar/
+
+Jagulator
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -4652,6 +4737,11 @@ Atari age - www.atariage.com
 FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
 
 
+Emulators:
+
+Handy - http://handy.sourceforge.net/
+
+
 MESS Emulation State:
 
 Several cartridges playable
@@ -4868,7 +4958,43 @@ $bio
 MegaDuck/Cougar Boy
 
 
+The Mega Duck was released by Creatronic, Videojet and Timlex in 1993 
+mainly in Germany and France. The Cougar Boy was released by Cougar, an electronic manufacturer of device and accessories, had mainly distributed it in Brasil in 1993. Cougar brought the rights from Creatronics to manufacture it under it's own name.
+
+Looks much like a Game Boy with its monochrome green screen, "start", "Select", "A" & "B" buttons and directional pad but that's were the similiraties ends.
+
+The carts are about 2 1/8 inchs by 2 1/2 inchs with 36 pins to connect
+with the cartridge slot of the Mega Duck (unlike the 32-pins of the
+Game Boy or the 40-pins of the Supervision).
+
+There were around 30 games made for the system.
+
+
 Features:
+
+CPU : 8-bit VLSI 
+
+RAM: 64 kbit RAM 
+
+Screen: 49 mm x 46 mm (160 x 144 pixels)
+
+Color: 4 monochrome green tones
+
+Contrast Adjustment, Power Switch, Volume controller
+
+Built-in speaker, Headphone Jack 
+
+Direction, A & B, Select, Start buttons (similar to the GameBoy)
+
+Power: External Power Supply Jack (DC6V) or 4 x "AA" Batteries  
+
+Two Player Link (6-pin communications port). 
+
+36-pin Cartridge Slot
+
+Size: 15.5 cm x 9.7 cm x 3.2 cm 
+
+Weight: 249 g 
 
 
 MESS Emulation State:
@@ -5563,38 +5689,44 @@ Memotech MTX512
 Usage:
 
 
-Currently, the driver requires cassette images to be stored in the following
-directory - 
+The default emulation implements a MTX512 with 64K bytes RAM. However,
+the system supports memory sizes from 32K upto 512K, with 32K increments.
 
-software\mtx512
 
-The cassette image is a flat binary image with the first 0x12 bytes being the
-original mtx header and the rest being the file data.
+To load and run a tape image, just type LOAD "<image name>" at the Ready
+Prompt. To save a (BASIC) program, just type SAVE "<image name>" at the
+Ready Prompt.
 
-A note about cassette naming schemes - so long as the filename of the cassette
-image is the same as that stored in the header, you should be alright.
 
-To load and run a tape image, just type LOAD "<image name>" at the Ready Prompt.
-To save a (BASIC) program, just type SAVE "<image name>" at the Ready Prompt.
+The cassette image is a flat binary with the first 18 bytes being the
+original MTX tape header and the rest being the file data. The driver
+requires cassette images to be stored in the directory "...\software\mtx512".
+The filename of the cassette image should be the same as the name stored
+in the header, without the trailing spaces. This name can be found at
+offset 1 to 15 (starting at 0).
+
 
 MTX BASIC is pretty much a standard dialect, so you should have no problems
-using it, but its graphic handling etc. is a bit esoteric.
+using it, but its graphics and sound handling might be a bit esoteric.
 
 
 
 Known Issues:
 
 
-Improving the tape support, because at the moment it is just a hack.
+ - Limited Z80 CTC support (input channel connections are not emulated).
 
-Improve the TMS99x8 driver (appears the dirtyrect handling there is not
-quite right)
+ - No cassette device support; currently loading and saving is implemented by rewriting the ROM image (and there is no verify support).
 
-Support for additional ROMs
+ - No support for joysticks.
 
-No Cassette Save support.
+ - No support for additional ROMs.
 
-No Printer support
+ - No support for the communications board (e.g., RS-232 connections).
+
+ - No support for the FDX/HDX system.
+
+ - No support for the Node/Ring system.
 
 $end
 
@@ -5963,6 +6095,21 @@ The main focus up until this point has been in getting the NES driver as accurat
 
 
 Wanted: I'd appreciate any info on some of the more obscure mappers. If you have any of this, please drop me a line at bradman@pobox.com
+
+
+Emulators:
+
+Nestopia - http://nestopia.sourceforge.net/
+
+olafnes - http://olafnes.1emulation.com/
+
+FCE Ultra - http://fceultra.sourceforge.net/
+
+FakeNES - http://fakenes.sourceforge.net/
+
+RockNES - http://rocknes.kinox.org/
+
+
 
 
 $end
@@ -7602,11 +7749,7 @@ This driver runs just about everything!
 
 To do (see source):
 
-TMS9928A support for 'f16ffight.sms'
-
 SMS lightgun support
-
-SMS Pause key - certainly there's an effective way to handle this
 
 SMS 3D glass support
 
@@ -7631,19 +7774,19 @@ included a CD-ROM expansion.
 
 Features:
 
-CPU: Custom 16-bit - 65C816 at 3.58 MHz (Machine adjustable to 3.58, 2.68, and 1.79 Mhz)
+CPU: Custom 16-bit - 65C816 at 3.58 MHz (Variable memory access speeds of 3.58, 2.68, and 1.79 Mhz)
 
 Co-processor: None (DSP and SuperFX were inside the cartridge of selected games )
 
-RAM: (?)
+RAM: 128 KB
 
-Video RAM: (?)
+Video RAM: 64KB
 
-Color Palette: 32,768; 256 max on screen
+Color Palette: 32,768; 256 entry palette, writable during h-blank. up to 11-bit direct color mode.
 
-Maximum Screen Resolution: 512 x 448 pixels
+Maximum Screen Resolution: 512 x 448 pixels (has unused 512x478 mode)
 
-Max # of sprites: 128, 32 per scanline
+Max # of sprites: 128, 32 per scanline, limited to 34 tiles per line
 
 Max and Min Sprite Size: 64 x 64 pixels; 8 x 8 pixels
 
@@ -7653,22 +7796,21 @@ Sound channels: 8 ADPCM with 64 Kb Ram
 
 Sound Processor: Sony SPC700 ("wavetable-like" music, near 16-bit sound quality playback(CD) & Q-Sound surround sound.)
 
-Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the largest game)
+Cart Size: 2Mbit - 128 Megabit Max.
+           Tales of Phantasia and Star Ocean, at 48 Mbit, are the largest.
+           Tengai Makyo Zero and Dai Kaiju Monogatari are each 40 Mbit.
 
 Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
 
 
-
 MESS Emulation State:
 
-This driver is preliminary and most images will not work. Super Mario World (US version) is playable.
+This driver is immature and many images will not work. Super Mario World (US version) is playable. The DSP-1 in-cart coprocessor is emulated.
 
 
 To do (see source):
 
-Emulate extra chips - superfx, dsp2, sa-1 etc.
-
-Add sound emulation. Currently the SPC700 is emulated, but that's it.
+Emulate extra chips - superfx, DSP-2, 3, and 4, SETA ST-010, ST-011, ST-0018, SPC7110, S-DD1, SA-1, Cx4, and OBC1
 
 Add horizontal mosaic, hi-res. interlaced etc to video emulation.
 
@@ -7682,6 +7824,16 @@ Add support for running at 3.58Mhz at the appropriate time.
 
 I'm sure there's lots more ...
 
+
+Emulators:
+
+ZSNES - http://www.zsnes.com/
+
+SNEeSe - http://www.emuunlim.com/sneese/
+
+Snes9x - http://www.snes9x.com
+
+BSNES - http://byuu.org/
 
 $end
 
@@ -8305,38 +8457,56 @@ $bio
 Watara Supervision
 
 
-non-color handheld
+Non-color handheld manufactured and sold from several firms under different names:
 
-sold from several firms under different names
-Quickshot Supervision
-Hartung SV-100
-...
 
-There are several designs, but all have the same functionality.
-*(knickable screen)
-*GB2000 (game boy style, no comm port)
+Model 9205 (bendable screen):
+
+Watara Supervision
+
+Tai-Kerr Boy (HK)
+
+Vini-Spil Supervision (Dk)
+
+Quickshot Supervision QS-800 (UK)
+
+Hartung SuperVision SV-100 (De,Nl)
+
+Audiosonic Supervision GB-1000 (It,Fr)
+
+
+Model GB-2000 (non bendable screen):
+
+Watara (US,Ca,etc.), Audiosonic (Fr,It), Vini-Spil (Dk)
+
+
+Model 9600 (non bendable screen, no comm-port, three colour variations):
+
+Magnum International (US), Videojet (Fr)
 
 
 Features:
 
-160x160 in 4 greys LCD display
+CPU : M65C02 8-bit VLSI at 4 MHz
 
-4? stereo voices (integrated mono speaker, port for stereo speaker)
+Screen:  LCD 61mm x 61mm (2.37" x 2.37"), 160 x 160 pixels, 4 grey levels
 
-Controls for 1 Player
+Sound: 4(?) stereo voices (integrated mono speaker, port for stereo speaker), Headphone jack (small stereo headphones included), Built-in mono speaker,
 
-Serial port
+Controls: Directional buttons, A & B, Select & Start.
 
-Cartridge port
+Power: 4 "AA" Batteries, External Power Supply Jack (DC6V)
 
-Battery port
+40 pin Cartridge port
 
-Connector for external power supply
+Contrast Adjustment, Volume controller, Power Switch
+
+Two Player Link (communications port) - DB-9 connector, similar to the old Atari joysticks.
 
 
 Optional features:
 
-TV adapter
+TV-link
 
 
 Notes:

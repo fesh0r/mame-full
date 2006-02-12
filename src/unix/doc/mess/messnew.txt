@@ -1,3 +1,73 @@
+0.104
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Exidy Sorcerer (diskless) [Robert]
+- Sony Playstation (scph3000 J v1.1 01/22/95) [incog]
+- Sony Playstation (scph3500 J v2.1 07/17/95) [incog]
+- Turbo Grafix-16 [Rob Bohms]
+- Acorn Electron [Wilbert Pol]
+
+
+
+System Driver Changes:
+----------------------
+- [AT] Cleaned up A20 gating.  [Nate Woods]
+
+- [COCO3] Fixed a timing bug in video rendering.  (bug #743) [Nate Woods]
+
+- [PC] Fixed PC keyboard ESC char code (it is now 27; used to be 26).  [Nate
+  Woods]
+
+- [EXIDY] Fixed keyboard, printer and video speed.  Added natural keyboard
+  support.  (bug #615) [Robert]
+
+- [PCE] Various improvements, updated renderer and removed GAME_NOT_WORKING
+  flag.  [Rob Bohms and Charles MacDonald]
+
+- [VTECH1] Fixed key definitions.  (bug #835) [Robert]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Fixed a bug that caused crashes if a dialog was presented, the
+  emulation reset, and a subsequent dialog presented.  (bug #834) [Nate Woods]
+
+- [Windows GUI] Fixed a bug that caused zip files where the file extension was
+  not all lowercase to not be recognized as such.  (bug #831) [Oliver
+  Stoenberg]
+
+
+
+Imgtool Changes:
+----------------
+- [OS9] Removed a limitation that prevented images from loading that have
+  allocation bitmaps larger than 1024 bytes.  (bug #825) [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.104.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Changed how devices are specified.  The new system resembles how MAME CPU
+  and sound cores are specified.  [Nate Woods]
+
+- Added a "input" command to the debugger.  [Nate Woods]
+
+- Cleaned up natural keyboard code.  No longer have QUEUE_CHARS/ACCEPT_CHARS
+  and CHARQUEUE_EMPTY; callbacks are now installed at runtime.  [Nate Woods]
+
+- Fixed a file manager memory allocation bug.  [Brian Sturk]
+
+- Moved MESS validity code into a separate file.  [Nate Woods]
+
+- Enhanced error reporting when loading images.  (bug #827)  [Nate Woods]
+
+
+
 0.103
 
 New System Drivers Supported (in no particular order):
