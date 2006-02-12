@@ -20,11 +20,11 @@
 		bit 0: transmit buffer empty (TPMT)
 
 	output: 
-		bit 4: no parity
-		bit 3: parity type
-		bit 2: number of stop bits
-		bit 1: number of bits per char bit 2
-		bit 0: number of bits per char bit 1
+		bit 4: no parity (NPB)
+		bit 3: parity type (POE)
+		bit 2: number of stop bits (NSB)
+		bit 1: number of bits per char bit 2 (NDB2)
+		bit 0: number of bits per char bit 1 (NDB1)
 
 	port fe:
 	========
@@ -90,6 +90,7 @@
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
+#include "devices/cartslot.h"
 #include "devices/printer.h"
 #include "devices/z80bin.h"
 #include "sound/speaker.h"
@@ -844,10 +845,12 @@ ROM_START(exidy)
 	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, CRC(ac924f67) SHA1(72fcad6dd1ed5ec0527f967604401284d0e4b6a1))
 	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, CRC(ead1d0f6) SHA1(c68bed7344091bca135e427b4793cc7d49ca01be))
 
-	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, CRC(1dd20d80) SHA1(dd34364ca1a35caa7255b18e6c953f6df664cc74))
-	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, CRC(1068a3f8) SHA1(6395f2c9829d537d68b75a750acbf27145f1bbad))
-	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, CRC(e6332518) SHA1(fe27fccc82f86b90453c4fae55371f3a050dd6dc))
-	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19) SHA1(75fffd897aec8c3dbe1a918f5a29485e603004cb))	
+	ROM_CART_LOAD(0, "rom\0", 0xc000, 0x2000, ROM_NOMIRROR | ROM_OPTIONAL)
+
+//	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, CRC(1dd20d80) SHA1(dd34364ca1a35caa7255b18e6c953f6df664cc74))
+//	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, CRC(1068a3f8) SHA1(6395f2c9829d537d68b75a750acbf27145f1bbad))
+//	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, CRC(e6332518) SHA1(fe27fccc82f86b90453c4fae55371f3a050dd6dc))
+//	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19) SHA1(75fffd897aec8c3dbe1a918f5a29485e603004cb))	
 ROM_END
 
 ROM_START(exidyd)
@@ -864,11 +867,8 @@ ROM_START(exidyd)
 	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, CRC(ac924f67) SHA1(72fcad6dd1ed5ec0527f967604401284d0e4b6a1))
 	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, CRC(ead1d0f6) SHA1(c68bed7344091bca135e427b4793cc7d49ca01be))
 
-	/* Standard Basic roms (cart) */
-	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, CRC(1dd20d80) SHA1(dd34364ca1a35caa7255b18e6c953f6df664cc74))
-	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, CRC(1068a3f8) SHA1(6395f2c9829d537d68b75a750acbf27145f1bbad))
-	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, CRC(e6332518) SHA1(fe27fccc82f86b90453c4fae55371f3a050dd6dc))
-	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19) SHA1(75fffd897aec8c3dbe1a918f5a29485e603004cb))	
+	/* cart */
+	ROM_CART_LOAD(0, "rom\0", 0xc000, 0x2000, ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
 static void exidy_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
@@ -916,6 +916,7 @@ static void exidy_cassette_getinfo(const device_class *devclass, UINT32 state, u
 SYSTEM_CONFIG_START(exidy)
 	CONFIG_DEVICE(exidy_printer_getinfo)
 	CONFIG_DEVICE(exidy_floppy_getinfo)
+	CONFIG_DEVICE(cartslot_device_getinfo)
 	CONFIG_DEVICE(exidy_cassette_getinfo)		// use of cassette causes a hang
 	CONFIG_DEVICE(z80bin_quickload_getinfo)
 SYSTEM_CONFIG_END

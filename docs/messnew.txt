@@ -2,6 +2,8 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- [EXIDY] Added cartridge support.  (bug #842) [Robert]
+
 - [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
   [Nate Woods]
 
