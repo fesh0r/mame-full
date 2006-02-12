@@ -457,7 +457,7 @@ static int fileselect(int selected, const char *default_selection)
 		fs_generate_filelist();
 	}
 
-	total = fs_total - 1;
+	total = fs_total;
 
 	if (total > 0)
 	{

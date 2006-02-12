@@ -11,7 +11,8 @@ New System Drivers Supported (in no particular order):
 
 User Interface Changes:
 -----------------------
-(none)
+- Fixed a file manager bug that prevented the last item from being selected. 
+  [telengard]
 
 
 
