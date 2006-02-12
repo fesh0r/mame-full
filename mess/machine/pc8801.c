@@ -1,6 +1,17 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.26 2005/10/31 13:36:29 npwoods Exp $
+	machine/pc8801.c
+
+	Implementation of the PC8801
+
+	On the PC8801, there are two CPUs.  The main CPU and the FDC CPU.  Two
+	8255 PPIs are used for cross CPU communication.  These ports are connected
+	as below:
+
+		Main CPU 8255 port A <--> FDC CPU 8255 port B
+		Main CPU 8255 port B <--> FDC CPU 8255 port A
+		Main CPU 8255 port C (bits 7-4) <--> FDC CPU 8255 port C (bits 0-3)
+		Main CPU 8255 port C (bits 0-3) <--> FDC CPU 8255 port C (bits 7-4)
 
 ***************************************************************************/
 
@@ -712,62 +723,68 @@ MACHINE_INIT( pc88srh )
 }
 
 /* 5 inch floppy drive */
-static char save_8255A[2];
-static char save_8255B[2];
-static char save_8255C[2];
 
-static void save_8255_A(int chip, int data)
+static UINT8 load_8255_A(int chip)
 {
-	save_8255A[chip]=data;
-}
-static int load_8255_A(int chip)
-{
-	return use_5FD ? save_8255B[1-chip] : 0xff;
+	return use_5FD ? ppi8255_get_portB(1-chip) : 0xff;
 }
 
-static void save_8255_B(int chip, int data)
+static UINT8 load_8255_B(int chip)
 {
-	save_8255B[chip]=data;
-}
-static int load_8255_B(int chip)
-{
-	return use_5FD ? save_8255A[1-chip] : 0xff;
+	return use_5FD ? ppi8255_get_portA(1-chip) : 0xff;
 }
 
-static void save_8255_C(int chip, int data)
+static UINT8 load_8255_C(int chip)
 {
-	save_8255C[chip]=data;
+	UINT8 result = 0xFF;
+	UINT8 port_c;
+
+	if (use_5FD)
+	{
+		port_c = ppi8255_get_portC(1-chip);
+		result = ((port_c >> 4) & 0x0F) | ((port_c << 4) & 0xF0);
+	}
+
+	/* NPW 11-Feb-2006 - This is a brutal no-good hack to work around bug #759
+	 *
+	 * The problem is that in MESS 0.96, a regression was introduced that
+	 * prevented the PC8801 from booting up.  The source of this regression
+	 * was the 8255 PPI rewrite.
+	 *
+	 * What seems to happen is CPU #0 does a write to 8255 #0 port C at PC=37CF
+	 * and this causes a communication to be made to CPU #1.  Under the
+	 * previous 8255 code, this write would not actually make it to the the
+	 * slave CPU, CPU #1.  After examining the data sheet, all indications are
+	 * that the new 8255 behavior is indeed correct.
+	 *
+	 * So what I'm doing is an ugly hack so that when the slave CPU #1 sees the
+	 * value written to it, I actually change this to the previous value,
+	 * cloaking the communication.  So the PC8801 now boots up, but hopefully
+	 * a correct fix can be made.
+	 */
+	if ((chip == 1) && (result == 0xF8))
+		result = 0xF0;
+
+	return result;
 }
 
-static int load_8255_C(int chip)
-{
-	return use_5FD ? (((save_8255C[1-chip]>>4)&0x0f)|
-		((save_8255C[1-chip]<<4)&0xf0)) : 0xff;
-}
-
-static  READ8_HANDLER( load_8255_chip0_A )	{ return load_8255_A(0); }
-static  READ8_HANDLER( load_8255_chip1_A )	{ return load_8255_A(1); }
-static WRITE8_HANDLER( save_8255_chip0_A )	{ save_8255_A(0, data); }
-static WRITE8_HANDLER( save_8255_chip1_A )	{ save_8255_A(1, data); }
-static  READ8_HANDLER( load_8255_chip0_B )	{ return load_8255_B(0); }
-static  READ8_HANDLER( load_8255_chip1_B )	{ return load_8255_B(1); }
-static WRITE8_HANDLER( save_8255_chip0_B )	{ save_8255_B(0, data); }
-static WRITE8_HANDLER( save_8255_chip1_B )	{ save_8255_B(1, data); }
-static  READ8_HANDLER( load_8255_chip0_C )	{ return load_8255_C(0); }
-static  READ8_HANDLER( load_8255_chip1_C )	{ return load_8255_C(1); }
-static WRITE8_HANDLER( save_8255_chip0_C )	{ save_8255_C(0, data); }
-static WRITE8_HANDLER( save_8255_chip1_C )	{ save_8255_C(1, data); }
+static READ8_HANDLER( load_8255_chip0_A )	{ return load_8255_A(0); }
+static READ8_HANDLER( load_8255_chip1_A )	{ return load_8255_A(1); }
+static READ8_HANDLER( load_8255_chip0_B )	{ return load_8255_B(0); }
+static READ8_HANDLER( load_8255_chip1_B )	{ return load_8255_B(1); }
+static READ8_HANDLER( load_8255_chip0_C )	{ return load_8255_C(0); }
+static READ8_HANDLER( load_8255_chip1_C )	{ return load_8255_C(1); }
 
 
-ppi8255_interface pc8801_8255_config =
+const ppi8255_interface pc8801_8255_config =
 {
 	2,
 	{ load_8255_chip0_A, load_8255_chip1_A },
 	{ load_8255_chip0_B, load_8255_chip1_B },
 	{ load_8255_chip0_C, load_8255_chip1_C },
-	{ save_8255_chip0_A, save_8255_chip1_A },
-	{ save_8255_chip0_B, save_8255_chip1_B },
-	{ save_8255_chip0_C, save_8255_chip1_C },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ NULL, NULL },
 };
 
  READ8_HANDLER(pc8801fd_nec765_tc)
