@@ -683,15 +683,15 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 
 struct device_rc_option
 {
-	// options for the RC system
+	/* options for the RC system */
 	struct rc_option opts[2];
 
-	// device information
+	/* device information */
 	iodevice_t devtype;
 	const char *tag;
 	int index;
 
-	// mounted file
+	/* mounted file */
 	char *filename;
 };
 
@@ -709,7 +709,7 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 {
 	struct device_rc_option *dev_option = (struct device_rc_option *) option;
 
-	// the user specified a device type
+	/* the user specified a device type */
 	options.image_files[options.image_count].device_type = dev_option->devtype;
 	options.image_files[options.image_count].device_tag = dev_option->tag;
 	options.image_files[options.image_count].device_index = dev_option->index;
@@ -735,7 +735,7 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 	const char *dev_short_name;
 	const char *dev_tag;
 
-	// retrieve getinfo handlers
+	/* retrieve getinfo handlers */
 	memset(&cfg, 0, sizeof(cfg));
 	memset(handlers, 0, sizeof(handlers));
 	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
@@ -743,13 +743,13 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 	cfg.device_countoverrides = count_overrides;
 	gamedrv->sysconfig_ctor(&cfg);
 
-	// count devides
+	/* count devides */
 	for (dev_count = 0; handlers[dev_count]; dev_count++)
 		;
 
 	if (dev_count > 0)
 	{
-		// add a separator
+		/* add a separator */
 		opts = auto_malloc(sizeof(*opts) * 2);
 		memset(opts, 0, sizeof(*opts) * 2);
 		opts[0].name = "MESS devices";
@@ -757,17 +757,17 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 		opts[1].type = rc_end;
 		rc_register(rc, opts);
 
-		// we need to save all options
+		/* we need to save all options */
 		device_options = auto_malloc(sizeof(*device_options) * dev_count);
 		memset(device_options, 0, sizeof(*device_options) * dev_count);
 
-		// list all options
+		/* list all options */
 		for (dev = 0; dev < dev_count; dev++)
 		{
 			devclass.gamedrv = gamedrv;
 			devclass.get_info = handlers[dev];
 
-			// retrieve info about the device
+			/* retrieve info about the device */
 			devtype = (iodevice_t) (int) device_get_info_int(&devclass, DEVINFO_INT_TYPE);
 			count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
 			dev_tag = device_get_info_string(&devclass, DEVINFO_STR_DEV_TAG);
@@ -778,15 +778,15 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 
 			for (id = 0; id < count; id++)
 			{
-				// retrieve info about hte device instance
+				/* retrieve info about the device instance */
 				dev_name = device_instancename(&devclass, id);
 				dev_short_name = device_briefinstancename(&devclass, id);
 
-				// dynamically allocate the option
+				/* dynamically allocate the option */
 				dev_option = auto_malloc(sizeof(*dev_option));
 				memset(dev_option, 0, sizeof(*dev_option));
 
-				// populate the options
+				/* populate the options */
 				dev_option->opts[0].name = auto_strdup(dev_name);
 				dev_option->opts[0].shortname = auto_strdup(dev_short_name);
 				dev_option->opts[0].type = rc_string;
@@ -797,7 +797,7 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 				dev_option->tag = dev_tag;
 				dev_option->index = id;
 
-				// register these options
+				/* register these options */
 				device_options[dev].opts[id] = dev_option;
 				rc_register(rc, dev_option->opts);
 			}
@@ -871,7 +871,7 @@ void osd_begin_final_unloading(void)
 		{
 			for (i = 0; i < device_options[opt].count; i++)
 			{
-				// free existing string, if there
+				/* free existing string, if there */
 				filename_ptr = &device_options[opt].opts[i]->filename;
 				if (*filename_ptr)
 				{
@@ -879,10 +879,10 @@ void osd_begin_final_unloading(void)
 					*filename_ptr = NULL;
 				}
 
-				// locate image
+				/* locate image */
 				image = image_from_device_and_index(dev, i);
 
-				// place new filename, if there
+				/* place new filename, if there */
 				if (image)
 					*filename_ptr = strdup(image_filename(image));
 			}
