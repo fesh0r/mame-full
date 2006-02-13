@@ -12,6 +12,8 @@
 #include "inputx.h"
 #include "sound/beep.h"
 
+#define ST2_HEADER_SIZE		256
+
 extern  READ8_HANDLER( cdp1861_video_enable_r );
 
 static UINT8 keylatch;
@@ -275,7 +277,7 @@ MACHINE_DRIVER_END
 ROM_START(studio2)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
 	ROM_LOAD("studio2.rom", 0x0000, 0x800, CRC(a494b339))
-	ROM_CART_LOAD(0, "bin\0", 0x0400, 0xfc00, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL )
+//	ROM_CART_LOAD(0, "st2,bin\0", 0x0400, 0xfc00, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL )
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
@@ -288,11 +290,54 @@ ROM_END
 
 /* System Configuration */
 
+DEVICE_LOAD( studio2_cart ) {
+	UINT8	*ptr = NULL;
+	UINT8	header[ST2_HEADER_SIZE];
+	int	filesize;
+
+	filesize = image_length( image );
+	if ( filesize <= ST2_HEADER_SIZE ) {
+		logerror( "Error loading cartridge: Invalid ROM file: %s.\n", image_filename( image ) );
+		return INIT_FAIL;
+	}
+
+	/* read ST2 header */
+	if ( mame_fread( file, header, ST2_HEADER_SIZE ) != ST2_HEADER_SIZE ) {
+		logerror( "Error loading cartridge: Unable to read header from file: %s.\n", image_filename( image ) );
+		return INIT_FAIL;
+	}
+	filesize -= ST2_HEADER_SIZE;
+	/* Read ST2 cartridge contents */
+	ptr = ((UINT8 *)memory_region( REGION_CPU1 ) ) + 0x0400;
+	if ( mame_fread( file, ptr, filesize ) != filesize ) {
+		logerror( "Error loading cartridge: Unable to read contents from file: %s.\n", image_filename( image ) );
+		return INIT_FAIL;
+	}
+	return INIT_PASS;
+}
+
+static void studio2_cartslot_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
+	switch( state ) {
+	case DEVINFO_INT_COUNT:
+		info->i = 1;
+		break;
+	case DEVINFO_PTR_LOAD:
+		info->load = device_load_studio2_cart;
+		break;
+	case DEVINFO_STR_FILE_EXTENSIONS:
+		info->s = "st2\0";
+		break;
+	default:
+		cartslot_device_getinfo( devclass, state, info );
+		break;
+	}
+}
+
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE(cartslot_device_getinfo)
+	CONFIG_DEVICE(studio2_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /* Driver Initialization */
