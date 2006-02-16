@@ -856,7 +856,7 @@ void osd_die(const char *text,...)
 	exit(-1);
 }
 
-
+#ifdef MESS
 
 void osd_begin_final_unloading(void)
 {
@@ -890,3 +890,5 @@ void osd_begin_final_unloading(void)
 		}
 	}
 }
+
+#endif
