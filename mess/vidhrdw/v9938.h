@@ -17,7 +17,6 @@
 int v9938_init (int, int, void (*callback)(int));
 void v9938_reset (void);
 int v9938_interrupt (void);
-VIDEO_UPDATE( v9938 );
 void v9938_set_sprite_limit (int);
 void v9938_set_resolution (int);
 

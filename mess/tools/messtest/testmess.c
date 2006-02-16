@@ -152,6 +152,7 @@ static void dump_screenshot(int write_file)
 	mame_bitmap *bitmap;
 	int x, y, is_blank;
 	pen_t color;
+	extern mame_bitmap *scrbitmap[8];
 
 	bitmap = artwork_get_ui_bitmap();
 
@@ -174,7 +175,7 @@ static void dump_screenshot(int write_file)
 	}
 
 	/* check to see if bitmap is blank */
-	bitmap = Machine->scrbitmap;
+	bitmap = scrbitmap[0];
 	is_blank = 1;
 	color = bitmap->read(bitmap, 0, 0);
 	for (y = 0; is_blank && (y < bitmap->height); y++)

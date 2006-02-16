@@ -36,7 +36,7 @@ typedef struct _xml_attribute_node xml_attribute_node;
 
 struct _xml_data_node
 {
-	struct _xml_data_node *next;				/* pointer to next sibling node */
+	struct _xml_data_node *next;			/* pointer to next sibling node */
 	struct _xml_data_node *parent;			/* pointer to parent node */
 	struct _xml_data_node *child;			/* pointer to first child node */
 	const char *name;						/* pointer to copy of tag name */
@@ -76,6 +76,7 @@ typedef struct _xml_custom_parse xml_custom_parse;
 xml_data_node *xml_file_create(void);
 xml_data_node *xml_file_read(mame_file *file);
 xml_data_node *xml_file_read_custom(xml_custom_parse *parse_info);
+xml_data_node *xml_string_read(const char *string);
 void xml_file_write(xml_data_node *node, mame_file *file);
 void xml_file_free(xml_data_node *node);
 

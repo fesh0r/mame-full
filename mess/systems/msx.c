@@ -782,7 +782,7 @@ static MACHINE_DRIVER_START( msx2 )
 	MDRV_PALETTE_INIT( v9938 )
 
 	MDRV_VIDEO_START( msx2 )
-	MDRV_VIDEO_UPDATE( v9938 )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

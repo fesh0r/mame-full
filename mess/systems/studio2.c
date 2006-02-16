@@ -325,7 +325,7 @@ static void studio2_cartslot_getinfo( const device_class *devclass, UINT32 state
 		info->load = device_load_studio2_cart;
 		break;
 	case DEVINFO_STR_FILE_EXTENSIONS:
-		info->s = "st2\0";
+		strcpy(info->s = device_temp_str(), "st2");
 		break;
 	default:
 		cartslot_device_getinfo( devclass, state, info );

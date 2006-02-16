@@ -20,6 +20,7 @@ Historical notes: TI made several last minute design changes.
 
 #include "driver.h"
 #include "inputx.h"
+#include "vidhrdw/generic.h"
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 
@@ -672,34 +673,27 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	/* basic machine hardware */
 	/* TMS9900 CPU @ 3.0 MHz */
 	MDRV_CPU_ADD(TMS9900, 3000000)
-	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_PROGRAM_MAP(memmap_4ev, 0)
 	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_4ev_hblank_interrupt, 263)	/* 262.5 in 60Hz, 312.5 in 50Hz */
-	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
 	MDRV_FRAMES_PER_SECOND(60)	/* or 50Hz */
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( ti99 )
 	MDRV_MACHINE_STOP( ti99 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(512+32, (212+28)*2)
 	MDRV_VISIBLE_AREA(0, 512+32 - 1, 0, (212+28)*2 - 1)
 
-	/*MDRV_GFXDECODE(NULL)*/
 	MDRV_PALETTE_LENGTH(512)
 	MDRV_COLORTABLE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(v9938)
 	MDRV_VIDEO_START(ti99_4ev)
-	/*MDRV_VIDEO_EOF(name)*/
-	MDRV_VIDEO_UPDATE(v9938)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

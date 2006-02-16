@@ -28,6 +28,7 @@
 
 #include "driver.h"
 #include "inputx.h"
+#include "vidhrdw/generic.h"
 #include "vidhrdw/v9938.h"
 
 #include "machine/ti99_4x.h"
@@ -272,7 +273,7 @@ static MACHINE_DRIVER_START(ti99_4p_60hz)
 	MDRV_PALETTE_INIT(v9938)
 	MDRV_VIDEO_START(ti99_4ev)
 	/*MDRV_VIDEO_EOF(name)*/
-	MDRV_VIDEO_UPDATE(v9938)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")

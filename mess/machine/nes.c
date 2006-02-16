@@ -198,7 +198,9 @@ static int zapper_hit_pixel(const UINT32 *input)
 {
 	UINT16 pix;
 	UINT8 r, g, b;
-	pix = read_pixel(Machine->scrbitmap, input[1], input[2]);
+	extern mame_bitmap *scrbitmap[8];
+
+	pix = read_pixel(scrbitmap[0], input[1], input[2]);
 	palette_get_color(pix, &r, &g, &b);
 	return (((UINT16) r) + ((UINT16) g) + ((UINT16) b)) >= 240*3;
 }

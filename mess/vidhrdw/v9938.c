@@ -1149,11 +1149,6 @@ static void v9938_refresh_line (mame_bitmap *bmp, int line)
 		}
 	}
 
-VIDEO_UPDATE( v9938 )
-{
-	/* already been rendered, since we're using scanline stuff */
-}
-
 /*
 
 From: awulms@inter.nl.net (Alex Wulms)
@@ -1320,8 +1315,7 @@ static void v9938_interrupt_start_vblank (void)
 	}
 
 int v9938_interrupt (void)
-	{
-	UINT8 col[256];
+{
 	int scanline, max, pal, scanline_start;
 
 	v9938_update_command ();
@@ -1331,23 +1325,23 @@ int v9938_interrupt (void)
 
 	/* set flags */
 	if (vdp.scanline == (vdp.offset_y + scanline_start) )
-		{
+	{
 		vdp.statReg[2] &= ~0x40;
-		}
+	}
 	else if (vdp.scanline == (vdp.offset_y + vdp.visible_y + scanline_start) )
-		{
+	{
 		vdp.statReg[2] |= 0x40;
 		vdp.statReg[0] |= 0x80;
-		}
+	}
 
 	max = (pal) ? 255 : (vdp.contReg[9] & 0x80) ? 234 : 244;
 	scanline = (vdp.scanline - scanline_start - vdp.offset_y);
 	if ( (scanline >= 0) && (scanline <= max) &&
 	   ( ( (scanline + vdp.contReg[23]) & 255) == vdp.contReg[19]) )
-		{
+	{
 		vdp.statReg[1] |= 1;
 		logerror ("V9938: scanline interrupt (%d)\n", scanline);
-		}
+	}
 	else
 		if ( !(vdp.contReg[0] & 0x10) ) vdp.statReg[1] &= 0xfe;
 
@@ -1360,26 +1354,18 @@ int v9938_interrupt (void)
 
 	/* render the current line */
 	if ((vdp.scanline >= scanline_start) && (vdp.scanline < (212 + 28 + scanline_start)))
-		{
+	{
 		scanline = (vdp.scanline - scanline_start) & 255;
 
-		if (osd_skip_this_frame () )
-			{
-			if ( !(vdp.statReg[2] & 0x40) && (modes[vdp.mode].sprites) )
-				modes[vdp.mode].sprites ( (scanline - vdp.offset_y) & 255, col);
-			}
-		else
-			{
-			v9938_refresh_line (Machine->scrbitmap, scanline);
-			}
-		}
+		v9938_refresh_line (tmpbitmap, scanline);
+	}
 
 	max = (vdp.contReg[9] & 2) ? 313 : 262;
 	if (++vdp.scanline == max)
 		vdp.scanline = 0;
 
 	return vdp.INT;
-	}
+}
 
 /*
 	Driver-specific function: update the vdp mouse state

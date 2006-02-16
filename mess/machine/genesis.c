@@ -130,8 +130,9 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 {
 	UINT32 *destline;
 	int i;
+	extern mame_bitmap *scrbitmap[8];
 
-	destline = (UINT32 *)(Machine->scrbitmap->line[line]);
+	destline = (UINT32 *)(scrbitmap[0]->line[line]);
 
 	for (i = 0; i < 320; i++)
 	{

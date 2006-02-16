@@ -12,19 +12,13 @@
 // MESS headers
 #include "driver.h"
 #include "windows/rc.h"
+#include "windows/config.h"
 #include "parallel.h"
 #include "menu.h"
 #include "device.h"
 #include "configms.h"
 #include "mscommon.h"
 #include "pool.h"
-
-//============================================================
-//	IMPORTS
-//============================================================
-
-// from config.c
-extern struct rc_struct *rc;
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -81,7 +75,7 @@ int write_config(const char* filename, const game_driver *gamedrv)
 	if (!f)
 		goto done;
 
-	if (osd_rc_write(rc, f, filename))
+	if (osd_rc_write(cli_rc_access(), f, filename))
 		goto done;
 
 	retval = 0;

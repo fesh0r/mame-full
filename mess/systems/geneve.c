@@ -199,6 +199,7 @@
 
 #include "driver.h"
 #include "inputx.h"
+#include "vidhrdw/generic.h"
 #include "vidhrdw/v9938.h"
 
 #include "includes/geneve.h"
@@ -480,7 +481,7 @@ static MACHINE_DRIVER_START(geneve_60hz)
 	MDRV_PALETTE_INIT(v9938)
 	MDRV_VIDEO_START(geneve)
 	/*MDRV_VIDEO_EOF(name)*/
-	MDRV_VIDEO_UPDATE(v9938)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
