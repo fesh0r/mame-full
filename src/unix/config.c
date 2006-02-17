@@ -860,35 +860,6 @@ void osd_die(const char *text,...)
 
 void osd_begin_final_unloading(void)
 {
-	int opt = 0, i;
-	const struct IODevice *dev;
-	mess_image *image;
-	char **filename_ptr;
-
-	if (Machine->devices)
-	{
-		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
-		{
-			for (i = 0; i < device_options[opt].count; i++)
-			{
-				/* free existing string, if there */
-				filename_ptr = &device_options[opt].opts[i]->filename;
-				if (*filename_ptr)
-				{
-					free(*filename_ptr);
-					*filename_ptr = NULL;
-				}
-
-				/* locate image */
-				image = image_from_device_and_index(dev, i);
-
-				/* place new filename, if there */
-				if (image)
-					*filename_ptr = strdup(image_filename(image));
-			}
-			opt++;
-		}
-	}
 }
 
 #endif
