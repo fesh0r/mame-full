@@ -2,9 +2,17 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@xmission.com)
 
+Release 0.104, 16 February 2006
+	- Everything from MAME 0.104 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.104 (http://x.mame.net/changes-mess.html).
+	- The "-Wdeclaration-after-statement" switch is no longer enabled by 
+	  default in the makefile, since it's only available in GCC 3.4 and 
+	  later.
+	- Performing "make install" now installs tools such as romcmp and 
+	  chdman.
+
 Release 0.103, 16 January 2006
-	- Everything from MAME 0.103 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.103 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.103 and MESS 0.103.
 	- Modified osd_alloc_executable() to use mmap() by default.  This 
 	  prevents segfaults in the DRC core on systems that support the NX 
 	  bit, such as AMD64 and Intel Prescott.  Thanks to Julian Sikorski, 
