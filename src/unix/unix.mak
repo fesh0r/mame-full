@@ -728,22 +728,24 @@ install: $(INST.$(DISPLAY_METHOD)) install-man
 	@echo $(NAME) for $(ARCH)-$(MY_CPU) installation completed
 
 install-man:
-	@echo installing manual pages under $(MANDIR) ...
+	@echo Installing manual pages under $(MANDIR) ...
 	-$(INSTALL_MAN_DIR) $(MANDIR)
 	$(INSTALL_MAN) src/unix/doc/x$(TARGET).6 $(MANDIR)/x$(TARGET).6
 
 doinstall:
-	@echo installing binaries under $(BINDIR)...
+	@echo Installing binaries under $(BINDIR)...
 	-$(INSTALL_PROGRAM_DIR) $(BINDIR)
 	$(INSTALL_PROGRAM) $(NAME).$(DISPLAY_METHOD) $(BINDIR)
+	$(INSTALL_PROGRAM) $(TOOLS) $(BINDIR)
 
 doinstallsuid:
-	@echo installing binaries under $(BINDIR)...
+	@echo Installing binaries under $(BINDIR)...
 	-$(INSTALL_PROGRAM_DIR) $(BINDIR)
 	$(INSTALL_PROGRAM_SUID) $(NAME).$(DISPLAY_METHOD) $(BINDIR)
+	$(INSTALL_PROGRAM) $(TOOLS) $(BINDIR)
 
 copycab:
-	@echo installing cabinet files under $(XMAMEROOT)...
+	@echo Installing cabinet files under $(XMAMEROOT)...
 	@cd src/unix; \
 	for i in cab/*; do \
 	if test ! -d $(XMAMEROOT)/$$i; then \
