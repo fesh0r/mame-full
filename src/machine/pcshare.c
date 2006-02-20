@@ -493,60 +493,6 @@ void init_pc_common(UINT32 flags)
 	pc_keyboard_timer = mame_timer_alloc(pc_keyb_timer);
 }
 
-
-
-#ifdef MESS
-
-/***********************************/
-/* PC interface to PC COM hardware */
-/* Done this way because PCW16 also has PC-com hardware but it
-is connected in a different way */
-
-static int pc_COM_r(int n, int offset)
-{
-	/* enabled? */
-	if( !(input_port_2_r(0) & (0x80 >> n)) )
-	{
-		DBG_LOG(1,"COM_r",("COM%d $%02x: disabled\n", n+1, 0x0ff));
-		return 0x0ff;
-    }
-
-	return uart8250_r(n, offset);
-}
-
-static void pc_COM_w(int n, int offset, int data)
-{
-	/* enabled? */
-	if( !(input_port_2_r(0) & (0x80 >> n)) )
-	{
-		DBG_LOG(1,"COM_w",("COM%d $%02x: disabled\n", n+1, data));
-		return;
-    }
-
-	uart8250_w(n,offset, data);
-}
-
-READ8_HANDLER(pc_COM1_r)  { return pc_COM_r(0, offset); }
-READ8_HANDLER(pc_COM2_r)  { return pc_COM_r(1, offset); }
-READ8_HANDLER(pc_COM3_r)  { return pc_COM_r(2, offset); }
-READ8_HANDLER(pc_COM4_r)  { return pc_COM_r(3, offset); }
-WRITE8_HANDLER(pc_COM1_w) { uart8250_w(0, offset, data); }
-WRITE8_HANDLER(pc_COM2_w) { uart8250_w(1, offset, data); }
-WRITE8_HANDLER(pc_COM3_w) { uart8250_w(2, offset, data); }
-WRITE8_HANDLER(pc_COM4_w) { uart8250_w(3, offset, data); }
-
-READ32_HANDLER(pc32_COM1_r)  { return read32le_with_read8_handler(pc_COM1_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM2_r)  { return read32le_with_read8_handler(pc_COM2_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM3_r)  { return read32le_with_read8_handler(pc_COM3_r, offset, mem_mask); }
-READ32_HANDLER(pc32_COM4_r)  { return read32le_with_read8_handler(pc_COM4_r, offset, mem_mask); }
-WRITE32_HANDLER(pc32_COM1_w) { write32le_with_write8_handler(pc_COM1_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM2_w) { write32le_with_write8_handler(pc_COM2_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM3_w) { write32le_with_write8_handler(pc_COM3_w, offset, data, mem_mask); }
-WRITE32_HANDLER(pc32_COM4_w) { write32le_with_write8_handler(pc_COM4_w, offset, data, mem_mask); }
-#endif /* MESS */
-
-
-
 /*
    keyboard seams to permanently sent data clocked by the mainboard
    clock line low for longer means "resync", keyboard sends 0xaa as answer
@@ -617,78 +563,6 @@ void pc_keyboard(void)
 #ifdef MESS
 /*************************************************************************
  *
- *		JOY
- *		joystick port
- *
- *************************************************************************/
-
-static double JOY_time = 0.0;
-
-WRITE8_HANDLER ( pc_JOY_w )
-{
-	JOY_time = timer_get_time();
-}
-
-#if 0
-#define JOY_VALUE_TO_TIME(v) (24.2e-6+11e-9*(100000.0/256)*v)
- READ8_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-#if 0
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-#endif
-	{
-		delta=new_time-JOY_time;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_16_r(0)) ) data &= ~0x01;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_17_r(0)) ) data &= ~0x02;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_18_r(0)) ) data &= ~0x04;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_19_r(0)) ) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#else
- READ8_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-	{
-		delta = (int)( 256 * 1000 * (new_time - JOY_time) );
-		if (input_port_16_r(0) < delta) data &= ~0x01;
-		if (input_port_17_r(0) < delta) data &= ~0x02;
-		if (input_port_18_r(0) < delta) data &= ~0x04;
-		if (input_port_19_r(0) < delta) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input
-						   _port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#endif
-
-
-
-/*************************************************************************
- *
  *		Turbo handling
  *
  *************************************************************************/
@@ -741,40 +615,5 @@ int pc_turbo_setup(int cpunum, int port, int mask, double off_speed, double on_s
 }
 
 
-INPUT_PORTS_START( pc_joystick_none )
-	PORT_START      /* IN15 */
-    PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN16 */
-    PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN17 */
-    PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN18 */
-    PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-	PORT_START      /* IN19 */
-    PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-INPUT_PORTS_END
-
-
-
-INPUT_PORTS_START( pc_joystick )
-	PORT_START	/* IN15 */
-	PORT_BIT ( 0xf, 0xf,	 IPT_UNUSED ) 
-	PORT_BIT( 0x0010, 0x0000, IPT_BUTTON1) PORT_NAME("Joystick 1 Button 1")
-	PORT_BIT( 0x0020, 0x0000, IPT_BUTTON2) PORT_NAME("Joystick 1 Button 2")
-	PORT_BIT( 0x0040, 0x0000, IPT_BUTTON1) PORT_NAME("Joystick 2 Button 1") PORT_CODE(JOYCODE_2_BUTTON1) PORT_PLAYER(2)
-	PORT_BIT( 0x0080, 0x0000, IPT_BUTTON2) PORT_NAME("Joystick 2 Button 2") PORT_CODE(JOYCODE_2_BUTTON2) PORT_PLAYER(2)
-		
-	PORT_START	/* IN16 */
-	PORT_BIT(0xff,0x80,IPT_AD_STICK_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_MINMAX(1,0xff) PORT_CODE_DEC(KEYCODE_LEFT) PORT_CODE_INC(KEYCODE_RIGHT) PORT_CODE_DEC(JOYCODE_1_LEFT) PORT_CODE_INC(JOYCODE_1_RIGHT) PORT_REVERSE PORT_RESET
-		
-	PORT_START /* IN17 */
-	PORT_BIT(0xff,0x80,IPT_AD_STICK_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_MINMAX(1,0xff) PORT_CODE_DEC(KEYCODE_UP) PORT_CODE_INC(KEYCODE_DOWN) PORT_CODE_DEC(JOYCODE_1_UP) PORT_CODE_INC(JOYCODE_1_DOWN) PORT_REVERSE PORT_RESET
-		
-	PORT_START	/* IN18 */
-	PORT_BIT(0xff,0x80,IPT_AD_STICK_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_MINMAX(1,0xff) PORT_CODE_DEC(JOYCODE_2_LEFT) PORT_CODE_INC(JOYCODE_2_RIGHT) PORT_PLAYER(2) PORT_REVERSE PORT_RESET
-		
-	PORT_START /* IN19 */
-	PORT_BIT(0xff,0x80,IPT_AD_STICK_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_MINMAX(1,0xff) PORT_CODE_DEC(JOYCODE_2_UP) PORT_CODE_INC(JOYCODE_2_DOWN) PORT_PLAYER(2) PORT_REVERSE PORT_RESET
-INPUT_PORTS_END
 #endif /* MESS */
 

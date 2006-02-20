@@ -34,6 +34,7 @@
 
 #include "includes/pc_ide.h"
 #include "machine/pc_fdc.h"
+#include "machine/pc_joy.h"
 #include "machine/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
@@ -111,8 +112,8 @@ static ADDRESS_MAP_START(pc_io, ADDRESS_SPACE_IO, 8)
 #endif
 	AM_RANGE(0x0240, 0x0257) AM_READWRITE(pc_rtc_r,					pc_rtc_w)
 	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
-	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
-	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(uart8250_3_r,				uart8250_3_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(uart8250_1_r,				uart8250_1_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
 	AM_RANGE(0x0340, 0x0357) AM_READ(return8_FF) /* anonymous bios should not recogniced realtimeclock */
@@ -122,9 +123,9 @@ static ADDRESS_MAP_START(pc_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
 	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
-	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(uart8250_2_r,				uart8250_2_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
-	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(uart8250_0_r,				uart8250_0_w)
 ADDRESS_MAP_END
 
 
@@ -151,8 +152,8 @@ static ADDRESS_MAP_START(europc_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0250, 0x025f) AM_READWRITE(europc_jim_r,				europc_jim_w)
 	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
 	AM_RANGE(0x02e0, 0x02e0) AM_READ     (europc_jim2_r)
-	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
-	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(uart8250_3_r,				uart8250_3_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(uart8250_1_r,				uart8250_1_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
 	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
@@ -161,9 +162,9 @@ static ADDRESS_MAP_START(europc_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
 //	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
-	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(uart8250_2_r,				uart8250_2_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
-	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(uart8250_0_r,				uart8250_0_w)
 ADDRESS_MAP_END
 
 
@@ -190,14 +191,14 @@ static ADDRESS_MAP_START(tandy1000_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
 	AM_RANGE(0x00c0, 0x00c0) AM_WRITE(								SN76496_0_w)
 	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
-	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(uart8250_1_r,				uart8250_1_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
 	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_t1t_p37x_r,			pc_t1t_p37x_w)
 	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
 	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_T1T_r,					pc_T1T_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
-	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(uart8250_0_r,				uart8250_0_w)
 ADDRESS_MAP_END
 
 
@@ -212,15 +213,15 @@ static ADDRESS_MAP_START(pc200_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
 	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
 	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
-	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
-	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(uart8250_3_r,				uart8250_3_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(uart8250_1_r,				uart8250_1_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
 	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc200_port378_r,			pc_parallelport1_w)
 	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
-	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(uart8250_2_r,				uart8250_2_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
-	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(uart8250_0_r,				uart8250_0_w)
 ADDRESS_MAP_END
 
 
@@ -246,15 +247,15 @@ static ADDRESS_MAP_START(pc1640_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
 	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
 	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
-	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
-	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(uart8250_3_r,				uart8250_3_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(uart8250_1_r,				uart8250_1_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
 	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc1640_port378_r,			pc_parallelport1_w)
 	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
-	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(uart8250_2_r,				uart8250_2_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
-	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(uart8250_0_r,				uart8250_0_w)
 ADDRESS_MAP_END
 
 
