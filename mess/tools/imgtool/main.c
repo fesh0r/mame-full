@@ -211,7 +211,12 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
 	{
-		fprintf(stdout, "%-20s\t%8u %15s\n", ent.filename, (unsigned int) ent.filesize, ent.attr);
+		if (ent.directory)
+			snprintf(buf, sizeof(buf), "<DIR>");
+		else
+			snprintf(buf, sizeof(buf), "%u", (unsigned int) ent.filesize);
+
+		fprintf(stdout, "%-20s\t%8s %15s\n", ent.filename, buf, ent.attr);
 		total_count++;
 		total_size += ent.filesize;
 	}

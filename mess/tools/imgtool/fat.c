@@ -546,6 +546,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	UINT32 fat_bits, total_sectors_l, total_sectors_h, sector_size;
 	UINT64 available_sectors;
 	int i;
+	int has_extended_bios_param_block = TRUE;
 
 	info = fat_get_diskinfo(image);
 
@@ -591,7 +592,10 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 		else if (!memcmp(&header[54], "FAT32   ", 8))
 			fat_bits = 32;
 		else
-			return IMGTOOLERR_CORRUPTIMAGE;
+		{
+			fat_bits = 8;
+			has_extended_bios_param_block = FALSE;
+		}
 	}
 	
 	info->fat_bits				= fat_bits;

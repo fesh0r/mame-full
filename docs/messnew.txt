@@ -26,7 +26,10 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- The "dir" command will display "<DIR>" for directories.  [Nate Woods]
+
+- [FAT] Now supports FAT file systems without an extended BIOS parameter
+  block.  [Nate Woods]
 
 
 
