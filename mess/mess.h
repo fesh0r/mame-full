@@ -32,8 +32,6 @@
 
 /**************************************************************************/
 
-extern int devices_inited;
-
 /* MESS_DEBUG is a debug switch (for developers only) for
    debug code, which should not be found in distributions, like testdrivers,...
    contrary to MAME_DEBUG, NDEBUG it should not be found in the makefiles of distributions
@@ -76,7 +74,6 @@ int mess_validitychecks(void);
 
 /* these are called from mame.c*/
 int devices_init(const game_driver *gamedrv);
-int devices_initialload(const game_driver *gamedrv, int ispreload);
 void devices_exit(void);
 
 void mess_config_init(void);

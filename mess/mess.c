@@ -20,12 +20,12 @@
 
 /* Globals */
 const char *mess_path;
-int devices_inited;
 
 UINT32 mess_ram_size;
 UINT8 *mess_ram;
 UINT8 mess_ram_default_value = 0xCD;
 
+static int devices_initialload(const game_driver *gamedrv);
 
 
 static int ram_init(const game_driver *gamedrv)
@@ -136,13 +136,13 @@ int devices_init(const game_driver *gamedrv)
 
 	/* init all devices */
 	image_init();
-	devices_inited = TRUE;
+	devices_initialload(gamedrv);
 	return 0;
 }
 
 
 
-int devices_initialload(const game_driver *gamedrv, int ispreload)
+static int devices_initialload(const game_driver *gamedrv)
 {
 	int i;
 	int id;
@@ -155,13 +155,6 @@ int devices_initialload(const game_driver *gamedrv, int ispreload)
 	iodevice_t devtype;
 	const char *devtag;
 	int devindex;
-
-	/* normalize ispreload */
-	ispreload = ispreload ? 1 : 0;
-
-	/* wrong time to preload? */
-	if (ispreload != devices_inited)
-		return 0;
 
 	/* count number of devices, and record a list of allocated slots */
 	devcount = 0;
@@ -265,7 +258,7 @@ void devices_exit(void)
 
 	/* exit all devices */
 	image_exit();
-	devices_inited = FALSE;
+	Machine->devices = NULL;
 }
 
 

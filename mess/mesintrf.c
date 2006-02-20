@@ -87,7 +87,7 @@ void mess_ui_update(void)
 	}
 
 	/* run display routine for device */
-	if (devices_inited)
+	if (Machine->devices)
 	{
 		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 		{

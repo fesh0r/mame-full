@@ -411,7 +411,7 @@ static int init_machine(void)
 
 #ifdef MESS
 	/* initialize the devices */
-	if (devices_init(gamedrv) || devices_initialload(gamedrv, TRUE))
+	if (devices_init(gamedrv))
 	{
 		logerror("devices_init failed\n");
 		goto cant_load_roms;
@@ -434,15 +434,6 @@ static int init_machine(void)
 	/* call the game driver's init function */
 	if (gamedrv->driver_init)
 		(*gamedrv->driver_init)();
-
-#ifdef MESS
-	/* initialize the devices */
-	if (devices_initialload(gamedrv, FALSE))
-	{
-		logerror("devices_initialload failed\n");
-		goto cant_load_roms;
-	}
-#endif
 
 	return 0;
 
