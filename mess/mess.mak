@@ -587,6 +587,7 @@ $(OBJ)/pcshare.a:					\
 	$(OBJ)/mess/sndhrdw/sblaster.o	\
 	$(OBJ)/mess/machine/pc_fdc.o	\
 	$(OBJ)/mess/machine/pc_hdc.o	\
+	$(OBJ)/mess/machine/pc_joy.o	\
 	$(OBJ)/mess/vidhrdw/pc_video.o	\
 	$(OBJ)/mess/vidhrdw/pc_mda.o	\
 	$(OBJ)/mess/vidhrdw/pc_cga.o	\
