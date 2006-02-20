@@ -21,6 +21,7 @@
 #include "includes/at.h"
 #include "machine/pckeybrd.h"
 #include "includes/sblaster.h"
+#include "machine/i82439tx.h"
 
 static const SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
@@ -77,6 +78,14 @@ DRIVER_INIT( at386 )
 		KBDC8042_AT386, at_set_gate_a20, at_keyboard_interrupt
 	};
 	init_at_common(&at8042);
+}
+
+
+
+DRIVER_INIT( at586 )
+{
+	init_at386();
+	intel82439tx_init();
 }
 
 

@@ -39,6 +39,7 @@
 #include "formats/pc_dsk.h"
 
 #include "machine/8237dma.h"
+#include "machine/pci.h"
 #include "memconv.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
@@ -88,6 +89,13 @@ static ADDRESS_MAP_START( at386_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000d0000, 0x000effff) AM_ROM
 	AM_RANGE(0x000f0000, 0x000fffff) AM_ROM AM_REGION(REGION_CPU1, 0x0f0000)
 	AM_RANGE(0x00ff0000, 0x00ffffff) AM_ROM AM_REGION(REGION_CPU1, 0x0f0000)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( at586_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0009ffff) AM_RAMBANK(10)
+	AM_RANGE(0x000a0000, 0x000b7fff) AM_NOP
+	AM_RANGE(0x000b8000, 0x000bffff) AM_READWRITE(MRA32_RAM, pc_video_videoram32_w) AM_BASE((UINT32 **) &videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xfffe0000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0x20000)
 ADDRESS_MAP_END
 
 
@@ -162,6 +170,29 @@ static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc32le_fdc_r,				pc32le_fdc_w)
 	AM_RANGE(0x03bc, 0x03bf) AM_READWRITE(pc32_parallelport0_r,		pc32_parallelport0_w)
 	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc32_COM1_r,				pc32_COM1_w)
+ADDRESS_MAP_END
+
+
+
+static ADDRESS_MAP_START(at586_io, ADDRESS_SPACE_IO, 32)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_32le_0_r,			dma8237_32le_0_w)
+	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_32le_0_r,			pic8259_32le_0_w)
+	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_32le_0_r,			pit8253_32le_0_w)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(kbdc8042_32le_r,			kbdc8042_32le_w)
+	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port32le_r,		mc146818_port32le_w)
+	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page32_r,				at_page32_w)
+	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_32le_1_r,			pic8259_32le_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(at32_dma8237_1_r,			at32_dma8237_1_w)
+	AM_RANGE(0x0278, 0x027f) AM_READWRITE(pc32_parallelport2_r,		pc32_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc32_COM4_r,				pc32_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc32_COM2_r,				pc32_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc32_HDC1_r,				pc32_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc32_HDC2_r,				pc32_HDC2_w)
+	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc32_parallelport1_r,		pc32_parallelport1_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc32le_fdc_r,				pc32le_fdc_w)
+	AM_RANGE(0x03bc, 0x03bf) AM_READWRITE(pc32_parallelport0_r,		pc32_parallelport0_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc32_COM1_r,				pc32_COM1_w)
+	AM_RANGE(0x0cf8, 0x0cff) AM_READWRITE(pci_32le_r,				pci_32le_w)
 ADDRESS_MAP_END
 
 
@@ -518,6 +549,15 @@ static MACHINE_DRIVER_START( at486 )
 	MDRV_CPU_REPLACE("main", I486, 12000000)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( at586 )
+	MDRV_IMPORT_FROM( at386 )
+
+	MDRV_CPU_REPLACE("main", PENTIUM, 60000000)
+	MDRV_CPU_PROGRAM_MAP(at586_map, 0)
+	MDRV_CPU_IO_MAP(at586_io, 0)
+MACHINE_DRIVER_END
+
+
 
 #if 0
 	// ibm at
@@ -619,6 +659,15 @@ ROM_START( at486 )
     ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069) SHA1(ed08559ce2d7f97f68b9f540bddad5b6295294dd))
 ROM_END
 
+ROM_START( at586 )
+	ROM_REGION32_LE(0x40000, REGION_USER1, 0)
+    ROM_LOAD("wdbios.rom",  0x08000, 0x02000, CRC(8e9e2bd4) SHA1(601d7ceab282394ebab50763c267e915a6a2166a))
+	ROM_LOAD("at586.bin",   0x20000, 0x20000, CRC(717037f5))
+	
+	ROM_REGION(0x08100, REGION_GFX1, 0)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069) SHA1(ed08559ce2d7f97f68b9f540bddad5b6295294dd))
+ROM_END
+
 static void ibmat_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* printer */
@@ -678,4 +727,5 @@ COMP ( 1987,	at,			ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "PC/A
 COMP ( 1989,	neat,		ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMP ( 1988,	at386,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMP ( 1990,	at486,		ibmat,	0,		at486,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMP  ( 1987,	atvga,		0,		0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" , 0)
+COMP ( 1990,	at586,		ibmat,	0,		at586,      atcga,		at586,	    ibmat,   "",  "PC/AT 586(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMP ( 1987,	atvga,		0,		0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" , 0)

@@ -130,7 +130,7 @@ CPUS+=E116T
 #CPUS+=GMS30C2232
 CPUS+=I386
 CPUS+=I486
-#CPUS+=PENTIUM
+CPUS+=PENTIUM
 #CPUS+=MEDIAGX
 #CPUS+=I960
 #CPUS+=H83002
@@ -608,7 +608,8 @@ $(OBJ)/at.a:	   \
 	$(OBJ)/mess/machine/pc_ide.o   \
 	$(OBJ)/mess/machine/ps2.o	 \
 	$(OBJ)/mess/machine/at.o       \
-	$(OBJ)/mess/systems/at.o
+	$(OBJ)/mess/systems/at.o	\
+	$(OBJ)/mess/machine/i82439tx.o
 
 $(OBJ)/p2000.a:    \
 	$(OBJ)/mess/vidhrdw/saa5050.o  \
