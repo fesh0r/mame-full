@@ -78,6 +78,7 @@ static UINT32 intel82439tx_pci_read(int function, int offset, UINT32 mem_mask)
 		case 0x34:	/* reserved */
 		case 0x38:	/* reserved */
 		case 0x3C:	/* reserved */
+		case 0x4C:	/* reserved */
 		case 0x50:
 		case 0x54:
 		case 0x58:
@@ -85,6 +86,7 @@ static UINT32 intel82439tx_pci_read(int function, int offset, UINT32 mem_mask)
 		case 0x60:
 		case 0x64:
 		case 0x68:
+		case 0x78:
 		case 0xE0:
 			result = i82439tx->regs[(offset - 0x50) / 4];
 			break;
@@ -132,6 +134,7 @@ static void intel82439tx_pci_write(int function, int offset, UINT32 data, UINT32
 		case 0x2C:	/* reserved */
 		case 0x30:	/* reserved */
 		case 0x3C:	/* reserved */
+		case 0x4C:	/* reserved */
 			/* read only */
 			break;
 
@@ -145,6 +148,8 @@ static void intel82439tx_pci_write(int function, int offset, UINT32 data, UINT32
 		case 0x64:
 		case 0x68:
 		case 0x70:
+		case 0x74:
+		case 0x78:
 		case 0xE0:
 			switch(offset)
 			{
