@@ -1,13 +1,13 @@
 /************************************************\
 * Multitech Micro Professor 1                    *
 *                                                *
-*     CPU: Z80 @ 3.58MHz                         *
+*     CPU: Z80 @ 1.79 MHz                        *
 *     ROM: 4-kilobyte ROM monitor                *
 *     RAM: 4 kilobytes                           *
 *   Input: Hex keypad                            *
 * Storage: Cassette tape                         *
 *   Video: 6x 7-segment LED display              *
-*   Sound: Beeper                                *
+*   Sound: Speaker                               *
 *                                                *
 * TODO:                                          *
 *    Cassette storage emulation                  *
@@ -34,6 +34,7 @@
 #include "machine/z80sio.h"
 #include "mscommon.h"
 #include "inputx.h"
+#include "sound/dac.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -90,10 +91,30 @@ static const char leddisplay[] =
 	"  dddddddddddddddddd    hhhh \r"
 	"  dddddddddddddddddd     hh  \r"
 	"   dddddddddddddddd          \r"
+}; // h is originally represented by p in original schematics
+
+static const char radius_7_led[] = {
+       "     11111\r"
+       "   111111111\r"
+       "  11111111111\r"
+       " 1111111111111\r"
+       "11111111111111\r"
+       "111111111111111\r"
+       "111111111111111\r"
+       "111111111111111\r"
+       "111111111111111\r"
+       "111111111111111\r"
+       "111111111111111\r"
+       " 1111111111111\r"
+       "  11111111111\r"
+       "   111111111\r"
+       "    111111\r"
 };
 
 static UINT32 leddigit[6];
 static INT8 lednum;
+static bool led_tone;
+static bool led_halt;
 static INT8 keycol;
 static UINT8 kbdlatch;
 
@@ -105,6 +126,7 @@ static PALETTE_INIT( mpf1 )
 {
 	palette_set_color(0, 0x00, 0x00, 0x00);
 	palette_set_color(1, 0xff, 0x00, 0x00);
+	palette_set_color(2, 0x00, 0xff, 0x00);
 }
 
 
@@ -129,10 +151,18 @@ VIDEO_UPDATE( mpf1 )
 	int x;
 	static UINT8 xpositions[] = { 20, 59, 97, 135, 185, 223 };
 
-	fillbitmap(bitmap, get_black_pen(), NULL);
+	//fillbitmap(bitmap, get_black_pen(), NULL);
 
 	for(x = 0; x < 6; x++)
 		draw_led(bitmap, leddisplay, leddigit[x], xpositions[x], 377);
+
+	// tone-LED; the green one
+	draw_led(bitmap, radius_7_led, led_tone * 2, 277, 375);
+
+	// halt-LED; the red one, is turned on when the processor is halted
+	// TODO: processor seems to halt, but restarts(?) at 0x0000 after a while -> fix
+	led_halt = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_REGISTER + Z80_HALT);
+	draw_led(bitmap, radius_7_led, led_halt, 277, 394);
 }
 
 /* Memory Maps */
@@ -144,10 +174,45 @@ static ADDRESS_MAP_START( mpf1_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mpf1_io_map, ADDRESS_SPACE_IO, 8 )
+    /* Appendix B.D from the MPF-I user's manual:
+       (contains possible typing/printing errors so I've cited it litteraly)
+
+    * D. Input/Output port addressing
+    *    
+    *    U96 (74LS139) is an I/O port decoder.
+    *    
+    *           IORQ    A7  A6   Selected I/O    Port Address
+    *            
+    *            0      0   0       8255          00 - 03
+    *            
+    *            0      0   1       CTC           40 - 43
+    *            
+    *            0      1   0       PIO           80 - 83
+    *            
+    *      Note; I/O port is not fully decoded, e.g. the 16 combinations
+    *            00 - 03,  04 - 07, 08 - 0B,.....3C - 3F, all select the s
+    *            8255.  The CTC & PIO are also selected by 16 different
+    *            combinations.
+    
+       Where the text states ".... , all select the s ...." it probably means
+       "... ., all select the same ....".
+       
+       So to asure that this "incompleteness" of the hardware does also exist in
+       this simulator I've expanded the port assignments accordingly. I've also
+       tested wether this is true for the actual hardware, and it is.
+    */
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x03) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
-//	AM_RANGE(0x40, 0x40) AM_WRITE(ctc_enable_w)
-//	AM_RANGE(0x80, 0x83) AM_READWRITE(pio_r, pio_w)
+	
+	// The 16 I/O port combinations for the 8255 (P8255A-5, 8628LLP, (c) 1981 AMD)
+	AM_RANGE(0x00, 0x03) AM_READWRITE(ppi8255_0_r, ppi8255_0_w) AM_MIRROR(0x3C)
+
+//  TODO: create drivers to emulate the following two chips
+//  The 16 I/O port combinations for the CTC (Zilog, Z0843004PSC, Z80 CTC, 8644)
+//	AM_RANGE(0x40, 0x43) AM_WRITE(ctc_enable_w) AM_MIRROR(0x7C)
+
+//  The 16 I/O port combinations for the PIO (Zilog, Z0842004PSC, Z80 PIO, 8735)
+//	AM_RANGE(0x80, 0x83) AM_READWRITE(pio_r, pio_w) AM_MIRROR(0xBF)
+
 ADDRESS_MAP_END
 
 /* Input Ports */
@@ -325,8 +390,8 @@ static z80pio_interface pio_intf =
 
 /* PPI8255 Interface */
 
-// PA7 = tape EAR
-// PC7 = tape MIC
+//  PA7 = tape EAR = INPUT, meant to be connected to the earphone jacket of a taperecorder
+// ~PC7 = tape MIC = OUTPUT, meant to be connected to the microphone jacket of a taperecorder
 
 static  READ8_HANDLER( mpf1_porta_r )
 {
@@ -376,6 +441,7 @@ static WRITE8_HANDLER( mpf1_porta_w )
 
 static WRITE8_HANDLER( mpf1_portb_w )
 {
+    //int i;
 	/*	A	0x08
 		B	0x10
 		C	0x20
@@ -383,8 +449,17 @@ static WRITE8_HANDLER( mpf1_portb_w )
 		E	0x01
 		F	0x04
 		G	0x02
-		H	0x40 */
-	if( data )
+		H	0x40 (represented by P in original schematics) */
+		
+	/*  Original bit to leddisplay-segment assignment:
+		(and as such what is written as output to this port)
+		bit      7 6 5 4 3 2 1 0
+		segment  d p c b a f g e
+
+		The next statement converts this to the following assignment: (which is compatible with draw_led())
+		bit      7 6 5 4 3 2 1 0
+		segment  p g f e d c b a */
+	if( data | ( activecpu_get_pc() != 0x63C ) )
 	{
 		data = ( (data & 0x08) >> 3 ) |
 			   ( (data & 0x10) >> 3 ) |
@@ -416,11 +491,17 @@ static WRITE8_HANDLER( mpf1_portc_w )
 		lednum = 5 - lednum;
 	}
 
+	data = ~kbdlatch;
+
 	// watchdog reset
 	watchdog_reset_w(0, ~data & 0x40);
 
 	// TONE led & speaker
-	set_led_status(0, ~data & 0x80);
+	led_tone = (~data & 0x80) >> 7;
+	set_led_status(0, led_tone);
+	
+	// speaker
+	DAC_data_w(0, 0xFF * led_tone);
 
 	verboselog( 1, "PPI port C (LED/Kbd Col select) write: %02x\n", data );
 }
@@ -464,7 +545,7 @@ static MACHINE_INIT( mpf1 )
 
 static MACHINE_DRIVER_START( mpf1 )
 	// basic machine hardware
-	MDRV_CPU_ADD(Z80, 3580000/2)	// 1.79 MHz
+	MDRV_CPU_ADD(Z80, 3579500/2)	// 1.79 MHz
 	MDRV_CPU_PROGRAM_MAP(mpf1_map, 0)
 	MDRV_CPU_IO_MAP(mpf1_io_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse, 1)
@@ -478,13 +559,16 @@ static MACHINE_DRIVER_START( mpf1 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(462, 661)
 	MDRV_VISIBLE_AREA(0, 461, 0, 660)
-	MDRV_PALETTE_LENGTH(2)
+	MDRV_PALETTE_LENGTH(3)
 
 	MDRV_PALETTE_INIT( mpf1 )
 	MDRV_VIDEO_START(mpf1)
 	MDRV_VIDEO_UPDATE(mpf1)
 
 	// sound hardware
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 MACHINE_DRIVER_END
 

@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [EXIDY] Added cartridge support.  (bug #842) [Robert]
 
+- [MPF1] Added sound support and other enhancements.  [Giel van Schijndel]
+
 - [MSX] Fixed a crash involving cartridge use.  (bug #841) [Nate Woods]
 
 - [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
