@@ -24,6 +24,8 @@ struct basictoken_tableent
 struct basictokens
 {
 	UINT16 baseaddress;
+	int skip_bytes;
+	int be;
 	const struct basictoken_tableent *entries;
 	int num_entries;
 };
@@ -40,6 +42,7 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 	UINT16 address, line_number;
 	UINT8 b, shift;
 	int i;
+	int in_string = FALSE;
 	const struct basictoken_tableent *token_table;
 	const char *token;
 
@@ -55,20 +58,28 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 	if (err)
 		goto done;
 
-	/* skip first three bytes */
-	stream_seek(mem_stream, 3, SEEK_SET);
+	/* skip first bytes */
+	stream_seek(mem_stream, tokens->skip_bytes, SEEK_SET);
 
 	while(stream_read(mem_stream, line_header, sizeof(line_header)) == sizeof(line_header))
 	{
-		address = (UINT16) pick_integer_be(line_header, 0, 2);
-		line_number = (UINT16) pick_integer_be(line_header, 2, 2);
+		if (tokens->be) {
+			address = (UINT16) pick_integer_be(line_header, 0, 2);
+			line_number = (UINT16) pick_integer_be(line_header, 2, 2);
+		} else {
+			address = (UINT16) pick_integer_le(line_header, 0, 2);
+			line_number = (UINT16) pick_integer_le(line_header, 2, 2);			
+		}
 
 		stream_printf(destf, "%u ", (unsigned) line_number);
 		shift = 0x00;
 
 		while((stream_read(mem_stream, &b, 1) > 0) && (b != 0x00))
 		{
-			if (b & 0x80)
+			if (b == 0x22)
+				in_string = in_string ? FALSE : TRUE;
+				
+			if ((b & 0x80) && (!in_string))
 			{
 				token = NULL;
 
@@ -439,6 +450,138 @@ static const char *dragonbas_functions[] =
 	"LOC",		/* 0xffa4 */
 	"LOF",		/* 0xffa5 */
 	"MKN$"		/* 0xffa6 */
+};
+
+static const char *vzbas[] =
+{
+	"END",		/* 0x80 */
+	"FOR",		/* 0x81 */
+	"RESET",	/* 0x82 */
+	"SET",		/* 0x83 */
+	"CLS",		/* 0x84 */
+	NULL,		/* 0x85 */
+	"RANDOM",	/* 0x86 */
+	"NEXT",		/* 0x87 */
+	"DATA",		/* 0x88 */
+	"INPUT",	/* 0x89 */
+	"DIM",		/* 0x8a */
+	"READ",		/* 0x8b */
+	"LET",		/* 0x8c */
+	"GOTO",		/* 0x8d */
+	"RUN",		/* 0x8e */
+	"IF",		/* 0x8f */
+	"RESTORE",	/* 0x90 */
+	"GOSUB",	/* 0x91 */
+	"RETURN",	/* 0x92 */
+	"'",		/* 0x93 */
+	"STOP",		/* 0x94 */
+	"ELSE",		/* 0x95 */
+	"COPY",		/* 0x96 */
+	"COLOR",	/* 0x97 */
+	"VERIFY",	/* 0x98 */
+	"DEFINT",	/* 0x99 */
+	"DEFSNG",	/* 0x9a */
+	"DEFDBL",	/* 0x9b */
+	"CRUN",		/* 0x9c */
+	"MODE",		/* 0x9d */
+	"ERROR",	/* 0x9e */
+	"RESUME",	/* 0x9f */
+	"OUT",		/* 0xa0 */
+	"IN",		/* 0xa1 */
+	NULL,		/* 0xa2 */
+	NULL,		/* 0xa3 */
+	NULL,		/* 0xa4 */
+	NULL,		/* 0xa5 */
+	NULL,		/* 0xa6 */
+	NULL,		/* 0xa7 */
+	NULL,		/* 0xa8 */
+	NULL,		/* 0xa9 */
+	NULL,		/* 0xaa */
+	NULL,		/* 0xab */
+	NULL,		/* 0xac */
+	NULL,		/* 0xad */
+	"(RESET)",	/* 0xae */
+	"LPRINT",	/* 0xaf */
+	NULL,		/* 0xb0 */
+	"POKE",		/* 0xb1 */
+	"PRINT",	/* 0xb2 */
+	"CONT",		/* 0xb3 */
+	"LIST",		/* 0xb4 */
+	"LLIST",	/* 0xb5 */
+	"DELETE",	/* 0xb6 */
+	"AUTO",		/* 0xb7 */
+	"CLEAR",	/* 0xb8 */
+	"CLOAD",	/* 0xb9 */
+	"CSAVE",	/* 0xba */
+	"NEW",		/* 0xbb */
+	"TAB(",		/* 0xbc */
+	"TO",		/* 0xbd */
+	NULL,		/* 0xbe */
+	"USING",	/* 0xbf */
+	"VARPTR",	/* 0xc0 */
+	"USR",		/* 0xc1 */
+	"ERL",		/* 0xc2 */
+	"ERR",		/* 0xc3 */
+	"STRING$",	/* 0xc4 */
+	NULL,		/* 0xc5 */
+	"POINT",	/* 0xc6 */
+	NULL,		/* 0xc7 */
+	"MEM",		/* 0xc8 */
+	"INKEY$",	/* 0xc9 */
+	"THEN",		/* 0xca */
+	"NOT",		/* 0xcb */
+	"STEP",		/* 0xcc */
+	"+",		/* 0xcd */
+	"-",		/* 0xce */
+	"*",		/* 0xcf */
+	"/",		/* 0xd0 */
+	"^",		/* 0xd1 */
+	"AND",		/* 0xd2 */
+	"OR",		/* 0xd3 */
+	">",		/* 0xd4 */
+	"=",		/* 0xd5 */
+	"<",		/* 0xd6 */
+	"SGN",		/* 0xd7 */
+	"INT",		/* 0xd8 */
+	"ABS",		/* 0xd9 */
+	"FRE",		/* 0xda */
+	"INP",		/* 0xdb */
+	"POS",		/* 0xdc */
+	"SQR",		/* 0xdd */
+	"AND",		/* 0xde */
+	"LOG",		/* 0xdf */
+	"EXP",		/* 0xe0 */
+	"COS",		/* 0xe1 */
+	"SIN",		/* 0xe2 */
+	"TAN",		/* 0xe3 */
+	"ATN",		/* 0xe4 */
+	"PEEK",		/* 0xe5 */
+	NULL,		/* 0xe6 */
+	NULL,		/* 0xe7 */
+	NULL,		/* 0xe8 */
+	NULL,		/* 0xe9 */
+	NULL,		/* 0xea */
+	NULL,		/* 0xeb */
+	NULL,		/* 0xec */
+	NULL,		/* 0xed */
+	NULL,		/* 0xee */
+	"CINT",		/* 0xef */
+	"CSNG",		/* 0xf0 */
+	"CDBL",		/* 0xf1 */
+	"FIX",		/* 0xf2 */
+	"LEN",		/* 0xf3 */
+	"STR$",		/* 0xf4 */
+	"VAL",		/* 0xf5 */
+	"ASC",		/* 0xf6 */
+	"CHR$",		/* 0xf7 */
+	"LEFT$",	/* 0xf8 */
+	"RIGHT$",	/* 0xf9 */
+	"MID$",		/* 0xfa */
+	NULL,		/* 0xfb */
+	NULL,		/* 0xfc */
+	NULL,		/* 0xfd */
+	NULL,		/* 0xfe */
+	NULL		/* 0xff */
 };
 
 #ifdef BASIC_
@@ -2449,6 +2592,8 @@ static const struct basictoken_tableent cocobas_tokenents[] =
 static const struct basictokens cocobas_tokens =
 {
 	0x2600,
+	4,
+	TRUE,
 	cocobas_tokenents,
 	sizeof(cocobas_tokenents) / sizeof(cocobas_tokenents[0])
 };
@@ -2493,6 +2638,8 @@ static const struct basictoken_tableent dragonbas_tokenents[] =
 static const struct basictokens dragonbas_tokens =
 {
 	0x2600,
+	4,
+	TRUE,
 	dragonbas_tokenents,
 	sizeof(dragonbas_tokenents) / sizeof(dragonbas_tokenents[0])
 };
@@ -2517,5 +2664,48 @@ void filter_dragonbas_getinfo(UINT32 state, union filterinfo *info)
 		case FILTINFO_STR_HUMANNAME:	info->s = "Dragon Tokenized Basic Files"; break;
 		case FILTINFO_PTR_READFILE:		info->read_file = dragonbas_readfile; break;
 		case FILTINFO_PTR_WRITEFILE:	info->write_file = dragonbas_writefile; break;
+	}
+}
+
+/*************************************
+ *
+ *  VZBASIC
+ *
+ *************************************/
+
+static const struct basictoken_tableent vzbas_tokenents[] =
+{
+	{ 0x00,	0x80,	vzbas,	sizeof(vzbas) / sizeof(vzbas[0]) }
+};
+
+static const struct basictokens vzbas_tokens =
+{
+	0x7ae9,
+	0,
+	FALSE,
+	vzbas_tokenents,
+	sizeof(vzbas_tokenents) / sizeof(vzbas_tokenents[0])
+};
+
+static imgtoolerr_t vzbas_readfile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *destf)
+{
+	return basic_readfile(&vzbas_tokens, image, filename, fork, destf);
+}
+
+static imgtoolerr_t vzbas_writefile(imgtool_image *image, const char *filename,
+	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+{
+	return basic_writefile(&vzbas_tokens, image, filename, fork, sourcef, opts);
+}
+
+void filter_vzbas_getinfo(UINT32 state, union filterinfo *info)
+{
+	switch(state)
+	{
+		case FILTINFO_STR_NAME:			info->s = "vzbas"; break;
+		case FILTINFO_STR_HUMANNAME:	info->s = "Laser/VZ Tokenized Basic Files"; break;
+		case FILTINFO_PTR_READFILE:		info->read_file = vzbas_readfile; break;
+		case FILTINFO_PTR_WRITEFILE:	info->write_file = vzbas_writefile; break;
 	}
 }

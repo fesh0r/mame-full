@@ -28,6 +28,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- VZDOS images now supported.  [Dirk Best]
+
 - The "dir" command will display "<DIR>" for directories.  [Nate Woods]
 
 - [FAT] Now supports FAT file systems without an extended BIOS parameter

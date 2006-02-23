@@ -54,7 +54,8 @@ extern void filter_eoln_getinfo(UINT32 state, union filterinfo *info);
 extern void filter_cocobas_getinfo(UINT32 state, union filterinfo *info);
 extern void filter_dragonbas_getinfo(UINT32 state, union filterinfo *info);
 extern void filter_macbinary_getinfo(UINT32 state, union filterinfo *info);
-
+extern void filter_vzsnapshot_getinfo(UINT32 state, union filterinfo *info);
+extern void filter_vzbas_getinfo(UINT32 state, union filterinfo *info);
 
 
 #endif /* FILTER_H */

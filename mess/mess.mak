@@ -701,6 +701,7 @@ $(OBJ)/vtech.a :   \
 	$(OBJ)/mess/machine/vtech2.o	\
 	$(OBJ)/mess/systems/vtech2.o	\
 	$(OBJ)/mess/formats/vt_cas.o	\
+	$(OBJ)/mess/formats/vt_dsk.o	\
 
 $(OBJ)/jupiter.a : \
 	$(OBJ)/mess/systems/jupiter.o	\
