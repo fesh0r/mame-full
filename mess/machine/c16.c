@@ -476,7 +476,7 @@ static WRITE8_HANDLER(c16_sidcart_64k)
 	sid6581_0_port_w(offset,data);
 }
 
-MACHINE_INIT( c16 )
+MACHINE_RESET( c16 )
 {
 	int i;
 

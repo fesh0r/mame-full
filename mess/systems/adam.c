@@ -590,7 +590,7 @@ void resetPCB(void)
 		memory_region(REGION_CPU1)[(adam_pcb+4+i*21)&0xFFFF]=i+1;
 }
 
-static MACHINE_INIT( adam )
+static MACHINE_RESET( adam )
 {
 	if (image_exists(image_from_devtype_and_index(IO_CARTSLOT, 0)))
 	{
@@ -636,7 +636,7 @@ static MACHINE_DRIVER_START( adam )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( adam )
+	MDRV_MACHINE_RESET( adam )
 
     /* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )

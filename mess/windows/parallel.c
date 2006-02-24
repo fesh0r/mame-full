@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "parallel.h"
+#include "mame.h"
 
 #define SEQUENTIAL	0
 
@@ -23,6 +24,8 @@ struct call_data
 	void (*task)(void *param, int task_num, int task_count);
 	void *param;
 };
+
+static void win_parallel_exit(void);
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -173,6 +176,8 @@ int win_parallel_init(void)
 		if (set_thread_ideal_processor)
 			set_thread_ideal_processor(GetCurrentThread(), 0);
 	}
+
+	add_exit_callback(win_parallel_exit);
 	return 0;
 
 error:
@@ -184,7 +189,7 @@ error:
 //	win_parallel_exit
 //============================================================
 
-void win_parallel_exit(void)
+static void win_parallel_exit(void)
 {
 	int i;
 	HANDLE *threads = NULL;

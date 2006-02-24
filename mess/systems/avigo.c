@@ -81,6 +81,8 @@ static int avigo_flash_at_0x4000;
 static int avigo_flash_at_0x8000;
 static void *avigo_banked_opbase[4];
 
+static void avigo_machine_stop(void);
+
 static void avigo_setbank(int bank, void *address, read8_handler rh, write8_handler wh)
 {
 	if (address)
@@ -410,7 +412,7 @@ static OPBASE_HANDLER( avigo_opbase_handler )
 	return address;
 }
 
-static MACHINE_INIT( avigo )
+static MACHINE_RESET( avigo )
 {
 	int i;
 	unsigned char *addr;
@@ -503,9 +505,11 @@ static MACHINE_INIT( avigo )
 
 	/* 0x08000 is specially banked! */
 	avigo_refresh_memory();
+
+	add_exit_callback(avigo_machine_stop);
 }
 
-static MACHINE_STOP( avigo )
+static void avigo_machine_stop(void)
 {
 	/* store and free flash memory */
 	amd_flash_store(0, "avigof1.nv");
@@ -938,8 +942,7 @@ static MACHINE_DRIVER_START( avigo )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( avigo )
-	MDRV_MACHINE_STOP( avigo )
+	MDRV_MACHINE_RESET( avigo )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

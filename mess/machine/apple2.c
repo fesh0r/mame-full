@@ -11,7 +11,6 @@
 
 ***************************************************************************/
 
-/* common.h included for the RomModule definition */
 #include "driver.h"
 #include "state.h"
 #include "vidhrdw/generic.h"
@@ -24,6 +23,7 @@
 #include "devices/flopdrv.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
+#include "profiler.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -729,7 +729,7 @@ static int apple2_hasslots(void)
 
 
 
-MACHINE_INIT( apple2 )
+MACHINE_RESET( apple2 )
 {
 	int need_intcxrom, i;
 
@@ -1525,7 +1525,7 @@ void apple2_init_common(const struct apple2_config *config)
 	memcpy(a2_config, config, sizeof(*config));
 
 	/* state save registers */
-	state_save_register_UINT32("apple2", 0, "softswitch", &a2, 1);
+	state_save_register_global(a2);
 	state_save_register_func_postload(apple2_update_memory);
 
 	/* apple2 behaves much better when the default memory is zero */

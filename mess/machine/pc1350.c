@@ -168,7 +168,7 @@ DRIVER_INIT( pc1350 )
 	timer_set(1,0,pc1350_power_up);
 }
 
-MACHINE_INIT( pc1350 )
+MACHINE_RESET( pc1350 )
 {
 	if (PC1350_RAM20K)
 	{

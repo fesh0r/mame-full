@@ -3,7 +3,7 @@
 
 /* from mess/machine/kim1.c */
 DRIVER_INIT( kim1 );
-MACHINE_INIT( kim1 );
+MACHINE_RESET( kim1 );
 
 void kim1_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
 

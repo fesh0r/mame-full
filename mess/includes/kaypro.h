@@ -12,8 +12,7 @@
 #include "machine/cpm_bios.h"
 
 DRIVER_INIT( kaypro );
-MACHINE_INIT( kaypro );
-MACHINE_STOP( kaypro );
+MACHINE_RESET( kaypro );
 
 INTERRUPT_GEN( kaypro_interrupt );
 

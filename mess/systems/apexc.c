@@ -14,9 +14,10 @@ static void apexc_teletyper_init(void);
 static void apexc_teletyper_putchar(int character);
 
 
-static void machine_init_apexc(void)
+static MACHINE_START(apexc)
 {
 	apexc_teletyper_init();
+	return 0;
 }
 
 
@@ -813,7 +814,7 @@ static MACHINE_DRIVER_START(apexc)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( apexc )
+	MDRV_MACHINE_START( apexc )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

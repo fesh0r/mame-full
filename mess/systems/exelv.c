@@ -65,7 +65,7 @@ static int video_start_exelv(void)
 	return tms3556_init(/*0x8000*/0x10000);	/* tms3556 with 32 kb of video RAM */
 }
 
-static void machine_init_exelv(void)
+static void machine_reset_exelv(void)
 {
 	tms3556_reset();
 	io_reset();
@@ -555,7 +555,7 @@ static MACHINE_DRIVER_START(exelv)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( exelv )
+	MDRV_MACHINE_RESET( exelv )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

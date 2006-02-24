@@ -82,7 +82,7 @@ struct
 static void concept_fdc_init(int slot);
 static void concept_hdc_init(int slot);
 
-MACHINE_INIT(concept)
+MACHINE_RESET(concept)
 {
 	/* initialize int state */
 	pending_interrupts = 0;

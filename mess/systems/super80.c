@@ -63,7 +63,7 @@ static void reset_timer_callback(int dummy)
 	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x0000);
 }
 
-static void machine_init_super80(void)
+static MACHINE_RESET( super8 )
 {
 	/* reset PIO */
 	z80pio_init(0, &z80pio_intf);
@@ -320,7 +320,7 @@ static MACHINE_DRIVER_START( super80 )
 	//MDRV_VBLANK_DURATION(2500)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( super80 )
+	MDRV_MACHINE_RESET( super80 )
 
 	MDRV_GFXDECODE(super80_gfxdecodeinfo)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

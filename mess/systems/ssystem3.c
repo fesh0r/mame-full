@@ -69,7 +69,7 @@ static INTERRUPT_GEN( ssystem3_frame_int )
 	toggle^=0;
 }
 
-static MACHINE_INIT( ssystem3 )
+static MACHINE_RESET( ssystem3 )
 {
 	via_reset();
 }
@@ -137,7 +137,7 @@ static MACHINE_DRIVER_START( ssystem3 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( ssystem3 )
+	MDRV_MACHINE_RESET( ssystem3 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

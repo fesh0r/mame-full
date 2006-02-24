@@ -91,7 +91,7 @@ static OPBASE_HANDLER(spectrum_opbaseoverride)
 	return address;
 }
 
-MACHINE_INIT( spectrum )
+MACHINE_RESET( spectrum )
 {
 	memory_set_opbase_handler(0, spectrum_opbaseoverride);
 }

@@ -324,16 +324,8 @@ field:		X address	D			Function	Y address	D (part 2)
 */
 
 #include "driver.h"
-#include "mamedbg.h"
-
 #include "apexc.h"
-
-#ifndef FALSE
-#define FALSE	0
-#endif
-#ifndef TRUE
-#define TRUE	1
-#endif
+#include "debugger.h"
 
 typedef struct
 {

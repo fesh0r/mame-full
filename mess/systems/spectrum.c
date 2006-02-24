@@ -512,7 +512,7 @@ static ADDRESS_MAP_START (spectrum_128_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0xc000, 0xffff) AM_READWRITE( MRA8_BANK4, MWA8_BANK8 )
 ADDRESS_MAP_END
 
-static MACHINE_INIT( spectrum_128 )
+static MACHINE_RESET( spectrum_128 )
 {
 	if (spectrum_alloc_ram(128)!=0)
 	{
@@ -530,7 +530,7 @@ static MACHINE_INIT( spectrum_128 )
 		spectrum_128_port_7ffd_data = 0;
 		spectrum_128_update_memory();
 
-		machine_init_spectrum();
+		machine_reset_spectrum();
 	}
 }
 
@@ -826,7 +826,7 @@ static ADDRESS_MAP_START (spectrum_plus3_io, ADDRESS_SPACE_IO, 8)
 		AM_RANGE(0x0000, 0xffff) AM_READWRITE( spectrum_plus3_port_r, spectrum_plus3_port_w )
 ADDRESS_MAP_END
 
-static MACHINE_INIT( spectrum_plus3 )
+static MACHINE_RESET( spectrum_plus3 )
 {
 	if (spectrum_alloc_ram(128))
 	{
@@ -840,7 +840,7 @@ static MACHINE_INIT( spectrum_plus3 )
 		spectrum_plus3_port_1ffd_data = 0;
 		spectrum_plus3_update_memory();
 
-		machine_init_spectrum();
+		machine_reset_spectrum();
 	}
 }
 
@@ -1302,13 +1302,13 @@ static ADDRESS_MAP_START (ts2068_mem, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 
-static MACHINE_INIT( ts2068 )
+static MACHINE_RESET( ts2068 )
 {
 	ts2068_port_ff_data = 0;
 	ts2068_port_f4_data = 0;
 	ts2068_update_memory();
 
-	machine_init_spectrum();
+	machine_reset_spectrum();
 }
 
 
@@ -1361,13 +1361,13 @@ static ADDRESS_MAP_START (tc2048_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x4000, 0xffff) AM_READWRITE( MRA8_BANK1, MWA8_BANK2 )
 ADDRESS_MAP_END
 
-static MACHINE_INIT( tc2048 )
+static MACHINE_RESET( tc2048 )
 {
 	memory_set_bankptr(1, mess_ram);
 	memory_set_bankptr(2, mess_ram);
 	ts2068_port_ff_data = 0;
 
-	machine_init_spectrum();
+	machine_reset_spectrum();
 }
 
 
@@ -1696,7 +1696,7 @@ static ADDRESS_MAP_START (scorpion_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0xffff) AM_READWRITE(scorpion_port_r, scorpion_port_w)
 ADDRESS_MAP_END
 
-static MACHINE_INIT( scorpion )
+static MACHINE_RESET( scorpion )
 {
 	if (spectrum_alloc_ram(256))
 	{
@@ -1738,7 +1738,7 @@ static ADDRESS_MAP_START (pentagon_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0xffff) AM_READWRITE( pentagon_port_r, pentagon_port_w )
 ADDRESS_MAP_END
 
-static MACHINE_INIT( pentagon )
+static MACHINE_RESET( pentagon )
 {
 	if (spectrum_alloc_ram(128))
 	{
@@ -1958,7 +1958,7 @@ static MACHINE_DRIVER_START( spectrum )
 	MDRV_VBLANK_DURATION(2500)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( spectrum )
+	MDRV_MACHINE_RESET( spectrum )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1990,7 +1990,7 @@ static MACHINE_DRIVER_START( spectrum_128 )
 	MDRV_CPU_IO_MAP(spectrum_128_io, 0)
 	MDRV_FRAMES_PER_SECOND(50.021)
 
-	MDRV_MACHINE_INIT( spectrum_128 )
+	MDRV_MACHINE_RESET( spectrum_128 )
 
     /* video hardware */
 	MDRV_VIDEO_START( spectrum_128 )
@@ -2009,7 +2009,7 @@ static MACHINE_DRIVER_START( spectrum_plus3 )
 	MDRV_CPU_IO_MAP(spectrum_plus3_io, 0)
 	MDRV_FRAMES_PER_SECOND(50.01)
 
-	MDRV_MACHINE_INIT( spectrum_plus3 )
+	MDRV_MACHINE_RESET( spectrum_plus3 )
 MACHINE_DRIVER_END
 
 
@@ -2020,7 +2020,7 @@ static MACHINE_DRIVER_START( ts2068 )
 	MDRV_CPU_IO_MAP(ts2068_io, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 
-	MDRV_MACHINE_INIT( ts2068 )
+	MDRV_MACHINE_RESET( ts2068 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -2045,7 +2045,7 @@ static MACHINE_DRIVER_START( tc2048 )
 	MDRV_CPU_IO_MAP(tc2048_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 
-	MDRV_MACHINE_INIT( tc2048 )
+	MDRV_MACHINE_RESET( tc2048 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -2061,7 +2061,7 @@ static MACHINE_DRIVER_START( scorpion )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(scorpion_io, 0)
-	MDRV_MACHINE_INIT( scorpion )
+	MDRV_MACHINE_RESET( scorpion )
 MACHINE_DRIVER_END
 
 
@@ -2069,7 +2069,7 @@ static MACHINE_DRIVER_START( pentagon )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(pentagon_io, 0)
-	MDRV_MACHINE_INIT( pentagon )
+	MDRV_MACHINE_RESET( pentagon )
 MACHINE_DRIVER_END
 
 

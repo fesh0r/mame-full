@@ -40,6 +40,7 @@ static void reader_callback(int dummy);
 static void puncher_callback(int nac);
 static void tyo_callback(int nac);
 static void dpy_callback(int dummy);
+static void pdp1_machine_stop(void);
 
 
 /* pointer to pdp-1 RAM */
@@ -297,7 +298,7 @@ static OPBASE_HANDLER(setOPbasefunc)
 	return -1;
 }
 
-MACHINE_INIT( pdp1 )
+MACHINE_RESET( pdp1 )
 {
 	int config;
 
@@ -320,10 +321,12 @@ MACHINE_INIT( pdp1 )
 	lightpen.x = lightpen.y = 0;
 	lightpen.radius = 10;	/* ??? */
 	pdp1_update_lightpen_state(&lightpen);
+
+	add_exit_callback(pdp1_machine_stop);
 }
 
 
-MACHINE_STOP( pdp1 )
+static void pdp1_machine_stop(void)
 {
 	/* the core will take care of freeing the timers, BUT we must set the variables
 	to NULL if we don't want to risk confusing the tape image init function */

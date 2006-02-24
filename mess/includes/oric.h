@@ -1,5 +1,5 @@
 /* from machine/oric.c */
-MACHINE_INIT( oric );
+MACHINE_RESET( oric );
 INTERRUPT_GEN( oric_interrupt );
 READ8_HANDLER( oric_IO_r );
 WRITE8_HANDLER( oric_IO_w );
@@ -19,5 +19,5 @@ DEVICE_LOAD( oric_floppy );
 DEVICE_LOAD( oric_cassette );
 
 /* Telestrat specific */
-MACHINE_INIT( telestrat );
+MACHINE_RESET( telestrat );
 

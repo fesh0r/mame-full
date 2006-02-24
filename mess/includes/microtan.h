@@ -27,7 +27,7 @@ extern UINT8 *microtan_chunky_buffer;
 
 /* from mess/machine/microtan.c */
 void init_microtan(void);
-MACHINE_INIT( microtan );
+MACHINE_RESET( microtan );
 
 SNAPSHOT_LOAD( microtan );
 QUICKLOAD_LOAD( microtan_hexfile );

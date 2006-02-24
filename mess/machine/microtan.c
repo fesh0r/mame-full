@@ -955,7 +955,7 @@ DRIVER_INIT( microtan )
 
 }
 
-MACHINE_INIT( microtan )
+MACHINE_RESET( microtan )
 {
     int i;
 

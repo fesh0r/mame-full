@@ -1146,7 +1146,7 @@ static void lisa210_set_iwm_enable_lines(int enable_mask)
 	sony_set_enable_lines(enable_mask >> 1);
 }
 
-MACHINE_INIT( lisa )
+MACHINE_RESET( lisa )
 {
 	mouse_timer = timer_alloc(handle_mouse);
 

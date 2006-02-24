@@ -427,9 +427,7 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( pdp1 )
-	MDRV_MACHINE_STOP( pdp1 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
+	MDRV_MACHINE_RESET( pdp1 )
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

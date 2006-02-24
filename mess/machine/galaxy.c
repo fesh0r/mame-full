@@ -172,7 +172,7 @@ DRIVER_INIT( galaxy )
   Machine Initialization
 ***************************************************************************/
 
-MACHINE_INIT( galaxy )
+MACHINE_RESET( galaxy )
 {
 	/* ROM 2 enable/disable */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, readinputport(7) ? MRA8_ROM : MRA8_NOP);

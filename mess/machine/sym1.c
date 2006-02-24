@@ -128,7 +128,7 @@ DRIVER_INIT( sym1 )
 	riot_init(0, &riot);
 }
 
-MACHINE_INIT( sym1 )
+MACHINE_RESET( sym1 )
 {
 	via_reset();
 	riot_reset(0);

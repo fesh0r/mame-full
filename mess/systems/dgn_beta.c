@@ -333,8 +333,7 @@ static MACHINE_DRIVER_START( dgnbeta )
 	MDRV_VBLANK_DURATION(100)
 	MDRV_CPU_VBLANK_INT(dgn_beta_frame_interrupt,1)		/* Call once / vblank */
 		
-	MDRV_MACHINE_INIT( dgnbeta )
-	MDRV_MACHINE_STOP( dgnbeta )
+	MDRV_MACHINE_RESET( dgnbeta )
 
 	/* video hardware */
 	

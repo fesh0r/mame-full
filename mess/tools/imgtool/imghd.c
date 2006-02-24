@@ -133,7 +133,6 @@ static chd_interface_file *imgtool_chd_open(const char *filename, const char *mo
 {
 	imgtool_stream *img = decode_image_ref(filename);
 
-
 	/* invalid "file name"? */
 	if (img == NULL)
 		return NULL;
@@ -151,7 +150,6 @@ static chd_interface_file *imgtool_chd_open(const char *filename, const char *mo
 */
 static void imgtool_chd_close(chd_interface_file *file)
 {
-	(void) file;
 }
 
 /*
@@ -343,6 +341,8 @@ void imghd_close(struct mess_hard_disk_file *disk)
 		chd_close(disk->chd);
 		disk->chd = NULL;
 	}
+	if (disk->stream)
+		stream_close(disk->stream);
 
 	chd_set_interface(&interface_save);
 }

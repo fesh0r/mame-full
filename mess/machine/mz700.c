@@ -87,7 +87,7 @@ DRIVER_INIT(mz700)
 
 
 
-MACHINE_INIT(mz700)
+MACHINE_RESET(mz700)
 {
 	ne556_timer[0] = timer_alloc(ne556_callback);
 	timer_adjust(ne556_timer[0], TIME_IN_HZ(1.5), 0, TIME_IN_HZ(1.5));

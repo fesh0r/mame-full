@@ -95,11 +95,11 @@ static int d_dac;
 static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( coco3_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
-static  READ8_HANDLER (  d_pia1_cb1_r );
-static  READ8_HANDLER (  d_pia0_pa_r );
-static  READ8_HANDLER (  d_pia1_pa_r );
-static  READ8_HANDLER (  d_pia1_pb_r_coco );
-static  READ8_HANDLER (  d_pia1_pb_r_coco2 );
+static READ8_HANDLER (  d_pia1_cb1_r );
+static READ8_HANDLER (  d_pia0_pa_r );
+static READ8_HANDLER (  d_pia1_pa_r );
+static READ8_HANDLER (  d_pia1_pb_r_coco );
+static READ8_HANDLER (  d_pia1_pb_r_coco2 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
 static WRITE8_HANDLER ( d_pia0_pb_w );
 static WRITE8_HANDLER ( dragon64_pia1_pb_w );
@@ -124,6 +124,7 @@ static void dragon64_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
+static void coco_machine_stop(void);
 
 /* Are we a CoCo or a Dragon ? */
 typedef enum
@@ -2469,7 +2470,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 }
 
-MACHINE_INIT( dragon32 )
+MACHINE_RESET( dragon32 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2478,7 +2479,7 @@ MACHINE_INIT( dragon32 )
 	coco_or_dragon = AM_DRAGON;
 }
 
-MACHINE_INIT( dragon64 )
+MACHINE_RESET( dragon64 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2488,7 +2489,7 @@ MACHINE_INIT( dragon64 )
 	coco_or_dragon = AM_DRAGON;
 }
 
-MACHINE_INIT( dgnalpha )
+MACHINE_RESET( dgnalpha )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2507,7 +2508,7 @@ MACHINE_INIT( dgnalpha )
 	coco_or_dragon = AM_DRAGON;
 }
 
-MACHINE_INIT( coco )
+MACHINE_RESET( coco )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2516,7 +2517,7 @@ MACHINE_INIT( coco )
 	coco_or_dragon = AM_COCO;
 }
 
-MACHINE_INIT( coco2 )
+MACHINE_RESET( coco2 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2525,7 +2526,7 @@ MACHINE_INIT( coco2 )
 	coco_or_dragon = AM_COCO;
 }
 
-MACHINE_INIT( coco3 )
+MACHINE_RESET( coco3 )
 {
 	int i;
 
@@ -2550,9 +2551,11 @@ MACHINE_INIT( coco3 )
 	coco3_interupt_line = 0;
 	
 	coco_or_dragon = AM_COCO;
+
+	add_exit_callback(coco_machine_stop);
 }
 
-MACHINE_STOP( coco )
+static void coco_machine_stop(void)
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
@@ -2585,8 +2588,8 @@ static void coco3_state_postload(void)
 
 DRIVER_INIT( coco3 )
 {
-	state_save_register_UINT32("coco3", 0, "mmu", coco3_mmu, sizeof(coco3_mmu) / sizeof(coco3_mmu[0]));
-	state_save_register_UINT8("coco3", 0, "gimereg", coco3_gimereg, sizeof(coco3_gimereg) / sizeof(coco3_gimereg[0]));
+	state_save_register_global_array(coco3_mmu);
+	state_save_register_global_array(coco3_gimereg);
 	state_save_register_func_postload(coco3_state_postload);
 }
 

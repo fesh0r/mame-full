@@ -7,11 +7,9 @@ extern UINT8 ti85_LCD_contrast;
 extern UINT8 ti85_LCD_status;
 extern UINT8 ti85_timer_interrupt_mask;
 
-MACHINE_INIT( ti81 );
-MACHINE_INIT( ti85 );
-MACHINE_STOP( ti85 );
-MACHINE_INIT( ti86 );
-MACHINE_STOP( ti86 );
+MACHINE_RESET( ti81 );
+MACHINE_RESET( ti85 );
+MACHINE_RESET( ti86 );
 
 NVRAM_HANDLER( ti81 );
 NVRAM_HANDLER( ti85 );

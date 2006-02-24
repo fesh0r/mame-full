@@ -15,6 +15,7 @@ static void reader_callback(int dummy);
 static void puncher_callback(int dummy);
 static void prt_callback(int dummy);
 static void dis_callback(int dummy);
+static void tx0_machine_stop(void);
 
 
 /* tape reader registers */
@@ -147,7 +148,7 @@ static OPBASE_HANDLER(setOPbasefunc)
 }
 
 
-MACHINE_INIT( tx0 )
+MACHINE_RESET( tx0 )
 {
 	memory_set_opbase_handler(0, setOPbasefunc);
 
@@ -158,10 +159,12 @@ MACHINE_INIT( tx0 )
 
 	/* reset device state */
 	tape_reader.rcl = tape_reader.rc = 0;
+
+	add_exit_callback(tx0_machine_stop);
 }
 
 
-MACHINE_STOP( tx0 )
+static void tx0_machine_stop(void)
 {
 	/* the core will take care of freeing the timers, BUT we must set the variables
 	to NULL if we don't want to risk confusing the tape image init function */

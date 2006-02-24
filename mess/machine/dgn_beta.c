@@ -984,7 +984,7 @@ INTERRUPT_GEN( dgn_beta_frame_interrupt )
 
 /********************************* Machine/Driver Initialization ****************************************/
 
-MACHINE_INIT( dgnbeta )
+MACHINE_RESET( dgnbeta )
 {
 	system_rom = memory_region(REGION_CPU1);
 
@@ -1018,10 +1018,6 @@ MACHINE_INIT( dgnbeta )
 	wd179x_reset();
 	wd179x_set_density(DEN_MFM_LO);
 	wd179x_set_drive(0);
-}
-
-MACHINE_STOP( dgnbeta )
-{
 }
 
 DRIVER_INIT( dgnbeta )

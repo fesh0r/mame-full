@@ -13,7 +13,7 @@
 #include "sound/custom.h"
 
 /* from machine/mac.c */
-MACHINE_INIT( mac );
+MACHINE_RESET( mac );
 
 DRIVER_INIT(mac128k512k);
 DRIVER_INIT(mac512ke);

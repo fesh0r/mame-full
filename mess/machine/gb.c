@@ -68,6 +68,7 @@ UINT8 gb_io[0x10];
 UINT8 gb_vid_regs[0x40];
 UINT8 gb_ie;
 
+static void gb_machine_stop(void);
 void (*refresh_scanline)(void);
 
 #ifdef MAME_DEBUG
@@ -163,7 +164,7 @@ static void gb_init(void)
 	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
 }
 
-MACHINE_INIT( gb )
+MACHINE_RESET( gb )
 {
         gb_init();
 
@@ -175,7 +176,7 @@ MACHINE_INIT( gb )
 	refresh_scanline = gb_refresh_scanline;
 }
 
-MACHINE_INIT( sgb )
+MACHINE_RESET( sgb )
 {
 	gb_init();
 
@@ -207,7 +208,7 @@ MACHINE_INIT( sgb )
 	refresh_scanline = sgb_refresh_scanline;
 }
 
-MACHINE_INIT( gbpocket )
+MACHINE_RESET( gbpocket )
 {
 	gb_init();
 
@@ -221,7 +222,7 @@ MACHINE_INIT( gbpocket )
 	refresh_scanline = gb_refresh_scanline;
 }
 
-MACHINE_INIT( gbc )
+MACHINE_RESET( gbc )
 {
 	int ii;
 
@@ -284,9 +285,11 @@ MACHINE_INIT( gbc )
 
 	/* set the scanline refresh function */
 	refresh_scanline = gbc_refresh_scanline;
+
+	add_exit_callback(gb_machine_stop);
 }
 
-MACHINE_STOP( gb )
+static void gb_machine_stop(void)
 {
 /*	int I; */
 
@@ -1832,7 +1835,7 @@ WRITE8_HANDLER ( gbc_video_w )
 
  ****************************************************************************/
 
-MACHINE_INIT( megaduck )
+MACHINE_RESET( megaduck )
 {
 	/* We may have to add some more stuff here, if not then it can be merged back into gb */
 	gb_init();

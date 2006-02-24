@@ -221,7 +221,7 @@ static MACHINE_DRIVER_START( atom )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(128)
 
-	MDRV_MACHINE_INIT( atom )
+	MDRV_MACHINE_RESET( atom )
 
 	/* video hardware */
 	MDRV_M6847_PAL( atom )
@@ -238,7 +238,7 @@ static MACHINE_DRIVER_START( atomeb )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP(atomeb_mem, 0 )
 
-	MDRV_MACHINE_INIT( atomeb )
+	MDRV_MACHINE_RESET( atomeb )
 MACHINE_DRIVER_END
 
 

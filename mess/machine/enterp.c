@@ -18,7 +18,7 @@
 
 void Enterprise_SetupPalette(void);
 
-MACHINE_INIT( enterprise )
+MACHINE_RESET( enterprise )
 {
 	/* initialise the hardware */
 	Enterprise_Initialise();

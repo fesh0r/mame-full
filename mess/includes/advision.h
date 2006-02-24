@@ -3,7 +3,7 @@ extern int advision_framestart;
 /*extern int advision_videoenable;*/
 extern int advision_videobank;
 
-MACHINE_INIT( advision );
+MACHINE_RESET( advision );
 READ8_HANDLER ( advision_MAINRAM_r);
 WRITE8_HANDLER( advision_MAINRAM_w );
 WRITE8_HANDLER( advision_putp1 );

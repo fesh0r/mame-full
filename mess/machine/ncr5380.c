@@ -62,7 +62,7 @@ static struct NCR5380interface *intf;
 static UINT8 n5380_Registers[8];
 static UINT8 last_id;
 static UINT8 n5380_Command[32];
-static int cmd_ptr, d_ptr, d_limit;
+static INT32 cmd_ptr, d_ptr, d_limit;
 static UINT8 n5380_Data[512];
 
 // get the length of a SCSI command based on it's command byte type
@@ -351,13 +351,13 @@ extern void ncr5380_init( struct NCR5380interface *interface )
 		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}	
 
-	state_save_register_UINT8("ncr5380", 0, "registers", n5380_Registers, 8);
-	state_save_register_UINT8("ncr5380", 0, "cmdbuf", n5380_Command, 32);
-	state_save_register_UINT8("ncr5380", 0, "databuf", n5380_Data, 512);
-	state_save_register_UINT8("ncr5380", 0, "lastid", &last_id, 1);
-	state_save_register_int("ncr5380", 0, "cmdptr", &cmd_ptr);
-	state_save_register_int("ncr5380", 0, "dptr", &d_ptr);
-	state_save_register_int("ncr5380", 0, "dlimit", &d_limit);
+	state_save_register_item_array("ncr5380", 0, n5380_Registers);
+	state_save_register_item_array("ncr5380", 0, n5380_Command);
+	state_save_register_item_array("ncr5380", 0, n5380_Data);
+	state_save_register_item("ncr5380", 0, last_id);
+	state_save_register_item("ncr5380", 0, cmd_ptr);
+	state_save_register_item("ncr5380", 0, d_ptr);
+	state_save_register_item("ncr5380", 0, d_limit);
 }
 
 void ncr5380_read_data(int bytes, UINT8 *pData)

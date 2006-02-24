@@ -92,7 +92,7 @@ static void common_init_machine(void)
     }
 }
 
-MACHINE_INIT(laser110)
+MACHINE_RESET(laser110)
 {
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)
@@ -108,7 +108,7 @@ MACHINE_INIT(laser110)
 	common_init_machine();
 }
 
-MACHINE_INIT(laser210)
+MACHINE_RESET(laser210)
 {
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)
@@ -124,7 +124,7 @@ MACHINE_INIT(laser210)
 	common_init_machine();
 }
 
-MACHINE_INIT(laser310)
+MACHINE_RESET(laser310)
 {
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)

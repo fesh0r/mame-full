@@ -534,7 +534,7 @@ DRIVER_INIT( vic20i )
 	cbm_ieee_open();
 }
 
-MACHINE_INIT( vc20 )
+MACHINE_RESET( vc20 )
 {
 	if (RAMIN0X0400)
 	{

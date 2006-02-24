@@ -304,7 +304,7 @@ static DRIVER_INIT( svision )
 	svision.timer1 = timer_alloc(svision_timer);
 }
 
-static MACHINE_INIT( svision )
+static MACHINE_RESET( svision )
 {
     svision.timer1_shot = FALSE;
 	svision_update_banks();
@@ -325,7 +325,7 @@ static MACHINE_DRIVER_START( svision )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( svision )
+	MDRV_MACHINE_RESET( svision )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)	/* lcd */

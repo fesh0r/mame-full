@@ -8,7 +8,7 @@
 
 
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #include "apexc.h"
 

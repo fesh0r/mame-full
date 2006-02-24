@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "f8.h"
 
 #define S	0x01

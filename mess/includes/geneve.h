@@ -28,16 +28,15 @@ enum
 
 /* prototypes for machine code */
 
-void init_geneve(void);
-void init_genmod(void);
+DRIVER_INIT( geneve );
+DRIVER_INIT( genmod );
 
-void machine_init_geneve(void);
-void machine_stop_geneve(void);
+MACHINE_START( geneve );
 
-int video_start_geneve(void);
+VIDEO_START( geneve );
 void geneve_hblank_interrupt(void);
 
- READ8_HANDLER ( geneve_r );
+READ8_HANDLER ( geneve_r );
 WRITE8_HANDLER ( geneve_w );
 
 WRITE8_HANDLER ( geneve_peb_mode_cru_w );

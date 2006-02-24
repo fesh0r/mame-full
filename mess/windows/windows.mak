@@ -21,23 +21,26 @@ endif
 # note this requires that OSOBJS be the first target
 #
 OSOBJS = \
-	$(OBJ)/windows/asmblit.o \
-	$(OBJ)/windows/asmtile.o \
-	$(OBJ)/windows/blit.o \
-	$(OBJ)/windows/config.o \
-	$(OBJ)/windows/fileio.o \
-	$(OBJ)/windows/fronthlp.o \
-	$(OBJ)/windows/input.o \
-	$(OBJ)/windows/misc.o \
-	$(OBJ)/windows/rc.o \
-	$(OBJ)/windows/sound.o \
-	$(OBJ)/windows/ticker.o \
-	$(OBJ)/windows/video.o \
-	$(OBJ)/windows/window.o \
-	$(OBJ)/windows/wind3d.o \
-	$(OBJ)/windows/wind3dfx.o \
-	$(OBJ)/windows/winddraw.o \
-	$(OBJ)/windows/winmain.o
+	$(OBJ)/$(MAMEOS)/asmblit.o \
+	$(OBJ)/$(MAMEOS)/asmtile.o \
+	$(OBJ)/$(MAMEOS)/blit.o \
+	$(OBJ)/$(MAMEOS)/config.o \
+	$(OBJ)/$(MAMEOS)/fileio.o \
+	$(OBJ)/$(MAMEOS)/fronthlp.o \
+	$(OBJ)/$(MAMEOS)/input.o \
+	$(OBJ)/$(MAMEOS)/misc.o \
+	$(OBJ)/$(MAMEOS)/rc.o \
+	$(OBJ)/$(MAMEOS)/sound.o \
+	$(OBJ)/$(MAMEOS)/ticker.o \
+	$(OBJ)/$(MAMEOS)/video.o \
+	$(OBJ)/$(MAMEOS)/window.o \
+	$(OBJ)/$(MAMEOS)/wind3d.o \
+	$(OBJ)/$(MAMEOS)/wind3dfx.o \
+	$(OBJ)/$(MAMEOS)/winddraw.o \
+	$(OBJ)/$(MAMEOS)/winmain.o \
+
+OSTOOLOBJS = \
+	$(OBJ)/$(MAMEOS)/osd_tool.o
 
 ifdef MESS
 CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"

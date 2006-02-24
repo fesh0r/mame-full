@@ -99,16 +99,12 @@ static void init_ti99_2_32(void)
 #define TI99_2_32_ROMPAGE0 (memory_region(REGION_CPU1)+0x4000)
 #define TI99_2_32_ROMPAGE1 (memory_region(REGION_CPU1)+0x10000)
 
-static void machine_init_ti99_2(void)
+static MACHINE_RESET( ti99_2 )
 {
 	if (! ROM_paged)
 		memory_set_bankptr(1, memory_region(REGION_CPU1)+0x4000);
 	else
 		memory_set_bankptr(1, TI99_2_32_ROMPAGE0);
-}
-
-static void machine_stop_ti99_2(void)
-{
 }
 
 static void ti99_2_vblank_interrupt(void)
@@ -404,9 +400,7 @@ static MACHINE_DRIVER_START(ti99_2)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( ti99_2 )
-	MDRV_MACHINE_STOP( ti99_2 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
+	MDRV_MACHINE_RESET( ti99_2 )
 
 	/* video hardware */
 	/*MDRV_TMS9928A( &tms9918_interface )*/

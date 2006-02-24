@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "cdp1802.h"
 
 /* Layout of the registers in the debugger */

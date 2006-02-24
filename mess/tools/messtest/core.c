@@ -268,7 +268,6 @@ static int external_entity_handler(XML_Parser parser,
 
 		code_init();
 		c = token_to_code(buf);
-		code_exit();
 
 		if (c != CODE_NONE)
 		{
@@ -361,12 +360,19 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 	FILE *file;
 	int result = -1;
 	char *script_directory;
-	xml_custom_parse parse;
+	xml_parse_options parse_options;
+	xml_parse_error parse_error;
 	xml_data_node *root_node;
 	xml_data_node *tests_node;
+	mess_pile pile;
+	const char *xml;
+	size_t sz;
+	char buf[256];
 
 	*test_count = 0;
 	*failure_count = 0;
+
+	pile_init(&pile);
 
 	/* open the script file */
 	file = fopen(opts->script_filename, "r");
@@ -375,6 +381,15 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 		fprintf(stderr, "%s: Cannot open file\n", opts->script_filename);
 		goto done;
 	}
+
+	/* read the file */
+	while(!feof(file))
+	{
+		sz = fread(buf, 1, sizeof(buf), file);
+		pile_write(&pile, buf, sz);
+	}
+	pile_writebyte(&pile, '\0', 1);
+	xml = (const char *) pile_getptr(&pile);
 
 	/* save the current working directory, and change to the test directory */
 	saved_directory[0] = '\0';
@@ -389,16 +404,17 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 		}
 	}
 
+	/* set up parse options */
+	memset(&parse_options, 0, sizeof(parse_options));
+	parse_options.init_parser = parse_init;
+	parse_options.flags = XML_PARSE_FLAG_WHITESPACE_SIGNIFICANT;
+	parse_options.error = &parse_error;
+
 	/* do the parse */
-	memset(&parse, 0, sizeof(parse));
-	parse.init = parse_init;
-	parse.read = parse_read;
-	parse.eof = parse_eof;
-	parse.param = (void *) file;
-	root_node = xml_file_read_custom(&parse);
+	root_node = xml_string_read(xml, &parse_options);
 	if (!root_node)
 	{
-		error_reportf("%s", parse.error_message);
+		error_reportf("%s", parse_error.error_message);
 		goto done;
 	}
 
@@ -414,6 +430,7 @@ done:
 	/* restore the directory */
 	if (saved_directory[0])
 		osd_setcurdir(saved_directory);
+	pile_delete(&pile);
 	return result;
 }
 

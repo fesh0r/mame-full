@@ -237,7 +237,7 @@ static OPBASE_HANDLER(atom_opbase_handler)
 	return activecpu_get_pc() & 0x0ffff;
 }
 
-MACHINE_INIT( atom )
+MACHINE_RESET( atom )
 {
 	ppi8255_init (&atom_8255_int);
 	atom_8255_porta = 0xff;
@@ -503,14 +503,14 @@ WRITE8_HANDLER(atom_eprom_box_w)
 }
 
 /* read from eprom box register, can this be done in the real hardware */
- READ8_HANDLER(atom_eprom_box_r)
+READ8_HANDLER(atom_eprom_box_r)
 {
 	return selected_eprom;
 }
 
-MACHINE_INIT( atomeb )
+MACHINE_RESET( atomeb )
 {
-	machine_init_atom();
+	machine_reset_atom();
 	atom_eprom_box_init();
 }
 

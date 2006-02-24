@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
 #include "videomap.h"
 #include "mess.h"
 #include "vidhrdw/generic.h"
+#include "profiler.h"
 
 #define PROFILER_VIDEOMAP_DRAWBORDER	PROFILER_USER3
 #define PROFILER_VIDEOMAP_DRAWBODY		PROFILER_USER4

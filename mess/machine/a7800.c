@@ -100,7 +100,7 @@ DRIVER_INIT( a7800_pal )
 
 
 
-MACHINE_INIT( a7800 )
+MACHINE_RESET( a7800 )
 {
 	UINT8 *memory;
 

@@ -1,7 +1,7 @@
 #include "devices/snapquik.h"
 
 /* machine/atom.c */
-MACHINE_INIT( atom );
+MACHINE_RESET( atom );
 QUICKLOAD_LOAD( atom );
  READ8_HANDLER (atom_8255_porta_r);
  READ8_HANDLER (atom_8255_portb_r);
@@ -23,4 +23,4 @@ DEVICE_LOAD( atom_floppy );
 WRITE8_HANDLER(atom_eprom_box_w);
 void atom_eprom_box_init(void);
 
-MACHINE_INIT( atomeb );
+MACHINE_RESET( atomeb );

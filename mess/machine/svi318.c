@@ -536,9 +536,9 @@ VIDEO_UPDATE( svi328b )
 	video_update_svi318_80col(screen, bitmap, cliprect, do_skip);
 }
 
-MACHINE_INIT( svi328b )
+MACHINE_RESET( svi328b )
 {
-	machine_init_svi318();
+	machine_reset_svi318();
 	svi318_80col_init();
 }
 
@@ -620,7 +620,7 @@ DRIVER_INIT( svi318 )
 	wd179x_init(WD_TYPE_179X, svi_fdc_callback);
 }
 
-MACHINE_INIT( svi318 )
+MACHINE_RESET( svi318 )
 {
 	/* video stuff */
 	TMS9928A_reset();
@@ -632,30 +632,6 @@ MACHINE_INIT( svi318 )
 	svi318_set_banks();
 
 	wd179x_reset();
-}
-
-MACHINE_STOP( svi318 )
-{
-/*
-	int i,j;
-
-	if (svi.empty_bank) free (svi.empty_bank);
-	if (svi.banks[1][0]) free (svi.banks[1][0]);
-	for (i=2;i<4;i++)
-		for (j=0;j<2;j++)
-			{
-			if (svi.banks[j][i])
-				{
-				free (svi.banks[j][i]);
-				svi.banks[j][i] = NULL;
-				}
-			}
-
-	for (i=0; z80_cycle_table[i].table != -1; i++) {
-		cpunum_set_info_ptr(0, CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table,
-				(void*)z80_cycle_table[i].old_table);
-	}
-*/
 }
 
 INTERRUPT_GEN( svi318_interrupt )

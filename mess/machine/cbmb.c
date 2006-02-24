@@ -286,7 +286,7 @@ void cbm500_driver_init (void)
 	vic6567_init (0, 0, cbmb_dma_read, cbmb_dma_read_color, NULL);
 }
 
-MACHINE_INIT( cbmb )
+MACHINE_RESET( cbmb )
 {
 	sndti_reset(SOUND_SID6581, 0);
 	cia6526_reset ();

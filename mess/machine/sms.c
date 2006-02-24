@@ -533,7 +533,7 @@ static void setup_banks( void ) {
 	}
 }
 
-MACHINE_INIT(sms)
+MACHINE_RESET(sms)
 {
 	smsVersion = 0x00;
 	if ( HAS_FM ) {

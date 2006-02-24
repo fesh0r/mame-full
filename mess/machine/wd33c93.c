@@ -154,7 +154,7 @@ WRITE8_HANDLER(wd33c93_w)
 			{
 			case 0x00: /* Reset controller */
 				// this clears all the registers
-				memset(n33C93_Registers, 0, SBIC_num_registers * sizeof(UINT8));
+				memset(n33C93_Registers, 0, sizeof(n33C93_Registers));
 
 				if( n33C93_Registers[ SBIC_myid ] & SBIC_MyID_Advanced )
 				{
@@ -290,8 +290,8 @@ extern void wd33c93_init( struct WD33C93interface *interface )
 		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}	
 
-	state_save_register_UINT8("wd33c93", 0, "registers", n33C93_Registers, SBIC_num_registers);
-	state_save_register_UINT8("wd33c93", 0, "register select", &n33C93_RegisterSelect, 1);
+	state_save_register_item_array("wd33c93", 0, n33C93_Registers);
+	state_save_register_item("wd33c93", 0, n33C93_RegisterSelect);
 }
 
 void wd33c93_read_data(int bytes, UINT8 *pData)

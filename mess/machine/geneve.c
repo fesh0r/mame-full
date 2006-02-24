@@ -132,6 +132,8 @@ static int KeyFakeUnshiftState;
 static int KeyAutoRepeatKey;
 static int KeyAutoRepeatTimer;
 
+static void machine_stop_geneve(void);
+
 /*
 	GROM support.
 
@@ -188,18 +190,18 @@ enum
 	initialization, cart loading, etc.
 */
 
-void init_geneve(void)
+DRIVER_INIT( geneve )
 {
 	/*has_genmod = FALSE;*/
 }
 
-void init_genmod(void)
+DRIVER_INIT( genmod )
 {
 	/*has_genmod = TRUE;*/
 }
 
 
-void machine_init_geneve(void)
+MACHINE_START( geneve )
 {
 	mode_flags = /*0*/mf_mapmode;
 	/* initialize page lookup */
@@ -285,9 +287,12 @@ void machine_init_geneve(void)
 
 	if (has_usb_sm)
 		ti99_usbsm_init(TRUE);
+
+	add_exit_callback(machine_stop_geneve);
+	return 0;
 }
 
-void machine_stop_geneve(void)
+static void machine_stop_geneve(void)
 {
 	if (has_ide)
 		ti99_ide_save_memcard();

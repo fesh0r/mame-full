@@ -34,6 +34,8 @@ jupiter_tape;
 static UINT8 *jupiter_data = NULL;
 static int jupiter_data_type = JUPITER_NONE;
 
+static void jupiter_machine_stop(void);
+
 /* only gets called at the start of a cpu time slice */
 
 OPBASE_HANDLER( jupiter_opbaseoverride )
@@ -83,7 +85,7 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 
 static	int	jupiter_ramsize = 2;
 
-MACHINE_INIT( jupiter )
+MACHINE_RESET( jupiter )
 {
 	logerror("jupiter_init\r\n");
 	logerror("data: %08lX\n", (long) jupiter_data);
@@ -121,18 +123,18 @@ MACHINE_INIT( jupiter )
 											(int) jupiter_data_type);
 		memory_set_opbase_handler(0, jupiter_opbaseoverride);
 	}
+
+	add_exit_callback(jupiter_machine_stop);
 }
 
-MACHINE_STOP( jupiter )
+static void jupiter_machine_stop(void)
 {
-	logerror("jupiter_stop_machine\n");
 	if (jupiter_data)
 	{
 		free(jupiter_data);
 		jupiter_data = NULL;
 		jupiter_data_type = JUPITER_NONE;
 	}
-
 }
 
 /* Load in .ace files. These are memory images of 0x2000 to 0x7fff

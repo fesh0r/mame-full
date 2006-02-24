@@ -272,7 +272,7 @@ DRIVER_INIT( electron ) {
 	electron_tape_timer = timer_alloc( electron_tape_timer_handler );
 }
 
-MACHINE_INIT( electron ){
+MACHINE_RESET( electron ){
         memory_set_bankptr(1,memory_region(REGION_CPU1));
         memory_set_bankptr(2, (UINT8 *)memory_region(REGION_USER1) );
         memory_set_bankptr(4,memory_region(REGION_USER1)+0x40000);

@@ -206,7 +206,7 @@ static ppi8255_interface lviv_ppi8255_interface =
 	{lviv_ppi_0_portc_w, lviv_ppi_1_portc_w}
 };
 
-MACHINE_INIT( lviv )
+MACHINE_RESET( lviv )
 {
 	memory_set_opbase_handler(0, lviv_opbaseoverride);
 

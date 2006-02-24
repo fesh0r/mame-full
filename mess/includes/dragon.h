@@ -94,13 +94,12 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
 DRIVER_INIT( coco );
 DRIVER_INIT( coco3 );
-MACHINE_INIT( dragon32 );
-MACHINE_INIT( dragon64 );
-MACHINE_INIT( dgnalpha );
-MACHINE_INIT( coco );
-MACHINE_INIT( coco2 );
-MACHINE_INIT( coco3 );
-MACHINE_STOP( coco );
+MACHINE_RESET( dragon32 );
+MACHINE_RESET( dragon64 );
+MACHINE_RESET( dgnalpha );
+MACHINE_RESET( coco );
+MACHINE_RESET( coco2 );
+MACHINE_RESET( coco3 );
 
 INTERRUPT_GEN( coco3_vh_interrupt );
 

@@ -521,7 +521,7 @@ static ppi8255_interface ppi8255_intf =
 
 /* Machine Initialization */
 
-static MACHINE_INIT( mpf1 )
+static MACHINE_RESET( mpf1 )
 {
 	// PIO
 	z80pio_init(0, &pio_intf);
@@ -553,7 +553,7 @@ static MACHINE_DRIVER_START( mpf1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT( mpf1 )
+	MDRV_MACHINE_RESET( mpf1 )
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

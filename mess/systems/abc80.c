@@ -1061,7 +1061,7 @@ INTERRUPT_GEN( abc80_nmi_interrupt )
 
 /* Machine Initialization */
 
-static MACHINE_INIT( abc80 )
+static MACHINE_RESET( abc80 )
 {
 	z80pio_init(0, &abc80_pio_interface);
 	z80pio_reset(0);
@@ -1080,7 +1080,7 @@ static MACHINE_DRIVER_START( abc80 )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(abc80)
+	MDRV_MACHINE_RESET(abc80)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

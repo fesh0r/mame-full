@@ -38,7 +38,7 @@ static UINT8 ws_portram_init[256] =
 };
 
 
-MACHINE_INIT( wswan )
+MACHINE_RESET( wswan )
 {
 	/* Intialize ports */
 	memcpy( ws_portram, ws_portram_init, 256 );

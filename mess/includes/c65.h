@@ -46,7 +46,7 @@ void c65_colorram_write (int offset, int value);
 extern void c65_driver_init (void);
 extern void c65_driver_alpha1_init (void);
 extern void c65pal_driver_init (void);
-extern MACHINE_INIT( c65 );
+extern MACHINE_RESET( c65 );
 
 /*only for debugging */
 void c65_state (void);

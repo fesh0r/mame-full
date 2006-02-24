@@ -452,7 +452,7 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@..
 	$(LD) $(LDFLAGS) $^ -out:$@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDBGOBJS)
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(OSTOOLOBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(ZLIB) -out:$@
 
@@ -468,7 +468,7 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/mess/ui/d
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ -out:$@
 
-imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSDBGOBJS) $(OBJ)/mess/ui/dirent.o
+imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OSTOOLOBJS) $(OSDBGOBJS) $(OBJ)/mess/ui/dirent.o
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ $(ZLIB) -out:$@
 
@@ -479,9 +479,9 @@ wimgtool$(EXE): \
 		$(OBJ)/mess/ui/dirent.o							\
 		$(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) shlwapi.lib $^ $(ZLIB) -out:$@
+	$(LD) $(LDFLAGS) $(LIBS) $(OSTOOLOBJS) $(WINDOWS_PROGRAM) shlwapi.lib $^ $(ZLIB) -out:$@
 
-messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) \
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(OSTOOLOBJS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\

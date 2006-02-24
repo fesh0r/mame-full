@@ -2,7 +2,7 @@
 #define MBEE_H
 
 /* from mess/machine/mbee.c */
-MACHINE_INIT( mbee );
+MACHINE_RESET( mbee );
 
 void mbee_interrupt(void);
 

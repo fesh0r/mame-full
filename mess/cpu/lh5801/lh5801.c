@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #include "lh5801.h"
 
@@ -136,7 +136,17 @@ static LH5801_Regs lh5801= { 0 };
  ***************************************************************/
 #include "5801tbl.c"
 
-extern void lh5801_init(void) {}
+void lh5801_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_register_item("sc61860", cpu, sc61860.pc);
+	state_save_register_item("sc61860", cpu, sc61860.dp);
+	state_save_register_item("sc61860", cpu, sc61860.p);
+	state_save_register_item("sc61860", cpu, sc61860.q);
+	state_save_register_item("sc61860", cpu, sc61860.r);
+	state_save_register_item("sc61860", cpu, sc61860.carry);
+	state_save_register_item("sc61860", cpu, sc61860.zero);
+}
 
 void lh5801_reset(void *param)
 {
@@ -268,34 +278,6 @@ void lh5801_set_irq_line(int irqline, int state)
 
 void lh5801_set_irq_callback(int (*callback)(int))
 {
-}
-
-void lh5801_state_save(void *file)
-{
-#if 0
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file,"sc61860",cpu,"PC",&sc61860.pc,2);
-	state_save_UINT16(file,"sc61860",cpu,"DP",&sc61860.dp,2);
-	state_save_UINT8(file,"sc61860",cpu,"P",&sc61860.p,1);
-	state_save_UINT8(file,"sc61860",cpu,"Q",&sc61860.q,1);
-	state_save_UINT8(file,"sc61860",cpu,"R",&sc61860.r,1);
-//	state_save_UINT8(file,"sc61860",cpu,"C",&sc61860.carry,1);
-//	state_save_UINT8(file,"sc61860",cpu,"Z",&sc61860.zero,1);
-#endif
-}
-
-void lh5801_state_load(void *file)
-{
-#if 0
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file,"sc61860",cpu,"PC",&sc61860.pc,2);
-	state_load_UINT16(file,"sc61860",cpu,"DP",&sc61860.dp,2);
-	state_load_UINT8(file,"sc61860",cpu,"P",&sc61860.p,1);
-	state_load_UINT8(file,"sc61860",cpu,"Q",&sc61860.q,1);
-	state_load_UINT8(file,"sc61860",cpu,"R",&sc61860.r,1);
-//	state_load_UINT8(file,"sc61860",cpu,"C",&sc61860.carry,1);
-//	state_load_UINT8(file,"sc61860",cpu,"Z",&sc61860.zero,1);
-#endif
 }
 
 /****************************************************************************

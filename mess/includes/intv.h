@@ -20,7 +20,7 @@ extern DRIVER_INIT( intv );
 DEVICE_INIT( intv_cart );
 DEVICE_LOAD( intv_cart );
 
-extern MACHINE_INIT( intv );
+extern MACHINE_RESET( intv );
 extern INTERRUPT_GEN( intv_interrupt );
 
 READ16_HANDLER( intv_gram_r );

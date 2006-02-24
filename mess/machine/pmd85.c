@@ -833,7 +833,7 @@ DRIVER_INIT ( mato )
 	memory_set_opbase_handler(0, mato_opbaseoverride);
 }
 
-MACHINE_INIT( pmd85 )
+MACHINE_RESET( pmd85 )
 {
 	/* checking for Rom Module */
 	switch (pmd85_model)

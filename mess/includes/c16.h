@@ -166,7 +166,7 @@ extern void c16_interrupt (int);
 
 extern void c16_driver_init (void);
 extern void c16_driver_shutdown (void);
-extern MACHINE_INIT( c16 );
+extern MACHINE_RESET( c16 );
 extern INTERRUPT_GEN( c16_frame_interrupt );
 
 extern DEVICE_LOAD(c16_rom);

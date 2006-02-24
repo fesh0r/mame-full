@@ -9,9 +9,11 @@
   Bug fixes, SGB and GBC code                 Anthony Kruize     2002
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/gb.h"
+#include "profiler.h"
 
 static UINT8 bg_zbuf[160];
 

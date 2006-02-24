@@ -802,7 +802,7 @@ void c65pal_driver_init (void)
 	c65_common_driver_init ();
 }
 
-MACHINE_INIT( c65 )
+MACHINE_RESET( c65 )
 {
 	/* clear upper memory */
 	memset(mess_ram + 128*1024, 0xff, mess_ram_size -  128*1024);

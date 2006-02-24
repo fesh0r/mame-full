@@ -87,6 +87,7 @@ static const char helpfile[] = "mess.chm";
 //  PROTOTYPES
 //============================================================
 
+static void osd_exit(void);
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
 static int get_code_base_size(UINT32 *base, UINT32 *size);
@@ -276,6 +277,7 @@ int osd_init(void)
 	if (result == 0)
 		result = win_parallel_init();
 #endif
+	add_exit_callback(osd_exit);
 	return result;
 }
 
@@ -285,16 +287,12 @@ int osd_init(void)
 //  osd_exit
 //============================================================
 
-void osd_exit(void)
+static void osd_exit(void)
 {
 	extern void win_shutdown_input(void);
 
 	win_shutdown_input();
 	osd_set_leds(0);
-
-#ifdef MESS
-	win_parallel_exit();
-#endif
 }
 
 

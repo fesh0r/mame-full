@@ -132,16 +132,11 @@ DRIVER_INIT( kaypro )
 	cpm_init(4, disk_ids);
 }
 
-MACHINE_INIT( kaypro )
+MACHINE_RESET( kaypro )
 {
 	/* disable CapsLock LED initially */
 	set_led_status(1, 1);
 	set_led_status(1, 0);
-}
-
-MACHINE_STOP( kaypro )
-{
-	cpm_exit();
 }
 
 /******************************************************

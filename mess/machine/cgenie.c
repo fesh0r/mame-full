@@ -237,7 +237,7 @@ void init_cgenie(void)
 
 static void cgenie_fdc_callback(int);
 
-MACHINE_INIT( cgenie )
+MACHINE_RESET( cgenie )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -327,11 +327,8 @@ MACHINE_INIT( cgenie )
 
 	cgenie_load_cas = 1;
 	memory_set_opbase_handler(0, opbaseoverride);
-}
-
-MACHINE_STOP( cgenie )
-{
-	tape_put_close();
+	
+	add_exit_callback(tape_put_close);
 }
 
 DEVICE_LOAD( cgenie_cassette )

@@ -97,7 +97,7 @@ typedef enum
 	MODEL_MAC_SE
 } mac_model_t;
 
-static int mac_overlay = 0;
+static UINT32 mac_overlay = 0;
 static mac_model_t mac_model;
 
 
@@ -1282,7 +1282,7 @@ WRITE16_HANDLER ( mac_via_w )
  * Main
  * *************************************************************************/
 
-MACHINE_INIT(mac)
+MACHINE_RESET(mac)
 {
 	/* initialize real-time clock */
 	rtc_init();
@@ -1359,7 +1359,7 @@ static void mac_driver_init(mac_model_t model)
 	cpuintrf_set_dasm_override(mac_dasm_override);
 
 	/* save state stuff */
-	state_save_register_int("mac", 0, "overlay", &mac_overlay);
+	state_save_register_global(mac_overlay);
 	state_save_register_func_postload(mac_state_load);
 }
 

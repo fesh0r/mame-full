@@ -265,7 +265,7 @@ static struct pia6821_interface pia0_intf =
 	/*irqs   : A/B             */ 0, 0,
 };
 
-static MACHINE_INIT( fnvision )
+static MACHINE_RESET( fnvision )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
@@ -280,7 +280,7 @@ static MACHINE_DRIVER_START( fnvision )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT( fnvision )
+	MDRV_MACHINE_RESET( fnvision )
 
     // video hardware
 	MDRV_TMS9928A(&tms9928a_interface)

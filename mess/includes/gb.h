@@ -111,10 +111,9 @@ extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);
 
-extern MACHINE_INIT( gb );
-extern MACHINE_STOP( gb );
+extern MACHINE_RESET( gb );
 
-extern MACHINE_INIT( gbpocket );
+extern MACHINE_RESET( gbpocket );
 
 /* from vidhrdw/gb.c */
 extern READ8_HANDLER( gb_video_r );
@@ -142,7 +141,7 @@ EXTERN UINT8 sgb_tile_map[2048];	/* 32x32 tile map data (0-tile,1-attribute)	*/
 EXTERN UINT8 sgb_window_mask;		/* Current GB screen mask				*/
 EXTERN UINT8 sgb_hack;				/* Flag set if we're using a hack		*/
 
-extern MACHINE_INIT( sgb );
+extern MACHINE_RESET( sgb );
 extern WRITE8_HANDLER ( sgb_io_w );
 /* from vidhrdw/gb.c */
 void sgb_refresh_scanline(void);
@@ -171,7 +170,7 @@ EXTERN UINT8 *gbc_wndtab;			/* Window character table				*/
 EXTERN UINT8 gbc_mode;				/* is the GBC in mono/colour mode?		*/
 EXTERN UINT8 gbc_hdma_enabled;		/* is HDMA enabled?						*/
 
-extern MACHINE_INIT( gbc );
+extern MACHINE_RESET( gbc );
 extern WRITE8_HANDLER ( gbc_video_w );
 extern void gbc_hdma(UINT16 length);
 /* from vidhrdw/gb.c */
@@ -179,7 +178,7 @@ void gbc_refresh_scanline(void);
 
 /* -- Megaduck specific -- */
 extern DEVICE_LOAD(megaduck_cart);
-extern MACHINE_INIT( megaduck );
+extern MACHINE_RESET( megaduck );
 extern  READ8_HANDLER( megaduck_video_r );
 extern WRITE8_HANDLER( megaduck_video_w );
 extern WRITE8_HANDLER( megaduck_rom_bank_select_type1 );

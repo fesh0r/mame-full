@@ -1,6 +1,6 @@
 #include "driver.h"
-#ifdef	MAME_DEBUG
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "f8.h"
 
 static const char *rname[16] = {
@@ -600,5 +600,4 @@ unsigned DasmF8(char *buffer, unsigned pc)
 
     return size;
 }
-#endif
 

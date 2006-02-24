@@ -17,7 +17,7 @@
 #include "menu.h"
 #include "messres.h"
 #include "inputx.h"
-#include "video.h"
+#include "windows/video.h"
 #include "dialog.h"
 #include "opcntrl.h"
 #include "ui_text.h"
@@ -1739,7 +1739,7 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
 #endif
 
-	if (!HAS_DEBUGGER || !mame_debug)
+	if (!HAS_DEBUGGER || !Machine->debug_mode)
 		DeleteMenu(menu_bar, ID_OPTIONS_DEBUGGER, MF_BYCOMMAND);
 
 #if !HAS_TOGGLEFULLSCREEN

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/apple2.h"
+#include "profiler.h"
 
 /***************************************************************************/
 

@@ -1608,7 +1608,7 @@ DRIVER_INIT( compis )
 /* Name: compis                                                            */
 /* Desc: Machine - Init                                                    */
 /*-------------------------------------------------------------------------*/
-MACHINE_INIT( compis )
+MACHINE_RESET( compis )
 {
 	/* CPU */
 	compis_cpu_init();

@@ -38,7 +38,7 @@ static void pio_interrupt(int state)
 	cpunum_set_input_line(0, 0, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
-MACHINE_INIT( mbee )
+MACHINE_RESET( mbee )
 {
 	z80pio_init(0, &pio_intf);
     wd179x_init(WD_TYPE_179X,mbee_fdc_callback);

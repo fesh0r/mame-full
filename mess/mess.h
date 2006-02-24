@@ -74,7 +74,6 @@ int mess_validitychecks(void);
 
 /* these are called from mame.c*/
 int devices_init(const game_driver *gamedrv);
-void devices_exit(void);
 
 void mess_config_init(void);
 

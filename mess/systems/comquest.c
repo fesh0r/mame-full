@@ -223,7 +223,7 @@ static PALETTE_INIT( comquest )
 	memcpy(colortable, comquest_colortable,sizeof(comquest_colortable));
 }
 
-static MACHINE_INIT( comquest )
+static MACHINE_RESET( comquest )
 {
 //	UINT8 *mem=memory_region(REGION_USER1);
 //	memory_set_bankptr(1,mem+0x00000);
@@ -268,7 +268,7 @@ static MACHINE_DRIVER_START( comquest )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( comquest )
+	MDRV_MACHINE_RESET( comquest )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

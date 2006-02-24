@@ -40,8 +40,7 @@
 
 	
 DRIVER_INIT( dgnbeta );
-MACHINE_INIT( dgnbeta );
-MACHINE_STOP( dgnbeta );
+MACHINE_RESET( dgnbeta );
 
 // Page IO at FE00
 READ8_HANDLER( dgn_beta_page_r );

@@ -2063,7 +2063,7 @@ DRIVER_INIT( bbcm )
     mc146818_init(MC146818_STANDARD);
 }
 
-MACHINE_INIT( bbca )
+MACHINE_RESET( bbca )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	memory_set_bankptr(3,memory_region(REGION_CPU1));
@@ -2082,7 +2082,7 @@ MACHINE_INIT( bbca )
 	MC6850_config(&BBC_MC6850_calls);
 }
 
-MACHINE_INIT( bbcb )
+MACHINE_RESET( bbcb )
 {
 	bbc_DFSType=  (readinputport(21)>>0)&0x07;
 	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
@@ -2137,7 +2137,7 @@ MACHINE_INIT( bbcb )
 
 
 
-MACHINE_INIT( bbcbp )
+MACHINE_RESET( bbcbp )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x03000);  /* bank 2 screen/shadow ram     from 3000 to 7fff */
@@ -2168,7 +2168,7 @@ MACHINE_INIT( bbcbp )
 
 
 
-MACHINE_INIT( bbcm )
+MACHINE_RESET( bbcm )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));			/* bank 1 regular lower ram		from 0000 to 2fff */
 	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x3000);	/* bank 2 screen/shadow ram		from 3000 to 7fff */

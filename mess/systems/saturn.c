@@ -2221,7 +2221,7 @@ DRIVER_INIT ( saturn )
  	smpc_ram[0x5f] = 0x10;
 }
 
-MACHINE_INIT( saturn )
+MACHINE_RESET( saturn )
 {
 	// don't let the slave cpu and the 68k go anywhere
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
@@ -2364,7 +2364,7 @@ static MACHINE_DRIVER_START( saturn )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(192);	// guess, needed to force video update after V-Blank OUT interrupt
 
-	MDRV_MACHINE_INIT(saturn)
+	MDRV_MACHINE_RESET(saturn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )

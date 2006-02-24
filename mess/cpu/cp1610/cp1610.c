@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "cp1610.h"
 
 #define S  0x80

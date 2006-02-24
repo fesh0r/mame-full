@@ -22,9 +22,9 @@
 
 #include <stdio.h>
 #include <assert.h>
-#ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 
 #include "saturn.h"
 #include "sat.h"
@@ -1485,7 +1485,3 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 
 	return pc-oldpc;
 }
-
-#endif	/* MAME_DEBUG */
-
-

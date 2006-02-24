@@ -132,7 +132,7 @@ DRIVER_INIT( dai )
 	pit8253_init(1, &dai_pit8253_intf);
 }
 
-MACHINE_INIT( dai )
+MACHINE_RESET( dai )
 {
 	memory_set_opbase_handler(0, dai_opbaseoverride);
 

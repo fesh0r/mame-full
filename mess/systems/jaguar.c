@@ -94,7 +94,7 @@ static int jaguar_irq_callback(int level)
  *
  *************************************/
 
-static MACHINE_INIT( jaguar )
+static MACHINE_RESET( jaguar )
 {
 	cpu_set_irq_callback(0, jaguar_irq_callback);
 
@@ -457,7 +457,7 @@ MACHINE_DRIVER_START( jaguar )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(jaguar)
+	MDRV_MACHINE_RESET(jaguar)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -502,13 +502,8 @@ ROM_END
 
 static DRIVER_INIT( jaguar )
 {
-	state_save_register_UINT32("jaguar", 0, "ram",               jaguar_shared_ram, 0x200000 / 4);
-	state_save_register_UINT32("jaguar", 0, "cart",              cart_base,         0x600000 / 4);
-	state_save_register_UINT32("jaguar", 0, "gpu_clut",          jaguar_gpu_clut,   0x000400 / 4);
-	state_save_register_UINT32("jaguar", 0, "gpu_ram",           jaguar_gpu_ram,    0x001000 / 4);
-	state_save_register_UINT32("jaguar", 0, "dspram",            jaguar_dsp_ram,    0x002000 / 4);
-	state_save_register_UINT32("jaguar", 0, "joystick_data",     &joystick_data,           1);
-	state_save_register_UINT8("jaguar",  0, "eeprom_enable",     &eeprom_enable,           1);
+	state_save_register_global(joystick_data);
+	state_save_register_global(eeprom_enable);
 
 	cojag_draw_crosshair = FALSE;
 

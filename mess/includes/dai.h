@@ -5,7 +5,7 @@
 
 /* machine/dai.c */
 DRIVER_INIT( dai );
-MACHINE_INIT( dai );
+MACHINE_RESET( dai );
  READ8_HANDLER( dai_io_discrete_devices_r );
 WRITE8_HANDLER( dai_io_discrete_devices_w );
 WRITE8_HANDLER( dai_stack_interrupt_circuit_w );

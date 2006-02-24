@@ -15,7 +15,7 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w );
 
 VIDEO_START(genesis);
 VIDEO_UPDATE(genesis);
-MACHINE_INIT ( genesis );
+MACHINE_RESET ( genesis );
 INTERRUPT_GEN( genesis_interrupt );
 DRIVER_INIT ( genesis );
 

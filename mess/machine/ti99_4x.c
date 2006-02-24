@@ -697,7 +697,7 @@ DEVICE_UNLOAD( ti99_hd )
 /*
 	ti99_init_machine(); called before ti99_load_rom...
 */
-void machine_init_ti99(void)
+MACHINE_RESET( ti99 )
 {
 	/*console_GROMs.data_ptr = memory_region(region_grom);*/
 	console_GROMs.addr = 0;

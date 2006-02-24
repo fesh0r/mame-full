@@ -110,7 +110,7 @@ static DRIVER_INIT(tutor)
 	memory_set_bank(1, 0);
 }
 
-static MACHINE_INIT(tutor)
+static MACHINE_RESET(tutor)
 {
 	cartridge_enable = 0;
 
@@ -578,7 +578,7 @@ static MACHINE_DRIVER_START(tutor)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( tutor )
+	MDRV_MACHINE_RESET( tutor )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

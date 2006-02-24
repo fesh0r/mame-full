@@ -11,7 +11,7 @@ Not nice, but it works...
 */
 
 #include <string.h>
-#include "common.h"
+#include "mame.h"
 #include "uef_cas.h"
 #include "zlib.h"
 #include "osdepend.h"

@@ -94,7 +94,7 @@ WRITE8_HANDLER(c128_write_ff05);
 
 extern DRIVER_INIT( c128 );
 extern DRIVER_INIT( c128pal );
-extern MACHINE_INIT( c128 );
+extern MACHINE_RESET( c128 );
 
 extern VIDEO_START( c128 );
 extern VIDEO_UPDATE( c128 );

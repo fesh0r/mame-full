@@ -68,7 +68,7 @@ void hp48_out(int v);
 
 extern DRIVER_INIT( hp48s );
 extern DRIVER_INIT( hp48g );
-extern MACHINE_INIT( hp48 );
+extern MACHINE_RESET( hp48 );
 
 /* in vidhrdw/hp48.c */
 extern unsigned short hp48_colortable[0x20][2];

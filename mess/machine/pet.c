@@ -489,7 +489,7 @@ DRIVER_INIT( superpet )
 	crtc6845_init(&crtc_pet);
 }
 
-MACHINE_INIT( pet )
+MACHINE_RESET( pet )
 {
 	via_reset();
 	pia_reset();

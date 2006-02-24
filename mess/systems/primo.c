@@ -233,7 +233,7 @@ static MACHINE_DRIVER_START( primoa32 )
 	MDRV_CPU_VBLANK_INT( primo_vblank_interrupt, 1 )
 	MDRV_INTERLEAVE( 1 )
 
-	MDRV_MACHINE_INIT( primoa )
+	MDRV_MACHINE_RESET( primoa )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -271,7 +271,7 @@ static MACHINE_DRIVER_START( primob32 )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_IO_MAP( primob_port, 0 )
 
-	MDRV_MACHINE_INIT( primob )
+	MDRV_MACHINE_RESET( primob )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( primob48 )
@@ -279,7 +279,7 @@ static MACHINE_DRIVER_START( primob48 )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_IO_MAP( primob_port, 0 )
 
-	MDRV_MACHINE_INIT( primob )
+	MDRV_MACHINE_RESET( primob )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( primob64 )
@@ -287,7 +287,7 @@ static MACHINE_DRIVER_START( primob64 )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_IO_MAP( primob_port, 0 )
 
-	MDRV_MACHINE_INIT( primob )
+	MDRV_MACHINE_RESET( primob )
 MACHINE_DRIVER_END
 
 ROM_START( primoa32 )

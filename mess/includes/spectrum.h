@@ -20,7 +20,7 @@ DEVICE_LOAD( timex_cart );
 DEVICE_UNLOAD( timex_cart );
 extern void ts2068_update_memory(void);
 
-extern MACHINE_INIT( spectrum );
+extern MACHINE_RESET( spectrum );
 
 extern SNAPSHOT_LOAD( spectrum );
 extern QUICKLOAD_LOAD( spectrum );

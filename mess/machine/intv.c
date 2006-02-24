@@ -424,7 +424,7 @@ DRIVER_INIT( intv )
 }
 
 /* Set Reset and INTR/INTRM Vector */
-MACHINE_INIT( intv )
+MACHINE_RESET( intv )
 {
 	cpunum_set_input_line_vector(0, CP1610_RESET, 0x1000);
 

@@ -289,13 +289,13 @@ static void msx_ch_reset_core (void)
 	msx_memory_map_all ();
 }
 
-MACHINE_INIT( msx )
+MACHINE_RESET( msx )
 {
 	TMS9928A_reset ();
 	msx_ch_reset_core ();
 }
 
-MACHINE_INIT( msx2 )
+MACHINE_RESET( msx2 )
 {
 	v9938_reset ();
 	msx_ch_reset_core ();

@@ -702,12 +702,12 @@ static INTERRUPT_GEN( telmac_frame_int )
 
 /* Machine Initialization */
 
-static MACHINE_INIT( tmc2000 )
+static MACHINE_RESET( tmc2000 )
 {
 	// set program counter to 0x8000
 }
 
-static MACHINE_INIT( tmc2000e )
+static MACHINE_RESET( tmc2000e )
 {
 	// set program counter to selected value
 }
@@ -737,7 +737,7 @@ static MACHINE_DRIVER_START( tmc2000 )
 	MDRV_CPU_VBLANK_INT(telmac_frame_int, 1)
 	MDRV_CPU_CONFIG(tmc2000_config)
 
-	MDRV_MACHINE_INIT(tmc2000)
+	MDRV_MACHINE_RESET(tmc2000)
 
 	MDRV_FRAMES_PER_SECOND(CDP1864_FPS)	// 50.08 Hz
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -770,7 +770,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( tmc2000e )
 	MDRV_IMPORT_FROM(tmc2000)
 
-	MDRV_MACHINE_INIT(tmc2000e)
+	MDRV_MACHINE_RESET(tmc2000e)
 
 	// basic system hardware
 	MDRV_CPU_MODIFY("main")

@@ -1,11 +1,10 @@
 #include <stdio.h>
 
-#ifdef MAME_DEBUG
-
 #include <string.h>
 #include "osd_cpu.h"
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "tms7000.h"
 
 typedef enum { DONE, NONE, UI8, I8, UI16, I16, PCREL, PCABS, TRAP } operandtype;
@@ -450,5 +449,3 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 	strcpy (buffer, "Illegal Opcode");
 	return size;
 }
-
-#endif

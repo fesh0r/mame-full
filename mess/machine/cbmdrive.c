@@ -181,11 +181,8 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 	pos = d64_tracksector2offset (track, sector);
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer,256);
-	if (!c1551->buffer) {
-		logerror("out of memory %s %d\n",__FILE__, __LINE__);
-		osd_exit();
-		exit(1);
-	}
+	if (!c1551->buffer)
+		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
 
 	logerror("d64 read track %d sector %d\n", track, sector);
 
@@ -200,12 +197,8 @@ static void d64_read_directory (CBM_Drive * c1551)
 	int pos, track, sector, i, j, blocksfree, addr = 0x0101/*0x1001*/;
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer, 8 * 18 * 25);
-	if (!c1551->buffer) {
-		logerror("out of memory %s %d\n",
-				__FILE__, __LINE__);
-		osd_exit();
-		exit(1);
-	}
+	if (!c1551->buffer)
+		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
 
 	c1551->size = 0;
 

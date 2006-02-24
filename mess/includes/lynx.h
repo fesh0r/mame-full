@@ -17,7 +17,7 @@ void lynx_partialhash(char *dest, const unsigned char *data,
 #define PAD_LEFT 0x20
 #define PAD_RIGHT 0x10
 
-MACHINE_INIT( lynx );
+MACHINE_RESET( lynx );
 DRIVER_INIT( lynx );
 
 extern UINT8 *lynx_mem_0000;

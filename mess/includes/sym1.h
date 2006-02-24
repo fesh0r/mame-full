@@ -1,5 +1,5 @@
 extern DRIVER_INIT( sym1 );
-extern MACHINE_INIT( sym1 );
+extern MACHINE_RESET( sym1 );
 
 extern INTERRUPT_GEN( sym1_interrupt );
 

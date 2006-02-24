@@ -27,7 +27,7 @@ DRIVER_INIT( odyssey2 )
 
 
 
-MACHINE_INIT( odyssey2 )
+MACHINE_RESET( odyssey2 )
 {
     memory_set_bankptr(1, memory_region(REGION_USER1) + 3*0x800);
     p1 = 0;

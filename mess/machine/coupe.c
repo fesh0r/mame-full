@@ -117,7 +117,7 @@ void coupe_update_memory(void)
 		sam_screen = &mess_ram[((VMPR&0x1F) & PAGE_MASK) * 0x4000];
 }
 
-MACHINE_INIT( coupe )
+MACHINE_RESET( coupe )
 {
     LMPR = 0x0F;            /* ROM0 paged in, ROM1 paged out RAM Banks */
     HMPR = 0x01;

@@ -314,7 +314,7 @@ DEVICE_LOAD( trs80_floppy )
 
 static void trs80_fdc_callback(int);
 
-MACHINE_INIT( trs80 )
+MACHINE_RESET( trs80 )
 {
 	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
 
@@ -323,11 +323,7 @@ MACHINE_INIT( trs80 )
 		LOG(("trs80_init_machine: schedule cas_copy_callback (%d)\n", cas_size));
 		timer_set(0.5, 0, cas_copy_callback);
 	}
-}
-
-MACHINE_STOP( trs80 )
-{
-	tape_put_close();
+	add_exit_callback(tape_put_close);
 }
 
 /*************************************

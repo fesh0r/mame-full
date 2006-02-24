@@ -20,7 +20,7 @@ void init_lisa2(void);
 void init_lisa210(void);
 void init_mac_xl(void);
 
-extern MACHINE_INIT( lisa );
+extern MACHINE_RESET( lisa );
 
 extern void lisa_interrupt(void);
 

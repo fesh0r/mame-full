@@ -34,7 +34,8 @@ static UINT32 in_0_shift;
 static UINT32 in_1_shift;
 
 /* local prototypes */
-static void init_nes_core (void);
+static void init_nes_core(void);
+static void nes_machine_stop(void);
 
 static mess_image *cartslot_image(void)
 {
@@ -150,7 +151,7 @@ static int ppu_vidaccess( int num, int address, int data )
 	return data;
 }
 
-MACHINE_INIT( nes )
+MACHINE_RESET( nes )
 {
 	ppu2c03b_reset( 0, 1 );
 	ppu2c03b_set_vidaccess_callback(0, ppu_vidaccess);
@@ -181,11 +182,13 @@ MACHINE_INIT( nes )
 	/* Reset the serial input ports */
 	in_0_shift = 0;
 	in_1_shift = 0;
+
+	add_exit_callback(nes_machine_stop);
 }
 
 
 
-MACHINE_STOP( nes )
+static void nes_machine_stop(void)
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)

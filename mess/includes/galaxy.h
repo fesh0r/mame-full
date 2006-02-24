@@ -2,7 +2,7 @@
 
 /* machine/galaxy.c */
 extern DRIVER_INIT( galaxy );
-extern MACHINE_INIT( galaxy );
+extern MACHINE_RESET( galaxy );
 extern INTERRUPT_GEN( galaxy_interrupt );
 extern SNAPSHOT_LOAD( galaxy );
 extern int galaxy_interrupts_enabled;

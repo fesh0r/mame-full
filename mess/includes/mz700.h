@@ -17,7 +17,7 @@
 
 /* from mess/machine/mz700.c */
 DRIVER_INIT(mz700);
-MACHINE_INIT(mz700);
+MACHINE_RESET(mz700);
 
 DEVICE_LOAD( mz700_cassette );
 

@@ -13,7 +13,7 @@ WRITE8_HANDLER ( a7800_MARIA_w );
 extern int a7800_lines;
 extern int a7800_ispal;
 
-MACHINE_INIT( a7800 );
+MACHINE_RESET( a7800 );
 
 void a7800_partialhash(char *dest, const unsigned char *data,
 	unsigned long length, unsigned int functions);

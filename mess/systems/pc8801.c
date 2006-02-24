@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.45 2006/01/18 01:30:30 npwoods Exp $
+  $Id: pc8801.c,v 1.46 2006/02/24 13:07:42 npwoods Exp $
 
 ***************************************************************************/
 
@@ -523,7 +523,7 @@ static MACHINE_DRIVER_START( pc88srl )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(5000)
 
-	MDRV_MACHINE_INIT( pc88srl )
+	MDRV_MACHINE_RESET( pc88srl )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER
@@ -554,7 +554,7 @@ static MACHINE_DRIVER_START( pc88srh )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_INTERLEAVE(6000)
 
-	MDRV_MACHINE_INIT( pc88srh )
+	MDRV_MACHINE_RESET( pc88srh )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(8, 5)

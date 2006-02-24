@@ -22,7 +22,7 @@ extern UINT32 a3;
 #define VAR_EXTPOWER	0x0040
 #define VAR_EXTSIDE		0x0080
 
-MACHINE_INIT( apple3 );
+MACHINE_RESET( apple3 );
 DRIVER_INIT( apple3 );
 INTERRUPT_GEN( apple3_interrupt );
 

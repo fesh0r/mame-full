@@ -605,7 +605,7 @@ static void set_chip_clock(int chip, int data)
 	timer_adjust(m6530[chip].timer, 0, chip, TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256));
 }
 
-MACHINE_INIT( kim1 )
+MACHINE_RESET( kim1 )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 

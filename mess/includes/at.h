@@ -14,7 +14,7 @@ DRIVER_INIT( at586 );
 DRIVER_INIT( at_vga );
 DRIVER_INIT( ps2m30286 );
 
-MACHINE_INIT( at );
-MACHINE_INIT( at_vga );
+MACHINE_RESET( at );
+MACHINE_RESET( at_vga );
 
 #endif /* AT_H */

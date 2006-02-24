@@ -164,7 +164,7 @@ DRIVER_INIT( vic20i );
 DRIVER_INIT( vic1001 );
 void vc20_driver_shutdown (void);
 
-MACHINE_INIT( vc20 );
+MACHINE_RESET( vc20 );
 INTERRUPT_GEN( vc20_frame_interrupt );
 
 #endif

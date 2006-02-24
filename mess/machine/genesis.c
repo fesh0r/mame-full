@@ -2328,9 +2328,9 @@ INTERRUPT_GEN( genesis_interrupt )
 	/* nothing? */
 //}
 
-MACHINE_INIT ( genesis )
+MACHINE_RESET ( genesis )
 {
-//	logerror("MACHINE_INIT ( genesis )\n");
+//	logerror("MACHINE_RESET ( genesis )\n");
 	/* prevent the z80 from running (code must be uploaded by the 68k first) */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	genesis_z80_is_reset = 1;

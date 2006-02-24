@@ -11,12 +11,12 @@
 DRIVER_INIT( bbc );
 DRIVER_INIT( bbcm );
 
-MACHINE_INIT( bbca );
-MACHINE_INIT( bbcb );
-MACHINE_INIT( bbcb1770 );
-MACHINE_INIT( bbcbopus );
-MACHINE_INIT( bbcbp );
-MACHINE_INIT( bbcm );
+MACHINE_RESET( bbca );
+MACHINE_RESET( bbcb );
+MACHINE_RESET( bbcb1770 );
+MACHINE_RESET( bbcbopus );
+MACHINE_RESET( bbcbp );
+MACHINE_RESET( bbcm );
 
 
 extern INTERRUPT_GEN( bbcb_keyscan );

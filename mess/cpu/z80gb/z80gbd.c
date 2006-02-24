@@ -21,9 +21,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef	MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "z80gb.h"
 
 enum e_mnemonics
@@ -331,6 +331,3 @@ unsigned DasmZ80GB( char *buffer, unsigned pc )
 
 	return pc - PC;
 }
-
-#endif
-

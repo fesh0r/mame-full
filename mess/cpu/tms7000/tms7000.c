@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "tms7000.h"
 
 #define VERBOSE 0
@@ -199,24 +199,24 @@ static void tms7000_init(void)
 	memset(tms7000.pf, 0, 0x100);
 	memset(tms7000.rf, 0, 0x80);
 	
-        /* Save register state */
-	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
-	state_save_register_UINT8("tms7000", cpu, "SP", &pSP, 1);
-	state_save_register_UINT8("tms7000", cpu, "SR", &pSR, 1);
+	/* Save register state */
+	state_save_register_item("tms7000", cpu, pPC);
+	state_save_register_item("tms7000", cpu, pSP);
+	state_save_register_item("tms7000", cpu, pSR);
         
-        /* Save Interrupt state */
-	state_save_register_UINT8("tms7000", cpu, "interrupts", tms7000.irq_state, 3);
-        
-        /* Save register and perpherial file state */
-	state_save_register_UINT8("tms7000", cpu, "register file", tms7000.rf, 0x80);
-	state_save_register_UINT8("tms7000", cpu, "Perpherial file", tms7000.pf, 0x100);
+	/* Save Interrupt state */
+	state_save_register_item_array("tms7000", cpu, tms7000.irq_state);
 
-        /* Save timer state */
-	state_save_register_INT8("tms7000", cpu, "t1_pre_scaler", &(tms7000.t1_prescaler), 1);
-	state_save_register_UINT8("tms7000", cpu, "t1_capture_latch", &(tms7000.t1_capture_latch), 1);
-	state_save_register_INT16("tms7000", cpu, "t1_decrementer", &(tms7000.t1_decrementer), 1);
+	/* Save register and perpherial file state */
+	state_save_register_item_array("tms7000", cpu, tms7000.rf);
+	state_save_register_item_array("tms7000", cpu, tms7000.pf);
 
-	state_save_register_UINT8("tms7000", cpu, "tms7000_idle_state", &(tms7000.idle_state), 1);
+	/* Save timer state */
+	state_save_register_item("tms7000", cpu, tms7000.t1_prescaler);
+	state_save_register_item("tms7000", cpu, tms7000.t1_capture_latch);
+	state_save_register_item("tms7000", cpu, tms7000.t1_decrementer);
+
+	state_save_register_item("tms7000", cpu, tms7000.idle_state);
 }
 
 static void tms7000_reset(void *param)

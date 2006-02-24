@@ -51,7 +51,7 @@
 #include "devices/cassette.h"
 #include "image.h"
 
-static MACHINE_INIT( sord_m5 );
+static MACHINE_RESET( sord_m5 );
 
 static unsigned char fd5_databus;
 
@@ -195,12 +195,12 @@ static void sord_fd5_init(void)
 	nec765_init(&sord_fd5_nec765_interface,NEC765A);
 }
 
-static MACHINE_INIT( sord_m5_fd5 )
+static MACHINE_RESET( sord_m5_fd5 )
 {
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
-	machine_init_sord_m5();
+	machine_reset_sord_m5();
 	ppi8255_set_portC(0, 0x50);
 }
 
@@ -482,7 +482,7 @@ static void sordm5_video_interrupt_callback(int state)
 	}
 }
 
-static MACHINE_INIT( sord_m5 )
+static MACHINE_RESET( sord_m5 )
 {
 	z80ctc_init(0, &sord_m5_ctc_intf);
 
@@ -653,7 +653,7 @@ static MACHINE_DRIVER_START( sord_m5 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( sord_m5 )
+	MDRV_MACHINE_RESET( sord_m5 )
 
 	/* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )
@@ -676,7 +676,7 @@ static MACHINE_DRIVER_START( sord_m5_fd5 )
 	MDRV_CPU_IO_MAP(readport_sord_fd5,writeport_sord_fd5)
 
 	MDRV_INTERLEAVE(20)
-	MDRV_MACHINE_INIT( sord_m5_fd5 )
+	MDRV_MACHINE_RESET( sord_m5_fd5 )
 MACHINE_DRIVER_END
 
 

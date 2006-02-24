@@ -238,8 +238,7 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( gb )
-	MDRV_MACHINE_STOP( gb )
+	MDRV_MACHINE_RESET( gb )
 
 	MDRV_VIDEO_START( generic_bitmapped )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
@@ -268,7 +267,7 @@ static MACHINE_DRIVER_START( supergb )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_CONFIG(sgb_cpu_reset)
 
-	MDRV_MACHINE_INIT( sgb )
+	MDRV_MACHINE_RESET( sgb )
 
 	MDRV_SCREEN_SIZE(32*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
@@ -281,7 +280,7 @@ static MACHINE_DRIVER_START( gbpocket )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_CONFIG(gbp_cpu_reset)
-	MDRV_MACHINE_INIT( gbpocket )
+	MDRV_MACHINE_RESET( gbpocket )
 	MDRV_PALETTE_INIT(gbp)
 MACHINE_DRIVER_END
 
@@ -291,7 +290,7 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_CPU_PROGRAM_MAP( gbc_map, 0 )
 	MDRV_CPU_CONFIG(gbc_cpu_reset)
 
-	MDRV_MACHINE_INIT(gbc)
+	MDRV_MACHINE_RESET(gbc)
 
 	MDRV_PALETTE_LENGTH(32768)
 	MDRV_COLORTABLE_LENGTH(16*4)	/* 16 palettes of 4 colours */
@@ -348,8 +347,7 @@ static MACHINE_DRIVER_START( megaduck )
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( megaduck )
-	MDRV_MACHINE_STOP( gb )
+	MDRV_MACHINE_RESET( megaduck )
 
 	MDRV_VIDEO_START( generic_bitmapped )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )

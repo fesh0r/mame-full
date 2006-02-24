@@ -7,7 +7,6 @@
 *********************************************************************/
 
 #include "mame.h"
-#include "common.h"
 #include "includes/apple2.h"
 #include "includes/apple2gs.h"
 

@@ -10,11 +10,11 @@ void init_pc1640(void);
 void init_pc_vga(void);
 void init_t1000hx(void);
 
-MACHINE_INIT( pc_mda );
-MACHINE_INIT( pc_cga );
-MACHINE_INIT( pc_t1t );
-MACHINE_INIT( pc_aga );
-MACHINE_INIT( pc_vga );
+MACHINE_RESET( pc_mda );
+MACHINE_RESET( pc_cga );
+MACHINE_RESET( pc_t1t );
+MACHINE_RESET( pc_aga );
+MACHINE_RESET( pc_vga );
 
 void pc_cga_frame_interrupt(void);
 void pc_mda_frame_interrupt(void);

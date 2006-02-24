@@ -324,7 +324,7 @@ static void install_banks(int count, unsigned init)
 }
 
 
-static MACHINE_INIT( a2600 )
+static MACHINE_RESET( a2600 )
 {
 	int mode = readinputport(10);
 	int chip = readinputport(11);
@@ -647,7 +647,7 @@ static MACHINE_DRIVER_START( a2600 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 
-	MDRV_MACHINE_INIT(a2600)
+	MDRV_MACHINE_RESET(a2600)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

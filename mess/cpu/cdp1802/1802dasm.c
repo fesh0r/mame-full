@@ -22,7 +22,7 @@
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #include "cdp1802.h"
 

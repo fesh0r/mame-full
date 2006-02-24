@@ -237,7 +237,7 @@ static MACHINE_DRIVER_START( apple1 )
 	MDRV_VBLANK_DURATION((int) (70 * 65 * 7 * 2 / 14.31818))
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( apple1 )
+	MDRV_MACHINE_RESET( apple1 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	/* It would be nice if we could implement some sort of display

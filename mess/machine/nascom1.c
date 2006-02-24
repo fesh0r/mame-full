@@ -29,7 +29,7 @@ static	struct
 #define NASCOM1_KEY_INCR	0x01
 #define NASCOM1_CAS_ENABLE	0x10
 
-MACHINE_INIT( nascom1 )
+MACHINE_RESET( nascom1 )
 {
 	logerror("nascom1_init\r\n");
 	if (readinputport(9) != nascom1_ramsize)

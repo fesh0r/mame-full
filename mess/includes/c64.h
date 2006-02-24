@@ -232,7 +232,7 @@ extern void sx64_driver_init (void);
 extern void c64_driver_shutdown (void);
 extern void c64_common_init_machine (void);
 
-extern MACHINE_INIT( c64 );
+extern MACHINE_RESET( c64 );
 extern INTERRUPT_GEN( c64_frame_interrupt );
 
 void c64_rom_load(void);

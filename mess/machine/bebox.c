@@ -966,7 +966,7 @@ NVRAM_HANDLER( bebox )
 	nvram_handler_intelflash(0, file, read_or_write);
 }
 
-MACHINE_INIT( bebox )
+MACHINE_RESET( bebox )
 {
 	cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);

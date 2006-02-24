@@ -46,7 +46,7 @@ TODO:
 #endif
 #include "devices/mflopimg.h"
 
-static void machine_init_ti990_4(void)
+static MACHINE_RESET(ti990_4)
 {
 	ti990_hold_load();
 
@@ -228,7 +228,7 @@ static MACHINE_DRIVER_START(ti990_4)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( ti990_4 )
+	MDRV_MACHINE_RESET( ti990_4 )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -257,7 +257,6 @@ static MACHINE_DRIVER_START(ti990_4)
 	MDRV_PALETTE_INIT(asr733)
 #endif
 	MDRV_VIDEO_START(ti990_4)
-	/*MDRV_VIDEO_STOP(ti990_4)*/
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(ti990_4)
 

@@ -48,17 +48,17 @@ static void common_init_machine(opbase_handler setopbase)
 	zx_tape_bit = 0x80;
 }
 
-MACHINE_INIT ( zx80 )
+MACHINE_RESET ( zx80 )
 {
 	common_init_machine(zx_setopbase);
 }
 
-MACHINE_INIT ( zx81 )
+MACHINE_RESET ( zx81 )
 {
 	common_init_machine(zx_setopbase);
 }
 
-MACHINE_INIT ( pc8300 )
+MACHINE_RESET ( pc8300 )
 {
 	common_init_machine(pc8300_setopbase);
 }

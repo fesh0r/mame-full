@@ -544,7 +544,7 @@ static void mtx_printer_getinfo(const device_class *devclass, UINT32 state, unio
 	}
 }
 
-static MACHINE_INIT( mtx512 )
+static MACHINE_RESET( mtx512 )
 {
 	unsigned char * romimage;
 
@@ -755,7 +755,7 @@ static MACHINE_DRIVER_START( mtx512 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( mtx512 )
+	MDRV_MACHINE_RESET( mtx512 )
 
 	/* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )

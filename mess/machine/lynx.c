@@ -1160,7 +1160,7 @@ WRITE8_HANDLER( lynx_memory_config_w )
 	memory_set_bank(4, (data & 8) ? 1 : 0);
 }
 
-MACHINE_INIT( lynx )
+MACHINE_RESET( lynx )
 {
 	int i;
 	lynx_memory_config_w(0, 0);
@@ -1196,8 +1196,8 @@ static void lynx_postload(void)
 
 DRIVER_INIT( lynx )
 {
-	state_save_register_UINT8("lynx", 0, "lynx_memory_config", &lynx_memory_config, 1);
-	state_save_register_UINT8("lynx", 0, "lynx_fe00", lynx_mem_fe00, 0x200);
+	state_save_register_global(lynx_memory_config);
+	state_save_register_global(lynx_mem_fe00);
 	state_save_register_func_postload(lynx_postload);
 
 	memory_configure_bank(3, 0, 1, memory_region(REGION_CPU1) + 0x0000, 0);

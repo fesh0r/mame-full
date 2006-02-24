@@ -23,7 +23,7 @@
 #include <string.h>
 #include "z80gb.h"
 #include "daa_tab.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "state.h"
 
 #define FLAG_Z	0x80

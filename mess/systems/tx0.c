@@ -343,9 +343,7 @@ static MACHINE_DRIVER_START(tx0_64kw)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( tx0 )
-	MDRV_MACHINE_STOP( tx0 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
+	MDRV_MACHINE_RESET( tx0 )
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -383,9 +381,7 @@ static MACHINE_DRIVER_START(tx0_8kw)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_INIT( tx0 )
-	MDRV_MACHINE_STOP( tx0 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
+	MDRV_MACHINE_RESET( tx0 )
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

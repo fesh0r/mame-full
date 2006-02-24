@@ -11,7 +11,7 @@
 
 #include "driver.h"
 
-MACHINE_INIT( bebox );
+MACHINE_RESET( bebox );
 DRIVER_INIT( bebox );
 NVRAM_HANDLER( bebox );
 

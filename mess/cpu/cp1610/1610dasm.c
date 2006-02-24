@@ -1,6 +1,6 @@
 #include "driver.h"
 #ifdef	MAME_DEBUG
-#include "mamedbg.h"
+#include "debugger.h"
 #include "cp1610.h"
 
 #if 0

@@ -391,7 +391,7 @@ static WRITE8_HANDLER(apf_pia_1_w)
 	pia_1_w(offset & 0x03, data);
 }
 
-static MACHINE_INIT( apf_imagination )
+static MACHINE_RESET( apf_imagination )
 {
 	pia_config(1, PIA_STANDARD_ORDERING,&apf_imagination_pia_interface);
 
@@ -400,7 +400,7 @@ static MACHINE_INIT( apf_imagination )
 	wd179x_init(WD_TYPE_179X,NULL);
 }
 
-static MACHINE_INIT( apf_m1000 )
+static MACHINE_RESET( apf_m1000 )
 {
 	apf_common_init();
 }
@@ -737,7 +737,7 @@ static MACHINE_DRIVER_START( apf_imagination )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(0)
 
-	MDRV_MACHINE_INIT( apf_imagination )
+	MDRV_MACHINE_RESET( apf_imagination )
 
 	/* video hardware */
 	MDRV_M6847_NTSC( apf )
@@ -753,7 +753,7 @@ static MACHINE_DRIVER_START( apf_m1000 )
 	MDRV_IMPORT_FROM( apf_imagination )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP( apf_m1000_readmem,apf_m1000_writemem )
-	MDRV_MACHINE_INIT( apf_m1000 )
+	MDRV_MACHINE_RESET( apf_m1000 )
 MACHINE_DRIVER_END
 
 

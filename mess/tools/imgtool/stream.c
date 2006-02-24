@@ -10,10 +10,12 @@
 #include <string.h>
 #include <zlib.h>
 #include <assert.h>
+
 #include "unzip.h"
 #include "osdepend.h"
 #include "imgtool.h"
 #include "utils.h"
+#include "osd_tool.h"
 
 typedef enum
 {
@@ -26,27 +28,20 @@ struct _imgtool_stream
 	imgtype_t imgtype;
 	int write_protect;
 	const char *name; // needed for clear
-	union {
-		FILE *f;
-		struct {
+	INT64 position;
+
+	union
+	{
+		osd_tool_file *f;
+		struct
+		{
 			char *buf;
 			size_t bufsz;
-			size_t pos;
 		} m;
 	} u;
 };
 
-static size_t fsize(FILE *f)
-{
-	long l, sz;
-	l = ftell(f);
-	if (fseek(f, 0, SEEK_END))
-		return (size_t) -1;
-	sz = ftell(f);
-	if (fseek(f, l, SEEK_SET))
-		return (size_t) -1;
-	return (size_t) sz;
-}
+
 
 static imgtool_stream *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
@@ -71,7 +66,7 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 	memset(imgfile, 0, sizeof(*imgfile));
 	imgfile->imgtype = IMG_MEM;
 	imgfile->write_protect = 1;
-	imgfile->u.m.pos = 0;
+	imgfile->position = 0;
 
 	z = openzip(0, 0, zipname);
 	if (!z)
@@ -108,12 +103,14 @@ error:
 	return NULL;
 }
 
+
+
 imgtool_stream *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
 	imgtool_stream *imgfile = NULL;
-	static const char *write_modes[] = {"rb", "wb", "r+b", "w+b"};
-	FILE *f = NULL;
+	static const char *write_modes[] = {"rb", "wb", "rb+", "wb+"};
+	osd_tool_file *f = NULL;
 	char *buf = NULL;
 	int len, i;
 	imgtool_stream *s = NULL;
@@ -124,7 +121,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 	if (ext && !mame_stricmp(ext, ".zip"))
 		return stream_open_zip(fname, NULL, read_or_write);
 
-	f = fopen(fname, write_modes[read_or_write]);
+	f = osd_tool_fopen(fname, write_modes[read_or_write]);
 	if (!f)
 	{
 		if (!read_or_write)
@@ -165,6 +162,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 	/* Normal file */
 	memset(imgfile, 0, sizeof(*imgfile));
 	imgfile->imgtype = IMG_FILE;
+	imgfile->position = 0;
 	imgfile->write_protect = read_or_write ? 0 : 1;
 	imgfile->u.f = f;
 	imgfile->name = fname;
@@ -174,7 +172,7 @@ error:
 	if (imgfile)
 		free((void *) imgfile);
 	if (f)
-		fclose(f);
+		osd_tool_fclose(f);
 	if (buf)
 		free(buf);
 	return (imgtool_stream *) NULL;
@@ -192,7 +190,7 @@ imgtool_stream *stream_open_write_stream(int size)
 
 	imgfile->imgtype = IMG_MEM;
 	imgfile->write_protect = 0;
-	imgfile->u.m.pos = 0;
+	imgfile->position = 0;
 
 	imgfile->u.m.bufsz = size;
 	imgfile->u.m.buf = malloc(size);
@@ -216,9 +214,10 @@ imgtool_stream *stream_open_mem(void *buf, size_t sz)
 	if (!imgfile)
 		return NULL;
 
+	memset(imgfile, 0, sizeof(*imgfile));
 	imgfile->imgtype = IMG_MEM;
+	imgfile->position = 0;
 	imgfile->write_protect = 0;
-	imgfile->u.m.pos = 0;
 
 	imgfile->u.m.bufsz = sz;
 	imgfile->u.m.buf = buf;
@@ -234,7 +233,7 @@ void stream_close(imgtool_stream *s)
 	switch(s->imgtype)
 	{
 		case IMG_FILE:
-			fclose(s->u.f);
+			osd_tool_fclose(s->u.f);
 			break;
 
 		case IMG_MEM:
@@ -257,22 +256,22 @@ size_t stream_read(imgtool_stream *s, void *buf, size_t sz)
 	switch(s->imgtype)
 	{
 		case IMG_FILE:
-			result = fread(buf, 1, sz, s->u.f);
+			result = osd_tool_fread(s->u.f, s->position, sz, buf);
 			break;
 
 		case IMG_MEM:
-			if ((s->u.m.pos + sz) > s->u.m.bufsz)
-				result = s->u.m.bufsz - s->u.m.pos;
+			if ((s->position + sz) > s->u.m.bufsz)
+				result = s->u.m.bufsz - s->position;
 			else
 				result = sz;
-			memcpy(buf, s->u.m.buf + s->u.m.pos, result);
-			s->u.m.pos += result;
+			memcpy(buf, s->u.m.buf + s->position, result);
 			break;
 
 		default:
 			assert(0);
 			break;
 	}
+	s->position += result;
 	return result;
 }
 
@@ -287,25 +286,25 @@ size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
 		case IMG_MEM:
 			if (!s->write_protect)
 			{
-				if (s->u.m.bufsz < s->u.m.pos + sz)
+				if (s->u.m.bufsz < s->position + sz)
 				{
-					s->u.m.buf = realloc(s->u.m.buf, s->u.m.pos + sz);
-					s->u.m.bufsz = s->u.m.pos+sz;
+					s->u.m.buf = realloc(s->u.m.buf, s->position + sz);
+					s->u.m.bufsz = s->position + sz;
 				}
-				memcpy(s->u.m.buf + s->u.m.pos, buf, sz);
-				s->u.m.pos += sz;
+				memcpy(s->u.m.buf + s->position, buf, sz);
 				result = sz;
 			}
 			break;
 
 		case IMG_FILE:
-			result = fwrite(buf, 1, sz, s->u.f);
+			result = osd_tool_fwrite(s->u.f, s->position, sz, buf);
 			break;
 
 		default:
 			assert(0);
 			break;
 	}
+	s->position += result;
 	return result;
 }
 
@@ -318,7 +317,7 @@ UINT64 stream_size(imgtool_stream *s)
 	switch(s->imgtype)
 	{
 		case IMG_FILE:
-			result = fsize(s->u.f);
+			result = osd_tool_flength(s->u.f);
 			break;
 
 		case IMG_MEM:
@@ -353,64 +352,36 @@ void *stream_getptr(imgtool_stream *f)
 
 
 
-int stream_seek(imgtool_stream *s, size_t pos, int where)
+int stream_seek(imgtool_stream *s, INT64 pos, int where)
 {
-	int result = 0;
+	UINT64 size;
 
-	switch(s->imgtype)
+	size = stream_size(s);
+
+	switch(where)
 	{
-		case IMG_FILE:
-			result = fseek(s->u.f, pos, where);
+		case SEEK_CUR:
+			pos += s->position;
 			break;
-
-		case IMG_MEM:
-			switch(where)
-			{
-				case SEEK_CUR:
-					pos += s->u.m.pos;
-					break;
-				case SEEK_END:
-					pos += s->u.m.bufsz;
-					break;
-			}
-			if ((pos > s->u.m.bufsz) || (pos < 0))
-			{
-				result = -1;
-			}
-			else
-			{
-				s->u.m.pos = pos;
-			}
-			break;
-
-		default:
-			assert(0);
+		case SEEK_END:
+			pos += size;
 			break;
 	}
-	return result;
+
+	if (pos < 0)
+		pos = 0;
+	else if (pos > size)
+		pos = size;
+
+	s->position = pos;
+	return 0;
 }
 
 
 
 size_t stream_tell(imgtool_stream *s)
 {
-	int result = 0;
-
-	switch(s->imgtype)
-	{
-		case IMG_FILE:
-			result = ftell(s->u.f);
-			break;
-
-		case IMG_MEM:
-			result = s->u.m.pos;
-			break;
-
-		default:
-			assert(0);
-			break;
-	}
-	return result;
+	return (size_t) s->position;
 }
 
 
@@ -496,6 +467,8 @@ size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz)
 	return outsz;
 }
 
+
+
 void stream_clear(imgtool_stream *s)
 {
 	switch(s->imgtype)
@@ -503,10 +476,10 @@ void stream_clear(imgtool_stream *s)
 		case IMG_FILE:
 			if (!s->write_protect)
 			{
-				fclose(s->u.f);
-				s->u.f = fopen(s->name, "wb+");
-				fclose(s->u.f);
-				s->u.f = fopen(s->name, "wb");
+				osd_tool_fclose(s->u.f);
+				s->u.f = osd_tool_fopen(s->name, "wb+");
+				osd_tool_fclose(s->u.f);
+				s->u.f = osd_tool_fopen(s->name, "wb");
 			}
 			break;
 

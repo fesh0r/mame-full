@@ -514,7 +514,7 @@ static const struct via6522_interface via_1_intf =
 
 
 
-MACHINE_INIT( apple3 )
+MACHINE_RESET( apple3 )
 {
 	via_reset();
 }

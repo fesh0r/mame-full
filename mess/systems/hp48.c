@@ -188,7 +188,7 @@ static MACHINE_DRIVER_START( hp48s )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( hp48 )
+	MDRV_MACHINE_RESET( hp48 )
 
 	/* video hardware (well, actually there was no video ;) */
 	/* scanned with 300 dpi, scaled x 55%, y 55% for perfect display 2x2 pixels */

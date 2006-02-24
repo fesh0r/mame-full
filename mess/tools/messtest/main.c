@@ -21,6 +21,7 @@
 #include "sysdep/rc.h"
 #endif /* WIN32 */
 
+extern int mame_validitychecks(void);
 extern struct rc_option fileio_opts[];
 
 static int dump_screenshots;
@@ -172,9 +173,6 @@ int main(int argc, char *argv[])
 done:
 	if (rc)
 		rc_destroy(rc);
-#ifdef WIN32
-	win_parallel_exit();
-#endif /* WIN32 */
 	return result;
 }
 

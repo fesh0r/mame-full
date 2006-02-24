@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #include "saturn.h"
 #include "sat.h"

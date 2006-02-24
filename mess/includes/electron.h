@@ -53,7 +53,7 @@ WRITE8_HANDLER( electron_1mhz_w );
 READ8_HANDLER( electron_ula_r );
 WRITE8_HANDLER( electron_ula_w );
 DRIVER_INIT( electron );
-MACHINE_INIT( electron );
+MACHINE_RESET( electron );
 void electron_video_init( void );
 INTERRUPT_GEN( electron_scanline_interrupt );
 void electron_interrupt_handler(int mode, int interrupt);

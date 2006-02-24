@@ -338,7 +338,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "pdp1.h"
 
 #define LOG 0

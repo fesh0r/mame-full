@@ -170,10 +170,10 @@ DRIVER_INIT( apple1 )
 
 
 /*****************************************************************************
-**	MACHINE_INIT:  actions to perform on each cold boot.
+**	MACHINE_RESET:  actions to perform on each cold boot.
 *****************************************************************************/
 
-MACHINE_INIT( apple1 )
+MACHINE_RESET( apple1 )
 {
 	/* Reset the PIA and the display hardware. */
 	pia_reset();

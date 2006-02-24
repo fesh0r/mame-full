@@ -241,12 +241,12 @@ void primo_common_machine_init (void)
 	cpunum_set_clockscale(0, readinputport(5) ? 1.5 : 1.0);
 }
 
-MACHINE_INIT( primoa )
+MACHINE_RESET( primoa )
 {
 	primo_common_machine_init();
 }
 
-MACHINE_INIT( primob )
+MACHINE_RESET( primob )
 {
 	primo_common_machine_init();
 

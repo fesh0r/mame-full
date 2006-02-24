@@ -1113,7 +1113,7 @@ static void oric_common_init_machine(void)
     via_set_input_ca1(0, 1);
 }
 
-MACHINE_INIT( oric )
+MACHINE_RESET( oric )
 {
 	int disc_interface_id;
 
@@ -1465,7 +1465,7 @@ static void telestrat_acia_callback(int irq_state)
 }
 #endif
 
-MACHINE_INIT( telestrat )
+MACHINE_RESET( telestrat )
 {
 	oric_common_init_machine();
 

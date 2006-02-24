@@ -12,24 +12,13 @@
 
 #include "ap2_dsk.h"
 #include "basicdsk.h"
+#include "mamecore.h"
 
 
 #define APPLE2_IMAGE_DO		0
 #define APPLE2_IMAGE_PO		1
 #define APPLE2_IMAGE_NIB	2
 
-
-#ifndef MIN
-#define MIN(a,b)		(((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	1
-#endif
 
 /* used in for all Apple II images */
 static UINT32 apple2_get_track_size(floppy_image *floppy, int head, int track);

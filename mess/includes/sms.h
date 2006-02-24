@@ -51,7 +51,7 @@ void check_pause_button( void );
 DEVICE_INIT( sms_cart );
 DEVICE_LOAD( sms_cart );
 
-MACHINE_INIT(sms);
+MACHINE_RESET(sms);
 INTERRUPT_GEN(sms);
 NVRAM_HANDLER(sms);
 

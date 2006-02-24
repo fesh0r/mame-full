@@ -14,14 +14,6 @@
 #include "opresolv.h"
 #include "osdepend.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 enum resolution_entry_state
 {
 	RESOLUTION_ENTRY_STATE_UNSPECIFIED,

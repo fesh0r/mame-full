@@ -15,7 +15,7 @@
 
 static	int	aquarius_ramsize = 0;
 
-MACHINE_INIT( aquarius )
+MACHINE_RESET( aquarius )
 {
 	logerror("aquarius_init\r\n");
 	if (readinputport(9) != aquarius_ramsize)

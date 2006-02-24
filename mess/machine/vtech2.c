@@ -129,19 +129,19 @@ static void laser_machine_init(int bank_mask, int video_mask)
 		laser_bank_select_w(i, 0);
 }
 
-MACHINE_INIT( laser350 )
+MACHINE_RESET( laser350 )
 {
 	/* banks 0 to 3 only, optional ROM extension */
 	laser_machine_init(0xf00f, 3);
 }
 
-MACHINE_INIT( laser500 )
+MACHINE_RESET( laser500 )
 {
 	/* banks 0 to 2, and 4-7 only , optional ROM extension */
 	laser_machine_init(0xf0f7, 7);
 }
 
-MACHINE_INIT( laser700 )
+MACHINE_RESET( laser700 )
 {
 	/* all banks except #3 */
 	laser_machine_init(0xfff7, 7);

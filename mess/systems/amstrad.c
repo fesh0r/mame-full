@@ -1277,7 +1277,7 @@ The Gate-Array fetches two bytes for each address*/
 	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
 }
 
-static MACHINE_INIT( amstrad )
+static MACHINE_RESET( amstrad )
 {
 	int i;
 
@@ -1294,7 +1294,7 @@ static MACHINE_INIT( amstrad )
 	
 }
 
-static MACHINE_INIT( kccomp )
+static MACHINE_RESET( kccomp )
 {
 	int i;
 
@@ -1595,7 +1595,7 @@ static MACHINE_DRIVER_START( amstrad )
 	MDRV_INTERLEAVE(1)
 	MDRV_VBLANK_DURATION(19968)
 
-	MDRV_MACHINE_INIT( amstrad )
+	MDRV_MACHINE_RESET( amstrad )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -1623,7 +1623,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( kccomp )
 	MDRV_IMPORT_FROM( amstrad )
 	MDRV_FRAMES_PER_SECOND( AMSTRAD_FPS )
-	MDRV_MACHINE_INIT( kccomp )
+	MDRV_MACHINE_RESET( kccomp )
 	MDRV_SCREEN_SIZE(800, 312)
 	MDRV_PALETTE_INIT( kccomp )
 MACHINE_DRIVER_END

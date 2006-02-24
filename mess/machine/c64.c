@@ -899,7 +899,7 @@ void c64_common_init_machine (void)
 	vicirq = cia0irq = 0;
 }
 
-MACHINE_INIT( c64 )
+MACHINE_RESET( c64 )
 {
 	c64_common_init_machine ();
 

@@ -212,7 +212,7 @@ DRIVER_INIT( pet1 );
 DRIVER_INIT( pet40 );
 DRIVER_INIT( cbm80 );
 DRIVER_INIT( superpet );
-MACHINE_INIT( pet );
+MACHINE_RESET( pet );
 INTERRUPT_GEN( pet_frame_interrupt );
 
 void pet_rom_load(void);

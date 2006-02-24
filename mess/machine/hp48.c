@@ -473,7 +473,7 @@ DRIVER_INIT( hp48g )
 	timer_pulse(1.0/8192, 0, hp48_timer);
 }
 
-MACHINE_INIT( hp48 )
+MACHINE_RESET( hp48 )
 {
 	hp48_mem_reset();
 }

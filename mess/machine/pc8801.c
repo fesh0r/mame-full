@@ -712,12 +712,12 @@ static void pc88sr_ch_reset (int hireso)
   pc88sr_init_fmsound();
 }
 
-MACHINE_INIT( pc88srl )
+MACHINE_RESET( pc88srl )
 {
   pc88sr_ch_reset(0);
 }
 
-MACHINE_INIT( pc88srh )
+MACHINE_RESET( pc88srh )
 {
 	pc88sr_ch_reset(1);
 }

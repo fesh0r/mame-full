@@ -274,7 +274,7 @@ static void z88_refresh_memory_bank(int bank)
 	}
 }
 
-static MACHINE_INIT( z88 )
+static MACHINE_RESET( z88 )
 {
 	memset(mess_ram, 0x0ff, mess_ram_size);
 
@@ -716,7 +716,7 @@ static MACHINE_DRIVER_START( z88 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( z88 )
+	MDRV_MACHINE_RESET( z88 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

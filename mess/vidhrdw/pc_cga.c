@@ -272,10 +272,10 @@ static int internal_pc_cga_video_start(int personality)
 	if (!pc_video_start(&config, pc_cga_choosevideomode, 0x8000))
 		return 1;
 
-	state_save_register_UINT8("pccga", 0, "mode_control",	&cga.mode_control, 1);
-	state_save_register_UINT8("pccga", 0, "color_select",	&cga.color_select, 1);
-	state_save_register_UINT8("pccga", 0, "status",			&cga.status, 1);
-	state_save_register_UINT8("pccga", 0, "plantronics",	&cga.plantronics, 1);
+	state_save_register_item("pccga", 0, cga.mode_control);
+	state_save_register_item("pccga", 0, cga.color_select);
+	state_save_register_item("pccga", 0, cga.status);
+	state_save_register_item("pccga", 0, cga.plantronics);
 
 	timer_pulse(TIME_IN_SEC(32.0/240.0), 0, cga_timerproc);
 	return 0;

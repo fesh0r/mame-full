@@ -35,7 +35,7 @@ extern UINT8 STAT;			/* returned when port 249 read */
 void coupe_update_memory(void);
 
 DEVICE_LOAD( coupe_floppy );
-MACHINE_INIT( coupe );
+MACHINE_RESET( coupe );
 
 void coupe_eof_callback(void);
 

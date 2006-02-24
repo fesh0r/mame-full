@@ -3,7 +3,7 @@
 /* machine/apple1.c */
 
 DRIVER_INIT( apple1 );
-MACHINE_INIT( apple1 );
+MACHINE_RESET( apple1 );
 SNAPSHOT_LOAD( apple1 );
 
 READ8_HANDLER( apple1_cassette_r );

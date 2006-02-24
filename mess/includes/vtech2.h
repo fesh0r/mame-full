@@ -5,9 +5,9 @@
 extern int laser_latch;
 
 DRIVER_INIT(laser);
-MACHINE_INIT( laser350 );
-MACHINE_INIT( laser500 );
-MACHINE_INIT( laser700 );
+MACHINE_RESET( laser350 );
+MACHINE_RESET( laser500 );
+MACHINE_RESET( laser700 );
 
 DEVICE_LOAD( laser_cart );
 DEVICE_UNLOAD( laser_cart );

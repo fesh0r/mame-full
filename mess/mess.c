@@ -26,6 +26,7 @@ UINT8 *mess_ram;
 UINT8 mess_ram_default_value = 0xCD;
 
 static int devices_initialload(const game_driver *gamedrv);
+static void devices_exit(void);
 
 
 static int ram_init(const game_driver *gamedrv)
@@ -71,8 +72,8 @@ static int ram_init(const game_driver *gamedrv)
 			return 1;
 		memset(mess_ram, mess_ram_default_value, mess_ram_size);
 
-		state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);
-		state_save_register_UINT8("mess", 0, "ram", mess_ram, mess_ram_size);
+		state_save_register_item("mess", 0, mess_ram_size);
+		state_save_register_item_pointer("mess", 0, mess_ram, mess_ram_size);
 	}
 	else
 	{
@@ -137,6 +138,7 @@ int devices_init(const game_driver *gamedrv)
 	/* init all devices */
 	image_init();
 	devices_initialload(gamedrv);
+	add_exit_callback(devices_exit);
 	return 0;
 }
 
@@ -250,7 +252,7 @@ error:
  * Call the exit() functions for all devices of a
  * driver for all images.
  */
-void devices_exit(void)
+static void devices_exit(void)
 {
 	/* unload all devices */
 	image_unload_all(FALSE);

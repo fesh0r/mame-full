@@ -170,7 +170,7 @@ static void update_ti86_memory (void)
   Machine Initialization
 ***************************************************************************/
 
-MACHINE_INIT( ti81 )
+MACHINE_RESET( ti81 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -201,7 +201,7 @@ MACHINE_INIT( ti81 )
 	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
 }
 
-MACHINE_INIT( ti85 )
+MACHINE_RESET( ti85 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -231,14 +231,11 @@ MACHINE_INIT( ti85 )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
 	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x010000);
 	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
+
+	add_exit_callback(ti85_free_serial_data_memory);
 }
 
-MACHINE_STOP( ti85 )
-{
-	ti85_free_serial_data_memory();
-}
-
-MACHINE_INIT( ti86 )
+MACHINE_RESET( ti86 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -274,13 +271,9 @@ MACHINE_INIT( ti86 )
 
 		timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 	}
-}
 
-MACHINE_STOP( ti86 )
-{
-	ti85_free_serial_data_memory();
+	add_exit_callback(ti85_free_serial_data_memory);
 }
-
 
 /* I/O ports handlers */
 

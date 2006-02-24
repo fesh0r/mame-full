@@ -93,8 +93,7 @@ DEVICE_LOAD(nes_cart);
 DEVICE_LOAD(nes_disk);
 DEVICE_UNLOAD(nes_disk);
 
-MACHINE_INIT( nes );
-MACHINE_STOP( nes );
+MACHINE_RESET( nes );
 
 DRIVER_INIT( nes );
 DRIVER_INIT( nespal );

@@ -18,7 +18,7 @@ int pc1350_ina(void);
 int pc1350_inb(void);
 
 DRIVER_INIT( pc1350 );
-MACHINE_INIT( pc1350 );
+MACHINE_RESET( pc1350 );
 NVRAM_HANDLER( pc1350 );
 
 /* in vidhrdw/pocketc.c */

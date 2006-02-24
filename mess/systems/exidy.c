@@ -254,7 +254,7 @@ static void cassette_serial_in(int id, unsigned long state)
 	cassette_serial_connection.input_state = state;
 }
 
-static MACHINE_INIT( exidy )
+static MACHINE_RESET( exidy )
 {
 	hd6402_init();
 	hd6402_set_callback(exidy_hd6402_callback);
@@ -288,7 +288,7 @@ static MACHINE_INIT( exidy )
 
 }
 
-static MACHINE_INIT( exidyd )
+static MACHINE_RESET( exidyd )
 {
 	hd6402_init();
 	hd6402_set_callback(exidy_hd6402_callback);
@@ -796,7 +796,7 @@ static MACHINE_DRIVER_START( exidy )
 	MDRV_VBLANK_DURATION(200)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( exidy )
+	MDRV_MACHINE_RESET( exidy )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -821,7 +821,7 @@ static MACHINE_DRIVER_START( exidyd )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(exidyd_mem, 0)
 
-	MDRV_MACHINE_INIT( exidyd )
+	MDRV_MACHINE_RESET( exidyd )
 MACHINE_DRIVER_END
 
 /***************************************************************************

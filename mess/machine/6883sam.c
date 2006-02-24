@@ -99,7 +99,7 @@ static void update_sam(void)
 
 void sam_init(void)
 {
-	state_save_register_UINT16("6883sam", 0, "state", &sam.state, 1);
+	state_save_register_item("6883sam", 0, sam.state);
 	state_save_register_func_postload(update_sam);
 	sam.state = 0;
 	sam.old_state = ~0;

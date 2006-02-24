@@ -152,8 +152,7 @@ void init_ti99_4ev(void);
 void init_ti99_8(void);
 void init_ti99_4p(void);
 
-void machine_init_ti99(void);
-void machine_stop_ti99(void);
+MACHINE_RESET( ti99 );
 
 DEVICE_LOAD( ti99_cassette );
 

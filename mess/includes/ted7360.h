@@ -45,7 +45,6 @@ extern void ted7360_set_dma (read8_handler dma_read,
 #define TED7360_LINES (ted7360_pal?TED7360PAL_LINES:TED7360NTSC_LINES)
 
 extern VIDEO_START( ted7360 );
-extern VIDEO_STOP( ted7360 );
 extern VIDEO_UPDATE( ted7360 );
 extern unsigned char ted7360_palette[16 * 8 * 3];
 

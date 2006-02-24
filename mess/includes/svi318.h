@@ -12,8 +12,7 @@ typedef struct {
 } SVI_318;
 
 DRIVER_INIT( svi318 );
-MACHINE_INIT( svi318 );
-MACHINE_STOP( svi318 );
+MACHINE_RESET( svi318 );
 
 DEVICE_LOAD( svi318_cart );
 DEVICE_UNLOAD( svi318_cart );
@@ -45,4 +44,4 @@ READ8_HANDLER( svi318_crtc_r );
 WRITE8_HANDLER( svi318_crtc_w );
 WRITE8_HANDLER( svi318_crtcbank_w );
 VIDEO_UPDATE( svi328b );
-MACHINE_INIT( svi328b );
+MACHINE_RESET( svi328b );

@@ -15,10 +15,10 @@ extern int vtech1_latch;
  Machine Initialisations
 ******************************************************************************/
 
-MACHINE_INIT( laser110 );
-MACHINE_INIT( laser200 );
-MACHINE_INIT( laser210 );
-MACHINE_INIT( laser310 );
+MACHINE_RESET( laser110 );
+MACHINE_RESET( laser200 );
+MACHINE_RESET( laser210 );
+MACHINE_RESET( laser310 );
 
 
 /******************************************************************************

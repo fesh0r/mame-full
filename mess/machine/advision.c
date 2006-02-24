@@ -26,7 +26,7 @@ static int rLpointer;
 static int Dvalue;
 static int Gvalue;
 
-MACHINE_INIT( advision )
+MACHINE_RESET( advision )
 {
 	advision_ram = memory_region(REGION_CPU1) + 0x2000;
     advision_rambank = 0x300;

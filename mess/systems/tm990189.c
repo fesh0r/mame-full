@@ -186,7 +186,7 @@ static mame_file *rs232_fp;
 static UINT8 rs232_rts;
 static void *rs232_input_timer;
 
-static void machine_init_tm990_189(void)
+static MACHINE_RESET( tm990_189 )
 {
 	displayena_timer = timer_alloc(NULL);
 
@@ -201,7 +201,7 @@ static void machine_init_tm990_189(void)
 }
 
 
-static void machine_init_tm990_189_v(void)
+static MACHINE_RESET( tm990_189_v )
 {
 	displayena_timer = timer_alloc(NULL);
 
@@ -772,7 +772,7 @@ static MACHINE_DRIVER_START(tm990_189)
 	/*MDRV_CPU_VBLANK_INT(tm990_189_interrupt, 1)*/
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
-	MDRV_MACHINE_INIT( tm990_189 )
+	MDRV_MACHINE_RESET( tm990_189 )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - we emulate a 8-segment LED display */
@@ -791,7 +791,6 @@ static MACHINE_DRIVER_START(tm990_189)
 
 	MDRV_PALETTE_INIT(tm990_189)
 	/*MDRV_VIDEO_START(tm990_189)*/
-	/*MDRV_VIDEO_STOP(tm990_189)*/
 	MDRV_VIDEO_EOF(tm990_189)
 	MDRV_VIDEO_UPDATE(tm990_189)
 
@@ -814,7 +813,7 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	/*MDRV_CPU_VBLANK_INT(tm990_189_interrupt, 1)*/
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
-	MDRV_MACHINE_INIT( tm990_189_v )
+	MDRV_MACHINE_RESET( tm990_189_v )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */

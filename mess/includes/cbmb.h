@@ -231,7 +231,7 @@ void cbm600hu_driver_init (void);
 void cbm700_driver_init (void);
 void cbmb_common_init_machine (void);
 void cbmb_frame_interrupt (int param);
-MACHINE_INIT( cbmb );
+MACHINE_RESET( cbmb );
 
 void cbmb_rom_load(void);
 

@@ -110,7 +110,6 @@ extern bool vic6560_pal;
 
 
 extern VIDEO_START( vic6560 );
-extern VIDEO_STOP( vic6560 );
 extern VIDEO_UPDATE( vic6560 );
 extern unsigned char vic6560_palette[16 * 3];
 

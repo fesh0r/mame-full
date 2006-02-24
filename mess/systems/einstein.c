@@ -1378,7 +1378,7 @@ static int einstein_cpu_acknowledge_int(int cpu)
 	return (vector<<1);
 }
 
-static MACHINE_INIT( einstein )
+static MACHINE_RESET( einstein )
 {
 	memory_set_bankptr(2, mess_ram+0x02000);
 	memory_set_bankptr(3, mess_ram);
@@ -1423,9 +1423,9 @@ static MACHINE_INIT( einstein )
 
 }
 
-static MACHINE_INIT( einstein2 )
+static MACHINE_RESET( einstein2 )
 {
-	machine_init_einstein();
+	machine_reset_einstein();
 	einstein_80col_init();
 }
 
@@ -1694,7 +1694,7 @@ static MACHINE_DRIVER_START( einstein )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( einstein )
+	MDRV_MACHINE_RESET( einstein )
 
     /* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )
@@ -1712,7 +1712,7 @@ static MACHINE_DRIVER_START( einstei2 )
 
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_IO_MAP(readport_einstein2,writeport_einstein2)
-	MDRV_MACHINE_INIT( einstein2 )
+	MDRV_MACHINE_RESET( einstein2 )
 
     /* video hardware */
 	MDRV_SCREEN_SIZE(640, 400)

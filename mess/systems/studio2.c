@@ -221,11 +221,11 @@ static CDP1802_CONFIG vip_config={
 
 /* Machine Initialization */
 
-static MACHINE_INIT( studio2 )
+static MACHINE_RESET( studio2 )
 {
 }
 
-static MACHINE_INIT( vip )
+static MACHINE_RESET( vip )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1)+0x8000);
 }
@@ -243,7 +243,7 @@ static MACHINE_DRIVER_START( studio2 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( studio2 )
+	MDRV_MACHINE_RESET( studio2 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -269,7 +269,7 @@ static MACHINE_DRIVER_START( vip )
 	MDRV_CPU_PROGRAM_MAP(vip_map, 0)
 	MDRV_CPU_IO_MAP(vip_io_map, 0)
 	MDRV_CPU_CONFIG( vip_config )
-	MDRV_MACHINE_INIT( vip )
+	MDRV_MACHINE_RESET( vip )
 MACHINE_DRIVER_END
 
 /* ROMs */

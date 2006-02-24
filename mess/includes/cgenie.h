@@ -9,23 +9,22 @@ VIDEO_UPDATE( cgenie );
 void cgenie_sh_sound_init(const char * gamename);
 WRITE8_HANDLER ( cgenie_sh_control_port_w );
 WRITE8_HANDLER ( cgenie_sh_data_port_w );
- READ8_HANDLER ( cgenie_sh_control_port_r );
- READ8_HANDLER ( cgenie_sh_data_port_r );
+READ8_HANDLER ( cgenie_sh_control_port_r );
+READ8_HANDLER ( cgenie_sh_data_port_r );
 
 /* from mess/machine/cgenie.c */
 extern int cgenie_tv_mode;
 
- READ8_HANDLER ( cgenie_psg_port_a_r);
- READ8_HANDLER ( cgenie_psg_port_b_r );
+READ8_HANDLER ( cgenie_psg_port_a_r);
+READ8_HANDLER ( cgenie_psg_port_b_r );
 WRITE8_HANDLER ( cgenie_psg_port_a_w );
 WRITE8_HANDLER ( cgenie_psg_port_b_w );
 
 void init_cgenie(void);
-MACHINE_INIT( cgenie );
-MACHINE_STOP( cgenie );
+MACHINE_RESET( cgenie );
 
- READ8_HANDLER ( cgenie_colorram_r );
- READ8_HANDLER ( cgenie_fontram_r );
+READ8_HANDLER ( cgenie_colorram_r );
+READ8_HANDLER ( cgenie_fontram_r );
 
 void cgenie_dos_rom_w(int offset, int data);
 void cgenie_ext_rom_w(int offset, int data);

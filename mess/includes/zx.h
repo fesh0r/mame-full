@@ -1,9 +1,9 @@
 /* from machine/zx80.c */
 DRIVER_INIT( zx );
-MACHINE_INIT( zx80 );
-MACHINE_INIT( zx81 );
-MACHINE_INIT( pc8300 );
-MACHINE_INIT( pow3000 );
+MACHINE_RESET( zx80 );
+MACHINE_RESET( zx81 );
+MACHINE_RESET( pc8300 );
+MACHINE_RESET( pow3000 );
 
 READ8_HANDLER ( zx_io_r );
 WRITE8_HANDLER ( zx_io_w );

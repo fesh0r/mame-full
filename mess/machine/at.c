@@ -155,7 +155,7 @@ static int at_irq_callback(int irqline)
 
 
 
-MACHINE_INIT( at )
+MACHINE_RESET( at )
 {
 	dma8237_reset();
 	cpu_set_irq_callback(0, at_irq_callback);
@@ -163,7 +163,7 @@ MACHINE_INIT( at )
 
 
 
-MACHINE_INIT( at_vga )
+MACHINE_RESET( at_vga )
 {
 	pc_vga_reset();
 	dma8237_reset();

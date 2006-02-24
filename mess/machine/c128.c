@@ -815,7 +815,7 @@ DRIVER_INIT( c128pal )
 	vdc8563_set_rastering(0);
 }
 
-MACHINE_INIT( c128 )
+MACHINE_RESET( c128 )
 {
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;

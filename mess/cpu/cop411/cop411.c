@@ -1,4 +1,3 @@
-
 /**************************************************************************
  *               National Semiconductor COP411  Emulator                  *
  *                                                                        *
@@ -12,7 +11,7 @@
 
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "cop411.h"
 
 /* The opcode table now is a combination of cycle counts and function pointers */

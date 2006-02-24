@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.h,v 1.6 2004/06/12 21:03:02 npwoods Exp $
+  $Id: pc8801.h,v 1.7 2006/02/24 13:07:04 npwoods Exp $
 
 ***************************************************************************/
 
@@ -21,8 +21,8 @@ WRITE8_HANDLER(pc8801_outport_78);
 WRITE8_HANDLER(pc88sr_outport_71);
 
 extern INTERRUPT_GEN( pc8801_interrupt );
-extern MACHINE_INIT( pc88srl );
-extern MACHINE_INIT( pc88srh );
+extern MACHINE_RESET( pc88srl );
+extern MACHINE_RESET( pc88srh );
 
 void pc8801_update_bank(void);
 extern unsigned char *pc8801_mainRAM;

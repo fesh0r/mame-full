@@ -211,7 +211,7 @@ void paddle_callback (int param)
 		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-static MACHINE_INIT(coleco)
+static MACHINE_RESET(coleco)
 {
     cpunum_set_input_line_vector(0, 0, 0xff);
 	memset(&memory_region(REGION_CPU1)[0x6000], 0xff, 0x400);	// initialize RAM
@@ -234,7 +234,7 @@ static MACHINE_DRIVER_START( coleco )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(coleco)
+	MDRV_MACHINE_RESET(coleco)
 
     // video hardware
 	MDRV_TMS9928A(&tms9928a_interface)

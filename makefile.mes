@@ -423,7 +423,7 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDBGOBJS)
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(OSTOOLOBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
@@ -441,19 +441,19 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 
 imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSTOOLOBJS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
 wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
+	$(LD) $(LDFLAGS) $(OSTOOLOBJS) $(OSDBGLDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
-messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) \
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSTOOLOBJS) \
 		$(OBJ)/windows/asmtile.o				\
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
-		$(OBJ)/windows/winalloc.o					\
+		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\

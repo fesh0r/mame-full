@@ -1901,7 +1901,7 @@ static void	kc85_common_init(void)
 
 /*****************************************************************/
 
-MACHINE_INIT( kc85_4 )
+MACHINE_RESET( kc85_4 )
 {
 	kc85_84_data = 0x0828;
 	kc85_86_data = 0x063;
@@ -1930,13 +1930,13 @@ MACHINE_INIT( kc85_4 )
 #endif
 }
 
-MACHINE_INIT( kc85_4d )
+MACHINE_RESET( kc85_4d )
 {
-	machine_init_kc85_4();
+	machine_reset_kc85_4();
 	kc_disc_interface_init();
 }
 
-MACHINE_INIT( kc85_3 )
+MACHINE_RESET( kc85_3 )
 {
 	kc85_pio_data[0] = 0x0f;
 	kc85_pio_data[1] = 0x0f1;
