@@ -86,7 +86,6 @@ static struct rc_option opts2[] = {
 	{ "language", "lang", rc_string, &language, "english", 0, 0, NULL, "Select the language for the menus and osd" },
 	{ "fuzzycmp", "fc", rc_bool, &use_fuzzycmp, "1", 0, 0, NULL, "Enable/disable use of fuzzy gamename matching when there is no exact match" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "Enable/disable cheat subsystem" },
-	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "Skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
 #ifdef MESS
 	{ "skip_warnings", NULL, rc_bool, &options.skip_warnings, "0", 0, 0, NULL, "Skip displaying the warnings screen" },
