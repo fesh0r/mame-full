@@ -11,6 +11,7 @@
 #include "artwork.h"
 #include "usrintrf.h"
 #include "vidhrdw/vector.h"
+#include "debug/mamedbg.h"
 #ifdef MESS
 #include "mess/mesintrf.h"
 #endif
@@ -920,7 +921,7 @@ void osd_update_video_and_audio(mame_display *display)
 	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
 		change_debugger_focus(display->debug_focus);
 	/* If the user presses the F5 key, toggle the debugger's focus */
-	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
+	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && Machine->debug_mode)
 		change_debugger_focus(!debugger_has_focus);
 
 	/*** STEP 3: update the focused display ***/

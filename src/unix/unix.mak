@@ -319,6 +319,9 @@ CONFIG  += -I/usr/include/lirc
 MY_LIBS += -L/usr/lib -llirc_client
 endif
 
+OSTOOLOBJS = \
+	$(OBJDIR)/osd_tool.o
+
 # sysdep objs
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
    $(SYSDEP_DIR)/plugin_manager.o $(SYSDEP_DIR)/sysdep_sound_stream.o \
@@ -578,7 +581,7 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
+chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS)
 	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 

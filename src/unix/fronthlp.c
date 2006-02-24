@@ -2,7 +2,6 @@
 #include "xmame.h"
 #include "driver.h"
 #include "audit.h"
-#include "common.h"
 #include "info.h"
 #include "sound/samples.h"
 

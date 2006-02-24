@@ -38,7 +38,6 @@
 #include "osdepend.h"
 #include "driver.h"
 #include "mame.h"
-#include "common.h"
 #include "sysdep/rc.h"
 #include "sysdep/sysdep_sound_stream.h"
 

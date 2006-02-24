@@ -10,6 +10,8 @@
 #include <sys/mman.h>
 #endif
 
+static void osd_exit(void);
+
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
 int osd_init(void)
@@ -22,13 +24,15 @@ int osd_init(void)
 	if (osd_input_initpre() != OSD_OK)
 		return OSD_NOT_OK;
 
+	add_exit_callback(osd_exit);
+
 	return OSD_OK;
 }
 
 /*
  * Cleanup routines to be executed when the program is terminated.
  */
-void osd_exit(void)
+static void osd_exit(void)
 {
 #ifdef XMAME_NET
 	osd_net_close();
