@@ -17,6 +17,10 @@
 #include "sound/wavwrite.h"
 #include "vidhrdw/generic.h"
 
+#ifdef WIN32
+#include "windows/parallel.h"
+#endif
+
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcpu.h"
 #endif
@@ -273,6 +277,10 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 		options.image_count++;
 		current_command++;
 	}
+
+#ifdef WIN32
+	win_parallel_init();
+#endif /* WIN32 */
 
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);

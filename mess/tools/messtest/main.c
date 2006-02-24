@@ -16,7 +16,6 @@
 #include <windows.h>
 #include "windows/rc.h"
 #include "windows/glob.h"
-#include "windows/parallel.h"
 #elif defined XMAME
 #include "sysdep/rc.h"
 #endif /* WIN32 */
@@ -106,8 +105,6 @@ int main(int argc, char *argv[])
 #ifdef WIN32
 	/* expand wildcards so '*' can be used; this is not UNIX */
 	win_expand_wildcards(&argc, &argv);
-
-	win_parallel_init();
 #else
 	{
 		/* this is for XMESS */
