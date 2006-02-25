@@ -11,7 +11,7 @@
 #include "artwork.h"
 #include "usrintrf.h"
 #include "vidhrdw/vector.h"
-#include "debug/mamedbg.h"
+#include "mamedbg.h"
 #ifdef MESS
 #include "mess/mesintrf.h"
 #endif
@@ -1150,7 +1150,7 @@ void osd_update_video_and_audio(mame_display *display)
 			else
 			{
 				frames_displayed++;
-				if (frames_displayed + 1 == frames_to_display)
+				if (frames_displayed == frames_to_display)
 				{
 					char name[20];
 					mame_file *fp;
