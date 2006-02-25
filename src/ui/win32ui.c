@@ -1810,6 +1810,7 @@ void SetMainTitle(void)
 
 static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	extern int mame_validitychecks(void);
 	WNDCLASS	wndclass;
 	RECT		rect;
 	int i, j = 0, nSplitterCount;
