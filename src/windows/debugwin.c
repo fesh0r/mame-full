@@ -1745,9 +1745,9 @@ static void memory_process_string(debugwin_info *info, const char *string)
 
 static void memory_update_checkmarks(debugwin_info *info)
 {
-	CheckMenuItem(GetMenu(info->wnd), ID_1_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 1) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(GetMenu(info->wnd), ID_2_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 2) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(GetMenu(info->wnd), ID_4_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 4) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_1_BYTE_CHUNKS, MF_BYCOMMAND | ((debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK) == 1) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_2_BYTE_CHUNKS, MF_BYCOMMAND | ((debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK) == 2) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_4_BYTE_CHUNKS, MF_BYCOMMAND | ((debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK) == 4) ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(GetMenu(info->wnd), ID_REVERSE_VIEW, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_REVERSE_VIEW) ? MF_CHECKED : MF_UNCHECKED));
 }
 
