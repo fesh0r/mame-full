@@ -34,7 +34,7 @@ size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz);
 size_t stream_transfer_all(imgtool_stream *dest, imgtool_stream *source);
 
 /* Fills sz bytes with b */
-size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz);
+size_t stream_fill(imgtool_stream *f, unsigned char b, UINT64 sz);
 
 /* Returns the CRC of a file */
 int stream_crc(imgtool_stream *f, unsigned long *result);

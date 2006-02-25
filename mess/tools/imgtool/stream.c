@@ -369,11 +369,13 @@ int stream_seek(imgtool_stream *s, INT64 pos, int where)
 	}
 
 	if (pos < 0)
-		pos = 0;
-	else if (pos > size)
-		pos = size;
+		s->position = 0;
+	else
+		s->position = MIN(size, pos);
 
-	s->position = pos;
+	if (s->position < pos)
+		stream_fill(s, '\0', pos - s->position);
+
 	return 0;
 }
 
@@ -452,7 +454,7 @@ int file_crc(const char *fname,  unsigned long *result)
 	return err;
 }
 
-size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz)
+size_t stream_fill(imgtool_stream *f, unsigned char b, UINT64 sz)
 {
 	size_t outsz;
 	char buf[1024];
@@ -460,7 +462,8 @@ size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz)
 	outsz = 0;
 	memset(buf, b, MIN(sz, sizeof(buf)));
 
-	while(sz) {
+	while(sz)
+	{
 		outsz += stream_write(f, buf, MIN(sz, sizeof(buf)));
 		sz -= MIN(sz, sizeof(buf));
 	}

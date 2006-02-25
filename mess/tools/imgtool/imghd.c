@@ -309,6 +309,7 @@ imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard
 		err = IMGTOOLERR_UNEXPECTED;
 		goto done;
 	}
+	hard_disk->stream = stream;
 
 done:
 	if (err)
