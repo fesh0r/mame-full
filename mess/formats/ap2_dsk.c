@@ -12,6 +12,7 @@
 
 #include "ap2_dsk.h"
 #include "basicdsk.h"
+#include "osdepend.h"
 #include "mamecore.h"
 
 
