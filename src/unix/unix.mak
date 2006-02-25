@@ -167,8 +167,6 @@ FRAMESKIP_DIR = $(UNIX_OBJDIR)/frameskip-drivers
 OBJDIRS += $(UNIX_OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
 	$(JOY_DIR) $(FRAMESKIP_DIR) $(BLIT_DIR)
 
-IMGTOOL_LIBS = -lz
-
 ifeq ($(TARGET), mess)
 INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 else
@@ -186,6 +184,10 @@ SOUNDLIB = $(OBJ)/libsound.a
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
+ifdef SEPARATE_LIBM
+LIBS += -lm
+endif
+
 ifdef BUILD_EXPAT
 CFLAGS += -Isrc/expat
 OBJDIRS += $(OBJ)/expat
@@ -256,11 +258,7 @@ MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	$(COREDEFS) $(SOUNDDEFS) $(CPUDEFS) $(ASMDEFS) \
 	$(INCLUDES) $(INCLUDE_PATH)
 
-MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lz
-
-ifdef SEPARATE_LIBM
-MY_LIBS += -lm
-endif
+MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD))
 
 ifdef DEBUG
 MY_CFLAGS += -DMAME_DEBUG
@@ -593,7 +591,7 @@ dat2html: $(DAT2HTML_OBJS)
 
 imgtool: $(IMGTOOL_OBJS) $(OSTOOLOBJS) $(ZLIB) $(PLATFORM_TOOL_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/dirio.o \
