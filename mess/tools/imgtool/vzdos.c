@@ -169,10 +169,10 @@ static imgtoolerr_t vzdos_get_dirent(imgtool_image *img, int index, vzdos_dirent
 	int ret, entry;
 	UINT8 buffer[DATA_SIZE + 2];
 
-	ret = vzdos_read_sector_data(img, 0, (int)(index-1)/8, buffer);
+	ret = vzdos_read_sector_data(img, 0, (int) index / 8, buffer);
 	if (ret) return ret;
 	
-	entry = (((index - 1) % 8) * sizeof(vzdos_dirent));
+	entry = ((index % 8) * sizeof(vzdos_dirent));
 
 	memcpy(ent, &buffer[entry], 10);
 	ent->start_track   = pick_integer_le(&buffer[entry], 10, 1);
@@ -200,10 +200,10 @@ static imgtoolerr_t vzdos_set_dirent(imgtool_image *img, int index, vzdos_dirent
 	UINT8 buffer[DATA_SIZE + 2];
 
 	/* read current sector with entries */
-	ret = vzdos_read_sector_data(img, 0, (int)(index-1)/8, buffer);
+	ret = vzdos_read_sector_data(img, 0, (int) index / 8, buffer);
 	if (ret) return ret;
 
-	entry = (((index - 1) % 8) * sizeof(vzdos_dirent));
+	entry = ((index % 8) * sizeof(vzdos_dirent));
 
 	memcpy(&buffer[entry], &ent, 10);
 	place_integer_le(buffer, entry + 10, 1, ent.start_track);
@@ -212,7 +212,7 @@ static imgtoolerr_t vzdos_set_dirent(imgtool_image *img, int index, vzdos_dirent
 	place_integer_le(buffer, entry + 14, 2, ent.end_address);
 	
 	/* save new sector */
-	ret = vzdos_write_sector_data(img, 0, (int)(index-1)/8, buffer);
+	ret = vzdos_write_sector_data(img, 0, (int) index / 8, buffer);
 	if (ret) return ret;
 	
 	return IMGTOOLERR_SUCCESS;	
@@ -415,7 +415,7 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 		int ret, len;
 		vzdos_dirent dirent;
 
-		ret = vzdos_get_dirent(img_enum_image(enumeration), iter->index, &dirent);
+		ret = vzdos_get_dirent(img_enum_image(enumeration), iter->index - 1, &dirent);
 		
 		if (dirent.ftype == 0x00) {
 			iter->eof = 1;
@@ -462,6 +462,7 @@ static imgtoolerr_t vzdos_diskimage_freespace(imgtool_image *img, UINT64 *size)
 {
 	int ret, i;
 	UINT8 c, v, buffer[DATA_SIZE + 2];
+	*size = 0;
 
 	ret = vzdos_read_sector_data(img, 0, 15, buffer);
 	if (ret) return ret;
@@ -473,7 +474,7 @@ static imgtoolerr_t vzdos_diskimage_freespace(imgtool_image *img, UINT64 *size)
 		}
 		*size += c * DATA_SIZE;
 	}
-	*size = (DATA_SIZE * 16 * 40) - *size;
+	*size = (DATA_SIZE * 16 * 39) - *size;
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -559,13 +560,13 @@ static imgtoolerr_t vzdos_diskimage_deletefile(imgtool_image *img, const char *f
 
 		ret = vzdos_set_dirent(img, index++, next_entry);
 		if (ret) return ret;
-		
+
 		while ((ret = vzdos_get_dirent(img, index + 1, &next_entry)) != IMGTOOLERR_FILENOTFOUND) {
 			if (ret) return ret;
 			ret = vzdos_set_dirent(img, index++, next_entry);
 			if (ret) return ret; 
 		}
-		
+
 		ret = vzdos_clear_dirent(img, index);
 		if (ret) return ret;
 		
@@ -608,20 +609,19 @@ static imgtoolerr_t vzdos_writefile(imgtool_image *img, int offset, imgtool_stre
 	vzdos_dirent temp_entry;
 	UINT64 filesize = 0, freespace = 0;
 	UINT8 buffer[DATA_SIZE + 2];
+	char filename[9];
 
 	/* is the image writeable? */
 	if (floppy_is_read_only(imgtool_floppy(img)))
 		return IMGTOOLERR_READONLY;
 
-	/* TODO: check for leading spaces and strip */
-	if (strlen(entry->fname) > 8 || strlen(entry->fname) < 1)
-		return IMGTOOLERR_BADFILENAME;
-	
 	/* check for already existing filename -> overwrite */
-	ret = vzdos_get_dirent_fname(img, entry->fname, &temp_entry);
+	strcpy(filename, entry->fname);
+	filename[vzdos_get_fname_len(entry->fname) + 1] = 0x00;
+	ret = vzdos_get_dirent_fname(img, filename, &temp_entry);
 	if (!ret) {
 		/* file already exists, delete it */
-		ret = vzdos_diskimage_deletefile(img, entry->fname);
+		ret = vzdos_diskimage_deletefile(img, filename);
 		if (ret) return ret;
 	} else if (ret != IMGTOOLERR_FILENOTFOUND) {
 		/* another error occured, return it */
@@ -656,11 +656,11 @@ static imgtoolerr_t vzdos_writefile(imgtool_image *img, int offset, imgtool_stre
 		else if (ret)
 			return (ret);
 	}
-	
+
 	/* write directory entry to disk */
 	ret = vzdos_set_dirent(img, index, *entry);
 	if (ret) return ret;
-	
+
 	next_track  = 0;
 	next_sector = 0;
 	
@@ -704,7 +704,11 @@ static imgtoolerr_t vzdos_diskimage_writefile(imgtool_image *img, const char *fi
 {
 	int ret, ftype;
 	vzdos_dirent entry;
-	
+
+	/* TODO: check for leading spaces and strip */
+	if (strlen(filename) > 8 || strlen(filename) < 1)
+		return IMGTOOLERR_BADFILENAME;
+		
 	/* prepare directory entry */
 	ftype = option_resolution_lookup_int(opts, 'T');
 
@@ -862,10 +866,15 @@ static imgtoolerr_t vzsnapshot_writefile(imgtool_image *image, const char *filen
 	/* filename from header or directly? */
 	fnameopt = option_resolution_lookup_int(opts, 'F');
 	
-	if (fnameopt == 0)
-		memcpy(&entry.fname, &header[4], 8);		
-	else
+	if (fnameopt == 0) {
+		memcpy(&entry.fname, &header[4], 8);			
+	} else {
+		/* TODO: check for leading spaces and strip */
+		if (strlen(filename) > 8 || strlen(filename) < 1)
+		return IMGTOOLERR_BADFILENAME;
+		
 		memcpy(&entry.fname, filename, strlen(filename) - 3);
+	}
 	
 	/* write file to disk */
 	ret = vzdos_writefile(image, 24, sourcef, &entry);
