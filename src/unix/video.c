@@ -318,12 +318,18 @@ static int video_verify_artwork(struct rc_option *option, const char *arg,
 
 static int video_verify_ftr(struct rc_option *option, const char *arg, int priority)
 {
-	/*
-	 * if we're running < 5 minutes, allow us to skip warnings to
-	 * facilitate benchmarking/validation testing
-	 */
+	int ftr;
+
+	if (sscanf(arg, "%d", &ftr) != 1)
+	{
+		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
+		return -1;
+	}
+
+	/* if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing */
+	frames_to_display = ftr;
 	if (frames_to_display > 0 && frames_to_display < 60*60*5)
-		options.skip_warnings = 1;
+		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
 
 	option->priority = priority;
 	return 0;
