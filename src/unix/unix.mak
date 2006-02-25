@@ -218,7 +218,7 @@ all: maketree $(NAME).$(DISPLAY_METHOD) extra
 VPATH = src $(wildcard src/cpu/*)
 
 # Platform-dependent objects for imgtool
-PLATFORM_IMGTOOL_OBJS = $(OBJDIR)/dirio.o \
+PLATFORM_TOOL_OBJS = $(OBJDIR)/dirio.o \
 			$(OBJDIR)/fileio.o \
 			$(OBJDIR)/sysdep/misc.o
 
@@ -571,8 +571,6 @@ $(sort $(OBJDIRS)):
 
 extra: $(TOOLS)
 
-$(PLATFORM_IMGTOOL_OBJS):
-
 xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
@@ -593,7 +591,7 @@ dat2html: $(DAT2HTML_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
 
-imgtool: $(IMGTOOL_OBJS) $(ZLIB) $(PLATFORM_IMGTOOL_OBJS)
+imgtool: $(IMGTOOL_OBJS) $(OSTOOLOBJS) $(ZLIB) $(PLATFORM_TOOL_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
