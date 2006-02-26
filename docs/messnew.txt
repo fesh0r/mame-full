@@ -14,6 +14,8 @@ System Driver Changes:
 
 - [MSX] Fixed a crash involving cartridge use.  (bug #841) [Nate Woods]
 
+- [MSX] Fixed subtle memory corruption bug.  [R Belmont, Wilbert Pol]
+
 - [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
   [Nate Woods]
 
