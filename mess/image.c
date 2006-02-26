@@ -951,13 +951,13 @@ int image_battery_save(mess_image *img, const void *buffer, int length)
 		if (nvram_filename)
 		{
 			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
+			free(nvram_filename);
 			if (f)
 			{
 				mame_fwrite(f, buffer, length);
 				mame_fclose(f);
 				return TRUE;
 			}
-			free(nvram_filename);
 		}
 	}
 	return FALSE;
