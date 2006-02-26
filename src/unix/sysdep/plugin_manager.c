@@ -174,6 +174,8 @@ void plugin_manager_unload(struct plugin_manager_struct *manager,
          plugin_manager_remove(manager, i);
       }
    }
+   free(manager->data);
+   manager->data = NULL;
 }
 
 static void *plugin_manager_init_and_or_create(
