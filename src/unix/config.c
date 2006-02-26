@@ -740,7 +740,8 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
 	cfg.device_handlers = handlers;
 	cfg.device_countoverrides = count_overrides;
-	gamedrv->sysconfig_ctor(&cfg);
+	if (gamedrv->sysconfig_ctor)
+		gamedrv->sysconfig_ctor(&cfg);
 
 	/* count devides */
 	for (dev_count = 0; handlers[dev_count]; dev_count++)
