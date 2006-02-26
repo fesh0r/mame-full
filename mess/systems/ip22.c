@@ -1540,7 +1540,7 @@ static void ip22_chdcd_getinfo(const device_class *devclass, UINT32 state, union
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case DEVINFO_INT_COUNT:							info->i = 4; break;
 
-		default: cdrom_device_getinfo(devclass, state, info);
+		default: cdrom_device_getinfo(devclass, state, info); break;
 	}
 }
 
@@ -1550,19 +1550,9 @@ static void ip22_harddisk_getinfo(const device_class *devclass, UINT32 state, un
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_TYPE:							info->i = IO_HARDDISK; break;
-		case DEVINFO_INT_READABLE:						info->i = 1; break;
-		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
-		case DEVINFO_INT_CREATABLE:						info->i = 0; break;
 		case DEVINFO_INT_COUNT:							info->i = 2; break;
 
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_INIT:							info->init = device_init_mess_hd; break;
-		case DEVINFO_PTR_LOAD:							info->load = device_load_mess_hd; break;
-		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_mess_hd; break;
-
-		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "chd"); break;
+		default: harddisk_device_getinfo(devclass, state, info); break;
 	}
 }
 
