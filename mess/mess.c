@@ -137,9 +137,8 @@ int devices_init(const game_driver *gamedrv)
 
 	/* init all devices */
 	image_init();
-	devices_initialload(gamedrv);
 	add_exit_callback(devices_exit);
-	return 0;
+	return devices_initialload(gamedrv);
 }
 
 
