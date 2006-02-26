@@ -453,7 +453,7 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	else
 		vdp.vram_exp = NULL;
 
-	return 0;
+	return video_start_generic_bitmapped();
 }
 
 void v9938_reset (void)
