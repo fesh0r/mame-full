@@ -11,6 +11,7 @@
 #include "machine/pic8259.h"
 #include "machine/8237dma.h"
 #include "machine/mc146818.h"
+#include "machine/pc_turbo.h"
 
 #include "vidhrdw/pc_vga.h"
 #include "vidhrdw/pc_cga.h"
@@ -155,17 +156,15 @@ static int at_irq_callback(int irqline)
 
 
 
-MACHINE_RESET( at )
+MACHINE_START( at )
 {
-	dma8237_reset();
 	cpu_set_irq_callback(0, at_irq_callback);
+	return 0;
 }
 
 
 
-MACHINE_RESET( at_vga )
+MACHINE_RESET( at )
 {
-	pc_vga_reset();
 	dma8237_reset();
-	cpu_set_irq_callback(0, at_irq_callback);
 }

@@ -10,12 +10,14 @@
 	Release 52, Last Change 20oct96
 
 ***************************************************************************/
+
 #include <assert.h>
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "machine/uart8250.h"
 #include "machine/mc146818.h"
 #include "machine/pic8259.h"
+#include "machine/pc_turbo.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/pc_vga.h"
@@ -252,7 +254,6 @@ MACHINE_RESET( pc_aga )
 
 MACHINE_RESET( pc_vga )
 {
-	pc_vga_reset();
 	dma8237_reset();
 	cpu_set_irq_callback(0, pc_irq_callback);
 }

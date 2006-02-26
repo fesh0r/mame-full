@@ -583,6 +583,7 @@ $(OBJ)/pcshare.a:					\
 	$(OBJ)/machine/8237dma.o	\
 	$(OBJ)/machine/pic8259.o	\
 	$(OBJ)/machine/pcshare.o	\
+	$(OBJ)/mess/machine/pc_turbo.o	\
 	$(OBJ)/mess/sndhrdw/pc.o		\
 	$(OBJ)/mess/sndhrdw/sblaster.o	\
 	$(OBJ)/mess/machine/pc_fdc.o	\

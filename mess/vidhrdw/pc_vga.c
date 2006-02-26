@@ -50,6 +50,9 @@ static PALETTE_INIT( ega );
 static PALETTE_INIT( vga );
 static VIDEO_START( ega );
 static VIDEO_START( vga );
+static VIDEO_RESET( ega );
+static VIDEO_RESET( vga );
+
 static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
@@ -158,6 +161,7 @@ MACHINE_DRIVER_START( pcvideo_vga )
 	MDRV_PALETTE_INIT(vga)
 
 	MDRV_VIDEO_START(vga)
+	MDRV_VIDEO_RESET(vga)
 	MDRV_VIDEO_UPDATE(pc_video)
 MACHINE_DRIVER_END
 
@@ -170,6 +174,7 @@ MACHINE_DRIVER_START( pcvideo_pc1640 )
 	MDRV_PALETTE_INIT(ega)
 
 	MDRV_VIDEO_START(ega)
+	MDRV_VIDEO_RESET(ega)
 	MDRV_VIDEO_UPDATE(pc_video)
 MACHINE_DRIVER_END
 
@@ -1111,7 +1116,7 @@ static void vga_timer(int param)
 	vga.monitor.retrace=1;
 }
 
-VIDEO_START( ega )
+static VIDEO_START( ega )
 {
 	vga.monitor.get_clock = ega_get_clock;
 	vga.monitor.get_lines = ega_get_crtc_lines;
@@ -1123,7 +1128,11 @@ VIDEO_START( ega )
 	return 0;
 }
 
-VIDEO_START( vga )
+static VIDEO_RESET( ega )
+{
+}
+
+static VIDEO_START( vga )
 {
 	vga.monitor.get_clock=vga_get_clock;
 	vga.monitor.get_lines=vga_get_crtc_lines;
@@ -1135,8 +1144,10 @@ VIDEO_START( vga )
 	return 0;
 }
 
-#define myMIN(a, b) ((a) < (b) ? (a) : (b))
-#define myMAX(a, b) ((a) > (b) ? (a) : (b))
+static VIDEO_RESET( vga )
+{
+	pc_vga_reset();
+}
 
 static void vga_vh_text(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
@@ -1166,7 +1177,7 @@ static void vga_vh_text(mame_bitmap *bitmap, struct crtc6845 *crtc)
 			attr = vga.memory[(pos<<2) + 1];
 			font = vga.memory+2+(ch<<(5+2))+FONT1;
 
-			for (h = myMAX(-line, 0); (h < height) && (line+h < myMIN(TEXT_LINES, bitmap->height)); h++)
+			for (h = MAX(-line, 0); (h < height) && (line+h < MIN(TEXT_LINES, bitmap->height)); h++)
 			{
 				bitmapline = (UINT16 *) bitmap->line[line+h];
 				bits = font[h<<2];
