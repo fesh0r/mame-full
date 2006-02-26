@@ -45,14 +45,6 @@
  * Definitions.
  */
  
-#ifndef TRUE
-#define	TRUE			(1)
-#endif
-
-#ifndef FALSE
-#define FALSE			(0)
-#endif
-
 #define OSD_OK			(0)
 #define OSD_NOT_OK		(1)
 
