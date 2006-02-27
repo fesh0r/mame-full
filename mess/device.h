@@ -56,8 +56,8 @@ enum
 	DEVINFO_PTR_VERIFY,
 	DEVINFO_PTR_GET_DISPOSITIONS,
 	DEVINFO_PTR_CREATE_OPTGUIDE,
-    
 	DEVINFO_PTR_CREATE_OPTSPEC,
+	DEVINFO_PTR_VALIDITY_CHECK,							/* R/O: int (*validity_check)(const device_class *devclass) */
 
 	DEVINFO_PTR_DEV_SPECIFIC = 0x18000,					/* R/W: Device-specific values start here */
 
@@ -99,6 +99,8 @@ typedef void (*device_getdispositions_handler)(const struct IODevice *dev, int i
 typedef void (*device_display_handler)(mess_image *img);
 typedef const char *(*device_getname_handler)(const struct IODevice *dev, int id, char *buf, size_t bufsize);
 
+struct _device_class;
+
 union devinfo
 {
 	INT64	i;											/* generic integers */
@@ -119,9 +121,9 @@ union devinfo
 
 	device_display_handler display;
 	device_getname_handler name;
-};
 
-struct _device_class;
+	int (*validity_check)(const struct _device_class *devclass);
+};
 
 typedef void (*device_getinfo_handler)(const struct _device_class *devclass, UINT32 state, union devinfo *info);
 
