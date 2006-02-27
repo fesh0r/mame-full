@@ -342,16 +342,10 @@ ADDRESS_MAP_END
 /* functions and data used by spectrum 128, spectrum +2, spectrum +3 and scorpion */
 static unsigned char *spectrum_ram = NULL;
 
-static int spectrum_alloc_ram(int ram_size_in_k)
+static void spectrum_alloc_ram(int ram_size_in_k)
 {
 	spectrum_ram = (unsigned char *)auto_malloc(ram_size_in_k*1024);
-	if (spectrum_ram)
-	{
-		memset(spectrum_ram, 0, ram_size_in_k*1024);
-		return 1;
-	}
-
-	return 0;
+	memset(spectrum_ram, 0, ram_size_in_k*1024);
 }
 
 
@@ -514,24 +508,23 @@ ADDRESS_MAP_END
 
 static MACHINE_RESET( spectrum_128 )
 {
-	if (spectrum_alloc_ram(128)!=0)
-	{
-		/* 0x0000-0x3fff always holds ROM */
+	spectrum_alloc_ram(128);
 
-		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankptr(2, spectrum_ram + (5<<14));
-		memory_set_bankptr(6, spectrum_ram + (5<<14));
+	/* 0x0000-0x3fff always holds ROM */
 
-		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankptr(3, spectrum_ram + (2<<14));
-		memory_set_bankptr(7, spectrum_ram + (2<<14));
+	/* Bank 5 is always in 0x4000 - 0x7fff */
+	memory_set_bankptr(2, spectrum_ram + (5<<14));
+	memory_set_bankptr(6, spectrum_ram + (5<<14));
 
-		/* set initial ram config */
-		spectrum_128_port_7ffd_data = 0;
-		spectrum_128_update_memory();
+	/* Bank 2 is always in 0x8000 - 0xbfff */
+	memory_set_bankptr(3, spectrum_ram + (2<<14));
+	memory_set_bankptr(7, spectrum_ram + (2<<14));
 
-		machine_reset_spectrum();
-	}
+	/* set initial ram config */
+	spectrum_128_port_7ffd_data = 0;
+	spectrum_128_update_memory();
+
+	machine_reset_spectrum();
 }
 
 /****************************************************************************************************/
@@ -828,20 +821,19 @@ ADDRESS_MAP_END
 
 static MACHINE_RESET( spectrum_plus3 )
 {
-	if (spectrum_alloc_ram(128))
-	{
-		nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
+	spectrum_alloc_ram(128);
 
-		floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
-		floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
+	nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
 
-		/* Initial configuration */
-		spectrum_128_port_7ffd_data = 0;
-		spectrum_plus3_port_1ffd_data = 0;
-		spectrum_plus3_update_memory();
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 
-		machine_reset_spectrum();
-	}
+	/* Initial configuration */
+	spectrum_128_port_7ffd_data = 0;
+	spectrum_plus3_port_1ffd_data = 0;
+	spectrum_plus3_update_memory();
+
+	machine_reset_spectrum();
 }
 
 
@@ -1698,23 +1690,22 @@ ADDRESS_MAP_END
 
 static MACHINE_RESET( scorpion )
 {
-	if (spectrum_alloc_ram(256))
-	{
-		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankptr(2, spectrum_ram + (5<<14));
-		memory_set_bankptr(6, spectrum_ram + (5<<14));
+	spectrum_alloc_ram(256);
 
-		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankptr(3, spectrum_ram + (2<<14));
-		memory_set_bankptr(7, spectrum_ram + (2<<14));
+	/* Bank 5 is always in 0x4000 - 0x7fff */
+	memory_set_bankptr(2, spectrum_ram + (5<<14));
+	memory_set_bankptr(6, spectrum_ram + (5<<14));
 
-		spectrum_128_port_7ffd_data = 0;
-		scorpion_256_port_1ffd_data = 0;
+	/* Bank 2 is always in 0x8000 - 0xbfff */
+	memory_set_bankptr(3, spectrum_ram + (2<<14));
+	memory_set_bankptr(7, spectrum_ram + (2<<14));
 
-		scorpion_update_memory();
+	spectrum_128_port_7ffd_data = 0;
+	scorpion_256_port_1ffd_data = 0;
 
-		betadisk_init();
-	}
+	scorpion_update_memory();
+
+	betadisk_init();
 }
 
 /****************************************************************************************************/
@@ -1740,18 +1731,17 @@ ADDRESS_MAP_END
 
 static MACHINE_RESET( pentagon )
 {
-	if (spectrum_alloc_ram(128))
-	{
-		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankptr(2, spectrum_ram + (5<<14));
-		memory_set_bankptr(6, spectrum_ram + (5<<14));
+	spectrum_alloc_ram(128);
 
-		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankptr(3, spectrum_ram + (2<<14));
-		memory_set_bankptr(7, spectrum_ram + (2<<14));
+	/* Bank 5 is always in 0x4000 - 0x7fff */
+	memory_set_bankptr(2, spectrum_ram + (5<<14));
+	memory_set_bankptr(6, spectrum_ram + (5<<14));
 
-		betadisk_init();
-	}
+	/* Bank 2 is always in 0x8000 - 0xbfff */
+	memory_set_bankptr(3, spectrum_ram + (2<<14));
+	memory_set_bankptr(7, spectrum_ram + (2<<14));
+
+	betadisk_init();
 }
 
 /****************************************************************************************************/

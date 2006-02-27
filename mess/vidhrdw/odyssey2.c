@@ -169,8 +169,6 @@ VIDEO_START( odyssey2 )
 
 	odyssey2_vh_hpos = 0;
 	odyssey2_display = (UINT8 *) auto_malloc(8 * 8 * 256);
-	if( !odyssey2_display )
-		return 1;
 	memset(odyssey2_display, 0, 8 * 8 * 256);
 	return 0;
 }

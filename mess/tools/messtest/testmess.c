@@ -936,8 +936,6 @@ const struct KeyboardInfo *osd_get_key_list(void)
 	if (!ki)
 	{
 		ki = auto_malloc((__code_key_last - __code_key_first + 1) * sizeof(struct KeyboardInfo));
-		if (!ki)
-			return NULL;
 
 		for (i = __code_key_first; i <= __code_key_last; i++)
 		{
@@ -956,8 +954,6 @@ const struct JoystickInfo *osd_get_joy_list(void)
 	if (!ji)
 	{
 		ji = auto_malloc((__code_joy_last - __code_joy_first + 1) * sizeof(struct JoystickInfo));
-		if (!ji)
-			return NULL;
 
 		for (i = __code_joy_first; i <= __code_joy_last; i++)
 		{

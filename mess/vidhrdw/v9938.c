@@ -150,11 +150,6 @@ PALETTE_INIT( v9958 )
 	if (!pal_indYJK)
 	{
 		pal_indYJK = auto_malloc(0x20000 * sizeof(UINT16));
-		if (!pal_indYJK)
-		{
-			logerror ("Fatal: cannot malloc () in v9958_init_palette (), cannot exit\n");
-			return;
-		}
 	}
 
 	logerror ("Building YJK table for V9958 screens, may take a while ... \n");
@@ -431,9 +426,6 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 
 	/* allocate VRAM */
 	vdp.vram = auto_malloc (0x20000);
-	if (!vdp.vram)
-		return 1;
-
 	memset (vdp.vram, 0, 0x20000);
 	if (vdp.vram_size < 0x20000)
 	{
@@ -445,9 +437,6 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	if (vdp.vram_size > 0x20000)
 	{
 		vdp.vram_exp = auto_malloc (0x10000);
-		if (!vdp.vram_exp)
-			return 1;
-
 		memset (vdp.vram_exp, 0, 0x10000);
 	}
 	else

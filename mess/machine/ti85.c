@@ -676,18 +676,16 @@ DEVICE_LOAD( ti85_serial )
 
 	if (file_size != 0)
 	{
-		if ((file_data = (UINT8*) auto_malloc(file_size)))
-		{
-			mame_fread(file, file_data, file_size);
+		file_data = (UINT8*) auto_malloc(file_size);
+		mame_fread(file, file_data, file_size);
 
-			if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
-			{
-				ti85_free_serial_stream (&ti85_serial_stream);
-				return INIT_FAIL;
-			}
-				                                    
-			ti85_serial_status = TI85_SEND_HEADER;
+		if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
+		{
+			ti85_free_serial_stream (&ti85_serial_stream);
+			return INIT_FAIL;
 		}
+			                                    
+		ti85_serial_status = TI85_SEND_HEADER;
 	}
 	else 
 	{

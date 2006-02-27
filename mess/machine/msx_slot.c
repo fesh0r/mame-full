@@ -104,10 +104,6 @@ MSX_SLOT_MAP(rom)
 MSX_SLOT_INIT(ram)
 {
 	state->mem = auto_malloc (size);
-	if (!state->mem) {
-		logerror ("ram: error: out of memory\n");
-		return 1;
-	}
 	memset (state->mem, 0, size);
 	state->type = SLOT_RAM;
 	state->start_page = page;
@@ -151,10 +147,6 @@ MSX_SLOT_INIT(rammm)
 		return 1;
 	}
 	state->mem = auto_malloc (size);
-	if (!state->mem) {
-		logerror ("ram mapper: error: out of memory\n");
-		return 1;
-	}
 	memset (state->mem, 0, size);
 
 #ifdef MONMSX
@@ -573,10 +565,6 @@ MSX_SLOT_INIT(ascii8_sram)
 	int banks;
 
 	state->cart.sram.mem = auto_malloc (0x2000);
-	if (!state->cart.sram.mem) {
-		logerror ("ascii8_sram: error: failed to malloc sram memory\n");
-		return 1;
-	}
 	if (size > 0x100000) {
 		logerror ("ascii8_sram: warning: truncating to 1mb\n");
 		size = 0x100000;
@@ -725,10 +713,6 @@ MSX_SLOT_INIT(ascii16_sram)
 	int banks;
 
 	state->cart.sram.mem = auto_malloc (0x4000);
-	if (!state->cart.sram.mem) {
-		logerror ("ascii16_sram: error: failed to malloc sram memory\n");
-		return 1;
-	}
 
 	if (size > 0x200000) {
 		logerror ("ascii16_sram: warning: truncating to 2mb\n");
@@ -966,11 +950,6 @@ MSX_SLOT_INIT(gmaster2)
 	state->mem = mem;
 
 	p = auto_malloc (0x4000);
-	if (!p) {
-		logerror ("gmaster2: error: out of memory\n");
-		return 1;
-	}
-
 	memset (p, 0, 0x4000);
 	state->cart.sram.mem = p;
 	if (!state->sramfile) {
@@ -1474,10 +1453,6 @@ MSX_SLOT_INIT(fmpac)
 	if (!strncmp ((char*)mem + 0x18, "PAC2", 4)) {
 		state->cart.fmpac.sram_support = 1;
 		p = auto_malloc (0x4000);
-		if (!p) {
-			logerror ("fmpac: error: out of memory\n");
-			return 1;
-		}
 		memset (p, 0, 0x2000);
 		memset (p + 0x2000, 0xff, 0x2000);
 		state->cart.fmpac.mem = p;
@@ -1964,10 +1939,6 @@ MSX_SLOT_INIT(soundcartridge)
 	UINT8 *p;
 
 	p = auto_malloc (0x20000);
-	if (!p) {
-		logerror ("soundcartridge: error: failed to malloc ram\n");
-		return 1;
-	}
 	memset (p, 0, 0x20000);
 
 	state->mem = p;

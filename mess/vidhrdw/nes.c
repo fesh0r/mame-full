@@ -23,9 +23,6 @@ VIDEO_START( nes )
 	static struct ppu2c03b_interface *ppu_interface;
 
 	ppu_interface = auto_malloc(sizeof(struct ppu2c03b_interface));
-	if (!ppu_interface)
-		return 1;
-
 	memset(ppu_interface, 0, sizeof(struct ppu2c03b_interface));
 	ppu_interface->num				= 1;
 	ppu_interface->vrom_region[0]	= nes.chr_chunks ? REGION_GFX1 : REGION_INVALID;

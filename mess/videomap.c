@@ -846,8 +846,6 @@ int videomap_init(const struct videomap_config *config)
 	callbacks = config->intf;
 	flags = FLAG_FULL_REFRESH;
 	border_scanline = (UINT16 *) auto_malloc(Machine->drv->screen_width * sizeof(UINT16));
-	if (!border_scanline)
-		return 1;
 
 	/* do we need to perform endian flipping? */
 	memory_flags = config->intf->flags & VIDEOMAP_FLAGS_MEMORY_MASK;

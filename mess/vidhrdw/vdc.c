@@ -22,8 +22,6 @@ VIDEO_START( pce )
 
 	/* allocate VRAM */
 	vdc.vram = auto_malloc(0x10000);
-	if(!vdc.vram)
-		return 1;
 	memset(vdc.vram, 0, 0x10000);
 
 	/* create display bitmap */

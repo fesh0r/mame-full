@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.15 2005/08/31 01:22:09 npwoods Exp $
+  $Id: pc8801.c,v 1.16 2006/02/27 23:58:00 npwoods Exp $
 
 ***************************************************************************/
 
@@ -106,7 +106,7 @@ void pc8801_video_init (int hireso)
 	text_old = auto_malloc(sizeof(unsigned short)*80*100);
 	graph_dirty = auto_malloc(80*100);
 
-	if (!wbm1 || !wbm2 || !gVRAM || !pc88sr_textRAM || !attr_tmp || !attr_old || !text_old || !graph_dirty)
+	if (!wbm1 || !wbm2)
 	{
 		logerror ("pc8801: out of memory!\n");
 		return;

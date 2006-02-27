@@ -1423,13 +1423,11 @@ static int compis_gdc_start (const compis_gdc_interface *intf)
 
 	/* Video RAM */
 	gdc_mess.vram = (UINT16*)auto_malloc (gdc_mess.vramsize * sizeof(UINT16) );
-	if (!gdc_mess.vram)
-		return 1;
 	memset (gdc_mess.vram, 0, gdc_mess.vramsize*sizeof(UINT16) );
 
 	/* back bitmap */
 
-	gdc_mess.tmpbmp    = auto_bitmap_alloc (640, 400);
+	gdc_mess.tmpbmp = auto_bitmap_alloc (640, 400);
 	if (!gdc_mess.tmpbmp ) {
 		return 1;
 	}

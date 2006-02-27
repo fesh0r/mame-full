@@ -73,12 +73,8 @@ int video_start_crt(int num_levels, int offset_x, int offset_y, int width, int h
 
 	/* alloc the arrays */
 	list = auto_malloc(window_width * window_height * sizeof(point));
-	if (!list)
-		return 1;
 
 	list_head = auto_malloc(window_height * sizeof(int));
-	if (!list_head)
-		return 1;
 
 	/* fill with black and set up list as empty */
 	for (i=0; i<(window_width * window_height); i++)

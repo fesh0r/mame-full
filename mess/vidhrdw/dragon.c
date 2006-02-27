@@ -457,8 +457,6 @@ VIDEO_START( coco3 )
 
 	/* initialize palette RAM */
 	paletteram = auto_malloc(16 * sizeof(int));
-	if (!paletteram)
-		return 1;
 	memset(paletteram, 0, 16 * sizeof(int));
 
 	if (internal_video_start_m6847(&p, &coco3_videomap_interface, MAX_HIRES_VRAM)) {

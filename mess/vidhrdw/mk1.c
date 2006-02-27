@@ -31,8 +31,6 @@ VIDEO_START( mk1 )
 	/* artwork seams to need this */
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
-	if (!videoram)
-        return 1;
 	return 0;
 }
 

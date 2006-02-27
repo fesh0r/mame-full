@@ -192,10 +192,6 @@ static void get_double_tile_info(int tile_index)
 VIDEO_START( cdp1869 )
 {
 	colorram = auto_malloc(videoram_size);
-
-	if (!colorram)
-		return 1;
-
 	memset(colorram, 0, videoram_size);
 
 	normal_tilemap = tilemap_create(get_normal_tile_info, tilemap_scan_rows, 

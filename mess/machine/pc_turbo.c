@@ -44,9 +44,6 @@ int pc_turbo_setup(int cpunum, int port, int mask, double off_speed, double on_s
 	struct pc_turbo_info *ti;
 
 	ti = auto_malloc(sizeof(struct pc_turbo_info));
-	if (!ti)
-		return 1;
-
 	ti->cpunum = cpunum;
 	ti->port = port;
 	ti->mask = mask;

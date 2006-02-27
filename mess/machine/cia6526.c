@@ -103,8 +103,6 @@ static void cia_tod_timeout (int which);
 void cia6526_init()
 {
 	cia = auto_malloc(sizeof(CIA6526) * MAX_CIA);
-	if (!cia)
-		return;
 	memset(cia, 0, sizeof(CIA6526) * MAX_CIA);
 }
 

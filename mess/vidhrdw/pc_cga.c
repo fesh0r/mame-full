@@ -1420,9 +1420,6 @@ WRITE8_HANDLER ( pc1512_videoram_w )
 VIDEO_START( pc1512 )
 {
 	videoram = (UINT8*) auto_malloc(0x10000);
-	if (videoram == 0)
-		return 1;
-
 	videoram_size = 0x4000; //! used in cga this way, size of plain memory in 1 bank
 	memory_set_bankptr(1,videoram + videoram_offset[0]);
 	pc1512.write = 0xf;

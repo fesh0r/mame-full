@@ -27,8 +27,6 @@ VIDEO_START( sym1 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*) auto_malloc (videoram_size);
-	if (!videoram)
-        return 1;
 
 #if 0
 	{

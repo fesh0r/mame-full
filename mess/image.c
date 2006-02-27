@@ -94,8 +94,6 @@ int image_init(void)
 	if (count > 0)
 	{
 		images = auto_malloc(count * sizeof(*images));
-		if (!images)
-			return INIT_FAIL;
 		memset(images, 0, count * sizeof(*images));
 	}
 

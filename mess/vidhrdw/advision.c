@@ -28,8 +28,6 @@ VIDEO_START( advision )
 {
     advision_vh_hpos = 0;
 	advision_display = (UINT8 *)auto_malloc(8 * 8 * 256);
-	if( !advision_display )
-		return 1;
 	memset(advision_display, 0, 8 * 8 * 256);
     return 0;
 }

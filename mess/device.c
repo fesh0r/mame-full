@@ -188,8 +188,6 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 	count++; /* for our purposes, include the tailing empty device */
 
 	devices = (struct IODevice *) auto_malloc(count * sizeof(struct IODevice));
-	if (!devices)
-		goto error;
 	memset(devices, 0, count * sizeof(struct IODevice));
 
 	position = 0;

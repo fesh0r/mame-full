@@ -549,20 +549,12 @@ static MACHINE_RESET( mtx512 )
 	unsigned char * romimage;
 
 	mtx_null_mem = (unsigned char *) auto_malloc (16384);
-	if (!mtx_null_mem)
-		return;
 
 	mtx_zero_mem = (unsigned char *) auto_malloc (16384);
-	if (!mtx_zero_mem)
-		return;
 
 	mtx_loadbuffer = (unsigned char *) auto_malloc (65536);
-	if (!mtx_loadbuffer)
-		return;
 
 	mtx_savebuffer = (unsigned char *) auto_malloc (65536);
-	if (!mtx_savebuffer)
-		return;
 
 	memset (mtx_null_mem, 0, 16384);
 	memset (mtx_zero_mem, 0, 16384);

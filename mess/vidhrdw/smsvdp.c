@@ -275,12 +275,6 @@ VIDEO_START(sms) {
 
 	lineCollisionBuffer = auto_malloc(MAX_X_PIXELS);
 	spriteCache = auto_malloc(MAX_X_PIXELS * 16);
-	if (!lineCollisionBuffer) {
-		return (1);
-	}
-	if (!spriteCache) {
-		return (1);
-	}
 
 	/* Make temp bitmap for rendering */
 	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);

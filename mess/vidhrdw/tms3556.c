@@ -253,9 +253,6 @@ int tms3556_init(int vram_size)
 
 	/* allocate VRAM */
 	vdp.vram = auto_malloc(0x10000);
-	if (!vdp.vram)
-		return 1;
-
 	memset (vdp.vram, 0, 0x10000);
 	if (vdp.vram_size < 0x10000)
 	{

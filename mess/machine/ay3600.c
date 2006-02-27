@@ -303,8 +303,6 @@ int AY3600_init()
 {
 	/* Init the key remapping table */
 	ay3600_keys = auto_malloc(AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
-	if (!ay3600_keys)
-		return 1;
 	memset(ay3600_keys, 0, AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
 
 	/* We poll the keyboard periodically to scan the keys.  This is

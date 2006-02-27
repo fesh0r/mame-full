@@ -233,8 +233,6 @@ static BOOL CreateMessIcons(void)
     if (!mess_icon_index)
 	{
 		mess_icon_index = auto_malloc(game_count * IO_COUNT * sizeof(*mess_icon_index));
-		if (!mess_icon_index)
-			return FALSE;
     }
 
     for (i = 0; i < (game_count * IO_COUNT); i++)

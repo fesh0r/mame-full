@@ -136,8 +136,6 @@ SNAPSHOT_LOAD( galaxy )
 		case GALAXY_SNAPSHOT_V1_SIZE:
 		case GALAXY_SNAPSHOT_V2_SIZE:
 			snapshot_data = auto_malloc(snapshot_size);
-			if (!snapshot_data)
-				return INIT_FAIL;
 			break;
 		default:
 			return INIT_FAIL;

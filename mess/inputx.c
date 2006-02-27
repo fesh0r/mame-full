@@ -595,8 +595,6 @@ void inputx_init(void)
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
-		if (!codes)
-			goto error;
 		if (!build_codes(Machine->input_ports, codes, TRUE))
 			goto error;
 

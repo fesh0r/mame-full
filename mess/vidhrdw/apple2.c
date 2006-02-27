@@ -379,7 +379,7 @@ int apple2_video_start(const UINT8 *vram, size_t vram_size, UINT32 ignored_softs
 	/* 14x8 */
 	lores_tiledata = auto_malloc(sizeof(UINT8) * 14 * 8);
 
-	if (!text_tilemap || !lores_tilemap || !hires_artifact_map || !dhires_artifact_map)
+	if (!text_tilemap || !dbltext_tilemap || !lores_tilemap)
 		return 1;
 	
 	/* build lores_tiledata */

@@ -57,6 +57,8 @@ Source Changes:
 - Eliminated the unknown and unused -listtext and -createdir command line
   options.  [Nate Woods]
 
+- Cleaned up auto_malloc() calls.  [Oliver Stoenberg]
+
 
 
 0.104

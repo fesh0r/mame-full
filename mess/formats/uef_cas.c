@@ -86,9 +86,7 @@ static int uef_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
 			goto cleanup;
 		}
 		gz_ptr = (UINT8*) auto_malloc( inflate_size );
-		if ( !gz_ptr ) {
-			goto cleanup;
-		}
+
 		d_stream.zalloc = 0;
 		d_stream.zfree = 0;
 		d_stream.opaque = 0;

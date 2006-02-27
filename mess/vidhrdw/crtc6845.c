@@ -134,9 +134,6 @@ struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 	int idx;
 
 	crtc = auto_malloc(sizeof(struct crtc6845));
-	if (!crtc)
-		return NULL;
-
 	memset(crtc, 0, sizeof(*crtc));
 	crtc->cursor_time = timer_get_time();
 	crtc->config = *config;

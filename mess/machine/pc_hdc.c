@@ -170,8 +170,6 @@ int pc_hdc_setup(void)
 	hdc_control = 0;
 
 	buffer = auto_malloc(17*4*512);
-	if (!buffer)
-		return -1;
 
 	/* init for all boards */
 	for (i = 0; i < MAX_BOARD; i++)

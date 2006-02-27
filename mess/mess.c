@@ -68,8 +68,6 @@ static int ram_init(const game_driver *gamedrv)
 	if (mess_ram_size > 0)
 	{
 		mess_ram = (UINT8 *) auto_malloc(mess_ram_size);
-		if (!mess_ram)
-			return 1;
 		memset(mess_ram, mess_ram_default_value, mess_ram_size);
 
 		state_save_register_item("mess", 0, mess_ram_size);
@@ -102,8 +100,6 @@ int devices_init(const game_driver *gamedrv)
 
 		cwd = osd_get_cwd();
 		s = auto_malloc(strlen(cwd) + 1);
-		if (!s)
-			return 1;
 		strcpy(s, cwd);
 		mess_path = s;
 	}

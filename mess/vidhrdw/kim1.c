@@ -47,13 +47,8 @@ VIDEO_START( kim1 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = auto_malloc (videoram_size);
-	if (!videoram)
-        return 1;
 
-	if (video_start_generic () != 0)
-        return 1;
-
-    return 0;
+	return video_start_generic();
 }
 
 VIDEO_UPDATE( kim1 )

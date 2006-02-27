@@ -738,10 +738,6 @@ void msx_memory_init (void)
 	UINT8 *mem = NULL;
 
 	msx1.empty = (UINT8*)auto_malloc (0x4000);
-	if (!msx1.empty) {
-		logerror ("msx_memory_init: error: cannot allocate empty page\n");
-		return;
-	}
 	memset (msx1.empty, 0xff, 0x4000);
 
 	for (prim=0; prim<4; prim++) {
@@ -828,11 +824,6 @@ void msx_memory_init (void)
 					break;
 				}
 				st = (slot_state*)auto_malloc (sizeof (slot_state));
-				if (!st) {
-					logerror ("fatal error: cannot malloc %d\n", 
-								(int)sizeof (slot_state));
-					continue;
-				}
 				memset (st, 0, sizeof (slot_state));
 
 				if (slot->init (st, layout->slot_page, mem, size)) {

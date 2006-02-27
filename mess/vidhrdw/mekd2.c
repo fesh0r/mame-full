@@ -60,8 +60,6 @@ VIDEO_START( mekd2 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
-	if (!videoram)
-        return 1;
 
 #if 0
 	{
@@ -72,10 +70,7 @@ VIDEO_START( mekd2 )
 	}
 #endif
 
-	if (video_start_generic () != 0)
-        return 1;
-
-    return 0;
+	return video_start_generic();
 }
 
 VIDEO_UPDATE( mekd2 )

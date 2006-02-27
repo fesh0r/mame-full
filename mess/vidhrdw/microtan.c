@@ -46,12 +46,8 @@ VIDEO_START( microtan )
 		return 1;
 
 	microtan_chunky_buffer = auto_malloc(videoram_size);
-
-	if (!microtan_chunky_buffer)
-		return 1;
-
-	microtan_chunky_graphics = 0;
 	memset(microtan_chunky_buffer, 0, videoram_size);
+	microtan_chunky_graphics = 0;
 
 	return 0;
 }

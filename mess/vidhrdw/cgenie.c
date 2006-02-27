@@ -39,14 +39,9 @@ VIDEO_START( cgenie )
 		return 1;
 
     cleanbuffer = (UINT8*)auto_malloc(64 * 32 * 8);
-	if( !cleanbuffer )
-		return 1;
 	memset(cleanbuffer, 0, 64 * 32 * 8);
 
-
 	colorbuffer = (UINT8*)auto_malloc(64 * 32 * 8);
-	if( !colorbuffer )
-		return 1;
 	memset(colorbuffer, 0, 64 * 32 * 8);
 
 	return 0;

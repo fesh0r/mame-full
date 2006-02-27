@@ -658,15 +658,11 @@ VIDEO_START( vic2 )
 	if (vic2.vic3) {
 		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 656 / 8);
 
-		if (!vic2.screen[0])
-			return 1;
 		for (i = 1; i < 216; i++)
 			vic2.screen[i] = vic2.screen[i - 1] + 656 / 8;
 	} else {
 		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 336 / 8);
 
-		if (!vic2.screen[0])
-			return 1;
 		for (i = 1; i < 216; i++)
 			vic2.screen[i] = vic2.screen[i - 1] + 336 / 8;
 	}

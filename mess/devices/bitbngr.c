@@ -41,17 +41,8 @@ static int bitbanger_init(mess_image *img)
 	config = (const struct bitbanger_config *) device_get_info_ptr(&dev->devclass, DEVINFO_PTR_BITBANGER_CONFIG);
 
 	bi = (struct bitbanger_info *) auto_malloc(sizeof(struct bitbanger_info));
-	if (!bi)
-		return INIT_FAIL;
-
 	bi->pulses = (double *) auto_malloc(config->maximum_pulses * sizeof(double));
-	if (!bi->pulses)
-		return INIT_FAIL;
-
 	bi->factored_pulses = (int *) auto_malloc(config->maximum_pulses * sizeof(int));
-	if (!bi->factored_pulses)
-		return INIT_FAIL;
-
 	bi->config = config;
 	bi->last_pulse_time = 0.0;
 	bi->recorded_pulses = 0;

@@ -182,11 +182,7 @@ void	flash_init(int index1)
 
 	/* 1mb ram */
 	flash[index1].base = (char *) auto_malloc(1024*1024);
-	if (flash[index1].base!=NULL)
-	{
-                memset(flash[index1].base, 0x080, 1024*1024);
-
-	}
+	memset(flash[index1].base, 0x080, 1024*1024);
 	flash_reset(index1);
 	/* no erase state */
 	flash[index1].flash_erase_status = FLASH_ERASE_STATUS_NONE;

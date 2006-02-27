@@ -33,16 +33,10 @@ VIDEO_START( spectrum )
 	frame_number = 0;
 	flash_invert = 0;
 	spectrum_characterram = auto_malloc(0x1800);
-	if (!spectrum_characterram)
-		return 1;
 
 	spectrum_colorram = auto_malloc(0x300);
-	if (!spectrum_colorram)
-		return 1;
 
 	charsdirty = auto_malloc(0x300);
-	if (!charsdirty)
-		return 1;
 
 	memset(charsdirty,1,0x300);
 	EventList_Initialise(30000);
