@@ -225,7 +225,7 @@ static int devices_initialload(const game_driver *gamedrv)
 	{
 		if (dev->must_be_loaded)
 		{
-			for (id = 0; i < dev->count; i++)
+			for (id = 0; id < dev->count; id++)
 			{
 				image = image_from_device_and_index(dev, id);
 				if (!image_exists(image))
