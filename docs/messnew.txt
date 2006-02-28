@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [990189V] Fixed crash when taking a screenshot.  (bug #714) [Oliver
+  Stoeneberg, Nate Woods]
+
 - [EXIDY] Added cartridge support.  (bug #842) [Robert]
 
 - [MPF1] Added sound support and other enhancements.  [Giel van Schijndel]
@@ -57,7 +60,7 @@ Source Changes:
 - Eliminated the unknown and unused -listtext and -createdir command line
   options.  [Nate Woods]
 
-- Cleaned up auto_malloc() calls.  [Oliver Stoenberg]
+- Cleaned up auto_malloc() calls.  [Oliver Stoeneberg]
 
 
 
@@ -99,7 +102,7 @@ User Interface Changes:
 
 - [Windows GUI] Fixed a bug that caused zip files where the file extension was
   not all lowercase to not be recognized as such.  (bug #831) [Oliver
-  Stoenberg]
+  Stoeneberg]
 
 
 
