@@ -57,7 +57,7 @@ enum
 	DEVINFO_PTR_GET_DISPOSITIONS,
 	DEVINFO_PTR_CREATE_OPTGUIDE,
 	DEVINFO_PTR_CREATE_OPTSPEC,
-	DEVINFO_PTR_VALIDITY_CHECK,							/* R/O: int (*validity_check)(const device_class *devclass) */
+	DEVINFO_PTR_VALIDITY_CHECK = DEVINFO_PTR_CREATE_OPTSPEC + DEVINFO_CREATE_OPTMAX,	/* R/O: int (*validity_check)(const device_class *devclass) */
 
 	DEVINFO_PTR_DEV_SPECIFIC = 0x18000,					/* R/W: Device-specific values start here */
 

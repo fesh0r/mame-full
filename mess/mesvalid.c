@@ -22,6 +22,7 @@ static int validate_device(const device_class *devclass)
 	char *s1;
 	char *s2;
 	iodevice_t devtype;
+	int (*validity_check)(const device_class *devclass);
 
 	/* critical information */
 	devtype = (iodevice_t) (int) device_get_info_int(devclass, DEVINFO_INT_TYPE);
@@ -129,6 +130,15 @@ static int validate_device(const device_class *devclass)
 		default:
 			break;
 	}
+
+	/* is there a custom validity check? */
+	validity_check = (int (*)(const device_class *)) device_get_info_fct(devclass, DEVINFO_PTR_VALIDITY_CHECK);
+	if (validity_check)
+	{
+		if (validity_check(devclass))
+			error = 1;
+	}
+
 	return error;
 }
 

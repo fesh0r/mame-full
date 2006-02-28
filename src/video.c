@@ -479,6 +479,17 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 	/* "dirty" the area for the next display update */
 	visible_area_changed = 1;
+	
+	/* bounds check */
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	{
+		if ((min_x < 0) || (min_y < 0) || (max_x >= scrbitmap[0]->width) || (max_y >= scrbitmap[0]->height))
+		{
+			osd_die("set_visible_area(%d,%d,%d,%d) out of bounds; bitmap dimensions are (%d,%d)\n",
+				min_x, min_y, max_x, max_y,
+				scrbitmap[0]->width, scrbitmap[0]->height);
+		}
+	}
 
 	/* set the new values in the Machine struct */
 	Machine->visible_area.min_x = min_x;
