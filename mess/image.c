@@ -997,6 +997,7 @@ mess_image *image_from_device_and_index(const struct IODevice *dev, int id)
 	mess_image *image = NULL;
 
 	assert(id < dev->count);
+	assert(images);
 
 	indx = 0;
 	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
