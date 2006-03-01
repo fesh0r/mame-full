@@ -2,9 +2,9 @@
 #include "sound/custom.h"
 
 /* in vidhrdw/channelf.c */
-extern int channelf_val_reg;
-extern int channelf_row_reg;
-extern int channelf_col_reg;
+extern UINT8 channelf_val_reg;
+extern UINT8 channelf_row_reg;
+extern UINT8 channelf_col_reg;
 
 extern PALETTE_INIT( channelf );
 extern VIDEO_START( channelf );

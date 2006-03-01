@@ -2,9 +2,9 @@
 #include "vidhrdw/generic.h"
 #include "includes/channelf.h"
 
-int channelf_val_reg;
-int channelf_row_reg;
-int channelf_col_reg;
+UINT8 channelf_val_reg = 0;
+UINT8 channelf_row_reg = 0;
+UINT8 channelf_col_reg = 0;
 
 static UINT8 channelf_palette[] = {
 	0x00, 0x00, 0x00,	/* black */
