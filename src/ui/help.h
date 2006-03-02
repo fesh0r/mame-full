@@ -41,7 +41,7 @@ extern const MAMEHELPINFO g_helpInfo[];
 #define MAME32CONTEXTHELP "mame32.chm::/cntx_help.txt"
 #endif
 
-extern int  HelpInit(void);
+extern int HelpInit(void);
 extern void HelpExit(void);
 extern HWND HelpFunction(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
 

@@ -312,6 +312,8 @@
 #define IDC_LIGHTGUNDEVICE              1239
 #define IDC_ANALOG_AXES_TEXT            1240
 #define IDC_ANALOG_AXES                 1241
+#define IDC_HIGH_PRIORITY_TEXT          1242
+#define IDC_HIGH_PRIORITYTXT            1244
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -333,6 +335,7 @@
 #define ID_FILE_PLAY_RECORD             40019
 #define ID_FILE_PLAY_BACK               40020
 #define ID_FILE_PLAY_RECORD_WAVE        40021
+#define ID_FILE_PLAY_RECORD_MNG         40022
 #define ID_VIEW_PICTURE_AREA            40023
 #define ID_HELP_CONTENTS                40025
 #define ID_HELP_WHATS_NEW32             40026
@@ -405,7 +408,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        187
 #define _APS_NEXT_COMMAND_VALUE         40097
-#define _APS_NEXT_CONTROL_VALUE         1242
+#define _APS_NEXT_CONTROL_VALUE         1245
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

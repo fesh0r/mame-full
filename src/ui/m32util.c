@@ -333,7 +333,9 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 					num_speakers++;
 
 			gameinfo->isStereo = (num_speakers > 1);
-			gameinfo->isMultiMon = FALSE;
+			//gameinfo->isMultiMon = ((drv.video_attributes & VIDEO_DUAL_MONITOR) != 0);
+			// Was removed from Core
+			gameinfo->isMultiMon = 0;
 			gameinfo->isVector = ((drv.video_attributes & VIDEO_TYPE_VECTOR) != 0);
 			gameinfo->usesRoms = FALSE;
 			for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))

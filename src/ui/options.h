@@ -45,6 +45,17 @@ enum
 	UNKNOWN	= -1
 };
 
+// config helpers types
+enum
+{
+	RO_BOOL = 0, // BOOL value
+	RO_INT,      // int value
+	RO_DOUBLE,   // double value
+	RO_COLOR,    // COLORREF value
+	RO_STRING,   // pointer to string    - m_vpData is an allocated buffer
+	RO_ENCODE    // encode/decode string - calls decode/encode functions
+};
+
 /* Default input */
 enum 
 {
@@ -200,7 +211,7 @@ typedef struct
 	BOOL   old_timing;
 	BOOL   leds;
 	char   *ledmode;
-	BOOL   high_priority;
+	int    priority;
 	BOOL   skip_gameinfo;
 #ifdef MESS
 	BOOL   skip_warnings;
@@ -295,7 +306,7 @@ typedef struct
 #ifdef MESS
 	BOOL     skip_warnings;
 #endif
-    BOOL     high_priority;
+    int      priority;
     BOOL     autosave;
 
 	// Keyboard control of ui
