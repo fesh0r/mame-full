@@ -640,58 +640,16 @@ DEVICE_UNLOAD( ti99_cart )
 	slot_type[id] = SLOT_EMPTY;
 }
 
-DEVICE_INIT( ti99_hd )
-{
-	int id = image_index_in_device(image);
-
-	switch (id)
-	{
-	case 0:
-	case 1:
-	case 2:
-		return device_init_mess_hd(image);
-
-	case 3:
-		return device_init_ti99_ide(image);
-	}
-
-	return INIT_FAIL;
-}
-
 DEVICE_LOAD( ti99_hd )
 {
 	int id = image_index_in_device(image);
-
-	switch (id)
-	{
-	case 0:
-	case 1:
-	case 2:
-		return smc92x4_hd_load(image, id);
-
-	case 3:
-		return device_load_ti99_ide(image, file);
-	}
-
-	return INIT_FAIL;
+	return smc92x4_hd_load(image, id);
 }
 
 DEVICE_UNLOAD( ti99_hd )
 {
 	int id = image_index_in_device(image);
-
-	switch (id)
-	{
-	case 0:
-	case 1:
-	case 2:
-		smc92x4_hd_unload(image, id);
-		break;
-
-	case 3:
-		device_unload_ti99_ide(image);
-		break;
-	}
+	smc92x4_hd_unload(image, id);
 }
 
 /*

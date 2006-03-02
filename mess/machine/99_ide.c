@@ -102,30 +102,6 @@ static void clk_interrupt_callback(int state)
 }
 
 /*
-	Init an IDE image
-*/
-DEVICE_INIT( ti99_ide )
-{
-	return ide_hd_init(image, 0, 0, &ti99_ide_interface);
-}
-
-/*
-	Load an IDE image
-*/
-DEVICE_LOAD( ti99_ide )
-{
-	return ide_hd_load(image, 0, 0, &ti99_ide_interface);
-}
-
-/*
-	Unload an IDE image
-*/
-DEVICE_UNLOAD( ti99_ide )
-{
-	ide_hd_unload(image, 0, 0, &ti99_ide_interface);
-}
-
-/*
 	Reset ide card, set up handlers
 */
 void ti99_ide_init(int in_tms9995_mode)
@@ -135,8 +111,6 @@ void ti99_ide_init(int in_tms9995_mode)
 	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
 
 	ti99_peb_set_card_handlers(0x1000, & ide_handlers);
-
-	ide_hd_machine_init(0, 0, & ti99_ide_interface);
 
 	cur_page = 0;
 	sram_enable = 0;
@@ -385,5 +359,21 @@ static WRITE8_HANDLER(ide_mem_w)
 			else
 				ti99_ide_RAM[offset] = data;
 		}
+	}
+}
+
+
+
+void ti99_ide_harddisk_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case DEVINFO_INT_COUNT:						info->i = 1; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case DEVINFO_PTR_IDEDRIVE_INTERFACE: info->p = (void *) &ti99_ide_interface; break;
+
+		default: ide_harddisk_device_getinfo(devclass, state, info); break;
 	}
 }

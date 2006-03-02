@@ -1,4 +1,22 @@
-int ide_hd_init(mess_image *img, int which_bus, int which_address, struct ide_interface *intf);
-int ide_hd_load(mess_image *img, int which_bus, int which_address, struct ide_interface *intf);
-void ide_hd_unload(mess_image *img, int which_bus, int which_address, struct ide_interface *intf);
-void ide_hd_machine_init(int which_bus, int which_address, struct ide_interface *intf);
+/*********************************************************************
+
+	idedrive.h
+
+	Code to interface the MESS image code with MAME's IDE core
+
+*********************************************************************/
+
+#ifndef IDEDRIVE_H
+#define IDEDRIVE_H
+
+enum
+{
+	DEVINFO_INT_IDEDRIVE_ADDRESS = DEVINFO_INT_DEV_SPECIFIC,
+
+	DEVINFO_PTR_IDEDRIVE_INTERFACE = DEVINFO_PTR_DEV_SPECIFIC
+};
+
+void ide_harddisk_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info);
+
+
+#endif /* IDEDRIVE_H */
