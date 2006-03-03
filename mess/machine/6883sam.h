@@ -31,7 +31,6 @@ struct _sam6883_interface
 };
 
 void sam_init(const sam6883_interface *intf);
-void sam_reset(void);
 
 WRITE8_HANDLER(sam_w);
 

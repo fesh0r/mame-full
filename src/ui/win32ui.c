@@ -293,6 +293,7 @@ static BOOL             SelectLanguageFile(HWND hWnd, TCHAR* filename);
 static void             MamePlayRecordGame(void);
 static void             MamePlayBackGame(void);
 static void             MamePlayRecordWave(void);
+static void             MamePlayRecordMNG(void);
 static void				MameLoadState(void);
 static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filename, int filetype);
 static void             MamePlayGame(void);
@@ -1058,6 +1059,11 @@ static DWORD RunMAME(int nGameIndex)
 		argv[argc++] = "-wavwrite";
 		argv[argc++] = g_pRecordWaveName;
 	}
+	if (g_pRecordMNGName != NULL)
+	{
+		argv[argc++] = "-mngwrite";
+		argv[argc++] = g_pRecordMNGName;
+	}
 	if (g_pSaveStateName != NULL)
 	{
 		argv[argc++] = "-state";
@@ -1106,6 +1112,8 @@ static DWORD RunMAME(int nGameIndex)
 	char pCmdLine[2048];
 	HWND hGameWnd = NULL;
 	long lGameWndStyle = 0;
+	int UIPriority = GetThreadPriority(GetCurrentThread());
+	//Save the Priority
 
 #ifdef MESS
 	SaveGameOptions(nGameIndex);
@@ -1164,6 +1172,8 @@ static DWORD RunMAME(int nGameIndex)
 		}
 
 		ShowWindow(hMain, SW_SHOW);
+		//Restore UI Thread Priority
+		SetThreadPriority(GetCurrentThread(),UIPriority);
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
@@ -4147,6 +4157,10 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		MamePlayRecordWave();
 		return TRUE;
 
+	case ID_FILE_PLAY_RECORD_MNG:
+		MamePlayRecordMNG();
+		return TRUE;
+
 	case ID_FILE_LOADSTATE :
 		MameLoadState();
 		return TRUE;
@@ -5334,6 +5348,7 @@ enum
 	FILETYPE_INPUT_FILES = 1,
 	FILETYPE_SAVESTATE_FILES = 2,
 	FILETYPE_WAVE_FILES = 3,
+	FILETYPE_MNG_FILES = 4
 };
 static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int filetype)
 {
@@ -5346,15 +5361,16 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int fi
 	switch (filetype)
 	{
 	case FILETYPE_INPUT_FILES :
-	{
 		of.lpstrFilter   = MAMENAME " input files (*.inp,*.zip)\0*.inp;*.zip\0All files (*.*)\0*.*\0";
 		break;
-	}
 	case FILETYPE_SAVESTATE_FILES :
 		of.lpstrFilter   = MAMENAME " savestate files (*.sta)\0*.sta;\0All files (*.*)\0*.*\0";
 		break;
 	case FILETYPE_WAVE_FILES :
 		of.lpstrFilter   = "Sounds (*.wav)\0*.wav;\0All files (*.*)\0*.*\0";
+		break;
+	case FILETYPE_MNG_FILES :
+		of.lpstrFilter   = "videos (*.mng)\0*.mng;\0All files (*.*)\0*.*\0";
 		break;
 	}
 	of.lpstrCustomFilter = NULL;
@@ -5382,6 +5398,9 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int fi
 		break;
 	case FILETYPE_WAVE_FILES :
 		of.lpstrDefExt       = "wav";
+		break;
+	case FILETYPE_MNG_FILES :
+		of.lpstrDefExt       = "mng";
 		break;
 	}
 	of.lCustData         = 0;
@@ -5744,6 +5763,23 @@ static void MamePlayRecordWave()
 		g_pRecordWaveName = filename;
 		MamePlayGameWithOptions(nGame);
 		g_pRecordWaveName = NULL;
+	}	
+}
+
+static void MamePlayRecordMNG()
+{
+	int  nGame;
+	char filename[MAX_PATH];
+	*filename = 0;
+
+	nGame = Picker_GetSelectedItem(hwndList);
+	strcpy(filename, drivers[nGame]->name);
+
+	if (CommonFileDialog(GetSaveFileName, filename, FILETYPE_MNG_FILES))
+	{
+		g_pRecordMNGName = filename;
+		MamePlayGameWithOptions(nGame);
+		g_pRecordMNGName = NULL;
 	}	
 }
 

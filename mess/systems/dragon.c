@@ -14,7 +14,7 @@
 #include "inputx.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
-#include "includes/6883sam.h"
+#include "machine/6883sam.h"
 #include "includes/dragon.h"
 #include "devices/basicdsk.h"
 #include "includes/6551.h"
@@ -34,15 +34,15 @@
 #define JOYSTICK_SENSITIVITY	100
 
 static ADDRESS_MAP_START( coco_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
-	AM_RANGE(0x8000, 0xfeff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
-	AM_RANGE(0xff00, 0xff1f)	AM_READWRITE(pia_0_r,				pia_0_w)
-	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
-	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
-	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
-	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_mapped_irq_r,	MWA8_NOP)
+	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
+	AM_RANGE(0x8000, 0xfeff) AM_RAMBANK(2)
+	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,				pia_0_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf) AM_NOP
+	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
+	AM_RANGE(0xffe0, 0xffef) AM_NOP
+	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x3ff0)
 ADDRESS_MAP_END
 
 
@@ -56,41 +56,41 @@ ADDRESS_MAP_END
  * which would make sense, but I'm not sure.
  */
 static ADDRESS_MAP_START( coco3_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
-	AM_RANGE(0x2000, 0x3fff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
-	AM_RANGE(0x4000, 0x5fff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
-	AM_RANGE(0x6000, 0x7fff)	AM_READWRITE(MRA8_BANK4,			MWA8_BANK4)
-	AM_RANGE(0x8000, 0x9fff)	AM_READWRITE(MRA8_BANK5,			MWA8_BANK5)
-	AM_RANGE(0xa000, 0xbfff)	AM_READWRITE(MRA8_BANK6,			MWA8_BANK6)
-	AM_RANGE(0xc000, 0xdfff)	AM_READWRITE(MRA8_BANK7,			MWA8_BANK7)
-	AM_RANGE(0xe000, 0xfdff)	AM_READWRITE(MRA8_BANK8,			MWA8_BANK8)
-	AM_RANGE(0xfe00, 0xfeff)	AM_READWRITE(MRA8_BANK9,			MWA8_BANK9)
-	AM_RANGE(0xff00, 0xff1f)	AM_READWRITE(pia_0_r,				pia_0_w)
-	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco3_pia_1_r,			pia_1_w)
-	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
-	AM_RANGE(0xff90, 0xff97)	AM_READWRITE(coco3_gime_r,			coco3_gime_w)
-	AM_RANGE(0xff98, 0xff9f)	AM_READWRITE(coco3_gimevh_r,		coco3_gimevh_w)
-	AM_RANGE(0xffa0, 0xffaf)	AM_READWRITE(coco3_mmu_r,			coco3_mmu_w)
-	AM_RANGE(0xffb0, 0xffbf)	AM_READWRITE(paletteram_r,			coco3_palette_w)
-	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
-	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(coco3_mapped_irq_r,	MWA8_NOP)
+	AM_RANGE(0x0000, 0x1fff) AM_RAMBANK(1)
+	AM_RANGE(0x2000, 0x3fff) AM_RAMBANK(2)
+	AM_RANGE(0x4000, 0x5fff) AM_RAMBANK(3)
+	AM_RANGE(0x6000, 0x7fff) AM_RAMBANK(4)
+	AM_RANGE(0x8000, 0x9fff) AM_RAMBANK(5)
+	AM_RANGE(0xa000, 0xbfff) AM_RAMBANK(6)
+	AM_RANGE(0xc000, 0xdfff) AM_RAMBANK(7)
+	AM_RANGE(0xe000, 0xfdff) AM_RAMBANK(8)
+	AM_RANGE(0xfe00, 0xfeff) AM_RAMBANK(9)
+	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,				pia_0_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco3_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xff97) AM_READWRITE(coco3_gime_r,			coco3_gime_w)
+	AM_RANGE(0xff98, 0xff9f) AM_READWRITE(coco3_gimevh_r,		coco3_gimevh_w)
+	AM_RANGE(0xffa0, 0xffaf) AM_READWRITE(coco3_mmu_r,			coco3_mmu_w)
+	AM_RANGE(0xffb0, 0xffbf) AM_READWRITE(paletteram_r,			coco3_palette_w)
+	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
+	AM_RANGE(0xffe0, 0xffef) AM_NOP
+	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x7ff0)
 ADDRESS_MAP_END
 
 
 
 static ADDRESS_MAP_START( d64_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
-	AM_RANGE(0x8000, 0xbfff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
-	AM_RANGE(0xc000, 0xfeff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
-	AM_RANGE(0xff00, 0xff03)	AM_READWRITE(pia_0_r,				pia_0_w)		AM_MIRROR(0x0018)
-	AM_RANGE(0xff04, 0xff07)	AM_READWRITE(acia_6551_r,			acia_6551_w)	AM_MIRROR(0x0018)
-	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
-	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
-	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
-	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_mapped_irq_r,	MWA8_NOP)
+	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
+	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
+	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,				pia_0_w)		AM_MIRROR(0x0018)
+	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,			acia_6551_w)	AM_MIRROR(0x0018)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf) AM_NOP
+	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
+	AM_RANGE(0xffe0, 0xffef) AM_NOP
+	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x3ff0)
 ADDRESS_MAP_END
 
 
@@ -144,19 +144,19 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( dgnalpha_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
-	AM_RANGE(0x8000, 0xbfff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
-	AM_RANGE(0xc000, 0xfeff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
-	AM_RANGE(0xff00, 0xff03)	AM_READWRITE(pia_0_r,				pia_0_w)	
-	AM_RANGE(0xff04, 0xff07)	AM_READWRITE(acia_6551_r,			acia_6551_w)	
-	AM_RANGE(0xff20, 0xff23)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
-	AM_RANGE(0xff24, 0xff27)	AM_READWRITE(pia_2_r,			pia_2_w) 	/* Third PIA on Dragon Alpha */
-	AM_RANGE(0xff2c, 0xff2f)	AM_READWRITE(wd2797_r,				wd2797_w)	/* Alpha onboard disk interface */
-	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
-	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
-	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
-	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_alpha_mapped_irq_r,	MWA8_NOP)
+	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
+	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
+	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,			pia_0_w)	
+	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,		acia_6551_w)	
+	AM_RANGE(0xff20, 0xff23) AM_READWRITE(coco_pia_1_r,		pia_1_w)
+	AM_RANGE(0xff24, 0xff27) AM_READWRITE(pia_2_r,			pia_2_w) 	/* Third PIA on Dragon Alpha */
+	AM_RANGE(0xff2c, 0xff2f) AM_READWRITE(wd2797_r,			wd2797_w)	/* Alpha onboard disk interface */
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,	coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf) AM_NOP
+	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
+	AM_RANGE(0xffe0, 0xffef) AM_NOP
+	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x3ff0)
 ADDRESS_MAP_END
 
 

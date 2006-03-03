@@ -1,4 +1,4 @@
-#include "includes/6883sam.h"
+#include "machine/6883sam.h"
 #include "state.h"
 
 /* The Motorola 6883 SAM has 16 bits worth of state, but the state is changed
@@ -60,6 +60,8 @@ static const UINT8 sammode2rowheight[] =
 	1	/* 7 - Reserved/Invalid */
 };
 
+static void sam_reset(void);
+
 static void update_sam(void)
 {
 	UINT16 xorval;
@@ -68,35 +70,31 @@ static void update_sam(void)
 	sam.old_state = sam.state;
 
 	/* Check changes in VDG Mode */
-	if ((xorval & 0x0007) && sam.intf->set_rowheight) {
+	if ((xorval & 0x0007) && sam.intf->set_rowheight)
 		sam.intf->set_rowheight(sammode2rowheight[sam.state & 0x0007]);
-	}
 
 	/* Check changes in Display Offset */
-	if ((xorval & 0x03F8) && sam.intf->set_displayoffset) {
+	if ((xorval & 0x03F8) && sam.intf->set_displayoffset)
 		sam.intf->set_displayoffset((sam.state & 0x03F8) << 6);
-	}
 
 	/* Check changes in Page #1 */
-	if ((xorval & 0x0400) && sam.intf->set_pageonemode) {
+	if ((xorval & 0x0400) && sam.intf->set_pageonemode)
 		sam.intf->set_pageonemode((sam.state & 0x0400) / 0x0400);
-	}
 
 	/* Check changes in MPU Rate */
-	if ((xorval & 0x1800) && sam.intf->set_mpurate) {
+	if ((xorval & 0x1800) && sam.intf->set_mpurate)
 		sam.intf->set_mpurate((sam.state & 0x1800) / 0x0800);
-	}
 
 	/* Check changes in Memory Size */
-	if ((xorval & 0x6000) && sam.intf->set_memorysize) {
+	if ((xorval & 0x6000) && sam.intf->set_memorysize)
 		sam.intf->set_memorysize((sam.state & 0x6000) / 0x2000);
-	}
 
 	/* Check changes in Map Type */
-	if ((xorval & 0x8000) && sam.intf->set_maptype) {
+	if ((xorval & 0x8000) && sam.intf->set_maptype)
 		sam.intf->set_maptype((sam.state & 0x8000) / 0x8000);
-	}
 }
+
+
 
 void sam_init(const sam6883_interface *intf)
 {
@@ -105,14 +103,20 @@ void sam_init(const sam6883_interface *intf)
 	sam.state = 0;
 	sam.old_state = ~0;
 	sam.intf = intf;
+
+	add_reset_callback(sam_reset);
 }
 
-void sam_reset(void)
+
+
+static void sam_reset(void)
 {
 	sam.state = 0;
 	sam.old_state = ~0;
 	update_sam();
 }
+
+
 
 void sam_setstate(UINT16 state, UINT16 mask)
 {
@@ -121,11 +125,14 @@ void sam_setstate(UINT16 state, UINT16 mask)
 	update_sam();
 }
 
+
+
 WRITE8_HANDLER(sam_w)
 {
 	UINT16 mask;
 
-	if (offset < 32) {
+	if (offset < 32)
+	{
 		mask = 1 << (offset / 2);
 		if (offset & 1)
 			sam.state |= mask;

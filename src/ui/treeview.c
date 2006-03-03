@@ -35,6 +35,7 @@
 
 #include <io.h>
 #include <driver.h>
+#include "hash.h"
 #include "M32Util.h"
 #include "bitmask.h"
 #include "screenshot.h"
@@ -45,7 +46,6 @@
 #include "options.h"
 #include "help.h"
 #include "dialogs.h"
-#include "hash.h"
 
 #ifdef _MSC_VER
 #if _MSC_VER > 1200

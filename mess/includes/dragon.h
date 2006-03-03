@@ -110,9 +110,6 @@ DEVICE_UNLOAD(coco3_rom);
 
 SNAPSHOT_LOAD ( coco_pak );
 SNAPSHOT_LOAD ( coco3_pak );
-READ8_HANDLER ( dragon_mapped_irq_r );
-READ8_HANDLER ( dragon_alpha_mapped_irq_r );
-READ8_HANDLER ( coco3_mapped_irq_r );
 READ8_HANDLER ( coco3_mmu_r );
 WRITE8_HANDLER ( coco3_mmu_w );
 READ8_HANDLER ( coco3_gime_r );

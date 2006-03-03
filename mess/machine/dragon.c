@@ -66,7 +66,7 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 #include "machine/6821pia.h"
 #include "includes/dragon.h"
 #include "includes/cococart.h"
-#include "includes/6883sam.h"
+#include "machine/6883sam.h"
 #include "includes/6551.h"
 #include "vidhrdw/m6847.h"
 #include "formats/cocopak.h"
@@ -1608,24 +1608,6 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
 /***************************************************************************
   Misc
 ***************************************************************************/
-
- READ8_HANDLER(dragon_mapped_irq_r)
-{
-	return coco_rom[0x3ff0 + offset];
-}
-
-READ8_HANDLER(dragon_alpha_mapped_irq_r)
-{
-	return dragon_rom_bank[0x3ff0 + offset];
-}
-
- READ8_HANDLER(coco3_mapped_irq_r)
-{
-	/* NPW 28-Aug-2000 - I discovered this when we moved over to the new ROMset
-	 * and Tim confirmed this
-	 */
-	return coco_rom[0x7ff0 + offset];
-}
 
 static void d_sam_set_mpurate(int val)
 {
