@@ -14,9 +14,13 @@
 
 **********************************************************************/
 
+#ifndef __6833SAM_H__
+#define __6833SAM_H__
+
 #include "driver.h"
 
-struct sam6883_interface
+typedef struct _sam6883_interface sam6883_interface;
+struct _sam6883_interface
 {
 	void (*set_rowheight)(int rowheight);
 	void (*set_displayoffset)(int offset);
@@ -26,10 +30,11 @@ struct sam6883_interface
 	void (*set_maptype)(int val);
 };
 
-void sam_init(void);
-void sam_config(const struct sam6883_interface *intf);
+void sam_init(const sam6883_interface *intf);
 void sam_reset(void);
 
 WRITE8_HANDLER(sam_w);
 
 void sam_setstate(UINT16 state, UINT16 mask);
+
+#endif /* __6833SAM_H__ */

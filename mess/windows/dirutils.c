@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "osdepend.h"
+#include "mame.h"
 #include "strconv.h"
 
 

@@ -1,7 +1,8 @@
-#include "driver.h"
-#include "includes/channelf.h"
-
 #include <math.h>
+
+#include "driver.h"
+#include "streams.h"
+#include "includes/channelf.h"
 
 static sound_stream *channel;
 static int sound_mode;

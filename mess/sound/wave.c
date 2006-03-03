@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "utils.h"
 #include "devices/cassette.h"
+#include "streams.h"
 
 #define ALWAYS_PLAY_SOUND	0
 #define WAVE_TOKEN_MASK		0xFFFF0000
@@ -63,7 +64,7 @@ static void *wave_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void wave_set_info(void *token, UINT32 state, union sndinfo *info)
+static void wave_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -72,7 +73,7 @@ static void wave_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void wave_get_info(void *token, UINT32 state, union sndinfo *info)
+void wave_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

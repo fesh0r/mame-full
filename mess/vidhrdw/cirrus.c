@@ -89,21 +89,21 @@ static void cirrus_update_8bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 static void cirrus_update_16bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	osd_die("NYI");
+	fatalerror("NYI");
 }
 
 
 
 static void cirrus_update_24bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	osd_die("NYI");
+	fatalerror("NYI");
 }
 
 
 
 static void cirrus_update_32bpp(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	osd_die("NYI");
+	fatalerror("NYI");
 }
 
 

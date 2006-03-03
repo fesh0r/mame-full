@@ -124,11 +124,7 @@ int osd_display_loading_rom_message(const char *name, rom_load_data *romdata)
 	return 0;
 }
 
-void osd_pause(int paused)
-{
-}
-
-void CLIB_DECL logerror(const char *text,...)
+void osd_logerror(const char *text)
 {
 }
 

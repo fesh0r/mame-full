@@ -9,6 +9,8 @@
 #ifndef IDEDRIVE_H
 #define IDEDRIVE_H
 
+#include "driver.h"
+
 enum
 {
 	DEVINFO_INT_IDEDRIVE_ADDRESS = DEVINFO_INT_DEV_SPECIFIC,

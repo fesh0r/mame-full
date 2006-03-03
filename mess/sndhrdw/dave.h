@@ -2,6 +2,7 @@
 #define __DAVE_SOUND_CHIP_HEADER_INCLUDED__
 
 #include "sound/custom.h"
+#include "streams.h"
 
 /******************************
 DAVE SOUND CHIP

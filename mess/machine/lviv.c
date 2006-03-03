@@ -45,7 +45,7 @@ static void lviv_update_memory (void)
 static OPBASE_HANDLER(lviv_opbaseoverride)
 {
 	if (readinputport(12)&0x01)
-		machine_reset();
+		mame_schedule_soft_reset();
 	return address;
 }
 

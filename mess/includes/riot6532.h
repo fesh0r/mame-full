@@ -15,8 +15,6 @@ a7 acts as interrupt input
 state of this interrupt input can be read as bit 6 in interrupt status
 */
  
-#include "osd_cpu.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

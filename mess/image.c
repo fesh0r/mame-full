@@ -215,7 +215,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 
 	/* do we need to reset the CPU? */
 	if ((timer_get_time() > 0) && dev->reset_on_load)
-		machine_reset();
+		mame_schedule_soft_reset();
 
 	/* prepare to open the file */
 	img->created = 0;

@@ -9,12 +9,12 @@
 
 struct sw_storage
 {
-	uword len;
+	UINT16 len;
 #if defined(DIRECT_FIXPOINT)
-	udword stp;
+	UINT32 stp;
 #else
-	udword pnt;
-	sword stp;
+	UINT32 pnt;
+	INT16 stp;
 #endif
 };
 
@@ -24,44 +24,44 @@ typedef struct _sidOperator
 {
 	struct _SID6581 *sid;
 	UINT8 reg[7];
-	udword SIDfreq;
-	uword SIDpulseWidth;
-	ubyte SIDctrl;
-	ubyte SIDAD, SIDSR;
+	UINT32 SIDfreq;
+	UINT16 SIDpulseWidth;
+	UINT8 SIDctrl;
+	UINT8 SIDAD, SIDSR;
 	
 	struct _sidOperator* carrier;
 	struct _sidOperator* modulator;
 	bool sync;
 	
-	uword pulseIndex, newPulseIndex;
-	uword curSIDfreq;
-	uword curNoiseFreq;
+	UINT16 pulseIndex, newPulseIndex;
+	UINT16 curSIDfreq;
+	UINT16 curNoiseFreq;
 	
-    ubyte output;//, outputMask;
+    UINT8 output;//, outputMask;
 	
 	char filtVoiceMask;
 	bool filtEnabled;
-	filterfloat filtLow, filtRef;
-	sbyte filtIO;
+	float filtLow, filtRef;
+	INT8 filtIO;
 	
-	sdword cycleLenCount;
+	INT32 cycleLenCount;
 #if defined(DIRECT_FIXPOINT)
 	cpuLword cycleLen, cycleAddLen;
 #else
-	udword cycleAddLenPnt;
-	uword cycleLen, cycleLenPnt;
+	UINT32 cycleAddLenPnt;
+	UINT16 cycleLen, cycleLenPnt;
 #endif
 	
-	sbyte(*outProc)(struct _sidOperator *);
+	INT8(*outProc)(struct _sidOperator *);
 	void(*waveProc)(struct _sidOperator *);
 
 #if defined(DIRECT_FIXPOINT)
 	cpuLword waveStep, waveStepAdd;
 #else
-	uword waveStep, waveStepAdd;
-	udword waveStepPnt, waveStepAddPnt;
+	UINT16 waveStep, waveStepAdd;
+	UINT32 waveStepPnt, waveStepAddPnt;
 #endif
-	uword waveStepOld;
+	UINT16 waveStepOld;
 	struct sw_storage wavePre[2];
 
 #if defined(DIRECT_FIXPOINT) && defined(LARGE_NOISE_TABLE)
@@ -69,38 +69,38 @@ typedef struct _sidOperator
 #elif defined(DIRECT_FIXPOINT)
 	cpuLBword noiseReg;
 #else
-	udword noiseReg;
+	UINT32 noiseReg;
 #endif
-	udword noiseStep, noiseStepAdd;
-	ubyte noiseOutput;
+	UINT32 noiseStep, noiseStepAdd;
+	UINT8 noiseOutput;
 	bool noiseIsLocked;
 
-	ubyte ADSRctrl;
+	UINT8 ADSRctrl;
 //	bool gateOnCtrl, gateOffCtrl;
-	uword (*ADSRproc)(struct _sidOperator *);
+	UINT16 (*ADSRproc)(struct _sidOperator *);
 	
 #ifdef SID_FPUENVE
-	filterfloat fenveStep, fenveStepAdd;
-	udword enveStep;
+	float fenveStep, fenveStepAdd;
+	UINT32 enveStep;
 #elif defined(DIRECT_FIXPOINT)
 	cpuLword enveStep, enveStepAdd;
 #else
-	uword enveStep, enveStepAdd;
-	udword enveStepPnt, enveStepAddPnt;
+	UINT16 enveStep, enveStepAdd;
+	UINT32 enveStepPnt, enveStepAddPnt;
 #endif
-	ubyte enveVol, enveSusVol;
-	uword enveShortAttackCount;
+	UINT8 enveVol, enveSusVol;
+	UINT16 enveShortAttackCount;
 } sidOperator;
 
-typedef sbyte (*ptr2sidFunc)(sidOperator *);
-typedef uword (*ptr2sidUwordFunc)(sidOperator *);
+typedef INT8 (*ptr2sidFunc)(sidOperator *);
+typedef UINT16 (*ptr2sidUwordFunc)(sidOperator *);
 typedef void (*ptr2sidVoidFunc)(sidOperator *);
 
 void sidClearOperator( sidOperator* pVoice );
 
 void sidEmuSet(sidOperator* pVoice);
 void sidEmuSet2(sidOperator* pVoice);
-sbyte sidWaveCalcNormal(sidOperator* pVoice);
+INT8 sidWaveCalcNormal(sidOperator* pVoice);
 
 void sidInitWaveformTables(SIDTYPE type);
 void sidInitMixerEngine(void);

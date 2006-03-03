@@ -29,7 +29,7 @@
 *                    Each type is one of: U8,8,U16,16,U32,32,U64,64            *
 *                                                                              *
 *******************************************************************************/
-
+#pragma once
 
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
@@ -37,6 +37,10 @@
 #ifdef __MWERKS__
 #define INLINE static inline
 #define __extension__
+#endif
+
+#if defined(_MSC_VER) && !defined(INLINE)
+#define INLINE static
 #endif
 
 /* The Win32 port requires this constant for variable arg routines. */

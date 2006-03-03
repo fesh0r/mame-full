@@ -934,3 +934,15 @@ done:
 	return result;
 }
 
+
+
+int mame_stricmp(const char *s1, const char *s2)
+{
+	for (;;)
+ 	{
+		int c1 = tolower(*s1++);
+		int c2 = tolower(*s2++);
+		if (c1 == 0 || c1 != c2)
+			return c1 - c2;
+ 	}
+}

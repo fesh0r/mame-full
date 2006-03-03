@@ -92,7 +92,7 @@ static UINT32 intel82439tx_pci_read(int function, int offset, UINT32 mem_mask)
 			break;
 
 		default:
-			osd_die("intel82439tx_pci_read(): Unexpected PCI read 0x%02X\n", offset);
+			fatalerror("intel82439tx_pci_read(): Unexpected PCI read 0x%02X\n", offset);
 			break;
 	}
 	return result;
@@ -190,7 +190,7 @@ static void intel82439tx_pci_write(int function, int offset, UINT32 data, UINT32
 			break;
 
 		default:
-			osd_die("intel82439tx_pci_write(): Unexpected PCI write 0x%02X <-- 0x%08X\n", offset, data);
+			fatalerror("intel82439tx_pci_write(): Unexpected PCI write 0x%02X <-- 0x%08X\n", offset, data);
 			break;
 	}
 

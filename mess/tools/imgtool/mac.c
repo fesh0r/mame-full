@@ -91,6 +91,7 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <stddef.h>
 
 #include "osdepend.h"
 #include "imgtoolx.h"

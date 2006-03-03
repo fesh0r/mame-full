@@ -640,7 +640,7 @@ void tms3556_interrupt(void)
 	/* render the current line */
 	if ((vdp.scanline >= 0) && (vdp.scanline < TOTAL_HEIGHT))
 	{
-		//if (!osd_skip_this_frame())
+		//if (!skip_this_frame())
 			tms3556_draw_line(tmpbitmap, vdp.scanline);
 	}
 

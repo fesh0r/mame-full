@@ -17,7 +17,7 @@
 	Raphael Nabet, 2002-2004.
 */
 
-/*#include "harddisk.h"*/
+#include "driver.h"
 #include "machine/idectrl.h"
 #include "devices/idedrive.h"
 #include "machine/rtc65271.h"

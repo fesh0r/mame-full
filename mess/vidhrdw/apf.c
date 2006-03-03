@@ -2,6 +2,7 @@
 
 ******************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/m6847.h"
 #include "includes/apf.h"
@@ -17,7 +18,7 @@ static void apf_charproc(UINT8 c)
 
 
 
- READ8_HANDLER(apf_video_r)
+READ8_HANDLER(apf_video_r)
 {
 	return apf_video_ram[offset];
 }

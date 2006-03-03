@@ -136,7 +136,6 @@ static int format_index;
 static UINT64 runtime_hash;
 static void *wavptr;
 static UINT32 samples_this_frame;
-static jmp_buf die_jmpbuf;
 static int seen_first_update;
 
 /* command list */
@@ -195,30 +194,6 @@ static void dump_screenshot(int write_file)
 		had_failure = TRUE;
 		report_message(MSG_FAILURE, "Screenshot is blank");
 	}
-}
-
-
-
-void CLIB_DECL osd_die(const char *text,...)
-{
-	va_list va;
-	char buf[256];
-	char *s;
-
-	/* format the die message */
-	va_start(va, text);
-	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), text, va);
-	va_end(va);
-
-	/* strip out \n */
-	s = strchr(buf, '\n');
-	if (s)
-		*s = '\0';
-
-	/* report the failure */
-	report_message(MSG_FAILURE, "Die: %s", buf);
-	state = STATE_ABORTED;
-	longjmp(die_jmpbuf, -1);
 }
 
 
@@ -285,8 +260,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();
-	if (setjmp(die_jmpbuf) == 0)
-		run_game(driver_num);
+	run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
 
 	/* what happened? */
@@ -325,13 +299,6 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 		results->runtime_hash = runtime_hash;
 	}
 	return rc;
-}
-
-
-
-int osd_trying_to_quit(void)
-{
-	return (state == STATE_ABORTED) || (state == STATE_DONE);
 }
 
 

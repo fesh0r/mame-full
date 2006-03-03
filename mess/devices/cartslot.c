@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "cartslot.h"
 #include "mess.h"
 #include "mscommon.h"
@@ -183,7 +184,7 @@ void cartslot_device_getinfo(const device_class *devclass, UINT32 state, union d
 					| ROM_BITWIDTHMASK | ROM_BITSHIFTMASK
 					| ROM_INHERITFLAGSMASK | ROM_BIOSFLAGSMASK))
 				{
-					osd_die("Unsupported ROM cart flags 0x%08X", flags);
+					fatalerror("Unsupported ROM cart flags 0x%08X", flags);
 				}
 
 				count = MAX(position + 1, count);

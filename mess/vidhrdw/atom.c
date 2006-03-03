@@ -4,6 +4,7 @@ atom.c
 
 ******************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"

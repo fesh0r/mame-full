@@ -9,12 +9,16 @@
 
 ***************************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "artwork.h"
 #include "profiler.h"
 #include "png.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
+
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
+#include "mamedbg.h"
+#endif
 
 
 
@@ -74,7 +78,7 @@ static artwork_callbacks mame_artwork_callbacks =
 #endif
 
 #ifdef MESS
-int skip_this_frame;
+int mess_skip_this_frame;
 #endif
 
 
@@ -83,6 +87,7 @@ int skip_this_frame;
     PROTOTYPES
 ***************************************************************************/
 
+static void video_pause(int pause);
 static void video_exit(void);
 static int allocate_graphics(const gfx_decode *gfxdecodeinfo);
 static void decode_graphics(const gfx_decode *gfxdecodeinfo);
@@ -113,6 +118,7 @@ int video_init(void)
 	movie_file = NULL;
 	movie_frame = 0;
 
+	add_pause_callback(video_pause);
 	add_exit_callback(video_exit);
 
 	/* first allocate the necessary palette structures */
@@ -235,12 +241,26 @@ int video_init(void)
 
 
 /*-------------------------------------------------
+    video_pause - pause the video system
+-------------------------------------------------*/
+
+static void video_pause(int pause)
+{
+	palette_set_global_brightness_adjust(pause ? options.pause_bright : 1.00);
+	schedule_full_refresh();
+}
+
+
+/*-------------------------------------------------
     video_exit - close down the video system
 -------------------------------------------------*/
 
 static void video_exit(void)
 {
 	int i;
+
+	/* stop recording any movie */
+	record_movie_stop();
 
 	/* free all the graphics elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
@@ -249,12 +269,14 @@ static void video_exit(void)
 		Machine->gfx[i] = 0;
 	}
 
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* free the font elements */
 	if (Machine->debugger_font)
 	{
 		freegfx(Machine->debugger_font);
 		Machine->debugger_font = NULL;
 	}
+#endif
 
 	/* close down the OSD layer's display */
 	osd_close_display();
@@ -479,17 +501,15 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 	/* "dirty" the area for the next display update */
 	visible_area_changed = 1;
-	
+
 	/* bounds check */
 	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
-	{
 		if ((min_x < 0) || (min_y < 0) || (max_x >= scrbitmap[0]->width) || (max_y >= scrbitmap[0]->height))
 		{
-			osd_die("set_visible_area(%d,%d,%d,%d) out of bounds; bitmap dimensions are (%d,%d)\n",
+			fatalerror("set_visible_area(%d,%d,%d,%d) out of bounds; bitmap dimensions are (%d,%d)",
 				min_x, min_y, max_x, max_y,
 				scrbitmap[0]->width, scrbitmap[0]->height);
 		}
-	}
 
 	/* set the new values in the Machine struct */
 	Machine->visible_area.min_x = min_x;
@@ -600,9 +620,9 @@ void force_partial_update(int scanline)
 			int update_says_skip = 0;
 			(*Machine->drv->video_update)(0, scrbitmap[0], &clip, &update_says_skip);
 			if (!update_says_skip)
-				skip_this_frame = 0;
-			else if (skip_this_frame == -1)
-				skip_this_frame = 1;
+				mess_skip_this_frame = 0;
+			else if (mess_skip_this_frame == -1)
+				mess_skip_this_frame = 1;
 		}
 #else
 		(*Machine->drv->video_update)(0, scrbitmap[0], &clip);
@@ -645,9 +665,9 @@ void update_video_and_audio(void)
 	current_display.changed_flags = 0;
 
 #ifdef MESS
-	if (skip_this_frame == 1)
+	if (mess_skip_this_frame == 1)
 		current_display.changed_flags |= GAME_OPTIONAL_FRAMESKIP;
-	skip_this_frame = -1;
+	mess_skip_this_frame = -1;
 #endif /* MESS */
 
 	/* set the main game bitmap */
@@ -758,7 +778,7 @@ static void recompute_fps(int skipped_it)
     operations
 -------------------------------------------------*/
 
-int updatescreen(void)
+void updatescreen(void)
 {
 	/* update sound */
 	sound_frame_update();
@@ -774,12 +794,7 @@ int updatescreen(void)
 	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
-	if (ui_update_and_render(artwork_get_ui_bitmap()))
-	{
-		/* quit if the user asked to */
-		record_movie_stop();
-		return 1;
-	}
+	ui_update_and_render(artwork_get_ui_bitmap());
 
 	/* update our movie recording state */
 	if (!mame_is_paused())
@@ -795,9 +810,18 @@ int updatescreen(void)
 		(*Machine->drv->video_eof)();
 		profiler_mark(PROFILER_END);
 	}
-
-	return 0;
 }
+
+
+/*-------------------------------------------------
+    skip_this_frame -
+-------------------------------------------------*/
+
+int skip_this_frame(void)
+{
+	return osd_skip_this_frame();
+}
+
 
 
 /*-------------------------------------------------

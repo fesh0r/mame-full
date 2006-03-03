@@ -8,6 +8,7 @@
 
  *********************************************************************/
 
+#include "driver.h"
 #include "machine/idectrl.h"
 #include "devices/harddriv.h"
 #include "idedrive.h"

@@ -144,7 +144,7 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer, c1551->size);
 	if (!c1551->buffer)
-		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
+		fatalerror("out of memory %s %d\n", __FILE__, __LINE__);
 
 	c1551->size--;
 
@@ -182,7 +182,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer,256);
 	if (!c1551->buffer)
-		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
+		fatalerror("out of memory %s %d\n", __FILE__, __LINE__);
 
 	logerror("d64 read track %d sector %d\n", track, sector);
 
@@ -198,7 +198,7 @@ static void d64_read_directory (CBM_Drive * c1551)
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer, 8 * 18 * 25);
 	if (!c1551->buffer)
-		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
+		fatalerror("out of memory %s %d\n", __FILE__, __LINE__);
 
 	c1551->size = 0;
 

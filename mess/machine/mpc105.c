@@ -120,7 +120,7 @@ static UINT32 mpc105_pci_read(int function, int offset, UINT32 mem_mask)
 					break;
 					
 				default:
-					osd_die("Unknown CPU");
+					fatalerror("Unknown CPU");
 					break;
 			}
 			break;
@@ -191,7 +191,7 @@ static void mpc105_pci_write(int function, int offset, UINT32 data, UINT32 mem_m
 			break;
 
 		case 0xA8:	/* processor interface configuration 1 */
-			//osd_die("mpc105_pci_write(): Unexpected PCI write 0x%02X <-- 0x%08X\n", offset, data);
+			//fatalerror("mpc105_pci_write(): Unexpected PCI write 0x%02X <-- 0x%08X\n", offset, data);
 			break;
 	}
 }

@@ -762,14 +762,14 @@ static void pmd85_cassette_timer_callback(int dummy)
 static OPBASE_HANDLER(pmd85_opbaseoverride)
 {
 	if (readinputport(0x10)&0x01)
-		machine_reset();
+		mame_schedule_soft_reset();
 	return address;
 }
 
 static OPBASE_HANDLER(mato_opbaseoverride)
 {
 	if (readinputport(0x09)&0x01)
-		machine_reset();
+		mame_schedule_soft_reset();
 	return address;
 }
 

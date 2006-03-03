@@ -6,6 +6,7 @@
 
 *********************************************************************/
 
+#include <ctype.h>
 #include "core.h"
 
 static const struct

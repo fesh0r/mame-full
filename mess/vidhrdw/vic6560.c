@@ -4,9 +4,9 @@
   PeT mess@utanet.at
 
 ***************************************************************************/
+
 #include <math.h>
 #include <stdio.h>
-#include "osd_cpu.h"
 #include "driver.h"
 #include "utils.h"
 #include "sound/custom.h"

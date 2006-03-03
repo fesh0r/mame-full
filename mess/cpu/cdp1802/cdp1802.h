@@ -18,12 +18,11 @@
  *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
+
 #ifndef _CDP1802_H
 #define _CDP1802_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-
 
 #define CDP1802_INT_NONE	0
 #define CDP1802_IRQ			1

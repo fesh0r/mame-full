@@ -6,6 +6,8 @@
 
 ***************************************************************************/
 
+#include <ctype.h>
+
 #include "mess.h"
 #include "device.h"
 #include "ui_text.h"

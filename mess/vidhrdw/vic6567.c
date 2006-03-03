@@ -57,7 +57,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "osd_cpu.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "mscommon.h"
@@ -1122,7 +1121,7 @@ static void vic2_drawlines (int first, int last)
 	if (first == last)
 		return;
 	vic2.lastline = last;
-	if (osd_skip_this_frame ())
+	if (skip_this_frame ())
 		return;
 
 

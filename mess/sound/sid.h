@@ -7,8 +7,8 @@
 */
 
 #include "sound/sid6581.h"
-#include "sidtypes.h"
 #include "sidvoice.h"
+#include "streams.h"
 
 /* private area */
 typedef struct _SID6581
@@ -17,10 +17,10 @@ typedef struct _SID6581
 
     int (*ad_read) (int which);
     SIDTYPE type;
-    udword clock;
+    UINT32 clock;
 
-    uword PCMfreq; // samplerate of the current systems soundcard/DAC
-    udword PCMsid, PCMsidNoise;
+    UINT16 PCMfreq; // samplerate of the current systems soundcard/DAC
+    UINT32 PCMsid, PCMsidNoise;
 
 #if 0
 	/* following depends on type */
@@ -36,15 +36,15 @@ typedef struct _SID6581
 
 //	bool sidKeysOn[0x20], sidKeysOff[0x20];
 
-	ubyte masterVolume;
-	uword masterVolumeAmplIndex;
+	UINT8 masterVolume;
+	UINT16 masterVolumeAmplIndex;
 
 
 	struct
 	{
 		bool Enabled;
 		UINT8 Type, CurType;
-		filterfloat Dy, ResDy;
+		float Dy, ResDy;
 		UINT16 Value;
 	} filter;
 
@@ -65,7 +65,7 @@ void initMixerEngine(void);
 void filterTableInit(void);
 extern void MixerInit(bool threeVoiceAmplify);
 
-void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, udword bufferLen );
+void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, UINT32 bufferLen );
 
 #if 0
 void sidFilterTableInit(void);

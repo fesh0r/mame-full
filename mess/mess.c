@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <assert.h>
+
 #include "driver.h"
 #include "devices/flopdrv.h"
 #include "utils.h"
@@ -17,6 +18,7 @@
 #include "image.h"
 #include "inputx.h"
 #include "artwork.h"
+#include "hash.h"
 
 /* Globals */
 const char *mess_path;
@@ -322,14 +324,6 @@ void mess_config_init(void)
 	extern void win_mess_config_init(void);
 	win_mess_config_init();
 #endif
-}
-
-
-
-void machine_hard_reset(void)
-{
-	memset(mess_ram, mess_ram_default_value, mess_ram_size);
-	machine_reset();
 }
 
 

@@ -354,7 +354,6 @@ Video part
 */
 #include <math.h>
 #include <stdio.h>
-#include "osd_cpu.h"
 #include "driver.h"
 #include "utils.h"
 #include "sound/custom.h"
@@ -1050,7 +1049,7 @@ static void ted7360_drawlines (int first, int last)
 
 	lastline = last;
 
-	if (osd_skip_this_frame ())
+	if (skip_this_frame ())
 		return;
 
 	/* top part of display not rastered */

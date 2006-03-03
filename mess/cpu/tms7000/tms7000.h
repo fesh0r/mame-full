@@ -21,7 +21,6 @@
 #define _TMS7000_H
 
 #include "memory.h"
-#include "osd_cpu.h"
 
 enum { TMS7000_PC=1, TMS7000_SP, TMS7000_ST, TMS7000_IDLE, TMS7000_T1_CL, TMS7000_T1_PS, TMS7000_T1_DEC };
 

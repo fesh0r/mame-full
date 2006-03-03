@@ -42,8 +42,6 @@ HP38G             09/??/95              1LT8             Yorke
 #define _SATURN_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-
 
 #ifdef __cplusplus
 extern "C" {

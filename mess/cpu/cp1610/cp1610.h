@@ -21,7 +21,6 @@
 #define _CP1610_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 enum {
 	CP1610_R0=1, CP1610_R1, CP1610_R2, CP1610_R3,

@@ -1572,7 +1572,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 		if (strcmp(buffer,"0x0x0") == 0)
 			sprintf(buffer,"auto");
 		FreeIfAllocated(&o->resolution);
-		o->resolution = strdup(buffer);
+		o->resolution = mame_strdup(buffer);
 	}
 
 	/* refresh */
@@ -1607,7 +1607,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 
 		snprintf(buffer,sizeof(buffer),"%d:%d",n,d);
 		FreeIfAllocated(&o->aspect);
-		o->aspect = strdup(buffer);
+		o->aspect = mame_strdup(buffer);
 	}
 	/*analog axes*/
 	hCtrl = GetDlgItem(hWnd, IDC_ANALOG_AXES);	
@@ -1655,7 +1655,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 		{
 			// save the new setting
 			FreeIfAllocated(&o->digital);
-			o->digital = strdup(digital);
+			o->digital = mame_strdup(digital);
 		}
 	}
 #ifdef MESS
@@ -2283,12 +2283,12 @@ static void AssignScreen(HWND hWnd)
 		//only copy if it is different from Display1, as for Display1 this is not necessary
 		if (strcmp(ptr,"\\\\.\\DISPLAY1") != 0)
 		{
-			pGameOpts->screen = strdup(ptr);
+			pGameOpts->screen = mame_strdup(ptr);
 		}
 		else
 		{
 			//keep it empty
-			pGameOpts->screen = strdup("");
+			pGameOpts->screen = mame_strdup("");
 		}
 	}
 }
@@ -2312,7 +2312,7 @@ static void AssignInput(HWND hWnd)
 	{
 		// we display Standard, but keep it blank internally
 		FreeIfAllocated(&pGameOpts->ctrlr);
-		pGameOpts->ctrlr = strdup("");
+		pGameOpts->ctrlr = mame_strdup("");
 	}
 
 }
@@ -2381,13 +2381,13 @@ static void AssignAnalogAxes(HWND hWnd)
 	{
 		//all axes on all joysticks are digital
 		FreeIfAllocated(&pGameOpts->digital);
-		pGameOpts->digital = strdup("all");
+		pGameOpts->digital = mame_strdup("all");
 	}
 	if( nCheckCounter == 0 )
 	{
 		// no axes are treated as digital, which is the default...
 		FreeIfAllocated(&pGameOpts->digital);
-		pGameOpts->digital = strdup("");
+		pGameOpts->digital = mame_strdup("");
 	}
 }
 
@@ -2397,7 +2397,7 @@ static void AssignEffect(HWND hWnd)
 
 	FreeIfAllocated(&pGameOpts->effect);
 	if (ptr != NULL)
-		pGameOpts->effect = strdup(ptr);
+		pGameOpts->effect = mame_strdup(ptr);
 }
 
 static void AssignLedmode(HWND hWnd)
@@ -2406,7 +2406,7 @@ static void AssignLedmode(HWND hWnd)
 
 	FreeIfAllocated(&pGameOpts->ledmode);
 	if (ptr != NULL)
-		pGameOpts->ledmode = strdup(ptr);
+		pGameOpts->ledmode = mame_strdup(ptr);
 }
 
 static void AssignPaddle(HWND hWnd)
@@ -2414,9 +2414,9 @@ static void AssignPaddle(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nPaddleIndex);
 	FreeIfAllocated(&pGameOpts->paddle);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->paddle = strdup(ptr);
+		pGameOpts->paddle = mame_strdup(ptr);
 	else
-		pGameOpts->paddle = strdup("");
+		pGameOpts->paddle = mame_strdup("");
 
 }
 
@@ -2425,9 +2425,9 @@ static void AssignADStick(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nADStickIndex);
 	FreeIfAllocated(&pGameOpts->adstick);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->adstick = strdup(ptr);
+		pGameOpts->adstick = mame_strdup(ptr);
 	else
-		pGameOpts->adstick = strdup("");
+		pGameOpts->adstick = mame_strdup("");
 }
 
 static void AssignPedal(HWND hWnd)
@@ -2435,9 +2435,9 @@ static void AssignPedal(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nPedalIndex);
 	FreeIfAllocated(&pGameOpts->pedal);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->pedal = strdup(ptr);
+		pGameOpts->pedal = mame_strdup(ptr);
 	else
-		pGameOpts->pedal = strdup("");
+		pGameOpts->pedal = mame_strdup("");
 }
 
 static void AssignDial(HWND hWnd)
@@ -2445,9 +2445,9 @@ static void AssignDial(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nDialIndex);
 	FreeIfAllocated(&pGameOpts->dial);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->dial = strdup(ptr);
+		pGameOpts->dial = mame_strdup(ptr);
 	else
-		pGameOpts->dial = strdup("");
+		pGameOpts->dial = mame_strdup("");
 }
 
 static void AssignTrackball(HWND hWnd)
@@ -2455,9 +2455,9 @@ static void AssignTrackball(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nTrackballIndex);
 	FreeIfAllocated(&pGameOpts->trackball);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->trackball = strdup(ptr);
+		pGameOpts->trackball = mame_strdup(ptr);
 	else
-		pGameOpts->trackball = strdup("");
+		pGameOpts->trackball = mame_strdup("");
 }
 
 static void AssignLightgun(HWND hWnd)
@@ -2465,9 +2465,9 @@ static void AssignLightgun(HWND hWnd)
 	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nLightgunIndex);
 	FreeIfAllocated(&pGameOpts->lightgun_device);
 	if (ptr != NULL && strlen(ptr)>0 && strcmp(ptr,"none") != 0 )
-		pGameOpts->lightgun_device = strdup(ptr);
+		pGameOpts->lightgun_device = mame_strdup(ptr);
 	else
-		pGameOpts->lightgun_device = strdup("");
+		pGameOpts->lightgun_device = mame_strdup("");
 }
 
 
@@ -2520,12 +2520,12 @@ static void ResetDataMap(void)
 	if (pGameOpts->ctrlr == NULL || mame_stricmp(pGameOpts->ctrlr,"Standard") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->ctrlr);
-		pGameOpts->ctrlr = strdup("");
+		pGameOpts->ctrlr = mame_strdup("");
 	}
 	if (pGameOpts->screen == NULL || mame_stricmp(pGameOpts->screen,"") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->screen);
-		pGameOpts->screen = strdup("");
+		pGameOpts->screen = mame_strdup("");
 		g_nScreenIndex = 0;
 	}
 	else
@@ -3516,8 +3516,8 @@ static void InitializeScreenUI(HWND hwnd)
 		{
 			if( !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) )
 			{
-				ComboBox_InsertString(hCtrl, i, strdup(dd.DeviceName));
-				ComboBox_SetItemData( hCtrl, i, (const char*)strdup(dd.DeviceName));
+				ComboBox_InsertString(hCtrl, i, mame_strdup(dd.DeviceName));
+				ComboBox_SetItemData( hCtrl, i, (const char*)mame_strdup(dd.DeviceName));
 			}
 		}
 	}

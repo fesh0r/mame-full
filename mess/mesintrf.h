@@ -26,6 +26,4 @@ int filemanager(int selected);
 /* tape control */
 int tapecontrol(int selected);
 
-#define machine_reset machine_hard_reset
-
 #endif /* MESINTRF_H */

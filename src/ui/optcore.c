@@ -79,7 +79,7 @@ void LoadOption(void *option_struct, const REG_OPTION *option, const char *value
 	case RO_STRING:
 		if (*(char**)ptr != NULL)
 			free(*(char**)ptr);
-		*(char **)ptr = strdup(value_str);
+		*(char **)ptr = mame_strdup(value_str);
 		break;
 
 	case RO_BOOL:
@@ -138,7 +138,7 @@ BOOL CopyOptionStruct(void *dest, const void *source, const REG_OPTION *option_a
 				(char **)((char *)dest + option_array[i].m_iDataOffset);
 			if (*string_to_copy != NULL)
 			{
-				*string_to_copy = strdup(*string_to_copy);
+				*string_to_copy = mame_strdup(*string_to_copy);
 				if (!*string_to_copy)
 					success = FALSE;
 			}

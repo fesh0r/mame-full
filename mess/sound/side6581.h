@@ -6,14 +6,12 @@
 #define ENVE_DL_H
 
 
-#include "sidtypes.h"
-
 //
 // Hardware:
 // C64 C PAL, MOS 6581R4 1686 S
 //
 
-static ubyte releaseTab[] =
+static UINT8 releaseTab[] =
 {
   255, 255, 254, 254, 253, 253, 252, 252, 251, 251, 250, 250, 249, 249, 248,
   248, 247, 247, 246, 246, 245, 245, 244, 244, 243, 243, 242, 242, 241, 241,

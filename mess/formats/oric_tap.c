@@ -1,5 +1,5 @@
 #include "oric_tap.h"
-#include "osdepend.h"
+#include "driver.h"
 
 /* this code based heavily on tap2wav by Fabrice Frances */
 #define ORIC_SYNC_BYTE	0x016

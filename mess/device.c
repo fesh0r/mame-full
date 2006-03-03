@@ -7,8 +7,10 @@
 ***************************************************************************/
 
 #include <assert.h>
+
 #include "device.h"
 #include "ui_text.h"
+#include "driver.h"
 
 
 /*************************************
@@ -246,7 +248,7 @@ struct IODevice *devices_allocate(const game_driver *gamedrv)
 			if (createimage_optcount > 0)
 			{
 				if (createimage_optcount > DEVINFO_CREATE_OPTMAX)
-					osd_die("DEVINFO_INT_CREATE_OPTCOUNT: Too many options");
+					fatalerror("DEVINFO_INT_CREATE_OPTCOUNT: Too many options");
 
 				devices[i].createimage_options = auto_malloc((createimage_optcount + 1) *
 					sizeof(*devices[i].createimage_options));

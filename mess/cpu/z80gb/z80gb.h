@@ -1,7 +1,6 @@
 #ifndef z80gb_H
 #define z80gb_H
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 #include "driver.h"
 #include "includes/gb.h"
 

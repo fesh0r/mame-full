@@ -41,6 +41,7 @@
 
 #include "driver.h"
 #include "includes/gb.h"
+#include "streams.h"
 
 #define NR10 0x00
 #define NR11 0x01

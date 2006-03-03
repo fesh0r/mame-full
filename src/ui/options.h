@@ -45,17 +45,6 @@ enum
 	UNKNOWN	= -1
 };
 
-// config helpers types
-enum
-{
-	RO_BOOL = 0, // BOOL value
-	RO_INT,      // int value
-	RO_DOUBLE,   // double value
-	RO_COLOR,    // COLORREF value
-	RO_STRING,   // pointer to string    - m_vpData is an allocated buffer
-	RO_ENCODE    // encode/decode string - calls decode/encode functions
-};
-
 /* Default input */
 enum 
 {

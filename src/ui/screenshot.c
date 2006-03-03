@@ -173,7 +173,7 @@ void FreeScreenShot(void)
 void SetCorePathList(int file_type,const char *s)
 {
 	// we have to pass in a malloc()'d string; core will free it later
-	set_pathlist(file_type,strdup(s));
+	set_pathlist(file_type, mame_strdup(s));
 }
 
 BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)

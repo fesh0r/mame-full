@@ -341,7 +341,7 @@ INTERRUPT_GEN(sms) {
 		}
 	}
 
-	if (!osd_skip_this_frame()) {
+	if (!skip_this_frame()) {
 #ifdef LOG_CURLINE
 		logerror("l %04x, pc: %04x\n", currentLine, activecpu_get_pc());
 #endif

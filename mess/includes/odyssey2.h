@@ -1,4 +1,5 @@
 #include "sound/custom.h"
+#include "streams.h"
 
 /* machine/odyssey2.c */
 extern int odyssey2_framestart;

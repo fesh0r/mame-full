@@ -1,13 +1,14 @@
 /***************************************************************************
 
-  IBM PC junior
-  Tandy 1000 Graphics Adapter (T1T) section
+	IBM PC junior
+	Tandy 1000 Graphics Adapter (T1T) section
 
-  Note that in the IBM PC Junior world, the term 'vga' is not the 'vga' that
-  most people think of
+	Note that in the IBM PC Junior world, the term 'vga' is not the 'vga' that
+	most people think of
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/crtc6845.h"

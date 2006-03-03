@@ -1,11 +1,14 @@
 /***************************************************************************
 
 	speaker.c
+
 	Sound driver to emulate a simple speaker,
 	driven by one or more output bits
 
 ****************************************************************************/
+
 #include "driver.h"
+#include "streams.h"
 
 static INT16 default_levels[2] = {0,32767};
 
@@ -17,7 +20,7 @@ struct speaker
 	int level;
 };
 
-//static struct Speaker_interface *intf;
+
 
 static void speaker_sound_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
@@ -69,7 +72,7 @@ void speaker_level_w(int which, int new_level)
  * Generic get_info
  **************************************************************************/
 
-static void speaker_set_info(void *token, UINT32 state, union sndinfo *info)
+static void speaker_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -78,7 +81,7 @@ static void speaker_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void speaker_get_info(void *token, UINT32 state, union sndinfo *info)
+void speaker_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

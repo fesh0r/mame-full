@@ -47,7 +47,7 @@ void mame_fclose(mame_file *file)
 	fclose((FILE *) file);
 }
 
-void CLIB_DECL osd_die(const char *text,...)
+void CLIB_DECL fatalerror(const char *text,...)
 {
 	va_list va;
 	va_start(va, text);

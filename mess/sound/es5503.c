@@ -31,6 +31,7 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "es5503.h"
+#include "streams.h"
 
 #define VERBOSE	(1)
 
@@ -430,7 +431,7 @@ WRITE8_HANDLER(ES5503_ram_0_w)
  * Generic get_info
  **************************************************************************/
 
-static void es5503_set_info(void *token, UINT32 state, union sndinfo *info)
+static void es5503_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -439,7 +440,7 @@ static void es5503_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void es5503_get_info(void *token, UINT32 state, union sndinfo *info)
+void es5503_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

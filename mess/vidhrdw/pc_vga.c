@@ -1056,11 +1056,11 @@ void pc_vga_init(const struct pc_vga_interface *vga_intf, const struct pc_svga_i
 		vga.svga_intf = *svga_intf;
 
 		if (vga.svga_intf.seq_regcount < 0x05)
-			osd_die("Invalid SVGA sequencer register count");
+			fatalerror("Invalid SVGA sequencer register count");
 		if (vga.svga_intf.gc_regcount < 0x09)
-			osd_die("Invalid SVGA GC register count");
+			fatalerror("Invalid SVGA GC register count");
 		if (vga.svga_intf.crtc_regcount < 0x19)
-			osd_die("Invalid SVGA CRTC register count");
+			fatalerror("Invalid SVGA CRTC register count");
 	}
 	else
 	{

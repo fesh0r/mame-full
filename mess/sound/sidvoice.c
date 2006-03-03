@@ -2,38 +2,36 @@
 #include "includes/cbm.h"
 #include <math.h>
 
-#include "sidtypes.h"
-
 #include "sidvoice.h"
 #include "sid.h"
 #include "sidenvel.h"
 #include "sidw6581.h"
 #include "sidw8580.h"
 
-static ubyte triangleTable[4096];
-static ubyte sawtoothTable[4096];
-static ubyte squareTable[2*4096];
-static ubyte* waveform30;
-static ubyte* waveform50;
-static ubyte* waveform60;
-static ubyte* waveform70;
+static UINT8 triangleTable[4096];
+static UINT8 sawtoothTable[4096];
+static UINT8 squareTable[2*4096];
+static UINT8* waveform30;
+static UINT8* waveform50;
+static UINT8* waveform60;
+static UINT8* waveform70;
 #if defined(LARGE_NOISE_TABLE)
-  static ubyte noiseTableMSB[1<<8];
-  static ubyte noiseTableLSB[1L<<16];
+  static UINT8 noiseTableMSB[1<<8];
+  static UINT8 noiseTableLSB[1L<<16];
 #else
-  static ubyte noiseTableMSB[1<<8];
-  static ubyte noiseTableMID[1<<8];
-  static ubyte noiseTableLSB[1<<8];
+  static UINT8 noiseTableMSB[1<<8];
+  static UINT8 noiseTableMID[1<<8];
+  static UINT8 noiseTableLSB[1<<8];
 #endif
 
-static sbyte* ampMod1x8;
+static INT8* ampMod1x8;
 
-static const udword noiseSeed = 0x7ffff8;
+static const UINT32 noiseSeed = 0x7ffff8;
 
 void sidInitMixerEngine(void)
 {
-	uword uk;
-	sdword si, sj    ;
+	UINT16 uk;
+	INT32 si, sj    ;
 
 	/* 8-bit volume modulation tables. */
 	float filterAmpl = 1.0;
@@ -50,7 +48,7 @@ void sidInitMixerEngine(void)
 	{
 		for ( sj = -128; sj < 128; sj++, uk++ )
 		{
-			ampMod1x8[uk] = (sbyte)(((si*sj)/255)*filterAmpl);
+			ampMod1x8[uk] = (INT8)(((si*sj)/255)*filterAmpl);
 		}
 	}
 
@@ -100,7 +98,7 @@ INLINE void noiseAdvance(sidOperator* pVoice)
 
 INLINE void noiseAdvanceHp(sidOperator* pVoice)
 {
-	udword tmp = pVoice->noiseStepAdd;
+	UINT32 tmp = pVoice->noiseStepAdd;
 	while (tmp >= (1L<<20))
 	{
 		tmp -= (1L<<20);
@@ -308,9 +306,9 @@ INLINE void waveCalcCycleLen(sidOperator* pVoice)
 /*	else */
 	{
 #if defined(DIRECT_FIXPOINT)
-		register uword diff = pVoice->cycleLenCount - pVoice->cycleLen.w[HI];
+		register UINT16 diff = pVoice->cycleLenCount - pVoice->cycleLen.w[HI];
 #else
-		register uword diff = pVoice->cycleLenCount - pVoice->cycleLen;
+		register UINT16 diff = pVoice->cycleLenCount - pVoice->cycleLen;
 #endif
 		if ( pVoice->wavePre[diff].len != pVoice->cycleLenCount )
 		{
@@ -342,18 +340,18 @@ INLINE void waveCalcFilter(sidOperator* pVoice)
 		{
 			if ( pVoice->sid->filter.Type == 0x20 )
 			{
-				filterfloat tmp;
+				float tmp;
 				pVoice->filtLow += ( pVoice->filtRef * pVoice->sid->filter.Dy );
-				tmp = (filterfloat)pVoice->filtIO - pVoice->filtLow;
+				tmp = (float)pVoice->filtIO - pVoice->filtLow;
 				tmp -= pVoice->filtRef * pVoice->sid->filter.ResDy;
 				pVoice->filtRef += ( tmp * (pVoice->sid->filter.Dy) );
-				pVoice->filtIO = (sbyte)(pVoice->filtRef-pVoice->filtLow/4);
+				pVoice->filtIO = (INT8)(pVoice->filtRef-pVoice->filtLow/4);
 			}
 			else if (pVoice->sid->filter.Type == 0x40)
 			{
-				filterfloat tmp, tmp2;
+				float tmp, tmp2;
 				pVoice->filtLow += ( pVoice->filtRef * pVoice->sid->filter.Dy * 0.1 );
-				tmp = (filterfloat)pVoice->filtIO - pVoice->filtLow;
+				tmp = (float)pVoice->filtIO - pVoice->filtLow;
 				tmp -= pVoice->filtRef * pVoice->sid->filter.ResDy;
 				pVoice->filtRef += ( tmp * (pVoice->sid->filter.Dy) );
 				tmp2 = pVoice->filtRef - pVoice->filtIO/8;
@@ -361,11 +359,11 @@ INLINE void waveCalcFilter(sidOperator* pVoice)
 					tmp2 = -128;
 				if (tmp2 > 127)
 					tmp2 = 127;
-				pVoice->filtIO = (sbyte)tmp2;
+				pVoice->filtIO = (INT8)tmp2;
 			}
 			else
 			{
-				filterfloat sample, sample2;
+				float sample, sample2;
 				int tmp;
 				pVoice->filtLow += ( pVoice->filtRef * pVoice->sid->filter.Dy );
 				sample = pVoice->filtIO;
@@ -376,23 +374,23 @@ INLINE void waveCalcFilter(sidOperator* pVoice)
 
 				if ( pVoice->sid->filter.Type == 0x10 )
 				{
-					pVoice->filtIO = (sbyte)pVoice->filtLow;
+					pVoice->filtIO = (INT8)pVoice->filtLow;
 				}
 				else if ( pVoice->sid->filter.Type == 0x30 )
 				{
-					pVoice->filtIO = (sbyte)pVoice->filtLow;
+					pVoice->filtIO = (INT8)pVoice->filtLow;
 				}
 				else if ( pVoice->sid->filter.Type == 0x50 )
 				{
-					pVoice->filtIO = (sbyte)(sample - (tmp >> 1));
+					pVoice->filtIO = (INT8)(sample - (tmp >> 1));
 				}
 				else if ( pVoice->sid->filter.Type == 0x60 )
 				{
-					pVoice->filtIO = (sbyte)tmp;
+					pVoice->filtIO = (INT8)tmp;
 				}
 				else if ( pVoice->sid->filter.Type == 0x70 )
 				{
-					pVoice->filtIO = (sbyte)(sample - (tmp >> 1));
+					pVoice->filtIO = (INT8)(sample - (tmp >> 1));
 				}
 			}
 		}
@@ -403,14 +401,14 @@ INLINE void waveCalcFilter(sidOperator* pVoice)
 	}
 }
 
-static sbyte waveCalcMute(sidOperator* pVoice)
+static INT8 waveCalcMute(sidOperator* pVoice)
 {
 	(*pVoice->ADSRproc)(pVoice);  /* just process envelope */
 	return pVoice->filtIO;//&pVoice->outputMask;
 }
 
 
-sbyte sidWaveCalcNormal(sidOperator* pVoice)
+INT8 sidWaveCalcNormal(sidOperator* pVoice)
 {
 	if ( pVoice->cycleLenCount <= 0 )
 	{
@@ -436,7 +434,7 @@ sbyte sidWaveCalcNormal(sidOperator* pVoice)
 }
 
 
-static sbyte waveCalcRangeCheck(sidOperator* pVoice)
+static INT8 waveCalcRangeCheck(sidOperator* pVoice)
 {
 #if defined(DIRECT_FIXPOINT)
 	pVoice->waveStepOld = pVoice->waveStep.w[HI];
@@ -466,10 +464,10 @@ static sbyte waveCalcRangeCheck(sidOperator* pVoice)
 
 void sidEmuSet(sidOperator* pVoice)
 {
-	ubyte enveTemp, newWave, oldWave;
-	ubyte ADtemp;
-	ubyte SRtemp;
-	ubyte tmpSusVol;
+	UINT8 enveTemp, newWave, oldWave;
+	UINT8 ADtemp;
+	UINT8 SRtemp;
+	UINT8 tmpSusVol;
 
 	pVoice->SIDfreq = pVoice->reg[0]|(pVoice->reg[1]<<8);
 
@@ -721,7 +719,7 @@ void sidEmuSet2(sidOperator* pVoice)
 void sidInitWaveformTables(SIDTYPE type)
 {
 	int i,j;
-	uword k;
+	UINT16 k;
 
 	k = 0;
 	for ( i = 0; i < 256; i++ )
@@ -781,10 +779,10 @@ void sidInitWaveformTables(SIDTYPE type)
 
 	{
 #if defined(LARGE_NOISE_TABLE)
-	udword ni;
+	UINT32 ni;
 	for (ni = 0; ni < sizeof(noiseTableLSB); ni++)
 	{
-		noiseTableLSB[ni] = (ubyte)
+		noiseTableLSB[ni] = (UINT8)
 			(((ni >> (13-4)) & 0x10) |
 			 ((ni >> (11-3)) & 0x08) |
 			 ((ni >> (7-2)) & 0x04) |
@@ -793,29 +791,29 @@ void sidInitWaveformTables(SIDTYPE type)
 	}
 	for (ni = 0; ni < sizeof(noiseTableMSB); ni++)
 	{
-		noiseTableMSB[ni] = (ubyte)
+		noiseTableMSB[ni] = (UINT8)
 			(((ni << (7-(22-16))) & 0x80) |
 			 ((ni << (6-(20-16))) & 0x40) |
 			 ((ni << (5-(16-16))) & 0x20));
 	}
 #else
-	udword ni;
+	UINT32 ni;
 	for (ni = 0; ni < sizeof(noiseTableLSB); ni++)
 	{
-		noiseTableLSB[ni] = (ubyte)
+		noiseTableLSB[ni] = (UINT8)
 			(((ni >> (7-2)) & 0x04) |
 			 ((ni >> (4-1)) & 0x02) |
 			 ((ni >> (2-0)) & 0x01));
 	}
 	for (ni = 0; ni < sizeof(noiseTableMID); ni++)
 	{
-		noiseTableMID[ni] = (ubyte)
+		noiseTableMID[ni] = (UINT8)
 			(((ni >> (13-8-4)) & 0x10) |
 			 ((ni << (3-(11-8))) & 0x08));
 	}
 	for (ni = 0; ni < sizeof(noiseTableMSB); ni++)
 	{
-		noiseTableMSB[ni] = (ubyte)
+		noiseTableMSB[ni] = (UINT8)
 			(((ni << (7-(22-16))) & 0x80) |
 			 ((ni << (6-(20-16))) & 0x40) |
 			 ((ni << (5-(16-16))) & 0x20));

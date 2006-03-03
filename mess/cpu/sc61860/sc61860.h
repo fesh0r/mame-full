@@ -34,7 +34,6 @@
    64 kb external ram (first 8kbyte not seen for program execution?) */
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 #ifdef __cplusplus
 extern "C" {

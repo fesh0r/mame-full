@@ -702,6 +702,7 @@ static char * g_pRecordName = NULL;
 static char * g_pPlayBkName = NULL;
 static char * g_pSaveStateName = NULL;
 static char * g_pRecordWaveName = NULL;
+static char * g_pRecordMNGName = NULL;
 static char * override_playback_directory = NULL;
 static char * override_savestate_directory = NULL;
 
@@ -968,6 +969,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -rec \"%s\"",            g_pRecordName);
 	if (g_pRecordWaveName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -wavwrite \"%s\"",       g_pRecordWaveName);
+	if (g_pRecordMNGName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -mngwrite \"%s\"",       g_pRecordMNGName);
 	if (g_pSaveStateName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog        ? "" : "no");
@@ -977,12 +980,14 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
 	if (pOpts->skip_gameinfo)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
+	//WIP RS we need to determine the ThreadPriority of our App before starting the emulation and restore that after the emulation
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -priority %i", pOpts->priority);
+	if (pOpts->autosave)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");
 #ifdef MESS
 	if (pOpts->skip_warnings)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_warnings");
 #endif
-	if (pOpts->high_priority)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -high_priority");
 
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
@@ -2008,8 +2013,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hTreeView = GetDlgItem(hMain, IDC_TREE);
 	hwndList  = GetDlgItem(hMain, IDC_LIST);
 
-	history_filename = strdup(GetHistoryFileName());
-	mameinfo_filename = strdup(GetMAMEInfoFileName());
+	history_filename = mame_strdup(GetHistoryFileName());
+	mameinfo_filename = mame_strdup(GetMAMEInfoFileName());
 
 	if (!InitSplitters())
 		return FALSE;

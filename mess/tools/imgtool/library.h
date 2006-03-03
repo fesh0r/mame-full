@@ -17,7 +17,6 @@
 
 #include <time.h>
 
-#include "osd_cpu.h"
 #include "opresolv.h"
 #include "stream.h"
 #include "unicode.h"

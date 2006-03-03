@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
@@ -7,8 +9,7 @@
 #include "sound/nes_apu.h"
 #include "zlib.h"
 #include "image.h"
-
-#include <math.h>
+#include "hash.h"
 
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
@@ -610,10 +611,10 @@ DEVICE_UNLOAD(nes_disk)
 
 void ppu_mirror_custom (int page, int address)
 {
-	osd_die("Unimplemented");
+	fatalerror("Unimplemented");
 }
 
 void ppu_mirror_custom_vrom (int page, int address)
 {
-	osd_die("Unimplemented");
+	fatalerror("Unimplemented");
 }

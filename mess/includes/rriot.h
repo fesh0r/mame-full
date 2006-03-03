@@ -86,8 +86,6 @@ separate irq output
 some significant differences, so unique component
 */
  
-#include "osd_cpu.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -8,6 +8,7 @@
 #include "driver.h"
 #include "includes/kaypro.h"
 #include "sound/custom.h"
+#include "streams.h"
 
 static	sound_stream  *channel;
 #define BELL_FREQ	1000

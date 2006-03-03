@@ -9,11 +9,11 @@
      www.funet.fi
 
 ***************************************************************************/
+
 #include <ctype.h>
 #include <stdio.h>
 
 #include "driver.h"
-#include "osd_cpu.h"
 #include "driver.h"
 #include "image.h"
 #include "cpu/m6502/m6502.h"

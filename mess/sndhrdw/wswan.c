@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "includes/wswan.h"
+#include "streams.h"
 
 static void wswan_sh_update(void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {

@@ -1,4 +1,5 @@
 /***************************************************************************
+
 	beep.c
 
 	This is used for computers/systems which can only output a constant tone.
@@ -7,9 +8,12 @@
 	KT - 25-Jun-2000
 
 	Sound handler
+
 ****************************************************************************/
+
 #include "driver.h"
 #include "sound/beep.h"
+#include "streams.h"
 
 struct beep_sound
 {
@@ -158,7 +162,7 @@ void beep_set_volume(int num, int volume)
  * Generic get_info
  **************************************************************************/
 
-static void beep_set_info(void *token, UINT32 state, union sndinfo *info)
+static void beep_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -167,7 +171,7 @@ static void beep_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void beep_get_info(void *token, UINT32 state, union sndinfo *info)
+void beep_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

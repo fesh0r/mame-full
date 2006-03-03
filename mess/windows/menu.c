@@ -40,9 +40,6 @@
 //	IMPORTS
 //============================================================
 
-// from input.c
-extern UINT8 win_trying_to_quit;
-
 // from timer.c
 extern void win_timer_enable(int enabled);
 
@@ -77,6 +74,12 @@ enum
 	DEVOPTION_CASSETTE_FASTFORWARD,
 #endif
 	DEVOPTION_MAX
+};
+
+enum
+{
+	LOADSAVE_LOAD,
+	LOADSAVE_SAVE
 };
 
 #ifdef MAME_DEBUG
@@ -525,7 +528,17 @@ static void loadsave(int type)
 #ifdef UNICODE
 		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%S", filenamew);
 #endif
-		cpu_loadsave_schedule_file(type, filename);
+
+		switch(type)
+		{
+			case LOADSAVE_LOAD:
+				mame_schedule_load(filename);
+				break;
+
+			case LOADSAVE_SAVE:
+				mame_schedule_save(filename);
+				break;
+		}
 	}
 	if (dir)
 		free(dir);
@@ -947,7 +960,7 @@ static void pause(void)
 		is_paused = 1;
 		mame_pause(1);
 		draw_screen();
-		while(is_paused && !win_trying_to_quit)
+		while(is_paused)
 		{
 			update_video_and_audio();
 			WaitMessage();
@@ -1494,189 +1507,190 @@ static int invoke_command(UINT command)
 	input_port_entry *in;
 	const char *section;
 
-	switch(command) {
-	case ID_FILE_LOADSTATE:
-		loadsave(LOADSAVE_LOAD);
-		break;
+	switch(command)
+	{
+		case ID_FILE_LOADSTATE:
+			loadsave(LOADSAVE_LOAD);
+			break;
 
-	case ID_FILE_SAVESTATE:
-		loadsave(LOADSAVE_SAVE);
-		break;
+		case ID_FILE_SAVESTATE:
+			loadsave(LOADSAVE_SAVE);
+			break;
 
-	case ID_FILE_SAVESCREENSHOT:
-		save_screen_snapshot(artwork_get_ui_bitmap());
-		break;
+		case ID_FILE_SAVESCREENSHOT:
+			save_screen_snapshot(artwork_get_ui_bitmap());
+			break;
 
-	case ID_FILE_EXIT:
-		PostMessage(win_video_window, WM_DESTROY, 0, 0);
-		break;
+		case ID_FILE_EXIT:
+			PostMessage(win_video_window, WM_DESTROY, 0, 0);
+			break;
 
-	case ID_EDIT_PASTE:
-		paste();
-		break;
+		case ID_EDIT_PASTE:
+			paste();
+			break;
 
-	case ID_KEYBOARD_NATURAL:
-		win_use_natural_keyboard = 1;
-		break;
+		case ID_KEYBOARD_NATURAL:
+			win_use_natural_keyboard = 1;
+			break;
 
-	case ID_KEYBOARD_EMULATED:
-		win_use_natural_keyboard = 0;
-		break;
+		case ID_KEYBOARD_EMULATED:
+			win_use_natural_keyboard = 0;
+			break;
 
-	case ID_KEYBOARD_CUSTOMIZE:
-		customize_keyboard();
-		break;
+		case ID_KEYBOARD_CUSTOMIZE:
+			customize_keyboard();
+			break;
 
-	case ID_OPTIONS_PAUSE:
-		pause();
-		break;
+		case ID_OPTIONS_PAUSE:
+			pause();
+			break;
 
-	case ID_OPTIONS_HARDRESET:
-		machine_hard_reset();
-		break;
+		case ID_OPTIONS_HARDRESET:
+			mame_schedule_hard_reset();
+			break;
 
-	case ID_OPTIONS_SOFTRESET:
-		machine_reset();
-		break;
+		case ID_OPTIONS_SOFTRESET:
+			mame_schedule_soft_reset();
+			break;
 
-	case ID_OPTIONS_THROTTLE:
-		throttle = !throttle;
-		break;
+		case ID_OPTIONS_THROTTLE:
+			throttle = !throttle;
+			break;
 
 #if HAS_PROFILER
-	case ID_OPTIONS_PROFILER:
-		ui_set_show_profiler(!ui_get_show_profiler());
-		break;
+		case ID_OPTIONS_PROFILER:
+			ui_set_show_profiler(!ui_get_show_profiler());
+			break;
 #endif // HAS_PROFILER
 
 #if HAS_DEBUGGER
-	case ID_OPTIONS_DEBUGGER:
+		case ID_OPTIONS_DEBUGGER:
 #ifdef NEW_DEBUGGER
-		debug_halt_on_next_instruction();
+			debug_halt_on_next_instruction();
 #else
-		{
-			extern int debug_key_pressed;
-			debug_key_pressed = 1;
-		}
+			{
+				extern int debug_key_pressed;
+				debug_key_pressed = 1;
+			}
 #endif
-		break;
+			break;
 #endif // HAS_DEBUGGER
 
-	case ID_OPTIONS_CONFIGURATION:
-		customize_configuration();
-		break;
+		case ID_OPTIONS_CONFIGURATION:
+			customize_configuration();
+			break;
 
-	case ID_OPTIONS_DIPSWITCHES:
-		customize_dipswitches();
-		break;
+		case ID_OPTIONS_DIPSWITCHES:
+			customize_dipswitches();
+			break;
 
-	case ID_OPTIONS_MISCINPUT:
-		customize_miscinput();
-		break;
+		case ID_OPTIONS_MISCINPUT:
+			customize_miscinput();
+			break;
 
-	case ID_OPTIONS_ANALOGCONTROLS:
-		customize_analogcontrols();
-		break;
+		case ID_OPTIONS_ANALOGCONTROLS:
+			customize_analogcontrols();
+			break;
 
 #if HAS_TOGGLEFULLSCREEN
-	case ID_OPTIONS_FULLSCREEN:
-		win_toggle_full_screen();
-		break;
+		case ID_OPTIONS_FULLSCREEN:
+			win_toggle_full_screen();
+			break;
 #endif
 
-	case ID_OPTIONS_TOGGLEFPS:
-		ui_set_show_fps(!ui_get_show_fps());
-		break;
+		case ID_OPTIONS_TOGGLEFPS:
+			ui_set_show_fps(!ui_get_show_fps());
+			break;
 
-	case ID_OPTIONS_USEMOUSE:
-		{
-			extern int win_use_mouse;
-			win_use_mouse = !win_use_mouse;
-		}
-		break;
+		case ID_OPTIONS_USEMOUSE:
+			{
+				extern int win_use_mouse;
+				win_use_mouse = !win_use_mouse;
+			}
+			break;
 
 #if HAS_TOGGLEMENUBAR
-	case ID_OPTIONS_TOGGLEMENUBAR:
-		win_toggle_menubar();
-		break;
+		case ID_OPTIONS_TOGGLEMENUBAR:
+			win_toggle_menubar();
+			break;
 #endif
 
-	case ID_FRAMESKIP_AUTO:
-		autoframeskip = 1;
-		break;
+		case ID_FRAMESKIP_AUTO:
+			autoframeskip = 1;
+			break;
 
-	case ID_HELP_ABOUT:
-		help_about_mess();
-		break;
+		case ID_HELP_ABOUT:
+			help_about_mess();
+			break;
 
-	case ID_HELP_ABOUTSYSTEM:
-		help_about_thissystem();
-		break;
+		case ID_HELP_ABOUTSYSTEM:
+			help_about_thissystem();
+			break;
 
-	default:
-		// quickly come up with a port count, so we can upper bound commands
-		// near ID_INPUT_0
-		port_count = 0;
-		while(Machine->input_ports[port_count].type != IPT_END)
-			port_count++;
+		default:
+			// quickly come up with a port count, so we can upper bound commands
+			// near ID_INPUT_0
+			port_count = 0;
+			while(Machine->input_ports[port_count].type != IPT_END)
+				port_count++;
 
-		if ((command >= ID_FRAMESKIP_0) && (command < ID_FRAMESKIP_0 + FRAMESKIP_LEVELS))
-		{
-			// change frameskip
-			frameskip = command - ID_FRAMESKIP_0;
-			autoframeskip = 0;
-		}
-		else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
-		{
-			// change device
-			img = decode_deviceoption(command, &dev_command);
-			device_command(img, dev_command);
-		}
-		else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
-		{
-			// customize joystick
-			customize_joystick(command - ID_JOYSTICK_0);
-		}
-		else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
-		{
-			// customize categorized input
-			in = &Machine->input_ports[command - ID_INPUT_0];
-			switch(in->type) {
-			case IPT_CATEGORY_NAME:
-				// customize the input type
-				category = 0;
-				section = NULL;
-				for (i = 1; (in[i].type) == IPT_CATEGORY_SETTING; i++)
-				{
-					if (in[i].default_value == in[0].default_value)
-					{
-						category = in[i].category;
-						section = in[i].name;
-					}
-				}
-				customize_categorizedinput(section, category);
-				break;
-
-			case IPT_CATEGORY_SETTING:
-				// change the input type for this category
-				setting = in->default_value;
-				while((in->type) != IPT_CATEGORY_NAME)
-					in--;
-				in->default_value = setting;
-				break;
-
-			default:
-				// should never happen
-				handled = 0;
-				break;
+			if ((command >= ID_FRAMESKIP_0) && (command < ID_FRAMESKIP_0 + FRAMESKIP_LEVELS))
+			{
+				// change frameskip
+				frameskip = command - ID_FRAMESKIP_0;
+				autoframeskip = 0;
 			}
-		}
-		else
-		{
-			// bogus command
-			handled = 0;
-		}
-		break;
+			else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
+			{
+				// change device
+				img = decode_deviceoption(command, &dev_command);
+				device_command(img, dev_command);
+			}
+			else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
+			{
+				// customize joystick
+				customize_joystick(command - ID_JOYSTICK_0);
+			}
+			else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
+			{
+				// customize categorized input
+				in = &Machine->input_ports[command - ID_INPUT_0];
+				switch(in->type) {
+				case IPT_CATEGORY_NAME:
+					// customize the input type
+					category = 0;
+					section = NULL;
+					for (i = 1; (in[i].type) == IPT_CATEGORY_SETTING; i++)
+					{
+						if (in[i].default_value == in[0].default_value)
+						{
+							category = in[i].category;
+							section = in[i].name;
+						}
+					}
+					customize_categorizedinput(section, category);
+					break;
+
+				case IPT_CATEGORY_SETTING:
+					// change the input type for this category
+					setting = in->default_value;
+					while((in->type) != IPT_CATEGORY_NAME)
+						in--;
+					in->default_value = setting;
+					break;
+
+				default:
+					// should never happen
+					handled = 0;
+					break;
+				}
+			}
+			else
+			{
+				// bogus command
+				handled = 0;
+			}
+			break;
 	}
 	return handled;
 }
@@ -1758,13 +1772,6 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%i", i);
 		AppendMenu(frameskip_menu, MF_STRING, ID_FRAMESKIP_0 + i, A2T(buf));
-	}
-
-	// set up the reset options
-	if (ram_option_count(Machine->gamedrv) == 0)
-	{
-		RemoveMenu(menu_bar, ID_OPTIONS_HARDRESET, MF_BYCOMMAND);
-		set_menu_text(menu_bar, ID_OPTIONS_SOFTRESET, "&Reset");
 	}
 
 	// set the help menu to refer to this machine
@@ -1910,14 +1917,3 @@ int osd_keyboard_disabled(void)
 {
 	return win_use_natural_keyboard;
 }
-
-//============================================================
-//	osd_trying_to_quit
-//============================================================
-
-int osd_trying_to_quit(void)
-{
-	return win_trying_to_quit;
-}
-
-

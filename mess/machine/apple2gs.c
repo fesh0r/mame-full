@@ -208,7 +208,7 @@ static void process_clock(void)
 						break;
 
 					default:
-						//osd_die("NYI");
+						//fatalerror("NYI");
 						break;
 				}
 			}
@@ -255,7 +255,7 @@ static void process_clock(void)
 			break;
 
 		default:
-			//osd_die("NYI");
+			//fatalerror("NYI");
 			break;
 	}
 }
@@ -506,7 +506,7 @@ static void adb_do_command(void)
 			break;
 
 		default:
-			osd_die("ADB command 0x%02x unimplemented", adb_command);
+			fatalerror("ADB command 0x%02x unimplemented", adb_command);
 			break;
 	}
 	adb_kmstatus |= 0x20;
@@ -622,7 +622,7 @@ static void adb_write_datareg(UINT8 data)
 					break;
 
 				default:
-					osd_die("ADB command 0x%02x unimplemented", data);
+					fatalerror("ADB command 0x%02x unimplemented", data);
 					break;
 
 			}

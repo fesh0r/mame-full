@@ -41,14 +41,15 @@
 
 struct sam6883
 {
-	const struct sam6883_interface *intf;
+	const sam6883_interface *intf;
 	UINT16 state;
 	UINT16 old_state;
 };
 
 static struct sam6883 sam;
 
-static UINT8 sammode2rowheight[] = {
+static const UINT8 sammode2rowheight[] =
+{
 	12,	/* 0 - Text */
 	3,	/* 1 - G1C/G1R */
 	3,	/* 2 - G2C */
@@ -97,18 +98,13 @@ static void update_sam(void)
 	}
 }
 
-void sam_init(void)
+void sam_init(const sam6883_interface *intf)
 {
 	state_save_register_item("6883sam", 0, sam.state);
 	state_save_register_func_postload(update_sam);
 	sam.state = 0;
 	sam.old_state = ~0;
-}
-
-void sam_config(const struct sam6883_interface *intf)
-{
 	sam.intf = intf;
-	update_sam();
 }
 
 void sam_reset(void)

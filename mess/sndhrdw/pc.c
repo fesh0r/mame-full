@@ -10,9 +10,9 @@
 
 ****************************************************************************/
 
-#include "osd_cpu.h"
+#include "driver.h"
+#include "streams.h"
 #include "machine/pcshare.h"
-
 #include "machine/pit8253.h"
 
 #define SND_LOG(n,m,a)

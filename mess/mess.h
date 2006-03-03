@@ -123,6 +123,4 @@ UINT8 *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_
 /* gets the path to the MESS executable */
 extern const char *mess_path;
 
-void machine_hard_reset(void);
-
 #endif

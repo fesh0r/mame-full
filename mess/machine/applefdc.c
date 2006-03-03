@@ -371,7 +371,7 @@ UINT8 applefdc_r(offs_t offset)
 			break;
 
 		case APPLEFDC_SWIM:
-			osd_die("NYI");
+			fatalerror("NYI");
 			break;
 	}
 	return result;
@@ -413,7 +413,7 @@ void applefdc_w(offs_t offset, UINT8 data)
 			break;
 
 		case APPLEFDC_SWIM:
-			osd_die("NYI");
+			fatalerror("NYI");
 			break;
 	}
 }

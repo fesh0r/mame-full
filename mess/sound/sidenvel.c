@@ -35,20 +35,19 @@
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 
-#include "sidtypes.h"
 #include "sidvoice.h"
 #include "sid.h"
 
 #include "side6581.h"
 #include "sidenvel.h"
 
-const ubyte masterVolumeLevels[16] =
+const UINT8 masterVolumeLevels[16] =
 {
     0,  17,  34,  51,  68,  85, 102, 119,
   136, 153, 170, 187, 204, 221, 238, 255
 };
 
-static uword masterAmplModTable[16*256];
+static UINT16 masterAmplModTable[16*256];
 
 static float attackTimes[16] =
 {
@@ -82,23 +81,23 @@ static float decayReleaseTimes[16] =
   static float attackRates[16];
   static float decayReleaseRates[16];
 #elif defined(DIRECT_FIXPOINT)
-  static udword attackRates[16];
-  static udword decayReleaseRates[16];
+  static UINT32 attackRates[16];
+  static UINT32 decayReleaseRates[16];
 #else
-  static udword attackRates[16];
-  static udword attackRatesP[16];
-  static udword decayReleaseRates[16];
-  static udword decayReleaseRatesP[16];
+  static UINT32 attackRates[16];
+  static UINT32 attackRatesP[16];
+  static UINT32 decayReleaseRates[16];
+  static UINT32 decayReleaseRatesP[16];
 #endif
 
-const udword attackTabLen = 255;
-static udword releaseTabLen;
-static udword releasePos[256];
+const UINT32 attackTabLen = 255;
+static UINT32 releaseTabLen;
+static UINT32 releasePos[256];
 
 
-void enveEmuInit( udword updateFreq, bool measuredValues )
+void enveEmuInit( UINT32 updateFreq, bool measuredValues )
 {
-	udword i, j, k;
+	UINT32 i, j, k;
 
 	releaseTabLen = sizeof(releaseTab);
 	for ( i = 0; i < 256; i++ )
@@ -123,10 +122,10 @@ void enveEmuInit( udword updateFreq, bool measuredValues )
 	{
 		for ( j = 0; j < 256; j++ )
 		{
-			uword tmpVol = j;
+			UINT16 tmpVol = j;
 			if (measuredValues)
 			{
-				tmpVol = (uword) ((293.0*(1-exp(j/-130.0)))+4.0);
+				tmpVol = (UINT16) ((293.0*(1-exp(j/-130.0)))+4.0);
 				if (j == 0)
 					tmpVol = 0;
 				if (tmpVol > 255)
@@ -150,24 +149,24 @@ void enveEmuInit( udword updateFreq, bool measuredValues )
 			scaledenvelen = 1;
 		decayReleaseRates[i] = releaseTabLen / scaledenvelen;
 #elif defined(DIRECT_FIXPOINT)
-		udword scaledenvelen = (udword)floor(( attackTimes[i] * updateFreq ) / 1000UL );
+		UINT32 scaledenvelen = (UINT32)floor(( attackTimes[i] * updateFreq ) / 1000UL );
 		if (scaledenvelen == 0)
 			scaledenvelen = 1;
 		attackRates[i] = (attackTabLen << 16) / scaledenvelen;
 
-		scaledenvelen = (udword)floor(( decayReleaseTimes[i] * updateFreq ) / 1000UL );
+		scaledenvelen = (UINT32)floor(( decayReleaseTimes[i] * updateFreq ) / 1000UL );
 		if (scaledenvelen == 0)
 			scaledenvelen = 1;
 		decayReleaseRates[i] = (releaseTabLen << 16) / scaledenvelen;
 #else
-		udword scaledenvelen = (udword)(/*floor*/(( attackTimes[i] * updateFreq ) / 1000UL ));
+		UINT32 scaledenvelen = (UINT32)(/*floor*/(( attackTimes[i] * updateFreq ) / 1000UL ));
 
 		if (scaledenvelen == 0)
 			scaledenvelen = 1;
 		attackRates[i] = attackTabLen / scaledenvelen;
 		attackRatesP[i] = (( attackTabLen % scaledenvelen ) * 65536UL ) / scaledenvelen;
 
-		scaledenvelen = (udword)(/*floor*/(( decayReleaseTimes[i] * updateFreq ) / 1000UL ));
+		scaledenvelen = (UINT32)(/*floor*/(( decayReleaseTimes[i] * updateFreq ) / 1000UL ));
 		if (scaledenvelen == 0)
 			scaledenvelen = 1;
 		decayReleaseRates[i] = releaseTabLen / scaledenvelen;
@@ -198,24 +197,24 @@ void enveEmuResetOperator(sidOperator* pVoice)
 	pVoice->enveShortAttackCount = 0;
 }
 
-INLINE uword enveEmuStartAttack(sidOperator*);
-INLINE uword enveEmuStartDecay(sidOperator*);
-INLINE uword enveEmuStartRelease(sidOperator*);
-INLINE uword enveEmuAlterAttack(sidOperator*);
-INLINE uword enveEmuAlterDecay(sidOperator*);
-INLINE uword enveEmuAlterSustain(sidOperator*);
-INLINE uword enveEmuAlterSustainDecay(sidOperator*);
-INLINE uword enveEmuAlterRelease(sidOperator*);
-INLINE uword enveEmuAttack(sidOperator*);
-INLINE uword enveEmuDecay(sidOperator*);
-INLINE uword enveEmuSustain(sidOperator*);
-INLINE uword enveEmuSustainDecay(sidOperator*);
-INLINE uword enveEmuRelease(sidOperator*);
-INLINE uword enveEmuMute(sidOperator*);
+INLINE UINT16 enveEmuStartAttack(sidOperator*);
+INLINE UINT16 enveEmuStartDecay(sidOperator*);
+INLINE UINT16 enveEmuStartRelease(sidOperator*);
+INLINE UINT16 enveEmuAlterAttack(sidOperator*);
+INLINE UINT16 enveEmuAlterDecay(sidOperator*);
+INLINE UINT16 enveEmuAlterSustain(sidOperator*);
+INLINE UINT16 enveEmuAlterSustainDecay(sidOperator*);
+INLINE UINT16 enveEmuAlterRelease(sidOperator*);
+INLINE UINT16 enveEmuAttack(sidOperator*);
+INLINE UINT16 enveEmuDecay(sidOperator*);
+INLINE UINT16 enveEmuSustain(sidOperator*);
+INLINE UINT16 enveEmuSustainDecay(sidOperator*);
+INLINE UINT16 enveEmuRelease(sidOperator*);
+INLINE UINT16 enveEmuMute(sidOperator*);
 
-INLINE uword enveEmuStartShortAttack(sidOperator*);
-INLINE uword enveEmuAlterShortAttack(sidOperator*);
-INLINE uword enveEmuShortAttack(sidOperator*);
+INLINE UINT16 enveEmuStartShortAttack(sidOperator*);
+INLINE UINT16 enveEmuAlterShortAttack(sidOperator*);
+INLINE UINT16 enveEmuShortAttack(sidOperator*);
 
 
 ptr2sidUwordFunc enveModeTable[] =
@@ -261,7 +260,7 @@ INLINE void enveEmuEnveAdvance(sidOperator* pVoice)
 /* */
 
 /* Only used in the beginning. */
-INLINE uword enveEmuMute(sidOperator* pVoice)
+INLINE UINT16 enveEmuMute(sidOperator* pVoice)
 {
 	return 0;
 }
@@ -270,10 +269,10 @@ INLINE uword enveEmuMute(sidOperator* pVoice)
 /* Release */
 /* */
 
-INLINE uword enveEmuRelease(sidOperator* pVoice)
+INLINE UINT16 enveEmuRelease(sidOperator* pVoice)
 {
 #ifdef SID_FPUENVE
-	pVoice->enveStep = (uword)pVoice->fenveStep;
+	pVoice->enveStep = (UINT16)pVoice->fenveStep;
 #endif
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)
 	if ( pVoice->enveStep.w[HI] >= releaseTabLen )
@@ -296,9 +295,9 @@ INLINE uword enveEmuRelease(sidOperator* pVoice)
 	}
 }
 
-INLINE uword enveEmuAlterRelease(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterRelease(sidOperator* pVoice)
 {
-	ubyte release = pVoice->SIDSR & 0x0F;
+	UINT8 release = pVoice->SIDSR & 0x0F;
 #ifdef SID_FPUENVE
 	pVoice->fenveStepAdd = decayReleaseRates[release];
 #elif defined(DIRECT_FIXPOINT)
@@ -311,7 +310,7 @@ INLINE uword enveEmuAlterRelease(sidOperator* pVoice)
 	return enveEmuRelease(pVoice);
 }
 
-INLINE uword enveEmuStartRelease(sidOperator* pVoice)
+INLINE UINT16 enveEmuStartRelease(sidOperator* pVoice)
 {
 	pVoice->ADSRctrl = ENVE_RELEASE;
 #ifdef SID_FPUENVE
@@ -330,15 +329,15 @@ INLINE uword enveEmuStartRelease(sidOperator* pVoice)
 /* Sustain */
 /* */
 
-INLINE uword enveEmuSustain(sidOperator* pVoice)
+INLINE UINT16 enveEmuSustain(sidOperator* pVoice)
 {
 	return masterAmplModTable[pVoice->sid->masterVolumeAmplIndex+pVoice->enveVol];
 }
 
-INLINE uword enveEmuSustainDecay(sidOperator* pVoice)
+INLINE UINT16 enveEmuSustainDecay(sidOperator* pVoice)
 {
 #ifdef SID_FPUENVE
-	pVoice->enveStep = (uword)pVoice->fenveStep;
+	pVoice->enveStep = (UINT16)pVoice->fenveStep;
 #endif
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)
 	if ( pVoice->enveStep.w[HI] >= releaseTabLen )
@@ -371,9 +370,9 @@ INLINE uword enveEmuSustainDecay(sidOperator* pVoice)
 }
 
 /* This is the same as enveEmuStartSustainDecay(). */
-INLINE uword enveEmuAlterSustainDecay(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterSustainDecay(sidOperator* pVoice)
 {
-	ubyte decay = pVoice->SIDAD & 0x0F ;
+	UINT8 decay = pVoice->SIDAD & 0x0F ;
 #ifdef SID_FPUENVE
 	pVoice->fenveStepAdd = decayReleaseRates[decay];
 #elif defined(DIRECT_FIXPOINT)
@@ -387,7 +386,7 @@ INLINE uword enveEmuAlterSustainDecay(sidOperator* pVoice)
 }
 
 /* This is the same as enveEmuStartSustain(). */
-INLINE uword enveEmuAlterSustain(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterSustain(sidOperator* pVoice)
 {
 	if ( pVoice->enveVol > pVoice->enveSusVol )
 	{
@@ -407,10 +406,10 @@ INLINE uword enveEmuAlterSustain(sidOperator* pVoice)
 /* Decay */
 /* */
 
-INLINE uword enveEmuDecay(sidOperator* pVoice)
+INLINE UINT16 enveEmuDecay(sidOperator* pVoice)
 {
 #ifdef SID_FPUENVE
-	pVoice->enveStep = (uword)pVoice->fenveStep;
+	pVoice->enveStep = (UINT16)pVoice->fenveStep;
 #endif
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)
 	if ( pVoice->enveStep.w[HI] >= releaseTabLen )
@@ -442,9 +441,9 @@ INLINE uword enveEmuDecay(sidOperator* pVoice)
 	}
 }
 
-INLINE uword enveEmuAlterDecay(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterDecay(sidOperator* pVoice)
 {
-	ubyte decay = pVoice->SIDAD & 0x0F ;
+	UINT8 decay = pVoice->SIDAD & 0x0F ;
 #ifdef SID_FPUENVE
 	pVoice->fenveStepAdd = decayReleaseRates[decay];
 #elif defined(DIRECT_FIXPOINT)
@@ -457,7 +456,7 @@ INLINE uword enveEmuAlterDecay(sidOperator* pVoice)
 	return enveEmuDecay(pVoice);
 }
 
-INLINE uword enveEmuStartDecay(sidOperator* pVoice)
+INLINE UINT16 enveEmuStartDecay(sidOperator* pVoice)
 {
 	pVoice->ADSRctrl = ENVE_DECAY;
 #ifdef SID_FPUENVE
@@ -474,10 +473,10 @@ INLINE uword enveEmuStartDecay(sidOperator* pVoice)
 /* Attack */
 /* */
 
-INLINE uword enveEmuAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuAttack(sidOperator* pVoice)
 {
 #ifdef SID_FPUENVE
-	pVoice->enveStep = (uword)pVoice->fenveStep;
+	pVoice->enveStep = (UINT16)pVoice->fenveStep;
 #endif
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)
 	if ( pVoice->enveStep.w[HI] > attackTabLen )
@@ -497,9 +496,9 @@ INLINE uword enveEmuAttack(sidOperator* pVoice)
 	}
 }
 
-INLINE uword enveEmuAlterAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterAttack(sidOperator* pVoice)
 {
-	ubyte attack = pVoice->SIDAD >> 4;
+	UINT8 attack = pVoice->SIDAD >> 4;
 #ifdef SID_FPUENVE
 	pVoice->fenveStepAdd = attackRates[attack];
 #elif defined(DIRECT_FIXPOINT)
@@ -512,7 +511,7 @@ INLINE uword enveEmuAlterAttack(sidOperator* pVoice)
 	return enveEmuAttack(pVoice);
 }
 
-INLINE uword enveEmuStartAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuStartAttack(sidOperator* pVoice)
 {
 	pVoice->ADSRctrl = ENVE_ATTACK;
 #ifdef SID_FPUENVE
@@ -534,10 +533,10 @@ INLINE uword enveEmuStartAttack(sidOperator* pVoice)
 /*#include <iostream.h> */
 /*#include <iomanip.h> */
 
-INLINE uword enveEmuShortAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuShortAttack(sidOperator* pVoice)
 {
 #ifdef SID_FPUENVE
-	pVoice->enveStep = (uword)pVoice->fenveStep;
+	pVoice->enveStep = (UINT16)pVoice->fenveStep;
 #endif
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)
 	if ((pVoice->enveStep.w[HI] > attackTabLen) ||
@@ -562,9 +561,9 @@ INLINE uword enveEmuShortAttack(sidOperator* pVoice)
 	}
 }
 
-INLINE uword enveEmuAlterShortAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuAlterShortAttack(sidOperator* pVoice)
 {
-	ubyte attack = pVoice->SIDAD >> 4;
+	UINT8 attack = pVoice->SIDAD >> 4;
 #ifdef SID_FPUENVE
 	pVoice->fenveStepAdd = attackRates[attack];
 #elif defined(DIRECT_FIXPOINT)
@@ -577,7 +576,7 @@ INLINE uword enveEmuAlterShortAttack(sidOperator* pVoice)
 	return enveEmuShortAttack(pVoice);
 }
 
-INLINE uword enveEmuStartShortAttack(sidOperator* pVoice)
+INLINE UINT16 enveEmuStartShortAttack(sidOperator* pVoice)
 {
 	pVoice->ADSRctrl = ENVE_SHORTATTACK;
 #ifdef SID_FPUENVE

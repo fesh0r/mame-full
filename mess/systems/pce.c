@@ -41,6 +41,7 @@
 **********************************************************************/
 
 #include <assert.h>
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vdc.h"
@@ -48,6 +49,8 @@
 #include "includes/pce.h"
 #include "devices/cartslot.h"
 #include "sound/c6280.h"
+#include "hash.h"
+
 static INTERRUPT_GEN( pce_interrupt )
 {
     int ret = 0;

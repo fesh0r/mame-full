@@ -9,9 +9,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+
 #include "osdepend.h"
 #include "imgtoolx.h"
-#include "osd_cpu.h"
 #include "utils.h"
 #include "library.h"
 #include "modules.h"

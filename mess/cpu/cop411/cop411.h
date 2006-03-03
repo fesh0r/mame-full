@@ -11,9 +11,6 @@
 #define INLINE static inline
 #endif
 
-#include "osd_cpu.h"
-
-
 #define COP411_CLOCK_DIVIDER		(4)
 
 #define  COP411_L	0x100

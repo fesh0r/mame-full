@@ -122,7 +122,7 @@ void set_devicedirectory(int dev, const char *dir)
 	assert(dev < IO_COUNT);
 	if (dev_dirs[dev])
 		free(dev_dirs[dev]);
-	dev_dirs[dev] = strdup(dir);
+	dev_dirs[dev] = mame_strdup(dir);
 }
 
 
@@ -339,7 +339,7 @@ void osd_begin_final_unloading(void)
 
 				// place new filename, if there
 				if (image)
-					*filename_ptr = strdup(image_filename(image));
+					*filename_ptr = mame_strdup(image_filename(image));
 			}
 			opt++;
 		}

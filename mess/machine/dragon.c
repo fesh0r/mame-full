@@ -354,7 +354,7 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 
 };
 
-static struct sam6883_interface coco_sam_intf =
+static const sam6883_interface coco_sam_intf =
 {
 	m6847_set_row_height,
 	m6847_set_video_offset,
@@ -364,7 +364,7 @@ static struct sam6883_interface coco_sam_intf =
 	d_sam_set_maptype
 };
 
-static struct sam6883_interface coco3_sam_intf =
+static const sam6883_interface coco3_sam_intf =
 {
 	NULL,
 	m6847_set_video_offset,
@@ -374,7 +374,7 @@ static struct sam6883_interface coco3_sam_intf =
 	coco3_sam_set_maptype
 };
 
-static struct sam6883_interface dragon64_sam_intf =
+static const sam6883_interface dragon64_sam_intf =
 {
 	m6847_set_row_height,
 	m6847_set_video_offset,
@@ -2426,7 +2426,7 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartbank
 };
 
-static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf,
+static void generic_init_machine(struct pia6821_interface *piaintf, const sam6883_interface *samintf,
 	const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback,
 	void (*recalc_interrupts_)(int dummy))
 {
@@ -2458,8 +2458,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
 	pia_reset();
 
-	sam_config(samintf);
-	sam_reset();
+	sam_init(samintf);
 
 	/* HACK for bankswitching carts */
 	if( is_Orch90() )
@@ -2468,18 +2467,20 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	    cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
+	add_exit_callback(coco_machine_stop);
 }
 
-MACHINE_RESET( dragon32 )
+MACHINE_START( dragon32 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_DRAGON;
+	return 0;
 }
 
-MACHINE_RESET( dragon64 )
+MACHINE_START( dragon64 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2487,9 +2488,10 @@ MACHINE_RESET( dragon64 )
 	acia_6551_init();
 	
 	coco_or_dragon = AM_DRAGON;
+	return 0;
 }
 
-MACHINE_RESET( dgnalpha )
+MACHINE_START( dgnalpha )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
@@ -2506,27 +2508,30 @@ MACHINE_RESET( dgnalpha )
 	wd179x_init(WD_TYPE_179X,dgnalpha_fdc_callback);
 
 	coco_or_dragon = AM_DRAGON;
+	return 0;
 }
 
-MACHINE_RESET( coco )
+MACHINE_START( coco )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
+	return 0;
 }
 
-MACHINE_RESET( coco2 )
+MACHINE_START( coco2 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
+	return 0;
 }
 
-MACHINE_RESET( coco3 )
+static void coco3_machine_reset(void)
 {
 	int i;
 
@@ -2541,18 +2546,23 @@ MACHINE_RESET( coco3 )
 		coco3_mmu[i] = coco3_mmu[i + 8] = 56 + i;
 		coco3_gimereg[i] = 0;
 	}
+	coco3_mmu_update(0, 8);
+	coco3_vh_reset();
+}
 
+MACHINE_START( coco3 )
+{
 	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
 
-	coco3_mmu_update(0, 8);
+	coco3_machine_reset();
 	coco3_timer_init();
-	coco3_vh_reset();
 
 	coco3_interupt_line = 0;
 	
 	coco_or_dragon = AM_COCO;
 
-	add_exit_callback(coco_machine_stop);
+	add_reset_callback(coco3_machine_reset);
+	return 0;
 }
 
 static void coco_machine_stop(void)
@@ -2570,8 +2580,6 @@ DRIVER_INIT( coco )
 		cart_inserted++;
 	else if (cart_inserted == 2)
 		cart_inserted = 0;
-
-	sam_init();
 
 	/* The choise of 50hz is arbitrary */
 	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);

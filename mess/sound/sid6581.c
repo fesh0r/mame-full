@@ -108,7 +108,7 @@ WRITE8_HANDLER ( sid6581_1_port_w )
  * Generic get_info
  **************************************************************************/
 
-static void sid6581_set_info(void *token, UINT32 state, union sndinfo *info)
+static void sid6581_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -117,7 +117,7 @@ static void sid6581_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void sid6581_get_info(void *token, UINT32 state, union sndinfo *info)
+void sid6581_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -139,7 +139,7 @@ void sid6581_get_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void sid8580_get_info(void *token, UINT32 state, union sndinfo *info)
+void sid8580_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

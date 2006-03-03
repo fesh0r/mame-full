@@ -1,7 +1,6 @@
 #ifndef _PDP1_H
 #define _PDP1_H
 
-#include "osd_cpu.h"
 #include "driver.h"
 
 

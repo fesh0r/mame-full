@@ -216,7 +216,7 @@ VIDEO_START( pc_aga )
 		break;
 
 	default:
-		osd_die("CGA:  Bus width %d not supported\n", buswidth);
+		fatalerror("CGA:  Bus width %d not supported\n", buswidth);
 		break;
 	}
 
@@ -242,7 +242,7 @@ VIDEO_START( pc200 )
 		break;
 
 	default:
-		osd_die("CGA:  Bus width %d not supported\n", buswidth);
+		fatalerror("CGA:  Bus width %d not supported\n", buswidth);
 		break;
 	}
 	return 0;

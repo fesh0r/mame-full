@@ -1,7 +1,7 @@
 /* .PTP Microkey Primo tape images */
 
 
-#include "osdepend.h"
+#include "driver.h"
 #include "primoptp.h"
 
 

@@ -31,6 +31,7 @@
 #include <math.h>
 #include <direct.h>
 #include <driver.h>
+#include <stddef.h>
 
 #include "screenshot.h"
 #include "bitmask.h"
@@ -391,7 +392,7 @@ static const REG_OPTION regGameOpts[] =
 	{ "rdtsc",                  RO_BOOL,    offsetof(options_type, old_timing),                      "0" },
 	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "0" },
 	{ "led_mode",               RO_STRING,  offsetof(options_type, ledmode),                         "ps/2" },
-	{ "high_priority",          RO_BOOL,    offsetof(options_type, high_priority),                   "0" },
+	{ "priority",               RO_INT,     offsetof(options_type, priority),                        "0" },
 	{ "skip_gameinfo",          RO_BOOL,    offsetof(options_type, skip_gameinfo),                   "0" },
 #ifdef MESS
 	{ "skip_warnings",          RO_BOOL,    offsetof(options_type, skip_warnings),     "0" },
@@ -698,10 +699,10 @@ BOOL OptionsInit()
 
 	// have our mame core (file code) know about our rom path
 	// this leaks a little, but the win32 file core writes to this string
-	set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
-	set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
+	set_pathlist(FILETYPE_ROM,mame_strdup(settings.romdirs));
+	set_pathlist(FILETYPE_SAMPLE,mame_strdup(settings.sampledirs));
 #ifdef MESS
-	set_pathlist(FILETYPE_HASH, strdup(settings.mess.hashdir));
+	set_pathlist(FILETYPE_HASH, mame_strdup(settings.mess.hashdir));
 #endif
 	return TRUE;
 
@@ -1286,7 +1287,7 @@ void SetCurrentTab(const char *shortname)
 {
 	FreeIfAllocated(&settings.current_tab);
 	if (shortname != NULL)
-		settings.current_tab = strdup(shortname);
+		settings.current_tab = mame_strdup(shortname);
 }
 
 const char *GetCurrentTab(void)
@@ -1299,7 +1300,7 @@ void SetDefaultGame(const char *name)
 	FreeIfAllocated(&settings.default_game);
 
 	if (name != NULL)
-		settings.default_game = strdup(name);
+		settings.default_game = mame_strdup(name);
 }
 
 const char *GetDefaultGame(void)
@@ -1513,7 +1514,7 @@ void SetLanguage(const char* lang)
 	FreeIfAllocated(&settings.language);
 
 	if (lang != NULL)
-		settings.language = strdup(lang);
+		settings.language = mame_strdup(lang);
 }
 
 const char* GetRomDirs(void)
@@ -1527,11 +1528,11 @@ void SetRomDirs(const char* paths)
 
 	if (paths != NULL)
 	{
-		settings.romdirs = strdup(paths);
+		settings.romdirs = mame_strdup(paths);
 
 		// have our mame core (file code) know about it
 		// this leaks a little, but the win32 file core writes to this string
-		set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
+		set_pathlist(FILETYPE_ROM,mame_strdup(settings.romdirs));
 	}
 }
 
@@ -1546,11 +1547,11 @@ void SetSampleDirs(const char* paths)
 
 	if (paths != NULL)
 	{
-		settings.sampledirs = strdup(paths);
+		settings.sampledirs = mame_strdup(paths);
 		
 		// have our mame core (file code) know about it
 		// this leaks a little, but the win32 file core writes to this string
-		set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
+		set_pathlist(FILETYPE_SAMPLE,mame_strdup(settings.sampledirs));
 	}
 
 }
@@ -1565,7 +1566,7 @@ void SetIniDir(const char *path)
 	FreeIfAllocated(&settings.inidir);
 
 	if (path != NULL)
-		settings.inidir = strdup(path);
+		settings.inidir = mame_strdup(path);
 }
 
 const char* GetCtrlrDir(void)
@@ -1578,7 +1579,7 @@ void SetCtrlrDir(const char* path)
 	FreeIfAllocated(&settings.ctrlrdir);
 
 	if (path != NULL)
-		settings.ctrlrdir = strdup(path);
+		settings.ctrlrdir = mame_strdup(path);
 }
 
 const char* GetCfgDir(void)
@@ -1591,7 +1592,7 @@ void SetCfgDir(const char* path)
 	FreeIfAllocated(&settings.cfgdir);
 
 	if (path != NULL)
-		settings.cfgdir = strdup(path);
+		settings.cfgdir = mame_strdup(path);
 }
 
 const char* GetHiDir(void)
@@ -1604,7 +1605,7 @@ void SetHiDir(const char* path)
 	FreeIfAllocated(&settings.hidir);
 
 	if (path != NULL)
-		settings.hidir = strdup(path);
+		settings.hidir = mame_strdup(path);
 }
 
 const char* GetNvramDir(void)
@@ -1617,7 +1618,7 @@ void SetNvramDir(const char* path)
 	FreeIfAllocated(&settings.nvramdir);
 
 	if (path != NULL)
-		settings.nvramdir = strdup(path);
+		settings.nvramdir = mame_strdup(path);
 }
 
 const char* GetInpDir(void)
@@ -1630,7 +1631,7 @@ void SetInpDir(const char* path)
 	FreeIfAllocated(&settings.inpdir);
 
 	if (path != NULL)
-		settings.inpdir = strdup(path);
+		settings.inpdir = mame_strdup(path);
 }
 
 const char* GetImgDir(void)
@@ -1643,7 +1644,7 @@ void SetImgDir(const char* path)
 	FreeIfAllocated(&settings.imgdir);
 
 	if (path != NULL)
-		settings.imgdir = strdup(path);
+		settings.imgdir = mame_strdup(path);
 }
 
 const char* GetStateDir(void)
@@ -1656,7 +1657,7 @@ void SetStateDir(const char* path)
 	FreeIfAllocated(&settings.statedir);
 
 	if (path != NULL)
-		settings.statedir = strdup(path);
+		settings.statedir = mame_strdup(path);
 }
 
 const char* GetArtDir(void)
@@ -1669,7 +1670,7 @@ void SetArtDir(const char* path)
 	FreeIfAllocated(&settings.artdir);
 
 	if (path != NULL)
-		settings.artdir = strdup(path);
+		settings.artdir = mame_strdup(path);
 }
 
 const char* GetMemcardDir(void)
@@ -1682,7 +1683,7 @@ void SetMemcardDir(const char* path)
 	FreeIfAllocated(&settings.memcarddir);
 
 	if (path != NULL)
-		settings.memcarddir = strdup(path);
+		settings.memcarddir = mame_strdup(path);
 }
 
 const char* GetFlyerDir(void)
@@ -1695,7 +1696,7 @@ void SetFlyerDir(const char* path)
 	FreeIfAllocated(&settings.flyerdir);
 
 	if (path != NULL)
-		settings.flyerdir = strdup(path);
+		settings.flyerdir = mame_strdup(path);
 }
 
 const char* GetCabinetDir(void)
@@ -1708,7 +1709,7 @@ void SetCabinetDir(const char* path)
 	FreeIfAllocated(&settings.cabinetdir);
 
 	if (path != NULL)
-		settings.cabinetdir = strdup(path);
+		settings.cabinetdir = mame_strdup(path);
 }
 
 const char* GetMarqueeDir(void)
@@ -1721,7 +1722,7 @@ void SetMarqueeDir(const char* path)
 	FreeIfAllocated(&settings.marqueedir);
 
 	if (path != NULL)
-		settings.marqueedir = strdup(path);
+		settings.marqueedir = mame_strdup(path);
 }
 
 const char* GetTitlesDir(void)
@@ -1734,7 +1735,7 @@ void SetTitlesDir(const char* path)
 	FreeIfAllocated(&settings.titlesdir);
 
 	if (path != NULL)
-		settings.titlesdir = strdup(path);
+		settings.titlesdir = mame_strdup(path);
 }
 
 const char * GetControlPanelDir(void)
@@ -1746,7 +1747,7 @@ void SetControlPanelDir(const char *path)
 {
 	FreeIfAllocated(&settings.cpaneldir);
 	if (path != NULL)
-		settings.cpaneldir = strdup(path);
+		settings.cpaneldir = mame_strdup(path);
 }
 
 const char * GetDiffDir(void)
@@ -1759,7 +1760,7 @@ void SetDiffDir(const char* path)
 	FreeIfAllocated(&settings.diffdir);
 
 	if (path != NULL)
-		settings.diffdir = strdup(path);
+		settings.diffdir = mame_strdup(path);
 }
 
 const char* GetIconsDir(void)
@@ -1772,7 +1773,7 @@ void SetIconsDir(const char* path)
 	FreeIfAllocated(&settings.iconsdir);
 
 	if (path != NULL)
-		settings.iconsdir = strdup(path);
+		settings.iconsdir = mame_strdup(path);
 }
 
 const char* GetBgDir (void)
@@ -1785,7 +1786,7 @@ void SetBgDir (const char* path)
 	FreeIfAllocated(&settings.bgdir);
 
 	if (path != NULL)
-		settings.bgdir = strdup(path);
+		settings.bgdir = mame_strdup(path);
 }
 
 const char* GetFolderDir(void)
@@ -1798,7 +1799,7 @@ void SetFolderDir(const char* path)
 	FreeIfAllocated(&settings.folderdir);
 
 	if (path != NULL)
-		settings.folderdir = strdup(path);
+		settings.folderdir = mame_strdup(path);
 }
 
 const char* GetCheatFileName(void)
@@ -1811,7 +1812,7 @@ void SetCheatFileName(const char* path)
 	FreeIfAllocated(&settings.cheat_filename);
 
 	if (path != NULL)
-		settings.cheat_filename = strdup(path);
+		settings.cheat_filename = mame_strdup(path);
 }
 
 const char* GetHistoryFileName(void)
@@ -1824,7 +1825,7 @@ void SetHistoryFileName(const char* path)
 	FreeIfAllocated(&settings.history_filename);
 
 	if (path != NULL)
-		settings.history_filename = strdup(path);
+		settings.history_filename = mame_strdup(path);
 }
 
 
@@ -1838,7 +1839,7 @@ void SetMAMEInfoFileName(const char* path)
 	FreeIfAllocated(&settings.mameinfo_filename);
 
 	if (path != NULL)
-		settings.mameinfo_filename = strdup(path);
+		settings.mameinfo_filename = mame_strdup(path);
 }
 
 void ResetGameOptions(int driver_index)
@@ -2469,7 +2470,7 @@ static void KeySeqDecodeString(const char *str, void* data)
 	input_seq *is = &(ks->is);
 
 	FreeIfAllocated(&ks->seq_string);
-	ks->seq_string = strdup(str);
+	ks->seq_string = mame_strdup(str);
 
 	//get the new input sequence
 	string_to_seq(str,is);

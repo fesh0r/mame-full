@@ -4,6 +4,7 @@
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/crtc6845.h"
 
@@ -200,7 +201,7 @@ VIDEO_START( pc_mda )
 			break;
 
 		default:
-			osd_die("MDA:  Bus width %d not supported\n", buswidth);
+			fatalerror("MDA:  Bus width %d not supported\n", buswidth);
 			break;
 	}
 

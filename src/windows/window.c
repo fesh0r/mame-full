@@ -46,7 +46,6 @@
 #include "wind3d.h"
 #include "video.h"
 #include "blit.h"
-#include "mamedbg.h"
 #include "input.h"
 #include "../debug/window.h"
 
@@ -455,9 +454,13 @@ INLINE void get_work_area(RECT *maximum)
 
 int win_init_window(void)
 {
-	static int classes_created = 0;
+	static int classes_created = FALSE;
 	TCHAR title[256];
 	HMENU menu = NULL;
+
+	// if we already have a window, just leave it alone
+	if (win_video_window)
+		return 0;
 
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
@@ -493,6 +496,7 @@ int win_init_window(void)
 		// register the class; fail if we can't
 		if (!RegisterClass(&wc))
 			return 1;
+		classes_created = TRUE;
 	}
 
 	// make the window title
@@ -535,7 +539,6 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	// clear the initial state
 	last_bitmap = NULL;
 	visible_area_set = 0;
-	win_trying_to_quit = 0;
 
 	// extract useful parameters from the attributes
 	pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
@@ -881,6 +884,11 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 			return DefWindowProc(wnd, message, wparam, lparam);
 		}
 
+		// close: handle clicks on the close box
+		case WM_CLOSE:
+			mame_schedule_exit();
+			break;
+
 		// destroy: close down the app
 		case WM_DESTROY:
 			if (win_use_directx)
@@ -894,7 +902,6 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 					win_ddraw_kill();
 				}
 			}
-			win_trying_to_quit = 1;
 			win_video_window = 0;
 			break;
 

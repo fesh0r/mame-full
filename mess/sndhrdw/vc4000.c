@@ -6,8 +6,8 @@
 ***************************************************************************/
 
 #include <math.h>
-#include "osd_cpu.h"
 #include "mame.h"
+#include "streams.h"
 
 #include "includes/vc4000.h"
 

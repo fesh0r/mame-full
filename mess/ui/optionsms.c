@@ -112,7 +112,7 @@ void SetSoftwareDirs(const char* paths)
 {
 	FreeIfAllocated(&settings.mess.softwaredirs);
     if (paths != NULL)
-        settings.mess.softwaredirs = strdup(paths);
+        settings.mess.softwaredirs = mame_strdup(paths);
 }
 
 const char *GetCrcDir(void)
@@ -124,7 +124,7 @@ void SetCrcDir(const char *hashdir)
 {
 	FreeIfAllocated(&settings.mess.hashdir);
     if (hashdir != NULL)
-        settings.mess.hashdir = strdup(hashdir);
+        settings.mess.hashdir = mame_strdup(hashdir);
 }
 
 BOOL GetUseNewUI(int driver_index)
@@ -146,7 +146,7 @@ void SetSelectedSoftware(int driver_index, int device_inst_index, const char *so
 		dprintf("SetSelectedSoftware(): driver_index=%d device_inst_index=%d software='%s'\n", driver_index, device_inst_index, software);
 	}
 
-	newsoftware = strdup(software ? software : "");
+	newsoftware = mame_strdup(software ? software : "");
 	if (!newsoftware)
 		return;
 
@@ -177,7 +177,7 @@ void SetExtraSoftwarePaths(int driver_index, const char *extra_paths)
 
 	if (extra_paths && *extra_paths)
 	{
-		new_extra_paths = strdup(extra_paths);
+		new_extra_paths = mame_strdup(extra_paths);
 		if (!new_extra_paths)
 			return;
 	}
@@ -200,7 +200,7 @@ void SetCurrentSoftwareTab(const char *shortname)
 {
 	FreeIfAllocated(&settings.mess.software_tab);
 	if (shortname != NULL)
-		settings.mess.software_tab = strdup(shortname);
+		settings.mess.software_tab = mame_strdup(shortname);
 }
 
 const char *GetCurrentSoftwareTab(void)
@@ -246,7 +246,7 @@ BOOL LoadDeviceOption(DWORD nSettingsFile, char *key, const char *value_str)
 				|| !mame_stricmp(key, device_briefinstancename(&devclass, id)))
 			{
 				FreeIfAllocated(&game_options[game_index].mess.software[pos]);
-				game_options[game_index].mess.software[pos] = strdup(value_str);
+				game_options[game_index].mess.software[pos] = mame_strdup(value_str);
 				return TRUE;
 			}
 			pos++;

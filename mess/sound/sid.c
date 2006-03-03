@@ -16,29 +16,27 @@
 #include "includes/cbm.h"
 #include <math.h>
 
-#include "sidtypes.h"
-
 #include "sidvoice.h"
 #include "sidenvel.h"
 #include "sid.h"
 
-filterfloat filterTable[0x800];
-filterfloat bandPassParam[0x800];
+float filterTable[0x800];
+float bandPassParam[0x800];
 #define lowPassParam filterTable
-filterfloat filterResTable[16];
+float filterResTable[16];
 
 #define maxLogicalVoices 4
 
 static const int mix16monoMiddleIndex = 256*maxLogicalVoices/2;
-static uword mix16mono[256*maxLogicalVoices];
+static UINT16 mix16mono[256*maxLogicalVoices];
 
-static uword zero16bit=0;  /* either signed or unsigned */
-udword splitBufferLen;
+static UINT16 zero16bit=0;  /* either signed or unsigned */
+UINT32 splitBufferLen;
 
 void MixerInit(bool threeVoiceAmplify)
 {
 	long si;
-	uword ui;
+	UINT16 ui;
 	long ampDiv = maxLogicalVoices;
 
 	if (threeVoiceAmplify)
@@ -49,9 +47,9 @@ void MixerInit(bool threeVoiceAmplify)
 	/* Mixing formulas are optimized by sample input value. */
 
 	si = (-128*maxLogicalVoices) * 256;
-	for (ui = 0; ui < sizeof(mix16mono)/sizeof(uword); ui++ )
+	for (ui = 0; ui < sizeof(mix16mono)/sizeof(UINT16); ui++ )
 	{
-		mix16mono[ui] = (uword)(si/ampDiv) + zero16bit;
+		mix16mono[ui] = (UINT16)(si/ampDiv) + zero16bit;
 		si+=256;
 	}
 
@@ -101,9 +99,9 @@ INLINE void syncEm(SID6581 *This)
 }
 
 
-void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, udword bufferLen )
+void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, UINT32 bufferLen )
 {
-//void* fill16bitMono( SID6581 *This, void* buffer, udword numberOfSamples )
+//void* fill16bitMono( SID6581 *This, void* buffer, UINT32 numberOfSamples )
 
 	for ( ; bufferLen > 0; bufferLen-- )
 	{
@@ -156,12 +154,12 @@ bool sidEmuReset(SID6581 *This)
 
 void filterTableInit(void)
 {
-	uword uk;
+	UINT16 uk;
 	/* Parameter calculation has not been moved to a separate function */
 	/* by purpose. */
 	const float filterRefFreq = 44100.0;
 
-/*	extern filterfloat filterTable[0x800]; */
+/*	extern float filterTable[0x800]; */
 	float yMax = 1.0;
 	float yMin = 0.01;
 	float yAdd;
@@ -183,7 +181,7 @@ void filterTableInit(void)
 		uk++;
 	}
 
-	/*extern filterfloat bandPassParam[0x800]; */
+	/*extern float bandPassParam[0x800]; */
 	yMax = 0.22;
 	yMin = 0.05;  /* less for some R1/R4 chips */
 	yAdd = (yMax-yMin)/2048.0;
@@ -197,7 +195,7 @@ void filterTableInit(void)
 		uk++;
 	}
 
-	/*extern filterfloat filterResTable[16]; */
+	/*extern float filterResTable[16]; */
 	resDyMax = 1.0;
 	resDyMin = 2.0;
 	resDy = resDyMin;
@@ -230,8 +228,8 @@ void sid6581_init (SID6581 *This)
 
 
 
-	This->PCMsid = (udword)(This->PCMfreq * (16777216.0 / This->clock));
-	This->PCMsidNoise = (udword)((This->clock*256.0)/This->PCMfreq);
+	This->PCMsid = (UINT32)(This->PCMfreq * (16777216.0 / This->clock));
+	This->PCMsidNoise = (UINT32)((This->clock*256.0)/This->PCMfreq);
 
 	This->filter.Enabled = TRUE;
 
@@ -282,7 +280,7 @@ void sid6581_port_w (SID6581 *This, int offset, int data)
 	}
 	if ( This->filter.Enabled )
 	{
-	    This->filter.Value = 0x7ff & ( (This->reg[0x15]&7) | ( (uword)This->reg[0x16] << 3 ));
+	    This->filter.Value = 0x7ff & ( (This->reg[0x15]&7) | ( (UINT16)This->reg[0x16] << 3 ));
 	    if (This->filter.Type == 0x20)
 		This->filter.Dy = bandPassParam[This->filter.Value];
 	    else

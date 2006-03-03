@@ -176,7 +176,7 @@ static void vic3_drawlines (int first, int last)
 	if (first == last)
 		return;
 	vic2.lastline = last;
-	if (osd_skip_this_frame ())
+	if (skip_this_frame ())
 		return;
 
 	/* top part of display not rastered */
@@ -774,7 +774,7 @@ INTERRUPT_GEN( vic3_raster_irq )
 			set_visible_area(0,columns+16-1,0, raws+16-1);
 		}
 		if (VIC3_BITPLANES) {
-			if (!osd_skip_this_frame ()) vic3_draw_bitplanes();
+			if (!skip_this_frame ()) vic3_draw_bitplanes();
 		} else {
 			if (vic2.on) vic2_drawlines (vic2.lastline, vic2.lines);
 		}

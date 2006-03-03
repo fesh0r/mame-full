@@ -23,7 +23,6 @@
 #define _F8_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 #ifdef __cplusplus
 extern "C" {

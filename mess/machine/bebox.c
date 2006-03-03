@@ -303,7 +303,7 @@ static void bebox_set_irq_bit(unsigned int interrupt_bit, int val)
 	{
 		/* make sure that we don't shoot ourself in the foot */
 		if ((interrupt_bit > sizeof(interrupt_names) / sizeof(interrupt_names[0])) && !interrupt_names[interrupt_bit])
-			osd_die("Raising invalid interrupt %u", interrupt_bit);
+			fatalerror("Raising invalid interrupt %u", interrupt_bit);
 
 		logerror("bebox_set_irq_bit(): pc[0]=0x%08x pc[1]=0x%08x %s interrupt #%u (%s)\n",
 			(unsigned) cpunum_get_reg(0, REG_PC),
@@ -646,7 +646,7 @@ static WRITE8_HANDLER(at_hipage8_w)
 
 READ64_HANDLER(bebox_80000480_r)
 {
-	osd_die("NYI");
+	fatalerror("NYI");
 }
 
 

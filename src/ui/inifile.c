@@ -23,6 +23,7 @@
 #include <math.h>
 #include <direct.h>
 #include <driver.h>
+#include <ctype.h>
 
 #include "screenshot.h"
 #include "bitmask.h"

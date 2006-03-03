@@ -5,9 +5,10 @@
 ***************************************************************************/
 
 #include <math.h>
-#include "osd_cpu.h"
+
 #include "mame.h"
 #include "timer.h"
+#include "streams.h"
 
 #include "includes/svision.h"
 
