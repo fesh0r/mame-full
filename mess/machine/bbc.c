@@ -182,7 +182,7 @@ WRITE8_HANDLER ( page_selectbp_w )
 		};
 
 		/* set the rom to be read from b000 to bfff */
-		memory_set_bankptr(6,memory_region(REGION_USER1)+(bbc_rombank<<14)+0x03000);
+		memory_set_bank(6, bbc_rombank);
 	}
 	else
 	{
@@ -436,12 +436,11 @@ WRITE8_HANDLER ( page_selectbm_w )
 	if (pagedRAM)
 	{
 		memory_set_bankptr(4,memory_region(REGION_CPU1)+0x8000);
-		memory_set_bankptr(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		memory_set_bank(5, bbc_rombank);
 	} else {
 		memory_set_bankptr(4,memory_region(REGION_USER1)+((bbc_rombank)<<14));
-		memory_set_bankptr(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		memory_set_bank(5, bbc_rombank);
 	}
-
 }
 
 
@@ -2063,6 +2062,13 @@ DRIVER_INIT( bbcm )
     mc146818_init(MC146818_STANDARD);
 }
 
+MACHINE_START( bbca )
+{
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+	return 0;
+}
+
 MACHINE_RESET( bbca )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
@@ -2070,10 +2076,6 @@ MACHINE_RESET( bbca )
 
 	memory_set_bankptr(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	memory_set_bankptr(7,memory_region(REGION_USER1)+0x10000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	memory_set_bankptr(9,memory_region(REGION_USER1)+0x13f00);  /* bank 9 points at the OS rom  from c000 to ffff */
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
 
 	via_reset();
 
@@ -2082,12 +2084,34 @@ MACHINE_RESET( bbca )
 	MC6850_config(&BBC_MC6850_calls);
 }
 
-MACHINE_RESET( bbcb )
+MACHINE_START( bbcb )
 {
 	bbc_DFSType=  (readinputport(21)>>0)&0x07;
 	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
 	bbc_RAMSize=  (readinputport(21)>>5)&0x01;
 
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	/*set up the required disc controller*/
+	switch (bbc_DFSType) {
+	case 0:	case 1: case 2: case 3:
+		previous_i8271_int_state=0;
+		i8271_init(&bbc_i8271_interface);
+		break;
+	case 4: case 5: case 6:
+		previous_wd177x_int_state=1;
+	    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
+		break;
+	}
+	return 0;
+}
+
+MACHINE_RESET( bbcb )
+{
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	if (bbc_RAMSize)
 	{
@@ -2102,13 +2126,6 @@ MACHINE_RESET( bbcb )
 
 	memory_set_bankptr(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00);  /* bank 9 points at the OS rom  from c000 to ffff */
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
-
-	via_config(1, &bbcb_user_via);
-	via_set_clock(1,1000000);
 
 	via_reset();
 
@@ -2121,13 +2138,9 @@ MACHINE_RESET( bbcb )
 	/*set up the required disc controller*/
 	switch (bbc_DFSType) {
 	case 0:	case 1: case 2: case 3:
-		previous_i8271_int_state=0;
-		i8271_init(&bbc_i8271_interface);
 		i8271_reset();
 		break;
 	case 4: case 5: case 6:
-		previous_wd177x_int_state=1;
-	    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
 	    wd179x_reset();
 		break;
 	}
@@ -2136,23 +2149,30 @@ MACHINE_RESET( bbcb )
 }
 
 
+MACHINE_START( bbcbp )
+{
+	memory_set_opbase_handler(0, bbcbp_opbase_handler);
+
+	/* bank 6 is the paged ROMs     from b000 to bfff */
+	memory_configure_bank(6, 0, 16, memory_region(REGION_USER1) + 0x3000, 1<<14);
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
+	return 0;
+}
 
 MACHINE_RESET( bbcbp )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x03000);  /* bank 2 screen/shadow ram     from 3000 to 7fff */
 	memory_set_bankptr(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to afff */
-	memory_set_bankptr(6,memory_region(REGION_USER1)+0x03000); /* bank 6 is the paged ROMs     from b000 to bfff */
+	memory_set_bank(6, 0);
 	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000); /* bank 7 points at the OS rom  from c000 to ffff */
-	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 points at the OS rom  from c000 to ffff */
-
-	memory_set_opbase_handler(0, bbcbp_opbase_handler);
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
-
-	via_config(1, &bbcb_user_via);
-	via_set_clock(1,1000000);
 
 	via_reset();
 
@@ -2162,29 +2182,35 @@ MACHINE_RESET( bbcbp )
 	MC6850_config(&BBC_MC6850_calls);
 
 	previous_wd177x_int_state=1;
-    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
     wd179x_reset();
 }
 
 
+
+MACHINE_START( bbcm )
+{
+	memory_set_opbase_handler(0, bbcm_opbase_handler);
+
+	/* bank 5 is the paged ROMs     from 9000 to bfff */
+	memory_configure_bank(5, 0, 16, memory_region(REGION_USER1)+0x01000, 1<<14);
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
+	return 0;
+}
 
 MACHINE_RESET( bbcm )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1));			/* bank 1 regular lower ram		from 0000 to 2fff */
 	memory_set_bankptr(2,memory_region(REGION_CPU1)+0x3000);	/* bank 2 screen/shadow ram		from 3000 to 7fff */
 	memory_set_bankptr(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to 8fff */
-	memory_set_bankptr(5,memory_region(REGION_USER1)+0x01000); /* bank 5 is the paged ROMs     from 9000 to bfff */
+	memory_set_bank(5, 0);
 	memory_set_bankptr(7,memory_region(REGION_USER1)+0x40000); /* bank 6 OS rom of RAM			from c000 to dfff */
-	memory_set_bankptr(8,memory_region(REGION_USER1)+0x42000); /* bank 8 OS rom  				from e000 to ffff */
-	memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 is the top of the OS  from ff00 to ffff */
-
-	memory_set_opbase_handler(0, bbcm_opbase_handler);
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
-
-	via_config(1, &bbcb_user_via);
-	via_set_clock(1,1000000);
 
 	via_reset();
 
@@ -2194,7 +2220,5 @@ MACHINE_RESET( bbcm )
 	MC6850_config(&BBC_MC6850_calls);
 
 	previous_wd177x_int_state=1;
-    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
     wd179x_reset();
-
 }

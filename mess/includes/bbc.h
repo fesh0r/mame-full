@@ -11,6 +11,13 @@
 DRIVER_INIT( bbc );
 DRIVER_INIT( bbcm );
 
+MACHINE_START( bbca );
+MACHINE_START( bbcb );
+MACHINE_START( bbcb1770 );
+MACHINE_START( bbcbopus );
+MACHINE_START( bbcbp );
+MACHINE_START( bbcm );
+
 MACHINE_RESET( bbca );
 MACHINE_RESET( bbcb );
 MACHINE_RESET( bbcb1770 );
@@ -18,14 +25,8 @@ MACHINE_RESET( bbcbopus );
 MACHINE_RESET( bbcbp );
 MACHINE_RESET( bbcm );
 
-
-extern INTERRUPT_GEN( bbcb_keyscan );
-extern INTERRUPT_GEN( bbcm_keyscan );
-
-READ8_HANDLER ( BBC_NOP_00_r );
-READ8_HANDLER ( BBC_NOP_FE_r );
-READ8_HANDLER ( BBC_NOP_FF_r );
-
+INTERRUPT_GEN( bbcb_keyscan );
+INTERRUPT_GEN( bbcm_keyscan );
 
 WRITE8_HANDLER ( memorya1_w );
 WRITE8_HANDLER ( page_selecta_w );

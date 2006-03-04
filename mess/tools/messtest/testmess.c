@@ -791,6 +791,7 @@ static void command_end(void)
 	/* at the end of our test */
 	state = STATE_DONE;
 	final_time = timer_get_time();
+	mame_schedule_exit();
 }
 
 

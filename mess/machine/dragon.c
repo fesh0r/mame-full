@@ -2517,8 +2517,6 @@ static void coco3_machine_reset(void)
 {
 	int i;
 
-	videomap_reset();
-
 	/* Tepolt verifies that the GIME registers are all cleared on initialization */
 	coco3_enable_64k = 0;
 	gime_irq = 0;
@@ -2544,6 +2542,7 @@ MACHINE_START( coco3 )
 	coco_or_dragon = AM_COCO;
 
 	add_reset_callback(coco3_machine_reset);
+	add_reset_callback(videomap_reset);
 	return 0;
 }
 

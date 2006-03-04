@@ -103,6 +103,10 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
+	{
+		extern UINT8 track_mallocs;
+		track_mallocs = TRUE;
+	}
 	/* expand wildcards so '*' can be used; this is not UNIX */
 	win_expand_wildcards(&argc, &argv);
 #else

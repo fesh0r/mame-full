@@ -115,7 +115,7 @@ static ADDRESS_MAP_START(bbca_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_NOP													/*    fec0-fedf  uPD7002		1 Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ     (return8_FE    	                	)	/*    fee0-feff  Tube ULA 	 	1 Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9    	, MWA8_ROM      	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x13f00)				/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -148,7 +148,7 @@ static ADDRESS_MAP_START(bbcb_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w		 	)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE						 	)	/*    fee0-feff  Tube ULA 	 	Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM		 	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x43f00)				/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -182,7 +182,7 @@ static ADDRESS_MAP_START(bbcbp_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w			)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	/*    fee0-feff  Tube ULA		Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x43f00)				/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -218,7 +218,7 @@ static ADDRESS_MAP_START(bbcbp128_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w			)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	/*    fee0-feff  Tube ULA		Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x43f00)				/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -257,7 +257,7 @@ static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x9000, 0xbfff) AM_READWRITE(MRA8_BANK5		, memorybm5_w		)	/*    9000-bfff					Rest of paged ROM/RAM area		*/
 
 	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_BANK7		, memorybm7_w		)	/*    c000-dfff					OS ROM or 8K of RAM		  HAZEL	*/
-	AM_RANGE(0xe000, 0xfbff) AM_READWRITE(MRA8_BANK8		, MWA8_ROM			)	/*    e000-fbff					OS ROM							*/
+	AM_RANGE(0xe000, 0xfbff) AM_ROM AM_REGION(REGION_USER1, 0x42000)				/*    e000-fbff					OS ROM							*/
 
 	AM_RANGE(0xfc00, 0xfeff) AM_READWRITE(bbcm_r			, bbcm_w			)   /*    this is now processed directly because it can be ROM or hardware */
 	/*
@@ -282,7 +282,7 @@ static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	      fee0-feff  Tube ULA		Tube system interface
 	*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x43f00)				/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -677,6 +677,7 @@ static MACHINE_DRIVER_START( bbca )
 	MDRV_VBLANK_DURATION(128)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( bbca )
 	MDRV_MACHINE_RESET( bbca )
 
 	/* video hardware */
@@ -702,6 +703,7 @@ static MACHINE_DRIVER_START( bbcb )
 	MDRV_IMPORT_FROM( bbca )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP( bbcb_mem, 0 )
+	MDRV_MACHINE_START( bbcb )
 	MDRV_MACHINE_RESET( bbcb )
 	MDRV_VIDEO_START( bbcb )
 MACHINE_DRIVER_END
@@ -711,6 +713,7 @@ static MACHINE_DRIVER_START( bbcbp )
 	MDRV_IMPORT_FROM( bbca )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP( bbcbp_mem, 0 )
+	MDRV_MACHINE_START( bbcbp )
 	MDRV_MACHINE_RESET( bbcbp )
 	MDRV_VIDEO_START( bbcbp )
 MACHINE_DRIVER_END
@@ -720,6 +723,7 @@ static MACHINE_DRIVER_START( bbcbp128 )
 	MDRV_IMPORT_FROM( bbca )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP( bbcbp128_mem, 0 )
+	MDRV_MACHINE_START( bbcbp )
 	MDRV_MACHINE_RESET( bbcbp )
 	MDRV_VIDEO_START( bbcbp )
 MACHINE_DRIVER_END
@@ -736,6 +740,7 @@ static MACHINE_DRIVER_START( bbcm )
 	MDRV_VBLANK_DURATION(128)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( bbcm )
 	MDRV_MACHINE_RESET( bbcm )
 
 	/* video hardware */
