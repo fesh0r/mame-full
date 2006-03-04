@@ -381,6 +381,7 @@ typedef struct
     char*    mameinfo_filename;
     char*    ctrlrdir;
     char*    folderdir;
+    char*    commentdir;
 
 #ifdef MESS
     struct mess_specific_settings mess;
@@ -614,6 +615,9 @@ void SetBgDir(const char *path);
 
 const char* GetCtrlrDir(void);
 void SetCtrlrDir(const char* path);
+
+const char* GetCommentDir(void);
+void SetCommentDir(const char* path);
 
 const char* GetFolderDir(void);
 void SetFolderDir(const char* path);

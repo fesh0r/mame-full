@@ -436,6 +436,7 @@ static const REG_OPTION global_game_options[] =
 	{ "diff_directory",         RO_STRING,  offsetof(settings_type, diffdir),          "diff" },
 	{ "cheat_file",             RO_STRING,  offsetof(settings_type, cheat_filename),   "cheat.dat" },
 	{ "ctrlr_directory",        RO_STRING,  offsetof(settings_type, ctrlrdir),         "ctrlr" },
+	{ "comment_directory",      RO_STRING,  offsetof(settings_type, commentdir),       "comment" },
 	{ "" }
 
 };
@@ -1580,6 +1581,19 @@ void SetCtrlrDir(const char* path)
 
 	if (path != NULL)
 		settings.ctrlrdir = mame_strdup(path);
+}
+
+const char* GetCommentDir(void)
+{
+	return settings.commentdir;
+}
+
+void SetCommentDir(const char* path)
+{
+	FreeIfAllocated(&settings.commentdir);
+
+	if (path != NULL)
+		settings.commentdir = mame_strdup(path);
 }
 
 const char* GetCfgDir(void)
