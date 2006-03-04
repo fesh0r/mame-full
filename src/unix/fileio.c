@@ -284,7 +284,7 @@ static char *copy_and_expand_variables(const char *path, int len)
 	return result;
 
 out_of_memory:
-	osd_die("Out of memory in variable expansion!\n");
+	fatalerror("Out of memory in variable expansion!\n");
 }
 
 
@@ -353,7 +353,7 @@ static void expand_pathlist(struct pathdata *list)
 	return;
 
 out_of_memory:
-	osd_die("Out of memory!\n");
+	fatalerror("Out of memory!\n");
 }
 
 

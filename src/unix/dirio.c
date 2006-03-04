@@ -380,9 +380,9 @@ char *get_home_dir(void)
  */
 #if defined(__DECC) && defined(VMS)
 	decc$from_vms(pw->pw_dir, convert_vms_to_unix, 1);
-	if (!(s = strdup(vms_to_unix_buffer)))
+	if (!(s = mame_strdup(vms_to_unix_buffer)))
 #else
-	if (!(s = strdup(pw->pw_dir)))
+	if (!(s = mame_strdup(pw->pw_dir)))
 #endif
 		fprintf(stderr, "error: malloc failed for homedir string\n");
 

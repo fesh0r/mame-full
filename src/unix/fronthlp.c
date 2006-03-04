@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "audit.h"
 #include "info.h"
+#include "hash.h"
 #include "sound/samples.h"
 
 #ifdef MESS

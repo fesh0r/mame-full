@@ -124,8 +124,7 @@ void sysdep_sound_stream_destroy(struct sysdep_sound_stream_struct *stream)
    if(stream->sample_buf)
    {
       for(i = 0; i < stream->sample_buf_count; i++)
-         if(stream->sample_buf[i].data)
-            free(stream->sample_buf[i].data);
+         free(stream->sample_buf[i].data);
       
       free(stream->sample_buf);
    }

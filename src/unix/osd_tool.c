@@ -98,7 +98,7 @@ osd_tool_file *osd_tool_fopen(const char *filename, const char *mode)
 		{
 			/*
 			 * Calling setbuf makes -createhd and -merge run 5 - 10x faster
-			 * on * Linux with the GNU C Library, and it shouldn't hurt
+			 * on Linux with the GNU C Library, and it shouldn't hurt
 			 * performance on other platforms (verified on Mac OS X).
 			 */
 			setbuf(file, buf);

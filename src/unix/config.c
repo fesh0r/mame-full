@@ -21,6 +21,8 @@ extern void XInput_trackballs_reset();
 extern char *cheatfile;
 extern char *db_filename;
 
+extern FILE *errorlog;
+
 extern char *playbackname;
 extern char *recordname;
 
@@ -377,7 +379,7 @@ int xmame_config_init(int argc, char *argv[])
 	{
 		options.playback = mame_fopen(playbackname, 0, FILETYPE_INPUTLOG, 0);
 		if (!options.playback)
-			osd_die("failed to open %s for playback\n", playbackname);
+			fatalerror("failed to open %s for playback\n", playbackname);
 	}
 
 	/* check for game name embedded in .inp header */
@@ -545,7 +547,7 @@ int xmame_config_init(int argc, char *argv[])
 	{
 		options.record = mame_fopen(recordname, 0, FILETYPE_INPUTLOG, 1);
 		if (!options.record)
-			osd_die("failed to open %s for recording\n", recordname);
+			fatalerror("failed to open %s for recording\n", recordname);
 	}
 
 	if (options.record)
@@ -809,51 +811,17 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 
 
 /*============================================================*/
-/*	vlogerror */
+/*	osd_logerror */
 /*============================================================*/
 
-extern FILE *errorlog;
-
-static void vlogerror(const char *text, va_list arg)
+void osd_logerror(const char *text)
 {
+	/* standard vfprintf stuff here */
 	if (errorlog)
 	{
-		vfprintf(errorlog, text, arg);
+		fprintf(errorlog, "%s", text);
 		fflush(errorlog);
 	}
-}
-
-
-/*============================================================*/
-/*	logerror */
-/*============================================================*/
-
-void logerror(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vlogerror(text, arg);
-	va_end(arg);
-}
-
-
-/*============================================================*/
-/*	osd_die */
-/*============================================================*/
-
-void osd_die(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vlogerror(text, arg);
-	vfprintf(stderr_file, text, arg);
-	va_end(arg);
-
-	exit(-1);
 }
 
 #ifdef MESS

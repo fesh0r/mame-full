@@ -250,38 +250,37 @@ endif
 
 # Perhaps one day original mame/mess sources will use POSIX strcasecmp and
 # M_PI instead MS-DOS counterparts... (a long and sad history ...)
-MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
+CFLAGS += $(IL) $(CFLAGS.$(MY_CPU)) \
 	-D__ARCH_$(ARCH) -D__CPU_$(MY_CPU) -D$(DISPLAY_METHOD) \
-	-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp \
 	-DPI=M_PI -DXMAME -DUNIX -DSIGNED_SAMPLES -DCLIB_DECL= \
 	-DHAVE_UNISTD_H=1 \
 	$(COREDEFS) $(SOUNDDEFS) $(CPUDEFS) $(ASMDEFS) \
 	$(INCLUDES) $(INCLUDE_PATH)
 
-MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD))
+LIBS += $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD))
 
 ifdef DEBUG
-MY_CFLAGS += -DMAME_DEBUG
+CFLAGS += -DMAME_DEBUG
 endif
 
 ifdef XMAME_NET
-MY_CFLAGS += -DXMAME_NET
+CFLAGS += -DXMAME_NET
 endif
 
 ifdef DISABLE_EFFECTS
-MY_CFLAGS += -DDISABLE_EFFECTS
+CFLAGS += -DDISABLE_EFFECTS
 endif
 
 ifdef HAVE_MMAP
-MY_CFLAGS += -DHAVE_MMAP
+CFLAGS += -DHAVE_MMAP
 endif
 
 ifdef CRLF
-MY_CFLAGS += -DCRLF=$(CRLF)
+CFLAGS += -DCRLF=$(CRLF)
 endif
 
 ifdef PAUSE_KEY_119
-MY_CFLAGS += -DPAUSE_KEY_119
+CFLAGS += -DPAUSE_KEY_119
 endif
 
 # The SDL target automatically includes the SDL joystick and audio drivers.
@@ -314,7 +313,7 @@ TOOLS = dat2html chdman imgtool
 endif
 ifdef LIRC
 CONFIG  += -I/usr/include/lirc
-MY_LIBS += -L/usr/lib -llirc_client
+LIBS += -L/usr/lib -llirc_client
 endif
 
 OSTOOLOBJS = \
@@ -449,11 +448,11 @@ CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
 
-MY_CFLAGS += $(CFLAGS.$(ARCH))
+CFLAGS += $(CFLAGS.$(ARCH))
 
 # CONFIG are the cflags used to build the unix tree, this is where most defines
 # go
-CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='"x$(TARGET)"' \
+CONFIG = $(CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='"x$(TARGET)"' \
 	-DDISPLAY_METHOD='"$(DISPLAY_METHOD)"' \
 	-DXMAMEROOT='"$(XMAMEROOT)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
@@ -464,27 +463,27 @@ endif
 # Sound drivers config
 ifdef SOUND_ESOUND
 CONFIG  += -DSYSDEP_DSP_ESOUND `esd-config --cflags`
-MY_LIBS += `esd-config --libs`
+LIBS += `esd-config --libs`
 endif
 
 ifdef SOUND_ALSA
 CONFIG  += -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
-MY_LIBS += -lasound
+LIBS += -lasound
 endif
 
 ifdef SOUND_ARTS_TEIRA
 CONFIG  += -DSYSDEP_DSP_ARTS_TEIRA `artsc-config --cflags`
-MY_LIBS += `artsc-config --libs`
+LIBS += `artsc-config --libs`
 endif
 
 ifdef SOUND_ARTS_SMOTEK
 CONFIG  += -DSYSDEP_DSP_ARTS_SMOTEK `artsc-config --cflags`
-MY_LIBS += `artsc-config --libs`
+LIBS += `artsc-config --libs`
 endif
 
 ifdef SOUND_SDL
 CONFIG  += -DSYSDEP_DSP_SDL `$(SDL_CONFIG) --cflags`
-MY_LIBS += `$(SDL_CONFIG) --libs`
+LIBS += `$(SDL_CONFIG) --libs`
 endif
 
 ifdef SOUND_WAVEOUT
@@ -506,26 +505,26 @@ ifdef JOY_USB
 CONFIG += -DUSB_JOYSTICK
 ifeq ($(shell test -f /usr/include/usbhid.h && echo have_usbhid), have_usbhid)
 CONFIG += -DHAVE_USBHID_H
-MY_LIBS += -lusbhid
+LIBS += -lusbhid
 else
 ifeq ($(shell test -f /usr/include/libusbhid.h && echo have_libusbhid), have_libusbhid)
 CONFIG += -DHAVE_LIBUSBHID_H
-MY_LIBS += -lusbhid
+LIBS += -lusbhid
 else
-MY_LIBS += -lusb
+LIBS += -lusb
 endif
 endif
 endif
 
 ifdef JOY_SDL
 CONFIG  += -DSDL_JOYSTICK `$(SDL_CONFIG) --cflags`
-MY_LIBS += `$(SDL_CONFIG) --libs`
+LIBS += `$(SDL_CONFIG) --libs`
 endif
 
 # Happ UGCI config
 ifdef UGCICOIN
 CONFIG += -DUGCICOIN
-MY_LIBS += -lugci
+LIBS += -lugci
 endif
 
 ifdef LIRC
@@ -541,7 +540,7 @@ CONFIG += -DLIGHTGUN_DEFINE_INPUT_ABSINFO
 endif
 
 ifdef EFENCE
-MY_LIBS += -lefence
+LIBS += -lefence
 endif
 
 OBJS += $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS)
@@ -560,7 +559,7 @@ endif
 
 $(NAME).$(DISPLAY_METHOD): $(EXPAT) $(ZLIB) $(OBJS) $(UNIX_OBJS) $(OSDEPEND)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(EXPAT) $(ZLIB) $(UNIX_OBJS) $(OSDEPEND) $(MY_LIBS)
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(EXPAT) $(ZLIB) $(UNIX_OBJS) $(OSDEPEND) $(LIBS)
 
 maketree: $(sort $(OBJDIRS))
 
@@ -602,10 +601,10 @@ messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/sysdep/rc.o \
 	$(OBJDIR)/tststubs.o
 	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -Wl,--allow-multiple-definition -o $@
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $(LIBS) $^ -Wl,--allow-multiple-definition -o $@
 
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
 
 # library targets and dependencies
 $(CPULIB): $(CPUOBJS)
@@ -628,12 +627,12 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o \
 ifdef MESS
 $(OBJ)/mess/%.o: mess/%.c
 	$(CC_COMMENT) @echo '[MESS] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
 endif
 
 $(OBJ)/%.o: src/%.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
@@ -651,35 +650,20 @@ $(UNIX_OBJDIR)/%.o: src/unix/%.c src/unix/xmame.h
 
 $(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
 	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
 
 # special cases for the 68000 core
-#
-# compile generated C files for the 68000 emulator
-$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake
-	$(CC_COMMENT) @echo 'Compiling $(subst .o,.c,$@)...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -c $*.c -o $@
-
-# additional rule, because m68kcpu.c includes the generated m68kops.h :-/
-$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake
-
-# generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
-	$(CC_COMMENT) @echo 'M68K make $<...'
-	$(CC_COMPILE) $(HOST_CC) $(MY_CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake $<
-	$(CC_COMMENT) @echo 'Generating M68K source files...'
-	$(CC_COMPILE) $(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000/68020 emulators
 $(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
 	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
 	$(CC_COMMENT) @echo Generating $@...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68000tab.asm 00
 
 $(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
 	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMPILE) $(CC) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
 	$(CC_COMMENT) @echo Generating $@...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68020tab.asm 20
 

@@ -2,6 +2,7 @@
 #include "audit.h"
 #include "unzip.h"
 #include "driver.h"
+#include "hash.h"
 #include <dirent.h>
 
 #ifdef BSD43 /* old style directory handling */
