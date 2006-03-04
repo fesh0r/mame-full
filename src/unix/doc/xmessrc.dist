@@ -15,7 +15,7 @@ autodouble              1
 artwork                 1
 frameskipper            0
 throttle                1
-sleepidle               0
+sleepidle               1
 autoframeskip           1
 maxautoframeskip        8
 frameskip               0
