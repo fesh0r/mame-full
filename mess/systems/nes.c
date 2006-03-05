@@ -277,13 +277,13 @@ static MACHINE_DRIVER_START( nes )
 	MDRV_FRAMES_PER_SECOND(60/1.001)
 	MDRV_VBLANK_DURATION((113.75/(NTSC_CLOCK/1000000)) * (NTSC_SCANLINES_PER_FRAME-(BOTTOM_VISIBLE_SCANLINE+1)))
 
-	MDRV_MACHINE_RESET( nes )
+	MDRV_MACHINE_START( nes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_INIT(nes)
-	MDRV_VIDEO_START(nes)
+	MDRV_VIDEO_START(nes_ntsc)
 	MDRV_VIDEO_UPDATE(nes)
 
 	MDRV_PALETTE_LENGTH(4*16*8)
@@ -303,6 +303,7 @@ static MACHINE_DRIVER_START( nespal )
 	MDRV_CPU_REPLACE("main", N2A03, PAL_CLOCK)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION((113.75/(PAL_CLOCK/1000000)) * (PAL_SCANLINES_PER_FRAME-(BOTTOM_VISIBLE_SCANLINE+1)))
+	MDRV_VIDEO_START(nes_pal)
 
     /* sound hardware */
 	MDRV_SOUND_REPLACE("nessound", NES, PAL_CLOCK)
@@ -386,7 +387,7 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-CONS( 1983, famicom,   0,        0,		nes,      famicom,  nes,      famicom,	"Nintendo", "Famicom" , 0)
-CONS( 1985, nes,       0,        0,		nes,      nes,      nes,      nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" , 0)
-CONS( 1987, nespal,    nes,      0,		nespal,   nes,      nespal,   nes,		"Nintendo", "Nintendo Entertainment System (PAL)" , 0)
+CONS( 1983, famicom,   0,        0,		nes,      famicom,  0,	      famicom,	"Nintendo", "Famicom" , 0)
+CONS( 1985, nes,       0,        0,		nes,      nes,      0,        nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" , 0)
+CONS( 1987, nespal,    nes,      0,		nespal,   nes,      0,	      nes,		"Nintendo", "Nintendo Entertainment System (PAL)" , 0)
 

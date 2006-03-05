@@ -93,25 +93,26 @@ DEVICE_LOAD(nes_cart);
 DEVICE_LOAD(nes_disk);
 DEVICE_UNLOAD(nes_disk);
 
-MACHINE_RESET( nes );
+MACHINE_START( nes );
 
-DRIVER_INIT( nes );
-DRIVER_INIT( nespal );
- READ8_HANDLER( nes_IN0_r );
- READ8_HANDLER( nes_IN1_r );
+READ8_HANDLER( nes_IN0_r );
+READ8_HANDLER( nes_IN1_r );
+
+int nes_ppu_vidaccess( int num, int address, int data );
 
 void nes_partialhash(char *dest, const unsigned char *data,
 	unsigned long length, unsigned int functions);
 
 WRITE8_HANDLER( nes_low_mapper_w );
- READ8_HANDLER ( nes_low_mapper_r );
+READ8_HANDLER ( nes_low_mapper_r );
 WRITE8_HANDLER( nes_mid_mapper_w );
- READ8_HANDLER ( nes_mid_mapper_r );
+READ8_HANDLER ( nes_mid_mapper_r );
 WRITE8_HANDLER( nes_mapper_w );
 
 /* vidhrdw/nes.c */
 PALETTE_INIT( nes );
-VIDEO_START( nes );
+VIDEO_START( nes_ntsc );
+VIDEO_START( nes_pal );
 VIDEO_UPDATE( nes );
 
 #endif /* NES_H */

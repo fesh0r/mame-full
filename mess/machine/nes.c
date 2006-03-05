@@ -127,19 +127,7 @@ static void init_nes_core (void)
 	memcpy (battery_ram, battery_data, BATTERY_SIZE);
 }
 
-DRIVER_INIT( nes )
-{
-	ppu_scanlines_per_frame = ceil(NTSC_SCANLINES_PER_FRAME);
-	init_nes_core ();
-}
-
-DRIVER_INIT( nespal )
-{
-	ppu_scanlines_per_frame = ceil(PAL_SCANLINES_PER_FRAME);
-	init_nes_core ();
-}
-
-static int ppu_vidaccess( int num, int address, int data )
+int nes_ppu_vidaccess( int num, int address, int data )
 {
 	/* TODO: this is a bit of a hack, needed to get Argus, ASO, etc to work */
 	/* but, B-Wings, submath (j) seem to use this location differently... */
@@ -152,28 +140,8 @@ static int ppu_vidaccess( int num, int address, int data )
 	return data;
 }
 
-MACHINE_RESET( nes )
+static void nes_machine_reset(void)
 {
-	ppu2c03b_reset( 0, 1 );
-	ppu2c03b_set_vidaccess_callback(0, ppu_vidaccess);
-	ppu2c03b_set_scanlines_per_frame(0, ppu_scanlines_per_frame);
-
-	if (nes.four_screen_vram)
-	{
-		/* TODO: figure out what to do here */
-	}
-	else
-	{
-		switch(nes.hard_mirroring) {
-		case 0:
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
-			break;
-		case 1:
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-			break;
-		}
-	}
-
 	/* Some carts have extra RAM and require it on at startup, e.g. Metroid */
 	nes.mid_ram_enable = 1;
 
@@ -183,11 +151,15 @@ MACHINE_RESET( nes )
 	/* Reset the serial input ports */
 	in_0_shift = 0;
 	in_1_shift = 0;
-
-	add_exit_callback(nes_machine_stop);
 }
 
-
+MACHINE_START( nes )
+{
+	init_nes_core();
+	add_reset_callback(nes_machine_reset);
+	add_exit_callback(nes_machine_stop);
+	return 0;
+}
 
 static void nes_machine_stop(void)
 {
