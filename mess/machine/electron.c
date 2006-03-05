@@ -13,7 +13,7 @@
 #include "devices/cassette.h"
 
 ULA ula;
-void *electron_tape_timer;
+mame_timer *electron_tape_timer;
 
 static mess_image *cassette_device_image( void ) {
 	return image_from_devtype_and_index( IO_CASSETTE, 0 );
@@ -176,7 +176,7 @@ WRITE8_HANDLER( electron_ula_w ) {
 			} else {
 				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2 );
 			}
-			memory_set_bankptr( 2, (UINT8 *)(memory_region(REGION_USER1) + ( ula.rompage * 0x4000 ) ) );
+			memory_set_bank(2, ula.rompage);
 		}
 		if ( data & 0x10 ) {
 			electron_interrupt_handler( INT_CLEAR, INT_DISPLAY_END );
@@ -265,18 +265,10 @@ static void setup_beep(int dummy) {
 	beep_set_frequency( 0, 300 );
 }
 
-DRIVER_INIT( electron ) {
-	ula.interrupt_status = 0x82;
-	ula.interrupt_control = 0x00;
-	timer_set( 0.0, 0, setup_beep );
-	electron_tape_timer = timer_alloc( electron_tape_timer_handler );
-}
+static void electron_reset(void)
+{
+	memory_set_bank(2, 0);
 
-MACHINE_RESET( electron ){
-        memory_set_bankptr(1,memory_region(REGION_CPU1));
-        memory_set_bankptr(2, (UINT8 *)memory_region(REGION_USER1) );
-        memory_set_bankptr(4,memory_region(REGION_USER1)+0x40000);
-        memory_set_bankptr(9,memory_region(REGION_USER1)+0x43f00);
 	ula.communication_mode = 0x04;
 	ula.screen_mode = 0;
 	ula.cassette_motor_mode = 0;
@@ -290,5 +282,17 @@ MACHINE_RESET( electron ){
 	ula.tape_running = 0;
 	ula.vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, ula.screen_base );
 	electron_video_init();
+}
+
+MACHINE_START( electron )
+{
+	memory_configure_bank(2, 0, 16, memory_region(REGION_USER1), 0x4000);
+	
+	ula.interrupt_status = 0x82;
+	ula.interrupt_control = 0x00;
+	timer_set( 0.0, 0, setup_beep );
+	electron_tape_timer = timer_alloc( electron_tape_timer_handler );
+	add_reset_callback(electron_reset);
+	return 0;
 }
 

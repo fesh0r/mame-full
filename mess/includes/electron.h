@@ -18,21 +18,22 @@
 
 /* ULA context */
 
-typedef struct {
-        UINT8 interrupt_status;
-        UINT8 interrupt_control;
-        UINT8 rompage;
-        UINT16 screen_start;
+typedef struct
+{
+	UINT8 interrupt_status;
+	UINT8 interrupt_control;
+	UINT8 rompage;
+	UINT16 screen_start;
 	UINT16 screen_base;
 	int screen_size;
 	UINT16 screen_addr;
-        UINT8 *vram;
-        int current_pal[16];
-        int communication_mode;
-        int screen_mode;
-        int cassette_motor_mode;
-        int capslock_mode;
-        int scanline;
+	UINT8 *vram;
+	int current_pal[16];
+	int communication_mode;
+	int screen_mode;
+	int cassette_motor_mode;
+	int capslock_mode;
+	int scanline;
 	/* tape reading related */
 	UINT32 tape_value;
 	int tape_steps;
@@ -52,8 +53,7 @@ READ8_HANDLER( electron_1mhz_r );
 WRITE8_HANDLER( electron_1mhz_w );
 READ8_HANDLER( electron_ula_r );
 WRITE8_HANDLER( electron_ula_w );
-DRIVER_INIT( electron );
-MACHINE_RESET( electron );
+MACHINE_START( electron );
 void electron_video_init( void );
 INTERRUPT_GEN( electron_scanline_interrupt );
 void electron_interrupt_handler(int mode, int interrupt);

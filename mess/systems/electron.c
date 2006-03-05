@@ -51,13 +51,13 @@ static PALETTE_INIT( electron )
 }
 
 static ADDRESS_MAP_START(electron_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)							/* 32KB of RAM */
-	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(2)							/* Banked ROM pages */
-	AM_RANGE(0xc000, 0xfbff) AM_ROMBANK(4)							/* OS ROM */
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_REGION(REGION_CPU1,  0x00000)	/* 32KB of RAM */
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(2)								/* Banked ROM pages */
+	AM_RANGE(0xc000, 0xfbff) AM_ROM AM_REGION(REGION_USER1, 0x40000)	/* OS ROM */
 	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE( electron_jim_r, electron_jim_w )			/* JIM pages */
 	AM_RANGE(0xfd00, 0xfdff) AM_READWRITE( electron_1mhz_r, electron_1mhz_w )		/* 1MHz bus */
 	AM_RANGE(0xfe00, 0xfeff) AM_READWRITE( electron_ula_r, electron_ula_w )			/* Electron ULA */
-	AM_RANGE(0xff00, 0xffff) AM_ROMBANK(9)							/* OS ROM continued */
+	AM_RANGE(0xff00, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0x43f00)	/* OS ROM continued */
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( electron )
@@ -193,7 +193,7 @@ static MACHINE_DRIVER_START( electron )
 	MDRV_FRAMES_PER_SECOND( 50.08 )
 	/* MDRV_VBLANK_DURATION() */
 
-	MDRV_MACHINE_RESET( electron )
+	MDRV_MACHINE_START( electron )
 
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE( 640, 312 )
@@ -228,7 +228,5 @@ SYSTEM_CONFIG_START(electron)
 	CONFIG_DEVICE(electron_cassette_getinfo)
 SYSTEM_CONFIG_END
 
-/*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP ( 1983, electron, 0, 0, electron, electron, electron, electron, "Acorn", "Acorn Electron", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-
-
+/*	   YEAR  NAME      PARENT COMPAT	MACHINE   INPUT	    INIT  CONFIG	COMPANY	 FULLNAME */
+COMP ( 1983, electron, 0,     0,        electron, electron, 0,    electron, "Acorn", "Acorn Electron", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
