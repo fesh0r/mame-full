@@ -127,6 +127,7 @@ int cpuint_init(void)
 
 	/* loop over all CPUs and input lines */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
 		for (line = 0; line < MAX_INPUT_LINES; line++)
 		{
 			input_line_state[cpunum][line] = CLEAR_LINE;
@@ -134,6 +135,10 @@ int cpuint_init(void)
 			input_line_vector[cpunum][line] = cputype_default_irq_vector(Machine->drv->cpu[cpunum].cpu_type);
 			input_event_index[cpunum][line] = 0;
 		}
+
+		/* reset any driver hooks into the IRQ acknowledge callbacks */
+		drv_irq_callbacks[cpunum] = NULL;
+	}
 
 	/* set up some stuff to save */
 	state_save_push_tag(0);
@@ -143,8 +148,6 @@ int cpuint_init(void)
 	state_save_register_item_2d_array("cpu", 0, input_line_vector);
 	state_save_pop_tag();
 
-	/* reset any driver hooks into the IRQ acknowledge callbacks */
-	drv_irq_callbacks[cpunum] = NULL;
 
 	return 0;
 }
