@@ -10,9 +10,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "pool.h"
 #include "opresolv.h"
-#include "osdepend.h"
+#include "driver.h"
 
 enum resolution_entry_state
 {
