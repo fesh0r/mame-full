@@ -43,13 +43,10 @@ void c65_map(int a, int x, int y, int z);
 void c65_bankswitch (void);
 void c65_colorram_write (int offset, int value);
 
-extern void c65_driver_init (void);
-extern void c65_driver_alpha1_init (void);
-extern void c65pal_driver_init (void);
-extern MACHINE_RESET( c65 );
-
-/*only for debugging */
-void c65_state (void);
+void c65_driver_init (void);
+void c65_driver_alpha1_init (void);
+void c65pal_driver_init (void);
+MACHINE_START( c65 );
 
 extern UINT8 c65_keyline;
 extern UINT8 c65_6511_port;

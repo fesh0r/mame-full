@@ -802,13 +802,10 @@ void c65pal_driver_init (void)
 	c65_common_driver_init ();
 }
 
-MACHINE_RESET( c65 )
+MACHINE_START( c65 )
 {
 	/* clear upper memory */
 	memset(mess_ram + 128*1024, 0xff, mess_ram_size -  128*1024);
-
-	sndti_reset(SOUND_SID8580, 0);
-	sndti_reset(SOUND_SID8580, 1);
 
 	cbm_serial_reset_write (0);
 	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, 10);
@@ -823,4 +820,5 @@ MACHINE_RESET( c65 )
 
 	c65_bankswitch_interface(0xff);
 	c65_bankswitch ();
+	return 0;
 }
