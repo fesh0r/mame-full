@@ -123,6 +123,8 @@ static MACHINE_DRIVER_START( apple2gs )
 	MDRV_PALETTE_LENGTH( 16+256 )
 	MDRV_GFXDECODE( apple2gs_gfxdecodeinfo )
 
+	MDRV_MACHINE_START( apple2gs )
+
 	MDRV_PALETTE_INIT( apple2gs )
 	MDRV_VIDEO_START( apple2gs )
 	MDRV_VIDEO_UPDATE( apple2gs )
@@ -234,6 +236,7 @@ SYSTEM_CONFIG_START(apple2gs)
 	CONFIG_RAM_DEFAULT			(2 * 1024 * 1024)
 SYSTEM_CONFIG_END
 
-COMP( 1989, apple2gs, 0,        apple2,	apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM03)",			GAME_NOT_WORKING )
-COMP( 1987, apple2g1, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM01)",			GAME_NOT_WORKING )
-COMP( 1986, apple2g0, apple2gs, 0,			apple2gs, apple2gs,   apple2gs, apple2gs,	"Apple Computer", "Apple IIgs (ROM00)",			GAME_NOT_WORKING )
+/*    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT       INIT      CONFIG		COMPANY            FULLNAME */
+COMP( 1989, apple2gs, 0,        apple2, apple2gs, apple2gs,   0,        apple2gs,	"Apple Computer", "Apple IIgs (ROM03)",			GAME_NOT_WORKING )
+COMP( 1987, apple2g1, apple2gs, 0,      apple2gs, apple2gs,   0,        apple2gs,	"Apple Computer", "Apple IIgs (ROM01)",			GAME_NOT_WORKING )
+COMP( 1986, apple2g0, apple2gs, 0,      apple2gs, apple2gs,   0,        apple2gs,	"Apple Computer", "Apple IIgs (ROM00)",			GAME_NOT_WORKING )

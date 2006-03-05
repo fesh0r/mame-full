@@ -15,7 +15,7 @@ extern UINT16 apple2gs_bordercolor;
 
 INTERRUPT_GEN( apple2gs_interrupt );
 
-DRIVER_INIT( apple2gs );
+MACHINE_START( apple2gs );
 VIDEO_START( apple2gs );
 VIDEO_UPDATE( apple2gs );
 

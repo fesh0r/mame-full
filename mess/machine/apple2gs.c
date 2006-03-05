@@ -1653,7 +1653,7 @@ static READ8_HANDLER( apple2gs_read_vector )
 
 
 
-DRIVER_INIT( apple2gs )
+MACHINE_START( apple2gs )
 {
 	struct apple2_config cfg;
 	
@@ -1703,4 +1703,5 @@ DRIVER_INIT( apple2gs )
 	/* init the various subsystems */
 	scc_init(NULL);
 	apple2gs_setup_memory();
+	return 0;
 }
