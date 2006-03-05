@@ -43,46 +43,46 @@ DEVICE_LOAD(pce_cart)
 		size -= 512;
 		mame_fseek(file, 512, SEEK_SET);
 	}
-	if ( size > PCE_ROM_MAXSIZE ) {
+	if ( size > PCE_ROM_MAXSIZE )
 		size = PCE_ROM_MAXSIZE;
-	}
 
 	mame_fread(file, ROM, size);
 
 	extrainfo = image_extrainfo( image );
-	if ( extrainfo ) {
+	if ( extrainfo )
+	{
 		logerror( "extrainfo: %s\n", extrainfo );
-		if ( strstr( extrainfo, "ROM_SPLIT" ) ) {
+		if ( strstr( extrainfo, "ROM_SPLIT" ) )
 			split_rom = 1;
-		}
 	}
 
-	if ( ROM[0x1FFF] < 0xE0 ) {
+	if ( ROM[0x1FFF] < 0xE0 )
+	{
 		int i;
 		UINT8 decrypted[256];
 
 		logerror( "*** DEVICE_LOAD(pce_cart) : ROM image seems encrypted, decrypting...\n" );
 
 		/* Initialize decryption table */
-		for( i = 0; i < 256; i++ ) {
+		for( i = 0; i < 256; i++ )
 			decrypted[i] = ( ( i & 0x01 ) << 7 ) | ( ( i & 0x02 ) << 5 ) | ( ( i & 0x04 ) << 3 ) | ( ( i & 0x08 ) << 1 ) | ( ( i & 0x10 ) >> 1 ) | ( ( i & 0x20 ) >> 3 ) | ( ( i & 0x40 ) >> 5 ) | ( ( i & 0x80 ) >> 7 );
-		}
 
 		/* Decrypt ROM image */
-		for( i = 0; i < size; i++ ) {
+		for( i = 0; i < size; i++ )
 			ROM[i] = decrypted[ROM[i]];
-		}
 	}
 
 	/* check if we're dealing with a split rom image */
-	if ( size == 384 * 1024 ) {
+	if ( size == 384 * 1024 )
+	{
 		split_rom = 1;
 		/* Mirror the upper 128KB part of the image */
 		memcpy( ROM + 0x060000, ROM + 0x040000, 0x020000 );	/* Set up 060000 - 07FFFF mirror */
 	}
 
 	/* set up the memory for a split rom image */
-	if ( split_rom ) {
+	if ( split_rom )
+	{
 		logerror( "Split rom detected, setting up memory accordingly\n" );
 		/* Set up ROM address space as follows:          */
 		/* 000000 - 03FFFF : ROM data 000000 - 03FFFF    */
@@ -92,16 +92,22 @@ DEVICE_LOAD(pce_cart)
 		memcpy( ROM + 0x080000, ROM + 0x040000, 0x040000 );	/* Set up 080000 - 0BFFFF region */
 		memcpy( ROM + 0x0C0000, ROM + 0x040000, 0x040000 );	/* Set up 0C0000 - 0FFFFF region */
 		memcpy( ROM + 0x040000, ROM, 0x040000 );		/* Set up 040000 - 07FFFF region */
-	} else {
-		/* mirror 256KB rom data */
-		if ( size <= 0x040000 ) {
-			memcpy( ROM + 0x040000, ROM, 0x040000 );
-		}
-		/* mirror 512KB rom data */
-		if ( size <= 0x080000 ) {
-			memcpy( ROM + 0x080000, ROM, 0x080000 );
-		}
 	}
+	else
+	{
+		/* mirror 256KB rom data */
+		if ( size <= 0x040000 )
+			memcpy( ROM + 0x040000, ROM, 0x040000 );
+
+		/* mirror 512KB rom data */
+		if ( size <= 0x080000 )
+			memcpy( ROM + 0x080000, ROM, 0x080000 );
+	}
+
+	/* install the actual bank handlers */
+	memory_install_read_handler(0, ADDRESS_SPACE_PROGRAM, 0, PCE_ROM_MAXSIZE-1, 0, 0, STATIC_BANK1);
+	memory_install_write_handler(0, ADDRESS_SPACE_PROGRAM, 0, PCE_ROM_MAXSIZE-1, 0, 0, STATIC_BANK1);
+	memory_set_bankptr(1, ROM);
 
 	return 0;
 }
