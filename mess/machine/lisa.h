@@ -11,8 +11,11 @@
 
 #include "osdepend.h"
 
-extern VIDEO_START( lisa );
-extern VIDEO_UPDATE( lisa );
+extern UINT8 *lisa_fdc_rom;
+extern UINT8 *lisa_fdc_ram;
+
+VIDEO_START( lisa );
+VIDEO_UPDATE( lisa );
 
 extern NVRAM_HANDLER(lisa);
 
@@ -20,9 +23,9 @@ void init_lisa2(void);
 void init_lisa210(void);
 void init_mac_xl(void);
 
-extern MACHINE_RESET( lisa );
+MACHINE_RESET( lisa );
 
-extern void lisa_interrupt(void);
+void lisa_interrupt(void);
 
 READ8_HANDLER ( lisa_fdc_io_r );
 WRITE8_HANDLER ( lisa_fdc_io_w );

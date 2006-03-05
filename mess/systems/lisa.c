@@ -12,30 +12,24 @@
 
 
 static ADDRESS_MAP_START(lisa_map, ADDRESS_SPACE_PROGRAM, 16)
-
-	AM_RANGE(0x000000, 0xffffff) AM_READWRITE(lisa_r, lisa_w)	/* no fixed map, we use an MMU */
-
+	AM_RANGE(0x000000, 0xffffff) AM_READWRITE(lisa_r, lisa_w)			/* no fixed map, we use an MMU */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(lisa_fdc_map, ADDRESS_SPACE_PROGRAM, 8)
-
-	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)			/* RAM (shared with 68000) */
+	AM_RANGE(0x0000, 0x03ff) AM_RAM	AM_BASE(&lisa_fdc_ram)				/* RAM (shared with 68000) */
 	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(lisa_fdc_io_r, lisa_fdc_io_w)	/* disk controller (IWM and TTL logic) */
-	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)
-	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)			/* ROM */
+	AM_RANGE(0x0800, 0x0fff) AM_NOP
+	AM_RANGE(0x1000, 0x1fff) AM_ROM	AM_BASE(&lisa_fdc_rom)				/* ROM */
 	AM_RANGE(0x2000, 0xffff) AM_READWRITE(lisa_fdc_r, lisa_fdc_w)		/* handler for wrap-around */
-
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(lisa210_fdc_map, ADDRESS_SPACE_PROGRAM, 8)
-
-	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)			/* RAM (shared with 68000) */
-	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(MRA8_NOP, MWA8_NOP)			/* nothing, or RAM wrap-around ??? */
+	AM_RANGE(0x0000, 0x03ff) AM_RAM	AM_BASE(&lisa_fdc_ram)				/* RAM (shared with 68000) */
+	AM_RANGE(0x0400, 0x07ff) AM_NOP										/* nothing, or RAM wrap-around ??? */
 	AM_RANGE(0x0800, 0x0bff) AM_READWRITE(lisa_fdc_io_r, lisa_fdc_io_w)	/* disk controller (IWM and TTL logic) */
-	AM_RANGE(0x0c00, 0x0fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)			/* nothing, or IO port wrap-around ??? */
-	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)			/* ROM */
+	AM_RANGE(0x0c00, 0x0fff) AM_NOP										/* nothing, or IO port wrap-around ??? */
+	AM_RANGE(0x1000, 0x1fff) AM_ROM	AM_BASE(&lisa_fdc_rom)				/* ROM */
 	AM_RANGE(0x2000, 0xffff) AM_READWRITE(lisa_fdc_r, lisa_fdc_w)		/* handler for wrap-around */
-
 ADDRESS_MAP_END
 
 /* init with simple, fixed, B/W palette */

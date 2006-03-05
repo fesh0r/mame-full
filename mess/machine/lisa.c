@@ -62,12 +62,8 @@ UINT8 *lisa_rom_ptr;
 /* 1kb of RAM for 6504 floppy disk controller (shared with 68000), and 4kb of
 ROM (8kb on some boards, but then only one 4kb bank is selected, according to
 the drive type (TWIGGY or 3.5'')) */
-static UINT8 *fdc_ram;
-static UINT8 *fdc_rom;
-
-/* offsets in REGION_CPU2 */
-#define FDC_RAM_OFFSET 0x0000
-#define FDC_ROM_OFFSET 0x1000
+UINT8 *lisa_fdc_ram;
+UINT8 *lisa_fdc_rom;
 
 /* special ROM (includes S/N) */
 UINT8 *videoROM_ptr;
@@ -1026,35 +1022,16 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 /* TODO : save time difference with host clock, set default date, etc */
 NVRAM_HANDLER(lisa)
 {
-	UINT8 *l_fdc_ram = memory_region(REGION_CPU2) + FDC_RAM_OFFSET;	/* fdc_ram is not necessarily set yet */
-
-
 	if (read_or_write)
 	{
-		if (file)
-		{
-#if 0
-			logerror("Writing PRAM to file\n");
-#endif
-			mame_fwrite(file, l_fdc_ram, 1024);
-		}
+		mame_fwrite(file, lisa_fdc_ram, 1024);
 	}
 	else
 	{
 		if (file)
-		{
-#if 0
-			logerror("Reading PRAM from file\n");
-#endif
-			mame_fread(file, l_fdc_ram, 1024);
-		}
+			mame_fread(file, lisa_fdc_ram, 1024);
 		else
-		{
-#if 0
-			logerror("trashing PRAM\n");
-#endif
-			memset(l_fdc_ram, 0, 1024);
-		}
+			memset(lisa_fdc_ram, 0, 1024);
 
 		{
 			/* Now we copy the host clock into the Lisa clock */
@@ -1152,9 +1129,6 @@ MACHINE_RESET( lisa )
 
 	lisa_ram_ptr = memory_region(REGION_CPU1) + RAM_OFFSET;
 	lisa_rom_ptr = memory_region(REGION_CPU1) + ROM_OFFSET;
-
-	fdc_ram = memory_region(REGION_CPU2) + FDC_RAM_OFFSET;
-	fdc_rom = memory_region(REGION_CPU2) + FDC_ROM_OFFSET;
 
 	videoROM_ptr = memory_region(REGION_GFX1);
 
@@ -1433,36 +1407,36 @@ WRITE8_HANDLER ( lisa_fdc_io_w )
 	}
 }
 
- READ8_HANDLER ( lisa_fdc_r )
+READ8_HANDLER ( lisa_fdc_r )
 {
 	if (! (offset & 0x1000))
 	{
 		if (! (offset & 0x0800))
 			if (! (offset & 0x0400))
-				return fdc_ram[offset & 0x03ff];
+				return lisa_fdc_ram[offset & 0x03ff];
 			else
 				return lisa_fdc_io_r(offset & 0x03ff);
 		else
 			return 0;	/* ??? */
 	}
 	else
-		return fdc_rom[offset & 0x0fff];
+		return lisa_fdc_rom[offset & 0x0fff];
 }
 
- READ8_HANDLER ( lisa210_fdc_r )
+READ8_HANDLER ( lisa210_fdc_r )
 {
 	if (! (offset & 0x1000))
 	{
 		if (! (offset & 0x0400))
 			if (! (offset & 0x0800))
-				return fdc_ram[offset & 0x03ff];
+				return lisa_fdc_ram[offset & 0x03ff];
 			else
 				return lisa_fdc_io_r(offset & 0x03ff);
 		else
 			return 0;	/* ??? */
 	}
 	else
-		return fdc_rom[offset & 0x0fff];
+		return lisa_fdc_rom[offset & 0x0fff];
 }
 
 WRITE8_HANDLER ( lisa_fdc_w )
@@ -1472,7 +1446,7 @@ WRITE8_HANDLER ( lisa_fdc_w )
 		if (! (offset & 0x0800))
 		{
 			if (! (offset & 0x0400))
-				fdc_ram[offset & 0x03ff] = data;
+				lisa_fdc_ram[offset & 0x03ff] = data;
 			else
 				lisa_fdc_io_w(offset & 0x03ff, data);
 		}
@@ -1486,7 +1460,7 @@ WRITE8_HANDLER ( lisa210_fdc_w )
 		if (! (offset & 0x0400))
 		{
 			if (! (offset & 0x0800))
-				fdc_ram[offset & 0x03ff] = data;
+				lisa_fdc_ram[offset & 0x03ff] = data;
 			else
 				lisa_fdc_io_w(offset & 0x03ff, data);
 		}
@@ -1993,7 +1967,7 @@ static READ16_HANDLER ( lisa_IO_r )
 			if (! (offset & 0x400))
 			{
 				/*if (ACCESSING_LSB)*/	/* Geez, who cares ? */
-					answer = fdc_ram[offset & 0x03ff] & 0xff;	/* right ??? */
+					answer = lisa_fdc_ram[offset & 0x03ff] & 0xff;	/* right ??? */
 			}
 		}
 		else
@@ -2088,7 +2062,7 @@ static WRITE16_HANDLER ( lisa_IO_w )
 			if (! (offset & 0x0400))
 			{
 				if (ACCESSING_LSB)
-					fdc_ram[offset & 0x03ff] = data & 0xff;
+					lisa_fdc_ram[offset & 0x03ff] = data & 0xff;
 			}
 		}
 		else
