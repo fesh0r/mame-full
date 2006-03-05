@@ -1522,7 +1522,7 @@ static int invoke_command(UINT command)
 			break;
 
 		case ID_FILE_EXIT:
-			PostMessage(win_video_window, WM_DESTROY, 0, 0);
+			mame_schedule_exit();
 			break;
 
 		case ID_EDIT_PASTE:
