@@ -159,6 +159,7 @@ static BOOL g_bUseDefaults     = FALSE;
 static BOOL g_bReset           = FALSE;
 static int  g_nSampleRateIndex = 0;
 static int  g_nVolumeIndex     = 0;
+static int  g_nPriorityIndex     = 0;
 static int  g_nGammaIndex      = 0;
 static int  g_nBrightCorrectIndex = 0;
 static int  g_nPauseBrightIndex = 0;
@@ -2183,6 +2184,11 @@ static void AssignVolume(HWND hWnd)
 	pGameOpts->attenuation = g_nVolumeIndex - 32;
 }
 
+static void AssignPriority(HWND hWnd)
+{
+	pGameOpts->priority = g_nPriorityIndex - 15;
+}
+
 static void AssignBrightCorrect(HWND hWnd)
 {
 	/* "1.0", 0.5, 2.0 */
@@ -2561,6 +2567,7 @@ static void ResetDataMap(void)
 		g_nRotateIndex = 5;
 
 	g_nVolumeIndex = pGameOpts->attenuation + 32;
+	g_nPriorityIndex = pGameOpts->priority + 15;
 	switch (pGameOpts->samplerate)
 	{
 		case 11025:  g_nSampleRateIndex = 0; break;
@@ -2740,7 +2747,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_OLD_TIMING,    DM_BOOL, CT_BUTTON,   &pGameOpts->old_timing,    DM_BOOL, &pGameOpts->old_timing,    0, 0, 0);
 	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          DM_BOOL, &pGameOpts->leds,          0, 0, 0);
 	DataMapAdd(IDC_LEDMODE,       DM_INT,  CT_COMBOBOX, &g_nLedmodeIndex,		   DM_STRING, &pGameOpts->ledmode,  0, 0, AssignLedmode);
-	DataMapAdd(IDC_HIGH_PRIORITY, DM_INT, CT_SLIDER,   &pGameOpts->priority, DM_INT, &pGameOpts->priority, 0, 0, 0);
+	DataMapAdd(IDC_HIGH_PRIORITY, DM_INT, CT_SLIDER,   &g_nPriorityIndex, DM_INT, &pGameOpts->priority, 0, 0, AssignPriority);
 	DataMapAdd(IDC_HIGH_PRIORITYTXT, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->priority, 0, 0, 0);
 	DataMapAdd(IDC_SKIP_GAME_INFO, DM_BOOL, CT_BUTTON,  &pGameOpts->skip_gameinfo, DM_BOOL, &pGameOpts->skip_gameinfo, 0, 0, 0);
 	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &pGameOpts->bios,          DM_INT, &pGameOpts->bios,        0, 0, 0);
@@ -2988,7 +2995,7 @@ static void InitializeMisc(HWND hDlg)
 				(LPARAM)MAKELONG(1, 8)); // [1, 8]
 	SendDlgItemMessage(hDlg, IDC_HIGH_PRIORITY, TBM_SETRANGE,
 				(WPARAM)FALSE,
-				(LPARAM)MAKELONG(-15, 1)); // [-15, 1]
+				(LPARAM)MAKELONG(0, 16)); // [-15, 1]
 }
 
 static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
@@ -3294,7 +3301,7 @@ static void ThreadPrioritySelectionChange(HWND hwnd)
 	value = SendDlgItemMessage(hwnd,IDC_HIGH_PRIORITY, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
-	snprintf(buffer,sizeof(buffer),"%i",value);
+	snprintf(buffer,sizeof(buffer),"%i",value-15);
 	Static_SetText(GetDlgItem(hwnd,IDC_HIGH_PRIORITYTXT),buffer);
 
 }

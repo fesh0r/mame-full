@@ -229,7 +229,8 @@ BOOL LoadDeviceOption(DWORD nSettingsFile, char *key, const char *value_str)
 	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
 	cfg.device_handlers = handlers;
 	cfg.device_countoverrides = count_overrides;
-	gamedrv->sysconfig_ctor(&cfg);
+	if (gamedrv->sysconfig_ctor)
+		gamedrv->sysconfig_ctor(&cfg);
 
 	pos = 0;
 
@@ -277,7 +278,8 @@ void SaveDeviceOption(DWORD nSettingsFile, void (*emit_callback)(void *param_, c
 	cfg.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
 	cfg.device_handlers = handlers;
 	cfg.device_countoverrides = count_overrides;
-	gamedrv->sysconfig_ctor(&cfg);
+	if (gamedrv->sysconfig_ctor)
+		gamedrv->sysconfig_ctor(&cfg);
 
 	pos = 0;
 
