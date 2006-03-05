@@ -71,8 +71,7 @@ UINT8 apple2_iwm_getdiskreg(void);
 
 /* machine/apple2.c */
 void apple2_init_common(const struct apple2_config *config);
-DRIVER_INIT( apple2 );
-MACHINE_RESET( apple2 );
+MACHINE_START( apple2 );
 UINT8 apple2_getfloatingbusvalue(void);
 READ8_HANDLER( apple2_c0xx_r );
 WRITE8_HANDLER( apple2_c0xx_w );

@@ -719,7 +719,7 @@ UINT8 apple2_getfloatingbusvalue(void)
 
 
 /* -----------------------------------------------------------------------
- * Machine init
+ * Machine reset
  * ----------------------------------------------------------------------- */
 
 static int apple2_hasslots(void)
@@ -729,7 +729,7 @@ static int apple2_hasslots(void)
 
 
 
-MACHINE_RESET( apple2 )
+static void apple2_reset(void)
 {
 	int need_intcxrom, i;
 
@@ -738,8 +738,6 @@ MACHINE_RESET( apple2 )
 		|| !strcmp(Machine->gamedrv->name, "apple2c3")
 		|| !strcmp(Machine->gamedrv->name, "apple2cp");
 	apple2_setvar(need_intcxrom ? VAR_INTCXROM : 0, ~0);
-
-	AY3600_init();
 
 	a2_speaker_state = 0;
 
@@ -1519,7 +1517,10 @@ void apple2_init_common(const struct apple2_config *config)
 {
 	int i;
 	void *token;
-	
+
+	AY3600_init();
+	add_reset_callback(apple2_reset);
+
 	/* copy configuration */
 	a2_config = auto_malloc(sizeof(*config));
 	memcpy(a2_config, config, sizeof(*config));
@@ -1563,7 +1564,7 @@ void apple2_init_common(const struct apple2_config *config)
 
 
 
-DRIVER_INIT( apple2 )
+MACHINE_START( apple2 )
 {
 	struct apple2_memmap_config mem_cfg;
 	struct apple2_config a2_cfg;
@@ -1595,10 +1596,15 @@ DRIVER_INIT( apple2 )
 
 	apple2_init_common(&a2_cfg);
 
+	/* setup memory */
 	memset(&mem_cfg, 0, sizeof(mem_cfg));
 	mem_cfg.first_bank = 1;
 	mem_cfg.memmap = apple2_memmap_entries;
 	mem_cfg.auxmem = apple2cp_ce00_ram;
 	apple2_setup_memory(&mem_cfg);
+
+	/* perform initial reset */
+	apple2_reset();
+	return 0;
 }
 
