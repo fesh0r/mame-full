@@ -158,6 +158,15 @@ MACHINE_START( nes )
 	init_nes_core();
 	add_reset_callback(nes_machine_reset);
 	add_exit_callback(nes_machine_stop);
+
+	if (!image_exists(image_from_devtype_and_index(IO_CARTSLOT, 0)))
+	{
+		/* NPW 05-Mar-2006 - Hack to keep the Famicom from crashing */
+		static const UINT8 infinite_loop[] = { 0x4C, 0xF9, 0xFF, 0xF9, 0xFF }; /* JMP $FFF9, DC.W $FFF9 */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xFFF9, 0xFFFD, 0, 0, MRA8_BANK11);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xFFF9, 0xFFFD, 0, 0, MWA8_BANK11);
+		memory_set_bankptr(11, (void *) infinite_loop);
+	}
 	return 0;
 }
 

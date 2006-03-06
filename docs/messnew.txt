@@ -13,6 +13,9 @@ System Driver Changes:
 
 - [EXIDY] Added cartridge support.  (bug #842) [Robert]
 
+- [FAMICOM] Added hack to prevent crashing.  Marked as not working.  [Nate
+  Woods]
+
 - [MPF1] Added sound support and other enhancements.  [Giel van Schijndel]
 
 - [MSX] Fixed a crash involving cartridge use.  (bug #841) [Nate Woods]
