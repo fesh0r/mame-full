@@ -326,8 +326,9 @@ static void install_banks(int count, unsigned init)
 
 static MACHINE_START( a2600 )
 {
-	int mode = readinputport(10);
-	int chip = readinputport(11);
+	/* NPW 6-Mar-2006 - The MAME core changed, and now I cannot use readinputport() here properly */
+	int mode = 0xFF; /* readinputport(10); */
+	int chip = 0xFF; /* readinputport(11); */
 
 	extra_RAM = auto_malloc(0x400);
 

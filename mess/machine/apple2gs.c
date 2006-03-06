@@ -1267,19 +1267,19 @@ static WRITE8_HANDLER( apple2gs_aux4000_w )
 
 
 
-static void apple2gs_mem_000000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_000000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	meminfo->read_mem			= (a2 & VAR_ALTZP)	? 0x010000 : 0x000000;
 	meminfo->write_mem			= (a2 & VAR_ALTZP)	? 0x010000 : 0x000000;
 }
 
-static void apple2gs_mem_000200(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_000200(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	meminfo->read_mem			= (a2 & VAR_RAMRD)	? 0x010200 : 0x000200;
 	meminfo->write_mem			= (a2 & VAR_RAMWRT)	? 0x010200 : 0x000200;
 }
 
-static void apple2gs_mem_000400(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_000400(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if (a2 & VAR_80STORE)
 	{
@@ -1295,13 +1295,13 @@ static void apple2gs_mem_000400(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_000800(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_000800(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	meminfo->read_mem			= (a2 & VAR_RAMRD)	? 0x010800 : 0x000800;
 	meminfo->write_mem			= (a2 & VAR_RAMWRT)	? 0x010800 : 0x000800;
 }
 
-static void apple2gs_mem_002000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_002000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if ((a2 & (VAR_80STORE|VAR_HIRES)) == (VAR_80STORE|VAR_HIRES))
 	{
@@ -1317,13 +1317,13 @@ static void apple2gs_mem_002000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_004000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_004000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	meminfo->read_mem			= (a2 & VAR_RAMRD)	? 0x014000 : 0x004000;
 	meminfo->write_handler		= (a2 & VAR_RAMWRT)	? apple2gs_aux4000_w : apple2gs_main4000_w;
 }
 
-static void apple2gs_mem_xxD000(struct apple2_meminfo *meminfo, UINT32 lcmem)
+static void apple2gs_mem_xxD000(apple2_meminfo *meminfo, UINT32 lcmem)
 {
 	if (a2 & VAR_LCRAM)
 	{
@@ -1350,7 +1350,7 @@ static void apple2gs_mem_xxD000(struct apple2_meminfo *meminfo, UINT32 lcmem)
 	}
 }
 
-static void apple2gs_mem_xxE000(struct apple2_meminfo *meminfo, UINT32 lcmem)
+static void apple2gs_mem_xxE000(apple2_meminfo *meminfo, UINT32 lcmem)
 {
 	if (a2 & VAR_LCRAM)
 		meminfo->read_mem		= lcmem | 0x00E000;
@@ -1363,7 +1363,7 @@ static void apple2gs_mem_xxE000(struct apple2_meminfo *meminfo, UINT32 lcmem)
 		meminfo->write_mem		= APPLE2_MEM_FLOATING;
 }
 
-static void apple2gs_mem_00D000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_00D000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if (apple2gs_shadow & 0x40)
 	{
@@ -1376,7 +1376,7 @@ static void apple2gs_mem_00D000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_00E000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_00E000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if (apple2gs_shadow & 0x40)
 	{
@@ -1389,7 +1389,7 @@ static void apple2gs_mem_00E000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_01D000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_01D000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if (apple2gs_shadow & 0x40)
 	{
@@ -1402,7 +1402,7 @@ static void apple2gs_mem_01D000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_01E000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_01E000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	if (apple2gs_shadow & 0x40)
 	{
@@ -1415,29 +1415,29 @@ static void apple2gs_mem_01E000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 }
 
-static void apple2gs_mem_E0D000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_E0D000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	apple2gs_mem_xxD000(meminfo, 0x000000 | APPLE2_MEM_AUX);
 }
 
-static void apple2gs_mem_E0E000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_E0E000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	apple2gs_mem_xxE000(meminfo, 0x000000 | APPLE2_MEM_AUX);
 }
 
-static void apple2gs_mem_E1D000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_E1D000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	apple2gs_mem_xxD000(meminfo, 0x010000 | APPLE2_MEM_AUX);
 }
 
-static void apple2gs_mem_E1E000(offs_t begin, offs_t end, struct apple2_meminfo *meminfo)
+static void apple2gs_mem_E1E000(offs_t begin, offs_t end, apple2_meminfo *meminfo)
 {
 	apple2gs_mem_xxE000(meminfo, 0x010000 | APPLE2_MEM_AUX);
 }
 
 
 
-static const struct apple2_memmap_entry apple2gs_memmap_entries[] =
+static const apple2_memmap_entry apple2gs_memmap_entries[] =
 {
 	{ 0x000000, 0x0001FF, apple2gs_mem_000000, A2MEM_MONO },
 	{ 0x000200, 0x0003FF, apple2gs_mem_000200, A2MEM_DUAL },
@@ -1589,7 +1589,7 @@ static WRITE8_HANDLER( apple2gs_E12xxx_w ) { apple2gs_Exxxxx_w(offset + 0x12000,
 static void apple2gs_setup_memory(void)
 {
 	offs_t begin, end;
-	struct apple2_memmap_config cfg;
+	apple2_memmap_config cfg;
 
 	/* allocate memory for E00000-E1FFFF */
 	apple2gs_slowmem = auto_malloc(128*1024);
@@ -1655,7 +1655,7 @@ static READ8_HANDLER( apple2gs_read_vector )
 
 MACHINE_START( apple2gs )
 {
-	struct apple2_config cfg;
+	apple2_config cfg;
 	
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.slots[0] = &apple2_slot_langcard;

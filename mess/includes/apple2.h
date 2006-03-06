@@ -45,7 +45,8 @@ extern UINT32 a2;
 
 #define APPLE2_SLOT_COUNT	8
 
-struct apple2_slotdevice
+typedef struct _apple2_slotdevice apple2_slotdevice;
+struct _apple2_slotdevice
 {
 	const char *name;
 	const char *description;
@@ -55,22 +56,23 @@ struct apple2_slotdevice
 	void (*write)(void *token, offs_t offset, UINT8 data);
 };
 
-struct apple2_config
+typedef struct _apple2_config apple2_config;
+struct _apple2_config
 {
-	const struct apple2_slotdevice *slots[APPLE2_SLOT_COUNT];
+	const apple2_slotdevice *slots[APPLE2_SLOT_COUNT];
 };
 
 
-extern const struct apple2_slotdevice apple2_slot_langcard;
-extern const struct apple2_slotdevice apple2_slot_mockingboard;
-extern const struct apple2_slotdevice apple2_slot_floppy525;
-extern const struct apple2_slotdevice apple2_slot_iwm;
+extern const apple2_slotdevice apple2_slot_langcard;
+extern const apple2_slotdevice apple2_slot_mockingboard;
+extern const apple2_slotdevice apple2_slot_floppy525;
+extern const apple2_slotdevice apple2_slot_iwm;
 
 void apple2_iwm_setdiskreg(UINT8 data);
 UINT8 apple2_iwm_getdiskreg(void);
 
 /* machine/apple2.c */
-void apple2_init_common(const struct apple2_config *config);
+void apple2_init_common(const apple2_config *config);
 MACHINE_START( apple2 );
 UINT8 apple2_getfloatingbusvalue(void);
 READ8_HANDLER( apple2_c0xx_r );
@@ -119,7 +121,8 @@ typedef enum
 	A2MEM_DUAL		= 2		/* this is a bank where read and write can go different places */
 } bank_disposition_t;
 
-struct apple2_meminfo
+typedef struct _apple2_meminfo apple2_meminfo;
+struct _apple2_meminfo
 {
 	UINT32 read_mem;
 	read8_handler read_handler;
@@ -127,23 +130,25 @@ struct apple2_meminfo
 	write8_handler write_handler;
 };
 
-struct apple2_memmap_entry
+typedef struct _apple2_memmap_entry apple2_memmap_entry;
+struct _apple2_memmap_entry
 {
 	offs_t begin;
 	offs_t end;
-	void (*get_meminfo)(offs_t begin, offs_t end, struct apple2_meminfo *meminfo);
+	void (*get_meminfo)(offs_t begin, offs_t end, apple2_meminfo *meminfo);
 	bank_disposition_t bank_disposition;
 };
 
-struct apple2_memmap_config
+typedef struct _apple2_memmap_config apple2_memmap_config;
+struct _apple2_memmap_config
 {
 	int first_bank;
 	UINT8 *auxmem;
 	UINT32 auxmem_length;
-	const struct apple2_memmap_entry *memmap;
+	const apple2_memmap_entry *memmap;
 };
 
-void apple2_setup_memory(const struct apple2_memmap_config *config);
+void apple2_setup_memory(const apple2_memmap_config *config);
 void apple2_update_memory(void);
 
 #endif /* APPLE2_H */
