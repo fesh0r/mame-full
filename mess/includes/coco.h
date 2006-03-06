@@ -1,6 +1,6 @@
 /*********************************************************************
 
-	dragon.h
+	coco.h
 
 	CoCo/Dragon code
 
@@ -92,8 +92,6 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom);
  * from machine/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
-DRIVER_INIT( coco );
-DRIVER_INIT( coco3 );
 MACHINE_START( dragon32 );
 MACHINE_START( dragon64 );
 MACHINE_START( dgnalpha );

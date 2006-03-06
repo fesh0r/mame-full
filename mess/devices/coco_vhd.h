@@ -11,7 +11,7 @@
 
 #include "fileio.h"
 #include "mess.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 
 READ8_HANDLER(coco_vhd_io_r);
 WRITE8_HANDLER(coco_vhd_io_w);

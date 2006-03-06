@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  machine/dragon.c
+  machine/coco.c
 
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
@@ -64,7 +64,7 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 #include "includes/cococart.h"
 #include "machine/6883sam.h"
 #include "includes/6551.h"
@@ -647,7 +647,7 @@ DEVICE_UNLOAD(coco_rom)
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	memset(&ROM[0x4000], 0, 0x4000);
 	
-	cart_inserted=0;	/* Flag cart no longer inserted */
+	cart_inserted = 0;	/* Flag cart no longer inserted */
 }
 
 DEVICE_LOAD(coco3_rom)
@@ -2304,7 +2304,8 @@ static void coco_cartridge_enablesound(int enable)
 static void coco_setcartline(int data)
 {
 	/* If cart autostart enabled then start it, else do not autostart */
-	if (readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
+	/* NPW 6-Mar-2006 - Cannot read input ports at this time */
+	if (/* readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && */ cart_inserted)
 		cart_line = data;
 	else
 		cart_line = 0;
@@ -2315,7 +2316,8 @@ static void coco_setcartline(int data)
 static void coco3_setcartline(int data)
 {
 	/* If cart autostart enabled then start it, else do not autostart */
-	if (readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
+	/* NPW 6-Mar-2006 - Cannot read input ports at this time */
+	if (/* readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && */ cart_inserted)
 		cart_line = data;
 	else
 		cart_line = 0;
@@ -2449,6 +2451,14 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 	    cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
+
+	/* The choise of 50hz is arbitrary */
+	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
+
+#ifdef MAME_DEBUG
+	cpuintrf_set_dasm_override(coco_dasm_override);
+#endif
+
 	add_exit_callback(coco_machine_stop);
 }
 
@@ -2530,6 +2540,11 @@ static void coco3_machine_reset(void)
 	coco3_vh_reset();
 }
 
+static void coco3_state_postload(void)
+{
+	coco3_mmu_update(0, 8);
+}
+
 MACHINE_START( coco3 )
 {
 	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
@@ -2541,6 +2556,10 @@ MACHINE_START( coco3 )
 	
 	coco_or_dragon = AM_COCO;
 
+	state_save_register_global_array(coco3_mmu);
+	state_save_register_global_array(coco3_gimereg);
+	state_save_register_func_postload(coco3_state_postload);
+
 	add_reset_callback(coco3_machine_reset);
 	add_reset_callback(videomap_reset);
 	return 0;
@@ -2550,36 +2569,7 @@ static void coco_machine_stop(void)
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
-}
-
-DRIVER_INIT( coco )
-{
-	/* this is an ugly trick to take into account that we cannot count on
-	 * cart_inserted being zero when we start up.  If a previous session
-	 * set cart_inserted then this will clear it out */
-	if (cart_inserted == 1)
-		cart_inserted++;
-	else if (cart_inserted == 2)
-		cart_inserted = 0;
-
-	/* The choise of 50hz is arbitrary */
-	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
-
-#ifdef MAME_DEBUG
-	cpuintrf_set_dasm_override(coco_dasm_override);
-#endif
-}
-
-static void coco3_state_postload(void)
-{
-	coco3_mmu_update(0, 8);
-}
-
-DRIVER_INIT( coco3 )
-{
-	state_save_register_global_array(coco3_mmu);
-	state_save_register_global_array(coco3_gimereg);
-	state_save_register_func_postload(coco3_state_postload);
+	cart_inserted = 0;
 }
 
 /***************************************************************************

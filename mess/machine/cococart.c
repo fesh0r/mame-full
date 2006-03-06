@@ -11,7 +11,7 @@
 #include "devices/coco_vhd.h"
 #include "ds1315.h"
 #include "m6242b.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 #include "sound/dac.h"
 
 static const struct cartridge_callback *cartcallbacks;

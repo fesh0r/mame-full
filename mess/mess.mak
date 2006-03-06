@@ -437,9 +437,9 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/machine/cococart.o	\
 	$(OBJ)/mess/machine/ds1315.o	\
 	$(OBJ)/mess/machine/m6242b.o	\
-	$(OBJ)/mess/machine/dragon.o	\
-	$(OBJ)/mess/vidhrdw/dragon.o	\
-	$(OBJ)/mess/systems/dragon.o	\
+	$(OBJ)/mess/machine/coco.o		\
+	$(OBJ)/mess/vidhrdw/coco.o		\
+	$(OBJ)/mess/systems/coco.o		\
 	$(OBJ)/mess/formats/cocopak.o	\
 	$(OBJ)/mess/formats/coco_cas.o	\
 	$(OBJ)/mess/formats/coco_dsk.o	\

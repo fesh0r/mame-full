@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	dragon.c
+	coco.c
 
 	TRS-80 Radio Shack Color Computer Family
 
@@ -15,7 +15,7 @@
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "machine/6883sam.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 #include "devices/basicdsk.h"
 #include "includes/6551.h"
 #include "formats/coco_dsk.h"
@@ -1035,14 +1035,14 @@ SYSTEM_CONFIG_START(dgnalpha)
 SYSTEM_CONFIG_END
 
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT		INIT     CONFIG	COMPANY					FULLNAME */
-COMP(  1980,	coco,		0,		0,		coco,		coco,		coco,	coco,		"Tandy Radio Shack",	"Color Computer" , 0)
-COMP(  1981,	cocoe,		coco,	0,		coco,		coco,		coco,	coco,		"Tandy Radio Shack",	"Color Computer (Extended BASIC 1.0)" , 0)
-COMP(  1983,	coco2,		coco,	0,		coco2,		coco,		coco,	coco2,		"Tandy Radio Shack",	"Color Computer 2" , 0)
-COMP(  1985?,	coco2b,		coco,	0,		coco2b,		coco,		coco,	coco2,		"Tandy Radio Shack",	"Color Computer 2B" , 0)
-COMP(  1986,	coco3,		coco,	0,	 	coco3,		coco3,		coco3,	coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC)" , 0)
-COMP(  1986,	coco3p,		coco, 	0,		coco3,		coco3,		coco3,	coco3,		"Tandy Radio Shack",	"Color Computer 3 (PAL)" , 0)
-COMP(  19??,	coco3h,		coco,	0,		coco3h,		coco3,		coco3,	coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED)
-COMP(  1982,	dragon32,	coco,	0,		dragon32,	dragon32,	coco,	dragon32,	"Dragon Data Ltd",    "Dragon 32" , 0)
-COMP(  1983,	dragon64,	coco,	0,		dragon64,	dragon32,	coco,	dragon64,	"Dragon Data Ltd",    "Dragon 64" , 0)
-COMP(  1984,	dgnalpha,	coco,	0,		dgnalpha,	dragon32,	coco,	dgnalpha,	"Dragon Data Ltd",    "Dragon Alpha Prototype" , 0)
-COMP(  1984,	cp400,		coco, 	0,		coco,		coco,		coco,	coco,		"Prologica",          "CP400" , 0)
+COMP(  1980,	coco,		0,		0,		coco,		coco,		0,		coco,		"Tandy Radio Shack",	"Color Computer" , 0)
+COMP(  1981,	cocoe,		coco,	0,		coco,		coco,		0,		coco,		"Tandy Radio Shack",	"Color Computer (Extended BASIC 1.0)" , 0)
+COMP(  1983,	coco2,		coco,	0,		coco2,		coco,		0,		coco2,		"Tandy Radio Shack",	"Color Computer 2" , 0)
+COMP(  1985?,	coco2b,		coco,	0,		coco2b,		coco,		0,		coco2,		"Tandy Radio Shack",	"Color Computer 2B" , 0)
+COMP(  1986,	coco3,		coco,	0,	 	coco3,		coco3,		0,		coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC)" , 0)
+COMP(  1986,	coco3p,		coco, 	0,		coco3,		coco3,		0,		coco3,		"Tandy Radio Shack",	"Color Computer 3 (PAL)" , 0)
+COMP(  19??,	coco3h,		coco,	0,		coco3h,		coco3,		0,		coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED)
+COMP(  1982,	dragon32,	coco,	0,		dragon32,	dragon32,	0,		dragon32,	"Dragon Data Ltd",    "Dragon 32" , 0)
+COMP(  1983,	dragon64,	coco,	0,		dragon64,	dragon32,	0,		dragon64,	"Dragon Data Ltd",    "Dragon 64" , 0)
+COMP(  1984,	dgnalpha,	coco,	0,		dgnalpha,	dragon32,	0,		dgnalpha,	"Dragon Data Ltd",    "Dragon Alpha Prototype" , 0)
+COMP(  1984,	cp400,		coco, 	0,		coco,		coco,		0,		coco,		"Prologica",          "CP400" , 0)

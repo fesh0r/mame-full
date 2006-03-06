@@ -16,7 +16,7 @@
 #include "videomap.h"
 
 /* The "Back doors" are declared here */
-#include "includes/dragon.h"
+#include "includes/coco.h"
 
 #ifdef MAME_DEBUG
 #define LOG_FS			0

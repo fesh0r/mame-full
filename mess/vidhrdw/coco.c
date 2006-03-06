@@ -36,7 +36,7 @@
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "vidhrdw/generic.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 
 
 

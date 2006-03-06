@@ -43,7 +43,7 @@ documentation still exists.
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
 #include "includes/crtc6845.h"
-#include "includes/dragon.h"
+#include "includes/coco.h"
 #include "includes/dgn_beta.h"
 #include "devices/basicdsk.h"
 #include "includes/6551.h"
