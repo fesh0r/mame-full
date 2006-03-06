@@ -899,7 +899,7 @@ void c64_common_init_machine (void)
 	vicirq = cia0irq = 0;
 }
 
-MACHINE_RESET( c64 )
+MACHINE_START( c64 )
 {
 	c64_common_init_machine ();
 
@@ -910,6 +910,7 @@ MACHINE_RESET( c64 )
 		c128_bankswitch_64 (1);
 	if (!ultimax)
 		c64_bankswitch (1);
+	return 0;
 }
 
 

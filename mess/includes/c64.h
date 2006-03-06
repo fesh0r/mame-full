@@ -224,26 +224,24 @@ void c64_m6510_port_write(UINT8 data);
 READ8_HANDLER ( c64_colorram_read );
 WRITE8_HANDLER ( c64_colorram_write );
 
-extern void c64_driver_init (void);
-extern void c64pal_driver_init (void);
-extern void ultimax_driver_init (void);
-extern void c64gs_driver_init (void);
-extern void sx64_driver_init (void);
-extern void c64_driver_shutdown (void);
-extern void c64_common_init_machine (void);
+void c64_driver_init (void);
+void c64pal_driver_init (void);
+void ultimax_driver_init (void);
+void c64gs_driver_init (void);
+void sx64_driver_init (void);
+void c64_driver_shutdown (void);
+void c64_common_init_machine (void);
 
-extern MACHINE_RESET( c64 );
-extern INTERRUPT_GEN( c64_frame_interrupt );
+MACHINE_START( c64 );
+INTERRUPT_GEN( c64_frame_interrupt );
 
 void c64_rom_load(void);
 void c64_rom_recognition (void);
 
-void c64_state(void);
-
 /* private area */
 
 WRITE8_HANDLER ( c64_write_io );
- READ8_HANDLER ( c64_read_io );
+READ8_HANDLER ( c64_read_io );
 int c64_cia0_port_a_r (int offset);
 int c64_cia0_port_b_r (int offset);
 void c64_cia0_port_a_w (int offset, int data);
