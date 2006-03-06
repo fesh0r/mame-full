@@ -1669,14 +1669,19 @@ MACHINE_START( apple2gs )
 
 	/* setup globals */
 	apple2gs_cur_slot6_image = NULL;
-	apple2gs_langsel = 0;
+	apple2gs_newvideo = 0x00;
+	apple2gs_vgcint = 0x00;
+	apple2gs_langsel = 0x00;
+	apple2gs_sltromsel = 0x00;
 	apple2gs_cyareg = 0x80;
 	apple2gs_inten = 0x00;
-	apple2gs_vgcint = 0x00;
 	apple2gs_intflag = 0x00;
 	apple2gs_shadow = 0x08;
-	apple2gs_newvideo = 0;
 	apple2gs_pending_irqs = 0x00;
+	apple2gs_mouse_x = 0x00;
+	apple2gs_mouse_y = 0x00;
+	apple2gs_mouse_dx = 0x00;
+	apple2gs_mouse_dy = 0x00;
 	adb_state = ADBSTATE_IDLE;
 	adb_kmstatus = 0x10;
 	adb_command = 0;
@@ -1691,14 +1696,19 @@ MACHINE_START( apple2gs )
 	memset(adb_memory, 0, sizeof(adb_memory));
 	adb_address_keyboard = 2;
 	adb_address_mouse = 3;
-	apple2gs_mouse_x = 0x00;
-	apple2gs_mouse_y = 0x00;
-	apple2gs_mouse_dx = 0x00;
-	apple2gs_mouse_dy = 0x00;
 
 	/* init time */
+	clock_data = 0;
+	clock_control =0;
+	clock_read = 0;
+	clock_reg1 = 0;
+	clock_mode = CLOCKMODE_IDLE;
 	clock_curtime = 0;
 	clock_curtime_interval = 0;
+
+	sndglu_ctrl = 0x00;
+	sndglu_addr = 0;
+	sndglu_dummy_read = 0;
 
 	/* init the various subsystems */
 	scc_init(NULL);

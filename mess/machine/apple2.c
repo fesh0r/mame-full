@@ -1518,6 +1518,8 @@ void apple2_init_common(const struct apple2_config *config)
 	int i;
 	void *token;
 
+	a2 = 0;
+
 	AY3600_init();
 	add_reset_callback(apple2_reset);
 
