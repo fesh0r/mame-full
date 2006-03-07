@@ -23,10 +23,6 @@
 #define COCO3_DIP_MONITORTYPE		12
 #define COCO3_DIP_MONITORTYPE_MASK	0x08
 
-/* Port Tags for configuration of DOs enable/diable and cartrage autostart */
-
-#define DRAGON_COCO_CART_AUTOSTART	"Cartridge Autostart"
-
 /* ----------------------------------------------------------------------- *
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */

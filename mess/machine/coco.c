@@ -2304,20 +2304,18 @@ static void coco_cartridge_enablesound(int enable)
 static void coco_setcartline(int data)
 {
 	/* If cart autostart enabled then start it, else do not autostart */
-	/* NPW 6-Mar-2006 - Cannot read input ports at this time */
-	if (/* readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && */ cart_inserted)
+	if (cart_inserted)
 		cart_line = data;
 	else
 		cart_line = 0;
-		
+	
 	pia_1_cb1_w(0, data ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void coco3_setcartline(int data)
 {
 	/* If cart autostart enabled then start it, else do not autostart */
-	/* NPW 6-Mar-2006 - Cannot read input ports at this time */
-	if (/* readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && */ cart_inserted)
+	if (cart_inserted)
 		cart_line = data;
 	else
 		cart_line = 0;
