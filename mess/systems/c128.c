@@ -423,12 +423,6 @@ ADDRESS_MAP_END
 	 /*PORT_DIPSETTING (0x10, "C64 CBM Supergames")*/\
 	 /*PORT_DIPSETTING (0x14, "C64 Ocean Robocop2")*/\
 	 /*PORT_DIPSETTING (0x1c, "C128")*/\
-	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")\
-	 PORT_DIPSETTING (0, DEF_STR( None ))\
-	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")\
-	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")\
-	 PORT_DIPSETTING (0, DEF_STR( None ))\
-	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
 
 #define DIPS_KEYS_BOTH \
 	PORT_START \

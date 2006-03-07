@@ -112,9 +112,6 @@
 #define IEC8ON ((input_port_8_r(0)&0x38)==8)
 #define IEC9ON ((input_port_8_r(0)&7)==1)
 
-#define SERIAL8ON ((input_port_8_r(0)&0x38)==0x18)
-#define SERIAL9ON ((input_port_8_r(0)&7)==3)
-
 #define SIDCARD ((input_port_9_r(0)&0x80))
 // a lot of c64 software has been converted to c16
 // these oftenly still produce the commands for the sid chip at 0xd400

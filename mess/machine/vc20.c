@@ -597,11 +597,11 @@ MACHINE_RESET( vc20 )
 	vc1541_reset ();
 #endif
 	if (ieee) {
-		cbm_drive_0_config (SERIAL8ON ? IEEE : 0, 8);
-		cbm_drive_1_config (SERIAL9ON ? IEEE : 0, 9);
+		cbm_drive_0_config (IEEE, 8);
+		cbm_drive_1_config (IEEE, 9);
 	} else {
-		cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, 8);
-		cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, 9);
+		cbm_drive_0_config (SERIAL, 8);
+		cbm_drive_1_config (SERIAL, 9);
 	}
 	via_reset ();
 	via_0_ca1_w (0, vc20_via0_read_ca1(0) );

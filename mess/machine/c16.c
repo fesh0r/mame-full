@@ -555,20 +555,8 @@ MACHINE_RESET( c16 )
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfec0, 0xfedf, 0, 0, MRA8_NOP);
 	}
 
-	if (SERIAL8ON)
-		i = SERIAL;
-	else if (IEC8ON)
-		i = IEC;
-	else
-		i = 0;
-	cbm_drive_0_config (i, 8);
-	if (SERIAL9ON)
-		i = SERIAL;
-	else if (IEC9ON)
-		i = IEC;
-	else
-		i = 0;
-	cbm_drive_1_config (i, 9);
+	cbm_drive_0_config (SERIAL, 8);
+	cbm_drive_1_config (SERIAL, 9);
 
 	if (REAL_C1551)
 		c1551_reset ();

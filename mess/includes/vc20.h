@@ -112,9 +112,6 @@
 #define DATASSETTE (readinputport(11)&0x8)
 #define DATASSETTE_TONE (readinputport(11)&4)
 
-#define SERIAL8ON (readinputport(11)&2)
-#define SERIAL9ON (readinputport(11)&1)
-
 #define QUICKLOAD		(readinputport(9)&8)
 
 #define DATASSETTE_PLAY		(readinputport(9)&4)

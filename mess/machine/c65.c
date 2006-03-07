@@ -808,8 +808,8 @@ MACHINE_START( c65 )
 	memset(mess_ram + 128*1024, 0xff, mess_ram_size -  128*1024);
 
 	cbm_serial_reset_write (0);
-	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, 10);
-	cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, 11);
+	cbm_drive_0_config (SERIAL, 10);
+	cbm_drive_1_config (SERIAL, 11);
 	cia6526_reset ();
 	c64_vicaddr = c64_memory;
 
