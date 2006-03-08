@@ -69,37 +69,21 @@ Timings:
 #include "devices/cassette.h"
 
 /* I/O ports */
-ADDRESS_MAP_START( dai_readport , ADDRESS_SPACE_IO, 8)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dai_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_START( dai_io , ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 /* memory w/r functions */
-ADDRESS_MAP_START( dai_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0xbfff) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0xe000, 0xefff) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0xf000, 0xf7ff) AM_READ( MRA8_NOP )
-	AM_RANGE( 0xf800, 0xf8ff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0xfb00, 0xfbff) AM_READ( amd9511_r )
-	AM_RANGE( 0xfc00, 0xfcff) AM_READ( pit8253_0_r )
-	AM_RANGE( 0xfd00, 0xfdff) AM_READ( dai_io_discrete_devices_r )
-	AM_RANGE( 0xfe00, 0xfeff) AM_READ( ppi8255_0_r )
-	AM_RANGE( 0xff00, 0xffff) AM_READ( tms5501_0_r )
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dai_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0xbfff) AM_WRITE( MWA8_BANK1 )
-	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0xe000, 0xefff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_START( dai_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xbfff) AM_RAMBANK(1)
+	AM_RANGE( 0xc000, 0xdfff) AM_ROM
+	AM_RANGE( 0xe000, 0xefff) AM_ROMBANK(2)
 	AM_RANGE( 0xf000, 0xf7ff) AM_WRITE( dai_stack_interrupt_circuit_w )
-	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0xfb00, 0xfbff) AM_WRITE( amd9511_w )
-	AM_RANGE( 0xfc00, 0xfcff) AM_WRITE( pit8253_0_w )
-	AM_RANGE( 0xfd00, 0xfdff) AM_WRITE( dai_io_discrete_devices_w )
-	AM_RANGE( 0xfe00, 0xfeff) AM_WRITE( ppi8255_0_w )
-	AM_RANGE( 0xff00, 0xffff) AM_WRITE( tms5501_0_w )
+	AM_RANGE( 0xf800, 0xf8ff) AM_RAM
+	AM_RANGE( 0xfb00, 0xfbff) AM_READWRITE( amd9511_r, amd9511_w )
+	AM_RANGE( 0xfc00, 0xfcff) AM_READWRITE( pit8253_0_r, pit8253_0_w )
+	AM_RANGE( 0xfd00, 0xfdff) AM_READWRITE( dai_io_discrete_devices_r, dai_io_discrete_devices_w )
+	AM_RANGE( 0xfe00, 0xfeff) AM_READWRITE( ppi8255_0_r, ppi8255_0_w )
+	AM_RANGE( 0xff00, 0xffff) AM_READWRITE( tms5501_0_r, tms5501_0_w )
 ADDRESS_MAP_END
 
 
@@ -195,13 +179,13 @@ static struct CassetteOptions dai_cassette_options = {
 static MACHINE_DRIVER_START( dai )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 2000000)
-	MDRV_CPU_PROGRAM_MAP(dai_readmem, dai_writemem)
-	MDRV_CPU_IO_MAP(dai_readport, dai_writeport)
+	MDRV_CPU_PROGRAM_MAP(dai_mem, 0)
+	MDRV_CPU_IO_MAP(dai_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( dai )
+	MDRV_MACHINE_START( dai )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -264,4 +248,4 @@ SYSTEM_CONFIG_END
 
 
 /*    YEAR  NAME PARENT  COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY				   FULLNAME */
-COMP( 1978, dai, 0,      0,	dai,	dai,	dai,	dai,	"Data Applications International", "DAI Personal Computer", 0)
+COMP( 1978, dai, 0,      0,	dai,	dai,	0,	dai,	"Data Applications International", "DAI Personal Computer", 0)
