@@ -44,7 +44,6 @@
 static  READ8_HANDLER(mekd2_pia_r) { return 0xff; }
 static  READ8_HANDLER(mekd2_cas_r) { return 0xff; }
 static  READ8_HANDLER(mekd2_kbd_r) { return 0xff; }
-static  READ8_HANDLER(mekd2_mirror_r) { UINT8 *mem = memory_region(REGION_CPU1); return mem[0xe000+(offset&0x3ff)]; }
 
 UINT8 pia[8];
 
@@ -92,29 +91,16 @@ static WRITE8_HANDLER(mekd2_kbd_w)
 }
 
 
-static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x00ff) AM_READ( MRA8_RAM )
-//	{ 0x0100, 0x01ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
-//	{ 0x6000, 0x67ff, MRA8_ROM },	/* -"- */
-//	  { 0x8004, 0x8007, mekd2_pia_r },
-//	  { 0x8008, 0x8008, mekd2_cas_r },
-//	  { 0x8020, 0x8023, mekd2_kbd_r },
-	AM_RANGE( 0xa000, 0xa07f) AM_READ( MRA8_RAM )
-//	{ 0xc000, 0xc7ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
-	AM_RANGE( 0xe000, 0xe3ff) AM_READ( MRA8_ROM )	/* JBUG ROM */
-	AM_RANGE( 0xe400, 0xffff) AM_READ( mekd2_mirror_r )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x00ff) AM_WRITE( MWA8_RAM )
-//	{ 0x0100, 0x01ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
-//	{ 0x6000, 0x67ff, MWA8_ROM },	/* -"- */
-//	  { 0x8004, 0x8007, mekd2_pia_w },
-//	  { 0x8008, 0x8008, mekd2_cas_w },
-	AM_RANGE( 0x8020, 0x8023) AM_WRITE( mekd2_kbd_w )
-	AM_RANGE( 0xa000, 0xa07f) AM_WRITE( MWA8_RAM )
-//	{ 0xc000, 0xc7ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
-	AM_RANGE( 0xe000, 0xe3ff) AM_WRITE( MWA8_ROM )	/* JBUG ROM */
+static ADDRESS_MAP_START( mekd2_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x00ff) AM_RAM
+//	AM_RANGE(0x0100, 0x01ff) AM_RAM						/* optional, set up in mekd2_init_machine */
+//	AM_RANGE(0x6000, 0x67ff) AM_ROM						/* -"- */
+//	AM_RANGE(0x8004, 0x8007) AM_READWRITE(mekd2_pia_r, mekd2_pia_w)
+//	AM_RANGE(0x8008, 0x8008) AM_READWRITE(mekd2_cas_r, mekd2_cas_w)
+	AM_RANGE(0x8020, 0x8023) AM_WRITE(mekd2_kbd_w)		/* mekd2_kbd_r */
+	AM_RANGE(0xa000, 0xa07f) AM_RAM
+//	AM_RANGE(0xc000, 0xc7ff) AM_RAM						/* optional, set up in mekd2_init_machine */
+	AM_RANGE(0xe000, 0xe3ff) AM_ROM AM_MIRROR(0x1c00)	/* JBUG ROM */
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( mekd2 )
@@ -168,7 +154,7 @@ static gfx_decode gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( mekd2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 614400)        /* 614.4 kHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(mekd2_mem, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
