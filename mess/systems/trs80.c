@@ -30,103 +30,57 @@ NMI
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H
 
-static ADDRESS_MAP_START( readmem_level1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff)	AM_READ(MRA8_ROM)
-	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
-	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x7fff)	AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( mem_level1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+	AM_RANGE(0x3800, 0x38ff) AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3c00, 0x3fff) AM_READWRITE(MRA8_RAM, trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_level1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff)	AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x4000, 0x7fff)	AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( io_level1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xfe, 0xfe) AM_READ(trs80_port_xx_r)
+	AM_RANGE(0xff, 0xff) AM_READWRITE(trs80_port_ff_r, trs80_port_ff_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport_level1, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xfe, 0xfe)	AM_READ(trs80_port_xx_r)
-	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
+static ADDRESS_MAP_START( mem_model1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_ROM
+	AM_RANGE(0x3000, 0x37df) AM_NOP
+	AM_RANGE(0x37e0, 0x37e3) AM_READWRITE(trs80_irq_status_r, trs80_motor_w)
+	AM_RANGE(0x37e4, 0x37e7) AM_NOP
+	AM_RANGE(0x37e8, 0x37eb) AM_READWRITE(trs80_printer_r, trs80_printer_w)
+	AM_RANGE(0x37ec, 0x37ec) AM_READWRITE(wd179x_status_r, wd179x_command_w)
+	AM_RANGE(0x37ed, 0x37ed) AM_READWRITE(wd179x_track_r, wd179x_track_w)
+	AM_RANGE(0x37ee, 0x37ee) AM_READWRITE(wd179x_sector_r, wd179x_sector_w)
+	AM_RANGE(0x37ef, 0x37ef) AM_READWRITE(wd179x_data_r, wd179x_data_w)
+	AM_RANGE(0x37f0, 0x37ff) AM_NOP
+	AM_RANGE(0x3800, 0x38ff) AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3900, 0x3bff) AM_NOP
+	AM_RANGE(0x3c00, 0x3fff) AM_READWRITE(MRA8_RAM, trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport_level1, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
+static ADDRESS_MAP_START( io_model1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xfe, 0xfe) AM_READ(trs80_port_xx_r)
+	AM_RANGE(0xff, 0xff) AM_READWRITE(trs80_port_ff_r, trs80_port_ff_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_model1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x2fff)	AM_READ(MRA8_ROM)
-	AM_RANGE(0x3000, 0x37df)	AM_READ(MRA8_NOP)
-	AM_RANGE(0x37e0, 0x37e3)	AM_READ(trs80_irq_status_r)
-	AM_RANGE(0x30e4, 0x37e7)	AM_READ(MRA8_NOP)
-	AM_RANGE(0x37e8, 0x37eb)	AM_READ(trs80_printer_r)
-	AM_RANGE(0x37ec, 0x37ec)	AM_READ(wd179x_status_r)
-	AM_RANGE(0x37ed, 0x37ed)	AM_READ(wd179x_track_r)
-	AM_RANGE(0x37ee, 0x37ee)	AM_READ(wd179x_sector_r)
-	AM_RANGE(0x37ef, 0x37ef)	AM_READ(wd179x_data_r)
-	AM_RANGE(0x37f0, 0x37ff)	AM_READ(MRA8_NOP)
-	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
-	AM_RANGE(0x3900, 0x3bff)	AM_READ(MRA8_NOP)
-	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0xffff)	AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( mem_model3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_ROM
+	AM_RANGE(0x3800, 0x38ff) AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3c00, 0x3fff) AM_READWRITE(MRA8_RAM, trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_model1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x2fff)	AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x3000, 0x37df)	AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x37e0, 0x37e3)	AM_WRITE(trs80_motor_w)
-	AM_RANGE(0x37e4, 0x37e7)	AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x37e8, 0x37eb)	AM_WRITE(trs80_printer_w)
-	AM_RANGE(0x37ec, 0x37ec)	AM_WRITE(wd179x_command_w)
-	AM_RANGE(0x37ed, 0x37ed)	AM_WRITE(wd179x_track_w)
-	AM_RANGE(0x37ee, 0x37ee)	AM_WRITE(wd179x_sector_w)
-	AM_RANGE(0x37ef, 0x37ef)	AM_WRITE(wd179x_data_w)
-	AM_RANGE(0x37f0, 0x37ff)	AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x3800, 0x3bff)	AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x4000, 0xffff)	AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( readport_model1, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xfe, 0xfe)	AM_READ(trs80_port_xx_r)
-	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport_model1, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readmem_model3, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x37ff)	AM_READ(MRA8_ROM)
-	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
-	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0xffff)	AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_model3, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x37ff)	AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x3800, 0x38ff)	AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x4000, 0xffff)	AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport_model3, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xe0, 0xe3)	AM_READ(trs80_irq_status_r)
-	AM_RANGE(0xf0, 0xf0)	AM_READ(wd179x_status_r)
-	AM_RANGE(0xf1, 0xf1)	AM_READ(wd179x_track_r)
-	AM_RANGE(0xf2, 0xf2)	AM_READ(wd179x_sector_r)
-	AM_RANGE(0xf3, 0xf3)	AM_READ(wd179x_data_r)
-	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport_model3, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xe0, 0xe3)	AM_WRITE(trs80_irq_mask_w)
+static ADDRESS_MAP_START( io_model3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xe0, 0xe3) AM_READWRITE(trs80_irq_status_r, trs80_irq_mask_w)
 	AM_RANGE(0xe4, 0xe4)	AM_WRITE(trs80_motor_w)
-	AM_RANGE(0xf0, 0xf0)	AM_WRITE(wd179x_command_w)
-	AM_RANGE(0xf1, 0xf1)	AM_WRITE(wd179x_track_w)
-	AM_RANGE(0xf2, 0xf2)	AM_WRITE(wd179x_sector_w)
-	AM_RANGE(0xf3, 0xf3)	AM_WRITE(wd179x_data_w)
-	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
+	AM_RANGE(0xf0, 0xf0) AM_READWRITE(wd179x_status_r, wd179x_command_w)
+	AM_RANGE(0xf1, 0xf1) AM_READWRITE(wd179x_track_r, wd179x_track_w)
+	AM_RANGE(0xf2, 0xf2) AM_READWRITE(wd179x_sector_r, wd179x_sector_w)
+	AM_RANGE(0xf3, 0xf3) AM_READWRITE(wd179x_data_r, wd179x_data_w)
+	AM_RANGE(0xff, 0xff) AM_READWRITE(trs80_port_ff_r, trs80_port_ff_w)
 ADDRESS_MAP_END
+
 
 
 /**************************************************************************
@@ -321,8 +275,8 @@ static struct Speaker_interface speaker_interface =
 static MACHINE_DRIVER_START( level1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 1796000)        /* 1.796 Mhz */
-	MDRV_CPU_PROGRAM_MAP(readmem_level1,writemem_level1)
-	MDRV_CPU_IO_MAP(readport_level1,writeport_level1)
+	MDRV_CPU_PROGRAM_MAP(mem_level1, 0)
+	MDRV_CPU_IO_MAP(io_level1, 0)
 	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(trs80_timer_interrupt, TIME_IN_HZ(40))
 	MDRV_FRAMES_PER_SECOND(60)
@@ -354,16 +308,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( model1 )
 	MDRV_IMPORT_FROM( level1 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( readmem_model1, writemem_model1 )
-	MDRV_CPU_IO_MAP( readport_model1,writeport_model1 )
+	MDRV_CPU_PROGRAM_MAP( mem_model1, 0 )
+	MDRV_CPU_IO_MAP( io_model1, 0 )
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( model3 )
 	MDRV_IMPORT_FROM( level1 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( readmem_model3, writemem_model3 )
-	MDRV_CPU_IO_MAP( readport_model3,writeport_model3 )
+	MDRV_CPU_PROGRAM_MAP( mem_model3, 0 )
+	MDRV_CPU_IO_MAP( io_model3, 0 )
 	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 2)
 MACHINE_DRIVER_END
 
