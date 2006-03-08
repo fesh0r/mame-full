@@ -825,9 +825,6 @@ TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 	DRIVER( bebox )		/* BeBox Dual603-66	*/
 	DRIVER( bebox2 )	/* BeBox Dual603-133	*/
 
-	/* Tiger Electronics */
-	DRIVER( gamecom )
-
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
