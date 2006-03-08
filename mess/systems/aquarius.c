@@ -42,22 +42,13 @@ ADDRESS_MAP_END
 
 /* Memory w/r functions */
 
-ADDRESS_MAP_START( aquarius_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x1fff) AM_READ( MRA8_ROM)
-	AM_RANGE(0x2000, 0x2fff) AM_READ( MRA8_NOP)
-	AM_RANGE(0x3000, 0x37ff) AM_READ( videoram_r)
-	AM_RANGE(0x3800, 0x3fff) AM_READ( MRA8_RAM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ( MRA8_NOP)
-	AM_RANGE(0x8000, 0xffff) AM_READ( MRA8_NOP)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( aquarius_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE( MWA8_ROM)
-	AM_RANGE(0x2000, 0x2fff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE( aquarius_videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
-	AM_RANGE(0x3800, 0x3fff) AM_WRITE( MWA8_RAM)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE( MWA8_NOP)
+ADDRESS_MAP_START( aquarius_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x2fff) AM_NOP
+	AM_RANGE(0x3000, 0x37ff) AM_READWRITE(videoram_r, aquarius_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x3800, 0x3fff) AM_RAM
+	AM_RANGE(0x4000, 0x7fff) AM_NOP
+	AM_RANGE(0x8000, 0xffff) AM_NOP
 ADDRESS_MAP_END
 
 /* graphics output */
@@ -219,7 +210,7 @@ static INTERRUPT_GEN( aquarius_interrupt )
 static MACHINE_DRIVER_START( aquarius )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3500000)
-	MDRV_CPU_PROGRAM_MAP(aquarius_readmem, aquarius_writemem)
+	MDRV_CPU_PROGRAM_MAP(aquarius_mem, 0)
 	MDRV_CPU_IO_MAP(aquarius_io, 0)
 	MDRV_CPU_VBLANK_INT( aquarius_interrupt, 1 )
 	MDRV_FRAMES_PER_SECOND(60)
