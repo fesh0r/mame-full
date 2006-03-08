@@ -276,15 +276,15 @@ MACHINE_DRIVER_END
 
 ROM_START(studio2)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
-	ROM_LOAD("studio2.rom", 0x0000, 0x800, CRC(a494b339))
+	ROM_LOAD("studio2.rom", 0x0000, 0x800, CRC(a494b339) SHA1(f2650dacc9daab06b9fdf0e7748e977b2907010c))
 //	ROM_CART_LOAD(0, "st2,bin\0", 0x0400, 0xfc00, ROM_NOCLEAR | ROM_NOMIRROR | ROM_OPTIONAL )
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
 ROM_START(vip)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
-	ROM_LOAD("monitor.rom", 0x8000, 0x200, CRC(5be0a51f))
-	ROM_LOAD("chip8.rom", 0x8200, 0x200, CRC(3e0f50f0))
+	ROM_LOAD("monitor.rom", 0x8000, 0x200, CRC(5be0a51f) SHA1(40266e6d13e3340607f8b3dcc4e91d7584287c06))
+	ROM_LOAD("chip8.rom", 0x8200, 0x200, CRC(3e0f50f0) SHA1(4a9759035f99d125859cdf6ad71b8728637dcf4f))
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
@@ -372,6 +372,6 @@ static DRIVER_INIT( vip )
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac elf2 16 key keyblock
 CONS(1977,	vip,		0,		0,		vip,		vip,		vip,		studio2,	"RCA",		"COSMAC VIP", GAME_NOT_WORKING )
-CONS(1976,	studio2,	0,		0,		studio2,	studio2,	studio2,	studio2,	"RCA",		"Studio II", GAME_NOT_WORKING )
+CONS(1976,	studio2,	0,		0,		studio2,	studio2,	studio2,	studio2,	"RCA",		"Studio II", 0 )
 // hanimex mpt-02
 // colour studio 2 (m1200) with little color capability

@@ -150,8 +150,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( astrocdw )	/* Bally Astrocade (white case)						*/
 
 	/* RCA */
-TESTDRIVER( vip )		/* Cosmac VIP										*/
-TESTDRIVER( studio2 )	/* Studio II										*/
+	DRIVER( vip )		/* Cosmac VIP										*/
+	DRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
@@ -824,6 +824,9 @@ TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 	/* Be Incorporated */
 	DRIVER( bebox )		/* BeBox Dual603-66	*/
 	DRIVER( bebox2 )	/* BeBox Dual603-133	*/
+
+	/* Tiger Electronics */
+	DRIVER( gamecom )
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
