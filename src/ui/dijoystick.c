@@ -141,7 +141,7 @@ static int DIJoystick_init(void)
 	}
 
 	/* enumerate for joystick devices */
-	hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
+	hr = IDirectInput_EnumDevices(di, DI8DEVCLASS_GAMECTRL,
 				 (LPDIENUMDEVICESCALLBACK)DIJoystick_EnumDeviceProc,
 				 NULL,
 				 DIEDFL_ATTACHEDONLY);
@@ -338,7 +338,7 @@ static BOOL DIJoystick_Available(void)
 		return bAvailable;
 
 	/* enumerate for joystick devices */
-	hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
+	hr = IDirectInput_EnumDevices(di, DI8DEVCLASS_GAMECTRL,
 								  inputEnumDeviceProc,
 								  &guidDevice,
 								  DIEDFL_ATTACHEDONLY);
