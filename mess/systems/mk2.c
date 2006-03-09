@@ -44,38 +44,21 @@ MOS MPS 6332 005 2179
   83, 84 contains display variables
  */
 // only lower 12 address bits on bus!
-static ADDRESS_MAP_START( mk2_readmem , ADDRESS_SPACE_PROGRAM, 8)
+static ADDRESS_MAP_START(mk2_mem , ADDRESS_SPACE_PROGRAM, 8)
 #ifdef M6504_MEMORY_LAYOUT
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) ) // m6504
-	AM_RANGE( 0x0000, 0x01ff) AM_READ( MRA8_RAM ) // 2 2111, should be mirrored
-	AM_RANGE( 0x0b00, 0x0b0f) AM_READ( rriot_0_r )
-	AM_RANGE( 0x0b80, 0x0bbf) AM_READ( MRA8_RAM ) // rriot ram
-	AM_RANGE( 0x0c00, 0x0fff) AM_READ( MRA8_ROM ) // rriot rom
-	AM_RANGE( 0x1000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x0000, 0x01ff) AM_RAM // 2 2111, should be mirrored
+	AM_RANGE( 0x0b00, 0x0b0f) AM_READWRITE( rriot_0_r, rriot_0_w )
+	AM_RANGE( 0x0b80, 0x0bbf) AM_RAM // rriot ram
+	AM_RANGE( 0x0c00, 0x0fff) AM_ROM // rriot rom
+	AM_RANGE( 0x1000, 0x1fff) AM_ROM
 #else
-	AM_RANGE( 0x0000, 0x01ff) AM_READ( MRA8_RAM ) // 2 2111, should be mirrored
-	AM_RANGE( 0x8009, 0x8009) AM_READ( MRA8_NOP )// bit $8009 (ora #$80) causes false accesses
-	AM_RANGE( 0x8b00, 0x8b0f) AM_READ( rriot_0_r )
-	AM_RANGE( 0x8b80, 0x8bbf) AM_READ( MRA8_RAM ) // rriot ram
-	AM_RANGE( 0x8c00, 0x8fff) AM_READ( MRA8_ROM ) // rriot rom
-	AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_ROM )
-#endif
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mk2_writemem , ADDRESS_SPACE_PROGRAM, 8)
-#ifdef M6504_MEMORY_LAYOUT
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) ) // m6504
-	AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x0b00, 0x0b0f) AM_WRITE( rriot_0_w )
-	AM_RANGE( 0x0b80, 0x0bbf) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x0c00, 0x0fff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x1000, 0x1fff) AM_WRITE( MWA8_ROM )
-#else
-	AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x8b00, 0x8b0f) AM_WRITE( rriot_0_w )
-	AM_RANGE( 0x8b80, 0x8bbf) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x8c00, 0x8fff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x0000, 0x01ff) AM_RAM // 2 2111, should be mirrored
+	AM_RANGE( 0x8009, 0x8009) AM_NOP // bit $8009 (ora #$80) causes false accesses
+	AM_RANGE( 0x8b00, 0x8b0f) AM_READWRITE( rriot_0_r, rriot_0_w )
+	AM_RANGE( 0x8b80, 0x8bbf) AM_RAM // rriot ram
+	AM_RANGE( 0x8c00, 0x8fff) AM_ROM // rriot rom
+	AM_RANGE( 0xf000, 0xffff) AM_ROM
 #endif
 ADDRESS_MAP_END
 
@@ -126,7 +109,7 @@ static MACHINE_RESET( mk2 )
 static MACHINE_DRIVER_START( mk2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)        /* 6504 */
-	MDRV_CPU_PROGRAM_MAP(mk2_readmem,mk2_writemem)
+	MDRV_CPU_PROGRAM_MAP(mk2_mem, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
