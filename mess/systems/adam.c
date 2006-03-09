@@ -191,38 +191,22 @@ TO DO:
 #include "devices/mflopimg.h"
 #include "formats/adam_dsk.h"
 
-static ADDRESS_MAP_START( adam_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x00000, 0x01fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0x02000, 0x03fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0x04000, 0x05fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE( 0x06000, 0x07fff) AM_READ( MRA8_BANK4 )
-	AM_RANGE( 0x08000, 0x0ffff) AM_READ( MRA8_BANK5 )
+static ADDRESS_MAP_START( adam_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x01fff) AM_READWRITE( MRA8_BANK1, MWA8_BANK6 )
+	AM_RANGE(0x02000, 0x03fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK7 )
+	AM_RANGE(0x04000, 0x05fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK8 )
+	AM_RANGE(0x06000, 0x07fff) AM_READWRITE( MRA8_BANK4, MWA8_BANK9 )
+	AM_RANGE(0x08000, 0x0ffff) AM_READWRITE( MRA8_BANK5, common_writes_w )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( adam_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x00000, 0x01fff) AM_WRITE( MWA8_BANK6 )
-	AM_RANGE( 0x02000, 0x03fff) AM_WRITE( MWA8_BANK7 )
-	AM_RANGE( 0x04000, 0x05fff) AM_WRITE( MWA8_BANK8 )
-	AM_RANGE( 0x06000, 0x07fff) AM_WRITE( MWA8_BANK9 )
-	AM_RANGE( 0x08000, 0x0ffff) AM_WRITE( common_writes_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START ( adam_readport , ADDRESS_SPACE_IO, 8)
+static ADDRESS_MAP_START ( adam_io, ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE( 0x20, 0x3F) AM_READ( adamnet_r )
-	AM_RANGE( 0x60, 0x7F) AM_READ( adam_memory_map_controller_r )
-	AM_RANGE( 0xA0, 0xBF) AM_READ( adam_video_r )
-	AM_RANGE( 0xE0, 0xFF) AM_READ( adam_paddle_r )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START ( adam_writeport , ADDRESS_SPACE_IO, 8)
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE( 0x20, 0x3F) AM_WRITE( adamnet_w )
-	AM_RANGE( 0x60, 0x7F) AM_WRITE( adam_memory_map_controller_w )
-	AM_RANGE( 0x80, 0x9F) AM_WRITE( adam_paddle_toggle_off )
-	AM_RANGE( 0xA0, 0xBF) AM_WRITE( adam_video_w )
-	AM_RANGE( 0xC0, 0xDF) AM_WRITE( adam_paddle_toggle_on )
-	AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
+	AM_RANGE(0x20, 0x3F) AM_READWRITE( adamnet_r, adamnet_w )
+	AM_RANGE(0x60, 0x7F) AM_READWRITE( adam_memory_map_controller_r, adam_memory_map_controller_w )
+	AM_RANGE(0x80, 0x9F) AM_WRITE( adam_paddle_toggle_off )
+	AM_RANGE(0xA0, 0xBF) AM_READWRITE( adam_video_r, adam_video_w )
+	AM_RANGE(0xC0, 0xDF) AM_WRITE( adam_paddle_toggle_on )
+	AM_RANGE(0xE0, 0xFF) AM_READWRITE( adam_paddle_r, SN76496_0_w )
 ADDRESS_MAP_END
 
 /*
@@ -230,14 +214,9 @@ I do now know the real memory map of the Master 6801...
 and the 6801 ASM code is a replacement coded for this driver.
 */
 
-static ADDRESS_MAP_START( master6801_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0100, 0x3fff) AM_READ( MRA8_ROM ) /* Replacement Master ROM code */
-	AM_RANGE( 0x4000, 0xffff) AM_READ( master6801_ram_r ) /* RAM Memory shared with Z80 not banked*/
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( master6801_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0100, 0x3fff) AM_WRITE( MWA8_NOP ) /* Unused */
-    AM_RANGE( 0x4000, 0xffff) AM_WRITE( master6801_ram_w ) /* RAM Memory shared with Z80 not banked*/
+static ADDRESS_MAP_START( master6801_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0100, 0x3fff) AM_ROM /* Replacement Master ROM code */
+	AM_RANGE( 0x4000, 0xffff) AM_READWRITE( master6801_ram_r, master6801_ram_w ) /* RAM Memory shared with Z80 not banked*/
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( adam )
@@ -624,12 +603,12 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( adam )
 	/* Machine hardware */
 	MDRV_CPU_ADD_TAG("Main", Z80, 3579545)       /* 3.579545 Mhz */
-	MDRV_CPU_PROGRAM_MAP(adam_readmem,adam_writemem)
-	MDRV_CPU_IO_MAP(adam_readport,adam_writeport)
+	MDRV_CPU_PROGRAM_MAP(adam_mem, 0)
+	MDRV_CPU_IO_MAP(adam_io, 0)
 
     /* Master M6801 AdamNet controller */
 	//MDRV_CPU_ADD(M6800, 4000000)       /* 4.0 Mhz */
-	//MDRV_CPU_PROGRAM_MAP(master6801_readmem,master6801_writemem)
+	//MDRV_CPU_PROGRAM_MAP(master6801_mem, 0)
 
 	MDRV_CPU_VBLANK_INT(adam_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(60)

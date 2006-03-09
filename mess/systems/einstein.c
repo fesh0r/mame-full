@@ -742,17 +742,12 @@ static  READ8_HANDLER(einstein_psg_r)
 /* keyboard int->ctc/adc->pio */
 
 
-ADDRESS_MAP_START( readmem_einstein , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x01fff) AM_READ( MRA8_BANK1)
-	AM_RANGE(0x2000, 0x0ffff) AM_READ( MRA8_BANK2)
+ADDRESS_MAP_START( einstein_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK3)
+	AM_RANGE(0x2000, 0x0ffff) AM_READWRITE(MRA8_BANK2, MWA8_BANK4)
 ADDRESS_MAP_END
 
 
-
-ADDRESS_MAP_START( writemem_einstein , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x01fff) AM_WRITE( MWA8_BANK3)
-	AM_RANGE(0x2000, 0x0ffff) AM_WRITE( MWA8_BANK4)
-ADDRESS_MAP_END
 
 static void einstein_page_rom(void)
 {
@@ -1274,21 +1269,14 @@ static WRITE8_HANDLER(einstein_port_w)
 }
 
 
-ADDRESS_MAP_START( readport_einstein2 , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000,0x0ffff) AM_READ( einstein2_port_r)
+ADDRESS_MAP_START( einstein2_io , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_READWRITE(einstein2_port_r, einstein2_port_w)
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( writeport_einstein2 , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000,0x0ffff) AM_WRITE( einstein2_port_w)
+ADDRESS_MAP_START( einstein_io , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_READWRITE(einstein_port_r, einstein_port_w)
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( readport_einstein , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000,0x0ffff) AM_READ( einstein_port_r)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( writeport_einstein , ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000,0x0ffff) AM_WRITE( einstein_port_w)
-ADDRESS_MAP_END
 #if 0
 ADDRESS_MAP_START( readport_einstein , ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x000, 0x007) AM_READ( einstein_psg_r)
@@ -1687,8 +1675,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( einstein )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, EINSTEIN_SYSTEM_CLOCK)
-	MDRV_CPU_PROGRAM_MAP(readmem_einstein,writemem_einstein)
-	MDRV_CPU_IO_MAP(readport_einstein,writeport_einstein)
+	MDRV_CPU_PROGRAM_MAP(einstein_mem, 0)
+	MDRV_CPU_IO_MAP(einstein_io, 0)
 	MDRV_CPU_CONFIG(einstein_daisy_chain)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1711,7 +1699,7 @@ static MACHINE_DRIVER_START( einstei2 )
 	MDRV_IMPORT_FROM( einstein )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_IO_MAP(readport_einstein2,writeport_einstein2)
+	MDRV_CPU_IO_MAP(einstein2_io, 0)
 	MDRV_MACHINE_RESET( einstein2 )
 
     /* video hardware */
