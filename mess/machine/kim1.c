@@ -794,11 +794,6 @@ INLINE int m6530_r(int chip, int offset)
 	return m6530_r(1, offset);
 }
 
- READ8_HANDLER ( kim1_mirror_r )
-{
-	return program_read_byte(offset & 0x1fff);
-}
-
 static void m6530_w(int chip, int offset, int data)
 {
 	switch (offset)
@@ -913,11 +908,6 @@ WRITE8_HANDLER ( m6530_003_w )
 WRITE8_HANDLER ( m6530_002_w )
 {
 	m6530_w(1, offset, data);
-}
-
-WRITE8_HANDLER ( kim1_mirror_w )
-{
-	program_write_byte(offset & 0x1fff, data);
 }
 
 void kim1_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
