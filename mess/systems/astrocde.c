@@ -44,20 +44,22 @@
  * Bally Astrocade
  ****************************************************************************/
 
-ADDRESS_MAP_START( astrocade_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_START( astrocade_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READWRITE(MRA8_ROM, astrocade_magicram_w)
+	AM_RANGE(0x1000, 0x3fff) AM_ROM /* Star Fortress writes in here?? */
+	AM_RANGE(0x4000, 0x4fff) AM_READWRITE(MRA8_RAM, astrocade_videoram_w) AM_BASE(&astrocade_videoram) AM_SIZE(&videoram_size) /* ASG */
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( astrocade_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(astrocade_magicram_w)
-	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Star Fortress writes in here?? */
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(astrocade_videoram_w) AM_BASE(&astrocade_videoram) AM_SIZE(&videoram_size) /* ASG */
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( astrocade_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READ(astrocade_intercept_r)
-	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READ(astrocade_video_retrace_r)
+ADDRESS_MAP_START( astrocade_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x07) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_register_w)
+	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READWRITE(astrocade_intercept_r, astrocade_mode_w)
+	AM_RANGE(0x09, 0x09) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_split_w)
+	AM_RANGE(0x0a, 0x0a) AM_MIRROR(0xff00) AM_WRITE(astrocade_vertical_blank_w)
+	AM_RANGE(0x0b, 0x0b) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_block_w)
+	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff00) AM_WRITE(astrocade_magic_control_w)
+	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(interrupt_vector_w)
+	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READWRITE(astrocade_video_retrace_r, astrocade_interrupt_enable_w)
+	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocade_interrupt_w)
 	/*AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_READ(astrocade_horiz_r)*/
 	AM_RANGE(0x10, 0x10) AM_MIRROR(0xff00) AM_READ(input_port_0_r)
 	AM_RANGE(0x11, 0x11) AM_MIRROR(0xff00) AM_READ(input_port_1_r)
@@ -67,23 +69,11 @@ ADDRESS_MAP_START( astrocade_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x15, 0x15) AM_MIRROR(0xff00) AM_READ(input_port_5_r)
 	AM_RANGE(0x16, 0x16) AM_MIRROR(0xff00) AM_READ(input_port_6_r)
 	AM_RANGE(0x17, 0x17) AM_MIRROR(0xff00) AM_READ(input_port_7_r)
+	AM_RANGE(0x10, 0x17) AM_MIRROR(0xff00) AM_WRITE(astrocade_sound1_w) /* Sound Stuff */
 	AM_RANGE(0x1c, 0x1c) AM_MIRROR(0xff00) AM_READ(input_port_8_r)
 	AM_RANGE(0x1d, 0x1d) AM_MIRROR(0xff00) AM_READ(input_port_9_r)
 	AM_RANGE(0x1e, 0x1e) AM_MIRROR(0xff00) AM_READ(input_port_10_r)
 	AM_RANGE(0x1f, 0x1f) AM_MIRROR(0xff00) AM_READ(input_port_11_r)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( astrocade_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x07) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_register_w)
-	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_WRITE(astrocade_mode_w)
-	AM_RANGE(0x09, 0x09) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_split_w)
-	AM_RANGE(0x0a, 0x0a) AM_MIRROR(0xff00) AM_WRITE(astrocade_vertical_blank_w)
-	AM_RANGE(0x0b, 0x0b) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_block_w)
-	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff00) AM_WRITE(astrocade_magic_control_w)
-	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(interrupt_vector_w)
-	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_WRITE(astrocade_interrupt_enable_w)
-	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocade_interrupt_w)
-	AM_RANGE(0x10, 0x17) AM_MIRROR(0xff00) AM_WRITE(astrocade_sound1_w) /* Sound Stuff */
 	AM_SPACE(0x18, 0xff) AM_WRITE(astrocade_soundblock1_w)
 	AM_RANGE(0x19, 0x19) AM_MIRROR(0xff00) AM_WRITE(astrocade_magic_expand_color_w)
 ADDRESS_MAP_END
@@ -176,8 +166,8 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( astrocde )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789000)        /* 1.789 Mhz */
-	MDRV_CPU_PROGRAM_MAP(astrocade_readmem,astrocade_writemem)
-	MDRV_CPU_IO_MAP(astrocade_readport,astrocade_writeport)
+	MDRV_CPU_PROGRAM_MAP(astrocade_mem, 0)
+	MDRV_CPU_IO_MAP(astrocade_io, 0)
 	MDRV_CPU_VBLANK_INT(astrocade_interrupt,256)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
