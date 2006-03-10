@@ -652,32 +652,6 @@ $(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
 	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
 
-# special cases for the 68000 core
-
-# generate asm source files for the 68000/68020 emulators
-$(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
-	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
-	$(CC_COMMENT) @echo Generating $@...
-	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68000tab.asm 00
-
-$(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
-	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
-	$(CC_COMMENT) @echo Generating $@...
-	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68020tab.asm 20
-
-# generated asm files for the 68000 emulator
-$(OBJ)/cpu/m68000/68000.o:  $(OBJ)/cpu/m68000/68000.asm
-	$(CC_COMMENT) @echo Assembling $<...
-	$(CC_COMPILE) $(ASM_STRIP) $<
-	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
-
-$(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
-	$(CC_COMMENT) @echo Assembling $<...
-	$(CC_COMPILE) $(ASM_STRIP) $<
-	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
-
 # MMX assembly language for effect filters
 $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
 	$(CC_COMMENT) @echo Assembling $<...
