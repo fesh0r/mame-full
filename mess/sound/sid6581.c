@@ -15,18 +15,9 @@
 
 static SID6581 *get_sid(int indx)
 {
-	SID6581 *sid = NULL;
-
-#if HAS_SID6581
-	if (!sid)
-		sid = sndti_token(SOUND_SID6581, indx);
-#endif
-
-#if HAS_SID8580
-	if (!sid)
-		sid = sndti_token(SOUND_SID8580, indx);
-#endif
-	return sid;
+	int type = sndnum_to_sndti(indx, NULL);
+	assert((type == SOUND_SID6581) || (type == SOUND_SID8580));
+	return (SID6581 *) sndti_token(type, indx);
 }
 
 
