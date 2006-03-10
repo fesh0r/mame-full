@@ -33,6 +33,8 @@
 
 #include "includes/c64.h"
 
+static void c64_driver_shutdown (void);
+
 unsigned char c65_keyline = { 0xff };
 UINT8 c65_6511_port=0xff;
 
@@ -838,6 +840,7 @@ static void c64_common_driver_init (void)
 					  c64_vic_interrupt);
 	}
 	cia6526_reset ();
+	add_exit_callback(c64_driver_shutdown);
 }
 
 DRIVER_INIT( c64 )
@@ -896,8 +899,6 @@ void c64_common_init_machine (void)
 	}
 	c64_vicaddr = c64_memory;
 	vicirq = cia0irq = 0;
-
-	add_exit_callback(c64_driver_shutdown);
 }
 
 MACHINE_START( c64 )

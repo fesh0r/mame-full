@@ -1,7 +1,7 @@
 /* machine/jupiter.c */
 
 OPBASE_HANDLER( jupiter_opbaseoverride );
-MACHINE_RESET( jupiter );
+MACHINE_START( jupiter );
 
 DEVICE_LOAD( jupiter_ace );
 DEVICE_LOAD( jupiter_tap );

@@ -2144,8 +2144,6 @@ MACHINE_RESET( bbcb )
 	    wd179x_reset();
 		break;
 	}
-
-	sndti_reset(SOUND_TMS5220, 0);
 }
 
 

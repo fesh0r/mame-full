@@ -385,7 +385,7 @@ static MACHINE_DRIVER_START( cgenie )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(4)
 
-	MDRV_MACHINE_RESET( cgenie )
+	MDRV_MACHINE_START( cgenie )
 	
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -473,4 +473,4 @@ SYSTEM_CONFIG_START(cgenie)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
-COMP( 1982, cgenie,   0,		0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" , 0)
+COMP( 1982, cgenie,   0,		0,		cgenie,   cgenie,	0,        cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" , 0)

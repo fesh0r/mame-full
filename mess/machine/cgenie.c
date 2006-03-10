@@ -220,24 +220,9 @@ static OPBASE_HANDLER (opbaseoverride)
 	return address;
 }
 
-void init_cgenie(void)
-{
-	UINT8 *gfx = memory_region(REGION_GFX2);
-	int i;
-	/*
-	 * Every fitfth cycle is a wait cycle, so I reduced
-	 * the overlocking by one fitfth
-	 */
-	cpunum_set_clockscale(0, 0.80);
-
-	/* Initialize some patterns to be displayed in graphics mode */
-	for( i = 0; i < 256; i++ )
-		memset(gfx + i * 8, i, 8);
-}
-
 static void cgenie_fdc_callback(int);
 
-MACHINE_RESET( cgenie )
+static void cgenie_machine_reset(void)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -327,9 +312,28 @@ MACHINE_RESET( cgenie )
 
 	cgenie_load_cas = 1;
 	memory_set_opbase_handler(0, opbaseoverride);
-	
-	add_exit_callback(tape_put_close);
+
 }
+
+MACHINE_START( cgenie )
+{
+	UINT8 *gfx = memory_region(REGION_GFX2);
+	int i;
+	/*
+	 * Every fitfth cycle is a wait cycle, so I reduced
+	 * the overlocking by one fitfth
+	 */
+	cpunum_set_clockscale(0, 0.80);
+
+	/* Initialize some patterns to be displayed in graphics mode */
+	for( i = 0; i < 256; i++ )
+		memset(gfx + i * 8, i, 8);
+
+	add_reset_callback(cgenie_machine_reset);
+	add_exit_callback(tape_put_close);
+	return 0;
+}
+
 
 DEVICE_LOAD( cgenie_cassette )
 {

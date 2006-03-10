@@ -20,8 +20,7 @@ READ8_HANDLER ( cgenie_psg_port_b_r );
 WRITE8_HANDLER ( cgenie_psg_port_a_w );
 WRITE8_HANDLER ( cgenie_psg_port_b_w );
 
-void init_cgenie(void);
-MACHINE_RESET( cgenie );
+MACHINE_START( cgenie );
 
 READ8_HANDLER ( cgenie_colorram_r );
 READ8_HANDLER ( cgenie_fontram_r );
