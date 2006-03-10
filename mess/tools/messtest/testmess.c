@@ -253,10 +253,6 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 		current_command++;
 	}
 
-#ifdef WIN32
-	win_parallel_init();
-#endif /* WIN32 */
-
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();

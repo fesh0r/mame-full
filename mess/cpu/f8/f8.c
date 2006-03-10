@@ -1554,7 +1554,7 @@ static void f8_ns_isar_d(void)
 	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
 }
 
-void f8_reset(void *param)
+void f8_reset(void)
 {
 	UINT8 data;
 	int i;
@@ -1587,11 +1587,6 @@ void f8_reset(void *param)
 		else
 			data = (data << 1) | 1;
 	}
-}
-/* Shut down CPU core */
-void f8_exit(void)
-{
-	/* nothing to do */
 }
 
 /* Execute cycles - returns number of cycles actually run */
@@ -1931,7 +1926,10 @@ unsigned f8_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-void f8_init (void) { }
+static void f8_init (int index, int clock, const void *config, int (*irqcallback)(int))
+{
+	f8.irq_callback = irqcallback;
+}
 
 static void f8_set_info(UINT32 state, union cpuinfo *info)
 {
@@ -2027,9 +2025,6 @@ static void f8_set_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_REGISTER + F8_R63:
 		f8.r[state - (CPUINFO_INT_REGISTER + F8_R16) + 16]=info->i;
 		break;
-
-	/* --- the following bits of info are returned as pointers to data or functions --- */
-	case CPUINFO_PTR_IRQ_CALLBACK:	f8.irq_callback = info->irqcallback;	break;
 	}
 	return;
 }
@@ -2148,12 +2143,10 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = f8_set_context;		break;
 	case CPUINFO_PTR_INIT:							info->init = f8_init;					break;
 	case CPUINFO_PTR_RESET:							info->reset = f8_reset;					break;
-	case CPUINFO_PTR_EXIT:							info->exit = f8_exit;					break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = f8_execute;				break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = f8_dasm;			break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = f8.irq_callback;	break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &f8_icount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = f8_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = f8_win_layout;				break;

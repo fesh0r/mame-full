@@ -158,7 +158,7 @@ static int at_irq_callback(int irqline)
 
 MACHINE_START( at )
 {
-	cpu_set_irq_callback(0, at_irq_callback);
+	cpunum_set_irq_callback(0, at_irq_callback);
 	return 0;
 }
 

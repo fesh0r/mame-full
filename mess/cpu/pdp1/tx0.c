@@ -146,14 +146,10 @@ static void tx0_write(offs_t address, int data)
 		;
 }
 
-static void tx0_init(void)
-{
-	/* nothing to do */
-}
-
-static void tx0_reset_common(int is_64kw, tx0_reset_param_t *param)
+static void tx0_init_common(int is_64kw, int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i;
+	tx0_reset_param_t *param = (tx0_reset_param_t *) config;
 
 	/* clean-up */
 	memset (&tx0, 0, sizeof (tx0));
@@ -173,21 +169,15 @@ static void tx0_reset_common(int is_64kw, tx0_reset_param_t *param)
 	tx0.gbl_cm_sel = 1;	/* HACK */
 }
 
-static void tx0_reset_64kw(void *untyped_param)
+static void tx0_init_64kw(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	tx0_reset_common(1, (tx0_reset_param_t *) untyped_param);
+	tx0_init_common(1, index, clock, config, irqcallback);
 }
 
-static void tx0_reset_8kw(void *untyped_param)
+static void tx0_init_8kw(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	tx0_reset_common(0, (tx0_reset_param_t *) untyped_param);
+	tx0_init_common(0, index, clock, config, irqcallback);
 }
-
-static void tx0_exit(void)
-{
-	/* nothing to do */
-}
-
 
 static void tx0_get_context(void *dst)
 {
@@ -487,9 +477,6 @@ static void tx0_set_info(UINT32 state, union cpuinfo *info)
 #endif
 	case CPUINFO_INT_REGISTER + TX0_RESET:		pulse_reset();							break;
 	case CPUINFO_INT_REGISTER + TX0_IO_COMPLETE:tx0.ios = 1;							break;
-
-	/* --- the following bits of info are set as pointers to data or functions --- */
-	case CPUINFO_PTR_IRQ_CALLBACK:				(void) info->irqcallback;					break;
 	}
 }
 
@@ -564,14 +551,11 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_INFO:						info->setinfo = tx0_set_info;			break;
 	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tx0_get_context;		break;
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tx0_set_context;		break;
-	case CPUINFO_PTR_INIT:							info->init = tx0_init;					break;
-	case CPUINFO_PTR_RESET:							info->reset = tx0_reset_64kw;			break;
-	case CPUINFO_PTR_EXIT:							info->exit = tx0_exit;					break;
+	case CPUINFO_PTR_INIT:							info->init = tx0_init_64kw;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_64kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_64kw;		break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;
@@ -694,14 +678,11 @@ void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_INFO:						info->setinfo = tx0_set_info;			break;
 	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tx0_get_context;		break;
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tx0_set_context;		break;
-	case CPUINFO_PTR_INIT:							info->init = tx0_init;					break;
-	case CPUINFO_PTR_RESET:							info->reset = tx0_reset_8kw;			break;
-	case CPUINFO_PTR_EXIT:							info->exit = tx0_exit;					break;
+	case CPUINFO_PTR_INIT:							info->init = tx0_init_8kw;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_8kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_8kw;		break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;

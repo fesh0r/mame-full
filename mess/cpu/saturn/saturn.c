@@ -175,23 +175,16 @@ static unsigned saturn_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 
-static void saturn_init(void)
+static void saturn_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
+	saturn.config = (SATURN_CONFIG *) config;
 }
 
-static void saturn_reset(void *param)
+static void saturn_reset(void)
 {
-	if (param) {
-		saturn.config=(SATURN_CONFIG *)param;
-	}
 	saturn.stackpointer=0;
 	saturn.pc=0;
 	change_pc(saturn.pc);
-}
-
-static void saturn_exit(void)
-{
-	/* nothing to do yet */
 }
 
 static void saturn_get_context (void *dst)
@@ -450,11 +443,9 @@ void saturn_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = saturn_set_context;		break;
 		case CPUINFO_PTR_INIT:							info->init = saturn_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = saturn_reset;					break;
-		case CPUINFO_PTR_EXIT:							info->exit = saturn_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = saturn_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;							break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = saturn_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;					break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &saturn_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = saturn_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = saturn_win_layout;				break;

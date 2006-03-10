@@ -26,16 +26,15 @@ static void nes_vh_reset(void)
 
 static int nes_vh_start(int ppu_scanlines_per_frame)
 {
-	static struct ppu2c03b_interface *ppu_interface;
+	ppu2c03b_interface ppu_interface;
 
-	ppu_interface = auto_malloc(sizeof(struct ppu2c03b_interface));
-	memset(ppu_interface, 0, sizeof(struct ppu2c03b_interface));
-	ppu_interface->num				= 1;
-	ppu_interface->vrom_region[0]	= nes.chr_chunks ? REGION_GFX1 : REGION_INVALID;
-	ppu_interface->mirroring[0]		= PPU_MIRROR_NONE;
-	ppu_interface->nmi_handler[0]	= ppu_nmi;
+	memset(&ppu_interface, 0, sizeof(ppu_interface));
+	ppu_interface.num				= 1;
+	ppu_interface.vrom_region[0]	= nes.chr_chunks ? REGION_GFX1 : REGION_INVALID;
+	ppu_interface.mirroring[0]		= PPU_MIRROR_NONE;
+	ppu_interface.nmi_handler[0]	= ppu_nmi;
 
-	ppu2c03b_init(ppu_interface);
+	ppu2c03b_init(&ppu_interface);
 	ppu2c03b_set_vidaccess_callback(0, nes_ppu_vidaccess);
 	ppu2c03b_set_scanlines_per_frame(0, ppu_scanlines_per_frame);
 

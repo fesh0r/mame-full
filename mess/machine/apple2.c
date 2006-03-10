@@ -552,7 +552,7 @@ static const apple2_memmap_entry apple2_memmap_entries[] =
 
 void apple2_setvar(UINT32 val, UINT32 mask)
 {
-	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, activecpu_get_pc()));
+	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, cpunum_get_reg(0, REG_PC)));
 
 	assert((val & mask) == val);
 
@@ -1199,7 +1199,7 @@ static UINT8 apple2_mockingboard_read(void *token, offs_t offset)
 			return flip2;
 			break;
 		default:
-			LOG(("mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, activecpu_get_pc()));
+			LOG(("mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, cpunum_get_reg(0, REG_PC)));
 			break;
 	}
 	return 0x00;

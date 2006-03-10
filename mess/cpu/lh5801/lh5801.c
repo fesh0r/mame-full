@@ -34,18 +34,6 @@
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-#define lh5801_ICount lh5801_icount
-struct cpu_interface
-lh5801_interface=
-CPU0(LH5801,  lh5801,  1,  0,1.00,LH5801_INT_NONE,  LH5801_IRQ,    -1,             8, 17,     0,17,BE,1, 5);
-
-extern void lh5801_runtime_loader_init(void)
-{
-	cpuintf[CPU_LH5801]=lh5801_interface;
-}
-#endif
-
 enum {
 	LH5801_T=1,
 	LH5801_P,

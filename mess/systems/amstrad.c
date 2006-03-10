@@ -1239,7 +1239,7 @@ static void amstrad_common_init(void)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_BANK15);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_BANK16);
 
-	cpuint_reset_cpu(0);
+	cpunum_reset(0);
 	cpunum_set_input_line_vector(0, 0,0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
@@ -1274,7 +1274,7 @@ The Gate-Array fetches two bytes for each address*/
 	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, amstrad_cycle_table_ex);
 
 	/* Juergen is a cool dude! */
-	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
+	cpunum_set_irq_callback(0, amstrad_cpu_acknowledge_int);
 }
 
 static MACHINE_RESET( amstrad )

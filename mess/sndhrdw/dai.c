@@ -10,7 +10,6 @@
 
 #include "driver.h"
 #include "sound/custom.h"
-#include "machine/random.h"
 #include "machine/pit8253.h"
 #include "includes/dai.h"
 #include "streams.h"

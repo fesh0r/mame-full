@@ -192,7 +192,7 @@ static void tms7000_set_context(void *src)
         tms7000_check_IRQ_lines();
 }
 
-static void tms7000_init(void)
+static void tms7000_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int cpu = cpu_getactivecpu();
 
@@ -217,9 +217,11 @@ static void tms7000_init(void)
 	state_save_register_item("tms7000", cpu, tms7000.t1_decrementer);
 
 	state_save_register_item("tms7000", cpu, tms7000.idle_state);
+
+	tms7000.irq_callback = irqcallback;
 }
 
-static void tms7000_reset(void *param)
+static void tms7000_reset(void)
 {
 //	tms7000.architecture = (int)param;
         
@@ -262,10 +264,6 @@ static void tms7000_reset(void *param)
 	tms7000_div_by_16_trigger = -16;
 }
 
-static void tms7000_exit(void)
-{
-}
-
 
 /**************************************************************************
  * Generic set_info
@@ -289,9 +287,6 @@ static void tms7000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS7000_T1_CL: tms7000.t1_capture_latch = info->i;	break;
 		case CPUINFO_INT_REGISTER + TMS7000_T1_PS: tms7000.t1_prescaler = info->i;	break;
 		case CPUINFO_INT_REGISTER + TMS7000_T1_DEC: tms7000.t1_decrementer = info->i;	break;
-        
-        /* --- the following bits of info are set as pointers to data or functions --- */
-        case CPUINFO_PTR_IRQ_CALLBACK:	tms7000.irq_callback = info->irqcallback;	break;
     }
 }
 
@@ -347,11 +342,9 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_SET_CONTEXT:	info->setcontext = tms7000_set_context;	break;
         case CPUINFO_PTR_INIT:	info->init = tms7000_init;	break;
         case CPUINFO_PTR_RESET:	info->reset = tms7000_reset;	break;
-        case CPUINFO_PTR_EXIT:	info->exit = tms7000_exit;	break;
         case CPUINFO_PTR_EXECUTE:	info->execute = tms7000_execute;	break;
         case CPUINFO_PTR_BURN:	info->burn = NULL;	/* Not supported */break;
         case CPUINFO_PTR_DISASSEMBLE:	info->disassemble = tms7000_dasm;	break;
-        case CPUINFO_PTR_IRQ_CALLBACK:	info->irqcallback = tms7000.irq_callback; break;
         case CPUINFO_PTR_INSTRUCTION_COUNTER:	info->icount = &tms7000_icount;	break;
         case CPUINFO_PTR_REGISTER_LAYOUT:	info->p = tms7000_reg_layout;	break;
         case CPUINFO_PTR_WINDOW_LAYOUT:	info->p = tms7000_win_layout;	break;

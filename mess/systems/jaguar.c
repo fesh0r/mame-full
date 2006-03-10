@@ -96,7 +96,7 @@ static int jaguar_irq_callback(int level)
 
 static MACHINE_START( jaguar )
 {
-	cpu_set_irq_callback(0, jaguar_irq_callback);
+	cpunum_set_irq_callback(0, jaguar_irq_callback);
 
 	*((UINT32 *) jaguar_gpu_ram) = 0x3d0dead;
 

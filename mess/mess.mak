@@ -943,7 +943,6 @@ COREOBJS +=							\
 	$(ZLIB)							\
 	$(OBJ)/vidhrdw/tms9928a.o		\
 	$(OBJ)/machine/8255ppi.o		\
-	$(OBJ)/machine/random.o			\
 	$(OBJ)/machine/6522via.o		\
 	$(OBJ)/machine/6821pia.o		\
 	$(OBJ)/machine/z80ctc.o			\

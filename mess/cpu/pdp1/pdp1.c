@@ -548,14 +548,9 @@ static void pdp1_set_irq_line (int irqline, int state)
 }
 
 
-static void pdp1_init(void)
+static void pdp1_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	/* nothing to do */
-}
-
-static void pdp1_reset (void *untyped_param)
-{
-	pdp1_reset_param_t *param = untyped_param;
+	const pdp1_reset_param_t *param = config;
 	int i;
 
 	/* clean-up */
@@ -607,11 +602,10 @@ static void pdp1_reset (void *untyped_param)
 	pulse_start_clear();
 }
 
-static void pdp1_exit (void)
+static void pdp1_reset (void)
 {
 	/* nothing to do */
 }
-
 
 static void pdp1_get_context (void *dst)
 {
@@ -969,9 +963,6 @@ static void pdp1_set_info(UINT32 state, union cpuinfo *info)
 #endif
 	case CPUINFO_INT_REGISTER + PDP1_START_CLEAR:	pulse_start_clear();					break;
 	case CPUINFO_INT_REGISTER + PDP1_IO_COMPLETE:	pdp1.ios = 1;							break;
-
-	/* --- the following bits of info are set as pointers to data or functions --- */
-	case CPUINFO_PTR_IRQ_CALLBACK:				(void) info->irqcallback;					break;
 	}
 }
 
@@ -1065,12 +1056,10 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = pdp1_set_context;	break;
 	case CPUINFO_PTR_INIT:							info->init = pdp1_init;					break;
 	case CPUINFO_PTR_RESET:							info->reset = pdp1_reset;				break;
-	case CPUINFO_PTR_EXIT:							info->exit = pdp1_exit;					break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = pdp1_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = pdp1_dasm;			break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pdp1_ICount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pdp1_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pdp1_win_layout;				break;

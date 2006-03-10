@@ -230,32 +230,32 @@ static int pc_irq_callback(int irqline)
 MACHINE_RESET( pc_mda )
 {
 	dma8237_reset();
-	cpu_set_irq_callback(0, pc_irq_callback);
+	cpunum_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_RESET( pc_cga )
 {
 	dma8237_reset();
-	cpu_set_irq_callback(0, pc_irq_callback);
+	cpunum_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_RESET( pc_t1t )
 {
 	pc_t1t_reset();
 	dma8237_reset();
-	cpu_set_irq_callback(0, pc_irq_callback);
+	cpunum_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_RESET( pc_aga )
 {
 	dma8237_reset();
-	cpu_set_irq_callback(0, pc_irq_callback);
+	cpunum_set_irq_callback(0, pc_irq_callback);
 }
 
 MACHINE_RESET( pc_vga )
 {
 	dma8237_reset();
-	cpu_set_irq_callback(0, pc_irq_callback);
+	cpunum_set_irq_callback(0, pc_irq_callback);
 }
 
 /**************************************************************************

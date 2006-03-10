@@ -116,11 +116,8 @@ void sc61860_2ms_tick(int param)
 #include "scops.c"
 #include "sctable.c"
 
-static void sc61860_reset(void *param)
+static void sc61860_reset(void)
 {
-	if (param) {
-		sc61860.config=(SC61860_CONFIG *)param;
-	}
 	sc61860.timer.t2ms=0;
 	sc61860.timer.t512ms=0;
 	sc61860.timer.count=256;
@@ -136,13 +133,9 @@ static unsigned sc61860_dasm(char *buffer, unsigned pc)
 }
 #endif /* MAME_DEBUG */
 
-static void sc61860_init(void)
+static void sc61860_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-}
-
-static void sc61860_exit(void)
-{
-	/* nothing to do yet */
+	sc61860.config = (SC61860_CONFIG *) config;
 }
 
 static void sc61860_get_context (void *dst)
@@ -264,11 +257,9 @@ void sc61860_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = sc61860_set_context;			break;
 		case CPUINFO_PTR_INIT:							info->init = sc61860_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = sc61860_reset;					break;
-		case CPUINFO_PTR_EXIT:							info->exit = sc61860_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = sc61860_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sc61860_dasm;					break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sc61860_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sc61860_reg_layout;	break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sc61860_win_layout;	break;

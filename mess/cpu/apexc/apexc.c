@@ -767,11 +767,11 @@ special_fetch:
 }
 
 
-static void apexc_init(void)
+static void apexc_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 }
 
-static void apexc_reset(void *param)
+static void apexc_reset(void)
 {
 	/* mmmh...  I don't know what happens on reset with an actual APEXC. */
 
@@ -782,10 +782,6 @@ static void apexc_reset(void *param)
 	apexc.cr = 0;				/* first instruction executed will be a stop */
 	apexc.running = TRUE;		/* this causes the CPU to load the instruction at 0/0,
 								which enables easy booting (just press run on the panel) */
-}
-
-static void apexc_exit(void)
-{
 }
 
 static void apexc_get_context(void *dst)
@@ -859,9 +855,6 @@ static void apexc_set_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_REGISTER + APEXC_ML:		apexc.ml = info->i & 0x3ff;					break;
 	case CPUINFO_INT_REGISTER + APEXC_WS:		apexc.working_store = info->i & 0xf;		break;
 	case CPUINFO_INT_REGISTER + APEXC_STATE:	apexc.running = info->i ? TRUE : FALSE;		break;
-
-	/* --- the following bits of info are set as pointers to data or functions --- */
-	case CPUINFO_PTR_IRQ_CALLBACK:				(void) info->irqcallback;					break;
 	}
 }
 
@@ -930,12 +923,10 @@ void apexc_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = apexc_set_context;	break;
 	case CPUINFO_PTR_INIT:							info->init = apexc_init;				break;
 	case CPUINFO_PTR_RESET:							info->reset = apexc_reset;				break;
-	case CPUINFO_PTR_EXIT:							info->exit = apexc_exit;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = apexc_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = apexc_dasm;			break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &apexc_ICount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = apexc_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = apexc_win_layout;				break;

@@ -1562,16 +1562,10 @@ static void cp1610_xori(int d)
 	cp1610_icount -= 8;
 }
 
-void cp1610_reset(void *param)
+void cp1610_reset(void)
 {
 	/* This is how we set the reset vector */
 	cpunum_set_input_line(cpu_getactivecpu(), CP1610_RESET, PULSE_LINE);
-}
-
-/* Shut down CPU core */
-void cp1610_exit(void)
-{
-	/* nothing to do */
 }
 
 /***************************************************
@@ -3416,15 +3410,13 @@ unsigned cp1610_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-void cp1610_init(void)
+void cp1610_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	cp1610.intr_enabled = 0;
-
 	cp1610.reset_pending = 0;
 	cp1610.intr_pending = 0;
 	cp1610.intrm_pending = 0;
-
-	return;
+	cp1610.irq_callback = irqcallback;
 }
 
 static void cp1610_set_irq_line(UINT32 irqline, int state)
@@ -3470,9 +3462,6 @@ static void cp1610_set_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_REGISTER + CP1610_R6: cp1610.r[6] = info->i;			break;
 	case CPUINFO_INT_PC:
 	case CPUINFO_INT_REGISTER + CP1610_R7: cp1610.r[7] = info->i;			break;
-
-	/* --- the following bits of info are returned as pointers to data or functions --- */
-	case CPUINFO_PTR_IRQ_CALLBACK:	cp1610.irq_callback = info->irqcallback;	break;
 	}
 	return;
 }
@@ -3525,12 +3514,10 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = cp1610_set_context;	break;
 	case CPUINFO_PTR_INIT:							info->init = cp1610_init;				break;
 	case CPUINFO_PTR_RESET:							info->reset = cp1610_reset;				break;
-	case CPUINFO_PTR_EXIT:							info->exit = cp1610_exit;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = cp1610_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cp1610_dasm;		break;
-	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = cp1610.irq_callback;	break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cp1610_icount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cp1610_reg_layout;			break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cp1610_win_layout;			break;

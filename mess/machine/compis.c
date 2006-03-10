@@ -1477,7 +1477,7 @@ WRITE8_HANDLER( i186_internal_port_w )
 			/* we need to do this at a time when the I86 context is swapped in */
 			/* this register is generally set once at startup and never again, so it's a good */
 			/* time to set it up */
-			activecpu_set_irq_callback(int_callback);
+			cpunum_set_irq_callback(0, int_callback);
 			break;
 
 		case 0xc0:
@@ -1599,7 +1599,7 @@ static int compis_irq_callback(int irqline)
 
 DRIVER_INIT( compis )
 {
-	cpu_set_irq_callback(0,	compis_irq_callback);
+	cpunum_set_irq_callback(0,	compis_irq_callback);
 	pic8259_init(2, compis_pic_set_int_line);
 	memset (&compis, 0, sizeof (compis) );
 }
@@ -1633,7 +1633,7 @@ MACHINE_RESET( compis )
 	compis_keyb_init();
 
 	/* OSP PIC 8259 */
-	cpu_set_irq_callback(0, compis_irq_callback);
+	cpunum_set_irq_callback(0, compis_irq_callback);
 }
 
 /*-------------------------------------------------------------------------*/

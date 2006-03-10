@@ -1394,7 +1394,7 @@ static MACHINE_RESET( einstein )
 	einstein_int_mask = 0;
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
 
-	cpu_set_irq_callback(0, einstein_cpu_acknowledge_int);
+	cpunum_set_irq_callback(0, einstein_cpu_acknowledge_int);
 
 	/* the einstein keyboard can generate a interrupt */
 	/* the int is actually clocked at the system clock 4Mhz, but this would be too fast for our

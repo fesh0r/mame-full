@@ -7,18 +7,14 @@
 //
 //============================================================
 
+// Needed for RAW Input
+#define _WIN32_WINNT 0x501
+#define WM_INPUT 0x00FF
+
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
-#ifndef WINVER
-#define WINVER 0x500
-#define COMPILE_MULTIMON_STUBS
 #include <windows.h>
 #include <windowsx.h>
-#include <multimon.h>
-#else
-#include <windows.h>
-#include <windowsx.h>
-#endif
 
 // missing stuff from the mingw headers
 #ifndef ENUM_CURRENT_SETTINGS
@@ -40,6 +36,7 @@
 #include <math.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
 #include "window.h"
 #include "winddraw.h"
@@ -66,7 +63,6 @@
 // from input.c
 extern void win_pause_input(int pause);
 extern int win_is_mouse_captured(void);
-extern UINT8 win_trying_to_quit;
 
 // from video.c
 extern HMONITOR monitor;
@@ -158,6 +154,9 @@ int win_color32_bdst_shift = 0;
 // actual physical resolution
 int win_physical_width;
 int win_physical_height;
+
+// raw mouse support
+int win_use_raw_mouse = 0;
 
 
 
@@ -809,6 +808,27 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 	// handle a few messages
 	switch (message)
 	{
+		// input: handle the raw mouse input
+		case WM_INPUT:
+		{
+			if (win_use_raw_mouse)
+				win_raw_mouse_update((HRAWINPUT)lparam);
+			break;
+		}
+
+		// paint: redraw the last bitmap
+		case WM_PAINT:
+		{
+			PAINTSTRUCT pstruct;
+			HDC hdc = BeginPaint(wnd, &pstruct);
+ 			if (win_video_window)
+  				draw_video_contents(hdc, NULL, NULL, NULL, 1);
+ 			if (win_has_menu())
+ 				DrawMenuBar(win_video_window);
+			EndPaint(wnd, &pstruct);
+			break;
+		}
+
 #if !HAS_WINDOW_MENU
 		// non-client paint: punt if full screen
 		case WM_NCPAINT:
@@ -830,19 +850,6 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 			osd_sound_enable(1);
 			win_timer_enable(1);
 			break;
-
-		// paint: redraw the last bitmap
-		case WM_PAINT:
-		{
-			PAINTSTRUCT pstruct;
-			HDC hdc = BeginPaint(wnd, &pstruct);
- 			if (win_video_window)
-  				draw_video_contents(hdc, NULL, NULL, NULL, 1);
- 			if (win_has_menu())
- 				DrawMenuBar(win_video_window);
-			EndPaint(wnd, &pstruct);
-			break;
-		}
 
 		// get min/max info: set the minimum window size
 		case WM_GETMINMAXINFO:

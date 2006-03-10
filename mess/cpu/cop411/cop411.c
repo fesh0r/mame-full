@@ -528,7 +528,7 @@ static s_opcode opcode_main[256]=
 /****************************************************************************
  * Initialize emulation
  ****************************************************************************/
-static void cop411_init(void)
+static void cop411_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i;
 
@@ -546,7 +546,7 @@ static void cop411_init(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-static void cop411_reset(void *param)
+static void cop411_reset(void)
 {
 	R.PC.d =0;
 	R.A=0;
@@ -560,16 +560,6 @@ static void cop411_reset(void *param)
 /*	M_OUT(0x20,0x0F);*/
 	cop411_masterclock=0;
 }
-
-
-/****************************************************************************
- * Shut down CPU emulation
- ****************************************************************************/
-static void cop411_exit(void)
-{
-	/* nothing to do ? */
-}
-
 
 
 /****************************************************************************
@@ -727,11 +717,9 @@ void cop411_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = cop411_set_context;	break;
 		case CPUINFO_PTR_INIT:							info->init = cop411_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = cop411_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = cop411_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = cop411_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cop411_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;           	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop411_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cop411_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cop411_win_layout;				break;

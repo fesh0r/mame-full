@@ -95,18 +95,7 @@ int main(int argc, char *argv[])
 
 	mess_ghost_images = 1;
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1300)
-	if (IsDebuggerPresent())
-	{
-		_set_error_mode(_OUT_TO_MSGBOX);
-	}
-#endif
-
 #ifdef WIN32
-	{
-		extern UINT8 track_mallocs;
-		track_mallocs = TRUE;
-	}
 	/* expand wildcards so '*' can be used; this is not UNIX */
 	win_expand_wildcards(&argc, &argv);
 #else

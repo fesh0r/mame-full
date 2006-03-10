@@ -110,16 +110,13 @@ static void cdp1802_set_context (void *src)
 	}
 }
 
-static void cdp1802_init(void)
+static void cdp1802_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	// nothing to do
+	cdp1802.config = (CDP1802_CONFIG *) config;
 }
 
-static void cdp1802_reset(void *param)
+static void cdp1802_reset(void)
 {
-	if (param)
-		cdp1802.config = (CDP1802_CONFIG *)param;
-
 	I = 0;
 	N = 0;
 	cdp1802_q(0);
@@ -136,11 +133,6 @@ static void cdp1802_reset(void *param)
 
 	cdp1802.idle = 0;
 	cdp1802.dma_cycles = 0;
-}
-
-static void cdp1802_exit(void)
-{
-	// nothing to do
 }
 
 static int cdp1802_execute(int cycles)
@@ -317,11 +309,9 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = cdp1802_set_context;	break;
 		case CPUINFO_PTR_INIT:							info->init = cdp1802_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = cdp1802_reset;			break;
-		case CPUINFO_PTR_EXIT:							info->exit = cdp1802_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = cdp1802_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cdp1802_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cdp1802_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cdp1802_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cdp1802_win_layout;			break;

@@ -82,9 +82,8 @@ endif
 # Preprocessor Definitions
 #
 
-DEFS += -DWINVER=0x0400 \
+DEFS += -DWINVER=0x0500 \
         -D_WIN32_IE=0x0500 \
-        -D_WIN32_WINNT=0x0400 \
 	-DDECL_SPEC= \
         -DZEXTERN=extern \
 
