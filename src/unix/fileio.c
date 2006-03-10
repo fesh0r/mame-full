@@ -771,7 +771,6 @@ void osd_fclose(osd_file *file)
 
 
 
-#ifdef MESS
 /*============================================================ */
 /*	osd_create_directory */
 /*============================================================ */
@@ -783,6 +782,5 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 	/* compose the full path */
 	compose_path(fullpath, sizeof(fullpath), pathtype, pathindex, dirname);
 
-	return check_and_create_dir(fullpath) ? 0 : 1;
+	return check_and_create_dir(fullpath) ? FALSE : TRUE;
 }
-#endif
