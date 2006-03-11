@@ -162,11 +162,6 @@ static void tx0_init_common(int is_64kw, int index, int clock, const void *confi
 
 	tx0.address_mask = is_64kw ? ADDRESS_MASK_64KW : ADDRESS_MASK_8KW;
 	tx0.ir_mask = is_64kw ? 03 : 037;
-
-	/* reset CPU flip-flops */
-	pulse_reset();
-
-	tx0.gbl_cm_sel = 1;	/* HACK */
 }
 
 static void tx0_init_64kw(int index, int clock, const void *config, int (*irqcallback)(int))
@@ -177,6 +172,14 @@ static void tx0_init_64kw(int index, int clock, const void *config, int (*irqcal
 static void tx0_init_8kw(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	tx0_init_common(0, index, clock, config, irqcallback);
+}
+
+static void tx0_reset(void)
+{
+	/* reset CPU flip-flops */
+	pulse_reset();
+
+	tx0.gbl_cm_sel = 1;	/* HACK */
 }
 
 static void tx0_get_context(void *dst)
@@ -552,6 +555,7 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tx0_get_context;		break;
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tx0_set_context;		break;
 	case CPUINFO_PTR_INIT:							info->init = tx0_init_64kw;				break;
+	case CPUINFO_PTR_RESET:							info->reset = tx0_reset;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_64kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
@@ -679,6 +683,7 @@ void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tx0_get_context;		break;
 	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tx0_set_context;		break;
 	case CPUINFO_PTR_INIT:							info->init = tx0_init_8kw;				break;
+	case CPUINFO_PTR_RESET:							info->reset = tx0_reset;				break;
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_8kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
