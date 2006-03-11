@@ -236,8 +236,8 @@ ROM_START( concept )
 	ROM_LOAD16_BYTE("bootl17l", 0x010001, 0x1000, CRC(107a3830))
 #elif 1
 	// version 0 lvl 8 release
-	ROM_LOAD16_BYTE("bootl08h", 0x010000, 0x1000, CRC(ee479f51))
-	ROM_LOAD16_BYTE("bootl08l", 0x010001, 0x1000, CRC(acaefd07))
+	ROM_LOAD16_BYTE("bootl08h", 0x010000, 0x1000, CRC(ee479f51) SHA1(b20ba18564672196076e46507020c6d69a640a2f))
+	ROM_LOAD16_BYTE("bootl08l", 0x010001, 0x1000, CRC(acaefd07) SHA1(de0c7eaacaf4c0652aa45e523cebce2b2993c437))
 #else
 	// version $F lvl 8 (development version found on a floppy disk along with
 	// the source code)
