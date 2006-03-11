@@ -146,7 +146,7 @@ static int CyclesCB[256] =
 
 static void z80gb_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	Regs.w.config = (const INT16 *) config;
+	Regs.w.config = (const UINT16 *) config;
 	Regs.w.irq_callback = irqcallback;
 }
 
