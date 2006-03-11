@@ -81,8 +81,6 @@ static int avigo_flash_at_0x4000;
 static int avigo_flash_at_0x8000;
 static void *avigo_banked_opbase[4];
 
-static void avigo_machine_stop(void);
-
 static void avigo_setbank(int bank, void *address, read8_handler rh, write8_handler wh)
 {
 	if (address)
@@ -412,7 +410,7 @@ static OPBASE_HANDLER( avigo_opbase_handler )
 	return address;
 }
 
-static MACHINE_RESET( avigo )
+static void avigo_machine_reset(void)
 {
 	int i;
 	unsigned char *addr;
@@ -474,10 +472,6 @@ static MACHINE_RESET( avigo )
 		previous_input_port_data[i] = readinputport(i);
 	}
 
-	/* a timer used to check status of pen */
-	/* an interrupt is generated when the pen is pressed to the screen */
-	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
-
 	avigo_irq = 0;
 	avigo_rom_bank_l = 0;
 	avigo_rom_bank_h = 0;
@@ -505,8 +499,6 @@ static MACHINE_RESET( avigo )
 
 	/* 0x08000 is specially banked! */
 	avigo_refresh_memory();
-
-	add_exit_callback(avigo_machine_stop);
 }
 
 static void avigo_machine_stop(void)
@@ -520,6 +512,17 @@ static void avigo_machine_stop(void)
 
 	amd_flash_store(2, "avigof3.nv");
 	amd_flash_finish(2);
+}
+
+static MACHINE_START( avigo )
+{
+	/* a timer used to check status of pen */
+	/* an interrupt is generated when the pen is pressed to the screen */
+	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
+
+	add_reset_callback(avigo_machine_reset);
+	add_exit_callback(avigo_machine_stop);
+	return 0;
 }
 
 
@@ -942,7 +945,7 @@ static MACHINE_DRIVER_START( avigo )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( avigo )
+	MDRV_MACHINE_START( avigo )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

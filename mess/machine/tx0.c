@@ -141,6 +141,7 @@ enum
 	PF_EOT = 004
 };
 
+
 static OPBASE_HANDLER(setOPbasefunc)
 {
 	/* just to get rid of the warnings */
@@ -148,19 +149,10 @@ static OPBASE_HANDLER(setOPbasefunc)
 }
 
 
-MACHINE_RESET( tx0 )
+static void tx0_machine_reset(void)
 {
-	memory_set_opbase_handler(0, setOPbasefunc);
-
-	tape_reader.timer = timer_alloc(reader_callback);
-	tape_puncher.timer = timer_alloc(puncher_callback);
-	typewriter.prt_timer = timer_alloc(prt_callback);
-	dis_timer = timer_alloc(dis_callback);
-
 	/* reset device state */
 	tape_reader.rcl = tape_reader.rc = 0;
-
-	add_exit_callback(tx0_machine_stop);
 }
 
 
@@ -169,6 +161,21 @@ static void tx0_machine_stop(void)
 	/* the core will take care of freeing the timers, BUT we must set the variables
 	to NULL if we don't want to risk confusing the tape image init function */
 	tape_reader.timer = tape_puncher.timer = typewriter.prt_timer = dis_timer = NULL;
+}
+
+
+MACHINE_START( tx0 )
+{
+	memory_set_opbase_handler(0, setOPbasefunc);;
+
+	tape_reader.timer = timer_alloc(reader_callback);
+	tape_puncher.timer = timer_alloc(puncher_callback);
+	typewriter.prt_timer = timer_alloc(prt_callback);
+	dis_timer = timer_alloc(dis_callback);
+
+	add_reset_callback(tx0_machine_reset);
+	add_exit_callback(tx0_machine_stop);
+	return 0;
 }
 
 

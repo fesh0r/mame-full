@@ -148,12 +148,51 @@ static parallel_drum_t parallel_drum;
 #define PARALLEL_DRUM_ROTATION_TIME TIME_IN_USEC(8.5*4096)
 
 
+static OPBASE_HANDLER(setOPbasefunc)
+{
+	/* just to get rid of the warnings */
+	return -1;
+}
+
+
+static void pdp1_machine_reset(void)
+{
+	int config;
+
+	config = readinputport(pdp1_config);
+	pdp1_reset_param.extend_support = (config >> pdp1_config_extend_bit) & pdp1_config_extend_mask;
+	pdp1_reset_param.hw_mul_div = (config >> pdp1_config_hw_mul_div_bit) & pdp1_config_hw_mul_div_mask;
+	pdp1_reset_param.type_20_sbs = (config >> pdp1_config_type_20_sbs_bit) & pdp1_config_type_20_sbs_mask;
+
+	tape_reader.timer = timer_alloc(reader_callback);
+	tape_puncher.timer = timer_alloc(puncher_callback);
+	typewriter.tyo_timer = timer_alloc(tyo_callback);
+	dpy_timer = timer_alloc(dpy_callback);
+
+	/* reset device state */
+	tape_reader.rcl = tape_reader.rc = 0;
+	io_status = io_st_tyo | io_st_ptp;
+	lightpen.active = lightpen.down = 0;
+	lightpen.x = lightpen.y = 0;
+	lightpen.radius = 10;	/* ??? */
+	pdp1_update_lightpen_state(&lightpen);
+}
+
+
+static void pdp1_machine_stop(void)
+{
+	/* the core will take care of freeing the timers, BUT we must set the variables
+	to NULL if we don't want to risk confusing the tape image init function */
+	tape_reader.timer = tape_puncher.timer = typewriter.tyo_timer = dpy_timer = NULL;
+}
+
+
 /*
 	driver init function
 
 	Set up the pdp1_memory pointer, and generate font data.
 */
-void init_pdp1(void)
+MACHINE_START( pdp1 )
 {
 	UINT8 *dst;
 
@@ -287,50 +326,13 @@ void init_pdp1(void)
 
 	/* set up our font */
 	dst = memory_region(REGION_GFX1);
-
 	memcpy(dst, fontdata6x8, pdp1_fontdata_size);
-}
-
-
-static OPBASE_HANDLER(setOPbasefunc)
-{
-	/* just to get rid of the warnings */
-	return -1;
-}
-
-MACHINE_RESET( pdp1 )
-{
-	int config;
 
 	memory_set_opbase_handler(0, setOPbasefunc);
 
-	config = readinputport(pdp1_config);
-	pdp1_reset_param.extend_support = (config >> pdp1_config_extend_bit) & pdp1_config_extend_mask;
-	pdp1_reset_param.hw_mul_div = (config >> pdp1_config_hw_mul_div_bit) & pdp1_config_hw_mul_div_mask;
-	pdp1_reset_param.type_20_sbs = (config >> pdp1_config_type_20_sbs_bit) & pdp1_config_type_20_sbs_mask;
-
-	tape_reader.timer = timer_alloc(reader_callback);
-	tape_puncher.timer = timer_alloc(puncher_callback);
-	typewriter.tyo_timer = timer_alloc(tyo_callback);
-	dpy_timer = timer_alloc(dpy_callback);
-
-	/* reset device state */
-	tape_reader.rcl = tape_reader.rc = 0;
-	io_status = io_st_tyo | io_st_ptp;
-	lightpen.active = lightpen.down = 0;
-	lightpen.x = lightpen.y = 0;
-	lightpen.radius = 10;	/* ??? */
-	pdp1_update_lightpen_state(&lightpen);
-
+	add_reset_callback(pdp1_machine_reset);
 	add_exit_callback(pdp1_machine_stop);
-}
-
-
-static void pdp1_machine_stop(void)
-{
-	/* the core will take care of freeing the timers, BUT we must set the variables
-	to NULL if we don't want to risk confusing the tape image init function */
-	tape_reader.timer = tape_puncher.timer = typewriter.tyo_timer = dpy_timer = NULL;
+	return 0;
 }
 
 

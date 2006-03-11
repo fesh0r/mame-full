@@ -1,6 +1,6 @@
 <tests>
 
-<test name="trs80_000" driver="trs80_10">
+<test name="trs80_000" driver="trs80">
 	<wait time="5"/>
 </test>
 

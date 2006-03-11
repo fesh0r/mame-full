@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( level1 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( trs80 )
+	MDRV_MACHINE_START( trs80 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -459,11 +459,10 @@ SYSTEM_CONFIG_START(trs8012)
 SYSTEM_CONFIG_END
 
 
-/*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP ( 1977, trs80,    0,		 0,		level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" , 0)
-COMP ( 1978, trs80l2,  trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" , 0)
-COMP ( 1978, trs80l2a, trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" , 0)
-COMP ( 1980, sys80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"EACA Computers Ltd.","System-80" , 0)
-COMP( 1981, lnw80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
-COMP( 1980, trs80m3,  trs80,	 0,		model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
-
+/*	  YEAR  NAME	  PARENT	 COMPAT	MACHINE   INPUT	 INIT  CONFIG	COMPANY	 FULLNAME */
+COMP( 1977, trs80,    0,		 0,		level1,   trs80, 0,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" , 0)
+COMP( 1978, trs80l2,  trs80,	 0,		model1,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" , 0)
+COMP( 1978, trs80l2a, trs80,	 0,		model1,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" , 0)
+COMP( 1980, sys80,    trs80,	 0,		model1,   trs80, 0,    trs8012,	"EACA Computers Ltd.","System-80" , 0)
+COMP( 1981, lnw80,    trs80,	 0,		model1,   trs80, 0,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
+COMP( 1980, trs80m3,  trs80,	 0,		model3,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )

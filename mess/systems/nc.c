@@ -976,10 +976,8 @@ static CENTRONICS_CONFIG nc100_cent_config[1]={
 	},
 };
 
-static MACHINE_RESET( nc100 )
+static void nc100_machine_reset(void)
 {
-    nc_type = NC_TYPE_1xx;
-
     /* 256k of rom */
     nc_membank_rom_mask = 0x0f;
 
@@ -1006,8 +1004,6 @@ static MACHINE_RESET( nc100 )
 
 	/* serial */
 	nc_irq_latch_mask = (1<<0) | (1<<1);
-
-	add_exit_callback(nc100_machine_stop);
 }
 
 static void nc100_machine_stop(void)
@@ -1016,6 +1012,15 @@ static void nc100_machine_stop(void)
 	tc8521_save_stream(file);
 	nc_common_store_memory_to_stream();
 	nc_common_close_stream();
+}
+
+static MACHINE_START( nc100 )
+{
+    nc_type = NC_TYPE_1xx;
+
+	add_reset_callback(nc100_machine_reset);
+	add_exit_callback(nc100_machine_stop);
+	return 0;
 }
 
 
@@ -1368,10 +1373,8 @@ static void nc200_floppy_drive_index_callback(int drive_id)
 //	nc_update_interrupts();
 }
 
-static MACHINE_RESET( nc200 )
+static void nc200_machine_reset(void)
 {
-    nc_type = NC_TYPE_200;
-
 	/* 512k of rom */
 	nc_membank_rom_mask = 0x1f;
 
@@ -1407,8 +1410,6 @@ static MACHINE_RESET( nc200 )
 	nc_irq_latch_mask = /*(1<<5) |*/ (1<<2);
 
 	nc200_video_set_backlight(0);
-
-	add_exit_callback(nc200_machine_stop);
 }
 
 static void nc200_machine_stop(void)
@@ -1420,6 +1421,15 @@ static void nc200_machine_stop(void)
 	}
 	nc_common_store_memory_to_stream();
 	nc_common_close_stream();
+}
+
+static MACHINE_START( nc200 )
+{
+    nc_type = NC_TYPE_200;
+
+	add_reset_callback(nc200_machine_reset);
+	add_exit_callback(nc200_machine_stop);
+	return 0;
 }
 
 /*
@@ -1698,7 +1708,7 @@ static MACHINE_DRIVER_START( nc100 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( nc100 )
+	MDRV_MACHINE_START( nc100 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1725,7 +1735,7 @@ static MACHINE_DRIVER_START( nc200 )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_IO_MAP(nc200_io, 0)
 
-	MDRV_MACHINE_RESET( nc200 )
+	MDRV_MACHINE_START( nc200 )
 
     /* video hardware */
 	MDRV_SCREEN_SIZE(NC200_SCREEN_WIDTH, NC200_SCREEN_HEIGHT)

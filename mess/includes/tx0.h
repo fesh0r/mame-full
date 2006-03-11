@@ -1,7 +1,7 @@
 #define READ18_HANDLER(name) READ32_HANDLER(name)
 #define WRITE18_HANDLER(name) WRITE32_HANDLER(name)
 
-MACHINE_RESET( tx0 );
+MACHINE_START( tx0 );
 void tx0_tape_get_open_mode(const struct IODevice *dev, int id,
 	unsigned int *readable, unsigned int *writeable, unsigned int *creatable);
 DEVICE_INIT( tx0_tape );

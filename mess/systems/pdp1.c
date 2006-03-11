@@ -427,7 +427,7 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_MACHINE_RESET( pdp1 )
+	MDRV_MACHINE_START( pdp1 )
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -545,4 +545,4 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	CONFIG	COMPANY	FULLNAME */
-COMP( 1961, pdp1,	  0, 		0,		pdp1,	  pdp1, 	pdp1,	pdp1,	"Digital Equipment Corporation",  "PDP-1" , 0)
+COMP( 1961, pdp1,	  0, 		0,		pdp1,	  pdp1, 	0,		pdp1,	"Digital Equipment Corporation",  "PDP-1" , 0)

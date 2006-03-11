@@ -71,37 +71,6 @@ static void tape_put_close(void);
 #define FH TRS80_FONT_H
 
 
-void init_trs80(void)
-{
-	UINT8 *FNT = memory_region(REGION_GFX1);
-	int i, y;
-
-	for( i = 0x000; i < 0x080; i++ )
-	{
-		/* copy eight lines from the character generator */
-		for (y = 0; y < 8; y++)
-			FNT[i*FH+y] = FNT[0x0800+i*8+y] << 3;
-		/* wipe out the lower lines (no descenders!) */
-		for (y = 8; y < FH; y++)
-			FNT[i*FH+y] = 0;
-	}
-	/* setup the 2x3 chunky block graphics (two times 64 characters) */
-	for( i = 0x080; i < 0x100; i++ )
-	{
-		UINT8 b0, b1, b2, b3, b4, b5;
-		b0 = (i & 0x01) ? 0xe0 : 0x00;
-		b1 = (i & 0x02) ? 0x1c : 0x00;
-		b2 = (i & 0x04) ? 0xe0 : 0x00;
-		b3 = (i & 0x08) ? 0x1c : 0x00;
-		b4 = (i & 0x10) ? 0xe0 : 0x00;
-		b5 = (i & 0x20) ? 0x1c : 0x00;
-
-		FNT[i*FH+ 0] = FNT[i*FH+ 1] = FNT[i*FH+ 2] = FNT[i*FH+ 3] = b0 | b1;
-		FNT[i*FH+ 4] = FNT[i*FH+ 5] = FNT[i*FH+ 6] = FNT[i*FH+ 7] = b2 | b3;
-		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
-	}
-}
-
 static void cas_copy_callback(int param)
 {
 	UINT16 entry = 0, block_ofs = 0, block_len = 0;
@@ -314,16 +283,50 @@ DEVICE_LOAD( trs80_floppy )
 
 static void trs80_fdc_callback(int);
 
-MACHINE_RESET( trs80 )
+static void trs80_machine_reset(void)
 {
-	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
-
 	if (cas_size)
 	{
 		LOG(("trs80_init_machine: schedule cas_copy_callback (%d)\n", cas_size));
 		timer_set(0.5, 0, cas_copy_callback);
 	}
+}
+
+MACHINE_START( trs80 )
+{
+	UINT8 *FNT = memory_region(REGION_GFX1);
+	int i, y;
+
+	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
+
+	for( i = 0x000; i < 0x080; i++ )
+	{
+		/* copy eight lines from the character generator */
+		for (y = 0; y < 8; y++)
+			FNT[i*FH+y] = FNT[0x0800+i*8+y] << 3;
+		/* wipe out the lower lines (no descenders!) */
+		for (y = 8; y < FH; y++)
+			FNT[i*FH+y] = 0;
+	}
+	/* setup the 2x3 chunky block graphics (two times 64 characters) */
+	for( i = 0x080; i < 0x100; i++ )
+	{
+		UINT8 b0, b1, b2, b3, b4, b5;
+		b0 = (i & 0x01) ? 0xe0 : 0x00;
+		b1 = (i & 0x02) ? 0x1c : 0x00;
+		b2 = (i & 0x04) ? 0xe0 : 0x00;
+		b3 = (i & 0x08) ? 0x1c : 0x00;
+		b4 = (i & 0x10) ? 0xe0 : 0x00;
+		b5 = (i & 0x20) ? 0x1c : 0x00;
+
+		FNT[i*FH+ 0] = FNT[i*FH+ 1] = FNT[i*FH+ 2] = FNT[i*FH+ 3] = b0 | b1;
+		FNT[i*FH+ 4] = FNT[i*FH+ 5] = FNT[i*FH+ 6] = FNT[i*FH+ 7] = b2 | b3;
+		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
+	}
+
+	add_reset_callback(trs80_machine_reset);
 	add_exit_callback(tape_put_close);
+	return 0;
 }
 
 /*************************************
