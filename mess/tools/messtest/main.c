@@ -20,7 +20,7 @@
 #include "sysdep/rc.h"
 #endif /* WIN32 */
 
-extern int mame_validitychecks(void);
+extern int mame_validitychecks(int game);
 extern struct rc_option fileio_opts[];
 
 static int dump_screenshots;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	sndintrf_init();
 	
 	/* run MAME's validity checks; if these fail cop out now */
-	if (mame_validitychecks())
+	if (mame_validitychecks(-1))
 		goto done;
 	/* run Imgtool's validity checks; if these fail cop out now */
 	if (imgtool_validitychecks())
