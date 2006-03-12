@@ -94,7 +94,7 @@ static int jaguar_irq_callback(int level)
  *
  *************************************/
 
-static MACHINE_START( jaguar )
+static MACHINE_RESET( jaguar )
 {
 	cpunum_set_irq_callback(0, jaguar_irq_callback);
 
@@ -131,7 +131,6 @@ static MACHINE_START( jaguar )
 	cojag_sound_reset();
 
 	joystick_data = 0xffffffff;
-	return 0;
 }
 
 
@@ -458,7 +457,7 @@ MACHINE_DRIVER_START( jaguar )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_START(jaguar)
+	MDRV_MACHINE_RESET(jaguar)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)

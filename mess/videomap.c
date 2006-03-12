@@ -442,8 +442,10 @@ static void general_invalidate(UINT8 inval_flags_mask, int scanline)
 	mame_time current_delay;
 
 	/* sanity check the scanline */
-	assert(scanline >= 0);
-	assert(scanline <= Machine->drv->screen_height);
+	if (scanline < 0)
+		scanline = 0;
+	else if (scanline > Machine->drv->screen_height)
+		scanline = Machine->drv->screen_height;
 
 	/* figure out how soon our timer needs to go off */
 	delay = cpu_getscanlinetime_mt(scanline);
