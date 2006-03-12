@@ -230,7 +230,7 @@ static gfx_decode gfxdecodeinfo[] =
 	black.  Grey levels follow an exponential law, so that decrementing the
 	color index periodically will simulate the remanence of a cathode ray tube.
 */
-static unsigned char palette[] =
+static const unsigned char palette[] =
 {
 	0xFF,0xFF,0xFF,	/* white */
 	0x00,0xFF,0x00,	/* green */
@@ -239,7 +239,7 @@ static unsigned char palette[] =
 	0x80,0x80,0x80	/* light gray */
 };
 
-static unsigned short colortable[] =
+static const unsigned short tx0_colortable[] =
 {
 	pen_panel_bg, pen_panel_caption,
 	pen_typewriter_bg, pen_black,
@@ -247,7 +247,7 @@ static unsigned short colortable[] =
 };
 
 /* Initialise the palette */
-static void palette_init_tx0(unsigned short *sys_colortable, const unsigned char *dummy)
+static PALETTE_INIT( tx0 )
 {
 	/* rgb components for the two color emissions */
 	const double r1 = .1, g1 = .1, b1 = .924, r2 = .7, g2 = .7, b2 = .076;
@@ -305,7 +305,7 @@ static void palette_init_tx0(unsigned short *sys_colortable, const unsigned char
 	/* load static palette */
 	palette_set_colors(pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
 
-	memcpy(sys_colortable, colortable, sizeof(colortable));
+	memcpy(colortable, tx0_colortable, sizeof(tx0_colortable));
 }
 
 
@@ -353,7 +353,7 @@ static MACHINE_DRIVER_START(tx0_64kw)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(pen_crt_num_levels + (sizeof(palette) / sizeof(palette[0]) / 3))
-	MDRV_COLORTABLE_LENGTH(sizeof(colortable) / sizeof(colortable[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(tx0_colortable) / sizeof(tx0_colortable[0]))
 
 	MDRV_PALETTE_INIT(tx0)
 	MDRV_VIDEO_START(tx0)
@@ -391,7 +391,7 @@ static MACHINE_DRIVER_START(tx0_8kw)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(pen_crt_num_levels + (sizeof(palette) / sizeof(palette[0]) / 3))
-	MDRV_COLORTABLE_LENGTH(sizeof(colortable) / sizeof(colortable[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(tx0_colortable) / sizeof(tx0_colortable[0]))
 
 	MDRV_PALETTE_INIT(tx0)
 	MDRV_VIDEO_START(tx0)
