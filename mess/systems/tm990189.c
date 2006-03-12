@@ -853,10 +853,10 @@ ROM_START(990189)
 	ROM_REGION(0x4000, REGION_CPU1,0)
 
 	/* extra ROM */
-	ROM_LOAD("990-469.u32", 0x0800, 0x0800, CRC(08df7edb))
+	ROM_LOAD("990-469.u32", 0x0800, 0x0800, CRC(08df7edb) SHA1(fa9751fd2e3e5d7ae03819fc9c7099e2ddd9fb53))
 
 	/* boot ROM */
-	ROM_LOAD("990-469.u33", 0x3000, 0x1000, CRC(e9b4ac1b))		
+	ROM_LOAD("990-469.u33", 0x3000, 0x1000, CRC(e9b4ac1b) SHA1(96e88f4cb7a374033cdf3af0dc26ca5b1d55b9f9))
 	/*ROM_LOAD("unibasic.bin", 0x3000, 0x1000, CRC(de4d9744))*/	/* older, partial dump of university BASIC */
 
 ROM_END
@@ -866,16 +866,16 @@ ROM_START(990189v)
 	ROM_REGION(0x4000, REGION_CPU1,0)
 
 	/* extra ROM */
-	ROM_LOAD("990-469.u32", 0x0800, 0x0800, CRC(08df7edb))
+	ROM_LOAD("990-469.u32", 0x0800, 0x0800, CRC(08df7edb) SHA1(fa9751fd2e3e5d7ae03819fc9c7099e2ddd9fb53))
 
 	/* extension ROM */
-	ROM_LOAD_OPTIONAL("demo1000.u13", 0x1000, 0x0800, CRC(c0e16685))
+	ROM_LOAD_OPTIONAL("demo1000.u13", 0x1000, 0x0800, CRC(c0e16685) SHA1(d0d314134c42fa4682aafbace67f539f67f6ba65))
 
 	/* extension ROM */
-	ROM_LOAD_OPTIONAL("demo1800.u11", 0x1800, 0x0800, CRC(8737dc4b))
+	ROM_LOAD_OPTIONAL("demo1800.u11", 0x1800, 0x0800, CRC(8737dc4b) SHA1(b87da7aa4d3f909e70f885c4b36999cc1abf5764))
 
 	/* boot ROM */
-	ROM_LOAD("990-469.u33", 0x3000, 0x1000, CRC(e9b4ac1b))		
+	ROM_LOAD("990-469.u33", 0x3000, 0x1000, CRC(e9b4ac1b) SHA1(96e88f4cb7a374033cdf3af0dc26ca5b1d55b9f9))
 	/*ROM_LOAD("unibasic.bin", 0x3000, 0x1000, CRC(de4d9744))*/	/* older, partial dump of university BASIC */
 
 ROM_END

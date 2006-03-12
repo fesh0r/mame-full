@@ -297,7 +297,7 @@ ROM_START(ti990_4)
 	/* ROM set 945121-4(?): "Floppy disc loader with self test" (cf 945401-9701
 	pp. 1-19) */
 
-	ROM_LOAD16_WORD("ti9904.rom", 0xFC00, 0x400, CRC(691e7d19))
+	ROM_LOAD16_WORD("ti9904.rom", 0xFC00, 0x400, CRC(691e7d19) SHA1(58d9bed80490fdf71c743bfd3077c70840b7df8c))
 
 #endif
 

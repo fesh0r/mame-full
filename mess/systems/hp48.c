@@ -212,24 +212,24 @@ ROM_START(hp48s)
 	ROM_REGION(0x1c0000,REGION_CPU1, 0)
 	/* version at 0x7fff0 little endian 6 characters */
 	/* 0x3fff8 in byte wide rom */
-//	ROM_LOAD("sxrom-a", 0x00000, 0x40000, CRC(a87696c7))
-//	ROM_LOAD("sxrom-b", 0x00000, 0x40000, CRC(034f6ce4))
-//	ROM_LOAD("sxrom-c", 0x00000, 0x40000, CRC(a9a0279d))
-//	ROM_LOAD("sxrom-d", 0x00000, 0x40000, CRC(6e71244e))
-//	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(704ffa08))
+//	ROM_LOAD("sxrom-a", 0x00000, 0x40000, CRC(a87696c7) SHA1(3271b103ad99254d069e20171beb418ace72cc90))
+//	ROM_LOAD("sxrom-b", 0x00000, 0x40000, CRC(034f6ce4) SHA1(acd256f2efee868ce402008f4131d94b312e60bc))
+//	ROM_LOAD("sxrom-c", 0x00000, 0x40000, CRC(a9a0279d) SHA1(fee852d43ae6941d07a9d0d31f37e68e4f9051b1))
+//	ROM_LOAD("sxrom-d", 0x00000, 0x40000, CRC(6e71244e) SHA1(893f29abd17434db7da986b27dc10c48f458d3aa))
+//	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(704ffa08) SHA1(0d498d135bf729c1d775cce522528837729e2e94))
 	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(d4f1390b) SHA1(f6be01a05aedefa8a285d480e33458447cf2bdaa)) // differences only in the hardware window
 //	ROM_LOAD("rom.sx", 0x00000, 0x40000, CRC(5619ccaf)) //revision E bad dump
-//	ROM_LOAD("sxrom-j", 0x00000, 0x40000, CRC(1a6378ef))
+//	ROM_LOAD("sxrom-j", 0x00000, 0x40000, CRC(1a6378ef) SHA1(5235f5379f1fd7edfe9bb6bf466b60d279163e73))
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
 ROM_START(hp48g)
 	ROM_REGION(0x580000,REGION_CPU1, 0)
 	/* version at 0x7ffbf little endian 6 characters */
-//	ROM_LOAD("gxrom-k", 0x00000, 0x80000, CRC(bdd5d2ee))
-//	ROM_LOAD("gxrom-l", 0x00000, 0x80000, CRC(70958e6b))
-//	ROM_LOAD("gxrom-m", 0x00000, 0x80000, CRC(e21a09e4))
-//	ROM_LOAD("gxrom-p", 0x00000, 0x80000, CRC(27f90428))
+//	ROM_LOAD("gxrom-k", 0x00000, 0x80000, CRC(bdd5d2ee) SHA1(afa1498238e991b1e3d07fb8b4c227b115f7bcc1))
+//	ROM_LOAD("gxrom-l", 0x00000, 0x80000, CRC(70958e6b) SHA1(8eebac69ff804086247b989bf320e57a2d8a59a7))
+//	ROM_LOAD("gxrom-m", 0x00000, 0x80000, CRC(e21a09e4) SHA1(09932d543594e459eeb94a79654168cd15e79a87))
+//	ROM_LOAD("gxrom-p", 0x00000, 0x80000, CRC(27f90428) SHA1(b98312716ff81b9b439002c2ec7a07b9808440fb))
 	ROM_LOAD("gxrom-r", 0x00000, 0x80000, CRC(00ee1a62))
 //	ROM_LOAD("rom.gx", 0x00000, 0x80000, CRC(d6bb68c5)) //revision R bad dump
 	ROM_REGION(0x100,REGION_GFX1,0)

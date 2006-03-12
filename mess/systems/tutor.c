@@ -599,8 +599,8 @@ MACHINE_DRIVER_END
 ROM_START(tutor)
 	/*CPU memory space*/
 	ROM_REGION(0x14000,REGION_CPU1,0)
-	ROM_LOAD("tutor1.bin", 0x0000, 0x8000, CRC(702c38ba))      /* system ROM */
-	ROM_LOAD("tutor2.bin", 0x8000, 0x4000, CRC(05f228f5))      /* BASIC ROM */
+	ROM_LOAD("tutor1.bin", 0x0000, 0x8000, CRC(702c38ba) SHA1(ce60607c3038895e31915d41bb5cf71cb8522d7a))      /* system ROM */
+	ROM_LOAD("tutor2.bin", 0x8000, 0x4000, CRC(05f228f5) SHA1(46a14a45f6f9e2c30663a2b87ce60c42768a78d0))      /* BASIC ROM */
 ROM_END
 
 static void tutor_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
