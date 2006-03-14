@@ -835,6 +835,13 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 			if (win_window_mode)
 				return DefWindowProc(wnd, message, wparam, lparam);
 			break;
+
+#else
+
+		case WM_SYSKEYUP:
+		case WM_SYSKEYDOWN:
+			break;
+
 #endif /* !HAS_WINDOW_MENU */
 
 		// suspend sound and timer if we are resizing or a menu is coming up
