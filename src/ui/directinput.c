@@ -20,7 +20,13 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+// undef WINNT for dinput.h to prevent duplicate definition
+#undef WINNT
+#undef DIRECTINPUT_VERSION
+#define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
+
 #include "DirectInput.h"
 #include "M32Util.h"
 

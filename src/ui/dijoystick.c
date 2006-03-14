@@ -18,10 +18,15 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <dinput.h>
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
+
+// undef WINNT for dinput.h to prevent duplicate definition
+#undef WINNT
+#undef DIRECTINPUT_VERSION
+#define DIRECTINPUT_VERSION 0x0700
+#include <dinput.h>
 
 #include "screenshot.h"
 #include "MAME32.h"
@@ -141,10 +146,10 @@ static int DIJoystick_init(void)
 	}
 
 	/* enumerate for joystick devices */
-	hr = IDirectInput_EnumDevices(di, DI8DEVCLASS_GAMECTRL,
+	hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
 				 (LPDIENUMDEVICESCALLBACK)DIJoystick_EnumDeviceProc,
 				 NULL,
-				 DIEDFL_ATTACHEDONLY);
+				 DIEDFL_ATTACHEDONLY  );
 	if (FAILED(hr))
 	{
 		ErrorMsg("DirectInput EnumDevices() failed: %s", DirectXDecodeError(hr));
@@ -338,7 +343,7 @@ static BOOL DIJoystick_Available(void)
 		return bAvailable;
 
 	/* enumerate for joystick devices */
-	hr = IDirectInput_EnumDevices(di, DI8DEVCLASS_GAMECTRL,
+	hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
 								  inputEnumDeviceProc,
 								  &guidDevice,
 								  DIEDFL_ATTACHEDONLY);
