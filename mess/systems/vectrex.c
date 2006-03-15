@@ -225,8 +225,8 @@ MACHINE_DRIVER_END
 
 ROM_START(raaspec)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
-	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, CRC(20af7f3f))
-	ROM_LOAD("system.img", 0xe000, 0x2000, CRC(ba13fb57))
+	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, CRC(20af7f3f) SHA1(7ce85db8dd32687ad7629631ae113820371faf7c))
+	ROM_LOAD("system.img", 0xe000, 0x2000, CRC(ba13fb57) SHA1(65d07426b520ddd3115d40f255511e0fd2e20ae7))
 ROM_END
 
 /***************************************************************************
