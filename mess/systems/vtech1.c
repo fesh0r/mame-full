@@ -26,6 +26,10 @@ System driver:
       - added BASIC V2.1
       - added SHA1 checksums
 
+	Dirk Best <duke@redump.de>, March 2006
+	  - 64KB memory expansion (banked)
+	  - cartridge support
+
 Thanks go to:
 
     - Guy Thomason
@@ -49,7 +53,7 @@ Memory maps:
         7800-7FFF 2K internal user RAM
         8000-87FF 2K ?
         8800-C7FF 16K memory expansion
-        C800-FFFF 14K not used
+        C800-FFFF 64K memory expansion
         
     Laser 210
         0000-1FFF 8K ROM 0
@@ -62,7 +66,7 @@ Memory maps:
         7000-77FF 2K video RAM
         7800-8FFF 6K internal user RAM (3x2K: U2, U3, U4)
         9000-CFFF 16K memory expansion
-        D000-FFFF 12K not used
+        D000-FFFF 64K memory expansion
     
     Laser 310
         0000-3FFF 16K ROM
@@ -74,16 +78,21 @@ Memory maps:
         7000-77FF 2K video RAM
         7800-B7FF 16K internal user RAM
         B800-F7FF 16K memory expansion
-        F800-FFFF 2K not used
+        F800-FFFF 64K memory expansion
 
 Todo:
 
-    - Add the 64KB memory expansion (banked)
     - Figure out which machines were shipped with which ROM version
       (currently only a guess)
     - Lightpen support
     - External keyboard? (and maybe the other strange I/O stuff which is
       commented out at the moment...)
+
+Notes:
+
+    - The only known dumped cartridge is the DOS ROM:
+      CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b)
+
 
 ******************************************************************************/
 
@@ -92,6 +101,7 @@ Todo:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/m6847.h"
 #include "includes/vtech1.h"
+#include "devices/cartslot.h"
 #include "devices/snapquik.h"
 #include "devices/cassette.h"
 #include "devices/printer.h"
@@ -106,51 +116,49 @@ Todo:
 ******************************************************************************/
 
 static ADDRESS_MAP_START(laser110_mem, ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE(0x0000, 0x3fff) AM_ROM
-    AM_RANGE(0x4000, 0x5fff) AM_ROM
-    AM_RANGE(0x6000, 0x67ff) AM_ROM
+    AM_RANGE(0x0000, 0x3fff) AM_ROM	/* basic rom */
+    AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
+    AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
     AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
-    AM_RANGE(0x7800, 0x7fff) AM_RAM
+    AM_RANGE(0x7800, 0x7fff) AM_RAM	/* 2KB user ram */
     AM_RANGE(0x8000, 0x87ff) AM_NOP
-//  AM_RANGE(0x8800, 0xc7ff) AM_RAM /* 16KB/64KB memory expansion */
-    AM_RANGE(0xc800, 0xffff) AM_NOP 
+//  AM_RANGE(0x8800, 0xc7ff) AM_RAM	/* 16KB/64KB memory expansion */
+//  AM_RANGE(0xc800, 0xffff) AM_NOP	/* dynamically mapped */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(laser210_mem, ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE(0x0000, 0x3fff) AM_ROM
-    AM_RANGE(0x4000, 0x5fff) AM_ROM
-    AM_RANGE(0x6000, 0x67ff) AM_ROM
+    AM_RANGE(0x0000, 0x3fff) AM_ROM	/* basic rom */
+    AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
+    AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
     AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* U7 (6847) */
-    AM_RANGE(0x7800, 0x7fff) AM_RAM
-    AM_RANGE(0x8000, 0x87ff) AM_RAM
-    AM_RANGE(0x8800, 0x8fff) AM_RAM
-//  AM_RANGE(0x9000, 0xcfff) AM_RAM /* 16KB/64KB memory expansion */
-    AM_RANGE(0xd000, 0xffff) AM_NOP
+    AM_RANGE(0x7800, 0x8fff) AM_RAM	/* 6KB user ram */
+//  AM_RANGE(0x9000, 0xcfff) AM_RAM	/* 16KB/64KB memory expansion */
+//  AM_RANGE(0xd000, 0xffff) AM_NOP	/* dynamically mapped */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(laser310_mem, ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE(0x0000, 0x3fff) AM_ROM
-    AM_RANGE(0x4000, 0x5fff) AM_ROM
-    AM_RANGE(0x6000, 0x67ff) AM_ROM
+    AM_RANGE(0x0000, 0x3fff) AM_ROM	/* basic rom */
+    AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
+    AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
     AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
-    AM_RANGE(0x7800, 0xb7ff) AM_RAM
-//  AM_RANGE(0xb800, 0xf7ff) AM_RAM /* 16KB/64KB memory expansion */
-    AM_RANGE(0xf800, 0xffff) AM_NOP
+    AM_RANGE(0x7800, 0xb7ff) AM_RAM	/* 16KB user ram */
+//  AM_RANGE(0xb800, 0xf7ff) AM_RAM	/* 16KB/64KB memory expansion */
+//  AM_RANGE(0xf800, 0xffff) AM_NOP	/* dynamically mapped */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(vtech1_io, ADDRESS_SPACE_IO, 8)
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x0f) AM_READWRITE(vtech1_printer_r, vtech1_printer_w)
-	AM_RANGE(0x10, 0x1f) AM_READWRITE(vtech1_fdc_r, vtech1_fdc_w)
-	AM_RANGE(0x20, 0x2f) AM_READ(vtech1_joystick_r)
-	AM_RANGE(0x30, 0x3f) AM_READWRITE(vtech1_serial_r, vtech1_serial_w)
-	AM_RANGE(0x40, 0x4f) AM_READ(vtech1_lightpen_r)
+	AM_RANGE(0x00, 0x0f) AM_READWRITE(vtech1_printer_r, vtech1_printer_w    )
+	AM_RANGE(0x10, 0x1f) AM_READWRITE(vtech1_fdc_r,     vtech1_fdc_w        )
+	AM_RANGE(0x20, 0x2f) AM_READ(     vtech1_joystick_r                     )
+	AM_RANGE(0x30, 0x3f) AM_READWRITE(vtech1_serial_r,  vtech1_serial_w     )
+	AM_RANGE(0x40, 0x4f) AM_READ(     vtech1_lightpen_r                     )
 	AM_RANGE(0x50, 0x5f) AM_NOP /* Real time clock (proposed) */
 	AM_RANGE(0x60, 0x6f) AM_NOP /* External keyboard */
-	AM_RANGE(0x70, 0x7f) AM_WRITE(vtech1_memory_bank_w)
+	AM_RANGE(0x70, 0x7f) AM_WRITE(                      vtech1_memory_bank_w)
 	AM_RANGE(0x80, 0xff) AM_NOP
 //	AM_RANGE(0xc9, 0xca) AM_NOP /* Eprom programmer */
 //	AM_RANGE(0xd8, 0xe7) AM_NOP /* Auto boot at 8000-9fff (proposed) */
@@ -167,16 +175,9 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START(vtech1)
 	PORT_START /* IN0 */
-	PORT_CONFNAME(0x80, 0x80, "16K RAM expansion")
-	PORT_CONFSETTING(   0x00, DEF_STR(No))
-	PORT_CONFSETTING(   0x80, DEF_STR(Yes))
-	PORT_CONFNAME(0x40, 0x40, "DOS ROM module")
-	PORT_CONFSETTING(   0x00, DEF_STR(No))
-	PORT_CONFSETTING(   0x40, DEF_STR(Yes))
 	PORT_CONFNAME(0x10, 0x10, "Autorun on Quickload")
 	PORT_CONFSETTING(   0x00, DEF_STR(No))
 	PORT_CONFSETTING(   0x10, DEF_STR(Yes))
-	PORT_BIT( 0x2f, 0x2f, IPT_UNUSED )
 	
 	PORT_START /* IN1 KEY ROW 0 */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -358,7 +359,7 @@ static MACHINE_DRIVER_START(laser110)
     MDRV_VBLANK_DURATION(0)
     MDRV_INTERLEAVE(1)
 
-    MDRV_MACHINE_RESET(laser110)
+	MDRV_MACHINE_START(laser110)
 
     /* video hardware */
     MDRV_M6847_PAL(vtech1)
@@ -384,7 +385,7 @@ static MACHINE_DRIVER_START(laser210)
     MDRV_CPU_MODIFY("main")
     MDRV_CPU_PROGRAM_MAP(laser210_mem, 0)
 
-    MDRV_MACHINE_RESET(laser210)
+    MDRV_MACHINE_START(laser210)
     MDRV_PALETTE_INIT(color)
 MACHINE_DRIVER_END
 
@@ -393,7 +394,7 @@ static MACHINE_DRIVER_START(laser310)
     MDRV_CPU_REPLACE( "main", Z80, LASER310_MAIN_OSCILLATOR/5)  /* 3.54690 Mhz */
     MDRV_CPU_PROGRAM_MAP(laser310_mem, 0)
 
-    MDRV_MACHINE_RESET(laser310)
+    MDRV_MACHINE_START(laser310)
     MDRV_PALETTE_INIT(color)
 MACHINE_DRIVER_END
 
@@ -404,9 +405,9 @@ MACHINE_DRIVER_END
 
 ROM_START(laser110)
     ROM_REGION(0x6800, REGION_CPU1, 0)
-    ROM_LOAD(         "vtechv12.lo",  0x0000, 0x2000, CRC(99412d43) SHA1(6aed8872a0818be8e1b08ecdfd92acbe57a3c96d))
-    ROM_LOAD(         "vtechv12.hi",  0x2000, 0x2000, CRC(e4c24e8b) SHA1(9d8fb3d24f3d4175b485cf081a2d5b98158ab2fb))
-    ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
+    ROM_LOAD("vtechv12.lo", 0x0000, 0x2000, CRC(99412d43) SHA1(6aed8872a0818be8e1b08ecdfd92acbe57a3c96d))
+    ROM_LOAD("vtechv12.hi", 0x2000, 0x2000, CRC(e4c24e8b) SHA1(9d8fb3d24f3d4175b485cf081a2d5b98158ab2fb))
+    ROM_CART_LOAD(0, "rom\0", 0x04000, 0x27ff, ROM_NOMIRROR | ROM_OPTIONAL )
 ROM_END
 
 #define rom_las110de    rom_laser110
@@ -417,9 +418,9 @@ ROM_END
 
 ROM_START(laser210)
     ROM_REGION(0x6800, REGION_CPU1, 0)
-    ROM_LOAD(         "vtechv20.lo",  0x0000, 0x2000, CRC(cc854fe9) SHA1(6e66a309b8e6dc4f5b0b44e1ba5f680467353d66))
-    ROM_LOAD(         "vtechv20.hi",  0x2000, 0x2000, CRC(7060f91a) SHA1(8f3c8f24f97ebb98f3c88d4e4ba1f91ffd563440))
-    ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
+    ROM_LOAD("vtechv20.lo", 0x0000, 0x2000, CRC(cc854fe9) SHA1(6e66a309b8e6dc4f5b0b44e1ba5f680467353d66))
+    ROM_LOAD("vtechv20.hi", 0x2000, 0x2000, CRC(7060f91a) SHA1(8f3c8f24f97ebb98f3c88d4e4ba1f91ffd563440))
+    ROM_CART_LOAD(0, "rom\0", 0x04000, 0x27ff, ROM_NOMIRROR | ROM_OPTIONAL )
 ROM_END
 
 #define rom_las210de    rom_laser210
@@ -427,16 +428,16 @@ ROM_END
 
 ROM_START(laser310)
     ROM_REGION(0x6800, REGION_CPU1, 0)
-    ROM_LOAD(         "vtechv20.rom", 0x0000, 0x4000, CRC(613de12c) SHA1(f216c266bc09b0dbdbad720796e5ea9bc7d91e53))
-    ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
+    ROM_LOAD("vtechv20.rom", 0x0000, 0x4000, CRC(613de12c) SHA1(f216c266bc09b0dbdbad720796e5ea9bc7d91e53))
+    ROM_CART_LOAD(0, "rom\0", 0x04000, 0x27ff, ROM_NOMIRROR | ROM_OPTIONAL )
 ROM_END
 
 #define rom_vz300       rom_laser310
 
 ROM_START(las31021)
     ROM_REGION(0x6800, REGION_CPU1, 0)
-    ROM_LOAD(         "vtechv21.rom", 0x0000, 0x4000, CRC(f7df980f) SHA1(5ba14a7a2eedca331b033901080fa5d205e245ea))
-    ROM_LOAD_OPTIONAL("vzdos.rom",    0x4000, 0x2000, CRC(b6ed6084) SHA1(59d1cbcfa6c5e1906a32704fbf0d9670f0d1fd8b))
+    ROM_LOAD("vtechv21.rom", 0x0000, 0x4000, CRC(f7df980f) SHA1(5ba14a7a2eedca331b033901080fa5d205e245ea))
+    ROM_CART_LOAD(0, "rom\0", 0x04000, 0x27ff, ROM_NOMIRROR | ROM_OPTIONAL )
 ROM_END
 
 #define rom_vz300_21    rom_laser310
@@ -511,12 +512,42 @@ static void vtech1_floppy_getinfo(const device_class *devclass, UINT32 state, un
 	}
 }
 
+/* There were two memory expansions available for the Laser/VZ computers:
+
+   - a 16kb expansion without banking
+   - a 64kb expansion where the first bank is fixed and the other 3 are
+     banked in as needed
+
+   Both are externally connected devices and were not fully compatible
+   between Laser 110/210/310 computers, though they could be relativly
+   easily modified. */
+
 SYSTEM_CONFIG_START(vtech1)
     CONFIG_DEVICE(vtech1_printer_getinfo)
+    CONFIG_DEVICE(cartslot_device_getinfo)
     CONFIG_DEVICE(vtech1_cassette_getinfo)
     CONFIG_DEVICE(vtech1_snapshot_getinfo)
     CONFIG_DEVICE(vtech1_floppy_getinfo)
 	CONFIG_DEVICE(z80bin_quickload_getinfo)
+	CONFIG_RAM_DEFAULT (66 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(laser110)
+	CONFIG_IMPORT_FROM (vtech1)
+	CONFIG_RAM         ( 2 * 1024)
+	CONFIG_RAM         (18 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(laser210)
+	CONFIG_IMPORT_FROM (vtech1)
+	CONFIG_RAM         ( 6 * 1024)
+	CONFIG_RAM         (22 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(laser310)
+	CONFIG_IMPORT_FROM (vtech1)
+	CONFIG_RAM         (16 * 1024)
+	CONFIG_RAM         (32 * 1024)
 SYSTEM_CONFIG_END
 
 
@@ -524,20 +555,20 @@ SYSTEM_CONFIG_END
  Drivers
 ******************************************************************************/
 
-/*   YEAR  NAME        PARENT    COMPAT  MACHINE   INPUT   INIT  CONFIG  COMPANY                   FULLNAME */
-COMP(1983, laser110,        0,        0, laser110, vtech1, NULL, vtech1, "Video Technology",       "Laser 110"                     , 0)
-COMP(1983, las110de, laser110,        0, laser110, vtech1, NULL, vtech1, "Sanyo",                  "Laser 110 (Germany)"           , 0)
+/*   YEAR  NAME        PARENT    COMPAT  MACHINE   INPUT   INIT  CONFIG    COMPANY                   FULLNAME */
+COMP(1983, laser110,        0,        0, laser110, vtech1, NULL, laser110, "Video Technology",       "Laser 110"                     , 0)
+COMP(1983, las110de, laser110,        0, laser110, vtech1, NULL, laser110, "Sanyo",                  "Laser 110 (Germany)"           , 0)
 
-COMP(1983, laser200,        0,        0, laser200, vtech1, NULL, vtech1, "Video Technology",       "Laser 200"                     , 0)
-COMP(1983, vz200de,  laser200,        0, laser200, vtech1, NULL, vtech1, "Video Technology",       "VZ-200 (Germany & Netherlands)", 0)
-COMP(1983, fellow,   laser200,        0, laser200, vtech1, NULL, vtech1, "Salora",                 "Fellow (Finland)"              , 0)
-COMP(1983, tx8000,   laser200,        0, laser200, vtech1, NULL, vtech1, "Texet",                  "TX-8000 (UK)"                  , 0)
+COMP(1983, laser200,        0,        0, laser200, vtech1, NULL, laser110, "Video Technology",       "Laser 200"                     , 0)
+COMP(1983, vz200de,  laser200,        0, laser200, vtech1, NULL, laser110, "Video Technology",       "VZ-200 (Germany & Netherlands)", 0)
+COMP(1983, fellow,   laser200,        0, laser200, vtech1, NULL, laser110, "Salora",                 "Fellow (Finland)"              , 0)
+COMP(1983, tx8000,   laser200,        0, laser200, vtech1, NULL, laser110, "Texet",                  "TX-8000 (UK)"                  , 0)
 
-COMP(1984, laser210,        0,        0, laser210, vtech1, NULL, vtech1, "Video Technology",       "Laser 210"                     , 0)
-COMP(1984, vz200,    laser210,        0, laser210, vtech1, NULL, vtech1, "Dick Smith Electronics", "VZ-200 (Oceania)"              , 0)
-COMP(1984, las210de, laser210,        0, laser210, vtech1, NULL, vtech1, "Sanyo",                  "Laser 210 (Germany)"           , 0)
+COMP(1984, laser210,        0,        0, laser210, vtech1, NULL, laser210, "Video Technology",       "Laser 210"                     , 0)
+COMP(1984, vz200,    laser210,        0, laser210, vtech1, NULL, laser210, "Dick Smith Electronics", "VZ-200 (Oceania)"              , 0)
+COMP(1984, las210de, laser210,        0, laser210, vtech1, NULL, laser210, "Sanyo",                  "Laser 210 (Germany)"           , 0)
 
-COMP(1984, laser310,        0,        0, laser310, vtech1, NULL, vtech1, "Video Technology",       "Laser 310"                     , 0)
-COMP(1984, las31021, laser310,        0, laser310, vtech1, NULL, vtech1, "Video Technology",       "Laser 310 (BASIC V2.1)"        , 0)
-COMP(1984, vz300,    laser310,        0, laser310, vtech1, NULL, vtech1, "Dick Smith Electronics", "VZ-300 (Oceania)"              , 0)
-COMP(1984, vz300_21, laser310,        0, laser310, vtech1, NULL, vtech1, "Dick Smith Electronics", "VZ-300 (Oceania, BASIC V2.1)"  , 0)
+COMP(1984, laser310,        0,        0, laser310, vtech1, NULL, laser310, "Video Technology",       "Laser 310"                     , 0)
+COMP(1984, las31021, laser310,        0, laser310, vtech1, NULL, laser310, "Video Technology",       "Laser 310 (BASIC V2.1)"        , 0)
+COMP(1984, vz300,    laser310,        0, laser310, vtech1, NULL, laser310, "Dick Smith Electronics", "VZ-300 (Oceania)"              , 0)
+COMP(1984, vz300_21, laser310,        0, laser310, vtech1, NULL, laser310, "Dick Smith Electronics", "VZ-300 (Oceania, BASIC V2.1)"  , 0)

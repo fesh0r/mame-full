@@ -25,6 +25,11 @@ Machine driver:
       - fixed loading of the DOS ROM
       - preliminary printer emulation
 
+    Dirk Best <duke@redump.de>, March 2006
+      - 64K bank switched memory implemented
+      - better printer emulation
+      - cartridge support
+      
 Thanks go to:
 
     - Guy Thomason
@@ -35,8 +40,6 @@ Thanks go to:
 
 Todo:
 
-	- 64K bankswitched memory
-	- better Printer emulation
 	- Lightpen
 	- RS232 serial
 
@@ -52,6 +55,9 @@ Todo:
 #include "cpu/z80/z80.h"
 #include "sound/speaker.h"
 #include "image.h"
+
+#define LOG_VTECH1_LATCH 0
+#define LOG_VTECH1_FDC   0
 
 int vtech1_latch = -1;
 
@@ -73,80 +79,78 @@ static int vtech1_fdc_write = 0;
 static int vtech1_fdc_offs = 0;
 static int vtech1_fdc_latch = 0;
 
+static UINT8 *banked_mem;
 
 /******************************************************************************
  Machine Initialisation
 ******************************************************************************/
 
-static void common_init_machine(void)
+static void common_init_machine(int base)
 {
-	/* install DOS ROM? */
-    if (readinputport(0) & 0x40)
-    {
-    	memset(vtech1_fdc_data, 0, TRKSIZE_FM);
-    }
-    else
-    {
-        UINT8 *ROM = memory_region(REGION_CPU1);   
-        memset(&ROM[0x4000], 0x00, 0x2000);    	
-    }
+	/* memory configuration */
+	switch (mess_ram_size) {
+		case 18 * 1024:
+		case 22 * 1024:
+		case 32 * 1024:
+			/* install 16KB memory expansion */
+			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, base, base + 0x3fff, 0, 0, MRA8_RAM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, base + 0x3fff, 0, 0, MWA8_RAM);
+			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, base + 0x4000, 0xffff, 0, 0, MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base + 0x4000, 0xffff, 0, 0, MWA8_NOP);
+			break;
+		case 66 * 1024:
+			/* install 64KB memory expansion */
+			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, base, 0xbfff, 0, 0, MRA8_RAM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, 0xbfff, 0, 0, MWA8_RAM);
+			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, MRA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, MWA8_BANK1);        
+			if (!banked_mem) banked_mem = malloc(3 * 0x4000);
+			memory_set_bankptr(1, banked_mem);
+			break;		
+		default:
+			/* no memory expansion */
+			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, base, 0xffff, 0, 0, MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, 0xffff, 0, 0, MWA8_NOP);		
+	}
 }
 
-MACHINE_RESET(laser110)
+static void vtech1_machine_stop(void)
 {
-	/* install 16KB memory expansion? */
-    if(readinputport(0) & 0x80)
-    {
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_RAM);
-    }
-    else
-    {
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_NOP);
-    }
-	common_init_machine();
+	/* FIXME: memory should be freed here, but then it crashes on hard resets? */
+	/* if (banked_mem) free(banked_mem); */
 }
 
-MACHINE_RESET(laser210)
+MACHINE_START(laser110)
 {
-	/* install 16KB memory expansion? */
-    if(readinputport(0) & 0x80)
-    {
-        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MRA8_RAM);
-        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MWA8_RAM);
-    }
-    else
-    {
-        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MRA8_NOP);
-        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MWA8_NOP);
-    }
-	common_init_machine();
+	common_init_machine(0x8000);
+	add_exit_callback(vtech1_machine_stop);
+	return 0;
 }
 
-MACHINE_RESET(laser310)
+MACHINE_START(laser210)
 {
-	/* install 16KB memory expansion? */
-    if(readinputport(0) & 0x80)
-    {
-        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MRA8_RAM);
-        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MWA8_RAM);
-    }
-    else
-    {
-        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MRA8_NOP);
-        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MWA8_NOP);
-    }
-	common_init_machine();
+	common_init_machine(0x9000);
+	add_exit_callback(vtech1_machine_stop);
+	return 0;
+}
+
+MACHINE_START(laser310)
+{
+	common_init_machine(0xb800);
+	add_exit_callback(vtech1_machine_stop);
+	return 0;
 }
 
 
 /******************************************************************************
  Memory Bank Handling
 ******************************************************************************/
+
 WRITE8_HANDLER (vtech1_memory_bank_w)
 {
 	logerror("vtech1_memory_bank_w $%02X\n", data);
+	if (data >= 1 && data <= 3 && (mess_ram_size == (66 * 1024)))	/* 3 banks */
+		memory_set_bankptr(1, banked_mem + ((data - 1) * 0x4000));
 }
 
 
@@ -278,7 +282,8 @@ static void vtech1_get_track(void)
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		mame_fseek(vtech1_file(), offs, SEEK_SET);
 		size = mame_fread(vtech1_file(), vtech1_fdc_data, size);
-		logerror("get track @$%05x $%04x bytes\n", offs, size);
+		if (LOG_VTECH1_FDC)
+			logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
 	vtech1_fdc_offs = 0;
 	vtech1_fdc_write = 0;
@@ -293,7 +298,8 @@ static void vtech1_put_track(void)
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		mame_fseek(vtech1_file(), offs + vtech1_fdc_start, SEEK_SET);
 		size = mame_fwrite(vtech1_file(), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
-		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
+		if (LOG_VTECH1_FDC)
+			logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }
 }
 
@@ -313,16 +319,17 @@ READ8_HANDLER(vtech1_fdc_r)
 			if( vtech1_fdc_status & 0x80 )
 				vtech1_fdc_bits--;
 			data = (vtech1_data >> vtech1_fdc_bits) & 0xff;
-#if 0
-			logerror("vtech1_fdc_r bits %d%d%d%d%d%d%d%d\n",
-                (data>>7)&1,(data>>6)&1,(data>>5)&1,(data>>4)&1,
-                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 );
-#endif
+			if (LOG_VTECH1_FDC) {
+				logerror("vtech1_fdc_r bits %d%d%d%d%d%d%d%d\n",
+	                (data>>7)&1,(data>>6)&1,(data>>5)&1,(data>>4)&1,
+	                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 );
+			}
         }
 		if (vtech1_fdc_bits == 0)
         {
 			vtech1_data = vtech1_fdc_data[vtech1_fdc_offs];
-			logerror("vtech1_fdc_r %d : data ($%04X) $%02X\n", offset, vtech1_fdc_offs, vtech1_data);
+			if (LOG_VTECH1_FDC)
+				logerror("vtech1_fdc_r %d : data ($%04X) $%02X\n", offset, vtech1_fdc_offs, vtech1_data);
 			if(vtech1_fdc_status & 0x80)
             {
 				vtech1_fdc_bits = 8;
@@ -340,7 +347,8 @@ READ8_HANDLER(vtech1_fdc_r)
     case 3: /* write protect status (read-only) */
 		if (vtech1_drive >= 0)
 			data = vtech1_fdc_wrprot[vtech1_drive];
-		logerror("vtech1_fdc_r %d : write_protect $%02X\n", offset, data);
+		if (LOG_VTECH1_FDC)
+			logerror("vtech1_fdc_r %d : write_protect $%02X\n", offset, data);
         break;
     }
     return data;
@@ -369,7 +377,8 @@ WRITE8_HANDLER(vtech1_fdc_w)
             {
 				if (vtech1_track_x2[vtech1_drive] > 0)
 					vtech1_track_x2[vtech1_drive]--;
-				logerror("vtech1_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
+				if (LOG_VTECH1_FDC)	
+					logerror("vtech1_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
 				if ((vtech1_track_x2[vtech1_drive] & 1) == 0)
 					vtech1_get_track();
             }
@@ -381,7 +390,8 @@ WRITE8_HANDLER(vtech1_fdc_w)
             {
 				if (vtech1_track_x2[vtech1_drive] < 2*40)
 					vtech1_track_x2[vtech1_drive]++;
-				logerror("vtech1_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
+				if (LOG_VTECH1_FDC)
+					logerror("vtech1_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
 				if ((vtech1_track_x2[vtech1_drive] & 1) == 0)
 					vtech1_get_track();
             }
@@ -404,7 +414,8 @@ WRITE8_HANDLER(vtech1_fdc_w)
 						if (vtech1_data & 0x0010 ) value |= 0x04;
 						if (vtech1_data & 0x0004 ) value |= 0x02;
 						if (vtech1_data & 0x0001 ) value |= 0x01;
-						logerror("vtech1_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, vtech1_fdc_offs, vtech1_fdc_data[vtech1_fdc_offs], value, vtech1_data);
+						if (LOG_VTECH1_FDC)
+							logerror("vtech1_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, vtech1_fdc_offs, vtech1_fdc_data[vtech1_fdc_offs], value, vtech1_data);
 						vtech1_fdc_data[vtech1_fdc_offs] = value;
 						vtech1_fdc_offs = (vtech1_fdc_offs + 1) % TRKSIZE_FM;
 						vtech1_fdc_write++;
@@ -557,7 +568,8 @@ READ8_HANDLER(vtech1_keyboard_r)
  ************************************************/
 WRITE8_HANDLER(vtech1_latch_w)
 {
-	logerror("vtech1_latch_w $%02X\n", data);
+	if (LOG_VTECH1_LATCH)
+		logerror("vtech1_latch_w $%02X\n", data);
 	
 	/* cassette data bits toggle? */
 	if ((vtech1_latch ^ data ) & 0x06)
@@ -580,11 +592,13 @@ WRITE8_HANDLER(vtech1_latch_w)
 		m6847_gm1_w(0,	data & 0x08);
 		m6847_set_cannonical_row_height();
 		schedule_full_refresh();
-
-		if ((vtech1_latch ^ data) & 0x10)
-			logerror("vtech1_latch_w: change background %d\n", (data >> 4) & 1);
-		if ((vtech1_latch ^ data) & 0x08)
-			logerror("vtech1_latch_w: change mode to %s\n", (data & 0x08) ? "gfx" : "text");
+	
+		if (LOG_VTECH1_LATCH) {
+			if ((vtech1_latch ^ data) & 0x10)
+				logerror("vtech1_latch_w: change background %d\n", (data >> 4) & 1);
+			if ((vtech1_latch ^ data) & 0x08)
+				logerror("vtech1_latch_w: change mode to %s\n", (data & 0x08) ? "gfx" : "text");
+		}
 
 	}
 
@@ -614,10 +628,18 @@ READ8_HANDLER(vtech1_printer_r)
 
 WRITE8_HANDLER(vtech1_printer_w)
 {
+	static int prn_data;
 	
-	if (offset == 0x0e)
-		printer_output(image_from_devtype_and_index(IO_PRINTER, 0), data);
-	
+	switch (offset) {
+		case 0x0d:	/* strobe data to printer */
+			printer_output(image_from_devtype_and_index(IO_PRINTER, 0), prn_data);
+			break;
+		case 0x0e:	/* load output latch */
+			prn_data = data;
+			break;
+		default:
+			logerror("vtech1_printer_w $%02x, unknown offset %02x\n", data, offset);
+	}
 }
 
 
@@ -628,12 +650,13 @@ WRITE8_HANDLER(vtech1_printer_w)
 READ8_HANDLER(vtech1_serial_r)
 {
 	int data = 0xff;
+	logerror("vtech1_serial_r offset $%02x\n", offset);
 	return data;
 }
 
 WRITE8_HANDLER(vtech1_serial_w)
 {
-	logerror("vtech1_serial_w $%02X\n", data);		
+	logerror("vtech1_serial_w $%02x, offset %02x\n", data, offset);
 }
 
 

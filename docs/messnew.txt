@@ -25,6 +25,9 @@ System Driver Changes:
 - [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
   [Nate Woods]
 
+- [VTECH1] Added support for the 64k memory expansion, and cartridge support.
+  [Dirk Best]
+
 
 
 User Interface Changes:
