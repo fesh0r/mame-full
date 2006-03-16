@@ -1,6 +1,991 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hashfile>
-	<!-- MSX2 - Cassettes -->
+	<!-- Note: This list is provided as a record of known dumps for this system. -->
+	<!-- These checksums have not been validated and cannot be assumed correct. -->
+	<!-- They are provided here as a database to help the emulation of this system. -->
+	<!-- The <extrainfo> field is the mapper type. Values: -->
+	<!-- 0 standard (no mapper) -->
+	<!-- 1 msx-dos 2 -->
+	<!-- 2 konami5 with SCC -->
+	<!-- 3 konami4 without SCC -->
+	<!-- 4 ascii/8kb -->
+	<!-- 5 ascii/16kb -->
+	<!-- 6 Game Master 2 with SRAM -->
+	<!-- 7 ascii/8kb with 8kb SRAM -->
+	<!-- 8 ascii/16kb with 2kb SRAM -->
+	<!-- 9 R-Type -->
+	<!-- 10 konami mah-jong 2 -->
+	<!-- 11 Panasonic fm-pac -->
+	<!-- 12 Super Lode Runner -->
+	<!-- 13 Konami Synthesizer -->
+	<!-- 14 Cross Blaim -->
+	<!-- 15 Disk ROM (Philips/Sony) -->
+	<!-- 16 Korean 80-in-1 -->
+	<!-- 17 Korean 126-in-1 -->
+	<!-- (1) Games Compiled by Kaneda-->
+	<hash crc32="c99e5601" name="1942">
+		<year>1986</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="f5174422" name="A-Class Mahjong">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="c956e1df" name="A-Train">
+		<year>1989</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>8</extrainfo>
+	</hash>
+	<hash crc32="d2ee4051" name="Acrojet">
+		<year>1988</year>
+		<manufacturer>System Soft</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="0aedea40" name="Akumajyo Drakyula - Vampire Killer (1)">
+		<year>1986</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="5953d084" name="Akumajyo Drakyula - Vampire Killer (2)">
+		<year>1986</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="038c250d" name="Akumajyo Drakyula - Vampire Killer (3)">
+		<year>1986</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="217935d0" name="Akumajyo Drakyula - Vampire Killer (4)">
+		<year>1986</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="c29edd84" name="Aleste">
+		<year>1988</year>
+		<manufacturer>Compile</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="bcf03d8b" name="American Soccer">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c6f74489" name="Andorogynus">
+		<year>1988</year>
+		<manufacturer>Telenet</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="ae3167ee" name="Arctic">
+		<year>1989</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="00d36af6" name="Arkanoid 2">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="bfe150c4" name="Arsene Lupin 3rd - Babiron No Ougon Densetsu">
+		<year>1988</year>
+		<manufacturer>Toho</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c4096e6b" name="Arsene Lupin 3rd - Cariostoro No Siro">
+		<year>1987</year>
+		<manufacturer>Toho</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="225705cc" name="Arugiisu No Tsubasa">
+		<year>1988</year>
+		<manufacturer>Kogado</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3cb34efb" name="Ashiguine">
+		<year>1987</year>
+		<manufacturer>Bit2</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="47a82d74" name="Ashiguine 2">
+		<year>1987</year>
+		<manufacturer>T&amp;E Soft</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="353382ce" name="Ashiguine 3">
+		<year>1987</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="6524d9fc" name="Bubble Bobble">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="8528a795" name="Crimuzon">
+		<year>1987</year>
+		<manufacturer>Scap Trust</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="ec7a8012" name="Daikoukai Jidai">
+		<year>1990</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="a987a0d8" name="Daisenryaku">
+		<year>1986</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>8</extrainfo>
+	</hash>
+	<hash crc32="7098faf0" name="Darwin 4078">
+		<year>1987</year>
+		<manufacturer>Hudson</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="f221b845" name="Deep Forest">
+		<year>1987</year>
+		<manufacturer>Xain</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="5acbd591" name="Dires">
+		<year>1987</year>
+		<manufacturer>Telenet</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="e1148738" name="Double Vision">
+		<year>1988</year>
+		<manufacturer>Hard</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="49252882" name="Dragon Buster">
+		<year>1987</year>
+		<manufacturer>Namcot</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="7729e7a9" name="Dragon Quest">
+		<year>1986</year>
+		<manufacturer>Enix</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="0bf0c3f5" name="Dragon Quest 2">
+		<year>1987</year>
+		<manufacturer>Enix</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="98095852" name="Dragon Slayer 4">
+		<year>1987</year>
+		<manufacturer>Falcom</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="94982598" name="Druid">
+		<year>1988</year>
+		<manufacturer>Jaleco</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="9935e9bd" name="Dynamite Bowl">
+		<year>1987</year>
+		<manufacturer>Toshiba EMI</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="14913432" name="Eidolon">
+		<year>1986</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="a8e9ac9b" name="Erusurid - Elslid">
+		<year>1988</year>
+		<manufacturer>NCS</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="413d4700" name="Europe War">
+		<year>1992</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="53cce88d" name="F15 Strike Eagle">
+		<year>1987</year>
+		<manufacturer>System Soft</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="0e03847b" name="Famicle Parodic">
+		<year>1988</year>
+		<manufacturer>Bit2</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="7c867d98" name="Family Billiard">
+		<year>1987</year>
+		<manufacturer>Pack In Video</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="7030f2ab" name="Family Boxing">
+		<year>1988</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="356b7d2a" name="Family Stadium">
+		<year>1989</year>
+		<manufacturer>Namcot</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="1bdfaeeb" name="Fantasy Zone 2">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="cdcdc6c0" name="Fire Ball">
+		<year>1988</year>
+		<manufacturer>Humming Bird Soft</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="9f152e9b" name="Fleet Commander 2">
+		<year>1990</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="fbdafe4e" name="Gakuen Monogatari - High School Story">
+		<year>1988</year>
+		<manufacturer>Great</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="91955bcd" name="Gambler Jikochuushinha">
+		<year>1988</year>
+		<manufacturer>Gamearts</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="eb67d4d6" name="Gambler Jikochuushinha 2">
+		<year>1988</year>
+		<manufacturer>Gamearts</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="40e53ea3" name="Ganbare Goemon">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="2fb0ed30" name="Garyuuou">
+		<year>1987</year>
+		<manufacturer>Xain</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="b0a7800f" name="Gekitotsu Pennant Race (1)">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="c08faf0e" name="Gekitotsu Pennant Race (2)">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="c44c6330" name="Gekitotsu Pennant Race 2">
+		<year>1989</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="075ab646" name="Genchouhishi">
+		<year>1992</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="3b5b3fd8" name="Genghis Khan">
+		<year>1988</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="28094960" name="Girly Block">
+		<year>1988</year>
+		<manufacturer>Telenet</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="4b61ae91" name="Gofer No Yabou Episode 2 (1)">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="0db7132f" name="Gofer No Yabou Episode 2 (2)">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="8df56d42" name="Hacker">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="e0e72736" name="Hai No Majutsushi">
+		<year>1989</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>10</extrainfo>
+	</hash>
+	<hash crc32="1d7040af" name="Hardball">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="6ac18445" name="Heroes Of The Lance">
+		<year>1991</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="1123545c" name="High School Kimengumi">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3ab5ae57" name="Hinotori (1)">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="d95116b0" name="Hinotori (2)">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="f35df283" name="Hole In One Special (1)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="4708bdd1" name="Hole In One Special (2)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="00db86c8" name="Hydlide 3">
+		<year>1987</year>
+		<manufacturer>T&amp;E Soft</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="935f1bde" name="Ide Yousuke No Jissen Mahjong">
+		<year>1988</year>
+		<manufacturer>Pack In Video</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="a9a66075" name="Ikari">
+		<year>1987</year>
+		<manufacturer>SNK</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="881b3849" name="Inindou Datou Nobunaga">
+		<year>1991</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="8bc34dca" name="Isin No Arashi">
+		<year>1989</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="2c2924ed" name="Jyansei (1)">
+		<year>1986</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="00b8e82e" name="Jyansei (2)">
+		<year>1986</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="c8ff3829" name="Jyanyuu">
+		<year>1987</year>
+		<manufacturer>Tecno Soft</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="053aa66e" name="Kenpelen Chess">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="5c859406" name="Kikikaikai">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="23b78a2d" name="King Kong 2">
+		<year>1986</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="b1cb1052" name="King's Valley 2">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="774c70fc" name="King's Valley 2 (Edit Contest Version)">
+		<year>1988</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="167a53da" name="Kisei">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="0767af40" name="Kitahei">
+		<year>1986</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="4e82660d" name="Kontora - Contra">
+		<year>1989</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="fb348de6" name="Koronis Rift">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="dcb1a61e" name="Kyouto Ryu No Tera Satsujin Jiken">
+		<year>1988</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="9926f43c" name="Labyrinth">
+		<year>1987</year>
+		<manufacturer>Pack In Video</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c7521809" name="Lempereur">
+		<year>1990</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="f87bd172" name="Mad Rider">
+		<year>1987</year>
+		<manufacturer>Carry Lab</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="f4d127c0" name="Maison Ikkoku">
+		<year>1987</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="94191aae" name="Maison Ikkoku Final">
+		<year>1988</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="17baf3ed" name="Makaijima - Higemaru">
+		<year>1987</year>
+		<manufacturer>Capcom</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="f7a9591d" name="Malaya No Hihou">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="fafe1303" name="Metal Gear">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="18b1f34b" name="Metal Gear 2 - Solid Snake">
+		<year>1990</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="dcee5080" name="Metal Gear 2 - Solid Snake (Demo Version)">
+		<year>1990</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="70aa93cf" name="Mirai - Future">
+		<year>1987</year>
+		<manufacturer>Xain</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3f69a464" name="Mississippi Satsujin Jiken">
+		<year>1987</year>
+		<manufacturer>Jaleco</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="68745c64" name="Moero! Nettou Yakyuu'88">
+		<year>1988</year>
+		<manufacturer>Jaleco</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="ebccb796" name="Mon Mon Monstar">
+		<year>1989</year>
+		<manufacturer>Hot-B</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="53c25b6b" name="MSX-FAN Fandom Library 2">
+		<year>1988</year>
+		<manufacturer>Tecnopolis Soft</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="790d5335" name="MSX-FAN Fandom Library 3">
+		<year>1988</year>
+		<manufacturer>Tecnopolis Soft</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="758c6087" name="Nekketsu Juudou">
+		<year>1989</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="f56a00e6" name="Ninja Kun">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="0ff8e2c7" name="Nobunaga No Yabou - Bushou Fuuunroku">
+		<year>1991</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="69c11d81" name="Nobunaga No Yabou - Sengoku Gunyuuden">
+		<year>1989</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="653f1c73" name="Nobunaga No Yabou - Zenkokuban">
+		<year>1987</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="f2544e2e" name="Ogre">
+		<year>1986</year>
+		<manufacturer>System Soft</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="0a9f8d6c" name="Outrun">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="7df16fc8" name="Pac-Mania">
+		<year>1989</year>
+		<manufacturer>Namcot</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="252798f6" name="Pachipro Densetsu">
+		<year>1988</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="b1b24da1" name="Penguin-Kun Wars 2">
+		<year>1988</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="e85a4a6b" name="Predator">
+		<year>1988</year>
+		<manufacturer>Pack In Video</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c065bc29" name="Pro Baseball Fan">
+		<year>1987</year>
+		<manufacturer>Telenet</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="2abb1ec4" name="Professional Mahjong Gokuh">
+		<year>1988</year>
+		<manufacturer>Chatnoir</manufacturer>
+		<extrainfo>8</extrainfo>
+	</hash>
+	<hash crc32="1b285fe3" name="Project A2">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="a0014e7f" name="Quarth">
+		<year>1990</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="c4ccb75f" name="Quarth (Demo Version)">
+		<year>1990</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="8d94af7d" name="Quinpl">
+		<year>1988</year>
+		<manufacturer>Bit2</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="a884911c" name="R-Type">
+		<year>1988</year>
+		<manufacturer>Irem</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>9</extrainfo>
+	</hash>
+	<hash crc32="84461e73" name="Rastan Saga">
+		<year>1988</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="babc68f2" name="Relics">
+		<year>1986</year>
+		<manufacturer>Bothtec</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="6eee12c4" name="Replicart">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="5ccc09ab" name="Return Of Jelda">
+		<year>1987</year>
+		<manufacturer>Carry Lab</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="e79aa962" name="Rick &amp; Mick's Adventure">
+		<year>1987</year>
+		<manufacturer>Humming Bird Soft</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="17f9ee7f" name="Romancia">
+		<year>1986</year>
+		<manufacturer>Falcom</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="fb9e42e1" name="Royal Blood">
+		<year>1991</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="b83aa6f5" name="Sangokusi">
+		<year>1988</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="c89b93b5" name="Sangokusi 2">
+		<year>1991</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="fe797d88" name="Satsujin Club - Murder Club">
+		<year>1988</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="226795e0" name="Scramble Formation">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="e37b681e" name="Seikima 2 Special">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3b815dc6" name="Shanghai">
+		<year>1987</year>
+		<manufacturer>System Soft</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="f640670c" name="Shougi Sinan 2">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="39e1c37a" name="Siryousensen - War Of The Dead">
+		<year>1987</year>
+		<manufacturer>Victor</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="27405eed" name="Space Manbow">
+		<year>1989</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="cbdfcc35" name="Star Virgin">
+		<year>1988</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="4a3abb65" name="Strategic Mars">
+		<year>1989</year>
+		<manufacturer>dB-Soft</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="187d3a21" name="Suikoden">
+		<year>1989</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="8df9945a" name="Super Daisenryaku">
+		<year>1988</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>8</extrainfo>
+	</hash>
+	<hash crc32="80ecac11" name="Super Lode Runner">
+		<year>1987</year>
+		<manufacturer>Irem</manufacturer>
+		<extrainfo>12</extrainfo>
+	</hash>
+	<hash crc32="f00b4bbc" name="Super Pierrot">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="b2392ef3" name="Super Rambo Special">
+		<year>1986</year>
+		<manufacturer>Pack In Video</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="5a5be701" name="Super Runner">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="cbb00ef1" name="Super Triton">
+		<year>1986</year>
+		<manufacturer>Sein</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="ae82a874" name="Taiyouno Sinden - Asteka 2">
+		<year>1987</year>
+		<manufacturer>Falcom</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c31f459c" name="Teitoku No Ketsudan">
+		<year>1991</year>
+		<manufacturer>Koei</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="7e637801" name="Tengoku Yoitoko">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="aa598dfd" name="Tetris">
+		<year>1988</year>
+		<manufacturer>Bps</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="5f354e65" name="The Cockpit">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="8ee8212c" name="The Return Of Ishtar">
+		<year>1988</year>
+		<manufacturer>Namcot</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="96b33497" name="Topple Zip">
+		<year>1987</year>
+		<manufacturer>Bothtec</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="ff7395a3" name="Tsurikichi Sanpei Blue Marlin Hen">
+		<year>1988</year>
+		<manufacturer>Cross Media</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="24238b21" name="Tsurikichi Sanpei Tsurisennin Hen">
+		<year>1989</year>
+		<manufacturer>Cross Media</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="37b9e10f" name="Ultima Exodus">
+		<year>1987</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="e564a25f" name="Urusei Yatsura">
+		<year>1987</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="1f1f1f26" name="Usas (1)">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="30396650" name="Usas (2)">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="94ebc319" name="Victorious Nine 2">
+		<year>1987</year>
+		<manufacturer>Taito</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="08a5ca60" name="Wizardry">
+		<year>1988</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="aea8d064" name="Woody Poco">
+		<year>1987</year>
+		<manufacturer>dB-Soft</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="97591725" name="Xevious - Fardraut Saga">
+		<year>1989</year>
+		<manufacturer>Namcot</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="ff974ee3" name="Yaksa">
+		<year>1987</year>
+		<manufacturer>Wolf Team</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="712ae3c6" name="Yuureikun">
+		<year>1988</year>
+		<manufacturer>System Sacom</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="d153b2f2" name="Zanac-EX">
+		<year>1986</year>
+		<manufacturer>Pony Cannon</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="2605031e" name="Zoids">
+		<year>1988</year>
+		<manufacturer>Toshiba EMI</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="a29e6ab4" name="Zombie Hunter">
+		<year>1989</year>
+		<manufacturer>Hi-Score</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="d0ececc6" name="Zukkoke Yajikita Onmitsudoutyuu (1)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="4968e84e" name="Zukkoke Yajikita Onmitsudoutyuu (2)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<!-- (2) Applications (Education / Utility / Business / Etc.) -->
+	<hash crc32="2ffb49c3" name="Cheese 2">
+		<year>1985</year>
+		<manufacturer>Nipon Electronics</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="006fba38" name="Disk Basic 1.0 (For FS-FD351)">
+		<year>1985</year>
+		<manufacturer>National</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="4c9b8214" name="Disk Basic 1.0 (For FS-FD1)">
+		<year>1987</year>
+		<manufacturer>Panasonic</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="4b673b29" name="Disk Basic 1.0 (For FS-FD1A)">
+		<year>1987</year>
+		<manufacturer>Panasonic</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="af99376f" name="Disk Basic 1.0 (For HBD-F1/HB-F900/HB-F1XD/HB-F1XDmk2)">
+		<year>1987</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="a21f5266" name="Disk Basic 1.0 (For HB-F1XDJ)">
+		<year>1988</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="04e4e533" name="Disk Basic 1.0 (For HB-F1XV)">
+		<year>1989</year>
+		<manufacturer>Sony</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="0e84505d" name="FM Pana Amusement Cartridge (FM-PAC)">
+		<year>1988</year>
+		<manufacturer>Panasoft</manufacturer>
+		<extrainfo>11</extrainfo>
+	</hash>
+	<hash crc32="33c37313" name="Garakuta">
+		<year>1988</year>
+		<manufacturer>Wachi Electronics</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="40313fec" name="Halnote">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<status>(Not Playable / System Disk Needs)</status>
+	</hash>
+	<hash crc32="ef02e4f3" name="Japanese MSX-Write">
+		<year>1986</year>
+		<manufacturer>Ascii</manufacturer>
+		<status>(MSX2 Mode / Not Playable / Kanji ROM Needs)</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="459478cb" name="Japanese MSX-Write II">
+		<year>1988</year>
+		<manufacturer>Ascii</manufacturer>
+		<status>(Kanji ROM Needs)</status>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="3b8fdf44" name="Kanji Rom - JIS 1st Class (For Japanese MSX-Write)">
+		<manufacturer>0</manufacturer>
+	</hash>
+	<hash crc32="17e58926" name="Kanji Rom - JIS 1st+2nd Class (For Japanese MSX-Write II)">
+		<manufacturer>0</manufacturer>
+	</hash>
+	<hash crc32="084c5803" name="Konami's Game Master 2">
+		<year>1987</year>
+		<manufacturer>Konami</manufacturer>
+		<status>(MSX2 Mode)</status>
+		<extrainfo>6</extrainfo>
+	</hash>
+	<hash crc32="90e893ba" name="MSX Audio (FS-CA1)">
+		<year>1988</year>
+		<manufacturer>Panasoic</manufacturer>
+		<status>(Includes I/O-accessed Device)</status>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="a13615d2" name="MSX Basic-Kun Plus">
+		<year>1988</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="7122e8e3" name="Synthe Saurus 1.1">
+		<year>1988</year>
+		<manufacturer>Bit2</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<!-- (3) Sample or System Disk For Rom Cartridge -->
+	<hash crc32="b35b30f4" name="Sample Disk (For MSX Basic-Kun Plus)">
+		<year>1988</year>
+		<manufacturer>Ascii</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ce3b09c0" name="Sample &amp; System Disk (For FS-FD1/FD1A/PW1)">
+		<year>1987</year>
+		<manufacturer>Panasonic</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="2ec98b57" name="System Disk #1 (For Halnote)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5899d0ae" name="System Disk #2 (For Halnote)">
+		<year>1987</year>
+		<manufacturer>Hal</manufacturer>
+		<status>Not Playable</status>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<!-- TOSEC data from here down. version?-->
+	<!-- MSX2 - Cassettes-->
 	<hash crc32="3a90e775" md5="769b3f0b1208a21d330ea2f90419329f" name="Games Collection, The - Bankbuster (Tape 4 of 6 Side B)">
 		<year>1988</year>
 		<manufacturer>Eurosoft</manufacturer>
