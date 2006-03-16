@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <hashfile>
 	<!-- these results are based on a modified mess054 version -->
 	<!-- some programs will not work with your version (deskmate2, storm tandy mode, ...) -->
@@ -55,7 +56,7 @@
 		<manufacturer>not working</manufacturer>
 	</hash>
 	<hash crc32="bed9e4ea" name="cpm86v11.dsk"/>
-	<hash crc32="155314cd" name="cpm86v11.qm ("/>
+	<hash crc32="155314cd" name="cpm86v11.qm"/>
 	<hash crc32="ddfe9550" name="dos11.dsk">
 		<year>MSDOS</year>
 		<manufacturer>boot sector not IBMPC/MSDOS2? conform; not working</manufacturer>
@@ -588,15 +589,6 @@
 	<hash crc32="ec90b6da" name="ultima5_3of4.dsk"/>
 	<hash crc32="7d2001bc" name="ultima5_4of4.dsk"/>
 	<!-- basic_stamp.td0 | MSDOS -->
-	<hash crc32="fb591430" name="pharaohs_tomb1.dsk">
-		<year>MSDOS; CGA graphics</year>
-	</hash>
-	<hash crc32="f71438db" name="sierra_demopack1.dsk">
-		<year>MSDOS; HERCULES, PCJR graphics; PCJR sound</year>
-	</hash>
-	<hash crc32="55f02d0c" name="arctic_adventure1.dsk">
-		<year>MSDOS; PCJR graphics</year>
-	</hash>
 	<hash crc32="0bd2bbba" name="transylvania_1000.dsk">
 		<year>BOOT; MSDOS; PCJR graphics</year>
 		<manufacturer>t1000hx booting trouble</manufacturer>
