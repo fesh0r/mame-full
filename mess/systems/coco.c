@@ -156,7 +156,7 @@ static ADDRESS_MAP_START( dgnalpha_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xff90, 0xffbf) AM_NOP
 	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
 	AM_RANGE(0xffe0, 0xffef) AM_NOP
-	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x3ff0)
+	AM_RANGE(0xfff0, 0xffff) AM_READ(dragon_alpha_mapped_irq_r)
 ADDRESS_MAP_END
 
 

@@ -1562,6 +1562,13 @@ static READ8_HANDLER ( d_pia1_pb_r_coco2 )
 
 
 
+READ8_HANDLER(dragon_alpha_mapped_irq_r)
+{
+	return dragon_rom_bank[0x3ff0 + offset];
+}
+
+
+
 /***************************************************************************
   Misc
 ***************************************************************************/
