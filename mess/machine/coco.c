@@ -88,7 +88,7 @@ static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
 static int gime_firq, gime_irq;
 static int cart_line, cart_inserted;
-static UINT8 pia0_pb, pia1_pb1, soundmux_status;
+static UINT8 soundmux_status;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
 
@@ -101,7 +101,6 @@ static READ8_HANDLER (  d_pia1_pa_r );
 static READ8_HANDLER (  d_pia1_pb_r_coco );
 static READ8_HANDLER (  d_pia1_pb_r_coco2 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
-static WRITE8_HANDLER ( d_pia0_pb_w );
 static WRITE8_HANDLER ( dragon64_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_cb2_w);
 static WRITE8_HANDLER ( d_pia0_cb2_w);
@@ -140,22 +139,13 @@ static UINT8 *dragon_rom_bank;					/* Dragon 64 / Alpha rom bank in use */
 static void dragon_page_rom(int	romswitch);
 
 /* Dragon Alpha only */
-
-static UINT8	pia2_pa;
-static UINT8	pia2_pb;
-
-static READ8_HANDLER ( dgnalpha_pia2_pa_r );
-static READ8_HANDLER ( dgnalpha_pia2_pb_r );
 static WRITE8_HANDLER ( dgnalpha_pia2_pa_w );
-static WRITE8_HANDLER ( dgnalpha_pia2_pb_w );
-static WRITE8_HANDLER ( d_pia2_ca2_w);
 static void d_pia2_firq_a(int state);
 static void d_pia2_firq_b(int state);
 
 static int pia2_firq_a, pia2_firq_b;
 
 static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after reset */
-static int alpha_nmi_en;			/* Is ALpha NMI enabled ? */
 
 /* End Dragon Alpha */
 
@@ -169,7 +159,6 @@ static int alpha_nmi_en;			/* Is ALpha NMI enabled ? */
  * (assuming MAME_DEBUG is on).  "Frequent" options are options that happen
  * enough that they might get in the way.
  */
-#ifdef MAME_DEBUG
 #define LOG_PAK			0	/* [Sparse]   Logging on PAK trailers */
 #define LOG_INT_MASKING	0	/* [Sparse]   Logging on changing GIME interrupt masks */
 #define LOG_CASSETTE	0	/* [Sparse]   Logging when cassette motor changes state */
@@ -184,22 +173,6 @@ static int alpha_nmi_en;			/* Is ALpha NMI enabled ? */
 #define LOG_IRQ_RECALC	0
 #define LOG_D64MEM		0
 #define LOG_VBORD		0
-#else /* !MAME_DEBUG */
-#define LOG_PAK			0
-#define LOG_CASSETTE	0
-#define LOG_INT_MASKING	0
-#define LOG_TIMER_SET   0
-#define LOG_INT_TMR		0
-#define LOG_INT_COCO3	0
-#define LOG_GIME		0
-#define LOG_MMU			0
-#define LOG_FLOPPY		0
-#define LOG_TIMER       0
-#define LOG_DEC_TIMER	0
-#define LOG_IRQ_RECALC	0
-#define LOG_D64MEM		0
-#define LOG_VBORD		0
-#endif /* MAME_DEBUG */
 
 static void coco3_timer_hblank(void);
 static int count_bank(void);
@@ -265,7 +238,7 @@ static struct pia6821_interface coco_pia_intf[] =
 	/* PIA 0 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -282,7 +255,7 @@ static struct pia6821_interface coco2_pia_intf[] =
 	/* PIA 0 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -299,7 +272,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 	/* PIA 0 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, d_pia1_pb_r_coco2, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
 
@@ -316,7 +289,7 @@ static struct pia6821_interface dragon64_pia_intf[] =
 	/* PIA 0 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -334,7 +307,7 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 	/* PIA 0 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -347,8 +320,8 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 
 	/* PIA 2 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ dgnalpha_pia2_pa_r,dgnalpha_pia2_pb_r, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ dgnalpha_pia2_pa_w,dgnalpha_pia2_pb_w, d_pia2_ca2_w,0,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ dgnalpha_pia2_pa_w, 0, 0, 0,
 		/*irqs	 : A/B	   		   */ d_pia2_firq_a, d_pia2_firq_b
 	}
 
@@ -552,13 +525,13 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 		paklength = 0xff00;
 
 	/* PAK files reflect the fact that JeffV's emulator did not appear to
-		* differentiate between RAM and ROM memory.  So what we do when a PAK
-		* loads is to copy the ROM into RAM, load the PAK into RAM, and then
-		* copy the part of RAM corresponding to PAK ROM to the actual PAK ROM
-		* area.
-		*
-		* It is ugly, but it reflects the way that JeffV's emulator works
-		*/
+	 * differentiate between RAM and ROM memory.  So what we do when a PAK
+	 * loads is to copy the ROM into RAM, load the PAK into RAM, and then
+	 * copy the part of RAM corresponding to PAK ROM to the actual PAK ROM
+	 * area.
+	 *
+	 * It is ugly, but it reflects the way that JeffV's emulator works
+	 */
 
 	memcpy(rambase + 0x8000, rombase, 0x4000);
 	memcpy(rambase + 0xC000, pakbase, 0x3F00);
@@ -1079,8 +1052,10 @@ void dragon_sound_update(void)
 	/* Call this function whenever you need to update the sound. It will
 	 * automatically mute any devices that are switched out.
 	 */
+	int pia1_pb1 = pia_get_output_b(1) & 0x02;
 
-	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
+	if (soundmux_status & SOUNDMUX_STATUS_ENABLE)
+	{
 		switch(soundmux_status) {
 		case SOUNDMUX_STATUS_ENABLE:
 			/* DAC */
@@ -1186,7 +1161,10 @@ static int keyboard_r(void)
 	const char *joyport_tag;
 	int joyval;
 	static const int joy_rat_table[] = {15, 24, 42, 33 };
+	UINT8 pia0_pb;
 	
+	pia0_pb = pia_get_output_b(0);
+
 	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
 	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
 	if ((input_port_2_r(0) | pia0_pb) != 0xff) porta &= ~0x04;
@@ -1243,11 +1221,6 @@ static WRITE8_HANDLER ( d_pia0_pa_w )
 	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX) {
 		coco_hiresjoy_w(data & 0x04);
 	}
-}
-
-static WRITE8_HANDLER ( d_pia0_pb_w )
-{
-	pia0_pb = data;
 }
 
 /* The following hacks are necessary because a large portion of cartridges
@@ -1331,7 +1304,7 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 			/* If strobe bit is high send data from pia0 port b to dragon parallel printer */
 			if (data&2)
 			{
-				printer_output(printer_image(),pia0_pb);
+				printer_output(printer_image(), pia_get_output_b(0));
 			}
 			break;
 	}
@@ -1362,8 +1335,7 @@ static WRITE8_HANDLER( d_pia1_pb_w )
 	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
 	 */
 
-	 pia1_pb1 = ((data & 0x02) ? 127 : 0);
-	 dragon_sound_update();
+	dragon_sound_update();
 }
 
 enum
@@ -1398,60 +1370,37 @@ static WRITE8_HANDLER( dragon64_pia1_pb_w )
 	CB1				DRQ from WD2797 disk controler.
 ***************************************************************************/
   
-static READ8_HANDLER( dgnalpha_pia2_pa_r )
-{
-	return 0;
-	/*return pia2_pa;*/
-}
-
-static READ8_HANDLER( dgnalpha_pia2_pb_r )
-{
-	return 0;
-}
-
 static WRITE8_HANDLER( dgnalpha_pia2_pa_w )
 {
 	int	bc_flags;		/* BCDDIR/BC1, as connected to PIA2 port a bits 0 and 1 */
-
-	pia2_pa = data;
 
 	/* If bit 2 of the pia2 ddra is 1 then this pin is an output so use it */
 	/* to control the paging of the boot and basic roms */
 	/* Otherwise it set as an input, with an internal pull-up so it should */
 	/* always be high (enabling boot rom) */
-	if(pia_get_ddr_a(2) & 0x04)
+	if (pia_get_ddr_a(2) & 0x04)
 	{
 		dragon_page_rom(data & 0x04);	/* bit 2 controls boot or basic rom */
 	}
 	
 	/* Bits 0 and 1 for pia2 port a control the BCDIR and BC1 lines of the */
 	/* AY-8912 */
-	bc_flags = pia2_pa & 0x03;	/* mask out bits */
+	bc_flags = data & 0x03;	/* mask out bits */
 	
 	switch (bc_flags)
 	{
 		case 0x00	: 		/* Inactive, do nothing */
 			break;			
 		case 0x01	: 		/* Write to selected port */
-			AY8910_write_port_0_w(0,pia2_pb);
+			AY8910_write_port_0_w(0, pia_get_output_b(2));
 			break;
 		case 0x02	: 		/* Read from selected port */
-			pia2_pb=AY8910_read_port_0_r(0);
+			pia_set_input_b(2, AY8910_read_port_0_r(0));
 			break;
 		case 0x03	:		/* Select port to write to */
-			AY8910_control_port_0_w(0,pia2_pb);
+			AY8910_control_port_0_w(0, pia_get_output_b(2));
 			break;
 	}
-}
-
-static WRITE8_HANDLER( dgnalpha_pia2_pb_w )
-{
-	pia2_pb = data;
-}
-
-static WRITE8_HANDLER ( d_pia2_ca2_w )
-{
-	alpha_nmi_en = data;	// used to enable/disable NMI ?
 }
 
 /* Controls rom paging in Dragon 64, and Dragon Alpha */
@@ -1490,8 +1439,8 @@ static void	dgnalpha_fdc_callback(int event)
 		    if(dgnalpha_just_reset)
 				dgnalpha_just_reset=0;
 			else
-			{	
-				if(alpha_nmi_en) 
+			{
+				if (pia_2_ca2_r(0)) 
 					cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 			}
 			break;
@@ -1566,12 +1515,16 @@ static WRITE8_HANDLER ( d_pia1_ca2_w )
 		CASSETTE_MASK_MOTOR);
 }
 
+
+
 static  READ8_HANDLER ( d_pia1_pa_r )
 {
 	return (cassette_input(cassette_device_image()) >= 0) ? 1 : 0;
 }
 
-static  READ8_HANDLER ( d_pia1_pb_r_coco )
+
+
+static READ8_HANDLER ( d_pia1_pb_r_coco )
 {
 	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
 	 * on the CoCo serial-in (pb0). Serial-in not yet implemented.
@@ -1580,7 +1533,7 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco )
 	int result;
 
 	if (mess_ram_size >= 0x8000)
-		result = (pia0_pb & 0x80) >> 5;
+		result = (pia_get_output_b(0) & 0x80) >> 5;
 	else if (mess_ram_size >= 0x4000)
 		result = 0x04;
 	else
@@ -1589,7 +1542,9 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco )
 	return result;
 }
 
-static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
+
+
+static READ8_HANDLER ( d_pia1_pb_r_coco2 )
 {
 	/* This handles the reading of the memory sense switch (pb2) for the CoCo 2 and 3,
 	 * and serial-in (pb0). Serial-in not yet implemented.
@@ -1601,9 +1556,11 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
 	else if (mess_ram_size <= 0x4000)
 		result = 0x04;					/* 16K: wire pia1_pb2 high */
 	else
-		result = (pia0_pb & 0x40) >> 4;		/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
+		result = (pia_get_output_b(0) & 0x40) >> 4;		/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
 	return result;
 }
+
+
 
 /***************************************************************************
   Misc
@@ -1675,6 +1632,8 @@ static void d_sam_set_memorysize(int val)
 	static int vram_sizes[] = { 0x1000, 0x4000, 0x10000, 0x10000 };
 	m6847_set_ram_size(vram_sizes[val % 4]);
 }
+
+
 
 /***************************************************************************
   CoCo 3 Timer
@@ -2431,7 +2390,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
     pia2_firq_a = CLEAR_LINE;
 	pia2_firq_b = CLEAR_LINE;
 
-	pia0_pb = pia1_pb1 = soundmux_status = 0;
+	soundmux_status = 0;
 	joystick_axis = joystick = 0;
 	d_dac = 0;
 
@@ -2493,7 +2452,6 @@ MACHINE_START( dgnalpha )
 	/* dgnalpha_just_reset, is here to flag that we should ignore the first irq generated */
 	/* by the WD2797, it is reset to 0 after the first inurrupt */
 	dgnalpha_just_reset=1;
-	alpha_nmi_en=1;
 	
 	wd179x_init(WD_TYPE_179X,dgnalpha_fdc_callback);
 

@@ -25,10 +25,6 @@
 //  GLOBAL VARIABLES
 //============================================================
 
-// current frameskip/autoframeskip settings
-extern int			frameskip;
-extern int			autoframeskip;
-
 // speed throttling
 extern int			throttle;
 
@@ -51,5 +47,7 @@ extern UINT8		blit_swapxy;
 void win_pause(int pause);
 void win_orient_rect(rectangle *rect);
 void win_disorient_rect(rectangle *rect);
+void win_set_frameskip(int frameskip);		// <0 = auto
+int win_get_frameskip(void);				// <0 = auto
 
 #endif

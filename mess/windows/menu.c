@@ -1173,6 +1173,7 @@ static void prepare_menus(void)
 	int has_config, has_dipswitch, has_keyboard, has_analog, has_misc;
 	const input_port_entry *in;
 	UINT16 in_cat_value = 0;
+	int frameskip;
 
 	if (!win_menu_bar)
 		return;
@@ -1182,6 +1183,8 @@ static void prepare_menus(void)
 		setup_joystick_menu();
 		joystick_menu_setup = 1;
 	}
+
+	frameskip = win_get_frameskip();
 
 	has_config		= input_has_input_class(INPUT_CLASS_CONFIG);
 	has_dipswitch	= input_has_input_class(INPUT_CLASS_DIPSWITCH);
@@ -1222,9 +1225,9 @@ static void prepare_menus(void)
 																												: MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			autoframeskip								? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			(frameskip < 0)								? MFS_CHECKED : MFS_ENABLED);
 	for (i = 0; i < FRAMESKIP_LEVELS; i++)
-		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i))			? MFS_CHECKED : MFS_ENABLED);
+		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i,		(frameskip == i)							? MFS_CHECKED : MFS_ENABLED);
 
 	// if we are using categorized input, we need to properly checkmark the categories
 	if (use_input_categories)
@@ -1616,7 +1619,7 @@ static int invoke_command(UINT command)
 #endif
 
 		case ID_FRAMESKIP_AUTO:
-			autoframeskip = 1;
+			win_set_frameskip(-1);
 			break;
 
 		case ID_HELP_ABOUT:
@@ -1637,8 +1640,7 @@ static int invoke_command(UINT command)
 			if ((command >= ID_FRAMESKIP_0) && (command < ID_FRAMESKIP_0 + FRAMESKIP_LEVELS))
 			{
 				// change frameskip
-				frameskip = command - ID_FRAMESKIP_0;
-				autoframeskip = 0;
+				win_set_frameskip(command - ID_FRAMESKIP_0);
 			}
 			else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
 			{

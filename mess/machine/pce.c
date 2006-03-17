@@ -142,7 +142,7 @@ DRIVER_INIT( tg16 )
 /* todo: how many input ports does the PCE have? */
 WRITE8_HANDLER ( pce_joystick_w )
 {
-	set_h6280io_buffer(data);
+	h6280io_set_buffer(data);
     /* bump counter on a low-to-high transition of bit 1 */
     if((!joystick_data_select) && (data & JOY_CLOCK))
     {
@@ -159,7 +159,7 @@ WRITE8_HANDLER ( pce_joystick_w )
     }
 }
 
- READ8_HANDLER ( pce_joystick_r )
+READ8_HANDLER ( pce_joystick_r )
 {
 	UINT8 ret;
 	int data = readinputport(0);

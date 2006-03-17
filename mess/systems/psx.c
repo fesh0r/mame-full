@@ -17,8 +17,7 @@
 #include "devices/snapquik.h"
 #include "includes/psx.h"
 #include "sound/psx.h"
-
-extern void mips_stop( void );
+#include "debugger.h"
 
 struct
 {
@@ -89,7 +88,10 @@ static OPBASE_HANDLER( psx_setopbase )
 		}
 
 		memory_set_opbase_handler( 0, NULL );
-		mips_stop();
+#ifdef MAME_DEBUG
+		DEBUGGER_BREAK;
+		CALL_MAME_DEBUG;
+#endif
 		return ~0;
 	}
 	return address;

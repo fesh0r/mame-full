@@ -141,6 +141,9 @@ CPUS+=PENTIUM
 CPUS+=PPC603
 #CPUS+=SE3208
 #CPUS+=MC68HC11
+#CPUS += ADSP21062
+#CPUS += DSP56156
+#CPUS += RSP
 CPUS+=Z80GB
 CPUS+=CDP1802
 CPUS+=SC61860
@@ -240,6 +243,7 @@ SOUNDS+=ES5503
 # Archive definitions
 DRVLIBS = \
 	$(OBJ)/coco.a     \
+	$(OBJ)/mc10.a     \
 	$(OBJ)/apple.a    \
 	$(OBJ)/apexc.a	  \
 	$(OBJ)/pdp1.a	  \
@@ -444,13 +448,17 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/formats/coco_cas.o	\
 	$(OBJ)/mess/formats/coco_dsk.o	\
 	$(OBJ)/mess/devices/coco_vhd.o	\
+
+$(OBJ)/mc10.a:	\
 	$(OBJ)/mess/machine/mc10.o		\
 	$(OBJ)/mess/systems/mc10.o		\
+	$(OBJ)/mess/formats/coco_cas.o	\
 
 $(OBJ)/dgn_beta.a:	\
 	$(OBJ)/mess/machine/dgn_beta.o	\
 	$(OBJ)/mess/vidhrdw/dgn_beta.o	\
-	$(OBJ)/mess/systems/dgn_beta.o	
+	$(OBJ)/mess/systems/dgn_beta.o	\
+	$(OBJ)/mess/formats/coco_dsk.o	\
 
 $(OBJ)/trs80.a:    \
 	$(OBJ)/mess/machine/trs80.o	 \

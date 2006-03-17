@@ -493,7 +493,7 @@ static void jaguar_exit(void)
     CORE EXECUTION LOOP
 ***************************************************************************/
 
-int jaguargpu_execute(int cycles)
+static int jaguargpu_execute(int cycles)
 {
 	/* if we're halted, we shouldn't be here */
 	if (!(jaguar.ctrl[G_CTRL] & 1))
@@ -539,7 +539,7 @@ int jaguargpu_execute(int cycles)
 	return cycles - jaguar_icount;
 }
 
-int jaguardsp_execute(int cycles)
+static int jaguardsp_execute(int cycles)
 {
 	/* if we're halted, we shouldn't be here */
 	if (!(jaguar.ctrl[G_CTRL] & 1))

@@ -43,6 +43,7 @@
 /* NULL versions */
 #define init_NULL				NULL
 #define nvram_handler_NULL 		NULL
+#define memcard_handler_NULL	NULL
 #define machine_start_NULL 		NULL
 #define machine_reset_NULL 		NULL
 #define sound_start_NULL 		NULL
