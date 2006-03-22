@@ -97,19 +97,19 @@ TARGET = mame
 # just as well.  However, stay away from the `cc' Ultrix compiler if 
 # possible.
 
-CC	= gcc
-# CC    = cc
-# CC	= icc
-# CC	= c89
+CC	= @gcc
+# CC    = @cc
+# CC	= @icc
+# CC	= @c89
 
 # Uncomment for Sun Forte 7 and above C/C++ compiler, see below for
 # additional optimizations.
-# CC = sun-forte
+# CC = @sun-forte
 
 # Compiler for host compilations in cross-compiling environments (used 
 # in src/unix/unix.mak for m68k).
 HOST_CC = $(CC)
-# HOST_CC = gcc
+# HOST_CC = @gcc
 
 
 ###########################################################################
@@ -222,11 +222,12 @@ ifneq (,$(findstring gcc,$(CC)))
   
   # Optimization level -- choose one of these.
   # Use -O1 if you suspect that -O2 is producing bad code; use -O3 for a 
-  # possible speedup; use -Os for a smaller executable.
+  # possible speedup, -Os for a smaller executable, and -O0 for debugging.
   # CFLAGS += -O2
   # CFLAGS += -O1
   # CFLAGS += -O3
   # CFLAGS += -Os
+  # CFLAGS += -O0
 
   # This option should reduce compilation time and disk activity, but at 
   # the expense of using a LOT more memory.  If you have less than 
@@ -448,6 +449,31 @@ LD	= $(CC) -Wl,-s
 
 
 ###########################################################################
+# Assembler and object file format
+###########################################################################
+
+ASM = @nasm
+
+# Choose ELF or a.out
+# ELF settings: No leading underscores + ELF object format.  Tested with
+# Linux/i386.  Also for Solaris/x86, for example.
+ASM_STRIP = src/unix/contrib/porting/strip_
+ASM_FMT  = -f elf
+# a.out settings: Leading underscores + a.out object format.  Tested with
+# netBSD i386.  Also for older Linux installs, FreeBSD, and others.
+# ASM_STRIP = true  # no strip command
+# ASM_FMT  = -f aoutb
+
+
+###########################################################################
+# Archiver
+###########################################################################
+
+AR = @ar
+AR_OPTS = rc
+
+
+###########################################################################
 # Math library and ranlib
 ###########################################################################
 
@@ -458,8 +484,8 @@ SEPARATE_LIBM = 1
 
 # Does your platform have ranlib?  Leave this untouched unless you are
 # using IRIX, Unixware 7, or the Intel C++ Compiler.
-RANLIB = ranlib
-# RANLIB = true
+RANLIB = @ranlib
+# RANLIB = @true
 
 
 ###########################################################################
@@ -679,6 +705,7 @@ ARCH  = linux
 # Uncomment this to add LIRC support to xmame.
 # LIRC = 1
 
+
 ###########################################################################
 # Sound Devices
 ###########################################################################
@@ -821,7 +848,7 @@ GLCFLAGS += -D_X11_
 # GLLIBS += -lXmu -lXi
 
 ###########################################################################
-# Debug support and object file format
+# Debug support
 ###########################################################################
 
 # Uncomment the next lines to build xmame with a built-in debugger (only
@@ -839,16 +866,6 @@ NAME=x$(TARGET)d
 else
 NAME=x$(TARGET)
 endif
-
-# Choose ELF or a.out
-# ELF settings: No leading underscores + ELF object format.  Tested with
-# Linux/i386.  Also for Solaris/x86, for example.
-ASM_STRIP = src/unix/contrib/porting/strip_
-NASM_FMT  = -f elf
-# a.out settings: Leading underscores + a.out object format.  Tested with
-# netBSD i386.  Also for older Linux installs, FreeBSD, and others.
-# ASM_STRIP = true  # no strip command
-# NASM_FMT  = -f aoutb
 
 
 ###########################################################################

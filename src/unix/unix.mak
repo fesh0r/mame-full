@@ -2,10 +2,6 @@
 # Non-user-configurable settings
 ##############################################################################
 
-# *** Comment out this line to get verbose make output, for debugging build
-# problems
-QUIET = 1
-
 
 ##############################################################################
 # CPU-dependent settings
@@ -79,7 +75,7 @@ INST.svgafx     = doinstallsuid
 INST.SDL	= doinstall
 INST.photon2	= doinstall
 
-# handle X11 display method additonal settings, override INST if nescesarry
+# handle X11 display method additonal settings, override INST if necessary
 ifdef X11_MITSHM
 CFLAGS.x11 += -DUSE_MITSHM
 endif
@@ -115,21 +111,6 @@ endif
 
 ifndef HOST_CC
 HOST_CC = $(CC)
-endif
-
-
-##############################################################################
-# Quiet the compiler output if requested
-##############################################################################
-
-ifdef QUIET
-CC_COMMENT = 
-CC_COMPILE = @
-AR_OPTS = rc
-else
-CC_COMMENT = \#
-CC_COMPILE = 
-AR_OPTS = rcv
 endif
 
 
@@ -309,7 +290,7 @@ COMMON_OBJS  =  \
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
-TOOLS = dat2html chdman imgtool
+TOOLS = chdman imgtool
 endif
 ifdef LIRC
 CONFIG  += -I/usr/include/lirc
@@ -558,8 +539,8 @@ endif
 ##############################################################################
 
 $(NAME).$(DISPLAY_METHOD): $(EXPAT) $(ZLIB) $(OBJS) $(UNIX_OBJS) $(OSDEPEND)
-	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(EXPAT) $(ZLIB) $(UNIX_OBJS) $(OSDEPEND) $(LIBS)
+	@echo 'Linking $@ ...'
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(EXPAT) $(ZLIB) $(UNIX_OBJS) $(OSDEPEND) $(LIBS)
 
 maketree: $(sort $(OBJDIRS))
 
@@ -569,28 +550,28 @@ $(sort $(OBJDIRS)):
 extra: $(TOOLS)
 
 xlistdev: src/unix/contrib/tools/xlistdev.c
-	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
+	@echo 'Compiling $< ...'
+	$(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
 
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
-	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	@echo 'Linking $@...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS)
-	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	@echo 'Linking $@...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 xml2info: $(OBJ)/xml2info.o $(EXPAT)
-	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	@echo 'Linking $@...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 dat2html: $(DAT2HTML_OBJS)
-	$(CC_COMMENT) @echo 'Compiling $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
+	@echo 'Compiling $@...'
+	$(LD) $(LDFLAGS) $^ -o $@
 
 imgtool: $(IMGTOOL_OBJS) $(OSTOOLOBJS) $(ZLIB) $(PLATFORM_TOOL_OBJS)
-	$(CC_COMMENT) @echo 'Compiling $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	@echo 'Compiling $@...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/dirio.o \
@@ -600,11 +581,11 @@ messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/sysdep/misc.o \
 	$(OBJDIR)/sysdep/rc.o \
 	$(OBJDIR)/tststubs.o
-	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $(LIBS) $^ -Wl,--allow-multiple-definition -o $@
+	@echo 'Linking $@...'
+	$(LD) $(LDFLAGS) $(LIBS) $^ -Wl,--allow-multiple-definition -o $@
 
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
-	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 # library targets and dependencies
 $(CPULIB): $(CPUOBJS)
@@ -626,45 +607,38 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o \
 
 ifdef MESS
 $(OBJ)/mess/%.o: mess/%.c
-	$(CC_COMMENT) @echo '[MESS] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
+	@echo '[MESS] Compiling $< ...'
+	$(CC) $(CFLAGS) -o $@ -c $<
 endif
 
 $(OBJ)/%.o: src/%.c
-	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
+	@echo 'Compiling $< ...'
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(OBJ)/%.a:
-	$(CC_COMMENT) @echo 'Archiving $@ ...'
-	$(CC_COMPILE) ar $(AR_OPTS) $@ $^
-	$(CC_COMPILE) $(RANLIB) $@
+	@echo 'Archiving $@ ...'
+	$(AR) $(AR_OPTS) $@ $^
+	$(RANLIB) $@
 
 $(OSDEPEND): $(UNIX_OBJS)
-	$(CC_COMMENT) @echo '[OSDEPEND] Archiving $@ ...'
-	$(CC_COMPILE) ar $(AR_OPTS) $@ $(UNIX_OBJS)
-	$(CC_COMPILE) $(RANLIB) $@
+	@echo '[OSDEPEND] Archiving $@ ...'
+	$(AR) $(AR_OPTS) $@ $(UNIX_OBJS)
+	$(RANLIB) $@
 
 $(UNIX_OBJDIR)/%.o: src/unix/%.c src/unix/xmame.h
-	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(CONFIG) -o $@ -c $<
+	@echo '[OSDEPEND] Compiling $< ...'
+	$(CC) $(CONFIG) -o $@ -c $<
 
 $(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
-	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(CFLAGS) -o $@ -c $<
+	@echo '[OSDEPEND] Compiling $< ...'
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 # MMX assembly language for effect filters
 $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
-	$(CC_COMMENT) @echo Assembling $<...
-	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
+	@echo Assembling $<...
+	$(ASM) $(ASM_FMT) -o $@ $<
 
 doc: src/unix/doc/xmame-doc.txt src/unix/doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) src/unix/doc/x$(TARGET).6
-
-src/unix/doc/xmame-doc.txt: src/unix/doc/xmame-doc.sgml
-	cd src/unix/doc; \
-	sgml2txt   -l en -p a4 -f          xmame-doc.sgml; \
-	sgml2html  -l en -p a4             xmame-doc.sgml; \
-	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
-	rm -f xmame-doc.lyx~
 
 src/unix/doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -showconfig | \
@@ -725,4 +699,4 @@ cleanosd:
 cleancore:
 	@echo Deleting core object files...
 	@if test -d $(OBJ); then \
-	rm -rf `find $(OBJ) -mindepth 1 -path '$(OBJDIR)' -prune -o -print`; fi
+	@rm -rf `find $(OBJ) -mindepth 1 -path '$(OBJDIR)' -prune -o -print`; fi
