@@ -551,26 +551,12 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 		if( g_nFolder == FOLDER_VECTOR )
 		{
 			g_nPropertyMode = SOURCE_VECTOR;
-			if( GetVectorUsesDefaultsMem() )
-			{
-				g_bUseDefaults = FALSE;
-			}
-			else
-			{
-				g_bUseDefaults = TRUE;
-			}
+			g_bUseDefaults = GetVectorUsesDefaults() ? TRUE : FALSE;
 		}
 		else
 		{
 			g_nPropertyMode = SOURCE_FOLDER;
-			if( GetFolderUsesDefaultsMem(g_nFolder, g_nFolderGame) )
-			{
-				g_bUseDefaults = FALSE;
-			}
-			else
-			{
-				g_bUseDefaults = TRUE;
-			}
+			g_bUseDefaults = GetFolderUsesDefaults(g_nFolder, g_nFolderGame) ? TRUE : FALSE;
 		}
 		if( DriverIsVector( folder_index ) && (game_num != FOLDER_VECTOR ) )
 		{
@@ -1044,7 +1030,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		//Well we need to check for that info here then
 		if( g_nGame >= 0)
 		{
-			if( GetGameUsesDefaultsMem(g_nGame) )
+			if( !GetGameUsesDefaults(g_nGame) )
 			{
 				SetGameUsesDefaults( g_nGame, FALSE);
 				g_bUseDefaults = FALSE;
@@ -1058,7 +1044,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		{
 			if( g_nFolder == FOLDER_VECTOR )
 			{
-				if( GetVectorUsesDefaultsMem() )
+				if( GetVectorUsesDefaults() )
 				{
 					g_bUseDefaults = FALSE;
 				}
@@ -1069,13 +1055,13 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			}
 			else
 			{
-				if( GetFolderUsesDefaultsMem(g_nFolder, g_nFolderGame) )
+				if( GetFolderUsesDefaults(g_nFolder, g_nFolderGame) )
 				{
-					g_bUseDefaults = FALSE;
+					g_bUseDefaults = TRUE;
 				}
 				else
 				{
-					g_bUseDefaults = TRUE;
+					g_bUseDefaults = FALSE;
 				}
 			}
 		}
@@ -1237,7 +1223,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 					}
 					else
 					{
-						SetGameUsesDefaults(g_nGame,TRUE);
+//						SetGameUsesDefaults(g_nGame,TRUE);
 						if( g_nFolder == FOLDER_VECTOR)
 							CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, TRUE), pGameOpts);
 						//Not Vector Folder, but Source Folder of Vector Games

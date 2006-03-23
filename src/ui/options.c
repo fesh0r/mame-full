@@ -792,50 +792,49 @@ static DWORD GetFolderSettingsFileID(int folder_index)
 	int i, j;
 	const char *pParent;
 
-	for( i = 0; i<=folder_index; i++ )
+	if (folder_index < MAX_FOLDERS)
 	{
-		if( folder_index < MAX_FOLDERS)
+		for (i = 0; g_folderData[i].m_lpTitle; i++)
 		{
-			if( g_folderData[i].m_nFolderId == folder_index )
+			if (g_folderData[i].m_nFolderId == folder_index)
 			{
 				nSettingsFile = i | SETTINGS_FILE_FOLDER;				
 				break;
 			}
 		}
-		else if( folder_index < MAX_FOLDERS + numExtraFolders)
+	}
+	else if (folder_index < MAX_FOLDERS + numExtraFolders)
+	{
+		for (i = 0; i < MAX_EXTRA_FOLDERS * MAX_EXTRA_SUBFOLDERS; i++)
 		{
-			if( ExtraFolderData[i] )
+			if (ExtraFolderData[i])
 			{
-				if( ExtraFolderData[i]->m_nFolderId == folder_index )
-				{
-					nSettingsFile = i | SETTINGS_FILE_EXFOLDER;				
-					break;
-				}
+				nSettingsFile = i | SETTINGS_FILE_EXFOLDER;				
+				break;
 			}
 		}
-		else
+	}
+	else
+	{
+		//we jump to the corresponding folderData
+		if( ExtraFolderData[folder_index] )
 		{
-			//we jump to the corresponding folderData
-			if( ExtraFolderData[folder_index] )
+			//SubDirName is ParentFolderName
+			pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
+			if( pParent )
 			{
-				//SubDirName is ParentFolderName
-				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
-				if( pParent )
-				{
-					nSettingsFile = folder_index | SETTINGS_FILE_EXFOLDERPARENT;
+				nSettingsFile = folder_index | SETTINGS_FILE_EXFOLDERPARENT;
 
-					if( ExtraFolderData[folder_index]->m_nParent == FOLDER_SOURCE )
+				if( ExtraFolderData[folder_index]->m_nParent == FOLDER_SOURCE )
+				{
+					for (j = 0; drivers[j]; j++)
 					{
-						for (j = 0; drivers[j]; j++)
+						if (!strcmp(GetDriverFilename(j), ExtraFolderData[folder_index]->m_szTitle))
 						{
-							if (!strcmp(drivers[j]->source_file, ExtraFolderData[folder_index]->m_szTitle))
-							{
-								nSettingsFile = j | SETTINGS_FILE_SOURCEFILE;
-								break;
-							}
+							nSettingsFile = j | SETTINGS_FILE_SOURCEFILE;
+							break;
 						}
 					}
-					break;
 				}
 			}
 		}
@@ -920,8 +919,6 @@ options_type * GetVectorOptions(void)
 
 options_type * GetSourceOptions(int driver_index )
 {
-	char buffer[512];
-	char title[512];
 	static options_type source_opts;
 
 	assert(0 <= driver_index && driver_index < num_games);
@@ -934,11 +931,10 @@ options_type * GetSourceOptions(int driver_index )
 		//If it is a Vector game sync in the Vector.ini settings
 		SyncInFolderOptions(&source_opts, FOLDER_VECTOR);
 	}
+
 	//If it has source folder settings sync in the source\sourcefile.ini settings
-	strcpy(title, GetDriverFilename(driver_index) );
-	title[strlen(title)-2] = '\0';
-	//Core expects it there
-	snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
+	LoadSettingsFile(driver_index | SETTINGS_FILE_SOURCEFILE, &source_opts, regGameOpts);
+
 	return &source_opts;
 }
 
@@ -983,19 +979,6 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	
 	LoadSettingsFileEx(driver_index | SETTINGS_FILE_GAME, handlers);
 	return &game_options[driver_index];
-}
-
-BOOL GetGameUsesDefaults(int driver_index)
-{
-	if (driver_index < 0)
-	{
-		dprintf("got getgameusesdefaults with driver index %i",driver_index);
-		return TRUE;
-	}
-	//This returns always true, because it is not saved in a file just initialized
-	//We use the in mem check for the moment
-	return ! GetGameUsesDefaultsMem(driver_index );
-	//return game_variables[driver_index].use_default;
 }
 
 void SetGameUsesDefaults(int driver_index,BOOL use_defaults)
@@ -2939,7 +2922,7 @@ void LoadFolderOptions(int folder_index )
 		return;
 
 	CopyGameOptions(&global, &folder_options[redirect_index]);
-	if (LoadSettingsFile(nSettingsFile, &folder_options[redirect_index], regGameOpts))
+	if (!LoadSettingsFile(nSettingsFile, &folder_options[redirect_index], regGameOpts))
 	{
 		// uses globals
 		CopyGameOptions(&global, &folder_options[redirect_index] );
@@ -3068,8 +3051,8 @@ void SaveOptions(void)
 	SaveSettingsFileEx(SETTINGS_FILE_UI, handlers);
 }
 
-//returns true if different
-BOOL GetVectorUsesDefaultsMem(void)
+//returns true if same
+BOOL GetVectorUsesDefaults(void)
 {
 	int redirect_index = 0;
 
@@ -3081,8 +3064,8 @@ BOOL GetVectorUsesDefaultsMem(void)
 	return AreOptionsEqual(regGameOpts, &folder_options[redirect_index], &global);
 }
 
-//returns true if different
-BOOL GetFolderUsesDefaultsMem(int folder_index, int driver_index)
+//returns true if same
+BOOL GetFolderUsesDefaults(int folder_index, int driver_index)
 {
 	const options_type *opts;
 	int redirect_index;
@@ -3100,11 +3083,17 @@ BOOL GetFolderUsesDefaultsMem(int folder_index, int driver_index)
 	return AreOptionsEqual(regGameOpts, &folder_options[redirect_index], opts);
 }
 
-//returns true if different
-BOOL GetGameUsesDefaultsMem(int driver_index)
+//returns true if same
+BOOL GetGameUsesDefaults(int driver_index)
 {
 	const options_type *opts;
 	int nParentIndex= -1;
+
+	if (driver_index < 0)
+	{
+		dprintf("got getgameusesdefaults with driver index %i",driver_index);
+		return TRUE;
+	}
 
 	if ((driver_index >= 0) && DriverIsClone(driver_index))
 	{
@@ -3211,13 +3200,9 @@ void SaveFolderOptions(int folder_index, int game_index)
 	if( redirect_index < 0)
 		return;
 
-	if( !AreOptionsEqual(regGameOpts, &folder_options[redirect_index], pOpts) ) 
-	{
-		//Find the Title
-		nSettingsFile = GetFolderSettingsFileID(folder_index);
-	
-		SaveSettingsFile(nSettingsFile, &folder_options[redirect_index], pOpts, regGameOpts);
-	}
+	//Save out the file
+	nSettingsFile = GetFolderSettingsFileID(folder_index);
+	SaveSettingsFile(nSettingsFile, &folder_options[redirect_index], pOpts, regGameOpts);
 }
 
 
