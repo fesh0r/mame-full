@@ -982,7 +982,8 @@ void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 		{ "F9",			UCHAR_MAMEKEY(F9) },
 		{ "F10",		UCHAR_MAMEKEY(F10) },
 		{ "F11",		UCHAR_MAMEKEY(F11) },
-		{ "F12",		UCHAR_MAMEKEY(F12) }
+		{ "F12",		UCHAR_MAMEKEY(F12) },
+		{ "QUOTE",		'\"' }
 	};
 
 	i = 0;
