@@ -17,9 +17,9 @@
 static int validate_device(const device_class *devclass)
 {
 	int error = 0;
-	int is_invalid;
+	int is_invalid, i;
 	const char *s;
-	INT64 devcount;
+	INT64 devcount, optcount;
 	char buf[256];
 	char *s1;
 	char *s2;
@@ -131,6 +131,38 @@ static int validate_device(const device_class *devclass)
 			
 		default:
 			break;
+	}
+
+	/* check creation options */
+	optcount = device_get_info_int(devclass, DEVINFO_INT_CREATE_OPTCOUNT);
+	if ((optcount < 0) || (optcount >= DEVINFO_CREATE_OPTMAX))
+	{
+		printf("%s: device type '%s' has an invalid creation optcount\n", devclass->gamedrv->name, device_typename(devtype));
+		error = 1;
+	}
+	else
+	{
+		for (i = 0; i < (int) optcount; i++)
+		{
+			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTNAME + i))
+			{
+				printf("%s: device type '%s' create option #%d: name not present\n",
+					devclass->gamedrv->name, device_typename(devtype), i);
+				error = 1;
+			}
+			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTDESC + i))
+			{
+				printf("%s: device type '%s' create option #%d: description not present\n",
+					devclass->gamedrv->name, device_typename(devtype), i);
+				error = 1;
+			}
+			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTEXTS + i))
+			{
+				printf("%s: device type '%s' create option #%d: extensions not present\n",
+					devclass->gamedrv->name, device_typename(devtype), i);
+				error = 1;
+			}
+		}
 	}
 
 	/* is there a custom validity check? */

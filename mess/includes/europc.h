@@ -30,7 +30,7 @@ ALT,[SPACE], SPACE BAR,[SPACE],CAPS LOCK,[SPACE], KEYPAD 0, KEYPAD ., KEYPAD ENT
 i am not sure if keypad enter delivers the mf2 keycode
  */
 #define EUROPC_KEYBOARD \
-    PORT_START  /* IN4 */\
+    PORT_START_TAG("pc_keyboard_0")  /* IN4 */\
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */\
 	EUROPC_HELPER( 0x0002, "Esc",          KEYCODE_ESC,        CODE_NONE ) /* Esc                         01  81 */\
 	EUROPC_HELPER( 0x0004, "1 !",          KEYCODE_1,          CODE_NONE ) /* 1                           02  82 */\
@@ -48,7 +48,7 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE,  CODE_NONE ) /* Backspace                   0E  8E */\
 	EUROPC_HELPER( 0x8000, "Tab",          KEYCODE_TAB,        CODE_NONE ) /* Tab                         0F  8F */\
 		\
-	PORT_START	/* IN5 */\
+	PORT_START_TAG("pc_keyboard_1")	/* IN5 */\
 	EUROPC_HELPER( 0x0001, "Q",            KEYCODE_Q,          CODE_NONE ) /* Q                           10  90 */\
 	EUROPC_HELPER( 0x0002, "W",            KEYCODE_W,          CODE_NONE ) /* W                           11  91 */\
 	EUROPC_HELPER( 0x0004, "E",            KEYCODE_E,          CODE_NONE ) /* E                           12  92 */\
@@ -66,7 +66,7 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x4000, "A",            KEYCODE_A,          CODE_NONE ) /* A                           1E  9E */\
 	EUROPC_HELPER( 0x8000, "S",            KEYCODE_S,          CODE_NONE ) /* S                           1F  9F */\
 		\
-	PORT_START	/* IN6 */\
+	PORT_START_TAG("pc_keyboard_2")	/* IN6 */\
 	EUROPC_HELPER( 0x0001, "D",            KEYCODE_D,          CODE_NONE ) /* D                           20  A0 */\
 	EUROPC_HELPER( 0x0002, "F",            KEYCODE_F,          CODE_NONE ) /* F                           21  A1 */\
 	EUROPC_HELPER( 0x0004, "G",            KEYCODE_G,          CODE_NONE ) /* G                           22  A2 */\
@@ -84,7 +84,7 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x4000, "C",            KEYCODE_C,          CODE_NONE ) /* C                           2E  AE */\
 	EUROPC_HELPER( 0x8000, "V",            KEYCODE_V,          CODE_NONE ) /* V                           2F  AF */\
 		\
-	PORT_START	/* IN7 */\
+	PORT_START_TAG("pc_keyboard_3")	/* IN7 */\
 	EUROPC_HELPER( 0x0001, "B",            KEYCODE_B,          CODE_NONE ) /* B                           30  B0 */\
 	EUROPC_HELPER( 0x0002, "N",            KEYCODE_N,          CODE_NONE ) /* N                           31  B1 */\
 	EUROPC_HELPER( 0x0004, "M",            KEYCODE_M,          CODE_NONE ) /* M                           32  B2 */\
@@ -102,7 +102,7 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x4000, "F4",           KEYCODE_F4,         CODE_NONE ) /* F4                          3E  BE */\
 	EUROPC_HELPER( 0x8000, "F5",           KEYCODE_F5,         CODE_NONE ) /* F5                          3F  BF */\
 		\
-	PORT_START	/* IN8 */\
+	PORT_START_TAG("pc_keyboard_4")	/* IN8 */\
 	EUROPC_HELPER( 0x0001, "F6",           KEYCODE_F6,         CODE_NONE )     /* F6                          40  C0 */\
 	EUROPC_HELPER( 0x0002, "F7",           KEYCODE_F7,         CODE_NONE )     /* F7                          41  C1 */\
 	EUROPC_HELPER( 0x0004, "F8",           KEYCODE_F8,         CODE_NONE )     /* F8                          42  C2 */\
@@ -120,7 +120,7 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD,   CODE_NONE )     /* Keypad +                    4E  CE */\
 	EUROPC_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END )   /* Keypad 1  (End)             4F  CF */\
 		\
-	PORT_START	/* IN9 */\
+	PORT_START_TAG("pc_keyboard_5")	/* IN9 */\
 	EUROPC_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN )   /* Keypad 2  (Down arrow)      50  D0 */\
 	EUROPC_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN )   /* Keypad 3  (PgDn)            51  D1 */\
 	EUROPC_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */\
@@ -131,10 +131,10 @@ i am not sure if keypad enter delivers the mf2 keycode
 	EUROPC_HELPER( 0x0100, "F12",	       KEYCODE_F12,        CODE_NONE )		/* F12                         58  D8 */\
 	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )\
 		\
-	PORT_START	/* IN10 */\
+	PORT_START_TAG("pc_keyboard_6")	/* IN10 */\
 	EUROPC_HELPER( 0x0001, "KP Enter",	   KEYCODE_ENTER_PAD,  CODE_NONE )		/* PAD Enter                   60  e0 */\
 	PORT_BIT ( 0xfffe, 0x0000, IPT_UNUSED )\
 		\
-	PORT_START	/* IN11 */\
+	PORT_START_TAG("pc_keyboard_7")	/* IN11 */\
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 

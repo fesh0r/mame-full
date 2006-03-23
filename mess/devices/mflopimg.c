@@ -445,11 +445,11 @@ void floppy_device_getinfo(const device_class *devclass, UINT32 state, union dev
 			{
 				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTNAME].name;
 			}
-			else if ((state >= DEVINFO_STR_CREATE_OPTDESC) && (state < DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX))
+			else if ((state >= DEVINFO_STR_CREATE_OPTDESC) && (state < DEVINFO_STR_CREATE_OPTDESC + DEVINFO_CREATE_OPTMAX))
 			{
 				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTDESC].description;
 			}
-			else if ((state >= DEVINFO_STR_CREATE_OPTEXTS) && (state < DEVINFO_STR_CREATE_OPTNAME + DEVINFO_CREATE_OPTMAX))
+			else if ((state >= DEVINFO_STR_CREATE_OPTEXTS) && (state < DEVINFO_STR_CREATE_OPTEXTS + DEVINFO_CREATE_OPTMAX))
 			{
 				info->s = (void *) floppy_options[state - DEVINFO_STR_CREATE_OPTEXTS].extensions;
 			}

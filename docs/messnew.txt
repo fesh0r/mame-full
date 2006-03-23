@@ -11,6 +11,9 @@ System Driver Changes:
 - [990189V] Fixed crash when taking a screenshot.  (bug #714) [Oliver
   Stoeneberg, Nate Woods]
 
+- [EUROPC] Fixed keyboard regression introduced in 0.104.  (bug #857) [Nate
+  Woods]
+
 - [EXIDY] Added cartridge support.  (bug #842) [Robert]
 
 - [FAMICOM] Added hack to prevent crashing.  Marked as not working.  [Nate
@@ -62,6 +65,9 @@ Source Changes:
   Also, drivers now have the ability to specify the string to be used for the
   command line option.  This allows multiple devices of the same type to be
   viable.  (bugs #711, #839) [Nate Woods]
+
+- Fixed a bug that caused image creation to crash in certain situations.
+  (bug #858) [Nate Woods]
 
 - Eliminated the unknown and unused -listtext and -createdir command line
   options.  [Nate Woods]
