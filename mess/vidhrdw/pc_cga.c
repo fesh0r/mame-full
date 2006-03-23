@@ -314,7 +314,7 @@ static VIDEO_START( pc_cga )
 	}
 
 	if (videoram_size == 0)
-		videoram_size = 0x4000;
+		videoram_size = 0x8000;
 	if (!videoram)
 		videoram = auto_malloc(videoram_size);
 	memory_set_bankptr(11, videoram);

@@ -25,6 +25,9 @@ System Driver Changes:
 
 - [MSX] Fixed subtle memory corruption bug.  [R Belmont, Wilbert Pol]
 
+- [PC] Fixed a crash involving certain types of CGA memory access.  (bug #859)
+  [Nate Woods]
+
 - [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
   [Nate Woods]
 
