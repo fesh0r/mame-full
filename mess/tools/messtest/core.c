@@ -414,7 +414,11 @@ int messtest(const struct messtest_options *opts, int *test_count, int *failure_
 	root_node = xml_string_read(xml, &parse_options);
 	if (!root_node)
 	{
-		error_reportf("%s", parse_error.error_message);
+		fprintf(stderr, "%s:%d:%d: %s\n",
+			opts->script_filename,
+			parse_error.error_line,
+			parse_error.error_column,
+			parse_error.error_message);
 		goto done;
 	}
 
