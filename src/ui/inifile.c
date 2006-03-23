@@ -161,7 +161,12 @@ static BOOL SettingsFileName(DWORD nSettingsFile, char *buffer, size_t bufsize)
 			break;
 
 		case SETTINGS_FILE_FOLDER:
-			snprintf(buffer, bufsize, "%s\\%s.ini", GetIniDir(), g_folderData[arg].m_lpTitle);
+			// use lower case
+			snprintf(title, sizeof(title), "%s", g_folderData[arg].m_lpTitle);
+			for (i = 0; title[i]; i++)
+				title[i] = tolower(title[i]);
+
+			snprintf(buffer, bufsize, "%s\\%s.ini", GetIniDir(), title);
 			break;
 
 		case SETTINGS_FILE_EXFOLDER:
@@ -395,9 +400,14 @@ BOOL SaveSettingsFileEx(DWORD nSettingsFile, const struct SettingsHandler *handl
 		{
 			// We successfully obtained the Attributes, so File exists, and we can delete it
 			if (DeleteFile(buffer) == 0)
-			{
 				dprintf("error deleting %s; error %d\n",buffer, GetLastError());
-			}
+
+			// Try to delete extra directories
+			s = strrchr(buffer, '\\');
+			if (*s)
+				*s = '\0';
+			if (strchr(buffer, '\\'))
+				RemoveDirectory(buffer);
 		}
 		return TRUE;
 	}

@@ -524,13 +524,13 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	g_nFolder = game_num;
 	if( source == SRC_GAME )
 	{
-            pGameOpts = GetGameOptions(game_num, folder_index);
-            g_bUseDefaults = GetGameUsesDefaults(game_num);
-            SetGameUsesDefaults(game_num, g_bUseDefaults);
-            /* Stash the result for comparing later */
-            CopyGameOptions(pGameOpts,&origGameOpts);
-            g_nFolderGame = game_num;
-            g_nPropertyMode = SOURCE_GAME;
+		pGameOpts = GetGameOptions(game_num, folder_index);
+		g_bUseDefaults = GetGameUsesDefaults(game_num);
+		SetGameUsesDefaults(game_num, g_bUseDefaults);
+		/* Stash the result for comparing later */
+		CopyGameOptions(pGameOpts,&origGameOpts);
+		g_nFolderGame = game_num;
+		g_nPropertyMode = SOURCE_GAME;
 	}
 	else
 	{
@@ -539,7 +539,7 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 		//so we take the selected game in the listview of a source file to check if it is a Vector game
 		//this implies that vector games are not mixed up in the source with non-vector games
 		//which I think is the case
-		if( DriverIsVector( folder_index ) && (game_num != FOLDER_VECTOR ) )
+		if (DriverIsVector( folder_index ) && (game_num != FOLDER_VECTOR ) )
 		{
 			GetFolderOptions(game_num, TRUE);
 			pGameOpts = GetSourceOptions( folder_index );
@@ -1044,25 +1044,11 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		{
 			if( g_nFolder == FOLDER_VECTOR )
 			{
-				if( GetVectorUsesDefaults() )
-				{
-					g_bUseDefaults = FALSE;
-				}
-				else
-				{
-					g_bUseDefaults = TRUE;
-				}
+				g_bUseDefaults = GetVectorUsesDefaults() ? TRUE : FALSE;
 			}
 			else
 			{
-				if( GetFolderUsesDefaults(g_nFolder, g_nFolderGame) )
-				{
-					g_bUseDefaults = TRUE;
-				}
-				else
-				{
-					g_bUseDefaults = FALSE;
-				}
+				g_bUseDefaults = GetFolderUsesDefaults(g_nFolder, g_nFolderGame) ? TRUE : FALSE;
 			}
 		}
 		SetPropEnabledControls(hDlg);
@@ -1223,7 +1209,6 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 					}
 					else
 					{
-//						SetGameUsesDefaults(g_nGame,TRUE);
 						if( g_nFolder == FOLDER_VECTOR)
 							CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, TRUE), pGameOpts);
 						//Not Vector Folder, but Source Folder of Vector Games
