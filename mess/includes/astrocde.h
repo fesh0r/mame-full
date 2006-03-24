@@ -17,6 +17,7 @@ extern WRITE8_HANDLER( astrocade_interrupt_w );
 extern INTERRUPT_GEN( astrocade_interrupt );
 
 WRITE8_HANDLER ( astrocade_mode_w );
+WRITE8_HANDLER ( astrocade_interrupt_vector_w );
 
 WRITE8_HANDLER ( astrocade_colour_register_w );
 WRITE8_HANDLER ( astrocade_colour_block_w );

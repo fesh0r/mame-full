@@ -70,3 +70,10 @@ INTERRUPT_GEN( astrocade_interrupt )
 	                                && (CurrentScan == NextScanInt))
 		cpunum_set_input_line(0, 0, PULSE_LINE);
 }
+
+WRITE8_HANDLER( astrocade_interrupt_vector_w )
+{
+	cpunum_set_input_line_vector(0, 0, data);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
+}
+

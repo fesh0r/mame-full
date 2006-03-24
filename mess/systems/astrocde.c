@@ -57,7 +57,7 @@ ADDRESS_MAP_START( astrocade_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0a, 0x0a) AM_MIRROR(0xff00) AM_WRITE(astrocade_vertical_blank_w)
 	AM_RANGE(0x0b, 0x0b) AM_MIRROR(0xff00) AM_WRITE(astrocade_colour_block_w)
 	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff00) AM_WRITE(astrocade_magic_control_w)
-	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(interrupt_vector_w)
+	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(astrocade_interrupt_vector_w)
 	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READWRITE(astrocade_video_retrace_r, astrocade_interrupt_enable_w)
 	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocade_interrupt_w)
 	/*AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_READ(astrocade_horiz_r)*/

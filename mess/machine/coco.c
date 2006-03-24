@@ -1209,7 +1209,7 @@ static  READ8_HANDLER ( d_pia0_pa_r )
 	return keyboard_r();
 }
 
-static void coco3_poll_keyboard(int dummy)
+static void coco3_poll_keyboard(void *param, UINT32 value, UINT32 mask)
 {
 	int porta;
 	porta = keyboard_r() & 0x7f;
@@ -2379,6 +2379,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 	void (*recalc_interrupts_)(int dummy))
 {
 	const struct cartridge_slot *cartslottype;
+	int portnum;
 
 	recalc_interrupts = recalc_interrupts_;
 
@@ -2416,8 +2417,8 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 
-	/* The choise of 50hz is arbitrary */
-	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
+	for (portnum = 0; portnum <= 6; portnum++)
+		input_port_set_changed_callback(portnum, ~0, coco3_poll_keyboard, NULL);
 
 #ifdef MAME_DEBUG
 	cpuintrf_set_dasm_override(coco_dasm_override);
