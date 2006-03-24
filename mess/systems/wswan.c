@@ -80,10 +80,10 @@ static gfx_decode gfxdecodeinfo[] =
 static PALETTE_INIT( wswan )
 {
 	int ii;
-	for( ii = 0; ii < 8; ii++ )
+	for( ii = 0; ii < 16; ii++ )
 	{
-		UINT8 shade = ii * (256 / 8);
-		palette_set_color( 7 - ii, shade, shade, shade );
+		UINT8 shade = ii * (256 / 16);
+		palette_set_color( 15 - ii, shade, shade, shade );
 	}
 }
 
@@ -113,7 +113,7 @@ static MACHINE_DRIVER_START( wswan )
 	MDRV_SCREEN_SIZE(28*8, 18*8)
 	MDRV_VISIBLE_AREA(0*8, 28*8-1, 0*8, 18*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_LENGTH(16)
 	MDRV_COLORTABLE_LENGTH(4*16)
 	MDRV_PALETTE_INIT(wswan)
 

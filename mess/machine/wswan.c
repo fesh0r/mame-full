@@ -16,7 +16,7 @@ static UINT8 *ROMMap[128];
 static UINT8 ROMBanks;
 struct VDP vdp;
 UINT8 *ws_ram;
-static UINT8 ws_portram[256];
+UINT8 ws_portram[256];
 static UINT8 ws_portram_init[256] =
 {
 	0x00, 0x00, 0x00/*?*/, 0xbb, 0x00, 0x00, 0x00, 0x26, 0xfe, 0xde, 0xf9, 0xfb, 0xdb, 0xd7, 0x7f, 0xf5,
@@ -36,6 +36,38 @@ static UINT8 ws_portram_init[256] =
 	0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1,
 	0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
 };
+
+void wswan_handle_irqs( void ) {
+	if ( ws_portram[0xb6] & WSWAN_IFLAG_HBLTMR ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_HBLTMR );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_VBL ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_VBL );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_VBLTMR ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_VBLTMR );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_LCMP ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_LCMP );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_SRX ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_SRX );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_RTC ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_RTC );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_KEY ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_KEY );
+	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_STX ) {
+		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_STX );
+	} else {
+		cpunum_set_input_line( 0, 0, CLEAR_LINE );
+	}
+}
+
+void wswan_set_irq_line(int irq) {
+	ws_portram[0xb6] |= irq;
+	wswan_handle_irqs();
+}
+
+void wswan_clear_irq_line(int irq) {
+	ws_portram[0xb6] &= ~irq;
+	wswan_handle_irqs();
+}
 
 
 MACHINE_RESET( wswan )
@@ -58,26 +90,33 @@ MACHINE_RESET( wswan )
 	memory_set_bankptr( 13, ROMMap[ROMBanks - 3] );
 	memory_set_bankptr( 14, ROMMap[ROMBanks - 2] );
 	memory_set_bankptr( 15, ROMMap[ROMBanks - 1] );
+
+	vdp.vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
+
+	vdp.current_line = 0;
 }
 
 READ8_HANDLER( wswan_port_r )
 {
-	UINT8 value = 0xff;
+	UINT8 value = ws_portram[offset];
 
+	logerror( "port read %02X\n", offset );
 	switch( offset )
 	{
 		case 0x02:		/* Current line */
-			return vdp.current_line;
+			value = vdp.current_line;
+			break;
 		case 0xA0:		/* Hardware type */
 			value = WSWAN_TYPE_MONO;
 			break;
 	}
 
-	return ws_portram[offset];
+	return value;
 }
 
 WRITE8_HANDLER( wswan_port_w )
 {
+	logerror( "port write %02X <- %02X\n", offset, data );
 	switch( offset )
 	{
 		case 0x00:		/* Display control */
@@ -154,43 +193,60 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.icons = data;	/* ummmmm */
 			break;
 		case 0x1c:		/* Palette colors 1 and 2 */
-			{
-				UINT8 shade1 = (0xf - (data & 0xf)) * 32;
-				UINT8 shade2 = (0xf - ((data & 0xf0) >> 4)) * 32;
-
-				palette_set_color( 0, shade1, shade1, shade1 );
-				palette_set_color( 1, shade2, shade2, shade2 );
-			} break;
+			vdp.main_palette[0] = data & 0x0F;
+			vdp.main_palette[1] = ( data & 0xF0 ) >> 4;
+			break;
 		case 0x1d:		/* Palette colors 3 and 4 */
-			{
-				UINT8 shade1 = (0xf - (data & 0xf)) * 32;
-				UINT8 shade2 = (0xf - ((data & 0xf0) >> 4)) * 32;
-
-				palette_set_color( 2, shade1, shade1, shade1 );
-				palette_set_color( 3, shade2, shade2, shade2 );
-			} break;
+			vdp.main_palette[2] = data & 0x0F;
+			vdp.main_palette[3] = ( data & 0xF0 ) >> 4;
+			break;
 		case 0x1e:		/* Palette colors 5 and 6 */
-			{
-				UINT8 shade1 = (0xf - (data & 0xf)) * 32;
-				UINT8 shade2 = (0xf - ((data & 0xf0) >> 4)) * 32;
-
-				palette_set_color( 4, shade1, shade1, shade1 );
-				palette_set_color( 5, shade2, shade2, shade2 );
-			} break;
+			vdp.main_palette[4] = data & 0x0F;
+			vdp.main_palette[5] = ( data & 0xF0 ) >> 4;
+			break;
 		case 0x1f:		/* Palette colors 7 and 8 */
-			{
-				UINT8 shade1 = (0xf - (data & 0xf)) * 32;
-				UINT8 shade2 = (0xf - ((data & 0xf0) >> 4)) * 32;
-
-				palette_set_color( 6, shade1, shade1, shade1 );
-				palette_set_color( 7, shade2, shade2, shade2 );
-			} break;
+			vdp.main_palette[6] = data & 0x0F;
+			vdp.main_palette[7] = ( data & 0xF0 ) >> 4;
+			break;
+		case 0x20:		/* tile/sprite palette settings */
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:
+		case 0x28:
+		case 0x29:
+		case 0x2A:
+		case 0x2B:
+		case 0x2C:
+		case 0x2D:
+		case 0x2E:
+		case 0x2F:
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+		case 0x38:
+		case 0x39:
+		case 0x3A:
+		case 0x3B:
+		case 0x3C:
+		case 0x3D:
+		case 0x3E:
+		case 0x3F:
+			break;
 		case 0x40:		/* DMA source address (low) */
 		case 0x41:		/* DMA source address (high) */
 		case 0x42:		/* DMA source bank */
 		case 0x43:		/* DMA destination bank */
 		case 0x44:		/* DMA destination address (low) */
-		case 0x45:		/* DMA destinatino address (hgih) */
+		case 0x45:		/* DMA destination address (hgih) */
 		case 0x46:		/* Size of copied data (low) */
 		case 0x47:		/* Size of copied data (high) */
 			break;
@@ -210,6 +266,28 @@ WRITE8_HANDLER( wswan_port_w )
 			break;
 		case 0x60:		/* Video mode */
 			/* FIXME: Is this WSC only? */
+			break;
+		case 0x80:		/* sound registers */
+		case 0x81:
+		case 0x82:
+		case 0x83:
+		case 0x84:
+		case 0x85:
+		case 0x86:
+		case 0x87:
+		case 0x88:
+		case 0x89:
+		case 0x8A:
+		case 0x8B:
+		case 0x8C:
+		case 0x8D:
+		case 0x8E:
+		case 0x8F:
+		case 0x90:
+		case 0x91:
+		case 0x92:
+		case 0x93:
+		case 0x94:
 			break;
 		case 0xa0:		/* Hardware type - this is probably read only */
 			break;
@@ -240,8 +318,13 @@ WRITE8_HANDLER( wswan_port_w )
 			break;
 		case 0xb2:		/* Interrupt enable */
 			break;
+		case 0xb3:		/* serial communication */
+			if ( data & 0x80 ) {
+				data |= 0x04;
+			}
+			break;
 		case 0xb6:		/* Interrupt acknowledge */
-			/* FIXME: what is this? */
+			wswan_clear_irq_line( data );
 			break;
 		case 0xc0:		/* ROM bank select for banks 3-14 */
 			printf( "ROM bank select - unsupported\n" );
@@ -263,6 +346,40 @@ WRITE8_HANDLER( wswan_port_w )
 
 	/* Update the port value */
 	ws_portram[offset] = data;
+}
+
+enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
+const char* wswan_sram_str[] = {
+	"none", "64K SRAM", "256K SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown"
+};
+
+static const char* wswan_determine_sram( UINT8 data ) {
+	switch( data ) {
+	case 0x00: return wswan_sram_str[ SRAM_NONE ];
+	case 0x01: return wswan_sram_str[ SRAM_64K ];
+	case 0x02: return wswan_sram_str[ SRAM_256K ];
+	case 0x10: return wswan_sram_str[ EEPROM_1K ];
+	case 0x20: return wswan_sram_str[ EEPROM_16K ];
+	case 0x50: return wswan_sram_str[ EEPROM_8K ];
+	}
+	return wswan_sram_str[ SRAM_UNKNOWN ];
+}
+
+enum enum_romsize { ROM_4M=0, ROM_8M, ROM_16M, ROM_32M, ROM_64M, ROM_128M, ROM_UNKNOWN };
+const char* wswan_romsize_str[] = {
+	"4Mbit", "8Mbit", "16Mbit", "32Mbit", "64Mbit", "128Mbit", "Unknown"
+};
+
+static const char* wswan_determine_romsize( UINT8 data ) {
+	switch( data ) {
+	case 0x02:	return wswan_romsize_str[ ROM_4M ];
+	case 0x03:	return wswan_romsize_str[ ROM_8M ];
+	case 0x04:	return wswan_romsize_str[ ROM_16M ];
+	case 0x06:	return wswan_romsize_str[ ROM_32M ];
+	case 0x08:	return wswan_romsize_str[ ROM_64M ];
+	case 0x09:	return wswan_romsize_str[ ROM_128M ];
+	}
+	return wswan_romsize_str[ ROM_UNKNOWN ];
 }
 
 DEVICE_LOAD(wswan_cart)
@@ -302,10 +419,10 @@ DEVICE_LOAD(wswan_cart)
 	printf( "\tDeveloper ID: %X\n", ROMMap[ROMBanks-1][0xfff6] );
 	printf( "\tMinimum system: %s\n", ROMMap[ROMBanks-1][0xfff7] ? "WonderSwan Color" : "WonderSwan" );
 	printf( "\tCart ID: %X\n", ROMMap[ROMBanks-1][0xfff8] );
-	printf( "\tROM size: %X\n", ROMMap[ROMBanks-1][0xfffa] );
-	printf( "\tSRAM size: %X\n", ROMMap[ROMBanks-1][0xfffb] );
+	printf( "\tROM size: %s\n", wswan_determine_romsize( ROMMap[ROMBanks-1][0xfffa] ) );
+	printf( "\tSRAM size: %s\n", wswan_determine_sram( ROMMap[ROMBanks-1][0xfffb] ) );
 	printf( "\tFeatures: %X\n", ROMMap[ROMBanks-1][0xfffc] );
-	printf( "\tRTC: %X\n", ROMMap[ROMBanks-1][0xfffd] );
+	printf( "\tRTC: %s\n", ( ROMMap[ROMBanks-1][0xfffd] ? "yes" : "no" ) );
 	printf( "\tChecksum: %X%X\n", ROMMap[ROMBanks-1][0xffff], ROMMap[ROMBanks-1][0xfffe] );
 #endif
 
@@ -322,7 +439,7 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 
 	if( (ws_portram[0xb2] & WSWAN_IFLAG_VBL) && (vdp.current_line == 144) )
 	{
-		ws_portram[0xb6] &= ~WSWAN_IFLAG_VBL;
-		cpunum_set_input_line( 0, (ws_portram[0xb0] + WSWAN_INT_VBL), HOLD_LINE );
+		logerror( "Setting VBL interrupt line\n" );
+		wswan_set_irq_line( WSWAN_IFLAG_VBL );
 	}
 }

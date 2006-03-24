@@ -10,6 +10,8 @@
 #define WSWAN_VIDMODE_16_LAYERED 2
 #define WSWAN_VIDMODE_16_PACKED 3
 
+#define WSWAN_X_PIXELS	28*8
+
 /* Interrupt flags */
 #define WSWAN_IFLAG_STX    0x1
 #define WSWAN_IFLAG_KEY    0x2
@@ -65,9 +67,13 @@ struct VDP
 	UINT8 timer_vblank_enable;		/* Vertical blank interrupt on/off */
 	UINT8 timer_vblank_mode;		/* Vertical blank timer mode */
 	UINT16 timer_vblank_freq;		/* Vertical blank timer frequency */
+	UINT8 *vram;				/* pointer to start of ram/vram (set by MACHINE_RESET) */
+	UINT8 main_palette[8];
 };
 
 extern struct VDP vdp;
+extern UINT8 ws_portram[256];
+
 
 extern MACHINE_RESET( wswan );
 extern READ8_HANDLER( wswan_port_r );
