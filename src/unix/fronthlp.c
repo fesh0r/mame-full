@@ -10,7 +10,7 @@
 #include "infomess.h"
 #endif
 
-static int frontend_list_clones(char *gamename);
+static int frontend_list_clones(const char *gamename);
 static int frontend_list_cpu(void);
 static int frontend_list_gamelistheader(void);
 static int frontend_list_hash(int type);
@@ -276,7 +276,7 @@ char *get_description(int driver)
 	return description;
 }
 
-int frontend_list(char *gamename)
+int frontend_list(const char *gamename)
 {
 	int i, j = 0;
 	const char *header[] = {
@@ -333,11 +333,13 @@ int frontend_list(char *gamename)
 	};
 
 	machine_config drv;
+	const char *all_games = "*";
 	int matching     = 0;
 	int skipped      = 0;
 
-	if (!gamename)
-		gamename = "";
+	/* HACK: some options REQUIRE gamename field to work: default to "*" */
+	if (!gamename || (strlen(gamename) == 0))
+		gamename = all_games;
 
 	/* 
 	 * since the cpuintrf structure is filled dynamically now, we have to 
@@ -352,7 +354,8 @@ int frontend_list(char *gamename)
 		int count = 0;
 
 		/* first count the drivers */
-		while (drivers[count]) count++;
+		while (drivers[count])
+			count++;
 
 		/* qsort as appropriate */
 		if (sortby == 1)
@@ -392,7 +395,7 @@ int frontend_list(char *gamename)
 
 	fprintf(stdout_file, header[list - 1]);
 
-	for (i=0;drivers[i];i++)
+	for (i = 0; drivers[i]; i++)
 	{
 		expand_machine_driver(drivers[i]->drv, &drv);	
 		if ( (listclones || drivers[i]->clone_of == 0 ||
@@ -430,14 +433,14 @@ int frontend_list(char *gamename)
 					fprintf(stdout_file, "%-10s ", strrchr(drivers[i]->source_file, '/') + 1);
 
 					/* Then, cpus */
-					for(j=0;j<MAX_CPU;j++)
+					for (j = 0; j < MAX_CPU; j++)
 					{
 						const cpu_config *x_cpu = drv.cpu;
 						fprintf(stdout_file, "%-8s ",cputype_name(x_cpu[j].cpu_type));
 					}
 					fprintf(stdout_file, " ");
 
-					for(j=0;j<MAX_SOUND;j++)
+					for (j = 0; j < MAX_SOUND; j++)
 					{
 						const sound_config *x_sound = drv.sound;
 						fprintf(stdout_file, "%-11s ", sndtype_name(x_sound[j].sound_type));
@@ -492,7 +495,7 @@ int frontend_list(char *gamename)
 						{
 							const char **samplenames = NULL;
 #if (HAS_SAMPLES || HAS_VLM5030)
-							for (j = 0;drv.sound[j].sound_type && j < MAX_SOUND; j++)
+							for (j = 0; drv.sound[j].sound_type && j < MAX_SOUND; j++)
 							{
 #if (HAS_SAMPLES)
 								if (drv.sound[j].sound_type == SOUND_SAMPLES)
@@ -577,13 +580,13 @@ int frontend_list(char *gamename)
 						}
 
 						fprintf(stdout_file, "This is the list of the ROMs required for driver \"%s\".\n"
-									"Name            Size Checksum\n", gamename);
+									"Name            Size Checksum\n", drivers[i]->name);
 						for (region = drivers[i]->rom; region; region = rom_next_region(region))			
 						{
 							for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 							{
 								const char *name = ROM_GETNAME(rom);
-								const char* hash = ROM_GETHASHDATA(rom);
+								const char *hash = ROM_GETHASHDATA(rom);
 								int length = -1; /* default is for disks! */
 
 								if (ROMREGION_ISROMDATA(region))
@@ -955,7 +958,7 @@ int frontend_list(char *gamename)
 		return 0;
 }
 
-static int frontend_list_clones(char *gamename)
+static int frontend_list_clones(const char *gamename)
 {
 	/* listclones is a special case since the strwildcmp */
 	/* also has to be done on clone_of. */
