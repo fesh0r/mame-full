@@ -122,7 +122,6 @@ int coco3_mmu_translate(int bank, int offset);
 int coco_bitbanger_init (int id);
 READ8_HANDLER( coco_pia_1_r );
 READ8_HANDLER( coco3_pia_1_r );
-void dragon_sound_update(void);
 READ8_HANDLER( dragon_alpha_mapped_irq_r );
 
 /* Dragon Alpha AY-8912 */

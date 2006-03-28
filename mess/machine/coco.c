@@ -90,22 +90,22 @@ static int gime_firq, gime_irq;
 static int cart_line, cart_inserted;
 static UINT8 soundmux_status;
 static UINT8 joystick_axis, joystick;
-static int d_dac;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( coco3_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
-static READ8_HANDLER (  d_pia1_cb1_r );
-static READ8_HANDLER (  d_pia0_pa_r );
-static READ8_HANDLER (  d_pia1_pa_r );
-static READ8_HANDLER (  d_pia1_pb_r_coco );
-static READ8_HANDLER (  d_pia1_pb_r_coco2 );
+static READ8_HANDLER ( d_pia1_cb1_r );
+static READ8_HANDLER ( d_pia1_pa_r );
+static READ8_HANDLER ( d_pia1_pb_r_coco );
+static READ8_HANDLER ( d_pia1_pb_r_coco2 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
+static WRITE8_HANDLER ( d_pia0_pb_w );
 static WRITE8_HANDLER ( dragon64_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_cb2_w);
 static WRITE8_HANDLER ( d_pia0_cb2_w);
 static WRITE8_HANDLER ( d_pia1_ca2_w);
 static WRITE8_HANDLER ( d_pia0_ca2_w);
+static WRITE8_HANDLER ( coco3_pia0_pb_w );
 static void d_pia0_irq_a(int state);
 static void d_pia0_irq_b(int state);
 static void d_pia1_firq_a(int state);
@@ -237,8 +237,8 @@ static struct pia6821_interface coco_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -254,8 +254,8 @@ static struct pia6821_interface coco2_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -271,8 +271,8 @@ static struct pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, d_pia1_pb_r_coco2, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, d_pia1_pb_r_coco2, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, coco3_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
 
@@ -288,8 +288,8 @@ static struct pia6821_interface dragon64_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -306,8 +306,8 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 	/* PIA 0 and 1 as Dragon 64 */
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, 0, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
@@ -1047,19 +1047,20 @@ static void soundmux_update(void)
 	cassette_change_state(cassette_device_image(), new_state, CASSETTE_MASK_SPEAKER);
 }
 
-void dragon_sound_update(void)
+static void coco_sound_update(void)
 {
 	/* Call this function whenever you need to update the sound. It will
 	 * automatically mute any devices that are switched out.
 	 */
-	int pia1_pb1 = pia_get_output_b(1) & 0x02;
+	UINT8 dac = pia_get_output_a(1) & 0xFC;
+	UINT8 pia1_pb1 = pia_get_output_b(1) & 0x02;
 
 	if (soundmux_status & SOUNDMUX_STATUS_ENABLE)
 	{
 		switch(soundmux_status) {
 		case SOUNDMUX_STATUS_ENABLE:
 			/* DAC */
-			DAC_data_w(0, pia1_pb1 + (d_dac >> 1) );  /* Mixing the two sources */
+			DAC_data_w(0, pia1_pb1 + (dac >> 1) );  /* Mixing the two sources */
 			break;
 		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
 			/* CSN */
@@ -1148,20 +1149,25 @@ static WRITE8_HANDLER ( d_pia0_ca2_w )
 	soundmux_sel1_w(data);
 }
 
+
+
 static WRITE8_HANDLER ( d_pia0_cb2_w )
 {
 	joystick = data;
 	soundmux_sel2_w(data);
 }
 
-static int keyboard_r(void)
+
+
+static UINT8 coco_update_keyboard(void)
 {
-	int porta = 0x7f;
+	UINT8 porta = 0x7F;
 	int joyport;
 	const char *joyport_tag;
 	int joyval;
 	static const int joy_rat_table[] = {15, 24, 42, 33 };
 	UINT8 pia0_pb;
+	UINT8 dac = pia_get_output_a(1) & 0xFC;
 	
 	pia0_pb = pia_get_output_b(0);
 
@@ -1173,14 +1179,13 @@ static int keyboard_r(void)
 	if ((input_port_5_r(0) | pia0_pb) != 0xff) porta &= ~0x20;
 	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
 
-
 	if (joystick_mode() == JOYSTICKMODE_RAT)
 	{
 		/* The RAT graphic mouse */
 		joyport_tag = joystick_axis ? "rat_mouse_y" : "rat_mouse_x";
 		joyval = readinputportbytag(joyport_tag);
 
-		if ((d_dac >> 2) <= joy_rat_table[joyval])
+		if ((dac >> 2) <= joy_rat_table[joyval])
 			porta |= 0x80;
 	}
 	else if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL))
@@ -1195,51 +1200,70 @@ static int keyboard_r(void)
 		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
 		joyval = read_joystick(joyport) * 64.0;
 
-		if ((d_dac >> 2 ) <= joyval)
+		if ((dac >> 2) <= joyval)
 			porta |= 0x80;
 	}
 
 	porta &= ~readinputport(11);
-
+	
+	pia_set_input_a(0, porta);
 	return porta;
 }
 
-static  READ8_HANDLER ( d_pia0_pa_r )
+
+
+static UINT8 coco3_update_keyboard(void)
 {
-	return keyboard_r();
+	UINT8 porta;
+	porta = coco_update_keyboard();
+	coco3_raise_interrupt(COCO3_INT_EI1, ((porta & 0x7F) == 0x7F) ? CLEAR_LINE : ASSERT_LINE);
+	return porta;
+}
+
+
+
+static WRITE8_HANDLER ( d_pia0_pb_w )		{ coco_update_keyboard(); }
+static WRITE8_HANDLER ( coco3_pia0_pb_w )	{ coco3_update_keyboard(); }
+
+static void coco_poll_keyboard(void *param, UINT32 value, UINT32 mask)
+{
+	coco_update_keyboard();
 }
 
 static void coco3_poll_keyboard(void *param, UINT32 value, UINT32 mask)
 {
-	int porta;
-	porta = keyboard_r() & 0x7f;
-	coco3_raise_interrupt(COCO3_INT_EI1, (porta == 0x7f) ? CLEAR_LINE : ASSERT_LINE);
+	coco3_update_keyboard();
 }
+
+
 
 static WRITE8_HANDLER ( d_pia0_pa_w )
 {
-	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX) {
+	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX)
 		coco_hiresjoy_w(data & 0x04);
-	}
 }
+
+
 
 /* The following hacks are necessary because a large portion of cartridges
  * tie the Q line to the CART line.  Since Q pulses with every single clock
  * cycle, this would be prohibitively slow to emulate.  Thus we are only
  * going to pulse when the PIA is read from; which seems good enough (for now)
  */
- READ8_HANDLER( coco_pia_1_r )
+READ8_HANDLER( coco_pia_1_r )
 {
-	if (cart_line == CARTLINE_Q) {
+	if (cart_line == CARTLINE_Q)
+	{
 		coco_setcartline(CARTLINE_CLEAR);
 		coco_setcartline(CARTLINE_Q);
 	}
 	return pia_1_r(offset);
 }
 
- READ8_HANDLER( coco3_pia_1_r )
+READ8_HANDLER( coco3_pia_1_r )
 {
-	if (cart_line == CARTLINE_Q) {
+	if (cart_line == CARTLINE_Q)
+	{
 		coco3_setcartline(CARTLINE_CLEAR);
 		coco3_setcartline(CARTLINE_Q);
 	}
@@ -1285,13 +1309,14 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	 *  7-2:	DAC to speaker or cassette
 	 *    1:	Serial out (CoCo), Printer strobe (Dragon)
 	 */
-	d_dac = data & 0xfc;
-	dragon_sound_update();
+	UINT8 dac = pia_get_output_a(1) & 0xFC;
+
+	coco_sound_update();
 
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
-		coco_hiresjoy_w(d_dac >= 0x80);
+		coco_hiresjoy_w(dac >= 0x80);
 	else
-		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) / 128.0);
+		cassette_output(cassette_device_image(), ((int) dac - 0x80) / 128.0);
 
 	switch(coco_or_dragon)
 	{
@@ -1302,7 +1327,7 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	
 		case AM_DRAGON:
 			/* If strobe bit is high send data from pia0 port b to dragon parallel printer */
-			if (data&2)
+			if (data & 0x02)
 			{
 				printer_output(printer_image(), pia_get_output_b(0));
 			}
@@ -1334,8 +1359,7 @@ static WRITE8_HANDLER( d_pia1_pb_w )
 	 *
 	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
 	 */
-
-	dragon_sound_update();
+	coco_sound_update();
 }
 
 enum
@@ -1454,7 +1478,7 @@ static void	dgnalpha_fdc_callback(int event)
 }
 
 /* The Dragon Alpha hardware reverses the order of the WD2797 registers */
- READ8_HANDLER(wd2797_r)
+READ8_HANDLER(wd2797_r)
 {
 	int result = 0;
 
@@ -1517,7 +1541,7 @@ static WRITE8_HANDLER ( d_pia1_ca2_w )
 
 
 
-static  READ8_HANDLER ( d_pia1_pa_r )
+static READ8_HANDLER ( d_pia1_pa_r )
 {
 	return (cassette_input(cassette_device_image()) >= 0) ? 1 : 0;
 }
@@ -2400,8 +2424,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 
 	soundmux_status = 0;
 	joystick_axis = joystick = 0;
-	d_dac = 0;
-
+	
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
@@ -2418,7 +2441,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 
 	for (portnum = 0; portnum <= 6; portnum++)
-		input_port_set_changed_callback(portnum, ~0, coco3_poll_keyboard, NULL);
+		input_port_set_changed_callback(portnum, ~0, coco_poll_keyboard, NULL);
 
 #ifdef MAME_DEBUG
 	cpuintrf_set_dasm_override(coco_dasm_override);
@@ -2511,6 +2534,8 @@ static void coco3_state_postload(void)
 
 MACHINE_START( coco3 )
 {
+	int portnum;
+
 	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
 
 	coco3_machine_reset();
@@ -2519,6 +2544,9 @@ MACHINE_START( coco3 )
 	coco3_interupt_line = 0;
 	
 	coco_or_dragon = AM_COCO;
+
+	for (portnum = 0; portnum <= 6; portnum++)
+		input_port_set_changed_callback(portnum, ~0, coco_poll_keyboard, NULL);
 
 	state_save_register_global_array(coco3_mmu);
 	state_save_register_global_array(coco3_gimereg);

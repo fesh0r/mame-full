@@ -353,19 +353,11 @@ COMP( 1987,	macse,    0,		0,		macplus,  macplus,  macse,		    macse,		"Apple Com
 
 /* Early Mac2 driver - does not work at all, but enabled me to disassemble the ROMs */
 
-static ADDRESS_MAP_START (mac2_readmem, ADDRESS_SPACE_PROGRAM, 16)
+static ADDRESS_MAP_START (mac2_mem, ADDRESS_SPACE_PROGRAM, 16)
 
-	AM_RANGE( 0x00000000, 0x007fffff) AM_READ( MRA8_RAM )	/* ram */
-	AM_RANGE( 0x00800000, 0x008fffff) AM_READ( MRA8_ROM )	/* rom */
-	AM_RANGE( 0x00900000, 0x00ffffff) AM_READ( MRA8_NOP )
-
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START (mac2_writemem, ADDRESS_SPACE_PROGRAM, 16)
-
-	AM_RANGE( 0x00000000, 0x007fffff) AM_WRITE( MWA8_RAM )	/* ram */
-	AM_RANGE( 0x00800000, 0x008fffff) AM_WRITE( MWA8_ROM )	/* rom */
-	AM_RANGE( 0x00900000, 0x00ffffff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0x00000000, 0x007fffff) AM_RAM
+	AM_RANGE( 0x00800000, 0x008fffff) AM_ROM
+	AM_RANGE( 0x00900000, 0x00ffffff) AM_NOP
 
 ADDRESS_MAP_END
 
@@ -382,7 +374,7 @@ static struct MachineDriver machine_driver_mac2 =
 		{
 			CPU_M68020,
 			16000000,			/* +/- 16 Mhz */
-			mac2_readmem,mac2_writemem,0,0,
+			mac2_mem,0,0,0,
 			0,0,
 		}
 	},

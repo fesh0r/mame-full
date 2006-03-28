@@ -55,16 +55,11 @@ static MACHINE_RESET( sord_m5 );
 
 static unsigned char fd5_databus;
 
-ADDRESS_MAP_START( readmem_sord_fd5 , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x03fff) AM_READ( MRA8_ROM)	/* internal rom */
-	AM_RANGE(0x4000, 0x0ffff) AM_READ( MRA8_RAM)
+ADDRESS_MAP_START( sord_fd5_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03fff) AM_ROM	/* internal rom */
+	AM_RANGE(0x4000, 0x0ffff) AM_RAM
 ADDRESS_MAP_END
 
-
-ADDRESS_MAP_START( writemem_sord_fd5 , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x03fff) AM_WRITE( MWA8_ROM) /* internal rom */
-	AM_RANGE(0x4000, 0x0ffff) AM_WRITE( MWA8_RAM)
-ADDRESS_MAP_END
 
 static int obfa,ibfa, intra;
 static int fd5_port_0x020_data;
@@ -342,19 +337,13 @@ static READ8_HANDLER ( sord_keyboard_r )
 	return readinputport(offset);
 }
 
-ADDRESS_MAP_START( readmem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x01fff) AM_READ( MRA8_ROM)	/* internal rom */
-	AM_RANGE(0x2000, 0x06fff) AM_READ( MRA8_BANK1)
-	AM_RANGE(0x7000, 0x0ffff) AM_READ( MRA8_RAM)
+ADDRESS_MAP_START( sord_m5_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_ROM	/* internal rom */
+	AM_RANGE(0x2000, 0x06fff) AM_ROMBANK(1)
+	AM_RANGE(0x7000, 0x0ffff) AM_RAM
 ADDRESS_MAP_END
 
 
-
-ADDRESS_MAP_START( writemem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x01fff) AM_WRITE( MWA8_ROM) /* internal rom */
-	AM_RANGE(0x02000, 0x06fff) AM_WRITE( MWA8_NOP)	
-	AM_RANGE(0x7000, 0x0ffff) AM_WRITE( MWA8_RAM)
-ADDRESS_MAP_END
 
 static READ8_HANDLER(sord_ctc_r)
 {
@@ -645,7 +634,7 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( sord_m5 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3800000)
-	MDRV_CPU_PROGRAM_MAP(readmem_sord_m5,writemem_sord_m5)
+	MDRV_CPU_PROGRAM_MAP(sord_m5_mem, 0)
 	MDRV_CPU_IO_MAP(sord_m5_io, 0)
 	MDRV_CPU_VBLANK_INT(sord_interrupt, 1)
 	MDRV_CPU_CONFIG( sord_m5_daisy_chain )
@@ -672,7 +661,7 @@ static MACHINE_DRIVER_START( sord_m5_fd5 )
 	MDRV_CPU_IO_MAP(srdm5fd5_io, 0)
 
 	MDRV_CPU_ADD(Z80, 3800000)
-	MDRV_CPU_PROGRAM_MAP(readmem_sord_fd5,writemem_sord_fd5)
+	MDRV_CPU_PROGRAM_MAP(sord_fd5_mem, 0)
 	MDRV_CPU_IO_MAP(readport_sord_fd5,writeport_sord_fd5)
 
 	MDRV_INTERLEAVE(20)
