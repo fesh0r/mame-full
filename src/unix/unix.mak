@@ -290,7 +290,7 @@ COMMON_OBJS  =  \
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
-TOOLS = chdman imgtool
+TOOLS = dat2html chdman imgtool
 endif
 ifdef LIRC
 CONFIG  += -I/usr/include/lirc
