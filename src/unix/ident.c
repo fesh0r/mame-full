@@ -272,7 +272,7 @@ void romident(const char* name,int enter_dirs)
 	}
 }
 
-int frontend_ident(char *gamename)
+int frontend_ident(const char *gamename)
 {
 	if (!ident)
 		return 1234;
