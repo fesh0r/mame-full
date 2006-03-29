@@ -648,8 +648,7 @@ void xv_clear_display_buffer(void)
       ClearYV12();
       break;
     default:
-      memset(xvimage->data, 0, xvimage->width*xvimage->height*
-        sysdep_display_properties.palette_info.bpp/8);
+      memset(xvimage->data, 0, xvimage->data_size);
   }
 }
 
