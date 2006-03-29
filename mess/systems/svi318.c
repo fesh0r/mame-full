@@ -18,80 +18,59 @@
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 
-static ADDRESS_MAP_START( svi318_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_BANK1 )
+static ADDRESS_MAP_START( svi318_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE( 0x0000, 0x7fff) AM_READWRITE( MRA8_BANK1, svi318_writemem0 )
 	AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK2 )
 	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK3 )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( svi318_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( svi318_writemem0 )
 	AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( svi318_readport, ADDRESS_SPACE_IO, 8 )
+
+
+static ADDRESS_MAP_START( svi318_io, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
-	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
-	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
-	AM_RANGE( 0x32, 0x32) AM_READ( wd179x_sector_r )
-	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
-	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_irqdrq_r )
-	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
-	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
-	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
-	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( svi318_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
-	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
-	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
-	AM_RANGE( 0x32, 0x32) AM_WRITE( wd179x_sector_w )
-	AM_RANGE( 0x33, 0x33) AM_WRITE( wd179x_data_w )
-	AM_RANGE( 0x34, 0x34) AM_WRITE( svi318_fdc_drive_motor_w )
+	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
+	AM_RANGE( 0x30, 0x30) AM_READWRITE( wd179x_status_r, wd179x_command_w )
+	AM_RANGE( 0x31, 0x31) AM_READWRITE( wd179x_track_r, wd179x_track_w )
+	AM_RANGE( 0x32, 0x32) AM_READWRITE( wd179x_sector_r, wd179x_sector_w )
+	AM_RANGE( 0x33, 0x33) AM_READWRITE( wd179x_data_r, wd179x_data_w )
+	AM_RANGE( 0x34, 0x34) AM_READWRITE( svi318_fdc_irqdrq_r, svi318_fdc_drive_motor_w )
 	AM_RANGE( 0x38, 0x38) AM_WRITE( svi318_fdc_density_side_w )
 	AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
 	AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
-	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
-	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
-	AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( svi318_readport2, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
-	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
-	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
-	AM_RANGE( 0x32, 0x32) AM_READ( wd179x_sector_r )
-	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
-	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_irqdrq_r )
-	AM_RANGE( 0x50, 0x51) AM_READ( svi318_crtc_r )
 	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
 	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
+	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
+	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
 	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
+	AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
 	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( svi318_writeport2, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( svi318_io2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
-	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
-	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
-	AM_RANGE( 0x32, 0x32) AM_WRITE( wd179x_sector_w )
-	AM_RANGE( 0x33, 0x33) AM_WRITE( wd179x_data_w )
-	AM_RANGE( 0x34, 0x34) AM_WRITE( svi318_fdc_drive_motor_w )
+	AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
+	AM_RANGE( 0x30, 0x30) AM_READWRITE( wd179x_status_r, wd179x_command_w )
+	AM_RANGE( 0x31, 0x31) AM_READWRITE( wd179x_track_r, wd179x_track_w )
+	AM_RANGE( 0x32, 0x32) AM_READWRITE( wd179x_sector_r, wd179x_sector_w )
+	AM_RANGE( 0x33, 0x33) AM_READWRITE( wd179x_data_r, wd179x_data_w )
+	AM_RANGE( 0x34, 0x34) AM_READWRITE( svi318_fdc_irqdrq_r, svi318_fdc_drive_motor_w )
 	AM_RANGE( 0x38, 0x38) AM_WRITE( svi318_fdc_density_side_w )
-	AM_RANGE( 0x50, 0x51) AM_WRITE( svi318_crtc_w )
+	AM_RANGE( 0x50, 0x51) AM_READWRITE( svi318_crtc_r, svi318_crtc_w )
 	AM_RANGE( 0x58, 0x58) AM_WRITE( svi318_crtcbank_w )
 	AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
 	AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
+	AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
+	AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
 	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
 	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
+	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
 	AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
+	AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
 ADDRESS_MAP_END
 
 /*
@@ -356,8 +335,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( svi318 )
 	/* Basic machine hardware */
 	MDRV_CPU_ADD_TAG( "main", Z80, 3579545 )	/* 3.579545 Mhz */
-	MDRV_CPU_PROGRAM_MAP( svi318_readmem, svi318_writemem )
-	MDRV_CPU_IO_MAP( svi318_readport, svi318_writeport )
+	MDRV_CPU_PROGRAM_MAP( svi318_mem, 0 )
+	MDRV_CPU_IO_MAP( svi318_io, 0 )
 	MDRV_CPU_VBLANK_INT( svi318_interrupt, 1 )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -383,7 +362,7 @@ static MACHINE_DRIVER_START( svi328b )
 	MDRV_IMPORT_FROM( svi318 )
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP( svi318_readport2, svi318_writeport2 )
+	MDRV_CPU_IO_MAP( svi318_io2, 0 )
 	MDRV_MACHINE_RESET( svi328b )
 
 	/* video hardware */

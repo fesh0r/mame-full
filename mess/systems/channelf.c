@@ -182,34 +182,24 @@ static WRITE8_HANDLER( channelf_2102B_w )  /* SKR */
 }
 
 static ADDRESS_MAP_START( channelf_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_ROM, MWA8_ROM)
-	AM_RANGE(0x0800, 0x27ff) AM_READ(MRA8_ROM) /* Cartridge Data */
-	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(MRA8_RAM, MWA8_RAM) /* Schach RAM */
+	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x0800, 0x27ff) AM_ROM /* Cartridge Data */
+	AM_RANGE(0x2800, 0x2fff) AM_RAM /* Schach RAM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(channelf_port_0_r) /* Front panel switches */
-	AM_RANGE(0x01, 0x01) AM_READ(channelf_port_1_r) /* Right controller     */
-	AM_RANGE(0x04, 0x04) AM_READ(channelf_port_4_r) /* Left controller      */
-	AM_RANGE(0x05, 0x05) AM_READ(channelf_port_5_r)
+static ADDRESS_MAP_START( channelf_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(channelf_port_0_r, channelf_port_0_w) /* Front panel switches */
+	AM_RANGE(0x01, 0x01) AM_READWRITE(channelf_port_1_r, channelf_port_1_w) /* Right controller     */
+	AM_RANGE(0x04, 0x04) AM_READWRITE(channelf_port_4_r, channelf_port_4_w) /* Left controller      */
+	AM_RANGE(0x05, 0x05) AM_READWRITE(channelf_port_5_r, channelf_port_5_w)
 
-	AM_RANGE(0x20, 0x20) AM_READ(channelf_2102A_r) /* SKR 2102 control and addr for cart 18 */
-	AM_RANGE(0x21, 0x21) AM_READ(channelf_2102B_r) /* SKR 2102 addr */
-	AM_RANGE(0x24, 0x24) AM_READ(channelf_2102A_r) /* SKR 2102 control and addr for cart 10 */
-	AM_RANGE(0x25, 0x25) AM_READ(channelf_2102B_r) /* SKR 2102 addr */
+	AM_RANGE(0x20, 0x20) AM_READWRITE(channelf_2102A_r, channelf_2102A_w) /* SKR 2102 control and addr for cart 18 */
+	AM_RANGE(0x21, 0x21) AM_READWRITE(channelf_2102B_r, channelf_2102B_w) /* SKR 2102 addr */
+	AM_RANGE(0x24, 0x24) AM_READWRITE(channelf_2102A_r, channelf_2102A_w) /* SKR 2102 control and addr for cart 10 */
+	AM_RANGE(0x25, 0x25) AM_READWRITE(channelf_2102B_r, channelf_2102B_w) /* SKR 2102 addr */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(channelf_port_0_w) /* Enable Controllers & ARM WRT */
-	AM_RANGE(0x01, 0x01) AM_WRITE(channelf_port_1_w) /* Video Write Data */
-	AM_RANGE(0x04, 0x04) AM_WRITE(channelf_port_4_w) /* Video Horiz */
-	AM_RANGE(0x05, 0x05) AM_WRITE(channelf_port_5_w) /* Video Vert & Sound */
 
-	AM_RANGE(0x20, 0x20) AM_WRITE(channelf_2102A_w) /* SKR 2102 control and addr for cart 18 */
-	AM_RANGE(0x21, 0x21) AM_WRITE(channelf_2102B_w) /* SKR 2102 addr */
-	AM_RANGE(0x24, 0x24) AM_WRITE(channelf_2102A_w) /* SKR 2102 control and addr for cart 10 */
-	AM_RANGE(0x25, 0x25) AM_WRITE(channelf_2102B_w) /* SKR 2102 addr */
-ADDRESS_MAP_END
 
 INPUT_PORTS_START( channelf )
 	PORT_START /* Front panel buttons */
@@ -251,7 +241,7 @@ static MACHINE_DRIVER_START( channelf )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(F8, 3579545/2)        /* Colorburst/2 */
 	MDRV_CPU_PROGRAM_MAP(channelf_map, 0)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_IO_MAP(channelf_io, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
