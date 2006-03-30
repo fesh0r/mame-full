@@ -260,10 +260,11 @@ void wd179x_set_drive(UINT8 drive)
 
 void wd179x_set_side(UINT8 head)
 {
-#if VERBOSE
-	if( head != hd )
-		logerror("wd179x_set_side: $%02x\n", head);
-#endif
+	if (VERBOSE)
+	{
+		if (head != hd)
+			logerror("wd179x_set_side: $%02x\n", head);
+	}
 	hd = head;
 }
 
@@ -273,10 +274,11 @@ void wd179x_set_density(DENSITY density)
 {
 	WD179X *w = &wd;
 
-#if VERBOSE
-	if( w->density != density )
-		logerror("wd179x_set_density: $%02x\n", density);
-#endif
+	if (VERBOSE)
+	{
+		if (w->density != density)
+			logerror("wd179x_set_density: $%02x\n", density);
+	}
 
 	w->density = density;
 }
@@ -625,9 +627,8 @@ static int wd179x_find_sector(WD179X *w)
 					/* get ddam status */
 					w->ddam = id.flags & ID_FLAG_DELETED_DATA;
 					/* got record type here */
-#if VERBOSE
-	logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
-#endif
+					if (VERBOSE)
+						logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
 					return 1;
 				}
 			}
@@ -644,9 +645,9 @@ static int wd179x_find_sector(WD179X *w)
 	/* record not found */
 	w->status |= STA_2_REC_N_FND;
 
-#if VERBOSE
-	logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
-#endif
+	if (VERBOSE)
+		logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
+
 	wd179x_complete_command(w, DELAY_ERROR);
 
 	return 0;
@@ -841,9 +842,8 @@ static void	wd179x_read_sector_callback(int code)
 
 	/* ok, start that read! */
 
-#if VERBOSE
-	logerror("wd179x: Read Sector callback.\n");
-#endif
+	if (VERBOSE)
+		logerror("wd179x: Read Sector callback.\n");
 
 	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 		wd179x_complete_command(w, DELAY_NOTREADY);
@@ -863,9 +863,8 @@ static void	wd179x_write_sector_callback(int code)
 
 	/* ok, start that write! */
 
-#if VERBOSE
-	logerror("wd179x: Write Sector callback.\n");
-#endif
+	if (VERBOSE)
+		logerror("wd179x: Write Sector callback.\n");
 
 	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 		wd179x_complete_command(w, DELAY_NOTREADY);
@@ -992,11 +991,11 @@ static void wd179x_timed_write_sector_request(void)
 	/* eventually set data request bit */
 //	w->status |= w->status_drq;
 
-#if VERBOSE
-	if (w->data_count < 4)
-		logerror("wd179x_status_r: $%02X (data_count %d)\n", result, w->data_count);
-#endif
-
+	if (VERBOSE)
+	{
+		if (w->data_count < 4)
+			logerror("wd179x_status_r: $%02X (data_count %d)\n", result, w->data_count);
+	}
 
 	return result;
 }
@@ -1004,26 +1003,26 @@ static void wd179x_timed_write_sector_request(void)
 
 
 /* read the FDC track register */
- READ8_HANDLER ( wd179x_track_r )
+READ8_HANDLER ( wd179x_track_r )
 {
 	WD179X *w = &wd;
 
-#if VERBOSE
-	logerror("wd179x_track_r: $%02X\n", w->track_reg);
-#endif
+	if (VERBOSE)
+		logerror("wd179x_track_r: $%02X\n", w->track_reg);
+
 	return w->track_reg;
 }
 
 
 
 /* read the FDC sector register */
- READ8_HANDLER ( wd179x_sector_r )
+READ8_HANDLER ( wd179x_sector_r )
 {
 	WD179X *w = &wd;
 
-#if VERBOSE
-	logerror("wd179x_sector_r: $%02X\n", w->sector);
-#endif
+	if (VERBOSE)
+		logerror("wd179x_sector_r: $%02X\n", w->sector);
+
 	return w->sector;
 }
 
@@ -1042,9 +1041,9 @@ static void wd179x_timed_write_sector_request(void)
 		/* yes */
 		w->data = w->buffer[w->data_offset++];
 
-#if VERBOSE_DATA
-		logerror("wd179x_data_r: $%02X (data_count %d)\n", w->data, w->data_count);
-#endif
+		if (VERBOSE_DATA)
+			logerror("wd179x_data_r: $%02X (data_count %d)\n", w->data, w->data_count);
+
 		/* any bytes remaining? */
 		if (--w->data_count < 1)
 		{
@@ -1067,9 +1066,8 @@ static void wd179x_timed_write_sector_request(void)
 			   compare them with a calculated CRC */
 			wd179x_complete_command(w, DELAY_DATADONE);
 
-#if VERBOSE
-			logerror("wd179x_data_r(): data read completed\n");
-#endif
+			if (VERBOSE)
+				logerror("wd179x_data_r(): data read completed\n");
 		}
 		else
 		{
@@ -1102,9 +1100,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 	if ((data & ~FDC_MASK_TYPE_IV) == FDC_FORCE_INT)
 	{
-#if VERBOSE
-		logerror("wd179x_command_w $%02X FORCE_INT (data_count %d)\n", data, w->data_count);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X FORCE_INT (data_count %d)\n", data, w->data_count);
+
 		w->data_count = 0;
 		w->data_offset = 0;
 		w->status &= ~(STA_2_BUSY);
@@ -1133,9 +1131,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 		if ((data & ~FDC_MASK_TYPE_II) == FDC_READ_SEC)
 		{
-#if VERBOSE
-			logerror("wd179x_command_w $%02X READ_SEC\n", data);
-#endif
+			if (VERBOSE)
+				logerror("wd179x_command_w $%02X READ_SEC\n", data);
+
 			w->read_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 			w->command_type = TYPE_II;
@@ -1149,9 +1147,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 		if ((data & ~FDC_MASK_TYPE_II) == FDC_WRITE_SEC)
 		{
-#if VERBOSE
-			logerror("wd179x_command_w $%02X WRITE_SEC\n", data);
-#endif
+			if (VERBOSE)
+				logerror("wd179x_command_w $%02X WRITE_SEC\n", data);
+
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 			w->command_type = TYPE_II;
@@ -1165,9 +1163,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_READ_TRK)
 		{
-#if VERBOSE
-			logerror("wd179x_command_w $%02X READ_TRK\n", data);
-#endif
+			if (VERBOSE)
+				logerror("wd179x_command_w $%02X READ_TRK\n", data);
+
 			w->command = data & ~FDC_MASK_TYPE_III;
 			w->command_type = TYPE_III;
 			w->status &= ~STA_2_LOST_DAT;
@@ -1182,9 +1180,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_WRITE_TRK)
 		{
-#if VERBOSE
-			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
-#endif
+			if (VERBOSE)
+				logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
+
 			w->command_type = TYPE_III;
 			w->status &= ~STA_2_LOST_DAT;
 			wd179x_clear_data_request();
@@ -1220,9 +1218,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_READ_DAM)
 		{
-#if VERBOSE
-			logerror("wd179x_command_w $%02X READ_DAM\n", data);
-#endif
+			if (VERBOSE)
+				logerror("wd179x_command_w $%02X READ_DAM\n", data);
+
 			w->command_type = TYPE_III;
 			w->status &= ~STA_2_LOST_DAT;
   			wd179x_clear_data_request();
@@ -1238,9 +1236,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 			return;
 		}
 
-#if VERBOSE
-		logerror("wd179x_command_w $%02X unknown\n", data);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X unknown\n", data);
+
 		return;
 	}
 
@@ -1251,10 +1249,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 	if ((data & ~FDC_MASK_TYPE_I) == FDC_RESTORE)
 	{
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X RESTORE\n", data);
 
-#if VERBOSE
-		logerror("wd179x_command_w $%02X RESTORE\n", data);
-#endif
 		wd179x_restore(w);
 	}
 
@@ -1268,24 +1265,22 @@ WRITE8_HANDLER ( wd179x_command_w )
 		/* setup step direction */
 		if (w->track_reg < w->data)
 		{
-			#if VERBOSE
-			logerror("direction: +1\n");
-			#endif
+			if (VERBOSE)
+				logerror("direction: +1\n");
+
 			w->direction = 1;
 		}
-		else
-		if (w->track_reg > w->data)
+		else if (w->track_reg > w->data)
         {
-        	#if VERBOSE
-			logerror("direction: -1\n");
-			#endif
+			if (VERBOSE)
+				logerror("direction: -1\n");
+
 			w->direction = -1;
 		}
 
 		newtrack = w->data;
-#if VERBOSE
-		logerror("wd179x_command_w $%02X SEEK (data_reg is $%02X)\n", data, newtrack);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X SEEK (data_reg is $%02X)\n", data, newtrack);
 
 		/* reset busy count */
 		w->busy_count = 0;
@@ -1313,9 +1308,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP)
 	{
-#if VERBOSE
-		logerror("wd179x_command_w $%02X STEP dir %+d\n", data, w->direction);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X STEP dir %+d\n", data, w->direction);
+
 		w->command_type = TYPE_I;
         /* if it is a real floppy, issue a step command */
 		/* simulate seek time busy signal */
@@ -1336,9 +1331,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_IN)
 	{
-#if VERBOSE
-		logerror("wd179x_command_w $%02X STEP_IN\n", data);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X STEP_IN\n", data);
+
 		w->command_type = TYPE_I;
         w->direction = +1;
 		/* simulate seek time busy signal */
@@ -1357,9 +1352,9 @@ WRITE8_HANDLER ( wd179x_command_w )
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_OUT)
 	{
-#if VERBOSE
-		logerror("wd179x_command_w $%02X STEP_OUT\n", data);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_command_w $%02X STEP_OUT\n", data);
+
 		w->command_type = TYPE_I;
         w->direction = -1;
 		/* simulate seek time busy signal */
@@ -1402,9 +1397,8 @@ WRITE8_HANDLER ( wd179x_track_w )
 	WD179X *w = &wd;
 	w->track_reg = data;
 
-#if VERBOSE
-	logerror("wd179x_track_w $%02X\n", data);
-#endif
+	if (VERBOSE)
+		logerror("wd179x_track_w $%02X\n", data);
 }
 
 
@@ -1414,9 +1408,8 @@ WRITE8_HANDLER ( wd179x_sector_w )
 {
 	WD179X *w = &wd;
 	w->sector = data;
-#if VERBOSE
-	logerror("wd179x_sector_w $%02X\n", data);
-#endif
+	if (VERBOSE)
+		logerror("wd179x_sector_w $%02X\n", data);
 }
 
 
@@ -1432,9 +1425,8 @@ WRITE8_HANDLER ( wd179x_data_w )
 		wd179x_clear_data_request();
 
 		/* put byte into buffer */
-#if VERBOSE_DATA
-		logerror("WD179X buffered data: $%02X at offset %d.\n", data, w->data_offset);
-#endif
+		if (VERBOSE_DATA)
+			logerror("WD179X buffered data: $%02X at offset %d.\n", data, w->data_offset);
 	
 		w->buffer[w->data_offset++] = data;
 		
@@ -1458,9 +1450,8 @@ WRITE8_HANDLER ( wd179x_data_w )
 	}
 	else
 	{
-#if VERBOSE
-		logerror("wd179x_data_w $%02X\n", data);
-#endif
+		if (VERBOSE)
+			logerror("wd179x_data_w $%02X\n", data);
 	}
 	w->data = data;
 }
