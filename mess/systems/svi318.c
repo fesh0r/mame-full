@@ -9,7 +9,7 @@
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
 #include "includes/svi318.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "devices/cartslot.h"

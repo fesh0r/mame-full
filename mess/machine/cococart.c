@@ -7,7 +7,7 @@
 ***************************************************************************/
   
 #include "includes/cococart.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/coco_vhd.h"
 #include "ds1315.h"
 #include "m6242b.h"

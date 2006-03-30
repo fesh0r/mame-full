@@ -19,7 +19,7 @@
 #include "sndhrdw/dave.h"
 #include "includes/enterp.h"
 #include "vidhrdw/epnick.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "cpuintrf.h"
 #include "devices/basicdsk.h"
 /* for CPCEMU style disk images */

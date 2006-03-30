@@ -1366,7 +1366,7 @@ static MACHINE_RESET( tc2048 )
 /****************************************************************************************************/
 /* BETADISK/TR-DOS disc controller emulation */
 /* microcontroller KR1818VG93 is a russian wd179x clone */
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 
 /*
 DRQ (D6) and INTRQ (D7).

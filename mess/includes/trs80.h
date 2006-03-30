@@ -5,7 +5,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/snapquik.h"
 
 #define TRS80_FONT_W 6

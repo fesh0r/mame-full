@@ -51,7 +51,7 @@ Vidhrdw:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "cpu/m68000/m68k.h"
 #include "cpu/m68000/m68000.h"
 #include "devices/basicdsk.h"

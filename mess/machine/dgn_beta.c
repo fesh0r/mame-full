@@ -61,7 +61,7 @@
 #include "includes/dgn_beta.h"
 #include "includes/6551.h"
 #include "image.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "includes/crtc6845.h"
 
 static UINT8 *system_rom;

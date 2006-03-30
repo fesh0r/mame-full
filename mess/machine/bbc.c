@@ -12,7 +12,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
 #include "includes/i8271.h"

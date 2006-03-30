@@ -17,7 +17,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "includes/tc8521.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"

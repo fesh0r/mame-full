@@ -8,7 +8,7 @@
  *
  ******************************************************************************/
 
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "machine/cpm_bios.h"
 
 DRIVER_INIT( kaypro );

@@ -12,7 +12,7 @@
 #include "machine/z80pio.h"
 #include "machine/z80sio.h"
 #include "vidhrdw/generic.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "includes/mbee.h"
 #include "devices/cassette.h"
 #include "cpu/z80/z80.h"

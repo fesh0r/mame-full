@@ -87,7 +87,7 @@
 #include "includes/centroni.h"
 #include "includes/hd6402.h"
 #include "cpu/z80/z80.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "devices/cartslot.h"

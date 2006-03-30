@@ -12,7 +12,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/enterp.h"
 #include "devices/basicdsk.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "sndhrdw/dave.h"
 #include "image.h"
 

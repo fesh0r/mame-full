@@ -1,8 +1,8 @@
 /*********************************************************************
 
-	wd179x.h
+	wd17xx.h
 
-	Implementations of the Western Digitial 17xx and 19xx families of
+	Implementations of the Western Digital 17xx and 19xx families of
 	floppy disk controllers
 
 *********************************************************************/
@@ -28,9 +28,14 @@
 /* enumeration to specify the type of FDC; there are subtle differences */
 typedef enum
 {
-	WD_TYPE_177X = 0,
-	WD_TYPE_179X = 1,
-	WD_TYPE_MB8877 = 1	/* duplicate constant until this is implemented */
+	WD_TYPE_1770,
+	WD_TYPE_1772,
+	WD_TYPE_1773,
+	WD_TYPE_179X,
+
+	/* duplicate constants */
+	WD_TYPE_177X = WD_TYPE_1770,
+	WD_TYPE_MB8877 = WD_TYPE_179X
 } wd179x_type_t;
 
 

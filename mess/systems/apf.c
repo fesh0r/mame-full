@@ -6,7 +6,7 @@
 #include "includes/apf.h"
 
 #include "machine/6821pia.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "formats/apf_apt.h"

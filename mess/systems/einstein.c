@@ -85,7 +85,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "includes/centroni.h"
 #include "includes/msm8251.h"
 #include "devices/dsk.h"

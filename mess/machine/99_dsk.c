@@ -23,7 +23,7 @@
 	Raphael Nabet, 1999-2004.
 */
 
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "smc92x4.h"
 #include "ti99_4x.h"
 #include "99_peb.h"

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	wd179x.c
+	wd17xx.c
 
 	Implementations of the Western Digitial 17xx and 19xx families of
 	floppy disk controllers
@@ -26,7 +26,7 @@
 
 
 #include "driver.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/flopdrv.h"
 
 

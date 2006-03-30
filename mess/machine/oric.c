@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "machine/6522via.h"
 #include "machine/applefdc.h"
 #include "includes/6551.h"

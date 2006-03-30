@@ -75,7 +75,7 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 #include "devices/cassette.h"
 #include "image.h"
 #include "state.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 

@@ -12,7 +12,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "includes/svi318.h"
 #include "formats/svi_cas.h"
 #include "machine/8255ppi.h"

@@ -1019,7 +1019,7 @@ COREOBJS +=							\
 	$(OBJ)/machine/pckeybrd.o \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
-	$(OBJ)/mess/machine/wd179x.o   \
+	$(OBJ)/mess/machine/wd17xx.o   \
 	$(OBJ)/mess/machine/serial.o   \
 	$(OBJ)/mess/formats/wavfile.o
 

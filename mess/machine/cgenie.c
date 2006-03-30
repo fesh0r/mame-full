@@ -13,7 +13,7 @@
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/cgenie.h"
-#include "includes/wd179x.h"
+#include "machine/wd17xx.h"
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 #include "sound/ay8910.h"
