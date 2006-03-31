@@ -6,6 +6,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/md5.o							\
 	$(OBJ)/sha1.o							\
 	$(OBJ)/version.o						\
+	$(OBJ)/mamecore.o						\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\
