@@ -12,7 +12,6 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "osdepend.h"
 #include "utils.h"
 
 void replace_lt_gt(char *line)
@@ -134,7 +133,7 @@ int CLIB_DECL main(int ac, char **av)
 		{
 			if( line[0] == '$' )
 			{
-				if( strncmpi(line + 1, "info", 4) == 0 )
+				if( mame_strnicmp(line + 1, "info", 4) == 0 )
 				{
 					char *eq = strchr(line, '=');
 					strcpy(system_name, eq + 1);
@@ -169,12 +168,12 @@ int CLIB_DECL main(int ac, char **av)
 					emptycount = 0;
                 }
 				else
-				if( strncmpi(line + 1, "bio", 3) == 0 )
+				if( mame_strnicmp(line + 1, "bio", 3) == 0 )
                 {
 					/* that's just fine... */
 				}
 				else
-				if( strncmpi(line + 1, "end", 3) == 0 )
+				if( mame_strnicmp(line + 1, "end", 3) == 0 )
 				{
 					if (html_system)
 					{

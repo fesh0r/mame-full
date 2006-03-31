@@ -56,7 +56,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.104u7.  This incorporates all features of the
+- The core is based on MAME 0.104u8.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed how devices work.  Device command line options are now on a per

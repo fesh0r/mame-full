@@ -60,7 +60,7 @@ struct FloppyCallbacks
 	int (*get_sectors_per_track)(floppy_image *floppy, int head, int track);
 	UINT32 (*get_track_size)(floppy_image *floppy, int head, int track);
 	floperr_t (*get_sector_length)(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length);
-	floperr_t (*get_indexed_sector_info)(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *sector, UINT32 *sector_length);
+	floperr_t (*get_indexed_sector_info)(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *side, int *sector, UINT32 *sector_length);
 	floperr_t (*get_track_data_offset)(floppy_image *floppy, int head, int track, UINT64 *offset);
 };
 
@@ -149,7 +149,7 @@ int floppy_get_tracks_per_disk(floppy_image *floppy);
 int floppy_get_heads_per_disk(floppy_image *floppy);
 UINT32 floppy_get_track_size(floppy_image *floppy, int head, int track);
 floperr_t floppy_get_sector_length(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length);
-floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *sector, UINT32 *sector_length);
+floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *side, int *sector, UINT32 *sector_length);
 floperr_t floppy_get_sector_count(floppy_image *floppy, int head, int track, int *sector_count);
 floperr_t floppy_load_track(floppy_image *floppy, int head, int track, int dirtify, void **track_data, size_t *track_length);
 int floppy_is_read_only(floppy_image *floppy);

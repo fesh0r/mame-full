@@ -1950,29 +1950,3 @@ BOOL wimgtool_registerclass(void)
 	wimgtool_wndclass.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_IMGTOOL));
 	return RegisterClass(&wimgtool_wndclass);
 }
-
-
-
-int mame_stricmp(const char *s1, const char *s2)
-{
-	for (;;)
- 	{
-		int c1 = tolower(*s1++);
-		int c2 = tolower(*s2++);
-		if (c1 == 0 || c1 != c2)
-			return c1 - c2;
- 	}
-}
-
-
-char *mame_strdup(const char *str)
-{
-	char *cpy = NULL;
-	if (str != NULL)
-	{
-		cpy = malloc(strlen(str) + 1);
-		if (cpy != NULL)
-			strcpy(cpy, str);
-	}
-	return cpy;
-}

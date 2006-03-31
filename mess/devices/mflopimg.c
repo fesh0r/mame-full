@@ -98,7 +98,7 @@ static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index
 	if (!flopimg || !flopimg->floppy)
 		return;
 
-	floppy_get_indexed_sector_info(flopimg->floppy, side, flopimg->track, id_index, &cylinder, &sector, &sector_length);
+	floppy_get_indexed_sector_info(flopimg->floppy, side, flopimg->track, id_index, &cylinder, &side, &sector, &sector_length);
 
 	N = compute_log2(sector_length);
 

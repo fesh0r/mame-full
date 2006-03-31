@@ -1031,11 +1031,13 @@ TOOLS = dat2html$(EXE) messtest$(EXE) chdman$(EXE) messdocs$(EXE) imgtool$(EXE)
 include mess/tools/imgtool/imgtool.mak
 
 DAT2HTML_OBJS =								\
+	$(OBJ)/mamecore.o						\
 	$(OBJ)/mess/tools/dat2html/dat2html.o	\
 	$(OBJ)/mess/tools/imgtool/stubs.o		\
 	$(OBJ)/mess/utils.o
 
 MESSDOCS_OBJS =								\
+	$(OBJ)/mamecore.o						\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\

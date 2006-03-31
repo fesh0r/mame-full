@@ -959,7 +959,7 @@ static floperr_t coco_dmk_get_sector_length(floppy_image *floppy, int head, int 
 
 
 
-static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *sector, UINT32 *sector_length)
+static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *side, int *sector, UINT32 *sector_length)
 {
 	floperr_t err;
 	UINT32 idam_offset;
@@ -984,6 +984,8 @@ static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head
 
 	if (cylinder)
 		*cylinder = dmk_idam_track(&track_data[idam_offset]);
+	if (side)
+		*side = dmk_idam_side(&track_data[idam_offset]);
 	if (sector)
 		*sector = dmk_idam_sector(&track_data[idam_offset]);
 	if (sector_length)
