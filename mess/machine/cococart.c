@@ -79,7 +79,7 @@ enum {
 
 static void coco_fdc_init(const struct cartridge_callback *callbacks)
 {
-    wd179x_init(WD_TYPE_179X,coco_fdc_callback);
+    wd179x_init(WD_TYPE_1773, coco_fdc_callback);
 	dskreg = 0;
 	cartcallbacks = callbacks;
 	drq_state = ASSERT_LINE;

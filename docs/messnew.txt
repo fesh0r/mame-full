@@ -69,6 +69,9 @@ Source Changes:
   command line option.  This allows multiple devices of the same type to be
   viable.  (bugs #711, #839) [Nate Woods]
 
+- Fixed WD17XX side select option; this prevented some copy protection schemes
+  from being properly emulated.  (bug #863) [Nate Woods]
+
 - Fixed a bug that caused image creation to crash in certain situations.
   (bug #858) [Nate Woods]
 

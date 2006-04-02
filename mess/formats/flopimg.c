@@ -414,7 +414,7 @@ UINT64 floppy_image_size(floppy_image *floppy)
 *********************************************************************/
 
 static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int track, int sector, int offset,
-	void *buffer, size_t buffer_len, int writing)
+	void *buffer, size_t buffer_len, int writing, int indexed)
 {
 	floperr_t err;
 	const struct FloppyCallbacks *fmt;
@@ -423,10 +423,35 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 	UINT8 *new_alloc_buf;
 	UINT32 sector_length;
 	UINT8 *buffer_ptr = buffer;
+	floperr_t (*read_sector)(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen);
+	floperr_t (*write_sector)(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen);
 
 	fmt = floppy_callbacks(floppy);
 
-	if (!fmt->get_sector_length || !fmt->read_sector || (writing && !fmt->write_sector))
+	/* choose proper calls for indexed vs non-indexed */
+	if (indexed)
+	{
+		read_sector = fmt->read_indexed_sector;
+		write_sector = fmt->write_indexed_sector;
+		if (!fmt->get_indexed_sector_info)
+		{
+			err = FLOPPY_ERROR_UNSUPPORTED;
+			goto done;
+		}
+	}
+	else
+	{
+		read_sector = fmt->read_sector;
+		write_sector = fmt->write_sector;
+		if (!fmt->get_sector_length)
+		{
+			err = FLOPPY_ERROR_UNSUPPORTED;
+			goto done;
+		}
+	}
+
+	/* check to make sure that the operation is supported */
+	if (!read_sector || (writing && !write_sector))
 	{
 		err = FLOPPY_ERROR_UNSUPPORTED;
 		goto done;
@@ -435,7 +460,11 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 	/* main loop */
 	while(buffer_len > 0)
 	{
-		err = fmt->get_sector_length(floppy, head, track, sector, &sector_length);
+		/* find out the size of this sector */
+		if (indexed)
+			err = fmt->get_indexed_sector_info(floppy, head, track, sector, NULL, NULL, NULL, &sector_length);
+		else
+			err = fmt->get_sector_length(floppy, head, track, sector, &sector_length);
 		if (err)
 			goto done;
 
@@ -456,7 +485,7 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 				alloc_buf = new_alloc_buf;
 
 				/* read the sector (we need to do this even when writing */
-				err = fmt->read_sector(floppy, head, track, sector, alloc_buf, sector_length);
+				err = read_sector(floppy, head, track, sector, alloc_buf, sector_length);
 				if (err)
 					goto done;
 
@@ -466,7 +495,7 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 				{
 					memcpy(alloc_buf + offset, buffer_ptr, this_buffer_len);
 
-					err = fmt->write_sector(floppy, head, track, sector, alloc_buf, sector_length);
+					err = write_sector(floppy, head, track, sector, alloc_buf, sector_length);
 					if (err)
 						goto done;
 				}
@@ -482,9 +511,9 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 				this_buffer_len = sector_length;
 
 				if (writing)
-					err = fmt->write_sector(floppy, head, track, sector, buffer_ptr, sector_length);
+					err = write_sector(floppy, head, track, sector, buffer_ptr, sector_length);
 				else
-					err = fmt->read_sector(floppy, head, track, sector, buffer_ptr, sector_length);
+					err = read_sector(floppy, head, track, sector, buffer_ptr, sector_length);
 				if (err)
 					goto done;
 			}
@@ -513,14 +542,28 @@ done:
 
 floperr_t floppy_read_sector(floppy_image *floppy, int head, int track, int sector, int offset,	void *buffer, size_t buffer_len)
 {
-	return floppy_readwrite_sector(floppy, head, track, sector, offset, buffer, buffer_len, FALSE);
+	return floppy_readwrite_sector(floppy, head, track, sector, offset, buffer, buffer_len, FALSE, FALSE);
 }
 
 
 
 floperr_t floppy_write_sector(floppy_image *floppy, int head, int track, int sector, int offset, const void *buffer, size_t buffer_len)
 {
-	return floppy_readwrite_sector(floppy, head, track, sector, offset, (void *) buffer, buffer_len, TRUE);
+	return floppy_readwrite_sector(floppy, head, track, sector, offset, (void *) buffer, buffer_len, TRUE, FALSE);
+}
+
+
+
+floperr_t floppy_read_indexed_sector(floppy_image *floppy, int head, int track, int sector_index, int offset,	void *buffer, size_t buffer_len)
+{
+	return floppy_readwrite_sector(floppy, head, track, sector_index, offset, buffer, buffer_len, FALSE, TRUE);
+}
+
+
+
+floperr_t floppy_write_indexed_sector(floppy_image *floppy, int head, int track, int sector_index, int offset, const void *buffer, size_t buffer_len)
+{
+	return floppy_readwrite_sector(floppy, head, track, sector_index, offset, (void *) buffer, buffer_len, TRUE, TRUE);
 }
 
 

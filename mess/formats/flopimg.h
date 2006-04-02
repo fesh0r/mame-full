@@ -51,6 +51,8 @@ struct FloppyCallbacks
 {
 	floperr_t (*read_sector)(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen);
 	floperr_t (*write_sector)(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen);
+	floperr_t (*read_indexed_sector)(floppy_image *floppy, int head, int track, int sector_index, void *buffer, size_t buflen);
+	floperr_t (*write_indexed_sector)(floppy_image *floppy, int head, int track, int sector_index, const void *buffer, size_t buflen);
 	floperr_t (*read_track)(floppy_image *floppy, int head, int track, UINT64 offset, void *buffer, size_t buflen);
 	floperr_t (*write_track)(floppy_image *floppy, int head, int track, UINT64 offset, const void *buffer, size_t buflen);
 	floperr_t (*format_track)(floppy_image *floppy, int head, int track, option_resolution *params);
@@ -139,6 +141,8 @@ void floppy_set_filler(floppy_image *floppy, UINT8 filler);
 /* calls for accessing disk image data */
 floperr_t floppy_read_sector(floppy_image *floppy, int head, int track, int sector, int offset, void *buffer, size_t buffer_len);
 floperr_t floppy_write_sector(floppy_image *floppy, int head, int track, int sector, int offset, const void *buffer, size_t buffer_len);
+floperr_t floppy_read_indexed_sector(floppy_image *floppy, int head, int track, int sector_index, int offset, void *buffer, size_t buffer_len);
+floperr_t floppy_write_indexed_sector(floppy_image *floppy, int head, int track, int sector_index, int offset, const void *buffer, size_t buffer_len);
 floperr_t floppy_clear_sector(floppy_image *floppy, int head, int track, int sector, UINT8 data);
 floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len);
 floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len);

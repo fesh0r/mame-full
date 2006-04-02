@@ -866,7 +866,7 @@ static UINT32 coco_dmk_get_track_size(floppy_image *floppy, int head, int track)
 	
 	
 
-static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, int track, int sector, int dirtify, UINT8 **sector_data, UINT32 *sector_length)
+static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, int track, int sector, int sector_is_index, int dirtify, UINT8 **sector_data, UINT32 *sector_length)
 {
 	struct dmk_tag *tag = get_dmk_tag(floppy);
 	floperr_t err;
@@ -905,12 +905,24 @@ static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, i
 
 		calculated_crc = ccitt_crc16(0xCDB4, &track_data[idam_offset], DMK_IDAM_LENGTH - 2);
 
-		/* check IDAM integrity and check for matching sector */
-		if ((calculated_crc == dmk_idam_crc(&track_data[idam_offset]))
-/*				&& (track == dmk_idam_track(&track_data[idam_offset]))	*/
-/*				&& (head == dmk_idam_side(&track_data[idam_offset]))	*/
-				&& (sector == dmk_idam_sector(&track_data[idam_offset])))
-			break;
+		if (calculated_crc == dmk_idam_crc(&track_data[idam_offset]))
+		{
+			if (sector_is_index)
+			{
+				/* the sector is indexed; decrement the index and go */
+				if (sector-- == 0)
+					break;
+			}
+			else
+			{
+				/* check IDAM integrity and check for matching sector */
+				if ((sector == dmk_idam_sector(&track_data[idam_offset]))
+/*					&& (track == dmk_idam_track(&track_data[idam_offset]))	*/
+/*					&& (head == dmk_idam_side(&track_data[idam_offset]))	*/
+					)
+					break;
+			}
+		}
 	}
 
 	if (i >= DMK_TOC_LEN)
@@ -954,7 +966,7 @@ static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, i
 
 static floperr_t coco_dmk_get_sector_length(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
 {
-	return coco_dmk_seek_sector_in_track(floppy, head, track, sector, FALSE, NULL, sector_length);
+	return coco_dmk_seek_sector_in_track(floppy, head, track, sector, FALSE, FALSE, NULL, sector_length);
 }
 
 
@@ -995,7 +1007,7 @@ static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head
 
 
 
-static floperr_t coco_dmk_read_sector(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen)
+static floperr_t internal_coco_dmk_read_sector(floppy_image *floppy, int head, int track, int sector, int sector_is_index, void *buffer, size_t buflen)
 {
 	floperr_t err;
 	UINT32 sector_length;
@@ -1003,7 +1015,7 @@ static floperr_t coco_dmk_read_sector(floppy_image *floppy, int head, int track,
 	UINT16 calculated_crc;
 	UINT8 *sector_data;
 				
-	err = coco_dmk_seek_sector_in_track(floppy, head, track, sector, FALSE, &sector_data, &sector_length);
+	err = coco_dmk_seek_sector_in_track(floppy, head, track, sector, sector_is_index, FALSE, &sector_data, &sector_length);
 	if (err)
 		return err;
 
@@ -1019,17 +1031,17 @@ static floperr_t coco_dmk_read_sector(floppy_image *floppy, int head, int track,
 
 	return FLOPPY_ERROR_SUCCESS;
 }
-	
-	
-	
-static floperr_t coco_dmk_write_sector(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen)
+
+
+
+static floperr_t internal_coco_dmk_write_sector(floppy_image *floppy, int head, int track, int sector, int sector_is_index, const void *buffer, size_t buflen)
 {
 	floperr_t err;
 	UINT32 sector_length;
 	UINT8 *sector_data;
 	UINT16 crc;
 		
-	err = coco_dmk_seek_sector_in_track(floppy, head, track, sector, TRUE, &sector_data, &sector_length);
+	err = coco_dmk_seek_sector_in_track(floppy, head, track, sector, sector_is_index, TRUE, &sector_data, &sector_length);
 	if (err)
 		return err;
 		
@@ -1045,6 +1057,28 @@ static floperr_t coco_dmk_write_sector(floppy_image *floppy, int head, int track
 }
 
 		
+
+static floperr_t coco_dmk_read_sector(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen)
+{
+	return internal_coco_dmk_read_sector(floppy, head, track, sector, FALSE, buffer, buflen);
+}
+
+static floperr_t coco_dmk_write_sector(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen)
+{
+	return internal_coco_dmk_write_sector(floppy, head, track, sector, FALSE, buffer, buflen);
+}
+
+static floperr_t coco_dmk_read_indexed_sector(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen)
+{
+	return internal_coco_dmk_read_sector(floppy, head, track, sector, TRUE, buffer, buflen);
+}
+
+static floperr_t coco_dmk_write_indexed_sector(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen)
+{
+	return internal_coco_dmk_write_sector(floppy, head, track, sector, TRUE, buffer, buflen);
+}
+
+
 
 static void coco_dmk_interpret_header(floppy_image *floppy, int *heads, int *tracks, int *track_size)
 {
@@ -1110,6 +1144,8 @@ FLOPPY_CONSTRUCT(coco_dmk_construct)
 	callbacks->get_indexed_sector_info = coco_dmk_get_indexed_sector_info;
 	callbacks->read_sector = coco_dmk_read_sector;
 	callbacks->write_sector = coco_dmk_write_sector;
+	callbacks->read_indexed_sector = coco_dmk_read_indexed_sector;
+	callbacks->write_indexed_sector = coco_dmk_write_indexed_sector;
 
 	return FLOPPY_ERROR_SUCCESS;
 }

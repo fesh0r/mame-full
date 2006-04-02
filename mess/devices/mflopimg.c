@@ -105,7 +105,7 @@ static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index
 	id->C = cylinder;
 	id->H = side;
 	id->R = sector;
-	id->data_id = sector;
+	id->data_id = id_index;
 	id->flags = 0;
 	id->N = ((N >= 7) && (N <= 10)) ? N - 7 : 0;
 }
@@ -131,7 +131,7 @@ static void flopimg_read_sector_data_into_buffer(mess_image *image, int side, in
 	if (!flopimg || !flopimg->floppy)
 		return;
 
-	floppy_read_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
+	floppy_read_indexed_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
 	
 	if (LOG_FLOPPY)
 		log_readwrite("sector_read", side, flopimg->track, index1, ptr, length);
@@ -150,7 +150,7 @@ static void flopimg_write_sector_data_from_buffer(mess_image *image, int side, i
 	if (LOG_FLOPPY)
 		log_readwrite("sector_write", side, flopimg->track, index1, ptr, length);
 
-	floppy_write_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
+	floppy_write_indexed_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
 }
 
 

@@ -2484,7 +2484,7 @@ MACHINE_START( dgnalpha )
 	/* by the WD2797, it is reset to 0 after the first inurrupt */
 	dgnalpha_just_reset=1;
 	
-	wd179x_init(WD_TYPE_179X,dgnalpha_fdc_callback);
+	wd179x_init(WD_TYPE_1773, dgnalpha_fdc_callback);
 
 	coco_or_dragon = AM_DRAGON;
 	return 0;

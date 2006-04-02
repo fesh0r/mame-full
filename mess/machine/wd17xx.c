@@ -138,6 +138,7 @@ typedef struct
 	UINT8	command;				/* last command written */
 	UINT8	command_type;			/* last command type */
 	UINT8	sector; 				/* current sector # */
+	UINT8	head;					/* current head # */
 
 	UINT8	read_cmd;				/* last read command issued */
 	UINT8	write_cmd;				/* last write command issued */
@@ -603,6 +604,13 @@ static void wd179x_read_id(WD179X * w)
 
 
 
+static int wd179x_has_side_select(void)
+{
+	return (wd.type == WD_TYPE_1773) || (wd.type == WD_TYPE_1793) || (wd.type == WD_TYPE_2793);
+}
+
+
+
 static int wd179x_find_sector(WD179X *w)
 {
 	UINT8 revolution_count;
@@ -619,17 +627,21 @@ static int wd179x_find_sector(WD179X *w)
 			/* compare track */
 			if (id.C == w->track_reg)
 			{
-				/* compare id */
-				if (id.R == w->sector)
+				/* compare head, if we were asked to */
+				if (!wd179x_has_side_select() || (id.H == w->head) || (w->head == (UINT8) ~0))
 				{
-					w->sector_length = 1<<(id.N+7);
-					w->sector_data_id = id.data_id;
-					/* get ddam status */
-					w->ddam = id.flags & ID_FLAG_DELETED_DATA;
-					/* got record type here */
-					if (VERBOSE)
-						logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
-					return 1;
+					/* compare id */
+					if (id.R == w->sector)
+					{
+						w->sector_length = 1<<(id.N+7);
+						w->sector_data_id = id.data_id;
+						/* get ddam status */
+						w->ddam = id.flags & ID_FLAG_DELETED_DATA;
+						/* got record type here */
+						if (VERBOSE)
+							logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
+						return 1;
+					}
 				}
 			}
 		}
@@ -659,6 +671,12 @@ static int wd179x_find_sector(WD179X *w)
 static void wd179x_read_sector(WD179X *w)
 {
 	w->data_offset = 0;
+
+	/* side compare? */
+	if (w->read_cmd & 0x02)
+		w->head = (w->read_cmd & 0x08) ? 1 : 0;
+	else
+		w->head = ~0;
 
 	if (wd179x_find_sector(w))
 	{
@@ -749,6 +767,12 @@ static void wd179x_write_sector(WD179X *w)
 	 * has been transfered into our buffer - now write it to
 	 * the disc image or to the real disc
 	 */
+
+	/* side compare? */
+	if (w->write_cmd & 0x02)
+		w->head = (w->write_cmd & 0x08) ? 1 : 0;
+	else
+		w->head = ~0;
 
 	/* find sector */
 	if (wd179x_find_sector(w))
@@ -880,6 +904,12 @@ static void	wd179x_write_sector_callback(int code)
 		}
 		else
 		{
+			/* side compare? */
+			if (w->write_cmd & 0x02)
+				w->head = (w->write_cmd & 0x08) ? 1 : 0;
+			else
+				w->head = ~0;
+
 			/* attempt to find it first before getting data from cpu */
 			if (wd179x_find_sector(w))
 			{
@@ -976,7 +1006,8 @@ static void wd179x_timed_write_sector_request(void)
 	//	floppy_drive_set_ready_state(wd179x_current_image(), 1,1);
 		w->status &= ~STA_1_NOT_READY;
 		
-		if (w->type == WD_TYPE_179X)
+		/* TODO: What is this?  We need some more info on this */
+		if ((w->type == WD_TYPE_179X) || (w->type == WD_TYPE_1773))
 		{
 			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 				w->status |= STA_1_NOT_READY;
