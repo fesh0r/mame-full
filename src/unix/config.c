@@ -21,8 +21,6 @@ extern void XInput_trackballs_reset();
 extern char *cheatfile;
 extern char *db_filename;
 
-extern FILE *errorlog;
-
 extern char *playbackname;
 extern char *recordname;
 
@@ -595,16 +593,24 @@ void xmame_config_exit(void)
 	home_dir = NULL;
 
 	/* close open files */
+	if (options.logfile)
+	{
+		mame_fclose(options.logfile);
+		options.logfile = NULL;
+	}
+
 	if (options.playback)
 	{
 		mame_fclose(options.playback);
 		options.playback = NULL;
 	}
+
 	if (options.record)
 	{
 		mame_fclose(options.record);
 		options.record = NULL;
 	}
+
 	if (options.language_file)
 	{
 		mame_fclose(options.language_file);
@@ -806,25 +812,6 @@ static void add_mess_device_options(struct rc_struct *rc, const game_driver *gam
 		}
 	}
 }
-
-#endif
-
-
-/*============================================================*/
-/*	osd_logerror */
-/*============================================================*/
-
-void osd_logerror(const char *text)
-{
-	/* standard vfprintf stuff here */
-	if (errorlog)
-	{
-		fprintf(errorlog, "%s", text);
-		fflush(errorlog);
-	}
-}
-
-#ifdef MESS
 
 void osd_begin_final_unloading(void)
 {

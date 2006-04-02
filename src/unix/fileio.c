@@ -84,13 +84,36 @@ static osd_file openfile[MAX_OPEN_FILES];
 /*	GLOBAL VARIABLES */
 /*============================================================ */
 
-FILE *errorlog = NULL;
-
 char *playbackname;
 char *recordname;
 
 FILE *stdout_file;
 FILE *stderr_file;
+
+
+
+/*============================================================ */
+/*	LOCAL VARIABLES */
+/*============================================================ */
+
+static int errorlog;
+
+static int init_errorlog(struct rc_option *option, const char *arg, int priority)
+{
+	/* provide errorlog from here on */
+	if (errorlog)
+	{
+		options.logfile = mame_fopen("error.log", NULL, FILETYPE_DEBUGLOG, TRUE);
+		if (!options.logfile)
+		{
+			perror("unable to open log file\n");
+			exit(1);
+		}
+	}
+	option->priority = priority;
+	return 0;
+}
+
 
 
 /*============================================================ */
@@ -126,7 +149,7 @@ struct rc_option fileio_opts[] =
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "Set a file to playback keypresses from" },
 	{ "stdout-file", "out", rc_file, &stdout_file, NULL, 1,	0, NULL, "Set a file to redirect stdout to" },
 	{ "stderr-file", "err",	rc_file, &stderr_file, NULL, 1, 0, NULL, "Set a file to redirect stderr to" },
-	{ "log", "L", rc_file, &errorlog, NULL, 1, 0, NULL, "Set a file to log debug info to" },
+	{ "log", "L", rc_bool, &errorlog, "0", 0, 0, init_errorlog, "Generate error.log" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
