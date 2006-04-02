@@ -5,6 +5,7 @@
   Machine file to handle emulation of the Bandai WonderSwan.
 
   Anthony Kruize
+  Wilbert Pol
 
 ***************************************************************************/
 
@@ -12,9 +13,27 @@
 #include "includes/wswan.h"
 #include "image.h"
 
+#define INTERNAL_EEPROM_SIZE	1024
+
+enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
+const char* wswan_sram_str[] = { "none", "64K SRAM", "256K SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown" };
+const int wswan_sram_size[] = { 0, 64*1024, 256*1024, 1024, 16*1024, 8*1024, 0 };
+
+struct EEPROM {
+	UINT8	mode;		/* eeprom mode */
+	UINT16	address;	/* Read/write address */
+	UINT8	command;	/* Commands: 00, 01, 02, 03, 04, 08, 0C */
+	UINT8	start;		/* start bit */
+	UINT8	write_enabled;	/* write enabled yes/no */
+	int	size;		/* size of eeprom/sram area */
+	UINT8	*data;		/* pointer to start of sram/eeprom data */
+};
+
 static UINT8 *ROMMap[128];
 static UINT8 ROMBanks;
+static UINT8 internal_eeprom[INTERNAL_EEPROM_SIZE];
 struct VDP vdp;
+struct EEPROM eeprom;
 UINT8 *ws_ram;
 UINT8 ws_portram[256];
 static UINT8 ws_portram_init[256] =
@@ -38,21 +57,21 @@ static UINT8 ws_portram_init[256] =
 };
 
 void wswan_handle_irqs( void ) {
-	if ( ws_portram[0xb6] & WSWAN_IFLAG_HBLTMR ) {
+	if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_HBLTMR ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_HBLTMR );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_VBL ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_VBL ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_VBL );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_VBLTMR ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_VBLTMR ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_VBLTMR );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_LCMP ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_LCMP ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_LCMP );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_SRX ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_SRX ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_SRX );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_RTC ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_RTC ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_RTC );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_KEY ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_KEY ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_KEY );
-	} else if ( ws_portram[0xb6] & WSWAN_IFLAG_STX ) {
+	} else if ( ws_portram[0xb2] & ws_portram[0xb6] & WSWAN_IFLAG_STX ) {
 		cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, ws_portram[0xb0] + WSWAN_INT_STX );
 	} else {
 		cpunum_set_input_line( 0, 0, CLEAR_LINE );
@@ -60,8 +79,10 @@ void wswan_handle_irqs( void ) {
 }
 
 void wswan_set_irq_line(int irq) {
-	ws_portram[0xb6] |= irq;
-	wswan_handle_irqs();
+	if ( ws_portram[0xb2] & irq ) {
+		ws_portram[0xb6] |= irq;
+		wswan_handle_irqs();
+	}
 }
 
 void wswan_clear_irq_line(int irq) {
@@ -69,13 +90,30 @@ void wswan_clear_irq_line(int irq) {
 	wswan_handle_irqs();
 }
 
+static void wswan_machine_stop( void ) {
+	if ( eeprom.size ) {
+		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), memory_region(REGION_USER1), eeprom.size );
+	}
+}
+
+MACHINE_START( wswan ) {
+	add_exit_callback( wswan_machine_stop );
+	return 0;
+}
 
 MACHINE_RESET( wswan )
 {
 	/* Intialize ports */
 	memcpy( ws_portram, ws_portram_init, 256 );
 
+	/* Initialize VDP */
+	memset( &vdp, 0, sizeof( vdp ) );
+
+	vdp.vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
+	vdp.current_line = 145;  /* Randomly chosen, beginning of VBlank period to give cart some time to boot up */
+
 	/* Switch in the banks */
+	memory_set_bankptr( 1, eeprom.data );
 	memory_set_bankptr( 2, ROMMap[ROMBanks - 1] );
 	memory_set_bankptr( 3, ROMMap[ROMBanks - 1] );
 	memory_set_bankptr( 4, ROMMap[ROMBanks - 12] );
@@ -90,17 +128,28 @@ MACHINE_RESET( wswan )
 	memory_set_bankptr( 13, ROMMap[ROMBanks - 3] );
 	memory_set_bankptr( 14, ROMMap[ROMBanks - 2] );
 	memory_set_bankptr( 15, ROMMap[ROMBanks - 1] );
+}
 
-	vdp.vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
-
-	vdp.current_line = 0;
+NVRAM_HANDLER( wswan ) {
+	if ( read_or_write ) {
+		/* Load the EEPROM data */
+		mame_fwrite( file, internal_eeprom, INTERNAL_EEPROM_SIZE );
+	} else {
+		/* Load the EEPROM data */
+		if ( file ) {
+			mame_fread( file, internal_eeprom, INTERNAL_EEPROM_SIZE );
+		} else {
+			/* Initialize the EEPROM data */
+			memset( internal_eeprom, 0xFF, sizeof( internal_eeprom ) );
+		}
+	}
 }
 
 READ8_HANDLER( wswan_port_r )
 {
 	UINT8 value = ws_portram[offset];
 
-	logerror( "port read %02X\n", offset );
+	logerror( "PC=%X: port read %02X\n", activecpu_get_pc(), offset );
 	switch( offset )
 	{
 		case 0x02:		/* Current line */
@@ -116,7 +165,7 @@ READ8_HANDLER( wswan_port_r )
 
 WRITE8_HANDLER( wswan_port_w )
 {
-	logerror( "port write %02X <- %02X\n", offset, data );
+	logerror( "PC=%X: port write %02X <- %02X\n", activecpu_get_pc(), offset, data );
 	switch( offset )
 	{
 		case 0x00:		/* Display control */
@@ -313,31 +362,159 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.timer_vblank_freq &= 0xff;
 			vdp.timer_vblank_freq += data << 8;
 			break;
-		case 0xb0:		/* Interrupt base */
-			/* FIXME: what is this? */
+		case 0xb0:		/* Interrupt base vector */
 			break;
 		case 0xb2:		/* Interrupt enable */
 			break;
 		case 0xb3:		/* serial communication */
+//			data |= 0x02;
+			ws_portram[0xb1] = 0xFF;
 			if ( data & 0x80 ) {
+//				ws_portram[0xb1] = 0x00;
 				data |= 0x04;
+			}
+			if (data & 0x20 ) {
+//				data |= 0x01;
+			}
+			break;
+		case 0xb5:		/* Read controls */
+			data = data & 0xF0;
+			switch( data ) {
+			case 0x10:	/* Read Y cursors: Y1 - Y2 - Y3 - Y4 */
+				data = data | readinputport( 2 );
+				break;
+			case 0x20:	/* Read X cursors: X1 - X2 - X3 - X4 */
+				data = data | readinputport( 0 );
+				break;
+			case 0x40:	/* Read buttons: START - A - B */
+				data = data | readinputport( 1 );
+				break;
 			}
 			break;
 		case 0xb6:		/* Interrupt acknowledge */
 			wswan_clear_irq_line( data );
+			data = ws_portram[0xB6];
 			break;
-		case 0xc0:		/* ROM bank select for banks 3-14 */
+		case 0xba:		/* Internal EEPROM data */
+		case 0xbb:
+			break;
+		case 0xbc:		/* Internal EEPROM address */
+		case 0xbd:
+			break;
+		case 0xbe:		/* Internal EEPROM command */
+			if ( data & 0x20 ) {
+				UINT16 addr = ( ( ( ws_portram[0xbd] << 8 ) | ws_portram[0xbc] ) << 1 ) & 0x1FF;
+				internal_eeprom[ addr ] = ws_portram[0xba];
+				internal_eeprom[ addr + 1 ] = ws_portram[0xbb];
+				data |= 0x02;
+			} else if ( data & 0x10 ) {
+				UINT16 addr = ( ( ( ws_portram[0xbd] << 8 ) | ws_portram[0xbc] ) << 1 ) & 0x1FF;
+				ws_portram[0xba] = internal_eeprom[ addr ];
+				ws_portram[0xbb] = internal_eeprom[ addr + 1];
+				data |= 0x01;
+			} else {
+				logerror( "Unsupported internal EEPROM command: %X\n", data );
+			}
+			break;
+		case 0xc0:		/* ROM bank select for banks 4-15 */
 			printf( "ROM bank select - unsupported\n" );
+			memory_set_bankptr( 4, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 4 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 5, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 5 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 6, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 6 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 7, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 7 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 8, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 8 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 9, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 9 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 10, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 10 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 11, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 11 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 12, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 12 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 13, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 13 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 14, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 14 ) & ( ROMBanks - 1 ) ] );
+			memory_set_bankptr( 15, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 15 ) & ( ROMBanks - 1 ) ] );
 			break;
 		case 0xc1:		/* SRAM bank select */
-			/* FIXME: unsupported */
-/*			memory_set_bankptr( 1, RAMMap[data] ); */
+			if ( eeprom.mode == SRAM_64K || eeprom.mode == SRAM_256K ) {
+				memory_set_bankptr( 1, &eeprom.data[ ( data * 64 * 1024 ) & ( eeprom.size - 1 ) ] );
+			}
 			break;
 		case 0xc2:		/* ROM bank select for bank 1 (0x2000-0x2fff) */
-			memory_set_bankptr( 2, ROMMap[ROMBanks - (0xff - data) - 1]);
+			memory_set_bankptr( 2, ROMMap[ data & ( ROMBanks - 1 ) ]);
 			break;
 		case 0xc3:		/* ROM bank select for bank 2 (0x3000-0x3fff) */
-			memory_set_bankptr( 3, ROMMap[ROMBanks - (0xff - data) - 1]);
+			memory_set_bankptr( 3, ROMMap[ data & ( ROMBanks - 1 ) ]);
+			break;
+		case 0xc6:		/* EEPROM address lower bits port */
+			switch( eeprom.mode ) {
+			case EEPROM_1K:
+				eeprom.address = data & 0x3F;
+				eeprom.command = data >> 4;
+				if ( ( eeprom.command & 0x0C ) != 0x00 ) {
+					eeprom.command = eeprom.command & 0x0C;
+				}
+				break;
+			case EEPROM_16K:
+				eeprom.address = ( eeprom.address & 0xFF00 ) | data;
+				break;
+			default:
+				logerror( "Write EEPROM address/register register C6 for unsupported EEPROM type\n" );
+				break;
+			}
+			break;
+		case 0xc7:		/* EEPROM higher bits/command bits port */
+			switch( eeprom.mode ) {
+			case EEPROM_1K:
+				eeprom.start = data & 0x01;
+				break;
+			case EEPROM_16K:
+				eeprom.address = ( ( data & 0x03 ) << 8 ) | ( eeprom.address & 0xFF );
+				eeprom.command = data & 0x0F;
+				if ( ( eeprom.command & 0x0C ) != 0x00 ) {
+					eeprom.command = eeprom.command & 0x0C;
+				}
+				eeprom.start = ( data >> 4 ) & 0x01;
+				break;
+			default:
+				logerror( "Write EEPROM address/command register C7 for unsupported EEPROM type\n" );
+				break;
+			}
+			break;
+		case 0xc8:
+			if ( eeprom.mode == EEPROM_1K || eeprom.mode == EEPROM_16K ) {
+				if ( data & 0x80 ) {	/* Initialize */
+					logerror( "Unsupported EEPROM command 'Initialize'\n" );
+				}
+				if ( data & 0x40 ) {	/* Protect */
+					switch( eeprom.command ) {
+					case 0x00:
+						eeprom.write_enabled = 0;
+						break;
+					case 0x03:
+						eeprom.write_enabled = 1;
+						break;
+					default:
+						logerror( "Unsupported 'Protect' command %X\n", eeprom.command );
+					}
+				}
+				if ( data & 0x20 ) {	/* Write */
+					if ( eeprom.write_enabled ) {
+						switch( eeprom.command ) {
+						case 0x04:
+							eeprom.data[ ( eeprom.address << 1 ) + 1 ] = ws_portram[0xc4];
+							eeprom.data[ eeprom.address << 1 ] = ws_portram[0xc5];
+							data |= 0x02;
+							break;
+						default:
+							logerror( "Unsupported 'Write' command %X\n", eeprom.command );
+						}
+					}
+				}
+				if ( data & 0x10 ) {	/* Read */
+					ws_portram[0xc4] = eeprom.data[ ( eeprom.address << 1 ) + 1 ];
+					ws_portram[0xc5] = eeprom.data[ eeprom.address << 1 ];
+					data |= 0x01;
+				}
+			} else {
+				logerror( "EEPROM command for unknown EEPROM type\n" );
+			}
 			break;
 		default:
 			logerror( "Write to unsupported port: %X - %X\n", offset, data );
@@ -348,21 +525,19 @@ WRITE8_HANDLER( wswan_port_w )
 	ws_portram[offset] = data;
 }
 
-enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
-const char* wswan_sram_str[] = {
-	"none", "64K SRAM", "256K SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown"
-};
-
 static const char* wswan_determine_sram( UINT8 data ) {
+	eeprom.write_enabled = 0;
+	eeprom.mode = SRAM_UNKNOWN;
 	switch( data ) {
-	case 0x00: return wswan_sram_str[ SRAM_NONE ];
-	case 0x01: return wswan_sram_str[ SRAM_64K ];
-	case 0x02: return wswan_sram_str[ SRAM_256K ];
-	case 0x10: return wswan_sram_str[ EEPROM_1K ];
-	case 0x20: return wswan_sram_str[ EEPROM_16K ];
-	case 0x50: return wswan_sram_str[ EEPROM_8K ];
+	case 0x00: eeprom.mode = SRAM_NONE; break;
+	case 0x01: eeprom.mode = SRAM_64K; break;
+	case 0x02: eeprom.mode = SRAM_256K; break;
+	case 0x10: eeprom.mode = EEPROM_1K; break;
+	case 0x20: eeprom.mode = EEPROM_16K; break;
+	case 0x50: eeprom.mode = EEPROM_8K; break;
 	}
-	return wswan_sram_str[ SRAM_UNKNOWN ];
+	eeprom.size = wswan_sram_size[ eeprom.mode ];
+	return wswan_sram_str[ eeprom.mode ];
 }
 
 enum enum_romsize { ROM_4M=0, ROM_8M, ROM_16M, ROM_32M, ROM_64M, ROM_128M, ROM_UNKNOWN };
@@ -382,9 +557,17 @@ static const char* wswan_determine_romsize( UINT8 data ) {
 	return wswan_romsize_str[ ROM_UNKNOWN ];
 }
 
+DEVICE_INIT(wswan_cart)
+{
+	memset( &eeprom, 0, sizeof( eeprom ) );
+	eeprom.data = memory_region( REGION_USER1 );
+	return INIT_PASS;
+}
+
 DEVICE_LOAD(wswan_cart)
 {
 	UINT8 ii;
+	const char *sram_str;
 
 	if( new_memory_region( REGION_CPU1, 0x100000, 0) )
 	{
@@ -413,6 +596,8 @@ DEVICE_LOAD(wswan_cart)
 		}
 	}
 
+	sram_str = wswan_determine_sram( ROMMap[ROMBanks-1][0xfffb] );
+
 #ifdef MAME_DEBUG
 	/* Spit out some info */
 	printf( "ROM DETAILS\n" );
@@ -420,11 +605,19 @@ DEVICE_LOAD(wswan_cart)
 	printf( "\tMinimum system: %s\n", ROMMap[ROMBanks-1][0xfff7] ? "WonderSwan Color" : "WonderSwan" );
 	printf( "\tCart ID: %X\n", ROMMap[ROMBanks-1][0xfff8] );
 	printf( "\tROM size: %s\n", wswan_determine_romsize( ROMMap[ROMBanks-1][0xfffa] ) );
-	printf( "\tSRAM size: %s\n", wswan_determine_sram( ROMMap[ROMBanks-1][0xfffb] ) );
+	printf( "\tSRAM size: %s\n", sram_str );
 	printf( "\tFeatures: %X\n", ROMMap[ROMBanks-1][0xfffc] );
 	printf( "\tRTC: %s\n", ( ROMMap[ROMBanks-1][0xfffd] ? "yes" : "no" ) );
 	printf( "\tChecksum: %X%X\n", ROMMap[ROMBanks-1][0xffff], ROMMap[ROMBanks-1][0xfffe] );
 #endif
+
+	if ( eeprom.size != 0 ) {
+		image_battery_load( image, memory_region(REGION_USER1), eeprom.size );
+	}
+
+	logerror( "Image Name: %s\n", image_longname( image ) );
+	logerror( "Image Year: %s\n", image_year( image ) );
+	logerror( "Image Manufacturer: %s\n", image_manufacturer( image ) );
 
 	/* All done */
 	return INIT_PASS;
@@ -432,14 +625,35 @@ DEVICE_LOAD(wswan_cart)
 
 INTERRUPT_GEN(wswan_scanline_interrupt)
 {
-	if( vdp.current_line < 144 )
+	if( vdp.current_line < 144 ) {
 		wswan_refresh_scanline();
+		if ( vdp.timer_hblank_enable && vdp.timer_hblank_freq != 0 ) {
+			vdp.timer_hblank_freq--;
+			logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
+			if ( vdp.timer_hblank_freq == 0 ) {
+				if ( vdp.timer_hblank_mode ) {
+					vdp.timer_hblank_freq = ( ws_portram[0xa5] << 8 ) | ws_portram[0xa4];
+				}
+				logerror( "trigerring hbltmr interrupt\n" );
+				wswan_set_irq_line( WSWAN_IFLAG_HBLTMR );
+			}
+		}
+	}
 
-	vdp.current_line = (vdp.current_line + 1) % 158; /*159?*/
+	vdp.current_line = (vdp.current_line + 1) % 159; /*159?*/
 
-	if( (ws_portram[0xb2] & WSWAN_IFLAG_VBL) && (vdp.current_line == 144) )
-	{
-		logerror( "Setting VBL interrupt line\n" );
+	if( vdp.current_line == 144 ) {
 		wswan_set_irq_line( WSWAN_IFLAG_VBL );
+		if ( vdp.timer_vblank_enable && vdp.timer_vblank_freq != 0 ) {
+			vdp.timer_vblank_freq--;
+			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
+			if ( vdp.timer_vblank_freq == 0 ) {
+				if ( vdp.timer_vblank_mode ) {
+					vdp.timer_vblank_freq = ( ws_portram[0xa7] << 8 ) | ws_portram[0xa6];
+				}
+				logerror( "triggering vbltmr interrupt\n" );
+				wswan_set_irq_line( WSWAN_IFLAG_VBLTMR );
+			}
+		}
 	}
 }

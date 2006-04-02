@@ -74,10 +74,12 @@ struct VDP
 extern struct VDP vdp;
 extern UINT8 ws_portram[256];
 
-
+extern NVRAM_HANDLER( wswan );
+extern MACHINE_START( wswan );
 extern MACHINE_RESET( wswan );
 extern READ8_HANDLER( wswan_port_r );
 extern WRITE8_HANDLER( wswan_port_w );
+extern DEVICE_INIT(wswan_cart);
 extern DEVICE_LOAD(wswan_cart);
 extern INTERRUPT_GEN(wswan_scanline_interrupt);
 
