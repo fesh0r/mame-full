@@ -85,7 +85,7 @@ void joy_standard_init(void)
 	fprintf (stderr_file, "Standard joystick interface initialization...\n");
 	for (i = 0, dev = first_dev; dev <= last_dev; i++, dev++)
 	{
-		sprintf (devname, "%s%d", joy_dev, dev);
+		snprintf(devname, sizeof(devname), "%s%d", joy_dev, dev);
 		if ((joy_data[i].fd = open(devname, O_RDONLY)) >= 0)
 		{
 			if (use_old_driver)
