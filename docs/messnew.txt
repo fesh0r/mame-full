@@ -3,6 +3,7 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - AT 586 (not working yet) [Nate Woods]
+- Nintendo N64  [Ville Linde]
 
 
 

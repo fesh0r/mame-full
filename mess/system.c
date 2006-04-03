@@ -117,7 +117,8 @@ const game_driver *test_drivers[] =
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
 	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
-
+	DRIVER( n64 )		/* Nintendo N64										*/
+	
 	DRIVER( megaduck )	/* Megaduck											*/
 
 	/* SEGA */
@@ -209,7 +210,7 @@ TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
 	DRIVER( bbcm)		/* 198? BBC Master									*/
 	DRIVER( electron )	/* 1983 Acorn Electron							*/
-TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310						*/
+//TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
 	DRIVER( z88 )		/*													*/

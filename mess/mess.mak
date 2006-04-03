@@ -393,7 +393,9 @@ $(OBJ)/nintendo.a:					\
 	$(OBJ)/sndhrdw/snes.o			\
 	$(OBJ)/machine/snes.o			\
 	$(OBJ)/vidhrdw/snes.o			\
-	$(OBJ)/mess/systems/snes.o	 
+	$(OBJ)/mess/systems/snes.o	 	\
+	$(OBJ)/mess/systems/n64.o		\
+	$(OBJ)/vidhrdw/n64.o			\
 
 $(OBJ)/amiga.a: \
 	$(OBJ)/vidhrdw/amiga.o			\
