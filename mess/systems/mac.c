@@ -42,7 +42,6 @@
 #include "devices/sonydriv.h"
 #include "devices/harddriv.h"
 #include "includes/mac.h"
-#include "videomap.h"
 
 
 static ADDRESS_MAP_START(mac512ke_map, ADDRESS_SPACE_PROGRAM, 16)
@@ -89,7 +88,7 @@ static MACHINE_DRIVER_START( mac512ke )
 	MDRV_PALETTE_INIT(mac)
 
 	MDRV_VIDEO_START(mac)
-	MDRV_VIDEO_UPDATE(videomap)
+	MDRV_VIDEO_UPDATE(mac)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
