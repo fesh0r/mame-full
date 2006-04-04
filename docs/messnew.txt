@@ -1,9 +1,9 @@
-0.104.1
+0.105
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - AT 586 (not working yet) [Nate Woods]
-- Nintendo N64  [Ville Linde]
+- Nintendo N64 (not working yet) [Ville Linde]
 
 
 
@@ -59,7 +59,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.104u9.  This incorporates all features of the
+- The core is based on MAME 0.105.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Changed how devices work.  Device command line options are now on a per
