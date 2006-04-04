@@ -103,7 +103,7 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	/* provide errorlog from here on */
 	if (errorlog)
 	{
-		options.logfile = mame_fopen("error.log", NULL, FILETYPE_DEBUGLOG, TRUE);
+		options.logfile = mame_fopen(NULL, "error.log", FILETYPE_DEBUGLOG, TRUE);
 		if (!options.logfile)
 		{
 			perror("unable to open log file\n");
