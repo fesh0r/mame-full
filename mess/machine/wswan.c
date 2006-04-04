@@ -29,8 +29,8 @@ struct EEPROM {
 	UINT8	*data;		/* pointer to start of sram/eeprom data */
 };
 
-static UINT8 *ROMMap[128];
-static UINT8 ROMBanks;
+static UINT8 *ROMMap[256];
+static UINT32 ROMBanks;
 static UINT8 internal_eeprom[INTERNAL_EEPROM_SIZE];
 struct VDP vdp;
 struct EEPROM eeprom;
@@ -417,7 +417,6 @@ WRITE8_HANDLER( wswan_port_w )
 			}
 			break;
 		case 0xc0:		/* ROM bank select for banks 4-15 */
-			printf( "ROM bank select - unsupported\n" );
 			memory_set_bankptr( 4, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 4 ) & ( ROMBanks - 1 ) ] );
 			memory_set_bankptr( 5, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 5 ) & ( ROMBanks - 1 ) ] );
 			memory_set_bankptr( 6, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 6 ) & ( ROMBanks - 1 ) ] );
@@ -566,7 +565,7 @@ DEVICE_INIT(wswan_cart)
 
 DEVICE_LOAD(wswan_cart)
 {
-	UINT8 ii;
+	UINT32 ii;
 	const char *sram_str;
 
 	if( new_memory_region( REGION_CPU1, 0x100000, 0) )
