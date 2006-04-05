@@ -71,7 +71,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		va_start( v, s_fmt );
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
-		logerror( "%08x: %s", activecpu_get_pc(), buf );
+		logerror( "%08x: %s", safe_activecpu_get_pc(), buf );
 	}
 }
 
@@ -300,7 +300,7 @@ static WRITE32_HANDLER( hpc3_pbus6_w )
 		cChar = data & 0x000000ff;
 		if( cChar >= 0x20 || cChar == 0x0d || cChar == 0x0a )
 		{
-			printf( "%c", cChar );
+//			printf( "%c", cChar );
 		}
 		break;
 	case 0x034/4:
@@ -315,7 +315,7 @@ static WRITE32_HANDLER( hpc3_pbus6_w )
 		cChar = data & 0x000000ff;
 		if( cChar >= 0x20 || cChar == 0x0d || cChar == 0x0a )
 		{
-			printf( "%c", cChar );
+//			printf( "%c", cChar );
 		}
 		break;
 	case 0x40/4:
