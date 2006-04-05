@@ -66,7 +66,8 @@ static void init_nes_core (void)
 			nes.slow_banking = 0;
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4030, 0x403f, 0, 0, fds_r);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xdfff, 0, 0, MRA8_RAM);
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MRA8_ROM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MRA8_BANK1);
+			memory_set_bankptr(1, &nes.rom[0xe000]);
 
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4020, 0x402f, 0, 0, fds_w);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xdfff, 0, 0, MWA8_RAM);
@@ -570,10 +571,6 @@ DEVICE_LOAD(nes_disk)
 			return INIT_FAIL;
 		mame_fread (file, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
 	}
-
-	/* adjust for eof */
-	nes_fds.sides --;
-	nes_fds.data = image_realloc(image, nes_fds.data, nes_fds.sides * 65500);
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 

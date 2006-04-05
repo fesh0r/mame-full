@@ -4190,8 +4190,11 @@ int mapper_reset (int mapperNum)
 
 	MMC5_vram_control = 0;
 
-	/* Point the WRAM/battery area to the first RAM bank */
-	memory_set_bankptr (5, &nes.wram[0x0000]);
+	if (mapperNum != 20)
+	{
+		/* Point the WRAM/battery area to the first RAM bank */
+		memory_set_bankptr (5, &nes.wram[0x0000]);
+	}
 
 	switch (mapperNum)
 	{
