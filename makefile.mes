@@ -23,7 +23,7 @@
 # build rules will be included from $(TARGET).mak
 #-------------------------------------------------
 
-ifeq ($(TARGET),)
+ifndef TARGET
 TARGET = mess
 endif
 
@@ -34,7 +34,9 @@ endif
 # build rules will be includes from $(MAMEOS)/$(MAMEOS).mak
 #-------------------------------------------------
 
+ifndef MAMEOS
 MAMEOS = windows
+endif
 
 
 
@@ -134,51 +136,51 @@ PREFIX =
 endif
 
 # by default, compile for Pentium target and add no suffix
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)
-GUINAME = $(TARGET)gui$(SUFFIX)
+NAME = $(PREFIX)$(TARGET)
+GUINAME = $(TARGET)gui
 ARCH = -march=pentium
 
 # architecture-specific builds get extra options and a suffix
 ifdef ATHLON
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
-GUINAME = $(TARGET)gui$(SUFFIX)at
+NAME = $(PREFIX)$(TARGET)at
+GUINAME = $(TARGET)guiat
 ARCH = -march=athlon
 endif
 
 ifdef K6
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
-GUINAME = $(TARGET)gui$(SUFFIX)k6
+NAME = $(PREFIX)$(TARGET)k6
+GUINAME = $(TARGET)guik6
 ARCH = -march=k6
 endif
 
 ifdef I686
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
-GUINAME = $(TARGET)gui$(SUFFIX)pp
+NAME = $(PREFIX)$(TARGET)pp
+GUINAME = $(TARGET)guipp
 ARCH = -march=pentiumpro
 endif
 
 ifdef P4
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
-GUINAME = $(TARGET)gui$(SUFFIX)p4
+NAME = $(PREFIX)$(TARGET)p4
+GUINAME = $(TARGET)guip4
 ARCH = -march=pentium4
 endif
 
 ifdef AMD64
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)64
-GUINAME = $(TARGET)gui$(SUFFIX)64
+NAME = $(PREFIX)$(TARGET)64
+GUINAME = $(TARGET)gui64
 ARCH = -march=athlon64
 endif
 
 ifdef PM
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)pm
-GUINAME = $(TARGET)gui$(SUFFIX)pm
+NAME = $(PREFIX)$(TARGET)pm
+GUINAME = $(TARGET)guipm
 ARCH = -march=pentium3 -msse2
 endif
 
 # debug builds just get the 'd' suffix and nothing more
 ifdef DEBUG
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
-GUINAME = $(TARGET)gui$(SUFFIX)d
+NAME = $(PREFIX)$(TARGET)d
+GUINAME = $(TARGET)guid
 endif
 
 EMULATORCLI = $(NAME)$(EXE)
@@ -193,7 +195,7 @@ OBJ = obj/$(NAME)
 # compile-time definitions
 #-------------------------------------------------
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3 -Dalloca=__builtin_alloca
 
 ifdef DEBUG
 DEFS += -DMAME_DEBUG
@@ -235,14 +237,13 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
-	-Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
+CFLAGS = -std=gnu89 -Imess -Isrc -Isrc/includes -Isrc/$(MAMEOS) -Imess/$(MAMEOS)
 
 ifdef SYMBOLS
-CFLAGS += -O0 -Werror -Wall -Wno-unused -g
+CFLAGS += -O0 -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fomit-frame-pointer -fno-strict-aliasing \
+	$(ARCH) -O3 -fno-strict-aliasing \
 	-Werror -Wall \
 	-Wno-sign-compare \
 	-Wno-unused-functions \
@@ -256,14 +257,15 @@ CFLAGS += -DNDEBUG \
 	-Wdeclaration-after-statement
 endif
 
-# the windows osd code at least cannot be compiled with -pedantic
-CFLAGSPEDANTIC = $(CFLAGS)
+# extra options needed *only* for the osd files
+CFLAGSOSDEPEND = $(CFLAGS)
+
+LDFLAGS = -WO
 
 ifdef SYMBOLS
 LDFLAGS =
 else
-#LDFLAGS = -Wl,--warn-common
-LDFLAGS = -s
+LDFLAGS += -s
 endif
 
 ifdef MAP
@@ -272,12 +274,24 @@ else
 MAPFLAGS =
 endif
 
+ifdef COMPILESYSTEM_CYGWIN
+CFLAGS += -mno-cygwin
+LDFLAGS	+= -mno-cygwin
+endif
+
+
+
+#-------------------------------------------------
+# define the dependency search paths
+#-------------------------------------------------
+
+VPATH = src $(wildcard src/cpu/*)
+
 
 
 #-------------------------------------------------
 # define the standard object directories
 #-------------------------------------------------
-
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug $(OBJ)/xml2info
@@ -376,13 +390,10 @@ else
 include src/$(MAMEOS)/$(MAMEOS).mak
 endif
 
-ifdef COMPILESYSTEM_CYGWIN
-CFLAGS	+= -mno-cygwin
-LDFLAGS	+= -mno-cygwin
-endif
-
 # combine the various definitions to one
-CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
+CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)
+
+
 
 #-------------------------------------------------
 # primary targets
@@ -480,107 +491,55 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 				$(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
 				$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
 
-#############################################################################
 
-# for Windows at least, we can't compile OS-specific code with -pedantic
+
+#-------------------------------------------------
+# generic rules
+#-------------------------------------------------
+
 $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/mess/$(MAMEOS)/%.o: mess/$(MAMEOS)/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/xml2info/%.o: src/xml2info/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/mess/tools/messtest/%.o: mess/tools/messtest/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGSOSDEPEND) $< -o $(@:%.o=%.S)
 endif
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
+endif
+
+$(OBJ)/%.pp: src/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 $(OBJ)/mess/%.o: mess/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
-#-------------------------------------------------
-# special rules
-#-------------------------------------------------
-
-
-# compile generated C files for the 68000 emulator
-$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
-	@echo Compiling $(subst .o,.c,$@)...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $*.c -o $@
+$(OBJ)/mess/%.pp: mess/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
-
-# additional rule, because m68kcpu.c includes the generated m68kops.h :-/
-$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
-
-# generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
-	@echo M68K make $<...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
-	@echo Generating M68K source files...
-	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
-
-# generate asm source files for the 68000/68020 emulators
-$(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
-	@echo Generating $@...
-	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68000tab.asm 00
-
-$(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
-	@echo Generating $@...
-	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68020tab.asm 20
-
-# generated asm files for the 68000 emulator
-$(OBJ)/cpu/m68000/68000.o:  $(OBJ)/cpu/m68000/68000.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
-
-$(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@
 	$(AR) cr $@ $^
+	
+%$(EXE):
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 mess.chm: $(MESSDOCS)
 	$(MESSDOCS) docs/wintoc.xml obj/help

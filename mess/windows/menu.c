@@ -26,7 +26,7 @@
 #include "artwork.h"
 #include "tapedlg.h"
 #include "artworkx.h"
-#include "debugcpu.h"
+#include "debug/debugcpu.h"
 #include "inptport.h"
 #include "devices/cassette.h"
 
