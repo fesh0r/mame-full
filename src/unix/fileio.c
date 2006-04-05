@@ -96,6 +96,8 @@ FILE *stderr_file;
 /*	LOCAL VARIABLES */
 /*============================================================ */
 
+#ifndef MESS
+
 static int errorlog;
 
 static int init_errorlog(struct rc_option *option, const char *arg, int priority)
@@ -113,6 +115,8 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	option->priority = priority;
 	return 0;
 }
+
+#endif // !MESS
 
 
 
@@ -149,7 +153,9 @@ struct rc_option fileio_opts[] =
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "Set a file to playback keypresses from" },
 	{ "stdout-file", "out", rc_file, &stdout_file, NULL, 1,	0, NULL, "Set a file to redirect stdout to" },
 	{ "stderr-file", "err",	rc_file, &stderr_file, NULL, 1, 0, NULL, "Set a file to redirect stderr to" },
+#ifndef MESS
 	{ "log", "L", rc_bool, &errorlog, "0", 0, 0, init_errorlog, "Generate error.log" },
+#endif
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
