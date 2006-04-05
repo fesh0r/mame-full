@@ -93,7 +93,7 @@ void wswan_draw_foreground_0( void ) {
 				x_offset = 7 - x + ( column << 3 ) - ( vdp.layer_fg_scroll_x & 0x07 );
 			}
 			if ( x_offset >= 0 && x_offset < WSWAN_X_PIXELS ) {
-				if ( pal[col] || !(tile_palette & 4) ) {
+				if ( col || !(tile_palette & 4) ) {
 					plot_pixel( tmpbitmap, x_offset, vdp.current_line, Machine->pens[vdp.main_palette[pal[col]]] );
 				}
 			}
@@ -137,7 +137,7 @@ void wswan_draw_foreground_2( void ) {
 				x_offset = 7 - x + ( column << 3 ) - ( vdp.layer_fg_scroll_x & 0x07 );
 			}
 			if ( x_offset >= 0 && x_offset >= vdp.window_fg_left && x_offset < vdp.window_fg_right && x_offset < WSWAN_X_PIXELS ) {
-				if ( pal[col] || !(tile_palette & 4) ) {
+				if ( col || !(tile_palette & 4) ) {
 					plot_pixel( tmpbitmap, x_offset, vdp.current_line, Machine->pens[vdp.main_palette[pal[col]]] );
 				}
 			}
@@ -181,7 +181,7 @@ void wswan_draw_foreground_3( void ) {
 				x_offset = 7 - x + ( column << 3 ) - ( vdp.layer_fg_scroll_x & 0x07 );
 			}
 			if ( ( x_offset >= 0 && x_offset < vdp.window_fg_left ) || ( x_offset >= vdp.window_fg_right && x_offset < WSWAN_X_PIXELS ) ) {
-				if ( pal[col] || !(tile_palette & 4) ) {
+				if ( col || !(tile_palette & 4) ) {
 					plot_pixel( tmpbitmap, x_offset, vdp.current_line, Machine->pens[vdp.main_palette[pal[col]]] );
 				}
 			}
