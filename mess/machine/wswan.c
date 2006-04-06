@@ -187,7 +187,7 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.line_compare = data;
 			break;
 		case 0x04:		/* Sprite table base address */
-			vdp.sprite_table_address = data << 9;
+			vdp.sprite_table_address = ( data & 0x3F ) << 9;
 			break;
 		case 0x05:		/* Number of sprite to start drawing with */
 			vdp.sprite_first = data;
@@ -196,8 +196,8 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.sprite_last = data;
 			break;
 		case 0x07:		/* Screen addresses */
-			vdp.layer_bg_address = (data & 0xf) << 11;
-			vdp.layer_fg_address = (data & 0xf0) << 7;
+			vdp.layer_bg_address = (data & 0x7) << 11;
+			vdp.layer_fg_address = (data & 0x70) << 7;
 			break;
 		case 0x08:		/* Left coordinate of foreground window */
 			vdp.window_fg_left = data;
@@ -316,27 +316,28 @@ WRITE8_HANDLER( wswan_port_w )
 		case 0x60:		/* Video mode */
 			/* FIXME: Is this WSC only? */
 			break;
-		case 0x80:		/* sound registers */
-		case 0x81:
-		case 0x82:
-		case 0x83:
-		case 0x84:
-		case 0x85:
-		case 0x86:
-		case 0x87:
-		case 0x88:
-		case 0x89:
-		case 0x8A:
-		case 0x8B:
-		case 0x8C:
-		case 0x8D:
-		case 0x8E:
-		case 0x8F:
-		case 0x90:
-		case 0x91:
-		case 0x92:
-		case 0x93:
-		case 0x94:
+		case 0x80:		/* Audio 1 freq (lo) */
+		case 0x81:		/* Audio 1 freq (hi) */
+		case 0x82:		/* Audio 2 freq (lo) */
+		case 0x83:		/* Audio 2 freq (hi) */
+		case 0x84:		/* Audio 3 freq (lo) */
+		case 0x85:		/* Audio 3 freq (hi) */
+		case 0x86:		/* Audio 4 freq (lo) */
+		case 0x87:		/* Audio 4 freq (hi) */
+		case 0x88:		/* Audio 1 volume */
+		case 0x89:		/* Audio 2 volume */
+		case 0x8A:		/* Audio 3 volume */
+		case 0x8B:		/* Audio 4 volume */
+		case 0x8C:		/* Sweep value */
+		case 0x8D:		/* Sweep step */
+		case 0x8E:		/* Noise control */
+		case 0x8F:		/* Sample location */
+		case 0x90:		/* Audio control */
+		case 0x91:		/* Audio output */
+		case 0x92:		/* Noise counter shift register (lo) */
+		case 0x93:		/* Noise counter shift register (hi) */
+		case 0x94:		/* Master volume */
+			wswan_sound_port_w( offset, data );
 			break;
 		case 0xa0:		/* Hardware type - this is probably read only */
 			break;
@@ -628,12 +629,12 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 		wswan_refresh_scanline();
 		if ( vdp.timer_hblank_enable && vdp.timer_hblank_freq != 0 ) {
 			vdp.timer_hblank_freq--;
-			logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
+//			logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
 			if ( vdp.timer_hblank_freq == 0 ) {
 				if ( vdp.timer_hblank_mode ) {
 					vdp.timer_hblank_freq = ( ws_portram[0xa5] << 8 ) | ws_portram[0xa4];
 				}
-				logerror( "trigerring hbltmr interrupt\n" );
+//				logerror( "trigerring hbltmr interrupt\n" );
 				wswan_set_irq_line( WSWAN_IFLAG_HBLTMR );
 			}
 		}
@@ -645,12 +646,12 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 		wswan_set_irq_line( WSWAN_IFLAG_VBL );
 		if ( vdp.timer_vblank_enable && vdp.timer_vblank_freq != 0 ) {
 			vdp.timer_vblank_freq--;
-			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
+//			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
 			if ( vdp.timer_vblank_freq == 0 ) {
 				if ( vdp.timer_vblank_mode ) {
 					vdp.timer_vblank_freq = ( ws_portram[0xa7] << 8 ) | ws_portram[0xa6];
 				}
-				logerror( "triggering vbltmr interrupt\n" );
+//				logerror( "triggering vbltmr interrupt\n" );
 				wswan_set_irq_line( WSWAN_IFLAG_VBLTMR );
 			}
 		}
