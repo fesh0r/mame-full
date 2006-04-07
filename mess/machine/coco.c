@@ -1312,6 +1312,7 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	UINT8 dac = pia_get_output_a(1) & 0xFC;
 
 	coco_sound_update();
+	coco_update_keyboard();
 
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(dac >= 0x80);

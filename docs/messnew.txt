@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [COCO] Fixed joystick regression introduced in 0.105.  [Nate Woods]
+
 - [FAMICOM] Fixed disk system.  [Steve Leung]
 
 
