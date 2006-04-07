@@ -446,6 +446,7 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/machine/coco.o		\
 	$(OBJ)/mess/vidhrdw/coco.o		\
 	$(OBJ)/mess/systems/coco.o		\
+	$(OBJ)/mess/vidhrdw/coco3.o		\
 	$(OBJ)/mess/formats/cocopak.o	\
 	$(OBJ)/mess/formats/coco_cas.o	\
 	$(OBJ)/mess/formats/coco_dsk.o	\
@@ -975,7 +976,6 @@ COREOBJS +=							\
 	$(OBJ)/mess/compcfg.o			\
 	$(OBJ)/mess/utils.o				\
 	$(OBJ)/mess/eventlst.o			\
-	$(OBJ)/mess/videomap.o			\
 	$(OBJ)/mess/mscommon.o			\
 	$(OBJ)/mess/pool.o				\
 	$(OBJ)/mess/cheatms.o			\
@@ -1037,7 +1037,6 @@ DAT2HTML_OBJS =								\
 	$(OBJ)/mess/tools/dat2html/dat2html.o	\
 	$(OBJ)/mess/tools/imgtool/stubs.o		\
 	$(OBJ)/mess/utils.o						\
-	$(OBJ)/mamecore.o
 
 MESSDOCS_OBJS =								\
 	$(OBJ)/mamecore.o						\

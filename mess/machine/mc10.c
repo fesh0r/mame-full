@@ -13,7 +13,8 @@
 #include "devices/cassette.h"
 #include "sound/dac.h"
 
-static int mc10_keyboard_strobe;
+static UINT8 mc10_bfff;
+static UINT8 mc10_keyboard_strobe;
 
 void mc10_init_machine(void)
 {
@@ -44,7 +45,7 @@ void mc10_init_machine(void)
     }
 }
 
- READ8_HANDLER ( mc10_bfff_r )
+READ8_HANDLER ( mc10_bfff_r )
 {
 	/*   BIT 0 KEYBOARD ROW 1
 	 *   BIT 1 KEYBOARD ROW 2
@@ -72,7 +73,7 @@ void mc10_init_machine(void)
 	return val;
 }
 
- READ8_HANDLER ( mc10_port1_r )
+READ8_HANDLER ( mc10_port1_r )
 {
 	return mc10_keyboard_strobe;
 }
@@ -91,7 +92,7 @@ WRITE8_HANDLER ( mc10_port1_w )
 	mc10_keyboard_strobe = data;
 }
 
- READ8_HANDLER ( mc10_port2_r )
+READ8_HANDLER ( mc10_port2_r )
 {
 	/*   BIT 1 KEYBOARD SHIFT/CONTROL KEYS INPUT
 	 * ! BIT 2 PRINTER OTS INPUT
@@ -121,25 +122,66 @@ WRITE8_HANDLER ( mc10_port2_w )
 	cassette_output(img, (data & 0x01) ? +1.0 : -1.0);
 }
 
+
+
 /* --------------------------------------------------
  * Video hardware
  * -------------------------------------------------- */
 
+static ATTR_CONST UINT8 mc10_get_attributes(UINT8 c)
+{
+	UINT8 result = 0x00;
+	if (c & 0x40)			result |= M6847_INV;
+	if (c & 0x80)			result |= M6847_AS;
+	if (mc10_bfff & 0x04)	result |= M6847_GM2 | M6847_INTEXT;
+	if (mc10_bfff & 0x08)	result |= M6847_GM1;
+	if (mc10_bfff & 0x10)	result |= M6847_GM0;
+	if (mc10_bfff & 0x20)	result |= M6847_AG;
+	if (mc10_bfff & 0x40)	result |= M6847_CSS;
+	return result;
+}
+
+
+
+static const UINT8 *mc10_get_video_ram(int scanline)
+{
+	offs_t offset = 0;
+
+	switch(mc10_bfff & 0x3C)
+	{
+		case 0x00: case 0x04: case 0x08: case 0x0C:
+		case 0x10: case 0x14: case 0x18: case 0x1C:
+			offset = (scanline / 12) * 0x20;	/* text/semigraphic */
+			break;
+
+		case 0x20:	offset = (scanline / 3) * 0x10;	break;	/* CG1 */
+		case 0x30:	offset = (scanline / 3) * 0x10;	break;	/* RG1 */
+		case 0x28:	offset = (scanline / 3) * 0x20;	break;	/* CG2 */
+		case 0x38:	offset = (scanline / 2) * 0x20;	break;	/* RG2 */
+		case 0x24:	offset = (scanline / 2) * 0x20;	break;	/* CG3 */
+		case 0x34:	offset = (scanline / 1) * 0x10;	break;	/* RG3 */
+		case 0x2C:	offset = (scanline / 1) * 0x20;	break;	/* CG6 */
+		case 0x3C:	offset = (scanline / 1) * 0x20;	break;	/* RG6 */
+	}
+
+	return mess_ram + offset;
+}
+
+
+
 VIDEO_START( mc10 )
 {
-	extern void dragon_charproc(UINT8 c);
-	struct m6847_init_params p;
+	m6847_config cfg;
 
-	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_ORIGINAL_NTSC;
-	p.artifactdipswitch = 7;
-	p.ram = mess_ram;
-	p.ramsize = mess_ram_size;
-	p.charproc = dragon_charproc;
-	p.initial_video_offset = 0;
-
-	return video_start_m6847(&p);
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.type = M6847_VERSION_ORIGINAL_NTSC;
+	cfg.get_attributes = mc10_get_attributes;
+	cfg.get_video_ram = mc10_get_video_ram;
+	m6847_init(&cfg);
+	return 0;
 }
+
+
 
 WRITE8_HANDLER ( mc10_bfff_w )
 {
@@ -150,37 +192,24 @@ WRITE8_HANDLER ( mc10_bfff_w )
 	 *   BIT 6 CSS 6847 CONTROL
 	 *   BIT 7 SOUND OUTPUT BIT
 	 */
-
-	m6847_gm2_w(0,	data & 0x04);
-	m6847_gm1_w(0,	data & 0x08);
-	m6847_gm0_w(0,	data & 0x10);
-	m6847_ag_w(0,	data & 0x20);
-	m6847_css_w(0,	data & 0x40);
+	mc10_bfff = data;
 	DAC_data_w(0, data & 0x80);
-
-	m6847_set_cannonical_row_height();
-	schedule_full_refresh();
 }
 
 
 
-static WRITE8_HANDLER ( mc10_ram_w )
+MACHINE_START( mc10 )
 {
-	if (mess_ram[offset] != data)
-	{
-		m6847_touch_vram(offset);
-		mess_ram[offset] = data;
-	}
-}
+	mc10_bfff = 0x00;
+	mc10_keyboard_strobe = 0x00;
 
-
-
-DRIVER_INIT( mc10 )
-{
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1,
 		0, 0, MRA8_BANK1);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1,
-		0, 0, mc10_ram_w);
+		0, 0, MWA8_BANK1);
 	memory_set_bankptr(1, mess_ram);
-}
 
+	state_save_register_global(mc10_bfff);
+	state_save_register_global(mc10_keyboard_strobe);
+	return 0;
+}

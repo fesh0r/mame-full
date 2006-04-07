@@ -231,7 +231,7 @@ struct rc_option video_opts[] =
 	{ "Windows misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow " APPNAME " to give back time to the system when it's not needed" },
 	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
-	{ "priority", NULL, rc_int, &win_priority, "0", -15, 1, NULL, "thread priority" },
+	{ "priority", NULL, rc_int, &win_priority, "-15", -15, 1, NULL, "thread priority" },
 
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -842,10 +842,6 @@ static void update_palette(mame_display *display)
 static void update_visible_area(mame_display *display)
 {
 	rectangle adjusted = display->game_visible_area;
-
-	// tell the UI where it can draw
-	ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
-			display->game_visible_area.max_x, display->game_visible_area.max_y);
 
 	// adjust for orientation
 	win_orient_rect(&adjusted);

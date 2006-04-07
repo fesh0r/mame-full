@@ -1,116 +1,82 @@
-/* m6847.h -- Implementation of Motorola 6847 video hardware chip */
+/*********************************************************************
 
-#ifndef _M6847_H
-#define _M6847_H
+    m6847.h
 
-#include "driver.h"
-#include "vidhrdw/generic.h"
+	Implementation of Motorola 6847 video hardware chip
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+**********************************************************************/
 
-/******************* Initialization & Functionality *******************/
+#ifndef __M6847_H__
+#define __M6847_H__
 
-#define M6847_ARTIFACT_COLOR_COUNT	14
+#include "mame.h"
 
-#define M6847_TOTAL_COLORS (13 + (M6847_ARTIFACT_COLOR_COUNT * 4))
+/* for now, the MAME core forces us to use these */
+#define M6847_NTSC_FRAMES_PER_SECOND	60
+#define M6847_PAL_FRAMES_PER_SECOND		50
 
-#define M6847_INTERRUPTS_PER_FRAME	263
-
-enum {
-	M6847_VERSION_ORIGINAL_PAL,
-	M6847_VERSION_ORIGINAL_NTSC,
-	M6847_VERSION_M6847Y_PAL,
-	M6847_VERSION_M6847Y_NTSC,
-	M6847_VERSION_M6847T1_PAL,
-	M6847_VERSION_M6847T1_NTSC
-};
-
-struct m6847_init_params
+typedef enum
 {
-	int version;				/* use one of the above initialization constants */
-	int artifactdipswitch;		/* dip switch that controls artifacting; -1 if NA */
-	UINT8 *ram;					/* the base of RAM */
-	int ramsize;				/* the size of accessible RAM */
-	void (*charproc)(UINT8 c);	/* the proc that gives the host a chance to change mode bits */
-	int initial_video_offset;	/* the first video offset to use */
+	M6847_VERSION_ORIGINAL_NTSC,
+	M6847_VERSION_ORIGINAL_PAL,
+	M6847_VERSION_M6847Y_NTSC,
+	M6847_VERSION_M6847Y_PAL,
+	M6847_VERSION_M6847T1_NTSC,
+	M6847_VERSION_M6847T1_PAL,
+	M6847_VERSION_GIME_NTSC,
+	M6847_VERSION_GIME_PAL
+} m6847_type;
 
-	write8_handler hs_func;	/* horizontal sync */
-	write8_handler fs_func;	/* field sync */
-	double callback_delay;		/* amount of time to wait before invoking callbacks (this is a CoCo related hack */
+enum
+{
+	M6847_AG		= 0x80,
+	M6847_AS		= 0x40,
+	M6847_INTEXT	= 0x20,
+	M6847_INV		= 0x10,
+	M6847_CSS		= 0x08,
+	M6847_GM2		= 0x04,
+	M6847_GM1		= 0x02,
+	M6847_GM0		= 0x01
 };
 
-/* This call fills out the params structure with defaults; this is so I can
- * change around the structure without breaking people's code */
-void m6847_vh_normalparams(struct m6847_init_params *params);
+typedef enum
+{
+	M6847_CLOCK,
+	M6847_HSYNC
+} m6847_timing_type;
 
-int video_start_m6847(const struct m6847_init_params *params);
-int m6847_is_t1(int version);
-extern INTERRUPT_GEN( m6847_vh_interrupt );
+typedef struct _m6847_config m6847_config;
+struct _m6847_config
+{
+	m6847_type type;
+	int cpu0_timing_factor;
 
-#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER)
-#define M6847_SCREEN_WIDTH	320
-#define M6847_SCREEN_HEIGHT	263
+	/* callbacks */
+	void (*horizontal_sync_callback)(int line);
+	void (*field_sync_callback)(int line);
+	UINT8 (*get_attributes)(UINT8 video_byte) ATTR_CONST;
+	const UINT8 *(*get_video_ram)(int scanline);
 
-extern void mdrv_m6847(machine_config *machine, int (*video_start_proc)(void), int is_pal);
+	/* needed for the CoCo 3 */
+	int (*new_frame_callback)(void);	/* returns whether the M6847 is in charge of this frame */
+	void (*custom_prepare_scanline)(int scanline);
 
-#define MDRV_M6847_NTSC(video_start_proc)		mdrv_m6847(machine, (video_start_##video_start_proc), 0);
-#define MDRV_M6847_PAL(video_start_proc)		mdrv_m6847(machine, (video_start_##video_start_proc), 1);
-
-/******************* Modifiers *******************/
-
-enum {
-	M6847_BORDERCOLOR_BLACK,
-	M6847_BORDERCOLOR_GREEN,
-	M6847_BORDERCOLOR_WHITE,
-	M6847_BORDERCOLOR_ORANGE
+	const UINT32 *custom_palette;
 };
 
-int m6847_get_bordercolor(void);
+/* creates a new M6847 instance */
+void m6847_init(const m6847_config *cfg);
 
-/* This allows the size of accessable RAM to be resized */
-void m6847_set_ram_size(int ramsize);
+/* video update proc */
+VIDEO_UPDATE(m6847);
 
-/* This is the base of video memory, within the ram specified by m6847_vh_start() */
-void m6847_set_video_offset(int offset);
-int m6847_get_video_offset(void);
+/* timing functions */
+UINT64 m6847_time(m6847_timing_type timing);
+mame_time m6847_time_until(m6847_timing_type timing, UINT64 target_time);
 
-/* Touches VRAM; offset is from vram base position */
-void m6847_touch_vram(int offset);
+/* CoCo 3 hooks */
+mame_time m6847_scanline_time(int scanline);
 
-/* Changes the height of each row */
-void m6847_set_row_height(int rowheight);
-void m6847_set_cannonical_row_height(void);
+INPUT_PORTS_EXTERN( m6847_artifacting );
 
-/* Call this function at vblank; so fs and hs will be properly set */
-int m6847_vblank(void);
-
-/******************* 1-bit mode port interfaces *******************/
-
- READ8_HANDLER( m6847_ag_r );
- READ8_HANDLER( m6847_as_r );
- READ8_HANDLER( m6847_intext_r );
- READ8_HANDLER( m6847_inv_r );
- READ8_HANDLER( m6847_css_r );
- READ8_HANDLER( m6847_gm2_r );
- READ8_HANDLER( m6847_gm1_r );
- READ8_HANDLER( m6847_gm0_r );
- READ8_HANDLER( m6847_hs_r );
- READ8_HANDLER( m6847_fs_r );
-
-WRITE8_HANDLER( m6847_ag_w );
-WRITE8_HANDLER( m6847_as_w );
-WRITE8_HANDLER( m6847_intext_w );
-WRITE8_HANDLER( m6847_inv_w );
-WRITE8_HANDLER( m6847_css_w );
-WRITE8_HANDLER( m6847_gm2_w );
-WRITE8_HANDLER( m6847_gm1_w );
-WRITE8_HANDLER( m6847_gm0_w );
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _M6847_H */
-
+#endif /* __M6847_H__ */

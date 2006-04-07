@@ -582,26 +582,6 @@ WRITE8_HANDLER(vtech1_latch_w)
 	if ((vtech1_latch ^ data ) & 0x41)
 		speaker_level_w(0, (data & 1) | ((data >> 5) & 2));
 
-	/* mode or the background color are toggle? */
-	if ((vtech1_latch ^ data) & 0x18)
-	{
-		/* background */
-		m6847_css_w(0,	data & 0x10);
-		/* text/graphics */
-		m6847_ag_w(0,	data & 0x08);		
-		m6847_gm1_w(0,	data & 0x08);
-		m6847_set_cannonical_row_height();
-		schedule_full_refresh();
-	
-		if (LOG_VTECH1_LATCH) {
-			if ((vtech1_latch ^ data) & 0x10)
-				logerror("vtech1_latch_w: change background %d\n", (data >> 4) & 1);
-			if ((vtech1_latch ^ data) & 0x08)
-				logerror("vtech1_latch_w: change mode to %s\n", (data & 0x08) ? "gfx" : "text");
-		}
-
-	}
-
 	vtech1_latch = data;
 }
 

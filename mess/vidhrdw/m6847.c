@@ -1,108 +1,167 @@
-/* m6847.c -- Implementation of Motorola 6847 video hardware chip
- *
- * Nate Woods
- *
- * Originally based on src/mess/vidhrdw/dragon.c by Mathis Rosenhauer
- *
- * Sources:
- *  M6847 data sheet (http://www.spies.com/arcade/schematics/DataSheets/6847.pdf)
- *  M6847T1 info from Rainbow magazine (10/86-12/86)
- */
+/*********************************************************************
 
-#include <assert.h>
+    m6847.c
+
+	Implementation of Motorola 6847 video hardware chip
+
+	Sources:
+	M6847 data sheet
+	M6847T1 info from Rainbow magazine (10/1986-12/1986)
+
+
+	AG  AS  INTEXT  INV  GM2  GM1  GM0
+	--  --  ------  ---  ---  ---  ---	
+	 0   0       0    0    X    X    X	Internal Alphanumerics
+	 0   0       0    1    X    X    X	Internal Alphanumerics Inverted
+	 0   0       1    0    X    X    X	External Alphanumerics
+	 0   0       1    1    X    X    X	External Alphanumerics Inverted
+	 0   1       0    X    X    X    X  Semigraphics 4
+	 0   1       1    X    X    X    X  Semigraphics 6
+	 1   X       X    X    0    0    0  Graphics CG1 (64x64x4)	  (16 bpr)
+	 1   X       X    X    0    0    1  Graphics RG1 (128x64x2)   (16 bpr)
+	 1   X       X    X    0    1    0  Graphics CG2 (128x64x4)   (32 bpr)
+	 1   X       X    X    0    1    1  Graphics RG2 (128x96x2)   (16 bpr)
+	 1   X       X    X    1    0    0  Graphics CG3 (128x96x4)   (32 bpr)
+	 1   X       X    X    1    0    1  Graphics RG3 (128x192x2)  (16 bpr)
+	 1   X       X    X    1    1    0  Graphics CG6 (128x192x4)  (32 bpr)
+	 1   X       X    X    1    1    1  Graphics RG6 (256x192x2)  (32 bpr)
+
+	Note: The M6847 relies on an external source (typically a 6883 SAM chip)
+	to feed it bytes; so the BPR (bytes per row) figures are effectively
+	suggestions.  Mismatching modes is responsible for the semigraphic modes
+	on the CoCo.
+
+	Timing:
+	(source Motorola M6847 Manual)
+
+	Horizontal Sync:  Total Period: 227.5 clock cycles
+		@ CLK(0) + DHS_F			- falling edge (high to low)
+		@ CLK(16.5) + DHS_R			- rising edge (low to high)
+		@ CLK(227.5) + DHS_F		- falling edge (high to low)
+		...
+
+	Field Sync:	Total Period 262*227.5 clock cycles
+		@ CLK(0) + DFS_F			- falling edge (high to low)
+	    @ CLK(32*227.5) + DFS_R		- rising edge (low to high)
+		@ CLK(262*227.5) + DFS_F	- falling edge (high to low) (262.5 for the M6847Y)
+
+	DHS_F:	550ns
+	DHS_R:	740ns
+	DFS_F:	520ns
+	DFS_R:	500ns
+
+	The M6847T1 is a later variant of the M6847 chip that implements lower
+	case support and some other nifty features.  This chip is in the CoCo 2B.
+	I have not been able to find a pinout diagram for this chip so I am
+	assuming that the extra text modes on the CoCo 2B are activated by the
+	GM2-0 pins.  This needs to be confirmed.
+
+	TODO: Implement PAL support
+
+**********************************************************************/
+
 #include "m6847.h"
-#include "state.h"
-#include "vidhrdw/generic.h"
-#include "videomap.h"
+#include "inputx.h"
 
-/* The "Back doors" are declared here */
-#include "includes/coco.h"
+#define LOG_FS		0
+#define LOG_HS		0
+#define LOG_STATS	0
 
-#ifdef MAME_DEBUG
-#define LOG_FS			0
-#define LOG_HS			0
-#define LOG_INTERRUPT	0
-#else /* !MAME_DEBUG */
-#define LOG_FS			0
-#define LOG_HS			0
-#define LOG_INTERRUPT	0
-#endif /* MAME_DEBUG */
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+#define RESTRICT	__restrict__
+#else /* !__GNUC__ */
+#define RESTRICT
+#endif /* __GNUC__ */
 
-struct m6847_state
+typedef struct _m6847_variant m6847_variant;
+struct _m6847_variant
 {
-	struct m6847_init_params initparams;
-	int modebits;
-	int videooffset;
-	int latched_videooffset;
-	int rowheight;
-	int fs, hs;
-	mame_timer *hs_timer1;
-	mame_timer *hs_timer2;
-	mame_timer *hs_timer_actual;
-	mame_timer *fs_timer;
-	mame_timer *fs_timer_actual;
+	const UINT8 *fontdata;
+	unsigned int has_lowercase : 1;
+	unsigned int text_offset : 1;
+
+	int frames_per_second;
+	double scanlines_per_frame;
+	double clocks_per_scanline;
+
+	double vblank_scanlines;
+	int top_border_scanlines;
+	int display_scanlines;
+	int bottom_border_scanlines;
+	int vretrace_scanlines;
+
+	double field_sync_scanlines;
 };
 
-static struct m6847_state the_state;
-
-enum {
-	M6847_MODEBIT_AG		= 0x80,
-	M6847_MODEBIT_AS		= 0x40,
-	M6847_MODEBIT_INTEXT	= 0x20,
-	M6847_MODEBIT_INV		= 0x10,
-	M6847_MODEBIT_CSS		= 0x08,
-	M6847_MODEBIT_GM2		= 0x04,
-	M6847_MODEBIT_GM1		= 0x02,
-	M6847_MODEBIT_GM0		= 0x01
+typedef struct _m6847_pixel m6847_pixel;
+struct _m6847_pixel
+{
+	UINT8 data;
+	UINT8 attr;
 };
 
-#define MAX_VRAM 6144
+typedef struct _m6847_vdg m6847_vdg;
+struct _m6847_vdg
+{
+	/* callbacks */
+	void (*horizontal_sync_callback)(int line);
+	void (*field_sync_callback)(int line);
+	UINT8 (*get_attributes)(UINT8 video_byte);
+	const UINT8 *(*get_video_ram)(int scanline);
+	int (*new_frame_callback)(void);	/* returns whether the M6847 is in charge of this frame */
+	void (*custom_prepare_scanline)(int scanline);
 
-#define LOG_M6847 0
+	/* timers */
+	mame_timer *fs_rise_timer;
+	mame_timer *fs_fall_timer;
+	mame_timer *hs_rise_timer;
+	mame_timer *hs_fall_timer;
 
-static unsigned char palette[] = {
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0xff,0x00, /* YELLOW */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x00,0x00, /* RED */
-	0xff,0xff,0xff, /* BUFF */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0x80,0x00, /* ORANGE */
-	0x00,0x40,0x00,	/* ALPHANUMERIC DARK GREEN */
-	0x00,0xff,0x00,	/* ALPHANUMERIC BRIGHT GREEN */
-	0x40,0x10,0x00,	/* ALPHANUMERIC DARK ORANGE */
-	0xff,0xc4,0x18	/* ALPHANUMERIC BRIGHT ORANGE */
+	/* things that vary according to chip version */
+	subseconds_t clock_period;
+	subseconds_t scanline_period;
+	subseconds_t field_sync_period;
+	subseconds_t horizontal_sync_period;
+	subseconds_t vblank_period;
+	int top_border_scanlines;
+	int display_scanlines;
+	int bottom_border_scanlines;
+	const UINT32 *palette;
+
+	/* flags */
+	unsigned int has_lowercase : 1;			/* M6847T1 has lower case */
+	unsigned int has_custom_palette : 1;	/* needed for CoCo 3 */
+	unsigned int text_offset : 2;			/* needed for CoCo 3 */
+
+	/* time at which the current frame began; used for scanline calculation */
+	mame_time frame_begin;
+
+	/* video state; every scanline the video state for the scanline is copied
+	 * here and only rendered in VIDEO_UPDATE */
+	int dirty;
+	int using_custom;
+	UINT32 border[384];
+	UINT8 attrs[384];
+	m6847_pixel screendata[192][32];
+
+	/* saved palette; used with CoCo 3 */
+	UINT32 saved_palette[16];
+
+	/* 2^7 modes, 128/16 character groups, background/foreground */
+	UINT8 colordata[128][128/16][2];
+
+	/* 2^7 modes, 128 characters, 12 scanlines */
+	UINT8 fontdata[128][128][12];
 };
 
-static double artifactfactors[] = {
-#if M6847_ARTIFACT_COLOR_COUNT == 2
-	1.000, 0.500, 0.000, /* [ 1] */
-	0.000, 0.500, 1.000  /* [ 2] */
-#elif M6847_ARTIFACT_COLOR_COUNT == 14
-	0.157, 0.000, 0.157, /* [ 1] - dk purple   (reverse  2) */
-	0.000, 0.157, 0.000, /* [ 2] - dk green    (reverse  1) */
-	1.000, 0.824, 1.000, /* [ 3] - lt purple   (reverse  4) */
-	0.824, 1.000, 0.824, /* [ 4] - lt green    (reverse  3) */
-	0.706, 0.236, 0.118, /* [ 5] - dk blue     (reverse  6) */
-	0.000, 0.197, 0.471, /* [ 6] - dk red      (reverse  5) */
-	1.000, 0.550, 0.393, /* [ 7] - lt blue     (reverse  8) */
-	0.275, 0.785, 1.000, /* [ 8] - lt red      (reverse  7) */
-	0.000, 0.500, 1.000, /* [ 9] - red         (reverse 10) */
-	1.000, 0.500, 0.000, /* [10] - blue        (reverse  9) */
-	1.000, 0.942, 0.785, /* [11] - cyan        (reverse 12) */
-	0.393, 0.942, 1.000, /* [12] - yellow      (reverse 11) */
-	0.236, 0.000, 0.000, /* [13] - black-blue  (reverse 14) */
-	0.000, 0.000, 0.236  /* [14] - black-red   (reverse 13) */
-#else
-#error Bad Artifact Color Count!!
-#endif
-};
 
-static unsigned char *fontdata8x12;
 
-static unsigned char pal_round_fontdata8x12[] =
+static void apply_artifacts(UINT32 *line);
+
+static m6847_vdg *m6847;
+
+
+static const UINT8 pal_round_fontdata8x12[] =
 {
 	0x00, 0x00, 0x38, 0x44, 0x04, 0x34, 0x4C, 0x4C, 0x38, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x10, 0x28, 0x44, 0x44, 0x7C, 0x44, 0x44, 0x00, 0x00, 0x00, 
@@ -287,7 +346,10 @@ static unsigned char pal_round_fontdata8x12[] =
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 };
-static unsigned char pal_square_fontdata8x12[] =
+
+
+
+static const UINT8 pal_square_fontdata8x12[] =
 {
 	0x00, 0x00, 0x00, 0x1C, 0x22, 0x02, 0x1A, 0x2A, 0x2A, 0x1C, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x08, 0x14, 0x22, 0x22, 0x3E, 0x22, 0x22, 0x00, 0x00, 
@@ -472,7 +534,10 @@ static unsigned char pal_square_fontdata8x12[] =
 	0xff,0xff,0xff,0xff,0xff,0xff, 0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,
 	0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff
 };
-static unsigned char ntsc_round_fontdata8x12[] =
+
+
+
+static const UINT8 ntsc_round_fontdata8x12[] =
 {
 	0x00, 0x00, 0x38, 0x44, 0x04, 0x34, 0x4C, 0x4C, 0x38, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x10, 0x28, 0x44, 0x44, 0x7C, 0x44, 0x44, 0x00, 0x00, 0x00, 
@@ -657,7 +722,10 @@ static unsigned char ntsc_round_fontdata8x12[] =
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 };
-static unsigned char ntsc_square_fontdata8x12[] =
+
+
+
+static const UINT8 ntsc_square_fontdata8x12[] =
 {
 	0x00, 0x00, 0x00, 0x1C, 0x22, 0x02, 0x1A, 0x2A, 0x2A, 0x1C, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x08, 0x14, 0x22, 0x22, 0x3E, 0x22, 0x22, 0x00, 0x00, 
@@ -843,788 +911,1085 @@ static unsigned char ntsc_square_fontdata8x12[] =
 	0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff
 };
 
-/* --------------------------------------------------
- * Initialization and termination
- * -------------------------------------------------- */
 
-void m6847_vh_normalparams(struct m6847_init_params *params)
+
+enum
 {
-	memset(params, '\0', sizeof(struct m6847_init_params));
-	params->version = M6847_VERSION_ORIGINAL_PAL;
-	params->artifactdipswitch = -1;
-}
+	GREEN, YELLOW, BLUE, RED,		/*  0 -  3 */
+	BUFF, CYAN, MAGENTA, ORANGE,	/*  4 -  7 */
 
-static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UINT8 *c1)
-{
-	double v;
-	int i;
+	BLACK,							/*  8 */
 
-	for (i = 0; i < 3; i++) {
-		v = (c0[i] * (1.0 - val[i])) + (c1[i] * val[i]);
-		dest[i] = (UINT8) (v + 0.5);
-	}
-}
-
-static void setup_artifact_palette(int destcolor, UINT16 c0, UINT16 c1,
-	const double *colorfactors, int numfactors, int reverse)
-{
-	int i, ii;
-	UINT8 rgb0[3];
-	UINT8 rgb1[3];
-	UINT8 rgbdest[3];
-
-	palette_get_color(c0, &rgb0[0], &rgb0[1], &rgb0[2]);
-	palette_get_color(c1, &rgb1[0], &rgb1[1], &rgb1[2]);
-
-	for (i = 0; i < numfactors; i++) {
-		ii = i;
-		if (reverse)
-			ii ^= 1;
-
-		mix_colors(rgbdest, &colorfactors[ii * 3], rgb0, rgb1);
-		palette_set_color(destcolor + i, rgbdest[0], rgbdest[1], rgbdest[2]);
-	}
-}
-
-static PALETTE_INIT( m6847 )
-{
-	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
-
-	palette_set_colors(0, palette, sizeof(palette) / 3);
-
-	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*0),
-		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
-	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*1),
-		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
-	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*2),
-		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
-	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*3),
-		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
-}
-
-UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metapalette, int row, int skew)
-{
-	int fgc, bgc;
-	const UINT8 *character;
-
-	/* give the host machine a chance to pull our strings */
-	the_state.initparams.charproc(c & 0xff);
-
-	if (the_state.modebits & M6847_MODEBIT_AS) {
-		/* semigraphics */
-		bgc = 8;
-
-		if ((the_state.modebits & M6847_MODEBIT_INTEXT) &&  (!m6847_is_t1(the_state.initparams.version)) ) {
-			/* semigraphics 6 */
-			character = &fontdata8x12[(96 + (c & 0x3f)) * 12];
-			fgc = ((c >> 6) & 0x3);
-			if (the_state.modebits & M6847_MODEBIT_CSS)
-				fgc += 4;
-		}
-		else {
-			/* Semigraphics 4 */
-			bgc = 8;
-			fgc = (c >> 4) & 0x7;
-			character = &fontdata8x12[(160 + (c & 0x0f)) * 12];
-		}
-
-	}
-	else {
-		/* Text */
-		fgc = (the_state.modebits & M6847_MODEBIT_CSS) ? 15 : 13;
-
-		/* Inverse the character, if appropriate */
-		if (the_state.modebits & M6847_MODEBIT_INV)
-			fgc ^= 1;
-
-		if ((the_state.initparams.version == M6847_VERSION_M6847T1_PAL) || (the_state.initparams.version == M6847_VERSION_M6847T1_NTSC) ) {
-			/* M6847T1 specific features */
-
-			/* Lowercase */
-			if ((the_state.modebits & M6847_MODEBIT_GM0) && ((c & 0xff) < 0x20))
-				c += 0x40;
-			else
-				c &= 0x3f;
-
-			/* Inverse (The following was verified in Rainbow Magazine 12/86) */
-			if (the_state.modebits & M6847_MODEBIT_GM1)
-				fgc ^= 1;
-		}
-		else {
-			c &= 0x3f;
-		}
-		character = &fontdata8x12[(c & 0x7f) * 12 + skew];
-		bgc = fgc ^ 1;
-	}
-
-	assert(((character >= fontdata8x12) && (character < (fontdata8x12 + sizeof(pal_round_fontdata8x12)))));
-
-	charpalette[0] = metapalette[bgc];
-	charpalette[1] = metapalette[fgc];
-	return character[row];
-}
-
-static UINT16 m6847_metapalette[] = { 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12};
-
-static UINT8 m6847_charproc(UINT32 c, UINT16 *charpalette, int row)
-{
-	return internal_m6847_charproc(c, charpalette, m6847_metapalette, row, 0);
-}
-
-void internal_m6847_frame_callback(struct videomap_framecallback_info *info, int offset, int border_top, int rows)
-{
-	/* keep track of the video offset so we can handle dirty buffers */
-	the_state.latched_videooffset = the_state.videooffset;
-
-	/* now fill in the struct */
-	info->video_base = the_state.videooffset + offset;
-	info->bordertop_scanlines = border_top;
-	info->visible_scanlines = rows;
-	if (the_state.modebits & M6847_MODEBIT_AG)
-	{
-		if (the_state.modebits & M6847_MODEBIT_GM0)
-			info->pitch = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
-		else
-			info->pitch = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
-	}
-	else
-	{
-		info->pitch = 32;
-	}
-}
-
-static void m6847_frame_callback(struct videomap_framecallback_info *info)
-{
-	internal_m6847_frame_callback(info, 0, 13+25, 192);
-}
-
-static UINT16 artifactcorrection[128] = {
-	 0,  0,		 0,	 0,		 0,  6,		 0,	 2,
-	 5,  7,		 5,	 7,		 1,  3,		 1, 11,
-	 8,  6,		 8, 14,		 8,  9,		 8,	 9,
-	 4,  4,		 4, 15,		12, 12,		12, 15,
-
-	 5, 13,		 5, 13,		13,  0,		13,	 2,
-	10, 10,		10, 10,		10, 15,		10, 11,
-	 3,  1,		 3,	 1,		15,  9,		15,	 9,
-	11, 11,		11, 11,		15, 15,		15, 15,
-
-	14,  0,		14,	 0,		14,  6,		14,	 2,
-	 0,  7,		 0,	 7,		 1,  3,		 1, 11,
-	 9,  6,		 9, 14,		 9,  9,		 9,	 9,
-	15,  4,		15, 15,		12, 12,		12, 15,
-
-	 2, 13,		 2, 13,		 2,  0,		 2,	 2,
-	10, 10,		10, 10,		10, 15,		10, 11,
-	12,  1,		12,	 1,		12,  9,		12,	 9,
-	15, 11,		15, 11,		15, 15,		15, 15
+	DKGREEN = 12, LTGREEN = 13,		/* 12 - 13 */
+	DKORANGE = 14, LTORANGE = 15,	/* 14 - 15 */
 };
 
-static int get_artifact_value(void)
+
+
+
+#define M6847_RGB(r,g,b)	((r << 16) | (g << 8) | (b << 0))
+
+
+static const UINT32 palette[] =
 {
-	return (the_state.initparams.artifactdipswitch == -1) ? 0 : (readinputport(the_state.initparams.artifactdipswitch) & 3);
+	M6847_RGB(0x00, 0xff, 0x00),	/* GREEN */
+	M6847_RGB(0xff, 0xff, 0x00),	/* YELLOW */
+	M6847_RGB(0x00, 0x00, 0xff),	/* BLUE */
+	M6847_RGB(0xff, 0x00, 0x00),	/* RED */
+	M6847_RGB(0xff, 0xff, 0xff),	/* BUFF */
+	M6847_RGB(0x00, 0xff, 0xff),	/* CYAN */
+	M6847_RGB(0xff, 0x00, 0xff),	/* MAGENTA */
+	M6847_RGB(0xff, 0x80, 0x00),	/* ORANGE */
+
+	M6847_RGB(0x00, 0x00, 0x00),	/* BLACK */
+	M6847_RGB(0x00, 0xff, 0x00),	/* GREEN */
+	M6847_RGB(0x00, 0x00, 0x00),	/* BLACK */
+	M6847_RGB(0xff, 0xff, 0xff),	/* BUFF */
+	
+	M6847_RGB(0x00, 0x40, 0x00),	/* ALPHANUMERIC DARK GREEN */
+	M6847_RGB(0x00, 0xff, 0x00),	/* ALPHANUMERIC BRIGHT GREEN */
+	M6847_RGB(0x40, 0x10, 0x00),	/* ALPHANUMERIC DARK ORANGE */
+	M6847_RGB(0xff, 0xc4, 0x18)		/* ALPHANUMERIC BRIGHT ORANGE */
+};
+
+
+
+#define FACTOR_SCANLINES_PER_FRAME	2
+#define FACTOR_CLOCKS_PER_SCANLINE	2
+
+#define GROSS_FACTOR	(FACTOR_SCANLINES_PER_FRAME * FACTOR_CLOCKS_PER_SCANLINE)
+
+static const m6847_variant variants[] =
+{
+	{
+		/* M6847_VERSION_ORIGINAL_NTSC */
+		ntsc_square_fontdata8x12,
+		FALSE, 0,
+		60, 262, 227.5,				/* frames, scanlines, clocks per scanline */
+		13, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_ORIGINAL_PAL */
+		pal_square_fontdata8x12,
+		FALSE, 0,
+		50, 262, 227.5,				/* frames, scanlines, clocks per scanline */
+		13, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_M6847Y_NTSC */
+		ntsc_square_fontdata8x12,
+		FALSE, 0,
+		60, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_M6847Y_PAL */
+		pal_square_fontdata8x12,
+		FALSE, 0,
+		50, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_M6847T1_NTSC */
+		ntsc_round_fontdata8x12,
+		TRUE, 0,
+		60, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_M6847T1_PAL */
+		pal_round_fontdata8x12,
+		TRUE, 0,
+		50, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		13+25+192					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_GIME_NTSC */
+		ntsc_round_fontdata8x12,
+		TRUE, 1,
+		60, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		262.5 - 3					/* field sync period */
+	},
+	{
+		/* M6847_VERSION_GIME_PAL */
+		pal_round_fontdata8x12,
+		TRUE, 1,
+		50, 262.5, 227.5,			/* frames, scanlines, clocks per scanline */
+		13.5, 25, 192, 26, 6,
+		262.5 - 3					/* field sync period */
+	}
+};
+
+
+
+/*************************************
+ *
+ *  Utilities
+ *
+ *************************************/
+
+static UINT32 color(int c)
+{
+	return m6847->palette[c];
 }
 
-void internal_m6847_line_callback(struct videomap_linecallback_info *info, const UINT16 *metapalette,
-	struct internal_m6847_linecallback_interface *intf)
+
+
+static const char *mame_time_string(mame_time t)
 {
-	int i;
-	int artifact_value, artifact_mode;
-	int metapalette_pos;
-	int palettebase;
-	UINT8 myrgb[3];
-	UINT8 rgb0[3];
-	UINT8 rgb1[3];
-	static UINT16 artifact_metapalette[128];
+	static char return_buffer[32];
+	char subseconds_buffer[24];
+	char *s;
+	char c;
+	subseconds_t subseconds;
+	subseconds_t max_subseconds;
 
-	info->visible_columns = 256 * intf->width_factor;
-	info->scanlines_per_row = the_state.rowheight;
-	info->borderleft_columns = (Machine->drv->screen_width - info->visible_columns) / 2;
-	info->border_value = 0xff;
-	info->text_modulo = 12;
+	s = subseconds_buffer + sizeof(subseconds_buffer);
+	*(--s) = '\0';
 
-	if (the_state.modebits & M6847_MODEBIT_AG)
+	subseconds = t.subseconds;
+	max_subseconds = MAX_SUBSECONDS;
+
+	while(max_subseconds > 1)
 	{
-		if (the_state.modebits & M6847_MODEBIT_GM0)
+		c = (subseconds % 10) + '0';
+		if ((c != '0') || s[1])
+			*(--s) = c;
+		subseconds /= 10;
+		max_subseconds /= 10;
+	}
+
+	if (*s == '\0')
+		*(--s) = '0';
+
+	snprintf(return_buffer, sizeof(return_buffer), "%u.%s", t.seconds, s);
+	return return_buffer;
+}
+
+
+
+static int attr_index_from_attribute(UINT8 attr)
+{
+	int result;
+	
+	result = ((attr & (M6847_AG | M6847_AS | M6847_INTEXT | M6847_INV | M6847_CSS)) >> 3)
+		| ((attr & (M6847_GM1 | M6847_GM0)) << 5);
+
+	/* sanity check */
+	assert(result < sizeof(m6847->fontdata) / sizeof(m6847->fontdata[0]));
+	return result;
+}
+
+
+
+static UINT8 attribute_from_attr_index(int attr_index)
+{
+	/* sanity check */
+	assert(attr_index >= 0);
+	assert(attr_index < sizeof(m6847->fontdata) / sizeof(m6847->fontdata[0]));
+
+	return (UINT8) ((attr_index & 0x1F) << 3)
+		| ((attr_index & 0x60) >> 5);
+}
+
+
+
+/*************************************
+ *
+ *  Video modes
+ *
+ *************************************/
+
+static void graphics_color_64(UINT32 *RESTRICT line, const m6847_pixel *RESTRICT video_data)
+{
+	int x;
+	UINT8 byte, attr;
+
+	for (x = 0; x < 16; x++)
+	{
+		byte = video_data[x].data;
+		attr = video_data[x].attr;
+
+		line[ 0] = line[ 1] = line[ 2] = line[ 3] = color(((byte >> 6) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[ 4] = line[ 5] = line[ 6] = line[ 7] = color(((byte >> 4) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[ 8] = line[ 9] = line[10] = line[11] = color(((byte >> 2) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[12] = line[13] = line[14] = line[15] = color(((byte >> 0) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line += 16;
+	}
+}
+
+
+
+static void graphics_color_128(UINT32 *RESTRICT line, const m6847_pixel *RESTRICT video_data)
+{
+	int x;
+	UINT8 byte, attr;
+
+	for (x = 0; x < 32; x++)
+	{
+		byte = video_data[x].data;
+		attr = video_data[x].attr;
+
+		line[ 0] = line[ 1] = color(((byte >> 6) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[ 2] = line[ 3] = color(((byte >> 4) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[ 4] = line[ 5] = color(((byte >> 2) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line[ 6] = line[ 7] = color(((byte >> 0) & 0x03) + (attr & M6847_CSS ? BUFF : GREEN));
+		line += 8;
+	}
+}
+
+
+
+static void graphics_bw_128(UINT32 *RESTRICT line, const m6847_pixel *RESTRICT video_data)
+{
+	int x;
+	UINT8 byte, attr;
+	UINT32 bg, fg;
+
+	for (x = 0; x < 16; x++)
+	{
+		byte = video_data[x].data;
+		attr = video_data[x].attr;
+
+		bg = color(attr & M6847_CSS ? 10 :  8);
+		fg = color(attr & M6847_CSS ? 11 :  9);
+
+		line[ 0] = line[ 1] = ((byte >> 7) & 0x01) ? fg : bg;
+		line[ 2] = line[ 3] = ((byte >> 6) & 0x01) ? fg : bg;
+		line[ 4] = line[ 5] = ((byte >> 5) & 0x01) ? fg : bg;
+		line[ 6] = line[ 7] = ((byte >> 4) & 0x01) ? fg : bg;
+		line[ 8] = line[ 9] = ((byte >> 3) & 0x01) ? fg : bg;
+		line[10] = line[11] = ((byte >> 2) & 0x01) ? fg : bg;
+		line[12] = line[13] = ((byte >> 1) & 0x01) ? fg : bg;
+		line[14] = line[15] = ((byte >> 0) & 0x01) ? fg : bg;
+		line += 16;
+	}
+}
+
+
+
+static void graphics_bw_256(UINT32 *RESTRICT line, const m6847_pixel *RESTRICT video_data)
+{
+	int x;
+	UINT8 byte, attr;
+	UINT32 bg, fg;
+
+	for (x = 0; x < 32; x++)
+	{
+		byte = video_data[x].data;
+		attr = video_data[x].attr;
+
+		bg = color(attr & M6847_CSS ? 10 :  8);
+		fg = color(attr & M6847_CSS ? 11 :  9);
+
+		line[0] = ((byte >> 7) & 0x01) ? fg : bg;
+		line[1] = ((byte >> 6) & 0x01) ? fg : bg;
+		line[2] = ((byte >> 5) & 0x01) ? fg : bg;
+		line[3] = ((byte >> 4) & 0x01) ? fg : bg;
+		line[4] = ((byte >> 3) & 0x01) ? fg : bg;
+		line[5] = ((byte >> 2) & 0x01) ? fg : bg;
+		line[6] = ((byte >> 1) & 0x01) ? fg : bg;
+		line[7] = ((byte >> 0) & 0x01) ? fg : bg;
+		line += 8;
+	}
+}
+
+
+
+static void (*graphics_modes[8])(UINT32 *line, const m6847_pixel *video_data) =
+{
+	graphics_color_64,	graphics_bw_128,
+	graphics_color_128,	graphics_bw_128,
+	graphics_color_128,	graphics_bw_128,
+	graphics_color_128,	graphics_bw_256
+};
+
+
+
+static void text_mode(int scanline, UINT32 *RESTRICT line, const m6847_pixel *RESTRICT video_data)
+{
+	int x;
+	UINT8 byte, attr;
+	int attr_index;
+	UINT32 bg_color, fg_color;
+	UINT8 char_data;
+
+	for (x = 0; x < 32; x++)
+	{
+		byte = video_data[x].data;
+		attr = video_data[x].attr;
+
+		attr_index = attr_index_from_attribute(attr);
+
+		bg_color = color(m6847->colordata[attr_index][(byte & 0x7F) / 16][0]);
+		fg_color = color(m6847->colordata[attr_index][(byte & 0x7F) / 16][1]);
+		char_data = m6847->fontdata[attr_index][byte & 0x7F][scanline % 12];
+
+		line[x*8+0] = (char_data & 0x80) ? fg_color : bg_color;
+		line[x*8+1] = (char_data & 0x40) ? fg_color : bg_color;
+		line[x*8+2] = (char_data & 0x20) ? fg_color : bg_color;
+		line[x*8+3] = (char_data & 0x10) ? fg_color : bg_color;
+		line[x*8+4] = (char_data & 0x08) ? fg_color : bg_color;
+		line[x*8+5] = (char_data & 0x04) ? fg_color : bg_color;
+		line[x*8+6] = (char_data & 0x02) ? fg_color : bg_color;
+		line[x*8+7] = (char_data & 0x01) ? fg_color : bg_color;
+	}
+}
+
+
+
+static void render_scanline(mame_bitmap *bitmap, int scanline)
+{
+	UINT32 border_color;
+	UINT32 *line;
+	UINT8 attrs;
+	int mode, x;
+	const m6847_pixel *video_data;
+
+	/* get the scanline */
+	line = (UINT32 *) bitmap->line[scanline];
+
+	/* choose the border color */
+	border_color = m6847->border[scanline];
+	attrs = m6847->attrs[scanline];
+
+	/* is this a border scanline? */
+	scanline -= m6847->top_border_scanlines;
+	if ((scanline >= 0) && (scanline < m6847->display_scanlines))
+	{
+		video_data = m6847->screendata[scanline];
+
+		/* left border */
+		for (x = 0; x < 32; x++)
+			line[x] = border_color;
+
+		if (attrs & M6847_AG)
 		{
-			/* resolution modes */
-			info->grid_width = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 256 : 128;
-			info->grid_depth = 1;
-
-			artifact_value = get_artifact_value();
-
-			if (artifact_value && (info->grid_width == 256))
-			{
-				/* arifacting */
-				metapalette_pos = -1;
-				info->flags = VIDEOMAP_FLAGS_ARTIFACT;
-				info->metapalette = artifact_metapalette;
-
-				/* figure out which mode we need to use */
-				artifact_mode = (artifact_value >= 2) ? 0 : 1;
-				if (the_state.modebits & M6847_MODEBIT_CSS)
-					artifact_mode += 2;
-
-				/* do we have a dynamic palette */
-				if (intf->setup_dynamic_artifact_palette)
-				{
-					palettebase = intf->setup_dynamic_artifact_palette(artifact_mode, rgb0, rgb1);
-					for (i = 0; i < M6847_ARTIFACT_COLOR_COUNT; i++)
-					{
-						mix_colors(myrgb, &artifactfactors[(i ^ (artifact_mode & 1)) * 3], rgb0, rgb1);
-						palette_set_color(palettebase + i, myrgb[0], myrgb[1], myrgb[2]);
-					}
-				}
-
-				/* set up the arifact metapalette */
-				assert(sizeof(artifactcorrection) == sizeof(artifact_metapalette));
-				for (i = 0; i < (sizeof(artifactcorrection) / sizeof(artifactcorrection[0])); i++)
-					artifact_metapalette[i] = intf->calculate_artifact_color(artifactcorrection[i], artifact_mode);
-			}
-			else
-			{
-				if (the_state.modebits & M6847_MODEBIT_CSS)
-					metapalette_pos = 10;
-				else
-					metapalette_pos = 8;
-			}
+			/* graphics */
+			mode = attrs & (M6847_GM2|M6847_GM1|M6847_GM0);
+			graphics_modes[mode](line + 32, video_data);
 		}
 		else
 		{
-			/* color modes */
-			info->grid_width = (the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 128 : 64;
-			info->grid_depth = 2;
-			if (the_state.modebits & M6847_MODEBIT_CSS)
-				metapalette_pos = 4;
-			else
-				metapalette_pos = 0;
+			/* text/semigraphics */
+			text_mode(scanline, line + 32, video_data);
 		}
-		if (metapalette_pos >= 0)
-			info->metapalette = &metapalette[metapalette_pos];
+
+		/* right border */
+		for (x = 288; x < 320; x++)
+			line[x] = border_color;
+
+		/* special case for artifacting */
+		if ((attrs & (M6847_AG|M6847_GM2|M6847_GM1|M6847_GM0))
+			== (M6847_AG|M6847_GM2|M6847_GM1|M6847_GM0))
+		{
+			apply_artifacts(line + 32);
+		}
 	}
 	else
 	{
-		/* text/semigraphic modes */
-		info->grid_width = 32;
-		info->grid_depth = 8;
-		info->charproc = intf->charproc;
+		/* we are drawing a border */
+		for (x = 0; x < bitmap->width; x++)
+			line[x] = border_color;
 	}
 }
 
-static UINT16 m6847_calculate_artifact_color(UINT16 metacolor, int artifact_mode)
-{
-	UINT16 result, artifact_base;
 
-	switch(metacolor)
+
+static void set_dirty(void)
+{
+	m6847->dirty = TRUE;
+}
+
+
+
+/*************************************
+ *
+ *  Artifacting hack; should be in core
+ *
+ *************************************/
+
+static UINT32 mix_color(double factor, UINT8 c0, UINT8 c1)
+{
+	return (UINT32) (UINT8) ((c0 * (1.0 - factor)) + (c1 * (0.0 + factor)) + 0.5);
+}
+
+
+
+static void apply_artifacts(UINT32 *line)
+{
+	/* Boy this code sucks; this code was adapted from the old M6847
+	 * artifacting implmentation.  The only reason that it didn't look as
+	 * horrible was because the code around it sucked as well.  Now that I
+	 * have cleaned everything up, the ugliness is much more prominent.
+	 *
+	 * Hopefully we will have a generic artifacting algorithm that plugs into
+	 * the MESS/MAME core directly so we can chuck this hack */
+	static const double artifact_colors[14*3] =
 	{
-	case 0:
-		result = 0;
-		break;
-	case 15:
-		result = (artifact_mode & 2) ? 5 : 1;
-		break;
-	default:
-		artifact_base = (sizeof(palette) / (sizeof(palette[0])*3)) + (artifact_mode * M6847_ARTIFACT_COLOR_COUNT);
-		result = artifact_base + metacolor - 1;
-		break;					
+		0.157, 0.000, 0.157, /* [ 1] - dk purple   (reverse  2) */
+		0.000, 0.157, 0.000, /* [ 2] - dk green    (reverse  1) */
+		1.000, 0.824, 1.000, /* [ 3] - lt purple   (reverse  4) */
+		0.824, 1.000, 0.824, /* [ 4] - lt green    (reverse  3) */
+		0.706, 0.236, 0.118, /* [ 5] - dk blue     (reverse  6) */
+		0.000, 0.197, 0.471, /* [ 6] - dk red      (reverse  5) */
+		1.000, 0.550, 0.393, /* [ 7] - lt blue     (reverse  8) */
+		0.275, 0.785, 1.000, /* [ 8] - lt red      (reverse  7) */
+		0.000, 0.500, 1.000, /* [ 9] - red         (reverse 10) */
+		1.000, 0.500, 0.000, /* [10] - blue        (reverse  9) */
+		1.000, 0.942, 0.785, /* [11] - cyan        (reverse 12) */
+		0.393, 0.942, 1.000, /* [12] - yellow      (reverse 11) */
+		0.236, 0.000, 0.000, /* [13] - black-blue  (reverse 14) */
+		0.000, 0.000, 0.236  /* [14] - black-red   (reverse 13) */
+	};
+
+	static const UINT8 artifactcorrection[128] =
+	{
+		0,  0,		 0,	 0,		 0,  6,		 0,	 2,
+		5,  7,		 5,	 7,		 1,  3,		 1, 11,
+		8,  6,		 8, 14,		 8,  9,		 8,	 9,
+		4,  4,		 4, 15,		12, 12,		12, 15,
+
+		5, 13,		 5, 13,		13,  0,		13,	 2,
+		10, 10,		10, 10,		10, 15,		10, 11,
+		3,  1,		 3,	 1,		15,  9,		15,	 9,
+		11, 11,		11, 11,		15, 15,		15, 15,
+
+		14,  0,		14,	 0,		14,  6,		14,	 2,
+		0,  7,		 0,	 7,		 1,  3,		 1, 11,
+		9,  6,		 9, 14,		 9,  9,		 9,	 9,
+		15,  4,		15, 15,		12, 12,		12, 15,
+
+		2, 13,		 2, 13,		 2,  0,		 2,	 2,
+		10, 10,		10, 10,		10, 15,		10, 11,
+		12,  1,		12,	 1,		12,  9,		12,	 9,
+		15, 11,		15, 11,		15, 15,		15, 15
+	};
+
+	UINT32 artifacting, c0, c1;
+	UINT32 colors[16];
+	static UINT32 saved_artifacting, saved_c0, saved_c1;
+	static UINT32 expanded_colors[128];
+	const double *factors;
+	UINT8 val;
+	UINT32 new_line[256];
+	int i;
+
+	/* are we artifacting? */
+	artifacting = readinputportbytag_safe("artifacting", 0x00) & 0x03;
+	if (artifacting == 0x00)
+		return;
+	artifacting &= 0x01;
+
+	/* determine the base artifact colors */
+	c1 = line[-1];
+	for (i = 0; i < 256; i++)
+	{
+		if (line[i] != c1)
+			break;
+	}
+	if (i >= 256)
+		return;	/* if everything is the same color as the border, no need for anything */
+	c0 = line[i];
+
+	/* do we need to update our artifact colors table? */
+	if ((artifacting != saved_artifacting) || (c0 != saved_c0) || (c1 != saved_c1))
+	{
+		saved_artifacting = artifacting;
+		saved_c0 = colors[0] = c0;
+		saved_c1 = colors[15] = c1;
+
+		/* mix the other colors */
+		for (i = 1; i <= 14; i++)
+		{
+			factors = &artifact_colors[((i - 1) ^ artifacting) * 3];
+
+			colors[i] =	(mix_color(factors[0], c0 >> 16, c1 >> 16) << 16)
+					|	(mix_color(factors[1], c0 >>  8, c1 >>  8) <<  8)
+					|	(mix_color(factors[2], c0 >>  0, c1 >>  0) <<  0);
+		}
+		for (i = 0; i < 128; i++)
+			expanded_colors[i] = colors[artifactcorrection[i]];
+	}
+
+	/* artifact the line */
+	for (i = 0; i < 256; i += 2)
+	{
+		val =	((line[i - 2] == c1) ? 0x20 : 0x00)
+			|	((line[i - 1] == c1) ? 0x10 : 0x00)
+			|	((line[i + 0] == c1) ? 0x08 : 0x00)
+			|	((line[i + 1] == c1) ? 0x04 : 0x00)
+			|	((line[i + 2] == c1) ? 0x02 : 0x00)
+			|	((line[i + 3] == c1) ? 0x01 : 0x00);
+
+		new_line[i + 0] = expanded_colors[val * 2 + 0];
+		new_line[i + 1] = expanded_colors[val * 2 + 1];
+	}
+
+	/* and copy the results back */
+	memcpy(line, new_line, sizeof(*line) * 256);
+}
+
+
+
+static void artifacting_changed(void *param, UINT32 val, UINT32 mask)
+{
+	set_dirty();
+}
+
+
+
+INPUT_PORTS_START( m6847_artifacting )
+	PORT_START_TAG("artifacting")
+	PORT_CONFNAME( 0x03, 0x00, "Artifacting" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
+	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
+INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *  Scanline operations
+ *
+ *************************************/
+
+static int get_scanline(void)
+{
+	int result;
+	mame_time duration;
+
+	/* get the time since last field sync */
+	duration = sub_mame_times(mame_timer_get_time(), m6847->frame_begin);
+	assert_always(duration.seconds == 0, "get_scanline(): duration exceeds one second");
+
+	if (duration.subseconds < m6847->vblank_period)
+	{
+		result = -1;	/* vblank */
+	}
+	else
+	{
+		result = (duration.subseconds - m6847->vblank_period)
+			/ m6847->scanline_period;
 	}
 	return result;
 }
 
-static struct internal_m6847_linecallback_interface m6847_linecallback_interface =
+
+
+static void prepare_scanline(int xpos)
 {
-	1,
-	m6847_charproc,
-	m6847_calculate_artifact_color,
-	NULL
-};
+	UINT8 attrs, data, attr;
+	int scanline;
+	int i, border_color;
+	int dirty;
+	const UINT8 *RESTRICT video_ram;
+	m6847_pixel *scanline_data;
 
-static void m6847_line_callback(struct videomap_linecallback_info *info)
-{
-	internal_m6847_line_callback(info, m6847_metapalette, &m6847_linecallback_interface);
-}
-
-static UINT16 internal_m6847_get_border_color_callback(void)
-{
-	UINT16 pen = 0;
-
-	switch(m6847_get_bordercolor()) {
-	case M6847_BORDERCOLOR_BLACK:
-		pen = 0;
-		break;
-	case M6847_BORDERCOLOR_GREEN:
-		pen = 1;
-		break;
-	case M6847_BORDERCOLOR_WHITE:
-		pen = 5;
-		break;
-	case M6847_BORDERCOLOR_ORANGE:
-		pen = 12;
-		break;
-	}
-	return pen;
-}
-
-static struct videomap_interface m6847_videomap_interface =
-{
-	VIDEOMAP_FLAGS_MEMORY8 | VIDEOMAP_FLAGS_BUFFERVIDEO,
-	m6847_frame_callback,
-	m6847_line_callback,
-	internal_m6847_get_border_color_callback
-};
-
-static void hs_set(int val);
-static void hs_set_actual(int val);
-static void fs_set(int val);
-static void fs_set_actual(int val);
-
-int internal_video_start_m6847(const struct m6847_init_params *params, const struct videomap_interface *videointf, int dirtyramsize)
-{
-	struct videomap_config cfg;
-
-	the_state.initparams = *params;
-	the_state.modebits = 0;
-	the_state.videooffset = params->initial_video_offset % params->ramsize;
-	the_state.latched_videooffset = 0;
-	the_state.rowheight = 12;
-	the_state.fs = 1;
-	the_state.hs = 1;
-
-	the_state.hs_timer1 = timer_alloc(hs_set);
-	the_state.hs_timer2 = timer_alloc(hs_set);
-	the_state.hs_timer_actual = timer_alloc(hs_set_actual);
-	the_state.fs_timer = timer_alloc(fs_set);
-	the_state.fs_timer_actual = timer_alloc(fs_set_actual);
-
-	videoram_size = dirtyramsize;
-	if (video_start_generic())
-		return 1;
-
-	cfg.intf = videointf;
-	cfg.videoram = params->ram;
-	cfg.videoram_windowsize = params->ramsize;
-	cfg.dirtybuffer = dirtybuffer;
-	videomap_init(&cfg);
-
-	/* The following code sets up which font to use.			*/
-	switch( params->version )
+	scanline = get_scanline();
+	if ((scanline >= 0) && (scanline < (m6847->top_border_scanlines
+		+ m6847->display_scanlines + m6847->bottom_border_scanlines)))
 	{
-		case M6847_VERSION_ORIGINAL_PAL:
-			fontdata8x12 = pal_square_fontdata8x12;
-			break;
-		case M6847_VERSION_ORIGINAL_NTSC:
-			fontdata8x12 = ntsc_square_fontdata8x12;
-			break;
-		case M6847_VERSION_M6847Y_PAL:
-			fontdata8x12 = pal_square_fontdata8x12;
-			break;
-		case M6847_VERSION_M6847Y_NTSC:
-			fontdata8x12 = ntsc_square_fontdata8x12;
-			break;
-		case M6847_VERSION_M6847T1_PAL:
-			fontdata8x12 = pal_round_fontdata8x12;
-			break;
-		case M6847_VERSION_M6847T1_NTSC:
-			fontdata8x12 = ntsc_round_fontdata8x12;
-			break;
-	}
-	
-	return 0;
-}
+		if (m6847->using_custom)
+		{
+			m6847->custom_prepare_scanline(scanline);
+		}
+		else
+		{
+			/* has the border color changed? */
+			attrs = m6847->get_attributes(0x00);
+			if (attrs != m6847->attrs[scanline])
+			{
+				m6847->dirty = TRUE;
+				m6847->attrs[scanline] = attrs;
 
-int video_start_m6847(const struct m6847_init_params *params)
-{
-	int result;
+				/* choose the border color */
+				if (attrs & M6847_AG)
+					border_color = (attrs & M6847_CSS) ? BUFF : GREEN;
+				else if (m6847->has_lowercase && (attrs & M6847_GM2))
+					border_color = (attrs & M6847_CSS) ? LTORANGE : LTGREEN;
+				else
+					border_color = BLACK;
 
-	result = internal_video_start_m6847(params, &m6847_videomap_interface, MAX_VRAM);
-	if (result)
-		return result;
+				/* need to use palette table directly; border colors are constant */
+				m6847->border[scanline] = palette[border_color];
+			}
 
-	state_save_register_func_postload(schedule_full_refresh);
-	return 0;
-}
+			/* is this a display scanline? */
+			scanline -= m6847->top_border_scanlines;
+			if ((scanline >= 0) && (scanline < m6847->display_scanlines))
+			{
+				video_ram = m6847->get_video_ram(scanline);
+				dirty = m6847->dirty;
+				scanline_data = m6847->screendata[scanline];
 
-/* --------------------------------------------------
- * Timing
- *
- * This M6847 code attempts to emulate the tricky timing of the M6847.  There
- * are two signals in question:  HS (Horizontal Sync) and FS (Field Sync).
- *
- * MAME/MESS timing will call us at vblank time; so all of our timing must be
- * relative to that point.
- *
- * Below are tables that show when each signal changes
- *
- * How to read these tables:
- *     "@ CLK(i) + j"  means "at clock cycle i plus j"
- *
- * HS:  Total Period: 227.5 clock cycles
- *		@ CLK(0) + DHS_F			- falling edge (high to low)
- *		@ CLK(16.5) + DHS_R			- rising edge (low to high)
- *		@ CLK(227.5) + DHS_F		- falling edge (high to low)
- *		...
- *
- * FS:	Total Period 262*227.5 clock cycles
- *		@ CLK(0) + DFS_F			- falling edge (high to low)
- *      @ CLK(32*227.5) + DFS_R		- rising edge (low to high)
- *		@ CLK(262*227.5) + DFS_F	- falling edge (high to low) (262.5 for the M6847Y)
- *
- * Source: Motorola M6847 Manual
- * -------------------------------------------------- */
+				for (i = xpos; i < 32; i++)
+				{
+					data = video_ram[i];
+					attr = m6847->get_attributes(video_ram[i]);
 
-#define DHS_F	TIME_IN_NSEC(550)
-#define DHS_R	TIME_IN_NSEC(740)
-#define DFS_F	TIME_IN_NSEC(520)
-#define DFS_R	TIME_IN_NSEC(600)
-
-/* TO BE RESOLVED:  The M6847 Manual says that HSYNCs occur every 227.5 clock
- * cycles; however every indication with the CoCo 3 seems to imply that HSYNCs
- * happen every 228 clock cycles.  To be honest, I'm not sure what the truth
- * really is... maybe they were different?  (Remember that the CoCo 3 did not
- * actually use the m6847 */
-
-/* The reason we have a delay is because of a very fine point in MAME/MESS's
- * emulation.  In the CoCo, fs/hs are tied to interrupts, and the game "Popcorn"
- * polls the interrupt sync flag (on $ff03 in PIA0), waiting for fs to trigger
- * an interrupt.  In a real CoCo, CPU instructions are executed among different
- * clock cycles, and it is possible for fs to be changed while an instruction is
- * happening.  In MAME/MESS, the change doesn't occur until the instruction is
- * over, and it jumps right to the interrupt handler, which clears the interrupt
- * sync flag.  Thus, the main program never sees the interrupt flag change, and
- * the emulation waits for ever.  Since MAME/MESS will most likely never split
- * instructions up, this delay is an attempt to delay the interrupts and allow
- * the program to see fs change before the interrupt handler is invoked
- */
-/*
-struct callback_info {
-	write8_handler callback;
-	int value;
-};
-
-static void do_invoke(int ci_int)
-{
-	struct callback_info *ci;
-	ci = (struct callback_info *) ci_int;
-	ci->callback(0, ci->value);
-}
-
-static void invoke_callback(write8_handler callback, double delay, int value)
-{
-	static int index_ = 0;
-	static struct callback_info callback_buf[32];
-
-	struct callback_info *ci;
-
-	if (callback) {
-		index_ %= sizeof(callback_buf) / sizeof(callback_buf[0]);
-
-		ci = &callback_buf[index_++];
-		if (!ci)
-			return;
-		ci->callback = callback;
-		ci->value = value;
-		timer_set(delay, (int) ci, do_invoke);
+					if ((data != scanline_data[i].data)	|| (attr != scanline_data[i].attr))
+					{
+						dirty = TRUE;
+						scanline_data[i].data = data;
+						scanline_data[i].attr = attr;
+					}
+				}
+				m6847->dirty = dirty;
+			}
+		}
 	}
 }
+
+
+
+/*************************************
+ *
+ *  Sync callbacks
+ *
+ *************************************/
+
+static void set_horizontal_sync(void)
+{
+	mame_time fire_time = mame_timer_firetime(m6847->hs_fall_timer);
+	int horizontal_sync = compare_mame_times(fire_time, mame_timer_get_time()) > 0;
+	if (m6847->horizontal_sync_callback)
+		m6847->horizontal_sync_callback(horizontal_sync);
+}
+
+static void set_field_sync(void)
+{
+	mame_time fire_time = mame_timer_firetime(m6847->fs_fall_timer);
+	int field_sync = compare_mame_times(fire_time, mame_timer_get_time()) > 0;
+	if (m6847->field_sync_callback)
+		m6847->field_sync_callback(field_sync);
+}
+
+
+
+/*************************************
+ *
+ *  Field sync/Horizontal sync timers
+ *
+ *************************************/
 
 static void hs_fall(int dummy)
 {
-	the_state.hs = 0;
-	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
-
 	if (LOG_HS)
-		logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
+		logerror("hs_fall(): time=%g\n", timer_get_time());
+
+	set_horizontal_sync();
 }
 
 static void hs_rise(int dummy)
 {
-	the_state.hs = 1;
-	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
-
 	if (LOG_HS)
-		logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
+		logerror("hs_rise(): time=%g\n", timer_get_time());
+
+	mame_timer_adjust(m6847->hs_rise_timer,
+		make_mame_time(0, m6847->scanline_period),
+		0, time_never);
+	mame_timer_adjust(m6847->hs_fall_timer,
+		make_mame_time(0, m6847->horizontal_sync_period),
+		0, time_never);
+
+	set_horizontal_sync();
+	prepare_scanline(0);
 }
 
 static void fs_fall(int dummy)
 {
-	the_state.fs = 0;
-	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
-
 	if (LOG_FS)
-		logerror("fs_fall(): fs=0 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
+		logerror("fs_fall(): time=%g scanline=%d\n", timer_get_time(), get_scanline());
+
+	set_field_sync();
 }
 
 static void fs_rise(int dummy)
 {
-	the_state.fs = 1;
-	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
-
 	if (LOG_FS)
-		logerror("fs_rise(): fs=1 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-}
-*/
+		logerror("fs_rise(): time=%g scanline=%d\n", timer_get_time(), get_scanline());
 
-static void hs_set_actual(int val)
-{
-	the_state.initparams.hs_func(0, val);
-}
+	m6847->frame_begin = mame_timer_get_time();
 
-static void hs_set(int val)
-{
-	the_state.hs = val;
-	if (the_state.initparams.hs_func)
-		timer_adjust(the_state.hs_timer_actual, the_state.initparams.callback_delay, val, 0);
+	/* adjust field sync falling edge timer */
+	mame_timer_adjust(m6847->fs_fall_timer,
+		make_mame_time(0, m6847->field_sync_period),
+		0, time_never);
 
-	if (LOG_HS)
-		logerror("hs_set(): hs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
-}
+	/* adjust horizontal sync rising timer */
+	mame_timer_adjust(m6847->hs_rise_timer, time_zero, 0, time_never);
 
-static void fs_set_actual(int val)
-{
-	the_state.initparams.fs_func(0, val);
-}
+	/* this is a hook for the CoCo 3 code to extend this stuff */
+	if (m6847->new_frame_callback)
+		m6847->using_custom = !m6847->new_frame_callback();
 
-static void fs_set(int val)
-{
-	the_state.fs = val;
-	if (the_state.initparams.fs_func)
-		timer_adjust(the_state.fs_timer_actual, the_state.initparams.callback_delay, val, 0);
-
-	if (LOG_FS)
-		logerror("fs_set(): fs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
+	set_field_sync();
 }
 
 
-int internal_m6847_getadjustedscanline(void)
+
+/*************************************
+ *
+ *  Initialization
+ *
+ *************************************/
+
+static subseconds_t double_to_subseconds(double d)
 {
-	int scanline;
-	int horzbeampos;
+	mame_time t;
+	t = double_to_mame_time(d);
+	assert_always(t.seconds == 0, "double_to_subseconds(): period exceeds one second");
+	return t.subseconds;
+}
 
-	scanline = cpu_getscanline();
-	horzbeampos = cpu_gethorzbeampos();
 
-	/* adjust scanline because things seem to behave weird here */
-	if ((horzbeampos + (Machine->drv->screen_width / 4)) < Machine->drv->screen_width)
+
+static const UINT8 *find_char(const m6847_variant *v,
+	UINT8 byte, UINT8 attr, int *fg, int *bg)
+{
+	int ch;
+	size_t offset = 0;
+
+	if (attr & M6847_AS)
 	{
-		if (scanline == 0)
-			scanline = Machine->drv->screen_height-1;
+		/* semigraphics */
+		*bg = BLACK;
+
+		if (!v->has_lowercase && (attr & M6847_INTEXT))
+		{
+			/* semigraphics 6 */
+			ch = (byte & 0x3F) + 0x60;
+			*fg = ((byte >> 5) & 0x03) + ((attr & M6847_CSS) ? BUFF : GREEN);
+		}
 		else
-			scanline--;
-	}
-	return scanline;
-}
-
-void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline)
-{
-	int new_fs;
-
-	if (LOG_INTERRUPT)
-		logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
-
-	/* vsync interrupt */
-	if (rise_scanline > fall_scanline)
-	{
-		if (scanline >= rise_scanline)
-			new_fs = 1;
-		else if (scanline >= fall_scanline)
-			new_fs = 0;
-		else
-			new_fs = 1;
+		{
+			/* semigraphics 4 */
+			ch = (byte & 0x0F) + 0xA0;
+			*fg = ((byte >> 4) & 0x07) + GREEN;
+		}
 	}
 	else
 	{
-		if (scanline >= fall_scanline)
-			new_fs = 0;
-		else if (scanline >= rise_scanline)
-			new_fs = 1;
-		else
-			new_fs = 0;
-	}
+		/* text */
+		ch = (byte & 0x3F) + 0x00;
 
-	if ((new_fs && !the_state.fs) || (!new_fs && the_state.fs))
-		timer_adjust(the_state.fs_timer, DFS_R, new_fs, 0);
-
-	/* hsync interrupt */
-	timer_adjust(the_state.hs_timer1, DHS_F, 0, 0);
-	timer_adjust(the_state.hs_timer2, DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 1, 0);
-}
-
-INTERRUPT_GEN( m6847_vh_interrupt )
-{
-	internal_m6847_vh_interrupt(internal_m6847_getadjustedscanline(), 0, 13+25+192);
-}
-
-/* --------------------------------------------------
- * The meat
- * -------------------------------------------------- */
-
-void m6847_set_ram_size(int ramsize)
-{
-	the_state.initparams.ramsize = ramsize;
-}
-
-int m6847_get_bordercolor(void)
-{
-	int bordercolor;
-
-	if (the_state.modebits & M6847_MODEBIT_AG) {
-		if (the_state.modebits & M6847_MODEBIT_CSS)
-			bordercolor = M6847_BORDERCOLOR_WHITE;
-		else
-			bordercolor = M6847_BORDERCOLOR_GREEN;
-	}
-	else {
-		if (((the_state.initparams.version == M6847_VERSION_M6847T1_PAL) || (the_state.initparams.version == M6847_VERSION_M6847T1_NTSC) )
-				&& ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == M6847_MODEBIT_GM2)) {
-			/* We are on the new VDG; and we have a colored border */
-			if (the_state.modebits & M6847_MODEBIT_CSS)
-				bordercolor = M6847_BORDERCOLOR_ORANGE;
-			else
-				bordercolor = M6847_BORDERCOLOR_GREEN;
-		}
-		else {
-			bordercolor = M6847_BORDERCOLOR_BLACK;
-		}
-	}
-	return bordercolor;
-}
-
-void internal_video_update_m6847(int screen, mame_bitmap *bitmap, const rectangle *cliprect, int *do_skip)
-{
-	static int last_artifact_value = 0;
-	int artifact_value;
-	int mode_with_arifact = M6847_MODEBIT_AG|M6847_MODEBIT_GM2|M6847_MODEBIT_GM1|M6847_MODEBIT_GM0;
-
-	/* this code is needed so we can detect changes in the artifact dip switch */
-	if ((the_state.modebits & mode_with_arifact) == mode_with_arifact)
-	{
-		artifact_value = get_artifact_value();
-		if (artifact_value != last_artifact_value)
+		if (v->has_lowercase)
 		{
-			last_artifact_value = artifact_value;
-			videomap_invalidate_lineinfo();
+			if ((ch < 0x20) && (attr & M6847_GM0) && !(attr & M6847_INV))
+			{
+				/* this is a lowercase character */
+				attr |= M6847_INV;
+				ch += 0x40;
+			}
+
+			if (attr & M6847_GM1)
+				attr ^= M6847_INV;
+		}
+
+		if (attr & M6847_INV)
+		{
+			/* dark foreground, light background */
+			*fg = (attr & M6847_CSS) ? DKORANGE : DKGREEN;
+			*bg = (attr & M6847_CSS) ? LTORANGE : LTGREEN;
+		}
+		else
+		{
+			/* light foreground, dark background */
+			*fg = (attr & M6847_CSS) ? LTORANGE : LTGREEN;
+			*bg = (attr & M6847_CSS) ? DKORANGE : DKGREEN;
+		}
+
+		offset = v->text_offset;
+	}
+
+	return &v->fontdata[ch * 12] + offset;
+}
+
+
+
+static void build_fontdata(const m6847_variant *v)
+{
+	int attr_index, row;
+	int fg, bg;
+	UINT8 byte, attr;
+	const UINT8 *char_data;
+
+	for (attr_index = 0; attr_index < sizeof(m6847->fontdata) / sizeof(m6847->fontdata[0]); attr_index++)
+	{
+		attr = attribute_from_attr_index(attr_index);
+
+		for (byte = 0; byte < 128; byte++)
+		{
+			char_data = find_char(v, byte, attr, &fg, &bg);
+
+			/* specify colors */
+			m6847->colordata[attr_index][byte / 16][0] = bg;
+			m6847->colordata[attr_index][byte / 16][1] = fg;
+
+			for (row = 0; row < 12; row++)
+			{
+				m6847->fontdata[attr_index][byte][row] = char_data[row];
+			}
 		}
 	}
-
-	video_update_videomap(screen, bitmap, cliprect, do_skip);
 }
 
-static VIDEO_UPDATE( m6847 )
-{
-	internal_video_update_m6847(screen, bitmap, cliprect, do_skip);
-}
 
-int m6847_is_t1(int version)
+
+void m6847_init(const m6847_config *cfg)
 {
-	if( version == M6847_VERSION_M6847T1_PAL )
-		return 1;
+	const m6847_variant *v;
+	UINT32 frequency;
+	subseconds_t period, frame_period, cpu0_clock_period = 0;
+	double total_scanlines;
+	int portnum;
+
+	/* identify proper M6847 variant */
+	assert(cfg->type < sizeof(variants) / sizeof(variants[0]));
+	v = &variants[cfg->type];
+
+	/* allocate instance */
+	m6847 = auto_malloc(sizeof(*m6847));
+	memset(m6847, 0, sizeof(*m6847));
+	set_dirty();
+	add_full_refresh_callback(set_dirty);
+
+	/* copy configuration */
+	m6847->get_attributes = cfg->get_attributes;
+	m6847->get_video_ram = cfg->get_video_ram;
+	m6847->horizontal_sync_callback = cfg->horizontal_sync_callback;
+	m6847->field_sync_callback = cfg->field_sync_callback;
+	m6847->new_frame_callback = cfg->new_frame_callback;
+	m6847->custom_prepare_scanline = cfg->custom_prepare_scanline;
+	m6847->has_lowercase = v->has_lowercase;
 	
-	if( version == M6847_VERSION_M6847T1_NTSC )
-		return 1;
-	
-	return 0;
-}
+	/* assert our assumptions */
+	assert((v->scanlines_per_frame * FACTOR_SCANLINES_PER_FRAME)
+		== (UINT32) (v->scanlines_per_frame * FACTOR_SCANLINES_PER_FRAME));
+	assert((v->clocks_per_scanline * FACTOR_CLOCKS_PER_SCANLINE)
+		== (UINT32) (v->clocks_per_scanline * FACTOR_CLOCKS_PER_SCANLINE));
+	assert((v->scanlines_per_frame * v->clocks_per_scanline * GROSS_FACTOR)
+		== (UINT32) (v->scanlines_per_frame * v->clocks_per_scanline * GROSS_FACTOR));
 
-/* --------------------------------------------------
- * Petty accessors
- * -------------------------------------------------- */
-
-void m6847_set_video_offset(int offset)
-{
-	if (LOG_M6847)
-		logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
-
-	offset %= the_state.initparams.ramsize;
-	if (offset != the_state.videooffset)
+	/* choose palette */
+	if (cfg->custom_palette)
 	{
-		the_state.videooffset = offset;
-		videomap_invalidate_frameinfo();
+		m6847->has_custom_palette = 1;
+		m6847->palette = cfg->custom_palette;
 	}
-}
-
-int m6847_get_video_offset(void)
-{
-	return the_state.videooffset;
-}
-
-void m6847_touch_vram(int offset)
-{
-	offset -= the_state.latched_videooffset;
-	offset %= the_state.initparams.ramsize;
-
-	if (offset < videoram_size)
-		dirtybuffer[offset] = 1;
-}
-
-void m6847_set_row_height(int rowheight)
-{
-	if (rowheight != the_state.rowheight) {
-		the_state.rowheight = rowheight;
-		videomap_invalidate_lineinfo();
-	}
-}
-
-void m6847_set_cannonical_row_height(void)
-{
-	static const int graphics_rowheights[] = { 3, 3, 3, 2, 2, 1, 1, 1 };
-	int rowheight;
-
-	if (the_state.modebits & M6847_MODEBIT_AG) {
-		rowheight = graphics_rowheights[the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1|M6847_MODEBIT_GM0)];
-	}
-	else {
-		rowheight = 12;
-	}
-	m6847_set_row_height(rowheight);
-}
-
-void mdrv_m6847(machine_config *machine, int (*video_start_proc)(void), int is_pal)
-{
-	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE)
-	MDRV_SCREEN_SIZE(M6847_SCREEN_WIDTH, M6847_SCREEN_HEIGHT)
-	MDRV_VISIBLE_AREA(0,319,11,250)
-	MDRV_PALETTE_LENGTH(M6847_TOTAL_COLORS)
-	MDRV_PALETTE_INIT(m6847)
-	MDRV_VIDEO_START(proc)
-	MDRV_VIDEO_UPDATE(m6847)
-}
-
- READ8_HANDLER( m6847_ag_r )		{ return (the_state.modebits & M6847_MODEBIT_AG) ? 1 : 0; }
- READ8_HANDLER( m6847_as_r )		{ return (the_state.modebits & M6847_MODEBIT_AS) ? 1 : 0; }
- READ8_HANDLER( m6847_intext_r )	{ return (the_state.modebits & M6847_MODEBIT_INTEXT) ? 1 : 0; }
- READ8_HANDLER( m6847_inv_r )		{ return (the_state.modebits & M6847_MODEBIT_INV) ? 1 : 0; }
- READ8_HANDLER( m6847_css_r )		{ return (the_state.modebits & M6847_MODEBIT_CSS) ? 1 : 0; }
- READ8_HANDLER( m6847_gm2_r )		{ return (the_state.modebits & M6847_MODEBIT_GM2) ? 1 : 0; }
- READ8_HANDLER( m6847_gm1_r )		{ return (the_state.modebits & M6847_MODEBIT_GM1) ? 1 : 0; }
- READ8_HANDLER( m6847_gm0_r )		{ return (the_state.modebits & M6847_MODEBIT_GM0) ? 1 : 0; }
- READ8_HANDLER( m6847_fs_r )		{ return the_state.fs; }
- READ8_HANDLER( m6847_hs_r )		{ return the_state.hs; }
-
-static void write_modebits(int data, int mask, int causesrefresh)
-{
-	int newmodebits;
-
-	if (data)
-		newmodebits = the_state.modebits | mask;
 	else
-		newmodebits = the_state.modebits & ~mask;
-
-	if (newmodebits != the_state.modebits)
 	{
-		the_state.modebits = newmodebits;
-		if (causesrefresh)
-		{
-			videomap_invalidate_lineinfo();
-			videomap_invalidate_border();
-		}
+		m6847->palette = palette;
+	}
+
+	/* allocate timers */
+	m6847->fs_rise_timer = timer_alloc(fs_rise);
+	m6847->fs_fall_timer = timer_alloc(fs_fall);
+	m6847->hs_rise_timer = timer_alloc(hs_rise);
+	m6847->hs_fall_timer = timer_alloc(hs_fall);
+
+	/* setup dimensions */
+	m6847->top_border_scanlines = v->top_border_scanlines;
+	m6847->display_scanlines = v->display_scanlines;
+	m6847->bottom_border_scanlines = v->bottom_border_scanlines;
+
+	/* compute frequency and period */
+	frequency = v->frames_per_second
+		* ((UINT32) (v->scanlines_per_frame * FACTOR_SCANLINES_PER_FRAME))
+		* ((UINT32) (v->clocks_per_scanline * FACTOR_CLOCKS_PER_SCANLINE));
+	period = MAX_SUBSECONDS / frequency;
+
+	/* choose CPU clock, if specified */
+	if (cfg->cpu0_timing_factor > 0)
+	{
+		cpu0_clock_period = period * cfg->cpu0_timing_factor * GROSS_FACTOR;
+		cpunum_set_clock_period(0, cpu0_clock_period);
+	}
+
+	/* calculate timing */
+	total_scanlines = v->vblank_scanlines
+		+ v->top_border_scanlines
+		+ v->display_scanlines
+		+ v->bottom_border_scanlines
+		+ v->vretrace_scanlines;
+	m6847->clock_period = period * GROSS_FACTOR;
+	m6847->scanline_period = period * (UINT32) (v->clocks_per_scanline * GROSS_FACTOR);
+	m6847->field_sync_period = period * (UINT32) (v->clocks_per_scanline * v->field_sync_scanlines * GROSS_FACTOR);
+	m6847->horizontal_sync_period = m6847->scanline_period / 100;
+	m6847->vblank_period = period * (UINT32) (v->clocks_per_scanline * v->vblank_scanlines * GROSS_FACTOR);
+
+	/* setup timing */
+	frame_period = period *
+		(UINT32) (v->clocks_per_scanline * total_scanlines * GROSS_FACTOR);
+	mame_timer_adjust(m6847->fs_rise_timer, time_zero, 0, make_mame_time(0, frame_period));
+
+	/* setup save states */
+	state_save_register_item("m6847", 0, m6847->frame_begin.seconds);
+	state_save_register_item("m6847", 0, m6847->frame_begin.subseconds);
+	state_save_register_func_postload(set_field_sync);
+	state_save_register_func_postload(set_horizontal_sync);
+	state_save_register_func_postload(set_dirty);
+
+	/* build font */
+	build_fontdata(v);
+
+	/* artifact callbacks */
+	portnum = port_tag_to_index("artifacting");
+	if (portnum >= 0)
+		input_port_set_changed_callback(portnum, ~0, artifacting_changed, NULL);
+
+	/* dump stats */
+	if (LOG_STATS)
+	{
+		logerror("m6847_init():\n");
+		logerror("\tclock:      %30s sec\n", mame_time_string(make_mame_time(0, period * GROSS_FACTOR)));
+		if (cpu0_clock_period > 0)
+			logerror("\tCPU0 clock: %30s sec\n", mame_time_string(make_mame_time(0, cpu0_clock_period)));
+		logerror("\tscanline:   %30s sec\n", mame_time_string(make_mame_time(0, m6847->scanline_period)));
+		logerror("\tfield sync: %30s sec\n", mame_time_string(make_mame_time(0, m6847->field_sync_period)));
+		logerror("\thorz sync:  %30s sec\n", mame_time_string(make_mame_time(0, m6847->horizontal_sync_period)));
+		logerror("\tvblank:     %30s sec\n", mame_time_string(make_mame_time(0, m6847->vblank_period)));
+		logerror("\tframe:      %30s sec\n", mame_time_string(make_mame_time(0, frame_period)));
+		logerror("\n");
 	}
 }
 
-WRITE8_HANDLER( m6847_ag_w )		{ write_modebits(data, M6847_MODEBIT_AG, 1); }
-WRITE8_HANDLER( m6847_as_w )		{ write_modebits(data, M6847_MODEBIT_AS, 0); }
-WRITE8_HANDLER( m6847_intext_w )	{ write_modebits(data, M6847_MODEBIT_INTEXT, 0); }
-WRITE8_HANDLER( m6847_inv_w )	{ write_modebits(data, M6847_MODEBIT_INV, 0); }
-WRITE8_HANDLER( m6847_css_w )	{ write_modebits(data, M6847_MODEBIT_CSS, 1); }
-WRITE8_HANDLER( m6847_gm2_w )	{ write_modebits(data, M6847_MODEBIT_GM2, 1); }
-WRITE8_HANDLER( m6847_gm1_w )	{ write_modebits(data, M6847_MODEBIT_GM1, 1); }
-WRITE8_HANDLER( m6847_gm0_w )	{ write_modebits(data, M6847_MODEBIT_GM0, 1); }
+
+
+VIDEO_UPDATE(m6847)
+{
+	int row, i;
+
+	/* if we have a custom palette, check to see if it has changed */
+	if (!m6847->dirty && m6847->has_custom_palette)
+	{
+		for (i = 0; i < 16; i++)
+		{
+			if (m6847->palette[i] != m6847->saved_palette[i])
+			{
+				m6847->dirty = TRUE;
+				break;
+			}
+		}
+	}
+
+	if (m6847->dirty)
+	{
+		/* this frame is dirty; render it */
+		m6847->dirty = FALSE;
+
+		/* copy palette if we have a custom palete */
+		if (m6847->has_custom_palette)
+		{
+			for (i = 0; i < 16; i++)
+				m6847->saved_palette[i] = m6847->palette[i];
+		}
+
+		/* the video RAM has been dirtied; need to draw */
+		for (row = cliprect->min_y; row <= cliprect->max_y; row++)
+			render_scanline(bitmap, row);
+	}
+	else
+	{
+		/* skip this frame */
+		*do_skip = TRUE;
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Timing calculations
+ *
+ *************************************/
+
+static UINT64 divide_mame_time(mame_time dividend, mame_time divisor)
+{
+	/* TODO: it should not be necessary to use floating point here */
+	double dividend_dbl = mame_time_to_double(dividend);
+	double divisor_dbl = mame_time_to_double(divisor);
+	return (UINT64) (dividend_dbl / divisor_dbl);
+}
+
+
+
+static mame_time multiply_mame_time(mame_time time, UINT64 factor)
+{
+	/* TODO: it should not be necessary to use floating point here */
+	double d = mame_time_to_double(time);
+	d *= factor;
+	return double_to_mame_time(d);
+}
+
+
+
+static mame_time interval(m6847_timing_type timing)
+{
+	mame_time result;
+
+	switch(timing)
+	{
+		case M6847_CLOCK:
+			result = make_mame_time(0, m6847->clock_period);
+			break;
+		case M6847_HSYNC:
+			result = make_mame_time(0, m6847->scanline_period);
+			break;
+		default:
+			fatalerror("invalid timing type");
+			break;
+	}
+	return result;
+}
+
+
+
+UINT64 m6847_time(m6847_timing_type timing)
+{
+	mame_time current_time = mame_timer_get_time();
+	mame_time divisor = interval(timing);
+	return divide_mame_time(current_time, divisor);
+}
+
+
+
+mame_time m6847_time_until(m6847_timing_type timing, UINT64 target_time)
+{
+	mame_time target_mame_time, current_time;
+	target_mame_time = multiply_mame_time(interval(timing), target_time);
+	current_time = mame_timer_get_time();
+
+	if (compare_mame_times(target_mame_time, current_time) < 0)
+		fatalerror("m6847_time_until(): cannot target past times");
+
+	return sub_mame_times(target_mame_time, current_time);
+}
+
+
+
+mame_time m6847_scanline_time(int scanline)
+{
+	return make_mame_time(0, m6847->scanline_period *
+			(13 /* FIXME */ + scanline));
+}
+
+
+
+/*************************************
+ *
+ *  Hacks
+ *
+ *************************************/
+
+void m6847_set_dirty(void) { set_dirty(); }
+int m6847_get_scanline(void) { return get_scanline(); }

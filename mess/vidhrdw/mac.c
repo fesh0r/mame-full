@@ -11,7 +11,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "videomap.h"
 #include "includes/mac.h"
 
 static int screen_buffer;

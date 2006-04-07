@@ -9,26 +9,36 @@ atom.c
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"
 
-static void atom_charproc(UINT8 c)
+static ATTR_CONST UINT8 atom_get_attributes(UINT8 c)
 {
-	m6847_inv_w(0,		(c & 0x80));
-	m6847_as_w(0,		(c & 0x40));
-	m6847_intext_w(0,	(c & 0x40));
+	extern UINT8 atom_8255_porta;
+	extern UINT8 atom_8255_portc;
+	UINT8 result = 0x00;
+	if (c & 0x40)				result |= M6847_AS | M6847_INTEXT;
+	if (c & 0x80)				result |= M6847_INV;
+	if (atom_8255_porta & 0x80)	result |= M6847_GM2;
+	if (atom_8255_porta & 0x40)	result |= M6847_GM1;
+	if (atom_8255_porta & 0x20)	result |= M6847_GM0;
+	if (atom_8255_porta & 0x10)	result |= M6847_AG;
+	if (atom_8255_portc & 0x08)	result |= M6847_CSS;
+	return result;
+}
+
+static const UINT8 *atom_get_video_ram(int scanline)
+{
+	return videoram + (scanline / 12) * 0x20;
 }
 
 VIDEO_START( atom )
 {
-	struct m6847_init_params p;
+	m6847_config cfg;
 
-	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_ORIGINAL_PAL;
-	p.ram = memory_region(REGION_CPU1) + 0x8000;
-	p.ramsize = 0x10000;
-	p.charproc = atom_charproc;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.type = M6847_VERSION_ORIGINAL_PAL;
+	cfg.get_attributes = atom_get_attributes;
+	cfg.get_video_ram = atom_get_video_ram;
+	m6847_init(&cfg);
 
-	if (video_start_m6847(&p))
-		return 1;
-
-	return (0);
+	return 0;
 }
 

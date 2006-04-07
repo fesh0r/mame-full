@@ -128,6 +128,9 @@ int skip_this_frame(void);
 /* return current performance data */
 const performance_info *mame_get_performance_info(void);
 
+/* request callback on full refresh */
+void add_full_refresh_callback(void (*callback)(void));
+
 /*
   Save a screen shot of the game display. It is suggested to use the core
   function save_screen_snapshot() or save_screen_snapshot_as(), so the format

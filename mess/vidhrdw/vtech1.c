@@ -32,34 +32,34 @@ Video hardware:
 #include "includes/vtech1.h"
 #include "vidhrdw/m6847.h"
 
-/*
-bit 3 of cassette/speaker/vdp control latch defines if the mode is text or
-graphics
-*/
-
-static void vtech1_charproc(UINT8 c)
+static ATTR_CONST UINT8 vtech1_get_attributes(UINT8 c)
 {
-	/* bit 7 defines if semigraphics/text used */
-	/* bit 6 defines if chars should be inverted */
-
-	m6847_inv_w(0,      (c & 0x40));
-	m6847_as_w(0,		(c & 0x80));
-	/* it appears this is fixed */
-	m6847_intext_w(0,	0);
+	UINT8 result = 0x00;
+	if (c & 0x40)				result |= M6847_INV;
+	if (c & 0x80)				result |= M6847_AS;
+	if (vtech1_latch & 0x10)	result |= M6847_CSS;
+	if (vtech1_latch & 0x08)	result |= M6847_AG | M6847_GM1;
+	return result;
 }
+
+
+
+static const UINT8 *vtech1_get_video_ram(int scanline)
+{
+	return videoram + (scanline / (vtech1_latch & 0x08 ? 3 : 12)) * 0x20;
+}
+
+
 
 VIDEO_START( vtech1 )
 {
-	struct m6847_init_params p;
+	m6847_config cfg;
 
-	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_ORIGINAL_PAL;
-	p.ram = videoram;
-	p.ramsize = videoram_size;
-	p.charproc = vtech1_charproc;
-
-	if (video_start_m6847(&p))
-		return 1;
-
-	return (0);
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.type = M6847_VERSION_ORIGINAL_PAL;
+	cfg.get_attributes = vtech1_get_attributes;
+	cfg.get_video_ram = vtech1_get_video_ram;
+	m6847_init(&cfg);
+	return 0;
 }
+

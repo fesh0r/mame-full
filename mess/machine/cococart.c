@@ -267,7 +267,7 @@ static void set_dragon_dskreg(int data)
 		break;
 	}
 
-	if( (readinputport(13) & 0x03) == 0 )
+	if( readinputportbytag("real_time_clock") == 0 )
 	{
 		/* This is the real time clock in Disto's many products */
 
@@ -320,7 +320,7 @@ WRITE8_HANDLER(coco_floppy_w)
 		break;
 	};
 
-	if( (readinputport(13) & 0x03) == 0 )
+	if( readinputportbytag("real_time_clock") == 0 )
 	{
 		/* This is the real time clock in Disto's many products */
 

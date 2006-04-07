@@ -120,8 +120,8 @@ static ADDRESS_MAP_START(laser110_mem, ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
     AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
-    AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
-    AM_RANGE(0x7800, 0x7fff) AM_RAM	/* 2KB user ram */
+    AM_RANGE(0x7000, 0x77ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
+    AM_RANGE(0x7800, 0x7fff) AM_RAM /* 2KB user ram */
     AM_RANGE(0x8000, 0x87ff) AM_NOP
 //  AM_RANGE(0x8800, 0xc7ff) AM_RAM	/* 16KB/64KB memory expansion */
 //  AM_RANGE(0xc800, 0xffff) AM_NOP	/* dynamically mapped */
@@ -355,15 +355,17 @@ static MACHINE_DRIVER_START(laser110)
     MDRV_CPU_PROGRAM_MAP(laser110_mem, 0)
     MDRV_CPU_IO_MAP(vtech1_io, 0)
     MDRV_CPU_VBLANK_INT(vtech1_interrupt,1)
-    MDRV_FRAMES_PER_SECOND(50)
-    MDRV_VBLANK_DURATION(0)
+	MDRV_FRAMES_PER_SECOND(M6847_PAL_FRAMES_PER_SECOND)
     MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_START(laser110)
 
     /* video hardware */
-    MDRV_M6847_PAL(vtech1)
-    MDRV_PALETTE_INIT(monochrome)
+	MDRV_VIDEO_START(vtech1)
+	MDRV_VIDEO_UPDATE(m6847)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(320, 25+192+26)
+	MDRV_VISIBLE_AREA(0, 319, 1, 239)
 
     /* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

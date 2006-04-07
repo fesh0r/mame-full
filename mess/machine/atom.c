@@ -26,9 +26,9 @@
 #include "devices/printer.h"
 #include "sound/speaker.h"
 
-static UINT8	atom_8255_porta;
-static UINT8	atom_8255_portb;
-static UINT8	atom_8255_portc;
+UINT8 atom_8255_porta;
+UINT8 atom_8255_portb;
+UINT8 atom_8255_portc;
 
 /* printer data written */
 static char atom_printer_data = 0x07f;
@@ -402,32 +402,18 @@ DEVICE_LOAD( atom_floppy )
 
 WRITE8_HANDLER ( atom_8255_porta_w )
 {
-	if ((data & 0xf0) != (atom_8255_porta & 0xf0))
-	{
-		m6847_gm2_w(0,	data & 0x80);
-		m6847_gm1_w(0,	data & 0x40);
-		m6847_gm0_w(0,	data & 0x20);
-		m6847_ag_w(0,	data & 0x10);
-		m6847_set_cannonical_row_height();
-		//schedule_full_refresh();
-	}
 	atom_8255_porta = data;
-/*	logerror("8255: Write port a, %02x\n", data); */
 }
 
 WRITE8_HANDLER ( atom_8255_portb_w )
 {
 	atom_8255_portb = data;
-/*	logerror("8255: Write port b, %02x\n", data); */
 }
 
 WRITE8_HANDLER (atom_8255_portc_w)
 {
 	atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);
-
-	m6847_css_w(0,(data & 0x08));
-/*	logerror("8255: Write port c, %02x\n", data); */
 }
 
 

@@ -7,62 +7,48 @@
 #include "vidhrdw/m6847.h"
 #include "includes/apf.h"
 
-unsigned char *apf_video_ram;
+UINT8 *apf_video_ram;
+UINT8 apf_m6847_attr;
 
-static void apf_charproc(UINT8 c)
+static ATTR_CONST UINT8 apf_get_attributes(UINT8 c)
 {
 	/* this seems to be the same so far, as it gives the same result as vapf */
-	m6847_inv_w(0,		(c & 0x040));
-	m6847_as_w(0,		(c & 0x080));	
+	UINT8 result = apf_m6847_attr;
+	if (c & 0x40)	result |= M6847_INV;
+	if (c & 0x80)	result |= M6847_AS;
+	return result;
 }
 
 
 
-READ8_HANDLER(apf_video_r)
+static void apf_vsync_int(int line)
 {
-	return apf_video_ram[offset];
-}
-
-WRITE8_HANDLER(apf_video_w)
-{
-	apf_video_ram[offset] = data;
-	m6847_touch_vram(offset);
-	
-	schedule_full_refresh();
-}
-
-extern unsigned int apf_ints;
-
-static WRITE8_HANDLER(apf_vsync_int)
-{
-	if (data!=0)
-	{
-		apf_ints|=(1<<4);
-	}
+	extern unsigned int apf_ints;
+	if (line)
+		apf_ints |= 0x10;
 	else
-	{
-		apf_ints&=~(1<<4);
-	}
-
+		apf_ints &= ~0x10;
 	apf_update_ints();
 }
 
-VIDEO_START( apf )
+
+
+static const UINT8 *apf_get_video_ram(int scanline)
 {
-	struct m6847_init_params p;
+	return &apf_video_ram[(scanline / 12) * 0x20 + 0x200];
+}
 
-	/* allocate video memory ram */
-	apf_video_ram = (unsigned char *)auto_malloc(0x0400);
 
-	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_ORIGINAL_NTSC;
-	p.ram = apf_video_ram+0x0200;
-	p.ramsize = 0x0400;
-	p.charproc = apf_charproc;
-	p.fs_func = apf_vsync_int;
 
-	if (video_start_m6847(&p))
-		return 1;
+VIDEO_START(apf)
+{
+	m6847_config cfg;
 
-	return (0);
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.type = M6847_VERSION_ORIGINAL_NTSC;
+	cfg.field_sync_callback = apf_vsync_int;
+	cfg.get_attributes = apf_get_attributes;
+	cfg.get_video_ram = apf_get_video_ram;
+	m6847_init(&cfg);
+	return 0;
 }

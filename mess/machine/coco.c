@@ -79,10 +79,11 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 
+UINT8 coco3_gimereg[16];
+
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
 static UINT32 coco3_mmu[16];
-static UINT8 coco3_gimereg[8];
 static int coco3_interupt_line;
 static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
@@ -121,6 +122,7 @@ static void d_sam_set_memorysize(int val);
 static void d_sam_set_maptype(int val);
 static void dragon64_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
+static const UINT8 *coco3_sam_get_rambase(void);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
 static void coco_machine_stop(void);
@@ -160,19 +162,14 @@ static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after re
  * enough that they might get in the way.
  */
 #define LOG_PAK			0	/* [Sparse]   Logging on PAK trailers */
-#define LOG_INT_MASKING	0	/* [Sparse]   Logging on changing GIME interrupt masks */
-#define LOG_CASSETTE	0	/* [Sparse]   Logging when cassette motor changes state */
-#define LOG_TIMER_SET	0	/* [Sparse]   Logging when setting the timer */
-#define LOG_INT_TMR		0	/* [Frequent] Logging when timer interrupt is invoked */
-#define LOG_FLOPPY		0	/* [Frequent] Set when floppy interrupts occur */
+#define LOG_INT_MASKING	1	/* [Sparse]   Logging on changing GIME interrupt masks */
 #define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
 #define LOG_TIMER       0
-#define LOG_DEC_TIMER	0
 #define LOG_IRQ_RECALC	0
-#define LOG_D64MEM		0
-#define LOG_VBORD		0
+
+#define GIME_TYPE_1987	0
 
 static void coco3_timer_hblank(void);
 static int count_bank(void);
@@ -329,8 +326,8 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 
 static const sam6883_interface coco_sam_intf =
 {
-	m6847_set_row_height,
-	m6847_set_video_offset,
+	SAM6883_ORIGINAL,
+	NULL,
 	d_sam_set_pageonemode,
 	d_sam_set_mpurate,
 	d_sam_set_memorysize,
@@ -339,8 +336,8 @@ static const sam6883_interface coco_sam_intf =
 
 static const sam6883_interface coco3_sam_intf =
 {
-	NULL,
-	m6847_set_video_offset,
+	SAM6883_GIME,
+	coco3_sam_get_rambase,
 	NULL,
 	d_sam_set_mpurate,
 	NULL,
@@ -349,8 +346,8 @@ static const sam6883_interface coco3_sam_intf =
 
 static const sam6883_interface dragon64_sam_intf =
 {
-	m6847_set_row_height,
-	m6847_set_video_offset,
+	SAM6883_ORIGINAL,
+	NULL,
 	d_sam_set_pageonemode,
 	d_sam_set_mpurate,
 	d_sam_set_memorysize,
@@ -452,7 +449,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	 * access that bit or or whether it is something else.  So that is why
 	 * I am specifying 0x7fff instead of 0xffff here
 	 */
-	sam_setstate(trailer->sam, 0x7fff);
+	sam_set_state(trailer->sam, 0x7fff);
 }
 
 static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index, int pakbase_index)
@@ -688,7 +685,8 @@ DEVICE_UNLOAD(coco3_rom)
   CoCo 3 emulator did not handle this properly.
 ***************************************************************************/
 
-enum {
+enum
+{
 	COCO3_INT_TMR	= 0x20,		/* Timer */
 	COCO3_INT_HBORD	= 0x10,		/* Horizontal border sync */
 	COCO3_INT_VBORD	= 0x08,		/* Vertical border sync */
@@ -836,51 +834,31 @@ static void coco3_raise_interrupt(int mask, int state)
 	}
 }
 
-WRITE8_HANDLER( coco_m6847_hs_w )
+
+
+void coco3_horizontal_sync_callback(int data)
 {
 	pia_0_ca1_w(0, data);
+	coco3_raise_interrupt(COCO3_INT_HBORD, data);
 }
 
-WRITE8_HANDLER( coco_m6847_fs_w )
+
+
+void coco3_field_sync_callback(int data)
 {
 	pia_0_cb1_w(0, data);
 }
 
-WRITE8_HANDLER( coco3_m6847_hs_w )
+
+
+void coco3_gime_field_sync_callback(void)
 {
-	if (data)
-		coco3_timer_hblank();
-	pia_0_ca1_w(0, coco3_vidvars.hs_pia_flip ? !data : data);
-	coco3_raise_interrupt(COCO3_INT_HBORD, coco3_vidvars.hs_gime_flip ? !data : data);
-}
-
-INTERRUPT_GEN( coco3_vh_interrupt )
-{
-	int border_top, body_scanlines;
-	int scanline;
-
-	body_scanlines = coco3_calculate_rows(&border_top, NULL);
-
-	scanline = internal_m6847_getadjustedscanline();
-
-	if (scanline == 0)
-		coco3_raise_interrupt(COCO3_INT_VBORD, CLEAR_LINE);
-	else if (scanline >= border_top+body_scanlines)
-		coco3_raise_interrupt(COCO3_INT_VBORD, ASSERT_LINE);
-
-	internal_m6847_vh_interrupt(scanline, coco3_vidvars.rise_scanline, coco3_vidvars.fall_scanline);
+	/* the CoCo 3 VBORD interrupt triggers right after the display */
+	coco3_raise_interrupt(COCO3_INT_VBORD, 1);
+	coco3_raise_interrupt(COCO3_INT_VBORD, 0);
 }
 
 
-
-WRITE8_HANDLER( coco3_m6847_fs_w )
-{
-	if (LOG_VBORD)
-		logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, cpu_getscanline());
-
-	pia_0_cb1_w(0, coco3_vidvars.fs_pia_flip ? !data : data);
-	coco3_raise_interrupt(COCO3_INT_VBORD, coco3_vidvars.fs_gime_flip ? !data : data);
-}
 
 /***************************************************************************
   Halt line
@@ -922,12 +900,21 @@ static double read_joystick(int joyport)
 	return readinputport(joyport) / 255.0;
 }
 
-#define JOYSTICKMODE_NORMAL			0x00
-#define JOYSTICKMODE_HIRES			0x10
-#define JOYSTICKMODE_HIRES_CC3MAX	0x30
-#define JOYSTICKMODE_RAT			0x20
 
-#define joystick_mode()	(readinputport(12) & 0x30)
+typedef enum
+{
+	JOYSTICKMODE_NORMAL			= 0x00,
+	JOYSTICKMODE_HIRES			= 0x10,
+	JOYSTICKMODE_HIRES_CC3MAX	= 0x30,
+	JOYSTICKMODE_RAT			= 0x20
+} joystick_mode_t;
+
+static joystick_mode_t joystick_mode(void)
+{
+	return (joystick_mode_t) (int) readinputportbytag("joystick_mode");
+}
+
+
 
 /***************************************************************************
   Hires Joystick
@@ -1346,14 +1333,6 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 
 static WRITE8_HANDLER( d_pia1_pb_w )
 {
-	m6847_ag_w(0,		data & 0x80);
-	m6847_gm2_w(0,		data & 0x40);
-	m6847_gm1_w(0,		data & 0x20);
-	m6847_gm0_w(0,		data & 0x10);
-	m6847_intext_w(0,	data & 0x10);
-	m6847_css_w(0,		data & 0x08);
-	set_vh_global_attribute(NULL, 0);
-
 	/* PB1 will drive the sound output.  This is a rarely
 	 * used single bit sound mode. It is always connected thus
 	 * cannot be disabled.
@@ -1378,7 +1357,7 @@ static WRITE8_HANDLER( dragon64_pia1_pb_w )
 	/* to control the paging of the 32k and 64k basic roms */
 	/* Otherwise it set as an input, with an internal pull-up so it should */
 	/* always be high (enabling 32k basic rom) */
-	if(pia_get_ddr_b(1) & 0x04)
+	if (pia_get_ddr_b(1) & 0x04)
 	{
 		dragon_page_rom(data & 0x04);
 	}	
@@ -1526,11 +1505,14 @@ WRITE8_HANDLER(wd2797_w)
 	};
 }
 
+
+
 static WRITE8_HANDLER( coco3_pia1_pb_w )
 {
 	d_pia1_pb_w(0, data);
-	m6847_set_cannonical_row_height();
 }
+
+
 
 static WRITE8_HANDLER ( d_pia1_ca2_w )
 {
@@ -1587,13 +1569,6 @@ static READ8_HANDLER ( d_pia1_pb_r_coco2 )
 
 
 
-READ8_HANDLER(dragon_alpha_mapped_irq_r)
-{
-	return dragon_rom_bank[0x3ff0 + offset];
-}
-
-
-
 /***************************************************************************
   Misc
 ***************************************************************************/
@@ -1624,6 +1599,13 @@ static void d_sam_set_mpurate(int val)
 	 */
     cpunum_set_clockscale(0, val ? 2 : 1);
 }
+READ8_HANDLER(dragon_alpha_mapped_irq_r)
+{
+	return dragon_rom_bank[0x3ff0 + offset];
+}
+
+
+
 
 static void d_sam_set_pageonemode(int val)
 {
@@ -1660,9 +1642,6 @@ static void d_sam_set_memorysize(int val)
 	 * TODO:  This should affect _all_ memory accesses, not just video ram
 	 * TODO:  Verify that the CoCo 3 ignored this
 	 */
-
-	static int vram_sizes[] = { 0x1000, 0x4000, 0x10000, 0x10000 };
-	m6847_set_ram_size(vram_sizes[val % 4]);
 }
 
 
@@ -1687,189 +1666,72 @@ static void d_sam_set_memorysize(int val)
   FAQ agrees with this
 ***************************************************************************/
 
-static double coco3_timer_counterbase;
-static mame_timer *coco3_timer_counter;
-static mame_timer *coco3_timer_fallingedge;
-static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
-static int coco3_timer_value;
-static int coco3_timer_base;
+static mame_timer *coco3_gime_timer;
 
-static void coco3_timer_cannonicalize(int newvalue);
-static void coco3_timer_fallingedge_handler(int dummy);
-
-static void coco3_timer_init(void)
+static void coco3_timer_reset(void)
 {
-	coco3_timer_counter = timer_alloc(coco3_timer_cannonicalize);
-	coco3_timer_fallingedge = timer_alloc(coco3_timer_fallingedge_handler);
-	coco3_timer_interval = 0;
-	coco3_timer_base = 0;
-	coco3_timer_value = 0;
-	coco3_timer_counterbase = -1.0;
-}
+	/* reset the timer; take the value stored in $FF94-5 and start the timer ticking */
+	UINT64 current_time;
+	UINT16 timer_value;
+	m6847_timing_type timing;
+	mame_time target_time;
 
-static int coco3_timer_actualvalue(int specified)
-{
-	/* This resets the timer back to the original value
-	 *
-	 * JK tells me that when the timer resets, it gets reset to a value that
-	 * is 2 (with the 1986 GIME) above or 1 (with the 1987 GIME) above the
-	 * value written into the timer.  coco3_timer_base keeps track of the value
-	 * placed into the variable, so we increment that here
-	 *
-	 * For now, we are emulating the 1986 GIME
-	 */
-	return specified ? specified + 2 : 0;
-}
+	/* value is from 0-4095 */
+	timer_value = ((coco3_gimereg[4] & 0x0F) * 0x100) | coco3_gimereg[5];
 
-static void coco3_timer_fallingedge_handler(int dummy)
-{
-	coco3_raise_interrupt(COCO3_INT_TMR, 0);
-}
-
-static void coco3_timer_newvalue(void)
-{
-	if (coco3_timer_value == 0)
+	if (timer_value > 0)
 	{
-		if (LOG_INT_TMR)
-			logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", cpu_getscanline(), timer_get_time());
+		/* depending on the GIME type, cannonicalize the value */
+		if (GIME_TYPE_1987)
+			timer_value += 1;	/* the 1987 GIME reset to the value plus one */
+		else
+			timer_value += 2;	/* the 1986 GIME reset to the value plus two */
 
-		coco3_raise_interrupt(COCO3_INT_TMR, 1);
-		timer_adjust(coco3_timer_fallingedge, coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_CMPCARRIER*4*57, 0, 0);
+		/* choose which timing clock source */
+		timing = (coco3_gimereg[1] & 0x20) ? M6847_CLOCK : M6847_HSYNC;
 
-		/* Every time the timer hit zero, the video hardware would do a blink */
-		coco3_vh_blink();
+		/* determine the current time */
+		current_time = m6847_time(timing);
 
-		/* This resets the timer back to the original value
-		 *
-		 * JK tells me that when the timer resets, it gets reset to a value that
-		 * is 2 (with the 1986 GIME) above or 1 (with the 1987 GIME) above the
-		 * value written into the timer.  coco3_timer_base keeps track of the value
-		 * placed into the variable, so we increment that here
-		 *
-		 * For now, we are emulating the 1986 GIME
-		 */
-		coco3_timer_value = coco3_timer_actualvalue(coco3_timer_base);
-	}
-}
-
-static void coco3_timer_cannonicalize(int newvalue)
-{
-	int elapsed;
-	double current_time;
-	double duration;
-
-	current_time = timer_get_time();
-
-	if (LOG_TIMER)
-		logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
-
-	if (coco3_timer_counterbase >= 0)
-	{
-		/* Calculate how many transitions elapsed */
-		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);
-		assert(elapsed >= 0);
-
+		/* calculate the time */
+		target_time = m6847_time_until(timing, current_time + timer_value);
 		if (LOG_TIMER)
-			logerror("coco3_timer_cannonicalize(): Recalculating; current_time=%g base=%g elapsed=%i\n", current_time, coco3_timer_counterbase, elapsed);
+			logerror("coco3_reset_timer(): target_time=%g\n", mame_time_to_double(target_time));
 
-		if (elapsed) {
-			coco3_timer_value -= elapsed;
-
-			/* HACKHACK - I don't know why I have to do this */
-			if (coco3_timer_value < 0)
-				coco3_timer_value = 0;
-
-			coco3_timer_newvalue();
-		}
-	}
-
-	/* non-negative values of newvalue set the timer value; negative values simply cannonicalize */
-	if (newvalue >= 0)
-	{
-		if (LOG_TIMER)
-			logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
-
-		coco3_timer_value = newvalue;
-	}
-
-	if (coco3_timer_interval && coco3_timer_value)
-	{
-		coco3_timer_counterbase = floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
-		duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
-		timer_adjust(coco3_timer_counter, duration, -1, 0);
-
-		if (LOG_TIMER)
-			logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
+		/* and adjust the timer */
+		mame_timer_adjust(coco3_gime_timer, target_time, 0, time_zero);
 	}
 	else
 	{
-		/* timer is disabled */
-		timer_reset(coco3_timer_counter, TIME_NEVER);
-		coco3_timer_counterbase = -1.0;
+		/* timer is shut off */
+		mame_timer_reset(coco3_gime_timer, time_never);
+		if (LOG_TIMER)
+			logerror("coco3_reset_timer(): timer is off\n");
 	}
 }
 
-static void coco3_timer_hblank(void)
-{
-	if (!coco3_timer_interval && (coco3_timer_value > 0))
-	{
-		if (LOG_DEC_TIMER)
-			logerror("coco3_timer_hblank(): Decrementing timer (%i ==> %i)\n", coco3_timer_value, coco3_timer_value - 1);
 
-		coco3_timer_value--;
-		coco3_timer_newvalue();
-	}
+
+static void coco3_timer_proc(int dummy)
+{
+	coco3_timer_reset();
+	coco3_vh_blink();
+	coco3_raise_interrupt(COCO3_INT_TMR, 1);
+	coco3_raise_interrupt(COCO3_INT_TMR, 0);
 }
 
-/* Write into MSB of timer ($FF94); this causes a reset (source: Sockmaster) */
-static void coco3_timer_msb_w(int data)
-{
-	if (LOG_TIMER_SET)
-		logerror("coco3_timer_msb_w(): data=$%02x\n", data);
 
-	coco3_timer_base &= 0x00ff;
-	coco3_timer_base |= (data & 0x0f) << 8;
-	coco3_timer_cannonicalize(coco3_timer_actualvalue(coco3_timer_base));
+
+static void coco3_timer_init(void)
+{
+	coco3_gime_timer = mame_timer_alloc(coco3_timer_proc);
 }
 
-/* Write into LSB of timer ($FF95); this does not cause a reset (source: Sockmaster) */
-static void coco3_timer_lsb_w(int data)
-{
-	if (LOG_TIMER_SET)
-		logerror("coco3_timer_lsb_w(): data=$%02x\n", data);
 
-	coco3_timer_base &= 0xff00;
-	coco3_timer_base |= (data & 0xff);
-}
-
-static void coco3_timer_set_interval(int interval)
-{
-	/* interval==0 is 63.5us interval==1 if 280ns */
-	if (interval)
-		interval = 1;
-
-	if (LOG_TIMER_SET)
-		logerror("coco3_timer_set_interval(): Interval is %s\n", interval ? "280ns" : "63.5us");
-
-	if (coco3_timer_interval != interval) {
-		coco3_timer_interval = interval;
-		coco3_timer_cannonicalize(-1);
-	}
-}
 
 /***************************************************************************
   MMU
 ***************************************************************************/
-
-static WRITE8_HANDLER ( coco_ram8000_w )
-{
-	coco_ram_w(offset + 0x8000, data);
-}
-
-static WRITE8_HANDLER ( coco_ramc000_w )
-{
-	coco_ram_w(offset + 0xc000, data);
-}
 
 static void d_sam_set_maptype(int val)
 {
@@ -1879,7 +1741,7 @@ static void d_sam_set_maptype(int val)
 	if (val && (mess_ram_size > 0x8000))
 	{
 		readbank = &mess_ram[0x8000];
-		writebank = coco_ram8000_w;
+		writebank = MWA8_BANK2;
 	}
 	else
 	{
@@ -1909,8 +1771,8 @@ static void dragon64_sam_set_maptype(int val)
 	{
 		readbank2 = &mess_ram[0x8000];
 		readbank3 = &mess_ram[0xc000];
-		writebank2 = coco_ram8000_w;
-		writebank3 = coco_ramc000_w;
+		writebank2 = MWA8_BANK2;
+		writebank3 = MWA8_BANK3;
 	}
 	else
 	{
@@ -1925,6 +1787,8 @@ static void dragon64_sam_set_maptype(int val)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, writebank2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xfeff, 0, 0, writebank3);
 }
+
+
 
 /*************************************
  *
@@ -2024,29 +1888,26 @@ int coco3_mmu_translate(int bank, int offset)
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
-	struct bank_info_entry
+	static const struct
 	{
-		write8_handler handler;
 		offs_t start;
 		offs_t end;
-	};
-
-	static const struct bank_info_entry bank_info[] =
+	}
+	bank_info[] =
 	{
-		{ coco3_ram_b1_w, 0x0000, 0x1fff },
-		{ coco3_ram_b2_w, 0x2000, 0x3fff },
-		{ coco3_ram_b3_w, 0x4000, 0x5fff },
-		{ coco3_ram_b4_w, 0x6000, 0x7fff },
-		{ coco3_ram_b5_w, 0x8000, 0x9fff },
-		{ coco3_ram_b6_w, 0xa000, 0xbfff },
-		{ coco3_ram_b7_w, 0xc000, 0xdfff },
-		{ coco3_ram_b8_w, 0xe000, 0xfdff },
-		{ coco3_ram_b9_w, 0xfe00, 0xfeff }
+		{ 0x0000, 0x1fff },
+		{ 0x2000, 0x3fff },
+		{ 0x4000, 0x5fff },
+		{ 0x6000, 0x7fff },
+		{ 0x8000, 0x9fff },
+		{ 0xa000, 0xbfff },
+		{ 0xc000, 0xdfff },
+		{ 0xe000, 0xfdff },
+		{ 0xfe00, 0xfeff }
 	};
 
-	int i, offset;
+	int i, offset, writebank;
 	UINT8 *readbank;
-	write8_handler writebank;
 
 	for (i = lowblock; i <= hiblock; i++)
 	{
@@ -2055,16 +1916,18 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 		{
 			/* an offset into the CoCo 3 ROM */
 			readbank = &coco_rom[offset & ~0x80000000];
-			writebank = MWA8_ROM;
+			writebank = STATIC_ROM;
 		}
 		else
 		{
 			/* offset into normal RAM */
 			readbank = &mess_ram[offset];
-			writebank = bank_info[i].handler;
+			writebank = i + 1;
 		}
+
+		/* set up the banks */
 		memory_set_bankptr(i + 1, readbank);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, bank_info[i].start, bank_info[i].end, 0, 0, writebank);
+		memory_install_write_handler(0, ADDRESS_SPACE_PROGRAM, bank_info[i].start, bank_info[i].end, 0, 0, writebank);
 
 		if (LOG_MMU)
 		{
@@ -2075,7 +1938,7 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 	}
 }
 
- READ8_HANDLER(coco3_mmu_r)
+READ8_HANDLER(coco3_mmu_r)
 {
 	/* The high two bits are floating (high resistance).  Therefore their
 	 * value is undefined.  But we are exposing them anyways here
@@ -2085,7 +1948,7 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 
 WRITE8_HANDLER(coco3_mmu_w)
 {
-	coco3_mmu[offset] = data | (((coco3_gimevhreg[3] >> 4) & 0x03) << 8);
+	coco3_mmu[offset] = data | (((coco3_gimereg[11] >> 4) & 0x03) << 8);
 
 	/* Did we modify the live MMU bank? */
 	if ((offset >> 3) == (coco3_gimereg[1] & 1))
@@ -2135,6 +1998,8 @@ WRITE8_HANDLER(coco3_mmu_w)
 	return result;
 }
 
+
+
 WRITE8_HANDLER(coco3_gime_w)
 {
 	coco3_gimereg[offset] = data;
@@ -2143,99 +2008,167 @@ WRITE8_HANDLER(coco3_gime_w)
 		logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, activecpu_get_pc());
 
 	/* Features marked with '!' are not yet implemented */
-	switch(offset) {
-	case 0:
-		/*	$FF90 Initialization register 0
-		 *		  Bit 7 COCO 1=CoCo compatible mode
-		 *		  Bit 6 MMUEN 1=MMU enabled
-		 *		  Bit 5 IEN 1 = GIME chip IRQ enabled
-		 *		  Bit 4 FEN 1 = GIME chip FIRQ enabled
-		 *		  Bit 3 MC3 1 = RAM at FEXX is constant
-		 *		  Bit 2 MC2 1 = standard SCS (Spare Chip Select)
-		 *		  Bit 1 MC1 ROM map control
-		 *		  Bit 0 MC0 ROM map control
-		 */
-		coco3_vh_sethires(data & 0x80 ? 0 : 1);
-		coco3_mmu_update(0, 8);
-		break;
+	switch(offset)
+	{
+		case 0:
+			/*	$FF90 Initialization register 0
+			*		  Bit 7 COCO 1=CoCo compatible mode
+			*		  Bit 6 MMUEN 1=MMU enabled
+			*		  Bit 5 IEN 1 = GIME chip IRQ enabled
+			*		  Bit 4 FEN 1 = GIME chip FIRQ enabled
+			*		  Bit 3 MC3 1 = RAM at FEXX is constant
+			*		  Bit 2 MC2 1 = standard SCS (Spare Chip Select)
+			*		  Bit 1 MC1 ROM map control
+			*		  Bit 0 MC0 ROM map control
+			*/
+			coco3_mmu_update(0, 8);
+			break;
 
-	case 1:
-		/*	$FF91 Initialization register 1
-		 *		  Bit 7 Unused
-		 *		  Bit 6 Unused
-		 *		  Bit 5 TINS Timer input select; 1 = 280 nsec, 0 = 63.5 usec
-		 *		  Bit 4 Unused
-		 *		  Bit 3 Unused
-		 *		  Bit 2 Unused
-		 *		  Bit 1 Unused
-		 *		  Bit 0 TR Task register select
-		 */
-		coco3_mmu_update(0, 8);
-		coco3_timer_set_interval(data & 0x20);
-		break;
+		case 1:
+			/*	$FF91 Initialization register 1
+			*		  Bit 7 Unused
+			*		  Bit 6 Unused
+			*		  Bit 5 TINS Timer input select; 1 = 280 nsec, 0 = 63.5 usec
+			*		  Bit 4 Unused
+			*		  Bit 3 Unused
+			*		  Bit 2 Unused
+			*		  Bit 1 Unused
+			*		  Bit 0 TR Task register select
+			*/
+			coco3_mmu_update(0, 8);
+			coco3_timer_reset();
+			break;
 
-	case 2:
-		/*	$FF92 Interrupt request enable register
-		 *		  Bit 7 Unused
-		 *		  Bit 6 Unused
-		 *		  Bit 5 TMR Timer interrupt
-		 *		  Bit 4 HBORD Horizontal border interrupt
-		 *		  Bit 3 VBORD Vertical border interrupt
-		 *		! Bit 2 EI2 Serial data interrupt
-		 *		  Bit 1 EI1 Keyboard interrupt
-		 *		  Bit 0 EI0 Cartridge interrupt
-		 */
-		if (LOG_INT_MASKING)
-		{
-			logerror("CoCo3 IRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
-				(data & 0x20) ? "TMR " : "",
-				(data & 0x10) ? "HBORD " : "",
-				(data & 0x08) ? "VBORD " : "",
-				(data & 0x04) ? "EI2 " : "",
-				(data & 0x02) ? "EI1 " : "",
-				(data & 0x01) ? "EI0 " : "");
-		}
-		break;
+		case 2:
+			/*	$FF92 Interrupt request enable register
+			*		  Bit 7 Unused
+			*		  Bit 6 Unused
+			*		  Bit 5 TMR Timer interrupt
+			*		  Bit 4 HBORD Horizontal border interrupt
+			*		  Bit 3 VBORD Vertical border interrupt
+			*		! Bit 2 EI2 Serial data interrupt
+			*		  Bit 1 EI1 Keyboard interrupt
+			*		  Bit 0 EI0 Cartridge interrupt
+			*/
+			if (LOG_INT_MASKING)
+			{
+				logerror("CoCo3 IRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
+					(data & 0x20) ? "TMR " : "",
+					(data & 0x10) ? "HBORD " : "",
+					(data & 0x08) ? "VBORD " : "",
+					(data & 0x04) ? "EI2 " : "",
+					(data & 0x02) ? "EI1 " : "",
+					(data & 0x01) ? "EI0 " : "");
+			}
+			break;
 
-	case 3:
-		/*	$FF93 Fast interrupt request enable register
-		 *		  Bit 7 Unused
-		 *		  Bit 6 Unused
-		 *		  Bit 5 TMR Timer interrupt
-		 *		  Bit 4 HBORD Horizontal border interrupt
-		 *		  Bit 3 VBORD Vertical border interrupt
-		 *		! Bit 2 EI2 Serial border interrupt
-		 *		  Bit 1 EI1 Keyboard interrupt
-		 *		  Bit 0 EI0 Cartridge interrupt
-		 */
-		if (LOG_INT_MASKING)
-		{
-			logerror("CoCo3 FIRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
-				(data & 0x20) ? "TMR " : "",
-				(data & 0x10) ? "HBORD " : "",
-				(data & 0x08) ? "VBORD " : "",
-				(data & 0x04) ? "EI2 " : "",
-				(data & 0x02) ? "EI1 " : "",
-				(data & 0x01) ? "EI0 " : "");
-		}
-		break;
+		case 3:
+			/*	$FF93 Fast interrupt request enable register
+			*		  Bit 7 Unused
+			*		  Bit 6 Unused
+			*		  Bit 5 TMR Timer interrupt
+			*		  Bit 4 HBORD Horizontal border interrupt
+			*		  Bit 3 VBORD Vertical border interrupt
+			*		! Bit 2 EI2 Serial border interrupt
+			*		  Bit 1 EI1 Keyboard interrupt
+			*		  Bit 0 EI0 Cartridge interrupt
+			*/
+			if (LOG_INT_MASKING)
+			{
+				logerror("CoCo3 FIRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
+					(data & 0x20) ? "TMR " : "",
+					(data & 0x10) ? "HBORD " : "",
+					(data & 0x08) ? "VBORD " : "",
+					(data & 0x04) ? "EI2 " : "",
+					(data & 0x02) ? "EI1 " : "",
+					(data & 0x01) ? "EI0 " : "");
+			}
+			break;
 
-	case 4:
-		/*	$FF94 Timer register MSB
-		 *		  Bits 4-7 Unused
-		 *		  Bits 0-3 High order four bits of the timer
-		 */
-		coco3_timer_msb_w(data);
-		break;
+		case 4:
+			/*	$FF94 Timer register MSB
+			*		  Bits 4-7 Unused
+			*		  Bits 0-3 High order four bits of the timer
+			*/
+			coco3_timer_reset();
+			break;
 
-	case 5:
-		/*	$FF95 Timer register LSB
-		 *		  Bits 0-7 Low order eight bits of the timer
-		 */
-		coco3_timer_lsb_w(data);
-		break;
+		case 5:
+			/*	$FF95 Timer register LSB
+			*		  Bits 0-7 Low order eight bits of the timer
+			*/
+			break;
+
+		case 8:
+			/*	$FF98 Video Mode Register
+			*		  Bit 7 BP 0 = Text modes, 1 = Graphics modes
+			*		  Bit 6 Unused
+			*		! Bit 5 BPI Burst Phase Invert (Color Set)
+			*		  Bit 4 MOCH 1 = Monochrome on Composite
+			*		! Bit 3 H50 1 = 50 Hz power, 0 = 60 Hz power
+			*		  Bits 0-2 LPR Lines per row
+			*/
+			break;
+
+		case 9:
+			/*	$FF99 Video Resolution Register
+			*		  Bit 7 Undefined
+			*		  Bits 5-6 LPF Lines per Field (Number of Rows)
+			*		  Bits 2-4 HRES Horizontal Resolution
+			*		  Bits 0-1 CRES Color Resolution
+			*/
+			break;
+
+		case 10:
+			/*	$FF9A Border Register
+			*		  Bits 6,7 Unused
+			*		  Bits 0-5 BRDR Border color
+			*/
+			break;
+
+		case 12:
+			/*	$FF9C Vertical Scroll Register
+			*		  Bits 4-7 Reserved
+			*		! Bits 0-3 VSC Vertical Scroll bits
+			*/
+			break;
+
+		case 11:
+		case 13:
+		case 14:
+			/*	$FF9B,$FF9D,$FF9E Vertical Offset Registers
+			*
+			*	According to JK, if an odd value is placed in $FF9E on the 1986
+			*	GIME, the GIME crashes
+			*
+			*  The reason that $FF9B is not mentioned in offical documentation
+			*  is because it is only meaninful in CoCo 3's with the 2MB upgrade
+			*/
+			break;
+
+		case 15:
+			/*
+			*	$FF9F Horizontal Offset Register
+			*		  Bit 7 HVEN Horizontal Virtual Enable
+			*		  Bits 0-6 X0-X6 Horizontal Offset Address
+			*
+			*  Unline $FF9D-E, this value can be modified mid frame
+			*/
+			break;
 	}
 }
+
+
+
+static const UINT8 *coco3_sam_get_rambase(void)
+{
+	UINT32 video_base;
+	video_base = coco3_get_video_base(0xE0, 0x3F);
+	return &mess_ram[video_base % mess_ram_size];
+}
+
+
+
 
 static void coco3_sam_set_maptype(int val)
 {
@@ -2454,7 +2387,6 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 MACHINE_START( dragon32 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_DRAGON;
@@ -2464,7 +2396,6 @@ MACHINE_START( dragon32 )
 MACHINE_START( dragon64 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
 	
@@ -2475,8 +2406,6 @@ MACHINE_START( dragon64 )
 MACHINE_START( dgnalpha )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
-
 	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
     	
 	acia_6551_init();
@@ -2485,7 +2414,7 @@ MACHINE_START( dgnalpha )
 	/* by the WD2797, it is reset to 0 after the first inurrupt */
 	dgnalpha_just_reset=1;
 	
-	wd179x_init(WD_TYPE_1773, dgnalpha_fdc_callback);
+	wd179x_init(WD_TYPE_179X, dgnalpha_fdc_callback);
 
 	coco_or_dragon = AM_DRAGON;
 	return 0;
@@ -2494,7 +2423,6 @@ MACHINE_START( dgnalpha )
 MACHINE_START( coco )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
@@ -2504,7 +2432,6 @@ MACHINE_START( coco )
 MACHINE_START( coco2 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
@@ -2525,7 +2452,6 @@ static void coco3_machine_reset(void)
 		coco3_gimereg[i] = 0;
 	}
 	coco3_mmu_update(0, 8);
-	coco3_vh_reset();
 }
 
 static void coco3_state_postload(void)
@@ -2554,7 +2480,6 @@ MACHINE_START( coco3 )
 	state_save_register_func_postload(coco3_state_postload);
 
 	add_reset_callback(coco3_machine_reset);
-	add_reset_callback(videomap_reset);
 	return 0;
 }
 

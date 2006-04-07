@@ -1,7 +1,5 @@
-extern VIDEO_START( apf );
-
-extern  READ8_HANDLER(apf_video_r);
-extern WRITE8_HANDLER(apf_video_w);
+VIDEO_START(apf);
+VIDEO_UPDATE(apf);
 
 void apf_update_ints(void);
 

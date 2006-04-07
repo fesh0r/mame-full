@@ -37,51 +37,37 @@ static unsigned char pad_data;
 
 static  READ8_HANDLER(apf_m1000_pia_in_a_func)
 {
-	logerror("pia 0 a r: %04x\n",offset);
-
 	return pad_data;
 }
 
 static  READ8_HANDLER(apf_m1000_pia_in_b_func)
 {
-	
-	logerror("pia 0 b r: %04x\n",offset);
-
 	return 0x0ff;
 }
 
 static  READ8_HANDLER(apf_m1000_pia_in_ca1_func)
 {
-	logerror("pia 0 ca1 r: %04x\n",offset);
-
 	return 0;
 }
 
 static  READ8_HANDLER(apf_m1000_pia_in_cb1_func)
 {
-	logerror("pia 0 cb1 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 static  READ8_HANDLER(apf_m1000_pia_in_ca2_func)
 {
-	logerror("pia 0 ca2 r: %04x\n",offset);
-
 	return 0;
 }
 
 static  READ8_HANDLER(apf_m1000_pia_in_cb2_func)
 {
-	logerror("pia 0 cb2 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 
 static WRITE8_HANDLER(apf_m1000_pia_out_a_func)
 {
-	logerror("pia 0 a w: %04x %02x\n",offset,data);
 }
 
 unsigned char previous_mode;
@@ -111,22 +97,21 @@ static WRITE8_HANDLER(apf_m1000_pia_out_b_func)
 	/* 222 = 1101 mono graphics */
 	//	if (((previous_mode^data) & 0x0f0)!=0)
 	{
+		extern UINT8 apf_m6847_attr;
+
 		/* not sure if this is correct - need to check */
-		m6847_ag_w(0,	data & 0x80);
-		m6847_gm0_w(0,	data & 0x10);
-		m6847_gm1_w(0,	data & 0x20);
-		m6847_gm2_w(0,	data & 0x40);
-/*		m6847_set_cannonical_row_height(); */
+		apf_m6847_attr = 0x00;
+		if (data & 0x80)	apf_m6847_attr |= M6847_AG;
+		if (data & 0x40)	apf_m6847_attr |= M6847_GM2;
+		if (data & 0x20)	apf_m6847_attr |= M6847_GM1;
+		if (data & 0x10)	apf_m6847_attr |= M6847_GM0;
 		previous_mode = data;
 	}
 	//	schedule_full_refresh();
-
-	logerror("pia 0 b w: %04x %02x\n",offset,data);
 }
 
 static WRITE8_HANDLER(apf_m1000_pia_out_ca2_func)
 {
-	logerror("pia 0 ca2 w: %04x %02x\n",offset,data);
 }
 
 static WRITE8_HANDLER(apf_m1000_pia_out_cb2_func)
@@ -144,22 +129,11 @@ unsigned char apf_ints;
 
 void apf_update_ints(void)
 {
-	if (apf_ints!=0)
-	{
-		cpunum_set_input_line(0,0,HOLD_LINE);
-		logerror("set int\n");
-	}
-	else
-	{
-		cpunum_set_input_line(0,0,CLEAR_LINE);
-		logerror("clear int\n");
-	}
+	cpunum_set_input_line(0, 0, apf_ints ? HOLD_LINE : CLEAR_LINE);
 }
 
 static void	apf_m1000_irq_a_func(int state)
 {
-	//logerror("pia 0 irq a %d\n",state);
-
 	if (state)
 	{
 		apf_ints|=1;
@@ -209,8 +183,6 @@ struct pia6821_interface apf_m1000_pia_interface=
 
 static  READ8_HANDLER(apf_imagination_pia_in_a_func)
 {
-	logerror("pia 1 a r: %04x\n",offset);
-
 	return keyboard_data;
 }
 
@@ -228,36 +200,27 @@ static READ8_HANDLER(apf_imagination_pia_in_b_func)
 
 static  READ8_HANDLER(apf_imagination_pia_in_ca1_func)
 {
-	logerror("pia 1 ca1 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 static  READ8_HANDLER(apf_imagination_pia_in_cb1_func)
 {
-	logerror("pia 1 cb1 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 static  READ8_HANDLER(apf_imagination_pia_in_ca2_func)
 {
-	logerror("pia 1 ca2 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 static  READ8_HANDLER(apf_imagination_pia_in_cb2_func)
 {
-	logerror("pia 1 cb2 r: %04x\n",offset);
-
 	return 0x00;
 }
 
 
 static WRITE8_HANDLER(apf_imagination_pia_out_a_func)
 {
-	logerror("pia 1 a w: %04x %02x\n",offset,data);
 }
 
 static WRITE8_HANDLER(apf_imagination_pia_out_b_func)
@@ -283,24 +246,18 @@ static WRITE8_HANDLER(apf_imagination_pia_out_b_func)
 	/* bit 6: cassette write */
 	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0),
 		(data & 0x40) ? -1.0 : 1.0);
-
-
-	logerror("pia 1 b w: %04x %02x\n",offset,data);
 }
 
 static WRITE8_HANDLER(apf_imagination_pia_out_ca2_func)
 {
-	//logerror("pia 1 ca2 w: %04x %02x\n",offset,data);
 }
 
 static WRITE8_HANDLER(apf_imagination_pia_out_cb2_func)
 {
-	//logerror("pia 1 cb2 w: %04x %02x\n",offset,data);
 }
 
 static void	apf_imagination_irq_a_func(int state)
 {
-	//logerror("pia 1 irq a %d\n",state);
 	if (state)
 	{
 		apf_ints|=4;
@@ -316,8 +273,6 @@ static void	apf_imagination_irq_a_func(int state)
 
 static void	apf_imagination_irq_b_func(int state)
 {
-	//logerror("pia 1 irq b %d\n",state);
-
 	if (state)
 	{
 		apf_ints|=8;
@@ -355,7 +310,6 @@ static void apf_common_init(void)
 	apf_ints = 0;
 	pia_config(0, PIA_STANDARD_ORDERING,&apf_m1000_pia_interface);
 	pia_reset();
-
 }
 
 static MACHINE_START( apf_imagination )
@@ -436,7 +390,7 @@ static READ8_HANDLER(apf_wd179x_data_r)
 }
 
 static ADDRESS_MAP_START(apf_imagination_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x00000, 0x003ff) AM_READWRITE(apf_video_r, apf_video_w) AM_MIRROR(0x1c00)
+	AM_RANGE( 0x00000, 0x003ff) AM_RAM AM_BASE(&apf_video_ram) AM_MIRROR(0x1c00)
 	AM_RANGE( 0x02000, 0x03fff) AM_READWRITE(pia_0_r, pia_0_w)	
 	AM_RANGE( 0x04000, 0x047ff) AM_ROM AM_REGION(REGION_CPU1, 0x10000) AM_MIRROR(0x1800)
 	AM_RANGE( 0x06000, 0x063ff) AM_READWRITE(pia_1_r, pia_1_w)
@@ -454,7 +408,7 @@ static ADDRESS_MAP_START(apf_imagination_map, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(apf_m1000_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x00000, 0x003ff) AM_READWRITE(apf_video_r, apf_video_w) AM_MIRROR(0x1c00)
+	AM_RANGE( 0x00000, 0x003ff) AM_RAM AM_BASE(&apf_video_ram)  AM_MIRROR(0x1c00)
 	AM_RANGE( 0x02000, 0x03fff) AM_READWRITE(pia_0_r, pia_0_w)	
 	AM_RANGE( 0x04000, 0x047ff) AM_ROM AM_REGION(REGION_CPU1, 0x10000) AM_MIRROR(0x1800)
 	AM_RANGE( 0x06800, 0x077ff) AM_ROM
@@ -632,15 +586,17 @@ static MACHINE_DRIVER_START( apf_imagination )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6800, 3750000)        /* 7.8336 Mhz */
 	MDRV_CPU_PROGRAM_MAP(apf_imagination_map, 0)
-	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_FRAMES_PER_SECOND(M6847_NTSC_FRAMES_PER_SECOND)
 	MDRV_INTERLEAVE(0)
 
 	MDRV_MACHINE_START( apf_imagination )
 
 	/* video hardware */
-	MDRV_M6847_NTSC( apf )
+	MDRV_VIDEO_START(apf)
+	MDRV_VIDEO_UPDATE(m6847)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(320, 25+192+26)
+	MDRV_VISIBLE_AREA(0, 319, 1, 239)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
