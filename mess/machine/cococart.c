@@ -245,6 +245,21 @@ static void set_dragon_dskreg(int data)
 
 /* ---------------------------------------------------- */
 
+typedef enum
+{
+	RTC_DISTO	= 0x00,
+	RTC_CLOUD9	= 0x01
+} rtc_type_t;
+
+static rtc_type_t real_time_clock(void)
+{
+	return (rtc_type_t) (int) readinputportbytag_safe("real_time_clock", 0x00);
+}
+
+
+
+/* ---------------------------------------------------- */
+
  READ8_HANDLER(coco_floppy_r)
 {
 	int result = 0;
@@ -267,25 +282,25 @@ static void set_dragon_dskreg(int data)
 		break;
 	}
 
-	if( readinputportbytag("real_time_clock") == 0 )
+	switch(real_time_clock())
 	{
-		/* This is the real time clock in Disto's many products */
+		case RTC_DISTO:
+			/* This is the real time clock in Disto's many products */
+			if( offset == ( 0xff50-0xff40 ) )
+				result = m6242_data_r( 0 );
+			break;
+			
+		case RTC_CLOUD9:
+			/* This is the realtime clock in the TC^3 SCSI Controller */
+			if( offset == ( 0xff79-0xff40 ) )
+				ds1315_r_1( offset );
 
-		if( offset == ( 0xff50-0xff40 ) )
-			result = m6242_data_r( 0 );
-	}
-	else
-	{
-		/* This is the realtime clock in the TC^3 SCSI Controller */
+			if( offset == ( 0xff78-0xff40 ) )
+				ds1315_r_0( offset );
 
-		if( offset == ( 0xff79-0xff40 ) )
-			ds1315_r_1( offset );
-
-		if( offset == ( 0xff78-0xff40 ) )
-			ds1315_r_0( offset );
-
-		if( offset == ( 0xff7c-0xff40 ) )
-			result = ds1315_r_data( offset );
+			if( offset == ( 0xff7c-0xff40 ) )
+				result = ds1315_r_data( offset );
+			break;
 	}
 
 /*	logerror("SCS read:  address %4.4X, data %2.2X\n", 0xff40+offset, result );*/
@@ -320,15 +335,19 @@ WRITE8_HANDLER(coco_floppy_w)
 		break;
 	};
 
-	if( readinputportbytag("real_time_clock") == 0 )
+	switch(real_time_clock())
 	{
-		/* This is the real time clock in Disto's many products */
+		case RTC_DISTO:
+			/* This is the real time clock in Disto's many products */
+			if( offset == ( 0xff50-0xff40 ) )
+				m6242_data_w( 0, data );
 
-		if( offset == ( 0xff50-0xff40 ) )
-			m6242_data_w( 0, data );
-
-		if( offset == ( 0xff51-0xff40 ) )
-			m6242_address_w( 0, data );
+			if( offset == ( 0xff51-0xff40 ) )
+				m6242_address_w( 0, data );
+			break;
+			
+		default:
+			break;
 	}
 
 	coco_vhd_io_w( offset, data );

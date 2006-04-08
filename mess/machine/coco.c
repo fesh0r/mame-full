@@ -911,7 +911,7 @@ typedef enum
 
 static joystick_mode_t joystick_mode(void)
 {
-	return (joystick_mode_t) (int) readinputportbytag("joystick_mode");
+	return (joystick_mode_t) (int) readinputportbytag_safe("joystick_mode", JOYSTICKMODE_NORMAL);
 }
 
 
