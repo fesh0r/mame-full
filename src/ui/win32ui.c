@@ -1825,7 +1825,7 @@ void SetMainTitle(void)
 
 static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	extern int mame_validitychecks(void);
+	extern int mame_validitychecks(int game);
 	WNDCLASS	wndclass;
 	RECT		rect;
 	int i, j = 0, nSplitterCount;
@@ -2208,7 +2208,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	}
 
 #ifdef MAME_DEBUG
-	if (mame_validitychecks())
+	if (mame_validitychecks(-1))
 	{
 		MessageBox(hMain, MAMENAME " has failed its validity checks.  The GUI will "
 			"still work, but emulations will fail to execute", MAMENAME, MB_OK);

@@ -24,7 +24,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed "Skip warnings" regression in the GUI.  (bug #867) [Nate
+  Woods]
 
 
 
