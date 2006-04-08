@@ -100,6 +100,28 @@ const game_driver driver_##NAME = 	\
 	ROT0|(FLAGS)							\
 };
 
+#define CONSB(YEAR,NAME,PARENT,BIOS,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
+extern const game_driver driver_##PARENT;   \
+extern const game_driver driver_##COMPAT;   \
+extern const game_driver driver_##NAME;   \
+const game_driver driver_##NAME = 	\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	system_bios_##BIOS,						\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+	construct_##MACHINE,					\
+	construct_ipt_##INPUT,					\
+	init_##INIT,							\
+	rom_##NAME,								\
+	construct_sysconfig_##CONFIG,			\
+	&driver_##COMPAT,						\
+	ROT0|(FLAGS)							\
+};
+
 #define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
 extern const game_driver driver_##PARENT;   \
 extern const game_driver driver_##COMPAT;   \

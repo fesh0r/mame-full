@@ -51,4 +51,5 @@ WRITE8_HANDLER( vtech1_memory_bank_w );
 
 void vtech1_interrupt(void);
 
+VIDEO_START( vtech1m );
 VIDEO_START( vtech1 );

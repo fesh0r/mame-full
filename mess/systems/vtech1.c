@@ -132,7 +132,7 @@ static ADDRESS_MAP_START(laser210_mem, ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
     AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
-    AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* U7 (6847) */
+    AM_RANGE(0x7000, 0x77ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size) /* U7 (6847) */
     AM_RANGE(0x7800, 0x8fff) AM_RAM	/* 6KB user ram */
 //  AM_RANGE(0x9000, 0xcfff) AM_RAM	/* 16KB/64KB memory expansion */
 //  AM_RANGE(0xd000, 0xffff) AM_NOP	/* dynamically mapped */
@@ -143,7 +143,7 @@ static ADDRESS_MAP_START(laser310_mem, ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE(0x4000, 0x5fff) AM_ROM	/* dos rom or other catridges */
     AM_RANGE(0x6000, 0x67ff) AM_ROM	/* reserved for cartridges */
     AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
-    AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
+    AM_RANGE(0x7000, 0x77ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size) /* (6847) */
     AM_RANGE(0x7800, 0xb7ff) AM_RAM	/* 16KB user ram */
 //  AM_RANGE(0xb800, 0xf7ff) AM_RAM	/* 16KB/64KB memory expansion */
 //  AM_RANGE(0xf800, 0xffff) AM_NOP	/* dynamically mapped */
@@ -292,46 +292,6 @@ INPUT_PORTS_END
 
 
 /******************************************************************************
- Palette Initialisation
-******************************************************************************/
-
-/* note - Juergen's colors do not match the colors in the m6847 code */
-static unsigned char vt_palette[] =
-{
-      0,   0,   0,    /* black (block graphics) */
-      0, 224,   0,    /* green */
-    208, 255,   0,    /* yellow (greenish) */
-      0,   0, 255,    /* blue */
-    255,   0,   0,    /* red */
-    224, 224, 144,    /* buff */
-      0, 255, 160,    /* cyan (greenish) */
-    255,   0, 255,    /* magenta */
-    240, 112,   0,    /* orange */
-      0,  64,   0,    /* dark green (alphanumeric characters) */
-      0, 224,  24,    /* bright green (alphanumeric characters) */
-     64,  16,   0,    /* dark orange (alphanumeric characters) */
-    255, 196,  24,    /* bright orange (alphanumeric characters) */
-};
-
-/* monochrome */
-static PALETTE_INIT(monochrome)
-{
-    int i;
-    for (i = 0; i < sizeof(vt_palette)/(sizeof(unsigned char)*3); i++) {
-        int mono;
-        mono = (int)(vt_palette[i*3+0] * 0.299 + vt_palette[i*3+1] * 0.587 + vt_palette[i*3+2] * 0.114);
-        palette_set_color(i, mono, mono, mono);
-    }
-}
-
-/* color */
-static PALETTE_INIT(color)
-{
-    palette_set_colors(0, vt_palette, sizeof(vt_palette) / (sizeof(vt_palette[0]) * 3));
-}
-
-
-/******************************************************************************
  Audio Initialisation
 ******************************************************************************/
 
@@ -342,7 +302,6 @@ static struct Speaker_interface speaker_interface =
 	4,
 	speaker_levels
 };
-
 
 
 /******************************************************************************
@@ -361,7 +320,7 @@ static MACHINE_DRIVER_START(laser110)
 	MDRV_MACHINE_START(laser110)
 
     /* video hardware */
-	MDRV_VIDEO_START(vtech1)
+	MDRV_VIDEO_START(vtech1m)
 	MDRV_VIDEO_UPDATE(m6847)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(320, 25+192+26)
@@ -379,25 +338,23 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START(laser200)
     MDRV_IMPORT_FROM(laser110)
 
-    MDRV_PALETTE_INIT(color)
+	MDRV_VIDEO_START(vtech1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(laser210)
-    MDRV_IMPORT_FROM(laser110)
+    MDRV_IMPORT_FROM(laser200)
     MDRV_CPU_MODIFY("main")
     MDRV_CPU_PROGRAM_MAP(laser210_mem, 0)
 
     MDRV_MACHINE_START(laser210)
-    MDRV_PALETTE_INIT(color)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(laser310)
-    MDRV_IMPORT_FROM( laser110 )
+    MDRV_IMPORT_FROM( laser200 )
     MDRV_CPU_REPLACE( "main", Z80, LASER310_MAIN_OSCILLATOR/5)  /* 3.54690 Mhz */
     MDRV_CPU_PROGRAM_MAP(laser310_mem, 0)
 
     MDRV_MACHINE_START(laser310)
-    MDRV_PALETTE_INIT(color)
 MACHINE_DRIVER_END
 
 

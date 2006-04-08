@@ -195,15 +195,11 @@ static MACHINE_DRIVER_START(smspal)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START(smsj21)
+static MACHINE_DRIVER_START(smsfm)
 	MDRV_IMPORT_FROM(sms)
 
 	MDRV_SOUND_ADD(YM2413, 8000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START(smsm3)
-	MDRV_IMPORT_FROM(sms)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(gamegear)
@@ -236,101 +232,74 @@ static MACHINE_DRIVER_START(gamegear)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
+/*
+  sms (no bios, fake driver)
+  smsumd3d (1986)
+*/
+SYSTEM_BIOS_START( sms )
+	SYSTEM_BIOS_ADD( 0, "bios13", "US/European BIOS v1.3 (1986)" ) /* smsu13 */
+/*	SYSTEM_BIOS_ADD( 1, "missiled", "US/European BIOS with Missile Defense 3D (1986)" ) smsumd3d */
+	SYSTEM_BIOS_ADD( 1, "hangonsh", "US/European BIOS v2.4 with Hang On and Safari Hunt (1988)" ) /* smsuhs24 */
+	SYSTEM_BIOS_ADD( 2, "hangon", "US/European BIOS v3.4 with Hang On (1988)" ) /* smseh34 */
+	SYSTEM_BIOS_ADD( 3, "alexkidd", "US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smsuam */
+SYSTEM_BIOS_END
+
+SYSTEM_BIOS_START( smsj )
+        SYSTEM_BIOS_ADD( 0, "jbios21", "Sega Mark III/Sega Master System/Samsung Gamboy - Japanese SMS BIOS v2.1" ) /* smsj21 (+fm) (1985), smsm3 (1984), smsss (+fm) (198?) */
+SYSTEM_BIOS_END
+
+/*
+  smsemd3d (1986)
+  smspal (no bios, fake driver)
+*/
+SYSTEM_BIOS_START( smspal )
+        SYSTEM_BIOS_ADD( 0, "bios13", "Sega Master System - US/European BIOS v1.3 (1986)" ) /* smse13 */
+/*	SYSTEM_BIOS_ADD( 1, "missiled", "US/European BIOS with Missile Defense 3D (1986)" ) smsemd3d */
+	SYSTEM_BIOS_ADD( 1, "hangonsh", "Sega Master System Plus - US/European BIOS v2.4 with Hang On and Safari Hunt (1988)" ) /* smsehs24 */
+	SYSTEM_BIOS_ADD( 2, "hangon", "Sega Master System - US/European BIOS v3.4 with Hang On (1988)" ) /* smseh34 */
+        SYSTEM_BIOS_ADD( 3, "alexkidd", "Sega Master System II - US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smseam */
+        SYSTEM_BIOS_ADD( 4, "sonic", "Sega Master System II/Tec Toy Master System III Compact (Brazil) - European/Brazilian BIOS with Sonic the Hedgehog (1991)" ) /* smsesh, smsbsh */
+SYSTEM_BIOS_END
+
 ROM_START(sms)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
+	ROM_REGION(0x40000, REGION_USER1, 0)
+	ROMX_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7), ROM_BIOS(1))
+        ROMX_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df), ROM_BIOS(2))
+        ROMX_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517), ROM_BIOS(3))
+        ROMX_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e), ROM_BIOS(4))
+	ROMX_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051), ROM_BIOS(5))
 ROM_END
 
 ROM_START(smspal)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-ROM_END
-
-ROM_START(smsj21)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13) SHA1(a8c1b39a2e41137835eda6a5de6d46dd9fadbaf2))
+	ROM_REGION(0x40000, REGION_USER1, 0)
+	ROMX_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7), ROM_BIOS(1))
+	ROMX_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517), ROM_BIOS(2))
+	ROMX_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e), ROM_BIOS(3))
+	ROMX_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051), ROM_BIOS(4))
+	ROMX_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df), ROM_BIOS(5))
 ROM_END
 
 ROM_START(smsm3)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13) SHA1(a8c1b39a2e41137835eda6a5de6d46dd9fadbaf2))
+	ROMX_LOAD("jbios21.rom", 0x0000, 0x2000, CRC(48D44A13) SHA1(a8c1b39a2e41137835eda6a5de6d46dd9fadbaf2), ROM_BIOS(1))
 ROM_END
 
-#define rom_smsss rom_smsj21
+#define rom_smsj21 rom_smsm3
 
-ROM_START(smsu13)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7))
-ROM_END
-
-ROM_START(smse13)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7))
-ROM_END
-
-ROM_START(smsuam)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051))
-ROM_END
-
-ROM_START(smseam)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051))
-ROM_END
-
-ROM_START(smsesh)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x40000, REGION_USER1, 0)
-	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df))
-ROM_END
-
-ROM_START(smsbsh)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x40000, REGION_USER1, 0)
-	ROM_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df))
-ROM_END
-
-ROM_START(smsuhs24)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517))
-ROM_END
-
-ROM_START(smsehs24)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517))
-ROM_END
-
-ROM_START(smsuh34)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e))
-ROM_END
-
-ROM_START(smseh34)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
-	ROM_REGION(0x20000, REGION_USER1, 0)
-	ROM_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e))
-ROM_END
+SYSTEM_BIOS_START( gamegear )
+	SYSTEM_BIOS_ADD( 0, "none", "No BIOS" ) /* gamegear */
+	SYSTEM_BIOS_ADD( 1, "majesco", "Majesco BIOS" ) /* gamg */
+SYSTEM_BIOS_END
 
 ROM_START(gamegear)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1,0)
+	ROMX_LOAD("majbios.rom", 0x0000, 0x0400, CRC(0EBEA9D4) SHA1(914aa165e3d879f060be77870d345b60cfeb4ede), ROM_BIOS(2))
 ROM_END
 
-#define rom_gamegj rom_gamegear
-
-ROM_START(gamg)
-	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1,0)
-	ROM_REGION(0x4000, REGION_USER1, 0)
-	ROM_LOAD("majbios.rom", 0x0000, 0x0400, CRC(0EBEA9D4) SHA1(914aa165e3d879f060be77870d345b60cfeb4ede))
-ROM_END
-
-#define rom_gamgj rom_gamg
+#define rom_gamegeaj rom_gamegear
 
 static void sms_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
@@ -338,17 +307,17 @@ static void sms_cartslot_getinfo(const device_class *devclass, UINT32 state, uni
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_COUNT:							info->i = 1; break;
-		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 1; break;
+		case DEVINFO_INT_COUNT:				info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:		info->i = 0; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_INIT:							info->init = device_init_sms_cart; break;
-		case DEVINFO_PTR_LOAD:							info->load = device_load_sms_cart; break;
+		case DEVINFO_PTR_INIT:				info->init = device_init_sms_cart; break;
+		case DEVINFO_PTR_LOAD:				info->load = device_load_sms_cart; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "sms"); break;
+		case DEVINFO_STR_FILE_EXTENSIONS:		strcpy(info->s = device_temp_str(), "sms"); break;
 
-		default:										cartslot_device_getinfo(devclass, state, info); break;
+		default:					cartslot_device_getinfo(devclass, state, info); break;
 	}
 }
 
@@ -356,29 +325,16 @@ SYSTEM_CONFIG_START(sms)
 	CONFIG_DEVICE(sms_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void smso_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
-{
-	switch(state)
-	{
-		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 0; break;
-
-		default:										sms_cartslot_getinfo(devclass, state, info); break;
-	}
-}
-
-SYSTEM_CONFIG_START(smso)
-	CONFIG_DEVICE(smso_cartslot_getinfo)
-SYSTEM_CONFIG_END
-
 static void gamegear_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	switch(state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "gg"); break;
+		case DEVINFO_INT_COUNT:				info->i = 1; break;
+		case DEVINFO_INT_MUST_BE_LOADED:		info->i = 1; break;
+		case DEVINFO_STR_FILE_EXTENSIONS:		strcpy(info->s = device_temp_str(), "gg"); break;
 
-		default:										sms_cartslot_getinfo(devclass, state, info); break;
+		default:					sms_cartslot_getinfo(devclass, state, info); break;
 	}
 }
 
@@ -408,25 +364,11 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*		YEAR	NAME		PARENT		COMPATIBLE	MACHINE		INPUT	INIT	CONFIG		COMPANY			FULLNAME */
-CONS(	1987,	sms,		0,			0,			sms,		sms,	0,		sms,		"Sega",			"Master System - (NTSC)" , 0)
-CONS(	1986,	smsu13,		sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) US/European BIOS v1.3" , FLAG_BIOS_2000 )
-CONS(	1986,	smse13,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) US/European BIOS v1.3" , FLAG_BIOS_2000 )
-//CONS(	1986,	smsumd3d,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Super Master System - (NTSC) US/European Missile Defense 3D BIOS" , FLAG_BIOS_FULL )
-//CONS(	1986,	smsemd3d,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Super Master System - (PAL) US/European Missile Defense 3D BIOS" , FLAG_BIOS_FULL )
-CONS(	1990,	smsuam,		sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System II - (NTSC) US/European BIOS with Alex Kidd in Miracle World" , FLAG_BIOS_FULL )
-CONS(	1990,	smseam,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System II - (PAL) US/European BIOS with Alex Kidd in Miracle World" , FLAG_BIOS_FULL )
-CONS(	1990,	smsesh,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System II - (PAL) European BIOS with Sonic The Hedgehog" , FLAG_BIOS_FULL )
-CONS(	1990,	smsbsh,		sms,		0,			smsm3,		sms,	0,		smso,		"Tec Toy",		"Master System III Compact (Brazil) - (PAL) European BIOS with Sonic The Hedgehog" , FLAG_BIOS_FULL )
-CONS(	1988,	smsuhs24,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System Plus - (NTSC) US/European BIOS v2.4 with Hang On and Safari Hunt" , FLAG_BIOS_FULL )
-CONS(	1988,	smsehs24,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System Plus - (PAL) US/European BIOS v2.4 with Hang On and Safari Hunt" , FLAG_BIOS_FULL )
-CONS(	1988,	smsuh34,	sms,		0,			sms,		sms,	0,		smso,		"Sega",			"Master System - (NTSC) US/European BIOS v3.4 with Hang On" , FLAG_BIOS_FULL )
-CONS(	1988,	smseh34,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System - (PAL) US/European BIOS v3.4 with Hang On" , FLAG_BIOS_FULL )
-CONS(	1985,	smspal,		sms,		0,			smspal,		sms,	0,		sms,		"Sega",			"Master System - (PAL)" , 0)
-CONS(	1985,	smsj21,		sms,		0,			smsj21,		sms,	0,		smso,		"Sega",			"Master System - (PAL) Japanese SMS BIOS v2.1" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 | FLAG_FM )
-CONS(	1984,	smsm3,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Mark III - (PAL) Japanese SMS BIOS v2.1" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 )
-CONS(	198?,	smsss,		sms,		0,			smsj21,		sms,	0,		smso,		"Samsung",		"Gamboy - (PAL) Japanese SMS BIOS v2.1" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 | FLAG_FM )
-CONS(	1990,	gamegear,	0,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - European/American" , FLAG_GAMEGEAR )
-CONS(	1990,	gamegj,		gamegear,	0,			gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - Japanese" , FLAG_REGION_JAPAN | FLAG_GAMEGEAR )
-CONS(	1990,	gamg,		gamegear,	0,			gamegear,	sms,	0,		gamegearo,	"Majesco",		"Game Gear - European/American Majesco Game Gear BIOS" , FLAG_GAMEGEAR | FLAG_BIOS_0400 )
-CONS(	1990,	gamgj,		gamegear,	0,			gamegear,	sms,	0,		gamegearo,	"Majesco",		"Game Gear - Japanese Majesco Game Gear BIOS" , FLAG_REGION_JAPAN | FLAG_GAMEGEAR | FLAG_BIOS_0400 )
+CONSB(	1986,	sms,	0, sms,			0,			sms,		sms,	0,		sms,		"Sega",			"Sega Master System/Sega Master System Plus/Sega Master System II" , FLAG_BIOS_FULL )
+CONSB(	1986,	smspal,	sms, smspal,	0,			smspal,		sms,	0,		sms,		"Sega",			"Sega Master System/Sega Master System Plus/Sega Master System II/Tec Toy Master System III Compact (Brazil)" , FLAG_BIOS_FULL )
+CONSB(  1984,   smsm3,	0, smsj,              0,                      sms,            sms,    0,              sms,            "Sega",                 "Sega Mark III" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 )
+CONSB(	1985,	smsj21,		smsm3, smsj,		0,			smsfm,		sms,	0,		sms,		"Sega",			"Sega Master System/Samsung Gamboy" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 | FLAG_FM )
+
+CONSB(	1990,	gamegear,	0, gamegear,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Sega Game Gear - European/American" , FLAG_GAMEGEAR | FLAG_BIOS_0400 )
+CONSB(	1990,	gamegeaj,	gamegear, gamegear,	0,			gamegear,	sms,	0,		gamegear,	"Sega",			"Sega Game Gear - Japanese" , FLAG_REGION_JAPAN | FLAG_GAMEGEAR | FLAG_BIOS_0400 )
 

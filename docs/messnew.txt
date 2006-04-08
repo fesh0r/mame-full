@@ -18,6 +18,8 @@ System Driver Changes:
 
 - [FAMICOM] Fixed disk system.  [Steve Leung]
 
+- [SMS] Changed to use selectable bioses.  [Wilbert Pol]
+
 
 
 User Interface Changes:
