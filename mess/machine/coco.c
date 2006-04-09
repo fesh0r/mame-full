@@ -83,14 +83,10 @@ UINT8 coco3_gimereg[16];
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
-static UINT32 coco3_mmu[16];
-static int coco3_interupt_line;
-static int pia0_irq_a, pia0_irq_b;
-static int pia1_firq_a, pia1_firq_b;
-static int gime_firq, gime_irq;
+static UINT8 coco3_mmu[16];
+static UINT8 coco3_interupt_line;
+static UINT8 gime_firq, gime_irq;
 static int cart_line, cart_inserted;
-static UINT8 soundmux_status;
-static UINT8 joystick_axis, joystick;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( coco3_pia1_pb_w );
@@ -144,8 +140,6 @@ static void dragon_page_rom(int	romswitch);
 static WRITE8_HANDLER ( dgnalpha_pia2_pa_w );
 static void d_pia2_firq_a(int state);
 static void d_pia2_firq_b(int state);
-
-static int pia2_firq_a, pia2_firq_b;
 
 static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after reset */
 
@@ -704,7 +698,10 @@ static int is_cpu_suspended(void)
 
 static void d_recalc_irq(void)
 {
-	if (((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE)) && is_cpu_suspended())
+	UINT8 pia0_irq_a = pia_get_irq_a(0);
+	UINT8 pia0_irq_b = pia_get_irq_b(0);
+
+	if ((pia0_irq_a || pia0_irq_b) && is_cpu_suspended())
 		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
@@ -712,8 +709,13 @@ static void d_recalc_irq(void)
 
 static void d_recalc_firq(void)
 {
-	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE) ||
-	     (pia2_firq_a == ASSERT_LINE) || (pia2_firq_b == ASSERT_LINE)) && is_cpu_suspended())
+	UINT8 pia1_firq_a = pia_get_irq_a(1);
+	UINT8 pia1_firq_b = pia_get_irq_b(1);
+	UINT8 pia2_firq_a = pia_get_irq_a(2);
+	UINT8 pia2_firq_b = pia_get_irq_b(2);
+
+	if ((pia1_firq_a || pia1_firq_b ||
+	     pia2_firq_a || pia2_firq_b) && is_cpu_suspended())
 		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
@@ -721,12 +723,6 @@ static void d_recalc_firq(void)
 
 static void coco3_recalc_irq(void)
 {
-	if (LOG_IRQ_RECALC)
-	{
-		logerror("coco3_recalc_irq(): gime_irq=%i pia0_irq_a=%i pia0_irq_b=%i (GIME IRQ %s)\n",
-			gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
-	}
-
 	if ((coco3_gimereg[0] & 0x20) && gime_irq && is_cpu_suspended())
 		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
@@ -743,66 +739,56 @@ static void coco3_recalc_firq(void)
 
 static void d_pia0_irq_a(int state)
 {
-	pia0_irq_a = state;
 	d_recalc_irq();
 }
 
 static void d_pia0_irq_b(int state)
 {
-	pia0_irq_b = state;
 	d_recalc_irq();
 }
 
 static void d_pia1_firq_a(int state)
 {
-	pia1_firq_a = state;
 	d_recalc_firq();
 }
 
 static void d_pia1_firq_b(int state)
 {
-	pia1_firq_b = state;
 	d_recalc_firq();
 }
 
 /* Dragon Alpha second PIA IRQ lines also cause FIRQ */
 static void d_pia2_firq_a(int state)
 {
-	pia2_firq_b = state;
 	d_recalc_firq();
 }
 
 static void d_pia2_firq_b(int state)
 {
-	pia2_firq_b = state;
 	d_recalc_firq();
 }
 
 static void coco3_pia0_irq_a(int state)
 {
-	pia0_irq_a = state;
 	coco3_recalc_irq();
 }
 
 static void coco3_pia0_irq_b(int state)
 {
-	pia0_irq_b = state;
 	coco3_recalc_irq();
 }
 
 static void coco3_pia1_firq_a(int state)
 {
-	pia1_firq_a = state;
 	coco3_recalc_firq();
 }
 
 static void coco3_pia1_firq_b(int state)
 {
-	pia1_firq_b = state;
 	coco3_recalc_firq();
 }
 
-static void coco3_raise_interrupt(int mask, int state)
+static void coco3_raise_interrupt(UINT8 mask, int state)
 {
 	int lowtohigh;
 
@@ -1011,6 +997,18 @@ static mess_image *printer_image(void)
 	return image_from_devtype_and_index(IO_PRINTER, 0);
 }
 
+static int get_soundmux_status(void)
+{
+	int soundmux_status = 0;
+	if (pia_get_output_cb2(1))
+		soundmux_status |= SOUNDMUX_STATUS_ENABLE;
+	if (pia_get_output_ca2(0))
+		soundmux_status |= SOUNDMUX_STATUS_SEL1;
+	if (pia_get_output_cb2(0))
+		soundmux_status |= SOUNDMUX_STATUS_SEL2;
+	return soundmux_status;
+}
+
 static void soundmux_update(void)
 {
 	/* This function is called whenever the MUX (selector switch) is changed
@@ -1019,6 +1017,7 @@ static void soundmux_update(void)
 	 * switch on or off.
 	 */
 	cassette_state new_state;
+	int soundmux_status = get_soundmux_status();
 
 	switch(soundmux_status) {
 	case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
@@ -1041,6 +1040,7 @@ static void coco_sound_update(void)
 	 */
 	UINT8 dac = pia_get_output_a(1) & 0xFC;
 	UINT8 pia1_pb1 = pia_get_output_b(1) & 0x02;
+	int soundmux_status = get_soundmux_status();
 
 	if (soundmux_status & SOUNDMUX_STATUS_ENABLE)
 	{
@@ -1063,33 +1063,6 @@ static void coco_sound_update(void)
 			break;
 		}
 	}
-}
-
-static void soundmux_enable_w(int data)
-{
-	if (data)
-		soundmux_status |= SOUNDMUX_STATUS_ENABLE;
-	else
-		soundmux_status &= ~SOUNDMUX_STATUS_ENABLE;
-	soundmux_update();
-}
-
-static void soundmux_sel1_w(int data)
-{
-	if (data)
-		soundmux_status |= SOUNDMUX_STATUS_SEL1;
-	else
-		soundmux_status &= ~SOUNDMUX_STATUS_SEL1;
-	soundmux_update();
-}
-
-static void soundmux_sel2_w(int data)
-{
-	if (data)
-		soundmux_status |= SOUNDMUX_STATUS_SEL2;
-	else
-		soundmux_status &= ~SOUNDMUX_STATUS_SEL2;
-	soundmux_update();
 }
 
 READ8_HANDLER ( dgnalpha_psg_porta_read )
@@ -1132,16 +1105,14 @@ WRITE8_HANDLER ( dgnalpha_psg_porta_write )
 
 static WRITE8_HANDLER ( d_pia0_ca2_w )
 {
-	joystick_axis = data;
-	soundmux_sel1_w(data);
+	soundmux_update();
 }
 
 
 
 static WRITE8_HANDLER ( d_pia0_cb2_w )
 {
-	joystick = data;
-	soundmux_sel2_w(data);
+	soundmux_update();
 }
 
 
@@ -1155,8 +1126,11 @@ static UINT8 coco_update_keyboard(void)
 	static const int joy_rat_table[] = {15, 24, 42, 33 };
 	UINT8 pia0_pb;
 	UINT8 dac = pia_get_output_a(1) & 0xFC;
+	int joystick_axis, joystick;
 	
 	pia0_pb = pia_get_output_b(0);
+	joystick_axis = pia_get_output_ca2(0);
+	joystick = pia_get_output_cb2(0);
 
 	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
 	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
@@ -1284,7 +1258,7 @@ static  READ8_HANDLER ( d_pia1_cb1_r )
 
 static WRITE8_HANDLER ( d_pia1_cb2_w )
 {
-	soundmux_enable_w(data);
+	soundmux_update();
 }
 
 static WRITE8_HANDLER ( d_pia1_pa_w )
@@ -1414,7 +1388,7 @@ static void dragon_page_rom(int	romswitch)
 {
 	UINT8 *bank;
 	
-	if(romswitch) 
+	if (romswitch) 
 		bank = coco_rom;			/* This is the 32k mode basic(64)/boot rom(alpha)  */
 	else
 		bank = coco_rom + 0x8000;	/* This is the 64k mode basic(64)/basic rom(alpha) */
@@ -1819,11 +1793,11 @@ static void dragon64_sam_set_maptype(int val)
  * this function to use a RAM address, which is used for video since video can
  * never reference ROM.
  */
-int coco3_mmu_translate(int bank, int offset)
+offs_t coco3_mmu_translate(int bank, int offset)
 {
 	int forceram;
-	int block;
-	int result;
+	UINT32 block;
+	offs_t result;
 
 	/* Bank 8 is the 0xfe00 block; and it is treated differently */
 	if (bank == 8)
@@ -1850,6 +1824,7 @@ int coco3_mmu_translate(int bank, int offset)
 		if (coco3_gimereg[1] & 1)
 			bank += 8;
 		block = coco3_mmu[bank];
+		block |= ((UINT32) ((coco3_gimereg[11] >> 4) & 0x03)) << 8;
 	}
 	else
 	{
@@ -1880,11 +1855,14 @@ int coco3_mmu_translate(int bank, int offset)
 		block = rommap[coco3_gimereg[0] & 3][(block & 0x3f) - 0x3c];
 		result = (block * 0x2000 + offset) | 0x80000000;
 	}
-	else {
+	else
+	{
 		result = ((block * 0x2000) + offset) % mess_ram_size;
 	}
 	return result;
 }
+
+
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
@@ -1938,6 +1916,8 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 	}
 }
 
+
+
 READ8_HANDLER(coco3_mmu_r)
 {
 	/* The high two bits are floating (high resistance).  Therefore their
@@ -1946,9 +1926,11 @@ READ8_HANDLER(coco3_mmu_r)
 	return coco3_mmu[offset];
 }
 
+
+
 WRITE8_HANDLER(coco3_mmu_w)
 {
-	coco3_mmu[offset] = data | (((coco3_gimereg[11] >> 4) & 0x03) << 8);
+	coco3_mmu[offset] = data;
 
 	/* Did we modify the live MMU bank? */
 	if ((offset >> 3) == (coco3_gimereg[1] & 1))
@@ -1958,13 +1940,15 @@ WRITE8_HANDLER(coco3_mmu_w)
 	}
 }
 
+
+
 /***************************************************************************
   GIME Registers (Reference: Super Extended Basic Unravelled)
 ***************************************************************************/
 
- READ8_HANDLER(coco3_gime_r)
+READ8_HANDLER(coco3_gime_r)
 {
-	int result = 0;
+	UINT8 result = 0;
 
 	switch(offset) {
 	case 2:	/* Read pending IRQs */
@@ -2190,7 +2174,7 @@ static void coco_cartrige_init(const struct cartridge_slot *cartinterface, const
 		cartinterface->init(callbacks);
 }
 
- READ8_HANDLER(coco_cartridge_r)
+READ8_HANDLER(coco_cartridge_r)
 {
 	return (coco_cart_interface && coco_cart_interface->io_r) ? coco_cart_interface->io_r(offset) : 0;
 }
@@ -2347,18 +2331,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const sam688
 	dragon_rom_bank = coco_rom;
 
 	cart_line = CARTLINE_CLEAR;
-	pia0_irq_a = CLEAR_LINE;
-	pia0_irq_b = CLEAR_LINE;
-	pia1_firq_a = CLEAR_LINE;
-	pia1_firq_b = CLEAR_LINE;
 
-	/* These only exist in Dragon Alpha */
-    pia2_firq_a = CLEAR_LINE;
-	pia2_firq_b = CLEAR_LINE;
-
-	soundmux_status = 0;
-	joystick_axis = joystick = 0;
-	
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
@@ -2477,6 +2450,9 @@ MACHINE_START( coco3 )
 
 	state_save_register_global_array(coco3_mmu);
 	state_save_register_global_array(coco3_gimereg);
+	state_save_register_global(coco3_interupt_line);
+	state_save_register_global(gime_irq);
+	state_save_register_global(gime_firq);
 	state_save_register_func_postload(coco3_state_postload);
 
 	add_reset_callback(coco3_machine_reset);

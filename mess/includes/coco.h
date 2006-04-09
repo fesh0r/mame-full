@@ -67,7 +67,7 @@ READ8_HANDLER ( coco_cartridge_r);
 WRITE8_HANDLER ( coco_cartridge_w );
 READ8_HANDLER ( coco3_cartridge_r);
 WRITE8_HANDLER ( coco3_cartridge_w );
-int coco3_mmu_translate(int bank, int offset);
+offs_t coco3_mmu_translate(int bank, int offset);
 int coco_bitbanger_init (int id);
 READ8_HANDLER( coco_pia_1_r );
 READ8_HANDLER( coco3_pia_1_r );

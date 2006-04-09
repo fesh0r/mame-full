@@ -1927,7 +1927,14 @@ static mame_time multiply_mame_time(mame_time time, UINT64 factor)
 {
 	/* TODO: it should not be necessary to use floating point here */
 	double d = mame_time_to_double(time);
+
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
+	/* casting unsigned __int64 to double is not supported on VC6 or before */
+	d *= (INT64) factor;
+#else
 	d *= factor;
+#endif
+
 	return double_to_mame_time(d);
 }
 
