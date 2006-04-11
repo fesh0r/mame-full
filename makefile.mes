@@ -113,7 +113,6 @@ AR = @ar
 CC = @gcc
 LD = @gcc
 ASM = @nasm
-DASM = @gcc -S
 HHC = @-hhc
 ASMFLAGS = -f coff
 MD = -mkdir.exe
@@ -500,37 +499,30 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGSOSDEPEND) $< -o $(@:%.o=%.S)
-endif
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
 
 $(OBJ)/%.pp: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
+
+$(OBJ)/%.S: src/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
 $(OBJ)/mess/%.o: mess/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
 
 $(OBJ)/mess/%.pp: mess/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
-endif
+
+$(OBJ)/mess/%.S: mess/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
