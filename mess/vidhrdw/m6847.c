@@ -1485,7 +1485,7 @@ static int get_scanline(void)
 
 
 
-static void prepare_scanline(int xpos)
+INLINE void prepare_scanline(int xpos)
 {
 	UINT8 attrs, data, attr;
 	int scanline;
@@ -1547,6 +1547,13 @@ static void prepare_scanline(int xpos)
 			}
 		}
 	}
+}
+
+
+
+void m6847_video_changed(void)
+{
+	/* do nothing right now */
 }
 
 

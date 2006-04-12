@@ -69,6 +69,7 @@ void m6847_init(const m6847_config *cfg);
 
 /* video update proc */
 VIDEO_UPDATE(m6847);
+void m6847_video_changed(void);
 
 /* timing functions */
 UINT64 m6847_time(m6847_timing_type timing);

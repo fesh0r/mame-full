@@ -89,7 +89,6 @@ static UINT8 gime_firq, gime_irq;
 static int cart_line, cart_inserted;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
-static WRITE8_HANDLER ( coco3_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
 static READ8_HANDLER ( d_pia1_cb1_r );
 static READ8_HANDLER ( d_pia1_pa_r );
@@ -270,7 +269,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 	/* PIA 1 */
 	{
 		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, 0, 0, d_pia1_cb1_r, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, coco3_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
+		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia1_firq_a, coco3_pia1_firq_b
 	}
 };
@@ -1307,6 +1306,8 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 
 static WRITE8_HANDLER( d_pia1_pb_w )
 {
+	m6847_video_changed();
+
 	/* PB1 will drive the sound output.  This is a rarely
 	 * used single bit sound mode. It is always connected thus
 	 * cannot be disabled.
@@ -1477,13 +1478,6 @@ WRITE8_HANDLER(wd2797_w)
 			wd179x_set_side((data & 0x02) ? 1 : 0);
 			break;
 	};
-}
-
-
-
-static WRITE8_HANDLER( coco3_pia1_pb_w )
-{
-	d_pia1_pb_w(0, data);
 }
 
 
