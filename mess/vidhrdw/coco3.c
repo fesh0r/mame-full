@@ -81,6 +81,7 @@ struct _coco3_video
 	UINT8 line_in_row;
 	UINT8 blink;
 	UINT8 dirty;
+	UINT8 video_type;
 
 	/* video state; every scanline the video state for the scanline is copied
 	 * here and only rendered in VIDEO_UPDATE */
@@ -108,13 +109,14 @@ static coco3_video *video;
  *
  *************************************/
 
-static UINT32 color(int index)
+static void color_batch(UINT32 *results, const UINT8 *indexes, int count)
 {
 	UINT32 c;
 	const UINT32 *current_palette;
 	int is_black_white;
+	int i;
 
-	if (readinputportbytag("video_type"))
+	if (video->video_type)
 	{
 		/* RGB */
 		current_palette = video->rgb_palette;
@@ -127,19 +129,32 @@ static UINT32 color(int index)
 		is_black_white = (coco3_gimereg[8] & 0x10) ? TRUE : FALSE;
 	}
 
-	c = current_palette[index & 0x3F];
-
-	if (is_black_white)
+	for (i = 0; i < count; i++)
 	{
-		/* We are on a composite monitor/TV and the monochrome phase invert
-		 * flag is on in the GIME.  This means we have to average out all
-		 * colors
-		 */
-		UINT32 red   = ((c & 0xFF0000) >> 16);
-		UINT32 green = ((c & 0x00FF00) >>  8);
-		UINT32 blue  = ((c & 0x0000FF) >>  0);
-		c = (red + green + blue) / 3;
+		c = current_palette[indexes[i] & 0x3F];
+	
+		if (is_black_white)
+		{
+			/* We are on a composite monitor/TV and the monochrome phase invert
+			 * flag is on in the GIME.  This means we have to average out all
+			 * colors
+			 */
+			UINT32 red   = ((c & 0xFF0000) >> 16);
+			UINT32 green = ((c & 0x00FF00) >>  8);
+			UINT32 blue  = ((c & 0x0000FF) >>  0);
+			c = (red + green + blue) / 3;
+		}
+		
+		results[i] = c;
 	}
+}
+
+
+
+static UINT32 color(UINT8 index)
+{
+	UINT32 c;
+	color_batch(&c, &index, 1);
 	return c;
 }
 
@@ -268,8 +283,7 @@ INLINE void graphics_mode(UINT32 *RESTRICT line, const coco3_scanline_record *sc
 	UINT32 c;
 	UINT32 colors[16];
 
-	for (i = 0; i < (1 << bpp); i++)
-		colors[i] = color(scanline_record->palette[i]);
+	color_batch(colors, scanline_record->palette, 1 << bpp);
 
 	for (i = 0; i < byte_count; i++)
 	{
@@ -413,6 +427,9 @@ VIDEO_UPDATE( coco3 )
 		/* CoCo 3 graphics */
 		if (video->dirty)
 		{
+			/* placing this here, so its only read once */
+			video->video_type = (UINT8) readinputportbytag("video_type");
+			
 			for (row = cliprect->min_y; row <= cliprect->max_y; row++)
 				coco3_render_scanline(bitmap, row);
 			video->dirty = FALSE;
