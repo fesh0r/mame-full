@@ -7871,10 +7871,6 @@
 		<year>1987</year>
 		<manufacturer>Taito</manufacturer>
 	</hash>
-	<hash crc32="00d36af6" md5="2d594d9ebfb36faba7eea3c6b4e55dc8" name="Arkanoid II - Revenge Of DOH (Jp-En)[a]">
-		<year>1987</year>
-		<manufacturer>Taito</manufacturer>
-	</hash>
 	<hash crc32="846d9863" md5="fd462e58d7d9f6cbec959f1bb40447fd" name="Arkanoid II - Revenge Of DOH (Jp-En)">
 		<status>KNOWN BAD DUMP</status>
 	</hash>
@@ -8262,10 +8258,6 @@
 	<hash crc32="4708bdd1" md5="df9d9e1dd54409d5b35339ea60b1045e" name="Hole In One Special (Jp)">
 		<status>KNOWN BAD DUMP</status>
 	</hash>
-	<hash crc32="00db86c8" md5="c8f2a1a93f852096eaebaa18e59350cf" name="Hydlide III - The Space Memories (Jp)">
-		<year>1987</year>
-		<manufacturer>T&amp;E Soft</manufacturer>
-	</hash>
 	<hash crc32="935f1bde" md5="77a23da8af09ccb05f19ca50e717875b" name="Ide Yousuke No Jissen Mahjong (Jp)">
 		<year>1988</year>
 		<manufacturer>Capcom</manufacturer>
@@ -8283,10 +8275,6 @@
 	<hash crc32="8bc34dca" md5="6c3ac4fc067d82977a11611ec29ae4c4" name="Isin No Arashi (Jp)">
 		<year>1989</year>
 		<manufacturer>Koei</manufacturer>
-	</hash>
-	<hash crc32="00b8e82e" md5="d9c9ee473b5e1e372b2b53a3c9558d5f" name="Jyansei (Jp)">
-		<year>1986</year>
-		<manufacturer>Sony Corp</manufacturer>
 	</hash>
 	<hash crc32="c8ff3829" md5="45fc6994d275524482f28696824b0d96" name="Jyanyuu (Jp)">
 		<year>1987</year>
@@ -8894,4 +8882,3 @@
 		<manufacturer>Hal Lab</manufacturer>
 	</hash>
 </hashfile>
-

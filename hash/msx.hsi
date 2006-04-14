@@ -163,11 +163,6 @@
 		<extrainfo>0</extrainfo>
 	</hash>
 	<hash crc32="055254e0" name="Alpha Squadron">
-		<year>1984</year>
-		<manufacturer>Sony</manufacturer>
-		<extrainfo>0</extrainfo>
-	</hash>
-	<hash crc32="055254e0" name="Alpha Squadron">
 		<manufacturer>AG Corp.</manufacturer>
 		<year>1984</year>
 		<extrainfo>0</extrainfo>
@@ -494,11 +489,6 @@
 	<hash crc32="042ad44d" name="Bomberman Special">
 		<manufacturer>Hudson soft</manufacturer>
 		<year>1986</year>
-		<extrainfo>0</extrainfo>
-	</hash>
-	<hash crc32="042ad44d" name="Bomberman Special">
-		<year>1986</year>
-		<manufacturer>Hudson</manufacturer>
 		<extrainfo>0</extrainfo>
 	</hash>
 	<hash crc32="90ccea11" name="Boogie Woogi Jungle">
@@ -1893,14 +1883,8 @@
 		<extrainfo>4</extrainfo>
 	</hash>
 	<hash crc32="00c5d5b5" name="Hydlide 3">
-		<manufacturer>T&amp;E Soft</manufacturer>
-		<year>1987</year>
-		<extrainfo>7</extrainfo>
-	</hash>
-	<hash crc32="00c5d5b5" name="Hydlide 3">
 		<year>1987</year>
 		<manufacturer>T&amp;E Soft</manufacturer>
-		<status> Not Playable</status>
 		<extrainfo>4</extrainfo>
 	</hash>
 	<hash crc32="fef1d8fa" name="Hyper Olympic 1">
@@ -4573,5 +4557,4 @@
 		<manufacturer>Pony Cannon</manufacturer>
 		<extrainfo>0</extrainfo>
 	</hash>
-
 </hashfile>
