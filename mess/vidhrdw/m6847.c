@@ -37,6 +37,9 @@
 	Horizontal Sync:  Total Period: 227.5 clock cycles
 		@ CLK(0) + DHS_F			- falling edge (high to low)
 		@ CLK(16.5) + DHS_R			- rising edge (low to high)
+		@ CLK(42)					- left border start
+		@ CLK(71.5)					- body start
+		@ CLK(199.5)				- right border start
 		@ CLK(227.5) + DHS_F		- falling edge (high to low)
 		...
 
@@ -63,9 +66,14 @@
 #include "m6847.h"
 #include "inputx.h"
 
-#define LOG_FS		0
-#define LOG_HS		0
-#define LOG_STATS	0
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
+#endif
+
+#define LOG_FS			0
+#define LOG_HS			0
+#define LOG_STATS		0
+#define LOG_PREPARE		1
 
 #if defined(__GNUC__) && (__GNUC__ >= 3)
 #define RESTRICT	__restrict__
@@ -132,9 +140,6 @@ struct _m6847_vdg
 	unsigned int has_lowercase : 1;			/* M6847T1 has lower case */
 	unsigned int has_custom_palette : 1;	/* needed for CoCo 3 */
 	unsigned int text_offset : 2;			/* needed for CoCo 3 */
-
-	/* time at which the current frame began; used for scanline calculation */
-	mame_time frame_begin;
 
 	/* video state; every scanline the video state for the scanline is copied
 	 * here and only rendered in VIDEO_UPDATE */
@@ -1448,7 +1453,7 @@ static void artifacting_changed(void *param, UINT32 val, UINT32 mask)
 
 INPUT_PORTS_START( m6847_artifacting )
 	PORT_START_TAG("artifacting")
-	PORT_CONFNAME( 0x03, 0x00, "Artifacting" )
+	PORT_CONFNAME( 0x03, 0x01, "Artifacting" )
 	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
 	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
 	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
@@ -1468,7 +1473,9 @@ static int get_scanline(void)
 	mame_time duration;
 
 	/* get the time since last field sync */
-	duration = sub_mame_times(mame_timer_get_time(), m6847->frame_begin);
+	duration = sub_mame_times(
+		mame_timer_starttime(m6847->hs_rise_timer),
+		mame_timer_starttime(m6847->fs_rise_timer));
 	assert_always(duration.seconds == 0, "get_scanline(): duration exceeds one second");
 
 	if (duration.subseconds < m6847->vblank_period)
@@ -1485,6 +1492,42 @@ static int get_scanline(void)
 
 
 
+static int get_beamx(void)
+{
+	mame_time scanline_time;
+	int result;
+
+	scanline_time = mame_timer_timeelapsed(m6847->hs_rise_timer);
+	if (scanline_time.seconds != 0)
+		return 0;
+	assert(scanline_time.subseconds < m6847->scanline_period);
+
+	if (scanline_time.subseconds < (m6847->clock_period * 42))
+	{
+		/* hsync */
+		result = 0;
+	}
+	else if (scanline_time.subseconds < (m6847->clock_period * 95 / 2))
+	{
+		/* left border */
+		result = 0;
+	}
+	else if (scanline_time.subseconds < (m6847->clock_period * 351 / 2))
+	{
+		/* body */
+		result = (scanline_time.subseconds - (m6847->clock_period * 95 / 2))
+			/ m6847->clock_period * 2;
+	}
+	else
+	{
+		/* right border */
+		result = 256;
+	}
+	return result;
+}
+
+
+
 INLINE void prepare_scanline(int xpos)
 {
 	UINT8 attrs, data, attr;
@@ -1495,6 +1538,10 @@ INLINE void prepare_scanline(int xpos)
 	m6847_pixel *scanline_data;
 
 	scanline = get_scanline();
+
+	if (LOG_PREPARE)
+		logerror("m6847_prepare_scanline(): scanline=%d xpos=%d\n", scanline, xpos);
+
 	if ((scanline >= 0) && (scanline < (m6847->top_border_scanlines
 		+ m6847->display_scanlines + m6847->bottom_border_scanlines)))
 	{
@@ -1553,7 +1600,7 @@ INLINE void prepare_scanline(int xpos)
 
 void m6847_video_changed(void)
 {
-	/* do nothing right now */
+	prepare_scanline(get_beamx() / 8);
 }
 
 
@@ -1569,7 +1616,7 @@ static void set_horizontal_sync(void)
 	mame_time fire_time = mame_timer_firetime(m6847->hs_fall_timer);
 	int horizontal_sync = compare_mame_times(fire_time, mame_timer_get_time()) > 0;
 	if (m6847->horizontal_sync_callback)
-		m6847->horizontal_sync_callback(horizontal_sync);
+		m6847->horizontal_sync_callback(!horizontal_sync);
 }
 
 static void set_field_sync(void)
@@ -1625,8 +1672,6 @@ static void fs_rise(int dummy)
 	if (LOG_FS)
 		logerror("fs_rise(): time=%g scanline=%d\n", timer_get_time(), get_scanline());
 
-	m6847->frame_begin = mame_timer_get_time();
-
 	/* adjust field sync falling edge timer */
 	mame_timer_adjust(m6847->fs_fall_timer,
 		make_mame_time(0, m6847->field_sync_period),
@@ -1643,6 +1688,42 @@ static void fs_rise(int dummy)
 }
 
 
+
+/*************************************
+ *
+ *  Debugging
+ *
+ *************************************/
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+
+static void execute_dumpscanline(int ref, int params, const char **param)
+{
+	int i;
+	int beamx = get_beamx() / 8;
+	int scanline = get_scanline();
+	const m6847_pixel *pixel = m6847->screendata[scanline];
+
+	for (i = 0; i < beamx; i++)
+	{
+		debug_console_printf("[%02d]: 0x%02X (", i, pixel[i].data);
+
+		if (pixel[i].attr & M6847_AG)		debug_console_printf(" AG");
+		if (pixel[i].attr & M6847_AS)		debug_console_printf(" AS");
+		if (pixel[i].attr & M6847_INTEXT)	debug_console_printf(" INTEXT");
+		if (pixel[i].attr & M6847_INV)		debug_console_printf(" INV");
+		if (pixel[i].attr & M6847_CSS)		debug_console_printf(" CSS");
+		if (pixel[i].attr & M6847_GM2)		debug_console_printf(" GM2");
+		if (pixel[i].attr & M6847_GM1)		debug_console_printf(" GM1");
+		if (pixel[i].attr & M6847_GM0)		debug_console_printf(" GM0");
+
+		debug_console_printf(" )\n");
+	}
+}
+
+
+
+#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
 
 /*************************************
  *
@@ -1831,7 +1912,7 @@ void m6847_init(const m6847_config *cfg)
 	m6847->clock_period = period * GROSS_FACTOR;
 	m6847->scanline_period = period * (UINT32) (v->clocks_per_scanline * GROSS_FACTOR);
 	m6847->field_sync_period = period * (UINT32) (v->clocks_per_scanline * v->field_sync_scanlines * GROSS_FACTOR);
-	m6847->horizontal_sync_period = m6847->scanline_period / 100;
+	m6847->horizontal_sync_period = period * GROSS_FACTOR * 33 / 2;
 	m6847->vblank_period = period * (UINT32) (v->clocks_per_scanline * v->vblank_scanlines * GROSS_FACTOR);
 
 	/* setup timing */
@@ -1840,8 +1921,6 @@ void m6847_init(const m6847_config *cfg)
 	mame_timer_adjust(m6847->fs_rise_timer, time_zero, 0, make_mame_time(0, frame_period));
 
 	/* setup save states */
-	state_save_register_item("m6847", 0, m6847->frame_begin.seconds);
-	state_save_register_item("m6847", 0, m6847->frame_begin.subseconds);
 	state_save_register_func_postload(set_field_sync);
 	state_save_register_func_postload(set_horizontal_sync);
 	state_save_register_func_postload(set_dirty);
@@ -1868,6 +1947,11 @@ void m6847_init(const m6847_config *cfg)
 		logerror("\tframe:      %30s sec\n", mame_time_string(make_mame_time(0, frame_period)));
 		logerror("\n");
 	}
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	/* setup debug commands */
+	debug_console_register_command("m6847_dumpscanline", CMDFLAG_NONE, 0, 0, 0, execute_dumpscanline);
+#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
 }
 
 

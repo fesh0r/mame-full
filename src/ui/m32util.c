@@ -314,7 +314,7 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 			machine_config drv;
 			const input_port_entry *input_ports;
 			int speakernum, num_speakers;
-			gameinfo->isClone = ((gamedrv->clone_of->flags & NOT_A_DRIVER) == 0);
+			gameinfo->isClone = driver_get_clone(gamedrv) != NULL;
 			gameinfo->isBroken = ((gamedrv->flags & GAME_NOT_WORKING) != 0);
 			gameinfo->supportsSaveState = ((gamedrv->flags & GAME_SUPPORTS_SAVE) != 0);
 			gameinfo->isHarddisk = FALSE;

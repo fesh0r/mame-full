@@ -76,7 +76,7 @@ const game_driver *test_drivers[] =
 #define TESTDRIVER(NAME)
 #define NOBODY(NAME)
 #endif
-const game_driver *drivers[] =
+const game_driver * const drivers[] =
 {
 #include "system.c"
   0             /* end of array */

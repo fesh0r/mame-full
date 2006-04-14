@@ -330,8 +330,8 @@ void mess_config_init(void)
 
 const game_driver *mess_next_compatible_driver(const game_driver *drv)
 {
-	if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
-		drv = drv->clone_of;
+	if (driver_get_clone(drv))
+		drv = driver_get_clone(drv);
 	else if (drv->compatible_with && !(drv->compatible_with->flags & NOT_A_DRIVER))
 		drv = drv->compatible_with;
 	else

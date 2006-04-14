@@ -614,7 +614,7 @@ int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
                         {
                                 err = load_datafile_text (gdrv, buffer, bufsize,
                                                                                   hist_idx, DATAFILE_TAG_BIO);
-                                gdrv = gdrv->clone_of;
+                                gdrv = driver_get_clone(gdrv);
                         } while (err && gdrv);
 
                         if (err) history = 0;
@@ -645,7 +645,7 @@ int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
                         {
                                 err = load_datafile_text (gdrv, buffer+len, bufsize-len,
                                                                                   mame_idx, DATAFILE_TAG_MAME);
-                                gdrv = gdrv->clone_of;
+                                gdrv = driver_get_clone(gdrv);
                         } while (err && gdrv);
 
                         if (err) mameinfo = 0;

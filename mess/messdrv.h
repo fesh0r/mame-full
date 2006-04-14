@@ -85,7 +85,7 @@ extern const game_driver driver_##NAME;   \
 const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
-	&driver_##PARENT,						\
+	#PARENT,								\
 	#NAME,									\
 	system_bios_0,							\
 	FULLNAME,								\
@@ -107,7 +107,7 @@ extern const game_driver driver_##NAME;   \
 const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
-	&driver_##PARENT,						\
+	#PARENT,								\
 	#NAME,									\
 	system_bios_##BIOS,						\
 	FULLNAME,								\
@@ -129,7 +129,7 @@ extern const game_driver driver_##NAME;   \
 const game_driver driver_##NAME = 	\
 {											\
 	__FILE__,								\
-	&driver_##PARENT,						\
+	#PARENT,								\
 	#NAME,									\
 	system_bios_0,							\
 	FULLNAME,								\

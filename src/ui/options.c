@@ -959,7 +959,7 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	//Sync in parent settings if it has one
 	if( DriverIsClone(driver_index))
 	{
-		parent_index = GetDriverIndex(drivers[driver_index]->clone_of);
+		parent_index = GetDriverIndex(driver_get_clone(drivers[driver_index]));
 		LoadSettingsFile(parent_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
 	}
 
@@ -3097,7 +3097,7 @@ BOOL GetGameUsesDefaults(int driver_index)
 
 	if ((driver_index >= 0) && DriverIsClone(driver_index))
 	{
-		nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
+		nParentIndex = GetGameNameIndex( driver_get_clone(drivers[driver_index])->name );
 		if( nParentIndex >= 0)
 			opts = GetGameOptions(nParentIndex, FALSE);
 		else
@@ -3122,7 +3122,7 @@ void SaveGameOptions(int driver_index)
 	{
 		if( DriverIsClone(driver_index) )
 		{
-			nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
+			nParentIndex = GetGameNameIndex( driver_get_clone(drivers[driver_index])->name );
 			if( nParentIndex >= 0)
 				CopyGameOptions(GetGameOptions(nParentIndex, FALSE), &Opts );
 			else

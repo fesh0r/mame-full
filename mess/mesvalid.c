@@ -210,7 +210,7 @@ int mess_validitychecks(void)
 		devices = devices_allocate(drivers[i]);
 
 		/* make sure that there are no clones that reference nonexistant drivers */
-		if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+		if (driver_get_clone(drivers[i]))
 		{
 			if (drivers[i]->compatible_with && !(drivers[i]->compatible_with->flags & NOT_A_DRIVER))
 			{
@@ -220,12 +220,12 @@ int mess_validitychecks(void)
 
 			for (j = 0; drivers[j]; j++)
 			{
-				if (drivers[i]->clone_of == drivers[j])
+				if (driver_get_clone(drivers[i]) == drivers[j])
 					break;
 			}
 			if (!drivers[j])
 			{
-				printf("%s: is a clone of %s, which is not in drivers[]\n", drivers[i]->name, drivers[i]->clone_of->name);
+				printf("%s: is a clone of %s, which is not in drivers[]\n", drivers[i]->name, driver_get_clone(drivers[i])->name);
 				error = 1;
 			}
 		}

@@ -266,7 +266,7 @@ static int GetMessIcon(int nGame, int nSoftwareType)
         nIconPos = mess_icon_index[the_index];
         if (nIconPos >= 0)
 		{
-			for (drv = drivers[nGame]; drv; drv = drv->clone_of)
+			for (drv = drivers[nGame]; drv; drv = driver_get_clone(drv))
 			{
 				_snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s/%s", drv->name, iconname);
 				hIcon = LoadIconFromFile(buffer);

@@ -253,10 +253,10 @@ static void snes_machine_stop(void)
 		snes_save_sram();
 }
 
-static MACHINE_START( snes )
+static MACHINE_START( snes_mess )
 {
 	add_exit_callback(snes_machine_stop);
-	return 0;
+	return machine_start_snes();
 }
 
 static int device_load_snes_cart(mess_image *image, mame_file *file)
@@ -480,7 +480,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
 	MDRV_INTERLEAVE(800)
 
-	MDRV_MACHINE_START( snes )
+	MDRV_MACHINE_START( snes_mess )
 	MDRV_MACHINE_RESET( snes )
 
 	/* video hardware */

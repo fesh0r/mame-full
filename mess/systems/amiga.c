@@ -181,10 +181,8 @@ static UINT16 amiga_read_dskbytr(void)
 
 static void amiga_write_dsklen(UINT16 data)
 {
-	extern custom_regs_def custom_regs;
-
 	if ( data & 0x8000 ) {
-		if ( custom_regs.DSKLEN & 0x8000 )
+		if ( CUSTOM_REG(REG_DSKLEN) & 0x8000 )
 			amiga_fdc_setup_dma();
 	}
 }

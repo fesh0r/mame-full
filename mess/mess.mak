@@ -401,6 +401,7 @@ $(OBJ)/nintendo.a:					\
 $(OBJ)/amiga.a: \
 	$(OBJ)/vidhrdw/amiga.o			\
 	$(OBJ)/machine/amiga.o			\
+	$(OBJ)/sndhrdw/amiga.o			\
 	$(OBJ)/mess/machine/amigafdc.o	\
 	$(OBJ)/mess/systems/amiga.o
 

@@ -112,7 +112,7 @@ static mame_file *mess_load_artwork_file(const game_driver **driver)
 			if (artfile)
 				break;
 		}
-		*driver = (*driver)->clone_of;
+		*driver = driver_get_clone(*driver);
 	}
 	return artfile;
 }

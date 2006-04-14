@@ -20,7 +20,9 @@
 # build rules will be included from $(TARGET).mak
 #-------------------------------------------------
 
+ifndef TARGET
 TARGET = mame
+endif
 
 
 
@@ -29,7 +31,9 @@ TARGET = mame
 # build rules will be includes from $(MAMEOS)/$(MAMEOS).mak
 #-------------------------------------------------
 
+ifndef MAMEOS
 MAMEOS = windows
+endif
 
 
 
@@ -410,6 +414,10 @@ $(OBJ)/%.o: src/%.c
 $(OBJ)/%.pp: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
+
+$(OBJ)/%.s: src/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
 $(OBJ)/%.a:
 	@echo Archiving $@...

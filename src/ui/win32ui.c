@@ -1851,9 +1851,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	for (i = 0; i < game_count; i++)
 	{
 		parent_index[i] = -1;
-		if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+		if (driver_get_clone(drivers[i]))
 		{
-			if (drivers[i]->clone_of == drivers[j])
+			if (driver_get_clone(drivers[i]) == drivers[j])
 			{
 				parent_index[i] = j;
 			}
@@ -1861,7 +1861,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 			{
 				for (j = 0; j < game_count; j++)
 				{
-					if (drivers[i]->clone_of == drivers[j])
+					if (driver_get_clone(drivers[i]) == drivers[j])
 					{
 						parent_index[i] = j;
 						break;
@@ -2580,7 +2580,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 				for (nGameIndex = 0; drivers[nGameIndex]; nGameIndex++)
 				{
-					for (drv = drivers[nGameIndex]; drv; drv = drv->clone_of)
+					for (drv = drivers[nGameIndex]; drv; drv = driver_get_clone(drv))
 					{
 						if (!mame_stricmp(drv->name, szFileName))
 						{
@@ -3418,7 +3418,7 @@ static void PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 static LPCSTR GetCloneParentName(int nItem)
 {
 	if (DriverIsClone(nItem) == TRUE)
-		return ModifyThe(drivers[nItem]->clone_of->description);
+		return ModifyThe(driver_get_clone(drivers[nItem])->description);
 	return "";
 }
 
@@ -4955,11 +4955,11 @@ static void AddDriverIcon(int nItem,int default_icon_index)
 		return;
 
 	hIcon = LoadIconFromFile((char *)drivers[nItem]->name);
-	if (hIcon == NULL && drivers[nItem]->clone_of != NULL)
+	if (hIcon == NULL && driver_get_clone(drivers[nItem]) != NULL)
 	{
-		hIcon = LoadIconFromFile((char *)drivers[nItem]->clone_of->name);
-		if (hIcon == NULL && drivers[nItem]->clone_of->clone_of != NULL)
-			hIcon = LoadIconFromFile((char *)drivers[nItem]->clone_of->clone_of->name);
+		hIcon = LoadIconFromFile((char *)driver_get_clone(drivers[nItem])->name);
+		if (hIcon == NULL && driver_get_clone(driver_get_clone(drivers[nItem])) != NULL)
+			hIcon = LoadIconFromFile((char *)driver_get_clone(driver_get_clone(drivers[nItem]))->name);
 	}
 
 	if (hIcon != NULL)
@@ -7089,7 +7089,7 @@ BOOL SendIconToEmulationWindow(int nGameIndex)
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			hIcon = LoadIconFromFile(drivers[nGameIndex]->clone_of->name); 
+			hIcon = LoadIconFromFile(driver_get_clone(drivers[nGameIndex])->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
@@ -7176,7 +7176,7 @@ void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			hIcon = LoadIconFromFile(drivers[nGameIndex]->clone_of->name); 
+			hIcon = LoadIconFromFile(driver_get_clone(drivers[nGameIndex])->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 

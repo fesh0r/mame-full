@@ -955,8 +955,8 @@ static char *GameInfoCloneOf(UINT nIndex)
 	if (DriverIsClone(nIndex))
 	{
 		sprintf(buf, "%s - \"%s\"",
-				ConvertAmpersandString(ModifyThe(drivers[nIndex]->clone_of->description)),
-				drivers[nIndex]->clone_of->name); 
+				ConvertAmpersandString(ModifyThe(driver_get_clone(drivers[nIndex])->description)),
+				driver_get_clone(drivers[nIndex])->name); 
 	}
 
 	return buf;
@@ -1195,7 +1195,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						if( DriverIsClone(g_nGame) )
 						{
 							int nParentIndex = -1;
-							nParentIndex = GetGameNameIndex( drivers[g_nGame]->clone_of->name );
+							nParentIndex = GetGameNameIndex( driver_get_clone(drivers[g_nGame])->name );
 							if( nParentIndex >= 0)
 								CopyGameOptions(GetGameOptions(nParentIndex, g_nFolder), pGameOpts );
 							else
@@ -1386,7 +1386,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		{
 			if( DriverIsClone(g_nGame) )
 			{
-				nParentIndex = GetGameNameIndex( drivers[g_nGame]->clone_of->name );
+				nParentIndex = GetGameNameIndex( driver_get_clone(drivers[g_nGame])->name );
 			}
 		}
 		//Set the Coloring of the elements

@@ -12,7 +12,7 @@ extern void rdp_process_list(void);
 
 extern void signal_rcp_interrupt(int interrupt);
 extern void clear_rcp_interrupt(int interrupt);
-	
+
 
 #define SP_INTERRUPT	0x1
 #define SI_INTERRUPT	0x2
