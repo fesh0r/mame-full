@@ -68,6 +68,7 @@
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcpu.h"
+#include "debug/debugcon.h"
 #endif
 
 #define LOG_FS			0
