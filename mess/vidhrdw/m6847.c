@@ -76,12 +76,6 @@
 #define LOG_STATS		0
 #define LOG_PREPARE		1
 
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-#define RESTRICT	__restrict__
-#else /* !__GNUC__ */
-#define RESTRICT
-#endif /* __GNUC__ */
-
 typedef struct _m6847_variant m6847_variant;
 struct _m6847_variant
 {
