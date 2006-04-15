@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "f8.h"
 
 static const char *rname[16] = {

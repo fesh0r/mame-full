@@ -3,7 +3,7 @@
 
 #include "cpuintrf.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "tms7000.h"
 
 typedef enum { DONE, NONE, UI8, I8, UI16, I16, PCREL, PCABS, TRAP } operandtype;

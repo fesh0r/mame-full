@@ -376,10 +376,7 @@ all: maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) $(MESSTOOLS)
 
 include src/core.mak
 include mess/$(TARGET).mak
-include src/cpu/cpu.mak
-include src/sound/sound.mak
-include mess/cpu/cpu.mak
-include mess/sound/sound.mak
+
 ifeq ($(MAMEOS),windows)
 include mess/tools/imgtool/windows/wimgtool.mak
 endif
@@ -388,6 +385,11 @@ include mess/$(MAMEOS)/$(MAMEOS).mak
 else
 include src/$(MAMEOS)/$(MAMEOS).mak
 endif
+
+include src/cpu/cpu.mak
+include src/sound/sound.mak
+include mess/cpu/cpu.mak
+include mess/sound/sound.mak
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)

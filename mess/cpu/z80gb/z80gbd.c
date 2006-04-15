@@ -23,7 +23,7 @@
 #include <string.h>
 #include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "z80gb.h"
 
 enum e_mnemonics

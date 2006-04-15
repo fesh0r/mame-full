@@ -24,7 +24,7 @@
 #include <assert.h>
 #include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 
 #include "saturn.h"
 #include "sat.h"
