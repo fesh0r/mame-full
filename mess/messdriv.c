@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  driver.c
+  messdriv.c
 
   The list of all available drivers. Drivers have to be included here to be
   recognized by the executable.
@@ -62,7 +62,7 @@ const game_driver *test_drivers[] =
 #define DRIVER(NAME) extern const game_driver driver_##NAME;
 #define TESTDRIVER(NAME) extern const game_driver driver_##NAME;
 #define NOBODY(NAME) extern const game_driver driver_##NAME;
-#include "system.c"
+#include "messdriv.c"
 
 /* step 2: define the drivers[] array */
 #undef DRIVER
@@ -78,7 +78,7 @@ const game_driver *test_drivers[] =
 #endif
 const game_driver * const drivers[] =
 {
-#include "system.c"
+#include "messdriv.c"
   0             /* end of array */
 };
 
@@ -89,7 +89,7 @@ const game_driver * const drivers[] =
 #define TESTDRIVER(NAME) &driver_##NAME,
 const game_driver *test_drivers[] =
 {
-#include "system.c"
+#include "messdriv.c"
 	0	/* end of array */
 };
 

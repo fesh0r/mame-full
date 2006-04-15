@@ -966,7 +966,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/mess.o				\
 	$(OBJ)/mess/mesvalid.o			\
 	$(OBJ)/mess/image.o				\
-	$(OBJ)/mess/system.o			\
+	$(OBJ)/mess/messdriv.o			\
 	$(OBJ)/mess/device.o			\
 	$(OBJ)/mess/hashfile.o			\
 	$(OBJ)/mess/inputx.o			\
