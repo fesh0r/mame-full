@@ -14,8 +14,8 @@
 struct ImgtoolFloppyExtra
 {
 	const struct FloppyFormat *format;
-	imgtoolerr_t (*create)(imgtool_image *image, option_resolution *opts);
-	imgtoolerr_t (*open)(imgtool_image *img);
+	imgtoolerr_t (*create)(imgtool_image *image, imgtool_stream *stream, option_resolution *opts);
+	imgtoolerr_t (*open)(imgtool_image *image, imgtool_stream *stream);
 };
 
 
@@ -141,7 +141,7 @@ static imgtoolerr_t imgtool_floppy_open_internal(imgtool_image *image, imgtool_s
 
 	if (extra->open)
 	{
-		err = extra->open(image);
+		err = extra->open(image, NULL);
 		if (err)
 			return err;
 	}
@@ -181,7 +181,7 @@ static imgtoolerr_t imgtool_floppy_create(imgtool_image *image, imgtool_stream *
 	/* do we have to do extra stuff when creating the image? */
 	if (extra->create)
 	{
-		err = extra->create(image, opts);
+		err = extra->create(image, NULL, opts);
 		if (err)
 			goto done;
 	}
@@ -189,7 +189,7 @@ static imgtoolerr_t imgtool_floppy_create(imgtool_image *image, imgtool_stream *
 	/* do we have to do extra stuff when opening the image? */
 	if (extra->open)
 	{
-		err = extra->open(image);
+		err = extra->open(image, NULL);
 		if (err)
 			goto done;
 	}
@@ -248,13 +248,12 @@ imgtoolerr_t imgtool_floppy_write_sector(imgtool_image *image, UINT32 track, UIN
 
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,
 	const char *description, const struct FloppyFormat *format,
-	imgtoolerr_t (*populate)(imgtool_library *library, struct ImgtoolFloppyCallbacks *module))
+	void (*getinfo)(UINT32 state, union imgtoolinfo *info))
 {
 	imgtoolerr_t err;
 	struct ImageModule *module;
 	int format_index;
 	char buffer[512];
-	struct ImgtoolFloppyCallbacks floppy_callbacks;
 	struct ImgtoolFloppyExtra *extra;
 
 	for (format_index = 0; format[format_index].construct; format_index++)
@@ -288,50 +287,44 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 		module->read_sector				= imgtool_floppy_read_sector;
 		module->write_sector			= imgtool_floppy_write_sector;
 
-		if (populate)
+		if (getinfo)
 		{
-			memset(&floppy_callbacks, 0, sizeof(floppy_callbacks));
-			floppy_callbacks.image_extra_bytes = module->image_extra_bytes;
-			floppy_callbacks.imageenum_extra_bytes = module->imageenum_extra_bytes;
-			
-			populate(library, &floppy_callbacks);
-
-			extra->create						= floppy_callbacks.create;
-			extra->open							= floppy_callbacks.open;
-			module->eoln						= floppy_callbacks.eoln;
-			module->path_separator				= floppy_callbacks.path_separator;
-			module->alternate_path_separator	= floppy_callbacks.alternate_path_separator;
-			module->prefer_ucase				= floppy_callbacks.prefer_ucase;
-			module->initial_path_separator		= floppy_callbacks.initial_path_separator;
-			module->open_is_strict				= floppy_callbacks.open_is_strict;
-			module->supports_creation_time		= floppy_callbacks.supports_creation_time;
-			module->supports_lastmodified_time	= floppy_callbacks.supports_lastmodified_time;
-			module->tracks_are_called_cylinders	= floppy_callbacks.tracks_are_called_cylinders;
-			module->writing_untested			= floppy_callbacks.writing_untested;
-			module->creation_untested			= floppy_callbacks.creation_untested;
-			module->supports_bootblock			= floppy_callbacks.supports_bootblock;
-			module->info						= floppy_callbacks.info;
-			module->begin_enum					= floppy_callbacks.begin_enum;
-			module->next_enum					= floppy_callbacks.next_enum;
-			module->close_enum					= floppy_callbacks.close_enum;
-			module->free_space					= floppy_callbacks.free_space;
-			module->read_file					= floppy_callbacks.read_file;
-			module->write_file					= floppy_callbacks.write_file;
-			module->delete_file					= floppy_callbacks.delete_file;
-			module->list_forks					= floppy_callbacks.list_forks;
-			module->create_dir					= floppy_callbacks.create_dir;
-			module->delete_dir					= floppy_callbacks.delete_dir;
-			module->list_attrs					= floppy_callbacks.list_attrs;
-			module->get_attrs					= floppy_callbacks.get_attrs;
-			module->set_attrs					= floppy_callbacks.set_attrs;
-			module->attr_name					= floppy_callbacks.attr_name;
-			module->get_iconinfo				= floppy_callbacks.get_iconinfo;
-			module->suggest_transfer			= floppy_callbacks.suggest_transfer;
-			module->get_chain					= floppy_callbacks.get_chain;
-			module->writefile_optguide			= floppy_callbacks.writefile_optguide;
-			module->writefile_optspec			= floppy_callbacks.writefile_optspec;
-			module->image_extra_bytes			= floppy_callbacks.image_extra_bytes;
-			module->imageenum_extra_bytes		= floppy_callbacks.imageenum_extra_bytes;
+			extra->create						= (imgtoolerr_t	(*)(imgtool_image *, imgtool_stream *, option_resolution *)) imgtool_get_info_ptr(getinfo, IMGTOOLINFO_PTR_CREATE);
+			extra->open							= (imgtoolerr_t	(*)(imgtool_image *, imgtool_stream *)) imgtool_get_info_ptr(getinfo, IMGTOOLINFO_PTR_OPEN);
+			module->eoln						= imgtool_library_strdup(library, imgtool_get_info_ptr(getinfo, IMGTOOLINFO_STR_EOLN));
+			module->path_separator				= (char) imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_PATH_SEPARATOR);
+			module->alternate_path_separator	= (char) imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
+			module->prefer_ucase				= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
+			module->initial_path_separator		= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR) ? 1 : 0;
+			module->open_is_strict				= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_OPEN_IS_STRICT) ? 1 : 0;
+			module->supports_creation_time		= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME) ? 1 : 0;
+			module->supports_lastmodified_time	= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME) ? 1 : 0;
+			module->tracks_are_called_cylinders	= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_TRACKS_ARE_CALLED_CYLINDERS) ? 1 : 0;
+			module->writing_untested			= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_WRITING_UNTESTED) ? 1 : 0;
+			module->creation_untested			= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_CREATION_UNTESTED) ? 1 : 0;
+			module->supports_bootblock			= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK) ? 1 : 0;
+			module->info						= (void (*)(imgtool_image *, char *, size_t)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_INFO);
+			module->begin_enum					= (imgtoolerr_t (*)(imgtool_imageenum *, const char *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_BEGIN_ENUM);
+			module->next_enum					= (imgtoolerr_t (*)(imgtool_imageenum *, imgtool_dirent *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_NEXT_ENUM);
+			module->close_enum					= (void (*)(imgtool_imageenum *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_CLOSE_ENUM);
+			module->free_space					= (imgtoolerr_t (*)(imgtool_image *, UINT64 *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_FREE_SPACE);
+			module->read_file					= (imgtoolerr_t (*)(imgtool_image *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_READ_FILE);
+			module->write_file					= (imgtoolerr_t (*)(imgtool_image *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_WRITE_FILE);
+			module->delete_file					= (imgtoolerr_t (*)(imgtool_image *, const char *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_DELETE_FILE);
+			module->list_forks					= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_forkent *, size_t)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_LIST_FORKS);
+			module->create_dir					= (imgtoolerr_t (*)(imgtool_image *, const char *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_CREATE_DIR);
+			module->delete_dir					= (imgtoolerr_t (*)(imgtool_image *, const char *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_DELETE_DIR);
+			module->list_attrs					= (imgtoolerr_t (*)(imgtool_image *, const char *, UINT32 *, size_t)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_LIST_ATTRS);
+			module->get_attrs					= (imgtoolerr_t (*)(imgtool_image *, const char *, const UINT32 *, imgtool_attribute *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_GET_ATTRS);
+			module->set_attrs					= (imgtoolerr_t (*)(imgtool_image *, const char *, const UINT32 *, const imgtool_attribute *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_SET_ATTRS);
+			module->attr_name					= (imgtoolerr_t (*)(UINT32, const imgtool_attribute *, char *, size_t)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_ATTR_NAME);
+			module->get_iconinfo				= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_GET_ICON_INFO);
+			module->suggest_transfer			= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
+			module->get_chain					= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(getinfo, IMGTOOLINFO_PTR_GET_CHAIN);
+			module->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(getinfo, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+			module->writefile_optspec			= imgtool_library_strdup(library, imgtool_get_info_ptr(getinfo, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC));
+			module->image_extra_bytes			+= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES);
+			module->imageenum_extra_bytes		+= imgtool_get_info_int(getinfo, IMGTOOLINFO_INT_ENUM_EXTRA_BYTES);
 		}
 	}
 	return IMGTOOLERR_SUCCESS;

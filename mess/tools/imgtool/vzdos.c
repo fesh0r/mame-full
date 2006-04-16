@@ -788,9 +788,10 @@ static imgtoolerr_t vzdos_diskimage_suggesttransfer(imgtool_image *image, const 
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_create(imgtool_image *img, option_resolution *opts)
+static imgtoolerr_t vzdos_diskimage_create(imgtool_image *img, imgtool_stream *stream, option_resolution *opts)
 {
-	int ret, track, sector;
+	imgtoolerr_t ret;
+	int track, sector;
 
 	for (track = 0; track < 40; track++) {
 		for (sector = 0; sector < 16; sector++) {
@@ -924,23 +925,25 @@ W	E & F Word Pro with Patch 3.3 File	        End Addr D000H
 W	Russell Harrison Word Pro File              Except above two	
 */
 
-static imgtoolerr_t vzdos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void vzdos_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->prefer_ucase			= 1;
-	module->imageenum_extra_bytes  += sizeof(vz_iterator);
-	module->eoln					= NULL;
-	module->open					= NULL;
-	module->begin_enum				= vzdos_diskimage_beginenum;
-	module->next_enum				= vzdos_diskimage_nextenum;
-	module->free_space				= vzdos_diskimage_freespace;
-	module->read_file				= vzdos_diskimage_readfile;
-	module->write_file				= vzdos_diskimage_writefile;
-	module->delete_file				= vzdos_diskimage_deletefile;
-	module->create					= vzdos_diskimage_create;
-	module->writefile_optguide		= vzdos_writefile_optionguide;
-	module->writefile_optspec		= "T[0]-2;F[0]-1";
-	module->suggest_transfer        = vzdos_diskimage_suggesttransfer;
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_INT_PREFER_UCASE:					info->i = 1; break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(vz_iterator); break;
+		case IMGTOOLINFO_STR_EOLN:							info->s = NULL; break;
+		case IMGTOOLINFO_PTR_OPEN:							info->open = NULL; break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = vzdos_diskimage_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = vzdos_diskimage_nextenum; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = vzdos_diskimage_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = vzdos_diskimage_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = vzdos_diskimage_writefile; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = vzdos_diskimage_deletefile; break;
+		case IMGTOOLINFO_PTR_CREATE:						info->create = vzdos_diskimage_create; break;
+		case IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE:			info->writefile_optguide = vzdos_writefile_optionguide; break;
+		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T[0]-2;F[0]-1"); break;
+		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = vzdos_diskimage_suggesttransfer; break;
+	}
 }
 
 FLOPPYMODULE(vzdos, "VZ-DOS format", vz, vzdos_module_populate)

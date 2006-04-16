@@ -1525,7 +1525,7 @@ typedef struct mfs_dirref
 
 
 
-static imgtoolerr_t mfs_image_create(imgtool_image *image, option_resolution *opts)
+static imgtoolerr_t mfs_image_create(imgtool_image *image, imgtool_stream *stream, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	UINT8 buffer[512];
@@ -1589,7 +1589,7 @@ static imgtoolerr_t mfs_image_create(imgtool_image *image, option_resolution *op
 
 	Return imgtool error code
 */
-static imgtoolerr_t mfs_image_open(imgtool_image *image)
+static imgtoolerr_t mfs_image_open(imgtool_image *image, imgtool_stream *stream)
 {
 	imgtoolerr_t err;
 	mac_l2_imgref *l2_img;
@@ -3014,7 +3014,7 @@ static int hfs_catKey_compare(const void *p1, const void *p2)
 
 	Return imgtool error code
 */
-static imgtoolerr_t hfs_image_open(imgtool_image *image)
+static imgtoolerr_t hfs_image_open(imgtool_image *image, imgtool_stream *stream)
 {
 	imgtoolerr_t err;
 	mac_l2_imgref *l2_img;
@@ -6303,44 +6303,52 @@ static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *pa
  *
  *************************************/
 
-static imgtoolerr_t mac_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void mac_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->open_is_strict				= 1;
-	module->image_extra_bytes			+= sizeof(struct mac_l2_imgref);
-	module->imageenum_extra_bytes		+= sizeof(struct mac_iterator);
-	module->eoln						= EOLN_CR;
-	module->path_separator				= ':';
+	switch(state)
+	{
+		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct mac_l2_imgref); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct mac_iterator); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = ':'; break;
 
-/*	module->close						= mac_image_exit; */
-	module->info						= mac_image_info;
-	module->begin_enum					= mac_image_beginenum;
-	module->next_enum					= mac_image_nextenum;
-	module->free_space					= mac_image_freespace;
-	module->read_file					= mac_image_readfile;
-	module->list_forks					= mac_image_listforks;
-	module->get_attrs					= mac_image_getattrs;
-	module->set_attrs					= mac_image_setattrs;
-	module->get_iconinfo				= mac_image_geticoninfo;
-	module->suggest_transfer			= mac_image_suggesttransfer;
-	return IMGTOOLERR_SUCCESS;
+		case IMGTOOLINFO_PTR_CLOSE:							/* info->close = mac_image_exit */; break;
+		case IMGTOOLINFO_PTR_INFO:							info->info = mac_image_info; break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = mac_image_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = mac_image_nextenum; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = mac_image_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = mac_image_readfile; break;
+		case IMGTOOLINFO_PTR_LIST_FORKS:					info->list_forks = mac_image_listforks; break;
+		case IMGTOOLINFO_PTR_GET_ATTRS:						info->get_attrs = mac_image_getattrs; break;
+		case IMGTOOLINFO_PTR_SET_ATTRS:						info->set_attrs = mac_image_setattrs; break;
+		case IMGTOOLINFO_PTR_GET_ICON_INFO:					info->get_iconinfo = mac_image_geticoninfo; break;
+		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = mac_image_suggesttransfer; break;
+	}
 }
 
 
 
-static imgtoolerr_t mac_mfs_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void mac_mfs_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->create						= mfs_image_create;
-	module->open						= mfs_image_open;
-	module->write_file					= mac_image_writefile;
-	return mac_module_populate(library, module);
+	switch(state)
+	{
+		case IMGTOOLINFO_PTR_CREATE:						info->create = mfs_image_create; break;
+		case IMGTOOLINFO_PTR_OPEN:							info->open = mfs_image_open; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = mac_image_writefile; break;
+		default: mac_module_populate(state, info); break;
+	}
 }
 
 
 
-static imgtoolerr_t mac_hfs_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void mac_hfs_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->open						= hfs_image_open;
-	return mac_module_populate(library, module);
+	switch(state)
+	{
+		case IMGTOOLINFO_PTR_OPEN:							info->open = hfs_image_open; break;
+		default: mac_module_populate(state, info); break;
+	}
 }
 
 

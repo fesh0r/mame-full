@@ -393,3 +393,12 @@ done:
 	return error;
 }
 
+
+
+char *imgtool_temp_str(void)
+{
+	static int index;
+	static char temp_string_pool[32][256];
+	return temp_string_pool[index++ % (sizeof(temp_string_pool) / sizeof(temp_string_pool[0]))];
+}
+

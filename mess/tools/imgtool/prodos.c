@@ -499,7 +499,7 @@ static imgtoolerr_t prodos_diskimage_open(imgtool_image *image)
 
 
 
-static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image)
+static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image, imgtool_stream *stream)
 {
 	prodos_setprocs_525(image);
 	return prodos_diskimage_open(image);
@@ -507,7 +507,7 @@ static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image)
 
 
 
-static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
+static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image, imgtool_stream *stream)
 {
 	prodos_setprocs_35(image);
 	return prodos_diskimage_open(image);
@@ -699,7 +699,7 @@ static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolut
 
 
 
-static imgtoolerr_t prodos_diskimage_create_525(imgtool_image *image, option_resolution *opts)
+static imgtoolerr_t prodos_diskimage_create_525(imgtool_image *image, imgtool_stream *stream, option_resolution *opts)
 {
 	prodos_setprocs_525(image);
 	return prodos_diskimage_create(image, opts);
@@ -707,7 +707,7 @@ static imgtoolerr_t prodos_diskimage_create_525(imgtool_image *image, option_res
 
 
 
-static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, option_resolution *opts)
+static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, imgtool_stream *stream, option_resolution *opts)
 {
 	prodos_setprocs_35(image);
 	return prodos_diskimage_create(image, opts);
@@ -2193,51 +2193,57 @@ static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *
 
 
 
-static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void apple2_prodos_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->initial_path_separator		= 1;
-	module->open_is_strict				= 1;
-	module->supports_creation_time		= 1;
-	module->supports_lastmodified_time	= 1;
-	module->writing_untested			= 1;
-	module->image_extra_bytes			+= sizeof(struct prodos_diskinfo);
-	module->imageenum_extra_bytes		+= sizeof(struct prodos_direnum);
-	module->eoln						= EOLN_CR;
-	module->path_separator				= '/';
-	module->begin_enum					= prodos_diskimage_beginenum;
-	module->next_enum					= prodos_diskimage_nextenum;
-	module->free_space					= prodos_diskimage_freespace;
-	module->read_file					= prodos_diskimage_readfile;
-	module->write_file					= prodos_diskimage_writefile;
-	module->delete_file					= prodos_diskimage_deletefile;
-	module->list_forks					= prodos_diskimage_listforks;
-	module->create_dir					= prodos_diskimage_createdir;
-	module->delete_dir					= prodos_diskimage_deletedir;
-	module->get_attrs					= prodos_diskimage_getattrs;
-	module->set_attrs					= prodos_diskimage_setattrs;
-	module->suggest_transfer			= prodos_diskimage_suggesttransfer;
-	module->get_chain					= prodos_diskimage_getchain;
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR:		info->i = 1; break;
+		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
+		case IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME:		info->i = 1; break;
+		case IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME:	info->i = 1; break;
+		case IMGTOOLINFO_INT_WRITING_UNTESTED:				info->i = 1; break;
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct prodos_diskinfo); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct prodos_direnum); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '/'; break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = prodos_diskimage_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = prodos_diskimage_nextenum; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = prodos_diskimage_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = prodos_diskimage_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = prodos_diskimage_writefile; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = prodos_diskimage_deletefile; break;
+		case IMGTOOLINFO_PTR_LIST_FORKS:					info->list_forks = prodos_diskimage_listforks; break;
+		case IMGTOOLINFO_PTR_CREATE_DIR:					info->create_dir = prodos_diskimage_createdir; break;
+		case IMGTOOLINFO_PTR_DELETE_DIR:					info->delete_dir = prodos_diskimage_deletedir; break;
+		case IMGTOOLINFO_PTR_GET_ATTRS:						info->get_attrs = prodos_diskimage_getattrs; break;
+		case IMGTOOLINFO_PTR_SET_ATTRS:						info->set_attrs = prodos_diskimage_setattrs; break;
+		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = prodos_diskimage_suggesttransfer; break;
+		case IMGTOOLINFO_PTR_GET_CHAIN:						info->get_chain = prodos_diskimage_getchain; break;
+	}
 }
 
 
 
-static imgtoolerr_t apple2_prodos_module_populate_525(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void apple2_prodos_module_populate_525(UINT32 state, union imgtoolinfo *info)
 {
-	apple2_prodos_module_populate(library, module);
-	module->create = prodos_diskimage_create_525;
-	module->open = prodos_diskimage_open_525;
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_PTR_CREATE:						info->create = prodos_diskimage_create_525; break;
+		case IMGTOOLINFO_PTR_OPEN:							info->open = prodos_diskimage_open_525; break;
+		default:											apple2_prodos_module_populate(state, info); break;
+	}
 }
 
 
 
-static imgtoolerr_t apple2_prodos_module_populate_35(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void apple2_prodos_module_populate_35(UINT32 state, union imgtoolinfo *info)
 {
-	apple2_prodos_module_populate(library, module);
-	module->create = prodos_diskimage_create_35;
-	module->open = prodos_diskimage_open_35;
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_PTR_CREATE:						info->create = prodos_diskimage_create_35; break;
+		case IMGTOOLINFO_PTR_OPEN:							info->open = prodos_diskimage_open_35; break;
+		default:											apple2_prodos_module_populate(state, info); break;
+	}
 }
 
 

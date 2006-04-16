@@ -589,20 +589,22 @@ OPTION_GUIDE_END
 
 
 
-static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void coco_rsdos_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->prefer_ucase			= 1;
-	module->imageenum_extra_bytes	+= sizeof(struct rsdos_direnum);
-	module->eoln					= EOLN_CR;
-	module->next_enum				= rsdos_diskimage_nextenum;
-	module->free_space				= rsdos_diskimage_freespace;
-	module->read_file				= rsdos_diskimage_readfile;
-	module->write_file				= rsdos_diskimage_writefile;
-	module->delete_file				= rsdos_diskimage_deletefile;
-	module->suggest_transfer		= rsdos_diskimage_suggesttransfer;
-	module->writefile_optguide		= coco_rsdos_writefile_optionguide;
-	module->writefile_optspec		= "T0-[2]-3;M0-[1]";
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_INT_PREFER_UCASE:					info->i = 1; break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct rsdos_direnum); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = rsdos_diskimage_nextenum; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = rsdos_diskimage_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = rsdos_diskimage_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = rsdos_diskimage_writefile; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = rsdos_diskimage_deletefile; break;
+		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = rsdos_diskimage_suggesttransfer; break;
+		case IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE:			info->writefile_optguide = coco_rsdos_writefile_optionguide; break;
+		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T0-[2]-3;M0-[1]"); break;
+	}
 }
 
 

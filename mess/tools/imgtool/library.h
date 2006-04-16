@@ -139,6 +139,148 @@ typedef struct
 	UINT32 icon32x32[32][32];
 } imgtool_iconinfo;
 
+enum
+{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	IMGTOOLINFO_INT_FIRST = 0x00000,
+	IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES,
+	IMGTOOLINFO_INT_ENUM_EXTRA_BYTES,
+	IMGTOOLINFO_INT_PATH_SEPARATOR,
+	IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR,
+	IMGTOOLINFO_INT_PREFER_UCASE, 
+	IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR,
+	IMGTOOLINFO_INT_OPEN_IS_STRICT,
+	IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME,
+	IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME,
+	IMGTOOLINFO_INT_TRACKS_ARE_CALLED_CYLINDERS,
+	IMGTOOLINFO_INT_WRITING_UNTESTED,
+	IMGTOOLINFO_INT_CREATION_UNTESTED,
+	IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK,
+
+	IMGTOOLINFO_INT_DEV_SPECIFIC = 0x08000,					/* R/W: Device-specific values start here */
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	IMGTOOLINFO_PTR_FIRST = 0x10000,
+
+	IMGTOOLINFO_PTR_OPEN,
+	IMGTOOLINFO_PTR_CLOSE,
+	IMGTOOLINFO_PTR_INFO,
+	IMGTOOLINFO_PTR_BEGIN_ENUM,
+	IMGTOOLINFO_PTR_NEXT_ENUM,
+	IMGTOOLINFO_PTR_CLOSE_ENUM,
+	IMGTOOLINFO_PTR_FREE_SPACE,
+	IMGTOOLINFO_PTR_READ_FILE,
+	IMGTOOLINFO_PTR_WRITE_FILE,
+	IMGTOOLINFO_PTR_DELETE_FILE,
+	IMGTOOLINFO_PTR_LIST_FORKS,
+	IMGTOOLINFO_PTR_CREATE_DIR,
+	IMGTOOLINFO_PTR_DELETE_DIR,
+	IMGTOOLINFO_PTR_LIST_ATTRS,
+	IMGTOOLINFO_PTR_GET_ATTRS,
+	IMGTOOLINFO_PTR_SET_ATTRS,
+	IMGTOOLINFO_PTR_ATTR_NAME,
+	IMGTOOLINFO_PTR_GET_ICON_INFO,
+	IMGTOOLINFO_PTR_SUGGEST_TRANSFER,
+	IMGTOOLINFO_PTR_GET_CHAIN,
+	IMGTOOLINFO_PTR_CREATE,
+	IMGTOOLINFO_PTR_GET_SECTOR_SIZE,
+	IMGTOOLINFO_PTR_READ_SECTOR,
+	IMGTOOLINFO_PTR_WRITE_SECTOR,
+	IMGTOOLINFO_PTR_APPROVE_FILENAME_CHAR,
+	IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE,
+	IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE,
+
+	IMGTOOLINFO_PTR_DEV_SPECIFIC = 0x18000,					/* R/W: Device-specific values start here */
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	IMGTOOLINFO_STR_FIRST = 0x20000,
+
+	IMGTOOLINFO_STR_NAME,
+	IMGTOOLINFO_STR_DESCRIPTION,
+	IMGTOOLINFO_STR_FILE,
+	IMGTOOLINFO_STR_FILE_EXTENSIONS,
+	IMGTOOLINFO_STR_EOLN,
+	IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC,
+	IMGTOOLINFO_STR_WRITEFILE_OPTSPEC
+};
+
+
+
+union imgtoolinfo
+{
+	INT64	i;											/* generic integers */
+	void *	p;											/* generic pointers */
+	genf *  f;											/* generic function pointers */
+	char *	s;											/* generic strings */
+
+	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *sream);
+	void			(*close)		(imgtool_image *image);
+	void			(*info)			(imgtool_image *image, char *string, size_t len);
+	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)	(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *filename);
+	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
+	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*list_attrs)	(imgtool_image *image, const char *path, UINT32 *attrs, size_t len);
+	imgtoolerr_t	(*get_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
+	imgtoolerr_t	(*set_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+	imgtoolerr_t	(*attr_name)	(UINT32 attribute, const imgtool_attribute *attr, char *buffer, size_t buffer_len);
+	imgtoolerr_t	(*get_iconinfo)	(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
+	imgtoolerr_t	(*suggest_transfer)(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
+	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
+	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *stream, option_resolution *opts);
+	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
+	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
+	imgtoolerr_t	(*write_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
+	int				(*approve_filename_char)(unicode_char_t ch);
+
+	const struct OptionGuide *createimage_optguide;
+	const struct OptionGuide *writefile_optguide;
+};
+
+
+INLINE INT64 imgtool_get_info_int(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+{
+	union imgtoolinfo info;
+	info.i = 0;
+	get_info(state, &info);
+	return info.i;
+}
+
+INLINE void *imgtool_get_info_ptr(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+{
+	union imgtoolinfo info;
+	info.p = NULL;
+	get_info(state, &info);
+	return info.p;
+}
+
+INLINE genf *imgtool_get_info_fct(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+{
+	union imgtoolinfo info;
+	info.f = NULL;
+	get_info(state, &info);
+	return info.f;
+}
+
+INLINE char *imgtool_get_info_string(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+{
+	union imgtoolinfo info;
+	info.s = NULL;
+	get_info(state, &info);
+	return info.s;
+}
+
+/* circular string buffer */
+char *imgtool_temp_str(void);
+
+
+
 struct ImageModule
 {
 	struct ImageModule *previous;

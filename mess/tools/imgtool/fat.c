@@ -537,7 +537,7 @@ static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, struct fat_
 
 
 
-static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
+static imgtoolerr_t fat_diskimage_open(imgtool_image *image, imgtool_stream *stream)
 {
 	UINT8 header[FAT_SECLEN];
 	struct fat_partitiontableinfo pi;
@@ -641,7 +641,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 
 
 
-static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution *opts)
+static imgtoolerr_t fat_diskimage_create(imgtool_image *image, imgtool_stream *stream, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	struct fat_diskinfo *disk_info;
@@ -2270,29 +2270,31 @@ static imgtoolerr_t fat_diskimage_deletedir(imgtool_image *image, const char *pa
 	Imgtool module declaration
 *********************************************************************/
 
-static imgtoolerr_t fat_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+static void fat_module_populate(UINT32 state, union imgtoolinfo *info)
 {
-	module->initial_path_separator		= 1;
-	module->open_is_strict				= 1;
-	module->supports_creation_time		= 1;
-	module->supports_lastmodified_time	= 1;
-	module->supports_bootblock			= 1;
-	module->path_separator				= '\\';
-	module->alternate_path_separator	= '/';
-	module->eoln						= EOLN_CRLF;
-	module->image_extra_bytes			+= sizeof(struct fat_diskinfo);
-	module->imageenum_extra_bytes		+= sizeof(struct fat_file);
-	module->create						= fat_diskimage_create;
-	module->open						= fat_diskimage_open;
-	module->begin_enum					= fat_diskimage_beginenum;
-	module->next_enum					= fat_diskimage_nextenum;
-	module->read_file					= fat_diskimage_readfile;
-	module->write_file					= fat_diskimage_writefile;
-	module->delete_file					= fat_diskimage_deletefile;
-	module->free_space					= fat_diskimage_freespace;
-	module->create_dir					= fat_diskimage_createdir;
-	module->delete_dir					= fat_diskimage_deletedir;
-	return IMGTOOLERR_SUCCESS;
+	switch(state)
+	{
+		case IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR:		info->i = 1; break;
+		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
+		case IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME:		info->i = 1; break;
+		case IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME:	info->i = 1; break;
+		case IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK:			info->i = 1; break;
+		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '\\'; break;
+		case IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR:		info->i = '/'; break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r\n"); break;
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct fat_diskinfo); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct fat_file); break;
+		case IMGTOOLINFO_PTR_CREATE:						info->create = fat_diskimage_create; break;
+		case IMGTOOLINFO_PTR_OPEN:							info->open = fat_diskimage_open; break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = fat_diskimage_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = fat_diskimage_nextenum; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = fat_diskimage_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = fat_diskimage_writefile; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = fat_diskimage_deletefile; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = fat_diskimage_freespace; break;
+		case IMGTOOLINFO_PTR_CREATE_DIR:					info->create_dir = fat_diskimage_createdir; break;
+		case IMGTOOLINFO_PTR_DELETE_DIR:					info->delete_dir = fat_diskimage_deletedir; break;
+	}
 }
 
 
@@ -2314,17 +2316,17 @@ static const char fat_chd_create_optionspec[] = "H1-[16]S1-[32]-63T10/20/30/40/5
 
 
 
-static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream *f)
+static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream *stream)
 {
 	imgtoolerr_t err;
 	struct fat_diskinfo *disk_info;
 
 	disk_info = fat_get_diskinfo(image);
-	err = imghd_open(f, &disk_info->harddisk);
+	err = imghd_open(stream, &disk_info->harddisk);
 	if (err)
 		goto done;
 
-	err = fat_diskimage_open(image);
+	err = fat_diskimage_open(image, NULL);
 	if (err)
 		goto done;
 
@@ -2357,11 +2359,11 @@ static imgtoolerr_t fat_chd_diskimage_create(imgtool_image *image, imgtool_strea
 	if (err)
 		goto done;
 
-	err = fat_diskimage_create(image, opts);
+	err = fat_diskimage_create(image, NULL, opts);
 	if (err)
 		goto done;
 
-	err = fat_diskimage_open(image);
+	err = fat_diskimage_open(image, NULL);
 	if (err)
 		goto done;
 
