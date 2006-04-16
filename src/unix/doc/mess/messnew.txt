@@ -1,3 +1,90 @@
+0.105
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- AT 586 (not working yet) [Nate Woods]
+- Nintendo N64 (not working yet) [Ville Linde]
+
+
+
+System Driver Changes:
+----------------------
+- [990189V] Fixed crash when taking a screenshot.  (bug #714) [Oliver
+  Stoeneberg, Nate Woods]
+
+- [EUROPC] Fixed keyboard regression introduced in 0.104.  (bug #857) [Nate
+  Woods]
+
+- [EXIDY] Added cartridge support.  (bug #842) [Robert]
+
+- [FAMICOM] Added hack to prevent crashing.  Marked as not working.  [Nate
+  Woods]
+
+- [MAC] Moved Mac video code off of videomap.c.  [Nate Woods]
+
+- [MPF1] Added sound support and other enhancements.  [Giel van Schijndel]
+
+- [MSX] Fixed a crash involving cartridge use.  (bug #841) [Nate Woods]
+
+- [MSX] Fixed subtle memory corruption bug.  [R Belmont, Wilbert Pol]
+
+- [PC] Fixed a crash involving certain types of CGA memory access.  (bug #859)
+  [Nate Woods]
+
+- [PC8801] Worked around a regression introduced in MESS 0.96.  (bug #759)
+  [Nate Woods]
+
+- [VTECH1] Added support for the 64k memory expansion, and cartridge support.
+  [Dirk Best]
+
+
+
+User Interface Changes:
+-----------------------
+- Fixed a file manager bug that prevented the last item from being selected. 
+  [telengard]
+
+
+
+Imgtool Changes:
+----------------
+- VZDOS images now supported.  [Dirk Best]
+
+- The "dir" command will display "<DIR>" for directories.  [Nate Woods]
+
+- [FAT] Now supports FAT file systems without an extended BIOS parameter
+  block.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.105.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Changed how devices work.  Device command line options are now on a per
+  device basis, and now identify the index within a device.  Therefore, you
+  now might invoke MESS like this:
+  
+	mess mysystem -flop1 foo.dsk -flop2 bar.dsk
+	
+  Also, drivers now have the ability to specify the string to be used for the
+  command line option.  This allows multiple devices of the same type to be
+  viable.  (bugs #711, #839) [Nate Woods]
+
+- Fixed WD17XX side select option; this prevented some copy protection schemes
+  from being properly emulated.  (bug #863) [Nate Woods]
+
+- Fixed a bug that caused image creation to crash in certain situations.
+  (bug #858) [Nate Woods]
+
+- Eliminated the unknown and unused -listtext and -createdir command line
+  options.  [Nate Woods]
+
+- Cleaned up auto_malloc() calls.  [Oliver Stoeneberg]
+
+
+
 0.104
 
 New System Drivers Supported (in no particular order):
@@ -36,7 +123,7 @@ User Interface Changes:
 
 - [Windows GUI] Fixed a bug that caused zip files where the file extension was
   not all lowercase to not be recognized as such.  (bug #831) [Oliver
-  Stoenberg]
+  Stoeneberg]
 
 
 

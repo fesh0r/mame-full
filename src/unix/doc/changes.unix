@@ -2,9 +2,19 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@xmission.com)
 
+Release 0.105
+	- Everything from MAME 0.105 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.105 (http://x.mame.net/changes-mess.html).
+	- Fixed "-frames_to_run/-ftr" so that it works the same as on Windows.
+	- Fixed a memory leak in the plugin manager shutdown found by Valgrind. 
+	  Bugzilla bug 850.
+	- The output of "-listroms (-lr)" now shows the correct driver name 
+	  when it's run for all ROMs.
+	- Fixed a potential buffer overflow in the standard joystick driver.  
+	  Bugzill bug 821.  (Pierre Riteau)
+
 Release 0.104, 16 February 2006
-	- Everything from MAME 0.104 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.104 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.104 and MESS 0.104.
 	- The "-Wdeclaration-after-statement" switch is no longer enabled by 
 	  default in the makefile, since it's only available in GCC 3.4 and 
 	  later.
@@ -73,7 +83,7 @@ Release 0.99, 16 August 2005
 	  in the X11, Xv, and effects code.  (Hans de Goede)
 	- The SVGAlib driver now handles __svgalib_tty_fd == -1.  This allows 
 	  it to work with newer releases of SVGAlib.  (Hans de Goede)
-	- Removed "-xv/-xvext" from the manpage.  Bugzilla bug 535. (Erik 
+	- Removed "-xvext (-xv)" from the manpage.  Bugzilla bug 535. (Erik 
 	  Hovland)
 	- Updated the joystick types in the manpage.  Bugzilla bug 737.
 	- Fixed some typos in the documentation.  Bugzilla bug 738.  (Erik 

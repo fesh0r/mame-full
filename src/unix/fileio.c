@@ -57,7 +57,9 @@ extern char *cheatfile;
 /*	TYPE DEFINITIONS */
 /*============================================================ */
 
-struct pathdata
+typedef struct _pathdata pathdata;
+
+struct _pathdata
 {
 	const char *rawpath;
 	const char **path;
@@ -75,7 +77,7 @@ struct _osd_file
 	unsigned char	buffer[FILE_BUFFER_SIZE];
 };
 
-static struct pathdata pathlist[FILETYPE_end];
+static pathdata pathlist[FILETYPE_end];
 static osd_file openfile[MAX_OPEN_FILES];
 
 
@@ -147,6 +149,7 @@ struct rc_option fileio_opts[] =
 	{ "snapshot_directory", NULL, rc_string, &pathlist[FILETYPE_SCREENSHOT].rawpath, XMAMEROOT"/snap", 0, 0, NULL, "Directory for screenshots (.png format)" },
 	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "$HOME/"PATH_LEADER NAME"/diff", 0, 0, NULL, "Directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, XMAMEROOT"/ctrlr", 0, 0, NULL, "Directory to save controller definitions" },
+	{ "comment_directory", NULL, rc_string, &pathlist[FILETYPE_COMMENT].rawpath, XMAMEROOT"/comments", 0, 0, NULL, "Directory to save comment files" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
 	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "Set a file to record keypresses into" },
@@ -190,7 +193,7 @@ static char *find_reverse_path_sep(char *name)
 /*	create_path */
 /*============================================================ */
 
-static void create_path(char *path, int has_filename)
+static int create_path(char *path, int has_filename)
 {
 	char *sep = find_reverse_path_sep(path);
 
@@ -198,16 +201,17 @@ static void create_path(char *path, int has_filename)
 	if (sep && sep > path && !is_pathsep(sep[-1]))
 	{
 		*sep = 0;
-		create_path(path, 0);
+		if (!create_path(path, 0))
+			return 0;
 		*sep = '/';
 	}
 
 	/* if we have a filename, we're done */
 	if (has_filename)
-		return;
+		return 1;
 
 	/* create the path */
-	check_and_create_dir(path);
+	return check_and_create_dir(path) ? FALSE : TRUE;
 }
 
 
@@ -285,8 +289,7 @@ static char *copy_and_expand_variables(const char *path, int len)
 
 	/* allocate a string of the appropriate length */
 	result = malloc(length + 1);
-	if (!result)
-		goto out_of_memory;
+	assert_always(result != NULL, "Out of memory in variable expansion!");
 
 	/* now actually generate the string */
 	backslash = 0;
@@ -311,9 +314,6 @@ static char *copy_and_expand_variables(const char *path, int len)
 	/* NULL terminate and return */
 	*dst = 0;
 	return result;
-
-out_of_memory:
-	fatalerror("Out of memory in variable expansion!\n");
 }
 
 
@@ -322,7 +322,7 @@ out_of_memory:
 /*	expand_pathlist */
 /*============================================================ */
 
-static void expand_pathlist(struct pathdata *list)
+static void expand_pathlist(pathdata *list)
 {
 	const char *rawpath = (list->rawpath) ? list->rawpath : "";
 	const char *token;
@@ -355,8 +355,7 @@ static void expand_pathlist(struct pathdata *list)
 	{
 		/* allocate space for the new pointer */
 		list->path = realloc((void *)list->path, (list->pathcount + 1) * sizeof(char *));
-		if (!list->path)
-			goto out_of_memory;
+		assert_always(list->path != NULL, "Out of memory!");
 
 		/* copy the path in */
 		list->path[list->pathcount++] = copy_and_expand_variables(rawpath, token - rawpath);
@@ -380,9 +379,6 @@ static void expand_pathlist(struct pathdata *list)
 	free((void *)list->rawpath);
 	list->rawpath = NULL;
 	return;
-
-out_of_memory:
-	fatalerror("Out of memory!\n");
 }
 
 
@@ -397,7 +393,7 @@ void free_pathlists(void)
 
 	for (i = 0; i < FILETYPE_end; i++)
 	{
-		struct pathdata *list = &pathlist[i];
+		pathdata *list = &pathlist[i];
 
 		/* free any existing paths */
 		if (list->pathcount != 0)
@@ -423,7 +419,7 @@ void free_pathlists(void)
 
 static const char *get_path_for_filetype(int filetype, int pathindex, int *count)
 {
-	struct pathdata *list;
+	pathdata *list;
 
 	/* handle aliasing of some paths */
 	switch (filetype)
@@ -608,7 +604,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename,
 			goto error;
 
 		/* create the path and try again */
-		create_path(fullpath, 1);
+		create_path(fullpath, TRUE);
 		file->fileptr = fopen(fullpath, mode);
 
 		/* if that doesn't work, we give up */
@@ -811,5 +807,5 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 	/* compose the full path */
 	compose_path(fullpath, sizeof(fullpath), pathtype, pathindex, dirname);
 
-	return check_and_create_dir(fullpath) ? FALSE : TRUE;
+	return create_path(fullpath, FALSE);
 }

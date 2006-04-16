@@ -29,6 +29,7 @@ static int showconfig = 0;
 static int showmanusage = 0;
 static int showversion = 0;
 static int showusage  = 0;
+static int validate = 0;
 static int use_fuzzycmp = 1;
 static int loadconfig = 1;
 static char *language = NULL;
@@ -90,7 +91,8 @@ static struct rc_option opts2[] = {
 #ifdef MESS
 	{ "skip_warnings", NULL, rc_bool, &options.skip_warnings, "0", 0, 0, NULL, "Skip displaying the warnings screen" },
 #endif
-	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
+	{ "validate", "valid", rc_bool, &validate, "0", 0, 0, NULL, "Validate all game drivers" },
+	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "Change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
 	{ "autosave", NULL, rc_bool, &options.auto_save, "0", 0, 0, NULL, "Enable automatic restore at startup and save at exit" },
 #ifdef MAME_DEBUG
@@ -319,6 +321,14 @@ int xmame_config_init(int argc, char *argv[])
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 		return OSD_NOT_OK;
 
+	if (validate)
+	{
+		extern int mame_validitychecks(int game);
+		cpuintrf_init();
+		sndintrf_init();
+		exit(mame_validitychecks(-1));
+	}
+
 	if (showmanusage)
 	{
 		rc_print_man_options(rc, stdout);
@@ -357,8 +367,10 @@ int xmame_config_init(int argc, char *argv[])
 	}
 
 	/* setup stderr_file and stdout_file */
-	if (!stderr_file) stderr_file = stderr;
-	if (!stdout_file) stdout_file = stdout;
+	if (!stderr_file)
+		stderr_file = stderr;
+	if (!stdout_file)
+		stdout_file = stdout;
 
 	if (showconfig)
 	{
@@ -367,10 +379,10 @@ int xmame_config_init(int argc, char *argv[])
 	}
 
 	/* handle frontend options */
-	if ( (i=frontend_list(gamename)) != 1234)
+	if ((i = frontend_list(gamename)) != 1234)
 		return i;
 
-	if ( (i=frontend_ident(gamename)) != 1234)
+	if ((i = frontend_ident(gamename)) != 1234)
 		return i;
 
 	if (playbackname)

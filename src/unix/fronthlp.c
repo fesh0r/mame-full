@@ -295,8 +295,6 @@ int frontend_list(const char *gamename)
 			"--------  ------\n",
 #ifdef MESS
 		/* listdevices      */ "",
-		/* listtext         */ "",
-		/* createdir        */ "",
 #endif
 		/* listromsize      */ "name    \tyear \tsize\n"
 			"--------\t-----\t----\n",

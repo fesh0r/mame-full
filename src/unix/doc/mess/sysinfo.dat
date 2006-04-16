@@ -1000,6 +1000,7 @@ Apple History -- http://www.apple-history.com/
 
 Apple ][ History -- http://apple2history.org/history/ah03.html
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -1160,6 +1161,11 @@ Screen: 16 colors at 560x192 (double-hi-res); 4-bit color text mode at 40x48
 
 Data path: 8-bit
 
+
+Emulators:
+
+AppleWin - http://www.tomcharlesworth.pwp.blueyonder.co.uk/
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -1224,6 +1230,11 @@ Apple ][ History -- http://apple2history.org/history/ah06.html
 DOS/ProDOS FAQ -- http://www.apple2.org/faq/FAQ.dos.prodos.html
 
 APPLESOFT FAQ -- http://www.apple2.org/faq/FAQ.applesoft02.html
+
+
+Emulators:
+
+AppleWin - http://www.tomcharlesworth.pwp.blueyonder.co.uk/
 
 $end
 
@@ -1343,7 +1354,7 @@ Emerson Arcadia 2001
 
 Schmid TVG2000 / Tele Fever (Germany)
 
-Hanimex hmg 2650
+Hanimex HMG2650
 
 LeisureVision (Canada)
 
@@ -1371,12 +1382,7 @@ Controller Layout:
 
   7   8   9
 
- Del  0 Enter
-
-
-Links:
-
-r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
+ Del  0  Enter
 
 
 MESS Emulation State:
@@ -1386,6 +1392,13 @@ Based on info by Paul Robson, Ward Shrake
 Look in hash/arcadia.hsi for some issues
 
 Bad analog joystick emulation
+
+
+Emulators:
+
+2001 (for DOS) - http://users.aol.com/mk14emu/arcadia.htm
+
+Emulator2001 (for Windows) - http://www.gstsoftware.co.nz/ (min. CPU: Pentium 1.4Ghz - a joke!)
 
 
 $end
@@ -1493,6 +1506,15 @@ Features:
 
 
 MESS Emulation State:
+
+
+Emulators:
+
+B-EM (Windows, MS-DOS, Mac OS X) - http://b-em.bbcmicro.com/
+
+BeebEm - http://www.mikebuk.dsl.pipex.com/beebem
+
+model-b - http://modelb.bbcmicro.com/
 
 $end
 
@@ -2847,6 +2869,11 @@ Telegames purchased the rights to the system, and many of the manufactured games
 a clone, The Personal Arcade, in 1988. It was later re-released by them, as the DINA.
 
 
+Emulators:
+
+ColEm (for Unix/X, Macintosh, OS/2, MS-DOS, PalmOS5, Acorn, PocketPC, Dreamcast, PC98, Xfree86-OS/2) - http://fms.komkon.org/ColEm/
+
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -3020,11 +3047,10 @@ There are a few excellent utilities for creating and maintaining
 disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
+
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
-
 Others can be found in the FAQ at http://genesis8.free.fr/
-
 
 
 Known Issues:
@@ -3041,6 +3067,30 @@ History and Trivia:
 
 The CPC464 was an 8-bit Amstrad computer, produced in 1984, with 64k of RAM and a tape 
 recorder built in.
+
+
+Links:
+
+http://cpczone.emuunlim.com/
+
+
+Emulators:
+
+Arnold - http://arnold.emuunlim.com/
+
+CaPriCe32 - http://www.caprice32.cybercube.com/
+
+CoPaCabana (Win,PalmOS) - http://copacabana.emuunlim.com/
+
+CpcAlive - http://www.cpcalive.com/
+
+CPCEMU (En,De,Fr,Es) - http://www.cpcemu.de, http://www.cpc-emu.org
+
+C P C E - http://cpce.emuunlim.com/
+
+WinAPE32 - http://winape.emuunlim.com/
+
+WinCPC - http://www.wincpc.ch
 
 $end
 
@@ -3098,7 +3148,6 @@ disk images for the Amstrad CPC emulators. Here are just a couple -
 CPDRead   http://www.classicgaming.com/caprice/
 
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
-
 
 Others can be found in the FAQ at http://genesis8.free.fr/
 
@@ -3190,7 +3239,6 @@ disk images for the Amstrad CPC emulators. Here are just a couple -
 CPDRead   http://www.classicgaming.com/caprice/
 
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
-
 
 Others can be found in the FAQ at http://genesis8.free.fr
 
@@ -3636,7 +3684,25 @@ Rechargeable battery (NAKI) ~ 12 hours
 
 MESS Emulation State:
 
-Preliminary sound support only.  
+Preliminary sound support only.
+
+
+Emulators:
+
+VisualBoyAdvance - http://vba.ngemu.com/ (GB,GBC,GBA)
+
+RascalBoy Advance - http://www.rascalboy.nzone.it (GBA)
+
+Hello GameBoy - ??? (GB,GBC)
+
+KiGB - http://kigb.emuunlim.com/ (GB,GBC,SGB)
+
+GEST - http://koti.mbnet.fi/gest_emu/ (GB,GBC,SGB)
+
+D-BOY http://www.emucamp.com/boukichi 
+
+no$gba - http://work.typo3.work.de/nocash/gba.htm (GBA)
+
 
 $end
 
@@ -5184,30 +5250,38 @@ A list of known MSX compliant machines:
 Canon (Japan)
 
 V-8: 16kB RAM (other source says 32kB RAM)
-V-10: 16kB RAM
-V-20: 64kB RAM
 
+V-10: 16kB RAM
+
+V-20: 64kB RAM
 
 
 Casio (Japan)
 
 MX-10: 16kB RAM (other source says 64k), docking station available
-MX-101: 16kB RAM (other source says 64k)
-PV-7: 32kB RAM
-PV-16: 16kB RAM
 
+MX-101: 16kB RAM (other source says 64k)
+
+PV-7: 32kB RAM
+
+PV-16: 16kB RAM
 
 
 Daewoo/Yeno (Korea)
 
 Ce-Tec MPC-80: 64kB RAM (other source says 32KB)
-DPC-100: 16kB RAM, built in loudspeaker, available in green, blue or silver
-DPC-200: 64kB RAM
-DPH-64: 64kB RAM (other source says 32kB RAM)
-DPH-?: 64kB RAM, built in software, Arabic version
-IQ-1000: 32kB RAM, produced for Korea
-MX64: 64kB RAM
 
+DPC-100: 16kB RAM, built in loudspeaker, available in green, blue or silver
+
+DPC-200: 64kB RAM
+
+DPH-64: 64kB RAM (other source says 32kB RAM)
+
+DPH-?: 64kB RAM, built in software, Arabic version
+
+IQ-1000: 32kB RAM, produced for Korea
+
+MX64: 64kB RAM
 
 
 Dragon (Spain)
@@ -5215,11 +5289,9 @@ Dragon (Spain)
 MSX-64: 64kB RAM
 
 
-
 Dynadata (MSX from Daewoo in Spain)
 
 DPC-200: 64kB RAM
-
 
 
 Fenner (Italy?)
@@ -5227,63 +5299,78 @@ Fenner (Italy?)
 FPC-500: 64kB RAM
 
 
-
 Fujitsu (Japan)
 
 MB-H1: ??kB RAM
-FM-X: 16kB RAM
 
+FM-X: 16kB RAM
 
 
 General (Japan)
 
 PAXON-PC K50: ??kB RAM, separate keyboard, computer and monitor in one box
-PAXON-PC T50: 16kB RAM, RGB connector
-PAXON-PC T55: 32kB RAM, RGB connector
 
+PAXON-PC T50: 16kB RAM, RGB connector
+
+PAXON-PC T55: 32kB RAM, RGB connector
 
 
 Goldstar (Korea)
 
 FC-80: ??kB RAM
-FC-100: 16kB RAM
-FC-200: 64kB RAM (with hole for light-pen)
 
+FC-100: 16kB RAM
+
+FC-200: 64kB RAM (with hole for light-pen)
 
 
 Gradiente (Brazil)
 
 XP-800 Expert 1.0: 64kB RAM, separate keyboard
-XP-800 Expert 1.1: 64kB RAM, separate keyboard (with fixed ASCII tables, grey colour)
-Expert plus: 64kB RAM, separate keyboard (black colour)
-Expert DD plus: 64kB RAM, separate keyboard, 3,5" floppy disk drive (black colour)
 
+XP-800 Expert 1.1: 64kB RAM, separate keyboard (with fixed ASCII tables, grey colour)
+
+Expert plus: 64kB RAM, separate keyboard (black colour)
+
+Expert DD plus: 64kB RAM, separate keyboard, 3,5" floppy disk drive (black colour)
 
 
 Hitachi (Japan)
 
 Hint: 16kB RAM
-MB-H1 (Humanicatio): 32kB RAM, built in software (Sketch and Music)
-MB-H1E: 16kB RAM
-MB-H2: 64kB RAM, built in tape recorder
-MB-H21: ??kB RAM
-MB-H25: ??kB RAM
-MB-H50: 64kB RAM
-MB-H80: 64kB RAM, also built in software (Sketch and Music)
 
+MB-H1 (Humanicatio): 32kB RAM, built in software (Sketch and Music)
+
+MB-H1E: 16kB RAM
+
+MB-H2: 64kB RAM, built in tape recorder
+
+MB-H21: ??kB RAM
+
+MB-H25: ??kB RAM
+
+MB-H50: 64kB RAM
+
+MB-H80: 64kB RAM, also built in software (Sketch and Music)
 
 
 JVC/Victor (Japan)
 
 HC-5: 32kB RAM (other source says 16kB RAM)
-HC-6: 16kB RAM
-HC-6AV: 32kB RAM, RGB connector
-HC-7: 64kB RAM (Japanese version)
-HC-7E: 64kB RAM (English version, other source says 32KB RAM)
-HC-7GB: 64kB RAM
-HC-30: 32kB RAM
-HC-60: 32kB RAM
 
+HC-6: 16kB RAM
+
+HC-6AV: 32kB RAM, RGB connector
+
+HC-7: 64kB RAM (Japanese version)
+
+HC-7E: 64kB RAM (English version, other source says 32KB RAM)
+
+HC-7GB: 64kB RAM
+
+HC-30: 32kB RAM
+
+HC-60: 32kB RAM
 
 
 Kyocera (Japan)
@@ -5291,61 +5378,90 @@ Kyocera (Japan)
 YC-64: 64kB RAM
 
 
-
 Mitsubishi (Japan)
 
 Letus: 16kB RAM
-ML-8000: 32kB RAM
-ML-F48: 32kB RAM
-ML-F80: 64kB RAM
-ML-F110: 16kB RAM
-ML-F120(D): 32kB RAM
-ML-F8000: 32kB RAM
-ML-FX1: 64kB RAM
-ML-FX2: 64kB RAM, built in software
 
+ML-8000: 32kB RAM
+
+ML-F48: 32kB RAM
+
+ML-F80: 64kB RAM
+
+ML-F110: 16kB RAM
+
+ML-F120(D): 32kB RAM
+
+ML-F8000: 32kB RAM
+
+ML-FX1: 64kB RAM
+
+ML-FX2: 64kB RAM, built in software
 
 
 National/Matsushita (Japan)
 
 CF-2000: 16kB RAM (MSX1)
+
 CF-1200: 16kB RAM (MSX1)
+
 CF-2700: 32kB RAM (MSX1)
+
 CF-3000: 64kB RAM (MSX1)
+
 CF-3300: 64kB RAM (MSX1 / 1 or 2 FDD)
+
 FS-4000: 64kB RAM (MSX1)
+
 FS-1300: 64kB RAM (MSX1)
+
 FS-5500F1/F2: 64kB RAM (MSX2 / 1 or 2 FDD)
+
 FS-4500: 64kB RAM (MSX2)
+
 FS-4700F: 64kB RAM (MSX2)
+
 FS-5000F2: 128kB Mapper RAM (MSX2 / 2 FDD)
+
 FS-4600F: 128kB Mapper RAM (MSX2)
 
 
 Olympia (France)
 
 PHC-2: ??kB RAM, same as some Sanyo?
-PHC-28: 32kB RAM, same as Sanyo's PHC-28S
 
+PHC-28: 32kB RAM, same as Sanyo's PHC-28S
 
 
 Panasonic (Europe)
 
 CF-2000: 16kB RAM
+
 CF-2700: 64kB RAM, same as Sanyo MPC-64
+
 CF-3000: 64kB RAM
+
 CF-3300: 64kB RAM
+
 
 Panasonic/Matsushita (Japan)
 
 FS-A1: 64kB RAM (MSX2)
+
 FS-A1MK2: 64kB Mapper RAM (MSX2)
+
 FS-A1F: 64kB Mapper RAM (MSX2)
+
 FS-A1FM: 64kB Mapper RAM (MSX2)
+
 FS-A1FX: 64kB Mapper RAM (MSX2+)
+
 FS-A1WX: 64kB Mapper RAM (MSX2+)
+
 FS-A1WX: 64kB Mapper RAM (MSX2+)
+
 FS-A1GT: 256kB Mapper RAM (MSXturboR)
+
 FS-A1GT: 512kB Mapper RAM (MSXturboR)
 
 
@@ -5354,14 +5470,14 @@ Perfect (Daewoo in Kuwait)
 Perfect1: 64kb RAM, 1 slot, no reset, built in software
 
 
-
 Philips (The Netherlands)
 
 VG-8000: 16kB RAM
-VG-8010: 32kB RAM
-VG-8020: 64kB RAM, (VG8020 comes in 2 different versions (/00 and /20), new versions use 
-sub-slot for RAM)
 
+VG-8010: 32kB RAM
+
+VG-8020: 64kB RAM, (VG8020 comes in 2 different versions (/00 and /20), 
+new versions use sub-slot for RAM)
 
 
 Pioneer (Japan)
@@ -5371,11 +5487,9 @@ separate keyboard (UK version in black, JP version in black/silver (lila/blue ke
 PX-V60: 64kB RAM
 
 
-
 Radofin (Hong-Kong)
 
 Triton: 64kB RAM
-
 
 
 Radiola (France)
@@ -5383,20 +5497,25 @@ Radiola (France)
 MX-180: 32kB RAM, Same as Philips VG-8010 with a different color case
 
 
-
 Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
      Those computers are Yamaha and Sanyo MSX modified for arabian countries.
 
 AX-100: 64kB RAM
-AX-150: 64kB RAM
-AX-170: 64kB RAM, built in special ROMs with Arabic characters set and software
-AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
-AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
-AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
-SX-100: 32kB RAM, 3 slots, RGB connector
-SX-101: ??kB RAM, 3 slots
 
+AX-150: 64kB RAM
+
+AX-170: 64kB RAM, built in special ROMs with Arabic characters set and software
+
+AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
+
+AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
+
+AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
+
+SX-100: 32kB RAM, 3 slots, RGB connector
+
+SX-101: ??kB RAM, 3 slots
 
 
 Samsung (Korea)
@@ -5404,28 +5523,43 @@ Samsung (Korea)
 SPC-800: 64kB RAM
 
 
-
 Sanyo (Japan)
 
 MPC-2: 16kB RAM
-MPC-3: 16kB RAM
-MPC-4: 16kB RAM
-MPC-5: 16kB RAM
-MPC-6: 64kB RAM
-MPC-10(mk2): 64kB RAM (other source says 32kB RAM), lightpen-interface
-MPC-11: 64kB RAM (other source says 32kB RAM), lightpen-interface
-MPC-64: 64kB RAM
-MPC-100: 64kB RAM, hole for lightpen
-MPC-200: 64kB RAM
-MPC-X: 64kB RAM, built in lightpen, high-res adaptor and speech-synthesizer
-PHC-27: 64kB RAM
-PHC-28L: 64kB RAM, Same as PHC-28S but with 64kB RAM
-PHC-28S: 16KB (or 32KB) RAM
-PHC-30: 16kB RAM (other source says 32KB), built in tape recorder
-PHC-30N: 64kB RAM
-PHC-33: 32kB RAM
-WAVY-MPC-10: 32KB (other source says 16KB) RAM, built in light pen unit
 
+MPC-3: 16kB RAM
+
+MPC-4: 16kB RAM
+
+MPC-5: 16kB RAM
+
+MPC-6: 64kB RAM
+
+MPC-10(mk2): 64kB RAM (other source says 32kB RAM), lightpen-interface
+
+MPC-11: 64kB RAM (other source says 32kB RAM), lightpen-interface
+
+MPC-64: 64kB RAM
+
+MPC-100: 64kB RAM, hole for lightpen
+
+MPC-200: 64kB RAM
+
+MPC-X: 64kB RAM, built in lightpen, high-res adaptor and speech-synthesizer
+
+PHC-27: 64kB RAM
+
+PHC-28L: 64kB RAM, Same as PHC-28S but with 64kB RAM
+
+PHC-28S: 16KB (or 32KB) RAM
+
+PHC-30: 16kB RAM (other source says 32KB), built in tape recorder
+
+PHC-30N: 64kB RAM
+
+PHC-33: 32kB RAM
+
+WAVY-MPC-10: 32KB (other source says 16KB) RAM, built in light pen unit
 
 
 Schneider (Germany)
@@ -5433,12 +5567,11 @@ Schneider (Germany)
 MC-810: 32kB RAM, (Same as Philips VG-8010 with a different color case)
 
 
-
 Sharp/Epcom (Brazil)
 
 HB-8000 HotBit: 64kB RAM (white colour)
-HB-8000 HotBit 1.2: 64kB RAM (in black color)
 
+HB-8000 HotBit 1.2: 64kB RAM (in black color)
 
 
 Sony (Japan)
@@ -5448,25 +5581,34 @@ HB-101F or HB-700D. The last letter is only depending of the keyboard layout of 
 country. D=German (QWERTZ) F=French (AZERTY) S=Spanish P=UK (QWERTY)
 
 HB-10: 64kB RAM
-HB-11: 64kB RAM
-HB-11U: ??kB RAM, built in dictionary Japanese-English
-HB-20: 32kB RAM
-HB-55: 16kB RAM
-HB-75: 64kB RAM, built in program: Personal Databank (schedule/memo/address)
-HB-101: 32kB RAM, (Same as HB-201 but with 32kB RAM, but other source says 16kB RAM)
-HB-201: 64kB RAM, built in joystick (Same as HB-501 but without tape recorder)
-HB-501: 64kB RAM, built in tape recorder ('BitCorder'), pause button, joystick
-HB-701, 64kB RAM
-HB-701FD: 64kB RAM, floppy disk drive
 
+HB-11: 64kB RAM
+
+HB-11U: ??kB RAM, built in dictionary Japanese-English
+
+HB-20: 32kB RAM
+
+HB-55: 16kB RAM
+
+HB-75: 64kB RAM, built in program: Personal Databank (schedule/memo/address)
+
+HB-101: 32kB RAM, (Same as HB-201 but with 32kB RAM, but other source says 16kB RAM)
+
+HB-201: 64kB RAM, built in joystick (Same as HB-501 but without tape recorder)
+
+HB-501: 64kB RAM, built in tape recorder ('BitCorder'), pause button, joystick
+
+HB-701, 64kB RAM
+
+HB-701FD: 64kB RAM, floppy disk drive
 
 
 Spectravideo (Hong-Kong/USA)
 
 SVI-728: 64kB RAM, numeric keypad
+
 SVI-738: 64kB RAM, built in 80 columns card (V9938), RS232C interface, 360KB 3,5" floppy 
 disk drive. Also called X'PRESS and also SVI-318 and SVI-328 MSX compatible with an emulator
-
 
 
 Talent/Telematica (Argentina)
@@ -5474,27 +5616,38 @@ Talent/Telematica (Argentina)
 DPC-200: 64kB RAM, Daewoo's MSX model sold under the Talent name
 
 
-
 Toshiba (Japan)
 
 HX-10: 64kB RAM
+
 HX-10D: 16kB RAM
+
 HX-10DP: 64kB RAM
+
 HX-10DPN: 64kB RAM, built in program (??)
+
 HX-10E: 64kB RAM
+
 HX-10S: 16kB RAM
+
 HX-20: 64kB RAM, built in word processor (in total 64kB ROM), RAMdisk feature (32kB of 
 main RAM in page 0 and 1 are used, under BASIC), T6950 VDP (software compatible with 
 9929A which is normally used)
+
 HX-20e: 64kB RAM, built in word processor, RS232C interface
+
 HX-21: 64kB RAM, built in software
+
 HX-22: 64kB RAM, RS-232C interface, RGB connector (SCART 21), built in word processor (in 
 total 64kB ROM)
-HX-30: ??kB RAM, built in software
-HX-31: ??kB RAM, built in software
-HX-32: ??kB RAM, built in software
-HX-51: ??kB RAM
 
+HX-30: ??kB RAM, built in software
+
+HX-31: ??kB RAM, built in software
+
+HX-32: ??kB RAM, built in software
+
+HX-51: ??kB RAM
 
 
 Triton (Hong-Kong)
@@ -5506,17 +5659,25 @@ PC64: 64kB RAM
 Yamaha (Japan)
 
 CX5: 32kB RAM
+
 CX5F: 32kB RAM
+
 CX5M: 32kB RAM, built in FM synthesizer (SFG-01) and MIDI-Interface
+
 CX5MII: 64kB RAM, built in FM synthesizer (SFG-01), MIDI-interface
+
 CX5MII/128: 128kB RAM, built in FM synthesizer (SFG-05), (V9938 built in), built in 
 FM VOICING program II
-CX-11: 32kB RAM
-CX-100: 32kB RAM
-YIS-303: 16kB RAM
-YIS-503: 32kB RAM
-YIS-503II/64: 64kB RAM, FDD
 
+CX-11: 32kB RAM
+
+CX-100: 32kB RAM
+
+YIS-303: 16kB RAM
+
+YIS-503: 32kB RAM
+
+YIS-503II/64: 64kB RAM, FDD
 
 
 Yashica (Japan)
@@ -5660,6 +5821,19 @@ not found'', which results in ``Disk I/O error'' in MSX-BASIC.
 Also not that memory emulation isn't complete so MSX2 memory mappers
 don't work yet.
 
+
+Emulators:
+
+blueMSX - http://www.bluemsx.com/
+
+fMSX (Windows - ported to Symbian, Macintosh, MS-DOS, Amiga, Acorn, 
+PlayStation, NetBSD/HPCMIPS, OpenVMS, OS/2, FMTowns, X68000, Xfree86-OS/2, PC-9801) - http://www.freeflight.com/fms/, http://fms.komkon.org/fMSX/
+
+NLMSX - http://nlmsx.generation-msx.nl/
+
+openMSX - http://openmsx.sourceforge.net/
+
+RuMSX - http://www.lexlechz.at
 
 $end
 
@@ -6109,7 +6283,7 @@ FakeNES - http://fakenes.sourceforge.net/
 
 RockNES - http://rocknes.kinox.org/
 
-
+Nintendulator - http://qmt.ath.cx/~nes/nintendulator/
 
 
 $end
@@ -6981,6 +7155,17 @@ Turbo Station 16 - pcenginefx.com/TS/
 MESS Emulation State:
 
 Preliminary...  Xevious and Raiden8x work OK.
+
+
+Emulators:
+
+MagicEngine (commercial) - http://www.magicengine.com/
+
+Ho-Go! (for DOS, Windows, Linux, BeOS, Solaris) - http://www.zeograd.com/
+
+Hu6280 - http://www.hu6280.com/
+
+GPengine (for GP32) - http://www.gp32x.com/gpengine/
 
 $end
 
@@ -10343,5 +10528,9 @@ developed for the ZX-81, among them: 3.5" floppy disk units, high resolution gra
 RS232 or Centronics interfaces, and RAM extensions. The ZX 81 was sold as the Timex-Sinclair 
 1000 in the USA. 
 
+
+Emulators:
+
+EightyOne - http://www.chuntey.com/eightyone/
 
 $end
