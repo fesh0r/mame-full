@@ -514,8 +514,10 @@ int xmame_config_init(int argc, char *argv[])
 			/* on equal fuzz index, we prefear working, original games */
 			if (tmp == fuzz)
 			{
+				const game_driver *clone_of = driver_get_clone(drivers[i]);
+
 				/* game is a clone */
-				if (drivers[i]->clone_of != 0 && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+				if (clone_of != NULL && !(clone_of->flags & NOT_A_DRIVER))
 				{
 					if ((!drivers[game_index]->flags & GAME_NOT_WORKING) || (drivers[i]->flags & GAME_NOT_WORKING))
 						continue;

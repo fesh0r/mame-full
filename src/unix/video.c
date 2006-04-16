@@ -391,6 +391,7 @@ int osd_create_display(const osd_create_params *params,
 		UINT32 *rgb_components)
 {
 	int orientation;
+	const game_driver *clone_of;
 
 	video_fps                      = params->fps;
 	normal_params.width            = params->width;
@@ -557,7 +558,7 @@ int osd_create_display(const osd_create_params *params,
 	debug_params.max_height = options.debug_height;
 
 	/* apply vis area override hacks */
-	if (!strcmp(drivers[game_index]->clone_of->name, "megatech"))
+	if ((clone_of = driver_get_clone(drivers[game_index])) && !strcmp(clone_of->name, "megatech"))
 	{
 		game_vis_area_override_rect[1].min_y = 192;
 		game_vis_area_override_rect[2].max_x = 255;
@@ -566,7 +567,7 @@ int osd_create_display(const osd_create_params *params,
 		game_vis_area_override_aspect[2] = (double)4.0/3.0;
 		game_vis_area_override_index = 1;
 	}
-	if (!strcmp(drivers[game_index]->clone_of->name, "playch10"))
+	if ((clone_of = driver_get_clone(drivers[game_index])) && !strcmp(clone_of->name, "playch10"))
 	{
 		game_vis_area_override_rect[1].min_y = 240;
 		game_vis_area_override_rect[2].max_y = 239;

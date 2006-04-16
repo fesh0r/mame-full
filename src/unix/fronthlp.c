@@ -395,9 +395,10 @@ int frontend_list(const char *gamename)
 
 	for (i = 0; drivers[i]; i++)
 	{
+		const game_driver *clone_of_i = driver_get_clone(drivers[i]);
 		expand_machine_driver(drivers[i]->drv, &drv);	
-		if ( (listclones || drivers[i]->clone_of == 0 ||
-					(drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
+		if ( (listclones || clone_of_i == NULL ||
+					(clone_of_i->flags & NOT_A_DRIVER)) &&
 				!strwildcmp(gamename, drivers[i]->name) )
 		{
 			matching++;
@@ -456,15 +457,17 @@ int frontend_list(const char *gamename)
 							const game_driver *maindrv;
 							int foundworking;
 
-							if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
-								maindrv = drivers[i]->clone_of;
-							else maindrv = drivers[i];
+							if (clone_of_i && !(clone_of_i->flags & NOT_A_DRIVER))
+								maindrv = clone_of_i;
+							else
+								maindrv = drivers[i];
 
 							foundworking = 0;
 							j = 0;
 							while (drivers[j])
 							{
-								if (drivers[j] == maindrv || drivers[j]->clone_of == maindrv)
+								const game_driver *clone_of_j = driver_get_clone(drivers[j]);
+								if (drivers[j] == maindrv || clone_of_j == maindrv)
 								{
 									if (!(drivers[j]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)))
 									{
@@ -696,7 +699,7 @@ int frontend_list(const char *gamename)
 					if (audit_has_missing_roms (i))
 					{
 						fprintf(stdout_file, "%-10s%-10s%s\n", drivers[i]->name,
-								(drivers[i]->clone_of) ? drivers[i]->clone_of->name : "",
+								clone_of_i ? clone_of_i->name : "",
 								get_description(i));
 						not_found++;
 					}
@@ -824,9 +827,11 @@ int frontend_list(const char *gamename)
 						for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
 							for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 								if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+								{
 									for (j = 0; drivers[j]; j++)
 									{
-										if (j != i && drivers[j]->clone_of && (drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 && (drivers[j]->clone_of == drivers[i] || (i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
+										const game_driver *clone_of_j = driver_get_clone(drivers[j]);
+										if (j != i && clone_of_j && (clone_of_j->flags & NOT_A_DRIVER) == 0 && (clone_of_j == drivers[i] || (i < j && clone_of_j == clone_of_i)))
 										{
 											const rom_entry *region1, *rom1;
 											int match = 0;
@@ -883,6 +888,7 @@ int frontend_list(const char *gamename)
 
 										}
 									}
+								}
 
 						if (found)
 							incorrect++;
@@ -892,8 +898,8 @@ int frontend_list(const char *gamename)
 					break;
 				case LIST_WRONGFPS: /* list drivers with too high frame rate */
 					if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
-							(drivers[i]->clone_of == 0 ||
-							 (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
+							(clone_of_i == NULL ||
+							 (clone_of_i->flags & NOT_A_DRIVER)) &&
 							drv.frames_per_second > 57 &&
 							drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 > 244 &&
 							drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 <= 256)
@@ -963,13 +969,14 @@ static int frontend_list_clones(const char *gamename)
 	int i;
 
 	fprintf(stdout_file, "Name:    Clone of:\n");
-	for (i=0;drivers[i];i++)
+	for (i = 0; drivers[i]; i++)
 	{
-		if(drivers[i]->clone_of &&
-				!(drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
+		const game_driver *clone_of = driver_get_clone(drivers[i]);
+		if(clone_of &&
+				!(clone_of->flags & NOT_A_DRIVER) &&
 				( !strwildcmp(gamename,drivers[i]->name) ||
-				  !strwildcmp(gamename,drivers[i]->clone_of->name)))
-			fprintf(stdout_file, "%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
+				  !strwildcmp(gamename,clone_of->name)))
+			fprintf(stdout_file, "%-8s %-8s\n",drivers[i]->name,clone_of->name);
 	}
 	return 0;
 }
@@ -999,8 +1006,9 @@ static int frontend_list_cpu(void)
 
 		while (drivers[i])
 		{
+			const game_driver *clone_of = driver_get_clone(drivers[i]);
 			expand_machine_driver(drivers[i]->drv, &drv);	
-			if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+			if (clone_of == NULL || (clone_of->flags & NOT_A_DRIVER))
 			{
 				const cpu_config *x_cpu = drv.cpu;
 
