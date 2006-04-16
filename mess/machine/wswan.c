@@ -15,9 +15,10 @@
 
 #define INTERNAL_EEPROM_SIZE	1024
 
-enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
-const char* wswan_sram_str[] = { "none", "64K SRAM", "256K SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown" };
-const int wswan_sram_size[] = { 0, 64*1024, 256*1024, 1024, 16*1024, 8*1024, 0 };
+enum enum_system { WSWAN=0, WSC };
+enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, SRAM_1M, SRAM_2M, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
+const char* wswan_sram_str[] = { "none", "64K SRAM", "256K SRAM", "1M SRAM", "2M SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown" };
+const int wswan_sram_size[] = { 0, 64*1024, 256*1024, 1024*1024, 2*1024*1024,  1024, 16*1024, 8*1024, 0 };
 
 struct EEPROM {
 	UINT8	mode;		/* eeprom mode */
@@ -32,6 +33,7 @@ struct EEPROM {
 static UINT8 *ROMMap[256];
 static UINT32 ROMBanks;
 static UINT8 internal_eeprom[INTERNAL_EEPROM_SIZE];
+static UINT8 system_type;
 struct VDP vdp;
 struct EEPROM eeprom;
 UINT8 *ws_ram;
@@ -40,7 +42,7 @@ static UINT8 ws_portram_init[256] =
 {
 	0x00, 0x00, 0x00/*?*/, 0xbb, 0x00, 0x00, 0x00, 0x26, 0xfe, 0xde, 0xf9, 0xfb, 0xdb, 0xd7, 0x7f, 0xf5,
 	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x9e, 0x9b, 0x00, 0x00, 0x00, 0x00, 0x99, 0xfd, 0xb7, 0xdf,
-	0x30, 0x57, 0x75, 0x76, 0x15, 0x73, 0x77, 0x77, 0x20, 0x75, 0x50, 0x36, 0x70, 0x67, 0x50, 0x77,
+	0x30, 0x57, 0x75, 0x76, 0x15, 0x73, 0x70/*77?*/, 0x77, 0x20, 0x75, 0x50, 0x36, 0x70, 0x67, 0x50, 0x77,
 	0x57, 0x54, 0x75, 0x77, 0x75, 0x17, 0x37, 0x73, 0x50, 0x57, 0x60, 0x77, 0x70, 0x77, 0x10, 0x73,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -97,12 +99,21 @@ static void wswan_machine_stop( void ) {
 }
 
 MACHINE_START( wswan ) {
+	system_type = WSWAN;
+	add_exit_callback( wswan_machine_stop );
+	return 0;
+}
+
+MACHINE_START( wscolor ) {
+	system_type = WSC;
 	add_exit_callback( wswan_machine_stop );
 	return 0;
 }
 
 MACHINE_RESET( wswan )
 {
+	int i;
+
 	/* Intialize ports */
 	memcpy( ws_portram, ws_portram_init, 256 );
 
@@ -110,7 +121,13 @@ MACHINE_RESET( wswan )
 	memset( &vdp, 0, sizeof( vdp ) );
 
 	vdp.vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
+	vdp.palette_vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, ( system_type == WSC ) ? 0xFE00 : 0 );
 	vdp.current_line = 145;  /* Randomly chosen, beginning of VBlank period to give cart some time to boot up */
+	vdp.new_display_vertical = ROMMap[ROMBanks-1][0xfffc] & 0x01;
+	vdp.display_vertical = ~vdp.new_display_vertical;
+	vdp.color_mode = 0;
+	vdp.colors_16 = 0;
+	vdp.tile_packed = 0;
 
 	/* Switch in the banks */
 	memory_set_bankptr( 1, eeprom.data );
@@ -156,7 +173,11 @@ READ8_HANDLER( wswan_port_r )
 			value = vdp.current_line;
 			break;
 		case 0xA0:		/* Hardware type */
-			value = WSWAN_TYPE_MONO;
+			value = value & ~ 0x02;
+			if ( system_type == WSC ) {
+				value |= 2;
+			}
+			break;
 			break;
 	}
 
@@ -242,20 +263,48 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.icons = data;	/* ummmmm */
 			break;
 		case 0x1c:		/* Palette colors 1 and 2 */
-			vdp.main_palette[0] = data & 0x0F;
-			vdp.main_palette[1] = ( data & 0xF0 ) >> 4;
+			if ( system_type == WSC ) {
+				int i = 15 - ( data & 0x0F );
+				int j = 15 - ( ( data & 0xF0 ) >> 4 );
+				vdp.main_palette[0] = ( i << 8 ) | ( i << 4 ) | i;
+				vdp.main_palette[1] = ( j << 8 ) | ( j << 4 ) | j;
+			} else {
+				vdp.main_palette[0] = data & 0x0F;
+				vdp.main_palette[1] = ( data & 0xF0 ) >> 4;
+			}
 			break;
 		case 0x1d:		/* Palette colors 3 and 4 */
-			vdp.main_palette[2] = data & 0x0F;
-			vdp.main_palette[3] = ( data & 0xF0 ) >> 4;
+			if ( system_type == WSC ) {
+				int i = 15 - ( data & 0x0F );
+				int j = 15 - ( ( data & 0xF0 ) >> 4 );
+				vdp.main_palette[2] = ( i << 8 ) | ( i << 4 ) | i;
+				vdp.main_palette[3] = ( j << 8 ) | ( j << 4 ) | j;
+			} else {
+				vdp.main_palette[2] = data & 0x0F;
+				vdp.main_palette[3] = ( data & 0xF0 ) >> 4;
+			}
 			break;
 		case 0x1e:		/* Palette colors 5 and 6 */
-			vdp.main_palette[4] = data & 0x0F;
-			vdp.main_palette[5] = ( data & 0xF0 ) >> 4;
+			if ( system_type == WSC ) {
+				int i = 15 - ( data & 0x0F );
+				int j = 15 - ( ( data & 0xF0 ) >> 4 );
+				vdp.main_palette[4] = ( i << 8 ) | ( i << 4 ) | i;
+				vdp.main_palette[5] = ( j << 8 ) | ( j << 4 ) | j;
+			} else {
+				vdp.main_palette[4] = data & 0x0F;
+				vdp.main_palette[5] = ( data & 0xF0 ) >> 4;
+			}
 			break;
 		case 0x1f:		/* Palette colors 7 and 8 */
-			vdp.main_palette[6] = data & 0x0F;
-			vdp.main_palette[7] = ( data & 0xF0 ) >> 4;
+			if ( system_type == WSC ) {
+				int i = 15 - ( data & 0x0F );
+				int j = 15 - ( ( data & 0xF0 ) >> 4 );
+				vdp.main_palette[6] = ( i << 8 ) | ( i << 4 ) | i;
+				vdp.main_palette[7] = ( j << 8 ) | ( j << 4 ) | j;
+			} else {
+				vdp.main_palette[6] = data & 0x0F;
+				vdp.main_palette[7] = ( data & 0xF0 ) >> 4;
+			}
 			break;
 		case 0x20:		/* tile/sprite palette settings */
 		case 0x21:
@@ -308,13 +357,39 @@ WRITE8_HANDLER( wswan_port_w )
 				src = ws_portram[0x40] + (ws_portram[0x41] << 8) + (ws_portram[0x42] << 16);
 				dst = ws_portram[0x44] + (ws_portram[0x45] << 8) + (ws_portram[0x43] << 16);
 				length = ws_portram[0x46] + (ws_portram[0x47] << 8);
-				memcpy( &ws_ram[dst], &ws_ram[src], length );
-				data = 0;
-				printf( "DMA  src:%X dst:%X length:%d\n", src, dst, length );
+				for( ; length > 0; length-- ) {
+					program_write_byte_8( dst, program_read_byte_8( src ) );
+					src++;
+					dst++;
+				}
+#ifdef DEBUG
+					logerror( "DMA  src:%X dst:%X length:%d\n", src, dst, length );
+#endif
+				ws_portram[0x40] = src & 0xFF;
+				ws_portram[0x41] = ( src >> 8 ) & 0xFF;
+				ws_portram[0x44] = dst & 0xFF;
+				ws_portram[0x45] = ( dst >> 8 ) & 0xFF;
+				ws_portram[0x46] = length & 0xFF;
+				ws_portram[0x47] = ( length >> 8 ) & 0xFF;
+				data &= 0x7F;
 			}
 			break;
 		case 0x60:		/* Video mode */
-			/* FIXME: Is this WSC only? */
+			/*
+			 * 111	- packed, 16 color, use 4000/8000, color
+			 * 110	- not packed, 16 color, use 4000/8000, color
+			 * 101	- packed, 4 color, use 2000, color
+			 * 100	- not packed, 4 color, use 2000, color
+			 * 011	- packed, 16 color, use 4000/8000, monochrome
+			 * 010	- not packed, 16 color , use 4000/8000, monochrome
+			 * 001	- packed, 4 color, use 2000, monochrome
+			 * 000  - not packed, 4 color, use 2000, monochrome - Regular WS monochrome
+			 */
+			if ( system_type == WSC ) {
+				vdp.color_mode = data & 0x80;
+				vdp.colors_16 = data & 0x40;
+				vdp.tile_packed = data & 0x20;
+			}
 			break;
 		case 0x80:		/* Audio 1 freq (lo) */
 		case 0x81:		/* Audio 1 freq (hi) */
@@ -366,6 +441,9 @@ WRITE8_HANDLER( wswan_port_w )
 		case 0xb0:		/* Interrupt base vector */
 			break;
 		case 0xb2:		/* Interrupt enable */
+			if ( data & 0x10 ) {
+				logerror( "Enabling unsupported drawing line detection interrupt\n" );
+			}
 			break;
 		case 0xb3:		/* serial communication */
 //			data |= 0x02;
@@ -432,7 +510,7 @@ WRITE8_HANDLER( wswan_port_w )
 			memory_set_bankptr( 15, ROMMap[ ( ( ( data & 0x0F ) << 4 ) | 15 ) & ( ROMBanks - 1 ) ] );
 			break;
 		case 0xc1:		/* SRAM bank select */
-			if ( eeprom.mode == SRAM_64K || eeprom.mode == SRAM_256K ) {
+			if ( eeprom.mode == SRAM_64K || eeprom.mode == SRAM_256K || eeprom.mode == SRAM_1M || eeprom.mode == SRAM_2M ) {
 				memory_set_bankptr( 1, &eeprom.data[ ( data * 64 * 1024 ) & ( eeprom.size - 1 ) ] );
 			}
 			break;
@@ -532,6 +610,8 @@ static const char* wswan_determine_sram( UINT8 data ) {
 	case 0x00: eeprom.mode = SRAM_NONE; break;
 	case 0x01: eeprom.mode = SRAM_64K; break;
 	case 0x02: eeprom.mode = SRAM_256K; break;
+	case 0x03: eeprom.mode = SRAM_1M; break;
+	case 0x04: eeprom.mode = SRAM_2M; break;
 	case 0x10: eeprom.mode = EEPROM_1K; break;
 	case 0x20: eeprom.mode = EEPROM_16K; break;
 	case 0x50: eeprom.mode = EEPROM_8K; break;
@@ -569,14 +649,8 @@ DEVICE_LOAD(wswan_cart)
 	UINT32 ii;
 	const char *sram_str;
 
-	if( new_memory_region( REGION_CPU1, 0x100000, 0) )
-	{
-		logerror( "Memory allocation failed reading rom!\n" );
-		return INIT_FAIL;
-	}
-
-	ws_ram = memory_region( REGION_CPU1 );
-	memset( ws_ram, 0, 0x100000 );
+	ws_ram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
+	memset( ws_ram, 0, 0xFFFF );
 	ROMBanks = mame_fsize( file ) / 65536;
 
 	for( ii = 0; ii < ROMBanks; ii++ )
@@ -625,35 +699,60 @@ DEVICE_LOAD(wswan_cart)
 
 INTERRUPT_GEN(wswan_scanline_interrupt)
 {
+	/* Decrement 12kHz (HBlank) counter */
+	ws_portram[0xA8] = ws_portram[0xA8] - 1;
+	if ( ws_portram[0xA8] == 0xFF ) {
+		ws_portram[0xA9] = ws_portram[0xA9] - 1;
+	}
+
 	if( vdp.current_line < 144 ) {
 		wswan_refresh_scanline();
-		if ( vdp.timer_hblank_enable && vdp.timer_hblank_freq != 0 ) {
-			vdp.timer_hblank_freq--;
-//			logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
-			if ( vdp.timer_hblank_freq == 0 ) {
-				if ( vdp.timer_hblank_mode ) {
-					vdp.timer_hblank_freq = ( ws_portram[0xa5] << 8 ) | ws_portram[0xa4];
-				}
-//				logerror( "trigerring hbltmr interrupt\n" );
-				wswan_set_irq_line( WSWAN_IFLAG_HBLTMR );
+	}
+
+	if ( vdp.timer_hblank_enable && vdp.timer_hblank_freq != 0 ) {
+		vdp.timer_hblank_freq--;
+		logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
+		if ( vdp.timer_hblank_freq == 0 ) {
+			if ( vdp.timer_hblank_mode ) {
+				vdp.timer_hblank_freq = ( ws_portram[0xa5] << 8 ) | ws_portram[0xa4];
 			}
+			logerror( "trigerring hbltmr interrupt\n" );
+			wswan_set_irq_line( WSWAN_IFLAG_HBLTMR );
 		}
 	}
 
-	vdp.current_line = (vdp.current_line + 1) % 159; /*159?*/
+	vdp.current_line = (vdp.current_line + 1) % 160; /*159?*/
 
 	if( vdp.current_line == 144 ) {
 		wswan_set_irq_line( WSWAN_IFLAG_VBL );
+		/* Decrement 75Hz (VBlank) counter */
+		ws_portram[0xAA] = ws_portram[0xAA] - 1;
+		if ( ws_portram[0xAA] == 0xFF ) {
+			ws_portram[0xAB] = ws_portram[0xAB] - 1;
+		}
+
 		if ( vdp.timer_vblank_enable && vdp.timer_vblank_freq != 0 ) {
 			vdp.timer_vblank_freq--;
-//			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
+			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
 			if ( vdp.timer_vblank_freq == 0 ) {
 				if ( vdp.timer_vblank_mode ) {
 					vdp.timer_vblank_freq = ( ws_portram[0xa7] << 8 ) | ws_portram[0xa6];
 				}
-//				logerror( "triggering vbltmr interrupt\n" );
+				logerror( "triggering vbltmr interrupt\n" );
 				wswan_set_irq_line( WSWAN_IFLAG_VBLTMR );
 			}
 		}
 	}
+
+	if ( vdp.current_line == 0 ) {
+		if ( vdp.display_vertical != vdp.new_display_vertical ) {
+			vdp.display_vertical = vdp.new_display_vertical;
+			if ( vdp.display_vertical ) {
+				set_visible_area( 5*8, 5*8 + WSWAN_Y_PIXELS - 1, 0, WSWAN_X_PIXELS - 1 );
+			} else {
+				set_visible_area( 0, WSWAN_X_PIXELS - 1, 5*8, 5*8 + WSWAN_Y_PIXELS - 1 );
+			}
+		}
+	}
 }
+

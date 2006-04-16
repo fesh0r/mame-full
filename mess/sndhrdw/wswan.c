@@ -2,6 +2,8 @@
 
   Wonderswan sound emulation
 
+  Wilbert Pol
+
   Sound emulation is very preliminary and far from complete
 
 **************************************************************************************/
@@ -9,6 +11,8 @@
 #include "driver.h"
 #include "includes/wswan.h"
 #include "streams.h"
+
+static sound_stream *channel;
 
 struct CHAN {
 	UINT16	freq;			/* frequency */
@@ -50,6 +54,7 @@ void wswan_ch_set_freq( struct CHAN *ch, UINT16 freq ) {
 }
 
 WRITE8_HANDLER( wswan_sound_port_w ) {
+	stream_update( channel, 0 );
 	switch( offset ) {
 	case 0x80:				/* Audio 1 freq (lo) */
 		wswan_ch_set_freq( &snd.audio1, ( snd.audio1.freq & 0xFF00 ) | data );
@@ -206,7 +211,7 @@ static void wswan_sh_update(void *param,stream_sample_t **inputs, stream_sample_
 
 void *wswan_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	stream_create(0, 2, Machine->sample_rate, 0, wswan_sh_update);
+	channel = stream_create(0, 2, Machine->sample_rate, 0, wswan_sh_update);
 
 	snd.audio1.on = 0;
 	snd.audio1.signal = 16;

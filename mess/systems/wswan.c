@@ -10,6 +10,25 @@
 
   Based on the WStech documentation by Judge and Dox.
 
+  Known issues/TODOs:
+  - Get the V30MZ core into MAME, still need to remove some nec specific
+    instructions and fix the flags handling of the div/mul instructions.
+  - Add support for noise sound
+  - Add support for voice sound
+  - Add support for enveloped sound
+  - Fix video DMA.
+  - Add sound DMA.
+  - Add (real/proper) RTC support.
+  - Look into timing issues like in Puzzle Bobble. VBlank interrupt lasts very long
+    which causes sprites to be disabled until about 10%-40% of drawing the screen.
+    The real unit seems to display things fine, need a real unit + real cart to
+    verify.
+  - Is background color setting really ok?
+  - Get a dump of the internal BIOSes.
+  - Swan Crystal can handle up to 512Mbit ROMs??????
+  - Get a dump of the Wonderswan Bios and the Wonderswan Color bios so we can get rid
+    of the hard coded of the Stack Pointer in the v30mz core.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -19,8 +38,8 @@
 #include "sound/custom.h"
 
 static ADDRESS_MAP_START (wswan_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x03fff) AM_RAM			/* 16kb RAM + 16kb 4 colour tiles */
-	AM_RANGE(0x04000, 0x0ffff) AM_NOP			/* Not used */
+	AM_RANGE(0x00000, 0x03fff) AM_RAM		/* 16kb RAM / 4 colour tiles */
+	AM_RANGE(0x04000, 0x0ffff) AM_NOP		/* nothing */
 	AM_RANGE(0x10000, 0x1ffff) AM_RAMBANK(1)	/* SRAM bank */
 	AM_RANGE(0x20000, 0x2ffff) AM_ROMBANK(2)	/* ROM bank 1 */
 	AM_RANGE(0x30000, 0x3ffff) AM_ROMBANK(3)	/* ROM bank 2 */
@@ -38,9 +57,8 @@ static ADDRESS_MAP_START (wswan_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xF0000, 0xFffff) AM_ROMBANK(15)	/* ROM bank 14 */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START (wsc_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x03fff) AM_RAM			/* 16kb RAM + 16kb 4 colour tiles */
-	AM_RANGE(0x04000, 0x0ffff) AM_RAM			/* 16 colour tiles + palettes */
+static ADDRESS_MAP_START (wscolor_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x0ffff) AM_RAM		/* 16kb RAM / 4 colour tiles, 16 colour tiles + palettes */
 	AM_RANGE(0x10000, 0x1ffff) AM_RAMBANK(1)	/* SRAM bank */
 	AM_RANGE(0x20000, 0x2ffff) AM_ROMBANK(2)	/* ROM bank 1 */
 	AM_RANGE(0x30000, 0x3ffff) AM_ROMBANK(3)	/* ROM bank 2 */
@@ -73,10 +91,10 @@ INPUT_PORTS_START( wswan )
 	PORT_BIT( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Button A") 
 	PORT_BIT( 0x8, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Button B") 
 	PORT_START /* IN 2 : cursors (Y1-Y4) */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y1 - Up") PORT_CODE(KEYCODE_W)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y3 - Down") PORT_CODE(KEYCODE_S)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y4 - Left") PORT_CODE(KEYCODE_A)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y2 - Right") PORT_CODE(KEYCODE_D)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y1 - Left") PORT_CODE(KEYCODE_A)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y3 - Right") PORT_CODE(KEYCODE_D)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y4 - Down") PORT_CODE(KEYCODE_S)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Y2 - Up") PORT_CODE(KEYCODE_W)
 INPUT_PORTS_END
 
 static gfx_decode gfxdecodeinfo[] =
@@ -93,6 +111,16 @@ static PALETTE_INIT( wswan )
 	}
 }
 
+static PALETTE_INIT( wscolor ) {
+	int i;
+	for( i = 0; i < 4096; i++ ) {
+		int r = ( i & 0x0F00 ) >> 8;
+		int g = ( i & 0x00F0 ) >> 4;
+		int b = i & 0x000F;
+		palette_set_color( i, r << 4, g << 4, b << 4 );
+	}
+}
+
 static struct CustomSound_interface wswan_sound_interface =
 {
 	wswan_sh_start
@@ -100,11 +128,10 @@ static struct CustomSound_interface wswan_sound_interface =
 
 static MACHINE_DRIVER_START( wswan )
 	/* Basic machine hardware */
-	/* FIXME: CPU should be a V30MZ not a V30! */
-	MDRV_CPU_ADD_TAG("main", V30, 4 * 3072000)		/* 3.072 Mhz, V30MZ is approx. 4 times faster than V30 */
+	MDRV_CPU_ADD_TAG("main", V30/*MZ*/, 12000000 /*3072000*/)
 	MDRV_CPU_PROGRAM_MAP(wswan_mem, 0)
 	MDRV_CPU_IO_MAP(wswan_io, 0)
-	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 159/*159?*/)	/* 1 int each scanline */
+	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 160/*159?*/)	/* 1 int each scanline */
 
 	MDRV_FRAMES_PER_SECOND(75)
 	MDRV_VBLANK_DURATION(0)
@@ -119,8 +146,8 @@ static MACHINE_DRIVER_START( wswan )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(28*8, 18*8)
-	MDRV_VISIBLE_AREA(0*8, 28*8-1, 0*8, 18*8-1)
+	MDRV_SCREEN_SIZE( WSWAN_X_PIXELS, WSWAN_X_PIXELS )
+	MDRV_VISIBLE_AREA(0*8, WSWAN_X_PIXELS - 1, 0, WSWAN_X_PIXELS - 1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 	MDRV_COLORTABLE_LENGTH(4*16)
@@ -137,8 +164,10 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( wscolor )
 	MDRV_IMPORT_FROM(wswan)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(wsc_mem, 0)
+	MDRV_CPU_PROGRAM_MAP(wscolor_mem, 0)
+	MDRV_MACHINE_START( wscolor )
 	MDRV_PALETTE_LENGTH(4096)
+	MDRV_PALETTE_INIT( wscolor )
 MACHINE_DRIVER_END
 
 static void wswan_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
@@ -173,14 +202,15 @@ SYSTEM_CONFIG_END
 
 ROM_START( wswan )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_REGION( 0x40000, REGION_USER1, 0 )	/* SRAM/EEPROM area */
+	ROM_REGION( 0x200000, REGION_USER1, 0 )	/* SRAM/EEPROM area ( up to 2M for Wonderwitch ) */
 ROM_END
 
 ROM_START( wscolor )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_REGION( 0x40000, REGION_USER1, 0 )	/* SRAM/EEPROM area */
+	ROM_REGION( 0x200000, REGION_USER1, 0 )	/* SRAM/EEPROM area ( up to 2M for Wonderwitch ) */
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY   FULLNAME*/
-CONS( 1999, wswan,   0,      0,      wswan,   wswan, 0,    wswan,  "Bandai", "WonderSwan",       GAME_NOT_WORKING )
-CONS( 2000, wscolor, wswan,  0,      wscolor, wswan, 0,    wswan,  "Bandai", "WonderSwan Color", GAME_NOT_WORKING )
+CONS( 1999, wswan,   0,      0,      wswan,   wswan, 0,    wswan,  "Bandai", "WonderSwan",       GAME_IMPERFECT_SOUND )
+CONS( 2000, wscolor, wswan,  0,      wscolor, wswan, 0,    wswan,  "Bandai", "WonderSwan Color", GAME_IMPERFECT_SOUND )
+

@@ -183,7 +183,7 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* BANDAI */
 	DRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
-TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
+	DRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
 
 
 /****************COMPUTERS***************************************************/
