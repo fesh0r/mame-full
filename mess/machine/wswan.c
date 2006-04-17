@@ -161,8 +161,6 @@ MACHINE_START( wscolor ) {
 
 MACHINE_RESET( wswan )
 {
-	int i;
-
 	/* Intialize ports */
 	memcpy( ws_portram, ws_portram_init, 256 );
 
