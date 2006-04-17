@@ -362,56 +362,63 @@ void x11_resize_window(unsigned int *width, unsigned int *height,
 int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
+	unsigned long winattrmask;
 	XEvent event;
 	int x,y;
 	Window root = RootWindowOfScreen (screen);
 
-        x11_get_geometry(&x, &y, width, height, &winattr.win_gravity,
-          NULL, type);
-	
+	x11_get_geometry(&x, &y, width, height, &winattr.win_gravity,
+			NULL, type);
+
 	if (run_in_root_window)
 	{
-          window = root;
-          return 0;
+		window = root;
+		return 0;
 	}
-	
-	if (!sysdep_display_params.fullscreen && root_window_id)
-          root = root_window_id;
 
-        /* Create and setup the window. No buttons, no fancy stuff. */
-        winattr.background_pixel  = BlackPixelOfScreen (screen);
-        winattr.border_pixel      = WhitePixelOfScreen (screen);
-        winattr.bit_gravity       = ForgetGravity;
-        winattr.backing_store     = NotUseful;
-        winattr.override_redirect = False;
-        winattr.save_under        = False;
-        winattr.event_mask        = 0;
-        winattr.do_not_propagate_mask = 0;
-        winattr.colormap          = DefaultColormapOfScreen (screen);
-        winattr.cursor            = None;
-        
-        window = XCreateWindow(display, root, x, y, *width, *height, 0,
+	if (!sysdep_display_params.fullscreen && root_window_id)
+		root = root_window_id;
+
+	/* Create and setup the window. No buttons, no fancy stuff. */
+	winattr.background_pixel  = BlackPixelOfScreen (screen);
+	winattr.border_pixel      = WhitePixelOfScreen (screen);
+	winattr.bit_gravity       = ForgetGravity;
+	winattr.backing_store     = NotUseful;
+	winattr.override_redirect = False;
+	winattr.save_under        = False;
+	winattr.event_mask        = 0;
+	winattr.do_not_propagate_mask = 0;
+	winattr.colormap          = DefaultColormapOfScreen (screen);
+	winattr.cursor            = None;
+
+	winattrmask = CWBorderPixel | CWBackPixel | CWBitGravity |
+			 CWWinGravity | CWBackingStore | CWOverrideRedirect | 
+			 CWSaveUnder | CWEventMask | CWDontPropagate | CWColormap | 
+			 CWCursor;
+	if (sysdep_display_params.fullscreen)
+	{
+		winattr.override_redirect = True;
+		winattrmask |= CWOverrideRedirect;
+	}
+
+	window = XCreateWindow(display, root, x, y, *width, *height, 0,
 			screen->root_depth, InputOutput, screen->root_visual,
-                        (CWBorderPixel | CWBackPixel | CWBitGravity |
-                         CWWinGravity | CWBackingStore |
-                         CWOverrideRedirect | CWSaveUnder | CWEventMask |
-                         CWDontPropagate | CWColormap | CWCursor),
-                        &winattr);
-        if (!window)
-        {
-                fprintf (stderr, "OSD ERROR: failed in XCreateWindow().\n");
-                return 1;
-        }
-        
-        /* set the hints */
-        x11_set_window_hints(type);
-        
-        XSelectInput (display, window, ExposureMask);
-        XMapRaised   (display, window);
-        XClearWindow (display, window);
-        XWindowEvent (display, window, ExposureMask, &event);
-        
-        return 0;
+			winattrmask, &winattr);
+	if (!window)
+	{
+		fprintf (stderr, "OSD ERROR: failed in XCreateWindow().\n");
+		return 1;
+	}
+
+	/* set the hints */
+	x11_set_window_hints(type);
+
+	XSelectInput (display, window, ExposureMask);
+	XMapRaised   (display, window);
+	XClearWindow (display, window);
+	XWindowEvent (display, window, ExposureMask, &event);
+
+	return 0;
 }
 
 /* Set the hints for a window, window-type can be:
