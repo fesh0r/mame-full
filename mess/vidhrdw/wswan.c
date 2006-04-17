@@ -420,9 +420,9 @@ void wswan_draw_foreground_3( void ) {
 
 void wswan_handle_sprites( int mask ) {
 	int	i;
-	if ( vdp.sprite_last <= vdp.sprite_first )
+	if ( vdp.sprite_count == 0 )
 		return;
-	for( i = vdp.sprite_last - 1; i >= vdp.sprite_first; i-- ) {
+	for( i = vdp.sprite_first + vdp.sprite_count - 1; i >= vdp.sprite_first; i-- ) {
 		UINT8	x, y;
 		UINT16	tile_data;
 		int	tile_line;
@@ -464,7 +464,7 @@ void wswan_handle_sprites( int mask ) {
 				}
 			}
 
-			if ( !vdp.window_sprites_enable || ( vdp.current_line >= vdp.window_sprites_top && vdp.current_line < vdp.window_sprites_bottom ) ) {
+			if ( !vdp.window_sprites_enable || !(tile_data & 0x1000) || vdp.window_sprites_left==vdp.window_sprites_right || ( vdp.current_line >= vdp.window_sprites_top && vdp.current_line < vdp.window_sprites_bottom ) ) {
 				for ( j = 0; j < 8; j++ ) {
 					int col;
 					if ( vdp.tile_packed ) {
@@ -488,7 +488,7 @@ void wswan_handle_sprites( int mask ) {
 						x_offset = x + 7 - j;
 					}
 					x_offset = x_offset & 0xFF;
-					if ( !vdp.window_sprites_enable || ( x_offset >= vdp.window_sprites_left && x_offset < vdp.window_sprites_right ) ) {
+					if ( !vdp.window_sprites_enable || !(tile_data & 0x1000) || vdp.window_sprites_left==vdp.window_sprites_right || ( x_offset >= vdp.window_sprites_left && x_offset < vdp.window_sprites_right ) ) {
 						if ( x_offset >= 0 && x_offset < WSWAN_X_PIXELS ) {
 							if ( vdp.colors_16 ) {
 								if ( col ) {
@@ -527,7 +527,7 @@ void wswan_refresh_scanline(void)
 	rec.min_y = rec.max_y = vdp.current_line;
 	if ( ws_portram[0x14] ) {
 		/* Not sure if these background color checks and settings are correct */
-		if ( vdp.color_mode && vdp.colors_16 && vdp.tile_packed ) {
+		if ( vdp.color_mode && vdp.colors_16 ) {
 			wswan_fillbitmap( Machine->pens[ pal[ws_portram[0x01]>>4][ws_portram[0x01]&0x0F] ], &rec );
 		} else {
 			wswan_fillbitmap( Machine->pens[ vdp.main_palette[ws_portram[0x01]&0x07] ], &rec );

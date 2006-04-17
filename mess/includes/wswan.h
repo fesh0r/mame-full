@@ -40,7 +40,7 @@ struct VDP
 	UINT8 line_compare;			/* Line to trigger line interrupt on */
 	UINT32 sprite_table_address;		/* Address of the sprite table */
 	UINT8 sprite_first;			/* First sprite to draw */
-	UINT8 sprite_last;			/* Last sprite to draw */
+	UINT8 sprite_count;			/* Number of sprites to draw */
 	UINT16 layer_bg_address;		/* Address of the background screen map */
 	UINT16 layer_fg_address;		/* Address of the foreground screen map */
 	UINT8 window_fg_left;			/* Left coordinate of foreground window */
@@ -62,10 +62,12 @@ struct VDP
 	UINT8 tile_packed;			/* layered/packed tile mode switch */
 	UINT8 timer_hblank_enable;		/* Horizontal blank interrupt on/off */
 	UINT8 timer_hblank_mode;		/* Horizontal blank timer mode */
-	UINT16 timer_hblank_freq;		/* Horizontal blank timer frequency */
+	UINT16 timer_hblank_reload;		/* Horizontal blank timer reload value */
+	UINT16 timer_hblank_count;		/* Horizontal blank timer counter value */
 	UINT8 timer_vblank_enable;		/* Vertical blank interrupt on/off */
 	UINT8 timer_vblank_mode;		/* Vertical blank timer mode */
-	UINT16 timer_vblank_freq;		/* Vertical blank timer frequency */
+	UINT16 timer_vblank_reload;		/* Vertical blank timer reload value */
+	UINT16 timer_vblank_count;		/* Vertical blank timer counter value */
 	UINT8 *vram;				/* pointer to start of ram/vram (set by MACHINE_RESET) */
 	UINT8 *palette_vram;			/* pointer to start of palette area in ram/vram (set by MACHINE_RESET), WSC only */
 	int main_palette[8];

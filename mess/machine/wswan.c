@@ -30,12 +30,26 @@ struct EEPROM {
 	UINT8	*data;		/* pointer to start of sram/eeprom data */
 };
 
+struct RTC {
+	UINT8	present;	/* Is an RTC present */
+	UINT8	setting;	/* Timer setting byte */
+	UINT8	year;		/* Year */
+	UINT8	month;		/* Month */
+	UINT8	day;		/* Day */
+	UINT8	day_of_week;	/* Day of the week */
+	UINT8	hour;		/* Hour, high bit = 0 => AM, high bit = 1 => PM */
+	UINT8	minute;		/* Minute */
+	UINT8	second;		/* Second */
+	UINT8	index;		/* index for reading/writing of current of alarm time */
+};
+
 static UINT8 *ROMMap[256];
 static UINT32 ROMBanks;
 static UINT8 internal_eeprom[INTERNAL_EEPROM_SIZE];
 static UINT8 system_type;
 struct VDP vdp;
-struct EEPROM eeprom;
+static struct EEPROM eeprom;
+static struct RTC rtc;
 UINT8 *ws_ram;
 UINT8 ws_portram[256];
 static UINT8 ws_portram_init[256] =
@@ -92,6 +106,41 @@ void wswan_clear_irq_line(int irq) {
 	wswan_handle_irqs();
 }
 
+static void wswan_rtc_callback( int dummy ) {
+	/* A second passed */
+	rtc.second = rtc.second + 1;
+	if ( ( rtc.second & 0x0F ) > 9 ) {
+		rtc.second = ( rtc.second & 0xF0 ) + 0x10;
+	}
+
+	/* Check for minute passed */
+	if ( rtc.second >= 0x60 ) {
+		rtc.second = 0;
+		rtc.minute = rtc.minute + 1;
+		if ( ( rtc.minute & 0x0F ) > 9 ) {
+			rtc.minute = ( rtc.minute & 0xF0 ) + 0x10;
+		}
+	}
+
+	/* Check for hour passed */
+	if ( rtc.minute >= 0x60 ) {
+		rtc.minute = 0;
+		rtc.hour = rtc.hour + 1;
+		if ( ( rtc.hour & 0x0F ) > 9 ) {
+			rtc.hour = ( rtc.hour & 0xF0 ) + 0x10;
+		}
+		if ( rtc.hour == 0x12 ) {
+			rtc.hour |= 0x80;
+		}
+	}
+
+	/* Check for day passed */
+	if ( rtc.hour >= 0xA4 ) {
+		rtc.hour = 0;
+		rtc.day = rtc.day + 1;
+	}
+}
+
 static void wswan_machine_stop( void ) {
 	if ( eeprom.size ) {
 		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), memory_region(REGION_USER1), eeprom.size );
@@ -131,20 +180,25 @@ MACHINE_RESET( wswan )
 
 	/* Switch in the banks */
 	memory_set_bankptr( 1, eeprom.data );
-	memory_set_bankptr( 2, ROMMap[ROMBanks - 1] );
-	memory_set_bankptr( 3, ROMMap[ROMBanks - 1] );
-	memory_set_bankptr( 4, ROMMap[ROMBanks - 12] );
-	memory_set_bankptr( 5, ROMMap[ROMBanks - 11] );
-	memory_set_bankptr( 6, ROMMap[ROMBanks - 10] );
-	memory_set_bankptr( 7, ROMMap[ROMBanks - 9] );
-	memory_set_bankptr( 8, ROMMap[ROMBanks - 8] );
-	memory_set_bankptr( 9, ROMMap[ROMBanks - 7] );
-	memory_set_bankptr( 10, ROMMap[ROMBanks - 6] );
-	memory_set_bankptr( 11, ROMMap[ROMBanks - 5] );
-	memory_set_bankptr( 12, ROMMap[ROMBanks - 4] );
-	memory_set_bankptr( 13, ROMMap[ROMBanks - 3] );
-	memory_set_bankptr( 14, ROMMap[ROMBanks - 2] );
-	memory_set_bankptr( 15, ROMMap[ROMBanks - 1] );
+	memory_set_bankptr( 2, ROMMap[(ROMBanks - 1) & (ROMBanks - 1)] );
+	memory_set_bankptr( 3, ROMMap[(ROMBanks - 1) & (ROMBanks - 1)] );
+	memory_set_bankptr( 4, ROMMap[(ROMBanks - 12) & (ROMBanks - 1)] );
+	memory_set_bankptr( 5, ROMMap[(ROMBanks - 11) & (ROMBanks - 1)] );
+	memory_set_bankptr( 6, ROMMap[(ROMBanks - 10) & (ROMBanks - 1)] );
+	memory_set_bankptr( 7, ROMMap[(ROMBanks - 9) & (ROMBanks - 1)] );
+	memory_set_bankptr( 8, ROMMap[(ROMBanks - 8) & (ROMBanks - 1)] );
+	memory_set_bankptr( 9, ROMMap[(ROMBanks - 7) & (ROMBanks - 1)] );
+	memory_set_bankptr( 10, ROMMap[(ROMBanks - 6) & (ROMBanks - 1)] );
+	memory_set_bankptr( 11, ROMMap[(ROMBanks - 5) & (ROMBanks - 1)] );
+	memory_set_bankptr( 12, ROMMap[(ROMBanks - 4) & (ROMBanks - 1)] );
+	memory_set_bankptr( 13, ROMMap[(ROMBanks - 3) & (ROMBanks - 1)] );
+	memory_set_bankptr( 14, ROMMap[(ROMBanks - 2) & (ROMBanks - 1)] );
+	memory_set_bankptr( 15, ROMMap[(ROMBanks - 1) & (ROMBanks - 1)] );
+
+	/* Set up RTC timer */
+	if ( rtc.present ) {
+		timer_pulse( TIME_IN_SEC(1), 0, wswan_rtc_callback );
+	}
 }
 
 NVRAM_HANDLER( wswan ) {
@@ -178,7 +232,31 @@ READ8_HANDLER( wswan_port_r )
 				value |= 2;
 			}
 			break;
+		case 0xA8:
+			value = vdp.timer_hblank_count & 0xFF;
 			break;
+		case 0xA9:
+			value = vdp.timer_hblank_count >> 8;
+			break;
+		case 0xAA:
+			value = vdp.timer_vblank_count & 0xFF;
+			break;
+		case 0xAB:
+			value = vdp.timer_vblank_count >> 8;
+			break;
+		case 0xCB:		/* RTC data */
+			if ( ws_portram[0xca] == 0x95 && ( rtc.index < 7 ) ) {
+				switch( rtc.index ) {
+				case 0: value = rtc.year; break;
+				case 1: value = rtc.month; break;
+				case 2: value = rtc.day; break;
+				case 3: value = rtc.day_of_week; break;
+				case 4: value = rtc.hour; break;
+				case 5: value = rtc.minute; break;
+				case 6: value = rtc.second; break;
+				}
+				rtc.index++;
+			}
 	}
 
 	return value;
@@ -213,8 +291,8 @@ WRITE8_HANDLER( wswan_port_w )
 		case 0x05:		/* Number of sprite to start drawing with */
 			vdp.sprite_first = data;
 			break;
-		case 0x06:		/* Number of sprite to stop drawing with */
-			vdp.sprite_last = data;
+		case 0x06:		/* Number of sprites to draw */
+			vdp.sprite_count = data;
 			break;
 		case 0x07:		/* Screen addresses */
 			vdp.layer_bg_address = (data & 0x7) << 11;
@@ -422,22 +500,32 @@ WRITE8_HANDLER( wswan_port_w )
 			vdp.timer_vblank_enable = (data & 0x4) >> 2;
 			vdp.timer_vblank_mode = (data & 0x8) >> 3;
 			break;
-		case 0xa4:		/* HBlank timer frequency (low) */
-			vdp.timer_hblank_freq &= 0xff00;
-			vdp.timer_hblank_freq += data;
+		case 0xa4:		/* HBlank timer frequency (low) - reload value */
+			vdp.timer_hblank_reload &= 0xff00;
+			vdp.timer_hblank_reload += data;
+			vdp.timer_hblank_count = vdp.timer_hblank_reload;
 			break;
-		case 0xa5:		/* HBlank timer frequenct (high) */
-			vdp.timer_hblank_freq &= 0xff;
-			vdp.timer_hblank_freq += data << 8;
+		case 0xa5:		/* HBlank timer frequenct (high) - reload value */
+			vdp.timer_hblank_reload &= 0xff;
+			vdp.timer_hblank_reload += data << 8;
+			vdp.timer_hblank_count = vdp.timer_hblank_reload;
 			break;
-		case 0xa6:		/* VBlank timer frequency (low) */
-			vdp.timer_vblank_freq &= 0xff00;
-			vdp.timer_vblank_freq += data;
+		case 0xa6:		/* VBlank timer frequency (low) - reload value */
+			vdp.timer_vblank_reload &= 0xff00;
+			vdp.timer_vblank_reload += data;
+			vdp.timer_vblank_count = vdp.timer_vblank_reload;
 			break;
-		case 0xa7:		/* VBlank timer frequenct (high) */
-			vdp.timer_vblank_freq &= 0xff;
-			vdp.timer_vblank_freq += data << 8;
+		case 0xa7:		/* VBlank timer frequency (high) - reload value */
+			vdp.timer_vblank_reload &= 0xff;
+			vdp.timer_vblank_reload += data << 8;
+			vdp.timer_vblank_count = vdp.timer_vblank_reload;
 			break;
+		case 0xa8:		/* Timer counters */
+		case 0xa9:
+		case 0xaa:
+		case 0xab:
+			break;
+
 		case 0xb0:		/* Interrupt base vector */
 			break;
 		case 0xb2:		/* Interrupt enable */
@@ -564,9 +652,11 @@ WRITE8_HANDLER( wswan_port_w )
 					switch( eeprom.command ) {
 					case 0x00:
 						eeprom.write_enabled = 0;
+						data |= 0x02;
 						break;
 					case 0x03:
 						eeprom.write_enabled = 1;
+						data |= 0x02;
 						break;
 					default:
 						logerror( "Unsupported 'Protect' command %X\n", eeprom.command );
@@ -592,6 +682,58 @@ WRITE8_HANDLER( wswan_port_w )
 				}
 			} else {
 				logerror( "EEPROM command for unknown EEPROM type\n" );
+			}
+			break;
+		case 0xca:		/* RTC Command */
+			switch( data ) {
+			case 0x10:	/* Reset */
+				rtc.index = 8;
+				rtc.year = 0;
+				rtc.month = 1;
+				rtc.day = 1;
+				rtc.day_of_week = 0;
+				rtc.hour = 0;
+				rtc.minute = 0;
+				rtc.second = 0;
+				rtc.setting = 0xFF;
+				data |= 0x80;
+				break;
+			case 0x12:	/* Write Timer Settings (Alarm) */
+				rtc.index = 8;
+				rtc.setting = ws_portram[0xcb];
+				data |= 0x80;
+				break;
+			case 0x13:	/* Read Timer Settings (Alarm) */
+				rtc.index = 8;
+				ws_portram[0xcb] = rtc.setting;
+				data |= 0x80;
+				break;
+			case 0x14:	/* Set Time/Date */
+				rtc.year = ws_portram[0xcb];
+				rtc.index = 1;
+				data |= 0x80;
+				break;
+			case 0x15:	/* Get Time/Date */
+				rtc.index = 0;
+				data |= 0x80;
+				ws_portram[0xcb] = rtc.year;
+				break;
+			default:
+				logerror( "%X: Unknown RTC command (%X) requested\n", activecpu_get_pc(), data );
+			}
+			break;
+		case 0xcb:		/* RTC Data */
+			if ( ws_portram[0xca] == 0x94 && rtc.index < 7 ) {
+				switch( rtc.index ) {
+				case 0:	rtc.year = data; break;
+				case 1: rtc.month = data; break;
+				case 2: rtc.day = data; break;
+				case 3: rtc.day_of_week = data; break;
+				case 4: rtc.hour = data; break;
+				case 5: rtc.minute = data; break;
+				case 6: rtc.second = data; break;
+				}
+				rtc.index++;
 			}
 			break;
 		default:
@@ -639,8 +781,22 @@ static const char* wswan_determine_romsize( UINT8 data ) {
 
 DEVICE_INIT(wswan_cart)
 {
+	/* Initialize EEPROM structure */
 	memset( &eeprom, 0, sizeof( eeprom ) );
 	eeprom.data = memory_region( REGION_USER1 );
+
+	/* Initialize RTC structure */
+	rtc.present = 0;
+	rtc.index = 0;
+	rtc.year = 0;
+	rtc.month = 0;
+	rtc.day = 0;
+	rtc.day_of_week = 0;
+	rtc.hour = 0;
+	rtc.minute = 0;
+	rtc.second = 0;
+	rtc.setting = 0xFF;
+
 	return INIT_PASS;
 }
 
@@ -672,6 +828,8 @@ DEVICE_LOAD(wswan_cart)
 
 	sram_str = wswan_determine_sram( ROMMap[ROMBanks-1][0xfffb] );
 
+	rtc.present = ROMMap[ROMBanks-1][0xfffd] ? 1 : 0;
+
 #ifdef MAME_DEBUG
 	/* Spit out some info */
 	printf( "ROM DETAILS\n" );
@@ -699,22 +857,19 @@ DEVICE_LOAD(wswan_cart)
 
 INTERRUPT_GEN(wswan_scanline_interrupt)
 {
-	/* Decrement 12kHz (HBlank) counter */
-	ws_portram[0xA8] = ws_portram[0xA8] - 1;
-	if ( ws_portram[0xA8] == 0xFF ) {
-		ws_portram[0xA9] = ws_portram[0xA9] - 1;
-	}
-
 	if( vdp.current_line < 144 ) {
 		wswan_refresh_scanline();
 	}
 
-	if ( vdp.timer_hblank_enable && vdp.timer_hblank_freq != 0 ) {
-		vdp.timer_hblank_freq--;
-		logerror( "timer_hblank_freq: %X\n", vdp.timer_hblank_freq );
-		if ( vdp.timer_hblank_freq == 0 ) {
+	/* Decrement 12kHz (HBlank) counter */
+	if ( vdp.timer_hblank_enable && vdp.timer_hblank_reload != 0 ) {
+		vdp.timer_hblank_count--;
+		logerror( "timer_hblank_count: %X\n", vdp.timer_hblank_count );
+		if ( vdp.timer_hblank_count == 0 ) {
 			if ( vdp.timer_hblank_mode ) {
-				vdp.timer_hblank_freq = ( ws_portram[0xa5] << 8 ) | ws_portram[0xa4];
+				vdp.timer_hblank_count = vdp.timer_hblank_reload;
+			} else {
+				vdp.timer_hblank_reload = 0;
 			}
 			logerror( "trigerring hbltmr interrupt\n" );
 			wswan_set_irq_line( WSWAN_IFLAG_HBLTMR );
@@ -726,17 +881,14 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 	if( vdp.current_line == 144 ) {
 		wswan_set_irq_line( WSWAN_IFLAG_VBL );
 		/* Decrement 75Hz (VBlank) counter */
-		ws_portram[0xAA] = ws_portram[0xAA] - 1;
-		if ( ws_portram[0xAA] == 0xFF ) {
-			ws_portram[0xAB] = ws_portram[0xAB] - 1;
-		}
-
-		if ( vdp.timer_vblank_enable && vdp.timer_vblank_freq != 0 ) {
-			vdp.timer_vblank_freq--;
-			logerror( "timer_vblank_freq: %X\n", vdp.timer_vblank_freq );
-			if ( vdp.timer_vblank_freq == 0 ) {
+		if ( vdp.timer_vblank_enable && vdp.timer_vblank_reload != 0 ) {
+			vdp.timer_vblank_count--;
+			logerror( "timer_vblank_count: %X\n", vdp.timer_vblank_count );
+			if ( vdp.timer_vblank_count == 0 ) {
 				if ( vdp.timer_vblank_mode ) {
-					vdp.timer_vblank_freq = ( ws_portram[0xa7] << 8 ) | ws_portram[0xa6];
+					vdp.timer_vblank_count = vdp.timer_vblank_reload;
+				} else {
+					vdp.timer_vblank_reload = 0;
 				}
 				logerror( "triggering vbltmr interrupt\n" );
 				wswan_set_irq_line( WSWAN_IFLAG_VBLTMR );
