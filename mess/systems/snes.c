@@ -51,7 +51,7 @@ static WRITE8_HANDLER( spc_ram_100_w )
 }
 
 static ADDRESS_MAP_START( spc_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x00ef) AM_READWRITE(spc_ram_r, spc_ram_w)   	/* lower 32k ram */
+	AM_RANGE(0x0000, 0x00ef) AM_READWRITE(spc_ram_r, spc_ram_w) AM_BASE(&spc_ram)   	/* lower 32k ram */
 	AM_RANGE(0x00f0, 0x00ff) AM_READWRITE(spc_io_r, spc_io_w)   	/* spc io */
 	AM_RANGE(0x0100, 0xffff) AM_WRITE(spc_ram_100_w)
 	AM_RANGE(0x0100, 0xffbf) AM_READ(spc_ram_100_r)
@@ -540,27 +540,17 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 ROM_START(snes)
-	ROM_REGION(0x1000000,       REGION_CPU1,  0)		/* 65C816 */
-	ROM_REGION(SNES_VRAM_SIZE,  REGION_GFX1,  0)		/* VRAM */
-	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
-	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
-	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
 	ROM_REGION(0x100,           REGION_USER5, 0)		/* IPL ROM */
 	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0))	/* boot rom */
 	ROM_REGION(0x800,           REGION_USER6, 0)		/* add-on chip ROMs (DSP, SFX, etc) */
-        ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
+	ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
 ROM_END
 
 ROM_START(snespal)
-	ROM_REGION(0x1000000,       REGION_CPU1,  0)		/* 65C816 */
-	ROM_REGION(SNES_VRAM_SIZE,  REGION_GFX1,  0)		/* VRAM */
-	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
-	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
-	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
 	ROM_REGION(0x100,           REGION_USER5, 0)		/* IPL ROM */
 	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0))	/* boot rom */
 	ROM_REGION(0x800,           REGION_USER6, 0)		/* add-on chip ROMs (DSP, SFX, etc) */
-        ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
+	ROM_LOAD("dsp1data.bin", 0x000000, 0x000800, CRC(4b02d66d) SHA1(1534f4403d2a0f68ba6e35186fe7595d33de34b1))
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
