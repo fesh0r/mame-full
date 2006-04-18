@@ -268,6 +268,17 @@ ROM_START( famicom )
     ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
+ROM_START( famitwin )
+    ROM_REGION( 0x10000, REGION_CPU1,0 )  /* Main RAM + program banks */
+    ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, CRC(4df24a6c) SHA1(e4e41472c454f928e53eb10e0509bf7d1146ecc1))
+
+    ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
+
+    ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
+
+    ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
+ROM_END
+
 
 
 static MACHINE_DRIVER_START( nes )
@@ -388,6 +399,7 @@ SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
 CONS( 1983, famicom,   0,        0,		nes,      famicom,  0,	      famicom,	"Nintendo", "Famicom" , GAME_NOT_WORKING)
+CONS( 1986, famitwin,  famicom,  0,		nes,      famicom,  0,	      famicom,	"Sharp", "Famicom Twin" , GAME_NOT_WORKING)
 CONS( 1985, nes,       0,        0,		nes,      nes,      0,        nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" , 0)
 CONS( 1987, nespal,    nes,      0,		nespal,   nes,      0,	      nes,		"Nintendo", "Nintendo Entertainment System (PAL)" , 0)
 

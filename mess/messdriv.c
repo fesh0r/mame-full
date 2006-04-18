@@ -111,6 +111,7 @@ const game_driver *test_drivers[] =
 	DRIVER( nes )		/* Nintendo Entertainment System					*/
 	DRIVER( nespal )	/* Nintendo Entertainment System					*/
 	DRIVER( famicom )
+	DRIVER( famitwin )	/* Sharp Famicom Twin System					*/
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
 	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
