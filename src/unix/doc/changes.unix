@@ -2,7 +2,12 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@xmission.com)
 
-Release 0.105
+Release 0.105.1, 18 April 2006
+	- Reverted a change intended to work around some Metacity focus 
+	  misbehavior.  It was causing all window managers to have focus 
+	  problems in fullscreen mode.
+
+Release 0.105, 16 April 2006
 	- Everything from MAME 0.105 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.105 (http://x.mame.net/changes-mess.html).
 	- Fixed "-frames_to_run/-ftr" so that it works the same as on Windows.
@@ -12,6 +17,10 @@ Release 0.105
 	  when it's run for all ROMs.
 	- Fixed a potential buffer overflow in the standard joystick driver.  
 	  Bugzill bug 821.  (Pierre Riteau)
+	- In fullscreen mode, the display no longer appears underneath other 
+	  windows when the window manager is Metacity 2.14.x. However, there's 
+	  still a problem with keystrokes not being received, but you can use 
+	  "-grabkeyboard (-gkb)" or left-ctrl + end as a workaround.
 
 Release 0.104, 16 February 2006
 	- Everything from MAME 0.104 and MESS 0.104.

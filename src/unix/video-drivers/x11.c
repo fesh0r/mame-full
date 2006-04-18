@@ -392,14 +392,8 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 	winattr.cursor            = None;
 
 	winattrmask = CWBorderPixel | CWBackPixel | CWBitGravity |
-			 CWWinGravity | CWBackingStore | CWOverrideRedirect | 
-			 CWSaveUnder | CWEventMask | CWDontPropagate | CWColormap | 
-			 CWCursor;
-	if (sysdep_display_params.fullscreen)
-	{
-		winattr.override_redirect = True;
-		winattrmask |= CWOverrideRedirect;
-	}
+			 CWWinGravity | CWBackingStore | CWSaveUnder | CWEventMask | 
+			 CWDontPropagate | CWColormap | CWCursor;
 
 	window = XCreateWindow(display, root, x, y, *width, *height, 0,
 			screen->root_depth, InputOutput, screen->root_visual,
