@@ -16,8 +16,9 @@
   - Add support for noise sound
   - Add support for voice sound
   - Add support for enveloped sound
-  - Fix video DMA.
+  - Perform video DMA at proper timing.
   - Add sound DMA.
+  - Setup some reasonable values in the internal EEPROM area?
   - Add (real/proper) RTC support.
   - Look into timing issues like in Puzzle Bobble. VBlank interrupt lasts very long
     which causes sprites to be disabled until about 10%-40% of drawing the screen.
@@ -26,8 +27,6 @@
   - Is background color setting really ok?
   - Get a dump of the internal BIOSes.
   - Swan Crystal can handle up to 512Mbit ROMs??????
-  - Get a dump of the Wonderswan Bios and the Wonderswan Color bios so we can get rid
-    of the hard coded of the Stack Pointer in the v30mz core.
 
 ***************************************************************************/
 
@@ -128,7 +127,7 @@ static struct CustomSound_interface wswan_sound_interface =
 
 static MACHINE_DRIVER_START( wswan )
 	/* Basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", V30/*MZ*/, 12000000 /*3072000*/)
+	MDRV_CPU_ADD_TAG("main", V30MZ, 3072000)
 	MDRV_CPU_PROGRAM_MAP(wswan_mem, 0)
 	MDRV_CPU_IO_MAP(wswan_io, 0)
 	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 160/*159?*/)	/* 1 int each scanline */
@@ -202,12 +201,12 @@ SYSTEM_CONFIG_END
 
 ROM_START( wswan )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_REGION( 0x200000, REGION_USER1, 0 )	/* SRAM/EEPROM area ( up to 2M for Wonderwitch ) */
+	ROM_LOAD( "ws_bios.bin", 0x0000, 0x0001, NO_DUMP )
 ROM_END
 
 ROM_START( wscolor )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_REGION( 0x200000, REGION_USER1, 0 )	/* SRAM/EEPROM area ( up to 2M for Wonderwitch ) */
+	ROM_LOAD( "wsc_bios.bin", 0x0000, 0x0001, NO_DUMP )
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY   FULLNAME*/

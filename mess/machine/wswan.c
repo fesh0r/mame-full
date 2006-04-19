@@ -143,7 +143,7 @@ static void wswan_rtc_callback( int dummy ) {
 
 static void wswan_machine_stop( void ) {
 	if ( eeprom.size ) {
-		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), memory_region(REGION_USER1), eeprom.size );
+		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), eeprom.data, eeprom.size );
 	}
 }
 
@@ -781,7 +781,7 @@ DEVICE_INIT(wswan_cart)
 {
 	/* Initialize EEPROM structure */
 	memset( &eeprom, 0, sizeof( eeprom ) );
-	eeprom.data = memory_region( REGION_USER1 );
+	eeprom.data = NULL;
 
 	/* Initialize RTC structure */
 	rtc.present = 0;
@@ -842,7 +842,8 @@ DEVICE_LOAD(wswan_cart)
 #endif
 
 	if ( eeprom.size != 0 ) {
-		image_battery_load( image, memory_region(REGION_USER1), eeprom.size );
+		eeprom.data = auto_malloc( eeprom.size );
+		image_battery_load( image, eeprom.data, eeprom.size );
 	}
 
 	logerror( "Image Name: %s\n", image_longname( image ) );
