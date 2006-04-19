@@ -580,7 +580,8 @@ messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/parallel.o \
 	$(OBJDIR)/sysdep/misc.o \
 	$(OBJDIR)/sysdep/rc.o \
-	$(OBJDIR)/tststubs.o
+	$(OBJDIR)/tststubs.o \
+	$(OBJDIR)/osd_tool.o
 	@echo 'Linking $@...'
 	$(LD) $(LDFLAGS) $(LIBS) $^ -Wl,--allow-multiple-definition -o $@
 
@@ -690,6 +691,7 @@ clean68k:
 	@echo Deleting 68k object files...
 	@rm -f $(OBJ)/cpuintrf.o
 	@rm -f $(OBJ)/drivers/cps2.o
+	@rm -f $(OBJ)/libcpu.a
 	@rm -rf $(OBJ)/cpu/m68000
 
 cleanosd:
