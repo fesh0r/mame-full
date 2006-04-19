@@ -27,6 +27,9 @@ User Interface Changes:
 - [Windows GUI] Fixed "Skip warnings" regression in the GUI.  (bug #867) [Nate
   Woods]
 
+- [Windows GUI] Fixed bug that caused problems selecting different images in
+  the picker.  [Nate Woods]
+
 
 
 Imgtool Changes:

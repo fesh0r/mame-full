@@ -523,7 +523,7 @@ static void MessRemoveImage(int nGame, device_class devclass, LPCTSTR pszFilenam
 			{
 				if (!_tcsicmp(pszFilename, GetSelectedSoftware(nGame, nPos + i)))
 				{
-					MessSpecifyImage(nGame, &devclass, nPos + i, NULL);
+					MessSpecifyImage(nGame, &devclass, i, NULL);
 					break;
 				}
 			}
