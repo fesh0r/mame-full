@@ -249,21 +249,6 @@ static void pdp1_draw_string(mame_bitmap *bitmap, const char *buf, int x, int y,
 }
 
 
-/* draw a vertical line */
-static void pdp1_draw_vline(mame_bitmap *bitmap, int x, int y, int height, int color)
-{
-	while (height--)
-		plot_pixel(bitmap, x, y++, color);
-}
-
-/* draw a horizontal line */
-static void pdp1_draw_hline(mame_bitmap *bitmap, int x, int y, int width, int color)
-{
-	while (width--)
-		plot_pixel(bitmap, x++, y, color);
-}
-
-
 /*
 	draw the operator control panel (fixed backdrop)
 */
@@ -282,7 +267,7 @@ static void pdp1_draw_panel_backdrop(mame_bitmap *bitmap)
 	pdp1_draw_string(bitmap, "test word", x_panel_col1_offset, y_panel_tw_offset, color_panel_caption);
 
 	/* column separator */
-	pdp1_draw_vline(bitmap, x_panel_col2_offset-4, panel_window_offset_y+8, 96, pen_panel_caption);
+	plot_box(bitmap, x_panel_col2_offset-4, panel_window_offset_y+8, 1, 96, pen_panel_caption);
 
 	/* column 2: 1-bit indicators */
 	pdp1_draw_string(bitmap, "run", x_panel_col2_offset+8, y_panel_run_offset, color_panel_caption);
@@ -300,17 +285,17 @@ static void pdp1_draw_panel_backdrop(mame_bitmap *bitmap)
 	pdp1_draw_string(bitmap, "i-o sync", x_panel_col2_offset+8, y_panel_ios_offset, color_panel_caption);
 
 	/* column separator */
-	pdp1_draw_vline(bitmap, x_panel_col3_offset-4, panel_window_offset_y+8, 96, pen_panel_caption);
+	plot_box(bitmap, x_panel_col3_offset-4, panel_window_offset_y+8, 1, 96, pen_panel_caption);
 
 	/* column 3: power, single step, single inst, sense, flags, instr... */
 	pdp1_draw_string(bitmap, "power", x_panel_col3_offset+16, y_panel_power_offset, color_panel_caption);
 	pdp1_draw_string(bitmap, "single step", x_panel_col3_offset+16, y_panel_sngl_step_offset, color_panel_caption);
 	pdp1_draw_string(bitmap, "single inst.", x_panel_col3_offset+16, y_panel_sngl_inst_offset, color_panel_caption);
 	/* separator */
-	pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y_panel_sep1_offset+4, 96, pen_panel_caption);
+	plot_box(bitmap, x_panel_col3_offset+8, y_panel_sep1_offset+4, 96, 1, pen_panel_caption);
 	pdp1_draw_string(bitmap, "sense switches", x_panel_col3_offset, y_panel_ss_offset, color_panel_caption);
 	/* separator */
-	pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y_panel_sep2_offset+4, 96, pen_panel_caption);
+	plot_box(bitmap, x_panel_col3_offset+8, y_panel_sep2_offset+4, 96, 1, pen_panel_caption);
 	pdp1_draw_string(bitmap, "program flags", x_panel_col3_offset, y_panel_pf_offset, color_panel_caption);
 	pdp1_draw_string(bitmap, "instruction", x_panel_col3_offset, y_panel_ir_offset, color_panel_caption);
 }

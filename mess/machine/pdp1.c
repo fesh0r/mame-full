@@ -322,7 +322,7 @@ MACHINE_START( pdp1 )
 	};
 
 	/* set up memory regions */
-	pdp1_memory = (int *) memory_region(REGION_CPU1); /* really bad! */
+	pdp1_memory = auto_malloc(0x40000);
 
 	/* set up our font */
 	dst = memory_region(REGION_GFX1);
