@@ -498,9 +498,8 @@ VIDEO_START( mbee )
 {
     if( video_start_generic() )
 		return 1;
-	pcgram = memory_region(REGION_CPU1)+0xf000;
-	videoram = memory_region(REGION_GFX1)+0x0000;
-	colorram = memory_region(REGION_GFX1)+0x0800;
+	videoram = auto_malloc(0x800);
+	colorram = auto_malloc(0x800);
     memset(dirtybuffer, 1, videoram_size);
 
     return 0;
