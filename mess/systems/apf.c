@@ -164,7 +164,7 @@ static void	apf_m1000_irq_b_func(int state)
 
 }
 
-struct pia6821_interface apf_m1000_pia_interface=
+static const pia6821_interface apf_m1000_pia_interface=
 {
 	apf_m1000_pia_in_a_func,
 	apf_m1000_pia_in_b_func,
@@ -286,7 +286,7 @@ static void	apf_imagination_irq_b_func(int state)
 
 }
 
-struct pia6821_interface apf_imagination_pia_interface=
+static const pia6821_interface apf_imagination_pia_interface=
 {
 	apf_imagination_pia_in_a_func,
 	apf_imagination_pia_in_b_func,

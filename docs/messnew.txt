@@ -28,7 +28,7 @@ User Interface Changes:
   Woods]
 
 - [Windows GUI] Fixed bug that caused problems selecting different images in
-  the picker.  [Nate Woods]
+  the picker.  (bug #873) [Nate Woods]
 
 
 
@@ -40,7 +40,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.105u1.  This incorporates all features of the
+- The core is based on MAME 0.105u2.  This incorporates all features of the
   update to this core.  [MAME team]
 
 

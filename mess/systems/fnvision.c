@@ -258,17 +258,21 @@ static WRITE8_HANDLER( pia0_porta_w )
 	logerror("%u",data);
 }
 
-static struct pia6821_interface pia0_intf =
+static const pia6821_interface pia0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia0_portb_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia0_porta_w, SN76496_0_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0,
 };
 
+static MACHINE_START( fnvision )
+{
+	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
+	return 0;
+}
+
 static MACHINE_RESET( fnvision )
 {
-	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
 	pia_reset();
 }
 
@@ -280,6 +284,7 @@ static MACHINE_DRIVER_START( fnvision )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START( fnvision )
 	MDRV_MACHINE_RESET( fnvision )
 
     // video hardware

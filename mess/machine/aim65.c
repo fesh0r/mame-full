@@ -34,7 +34,8 @@ static WRITE8_HANDLER( aim65_pia_b_w)
 	aim65_pia();
 }
 
-static struct pia6821_interface pia= {
+static const pia6821_interface pia=
+{
 	0,//read8_handler in_a_func,
 	0,//read8_handler in_b_func,
 	0,//read8_handler in_ca1_func,

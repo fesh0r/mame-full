@@ -86,8 +86,8 @@ static MACHINE_DRIVER_START( ntsc )
 	MDRV_PALETTE_LENGTH(4096)
 	MDRV_PALETTE_INIT( amiga )
 
-	MDRV_VIDEO_START( amiga )
-	MDRV_VIDEO_UPDATE( generic_bitmapped )
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

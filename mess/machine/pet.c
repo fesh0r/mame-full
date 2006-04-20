@@ -136,7 +136,7 @@ static  READ8_HANDLER ( pet_pia1_cb1_read )
 	return cbm_ieee_srq_r();
 }
 
-static struct pia6821_interface pet_pia0 =
+static const pia6821_interface pet_pia0 =
 {
 	pet_pia0_port_a_read,		/* in_a_func */
 	pet_pia0_port_b_read,		/* in_b_func */
@@ -152,7 +152,7 @@ static struct pia6821_interface pet_pia0 =
 	pet_irq						/* irq_b_func */
 };
 
-static struct pia6821_interface pet_pia1 =
+static const pia6821_interface pet_pia1 =
 {
 	pet_pia1_port_a_read,		/* in_a_func */
 	NULL,						/* in_b_func */

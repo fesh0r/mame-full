@@ -36,8 +36,6 @@ static int fdc_rdy = 1;
 
 static void fdc_rev_proc( int drive );
 
-extern custom_regs_def custom_regs;
-
 static DEVICE_INIT(amiga_fdc)
 {
 	int id = image_index_in_device(image);

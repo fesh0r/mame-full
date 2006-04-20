@@ -301,6 +301,9 @@ void show_approx_matches(void)
 	{
 		int tmp;
 
+		if ((drivers[i]->flags & NOT_A_DRIVER) != 0)
+			continue;
+
 		penalty = penalty_compare (gamename, drivers[i]->description);
 		tmp = penalty_compare (gamename, drivers[i]->name);
 		if (tmp < penalty) penalty = tmp;

@@ -223,7 +223,7 @@ const struct coco3_video_vars coco3_vidvars =
 
 /* ----------------------------------------------------------------------- */
 
-static struct pia6821_interface coco_pia_intf[] =
+static const pia6821_interface coco_pia_intf[] =
 {
 	/* PIA 0 */
 	{
@@ -240,7 +240,7 @@ static struct pia6821_interface coco_pia_intf[] =
 	}
 };
 
-static struct pia6821_interface coco2_pia_intf[] =
+static const pia6821_interface coco2_pia_intf[] =
 {
 	/* PIA 0 */
 	{
@@ -257,7 +257,7 @@ static struct pia6821_interface coco2_pia_intf[] =
 	}
 };
 
-static struct pia6821_interface coco3_pia_intf[] =
+static const pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
@@ -274,7 +274,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 	}
 };
 
-static struct pia6821_interface dragon64_pia_intf[] =
+static const pia6821_interface dragon64_pia_intf[] =
 {
 	/* PIA 0 */
 	{
@@ -291,7 +291,7 @@ static struct pia6821_interface dragon64_pia_intf[] =
 	}
 };
 
-static struct pia6821_interface dgnalpha_pia_intf[] =
+static const pia6821_interface dgnalpha_pia_intf[] =
 {
 	/* PIA 0 and 1 as Dragon 64 */
 	/* PIA 0 */
@@ -2310,7 +2310,7 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartbank
 };
 
-static void generic_init_machine(struct pia6821_interface *piaintf, const sam6883_interface *samintf,
+static void generic_init_machine(const pia6821_interface *piaintf, const sam6883_interface *samintf,
 	const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback,
 	void (*recalc_interrupts_)(int dummy))
 {

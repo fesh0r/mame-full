@@ -332,8 +332,8 @@ static MACHINE_DRIVER_START( dgnbeta )
 	MDRV_FRAMES_PER_SECOND(DGNBETA_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(100)
 	MDRV_CPU_VBLANK_INT(dgn_beta_frame_interrupt,1)		/* Call once / vblank */
-		
-	MDRV_MACHINE_RESET( dgnbeta )
+	
+	MDRV_MACHINE_START( dgnbeta )
 
 	/* video hardware */
 	
@@ -363,4 +363,4 @@ SYSTEM_CONFIG_START(dgnbeta)
 SYSTEM_CONFIG_END
 
 /*     YEAR	NAME		PARENT	COMPAT		MACHINE    	INPUT		INIT    	CONFIG		COMPANY			FULLNAME */
-COMP(  1984,	dgnbeta,	0,	0,		dgnbeta,	dgnbeta,	dgnbeta,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" , 0)
+COMP(  1984,	dgnbeta,	0,	0,		dgnbeta,	dgnbeta,	0,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" , 0)
