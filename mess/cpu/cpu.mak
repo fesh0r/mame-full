@@ -153,3 +153,26 @@ $(OBJ)/$(TX0D)/tx0dasm.o:	$(TX0D)/tx0.h $(TX0D)/tx0dasm.c
 else
 CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_8KW=0
 endif
+
+ifneq ($(filter SM8500,$(CPUS)),)
+SM8500D = mess/cpu/sm8500
+OBJDIRS += $(OBJ)/$(SM8500D)
+CPUDEFS += -DHAS_SM8500=1
+CPUOBJS += $(OBJ)/$(SM8500D)/sm8500.o
+DBGOBJS += $(OBJ)/$(SM8500D)/sm8500d.o
+$(OBJ)/$(SM8500D)/sm8500.o: $(SM8500D)/sm8500.c $(SM8500D)/sm8500.h $(SM8500D)/sm85ops.h
+else
+CPUDEFS += -DHAS_SM8500=0
+endif
+
+ifneq ($(filter V30MZ,$(CPUS)),)
+V30MZD = mess/cpu/v30mz
+OBJDIRS += $(OBJ)/$(V30MZD)
+CPUDEFS += -DHAS_V30MZ=1
+CPUOBJS += $(OBJ)/$(V30MZD)/v30mz.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
+$(OBJ)/$(V30MZD)/v30mz.o:       $(V30MZD)/v30mz.c $(V30MZD)/v30mz.h $(V30MZD)/necmodrm.h $(V30MZD)/necinstr.h $(V30MZD)/necea.h $(V30MZD)/nechost.h $(V30MZD)/necintrf.h
+else
+CPUDEFS += -DHAS_V30MZ=0
+endif
+
