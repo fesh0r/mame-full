@@ -598,12 +598,12 @@ static void c64_bankswitch (int reset)
 //	    || (loram && hiram && !c64_exrom))
 	{
 		memory_set_bankptr (1, roml);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_RAM);	// always ram: pitstop
+		memory_set_bankptr (2, c64_memory + 0x8000);
 	}
 	else
 	{
 		memory_set_bankptr (1, c64_memory + 0x8000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_RAM);
+		memory_set_bankptr (2, c64_memory + 0x8000);
 	}
 
 #if 1
@@ -653,15 +653,11 @@ static void c64_bankswitch (int reset)
 	}
 	else
 	{
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_RAM);
 		if (hiram)
-		{
 			memory_set_bankptr (7, c64_kernal);
-		}
 		else
-		{
 			memory_set_bankptr (7, c64_memory + 0xe000);
-		}
+		memory_set_bankptr (8, c64_memory + 0xe000);
 	}
 	game = c64_game;
 	exrom = c64_exrom;
