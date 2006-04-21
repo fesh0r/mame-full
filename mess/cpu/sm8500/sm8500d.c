@@ -12,7 +12,7 @@ Sharp sm8500 CPU disassembly
 #ifdef MAME_DEBUG
 #include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "sm8500.h"
 
 enum e_mnemonics
