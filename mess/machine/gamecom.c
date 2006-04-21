@@ -57,7 +57,7 @@ GAMECOM_TIMER gamecom_timer[2];
 
 int gamecom_timer_limit[8] = { 2/2, 1024/2, 2048/2, 4096/2, 8192/2, 16384/2, 32768/2, 65536/2 };
 
-void gamecom_dma_init();
+void gamecom_dma_init(void);
 
 static void gamecom_clock_timer_callback(int dummy)
 {
@@ -293,7 +293,7 @@ READ8_HANDLER( gamecom_internal_r )
 
 /* The manual is not conclusive as to which bit of the DMVP register (offset 0x3D) determines
    which page for source or destination is used */
-void gamecom_dma_init() {
+void gamecom_dma_init(void) {
 	if ( gamecom_dma.decrement_x || gamecom_dma.decrement_y ) {
 		logerror( "TODO: Decrement-x and decrement-y are not supported yet\n" );
 	}

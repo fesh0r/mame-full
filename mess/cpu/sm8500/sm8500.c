@@ -224,13 +224,13 @@ UINT16 oldpc;
 
 	do
 	{
-		UINT8	r1,r2,r3;
+		UINT8	r1,r2;
 		UINT16	s1,s2;
 		UINT32	d1,d2;
 		UINT32	res;
 
 		CALL_MAME_DEBUG;
-oldpc = regs.PC;
+		oldpc = regs.PC;
 		mycycles = 0;
 		sm8500_process_interrupts();
 		if ( !regs.halted ) {

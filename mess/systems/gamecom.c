@@ -140,7 +140,7 @@ static void gamecom_cartslot_getinfo( const device_class *devclass, UINT32 state
 		info->load = device_load_gamecom_cart;
 		break;
 	case DEVINFO_STR_FILE_EXTENSIONS:
-		info->s = "bin\0";
+		strcpy(info->s = device_temp_str(), "bin");
 		break;
 	default:
 		cartslot_device_getinfo( devclass, state, info );

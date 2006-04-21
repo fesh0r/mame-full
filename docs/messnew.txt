@@ -20,6 +20,8 @@ System Driver Changes:
 
 - [FAMICOM] Fixed disk system.  [Steve Leung]
 
+- [N64] Properly recognizes .n64 file extension.  [Justin Kerk]
+
 - [SMS] Changed to use selectable bioses.  [Wilbert Pol]
 
 
