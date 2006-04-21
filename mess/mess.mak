@@ -326,6 +326,7 @@ DRVLIBS = \
 	$(OBJ)/primo.a		\
 	$(OBJ)/dgn_beta.a	\
 	$(OBJ)/be.a			\
+        $(OBJ)/tiger.a		\
 
 
 $(OBJ)/neocd.a:						\
@@ -951,6 +952,11 @@ $(OBJ)/be.a:						\
 	$(OBJ)/mess/vidhrdw/cirrus.o	\
 	$(OBJ)/machine/intelfsh.o		\
 	$(OBJ)/machine/53c810.o
+
+$(OBJ)/tiger.a:				\
+	$(OBJ)/mess/systems/gamecom.o	\
+	$(OBJ)/mess/machine/gamecom.o	\
+	$(OBJ)/mess/vidhrdw/gamecom.o
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\

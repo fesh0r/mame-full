@@ -127,7 +127,7 @@ static struct CustomSound_interface wswan_sound_interface =
 
 static MACHINE_DRIVER_START( wswan )
 	/* Basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", V30/*MZ*/, 3072000)
+	MDRV_CPU_ADD_TAG("main", V30MZ, 3072000)
 	MDRV_CPU_PROGRAM_MAP(wswan_mem, 0)
 	MDRV_CPU_IO_MAP(wswan_io, 0)
 	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 160/*159?*/)	/* 1 int each scanline */
@@ -201,12 +201,12 @@ SYSTEM_CONFIG_END
 
 ROM_START( wswan )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "ws_bios.bin", 0x0000, 0x0001, NO_DUMP )
+	ROM_LOAD_OPTIONAL( "ws_bios.bin", 0x0000, 0x0001, NO_DUMP )
 ROM_END
 
 ROM_START( wscolor )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "wsc_bios.bin", 0x0000, 0x0001, NO_DUMP )
+	ROM_LOAD_OPTIONAL( "wsc_bios.bin", 0x0000, 0x0001, NO_DUMP )
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY   FULLNAME*/
