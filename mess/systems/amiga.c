@@ -16,11 +16,11 @@ ernesto@imagina.com
 #include "inputx.h"
 
 static ADDRESS_MAP_START(amiga_mem, ADDRESS_SPACE_PROGRAM, 16)
-    AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram)		/* Chip Ram - 1Mb / 512k */
-    AM_RANGE( 0xbfd000, 0xbfefff) AM_READWRITE( amiga_cia_r, amiga_cia_w )			/* 8510's CIA A and CIA B */
+	AM_RANGE(0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
+	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
 //  { 0xc00000, 0xd7ffff, MRA8_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
-    AM_RANGE( 0xdbf000, 0xdfffff) AM_READWRITE( amiga_custom_r, amiga_custom_w )	/* Custom Chips */
-    AM_RANGE( 0xf80000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)					/* System ROM - mirror */
+	AM_RANGE(0xc00000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)
+    AM_RANGE(0xf80000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)					/* System ROM - mirror */
 ADDRESS_MAP_END
 
 /**************************************************************************
