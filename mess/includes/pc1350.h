@@ -17,8 +17,7 @@ bool pc1350_brk(void);
 int pc1350_ina(void);
 int pc1350_inb(void);
 
-DRIVER_INIT( pc1350 );
-MACHINE_RESET( pc1350 );
+MACHINE_START( pc1350 );
 NVRAM_HANDLER( pc1350 );
 
 /* in vidhrdw/pocketc.c */
@@ -100,8 +99,6 @@ int pc1350_keyboard_line_r(void);
 #define PC1350_KEY_SPACE input_port_7_r(0)&4
 #define PC1350_KEY_ENTER input_port_7_r(0)&2
 
-#define PC1350_RAM12K (input_port_8_r(0)&0x80)==0x40
-#define PC1350_RAM20K (input_port_8_r(0)&0x80)==0x80
 #define PC1350_CONTRAST (input_port_8_r(0)&7)
 
 #endif /* PC1350_H */
