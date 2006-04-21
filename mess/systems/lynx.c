@@ -26,7 +26,7 @@ static ADDRESS_MAP_START( lynx_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0xfbff) AM_RAM AM_BASE(&lynx_mem_0000)
 	AM_RANGE(0xfc00, 0xfcff) AM_RAM AM_BASE(&lynx_mem_fc00)
 	AM_RANGE(0xfd00, 0xfdff) AM_RAM AM_BASE(&lynx_mem_fd00)
-	AM_RANGE(0xfe00, 0xfff7) AM_READWRITE( MRA8_BANK3, MWA8_RAM ) AM_BASE(&lynx_mem_fe00)
+	AM_RANGE(0xfe00, 0xfff7) AM_READWRITE( MRA8_BANK3, MWA8_RAM ) AM_BASE(&lynx_mem_fe00) AM_SIZE(&lynx_mem_fe00_size)
 	AM_RANGE(0xfff8, 0xfff8) AM_RAM
 	AM_RANGE(0xfff9, 0xfff9) AM_READWRITE( lynx_memory_config_r, lynx_memory_config_w )
 	AM_RANGE(0xfffa, 0xffff) AM_READWRITE( MRA8_BANK4, MWA8_RAM ) AM_BASE(&lynx_mem_fffa)
@@ -222,7 +222,7 @@ static MACHINE_DRIVER_START( lynx )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( lynx )
+	MDRV_MACHINE_START( lynx )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -435,6 +435,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT    COMPAT	MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
-CONS( 1989, lynx,	  0, 		0,		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONS( 1989, lynxa,	  lynx, 	0,		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONS( 1991, lynx2,	  lynx, 	0,		lynx2,	lynx,	lynx,	lynx,	"Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONS( 1989, lynx,	  0, 		0,		lynx,	lynx,	0,		lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONS( 1989, lynxa,	  lynx, 	0,		lynx,	lynx,	0,		lynx,	"Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONS( 1991, lynx2,	  lynx, 	0,		lynx2,	lynx,	0,		lynx,	"Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)

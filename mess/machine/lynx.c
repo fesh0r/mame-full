@@ -80,6 +80,7 @@ UINT8 *lynx_mem_fc00;
 UINT8 *lynx_mem_fd00;
 UINT8 *lynx_mem_fe00;
 UINT8 *lynx_mem_fffa;
+size_t lynx_mem_fe00_size;
 
 static UINT8 lynx_memory_config;
 
@@ -1160,7 +1161,7 @@ WRITE8_HANDLER( lynx_memory_config_w )
 	memory_set_bank(4, (data & 8) ? 1 : 0);
 }
 
-MACHINE_RESET( lynx )
+static void lynx_reset(void)
 {
 	int i;
 	lynx_memory_config_w(0, 0);
@@ -1170,12 +1171,12 @@ MACHINE_RESET( lynx )
 	memset(&suzy, 0, sizeof(suzy));
 	memset(&mikey, 0, sizeof(mikey));
 
-	mikey.data[0x80]=0;
-	mikey.data[0x81]=0;
+	mikey.data[0x80] = 0;
+	mikey.data[0x81] = 0;
 
 	lynx_uart_reset();
 
-	for (i=0; i<ARRAY_LENGTH(lynx_timer); i++)
+	for (i = 0; i < (sizeof(lynx_timer) / sizeof(lynx_timer[0])); i++)
 		lynx_timer_init(lynx_timer+i);
 
 	lynx_audio_reset();
@@ -1194,10 +1195,10 @@ static void lynx_postload(void)
 	lynx_memory_config_w(0, lynx_memory_config);
 }
 
-DRIVER_INIT( lynx )
+MACHINE_START( lynx )
 {
 	state_save_register_global(lynx_memory_config);
-	state_save_register_global(lynx_mem_fe00);
+	state_save_register_global_pointer(lynx_mem_fe00, lynx_mem_fe00_size);
 	state_save_register_func_postload(lynx_postload);
 
 	memory_configure_bank(3, 0, 1, memory_region(REGION_CPU1) + 0x0000, 0);
@@ -1206,5 +1207,7 @@ DRIVER_INIT( lynx )
 	memory_configure_bank(4, 1, 1, lynx_mem_fffa, 0);
 
 	memset(&suzy, 0, sizeof(suzy));
-}
 
+	add_reset_callback(lynx_reset);
+	return 0;
+}

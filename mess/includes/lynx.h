@@ -17,14 +17,14 @@ void lynx_partialhash(char *dest, const unsigned char *data,
 #define PAD_LEFT 0x20
 #define PAD_RIGHT 0x10
 
-MACHINE_RESET( lynx );
-DRIVER_INIT( lynx );
+MACHINE_START( lynx );
 
 extern UINT8 *lynx_mem_0000;
 extern UINT8 *lynx_mem_fc00;
 extern UINT8 *lynx_mem_fd00;
 extern UINT8 *lynx_mem_fe00;
 extern UINT8 *lynx_mem_fffa;
+extern size_t lynx_mem_fe00_size;
 
 extern UINT16 lynx_granularity;
 extern int lynx_rotate;
