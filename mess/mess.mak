@@ -326,7 +326,7 @@ DRVLIBS = \
 	$(OBJ)/primo.a		\
 	$(OBJ)/dgn_beta.a	\
 	$(OBJ)/be.a			\
-        $(OBJ)/tiger.a		\
+	$(OBJ)/tiger.a		\
 
 
 $(OBJ)/neocd.a:						\
