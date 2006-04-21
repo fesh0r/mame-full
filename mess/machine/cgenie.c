@@ -298,18 +298,6 @@ static void cgenie_machine_reset(void)
 		memset(&memory_region(REGION_CPU1)[0x0e000], 0x00, 0x1000);
 	}
 
-	/* check for 32K RAM */
-	if( readinputport(0) & 0x04 )
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_RAM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_RAM);
-	}
-	else
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_NOP);
-	}
-
 	cgenie_load_cas = 1;
 	memory_set_opbase_handler(0, opbaseoverride);
 
@@ -320,7 +308,7 @@ MACHINE_START( cgenie )
 	UINT8 *gfx = memory_region(REGION_GFX2);
 	int i;
 	/*
-	 * Every fitfth cycle is a wait cycle, so I reduced
+	 * Every fifth cycle is a wait cycle, so I reduced
 	 * the overlocking by one fitfth
 	 */
 	cpunum_set_clockscale(0, 0.80);
@@ -328,6 +316,12 @@ MACHINE_START( cgenie )
 	/* Initialize some patterns to be displayed in graphics mode */
 	for( i = 0; i < 256; i++ )
 		memset(gfx + i * 8, i, 8);
+
+	/* set up RAM */
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000 + mess_ram_size - 1, 0, 0, cgenie_videoram_w);
+	videoram = mess_ram;
+	memory_set_bankptr(1, mess_ram);
 
 	add_reset_callback(cgenie_machine_reset);
 	add_exit_callback(tape_put_close);

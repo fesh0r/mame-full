@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [CGENIE] Implemented configurable RAM support.  [Nate Woods]
+
 - [COCO] Fixed joystick regression introduced in 0.105.  [Nate Woods]
 
 - [COCO] Complete rewrite of both M6847 and GIME video code; timing and

@@ -35,8 +35,7 @@ NMI
 
 static ADDRESS_MAP_START (cgenie_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0x7fff) AM_READWRITE( MRA8_RAM, cgenie_videoram_w) AM_BASE( &videoram )
-//	AM_RANGE(0x8000, 0xbfff) AM_RAM	// only if 32K RAM is enabled
+//	AM_RANGE(0x4000, 0xbfff) AM_RAM	// set up in MACHINE_START
 //	AM_RANGE(0xc000, 0xdfff) AM_ROM	// installed in cgenie_init_machine
 //	AM_RANGE(0xe000, 0xefff) AM_ROM	// installed in cgenie_init_machine
 	AM_RANGE(0xf000, 0xf3ff) AM_READWRITE( cgenie_colorram_r, cgenie_colorram_w ) AM_BASE( &colorram )
@@ -80,9 +79,6 @@ INPUT_PORTS_START( cgenie )
 	PORT_BIT(	  0x08, 0x08, IPT_DIPSWITCH_NAME) PORT_NAME("Virtual tape support") PORT_CODE(KEYCODE_F6) PORT_TOGGLE
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME(	  0x04, 0x04, "Memory Size")
-	PORT_DIPSETTING(	0x04, "32K" )
-	PORT_DIPSETTING(	0x00, "16K" )
 	PORT_BIT(0x07, 0x07, IPT_UNUSED)
 
 /**************************************************************************
@@ -470,6 +466,8 @@ SYSTEM_CONFIG_START(cgenie)
 	CONFIG_DEVICE(cartslot_device_getinfo)
 	CONFIG_DEVICE(cgenie_floppy_getinfo)
 	CONFIG_DEVICE(cgenie_cassette_getinfo)
+	CONFIG_RAM_DEFAULT	(16 * 1024)
+	CONFIG_RAM			(32 * 1024)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
