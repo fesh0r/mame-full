@@ -383,16 +383,6 @@ static void sm8500_set_irq_line( int irqline, int state )
 	}
 }
 
-static unsigned sm8500_dasm( char *buffer, unsigned pc )
-{
-#ifdef MAME_DEBUG
-	return dasm_sm8500( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", 0x0000 );  /* cpu_readop(pc) */
-	return 1;
-#endif
-}
-
 static void sm8500_set_info( UINT32 state, union cpuinfo *info )
 {
 	switch(state)
@@ -519,7 +509,9 @@ void sm8500_get_info( UINT32 state, union cpuinfo *info )
 	case CPUINFO_PTR_EXIT:					info->exit = sm8500_exit; break;
 	case CPUINFO_PTR_EXECUTE:				info->execute = sm8500_execute; break;
 	case CPUINFO_PTR_BURN:					info->burn = sm8500_burn; break;
-	case CPUINFO_PTR_DISASSEMBLE:				info->disassemble = sm8500_dasm; break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:			info->disassemble_new = sm8500_dasm; break;
+#endif
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sm8500_icount; break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:			info->p = sm8500_reg_layout; break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:				info->p = sm8500_win_layout; break;

@@ -9,7 +9,6 @@ Sharp sm8500 CPU disassembly
 
 #include <stdio.h>
 #include <string.h>
-#ifdef MAME_DEBUG
 #include "driver.h"
 #include "debugger.h"
 #include "debug/eainfo.h"
@@ -53,6 +52,22 @@ static const char *s_mnemonic[] =
 "comp1A", "comp1B", "comp4F",
 };
 
+#define _OVER DASMFLAG_STEP_OVER
+#define _OUT  DASMFLAG_STEP_OUT
+
+static const UINT32 s_flags[] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, _OVER, _OVER, 0,
+	0, 0, 0, 0, 0, 0, _OVER, 0,
+	0, 0, 0, 0, 0, _OVER, 0, 0,
+	_OUT, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, _OUT, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0,
+	0, 0, 0
+};
+
 typedef struct
 {
 	UINT8	access;
@@ -61,7 +76,7 @@ typedef struct
 }	sm8500dasm;
 
 /* We can probably get rid of this list of registers */
-static char *sm8500_regs_R[256] = {
+static const char *sm8500_regs_R[256] = {
 "00"   , "01"   , "02"   , "03"   , "04"   , "05"   , "06"   , "07"  ,
 "08"   , "09"   , "0A"   , "0B"   , "0C"   , "0D"   , "0E"   , "0F" ,
 "IE0"  , "IE1"  , "IR0"  , "IR1"  , "P0"   , "P1"   , "P2"   , "P3"   ,
@@ -96,12 +111,12 @@ static char *sm8500_regs_R[256] = {
 "F8"   , "F9"   , "FA"   , "FB"   , "FC"   , "FD"   , "FE"   , "FF"
 };
 
-static char *sm8500_cond[16] = {
+static const char *sm8500_cond[16] = {
 	"F", "LT", "LE", "ULE", "OV",  "MI", "Z",  "C",
 	"T", "GE", "GT", "UGT", "NOV", "PL", "NZ", "NC"
 };
 
-static UINT8 sm8500_b2w[8] = {
+static const UINT8 sm8500_b2w[8] = {
 	0, 8, 2, 10, 4, 12, 6, 14
 };
 
@@ -118,7 +133,7 @@ enum e_addrmodes {
 	AM_riB, AM_iS, AM_CALS, AM_bid, AM_1A, AM_1B, AM_4F,
 };
 
-static sm8500dasm mnemonic[256] = {
+static const sm8500dasm mnemonic[256] = {
 	/* 00 - 0F */
         {_RW,zCLR, AM_R},  {_RW,zNEG,AM_R},   {_RW,zCOM,AM_R},   {_RW,zRR,AM_R},
         {_RW,zRL, AM_R},   {_RW,zRRC,AM_R},  {_RW,zRLC,AM_R},   {_RW,zSRL,AM_R},
@@ -202,19 +217,19 @@ static sm8500dasm mnemonic[256] = {
 
 };
 
-unsigned dasm_sm8500( char *buffer, unsigned pc )
+unsigned sm8500_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes )
 {
-	sm8500dasm *instr;
+	const sm8500dasm *instr;
 	const char *symbol, *symbol2;
 	char *dst;
-	unsigned old_pc = pc;
 	UINT8 op;
 	INT8 offset = 0;
 	UINT16 ea = 0, ea2 = 0;
+	int pos = 0;
 
 	dst = buffer;
 
-	op = cpu_readop( pc++ );
+	op = oprom[pos++];
 
 	instr = &mnemonic[op];
 
@@ -225,47 +240,47 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 		}
 		switch( instr->arguments ) {
 		case AM_R:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			set_ea_info( 0, ea, EA_UINT8, instr->access );
 			dst += sprintf( dst, "R%02Xh", ea );
 			break;
 		case AM_iR:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			set_ea_info( 0, ea, EA_UINT8, instr->access );
 			dst += sprintf( dst, "R%02Xh, %s", ea, symbol );
 			break;
 		case AM_iS:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			set_ea_info( 0, ea, EA_UINT8, instr->access );
 			dst += sprintf( dst, "RR%02Xh, %s", ea, symbol );
 			break;
 		case AM_Sw:
-			ea2 = cpu_readop_arg( pc++ );
-			ea = cpu_readop_arg( pc++ ) << 8;
-			ea += cpu_readop_arg( pc++ );
+			ea2 = oprom[pos++];
+			ea = oprom[pos++] << 8;
+			ea += oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT16, EA_VALUE );
 			set_ea_info( 0, ea2, EA_UINT16, instr->access );
 			dst+= sprintf( dst, "RR%02Xh, %s", ea2, symbol );
 			break;
 		case AM_rib:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
 			set_ea_info( 0, (op & 0x07), EA_UINT8, instr->access );
 			dst += sprintf( dst, "r%02Xh, %s", op & 0x07, symbol );
 			break;
 		case AM_riw:
-			ea = cpu_readop_arg( pc++ ) << 8;
-			ea += cpu_readop_arg( pc++ );
+			ea = oprom[pos++] << 8;
+			ea += oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT16, EA_VALUE );
 			set_ea_info( 0, (op & 0x07), EA_UINT16, instr->access );
 			dst += sprintf( dst, "rr%02Xh, %s", sm8500_b2w[op & 0x07], symbol );
 			break;
 		case AM_rmb:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "r%02Xh,", ( ea >> 3 ) & 0x07 );
 			switch( ea & 0xC0 ) {
 			case 0x00:
@@ -273,7 +288,7 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			case 0x40:
 				dst += sprintf( dst, "(r%02Xh)+", ea & 0x07 ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(r%02Xh)", symbol2, ea & 0x07 );
@@ -286,14 +301,14 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_mbr:
-			ea = cpu_readop( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "@r%02Xh", ea & 0x07 ); break;
 			case 0x40:
 				dst += sprintf( dst, "(r%02Xh)+", ea & 0x07 ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(r%02Xh)", symbol2, ea & 0x07 );
@@ -307,7 +322,7 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			dst += sprintf( dst, ",r%02Xh", ( ea >> 3 ) & 0x07 );
 			break;
 		case AM_rmw:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "r%02Xh,", ( ea >> 3 ) & 0x07 );
 			switch( ea & 0xC0 ) {
 			case 0x00:
@@ -315,8 +330,8 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			case 0x40:
 				dst += sprintf( dst, "(rr%02Xh)+", sm8500_b2w[ea & 0x07] ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ ) << 8;
-				ea2 += cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++] << 8;
+				ea2 += oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
@@ -329,15 +344,15 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_mwr:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "@rr%02Xh", sm8500_b2w[ea & 0x07] ); break;
 			case 0x40:
 				dst += sprintf( dst, "(rr%02Xh)+", sm8500_b2w[ea & 0x07] ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ ) << 8;
-				ea2 += cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++] << 8;
+				ea2 += oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
@@ -351,7 +366,7 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			dst += sprintf( dst, ",r%02Xh", ( ea >> 3 ) & 0x07 );
 			break;
 		case AM_smw:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "rr%02Xh,", sm8500_b2w[( ea >> 3 ) & 0x07] );
 			switch( ea & 0xC0 ) {
 			case 0x00:
@@ -359,8 +374,8 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			case 0x40:
 				dst += sprintf( dst, "(rr%02Xh)+", sm8500_b2w[ea & 0x07] ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ ) << 8;
-				ea2 += cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++] << 8;
+				ea2 += oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
@@ -373,15 +388,15 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_mws:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "@rr%02Xh", sm8500_b2w[ea & 0x07] ); break;
 			case 0x40:
 				dst += sprintf( dst, "(rr%02Xh)+", sm8500_b2w[ea & 0x07] ); break;
 			case 0x80:
-				ea2 = cpu_readop_arg( pc++ ) << 8;
-				ea2 += cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++] << 8;
+				ea2 += oprom[pos++];
 				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
 					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
@@ -395,23 +410,23 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			dst += sprintf( dst, ",rr%02Xh", sm8500_b2w[( ea >> 3 ) & 0x07] );
 			break;
 		case AM_cbr:
-			offset = (INT8) cpu_readop_arg( pc ++ );
-			symbol = set_ea_info( 0, old_pc, offset + 2, instr->access );
+			offset = (INT8) oprom[pos++];
+			symbol = set_ea_info( 0, pc, offset + 2, instr->access );
 			dst += sprintf( dst, "%s,%s", sm8500_cond[ op & 0x0F ], symbol );
 			break;
 		case AM_rbr:
-			offset = (INT8) cpu_readop_arg( pc++ );
-			symbol = set_ea_info( 0, old_pc, offset + 2, instr->access );
+			offset = (INT8) oprom[pos++];
+			symbol = set_ea_info( 0, pc, offset + 2, instr->access );
 			dst += sprintf( dst, "r%02Xh,%s", op & 0x07, symbol );
 			break;
 		case AM_cjp:
-			ea = cpu_readop_arg( pc++ ) << 8;
-			ea += cpu_readop_arg( pc++ );
+			ea = oprom[pos++] << 8;
+			ea += oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT16, instr->access );
 			dst += sprintf( dst, "%s,%s", sm8500_cond[ op & 0x0F], symbol );
 			break;
 		case AM_rr:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xc0 ) {
 			case 0x00:
 				dst += sprintf( dst, "r%02Xh,r%02Xh", (ea >> 3 ) & 0x07, ea & 0x07 );
@@ -424,7 +439,7 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_r1:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 				dst += sprintf( dst, "@r%02Xh", (ea >> 3 ) & 0x07 );
 				break;
@@ -436,34 +451,34 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_S:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "RR%02Xh", ea );
 			break;
 		case AM_pi:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
 			set_ea_info( 0, 0x10 + (op & 0x07), EA_UINT8, instr->access );
 			dst += sprintf( dst, "r%02Xh, %s", 0x10 + (op & 0x07), symbol );
 			break;
 		case AM_Ri:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			symbol = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 			dst += sprintf( dst, "R%02Xh,%s", ea, symbol );
 			break;
 		case AM_i:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_ii:
-			ea = cpu_readop_arg( pc++ ) << 8;
-			ea |= cpu_readop_arg( pc++ );
+			ea = oprom[pos++] << 8;
+			ea += oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT16, EA_VALUE );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_ss:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "rr%02Xh,rr%02Xh", sm8500_b2w[( ea >> 3 ) & 0x07], sm8500_b2w[ea & 0x07] ); break;
@@ -476,18 +491,18 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_RR:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,R%02Xh", ea2, ea );
 			break;
 		case AM_2:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "rr%02Xh", sm8500_b2w[ea & 0x07] ); break;
 			case 0x40:
-				ea2 = cpu_readop_arg( pc++ ) << 8;
-				ea2 |= cpu_readop_arg( pc++ );
+				ea2 = oprom[pos++] << 8;
+				ea2 += oprom[pos++];
 				symbol = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x38 ) {
 					dst += sprintf( dst, "@%s(r%02Xh)", symbol, ( ea >> 3 ) & 0x07 );
@@ -502,13 +517,13 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_SS:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			dst += sprintf( dst, "RR%02Xh,RR%02Xh", ea2, ea );
 			break;
 		case AM_bR:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "BF,R%02Xh,#%d", ea2, ea & 0x07 ); break;
@@ -521,45 +536,45 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_Rbr:
-			ea = cpu_readop_arg( pc++ );
-			offset = (INT8) cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			offset = (INT8) oprom[pos++];
 			symbol = set_ea_info( 0, pc, offset, instr->access );
 			dst += sprintf( dst, "R%02Xh,#%d,%s", ea, op & 0x07, symbol );
 			break;
 		case AM_Rb:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,#%d", ea, op&0x07 );
 			break;
 		case AM_rR:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "r%02Xh,R%02Xh", op & 0x07, ea );
 			break;
 		case AM_Rr:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,r%02Xh", ea, op & 0x07 );
 			break;
 		case AM_Rii:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,", ea );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
 			dst += sprintf( dst, "%s,", symbol );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_RiR:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,", ea );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
 			dst += sprintf( dst, "%s,", symbol );
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh", ea );
 			break;
 		case AM_riB:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			switch( ea & 0xC0 ) {
 			case 0x00:
 				dst += sprintf( dst, "#%2x(r%02Xh),#%d", ea2, ea >> 3, ea & 0x07 );
@@ -573,13 +588,13 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			}
 			break;
 		case AM_CALS:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			symbol = set_ea_info( 0, 0x1000 | ( ( op & 0x0f ) << 8 ) | ea, EA_UINT16, EA_VALUE );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_bid:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			if ( ea & 0x38 ) {
 				symbol = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 				dst += sprintf( dst, "%s(r%02Xh)", symbol, ( ea >> 3 ) & 0x07 );
@@ -588,12 +603,12 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 				dst += sprintf( dst, "%s", symbol );
 			}
 			dst += sprintf( dst, ",#%d,", ea & 0x07 );
-			offset = (INT8) cpu_readop_arg( pc++ );
+			offset = (INT8) oprom[pos++];
 			symbol = set_ea_info( 0, pc, offset, instr->access );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_1A:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0x07 ) {
 			case 0x00: dst += sprintf( dst, "%-4s ", s_mnemonic[ zCLR ] ); break;
 			case 0x01: dst += sprintf( dst, "%-4s ", s_mnemonic[ zNEG ] ); break;
@@ -607,7 +622,7 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			dst += sprintf( dst, "@r%02Xh", ( ea >> 3 ) & 0x07 );
 			break;
 		case AM_1B:
-			ea = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
 			switch( ea & 0x07 ) {
 			case 0x00: dst += sprintf( dst, "%-4s ", s_mnemonic[ zINC ] ); break;
 			case 0x01: dst += sprintf( dst, "%-4s ", s_mnemonic[ zDEC ] ); break;
@@ -621,8 +636,8 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 			dst += sprintf( dst, "@r%02Xh", ( ea >> 3 ) & 0x07 );
 			break;
 		case AM_4F:
-			ea = cpu_readop_arg( pc++ );
-			ea2 = cpu_readop_arg( pc++ );
+			ea = oprom[pos++];
+			ea2 = oprom[pos++];
 			switch( ea & 0xc0 ) {
 			case 0x00: dst += sprintf( dst, "%-4s ", s_mnemonic[ zBCMP ] ); break;
 			case 0x40: dst += sprintf( dst, "%-4s ", s_mnemonic[ zBAND ] ); break;
@@ -646,8 +661,6 @@ unsigned dasm_sm8500( char *buffer, unsigned pc )
 		dst += sprintf( dst, "%s", s_mnemonic[ instr->mnemonic ] );
 	}
 
-	return pc - old_pc;
+	return pos | s_flags[instr->mnemonic] | DASMFLAG_SUPPORTED;
 }
-
-#endif
 
