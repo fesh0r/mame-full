@@ -3112,11 +3112,13 @@ BOOL GetGameUsesDefaults(int driver_index)
 
 void SaveGameOptions(int driver_index)
 {
-	BOOL options_different = TRUE;
 	options_type Opts;
 	int nParentIndex= -1;
 	struct SettingsHandler handlers[3];
 	int setting;
+#ifdef MESS
+	BOOL has_software = FALSE;
+#endif /* MESS */
 
 	if( driver_index >= 0)
 	{
@@ -3135,13 +3137,7 @@ void SaveGameOptions(int driver_index)
 	else
 		CopyGameOptions( GetSourceOptions(driver_index), &Opts );
 
-	if (game_variables[driver_index].use_default == FALSE)
-	{
-		options_different = !AreOptionsEqual(regGameOpts, &game_options[driver_index], &Opts);
-	}
-
 #ifdef MESS
-	if (!options_different)
 	{
 		int i;
 		const options_type *o;
@@ -3152,33 +3148,33 @@ void SaveGameOptions(int driver_index)
 		{
 			if (o->mess.software[i] && o->mess.software[i][0])
 			{
-				options_different = TRUE;
+				has_software = TRUE;
 				break;
 			}
 		}
 	}
 #endif // MESS
 
-	if (options_different)
-	{
-		memset(handlers, 0, sizeof(handlers));
-		setting = 0;
-		handlers[setting].type = SH_OPTIONSTRUCT;
-		handlers[setting].comment = "Options";
-		handlers[setting].u.option_struct.option_struct = (void *) &game_options[driver_index];
-		handlers[setting].u.option_struct.comparison_struct = &Opts;
-		handlers[setting].u.option_struct.option_array = regGameOpts;
-		setting++;
+	memset(handlers, 0, sizeof(handlers));
+	setting = 0;
+	handlers[setting].type = SH_OPTIONSTRUCT;
+	handlers[setting].comment = "Options";
+	handlers[setting].u.option_struct.option_struct = (void *) &game_options[driver_index];
+	handlers[setting].u.option_struct.comparison_struct = &Opts;
+	handlers[setting].u.option_struct.option_array = regGameOpts;
+	setting++;
 #ifdef MESS
+	if (has_software)
+	{
 		handlers[setting].type = SH_MANUAL;
 		handlers[setting].comment = "Devices";
 		handlers[setting].u.manual.emit = SaveDeviceOption;
 		setting++;
-#endif // MESS
-		handlers[setting].type = SH_END;
-
-		SaveSettingsFileEx(driver_index | SETTINGS_FILE_GAME, handlers);
 	}
+#endif // MESS
+	handlers[setting].type = SH_END;
+
+	SaveSettingsFileEx(driver_index | SETTINGS_FILE_GAME, handlers);
 }
 
 void SaveFolderOptions(int folder_index, int game_index)

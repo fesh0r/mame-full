@@ -2156,7 +2156,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		ShowCursor(FALSE);
 	}
 
-	dprintf("about to show window");
+	dprintf("about to show window\n");
 
 	nCmdShow = GetWindowState();
 	if (nCmdShow == SW_HIDE || nCmdShow == SW_MINIMIZE || nCmdShow == SW_SHOWMINIMIZED)

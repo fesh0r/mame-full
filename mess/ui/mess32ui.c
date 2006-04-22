@@ -492,6 +492,8 @@ static void MessSpecifyImage(int nGame, const device_class *devclass, int nID, L
 
 	if (nID >= 0)
 		InternalSetSelectedSoftware(nGame, dev->position + nID, pszFilename);
+	else if (LOG_SOFTWARE)
+		dprintf("MessSpecifyImage(): Failed to place image '%s'\n", pszFilename);
 
 	end_resource_tracking();
 }

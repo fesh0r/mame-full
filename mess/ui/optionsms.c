@@ -143,7 +143,8 @@ void SetSelectedSoftware(int driver_index, int device_inst_index, const char *so
 
 	if (LOG_SOFTWARE)
 	{
-		dprintf("SetSelectedSoftware(): driver_index=%d device_inst_index=%d software='%s'\n", driver_index, device_inst_index, software);
+		dprintf("SetSelectedSoftware(): driver_index=%d (\'%s\') device_inst_index=%d software='%s'\n",
+			driver_index, drivers[driver_index]->name, device_inst_index, software);
 	}
 
 	newsoftware = mame_strdup(software ? software : "");
