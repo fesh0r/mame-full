@@ -34,6 +34,8 @@ User Interface Changes:
 - [Windows GUI] Fixed bug that caused problems selecting different images in
   the picker.  (bug #873) [Nate Woods]
 
+- [Windows GUI] New icons and splash screen.  [incog]
+
 
 
 Imgtool Changes:
