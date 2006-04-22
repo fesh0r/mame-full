@@ -438,6 +438,7 @@ void wswan_handle_sprites( int mask ) {
 			int	j, x_offset, tile_address;
 			int	tile_number = tile_data & 0x01FF;
 			int	tile_palette = 8 + ( ( tile_data >> 9 ) & 0x07 );
+			int	check_clip = 0;
 			if ( tile_data & 0x8000 ) {
 				tile_line = 7 - tile_line;
 			}
@@ -464,49 +465,68 @@ void wswan_handle_sprites( int mask ) {
 				}
 			}
 
-			if ( !vdp.window_sprites_enable || !(tile_data & 0x1000) || vdp.window_sprites_left==vdp.window_sprites_right || ( vdp.current_line >= vdp.window_sprites_top && vdp.current_line < vdp.window_sprites_bottom ) ) {
-				for ( j = 0; j < 8; j++ ) {
-					int col;
-					if ( vdp.tile_packed ) {
-						if ( vdp.colors_16 ) {
-							col = plane0 & 0x0F;
-							plane0 = plane0 >> 4;
-						} else {
-							col = plane0 & 0x03;
-							plane0 = plane0 >> 2;
+			if ( vdp.window_sprites_enable ) {
+				if ( tile_data & 0x1000 ) {
+					if ( vdp.current_line >= vdp.window_sprites_top && vdp.current_line <= vdp.window_sprites_bottom ) {
+						check_clip = 1;
+					}
+				} else {
+					if ( vdp.current_line < vdp.window_sprites_top || vdp.current_line > vdp.window_sprites_bottom ) {
+						continue;
+					}
+				}
+			}
+
+			for ( j = 0; j < 8; j++ ) {
+				int col;
+				if ( vdp.tile_packed ) {
+					if ( vdp.colors_16 ) {
+						col = plane0 & 0x0F;
+						plane0 = plane0 >> 4;
+					} else {
+						col = plane0 & 0x03;
+						plane0 = plane0 >> 2;
+					}
+				} else {
+					col = ( plane3 & 8 ) | ( plane2 & 4 ) | ( plane1 & 2 ) | ( plane0 & 1 );
+					plane3 = plane3 >> 1;
+					plane2 = plane2 >> 1;
+					plane1 = plane1 >> 1;
+					plane0 = plane0 >> 1;
+				}
+				if ( tile_data & 0x4000 ) {
+					x_offset = x + j;
+				} else {
+					x_offset = x + 7 - j;
+				}
+				x_offset = x_offset & 0xFF;
+				if ( vdp.window_sprites_enable ) {
+					if ( tile_data & 0x1000 && check_clip ) {
+						if ( x_offset >= vdp.window_sprites_left && x_offset <= vdp.window_sprites_right ) {
+							continue;
 						}
 					} else {
-						col = ( plane3 & 8 ) | ( plane2 & 4 ) | ( plane1 & 2 ) | ( plane0 & 1 );
-						plane3 = plane3 >> 1;
-						plane2 = plane2 >> 1;
-						plane1 = plane1 >> 1;
-						plane0 = plane0 >> 1;
+						if ( x_offset < vdp.window_sprites_left || x_offset > vdp.window_sprites_right ) {
+//							continue;
+						}
 					}
-					if ( tile_data & 0x4000 ) {
-						x_offset = x + j;
-					} else {
-						x_offset = x + 7 - j;
-					}
-					x_offset = x_offset & 0xFF;
-					if ( !vdp.window_sprites_enable || !(tile_data & 0x1000) || vdp.window_sprites_left==vdp.window_sprites_right || ( x_offset >= vdp.window_sprites_left && x_offset < vdp.window_sprites_right ) ) {
-						if ( x_offset >= 0 && x_offset < WSWAN_X_PIXELS ) {
-							if ( vdp.colors_16 ) {
-								if ( col ) {
-									if ( vdp.color_mode ) {
-										wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
-									} else {
-										/* Hmmmm, what should we do here... Is this correct?? */
-										wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
-									}
-								}
+				}
+				if ( x_offset >= 0 && x_offset < WSWAN_X_PIXELS ) {
+					if ( vdp.colors_16 ) {
+						if ( col ) {
+							if ( vdp.color_mode ) {
+								wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
 							} else {
-								if ( col || !(tile_palette & 4 ) ) {
-									if ( vdp.color_mode ) {
-										wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
-									} else {
-										wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[vdp.main_palette[pal[tile_palette][col]]] );
-									}
-								}
+								/* Hmmmm, what should we do here... Is this correct?? */
+								wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
+							}
+						}
+					} else {
+						if ( col || !(tile_palette & 4 ) ) {
+							if ( vdp.color_mode ) {
+								wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[pal[tile_palette][col]] );
+							} else {
+								wswan_plot_pixel( x_offset, vdp.current_line, Machine->pens[vdp.main_palette[pal[tile_palette][col]]] );
 							}
 						}
 					}
@@ -563,12 +583,12 @@ void wswan_refresh_scanline(void)
 			printf( "Unknown foreground mode 1 set\n" );
 			break;
 		case 2:	/* FG only inside window area */
-			if ( vdp.current_line >= vdp.window_fg_top && vdp.current_line < vdp.window_fg_bottom ) {
+			if ( vdp.current_line >= vdp.window_fg_top && vdp.current_line <= vdp.window_fg_bottom ) {
 				wswan_draw_foreground_2();
 			}
 			break;
 		case 3:	/* FG only outside window area */
-			if ( vdp.current_line < vdp.window_fg_top || vdp.current_line >= vdp.window_fg_bottom ) {
+			if ( vdp.current_line < vdp.window_fg_top || vdp.current_line > vdp.window_fg_bottom ) {
 				wswan_draw_foreground_0();
 			} else {
 				wswan_draw_foreground_3();

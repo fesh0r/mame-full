@@ -218,6 +218,7 @@ READ8_HANDLER( wswan_port_r )
 {
 	UINT8 value = ws_portram[offset];
 
+	if ( offset != 2 ) 
 	logerror( "PC=%X: port read %02X\n", activecpu_get_pc(), offset );
 	switch( offset )
 	{
@@ -527,9 +528,6 @@ WRITE8_HANDLER( wswan_port_w )
 		case 0xb0:		/* Interrupt base vector */
 			break;
 		case 0xb2:		/* Interrupt enable */
-			if ( data & 0x10 ) {
-				logerror( "Enabling unsupported drawing line detection interrupt\n" );
-			}
 			break;
 		case 0xb3:		/* serial communication */
 //			data |= 0x02;
@@ -875,7 +873,7 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 		}
 	}
 
-	vdp.current_line = (vdp.current_line + 1) % 160; /*159?*/
+//	vdp.current_line = (vdp.current_line + 1) % 159;
 
 	if( vdp.current_line == 144 ) {
 		wswan_set_irq_line( WSWAN_IFLAG_VBL );
@@ -894,6 +892,14 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 			}
 		}
 	}
+
+//	vdp.current_line = (vdp.current_line + 1) % 159; 
+
+	if ( vdp.current_line == vdp.line_compare ) {
+		wswan_set_irq_line( WSWAN_IFLAG_LCMP );
+	}
+
+	vdp.current_line = (vdp.current_line + 1) % 159;
 
 	if ( vdp.current_line == 0 ) {
 		if ( vdp.display_vertical != vdp.new_display_vertical ) {

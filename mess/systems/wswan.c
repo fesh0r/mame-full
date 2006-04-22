@@ -130,7 +130,7 @@ static MACHINE_DRIVER_START( wswan )
 	MDRV_CPU_ADD_TAG("main", V30MZ, 3072000)
 	MDRV_CPU_PROGRAM_MAP(wswan_mem, 0)
 	MDRV_CPU_IO_MAP(wswan_io, 0)
-	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 160/*159?*/)	/* 1 int each scanline */
+	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 159)	/* 1 int each scanline */
 
 	MDRV_FRAMES_PER_SECOND(75)
 	MDRV_VBLANK_DURATION(0)
