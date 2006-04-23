@@ -17,10 +17,10 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
 #include "sound/sid6581.h"
+#include "machine/6526cia.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
-#include "includes/cia6526.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
@@ -73,9 +73,8 @@ static enum
 	CartridgeSuperGames, CartridgeRobocop2
 }
 cartridgetype = CartridgeAuto;
-static UINT8 cia0porta, cia0portb;
 static UINT8 serial_clock, serial_data, serial_atn;
-static UINT8 vicirq = 0, cia0irq = 0, cia1irq = 0;
+static UINT8 vicirq = 0;
 
 static int is_c65(void)
 {
@@ -90,6 +89,8 @@ static int is_c128(void)
 static void c64_nmi(void)
 {
 	static int nmilevel = 0;
+	int cia1irq = cia_get_irq(1);
+
 	if (nmilevel != KEY_RESTORE||cia1irq)
 	{
 		if (is_c128())
@@ -129,116 +130,128 @@ static void c64_nmi(void)
  * flag cassette read input, serial request in
  * irq to irq connected
  */
-int c64_cia0_port_a_r (int offset)
+static UINT8 c64_cia0_port_a_r (void)
 {
-    int value = 0xff;
+	UINT8 value = 0xff;
+	UINT8 cia0portb = cia_get_output_b(0);
 
-    if (!(cia0portb&0x80)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x80)) t&=~0x80;
-	if (!(c64_keyline[6]&0x80)) t&=~0x40;
-	if (!(c64_keyline[5]&0x80)) t&=~0x20;
-	if (!(c64_keyline[4]&0x80)) t&=~0x10;
-	if (!(c64_keyline[3]&0x80)) t&=~0x08;
-	if (!(c64_keyline[2]&0x80)) t&=~0x04;
-	if (!(c64_keyline[1]&0x80)) t&=~0x02;
-	if (!(c64_keyline[0]&0x80)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x40)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x40)) t&=~0x80;
-	if (!(c64_keyline[6]&0x40)) t&=~0x40;
-	if (!(c64_keyline[5]&0x40)) t&=~0x20;
-	if (!(c64_keyline[4]&0x40)) t&=~0x10;
-	if (!(c64_keyline[3]&0x40)) t&=~0x08;
-	if (!(c64_keyline[2]&0x40)) t&=~0x04;
-	if (!(c64_keyline[1]&0x40)) t&=~0x02;
-	if (!(c64_keyline[0]&0x40)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x20)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x20)) t&=~0x80;
-	if (!(c64_keyline[6]&0x20)) t&=~0x40;
-	if (!(c64_keyline[5]&0x20)) t&=~0x20;
-	if (!(c64_keyline[4]&0x20)) t&=~0x10;
-	if (!(c64_keyline[3]&0x20)) t&=~0x08;
-	if (!(c64_keyline[2]&0x20)) t&=~0x04;
-	if (!(c64_keyline[1]&0x20)) t&=~0x02;
-	if (!(c64_keyline[0]&0x20)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x10)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x10)) t&=~0x80;
-	if (!(c64_keyline[6]&0x10)) t&=~0x40;
-	if (!(c64_keyline[5]&0x10)) t&=~0x20;
-	if (!(c64_keyline[4]&0x10)) t&=~0x10;
-	if (!(c64_keyline[3]&0x10)) t&=~0x08;
-	if (!(c64_keyline[2]&0x10)) t&=~0x04;
-	if (!(c64_keyline[1]&0x10)) t&=~0x02;
-	if (!(c64_keyline[0]&0x10)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x08)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x08)) t&=~0x80;
-	if (!(c64_keyline[6]&0x08)) t&=~0x40;
-	if (!(c64_keyline[5]&0x08)) t&=~0x20;
-	if (!(c64_keyline[4]&0x08)) t&=~0x10;
-	if (!(c64_keyline[3]&0x08)) t&=~0x08;
-	if (!(c64_keyline[2]&0x08)) t&=~0x04;
-	if (!(c64_keyline[1]&0x08)) t&=~0x02;
-	if (!(c64_keyline[0]&0x08)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x04)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x04)) t&=~0x80;
-	if (!(c64_keyline[6]&0x04)) t&=~0x40;
-	if (!(c64_keyline[5]&0x04)) t&=~0x20;
-	if (!(c64_keyline[4]&0x04)) t&=~0x10;
-	if (!(c64_keyline[3]&0x04)) t&=~0x08;
-	if (!(c64_keyline[2]&0x04)) t&=~0x04;
-	if (!(c64_keyline[1]&0x04)) t&=~0x02;
-	if (!(c64_keyline[0]&0x04)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x02)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x02)) t&=~0x80;
-	if (!(c64_keyline[6]&0x02)) t&=~0x40;
-	if (!(c64_keyline[5]&0x02)) t&=~0x20;
-	if (!(c64_keyline[4]&0x02)) t&=~0x10;
-	if (!(c64_keyline[3]&0x02)) t&=~0x08;
-	if (!(c64_keyline[2]&0x02)) t&=~0x04;
-	if (!(c64_keyline[1]&0x02)) t&=~0x02;
-	if (!(c64_keyline[0]&0x02)) t&=~0x01;
-	value &=t;
-    }
-    if (!(cia0portb&0x01)) {
-	UINT8 t=0xff;
-	if (!(c64_keyline[7]&0x01)) t&=~0x80;
-	if (!(c64_keyline[6]&0x01)) t&=~0x40;
-	if (!(c64_keyline[5]&0x01)) t&=~0x20;
-	if (!(c64_keyline[4]&0x01)) t&=~0x10;
-	if (!(c64_keyline[3]&0x01)) t&=~0x08;
-	if (!(c64_keyline[2]&0x01)) t&=~0x04;
-	if (!(c64_keyline[1]&0x01)) t&=~0x02;
-	if (!(c64_keyline[0]&0x01)) t&=~0x01;
-	value &=t;
-    }
+	if (!(cia0portb&0x80))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x80)) t&=~0x80;
+		if (!(c64_keyline[6]&0x80)) t&=~0x40;
+		if (!(c64_keyline[5]&0x80)) t&=~0x20;
+		if (!(c64_keyline[4]&0x80)) t&=~0x10;
+		if (!(c64_keyline[3]&0x80)) t&=~0x08;
+		if (!(c64_keyline[2]&0x80)) t&=~0x04;
+		if (!(c64_keyline[1]&0x80)) t&=~0x02;
+		if (!(c64_keyline[0]&0x80)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x40))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x40)) t&=~0x80;
+		if (!(c64_keyline[6]&0x40)) t&=~0x40;
+		if (!(c64_keyline[5]&0x40)) t&=~0x20;
+		if (!(c64_keyline[4]&0x40)) t&=~0x10;
+		if (!(c64_keyline[3]&0x40)) t&=~0x08;
+		if (!(c64_keyline[2]&0x40)) t&=~0x04;
+		if (!(c64_keyline[1]&0x40)) t&=~0x02;
+		if (!(c64_keyline[0]&0x40)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x20))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x20)) t&=~0x80;
+		if (!(c64_keyline[6]&0x20)) t&=~0x40;
+		if (!(c64_keyline[5]&0x20)) t&=~0x20;
+		if (!(c64_keyline[4]&0x20)) t&=~0x10;
+		if (!(c64_keyline[3]&0x20)) t&=~0x08;
+		if (!(c64_keyline[2]&0x20)) t&=~0x04;
+		if (!(c64_keyline[1]&0x20)) t&=~0x02;
+		if (!(c64_keyline[0]&0x20)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x10))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x10)) t&=~0x80;
+		if (!(c64_keyline[6]&0x10)) t&=~0x40;
+		if (!(c64_keyline[5]&0x10)) t&=~0x20;
+		if (!(c64_keyline[4]&0x10)) t&=~0x10;
+		if (!(c64_keyline[3]&0x10)) t&=~0x08;
+		if (!(c64_keyline[2]&0x10)) t&=~0x04;
+		if (!(c64_keyline[1]&0x10)) t&=~0x02;
+		if (!(c64_keyline[0]&0x10)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x08))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x08)) t&=~0x80;
+		if (!(c64_keyline[6]&0x08)) t&=~0x40;
+		if (!(c64_keyline[5]&0x08)) t&=~0x20;
+		if (!(c64_keyline[4]&0x08)) t&=~0x10;
+		if (!(c64_keyline[3]&0x08)) t&=~0x08;
+		if (!(c64_keyline[2]&0x08)) t&=~0x04;
+		if (!(c64_keyline[1]&0x08)) t&=~0x02;
+		if (!(c64_keyline[0]&0x08)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x04))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x04)) t&=~0x80;
+		if (!(c64_keyline[6]&0x04)) t&=~0x40;
+		if (!(c64_keyline[5]&0x04)) t&=~0x20;
+		if (!(c64_keyline[4]&0x04)) t&=~0x10;
+		if (!(c64_keyline[3]&0x04)) t&=~0x08;
+		if (!(c64_keyline[2]&0x04)) t&=~0x04;
+		if (!(c64_keyline[1]&0x04)) t&=~0x02;
+		if (!(c64_keyline[0]&0x04)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x02))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x02)) t&=~0x80;
+		if (!(c64_keyline[6]&0x02)) t&=~0x40;
+		if (!(c64_keyline[5]&0x02)) t&=~0x20;
+		if (!(c64_keyline[4]&0x02)) t&=~0x10;
+		if (!(c64_keyline[3]&0x02)) t&=~0x08;
+		if (!(c64_keyline[2]&0x02)) t&=~0x04;
+		if (!(c64_keyline[1]&0x02)) t&=~0x02;
+		if (!(c64_keyline[0]&0x02)) t&=~0x01;
+		value &=t;
+	}
+	if (!(cia0portb&0x01))
+	{
+		UINT8 t=0xff;
+		if (!(c64_keyline[7]&0x01)) t&=~0x80;
+		if (!(c64_keyline[6]&0x01)) t&=~0x40;
+		if (!(c64_keyline[5]&0x01)) t&=~0x20;
+		if (!(c64_keyline[4]&0x01)) t&=~0x10;
+		if (!(c64_keyline[3]&0x01)) t&=~0x08;
+		if (!(c64_keyline[2]&0x01)) t&=~0x04;
+		if (!(c64_keyline[1]&0x01)) t&=~0x02;
+		if (!(c64_keyline[0]&0x01)) t&=~0x01;
+		value &=t;
+	}
 
-    if (JOYSTICK_SWAP) value &= c64_keyline[8];
-    else value &= c64_keyline[9];
+	if (JOYSTICK_SWAP)
+		value &= c64_keyline[8];
+	else
+		value &= c64_keyline[9];
 
-    return value;
+	return value;
 }
 
-int c64_cia0_port_b_r (int offset)
+static UINT8 c64_cia0_port_b_r (void)
 {
-    int value = 0xff;
+    UINT8 value = 0xff;
+	UINT8 cia0porta = cia_get_output_a(0);
 
     if (!(cia0porta & 0x80)) value &= c64_keyline[7];
     if (!(cia0porta & 0x40)) value &= c64_keyline[6];
@@ -270,14 +283,8 @@ int c64_cia0_port_b_r (int offset)
     return value;
 }
 
-void c64_cia0_port_a_w (int offset, int data)
+static void c64_cia0_port_b_w (UINT8 data)
 {
-    cia0porta = data;
-}
-
-static void c64_cia0_port_b_w (int offset, int data)
-{
-    cia0portb =data;
     vic2_lightpen_write (data & 0x10);
 }
 
@@ -309,16 +316,12 @@ static void c64_irq (int level)
 
 WRITE8_HANDLER(c64_tape_read)
 {
-	cia6526_0_set_input_flag (data);
+	cia_issue_index(0);
 }
 
 static void c64_cia0_interrupt (int level)
 {
-	if (level != cia0irq)
-	{
-		c64_irq (level || vicirq);
-		cia0irq = level;
-	}
+	c64_irq (level || vicirq);
 }
 
 void c64_vic_interrupt (int level)
@@ -326,7 +329,7 @@ void c64_vic_interrupt (int level)
 #if 1
 	if (level != vicirq)
 	{
-		c64_irq (level || cia0irq);
+		c64_irq (level || cia_get_irq(0));
 		vicirq = level;
 	}
 #endif
@@ -355,9 +358,9 @@ void c64_vic_interrupt (int level)
  * flag restore key or rs232 received data input
  * irq to nmi connected ?
  */
-int c64_cia1_port_a_r (int offset)
+UINT8 c64_cia1_port_a_r (void)
 {
-	int value = 0xff;
+	UINT8 value = 0xff;
 
 	if (!serial_clock || !cbm_serial_clock_read ())
 		value &= ~0x40;
@@ -366,7 +369,7 @@ int c64_cia1_port_a_r (int offset)
 	return value;
 }
 
-static void c64_cia1_port_a_w (int offset, int data)
+static void c64_cia1_port_a_w (UINT8 data)
 {
 	static int helper[4] = {0xc000, 0x8000, 0x4000, 0x0000};
 
@@ -382,36 +385,31 @@ static void c64_cia1_port_a_w (int offset, int data)
 
 static void c64_cia1_interrupt (int level)
 {
-	cia1irq = level;
 	c64_nmi();
 }
 
-struct cia6526_interface c64_cia0 =
+const cia6526_interface c64_cia0 =
 {
-	c64_cia0_port_a_r,
-	c64_cia0_port_b_r,
-	c64_cia0_port_a_w,
-	c64_cia0_port_b_w,
-	0,								   /*c64_cia0_pc_w */
-	0,								   /*c64_cia0_sp_r */
-	0,								   /*c64_cia0_sp_w */
-	0,								   /*c64_cia0_cnt_r */
-	0,								   /*c64_cia0_cnt_w */
+	CIA6526,
 	c64_cia0_interrupt,
-	0xff, 0xff, 0
-}, c64_cia1 =
+	0.0, 60,
+
+	{
+		{ c64_cia0_port_a_r, NULL },
+		{ c64_cia0_port_b_r, c64_cia0_port_b_w }
+	}
+};
+
+const cia6526_interface c64_cia1 =
 {
-	c64_cia1_port_a_r,
-	0,								   /*c64_cia1_port_b_r, */
-	c64_cia1_port_a_w,
-	0,								   /*c64_cia1_port_b_w, */
-	0,								   /*c64_cia1_pc_w */
-	0,								   /*c64_cia1_sp_r */
-	0,								   /*c64_cia1_sp_w */
-	0,								   /*c64_cia1_cnt_r */
-	0,								   /*c64_cia1_cnt_w */
+	CIA6526,
 	c64_cia1_interrupt,
-	0xc7, 0xff, 0
+	0.0, 60,
+
+	{
+		{ c64_cia1_port_a_r, c64_cia1_port_a_w },
+		{ 0, 0 }
+	}
 };
 
 static void c64_bankswitch (int reset);
@@ -476,11 +474,11 @@ WRITE8_HANDLER( c64_write_io )
 	} else if (offset < 0xc00)
 		c64_colorram[offset & 0x3ff] = data | 0xf0;
 	else if (offset < 0xd00)
-		cia6526_0_port_w (offset & 0xff, data);
+		cia_0_w(offset, data);
 	else if (offset < 0xe00)
 	{
 		if (c64_cia1_on)
-			cia6526_1_port_w (offset & 0xff, data);
+			cia_1_w(offset, data);
 		else
 			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 	}
@@ -515,9 +513,9 @@ READ8_HANDLER( c64_read_io )
 	else if (offset < 0xc00)
 		return c64_colorram[offset & 0x3ff];
 	else if (offset < 0xd00)
-		return cia6526_0_port_r (offset & 0xff);
+		return cia_0_r(offset);
 	else if (c64_cia1_on && (offset < 0xe00))
-		return cia6526_1_port_r (offset & 0xff);
+		return cia_1_r(offset);
 	DBG_LOG (1, "io read", ("%.3x\n", offset));
 	return 0xff;
 }
@@ -710,6 +708,8 @@ UINT8 c64_m6510_port_read(void)
 int c64_paddle_read (int which)
 {
 	int pot1=0xff, pot2=0xff, pot3=0xff, pot4=0xff, temp;
+	UINT8 cia0porta = cia_get_output_a(0);
+
 	if (PADDLES34)
 	{
 		if (which) pot4=PADDLE4_VALUE;
@@ -815,14 +815,19 @@ static void c64_common_driver_init (void)
 	if (c64_tape_on)
 		vc20_tape_open (c64_tape_read);
 
-	cia6526_init();
-
-	c64_cia0.todin50hz = c64_pal;
-	cia6526_config (0, &c64_cia0);
-	if (c64_cia1_on)
 	{
-		c64_cia1.todin50hz = c64_pal;
-		cia6526_config (1, &c64_cia1);
+		cia6526_interface cia_intf[2];
+
+		cia_intf[0] = c64_cia0;
+		cia_intf[0].tod_clock = c64_pal ? 50 : 60;
+		cia_config(0, &cia_intf[0]);
+
+		if (c64_cia1_on)
+		{
+			cia_intf[1] = c64_cia1;
+			cia_intf[1].tod_clock = c64_pal ? 50 : 60;
+			cia_config(1, &cia_intf[1]);
+		}
 	}
 
 	if (ultimax)
@@ -835,7 +840,7 @@ static void c64_common_driver_init (void)
 		vic6567_init (0, c64_pal, c64_dma_read, c64_dma_read_color,
 					  c64_vic_interrupt);
 	}
-	cia6526_reset ();
+	cia_reset();
 	add_exit_callback(c64_driver_shutdown);
 }
 
@@ -894,7 +899,7 @@ void c64_common_init_machine (void)
 		serial_clock = serial_data = serial_atn = 1;
 	}
 	c64_vicaddr = c64_memory;
-	vicirq = cia0irq = 0;
+	vicirq = 0;
 }
 
 MACHINE_START( c64 )

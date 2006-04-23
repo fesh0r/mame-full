@@ -415,7 +415,7 @@ $(OBJ)/alpha.a: \
 
 $(OBJ)/amiga.a: \
 	$(OBJ)/drivers/arcadia.o $(OBJ)/machine/amiga.o $(OBJ)/sndhrdw/amiga.o $(OBJ)/vidhrdw/amiga.o \
-	$(OBJ)/drivers/mquake.o \
+	$(OBJ)/machine/6526cia.o $(OBJ)/drivers/mquake.o \
 
 $(OBJ)/atari.a: \
  	$(OBJ)/drivers/atarigx2.o $(OBJ)/vidhrdw/atarigx2.o \

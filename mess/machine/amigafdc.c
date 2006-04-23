@@ -7,6 +7,7 @@
 #include "mame.h"
 #include "amiga.h"
 #include "amigafdc.h"
+#include "machine/6526cia.h"
 
 /* required prototype */
 static void setup_fdc_buffer( int drive );
@@ -346,7 +347,8 @@ static void setup_fdc_buffer( int drive )
 static void fdc_rev_proc( int drive ) {
 	int time;
 
-	amiga_cia_issue_index();
+	/* Issue a index pulse when a disk revolution completes */
+	cia_issue_index(1);
 
 	time = ( CUSTOM_REG(REG_ADKCON) & 0x100 ) ? 2 : 4;
 	time *= ( 544 * 2 * 11 );
@@ -416,7 +418,7 @@ static void fdc_motor( int drive, int off ) {
 	fdc_status[drive].motor_on = on;
 }
 
-void amiga_fdc_control_w( int data ) {
+void amiga_fdc_control_w( UINT8 data ) {
 	int step_pulse;
 	int drive;
 

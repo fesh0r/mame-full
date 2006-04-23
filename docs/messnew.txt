@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [CBM] Changed code to share 6526 CIA implementation with the one used by
+  the Amiga in MAME.  [Nate Woods]
+
 - [CGENIE] Implemented configurable RAM support.  [Nate Woods]
 
 - [COCO] Fixed joystick regression introduced in 0.105.  [Nate Woods]

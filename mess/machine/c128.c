@@ -13,10 +13,10 @@
 #include "cpu/m6502/m6502.h"
 #include "sound/sid6581.h"
 #include "mscommon.h"
+#include "machine/6526cia.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
-#include "includes/cia6526.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
@@ -119,10 +119,10 @@ WRITE8_HANDLER( c128_write_d000 )
 				c64_colorram[(offset & 0x3ff)|((c64_port6510&3)<<10)] = data | 0xf0; // maybe all 8 bit connected!
 		    break;
 		case 0xc:
-			cia6526_0_port_w (offset & 0xff, data);
+			cia_0_w(offset, data);
 			break;
 		case 0xd:
-			cia6526_1_port_w (offset & 0xff, data);
+			cia_1_w(offset, data);
 			break;
 		case 0xf:
 			c128_dma8726_port_w(offset&0xff,data);
@@ -150,9 +150,9 @@ static  READ8_HANDLER( c128_read_io )
 	case 8: case 9: case 0xa: case 0xb:
 		return c64_colorram[offset & 0x3ff];
 	case 0xc:
-		return cia6526_0_port_r (offset & 0xff);
+		return cia_0_r(offset);
 	case 0xd:
-		return cia6526_1_port_r (offset & 0xff);
+		return cia_1_r(offset);
 	case 0xf:
 		return c128_dma8726_port_r(offset&0xff);
 	case 0xe:default:
@@ -786,12 +786,16 @@ static void c128_common_driver_init (void)
 
 	vc20_tape_open (c64_tape_read);
 
-	cia6526_init();
+	{
+		cia6526_interface cia_intf[2];
+		cia_intf[0] = c64_cia0;
+		cia_intf[1] = c64_cia1;
+		cia_intf[0].tod_clock = c64_pal ? 50 : 60;
+		cia_intf[1].tod_clock = c64_pal ? 50 : 60;
 
-	c64_cia0.todin50hz = c64_pal;
-	cia6526_config (0, &c64_cia0);
-	c64_cia1.todin50hz = c64_pal;
-	cia6526_config (1, &c64_cia1);
+		cia_config(0, &cia_intf[0]);
+		cia_config(1, &cia_intf[1]);
+	}
 }
 
 DRIVER_INIT( c128 )

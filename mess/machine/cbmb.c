@@ -7,10 +7,10 @@
 #include "driver.h"
 #include "cpu/m6502/m6509.h"
 #include "sound/sid6581.h"
+#include "machine/6526cia.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
-#include "includes/cia6526.h"
 #include "includes/tpi6525.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
@@ -175,29 +175,26 @@ static void cbmb_irq (int level)
   pb7 .. 4 gameport 2
   pb3 .. 0 gameport 1
  */
-static int cbmb_cia_port_a_r(int offset)
+static UINT8 cbmb_cia_port_a_r(void)
 {
 	return cbm_ieee_data_r();
 }
 
-static void cbmb_cia_port_a_w(int offset, int data)
+static void cbmb_cia_port_a_w(UINT8 data)
 {
 	cbm_ieee_data_w(0, data);
 }
 
-struct cia6526_interface cbmb_cia =
+const cia6526_interface cbmb_cia =
 {
-	cbmb_cia_port_a_r,/*c64_cia0_port_a_r, */
-	0,/*c64_cia0_port_b_r, */
-	cbmb_cia_port_a_w,/*c64_cia0_port_a_w, */
-	0,/*c64_cia0_port_b_w, */
-	0,								   /*c64_cia0_pc_w */
-	0,								   /*c64_cia0_sp_r */
-	0,								   /*c64_cia0_sp_w */
-	0,								   /*c64_cia0_cnt_r */
-	0,								   /*c64_cia0_cnt_w */
+	CIA6526,
 	tpi6525_0_irq2_level,
-	0xff, 0xff, 0
+	0.0, 60,
+
+	{
+		{ cbmb_cia_port_a_r, cbmb_cia_port_a_w },
+		{ 0, 0 }
+	}
 };
 
 WRITE8_HANDLER ( cbmb_colorram_w )
@@ -228,10 +225,7 @@ static void cbmb_common_driver_init (void)
 	cbmb_chargen=memory_region(REGION_CPU1)+0x100000;
 	/*    memset(c64_memory, 0, 0xfd00); */
 
-	cia6526_init();
-
-	cbmb_cia.todin50hz = 0;
-	cia6526_config (0, &cbmb_cia);
+	cia_config(0, &cbmb_cia);
 
 	tpi6525[0].a.read=cbmb_tpi0_port_a_r;
 	tpi6525[0].a.output=cbmb_tpi0_port_a_w;
@@ -289,7 +283,7 @@ void cbm500_driver_init (void)
 MACHINE_RESET( cbmb )
 {
 	sndti_reset(SOUND_SID6581, 0);
-	cia6526_reset ();
+	cia_reset();
 	tpi6525_0_reset();
 	tpi6525_1_reset();
 

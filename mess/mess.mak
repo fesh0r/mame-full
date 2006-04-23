@@ -405,12 +405,13 @@ $(OBJ)/amiga.a: \
 	$(OBJ)/vidhrdw/amiga.o			\
 	$(OBJ)/machine/amiga.o			\
 	$(OBJ)/sndhrdw/amiga.o			\
+	$(OBJ)/machine/6526cia.o		\
 	$(OBJ)/mess/machine/amigafdc.o	\
 	$(OBJ)/mess/systems/amiga.o
 
 $(OBJ)/cbmshare.a: \
+	$(OBJ)/machine/6526cia.o		\
 	$(OBJ)/mess/machine/tpi6525.o	\
-	$(OBJ)/mess/machine/cia6526.o	\
 	$(OBJ)/mess/machine/cbm.o		\
 	$(OBJ)/mess/machine/cbmdrive.o	\
 	$(OBJ)/mess/machine/vc1541.o	 \

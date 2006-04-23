@@ -141,17 +141,17 @@ static void autoconfig_init(void)
 
 static unsigned char coin_counter[2];
 
-static int arcadia_cia_0_portA_r( void )
+static UINT8 arcadia_cia_0_portA_r( void )
 {
-	int ret = readinputport(0) & 0xc0;
+	UINT8 ret = readinputport(0) & 0xc0;
 	ret |= 0x3f;
 	return ret; /* Gameport 1 and 0 buttons */
 }
 
-static int arcadia_cia_0_portB_r( void )
+static UINT8 arcadia_cia_0_portB_r( void )
 {
 	/* parallel port */
-	int ret = 0;
+	UINT8 ret = 0;
 	ret = readinputport(1) & 0x0f;
 
 	ret |= (coin_counter[0] & 3) << 4;
@@ -161,7 +161,7 @@ static int arcadia_cia_0_portB_r( void )
 	return ret;
 }
 
-static void arcadia_cia_0_portA_w( int data )
+static void arcadia_cia_0_portA_w( UINT8 data )
 {
 	/* switch banks as appropriate */
 	memory_set_bank(1, data & 1);
@@ -178,7 +178,7 @@ static void arcadia_cia_0_portA_w( int data )
 	set_led_status(0, (data & 2) ? 0 : 1); /* bit 2 = Power Led on Amiga*/
 }
 
-static void arcadia_cia_0_portB_w( int data )
+static void arcadia_cia_0_portB_w( UINT8 data )
 {
 	/* parallel port */
 	/* bit 0 = coin counter reset? */
@@ -704,7 +704,7 @@ INLINE void generic_decode(int region, int bit7, int bit6, int bit5, int bit4, i
 }
 
 
-static const struct amiga_machine_interface arcadia_intf =
+static const amiga_machine_interface arcadia_intf =
 {
 	arcadia_cia_0_portA_r,
 	arcadia_cia_0_portB_r,

@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "includes/amiga.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/6526cia.h"
 
 #define LOG_CUSTOM	1
 #define LOG_CIA		1
@@ -34,48 +35,6 @@
  *
  *************************************/
 
-typedef struct _cia_timer cia_timer;
-typedef struct _cia_port cia_port;
-typedef struct _cia_state cia_state;
-
-struct _cia_timer
-{
-	UINT16		latch;
-	UINT16		count;
-	UINT8		mode;
-	UINT8		started;
-	UINT8		irq;
-	mame_timer *timer;
-	cia_state *	cia;
-};
-
-struct _cia_port
-{
-	UINT8		ddr;
-	UINT8		latch;
-	int			(*read)(void);
-	void		(*write)(int);
-};
-
-struct _cia_state
-{
-	UINT16			irq;
-
-	cia_port		port[2];
-	cia_timer		timer[2];
-
-	/* Time Of the Day clock (TOD) */
-	UINT32			tod;
-	UINT32			tod_latch;
-	UINT8			tod_running;
-	UINT32			alarm;
-
-	/* Interrupts */
-	UINT8			icr;
-	UINT8			ics;
-};
-
-
 typedef struct _autoconfig_device autoconfig_device;
 struct _autoconfig_device
 {
@@ -98,8 +57,7 @@ UINT16 *amiga_custom_regs;
 UINT16 *amiga_expansion_ram;
 UINT16 *amiga_autoconfig_mem;
 
-static cia_state cia_8520[2];
-static const struct amiga_machine_interface *amiga_intf;
+static const amiga_machine_interface *amiga_intf;
 
 static autoconfig_device *autoconfig_list;
 static autoconfig_device *cur_autoconfig;
@@ -656,219 +614,27 @@ static void blitter_setup( void ) {
 
 ***************************************************************************/
 
-static void cia_update_interrupts(cia_state *cia)
-{
-	/* always update the high bit of ICS */
-	if (cia->ics & 0x7f)
-		cia->ics |= 0x80;
-	else
-		cia->ics &= ~0x80;
-
-	/* based on what is enabled, set/clear the IRQ via the custom chip */
-	if (cia->ics & cia->icr)
-		amiga_custom_w(REG_INTREQ, 0x8000 | cia->irq, 0);
-	else
-		amiga_custom_w(REG_INTREQ, 0x0000 | cia->irq, 0);
-}
-
-
-INLINE void cia_timer_start(cia_timer *timer)
-{
-	if (!timer->started)
-		timer_adjust_ptr(timer->timer, (double)timer->count * O2_TIMER_RATE, 0);
-}
-
-
-INLINE void cia_timer_stop(cia_timer *timer)
-{
-	timer_reset(timer->timer, TIME_NEVER);
-	timer->started = FALSE;
-}
-
-
-INLINE int cia_timer_count(cia_timer *timer)
-{
-	/* based on whether or not the timer is running, return the current count value */
-	if (timer->started)
-		return timer->count - (int)(timer_timeelapsed(timer->timer) / O2_TIMER_RATE);
-	else
-		return timer->count;
-}
-
-
-static void cia_timer_proc(void *param)
-{
-	cia_timer *timer = param;
-
-	/* clear the timer started flag */
-	timer->started = FALSE;
-
-	/* set the status and update interrupts */
-	timer->cia->ics |= timer->irq;
-	cia_update_interrupts(timer->cia);
-
-	/* reload the timer */
-	timer->count = timer->latch;
-
-	/* if one-shot mode, turn it off; otherwise, reprime the timer */
-	if (timer->mode & 0x08)
-		timer->mode &= 0xfe;
-	else
-		cia_timer_start(timer);
-}
-
-
-/* Update TOD on CIA A */
-static void cia_clock_tod(cia_state *cia)
-{
-	if (cia->tod_running)
-	{
-		cia->tod++;
-		cia->tod &= 0xffffff;
-		if (cia->tod == cia->alarm)
-		{
-			cia->ics |= 0x04;
-			cia_update_interrupts(cia);
-		}
-	}
-}
-
-
-/* Issue a index pulse when a disk revolution completes */
-void amiga_cia_issue_index(void)
-{
-	cia_state *cia = &cia_8520[1];
-	cia->ics |= 0x10;
-	cia_update_interrupts(cia);
-}
-
-
-static void cia_reset(void)
-{
-	int i, t;
-
-	/* initialize the CIA states */
-	memset(&cia_8520, 0, sizeof(cia_8520));
-
-	/* loop over and set up initial values */
-	for (i = 0; i < 2; i++)
-	{
-		cia_state *cia = &cia_8520[i];
-
-		/* select IRQ bit based on which CIA */
-		cia->irq = (i == 0) ? INTENA_PORTS : INTENA_EXTER;
-
-		/* initialize port handlers */
-		cia->port[0].read = (i == 0) ? amiga_intf->cia_0_portA_r : amiga_intf->cia_1_portA_r;
-		cia->port[1].read = (i == 0) ? amiga_intf->cia_0_portB_r : amiga_intf->cia_1_portB_r;
-		cia->port[0].write = (i == 0) ? amiga_intf->cia_0_portA_w : amiga_intf->cia_1_portA_w;
-		cia->port[1].write = (i == 0) ? amiga_intf->cia_0_portB_w : amiga_intf->cia_1_portB_w;
-
-		/* initialize data direction registers */
-		cia->port[0].ddr = (i == 0) ? 0x03 : 0xff;
-		cia->port[1].ddr = (i == 0) ? 0x00 : 0xff;
-
-		/* TOD running by default */
-		cia->tod_running = TRUE;
-
-		/* initialize timers */
-		for (t = 0; t < 2; t++)
-		{
-			cia_timer *timer = &cia->timer[t];
-
-			timer->latch = 0xffff;
-			timer->irq = 0x01 << t;
-			timer->cia = cia;
-			timer->timer = timer_alloc_ptr(cia_timer_proc, timer);
-		}
-	}
-}
-
-
 READ16_HANDLER( amiga_cia_r )
 {
-	cia_timer *timer;
-	cia_state *cia;
-	cia_port *port;
 	UINT8 data;
-	int shift;
+	int shift, which;
 
 	/* offsets 0000-07ff reference CIA B, and are accessed via the MSB */
 	if ((offset & 0x0800) == 0)
 	{
-		cia = &cia_8520[1];
+		which = 1;
 		shift = 8;
 	}
 
 	/* offsets 0800-0fff reference CIA A, and are accessed via the LSB */
 	else
 	{
-		cia = &cia_8520[0];
+		which = 0;
 		shift = 0;
 	}
 
-	/* switch off the offset */
-	switch (offset & 0x780)
-	{
-		/* port A/B data */
-		case CIA_PRA:
-		case CIA_PRB:
-			port = &cia->port[(offset >> 7) & 1];
-			data = port->read ? (*port->read)() : 0;
-			data = (data & ~port->ddr) | (port->latch & port->ddr);
-			break;
-
-		/* port A/B direction */
-		case CIA_DDRA:
-		case CIA_DDRB:
-			port = &cia->port[(offset >> 7) & 1];
-			data = port->ddr;
-			break;
-
-		/* timer A/B low byte */
-		case CIA_TALO:
-		case CIA_TBLO:
-			timer = &cia->timer[(offset >> 8) & 1];
-			data = cia_timer_count(timer) >> 0;
-			break;
-
-		/* timer A/B high byte */
-		case CIA_TAHI:
-		case CIA_TBHI:
-			timer = &cia->timer[(offset >> 8) & 1];
-			data = cia_timer_count(timer) >> 8;
-			break;
-
-		/* TOD counter low byte */
-		case CIA_TODLOW:
-			data = cia->tod_latch >> 0;
-			break;
-
-		/* TOD counter middle byte */
-		case CIA_TODMID:
-			data = cia->tod_latch >> 8;
-			break;
-
-		/* TOD counter high byte */
-		case CIA_TODHI:
-			cia->tod_latch = cia->tod;
-			data = cia->tod_latch >> 16;
-			break;
-
-		/* interrupt status/clear */
-		case CIA_ICR:
-			data = cia->ics;
-			cia->ics = 0; /* clear on read */
-			cia_update_interrupts(cia);
-			break;
-
-		/* timer A/B mode */
-		case CIA_CRA:
-		case CIA_CRB:
-			timer = &cia->timer[(offset >> 7) & 1];
-			data = timer->mode;
-			break;
-	}
+	/* handle the reads */
+	data = cia_read(which, offset >> 7);
 
 #if LOG_CIA
 	logerror("%06x:cia_%c_read(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data << shift, mem_mask ^ 0xffff);
@@ -880,10 +646,7 @@ READ16_HANDLER( amiga_cia_r )
 
 WRITE16_HANDLER( amiga_cia_w )
 {
-	cia_timer *timer;
-	cia_state *cia;
-	cia_port *port;
-	int shift;
+	int which;
 
 #if LOG_CIA
 	logerror("%06x:cia_%c_write(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data, mem_mask ^ 0xffff);
@@ -894,7 +657,7 @@ WRITE16_HANDLER( amiga_cia_w )
 	{
 		if (!ACCESSING_MSB)
 			return;
-		cia = &cia_8520[1];
+		which = 1;
 		data >>= 8;
 	}
 
@@ -903,104 +666,26 @@ WRITE16_HANDLER( amiga_cia_w )
 	{
 		if (!ACCESSING_LSB)
 			return;
-		cia = &cia_8520[0];
+		which = 0;
 		data &= 0xff;
 	}
 
 	/* handle the writes */
-	switch (offset & 0x7ff)
-	{
-		/* port A/B data */
-		case CIA_PRA:
-		case CIA_PRB:
-			port = &cia->port[(offset >> 7) & 1];
-			port->latch = data;
-			if (port->write)
-				(*port->write)(data & port->ddr);
-			break;
-
-		/* port A/B direction */
-		case CIA_DDRA:
-		case CIA_DDRB:
-			port = &cia->port[(offset >> 7) & 1];
-			port->ddr = data;
-			break;
-
-		/* timer A/B latch low */
-		case CIA_TALO:
-		case CIA_TBLO:
-			timer = &cia->timer[(offset >> 8) & 1];
-			timer->latch = (timer->latch & 0xff00) | (data << 0);
-			break;
-
-		/* timer A latch high */
-		case CIA_TAHI:
-		case CIA_TBHI:
-			timer = &cia->timer[(offset >> 8) & 1];
-			timer->latch = (timer->latch & 0x00ff) | (data << 8);
-
-			/* if it's one shot, start the timer */
-			if (timer->mode & 0x08)
-			{
-				timer->count = timer->latch;
-				timer->mode |= 0x01;
-				cia_timer_start(timer);
-			}
-			break;
-
-		/* time of day latches */
-		case CIA_TODLOW:
-		case CIA_TODMID:
-		case CIA_TODHI:
-			shift = 8 * ((offset - CIA_TODLOW) >> 7);
-
-			/* alarm setting mode? */
-			if (cia->timer[1].mode & 0x80)
-				cia->alarm = (cia->alarm & ~(0xff << shift)) | (data << shift);
-
-			/* counter setting mode */
-			else
-			{
-				cia->tod = (cia->tod & ~(0xff << shift)) | (data << shift);
-
-				/* only enable the TOD once the LSB is written */
-				cia->tod_running = (shift == 0);
-			}
-			break;
-
-		/* interrupt control register */
-		case CIA_ICR:
-			if (data & 0x80)
-				cia->icr |= data & 0x7f;
-			else
-				cia->icr &= ~(data & 0x7f);
-			cia_update_interrupts(cia);
-			break;
-
-		/* timer A/B modes */
-		case CIA_CRA:
-		case CIA_CRB:
-			timer = &cia->timer[(offset >> 7) & 1];
-			timer->mode = data & 0xef;
-
-			if (data & 0x02)
-				printf("Timer %c output on PB\n", 'A' + ((offset >> 8) & 1));
-
-			/* force load? */
-			if (data & 0x10)
-			{
-				timer->count = timer->latch;
-				cia_timer_stop(timer);
-			}
-
-			/* enable/disable? */
-			if (data & 0x01)
-				cia_timer_start(timer);
-			else
-				cia_timer_stop(timer);
-			break;
-	}
+	cia_write(which, offset >> 7, (UINT8) data);
 }
+
+
+static void amiga_cia_0_irq(int state)
+{
+	amiga_custom_w(REG_INTREQ, (state ? 0x8000 : 0x0000) | INTENA_PORTS, 0);
+}
+
+
+static void amiga_cia_1_irq(int state)
+{
+	amiga_custom_w(REG_INTREQ, (state ? 0x8000 : 0x0000) | INTENA_EXTER, 0);
+}
+
 
 
 /***************************************************************************
@@ -1258,14 +943,14 @@ INTERRUPT_GEN( amiga_irq )
 	if ( scanline == 0 )
 	{
 		/* vblank start */
-		cia_clock_tod(&cia_8520[0]);
+		cia_clock_tod(0);
 
 		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
 
 		if (amiga_intf->interrupt_callback)
 			amiga_intf->interrupt_callback();
 	}
-	cia_clock_tod(&cia_8520[1]);
+	cia_clock_tod(1);
 
 	amiga_render_scanline(scanline);
 
@@ -1527,8 +1212,31 @@ MACHINE_RESET(amiga)
 		amiga_intf->reset_callback();
 }
 
-void amiga_machine_config(const struct amiga_machine_interface *intf)
+void amiga_machine_config(const amiga_machine_interface *intf)
 {
-	amiga_intf = intf;
-}
+	cia6526_interface cia_intf[2];
 
+	amiga_intf = intf;
+
+	/* set up CIA interfaces */
+	memset(&cia_intf, 0, sizeof(cia_intf));
+	cia_intf[0].type = CIA8520;
+	cia_intf[0].clock = O2_TIMER_RATE;
+	cia_intf[0].tod_clock = 0.0;
+	cia_intf[0].irq_func = amiga_cia_0_irq;
+	cia_intf[0].port[0].read = intf->cia_0_portA_r;
+	cia_intf[0].port[0].write = intf->cia_0_portA_w;
+	cia_intf[0].port[1].read = intf->cia_0_portB_r;
+	cia_intf[0].port[1].write = intf->cia_0_portB_w;
+	cia_intf[1].type = CIA8520;
+	cia_intf[1].clock = O2_TIMER_RATE;
+	cia_intf[1].tod_clock = 0.0;
+	cia_intf[1].irq_func = amiga_cia_1_irq;
+	cia_intf[1].port[0].read = intf->cia_1_portA_r;
+	cia_intf[1].port[0].write = intf->cia_1_portA_w;
+	cia_intf[1].port[1].read = intf->cia_1_portB_r;
+	cia_intf[1].port[1].write = intf->cia_1_portB_w;
+
+	cia_config(0, &cia_intf[0]);
+	cia_config(1, &cia_intf[1]);
+}

@@ -282,37 +282,21 @@ Ernesto Corvi & Mariusz Wojcieszek
 #define INTENA_INTEN	0x4000
 #define INTENA_SETCLR	0x8000
 
-/* CIA registers */
-#define CIA_PRA			(0x0000/2)
-#define CIA_PRB			(0x0100/2)
-#define CIA_DDRA		(0x0200/2)
-#define CIA_DDRB		(0x0300/2)
-#define CIA_TALO		(0x0400/2)
-#define CIA_TAHI		(0x0500/2)
-#define CIA_TBLO		(0x0600/2)
-#define CIA_TBHI		(0x0700/2)
-#define CIA_TODLOW		(0x0800/2)
-#define CIA_TODMID		(0x0900/2)
-#define CIA_TODHI		(0x0a00/2)
-#define CIA_SDR			(0x0c00/2)
-#define CIA_ICR			(0x0d00/2)
-#define CIA_CRA			(0x0e00/2)
-#define CIA_CRB			(0x0f00/2)
-
 
 #define MAX_PLANES 6 /* 0 to 6, inclusive ( but we count from 0 to 5 ) */
 
-struct amiga_machine_interface
+typedef struct _amiga_machine_interface amiga_machine_interface;
+struct _amiga_machine_interface
 {
-	int (*cia_0_portA_r)(void);
-	int (*cia_0_portB_r)(void);
-	void (*cia_0_portA_w)(int data);
-	void (*cia_0_portB_w)(int data);
+	UINT8 (*cia_0_portA_r)(void);
+	UINT8 (*cia_0_portB_r)(void);
+	void (*cia_0_portA_w)(UINT8 data);
+	void (*cia_0_portB_w)(UINT8 data);
 
-	int (*cia_1_portA_r)(void);
-	int (*cia_1_portB_r)(void);
-	void (*cia_1_portA_w)(int data);
-	void (*cia_1_portB_w)(int data);
+	UINT8 (*cia_1_portA_r)(void);
+	UINT8 (*cia_1_portB_r)(void);
+	void (*cia_1_portA_w)(UINT8 data);
+	void (*cia_1_portB_w)(UINT8 data);
 
 	UINT16 (*read_joy0dat)(void);
 	UINT16 (*read_joy1dat)(void);
@@ -356,7 +340,7 @@ extern UINT16 *amiga_autoconfig_mem;
 INTERRUPT_GEN(amiga_vblank_irq);
 INTERRUPT_GEN(amiga_irq);
 void amiga_signal_irq(int which);
-void amiga_machine_config(const struct amiga_machine_interface *intf);
+void amiga_machine_config(const amiga_machine_interface *intf);
 WRITE16_HANDLER(amiga_custom_w);
 void amiga_reload_sprite_info( int spritenum );
 READ16_HANDLER(amiga_cia_r);

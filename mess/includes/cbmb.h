@@ -8,8 +8,6 @@
 
 #include "driver.h"
 
-#include "cia6526.h"
-
 #define C64_DIPS \
      PORT_START \
      PORT_BIT( 0x800, IP_ACTIVE_HIGH, IPT_BUTTON1) \

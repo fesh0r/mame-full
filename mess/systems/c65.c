@@ -10,10 +10,10 @@
 
 #include "driver.h"
 #include "sound/sid6581.h"
+#include "machine/6526cia.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
-#include "includes/cia6526.h"
 #include "includes/vic4567.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"

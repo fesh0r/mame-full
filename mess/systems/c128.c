@@ -295,10 +295,10 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
 
 #include "driver.h"
 #include "sound/sid6581.h"
+#include "machine/6526cia.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
-#include "includes/cia6526.h"
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/cbmserb.h"
@@ -364,8 +364,8 @@ static ADDRESS_MAP_START( c128_z80_io , ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0xd400, 0xd4ff) AM_READWRITE(sid6581_0_port_r, sid6581_0_port_w)
 	AM_RANGE(0xd500, 0xd5ff) AM_READWRITE(c128_mmu8722_port_r, c128_mmu8722_port_w)
 	AM_RANGE(0xd600, 0xd7ff) AM_READWRITE(vdc8563_port_r, vdc8563_port_w)
-	AM_RANGE(0xdc00, 0xdcff) AM_READWRITE(cia6526_0_port_r, cia6526_0_port_w)
-	AM_RANGE(0xdd00, 0xddff) AM_READWRITE(cia6526_1_port_r, cia6526_1_port_w)
+	AM_RANGE(0xdc00, 0xdcff) AM_READWRITE(cia_0_r, cia_0_w)
+	AM_RANGE(0xdd00, 0xddff) AM_READWRITE(cia_1_r, cia_1_w)
 /*	AM_RANGE(0xdf00, 0xdfff) AM_READWRITE(dma_port_r, dma_port_w) */
 ADDRESS_MAP_END
 

@@ -169,20 +169,20 @@ ROM_END
 
 ***************************************************************************/
 
-static int mquake_cia_0_portA_r( void )
+static UINT8 mquake_cia_0_portA_r( void )
 {
-	int ret = readinputport(0) & 0xc0;
+	UINT8 ret = readinputport(0) & 0xc0;
 	ret |= 0x3f;
 	return ret; /* Gameport 1 and 0 buttons */
 }
 
-static int mquake_cia_0_portB_r( void )
+static UINT8 mquake_cia_0_portB_r( void )
 {
 	/* parallel port */
 	return readinputport(2);
 }
 
-static void mquake_cia_0_portA_w( int data )
+static void mquake_cia_0_portA_w( UINT8 data )
 {
 	/* switch banks as appropriate */
 	memory_set_bank(1, data & 1);
@@ -197,7 +197,7 @@ static void mquake_cia_0_portA_w( int data )
 		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM);
 }
 
-static void mquake_cia_0_portB_w( int data )
+static void mquake_cia_0_portB_w( UINT8 data )
 {
 	/* parallel port */
 }
@@ -240,7 +240,7 @@ static UINT16 mquake_read_joy1dat(void)
 
 ***************************************************************************/
 
-static const struct amiga_machine_interface mquake_intf =
+static const amiga_machine_interface mquake_intf =
 {
 	mquake_cia_0_portA_r,
 	mquake_cia_0_portB_r,

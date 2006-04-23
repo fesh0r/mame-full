@@ -107,14 +107,14 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
-static int amiga_cia_0_portA_r( void )
+static UINT8 amiga_cia_0_portA_r( void )
 {
-	int ret = readinputport( 0 ) & 0xc0;
+	UINT8 ret = readinputport( 0 ) & 0xc0;
 	ret |= amiga_fdc_status_r();
 	return ret; /* Gameport 1 and 0 buttons */
 }
 
-static void amiga_cia_0_portA_w( int data )
+static void amiga_cia_0_portA_w( UINT8 data )
 {
 	/* switch banks as appropriate */
 	memory_set_bank(1, data & 1);
@@ -192,7 +192,7 @@ static void amiga_write_dsklen(UINT16 data)
 	}
 }
 
-static const struct amiga_machine_interface amiga_intf =
+static const amiga_machine_interface amiga_intf =
 {
 	amiga_cia_0_portA_r,	/* CIA0 port A read */
 	NULL,					/* CIA0 port B read: parallel port? */
