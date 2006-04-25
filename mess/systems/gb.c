@@ -397,13 +397,12 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 ROM_START( gameboy )
-	ROM_REGION( 0x10100, REGION_CPU1, 0 )
-	ROM_LOAD( "dmg_boot.bin", 0x10000, 0x0100, CRC(59c8598e) SHA1(4ed31ec6b0b175bb109c0eb5fd3d193da823339f) )
+	ROM_REGION( 0x0100, REGION_CPU1, 0 )
+	ROM_LOAD( "dmg_boot.bin", 0x0000, 0x0100, CRC(59c8598e) SHA1(4ed31ec6b0b175bb109c0eb5fd3d193da823339f) )
 ROM_END
 
 ROM_START( supergb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_REGION( 0x2000,  REGION_GFX1, 0 )	/* SGB border */
 ROM_END
 
 ROM_START( gbpocket )
