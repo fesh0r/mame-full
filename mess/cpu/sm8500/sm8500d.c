@@ -75,42 +75,6 @@ typedef struct
 	UINT8	arguments;
 }	sm8500dasm;
 
-/* We can probably get rid of this list of registers */
-static const char *sm8500_regs_R[256] = {
-"00"   , "01"   , "02"   , "03"   , "04"   , "05"   , "06"   , "07"  ,
-"08"   , "09"   , "0A"   , "0B"   , "0C"   , "0D"   , "0E"   , "0F" ,
-"IE0"  , "IE1"  , "IR0"  , "IR1"  , "P0"   , "P1"   , "P2"   , "P3"   ,
-"18"   , "SYS"  , "CKC"  , "1B"   , "SPH"  , "SPL"  , "PS0"  , "PS1"  ,
-"P0C"  , "P1C"  , "P2C"  , "P3C"  , "MMU0" , "MMU1" , "MMU2" , "MMU3" ,
-"MMU4" , "29"   , "2A"   , "URTT" , "URTR" , "URTS" , "URTC" , "2F" ,
-"LDC"  , "LCH"  , "LCV"  , "32"   , "DMC"  , "DMX1" , "DMY1" , "DMDX" ,
-"DMDY" , "DMX2" , "DMY2" , "DMPL" , "DMBR" , "DMVP" , "3E"   , "3F" ,
-"SGC"  , "41"   , "SG0L" , "43"   , "SG1L" , "45"   , "SG0TH", "SG0TL",
-"SG1TH", "SG1TL", "SG2L" , "_4Bh" , "SG2TH", "SG2TL", "SGDA" , "4F" ,
-"TM0C" , "TM0D" , "TM1C" , "TM1D" , "CLKT" , "55"   , "56"   , "57" ,
-"58"   , "59"   , "5A"   , "5B"   , "5C"   , "5D"   , "WDT"  , "WDTC" ,
-"SG0W0", "SG0W1", "SG0W2", "SG0W3", "SG0W4", "SG0W5", "SG0W6", "SG0W7",
-"SG0W8", "SG0W9", "SG0WA", "SG0WB", "SG0WC", "SG0WD", "SG0WE", "SG0WF",
-"SG1W0", "SG1W1", "SG1W2", "SG1W3", "SG1W4", "SG1W5", "SG1W6", "SG1W7",
-"SG1W8", "SG1W9", "SG1WA", "SG1WB", "SG1WC", "SG1WD", "SG1WE", "SG1WF",
-"80"   , "81"   , "82"   , "83"   , "84"   , "85"   , "86"   , "87" ,
-"88"   , "89"   , "8A"   , "8B"   , "8C"   , "8D"   , "8E"   , "8F" ,
-"90"   , "91"   , "92"   , "93"   , "94"   , "95"   , "96"   , "97" ,
-"98"   , "99"   , "9A"   , "9B"   , "9C"   , "9D"   , "9E"   , "9F" ,
-"A0"   , "A1"   , "A2"   , "A3"   , "A4"   , "A5"   , "A6"   , "A7" ,
-"A8"   , "A9"   , "AA"   , "AB"   , "AC"   , "AD"   , "AE"   , "AF" ,
-"B0"   , "B1"   , "B2"   , "B3"   , "B4"   , "B5"   , "B6"   , "B7" ,
-"B8"   , "B9"   , "BA"   , "BB"   , "BC"   , "BD"   , "BE"   , "BF" ,
-"C0"   , "C1"   , "C2"   , "C3"   , "C4"   , "C5"   , "C6"   , "C7" ,
-"C8"   , "C9"   , "CA"   , "CB"   , "CC"   , "CD"   , "CE"   , "CF" ,
-"D0"   , "D1"   , "D2"   , "D3"   , "D4"   , "D5"   , "D6"   , "D7" ,
-"D8"   , "D9"   , "DA"   , "DB"   , "DC"   , "DD"   , "DE"   , "DF" ,
-"E0"   , "E1"   , "E2"   , "E3"   , "E4"   , "E5"   , "E6"   , "E7" ,
-"E8"   , "E9"   , "EA"   , "EB"   , "EC"   , "ED"   , "EE"   , "EF" ,
-"F0"   , "F1"   , "F2"   , "F3"   , "F4"   , "F5"   , "F6"   , "F7" ,
-"F8"   , "F9"   , "FA"   , "FB"   , "FC"   , "FD"   , "FE"   , "FF"
-};
-
 static const char *sm8500_cond[16] = {
 	"F", "LT", "LE", "ULE", "OV",  "MI", "Z",  "C",
 	"T", "GE", "GT", "UGT", "NOV", "PL", "NZ", "NC"
