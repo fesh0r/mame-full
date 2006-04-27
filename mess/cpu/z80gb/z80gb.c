@@ -19,12 +19,9 @@
 /** TODO: Check cycle counts when leaving HALT state        **/
 /**                                                         **/
 /*************************************************************/
-#include <stdio.h>
-#include <string.h>
 #include "z80gb.h"
 #include "daa_tab.h"
 #include "debugger.h"
-#include "state.h"
 
 #define FLAG_Z	0x80
 #define FLAG_N  0x40
@@ -168,12 +165,12 @@ static void z80gb_reset(void)
 	}
 	else
 	{
-		Regs.w.AF = 0x01B0;
-		Regs.w.BC = 0x0013;
-		Regs.w.DE = 0x00D8;
-		Regs.w.HL = 0x014D;
-		Regs.w.SP = 0xFFFE;
-		Regs.w.PC = 0x0100;
+		Regs.w.AF = 0x0000;
+		Regs.w.BC = 0x0000;
+		Regs.w.DE = 0x0000;
+		Regs.w.HL = 0x0000;
+		Regs.w.SP = 0x0000;
+		Regs.w.PC = 0x0000;
 	}
 	Regs.w.enable &= ~IME;
 
@@ -391,16 +388,6 @@ static const char *z80gb_info(void *context, int regnum)
 	return buffer[which];
 }
 
-static unsigned z80gb_dasm( char *buffer, unsigned pc )
-{
-#ifdef MAME_DEBUG
-	return DasmZ80GB( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
-}
-
 static void z80gb_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -475,7 +462,9 @@ void z80gb_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = z80gb_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = z80gb_burn;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z80gb_dasm;			break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = z80gb_dasm;	break;
+#endif
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z80gb_ICount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z80gb_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z80gb_win_layout;				break;
