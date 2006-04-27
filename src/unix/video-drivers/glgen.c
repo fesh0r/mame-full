@@ -181,6 +181,7 @@ static int gl_texture_init;
 static int cab_loaded;
 static unsigned short *colorBlittedMemory = NULL;
 static unsigned char *empty_text = NULL;
+static int unpack_alignment;
 
 /* Vector variables */
 GLuint veclist=0;
@@ -654,6 +655,8 @@ int gl_open_display (int reopen)
 		sysdep_display_properties.palette_info.blue_mask);
   gl_texture_init = 0;
   bitmap_dirty    = 2;
+
+  disp__glGetIntegerv(GL_UNPACK_ALIGNMENT, &unpack_alignment);
   
   return gl_set_windowsize();
 }
@@ -1400,16 +1403,17 @@ static void drawTextureDisplay (mame_bitmap *bitmap,
     	unsigned short *dest=colorBlittedMemory;
     	int y,x;
     	int width;
+		int unpack_alignment_2byte = unpack_alignment / 2;
     	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
       	   width = sysdep_display_params.height;
     	else
     	   width = sysdep_display_params.width;
-    	/* Round the width to the default GL_UNPACK_ALIGNMENT value, 4. */
-    	if (width % 4)
-    	   width += 4 - (width % 4);
-    	for (y=vis_area->min_y;y<=vis_area->max_y;y++)
+		/* Round the width to the GL_UNPACK_ALIGNMENT value in even-numbered bytes. */
+    	if (width % unpack_alignment_2byte)
+    	   width += unpack_alignment_2byte - (width % unpack_alignment_2byte);
+    	for (y = vis_area->min_y; y <= vis_area->max_y; y++)
     	{
-    	   for (x=vis_area->min_x; x<=vis_area->max_x; x++, dest++)
+    	   for (x = vis_area->min_x; x<=vis_area->max_x; x++, dest++)
     	   {
     	      *dest=palette->lookup[((unsigned short*)(bitmap->line[y]))[x]];
     	   }
