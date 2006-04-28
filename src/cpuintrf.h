@@ -194,7 +194,7 @@ enum
 	CPU_COP411,
 	CPU_SM8500,
 	CPU_V30MZ,
-#endif
+#endif /* MESS */
     CPU_COUNT
 };
 
@@ -498,9 +498,6 @@ void activecpu_set_opbase(offs_t val);
 /* disassemble a line at a given PC on the active CPU */
 offs_t activecpu_dasm(char *buffer, offs_t pc);
 offs_t activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
-
-/* return a string containing the state of the flags on the active CPU */
-const char *activecpu_flags(void);
 
 /* return a string containing the state of the active CPU */
 const char *activecpu_dump_state(void);

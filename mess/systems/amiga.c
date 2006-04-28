@@ -73,7 +73,7 @@ static MACHINE_DRIVER_START( ntsc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
 	MDRV_CPU_PROGRAM_MAP(amiga_mem, 0)
-	MDRV_CPU_VBLANK_INT(amiga_irq, 262)
+	MDRV_CPU_VBLANK_INT(amiga_scanline_callback, 262)
 	MDRV_FRAMES_PER_SECOND(59.997)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -192,26 +192,27 @@ static void amiga_write_dsklen(UINT16 data)
 	}
 }
 
-static const amiga_machine_interface amiga_intf =
-{
-	amiga_cia_0_portA_r,	/* CIA0 port A read */
-	NULL,					/* CIA0 port B read: parallel port? */
-	amiga_cia_0_portA_w,	/* CIA0 port A write */
-	NULL,					/* CIA0 port B write: parallel port? */
-	NULL,					/* CIA1 port A read */
-	NULL,					/* CIA1 port B read */
-	NULL,					/* CIA1 port A write */
-	amiga_fdc_control_w,	/* CIA1 port B write */
-	amiga_read_joy0dat,		/* read_joy0dat */
-	amiga_read_joy1dat,		/* read_joy1dat */
-	amiga_read_dskbytr,		/* read_dskbytr */
-	amiga_write_dsklen,		/* write_dsklen */
-	NULL,					/* interrupt_callback */
-	NULL					/* reset_callback */
-};
-
 static DRIVER_INIT( amiga )
 {
+	static const amiga_machine_interface amiga_intf =
+	{
+		ANGUS_CHIP_RAM_MASK,
+		amiga_cia_0_portA_r,	/* CIA0 port A read */
+		NULL,					/* CIA0 port B read: parallel port? */
+		amiga_cia_0_portA_w,	/* CIA0 port A write */
+		NULL,					/* CIA0 port B write: parallel port? */
+		NULL,					/* CIA1 port A read */
+		NULL,					/* CIA1 port B read */
+		NULL,					/* CIA1 port A write */
+		amiga_fdc_control_w,	/* CIA1 port B write */
+		amiga_read_joy0dat,		/* read_joy0dat */
+		amiga_read_joy1dat,		/* read_joy1dat */
+		amiga_read_dskbytr,		/* read_dskbytr */
+		amiga_write_dsklen,		/* write_dsklen */
+		NULL,					/* scanline_callback */
+		NULL					/* reset_callback */
+	};
+
 	amiga_machine_config(&amiga_intf);
 
 	/* set up memory */

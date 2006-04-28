@@ -3,7 +3,7 @@
     MOS 6526/8520 CIA interface and emulation
 
     This function emulates all the functionality of up to 2 MOS6526 or
-	MOS8520 complex interface adapters.
+    MOS8520 complex interface adapters.
 
 **********************************************************************/
 

@@ -1564,8 +1564,8 @@ static void before_display_dialog(void)
 	gx_suspend();
 #else
 	// on Windows, suspend DirectX
-	extern int win_suspend_directx;
-	win_suspend_directx = 1;
+//	extern int win_suspend_directx;
+//	win_suspend_directx = 1;
 #endif
 
 	// disable sound while in the dialog
@@ -1590,8 +1590,8 @@ static void after_display_dialog(void)
 	gx_resume();
 #else
 	// on Windows, suspend DirectX
-	extern int win_suspend_directx;
-	win_suspend_directx = 0;
+//	extern int win_suspend_directx;
+//	win_suspend_directx = 0;
 #endif
 
 	// reenable timer

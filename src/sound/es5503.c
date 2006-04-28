@@ -7,21 +7,21 @@
 
   This software is dual-licensed: it may be used in MAME and properly licensed
   MAME derivatives under the terms of the MAME license.  For use outside of
-  MAME and properly licensed derivatives, it is available under the 
+  MAME and properly licensed derivatives, it is available under the
   terms of the GNU Lesser General Public License (LGPL), version 2.1.
   You may read the LGPL at http://www.gnu.org/licenses/lgpl.html
 
   History: the ES5503 was the next design after the famous C64 "SID" by Bob Yannes.
-  It powered the legendary Mirage sampler (the first affordable pro sampler) as well 
-  as the ESQ-1 synth/sequencer.  The ES5505 (used in Taito's F3 System) and 5506 
-  (used in the "Soundscape" series of ISA PC sound cards) followed on a fundamentally 
+  It powered the legendary Mirage sampler (the first affordable pro sampler) as well
+  as the ESQ-1 synth/sequencer.  The ES5505 (used in Taito's F3 System) and 5506
+  (used in the "Soundscape" series of ISA PC sound cards) followed on a fundamentally
   similar architecture.
 
-  Bugs: On the real silicon, oscillators 30 and 31 have random volume fluctuations and are 
+  Bugs: On the real silicon, oscillators 30 and 31 have random volume fluctuations and are
   unusable for playback.  We don't attempt to emulate that :-)
 
-  Additionally, in "swap" mode, there's one cycle when the switch takes place where the 
-  oscillator's output is 0x80 (centerline) regardless of the sample data.  This can 
+  Additionally, in "swap" mode, there's one cycle when the switch takes place where the
+  oscillator's output is 0x80 (centerline) regardless of the sample data.  This can
   cause audible clicks and a general degradation of audio quality if the correct sample
   data at that point isn't 0x80 or very near it.
 
@@ -59,7 +59,6 @@ typedef struct
 	ES5503Osc oscillators[32];
 
 	UINT8 docram[(128*1024) + 16];	// total size available to a DOC plus 16 bytes for "stop" zeros
-	UINT8 playram[(128*1024) + 16];	// DOCRAM pre-inverted for playback
 
 	int index;
 	sound_stream * stream;
@@ -67,7 +66,7 @@ typedef struct
 	void (*irq_callback)(int);	// IRQ callback
 
 	read8_handler adc_read;		// callback for the 5503's built-in analog to digital converter
-	
+
 	UINT8 irqpending;		// irq pending register
 	UINT8 lastirqosc;		// last oscillator that caused an IRQ
 	INT8  oscsenabled;		// # of oscillators enabled
@@ -79,7 +78,7 @@ static UINT32 accmasks[8]  = { 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff,
 static int    resshifts[8] = { 9, 10, 11, 12, 13, 14, 15, 16 };
 
 // halt_osc: handle halting an oscillator
-// chip = chip # 
+// chip = chip #
 // onum = oscillator #
 // type = 1 for 0 found in sample data, 0 for hit end of table size
 static void halt_osc(ES5503Chip *chip, int onum, int type)
@@ -88,7 +87,7 @@ static void halt_osc(ES5503Chip *chip, int onum, int type)
 	ES5503Osc *pPartner = &chip->oscillators[onum^1];
 	int mode = (pOsc->control>>1) & 3;
 
-//	printf("halt_osc %d, control %02x, mode = %d, type = %d\n", onum, pOsc->control, mode, type);
+//  printf("halt_osc %d, control %02x, mode = %d, type = %d\n", onum, pOsc->control, mode, type);
 
 	// if 0 found in sample data or mode is not free-run, halt this oscillator
 	if ((type) || (mode > 0))
@@ -99,7 +98,7 @@ static void halt_osc(ES5503Chip *chip, int onum, int type)
 	// if swap mode, start the partner
 	if (mode == 3)
 	{
-//		printf("swap mode, starting partner\n");
+//      printf("swap mode, starting partner\n");
 		pPartner->control &= ~1;	// clear the halt bit
 		pPartner->accumulator = 0;	// make sure it's at the beginning
 	}
@@ -124,7 +123,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 	UINT32 ramptr;
 	ES5503Chip *chip = param;
 
-//	printf("5503_pcm_update: %d oscs\n", ES5503[num].oscsenabled);
+//  printf("5503_pcm_update: %d oscs\n", ES5503[num].oscsenabled);
 
 	memset(mix, 0, sizeof(mix));
 
@@ -146,9 +145,9 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 			int resshift = resshifts[pOsc->resolution] - pOsc->wavetblsize;
 			UINT32 resmask = accmasks[pOsc->resolution];
 
-//			printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & resmask);
+//          printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & resmask);
 
-//			printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x)\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer);
+//          printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x)\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer);
 
 			for (snum = 0; snum < length; snum++)
 			{
@@ -156,10 +155,10 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				acc += freq;
 
-//				printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
-				
-				data = chip->playram[ramptr + wtptr];
-				
+//              printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
+
+				data = chip->docram[ramptr + wtptr] ^ 0x80;
+
 				if (pOsc->control & 0x10)
 				{
 					*mixp++ += (data * vol);
@@ -173,7 +172,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				if (chip->docram[ramptr + wtptr] == 0x00)
 				{
-//					printf("osc %d hit zero @ %x (mode %d pmode %d)\n", osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
+//                  printf("osc %d hit zero @ %x (mode %d pmode %d)\n", osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
 					halt_osc(chip, osc, 1);
 					acc = 0;
 				}
@@ -209,7 +208,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 }
 
 
-static void *es5503_start(int sndindex, int clock, const void *config) 
+static void *es5503_start(int sndindex, int clock, const void *config)
 {
 	const struct ES5503interface *intf;
 	int osc;
@@ -296,7 +295,7 @@ READ8_HANDLER(ES5503_reg_0_r)
 			case 0xe0:	// interrupt status
 				retval = 0x80 | chip->lastirqosc;
 
-				// scan all oscillators 
+				// scan all oscillators
 				for (i = 0; i < chip->oscsenabled+1; i++)
 				{
 					if (chip->oscillators[i].irqpend)
@@ -305,7 +304,7 @@ READ8_HANDLER(ES5503_reg_0_r)
 						retval = i<<1;
 						chip->lastirqosc = retval;
 						retval |= 1;
-					
+
 						// and clear its flag
 						chip->oscillators[i].irqpend = 0;
 
@@ -317,7 +316,7 @@ READ8_HANDLER(ES5503_reg_0_r)
 					}
 				}
 
-//				printf("Read e0 = %02x, PC = %x\n", retval, activecpu_get_pc());
+//              printf("Read e0 = %02x, PC = %x\n", retval, activecpu_get_pc());
 
 				return retval;
 				break;
@@ -370,7 +369,7 @@ WRITE8_HANDLER(ES5503_reg_0_w)
 				break;
 
 			case 0xa0:	// oscillator control
-//				printf("5503: %02x to control for voice %02d\n", data, osc);
+//              printf("5503: %02x to control for voice %02d\n", data, osc);
 				// if a fresh key-on, reset the accumulator
 				if ((chip->oscillators[osc].control & 1) && (!(data&1)))
 				{
@@ -424,7 +423,6 @@ WRITE8_HANDLER(ES5503_ram_0_w)
 	ES5503Chip *chip = sndti_token(SOUND_ES5503, 0);
 
 	chip->docram[offset] = data;
-	chip->playram[offset] = data ^ 0x80;
 }
 
 /**************************************************************************

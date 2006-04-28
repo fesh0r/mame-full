@@ -3,13 +3,21 @@
     MOS 6526/8520 CIA interface and emulation
 
     This function emulates all the functionality of up to 2 MOS6526 or
-	MOS8520 complex interface adapters.
+    MOS8520 complex interface adapters.
 
 **********************************************************************/
 
 #include "mame.h"
 #include "timer.h"
 #include "6526cia.h"
+
+
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
 
 /* CIA registers */
 #define CIA_PRA			0
@@ -20,14 +28,15 @@
 #define CIA_TAHI		5
 #define CIA_TBLO		6
 #define CIA_TBHI		7
-#define CIA_TOD0		8		/* 6526: 1/10 seconds	8520: bits  0- 7 */
-#define CIA_TOD1		9		/* 6526: seconds		8520: bits  8-15 */
-#define CIA_TOD2		10		/* 6526: minutes		8520: bits 16-23 */
-#define CIA_TOD3		11		/* 6526: hours			8520: N/A */
+#define CIA_TOD0		8		/* 6526: 1/10 seconds   8520: bits  0- 7 */
+#define CIA_TOD1		9		/* 6526: seconds        8520: bits  8-15 */
+#define CIA_TOD2		10		/* 6526: minutes        8520: bits 16-23 */
+#define CIA_TOD3		11		/* 6526: hours          8520: N/A */
 #define CIA_SDR			12
 #define CIA_ICR			13
 #define CIA_CRA			14
 #define CIA_CRB			15
+
 
 
 /*************************************
@@ -35,7 +44,6 @@
  *  Type definitions
  *
  *************************************/
-
 
 typedef struct _cia_timer cia_timer;
 typedef struct _cia_port cia_port;
@@ -75,6 +83,7 @@ struct _cia_state
 	/* Time Of the Day clock (TOD) */
 	UINT32			tod;
 	UINT32			tod_latch;
+	UINT8			tod_latched;
 	UINT8			tod_running;
 	UINT32			alarm;
 
@@ -95,7 +104,23 @@ struct _cia_state
 static cia_state cia_array[2];
 
 
+
+/*************************************
+ *
+ *  Prototypes
+ *
+ *************************************/
+
 static void cia_timer_proc(void *param);
+
+
+
+/*************************************
+ *
+ *  Prototypes
+ *
+ *************************************/
+
 
 /***************************************************************************
 
@@ -231,7 +256,10 @@ static void cia_update_interrupts(cia_state *cia)
 INLINE void cia_timer_start(cia_timer *timer)
 {
 	if (!timer->started)
+	{
 		timer_adjust_ptr(timer->timer, (double)timer->count * timer->cia->clock, 0);
+		timer->started = TRUE;
+	}
 }
 
 
@@ -335,7 +363,7 @@ void cia_clock_tod(int which)
 		{
 			case CIA6526:
 				/* The 6526 split the value into hours, minutes, seconds and
-				 * subseconds */
+                 * subseconds */
 				cia->tod = cia6526_increment(cia->tod);
 				break;
 
@@ -411,9 +439,17 @@ UINT8 cia_read(int which, offs_t offset)
 		case CIA_TOD2:
 		case CIA_TOD3:
 			if (offset == CIA_TOD2)
+			{
 				cia->tod_latch = cia->tod;
+				cia->tod_latched = TRUE;
+			}
+			else if (offset == CIA_TOD0)
+				cia->tod_latched = FALSE;
 
-			data = cia->tod_latch >> ((offset - CIA_TOD0) * 8);
+			if (cia->tod_latched)
+				data = cia->tod_latch >> ((offset - CIA_TOD0) * 8);
+			else
+				data = cia->tod >> ((offset - CIA_TOD0) * 8);
 			break;
 
 		/* interrupt status/clear */
