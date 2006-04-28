@@ -375,12 +375,12 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int b
 			break;
 		case AM_cbr:
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc, offset + 2, instr->access );
+			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
 			dst += sprintf( dst, "%s,%s", sm8500_cond[ op & 0x0F ], symbol );
 			break;
 		case AM_rbr:
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc, offset + 2, instr->access );
+			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
 			dst += sprintf( dst, "r%02Xh,%s", op & 0x07, symbol );
 			break;
 		case AM_cjp:
@@ -502,7 +502,7 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int b
 		case AM_Rbr:
 			ea = oprom[pos++];
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc, offset, instr->access );
+			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
 			dst += sprintf( dst, "R%02Xh,#%d,%s", ea, op & 0x07, symbol );
 			break;
 		case AM_Rb:
@@ -568,7 +568,7 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int b
 			}
 			dst += sprintf( dst, ",#%d,", ea & 0x07 );
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc, offset, instr->access );
+			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
 			dst += sprintf( dst, "%s", symbol );
 			break;
 		case AM_1A:
