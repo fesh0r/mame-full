@@ -41,8 +41,7 @@ Priority:  Todo:                                                  Done:
 #include "includes/gb.h"
 #include "devices/cartslot.h"
 
-/* Initial value of the cpu registers */
-static UINT16 dmg_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };	/* GameBoy                          */
+/* Initial value of the cpu registers (hacks until we get bios dumps) */
 static UINT16 sgb_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };    /* Super GameBoy                    */
 static UINT16 gbp_cpu_reset[6] = { 0xFFB0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Pocket / Super GameBoy 2 */
 static UINT16 gbc_cpu_reset[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Color  / Gameboy Advance */
@@ -232,7 +231,6 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_map, 0)
 	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
-	MDRV_CPU_CONFIG(dmg_cpu_reset)
 
 	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -403,14 +401,17 @@ ROM_END
 
 ROM_START( supergb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "sgb_boot.bin", 0x0000, 0x0100, NO_DUMP );
 ROM_END
 
 ROM_START( gbpocket )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "gbp_boot.bin", 0x0000, 0x0100, NO_DUMP );
 ROM_END
 
 ROM_START( gbcolor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "gbc_boot.bin", 0x0000, 0x0100, NO_DUMP );
 ROM_END
 
 
