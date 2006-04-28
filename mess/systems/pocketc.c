@@ -735,7 +735,7 @@ COMP( 1982, pc1251,		0, 		0,		pc1251,	pc1251,	pc1251,	pocketc,	"Sharp",	"Pocket 
 COMP( 198?, trs80pc3,	pc1251,	0,		pc1251,	pc1251,	pc1251,	pocketc,	"Tandy",	"TRS80 PC-3", GAME_NOT_WORKING)
 
 /* pc1261/pc1262 */
-COMP( 1984, pc1350,		0, 		0,		pc1350,	pc1350,	0,		pocketc,	"Sharp",	"Pocket Computer 1350", GAME_NOT_WORKING)
+COMP( 1984, pc1350,		0, 		0,		pc1350,	pc1350,	0,		pc1350,		"Sharp",	"Pocket Computer 1350", GAME_NOT_WORKING)
 COMP( 1983, pc1401,		0, 		0,		pc1401,	pc1401,	pc1401,	pocketc,	"Sharp",	"Pocket Computer 1401", GAME_NOT_WORKING)
 COMP( 1984, pc1402,		pc1401,	0,		pc1401,	pc1401,	pc1401,	pocketc,	"Sharp",	"Pocket Computer 1402", GAME_NOT_WORKING)
 

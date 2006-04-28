@@ -135,14 +135,18 @@ static void fdc_dma_proc( int drive ) {
 
 	setup_fdc_buffer( drive );
 
-	if ( CUSTOM_REG(REG_DSKLEN) & 0x4000 ) {
+	if ( CUSTOM_REG(REG_DSKLEN) & 0x4000 )
+	{
 		logerror("Write to disk unsupported yet\n" );
-	} else {
-		unsigned char *RAM = &memory_region(REGION_CPU1)[( CUSTOM_REG(REG_DSKPTH) << 16 ) | CUSTOM_REG(REG_DSKPTL)];
+	}
+	else
+	{
+		offs_t offset = CUSTOM_REG_LONG(REG_DSKPTH);
 		int cur_pos = fdc_status[drive].pos;
 		int len = CUSTOM_REG(REG_DSKLEN) & 0x3fff;
 
-		while ( len-- ) {
+		while ( len-- )
+		{
 			int dat = ( fdc_status[drive].mfm[cur_pos++] ) << 8;
 
 			cur_pos %= ( 544 * 2 * 11 );
@@ -151,9 +155,9 @@ static void fdc_dma_proc( int drive ) {
 
 			cur_pos %= ( 544 * 2 * 11 );
 
-			*((UINT16 *) RAM) = dat;
+			amiga_chip_ram_w(offset, dat);
 
-			RAM += 2;
+			offset += 2;
 		}
 	}
 
