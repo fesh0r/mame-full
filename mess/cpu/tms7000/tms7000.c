@@ -48,7 +48,6 @@
 static void tms7000_set_irq_line(int irqline, int state);
 static void tms7000_get_context(void *dst);
 static void tms7000_set_context(void *src);
-static unsigned tms7000_dasm(char *buffer, unsigned pc);
 static void tms7000_check_IRQ_lines( void );
 static void tms7000_do_interrupt( UINT16 address, UINT8 line );
 static int tms7000_execute(int cycles);
@@ -344,7 +343,9 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_RESET:	info->reset = tms7000_reset;	break;
         case CPUINFO_PTR_EXECUTE:	info->execute = tms7000_execute;	break;
         case CPUINFO_PTR_BURN:	info->burn = NULL;	/* Not supported */break;
-        case CPUINFO_PTR_DISASSEMBLE:	info->disassemble = tms7000_dasm;	break;
+#ifdef MAME_DEBUG
+        case CPUINFO_PTR_DISASSEMBLE_NEW:	info->disassemble_new = tms7000_dasm;	break;
+#endif
         case CPUINFO_PTR_INSTRUCTION_COUNTER:	info->icount = &tms7000_icount;	break;
         case CPUINFO_PTR_REGISTER_LAYOUT:	info->p = tms7000_reg_layout;	break;
         case CPUINFO_PTR_WINDOW_LAYOUT:	info->p = tms7000_win_layout;	break;
@@ -390,16 +391,6 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info)
 			tms7000_get_info(state, info);
 			break;
 	}
-}
-
-static unsigned tms7000_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return Dasm7000(buffer,pc);
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
 }
 
 void tms7000_set_irq_line(int irqline, int state)
