@@ -88,7 +88,7 @@ BOOL LoadScreenShot(int nGame, int nType)
 #endif /* MESS */
 {
 	BOOL loaded = FALSE;
-
+	const game_driver *clone_of = NULL, *clone_of_clone = NULL;
 	/* No need to reload the same one again */
 #ifndef MESS
 	if (nGame == current_image_game && nType == current_image_type)
@@ -103,8 +103,8 @@ BOOL LoadScreenShot(int nGame, int nType)
 	if (lpSoftwareName)
 	{
 		loaded = LoadSoftwareScreenShot(drivers[nGame], lpSoftwareName, nType);
-		if (!loaded && driver_get_clone(drivers[nGame]))
-			loaded = LoadSoftwareScreenShot(driver_get_clone(drivers[nGame]), lpSoftwareName, nType);
+		if (!loaded && ((clone_of = driver_get_clone(drivers[nGame])) != NULL && !(clone_of->flags & NOT_A_DRIVER)))
+			loaded = LoadSoftwareScreenShot(clone_of, lpSoftwareName, nType);
 	}
 	if (!loaded)
 #endif /* MESS */
@@ -114,12 +114,12 @@ BOOL LoadScreenShot(int nGame, int nType)
 
 	/* If not loaded, see if there is a clone and try that */
 	if (!loaded
-	&&	 (driver_get_clone(drivers[nGame]) != NULL))
+	&&	 (clone_of = driver_get_clone(drivers[nGame])) != NULL)
 
 	{
-		loaded = LoadDIB(driver_get_clone(drivers[nGame])->name, &m_hDIB, &m_hPal, nType);
-		if (!loaded && driver_get_clone(driver_get_clone(drivers[nGame])))
-			loaded = LoadDIB(driver_get_clone(driver_get_clone(drivers[nGame]))->name, &m_hDIB, &m_hPal, nType);
+		loaded = LoadDIB(clone_of->name, &m_hDIB, &m_hPal, nType);
+		if (!loaded && ( (clone_of_clone = driver_get_clone(clone_of)) != NULL))
+			loaded = LoadDIB(clone_of_clone->name, &m_hDIB, &m_hPal, nType);
 	}
 
 	if (loaded)

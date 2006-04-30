@@ -70,6 +70,7 @@ FOLDERDATA g_folderData[] =
 	{"CHD",             "harddisk",          FOLDER_HARDDISK,     IDI_HARDDISK,             0,             0,            NULL,                       DriverIsHarddisk,  TRUE },
   	{"Samples",    	    "samples",           FOLDER_SAMPLES,      IDI_FOLDER,               0,             0,            NULL,                       DriverUsesSamples,  TRUE },
   	{"Save State",    	"savestate",         FOLDER_SAVESTATE,    IDI_FOLDER,               0,             0,            NULL,                       DriverSupportsSaveState,  TRUE },
+  	{"BIOS",	    	"bios",		         FOLDER_BIOS,		  IDI_FOLDER,               0,             0,            NULL,                       DriverIsBios,  TRUE },
 	{ NULL }
 };
 

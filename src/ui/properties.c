@@ -949,14 +949,16 @@ char *GameInfoTitle(UINT nIndex)
 static char *GameInfoCloneOf(UINT nIndex)
 {
 	static char buf[1024];
+	const game_driver *clone_of = NULL;
 
 	buf[0] = '\0';
 
 	if (DriverIsClone(nIndex))
 	{
-		sprintf(buf, "%s - \"%s\"",
-				ConvertAmpersandString(ModifyThe(driver_get_clone(drivers[nIndex])->description)),
-				driver_get_clone(drivers[nIndex])->name); 
+		if( ( clone_of = driver_get_clone(drivers[nIndex])) != NULL )
+			sprintf(buf, "%s - \"%s\"",
+				ConvertAmpersandString(ModifyThe(clone_of->description)),
+				clone_of->name); 
 	}
 
 	return buf;
@@ -1016,6 +1018,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 {
 	RECT rc;
 	int nParentIndex = -1;
+	const game_driver *clone_of = NULL;
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
@@ -1195,7 +1198,8 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						if( DriverIsClone(g_nGame) )
 						{
 							int nParentIndex = -1;
-							nParentIndex = GetGameNameIndex( driver_get_clone(drivers[g_nGame])->name );
+							if( (clone_of = driver_get_clone(drivers[g_nGame]))!= NULL);
+							nParentIndex = GetGameNameIndex( clone_of->name );
 							if( nParentIndex >= 0)
 								CopyGameOptions(GetGameOptions(nParentIndex, g_nFolder), pGameOpts );
 							else
@@ -1386,7 +1390,8 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		{
 			if( DriverIsClone(g_nGame) )
 			{
-				nParentIndex = GetGameNameIndex( driver_get_clone(drivers[g_nGame])->name );
+				if( (clone_of = driver_get_clone(drivers[g_nGame])) != NULL );
+				nParentIndex = GetGameNameIndex( clone_of->name );
 			}
 		}
 		//Set the Coloring of the elements
@@ -2082,11 +2087,39 @@ static void SetPropEnabledControls(HWND hWnd)
 
 	if (!in_window && (nIndex <= -1 || DriverUsesLightGun(nIndex)))
 	{
-		BOOL use_lightgun;
-		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),TRUE);
-		use_lightgun = Button_GetCheck(GetDlgItem(hWnd,IDC_LIGHTGUN));
-		Button_Enable(GetDlgItem(hWnd,IDC_DUAL_LIGHTGUN),use_lightgun);
-		Button_Enable(GetDlgItem(hWnd,IDC_RELOAD),use_lightgun);
+		// on WinXP the Lightgun and Dual Lightgun switches are no longer supported use mouse instead
+		OSVERSIONINFOEX osvi;
+		BOOL bOsVersionInfoEx;
+		// Try calling GetVersionEx using the OSVERSIONINFOEX structure.
+		// If that fails, try using the OSVERSIONINFO structure.
+
+		ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+
+		if( !(bOsVersionInfoEx = GetVersionEx ((OSVERSIONINFO *) &osvi)) )
+		{
+			osvi.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
+			bOsVersionInfoEx = GetVersionEx ( (OSVERSIONINFO *) &osvi);
+		}
+
+		if( bOsVersionInfoEx && (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osvi.dwMajorVersion >= 5) )
+		{
+			BOOL use_lightgun;
+			//XP and above...
+			Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),FALSE);
+			use_lightgun = Button_GetCheck(GetDlgItem(hWnd,IDC_USE_MOUSE));
+			Button_Enable(GetDlgItem(hWnd,IDC_DUAL_LIGHTGUN),FALSE);
+			Button_Enable(GetDlgItem(hWnd,IDC_RELOAD),use_lightgun);
+		}
+		else
+		{
+			BOOL use_lightgun;
+			// Older than XP 
+			Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),TRUE);
+			use_lightgun = Button_GetCheck(GetDlgItem(hWnd,IDC_LIGHTGUN));
+			Button_Enable(GetDlgItem(hWnd,IDC_DUAL_LIGHTGUN),use_lightgun);
+			Button_Enable(GetDlgItem(hWnd,IDC_RELOAD),use_lightgun);
+		}
 	}
 	else
 	{

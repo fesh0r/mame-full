@@ -315,7 +315,7 @@ static const REG_OPTION regGameOpts[] =
 	{ "matchrefresh",           RO_BOOL,    offsetof(options_type, matchrefresh),                    "0" },
 	{ "syncrefresh",            RO_BOOL,    offsetof(options_type, syncrefresh),                     "0" },
 	{ "throttle",               RO_BOOL,    offsetof(options_type, throttle),                        "1" },
-	{ "full_screen_brightness", RO_DOUBLE,  offsetof(options_type, gfx_brightness),                  "1.0" },
+	{ "full_screen_gamma",      RO_DOUBLE,  offsetof(options_type, gfx_brightness),                  "1.0" },
 	{ "frames_to_run",          RO_INT,     offsetof(options_type, frames_to_display),               "0" },
 	{ "effect",                 RO_STRING,  offsetof(options_type, effect),                          "none" },
 	{ "screen_aspect",          RO_STRING,  offsetof(options_type, aspect),                          "4:3" },
@@ -3086,7 +3086,8 @@ BOOL GetFolderUsesDefaults(int folder_index, int driver_index)
 //returns true if same
 BOOL GetGameUsesDefaults(int driver_index)
 {
-	const options_type *opts;
+	const options_type *opts = NULL;
+	const game_driver *clone_of = NULL;
 	int nParentIndex= -1;
 
 	if (driver_index < 0)
@@ -3097,7 +3098,8 @@ BOOL GetGameUsesDefaults(int driver_index)
 
 	if ((driver_index >= 0) && DriverIsClone(driver_index))
 	{
-		nParentIndex = GetGameNameIndex( driver_get_clone(drivers[driver_index])->name );
+		if( ( clone_of = driver_get_clone(drivers[driver_index])) != NULL )
+			nParentIndex = GetGameNameIndex( clone_of->name );
 		if( nParentIndex >= 0)
 			opts = GetGameOptions(nParentIndex, FALSE);
 		else
@@ -3113,6 +3115,7 @@ BOOL GetGameUsesDefaults(int driver_index)
 void SaveGameOptions(int driver_index)
 {
 	options_type Opts;
+	const game_driver *clone_of = NULL;
 	int nParentIndex= -1;
 	struct SettingsHandler handlers[3];
 	int setting;
@@ -3124,7 +3127,8 @@ void SaveGameOptions(int driver_index)
 	{
 		if( DriverIsClone(driver_index) )
 		{
-			nParentIndex = GetGameNameIndex( driver_get_clone(drivers[driver_index])->name );
+			if( ( clone_of = driver_get_clone(drivers[driver_index])) != NULL )
+				nParentIndex = GetGameNameIndex( clone_of->name );
 			if( nParentIndex >= 0)
 				CopyGameOptions(GetGameOptions(nParentIndex, FALSE), &Opts );
 			else

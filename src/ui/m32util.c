@@ -29,6 +29,7 @@
 #include "MAME32.h"
 #include "M32Util.h"
 
+
 /***************************************************************************
 	function prototypes
  ***************************************************************************/
@@ -309,12 +310,13 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 		for (ndriver = 0; ndriver < GetNumGames(); ndriver++)
 		{
 			const game_driver *gamedrv = drivers[ndriver];
+			const game_driver *clone_of = NULL;
 			struct DriversInfo *gameinfo = &drivers_info[ndriver];
 			const rom_entry *region, *rom;
 			machine_config drv;
 			const input_port_entry *input_ports;
 			int speakernum, num_speakers;
-			gameinfo->isClone = driver_get_clone(gamedrv) != NULL;
+			gameinfo->isClone = ((clone_of = driver_get_clone(gamedrv)) != NULL && (clone_of->flags & NOT_A_DRIVER) == 0);
 			gameinfo->isBroken = ((gamedrv->flags & GAME_NOT_WORKING) != 0);
 			gameinfo->supportsSaveState = ((gamedrv->flags & GAME_SUPPORTS_SAVE) != 0);
 			gameinfo->isHarddisk = FALSE;
@@ -410,6 +412,15 @@ BOOL DriverIsHarddisk(int driver_index)
 {
 	return GetDriversInfo(driver_index)->isHarddisk;
 }
+
+BOOL DriverIsBios(int driver_index)
+{
+	BOOL bBios = FALSE;
+	if( !( (drivers[driver_index]->flags & NOT_A_DRIVER ) == 0)   )
+		bBios = TRUE;
+	return bBios;
+}
+
 
 BOOL DriverHasOptionalBIOS(int driver_index)
 {

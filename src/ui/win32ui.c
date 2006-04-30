@@ -317,6 +317,7 @@ static void             AddDriverIcon(int nItem,int default_icon_index);
 // Context Menu handlers
 static void             UpdateMenu(HMENU hMenu);
 static void InitTreeContextMenu(HMENU hTreeMenu);
+static void InitBodyContextMenu(HMENU hBodyContextMenu);
 static void ToggleShowFolder(int folder);
 static BOOL             HandleTreeContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HandleScreenShotContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
@@ -833,6 +834,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr_directory \"%s\"",    GetCtrlrDir());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -comment_directory \"%s\"",  GetCommentDir());
 
 	/* video */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%safs",                     pOpts->autoframeskip   ? "" : "no");
@@ -853,7 +855,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsb %f",                    pOpts->gfx_brightness);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_brightness);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ftr %d",                    pOpts->frames_to_display);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -effect %s",                 pOpts->effect);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
@@ -1034,6 +1036,7 @@ static DWORD RunMAME(int nGameIndex)
 	char pModule[_MAX_PATH];
 	extern int DECL_SPEC main_(int, char**);
 	int exit_code;
+	int UIPriority = GetThreadPriority(GetCurrentThread());
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
 	argv[argc++] = pModule;
@@ -1079,6 +1082,8 @@ static DWORD RunMAME(int nGameIndex)
 	/*This is to make sure this timer is killed, if the Game Window was not found
 	Should not happen, but you never know... */
 	KillTimer(hMain,GAMEWND_TIMER);
+	//Restore UI Thread Priority
+	SetThreadPriority(GetCurrentThread(),UIPriority);
 	elapsedtime = end - start;
 	if (exit_code == 0)
 	{
@@ -1826,6 +1831,7 @@ void SetMainTitle(void)
 static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	extern int mame_validitychecks(int game);
+	const game_driver *clone_of = NULL;
 	WNDCLASS	wndclass;
 	RECT		rect;
 	int i, j = 0, nSplitterCount;
@@ -1851,9 +1857,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	for (i = 0; i < game_count; i++)
 	{
 		parent_index[i] = -1;
-		if (driver_get_clone(drivers[i]))
+		if (((clone_of = driver_get_clone(drivers[i])) != NULL && (clone_of->flags & NOT_A_DRIVER) == 0))
 		{
-			if (driver_get_clone(drivers[i]) == drivers[j])
+			if (clone_of == drivers[j])
 			{
 				parent_index[i] = j;
 			}
@@ -1861,7 +1867,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 			{
 				for (j = 0; j < game_count; j++)
 				{
-					if (driver_get_clone(drivers[i]) == drivers[j])
+					if (clone_of == drivers[j])
 					{
 						parent_index[i] = j;
 						break;
@@ -3417,8 +3423,13 @@ static void PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 
 static LPCSTR GetCloneParentName(int nItem)
 {
+	const game_driver *clone_of = NULL;
 	if (DriverIsClone(nItem) == TRUE)
-		return ModifyThe(driver_get_clone(drivers[nItem])->description);
+	{
+		clone_of = driver_get_clone(drivers[nItem]);
+		if( clone_of )
+			return ModifyThe(clone_of->description);
+	}
 	return "";
 }
 
@@ -4442,6 +4453,29 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
 		break;
+		
+	case ID_FOLDER_SOURCEPROPERTIES:
+		if (!oldControl)
+		{
+			folder = GetFolderByName(FOLDER_SOURCE, GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
+			InitPropertyPage(hInst, hwnd, folder->m_nFolderId, GetSelectedFolderIcon(), Picker_GetSelectedItem(hwndList), SRC_FOLDER);
+			SaveFolderOptions(folder->m_nFolderId, Picker_GetSelectedItem(hwndList) );
+		}
+		/* Just in case the toggle MMX on/off */
+		UpdateStatusBar();
+		break;
+
+	case ID_FOLDER_VECTORPROPERTIES:
+		if (!oldControl)
+		{
+			folder = GetFolderByID( FOLDER_VECTOR );
+			InitPropertyPage(hInst, hwnd, folder->m_nFolderId, GetSelectedFolderIcon(), Picker_GetSelectedItem(hwndList), SRC_FOLDER);
+			SaveFolderOptions(folder->m_nFolderId, Picker_GetSelectedItem(hwndList) );
+		}
+		/* Just in case the toggle MMX on/off */
+		UpdateStatusBar();
+		break;
+		
 	case ID_FOLDER_AUDIT:
 		FolderCheck();
 		/* Just in case the toggle MMX on/off */
@@ -4949,17 +4983,19 @@ static void InitListView()
 static void AddDriverIcon(int nItem,int default_icon_index)
 {
 	HICON hIcon = 0;
+	const game_driver *clone_of = NULL;
+	const game_driver *clone_of_clone = NULL;
 
 	/* if already set to rom or clone icon, we've been here before */
 	if (icon_index[nItem] == 1 || icon_index[nItem] == 3)
 		return;
 
 	hIcon = LoadIconFromFile((char *)drivers[nItem]->name);
-	if (hIcon == NULL && driver_get_clone(drivers[nItem]) != NULL)
+	if (hIcon == NULL && ((clone_of = driver_get_clone(drivers[nItem])) != NULL) )
 	{
-		hIcon = LoadIconFromFile((char *)driver_get_clone(drivers[nItem])->name);
-		if (hIcon == NULL && driver_get_clone(driver_get_clone(drivers[nItem])) != NULL)
-			hIcon = LoadIconFromFile((char *)driver_get_clone(driver_get_clone(drivers[nItem]))->name);
+		hIcon = LoadIconFromFile((char *)clone_of->name);
+		if (hIcon == NULL && ((clone_of_clone = driver_get_clone(clone_of)) != NULL))
+			hIcon = LoadIconFromFile((char *)clone_of_clone->name);
 	}
 
 	if (hIcon != NULL)
@@ -6056,7 +6092,8 @@ static void GamePicker_OnBodyContextMenu(POINT pt)
 
 	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 	hMenu = GetSubMenu(hMenuLoad, 0);
-
+	InitBodyContextMenu(hMenu);
+	
 	UpdateMenu(hMenu);
 
 	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hMain,NULL);
@@ -6231,6 +6268,36 @@ void InitTreeContextMenu(HMENU hTreeMenu)
 	}
 
 }
+
+void InitBodyContextMenu(HMENU hBodyContextMenu)
+{
+	LPTREEFOLDER lpFolder;
+	char tmp[30];
+	MENUITEMINFO mii;
+	ZeroMemory(&mii,sizeof(mii));
+	mii.cbSize = sizeof(mii);
+
+	if (GetMenuItemInfo(hBodyContextMenu,ID_FOLDER_SOURCEPROPERTIES,FALSE,&mii) == FALSE)
+	{
+		dprintf("can't find show folders context menu");
+		return;
+	}
+	lpFolder = GetFolderByName(FOLDER_SOURCE, GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
+	snprintf(tmp,sizeof(tmp),"Properties for %s",lpFolder->m_lpTitle );
+	mii.fMask = MIIM_TYPE | MIIM_ID;
+	mii.fType = MFT_STRING;
+	mii.dwTypeData = tmp;
+	mii.cch = strlen(mii.dwTypeData);
+	mii.wID = ID_FOLDER_SOURCEPROPERTIES;
+
+
+	// menu in resources has one default item
+	// so overwrite this one
+	SetMenuItemInfo(hBodyContextMenu,ID_FOLDER_SOURCEPROPERTIES,FALSE,&mii);
+	if( ! DriverIsVector(Picker_GetSelectedItem(hwndList) ) )
+		EnableMenuItem(hBodyContextMenu, ID_FOLDER_VECTORPROPERTIES, MF_GRAYED);
+}
+
 
 void ToggleShowFolder(int folder)
 {
@@ -7082,6 +7149,7 @@ BOOL MouseHasBeenMoved(void)
 
 BOOL SendIconToEmulationWindow(int nGameIndex)
 {
+	const game_driver *clone_of = NULL;
 	HICON hIcon; 
 	hIcon = LoadIconFromFile(drivers[nGameIndex]->name); 
 	if( hIcon == NULL ) 
@@ -7089,7 +7157,8 @@ BOOL SendIconToEmulationWindow(int nGameIndex)
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			hIcon = LoadIconFromFile(driver_get_clone(drivers[nGameIndex])->name); 
+			if( ( clone_of = driver_get_clone(drivers[nGameIndex])) != NULL )
+				hIcon = LoadIconFromFile(clone_of->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
@@ -7170,13 +7239,15 @@ HWND GetGameWindow(void)
 void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 {
 	HICON hIcon; 
+	const game_driver *clone_of = NULL;
 	hIcon = LoadIconFromFile(drivers[nGameIndex]->name); 
 	if( hIcon == NULL ) 
 	{ 
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			hIcon = LoadIconFromFile(driver_get_clone(drivers[nGameIndex])->name); 
+			if( ( clone_of = driver_get_clone(drivers[nGameIndex])) != NULL )
+				hIcon = LoadIconFromFile(clone_of->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 

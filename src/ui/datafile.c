@@ -586,8 +586,9 @@ int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
 {
         static struct tDatafileIndex *hist_idx = 0;
         static struct tDatafileIndex *mame_idx = 0;
+//	const game_driver *clone_of = NULL;
         int history = 0, mameinfo = 0;
-        int err;
+        int err = 0;
 
         *buffer = 0;
 
@@ -612,9 +613,11 @@ int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
                         gdrv = drv;
                         do
                         {
+                                if ( ( gdrv->flags & NOT_A_DRIVER) == 1 )
+					break;
                                 err = load_datafile_text (gdrv, buffer, bufsize,
                                                                                   hist_idx, DATAFILE_TAG_BIO);
-                                gdrv = driver_get_clone(gdrv);
+				gdrv = driver_get_clone(gdrv);
                         } while (err && gdrv);
 
                         if (err) history = 0;
@@ -637,15 +640,18 @@ int load_driver_history (const game_driver *drv, char *buffer, int bufsize)
                 /* load informational text (append) */
                 if (mame_idx)
                 {
-                        int len = strlen (buffer);
+			int len = strlen (buffer);
                         const game_driver *gdrv;
 
                         gdrv = drv;
                         do
                         {
-                                err = load_datafile_text (gdrv, buffer+len, bufsize-len,
+                                if ( (gdrv->flags & NOT_A_DRIVER) == 1 )
+					break;
+				err = load_datafile_text (gdrv, buffer+len, bufsize-len,
                                                                                   mame_idx, DATAFILE_TAG_MAME);
-                                gdrv = driver_get_clone(gdrv);
+				
+				gdrv = driver_get_clone(gdrv);
                         } while (err && gdrv);
 
                         if (err) mameinfo = 0;

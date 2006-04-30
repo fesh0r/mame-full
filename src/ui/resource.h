@@ -398,6 +398,8 @@
 #define ID_UI_HISTORY_UP                40093
 #define ID_UI_HISTORY_DOWN              40094
 #define ID_FILE_LOADSTATE               40095
+#define ID_FOLDER_SOURCEPROPERTIES      40096
+#define ID_FOLDER_VECTORPROPERTIES      40097
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -407,7 +409,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        187
-#define _APS_NEXT_COMMAND_VALUE         40097
+#define _APS_NEXT_COMMAND_VALUE         40098
 #define _APS_NEXT_CONTROL_VALUE         1245
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

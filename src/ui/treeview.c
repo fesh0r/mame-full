@@ -336,7 +336,14 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	int i;
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 	LPTREEFOLDER lpParent = NULL;
-
+	const game_driver *clone_of = NULL;
+	
+	//Filter out the Bioses on all Folders, except for the Bios Folder
+	if( lpFolder->m_nFolderId != FOLDER_BIOS )
+	{
+		if( !( (drivers[nGame]->flags & NOT_A_DRIVER ) == 0) )
+			return TRUE;
+	}
  	// Filter games--return TRUE if the game should be HIDDEN in this view
 	if( GetFilterInherit() )
 	{
@@ -361,13 +368,13 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	{
 		return TRUE;
 	}
-
 	// Are there filters set on this folder?
 	if ((dwMask & F_MASK) == 0)
 		return FALSE;
 
 	// Filter out clones?
-	if (dwMask & F_CLONES && driver_get_clone(drivers[nGame]))
+	if (dwMask & F_CLONES
+	&&	( ( (clone_of = driver_get_clone(drivers[nGame]) ) != NULL) && ( (clone_of->flags & NOT_A_DRIVER) == 0)) )
 		return TRUE;
 
 	for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
