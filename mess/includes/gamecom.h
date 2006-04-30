@@ -148,4 +148,9 @@ extern INTERRUPT_GEN( gamecom_scanline );
 #define SM8521_SG1W13	0x7D
 #define SM8521_SG1W14	0x7E
 #define SM8521_SG1W15	0x7F
+
+/* machine/gamecom.c */
+extern UINT8 internal_registers[];
+extern UINT8 gamecom_vram[];
+
 #endif

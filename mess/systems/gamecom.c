@@ -55,6 +55,9 @@ SM8500_CONFIG gamecom_cpu_config = {
 	gamecom_update_timers
 };
 
+/*
+	0x20 -> Pause ?
+*/
 INPUT_PORTS_START( gamecom )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_NAME("Left")
@@ -90,7 +93,7 @@ static PALETTE_INIT( gamecom )
 	int index;
 	for ( index = 0; index < GAMECOM_PALETTE_LENGTH; index++ )
 	{
-		palette_set_color( index, palette[index*3+0], palette[index*3+1], palette[index*3+2] );
+		palette_set_color( 4-index, palette[index*3+0], palette[index*3+1], palette[index*3+2] );
 		colortable[index] = index;
 	}
 }
@@ -156,7 +159,7 @@ ROM_START( gamecom )
 	ROM_REGION( 0x2000, REGION_CPU1, 0 )
 	ROM_LOAD( "internal.bin", 0x1000,  0x1000, CRC(a0cec361) SHA1(03368237e8fed4a8724f3b4a1596cf4b17c96d33) )
 	ROM_REGION( 0x40000, REGION_USER1, 0 )
-        ROM_LOAD( "external.bin", 0x00000, 0x40000, CRC(e235a589) SHA1(97f782e72d738f4d7b861363266bf46b438d9b50) )
+	ROM_LOAD( "external.bin", 0x00000, 0x40000, CRC(e235a589) SHA1(97f782e72d738f4d7b861363266bf46b438d9b50) )
 ROM_END
 
 /*    YEAR  NAME     PARENT COMPAT MACHINE  INPUT    INIT CONFIG   COMPANY  FULLNAME */
