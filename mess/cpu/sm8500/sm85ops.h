@@ -910,7 +910,7 @@ logerror( "%04X: unk%02x\n", regs.PC-1,op );
 	break;
 case 0x2E:	/* MOV PS0,#00 - 4 cycles - Flags affected: -------- */
 	ARG_R;
-	regs.PS0 = r1; regs.register_base = regs.internal_ram + 0x400 + ( r1 & 0xF8 );
+	regs.PS0 = r1; regs.register_base = regs.internal_ram + ( r1 & 0xF8 );
         mycycles += 4;
 	break;
 case 0x2F:	/* BTST R,i - 6 cycles - Flags affected: -Z-0---- */
@@ -1328,43 +1328,43 @@ case 0x60:	/* CMPW RRr,RRs - 9 cycles - Flags affected: CZSV---- */
 case 0x61:	/* ADDW RRr,RRs - 10 cycles - Flags affected: CZSV0H-- */
 	ARG_RR;
 	OP_ADD16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 10;
 	break;
 case 0x62:	/* SUBW RRr,RRs - 10 cycles - Flags affected: CZSV1H-- */
 	ARG_RR;
 	OP_SUB16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 10;
 	break;
 case 0x63:	/* ADCW RRr,RRs - 10 cycles - Flags affected: CZSV0H-- */
 	ARG_RR;
 	OP_ADC16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 10;
 	break;
 case 0x64:	/* SBCW RRr,RRs - 10 cycles - Flags affected: CZSV1H-- */
 	ARG_RR;
 	OP_SBC16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 10;
 	break;
 case 0x65:	/* ANDW RRr,RRs - 14 cycles - Flags affected: -Z-0---- */
 	ARG_RR;
 	OP_AND16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 14;
 	break;
 case 0x66:	/* ORW RRr,RRs - 14 cycles - Flags affected: -Z-0---- */
 	ARG_RR;
 	OP_OR16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 14;
 	break;
 case 0x67:	/* XORW RRr,RRs - 14 cycles - Flags affected: -Z-0---- */
 	ARG_RR;
 	OP_XOR16( sm85cpu_mem_readword( r1 ), sm85cpu_mem_readword( r2 ) );
-	sm85cpu_mem_writebyte( r1, res & 0xFFFF );
+	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	mycycles += 14;
 	break;
 case 0x68:	/* CMPW RRr,w - 9 cycles - Flags affected: CZSV---- */

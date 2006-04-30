@@ -217,7 +217,7 @@ INLINE void sm8500_process_interrupts(void) {
 static int sm8500_execute( int cycles )
 {
 	UINT8	op;
-UINT16 oldpc;
+	UINT16 oldpc;
 	int	mycycles;
 
 	sm8500_icount = cycles;
@@ -319,7 +319,7 @@ static void sm8500_set_reg( int regnum, unsigned val )
 	case SM8500_PC:		regs.PC = val; break;
 	case REG_SP:
 	case SM8500_SP:		regs.SP = val; break;
-	case SM8500_PS:		regs.PS0 = ( val >> 8 ) & 0xFF; regs.PS1 = val & 0xFF; break;
+	case SM8500_PS:		sm8500_set_reg( SM8500_PS0, ( val >> 8 ) & 0xFF ); sm8500_set_reg( SM8500_PS1, val & 0xFF ); break;
 	case SM8500_SYS16:	regs.SYS = val; break;
 	case SM8500_RR0:	sm85cpu_mem_writeword( 0x00, val); break;
 	case SM8500_RR2:	sm85cpu_mem_writeword( 0x02, val); break;
