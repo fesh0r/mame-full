@@ -315,7 +315,7 @@ static const REG_OPTION regGameOpts[] =
 	{ "matchrefresh",           RO_BOOL,    offsetof(options_type, matchrefresh),                    "0" },
 	{ "syncrefresh",            RO_BOOL,    offsetof(options_type, syncrefresh),                     "0" },
 	{ "throttle",               RO_BOOL,    offsetof(options_type, throttle),                        "1" },
-	{ "full_screen_gamma",      RO_DOUBLE,  offsetof(options_type, gfx_brightness),                  "1.0" },
+	{ "full_screen_gamma",		RO_DOUBLE,  offsetof(options_type, gfx_gamma),		                 "1.0" },
 	{ "frames_to_run",          RO_INT,     offsetof(options_type, frames_to_display),               "0" },
 	{ "effect",                 RO_STRING,  offsetof(options_type, effect),                          "none" },
 	{ "screen_aspect",          RO_STRING,  offsetof(options_type, aspect),                          "4:3" },
@@ -326,7 +326,7 @@ static const REG_OPTION regGameOpts[] =
 	// d3d
 	{ "d3d",                    RO_BOOL,    offsetof(options_type, use_d3d),                         "0" },
 	{ "d3dtexmanage",           RO_BOOL,    offsetof(options_type, d3d_texture_management),          "1" },
-	{ "d3dfilter",              RO_INT,     offsetof(options_type, d3d_filter),                      "1" },
+	{ "d3dfilter",              RO_BOOL,    offsetof(options_type, d3d_filter),                      "1" },
 	{ "d3deffect",              RO_ENCODE,  offsetof(options_type, d3d_effect),                      "auto", NULL, D3DEffectEncodeString,   D3DEffectDecodeString },
 	{ "d3dprescale",            RO_ENCODE,  offsetof(options_type, d3d_prescale),                    "auto", NULL, D3DPrescaleEncodeString, D3DPrescaleDecodeString },
 	{ "d3deffectrotate",        RO_BOOL,    offsetof(options_type, d3d_rotate_effects),              "1" },
@@ -547,15 +547,6 @@ const char * d3d_prescale_short_name[MAX_D3D_PRESCALE] =
 	"6",
 	"7",
 	"8",
-};
-
-const char * d3d_filter_long_name[MAX_D3D_FILTERS] =
-{
-	"None",
-	"Bilinear",
-	"Cubic (flat kernel)",
-	"Cubic (gaussian kernel)",
-	"Anisotropic",
 };
 
 const char * clean_stretch_long_name[MAX_CLEAN_STRETCH] =
@@ -941,6 +932,7 @@ options_type * GetSourceOptions(int driver_index )
 options_type * GetGameOptions(int driver_index, int folder_index )
 {
 	int parent_index, setting;
+	const game_driver *clone_of = NULL;
 	struct SettingsHandler handlers[3];
 
 	assert(0 <= driver_index && driver_index < num_games);
@@ -959,8 +951,11 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	//Sync in parent settings if it has one
 	if( DriverIsClone(driver_index))
 	{
-		parent_index = GetDriverIndex(driver_get_clone(drivers[driver_index]));
-		LoadSettingsFile(parent_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
+		if( ( clone_of = driver_get_clone(drivers[driver_index])) != NULL )
+		{
+			parent_index = GetDriverIndex(clone_of);
+			LoadSettingsFile(parent_index | SETTINGS_FILE_GAME, &game_options[driver_index], regGameOpts);
+		}
 	}
 
 	//last but not least, sync in game specific settings
@@ -1040,11 +1035,6 @@ const char * GetD3DPrescaleLongName(int d3d_prescale)
 const char * GetD3DPrescaleShortName(int d3d_prescale)
 {
 	return d3d_prescale_short_name[d3d_prescale];
-}
-
-const char * GetD3DFilterLongName(int d3d_filter)
-{
-	return d3d_filter_long_name[d3d_filter];
 }
 
 const char * GetCleanStretchLongName(int clean_stretch)

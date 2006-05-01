@@ -855,7 +855,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_brightness);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_gamma);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ftr %d",                    pOpts->frames_to_display);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -effect %s",                 pOpts->effect);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
@@ -867,7 +867,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->use_d3d)
 	{
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3d");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -flt %i",pOpts->d3d_filter);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflt",pOpts->d3d_filter?"":"no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3dtexmanage",pOpts->d3d_texture_management ? "" : "no");
 		if (pOpts->d3d_effect != D3D_EFFECT_NONE)
 			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3deffect %s",GetD3DEffectShortName(pOpts->d3d_effect));
@@ -983,7 +983,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
 	if (pOpts->skip_gameinfo)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
-	//WIP RS we need to determine the ThreadPriority of our App before starting the emulation and restore that after the emulation
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -priority %i", pOpts->priority);
 	if (pOpts->autosave)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");

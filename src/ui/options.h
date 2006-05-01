@@ -76,12 +76,6 @@ enum
 	MAX_D3D_EFFECTS = 17,
 };
 
-// d3d filter types
-enum
-{
-	MAX_D3D_FILTERS = 5,
-};
-
 // d3d prescale types
 enum
 {
@@ -121,7 +115,7 @@ typedef struct
 	BOOL   matchrefresh;
 	BOOL   syncrefresh;
 	BOOL   throttle;
-	double gfx_brightness;
+	double gfx_gamma;
 	int    frames_to_display;
 	char   *effect;
 	char   *aspect;
@@ -131,7 +125,7 @@ typedef struct
 
 	// d3d
 	BOOL use_d3d;
-	int d3d_filter;
+	BOOL d3d_filter;
 	BOOL d3d_texture_management;
 	int d3d_effect;
 	int d3d_prescale;
@@ -432,8 +426,6 @@ const char * GetD3DEffectShortName(int d3d_effect);
 
 const char * GetD3DPrescaleLongName(int d3d_prescale);
 const char * GetD3DPrescaleShortName(int d3d_prescale);
-
-const char * GetD3DFilterLongName(int d3d_filter);
 
 const char * GetCleanStretchLongName(int clean_stretch);
 const char * GetCleanStretchShortName(int clean_stretch);

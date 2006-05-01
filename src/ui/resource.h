@@ -171,9 +171,9 @@
 #define IDC_TRANSLUCENCY                1081
 #define IDC_VERSION                     1082
 #define IDC_ARTWORK                     1083
-#define IDC_BRIGHTNESS                  1084
+#define IDC_FSGAMMA		                1084
 #define IDC_GAMMADISP                   1085
-#define IDC_BRIGHTNESSDISP              1086
+#define IDC_FSGAMMADISP                 1086
 #define IDC_BRIGHTCORRECTDISP           1087
 #define IDC_FLICKERDISP                 1088
 #define IDC_INTENSITYDISP               1089
@@ -234,7 +234,7 @@
 #define IDC_REFRESH                     1148
 #define IDC_REFRESHTEXT                 1149
 #define IDC_EFFECT                      1150
-#define IDC_BRIGHTNESSTEXT              1151
+#define IDC_FSGAMMATEXT                 1151
 #define IDC_STEADYKEY                   1152
 #define IDC_ASPECTRATIO                 1153
 #define IDC_ASPECTRATION                1154
