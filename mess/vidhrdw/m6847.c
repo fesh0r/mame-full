@@ -1595,7 +1595,8 @@ INLINE void prepare_scanline(int xpos)
 
 void m6847_video_changed(void)
 {
-	prepare_scanline(get_beamx() / 8);
+	/* NPW 2-May-2006 - Commenting this out until we properly fix bug #878 */
+	/* prepare_scanline(get_beamx() / 8); */
 }
 
 
