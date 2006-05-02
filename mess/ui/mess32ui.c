@@ -857,7 +857,6 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nGame,
 	const struct IODevice *dev, int nID, LPCTSTR pszFilename)
 {
 	MessSpecifyImage(nGame, &dev->devclass, nID, pszFilename);
-	MessReadMountedSoftware(nGame);
 }
 
 
