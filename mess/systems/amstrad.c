@@ -305,13 +305,17 @@ void amstrad_setUpperRom(void)
 {
 	unsigned char *BankBase;
 /* b3 : "1" Upper rom area disable or "0" Upper rom area enable */
-		if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<3)) == 0) {
-			BankBase = Amstrad_UpperRom;
-		} else {
-			BankBase = AmstradCPC_RamBanks[3];
-		}
+	if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<3)) == 0) {
+		BankBase = Amstrad_UpperRom;
+	} else {
+		BankBase = AmstradCPC_RamBanks[3];
+	}
+
+	if (BankBase)
+	{
 		memory_set_bankptr(7, BankBase);
 		memory_set_bankptr(8, BankBase+0x2000);
+	}
 }		
 void AmstradCPC_SetUpperRom(int Data)
 {

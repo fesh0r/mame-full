@@ -82,10 +82,16 @@ endif
 # Preprocessor Definitions
 #
 
-DEFS += -DWINVER=0x0400 \
-        -D_WIN32_IE=0x0500 \
+ifdef MSVC
+DEFS += -DWINVER=0x0500
+else
+DEFS += -DWINVER=0x0400
+endif
+
+DEFS += \
+	-D_WIN32_IE=0x0500 \
 	-DDECL_SPEC= \
-        -DZEXTERN=extern \
+	-DZEXTERN=extern \
 
 #	-DSHOW_UNAVAILABLE_FOLDER
 
