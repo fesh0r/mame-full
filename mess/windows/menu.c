@@ -76,12 +76,6 @@ enum
 	DEVOPTION_MAX
 };
 
-enum
-{
-	LOADSAVE_LOAD,
-	LOADSAVE_SAVE
-};
-
 #ifdef MAME_DEBUG
 #define HAS_PROFILER	1
 #define HAS_DEBUGGER	1
@@ -120,6 +114,7 @@ static int is_paused;
 static HICON device_icons[IO_COUNT];
 static int use_input_categories;
 static int joystick_menu_setup;
+static char state_filename[MAX_PATH];
 
 static int add_filter_entry(char *dest, size_t dest_len, const char *description, const char *extensions);
 
@@ -460,12 +455,12 @@ done:
 
 
 //============================================================
-//	loadsave
+//	state_dialog
 //============================================================
 
-static void loadsave(int type)
+static void state_dialog(BOOL (WINAPI *fileproc)(LPOPENFILENAME),
+	DWORD fileproc_flags, void (*mameproc)(const char *))
 {
-	static char filename[MAX_PATH];
 #ifdef UNICODE
 	WCHAR filenamew[MAX_PATH];
 #endif
@@ -475,17 +470,18 @@ static void loadsave(int type)
 	char *src;
 	char *dst;
 
-	if (filename[0])
+	if (state_filename[0])
 	{
-		dir = osd_dirname(filename);
+		dir = osd_dirname(state_filename);
 	}
 	else
 	{
-		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%s State.sta", Machine->gamedrv->description);
+		snprintf(state_filename, sizeof(state_filename) / sizeof(state_filename[0]),
+			"%s State.sta", Machine->gamedrv->description);
 		dir = NULL;
 
-		src = filename;
-		dst = filename;
+		src = state_filename;
+		dst = state_filename;
 		do
 		{
 			if ((*src == '\0') || isalnum(*src) || isspace(*src) || strchr("(),.", *src))
@@ -497,51 +493,46 @@ static void loadsave(int type)
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = win_video_window;
-	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | fileproc_flags;
 	ofn.lpstrFilter = TEXT("State Files (*.sta)\0*.sta\0All Files (*.*);*.*\0");
 	ofn.lpstrInitialDir = A2T(dir);
 #ifdef UNICODE
 	ofn.lpstrFile = filenamew;
 	ofn.nMaxFile = sizeof(filenamew) / sizeof(filenamew[0]);
 #else
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = sizeof(filename) / sizeof(filename[0]);
+	ofn.lpstrFile = state_filename;
+	ofn.nMaxFile = sizeof(state_filename) / sizeof(state_filename[0]);
 #endif
 
-	switch(type) {
-	case LOADSAVE_LOAD:
-		ofn.Flags |= OFN_FILEMUSTEXIST;
-		result = GetOpenFileName(&ofn);
-		break;
-
-	case LOADSAVE_SAVE:
-		result = GetSaveFileName(&ofn);
-		break;
-
-	default:
-		assert(0);
-		break;
-	}
-
+	result = fileproc(&ofn);
 	if (result)
 	{
 #ifdef UNICODE
-		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%S", filenamew);
+		snprintf(state_filename, sizeof(state_filename) / sizeof(state_filename[0]),
+			"%S", filenamew);
 #endif
 
-		switch(type)
-		{
-			case LOADSAVE_LOAD:
-				mame_schedule_load(filename);
-				break;
-
-			case LOADSAVE_SAVE:
-				mame_schedule_save(filename);
-				break;
-		}
+		mameproc(state_filename);
 	}
 	if (dir)
 		free(dir);
+}
+
+
+
+void state_load(void)
+{
+	state_dialog(GetOpenFileName, OFN_FILEMUSTEXIST, mame_schedule_load);
+}
+
+void state_save_as(void)
+{
+	state_dialog(GetSaveFileName, OFN_OVERWRITEPROMPT, mame_schedule_save);
+}
+
+void state_save(void)
+{
+	mame_schedule_save(state_filename);
 }
 
 
@@ -1201,6 +1192,8 @@ static void prepare_menus(void)
 		}
 	}
 
+	set_command_state(win_menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'							? MFS_ENABLED : MFS_GRAYED);
+
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			is_paused									? MFS_CHECKED : MFS_ENABLED);
@@ -1513,11 +1506,15 @@ static int invoke_command(UINT command)
 	switch(command)
 	{
 		case ID_FILE_LOADSTATE:
-			loadsave(LOADSAVE_LOAD);
+			state_load();
 			break;
 
 		case ID_FILE_SAVESTATE:
-			loadsave(LOADSAVE_SAVE);
+			state_save();
+			break;
+
+		case ID_FILE_SAVESTATE_AS:
+			state_save_as();
 			break;
 
 		case ID_FILE_SAVESCREENSHOT:

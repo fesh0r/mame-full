@@ -31,6 +31,10 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows] Added a save state option that lets the user override existing 
+  saves without a dialog, and save state as now prompts if the command would
+  override the existing save.  [Nate Woods]
+
 - [Windows GUI] Fixed "Skip warnings" regression in the GUI.  (bug #867) [Nate
   Woods]
 
