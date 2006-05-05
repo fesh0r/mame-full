@@ -11,7 +11,8 @@
 #include "driver.h"
 #include "includes/bbc.h"
 #include "vidhrdw/m6845.h"
-#include "vidhrdw/bbctext.h"
+#include "saa505x.h"
+//#include "vidhrdw/bbctext.h"
 
 
 void BBC_draw_hi_res(void);
@@ -19,7 +20,7 @@ void BBC_draw_teletext(void);
 
 static void (*draw_function)(void);
 
-void BBC_draw_RGB_in(int rgb);
+void BBC_draw_RGB_in(int offset,int data);
 
 /************************************************************************
  * video_refresh flag is used in optimising the screen redrawing
@@ -190,164 +191,6 @@ static int BBC_Character_Row=0;
 static int BBC_DE=0;
 
 
-/************************************************************************
- * SAA5050 Teletext
- ************************************************************************/
-
-
-static int teletext_data;
-static int teletext_LOSE;
-
-static char *tt_lookup=teletext_characters;
-static char *tt_graphics=teletext_graphics;
-static int tt_colour=7;
-static int tt_rcolour;
-static int tt_bgcolour=0;
-static int tt_start_line=0;
-static int tt_double_height=0;
-static int tt_double_height_set=0;
-static int tt_double_height_offset=0;
-static int tt_linecount=0;
-static int tt_flash=0;
-
-
-static int tt_frame_count=0;
-
-static void teletext_data_w(int offset, int data)
-{
-	teletext_data=data & 0x7f;
-}
-
-static void teletext_DEW(void)
-{
-	tt_linecount=9;
-	tt_double_height=0;
-	tt_double_height_set=0;
-	tt_double_height_offset=0;
-	tt_frame_count=(tt_frame_count+1)%50;
-}
-
-static void teletext_LOSE_w(int offset, int data)
-{
-	if ((data)&&(!teletext_LOSE))
-	{
-
-		tt_lookup=teletext_characters;
-		tt_colour=7;
-		tt_bgcolour=0;
-		tt_graphics=teletext_graphics;
-		tt_linecount=(tt_linecount+1)%10;
-		tt_start_line=0;
-		tt_double_height=0;
-		tt_flash=0;
-
-		// only check the double height stuff if at the first row of a new line
-		if (!tt_linecount)
-		{
-			tt_double_height_offset=((!tt_double_height_set)||tt_double_height_offset)?0:10;
-			tt_double_height_set=0;
-		}
-
-	}
-
-	teletext_LOSE=data;
-}
-
-
-static void teletext_clock(void)
-{
-	int sc1;
-	int code;
-	code=teletext_data;
-
-	switch (code)
-	{
-		// 0x00 Not used
-
-		case 0x01: case 0x02: case 0x03: case 0x04:
-		case 0x05: case 0x06: case 0x07:
-			tt_lookup=teletext_characters;
-			tt_colour=code;
-			break;
-
-
-		case 0x08:  // Flash
-			tt_flash=tt_frame_count<20?1:0;
-			break;
-		case 0x09:  // Steady
-			tt_flash=0;
-			break;
-
-		// 0x0a		End Box    NOT USED
-		// 0x0b     Start Box  NOT USED
-
-		case 0x0c:	// Normal Height
-			tt_double_height=0;
-			tt_start_line=0;
-			break;
-		case 0x0d:	// Double Height
-			tt_double_height=1;
-			tt_double_height_set=1;
-			tt_start_line=tt_double_height_offset;
-			break;
-
-		// 0x0e		S0         NOT USED
-		// 0x0f		S1         NOT USED
-		// 0x10		DLE        NOT USED
-
-		case 0x11: case 0x12: case 0x13: case 0x14:
-		case 0x15: case 0x16: case 0x17:
-			tt_lookup=tt_graphics;
-			tt_colour=code&0x07;
-			break;
-
-		// 0x18		Conceal Display
-
-		case 0x19:	//  Contiguois Graphics
-			tt_graphics=teletext_graphics;
-			if (tt_lookup!=teletext_characters)
-				tt_lookup=tt_graphics;
-			break;
-		case 0x1a:	//  Separated Graphics
-			tt_graphics=teletext_separated_graphics;
-			if (tt_lookup!=teletext_characters)
-				tt_lookup=tt_graphics;
-			break;
-
-		// 0x1b		ESC        NOT USED
-
-		case 0x1c:  //  Black Background
-			tt_bgcolour=0;
-			break;
-		case 0x1d:  //  New Background
-			tt_bgcolour=tt_colour;
-			break;
-
-		// 0x1e		Hold Graphics    TO BE DONE
-		// 0x1f		Release Graphics TO BE DONE
-
-	}
-
-	if (teletext_LOSE)
-	{
-		tt_rcolour=tt_flash?tt_bgcolour:tt_colour;
-		if (code<0x20) {code=0x20;}
-		code=(code-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
-		for(sc1=0;sc1<6;sc1++)
-		{
-			BBC_draw_RGB_in(tt_lookup[code++]?tt_rcolour:tt_bgcolour);
-		}
-	} else {
-
-		BBC_draw_RGB_in(0);
-		BBC_draw_RGB_in(0);
-		BBC_draw_RGB_in(0);
-		BBC_draw_RGB_in(0);
-		BBC_draw_RGB_in(0);
-		BBC_draw_RGB_in(0);
-	}
-}
-
 
 /************************************************************************
  * Teletext Interface circuits
@@ -355,6 +198,12 @@ static void teletext_clock(void)
 
 static int Teletext_Latch_Input_D7=0;
 static int Teletext_Latch=0;
+
+
+static struct saa505x_interface
+BBCsaa5050= {
+	BBC_draw_RGB_in,
+};
 
 void BBC_draw_teletext(void)
 {
@@ -367,7 +216,7 @@ void BBC_draw_teletext(void)
 
 	teletext_LOSE_w(0,(Teletext_Latch>>7)&1);
 
-	teletext_clock();
+	teletext_F1();
 
 	teletext_data_w(0,(Teletext_Latch&0x3f)|((Teletext_Latch&0x40)|(BBC_DE?0:0x40)));
 
@@ -573,10 +422,11 @@ void BBC_draw_hi_res(void)
 
 // RGB input to the Video ULA from the Teletext IC
 // Just pass on the output at the correct pixel size.
-void BBC_draw_RGB_in(int rgb)
+void BBC_draw_RGB_in(int offset,int data)
 {
-	BBC_ula_drawpixel(rgb,emulation_pixels_per_real_pixel);
+	BBC_ula_drawpixel(data,emulation_pixels_per_real_pixel);
 }
+
 
 
 
@@ -688,6 +538,8 @@ BBC6845= {
 	0,// Cursor status
 	BBC_Set_CRE, // Cursor status Emulation
 };
+
+
 
 
 
@@ -829,6 +681,7 @@ VIDEO_START( bbcb )
 	set_pixel_lookup();
 
 	crtc6845_config(&BBC6845);
+	saa505x_config(&BBCsaa5050);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
 	vidmem_RAM=vidmem;
@@ -843,6 +696,7 @@ VIDEO_START( bbcbp )
 
 	set_video_memory_lookups(32);
 	crtc6845_config(&BBC6845);
+	saa505x_config(&BBCsaa5050);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
 	vidmem_RAM=vidmem;
@@ -856,6 +710,7 @@ VIDEO_START( bbcm )
 	set_pixel_lookup();
 	set_video_memory_lookups(32);
 	crtc6845_config(&BBC6845);
+	saa505x_config(&BBCsaa5050);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
 	vidmem_RAM=vidmem;
