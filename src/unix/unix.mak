@@ -565,6 +565,10 @@ xml2info: $(OBJ)/xml2info.o $(EXPAT)
 	@echo 'Linking $@...'
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
+jedutil: $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
+	@echo 'Linking $@...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+
 dat2html: $(DAT2HTML_OBJS)
 	@echo 'Compiling $@...'
 	$(LD) $(LDFLAGS) $^ -o $@
