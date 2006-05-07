@@ -3,6 +3,7 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Atari 5200 (alt)  [incog]
+- CDTV  [Dirk Best]
 - Sharp Famicom Twin  [incog]
 
 
