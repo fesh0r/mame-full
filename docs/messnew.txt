@@ -9,6 +9,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMIGA] Cleanups.  [Dirk Best]
+
 - [CBM] Changed code to share 6526 CIA implementation with the one used by
   the Amiga in MAME.  [Nate Woods]
 

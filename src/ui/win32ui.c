@@ -986,10 +986,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -priority %i", pOpts->priority);
 	if (pOpts->autosave)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");
-#ifdef MESS
-	if (pOpts->skip_warnings)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_warnings");
-#endif
 
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
