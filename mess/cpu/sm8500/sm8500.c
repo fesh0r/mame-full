@@ -138,6 +138,8 @@ INLINE void sm8500_do_interrupt(UINT16 vector) {
 	PUSH_BYTE( regs.PC >> 8 );
 	/* Push PS1 */
 	PUSH_BYTE( regs.PS1 );
+	/* Clear I flag */
+	regs.PS1 &= ~ 0x01;
 	/* Change PC to address stored at "vector" */
 	regs.PC = sm85cpu_mem_readword( vector );
 }
