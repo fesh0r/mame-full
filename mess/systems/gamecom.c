@@ -21,28 +21,16 @@ Todo:
 #include "cpu/sm8500/sm8500.h"
 #include "devices/cartslot.h"
 
-static ADDRESS_MAP_START(gamecom_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x03FF )  AM_READ( gamecom_internal_r )	/* CPU internal register file and RAM */
-	AM_RANGE( 0x0400, 0x0FFF )  AM_READ( MRA8_NOP )			/* Nothing */
-        AM_RANGE( 0x1000, 0x1FFF )  AM_READ( MRA8_ROM )			/* Internal ROM (initially), or External ROM/Flash. Controlled by MMU0 (never swapped out in game.com) */
-        AM_RANGE( 0x2000, 0x3FFF )  AM_READ( MRA8_BANK1 )	/* External ROM/Flash. Controlled by MMU1 */
-        AM_RANGE( 0x4000, 0x5FFF )  AM_READ( MRA8_BANK2 )	/* External ROM/Flash. Controlled by MMU2 */
-        AM_RANGE( 0x6000, 0x7FFF )  AM_READ( MRA8_BANK3 )	/* External ROM/Flash. Controlled by MMU3 */
-        AM_RANGE( 0x8000, 0x9FFF )  AM_READ( MRA8_BANK4 )	/* External ROM/Flash. Controlled by MMU4 */
-        AM_RANGE( 0xA000, 0xDFFF )  AM_READ( gamecom_vram_r ) 	/* VRAM */
-        AM_RANGE( 0xE000, 0xFFFF )  AM_READ( MRA8_RAM )		/* Extended I/O, Extended RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START(gamecom_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
-        AM_RANGE( 0x0000, 0x03FF )  AM_WRITE( gamecom_internal_w )	/* CPU internal register file and RAM */
-	AM_RANGE( 0x0400, 0x0FFF )  AM_WRITE( MWA8_NOP )		/* Nothing */
-        AM_RANGE( 0x1000, 0x1FFF )  AM_WRITE( MWA8_ROM )		/* Internal ROM (initially), or External ROM/Flash. Controlled by MMU0 */
-        AM_RANGE( 0x2000, 0x3FFF )  AM_WRITE( MWA8_NOP )		/* External ROM/Flash. Controlled by MMU1 */
-        AM_RANGE( 0x4000, 0x5FFF )  AM_WRITE( MWA8_NOP )		/* External ROM/Flash. Controlled by MMU2 */
-        AM_RANGE( 0x6000, 0x7FFF )  AM_WRITE( MWA8_NOP )		/* External ROM/Flash. Controlled by MMU3 */
-        AM_RANGE( 0x8000, 0x9FFF )  AM_WRITE( MWA8_NOP )		/* External ROM/Flash. Controlled by MMU4 */ 
-        AM_RANGE( 0xA000, 0xDFFF )  AM_WRITE( gamecom_vram_w )		/* VRAM */
-        AM_RANGE( 0xE000, 0xFFFF )  AM_WRITE( MWA8_RAM )		/* Extended I/O, Extended RAM */
+static ADDRESS_MAP_START(gamecom_mem_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03FF )  AM_READWRITE( gamecom_internal_r, gamecom_internal_w )			/* CPU internal register file and RAM */
+	AM_RANGE( 0x0400, 0x0FFF )  AM_NOP									/* Nothing */
+        AM_RANGE( 0x1000, 0x1FFF )  AM_ROM									/* Internal ROM (initially), or External ROM/Flash. Controlled by MMU0 (never swapped out in game.com) */
+        AM_RANGE( 0x2000, 0x3FFF )  AM_ROMBANK(1)								/* External ROM/Flash. Controlled by MMU1 */
+        AM_RANGE( 0x4000, 0x5FFF )  AM_ROMBANK(2)								/* External ROM/Flash. Controlled by MMU2 */
+        AM_RANGE( 0x6000, 0x7FFF )  AM_ROMBANK(3)								/* External ROM/Flash. Controlled by MMU3 */
+        AM_RANGE( 0x8000, 0x9FFF )  AM_ROMBANK(4)								/* External ROM/Flash. Controlled by MMU4 */
+        AM_RANGE( 0xA000, 0xDFFF )  AM_READWRITE( gamecom_vram_r, gamecom_vram_w ) 	/* VRAM */
+        AM_RANGE( 0xE000, 0xFFFF )  AM_RAM									/* Extended I/O, Extended RAM */
 ADDRESS_MAP_END
 
 static gfx_decode gamecom_gfxdecodeinfo[] =
@@ -101,7 +89,7 @@ static PALETTE_INIT( gamecom )
 static MACHINE_DRIVER_START( gamecom )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG( "main", SM8500, 11059200/2 )   /* actually it's an sm8521 microcontroller containing an sm8500 cpu */
-        MDRV_CPU_PROGRAM_MAP( gamecom_readmem_map, gamecom_writemem_map )
+        MDRV_CPU_PROGRAM_MAP( gamecom_mem_map, 0 )
 	MDRV_CPU_CONFIG( gamecom_cpu_config )
 	MDRV_CPU_VBLANK_INT( gamecom_scanline, 200 )
 
