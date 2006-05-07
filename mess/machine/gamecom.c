@@ -29,9 +29,11 @@ typedef struct {
 	UINT8 *source_bank;
 	unsigned int source_current;
 	unsigned int source_line;
+	unsigned int source_mask;
 	UINT8 *dest_bank;
 	unsigned int dest_current;
 	unsigned int dest_line;
+	unsigned int dest_mask;
 } GAMECOM_DMA;
 
 typedef struct {
@@ -44,24 +46,26 @@ typedef struct {
 
 UINT8 *internal_ram;
 UINT8 internal_registers[0x80];
-UINT8 gamecom_vram[0x4000];
+UINT8 gamecom_vram[16*1024];
 UINT8 *cartridge1 = NULL;
 UINT8 *cartridge2 = NULL;
 UINT8 *cartridge = NULL;
-UINT8 dummy_bank[8*1024];
+UINT8 *dummy_bank = NULL;
 
-UINT8 clock_timer_val;
 static mame_timer *gamecom_clock_timer = NULL;
 GAMECOM_DMA gamecom_dma;
 GAMECOM_TIMER gamecom_timer[2];
 
-int gamecom_timer_limit[8] = { 2/2, 1024/2, 2048/2, 4096/2, 8192/2, 16384/2, 32768/2, 65536/2 };
+//int gamecom_timer_limit[8] = { 2/2, 1024/2, 2048/2, 4096/2, 8192/2, 16384/2, 32768/2, 65536/2 };
+int gamecom_timer_limit[8] = { 2, 1024, 2048, 4096, 8192, 16384, 32768, 65536 };
 
 void gamecom_dma_init(void);
 
 static void gamecom_clock_timer_callback(int dummy)
 {
-	clock_timer_val++;
+	UINT8 val = ( ( internal_registers[SM8521_CLKT] & 0x3F ) + 1 ) & 0x3F;
+	internal_registers[SM8521_CLKT] = ( internal_registers[SM8521_CLKT] & 0xC0 ) | val;
+	cpunum_set_input_line( 0, CK_INT, HOLD_LINE );
 }
 
 MACHINE_RESET( gamecom )
@@ -76,11 +80,13 @@ MACHINE_RESET( gamecom )
 		gamecom_clock_timer = timer_alloc( gamecom_clock_timer_callback );
 	}
 	/* intialize the empty dummy bank */
+	if ( dummy_bank == NULL ) {
+		dummy_bank = auto_malloc( 8 * 1024 );
+	}
 	memset( dummy_bank, 0xff, sizeof( dummy_bank ) );
 	cartridge = NULL;
 	/* disable DMA and timer */
 	gamecom_dma.enabled = 0;
-	clock_timer_val = 0;
 
 	memset( internal_registers, 0x00, sizeof(internal_registers) );
 	gamecom_internal_w( SM8521_URTT, 0xFF );
@@ -160,6 +166,7 @@ WRITE8_HANDLER( gamecom_internal_w )
 
 	/* Video hardware and DMA */
 	case SM8521_LCDC:
+		logerror( "%X: Setting LCDC to %X\n", activecpu_get_pc(), data );
 		break;
 	case SM8521_LCH:
 		break;
@@ -216,14 +223,15 @@ WRITE8_HANDLER( gamecom_internal_w )
 			/* timer run */
 			if ( data & 0x40 ) {
 				/* timer resolution 1 minute */
-				timer_adjust( gamecom_clock_timer, 60.0, 0, TIME_IN_SEC(60) );
+				timer_adjust( gamecom_clock_timer, 1.0, 0, TIME_IN_SEC(60) );
 			} else {
 				/* TImer resolution 1 second */
 				timer_adjust( gamecom_clock_timer, 1.0, 0, TIME_IN_SEC(1) );
 			}
 		} else {
-			/* timer reset */
-			clock_timer_val = 0;
+			/* disable timer reset */
+			timer_enable( gamecom_clock_timer, 0 );
+			data &= 0xC0;
 		}
 		break;
 
@@ -249,8 +257,10 @@ READ8_HANDLER( gamecom_internal_r )
 	}
 
 	switch( offset ) {
-	case SM8521_R0: case SM8521_R1: case SM8521_R2: case SM8521_R3:
-	case SM8521_R4: case SM8521_R5: case SM8521_R6: case SM8521_R7:
+	case SM8521_R0:  case SM8521_R1:  case SM8521_R2:  case SM8521_R3:
+	case SM8521_R4:  case SM8521_R5:  case SM8521_R6:  case SM8521_R7:
+	case SM8521_R8:  case SM8521_R9:  case SM8521_R10: case SM8521_R11:
+	case SM8521_R12: case SM8521_R13: case SM8521_R14: case SM8521_R15:
 		return sm85cpu_mem_readbyte( offset );
 	case SM8521_IE0:	return cpunum_get_reg( 0, SM8500_IE0 );
 	case SM8521_IE1:	return cpunum_get_reg( 0, SM8500_IE1 );
@@ -272,8 +282,8 @@ READ8_HANDLER( gamecom_internal_r )
 	case SM8521_P3C:	return cpunum_get_reg( 0, SM8500_P3C );
 	case SM8521_TM0D:	return gamecom_timer[0].counter;
 	case SM8521_TM1D:	return gamecom_timer[1].counter;
-	case SM8521_CLKT:	/* bit 0-5 read only, 6-7 read/write */
-			return ( internal_registers[offset] & 0xC0 ) | ( clock_timer_val & 0x3F );
+//	case SM8521_CLKT:	/* bit 0-5 read only, 6-7 read/write */
+//			return ( internal_registers[offset] & 0xC0 ) | ( clock_timer_val & 0x3F );
 
 	/* Reserved addresses */
 	case SM8521_18: case SM8521_1B:
@@ -284,7 +294,7 @@ READ8_HANDLER( gamecom_internal_r )
 	case SM8521_55: case SM8521_56: case SM8521_57: case SM8521_58:
 	case SM8521_59: case SM8521_5A: case SM8521_5B: case SM8521_5C:
 	case SM8521_5D:
-		logerror( "%X: Read from reserved address (0x%02X)\n", activecpu_get_pc(), offset );
+//		logerror( "%X: Read from reserved address (0x%02X)\n", activecpu_get_pc(), offset );
 		break;
 
 	}
@@ -313,6 +323,8 @@ void gamecom_dma_init(void) {
 	gamecom_dma.palette[1] = ( internal_registers[SM8521_DMPL] & 0x0C ) >> 2;
 	gamecom_dma.palette[2] = ( internal_registers[SM8521_DMPL] & 0x30 ) >> 4;
 	gamecom_dma.palette[3] = ( internal_registers[SM8521_DMPL] & 0xC0 ) >> 6;
+	gamecom_dma.source_mask = 0x1FFF;
+	gamecom_dma.dest_mask = 0x1FFF;
 	logerror("DMA: width %Xx%X, source (%X,%X), dest (%X,%X), transfer_mode %X, banks %X \n", gamecom_dma.width_x, gamecom_dma.width_y, gamecom_dma.source_x, gamecom_dma.source_y, gamecom_dma.dest_x, gamecom_dma.dest_y, gamecom_dma.transfer_mode, internal_registers[SM8521_DMVP] );
 	logerror( "   Palette: %d, %d, %d, %d\n", gamecom_dma.palette[0], gamecom_dma.palette[1], gamecom_dma.palette[2], gamecom_dma.palette[3] );
 	switch( gamecom_dma.transfer_mode ) {
@@ -325,8 +337,9 @@ void gamecom_dma_init(void) {
 		/* ROM->VRAM */
 		logerror( "DMA DMBR = %X\n", internal_registers[SM8521_DMBR] );
 		gamecom_dma.source_width = 64;
-		if ( internal_registers[SM8521_DMBR] < 32 ) {
-			gamecom_dma.source_bank = memory_region(REGION_USER1) + (internal_registers[SM8521_DMBR] << 13);
+		if ( internal_registers[SM8521_DMBR] < 16 ) {
+			gamecom_dma.source_bank = memory_region(REGION_USER1) + (internal_registers[SM8521_DMBR] << 14);
+			gamecom_dma.source_mask = 0x3FFF;
 		} else {
 			logerror( "TODO: Reading from external ROMs not supported yet\n" );
 			gamecom_dma.source_bank = memory_region(REGION_USER1);
@@ -360,92 +373,89 @@ void gamecom_dma_init(void) {
    for them to show up in some rom images...
  */
 void gamecom_handle_dma( int cycles ) {
+	unsigned y_count, x_count;
 	/* If not enabled, ignore */
 	if ( ! gamecom_dma.enabled ) {
 		return;
 	}
-	gamecom_dma.state_count += cycles;
-	while ( gamecom_dma.state_count >= 0 ) {
-		int source_pixel = 0;
-		int dest_pixel = 0;
-		/* Check for end of DMA */
-		if ( gamecom_dma.width_y_count > gamecom_dma.width_y ) {
-			gamecom_dma.enabled = 0;
-			cpunum_set_input_line( 0, DMA_INT, HOLD_LINE );
-		}
-		/* handle DMA for 1 pixel */
-		/* Read pixel data */
-		switch ( gamecom_dma.source_x_current & 0x03 ) {
-		case 0x00:	source_pixel = ( gamecom_dma.source_bank[gamecom_dma.source_current & 0x1FFF] & 0xC0 ) >> 6; break;
-		case 0x01:	source_pixel = ( gamecom_dma.source_bank[gamecom_dma.source_current & 0x1FFF] & 0x30 ) >> 4; break;
-		case 0x02:	source_pixel = ( gamecom_dma.source_bank[gamecom_dma.source_current & 0x1FFF] & 0x0C ) >> 2; break;
-		case 0x03:	source_pixel = ( gamecom_dma.source_bank[gamecom_dma.source_current & 0x1FFF] & 0x03 );      break;
-		}
-		if ( !gamecom_dma.overwrite_mode && source_pixel == 0 ) {
-			switch ( gamecom_dma.dest_x_current & 0x03 ) {
-			case 0x00:	dest_pixel = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0xC0 ) >> 6; break;
-			case 0x01:	dest_pixel = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0x30 ) >> 4; break;
-			case 0x02:	dest_pixel = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0x0C ) >> 2; break;
-			case 0x03:	dest_pixel = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0x03 );      break;
+	for( y_count = 0; y_count <= gamecom_dma.width_y; y_count++ ) {
+		for( x_count = 0; x_count <= gamecom_dma.width_x; x_count++ ) {
+			int source_pixel = 0;
+			int dest_pixel = 0;
+			int src_addr = gamecom_dma.source_current & gamecom_dma.source_mask;
+			int dest_addr = gamecom_dma.dest_current & gamecom_dma.dest_mask;
+			/* handle DMA for 1 pixel */
+			/* Read pixel data */
+			switch ( gamecom_dma.source_x_current & 0x03 ) {
+			case 0x00: source_pixel = ( gamecom_dma.source_bank[src_addr] & 0xC0 ) >> 6; break;
+			case 0x01: source_pixel = ( gamecom_dma.source_bank[src_addr] & 0x30 ) >> 4; break;
+			case 0x02: source_pixel = ( gamecom_dma.source_bank[src_addr] & 0x0C ) >> 2; break;
+			case 0x03: source_pixel = ( gamecom_dma.source_bank[src_addr] & 0x03 );      break;
 			}
-			source_pixel = dest_pixel;
-		}
-		/* Translate pixel data using DMA palette. */
-		/* Not sure if this should be done before the compound stuff - WP */
-		source_pixel = gamecom_dma.palette[ source_pixel ];
-		/* Write pixel data */
-		switch( gamecom_dma.dest_x_current & 0x03 ) {
-		case 0x00:
-			gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0x3F ) | ( source_pixel << 6 );
-			break;
-		case 0x01:
-			gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0xCF ) | ( source_pixel << 4 );
-			break;
-		case 0x02:
-			gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0xF3 ) | ( source_pixel << 2 );
-			break;
-		case 0x03:
-			gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] = ( gamecom_dma.dest_bank[gamecom_dma.dest_current & 0x1FFF] & 0xFC ) | source_pixel;
-			break;
-		}
-		/* Advance a pixel */
-		if ( gamecom_dma.decrement_x ) {
-			gamecom_dma.source_x_current--;
-			if ( ( gamecom_dma.source_x_current & 0x03 ) == 0x03 ) {
-				gamecom_dma.source_current--;
+
+			if ( !gamecom_dma.overwrite_mode && source_pixel == 0 ) {
+				switch ( gamecom_dma.dest_x_current & 0x03 ) {
+				case 0x00: dest_pixel = ( gamecom_dma.dest_bank[dest_addr] & 0xC0 ) >> 6; break;
+				case 0x01: dest_pixel = ( gamecom_dma.dest_bank[dest_addr] & 0x30 ) >> 4; break;
+				case 0x02: dest_pixel = ( gamecom_dma.dest_bank[dest_addr] & 0x0C ) >> 2; break;
+				case 0x03: dest_pixel = ( gamecom_dma.dest_bank[dest_addr] & 0x03 );      break;
+				}
+				source_pixel = dest_pixel;
 			}
-		} else {
-			gamecom_dma.source_x_current++;
-			if ( ( gamecom_dma.source_x_current & 0x03 ) == 0x00 ) {
-				gamecom_dma.source_current++;
+
+			/* Translate pixel data using DMA palette. */
+			/* Not sure if this should be done before the compound stuff - WP */
+			source_pixel = gamecom_dma.palette[ source_pixel ];
+			/* Write pixel data */
+			switch( gamecom_dma.dest_x_current & 0x03 ) {
+			case 0x00:
+				gamecom_dma.dest_bank[dest_addr] = ( gamecom_dma.dest_bank[dest_addr] & 0x3F ) | ( source_pixel << 6 );
+				break;
+			case 0x01:
+				gamecom_dma.dest_bank[dest_addr] = ( gamecom_dma.dest_bank[dest_addr] & 0xCF ) | ( source_pixel << 4 );
+				break;
+			case 0x02:
+				gamecom_dma.dest_bank[dest_addr] = ( gamecom_dma.dest_bank[dest_addr] & 0xF3 ) | ( source_pixel << 2 );
+				break;
+			case 0x03:
+				gamecom_dma.dest_bank[dest_addr] = ( gamecom_dma.dest_bank[dest_addr] & 0xFC ) | source_pixel;
+				break;
 			}
-		}
-		gamecom_dma.dest_x_current++;
-		if ( ( gamecom_dma.dest_x_current & 0x03 ) == 0x00 ) {
-			gamecom_dma.dest_current++;
-		}
-		gamecom_dma.width_x_count++;
-		if ( gamecom_dma.width_x_count > gamecom_dma.width_x ) {
-			/* Advance a line */
-			gamecom_dma.source_x_current = gamecom_dma.source_x;
-			gamecom_dma.dest_x_current = gamecom_dma.dest_x;
-			gamecom_dma.source_line += gamecom_dma.source_width;
-			gamecom_dma.source_current = gamecom_dma.source_line;
-			gamecom_dma.dest_line += gamecom_dma.dest_width;
-			gamecom_dma.dest_current = gamecom_dma.dest_line;
-			gamecom_dma.width_x_count = 0;
-			gamecom_dma.width_y_count++;
+
+			/* Advance a pixel */
+			if ( gamecom_dma.decrement_x ) {
+				gamecom_dma.source_x_current--;
+				if ( ( gamecom_dma.source_x_current & 0x03 ) == 0x03 ) {
+					gamecom_dma.source_current--;
+				}
+			} else {
+				gamecom_dma.source_x_current++;
+				if ( ( gamecom_dma.source_x_current & 0x03 ) == 0x00 ) {
+					gamecom_dma.source_current++;
+				}
+			}
+			gamecom_dma.dest_x_current++;
+			if ( ( gamecom_dma.dest_x_current & 0x03 ) == 0x00 ) {
+				gamecom_dma.dest_current++;
+			}
 		}
 
-		/* Just taking some value here... */
-		gamecom_dma.state_count -= 2;
+		/* Advance a line */
+		gamecom_dma.source_x_current = gamecom_dma.source_x;
+		gamecom_dma.dest_x_current = gamecom_dma.dest_x;
+		gamecom_dma.source_line += gamecom_dma.source_width;
+		gamecom_dma.source_current = gamecom_dma.source_line;
+		gamecom_dma.dest_line += gamecom_dma.dest_width;
+		gamecom_dma.dest_current = gamecom_dma.dest_line;
 	}
+	gamecom_dma.enabled = 0;
+	cpunum_set_input_line( 0, DMA_INT, HOLD_LINE );
 }
 
 void gamecom_update_timers( int cycles ) {
 	if ( gamecom_timer[0].enabled ) {
 		gamecom_timer[0].state_count += cycles;
-		if ( gamecom_timer[0].state_count >= gamecom_timer[0].state_limit ) {
+		while ( gamecom_timer[0].state_count >= gamecom_timer[0].state_limit ) {
 			gamecom_timer[0].state_count -= gamecom_timer[0].state_limit;
 			gamecom_timer[0].counter++;
 			if ( gamecom_timer[0].counter == gamecom_timer[0].check_value ) {
@@ -456,7 +466,7 @@ void gamecom_update_timers( int cycles ) {
 	}
 	if ( gamecom_timer[1].enabled ) {
 		gamecom_timer[1].state_count += cycles;
-		if ( gamecom_timer[1].state_count >= gamecom_timer[1].state_limit ) {
+		while ( gamecom_timer[1].state_count >= gamecom_timer[1].state_limit ) {
 			gamecom_timer[1].state_count -= gamecom_timer[1].state_limit;
 			gamecom_timer[1].counter++;
 			if ( gamecom_timer[1].counter == gamecom_timer[1].check_value ) {
@@ -488,12 +498,7 @@ DEVICE_LOAD( gamecom_cart )
 
 	/* allocate memory on first load of a cartridge */
 	if ( cartridge1 == NULL ) {
-		if ( (cartridge1 = malloc( 2048 * 1024 ) ) ) {
-		} else {
-			logerror( "Error loading cartridge: Unable to allocate memory.\n" );
-			cartridge1 = NULL;
-			return INIT_FAIL;
-		}
+		cartridge1 = auto_malloc( 2048 * 1024 );
 	}
 	filesize = image_length( image );
 	switch( filesize ) {

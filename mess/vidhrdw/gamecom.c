@@ -5,6 +5,7 @@
 #define Y_PIXELS 200
 
 int scanline;
+unsigned int base_address;
 
 void gamecom_video_init( void ) {
 	scanline = 0;
@@ -12,6 +13,9 @@ void gamecom_video_init( void ) {
 
 INTERRUPT_GEN( gamecom_scanline ) {
 	// draw line
+	if ( scanline == 0 ) {
+		base_address = ( internal_registers[SM8521_LCDC] & 0x40 ) ? 0x2000 : 0x0000;
+	}
 	if ( ! internal_registers[SM8521_LCDC] & 0x80 ) {
 		rectangle rec;
 		rec.min_x = 0;
@@ -20,7 +24,7 @@ INTERRUPT_GEN( gamecom_scanline ) {
 		fillbitmap( tmpbitmap, Machine->pens[ 0 ], &rec );
 		return;
 	} else {
-		UINT8 *line = &gamecom_vram[ ( ( internal_registers[SM8521_LCDC] & 0x40 ) ? 0x2000 : 0x0000 ) + 40 * scanline ];
+		UINT8 *line = &gamecom_vram[ base_address + 40 * scanline ];
 		int	pal[4];
 		int	i;
 
