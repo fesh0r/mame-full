@@ -2086,9 +2086,15 @@ MACHINE_RESET( bbca )
 
 MACHINE_START( bbcb )
 {
-	bbc_DFSType=  (readinputport(21)>>0)&0x07;
-	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
-	bbc_RAMSize=  (readinputport(21)>>5)&0x01;
+	//bbc_DFSType=  (readinputport(21)>>0)&0x07;
+	//bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
+	//bbc_RAMSize=  (readinputport(21)>>5)&0x01;
+	
+	bbc_DFSType=  (0x03>>0)&0x07;
+	bbc_SWRAMtype=(0x18>>3)&0x03;
+	bbc_RAMSize=  (0x20>>5)&0x01;
+	
+
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
