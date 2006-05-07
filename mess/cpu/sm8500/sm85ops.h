@@ -916,7 +916,7 @@ case 0x2E:	/* MOV PS0,#00 - 4 cycles - Flags affected: -------- */
 case 0x2F:	/* BTST R,i - 6 cycles - Flags affected: -Z-0---- */
 	ARG_RR;
 	regs.PS1 = regs.PS1 & ~ FLAG_V;
-	if ( ( sm85cpu_mem_readbyte( r1 ) & r2 ) == 0x00 ) {
+	if ( ( sm85cpu_mem_readbyte( r2 ) & r1 ) == 0x00 ) {
 		regs.PS1 = regs.PS1 | FLAG_Z;
 	} else {
 		regs.PS1 = regs.PS1 & ( ~ FLAG_Z );
