@@ -916,6 +916,11 @@ ROM_START(a5200)
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, CRC(4248d3e3) SHA1(6ad7a1e8c9fad486fbec9498cb48bf5bc3adc530))
 ROM_END
 
+ROM_START(a5200a)
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 16K for cartridges */
+	ROM_LOAD("5200a.rom", 0xf800, 0x0800, CRC(c2ba2613) SHA1(1d2a3f00109d75d2d79fecb565775eb95b7d04d5))
+ROM_END
+
 static void atari_floppy_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
 	/* floppy */
@@ -1027,3 +1032,4 @@ COMP ( 1979, a800,	   0,		 0,		a800,		a800,	 atari, a800,	"Atari",  "Atari 800 (
 COMP ( 1979, a800pal,  a800,	 0,		a800pal,	a800,	 atari,	a800,	"Atari",  "Atari 800 (PAL)" , 0)
 COMP ( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 atari, a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
 CONS ( 1982, a5200,    0,		 0,		a5200,		a5200,	 atari, a5200,	"Atari",  "Atari 5200", 0)
+CONS ( 1982, a5200a,    a5200,		 0,		a5200,		a5200,	 atari, a5200,	"Atari",  "Atari 5200 (alt)", 0)

@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Atari 5200 (alt)  [incog]
 - Sharp Famicom Twin  [incog]
 
 
