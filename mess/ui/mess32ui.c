@@ -548,6 +548,10 @@ static void MessReadMountedSoftware(int nGame)
 	const struct IODevice *pDevice;
 	LPCTSTR pszSoftware;
 
+	// First read stuff into device view
+	DevView_Refresh(GetDlgItem(hMain, IDC_SWDEVVIEW));
+
+	// Now read stuff into picker
 	begin_resource_tracking();
 
 	hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);

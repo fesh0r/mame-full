@@ -100,7 +100,7 @@ static void DevView_GetColumns(HWND hwndDevView, int *pnStaticPos, int *pnStatic
 
 
 
-static void DevView_SpecifyDevPaths(HWND hwndDevView)
+void DevView_Refresh(HWND hwndDevView)
 {
 	struct DevViewInfo *pDevViewInfo;
 	int i;
@@ -293,7 +293,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 	}
 
 	pDevViewInfo->nGame = nGame;
-	DevView_SpecifyDevPaths(hwndDevView);
+	DevView_Refresh(hwndDevView);
 	return TRUE;
 }
 
@@ -404,7 +404,7 @@ static LRESULT CALLBACK DevView_WndProc(HWND hwndDevView, UINT nMessage, WPARAM 
 			if (wParam)
 			{
 				pDevViewInfo = GetDevViewInfo(hwndDevView);
-				DevView_SpecifyDevPaths(hwndDevView);
+				DevView_Refresh(hwndDevView);
 			}
 			break;
 

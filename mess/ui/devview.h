@@ -12,5 +12,6 @@ struct DevViewCallbacks
 void DevView_SetCallbacks(HWND hwndDevView, const struct DevViewCallbacks *pCallbacks);
 BOOL DevView_SetDriver(HWND hwndDevView, int nGame);
 void DevView_RegisterClass(void);
+void DevView_Refresh(HWND hwndDevView);
 
 #endif // DEVVIEW_H

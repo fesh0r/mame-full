@@ -47,6 +47,9 @@ User Interface Changes:
 
 - [Windows GUI] New icons and splash screen.  [incog]
 
+- [Windows GUI] Fixed some general bugginess involving specifying images.
+  (bug #866)  [Nate Woods]
+
 
 
 Imgtool Changes:
