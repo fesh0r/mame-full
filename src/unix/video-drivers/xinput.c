@@ -424,8 +424,6 @@ int xinput_open(int force_grab, int extra_event_mask)
   
   if (force_grab)
     xinput_force_grab = X11_FORCE_INPUT_GRAB;
-  else if (sysdep_display_params.fullscreen)
-    xinput_force_grab = X11_FORCE_MOUSE_GRAB;
   else
     xinput_force_grab = 0;
   
