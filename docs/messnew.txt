@@ -5,6 +5,8 @@ New System Drivers Supported (in no particular order):
 - Atari 5200 (alt)  [incog]
 - CDTV  [Dirk Best]
 - Sharp Famicom Twin  [incog]
+- Bandai WonderSwan/WonderSwan Color [Wilbert Pol]
+- Tiger Game.com (not working yet) [Wilbert Pol]
 
 
 
