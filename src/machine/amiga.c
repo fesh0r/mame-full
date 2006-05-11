@@ -1025,7 +1025,7 @@ static void custom_reset(void)
 {
 	CUSTOM_REG(REG_DDFSTRT) = 0x18;
 	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
-	
+
 	switch (amiga_intf->chip_ram_mask) {
 		case ANGUS_CHIP_RAM_MASK:
 		case FAT_ANGUS_CHIP_RAM_MASK:
