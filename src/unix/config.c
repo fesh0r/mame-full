@@ -30,7 +30,6 @@ static int showmanusage = 0;
 static int showversion = 0;
 static int showusage  = 0;
 static int validate = 0;
-static int use_fuzzycmp = 1;
 static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
@@ -85,7 +84,6 @@ static struct rc_option opts2[] = {
 	{ "defaultgame", "def", rc_string, &defaultgamename, "robby", 0, 0, NULL, "Set the default game started when no game is given on the command line (only useful in the config files)" },
 #endif
 	{ "language", "lang", rc_string, &language, "english", 0, 0, NULL, "Select the language for the menus and osd" },
-	{ "fuzzycmp", "fc", rc_bool, &use_fuzzycmp, "1", 0, 0, NULL, "Enable/disable use of fuzzy gamename matching when there is no exact match" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "Enable/disable cheat subsystem" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
 #ifdef MESS
@@ -110,10 +108,16 @@ static struct rc_option opts2[] = {
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-/* fuzzy string compare, compare short string against long string        */
-/* e.g. astdel == "Asteroids Deluxe". The return code is the fuzz index, */
-/* we simply count the gaps between maching chars.                       */
-static int fuzzycmp (const char *s, const char *l)
+/*
+ * Penalty string compare, the result _should_ be a measure on
+ * how "close" two strings ressemble each other.
+ * The implementation is way too simple, but it sort of suits the
+ * purpose.
+ * This used to be called fuzzy matching, but there's no randomness
+ * involved and it is in fact a penalty method.
+ */
+
+int penalty_compare (const char *s, const char *l)
 {
 	int gaps = 0;
 	int match = 0;
@@ -146,6 +150,54 @@ static int fuzzycmp (const char *s, const char *l)
 		gaps++;
 
 	return gaps;
+}
+
+/*
+ * We compare the game name given on the CLI against the long and
+ * the short game names supported
+ */
+void show_approx_matches(void)
+{
+	struct { int penalty; int index; } topten[10];
+	int i,j;
+	int penalty; /* best fuzz factor so far */
+
+	for (i = 0; i < 10; i++)
+	{
+		topten[i].penalty = 9999;
+		topten[i].index = -1;
+	}
+
+	for (i = 0; (drivers[i] != 0); i++)
+	{
+		int tmp;
+
+		if ((drivers[i]->flags & NOT_A_DRIVER) != 0)
+			continue;
+
+		penalty = penalty_compare (gamename, drivers[i]->description);
+		tmp = penalty_compare (gamename, drivers[i]->name);
+		if (tmp < penalty) penalty = tmp;
+
+		/* eventually insert into table of approximate matches */
+		for (j = 0; j < 10; j++)
+		{
+			if (penalty >= topten[j].penalty) break;
+			if (j > 0)
+			{
+				topten[j-1].penalty = topten[j].penalty;
+				topten[j-1].index = topten[j].index;
+			}
+			topten[j].index = i;
+			topten[j].penalty = penalty;
+		}
+	}
+
+	for (i = 9; i >= 0; i--)
+	{
+		if (topten[i].index != -1)
+			fprintf (stderr, "%-10s%s\n", drivers[topten[i].index]->name, drivers[topten[i].index]->description);
+	}
 }
 
 #ifndef MESS
@@ -231,7 +283,7 @@ int xmess_printf_output(const char *fmt, va_list arg)
 int xmame_config_init(int argc, char *argv[])
 {
 	char buffer[BUF_SIZE];
-	unsigned char lsb_test[2]={0,1};
+	unsigned char lsb_test[2] = {0, 1};
 	int i;
 
 	memset(&options,0,sizeof(options));
@@ -497,49 +549,15 @@ int xmame_config_init(int argc, char *argv[])
 			}
 		}
 	}
-#endif                                
+#endif
 
-	/* educated guess on what the user wants to play */
-	if ( (game_index == -1) && use_fuzzycmp)
-	{
-		int fuzz = 9999; /*best fuzz factor so far*/
-
-		for (i = 0; (drivers[i] != 0); i++)
-		{
-			int tmp;
-			tmp = fuzzycmp(gamename, drivers[i]->description);
-			/* continue if the fuzz index is worse */
-			if (tmp > fuzz)
-				continue;
-			/* on equal fuzz index, we prefear working, original games */
-			if (tmp == fuzz)
-			{
-				const game_driver *clone_of = driver_get_clone(drivers[i]);
-
-				/* game is a clone */
-				if (clone_of != NULL && !(clone_of->flags & NOT_A_DRIVER))
-				{
-					if ((!drivers[game_index]->flags & GAME_NOT_WORKING) || (drivers[i]->flags & GAME_NOT_WORKING))
-						continue;
-				}
-				else continue;
-			}
-
-
-			/* we found a better match */
-			game_index = i;
-			fuzz = tmp;
-		}
-
-		if (game_index != -1)
-			fprintf(stdout_file,
-					"fuzzy name compare, running %s\n", drivers[game_index]->name);
-	}
-
+	/* we give up. print a few approximate matches */
 	if (game_index == -1)
 	{
-		fprintf(stderr_file, "\"%s\" not supported\n", gamename);
-		return OSD_NOT_OK;
+		fprintf(stderr_file, "\n\"%s\" approximately matches the following\n"
+				"supported " GAMESNOUN " (best match first):\n\n", gamename);
+		show_approx_matches();
+		exit(1);
 	}
 
 	/* now that we've got the gamename parse the game specific configfile */
