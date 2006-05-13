@@ -178,7 +178,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	UINT8 *buffer = NULL;
 	UINT64 size;
 	unsigned int readable, writeable, creatable;
-	osd_file_error ferr;
+	osd_file_error ferr = 0;
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)

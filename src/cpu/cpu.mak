@@ -652,20 +652,12 @@ DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 # when we compile source files we need to include generated files from the OBJ directory
 $(OBJ)/cpu/m68000/%.o: src/cpu/m68000/%.c
 	@echo Compiling $<...
-ifdef MSVC
-	$(CC) $(CDEFS) $(CFLAGS) -I$(OBJ)/cpu/m68000 -c $< -Fo$@
-else
 	$(CC) $(CDEFS) $(CFLAGS) -I$(OBJ)/cpu/m68000 -c $< -o $@
-endif
 
 # when we compile generated files we need to include stuff from the src directory
 $(OBJ)/cpu/m68000/%.o: $(OBJ)/cpu/m68000/%.c
 	@echo Compiling $<...
-ifdef MSVC
-	$(CC) $(CDEFS) $(CFLAGS) -Isrc/cpu/m68000 -c $< -Fo$@
-else
 	$(CC) $(CDEFS) $(CFLAGS) -Isrc/cpu/m68000 -c $< -o $@
-endif
 
 # rule to generate the C files
 $(M68000_GENERATED_FILES) $(M68000_GENERATED_HEADERS): $(OBJ)/cpu/m68000/m68kmake$(EXE) m68k_in.c

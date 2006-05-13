@@ -124,7 +124,7 @@ void tapedialog_init(void)
 
 void tapedialog_show(int id)
 {
-	HMODULE module;
+	extern HMODULE win_resource_module(void);
 
 	if (!win_window_mode)
 		win_toggle_full_screen();
@@ -135,8 +135,7 @@ void tapedialog_show(int id)
 	}
 	else
 	{
-		module = GetModuleHandle(EMULATORDLL);
-		CreateDialogParam(module, MAKEINTRESOURCE(IDD_TAPEDIALOG),
+		CreateDialogParam(win_resource_module(), MAKEINTRESOURCE(IDD_TAPEDIALOG),
 			win_video_window, tapedialog_dlgproc, id);
 	}
 }

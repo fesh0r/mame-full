@@ -2389,7 +2389,7 @@ static int dsk_alloc_file_physrecs(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc
 	int fphysrecs;
 	int i;
 	int cluster_index;
-	int last_sec, p_last_sec;
+	int last_sec, p_last_sec = 0;
 	int cur_block_seclen;
 	int cluster_baseAU, cluster_AUlen;
 	int first_best_block_baseAU = 0, first_best_block_seclen;
@@ -4644,8 +4644,8 @@ static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, 
 	int fphysrecs;
 	UINT8 buf[256];
 	imgtoolerr_t errorcode;
-	int parent_ref_valid, parent_ref;
-	ti99_catalog *catalog, catalog_buf;
+	int parent_ref_valid, parent_ref = 0;
+	ti99_catalog *catalog, catalog_buf = {0, };
 
 
 	(void) writeoptions;

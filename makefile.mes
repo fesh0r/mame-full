@@ -1,16 +1,10 @@
-#############################################################################
-# MESS main makefile                                                        #
-#                                                                           #
-# MESS build commands:                                                      #
-#                                                                           #
-#   Command                         Executable      Optimization            #
-#   ------------------------------  --------------  ------------            #
-#   make -f makefile.mes            mess.exe        Pentium                 #
-#   make -f makefile.mes DEBUG=1    messd.exe       N/A                     #
-#   make -f makefile.mes ATHLON=1   messat.exe      Athlon                  #
-#   make -f makefile.mes K6=1       messk6.exe      K6                      #
-#   make -f makefile.mes P4=1       messp4.exe      Pentium 4               #
-#############################################################################
+###########################################################################
+#
+#   makefile.mes
+#
+#   Core makefile for building MESS and derivatives
+#
+###########################################################################
 
 
 ###########################################################################
@@ -77,6 +71,9 @@ X86_PPC_DRC = 1
 # PM = 1
 # AMD64 = 1
 
+# uncomment next line if you are building for a 64-bit target
+# PTR64 = 1
+
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
@@ -99,14 +96,23 @@ BUILD_ZLIB = 1
 
 
 #-------------------------------------------------
+# sanity check the configuration
+#-------------------------------------------------
+
+# disable DRC cores for 64-bit builds
+ifdef PTR64
+X86_MIPS3_DRC =
+X86_PPC_DRC =
+endif
+
+
+
+#-------------------------------------------------
 # platform-specific definitions
 #-------------------------------------------------
 
 # extension for executables
 EXE = .exe
-
-# CPU core include paths
-VPATH=src $(wildcard src/cpu/*)
 
 # compiler, linker and utilities
 AR = @ar
@@ -130,26 +136,18 @@ WINUI = 1
 
 ifeq ($(MAMEOS),msdos)
 PREFIX = d
-else
-PREFIX =
 endif
 
-# by default, compile for Pentium target and add no suffix
+# by default, compile for Pentium target
 NAME = $(PREFIX)$(TARGET)
 GUINAME = $(TARGET)gui
 ARCH = -march=pentium
 
-# architecture-specific builds get extra options and a suffix
+# architecture-specific builds get extra options
 ifdef ATHLON
 NAME = $(PREFIX)$(TARGET)at
 GUINAME = $(TARGET)guiat
 ARCH = -march=athlon
-endif
-
-ifdef K6
-NAME = $(PREFIX)$(TARGET)k6
-GUINAME = $(TARGET)guik6
-ARCH = -march=k6
 endif
 
 ifdef I686
@@ -176,10 +174,15 @@ GUINAME = $(TARGET)guipm
 ARCH = -march=pentium3 -msse2
 endif
 
+ifdef MSVC_BUILD
+NAME:=$(NAME)vc
+GUINAME:=$(GUINAME)vc
+endif
+
 # debug builds just get the 'd' suffix and nothing more
 ifdef DEBUG
-NAME = $(PREFIX)$(TARGET)d
-GUINAME = $(TARGET)guid
+NAME := $(NAME)d
+GUINAME := $(GUINAME)d
 endif
 
 EMULATORCLI = $(NAME)$(EXE)
@@ -194,7 +197,15 @@ OBJ = obj/$(NAME)
 # compile-time definitions
 #-------------------------------------------------
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3 -Dalloca=__builtin_alloca
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
+
+ifndef MSVC_BUILD
+DEFS += -Dalloca=__builtin_alloca
+endif
+
+ifdef PTR64
+DEFS += -DPTR64
+endif
 
 ifdef DEBUG
 DEFS += -DMAME_DEBUG
@@ -222,7 +233,7 @@ MESSTOOLS = chdman$(EXE) imgtool$(EXE)
 
 ifeq ($(MAMEOS),windows)
 
-DEFS += -DWIN32 -DWINNT -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
+DEFS += -DWIN32 -DWINNT
 EMULATORDLL = $(NAME)lib.dll
 EMULATORGUI = $(GUINAME)$(EXE)
 EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
@@ -380,10 +391,9 @@ include mess/$(TARGET).mak
 ifeq ($(MAMEOS),windows)
 include mess/tools/imgtool/windows/wimgtool.mak
 endif
+include src/$(MAMEOS)/$(MAMEOS).mak
 ifeq ($(MAMEOS),windows)
 include mess/$(MAMEOS)/$(MAMEOS).mak
-else
-include src/$(MAMEOS)/$(MAMEOS).mak
 endif
 
 include src/cpu/cpu.mak
@@ -402,21 +412,27 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)
 
 ifeq ($(MAMEOS),windows)
 
+ifdef MSVC_BUILD
+DLLLINK=lib
+else
+DLLLINK=dll
+endif
+
 $(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(RESFILE) $(OSDBGOBJS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	@dllwrap --image-base=0x10080000 --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
+	$(LD) -shared $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
 # gui target
 $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $^ -o $@
+	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE) -o $@
 
 # cli target
 $(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -o $@
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/windows/climain.o -o $@
 
 else
 
@@ -510,7 +526,7 @@ $(OBJ)/%.pp: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 
-$(OBJ)/%.S: src/%.c
+$(OBJ)/%.s: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
@@ -529,7 +545,7 @@ $(OBJ)/mess/%.S: mess/%.c
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@
-	$(AR) cr $@ $^
+	$(AR) -cr $@ $^
 	
 %$(EXE):
 	@echo Linking $@...
@@ -546,7 +562,7 @@ makedir:
 $(sort $(OBJDIRS)):
 	$(MD) $@
 
-maketree: $(sort $(OBJDIRS))
+maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
 
 clean: cleantools cleantexts
 	@echo Deleting object tree $(OBJ)...

@@ -285,7 +285,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	int i;
-	imgtool_image *img;
+	imgtool_image *img = NULL;
 	const char *filename = NULL;
 	int unnamedargs;
 	filter_getinfoproc filter;
@@ -357,7 +357,7 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	imgtool_image *img = NULL;
-	imgtool_imageenum *imgenum;
+	imgtool_imageenum *imgenum = NULL;
 	imgtool_dirent ent;
 	filter_getinfoproc filter;
 	int unnamedargs;

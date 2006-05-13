@@ -82,7 +82,7 @@ endif
 # Preprocessor Definitions
 #
 
-ifdef MSVC
+ifdef MSVC_BUILD
 DEFS += -DWINVER=0x0500
 else
 DEFS += -DWINVER=0x0400
@@ -98,30 +98,6 @@ DEFS += \
 
 #####################################################################
 # Resources
-
-ifndef MSVC
-RC = windres --use-temp-file
-
-RCDEFS = -DMESS -DNDEBUG -D_WIN32_IE=0x0400
-
-RCFLAGS = -O coff --include-dir src --include-dir mess/ui --include-dir src/ui --include-dir mess/tools/imgtool/windows
-
-ifdef DEBUG
-RCFLAGS += -DMAME_DEBUG
-endif
-
-$(OBJ)/ui/%.res: src/windowsui/%.rc
-	@echo Compiling resources $<...
-	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
-
-$(OBJ)/mess/windows/%.res: mess/windows/%.rc
-	@echo Compiling resources $<...
-	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
-
-$(OBJ)/mess/%.res: mess/%.rc
-	@echo Compiling resources $<...
-	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
-endif
 
 ifndef MESS
 UI_RC = @windres --use-temp-file

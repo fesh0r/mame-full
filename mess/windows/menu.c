@@ -825,7 +825,7 @@ static void change_device(mess_image *img, int is_save)
 	const struct IODevice *dev = image_device(img);
 	const char *initial_dir;
 	BOOL result;
-	int create_format;
+	int create_format = 0;
 	option_resolution *create_args = NULL;
 	image_error_t err;
 
@@ -888,7 +888,7 @@ static void change_device(mess_image *img, int is_save)
 				TEXT("Error when %s the image: %s"),
 				is_save ? TEXT("creating") : TEXT("loading"),
 				image_error(img));
-			MessageBox(win_video_window, buffer, MAMENAME, MB_OK);
+			MessageBox(win_video_window, buffer, APPNAME, MB_OK);
 		}
 	}
 
@@ -1784,6 +1784,17 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 
 
 //============================================================
+//	win_resource_module
+//============================================================
+
+HMODULE win_resource_module(void)
+{
+	return (HMODULE) 0x10000000;
+}
+
+
+
+//============================================================
 //	win_create_menu
 //============================================================
 
@@ -1795,7 +1806,7 @@ int win_create_menu(HMENU *menus)
 	
 	if (options.disable_normal_ui)
 	{
-		module = GetModuleHandle(EMULATORDLL);
+		module = win_resource_module();
 		menu_bar = LoadMenu(module, MAKEINTRESOURCE(IDR_RUNTIME_MENU));
 		if (!menu_bar)
 			goto error;

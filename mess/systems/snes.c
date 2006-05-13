@@ -197,7 +197,7 @@ static void snes_load_sram(void)
 	{
 		for( ii = 0; ii < 8; ii++ )
 		{
-			memcpy( &snes_ram[0x700000 + (ii * 0x010000)], ptr, 0x7fff );
+			memmove( &snes_ram[0x700000 + (ii * 0x010000)], ptr, 0x7fff );
 			ptr += 0x7fff;
 		}
 	}
@@ -205,7 +205,7 @@ static void snes_load_sram(void)
 	{
 		for( ii = 0; ii < 16; ii++ )
 		{
-			memcpy( &snes_ram[0x306000 + (ii * 0x010000)], ptr, 0x1fff );
+			memmove( &snes_ram[0x306000 + (ii * 0x010000)], ptr, 0x1fff );
 			ptr += 0x1fff;
 		}
 	}
@@ -226,7 +226,7 @@ static void snes_save_sram(void)
 	{
 		for( ii = 0; ii < 8; ii++ )
 		{
-			memcpy( ptr, &snes_ram[0x700000 + (ii * 0x010000)], 0x8000 );
+			memmove( ptr, &snes_ram[0x700000 + (ii * 0x010000)], 0x8000 );
 			ptr += 0x8000;
 		}
 	}
@@ -234,7 +234,7 @@ static void snes_save_sram(void)
 	{
 		for( ii = 0; ii < 16; ii++ )
 		{
-			memcpy( ptr, &snes_ram[0x306000 + (ii * 0x010000)], 0x2000 );
+			memmove( ptr, &snes_ram[0x306000 + (ii * 0x010000)], 0x2000 );
 			ptr += 0x2000;
 		}
 	}

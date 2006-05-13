@@ -870,7 +870,7 @@ static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, i
 {
 	struct dmk_tag *tag = get_dmk_tag(floppy);
 	floperr_t err;
-	UINT32 idam_offset;
+	UINT32 idam_offset = 0;
 	UINT16 calculated_crc;
 	size_t i;
 	size_t offs;

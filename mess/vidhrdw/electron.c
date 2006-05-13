@@ -47,7 +47,7 @@ void electron_video_init( void ) {
 	}
 }
 
-inline UINT8 read_vram( UINT16 addr ) {
+INLINE UINT8 read_vram( UINT16 addr ) {
 	return ula.vram[ addr % ula.screen_size ];
 }
 

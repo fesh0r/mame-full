@@ -1165,7 +1165,7 @@ static imgtoolerr_t mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac
 */
 static imgtoolerr_t mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 {
-	UINT32 block;
+	UINT32 block = 0;
 	floppy_tag_record tag;
 	int run_len;
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -1241,7 +1241,7 @@ static imgtoolerr_t mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 */
 static imgtoolerr_t mac_file_write(mac_fileref *fileref, UINT32 len, const void *src)
 {
-	UINT32 block;
+	UINT32 block = 0;
 	floppy_tag_record tag;
 	int run_len;
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -6137,7 +6137,7 @@ static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path
 	UINT64 resource_fork_length;
 	const void *bundle;
 	UINT32 bundle_length, pos, fref_pos, icn_pos, i;
-	UINT16 local_id, resource_id;
+	UINT16 local_id = 0, resource_id;
 	UINT32 fref_bundleentry_length, icn_bundleentry_length;
 	const void *fref;
 	UINT32 resource_length;

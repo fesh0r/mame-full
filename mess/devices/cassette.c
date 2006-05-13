@@ -389,7 +389,7 @@ void cassette_device_getinfo(const device_class *devclass, UINT32 state, union d
 		case DEVINFO_PTR_LOAD:						info->load = device_load_cassette; break;
 		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_cassette; break;
 		case DEVINFO_PTR_DISPLAY:					info->display = device_display_cassette; break;
-		case DEVINFO_PTR_CASSETTE_FORMATS:			info->p = cassette_default_formats; break;
+		case DEVINFO_PTR_CASSETTE_FORMATS:			info->p = (void *) cassette_default_formats; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case DEVINFO_STR_DEV_FILE:					strcpy(info->s = device_temp_str(), __FILE__); break;

@@ -824,7 +824,7 @@ const struct ImageModule *find_filter_module(int filter_index,
 static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *path, LPCTSTR local_path)
 {
 	imgtoolerr_t err;
-	imgtool_imageenum *imageenum;
+	imgtool_imageenum *imageenum = NULL;
 	imgtool_dirent entry;
 	char subpath[1024];
 	TCHAR local_subpath[MAX_PATH];
@@ -924,7 +924,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	imgtoolerr_t err;
 	imgtool_image *image;
 	struct wimgtool_info *info;
-	struct imgtool_module_features features;
+	struct imgtool_module_features features = { 0, };
 	char buf[2];
 
 	info = get_wimgtool_info(window);

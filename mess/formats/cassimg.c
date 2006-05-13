@@ -151,7 +151,7 @@ casserr_t cassette_open_choices(void *file, const struct io_procs *procs, const 
 	casserr_t err;
 	cassette_image *cassette;
 	const struct CassetteFormat *format;
-	struct CassetteOptions opts;
+	struct CassetteOptions opts = {0, };
 	int i;
 
 	/* if not specified, use the dummy arguments */

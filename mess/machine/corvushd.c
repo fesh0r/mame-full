@@ -1173,7 +1173,7 @@ static UINT8 corvus_format_drive(UINT8 *pattern, UINT16 len) {
 			*c = &corvus_hdc;
 	UINT32	sector;
 	UINT32	max_sector;
-	UINT8	status;
+	UINT8	status = 0;
 	UINT8	tbuffer[512];
 
 	max_sector = c->sectors_per_track * c->tracks_per_cylinder * c->cylinders_per_drive;
