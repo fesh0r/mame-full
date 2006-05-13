@@ -1,11 +1,11 @@
-0.105.1
+0.106
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Atari 5200 (alt)  [incog]
+- Bandai WonderSwan/WonderSwan Color [Wilbert Pol]
 - CDTV  [Dirk Best]
 - Sharp Famicom Twin  [incog]
-- Bandai WonderSwan/WonderSwan Color [Wilbert Pol]
 - Tiger Game.com (not working yet) [Wilbert Pol]
 
 
@@ -62,7 +62,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.105u5.  This incorporates all features of the
+- The core is based on MAME 0.106.  This incorporates all features of the
   update to this core.  [MAME team]
 
 
