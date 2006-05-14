@@ -1192,7 +1192,7 @@ int Mame32Main(HINSTANCE    hInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow)
 {
-	dprintf("MAME32 starting");
+	dprintf("MAME32 starting\n");
 
 	options.gui_host = 1;
 	use_gui_romloading = TRUE;

@@ -8,6 +8,7 @@
 
 
 CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
+RCFLAGS += -DMESS
 
 OSOBJS += \
 	$(OBJ)/mess/windows/dirio.o		\
