@@ -502,6 +502,8 @@ BOOL SetupPicker(HWND hwndPicker, const struct PickerOptions *pOptions)
 	int i;
 	LONG_PTR l;
 
+	assert(hwndPicker);
+
 	// Allocate the list view struct
 	pPickerInfo = (struct PickerInfo *) malloc(sizeof(struct PickerInfo));
 	if (!pPickerInfo)
