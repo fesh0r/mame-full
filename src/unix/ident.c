@@ -3,6 +3,7 @@
 #include "unzip.h"
 #include "driver.h"
 #include "hash.h"
+#include "jedparse.h"
 #include <dirent.h>
 
 #ifdef BSD43 /* old style directory handling */
@@ -12,17 +13,24 @@
 #endif
 
 unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
-void romident(const char* name, int enter_dirs);
+void romident(const char* name);
 
-enum { KNOWN_START, KNOWN_ALL, KNOWN_NONE, KNOWN_SOME };
+#define KNOWN_START 0
+#define KNOWN_ALL   1
+#define KNOWN_NONE  2
+#define KNOWN_SOME  3
 
 static int silentident = 0;
 static int knownstatus = KNOWN_START;
 static int ident = 0;
+static int identfiles = 0;
+static int identmatches = 0;
+static int identnonroms = 0;
 
 enum { IDENT_IDENT = 1, IDENT_ISKNOWN };
 
-struct rc_option frontend_ident_opts[] = {
+struct rc_option frontend_ident_opts[] =
+{
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Rom Identification Related", NULL,	rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
@@ -39,60 +47,98 @@ struct rc_option frontend_ident_opts[] = {
 };
 
 
-/* Identifies a rom from from this checksum */
-static void match_roms(const game_driver *driver,const char* hash,int *found)
+/*-------------------------------------------------
+    match_roms - scan for a matching ROM by hash
+-------------------------------------------------*/
+
+static void match_roms(const game_driver *driver, const char *hash, int length, int *found)
 {
 	const rom_entry *region, *rom;
 
+	/* iterate over regions and files within the region */
 	for (region = rom_first_region(driver); region; region = rom_next_region(region))
-	{
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
 			if (hash_data_is_equal(hash, ROM_GETHASHDATA(rom), 0))
 			{
-				char baddump = hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP);
+				int baddump = hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP);
 
 				if (!silentident)
 				{
 					if (*found != 0)
 						fprintf(stdout_file, "             ");
-					fprintf(stdout_file, "= %s%-12s  %s\n",baddump ? "(BAD) " : "",ROM_GETNAME(rom),driver->description);
+					fprintf(stdout_file, "= %s%-12s  %s\n", baddump ? "(BAD) " : "", ROM_GETNAME(rom), driver->description);
 				}
 				(*found)++;
 			}
-		}
-	}
 }
 
-void identify_rom(const char* name, const char* hash, int length)
-{
-	int found = 0;
 
-	/* remove directory name */
+/*-------------------------------------------------
+    identify_data - identify a buffer full of
+    data; if it comes from a .JED file, parse the
+    fusemap into raw data first
+-------------------------------------------------*/
+
+void identify_data(const char *name, const UINT8 *data, int length)
+{
+	int namelen = strlen(name);
+	char hash[HASH_BUF_SIZE];
+	UINT8 *tempjed = NULL;
+	int found = 0;
+	jed_data jed;
 	int i;
-	for (i = strlen(name)-1;i >= 0;i--)
+
+	/* if this is a '.jed' file, process it into raw bits first */
+	if (namelen > 4 && name[namelen - 4] == '.' &&
+		tolower(name[namelen - 3]) == 'j' &&
+		tolower(name[namelen - 2]) == 'e' &&
+		tolower(name[namelen - 1]) == 'd' &&
+		jed_parse(data, length, &jed) == JEDERR_NONE)
 	{
+		/* now determine the new data length and allocate temporary memory for it */
+		length = jedbin_output(&jed, NULL, 0);
+		tempjed = malloc(length);
+		if (!tempjed)
+			return;
+
+		/* create a binary output of the JED data and use that instead */
+		jedbin_output(&jed, tempjed, length);
+		data = tempjed;
+	}
+
+	/* compute the hash of the data */
+	hash_data_clear(hash);
+	hash_compute(hash, data, length, HASH_SHA1 | HASH_CRC);
+
+	/* remove directory portion of the name */
+	for (i = namelen - 1; i > 0; i--)
 		if (name[i] == '/' || name[i] == '\\')
 		{
 			i++;
 			break;
 		}
-	}
+
+	/* output the name */
+	identfiles++;
 	if (!silentident)
-		fprintf(stdout_file, "%s ",&name[0]);
+		fprintf(stdout_file, "%s ", &name[i]);
 
+	/* see if we can find a match in the ROMs */
 	for (i = 0; drivers[i]; i++)
-		match_roms(drivers[i],hash,&found);
+		match_roms(drivers[i], hash, length, &found);
 
+	/* if we didn't find it, try to guess what it might be */
 	if (found == 0)
 	{
-		unsigned size = length;
-		while (size && (size & 1) == 0) size >>= 1;
-		if (size & ~1)
+		/* if not a power of 2, assume it is a non-ROM file */
+		if ((length & (length - 1)) != 0)
 		{
 			if (!silentident)
 				fprintf(stdout_file, "NOT A ROM\n");
+			identnonroms++;
 		}
+
+		/* otherwise, it's just not a match */
 		else
 		{
 			if (!silentident)
@@ -103,123 +149,95 @@ void identify_rom(const char* name, const char* hash, int length)
 				knownstatus = KNOWN_SOME;
 		}
 	}
+
+	/* if we did find it, count it as a match */
 	else
 	{
+		identmatches++;
 		if (knownstatus == KNOWN_START)
 			knownstatus = KNOWN_ALL;
 		else if (knownstatus == KNOWN_NONE)
 			knownstatus = KNOWN_SOME;
 	}
+
+	/* free any temporary JED data */
+	if (tempjed)
+		free(tempjed);
 }
 
-/* Identifies a file from this checksum */
-void identify_file(const char* name)
+
+/*-------------------------------------------------
+    identify_file - identify a file; if it is a
+    ZIP file, scan it and identify all enclosed
+    files
+-------------------------------------------------*/
+
+void identify_file(const char *name)
 {
-	FILE *f;
+	int namelen = strlen(name);
 	int length;
-	unsigned char* data;
-	char hash[HASH_BUF_SIZE];
+	FILE *f;
 
-	f = fopen(name,"rb");
-	if (!f) {
-		return;
-	}
+	/* if the file has a 3-character extension, check it */
+	if (namelen > 4 && name[namelen - 4] == '.' &&
+		tolower(name[namelen - 3]) == 'z' &&
+		tolower(name[namelen - 2]) == 'i' &&
+		tolower(name[namelen - 1]) == 'p')
+	{
+		/* first attempt to examine it as a valid ZIP file */
+		zip_file *zip = openzip(FILETYPE_RAW, 0, name);
+		if (zip != NULL)
+		{
+			zip_entry *entry;
 
-	/* determine length of file */
-	if (fseek (f, 0L, SEEK_END)!=0)	{
-		fclose(f);
-		return;
-	}
+			/* loop over entries in the ZIP, skipping empty files and directories */
+			for (entry = readzip(zip); entry; entry = readzip(zip))
+				if (entry->uncompressed_size != 0)
+				{
+					UINT8 *data = (UINT8 *)malloc(entry->uncompressed_size);
+					if (data != NULL)
+					{
+						readuncompresszip(zip, entry, data);
+						identify_data(entry->name, data, entry->uncompressed_size);
+						free(data);
+					}
+				}
 
-	length = ftell(f);
-	if (length == -1L) {
-		fclose(f);
-		return;
-	}
-
-	/* empty file */
-	if (!length) {
-		fclose(f);
-		return;
-	}
-
-	/* allocate space for entire file */
-	data = (unsigned char*)malloc(length);
-	if (!data) {
-		fclose(f);
-		return;
-	}
-
-	if (fseek (f, 0L, SEEK_SET)!=0) {
-		free(data);
-		fclose(f);
-		return;
-	}
-
-	if (fread(data, 1, length, f) != length) {
-		free(data);
-		fclose(f);
-		return;
-	}
-
-	fclose(f);
-
-	/* Compute checksum of all the available functions. Since MAME for
-	   now carries inforamtions only for CRC and SHA1, we compute only
-	   these */
-	hash_compute(hash, data, length, HASH_CRC | HASH_SHA1);
-	
-	/* Try to identify the ROM */
-	identify_rom(name, hash, length);
-
-	free(data);
-}
-
-void identify_zip(const char* zipname)
-{
-	zip_entry* ent;
-
-	zip_file* zip = openzip( FILETYPE_RAW, 0, zipname );
-	if (!zip)
-		return;
-
-	while ((ent = readzip(zip))) {
-		/* Skip empty file and directory */
-		if (ent->uncompressed_size!=0) {
-			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
-			char hash[HASH_BUF_SIZE];
-			UINT8 crcs[4];
-			UINT8 *data;
-
-/*			sprintf(buf,"%s/%s",zipname,ent->name); */
-			sprintf(buf,"%-12s",ent->name);
-
-			/* Decompress the ROM from the ZIP, and compute all the needed 
-			   checksums. Since MAME for now carries informations only for CRC and
-			   SHA1, we compute only these (actually, CRC is extracted from the
-			   ZIP header) */
-			hash_data_clear(hash);
-
-			data =  (UINT8*)malloc(ent->uncompressed_size);
-			readuncompresszip(zip, ent, (char *)data);
-			hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
-			free(data);
-			
-			crcs[0] = (UINT8)(ent->crc32 >> 24);
-			crcs[1] = (UINT8)(ent->crc32 >> 16);
-			crcs[2] = (UINT8)(ent->crc32 >> 8);
-			crcs[3] = (UINT8)(ent->crc32 >> 0);
-			hash_data_insert_binary_checksum(hash, HASH_CRC, crcs);
-
-			/* Try to identify the ROM */
-			identify_rom(buf, hash, ent->uncompressed_size);
-
-			free(buf);
+			/* close up and exit early */
+			closezip(zip);
+			return;
 		}
 	}
 
-	closezip(zip);
+	/* open the file directly */
+	f = fopen(name, "rb");
+	if (f)
+	{
+		/* determine the length of the file */
+		fseek(f, 0, SEEK_END);
+		length = ftell(f);
+		fseek(f, 0, SEEK_SET);
+
+		/* skip empty files */
+		if (length != 0)
+		{
+			UINT8 *data = (UINT8 *)malloc(length);
+			if (data != NULL)
+			{
+				fread(data, 1, length, f);
+				identify_data(name, data, length);
+				free(data);
+			}
+		}
+		fclose(f);
+	}
 }
+
+
+/*-------------------------------------------------
+    identify_dir - scan a directory and identify
+    all the files in it
+-------------------------------------------------*/
 
 void identify_dir(const char* dirname)
 {
@@ -227,17 +245,18 @@ void identify_dir(const char* dirname)
 	struct dirent *ent;
 
 	dir = opendir(dirname);
-	if (!dir) {
+	if (!dir)
 		return;
-	}
 
 	ent = readdir(dir);
-	while (ent) {
+	while (ent)
+	{
 		/* Skip special files */
-		if (ent->d_name[0]!='.') {
-			char* buf = (char*)malloc(strlen(dirname)+1+strlen(ent->d_name)+1);
-			sprintf(buf,"%s/%s",dirname,ent->d_name);
-			romident(buf,0);
+		if (ent->d_name[0] != '.')
+		{
+			char* buf = (char*)malloc(strlen(dirname) + 1 + strlen(ent->d_name) + 1);
+			sprintf(buf, "%s/%s", dirname, ent->d_name);
+			identify_file(buf);
 			free(buf);
 		}
 
@@ -246,30 +265,24 @@ void identify_dir(const char* dirname)
 	closedir(dir);
 }
 
-void romident(const char* name,int enter_dirs)
+void romident(const char* name)
 {
 	struct stat s;
 
-	if (stat(name,&s) != 0)	{
-		fprintf(stdout_file, "%s: %s\n",name,strerror(errno));
+	if (stat(name, &s) != 0)
+	{
+		fprintf(stdout_file, "%s: %s\n", name, strerror(errno));
 		return;
 	}
 
 #ifdef BSD43
 	if (S_IFDIR & s.st_mode)
 #else
-	if (S_ISDIR(s.st_mode)) {
+	if (S_ISDIR(s.st_mode))
 #endif
-		if (enter_dirs)
-			identify_dir(name);
-	} else {
-		unsigned l = strlen(name);
-		if (l>=4 && strcasecmp(name+l-4,".zip")==0)
-			identify_zip(name);
-		else
-			identify_file(name);
-		return;
-	}
+		identify_dir(name);
+	else
+		identify_file(name);
 }
 
 int frontend_ident(const char *gamename)
@@ -286,7 +299,7 @@ int frontend_ident(const char *gamename)
 	if (ident == IDENT_ISKNOWN)
 		silentident = 1;
 
-	romident(gamename, 1);
+	romident(gamename);
 
 	if (ident == IDENT_ISKNOWN)
 	{
