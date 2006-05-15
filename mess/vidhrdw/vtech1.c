@@ -43,10 +43,6 @@ UINT32 vtech1_palette_color[16];
 /* note - Juergen's colors do not match the colors in the m6847 code */
 static UINT8 vtech1_palette[] =
 {
-      0,   0,   0,    /* not used */
-      0,   0,   0,    /* not used */
-      0,   0,   0,    /* not used */
-      0,   0,   0,    /* black (block graphics) */
       0, 224,   0,    /* green */
     208, 255,   0,    /* yellow (greenish) */
       0,   0, 255,    /* blue */
@@ -55,6 +51,10 @@ static UINT8 vtech1_palette[] =
       0, 255, 160,    /* cyan (greenish) */
     255,   0, 255,    /* magenta */
     240, 112,   0,    /* orange */
+      0,   0,   0,    /* black (block graphics) */
+      0, 224,   0,    /* green */
+      0,   0,   0,    /* black (block graphics) */
+    224, 224, 144,    /* buff */
       0,  64,   0,    /* dark green (alphanumeric characters) */
       0, 224,  24,    /* bright green (alphanumeric characters) */
      64,  16,   0,    /* dark orange (alphanumeric characters) */
@@ -82,9 +82,11 @@ static const UINT8 *vtech1_get_video_ram(int scanline)
 VIDEO_START( vtech1m )
 {
 	m6847_config cfg;
-
 	int i;
-	for (i = 0; i < sizeof(vtech1_palette_mono); i++) {
+
+	/* TODO: Monochrome should be moved into M6847 code */
+	for (i = 0; i < sizeof(vtech1_palette_mono); i++)
+	{
         int mono;
         mono  = (int)(vtech1_palette[i*3+0] * 0.299);  /* red */
         mono += (int)(vtech1_palette[i*3+1] * 0.587);  /* green */
@@ -106,18 +108,10 @@ VIDEO_START( vtech1 )
 {
 	m6847_config cfg;
 
-	int i;
-	for (i = 0; i < sizeof(vtech1_palette_color); i++) {
-		vtech1_palette_color[i]  = vtech1_palette[i*3+0] << 16; /* red */
-		vtech1_palette_color[i] += vtech1_palette[i*3+1] <<  8; /* green */
-		vtech1_palette_color[i] += vtech1_palette[i*3+2];       /* blue */
-	}
-
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.type = M6847_VERSION_ORIGINAL_PAL;
 	cfg.get_attributes = vtech1_get_attributes;
 	cfg.get_video_ram = vtech1_get_video_ram;
-	cfg.custom_palette = vtech1_palette_color;
 	m6847_init(&cfg);
 	return 0;
 }
