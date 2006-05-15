@@ -70,7 +70,6 @@ hiscore_file            /usr/local/share/xmame/hiscore.dat
 ### Mame Related ###
 defaultgame             robby
 language                english
-fuzzycmp                1
 cheat                   0
 # debug                   0
 

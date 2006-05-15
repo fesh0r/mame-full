@@ -70,7 +70,6 @@ hiscore_file            /usr/local/share/xmess/hiscore.dat
 
 ### Mess Related ###
 language                english
-fuzzycmp                1
 cheat                   0
 # debug                   0
 
