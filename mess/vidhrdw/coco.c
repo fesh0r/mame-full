@@ -70,7 +70,12 @@ static void internal_video_start_coco(m6847_type type)
 
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.type = type;
-	cfg.cpu0_timing_factor = 4;
+	
+	/* NPW 14-May-2006 - Ugly hack; using CPU timing factor seems to break some
+	 * Dragon games */
+	if (Machine->gamedrv->name[0] == 'c')
+		cfg.cpu0_timing_factor = 4;
+
 	cfg.get_attributes = coco_get_attributes;
 	cfg.get_video_ram = sam_m6847_get_video_ram;
 	cfg.horizontal_sync_callback = coco_horizontal_sync_callback;
