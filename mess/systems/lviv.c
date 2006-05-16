@@ -450,20 +450,6 @@ static MACHINE_DRIVER_START( lviv )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
-ROM_START(lviv)
-	ROM_REGION(0x14000,REGION_CPU1,0)
-	ROM_LOAD("lviv.bin", 0x10000, 0x4000, CRC(44a347d9) SHA1(74e067493b2b7d9ab17333202009a1a4f5e460fd))
-ROM_END
-
-ROM_START(lviva)
-	ROM_REGION(0x14000,REGION_CPU1,0)
-	ROM_LOAD("lviva.bin", 0x10000, 0x4000, CRC(551622f5) SHA1(b225f3542b029d767b7db9dce562e8a3f77f92a2))
-ROM_END
-
-ROM_START(lvivp)
-	ROM_REGION(0x14000,REGION_CPU1,0)
-	ROM_LOAD("lvive.bin", 0x10000, 0x4000, CRC(f171c282) SHA1(c7dc2bdb02400e6b5cdcc50040eb06f506a7ed84))
-ROM_END
 
 static void lviv_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
@@ -498,6 +484,19 @@ static void lviv_snapshot_getinfo(const device_class *devclass, UINT32 state, un
 	}
 }
 
+SYSTEM_BIOS_START( lviv )
+SYSTEM_BIOS_ADD( 0, "lviv", "Lviv/L'vov" )
+SYSTEM_BIOS_ADD( 1, "lviva", "Lviv/L'vov (alternate)" )
+SYSTEM_BIOS_ADD( 2, "lvivp", "Lviv/L'vov (prototype)" )
+SYSTEM_BIOS_END
+
+ROM_START(lviv)
+ROM_REGION(0x14000,REGION_CPU1,0)
+ROMX_LOAD("lviv.bin", 0x10000, 0x4000, CRC(44a347d9) SHA1(74e067493b2b7d9ab17333202009a1a4f5e460fd), ROM_BIOS(1))
+ROMX_LOAD("lviva.bin", 0x10000, 0x4000, CRC(551622f5) SHA1(b225f3542b029d767b7db9dce562e8a3f77f92a2), ROM_BIOS(2))
+ROMX_LOAD("lvivp.bin", 0x10000, 0x4000, CRC(f171c282) SHA1(c7dc2bdb02400e6b5cdcc50040eb06f506a7ed84), ROM_BIOS(3))
+ROM_END
+
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	/* 9-Oct-2003 - Changed to lvt because lv? is an invalid file extension */
@@ -506,7 +505,5 @@ SYSTEM_CONFIG_START(lviv)
 SYSTEM_CONFIG_END
 
 
-/*    YEAR  NAME       PARENT  COMPAT	MACHINE    INPUT     INIT     CONFIG,  COMPANY	FULLNAME */
-COMP( 1989, lviv,      0,      0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv" , 0)
-COMP( 1989, lviva,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (alternate)" , 0)
-COMP( 1986, lvivp,     lviv,   0,		lviv,      lviv,     0,       lviv,    "",	"PK-01 Lviv (prototype)" , 0)
+/*    YEAR  NAME      PARENT    BIOS    COMPAT  MACHINE   INPUT     INIT                CONFIG          COMPANY          FULLNAME */
+COMPB( 1989,	lviv,	0,      lviv,      0,		lviv,      lviv,     0,       lviv,    "V. I. Lenin",	"Lviv" , 0)

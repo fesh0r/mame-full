@@ -721,10 +721,8 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	/* GALAKSIJA */
 	DRIVER( galaxy )
 
-	/* PK-01 Lviv */
-	DRIVER( lviv )		/* PK-01 Lviv										*/
-	DRIVER( lviva )		/* PK-01 Lviv (alternate)							*/
-	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
+	/* Lviv/L'vov */
+	DRIVER( lviv )		/* Lviv/L'vov										*/
 
 	/* Tesla */
 	DRIVER( pmd851 )	/* PMD-85.1											*/
