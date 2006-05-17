@@ -3,6 +3,11 @@
 
 /* from mess/machine/mbee.c */
 MACHINE_RESET( mbee );
+MACHINE_START( mbee );
+MACHINE_START( mbee56 );
+
+extern UINT8 *mbee_workram;
+READ8_HANDLER( mbee_lowram_r );
 
 void mbee_interrupt(void);
 

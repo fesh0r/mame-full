@@ -5,6 +5,13 @@
     machine driver
 	Juergen Buchmueller <pullmoll@t-online.de>, Jan 2000
 
+	"busnop" emulation by R. Belmont, May 2006.
+
+	"busnop" is a trick by which all reads from 0x0000-0x7FFF are held at 0x00
+	until A15 is asserted.  The Z80 NOP instruction is 0x00, so the effect is
+	to cause reset to skip all memory up to 0x8000, where the actual handling
+	code resides.
+	
 ****************************************************************************/
 
 #include "driver.h"
@@ -25,6 +32,9 @@ static UINT8 fdc_den = 0;
 static UINT8 fdc_status = 0;
 static void pio_interrupt(int state);
 static void mbee_fdc_callback(int);
+static UINT8 mbee_busnop = 0;
+
+UINT8 *mbee_workram;
 
 static z80pio_interface pio_intf =
 {
@@ -38,10 +48,60 @@ static void pio_interrupt(int state)
 	cpunum_set_input_line(0, 0, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
+/*
+  NOTE: the original hardware has a "busnop" circuit which is enabled on reset/poweron.
+  It causes all reads to return 0x00 until A15 is asserted (e.g. a read at or above 0x8000).
+  The following stuff emulates that functionality.
+*/
+
+READ8_HANDLER( mbee_lowram_r )
+{
+	if (mbee_busnop)
+	{
+		return 0;
+	}
+
+	return mbee_workram[offset];
+}
+
+offs_t mbee_opbase_handler(offs_t address)
+{
+	if (address > 0x7fff)
+	{
+		mbee_busnop = 0;
+	}
+
+	return address;
+}
+
+offs_t mbee56_opbase_handler(offs_t address)
+{
+	if (address > 0xdfff)
+	{
+		mbee_busnop = 0;
+	}
+
+	return address;
+}
+
 MACHINE_RESET( mbee )
 {
 	z80pio_init(0, &pio_intf);
-    wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
+	wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
+
+	mbee_busnop = 1;
+}
+
+MACHINE_START( mbee )
+{
+	memory_set_opbase_handler(0, mbee_opbase_handler);
+	return 0;
+}
+
+MACHINE_START( mbee56 )
+{
+	memory_set_opbase_handler(0, mbee56_opbase_handler);
+	return 0;
 }
 
 static mess_image *cassette_device_image(void)

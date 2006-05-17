@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [MBEE] Fixed reset.  [Robbert, R. Belmont]
+
 - [LVIV] Changed to use selectable BIOSes.  [incog]
 
 

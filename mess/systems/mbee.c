@@ -57,7 +57,7 @@
 #endif
 
 static ADDRESS_MAP_START(mbee_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x7fff) AM_RAM
+	AM_RANGE(0x0000, 0x7fff) AM_RAM AM_READ( mbee_lowram_r ) AM_BASE( &mbee_workram )
 	AM_RANGE(0x8000, 0xbfff) AM_ROM
 	AM_RANGE(0xc000, 0xdfff) AM_ROM
 	AM_RANGE(0xe000, 0xefff) AM_ROM
@@ -242,8 +242,8 @@ static PALETTE_INIT( mbee )
 
 static const struct z80_irq_daisy_chain mbee_daisy_chain[] =
 {
-    { z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
-    { 0, 0, 0, 0, -1}      /* end mark */
+	{ z80pio_reset, z80pio_irq_state, z80pio_irq_ack, z80pio_irq_reti, 0 }, /* PIO number 0 */
+	{ 0, 0, 0, 0, -1}      /* end mark */
 };
 
 
@@ -260,6 +260,7 @@ static MACHINE_DRIVER_START( mbee )
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_RESET( mbee )
+	MDRV_MACHINE_START( mbee )
 
 	MDRV_GFXDECODE(mbee_gfxdecodeinfo)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -285,6 +286,7 @@ static MACHINE_DRIVER_START( mbee56 )
 	MDRV_IMPORT_FROM( mbee )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP(mbee56_mem, 0)
+	MDRV_MACHINE_START( mbee56 )
 MACHINE_DRIVER_END
 
 
@@ -382,8 +384,8 @@ SYSTEM_CONFIG_START(mbee)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-COMP( 1982, mbee,     0,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" , 0)
-COMP( 1982, mbeepc,   mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" , 0)
-COMP( 1985?,mbeepc85, mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" , 0)
-COMP( 1983, mbee56,   mbee,		0,		mbee56,   mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" , 0)
+COMP( 1982, mbee,     0,	0,	mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" , 0)
+COMP( 1982, mbeepc,   mbee,	0,	mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" , 0)
+COMP( 1985?,mbeepc85, mbee,	0,	mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" , 0)
+COMP( 1983, mbee56,   mbee,	0,	mbee56,   mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" , 0)
 
