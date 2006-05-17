@@ -246,7 +246,7 @@ static MACHINE_DRIVER_START( channelf )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(128, 64)
 	MDRV_VISIBLE_AREA(4, 112 - 7, 4, 64 - 3)
@@ -264,14 +264,20 @@ static MACHINE_DRIVER_START( channelf )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
-ROM_START(channelf)
+SYSTEM_BIOS_START( channelf )
+	SYSTEM_BIOS_ADD( 0, "sl90025", "Luxor Video Entertainment System" )
+	SYSTEM_BIOS_ADD( 1, "sl31253", "Channel F" )
+SYSTEM_BIOS_END
+
+ROM_START( channelf )
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("sl31253.rom",   0x0000, 0x0400, CRC(04694ed9) SHA1(81193965a374d77b99b4743d317824b53c3e3c78))
+	ROMX_LOAD("sl90025.rom",  0x0000, 0x0400, CRC(015c1e38) SHA1(759e2ed31fbde4a2d8daf8b9f3e0dffebc90dae2), ROM_BIOS(1))
+	ROMX_LOAD("sl31253.rom",  0x0000, 0x0400, CRC(04694ed9) SHA1(81193965a374d77b99b4743d317824b53c3e3c78), ROM_BIOS(2))
 	ROM_LOAD("sl31254.rom",   0x0400, 0x0400, CRC(9c047ba3) SHA1(8f70d1b74483ba3a37e86cf16c849d601a8c3d2c))
 	ROM_CART_LOAD(0, "bin\0", 0x0800, 0x2000, ROM_NOMIRROR | ROM_OPTIONAL)
 ROM_END
 
-SYSTEM_CONFIG_START(channelf)
+SYSTEM_CONFIG_START( channelf )
 	CONFIG_DEVICE(cartslot_device_getinfo)
 SYSTEM_CONFIG_END
 
@@ -281,8 +287,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY		 FULLNAME */
-CONS( 1976, channelf, 0,		0,		channelf, channelf, 0,			channelf,	"Fairchild", "Channel F" , 0)
-
+/*     YEAR  NAME      PARENT    BIOS      COMPAT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */
+CONSB( 1976, channelf, 0,        channelf, 0,        channelf, channelf, 0,        channelf, "Fairchild", "Channel F" , 0)
 
 
