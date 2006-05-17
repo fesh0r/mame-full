@@ -15,6 +15,7 @@ Not nice, but it works...
 #include "uef_cas.h"
 #include "zlib.h"
 #include "osdepend.h"
+#include "math.h"
 
 #define UEF_WAV_FREQUENCY	4800
 #define WAVE_LOW	-32768
@@ -72,6 +73,34 @@ static const UINT8* skip_gz_header( const UINT8 *p ) {
 }
 
 UINT8 *gz_ptr = NULL;
+
+static float get_uef_float( const UINT8 *Float)
+{
+		int Mantissa;
+		float Result;
+		int Exponent;
+
+		/* assume a four byte array named Float exists, where Float[0]
+		was the first byte read from the UEF, Float[1] the second, etc */
+
+		/* decode mantissa */
+		Mantissa = Float[0] | (Float[1] << 8) | ((Float[2]&0x7f)|0x80) << 16;
+
+		Result = (float)Mantissa;
+		Result = (float)ldexp(Result, -23);
+
+		/* decode exponent */
+		Exponent = ((Float[2]&0x80) >> 7) | (Float[3]&0x7f) << 1;
+		Exponent -= 127;
+		Result = (float)ldexp(Result, Exponent);
+
+		/* flip sign if necessary */
+		if(Float[3]&0x80)
+			Result = -Result;
+
+	/* floating point number is now in 'Result' */
+	return Result;
+}
 
 static int uef_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
 	int	pos, size;
@@ -157,10 +186,12 @@ static int uef_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
 			baud_length = ( casdata[pos+1] << 8 ) | casdata[pos];
 			size += baud_length * 2 ;
 			break;
+		case 0x0116:
+			size += get_uef_float(casdata+pos)*UEF_WAV_FREQUENCY;
+			break;
 		case 0x0113:
 		case 0x0114:
 		case 0x0115:
-		case 0x0116:
 		case 0x0120:
 			logerror( "Unsupported chunk type: %04x\n", chunk_type );
 			break;
@@ -263,6 +294,14 @@ static int uef_cas_fill_wave( INT16 *buffer, int length, UINT8 *bytes ) {
 				length -= 2;
 			}
 			break;
+		case 0x0116:
+			for( baud_length = (get_uef_float(bytes+pos)*UEF_WAV_FREQUENCY); baud_length; baud_length-- ) {
+				*p = WAVE_NULL; p++;
+				length -= 1;
+			}
+			break;
+
+
 		}
 		pos += chunk_length;
 	}

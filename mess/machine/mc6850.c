@@ -307,6 +307,16 @@ void MC6850_Receive_Clock(int Receive_Data)
 
 }
 
+void MC6850_Reset(int clocklength)
+{
+	// If a long time has passed and no data has be sent then reset the counters
+	// there should be a timer in this code that calls here if no bits are recived after about 1.5 bits of time.
+	// but for now I am calling externally.
+	RSC=0;
+	RSR=0;
+	dcd_count=0;
+}
+
 int MC6850_Transmit_Clock(void)
 {
 	// clock out the data and return a Trasmit Data bit

@@ -592,7 +592,7 @@ VIDEO_UPDATE( bbc )
 	long c;
 	int full_refresh;
 
-logerror ("Box %d by %d \n",cliprect->min_y,cliprect->max_y);
+	//logerror ("Box %d by %d \n",cliprect->min_y,cliprect->max_y);
 
 	c = 0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 	full_refresh = 1;

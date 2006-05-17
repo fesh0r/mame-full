@@ -21,6 +21,8 @@
 #include "devices/printer.h"
 #include "devices/cassette.h"
 #include "machine/mc6850.h"
+#include "formats/csw_cas.h"
+#include "formats/uef_cas.h"
 
 
 /******************************************************************************
@@ -465,8 +467,7 @@ INPUT_PORTS_START(bbca)
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_MINMAX(0x0,0xff ) PORT_PLAYER(2)
 
-/*
-	This does not work anymore. :(
+
 
 	PORT_START_TAG("BBCCONFIG")
 	PORT_DIPNAME( 0x07, 0x00, "DFS SELECT" )
@@ -489,7 +490,7 @@ INPUT_PORTS_START(bbca)
 	PORT_DIPNAME( 0x20, 0x20, "Main Ram Size" )
 	PORT_DIPSETTING(    0x00, "16K" )
 	PORT_DIPSETTING(    0x20, "32K" )
-*/
+
 
 INPUT_PORTS_END
 
@@ -518,6 +519,56 @@ ROM_END
 
 
 ROM_START(bbcb)
+	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
+
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
+
+	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
+
+	// usos12.rom is the USA version of the OS. acorn tried to release the BBC B in the USA calling it the
+	// "Acorn Proton", it failed to sell in the USA and was withdrawn from the market.
+	// the main difference is the screen resolution setting the display to work on American TV's
+	//ROM_LOAD("usos12.rom", 0x40000,0x4000, CRC(c8e946a9) )
+
+
+	ROM_LOAD("basic2.rom",  0x00000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
+	//ROM_LOAD("speech-1.0.rom",  0x08000, 0x2000, CRC(e63f7fb7) )
+	//ROM_RELOAD(                 0x0a000, 0x2000                )
+	//ROM_LOAD("dfs144.rom",  0x04000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5)) /* rom page 14 38000 */
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
+	                                                      /* rom page 5  14000 */
+			  											  /* rom page 6  18000 */
+	                                                      /* rom page 7  1c000 */
+														  /* rom page 8  20000 */
+														  /* rom page 9  24000 */
+														  /* rom page 10 28000 */
+														  /* rom page 11 2c000 */
+														  /* rom page 12 30000 */
+														  /* rom page 13 34000 */
+
+	ROM_REGION(0x20000,REGION_USER2,0) /* DFS ROMS */
+
+	ROM_LOAD("dfs09.rom",    0x00000, 0x2000, CRC(3ce609cf) SHA1(5cc0f14b8f46855c70eaa653cca4ad079b458732))
+	ROM_RELOAD(              0x02000, 0x2000                )
+
+	ROM_LOAD("dnfs.rom",     0x04000, 0x4000, CRC(8ccd2157) SHA1(7e3c536baeae84d6498a14e8405319e01ee78232))
+	ROM_LOAD("dfs144.rom",   0x08000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5))
+	ROM_LOAD("zdfs-0.90.rom",0x0C000, 0x2000, CRC(ea579d4d) SHA1(59ad2a8994f4bddad6687891f1a2bc29f2fd32b8))
+	ROM_LOAD("ddfs223.rom",  0x10000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa))
+	ROM_LOAD("ddfs-1.53.rom",0x14000, 0x4000, CRC(e1be4ee4) SHA1(6719dc958f2631e6dc8f045429797b289bfe649a))
+	ROM_LOAD("ch103.rom",    0x18000, 0x4000, CRC(98367cf4) SHA1(eca3631aa420691f96b72bfdf2e9c2b613e1bf33))
+   /*NONE*/
+
+	ROM_REGION(0x80000,REGION_DISKS,0) /* Opus Ram Disc Space */
+
+ROM_END
+
+
+ROM_START(bbcbcsw)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
@@ -800,23 +851,34 @@ static void bbc_floppy_getinfo(const device_class *devclass, UINT32 state, union
 	}
 }
 
-static void bbc_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
-{
-	/* cassette */
-	switch(state)
-	{
-		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_COUNT:							info->i = 1; break;
-
-		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), "wav"); break;
-
-		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:		info->i = CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_MUTED; break;
-
-		default:										cassette_device_getinfo(devclass, state, info); break;
+static void bbc_cassette_uef_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
+	switch( state ) {
+	case DEVINFO_INT_COUNT:
+		info->i = 1;
+		break;
+	case DEVINFO_PTR_CASSETTE_FORMATS:
+		info->p = (void *)uef_cassette_formats;
+		break;
+	default:
+		cassette_device_getinfo( devclass, state, info );
+		break;
 	}
 }
+
+static void bbc_cassette_csw_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
+	switch( state ) {
+	case DEVINFO_INT_COUNT:
+		info->i = 1;
+		break;
+	case DEVINFO_PTR_CASSETTE_FORMATS:
+		info->p = (void *)csw_cassette_formats;
+		break;
+	default:
+		cassette_device_getinfo( devclass, state, info );
+		break;
+	}
+}
+
 
 static void bbc_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
@@ -831,24 +893,32 @@ static void bbc_printer_getinfo(const device_class *devclass, UINT32 state, unio
 }
 
 SYSTEM_CONFIG_START(bbca)
-	CONFIG_DEVICE(bbc_cassette_getinfo)
+	CONFIG_DEVICE(bbc_cassette_uef_getinfo)
 	CONFIG_DEVICE(bbc_printer_getinfo)
 SYSTEM_CONFIG_END
 
 
-SYSTEM_CONFIG_START(bbc)
+SYSTEM_CONFIG_START(bbcuef)
 	CONFIG_DEVICE(bbc_cartslot_getinfo)
 	CONFIG_DEVICE(bbc_floppy_getinfo)
-	CONFIG_DEVICE(bbc_cassette_getinfo)
+	CONFIG_DEVICE(bbc_cassette_uef_getinfo)
+	CONFIG_DEVICE(bbc_printer_getinfo)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(bbccsw)
+	CONFIG_DEVICE(bbc_cartslot_getinfo)
+	CONFIG_DEVICE(bbc_floppy_getinfo)
+	CONFIG_DEVICE(bbc_cassette_csw_getinfo)
 	CONFIG_DEVICE(bbc_printer_getinfo)
 SYSTEM_CONFIG_END
 
 
 /*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
 COMP ( 1981, bbca,	   0,		 0,		bbca,     bbca,   bbc,     bbca,	"Acorn","BBC Micro Model A" , 0)
-COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,   bbc,	   bbc,		"Acorn","BBC Micro Model B" , 0)
-COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 64K" , 0)
-COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 128k" , 0)
-COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbcm,    bbc,		"Acorn","BBC Master" , 0)
+COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,   bbc,	   bbcuef,	"Acorn","BBC Micro Model B (UEF)" , 0)
+COMP ( 1981, bbcbcsw,  bbca,	 0,		bbcb,     bbca,   bbc,	   bbccsw,	"Acorn","BBC Micro Model B (CSW)" , 0)
+COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,   bbc,     bbcuef,	"Acorn","BBC Micro Model B+ 64K" , 0)
+COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,   bbc,     bbcuef,	"Acorn","BBC Micro Model B+ 128k" , 0)
+COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbcm,    bbcuef,	"Acorn","BBC Master" , 0)
 
 

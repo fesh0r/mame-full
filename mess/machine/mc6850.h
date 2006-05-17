@@ -64,7 +64,7 @@ struct MC6850_interface
 };
 
 void MC6850_Receive_Clock(int Receive_Data);
-
+void MC6850_Reset(int clocklength);
 
 void MC6850_data_w(int offset, int data);
 int MC6850_data_r(int offset);

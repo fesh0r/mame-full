@@ -1378,7 +1378,13 @@ BBC_MC6850_calls= {
 
 static double last_dev_val = 0;
 static int wav_len = 0;
-static int shortbit = 0;
+//static int longbit=0;
+//static int shortbit = 0;
+
+static int len0=0;
+static int len1=0;
+static int len2=0;
+static int len3=0;
 
 void *bbc_tape_timer;
 
@@ -1389,35 +1395,52 @@ static void bbc_tape_timer_cb(int param)
 	dev_val=cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0));
 
 	// look for rising edges on the cassette wave
-	if ((dev_val>=0.0) && (last_dev_val<0.0))
+	if (((dev_val>=0.0) && (last_dev_val<0.0)) || ((dev_val<0.0) && (last_dev_val>=0.0)))
 	{
-		//logerror("cassette wav_len %d \n",wav_len);
-
-		/* 1 1200Hz cycle should be around 14 15 16 17 samples long */
-
-		if(wav_len>=12)
+		if (wav_len>(9*3))
 		{
-			/* Clock a 0 onto the serial line */
-			//logerror("Serial value 0\n");
-			MC6850_Receive_Clock(0);
-			shortbit=0;
+			//this is to long to recive anything so reset the serial IC. This is a hack, this should be done as a timer in the MC6850 code.
+			logerror ("Cassette length %d\n",wav_len);
+			MC6850_Reset(wav_len);
+			len0=0;
+			len1=0;
+			len2=0;
+			len3=0;
+			wav_len=0;
+
 		}
 
-		/* 1 2400Hz cycle should be around 7 8 and 9 samples long */
-		if(wav_len<12)
-		{
-			shortbit++;
-			/* 2 2400Hz waves make up a 1 bit */
-			if(shortbit==2)
-			{
-				/* Clock a 1 onto the serial line */
-		 		//logerror("Serial value 1\n");
-			    MC6850_Receive_Clock(1);
-				shortbit=0;
-			}
-		}
+		len3=len2;
+		len2=len1;
+		len1=len0;
+		len0=wav_len;
 
 		wav_len=0;
+		logerror ("cassette  %d  %d  %d  %d\n",len3,len2,len1,len0);
+
+		if ((len0+len1)>=(18+18-5))
+		{
+			/* Clock a 0 onto the serial line */
+			logerror("Serial value 0\n");
+			MC6850_Receive_Clock(0);
+			len0=0;
+			len1=0;
+			len2=0;
+			len3=0;
+		}
+
+		if (((len0+len1+len2+len3)<=41) && (len3!=0))
+		{
+			/* Clock a 1 onto the serial line */
+			logerror("Serial value 1\n");
+			MC6850_Receive_Clock(1);
+			len0=0;
+			len1=0;
+			len2=0;
+			len3=0;
+		}
+
+
 	}
 
 	wav_len++;
@@ -1430,10 +1453,16 @@ void BBC_Cassette_motor(unsigned char status)
 	if (status)
 	{
 		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),CASSETTE_MOTOR_ENABLED ,CASSETTE_MASK_MOTOR);
-		timer_adjust(bbc_tape_timer, 0, 0, TIME_IN_HZ(19200));
+		timer_adjust(bbc_tape_timer, 0, 0, TIME_IN_HZ(44100));
 	} else {
 		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),CASSETTE_MOTOR_DISABLED,CASSETTE_MASK_MOTOR);
 		timer_reset(bbc_tape_timer, TIME_NEVER);
+		MC6850_Reset(wav_len);
+		len0=0;
+		len1=0;
+		len2=0;
+		len3=0;
+		wav_len=0;
 	}
 }
 
@@ -1503,6 +1532,9 @@ static i8271_interface bbc_i8271_interface=
 
 READ8_HANDLER( bbc_i8271_read )
 {
+int ret;
+	ret=0x0ff;
+	logerror("i8271 read %d  ",offset);
 	switch (offset)
 	{
 		case 0:
@@ -1510,18 +1542,24 @@ READ8_HANDLER( bbc_i8271_read )
 		case 2:
 		case 3:
 			/* 8271 registers */
-			return i8271_r(offset);
+			ret=i8271_r(offset);
+			logerror("  %d\n",ret);
+			return ret;
 		case 4:
-			return i8271_data_r(offset);
+			ret=i8271_data_r(offset);
+			logerror("  %d\n",ret);
+			return ret;
 		default:
 			break;
 	}
-
+	logerror("  void\n");
 	return 0x0ff;
 }
 
 WRITE8_HANDLER( bbc_i8271_write )
 {
+	logerror("i8271 write  %d  %d\n",offset,data);
+
 	switch (offset)
 	{
 		case 0:
@@ -2086,15 +2124,11 @@ MACHINE_RESET( bbca )
 
 MACHINE_START( bbcb )
 {
-	//bbc_DFSType=  (readinputport(21)>>0)&0x07;
-	//bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
-	//bbc_RAMSize=  (readinputport(21)>>5)&0x01;
-	
-	bbc_DFSType=  (0x03>>0)&0x07;
-	bbc_SWRAMtype=(0x18>>3)&0x03;
-	bbc_RAMSize=  (0x20>>5)&0x01;
-	
-
+	//removed from here because MACHINE_START can no longer read DIP swiches.
+	//put in MACHINE_RESET instead.
+	//bbc_DFSType=  (readinputportbytag("BBCCONFIG")>>0)&0x07;
+	//bbc_SWRAMtype=(readinputportbytag("BBCCONFIG")>>3)&0x03;
+	//bbc_RAMSize=  (readinputportbytag("BBCCONFIG")>>5)&0x01;
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2103,21 +2137,25 @@ MACHINE_START( bbcb )
 	via_set_clock(1,1000000);
 
 	/*set up the required disc controller*/
-	switch (bbc_DFSType) {
-	case 0:	case 1: case 2: case 3:
+	//switch (bbc_DFSType) {
+	//case 0:	case 1: case 2: case 3:
 		previous_i8271_int_state=0;
 		i8271_init(&bbc_i8271_interface);
-		break;
-	case 4: case 5: case 6:
+	//	break;
+	//case 4: case 5: case 6:
 		previous_wd177x_int_state=1;
 	    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
-		break;
-	}
+	//	break;
+	//}
 	return 0;
 }
 
 MACHINE_RESET( bbcb )
 {
+	bbc_DFSType=  (readinputportbytag("BBCCONFIG")>>0)&0x07;
+	bbc_SWRAMtype=(readinputportbytag("BBCCONFIG")>>3)&0x03;
+	bbc_RAMSize=  (readinputportbytag("BBCCONFIG")>>5)&0x01;
+
 	memory_set_bankptr(1,memory_region(REGION_CPU1));
 	if (bbc_RAMSize)
 	{
@@ -2142,14 +2180,14 @@ MACHINE_RESET( bbcb )
 
 	opusbank=0;
 	/*set up the required disc controller*/
-	switch (bbc_DFSType) {
-	case 0:	case 1: case 2: case 3:
+	//switch (bbc_DFSType) {
+	//case 0:	case 1: case 2: case 3:
 		i8271_reset();
-		break;
-	case 4: case 5: case 6:
+	//	break;
+	//case 4: case 5: case 6:
 	    wd179x_reset();
-		break;
-	}
+	//	break;
+	//}
 }
 
 

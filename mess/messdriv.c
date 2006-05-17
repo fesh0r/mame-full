@@ -120,7 +120,7 @@ const game_driver *test_drivers[] =
 	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 	DRIVER( n64 )		/* Nintendo N64										*/
-	
+
 	DRIVER( megaduck )	/* Megaduck											*/
 
 	/* SEGA */
@@ -193,7 +193,8 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( atom )      /* 1979 Acorn Atom									*/
 	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
 	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
-	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
+	DRIVER( bbcb )      /* 1981 BBC Micro Model B		UEF					*/
+	DRIVER( bbcbcsw )     /* 1981 BBC Micro Model B		CSW					*/
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
 	DRIVER( bbcm)		/* 198? BBC Master									*/
@@ -398,7 +399,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( at386 )		/* 19?? IBM AT 386									*/
 	DRIVER( at486 )		/* 19?? IBM AT 486									*/
 	DRIVER( at586 )		/* 19?? AT 586                          			*/
-	
+
 	/* SINCLAIR */
 	DRIVER( zx80 )		/* Sinclair ZX-80						*/
 	DRIVER( zx81 )		/* Sinclair ZX-81						*/
