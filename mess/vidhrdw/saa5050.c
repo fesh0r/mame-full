@@ -220,14 +220,14 @@ static VIDEO_UPDATE( saa5050 )
 			if (saa5050_state.saa5050_flags & SAA5050_DBLHI)
 			{
 				drawgfx (bitmap, Machine->gfx[1], code, colour, 0, 0,
-					sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+					sx * 6, sy * 10, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 				drawgfx (bitmap, Machine->gfx[2], code, colour, 0, 0,
-					sx * 6, (sy + 1) * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+					sx * 6, (sy + 1) * 10, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 			}
 			else
 			{
 				drawgfx (bitmap, Machine->gfx[0], code, colour, 0, 0,
-					sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+					sx * 6, sy * 10, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 			}
 		}
 		if (saa5050_state.saa5050_flags & SAA5050_DBLHI)

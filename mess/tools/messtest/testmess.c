@@ -312,7 +312,7 @@ int osd_start_audio_stream(int stereo)
 	{
 		wavptr = NULL;
 	}
-	samples_this_frame = (int) ((double)Machine->sample_rate / (double)Machine->refresh_rate);
+	samples_this_frame = (int) ((double)Machine->sample_rate / (double)Machine->refresh_rate[0]);
 	return samples_this_frame;
 }
 

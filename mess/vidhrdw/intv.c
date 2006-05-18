@@ -644,7 +644,7 @@ static void draw_sprites(mame_bitmap *bitmap, int behind_foreground)
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 				}
 				else
@@ -668,14 +668,14 @@ static void draw_sprites(mame_bitmap *bitmap, int behind_foreground)
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16+(s->yflip)*s->ysize*8,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 					drawgfxzoom(bitmap,Machine->gfx[1],
 						code+1,
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16+(1-s->yflip)*s->ysize*8,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 				}
 			}
@@ -689,7 +689,7 @@ static void draw_sprites(mame_bitmap *bitmap, int behind_foreground)
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 				}
 				else
@@ -699,14 +699,14 @@ static void draw_sprites(mame_bitmap *bitmap, int behind_foreground)
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16+(s->yflip)*s->ysize*8,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 					drawgfxzoom(bitmap,Machine->gfx[0],
 						code+1,
 						s->color,
 						s->xflip,s->yflip,
 						s->xpos*2-16,s->ypos*2-16+(1-s->yflip)*s->ysize*8,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0,
 						0x8000*s->xsize, 0x8000*s->ysize);
 				}
 			}
@@ -756,7 +756,7 @@ void stic_screenrefresh()
 	else
 	{
 		/* STIC disabled, just fill with border color */
-		fillbitmap(tmpbitmap,Machine->pens[intv_border_color],&Machine->visible_area);
+		fillbitmap(tmpbitmap,Machine->pens[intv_border_color],&Machine->visible_area[0]);
 	}
 	col_delay = intv_col_delay;
 	row_delay = intv_row_delay;
@@ -766,7 +766,7 @@ VIDEO_UPDATE( intv )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,
 	           col_delay*2,row_delay*2,
-			   &Machine->visible_area,TRANSPARENCY_NONE,0);
+			   &Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }
 
 VIDEO_START( intvkbd )
@@ -856,7 +856,7 @@ VIDEO_UPDATE( intvkbd )
 					7, /* white */
 					0,0,
 					x*8,y*8,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 			}
 			if (current_row == tms9927_cursor_row)
 			{
@@ -867,7 +867,7 @@ VIDEO_UPDATE( intvkbd )
 					7,   /* white   */
 					0,0,
 					(tms9927_cursor_col-1)*8,y*8,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 			}
 			current_row = (current_row + 1) % tms9927_num_rows;
 		}
@@ -881,7 +881,7 @@ VIDEO_UPDATE( intvkbd )
 		1,
 		0,0,
 		0*8,0*8,
-		&Machine->visible_area, TRANSPARENCY_PEN, 0);
+		&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	for(y=0;y<5;y++)
 	{
 		drawgfx(bitmap,Machine->gfx[2],
@@ -889,19 +889,19 @@ VIDEO_UPDATE( intvkbd )
 			1,
 			0,0,
 			0*8,(y+2)*8,
-			&Machine->visible_area, TRANSPARENCY_PEN, 0);
+			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 	drawgfx(bitmap,Machine->gfx[2],
 			tape_unknown_write[5]+'0',
 			1,
 			0,0,
 			0*8,8*8,
-			&Machine->visible_area, TRANSPARENCY_PEN, 0);
+			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	drawgfx(bitmap,Machine->gfx[2],
 			tape_interrupts_enabled+'0',
 			1,
 			0,0,
 			0*8,10*8,
-			&Machine->visible_area, TRANSPARENCY_PEN, 0);
+			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 #endif
 }

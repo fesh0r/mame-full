@@ -2258,12 +2258,12 @@ void genesis_init_frame(void)
 		switch (genesis_vdp.genesis_vdp_regs[0x0c]&0x81)
 		{
 			case 0x00: // 32 cell
-				set_visible_area(0,32*8-1,0,224-1);
+				set_visible_area(0, 0, 32*8-1, 0, 224-1);
 				break;
 			case 0x01: // 40 cell corrupted
 			case 0x80: // illegal!
 			case 0x81: // 40 cell
-				set_visible_area(0,40*8-1,0,224-1);
+				set_visible_area(0, 0, 40*8-1, 0, 224-1);
 			break;
 		}
 	}

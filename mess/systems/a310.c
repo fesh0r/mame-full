@@ -53,7 +53,7 @@ static VIDEO_UPDATE( a310 )
 			sy = (offs / 80) * 8;
 			code = videoram[offs];
 			drawgfx(bitmap,Machine->gfx[0],code,0,0,0,sx,sy,
-                &Machine->visible_area,TRANSPARENCY_NONE,0);
+                &Machine->visible_area[0],TRANSPARENCY_NONE,0);
         }
 	}
 }

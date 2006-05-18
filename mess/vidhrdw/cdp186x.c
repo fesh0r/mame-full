@@ -223,10 +223,10 @@ VIDEO_UPDATE( cdp1869 )
 {
 	rectangle clip;
 
-	clip.min_x = Machine->visible_area.min_x + 60;
-	clip.max_x = Machine->visible_area.max_x - 36;
-	clip.min_y = Machine->visible_area.min_y + 44;
-	clip.max_y = Machine->visible_area.max_y - 48;
+	clip.min_x = Machine->visible_area[0].min_x + 60;
+	clip.max_x = Machine->visible_area[0].max_x - 36;
+	clip.min_y = Machine->visible_area[0].min_y + 44;
+	clip.max_y = Machine->visible_area[0].max_y - 48;
 
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 

@@ -95,9 +95,9 @@ VIDEO_UPDATE( pdp1 )
 	pdp1_draw_lightpen(bitmap);
 
 	pdp1_draw_panel(panel_bitmap);
-	copybitmap(bitmap, panel_bitmap, 0, 0, panel_window_offset_x, panel_window_offset_y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, panel_bitmap, 0, 0, panel_window_offset_x, panel_window_offset_y, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 
-	copybitmap(bitmap, typewriter_bitmap, 0, 0, typewriter_window_offset_x, typewriter_window_offset_y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, typewriter_bitmap, 0, 0, typewriter_window_offset_x, typewriter_window_offset_y, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 }
 
 
@@ -233,7 +233,7 @@ static void pdp1_draw_multipleswitch(mame_bitmap *bitmap, int x, int y, int valu
 static void pdp1_draw_char(mame_bitmap *bitmap, char character, int x, int y, int color)
 {
 	drawgfx(bitmap, Machine->gfx[0], character-32, color, 0, 0,
-				x+1, y, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+				x+1, y, &Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 }
 
 /* write a string on screen */

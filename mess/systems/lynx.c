@@ -184,7 +184,7 @@ void lynx_draw_lines(int newline)
 		{
 			width=w;
 			height=h;
-			set_visible_area(0,width-1,0, height-1);
+			set_visible_area(0, 0, width-1, 0, height-1);
 		}
 	}
 }

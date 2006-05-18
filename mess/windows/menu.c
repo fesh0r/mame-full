@@ -110,7 +110,6 @@ int win_use_natural_keyboard;
 //============================================================
 
 static HMENU win_menu_bar;
-static int is_paused;
 static HICON device_icons[IO_COUNT];
 static int use_input_categories;
 static int joystick_menu_setup;
@@ -942,23 +941,7 @@ static void paste(void)
 
 static void pause(void)
 {
-	if (is_paused)
-	{
-		is_paused = 0;
-	}
-	else
-	{
-		is_paused = 1;
-		mame_pause(1);
-		draw_screen();
-		while(is_paused)
-		{
-			update_video_and_audio();
-			WaitMessage();
-			win_process_events(1);
-		}
-		mame_pause(0);
-	}
+	mame_pause(!mame_is_paused());
 }
 
 
@@ -1192,11 +1175,11 @@ static void prepare_menus(void)
 		}
 	}
 
-	set_command_state(win_menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'							? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			is_paused									? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			mame_is_paused()							? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle									? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
@@ -1737,7 +1720,6 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
 
 	// initialize critical values
-	is_paused = 0;
 	joystick_menu_setup = 0;
 
 	// get the device icons

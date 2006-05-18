@@ -181,7 +181,7 @@ static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapsho
 			program_write_byte_8(i, vtech1_snapshot_data[24 + i - start]);
 
 		// sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
-		// vtech1_frame_time = (int)Machine->drv->frames_per_second;
+		// vtech1_frame_time = (int)Machine->drv->screen[0].refresh_rate;
 		logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
         /* patch BASIC variables */
 		program_write_byte_8(0x78a4, start % 256);
@@ -198,7 +198,7 @@ static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapsho
 		for (i = start; i < end; i++)
 			program_write_byte_8(i, vtech1_snapshot_data[24 + i - start]);
         // sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
-        // vtech1_frame_time = (int)Machine->drv->frames_per_second;
+        // vtech1_frame_time = (int)Machine->drv->screen[0].refresh_rate;
 		logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
         /* set USR() address */
 		program_write_byte_8(0x788e, start % 256);

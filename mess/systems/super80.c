@@ -96,7 +96,7 @@ static VIDEO_UPDATE( super80 )
 			else
 				col = 0;
 			drawgfx(bitmap, Machine->gfx[charset], chr, col, 0, 0, x*8, y*10,
-						&Machine->visible_area, TRANSPARENCY_NONE, 0);
+						&Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		}
 }
 

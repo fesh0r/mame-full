@@ -247,7 +247,7 @@ int tms3556_init(int vram_size)
 
 	vdp.vram_size = vram_size;
 
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 	if (!tmpbitmap)
 		return 1;
 
@@ -589,7 +589,7 @@ static void tms3556_draw_line(mame_bitmap *bmp, int line)
 static VIDEO_UPDATE(tms3556)
 {
 	/* already been rendered, since we're using scanline stuff */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 }
 
 /*

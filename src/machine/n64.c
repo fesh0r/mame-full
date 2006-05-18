@@ -476,7 +476,7 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x00/4:		// VI_CONTROL_REG
 			if ((vi_control & 0x40) != (data & 0x40))
 			{
-				set_visible_area(0, vi_width-1, 0, (data & 0x40) ? 479 : 239);
+				set_visible_area(0, 0, vi_width-1, 0, (data & 0x40) ? 479 : 239);
 			}
 			vi_control = data;
 			break;
@@ -488,7 +488,7 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x08/4:		// VI_WIDTH_REG
 			if (vi_width != data && data > 0)
 			{
-				set_visible_area(0, data-1, 0, (vi_control & 0x40) ? 479 : 239);
+				set_visible_area(0, 0, data-1, 0, (vi_control & 0x40) ? 479 : 239);
 			}
 			vi_width = data;
 			break;
@@ -578,7 +578,7 @@ static void audio_fifo_push(UINT32 address, UINT32 length)
 		printf("audio_fifo_push: tried to push to full DMA FIFO!!!\n");
 	}
 
-//	printf("fifo_push: adr %08x len %08x\n", address, length);
+//  printf("fifo_push: adr %08x len %08x\n", address, length);
 
 	audio_fifo[audio_fifo_wpos].address = address;
 	audio_fifo[audio_fifo_wpos].length = length;
@@ -642,10 +642,10 @@ static void start_audio_dma(void)
 {
 	UINT16 *ram = (UINT16*)rdram;
 	AUDIO_DMA *current = audio_fifo_get_top();
-	
+
 	ram = &ram[current->address/2];
 
-//	printf("DACDMA: %x for %x bytes\n", current->address, current->length);
+//  printf("DACDMA: %x for %x bytes\n", current->address, current->length);
 
 	dmadac_transfer(0, 2, 2, 2, current->length/4, ram);
 }
@@ -684,6 +684,8 @@ READ32_HANDLER( n64_ai_reg_r )
 
 WRITE32_HANDLER( n64_ai_reg_w )
 {
+//  UINT16 *ram = (UINT16*)rdram;
+
 	switch (offset)
 	{
 		case 0x00/4:		// AI_DRAM_ADDR_REG

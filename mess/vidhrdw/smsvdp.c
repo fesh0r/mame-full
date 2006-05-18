@@ -249,7 +249,7 @@ static void set_display_settings( void ) {
 	}
 	start_top_border = start_blanking + 19;
 	if ( ! IS_GAMEGEAR ) {
-		set_visible_area( LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
+		set_visible_area( 0, LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
 	}
 	isCRAMDirty = 1;
 }
@@ -277,13 +277,13 @@ VIDEO_START(sms) {
 	spriteCache = auto_malloc(MAX_X_PIXELS * 16);
 
 	/* Make temp bitmap for rendering */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!tmpbitmap) {
 		return (1);
 	}
 
 	prevBitMapSaved = 0;
-	prevBitMap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	prevBitMap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!prevBitMap) {
 		return (1);
 	}
@@ -346,7 +346,7 @@ INTERRUPT_GEN(sms) {
 		logerror("l %04x, pc: %04x\n", currentLine, activecpu_get_pc());
 #endif
 		if ( IS_GAMEGEAR ) {
-			if ((currentLine >= Machine->visible_area.min_y) && (currentLine <= Machine->visible_area.max_y)) {
+			if ((currentLine >= Machine->visible_area[0].min_y) && (currentLine <= Machine->visible_area[0].max_y)) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
 				if (code_pressed(KEYCODE_T)) {
@@ -1060,17 +1060,17 @@ VIDEO_UPDATE(sms) {
 	int x, y;
 
 	if (prevBitMapSaved) {
-	for (y = 0; y < Machine->drv->screen_height; y++) {
-		for (x = 0; x < Machine->drv->screen_width; x++) {
+	for (y = 0; y < Machine->drv->screen[0].maxheight; y++) {
+		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++) {
 			plot_pixel(bitmap, x, y, (read_pixel(tmpbitmap, x, y) + read_pixel(prevBitMap, x, y)) >> 2);
 			logerror("%x %x %x\n", read_pixel(tmpbitmap, x, y), read_pixel(prevBitMap, x, y), (read_pixel(tmpbitmap, x, y) + read_pixel(prevBitMap, x, y)) >> 2);
 		}
 	}
 	} else {
-		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	}
 	if (!prevBitMapSaved) {
-		copybitmap(prevBitMap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copybitmap(prevBitMap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	//prevBitMapSaved = 1;
 	}
 }

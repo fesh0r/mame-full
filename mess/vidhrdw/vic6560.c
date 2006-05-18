@@ -169,7 +169,7 @@ VIDEO_START( vic6560 )
 	pointercolortable[1] = Machine->pens[1];
 	pointercolortable[2] = Machine->pens[0];
 	pointerelement->total_colors = 3;
-	vic6560_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	vic6560_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	add_exit_callback(vic6560_video_stop);
 	return 0;
 }
@@ -484,7 +484,7 @@ INTERRUPT_GEN( vic656x_raster_interrupt )
 			r.min_y = LIGHTPEN_Y_VALUE - 1 + VIC656X_MAME_YPOS;
 			r.max_y = r.min_y + 8 - 1;
 
-			if (DOCLIP (&r, &Machine->visible_area))
+			if (DOCLIP (&r, &Machine->visible_area[0]))
 			{
 #ifndef GFX
 				vic6560_draw_pointer (vic6560_bitmap, &r,

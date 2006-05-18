@@ -55,8 +55,8 @@ MACHINE_RESET(sms);
 INTERRUPT_GEN(sms);
 NVRAM_HANDLER(sms);
 
-#define IS_NTSC											(Machine->drv->frames_per_second == 60)
-#define IS_PAL											(Machine->drv->frames_per_second == 50)
+#define IS_NTSC											(Machine->drv->screen[0].refresh_rate == 60)
+#define IS_PAL											(Machine->drv->screen[0].refresh_rate == 50)
 
 #define NTSC_X_PIXELS								(0x0156)				/* 342 pixels */
 #define NTSC_Y_PIXELS								(0x0106)				/* 262 lines */

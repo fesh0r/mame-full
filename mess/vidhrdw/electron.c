@@ -55,7 +55,7 @@ void electron_drawline( void ) {
 	int i;
 	int x = 0;
 	int pal[16];
-	rectangle r = Machine->visible_area;
+	rectangle r = Machine->visible_area[0];
 	r.min_y = r.max_y = ula.scanline;
 
 	/* set up palette */

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.16 2006/02/27 23:58:00 npwoods Exp $
+  $Id: pc8801.c,v 1.17 2006/05/18 23:50:32 npwoods Exp $
 
 ***************************************************************************/
 
@@ -87,8 +87,8 @@ static mame_bitmap *wbm1,*wbm2;
 
 void pc8801_video_init (int hireso)
 {
-	wbm1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-	wbm2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	wbm1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	wbm2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	pc8801_is_24KHz=hireso;
 	crtcON=0;
 	textON=1;
@@ -493,7 +493,7 @@ VIDEO_UPDATE( pc8801 )
 		  ((attr_new&TX_REV) ? 8 : 0)
 		  + ((attr_new&TX_COL_MASK)>>TX_COL_SHIFT),
 		  0,0,x*8,y*BLOCK_YSIZE,
-		  &Machine->visible_area,TRANSPARENCY_PEN,
+		  &Machine->visible_area[0],TRANSPARENCY_PEN,
 		  (attr_new&TX_REV) ? 1 : 0);
 	}
 	if(attr_new&TX_UL) {
@@ -593,9 +593,9 @@ VIDEO_UPDATE( pc8801 )
   }
 
   copybitmap(wbm1,wbm2,0,0,0,0,
-	     &Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	     &Machine->visible_area[0],TRANSPARENCY_PEN,palette_transparent_pen);
   copybitmap(bitmap,wbm1,0,0,0,0,
-	     &Machine->visible_area,TRANSPARENCY_NONE,0);
+	     &Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }
 
 PALETTE_INIT( pc8801 )

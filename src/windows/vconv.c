@@ -148,7 +148,7 @@ static DWORD get_exe_version(const char *executable)
 	version_info_size = GetFileVersionInfoSize(path, &dummy);
 	if (version_info_size == 0)
 	{
-		fprintf(stderr, "GetFileVersionInfoSize() failed\n"); 
+		fprintf(stderr, "GetFileVersionInfoSize() failed\n");
 		exit(-100);
 	}
 

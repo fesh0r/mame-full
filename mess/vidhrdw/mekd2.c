@@ -80,7 +80,7 @@ VIDEO_UPDATE( mekd2 )
     for (x = 0; x < 6; x++)
     {
         int sy = 408;
-        int sx = Machine->drv->screen_width - 212 + x * 30 + ((x >= 4) ? 6 : 0);
+        int sx = Machine->drv->screen[0].maxwidth - 212 + x * 30 + ((x >= 4) ? 6 : 0);
 
         drawgfx (bitmap, Machine->gfx[0],
                  videoram[2 * x + 0], videoram[2 * x + 1],
@@ -102,7 +102,7 @@ VIDEO_UPDATE( mekd2 )
 				{ 4,  5,  6,  7},
 				{ 0,  1,  2,  3}
             };
-            int sx = Machine->drv->screen_width - 182 + x * 37;
+            int sx = Machine->drv->screen[0].maxwidth - 182 + x * 37;
             int color, code = layout[y][x];
 
             color = (readinputport (code / 7) & (0x40 >> (code % 7))) ? 0 : 1;

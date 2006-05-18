@@ -102,7 +102,7 @@ VIDEO_UPDATE( galaxy )
 				code-=128;
 			sy = (offs / 32) * 13;
 			drawgfx(bitmap, Machine->gfx[0], code & 0x7f, 1, 0,0, sx,sy,
-				&Machine->visible_area, TRANSPARENCY_NONE, 0);
+				&Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		}
 	}
 

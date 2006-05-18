@@ -753,7 +753,6 @@ $(OBJ)/acorn.a:    \
 	$(OBJ)/mess/machine/i8271.o	 \
 	$(OBJ)/mess/machine/upd7002.o  \
 	$(OBJ)/mess/vidhrdw/saa505x.o	     \
-	$(OBJ)/mess/formats/csw_cas.o		\
 	$(OBJ)/mess/vidhrdw/bbc.o	     \
 	$(OBJ)/mess/machine/bbc.o	     \
 	$(OBJ)/mess/systems/bbc.o	     \

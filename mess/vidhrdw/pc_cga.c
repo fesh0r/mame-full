@@ -541,7 +541,7 @@ static void cga_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen_height)
+		if (r.min_y >= Machine->drv->screen[0].maxheight)
 			break;
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
@@ -656,7 +656,7 @@ static void cga_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen_height)
+		if (r.min_y >= Machine->drv->screen[0].maxheight)
 			break;
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
@@ -734,7 +734,7 @@ static void cga_text_blink_alt(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen_height)
+		if (r.min_y >= Machine->drv->screen[0].maxheight)
 			break;
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 

@@ -1456,7 +1456,7 @@ VIDEO_UPDATE(compis_gdc)
       }
 		copybitmap(bitmap,
                  gdc_mess.tmpbmp, 0, 0, 0, 0,
-                 &Machine->visible_area, TRANSPARENCY_NONE, 0);
+                 &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		gdc_mess.dirty = 0;
 	}
 }
@@ -1472,6 +1472,7 @@ void mdrv_compisgdc(machine_config *machine,
 {
 	int scr_width = (intf->mode == GDC_MODE_UHRG) ? 1280 : 640;
 	int scr_height = (intf->mode == GDC_MODE_UHRG) ? 800 : 400;
+	screen_config *screen = &machine->screen[0];
 
 	sIntf = *intf;
 

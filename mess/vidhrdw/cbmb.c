@@ -78,8 +78,8 @@ VIDEO_UPDATE( cbmb )
 	struct crtc6845_cursor cursor;
 	int full_refresh = 1;
 
-	rect.min_x=Machine->visible_area.min_x;
-	rect.max_x=Machine->visible_area.max_x;
+	rect.min_x=Machine->visible_area[0].min_x;
+	rect.max_x=Machine->visible_area[0].max_x;
 	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
