@@ -1,3 +1,72 @@
+0.106
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Atari 5200 (alt)  [incog]
+- Bandai WonderSwan/WonderSwan Color [Wilbert Pol]
+- CDTV  [Dirk Best]
+- Sharp Famicom Twin  [incog]
+- Tiger Game.com (not working yet) [Wilbert Pol]
+
+
+
+System Driver Changes:
+----------------------
+- [AMIGA] Cleanups.  [Dirk Best]
+
+- [CBM] Changed code to share 6526 CIA implementation with the one used by
+  the Amiga in MAME.  [Nate Woods]
+
+- [CGENIE] Implemented configurable RAM support.  [Nate Woods]
+
+- [COCO] Fixed joystick regression introduced in 0.105.  (bug #876) [Nate Woods]
+
+- [COCO] Complete rewrite of both M6847 and GIME video code; timing and
+  performance enhancements.  [Nate Woods]
+
+- [COCO] Changed joystick key assignments from arrow keys to numeric keypad,
+  as well as added mouse button assignments.  [Nate Woods]
+
+- [FAMICOM] Fixed disk system.  [Steve Leung]
+
+- [N64] Properly recognizes .n64 file extension.  [Justin Kerk]
+
+- [SMS] Changed to use selectable bioses.  [Wilbert Pol]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Added a save state option that lets the user override existing 
+  saves without a dialog, and save state as now prompts if the command would
+  override the existing save.  [Nate Woods]
+
+- [Windows GUI] Fixed "Skip warnings" regression in the GUI.  (bug #867) [Nate
+  Woods]
+
+- [Windows GUI] Fixed bug that caused problems selecting different images in
+  the picker.  (bug #873) [Nate Woods]
+
+- [Windows GUI] New icons and splash screen.  [incog]
+
+- [Windows GUI] Fixed some general bugginess involving specifying images.
+  (bug #866)  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.106.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.105
 
 New System Drivers Supported (in no particular order):
