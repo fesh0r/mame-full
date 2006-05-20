@@ -197,7 +197,7 @@ void identify_file(const char *name)
 					UINT8 *data = (UINT8 *)malloc(entry->uncompressed_size);
 					if (data != NULL)
 					{
-						readuncompresszip(zip, entry, data);
+						readuncompresszip(zip, entry, (char *)data);
 						identify_data(entry->name, data, entry->uncompressed_size);
 						free(data);
 					}
