@@ -515,7 +515,7 @@ int osd_create_display(const osd_create_params *params,
 		case 2: /* always on */
 			if (params->video_attributes & VIDEO_TYPE_VECTOR)
 			{
-				normal_params.vec_src_bounds  = &(Machine->visible_area);
+				normal_params.vec_src_bounds  = &(Machine->visible_area[0]);
 				normal_params.vec_dest_bounds = artwork_get_game_rect();
 			}
 	}
@@ -1390,7 +1390,7 @@ const char *osd_get_fps_text(const performance_info *performance)
 	    autoframeskip ? "auto" : "fskp", frameskip,
 	    (int)(performance->game_speed_percent + 0.5),
 	    (int)(performance->frames_per_second + 0.5),
-	    (int)(Machine->refresh_rate + 0.5));
+	    (int)(Machine->refresh_rate[0] + 0.5));
 	}
 	if ((i < 0) || (i >= (bufsize-1)))
 	  return buffer;

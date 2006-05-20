@@ -45,7 +45,8 @@ enum {
 /* Mame frontend interface & commandline */
 /* parsing rountines by Maurizio Zanello */
 
-struct rc_option frontend_list_opts[] = {
+struct rc_option frontend_list_opts[] =
+{
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Frontend Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "list", "l", rc_set_int, &list, NULL, LIST_LIST, 0, NULL, "List supported games matching gamename, or all, gamename may contain * and ? wildcards" },
@@ -749,8 +750,8 @@ int frontend_list(const char *gamename)
 					break;
 				case LIST_WRONGORIENTATION: /* list drivers which incorrectly use the orientation and visible area fields */
 					if(!(drv.video_attributes & VIDEO_TYPE_VECTOR) &&
-							((drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1) <=
-							 (drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1)) &&
+							((drv.screen[0].default_visible_area.max_x - drv.screen[0].default_visible_area.min_x + 1) <=
+							 (drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1)) &&
 							/* list of valid exceptions */
 							strcmp(drivers[i]->name,"crater") &&
 							strcmp(drivers[i]->name,"mpatrol") &&
@@ -808,8 +809,8 @@ int frontend_list(const char *gamename)
 							strcmp(drivers[i]->name,"kim1"))
 							{
 								fprintf(stdout_file, "%s %dx%d\n",drivers[i]->name,
-										drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
-										drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1);
+										drv.screen[0].default_visible_area.max_x - drv.screen[0].default_visible_area.min_x + 1,
+										drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1);
 								incorrect++;
 							} else correct++;
 					break;
@@ -900,17 +901,17 @@ int frontend_list(const char *gamename)
 					if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 							(clone_of_i == NULL ||
 							 (clone_of_i->flags & NOT_A_DRIVER)) &&
-							drv.frames_per_second > 57 &&
-							drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 > 244 &&
-							drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 <= 256)
+							drv.screen[0].refresh_rate > 57 &&
+							drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1 > 244 &&
+							drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1 <= 256)
 					{
 						fprintf(stdout_file, "%-8s  %-4dx%4d   %fHz\n",
 								drivers[i]->name,
-								drv.default_visible_area.max_x -
-								drv.default_visible_area.min_x + 1,
-								drv.default_visible_area.max_y -
-								drv.default_visible_area.min_y + 1,
-								drv.frames_per_second);
+								drv.screen[0].default_visible_area.max_x -
+								drv.screen[0].default_visible_area.min_x + 1,
+								drv.screen[0].default_visible_area.max_y -
+								drv.screen[0].default_visible_area.min_y + 1,
+								drv.screen[0].refresh_rate);
 						incorrect++;
 					}
 					else
