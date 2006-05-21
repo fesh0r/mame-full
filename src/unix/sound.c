@@ -33,7 +33,7 @@ struct rc_option sound_opts[] = {
 
 void sound_update_refresh_rate(float newrate)
 {
-	sound_samples_per_frame = Machine->sample_rate / Machine->refresh_rate;
+	sound_samples_per_frame = Machine->sample_rate / Machine->refresh_rate[0];
 }
 
 /* attenuation in dB */
@@ -91,7 +91,7 @@ void osd_sound_enable(int enable_it)
 						sound_dsp_device,
 						&(Machine->sample_rate),
 						&type,
-						sound_bufsize * (1 / Machine->refresh_rate),
+						sound_bufsize * (1 / Machine->refresh_rate[0]),
 						SYSDEP_DSP_EMULATE_TYPE | SYSDEP_DSP_O_NONBLOCK)))
 		{
 			Machine->sample_rate = 8000;
@@ -99,7 +99,7 @@ void osd_sound_enable(int enable_it)
 
 		/* calculate samples_per_frame */
 		sound_samples_per_frame = Machine->sample_rate /
-			Machine->refresh_rate;
+			Machine->refresh_rate[0];
 
 		if(sysdep_sound_dsp && !(sysdep_sound_stream = sysdep_sound_stream_create(sysdep_sound_dsp,
 						type, sound_samples_per_frame, 3)))
