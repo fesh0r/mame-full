@@ -460,6 +460,13 @@ static void node_recordfreespace(struct imgtooltest_state *state, xml_data_node 
 {
 	imgtoolerr_t err;
 
+	if (!state->image)
+	{
+		state->failed = 1;
+		report_message(MSG_FAILURE, "Image not loaded");
+		return;
+	}
+
 	err = img_freespace(state->image, &state->recorded_freespace);
 	if (err)
 	{
@@ -477,6 +484,13 @@ static void node_checkfreespace(struct imgtooltest_state *state, xml_data_node *
 	UINT64 current_freespace;
 	INT64 leaked_space;
 	const char *verb;
+
+	if (!state->image)
+	{
+		state->failed = 1;
+		report_message(MSG_FAILURE, "Image not loaded");
+		return;
+	}
 
 	err = img_freespace(state->image, &current_freespace);
 	if (err)
@@ -680,5 +694,8 @@ void node_testimgtool(xml_data_node *node)
 	report_testcase_ran(state.failed);
 
 	if (state.image)
+	{
 		img_close(state.image);
+		state.image = NULL;
+	}
 }
