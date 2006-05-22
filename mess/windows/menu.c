@@ -1771,7 +1771,16 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 
 HMODULE win_resource_module(void)
 {
+#ifdef _MSC_VER
+	// doing this because of lame build problems with EMULATORDLL, and how
+	// vconv is invoked
 	return (HMODULE) 0x10000000;
+#else // !_MSC_VER
+	static HMODULE module;
+	if (!module)
+		module = LoadLibrary(EMULATORDLL);
+	return module;
+#endif // _MSC_VER
 }
 
 
