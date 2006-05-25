@@ -100,6 +100,7 @@ int xgl_open_display(int reopen)
 {
   if(!reopen)
   {
+    XWindowAttributes window_attributes;
     VisualGC vgc;
     
     fprintf(stderr, xgl_version_str);
@@ -109,6 +110,10 @@ int xgl_open_display(int reopen)
         cabview?X11_RESIZABLE:X11_RESIZABLE_ASPECT))
       return 1;
     
+    /* Use the window's visual for the OpenGL context. */
+    if (XGetWindowAttributes(display, window, &window_attributes) != 0)
+       glCaps.nativeVisualID = window_attributes.visual->visualid;
+
     vgc = findVisualGlX( display, RootWindowOfScreen (screen),
                        &window, 0, 0, window_width, window_height, &glCaps, 
   		       NULL, NULL, 0, NULL, 0, NULL, 
