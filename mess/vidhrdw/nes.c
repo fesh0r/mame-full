@@ -12,6 +12,7 @@
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
 
+mame_bitmap *nes_zapper_hack;
 int nes_vram_sprite[8]; /* Used only by mmc5 for now */
 
 static void ppu_nmi(int num, int *ppu_regs)
@@ -24,9 +25,11 @@ static void nes_vh_reset(void)
 	ppu2c03b_reset( 0, 1 );
 }
 
-static int nes_vh_start(int ppu_scanlines_per_frame)
+static void nes_vh_start(int ppu_scanlines_per_frame)
 {
 	ppu2c03b_interface ppu_interface;
+
+	nes_zapper_hack = NULL;
 
 	memset(&ppu_interface, 0, sizeof(ppu_interface));
 	ppu_interface.num				= 1;
@@ -58,17 +61,18 @@ static int nes_vh_start(int ppu_scanlines_per_frame)
 
 	/* Reset the mapper variables. Will also mark the char-gen ram as dirty */
 	mapper_reset (nes.mapper);
-	return 0;
 }
 
 VIDEO_START( nes_ntsc )
 {
-	return nes_vh_start(NTSC_SCANLINES_PER_FRAME);
+	nes_vh_start(NTSC_SCANLINES_PER_FRAME);
+	return 0;
 }
 
 VIDEO_START( nes_pal )
 {
-	return nes_vh_start(PAL_SCANLINES_PER_FRAME);
+	nes_vh_start(PAL_SCANLINES_PER_FRAME);
+	return 0;
 }
 
 PALETTE_INIT( nes )
@@ -109,6 +113,8 @@ static void draw_sight(mame_bitmap *bitmap, int playerNum, int x_center, int y_c
 VIDEO_UPDATE( nes )
 {
 	int sights = 0;
+
+	nes_zapper_hack = bitmap;
 
 	/* render the ppu */
 	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );

@@ -182,11 +182,12 @@ static void nes_machine_stop(void)
 
 static int zapper_hit_pixel(const UINT32 *input)
 {
-	UINT16 pix;
+	UINT16 pix = 0;
 	UINT8 r, g, b;
-	extern mame_bitmap *scrbitmap[8];
+	extern mame_bitmap *nes_zapper_hack;
 
-	pix = read_pixel(scrbitmap[0], input[1], input[2]);
+	if (nes_zapper_hack)
+		pix = read_pixel(nes_zapper_hack, input[1], input[2]);
 	palette_get_color(pix, &r, &g, &b);
 	return (((UINT16) r) + ((UINT16) g) + ((UINT16) b)) >= 240*3;
 }

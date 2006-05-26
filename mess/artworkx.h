@@ -36,7 +36,9 @@
 
 ***************************************************************************/
 
+#ifndef NEW_RENDER
 extern artwork_callbacks mess_artwork_callbacks;
+#endif /* !NEW_RENDER */
 
 
 

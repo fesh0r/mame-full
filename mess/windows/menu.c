@@ -13,10 +13,10 @@
 
 // MAME/MESS headers
 #include "mame.h"
-#include "windold.h"
 #include "menu.h"
 #include "messres.h"
 #include "inputx.h"
+#include "windows/windold.h"
 #include "windows/video.h"
 #include "dialog.h"
 #include "opcntrl.h"
@@ -122,7 +122,7 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 //	customize_input
 //============================================================
 
-static void customize_input(const char *title, int cust_type, int player, int inputclass, const char *section)
+static void customize_input(HWND wnd, const char *title, int cust_type, int player, int inputclass, const char *section)
 {
 	dialog_box *dlg;
 	input_port_entry *in;
@@ -220,7 +220,7 @@ static void customize_input(const char *title, int cust_type, int player, int in
 		goto done;
 
 	/* ...and finally display the dialog */
-	win_dialog_runmodal(dlg);
+	win_dialog_runmodal(wnd, dlg);
 
 done:
 	if (dlg)
@@ -233,9 +233,9 @@ done:
 //	customize_joystick
 //============================================================
 
-static void customize_joystick(int joystick_num)
+static void customize_joystick(HWND wnd, int joystick_num)
 {
-	customize_input("Joysticks/Controllers", ARTWORK_CUSTTYPE_JOYSTICK, joystick_num, INPUT_CLASS_CONTROLLER, NULL);
+	customize_input(wnd, "Joysticks/Controllers", ARTWORK_CUSTTYPE_JOYSTICK, joystick_num, INPUT_CLASS_CONTROLLER, NULL);
 }
 
 
@@ -244,9 +244,9 @@ static void customize_joystick(int joystick_num)
 //	customize_keyboard
 //============================================================
 
-static void customize_keyboard(void)
+static void customize_keyboard(HWND wnd)
 {
-	customize_input("Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CLASS_KEYBOARD, NULL);
+	customize_input(wnd, "Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CLASS_KEYBOARD, NULL);
 }
 
 
@@ -255,9 +255,9 @@ static void customize_keyboard(void)
 //	customize_miscinput
 //============================================================
 
-static void customize_miscinput(void)
+static void customize_miscinput(HWND wnd)
 {
-	customize_input("Miscellaneous Input", ARTWORK_CUSTTYPE_MISC, 0, INPUT_CLASS_MISC, NULL);
+	customize_input(wnd, "Miscellaneous Input", ARTWORK_CUSTTYPE_MISC, 0, INPUT_CLASS_MISC, NULL);
 }
 
 
@@ -266,10 +266,10 @@ static void customize_miscinput(void)
 //	customize_categorizedinput
 //============================================================
 
-static void customize_categorizedinput(const char *section, int category)
+static void customize_categorizedinput(HWND wnd, const char *section, int category)
 {
 	assert(category > 0);
-	customize_input("Input", ARTWORK_CUSTTYPE_JOYSTICK, category, INPUT_CLASS_CATEGORIZED, section);
+	customize_input(wnd, "Input", ARTWORK_CUSTTYPE_JOYSTICK, category, INPUT_CLASS_CATEGORIZED, section);
 }
 
 
@@ -290,7 +290,7 @@ static void storeval_inputport(void *param, int val)
 //	customize_switches
 //============================================================
 
-static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
+static void customize_switches(HWND wnd, int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
 {
 	dialog_box *dlg;
 	input_port_entry *in;
@@ -331,7 +331,7 @@ static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt
 	if (win_dialog_add_standard_buttons(dlg))
 		goto done;
 
-	win_dialog_runmodal(dlg);
+	win_dialog_runmodal(wnd, dlg);
 
 done:
 	if (dlg)
@@ -344,9 +344,9 @@ done:
 //	customize_dipswitches
 //============================================================
 
-static void customize_dipswitches(void)
+static void customize_dipswitches(HWND wnd)
 {
-	customize_switches(UI_dipswitches, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
+	customize_switches(wnd, UI_dipswitches, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
 }
 
 
@@ -355,9 +355,9 @@ static void customize_dipswitches(void)
 //	customize_configuration
 //============================================================
 
-static void customize_configuration(void)
+static void customize_configuration(HWND wnd)
 {
-	customize_switches(UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
+	customize_switches(wnd, UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
 }
 
 
@@ -394,7 +394,7 @@ static void store_sensitivity(void *param, int val)
 
 
 
-static void customize_analogcontrols(void)
+static void customize_analogcontrols(HWND wnd)
 {
 	dialog_box *dlg;
 	input_port_entry *in;
@@ -444,7 +444,7 @@ static void customize_analogcontrols(void)
 	if (win_dialog_add_standard_buttons(dlg))
 		goto done;
 
-	win_dialog_runmodal(dlg);
+	win_dialog_runmodal(wnd, dlg);
 
 done:
 	if (dlg)
@@ -457,7 +457,7 @@ done:
 //	state_dialog
 //============================================================
 
-static void state_dialog(BOOL (WINAPI *fileproc)(LPOPENFILENAME),
+static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 	DWORD fileproc_flags, void (*mameproc)(const char *))
 {
 #ifdef UNICODE
@@ -491,7 +491,7 @@ static void state_dialog(BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = win_video_window;
+	ofn.hwndOwner = wnd;
 	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | fileproc_flags;
 	ofn.lpstrFilter = TEXT("State Files (*.sta)\0*.sta\0All Files (*.*);*.*\0");
 	ofn.lpstrInitialDir = A2T(dir);
@@ -519,14 +519,14 @@ static void state_dialog(BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 
 
 
-void state_load(void)
+void state_load(HWND wnd)
 {
-	state_dialog(GetOpenFileName, OFN_FILEMUSTEXIST, mame_schedule_load);
+	state_dialog(wnd, GetOpenFileName, OFN_FILEMUSTEXIST, mame_schedule_load);
 }
 
-void state_save_as(void)
+void state_save_as(HWND wnd)
 {
-	state_dialog(GetSaveFileName, OFN_OVERWRITEPROMPT, mame_schedule_save);
+	state_dialog(wnd, GetSaveFileName, OFN_OVERWRITEPROMPT, mame_schedule_save);
 }
 
 void state_save(void)
@@ -814,7 +814,7 @@ static void build_generic_filter(const struct IODevice *dev, int is_save, char *
 //	change_device
 //============================================================
 
-static void change_device(mess_image *img, int is_save)
+static void change_device(HWND wnd, mess_image *img, int is_save)
 {
 	dialog_box *dialog = NULL;
 	char filter[2048];
@@ -862,7 +862,7 @@ static void change_device(mess_image *img, int is_save)
 	}
 
 	// display the dialog
-	result = win_file_dialog(win_video_window, is_save ? FILE_DIALOG_SAVE : FILE_DIALOG_OPEN,
+	result = win_file_dialog(wnd, is_save ? FILE_DIALOG_SAVE : FILE_DIALOG_OPEN,
 		dialog, filter, initial_dir, filename, sizeof(filename) / sizeof(filename[0]));
 	if (result)
 	{
@@ -887,7 +887,7 @@ static void change_device(mess_image *img, int is_save)
 				TEXT("Error when %s the image: %s"),
 				is_save ? TEXT("creating") : TEXT("loading"),
 				image_error(img));
-			MessageBox(win_video_window, buffer, APPNAME, MB_OK);
+			MessageBox(wnd, buffer, APPNAME, MB_OK);
 		}
 	}
 
@@ -1176,6 +1176,9 @@ static void prepare_menus(void)
 	}
 
 	set_command_state(win_menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
+#ifdef NEW_RENDERER
+	set_command_state(win_menu_bar, ID_FILE_SAVESCREENSHOT,													MFS_GRAYED);
+#endif
 
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
@@ -1296,6 +1299,7 @@ static void prepare_menus(void)
 #if HAS_TOGGLEMENUBAR
 void win_toggle_menubar(void)
 {
+#ifndef NEW_RENDER
 	RECT before_rect = { 100, 100, 200, 200 };
 	RECT after_rect = { 100, 100, 200, 200 };
 	LONG width_diff;
@@ -1330,6 +1334,7 @@ void win_toggle_menubar(void)
 
 	win_adjust_window();
 	RedrawWindow(win_video_window, NULL, NULL, 0);
+#endif
 }
 #endif // HAS_TOGGLEMENUBAR
 
@@ -1339,57 +1344,59 @@ void win_toggle_menubar(void)
 //	device_command
 //============================================================
 
-static void device_command(mess_image *img, int devoption)
+static void device_command(HWND wnd, mess_image *img, int devoption)
 {
-	switch(devoption) {
-	case DEVOPTION_OPEN:
-		change_device(img, FALSE);
-		break;
-
-	case DEVOPTION_CREATE:
-		change_device(img, TRUE);
-		break;
-
-	case DEVOPTION_CLOSE:
-		image_unload(img);
-		break;
-
-	default:
-		switch(image_devtype(img)) {
-#if HAS_WAVE
-		case IO_CASSETTE:
-			switch(devoption) {
-			case DEVOPTION_CASSETTE_STOPPAUSE:
-				cassette_change_state(img, CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
-				break;
-
-			case DEVOPTION_CASSETTE_PLAY:
-				cassette_change_state(img, CASSETTE_PLAY, CASSETTE_MASK_UISTATE);
-				break;
-
-			case DEVOPTION_CASSETTE_RECORD:
-				cassette_change_state(img, CASSETTE_RECORD, CASSETTE_MASK_UISTATE);
-				break;
-
-#if USE_TAPEDLG
-			case DEVOPTION_CASSETTE_DIALOG:
-				tapedialog_show(id);
-				break;
-#else
-			case DEVOPTION_CASSETTE_REWIND:
-				cassette_seek(img, +1.0, SEEK_CUR);
-				break;
-
-			case DEVOPTION_CASSETTE_FASTFORWARD:
-				cassette_seek(img, +1.0, SEEK_CUR);
-				break;
-#endif
-			}
+	switch(devoption)
+	{
+		case DEVOPTION_OPEN:
+			change_device(wnd, img, FALSE);
 			break;
-#endif /* HAS_WAVE */
+
+		case DEVOPTION_CREATE:
+			change_device(wnd, img, TRUE);
+			break;
+
+		case DEVOPTION_CLOSE:
+			image_unload(img);
+			break;
 
 		default:
-			break;
+			switch(image_devtype(img))
+			{
+#if HAS_WAVE
+				case IO_CASSETTE:
+					switch(devoption) {
+					case DEVOPTION_CASSETTE_STOPPAUSE:
+						cassette_change_state(img, CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
+						break;
+
+					case DEVOPTION_CASSETTE_PLAY:
+						cassette_change_state(img, CASSETTE_PLAY, CASSETTE_MASK_UISTATE);
+						break;
+
+					case DEVOPTION_CASSETTE_RECORD:
+						cassette_change_state(img, CASSETTE_RECORD, CASSETTE_MASK_UISTATE);
+						break;
+
+#if USE_TAPEDLG
+					case DEVOPTION_CASSETTE_DIALOG:
+						tapedialog_show(wnd, id);
+						break;
+#else
+					case DEVOPTION_CASSETTE_REWIND:
+						cassette_seek(img, +1.0, SEEK_CUR);
+						break;
+
+					case DEVOPTION_CASSETTE_FASTFORWARD:
+						cassette_seek(img, +1.0, SEEK_CUR);
+						break;
+#endif
+				}
+				break;
+#endif /* HAS_WAVE */
+
+			default:
+				break;
 		}
 	}
 }
@@ -1400,7 +1407,7 @@ static void device_command(mess_image *img, int devoption)
 //	help_display
 //============================================================
 
-static void help_display(const char *chapter)
+static void help_display(HWND wnd, const char *chapter)
 {
 	typedef HWND (WINAPI *htmlhelpproc)(HWND hwndCaller, LPCTSTR pszFile, UINT uCommand, DWORD_PTR dwData);
 	static htmlhelpproc htmlhelp;
@@ -1424,7 +1431,7 @@ static void help_display(const char *chapter)
 	if (!win_window_mode)
 		win_toggle_full_screen();
 
-	htmlhelp(win_video_window, A2T(chapter), 0 /*HH_DISPLAY_TOPIC*/, 0);
+	htmlhelp(wnd, A2T(chapter), 0 /*HH_DISPLAY_TOPIC*/, 0);
 }
 
 
@@ -1433,9 +1440,9 @@ static void help_display(const char *chapter)
 //	help_about_mess
 //============================================================
 
-static void help_about_mess(void)
+static void help_about_mess(HWND wnd)
 {
-	help_display("mess.chm::/windows/main.htm");
+	help_display(wnd, "mess.chm::/windows/main.htm");
 }
 
 
@@ -1444,11 +1451,11 @@ static void help_about_mess(void)
 //	help_about_thissystem
 //============================================================
 
-static void help_about_thissystem(void)
+static void help_about_thissystem(HWND wnd)
 {
 	char buf[256];
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "mess.chm::/sysinfo/%s.htm", Machine->gamedrv->name);
-	help_display(buf);
+	help_display(wnd, buf);
 }
 
 
@@ -1476,7 +1483,7 @@ static mess_image *decode_deviceoption(int command, int *devoption)
 //	invoke_command
 //============================================================
 
-static int invoke_command(UINT command)
+static int invoke_command(HWND wnd, UINT command)
 {
 	int handled = 1;
 	int dev_command, i;
@@ -1489,7 +1496,7 @@ static int invoke_command(UINT command)
 	switch(command)
 	{
 		case ID_FILE_LOADSTATE:
-			state_load();
+			state_load(wnd);
 			break;
 
 		case ID_FILE_SAVESTATE:
@@ -1497,12 +1504,14 @@ static int invoke_command(UINT command)
 			break;
 
 		case ID_FILE_SAVESTATE_AS:
-			state_save_as();
+			state_save_as(wnd);
 			break;
 
+#ifndef NEW_RENDER
 		case ID_FILE_SAVESCREENSHOT:
 			save_screen_snapshot(artwork_get_ui_bitmap());
 			break;
+#endif // NEW_RENDER
 
 		case ID_FILE_EXIT:
 			mame_schedule_exit();
@@ -1521,7 +1530,7 @@ static int invoke_command(UINT command)
 			break;
 
 		case ID_KEYBOARD_CUSTOMIZE:
-			customize_keyboard();
+			customize_keyboard(wnd);
 			break;
 
 		case ID_OPTIONS_PAUSE:
@@ -1560,19 +1569,19 @@ static int invoke_command(UINT command)
 #endif // HAS_DEBUGGER
 
 		case ID_OPTIONS_CONFIGURATION:
-			customize_configuration();
+			customize_configuration(wnd);
 			break;
 
 		case ID_OPTIONS_DIPSWITCHES:
-			customize_dipswitches();
+			customize_dipswitches(wnd);
 			break;
 
 		case ID_OPTIONS_MISCINPUT:
-			customize_miscinput();
+			customize_miscinput(wnd);
 			break;
 
 		case ID_OPTIONS_ANALOGCONTROLS:
-			customize_analogcontrols();
+			customize_analogcontrols(wnd);
 			break;
 
 #if HAS_TOGGLEFULLSCREEN
@@ -1603,11 +1612,11 @@ static int invoke_command(UINT command)
 			break;
 
 		case ID_HELP_ABOUT:
-			help_about_mess();
+			help_about_mess(wnd);
 			break;
 
 		case ID_HELP_ABOUTSYSTEM:
-			help_about_thissystem();
+			help_about_thissystem(wnd);
 			break;
 
 		default:
@@ -1626,12 +1635,12 @@ static int invoke_command(UINT command)
 			{
 				// change device
 				img = decode_deviceoption(command, &dev_command);
-				device_command(img, dev_command);
+				device_command(wnd, img, dev_command);
 			}
 			else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
 			{
 				// customize joystick
-				customize_joystick(command - ID_JOYSTICK_0);
+				customize_joystick(wnd, command - ID_JOYSTICK_0);
 			}
 			else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
 			{
@@ -1650,7 +1659,7 @@ static int invoke_command(UINT command)
 							section = in[i].name;
 						}
 					}
-					customize_categorizedinput(section, category);
+					customize_categorizedinput(wnd, section, category);
 					break;
 
 				case IPT_CATEGORY_SETTING:
@@ -1827,7 +1836,7 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 	int i;
 	MSG msg;
 
-	static WPARAM keytrans[][2] =
+	static const WPARAM keytrans[][2] =
 	{
 		{ VK_ESCAPE,	UCHAR_MAMEKEY(ESC) },
 		{ VK_F1,		UCHAR_MAMEKEY(F1) },
@@ -1889,23 +1898,24 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 		}
 	}
 
-	switch(message) {
-	case WM_INITMENU:
-		prepare_menus();
-		break;
-
-	case WM_CHAR:
-		if (win_use_natural_keyboard)
-			inputx_postc(wparam);
-		break;
-
-	case WM_COMMAND:
-		if (invoke_command(wparam))
+	switch(message)
+	{
+		case WM_INITMENU:
+			prepare_menus();
 			break;
-		/* fall through */
 
-	default:
-		return win_video_window_proc(wnd, message, wparam, lparam);
+		case WM_CHAR:
+			if (win_use_natural_keyboard)
+				inputx_postc(wparam);
+			break;
+
+		case WM_COMMAND:
+			if (invoke_command(wnd, wparam))
+				break;
+			/* fall through */
+
+		default:
+			return win_video_window_proc(wnd, message, wparam, lparam);
 	}
 	return 0;
 }

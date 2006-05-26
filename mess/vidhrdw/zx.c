@@ -46,8 +46,7 @@ void zx_ula_bkgnd(int color)
 	{
 		int y, new_x, new_y;
 		rectangle r;
-		extern mame_bitmap *scrbitmap[8];
-		mame_bitmap *bitmap = scrbitmap[0];
+		mame_bitmap *bitmap = tmpbitmap;
 
 		new_y = cpu_getscanline();
 		new_x = cpu_gethorzbeampos();
@@ -99,10 +98,10 @@ static void zx_ula_nmi(int param)
 	 * scanlines at the top and bottom of the display.
 	 */
 	rectangle r = Machine->visible_area[0];
-	extern mame_bitmap *scrbitmap[8];
+	mame_bitmap *bitmap = tmpbitmap;
 
 	r.min_y = r.max_y = cpu_getscanline();
-	fillbitmap(scrbitmap[0], Machine->pens[1], &r);
+	fillbitmap(bitmap, Machine->pens[1], &r);
 	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	if (++ula_scanline_count == Machine->drv->screen[0].maxheight)
@@ -131,8 +130,7 @@ static void zx_ula_irq(int param)
 
 int zx_ula_r(int offs, int region)
 {
-	extern mame_bitmap *scrbitmap[8];
-	mame_bitmap *bitmap = scrbitmap[0];
+	mame_bitmap *bitmap = tmpbitmap;
 	int x, y, chr, data, ireg, rreg, cycles, offs0 = offs, halted = 0;
 	UINT8 *chrgen, *rom = memory_region(REGION_CPU1);
 	UINT16 *scanline;
@@ -192,7 +190,7 @@ VIDEO_START( zx )
 	return video_start_generic_bitmapped();
 }
 
-VIDEO_UPDATE( zx )
+VIDEO_EOF( zx )
 {
 	/* decrement video synchronization counter */
 	if (ula_frame_vsync)

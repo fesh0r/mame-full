@@ -78,6 +78,7 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 
 
 
+#ifndef NEW_RENDER
 static int mess_activate_artwork(osd_create_params *params)
 {
 	if ((params->width < options.min_width) && (params->height < options.min_height))
@@ -124,6 +125,9 @@ artwork_callbacks mess_artwork_callbacks =
 	mess_activate_artwork,
 	mess_load_artwork_file
 };
+#endif /* NEW_RENDER */
+
+
 
 /********************************************************************/
 

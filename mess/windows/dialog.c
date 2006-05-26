@@ -1600,7 +1600,7 @@ static void after_display_dialog(void)
 //	win_dialog_runmodal
 //============================================================
 
-void win_dialog_runmodal(dialog_box *dialog)
+void win_dialog_runmodal(HWND wnd, dialog_box *dialog)
 {
 	struct _dialog_box *di;
 	
@@ -1613,9 +1613,9 @@ void win_dialog_runmodal(dialog_box *dialog)
 	// show the dialog
 	before_display_dialog();
 	if (GetVersion() & 0x80000000)
-		DialogBoxIndirectParamA(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+		DialogBoxIndirectParamA(NULL, di->handle, wnd, dialog_proc, (LPARAM) di);
 	else
-		DialogBoxIndirectParamW(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+		DialogBoxIndirectParamW(NULL, di->handle, wnd, dialog_proc, (LPARAM) di);
 	after_display_dialog();
 }
 

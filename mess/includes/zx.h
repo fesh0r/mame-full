@@ -13,7 +13,7 @@ READ8_HANDLER ( pow3000_io_r );
 /* from vidhrdw/zx80.c */
 int zx_ula_scanline(void);
 VIDEO_START( zx );
-VIDEO_UPDATE( zx );
+VIDEO_EOF( zx );
 
 /* from vidhrdw/zx.c */
 void zx_ula_bkgnd(int color);

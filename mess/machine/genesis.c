@@ -129,9 +129,9 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 {
 	UINT32 *destline;
 	int i;
-	extern mame_bitmap *scrbitmap[8];
+	mame_bitmap *bitmap = tmpbitmap;
 
-	destline = (UINT32 *)(scrbitmap[0]->line[line]);
+	destline = (UINT32 *)(bitmap->line[line]);
 
 	for (i = 0; i < 320; i++)
 	{
@@ -1027,7 +1027,7 @@ VIDEO_START(genesis)
 {
 	genesis_vdp_start (&genesis_vdp);
 	oldscreenmode = 0xff; // driver specific
-	return 0;
+	return video_start_generic_bitmapped();
 }
 
 VIDEO_UPDATE(genesis)
@@ -1075,42 +1075,7 @@ VIDEO_UPDATE(genesis)
 
 	}
 
-
-	if ( code_pressed_memory(KEYCODE_K) )
-	{
-		{
-			FILE *fp;
-
-			fp=fopen("GEN_VRAM", "w+b");
-			if (fp)
-			{
-				fwrite(genesis_vdp.genesis_vdp_vram, 0x10000, 1, fp);
-				fclose(fp);
-			}
-		}
-
-		{
-			FILE *fp;
-
-			fp=fopen("GEN_CRAM", "w+b");
-			if (fp)
-			{
-				fwrite(genesis_vdp.genesis_vdp_cram, 0x80, 1, fp);
-				fclose(fp);
-			}
-		}
-
-		{
-			FILE *fp;
-
-			fp=fopen("GEN_VSRAM", "w+b");
-			if (fp)
-			{
-				fwrite(genesis_vdp.genesis_vdp_vsram, 0x80, 1, fp);
-				fclose(fp);
-			}
-		}
-	}
+	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
 }
 
 

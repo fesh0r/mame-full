@@ -150,6 +150,7 @@ static struct messtest_testcase current_testcase;
 
 static void dump_screenshot(int write_file)
 {
+#ifndef NEW_RENDER
 	mame_file *fp;
 	char buf[128];
 	mame_bitmap *bitmap;
@@ -194,6 +195,7 @@ static void dump_screenshot(int write_file)
 		had_failure = TRUE;
 		report_message(MSG_FAILURE, "Screenshot is blank");
 	}
+#endif /* !NEW_RENDER */
 }
 
 
@@ -817,19 +819,25 @@ static const struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_END,				command_end }
 };
 
-void osd_update_video_and_audio(mame_display *display)
+#ifndef NEW_RENDER
+void osd_update_video_and_audio(struct _mame_display *display)
+#else
+void osd_update(mame_time emutime)
+#endif
 {
 	int i;
 	double time_limit;
 	double current_time;
 	int cpunum;
 
+#ifndef NEW_RENDER
 	/* if the visible area has changed, update it */
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
 		ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
 			display->game_visible_area.max_x, display->game_visible_area.max_y);
 	}
+#endif
 
 	/* is this the first update?  if so, eat it */
 	if (!seen_first_update)

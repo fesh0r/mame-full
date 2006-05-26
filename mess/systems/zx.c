@@ -422,7 +422,7 @@ static MACHINE_DRIVER_START( zx80 )
 	MDRV_PALETTE_INIT(zx80)
 
 	MDRV_VIDEO_START(zx)
-	MDRV_VIDEO_UPDATE(zx)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")

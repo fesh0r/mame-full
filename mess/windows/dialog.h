@@ -39,7 +39,7 @@ char *win_dialog_strdup(dialog_box *dialog, const char *s);
 #endif
 
 /* dialog operations */
-void win_dialog_runmodal(dialog_box *dialog);
+void win_dialog_runmodal(HWND wnd, dialog_box *dialog);
 int win_dialog_add_combobox(dialog_box *dialog, const char *item_label, int default_value,
 	dialog_itemstoreval storeval, void *storeval_param);
 int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, int default_value,

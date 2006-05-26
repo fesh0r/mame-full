@@ -122,7 +122,7 @@ void tapedialog_init(void)
 //	tapedialog_show
 //============================================================
 
-void tapedialog_show(int id)
+void tapedialog_show(HWND wnd, int id)
 {
 	extern HMODULE win_resource_module(void);
 
@@ -136,7 +136,7 @@ void tapedialog_show(int id)
 	else
 	{
 		CreateDialogParam(win_resource_module(), MAKEINTRESOURCE(IDD_TAPEDIALOG),
-			win_video_window, tapedialog_dlgproc, id);
+			wnd, tapedialog_dlgproc, id);
 	}
 }
 #endif /* HAS_WAVE */

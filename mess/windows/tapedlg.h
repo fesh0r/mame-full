@@ -2,6 +2,6 @@
 #define TAPEDLG_H
 
 void tapedialog_init(void);
-void tapedialog_show(int id);
+void tapedialog_show(HWND wnd, int id);
 
 #endif /* TAPEDLG_H */
