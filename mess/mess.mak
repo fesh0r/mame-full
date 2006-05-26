@@ -764,6 +764,7 @@ $(OBJ)/acorn.a:    \
 	$(OBJ)/mess/systems/atom.o	 \
 	$(OBJ)/mess/machine/atom.o	 \
 	$(OBJ)/mess/formats/uef_cas.o	\
+	$(OBJ)/mess/formats/csw_cas.o	\
 	$(OBJ)/mess/vidhrdw/electron.o	\
 	$(OBJ)/mess/machine/electron.o	\
 	$(OBJ)/mess/systems/electron.o
