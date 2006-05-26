@@ -10,7 +10,7 @@
 
 #include "dialog.h"
 #include "mame.h"
-#include "../windows/window.h"
+#include "windold.h"
 #include "ui_text.h"
 #include "inputx.h"
 #include "utils.h"
@@ -18,6 +18,7 @@
 #include "mscommon.h"
 #include "pool.h"
 #include "winutils.h"
+#include "windows/input.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -112,14 +113,6 @@ struct seqselect_stuff
 	int record_first_insert; 
 };
 
-
-
-//============================================================
-//	IMPORTS
-//============================================================
-
-// from input.c
-extern void win_poll_input(void);
 
 
 //============================================================
@@ -1133,7 +1126,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 		if (wparam == TIMER_ID)
 		{
 			// we are in the middle of selecting a seq; we need to poll
-			win_poll_input();
+			wininput_poll();
 
 			ret = seq_read_async(&stuff->newcode, stuff->record_first_insert);
 			if (ret >= 0)

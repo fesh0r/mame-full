@@ -13,7 +13,7 @@
 #include "tapedlg.h"
 #include "mess.h"
 #include "messres.h"
-#include "windows/window.h"
+#include "windold.h"
 
 //============================================================
 //	PARAMETERS

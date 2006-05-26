@@ -97,7 +97,8 @@ const game_driver driver_##NAME = 	\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
 	&driver_##COMPAT,						\
-	ROT0|(FLAGS)							\
+	ROT0|(FLAGS),							\
+	NULL									\
 };
 
 #define CONSB(YEAR,NAME,PARENT,BIOS,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
@@ -119,7 +120,8 @@ const game_driver driver_##NAME = 	\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
 	&driver_##COMPAT,						\
-	ROT0|(FLAGS)							\
+	ROT0|(FLAGS),							\
+	NULL									\
 };
 
 #define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
@@ -141,7 +143,8 @@ const game_driver driver_##NAME = 	\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
 	&driver_##COMPAT,						\
-	ROT0|GAME_COMPUTER|(FLAGS)	 			\
+	ROT0|GAME_COMPUTER|(FLAGS),				\
+	NULL									\
 };
 
 #define COMPB(YEAR,NAME,PARENT,BIOS,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
@@ -163,7 +166,8 @@ const game_driver driver_##NAME = 	\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
 	&driver_##COMPAT,						\
-	ROT0|GAME_COMPUTER|(FLAGS)	 			\
+	ROT0|GAME_COMPUTER|(FLAGS),				\
+	NULL									\
 };
 
 #define construct_sysconfig_NULL	(NULL)

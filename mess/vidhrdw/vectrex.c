@@ -266,7 +266,7 @@ VIDEO_START( vectrex )
 
 	via_config(0, &vectrex_via6522_interface);
 	via_reset();
-	z_factor =  translucency? 1.5: 2;
+	z_factor = 2;
 
 	imager_freq = 1;
 
@@ -521,7 +521,7 @@ VIDEO_START( raaspec )
 
 	via_config(0, &spectrum1_via6522_interface);
 	via_reset();
-	z_factor =  translucency? 1.5:2;
+	z_factor = 2;
 
 	raaspec_led_w (0, 0xff);
 	return 0;

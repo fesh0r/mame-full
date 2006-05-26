@@ -20,10 +20,15 @@
 
 // MAME headers
 #include "driver.h"
+#ifndef NEW_RENDER
+#include "windold.h"
+#include "videoold.h"
+#else
 #include "window.h"
+#include "video.h"
+#endif
 #include "input.h"
 #include "config.h"
-#include "video.h"
 
 #ifdef MESS
 #include "parallel.h"
@@ -180,7 +185,7 @@ int main(int argc, char **argv)
 
 	// restore the original LED state and close keyboard handle
 	stop_led();
-	win_process_events(0);
+	winwindow_process_events(0);
 
 	// close errorlog, input and playback
 	cli_frontend_exit();
@@ -225,11 +230,17 @@ int osd_init(void)
 	extern int win_init_input(void);
 	extern void win_blit_init(void);
 	extern int win_erroroslog;
-	int result;
+	int result = 0;
 
+#ifdef NEW_RENDER
+	if (result == 0)
+		result = winvideo_init();
+#else
 	win_blit_init();
 
-	result = win_init_window();
+	if (result == 0)
+		result = win_init_window();
+#endif
 	if (result == 0)
 		result = win_init_input();
 
@@ -237,7 +248,6 @@ int osd_init(void)
 	if (result == 0)
 		result = win_parallel_init();
 #endif
-	add_pause_callback(win_pause);
 	add_exit_callback(osd_exit);
 
 	if (win_erroroslog)

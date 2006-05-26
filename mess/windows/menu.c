@@ -13,7 +13,7 @@
 
 // MAME/MESS headers
 #include "mame.h"
-#include "windows/window.h"
+#include "windold.h"
 #include "menu.h"
 #include "messres.h"
 #include "inputx.h"
@@ -1158,7 +1158,7 @@ static void prepare_menus(void)
 		joystick_menu_setup = 1;
 	}
 
-	frameskip = win_get_frameskip();
+	frameskip = winvideo_get_frameskip();
 
 	has_config		= input_has_input_class(INPUT_CLASS_CONFIG);
 	has_dipswitch	= input_has_input_class(INPUT_CLASS_DIPSWITCH);
@@ -1599,7 +1599,7 @@ static int invoke_command(UINT command)
 #endif
 
 		case ID_FRAMESKIP_AUTO:
-			win_set_frameskip(-1);
+			winvideo_set_frameskip(-1);
 			break;
 
 		case ID_HELP_ABOUT:
@@ -1620,7 +1620,7 @@ static int invoke_command(UINT command)
 			if ((command >= ID_FRAMESKIP_0) && (command < ID_FRAMESKIP_0 + FRAMESKIP_LEVELS))
 			{
 				// change frameskip
-				win_set_frameskip(command - ID_FRAMESKIP_0);
+				winvideo_set_frameskip(command - ID_FRAMESKIP_0);
 			}
 			else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
 			{
