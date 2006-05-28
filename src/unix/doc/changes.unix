@@ -2,17 +2,32 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@xmission.com)
 
-Release 0.105.1, 18 April 2006
+Release 0.106, 27 May 2006
+	- Everything from MAME 0.106 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.106 (http://x.mame.net/changes-mess.html).
 	- Reverted a change that was intended to work around some Metacity 
 	  focus misbehavior but was causing all window managers to have focus 
 	  problems in fullscreen mode.
 	- Fixed a link error for messtest.  (Arnaud G. Gibert)
 	- The clean68k target now removes libcpu.a, which fixes link errors for 
 	  successive builds made without a full clean.  (Arnaud G. Gibert)
+	- Fixed an alignment bug in the OpenGL driver which caused Defender, 
+	  and possibly other 16bpp games, to be skewed.
+	- The mouse is no longer automatically grabbed in fullscreen mode.  
+	  Bugzilla bug 877.
+	- Replaced fuzzy game name comparison with the method used by MAME for 
+	  Windows, which lists approximate matches when an exact match isn't 
+	  found.
+	- A BadMatch error should no longer occur for the OpenGL target in some 
+	  cases, such as when 16bpp mode is used with recent releases of the 
+	  binary NVIDIA driver.
+	- Fixed the tiny build target.  (Mike Frysinger)
+	- Added CFLAGS for the Blackfin CPU.  (Mike Frysinger)
+	- BUILD_ZLIB and BUILD_EXPAT can now be disabled without having to edit 
+	  the makefile.  (Mike Frysinger)
 
 Release 0.105, 16 April 2006
-	- Everything from MAME 0.105 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.105 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.105 and MESS 0.105.
 	- Fixed "-frames_to_run/-ftr" so that it works the same as on Windows.
 	- Fixed a memory leak in the plugin manager shutdown found by Valgrind. 
 	  Bugzilla bug 850.
