@@ -17,6 +17,7 @@ CFLAGS.m68k       =
 CFLAGS.risc       = -DALIGN_INTS -DALIGN_SHORTS 
 CFLAGS.risc_lsb   = -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST
 CFLAGS.mips       = -DALIGN_INTS -DALIGN_SHORTS -DSGI_FIX_MWA_NOP
+CFLAGS.bfin       = -DLSB_FIRST -DALIGN_INTS -DALIGN_SHORTS
 
 ##############################################################################
 # Architecture-dependent settings
@@ -169,7 +170,7 @@ ifdef SEPARATE_LIBM
 LIBS += -lm
 endif
 
-ifdef BUILD_EXPAT
+ifeq ($(BUILD_EXPAT),1)
 CFLAGS += -Isrc/expat
 OBJDIRS += $(OBJ)/expat
 EXPAT = $(OBJ)/libexpat.a
@@ -178,7 +179,7 @@ LIBS += -lexpat
 EXPAT =
 endif
 
-ifdef BUILD_ZLIB
+ifeq ($(BUILD_ZLIB),1)
 CFLAGS += -Isrc/zlib
 OBJDIRS += $(OBJ)/zlib
 ZLIB = $(OBJ)/libz.a
@@ -212,6 +213,9 @@ include src/$(TARGET).mak
 endif
 ifeq ($(TARGET), mess)
 include mess/$(TARGET).mak
+endif
+ifeq ($(TARGET), tiny)
+include src/$(TARGET).mak
 endif
 
 include src/cpu/cpu.mak
