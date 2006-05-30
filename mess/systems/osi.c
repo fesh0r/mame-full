@@ -8,7 +8,7 @@ WRITE8_HANDLER( sb2m600_videoram_w );
 VIDEO_START( sb2m600 );
 VIDEO_START( uk101 );
 VIDEO_UPDATE( sb2m600 );
-extern struct discrete_sound_block sb2m600_discrete_interface[];
+extern discrete_sound_block sb2m600_discrete_interface[];
 READ8_HANDLER( osi_keyboard_r );
 WRITE8_HANDLER ( sb2m600b_keyboard_w );
 WRITE8_HANDLER ( uk101_keyboard_w );
