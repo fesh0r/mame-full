@@ -10,5 +10,6 @@
 #include "formats/cassimg.h"
 
 CASSETTE_FORMATLIST_EXTERN(csw_cassette_formats);
+CASSETTE_FORMATLIST_EXTERN(bbc_cassette_formats);
 
 #endif /* CSW_CAS_H */

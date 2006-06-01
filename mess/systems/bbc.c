@@ -851,33 +851,19 @@ static void bbc_floppy_getinfo(const device_class *devclass, UINT32 state, union
 	}
 }
 
-static void bbc_cassette_uef_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
+static void bbc_cassette_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
 	switch( state ) {
 	case DEVINFO_INT_COUNT:
 		info->i = 1;
 		break;
 	case DEVINFO_PTR_CASSETTE_FORMATS:
-		info->p = (void *)uef_cassette_formats;
+		info->p = (void *)bbc_cassette_formats;
 		break;
 	default:
 		cassette_device_getinfo( devclass, state, info );
 		break;
 	}
 }
-
-static void bbc_cassette_csw_getinfo( const device_class *devclass, UINT32 state, union devinfo *info ) {
-	 switch( state ) {
-	 case DEVINFO_INT_COUNT:
-			 info->i = 1;
-			 break;
-	 case DEVINFO_PTR_CASSETTE_FORMATS:
-			 info->p = (void *)csw_cassette_formats;
-			 break;
-	 default:
-			 cassette_device_getinfo( devclass, state, info );
-			 break;
-	 }
- }
 
 static void bbc_printer_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
@@ -892,33 +878,25 @@ static void bbc_printer_getinfo(const device_class *devclass, UINT32 state, unio
 }
 
 SYSTEM_CONFIG_START(bbca)
-	CONFIG_DEVICE(bbc_cassette_uef_getinfo)
+	CONFIG_DEVICE(bbc_cassette_getinfo)
 	CONFIG_DEVICE(bbc_printer_getinfo)
 SYSTEM_CONFIG_END
 
 
-SYSTEM_CONFIG_START(bbcuef)
+SYSTEM_CONFIG_START(bbc)
 	CONFIG_DEVICE(bbc_cartslot_getinfo)
 	CONFIG_DEVICE(bbc_floppy_getinfo)
-	CONFIG_DEVICE(bbc_cassette_uef_getinfo)
+	CONFIG_DEVICE(bbc_cassette_getinfo)
 	CONFIG_DEVICE(bbc_printer_getinfo)
 SYSTEM_CONFIG_END
-
-SYSTEM_CONFIG_START(bbccsw)
-         CONFIG_DEVICE(bbc_cartslot_getinfo)
-         CONFIG_DEVICE(bbc_floppy_getinfo)
-         CONFIG_DEVICE(bbc_cassette_csw_getinfo)
-         CONFIG_DEVICE(bbc_printer_getinfo)
- SYSTEM_CONFIG_END
 
 
 
 /*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
 COMP ( 1981, bbca,	   0,		 0,		bbca,     bbca,   bbc,     bbca,	"Acorn","BBC Micro Model A" , 0)
-COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,   bbc,	   bbcuef,	"Acorn","BBC Micro Model B (UEF)" , 0)
-COMP ( 1981, bbcbcsw,  bbca,     0,     bbcb,     bbca,   bbc,     bbccsw,  "Acorn","BBC Micro Model B (CSW)" , 0)
-COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,   bbc,     bbcuef,	"Acorn","BBC Micro Model B+ 64K" , 0)
-COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,   bbc,     bbcuef,	"Acorn","BBC Micro Model B+ 128k" , 0)
-COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbcm,    bbcuef,	"Acorn","BBC Master" , 0)
+COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,   bbc,	   bbc,		"Acorn","BBC Micro Model B (UEF)" , 0)
+COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 64K" , 0)
+COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 128k" , 0)
+COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbcm,    bbc,		"Acorn","BBC Master" , 0)
 
 

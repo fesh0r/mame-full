@@ -194,7 +194,6 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
 	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
 	DRIVER( bbcb )      /* 1981 BBC Micro Model B		   					*/
-	DRIVER( bbcbcsw )   /* 1981 BBC Micro Model B with CSW cassette support */
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
 	DRIVER( bbcm)		/* 198? BBC Master									*/

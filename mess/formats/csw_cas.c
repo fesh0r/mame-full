@@ -318,6 +318,13 @@ struct CassetteFormat csw_cassette_format = {
 	NULL
 };
 
+extern struct CassetteFormat uef_cassette_format;
+
 CASSETTE_FORMATLIST_START(csw_cassette_formats)
 	CASSETTE_FORMAT(csw_cassette_format)
+CASSETTE_FORMATLIST_END
+
+CASSETTE_FORMATLIST_START(bbc_cassette_formats)
+	CASSETTE_FORMAT(csw_cassette_format)
+	CASSETTE_FORMAT(uef_cassette_format)
 CASSETTE_FORMATLIST_END
