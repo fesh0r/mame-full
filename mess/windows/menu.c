@@ -16,7 +16,6 @@
 #include "menu.h"
 #include "messres.h"
 #include "inputx.h"
-#include "windows/windold.h"
 #include "windows/video.h"
 #include "dialog.h"
 #include "opcntrl.h"
@@ -29,6 +28,12 @@
 #include "debug/debugcpu.h"
 #include "inptport.h"
 #include "devices/cassette.h"
+
+#ifdef NEW_RENDER
+#include "windows/window.h"
+#else
+#include "windows/windold.h"
+#endif
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -1296,47 +1301,66 @@ static void prepare_menus(void)
 //	win_toggle_menubar
 //============================================================
 
-#if HAS_TOGGLEMENUBAR
 void win_toggle_menubar(void)
 {
-#ifndef NEW_RENDER
-	RECT before_rect = { 100, 100, 200, 200 };
-	RECT after_rect = { 100, 100, 200, 200 };
+#ifdef NEW_RENDER
+	win_window_info *window;
+#endif
 	LONG width_diff;
 	LONG height_diff;
 	DWORD style, exstyle;
+	HWND hwnd;
+	BOOL has_menu;
 	extern void win_pause_input(int pause_);
 
-	// get before rect
-	style = GetWindowLong(win_video_window, GWL_STYLE);
-	exstyle = GetWindowLong(win_video_window, GWL_EXSTYLE);
-	AdjustWindowRectEx(&before_rect, style, win_has_menu(), exstyle);
-
-	win_pause_input(1);
-	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
-	win_pause_input(0);
-
-	// get after rect, and width/height diff
-	AdjustWindowRectEx(&after_rect, style, win_has_menu(), exstyle);
-	width_diff = (after_rect.right - after_rect.left) - (before_rect.right - before_rect.left);
-	height_diff = (after_rect.bottom - after_rect.top) - (before_rect.bottom - before_rect.top);
-
-	if (win_window_mode)
-	{
-		RECT window;
-		GetWindowRect(win_video_window, &window);
-		SetWindowPos(win_video_window, HWND_TOP, 0, 0,
-			window.right - window.left + width_diff,
-			window.bottom - window.top + height_diff,
-			SWP_NOMOVE | SWP_NOZORDER);
-		win_constrain_to_aspect_ratio(&window, WMSZ_BOTTOM, 0, COORDINATES_DESKTOP);
-	}
-
-	win_adjust_window();
-	RedrawWindow(win_video_window, NULL, NULL, 0);
+#ifdef NEW_RENDER
+	for (window = win_window_list; window != NULL; window = window->next)
 #endif
+	{
+		RECT before_rect = { 100, 100, 200, 200 };
+		RECT after_rect = { 100, 100, 200, 200 };
+
+#ifdef NEW_RENDER
+		hwnd = window->hwnd;
+		has_menu = win_has_menu(window);
+#else
+		hwnd = win_video_window;
+		has_menu = win_has_menu();
+#endif
+
+		// get before rect
+		style = GetWindowLong(hwnd, GWL_STYLE);
+		exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+		AdjustWindowRectEx(&before_rect, style, has_menu, exstyle);
+
+		win_pause_input(1);
+		SetMenu(hwnd, GetMenu(hwnd) ? NULL : win_menu_bar);
+		win_pause_input(0);
+
+		// get after rect, and width/height diff
+		AdjustWindowRectEx(&after_rect, style, has_menu, exstyle);
+		width_diff = (after_rect.right - after_rect.left) - (before_rect.right - before_rect.left);
+		height_diff = (after_rect.bottom - after_rect.top) - (before_rect.bottom - before_rect.top);
+
+		if (win_window_mode)
+		{
+			RECT window_rect;
+			GetWindowRect(hwnd, &window_rect);
+			SetWindowPos(hwnd, HWND_TOP, 0, 0,
+				window_rect.right - window_rect.left + width_diff,
+				window_rect.bottom - window_rect.top + height_diff,
+				SWP_NOMOVE | SWP_NOZORDER);
+#ifndef NEW_RENDER
+			win_constrain_to_aspect_ratio(&window_rect, WMSZ_BOTTOM, 0, COORDINATES_DESKTOP);
+#endif
+		}
+
+#ifndef NEW_RENDER
+		win_adjust_window();
+#endif
+		RedrawWindow(hwnd, NULL, NULL, 0);
+	}
 }
-#endif // HAS_TOGGLEMENUBAR
 
 
 

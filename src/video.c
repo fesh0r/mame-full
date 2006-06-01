@@ -697,7 +697,9 @@ void schedule_full_refresh(void)
 void force_partial_update(int scrnum, int scanline)
 {
 	rectangle clip = Machine->visible_area[scrnum];
+#ifndef NEW_RENDER
 	callback_item *cb;
+#endif
 
 	/* if skipping this frame, bail */
 	if (osd_skip_this_frame())
