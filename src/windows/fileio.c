@@ -125,10 +125,11 @@ static const struct
 	const char *option;
 } fileio_options[] =
 {
-	{ FILETYPE_ROM,			"rompath" },
 #ifndef MESS
+	{ FILETYPE_ROM,			"rompath" },
 	{ FILETYPE_IMAGE,		"rompath" },
 #else
+	{ FILETYPE_ROM,			"biospath" },
 	{ FILETYPE_IMAGE,		"softwarepath" },
 	{ FILETYPE_HASH,		"hash_directory" },
 #endif

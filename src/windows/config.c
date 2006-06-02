@@ -516,6 +516,9 @@ int cli_frontend_init(int argc, char **argv)
 	options_add_entries(config_opts);
 	options_add_entries(input_opts);
 	options_add_entries(video_opts);
+#ifdef MESS
+	options_add_entries(mess_opts);
+#endif // MESS
 
 	// parse the command line first; if we fail here, we're screwed
 	if (options_parse_command_line(argc, argv))
