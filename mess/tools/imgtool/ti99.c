@@ -3872,132 +3872,104 @@ OPTION_GUIDE_END
 
 #define dsk_create_optionspecs "B1-[2];C1-[40]-80;D1-[18]-36;E[0]-1;F[0]-3"
 
-static imgtoolerr_t ti99_createmodule_internal(imgtool_library *library, ti99_img_format img_format)
+static void ti99_getinfo(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
-	imgtoolerr_t err;
-	struct ImageModule *module;
-	const char *identifier = NULL;
-
-	switch (img_format)
+	switch(state)
 	{
-	case if_mess:
-		identifier = "ti99_old";
-		break;
-	case if_v9t9:
-		identifier = "v9t9";
-		break;
-	case if_pc99_fm:
-		identifier = "pc99fm";
-		break;
-	case if_pc99_mfm:
-		identifier = "pc99mfm";
-		break;
-	case if_harddisk:
-		identifier = "ti99hd";
-		break;
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(ti99_lvl2_imgref); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(dsk_iterator); break;
+
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+		case IMGTOOLINFO_PTR_CLOSE:							info->close = ti99_image_exit; break;
+		case IMGTOOLINFO_PTR_INFO:							info->info = ti99_image_info; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = ti99_image_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = ti99_image_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = ti99_image_writefile; break;
 	}
-
-	err = imgtool_library_createmodule(library, identifier, &module);
-	if (err)
-		return err;
-
-	module->image_extra_bytes = sizeof(ti99_lvl2_imgref);
-	module->imageenum_extra_bytes = sizeof(dsk_iterator);
-
-	switch (img_format)
-	{
-	case if_mess:
-		module->description			= "TI99 Diskette (old MESS format)";
-		module->open				= dsk_image_init_mess;
-		module->create				= dsk_image_create_mess;
-		module->createimage_optguide= dsk_create_optionguide;
-		module->createimage_optspec	= dsk_create_optionspecs;
-		break;
-
-	case if_v9t9:
-		module->description			= "TI99 Diskette (V9T9 format)";
-		module->open				= dsk_image_init_v9t9;
-		module->create				= dsk_image_create_v9t9;
-		module->createimage_optguide= dsk_create_optionguide;
-		module->createimage_optspec	= dsk_create_optionspecs;
-		break;
-
-	case if_pc99_fm:
-		module->description			= "TI99 Diskette (PC99 FM format)";
-		module->open				= dsk_image_init_pc99_fm;
-		/*module->create			= dsk_image_create_pc99fm;
-		module->createimage_optguide= ...;
-		module->createimage_optspec	= ...;*/
-		break;
-
-	case if_pc99_mfm:
-		module->description			= "TI99 Diskette (PC99 MFM format)";
-		module->open				= dsk_image_init_pc99_mfm;
-		/*module->create			= dsk_image_create_pc99mfm;
-		module->createimage_optguide= ...;
-		module->createimage_optspec	= ...;*/
-		break;
-
-	case if_harddisk:
-		module->description			= "TI99 Harddisk";
-		module->open				= win_image_init;
-		/*module->create			= hd_image_create;
-		module->createimage_optguide= ...;
-		module->createimage_optspec	= ...;*/
-		break;
-	}
-
-	switch (img_format)
-	{
-	case if_mess:
-	case if_v9t9:
-	case if_pc99_fm:
-	case if_pc99_mfm:
-		module->extensions			= "dsk\0";
-		module->begin_enum			= dsk_image_beginenum;
-		module->next_enum			= dsk_image_nextenum;
-		module->delete_file			= dsk_image_deletefile;
-		break;
-
-	case if_harddisk:
-		module->extensions			= "hd\0";
-		module->begin_enum			= win_image_beginenum;
-		module->next_enum			= win_image_nextenum;
-		module->delete_file			= win_image_deletefile;
-		break;
-	}
-
-	module->eoln					= EOLN_CR;
-
-	module->close					= ti99_image_exit;
-	module->info					= ti99_image_info;
-	module->free_space				= ti99_image_freespace;
-	module->read_file				= ti99_image_readfile;
-	module->write_file				= ti99_image_writefile;
-
-	/*module->writefile_optguide		= ...;
-	module->writefile_optspec		= ...;
-	module->extra					= NULL;*/
-
-	return IMGTOOLERR_SUCCESS;
 }
 
-imgtoolerr_t ti99_createmodule(imgtool_library *library)
+static void ti99_dsk_getinfo(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
-	imgtoolerr_t reply;
-
-	reply = ti99_createmodule_internal(library, if_mess);
-	if (!reply)
-		reply = ti99_createmodule_internal(library, if_v9t9);
-	if (!reply)
-		reply = ti99_createmodule_internal(library, if_pc99_fm);
-	if (!reply)
-		reply = ti99_createmodule_internal(library, if_pc99_mfm);
-	if (!reply)
-		reply = ti99_createmodule_internal(library, if_harddisk);
-
-	return reply;
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = imgtool_temp_str(), "dsk"); break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = dsk_image_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = dsk_image_nextenum; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = dsk_image_deletefile; break;
+		default:											ti99_getinfo(imgclass, state, info);
+	}
 }
+
+void ti99_old_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:					strcpy(info->s = imgtool_temp_str(), "ti99_old"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:			strcpy(info->s = imgtool_temp_str(), "TI99 Diskette (old MESS format)"); break;
+		case IMGTOOLINFO_PTR_OPEN:					info->open = dsk_image_init_mess; break;
+		case IMGTOOLINFO_PTR_CREATE:				info->create = dsk_image_create_mess; break;
+		case IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE:	info->createimage_optguide = dsk_create_optionguide; break;
+		case IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC:	strcpy(info->s = imgtool_temp_str(), dsk_create_optionspecs); break;
+		default:									ti99_dsk_getinfo(imgclass, state, info); break;
+	}
+}
+
+void ti99_v9t9_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:					strcpy(info->s = imgtool_temp_str(), "v9t9"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:			strcpy(info->s = imgtool_temp_str(), "TI99 Diskette (V9T9 format)"); break;
+		case IMGTOOLINFO_PTR_OPEN:					info->open = dsk_image_init_v9t9; break;
+		case IMGTOOLINFO_PTR_CREATE:				info->create = dsk_image_create_v9t9; break;
+		case IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE:	info->createimage_optguide = dsk_create_optionguide; break;
+		case IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC:	strcpy(info->s = imgtool_temp_str(), dsk_create_optionspecs); break;
+		default:									ti99_dsk_getinfo(imgclass, state, info); break;
+	}
+}
+
+void ti99_pc99fm_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:					strcpy(info->s = imgtool_temp_str(), "pc99fm"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:			strcpy(info->s = imgtool_temp_str(), "TI99 Diskette (PC99 FM format)"); break;
+		case IMGTOOLINFO_PTR_OPEN:					info->open = dsk_image_init_pc99_fm; break;
+		case IMGTOOLINFO_PTR_CREATE:				/* info->create = dsk_image_create_pc99fm; */ break;
+		default:									ti99_dsk_getinfo(imgclass, state, info); break;
+	}
+}
+
+void ti99_pc99mfm_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:					strcpy(info->s = imgtool_temp_str(), "pc99mfm"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:			strcpy(info->s = imgtool_temp_str(), "TI99 Diskette (PC99 MFM format)"); break;
+		case IMGTOOLINFO_PTR_OPEN:					info->open = dsk_image_init_pc99_mfm; break;
+		case IMGTOOLINFO_PTR_CREATE:				/* info->create = dsk_image_create_pc99mfm; */ break;
+		default:									ti99_dsk_getinfo(imgclass, state, info); break;
+	}
+}
+
+void ti99_ti99hd_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:					strcpy(info->s = imgtool_temp_str(), "ti99hd"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:			strcpy(info->s = imgtool_temp_str(), "TI99 Harddisk"); break;
+		case IMGTOOLINFO_PTR_OPEN:					info->open = win_image_init; break;
+		case IMGTOOLINFO_PTR_CREATE:				/* info->create = hd_image_create; */ break;
+
+		case IMGTOOLINFO_STR_FILE_EXTENSIONS:		strcpy(info->s = imgtool_temp_str(), "hd"); break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:			info->begin_enum = win_image_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:				info->next_enum = win_image_nextenum; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:			info->delete_file = win_image_deletefile; break;
+		default:									ti99_getinfo(imgclass, state, info);
+	}
+}
+
+
 
 /*
 	Open a file as a ti99_image (common code).

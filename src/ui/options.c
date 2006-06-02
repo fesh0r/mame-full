@@ -3241,9 +3241,10 @@ char * GetVersionString(void)
 #ifdef MAME_DEBUG
 static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME)
 {
+	int nBadOptions = 0;
+#if 0
 	struct rc_struct *rc;
 	int i;
-	int nBadOptions = 0;
 
 	rc = cli_rc_create();
 
@@ -3285,6 +3286,7 @@ static BOOL CheckOptions(const REG_OPTION *opts, BOOL bPassedToMAME)
 	assert(nBadOptions == 0);
 
 	rc_destroy(rc);
+#endif
 	return nBadOptions == 0;
 }
 #endif /* MAME_DEBUG */

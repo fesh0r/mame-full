@@ -928,7 +928,7 @@ static void paste(void)
 		{
 			mb_size = strlen(text);
 			w_size = MultiByteToWideChar(CP_ACP, 0, text, mb_size, NULL, 0);
-			wtext = alloca(w_size * sizeof(WCHAR));
+			wtext = (LPWSTR) alloca(w_size * sizeof(WCHAR));
 			MultiByteToWideChar(CP_ACP, 0, text, mb_size, wtext, w_size);
 			inputx_postn_utf16(wtext, w_size);
 			GlobalUnlock(h);
@@ -1133,6 +1133,24 @@ static void setup_joystick_menu(void)
 
 
 //============================================================
+//	is_throttled
+//	is_windowed
+//	set_throttle
+//============================================================
+
+#ifdef NEW_RENDER
+static int is_throttled(void)	{ return video_config.throttle; }
+static int is_windowed(void)	{ return video_config.windowed; }
+static void set_throttle(int t)	{ video_config.throttle = t; }
+#else
+static int is_throttled(void)	{ return throttle; }
+static int is_windowed(void)	{ return win_window_mode; }
+static void set_throttle(int t)	{ throttle = t; }
+#endif
+
+
+
+//============================================================
 //	prepare_menus
 //============================================================
 
@@ -1188,13 +1206,13 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			mame_is_paused()							? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle									? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		is_throttled()									? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_OPTIONS_MISCINPUT,		has_misc									? MFS_ENABLED : MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_OPTIONS_ANALOGCONTROLS,	has_analog									? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode							? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!is_windowed()							? MFS_CHECKED : MFS_ENABLED);
 #endif // HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_get_show_fps()							? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
@@ -1342,7 +1360,7 @@ void win_toggle_menubar(void)
 		width_diff = (after_rect.right - after_rect.left) - (before_rect.right - before_rect.left);
 		height_diff = (after_rect.bottom - after_rect.top) - (before_rect.bottom - before_rect.top);
 
-		if (win_window_mode)
+		if (is_windowed())
 		{
 			RECT window_rect;
 			GetWindowRect(hwnd, &window_rect);
@@ -1452,8 +1470,8 @@ static void help_display(HWND wnd, const char *chapter)
 	}
 
 	// if full screen, turn it off
-	if (!win_window_mode)
-		win_toggle_full_screen();
+	if (!is_windowed())
+		winwindow_toggle_full_screen();
 
 	htmlhelp(wnd, A2T(chapter), 0 /*HH_DISPLAY_TOPIC*/, 0);
 }
@@ -1570,7 +1588,7 @@ static int invoke_command(HWND wnd, UINT command)
 			break;
 
 		case ID_OPTIONS_THROTTLE:
-			throttle = !throttle;
+			set_throttle(!is_throttled());
 			break;
 
 #if HAS_PROFILER
@@ -1610,7 +1628,7 @@ static int invoke_command(HWND wnd, UINT command)
 
 #if HAS_TOGGLEFULLSCREEN
 		case ID_OPTIONS_FULLSCREEN:
-			win_toggle_full_screen();
+			winwindow_toggle_full_screen();
 			break;
 #endif
 
@@ -1939,7 +1957,7 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 			/* fall through */
 
 		default:
-			return win_video_window_proc(wnd, message, wparam, lparam);
+			return winwindow_video_window_proc(wnd, message, wparam, lparam);
 	}
 	return 0;
 }

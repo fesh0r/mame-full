@@ -2270,10 +2270,11 @@ static imgtoolerr_t fat_diskimage_deletedir(imgtool_image *image, const char *pa
 	Imgtool module declaration
 *********************************************************************/
 
-static void fat_module_populate(UINT32 state, union imgtoolinfo *info)
+static void fat_base_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR:		info->i = 1; break;
 		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
 		case IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME:		info->i = 1; break;
@@ -2281,11 +2282,14 @@ static void fat_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK:			info->i = 1; break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '\\'; break;
 		case IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR:		info->i = '/'; break;
-		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r\n"); break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct fat_diskinfo); break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct fat_file); break;
-		case IMGTOOLINFO_PTR_CREATE:						info->create = fat_diskimage_create; break;
-		case IMGTOOLINFO_PTR_OPEN:							info->open = fat_diskimage_open; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r\n"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = fat_diskimage_beginenum; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = fat_diskimage_nextenum; break;
 		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = fat_diskimage_readfile; break;
@@ -2299,7 +2303,24 @@ static void fat_module_populate(UINT32 state, union imgtoolinfo *info)
 
 
 
-FLOPPYMODULE(fat, "FAT format", pc, fat_module_populate)
+void fat_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "fat"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "FAT format"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = fat_diskimage_create; break;
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = fat_diskimage_open; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_pc; break;
+
+		default: fat_base_get_info(imgclass, state, info); break;
+	}
+}
+
 
 
 /* ----------------------------------------------------------------------- *
@@ -2432,44 +2453,28 @@ static imgtoolerr_t	fat_chd_diskimage_writesector(imgtool_image *image, UINT32 t
 
 
 
-imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
+void pc_chd_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
-	imgtoolerr_t err;
-	struct ImageModule *module;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case IMGTOOLINFO_INT_TRACKS_ARE_CALLED_CYLINDERS:	info->i = 1; break;
 
-	err = imgtool_library_createmodule(library, "pc_chd_fat", &module);
-	if (err)
-		return err;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "pc_chd_fat"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "PC CHD disk image (FAT format)"); break;
+		case IMGTOOLINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = imgtool_temp_str(), "chd"); break;
+		case IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC:			strcpy(info->s = imgtool_temp_str(), fat_chd_create_optionspec); break;
 
-	module->name						= "pc_chd_fat";
-	module->description					= "PC CHD disk image (FAT format)";
-	module->extensions					= "chd\0";
-	module->initial_path_separator		= 1;
-	module->open_is_strict				= 1;
-	module->supports_creation_time		= 1;
-	module->supports_lastmodified_time	= 1;
-	module->tracks_are_called_cylinders	= 1;
-	module->supports_bootblock			= 1;
-	module->path_separator				= '\\';
-	module->alternate_path_separator	= '/';
-	module->eoln						= EOLN_CRLF;
-	module->image_extra_bytes			+= sizeof(struct fat_diskinfo);
-	module->imageenum_extra_bytes		+= sizeof(struct fat_file);
-	module->open						= fat_chd_diskimage_open;
-	module->close						= fat_chd_diskimage_close;
-	module->create						= fat_chd_diskimage_create;
-	module->begin_enum					= fat_diskimage_beginenum;
-	module->next_enum					= fat_diskimage_nextenum;
-	module->read_file					= fat_diskimage_readfile;
-	module->write_file					= fat_diskimage_writefile;
-	module->delete_file					= fat_diskimage_deletefile;
-	module->free_space					= fat_diskimage_freespace;
-	module->create_dir					= fat_diskimage_createdir;
-	module->delete_dir					= fat_diskimage_deletedir;
-	module->get_sector_size				= fat_chd_diskimage_getsectorsize;
-	module->read_sector					= fat_chd_diskimage_readsector;
-	module->write_sector				= fat_chd_diskimage_writesector;
-	module->createimage_optguide		= fat_chd_create_optionguide;
-	module->createimage_optspec			= fat_chd_create_optionspec;
-	return IMGTOOLERR_SUCCESS;
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_OPEN:							info->open = fat_chd_diskimage_open; break;
+		case IMGTOOLINFO_PTR_CLOSE:							info->close = fat_chd_diskimage_close; break;
+		case IMGTOOLINFO_PTR_CREATE:						info->create = fat_chd_diskimage_create; break;
+		case IMGTOOLINFO_PTR_GET_SECTOR_SIZE:				info->get_sector_size = fat_chd_diskimage_getsectorsize; break;
+		case IMGTOOLINFO_PTR_READ_SECTOR:					info->read_sector = fat_chd_diskimage_readsector; break;
+		case IMGTOOLINFO_PTR_WRITE_SECTOR:					info->write_sector = fat_chd_diskimage_writesector; break;
+		case IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE:			info->createimage_optguide = fat_chd_create_optionguide; break;
+
+		default: fat_base_get_info(imgclass, state, info); break;
+	}
 }

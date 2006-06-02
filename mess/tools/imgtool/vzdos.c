@@ -95,7 +95,7 @@ static UINT16 chksum16(UINT8 *buffer, int len)
 /* returns the offset where the actual sector data starts */
 static imgtoolerr_t vzdos_get_data_start(imgtool_image *img, int track, int sector, int *start)
 {
-	int ret;
+	imgtoolerr_t ret;
 	UINT8 buffer[25]; /* enough to read the sector header */
 
 	ret = floppy_read_sector(imgtool_floppy(img), 0, track, sector_order[sector], 0, &buffer, sizeof(buffer));
@@ -925,13 +925,23 @@ W	E & F Word Pro with Patch 3.3 File	        End Addr D000H
 W	Russell Harrison Word Pro File              Except above two	
 */
 
-static void vzdos_module_populate(UINT32 state, union imgtoolinfo *info)
+void vzdos_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_PREFER_UCASE:					info->i = 1; break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(vz_iterator); break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "vzdos"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "VZ-DOS format"); break;
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
+		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T[0]-2;F[0]-1"); break;
 		case IMGTOOLINFO_STR_EOLN:							info->s = NULL; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
 		case IMGTOOLINFO_PTR_OPEN:							info->open = NULL; break;
 		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = vzdos_diskimage_beginenum; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = vzdos_diskimage_nextenum; break;
@@ -939,11 +949,9 @@ static void vzdos_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = vzdos_diskimage_readfile; break;
 		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = vzdos_diskimage_writefile; break;
 		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = vzdos_diskimage_deletefile; break;
-		case IMGTOOLINFO_PTR_CREATE:						info->create = vzdos_diskimage_create; break;
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = vzdos_diskimage_create; break;
 		case IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE:			info->writefile_optguide = vzdos_writefile_optionguide; break;
-		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T[0]-2;F[0]-1"); break;
 		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = vzdos_diskimage_suggesttransfer; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_vz; break;
 	}
 }
-
-FLOPPYMODULE(vzdos, "VZ-DOS format", vz, vzdos_module_populate)

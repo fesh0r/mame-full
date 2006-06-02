@@ -589,13 +589,23 @@ OPTION_GUIDE_END
 
 
 
-static void coco_rsdos_module_populate(UINT32 state, union imgtoolinfo *info)
+void rsdos_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_PREFER_UCASE:					info->i = 1; break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct rsdos_direnum); break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "rsdos"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "RS-DOS format"); break;
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
 		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T0-[2]-3;M0-[1]"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = rsdos_diskimage_nextenum; break;
 		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = rsdos_diskimage_freespace; break;
 		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = rsdos_diskimage_readfile; break;
@@ -603,11 +613,6 @@ static void coco_rsdos_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = rsdos_diskimage_deletefile; break;
 		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = rsdos_diskimage_suggesttransfer; break;
 		case IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE:			info->writefile_optguide = coco_rsdos_writefile_optionguide; break;
-		case IMGTOOLINFO_STR_WRITEFILE_OPTSPEC:				strcpy(info->s = imgtool_temp_str(), "T0-[2]-3;M0-[1]"); break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_coco; break;
 	}
 }
-
-
-
-FLOPPYMODULE(rsdos, "RS-DOS format", coco, coco_rsdos_module_populate)
-

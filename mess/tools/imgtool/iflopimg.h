@@ -19,6 +19,15 @@
 
 ***************************************************************************/
 
+enum
+{
+	IMGTOOLINFO_PTR_FLOPPY_FORMAT = IMGTOOLINFO_PTR_CLASS_SPECIFIC,
+	IMGTOOLINFO_PTR_FLOPPY_OPEN,
+	IMGTOOLINFO_PTR_FLOPPY_CREATE
+};
+
+int imgtool_floppy_make_class(int index, imgtool_class *imgclass);
+
 floppy_image *imgtool_floppy(imgtool_image *img);
 imgtoolerr_t imgtool_floppy_error(floperr_t err);
 
@@ -31,12 +40,5 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 	void (*getinfo)(UINT32 state, union imgtoolinfo *info));
 
 void *imgtool_floppy_extrabytes(imgtool_image *img);
-
-#define FLOPPYMODULE(name, description, format, getinfo)			\
-	imgtoolerr_t name##_createmodule(imgtool_library *library)		\
-	{																\
-		return imgtool_floppy_createmodule(library, #name,			\
-			description, floppyoptions_##format, getinfo);			\
-	}																\
 
 #endif /* IFLOPIMG_H */

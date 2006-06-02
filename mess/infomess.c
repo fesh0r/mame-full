@@ -182,7 +182,7 @@ void print_game_ramoptions(FILE* out, const game_driver* game)
  *
  *************************************/
 
-void print_mess_devices(const char *gamename)
+int frontend_listdevices(FILE *output)
 {
 	int i, dev, id;
 	const struct IODevice *devices;
@@ -191,6 +191,7 @@ void print_mess_devices(const char *gamename)
 	const char *name;
 	const char *shortname;
 	char paren_shortname[16];
+	const char *gamename = "*";
 
 	i = 0;
 
@@ -217,24 +218,25 @@ void print_mess_devices(const char *gamename)
 
 					sprintf(paren_shortname, "(%s)", shortname);
 
-					printf("%-13s%-12s%-8s   ", driver_name, name, paren_shortname);
+					fprintf(output, "%-13s%-12s%-8s   ", driver_name, name, paren_shortname);
 					driver_name = " ";
 
 					if (id == 0)
 					{
 						while (src && *src)
 						{
-							printf(".%-5s", src);
+							fprintf(output, ".%-5s", src);
 							src += strlen(src) + 1;
 						}
 					}
-					printf("\n");
+					fprintf(output, "\n");
 				}
 			}
 			end_resource_tracking();
 		}
 		i++;
 	}
+	return 0;
 }
 
 

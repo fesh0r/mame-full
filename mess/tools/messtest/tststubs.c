@@ -177,7 +177,7 @@ void *osd_alloc_executable(size_t size)
 //	osd_free_executable
 //============================================================
 
-void osd_free_executable(void *ptr)
+void osd_free_executable(void *ptr, size_t size)
 {
 #ifdef WIN32
 	VirtualFree(ptr, 0, MEM_RELEASE);

@@ -10,29 +10,26 @@
 
 #include "core.h"
 #include "hashfile.h"
+#include "options.h"
 #include "../imgtool/imgtool.h"
 
 #ifdef WIN32
 #include <windows.h>
-#include "windows/rc.h"
 #include "windows/glob.h"
-#elif defined XMAME
-#include "sysdep/rc.h"
 #endif /* WIN32 */
 
 extern int mame_validitychecks(int game);
-extern struct rc_option fileio_opts[];
+extern const options_entry fileio_opts[];
 
 static int dump_screenshots;
 static int preserve_directory;
 static int test_count, failure_count;
 
-static struct rc_option opts[] =
+static const options_entry messtest_opts[] =
 {
-	{ NULL, NULL, rc_link, fileio_opts, NULL, 0, 0, NULL, NULL },
-	{ "dumpscreenshots", "ds",	rc_bool,	&dump_screenshots,			"0", 0, 0, NULL,	"always dump screenshots" },
-	{ "preservedir",     "pd",	rc_bool,	&preserve_directory,		"0", 0, 0, NULL,	"always dump screenshots" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+	{ "dumpscreenshots;ds",		"0",	OPTION_BOOLEAN,	"always dump screenshots" },
+	{ "preservedir;pd",			"0",	OPTION_BOOLEAN,	"preserve current directory" },
+	{ NULL }
 };
 
 
@@ -87,7 +84,6 @@ static void win_expand_wildcards(int *argc, char **argv[])
 
 int main(int argc, char *argv[])
 {
-	struct rc_struct *rc = NULL;
 	int result = -1;
 	clock_t begin_time;
 	double elapsed_time;
@@ -123,29 +119,23 @@ int main(int argc, char *argv[])
 	if (imgtool_validitychecks())
 		goto done;
 
-	/* create rc struct */
-	rc = rc_create();
-	if (!rc)
-	{
-		fprintf(stderr, "Out of memory\n");
-		goto done;
-	}
-
 	/* register options */
-	if (rc_register(rc, opts))
-	{
-		fprintf(stderr, "Out of memory\n");
-		goto done;
-	}
+	options_add_entries(messtest_opts);
+	options_add_entries(fileio_opts);
 
 	begin_time = clock();
 
 	/* parse the commandline */
-	if (rc_parse_commandline(rc, argc, argv, 2, handle_arg))
+	// TODONATE: FIXME
+	if (options_parse_command_line(argc, argv))
 	{
 		fprintf(stderr, "Error while parsing cmdline\n");
 		goto done;
 	}
+
+	/* read options */
+	dump_screenshots = options_get_bool("dumpscreenshots", TRUE);
+	preserve_directory = options_get_bool("preservedir", TRUE);
 
 	if (test_count > 0)
 	{
@@ -161,8 +151,6 @@ int main(int argc, char *argv[])
 	result = failure_count;
 
 done:
-	if (rc)
-		rc_destroy(rc);
 	return result;
 }
 

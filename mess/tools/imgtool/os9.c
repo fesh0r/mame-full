@@ -1109,18 +1109,27 @@ static imgtoolerr_t os9_diskimage_deletedir(imgtool_image *image, const char *pa
 
 
 
-static void coco_os9_module_populate(UINT32 state, union imgtoolinfo *info)
+void os9_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR:		info->i = 1; break;
 		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct os9_diskinfo); break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct os9_direnum); break;
-		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '/'; break;
-		case IMGTOOLINFO_PTR_CREATE:						info->create = os9_diskimage_create; break;
-		case IMGTOOLINFO_PTR_OPEN:							info->open = os9_diskimage_open; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "os9"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "OS-9 format"); break;
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = os9_diskimage_create; break;
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = os9_diskimage_open; break;
 		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = os9_diskimage_beginenum; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = os9_diskimage_nextenum; break;
 		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = os9_diskimage_freespace; break;
@@ -1129,9 +1138,6 @@ static void coco_os9_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_PTR_DELETE_FILE:					info->delete_file = os9_diskimage_deletefile; break;
 		case IMGTOOLINFO_PTR_CREATE_DIR:					info->create_dir = os9_diskimage_createdir; break;
 		case IMGTOOLINFO_PTR_DELETE_DIR:					info->delete_dir = os9_diskimage_deletedir; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_coco; break;
 	}
 }
-
-
-
-FLOPPYMODULE(os9, "OS-9 format", coco, coco_os9_module_populate)

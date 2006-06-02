@@ -431,24 +431,19 @@ OPTION_GUIDE_END
 #define mess_hd_create_optionspecs "B[1]-2048;C1-[32]-65536;D1-[8]-64;E1-[128]-4096;F128/256/[512]/1024/2048/4096/8192/16384/32768/65536"
 
 
-imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
+void mess_hd_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
-	imgtoolerr_t err;
-	struct ImageModule *module;
+	switch(state)
+	{
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "mess_hd"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "MESS hard disk image"); break;
+		case IMGTOOLINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = imgtool_temp_str(), "hd"); break;
 
-	err = imgtool_library_createmodule(library, "mess_hd", &module);
-	if (err)
-		return err;
+		case IMGTOOLINFO_PTR_CREATE:						info->create = mess_hd_image_create; break;
 
-	module->description				= "MESS hard disk image";
-	module->extensions				= "hd\0";
-
-	module->create					= mess_hd_image_create;
-
-	module->createimage_optguide	= mess_hd_create_optionguide;
-	module->createimage_optspec		= mess_hd_create_optionspecs;
-
-	return IMGTOOLERR_SUCCESS;
+		case IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE:			info->createimage_optguide = mess_hd_create_optionguide; break;
+		case IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC:			strcpy(info->s = imgtool_temp_str(), mess_hd_create_optionspecs); break;
+	}
 }
 
 

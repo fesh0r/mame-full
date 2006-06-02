@@ -822,7 +822,7 @@ static const struct command_procmap_entry commands[] =
 #ifndef NEW_RENDER
 void osd_update_video_and_audio(struct _mame_display *display)
 #else
-void osd_update(mame_time emutime)
+int osd_update(mame_time emutime)
 #endif
 {
 	int i;
@@ -843,12 +843,12 @@ void osd_update(mame_time emutime)
 	if (!seen_first_update)
 	{
 		seen_first_update = TRUE;
-		return;
+		goto done;
 	}
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
-		return;
+		goto done;
 
 	/* have we hit the time limit? */
 	current_time = timer_get_time();
@@ -858,7 +858,7 @@ void osd_update(mame_time emutime)
 	{
 		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Time limit of %.2f seconds exceeded", time_limit);
-		return;
+		goto done;
 	}
 
 	/* update the runtime hash */
@@ -895,6 +895,11 @@ void osd_update(mame_time emutime)
 
 		current_command++;
 	}
+
+done:
+#ifdef NEW_RENDER
+	return FALSE;
+#endif
 }
 
 

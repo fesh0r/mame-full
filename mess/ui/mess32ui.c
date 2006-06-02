@@ -26,7 +26,6 @@
 #include "softwarepicker.h"
 #include "devview.h"
 #include "windows/window.h"
-#include "rc.h"
 #include "utils.h"
 #include "ui_text.h"
 #include "strconv.h"

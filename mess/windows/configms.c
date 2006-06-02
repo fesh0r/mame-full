@@ -11,7 +11,6 @@
 
 // MESS headers
 #include "driver.h"
-#include "windows/rc.h"
 #include "windows/config.h"
 #include "parallel.h"
 #include "menu.h"
@@ -30,23 +29,20 @@ int win_write_config;
 //	LOCAL VARIABLES
 //============================================================
 
-static char *ramsize_opt;
 static char *dev_dirs[IO_COUNT];
 
-static int specify_ram(struct rc_option *option, const char *arg, int priority);
-
-struct rc_option mess_opts[] =
+const options_entry mess_opts[] =
 {
-	/* FIXME - these option->names should NOT be hardcoded! */
-	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "newui",			"nu",   rc_bool,	&options.disable_normal_ui,	"1", 0, 0, NULL,			"use the new MESS UI" },
-	{ "ramsize",		"ram",  rc_string,	&ramsize_opt,				NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
-	{ "threads",		"thr",  rc_int,		&win_task_count,			NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
-	{ "natural",		"nat",  rc_bool,	&win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
-	{ "min_width",		"mw",   rc_int,		&options.min_width,			"200", 0, 0, NULL,			"specifies the minimum width for the display" },
-	{ "min_height",		"mh",   rc_int,		&options.min_height,		"200", 0, 0, NULL,			"specifies the minimum height for the display" },
-	{ "writeconfig",	"wc",	rc_bool,	&win_write_config,			NULL, 0, 0, NULL,			"writes configuration to (driver).ini on exit" },
-	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+	{ NULL,							NULL,   OPTION_HEADER,		"MESS SPECIFIC OPTIONS" },
+	{ "newui;nu",                   "1",    OPTION_BOOLEAN,		"use the new MESS UI" },
+    { "ramsize;ram",				NULL,	0,					"size of RAM (if supported by driver)" },
+	{ "threads;thr",				NULL,	0,					"number of threads to use for parallel operations" },
+	{ "natural;nat",				"0",	OPTION_BOOLEAN,		"specifies whether to use a natural keyboard or not" },
+	{ "min_width;mw",				"200",	0,					"specifies the minimum width for the display" },
+	{ "min_height;mh",				"200",	0,					"specifies the minimum height for the display" },
+	{ "writeconfig;wc",				"0",	OPTION_BOOLEAN,		"writes configuration to (driver).ini on exit" },
+	{ "skip_warnings",				"0",    OPTION_BOOLEAN,		"skip displaying the warnings screen" },
+	{ NULL }
 };
 
 //============================================================
@@ -75,8 +71,9 @@ int write_config(const char* filename, const game_driver *gamedrv)
 	if (!f)
 		goto done;
 
-	if (osd_rc_write(cli_rc_access(), f, filename))
-		goto done;
+//	TODONATE: FIXME
+//	if (osd_rc_write(cli_rc_access(), f, filename))
+//		goto done;
 
 	retval = 0;
 
@@ -84,25 +81,6 @@ done:
 	if (f)
 		mame_fclose(f);
 	return retval;
-}
-
-
-
-static int specify_ram(struct rc_option *option, const char *arg, int priority)
-{
-	UINT32 specified_ram = 0;
-
-	if (strcmp(arg, "0"))
-	{
-		specified_ram = ram_parse_string(arg);
-		if (specified_ram == 0)
-		{
-			fprintf(stderr, "Cannot recognize the RAM option %s\n", arg);
-			return -1;
-		}
-	}
-	options.ram = specified_ram;
-	return 0;
 }
 
 
@@ -131,10 +109,11 @@ void set_devicedirectory(int dev, const char *dir)
 //	Device options
 //============================================================
 
-struct device_rc_option
+typedef struct _device_rc_option device_rc_option;
+struct _device_rc_option
 {
 	// options for the RC system
-	struct rc_option opts[2];
+	options_entry opts[2];
 
 	// device information
 	iodevice_t devtype;
@@ -145,19 +124,21 @@ struct device_rc_option
 	char *filename;
 };
 
-struct device_type_options
+typedef struct _device_type_options device_type_options;
+struct _device_type_options
 {
 	int count;
-	struct device_rc_option *opts[MAX_DEV_INSTANCES];
+	device_rc_option *opts[MAX_DEV_INSTANCES];
 };
 
-struct device_type_options *device_options;
+device_type_options *device_options;
 
 
 
-static int add_device(struct rc_option *option, const char *arg, int priority)
+/*
+static int add_device(options_entry *option, const char *arg, int priority)
 {
-	struct device_rc_option *dev_option = (struct device_rc_option *) option;
+	device_rc_option *dev_option = (device_rc_option *) option;
 
 	// the user specified a device type
 	options.image_files[options.image_count].device_type = dev_option->devtype;
@@ -168,6 +149,7 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 
 	return 0;
 }
+*/
 
 
 
@@ -219,7 +201,7 @@ void device_dirs_save(int config_type, xml_data_node *parentnode)
 
 
 
-void win_add_mess_device_options(struct rc_struct *rc, const game_driver *gamedrv)
+void win_add_mess_device_options(const game_driver *gamedrv)
 {
 	struct SystemConfigurationParamBlock cfg;
 	device_getinfo_handler handlers[64];
@@ -227,11 +209,12 @@ void win_add_mess_device_options(struct rc_struct *rc, const game_driver *gamedr
 	device_class devclass;
 	iodevice_t devtype;
 	int dev_count, dev, id, count;
-	struct device_rc_option *dev_option;
-	struct rc_option *opts;
+	device_rc_option *dev_option;
+	options_entry *opts;
 	const char *dev_name;
 	const char *dev_short_name;
 	const char *dev_tag;
+	char dev_full_name[128];
 
 	// retrieve getinfo handlers
 	memset(&cfg, 0, sizeof(cfg));
@@ -252,9 +235,8 @@ void win_add_mess_device_options(struct rc_struct *rc, const game_driver *gamedr
 		opts = auto_malloc(sizeof(*opts) * 2);
 		memset(opts, 0, sizeof(*opts) * 2);
 		opts[0].name = "MESS devices";
-		opts[0].type = rc_seperator;
-		opts[1].type = rc_end;
-		rc_register(rc, opts);
+		opts[0].flags = OPTION_HEADER;
+		options_add_entries(opts);
 
 		// we need to save all options
 		device_options = auto_malloc(sizeof(*device_options) * dev_count);
@@ -280,25 +262,22 @@ void win_add_mess_device_options(struct rc_struct *rc, const game_driver *gamedr
 				// retrieve info about hte device instance
 				dev_name = device_instancename(&devclass, id);
 				dev_short_name = device_briefinstancename(&devclass, id);
+				snprintf(dev_full_name, sizeof(dev_full_name) / sizeof(dev_full_name[0]),
+					"%s;%s", dev_name, dev_short_name);
 
 				// dynamically allocate the option
 				dev_option = auto_malloc(sizeof(*dev_option));
 				memset(dev_option, 0, sizeof(*dev_option));
 
 				// populate the options
-				dev_option->opts[0].name = auto_strdup(dev_name);
-				dev_option->opts[0].shortname = auto_strdup(dev_short_name);
-				dev_option->opts[0].type = rc_string;
-				dev_option->opts[0].func = add_device;
-				dev_option->opts[0].dest = &dev_option->filename;
-				dev_option->opts[1].type = rc_end;
+				dev_option->opts[0].name = auto_strdup(dev_full_name);
 				dev_option->devtype = devtype;
 				dev_option->tag = dev_tag;
 				dev_option->index = id;
 
 				// register these options
 				device_options[dev].opts[id] = dev_option;
-				rc_register(rc, dev_option->opts);
+				options_add_entries(dev_option->opts);
 			}
 		}
 	}
@@ -366,4 +345,33 @@ int osd_select_file(mess_image *img, char *filename)
 
 void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
+}
+
+
+
+void win_mess_extract_options(void)
+{
+	UINT32 specified_ram = 0;
+	const char *arg;
+
+	arg = options_get_string("ramsize", TRUE);
+	if (arg)
+	{
+		specified_ram = ram_parse_string(arg);
+		if (specified_ram == 0)
+		{
+			fprintf(stderr, "Cannot recognize the RAM option %s\n", arg);
+			exit(-1);
+		}
+	}
+
+	options.skip_warnings = options_get_bool("skip_warnings", TRUE);
+	options.disable_normal_ui = options_get_bool("newui", TRUE);
+	options.ram = specified_ram;
+	options.min_width = options_get_int("min_width", TRUE);
+	options.min_height = options_get_int("min_height", TRUE);
+
+	win_task_count = options_get_int("threads", TRUE);
+	win_use_natural_keyboard = options_get_bool("natural", TRUE);
+	win_write_config = options_get_bool("writeconfig", TRUE);
 }

@@ -1,9 +1,11 @@
 IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/unzip.o							\
 	$(OBJ)/chd.o							\
+	$(OBJ)/options.o						\
 	$(OBJ)/harddisk.o						\
 	$(OBJ)/mamecore.o						\
 	$(OBJ)/md5.o							\
+	$(OBJ)/restrack.o						\
 	$(OBJ)/sha1.o							\
 	$(OBJ)/version.o						\
 	$(OBJ)/mamecore.o						\

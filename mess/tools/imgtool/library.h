@@ -157,7 +157,7 @@ enum
 	IMGTOOLINFO_INT_CREATION_UNTESTED,
 	IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK,
 
-	IMGTOOLINFO_INT_DEV_SPECIFIC = 0x08000,					/* R/W: Device-specific values start here */
+	IMGTOOLINFO_INT_CLASS_SPECIFIC = 0x08000,
 
 	/* --- the following bits of info are returned as pointers to data or functions --- */
 	IMGTOOLINFO_PTR_FIRST = 0x10000,
@@ -189,8 +189,9 @@ enum
 	IMGTOOLINFO_PTR_APPROVE_FILENAME_CHAR,
 	IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE,
 	IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE,
+	IMGTOOLINFO_PTR_MAKE_CLASS,
 
-	IMGTOOLINFO_PTR_DEV_SPECIFIC = 0x18000,					/* R/W: Device-specific values start here */
+	IMGTOOLINFO_PTR_CLASS_SPECIFIC = 0x18000,
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	IMGTOOLINFO_STR_FIRST = 0x20000,
@@ -201,7 +202,23 @@ enum
 	IMGTOOLINFO_STR_FILE_EXTENSIONS,
 	IMGTOOLINFO_STR_EOLN,
 	IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC,
-	IMGTOOLINFO_STR_WRITEFILE_OPTSPEC
+	IMGTOOLINFO_STR_WRITEFILE_OPTSPEC,
+
+	IMGTOOLINFO_STR_CLASS_SPECIFIC = 0x28000
+};
+
+
+
+union imgtoolinfo;
+typedef struct _imgtool_class imgtool_class;
+
+typedef void (*imgtool_get_info)(const imgtool_class *, UINT32, union imgtoolinfo *);
+
+struct _imgtool_class
+{
+	imgtool_get_info get_info;
+	imgtool_get_info derived_get_info;
+	void *derived_param;
 };
 
 
@@ -213,7 +230,7 @@ union imgtoolinfo
 	genf *  f;											/* generic function pointers */
 	char *	s;											/* generic strings */
 
-	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *sream);
+	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *stream);
 	void			(*close)		(imgtool_image *image);
 	void			(*info)			(imgtool_image *image, char *string, size_t len);
 	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
@@ -238,41 +255,43 @@ union imgtoolinfo
 	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
 	imgtoolerr_t	(*write_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
 	int				(*approve_filename_char)(unicode_char_t ch);
+	int				(*make_class)(int index, imgtool_class *imgclass);
 
 	const struct OptionGuide *createimage_optguide;
 	const struct OptionGuide *writefile_optguide;
 };
 
 
-INLINE INT64 imgtool_get_info_int(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+
+INLINE INT64 imgtool_get_info_int(const imgtool_class *imgclass, UINT32 state)
 {
 	union imgtoolinfo info;
 	info.i = 0;
-	get_info(state, &info);
+	imgclass->get_info(imgclass, state, &info);
 	return info.i;
 }
 
-INLINE void *imgtool_get_info_ptr(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+INLINE void *imgtool_get_info_ptr(const imgtool_class *imgclass, UINT32 state)
 {
 	union imgtoolinfo info;
 	info.p = NULL;
-	get_info(state, &info);
+	imgclass->get_info(imgclass, state, &info);
 	return info.p;
 }
 
-INLINE genf *imgtool_get_info_fct(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+INLINE genf *imgtool_get_info_fct(const imgtool_class *imgclass, UINT32 state)
 {
 	union imgtoolinfo info;
 	info.f = NULL;
-	get_info(state, &info);
+	imgclass->get_info(imgclass, state, &info);
 	return info.f;
 }
 
-INLINE char *imgtool_get_info_string(void (*get_info)(UINT32, union imgtoolinfo *), UINT32 state)
+INLINE char *imgtool_get_info_string(const imgtool_class *imgclass, UINT32 state)
 {
 	union imgtoolinfo info;
 	info.s = NULL;
-	get_info(state, &info);
+	imgclass->get_info(imgclass, state, &info);
 	return info.s;
 }
 
@@ -285,6 +304,8 @@ struct ImageModule
 {
 	struct ImageModule *previous;
 	struct ImageModule *next;
+
+	imgtool_class imgclass;
 
 	const char *name;
 	const char *description;
@@ -349,16 +370,15 @@ imgtool_library *imgtool_library_create(void);
 /* closes an imgtool library */
 void imgtool_library_close(imgtool_library *library);
 
+/* adds a module to an imgtool library */
+void imgtool_library_add(imgtool_library *library, imgtool_get_info get_info);
+
 /* seeks out and removes a module from an imgtool library */
 const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
 	const char *module);
 
 /* sorts an imgtool library */
 void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort);
-
-/* creates an imgtool module; called within module constructors */
-imgtoolerr_t imgtool_library_createmodule(imgtool_library *library,
-	const char *module_name, struct ImageModule **module);
 
 /* finds a module */
 const struct ImageModule *imgtool_library_findmodule(

@@ -6303,16 +6303,22 @@ static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *pa
  *
  *************************************/
 
-static void mac_module_populate(UINT32 state, union imgtoolinfo *info)
+static void generic_mac_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct mac_l2_imgref); break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct mac_iterator); break;
-		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = ':'; break;
 
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
 		case IMGTOOLINFO_PTR_CLOSE:							/* info->close = mac_image_exit */; break;
 		case IMGTOOLINFO_PTR_INFO:							info->info = mac_image_info; break;
 		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = mac_image_beginenum; break;
@@ -6324,36 +6330,42 @@ static void mac_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_PTR_SET_ATTRS:						info->set_attrs = mac_image_setattrs; break;
 		case IMGTOOLINFO_PTR_GET_ICON_INFO:					info->get_iconinfo = mac_image_geticoninfo; break;
 		case IMGTOOLINFO_PTR_SUGGEST_TRANSFER:				info->suggest_transfer = mac_image_suggesttransfer; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_apple35_mac; break;
 	}
 }
 
 
 
-static void mac_mfs_module_populate(UINT32 state, union imgtoolinfo *info)
+void mac_mfs_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
-		case IMGTOOLINFO_PTR_CREATE:						info->create = mfs_image_create; break;
-		case IMGTOOLINFO_PTR_OPEN:							info->open = mfs_image_open; break;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "mac_mfs"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "Mac MFS Floppy"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = mfs_image_create; break;
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = mfs_image_open; break;
 		case IMGTOOLINFO_PTR_WRITE_FILE:					info->write_file = mac_image_writefile; break;
-		default: mac_module_populate(state, info); break;
+
+		default: generic_mac_get_info(imgclass, state, info); break;
 	}
 }
 
 
 
-static void mac_hfs_module_populate(UINT32 state, union imgtoolinfo *info)
+void mac_hfs_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
-		case IMGTOOLINFO_PTR_OPEN:							info->open = hfs_image_open; break;
-		default: mac_module_populate(state, info); break;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "mac_hfs"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "Mac HFS Floppy"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = hfs_image_open; break;
+
+		default: generic_mac_get_info(imgclass, state, info); break;
 	}
 }
-
-
-
-FLOPPYMODULE(mac_mfs, "Mac MFS Floppy", apple35_mac, mac_mfs_module_populate)
-FLOPPYMODULE(mac_hfs, "Mac HFS Floppy", apple35_mac, mac_hfs_module_populate)
-
-

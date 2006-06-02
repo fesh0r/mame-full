@@ -136,40 +136,33 @@ static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filen
 static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *filename);
 static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
-imgtoolerr_t concept_createmodule(imgtool_library *library)
+void concept_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
-	imgtoolerr_t err;
-	struct ImageModule *module;
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(concept_image); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(concept_iterator); break;
 
-	err = imgtool_library_createmodule(library, "concept", &module);
-	if (err)
-		return err;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "concept"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "Concept floppy disk image"); break;
+		case IMGTOOLINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = imgtool_temp_str(), "img"); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
 
-	module->description				= "Concept floppy disk image";
-	module->extensions				= "img\0";
-	module->eoln					= EOLN_CR;
-	module->image_extra_bytes		= sizeof(concept_image);
-	module->imageenum_extra_bytes	= sizeof(concept_iterator);
-
-	module->open					= concept_image_init;
-	module->close					= concept_image_exit;
-	module->info					= concept_image_info;
-	module->begin_enum				= concept_image_beginenum;
-	module->next_enum				= concept_image_nextenum;
-	module->close_enum				= concept_image_closeenum;
-	module->free_space				= concept_image_freespace;
-	module->read_file				= concept_image_readfile;
-	/*module->write_file				= concept_image_writefile;
-	module->delete_file				= concept_image_deletefile;
-	module->create					= concept_image_create;*/
-
-	/*module->createimage_optguide	= ...;
-	module->createimage_optspec		= ...;
-	module->writefile_optguide		= ...;
-	module->writefile_optspec		= ...;*/
-	/*module->extra					= NULL;*/
-
-	return IMGTOOLERR_SUCCESS;
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_OPEN:							info->open = concept_image_init; break;
+		case IMGTOOLINFO_PTR_CLOSE:							info->close = concept_image_exit; break;
+		case IMGTOOLINFO_PTR_INFO:							info->info = concept_image_info; break;
+		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = concept_image_beginenum; break;
+		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = concept_image_nextenum; break;
+		case IMGTOOLINFO_PTR_CLOSE_ENUM:					info->close_enum = concept_image_closeenum; break;
+		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = concept_image_freespace; break;
+		case IMGTOOLINFO_PTR_READ_FILE:						info->read_file = concept_image_readfile; break;
+		case IMGTOOLINFO_PTR_WRITE_FILE:					/* info->write_file = concept_image_writefile */; break;
+		case IMGTOOLINFO_PTR_DELETE_FILE:					/* info->delete_file = concept_image_deletefile */; break;
+		case IMGTOOLINFO_PTR_CREATE:						/* info->create = concept_image_create */; break;
+	}
 }
 
 /*

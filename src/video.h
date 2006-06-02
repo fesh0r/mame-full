@@ -152,8 +152,10 @@ int skip_this_frame(void);
 /* return current performance data */
 const performance_info *mame_get_performance_info(void);
 
+#ifdef MESS
 /* request callback on full refresh */
 void add_full_refresh_callback(void (*callback)(void));
+#endif /* MESS */
 
 /*
   Save a screen shot of the game display. It is suggested to use the core

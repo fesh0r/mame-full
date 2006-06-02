@@ -2193,10 +2193,11 @@ static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *
 
 
 
-static void apple2_prodos_module_populate(UINT32 state, union imgtoolinfo *info)
+static void generic_prodos_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR:		info->i = 1; break;
 		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
 		case IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME:		info->i = 1; break;
@@ -2204,8 +2205,15 @@ static void apple2_prodos_module_populate(UINT32 state, union imgtoolinfo *info)
 		case IMGTOOLINFO_INT_WRITING_UNTESTED:				info->i = 1; break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct prodos_diskinfo); break;
 		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct prodos_direnum); break;
-		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '/'; break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "ProDOS format"); break;
+		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
+		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_MAKE_CLASS:					info->make_class = imgtool_floppy_make_class; break;
 		case IMGTOOLINFO_PTR_BEGIN_ENUM:					info->begin_enum = prodos_diskimage_beginenum; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM:						info->next_enum = prodos_diskimage_nextenum; break;
 		case IMGTOOLINFO_PTR_FREE_SPACE:					info->free_space = prodos_diskimage_freespace; break;
@@ -2224,29 +2232,36 @@ static void apple2_prodos_module_populate(UINT32 state, union imgtoolinfo *info)
 
 
 
-static void apple2_prodos_module_populate_525(UINT32 state, union imgtoolinfo *info)
+void prodos_525_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
-		case IMGTOOLINFO_PTR_CREATE:						info->create = prodos_diskimage_create_525; break;
-		case IMGTOOLINFO_PTR_OPEN:							info->open = prodos_diskimage_open_525; break;
-		default:											apple2_prodos_module_populate(state, info); break;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "prodos_525"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = prodos_diskimage_create_525; break;
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = prodos_diskimage_open_525; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_apple2; break;
+
+		default:											generic_prodos_get_info(imgclass, state, info); break;
 	}
 }
 
 
 
-static void apple2_prodos_module_populate_35(UINT32 state, union imgtoolinfo *info)
+void prodos_35_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
-		case IMGTOOLINFO_PTR_CREATE:						info->create = prodos_diskimage_create_35; break;
-		case IMGTOOLINFO_PTR_OPEN:							info->open = prodos_diskimage_open_35; break;
-		default:											apple2_prodos_module_populate(state, info); break;
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "prodos_35"); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = prodos_diskimage_create_35; break;
+		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = prodos_diskimage_open_35; break;
+		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_apple35_iigs; break;
+
+		default:											generic_prodos_get_info(imgclass, state, info); break;
 	}
 }
-
-
-
-FLOPPYMODULE(prodos_525, "ProDOS format", apple2,       apple2_prodos_module_populate_525)
-FLOPPYMODULE(prodos_35,  "ProDOS format", apple35_iigs, apple2_prodos_module_populate_35)
