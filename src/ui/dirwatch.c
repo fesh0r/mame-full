@@ -13,7 +13,6 @@
 #include <windows.h>
 #include <string.h>
 #include <tchar.h>
-#include <malloc.h>
 #include "dirwatch.h"
 
 typedef BOOL (WINAPI *READDIRECTORYCHANGESFUNC)(HANDLE hDirectory, LPVOID lpBuffer,

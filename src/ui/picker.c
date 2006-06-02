@@ -24,7 +24,6 @@
 #include <sys/stat.h>
 #include <wingdi.h>
 #include <time.h>
-#include <malloc.h>
 #include <tchar.h>
 
 #include "picker.h"

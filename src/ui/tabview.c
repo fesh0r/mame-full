@@ -24,9 +24,9 @@
 #include <sys/stat.h>
 #include <wingdi.h>
 #include <time.h>
-#include <malloc.h>
 #include <assert.h>
 #include <tchar.h>
+#include <stdlib.h>
 
 #include "tabview.h"
 #include "m32util.h"

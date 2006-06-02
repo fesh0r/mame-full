@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <malloc.h>
 #include <math.h>
 #include <direct.h>
 #include <driver.h>

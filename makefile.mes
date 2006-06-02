@@ -197,10 +197,6 @@ OBJ = obj/$(NAME)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
 
-ifndef MSVC_BUILD
-DEFS += -Dalloca=__builtin_alloca
-endif
-
 ifdef PTR64
 DEFS += -DPTR64
 endif
