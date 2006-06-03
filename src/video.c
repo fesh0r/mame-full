@@ -704,7 +704,7 @@ void schedule_full_refresh(void)
 void force_partial_update(int scrnum, int scanline)
 {
 	rectangle clip = Machine->visible_area[scrnum];
-#ifndef NEW_RENDER
+#if defined(MESS) && !defined(NEW_RENDER)
 	callback_item *cb;
 #endif
 
