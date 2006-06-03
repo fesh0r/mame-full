@@ -27,8 +27,11 @@ static int test_count, failure_count;
 
 static const options_entry messtest_opts[] =
 {
+	{ "" },
 	{ "dumpscreenshots;ds",		"0",	OPTION_BOOLEAN,	"always dump screenshots" },
 	{ "preservedir;pd",			"0",	OPTION_BOOLEAN,	"preserve current directory" },
+	{ "rdtsc",					"0",	OPTION_BOOLEAN, "use the RDTSC instruction for timing; faster but may result in uneven performance" },
+	{ "priority",				"0",	0,				"thread priority for the main game thread; range from -15 to 1" },
 	{ NULL }
 };
 
@@ -40,7 +43,7 @@ static const options_entry messtest_opts[] =
  *
  *************************************/
 
-static int handle_arg(char *arg)
+static void handle_arg(const char *arg)
 {
 	int this_test_count;
 	int this_failure_count;
@@ -59,7 +62,6 @@ static int handle_arg(char *arg)
 
 	test_count += this_test_count;
 	failure_count += this_failure_count;
-	return 0;
 }
 
 
@@ -112,6 +114,11 @@ int main(int argc, char *argv[])
 	cpuintrf_init();
 	sndintrf_init();
 	
+	/* register options */
+	options_add_entries(messtest_opts);
+	options_add_entries(fileio_opts);
+	options_set_option_callback("", handle_arg);
+
 	/* run MAME's validity checks; if these fail cop out now */
 	if (mame_validitychecks(-1))
 		goto done;
@@ -119,14 +126,9 @@ int main(int argc, char *argv[])
 	if (imgtool_validitychecks())
 		goto done;
 
-	/* register options */
-	options_add_entries(messtest_opts);
-	options_add_entries(fileio_opts);
-
 	begin_time = clock();
 
 	/* parse the commandline */
-	// TODONATE: FIXME
 	if (options_parse_command_line(argc, argv))
 	{
 		fprintf(stderr, "Error while parsing cmdline\n");
