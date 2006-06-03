@@ -27,7 +27,6 @@ gamma                   1.000000
 beam                    1.000000
 flicker                 0.000000
 antialias               1
-translucency            1
 
 ### X11-window Related ###
 cursor                  1

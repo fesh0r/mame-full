@@ -44,27 +44,17 @@ static void osd_exit(void)
 void *osd_alloc_executable(size_t size)
 {
 #ifdef HAVE_MMAP
-	void *addr = mmap(NULL, size + sizeof(size_t), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_SHARED, -1, 0);
-	if (addr)
-	{
-		/* Store the size at the front for munmap. */
-		*((size_t *)addr) = size + sizeof(size_t);
-		addr = (char *)addr + sizeof(size_t);
-	}
+	void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_SHARED, -1, 0);
 #else
 	void *addr = malloc(size);
 #endif
 	return addr;
 }
 
-void osd_free_executable(void *ptr)
+void osd_free_executable(void *ptr, size_t size)
 {
 #ifdef HAVE_MMAP
-	if (ptr)
-	{
-		ptr = (char *)ptr - sizeof(size_t);
-		munmap(ptr, *((size_t *)ptr));
-	}
+	munmap(ptr, size);
 #else
 	free(ptr);
 #endif
