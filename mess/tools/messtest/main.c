@@ -21,8 +21,6 @@
 extern int mame_validitychecks(int game);
 extern const options_entry fileio_opts[];
 
-static int dump_screenshots;
-static int preserve_directory;
 static int test_count, failure_count;
 
 static const options_entry messtest_opts[] =
@@ -52,9 +50,9 @@ static void handle_arg(const char *arg)
 	/* setup options */
 	memset(&opts, 0, sizeof(opts));
 	opts.script_filename = arg;
-	if (preserve_directory)
+	if (options_get_bool("preservedir", TRUE))
 		opts.preserve_directory = 1;
-	if (dump_screenshots)
+	if (options_get_bool("dumpscreenshots", TRUE))
 		opts.dump_screenshots = 1;
 
 	if (messtest(&opts, &this_test_count, &this_failure_count))
@@ -134,10 +132,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error while parsing cmdline\n");
 		goto done;
 	}
-
-	/* read options */
-	dump_screenshots = options_get_bool("dumpscreenshots", TRUE);
-	preserve_directory = options_get_bool("preservedir", TRUE);
 
 	if (test_count > 0)
 	{
