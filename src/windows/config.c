@@ -504,6 +504,17 @@ static void parse_ini_file(const char *name)
 }
 
 
+#ifdef MESS
+static void driver_name_callback(const char *arg)
+{
+	int drvnum;
+	drvnum = get_driver_index(arg);
+	if (drvnum >= 0)
+		win_add_mess_device_options(drivers[drvnum]);
+}
+#endif // MESS
+
+
 int cli_frontend_init(int argc, char **argv)
 {
 	machine_config drv;
@@ -518,6 +529,7 @@ int cli_frontend_init(int argc, char **argv)
 	options_add_entries(video_opts);
 #ifdef MESS
 	options_add_entries(mess_opts);
+	options_set_option_callback("", driver_name_callback);
 #endif // MESS
 
 	// parse the command line first; if we fail here, we're screwed

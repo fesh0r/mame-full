@@ -135,24 +135,6 @@ device_type_options *device_options;
 
 
 
-/*
-static int add_device(options_entry *option, const char *arg, int priority)
-{
-	device_rc_option *dev_option = (device_rc_option *) option;
-
-	// the user specified a device type
-	options.image_files[options.image_count].device_type = dev_option->devtype;
-	options.image_files[options.image_count].device_tag = dev_option->tag;
-	options.image_files[options.image_count].device_index = dev_option->index;
-	options.image_files[options.image_count].name = auto_strdup(arg);
-	options.image_count++;
-
-	return 0;
-}
-*/
-
-
-
 void device_dirs_load(int config_type, xml_data_node *parentnode)
 {
 	iodevice_t dev;
@@ -239,8 +221,8 @@ void win_add_mess_device_options(const game_driver *gamedrv)
 		options_add_entries(opts);
 
 		// we need to save all options
-		device_options = auto_malloc(sizeof(*device_options) * dev_count);
-		memset(device_options, 0, sizeof(*device_options) * dev_count);
+		device_options = auto_malloc(sizeof(*device_options) * (dev_count + 1));
+		memset(device_options, 0, sizeof(*device_options) * (dev_count + 1));
 
 		// list all options
 		for (dev = 0; dev < dev_count; dev++)
@@ -251,9 +233,7 @@ void win_add_mess_device_options(const game_driver *gamedrv)
 			// retrieve info about the device
 			devtype = (iodevice_t) (int) device_get_info_int(&devclass, DEVINFO_INT_TYPE);
 			count = (int) device_get_info_int(&devclass, DEVINFO_INT_COUNT);
-			dev_tag = device_get_info_string(&devclass, DEVINFO_STR_DEV_TAG);
-			if (dev_tag)
-				dev_tag = auto_strdup(dev_tag);
+			dev_tag = auto_strdup_allow_null(device_get_info_string(&devclass, DEVINFO_STR_DEV_TAG));
 
 			device_options[dev].count = count;
 
@@ -353,6 +333,11 @@ void win_mess_extract_options(void)
 {
 	UINT32 specified_ram = 0;
 	const char *arg;
+	device_rc_option *dev_option;
+	const char *optionname;
+	const char *filename;
+	const char *s;
+	int i, j;
 
 	arg = options_get_string("ramsize", TRUE);
 	if (arg)
@@ -374,4 +359,29 @@ void win_mess_extract_options(void)
 	win_task_count = options_get_int("threads", TRUE);
 	win_use_natural_keyboard = options_get_bool("natural", TRUE);
 	win_write_config = options_get_bool("writeconfig", TRUE);
+
+	for (i = 0; device_options[i].count > 0; i++)
+	{
+		for (j = 0; j < device_options[i].count; j++)
+		{
+			dev_option = device_options[i].opts[j];
+
+			// get the correct option name
+			optionname = dev_option->opts[0].name;
+			while((s = strchr(optionname, ';')) != NULL)
+				optionname = s + 1;
+
+			filename = options_get_string(optionname, TRUE);
+
+			if (filename)
+			{
+				// the user specified a device type
+				options.image_files[options.image_count].device_type = dev_option->devtype;
+				options.image_files[options.image_count].device_tag = dev_option->tag;
+				options.image_files[options.image_count].device_index = dev_option->index;
+				options.image_files[options.image_count].name = auto_strdup(filename);
+				options.image_count++;
+			}
+		}
+	}
 }
