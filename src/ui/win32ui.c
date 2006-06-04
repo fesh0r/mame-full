@@ -1835,9 +1835,15 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	extern const char *history_filename;
 	extern const char *mameinfo_filename;
 	LONG common_control_version = GetCommonControlVersion();
+	int validity_failed = 0;
 
 	srand((unsigned)time(NULL));
 
+#ifdef MAME_DEBUG
+	validity_failed = mame_validitychecks(-1);
+#endif // MAME_DEBUG
+
+	init_resource_tracking();
 	begin_resource_tracking();
 
 	// Count the number of games
@@ -2208,13 +2214,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		SetTimer(hMain, SCREENSHOT_TIMER, GetCycleScreenshot()*1000, NULL); //scale to Seconds
 	}
 
-#ifdef MAME_DEBUG
-	if (mame_validitychecks(-1))
+	if (validity_failed)
 	{
 		MessageBox(hMain, MAMENAME " has failed its validity checks.  The GUI will "
 			"still work, but emulations will fail to execute", MAMENAME, MB_OK);
 	}
-#endif // MAME_DEBUG
 
 	return TRUE;
 }
