@@ -60,7 +60,7 @@ struct rc_option sysdep_display_opts[] = {
   { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
   { "SDL Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
   { "doublebuf", NULL, rc_bool, &doublebuf, "1", 0, 0, NULL,
-    "Use double buffering to reduce flicker/tearing" },
+    "Enable/disable double buffering to reduce flicker/tearing" },
   { "grabinput", "gi", rc_bool, &sdl_grab_input, "0", 0, 0, NULL, "Select input grabbing (left-ctrl + delete)" },
   { "alwaysusemouse", "aum", rc_bool, &sdl_always_use_mouse, "0", 0, 0, NULL, "Always use mouse movements as input, even when not grabbed and not fullscreen (default disabled)" },
   { "cursor", "cu", rc_bool, &sdl_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
