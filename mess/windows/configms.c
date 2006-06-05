@@ -385,3 +385,16 @@ void win_mess_extract_options(void)
 		}
 	}
 }
+
+
+
+void win_mess_driver_name_callback(const char *arg)
+{
+	int drvnum;
+	drvnum = driver_get_index(arg);
+	if (drvnum >= 0)
+		win_add_mess_device_options(drivers[drvnum]);
+}
+
+
+

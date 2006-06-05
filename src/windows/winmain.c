@@ -15,6 +15,7 @@
 // standard includes
 #include <time.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 // MAME headers
 #include "driver.h"
@@ -51,14 +52,6 @@ int _CRT_glob = 0;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
-
-#if ENABLE_PROFILER
-static map_entry symbol_map[MAX_SYMBOLS];
-static int map_entries;
-static HANDLE profiler_thread;
-static DWORD profiler_thread_id;
-static volatile UINT8 profiler_thread_exit;
-#endif
 
 #ifndef MESS
 static const char helpfile[] = "docs\\windows.txt";
@@ -258,6 +251,24 @@ int osd_is_bad_read_ptr(const void *ptr, size_t size)
 	return IsBadReadPtr(ptr, size);
 }
 
+
+
+//============================================================
+//  verbose_printf
+//============================================================
+
+void CLIB_DECL verbose_printf(const char *text, ...)
+{
+	if (verbose)
+	{
+		va_list arg;
+
+		/* dump to the buffer */
+		va_start(arg, text);
+		vprintf(text, arg);
+		va_end(arg);
+	}
+}
 
 
 //============================================================

@@ -472,7 +472,6 @@ wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSTOOLOBJS) \
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
-		$(OBJ)/windows/misc.o					\
 		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\

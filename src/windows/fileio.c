@@ -48,13 +48,6 @@
 #endif // UNICODE
 
 
-//============================================================
-//  EXTERNALS
-//============================================================
-
-extern char *rompath_extra;
-
-
 
 //============================================================
 //  TYPE DEFINITIONS
@@ -396,15 +389,6 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 		// if we don't have a path, set an empty string
 		if (rawpath == NULL)
 			rawpath = "";
-
-		// special hack for ROMs
-		if (list == &pathlist[FILETYPE_ROM] && rompath_extra)
-		{
-			// this may leak a little memory, but it's a hack anyway! :-P
-			char *newpath = malloc_or_die(strlen(rompath_extra) + strlen(rawpath) + 2);
-			sprintf(newpath, "%s;%s", rompath_extra, rawpath);
-			rawpath = newpath;
-		}
 
 		// decompose the path
 		expand_pathlist(list, rawpath);
