@@ -693,6 +693,7 @@ BOOL OptionsInit()
 	set_pathlist(FILETYPE_ROM,mame_strdup(settings.romdirs));
 	set_pathlist(FILETYPE_SAMPLE,mame_strdup(settings.sampledirs));
 #ifdef MESS
+	set_pathlist(FILETYPE_IMAGE, mame_strdup(settings.mess.softwaredirs));
 	set_pathlist(FILETYPE_HASH, mame_strdup(settings.mess.hashdir));
 #endif
 	return TRUE;
