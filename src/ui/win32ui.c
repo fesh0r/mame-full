@@ -843,16 +843,10 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->use_triplebuf)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%stb",                  pOpts->use_triplebuf ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sw",                       pOpts->window_mode     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdd",                      pOpts->use_ddraw       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                     pOpts->ddraw_stretch   ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -r %s",                      pOpts->resolution);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -refresh %d",                pOpts->gfx_refresh);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssl",                      pOpts->scanlines       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchres",               pOpts->switchres       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchbpp",               pOpts->switchbpp       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smax",                     pOpts->maximize        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ska",                      pOpts->keepaspect      ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_gamma);
@@ -860,7 +854,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -effect %s",                 pOpts->effect);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -cs %s",                     GetCleanStretchShortName(pOpts->clean_stretch));
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -zoom %i",                   pOpts->zoom);
 
 	// d3d
@@ -911,7 +904,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	
 	/* core video */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -bright %f",                 pOpts->f_bright_correct); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -pause_brightness %f",       pOpts->f_pause_bright); 
 
 	if (pOpts->norotate)
@@ -947,7 +939,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -sr %d",                     pOpts->samplerate);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssamples",                 pOpts->use_samples     ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssound",                   pOpts->enable_sound    ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -vol %d",                    pOpts->attenuation);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -volume %d",                    pOpts->attenuation);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -audio_latency %i",          pOpts->audio_latency);
 	/* misc artwork options */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sart",                     pOpts->use_artwork     ? "" : "no");
@@ -957,7 +949,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbackdrop",            pOpts->backdrops       ? "" : "no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%soverlay",             pOpts->overlays        ? "" : "no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbezel",               pOpts->bezels          ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartcrop",             pOpts->artwork_crop    ? "" : "no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -artres %d",             pOpts->artres);
 	}
 
@@ -989,6 +980,23 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
+
+#ifndef NEW_RENDER
+	// stuff that will be going away soon
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdd",                      pOpts->use_ddraw       ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                     pOpts->ddraw_stretch   ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssl",                      pOpts->scanlines       ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchbpp",               pOpts->switchbpp       ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ska",                      pOpts->keepaspect      ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -cs %s",                     GetCleanStretchShortName(pOpts->clean_stretch));
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -bright %f",                 pOpts->f_bright_correct); 
+
+	if (pOpts->use_artwork == TRUE)
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartcrop",             pOpts->artwork_crop    ? "" : "no");
+	}
+#endif // NEW_RENDER
 
 	dprintf("Launching MAME32:");
 	dprintf("%s",pCmdLine);
