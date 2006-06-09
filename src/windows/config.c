@@ -262,7 +262,7 @@ int cli_frontend_init(int argc, char **argv)
 	execute_simple_commands();
 
 	// find out what game we might be referring to
-	gamename = auto_strdup_allow_null(options_get_string("", FALSE));
+	gamename = options_get_string("", FALSE);
 	if (gamename != NULL)
 		drvnum = driver_get_index(extract_base_name(gamename, basename, ARRAY_LENGTH(basename)));
 
@@ -299,7 +299,9 @@ int cli_frontend_init(int argc, char **argv)
 	}
 
 	// reparse the command line to ensure its options override all
+	// note that we re-fetch the gamename here as it will get overridden
 	options_parse_command_line(argc, argv);
+	gamename = options_get_string("", FALSE);
 
 	// execute any commands specified
 	execute_commands(argv[0]);
@@ -636,6 +638,11 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 		debug_source_script(stemp);
 #endif
 #endif
+
+{
+	extern const char *cheatfile;
+	cheatfile = options_get_string("cheat_file", TRUE);
+}
 
 	// need a decent default for debug width/height
 	if (options.debug_width == 0)

@@ -151,7 +151,7 @@ void options_add_entries(const options_entry *entrylist)
 
 /*-------------------------------------------------
     options_set_option_callback - specifies a
-	callback to be invoked when parsing options
+    callback to be invoked when parsing options
 -------------------------------------------------*/
 
 void options_set_option_callback(const char *name, void (*callback)(const char *arg))
@@ -242,7 +242,7 @@ int options_parse_command_line(int argc, char **argv)
 
 		/* invoke callback, if present */
 		if (data->callback)
-			data->callback(newdata);
+			(*data->callback)(newdata);
 
 		/* allocate a new copy of data for this */
 		update_data(data, newdata);
