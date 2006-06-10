@@ -21,13 +21,15 @@
 #define NUM_SIMUL_KEYS	(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1)
 #define LOG_INPUTX		0
 
-struct InputCode
+typedef struct _mess_input_code mess_input_code;
+struct _mess_input_code
 {
 	UINT32 port[NUM_SIMUL_KEYS];
 	const input_port_entry *ipt[NUM_SIMUL_KEYS];
 };
 
-struct KeyBuffer
+typedef struct _key_buffer key_buffer;
+struct _key_buffer
 {
 	int begin_pos;
 	int end_pos;
@@ -35,14 +37,15 @@ struct KeyBuffer
 	unicode_char_t buffer[4096];
 };
 
-struct CharInfo
+typedef struct _char_info char_info;
+struct _char_info
 {
 	unicode_char_t ch;
 	const char *name;
 	const char *alternate;	/* alternative string, in UTF-8 */
 };
 
-static const struct CharInfo charinfo[] =
+static const char_info charinfo[] =
 {
 	{ 0x0008,					"Backspace",	NULL },		/* Backspace */	
 	{ 0x0009,					"Tab",			"    " },	/* Tab */
@@ -306,7 +309,7 @@ static const struct CharInfo charinfo[] =
 
 ***************************************************************************/
 
-static const struct CharInfo *find_charinfo(unicode_char_t target_char)
+static const char_info *find_charinfo(unicode_char_t target_char)
 {
 	int low = 0;
 	int high = sizeof(charinfo) / sizeof(charinfo[0]);
@@ -356,7 +359,7 @@ static const char *charstr(unicode_char_t ch)
 
 
 
-static int scan_keys(const input_port_entry *input_ports, struct InputCode *codes, UINT32 *ports, const input_port_entry **shift_ports, int keys, int shift)
+static int scan_keys(const input_port_entry *input_ports, mess_input_code *codes, UINT32 *ports, const input_port_entry **shift_ports, int keys, int shift)
 {
 	int result = 0;
 	const input_port_entry *ipt;
@@ -421,9 +424,9 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 
 
 
-#define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES)
+#define CODE_BUFFER_SIZE	(sizeof(mess_input_code) * NUM_CODES)
 
-static int build_codes(const input_port_entry *input_ports, struct InputCode *codes, int map_lowercase)
+static int build_codes(const input_port_entry *input_ports, mess_input_code *codes, int map_lowercase)
 {
 	UINT32 ports[NUM_SIMUL_KEYS];
 	const input_port_entry *ipts[NUM_SIMUL_KEYS];
@@ -470,19 +473,19 @@ done:
 int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 {
 	char buf[CODE_BUFFER_SIZE];
-	struct InputCode *codes;
+	mess_input_code *codes;
 	const input_port_entry *input_ports;
 	const input_port_entry *ipt;
 	int port_count, i, j;
 	int error = 0;
 	unicode_char_t last_char = 0;
-	const struct CharInfo *ci;
+	const char_info *ci;
 
 	if (gamedrv)
 	{
 		if (gamedrv->flags & GAME_COMPUTER)
 		{
-			codes = (struct InputCode *) buf;
+			codes = (mess_input_code *) buf;
 
 			/* allocate the input ports */
 			*memory = input_port_allocate(gamedrv->construct_ipt, *memory);
@@ -548,8 +551,8 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 
 ***************************************************************************/
 
-static struct InputCode *codes;
-static struct KeyBuffer *keybuffer;
+static mess_input_code *codes;
+static key_buffer *keybuffer;
 static mame_timer *inputx_timer;
 static int (*queue_chars)(const unicode_char_t *text, size_t text_len);
 static int (*accept_char)(unicode_char_t ch);
@@ -572,7 +575,7 @@ static void execute_input(int ref, int params, const char *param[])
 static void setup_keybuffer(void)
 {
 	inputx_timer = mame_timer_alloc(inputx_timerproc);
-	keybuffer = auto_malloc(sizeof(struct KeyBuffer));
+	keybuffer = auto_malloc(sizeof(key_buffer));
 	memset(keybuffer, 0, sizeof(*keybuffer));
 }
 
@@ -594,7 +597,7 @@ void inputx_init(void)
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
+		codes = (mess_input_code *) auto_malloc(CODE_BUFFER_SIZE);
 		if (!build_codes(Machine->input_ports, codes, TRUE))
 			goto error;
 
@@ -622,10 +625,10 @@ int inputx_can_post(void)
 	return queue_chars || codes;
 }
 
-static struct KeyBuffer *get_buffer(void)
+static key_buffer *get_buffer(void)
 {
 	assert(inputx_can_post());
-	return (struct KeyBuffer *) keybuffer;
+	return (key_buffer *) keybuffer;
 }
 
 static int can_post_key_directly(unicode_char_t ch)
@@ -647,7 +650,7 @@ static int can_post_key_directly(unicode_char_t ch)
 static int can_post_key_alternate(unicode_char_t ch)
 {
 	const char *s;
-	const struct CharInfo *ci;
+	const char_info *ci;
 	unicode_char_t uchar;
 	int rc;
 
@@ -708,7 +711,7 @@ static mame_time choose_delay(unicode_char_t ch)
 
 static void internal_post_key(unicode_char_t ch)
 {
-	struct KeyBuffer *keybuf;
+	key_buffer *keybuf;
 
 	keybuf = get_buffer();
 
@@ -727,7 +730,7 @@ static void internal_post_key(unicode_char_t ch)
 
 static int buffer_full(void)
 {
-	struct KeyBuffer *keybuf;
+	key_buffer *keybuf;
 	keybuf = get_buffer();
 	return ((keybuf->end_pos + 1) % (sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]))) == keybuf->begin_pos;
 }
@@ -739,7 +742,7 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 	int last_cr = 0;
 	unicode_char_t ch;
 	const char *s;
-	const struct CharInfo *ci;
+	const char_info *ci;
 
 	current_rate = rate;
 
@@ -791,7 +794,7 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 
 static void inputx_timerproc(int dummy)
 {
-	struct KeyBuffer *keybuf;
+	key_buffer *keybuf;
 	mame_time delay;
 
 	keybuf = get_buffer();
@@ -835,8 +838,8 @@ static void inputx_timerproc(int dummy)
 
 void inputx_update(void)
 {
-	const struct KeyBuffer *keybuf;
-	const struct InputCode *code;
+	const key_buffer *keybuf;
+	const mess_input_code *code;
 	unicode_char_t ch;
 	int i;
 	UINT32 value;
@@ -902,7 +905,7 @@ void inputx_handle_mess_extensions(input_port_entry *ipt)
 const char *inputx_key_name(unicode_char_t ch)
 {
 	static char buf[2];
-	const struct CharInfo *ci;
+	const char_info *ci;
 	const char *result;
 
 	ci = find_charinfo(ch);
@@ -932,7 +935,7 @@ const char *inputx_key_name(unicode_char_t ch)
 
 int inputx_is_posting(void)
 {
-	const struct KeyBuffer *keybuf;
+	const key_buffer *keybuf;
 	keybuf = get_buffer();
 	return (keybuf->begin_pos != keybuf->end_pos) || (charqueue_empty && !charqueue_empty());
 }
