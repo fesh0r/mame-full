@@ -17,13 +17,14 @@
 #include "debug/debugcon.h"
 #endif
 
-#define NUM_CODES		128
 #define NUM_SIMUL_KEYS	(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1)
 #define LOG_INPUTX		0
+#define DUMP_CODES		0
 
 typedef struct _mess_input_code mess_input_code;
 struct _mess_input_code
 {
+	unicode_char_t ch;
 	UINT32 port[NUM_SIMUL_KEYS];
 	const input_port_entry *ipt[NUM_SIMUL_KEYS];
 };
@@ -341,7 +342,8 @@ static const char_info *find_charinfo(unicode_char_t target_char)
 
 static const char *charstr(unicode_char_t ch)
 {
-	static char buf[3];
+	static char buf[16];
+	const char *result = buf;
 
 	switch(ch)
 	{
@@ -349,19 +351,31 @@ static const char *charstr(unicode_char_t ch)
 		case '\r':	strcpy(buf, "\\r");		break;
 		case '\n':	strcpy(buf, "\\n");		break;
 		case '\t':	strcpy(buf, "\\t");		break;
+
 		default:
-			buf[0] = (char) ch;
-			buf[1] = '\0';
+			if (ch < 128)
+			{
+				buf[0] = (char) ch;
+				buf[1] = '\0';
+			}
+			else if ((ch >= UCHAR_MAMEKEY_BEGIN) && (ch < UCHAR_MAMEKEY_BEGIN + __code_max))
+			{
+				result = code_name((input_code) ch - UCHAR_MAMEKEY_BEGIN);
+			}
+			else
+			{
+				snprintf(buf, sizeof(buf) / sizeof(buf[0]), "U+%04X", (unsigned) ch);
+			}
 			break;
 	}
-	return buf;
+	return result;
 }
 
 
 
 static int scan_keys(const input_port_entry *input_ports, mess_input_code *codes, UINT32 *ports, const input_port_entry **shift_ports, int keys, int shift)
 {
-	int result = 0;
+	int code_count = 0;
 	const input_port_entry *ipt;
 	const input_port_entry *ipt_key = NULL;
 	UINT32 port = (UINT32) -1;
@@ -372,47 +386,59 @@ static int scan_keys(const input_port_entry *input_ports, mess_input_code *codes
 	ipt = input_ports;
 	while(ipt->type != IPT_END)
 	{
-		switch(ipt->type) {
-		case IPT_KEYBOARD:
-			ipt_key = ipt;
+		switch(ipt->type)
+		{
+			case IPT_KEYBOARD:
+				ipt_key = ipt;
 
-			code = ipt->keyboard.chars[shift];
-			if (code)
-			{
-				/* mark that we have found some natural keyboard codes */
-				result = 1;
-
-				/* is this a shifter key? */
-				if ((code >= UCHAR_SHIFT_BEGIN) && (code <= UCHAR_SHIFT_END))
+				code = ipt->keyboard.chars[shift];
+				if (code)
 				{
-					ports[keys] = port;
-					shift_ports[keys] = ipt_key;
-					scan_keys(input_ports, codes, ports, shift_ports, keys+1, code - UCHAR_SHIFT_1 + 1);
+					/* is this a shifter key? */
+					if ((code >= UCHAR_SHIFT_BEGIN) && (code <= UCHAR_SHIFT_END))
+					{
+						ports[keys] = port;
+						shift_ports[keys] = ipt_key;
+						code_count += scan_keys(input_ports,
+							codes ? &codes[code_count] : NULL,
+							ports,
+							shift_ports,
+							keys+1,
+							code - UCHAR_SHIFT_1 + 1);
+					}
+					else
+					{
+						/* not a shifter key; record normally */
+						if (codes)
+						{
+							/* if we have a destination, record the codes used here */
+							memcpy(codes[code_count].port, ports, sizeof(ports[0]) * keys);
+							memcpy((void *) codes[code_count].ipt, shift_ports, sizeof(shift_ports[0]) * keys);
+							codes[code_count].ch = code;
+							codes[code_count].port[keys] = port;
+							codes[code_count].ipt[keys] = ipt_key;
+						}
+
+						/* increment the count */
+						code_count++;
+
+						if (LOG_INPUTX)
+							logerror("inputx: code=%i (%s) port=%i ipt->name='%s'\n", (int) code, charstr(code), port, ipt->name);
+					}
 				}
-				else if (code < NUM_CODES)
-				{
-					memcpy(codes[code].port, ports, sizeof(ports[0]) * keys);
-					memcpy((void *) codes[code].ipt, shift_ports, sizeof(shift_ports[0]) * keys);
-					codes[code].port[keys] = port;
-					codes[code].ipt[keys] = ipt_key;
+				break;
 
-					if (LOG_INPUTX)
-						logerror("inputx: code=%i (%s) port=%i ipt->name='%s'\n", (int) code, charstr(code), port, ipt->name);
-				}
-			}
-			break;
+			case IPT_PORT:
+				port++;
+				/* fall through */
 
-		case IPT_PORT:
-			port++;
-			/* fall through */
-
-		default:
-			ipt_key = NULL;
-			break;
+			default:
+				ipt_key = NULL;
+				break;
 		}
 		ipt++;
 	}
-	return result;
+	return code_count;
 }
 
 
@@ -424,42 +450,31 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 
 
 
-#define CODE_BUFFER_SIZE	(sizeof(mess_input_code) * NUM_CODES)
+/*-------------------------------------------------
+    build_codes - given an input port table, create
+	a input code table useful for mapping unicode
+	chars
+-------------------------------------------------*/
 
-static int build_codes(const input_port_entry *input_ports, mess_input_code *codes, int map_lowercase)
+static mess_input_code *build_codes(const input_port_entry *input_ports)
 {
+	mess_input_code *codes = NULL;
 	UINT32 ports[NUM_SIMUL_KEYS];
 	const input_port_entry *ipts[NUM_SIMUL_KEYS];
-	int switch_upper, rc = 0;
-	unicode_char_t c;
+	int code_count;
 
-	/* first clear the buffer */
-	memset(codes, 0, CODE_BUFFER_SIZE);
-
-	if (!scan_keys(input_ports, codes, ports, ipts, 0, 0))
-		goto done;
-
-	if (map_lowercase)
+	/* first count the number of codes */
+	code_count = scan_keys(input_ports, NULL, ports, ipts, 0, 0);
+	if (code_count > 0)
 	{
-		/* special case; scan to see if upper case characters are specified, but not lower case */
-		switch_upper = 1;
-		for (c = 'A'; c <= 'Z'; c++)
-		{
-			if (!inputx_can_post_key(c) || inputx_can_post_key(unicode_tolower(c)))
-			{
-				switch_upper = 0;
-				break;
-			}
-		}
+		/* allocate the codes */
+		codes = auto_malloc(sizeof(*codes) * (code_count + 1));
+		memset(codes, 0, sizeof(*codes) * (code_count + 1));
 
-		if (switch_upper)
-			memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
+		/* and populate them */
+		scan_keys(input_ports, codes, ports, ipts, 0, 0);
 	}
-
-	rc = 1;
-
-done:
-	return rc;
+	return codes;
 }
 
 
@@ -472,7 +487,6 @@ done:
 
 int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 {
-	char buf[CODE_BUFFER_SIZE];
 	mess_input_code *codes;
 	const input_port_entry *input_ports;
 	const input_port_entry *ipt;
@@ -485,24 +499,22 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 	{
 		if (gamedrv->flags & GAME_COMPUTER)
 		{
-			codes = (mess_input_code *) buf;
-
 			/* allocate the input ports */
 			*memory = input_port_allocate(gamedrv->construct_ipt, *memory);
 			input_ports = *memory;
 
-			build_codes(input_ports, codes, FALSE);
-
-			port_count = 0;
-			for (ipt = input_ports; ipt->type != IPT_END; ipt++)
+			codes = build_codes(input_ports);
+			if (codes)
 			{
-				if (ipt->type == IPT_PORT)
-					port_count++;
-			}
+				/* count the total amount of ports */
+				port_count = 0;
+				for (ipt = input_ports; ipt->type != IPT_END; ipt++)
+				{
+					if (ipt->type == IPT_PORT)
+						port_count++;
+				}
 
-			if (port_count > 0)
-			{
-				for (i = 0; i < NUM_CODES; i++)
+				for (i = 0; codes[i].ch; i++)
 				{
 					for (j = 0; j < NUM_SIMUL_KEYS; j++)
 					{
@@ -581,6 +593,32 @@ static void setup_keybuffer(void)
 
 
 
+/*-------------------------------------------------
+    dump_codes - output all natural keyboard data
+	to a text file
+-------------------------------------------------*/
+
+static void dump_codes(void)
+{
+	FILE *f;
+	int i;
+
+	f = fopen("codes.txt", "w");
+	if (!f)
+		return;
+
+	if (codes)
+	{
+		for (i = 0; codes[i].ch; i++)
+		{
+			fprintf(f, "%-10d (%s)\n", codes[i].ch, charstr(codes[i].ch));
+		}
+	}
+	fclose(f);
+}
+
+
+
 void inputx_init(void)
 {
 	codes = NULL;
@@ -597,17 +635,14 @@ void inputx_init(void)
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		codes = (mess_input_code *) auto_malloc(CODE_BUFFER_SIZE);
-		if (!build_codes(Machine->input_ports, codes, TRUE))
-			goto error;
-
+		codes = build_codes(Machine->input_ports);
+		if (DUMP_CODES)
+			dump_codes();
 		setup_keybuffer();
 	}
-	return;
-
-error:
-	codes = NULL;
 }
+
+
 
 void inputx_setup_natural_keyboard(
 	int (*queue_chars_)(const unicode_char_t *text, size_t text_len),
@@ -631,9 +666,27 @@ static key_buffer *get_buffer(void)
 	return (key_buffer *) keybuffer;
 }
 
+
+
+static const mess_input_code *find_code(unicode_char_t ch)
+{
+	int i;
+
+	assert(codes);
+	for (i = 0; codes[i].ch; i++)
+	{
+		if (codes[i].ch == ch)
+			return &codes[i];
+	}
+	return NULL;
+}
+
+
+
 static int can_post_key_directly(unicode_char_t ch)
 {
-	int rc;
+	int rc = FALSE;
+	const mess_input_code *code;
 
 	if (queue_chars)
 	{
@@ -641,11 +694,14 @@ static int can_post_key_directly(unicode_char_t ch)
 	}
 	else
 	{
-		assert(codes);
-		rc = ((ch < NUM_CODES) && codes[ch].ipt[0] != NULL);
+		code = find_code(ch);
+		if (code)
+			rc = code->ipt[0] != NULL;
 	}
 	return rc;
 }
+
+
 
 static int can_post_key_alternate(unicode_char_t ch)
 {
@@ -743,6 +799,7 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 	unicode_char_t ch;
 	const char *s;
 	const char_info *ci;
+	const mess_input_code *code;
 
 	current_rate = rate;
 
@@ -762,7 +819,10 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 					last_cr = (ch == '\r');
 
 				if (LOG_INPUTX)
-					logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
+				{
+					code = find_code(ch);
+					logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), code ? code->port[0] : -1, (code && code->ipt[0]) ? code->ipt[0]->name : "<null>");
+				}
 
 				if (can_post_key_directly(ch))
 				{
@@ -853,13 +913,16 @@ void inputx_update(void)
 		{
 			/* identify the character that is down right now, and its component codes */
 			ch = keybuf->buffer[keybuf->begin_pos];
-			code = &codes[ch];
+			code = find_code(ch);
 
 			/* loop through this character's component codes */
-			for (i = 0; code->ipt[i] && (i < sizeof(code->ipt) / sizeof(code->ipt[0])); i++)
+			if (code)
 			{
-				value = code->ipt[i]->mask;
-				input_port_set_digital_value(code->port[i], value, value);
+				for (i = 0; code->ipt[i] && (i < sizeof(code->ipt) / sizeof(code->ipt[0])); i++)
+				{
+					value = code->ipt[i]->mask;
+					input_port_set_digital_value(code->port[i], value, value);
+				}
 			}
 		}
 	}
