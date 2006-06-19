@@ -28,6 +28,7 @@
 #endif
 #include "input.h"
 #include "config.h"
+#include "osdepend.h"
 
 #ifdef MESS
 #include "parallel.h"
