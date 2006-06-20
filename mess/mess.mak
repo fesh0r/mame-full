@@ -967,6 +967,7 @@ COREOBJS +=							\
 	$(EXPAT)						\
 	$(ZLIB)							\
 	$(OBJ)/vidhrdw/tms9928a.o		\
+	$(OBJ)/vidhrdw/v9938.o          \
 	$(OBJ)/machine/8255ppi.o		\
 	$(OBJ)/machine/6522via.o		\
 	$(OBJ)/machine/6821pia.o		\
@@ -1020,7 +1021,6 @@ COREOBJS +=							\
 	$(OBJ)/mess/vidhrdw/m6845.o		\
 	$(OBJ)/mess/machine/msm8251.o  \
 	$(OBJ)/mess/machine/tc8521.o   \
-	$(OBJ)/mess/vidhrdw/v9938.o    \
 	$(OBJ)/mess/vidhrdw/crtc6845.o \
 	$(OBJ)/mess/machine/28f008sa.o \
 	$(OBJ)/mess/machine/am29f080.o \
