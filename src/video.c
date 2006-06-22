@@ -87,7 +87,6 @@ static UINT8 full_refresh_pending;
 
 /* video updating */
 static int last_partial_scanline[MAX_SCREENS];
-static mame_timer *partial_update_timer;
 
 /* speed computation */
 static cycles_t last_fps_time;
@@ -129,7 +128,6 @@ int mess_skip_this_frame;
 
 static void video_pause(int pause);
 static void video_exit(void);
-static void partial_update_reset(int param);
 static int allocate_graphics(const gfx_decode *gfxdecodeinfo);
 static void decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
@@ -315,10 +313,6 @@ int video_init(void)
 	/* reset video statics and get out of here */
 	pdrawgfx_shadow_lowpri = 0;
 	leds_status = 0;
-
-	/* create a timer for partial updates */
-	partial_update_timer = timer_alloc(partial_update_reset);
-	timer_adjust(partial_update_timer, TIME_NOW, 0, 0);
 
 	/* initialize tilemaps */
 	if (tilemap_init() != 0)
@@ -514,6 +508,7 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo)
 }
 
 
+#ifndef NEW_RENDER
 /*-------------------------------------------------
     scale_vectorgames - scale the vector games
     to a given resolution
@@ -538,6 +533,7 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 	*width  &= ~3;
 	*height &= ~3;
 }
+#endif
 
 
 /*-------------------------------------------------
@@ -815,18 +811,16 @@ void add_full_refresh_callback(void (*callback)(void))
 
 
 /*-------------------------------------------------
-    partial_update_reset - reset partial updates
+    reset_partial_updates - reset partial updates
     at the start of each frame
 -------------------------------------------------*/
 
-static void partial_update_reset(int param)
+void reset_partial_updates(void)
 {
 	/* reset partial updates */
 	LOG_PARTIAL_UPDATES(("Partial: reset to 0\n"));
 	memset(last_partial_scanline, 0, sizeof(last_partial_scanline));
 	performance.partial_updates_this_frame = 0;
-
-	timer_adjust(partial_update_timer, cpu_getscanlinetime(0), 0, 0);
 }
 
 
@@ -1047,7 +1041,7 @@ void video_frame_update(void)
 
 		/* reset partial updates if we're paused or if the debugger is active */
 		if (paused || mame_debug_is_active())
-			partial_update_reset(0);
+			reset_partial_updates();
 	}
 }
 

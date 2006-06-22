@@ -1348,11 +1348,7 @@ void ResetTreeViewFolders(void)
 			tvi.iImage	= GetTreeViewIconIndex(lpFolder->m_nIconId);
 			tvi.iSelectedImage = 0;
 
-#if defined(__GNUC__) /* bug in commctrl.h */
 			tvs.item = tvi;
-#else
-			tvs.DUMMYUNIONNAME.item = tvi;
-#endif
 
 			// Add root branch
 			hti_parent = TreeView_InsertItem(hTreeView, &tvs);
@@ -1397,11 +1393,7 @@ void ResetTreeViewFolders(void)
 		tvi.pszText = treeFolders[i]->m_lpTitle;
 		tvi.lParam	= (LPARAM)treeFolders[i];
 		
-#if defined(__GNUC__) /* bug in commctrl.h */
 		tvs.item = tvi;
-#else
-		tvs.DUMMYUNIONNAME.item = tvi;
-#endif
 		// Add it to this tree branch
 		shti = TreeView_InsertItem(hTreeView, &tvs);
 
