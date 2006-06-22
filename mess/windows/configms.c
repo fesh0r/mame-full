@@ -360,27 +360,30 @@ void win_mess_extract_options(void)
 	win_use_natural_keyboard = options_get_bool("natural", TRUE);
 	win_write_config = options_get_bool("writeconfig", TRUE);
 
-	for (i = 0; device_options[i].count > 0; i++)
+	if (device_options)
 	{
-		for (j = 0; j < device_options[i].count; j++)
+		for (i = 0; device_options[i].count > 0; i++)
 		{
-			dev_option = device_options[i].opts[j];
-
-			// get the correct option name
-			optionname = dev_option->opts[0].name;
-			while((s = strchr(optionname, ';')) != NULL)
-				optionname = s + 1;
-
-			filename = options_get_string(optionname, TRUE);
-
-			if (filename)
+			for (j = 0; j < device_options[i].count; j++)
 			{
-				// the user specified a device type
-				options.image_files[options.image_count].device_type = dev_option->devtype;
-				options.image_files[options.image_count].device_tag = dev_option->tag;
-				options.image_files[options.image_count].device_index = dev_option->index;
-				options.image_files[options.image_count].name = auto_strdup(filename);
-				options.image_count++;
+				dev_option = device_options[i].opts[j];
+
+				// get the correct option name
+				optionname = dev_option->opts[0].name;
+				while((s = strchr(optionname, ';')) != NULL)
+					optionname = s + 1;
+
+				filename = options_get_string(optionname, TRUE);
+
+				if (filename)
+				{
+					// the user specified a device type
+					options.image_files[options.image_count].device_type = dev_option->devtype;
+					options.image_files[options.image_count].device_tag = dev_option->tag;
+					options.image_files[options.image_count].device_index = dev_option->index;
+					options.image_files[options.image_count].name = auto_strdup(filename);
+					options.image_count++;
+				}
 			}
 		}
 	}
