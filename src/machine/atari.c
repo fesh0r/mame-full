@@ -29,8 +29,6 @@ static int atari = 0;
 #define ATARI_600XL 3
 #define ATARI_800XL 4
 
-static int has_pia;
-
 #ifdef MESS
 static int a800_cart_loaded = 0;
 static int a800_cart_is_16k = 0;
@@ -74,10 +72,6 @@ void atari_interrupt_cb(int mask)
 #endif
 
 	cpunum_set_input_line(0, 0, HOLD_LINE);
-
-	if (has_pia)
-	{
-	}
 }
 
 /**************************************************************
@@ -770,7 +764,6 @@ static void atari_machine_start(int type, const pia6821_interface *pia_intf, int
 		pia_config(0, PIA_STANDARD_ORDERING, pia_intf);
 		add_reset_callback(atari_pia_reset);
 	}
-	has_pia = pia_intf ? TRUE : FALSE;
 
 	/* ANTIC */
 	add_reset_callback(antic_reset);
