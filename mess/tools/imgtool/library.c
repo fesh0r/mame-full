@@ -65,7 +65,7 @@ static void imgtool_library_add_class(imgtool_library *library, const imgtool_cl
 	module->name						= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_NAME));
 	module->description					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_DESCRIPTION));
 	module->extensions					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_FILE_EXTENSIONS));
-	module->eoln						= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_EOLN));
+	module->eoln						= auto_strdup_allow_null(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_EOLN));
 	module->path_separator				= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
 	module->alternate_path_separator	= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
 	module->prefer_ucase				= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;

@@ -53,7 +53,7 @@ static void node_createimage(struct imgtooltest_state *state, xml_data_node *nod
 	xml_data_node *child_node;
 	xml_attribute_node *attr_node;
 	option_resolution *opts = NULL;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	const char *driver;
 	const char *param_name;
 	const char *param_value;

@@ -146,7 +146,8 @@
 
 #define LOG(x)
 
-struct fat_diskinfo
+typedef struct _fat_diskinfo fat_diskinfo;
+struct _fat_diskinfo
 {
 	UINT32 fat_bits;
 	UINT32 sectors_per_cluster;
@@ -163,7 +164,8 @@ struct fat_diskinfo
 	struct mess_hard_disk_file harddisk;
 };
 
-struct fat_partitiontableinfo
+typedef struct _fat_partitiontableinfo fat_partitiontableinfo;
+struct _fat_partitiontableinfo
 {
 	UINT32 heads;
 	UINT32 sectors;
@@ -185,7 +187,8 @@ struct fat_partitiontableinfo
 	} partitions[4];
 };
 
-struct fat_file
+typedef struct _fat_file fat_file;
+struct _fat_file
 {
 	unsigned int root : 1;
 	unsigned int directory : 1;
@@ -200,7 +203,8 @@ struct fat_file
 	UINT32 dirent_sector_offset;
 };
 
-struct fat_dirent
+typedef struct _fat_dirent fat_dirent;
+struct _fat_dirent
 {
 	char long_filename[512];
 	char short_filename[13];
@@ -214,14 +218,16 @@ struct fat_dirent
 	time_t lastmodified_time;
 };
 
-struct fat_freeentry_info
+typedef struct _fat_freeentry_info fat_freeentry_info;
+struct _fat_freeentry_info
 {
 	UINT32 required_size;
 	UINT32 candidate_position;
 	UINT32 position;
 };
 
-struct fat_mediatype
+typedef struct _fat_mediatype fat_mediatype;
+struct _fat_mediatype
 {
 	UINT8 media_descriptor;
 	UINT8 heads;
@@ -238,7 +244,7 @@ typedef enum
 
 
 
-static struct fat_mediatype known_media[] =
+static const fat_mediatype known_media[] =
 {
 	{ 0xF0, 2, 80, 36 },
 	{ 0xF0, 2, 80, 18 },
@@ -303,14 +309,14 @@ static int fat_is_harddisk(imgtool_image *image)
 
 
 
-static struct fat_diskinfo *fat_get_diskinfo(imgtool_image *image)
+static fat_diskinfo *fat_get_diskinfo(imgtool_image *image)
 {
 	void *ptr;
 	if (fat_is_harddisk(image))
 		ptr = img_extrabytes(image);
 	else
 		ptr = imgtool_floppy_extrabytes(image);
-	return (struct fat_diskinfo *) ptr;
+	return (fat_diskinfo *) ptr;
 }
 
 
@@ -318,7 +324,7 @@ static struct fat_diskinfo *fat_get_diskinfo(imgtool_image *image)
 static void fat_get_sector_position(imgtool_image *image, UINT32 sector_index,
 	int *head, int *track, int *sector)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 
 	disk_info = fat_get_diskinfo(image);
 
@@ -342,7 +348,7 @@ static void fat_get_sector_position(imgtool_image *image, UINT32 sector_index,
 static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, void *buffer, size_t buffer_len)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	imgtoolerr_t err;
 	floperr_t ferr;
 	int head, track, sector;
@@ -383,7 +389,7 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, const void *buffer, size_t buffer_len)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	imgtoolerr_t err;
 	floperr_t ferr;
 	int head, track, sector;
@@ -443,7 +449,7 @@ static imgtoolerr_t fat_clear_sector(imgtool_image *image, UINT32 sector_index, 
 
 
 
-static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, struct fat_partitiontableinfo *pi)
+static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, fat_partitiontableinfo *pi)
 {
 	int i = 0;
 	const UINT8 *partition_info;
@@ -540,9 +546,9 @@ static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, struct fat_
 static imgtoolerr_t fat_diskimage_open(imgtool_image *image, imgtool_stream *stream)
 {
 	UINT8 header[FAT_SECLEN];
-	struct fat_partitiontableinfo pi;
+	fat_partitiontableinfo pi;
 	imgtoolerr_t err;
-	struct fat_diskinfo *info;
+	fat_diskinfo *info;
 	UINT32 fat_bits, total_sectors_l, total_sectors_h, sector_size;
 	UINT64 available_sectors;
 	int i;
@@ -644,7 +650,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image, imgtool_stream *str
 static imgtoolerr_t fat_diskimage_create(imgtool_image *image, imgtool_stream *stream, option_resolution *opts)
 {
 	imgtoolerr_t err;
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 	UINT32 heads, tracks, sectors;
 	UINT32 fat_bits, sectors_per_cluster, reserved_sectors, hidden_sectors;
 	UINT32 root_dir_count, root_dir_sectors;
@@ -789,7 +795,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, imgtool_stream *s
 static imgtoolerr_t fat_load_fat(imgtool_image *image, UINT8 **fat_table)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT8 *table;
 	UINT32 table_size;
 	UINT32 pos, len;
@@ -837,7 +843,7 @@ done:
 static imgtoolerr_t fat_save_fat(imgtool_image *image, const UINT8 *fat_table)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT32 table_size;
 	UINT32 pos, len;
 	UINT32 sector_index;
@@ -868,7 +874,7 @@ done:
 
 static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UINT32 fat_entry)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT64 entry;
 	UINT32 bit_index, i;
 	UINT32 last_entry = 0;
@@ -915,7 +921,7 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 
 static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat_entry, UINT32 value)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT64 entry;
 	UINT32 bit_index, i;
 
@@ -940,12 +946,12 @@ static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat
 
 
 
-static void fat_debug_integrity_check(imgtool_image *image, const UINT8 *fat_table, const struct fat_file *file)
+static void fat_debug_integrity_check(imgtool_image *image, const UINT8 *fat_table, const fat_file *file)
 {
 #ifdef MAME_DEBUG
 	/* debug function to test the integrity of a file */
 	UINT32 cluster;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 
 	disk_info = fat_get_diskinfo(image);
 	cluster = file->first_cluster ? file->first_cluster : 0xFFFFFFFF;
@@ -963,10 +969,10 @@ static void fat_debug_integrity_check(imgtool_image *image, const UINT8 *fat_tab
 
 
 
-static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, UINT32 pos)
+static imgtoolerr_t fat_seek_file(imgtool_image *image, fat_file *file, UINT32 pos)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT32 new_cluster;
 	UINT8 *fat_table = NULL;
 
@@ -1024,10 +1030,10 @@ done:
 
 
 
-static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file *file)
+static UINT32 fat_get_filepos_sector_index(imgtool_image *image, fat_file *file)
 {
 	UINT32 sector_index;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 
 	disk_info = fat_get_diskinfo(image);
 
@@ -1052,7 +1058,7 @@ static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file
 
 
 
-static imgtoolerr_t fat_corrupt_file_error(const struct fat_file *file)
+static imgtoolerr_t fat_corrupt_file_error(const fat_file *file)
 {
 	imgtoolerr_t err;
 	if (file->root)
@@ -1066,11 +1072,11 @@ static imgtoolerr_t fat_corrupt_file_error(const struct fat_file *file)
 
 
 
-static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *file,
+static imgtoolerr_t fat_readwrite_file(imgtool_image *image, fat_file *file,
 	void *buffer, size_t buffer_len, size_t *bytes_read, int read_or_write)
 {
 	imgtoolerr_t err;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT32 sector_index;
 	int offset;
 	size_t len;
@@ -1113,7 +1119,7 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 
 
 
-static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
+static imgtoolerr_t fat_read_file(imgtool_image *image, fat_file *file,
 	void *buffer, size_t buffer_len, size_t *bytes_read)
 {
 	return fat_readwrite_file(image, file, buffer, buffer_len, bytes_read, 0);
@@ -1121,7 +1127,7 @@ static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
 
 
 
-static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
+static imgtoolerr_t fat_write_file(imgtool_image *image, fat_file *file,
 	const void *buffer, size_t buffer_len, size_t *bytes_read)
 {
 	return fat_readwrite_file(image, file, (void *) buffer, buffer_len, bytes_read, 1);
@@ -1131,7 +1137,7 @@ static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
 
 static UINT32 fat_allocate_cluster(imgtool_image *image, UINT8 *fat_table)
 {
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT32 i, val;
 
 	disk_info = fat_get_diskinfo(image);
@@ -1151,11 +1157,11 @@ static UINT32 fat_allocate_cluster(imgtool_image *image, UINT8 *fat_table)
 
 
 /* sets the size of a file; 0xFFFFFFFF means 'delete' */
-static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *file,
+static imgtoolerr_t fat_set_file_size(imgtool_image *image, fat_file *file,
 	UINT32 new_size)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT32 new_cluster_count;
 	UINT32 old_cluster_count;
 	UINT32 cluster, write_cluster, last_cluster, new_pos, i;
@@ -1469,11 +1475,11 @@ static UINT32 fat_setup_time(time_t ansi_time)
 
 
 
-static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
-	struct fat_dirent *ent, struct fat_freeentry_info *freeent)
+static imgtoolerr_t fat_read_dirent(imgtool_image *image, fat_file *file,
+	fat_dirent *ent, fat_freeentry_info *freeent)
 {
 	imgtoolerr_t err;
-	const struct fat_diskinfo *disk_info;
+	const fat_diskinfo *disk_info;
 	UINT8 entry[FAT_DIRENT_SIZE];
 	size_t bytes_read;
 	int i, j;
@@ -1852,12 +1858,12 @@ static void fat_bump_dirent(UINT8 *entry, size_t entry_len)
 
 
 static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
-	creation_policy_t create, struct fat_file *file)
+	creation_policy_t create, fat_file *file)
 {
 	imgtoolerr_t err;
-	const struct fat_diskinfo *disk_info;
-	struct fat_dirent ent;
-	struct fat_freeentry_info freeent = { 0, };
+	const fat_diskinfo *disk_info;
+	fat_dirent ent;
+	fat_freeentry_info freeent = { 0, };
 	const char *next_path_part;
 	UINT8 *created_entry = NULL;
 	size_t created_entry_len = 0;
@@ -2002,9 +2008,9 @@ done:
 static imgtoolerr_t fat_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
 	imgtoolerr_t err;
-	struct fat_file *file;
+	fat_file *file;
 
-	file = (struct fat_file *) img_enum_extrabytes(enumeration);
+	file = (fat_file *) img_enum_extrabytes(enumeration);
 
 	err = fat_lookup_path(img_enum_image(enumeration), path, CREATE_NONE, file);
 	if (err)
@@ -2019,10 +2025,10 @@ static imgtoolerr_t fat_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
-	struct fat_file *file;
-	struct fat_dirent fatent;
+	fat_file *file;
+	fat_dirent fatent;
 
-	file = (struct fat_file *) img_enum_extrabytes(enumeration);
+	file = (fat_file *) img_enum_extrabytes(enumeration);
 	err = fat_read_dirent(img_enum_image(enumeration), file, &fatent, NULL);
 	if (err)
 		return err;
@@ -2092,7 +2098,7 @@ static imgtoolerr_t fat_write_bootblock(imgtool_image *image, imgtool_stream *st
 static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
-	struct fat_file file;
+	fat_file file;
 	size_t bytes_read;
 	char buffer[1024];
 
@@ -2124,7 +2130,7 @@ static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *fil
 static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
-	struct fat_file file;
+	fat_file file;
 	UINT32 bytes_left, len;
 	char buffer[1024];
 
@@ -2164,8 +2170,8 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 static imgtoolerr_t fat_diskimage_delete(imgtool_image *image, const char *filename, unsigned int dir)
 {
 	imgtoolerr_t err;
-	struct fat_file file;
-	struct fat_dirent ent;
+	fat_file file;
+	fat_dirent ent;
 
 	err = fat_lookup_path(image, filename, CREATE_NONE, &file);
 	if (err)
@@ -2201,7 +2207,7 @@ static imgtoolerr_t fat_diskimage_deletefile(imgtool_image *image, const char *f
 static imgtoolerr_t fat_diskimage_freespace(imgtool_image *image, UINT64 *size)
 {
 	imgtoolerr_t err;
-	const struct fat_diskinfo * disk_info;
+	const fat_diskinfo *disk_info;
 	UINT8 *fat_table;
 	UINT32 i;
 
@@ -2229,7 +2235,7 @@ done:
 static imgtoolerr_t fat_diskimage_createdir(imgtool_image *image, const char *path)
 {
 	imgtoolerr_t err;
-	struct fat_file file;
+	fat_file file;
 	UINT8 initial_data[64];
 
 	err = fat_lookup_path(image, path, CREATE_DIR, &file);
@@ -2282,8 +2288,8 @@ static void fat_base_get_info(const imgtool_class *imgclass, UINT32 state, union
 		case IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK:			info->i = 1; break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '\\'; break;
 		case IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR:		info->i = '/'; break;
-		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct fat_diskinfo); break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct fat_file); break;
+		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(fat_diskinfo); break;
+		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(fat_file); break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;
@@ -2340,7 +2346,7 @@ static const char fat_chd_create_optionspec[] = "H1-[16]S1-[32]-63T10/20/30/40/5
 static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream *stream)
 {
 	imgtoolerr_t err;
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 
 	disk_info = fat_get_diskinfo(image);
 	err = imghd_open(stream, &disk_info->harddisk);
@@ -2363,7 +2369,7 @@ static imgtoolerr_t fat_chd_diskimage_create(imgtool_image *image, imgtool_strea
 {
 	imgtoolerr_t err;
 	UINT32 cylinders, heads, sectors;
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 
 	cylinders = option_resolution_lookup_int(opts, 'T');
 	heads = option_resolution_lookup_int(opts, 'H');
@@ -2398,7 +2404,7 @@ done:
 
 static void fat_chd_diskimage_close(imgtool_image *image)
 {
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
 	imghd_close(&disk_info->harddisk);
 }
@@ -2407,7 +2413,7 @@ static void fat_chd_diskimage_close(imgtool_image *image)
 
 static imgtoolerr_t	fat_chd_diskimage_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size)
 {
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
 	*sector_size = imghd_get_header(&disk_info->harddisk)->sectorbytes;
 	return IMGTOOLERR_SUCCESS;
@@ -2415,7 +2421,7 @@ static imgtoolerr_t	fat_chd_diskimage_getsectorsize(imgtool_image *image, UINT32
 
 
 
-static UINT32 fat_chd_calc_lbasector(struct fat_diskinfo *disk_info, UINT32 track, UINT32 head, UINT32 sector)
+static UINT32 fat_chd_calc_lbasector(fat_diskinfo *disk_info, UINT32 track, UINT32 head, UINT32 sector)
 {
 	UINT32 lbasector;
 	const hard_disk_info *hd_info;
@@ -2433,7 +2439,7 @@ static UINT32 fat_chd_calc_lbasector(struct fat_diskinfo *disk_info, UINT32 trac
 
 static imgtoolerr_t	fat_chd_diskimage_readsector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len)
 {
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
 	return imghd_read(&disk_info->harddisk,
 		fat_chd_calc_lbasector(disk_info, track, head, sector),
@@ -2444,7 +2450,7 @@ static imgtoolerr_t	fat_chd_diskimage_readsector(imgtool_image *image, UINT32 tr
 
 static imgtoolerr_t	fat_chd_diskimage_writesector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len)
 {
-	struct fat_diskinfo *disk_info;
+	fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
 	return imghd_write(&disk_info->harddisk,
 		fat_chd_calc_lbasector(disk_info, track, head, sector),

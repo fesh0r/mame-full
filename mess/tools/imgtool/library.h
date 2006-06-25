@@ -156,6 +156,7 @@ enum
 	IMGTOOLINFO_INT_WRITING_UNTESTED,
 	IMGTOOLINFO_INT_CREATION_UNTESTED,
 	IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK,
+	IMGTOOLINFO_INT_BLOCK_SIZE,
 
 	IMGTOOLINFO_INT_CLASS_SPECIFIC = 0x08000,
 
@@ -163,7 +164,10 @@ enum
 	IMGTOOLINFO_PTR_FIRST = 0x10000,
 
 	IMGTOOLINFO_PTR_OPEN,
+	IMGTOOLINFO_PTR_CREATE,
 	IMGTOOLINFO_PTR_CLOSE,
+	IMGTOOLINFO_PTR_OPEN_PARTITION,
+	IMGTOOLINFO_PTR_CREATE_PARTION,
 	IMGTOOLINFO_PTR_INFO,
 	IMGTOOLINFO_PTR_BEGIN_ENUM,
 	IMGTOOLINFO_PTR_NEXT_ENUM,
@@ -182,10 +186,11 @@ enum
 	IMGTOOLINFO_PTR_GET_ICON_INFO,
 	IMGTOOLINFO_PTR_SUGGEST_TRANSFER,
 	IMGTOOLINFO_PTR_GET_CHAIN,
-	IMGTOOLINFO_PTR_CREATE,
 	IMGTOOLINFO_PTR_GET_SECTOR_SIZE,
 	IMGTOOLINFO_PTR_READ_SECTOR,
 	IMGTOOLINFO_PTR_WRITE_SECTOR,
+	IMGTOOLINFO_PTR_READ_BLOCK,
+	IMGTOOLINFO_PTR_WRITE_BLOCK,
 	IMGTOOLINFO_PTR_APPROVE_FILENAME_CHAR,
 	IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE,
 	IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE,
@@ -230,30 +235,34 @@ union imgtoolinfo
 	genf *  f;											/* generic function pointers */
 	char *	s;											/* generic strings */
 
-	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *stream);
-	void			(*close)		(imgtool_image *image);
-	void			(*info)			(imgtool_image *image, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
-	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)	(imgtool_imageenum *enumeration);
-	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *filename);
-	imgtoolerr_t	(*list_forks)	(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
-	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
-	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
-	imgtoolerr_t	(*list_attrs)	(imgtool_image *image, const char *path, UINT32 *attrs, size_t len);
-	imgtoolerr_t	(*get_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
-	imgtoolerr_t	(*set_attrs)	(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
-	imgtoolerr_t	(*attr_name)	(UINT32 attribute, const imgtool_attribute *attr, char *buffer, size_t buffer_len);
-	imgtoolerr_t	(*get_iconinfo)	(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
-	imgtoolerr_t	(*suggest_transfer)(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
-	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
-	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *stream, option_resolution *opts);
-	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
-	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
-	imgtoolerr_t	(*write_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
+	imgtoolerr_t	(*open)				(imgtool_image *image, imgtool_stream *stream);
+	void			(*close)			(imgtool_image *image);
+	imgtoolerr_t	(*create)			(imgtool_image *image, imgtool_stream *stream, option_resolution *opts);
+	imgtoolerr_t	(*open_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
+	imgtoolerr_t	(*create_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
+	void			(*info)				(imgtool_image *image, char *string, size_t len);
+	imgtoolerr_t	(*begin_enum)		(imgtool_imageenum *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)		(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)		(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*free_space)		(imgtool_image *image, UINT64 *size);
+	imgtoolerr_t	(*read_file)		(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)		(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)		(imgtool_image *image, const char *filename);
+	imgtoolerr_t	(*list_forks)		(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
+	imgtoolerr_t	(*create_dir)		(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*delete_dir)		(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*list_attrs)		(imgtool_image *image, const char *path, UINT32 *attrs, size_t len);
+	imgtoolerr_t	(*get_attrs)		(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
+	imgtoolerr_t	(*set_attrs)		(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+	imgtoolerr_t	(*attr_name)		(UINT32 attribute, const imgtool_attribute *attr, char *buffer, size_t buffer_len);
+	imgtoolerr_t	(*get_iconinfo)		(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
+	imgtoolerr_t	(*suggest_transfer)	(imgtool_image *image, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
+	imgtoolerr_t	(*get_chain)		(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
+	imgtoolerr_t	(*get_sector_size)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
+	imgtoolerr_t	(*read_sector)		(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
+	imgtoolerr_t	(*write_sector)		(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
+	imgtoolerr_t	(*read_block)		(imgtool_image *image, void *buffer, UINT64 block);
+	imgtoolerr_t	(*write_block)		(imgtool_image *image, const void *buffer, UINT64 block);
 	int				(*approve_filename_char)(unicode_char_t ch);
 	int				(*make_class)(int index, imgtool_class *imgclass);
 
