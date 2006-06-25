@@ -50,6 +50,9 @@ TARGET = mame
 # BROKEN)
 # XMAME_NET = 1
 
+# Uncomment to use the new rendering system.
+# NEW_RENDER = 1
+
 # Uncomment to use DRC MIPS3 engine (faster emulation, but only works on x86-
 # compatible CPUs).
 # X86_MIPS3_DRC = 1
@@ -62,8 +65,8 @@ TARGET = mame
 # x86-compatible CPUs).
 # X86_VOODOO_DRC = 1
 
-# Uncomment if you'd like to disable effects.  This can considerably speed 
-# up compilation of the blit files.
+# Uncomment to disable effects.  This can considerably speed up compilation of 
+# the blit files.
 # DISABLE_EFFECTS = 1
 
 # Uncomment the line below to enable the MMX assembly-language optimized
@@ -113,12 +116,12 @@ HOST_CC = $(CC)
 
 
 ###########################################################################
-# Reset CFLAGS
+# Reset CFLAGS and LDFLAGS
 ###########################################################################
 
-# If you want to use whatever CFLAGS are currently set in your 
-# environment, then comment this out.
-CFLAGS =
+# If you want to initialize CFLAGS and LDFLAGS, then uncomment this.
+CFLAGS = $(MY_CFLAGS)
+LDFLAGS = $(MY_LDFLAGS)
 
 
 ###########################################################################
@@ -140,18 +143,16 @@ CFLAGS = -O2
 # CFLAGS = -O2 -finline-functions -ffast-math -fstrength-reduce \
 # 	-traditional-cpp
 
-# GCC on OpenStep/PPC or Mac OS X.  If you get immediate errors when you 
-# build on OS X, remove the -traditional-cpp flag; it caused problems for 
-# me on OS X 10.3 with GCC 3.3.
-# CFLAGS = -O2 -funroll-loops -traditional-cpp -fstrength-reduce 
-# 	-fomit-frame-pointer -ffast-math -fsigned-char
+# GCC on OpenStep/PPC or Mac OS X.
+# CFLAGS = -O2 -funroll-loops -fstrength-reduce -fomit-frame-pointer \
+#   -ffast-math -fsigned-char
 
 # IRIX MIPSpro R5+K without IPA
 # CFLAGS = -n32 -mips4 -O3 -OPT:Olimit=0
 
 # IRIX MIPSpro with really serious optimization for R10K O2
 # CFLAGS = -fullwarn -n32 -mips4 -Ofast=ip32_10k -TARG:platform=ip32_10k \
-#  -OPT:Olimit=0 -IPA
+#   -OPT:Olimit=0 -IPA
 
 # IRIX with more general optimization for R5+K MIPS machines
 # CFLAGS = -fullwarn -n32 -mips4 -Ofast -OPT:Olimit=0 -IPA
@@ -173,8 +174,8 @@ ifneq (,$(findstring gcc,$(CC)))
   # Uncomment for a Linux/PowerPC system.
   # CFLAGS += -fsigned-char -mlongcall
 
-  # Uncomment for OpenStep.  This might also apply to some versions of 
-  # Mac OS X, but it definitely breaks things in OS X 10.3 with GCC 3.3.
+  # Uncomment for OpenStep.  This might also apply to some early versions 
+  # of Mac OS X.
   # CFLAGS += -traditional-cpp
 
 
@@ -222,7 +223,8 @@ ifneq (,$(findstring gcc,$(CC)))
   
   # Optimization level -- choose one of these.
   # Use -O1 if you suspect that -O2 is producing bad code; use -O3 for a 
-  # possible speedup, -Os for a smaller executable, and -O0 for debugging.
+  # possible speedup, -Os for a smaller executable, and -O0 to aid 
+  # debugging.
   # CFLAGS += -O2
   # CFLAGS += -O1
   # CFLAGS += -O3
@@ -390,8 +392,8 @@ ifeq ($(CC),sun-forte)
 
   # uncomment for silence...
   CFLAGS += -erroff
-  # Tell xmame that we really are in fact elf.  If not supplied, SHARED_PREFIX 
-  # is set causing dlopen()'s to fail.
+  # Tell xmame that we really are in fact elf.  If not supplied, 
+  # SHARED_PREFIX is set causing dlopen()'s to fail.
   CFLAGS += -D__ELF__ 
 endif
 endif
