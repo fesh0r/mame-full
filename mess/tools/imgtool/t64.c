@@ -103,7 +103,7 @@ typedef struct {
 	int index;
 } t64_iterator;
 
-static int t64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int t64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void t64_image_exit(imgtool_image *img);
 static void t64_image_info(imgtool_image *img, char *string, const int len);
 static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
@@ -113,7 +113,7 @@ static void t64_image_closeenum(imgtool_imageenum *enumeration);
 static int t64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int t64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
 static int t64_image_deletefile(imgtool_image *img, const char *fname);
-static int t64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options);
+static int t64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *_options);
 
 static struct OptionTemplate t64_createopts[] =
 {
@@ -150,7 +150,7 @@ IMAGEMODULE(
 	t64_createopts						/* create options */
 )
 
-static int t64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int t64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	t64_image *image;
 
@@ -391,7 +391,7 @@ static int t64_image_deletefile(imgtool_image *img, const char *fname)
 	return 0;
 }
 
-static int t64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options)
+static int t64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *_options)
 {
 	int entries;
 	t64_header header={ "T64 Tape archiv created by MESS\x1a" };

@@ -13,7 +13,7 @@
 
 struct _imgtool_image
 {
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	memory_pool pool;
 };
 
@@ -50,7 +50,7 @@ static imgtoolerr_t markerrorsource(imgtoolerr_t err)
 
 
 
-static void internal_error(const struct ImageModule *module, const char *message)
+static void internal_error(const imgtool_module *module, const char *message)
 {
 #ifdef MAME_DEBUG
 	logerror("%s: %s\n", module->name, message);
@@ -59,7 +59,7 @@ static void internal_error(const struct ImageModule *module, const char *message
 
 
 
-static imgtoolerr_t internal_open(const struct ImageModule *module, const char *fname,
+static imgtoolerr_t internal_open(const imgtool_module *module, const char *fname,
 	int read_or_write, option_resolution *createopts, imgtool_image **outimg)
 {
 	imgtoolerr_t err;
@@ -129,7 +129,7 @@ done:
 
 
 
-imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, imgtool_image **outimg)
+imgtoolerr_t img_open(const imgtool_module *module, const char *fname, int read_or_write, imgtool_image **outimg)
 {
 	read_or_write = read_or_write ? OSD_FOPEN_RW : OSD_FOPEN_READ;
 	return internal_open(module, fname, read_or_write, NULL, outimg);
@@ -139,7 +139,7 @@ imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int r
 
 imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, imgtool_image **outimg)
 {
-	const struct ImageModule *module;
+	const imgtool_module *module;
 
 	module = imgtool_library_findmodule(library, modulename);
 	if (!module)
@@ -334,7 +334,7 @@ done:
 imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 
 	module = img_enum_module(enumeration);
 
@@ -409,7 +409,7 @@ done:
 
 void img_closeenum(imgtool_imageenum *enumeration)
 {
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	module = img_enum_module(enumeration);
 	if (module->close_enum)
 		module->close_enum(enumeration);
@@ -1174,7 +1174,7 @@ done:
 
 
 
-imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
+imgtoolerr_t img_create(const imgtool_module *module, const char *fname,
 	option_resolution *opts, imgtool_image **image)
 {
 	imgtoolerr_t err;
@@ -1209,7 +1209,7 @@ done:
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
 	option_resolution *opts, imgtool_image **image)
 {
-	const struct ImageModule *module;
+	const imgtool_module *module;
 
 	module = imgtool_library_findmodule(library, modulename);
 	if (!module)
@@ -1263,7 +1263,7 @@ void *img_malloc(imgtool_image *image, size_t size)
 
 
 
-const struct ImageModule *img_module(imgtool_image *img)
+const imgtool_module *img_module(imgtool_image *img)
 {
 	return img->module;
 }
@@ -1278,7 +1278,7 @@ void *img_extrabytes(imgtool_image *img)
 
 
 
-const struct ImageModule *img_enum_module(imgtool_imageenum *enumeration)
+const imgtool_module *img_enum_module(imgtool_imageenum *enumeration)
 {
 	return enumeration->image->module;
 }

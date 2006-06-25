@@ -18,11 +18,6 @@
 #include "library.h"
 #include "filter.h"
 
-
-typedef struct ImageModule ImageModule;
-typedef const struct ImageModule *ImageModuleConstPtr;
-
-
 /* ----------------------------------------------------------------------- */
 
 #define EOLN_CR		"\x0d"
@@ -56,7 +51,7 @@ typedef const struct ImageModule *ImageModuleConstPtr;
  *		filename:			The file to check
  */
 imgtoolerr_t img_identify(imgtool_library *library, const char *filename,
-	ImageModuleConstPtr *modules, size_t count);
+	imgtool_module **modules, size_t count);
 
 /* img_open
  * img_open_byname
@@ -70,7 +65,7 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *filename,
  *		read_or_write:		Open mode (use OSD_FOPEN_* constants)
  *		outimg:				Placeholder for image pointer
  */
-imgtoolerr_t img_open(const struct ImageModule *module, const char *filename, int read_or_write, imgtool_image **outimg);
+imgtoolerr_t img_open(const imgtool_module *module, const char *filename, int read_or_write, imgtool_image **outimg);
 imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
 
 /* img_close
@@ -302,7 +297,7 @@ imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *
 imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value);
 imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value);
 
-void img_attrname(const struct ImageModule *module, UINT32 attribute, const imgtool_attribute *attr_value,
+void img_attrname(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
 	char *buffer, size_t buffer_len);
 
 /* img_geticoninfo
@@ -356,7 +351,7 @@ imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buf
  *							(tracks, sectors, etc)
  *		image:				Placeholder for resulting image.  Can be NULL
  */
-imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
+imgtoolerr_t img_create(const imgtool_module *module, const char *fname,
 	option_resolution *opts, imgtool_image **image);
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
 	option_resolution *opts, imgtool_image **image);
@@ -388,8 +383,8 @@ void *img_malloc(imgtool_image *image, size_t size);
  * Description:
  *		Retrieves the module associated with an image
  */
-const struct ImageModule *img_module(imgtool_image *img);
-const struct ImageModule *img_enum_module(imgtool_imageenum *enumeration);
+const imgtool_module *img_module(imgtool_image *img);
+const imgtool_module *img_enum_module(imgtool_imageenum *enumeration);
 
 /* img_extrabytes
  * img_enum_extrabytes
@@ -432,7 +427,7 @@ struct imgtool_module_features
 	unsigned int is_read_only : 1;
 };
 
-struct imgtool_module_features img_get_module_features(const struct ImageModule *module);
+struct imgtool_module_features img_get_module_features(const imgtool_module *module);
 
 /* imgtool_validitychecks
  *

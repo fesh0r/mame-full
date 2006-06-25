@@ -490,7 +490,7 @@ static int d64_filesize(d64_image *image, D64_ENTRY *entry)
 }
 #endif
 
-static int d64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int d64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void d64_image_exit(imgtool_image *img);
 static void d64_image_info(imgtool_image *img, char *string, const int len);
 static int d64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
@@ -500,19 +500,19 @@ static size_t d64_image_freespace(imgtool_image *img);
 static int d64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int d64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
 static int d64_image_deletefile(imgtool_image *img, const char *fname);
-static int d64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
+static int d64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_);
 
-static int x64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
-static int x64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
+static int x64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
+static int x64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_);
 
-static int d71_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int d71_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static size_t d71_image_freespace(imgtool_image *img);
-static int d71_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
+static int d71_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_);
 
-static int d81_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int d81_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void d81_image_info(imgtool_image *img, char *string, const int len);
 static size_t d81_image_freespace(imgtool_image *img);
-static int d81_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
+static int d81_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_);
 
 static int d64_read_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
 static int d64_write_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
@@ -625,7 +625,7 @@ IMAGEMODULE(
 	d64_createopts						/* create options */
 )
 
-static int d64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int d64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	d64_image *image;
 
@@ -667,7 +667,7 @@ static int d64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgt
 	return 0;
 }
 
-static int x64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int x64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	d64_image *image;
 
@@ -708,7 +708,7 @@ static int x64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgt
 	return 0;
 }
 
-static int d71_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int d71_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	d64_image *image;
 
@@ -739,7 +739,7 @@ static int d71_image_init(const struct ImageModule *mod, imgtool_stream *f, imgt
 	return 0;
 }
 
-static int d81_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int d81_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	d64_image *image;
 
@@ -1072,7 +1072,7 @@ static int d64_write_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 s
 	return IMGTOOLERR_UNEXPECTED;
 }
 
-static int d64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
+static int d64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	unsigned char sector[0x100]={0};
 	int tracks=35;
@@ -1117,7 +1117,7 @@ static int d64_image_create(const struct ImageModule *mod, imgtool_stream *f, co
 	return 0;
 }
 
-static int x64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
+static int x64_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	struct { 
 		unsigned char data[0x40];
@@ -1134,7 +1134,7 @@ static int x64_image_create(const struct ImageModule *mod, imgtool_stream *f, co
 	return 0;
 }
 
-static int d71_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
+static int d71_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	D71_HEADER d71_header= { { 0 } };
 	unsigned char sector[0x100]={0};
@@ -1198,7 +1198,7 @@ static int d71_image_create(const struct ImageModule *mod, imgtool_stream *f, co
 	return 0;
 }
 
-static int d81_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
+static int d81_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	unsigned char sector[0x100]={0};
 	unsigned char id[2]={'1','2'};

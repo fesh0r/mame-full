@@ -29,7 +29,7 @@ imgtoolerr_t imgtool_create_cannonical_library(int omit_untested, imgtool_librar
 	imgtoolerr_t err;
 	size_t i;
 	imgtool_library *lib;
-	struct ImageModule *module;
+	imgtool_module *module;
 
 	/* list of modules that we drop */
 	static const char *irrelevant_modules[] =

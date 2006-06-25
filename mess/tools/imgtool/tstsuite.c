@@ -10,7 +10,7 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 {
 	const char *testsuitefile;
 	FILE *inifile;
-	const struct ImageModule *module = NULL;
+	const imgtool_module *module = NULL;
 	char buffer[1024];
 	char buffer2[1024];
 	char filename[1024];

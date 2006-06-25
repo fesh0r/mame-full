@@ -134,7 +134,7 @@ static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
 static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
 /*static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *filename);
-static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
+static imgtoolerr_t concept_image_create(const imgtool_module *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
 void concept_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
@@ -475,7 +475,7 @@ static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *fil
 /*
 	Create a blank concept_image.
 */
-static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
+static imgtoolerr_t concept_image_create(const imgtool_module *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	/* ... */
 

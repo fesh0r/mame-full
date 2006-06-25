@@ -358,7 +358,7 @@ typedef struct {
 	int number;
 } crt_iterator;
 
-static int crt_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int crt_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void crt_image_exit(imgtool_image *img);
 static void crt_image_info(imgtool_image *img, char *string, const int len);
 static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
@@ -368,7 +368,7 @@ static void crt_image_closeenum(imgtool_imageenum *enumeration);
 static int crt_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int crt_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
 static int crt_image_deletefile(imgtool_image *img, const char *fname);
-static int crt_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options);
+static int crt_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *_options);
 
 /*
 	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
@@ -427,7 +427,7 @@ IMAGEMODULE(
 	c64crt_createopts					/* create options */
 )
 
-static int crt_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int crt_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	crt_image *image;
 
@@ -625,7 +625,7 @@ static int crt_image_deletefile(imgtool_image *img, const char *fname)
 	return 0;
 }
 
-static int crt_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options)
+static int crt_image_create(const imgtool_module *mod, imgtool_stream *f, const ResolvedOption *_options)
 {
 	crt_header header={ "C64 CARTRIDGE   " };
 	SET_ULONG(header.length, sizeof(header));

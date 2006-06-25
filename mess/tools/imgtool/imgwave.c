@@ -41,7 +41,7 @@ static int find_wavtag(imgtool_stream *f, int filelen, const char *tag, int *off
 	return 0;
 }
 
-int imgwave_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+int imgwave_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	int err;
 	waveimage *wimg;

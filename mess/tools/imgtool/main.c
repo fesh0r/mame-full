@@ -289,7 +289,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	const char *filename = NULL;
 	int unnamedargs;
 	filter_getinfoproc filter;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	option_resolution *resolution = NULL;
 	const char *fork;
 	const char *new_filename;
@@ -476,7 +476,7 @@ error:
 
 static int cmd_identify(const struct command *c, int argc, char *argv[])
 {
-	const struct ImageModule *modules[128];
+	imgtool_module *modules[128];
 	imgtoolerr_t err;
 	int i;
 
@@ -502,7 +502,7 @@ static int cmd_create(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	int unnamedargs;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	option_resolution *resolution = NULL;
 
 	module = imgtool_library_findmodule(library, argv[0]);
@@ -650,7 +650,7 @@ done:
 
 static int cmd_listformats(const struct command *c, int argc, char *argv[])
 {
-	const struct ImageModule *mod;
+	const imgtool_module *mod;
 
 	fprintf(stdout, "Image formats supported by imgtool:\n\n");
 
@@ -760,7 +760,7 @@ static void listoptions(const struct OptionGuide *opt_guide, const char *opt_spe
 
 static int cmd_listdriveroptions(const struct command *c, int argc, char *argv[])
 {
-	const struct ImageModule *mod;
+	const imgtool_module *mod;
 	const struct OptionGuide *opt_guide;
 
 	mod = imgtool_library_findmodule(library, argv[0]);

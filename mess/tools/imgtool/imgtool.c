@@ -18,7 +18,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-struct imgtool_module_features img_get_module_features(const struct ImageModule *module)
+struct imgtool_module_features img_get_module_features(const imgtool_module *module)
 {
 	struct imgtool_module_features features;
 	memset(&features, 0, sizeof(features));
@@ -61,7 +61,7 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 
 
 static imgtoolerr_t evaluate_module(const char *fname,
-	const struct ImageModule *module, float *result)
+	const imgtool_module *module, float *result)
 {
 	imgtoolerr_t err;
 	imgtool_image *image = NULL;
@@ -113,12 +113,12 @@ done:
 
 
 imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
-	ImageModuleConstPtr *modules, size_t count)
+	imgtool_module **modules, size_t count)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	const struct ImageModule *module = NULL;
-	const struct ImageModule *insert_module;
-	const struct ImageModule *temp_module;
+	imgtool_module *module = NULL;
+	imgtool_module *insert_module;
+	imgtool_module *temp_module;
 	size_t i = 0;
 	const char *extension;
 	float val, temp_val, *values = NULL;
@@ -184,7 +184,7 @@ done:
 
 
 
-void img_attrname(const struct ImageModule *module, UINT32 attribute, const imgtool_attribute *attr_value,
+void img_attrname(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
 	char *buffer, size_t buffer_len)
 {
 	imgtoolerr_t err = IMGTOOLERR_UNIMPLEMENTED;
@@ -263,7 +263,7 @@ int imgtool_validitychecks(void)
 	int val;
 	imgtoolerr_t err;
 	imgtool_library *library;
-	const struct ImageModule *module = NULL;
+	const imgtool_module *module = NULL;
 	const struct OptionGuide *guide_entry;
 	struct imgtool_module_features features;
 

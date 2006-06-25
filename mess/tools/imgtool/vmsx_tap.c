@@ -71,7 +71,7 @@ typedef struct
 	int			index;
 	} TAP_ITERATOR;
 
-static int vmsx_tap_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int vmsx_tap_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void vmsx_tap_image_exit(imgtool_image *img);
 static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
 static int vmsx_tap_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
@@ -238,7 +238,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 	return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
-static int vmsx_tap_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int vmsx_tap_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	TAP_IMAGE *image;
 	int rc;

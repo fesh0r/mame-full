@@ -18,8 +18,8 @@
 struct _imgtool_library
 {
 	memory_pool pool;
-	struct ImageModule *first;
-	struct ImageModule *last;
+	imgtool_module *first;
+	imgtool_module *last;
 };
 
 
@@ -49,7 +49,7 @@ void imgtool_library_close(imgtool_library *library)
 
 static void imgtool_library_add_class(imgtool_library *library, const imgtool_class *imgclass)
 {
-	struct ImageModule *module;
+	imgtool_module *module;
 
 	/* allocate the module and place it in the chain */
 	module = auto_malloc(sizeof(*module));
@@ -146,12 +146,12 @@ void imgtool_library_add(imgtool_library *library, imgtool_get_info get_info)
 
 
 
-const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
+const imgtool_module *imgtool_library_unlink(imgtool_library *library,
 	const char *module)
 {
-	struct ImageModule *m;
-	struct ImageModule **previous;
-	struct ImageModule **next;
+	imgtool_module *m;
+	imgtool_module **previous;
+	imgtool_module **next;
 
 	for (m = library->first; m; m = m->next)
 	{
@@ -171,8 +171,8 @@ const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
 
 
 
-static int module_compare(const struct ImageModule *m1,
-	const struct ImageModule *m2, imgtool_libsort_t sort)
+static int module_compare(const imgtool_module *m1,
+	const imgtool_module *m2, imgtool_libsort_t sort)
 {
 	int rc = 0;
 	switch(sort)
@@ -191,11 +191,11 @@ static int module_compare(const struct ImageModule *m1,
 
 void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort)
 {
-	struct ImageModule *m1;
-	struct ImageModule *m2;
-	struct ImageModule *target;
-	struct ImageModule **before;
-	struct ImageModule **after;
+	imgtool_module *m1;
+	imgtool_module *m2;
+	imgtool_module *target;
+	imgtool_module **before;
+	imgtool_module **after;
 
 	for (m1 = library->first; m1; m1 = m1->next)
 	{
@@ -229,10 +229,10 @@ void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort)
 
 
 
-const struct ImageModule *imgtool_library_findmodule(
+const imgtool_module *imgtool_library_findmodule(
 	imgtool_library *library, const char *module_name)
 {
-	const struct ImageModule *module;
+	const imgtool_module *module;
 
 	assert(library);
 	module = library->first;
@@ -243,16 +243,16 @@ const struct ImageModule *imgtool_library_findmodule(
 
 
 
-struct ImageModule *imgtool_library_iterate(imgtool_library *library, const struct ImageModule *module)
+imgtool_module *imgtool_library_iterate(imgtool_library *library, const imgtool_module *module)
 {
 	return module ? module->next : library->first;
 }
 
 
 
-struct ImageModule *imgtool_library_index(imgtool_library *library, int i)
+imgtool_module *imgtool_library_index(imgtool_library *library, int i)
 {
-	struct ImageModule *module;
+	imgtool_module *module;
 	module = library->first;
 	while(module && i--)
 		module = module->next;

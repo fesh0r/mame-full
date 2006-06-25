@@ -59,7 +59,7 @@ typedef struct
 	int			index;
 	} DSK_ITERATOR;
 
-static int msx_dsk_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int msx_dsk_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void msx_dsk_image_exit(imgtool_image *img);
 static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
 static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
@@ -171,7 +171,7 @@ IMAGEMODULE(
 #define 	FORMAT_MSX		(2)
 #define 	FORMAT_MULTI	(3)
 
-static int msx_dsk_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static int msx_dsk_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	DSK_IMAGE *image;
 	int size, disks, correct, format;

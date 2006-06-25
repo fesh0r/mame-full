@@ -54,7 +54,7 @@ struct WaveExtra
 																			\
 	int construct_imgmod_##name_(struct ImageModuleCtorParams *params)		\
 	{																		\
-		struct ImageModule *imgmod = params->imgmod;						\
+		imgtool_module *imgmod = params->imgmod;						\
 		memset(imgmod, 0, sizeof(*imgmod));									\
 		imgmod->name = #name_;												\
 		imgmod->humanname = (humanname_);									\
@@ -72,7 +72,7 @@ struct WaveExtra
 	}
 
 /* These are called internally */
-int imgwave_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+int imgwave_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 void imgwave_exit(imgtool_image *img);
 int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
 int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);

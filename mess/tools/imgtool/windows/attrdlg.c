@@ -12,7 +12,7 @@
 
 static const TCHAR owner_prop[] = TEXT("wimgtool_owned");
 
-extern const struct ImageModule *find_filter_module(int filter_index,
+extern const imgtool_module *find_filter_module(int filter_index,
 	BOOL creating_file);
 
 static HFONT get_window_font(HWND window)
@@ -167,7 +167,7 @@ static void apply_option_controls(HWND dialog, struct transfer_suggestion_info *
 struct new_dialog_info
 {
 	HWND parent;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	int control_count;
 	int margin;
 	unsigned int expanded : 1;
@@ -264,7 +264,7 @@ UINT_PTR CALLBACK win_new_dialog_hook(HWND dlgwnd, UINT message,
 	const OFNOTIFY *ofn_notify;
 	const NM_UPDOWN *ud_notify;
 	struct new_dialog_info *info;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	HWND control;
 	RECT r1, r2;
 	LONG_PTR l;

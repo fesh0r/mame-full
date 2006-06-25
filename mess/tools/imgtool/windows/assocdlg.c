@@ -132,7 +132,7 @@ static int CLIB_DECL extension_compare(const void *p1, const void *p2)
 
 static void setup_extensions(struct assocdlg_info *dlginfo)
 {
-	const struct ImageModule *module = NULL;
+	const imgtool_module *module = NULL;
 	const char *ext;
 	int i;
 

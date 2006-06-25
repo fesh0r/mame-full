@@ -546,7 +546,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 {
 	struct wimgtool_info *info;
 	LVCOLUMN col;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	int column_index = 0;
 	int i;
 	char buf[256];
@@ -683,8 +683,8 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	mess_pile pile;
-	const struct ImageModule *default_module = NULL;
-	const struct ImageModule *module = NULL;
+	const imgtool_module *default_module = NULL;
+	const imgtool_module *module = NULL;
 	const char *s;
 	TCHAR *filename;
 	TCHAR *filter;
@@ -796,10 +796,10 @@ done:
 
 
 
-const struct ImageModule *find_filter_module(int filter_index,
+const imgtool_module *find_filter_module(int filter_index,
 	BOOL creating_file)
 {
-	const struct ImageModule *module = NULL;
+	const imgtool_module *module = NULL;
 	struct imgtool_module_features features;
 
 	if (filter_index-- == 0)
@@ -918,11 +918,12 @@ done:
 
 
 
-imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
+imgtoolerr_t wimgtool_open_image(HWND window, const imgtool_module *module,
 	const char *filename, int read_or_write)
 {
 	imgtoolerr_t err;
 	imgtool_image *image;
+	imgtool_module *identified_module;
 	struct wimgtool_info *info;
 	struct imgtool_module_features features = { 0, };
 	char buf[2];
@@ -932,9 +933,10 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	// if the module is not specified, auto detect the format
 	if (!module)
 	{
-		err = img_identify(library, filename, &module, 1);
+		err = img_identify(library, filename, &identified_module, 1);
 		if (err)
 			goto done;
+		module = identified_module;
 	}
 
 	// check to see if this module actually supports writing
@@ -1008,7 +1010,7 @@ static void menu_new(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	memory_pool pool;
 	OPENFILENAME ofn;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	const char *filename = NULL;
 	option_resolution *resolution = NULL;
 
@@ -1052,7 +1054,7 @@ static void menu_open(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	memory_pool pool;
 	OPENFILENAME ofn;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	const char *filename = NULL;
 	struct wimgtool_info *info;
 	int read_or_write;
@@ -1100,7 +1102,7 @@ static void menu_insert(HWND window)
 	struct wimgtool_info *info;
 	option_resolution *opts = NULL;
 	BOOL cancel;
-	const struct ImageModule *module;
+	const imgtool_module *module;
 	const char *fork = NULL;
 	struct transfer_suggestion_info suggestion_info;
 	int use_suggestion_info;

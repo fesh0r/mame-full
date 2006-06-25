@@ -300,10 +300,11 @@ char *imgtool_temp_str(void);
 
 
 
-struct ImageModule
+typedef struct _imgtool_module imgtool_module;
+struct _imgtool_module
 {
-	struct ImageModule *previous;
-	struct ImageModule *next;
+	imgtool_module *previous;
+	imgtool_module *next;
 
 	imgtool_class imgclass;
 
@@ -374,23 +375,23 @@ void imgtool_library_close(imgtool_library *library);
 void imgtool_library_add(imgtool_library *library, imgtool_get_info get_info);
 
 /* seeks out and removes a module from an imgtool library */
-const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
+const imgtool_module *imgtool_library_unlink(imgtool_library *library,
 	const char *module);
 
 /* sorts an imgtool library */
 void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort);
 
 /* finds a module */
-const struct ImageModule *imgtool_library_findmodule(
+const imgtool_module *imgtool_library_findmodule(
 	imgtool_library *library, const char *module_name);
 
 /* memory allocators for pooled library memory */
 void *imgtool_library_alloc(imgtool_library *library, size_t mem);
 char *imgtool_library_strdup(imgtool_library *library, const char *s);
 
-struct ImageModule *imgtool_library_iterate(
-	imgtool_library *library, const struct ImageModule *module);
-struct ImageModule *imgtool_library_index(
+imgtool_module *imgtool_library_iterate(
+	imgtool_library *library, const imgtool_module *module);
+imgtool_module *imgtool_library_index(
 	imgtool_library *library, int i);
 
 #endif /* LIBRARY_H */
