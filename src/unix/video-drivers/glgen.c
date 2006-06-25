@@ -15,7 +15,6 @@
 
 #include <math.h>
 #include "glmame.h"
-#include <GL/glext.h>
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
