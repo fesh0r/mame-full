@@ -41,7 +41,7 @@ game_driver driver_0 =
 #ifdef TINY_COMPILE
 extern const game_driver TINY_NAME;
 
-const game_driver * drivers[] =
+const game_driver * const drivers[] =
 {
   TINY_POINTER,
   0             /* end of array */

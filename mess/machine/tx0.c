@@ -1058,8 +1058,11 @@ void tx0_sel(void)
 	magtape.sel_pending = TRUE;
 
 	if (magtape.state == MTS_UNSELECTED)
-		//magtape_callback();
+	{
+		if (0)
+			magtape_callback();
 		timer_adjust(magtape.timer, TIME_NOW, 0, 0.);
+	}
 }
 
 void tx0_io_cpy(void)

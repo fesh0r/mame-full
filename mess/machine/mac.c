@@ -68,7 +68,6 @@
 static int scan_keyboard(void);
 static void inquiry_timeout_func(int unused);
 static void keyboard_receive(int val);
-static void keyboard_send_reply(void);
 static READ8_HANDLER(mac_via_in_a);
 static READ8_HANDLER(mac_via_in_b);
 static WRITE8_HANDLER(mac_via_out_a);

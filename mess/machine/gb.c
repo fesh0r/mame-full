@@ -291,7 +291,9 @@ MACHINE_RESET( gbc )
 	/* set the scanline refresh function */
 	refresh_scanline = gbc_refresh_scanline;
 
-	/*add_exit_callback(gb_machine_stop);*/
+	/* NPW 25-Jun-2006 - how will battery backed RAM be saved? */
+	if (0)
+		add_exit_callback(gb_machine_stop);
 }
 
 static void gb_machine_stop(void)

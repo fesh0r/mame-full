@@ -644,11 +644,6 @@ INTERRUPT_GEN( trs80_frame_interrupt )
 {
 }
 
-static void trs80_nmi_generate (int param)
-{
-	cpunum_set_input_line (0, INPUT_LINE_NMI, PULSE_LINE);
-}
-
 /*************************************
  *									 *
  *		Memory handlers 			 *

@@ -608,7 +608,9 @@ static void lynx_blitter(void)
 	blitter.memory_accesses+=2;
 	if (!(blitter.cmd&0xff00)) break;
     }
-//    timer_set(TIME_IN_CYCLES(blitter.memory_accesses*20,0), 0, lynx_blitter_timer);
+
+	if (0)
+		timer_set(TIME_IN_CYCLES(blitter.memory_accesses*20,0), 0, lynx_blitter_timer);
 }
 
 static void lynx_divide(void)

@@ -33,8 +33,6 @@ UINT8 *pet_memory;
 UINT8 *superpet_memory;
 UINT8 *pet_videoram;
 
-static void pet_state(void);
-
 /* pia at 0xe810
    port a
     7 sense input (low for diagnostics)
