@@ -211,6 +211,9 @@ static z80gbdasm mnemonic_main[256]= {
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
+
+static unsigned z80gb_get_reg(int reg) { union cpuinfo info; z80gb_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+
 unsigned z80gb_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes )
 {
 	z80gbdasm *d;
