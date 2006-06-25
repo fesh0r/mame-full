@@ -43,7 +43,7 @@ static void osd_exit(void)
 
 void *osd_alloc_executable(size_t size)
 {
-#ifdef HAVE_MMAP
+#if defined(HAVE_MMAP) && !defined(__sgi)
 	void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_SHARED, -1, 0);
 #else
 	void *addr = malloc(size);
@@ -53,7 +53,7 @@ void *osd_alloc_executable(size_t size)
 
 void osd_free_executable(void *ptr, size_t size)
 {
-#ifdef HAVE_MMAP
+#if defined(HAVE_MMAP) && !defined(__sgi)
 	munmap(ptr, size);
 #else
 	free(ptr);
