@@ -49,10 +49,6 @@ static apple2_config *a2_config;
 static void **a2_slot_tokens;
 static int a2_speaker_state;
 
-static void mockingboard_init (int slot);
-static int mockingboard_r (int offset);
-static void mockingboard_w (int offset, int data);
-
 static double joystick_x1_time;
 static double joystick_y1_time;
 static double joystick_x2_time;
@@ -76,7 +72,6 @@ static WRITE8_HANDLER ( apple2_c01x_w );
 static WRITE8_HANDLER ( apple2_c02x_w );
 static WRITE8_HANDLER ( apple2_c03x_w );
 static WRITE8_HANDLER ( apple2_c05x_w );
-static WRITE8_HANDLER ( apple2_c06x_w );
 static WRITE8_HANDLER ( apple2_c07x_w );
 
 
@@ -721,13 +716,6 @@ UINT8 apple2_getfloatingbusvalue(void)
 /* -----------------------------------------------------------------------
  * Machine reset
  * ----------------------------------------------------------------------- */
-
-static int apple2_hasslots(void)
-{
-	return (memory_region_length(REGION_CPU1) & 0x0FFF) ? 1 : 0;
-}
-
-
 
 static void apple2_reset(void)
 {

@@ -463,13 +463,6 @@ static WRITE8_HANDLER(c16_sidcart_16k)
 	sid6581_0_port_w(offset,data);
 }
 
-static WRITE8_HANDLER(c16_sidcart_32k)
-{
-	mess_ram[0x5400 + offset]=data;
-	mess_ram[0xd400 + offset]=data;
-	sid6581_0_port_w(offset,data);
-}
-
 static WRITE8_HANDLER(c16_sidcart_64k)
 {
 	mess_ram[0xd400 + offset]=data;

@@ -302,42 +302,7 @@ static void z80gb_get_context (void *dst)
 		*(z80gb_regs *)dst = Regs;
 }
 
-/****************************************************************************
- * Get a specific register
- ****************************************************************************/
-unsigned z80gb_get_reg (int regnum)
-{
-	switch( regnum )
-	{
-	case REG_PC: return Regs.w.PC;
-	case Z80GB_PC: return Regs.w.PC;
-	case REG_SP: return Regs.w.SP;
-	case Z80GB_SP: return Regs.w.SP;
-	case Z80GB_AF: return Regs.w.AF;
-	case Z80GB_BC: return Regs.w.BC;
-	case Z80GB_DE: return Regs.w.DE;
-	case Z80GB_HL: return Regs.w.HL;
-	}
-	return 0;
-}
 
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-static void z80gb_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case REG_PC: Regs.w.PC = val; change_pc(Regs.w.PC); break;
-	case Z80GB_PC: Regs.w.PC = val; break;
-	case REG_SP: Regs.w.SP = val; break;
-	case Z80GB_SP: Regs.w.SP = val; break;
-	case Z80GB_AF: Regs.w.AF = val; break;
-	case Z80GB_BC: Regs.w.BC = val; break;
-	case Z80GB_DE: Regs.w.DE = val; break;
-	case Z80GB_HL: Regs.w.HL = val; break;
-    }
-}
 
 static void z80gb_set_irq_line (int irqline, int state)
 {
@@ -371,23 +336,6 @@ static void z80gb_set_irq_line (int irqline, int state)
 	CheckInterrupts = 0;
 }*/
 
-static const char *z80gb_info(void *context, int regnum)
-{
-	static char buffer[8][47+1];
-	static int which = 0;
-	z80gb_regs *r = context;
-
-	which = (which + 1) % 8;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &Regs;
-
-    switch( regnum )
-	{
-	}
-	return buffer[which];
-}
-
 static void z80gb_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -400,9 +348,9 @@ static void z80gb_set_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_INPUT_STATE + 4:				z80gb_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i); break;
 
 	case CPUINFO_INT_SP:						Regs.w.SP = info->i;						break;
-	case CPUINFO_INT_PC:						Regs.w.PC = info->i; change_pc(Regs.w.PC); break;
+	case CPUINFO_INT_PC:						Regs.w.PC = info->i; change_pc(Regs.w.PC);	break;
 
-	case CPUINFO_INT_REGISTER + Z80GB_PC:		Regs.w.PC = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_PC:		Regs.w.PC = info->i; change_pc(Regs.w.PC);	break;
 	case CPUINFO_INT_REGISTER + Z80GB_SP:		Regs.w.SP = info->i;						break;
 	case CPUINFO_INT_REGISTER + Z80GB_AF:		Regs.w.AF = info->i;						break;
 	case CPUINFO_INT_REGISTER + Z80GB_BC:		Regs.w.BC = info->i;						break;

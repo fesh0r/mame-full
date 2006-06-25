@@ -443,13 +443,6 @@ static int scan_keys(const input_port_entry *input_ports, mess_input_code *codes
 
 
 
-static unicode_char_t unicode_tolower(unicode_char_t c)
-{
-	return (c < 128) ? tolower((char) c) : c;
-}
-
-
-
 /*-------------------------------------------------
     build_codes - given an input port table, create
 	a input code table useful for mapping unicode

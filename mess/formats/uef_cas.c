@@ -209,12 +209,6 @@ cleanup:
 	return -1;
 }
 
-static INT16* uef_cas_fill_null( INT16 *buffer ) {
-	*buffer = WAVE_NULL; *buffer++;
-	*buffer = WAVE_NULL; *buffer++;
-	return buffer;
-}
-
 static INT16* uef_cas_fill_bit( INT16 *buffer, int bit ) {
 	if ( bit ) {
 		*buffer = WAVE_LOW; buffer++;

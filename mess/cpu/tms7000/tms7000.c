@@ -195,6 +195,8 @@ static void tms7000_init(int index, int clock, const void *config, int (*irqcall
 {
 	int cpu = cpu_getactivecpu();
 
+	tms7000.irq_callback = irqcallback;
+
 	memset(tms7000.pf, 0, 0x100);
 	memset(tms7000.rf, 0, 0x80);
 	
@@ -416,11 +418,6 @@ void tms7000_set_irq_line(int irqline, int state)
 		
 		tms7000_check_IRQ_lines();
 	}
-}
-
-static void tms7000_set_irq_callback(int (*callback)(int irqline))
-{
-	tms7000.irq_callback = callback;
 }
 
 static void tms7000_check_IRQ_lines( void )

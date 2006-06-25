@@ -135,17 +135,3 @@ MACHINE_RESET( coupe )
 
     wd179x_init(WD_TYPE_177X,NULL);
 }
-
-
-/*************************************
- *
- *      Interrupt handlers.
- *
- *************************************/
-
-static void coupe_nmi_generate(int param)
-{
-	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
-}
-
-

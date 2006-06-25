@@ -12,11 +12,6 @@
 #include "memory.h"
 
 
-static void InitDasmCOP411(void)
-{
-
-}
-
 int DasmCOP411(char *buffer, unsigned pc)
 {
 	int op;

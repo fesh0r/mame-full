@@ -164,7 +164,6 @@ static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after re
 
 #define GIME_TYPE_1987	0
 
-static void coco3_timer_hblank(void);
 static int count_bank(void);
 static int is_Orch90(void);
 
@@ -2440,7 +2439,7 @@ MACHINE_START( coco3 )
 	coco_or_dragon = AM_COCO;
 
 	for (portnum = 0; portnum <= 6; portnum++)
-		input_port_set_changed_callback(portnum, ~0, coco_poll_keyboard, NULL);
+		input_port_set_changed_callback(portnum, ~0, coco3_poll_keyboard, NULL);
 
 	state_save_register_global_array(coco3_mmu);
 	state_save_register_global_array(coco3_gimereg);

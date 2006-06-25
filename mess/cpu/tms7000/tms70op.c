@@ -2359,6 +2359,8 @@ static void movp_b2p( void )
 	tms7000_icount -= 10;
 }
 
+#if 0
+/* this appears to be unused */
 static void movp_r2p( void )
 {
 	UINT8	p,r;
@@ -2375,6 +2377,7 @@ static void movp_r2p( void )
 
 	tms7000_icount -= 11;
 }
+#endif
 
 static void movp_p2a( void )
 {
