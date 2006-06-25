@@ -369,6 +369,7 @@ $(OBJ)/atari.a:						\
 	$(OBJ)/vidhrdw/atari.o			\
 	$(OBJ)/vidhrdw/antic.o			\
 	$(OBJ)/vidhrdw/gtia.o			\
+	$(OBJ)/mess/machine/atarifdc.o	\
 	$(OBJ)/mess/systems/atari.o		\
 	$(OBJ)/mess/machine/a7800.o		\
 	$(OBJ)/mess/systems/a7800.o		\
