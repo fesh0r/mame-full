@@ -1060,7 +1060,7 @@ void tx0_sel(void)
 	if (magtape.state == MTS_UNSELECTED)
 	{
 		if (0)
-			magtape_callback();
+			magtape_callback(0);
 		timer_adjust(magtape.timer, TIME_NOW, 0, 0.);
 	}
 }
