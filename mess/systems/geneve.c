@@ -469,7 +469,6 @@ static MACHINE_DRIVER_START(geneve_60hz)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(512 + 32, (212 + 28) * 2)
 	MDRV_VISIBLE_AREA(0, 512 + 32 - 1, 0, (212 + 28) * 2 - 1)
 

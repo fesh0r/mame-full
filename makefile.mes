@@ -241,7 +241,7 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS = -std=gnu89 -Imess -Isrc -Isrc/includes -Isrc/$(MAMEOS) -Imess/$(MAMEOS)
+CFLAGS = -std=gnu89 -Imess -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/layout -Imess/$(MAMEOS)
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
@@ -297,8 +297,18 @@ VPATH = src $(wildcard src/cpu/*)
 # define the standard object directories
 #-------------------------------------------------
 
-OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug $(OBJ)/xml2info
+OBJDIRS = \
+	obj \
+	$(OBJ) \
+	$(OBJ)/cpu \
+	$(OBJ)/sound \
+	$(OBJ)/debug \
+	$(OBJ)/drivers \
+	$(OBJ)/layout \
+	$(OBJ)/machine \
+	$(OBJ)/sndhrdw \
+	$(OBJ)/vidhrdw \
+	$(OBJ)/$(MAMEOS) \
 
 OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/expat										\
@@ -441,21 +451,15 @@ endif
 
 #############################################################################
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
+file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(OSTOOLOBJS) $(ZLIB) $(OSDBGOBJS)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
+
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
 
 xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT) $(OSDBGOBJS)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-dat2html$(EXE): $(DAT2HTML_OBJS) $(OSDBGOBJS)
-	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
+jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
 
 messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 	@echo Compiling $@...
@@ -520,6 +524,10 @@ $(OBJ)/%.pp: src/%.c
 $(OBJ)/%.s: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+
+$(OBJ)/%.lh: src/%.lay file2str$(EXE)
+	@echo Converting $<...
+	@file2str$(EXE) $< $@ layout_$(basename $(notdir $<))
 
 $(OBJ)/mess/%.o: mess/%.c
 	@echo Compiling $<...

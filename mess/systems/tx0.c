@@ -347,7 +347,6 @@ static MACHINE_DRIVER_START(tx0_64kw)
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(virtual_width, virtual_height)
 	MDRV_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
 
@@ -385,7 +384,6 @@ static MACHINE_DRIVER_START(tx0_8kw)
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(virtual_width, virtual_height)
 	MDRV_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
 
