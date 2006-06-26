@@ -370,6 +370,17 @@ imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head,
 imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
 	UINT32 sector, const void *buffer, size_t len);
 
+/* img_getblocksize
+ * img_readblock
+ * img_writeblock
+ *
+ * Description:
+ *		Functions for reading/writing block data
+ */
+imgtoolerr_t img_getblocksize(imgtool_image *image, UINT32 *length);
+imgtoolerr_t img_readblock(imgtool_image *image, UINT64 block, void *buffer);
+imgtoolerr_t img_writeblock(imgtool_image *image, UINT64 block, const void *buffer);
+
 /* img_malloc
  *
  * Description:

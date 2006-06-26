@@ -98,6 +98,9 @@ static void imgtool_library_add_class(imgtool_library *library, const imgtool_cl
 	module->get_iconinfo				= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ICON_INFO);
 	module->suggest_transfer			= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
 	module->get_chain					= (imgtoolerr_t (*)(imgtool_image *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_CHAIN);
+	module->read_block					= (imgtoolerr_t (*)(imgtool_image *, void *, UINT64)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_BLOCK);
+	module->write_block					= (imgtoolerr_t (*)(imgtool_image *, const void *, UINT64)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_BLOCK);
+	module->block_size					= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_BLOCK_SIZE);
 	module->createimage_optguide		= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE);
 	module->createimage_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC));
 	module->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);

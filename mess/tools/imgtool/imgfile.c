@@ -1256,6 +1256,40 @@ imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
 
 
 
+imgtoolerr_t img_getblocksize(imgtool_image *image, UINT32 *length)
+{
+	/* implemented? */
+	if (image->module->block_size == 0)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	*length = image->module->block_size;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+imgtoolerr_t img_readblock(imgtool_image *image, UINT64 block, void *buffer)
+{
+	/* implemented? */
+	if (!image->module->read_block)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->read_block(image, buffer, block);
+}
+
+
+
+imgtoolerr_t img_writeblock(imgtool_image *image, UINT64 block, const void *buffer)
+{
+	/* implemented? */
+	if (!image->module->write_block)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->write_block(image, buffer, block);
+}
+
+
+
 void *img_malloc(imgtool_image *image, size_t size)
 {
 	return pool_malloc(&image->pool, size);

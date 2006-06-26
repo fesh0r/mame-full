@@ -363,7 +363,11 @@ struct _imgtool_module
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
 	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
 	imgtoolerr_t	(*write_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
+	imgtoolerr_t	(*read_block)	(imgtool_image *image, void *buffer, UINT64 block);
+	imgtoolerr_t	(*write_block)	(imgtool_image *image, const void *buffer, UINT64 block);
 	int				(*approve_filename_char)(unicode_char_t ch);
+
+	UINT32 block_size;
 
 	const struct OptionGuide *createimage_optguide;
 	const char *createimage_optspec;

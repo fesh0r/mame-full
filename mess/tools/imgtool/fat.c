@@ -350,36 +350,31 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 {
 	const fat_diskinfo *disk_info;
 	imgtoolerr_t err;
-	floperr_t ferr;
-	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
+	UINT32 block_size;
 	size_t len;
 
 	disk_info = fat_get_diskinfo(image);
 	sector_index += disk_info->partition_sector_index;
 
-	if (fat_is_harddisk(image))
-	{
-		while(buffer_len > 0)
-		{
-			err = imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
-			if (err)
-				return err;
+	/* sanity check */
+	err = img_getblocksize(image, &block_size);
+	if (err)
+		return err;
+	assert(block_size == sizeof(data));
 
-			len = MIN(buffer_len, sizeof(data) - offset);
-			memcpy(buffer, data + offset, len);
-
-			buffer = ((UINT8 *) buffer) + len;
-			buffer_len -= len;
-			offset = 0;
-		}
-	}
-	else
+	while(buffer_len > 0)
 	{
-		fat_get_sector_position(image, sector_index, &head, &track, &sector);
-		ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
-		if (ferr)
-			return imgtool_floppy_error(ferr);
+		err = img_readblock(image, sector_index++, data);
+		if (err)
+			return err;
+
+		len = MIN(buffer_len, sizeof(data) - offset);
+		memcpy(buffer, data + offset, len);
+
+		buffer = ((UINT8 *) buffer) + len;
+		buffer_len -= len;
+		offset = 0;
 	}
 	return IMGTOOLERR_SUCCESS;
 }
@@ -391,49 +386,44 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 {
 	const fat_diskinfo *disk_info;
 	imgtoolerr_t err;
-	floperr_t ferr;
-	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
 	const void *write_data;
+	UINT32 block_size;
 	size_t len;
 
 	disk_info = fat_get_diskinfo(image);
 	sector_index += disk_info->partition_sector_index;
 
-	if (fat_is_harddisk(image))
+	/* sanity check */
+	err = img_getblocksize(image, &block_size);
+	if (err)
+		return err;
+	assert(block_size == sizeof(data));
+
+	while(buffer_len > 0)
 	{
-		while(buffer_len > 0)
+		len = MIN(buffer_len, sizeof(data) - offset);
+
+		if ((offset != 0) || (buffer_len < sizeof(data)))
 		{
-			len = MIN(buffer_len, sizeof(data) - offset);
-
-			if ((offset != 0) || (buffer_len < sizeof(data)))
-			{
-				err = imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
-				if (err)
-					return err;
-				memcpy(data + offset, buffer, len);
-				write_data = data;
-			}
-			else
-			{
-				write_data = buffer;
-			}
-
-			err = imghd_write(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
+			err = img_readblock(image, sector_index, data);
 			if (err)
 				return err;
-
-			buffer = ((const UINT8 *) buffer) + len;
-			buffer_len -= len;
-			offset = 0;
+			memcpy(data + offset, buffer, len);
+			write_data = data;
 		}
-	}
-	else
-	{
-		fat_get_sector_position(image, sector_index, &head, &track, &sector);
-		ferr = floppy_write_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
-		if (ferr)
-			return imgtool_floppy_error(ferr);
+		else
+		{
+			write_data = buffer;
+		}
+
+		err = img_writeblock(image, sector_index++, write_data);
+		if (err)
+			return err;
+
+		buffer = ((UINT8 *) buffer) + len;
+		buffer_len -= len;
+		offset = 0;
 	}
 	return IMGTOOLERR_SUCCESS;
 }
@@ -1156,7 +1146,7 @@ static UINT32 fat_allocate_cluster(imgtool_image *image, UINT8 *fat_table)
 
 
 
-/* sets the size of a file; 0xFFFFFFFF means 'delete' */
+/* sets the size of a file; ~0 means 'delete' */
 static imgtoolerr_t fat_set_file_size(imgtool_image *image, fat_file *file,
 	UINT32 new_size)
 {
@@ -1177,7 +1167,7 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, fat_file *file,
 	LOG(("fat_set_file_size(): file->first_cluster=%d new_size=0x%08x\n", file->first_cluster, new_size));
 
 	/* special case */
-	if (new_size == 0xFFFFFFFF)
+	if (new_size == ~0)
 	{
 		delete_file = TRUE;
 		new_size = 0;
@@ -2188,7 +2178,7 @@ static imgtoolerr_t fat_diskimage_delete(imgtool_image *image, const char *filen
 			return IMGTOOLERR_DIRNOTEMPTY;
 	}
 
-	err = fat_set_file_size(image, &file, 0xFFFFFFFF);
+	err = fat_set_file_size(image, &file, ~0);
 	if (err)
 		return err;
 
@@ -2273,6 +2263,50 @@ static imgtoolerr_t fat_diskimage_deletedir(imgtool_image *image, const char *pa
 
 
 /*********************************************************************
+	Stuff specific to floppies
+*********************************************************************/
+
+static imgtoolerr_t fat_diskimage_readblock(imgtool_image *image, void *buffer, UINT64 block)
+{
+	imgtoolerr_t err;
+	floperr_t ferr;
+	int head, track, sector;
+	UINT32 block_size;
+
+	err = img_getblocksize(image, &block_size);
+	if (err)
+		return err;
+
+	fat_get_sector_position(image, block, &head, &track, &sector);
+	ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, 0, buffer, block_size);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_diskimage_writeblock(imgtool_image *image, const void *buffer, UINT64 block)
+{
+	imgtoolerr_t err;
+	floperr_t ferr;
+	int head, track, sector;
+	UINT32 block_size;
+
+	err = img_getblocksize(image, &block_size);
+	if (err)
+		return err;
+
+	fat_get_sector_position(image, block, &head, &track, &sector);
+	ferr = floppy_write_sector(imgtool_floppy(image), head, track, sector, 0, buffer, block_size);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+/*********************************************************************
 	Imgtool module declaration
 *********************************************************************/
 
@@ -2313,6 +2347,9 @@ void fat_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo
 {
 	switch(state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case IMGTOOLINFO_INT_BLOCK_SIZE:					info->i = FAT_SECLEN; break;
+
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "fat"); break;
 		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "FAT format"); break;
@@ -2322,6 +2359,8 @@ void fat_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo
 		case IMGTOOLINFO_PTR_FLOPPY_CREATE:					info->create = fat_diskimage_create; break;
 		case IMGTOOLINFO_PTR_FLOPPY_OPEN:					info->open = fat_diskimage_open; break;
 		case IMGTOOLINFO_PTR_FLOPPY_FORMAT:					info->p = (void *) floppyoptions_pc; break;
+		case IMGTOOLINFO_PTR_READ_BLOCK:					info->read_block = fat_diskimage_readblock; break;
+		case IMGTOOLINFO_PTR_WRITE_BLOCK:					info->write_block = fat_diskimage_writeblock; break;
 
 		default: fat_base_get_info(imgclass, state, info); break;
 	}
@@ -2459,12 +2498,27 @@ static imgtoolerr_t	fat_chd_diskimage_writesector(imgtool_image *image, UINT32 t
 
 
 
+static imgtoolerr_t fat_chd_diskimage_readblock(imgtool_image *image, void *buffer, UINT64 block)
+{
+	return imghd_read(&fat_get_diskinfo(image)->harddisk, block, 1, buffer);
+}
+
+
+
+static imgtoolerr_t fat_chd_diskimage_writeblock(imgtool_image *image, const void *buffer, UINT64 block)
+{
+	return imghd_write(&fat_get_diskinfo(image)->harddisk, block, 1, buffer);
+}
+
+
+
 void pc_chd_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
 {
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_TRACKS_ARE_CALLED_CYLINDERS:	info->i = 1; break;
+		case IMGTOOLINFO_INT_BLOCK_SIZE:					info->i = FAT_SECLEN; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "pc_chd_fat"); break;
@@ -2480,6 +2534,8 @@ void pc_chd_get_info(const imgtool_class *imgclass, UINT32 state, union imgtooli
 		case IMGTOOLINFO_PTR_READ_SECTOR:					info->read_sector = fat_chd_diskimage_readsector; break;
 		case IMGTOOLINFO_PTR_WRITE_SECTOR:					info->write_sector = fat_chd_diskimage_writesector; break;
 		case IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE:			info->createimage_optguide = fat_chd_create_optionguide; break;
+		case IMGTOOLINFO_PTR_READ_BLOCK:					info->read_block = fat_chd_diskimage_readblock; break;
+		case IMGTOOLINFO_PTR_WRITE_BLOCK:					info->write_block = fat_chd_diskimage_writeblock; break;
 
 		default: fat_base_get_info(imgclass, state, info); break;
 	}
