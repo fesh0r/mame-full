@@ -199,32 +199,6 @@ static const char *lookup_in_specification(const char *specification, const stru
 }
 
 
-static optreserr_t read_string(const char *s, char *buffer, size_t buffer_size)
-{
-	if (*s++ != '\'')
-	{
-		syntaxerror(NULL);
-		return OPTIONRESOLUTION_ERROR_SYNTAX;
-	}
-	
-	/* save space for trailing NUL */
-	buffer_size--;
-
-	while((s[0] != '\'') || (s[1] == '\''))
-	{
-		if (!buffer_size)
-			return OPTIONRESOLUTION_ERROR_OUTOFMEMORY;
-		buffer_size--;
-
-		*buffer++ = *s;
-		s += (*s == '\'') ? 2 : 1;
-	}
-
-	*buffer = '\0';
-	return OPTIONRESOLUTION_ERROR_SUCCESS;
-}
-
-
 
 option_resolution *option_resolution_create(const struct OptionGuide *guide, const char *specification)
 {
