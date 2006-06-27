@@ -769,9 +769,11 @@ void force_partial_update(int scrnum, int scanline)
 			int update_says_skip = 0;
 			(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip, &update_says_skip);
 
+#ifdef NEW_RENDER
 			scrchanged[scrnum] = !update_says_skip
 				|| (last_partial_scanline[scrnum] != 0)
 				|| (scanline != Machine->visible_area[scrnum].max_y);
+#endif
 		}
 #else
 		(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip);
