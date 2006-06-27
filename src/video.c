@@ -72,6 +72,7 @@ int vector_updates = 0;
 static int skipping_this_frame;
 static render_texture *scrtexture[MAX_SCREENS];
 static int scrformat[MAX_SCREENS];
+static int scrchanged[MAX_SCREENS];
 static
 #endif
 mame_bitmap *scrbitmap[MAX_SCREENS][2];
@@ -116,10 +117,6 @@ static artwork_callbacks mame_artwork_callbacks =
 #endif
 #endif
 
-#ifdef MESS
-int mess_skip_this_frame;
-#endif
-
 
 
 /***************************************************************************
@@ -153,6 +150,7 @@ int video_init(void)
 	full_refresh_callback_list = NULL;
 #endif
 	movie_frame = 0;
+	curbitmap = 0;
 
 #ifndef NEW_RENDER
 	add_pause_callback(video_pause);
@@ -770,10 +768,10 @@ void force_partial_update(int scrnum, int scanline)
 		{
 			int update_says_skip = 0;
 			(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip, &update_says_skip);
-			if (!update_says_skip)
-				mess_skip_this_frame = 0;
-			else if (mess_skip_this_frame == -1)
-				mess_skip_this_frame = 1;
+
+			scrchanged[scrnum] = !update_says_skip
+				|| (last_partial_scanline[scrnum] != 0)
+				|| (scanline != Machine->visible_area[scrnum].max_y);
 		}
 #else
 		(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip);
@@ -844,12 +842,6 @@ void update_video_and_audio(void)
 #ifndef NEW_RENDER
 	/* fill in our portion of the display */
 	current_display.changed_flags = 0;
-
-#ifdef MESS
-	if (mess_skip_this_frame == 1)
-		current_display.changed_flags |= GAME_OPTIONAL_FRAMESKIP;
-	mess_skip_this_frame = -1;
-#endif /* MESS */
 
 	/* set the main game bitmap */
 	current_display.game_bitmap = scrbitmap[0][curbitmap];
@@ -994,7 +986,7 @@ void video_frame_update(void)
 				/* only update if empty and not a vector game; otherwise assume the driver did it directly */
 				if (render_container_is_empty(render_container_get_screen(scrnum)) && !(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 				{
-					if (!skipping_this_frame)
+					if (!skipping_this_frame && scrchanged[scrnum])
 					{
 						rectangle visarea = Machine->visible_area[scrnum];
 						visarea.max_x++;
@@ -1047,7 +1039,8 @@ void video_frame_update(void)
 
 
 /*-------------------------------------------------
-    skip_this_frame -
+    skip_this_frame - accessor to determine if this
+	frame is being skipped
 -------------------------------------------------*/
 
 int skip_this_frame(void)
