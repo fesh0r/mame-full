@@ -2,6 +2,12 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@xmission.com)
 
+Release 0.107
+	- CFLAGS and LDFLAGS can now be set up by means of two external 
+	  variables (MY_CFLAGS and MY_LDFLAGS).  (Arnaud G. Gibert) 
+	- Enabled building on IRIX even when HAVE_MMAP is set in the makefile.  
+	  (Brandon Corey)
+
 Release 0.106, 27 May 2006
 	- Everything from MAME 0.106 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.106 (http://x.mame.net/changes-mess.html).
