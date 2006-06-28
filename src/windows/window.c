@@ -152,7 +152,7 @@ static volatile LONG mtlogindex;
 
 void mtlog_add(const char *event)
 {
-	int index = InterlockedIncrement(&mtlogindex) - 1;
+	int index = InterlockedIncrement((LONG *) &mtlogindex) - 1;
 	if (index < ARRAY_LENGTH(mtlog))
 	{
 		mtlog[index].timestamp = osd_cycles();
@@ -811,6 +811,15 @@ static void set_starting_view(int index, win_window_info *window, const char *vi
 				UINT32 viewscreens = render_target_get_view_screens(window->target, viewindex);
 				if (viewscreens == (1 << scrcount) - 1)
 					break;
+
+				// have we iterated through all views without finding one with
+				// all screens?
+				if (viewscreens == 0)
+				{
+					// just use the first view
+					viewindex = 0;
+					break;
+				}
 			}
 		}
 	}

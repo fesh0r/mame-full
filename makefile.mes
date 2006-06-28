@@ -241,7 +241,7 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS = -std=gnu89 -Imess -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/layout -Imess/$(MAMEOS)
+CFLAGS = -std=gnu89 -Imess -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/mess/layout -I$(OBJ)/layout -Imess/$(MAMEOS)
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
@@ -311,7 +311,7 @@ OBJDIRS = \
 	$(OBJ)/$(MAMEOS) \
 
 OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
-		$(OBJ)/mess/expat										\
+		$(OBJ)/mess/expat	$(OBJ)/mess/layout					\
 		$(OBJ)/mess/cpu		$(OBJ)/mess/devices					\
 		$(OBJ)/mess/systems $(OBJ)/mess/machine					\
 		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw					\
@@ -540,6 +540,10 @@ $(OBJ)/mess/%.pp: mess/%.c
 $(OBJ)/mess/%.S: mess/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+
+$(OBJ)/mess/%.lh: mess/%.lay file2str$(EXE)
+	@echo Converting $<...
+	@file2str$(EXE) $< $@ layout_$(basename $(notdir $<))
 
 $(OBJ)/%.a:
 	@echo Archiving $@...

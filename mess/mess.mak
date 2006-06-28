@@ -1086,3 +1086,10 @@ sysinfo.htm: dat2html$(EXE)
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
+
+
+#-------------------------------------------------
+# MESS specific layouts
+#-------------------------------------------------
+
+$(OBJ)/mess/systems/coco.o:	$(OBJ)/mess/layout/coco3.lh

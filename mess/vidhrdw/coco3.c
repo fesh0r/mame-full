@@ -402,6 +402,9 @@ VIDEO_UPDATE( coco3 )
 	int i, row;
 	UINT32 *line;
 
+	/* choose video type */
+	video->video_type = screen ? 1 : 0;
+
 	/* set all of the palette colors */
 	for (i = 0; i < 16; i++)
 		video->palette_colors[i] = color(video->palette_ram[i]);
@@ -427,9 +430,6 @@ VIDEO_UPDATE( coco3 )
 		/* CoCo 3 graphics */
 		if (video->dirty)
 		{
-			/* placing this here, so its only read once */
-			video->video_type = (UINT8) readinputportbytag("video_type");
-			
 			for (row = cliprect->min_y; row <= cliprect->max_y; row++)
 				coco3_render_scanline(bitmap, row);
 			video->dirty = FALSE;
