@@ -58,6 +58,7 @@ extern void win_timer_enable(int enabled);
 #define ID_DEVICE_0					11000
 #define ID_JOYSTICK_0				12000
 #define ID_INPUT_0					13000
+#define ID_VIDEO_VIEW_0				14000
 
 #define MAX_JOYSTICKS				(8)
 
@@ -114,7 +115,6 @@ int win_use_natural_keyboard;
 //	LOCAL VARIABLES
 //============================================================
 
-static HMENU win_menu_bar;
 static HICON device_icons[IO_COUNT];
 static int use_input_categories;
 static int joystick_menu_setup;
@@ -1055,7 +1055,7 @@ static void remove_menu_items(HMENU menu)
 //	setup_joystick_menu
 //============================================================
 
-static void setup_joystick_menu(void)
+static void setup_joystick_menu(HMENU menu_bar)
 {
 	int joystick_count = 0;
 	HMENU joystick_menu;
@@ -1078,7 +1078,7 @@ static void setup_joystick_menu(void)
 		in++;
 	}
 
-	joystick_menu = find_sub_menu(win_menu_bar, "&Options\0&Joysticks\0", TRUE);
+	joystick_menu = find_sub_menu(menu_bar, "&Options\0&Joysticks\0", TRUE);
 	if (!joystick_menu)
 		return;
 
@@ -1127,7 +1127,7 @@ static void setup_joystick_menu(void)
 	}
 
 	// last but not least, enable the joystick menu (or not)
-	set_command_state(win_menu_bar, ID_OPTIONS_JOYSTICKS, child_count ? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, child_count ? MFS_ENABLED : MFS_GRAYED);
 }
 
 
@@ -1154,12 +1154,16 @@ static void set_throttle(int t)	{ throttle = t; }
 //	prepare_menus
 //============================================================
 
-static void prepare_menus(void)
+static void prepare_menus(HWND wnd)
 {
 	int i;
 	const struct IODevice *dev;
 	char buf[MAX_PATH];
 	const char *s;
+	HMENU menu_bar;
+#ifdef NEW_RENDER
+	HMENU video_menu;
+#endif
 	HMENU device_menu;
 	HMENU sub_menu;
 	UINT_PTR new_item;
@@ -1171,17 +1175,29 @@ static void prepare_menus(void)
 	const input_port_entry *in;
 	UINT16 in_cat_value = 0;
 	int frameskip;
+#ifdef NEW_RENDER
+	int orientation;
+	LONG_PTR ptr = GetWindowLongPtr(wnd, GWLP_USERDATA);
+	win_window_info *window = (win_window_info *)ptr;
+	const char *view_name;
+	int view_index;
+#endif
 
-	if (!win_menu_bar)
+	menu_bar = GetMenu(wnd);
+	if (!menu_bar)
 		return;
 
 	if (!joystick_menu_setup)
 	{
-		setup_joystick_menu();
+		setup_joystick_menu(menu_bar);
 		joystick_menu_setup = 1;
 	}
 
 	frameskip = winvideo_get_frameskip();
+
+#ifdef NEW_RENDER
+	orientation = render_target_get_orientation(window->target);
+#endif
 
 	has_config		= input_has_input_class(INPUT_CLASS_CONFIG);
 	has_dipswitch	= input_has_input_class(INPUT_CLASS_DIPSWITCH);
@@ -1198,38 +1214,45 @@ static void prepare_menus(void)
 		}
 	}
 
-	set_command_state(win_menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
 #ifdef NEW_RENDERER
-	set_command_state(win_menu_bar, ID_FILE_SAVESCREENSHOT,													MFS_GRAYED);
+	set_command_state(menu_bar, ID_FILE_SAVESCREENSHOT,													MFS_GRAYED);
 #endif
 
-	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			mame_is_paused()							? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		is_throttled()									? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_OPTIONS_MISCINPUT,		has_misc									? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_OPTIONS_ANALOGCONTROLS,	has_analog									? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_OPTIONS_PAUSE,			mame_is_paused()							? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_OPTIONS_THROTTLE,		is_throttled()									? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_OPTIONS_MISCINPUT,		has_misc									? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_OPTIONS_ANALOGCONTROLS,	has_analog									? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!is_windowed()							? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_OPTIONS_FULLSCREEN,		!is_windowed()							? MFS_CHECKED : MFS_ENABLED);
 #endif // HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_get_show_fps()							? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_get_show_fps()							? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
-	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_get_show_profiler()						? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_OPTIONS_PROFILER,		ui_get_show_profiler()						? MFS_CHECKED : MFS_ENABLED);
 #endif
 
-	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,		(has_keyboard) ?
+	set_command_state(menu_bar, ID_KEYBOARD_EMULATED,		(has_keyboard) ?
 																(!win_use_natural_keyboard					? MFS_CHECKED : MFS_ENABLED)
 																												: MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,		(has_keyboard && inputx_can_post()) ?
+	set_command_state(menu_bar, ID_KEYBOARD_NATURAL,		(has_keyboard && inputx_can_post()) ?
 																(win_use_natural_keyboard					? MFS_CHECKED : MFS_ENABLED)
 																												: MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			(frameskip < 0)								? MFS_CHECKED : MFS_ENABLED);
+#ifdef NEW_RENDER
+	set_command_state(menu_bar, ID_VIDEO_ROTATE_0,			(orientation == ROT0)						? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_VIDEO_ROTATE_90,			(orientation == ROT90)						? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_VIDEO_ROTATE_180,		(orientation == ROT180)						? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(menu_bar, ID_VIDEO_ROTATE_270,		(orientation == ROT270)						? MFS_CHECKED : MFS_ENABLED);
+#endif
+
+	set_command_state(menu_bar, ID_FRAMESKIP_AUTO,			(frameskip < 0)								? MFS_CHECKED : MFS_ENABLED);
 	for (i = 0; i < FRAMESKIP_LEVELS; i++)
-		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i,		(frameskip == i)							? MFS_CHECKED : MFS_ENABLED);
+		set_command_state(menu_bar, ID_FRAMESKIP_0 + i,		(frameskip == i)							? MFS_CHECKED : MFS_ENABLED);
 
 	// if we are using categorized input, we need to properly checkmark the categories
 	if (use_input_categories)
@@ -1243,17 +1266,37 @@ static void prepare_menus(void)
 				break;
 
 			case IPT_CATEGORY_SETTING:
-				set_command_state(win_menu_bar, ID_INPUT_0 + i, (in->default_value == in_cat_value) ? MFS_CHECKED : MFS_ENABLED);
+				set_command_state(menu_bar, ID_INPUT_0 + i, (in->default_value == in_cat_value) ? MFS_CHECKED : MFS_ENABLED);
 				break;
 			}
 		}
 	}
 
+#ifdef NEW_RENDER
+	// set up screens in video menu
+	video_menu = find_sub_menu(menu_bar, "&Options\0&Video\0", FALSE);
+	do
+	{
+		GetMenuString(video_menu, 0, buf, sizeof(buf) / sizeof(buf[0]), MF_BYPOSITION);
+		if (buf[0])
+			RemoveMenu(video_menu, 0, MF_BYPOSITION);
+	}
+	while(buf[0]);
+	i = 0;
+	view_index = render_target_get_view(window->target);
+	while((view_name = render_target_get_view_name(window->target, i)) != NULL)
+	{
+		InsertMenu(video_menu, i, MF_BYPOSITION | (i == view_index ? MF_CHECKED : 0),
+			ID_VIDEO_VIEW_0 + i, A2T(view_name));
+		i++;
+	}
+#endif
+
 	// set up device menu; first remove all existing menu items
-	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
+	device_menu = find_sub_menu(menu_bar, "&Devices\0", FALSE);
 	remove_menu_items(device_menu);
 
-
+	// then set up the actual devices
 	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
 		for (i = 0; i < dev->count; i++)
@@ -1352,7 +1395,7 @@ void win_toggle_menubar(void)
 		AdjustWindowRectEx(&before_rect, style, has_menu, exstyle);
 
 		win_pause_input(1);
-		SetMenu(hwnd, GetMenu(hwnd) ? NULL : win_menu_bar);
+		SetMenu(hwnd, GetMenu(hwnd) ? NULL : NULL);
 		win_pause_input(0);
 
 		// get after rect, and width/height diff
@@ -1534,6 +1577,10 @@ static int invoke_command(HWND wnd, UINT command)
 	UINT16 setting, category;
 	input_port_entry *in;
 	const char *section;
+#ifdef NEW_RENDER
+	LONG_PTR ptr = GetWindowLongPtr(wnd, GWLP_USERDATA);
+	win_window_info *window = (win_window_info *)ptr;
+#endif
 
 	switch(command)
 	{
@@ -1549,11 +1596,13 @@ static int invoke_command(HWND wnd, UINT command)
 			state_save_as(wnd);
 			break;
 
-#ifndef NEW_RENDER
 		case ID_FILE_SAVESCREENSHOT:
+#ifdef NEW_RENDER
+			save_screen_snapshot(NULL);
+#else
 			save_screen_snapshot(artwork_get_ui_bitmap());
-			break;
 #endif // NEW_RENDER
+			break;
 
 		case ID_FILE_EXIT:
 			mame_schedule_exit();
@@ -1574,6 +1623,24 @@ static int invoke_command(HWND wnd, UINT command)
 		case ID_KEYBOARD_CUSTOMIZE:
 			customize_keyboard(wnd);
 			break;
+
+#ifdef NEW_RENDER
+		case ID_VIDEO_ROTATE_0:
+			render_target_set_orientation(window->target, ROT0);
+			break;
+
+		case ID_VIDEO_ROTATE_90:
+			render_target_set_orientation(window->target, ROT90);
+			break;
+
+		case ID_VIDEO_ROTATE_180:
+			render_target_set_orientation(window->target, ROT180);
+			break;
+
+		case ID_VIDEO_ROTATE_270:
+			render_target_set_orientation(window->target, ROT270);
+			break;
+#endif // NEW_RENDER
 
 		case ID_OPTIONS_PAUSE:
 			pause();
@@ -1684,6 +1751,13 @@ static int invoke_command(HWND wnd, UINT command)
 				// customize joystick
 				customize_joystick(wnd, command - ID_JOYSTICK_0);
 			}
+#ifdef NEW_RENDER
+			else if ((command >= ID_VIDEO_VIEW_0) && (command < ID_VIDEO_VIEW_0 + 1000))
+			{
+				// render views
+				render_target_set_view(window->target, command - ID_VIDEO_VIEW_0);
+			}
+#endif
 			else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
 			{
 				// customize categorized input
@@ -1809,8 +1883,6 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	// set the help menu to refer to this machine
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "About %s (%s)...", Machine->gamedrv->description, Machine->gamedrv->name);
 	set_menu_text(menu_bar, ID_HELP_ABOUTSYSTEM, buf);
-
-	win_menu_bar = menu_bar;
 	return 0;
 }
 
@@ -1943,7 +2015,7 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 	switch(message)
 	{
 		case WM_INITMENU:
-			prepare_menus();
+			prepare_menus(wnd);
 			break;
 
 		case WM_CHAR:
