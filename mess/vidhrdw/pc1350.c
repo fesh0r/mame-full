@@ -165,4 +165,5 @@ VIDEO_UPDATE( pc1350 )
 						pc1350_lcd.reg[0x83c]&0x40?color[1]:color[0]);
 	pocketc_draw_special(bitmap,RIGHT-30,DOWN+35,sml,
 						pc1350_lcd.reg[0x83c]&0x80?color[1]:color[0]);
+	return 0;
 }

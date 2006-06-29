@@ -1955,19 +1955,7 @@ void m6847_init(const m6847_config *cfg)
 VIDEO_UPDATE(m6847)
 {
 	int row, i;
-
-#ifdef NEW_RENDER
-	{
-		static int last_dirty;
-		int cur_dirty;
-
-		/* hack because the core alternates bitmaps */
-		cur_dirty = m6847->dirty;
-		if (!m6847->dirty)
-			m6847->dirty = last_dirty;
-		last_dirty = cur_dirty;
-	}
-#endif
+	UINT32 rc = 0;
 
 	/* if we have a custom palette, check to see if it has changed */
 	if (!m6847->dirty && m6847->has_custom_palette)
@@ -2001,8 +1989,9 @@ VIDEO_UPDATE(m6847)
 	else
 	{
 		/* skip this frame */
-		*do_skip = TRUE;
+		rc = UPDATE_HAS_NOT_CHANGED;
 	}
+	return rc;
 }
 
 

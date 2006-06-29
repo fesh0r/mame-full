@@ -528,12 +528,14 @@ static VIDEO_UPDATE( svi318_80col )
 			c++;
 		}
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( svi328b )
 {
-	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
-	video_update_svi318_80col(screen, bitmap, cliprect, do_skip);
+	video_update_tms9928a(screen, bitmap, cliprect);
+	video_update_svi318_80col(screen, bitmap, cliprect);
+	return 0;
 }
 
 MACHINE_RESET( svi328b )

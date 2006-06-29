@@ -49,6 +49,7 @@ static VIDEO_START( ip204415 )
 
 static VIDEO_UPDATE( ip204415 )
 {
+	return 0;
 }
 
 static struct EEPROM_interface eeprom_interface_93C56 =

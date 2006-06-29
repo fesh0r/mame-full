@@ -113,6 +113,7 @@ VIDEO_UPDATE( advision )
 			}
 		}
 	}
+	return 0;
 }
 
 

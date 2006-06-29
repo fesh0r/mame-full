@@ -531,7 +531,7 @@ VIDEO_UPDATE( vdc8563 )
 	int i;
 	int full_refresh = 1;
 
-	if (!vdc.rastering) return;
+	if (!vdc.rastering) return 0;
 	vdc8563_time();
 
 	full_refresh|=vdc.changed;
@@ -565,4 +565,5 @@ VIDEO_UPDATE( vdc8563 )
 	}
 
 	vdc.changed=0;
+	return 0;
 }

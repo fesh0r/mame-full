@@ -196,6 +196,7 @@ VIDEO_START( abc800c )
 VIDEO_UPDATE( abc80 )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Read/Write Handlers */

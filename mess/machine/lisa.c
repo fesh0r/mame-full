@@ -920,6 +920,7 @@ VIDEO_UPDATE( lisa )
 			line_buffer[x] = (v[(x+y*resx)>>4] & (0x8000 >> ((x+y*resx) & 0xf))) ? 1 : 0;
 		draw_scanline8(bitmap, 0, y, resx, line_buffer, Machine->pens, -1);
 	}
+	return 0;
 }
 
 

@@ -782,11 +782,7 @@ VIDEO_UPDATE( atari )
 {
 	UINT32 new_tv_artifacts;
 
-#ifdef MESS
-	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
-#else
 	video_update_generic_bitmapped(screen, bitmap, cliprect);
-#endif
 
 	new_tv_artifacts = readinputportbytag_safe("artifacts", 0);
 	if( tv_artifacts != new_tv_artifacts )
@@ -803,6 +799,7 @@ VIDEO_UPDATE( atari )
 			ui_draw_text(atari_frame_message, 0, height - 10);
 		}
 	}
+	return 0;
 }
 
 static renderer_function antic_renderer = antic_mode_0_xx;

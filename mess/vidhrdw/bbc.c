@@ -638,6 +638,7 @@ VIDEO_UPDATE( bbc )
 	// redrawn the screen so reset video_refresh
 	video_refresh=0;
 
+	return 0;
 }
 
 void bbc_frameclock(void)

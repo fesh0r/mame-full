@@ -152,4 +152,5 @@ VIDEO_UPDATE( nes )
 			}
 		}
 	}
+	return 0;
 }

@@ -51,4 +51,5 @@ logerror("DgnBeta Video update !\n");
 			}
 		}
 	}
+	return 0;
 }

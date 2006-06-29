@@ -160,5 +160,6 @@ VIDEO_UPDATE( pc1251 )
 	/* 0x3c 1 def?, 4 g, 8 de
 	   0x3d 2 shift, 4 rad, 8 error
 	   0x3e 1 pro?, 2 run?, 4rsv?*/
+	return 0;
 }
 

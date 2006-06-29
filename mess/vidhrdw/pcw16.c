@@ -273,4 +273,5 @@ VIDEO_UPDATE( pcw16 )
 			pScanLine+=2;
 		}
 	}
+	return 0;
 }

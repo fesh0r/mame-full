@@ -118,5 +118,6 @@ VIDEO_UPDATE( nc )
 			line_ptr = line_ptr+1;
 		}
 	}
+	return 0;
 }
 

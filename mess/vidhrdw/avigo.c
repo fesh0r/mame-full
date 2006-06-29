@@ -274,5 +274,6 @@ VIDEO_UPDATE( avigo )
 		ui_draw_text(avigo_text, 0, 216+16);
 
 	}
+	return 0;
 }
 

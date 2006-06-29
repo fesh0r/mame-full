@@ -74,4 +74,5 @@ VIDEO_UPDATE( p2000m )
 			dirtybuffer[offs] = 0;
 		}
 	}
+	return 0;
 }

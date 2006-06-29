@@ -92,5 +92,6 @@ VIDEO_UPDATE( exidy )
 			}
 		}
 	}
+	return 0;
 }
 

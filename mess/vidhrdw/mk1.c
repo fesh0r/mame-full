@@ -97,4 +97,5 @@ VIDEO_UPDATE( mk1 )
 		mk1_draw_9segment(bitmap, mk1_led[i], mk1_led_pos[i].x, mk1_led_pos[i].y);
 		mk1_led[i]=0;
 	}
+	return 0;
 }

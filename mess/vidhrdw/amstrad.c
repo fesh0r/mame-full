@@ -572,6 +572,7 @@ VIDEO_UPDATE( amstrad )
 	rect.max_y = AMSTRAD_SCREEN_HEIGHT-1;
 
     copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
+	return 0;
 }
 
 

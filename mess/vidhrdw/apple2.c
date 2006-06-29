@@ -507,6 +507,7 @@ VIDEO_UPDATE( apple2 )
 	{
 		apple2_lores_draw(bitmap, cliprect, page, 0, 191);
 	}
+	return 0;
 }
 
 void apple2_video_touch(offs_t offset)

@@ -1339,6 +1339,7 @@ VIDEO_UPDATE( vic2 )
 {
 	if (vic2.on)
 		copybitmap(bitmap, vic2.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 static PALETTE_INIT( vic2 )

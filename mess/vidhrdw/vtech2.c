@@ -341,6 +341,7 @@ VIDEO_UPDATE( laser )
 	{
 		ui_popup("%s", laser_frame_message);
 	}
+	return 0;
 }
 
 WRITE8_HANDLER( laser_bg_mode_w )

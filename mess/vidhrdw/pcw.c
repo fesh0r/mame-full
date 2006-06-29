@@ -180,4 +180,5 @@ VIDEO_UPDATE( pcw )
 
 		fillbitmap(bitmap, pen0, &rect);
 	}
+	return 0;
 }

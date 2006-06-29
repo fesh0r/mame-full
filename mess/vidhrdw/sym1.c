@@ -149,5 +149,6 @@ VIDEO_UPDATE( sym1 )
 				 sym1_led_pos[6].x, sym1_led_pos[6].y);
 	sym1_draw_led(bitmap, Machine->pens[1], 
 				 sym1_led_pos[7].x, sym1_led_pos[7].y);
+	return 0;
 }
 

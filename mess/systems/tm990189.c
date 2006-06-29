@@ -301,11 +301,12 @@ static void update_common(mame_bitmap *bitmap,
 static VIDEO_UPDATE( tm990_189 )
 {
 	update_common(bitmap, 580, 150, 110, 508, 387, 456, 507, 478, Machine->pens[1], Machine->pens[0]);
+	return 0;
 }
 
 static VIDEO_UPDATE( tm990_189_v )
 {
-	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
+	video_update_tms9928a(screen, bitmap, cliprect);
 
 	plot_box(bitmap, LED_display_window_left, LED_display_window_top, LED_display_window_width, LED_display_window_height, Machine->pens[1]);
 	update_common(bitmap,
@@ -314,6 +315,7 @@ static VIDEO_UPDATE( tm990_189_v )
 					LED_display_window_left+80, LED_display_window_top+16,
 					LED_display_window_left+128, LED_display_window_top+16,
 					Machine->pens[6], Machine->pens[1]);
+	return 0;
 }
 
 /*

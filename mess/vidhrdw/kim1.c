@@ -91,6 +91,7 @@ VIDEO_UPDATE( kim1 )
 				0, 0, sx, sy, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
         }
     }
+	return 0;
 }
 
 

@@ -103,6 +103,7 @@ VIDEO_UPDATE( cdp1864 )
 {
 	fillbitmap(bitmap, cdp1864.bgcolseq[cdp1864.bgcolor], cliprect);
 	// TODO: draw videoram to screen using DMA
+	return 0;
 }
 
 /*
@@ -243,6 +244,7 @@ VIDEO_UPDATE( cdp1869 )
 	}
 
 	blink++;
+	return 0;
 }
 
 void cdp1869_set_tone_volume(int which, int value)

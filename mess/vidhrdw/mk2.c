@@ -104,4 +104,5 @@ VIDEO_UPDATE( mk2 )
 				 mk2_led_pos[7].x, mk2_led_pos[7].y);
 
 	mk2_led[0]= mk2_led[1]= mk2_led[2]= mk2_led[3]= mk2_led[4]= 0;
+	return 0;
 }

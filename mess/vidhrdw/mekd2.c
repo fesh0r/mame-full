@@ -115,6 +115,7 @@ VIDEO_UPDATE( mekd2 )
         }
     }
 
+	return 0;
 }
 
 

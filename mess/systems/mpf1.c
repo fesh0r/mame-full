@@ -158,6 +158,7 @@ VIDEO_UPDATE( mpf1 )
 	// TODO: processor seems to halt, but restarts(?) at 0x0000 after a while -> fix
 	led_halt = (UINT8) cpunum_get_info_int(0, CPUINFO_INT_REGISTER + Z80_HALT);
 	draw_led(bitmap, radius_7_led, led_halt, 277, 394);
+	return 0;
 }
 
 /* Memory Maps */

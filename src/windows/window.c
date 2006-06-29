@@ -526,6 +526,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	if (window->target == NULL)
 		goto error;
 	render_target_set_orientation(window->target, video_orientation);
+	render_target_set_layer_config(window->target, video_config.layerconfig);
 
 	// set the specific view
 	sprintf(option, "view%d", index);
@@ -534,6 +535,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	// remember the current values in case they change
 	window->targetview = render_target_get_view(window->target);
 	window->targetorient = render_target_get_orientation(window->target);
+	window->targetlayerconfig = render_target_get_layer_config(window->target);
 
 	// make the window title
 	if (video_config.numscreens == 1)
@@ -606,7 +608,7 @@ static void winwindow_video_window_destroy(win_window_info *window)
 
 void winwindow_video_window_update(win_window_info *window)
 {
-	int targetview, targetorient;
+	int targetview, targetorient, targetlayerconfig;
 
 	assert(GetCurrentThreadId() == main_threadid);
 
@@ -615,10 +617,12 @@ void winwindow_video_window_update(win_window_info *window)
 	// see if the target has changed significantly in window mode
 	targetview = render_target_get_view(window->target);
 	targetorient = render_target_get_orientation(window->target);
-	if (targetview != window->targetview || targetorient != window->targetorient)
+	targetlayerconfig = render_target_get_layer_config(window->target);
+	if (targetview != window->targetview || targetorient != window->targetorient || targetlayerconfig != window->targetlayerconfig)
 	{
 		window->targetview = targetview;
 		window->targetorient = targetorient;
+		window->targetlayerconfig = targetlayerconfig;
 
 		// in window mode, reminimize/maximize
 		if (!window->fullscreen)
@@ -811,15 +815,8 @@ static void set_starting_view(int index, win_window_info *window, const char *vi
 				UINT32 viewscreens = render_target_get_view_screens(window->target, viewindex);
 				if (viewscreens == (1 << scrcount) - 1)
 					break;
-
-				// have we iterated through all views without finding one with
-				// all screens?
 				if (viewscreens == 0)
-				{
-					// just use the first view
-					viewindex = 0;
 					break;
-				}
 			}
 		}
 	}

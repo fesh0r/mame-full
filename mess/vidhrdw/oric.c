@@ -379,6 +379,7 @@ VIDEO_UPDATE( oric )
 			hires_active = 0;
 		}
 	}
+	return 0;
 }
 
 

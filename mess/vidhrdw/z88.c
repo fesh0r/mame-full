@@ -269,4 +269,5 @@ VIDEO_UPDATE( z88 )
 
 		stored_ptr+=256;
 	}		
+	return 0;
 }

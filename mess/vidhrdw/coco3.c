@@ -401,6 +401,7 @@ VIDEO_UPDATE( coco3 )
 {
 	int i, row;
 	UINT32 *line;
+	UINT32 rc = 0;
 
 	/* choose video type */
 	video->video_type = screen ? 1 : 0;
@@ -412,9 +413,9 @@ VIDEO_UPDATE( coco3 )
 	if (video->legacy_video)
 	{
 		/* legacy CoCo 1/2 graphics */
-		video_update_m6847(screen, bitmap, cliprect, do_skip);
+		rc = video_update_m6847(screen, bitmap, cliprect);
 
-		if (!*do_skip)
+		if ((rc & UPDATE_HAS_NOT_CHANGED) == 0)
 		{
 			/* need to double up all pixels */
 			for (row = cliprect->min_y; row <= cliprect->max_y; row++)
@@ -436,9 +437,10 @@ VIDEO_UPDATE( coco3 )
 		}
 		else
 		{
-			*do_skip = TRUE;
+			rc = UPDATE_HAS_NOT_CHANGED;
 		}
 	}
+	return rc;
 }
 
 

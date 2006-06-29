@@ -26,5 +26,6 @@ VIDEO_START( enterprise )
 VIDEO_UPDATE( enterprise )
 {
 	Nick_DoScreen(bitmap);
+	return 0;
 }
 

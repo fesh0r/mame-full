@@ -30,4 +30,5 @@ VIDEO_UPDATE( comquest )
 #endif
 		}
 	}
+	return 0;
 }

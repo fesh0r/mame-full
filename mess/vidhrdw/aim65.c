@@ -233,5 +233,6 @@ VIDEO_UPDATE( aim65 )
 	aim65_draw_led(bitmap, Machine->pens[1], 
 				 sym1_led_pos[7].x, sym1_led_pos[7].y);
 #endif
+	return 0;
 }
 

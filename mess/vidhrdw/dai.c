@@ -770,4 +770,5 @@ VIDEO_UPDATE( dai )
 		current_scan_line += line_repeat_count*2+2;
 		LOG_DAI_VIDEO_LINE(display_mode, unit_mode, horizontal_resolution, line_repeat_count, current_scan_line);
 	}
+	return 0;
 }

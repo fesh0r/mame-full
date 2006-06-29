@@ -292,6 +292,7 @@ static VIDEO_UPDATE( svision )
 			line += 4;
 		}
 	}
+	return 0;
 }
 
 static INTERRUPT_GEN( svision_frame_int )

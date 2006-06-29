@@ -479,4 +479,5 @@ INTERRUPT_GEN( vc4000_video_line )
 VIDEO_UPDATE( vc4000 )
 {
 	copybitmap(bitmap, vc4000_video.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }

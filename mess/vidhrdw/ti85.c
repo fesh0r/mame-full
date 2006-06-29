@@ -156,7 +156,7 @@ VIDEO_UPDATE( ti85 )
 			for (x=0; x<ti_screen_x_size; x++)
 				for (b=0; b<8; b++)
 					plot_pixel(bitmap, x*8+b, y, Machine->pens[ti85_colortable[ti85_LCD_contrast&0x1f][6]]);
-		return;
+		return 0;
 	}
 
 	lcdmem =  ((ti85_LCD_memory_base & 0x3F) + 0xc0) << 0x08;
@@ -180,5 +180,6 @@ VIDEO_UPDATE( ti85 )
 
 				plot_pixel(bitmap, x*8+b, y, Machine->pens[ti85_colortable[ti85_LCD_contrast&0x1f][brightnes]]);
 	                }
+	return 0;
 }
 

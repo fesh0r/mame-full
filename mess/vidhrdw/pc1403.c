@@ -257,6 +257,7 @@ that. */
     pocketc_draw_special(bitmap,RIGHT+274,DOWN+27,line/*print*/,
 			 pc1403_lcd.reg[0x7c]&0x40?color[1]:color[0]);
     
+	return 0;
 }
 
 

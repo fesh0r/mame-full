@@ -411,6 +411,7 @@ VIDEO_UPDATE( odyssey2 )
 			}
 		}
 	}
+	return 0;
 }
 
 void odyssey2_sh_update( void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length )

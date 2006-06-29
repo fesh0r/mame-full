@@ -182,6 +182,7 @@ static VIDEO_UPDATE(ti99_2)
 	}
 
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 static gfx_layout ti99_2_charlayout =

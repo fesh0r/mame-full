@@ -30,6 +30,7 @@ VIDEO_UPDATE( nascom1 )
 				TRANSPARENCY_NONE, 0);
 		}
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( nascom2 )
@@ -52,5 +53,6 @@ VIDEO_UPDATE( nascom2 )
 				TRANSPARENCY_NONE, 0);
 		}
 	}
+	return 0;
 }
 

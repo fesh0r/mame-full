@@ -194,5 +194,6 @@ VIDEO_UPDATE( pc1401 )
   603d: 0 BUSY, 1 DEF, 2 SHIFT, 3 HYP, 4 PRO, 5 RUN, 6 CAL
   607c: 0 E, 1 M, 2 (), 3 RAD, 4 G, 5 DE, 6 PRINT
 */
+	return 0;
 }
 

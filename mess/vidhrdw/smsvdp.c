@@ -1073,6 +1073,7 @@ VIDEO_UPDATE(sms) {
 		copybitmap(prevBitMap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	//prevBitMapSaved = 1;
 	}
+	return 0;
 }
 
 

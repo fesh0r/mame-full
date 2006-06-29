@@ -137,6 +137,7 @@ VIDEO_UPDATE(concept)
 		for (x = 0; x < 720; x++)
 			line[720-1-x] = (v[(x+48+y*768)>>4] & (0x8000 >> ((x+48+y*768) & 0xf))) ? 1 : 0;
 	}
+	return 0;
 }
 
 static void concept_set_interrupt(int level, int state)

@@ -65,7 +65,7 @@ VIDEO_UPDATE( galaxy )
 		black_area.max_y = 16*13-1;
 		fillbitmap(bitmap, Machine->pens[1], &black_area);
 		fast_mode = TRUE;
-		return;
+		return 0;
 	}
 
 	if (horizontal_pos!=program_read_byte(0x2ba8))
@@ -107,4 +107,5 @@ VIDEO_UPDATE( galaxy )
 	}
 
 	galaxy_interrupts_enabled = FALSE;
+	return 0;
 }

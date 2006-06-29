@@ -491,4 +491,5 @@ VIDEO_UPDATE( cgenie )
 		cgenie_refresh_tv_set(bitmap,full_refresh);
 	else
 		cgenie_refresh_monitor(bitmap,full_refresh);
+	return 0;
 }

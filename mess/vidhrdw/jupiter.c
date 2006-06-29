@@ -65,4 +65,5 @@ VIDEO_UPDATE( jupiter )
             dirtybuffer[offs] = 0;
 		}
 	}
+	return 0;
 }

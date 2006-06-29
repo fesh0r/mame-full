@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.17 2006/05/18 23:50:32 npwoods Exp $
+  $Id: pc8801.c,v 1.18 2006/06/29 12:32:53 npwoods Exp $
 
 ***************************************************************************/
 
@@ -596,6 +596,7 @@ VIDEO_UPDATE( pc8801 )
 	     &Machine->visible_area[0],TRANSPARENCY_PEN,palette_transparent_pen);
   copybitmap(bitmap,wbm1,0,0,0,0,
 	     &Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 PALETTE_INIT( pc8801 )

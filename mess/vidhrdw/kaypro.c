@@ -214,6 +214,7 @@ VIDEO_UPDATE( kaypro )
 		terminal_hidecursor(kaypro_terminal);
 	terminal_setcursor(kaypro_terminal, cur_x, cur_y);
 	terminal_draw(bitmap, NULL, kaypro_terminal);
+	return 0;
 }
 
 /******************************************************

@@ -110,5 +110,6 @@ VIDEO_UPDATE( cbmb )
 			}
 		}
 	}
+	return 0;
 }
 

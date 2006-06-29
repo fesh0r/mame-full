@@ -55,4 +55,5 @@ VIDEO_START( microtan )
 VIDEO_UPDATE( microtan )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

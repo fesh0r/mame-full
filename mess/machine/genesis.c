@@ -1075,7 +1075,8 @@ VIDEO_UPDATE(genesis)
 
 	}
 
-	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
+	video_update_generic_bitmapped(screen, bitmap, cliprect);
+	return 0;
 }
 
 

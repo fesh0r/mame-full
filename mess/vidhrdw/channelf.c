@@ -70,6 +70,7 @@ VIDEO_UPDATE( channelf )
 			plot_pixel(bitmap, x, y, pen);
 		}
 	}
+	return 0;
 }
 
 

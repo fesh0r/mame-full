@@ -192,4 +192,5 @@ VIDEO_UPDATE( hp48 )
 					  hp48_hardware.data[0xc]&1?color[1]:color[0]);
 	hp48_draw_special(bitmap,RIGHT+237,DOWN-13,hp48_transmit,
 					  hp48_hardware.data[0xc]&2?color[1]:color[0]);
+	return 0;
 }

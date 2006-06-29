@@ -206,6 +206,7 @@ VIDEO_UPDATE( newport )
 			*dest++ = ( ( nPix & 0x00f80000 ) >> 9 ) | ( ( nPix & 0x0000f800 ) >> 6 ) | ( ( nPix & 0x000000f8 ) >> 3 );
 		}
 	}
+	return 0;
 }
 
 UINT16 nCMAP0_PaletteIndex;

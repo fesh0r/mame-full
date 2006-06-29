@@ -197,4 +197,5 @@ VIDEO_UPDATE( ssystem3 )
 				 ssystem3_led_pos[4].x, ssystem3_led_pos[4].y, '5');
 	ssystem3_draw_led(bitmap, Machine->pens[ssystem3_led[4]&8?1:0], 
 				 ssystem3_led_pos[4].x, ssystem3_led_pos[4].y, '6');
+	return 0;
 }

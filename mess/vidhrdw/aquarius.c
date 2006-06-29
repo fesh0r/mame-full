@@ -40,6 +40,7 @@ VIDEO_START( aquarius )
 VIDEO_UPDATE( aquarius )
 {
 	tilemap_draw(bitmap, NULL, aquarius_tilemap, 0, 0);
+	return 0;
 }
 
 WRITE8_HANDLER( aquarius_videoram_w )

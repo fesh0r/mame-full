@@ -76,7 +76,7 @@ static int scrchanged[MAX_SCREENS];
 static
 #endif
 mame_bitmap *scrbitmap[MAX_SCREENS][2];
-static int curbitmap;
+static int curbitmap[MAX_SCREENS];
 
 /* the active video display */
 #ifndef NEW_RENDER
@@ -150,7 +150,6 @@ int video_init(void)
 	full_refresh_callback_list = NULL;
 #endif
 	movie_frame = 0;
-	curbitmap = 0;
 
 #ifndef NEW_RENDER
 	add_pause_callback(video_pause);
@@ -744,7 +743,7 @@ void force_partial_update(int scrnum, int scanline)
 	/* if there's a dirty bitmap and we didn't do any partial updates yet, handle it now */
 	if (full_refresh_pending && last_partial_scanline[scrnum] == 0)
 	{
-		fillbitmap(scrbitmap[0][curbitmap], get_black_pen(), NULL);
+		fillbitmap(scrbitmap[0][curbitmap[0]], get_black_pen(), NULL);
 #ifdef MESS
 		for (cb = full_refresh_callback_list; cb; cb = cb->next)
 			(*cb->func.full_refresh)();
@@ -762,24 +761,18 @@ void force_partial_update(int scrnum, int scanline)
 	/* render if necessary */
 	if (clip.min_y <= clip.max_y)
 	{
+		UINT32 flags;
+
 		profiler_mark(PROFILER_VIDEO);
 		LOG_PARTIAL_UPDATES(("updating %d-%d\n", clip.min_y, clip.max_y));
-#ifdef MESS
-		{
-			int update_says_skip = 0;
-			(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip, &update_says_skip);
-
-#ifdef NEW_RENDER
-			scrchanged[scrnum] = !update_says_skip
-				|| (last_partial_scanline[scrnum] != 0)
-				|| (scanline != Machine->visible_area[scrnum].max_y);
-#endif
-		}
-#else
-		(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip);
-#endif
+		flags = (*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap[scrnum]], &clip);
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
+
+#ifdef NEW_RENDER
+		/* if we modified the bitmap, we have to commit */
+		scrchanged[scrnum] |= (~flags & UPDATE_HAS_NOT_CHANGED);
+#endif
 	}
 
 	/* remember where we left off */
@@ -846,7 +839,7 @@ void update_video_and_audio(void)
 	current_display.changed_flags = 0;
 
 	/* set the main game bitmap */
-	current_display.game_bitmap = scrbitmap[0][curbitmap];
+	current_display.game_bitmap = scrbitmap[0][curbitmap[0]];
 	current_display.game_bitmap_update = Machine->absolute_visible_area;
 	if (!skipped_it)
 		current_display.changed_flags |= GAME_BITMAP_CHANGED;
@@ -981,10 +974,20 @@ void video_frame_update(void)
 		/* finish updating the screens */
 		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 			if (Machine->drv->screen[scrnum].tag != NULL)
-			{
 				force_partial_update(scrnum, Machine->visible_area[scrnum].max_y);
 
+		/* update our movie recording state */
+		if (!paused)
+			record_movie_frame(scrbitmap[0][curbitmap[0]]);
+
 #ifdef NEW_RENDER
+{
+		int livemask = render_get_live_screens_mask();
+
+		/* now add the quads for all the screens */
+		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+			if (livemask & (1 << scrnum))
+			{
 				/* only update if empty and not a vector game; otherwise assume the driver did it directly */
 				if (render_container_is_empty(render_container_get_screen(scrnum)) && !(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 				{
@@ -993,21 +996,16 @@ void video_frame_update(void)
 						rectangle visarea = Machine->visible_area[scrnum];
 						visarea.max_x++;
 						visarea.max_y++;
-						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap], &visarea, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
+						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap[scrnum]], &visarea, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
+						curbitmap[scrnum] = 1 - curbitmap[scrnum];
 					}
 					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
 				}
-#endif
 			}
 
-		/* update our movie recording state */
-		if (!paused)
-			record_movie_frame(scrbitmap[0][curbitmap]);
-
-#ifdef NEW_RENDER
-		/* advance to the next bitmap */
-		if (!skipping_this_frame)
-			curbitmap = 1 - curbitmap;
+		/* reset the screen changed flags */
+		memset(scrchanged, 0, sizeof(scrchanged));
+}
 #endif
 	}
 
@@ -1240,7 +1238,7 @@ void save_screen_snapshot(mame_bitmap *bitmap)
 		if (screenmask & (1 << scrnum))
 			if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
 			{
-				save_screen_snapshot_as(fp, scrbitmap[scrnum][curbitmap]);
+				save_screen_snapshot_as(fp, scrbitmap[scrnum][curbitmap[scrnum]]);
 				mame_fclose(fp);
 			}
 }

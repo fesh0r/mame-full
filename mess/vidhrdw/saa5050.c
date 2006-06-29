@@ -236,6 +236,7 @@ static VIDEO_UPDATE( saa5050 )
 			saa5050_state.saa5050_flags &= ~SAA5050_DBLHI;
 		}
 	}
+	return 0;
 }
 
 MACHINE_DRIVER_START( vh_saa5050 )

@@ -558,6 +558,7 @@ static VIDEO_UPDATE( apexc )
 			apexc_draw_char(bitmap, the_char, i*8, 48, 0);
 		}
 	}
+	return 0;
 }
 
 static int letters;

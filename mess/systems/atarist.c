@@ -265,6 +265,7 @@ void atarist_pixel_update(void)
 
 static VIDEO_UPDATE( atarist )
 {
+	return 0;
 }
 
 /***************************************************************************/

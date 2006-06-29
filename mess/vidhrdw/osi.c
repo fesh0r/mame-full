@@ -44,4 +44,5 @@ VIDEO_START( uk101 )
 VIDEO_UPDATE( sb2m600 )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

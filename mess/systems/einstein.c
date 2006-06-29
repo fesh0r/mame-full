@@ -1657,12 +1657,14 @@ static VIDEO_UPDATE( einstein_80col )
 			c++;
 		}
 	}
+	return 0;
 }
 
 static VIDEO_UPDATE( einstein2 )
 {
-	video_update_tms9928a(screen, bitmap, cliprect, do_skip);
-	video_update_einstein_80col(screen, bitmap, cliprect, do_skip);
+	video_update_tms9928a(screen, bitmap, cliprect);
+	video_update_einstein_80col(screen, bitmap, cliprect);
+	return 0;
 }
 
 static const TMS9928a_interface tms9928a_interface =

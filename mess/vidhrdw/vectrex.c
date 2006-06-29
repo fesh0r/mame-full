@@ -188,8 +188,9 @@ VIDEO_UPDATE( vectrex )
 		i = (i+1) % MAX_POINTS;
 	}
 
-	video_update_vector(screen, bitmap, &Machine->visible_area[0], do_skip);
+	video_update_vector(screen, bitmap, &Machine->visible_area[0]);
 	vector_clear_list();
+	return 0;
 }
 
 /*********************************************************************

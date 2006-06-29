@@ -98,6 +98,7 @@ VIDEO_UPDATE( pdp1 )
 	copybitmap(bitmap, panel_bitmap, 0, 0, panel_window_offset_x, panel_window_offset_y, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 
 	copybitmap(bitmap, typewriter_bitmap, 0, 0, typewriter_window_offset_x, typewriter_window_offset_y, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 

@@ -65,4 +65,5 @@ VIDEO_UPDATE( mac )
 			}
 		}
 	}
+	return 0;
 }

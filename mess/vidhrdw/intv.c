@@ -767,6 +767,7 @@ VIDEO_UPDATE( intv )
 	copybitmap(bitmap,tmpbitmap,0,0,
 	           col_delay*2,row_delay*2,
 			   &Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 VIDEO_START( intvkbd )
@@ -840,7 +841,7 @@ VIDEO_UPDATE( intvkbd )
 //	char c;
 
 	/* Draw the underlying INTV screen first */
-	video_update_intv(screen, bitmap, cliprect, do_skip);
+	video_update_intv(screen, bitmap, cliprect);
 
 	/* if the intvkbd text is not blanked, overlay it */
 	if (!intvkbd_text_blanked)
@@ -904,4 +905,5 @@ VIDEO_UPDATE( intvkbd )
 			0*8,10*8,
 			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 #endif
+	return 0;
 }

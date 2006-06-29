@@ -48,6 +48,7 @@ VIDEO_UPDATE( pce )
 
     /* copy our rendering buffer to the display */
     copybitmap (bitmap,vdc.bmp,0,0,0,0,&pce_visible_area,TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 void draw_black_line(int line)

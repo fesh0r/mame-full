@@ -852,4 +852,5 @@ READ8_HANDLER(arcadia_vsync_r)
 VIDEO_UPDATE( arcadia )
 {
 	copybitmap(bitmap, arcadia_video.bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }

@@ -1459,6 +1459,7 @@ VIDEO_UPDATE(compis_gdc)
                  &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		gdc_mess.dirty = 0;
 	}
+	return 0;
 }
 
 VIDEO_START ( compis_gdc )

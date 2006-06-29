@@ -104,6 +104,7 @@ VIDEO_UPDATE( studio2 )
 					0,0,x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
+	return 0;
 }
 
  READ8_HANDLER( cdp1861_video_enable_r )

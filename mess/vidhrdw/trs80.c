@@ -141,6 +141,7 @@ VIDEO_UPDATE( trs80 )
 	}
 
 	tilemap_draw(bitmap, NULL, current_tilemap, 0, 0);
+	return 0;
 }
 
 /***************************************************************************

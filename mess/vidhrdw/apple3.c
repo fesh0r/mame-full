@@ -379,6 +379,7 @@ VIDEO_UPDATE( apple3 )
 			apple3_video_graphics_chires(bitmap);
 			break;
 	}
+	return 0;
 }
 
 

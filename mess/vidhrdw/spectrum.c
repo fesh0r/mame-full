@@ -187,21 +187,21 @@ VIDEO_UPDATE( spectrum )
 
     for (count=0;count<32*8;count++)
     {
-	if (charsdirty[count]) {
-		decodechar( Machine->gfx[0],count,spectrum_characterram,
-				Machine->drv->gfxdecodeinfo[0].gfxlayout );
-	}
+		if (charsdirty[count]) {
+			decodechar( Machine->gfx[0],count,spectrum_characterram,
+					Machine->drv->gfxdecodeinfo[0].gfxlayout );
+		}
 
-	if (charsdirty[count+256]) {
-		decodechar( Machine->gfx[1],count,&spectrum_characterram[0x800],
-				Machine->drv->gfxdecodeinfo[0].gfxlayout );
-	}
+		if (charsdirty[count+256]) {
+			decodechar( Machine->gfx[1],count,&spectrum_characterram[0x800],
+					Machine->drv->gfxdecodeinfo[0].gfxlayout );
+		}
 
-	if (charsdirty[count+512]) {
-		decodechar( Machine->gfx[2],count,&spectrum_characterram[0x1000],
-				Machine->drv->gfxdecodeinfo[0].gfxlayout );
+		if (charsdirty[count+512]) {
+			decodechar( Machine->gfx[2],count,&spectrum_characterram[0x1000],
+					Machine->drv->gfxdecodeinfo[0].gfxlayout );
+		}
 	}
-}
 
     for (count=0;count<32*8;count++)
     {
@@ -255,6 +255,7 @@ VIDEO_UPDATE( spectrum )
             SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
             SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
             SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+	return 0;
 }
 
 VIDEO_START( spectrum_128 )
@@ -315,6 +316,7 @@ VIDEO_UPDATE( spectrum_128 )
 		SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
 		SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
 		SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200, 0xfe);
+	return 0;
 }
 
 /*******************************************************************
@@ -500,6 +502,7 @@ VIDEO_UPDATE( ts2068 )
                 TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
                 SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
                 SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+	return 0;
 }
 
 VIDEO_UPDATE( tc2048 )
@@ -539,4 +542,5 @@ VIDEO_UPDATE( tc2048 )
 		TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
 		SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
 		SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+	return 0;
 }

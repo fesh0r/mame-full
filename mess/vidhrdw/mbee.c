@@ -561,6 +561,7 @@ VIDEO_UPDATE( mbee )
             }
 		}
 	}
+	return 0;
 }
 
 

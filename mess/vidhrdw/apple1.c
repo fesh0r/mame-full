@@ -248,4 +248,5 @@ VIDEO_UPDATE( apple1 )
 {
 	apple1_vh_cursor_blink();
 	terminal_draw(bitmap, NULL, apple1_terminal);
+	return 0;
 }

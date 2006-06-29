@@ -452,7 +452,8 @@ void a7800_interrupt(void)
 VIDEO_UPDATE( a7800 )
 {
 	maria_scanline = 0;
-	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
+	video_update_generic_bitmapped(screen, bitmap, cliprect);
+	return 0;
 }
 
 

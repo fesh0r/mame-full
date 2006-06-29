@@ -72,6 +72,7 @@ struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 
 VIDEO_UPDATE( pc_video )
 {
+	UINT32 rc = 0;
 	int w = 0, h = 0;
 	pc_video_update_proc video_update;
 
@@ -107,10 +108,12 @@ VIDEO_UPDATE( pc_video )
 		if (tmpbitmap)
 		{
 			copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
-			*do_skip = !pc_anythingdirty;
+			if (!pc_anythingdirty)
+				rc = UPDATE_HAS_NOT_CHANGED;
 			pc_anythingdirty = 0;
 		}
 	}
+	return rc;
 }
 
 

@@ -842,6 +842,7 @@ VIDEO_START( c128 )
 
 VIDEO_UPDATE( c128 )
 {
-	video_update_vdc8563(screen, bitmap, cliprect, do_skip);
-	video_update_vic2(screen, bitmap, cliprect, do_skip);
+	video_update_vdc8563(screen, bitmap, cliprect);
+	video_update_vic2(screen, bitmap, cliprect);
+	return 0;
 }

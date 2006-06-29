@@ -684,6 +684,7 @@ VIDEO_UPDATE( kc85_4 )
 
 	kc85_common_process_frame(bitmap, kc85_4_pixel_grab_callback,&grab_data);
 
+	return 0;
 }
 
 /***************************************************************************
@@ -781,4 +782,5 @@ VIDEO_UPDATE( kc85_3 )
 
 	kc85_common_process_frame(bitmap, kc85_3_pixel_grab_callback,&grab_data);
 
+	return 0;
 }

@@ -88,4 +88,5 @@ VIDEO_UPDATE( lviv )
 			pen = lviv_colortable[0][((data & 0x01) >> 0) | ((data & 0x10) >> (0+3))];
 			plot_pixel(bitmap, x+3, y, Machine->pens[pen]);
 		}
+	return 0;
 }

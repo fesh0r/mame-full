@@ -121,6 +121,7 @@ static int video_start_ti990_4(void)
 static VIDEO_UPDATE( ti990_4 )
 {
 	vdt911_refresh(bitmap, 0, 0, 0);
+	return 0;
 }
 
 #else
@@ -133,6 +134,7 @@ static VIDEO_START( ti990_4 )
 static VIDEO_UPDATE( ti990_4 )
 {
 	asr733_refresh(bitmap, 0, 0, 0);
+	return 0;
 }
 
 #endif
