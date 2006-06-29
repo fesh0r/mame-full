@@ -17,6 +17,10 @@
 #include "sound/wavwrite.h"
 #include "vidhrdw/generic.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 #ifdef WIN32
 #include "windows/parallel.h"
 #endif
@@ -496,6 +500,29 @@ static void command_switch(void)
 	input_port_entry *switch_name;
 	input_port_entry *switch_setting;
 
+#ifdef NEW_RENDER
+	/* special hack until we support video targets natively */
+	if (!strcmp(current_command->u.switch_args.name, "Video type"))
+	{
+		render_target *target = render_target_get_indexed(0);
+		int view_index = 0;
+		const char *view_name;
+
+		while((view_name = render_target_get_view_name(target, view_index)) != NULL)
+		{
+			if (!strcmp(view_name, current_command->u.switch_args.value))
+				break;
+			view_index++;
+		}
+		
+		if (view_name)
+		{
+			render_target_set_view(target, view_index);
+			return;
+		}
+	}
+#endif
+
 	find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
 		IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING, &switch_name, &switch_setting);
 
@@ -850,7 +877,10 @@ int osd_update(mame_time emutime)
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
+	{
+		mame_schedule_exit();
 		goto done;
+	}
 
 	/* have we hit the time limit? */
 	current_time = timer_get_time();
