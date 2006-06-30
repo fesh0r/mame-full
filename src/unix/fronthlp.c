@@ -375,7 +375,7 @@ int frontend_list(const char *gamename)
 			return frontend_list_clones(gamename);
 		case LIST_XML: /* list all info */
 			init_resource_tracking();
-			print_mame_xml( stdout_file, drivers );
+			print_mame_xml( stdout_file, drivers, gamename );
 			exit_resource_tracking();
 			return OSD_OK;
 		case LIST_CPU:
