@@ -122,11 +122,11 @@ OBJ     = $(NAME).obj
 
 OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
 
-OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers \
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers $(OBJ)/layout \
 	  $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
 	  $(OBJ)/debug
 ifeq ($(TARGET), mess)
-OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/layout $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/devices $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	   $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/formats \
 	   $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
@@ -150,9 +150,9 @@ OBJDIRS += $(UNIX_OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
 	$(JOY_DIR) $(FRAMESKIP_DIR) $(BLIT_DIR)
 
 ifeq ($(TARGET), mess)
-INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -I$(OBJ)/layout -I$(OBJ)/mess/layout -Isrc/debug -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 else
-INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Isrc -Isrc/includes -I$(OBJ)/layout -Isrc/debug -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
 
 ##############################################################################
@@ -246,6 +246,10 @@ LIBS += $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD))
 
 ifdef DEBUG
 CFLAGS += -DMAME_DEBUG
+endif
+
+ifdef NEW_RENDER
+CFLAGS += -DNEW_RENDER
 endif
 
 ifdef XMAME_NET
@@ -557,6 +561,10 @@ xlistdev: src/unix/contrib/tools/xlistdev.c
 	@echo 'Compiling $< ...'
 	$(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
 
+$(OBJ)/file2str: $(OBJ)/file2str.o
+	@echo 'Linking $@ ...'
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	@echo 'Linking $@...'
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
@@ -618,11 +626,19 @@ ifdef MESS
 $(OBJ)/mess/%.o: mess/%.c
 	@echo '[MESS] Compiling $< ...'
 	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(OBJ)/mess/%.lh: mess/%.lay $(OBJ)/file2str
+	@echo '[MESS] Compiling $< ...'
+	@$(OBJ)/file2str $< $@ layout_$(basename $(notdir $<))
 endif
 
 $(OBJ)/%.o: src/%.c
 	@echo 'Compiling $< ...'
 	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(OBJ)/%.lh: src/%.lay $(OBJ)/file2str
+	@echo 'Compiling $< ...'
+	@$(OBJ)/file2str $< $@ layout_$(basename $(notdir $<))
 
 $(OBJ)/%.a:
 	@echo 'Archiving $@ ...'
