@@ -1229,7 +1229,11 @@ static mame_file *mame_fopen_next(int filetype)
 
 void save_screen_snapshot(mame_bitmap *bitmap)
 {
+#ifdef NEW_RENDER
 	UINT32 screenmask = render_get_live_screens_mask();
+#else
+	UINT32 screenmask = 1;
+#endif
 	mame_file *fp;
 	int scrnum;
 
