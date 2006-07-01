@@ -29,8 +29,9 @@ struct SND {
 	struct CHAN audio2;		/* Audio channel 2 */
 	struct CHAN audio3;		/* Audio channel 3 */
 	struct CHAN audio4;		/* Audio channel 4 */
-	UINT8	sweep_val;		/* Sweep value */
-	UINT8	sweep_step;		/* Sweep step */
+	INT8	sweep_step;		/* Sweep step */
+	UINT32	sweep_time;		/* Sweep time */
+	UINT32	sweep_count;		/* Sweep counter */
 	UINT8	noise_type;		/* Noise generator type */
 	UINT8	noise_reset;		/* Noise reset */
 	UINT8	noise_enable;		/* Noise enable */
@@ -39,6 +40,7 @@ struct SND {
 	UINT8	audio3_sweep;		/* Audio 3 sweep */
 	UINT8	audio4_noise;		/* Audio 4 noise */
 	UINT8	mono;			/* mono */
+	UINT8	voice_data;		/* voice data */
 	UINT8	output_volume;		/* output volume */
 	UINT8	external_stereo;	/* external stereo */
 	UINT8	external_speaker;	/* external speaker */
@@ -85,6 +87,7 @@ WRITE8_HANDLER( wswan_sound_port_w ) {
 		snd.audio1.vol_right = data & 0x0F;
 		break;
 	case 0x89:				/* Audio 2 volume */
+		snd.voice_data = data;
 		snd.audio2.vol_left = ( data & 0xF0 ) >> 4;
 		snd.audio2.vol_right = data & 0x0F;
 		break;
@@ -96,11 +99,11 @@ WRITE8_HANDLER( wswan_sound_port_w ) {
 		snd.audio4.vol_left = ( data & 0xF0 ) >> 4;
 		snd.audio4.vol_right = data & 0x0F;
 		break;
-	case 0x8C:				/* Sweep value */
-		snd.sweep_val = data;
+	case 0x8C:				/* Sweep step */
+		snd.sweep_step = (INT8)data;
 		break;
-	case 0x8D:				/* Sweep step */
-		snd.sweep_step = data;
+	case 0x8D:				/* Sweep time */
+		snd.sweep_time = Machine->sample_rate / ( 3072000 / ( 8192 * (data + 1) ) );
 		break;
 	case 0x8E:				/* Noise control */
 		snd.noise_type = data & 0x07;
@@ -158,7 +161,9 @@ static void wswan_sh_update(void *param,stream_sample_t **inputs, stream_sample_
 
 		if ( snd.audio2.on ) {
 			if ( snd.audio2_voice ) {
-				sample = 0;
+				sample = (INT8)snd.voice_data;
+				left += sample;
+				right += sample;
 			} else {
 				sample = snd.audio2.signal;
 				snd.audio2.pos++;
@@ -166,20 +171,24 @@ static void wswan_sh_update(void *param,stream_sample_t **inputs, stream_sample_
 					snd.audio2.pos = 0;
 					snd.audio2.signal = -snd.audio2.signal;
 				}
+				left += snd.audio2.vol_left * sample;
+				right += snd.audio2.vol_right * sample;
 			}
-			left += snd.audio2.vol_left * sample;
-			right += snd.audio2.vol_right * sample;
 		}
 
 		if ( snd.audio3.on ) {
-			if ( snd.audio3_sweep ) {
-				sample = 0;
-			} else {
-				sample = snd.audio3.signal;
-				snd.audio3.pos++;
-				if ( snd.audio3.pos >= snd.audio3.period / 2 ) {
-					snd.audio3.pos = 0;
-					snd.audio3.signal = -snd.audio3.signal;
+			sample = snd.audio3.signal;
+			snd.audio3.pos++;
+			if ( snd.audio3.pos >= snd.audio3.period / 2 ) {
+				snd.audio3.pos = 0;
+				snd.audio3.signal = -snd.audio3.signal;
+			}
+			if ( snd.audio3_sweep && snd.sweep_time ) {
+				snd.sweep_count++;
+				if ( snd.sweep_count >= snd.sweep_time ) {
+					snd.sweep_count = 0;
+					snd.audio3.freq += snd.sweep_step;
+					snd.audio3.period = Machine->sample_rate / ( 3072000  / ( ( 2048 - snd.audio3.freq ) << 5 ) );
 				}
 			}
 			left += snd.audio3.vol_left * sample;
