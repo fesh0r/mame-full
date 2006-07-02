@@ -547,8 +547,7 @@ int frontend_list(const char *gamename)
 					break;
 #ifdef MESS
 				case LIST_MESSDEVICES:
-					/* send the gamename to MESS */
-					print_mess_devices(gamename);
+					frontend_listdevices(stdout_file);
 					return 0;
 					break;
 #endif
