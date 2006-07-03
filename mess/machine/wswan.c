@@ -1294,26 +1294,28 @@ DEVICE_LOAD(wswan_cart)
 	rtc.present = ROMMap[ROMBanks-1][0xfffd] ? 1 : 0;
 
 #ifdef MAME_DEBUG
-	int sum = 0;
-	/* Spit out some info */
-	printf( "ROM DETAILS\n" );
-	printf( "\tDeveloper ID: %X\n", ROMMap[ROMBanks-1][0xfff6] );
-	printf( "\tMinimum system: %s\n", ROMMap[ROMBanks-1][0xfff7] ? "WonderSwan Color" : "WonderSwan" );
-	printf( "\tCart ID: %X\n", ROMMap[ROMBanks-1][0xfff8] );
-	printf( "\tROM size: %s\n", wswan_determine_romsize( ROMMap[ROMBanks-1][0xfffa] ) );
-	printf( "\tSRAM size: %s\n", sram_str );
-	printf( "\tFeatures: %X\n", ROMMap[ROMBanks-1][0xfffc] );
-	printf( "\tRTC: %s\n", ( ROMMap[ROMBanks-1][0xfffd] ? "yes" : "no" ) );
-	for( ii = 0; ii < ROMBanks; ii++ ) {
-		int count;
-		for( count = 0; count < 0x10000; count++ ) {
-			sum += ROMMap[ii][count];
+	{
+		int sum = 0;
+		/* Spit out some info */
+		printf( "ROM DETAILS\n" );
+		printf( "\tDeveloper ID: %X\n", ROMMap[ROMBanks-1][0xfff6] );
+		printf( "\tMinimum system: %s\n", ROMMap[ROMBanks-1][0xfff7] ? "WonderSwan Color" : "WonderSwan" );
+		printf( "\tCart ID: %X\n", ROMMap[ROMBanks-1][0xfff8] );
+		printf( "\tROM size: %s\n", wswan_determine_romsize( ROMMap[ROMBanks-1][0xfffa] ) );
+		printf( "\tSRAM size: %s\n", sram_str );
+		printf( "\tFeatures: %X\n", ROMMap[ROMBanks-1][0xfffc] );
+		printf( "\tRTC: %s\n", ( ROMMap[ROMBanks-1][0xfffd] ? "yes" : "no" ) );
+		for( ii = 0; ii < ROMBanks; ii++ ) {
+			int count;
+			for( count = 0; count < 0x10000; count++ ) {
+				sum += ROMMap[ii][count];
+			}
 		}
+		sum -= ROMMap[ROMBanks-1][0xffff];
+		sum -= ROMMap[ROMBanks-1][0xfffe];
+		sum &= 0xFFFF;
+		printf( "\tChecksum: %X%X (calculated: %04X)\n", ROMMap[ROMBanks-1][0xffff], ROMMap[ROMBanks-1][0xfffe], sum );
 	}
-	sum -= ROMMap[ROMBanks-1][0xffff];
-	sum -= ROMMap[ROMBanks-1][0xfffe];
-	sum &= 0xFFFF;
-	printf( "\tChecksum: %X%X (calculated: %04X)\n", ROMMap[ROMBanks-1][0xffff], ROMMap[ROMBanks-1][0xfffe], sum );
 #endif
 
 	if ( eeprom.size != 0 ) {
