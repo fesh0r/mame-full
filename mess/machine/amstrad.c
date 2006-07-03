@@ -200,6 +200,101 @@ SNAPSHOT_LOAD(amstrad)
 
 DEVICE_LOAD(amstrad_plus_cartridge)
 {
+	// load CPC Plus / GX4000 cartridge image
+	// Format is RIFF: RIFF header chunk contains "AMS!"
+	// Chunks should be 16k, but may vary
+	// Chunks labeled 'cb00' represent Cartridge block 0, and is loaded to &0000-&3fff
+	//                'cb01' represent Cartridge block 1, and is loaded to &4000-&7fff
+	//                ... and so on.
+
+	unsigned char header[12];  // RIFF chunk
+	char chunkid[4];  // chunk ID (4 character code - cb00, cb01, cb02... upto cb31 (max 512kB), other chunks are ignored)
+	char chunklen[4];  // chunk length (always little-endian)
+	int chunksize;  // chunk length, calcaulated from the above
+	int ramblock;  // 16k RAM block chunk is to be loaded in to
+	int result;
+	unsigned int bytes_to_read;  // total bytes to read, as mame_feof doesn't react to EOF without trying to go past it.
+	unsigned char* mem = memory_region(REGION_CPU1);
+
+	logerror("CPR: loading RIFF format CPC cartridge file\n");
+	// load RIFF chunk
+	result = mame_fread(file,header,12);
+	if(result != 12)
+	{
+		logerror("CPR: failed to read from cart image\n");
+		return INIT_FAIL;
+	}
+	if(strncmp(header,"RIFF",4) != 0)
+	{
+		logerror("CPR: not an RIFF format file - header is '%s'\n",header);
+		return INIT_FAIL;
+	}
+	if(strncmp((char*)(header+8),"AMS!",4) != 0)
+	{
+		logerror("CPR: not an Amstrad CPC cartridge image\n");
+		return INIT_FAIL;
+	}
+
+	bytes_to_read = header[4] + (header[5] << 8) + (header[6] << 16)+ (header[7] << 24);
+	bytes_to_read -= 4;  // account for AMS! header
+	logerror("CPR: Data to read: %i bytes\n",bytes_to_read);
+	// read some chunks
+	while(bytes_to_read > 0)
+	{
+		result = mame_fread(file,chunkid,4);
+		if(result != 4)
+		{
+			logerror("CPR: failed to read from cart image\n");
+			return INIT_FAIL;
+		}
+		bytes_to_read -= result;
+		result = mame_fread(file,chunklen,4);
+		if(result != 4)
+		{
+			logerror("CPR: failed to read from cart image\n");
+			return INIT_FAIL;
+		}
+		bytes_to_read -= result;
+		// calculate little-endian value, just to be sure
+		chunksize = chunklen[0] + (chunklen[1] << 8) + (chunklen[2] << 16) + (chunklen[3] << 24);
+
+		if(strncmp(chunkid,"cb",2) == 0)
+		{
+			// load chunk into RAM
+			// find out what block this is
+			ramblock = (chunkid[2] - 0x30) * 10;
+			ramblock += chunkid[3] - 0x30;
+			logerror("CPR: Loading chunk into RAM block %i ['%4s']\n",ramblock,chunkid);
+			if(ramblock >= 0 && ramblock < 32)
+			{
+				// clear RAM block
+				memset(mem+(0x4000*ramblock),0,0x4000);
+
+				// load block into ROM area
+				if(chunksize > 16384)
+					chunksize = 16384;
+				result = mame_fread(file,mem+(0x4000*ramblock),chunksize);
+				if(result != chunksize)
+				{
+					logerror("CPR: Read %i-byte chunk, expected %i bytes\n",result,chunksize);
+					return INIT_FAIL;
+				}
+				bytes_to_read -= chunksize;
+				logerror("CPR: Loaded %i-byte chunk into RAM block %i\n",result,ramblock);
+			}
+		}
+		else
+		{
+			logerror("CPR: Unknown chunk '%4s', skipping %i bytes\n",chunkid,chunksize);
+			if(chunksize != 0)
+			{
+				mame_fseek(file,chunksize,SEEK_CUR);
+				bytes_to_read -= chunksize;
+			}
+		}
+	}
+	
+
 	return INIT_PASS;
 }
 

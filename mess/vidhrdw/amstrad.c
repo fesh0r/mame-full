@@ -16,6 +16,18 @@
 
 static crtc6845_state amstrad_vidhrdw_6845_state;
 
+extern int amstrad_plus_asic_enabled;
+extern int amstrad_plus_pri;
+extern int amstrad_system_type;
+extern unsigned char *amstrad_plus_asic_ram;
+
+int amstrad_plus_split_scanline;  // ASIC split screen 
+int amstrad_plus_split_address;
+
+#ifdef MAME_DEBUG
+extern int amstrad_plus_lower_enabled;
+#endif
+
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
@@ -47,6 +59,9 @@ int amstrad_CRTC_HS_Counter;
 static int amstrad_CRTC_HS_After_VS_Counter;
 
 static mame_bitmap	*amstrad_bitmap;
+
+static int amstrad_scanline;
+
 
 /* the mode is re-loaded at each HSYNC */
 /* current mode to render */
@@ -219,6 +234,7 @@ PALETTE_INIT( amstrad_plus )
 {
 	int i;
 
+	palette_set_colors(0, amstrad_palette, sizeof(amstrad_palette) / 3);
 	for ( i = 0; i < 0x1000; i++ ) 
 	{
 		int r, g, b;
@@ -231,11 +247,15 @@ PALETTE_INIT( amstrad_plus )
 		g = ( g << 4 ) | ( g );
 		b = ( b << 4 ) | ( b );
 
-		palette_set_color(i, r, g, b);
-		colortable[i] = i;
+		palette_set_color(i+48, g, r, b);
+		colortable[i+48] = i+48;  // take into account the original palette, and sprite palette
 	}
 }
 
+void amstrad_plus_setspritecolour(unsigned int off, int r, int g, int b)
+{
+	palette_set_color((off/2) + 33, r, g, b);
+}
 
 static void amstrad_init_lookups(void)
 {
@@ -268,13 +288,22 @@ static void amstrad_init_lookups(void)
 /* Set the new colour from the GateArray */
 void amstrad_vh_update_colour(int PenIndex, int hw_colour_index)
 {
+	int val;
 /*  int cpu_cycles = ((cycles_currently_ran()>>2)-1) & 63;
 
 	logerror("color is changed(%d,%d) = %d\n",PenIndex, cpu_cycles, Machine->pens[hw_colour_index]);
   amstrad_GateArray_colours_ischanged++;
 	amstrad_GateArray_changed_colours[cpu_cycles][PenIndex] = Machine->pens[hw_colour_index];
 */
-  amstrad_GateArray_render_colours[PenIndex] = Machine->pens[hw_colour_index];
+	amstrad_GateArray_render_colours[PenIndex] = Machine->pens[hw_colour_index];
+	if(amstrad_system_type != 0)
+	{  // CPC+/GX4000 - normal palette changes through the Gate Array also makes the corresponding change in the ASIC palette
+		val = amstrad_palette[hw_colour_index*3+2] >> 4;
+		val += amstrad_palette[hw_colour_index*3] & 0xf0;
+		amstrad_plus_asic_ram[0x2400+PenIndex*2] = val;
+		val = amstrad_palette[hw_colour_index*3+1] >> 4;
+		amstrad_plus_asic_ram[0x2401+PenIndex*2] = val;
+	}
 }
 
 /* Set the new screen mode (0,1,2,4) from the GateArray */
@@ -286,7 +315,170 @@ void amstrad_vh_update_mode(int new_mode)
 
 static void amstrad_draw_screen_disabled(void)
 {
-	plot_box(amstrad_bitmap,x_screen_pos,y_screen_pos,AMSTRAD_CHARACTERS*2,1,amstrad_GateArray_render_colours[16]);
+	int colour;
+
+	if(amstrad_plus_asic_enabled == 0)
+		plot_box(amstrad_bitmap,x_screen_pos,y_screen_pos,AMSTRAD_CHARACTERS*2,1,amstrad_GateArray_render_colours[16]);
+	else
+	{
+		colour = 48 + amstrad_plus_asic_ram[0x2420];
+		colour += amstrad_plus_asic_ram[0x2421] << 8;
+		plot_box(amstrad_bitmap,x_screen_pos,y_screen_pos,AMSTRAD_CHARACTERS*2,1,colour);
+	}
+}
+
+/* mode 0 - low resolution - 16 colours */
+static void amstrad_plus_draw_screen_enabled_mode_0(void)
+{
+	mame_bitmap *bitmap = amstrad_bitmap;
+
+	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
+	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+	/* calc mem addr to fetch data from	based on ma, and ra */
+	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
+			((ra & 0x07)<<11) |
+			((ma & 0x03ff)<<1);
+
+	int x = x_screen_pos;
+	int y = y_screen_pos;
+	int cpcpen, messpen;
+
+	unsigned char data = mess_ram[addr];
+
+	cpcpen = Mode0Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x,y,4,1,messpen);
+
+	data = data<<1;
+
+	cpcpen = Mode0Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+4,y,4,1,messpen);
+
+	data = mess_ram[addr+1];
+
+	cpcpen = Mode0Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+8,y,4,1,messpen);
+
+	data = data<<1;
+
+	cpcpen = Mode0Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+12,y,4,1,messpen);
+}
+
+/* mode 1 - medium resolution - 4 colours */
+static void amstrad_plus_draw_screen_enabled_mode_1(void)
+{
+	mame_bitmap *bitmap = amstrad_bitmap;
+
+	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
+	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+/* calc mem addr to fetch data from	based on ma, and ra */
+	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
+			((ra & 0x07)<<11) |
+			((ma & 0x03ff)<<1);
+
+	int x = x_screen_pos;
+	int y = y_screen_pos;
+
+  int i, cpcpen, messpen; 
+  unsigned char data1 = mess_ram[addr];
+  unsigned char data2 = mess_ram[addr+1];
+
+  for (i=0;i<4;i++) {
+		cpcpen = Mode1Lookup[data1& 0xFF];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+  	plot_box(bitmap,x,y,2,1,messpen);
+
+		cpcpen = Mode1Lookup[data2];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+  	plot_box(bitmap,x+8,y,2,1,messpen);
+
+  	x += 2;
+		data1 = data1<<1;
+		data2 = data2<<1;
+	}
+}
+
+/* mode 2: high resolution - 2 colours */
+static void amstrad_plus_draw_screen_enabled_mode_2(void)
+{
+	mame_bitmap *bitmap = amstrad_bitmap;
+
+	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
+	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+/* calc mem addr to fetch data from	based on ma, and ra */
+	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
+			((ra & 0x07)<<11) |
+			((ma & 0x03ff)<<1);
+
+	int x = x_screen_pos;
+	int y = y_screen_pos;
+	int i, cpcpen, messpen;
+	unsigned long data = (mess_ram[addr]<<8) | mess_ram[addr+1];
+
+
+	for (i=0; i<16; i++)
+	{
+		cpcpen = (data>>15) & 0x01;
+		messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+		messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+		plot_pixel(bitmap,x,y,messpen);
+    x++;        
+		data = data<<1;
+	}
+}
+
+/* undocumented mode. low resolution - 4 colours */
+static void amstrad_plus_draw_screen_enabled_mode_3(void)
+{
+	mame_bitmap *bitmap = amstrad_bitmap;
+
+	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
+	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+/* calc mem addr to fetch data from	based on ma, and ra */
+	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
+			((ra & 0x07)<<11) |
+			((ma & 0x03ff)<<1);
+
+	int x = x_screen_pos;
+	int y = y_screen_pos;
+	int cpcpen, messpen;
+	unsigned char data = mess_ram[addr];
+
+	cpcpen = Mode3Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x,y,4,1,messpen);
+
+	data = data<<1;
+
+	cpcpen = Mode3Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+4,y,4,1,messpen);
+
+	data = mess_ram[addr+1];
+
+	cpcpen = Mode3Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+8,y,4,1,messpen);
+
+	data = data<<1;
+
+	cpcpen = Mode3Lookup[data];
+	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
+	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
+	plot_box(bitmap,x+12,y,4,1,messpen);
 }
 
 /* mode 0 - low resolution - 16 colours */
@@ -306,6 +498,12 @@ static void amstrad_draw_screen_enabled_mode_0(void)
 	int cpcpen, messpen;
 
 	unsigned char data = mess_ram[addr];
+
+	if(amstrad_plus_asic_enabled != 0)
+	{
+		amstrad_plus_draw_screen_enabled_mode_0();
+		return;
+	}
 
 	cpcpen = Mode0Lookup[data];
 	messpen = amstrad_GateArray_render_colours[cpcpen];
@@ -348,6 +546,12 @@ static void amstrad_draw_screen_enabled_mode_1(void)
   int i, cpcpen, messpen; 
   unsigned char data1 = mess_ram[addr];
   unsigned char data2 = mess_ram[addr+1];
+
+	if(amstrad_plus_asic_enabled != 0)
+	{
+		amstrad_plus_draw_screen_enabled_mode_1();
+		return;
+	}
 
   for (i=0;i<4;i++) {
 		cpcpen = Mode1Lookup[data1& 0xFF];
@@ -445,6 +649,73 @@ void amstrad_vh_execute_crtc_cycles(int dummy)
 /*    }*/
 }
 
+/*
+  ASIC hardware sprites
+  16 sprites, 15 colours, 4096 colour palette
+
+  ASIC sprite memory map, must be mapped in using the secondary lower ROM select register
+
+  &4000 - &4fff   Sprite bitmap data, lower 4 bits.
+
+  &6000 - &607f   Sprite properties, 8 bytes each
+                  byte 0-1: Sprite X location
+				  byte 2-3: Sprite Y location
+				  byte 5:   Sprite magnication (LSB first)
+				            bit 0-1: Y Magnification
+							bit 2-3: X magnification
+                                     00 = not displayed
+									 01 = x1
+									 10 = x2
+									 11 = x4
+
+  &6422 - &643f   Sprite palette, 12-bit, xxxxGGGGRRRRBBBB, sprite pens 1-15 (0 is always transparent)
+*/
+void amstrad_plus_sprite_draw(mame_bitmap* scr_bitmap)
+{
+	int spr;  // sprite number
+	int xloc,yloc;
+	int xmag,ymag;  // sprite properties
+	int sprptr;  // sprite location in ASIC RAM
+	rectangle rect;
+	crtc6845_state vid;
+
+	crtc6845_get_state(0,&vid);
+
+	// get display bounds from CRTC registers (sprites are bound and clipped to inside the border)
+	rect.min_x = (((vid.registers[0] - 1) - (vid.registers[2] - 1))*4)+8;
+	rect.max_x = rect.min_x + (vid.registers[1] * 16);
+	rect.min_y = (((vid.registers[4] - 1) - (vid.registers[7] - 1))*4)+4;
+	rect.max_y = rect.min_y + (vid.registers[6] * (vid.registers[9]+1));
+
+	for(spr=0;spr<16;spr++)
+	{
+		sprptr = 0x2000 + (8*spr);
+		xmag = (amstrad_plus_asic_ram[sprptr+4] & 0x0c) >> 2;
+		ymag = amstrad_plus_asic_ram[sprptr+4] & 0x03;
+		if(xmag != 0 && ymag != 0)
+		{
+				xmag = 1<<(15+xmag);
+				ymag = 1<<(15+ymag);
+			xloc = amstrad_plus_asic_ram[sprptr] + (amstrad_plus_asic_ram[sprptr+1] << 8);
+			xloc += rect.min_x;
+			yloc = amstrad_plus_asic_ram[sprptr+2] + (amstrad_plus_asic_ram[sprptr+3] << 8);
+			yloc += rect.min_y;
+			decodechar(Machine->gfx[0],spr,amstrad_plus_asic_ram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
+			drawgfxzoom(scr_bitmap,Machine->gfx[0],spr,0,0,0,xloc,yloc,&rect,
+				TRANSPARENCY_COLOR,32,xmag,ymag);
+		}
+	}
+}
+
+/*
+	CPC+ / GX4000 ASIC split screen registers
+*/
+void amstrad_plus_setsplitline(unsigned int line, unsigned int address)
+{
+	amstrad_plus_split_scanline = line;
+	amstrad_plus_split_address = address;
+}
+
 /************************************************************************
  * amstrad CRTC 6845 Status
  ************************************************************************/
@@ -475,29 +746,60 @@ static void amstrad_Set_HS(int offset, int data)
 		}
 //	The GA has a counter that increments on every falling edge of the CRTC generated HSYNC signal.
  
-  amstrad_CRTC_HS_Counter++;
+		amstrad_CRTC_HS_Counter++;
+		amstrad_scanline++;
 
-		if (amstrad_CRTC_HS_After_VS_Counter != 0)
+		if(amstrad_plus_asic_enabled == 0 || amstrad_plus_pri == 0 || amstrad_system_type == 0)
 		{
-			amstrad_CRTC_HS_After_VS_Counter--;
-			
-			if (amstrad_CRTC_HS_After_VS_Counter == 0)
+			if (amstrad_CRTC_HS_After_VS_Counter != 0)
 			{
-				if (amstrad_CRTC_HS_Counter >= 32)
+				amstrad_CRTC_HS_After_VS_Counter--;
+				
+				if (amstrad_CRTC_HS_After_VS_Counter == 0)
 				{
-					cpunum_set_input_line(0,0, ASSERT_LINE);
+					if (amstrad_CRTC_HS_Counter >= 32)
+					{
+//						logerror("IRQ: standard GA IRQ triggered, scanline %i\n",amstrad_scanline);
+						cpunum_set_input_line(0,0, ASSERT_LINE);
+					}
+					amstrad_CRTC_HS_Counter = 0;
 				}
+			}
+		
+			if (amstrad_CRTC_HS_Counter == 52)
+			{
 				amstrad_CRTC_HS_Counter = 0;
+//				logerror("IRQ: standard GA IRQ triggered, scanline %i\n",amstrad_scanline);
+				cpunum_set_input_line(0,0, ASSERT_LINE);
 			}
 		}
-		
-		if (amstrad_CRTC_HS_Counter == 52)
-		{
-			amstrad_CRTC_HS_Counter = 0;
-			cpunum_set_input_line(0,0, ASSERT_LINE);
+		else
+		{  // CPC+/GX4000 Programmable Raster Interrupt (disabled if &6800 in ASIC RAM is 0)
+			if(amstrad_scanline == amstrad_plus_pri && amstrad_plus_pri != 0)  
+			{
+//				logerror("IRQ: PRI triggered, scanline %i\n",amstrad_scanline);
+				cpunum_set_input_line(0,0,ASSERT_LINE);
+				amstrad_plus_asic_ram[0x2804] |= 0x80;
+				amstrad_CRTC_HS_Counter &= ~0x20;  // ASIC PRI resets the MSB of the raster counter
+			}
+			// CPC+/GX4000 Split screen registers  (disabled if &6801 in ASIC RAM is 0)
+			if(amstrad_plus_split_scanline != 0)
+			{
+				if(amstrad_scanline == amstrad_plus_split_scanline) // split occurs here (hopefully)
+				{
+					crtc6845_state vid;
+
+					// This if off by a bit (see Robocop 2), but is the easiest way that works consistently that I know of.
+					crtc6845_get_state(0,&vid);
+					vid.Memory_Address_of_next_Character_Row = amstrad_plus_split_address;
+					crtc6845_set_state(0,&vid);
+				}
+			}
 		}
 	}
 	amstrad_CRTC_HS = data;
+	if(amstrad_scanline > 311) // 312 scanlines by default
+		amstrad_scanline = 0;
 } 
 
 /* CRTC - Set new Vertical Sync Status*/
@@ -571,7 +873,21 @@ VIDEO_UPDATE( amstrad )
 	rect.min_y = 0;
 	rect.max_y = AMSTRAD_SCREEN_HEIGHT-1;
 
-    copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
+#ifdef MAME_DEBUG
+	if(code_pressed(KEYCODE_Z) && amstrad_system_type == 1)
+	{
+		int x;
+		for(x=0;x<32;x+=2)
+		{
+			amstrad_plus_asic_ram[0x2400+x] = ((x/2)<< 4) + x/2;
+			amstrad_plus_asic_ram[0x2401+x] = x/2;
+		}
+	}
+#endif
+	copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
+	if(amstrad_plus_asic_enabled != 0)
+		amstrad_plus_sprite_draw(bitmap);
+
 	return 0;
 }
 

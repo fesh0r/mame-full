@@ -31,7 +31,8 @@ void AmstradCPC_SetUpperRom(int);
 void AmstradCPC_PALWrite(int);
 
 extern int amstrad_cassette_init(mess_image *img, mame_file *fp, int open_mode);
-
+void amstrad_plus_setspritecolour(unsigned int off, int r, int g, int b);
+void amstrad_plus_setsplitline(unsigned int line, unsigned int address);
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
 hardware (GA and CRTC - the CRTC specifies the memory address to access,
