@@ -157,6 +157,8 @@ static void dump_screenshot(int write_file)
 	mame_file *fp;
 	char buf[128];
 	int is_blank = 0;
+	int scrnum;
+	UINT32 screenmask;
 #ifndef NEW_RENDER
 	int x, y;
 	pen_t color;
@@ -171,9 +173,29 @@ static void dump_screenshot(int write_file)
 		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
 		if (fp)
 		{
-			snapshot_save_screen_indexed(fp, 0);
-			mame_fclose(fp);
-			report_message(MSG_INFO, "Saved screenshot as %s", buf);
+#ifdef NEW_RENDER
+			screenmask = render_get_live_screens_mask();
+#else
+			screenmask = 1;
+#endif
+
+			if (screenmask != 0)
+			{
+				/* choose a screen */
+				for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+				{
+					if (screenmask & (1 << scrnum))
+						break;
+				}
+
+				snapshot_save_screen_indexed(fp, scrnum);
+				mame_fclose(fp);
+				report_message(MSG_INFO, "Saved screenshot as %s", buf);
+			}
+			else
+			{
+				report_message(MSG_INFO, "Could not save screenshot; no live screen");
+			}
 		}
 
 		if (screenshot_num >= 0)
