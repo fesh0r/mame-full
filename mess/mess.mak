@@ -1092,4 +1092,9 @@ mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep
 # MESS specific layouts
 #-------------------------------------------------
 
+$(OBJ)/render.o:	$(OBJ)/mess/layout/horizont.lh \
+					$(OBJ)/mess/layout/vertical.lh \
+
+
+
 $(OBJ)/mess/systems/coco.o:	$(OBJ)/mess/layout/coco3.lh
