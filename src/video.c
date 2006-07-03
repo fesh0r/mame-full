@@ -1082,7 +1082,9 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 {
 	rectangle bounds;
 	mame_bitmap *osdcopy;
+#ifndef NEW_RENDER
 	UINT32 saved_rgb_components[3];
+#endif
 
 	/* allow the artwork system to override certain parameters */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -1096,8 +1098,8 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 	{
 		bounds = Machine->visible_area[0];
 	}
-	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
 #ifndef NEW_RENDER
+	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
 	artwork_override_screenshot_params(&bitmap, &bounds, direct_rgb_components);
 #endif
 
@@ -1177,7 +1179,9 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 			bitmap_free(copy);
 		}
 	}
+#ifndef NEW_RENDER
 	memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
+#endif
 
 	/* if the OSD system allocated a bitmap; free it */
 	if (osdcopy)
@@ -1185,7 +1189,7 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 }
 
 
- /*-------------------------------------------------
+/*-------------------------------------------------
     snapshot_save_screen_indexed - save a snapshot to
     the given file handle
 -------------------------------------------------*/
