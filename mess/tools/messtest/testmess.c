@@ -328,6 +328,16 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 
 
 
+int osd_init(void)
+{
+#ifdef NEW_RENDER
+	render_target_alloc(NULL, FALSE);
+#endif
+	return 0;
+}
+
+
+
 int osd_start_audio_stream(int stereo)
 {
 	char buf[256];

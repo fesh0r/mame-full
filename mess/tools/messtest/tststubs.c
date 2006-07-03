@@ -9,11 +9,6 @@
 #include "debug/debugcpu.h"
 #endif
 
-int osd_init(void)
-{
-	return 0;
-}
-
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
 	rgb_components[0] = 0xff0000;
