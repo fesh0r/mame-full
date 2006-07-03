@@ -21,6 +21,10 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 
 
 /***************************************************************************
@@ -1957,9 +1961,13 @@ static void execute_snap(int ref, int params, const char *param[])
 		mame_file *fp;
 		const char *filename = param[0];
 		int scrnum = (params > 1) ? atoi(param[1]) : 0;
+#ifdef NEW_RENDER
+		UINT32 mask = render_get_live_screens_mask(); 
+#else
+		UINT32 mask = 1;
+#endif
 
-		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)
-			|| !(render_get_live_screens_mask() & (1 << scrnum)))
+		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)	|| !(mask & (1 << scrnum)))
 		{
 			debug_console_printf("Invalid screen number '%d'\n", scrnum);
 			return;
