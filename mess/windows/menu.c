@@ -1597,11 +1597,7 @@ static int invoke_command(HWND wnd, UINT command)
 			break;
 
 		case ID_FILE_SAVESCREENSHOT:
-#ifdef NEW_RENDER
-			save_screen_snapshot(NULL);
-#else
-			save_screen_snapshot(artwork_get_ui_bitmap());
-#endif // NEW_RENDER
+			snapshot_save_all_screens();
 			break;
 
 		case ID_FILE_EXIT:

@@ -1487,7 +1487,7 @@ static void handle_keys(void)
 
 	/* handle a save snapshot request */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		save_screen_snapshot(NULL);
+		snapshot_save_all_screens();
 
 	/* toggle pause */
 	if (input_ui_pressed(IPT_UI_PAUSE))

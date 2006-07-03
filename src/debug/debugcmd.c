@@ -1944,28 +1944,38 @@ static void execute_traceflush(int ref, int params, const char *param[])
 
 static void execute_snap(int ref, int params, const char *param[])
 {
-#ifndef NEW_RENDER
 	/* if no params, use the default behavior */
 	if (params == 0)
 	{
-		save_screen_snapshot(artwork_get_ui_bitmap());
+		snapshot_save_all_screens();
 		debug_console_printf("Saved snapshot\n");
 	}
 
 	/* otherwise, we have to open the file ourselves */
 	else
 	{
-		mame_file *fp = mame_fopen(Machine->gamedrv->name, param[0], FILETYPE_SCREENSHOT, 1);
-		if (!fp)
-			debug_console_printf("Error creating file '%s'\n", param[0]);
-		else
+		mame_file *fp;
+		const char *filename = param[0];
+		int scrnum = (params > 1) ? atoi(param[1]) : 0;
+
+		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)
+			|| !(render_get_live_screens_mask() & (1 << scrnum)))
 		{
-			save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
-			mame_fclose(fp);
-			debug_console_printf("Saved snapshot as '%s'\n", param[0]);
+			debug_console_printf("Invalid screen number '%d'\n", scrnum);
+			return;
 		}
+		
+		fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_SCREENSHOT, 1);
+		if (!fp)
+		{
+			debug_console_printf("Error creating file '%s'\n", filename);
+			return;
+		}
+
+		snapshot_save_screen_indexed(fp, scrnum);
+		mame_fclose(fp);
+		debug_console_printf("Saved screen snapshot #%d as '%s'\n", scrnum, filename);
 	}
-#endif
 }
 
 

@@ -154,15 +154,13 @@ static struct messtest_testcase current_testcase;
 
 static void dump_screenshot(int write_file)
 {
-#ifndef NEW_RENDER
 	mame_file *fp;
 	char buf[128];
-	mame_bitmap *bitmap;
-	int x, y, is_blank;
+	int is_blank = 0;
+#ifndef NEW_RENDER
+	int x, y;
 	pen_t color;
-	extern mame_bitmap *scrbitmap[8];
-
-	bitmap = artwork_get_ui_bitmap();
+#endif
 
 	if (write_file)
 	{
@@ -173,7 +171,7 @@ static void dump_screenshot(int write_file)
 		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
 		if (fp)
 		{
-			save_screen_snapshot_as(fp, bitmap);
+			snapshot_save_screen_indexed(fp, 0);
 			mame_fclose(fp);
 			report_message(MSG_INFO, "Saved screenshot as %s", buf);
 		}
@@ -182,6 +180,7 @@ static void dump_screenshot(int write_file)
 			screenshot_num++;
 	}
 
+#if 0
 	/* check to see if bitmap is blank */
 	bitmap = scrbitmap[0];
 	is_blank = 1;
@@ -194,12 +193,12 @@ static void dump_screenshot(int write_file)
 				is_blank = 0;
 		}
 	}
+#endif
 	if (is_blank)
 	{
 		had_failure = TRUE;
 		report_message(MSG_FAILURE, "Screenshot is blank");
 	}
-#endif /* !NEW_RENDER */
 }
 
 

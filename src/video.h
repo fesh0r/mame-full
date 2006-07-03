@@ -167,8 +167,8 @@ void add_full_refresh_callback(void (*callback)(void));
   file name. This isn't scrictly necessary, so you can just call
   save_screen_snapshot() to let the core automatically pick a default name.
 */
-void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap);
-void save_screen_snapshot(mame_bitmap *bitmap);
+void snapshot_save_screen_indexed(mame_file *fp, int scrnum);
+void snapshot_save_all_screens(void);
 
 /* Movie recording */
 void record_movie_start(const char *name);

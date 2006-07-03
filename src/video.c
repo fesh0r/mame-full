@@ -1186,12 +1186,14 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 
 
  /*-------------------------------------------------
-    save_screen_snapshot_as - save a snapshot to
+    snapshot_save_screen_indexed - save a snapshot to
     the given file handle
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap)
+void snapshot_save_screen_indexed(mame_file *fp, int scrnum)
 {
+	mame_bitmap *bitmap;
+	bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
 	save_frame_with(fp, bitmap, png_write_bitmap);
 }
 
@@ -1224,10 +1226,10 @@ static mame_file *mame_fopen_next(int filetype)
 
 
 /*-------------------------------------------------
-    save_screen_snapshot - save a snapshot.
+    snapshot_save_all_screens - save a snapshot.
 -------------------------------------------------*/
 
-void save_screen_snapshot(mame_bitmap *bitmap)
+void snapshot_save_all_screens(void)
 {
 #ifdef NEW_RENDER
 	UINT32 screenmask = render_get_live_screens_mask();
@@ -1242,7 +1244,7 @@ void save_screen_snapshot(mame_bitmap *bitmap)
 		if (screenmask & (1 << scrnum))
 			if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
 			{
-				save_screen_snapshot_as(fp, scrbitmap[scrnum][curbitmap[scrnum]]);
+				snapshot_save_screen_indexed(fp, scrnum);
 				mame_fclose(fp);
 			}
 }
