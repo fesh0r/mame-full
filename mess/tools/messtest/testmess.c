@@ -142,6 +142,10 @@ static void *wavptr;
 static UINT32 samples_this_frame;
 static int seen_first_update;
 
+#ifdef NEW_RENDER
+static render_target *target;
+#endif
+
 /* command list */
 static mess_pile command_pile;
 static memory_pool command_pool;
@@ -331,7 +335,8 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 int osd_init(void)
 {
 #ifdef NEW_RENDER
-	render_target_alloc(NULL, FALSE);
+	target = render_target_alloc(NULL, FALSE);
+	render_target_set_orientation(target, 0);
 #endif
 	return 0;
 }
@@ -890,7 +895,9 @@ int osd_update(mame_time emutime)
 	double current_time;
 	int cpunum;
 
-#ifndef NEW_RENDER
+#ifdef NEW_RENDER
+	render_target_get_primitives(target);
+#else
 	/* if the visible area has changed, update it */
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{

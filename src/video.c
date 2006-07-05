@@ -1169,8 +1169,12 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 	UINT32 saved_rgb_components[3];
 #endif
 
+	assert((scrnum >= 0) && (scrnum < MAX_SCREENS));
+
 	bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
 	orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
+
+	assert(bitmap);
 
 #ifdef NEW_RENDER
 	orientation = orientation_add(orientation,
