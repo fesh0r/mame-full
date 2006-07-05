@@ -1962,7 +1962,7 @@ static void execute_snap(int ref, int params, const char *param[])
 		const char *filename = param[0];
 		int scrnum = (params > 1) ? atoi(param[1]) : 0;
 #ifdef NEW_RENDER
-		UINT32 mask = render_get_live_screens_mask(); 
+		UINT32 mask = render_get_live_screens_mask();
 #else
 		UINT32 mask = 1;
 #endif
@@ -1972,7 +1972,7 @@ static void execute_snap(int ref, int params, const char *param[])
 			debug_console_printf("Invalid screen number '%d'\n", scrnum);
 			return;
 		}
-		
+
 		fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_SCREENSHOT, 1);
 		if (!fp)
 		{
@@ -1982,7 +1982,7 @@ static void execute_snap(int ref, int params, const char *param[])
 
 		snapshot_save_screen_indexed(fp, scrnum);
 		mame_fclose(fp);
-		debug_console_printf("Saved screen snapshot #%d as '%s'\n", scrnum, filename);
+		debug_console_printf("Saved screen #%d snapshot as '%s'\n", scrnum, filename);
 	}
 }
 

@@ -82,7 +82,7 @@ static help_item static_help_list[] =
 		"  printf <format>[,<item>[,...]] -- prints one or more <item>s to the console using <format>\n"
 		"  logerror <format>[,<item>[,...]] -- outputs one or more <item>s to the error.log\n"
 		"  tracelog <format>[,<item>[,...]] -- outputs one or more <item>s to the trace file using <format>\n"
-		"  snap [[<filename>], <scrnum>] -- save a screen snapshot\n"
+		"  snap [<filename>] -- save a screen snapshot\n"
 		"  quit -- exits MAME and the debugger\n"
 	},
 	{
