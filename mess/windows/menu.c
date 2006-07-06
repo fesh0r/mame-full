@@ -1371,7 +1371,7 @@ void win_toggle_menubar(void)
 	LONG height_diff;
 	DWORD style, exstyle;
 	HWND hwnd;
-	BOOL has_menu;
+	HMENU menu;
 	extern void win_pause_input(int pause_);
 
 #ifdef NEW_RENDER
@@ -1383,23 +1383,34 @@ void win_toggle_menubar(void)
 
 #ifdef NEW_RENDER
 		hwnd = window->hwnd;
-		has_menu = win_has_menu(window);
 #else
 		hwnd = win_video_window;
-		has_menu = win_has_menu();
 #endif
+
+		// get current menu
+		menu = GetMenu(hwnd);
 
 		// get before rect
 		style = GetWindowLong(hwnd, GWL_STYLE);
 		exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-		AdjustWindowRectEx(&before_rect, style, has_menu, exstyle);
+		AdjustWindowRectEx(&before_rect, style, menu ? TRUE : FALSE, exstyle);
 
+		// toggle the menu
 		win_pause_input(1);
-		SetMenu(hwnd, GetMenu(hwnd) ? NULL : NULL);
+		if (menu)
+		{
+			SetProp(hwnd, TEXT("menu"), (HANDLE) menu);
+			menu = NULL;
+		}
+		else
+		{
+			menu = (HMENU) GetProp(hwnd, TEXT("menu"));
+		}
+		SetMenu(hwnd, menu);
 		win_pause_input(0);
 
 		// get after rect, and width/height diff
-		AdjustWindowRectEx(&after_rect, style, has_menu, exstyle);
+		AdjustWindowRectEx(&after_rect, style, menu ? TRUE : FALSE, exstyle);
 		width_diff = (after_rect.right - after_rect.left) - (before_rect.right - before_rect.left);
 		height_diff = (after_rect.bottom - after_rect.top) - (before_rect.bottom - before_rect.top);
 
@@ -1565,6 +1576,21 @@ static mess_image *decode_deviceoption(int command, int *devoption)
 
 
 //============================================================
+//	set_window_orientation
+//============================================================
+
+#ifdef NEW_RENDER
+static void set_window_orientation(win_window_info *window, int orientation)
+{
+	render_target_set_orientation(window->target, orientation);
+	if (window->target == render_get_ui_target())
+		render_container_set_orientation(render_container_get_ui(), orientation);
+}
+#endif // NEW_RENDER
+
+
+
+//============================================================
 //	invoke_command
 //============================================================
 
@@ -1622,19 +1648,19 @@ static int invoke_command(HWND wnd, UINT command)
 
 #ifdef NEW_RENDER
 		case ID_VIDEO_ROTATE_0:
-			render_target_set_orientation(window->target, ROT0);
+			set_window_orientation(window, ROT0);
 			break;
 
 		case ID_VIDEO_ROTATE_90:
-			render_target_set_orientation(window->target, ROT90);
+			set_window_orientation(window, ROT90);
 			break;
 
 		case ID_VIDEO_ROTATE_180:
-			render_target_set_orientation(window->target, ROT180);
+			set_window_orientation(window, ROT180);
 			break;
 
 		case ID_VIDEO_ROTATE_270:
-			render_target_set_orientation(window->target, ROT270);
+			set_window_orientation(window, ROT270);
 			break;
 #endif // NEW_RENDER
 
