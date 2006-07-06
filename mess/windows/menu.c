@@ -1585,6 +1585,7 @@ static void set_window_orientation(win_window_info *window, int orientation)
 	render_target_set_orientation(window->target, orientation);
 	if (window->target == render_get_ui_target())
 		render_container_set_orientation(render_container_get_ui(), orientation);
+	winwindow_video_window_update(window);
 }
 #endif // NEW_RENDER
 
