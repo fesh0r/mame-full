@@ -1178,7 +1178,7 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 
 #ifdef NEW_RENDER
 	orientation = orientation_add(orientation,
-		render_target_get_orientation(render_target_get_indexed(scrnum)));
+		render_container_get_orientation(render_container_get_screen(scrnum)));
 #endif
 
 	begin_resource_tracking();
