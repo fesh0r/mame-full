@@ -112,8 +112,12 @@ done:
 
 
 
-imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
-	imgtool_module **modules, size_t count)
+/*-------------------------------------------------
+    img_identify - attempts to determine the module
+	for any given image
+-------------------------------------------------*/
+
+imgtoolerr_t img_identify(imgtool_library *library, const char *fname, imgtool_module **modules, size_t count)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_module *module = NULL;
@@ -183,6 +187,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_attrname - retrieves the human readable
+	name for an attribute
+-------------------------------------------------*/
 
 void img_attrname(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
 	char *buffer, size_t buffer_len)

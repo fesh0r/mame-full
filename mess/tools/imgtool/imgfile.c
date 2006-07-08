@@ -129,6 +129,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_open - open an image
+-------------------------------------------------*/
+
 imgtoolerr_t img_open(const imgtool_module *module, const char *fname, int read_or_write, imgtool_image **outimg)
 {
 	read_or_write = read_or_write ? OSD_FOPEN_RW : OSD_FOPEN_READ;
@@ -136,6 +140,10 @@ imgtoolerr_t img_open(const imgtool_module *module, const char *fname, int read_
 }
 
 
+
+/*-------------------------------------------------
+    img_open_byname - open an image
+-------------------------------------------------*/
 
 imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, imgtool_image **outimg)
 {
@@ -150,26 +158,34 @@ imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, c
 
 
 
-void img_close(imgtool_image *img)
+/*-------------------------------------------------
+    img_close - close an image
+-------------------------------------------------*/
+
+void img_close(imgtool_image *image)
 {
-	if (img->module->close)
-		img->module->close(img);
-	pool_exit(&img->pool);
-	free(img);
+	if (image->module->close)
+		image->module->close(image);
+	pool_exit(&image->pool);
+	free(image);
 }
 
 
 
-imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len)
+/*-------------------------------------------------
+    img_info - returns format specific information
+	about an image
+-------------------------------------------------*/
+
+imgtoolerr_t img_info(imgtool_image *image, char *string, size_t len)
 {
 	if (len > 0)
 	{
-		if (img->module->info)
-			img->module->info(img, string, len);
-		else
-			string[0] = '\0';
+		string[0] = '\0';
+		if (image->module->info)
+			image->module->info(image, string, len);
 	}
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -278,38 +294,43 @@ static imgtoolerr_t cannonicalize_fork(imgtool_image *image, const char **fork)
 
 
 
-imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
+/*-------------------------------------------------
+    img_beginenum - begins enumerating files on a
+	partition
+-------------------------------------------------*/
+
+imgtoolerr_t img_beginenum(imgtool_image *image, const char *path, imgtool_imageenum **outenum)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *enumeration = NULL;
 	char *alloc_path = NULL;
 	size_t size;
 
-	assert(img);
+	assert(image);
 	assert(outenum);
 
 	*outenum = NULL;
 
-	if (!img->module->next_enum)
+	if (!image->module->next_enum)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
 
-	err = cannonicalize_path(img, PATH_MUSTBEDIR, &path, &alloc_path);
+	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	size = sizeof(struct _imgtool_imageenum) + img_module(img)->imageenum_extra_bytes;
+	size = sizeof(struct _imgtool_imageenum) + img_module(image)->imageenum_extra_bytes;
 	enumeration = (imgtool_imageenum *) malloc(size);
 	if (!enumeration)
 		goto done;
 	memset(enumeration, '\0', size);
-	enumeration->image = img;
+	enumeration->image = image;
 
-	if (img->module->begin_enum)
+	if (image->module->begin_enum)
 	{
-		err = img->module->begin_enum(enumeration, path);
+		err = image->module->begin_enum(enumeration, path);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -330,6 +351,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_nextenum - continues enumerating files
+	within a partition
+-------------------------------------------------*/
 
 imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
@@ -368,7 +394,12 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 
 
 
-imgtoolerr_t img_getdirent(imgtool_image *img, const char *path, int index, imgtool_dirent *ent)
+/*-------------------------------------------------
+    img_getdirent - retrieves the nth directory
+	entry within a partition
+-------------------------------------------------*/
+
+imgtoolerr_t img_getdirent(imgtool_image *image, const char *path, int index, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
 	imgtool_imageenum *imgenum = NULL;
@@ -379,7 +410,7 @@ imgtoolerr_t img_getdirent(imgtool_image *img, const char *path, int index, imgt
 		goto done;
 	}
 
-	err = img_beginenum(img, path, &imgenum);
+	err = img_beginenum(image, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -407,6 +438,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_closeenum - closes a directory
+-------------------------------------------------*/
+
 void img_closeenum(imgtool_imageenum *enumeration)
 {
 	const imgtool_module *module;
@@ -418,38 +453,12 @@ void img_closeenum(imgtool_imageenum *enumeration)
 
 
 
-imgtoolerr_t img_countfiles(imgtool_image *img, int *totalfiles)
-{
-	int err;
-	imgtool_imageenum *imgenum;
-	imgtool_dirent ent;
+/*-------------------------------------------------
+    img_filesize - returns free space on a
+	partition, in bytes
+-------------------------------------------------*/
 
-	*totalfiles = 0;
-	memset(&ent, 0, sizeof(ent));
-
-	err = img_beginenum(img, NULL, &imgenum);
-	if (err)
-		goto done;
-
-	do {
-		err = img_nextenum(imgenum, &ent);
-		if (err)
-			goto done;
-
-		if (ent.filename[0])
-			(*totalfiles)++;
-	}
-	while(ent.filename[0]);
-
-done:
-	if (imgenum)
-		img_closeenum(imgenum);
-	return err;
-}
-
-
-
-imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesize)
+imgtoolerr_t img_filesize(imgtool_image *image, const char *fname, UINT64 *filesize)
 {
 	int err;
 	imgtool_imageenum *imgenum;
@@ -461,7 +470,7 @@ imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesiz
 	*filesize = -1;
 	memset(&ent, 0, sizeof(ent));
 
-	err = img_beginenum(img, path, &imgenum);
+	err = img_beginenum(image, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -488,6 +497,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_listattrs - identifies all attributes on a
+	file
+-------------------------------------------------*/
 
 imgtoolerr_t img_listattrs(imgtool_image *image, const char *path, UINT32 *attrs, size_t len)
 {
@@ -519,6 +533,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_getattrs - retrieves attributes on a file
+-------------------------------------------------*/
+
 imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values)
 {
 	imgtoolerr_t err;
@@ -546,6 +564,10 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_setattrs - sets attributes on a file
+-------------------------------------------------*/
 
 imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
 {
@@ -575,6 +597,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_getattrs - retrieves an attribute on a file
+-------------------------------------------------*/
+
 imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value)
 {
 	UINT32 attrs[2];
@@ -584,6 +610,10 @@ imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, im
 }
 
 
+
+/*-------------------------------------------------
+    img_setattr - sets attributes on a file
+-------------------------------------------------*/
 
 imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value)
 {
@@ -595,11 +625,15 @@ imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, im
 
 
 
+/*-------------------------------------------------
+    img_geticoninfo - retrieves the icon for a file
+	stored on a partition
+-------------------------------------------------*/
+
 imgtoolerr_t img_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo)
 {
 	imgtoolerr_t err;
 	char *alloc_path = NULL;
-
 
 	if (!image->module->get_iconinfo)
 	{
@@ -624,6 +658,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_suggesttransfer - suggests a list of
+	filters appropriate for a file on a partition
+-------------------------------------------------*/
 
 imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path,
 	imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
@@ -703,6 +742,11 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_getchain - retrieves the block chain for a
+	file or directory on a partition
+-------------------------------------------------*/
+
 imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent *chain, size_t chain_size)
 {
 	size_t i;
@@ -723,6 +767,11 @@ imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent
 }
 
 
+
+/*-------------------------------------------------
+    img_getchain_string - retrieves the block chain
+	for a file or directory on a partition
+-------------------------------------------------*/
 
 imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buffer, size_t buffer_len)
 {
@@ -789,6 +838,11 @@ imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buf
 
 
 
+/*-------------------------------------------------
+    img_freespace - returns the amount of free space
+	on a partition
+-------------------------------------------------*/
+
 imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz)
 {
 	imgtoolerr_t err;
@@ -807,6 +861,11 @@ imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz)
 }
 
 
+
+/*-------------------------------------------------
+    img_readfile - starts reading from a file on a
+	partition with a stream
+-------------------------------------------------*/
 
 imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf, filter_getinfoproc filter)
 {
@@ -867,6 +926,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_writefile - starts writing to a new file on
+	an image with a stream
+-------------------------------------------------*/
 
 imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts, filter_getinfoproc filter)
 {
@@ -985,6 +1049,11 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_getfile - read a file from an image,
+	storing it into a native file
+-------------------------------------------------*/
+
 imgtoolerr_t img_getfile(imgtool_image *image, const char *filename, const char *fork,
 	const char *dest, filter_getinfoproc filter)
 {
@@ -1037,6 +1106,11 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_putfile - read a native file and store it
+	on a partition
+-------------------------------------------------*/
+
 imgtoolerr_t img_putfile(imgtool_image *image, const char *newfname, const char *fork,
 	const char *source, option_resolution *opts, filter_getinfoproc filter)
 {
@@ -1056,6 +1130,10 @@ imgtoolerr_t img_putfile(imgtool_image *image, const char *newfname, const char 
 }
 
 
+
+/*-------------------------------------------------
+    img_deletefile - delete a file on a partition
+-------------------------------------------------*/
 
 imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 {
@@ -1088,6 +1166,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_listforks - lists all forks on an image
+-------------------------------------------------*/
+
 imgtoolerr_t img_listforks(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len)
 {
 	imgtoolerr_t err;
@@ -1115,6 +1197,11 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_createdir - creates a directory on a
+	partition
+-------------------------------------------------*/
 
 imgtoolerr_t img_createdir(imgtool_image *img, const char *path)
 {
@@ -1145,6 +1232,11 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_deletedir - deletes a directory on a
+	partition
+-------------------------------------------------*/
+
 imgtoolerr_t img_deletedir(imgtool_image *img, const char *path)
 {
 	imgtoolerr_t err;
@@ -1173,6 +1265,10 @@ done:
 }
 
 
+
+/*-------------------------------------------------
+    img_create - creates an image
+-------------------------------------------------*/
 
 imgtoolerr_t img_create(const imgtool_module *module, const char *fname,
 	option_resolution *opts, imgtool_image **image)
@@ -1206,6 +1302,10 @@ done:
 
 
 
+/*-------------------------------------------------
+    img_create_byname - creates an image
+-------------------------------------------------*/
+
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
 	option_resolution *opts, imgtool_image **image)
 {
@@ -1220,6 +1320,11 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
 
 
 
+/*-------------------------------------------------
+    img_getsectorsize - gets the size of a sector
+	on an image
+-------------------------------------------------*/
+
 imgtoolerr_t img_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head,
 	UINT32 sector, UINT32 *length)
 {
@@ -1231,6 +1336,10 @@ imgtoolerr_t img_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head,
 }
 
 
+
+/*-------------------------------------------------
+    img_readsector - reads a sector on an image
+-------------------------------------------------*/
 
 imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head,
 	UINT32 sector, void *buffer, size_t len)
@@ -1244,6 +1353,10 @@ imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head,
 
 
 
+/*-------------------------------------------------
+    img_writesector - writes a sector on an image
+-------------------------------------------------*/
+
 imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
 	UINT32 sector, const void *buffer, size_t len)
 {
@@ -1255,6 +1368,11 @@ imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
 }
 
 
+
+/*-------------------------------------------------
+    img_getblocksize - gets the size of a standard
+	block on an image
+-------------------------------------------------*/
 
 imgtoolerr_t img_getblocksize(imgtool_image *image, UINT32 *length)
 {
@@ -1268,6 +1386,11 @@ imgtoolerr_t img_getblocksize(imgtool_image *image, UINT32 *length)
 
 
 
+/*-------------------------------------------------
+    img_readblock - reads a standard block on an
+	image
+-------------------------------------------------*/
+
 imgtoolerr_t img_readblock(imgtool_image *image, UINT64 block, void *buffer)
 {
 	/* implemented? */
@@ -1278,6 +1401,11 @@ imgtoolerr_t img_readblock(imgtool_image *image, UINT64 block, void *buffer)
 }
 
 
+
+/*-------------------------------------------------
+    img_writeblock - writes a standard block on an
+	image
+-------------------------------------------------*/
 
 imgtoolerr_t img_writeblock(imgtool_image *image, UINT64 block, const void *buffer)
 {
@@ -1290,6 +1418,11 @@ imgtoolerr_t img_writeblock(imgtool_image *image, UINT64 block, const void *buff
 
 
 
+/*-------------------------------------------------
+    img_malloc - allocates memory associated with an
+	image
+-------------------------------------------------*/
+
 void *img_malloc(imgtool_image *image, size_t size)
 {
 	return pool_malloc(&image->pool, size);
@@ -1297,12 +1430,21 @@ void *img_malloc(imgtool_image *image, size_t size)
 
 
 
+/*-------------------------------------------------
+    img_module - returns the module associated with
+	this image
+-------------------------------------------------*/
+
 const imgtool_module *img_module(imgtool_image *img)
 {
 	return img->module;
 }
 
 
+
+/*-------------------------------------------------
+    img_extrabytes - returns extra bytes on an image
+-------------------------------------------------*/
 
 void *img_extrabytes(imgtool_image *img)
 {
@@ -1312,12 +1454,22 @@ void *img_extrabytes(imgtool_image *img)
 
 
 
+/*-------------------------------------------------
+    img_enum_module - returns the module associated
+	with this directory
+-------------------------------------------------*/
+
 const imgtool_module *img_enum_module(imgtool_imageenum *enumeration)
 {
 	return enumeration->image->module;
 }
 
 
+
+/*-------------------------------------------------
+    img_enum_extrabytes - returns extra bytes on a
+	directory
+-------------------------------------------------*/
 
 void *img_enum_extrabytes(imgtool_imageenum *enumeration)
 {
@@ -1327,8 +1479,12 @@ void *img_enum_extrabytes(imgtool_imageenum *enumeration)
 
 
 
+/*-------------------------------------------------
+    img_enum_image - returns the image associated
+	with this directory
+-------------------------------------------------*/
+
 imgtool_image *img_enum_image(imgtool_imageenum *enumeration)
 {
 	return enumeration->image;
 }
-
