@@ -37,7 +37,7 @@ enum
     GLOBAL VARIABLES
 -------------------------------------------------*/
 
-#ifdef NEW_RENDER
+#ifndef NEW_RENDER
 UINT32 direct_rgb_components[3];
 #endif
 UINT16 *palette_shadow_table;
