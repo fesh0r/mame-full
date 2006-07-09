@@ -479,11 +479,4 @@ BOOL MessPropertiesCommand(int nGame, HWND hWnd, WORD wNotifyCode, WORD wID, BOO
 
 void MessSetPropEnabledControls(HWND hWnd, options_type *o)
 {
-	if (o->mess.use_new_ui)
-		o->use_d3d = FALSE;
-
-	ShowWindow(GetDlgItem(hWnd, IDC_D3D_NEWUI_WARNING),	o->mess.use_new_ui ? SW_SHOW : SW_HIDE);
-	ShowWindow(GetDlgItem(hWnd, IDC_NEWUI_D3D_WARNING),	o->use_d3d ? SW_SHOW : SW_HIDE);
-	EnableWindow(GetDlgItem(hWnd, IDC_D3D),				!o->mess.use_new_ui);
-	EnableWindow(GetDlgItem(hWnd, IDC_USE_NEW_UI),		!o->use_d3d);
 }

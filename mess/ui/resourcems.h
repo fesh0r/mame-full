@@ -25,8 +25,6 @@
 #define IDI_WIN_CYLN                    2110
 #define IDI_WIN_PTAP                    2111
 #define IDI_WIN_PCRD                    2112
-#define IDC_D3D_NEWUI_WARNING			2108
-#define IDC_NEWUI_D3D_WARNING			2109
 #define ID_MESS_OPEN_SOFTWARE           2200
 #define ID_MESS_CREATE_SOFTWARE         2201
 #define ID_MESS_RUN_TESTS				2299

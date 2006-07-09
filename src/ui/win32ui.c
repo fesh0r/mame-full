@@ -855,17 +855,20 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	// d3d
 	if (pOpts->use_d3d)
 	{
+#ifdef NEW_RENDER
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -video direct3d");
+#else
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3d");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflt",pOpts->d3d_filter?"":"no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3dtexmanage",pOpts->d3d_texture_management ? "" : "no");
 		if (pOpts->d3d_effect != D3D_EFFECT_NONE)
 			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3deffect %s",GetD3DEffectShortName(pOpts->d3d_effect));
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dprescale %s",GetD3DPrescaleShortName(pOpts->d3d_prescale));
-
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3deffectrotate",pOpts->d3d_rotate_effects ? "" : "no");
 
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dscan %i",pOpts->d3d_scanlines);
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dfeedback %i",pOpts->d3d_feedback);
+#endif
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dprescale %s",GetD3DPrescaleShortName(pOpts->d3d_prescale));
 	}
 	/* input */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",                   pOpts->use_mouse       ? "" : "no");
@@ -975,7 +978,17 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
 
-#ifndef NEW_RENDER
+#ifdef NEW_RENDER
+	if (pOpts->use_ddraw)
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -video ddraw");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                 pOpts->ddraw_stretch   ? "" : "no");
+	}
+	else if (!pOpts->use_d3d)
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -video gdi");
+	}
+#else
 	// stuff that will be going away soon
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdd",                      pOpts->use_ddraw       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                     pOpts->ddraw_stretch   ? "" : "no");
@@ -5875,8 +5888,8 @@ static void MamePlayGameWithOptions(int nGame)
 	dwExitCode = RunMAME(nGame);
 	if (dwExitCode == 0)
 	{
-	   IncrementPlayCount(nGame);
-	   ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
+		IncrementPlayCount(nGame);
+		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 	}
 	else
 	{

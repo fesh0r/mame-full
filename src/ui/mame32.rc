@@ -707,9 +707,6 @@ BEGIN
     PUSHBUTTON      "Reset",IDC_PROP_RESET,4,210,97,14,0,0,0x80b80447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,118,210,97,14,
                     0,0,0x80b80401
-#ifdef MESS
-    LTEXT           "The new MESS UI is incompatible with Direct3D, so it must be turned off before D3D can be used",IDC_D3D_NEWUI_WARNING,108,177,110,28
-#endif
 END
 
 IDD_PROP_SOUND DIALOGEX 0, 0, 220, 228
@@ -934,7 +931,6 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,180,86,10,0
     CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,192,86,10,0
-    LTEXT           "Direct3D is incompatible with the new MESS UI, so it must be turned off before the new UI can be used",IDC_NEWUI_D3D_WARNING,108,177,110,28
 #endif
 END
 
