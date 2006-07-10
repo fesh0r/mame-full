@@ -396,10 +396,10 @@ static UINT32 menu_cheat(UINT32 state);
 static UINT32 menu_memory_card(UINT32 state);
 static UINT32 menu_video(UINT32 state);
 static UINT32 menu_reset_game(UINT32 state);
+static UINT32 menu_game_info(UINT32 state);
 
 #ifndef MESS
 static UINT32 menu_bookkeeping(UINT32 state);
-static UINT32 menu_game_info(UINT32 state);
 #else
 static UINT32 menu_file_manager(UINT32 state);
 static UINT32 menu_tape_control(UINT32 state);
@@ -1660,10 +1660,12 @@ do { \
 #ifndef MESS
   	/* add bookkeeping menu */
 	ADD_MENU(UI_bookkeeping, menu_bookkeeping, 0);
+#endif
 
 	/* add game info menu */
 	ADD_MENU(UI_gameinfo, menu_game_info, 0);
-#else /* MESS */
+
+#ifdef MESS
   	/* add image info menu */
 	ADD_MENU(UI_imageinfo, ui_menu_image_info, 0);
 
@@ -1675,7 +1677,7 @@ do { \
 	if (device_find(Machine->devices, IO_CASSETTE))
 		ADD_MENU(UI_tapecontrol, menu_tape_control, 1);
 #endif /* HAS_WAVE */
-#endif /* !MESS */
+#endif /* MESS */
 
 #ifdef NEW_RENDER
 	/* add video options menu */
@@ -2489,7 +2491,6 @@ static UINT32 menu_bookkeeping(UINT32 state)
  *
  *************************************/
 
-#ifndef MESS
 static UINT32 menu_game_info(UINT32 state)
 {
 	char buf[2048];
@@ -2509,7 +2510,6 @@ static UINT32 menu_game_info(UINT32 state)
 	ui_menu_generic_keys(&selected, 1);
 	return selected;
 }
-#endif
 
 
 

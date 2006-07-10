@@ -788,7 +788,7 @@ static floperr_t coco_dmk_format_track(floppy_image *floppy, int head, int track
 			memset(&track_data[track_position], 0x00, 8);
 			track_position += 8;
 		
-			memset(&track_data[track_position + 8], 0xA1, 3);
+			memset(&track_data[track_position], 0xA1, 3);
 			track_position += 3;
 
 			idam_offset = track_position | 0x8000;

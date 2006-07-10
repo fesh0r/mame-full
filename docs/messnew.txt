@@ -11,6 +11,9 @@ System Driver Changes:
 - [AMSTRAD] Preliminary CPC+ support, and support for .cpr cartridge images.
   [Barry Rodewald]
 
+- [COCO] Fixed a subtle problem when creating DMK disk images.  (bug #864)
+  [Nate Woods]
+
 - [COCO3P] Fixed video.  (bug #886) [Nate Woods]
 
 - [GAMEBOY] Fixed aspect ratio.  [Justin Kerk]
@@ -23,7 +26,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- Added a "System Information" menu item to the classic UI.  (bug #888) [Nate
+  Woods]
 
 
 
