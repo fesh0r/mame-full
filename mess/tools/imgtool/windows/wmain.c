@@ -13,9 +13,6 @@
 #include "hexview.h"
 #include "../modules.h"
 
-imgtool_library *library;
-
-
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	LPSTR command_line, int cmd_show)
 {
@@ -27,19 +24,17 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	HACCEL accel = NULL;
 	TCHAR *s;
 	
-	// Initialize Windows classes
+	// initialize Windows classes
 	InitCommonControls();
 	if (!wimgtool_registerclass())
 		goto done;
 	if (!hexview_registerclass())
 		goto done;
 
-	// Initialize the Imgtool library
-	err = imgtool_create_cannonical_library(TRUE, &library);
-	if (!library)
-		goto done;
-	imgtool_library_sort(library, ITLS_DESCRIPTION);
+	// initialize the Imgtool library
+	imgtool_init(TRUE);
 
+	// create the window
 	window = CreateWindow(wimgtool_class, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 	if (!window)
@@ -92,8 +87,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	rc = 0;
 
 done:
-	if (library)
-		imgtool_library_close(library);
+	imgtool_exit();
 	if (accel)
 		DestroyAcceleratorTable(accel);
 	return rc;

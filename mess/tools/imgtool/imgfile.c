@@ -145,11 +145,11 @@ imgtoolerr_t img_open(const imgtool_module *module, const char *fname, int read_
     img_open_byname - open an image
 -------------------------------------------------*/
 
-imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, imgtool_image **outimg)
+imgtoolerr_t img_open_byname(const char *modulename, const char *fname, int read_or_write, imgtool_image **outimg)
 {
 	const imgtool_module *module;
 
-	module = imgtool_library_findmodule(library, modulename);
+	module = imgtool_find_module(modulename);
 	if (!module)
 		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 
@@ -1306,12 +1306,12 @@ done:
     img_create_byname - creates an image
 -------------------------------------------------*/
 
-imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
+imgtoolerr_t img_create_byname(const char *modulename, const char *fname,
 	option_resolution *opts, imgtool_image **image)
 {
 	const imgtool_module *module;
 
-	module = imgtool_library_findmodule(library, modulename);
+	module = imgtool_find_module(modulename);
 	if (!module)
 		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 

@@ -21,8 +21,6 @@
 
 /* ---------------------------------------------------------------------- */
 
-static imgtool_library *library;
-
 static void writeusage(FILE *f, int write_word_usage, struct command *c, char *argv[])
 {
 	fprintf(f, "%s %s %s %s\n",
@@ -188,7 +186,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	const char *path;
 
 	/* attempt to open image */
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
@@ -253,7 +251,7 @@ static int cmd_get(const struct command *c, int argc, char *argv[])
 	filter_getinfoproc filter;
 	const char *fork;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &image);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &image);
 	if (err)
 		goto done;
 
@@ -296,7 +294,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	char **filename_list;
 	int filename_count;
 
-	module = imgtool_library_findmodule(library, argv[0]);
+	module = imgtool_find_module(argv[0]);
 	if (!module)
 	{
 		err = IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
@@ -364,7 +362,7 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	const char *path = NULL;
 	int arg;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
@@ -410,7 +408,7 @@ static int cmd_del(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
@@ -433,7 +431,7 @@ static int cmd_mkdir(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
@@ -456,7 +454,7 @@ static int cmd_rmdir(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
@@ -480,7 +478,7 @@ static int cmd_identify(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	int i;
 
-	err = img_identify(library, argv[0], modules, sizeof(modules) / sizeof(modules[0]));
+	err = img_identify(argv[0], modules, sizeof(modules) / sizeof(modules[0]));
 	if (err)
 		goto error;
 
@@ -505,7 +503,7 @@ static int cmd_create(const struct command *c, int argc, char *argv[])
 	const imgtool_module *module;
 	option_resolution *resolution = NULL;
 
-	module = imgtool_library_findmodule(library, argv[0]);
+	module = imgtool_find_module(argv[0]);
 	if (!module)
 	{
 		err = IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
@@ -552,7 +550,7 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 	UINT32 size, track, head, sector;
 
 	/* attempt to open image */
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
@@ -606,7 +604,7 @@ static int cmd_writesector(const struct command *c, int argc, char *argv[])
 	UINT32 size, track, head, sector;
 
 	/* attempt to open image */
-	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto done;
 
@@ -654,7 +652,7 @@ static int cmd_listformats(const struct command *c, int argc, char *argv[])
 
 	fprintf(stdout, "Image formats supported by imgtool:\n\n");
 
-	mod = imgtool_library_findmodule(library, NULL);
+	mod = imgtool_find_module(NULL);
 	while(mod)
 	{
 		fprintf(stdout, "  %-25s%s\n", mod->name, mod->description);
@@ -763,7 +761,7 @@ static int cmd_listdriveroptions(const struct command *c, int argc, char *argv[]
 	const imgtool_module *mod;
 	const struct OptionGuide *opt_guide;
 
-	mod = imgtool_library_findmodule(library, argv[0]);
+	mod = imgtool_find_module(argv[0]);
 	if (!mod)
 		goto error;
 
@@ -848,7 +846,6 @@ int CLIB_DECL main(int argc, char *argv[])
 	int i;
 	int result;
 	struct command *c;
-	imgtoolerr_t err;
 
 #ifdef MAME_DEBUG
 	if (imgtool_validitychecks())
@@ -873,14 +870,8 @@ int CLIB_DECL main(int argc, char *argv[])
 				if (c->minargs > (argc - 2))
 					goto cmderror;
 
-				/* build module library */
-				err = imgtool_create_cannonical_library(TRUE, &library);
-				if (err)
-				{
-					reporterror(err, NULL, NULL, NULL, NULL, NULL, NULL);
-					result = -1;
-					goto done;
-				}
+				/* initialize the imgtool core */
+				imgtool_init(TRUE);
 
 				if (c->lastargrepeats && (argc > c->maxargs))
 				{
@@ -929,7 +920,6 @@ cmderror:
 	result = -1;
 
 done:
-	if (library)
-		imgtool_library_close(library);
+	imgtool_exit();
 	return result;
 }

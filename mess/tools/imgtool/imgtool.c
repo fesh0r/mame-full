@@ -16,6 +16,10 @@
 #include "library.h"
 #include "modules.h"
 
+imgtool_library *global_imgtool_library;
+
+
+
 /* ----------------------------------------------------------------------- */
 
 struct imgtool_module_features img_get_module_features(const imgtool_module *module)
@@ -113,13 +117,57 @@ done:
 
 
 /*-------------------------------------------------
+    imgtool_init - initializes the imgtool core
+-------------------------------------------------*/
+
+void imgtool_init(int omit_untested)
+{
+	imgtoolerr_t err;
+	err = imgtool_create_cannonical_library(omit_untested, &global_imgtool_library);
+	assert(err == IMGTOOLERR_SUCCESS);
+	if (err == IMGTOOLERR_SUCCESS)
+	{
+		imgtool_library_sort(global_imgtool_library, ITLS_DESCRIPTION);
+	}
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_exit - closes out the imgtool core
+-------------------------------------------------*/
+
+void imgtool_exit(void)
+{
+	if (global_imgtool_library)
+	{
+		imgtool_library_close(global_imgtool_library);
+		global_imgtool_library = NULL;
+	}
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_find_module - looks up a module
+-------------------------------------------------*/
+
+const imgtool_module *imgtool_find_module(const char *modulename)
+{
+	return imgtool_library_findmodule(global_imgtool_library, modulename);
+}
+
+
+
+/*-------------------------------------------------
     img_identify - attempts to determine the module
 	for any given image
 -------------------------------------------------*/
 
-imgtoolerr_t img_identify(imgtool_library *library, const char *fname, imgtool_module **modules, size_t count)
+imgtoolerr_t img_identify(const char *fname, imgtool_module **modules, size_t count)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	imgtool_library *library = global_imgtool_library;
 	imgtool_module *module = NULL;
 	imgtool_module *insert_module;
 	imgtool_module *temp_module;
@@ -397,8 +445,7 @@ done:
 		printf("imgtool: %s\n", imgtool_error(err));
 		error = 1;
 	}
-	if (library)
-		imgtool_library_close(library);
+	imgtool_exit();
 	return error;
 }
 

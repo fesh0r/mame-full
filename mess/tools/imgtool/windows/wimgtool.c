@@ -21,7 +21,7 @@
 const TCHAR wimgtool_class[] = TEXT("wimgtool_class");
 const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");
 
-extern void win_association_dialog(HWND parent, imgtool_library *library);
+extern void win_association_dialog(HWND parent);
 
 struct wimgtool_info
 {
@@ -710,7 +710,7 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	}
 
 	// write out library modules
-	while((module = imgtool_library_iterate(library, module)) != NULL)
+	for (module = imgtool_find_module(NULL); module; module = module->next)
 	{
 		// check to see if we have the right features
 		features = img_get_module_features(module);
@@ -807,7 +807,7 @@ const imgtool_module *find_filter_module(int filter_index,
 	if (!creating_file && (filter_index-- == 0))
 		return NULL;
 
-	while((module = imgtool_library_iterate(library, module)) != NULL)
+	for (module = imgtool_find_module(NULL); module; module = module->next)
 	{
 		features = img_get_module_features(module);
 		if (creating_file ? features.supports_create : features.supports_open)
@@ -933,7 +933,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const imgtool_module *module,
 	// if the module is not specified, auto detect the format
 	if (!module)
 	{
-		err = img_identify(library, filename, &identified_module, 1);
+		err = img_identify(filename, &identified_module, 1);
 		if (err)
 			goto done;
 		module = identified_module;
@@ -1883,7 +1883,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 					break;
 
 				case ID_VIEW_ASSOCIATIONS:
-					win_association_dialog(window, library);
+					win_association_dialog(window);
 					break;
 			}
 			break;

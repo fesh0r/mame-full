@@ -39,7 +39,6 @@ static void report_imgtoolerr(imgtoolerr_t err)
 
 struct imgtooltest_state
 {
-	imgtool_library *library;
 	imgtool_image *image;
 	UINT64 recorded_freespace;
 	int failed;
@@ -67,7 +66,7 @@ static void node_createimage(struct imgtooltest_state *state, xml_data_node *nod
 	driver = attr_node->value;
 	
 	/* does image creation support options? */
-	module = imgtool_library_findmodule(state->library, attr_node->value);
+	module = imgtool_find_module(attr_node->value);
 	if (module && module->createimage_optguide && module->createimage_optspec)
 		opts = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
 
@@ -100,7 +99,7 @@ static void node_createimage(struct imgtooltest_state *state, xml_data_node *nod
 		option_resolution_add_param(opts, param_name, param_value);
 	}
 
-	err = img_create_byname(state->library, driver, tempfile_name(), opts, &state->image);
+	err = img_create_byname(driver, tempfile_name(), opts, &state->image);
 	if (opts)
 	{
 		option_resolution_close(opts);
@@ -642,28 +641,16 @@ static void node_checkattr(struct imgtooltest_state *state, xml_data_node *node)
 
 void node_testimgtool(xml_data_node *node)
 {
-	imgtoolerr_t err;
 	xml_data_node *child_node;
 	xml_attribute_node *attr_node;
 	struct imgtooltest_state state;
-	static imgtool_library *library;
 
-	/* create the library, if it hasn't been created already */
-	if (!library)
-	{
-		err = imgtool_create_cannonical_library(FALSE, &library);
-		if (err)
-		{
-			report_imgtoolerr(err);
-			return;
-		}
-	}
+	imgtool_init(FALSE);
 
 	attr_node = xml_get_attribute(node, "name");
 	report_testcase_begin(attr_node ? attr_node->value : NULL);
 	
 	memset(&state, 0, sizeof(state));
-	state.library = library;
 
 	for (child_node = node->child; child_node; child_node = child_node->next)
 	{
@@ -698,4 +685,6 @@ void node_testimgtool(xml_data_node *node)
 		img_close(state.image);
 		state.image = NULL;
 	}
+
+	imgtool_exit();
 }

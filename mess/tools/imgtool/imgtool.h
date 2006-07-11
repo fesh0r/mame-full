@@ -41,12 +41,17 @@
  * ---------------------------------------------------------------------------
  */
 
+/* ----- initialization ----- */
+void imgtool_init(int omit_untested);
+void imgtool_exit(void);
+const imgtool_module *imgtool_find_module(const char *modulename);
+
 /* ----- image management ----- */
-imgtoolerr_t img_identify(imgtool_library *library, const char *filename, imgtool_module **modules, size_t count);
+imgtoolerr_t img_identify(const char *filename, imgtool_module **modules, size_t count);
 imgtoolerr_t img_open(const imgtool_module *module, const char *filename, int read_or_write, imgtool_image **outimg);
-imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
+imgtoolerr_t img_open_byname(const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
 imgtoolerr_t img_create(const imgtool_module *module, const char *fname, option_resolution *opts, imgtool_image **image);
-imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts, imgtool_image **image);
+imgtoolerr_t img_create_byname(const char *modulename, const char *fname, option_resolution *opts, imgtool_image **image);
 void img_close(imgtool_image *image);
 imgtoolerr_t img_info(imgtool_image *image, char *string, size_t len);
 imgtoolerr_t img_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *length);

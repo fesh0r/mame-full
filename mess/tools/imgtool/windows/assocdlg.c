@@ -9,7 +9,6 @@
 
 struct assocdlg_info
 {
-	imgtool_library *library;
 	int extension_count;
 	const char *extensions[128];
 };
@@ -138,7 +137,7 @@ static void setup_extensions(struct assocdlg_info *dlginfo)
 
 	dlginfo->extension_count = 0;
 
-	while((module = imgtool_library_iterate(dlginfo->library, module)) != NULL)
+	for (module = imgtool_find_module(NULL); module; module = module->next)
 	{
 		ext = module->extensions;
 		while(ext[0])
@@ -166,11 +165,11 @@ static void setup_extensions(struct assocdlg_info *dlginfo)
 
 
 
-void win_association_dialog(HWND parent, imgtool_library *library)
+void win_association_dialog(HWND parent)
 {
 	struct assocdlg_info dlginfo;
 
-	dlginfo.library = library;
+	memset(&dlginfo, 0, sizeof(dlginfo));
 	setup_extensions(&dlginfo);
 
 	DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ASSOCIATIONS), parent,
