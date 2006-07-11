@@ -99,7 +99,7 @@ struct imgtool_floppy_image
 
 static floppy_image *get_floppy(imgtool_image *img)
 {
-	struct imgtool_floppy_image *fimg = (struct imgtool_floppy_image *) img_extrabytes(img);
+	struct imgtool_floppy_image *fimg = (struct imgtool_floppy_image *) imgtool_image_extra_bytes(img);
 	return fimg->floppy;
 }
 
@@ -114,8 +114,8 @@ static imgtoolerr_t imgtool_floppy_open_internal(imgtool_image *image, imgtool_s
 	const struct FloppyFormat *format;
 	imgtoolerr_t (*open)(imgtool_image *image, imgtool_stream *f);
 
-	fimg = (struct imgtool_floppy_image *) img_extrabytes(image);
-	imgclass = &img_module(image)->imgclass;
+	fimg = (struct imgtool_floppy_image *) imgtool_image_extra_bytes(image);
+	imgclass = &imgtool_image_module(image)->imgclass;
 	format = (const struct FloppyFormat *) imgclass->derived_param;
 	open = (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *)) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_FLOPPY_OPEN);
 
@@ -157,8 +157,8 @@ static imgtoolerr_t imgtool_floppy_create(imgtool_image *image, imgtool_stream *
 	imgtoolerr_t (*create)(imgtool_image *, imgtool_stream *, option_resolution *);
 	imgtoolerr_t (*open)(imgtool_image *image, imgtool_stream *f);
 
-	fimg = (struct imgtool_floppy_image *) img_extrabytes(image);
-	imgclass = &img_module(image)->imgclass;
+	fimg = (struct imgtool_floppy_image *) imgtool_image_extra_bytes(image);
+	imgclass = &imgtool_image_module(image)->imgclass;
 	format = (const struct FloppyFormat *) imgclass->derived_param;
 	create = (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *, option_resolution *)) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_FLOPPY_CREATE);
 	open = (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *)) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_FLOPPY_OPEN);
@@ -305,7 +305,7 @@ int imgtool_floppy_make_class(int index, imgtool_class *imgclass)
 floppy_image *imgtool_floppy(imgtool_image *img)
 {
 	struct imgtool_floppy_image *fimg;
-	fimg = (struct imgtool_floppy_image *) img_extrabytes(img);
+	fimg = (struct imgtool_floppy_image *) imgtool_image_extra_bytes(img);
 	return fimg->floppy;
 }
 
@@ -368,7 +368,7 @@ imgtoolerr_t imgtool_floppy_write_sector_from_stream(imgtool_image *img, int hea
 void *imgtool_floppy_extrabytes(imgtool_image *img)
 {
 	struct imgtool_floppy_image *fimg;
-	fimg = (struct imgtool_floppy_image *) img_extrabytes(img);
+	fimg = (struct imgtool_floppy_image *) imgtool_image_extra_bytes(img);
 	return fimg + 1;
 }
 

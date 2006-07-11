@@ -620,7 +620,7 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image, imgtool_stream *str
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* is the allocation bitmap too big? */
-	info->allocation_bitmap = img_malloc(image, info->allocation_bitmap_bytes);
+	info->allocation_bitmap = imgtool_image_malloc(image, info->allocation_bitmap_bytes);
 	if (!info->allocation_bitmap)
 		return IMGTOOLERR_OUTOFMEMORY;
 	memset(info->allocation_bitmap, 0, info->allocation_bitmap_bytes);
@@ -782,14 +782,14 @@ done:
 
 
 
-static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t os9_diskimage_beginenum(imgtool_directory *enumeration, const char *path)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct os9_direnum *os9enum;
 	imgtool_image *image;
 
-	image = img_enum_image(enumeration);
-	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
+	image = imgtool_directory_image(enumeration);
+	os9enum = (struct os9_direnum *) imgtool_directory_extrabytes(enumeration);
 
 	err = os9_lookup_path(image, path, CREATE_NONE, &os9enum->dir_info, NULL, NULL, NULL);
 	if (err)
@@ -808,7 +808,7 @@ done:
 
 
 
-static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t os9_diskimage_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	struct os9_direnum *os9enum;
 	UINT32 lsn, index;
@@ -818,8 +818,8 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	struct os9_fileinfo file_info;
 	imgtool_image *image;
 
-	image = img_enum_image(enumeration);
-	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
+	image = imgtool_directory_image(enumeration);
+	os9enum = (struct os9_direnum *) imgtool_directory_extrabytes(enumeration);
 
 	do
 	{
@@ -847,7 +847,7 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 
 	/* read file attributes */
 	lsn = pick_integer_be(dir_entry, 29, 3);
-	err = os9_decode_file_header(img_enum_image(enumeration), lsn, &file_info);
+	err = os9_decode_file_header(imgtool_directory_image(enumeration), lsn, &file_info);
 	if (err)
 		return err;
 

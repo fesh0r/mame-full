@@ -22,9 +22,9 @@ imgtool_library *global_imgtool_library;
 
 /* ----------------------------------------------------------------------- */
 
-struct imgtool_module_features img_get_module_features(const imgtool_module *module)
+imgtool_module_features imgtool_get_module_features(const imgtool_module *module)
 {
-	struct imgtool_module_features features;
+	imgtool_module_features features;
 	memset(&features, 0, sizeof(features));
 
 	if (module->create)
@@ -69,13 +69,13 @@ static imgtoolerr_t evaluate_module(const char *fname,
 {
 	imgtoolerr_t err;
 	imgtool_image *image = NULL;
-	imgtool_imageenum *imageenum = NULL;
+	imgtool_directory *imageenum = NULL;
 	imgtool_dirent ent;
 	float current_result;
 
 	*result = 0.0;
 
-	err = img_open(module, fname, OSD_FOPEN_READ, &image);
+	err = imgtool_image_open(module, fname, OSD_FOPEN_READ, &image);
 	if (err)
 		goto done;
 
@@ -83,14 +83,14 @@ static imgtoolerr_t evaluate_module(const char *fname,
 	{
 		current_result = module->open_is_strict ? 0.9 : 0.5;
 
-		err = img_beginenum(image, NULL, &imageenum);
+		err = imgtool_partition_open_directory(image, NULL, &imageenum);
 		if (err)
 			goto done;
 
 		memset(&ent, 0, sizeof(ent));
 		do
 		{
-			err = img_nextenum(imageenum, &ent);
+			err = imgtool_directory_get_next(imageenum, &ent);
 			if (err)
 				goto done;
 
@@ -108,9 +108,9 @@ done:
 	if (ERRORCODE(err) == IMGTOOLERR_CORRUPTIMAGE)
 		err = IMGTOOLERR_SUCCESS;
 	if (imageenum)
-		img_closeenum(imageenum);
+		imgtool_directory_close(imageenum);
 	if (image)
-		img_close(image);
+		imgtool_image_close(image);
 	return err;
 }
 
@@ -160,11 +160,11 @@ const imgtool_module *imgtool_find_module(const char *modulename)
 
 
 /*-------------------------------------------------
-    img_identify - attempts to determine the module
+    imgtool_identify_file - attempts to determine the module
 	for any given image
 -------------------------------------------------*/
 
-imgtoolerr_t img_identify(const char *fname, imgtool_module **modules, size_t count)
+imgtoolerr_t imgtool_identify_file(const char *fname, imgtool_module **modules, size_t count)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_library *library = global_imgtool_library;
@@ -237,11 +237,11 @@ done:
 
 
 /*-------------------------------------------------
-    img_attrname - retrieves the human readable
+    imgtool_partition_get_attribute_name - retrieves the human readable
 	name for an attribute
 -------------------------------------------------*/
 
-void img_attrname(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
+void imgtool_partition_get_attribute_name(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
 	char *buffer, size_t buffer_len)
 {
 	imgtoolerr_t err = IMGTOOLERR_UNIMPLEMENTED;
@@ -322,7 +322,7 @@ int imgtool_validitychecks(void)
 	imgtool_library *library;
 	const imgtool_module *module = NULL;
 	const struct OptionGuide *guide_entry;
-	struct imgtool_module_features features;
+	imgtool_module_features features;
 
 	err = imgtool_create_cannonical_library(TRUE, &library);
 	if (err)
@@ -330,7 +330,7 @@ int imgtool_validitychecks(void)
 
 	while((module = imgtool_library_iterate(library, module)) != NULL)
 	{
-		features = img_get_module_features(module);
+		features = imgtool_get_module_features(module);
 
 		if (!module->name)
 		{

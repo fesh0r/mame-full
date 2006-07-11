@@ -1483,7 +1483,7 @@ static UINT32 prodos_get_storagetype_maxfilesize(UINT8 storage_type)
 
 
 
-static imgtoolerr_t prodos_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t prodos_diskimage_beginenum(imgtool_directory *enumeration, const char *path)
 {
 	imgtoolerr_t err;
 	imgtool_image *image;
@@ -1491,8 +1491,8 @@ static imgtoolerr_t prodos_diskimage_beginenum(imgtool_imageenum *enumeration, c
 	struct prodos_dirent ent;
 	UINT16 block = ROOTDIR_BLOCK;
 
-	image = img_enum_image(enumeration);
-	appleenum = (struct prodos_direnum *) img_enum_extrabytes(enumeration);
+	image = imgtool_directory_image(enumeration);
+	appleenum = (struct prodos_direnum *) imgtool_directory_extrabytes(enumeration);
 
 	/* find subdirectory, if appropriate */
 	if (*path)
@@ -1518,7 +1518,7 @@ static imgtoolerr_t prodos_diskimage_beginenum(imgtool_imageenum *enumeration, c
 
 
 
-static imgtoolerr_t prodos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t prodos_diskimage_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
 	imgtool_image *image;
@@ -1526,8 +1526,8 @@ static imgtoolerr_t prodos_diskimage_nextenum(imgtool_imageenum *enumeration, im
 	struct prodos_dirent pd_ent;
 	UINT32 max_filesize;
 
-	image = img_enum_image(enumeration);
-	appleenum = (struct prodos_direnum *) img_enum_extrabytes(enumeration);
+	image = imgtool_directory_image(enumeration);
+	appleenum = (struct prodos_direnum *) imgtool_directory_extrabytes(enumeration);
 
 	do
 	{

@@ -21,7 +21,7 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 	const char *directive;
 	const char *directive_value;
 	imgtool_image *img = NULL;
-	imgtool_imageenum *imgenum;
+	imgtool_directory *imgenum;
 	imgtool_dirent imgdirent;
 	int err = -1, i;
 
@@ -94,9 +94,9 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 			{
 				/* imagefile directive */
 				if (img)
-					img_close(img);
+					imgtool_image_close(img);
 				strncpyz(filename_base, directive_value, filename_len);
-				err = img_open(module, filename, OSD_FOPEN_READ, &img);
+				err = imgtool_image_open(module, filename, OSD_FOPEN_READ, &img);
 				if (err)
 					goto error;
 
@@ -107,21 +107,21 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 				/* files directive */
 				if (!img)
 					goto needimgmodule;
-				err = img_beginenum(img, &imgenum);
+				err = imgtool_partition_open_directory(img, &imgenum);
 				if (err)
 					goto error;
 
 				memset(&imgdirent, 0, sizeof(imgdirent));
 				imgdirent.fname = buffer2;
 				imgdirent.fname_len = sizeof(buffer2);
-				while(((err = img_nextenum(imgenum, &imgdirent)) == 0) && imgdirent.fname[0])
+				while(((err = imgtool_directory_get_next(imgenum, &imgdirent)) == 0) && imgdirent.fname[0])
 				{
 					i = strlen(buffer2);
 					buffer2[i++] = ',';
 					imgdirent.fname = &buffer2[i];
 					imgdirent.fname_len = sizeof(buffer2) - i;
 				}
-				img_closeenum(imgenum);
+				imgtool_directory_close(imgenum);
 				if (err)
 					goto error;
 				i = strlen(buffer2);
@@ -160,7 +160,7 @@ done:
 	if (inifile)
 		fclose(inifile);
 	if (img)
-		img_close(img);
+		imgtool_image_close(img);
 	return err;
 }
 

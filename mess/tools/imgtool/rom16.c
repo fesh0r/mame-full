@@ -14,7 +14,7 @@ typedef struct {
 } rom16_image;
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	rom16_image *image;
 	int index;
 } rom16_iterator;
@@ -22,9 +22,9 @@ typedef struct {
 static int rom16_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void rom16_image_exit(imgtool_image *img);
 //static void rom16_image_info(imgtool_image *img, char *string, const int len);
-static int rom16_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int rom16_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void rom16_image_closeenum(imgtool_imageenum *enumeration);
+static int rom16_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int rom16_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void rom16_image_closeenum(imgtool_directory *enumeration);
 static int rom16_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int rom16_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
 //static int rom16_image_create(imgtool_stream *f, const geometry_options *options_);
@@ -103,7 +103,7 @@ static void rom16_image_info(imgtool_image *img, char *string, const int len)
 }
 #endif
 
-static int rom16_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int rom16_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	rom16_image *image=(rom16_image*)img;
 	rom16_iterator *iter;
@@ -118,7 +118,7 @@ static int rom16_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum
 	return 0;
 }
 
-static int rom16_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int rom16_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
     int pos = 0;
 	rom16_iterator *iter=(rom16_iterator*)enumeration;
@@ -152,7 +152,7 @@ static int rom16_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *
 	return 0;
 }
 
-static void rom16_image_closeenum(imgtool_imageenum *enumeration)
+static void rom16_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

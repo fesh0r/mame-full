@@ -264,7 +264,7 @@ static imgtoolerr_t prepare_dirent(struct rsdos_dirent *ent, const char *fname)
 
 
 
-static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	floperr_t ferr;
 	imgtoolerr_t err;
@@ -274,8 +274,8 @@ static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 	char fname[13];
 	imgtool_image *image;
 
-	image = img_enum_image(enumeration);
-	rsenum = (struct rsdos_direnum *) img_enum_extrabytes(enumeration);
+	image = imgtool_directory_image(enumeration);
+	rsenum = (struct rsdos_direnum *) imgtool_directory_extrabytes(enumeration);
 
 	/* Did we hit the end of file before? */
 	if (rsenum->eof)

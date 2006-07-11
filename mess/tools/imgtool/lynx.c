@@ -42,7 +42,7 @@ typedef struct {
 } lynx_image;
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	lynx_image *image;
 	int index;
 } lynx_iterator;
@@ -50,9 +50,9 @@ typedef struct {
 static int lynx_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void lynx_image_exit(imgtool_image *img);
 //static void lynx_image_info(imgtool_image *img, char *string, const int len);
-static int lynx_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int lynx_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void lynx_image_closeenum(imgtool_imageenum *enumeration);
+static int lynx_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int lynx_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void lynx_image_closeenum(imgtool_directory *enumeration);
 static int lynx_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
@@ -197,7 +197,7 @@ static void lynx_image_info(imgtool_image *img, char *string, const int len)
 }
 #endif
 
-static int lynx_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int lynx_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	lynx_image *image=(lynx_image*)img;
 	lynx_iterator *iter;
@@ -212,7 +212,7 @@ static int lynx_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	return 0;
 }
 
-static int lynx_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int lynx_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	lynx_iterator *iter=(lynx_iterator*)enumeration;
 	ent->corrupt=0;
@@ -237,7 +237,7 @@ static int lynx_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *e
 	return 0;
 }
 
-static void lynx_image_closeenum(imgtool_imageenum *enumeration)
+static void lynx_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

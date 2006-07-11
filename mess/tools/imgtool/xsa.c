@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct
 	{
-	imgtool_imageenum 	base;
+	imgtool_directory 	base;
 	XSA_IMAGE	*image;
 	int			index;
 	} XSA_ITERATOR;
@@ -26,9 +26,9 @@ typedef struct
 static int xsa_extract (imgtool_stream *in, imgtool_stream *out);
 static int xsa_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void xsa_image_exit(imgtool_image *img);
-static int xsa_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int xsa_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void xsa_image_closeenum(imgtool_imageenum *enumeration);
+static int xsa_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int xsa_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void xsa_image_closeenum(imgtool_directory *enumeration);
 static int xsa_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
@@ -123,7 +123,7 @@ static void xsa_image_exit(imgtool_image *img)
 	free(image);
 	}
 
-static int xsa_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int xsa_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 	{
 	XSA_IMAGE *image=(XSA_IMAGE*)img;
 	XSA_ITERATOR *iter;
@@ -138,7 +138,7 @@ static int xsa_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	return 0;
 	}
 
-static int xsa_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int xsa_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 	{
 	XSA_ITERATOR *iter=(XSA_ITERATOR*)enumeration;
 
@@ -156,7 +156,7 @@ static int xsa_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *en
 	return 0;
 	}
 
-static void xsa_image_closeenum(imgtool_imageenum *enumeration)
+static void xsa_image_closeenum(imgtool_directory *enumeration)
 	{
 	free(enumeration);
 	}

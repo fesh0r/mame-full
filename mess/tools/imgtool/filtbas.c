@@ -54,7 +54,7 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 	}
 
 	/* read actual file */
-	err = img_module(image)->read_file(image, filename, fork, mem_stream);
+	err = imgtool_image_module(image)->read_file(image, filename, fork, mem_stream);
 	if (err)
 		goto done;
 

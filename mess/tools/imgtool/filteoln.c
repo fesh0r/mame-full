@@ -60,7 +60,7 @@ static imgtoolerr_t ascii_readfile(imgtool_image *image, const char *filename, c
 		goto done;
 	}
 
-	err = img_module(image)->read_file(image, filename, fork, mem_stream);
+	err = imgtool_image_module(image)->read_file(image, filename, fork, mem_stream);
 	if (err)
 		goto done;
 
@@ -89,12 +89,12 @@ static imgtoolerr_t ascii_writefile(imgtool_image *image, const char *filename, 
 		goto done;
 	}
 
-	err = convert_stream_eolns(sourcef, mem_stream, img_module(image)->eoln);
+	err = convert_stream_eolns(sourcef, mem_stream, imgtool_image_module(image)->eoln);
 	if (err)
 		goto done;
 	stream_seek(mem_stream, SEEK_SET, 0);
 
-	err = img_module(image)->write_file(image, filename, fork, mem_stream, opts);
+	err = imgtool_image_module(image)->write_file(image, filename, fork, mem_stream, opts);
 	if (err)
 		goto done;
 

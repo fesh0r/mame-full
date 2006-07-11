@@ -304,7 +304,7 @@ static const UINT8 boot_sector_code[] =
 
 static int fat_is_harddisk(imgtool_image *image)
 {
-	return !strcmp(img_module(image)->name, "pc_chd_fat");
+	return !strcmp(imgtool_image_module(image)->name, "pc_chd_fat");
 }
 
 
@@ -313,7 +313,7 @@ static fat_diskinfo *fat_get_diskinfo(imgtool_image *image)
 {
 	void *ptr;
 	if (fat_is_harddisk(image))
-		ptr = img_extrabytes(image);
+		ptr = imgtool_image_extra_bytes(image);
 	else
 		ptr = imgtool_floppy_extrabytes(image);
 	return (fat_diskinfo *) ptr;
@@ -358,14 +358,14 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	sector_index += disk_info->partition_sector_index;
 
 	/* sanity check */
-	err = img_getblocksize(image, &block_size);
+	err = imgtool_image_get_block_size(image, &block_size);
 	if (err)
 		return err;
 	assert(block_size == sizeof(data));
 
 	while(buffer_len > 0)
 	{
-		err = img_readblock(image, sector_index++, data);
+		err = imgtool_image_read_block(image, sector_index++, data);
 		if (err)
 			return err;
 
@@ -395,7 +395,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 	sector_index += disk_info->partition_sector_index;
 
 	/* sanity check */
-	err = img_getblocksize(image, &block_size);
+	err = imgtool_image_get_block_size(image, &block_size);
 	if (err)
 		return err;
 	assert(block_size == sizeof(data));
@@ -406,7 +406,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 
 		if ((offset != 0) || (buffer_len < sizeof(data)))
 		{
-			err = img_readblock(image, sector_index, data);
+			err = imgtool_image_read_block(image, sector_index, data);
 			if (err)
 				return err;
 			memcpy(data + offset, buffer, len);
@@ -417,7 +417,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 			write_data = buffer;
 		}
 
-		err = img_writeblock(image, sector_index++, write_data);
+		err = imgtool_image_write_block(image, sector_index++, write_data);
 		if (err)
 			return err;
 
@@ -1995,14 +1995,14 @@ done:
 
 
 
-static imgtoolerr_t fat_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t fat_diskimage_beginenum(imgtool_directory *enumeration, const char *path)
 {
 	imgtoolerr_t err;
 	fat_file *file;
 
-	file = (fat_file *) img_enum_extrabytes(enumeration);
+	file = (fat_file *) imgtool_directory_extrabytes(enumeration);
 
-	err = fat_lookup_path(img_enum_image(enumeration), path, CREATE_NONE, file);
+	err = fat_lookup_path(imgtool_directory_image(enumeration), path, CREATE_NONE, file);
 	if (err)
 		return err;
 	if (!file->directory)
@@ -2012,14 +2012,14 @@ static imgtoolerr_t fat_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 
 
 
-static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t fat_diskimage_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
 	fat_file *file;
 	fat_dirent fatent;
 
-	file = (fat_file *) img_enum_extrabytes(enumeration);
-	err = fat_read_dirent(img_enum_image(enumeration), file, &fatent, NULL);
+	file = (fat_file *) imgtool_directory_extrabytes(enumeration);
+	err = fat_read_dirent(imgtool_directory_image(enumeration), file, &fatent, NULL);
 	if (err)
 		return err;
 
@@ -2273,7 +2273,7 @@ static imgtoolerr_t fat_diskimage_readblock(imgtool_image *image, void *buffer, 
 	int head, track, sector;
 	UINT32 block_size;
 
-	err = img_getblocksize(image, &block_size);
+	err = imgtool_image_get_block_size(image, &block_size);
 	if (err)
 		return err;
 
@@ -2293,7 +2293,7 @@ static imgtoolerr_t fat_diskimage_writeblock(imgtool_image *image, const void *b
 	int head, track, sector;
 	UINT32 block_size;
 
-	err = img_getblocksize(image, &block_size);
+	err = imgtool_image_get_block_size(image, &block_size);
 	if (err)
 		return err;
 

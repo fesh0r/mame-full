@@ -98,7 +98,7 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	imgtool_attribute attr_values[10];
 
 	/* get the forks */
-	err = img_module(image)->list_forks(image, filename, fork_entries, sizeof(fork_entries));
+	err = imgtool_image_module(image)->list_forks(image, filename, fork_entries, sizeof(fork_entries));
 	if (err)
 		return err;
 	for (i = 0; fork_entries[i].type != FORK_END; i++)
@@ -110,9 +110,9 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	}
 
 	/* get the attributes */
-	if (img_module(image)->get_attrs)
+	if (imgtool_image_module(image)->get_attrs)
 	{
-		err = img_module(image)->get_attrs(image, filename, attrs, attr_values);
+		err = imgtool_image_module(image)->get_attrs(image, filename, attrs, attr_values);
 		if (err)
 			return err;
 		creation_time     = mac_setup_time(attr_values[0].t);
@@ -157,7 +157,7 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	
 	if (data_fork)
 	{
-		err = img_module(image)->read_file(image, filename, "", destf);
+		err = imgtool_image_module(image)->read_file(image, filename, "", destf);
 		if (err)
 			return err;
 
@@ -166,7 +166,7 @@ static imgtoolerr_t macbinary_readfile(imgtool_image *image, const char *filenam
 	
 	if (resource_fork)
 	{
-		err = img_module(image)->read_file(image, filename, "RESOURCE_FORK", destf);
+		err = imgtool_image_module(image)->read_file(image, filename, "RESOURCE_FORK", destf);
 		if (err)
 			return err;
 
@@ -200,7 +200,7 @@ static imgtoolerr_t write_fork(imgtool_image *image, const char *filename, const
 			stream_fill(mem_stream, 0, fork_len);
 
 		stream_seek(mem_stream, 0, SEEK_SET);
-		err = img_module(image)->write_file(image, filename, fork, mem_stream, opts);
+		err = imgtool_image_module(image)->write_file(image, filename, fork, mem_stream, opts);
 		if (err)
 			goto done;
 	}
@@ -328,7 +328,7 @@ static imgtoolerr_t macbinary_writefile(imgtool_image *image, const char *filena
 		attr_values[8].i = script_code;
 		attr_values[9].i = extended_flags;
 
-		err = img_module(image)->set_attrs(image, filename, attrs, attr_values);
+		err = imgtool_image_module(image)->set_attrs(image, filename, attrs, attr_values);
 		if (err)
 			return err;
 	}

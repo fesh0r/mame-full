@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct
 	{
-	imgtool_imageenum 	base;
+	imgtool_directory 	base;
 	CAS_IMAGE	*image;
 	int			index;
 	} CAS_ITERATOR;
@@ -32,9 +32,9 @@ typedef struct
 static int fmsx_cas_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void fmsx_cas_image_exit(imgtool_image *img);
 //static void fmsx_cas_image_info(imgtool_image *img, char *string, const int len);
-static int fmsx_cas_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int fmsx_cas_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void fmsx_cas_image_closeenum(imgtool_imageenum *enumeration);
+static int fmsx_cas_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int fmsx_cas_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void fmsx_cas_image_closeenum(imgtool_directory *enumeration);
 static int fmsx_cas_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
@@ -137,7 +137,7 @@ static void fmsx_cas_image_exit(imgtool_image *img)
 	free(image);
 	}
 
-static int fmsx_cas_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int fmsx_cas_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	CAS_IMAGE *image=(CAS_IMAGE*)img;
 	CAS_ITERATOR *iter;
@@ -152,7 +152,7 @@ static int fmsx_cas_image_beginenum(imgtool_image *img, imgtool_imageenum **oute
 	return 0;
 }
 
-static int fmsx_cas_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int fmsx_cas_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	CAS_ITERATOR *iter=(CAS_ITERATOR*)enumeration;
 
@@ -168,7 +168,7 @@ static int fmsx_cas_image_nextenum(imgtool_imageenum *enumeration, imgtool_diren
 	return 0;
 }
 
-static void fmsx_cas_image_closeenum(imgtool_imageenum *enumeration)
+static void fmsx_cas_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

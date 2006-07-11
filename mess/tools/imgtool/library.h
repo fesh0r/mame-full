@@ -23,8 +23,12 @@
 
 
 typedef struct _imgtool_image imgtool_image;
-typedef struct _imgtool_imageenum imgtool_imageenum;
+typedef struct _imgtool_partition imgtool_partition;
+typedef struct _imgtool_directory imgtool_directory;
 typedef struct _imgtool_library imgtool_library;
+
+/* right now, partitions are interchangeable with images */
+#define imgtool_partition imgtool_image
 
 typedef enum
 {
@@ -241,9 +245,9 @@ union imgtoolinfo
 	imgtoolerr_t	(*open_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 	imgtoolerr_t	(*create_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 	void			(*info)				(imgtool_image *image, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)		(imgtool_imageenum *enumeration, const char *path);
-	imgtoolerr_t	(*next_enum)		(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)		(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*begin_enum)		(imgtool_directory *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)		(imgtool_directory *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)		(imgtool_directory *enumeration);
 	imgtoolerr_t	(*free_space)		(imgtool_image *image, UINT64 *size);
 	imgtoolerr_t	(*read_file)		(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
 	imgtoolerr_t	(*write_file)		(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
@@ -342,9 +346,9 @@ struct _imgtool_module
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);
 	void			(*info)			(imgtool_image *image, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
-	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)	(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*begin_enum)	(imgtool_directory *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)	(imgtool_directory *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)	(imgtool_directory *enumeration);
 	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
 	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf);
 	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);

@@ -81,9 +81,9 @@ static void imgtool_library_add_class(imgtool_library *library, const imgtool_cl
 	module->create						= (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CREATE);
 	module->close						= (void (*)(imgtool_image *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CLOSE);
 	module->info						= (void (*)(imgtool_image *, char *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_INFO);
-	module->begin_enum					= (imgtoolerr_t (*)(imgtool_imageenum *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
-	module->next_enum					= (imgtoolerr_t (*)(imgtool_imageenum *, imgtool_dirent *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
-	module->close_enum					= (void (*)(imgtool_imageenum *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CLOSE_ENUM);
+	module->begin_enum					= (imgtoolerr_t (*)(imgtool_directory *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
+	module->next_enum					= (imgtoolerr_t (*)(imgtool_directory *, imgtool_dirent *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
+	module->close_enum					= (void (*)(imgtool_directory *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CLOSE_ENUM);
 	module->free_space					= (imgtoolerr_t (*)(imgtool_image *, UINT64 *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_FREE_SPACE);
 	module->read_file					= (imgtoolerr_t (*)(imgtool_image *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_FILE);
 	module->write_file					= (imgtoolerr_t (*)(imgtool_image *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_FILE);

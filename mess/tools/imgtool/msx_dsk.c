@@ -54,16 +54,16 @@ typedef struct {
 
 typedef struct
 	{
-	imgtool_imageenum 	base;
+	imgtool_directory 	base;
 	DSK_IMAGE	*image;
 	int			index;
 	} DSK_ITERATOR;
 
 static int msx_dsk_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void msx_dsk_image_exit(imgtool_image *img);
-static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void msx_dsk_image_closeenum(imgtool_imageenum *enumeration);
+static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int msx_dsk_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void msx_dsk_image_closeenum(imgtool_directory *enumeration);
 static int msx_dsk_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
@@ -259,7 +259,7 @@ static void msx_dsk_image_exit(imgtool_image *img)
 	free(image);
 	}
 
-static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 	{
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
 	DSK_ITERATOR *iter;
@@ -274,7 +274,7 @@ static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outen
 	return 0;
 	}
 
-static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int msx_dsk_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 	{
 	DSK_ITERATOR *iter=(DSK_ITERATOR*)enumeration;
 
@@ -300,7 +300,7 @@ static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent
 	return 0;
 	}
 
-static void msx_dsk_image_closeenum(imgtool_imageenum *enumeration)
+static void msx_dsk_image_closeenum(imgtool_directory *enumeration)
 	{
 	free(enumeration);
 	}

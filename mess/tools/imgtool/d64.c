@@ -237,7 +237,7 @@ typedef struct _d64_image {
 } d64_image;
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	d64_image *image;
 	int track, sector;
 	int offset;
@@ -493,9 +493,9 @@ static int d64_filesize(d64_image *image, D64_ENTRY *entry)
 static int d64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void d64_image_exit(imgtool_image *img);
 static void d64_image_info(imgtool_image *img, char *string, const int len);
-static int d64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int d64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void d64_image_closeenum(imgtool_imageenum *enumeration);
+static int d64_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int d64_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void d64_image_closeenum(imgtool_directory *enumeration);
 static size_t d64_image_freespace(imgtool_image *img);
 static int d64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int d64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
@@ -822,7 +822,7 @@ static void d81_image_info(imgtool_image *img, char *string, const int len)
 			image->data[pos + 25], image->data[pos + 26] );
 }
 
-static int d64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int d64_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	d64_image *image=(d64_image*)img;
 	d64_iterator *iter;
@@ -841,7 +841,7 @@ static int d64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	return 0;
 }
 
-static int d64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int d64_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	d64_iterator *iter=(d64_iterator*)enumeration;
 	int pos;
@@ -887,7 +887,7 @@ static int d64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *en
 	return 0;
 }
 
-static void d64_image_closeenum(imgtool_imageenum *enumeration)
+static void d64_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }
@@ -979,7 +979,7 @@ static int d64_image_writefile(imgtool_image *img, const char *fname, imgtool_st
 
 	fsize=stream_size(sourcef)+1;
 
-	img_freespace(img, &freespace);
+	imgtool_partition_get_free_space(img, &freespace);
 
 	if ((entry=d64_image_findfile(image, (const unsigned char *)fname))!=NULL ) {
 		/* overriding */

@@ -74,9 +74,9 @@ struct WaveExtra
 /* These are called internally */
 int imgwave_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 void imgwave_exit(imgtool_image *img);
-int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-void imgwave_closeenum(imgtool_imageenum *enumeration);
+int imgwave_beginenum(imgtool_image *img, imgtool_directory **outenum);
+int imgwave_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+void imgwave_closeenum(imgtool_directory *enumeration);
 int imgwave_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 /* These are callable from wave modules */

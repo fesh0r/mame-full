@@ -47,60 +47,65 @@ void imgtool_exit(void);
 const imgtool_module *imgtool_find_module(const char *modulename);
 
 /* ----- image management ----- */
-imgtoolerr_t img_identify(const char *filename, imgtool_module **modules, size_t count);
-imgtoolerr_t img_open(const imgtool_module *module, const char *filename, int read_or_write, imgtool_image **outimg);
-imgtoolerr_t img_open_byname(const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
-imgtoolerr_t img_create(const imgtool_module *module, const char *fname, option_resolution *opts, imgtool_image **image);
-imgtoolerr_t img_create_byname(const char *modulename, const char *fname, option_resolution *opts, imgtool_image **image);
-void img_close(imgtool_image *image);
-imgtoolerr_t img_info(imgtool_image *image, char *string, size_t len);
-imgtoolerr_t img_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *length);
-imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
-imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
-imgtoolerr_t img_getblocksize(imgtool_image *image, UINT32 *length);
-imgtoolerr_t img_readblock(imgtool_image *image, UINT64 block, void *buffer);
-imgtoolerr_t img_writeblock(imgtool_image *image, UINT64 block, const void *buffer);
-void *img_malloc(imgtool_image *image, size_t size);
-const imgtool_module *img_module(imgtool_image *img);
-void *img_extrabytes(imgtool_image *img);
+imgtoolerr_t imgtool_identify_file(const char *filename, imgtool_module **modules, size_t count);
+imgtoolerr_t imgtool_image_open(const imgtool_module *module, const char *filename, int read_or_write, imgtool_image **outimg);
+imgtoolerr_t imgtool_image_open_byname(const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
+imgtoolerr_t imgtool_image_create(const imgtool_module *module, const char *fname, option_resolution *opts, imgtool_image **image);
+imgtoolerr_t imgtool_image_create_byname(const char *modulename, const char *fname, option_resolution *opts, imgtool_image **image);
+void imgtool_image_close(imgtool_image *image);
+imgtoolerr_t imgtool_image_info(imgtool_image *image, char *string, size_t len);
+imgtoolerr_t imgtool_image_get_sector_size(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *length);
+imgtoolerr_t imgtool_image_read_sector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
+imgtoolerr_t imgtool_image_write_sector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
+imgtoolerr_t imgtool_image_get_block_size(imgtool_image *image, UINT32 *length);
+imgtoolerr_t imgtool_image_read_block(imgtool_image *image, UINT64 block, void *buffer);
+imgtoolerr_t imgtool_image_write_block(imgtool_image *image, UINT64 block, const void *buffer);
+void *imgtool_image_malloc(imgtool_image *image, size_t size);
+const imgtool_module *imgtool_image_module(imgtool_image *image);
+void *imgtool_image_extra_bytes(imgtool_image *image);
 
-/* ----- stuff that will eventually operate on partitions ----- */
-imgtoolerr_t img_beginenum(imgtool_image *image, const char *path, imgtool_imageenum **outenum);
-imgtoolerr_t img_getdirent(imgtool_image *image, const char *path, int index, imgtool_dirent *ent);
-imgtoolerr_t img_filesize(imgtool_image *image, const char *filename, UINT64 *filesize);
-imgtoolerr_t img_freespace(imgtool_image *image, UINT64 *sz);
-imgtoolerr_t img_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf, filter_getinfoproc filter);
-imgtoolerr_t img_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *resolution, filter_getinfoproc filter);
-imgtoolerr_t img_getfile(imgtool_image *image, const char *filename, const char *fork, const char *dest, filter_getinfoproc filter);
-imgtoolerr_t img_putfile(imgtool_image *image, const char *newfname, const char *fork, const char *source, option_resolution *opts, filter_getinfoproc filter);
-imgtoolerr_t img_deletefile(imgtool_image *image, const char *fname);
-imgtoolerr_t img_listforks(imgtool_image *image, const char *path, imgtool_forkent *ents, size_t len);
-imgtoolerr_t img_createdir(imgtool_image *img, const char *path);
-imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
-imgtoolerr_t img_listattrs(imgtool_image *image, const char *path, UINT32 *attrs, size_t len);
-imgtoolerr_t img_getattrs(imgtool_image *image, const char *path, const UINT32 *attrs, imgtool_attribute *values);
-imgtoolerr_t img_setattrs(imgtool_image *image, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
-imgtoolerr_t img_getattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute *value);
-imgtoolerr_t img_setattr(imgtool_image *image, const char *path, UINT32 attr, imgtool_attribute value);
-void img_attrname(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value, char *buffer, size_t buffer_len);
-imgtoolerr_t img_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo);
-imgtoolerr_t img_suggesttransfer(imgtool_image *image, const char *path, imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
-imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent *chain, size_t chain_size);
-imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buffer, size_t buffer_len);
+/* ----- partition management ----- */
+imgtoolerr_t imgtool_image_open_partition(imgtool_image *image, imgtool_partition **partition);
+imgtoolerr_t imgtool_partition_close(imgtool_partition *partition);
+
+/* ----- partition operations ----- */
+imgtoolerr_t imgtool_partition_open_directory(imgtool_partition *partition, const char *path, imgtool_directory **outenum);
+imgtoolerr_t imgtool_partition_get_directory_entry(imgtool_partition *partition, const char *path, int index, imgtool_dirent *ent);
+imgtoolerr_t imgtool_partition_get_file_size(imgtool_partition *partition, const char *filename, UINT64 *filesize);
+imgtoolerr_t imgtool_partition_get_free_space(imgtool_partition *partition, UINT64 *sz);
+imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf, filter_getinfoproc filter);
+imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *resolution, filter_getinfoproc filter);
+imgtoolerr_t imgtool_partition_get_file(imgtool_partition *partition, const char *filename, const char *fork, const char *dest, filter_getinfoproc filter);
+imgtoolerr_t imgtool_partition_put_file(imgtool_partition *partition, const char *newfname, const char *fork, const char *source, option_resolution *opts, filter_getinfoproc filter);
+imgtoolerr_t imgtool_partition_delete_file(imgtool_partition *partition, const char *fname);
+imgtoolerr_t imgtool_partition_list_file_forks(imgtool_partition *partition, const char *path, imgtool_forkent *ents, size_t len);
+imgtoolerr_t imgtool_partition_create_directory(imgtool_partition *partition, const char *path);
+imgtoolerr_t imgtool_partition_delete_directory(imgtool_partition *partition, const char *path);
+imgtoolerr_t imgtool_partition_list_file_attributes(imgtool_partition *partition, const char *path, UINT32 *attrs, size_t len);
+imgtoolerr_t imgtool_partition_get_file_attributes(imgtool_partition *partition, const char *path, const UINT32 *attrs, imgtool_attribute *values);
+imgtoolerr_t imgtool_partition_put_file_attributes(imgtool_partition *partition, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
+imgtoolerr_t imgtool_partition_get_file_attribute(imgtool_partition *partition, const char *path, UINT32 attr, imgtool_attribute *value);
+imgtoolerr_t imgtool_partition_put_file_attribute(imgtool_partition *partition, const char *path, UINT32 attr, imgtool_attribute value);
+void         imgtool_partition_get_attribute_name(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value, char *buffer, size_t buffer_len);
+imgtoolerr_t imgtool_partition_get_icon_info(imgtool_partition *partition, const char *path, imgtool_iconinfo *iconinfo);
+imgtoolerr_t imgtool_partition_suggest_file_filters(imgtool_partition *partition, const char *path, imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
+imgtoolerr_t imgtool_partition_get_chain(imgtool_partition *partition, const char *path, imgtool_chainent *chain, size_t chain_size);
+imgtoolerr_t imgtool_partition_get_chain_string(imgtool_partition *partition, const char *path, char *buffer, size_t buffer_len);
 
 /* ----- directory management ----- */
-imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-void img_closeenum(imgtool_imageenum *enumeration);
-const imgtool_module *img_enum_module(imgtool_imageenum *enumeration);
-void *img_enum_extrabytes(imgtool_imageenum *enumeration);
-imgtool_image *img_enum_image(imgtool_imageenum *enumeration);
+imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent);
+void         imgtool_directory_close(imgtool_directory *enumeration);
+const imgtool_module *imgtool_directory_module(imgtool_directory *enumeration);
+void *imgtool_directory_extrabytes(imgtool_directory *enumeration);
+imgtool_image *imgtool_directory_image(imgtool_directory *enumeration);
 
-/* img_get_module_features
+/* imgtool_get_module_features
  *
  * Description:
  *		Retrieves a structure identifying this module's features associated with an image
  */
-struct imgtool_module_features
+typedef struct _imgtool_module_features imgtool_module_features;
+struct _imgtool_module_features
 {
 	unsigned int supports_create : 1;
 	unsigned int supports_open : 1;
@@ -120,13 +125,8 @@ struct imgtool_module_features
 	unsigned int is_read_only : 1;
 };
 
-struct imgtool_module_features img_get_module_features(const imgtool_module *module);
+imgtool_module_features imgtool_get_module_features(const imgtool_module *module);
 
-/* imgtool_validitychecks
- *
- * Description:
- *		Runs consistency checks to make sure that all is well
- */
 int imgtool_validitychecks(void);
 
 #endif /* IMGTOOL_H */

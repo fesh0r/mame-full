@@ -352,7 +352,7 @@ typedef struct {
 #define PACKET(image, pos) ((crt_packet*)(image->data+pos))
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	crt_image *image;
 	int pos;
 	int number;
@@ -361,9 +361,9 @@ typedef struct {
 static int crt_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void crt_image_exit(imgtool_image *img);
 static void crt_image_info(imgtool_image *img, char *string, const int len);
-static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int crt_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void crt_image_closeenum(imgtool_imageenum *enumeration);
+static int crt_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int crt_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void crt_image_closeenum(imgtool_directory *enumeration);
 //static size_t crt_image_freespace(imgtool_image *img);
 static int crt_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int crt_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
@@ -474,7 +474,7 @@ static void crt_image_info(imgtool_image *img, char *string, const int len)
 	return;
 }
 
-static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int crt_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	crt_image *image=(crt_image*)img;
 	crt_iterator *iter;
@@ -490,7 +490,7 @@ static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	return 0;
 }
 
-static int crt_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int crt_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	crt_iterator *iter=(crt_iterator*)enumeration;
 
@@ -515,7 +515,7 @@ static int crt_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *en
 	return 0;
 }
 
-static void crt_image_closeenum(imgtool_imageenum *enumeration)
+static void crt_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

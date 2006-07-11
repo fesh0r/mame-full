@@ -127,9 +127,9 @@ typedef struct concept_iterator
 static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f);
 static void concept_image_exit(imgtool_image *img);
 static void concept_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, const char *path);
-static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void concept_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t concept_image_beginenum(imgtool_directory *enumeration, const char *path);
+static imgtoolerr_t concept_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void concept_image_closeenum(imgtool_directory *enumeration);
 static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
 static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
 /*static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
@@ -256,7 +256,7 @@ static int get_catalog_entry(concept_image *image, const unsigned char *filename
 */
 static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f)
 {
-	concept_image *image = (concept_image *) img_extrabytes(img);
+	concept_image *image = (concept_image *) imgtool_image_extra_bytes(img);
 	int reply;
 	int i;
 	unsigned totphysrecs;
@@ -291,7 +291,7 @@ static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f)
 */
 static void concept_image_exit(imgtool_image *img)
 {
-	/*concept_image *image = (concept_image *) img_extrabytes(img);*/
+	/*concept_image *image = (concept_image *) imgtool_image_extra_bytes(img);*/
 }
 
 /*
@@ -301,7 +301,7 @@ static void concept_image_exit(imgtool_image *img)
 */
 static void concept_image_info(imgtool_image *img, char *string, size_t len)
 {
-	concept_image *image = (concept_image *) img_extrabytes(img);
+	concept_image *image = (concept_image *) imgtool_image_extra_bytes(img);
 	char vol_name[8];
 
 	memcpy(vol_name, image->dev_dir.vol_hdr.volname + 1, image->dev_dir.vol_hdr.volname[0]);
@@ -313,12 +313,12 @@ static void concept_image_info(imgtool_image *img, char *string, size_t len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t concept_image_beginenum(imgtool_directory *enumeration, const char *path)
 {
 	concept_iterator *iter;
 
-	iter = (concept_iterator *) img_enum_extrabytes(enumeration);
-	iter->image = (concept_image *) img_extrabytes(img_enum_image(enumeration));
+	iter = (concept_iterator *) imgtool_directory_extrabytes(enumeration);
+	iter->image = (concept_image *) imgtool_image_extra_bytes(imgtool_directory_image(enumeration));
 	iter->index = 0;
 	return IMGTOOLERR_SUCCESS;
 }
@@ -326,9 +326,9 @@ static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, cons
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t concept_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
-	concept_iterator *iter = (concept_iterator *) img_enum_extrabytes(enumeration);
+	concept_iterator *iter = (concept_iterator *) imgtool_directory_extrabytes(enumeration);
 
 
 	ent->corrupt = 0;
@@ -387,7 +387,7 @@ static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgto
 /*
 	Free enumerator
 */
-static void concept_image_closeenum(imgtool_imageenum *enumeration)
+static void concept_image_closeenum(imgtool_directory *enumeration)
 {
 }
 
@@ -421,7 +421,7 @@ static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size)
 */
 static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf)
 {
-	concept_image *image = (concept_image *) img_extrabytes(img);
+	concept_image *image = (concept_image *) imgtool_image_extra_bytes(img);
 	size_t filename_len = strlen(filename);
 	unsigned char concept_fname[16];
 	int catalog_index;

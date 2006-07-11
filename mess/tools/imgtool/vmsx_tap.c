@@ -66,16 +66,16 @@ typedef struct
 
 typedef struct
 	{
-	imgtool_imageenum 	base;
+	imgtool_directory 	base;
 	TAP_IMAGE	*image;
 	int			index;
 	} TAP_ITERATOR;
 
 static int vmsx_tap_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void vmsx_tap_image_exit(imgtool_image *img);
-static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int vmsx_tap_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void vmsx_tap_image_closeenum(imgtool_imageenum *enumeration);
+static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int vmsx_tap_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void vmsx_tap_image_closeenum(imgtool_directory *enumeration);
 static int vmsx_tap_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
@@ -288,7 +288,7 @@ static void vmsx_tap_image_exit(imgtool_image *img)
 	free(image);
 }
 
-static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	TAP_IMAGE *image=(TAP_IMAGE*)img;
 	TAP_ITERATOR *iter;
@@ -304,7 +304,7 @@ static int vmsx_tap_image_beginenum(imgtool_image *img, imgtool_imageenum **oute
 	return 0;
 }
 
-static int vmsx_tap_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int vmsx_tap_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 	{
 	TAP_ITERATOR *iter=(TAP_ITERATOR*)enumeration;
 	unsigned char *p;
@@ -331,7 +331,7 @@ static int vmsx_tap_image_nextenum(imgtool_imageenum *enumeration, imgtool_diren
 	return 0;
 	}
 
-static void vmsx_tap_image_closeenum(imgtool_imageenum *enumeration)
+static void vmsx_tap_image_closeenum(imgtool_directory *enumeration)
 	{
 	free (enumeration);
 	}

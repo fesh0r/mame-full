@@ -99,7 +99,7 @@ static void node_createimage(struct imgtooltest_state *state, xml_data_node *nod
 		option_resolution_add_param(opts, param_name, param_value);
 	}
 
-	err = img_create_byname(driver, tempfile_name(), opts, &state->image);
+	err = imgtool_image_create_byname(driver, tempfile_name(), opts, &state->image);
 	if (opts)
 	{
 		option_resolution_close(opts);
@@ -183,7 +183,7 @@ static void node_putfile(struct imgtooltest_state *state, xml_data_node *node)
 	stream_seek(stream, 0, SEEK_SET);
 	pile_delete(&pile);
 
-	err = img_writefile(state->image, filename, fork, stream, NULL, filter);
+	err = imgtool_partition_write_file(state->image, filename, fork, stream, NULL, filter);
 	if (err)
 	{
 		state->failed = 1;
@@ -194,7 +194,7 @@ static void node_putfile(struct imgtooltest_state *state, xml_data_node *node)
 	if (VERBOSE_FILECHAIN)
 	{
 		char buf[1024];
-		err = img_getchain_string(state->image, filename, buf, sizeof(buf) / sizeof(buf[0]));
+		err = imgtool_partition_get_chain_string(state->image, filename, buf, sizeof(buf) / sizeof(buf[0]));
 		if (err == IMGTOOLERR_SUCCESS)
 			report_message(MSG_INFO, "Filechain '%s': %s", filename, buf);
 	}
@@ -232,7 +232,7 @@ static void node_checkfile(struct imgtooltest_state *state, xml_data_node *node)
 		return;
 	}
 
-	err = img_readfile(state->image, filename, fork, stream, filter);
+	err = imgtool_partition_read_file(state->image, filename, fork, stream, filter);
 	if (err)
 	{
 		state->failed = 1;
@@ -270,7 +270,7 @@ static void append_to_list(char *buf, size_t buflen, const char *entry)
 static void node_checkdirectory(struct imgtooltest_state *state, xml_data_node *node)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	imgtool_imageenum *imageenum;
+	imgtool_directory *imageenum;
 	imgtool_dirent ent;
 	char expected_listing[128];
 	char actual_listing[128];
@@ -329,14 +329,14 @@ static void node_checkdirectory(struct imgtooltest_state *state, xml_data_node *
 
 	memset(&ent, 0, sizeof(ent));
 
-	err = img_beginenum(state->image, filename, &imageenum);
+	err = imgtool_partition_open_directory(state->image, filename, &imageenum);
 	if (err)
 		goto done;
 
 	i = 0;
 	do
 	{
-		err = img_nextenum(imageenum, &ent);
+		err = imgtool_directory_get_next(imageenum, &ent);
 		if (err)
 			goto done;
 
@@ -366,7 +366,7 @@ static void node_checkdirectory(struct imgtooltest_state *state, xml_data_node *
 
 done:
 	if (imageenum)
-		img_closeenum(imageenum);
+		imgtool_directory_close(imageenum);
 	if (err)
 	{
 		state->failed = 1;
@@ -396,7 +396,7 @@ static void node_deletefile(struct imgtooltest_state *state, xml_data_node *node
 		return;
 	}
 
-	err = img_deletefile(state->image, attr_node->value);
+	err = imgtool_partition_delete_file(state->image, attr_node->value);
 	if (err)
 	{
 		state->failed = 1;
@@ -420,7 +420,7 @@ static void node_createdirectory(struct imgtooltest_state *state, xml_data_node 
 		return;
 	}
 
-	err = img_createdir(state->image, attr_node->value);
+	err = imgtool_partition_create_directory(state->image, attr_node->value);
 	if (err)
 	{
 		state->failed = 1;
@@ -444,7 +444,7 @@ static void node_deletedirectory(struct imgtooltest_state *state, xml_data_node 
 		return;
 	}
 
-	err = img_deletedir(state->image, attr_node->value);
+	err = imgtool_partition_delete_directory(state->image, attr_node->value);
 	if (err)
 	{
 		state->failed = 1;
@@ -466,7 +466,7 @@ static void node_recordfreespace(struct imgtooltest_state *state, xml_data_node 
 		return;
 	}
 
-	err = img_freespace(state->image, &state->recorded_freespace);
+	err = imgtool_partition_get_free_space(state->image, &state->recorded_freespace);
 	if (err)
 	{
 		state->failed = 1;
@@ -491,7 +491,7 @@ static void node_checkfreespace(struct imgtooltest_state *state, xml_data_node *
 		return;
 	}
 
-	err = img_freespace(state->image, &current_freespace);
+	err = imgtool_partition_get_free_space(state->image, &current_freespace);
 	if (err)
 	{
 		state->failed = 1;
@@ -587,7 +587,7 @@ static void node_setattr(struct imgtooltest_state *state, xml_data_node *node)
 	if (!attribute)
 		return;
 
-	err = img_setattr(state->image, attr_node->value, attribute, value);
+	err = imgtool_partition_put_file_attribute(state->image, attr_node->value, attribute, value);
 	if (err)
 	{
 		state->failed = 1;
@@ -621,7 +621,7 @@ static void node_checkattr(struct imgtooltest_state *state, xml_data_node *node)
 	if (!attribute)
 		return;
 
-	err = img_getattr(state->image, attr_node->value, attribute, &value);
+	err = imgtool_partition_get_file_attribute(state->image, attr_node->value, attribute, &value);
 	if (err)
 	{
 		state->failed = 1;
@@ -682,7 +682,7 @@ void node_testimgtool(xml_data_node *node)
 
 	if (state.image)
 	{
-		img_close(state.image);
+		imgtool_image_close(state.image);
 		state.image = NULL;
 	}
 

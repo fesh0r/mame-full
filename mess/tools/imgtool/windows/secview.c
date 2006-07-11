@@ -180,12 +180,12 @@ static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UIN
 
 	info = get_sectorview_info(dialog);
 
-	err = img_getsectorsize(info->image, track, head, sector, &length);
+	err = imgtool_image_get_sector_size(info->image, track, head, sector, &length);
 	if (err)
 		goto done;
 
 	data = alloca(length);
-	err = img_readsector(info->image, track, head, sector, data, length);
+	err = imgtool_image_read_sector(info->image, track, head, sector, data, length);
 	if (err)
 		goto done;
 

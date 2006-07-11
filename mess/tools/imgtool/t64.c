@@ -98,7 +98,7 @@ typedef struct {
 #define ENTRY(image, index) ((t64_entry*)(image->data+sizeof(t64_header))+index)
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	t64_image *image;
 	int index;
 } t64_iterator;
@@ -106,9 +106,9 @@ typedef struct {
 static int t64_image_init(const imgtool_module *mod, imgtool_stream *f, imgtool_image **outimg);
 static void t64_image_exit(imgtool_image *img);
 static void t64_image_info(imgtool_image *img, char *string, const int len);
-static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
-static int t64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void t64_image_closeenum(imgtool_imageenum *enumeration);
+static int t64_image_beginenum(imgtool_image *img, imgtool_directory **outenum);
+static int t64_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void t64_image_closeenum(imgtool_directory *enumeration);
 //static size_t t64_image_freespace(imgtool_image *img);
 static int t64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 static int t64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
@@ -199,7 +199,7 @@ static void t64_image_info(imgtool_image *img, char *string, const int len)
 			HEADER(image)->max_entries);
 }
 
-static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static int t64_image_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	t64_image *image=(t64_image*)img;
 	t64_iterator *iter;
@@ -214,7 +214,7 @@ static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	return 0;
 }
 
-static int t64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static int t64_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	t64_iterator *iter=(t64_iterator*)enumeration;
 	ent->corrupt=0;
@@ -237,7 +237,7 @@ static int t64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *en
 	return 0;
 }
 
-static void t64_image_closeenum(imgtool_imageenum *enumeration)
+static void t64_image_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

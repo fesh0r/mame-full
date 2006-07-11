@@ -388,11 +388,11 @@ static imgtoolerr_t vzdos_write_formatted_sector(imgtool_image *img, int track, 
 	Imgtool module code
 *********************************************************************/
 
-static imgtoolerr_t vzdos_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t vzdos_diskimage_beginenum(imgtool_directory *enumeration, const char *path)
 {
 	vz_iterator *iter;
 
-	iter = (vz_iterator *) img_enum_extrabytes(enumeration);
+	iter = (vz_iterator *) imgtool_directory_extrabytes(enumeration);
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
 	iter->index = 1;
@@ -401,9 +401,9 @@ static imgtoolerr_t vzdos_diskimage_beginenum(imgtool_imageenum *enumeration, co
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
-	vz_iterator *iter = (vz_iterator *) img_enum_extrabytes(enumeration);
+	vz_iterator *iter = (vz_iterator *) imgtool_directory_extrabytes(enumeration);
 
 	if (iter->eof == 1 || iter->index > MAX_DIRENTS) {
 	
@@ -415,7 +415,7 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 		int ret, len;
 		vzdos_dirent dirent;
 
-		ret = vzdos_get_dirent(img_enum_image(enumeration), iter->index - 1, &dirent);
+		ret = vzdos_get_dirent(imgtool_directory_image(enumeration), iter->index - 1, &dirent);
 		
 		if (dirent.ftype == 0x00) {
 			iter->eof = 1;
@@ -451,7 +451,7 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void vzdos_diskimage_closeenum(imgtool_imageenum *enumeration)
+static void vzdos_diskimage_closeenum(imgtool_directory *enumeration)
 {
 	free(enumeration);
 }

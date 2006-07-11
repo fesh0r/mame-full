@@ -180,19 +180,19 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	int total_count, total_size, freespace_err;
 	UINT64 freespace;
 	imgtool_image *img = NULL;
-	imgtool_imageenum *imgenum = NULL;
+	imgtool_directory *imgenum = NULL;
 	imgtool_dirent ent;
 	char buf[512];
 	const char *path;
 
 	/* attempt to open image */
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
 	path = argc > 2 ? argv[2] : NULL;
 
-	err = img_beginenum(img, path, &imgenum);
+	err = imgtool_partition_open_directory(img, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -202,12 +202,12 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 	fprintf(stdout, "Contents of %s:\n", argv[1]);
 
-	img_info(img, buf, sizeof(buf));
+	imgtool_image_info(img, buf, sizeof(buf));
 	if (buf[0])
 		fprintf(stdout, "%s\n", buf);
 	fprintf(stdout, "------------------------  ------ ---------------\n");
 
-	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
+	while (((err = imgtool_directory_get_next(imgenum, &ent)) == 0) && !ent.eof)
 	{
 		if (ent.directory)
 			snprintf(buf, sizeof(buf), "<DIR>");
@@ -219,7 +219,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 		total_size += ent.filesize;
 	}
 
-	freespace_err = img_freespace(img, &freespace);
+	freespace_err = imgtool_partition_get_free_space(img, &freespace);
 
 	if (err)
 		goto done;
@@ -231,9 +231,9 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 done:
 	if (imgenum)
-		img_closeenum(imgenum);
+		imgtool_directory_close(imgenum);
 	if (img)
-		img_close(img);
+		imgtool_image_close(img);
 	if (err)
 		reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
 	return err ? -1 : 0;
@@ -251,7 +251,7 @@ static int cmd_get(const struct command *c, int argc, char *argv[])
 	filter_getinfoproc filter;
 	const char *fork;
 
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &image);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &image);
 	if (err)
 		goto done;
 
@@ -263,7 +263,7 @@ static int cmd_get(const struct command *c, int argc, char *argv[])
 
 	new_filename = (unnamedargs == 4) ? argv[3] : NULL;
 
-	err = img_getfile(image, filename, fork, new_filename, filter);
+	err = imgtool_partition_get_file(image, filename, fork, new_filename, filter);
 	if (err)
 		goto done;
 
@@ -273,7 +273,7 @@ done:
 	if (err)
 		reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
 	if (image)
-		img_close(image);
+		imgtool_image_close(image);
 	return (err || (unnamedargs < 0)) ? -1 : 0;
 }
 
@@ -321,7 +321,7 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	filename_count = unnamedargs - 3;
 
 	/* open up the image */
-	err = img_open(module, argv[1], OSD_FOPEN_RW, &img);
+	err = imgtool_image_open(module, argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
@@ -330,19 +330,19 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	{
 		filename = filename_list[i];
 		printf("Putting file '%s'...\n", filename);
-		err = img_putfile(img, new_filename, fork, filename, resolution, filter);
+		err = imgtool_partition_put_file(img, new_filename, fork, filename, resolution, filter);
 		if (err)
 			goto error;
 	}
 
-	img_close(img);
+	imgtool_image_close(img);
 	if (resolution)
 		option_resolution_close(resolution);
 	return 0;
 
 error:
 	if (img)
-		img_close(img);
+		imgtool_image_close(img);
 	if (resolution)
 		option_resolution_close(resolution);
 	reporterror(err, c, argv[0], argv[1], filename, NULL, resolution);
@@ -355,14 +355,14 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	imgtool_image *img = NULL;
-	imgtool_imageenum *imgenum = NULL;
+	imgtool_directory *imgenum = NULL;
 	imgtool_dirent ent;
 	filter_getinfoproc filter;
 	int unnamedargs;
 	const char *path = NULL;
 	int arg;
 
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
@@ -376,26 +376,26 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	if (unnamedargs < 0)
 		goto done;
 
-	err = img_beginenum(img, path, &imgenum);
+	err = imgtool_partition_open_directory(img, path, &imgenum);
 	if (err)
 		goto done;
 
 	memset(&ent, 0, sizeof(ent));
 
-	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
+	while (((err = imgtool_directory_get_next(imgenum, &ent)) == 0) && !ent.eof)
 	{
 		fprintf(stdout, "Retrieving %s (%u bytes)\n", ent.filename, (unsigned int) ent.filesize);
 
-		err = img_getfile(img, ent.filename, NULL, NULL, filter);
+		err = imgtool_partition_get_file(img, ent.filename, NULL, NULL, filter);
 		if (err)
 			goto done;
 	}
 
 done:
 	if (imgenum)
-		img_closeenum(imgenum);
+		imgtool_directory_close(imgenum);
 	if (img)
-		img_close(img);
+		imgtool_image_close(img);
 	if (err)
 		reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
 	return err ? -1 : 0;
@@ -408,12 +408,12 @@ static int cmd_del(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-	err = img_deletefile(img, argv[2]);
-	img_close(img);
+	err = imgtool_partition_delete_file(img, argv[2]);
+	imgtool_image_close(img);
 	if (err)
 		goto error;
 
@@ -431,12 +431,12 @@ static int cmd_mkdir(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-	err = img_createdir(img, argv[2]);
-	img_close(img);
+	err = imgtool_partition_create_directory(img, argv[2]);
+	imgtool_image_close(img);
 	if (err)
 		goto error;
 
@@ -454,12 +454,12 @@ static int cmd_rmdir(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	imgtool_image *img;
 
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-	err = img_deletedir(img, argv[2]);
-	img_close(img);
+	err = imgtool_partition_delete_directory(img, argv[2]);
+	imgtool_image_close(img);
 	if (err)
 		goto error;
 
@@ -478,7 +478,7 @@ static int cmd_identify(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	int i;
 
-	err = img_identify(argv[0], modules, sizeof(modules) / sizeof(modules[0]));
+	err = imgtool_identify_file(argv[0], modules, sizeof(modules) / sizeof(modules[0]));
 	if (err)
 		goto error;
 
@@ -524,7 +524,7 @@ static int cmd_create(const struct command *c, int argc, char *argv[])
 	if (unnamedargs < 0)
 		return -1;
 
-	err = img_create(module, argv[1], resolution, NULL);
+	err = imgtool_image_create(module, argv[1], resolution, NULL);
 	if (err)
 		goto error;
 
@@ -550,7 +550,7 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 	UINT32 size, track, head, sector;
 
 	/* attempt to open image */
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto done;
 
@@ -558,7 +558,7 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 	head = atoi(argv[3]);
 	sector = atoi(argv[4]);
 
-	err = img_getsectorsize(img, track, head, sector, &size);
+	err = imgtool_image_get_sector_size(img, track, head, sector, &size);
 	if (err)
 		goto done;
 
@@ -569,7 +569,7 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 		goto done;
 	}
 
-	err = img_readsector(img, track, head, sector, buffer, size);
+	err = imgtool_image_read_sector(img, track, head, sector, buffer, size);
 	if (err)
 		goto done;
 
@@ -604,7 +604,7 @@ static int cmd_writesector(const struct command *c, int argc, char *argv[])
 	UINT32 size, track, head, sector;
 
 	/* attempt to open image */
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
+	err = imgtool_image_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto done;
 
@@ -630,7 +630,7 @@ static int cmd_writesector(const struct command *c, int argc, char *argv[])
 
 	stream_read(stream, buffer, size);
 
-	err = img_writesector(img, track, head, sector, buffer, size);
+	err = imgtool_image_write_sector(img, track, head, sector, buffer, size);
 	if (err)
 		goto done;
 

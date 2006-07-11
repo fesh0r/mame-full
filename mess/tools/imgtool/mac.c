@@ -5237,9 +5237,9 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 
 static void mac_image_exit(imgtool_image *img);
 static void mac_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path);
-static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void mac_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t mac_image_beginenum(imgtool_directory *enumeration, const char *path);
+static imgtoolerr_t mac_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
+static void mac_image_closeenum(imgtool_directory *enumeration);
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
 static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
 static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
@@ -5298,10 +5298,10 @@ typedef struct mac_iterator
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path)
+static imgtoolerr_t mac_image_beginenum(imgtool_directory *enumeration, const char *path)
 {
-	mac_l2_imgref *image = get_imgref(img_enum_image(enumeration));
-	mac_iterator *iter = (mac_iterator *) img_enum_extrabytes(enumeration);
+	mac_l2_imgref *image = get_imgref(imgtool_directory_image(enumeration));
+	mac_iterator *iter = (mac_iterator *) imgtool_directory_extrabytes(enumeration);
 	imgtoolerr_t err = IMGTOOLERR_UNEXPECTED;
 
 	iter->format = image->format;
@@ -5507,10 +5507,10 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t mac_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
-	mac_iterator *iter = (mac_iterator *) img_enum_extrabytes(enumeration);
+	mac_iterator *iter = (mac_iterator *) imgtool_directory_extrabytes(enumeration);
 
 	switch (iter->format)
 	{

@@ -15,7 +15,7 @@ typedef struct {
 } waveimage;
 
 typedef struct {
-	imgtool_imageenum base;
+	imgtool_directory base;
 	waveimage *wimg;
 	int pos;
 } waveimageenum;
@@ -349,7 +349,7 @@ int imgwave_read(imgtool_image *img, UINT8 *buf, int bufsize)
 	return 0;
 }
 
-int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+int imgwave_beginenum(imgtool_image *img, imgtool_directory **outenum)
 {
 	/* TODO - Enumerating wave images should be cached */
 
@@ -363,11 +363,11 @@ int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	wenum->base.module = img->module;
 	wenum->wimg = wimg;
 	wenum->pos = wimg->basepos;
-	*outenum = (imgtool_imageenum *) wenum;
+	*outenum = (imgtool_directory *) wenum;
 	return 0;
 }
 
-int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
+int imgwave_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent)
 {
 	int err;
 	waveimageenum *wenum;
@@ -386,7 +386,7 @@ int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-void imgwave_closeenum(imgtool_imageenum *enumeration)
+void imgwave_closeenum(imgtool_directory *enumeration)
 {
 	waveimageenum *wenum = (waveimageenum *) enumeration;
 	free(wenum);
@@ -396,7 +396,7 @@ int imgwave_readfile(imgtool_image *img, const char *fname, imgtool_stream *dest
 {
 	int err, pos;
 	imgtool_dirent ent;
-	imgtool_imageenum *enumeration;
+	imgtool_directory *enumeration;
 	waveimageenum *wenum;
 	waveimage *wimg;
 	struct WaveExtra *extra;
