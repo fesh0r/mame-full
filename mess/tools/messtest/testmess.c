@@ -269,7 +269,6 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	options.skip_warnings = 1;
 	options.disable_normal_ui = 1;
 	options.ram = current_testcase.ram;
-	options.vector_intensity = 1.5;
 #ifndef NEW_RENDER
 	options.use_artwork = 1;
 #endif

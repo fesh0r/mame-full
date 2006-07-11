@@ -39,7 +39,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.106u10.  This incorporates all features of the
+- The core is based on MAME 0.106u11.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Fixed natural keyboard support for certain keys.  (bug #885) [Nate Woods]
