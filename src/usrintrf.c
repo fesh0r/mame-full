@@ -517,10 +517,10 @@ int ui_init(void)
 
 void ui_exit(void)
 {
+#ifdef NEW_RENDER
 	// free the showgfx stuff
 	showgfx_exit();
 
-#ifdef NEW_RENDER
 	if (ui_font)
 		render_font_free(ui_font);
 	ui_font = NULL;
@@ -1545,7 +1545,9 @@ void ui_set_startup_text(const char *text, int force)
 	if (force || (curtime - lastupdatetime) > osd_cycles_per_second() / 4)
 	{
 		lastupdatetime = curtime;
+#ifdef NEW_RENDER
 		video_frame_update();
+#endif
 	}
 }
 
@@ -4255,7 +4257,7 @@ static void showcharset(mame_bitmap *bitmap)
 		}
 
 		if (input_ui_pressed(IPT_UI_SNAPSHOT))
-			save_screen_snapshot(bitmap);
+			snapshot_save_all_screens();
 
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL) &&
@@ -4713,6 +4715,7 @@ static void onscrd_mixervol(int increment,int arg)
 
 static void onscrd_brightness(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int brightness;
@@ -4732,10 +4735,12 @@ static void onscrd_brightness(int increment,int arg)
 	else
 		sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), brightness / 10);
 	displayosd(buf, 800, 1200, 1000, brightness);
+#endif
 }
 
 static void onscrd_contrast(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int contrast;
@@ -4755,10 +4760,12 @@ static void onscrd_contrast(int increment,int arg)
 	else
 		sprintf(buf,"%s %3d%%", ui_getstring (UI_contrast), contrast / 10);
 	displayosd(buf, 100, 2000, 1000, contrast);
+#endif
 }
 
 static void onscrd_gamma(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int gamma;
@@ -4778,10 +4785,12 @@ static void onscrd_gamma(int increment,int arg)
 	else
 		sprintf(buf,"%s %4.2f", ui_getstring (UI_gamma), (double)gamma / 1000.0f);
 	displayosd(buf, 500, 3000, 1000, gamma);
+#endif
 }
 
 static void onscrd_xscale(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int xscale;
@@ -4801,10 +4810,12 @@ static void onscrd_xscale(int increment,int arg)
 	else
 		sprintf(buf,"%s %5.3f", "Horiz stretch", (double)xscale / 1000.0f);
 	displayosd(buf, 800, 1200, 1000, xscale);
+#endif
 }
 
 static void onscrd_yscale(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int yscale;
@@ -4824,10 +4835,12 @@ static void onscrd_yscale(int increment,int arg)
 	else
 		sprintf(buf,"%s %5.3f", "Vert stretch", (double)yscale / 1000.0f);
 	displayosd(buf, 800, 1200, 1000, yscale);
+#endif
 }
 
 static void onscrd_xoffset(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int xoffset;
@@ -4847,10 +4860,12 @@ static void onscrd_xoffset(int increment,int arg)
 	else
 		sprintf(buf,"%s %5.3f", "Horiz position", (double)xoffset / 1000.0f);
 	displayosd(buf, -200, 200, 0, xoffset);
+#endif
 }
 
 static void onscrd_yoffset(int increment,int arg)
 {
+#ifdef NEW_RENDER
 	render_container *container = render_container_get_screen(arg);
 	char buf[40];
 	int yoffset;
@@ -4870,6 +4885,7 @@ static void onscrd_yoffset(int increment,int arg)
 	else
 		sprintf(buf,"%s %5.3f", "Vert position", (double)yoffset / 1000.0f);
 	displayosd(buf, -200, 200, 0, yoffset);
+#endif
 }
 
 static void onscrd_vector_flicker(int increment,int arg)

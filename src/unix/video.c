@@ -33,7 +33,6 @@ static char *mngwrite = NULL;
 /* options these are initialised through the rc_option struct */
 static float f_beam;
 static float f_flicker;
-static float f_intensity;
 static int use_auto_double;
 static int use_hw_vectors;
 static int use_artwork;
@@ -168,6 +167,9 @@ struct rc_option video_opts[] = {
    { "gamma",		"gc",			rc_float,	&options.gamma,
      "1.0",		0.5,			2.0,		NULL,
      "Set the gamma correction (0.5 - 2.0)" },
+   { "contrast",	NULL,			rc_float,	&options.contrast,
+     "1.0",		0,			0,		NULL,
+     "Set the contrast correction" },
    { "norotate",	"nr",			rc_bool,	&video_norotate,
      "0",		0,			0,		NULL,
      "Do not apply rotation" },
@@ -218,7 +220,6 @@ struct rc_option video_opts[] = {
      "Always scale vectorgames to XresxYres, keeping their aspect ratio. This overrides the scale options" },
    { "beam", "B", rc_float, &f_beam, "1.0", 1.0, 16.0, video_verify_beam, "Set the beam size for vector games" },
    { "flicker", "f", rc_float, &f_flicker, "0.0", 0.0, 100.0, video_verify_flicker, "Set the flicker for vector games" },
-   { "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_verify_intensity, "Set intensity in vector games" },
    { "antialias",	"aa",			rc_bool,	&options.antialias,
      "1",		0,			0,		NULL,
      "Enable/disable antialiasing" },
@@ -373,14 +374,6 @@ static int video_verify_flicker(struct rc_option *option, const char *arg,
 
 	option->priority = priority;
 
-	return 0;
-}
-
-static int video_verify_intensity(struct rc_option *option, const char *arg,
-		int priority)
-{
-	options.vector_intensity = f_intensity;
-	option->priority = priority;
 	return 0;
 }
 
@@ -1155,6 +1148,7 @@ void osd_update_video_and_audio(mame_display *display)
 				frames_displayed++;
 				if (frames_displayed == frames_to_display)
 				{
+#if 0
 					char name[20];
 					mame_file *fp;
 
@@ -1167,6 +1161,7 @@ void osd_update_video_and_audio(mame_display *display)
 						save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
 						mame_fclose(fp);
 					}
+#endif
 					mame_schedule_exit();
 				}
 				end_time = curr;
