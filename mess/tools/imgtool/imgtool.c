@@ -218,7 +218,7 @@ static imgtoolerr_t evaluate_module(const char *fname,
 	{
 		current_result = module->open_is_strict ? 0.9 : 0.5;
 
-		err = imgtool_partition_open_directory(image, NULL, &imageenum);
+		err = imgtool_directory_open(image, NULL, &imageenum);
 		if (err)
 			goto done;
 
@@ -1021,111 +1021,6 @@ static imgtoolerr_t cannonicalize_fork(imgtool_image *image, const char **fork)
 
 
 /*-------------------------------------------------
-    imgtool_partition_open_directory - begins
-	enumerating files on a partition
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_partition_open_directory(imgtool_partition *partition, const char *path, imgtool_directory **outenum)
-{
-	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	imgtool_image *image = GET_IMAGE(partition);
-	imgtool_directory *enumeration = NULL;
-	char *alloc_path = NULL;
-	size_t size;
-
-	/* sanity checks */
-	assert(partition);
-	assert(outenum);
-
-	*outenum = NULL;
-
-	if (!image->module->next_enum)
-	{
-		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-		goto done;
-	}
-
-	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
-	if (err)
-		goto done;
-
-	size = sizeof(struct _imgtool_directory) + imgtool_image_module(image)->imageenum_extra_bytes;
-	enumeration = (imgtool_directory *) malloc(size);
-	if (!enumeration)
-	{
-		err = IMGTOOLERR_OUTOFMEMORY;
-		goto done;
-	}
-	memset(enumeration, '\0', size);
-	enumeration->image = image;
-
-	if (image->module->begin_enum)
-	{
-		err = image->module->begin_enum(enumeration, path);
-		if (err)
-		{
-			err = markerrorsource(err);
-			goto done;
-		}
-	}
-
-done:
-	if (alloc_path)
-		free(alloc_path);
-	if (err && enumeration)
-	{
-		free(enumeration);
-		enumeration = NULL;
-	}
-	*outenum = enumeration;
-	return err;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_directory_get_next - continues
-	enumerating files within a partition
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent)
-{
-	imgtoolerr_t err;
-	const imgtool_module *module;
-
-	module = imgtool_directory_module(enumeration);
-
-	/* This makes it so that drivers don't have to take care of clearing
-	 * the attributes if they don't apply
-	 */
-	memset(ent, 0, sizeof(*ent));
-
-	err = module->next_enum(enumeration, ent);
-	if (err)
-		return markerrorsource(err);
-
-	/* don't trust the module! */
-	if (!module->supports_creation_time && (ent->creation_time != 0))
-	{
-		internal_error(module, "next_enum() specified creation_time, which is marked as unsupported by this module");
-		return IMGTOOLERR_UNEXPECTED;
-	}
-	if (!module->supports_lastmodified_time && (ent->lastmodified_time != 0))
-	{
-		internal_error(module, "next_enum() specified lastmodified_time, which is marked as unsupported by this module");
-		return IMGTOOLERR_UNEXPECTED;
-	}
-	if (!module->path_separator && ent->directory)
-	{
-		internal_error(module, "next_enum() returned a directory, which is marked as unsupported by this module");
-		return IMGTOOLERR_UNEXPECTED;
-	}
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-/*-------------------------------------------------
     imgtool_partition_get_directory_entry - retrieves
 	the nth directory entry within a partition
 -------------------------------------------------*/
@@ -1141,7 +1036,7 @@ imgtoolerr_t imgtool_partition_get_directory_entry(imgtool_partition *partition,
 		goto done;
 	}
 
-	err = imgtool_partition_open_directory(partition, path, &imgenum);
+	err = imgtool_directory_open(partition, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -1170,21 +1065,6 @@ done:
 
 
 /*-------------------------------------------------
-    imgtool_directory_close - closes a directory
--------------------------------------------------*/
-
-void imgtool_directory_close(imgtool_directory *enumeration)
-{
-	const imgtool_module *module;
-	module = imgtool_directory_module(enumeration);
-	if (module->close_enum)
-		module->close_enum(enumeration);
-	free(enumeration);
-}
-
-
-
-/*-------------------------------------------------
     imgtool_partition_get_file_size - returns free
 	space on a partition, in bytes
 -------------------------------------------------*/
@@ -1201,7 +1081,7 @@ imgtoolerr_t imgtool_partition_get_file_size(imgtool_partition *partition, const
 	*filesize = -1;
 	memset(&ent, 0, sizeof(ent));
 
-	err = imgtool_partition_open_directory(partition, path, &imgenum);
+	err = imgtool_directory_open(partition, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -2014,6 +1894,132 @@ done:
 	if (alloc_path)
 		free(alloc_path);
 	return err;
+}
+
+
+
+/***************************************************************************
+
+	Directory handling functions
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    imgtool_directory_open - begins
+	enumerating files on a partition
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *path, imgtool_directory **outenum)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	imgtool_image *image = GET_IMAGE(partition);
+	imgtool_directory *enumeration = NULL;
+	char *alloc_path = NULL;
+	size_t size;
+
+	/* sanity checks */
+	assert(partition);
+	assert(outenum);
+
+	*outenum = NULL;
+
+	if (!image->module->next_enum)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
+	if (err)
+		goto done;
+
+	size = sizeof(struct _imgtool_directory) + imgtool_image_module(image)->imageenum_extra_bytes;
+	enumeration = (imgtool_directory *) malloc(size);
+	if (!enumeration)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(enumeration, '\0', size);
+	enumeration->image = image;
+
+	if (image->module->begin_enum)
+	{
+		err = image->module->begin_enum(enumeration, path);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
+	}
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	if (err && enumeration)
+	{
+		free(enumeration);
+		enumeration = NULL;
+	}
+	*outenum = enumeration;
+	return err;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_directory_close - closes a directory
+-------------------------------------------------*/
+
+void imgtool_directory_close(imgtool_directory *enumeration)
+{
+	const imgtool_module *module;
+	module = imgtool_directory_module(enumeration);
+	if (module->close_enum)
+		module->close_enum(enumeration);
+	free(enumeration);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_directory_get_next - continues
+	enumerating files within a partition
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent)
+{
+	imgtoolerr_t err;
+	const imgtool_module *module;
+
+	module = imgtool_directory_module(enumeration);
+
+	/* This makes it so that drivers don't have to take care of clearing
+	 * the attributes if they don't apply
+	 */
+	memset(ent, 0, sizeof(*ent));
+
+	err = module->next_enum(enumeration, ent);
+	if (err)
+		return markerrorsource(err);
+
+	/* don't trust the module! */
+	if (!module->supports_creation_time && (ent->creation_time != 0))
+	{
+		internal_error(module, "next_enum() specified creation_time, which is marked as unsupported by this module");
+		return IMGTOOLERR_UNEXPECTED;
+	}
+	if (!module->supports_lastmodified_time && (ent->lastmodified_time != 0))
+	{
+		internal_error(module, "next_enum() specified lastmodified_time, which is marked as unsupported by this module");
+		return IMGTOOLERR_UNEXPECTED;
+	}
+	if (!module->path_separator && ent->directory)
+	{
+		internal_error(module, "next_enum() returned a directory, which is marked as unsupported by this module");
+		return IMGTOOLERR_UNEXPECTED;
+	}
+	return IMGTOOLERR_SUCCESS;
 }
 
 

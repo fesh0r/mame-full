@@ -107,7 +107,7 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 				/* files directive */
 				if (!img)
 					goto needimgmodule;
-				err = imgtool_partition_open_directory(img, &imgenum);
+				err = imgtool_directory_open(img, &imgenum);
 				if (err)
 					goto error;
 

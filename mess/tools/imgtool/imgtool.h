@@ -91,7 +91,6 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, imgtool_partition **pa
 imgtoolerr_t imgtool_partition_close(imgtool_partition *partition);
 
 /* ----- partition operations ----- */
-imgtoolerr_t imgtool_partition_open_directory(imgtool_partition *partition, const char *path, imgtool_directory **outenum);
 imgtoolerr_t imgtool_partition_get_directory_entry(imgtool_partition *partition, const char *path, int index, imgtool_dirent *ent);
 imgtoolerr_t imgtool_partition_get_file_size(imgtool_partition *partition, const char *filename, UINT64 *filesize);
 imgtoolerr_t imgtool_partition_get_free_space(imgtool_partition *partition, UINT64 *sz);
@@ -115,8 +114,9 @@ imgtoolerr_t imgtool_partition_get_chain(imgtool_partition *partition, const cha
 imgtoolerr_t imgtool_partition_get_chain_string(imgtool_partition *partition, const char *path, char *buffer, size_t buffer_len);
 
 /* ----- directory management ----- */
-imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent);
+imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *path, imgtool_directory **outenum);
 void         imgtool_directory_close(imgtool_directory *enumeration);
+imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent);
 const imgtool_module *imgtool_directory_module(imgtool_directory *enumeration);
 void *imgtool_directory_extrabytes(imgtool_directory *enumeration);
 imgtool_image *imgtool_directory_image(imgtool_directory *enumeration);

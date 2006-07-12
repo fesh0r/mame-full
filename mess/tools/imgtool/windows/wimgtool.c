@@ -503,7 +503,7 @@ static imgtoolerr_t refresh_image(HWND window)
 		}
 
 
-		err = imgtool_partition_open_directory(info->image, info->current_directory, &imageenum);
+		err = imgtool_directory_open(info->image, info->current_directory, &imageenum);
 		if (err)
 			goto done;
 
@@ -838,7 +838,7 @@ static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *pa
 		goto done;
 	}
 
-	err = imgtool_partition_open_directory(image, path, &imageenum);
+	err = imgtool_directory_open(image, path, &imageenum);
 	if (err)
 		goto done;
 

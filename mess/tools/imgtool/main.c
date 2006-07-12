@@ -192,7 +192,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 	path = argc > 2 ? argv[2] : NULL;
 
-	err = imgtool_partition_open_directory(img, path, &imgenum);
+	err = imgtool_directory_open(img, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -376,7 +376,7 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	if (unnamedargs < 0)
 		goto done;
 
-	err = imgtool_partition_open_directory(img, path, &imgenum);
+	err = imgtool_directory_open(img, path, &imgenum);
 	if (err)
 		goto done;
 
