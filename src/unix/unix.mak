@@ -663,6 +663,20 @@ $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
 	@echo Assembling $<...
 	$(ASM) $(ASM_FMT) -o $@ $<
 
+$(OBJ)/video.o:		$(OBJ)/layout/horizont.lh \
+			$(OBJ)/layout/vertical.lh \
+			$(OBJ)/layout/dualhsxs.lh \
+			$(OBJ)/layout/dualhovu.lh \
+			$(OBJ)/layout/dualhuov.lh \
+			$(OBJ)/layout/triphsxs.lh \
+			$(OBJ)/layout/ho20ffff.lh \
+			$(OBJ)/layout/ho2eff2e.lh \
+			$(OBJ)/layout/ho88ffff.lh \
+			$(OBJ)/layout/hoa0a0ff.lh \
+			$(OBJ)/layout/hoffe457.lh \
+			$(OBJ)/layout/voffff20.lh \
+			$(OBJ)/layout/hoffff20.lh
+
 doc: src/unix/doc/xmame-doc.txt src/unix/doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) src/unix/doc/x$(TARGET).6
 
 src/unix/doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
