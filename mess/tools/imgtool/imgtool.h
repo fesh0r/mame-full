@@ -41,10 +41,32 @@
  * ---------------------------------------------------------------------------
  */
 
-/* ----- initialization ----- */
+typedef struct _imgtool_module_features imgtool_module_features;
+struct _imgtool_module_features
+{
+	unsigned int supports_create : 1;
+	unsigned int supports_open : 1;
+	unsigned int supports_reading : 1;
+	unsigned int supports_writing : 1;
+	unsigned int supports_deletefile : 1;
+	unsigned int supports_directories : 1;
+	unsigned int supports_freespace : 1;
+	unsigned int supports_createdir : 1;
+	unsigned int supports_deletedir : 1;
+	unsigned int supports_creation_time : 1;
+	unsigned int supports_lastmodified_time : 1;
+	unsigned int supports_readsector : 1;
+	unsigned int supports_writesector : 1;
+	unsigned int supports_forks : 1;
+	unsigned int supports_geticoninfo : 1;
+	unsigned int is_read_only : 1;
+};
+
+/* ----- initialization and basics ----- */
 void imgtool_init(int omit_untested);
 void imgtool_exit(void);
 const imgtool_module *imgtool_find_module(const char *modulename);
+imgtool_module_features imgtool_get_module_features(const imgtool_module *module);
 
 /* ----- image management ----- */
 imgtoolerr_t imgtool_identify_file(const char *filename, imgtool_module **modules, size_t count);
@@ -65,7 +87,7 @@ const imgtool_module *imgtool_image_module(imgtool_image *image);
 void *imgtool_image_extra_bytes(imgtool_image *image);
 
 /* ----- partition management ----- */
-imgtoolerr_t imgtool_image_open_partition(imgtool_image *image, imgtool_partition **partition);
+imgtoolerr_t imgtool_partition_open(imgtool_image *image, imgtool_partition **partition);
 imgtoolerr_t imgtool_partition_close(imgtool_partition *partition);
 
 /* ----- partition operations ----- */
@@ -98,34 +120,6 @@ void         imgtool_directory_close(imgtool_directory *enumeration);
 const imgtool_module *imgtool_directory_module(imgtool_directory *enumeration);
 void *imgtool_directory_extrabytes(imgtool_directory *enumeration);
 imgtool_image *imgtool_directory_image(imgtool_directory *enumeration);
-
-/* imgtool_get_module_features
- *
- * Description:
- *		Retrieves a structure identifying this module's features associated with an image
- */
-typedef struct _imgtool_module_features imgtool_module_features;
-struct _imgtool_module_features
-{
-	unsigned int supports_create : 1;
-	unsigned int supports_open : 1;
-	unsigned int supports_reading : 1;
-	unsigned int supports_writing : 1;
-	unsigned int supports_deletefile : 1;
-	unsigned int supports_directories : 1;
-	unsigned int supports_freespace : 1;
-	unsigned int supports_createdir : 1;
-	unsigned int supports_deletedir : 1;
-	unsigned int supports_creation_time : 1;
-	unsigned int supports_lastmodified_time : 1;
-	unsigned int supports_readsector : 1;
-	unsigned int supports_writesector : 1;
-	unsigned int supports_forks : 1;
-	unsigned int supports_geticoninfo : 1;
-	unsigned int is_read_only : 1;
-};
-
-imgtool_module_features imgtool_get_module_features(const imgtool_module *module);
 
 int imgtool_validitychecks(void);
 

@@ -53,7 +53,104 @@ imgtool_library *global_imgtool_library;
 
 
 
-/* ----------------------------------------------------------------------- */
+/***************************************************************************
+
+	Imgtool initialization and basics
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    markerrorsource - marks where an error source
+-------------------------------------------------*/
+
+static imgtoolerr_t markerrorsource(imgtoolerr_t err)
+{
+	assert(imgtool_error != NULL);
+
+	switch(err)
+	{
+		case IMGTOOLERR_OUTOFMEMORY:
+		case IMGTOOLERR_UNEXPECTED:
+		case IMGTOOLERR_BUFFERTOOSMALL:
+			/* Do nothing */
+			break;
+
+		case IMGTOOLERR_FILENOTFOUND:
+		case IMGTOOLERR_BADFILENAME:
+			err |= IMGTOOLERR_SRC_FILEONIMAGE;
+			break;
+
+		default:
+			err |= IMGTOOLERR_SRC_IMAGEFILE;
+			break;
+	}
+	return err;
+}
+
+
+
+/*-------------------------------------------------
+    internal_error - debug function for raising
+	internal errors
+-------------------------------------------------*/
+
+static void internal_error(const imgtool_module *module, const char *message)
+{
+#ifdef MAME_DEBUG
+	logerror("%s: %s\n", module->name, message);
+#endif
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_init - initializes the imgtool core
+-------------------------------------------------*/
+
+void imgtool_init(int omit_untested)
+{
+	imgtoolerr_t err;
+	err = imgtool_create_cannonical_library(omit_untested, &global_imgtool_library);
+	assert(err == IMGTOOLERR_SUCCESS);
+	if (err == IMGTOOLERR_SUCCESS)
+	{
+		imgtool_library_sort(global_imgtool_library, ITLS_DESCRIPTION);
+	}
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_exit - closes out the imgtool core
+-------------------------------------------------*/
+
+void imgtool_exit(void)
+{
+	if (global_imgtool_library)
+	{
+		imgtool_library_close(global_imgtool_library);
+		global_imgtool_library = NULL;
+	}
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_find_module - looks up a module
+-------------------------------------------------*/
+
+const imgtool_module *imgtool_find_module(const char *modulename)
+{
+	return imgtool_library_findmodule(global_imgtool_library, modulename);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_get_module_features - retrieves a
+	structure identifying this module's features
+	associated with an image
+-------------------------------------------------*/
 
 imgtool_module_features imgtool_get_module_features(const imgtool_module *module)
 {
@@ -96,6 +193,11 @@ imgtool_module_features imgtool_get_module_features(const imgtool_module *module
 }
 
 
+
+/*-------------------------------------------------
+    evaluate_module - evaluates a single file to
+	determine what module can best handle a file
+-------------------------------------------------*/
 
 static imgtoolerr_t evaluate_module(const char *fname,
 	const imgtool_module *module, float *result)
@@ -145,49 +247,6 @@ done:
 	if (image)
 		imgtool_image_close(image);
 	return err;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_init - initializes the imgtool core
--------------------------------------------------*/
-
-void imgtool_init(int omit_untested)
-{
-	imgtoolerr_t err;
-	err = imgtool_create_cannonical_library(omit_untested, &global_imgtool_library);
-	assert(err == IMGTOOLERR_SUCCESS);
-	if (err == IMGTOOLERR_SUCCESS)
-	{
-		imgtool_library_sort(global_imgtool_library, ITLS_DESCRIPTION);
-	}
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_exit - closes out the imgtool core
--------------------------------------------------*/
-
-void imgtool_exit(void)
-{
-	if (global_imgtool_library)
-	{
-		imgtool_library_close(global_imgtool_library);
-		global_imgtool_library = NULL;
-	}
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_find_module - looks up a module
--------------------------------------------------*/
-
-const imgtool_module *imgtool_find_module(const char *modulename)
-{
-	return imgtool_library_findmodule(global_imgtool_library, modulename);
 }
 
 
@@ -270,6 +329,166 @@ done:
 
 
 /*-------------------------------------------------
+    imgtool_image_get_sector_size - gets the size of a sector
+	on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_get_sector_size(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, UINT32 *length)
+{
+	/* implemented? */
+	if (!image->module->get_sector_size)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->get_sector_size(image, track, head, sector, length);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_read_sector - reads a sector on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_read_sector(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, void *buffer, size_t len)
+{
+	/* implemented? */
+	if (!image->module->read_sector)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->read_sector(image, track, head, sector, buffer, len);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_write_sector - writes a sector on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_write_sector(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, const void *buffer, size_t len)
+{
+	/* implemented? */
+	if (!image->module->write_sector)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->write_sector(image, track, head, sector, buffer, len);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_get_block_size - gets the size of a standard
+	block on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_get_block_size(imgtool_image *image, UINT32 *length)
+{
+	/* implemented? */
+	if (image->module->block_size == 0)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	*length = image->module->block_size;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_read_block - reads a standard block on an
+	image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_read_block(imgtool_image *image, UINT64 block, void *buffer)
+{
+	/* implemented? */
+	if (!image->module->read_block)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->read_block(image, buffer, block);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_write_block - writes a standard block on an
+	image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_write_block(imgtool_image *image, UINT64 block, const void *buffer)
+{
+	/* implemented? */
+	if (!image->module->write_block)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->write_block(image, buffer, block);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_malloc - allocates memory associated with an
+	image
+-------------------------------------------------*/
+
+void *imgtool_image_malloc(imgtool_image *image, size_t size)
+{
+	return pool_malloc(&image->pool, size);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_module - returns the module associated with
+	this image
+-------------------------------------------------*/
+
+const imgtool_module *imgtool_image_module(imgtool_image *img)
+{
+	return img->module;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_extra_bytes - returns extra bytes on an image
+-------------------------------------------------*/
+
+void *imgtool_image_extra_bytes(imgtool_image *img)
+{
+	assert(img->module->image_extra_bytes > 0);
+	return ((UINT8 *) img) + sizeof(*img);
+}
+
+
+
+/***************************************************************************
+
+	Imgtool partition management
+
+***************************************************************************/
+
+imgtoolerr_t imgtool_partition_open(imgtool_image *image, imgtool_partition **partition)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
+imgtoolerr_t imgtool_partition_close(imgtool_partition *partition)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
+/***************************************************************************
+
+	Imgtool partition operations
+
+***************************************************************************/
+
+/*-------------------------------------------------
     imgtool_partition_get_attribute_name - retrieves the human readable
 	name for an attribute
 -------------------------------------------------*/
@@ -345,7 +564,10 @@ void imgtool_partition_get_attribute_name(const imgtool_module *module, UINT32 a
 
 
 
-/* ----------------------------------------------------------------------- */
+/*-------------------------------------------------
+    imgtool_validitychecks - checks the validity
+	of the imgtool modules
+-------------------------------------------------*/
 
 int imgtool_validitychecks(void)
 {
@@ -484,6 +706,11 @@ done:
 
 
 
+/*-------------------------------------------------
+    imgtool_temp_str - provides a temporary string
+	buffer used for string passing
+-------------------------------------------------*/
+
 char *imgtool_temp_str(void)
 {
 	static int index;
@@ -495,44 +722,9 @@ char *imgtool_temp_str(void)
 
 /***************************************************************************
 
-    Imgtool core functions
+	Image handling functions
 
 ***************************************************************************/
-
-static imgtoolerr_t markerrorsource(imgtoolerr_t err)
-{
-	assert(imgtool_error != NULL);
-
-	switch(err)
-	{
-		case IMGTOOLERR_OUTOFMEMORY:
-		case IMGTOOLERR_UNEXPECTED:
-		case IMGTOOLERR_BUFFERTOOSMALL:
-			/* Do nothing */
-			break;
-
-		case IMGTOOLERR_FILENOTFOUND:
-		case IMGTOOLERR_BADFILENAME:
-			err |= IMGTOOLERR_SRC_FILEONIMAGE;
-			break;
-
-		default:
-			err |= IMGTOOLERR_SRC_IMAGEFILE;
-			break;
-	}
-	return err;
-}
-
-
-
-static void internal_error(const imgtool_module *module, const char *message)
-{
-#ifdef MAME_DEBUG
-	logerror("%s: %s\n", module->name, message);
-#endif
-}
-
-
 
 static imgtoolerr_t internal_open(const imgtool_module *module, const char *fname,
 	int read_or_write, option_resolution *createopts, imgtool_image **outimg)
@@ -648,6 +840,60 @@ void imgtool_image_close(imgtool_image *image)
 
 
 /*-------------------------------------------------
+    imgtool_image_create - creates an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_create(const imgtool_module *module, const char *fname,
+	option_resolution *opts, imgtool_image **image)
+{
+	imgtoolerr_t err;
+	option_resolution *alloc_resolution = NULL;
+
+	/* allocate dummy options if necessary */
+	if (!opts && module->createimage_optguide)
+	{
+		alloc_resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
+		if (!alloc_resolution)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+		opts = alloc_resolution;
+	}
+	if (opts)
+		option_resolution_finish(opts);
+
+	err = internal_open(module, fname, OSD_FOPEN_RW_CREATE, opts, image);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_resolution)
+		option_resolution_close(alloc_resolution);
+	return err;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_create_byname - creates an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_create_byname(const char *modulename, const char *fname,
+	option_resolution *opts, imgtool_image **image)
+{
+	const imgtool_module *module;
+
+	module = imgtool_find_module(modulename);
+	if (!module)
+		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
+
+	return imgtool_image_create(module, fname, opts, image);
+}
+
+
+
+/*-------------------------------------------------
     imgtool_image_info - returns format specific information
 	about an image
 -------------------------------------------------*/
@@ -668,6 +914,11 @@ imgtoolerr_t imgtool_image_info(imgtool_image *image, char *string, size_t len)
 #define PATH_MUSTBEDIR		0x00000001
 #define PATH_LEAVENULLALONE	0x00000002
 #define PATH_CANBEBOOTBLOCK	0x00000004
+
+/*-------------------------------------------------
+    cannonicalize_path - normalizes a path string
+	into a NUL delimited list
+-------------------------------------------------*/
 
 static imgtoolerr_t cannonicalize_path(imgtool_image *image, UINT32 flags,
 	const char **path, char **alloc_path)
@@ -1763,194 +2014,6 @@ done:
 	if (alloc_path)
 		free(alloc_path);
 	return err;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_create - creates an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_create(const imgtool_module *module, const char *fname,
-	option_resolution *opts, imgtool_image **image)
-{
-	imgtoolerr_t err;
-	option_resolution *alloc_resolution = NULL;
-
-	/* allocate dummy options if necessary */
-	if (!opts && module->createimage_optguide)
-	{
-		alloc_resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
-		if (!alloc_resolution)
-		{
-			err = IMGTOOLERR_OUTOFMEMORY;
-			goto done;
-		}
-		opts = alloc_resolution;
-	}
-	if (opts)
-		option_resolution_finish(opts);
-
-	err = internal_open(module, fname, OSD_FOPEN_RW_CREATE, opts, image);
-	if (err)
-		goto done;
-
-done:
-	if (alloc_resolution)
-		option_resolution_close(alloc_resolution);
-	return err;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_create_byname - creates an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_create_byname(const char *modulename, const char *fname,
-	option_resolution *opts, imgtool_image **image)
-{
-	const imgtool_module *module;
-
-	module = imgtool_find_module(modulename);
-	if (!module)
-		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
-
-	return imgtool_image_create(module, fname, opts, image);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_get_sector_size - gets the size of a sector
-	on an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_get_sector_size(imgtool_image *image, UINT32 track, UINT32 head,
-	UINT32 sector, UINT32 *length)
-{
-	/* implemented? */
-	if (!image->module->get_sector_size)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	return image->module->get_sector_size(image, track, head, sector, length);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_read_sector - reads a sector on an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_read_sector(imgtool_image *image, UINT32 track, UINT32 head,
-	UINT32 sector, void *buffer, size_t len)
-{
-	/* implemented? */
-	if (!image->module->read_sector)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	return image->module->read_sector(image, track, head, sector, buffer, len);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_write_sector - writes a sector on an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_write_sector(imgtool_image *image, UINT32 track, UINT32 head,
-	UINT32 sector, const void *buffer, size_t len)
-{
-	/* implemented? */
-	if (!image->module->write_sector)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	return image->module->write_sector(image, track, head, sector, buffer, len);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_get_block_size - gets the size of a standard
-	block on an image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_get_block_size(imgtool_image *image, UINT32 *length)
-{
-	/* implemented? */
-	if (image->module->block_size == 0)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	*length = image->module->block_size;
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_read_block - reads a standard block on an
-	image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_read_block(imgtool_image *image, UINT64 block, void *buffer)
-{
-	/* implemented? */
-	if (!image->module->read_block)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	return image->module->read_block(image, buffer, block);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_write_block - writes a standard block on an
-	image
--------------------------------------------------*/
-
-imgtoolerr_t imgtool_image_write_block(imgtool_image *image, UINT64 block, const void *buffer)
-{
-	/* implemented? */
-	if (!image->module->write_block)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	return image->module->write_block(image, buffer, block);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_malloc - allocates memory associated with an
-	image
--------------------------------------------------*/
-
-void *imgtool_image_malloc(imgtool_image *image, size_t size)
-{
-	return pool_malloc(&image->pool, size);
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_module - returns the module associated with
-	this image
--------------------------------------------------*/
-
-const imgtool_module *imgtool_image_module(imgtool_image *img)
-{
-	return img->module;
-}
-
-
-
-/*-------------------------------------------------
-    imgtool_image_extra_bytes - returns extra bytes on an image
--------------------------------------------------*/
-
-void *imgtool_image_extra_bytes(imgtool_image *img)
-{
-	assert(img->module->image_extra_bytes > 0);
-	return ((UINT8 *) img) + sizeof(*img);
 }
 
 
