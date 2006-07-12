@@ -33,7 +33,6 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/filtbas.o		\
 	$(OBJ)/mess/tools/imgtool/macbin.o		\
 	$(OBJ)/mess/tools/imgtool/imgtool.o		\
-	$(OBJ)/mess/tools/imgtool/imgfile.o		\
 	$(OBJ)/mess/tools/imgtool/imgterrs.o	\
 	$(OBJ)/mess/tools/imgtool/rsdos.o		\
 	$(OBJ)/mess/tools/imgtool/os9.o			\
