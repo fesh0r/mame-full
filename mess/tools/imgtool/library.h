@@ -27,9 +27,6 @@ typedef struct _imgtool_partition imgtool_partition;
 typedef struct _imgtool_directory imgtool_directory;
 typedef struct _imgtool_library imgtool_library;
 
-/* right now, partitions are interchangeable with images */
-#define imgtool_partition imgtool_image
-
 typedef enum
 {
 	SUGGESTION_END,

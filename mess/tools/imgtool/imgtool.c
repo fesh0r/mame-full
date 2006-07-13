@@ -24,8 +24,7 @@
 ***************************************************************************/
 
 /* this is a temporary hack */
-#define GET_IMAGE(partition)	((imgtool_image *) (partition))
-#define GET_PARTITION(image)	((imgtool_partition *) (image))
+#define GET_IMAGE(partition)	((partition)->image)
 
 
 
@@ -37,6 +36,12 @@ struct _imgtool_image
 {
 	const imgtool_module *module;
 	memory_pool pool;
+};
+
+struct _imgtool_partition
+{
+	imgtool_image *image;
+	int partition_index;
 };
 
 struct _imgtool_directory
@@ -260,6 +265,18 @@ done:
 
 
 /*-------------------------------------------------
+    imgtool_partition_image - retrieves the image
+	associated with this partition
+-------------------------------------------------*/
+
+imgtool_image *imgtool_partition_image(imgtool_partition *partition)
+{
+	return partition->image;
+}
+
+
+
+/*-------------------------------------------------
     imgtool_identify_file - attempts to determine the module
 	for any given image
 -------------------------------------------------*/
@@ -476,17 +493,34 @@ void *imgtool_image_extra_bytes(imgtool_image *img)
 
 ***************************************************************************/
 
-imgtoolerr_t imgtool_partition_open(imgtool_image *image, int index, imgtool_partition **partition)
+imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, imgtool_partition **partition)
 {
-	*partition = GET_PARTITION(image);
-	return IMGTOOLERR_SUCCESS;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	imgtool_partition *p;
+
+	// allocate the new partition object
+	p = (imgtool_partition *) malloc(sizeof(*p));
+	if (!p)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(p, 0, sizeof(*p));
+
+	// fill out the structure
+	p->image = image;
+	p->partition_index = partition_index;
+
+done:
+	*partition = err ? NULL : p;
+	return err;
 }
 
 
 
-imgtoolerr_t imgtool_partition_close(imgtool_partition *partition)
+void imgtool_partition_close(imgtool_partition *partition)
 {
-	return IMGTOOLERR_SUCCESS;
+	free(partition);
 }
 
 

@@ -87,8 +87,9 @@ const imgtool_module *imgtool_image_module(imgtool_image *image);
 void *imgtool_image_extra_bytes(imgtool_image *image);
 
 /* ----- partition management ----- */
-imgtoolerr_t imgtool_partition_open(imgtool_image *image, int index, imgtool_partition **partition);
-imgtoolerr_t imgtool_partition_close(imgtool_partition *partition);
+imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, imgtool_partition **partition);
+void         imgtool_partition_close(imgtool_partition *partition);
+imgtool_image *imgtool_partition_image(imgtool_partition *partition);
 
 /* ----- partition operations ----- */
 imgtoolerr_t imgtool_partition_get_directory_entry(imgtool_partition *partition, const char *path, int index, imgtool_dirent *ent);
