@@ -25,6 +25,7 @@
 
 /* this is a temporary hack */
 #define GET_IMAGE(partition)	((imgtool_image *) (partition))
+#define GET_PARTITION(image)	((imgtool_partition *) (image))
 
 
 
@@ -204,6 +205,7 @@ static imgtoolerr_t evaluate_module(const char *fname,
 {
 	imgtoolerr_t err;
 	imgtool_image *image = NULL;
+	imgtool_partition *partition = NULL;
 	imgtool_directory *imageenum = NULL;
 	imgtool_dirent ent;
 	float current_result;
@@ -218,7 +220,11 @@ static imgtoolerr_t evaluate_module(const char *fname,
 	{
 		current_result = module->open_is_strict ? 0.9 : 0.5;
 
-		err = imgtool_directory_open(image, NULL, &imageenum);
+		err = imgtool_partition_open(image, 0, &partition);
+		if (err)
+			goto done;
+
+		err = imgtool_directory_open(partition, NULL, &imageenum);
 		if (err)
 			goto done;
 
@@ -244,6 +250,8 @@ done:
 		err = IMGTOOLERR_SUCCESS;
 	if (imageenum)
 		imgtool_directory_close(imageenum);
+	if (partition)
+		imgtool_partition_close(partition);
 	if (image)
 		imgtool_image_close(image);
 	return err;
@@ -468,16 +476,17 @@ void *imgtool_image_extra_bytes(imgtool_image *img)
 
 ***************************************************************************/
 
-imgtoolerr_t imgtool_partition_open(imgtool_image *image, imgtool_partition **partition)
+imgtoolerr_t imgtool_partition_open(imgtool_image *image, int index, imgtool_partition **partition)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	*partition = GET_PARTITION(image);
+	return IMGTOOLERR_SUCCESS;
 }
 
 
 
 imgtoolerr_t imgtool_partition_close(imgtool_partition *partition)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
