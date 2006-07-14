@@ -19,6 +19,11 @@ static crtc6845_state amstrad_vidhrdw_6845_state;
 extern int amstrad_plus_asic_enabled;
 extern int amstrad_plus_pri;
 extern int amstrad_system_type;
+extern int amstrad_plus_irq_cause;
+extern int amstrad_plus_scroll_x;  
+extern int amstrad_plus_scroll_y;  
+extern int amstrad_plus_scroll_border;  
+
 extern unsigned char *amstrad_plus_asic_ram;
 
 int amstrad_plus_split_scanline;  // ASIC split screen 
@@ -48,6 +53,11 @@ static int y_screen_pos;
 static int x_screen_offset = -224;
 static int y_screen_offset = -32;
 
+/* display origin - used to align hardware sprites */
+static int display_x;
+static int display_y;
+static int display_update;  // flag to get location at first DE
+
 /* this contains the colours in Machine->pens form.*/
 /* this is updated from the eventlist and reflects the current state
 of the render colours - these may be different to the current colour palette values */
@@ -61,7 +71,7 @@ static int amstrad_CRTC_HS_After_VS_Counter;
 static mame_bitmap	*amstrad_bitmap;
 
 static int amstrad_scanline;
-
+static int border_counter;  // counts length of the soft scroll border extend
 
 /* the mode is re-loaded at each HSYNC */
 /* current mode to render */
@@ -333,7 +343,7 @@ static void amstrad_plus_draw_screen_enabled_mode_0(void)
 	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
-	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+	int ra = amstrad_CRTC_RA + amstrad_plus_scroll_y; // crtc6845_row_address_r(0);
 	/* calc mem addr to fetch data from	based on ma, and ra */
 	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
 			((ra & 0x07)<<11) |
@@ -343,8 +353,19 @@ static void amstrad_plus_draw_screen_enabled_mode_0(void)
 	int y = y_screen_pos;
 	int cpcpen, messpen;
 
-	unsigned char data = mess_ram[addr];
+	unsigned char data;
 
+	if(border_counter > 0)
+	{
+		if(border_counter > 0)
+			amstrad_draw_screen_disabled();
+		border_counter--;
+		return;
+	}
+
+	addr -= (amstrad_plus_scroll_x / 8);  // adjust for soft scroll register
+	addr &= 0xffff;
+	data = mess_ram[addr];
 	cpcpen = Mode0Lookup[data];
 	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
 	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
@@ -378,7 +399,7 @@ static void amstrad_plus_draw_screen_enabled_mode_1(void)
 	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
-	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+	int ra = amstrad_CRTC_RA + amstrad_plus_scroll_y; // crtc6845_row_address_r(0);
 /* calc mem addr to fetch data from	based on ma, and ra */
 	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
 			((ra & 0x07)<<11) |
@@ -388,10 +409,23 @@ static void amstrad_plus_draw_screen_enabled_mode_1(void)
 	int y = y_screen_pos;
 
   int i, cpcpen, messpen; 
-  unsigned char data1 = mess_ram[addr];
-  unsigned char data2 = mess_ram[addr+1];
+  unsigned char data1;
+  unsigned char data2;
 
-  for (i=0;i<4;i++) {
+	if(border_counter > 0)
+	{
+		if(border_counter > 0)
+			amstrad_draw_screen_disabled();
+		border_counter--;
+		return;
+	}
+
+	addr -= (amstrad_plus_scroll_x / 4);  // adjust for soft scroll register
+	addr &= 0xffff;
+	data1 = mess_ram[addr];
+	data2 = mess_ram[addr+1];
+
+	for (i=0;i<4;i++) {
 		cpcpen = Mode1Lookup[data1& 0xFF];
 	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
 	messpen += (amstrad_plus_asic_ram[0x2401+cpcpen*2]) << 8;
@@ -414,7 +448,7 @@ static void amstrad_plus_draw_screen_enabled_mode_2(void)
 	mame_bitmap *bitmap = amstrad_bitmap;
 
 	int ma = amstrad_CRTC_MA; // crtc6845_memory_address_r(0);
-	int ra = amstrad_CRTC_RA; // crtc6845_row_address_r(0);
+	int ra = amstrad_CRTC_RA + amstrad_plus_scroll_y; // crtc6845_row_address_r(0);
 /* calc mem addr to fetch data from	based on ma, and ra */
 	unsigned int addr = (((ma>>(4+8)) & 0x03)<<14) |
 			((ra & 0x07)<<11) |
@@ -423,8 +457,18 @@ static void amstrad_plus_draw_screen_enabled_mode_2(void)
 	int x = x_screen_pos;
 	int y = y_screen_pos;
 	int i, cpcpen, messpen;
-	unsigned long data = (mess_ram[addr]<<8) | mess_ram[addr+1];
+	unsigned long data;
 
+	if(border_counter > 0)
+	{
+		if(border_counter > 0)
+			amstrad_draw_screen_disabled();
+		border_counter--;
+		return;
+	}
+	addr -= (amstrad_plus_scroll_x / 2);  // adjust for soft scroll register
+	addr &= 0xffff;
+	data = (mess_ram[addr]<<8) | mess_ram[addr+1];
 
 	for (i=0; i<16; i++)
 	{
@@ -452,7 +496,19 @@ static void amstrad_plus_draw_screen_enabled_mode_3(void)
 	int x = x_screen_pos;
 	int y = y_screen_pos;
 	int cpcpen, messpen;
-	unsigned char data = mess_ram[addr];
+	unsigned char data;
+
+	if(border_counter > 0)
+	{
+		if(border_counter > 0)
+			amstrad_draw_screen_disabled();
+		border_counter--;
+		return;
+	}
+
+	addr -= (amstrad_plus_scroll_x / 8);  // adjust for soft scroll register
+	addr &= 0xffff;
+	data = mess_ram[addr];
 
 	cpcpen = Mode3Lookup[data];
 	messpen = 48 + (amstrad_plus_asic_ram[0x2400+cpcpen*2]);//amstrad_GateArray_render_colours[cpcpen];
@@ -682,9 +738,9 @@ void amstrad_plus_sprite_draw(mame_bitmap* scr_bitmap)
 	crtc6845_get_state(0,&vid);
 
 	// get display bounds from CRTC registers (sprites are bound and clipped to inside the border)
-	rect.min_x = (((vid.registers[0] - 1) - (vid.registers[2] - 1))*4)+8;
+	rect.min_x = display_x;//(((vid.registers[0] - 1) - (vid.registers[2] - 1))*4)+8;
 	rect.max_x = rect.min_x + (vid.registers[1] * 16);
-	rect.min_y = (((vid.registers[4] - 1) - (vid.registers[7] - 1))*4)+4;
+	rect.min_y = display_y;//(((vid.registers[4] - 1) - (vid.registers[7] - 1))*4)+4;
 	rect.max_y = rect.min_y + (vid.registers[6] * (vid.registers[9]+1));
 
 	for(spr=0;spr<16;spr++)
@@ -694,8 +750,8 @@ void amstrad_plus_sprite_draw(mame_bitmap* scr_bitmap)
 		ymag = amstrad_plus_asic_ram[sprptr+4] & 0x03;
 		if(xmag != 0 && ymag != 0)
 		{
-				xmag = 1<<(15+xmag);
-				ymag = 1<<(15+ymag);
+			xmag = 1<<(15+xmag);
+			ymag = 1<<(15+ymag);
 			xloc = amstrad_plus_asic_ram[sprptr] + (amstrad_plus_asic_ram[sprptr+1] << 8);
 			xloc += rect.min_x;
 			yloc = amstrad_plus_asic_ram[sprptr+2] + (amstrad_plus_asic_ram[sprptr+3] << 8);
@@ -729,6 +785,47 @@ static void amstrad_Set_RA(int offset, int data)
 {
 	amstrad_CRTC_RA = data;
 }
+
+/* CRTC - Set new Display Enabled Status*/
+static void amstrad_Set_DE(int offset, int data)
+{
+	amstrad_CRTC_DE = data;
+
+	if (amstrad_CRTC_DE == 0)
+	{
+		draw_function = amstrad_draw_screen_disabled;
+	}
+	else
+	{
+		if(display_update == 1)
+		{
+			crtc6845_state vid;
+
+			crtc6845_get_state(0,&vid);
+			vid.Scan_Line_Counter = (vid.Scan_Line_Counter + amstrad_plus_scroll_y) & 0x1f;
+			amstrad_CRTC_RA += amstrad_plus_scroll_y;
+			crtc6845_set_state(0,&vid);
+			display_x = x_screen_pos;
+			display_y = y_screen_pos;
+			display_update = 0;
+		}
+		switch (amstrad_current_mode) {
+		case 0x00:
+			draw_function = amstrad_draw_screen_enabled_mode_0;
+			break;
+		case 0x01:
+			draw_function = amstrad_draw_screen_enabled_mode_1;
+			break;
+		case 0x02:
+			draw_function = amstrad_draw_screen_enabled_mode_2;
+			break;
+		case 0x03:
+			draw_function = amstrad_draw_screen_enabled_mode_3;
+			break;
+		}
+  	 }
+}
+
 /* CRTC - Set new Horizontal Sync Status */
 static void amstrad_Set_HS(int offset, int data)
 {
@@ -749,51 +846,57 @@ static void amstrad_Set_HS(int offset, int data)
 		amstrad_CRTC_HS_Counter++;
 		amstrad_scanline++;
 
-		if(amstrad_plus_asic_enabled == 0 || amstrad_plus_pri == 0 || amstrad_system_type == 0)
+		if (amstrad_CRTC_HS_After_VS_Counter != 0)  // counters still operate regardless of PRI state
 		{
-			if (amstrad_CRTC_HS_After_VS_Counter != 0)
+			amstrad_CRTC_HS_After_VS_Counter--;
+			
+			if (amstrad_CRTC_HS_After_VS_Counter == 0)
 			{
-				amstrad_CRTC_HS_After_VS_Counter--;
-				
-				if (amstrad_CRTC_HS_After_VS_Counter == 0)
+				if (amstrad_CRTC_HS_Counter >= 32)
 				{
-					if (amstrad_CRTC_HS_Counter >= 32)
-					{
-//						logerror("IRQ: standard GA IRQ triggered, scanline %i\n",amstrad_scanline);
+					if(amstrad_plus_pri == 0 || amstrad_plus_asic_enabled == 0)
 						cpunum_set_input_line(0,0, ASSERT_LINE);
-					}
-					amstrad_CRTC_HS_Counter = 0;
 				}
-			}
-		
-			if (amstrad_CRTC_HS_Counter == 52)
-			{
 				amstrad_CRTC_HS_Counter = 0;
-//				logerror("IRQ: standard GA IRQ triggered, scanline %i\n",amstrad_scanline);
-				cpunum_set_input_line(0,0, ASSERT_LINE);
 			}
 		}
-		else
+		
+		if (amstrad_CRTC_HS_Counter == 52)
+		{
+			amstrad_CRTC_HS_Counter = 0;
+			if(amstrad_plus_pri == 0 || amstrad_plus_asic_enabled == 0)
+				cpunum_set_input_line(0,0, ASSERT_LINE);
+		}
+		if(amstrad_plus_asic_enabled != 0)
 		{  // CPC+/GX4000 Programmable Raster Interrupt (disabled if &6800 in ASIC RAM is 0)
 			if(amstrad_scanline == amstrad_plus_pri && amstrad_plus_pri != 0)  
 			{
 //				logerror("IRQ: PRI triggered, scanline %i\n",amstrad_scanline);
 				cpunum_set_input_line(0,0,ASSERT_LINE);
-				amstrad_plus_asic_ram[0x2804] |= 0x80;
+				amstrad_plus_asic_ram[0x2c0f] |= 0x80;
+				amstrad_plus_irq_cause = 0x06;  // raster interrupt vector
 				amstrad_CRTC_HS_Counter &= ~0x20;  // ASIC PRI resets the MSB of the raster counter
 			}
 			// CPC+/GX4000 Split screen registers  (disabled if &6801 in ASIC RAM is 0)
 			if(amstrad_plus_split_scanline != 0)
 			{
-				if(amstrad_scanline == amstrad_plus_split_scanline) // split occurs here (hopefully)
+				if(amstrad_scanline == amstrad_plus_split_scanline && amstrad_plus_split_scanline != 0) // split occurs here (hopefully)
 				{
 					crtc6845_state vid;
 
 					// This if off by a bit (see Robocop 2), but is the easiest way that works consistently that I know of.
 					crtc6845_get_state(0,&vid);
-					vid.Memory_Address_of_next_Character_Row = amstrad_plus_split_address;
+					vid.Memory_Address_of_next_Character_Row = vid.Memory_Address_of_this_Character_Row = amstrad_plus_split_address;
+					vid.Memory_Address = amstrad_plus_split_address;
+					amstrad_Set_MA(0,amstrad_plus_split_address);
+					amstrad_Set_RA(0,0);
 					crtc6845_set_state(0,&vid);
 				}
+			}
+			// CPC+/GX4000 soft scroll register
+			if(amstrad_plus_scroll_border != 0)
+			{
+				border_counter = 1;  // border extended to cover garbage data from using the soft scroll functions
 			}
 		}
 	}
@@ -811,36 +914,10 @@ static void amstrad_Set_VS(int offset, int data)
     y_screen_pos = y_screen_offset;
       x_screen_pos = x_screen_offset;
 /* Reset the amstrad_CRTC_HS_After_VS_Counter */
-    amstrad_CRTC_HS_After_VS_Counter = 2;
+	amstrad_CRTC_HS_After_VS_Counter = 2;
+	display_update = 1;
   }
   amstrad_CRTC_VS = data;
-}
-
-/* CRTC - Set new Display Enabled Status*/
-static void amstrad_Set_DE(int offset, int data)
-{
-	amstrad_CRTC_DE = data;
-	if (amstrad_CRTC_DE == 0)
-	{
-		draw_function = amstrad_draw_screen_disabled;
-	}
-	else
-	{
-		switch (amstrad_current_mode) {
-		case 0x00:
-			draw_function = amstrad_draw_screen_enabled_mode_0;
-			break;
-		case 0x01:
-			draw_function = amstrad_draw_screen_enabled_mode_1;
-			break;
-		case 0x02:
-			draw_function = amstrad_draw_screen_enabled_mode_2;
-			break;
-		case 0x03:
-			draw_function = amstrad_draw_screen_enabled_mode_3;
-			break;
-		}
-  	 }
 }
 
 /* CRTC - Set new Cursor Status */
@@ -884,10 +961,10 @@ VIDEO_UPDATE( amstrad )
 		}
 	}
 #endif
-	copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
+    copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
 	if(amstrad_plus_asic_enabled != 0)
 		amstrad_plus_sprite_draw(bitmap);
-
+	amstrad_scanline = y_screen_pos - 32;
 	return 0;
 }
 
@@ -914,6 +991,7 @@ VIDEO_START( amstrad )
 	y_screen_pos = y_screen_offset;
 
 	amstrad_bitmap = auto_bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
+	display_update = 1;
 
 	return 0;
 
