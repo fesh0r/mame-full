@@ -3838,11 +3838,11 @@ static imgtoolerr_t dsk_image_beginenum(imgtool_directory *enumeration, const ch
 static imgtoolerr_t dsk_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
 static imgtoolerr_t win_image_beginenum(imgtool_directory *enumeration, const char *path);
 static imgtoolerr_t win_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
-static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf);
-static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
-static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath);
-static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath);
+static imgtoolerr_t ti99_image_freespace(imgtool_partition *partition, UINT64 *size);
+static imgtoolerr_t ti99_image_readfile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *destf);
+static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t dsk_image_deletefile(imgtool_partition *partition, const char *fpath);
+static imgtoolerr_t win_image_deletefile(imgtool_partition *partition, const char *fpath);
 static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
 static imgtoolerr_t dsk_image_create_v9t9(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
 
@@ -4446,8 +4446,9 @@ static imgtoolerr_t win_image_nextenum(imgtool_directory *enumeration, imgtool_d
 /*
 	Compute free space on disk image (in AUs)
 */
-static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size)
+static imgtoolerr_t ti99_image_freespace(imgtool_partition *partition, UINT64 *size)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) imgtool_image_extra_bytes(img);
 	size_t freeAUs;
 	int i;
@@ -4467,8 +4468,9 @@ static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size)
 /*
 	Extract a file from a ti99_image.  The file is saved in tifile format.
 */
-static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf)
+static imgtoolerr_t ti99_image_readfile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *destf)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 #if 1
 
 	/* extract data as TIFILES */
@@ -4604,8 +4606,9 @@ static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, c
 /*
 	Add a file to a ti99_image.  The file must be in tifile format.
 */
-static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) imgtool_image_extra_bytes(img);
 	const char *filename;
 	char ti_fname[10];
@@ -4825,8 +4828,9 @@ static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, 
 /*
 	Delete a file from a ti99_image.
 */
-static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath)
+static imgtoolerr_t dsk_image_deletefile(imgtool_partition *partition, const char *fpath)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) imgtool_image_extra_bytes(img);
 	dsk_fdr fdr;
 	int i, cluster_index;
@@ -4963,8 +4967,9 @@ static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath)
 	return 0;
 }
 
-static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath)
+static imgtoolerr_t win_image_deletefile(imgtool_partition *partition, const char *fpath)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) imgtool_image_extra_bytes(img);
 	int parent_ddr_AU, is_dir, catalog_index;
 	win_fdr fdr;

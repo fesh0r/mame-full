@@ -2085,9 +2085,10 @@ static imgtoolerr_t fat_write_bootblock(imgtool_image *image, imgtool_stream *st
 
 
 
-static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
+static imgtoolerr_t fat_diskimage_readfile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	fat_file file;
 	size_t bytes_read;
 	char buffer[1024];
@@ -2117,9 +2118,10 @@ static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *fil
 
 
 
-static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t fat_diskimage_writefile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	fat_file file;
 	UINT32 bytes_left, len;
 	char buffer[1024];
@@ -2157,9 +2159,10 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 
 
 
-static imgtoolerr_t fat_diskimage_delete(imgtool_image *image, const char *filename, unsigned int dir)
+static imgtoolerr_t fat_diskimage_delete(imgtool_partition *partition, const char *filename, unsigned int dir)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	fat_file file;
 	fat_dirent ent;
 
@@ -2187,16 +2190,17 @@ static imgtoolerr_t fat_diskimage_delete(imgtool_image *image, const char *filen
 
 
 
-static imgtoolerr_t fat_diskimage_deletefile(imgtool_image *image, const char *filename)
+static imgtoolerr_t fat_diskimage_deletefile(imgtool_partition *partition, const char *filename)
 {
-	return fat_diskimage_delete(image, filename, 0);
+	return fat_diskimage_delete(partition, filename, 0);
 }
 
 
 
-static imgtoolerr_t fat_diskimage_freespace(imgtool_image *image, UINT64 *size)
+static imgtoolerr_t fat_diskimage_freespace(imgtool_partition *partition, UINT64 *size)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	const fat_diskinfo *disk_info;
 	UINT8 *fat_table;
 	UINT32 i;
@@ -2222,9 +2226,10 @@ done:
 
 
 
-static imgtoolerr_t fat_diskimage_createdir(imgtool_image *image, const char *path)
+static imgtoolerr_t fat_diskimage_createdir(imgtool_partition *partition, const char *path)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	fat_file file;
 	UINT8 initial_data[64];
 
@@ -2255,9 +2260,9 @@ static imgtoolerr_t fat_diskimage_createdir(imgtool_image *image, const char *pa
 
 
 
-static imgtoolerr_t fat_diskimage_deletedir(imgtool_image *image, const char *path)
+static imgtoolerr_t fat_diskimage_deletedir(imgtool_partition *partition, const char *path)
 {
-	return fat_diskimage_delete(image, path, 1);
+	return fat_diskimage_delete(partition, path, 1);
 }
 
 

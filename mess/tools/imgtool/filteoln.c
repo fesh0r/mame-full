@@ -48,9 +48,10 @@ static imgtoolerr_t convert_stream_eolns(imgtool_stream *source, imgtool_stream 
 
 
 
-static imgtoolerr_t ascii_readfile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *destf)
+static imgtoolerr_t ascii_readfile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	imgtool_stream *mem_stream;
 
 	mem_stream = stream_open_mem(NULL, 0);
@@ -60,7 +61,7 @@ static imgtoolerr_t ascii_readfile(imgtool_image *image, const char *filename, c
 		goto done;
 	}
 
-	err = imgtool_image_module(image)->read_file(image, filename, fork, mem_stream);
+	err = imgtool_image_module(image)->read_file(partition, filename, fork, mem_stream);
 	if (err)
 		goto done;
 
@@ -77,9 +78,10 @@ done:
 
 
 
-static imgtoolerr_t ascii_writefile(imgtool_image *image, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t ascii_writefile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	imgtool_stream *mem_stream = NULL;
 
 	mem_stream = stream_open_mem(NULL, 0);
@@ -94,7 +96,7 @@ static imgtoolerr_t ascii_writefile(imgtool_image *image, const char *filename, 
 		goto done;
 	stream_seek(mem_stream, SEEK_SET, 0);
 
-	err = imgtool_image_module(image)->write_file(image, filename, fork, mem_stream, opts);
+	err = imgtool_image_module(image)->write_file(partition, filename, fork, mem_stream, opts);
 	if (err)
 		goto done;
 

@@ -329,15 +329,16 @@ eof:
 
 
 
-static imgtoolerr_t rsdos_diskimage_freespace(imgtool_image *img, UINT64 *size)
+static imgtoolerr_t rsdos_diskimage_freespace(imgtool_partition *partition, UINT64 *size)
 {
 	floperr_t ferr;
 	UINT8 i;
 	size_t s = 0;
 	UINT8 granule_count;
 	UINT8 granule_map[MAX_GRANULEMAP_SIZE];
+	imgtool_image *image = imgtool_partition_image(partition);
 
-	ferr = get_granule_map(img, granule_map, &granule_count);
+	ferr = get_granule_map(image, granule_map, &granule_count);
 	if (ferr)
 		return imgtool_floppy_error(ferr);
 
@@ -387,11 +388,12 @@ static imgtoolerr_t delete_entry(imgtool_image *img, struct rsdos_dirent *ent, i
 
 
 
-static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fname, const char *fork, imgtool_stream *destf)
+static imgtoolerr_t rsdos_diskimage_readfile(imgtool_partition *partition, const char *fname, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	struct rsdos_dirent ent;
 	size_t size;
+	imgtool_image *img = imgtool_partition_image(partition);
 
 	err = lookup_rsdos_file(img, fname, &ent, NULL);
 	if (err)
@@ -409,10 +411,11 @@ static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fna
 
 
 
-static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fname, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t rsdos_diskimage_writefile(imgtool_partition *partition, const char *fname, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	floperr_t ferr;
 	imgtoolerr_t err;
+	imgtool_image *img = imgtool_partition_image(partition);
 	struct rsdos_dirent ent, ent2;
 	size_t i;
 	UINT64 sz;
@@ -422,20 +425,20 @@ static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fn
 	UINT8 granule_count;
 	UINT8 granule_map[MAX_GRANULEMAP_SIZE];
 
-	/* Can we write to this image? */
+	/* can we write to this image? */
 	if (floppy_is_read_only(imgtool_floppy(img)))
 		return IMGTOOLERR_READONLY;
 
-	err = rsdos_diskimage_freespace(img, &freespace);
+	err = rsdos_diskimage_freespace(partition, &freespace);
 	if (err)
 		return err;
 
-	/* Is there enough space? */
+	/* is there enough space? */
 	sz = stream_size(sourcef);
 	if (sz > freespace)
 		return IMGTOOLERR_NOSPACE;
 
-	/* Setup our directory entry */
+	/* setup our directory entry */
 	err = prepare_dirent(&ent, fname);
 	if (err)
 		return err;
@@ -513,24 +516,26 @@ static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fn
 
 
 
-static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *fname)
+static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_partition *partition, const char *fname)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	int pos;
 	struct rsdos_dirent ent;
 
-	err = lookup_rsdos_file(img, fname, &ent, &pos);
+	err = lookup_rsdos_file(image, fname, &ent, &pos);
 	if (err)
 		return err;
 
-	return delete_entry(img, &ent, pos);
+	return delete_entry(image, &ent, pos);
 }
 
 
 
-static imgtoolerr_t rsdos_diskimage_suggesttransfer(imgtool_image *image, const char *fname, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+static imgtoolerr_t rsdos_diskimage_suggesttransfer(imgtool_partition *partition, const char *fname, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	struct rsdos_dirent ent;
 	int pos;
 

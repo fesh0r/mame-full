@@ -963,10 +963,11 @@ imgtoolerr_t imgtool_image_info(imgtool_image *image, char *string, size_t len)
 	into a NUL delimited list
 -------------------------------------------------*/
 
-static imgtoolerr_t cannonicalize_path(imgtool_image *image, UINT32 flags,
+static imgtoolerr_t cannonicalize_path(imgtool_partition *partition, UINT32 flags,
 	const char **path, char **alloc_path)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	imgtool_image *image = GET_IMAGE(partition);
 	char *new_path = NULL;
 	char path_separator, alt_path_separator;
 	const char *s;
@@ -1043,8 +1044,10 @@ done:
 
 
 
-static imgtoolerr_t cannonicalize_fork(imgtool_image *image, const char **fork)
+static imgtoolerr_t cannonicalize_fork(imgtool_partition *partition, const char **fork)
 {
+	imgtool_image *image = GET_IMAGE(partition);
+
 	/* does this module support forks? */
 	if (image->module->list_forks)
 	{
@@ -1172,11 +1175,11 @@ imgtoolerr_t imgtool_partition_list_file_attributes(imgtool_partition *partition
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_LEAVENULLALONE, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_LEAVENULLALONE, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->list_attrs(image, path, attrs, len);
+	err = image->module->list_attrs(partition, path, attrs, len);
 	if (err)
 		goto done;
 
@@ -1206,11 +1209,11 @@ imgtoolerr_t imgtool_partition_get_file_attributes(imgtool_partition *partition,
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_LEAVENULLALONE, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_LEAVENULLALONE, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->get_attrs(image, path, attrs, values);
+	err = image->module->get_attrs(partition, path, attrs, values);
 	if (err)
 		goto done;
 
@@ -1240,11 +1243,11 @@ imgtoolerr_t imgtool_partition_put_file_attributes(imgtool_partition *partition,
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_LEAVENULLALONE, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_LEAVENULLALONE, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->set_attrs(image, path, attrs, values);
+	err = image->module->set_attrs(partition, path, attrs, values);
 	if (err)
 		goto done;
 
@@ -1304,12 +1307,12 @@ imgtoolerr_t imgtool_partition_get_icon_info(imgtool_partition *partition, const
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, 0, &path, &alloc_path);
+	err = cannonicalize_path(partition, 0, &path, &alloc_path);
 	if (err)
 		goto done;
 
 	memset(iconinfo, 0, sizeof(*iconinfo));
-	err = image->module->get_iconinfo(image, path, iconinfo);
+	err = image->module->get_iconinfo(partition, path, iconinfo);
 	if (err)
 		goto done;
 
@@ -1347,12 +1350,12 @@ imgtoolerr_t imgtool_partition_suggest_file_filters(imgtool_partition *partition
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_LEAVENULLALONE, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_LEAVENULLALONE, &path, &alloc_path);
 	if (err)
 		goto done;
 
 	/* invoke the module's suggest call */
-	err = image->module->suggest_transfer(image, path, suggestions, suggestions_length);
+	err = image->module->suggest_transfer(partition, path, suggestions, suggestions_length);
 	if (err)
 		goto done;
 
@@ -1428,7 +1431,7 @@ imgtoolerr_t imgtool_partition_get_chain(imgtool_partition *partition, const cha
 		chain[i].block = ~0;
 	}
 
-	return image->module->get_chain(image, path, chain, chain_size - 1);
+	return image->module->get_chain(partition, path, chain, chain_size - 1);
 }
 
 
@@ -1518,7 +1521,7 @@ imgtoolerr_t imgtool_partition_get_free_space(imgtool_partition *partition, UINT
 	if (!image->module->free_space)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = image->module->free_space(image, &size);
+	err = image->module->free_space(partition, &size);
 	if (err)
 		return err | IMGTOOLERR_SRC_IMAGEFILE;
 
@@ -1549,11 +1552,11 @@ imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const cha
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
+	err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
 	if (err)
 		goto done;
 
-	err = cannonicalize_fork(image, &fork);
+	err = cannonicalize_fork(partition, &fork);
 	if (err)
 		goto done;
 
@@ -1567,7 +1570,7 @@ imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const cha
 			goto done;
 		}
 
-		err = u.read_file(image, filename, fork, destf);
+		err = u.read_file(partition, filename, fork, destf);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -1577,7 +1580,7 @@ imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const cha
 	else
 	{
 		/* invoke the actual module */
-		err = image->module->read_file(image, filename, fork, destf);
+		err = image->module->read_file(partition, filename, fork, destf);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -1635,11 +1638,11 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
+	err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
 	if (err)
 		goto done;
 
-	err = cannonicalize_fork(image, &fork);
+	err = cannonicalize_fork(partition, &fork);
 	if (err)
 		goto done;
 
@@ -1660,7 +1663,7 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 	/* if free_space is implemented; do a quick check to see if space is available */
 	if (image->module->free_space)
 	{
-		err = image->module->free_space(image, &free_space);
+		err = image->module->free_space(partition, &free_space);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -1686,7 +1689,7 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 			goto done;
 		}
 
-		err = u.write_file(image, filename, fork, sourcef, opts);
+		err = u.write_file(partition, filename, fork, sourcef, opts);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -1696,7 +1699,7 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 	else
 	{
 		/* actually invoke the write file handler */
-		err = image->module->write_file(image, filename, fork, sourcef, opts);
+		err = image->module->write_file(partition, filename, fork, sourcef, opts);
 		if (err)
 		{
 			err = markerrorsource(err);
@@ -1818,11 +1821,11 @@ imgtoolerr_t imgtool_partition_delete_file(imgtool_partition *partition, const c
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, 0, &fname, &alloc_path);
+	err = cannonicalize_path(partition, 0, &fname, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->delete_file(image, fname);
+	err = image->module->delete_file(partition, fname);
 	if (err)
 	{
 		err = markerrorsource(err);
@@ -1855,11 +1858,11 @@ imgtoolerr_t imgtool_partition_list_file_forks(imgtool_partition *partition, con
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, 0, &path, &alloc_path);
+	err = cannonicalize_path(partition, 0, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->list_forks(image, path, ents, len);
+	err = image->module->list_forks(partition, path, ents, len);
 	if (err)
 		goto done;
 
@@ -1890,11 +1893,11 @@ imgtoolerr_t imgtool_partition_create_directory(imgtool_partition *partition, co
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_MUSTBEDIR, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->create_dir(image, path);
+	err = image->module->create_dir(partition, path);
 	if (err)
 		goto done;
 
@@ -1925,11 +1928,11 @@ imgtoolerr_t imgtool_partition_delete_directory(imgtool_partition *partition, co
 	}
 
 	/* cannonicalize path */
-	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_MUSTBEDIR, &path, &alloc_path);
 	if (err)
 		goto done;
 
-	err = image->module->delete_dir(image, path);
+	err = image->module->delete_dir(partition, path);
 	if (err)
 		goto done;
 
@@ -1972,7 +1975,7 @@ imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *pa
 		goto done;
 	}
 
-	err = cannonicalize_path(image, PATH_MUSTBEDIR, &path, &alloc_path);
+	err = cannonicalize_path(partition, PATH_MUSTBEDIR, &path, &alloc_path);
 	if (err)
 		goto done;
 

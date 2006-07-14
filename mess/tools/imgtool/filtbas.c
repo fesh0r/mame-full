@@ -33,10 +33,11 @@ struct basictokens
 
 
 static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
-	imgtool_image *image, const char *filename,
+	imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
+	imgtool_image *image = imgtool_partition_image(partition);
 	imgtool_stream *mem_stream;
 	UINT8 line_header[4];
 	UINT16 address, line_number;
@@ -54,7 +55,7 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 	}
 
 	/* read actual file */
-	err = imgtool_image_module(image)->read_file(image, filename, fork, mem_stream);
+	err = imgtool_image_module(image)->read_file(partition, filename, fork, mem_stream);
 	if (err)
 		goto done;
 
@@ -124,7 +125,7 @@ done:
 
 
 static imgtoolerr_t basic_writefile(const struct basictokens *tokens,
-	imgtool_image *image, const char *filename,
+	imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
@@ -2598,16 +2599,16 @@ static const struct basictokens cocobas_tokens =
 	sizeof(cocobas_tokenents) / sizeof(cocobas_tokenents[0])
 };
 
-static imgtoolerr_t cocobas_readfile(imgtool_image *image, const char *filename,
+static imgtoolerr_t cocobas_readfile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *destf)
 {
-	return basic_readfile(&cocobas_tokens, image, filename, fork, destf);
+	return basic_readfile(&cocobas_tokens, partition, filename, fork, destf);
 }
 
-static imgtoolerr_t cocobas_writefile(imgtool_image *image, const char *filename,
+static imgtoolerr_t cocobas_writefile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
-	return basic_writefile(&cocobas_tokens, image, filename, fork, sourcef, opts);
+	return basic_writefile(&cocobas_tokens, partition, filename, fork, sourcef, opts);
 }
 
 void filter_cocobas_getinfo(UINT32 state, union filterinfo *info)
@@ -2644,16 +2645,16 @@ static const struct basictokens dragonbas_tokens =
 	sizeof(dragonbas_tokenents) / sizeof(dragonbas_tokenents[0])
 };
 
-static imgtoolerr_t dragonbas_readfile(imgtool_image *image, const char *filename,
+static imgtoolerr_t dragonbas_readfile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *destf)
 {
-	return basic_readfile(&dragonbas_tokens, image, filename, fork, destf);
+	return basic_readfile(&dragonbas_tokens, partition, filename, fork, destf);
 }
 
-static imgtoolerr_t dragonbas_writefile(imgtool_image *image, const char *filename,
+static imgtoolerr_t dragonbas_writefile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
-	return basic_writefile(&dragonbas_tokens, image, filename, fork, sourcef, opts);
+	return basic_writefile(&dragonbas_tokens, partition, filename, fork, sourcef, opts);
 }
 
 void filter_dragonbas_getinfo(UINT32 state, union filterinfo *info)
@@ -2687,16 +2688,16 @@ static const struct basictokens vzbas_tokens =
 	sizeof(vzbas_tokenents) / sizeof(vzbas_tokenents[0])
 };
 
-static imgtoolerr_t vzbas_readfile(imgtool_image *image, const char *filename,
+static imgtoolerr_t vzbas_readfile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *destf)
 {
-	return basic_readfile(&vzbas_tokens, image, filename, fork, destf);
+	return basic_readfile(&vzbas_tokens, partition, filename, fork, destf);
 }
 
-static imgtoolerr_t vzbas_writefile(imgtool_image *image, const char *filename,
+static imgtoolerr_t vzbas_writefile(imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
-	return basic_writefile(&vzbas_tokens, image, filename, fork, sourcef, opts);
+	return basic_writefile(&vzbas_tokens, partition, filename, fork, sourcef, opts);
 }
 
 void filter_vzbas_getinfo(UINT32 state, union filterinfo *info)

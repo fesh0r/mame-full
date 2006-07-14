@@ -5240,9 +5240,9 @@ static void mac_image_info(imgtool_image *img, char *string, size_t len);
 static imgtoolerr_t mac_image_beginenum(imgtool_directory *enumeration, const char *path);
 static imgtoolerr_t mac_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
 static void mac_image_closeenum(imgtool_directory *enumeration);
-static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *destf);
-static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t mac_image_freespace(imgtool_partition *partition, UINT64 *size);
+static imgtoolerr_t mac_image_readfile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf);
+static imgtoolerr_t mac_image_writefile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
 
 /*
 	close a mfs/hfs image
@@ -5533,8 +5533,9 @@ static imgtoolerr_t mac_image_nextenum(imgtool_directory *enumeration, imgtool_d
 /*
 	Compute free space on disk image in bytes
 */
-static imgtoolerr_t mac_image_freespace(imgtool_image *image, UINT64 *size)
+static imgtoolerr_t mac_image_freespace(imgtool_partition *partition, UINT64 *size)
 {
+	imgtool_image *image = imgtool_partition_image(partition);
 	*size = ((UINT64) get_imgref(image)->freeABs) * 512;
 	return IMGTOOLERR_SUCCESS;
 }
@@ -5570,9 +5571,10 @@ static imgtoolerr_t mac_get_comment(mac_l2_imgref *image, mac_str255 filename, c
 /*
 	Extract a file from a disk image.
 */
-static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *destf)
+static imgtoolerr_t mac_image_readfile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
+	imgtool_image *img = imgtool_partition_image(partition);
 	mac_l2_imgref *image = get_imgref(img);
 	UINT32 parID;
 	mac_str255 filename;
@@ -5620,8 +5622,9 @@ static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, co
 /*
 	Add a file to a disk image.
 */
-static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t mac_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
+	imgtool_image *img = imgtool_partition_image(partition);
 	mac_l2_imgref *image = get_imgref(img);
 	UINT32 parID;
 	mac_str255 filename;
@@ -5694,13 +5697,14 @@ static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, c
 
 
 
-static imgtoolerr_t mac_image_listforks(imgtool_image *img, const char *path, imgtool_forkent *ents, size_t len)
+static imgtoolerr_t mac_image_listforks(imgtool_partition *partition, const char *path, imgtool_forkent *ents, size_t len)
 {
 	imgtoolerr_t err;
 	UINT32 parID;
 	mac_str255 filename;
 	mac_dirent cat_info;
 	int fork_num = 0;
+	imgtool_image *img = imgtool_partition_image(partition);
 	mac_l2_imgref *image = get_imgref(img);
 
 	/* resolve path and fetch file info from directory/catalog */
@@ -5731,9 +5735,10 @@ static imgtoolerr_t mac_image_listforks(imgtool_image *img, const char *path, im
 
 
 
-static imgtoolerr_t mac_image_getattrs(imgtool_image *img, const char *path, const UINT32 *attrs, imgtool_attribute *values)
+static imgtoolerr_t mac_image_getattrs(imgtool_partition *partition, const char *path, const UINT32 *attrs, imgtool_attribute *values)
 {
 	imgtoolerr_t err;
+	imgtool_image *img = imgtool_partition_image(partition);
 	UINT32 parID;
 	mac_str255 filename;
 	mac_dirent cat_info;
@@ -5798,12 +5803,13 @@ static imgtoolerr_t mac_image_getattrs(imgtool_image *img, const char *path, con
 
 
 
-static imgtoolerr_t mac_image_setattrs(imgtool_image *img, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
+static imgtoolerr_t mac_image_setattrs(imgtool_partition *partition, const char *path, const UINT32 *attrs, const imgtool_attribute *values)
 {
 	imgtoolerr_t err;
 	UINT32 parID;
 	mac_str255 filename;
 	mac_dirent cat_info;
+	imgtool_image *img = imgtool_partition_image(partition);
 	mac_l2_imgref *image = get_imgref(img);
 	int i;
 
@@ -6064,7 +6070,7 @@ static int load_icon(UINT32 *dest, const void *resource_fork, UINT64 resource_fo
 
 
 
-static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path, imgtool_iconinfo *iconinfo)
+static imgtoolerr_t mac_image_geticoninfo(imgtool_partition *partition, const char *path, imgtool_iconinfo *iconinfo)
 {
 	static const UINT32 mac_palette_1bpp[2] = { 0xFFFFFF, 0x000000 };
 
@@ -6146,7 +6152,7 @@ static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path
 		== (sizeof(attr_values) / sizeof(attr_values[0])));
 
 	/* first retrieve type and creator code */
-	err = mac_image_getattrs(image, path, attrs, attr_values);
+	err = mac_image_getattrs(partition, path, attrs, attr_values);
 	if (err)
 		goto done;
 	type_code = (UINT32) attr_values[0].i;
@@ -6166,7 +6172,7 @@ static imgtoolerr_t mac_image_geticoninfo(imgtool_image *image, const char *path
 	}
 
 	/* read in the resource fork */
-	err = mac_image_readfile(image, path, "RESOURCE_FORK", stream);
+	err = mac_image_readfile(partition, path, "RESOURCE_FORK", stream);
 	if (err)
 		goto done;
 	resource_fork = stream_getptr(stream);
@@ -6270,12 +6276,13 @@ done:
  *
  *************************************/
 
-static imgtoolerr_t mac_image_suggesttransfer(imgtool_image *img, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+static imgtoolerr_t mac_image_suggesttransfer(imgtool_partition *partition, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t err;
 	UINT32 parID;
 	mac_str255 filename;
 	mac_dirent cat_info;
+	imgtool_image *img = imgtool_partition_image(partition);
 	mac_l2_imgref *image = get_imgref(img);
 	mac_filecategory_t file_category = MAC_FILECATEGORY_DATA;
 
