@@ -120,6 +120,7 @@ void         imgtool_directory_close(imgtool_directory *enumeration);
 imgtoolerr_t imgtool_directory_get_next(imgtool_directory *enumeration, imgtool_dirent *ent);
 const imgtool_module *imgtool_directory_module(imgtool_directory *enumeration);
 void *imgtool_directory_extrabytes(imgtool_directory *enumeration);
+imgtool_partition *imgtool_directory_partition(imgtool_directory *directory);
 imgtool_image *imgtool_directory_image(imgtool_directory *enumeration);
 
 int imgtool_validitychecks(void);
