@@ -587,7 +587,7 @@ void imgtool_partition_close(imgtool_partition *partition)
 	name for an attribute
 -------------------------------------------------*/
 
-void imgtool_partition_get_attribute_name(const imgtool_module *module, UINT32 attribute, const imgtool_attribute *attr_value,
+void imgtool_partition_get_attribute_name(imgtool_partition *partition, UINT32 attribute, const imgtool_attribute *attr_value,
 	char *buffer, size_t buffer_len)
 {
 	imgtoolerr_t err = IMGTOOLERR_UNIMPLEMENTED;
@@ -596,8 +596,8 @@ void imgtool_partition_get_attribute_name(const imgtool_module *module, UINT32 a
 
 	if (attr_value)
 	{
-		if (module->attr_name)
-			err = module->attr_name(attribute, attr_value, buffer, buffer_len);
+		if (partition->attr_name)
+			err = partition->attr_name(attribute, attr_value, buffer, buffer_len);
 
 		if (err == IMGTOOLERR_UNIMPLEMENTED)
 		{
