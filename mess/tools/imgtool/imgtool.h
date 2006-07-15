@@ -113,6 +113,7 @@ imgtoolerr_t imgtool_partition_get_icon_info(imgtool_partition *partition, const
 imgtoolerr_t imgtool_partition_suggest_file_filters(imgtool_partition *partition, const char *path, imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 imgtoolerr_t imgtool_partition_get_chain(imgtool_partition *partition, const char *path, imgtool_chainent *chain, size_t chain_size);
 imgtoolerr_t imgtool_partition_get_chain_string(imgtool_partition *partition, const char *path, char *buffer, size_t buffer_len);
+const char * imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state);
 
 /* ----- directory management ----- */
 imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *path, imgtool_directory **outenum);

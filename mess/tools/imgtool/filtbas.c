@@ -13,7 +13,8 @@
 #include "osdutils.h"
 #include "utils.h"
 
-struct basictoken_tableent
+typedef struct _basictoken_tableent basictoken_tableent;
+struct _basictoken_tableent
 {
 	UINT8 shift;
 	UINT8 base;
@@ -21,30 +22,30 @@ struct basictoken_tableent
 	int num_tokens;
 };
 
-struct basictokens
+typedef struct _basictokens basictokens;
+struct _basictokens
 {
 	UINT16 baseaddress;
-	int skip_bytes;
-	int be;
-	const struct basictoken_tableent *entries;
+	unsigned int skip_bytes : 15;
+	unsigned int be : 1;
+	const basictoken_tableent *entries;
 	int num_entries;
 };
 
 
 
-static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
+static imgtoolerr_t basic_readfile(const basictokens *tokens,
 	imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
-	imgtool_image *image = imgtool_partition_image(partition);
 	imgtool_stream *mem_stream;
 	UINT8 line_header[4];
 	UINT16 address, line_number;
 	UINT8 b, shift;
 	int i;
 	int in_string = FALSE;
-	const struct basictoken_tableent *token_table;
+	const basictoken_tableent *token_table;
 	const char *token;
 
 	mem_stream = stream_open_mem(NULL, 0);
@@ -55,7 +56,7 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 	}
 
 	/* read actual file */
-	err = imgtool_image_module(image)->read_file(partition, filename, fork, mem_stream);
+	err = imgtool_partition_read_file(partition, filename, fork, mem_stream, NULL);
 	if (err)
 		goto done;
 
@@ -64,10 +65,13 @@ static imgtoolerr_t basic_readfile(const struct basictokens *tokens,
 
 	while(stream_read(mem_stream, line_header, sizeof(line_header)) == sizeof(line_header))
 	{
-		if (tokens->be) {
+		if (tokens->be)
+		{
 			address = (UINT16) pick_integer_be(line_header, 0, 2);
 			line_number = (UINT16) pick_integer_be(line_header, 2, 2);
-		} else {
+		}
+		else
+		{
 			address = (UINT16) pick_integer_le(line_header, 0, 2);
 			line_number = (UINT16) pick_integer_le(line_header, 2, 2);			
 		}
@@ -124,7 +128,7 @@ done:
 
 
 
-static imgtoolerr_t basic_writefile(const struct basictokens *tokens,
+static imgtoolerr_t basic_writefile(const basictokens *tokens,
 	imgtool_partition *partition, const char *filename,
 	const char *fork, imgtool_stream *sourcef, option_resolution *opts)
 {
@@ -2584,16 +2588,16 @@ static const char *basic_100[] = /* "BASIC 10.0" - supported by c65 & clones */
  *
  *************************************/
 
-static const struct basictoken_tableent cocobas_tokenents[] =
+static const basictoken_tableent cocobas_tokenents[] =
 {
 	{ 0x00,	0x80,	cocobas_statements,	sizeof(cocobas_statements) / sizeof(cocobas_statements[0]) },
 	{ 0xff,	0x80,	cocobas_functions,	sizeof(cocobas_functions) / sizeof(cocobas_functions[0]) }
 };
 
-static const struct basictokens cocobas_tokens =
+static const basictokens cocobas_tokens =
 {
 	0x2600,
-	4,
+	3,
 	TRUE,
 	cocobas_tokenents,
 	sizeof(cocobas_tokenents) / sizeof(cocobas_tokenents[0])
@@ -2630,13 +2634,13 @@ void filter_cocobas_getinfo(UINT32 state, union filterinfo *info)
  *
  *************************************/
 
-static const struct basictoken_tableent dragonbas_tokenents[] =
+static const basictoken_tableent dragonbas_tokenents[] =
 {
 	{ 0x00,	0x80,	dragonbas_statements,	sizeof(dragonbas_statements) / sizeof(dragonbas_statements[0]) },
 	{ 0xff,	0x80,	dragonbas_functions,	sizeof(dragonbas_functions) / sizeof(dragonbas_functions[0]) }
 };
 
-static const struct basictokens dragonbas_tokens =
+static const basictokens dragonbas_tokens =
 {
 	0x2600,
 	4,
@@ -2674,12 +2678,12 @@ void filter_dragonbas_getinfo(UINT32 state, union filterinfo *info)
  *
  *************************************/
 
-static const struct basictoken_tableent vzbas_tokenents[] =
+static const basictoken_tableent vzbas_tokenents[] =
 {
 	{ 0x00,	0x80,	vzbas,	sizeof(vzbas) / sizeof(vzbas[0]) }
 };
 
-static const struct basictokens vzbas_tokens =
+static const basictokens vzbas_tokens =
 {
 	0x7ae9,
 	0,

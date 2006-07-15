@@ -34,6 +34,7 @@ struct _imgtool_partition
 	imgtool_image *image;
 	int partition_index;
 
+	imgtool_class imgclass;
 	size_t imageenum_extra_bytes;
 
 	char path_separator;
@@ -533,6 +534,7 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 	/* fill out the structure */
 	p->image						= image;
 	p->partition_index				= partition_index;
+	p->imgclass						= module->imgclass;
 	p->imageenum_extra_bytes		= module->imageenum_extra_bytes;
 	p->path_separator				= module->path_separator;
 	p->alternate_path_separator		= module->alternate_path_separator;
@@ -665,17 +667,19 @@ int imgtool_validitychecks(void)
 {
 	int error = 0;
 	int val;
-	imgtoolerr_t err;
-	imgtool_library *library;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	const imgtool_module *module = NULL;
 	const struct OptionGuide *guide_entry;
 	imgtool_module_features features;
+	int created_library = FALSE;
 
-	err = imgtool_create_cannonical_library(TRUE, &library);
-	if (err)
-		goto done;
+	if (!global_imgtool_library)
+	{
+		imgtool_init(FALSE);
+		created_library = TRUE;
+	}
 
-	while((module = imgtool_library_iterate(library, module)) != NULL)
+	while((module = imgtool_library_iterate(global_imgtool_library, module)) != NULL)
 	{
 		features = imgtool_get_module_features(module);
 
@@ -787,12 +791,13 @@ int imgtool_validitychecks(void)
 	}
 
 done:
+	if (created_library)
+		imgtool_exit();
 	if (err)
 	{
 		printf("imgtool: %s\n", imgtool_error(err));
 		error = 1;
 	}
-	imgtool_exit();
 	return error;
 }
 
@@ -1589,15 +1594,6 @@ imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const cha
 		goto done;
 	}
 
-	/* cannonicalize path */
-	err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
-	if (err)
-		goto done;
-
-	err = cannonicalize_fork(partition, &fork);
-	if (err)
-		goto done;
-
 	if (filter)
 	{
 		/* use a filter */
@@ -1617,6 +1613,15 @@ imgtoolerr_t imgtool_partition_read_file(imgtool_partition *partition, const cha
 	}
 	else
 	{
+		/* cannonicalize path */
+		err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
+		if (err)
+			goto done;
+
+		err = cannonicalize_fork(partition, &fork);
+		if (err)
+			goto done;
+
 		/* invoke the actual module */
 		err = partition->read_file(partition, filename, fork, destf);
 		if (err)
@@ -1659,63 +1664,6 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 		goto done;
 	}
 
-	/* Does this image module prefer upper case file names? */
-	if (partition->prefer_ucase)
-	{
-		buf = malloc(strlen(filename) + 1);
-		if (!buf)
-		{
-			err = IMGTOOLERR_OUTOFMEMORY;
-			goto done;
-		}
-		strcpy(buf, filename);
-		for (s = buf; *s; s++)
-			*s = toupper(*s);
-		filename = buf;
-	}
-
-	/* cannonicalize path */
-	err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
-	if (err)
-		goto done;
-
-	err = cannonicalize_fork(partition, &fork);
-	if (err)
-		goto done;
-
-	/* allocate dummy options if necessary */
-	if (!opts && partition->writefile_optguide)
-	{
-		alloc_resolution = option_resolution_create(partition->writefile_optguide, partition->writefile_optspec);
-		if (!alloc_resolution)
-		{
-			err = IMGTOOLERR_OUTOFMEMORY;
-			goto done;
-		}
-		opts = alloc_resolution;
-	}
-	if (opts)
-		option_resolution_finish(opts);
-
-	/* if free_space is implemented; do a quick check to see if space is available */
-	if (partition->free_space)
-	{
-		err = partition->free_space(partition, &free_space);
-		if (err)
-		{
-			err = markerrorsource(err);
-			goto done;
-		}
-
-		file_size = stream_size(sourcef);
-
-		if (file_size > free_space)
-		{
-			err = markerrorsource(IMGTOOLERR_NOSPACE);
-			goto done;
-		}
-	}
-
 	if (filter)
 	{
 		/* use a filter */
@@ -1735,6 +1683,63 @@ imgtoolerr_t imgtool_partition_write_file(imgtool_partition *partition, const ch
 	}
 	else
 	{
+		/* does this partition prefer upper case file names? */
+		if (partition->prefer_ucase)
+		{
+			buf = malloc(strlen(filename) + 1);
+			if (!buf)
+			{
+				err = IMGTOOLERR_OUTOFMEMORY;
+				goto done;
+			}
+			strcpy(buf, filename);
+			for (s = buf; *s; s++)
+				*s = toupper(*s);
+			filename = buf;
+		}
+
+		/* cannonicalize path */
+		err = cannonicalize_path(partition, PATH_CANBEBOOTBLOCK, &filename, &alloc_path);
+		if (err)
+			goto done;
+
+		err = cannonicalize_fork(partition, &fork);
+		if (err)
+			goto done;
+
+		/* allocate dummy options if necessary */
+		if (!opts && partition->writefile_optguide)
+		{
+			alloc_resolution = option_resolution_create(partition->writefile_optguide, partition->writefile_optspec);
+			if (!alloc_resolution)
+			{
+				err = IMGTOOLERR_OUTOFMEMORY;
+				goto done;
+			}
+			opts = alloc_resolution;
+		}
+		if (opts)
+			option_resolution_finish(opts);
+
+		/* if free_space is implemented; do a quick check to see if space is available */
+		if (partition->free_space)
+		{
+			err = partition->free_space(partition, &free_space);
+			if (err)
+			{
+				err = markerrorsource(err);
+				goto done;
+			}
+
+			file_size = stream_size(sourcef);
+
+			if (file_size > free_space)
+			{
+				err = markerrorsource(IMGTOOLERR_NOSPACE);
+				goto done;
+			}
+		}
+
 		/* actually invoke the write file handler */
 		err = partition->write_file(partition, filename, fork, sourcef, opts);
 		if (err)
@@ -1973,6 +1978,13 @@ done:
 	if (alloc_path)
 		free(alloc_path);
 	return err;
+}
+
+
+
+const char * imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state)
+{
+	return imgtool_get_info_string(&partition->imgclass, state);
 }
 
 

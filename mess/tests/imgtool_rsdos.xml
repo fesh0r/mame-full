@@ -106,10 +106,17 @@
 </imgtooltest>
 
 <imgtooltest name="coco_rs_004">
-	<!-- NOTE: should be using &eoln; here -->
+	<!-- NOTE: should be using &eoln; here; this test assumes that the host is CRLF -->
 	<createimage driver="coco_jvc_rsdos"/>
 	<putfile name="FOO.TXT">'Hello&#13;World&#13;'</putfile>
 	<checkfile name="FOO.TXT" filter="ascii">'Hello&#13;&#10;World&#13;&#10;'</checkfile>
+</imgtooltest>
+
+<imgtooltest name="coco_rs_005">
+	<!-- NOTE: should be using &eoln; here; this test assumes that the host is CRLF -->
+	<createimage driver="coco_jvc_rsdos"/>
+	<putfile name="FOO.BAS">0xFF000B260A000A81A53130000000</putfile>
+	<checkfile name="FOO.BAS" filter="cocobas">'10 GOTO10&#13;&#10;'</checkfile>
 </imgtooltest>
 
 </tests>
