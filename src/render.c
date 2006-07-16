@@ -750,8 +750,9 @@ void render_init(void)
 	render_primitive_free_list = NULL;
 	container_item_free_list = NULL;
 
-	/* zap the UI target */
+	/* zap more variables */
 	ui_target = NULL;
+	memset(screen_container, 0, sizeof(screen_container));
 
 	/* create a UI container */
 	ui_container = render_container_alloc();
