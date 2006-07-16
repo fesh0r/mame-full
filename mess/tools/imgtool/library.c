@@ -66,47 +66,21 @@ static void imgtool_library_add_class(imgtool_library *library, const imgtool_cl
 	module->description					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_DESCRIPTION));
 	module->extensions					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_FILE_EXTENSIONS));
 	module->eoln						= auto_strdup_allow_null(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_EOLN));
-	module->path_separator				= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
-	module->alternate_path_separator	= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
-	module->prefer_ucase				= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
 	module->initial_path_separator		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR) ? 1 : 0;
 	module->open_is_strict				= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_OPEN_IS_STRICT) ? 1 : 0;
-	module->supports_creation_time		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME) ? 1 : 0;
-	module->supports_lastmodified_time	= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME) ? 1 : 0;
 	module->tracks_are_called_cylinders	= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_TRACKS_ARE_CALLED_CYLINDERS) ? 1 : 0;
 	module->writing_untested			= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_WRITING_UNTESTED) ? 1 : 0;
 	module->creation_untested			= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_CREATION_UNTESTED) ? 1 : 0;
-	module->supports_bootblock			= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK) ? 1 : 0;
 	module->open						= (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_OPEN);
 	module->create						= (imgtoolerr_t (*)(imgtool_image *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CREATE);
 	module->close						= (void (*)(imgtool_image *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CLOSE);
 	module->info						= (void (*)(imgtool_image *, char *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_INFO);
-	module->begin_enum					= (imgtoolerr_t (*)(imgtool_directory *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
-	module->next_enum					= (imgtoolerr_t (*)(imgtool_directory *, imgtool_dirent *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
-	module->close_enum					= (void (*)(imgtool_directory *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CLOSE_ENUM);
-	module->free_space					= (imgtoolerr_t (*)(imgtool_partition *, UINT64 *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_FREE_SPACE);
-	module->read_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_FILE);
-	module->write_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_FILE);
-	module->delete_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_FILE);
-	module->list_forks					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_forkent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_FORKS);
-	module->create_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CREATE_DIR);
-	module->delete_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_DIR);
-	module->list_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, UINT32 *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_ATTRS);
-	module->get_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ATTRS);
-	module->set_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, const imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SET_ATTRS);
-	module->attr_name					= (imgtoolerr_t (*)(UINT32, const imgtool_attribute *, char *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_ATTR_NAME);
-	module->get_iconinfo				= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ICON_INFO);
-	module->suggest_transfer			= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
-	module->get_chain					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_CHAIN);
 	module->read_block					= (imgtoolerr_t (*)(imgtool_image *, void *, UINT64)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_BLOCK);
 	module->write_block					= (imgtoolerr_t (*)(imgtool_image *, const void *, UINT64)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_BLOCK);
 	module->block_size					= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_BLOCK_SIZE);
 	module->createimage_optguide		= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE);
 	module->createimage_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_CREATEIMAGE_OPTSPEC));
-	module->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
-	module->writefile_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC));
 	module->image_extra_bytes			+= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES);
-	module->imageenum_extra_bytes		+= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ENUM_EXTRA_BYTES);
 }
 
 

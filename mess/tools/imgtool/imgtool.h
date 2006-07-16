@@ -46,6 +46,14 @@ struct _imgtool_module_features
 {
 	unsigned int supports_create : 1;
 	unsigned int supports_open : 1;
+	unsigned int supports_readsector : 1;
+	unsigned int supports_writesector : 1;
+	unsigned int is_read_only : 1;
+};
+
+typedef struct _imgtool_partition_features imgtool_partition_features;
+struct _imgtool_partition_features
+{
 	unsigned int supports_reading : 1;
 	unsigned int supports_writing : 1;
 	unsigned int supports_deletefile : 1;
@@ -55,8 +63,6 @@ struct _imgtool_module_features
 	unsigned int supports_deletedir : 1;
 	unsigned int supports_creation_time : 1;
 	unsigned int supports_lastmodified_time : 1;
-	unsigned int supports_readsector : 1;
-	unsigned int supports_writesector : 1;
 	unsigned int supports_forks : 1;
 	unsigned int supports_geticoninfo : 1;
 	unsigned int is_read_only : 1;
@@ -113,7 +119,15 @@ imgtoolerr_t imgtool_partition_get_icon_info(imgtool_partition *partition, const
 imgtoolerr_t imgtool_partition_suggest_file_filters(imgtool_partition *partition, const char *path, imgtool_stream *stream, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 imgtoolerr_t imgtool_partition_get_chain(imgtool_partition *partition, const char *path, imgtool_chainent *chain, size_t chain_size);
 imgtoolerr_t imgtool_partition_get_chain_string(imgtool_partition *partition, const char *path, char *buffer, size_t buffer_len);
+imgtool_partition_features imgtool_partition_get_features(imgtool_partition *partition);
+void *       imgtool_partition_get_info_ptr(imgtool_partition *partition, UINT32 state);
 const char * imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state);
+UINT64       imgtool_partition_get_info_int(imgtool_partition *partition, UINT32 state);
+
+/* ----- path management ----- */
+const char * imgtool_partition_get_root_path(imgtool_partition *partition);
+const char * imgtool_partition_path_concatenate(imgtool_partition *partition, const char *path1, const char *path2);
+const char * imgtool_partition_get_base_name(imgtool_partition *partition, const char *path);
 
 /* ----- directory management ----- */
 imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *path, imgtool_directory **outenum);

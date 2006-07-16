@@ -63,12 +63,6 @@ imgtoolerr_t imgtool_create_cannonical_library(int omit_untested, imgtool_librar
 		{
 			if (module->writing_untested)
 			{
-				module->write_file = NULL;
-				module->delete_file = NULL;
-				module->create_dir = NULL;
-				module->delete_dir = NULL;
-				module->writefile_optguide = NULL;
-				module->writefile_optspec = NULL;
 				module->write_sector = NULL;
 			}
 			if (module->creation_untested)

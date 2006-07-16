@@ -298,7 +298,7 @@ done:
 
 static int cmd_put(const struct command *c, int argc, char *argv[])
 {
-	imgtoolerr_t err;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	int i;
 	imgtool_image *image = NULL;
 	imgtool_partition *partition = NULL;
@@ -312,6 +312,8 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	char **filename_list;
 	int filename_count;
 	int partition_index = 0;
+	const struct OptionGuide *writefile_optguide;
+	const char *writefile_optspec;
 
 	module = imgtool_find_module(argv[0]);
 	if (!module)
@@ -320,13 +322,32 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 		goto done;
 	}
 
-	if (module->writefile_optguide && module->writefile_optspec)
+	/* ugh I hate the way this function is set up, this is because the
+	 * arguments depend on the partition; something that requires some
+	 * rudimentary parsing */
+	if (argc >= 2)
 	{
-		resolution = option_resolution_create(module->writefile_optguide, module->writefile_optspec);
-		if (!resolution)
-		{
-			err = IMGTOOLERR_OUTOFMEMORY;
+		/* open up the image */
+		err = imgtool_image_open(module, argv[1], OSD_FOPEN_RW, &image);
+		if (err)
 			goto done;
+
+		/* open up the partition */
+		err = imgtool_partition_open(image, partition_index, &partition);
+		if (err)
+			goto done;
+
+		writefile_optguide = (const struct OptionGuide *) imgtool_partition_get_info_ptr(partition, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+		writefile_optspec = imgtool_partition_get_info_ptr(partition, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC);
+
+		if (writefile_optguide && writefile_optspec)
+		{
+			resolution = option_resolution_create(writefile_optguide, writefile_optspec);
+			if (!resolution)
+			{
+				err = IMGTOOLERR_OUTOFMEMORY;
+				goto done;
+			}
 		}
 	}
 
@@ -338,16 +359,6 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 	new_filename = interpret_filename(argv[unnamedargs - 1]);
 	filename_list = &argv[2];
 	filename_count = unnamedargs - 3;
-
-	/* open up the image */
-	err = imgtool_image_open(module, argv[1], OSD_FOPEN_RW, &image);
-	if (err)
-		goto done;
-
-	/* open up the partition */
-	err = imgtool_partition_open(image, partition_index, &partition);
-	if (err)
-		goto done;
 
 	/* loop through the filenames, and put them */
 	for (i = 0; i < filename_count; i++)
@@ -814,6 +825,7 @@ static int cmd_listdriveroptions(const struct command *c, int argc, char *argv[]
 {
 	const imgtool_module *mod;
 	const struct OptionGuide *opt_guide;
+	const char *opt_spec;
 
 	mod = imgtool_find_module(argv[0]);
 	if (!mod)
@@ -822,11 +834,12 @@ static int cmd_listdriveroptions(const struct command *c, int argc, char *argv[]
 	fprintf(stdout, "Driver specific options for module '%s':\n\n", argv[0]);
 
 	/* list write options */
-	opt_guide = mod->writefile_optguide;
+	opt_guide = (const struct OptionGuide *) imgtool_get_info_ptr(&mod->imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+	opt_spec = imgtool_get_info_string(&mod->imgclass, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC);
 	if (opt_guide)
 	{
 		fprintf(stdout, "Image specific file options (usable on the 'put' command):\n\n");
-		listoptions(opt_guide, mod->writefile_optspec);
+		listoptions(opt_guide, opt_spec);
 		puts("\n");
 	}
 	else

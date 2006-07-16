@@ -80,6 +80,8 @@ struct _imgtool_directory
 
 imgtool_library *global_imgtool_library;
 
+static int global_omit_untested;
+
 
 
 /***************************************************************************
@@ -145,6 +147,7 @@ void imgtool_init(int omit_untested)
 	{
 		imgtool_library_sort(global_imgtool_library, ITLS_DESCRIPTION);
 	}
+	global_omit_untested = omit_untested;
 }
 
 
@@ -190,34 +193,10 @@ imgtool_module_features imgtool_get_module_features(const imgtool_module *module
 		features.supports_create = 1;
 	if (module->open)
 		features.supports_open = 1;
-	if (module->read_file)
-		features.supports_reading = 1;
-	if (module->write_file)
-		features.supports_writing = 1;
-	if (module->delete_file)
-		features.supports_deletefile = 1;
-	if (module->path_separator)
-		features.supports_directories = 1;
-	if (module->free_space)
-		features.supports_freespace = 1;
-	if (module->create_dir)
-		features.supports_createdir = 1;
-	if (module->delete_dir)
-		features.supports_deletedir = 1;
-	if (module->supports_creation_time)
-		features.supports_creation_time = 1;
-	if (module->supports_lastmodified_time)
-		features.supports_lastmodified_time = 1;
 	if (module->read_sector)
 		features.supports_readsector = 1;
 	if (module->write_sector)
 		features.supports_writesector = 1;
-	if (module->list_forks)
-		features.supports_forks = 1;
-	if (module->get_iconinfo)
-		features.supports_geticoninfo = 1;
-	if (!features.supports_writing && !features.supports_createdir && !features.supports_deletefile && !features.supports_deletedir)
-		features.is_read_only = 1;
 	return features;
 }
 
@@ -520,7 +499,7 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_partition *p;
-	const imgtool_module *module = imgtool_image_module(image);
+	const imgtool_class *imgclass;
 
 	/* allocate the new partition object */
 	p = (imgtool_partition *) malloc(sizeof(*p));
@@ -534,33 +513,46 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 	/* fill out the structure */
 	p->image						= image;
 	p->partition_index				= partition_index;
-	p->imgclass						= module->imgclass;
-	p->imageenum_extra_bytes		= module->imageenum_extra_bytes;
-	p->path_separator				= module->path_separator;
-	p->alternate_path_separator		= module->alternate_path_separator;
-	p->prefer_ucase					= module->prefer_ucase;
-	p->supports_creation_time		= module->supports_creation_time;
-	p->supports_lastmodified_time	= module->supports_lastmodified_time;
-	p->supports_bootblock			= module->supports_bootblock;
-	p->begin_enum					= module->begin_enum;
-	p->next_enum					= module->next_enum;
-	p->close_enum					= module->close_enum;
-	p->free_space					= module->free_space;
-	p->read_file					= module->read_file;
-	p->write_file					= module->write_file;
-	p->delete_file					= module->delete_file;
-	p->list_forks					= module->list_forks;
-	p->create_dir					= module->create_dir;
-	p->delete_dir					= module->delete_dir;
-	p->list_attrs					= module->list_attrs;
-	p->get_attrs					= module->get_attrs;
-	p->set_attrs					= module->set_attrs;
-	p->attr_name					= module->attr_name;
-	p->get_iconinfo					= module->get_iconinfo;
-	p->suggest_transfer				= module->suggest_transfer;
-	p->get_chain					= module->get_chain;
-	p->writefile_optguide			= module->writefile_optguide;
-	p->writefile_optspec			= module->writefile_optspec;
+
+	/* call the get_info proc */
+	imgclass = &imgtool_image_module(image)->imgclass;
+	p->imgclass						= *imgclass;
+	p->imageenum_extra_bytes		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ENUM_EXTRA_BYTES);
+	p->path_separator				= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
+	p->alternate_path_separator		= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
+	p->prefer_ucase					= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
+	p->supports_creation_time		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME) ? 1 : 0;
+	p->supports_lastmodified_time	= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME) ? 1 : 0;
+	p->supports_bootblock			= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK) ? 1 : 0;
+	p->begin_enum					= (imgtoolerr_t (*)(imgtool_directory *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
+	p->next_enum					= (imgtoolerr_t (*)(imgtool_directory *, imgtool_dirent *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
+	p->free_space					= (imgtoolerr_t (*)(imgtool_partition *, UINT64 *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_FREE_SPACE);
+	p->read_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_FILE);
+	p->write_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_FILE);
+	p->delete_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_FILE);
+	p->list_forks					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_forkent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_FORKS);
+	p->create_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CREATE_DIR);
+	p->delete_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_DIR);
+	p->list_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, UINT32 *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_ATTRS);
+	p->get_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ATTRS);
+	p->set_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, const imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SET_ATTRS);
+	p->attr_name					= (imgtoolerr_t (*)(UINT32, const imgtool_attribute *, char *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_ATTR_NAME);
+	p->get_iconinfo					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ICON_INFO);
+	p->suggest_transfer				= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
+	p->get_chain					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_CHAIN);
+	p->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+	p->writefile_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC));
+
+	/* mask out if writing is untested */
+	if (global_omit_untested && imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_WRITING_UNTESTED))
+	{
+		p->write_file = NULL;
+		p->delete_file = NULL;
+		p->create_dir = NULL;
+		p->delete_dir = NULL;
+		p->writefile_optguide = NULL;
+		p->writefile_optspec = NULL;
+	}
 
 done:
 	*partition = err ? NULL : p;
@@ -699,6 +691,7 @@ int imgtool_validitychecks(void)
 			error = 1;
 		}
 
+#if 0
 		/* sanity checks on modules that do not support directories */
 		if (!module->path_separator)
 		{
@@ -723,6 +716,7 @@ int imgtool_validitychecks(void)
 				error = 1;
 			}
 		}
+#endif
 
 		/* sanity checks on sector operations */
 		if (module->read_sector && !module->get_sector_size)
@@ -1982,9 +1976,166 @@ done:
 
 
 
-const char * imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state)
+/*-------------------------------------------------
+    imgtool_partition_get_features - retrieves a
+	structure identifying this partition's features
+	associated with an image
+-------------------------------------------------*/
+
+imgtool_partition_features imgtool_partition_get_features(imgtool_partition *partition)
+{
+	imgtool_partition_features features;
+	memset(&features, 0, sizeof(features));
+
+	if (partition->read_file)
+		features.supports_reading = 1;
+	if (partition->write_file)
+		features.supports_writing = 1;
+	if (partition->delete_file)
+		features.supports_deletefile = 1;
+	if (partition->path_separator)
+		features.supports_directories = 1;
+	if (partition->free_space)
+		features.supports_freespace = 1;
+	if (partition->create_dir)
+		features.supports_createdir = 1;
+	if (partition->delete_dir)
+		features.supports_deletedir = 1;
+	if (partition->supports_creation_time)
+		features.supports_creation_time = 1;
+	if (partition->supports_lastmodified_time)
+		features.supports_lastmodified_time = 1;
+	if (!features.supports_writing && !features.supports_createdir && !features.supports_deletefile && !features.supports_deletedir)
+		features.is_read_only = 1;
+	return features;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_get_info_ptr - retrieves a
+	pointer associated with a partition's format
+-------------------------------------------------*/
+
+void *imgtool_partition_get_info_ptr(imgtool_partition *partition, UINT32 state)
+{
+	return imgtool_get_info_ptr(&partition->imgclass, state);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_get_info_string - retrieves a
+	string associated with a partition's format
+-------------------------------------------------*/
+
+const char *imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state)
 {
 	return imgtool_get_info_string(&partition->imgclass, state);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_get_info_int - retrieves a
+	pointer associated with a partition's format
+-------------------------------------------------*/
+
+UINT64 imgtool_partition_get_info_int(imgtool_partition *partition, UINT32 state)
+{
+	return imgtool_get_info_int(&partition->imgclass, state);
+}
+
+
+
+/***************************************************************************
+
+	Path handling functions
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    imgtool_partition_get_root_path - retrieves
+	the path root of this partition
+-------------------------------------------------*/
+
+const char *imgtool_partition_get_root_path(imgtool_partition *partition)
+{
+	int initial_path_separator;
+	char path_separator;
+	char *buf;
+	int pos = 0;
+
+	initial_path_separator = imgtool_partition_get_info_int(partition, IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR) ? 1 : 0;
+	path_separator = (char) imgtool_partition_get_info_int(partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
+	buf = imgtool_temp_str();
+
+	if (initial_path_separator)
+		buf[pos++] = path_separator;
+	buf[pos] = '\0';
+	return buf;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_path_concatenate - retrieves
+	a pointer associated with a partition's format
+-------------------------------------------------*/
+
+const char *imgtool_partition_path_concatenate(imgtool_partition *partition, const char *path1, const char *path2)
+{
+	char path_separator;
+	size_t len;
+	char *buffer = imgtool_temp_str();
+	size_t buffer_len = 256;
+
+	path_separator = (char) imgtool_partition_get_info_int(partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
+	len = strlen(path1);
+
+	if (!strcmp(path2, "."))
+	{
+		/* keep the same directory */
+		snprintf(buffer, buffer_len, "%s", path1);
+	}
+	else if (!strcmp(path2, ".."))
+	{
+		/* up one directory */
+		while((len > 0) && (path1[len - 1] == path_separator))
+			len--;
+		while((len > 0) && (path1[len - 1] != path_separator))
+			len--;
+		snprintf(buffer, MIN(len + 1, buffer_len), "%s", path1);
+	}
+	else
+	{
+		/* append a path */
+		snprintf(buffer, buffer_len, "%s%c%s", path1, path_separator, path2);
+	}
+	return buffer;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_get_base_name - retrieves
+	a base name for a partition specific path
+-------------------------------------------------*/
+
+const char *imgtool_partition_get_base_name(imgtool_partition *partition, const char *path)
+{
+	char path_separator;
+	const char *new_path = path;
+	int i;
+
+	path_separator = (char) imgtool_partition_get_info_int(partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
+
+	for (i = 0; path[i]; i++)
+	{
+		if (path[i] == path_separator)
+			new_path = &path[i + 1];
+	}
+	return new_path;
 }
 
 
@@ -2133,7 +2284,7 @@ const imgtool_module *imgtool_directory_module(imgtool_directory *directory)
 
 void *imgtool_directory_extrabytes(imgtool_directory *directory)
 {
-	assert(directory->partition->image->module->imageenum_extra_bytes > 0);
+	assert(directory->partition->imageenum_extra_bytes > 0);
 	return ((UINT8 *) directory) + sizeof(*directory);
 }
 

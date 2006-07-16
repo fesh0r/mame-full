@@ -324,42 +324,17 @@ struct _imgtool_module
 	const char *eoln;
 
 	size_t image_extra_bytes;
-	size_t imageenum_extra_bytes;
-
-	char path_separator;
-	char alternate_path_separator;
 	
 	/* flags */
-	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
 	unsigned int open_is_strict : 1;
-	unsigned int supports_creation_time : 1;
-	unsigned int supports_lastmodified_time : 1;
 	unsigned int tracks_are_called_cylinders : 1;	/* used for hard drivers */
 	unsigned int writing_untested : 1;				/* used when we support writing, but not in main build */
 	unsigned int creation_untested : 1;				/* used when we support creation, but not in main build */
-	unsigned int supports_bootblock : 1;			/* this module supports loading/storing the boot block */
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);
 	void			(*info)			(imgtool_image *image, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)	(imgtool_directory *enumeration, const char *path);
-	imgtoolerr_t	(*next_enum)	(imgtool_directory *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)	(imgtool_directory *enumeration);
-	imgtoolerr_t	(*free_space)	(imgtool_partition *partition, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(imgtool_partition *partition, const char *filename);
-	imgtoolerr_t	(*list_forks)	(imgtool_partition *partition, const char *path, imgtool_forkent *ents, size_t len);
-	imgtoolerr_t	(*create_dir)	(imgtool_partition *partition, const char *path);
-	imgtoolerr_t	(*delete_dir)	(imgtool_partition *partition, const char *path);
-	imgtoolerr_t	(*list_attrs)	(imgtool_partition *partition, const char *path, UINT32 *attrs, size_t len);
-	imgtoolerr_t	(*get_attrs)	(imgtool_partition *partition, const char *path, const UINT32 *attrs, imgtool_attribute *values);
-	imgtoolerr_t	(*set_attrs)	(imgtool_partition *partition, const char *path, const UINT32 *attrs, const imgtool_attribute *values);
-	imgtoolerr_t	(*attr_name)	(UINT32 attribute, const imgtool_attribute *attr, char *buffer, size_t buffer_len);
-	imgtoolerr_t	(*get_iconinfo)	(imgtool_partition *partition, const char *path, imgtool_iconinfo *iconinfo);
-	imgtoolerr_t	(*suggest_transfer)(imgtool_partition *partition, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
-	imgtoolerr_t	(*get_chain)	(imgtool_partition *partition, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
 	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
@@ -372,9 +347,6 @@ struct _imgtool_module
 
 	const struct OptionGuide *createimage_optguide;
 	const char *createimage_optspec;
-
-	const struct OptionGuide *writefile_optguide;
-	const char *writefile_optspec;
 
 	const void *extra;
 };

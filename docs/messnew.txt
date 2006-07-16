@@ -33,7 +33,9 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-- Internal changes to how Imgtool modules are specified.  [Nate Woods]
+- Major internal changes to how Imgtool modules are specified, and introduced
+  a concept of partitions.  Partitions are not exposed to the UI yet.  Expect
+  regressions.  [Nate Woods]
 
 
 

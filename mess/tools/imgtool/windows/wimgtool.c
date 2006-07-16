@@ -26,10 +26,11 @@ extern void win_association_dialog(HWND parent);
 typedef struct _wimgtool_info wimgtool_info;
 struct _wimgtool_info
 {
-	HWND listview;
-	HWND statusbar;
-	imgtool_image *image;
-	imgtool_partition *partition;
+	HWND listview;					// handle to list view
+	HWND statusbar;					// handle to the status bar
+	imgtool_image *image;			// the currently loaded image
+	imgtool_partition *partition;	// the currently loaded partition
+
 	char *filename;
 	int open_mode;
 	char *current_directory;
@@ -341,11 +342,11 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	const char *ptr;
 	const char *s;
 	size_t size, i;
-	imgtool_module_features features;
+	imgtool_partition_features features;
 	struct tm *local_time;
 
 	info = get_wimgtool_info(window);
-	features = imgtool_get_module_features(imgtool_image_module(info->image));
+	features = imgtool_partition_get_features(info->partition);
 
 	/* try to get a custom icon */
 	if (features.supports_geticoninfo)
@@ -467,7 +468,8 @@ static imgtoolerr_t refresh_image(HWND window)
 	UINT64 filesize;
 	int i;
 	BOOL is_root_directory;
-	imgtool_module_features features;
+	imgtool_partition_features features;
+	char path_separator;
 
 	info = get_wimgtool_info(window);
 	size_buf[0] = '\0';
@@ -476,15 +478,15 @@ static imgtoolerr_t refresh_image(HWND window)
 
 	if (info->image)
 	{
-		memset(&features, 0, sizeof(features));
-		features = imgtool_get_module_features(imgtool_image_module(info->image));
+		features = imgtool_partition_get_features(info->partition);
 
 		is_root_directory = TRUE;
 		if (info->current_directory)
 		{
 			for (i = 0; info->current_directory[i]; i++)
 			{
-				if (info->current_directory[i] != imgtool_image_module(info->image)->path_separator)
+				path_separator = (char) imgtool_partition_get_info_int(info->partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
+				if (info->current_directory[i] != path_separator)
 				{
 					is_root_directory = FALSE;
 					break;
@@ -548,7 +550,6 @@ static imgtoolerr_t full_refresh_image(HWND window)
 {
 	wimgtool_info *info;
 	LVCOLUMN col;
-	const imgtool_module *module;
 	int column_index = 0;
 	int i;
 	char buf[256];
@@ -557,14 +558,13 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	TCHAR file_title_buf[MAX_PATH];
 	LPCTSTR file_title;
 	const char *statusbar_text[2];
-	imgtool_module_features features;
+	imgtool_partition_features features;
 
 	info = get_wimgtool_info(window);
 
 	// get the modules and features
-	module = info->image ? imgtool_image_module(info->image) : NULL;
-	if (module)
-		features = imgtool_get_module_features(module);
+	if (info->partition)
+		features = imgtool_partition_get_features(info->partition);
 	else
 		memset(&features, 0, sizeof(features));
 
@@ -607,7 +607,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 		}
 
 		statusbar_text[0] = osd_basename((char *) info->filename);
-		statusbar_text[1] = module->description;
+		statusbar_text[1] = imgtool_image_module(info->image)->description;
 	}
 	else
 	{
@@ -826,15 +826,10 @@ const imgtool_module *find_filter_module(int filter_index,
 static imgtoolerr_t get_recursive_directory(imgtool_partition *partition, const char *path, LPCTSTR local_path)
 {
 	imgtoolerr_t err;
-	imgtool_image *image;
 	imgtool_directory *imageenum = NULL;
 	imgtool_dirent entry;
-	char subpath[1024];
+	const char *subpath;
 	TCHAR local_subpath[MAX_PATH];
-	char path_separator;
-
-	image = imgtool_partition_image(partition);
-	path_separator = imgtool_image_module(image)->path_separator;
 
 	if (!CreateDirectory(local_path, NULL))
 	{
@@ -855,7 +850,7 @@ static imgtoolerr_t get_recursive_directory(imgtool_partition *partition, const 
 		if (!entry.eof)
 		{
 			_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, U2T(entry.filename));
-			snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, entry.filename);
+			subpath = imgtool_partition_path_concatenate(partition, path, entry.filename);
 			
 			if (entry.directory)
 				err = get_recursive_directory(partition, subpath, local_subpath);
@@ -879,15 +874,10 @@ done:
 static imgtoolerr_t put_recursive_directory(imgtool_partition *partition, LPCTSTR local_path, const char *path)
 {
 	imgtoolerr_t err;
-	imgtool_image *image;
 	HANDLE h = INVALID_HANDLE_VALUE;
 	WIN32_FIND_DATA wfd;
-	char subpath[1024];
+	const char *subpath;
 	TCHAR local_subpath[MAX_PATH];
-	char path_separator;
-
-	image = imgtool_partition_image(partition);
-	path_separator = imgtool_image_module(image)->path_separator;
 
 	err = imgtool_partition_create_directory(partition, path);
 	if (err)
@@ -903,7 +893,7 @@ static imgtoolerr_t put_recursive_directory(imgtool_partition *partition, LPCTST
 			if (_tcscmp(wfd.cFileName, TEXT(".")) && _tcscmp(wfd.cFileName, TEXT("..")))
 			{
 				_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, wfd.cFileName);
-				snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, T2U(wfd.cFileName));
+				subpath = imgtool_partition_path_concatenate(partition, path, T2U(wfd.cFileName));
 
 				if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 					err = put_recursive_directory(partition, local_subpath, subpath);
@@ -933,8 +923,8 @@ imgtoolerr_t wimgtool_open_image(HWND window, const imgtool_module *module,
 	imgtool_module *identified_module;
 	wimgtool_info *info;
 	int partition_index = 0;
+	const char *root_path;
 	imgtool_module_features features = { 0, };
-	char buf[2];
 
 	info = get_wimgtool_info(window);
 
@@ -993,18 +983,10 @@ imgtoolerr_t wimgtool_open_image(HWND window, const imgtool_module *module,
 	}
 
 	// do we support directories?
-	if (features.supports_directories)
+	if (imgtool_partition_get_features(info->partition).supports_directories)
 	{
-		if (module->initial_path_separator)
-		{
-			buf[0] = module->path_separator;
-			buf[1] = '\0';
-		}
-		else
-		{
-			buf[0] = '\0';
-		}
-		info->current_directory = mame_strdup(buf);
+		root_path = imgtool_partition_get_root_path(partition);
+		info->current_directory = mame_strdup(root_path);
 		if (!info->current_directory)
 		{
 			err = IMGTOOLERR_OUTOFMEMORY;
@@ -1124,6 +1106,8 @@ static void menu_insert(HWND window)
 	int use_suggestion_info;
 	imgtool_stream *stream = NULL;
 	filter_getinfoproc filter = NULL;
+	const struct OptionGuide *writefile_optguide;
+	const char *writefile_optspec;
 
 	info = get_wimgtool_info(window);
 
@@ -1154,11 +1138,13 @@ static void menu_insert(HWND window)
 		sizeof(suggestion_info.suggestions) / sizeof(suggestion_info.suggestions[0]));
 
 	/* do we need to show an option dialog? */
-	if (suggestion_info.suggestions[0].viability || (module->writefile_optguide && module->writefile_optspec))
+	writefile_optguide = (const struct OptionGuide *) imgtool_partition_get_info_ptr(info->partition, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+	writefile_optspec = imgtool_partition_get_info_string(info->partition, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC);
+	if (suggestion_info.suggestions[0].viability || (writefile_optguide && writefile_optspec))
 	{
 		use_suggestion_info = (suggestion_info.suggestions[0].viability != SUGGESTION_END);
 		err = win_show_option_dialog(window, use_suggestion_info ? &suggestion_info : NULL,
-			module->writefile_optguide, module->writefile_optspec, &opts, &cancel);
+			writefile_optguide, writefile_optspec, &opts, &cancel);
 		if (err || cancel)
 			goto done;
 
@@ -1264,14 +1250,8 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	filename = entry->filename;
 
 	// figure out a suggested host filename
-	image_basename = entry->filename;
-	for (i = 0; entry->filename[i]; i++)
-	{
-		if (entry->filename[i] == imgtool_image_module(info->image)->path_separator)
-			image_basename = &entry->filename[i + 1];
-	}
+	image_basename = imgtool_partition_get_base_name(info->partition, entry->filename);
 	_tcscpy(host_filename, U2T(image_basename));
-
 
 	// try suggesting some filters (only if doing a single file)
 	if (!entry->directory)
@@ -1615,36 +1595,13 @@ static imgtoolerr_t change_directory(HWND window, const char *dir)
 {
 	wimgtool_info *info;
 	char *new_current_dir;
-	char buf[2];
-	char path_separator;
-	int i;
 
 	info = get_wimgtool_info(window);
-	path_separator = imgtool_image_module(info->image)->path_separator;
 
-	if (!strcmp(dir, ".."))
-	{
-		i = strlen(info->current_directory);
-		if (i > 0)
-			i--;
-		while((i > 0) && (info->current_directory[i-1] != path_separator))
-			i--;
-		info->current_directory[i] = '\0';
-	}
-	else
-	{
-		new_current_dir = realloc(info->current_directory,
-			strlen(info->current_directory) + 1 + strlen(dir) + 1);
-		if (!new_current_dir)
-			return IMGTOOLERR_OUTOFMEMORY;
-
-		buf[0] = path_separator;
-		buf[1] = '\0';
-
-		info->current_directory = new_current_dir;
-		strcat(info->current_directory, dir);	
-		strcat(info->current_directory, buf);
-	}
+	new_current_dir = mame_strdup(imgtool_partition_path_concatenate(info->partition, info->current_directory, dir));
+	if (!new_current_dir)
+		return IMGTOOLERR_OUTOFMEMORY;
+	info->current_directory = new_current_dir;
 	return full_refresh_image(window);
 }
 
@@ -1757,29 +1714,31 @@ static imgtoolerr_t init_menu_proc(HWND window, const imgtool_dirent *entry, voi
 static void init_menu(HWND window, HMENU menu)
 {
 	wimgtool_info *info;
-	imgtool_module_features features;
+	imgtool_module_features module_features;
+	imgtool_partition_features partition_features;
 	struct selection_info si;
 	unsigned int can_read, can_write, can_createdir, can_delete;
 	LONG lvstyle;
 
-	memset(&features, 0, sizeof(features));
+	memset(&module_features, 0, sizeof(module_features));
+	memset(&partition_features, 0, sizeof(partition_features));
 	memset(&si, 0, sizeof(si));
 
 	info = get_wimgtool_info(window);
 
 	if (info->image)
 	{
-		features = imgtool_get_module_features(imgtool_image_module(info->image));
-
+		module_features = imgtool_get_module_features(imgtool_image_module(info->image));
+		partition_features = imgtool_partition_get_features(info->partition);
 		foreach_selected_item(window, init_menu_proc, &si);
 	}
 
-	can_read      = features.supports_reading && (si.has_files || si.has_directories);
-	can_write     = features.supports_writing && (info->open_mode != OSD_FOPEN_READ);
-	can_createdir = features.supports_createdir && (info->open_mode != OSD_FOPEN_READ);
+	can_read      = partition_features.supports_reading && (si.has_files || si.has_directories);
+	can_write     = partition_features.supports_writing && (info->open_mode != OSD_FOPEN_READ);
+	can_createdir = partition_features.supports_createdir && (info->open_mode != OSD_FOPEN_READ);
 	can_delete    = (si.has_files || si.has_directories)
-						&& (!si.has_files || features.supports_deletefile)
-						&& (!si.has_directories || features.supports_deletedir)
+						&& (!si.has_files || partition_features.supports_deletefile)
+						&& (!si.has_directories || partition_features.supports_deletedir)
 						&& (info->open_mode != OSD_FOPEN_READ);
 
 	EnableMenuItem(menu, ID_IMAGE_INSERT,
@@ -1791,7 +1750,7 @@ static void init_menu(HWND window, HMENU menu)
 	EnableMenuItem(menu, ID_IMAGE_DELETE,
 		MF_BYCOMMAND | (can_delete ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(menu, ID_IMAGE_SECTORVIEW,
-		MF_BYCOMMAND | (features.supports_readsector ? MF_ENABLED : MF_GRAYED));
+		MF_BYCOMMAND | (module_features.supports_readsector ? MF_ENABLED : MF_GRAYED));
 
 	lvstyle = GetWindowLong(info->listview, GWL_STYLE) & LVS_TYPEMASK;
 	CheckMenuItem(menu, ID_VIEW_ICONS,
