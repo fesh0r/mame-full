@@ -123,6 +123,7 @@ imgtool_partition_features imgtool_partition_get_features(imgtool_partition *par
 void *       imgtool_partition_get_info_ptr(imgtool_partition *partition, UINT32 state);
 const char * imgtool_partition_get_info_string(imgtool_partition *partition, UINT32 state);
 UINT64       imgtool_partition_get_info_int(imgtool_partition *partition, UINT32 state);
+void *       imgtool_partition_extra_bytes(imgtool_partition *partition);
 
 /* ----- path management ----- */
 const char * imgtool_partition_get_root_path(imgtool_partition *partition);

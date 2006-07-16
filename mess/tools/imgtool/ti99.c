@@ -3877,7 +3877,7 @@ static void ti99_getinfo(const imgtool_class *imgclass, UINT32 state, union imgt
 	switch(state)
 	{
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(ti99_lvl2_imgref); break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(dsk_iterator); break;
+		case IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES:				info->i = sizeof(dsk_iterator); break;
 
 		case IMGTOOLINFO_STR_EOLN:							strcpy(info->s = imgtool_temp_str(), "\r"); break;
 		case IMGTOOLINFO_PTR_CLOSE:							info->close = ti99_image_exit; break;

@@ -6317,7 +6317,7 @@ static void generic_mac_get_info(const imgtool_class *imgclass, UINT32 state, un
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_OPEN_IS_STRICT:				info->i = 1; break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(struct mac_l2_imgref); break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct mac_iterator); break;
+		case IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES:				info->i = sizeof(struct mac_iterator); break;
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = ':'; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

@@ -2328,7 +2328,7 @@ static void fat_base_get_info(const imgtool_class *imgclass, UINT32 state, union
 		case IMGTOOLINFO_INT_PATH_SEPARATOR:				info->i = '\\'; break;
 		case IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR:		info->i = '/'; break;
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(fat_diskinfo); break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(fat_file); break;
+		case IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES:				info->i = sizeof(fat_file); break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_FILE:							strcpy(info->s = imgtool_temp_str(), __FILE__); break;

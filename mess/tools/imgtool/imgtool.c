@@ -35,7 +35,8 @@ struct _imgtool_partition
 	int partition_index;
 
 	imgtool_class imgclass;
-	size_t imageenum_extra_bytes;
+	size_t partition_extra_bytes;
+	size_t directory_extra_bytes;
 
 	char path_separator;
 	char alternate_path_separator;
@@ -481,10 +482,13 @@ const imgtool_module *imgtool_image_module(imgtool_image *img)
     imgtool_image_extra_bytes - returns extra bytes on an image
 -------------------------------------------------*/
 
-void *imgtool_image_extra_bytes(imgtool_image *img)
+void *imgtool_image_extra_bytes(imgtool_image *image)
 {
-	assert(img->module->image_extra_bytes > 0);
-	return ((UINT8 *) img) + sizeof(*img);
+	void *ptr = NULL;
+	if (image->module->image_extra_bytes > 0)
+		ptr = ((UINT8 *) image) + sizeof(*image);
+	assert(ptr);
+	return ptr;
 }
 
 
@@ -500,9 +504,16 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_partition *p;
 	const imgtool_class *imgclass;
+	size_t partition_extra_bytes;
+
+	/* identify the image class */
+	imgclass = &imgtool_image_module(image)->imgclass;
+
+	/* does this partition type have extra bytes? */
+	partition_extra_bytes = imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PARTITION_EXTRA_BYTES);
 
 	/* allocate the new partition object */
-	p = (imgtool_partition *) malloc(sizeof(*p));
+	p = (imgtool_partition *) malloc(sizeof(*p) + partition_extra_bytes);
 	if (!p)
 	{
 		err = IMGTOOLERR_OUTOFMEMORY;
@@ -513,11 +524,9 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 	/* fill out the structure */
 	p->image						= image;
 	p->partition_index				= partition_index;
-
-	/* call the get_info proc */
-	imgclass = &imgtool_image_module(image)->imgclass;
 	p->imgclass						= *imgclass;
-	p->imageenum_extra_bytes		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ENUM_EXTRA_BYTES);
+	p->partition_extra_bytes		= partition_extra_bytes;
+	p->directory_extra_bytes		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES);
 	p->path_separator				= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
 	p->alternate_path_separator		= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
 	p->prefer_ucase					= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
@@ -2048,6 +2057,22 @@ UINT64 imgtool_partition_get_info_int(imgtool_partition *partition, UINT32 state
 
 
 
+/*-------------------------------------------------
+    imgtool_partition_extra_bytes - returns extra
+	bytes on a partition
+-------------------------------------------------*/
+
+void *imgtool_partition_extra_bytes(imgtool_partition *partition)
+{
+	void *ptr = NULL;
+	if (partition->partition_extra_bytes > 0)
+		ptr = ((UINT8 *) partition) + sizeof(*partition);
+	assert(ptr);
+	return ptr;
+}
+
+
+
 /***************************************************************************
 
 	Path handling functions
@@ -2174,7 +2199,7 @@ imgtoolerr_t imgtool_directory_open(imgtool_partition *partition, const char *pa
 	if (err)
 		goto done;
 
-	size = sizeof(struct _imgtool_directory) + partition->imageenum_extra_bytes;
+	size = sizeof(struct _imgtool_directory) + partition->directory_extra_bytes;
 	enumeration = (imgtool_directory *) malloc(size);
 	if (!enumeration)
 	{
@@ -2284,7 +2309,7 @@ const imgtool_module *imgtool_directory_module(imgtool_directory *directory)
 
 void *imgtool_directory_extrabytes(imgtool_directory *directory)
 {
-	assert(directory->partition->imageenum_extra_bytes > 0);
+	assert(directory->partition->directory_extra_bytes > 0);
 	return ((UINT8 *) directory) + sizeof(*directory);
 }
 

@@ -142,7 +142,7 @@ void concept_get_info(const imgtool_class *imgclass, UINT32 state, union imgtool
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_IMAGE_EXTRA_BYTES:				info->i = sizeof(concept_image); break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(concept_iterator); break;
+		case IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES:				info->i = sizeof(concept_iterator); break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "concept"); break;

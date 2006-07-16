@@ -600,7 +600,7 @@ void rsdos_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolin
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case IMGTOOLINFO_INT_PREFER_UCASE:					info->i = 1; break;
-		case IMGTOOLINFO_INT_ENUM_EXTRA_BYTES:				info->i = sizeof(struct rsdos_direnum); break;
+		case IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES:				info->i = sizeof(struct rsdos_direnum); break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "rsdos"); break;
