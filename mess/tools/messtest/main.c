@@ -19,7 +19,6 @@
 #endif /* WIN32 */
 
 extern int mame_validitychecks(int game);
-extern const options_entry fileio_opts[];
 
 static int test_count, failure_count;
 
@@ -30,6 +29,34 @@ static const options_entry messtest_opts[] =
 	{ "preservedir;pd",			"0",	OPTION_BOOLEAN,	"preserve current directory" },
 	{ "rdtsc",					"0",	OPTION_BOOLEAN, "use the RDTSC instruction for timing; faster but may result in uneven performance" },
 	{ "priority",				"0",	0,				"thread priority for the main game thread; range from -15 to 1" },
+
+	// file and directory options
+	{ NULL,                       NULL,       OPTION_HEADER,     "PATH AND DIRECTORY OPTIONS" },
+#ifndef MESS
+	{ "rompath;rp",               "roms",     0,                 "path to ROMsets and hard disk images" },
+#else
+	{ "biospath;bp",              "bios",     0,                 "path to BIOS sets" },
+	{ "softwarepath;swp",         "software", 0,                 "path to software" },
+	{ "hash_directory;hash",      "hash",     0,                 "path to hash files" },
+#endif
+	{ "samplepath;sp",            "samples",  0,                 "path to samplesets" },
+#ifdef __WIN32__
+	{ "inipath",                  ".;ini",    0,                 "path to ini files" },
+#else
+	{ "inipath",                  "$HOME/.mame;.;ini", 0,        "path to ini files" },
+#endif
+	{ "cfg_directory",            "cfg",      0,                 "directory to save configurations" },
+	{ "nvram_directory",          "nvram",    0,                 "directory to save nvram contents" },
+	{ "memcard_directory",        "memcard",  0,                 "directory to save memory card contents" },
+	{ "input_directory",          "inp",      0,                 "directory to save input device logs" },
+	{ "hiscore_directory",        "hi",       0,                 "directory to save hiscores" },
+	{ "state_directory",          "sta",      0,                 "directory to save states" },
+	{ "artpath;artwork_directory","artwork",  0,                 "path to artwork files" },
+	{ "snapshot_directory",       "snap",     0,                 "directory to save screenshots" },
+	{ "diff_directory",           "diff",     0,                 "directory to save hard drive image difference files" },
+	{ "ctrlrpath;ctrlr_directory","ctrlr",    0,                 "path to controller definitions" },
+	{ "comment_directory",        "comments", 0,                 "directory to save debugger comments" },
+	{ "cheat_file",               "cheat.dat",0,                 "cheat filename" },
 	{ NULL }
 };
 
@@ -114,7 +141,6 @@ int main(int argc, char *argv[])
 	
 	/* register options */
 	options_add_entries(messtest_opts);
-	options_add_entries(fileio_opts);
 	options_set_option_callback("", handle_arg);
 
 	/* run MAME's validity checks; if these fail cop out now */

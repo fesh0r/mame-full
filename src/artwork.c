@@ -464,11 +464,10 @@ static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int en
 #endif
 
 /*-------------------------------------------------
-    artwork_union_rect - compute the union of two
-    rects
+    union_rect - compute the union of two rects
 -------------------------------------------------*/
 
-INLINE void artwork_union_rect(rectangle *dst, const rectangle *src)
+INLINE void union_rect(rectangle *dst, const rectangle *src)
 {
 	if (dst->max_x == 0)
 		*dst = *src;
@@ -842,7 +841,7 @@ void artwork_update_video_and_audio(mame_display *display)
 		{
 			/* compute the union of the two rects */
 			ui_changed_bounds = last_uibounds;
-			artwork_union_rect(&ui_changed_bounds, &uibounds);
+			union_rect(&ui_changed_bounds, &uibounds);
 			last_uibounds = uibounds;
 
 			/* track changes for a few frames */
@@ -852,9 +851,9 @@ void artwork_update_video_and_audio(mame_display *display)
 		/* if we have changed pending, mark the artwork dirty */
 		if (ui_changed)
 		{
-			artwork_union_rect(&underlay_invalid, &ui_changed_bounds);
-			artwork_union_rect(&overlay_invalid, &ui_changed_bounds);
-			artwork_union_rect(&bezel_invalid, &ui_changed_bounds);
+			union_rect(&underlay_invalid, &ui_changed_bounds);
+			union_rect(&overlay_invalid, &ui_changed_bounds);
+			union_rect(&bezel_invalid, &ui_changed_bounds);
 			ui_changed--;
 		}
 
@@ -862,9 +861,9 @@ void artwork_update_video_and_audio(mame_display *display)
 		if (!global_artwork_enable)
 		{
 			fillbitmap(final, MAKE_ARGB(0,0,0,0), NULL);
-			artwork_union_rect(&underlay_invalid, &screenrect);
-			artwork_union_rect(&overlay_invalid, &screenrect);
-			artwork_union_rect(&bezel_invalid, &screenrect);
+			union_rect(&underlay_invalid, &screenrect);
+			union_rect(&overlay_invalid, &screenrect);
+			union_rect(&bezel_invalid, &screenrect);
 			render_game_bitmap(display->game_bitmap, palette_lookup, display);
 		}
 
@@ -909,7 +908,7 @@ void artwork_update_video_and_audio(mame_display *display)
 
 	/* blit the union of the game/screen rect and the UI bounds */
 	display->game_bitmap_update = (artwork_changed || ui_changed) ? screenrect : gamerect;
-	artwork_union_rect(&display->game_bitmap_update, &uibounds);
+	union_rect(&display->game_bitmap_update, &uibounds);
 
 	/* force the visible area constant */
 	display->game_visible_area = screenrect;
@@ -983,7 +982,7 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 		rect.max_x = maxx;
 		rect.min_y = miny;
 		rect.max_y = maxy;
-		artwork_union_rect(&uibounds, &rect);
+		union_rect(&uibounds, &rect);
 
 		/* add hints for each scanline */
 		if (minx <= maxx)
@@ -1058,15 +1057,15 @@ void artwork_show(const char *tag, int show)
 
 				/* backdrop */
 				if (piece->layer == LAYER_BACKDROP)
-					artwork_union_rect(&underlay_invalid, &piece->bounds);
+					union_rect(&underlay_invalid, &piece->bounds);
 
 				/* overlay */
 				else if (piece->layer == LAYER_OVERLAY)
-					artwork_union_rect(&overlay_invalid, &piece->bounds);
+					union_rect(&overlay_invalid, &piece->bounds);
 
 				/* bezel */
 				else if (piece->layer >= LAYER_BEZEL)
-					artwork_union_rect(&bezel_invalid, &piece->bounds);
+					union_rect(&bezel_invalid, &piece->bounds);
 			}
 		}
 }
@@ -1122,8 +1121,8 @@ static int update_layers(void)
 
 	/* combine the invalid rects */
 	combined = underlay_invalid;
-	artwork_union_rect(&combined, &overlay_invalid);
-	artwork_union_rect(&combined, &bezel_invalid);
+	union_rect(&combined, &overlay_invalid);
+	union_rect(&combined, &bezel_invalid);
 	if (combined.max_x != 0)
 	{
 		/* blend into the final bitmap */
