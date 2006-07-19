@@ -682,7 +682,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 	UINT32 bytes_left = length;
 	int bytes_to_copy;
 	int result;
-	size_t read;
+	size_t bytes_read;
 
 	/* handle data from within the buffer */
 	if (file->offset >= file->bufferbase && file->offset < file->bufferbase + file->bufferbytes)
@@ -740,12 +740,12 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 	else
 	{
 		/* do the read */
-		read = fread(buffer, sizeof(unsigned char), bytes_left, file->fileptr);
-		file->filepos += read;
+		bytes_read = fread(buffer, sizeof(unsigned char), bytes_left, file->fileptr);
+		file->filepos += bytes_read;
 
 		/* adjust the pointers and return */
-		file->offset += read;
-		bytes_left -= read;
+		file->offset += bytes_read;
+		bytes_left -= bytes_read;
 		return length - bytes_left;
 	}
 }
@@ -759,7 +759,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 {
 	int result;
-	size_t written;
+	size_t bytes_written;
 
 	/* invalidate any buffered data */
 	file->bufferbytes = 0;
@@ -770,14 +770,14 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 		return 0;
 
 	/* do the write */
-	written = fwrite(buffer, sizeof(unsigned char), length, file->fileptr);
-	file->filepos += written;
+	bytes_written = fwrite(buffer, sizeof(unsigned char), length, file->fileptr);
+	file->filepos += bytes_written;
 
 	/* adjust the pointers */
-	file->offset += written;
+	file->offset += bytes_written;
 	if (file->offset > file->end)
 		file->end = file->offset;
-	return written;
+	return bytes_written;
 }
 
 
