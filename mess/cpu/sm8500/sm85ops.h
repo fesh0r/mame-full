@@ -134,7 +134,7 @@
 		s2 = 0; \
 		switch( r1 & 0xC0 ) { \
 		case 0x00: \
-			s2 = sm8500_b2w[ r1 & 0x07 ]; \
+			s2 = sm85cpu_mem_readword( sm8500_b2w[ r1 & 0x07 ] ); \
 			break; \
 		case 0x40: \
 			s2 = sm85cpu_mem_readword( regs.PC ); regs.PC += 2; \
@@ -1157,7 +1157,7 @@ case 0x4C:	/* MULT Rrr,Rs - 24 cycles - Flags affected: -Z-0---- */
 	break;
 case 0x4D:	/* MULT RRr,i - 24 cycles - Flags affected: -Z-0---- */
 	ARG_iR;
-	res = sm85cpu_mem_readword( r1 ) * r2;
+	res = sm85cpu_mem_readbyte( r1 + 1 ) * r2;
 	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	regs.PS1 = regs.PS1 & ~ ( FLAG_Z | FLAG_V );
 	regs.PS1 |= ( ( res & 0xFFFF ) == 0x00 ? FLAG_Z : 0 );
