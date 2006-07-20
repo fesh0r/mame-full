@@ -3045,6 +3045,7 @@ static void render_container_overlay_scale(mame_bitmap *dest, const mame_bitmap 
 
 static void render_container_recompute_lookups(render_container *container)
 {
+	int colors = palette_get_total_colors_with_ui();
 	int i;
 
 	/* recompute the 256 entry lookup table */
@@ -3068,13 +3069,12 @@ static void render_container_recompute_lookups(render_container *container)
 	}
 
 	/* recompute the palette entries */
-	for (i = 0; i < Machine->drv->total_colors; i++)
+	for (i = 0; i < colors; i++)
 	{
-		UINT8 r, g, b;
-		palette_get_color(i, &r, &g, &b);
-		container->bcglookup[i] = container->bcglookup256[0x200 + r] |
-								  container->bcglookup256[0x100 + g] |
-								  container->bcglookup256[0x000 + b];
+		pen_t newval = adjusted_palette[i];
+		container->bcglookup[i] = container->bcglookup256[0x200 + RGB_RED(newval)] |
+								  container->bcglookup256[0x100 + RGB_GREEN(newval)] |
+								  container->bcglookup256[0x000 + RGB_BLUE(newval)];
 	}
 }
 
