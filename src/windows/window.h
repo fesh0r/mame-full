@@ -54,6 +54,7 @@ struct _win_window_info
 	int					startmaximized;
 	int					isminimized;
 	int					ismaximized;
+	int					isactivated;
 	int					resize_state;
 
 	// monitor info
@@ -88,6 +89,7 @@ struct _win_draw_callbacks
 	const render_primitive_list *(*window_get_primitives)(win_window_info *window);
 	int (*window_draw)(win_window_info *window, HDC dc, int update);
 	void (*window_destroy)(win_window_info *window);
+	void (*window_activate)(win_window_info *window);
 };
 
 

@@ -1555,10 +1555,6 @@ static void before_display_dialog(void)
 #ifdef UNDER_CE
 	// on WinCE, suspend GAPI
 	gx_suspend();
-#else
-	// on Windows, suspend DirectX
-//	extern int win_suspend_directx;
-//	win_suspend_directx = 1;
 #endif
 
 	// disable sound while in the dialog
@@ -1581,10 +1577,6 @@ static void after_display_dialog(void)
 #ifdef UNDER_CE
 	// on WinCE, resume GAPI
 	gx_resume();
-#else
-	// on Windows, suspend DirectX
-//	extern int win_suspend_directx;
-//	win_suspend_directx = 0;
 #endif
 
 	// reenable timer
