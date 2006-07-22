@@ -1160,6 +1160,7 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 			window->isactivated = (LOWORD(wparam) == WA_ACTIVE) || (LOWORD(wparam) == WA_CLICKACTIVE);
 			if (draw.window_activate)
 				(*draw.window_activate)(window);
+			break;
 		}
 
 		// track whether we are in the foreground
