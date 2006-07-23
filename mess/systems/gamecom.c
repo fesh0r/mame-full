@@ -22,15 +22,15 @@ Todo:
 #include "devices/cartslot.h"
 
 static ADDRESS_MAP_START(gamecom_mem_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x03FF )  AM_READWRITE( gamecom_internal_r, gamecom_internal_w )			/* CPU internal register file and RAM */
-	AM_RANGE( 0x0400, 0x0FFF )  AM_NOP									/* Nothing */
-        AM_RANGE( 0x1000, 0x1FFF )  AM_ROM									/* Internal ROM (initially), or External ROM/Flash. Controlled by MMU0 (never swapped out in game.com) */
-        AM_RANGE( 0x2000, 0x3FFF )  AM_ROMBANK(1)								/* External ROM/Flash. Controlled by MMU1 */
-        AM_RANGE( 0x4000, 0x5FFF )  AM_ROMBANK(2)								/* External ROM/Flash. Controlled by MMU2 */
-        AM_RANGE( 0x6000, 0x7FFF )  AM_ROMBANK(3)								/* External ROM/Flash. Controlled by MMU3 */
-        AM_RANGE( 0x8000, 0x9FFF )  AM_ROMBANK(4)								/* External ROM/Flash. Controlled by MMU4 */
-        AM_RANGE( 0xA000, 0xDFFF )  AM_READWRITE( gamecom_vram_r, gamecom_vram_w ) 	/* VRAM */
-        AM_RANGE( 0xE000, 0xFFFF )  AM_RAM									/* Extended I/O, Extended RAM */
+	AM_RANGE( 0x0000, 0x03FF )  AM_READWRITE( gamecom_internal_r, gamecom_internal_w ) /* CPU internal register file and RAM */
+	AM_RANGE( 0x0400, 0x0FFF )  AM_NOP                                                 /* Nothing */
+	AM_RANGE( 0x1000, 0x1FFF )  AM_ROM                                                 /* Internal ROM (initially), or External ROM/Flash. Controlled by MMU0 (never swapped out in game.com) */
+	AM_RANGE( 0x2000, 0x3FFF )  AM_ROMBANK(1)                                          /* External ROM/Flash. Controlled by MMU1 */
+	AM_RANGE( 0x4000, 0x5FFF )  AM_ROMBANK(2)                                          /* External ROM/Flash. Controlled by MMU2 */
+	AM_RANGE( 0x6000, 0x7FFF )  AM_ROMBANK(3)                                          /* External ROM/Flash. Controlled by MMU3 */
+	AM_RANGE( 0x8000, 0x9FFF )  AM_ROMBANK(4)                                          /* External ROM/Flash. Controlled by MMU4 */
+	AM_RANGE( 0xA000, 0xDFFF )  AM_READWRITE( gamecom_vram_r, gamecom_vram_w )         /* VRAM */
+	AM_RANGE( 0xE000, 0xFFFF )  AM_RAM                                                 /* Extended I/O, Extended RAM */
 ADDRESS_MAP_END
 
 static gfx_decode gamecom_gfxdecodeinfo[] =
@@ -48,21 +48,28 @@ SM8500_CONFIG gamecom_cpu_config = {
 */
 INPUT_PORTS_START( gamecom )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_NAME("Left")
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_NAME("Right")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP) PORT_NAME("Up")
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN) PORT_NAME("Down")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_NAME("Button A")
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2) PORT_NAME("Button B")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3) PORT_NAME("Button C")
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4) PORT_NAME("Button D")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_NAME( "Up" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_NAME( "Down" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_NAME( "Left" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_NAME( "Right" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME( "Menu" ) PORT_CODE( KEYCODE_M )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME( "Power(?)" ) PORT_CODE( KEYCODE_N )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME( "Sound" ) PORT_CODE( KEYCODE_B )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME( "Pause" ) PORT_CODE( KEYCODE_V )
 
-/*
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MENU) PORT_NAME("Menu")
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SOUND) PORT_NAME("Sound")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_PAUSE) PORT_NAME("Pause)"
-*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME( "Button A" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME( "Button B" )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME( "Button C" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME( "Button D" )
+
+	PORT_START
+	PORT_BIT( 0xff, 100, IPT_LIGHTGUN_X ) PORT_MINMAX(0,199) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
+
+	PORT_START
+	PORT_BIT( 0xff, 80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,159) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
 #define GAMECOM_PALETTE_LENGTH	5	

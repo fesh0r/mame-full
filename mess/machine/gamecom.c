@@ -122,7 +122,40 @@ WRITE8_HANDLER( gamecom_internal_w )
 	case SM8521_IR1:	cpunum_set_reg( 0, SM8500_IR1, data ); return;
 	case SM8521_P0:		cpunum_set_reg( 0, SM8500_P0, data ); return;
 	case SM8521_P1:		cpunum_set_reg( 0, SM8500_P1, data ); return;
-	case SM8521_P2:		cpunum_set_reg( 0, SM8500_P2, data ); return;
+	case SM8521_P2:		cpunum_set_reg( 0, SM8500_P2, data );
+				switch( ( cpunum_get_reg( 0, SM8500_P1 ) << 8 ) | data ) {
+				case 0xFBFF:	/* column #0 */
+					if ( ! ( readinputport(1) & 0x01 ) ) {
+//						printf( "screen location: %d,%d\n", readinputport(3), readinputport(4) );
+					}
+					cpunum_set_reg( 0, SM8500_P0, 0xFF );
+					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1) & 0xFC ) | 0x03 );
+					break;
+				case 0xF7FF:	/* column #1 */
+				case 0xEFFF:	/* column #2 */
+				case 0xDFFF:	/* column #3 */
+				case 0xBFFF:	/* column #4 */
+				case 0x7FFF:	/* column #5 */
+				case 0xFFFE:	/* column #6 */
+				case 0xFFFD:	/* column #7 */
+				case 0xFFFB:	/* column #8 */
+				case 0xFFF7:	/* column #9 */
+				case 0xFFEF:	/* column #10 */
+				case 0xFFDF:	/* column #11 */
+				case 0xFFBF:	/* column #12 */
+					cpunum_set_reg( 0, SM8500_P0, 0xFF );
+					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1) & 0xFC ) | 0x03 );
+					break;
+				case 0xFF7F:	/* keys #1 */
+					cpunum_set_reg( 0, SM8500_P0, readinputport(0) );
+					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | ( readinputport(1) & 0x03 ) );
+					break;
+				case 0xFFFF:	/* keys #2 */
+					cpunum_set_reg( 0, SM8500_P0, 0xFF );
+					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | ( readinputport(2) & 0x03 ) );
+					break;
+				}
+				return;
 	case SM8521_P3:
 				/* P3 bit7 clear, bit6 set -> enable cartridge port #0? */
 				/* P3 bit6 clear, bit7 set -> enable cartridge port #1? */
@@ -266,7 +299,7 @@ READ8_HANDLER( gamecom_internal_r )
 	case SM8521_IE1:	return cpunum_get_reg( 0, SM8500_IE1 );
 	case SM8521_IR0:	return cpunum_get_reg( 0, SM8500_IR0 );
 	case SM8521_IR1:	return cpunum_get_reg( 0, SM8500_IR1 );
-	case SM8521_P0:		logerror( "%X: Read from P0\n", activecpu_get_pc() ); return readinputport(0);
+	case SM8521_P0:		logerror( "%X: Read from P0\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P0 );
 	case SM8521_P1:		logerror( "%X: Read from P1\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P1 );
 	case SM8521_P2:		logerror( "%X: Read from P2\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P2 );
 	case SM8521_P3:		return cpunum_get_reg( 0, SM8500_P3 );
