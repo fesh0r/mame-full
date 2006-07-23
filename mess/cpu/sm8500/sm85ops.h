@@ -1149,7 +1149,7 @@ case 0x4B:	/* MOVW RRr,ww - 9 cycles - Flags affected: -------- */
 	break;
 case 0x4C:	/* MULT Rrr,Rs - 24 cycles - Flags affected: -Z-0---- */
 	ARG_RR;
-	res = sm85cpu_mem_readword( r1 ) * sm85cpu_mem_readword( r2 );
+	res = sm85cpu_mem_readword( r1 ) * sm85cpu_mem_readbyte( r2 );
 	sm85cpu_mem_writeword( r1, res & 0xFFFF );
 	regs.PS1 = regs.PS1 & ~ ( FLAG_Z | FLAG_V );
 	regs.PS1 |= ( ( res & 0xFFFF ) == 0x00 ? FLAG_Z : 0 );
@@ -1283,13 +1283,17 @@ logerror( "%04X: unk%02x\n", regs.PC-1,op );
 	ARG_ad16;
 	mycycles += 6;
 	break;
-case 0x5C:	/* DIV RRr,Rs - 47 cycles - Flags affected: -Z-V---- */
+case 0x5C:	/* DIV RRr,RRs - 47 cycles - Flags affected: -Z-V---- */
+		/* lower 8 bits of RRs is used to divide */
+		/* remainder in stored upper 8 bits of RRs */
 logerror( "%04X: DIV RRr,Rs!\n", regs.PC-1 );
 	ARG_RR;
 	regs.PS1 = regs.PS1 & ~ ( FLAG_Z | FLAG_V );
-	s1 = sm85cpu_mem_readbyte( r2 );
+	s1 = sm85cpu_mem_readbyte( r2 + 1 );
 	if ( s1 ) {
-		res = sm85cpu_mem_readword( r1 ) / s1;
+		UINT16 div = sm85cpu_mem_readword( r1 );
+		res = div / s1;
+		sm85cpu_mem_writebyte( r2, div % s1 );
 		sm85cpu_mem_writeword( r1, res );
 		regs.PS1 = regs.PS1 | ( ( res == 0 ) ? FLAG_Z : 0 );
 	} else {
