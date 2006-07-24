@@ -149,7 +149,6 @@ static int drawdd_window_init(win_window_info *window);
 static void drawdd_window_destroy(win_window_info *window);
 static const render_primitive_list *drawdd_window_get_primitives(win_window_info *window);
 static int drawdd_window_draw(win_window_info *window, HDC dc, int update);
-static void drawdd_window_activate(win_window_info *window);
 
 // surface management
 static int ddraw_create(win_window_info *window);
@@ -222,7 +221,6 @@ int drawdd_init(win_draw_callbacks *callbacks)
 	callbacks->window_get_primitives = drawdd_window_get_primitives;
 	callbacks->window_draw = drawdd_window_draw;
 	callbacks->window_destroy = drawdd_window_destroy;
-	callbacks->window_activate = drawdd_window_activate;
 
 	verbose_printf("DirectDraw: Using DirectDraw 7\n");
 	return 0;
@@ -440,21 +438,6 @@ static int drawdd_window_draw(win_window_info *window, HDC dc, int update)
 
 
 //============================================================
-//  drawdd_window_activate
-//============================================================
-
-static void drawdd_window_activate(win_window_info *window)
-{
-	// if we are fullscreen, and the activation state changes, delete the
-	// surfaces so that next time they are created, the clipping is properly
-	// set up
-	if (window->dxdata && window->fullscreen)
-		ddraw_delete_surfaces(window);
-}
-
-
-
-//============================================================
 //  ddraw_create
 //============================================================
 
@@ -588,9 +571,15 @@ static int ddraw_create_surfaces(win_window_info *window)
 	if (dd->membuffer == NULL)
 		goto error;
 
-	// create a clipper for windowed mode
-	if ((!window->fullscreen || !window->isactivated) && create_clipper(window))
+#ifdef MESS
+	// create a clipper for all modes, since MESS has dialogs
+	if (create_clipper(window))
 		goto error;
+#else
+	// create a clipper for windowed mode
+	if (!window->fullscreen && create_clipper(window))
+		goto error;
+#endif
 
 	// full screen mode: set the gamma
 	if (window->fullscreen)

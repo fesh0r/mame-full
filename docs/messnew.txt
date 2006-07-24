@@ -1,4 +1,13 @@
-0.106.1
+0.107
+
+NOTE: This is the first full release of MESS with the new rendering
+system. Before freaking out that things don't work the way you
+expected, please read the docs/newvideo.txt file that gives some
+suggestions for how to set up your base configuration. If you still
+encounter issues, then run your system with the -v option and post
+about your problem at http://www.mess.org
+
+
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -41,7 +50,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.106u13.  This incorporates all features of the
+- The core is based on MAME 0.107.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Fixed natural keyboard support for certain keys.  (bug #885) [Nate Woods]
