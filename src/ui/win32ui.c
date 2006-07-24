@@ -40,7 +40,6 @@
 #include <io.h>
 #include <fcntl.h>
 #include <commctrl.h>
-#include <commdlg.h>
 #include <dlgs.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -51,7 +50,6 @@
 #include <driver.h>
 #include <osdepend.h>
 #include <unzip.h>
-
 
 #include "resource.h"
 #include "resource.hm"
@@ -228,8 +226,6 @@ int MIN_HEIGHT = DBU_MIN_HEIGHT;
 #define NO_FOLDER -1
 #define STATESAVE_VERSION 1
 
-typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
-
 /***************************************************************************
  externally defined global variables
  ***************************************************************************/
@@ -295,7 +291,6 @@ static void             MamePlayBackGame(void);
 static void             MamePlayRecordWave(void);
 static void             MamePlayRecordMNG(void);
 static void				MameLoadState(void);
-static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filename, int filetype);
 static void             MamePlayGame(void);
 static void             MamePlayGameWithOptions(int nGame);
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -787,6 +782,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
 	LPTREEFOLDER folder;
+	int screens_counter = 0;
 
 	// this command line can grow too long for win9x, so we try to not send
 	// some default values
@@ -829,65 +825,143 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -hiscore_directory \"%s\"",  GetHiDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -state_directory \"%s\"",    GetStateDir());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -artwork_directory \"%s\"",	GetArtDir());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -artpath \"%s\"",	GetArtDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr_directory \"%s\"",    GetCtrlrDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -comment_directory \"%s\"",  GetCommentDir());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
 
-	/* video */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%safs",                     pOpts->autoframeskip   ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -fs %d",                     pOpts->frameskip);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%swaitvsync",               pOpts->wait_vsync      ? "" : "no");
-	if (pOpts->use_triplebuf)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%stb",                  pOpts->use_triplebuf ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sw",                       pOpts->window_mode     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -r %s",                      pOpts->resolution);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchres",               pOpts->switchres       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smax",                     pOpts->maximize        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_gamma);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -ftr %d",                    pOpts->frames_to_display);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
-
-	// d3d
-	if (pOpts->use_d3d)
-	{
-#ifdef NEW_RENDER
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -video direct3d");
-#else
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3d");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflt",pOpts->d3d_filter?"":"no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3dtexmanage",pOpts->d3d_texture_management ? "" : "no");
-		if (pOpts->d3d_effect != D3D_EFFECT_NONE)
-			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3deffect %s",GetD3DEffectShortName(pOpts->d3d_effect));
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3deffectrotate",pOpts->d3d_rotate_effects ? "" : "no");
-
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dscan %i",pOpts->d3d_scanlines);
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dfeedback %i",pOpts->d3d_feedback);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sskip_gameinfo", pOpts->skip_gameinfo ? "" : "no");
+	/* Core Misc Options*/
+	if (DriverHasOptionalBIOS(nGameIndex))
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %s",pOpts->bios);
+	if (pOpts->cheat)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -c %d",                   pOpts->cheat );
+	/* save states and input recording */
+	if (g_pSaveStateName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
+	if (pOpts->autosave)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");
+	if (g_pPlayBkName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -pb \"%s\"",             g_pPlayBkName);
+	if (g_pRecordName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -rec \"%s\"",            g_pRecordName);
+	if (g_pRecordMNGName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -mngwrite \"%s\"",       g_pRecordMNGName);
+	if (g_pRecordWaveName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -wavwrite \"%s\"",       g_pRecordWaveName);
+	/* debugging options */
+#ifdef _DEBUG
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd",               pOpts->mame_debug   ? "" : "no");
 #endif
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dprescale %s",GetD3DPrescaleShortName(pOpts->d3d_prescale));
+	if (pOpts->errorlog)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog   ? "" : "no");
+	//Unsupported options in UI
+/*
+	{ "oslog",                    "0",        OPTION_BOOLEAN,    "output error.log data to the system debugger" },
+	{ "verbose;v",                "0",    OPTION_BOOLEAN,    "display additional diagnostic information" },
+	{ "validate;valid",           NULL,   OPTION_COMMAND,    "perform driver validation on all game drivers" },
+*/
+	/* Performance Options */
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%safs",                     pOpts->autoframeskip   ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fs %d",						pOpts->frameskip );
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -ftr %d",					pOpts->frames_to_display);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",				pOpts->throttle   ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssleep",					pOpts->sleep   ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srdtsc",					pOpts->old_timing ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -priority %d",				pOpts->priority);
+	/* video */
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -video %s",                  pOpts->videomode );
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -numscreens %d",             pOpts->numscreens);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sw",                      pOpts->window_mode? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smax",                    pOpts->maximize? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ska",                     pOpts->keepaspect ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -prescale %d",               pOpts->prescale);
+	if( pOpts->effect )
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -effect \"%s\"",         pOpts->effect);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -pause_brightness %f",       pOpts->f_pause_bright); 
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%swaitvsync",              pOpts->wait_vsync ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",            pOpts->syncrefresh ? "" : "no");
+	/* Video Rotation Options*/
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srotate", pOpts->rotate ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",pOpts->ror ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",pOpts->rol ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sautoror",pOpts->auto_ror ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sautorol",pOpts->auto_rol ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",pOpts->flipx ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",pOpts->flipy ? "" : "no");
+	/*Direct Draw Video Options*/
+	if( strcmp( pOpts->videomode, "ddraw" ) == 0 )
+	{
+		if (pOpts->ddraw_stretch)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",  pOpts->ddraw_stretch ? "" : "no");
 	}
-	/* input */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",                   pOpts->use_mouse       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sjoy",                     pOpts->use_joystick    ? "" : "no");
-	if (pOpts->use_joystick)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -a2d %f",                pOpts->f_a2d);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssteady",                  pOpts->steadykey       ? "" : "no");
+	/*Direct 3D Video Options*/
+	if( strcmp( pOpts->videomode, "d3d" ) == 0 )
+	{
+		if (pOpts->d3d_filter)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%sfilter",pOpts->d3d_filter ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dversion %d",         pOpts->d3d_version);
+	}
+	/* Per window options */
+	for( screens_counter = 0; screens_counter < min(pOpts->numscreens, MAX_SCREENS); screens_counter++ )
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -screen%d %s", screens_counter, pOpts->screen_params[screens_counter].screen);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -aspect%d %s", screens_counter, pOpts->screen_params[screens_counter].aspect);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -resolution%d %s", screens_counter, pOpts->screen_params[screens_counter].resolution);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -view%d %s", screens_counter ,pOpts->screen_params[screens_counter].view);
+	}
+	/* Full screen Options */
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%stb",					    pOpts->use_triplebuf ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchres",              pOpts->switchres ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsb %f",					pOpts->gfx_brightness);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsc %f",                    pOpts->gfx_contrast);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -fsg %f",                    pOpts->gfx_gamma);
+	/* Game screen options*/
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -brightness %f",pOpts->f_bright_correct);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -contrast %f",pOpts->f_contrast_correct);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",pOpts->f_gamma_correct);
+	/* Vector rendering Options*/
+	if (DriverIsVector(nGameIndex))
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%saa",                      pOpts->antialias ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -beam %f",                   pOpts->f_beam);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -flicker %f",                pOpts->f_flicker);
+	}
+	/* Artwork options*/
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sart",                     pOpts->use_artwork  ? "" : "no");
+	if (pOpts->use_artwork == TRUE)
+	{
+		if (pOpts->artwork_crop)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartcrop",            pOpts->artwork_crop ? "" : "no");
+		if (pOpts->backdrops)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbackdrop",            pOpts->backdrops ? "" : "no");
+		if (pOpts->overlays)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%soverlay",             pOpts->overlays ? "" : "no");
+		if (pOpts->bezels)
+			sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbezel",               pOpts->bezels ? "" : "no");
+	}
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sgun",!pOpts->window_mode && pOpts->lightgun ? "" : "no");
-	if (pOpts->dual_lightgun)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdual",pOpts->dual_lightgun ? "" : "no");
-	if (pOpts->offscreen_reload)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sreload",pOpts->offscreen_reload ? "" : "no");
-
+	/* Core Sound options*/
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssound",                   pOpts->enable_sound ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -sr %d",                     pOpts->samplerate);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssamples",                 pOpts->use_samples ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -volume %d",                    pOpts->attenuation);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -audio_latency %i",          pOpts->audio_latency);
+	/* input options*/
 	if (strlen(pOpts->ctrlr) > 0)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr \"%s\"",              pOpts->ctrlr);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",					pOpts->use_mouse ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sjoy",					pOpts->use_joystick ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sgun",					(!pOpts->window_mode && pOpts->lightgun) ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdual",				pOpts->dual_lightgun ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sreload",				pOpts->offscreen_reload ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssteady",					pOpts->steadykey ? "" : "no");
+	if (pOpts->use_joystick)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -a2d %f",                pOpts->f_a2d);
 	if (strlen(pOpts->digital) > 0)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -digital \"%s\"",            pOpts->digital);
-	/* controller mapping*/
 	if (strlen(pOpts->paddle) > 0)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -paddle \"%s\"",             pOpts->paddle);
 	if (strlen(pOpts->adstick) > 0)
@@ -900,115 +974,11 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -trackball \"%s\"",          pOpts->trackball);
 	if (strlen(pOpts->lightgun_device) > 0)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -lightgun_device \"%s\"",    pOpts->lightgun_device);
-
-	
-	/* core video */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -pause_brightness %f",       pOpts->f_pause_bright); 
-
-	if (pOpts->norotate)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%snorotate",pOpts->norotate ? "" : "no");
-	if (pOpts->ror)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",pOpts->ror ? "" : "no");
-	if (pOpts->rol)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",pOpts->rol ? "" : "no");
-	if (pOpts->auto_ror)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -autoror");
-	if (pOpts->auto_rol)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -autorol");
-	if (pOpts->flipx)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",pOpts->flipx ? "" : "no");
-	if (pOpts->flipy)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",pOpts->flipy ? "" : "no");
-	if (strlen(pOpts->screen) > 0)
+	if (pOpts->leds)
 	{
-		if (strcmp(pOpts->screen,"\\\\.\\DISPLAY1") != 0)
-			sprintf(&pCmdLine[strlen(pCmdLine)], " -screen %s",       pOpts->screen); 
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",					pOpts->leds ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -led_mode %s",				pOpts->ledmode );
 	}
-	/* vector */
-	if (DriverIsVector(nGameIndex))
-	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%saa",                      pOpts->antialias       ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%stl",                       pOpts->translucency    ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -beam %f",                   pOpts->f_beam);
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -flicker %f",                pOpts->f_flicker);
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -intensity %f",              pOpts->f_intensity);
-	}
-	/* sound */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -sr %d",                     pOpts->samplerate);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssamples",                 pOpts->use_samples     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssound",                   pOpts->enable_sound    ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -volume %d",                    pOpts->attenuation);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -audio_latency %i",          pOpts->audio_latency);
-	/* misc artwork options */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sart",                     pOpts->use_artwork     ? "" : "no");
-
-	if (pOpts->use_artwork == TRUE)
-	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbackdrop",            pOpts->backdrops       ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%soverlay",             pOpts->overlays        ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbezel",               pOpts->bezels          ? "" : "no");
-	}
-
-	/* misc */
-	if (pOpts->cheat)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sc",                   pOpts->cheat ? "" : "no");
-	if (pOpts->mame_debug)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd",               pOpts->mame_debug ? "" : "no");
-	if (g_pPlayBkName != NULL)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -pb \"%s\"",             g_pPlayBkName);
-	if (g_pRecordName != NULL)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -rec \"%s\"",            g_pRecordName);
-	if (g_pRecordWaveName != NULL)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -wavwrite \"%s\"",       g_pRecordWaveName);
-	if (g_pRecordMNGName != NULL)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -mngwrite \"%s\"",       g_pRecordMNGName);
-	if (g_pSaveStateName != NULL)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssleep",                   pOpts->sleep           ? "" : "no");
-	if (pOpts->old_timing)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -rdtsc");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
-	if (pOpts->skip_gameinfo)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -priority %i", pOpts->priority);
-	if (pOpts->autosave)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");
-
-	if (DriverHasOptionalBIOS(nGameIndex))
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
-
-#ifdef NEW_RENDER
-	if (pOpts->use_ddraw)
-	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -video ddraw");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                 pOpts->ddraw_stretch   ? "" : "no");
-	}
-	else if (!pOpts->use_d3d)
-	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -video gdi");
-	}
-#else
-	// stuff that will be going away soon
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdd",                      pOpts->use_ddraw       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shws",                     pOpts->ddraw_stretch   ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssl",                      pOpts->scanlines       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sswitchbpp",               pOpts->switchbpp       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ska",                      pOpts->keepaspect      ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -cs %s",                     GetCleanStretchShortName(pOpts->clean_stretch));
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -bright %f",                 pOpts->f_bright_correct); 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -refresh %d",                pOpts->gfx_refresh);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -effect %s",                 pOpts->effect);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -zoom %i",                   pOpts->zoom);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->f_gamma_correct);
-
-	if (pOpts->use_artwork == TRUE)
-	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartcrop",             pOpts->artwork_crop    ? "" : "no");
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -artres %d",             pOpts->artres);
-	}
-#endif // NEW_RENDER
 
 	dprintf("Launching MAME32:");
 	dprintf("%s",pCmdLine);
@@ -5398,14 +5368,7 @@ static void SetRandomPickItem()
 	}
 }
 
-enum
-{
-	FILETYPE_INPUT_FILES = 1,
-	FILETYPE_SAVESTATE_FILES = 2,
-	FILETYPE_WAVE_FILES = 3,
-	FILETYPE_MNG_FILES = 4
-};
-static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int filetype)
+BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int filetype)
 {
 	BOOL success;
 	OPENFILENAME of;
@@ -5422,10 +5385,13 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int fi
 		of.lpstrFilter   = MAMENAME " savestate files (*.sta)\0*.sta;\0All files (*.*)\0*.*\0";
 		break;
 	case FILETYPE_WAVE_FILES :
-		of.lpstrFilter   = "Sounds (*.wav)\0*.wav;\0All files (*.*)\0*.*\0";
+		of.lpstrFilter   = "sounds (*.wav)\0*.wav;\0All files (*.*)\0*.*\0";
 		break;
 	case FILETYPE_MNG_FILES :
 		of.lpstrFilter   = "videos (*.mng)\0*.mng;\0All files (*.*)\0*.*\0";
+		break;
+	case FILETYPE_EFFECT_FILES :
+		of.lpstrFilter   = "effects (*.png)\0*.png;\0All files (*.*)\0*.*\0";
 		break;
 	}
 	of.lpstrCustomFilter = NULL;
@@ -5438,7 +5404,12 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int fi
 	if (filetype == FILETYPE_SAVESTATE_FILES)
 		of.lpstrInitialDir = GetStateDir();
 	else
-		of.lpstrInitialDir   = last_directory;
+	{
+		if (filetype == FILETYPE_EFFECT_FILES)
+			of.lpstrInitialDir = GetArtDir();
+		else
+			of.lpstrInitialDir   = last_directory;
+	}
 	of.lpstrTitle        = NULL;
 	of.Flags             = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 	of.nFileOffset       = 0;
@@ -5456,6 +5427,9 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int fi
 		break;
 	case FILETYPE_MNG_FILES :
 		of.lpstrDefExt       = "mng";
+		break;
+	case FILETYPE_EFFECT_FILES :
+		of.lpstrDefExt       = "png";
 		break;
 	}
 	of.lCustData         = 0;

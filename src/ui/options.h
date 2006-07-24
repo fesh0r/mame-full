@@ -19,6 +19,7 @@
 
 #include "osd_cpu.h"
 #include "input.h" /* for input_seq definition */
+#include <video.h> /* for MAX_SCREENS Definition*/
 
 
 enum 
@@ -95,44 +96,43 @@ typedef struct
 	input_seq is;		/* sequence definition in MAME's internal keycodes */
 } KeySeq;
 
+typedef struct 
+{
+	char* screen;
+	char* aspect;
+	char* resolution;
+	char* view;
+} ScreenParams;
+
+
 typedef struct
 {
 	/* video */
+	char   *videomode;
+	char   *effect;
+	int    numscreens;
+	int    prescale;
 	BOOL   autoframeskip;
 	int    frameskip;
 	BOOL   wait_vsync;
 	BOOL   use_triplebuf;
 	BOOL   window_mode;
-	BOOL   use_ddraw;
 	BOOL   ddraw_stretch;
-	char *resolution;
 	int    gfx_refresh;
-	BOOL   scanlines;
 	BOOL   switchres;
-	BOOL   switchbpp;
 	BOOL   maximize;
 	BOOL   keepaspect;
-	BOOL   matchrefresh;
 	BOOL   syncrefresh;
 	BOOL   throttle;
 	double gfx_gamma;
+	double gfx_brightness;
+	double gfx_contrast;
 	int    frames_to_display;
-	char   *effect;
-	char   *aspect;
-	char   *screen;
-	int clean_stretch;
-	int zoom;
+	ScreenParams screen_params[MAX_SCREENS];
 
 	// d3d
-	BOOL use_d3d;
 	BOOL d3d_filter;
-	BOOL d3d_texture_management;
-	int d3d_effect;
-	int d3d_prescale;
-	BOOL d3d_rotate_effects;
-	int d3d_scanlines;
-	int d3d_feedback;
-
+	int d3d_version;
 	/* sound */
 
 	/* input */
@@ -155,21 +155,21 @@ typedef struct
 	/* Core video */
 	double f_bright_correct; /* "1.0", 0.5, 2.0 */
 	double f_pause_bright; /* "0.65", 0.5, 2.0 */
-	BOOL   norotate;
+	double f_contrast_correct; /* "1.0", 0.5, 2.0 */
+	BOOL   rotate;
 	BOOL   ror;
 	BOOL   rol;
 	BOOL   auto_ror;
 	BOOL   auto_rol;
 	BOOL   flipx;
 	BOOL   flipy;
-	double f_gamma_correct;
+	double f_gamma_correct; /* "1.0", 0.5, 3.0 */
 
 	/* Core vector */
 	BOOL   antialias;
 	BOOL   translucency;
 	double f_beam;
 	double f_flicker;
-	double f_intensity;
 
 	/* Sound */
 	int    samplerate;
@@ -184,7 +184,6 @@ typedef struct
 	BOOL   overlays;
 	BOOL   bezels;
 	BOOL   artwork_crop;
-	int    artres;
 
 	/* misc */
 	BOOL   cheat;
@@ -199,7 +198,7 @@ typedef struct
 #ifdef MESS
 	BOOL   skip_warnings;
 #endif
-	int bios;
+	char   *bios;
 	BOOL   autosave;
 
 #ifdef MESS
@@ -420,15 +419,6 @@ void ResetAllGameOptions(void);
 
 const char * GetImageTabLongName(int tab_index);
 const char * GetImageTabShortName(int tab_index);
-
-const char * GetD3DEffectLongName(int d3d_effect);
-const char * GetD3DEffectShortName(int d3d_effect);
-
-const char * GetD3DPrescaleLongName(int d3d_prescale);
-const char * GetD3DPrescaleShortName(int d3d_prescale);
-
-const char * GetCleanStretchLongName(int clean_stretch);
-const char * GetCleanStretchShortName(int clean_stretch);
 
 void SetViewMode(int val);
 int  GetViewMode(void);

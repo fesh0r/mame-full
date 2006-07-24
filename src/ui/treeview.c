@@ -19,6 +19,14 @@
 ***************************************************************************/
 
 #define WIN32_LEAN_AND_MEAN
+
+#ifdef _MSC_VER
+#ifndef NONAMELESSUNION
+#define NONAMELESSUNION 
+#endif
+#endif
+
+
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
@@ -1348,7 +1356,11 @@ void ResetTreeViewFolders(void)
 			tvi.iImage	= GetTreeViewIconIndex(lpFolder->m_nIconId);
 			tvi.iSelectedImage = 0;
 
+#if defined(__GNUC__) /* bug in commctrl.h */
 			tvs.item = tvi;
+#else
+			tvs.DUMMYUNIONNAME.item = tvi;
+#endif
 
 			// Add root branch
 			hti_parent = TreeView_InsertItem(hTreeView, &tvs);
@@ -1393,7 +1405,11 @@ void ResetTreeViewFolders(void)
 		tvi.pszText = treeFolders[i]->m_lpTitle;
 		tvi.lParam	= (LPARAM)treeFolders[i];
 		
+#if defined(__GNUC__) /* bug in commctrl.h */
 		tvs.item = tvi;
+#else
+		tvs.DUMMYUNIONNAME.item = tvi;
+#endif
 		// Add it to this tree branch
 		shti = TreeView_InsertItem(hTreeView, &tvs);
 

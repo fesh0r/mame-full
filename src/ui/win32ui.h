@@ -13,7 +13,10 @@
 #ifndef WIN32UI_H
 #define WIN32UI_H
 
+#define WIN32_LEAN_AND_MEAN
+#include <commdlg.h>
 #include <driver.h>
+#include "screenshot.h"
 
 enum
 {
@@ -23,11 +26,24 @@ enum
 	NUM_TABS
 };
 
+enum
+{
+	FILETYPE_INPUT_FILES = 1,
+	FILETYPE_SAVESTATE_FILES = 2,
+	FILETYPE_WAVE_FILES = 3,
+	FILETYPE_MNG_FILES = 5,
+	FILETYPE_EFFECT_FILES = 6
+};
+
+
 typedef struct
 {
 	INT resource;
 	const char *icon_name;
 } ICONDATA;
+
+typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
+BOOL CommonFileDialog(common_file_dialog_proc cfd,char *filename, int filetype);
 
 HWND GetMainWindow(void);
 HWND GetTreeView(void);
@@ -50,7 +66,7 @@ char * ConvertAmpersandString(const char *s);
 // globalized for painting tree control
 HBITMAP GetBackgroundBitmap(void);
 HPALETTE GetBackgroundPalette(void);
-MYBITMAPINFO * GetBackgroundInfo(void);
+MYBITMAPINFO* GetBackgroundInfo(void);
 BOOL GetUseOldControl(void);
 BOOL GetUseXPControl(void);
 

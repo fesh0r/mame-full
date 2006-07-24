@@ -87,15 +87,6 @@ static void  ListDecodeString(const char* str, void* data);
 static void  FontEncodeString(void* data, char* str);
 static void  FontDecodeString(const char* str, void* data);
 
-static void D3DEffectEncodeString(void *data,char *str);
-static void D3DEffectDecodeString(const char *str,void *data);
-
-static void D3DPrescaleEncodeString(void *data,char *str);
-static void D3DPrescaleDecodeString(const char *str,void *data);
-
-static void CleanStretchEncodeString(void *data,char *str);
-static void CleanStretchDecodeString(const char *str,void *data);
-
 static void FolderFlagsEncodeString(void *data,char *str);
 static void FolderFlagsDecodeString(const char *str,void *data);
 
@@ -293,44 +284,50 @@ static const REG_OPTION regSettings[] =
 static const REG_OPTION regGameOpts[] =
 {
 	// video
+	{ "video",                  RO_STRING,  offsetof(options_type, videomode),                       "d3d" },
+	{ "prescale",               RO_INT,    offsetof(options_type, prescale),                         "1" },
+	{ "numscreens",             RO_INT,     offsetof(options_type, numscreens),                      "1" },
 	{ "autoframeskip",          RO_BOOL,    offsetof(options_type, autoframeskip),                   "0" },
 	{ "frameskip",              RO_INT,     offsetof(options_type, frameskip),                       "0" },
 	{ "waitvsync",              RO_BOOL,    offsetof(options_type, wait_vsync),                      "0" },
+	{ "effect",                 RO_STRING,  offsetof(options_type, effect),                          "none" },
 #ifdef MESS
 	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "0" },
 #else
 	{ "triplebuffer",           RO_BOOL,    offsetof(options_type, use_triplebuf),                   "1" },
 #endif
 	{ "window",                 RO_BOOL,    offsetof(options_type, window_mode),                     "0" },
-	{ "ddraw",                  RO_BOOL,    offsetof(options_type, use_ddraw),                       "1" },
 	{ "hwstretch",              RO_BOOL,    offsetof(options_type, ddraw_stretch),                   "1" },
-	{ "resolution",             RO_STRING,  offsetof(options_type, resolution),                      "auto" },
-	{ "refresh",                RO_INT,     offsetof(options_type, gfx_refresh),                     "0" },
-	{ "scanlines",              RO_BOOL,    offsetof(options_type, scanlines),                       "0" },
 	{ "switchres",              RO_BOOL,    offsetof(options_type, switchres),                       "0" },
-	{ "switchbpp",              RO_BOOL,    offsetof(options_type, switchbpp),                       "0" },
 	{ "maximize",               RO_BOOL,    offsetof(options_type, maximize),                        "1" },
 	{ "keepaspect",             RO_BOOL,    offsetof(options_type, keepaspect),                      "1" },
-	{ "matchrefresh",           RO_BOOL,    offsetof(options_type, matchrefresh),                    "0" },
 	{ "syncrefresh",            RO_BOOL,    offsetof(options_type, syncrefresh),                     "0" },
 	{ "throttle",               RO_BOOL,    offsetof(options_type, throttle),                        "1" },
 	{ "full_screen_gamma",		RO_DOUBLE,  offsetof(options_type, gfx_gamma),		                 "1.0" },
+	{ "full_screen_brightness", RO_DOUBLE,  offsetof(options_type, gfx_brightness),                  "1.0" },
+	{ "full_screen_contrast",   RO_DOUBLE,  offsetof(options_type, gfx_contrast),	                 "1.0" },
 	{ "frames_to_run",          RO_INT,     offsetof(options_type, frames_to_display),               "0" },
-	{ "effect",                 RO_STRING,  offsetof(options_type, effect),                          "none" },
-	{ "screen_aspect",          RO_STRING,  offsetof(options_type, aspect),                          "4:3" },
-	{ "cleanstretch",           RO_ENCODE,  offsetof(options_type, clean_stretch),                   "auto", NULL, CleanStretchEncodeString, CleanStretchDecodeString },
-	{ "zoom",                   RO_INT,     offsetof(options_type, zoom),                            "2" },
-	{ "screen",					RO_STRING,  offsetof(options_type, screen),                          "" },
+	// per screen parameters
+	{ "screen0",				RO_STRING,  offsetof(options_type, screen_params[0].screen),         "auto" },
+	{ "aspect0",                RO_STRING,  offsetof(options_type, screen_params[0].aspect),         "auto" },
+	{ "resolution0",            RO_STRING,  offsetof(options_type, screen_params[0].resolution),     "auto" },
+	{ "view0",                  RO_STRING,  offsetof(options_type, screen_params[0].view),           "auto" },
+	{ "screen1",				RO_STRING,  offsetof(options_type, screen_params[1].screen),         "auto" },
+	{ "aspect1",                RO_STRING,  offsetof(options_type, screen_params[1].aspect),         "auto" },
+	{ "resolution1",            RO_STRING,  offsetof(options_type, screen_params[1].resolution),     "auto" },
+	{ "view1",                  RO_STRING,  offsetof(options_type, screen_params[1].view),           "auto" },
+	{ "screen2",				RO_STRING,  offsetof(options_type, screen_params[2].screen),         "auto" },
+	{ "aspect2",                RO_STRING,  offsetof(options_type, screen_params[2].aspect),         "auto" },
+	{ "resolution2",            RO_STRING,  offsetof(options_type, screen_params[2].resolution),     "auto" },
+	{ "view2",                  RO_STRING,  offsetof(options_type, screen_params[2].view),           "auto" },
+	{ "screen3",				RO_STRING,  offsetof(options_type, screen_params[3].screen),         "auto" },
+	{ "aspect3",                RO_STRING,  offsetof(options_type, screen_params[3].aspect),         "auto" },
+	{ "resolution3",            RO_STRING,  offsetof(options_type, screen_params[3].resolution),     "auto" },
+	{ "view3",                  RO_STRING,  offsetof(options_type, screen_params[3].view),           "auto" },
 
 	// d3d
-	{ "d3d",                    RO_BOOL,    offsetof(options_type, use_d3d),                         "0" },
-	{ "d3dtexmanage",           RO_BOOL,    offsetof(options_type, d3d_texture_management),          "1" },
 	{ "d3dfilter",              RO_BOOL,    offsetof(options_type, d3d_filter),                      "1" },
-	{ "d3deffect",              RO_ENCODE,  offsetof(options_type, d3d_effect),                      "auto", NULL, D3DEffectEncodeString,   D3DEffectDecodeString },
-	{ "d3dprescale",            RO_ENCODE,  offsetof(options_type, d3d_prescale),                    "auto", NULL, D3DPrescaleEncodeString, D3DPrescaleDecodeString },
-	{ "d3deffectrotate",        RO_BOOL,    offsetof(options_type, d3d_rotate_effects),              "1" },
-	{ "d3dscan",                RO_INT,     offsetof(options_type, d3d_scanlines),                   "100" },
-	{ "d3dfeedback",            RO_INT,     offsetof(options_type, d3d_feedback),                    "100" },
+	{ "d3dversion",             RO_INT,     offsetof(options_type, d3d_version),                     "9" },
 	
 	//input
 	{ "mouse",                  RO_BOOL,    offsetof(options_type, use_mouse),                       "0" },
@@ -350,9 +347,10 @@ static const REG_OPTION regGameOpts[] =
 	{ "lightgun_device",        RO_STRING,  offsetof(options_type, lightgun_device),                 "" },
 
 	// core video
+	{ "contrast",               RO_DOUBLE,  offsetof(options_type, f_contrast_correct),	             "1.0" }, 
 	{ "brightness",             RO_DOUBLE,  offsetof(options_type, f_bright_correct),                "1.0" }, 
 	{ "pause_brightness",       RO_DOUBLE,  offsetof(options_type, f_pause_bright),                  "0.65" }, 
-	{ "norotate",               RO_BOOL,    offsetof(options_type, norotate),                        "0" },
+	{ "rotate",                 RO_BOOL,    offsetof(options_type, rotate),                          "1" },
 	{ "ror",                    RO_BOOL,    offsetof(options_type, ror),                             "0" },
 	{ "rol",                    RO_BOOL,    offsetof(options_type, rol),                             "0" },
 	{ "autoror",                RO_BOOL,    offsetof(options_type, auto_ror),                        "0" },
@@ -363,13 +361,11 @@ static const REG_OPTION regGameOpts[] =
 
 	// vector
 	{ "antialias",              RO_BOOL,    offsetof(options_type, antialias),                       "1" },
-	{ "translucency",           RO_BOOL,    offsetof(options_type, translucency),                    "1" },
 	{ "beam",                   RO_DOUBLE,  offsetof(options_type, f_beam),                          "1.0" },
 	{ "flicker",                RO_DOUBLE,  offsetof(options_type, f_flicker),                       "0.0" },
-	{ "intensity",              RO_DOUBLE,  offsetof(options_type, f_intensity),                     "1.5" },
 
 	// sound
-	{ "samplerate",             RO_INT,     offsetof(options_type, samplerate),                      "44100" },
+	{ "samplerate",             RO_INT,     offsetof(options_type, samplerate),                      "48000" },
 	{ "samples",                RO_BOOL,    offsetof(options_type, use_samples),                     "1" },
 	{ "sound",                  RO_BOOL,    offsetof(options_type, enable_sound),                    "1" },
 	{ "volume",                 RO_INT,     offsetof(options_type, attenuation),                     "0" },
@@ -381,22 +377,21 @@ static const REG_OPTION regGameOpts[] =
 	{ "overlay",                RO_BOOL,    offsetof(options_type, overlays),                        "1" },
 	{ "bezel",                  RO_BOOL,    offsetof(options_type, bezels),                          "1" },
 	{ "artwork_crop",           RO_BOOL,    offsetof(options_type, artwork_crop),                    "0" },
-	{ "artres",                 RO_INT,     offsetof(options_type, artres),                          "0" },
 
 	// misc
 	{ "cheat",                  RO_BOOL,    offsetof(options_type, cheat),                           "0" },
 	{ "debug",                  RO_BOOL,    offsetof(options_type, mame_debug),                      "0" },
 	{ "log",                    RO_BOOL,    offsetof(options_type, errorlog),                        "0" },
-	{ "sleep",                  RO_BOOL,    offsetof(options_type, sleep),                           "0" },
+	{ "sleep",                  RO_BOOL,    offsetof(options_type, sleep),                           "1" },
 	{ "rdtsc",                  RO_BOOL,    offsetof(options_type, old_timing),                      "0" },
-	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "0" },
+	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "1" },
 	{ "led_mode",               RO_STRING,  offsetof(options_type, ledmode),                         "ps/2" },
 	{ "priority",               RO_INT,     offsetof(options_type, priority),                        "0" },
 	{ "skip_gameinfo",          RO_BOOL,    offsetof(options_type, skip_gameinfo),                   "0" },
 #ifdef MESS
 	{ "skip_warnings",          RO_BOOL,    offsetof(options_type, skip_warnings),     "0" },
 #endif
-	{ "bios",                   RO_INT,     offsetof(options_type, bios),                            "0" },
+	{ "bios",                   RO_STRING,  offsetof(options_type, bios),                            "default" },
 	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "0" },
 
 #ifdef MESS
@@ -476,96 +471,6 @@ const char* image_tabs_short_name[MAX_TAB_TYPES] =
 	"history",
 };
 
-// must match D3D_EFFECT_... in options.h, and count must match MAX_D3D_EFFECTS
-const char * d3d_effects_long_name[MAX_D3D_EFFECTS] =
-{
-	"None",
-	"Auto",
-	"Aperture grille",
-	"Dot medium mask",
-	"Dot medium bright",
-	"RGB minimum mask",
-	"RGB medium mask",
-	"RGB maximum bright",
-	"RGB micro",
-	"RGB tiny",
-	"RGB 3 pixel triad",
-	"RGB 4 pixel triad",
-	"RGB 6 pixel triad",
-	"RGB 16 pixel triad",
-	"Scanlines 25%",
-	"Scanlines 50%",
-	"Scanlines 75%",
-};
-
-const char * d3d_effects_short_name[MAX_D3D_EFFECTS] =
-{
-	"none",
-	"auto",
-	"aperturegrille",
-	"dotmedmask",
-	"dotmedbright",
-	"rgbminmask",
-	"rgbmedmask",
-	"rgbmaxbright",
-	"rgbmicro",
-	"rgbtiny",
-	"rgb3",
-	"rgb4",
-	"rgb6",
-	"rgb16",
-	"scan25",
-	"scan50",
-	"scan75",
-};
-
-// must match D3D_PRESCALE_... in options.h, and count must match MAX_D3D_PRESCALE
-const char * d3d_prescale_long_name[MAX_D3D_PRESCALE] =
-{
-	"None",
-	"Auto",
-	"Full",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-};
-
-const char * d3d_prescale_short_name[MAX_D3D_PRESCALE] =
-{
-	"none",
-	"auto",
-	"full",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-};
-
-const char * clean_stretch_long_name[MAX_CLEAN_STRETCH] =
-{
-	"None",
-	"Auto",
-	"Full",
-	"Horizontal",
-	"Vertical",
-};
-	
-const char * clean_stretch_short_name[MAX_CLEAN_STRETCH] =
-{
-	"none",
-	"auto",
-	"full",
-	"horizontal",
-	"vertical",
-};
-	
 
 static int  num_games = 0;
 static BOOL save_gui_settings = TRUE;
@@ -1015,36 +920,6 @@ const char * GetImageTabLongName(int tab_index)
 const char * GetImageTabShortName(int tab_index)
 {
 	return image_tabs_short_name[tab_index];
-}
-
-const char * GetD3DEffectLongName(int d3d_effect)
-{
-	return d3d_effects_long_name[d3d_effect];
-}
-
-const char * GetD3DEffectShortName(int d3d_effect)
-{
-	return d3d_effects_short_name[d3d_effect];
-}
-
-const char * GetD3DPrescaleLongName(int d3d_prescale)
-{
-	return d3d_prescale_long_name[d3d_prescale];
-}
-
-const char * GetD3DPrescaleShortName(int d3d_prescale)
-{
-	return d3d_prescale_short_name[d3d_prescale];
-}
-
-const char * GetCleanStretchLongName(int clean_stretch)
-{
-	return clean_stretch_long_name[clean_stretch];
-}
-
-const char * GetCleanStretchShortName(int clean_stretch)
-{
-	return clean_stretch_short_name[clean_stretch];
 }
 
 void SetViewMode(int val)
@@ -2596,77 +2471,6 @@ static void FontEncodeString(void* data, char *str)
 			f->lfFaceName);
 }
 
-static void D3DEffectEncodeString(void *data,char *str)
-{
-	int d3d_effect = *(int *)data;
-
-	strcpy(str,GetD3DEffectShortName(d3d_effect));
-}
-
-static void D3DEffectDecodeString(const char *str,void *data)
-{
-	int i;
-
-	*(int *)data = D3D_EFFECT_NONE;
-
-	for (i=0;i<MAX_D3D_EFFECTS;i++)
-	{
-		if (mame_stricmp(GetD3DEffectShortName(i),str) == 0)
-		{
-			*(int *)data = i;
-			return;
-		}
-	}
-	dprintf("invalid d3d effect string %s",str);
-}
-
-static void D3DPrescaleEncodeString(void *data,char *str)
-{
-	int d3d_prescale = *(int *)data;
-
-	strcpy(str,GetD3DPrescaleShortName(d3d_prescale));
-}
-
-static void D3DPrescaleDecodeString(const char *str,void *data)
-{
-	int i;
-
-	*(int *)data = D3D_PRESCALE_NONE;
-
-	for (i=0;i<MAX_D3D_PRESCALE;i++)
-	{
-		if (mame_stricmp(GetD3DPrescaleShortName(i),str) == 0)
-		{
-			*(int *)data = i;
-			return;
-		}
-	}
-	dprintf("invalid d3d prescale string %s",str);
-}
-
-static void CleanStretchEncodeString(void *data,char *str)
-{
-	int clean_stretch = *(int *)data;
-
-	strcpy(str,GetCleanStretchShortName(clean_stretch));
-}
-
-static void CleanStretchDecodeString(const char *str,void *data)
-{
-	int i;
-
-	*(int *)data = CLEAN_STRETCH_NONE;
-
-	for (i=0;i<MAX_CLEAN_STRETCH;i++)
-	{
-		if (mame_stricmp(GetCleanStretchShortName(i),str) == 0)
-		{
-			*(int *)data = i;
-			return;
-		}
-	}
-	dprintf("invalid clean stretch string %s",str);
-}
 
 static void FolderFlagsEncodeString(void *data,char *str)
 {

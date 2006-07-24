@@ -178,10 +178,14 @@ void SetCorePathList(int file_type,const char *s)
 
 BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 {
-	mame_file *mfile;
+	mame_file *mfile = NULL;
 	BOOL success;
 	const char *zip_name = NULL;
-
+	char *pngfilename = NULL;
+	char tmp[MAX_PATH];
+	strcpy(tmp, filename);
+	strcat(tmp,  ".png");
+	pngfilename = mame_strdup(tmp);
 	switch (pic_type)
 	{
 	case TAB_SCREENSHOT :
@@ -218,13 +222,12 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 	}
 	
 	// look for the raw file
-	mfile = mame_fopen(NULL,filename,FILETYPE_ARTWORK,0);
+	mfile = mame_fopen(NULL,pngfilename,FILETYPE_ARTWORK,0);
 	if (mfile == NULL)
 	{
 		// and look for the zip
-		mfile = mame_fopen(zip_name,filename,FILETYPE_ARTWORK,0);
+		mfile = mame_fopen(zip_name,pngfilename,FILETYPE_ARTWORK,0);
 	}
-
 	if (mfile == NULL)
 		return FALSE;
 
