@@ -147,12 +147,32 @@ WRITE8_HANDLER( gamecom_internal_w )
 					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1) & 0xFC ) | 0x03 );
 					break;
 				case 0xFF7F:	/* keys #1 */
+						/* P0 bit 0 cleared => 83 (up) */
+						/* P0 bit 1 cleared => 84 (down) */
+						/* P0 bit 2 cleared => 85 (left) */
+						/* P0 bit 3 cleared => 86 (right) */
+						/* P0 bit 4 cleared => 87 (menu) */
+						/* P0 bit 5 cleared => 8A (pause) */
+						/* P0 bit 6 cleared => 89 (sound) */
+						/* P0 bit 7 cleared => 8B (button A) */
+						/* P1 bit 0 cleared => 8C (button B) */
+						/* P1 bit 1 cleared => 8D (button C) */
 					cpunum_set_reg( 0, SM8500_P0, readinputport(0) );
 					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | ( readinputport(1) & 0x03 ) );
 					break;
 				case 0xFFFF:	/* keys #2 */
-					cpunum_set_reg( 0, SM8500_P0, 0xFF );
-					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | ( readinputport(2) & 0x03 ) );
+						/* P0 bit 0 cleared => 88 (power) */
+						/* P0 bit 1 cleared => 8E (button D) */
+						/* P0 bit 2 cleared => A0 */
+						/* P0 bit 3 cleared => A0 */
+						/* P0 bit 4 cleared => A0 */
+						/* P0 bit 5 cleared => A0 */
+						/* P0 bit 6 cleared => A0 */
+						/* P0 bit 7 cleared => A0 */
+						/* P1 bit 0 cleared => A0 */
+						/* P1 bit 1 cleared => A0 */
+					cpunum_set_reg( 0, SM8500_P0, ( cpunum_get_reg( 0, SM8500_P0 ) & 0xFC ) | ( readinputport(2) & 0x03 ) );
+					cpunum_set_reg( 0, SM8500_P1, 0xFF );
 					break;
 				}
 				return;
