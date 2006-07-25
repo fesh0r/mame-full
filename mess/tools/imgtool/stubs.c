@@ -47,6 +47,16 @@ void mame_fclose(mame_file *file)
 	fclose((FILE *) file);
 }
 
+int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
+{
+	int rc;
+	va_list va;
+	va_start(va, fmt);
+	rc = vfprintf(stderr, fmt, va);
+	va_end(va);
+	return rc;
+}
+
 void CLIB_DECL fatalerror(const char *text,...)
 {
 	va_list va;

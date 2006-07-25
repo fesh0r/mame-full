@@ -336,8 +336,38 @@ void options_output_ini_file(FILE *inifile)
 
 
 /*-------------------------------------------------
-    options_output_ini_file - output the current
+    options_output_ini_mame_file - output the current
     state to an INI file
+-------------------------------------------------*/
+
+#ifdef MESS
+void options_output_ini_mame_file(mame_file *inifile)
+{
+	options_data *data;
+
+	/* loop over all items */
+	for (data = datalist; data != NULL; data = data->next)
+	{
+		/* header: just print */
+		if ((data->flags & OPTION_HEADER) != 0)
+			mame_fprintf(inifile, "\n#\n# %s\n#\n", data->description);
+
+		/* otherwise, output entries for all non-deprecated and non-command items */
+		else if ((data->flags & (OPTION_DEPRECATED | OPTION_COMMAND)) == 0 && data->names[0][0] != 0)
+		{
+			if (data->data != NULL)
+				mame_fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
+			else
+				mame_fprintf(inifile, "# %-23s <NULL> (not set)\n", data->names[0]);
+		}
+	}
+}
+#endif
+
+
+/*-------------------------------------------------
+    options_output_help - output option help to
+	a file
 -------------------------------------------------*/
 
 void options_output_help(FILE *output)

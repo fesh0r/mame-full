@@ -61,6 +61,7 @@ int options_parse_ini_file(mame_file *inifile);
 
 void options_output_xml_file(FILE *xmlfile);
 void options_output_ini_file(FILE *inifile);
+void options_output_ini_mame_file(mame_file *inifile);
 
 void options_output_help(FILE *output);
 

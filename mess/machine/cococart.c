@@ -260,26 +260,28 @@ static rtc_type_t real_time_clock(void)
 
 /* ---------------------------------------------------- */
 
- READ8_HANDLER(coco_floppy_r)
+READ8_HANDLER(coco_floppy_r)
 {
-	int result = 0;
+	UINT8 result = 0;
 
-	switch(offset & 0xef) {
-	case 8:
-		result = wd179x_status_r(0);
-		break;
-	case 9:
-		result = wd179x_track_r(0);
-		break;
-	case 10:
-		result = wd179x_sector_r(0);
-		break;
-	case 11:
-		result = wd179x_data_r(0);
-		break;
-	default:
-		result = coco_vhd_io_r( offset );
-		break;
+	switch(offset & 0xef)
+	{
+		case 8:
+			result = wd179x_status_r(0);
+			break;
+		case 9:
+			result = wd179x_track_r(0);
+			break;
+		case 10:
+			result = wd179x_sector_r(0);
+			break;
+		case 11:
+			result = wd179x_data_r(0);
+			break;
+		default:
+			if (device_count(IO_VHD) > 0)
+				result = coco_vhd_io_r( offset );
+			break;
 	}
 
 	switch(real_time_clock())
@@ -310,29 +312,30 @@ static rtc_type_t real_time_clock(void)
 
 WRITE8_HANDLER(coco_floppy_w)
 {
-	switch(offset & 0xef) {
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-		set_coco_dskreg(data);
-		break;
-	case 8:
-		wd179x_command_w(0, data);
-		break;
-	case 9:
-		wd179x_track_w(0, data);
-		break;
-	case 10:
-		wd179x_sector_w(0, data);
-		break;
-	case 11:
-		wd179x_data_w(0, data);
-		break;
+	switch(offset & 0xef)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			set_coco_dskreg(data);
+			break;
+		case 8:
+			wd179x_command_w(0, data);
+			break;
+		case 9:
+			wd179x_track_w(0, data);
+			break;
+		case 10:
+			wd179x_sector_w(0, data);
+			break;
+		case 11:
+			wd179x_data_w(0, data);
+			break;
 	};
 
 	switch(real_time_clock())
@@ -350,7 +353,8 @@ WRITE8_HANDLER(coco_floppy_w)
 			break;
 	}
 
-	coco_vhd_io_w( offset, data );
+	if (device_count(IO_VHD) > 0)
+		coco_vhd_io_w( offset, data );
 
 /*	logerror("SCS write: address %4.4X, data %2.2X\n", 0xff40+offset, data );*/
 }

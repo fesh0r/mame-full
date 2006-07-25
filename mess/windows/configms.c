@@ -71,10 +71,7 @@ int write_config(const char* filename, const game_driver *gamedrv)
 	if (!f)
 		goto done;
 
-//	TODONATE: FIXME
-//	if (osd_rc_write(cli_rc_access(), f, filename))
-//		goto done;
-
+	options_output_ini_mame_file(f);
 	retval = 0;
 
 done:
