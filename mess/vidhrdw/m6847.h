@@ -71,6 +71,10 @@ void m6847_init(const m6847_config *cfg);
 VIDEO_UPDATE(m6847);
 void m6847_video_changed(void);
 
+/* sync */
+int m6847_get_horizontal_sync(void);
+int m6847_get_field_sync(void);
+
 /* timing functions */
 UINT64 m6847_time(m6847_timing_type timing);
 mame_time m6847_time_until(m6847_timing_type timing, UINT64 target_time);
