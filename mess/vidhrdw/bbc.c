@@ -670,6 +670,7 @@ VIDEO_START( bbca )
 	set_pixel_lookup();
 	set_video_memory_lookups(16);
 	crtc6845_config(&BBC6845);
+	saa505x_config(&BBCsaa5050);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
 	vidmem_RAM=vidmem;

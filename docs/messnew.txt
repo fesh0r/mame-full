@@ -22,6 +22,8 @@ System Driver Changes:
 
 - [ATOM] Fixed regression introduced in 0.106.  (bug #894) [Nate Woods]
 
+- [BBCA] Fixed regression introduced in 0.106.  (bug #893) [Nate Woods]
+
 - [COCO] Fixed a subtle problem when creating DMK disk images.  (bug #864)
   [Nate Woods]
 
