@@ -35,9 +35,12 @@ System Driver Changes:
 
 - [GAMEBOY] Fixed aspect ratio.  [Justin Kerk]
 
+- [LVIV] Changed to use selectable BIOSes.  [incog]
+
 - [MBEE] Fixed reset.  [Robbert, R. Belmont]
 
-- [LVIV] Changed to use selectable BIOSes.  [incog]
+- [T1000HX] Fixed invisible text regression introduced in 0.106.  (bug #899)
+  [Nate Woods]
 
 
 
