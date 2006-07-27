@@ -1018,6 +1018,7 @@ MACHINE_START( dgnbeta )
 #endif
 
 	add_reset_callback(dgnbeta_reset);
+	dgnbeta_reset();
 	return 0;
 }
 

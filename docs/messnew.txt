@@ -29,6 +29,8 @@ System Driver Changes:
 
 - [COCO3P] Fixed video.  (bug #886) [Nate Woods]
 
+- [DGNBETA] Fixed regression introduced in 0.106.  (bug #896) [Nate Woods]
+
 - [GAMEBOY] Fixed aspect ratio.  [Justin Kerk]
 
 - [MBEE] Fixed reset.  [Robbert, R. Belmont]
