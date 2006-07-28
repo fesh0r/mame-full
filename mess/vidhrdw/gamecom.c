@@ -16,6 +16,12 @@ INTERRUPT_GEN( gamecom_scanline ) {
 	if ( scanline == 0 ) {
 		base_address = ( internal_registers[SM8521_LCDC] & 0x40 ) ? 0x2000 : 0x0000;
 	}
+	{
+		rectangle rect;
+		rect.min_y = 0; rect.max_y = 159;
+		rect.min_x = 0; rect.max_x = 199;
+		draw_crosshair( tmpbitmap, readinputport(3), readinputport(4), &rect, 0 );
+	}
 	if ( ! internal_registers[SM8521_LCDC] & 0x80 ) {
 		rectangle rec;
 		rec.min_x = 0;

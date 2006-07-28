@@ -108,6 +108,30 @@ static void gamecom_set_mmu( int mmu, UINT8 data ) {
 	}
 }
 
+static void handle_stylus_press( UINT8 column ) {
+	static const UINT16 row_data[10] = { 0x3FE, 0x3FD, 0x3FB, 0x3F7, 0x3EF, 0x3DF, 0x3BF, 0x37F, 0x2FF, 0x1FF };
+	static UINT32 stylus_x;
+	static UINT32 stylus_y;
+
+	if ( column == 0 ) {
+		if ( ! ( readinputport(2) & 0x04 ) ) {
+			stylus_x = readinputport( 3 ) >> 4;
+			stylus_y = readinputport( 4 ) >> 4;
+		} else {
+			stylus_x = 16;
+			stylus_y = 16;
+		}
+	}
+
+	if ( stylus_x == column ) {
+		cpunum_set_reg( 0, SM8500_P0, row_data[stylus_y] & 0xFF );
+		cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | ( ( row_data[stylus_y] >> 8 ) & 0x03 ) );
+	} else {
+		cpunum_set_reg( 0, SM8500_P0, 0xFF );
+		cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1 ) & 0xFC ) | 0x03 );
+	}
+}
+
 WRITE8_HANDLER( gamecom_internal_w )
 {
 	if ( offset >= 0x80 ) {
@@ -125,26 +149,53 @@ WRITE8_HANDLER( gamecom_internal_w )
 	case SM8521_P2:		cpunum_set_reg( 0, SM8500_P2, data );
 				switch( ( cpunum_get_reg( 0, SM8500_P1 ) << 8 ) | data ) {
 				case 0xFBFF:	/* column #0 */
-					if ( ! ( readinputport(1) & 0x01 ) ) {
-//						printf( "screen location: %d,%d\n", readinputport(3), readinputport(4) );
-					}
-					cpunum_set_reg( 0, SM8500_P0, 0xFF );
-					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1) & 0xFC ) | 0x03 );
+						/* P0 bit 0 cleared => 01 */
+						/* P0 bit 1 cleared => 0E */
+						/* P0 bit 2 cleared => 1B */
+						/* P0 bit 3 cleared => etc */
+						/* P0 bit 4 cleared => */
+						/* P0 bit 5 cleared => */
+						/* P0 bit 6 cleared => */
+						/* P0 bit 7 cleared => */
+						/* P1 bit 0 cleared => */
+						/* P1 bit 1 cleared => */
+					handle_stylus_press( 0 );
 					break;
 				case 0xF7FF:	/* column #1 */
+					handle_stylus_press( 1 );
+					break;
 				case 0xEFFF:	/* column #2 */
+					handle_stylus_press( 2 );
+					break;
 				case 0xDFFF:	/* column #3 */
+					handle_stylus_press( 3 );
+					break;
 				case 0xBFFF:	/* column #4 */
+					handle_stylus_press( 4 );
+					break;
 				case 0x7FFF:	/* column #5 */
+					handle_stylus_press( 5 );
+					break;
 				case 0xFFFE:	/* column #6 */
+					handle_stylus_press( 6 );
+					break;
 				case 0xFFFD:	/* column #7 */
+					handle_stylus_press( 7 );
+					break;
 				case 0xFFFB:	/* column #8 */
+					handle_stylus_press( 8 );
+					break;
 				case 0xFFF7:	/* column #9 */
+					handle_stylus_press( 9 );
+					break;
 				case 0xFFEF:	/* column #10 */
+					handle_stylus_press( 10 );
+					break;
 				case 0xFFDF:	/* column #11 */
+					handle_stylus_press( 11 );
+					break;
 				case 0xFFBF:	/* column #12 */
-					cpunum_set_reg( 0, SM8500_P0, 0xFF );
-					cpunum_set_reg( 0, SM8500_P1, ( cpunum_get_reg( 0, SM8500_P1) & 0xFC ) | 0x03 );
+					handle_stylus_press( 12 );
 					break;
 				case 0xFF7F:	/* keys #1 */
 						/* P0 bit 0 cleared => 83 (up) */
@@ -219,7 +270,7 @@ WRITE8_HANDLER( gamecom_internal_w )
 
 	/* Video hardware and DMA */
 	case SM8521_LCDC:
-		logerror( "%X: Setting LCDC to %X\n", activecpu_get_pc(), data );
+//		logerror( "%X: Setting LCDC to %X\n", activecpu_get_pc(), data );
 		break;
 	case SM8521_LCH:
 		break;
@@ -319,9 +370,9 @@ READ8_HANDLER( gamecom_internal_r )
 	case SM8521_IE1:	return cpunum_get_reg( 0, SM8500_IE1 );
 	case SM8521_IR0:	return cpunum_get_reg( 0, SM8500_IR0 );
 	case SM8521_IR1:	return cpunum_get_reg( 0, SM8500_IR1 );
-	case SM8521_P0:		logerror( "%X: Read from P0\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P0 );
-	case SM8521_P1:		logerror( "%X: Read from P1\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P1 );
-	case SM8521_P2:		logerror( "%X: Read from P2\n", activecpu_get_pc() ); return cpunum_get_reg( 0, SM8500_P2 );
+	case SM8521_P0:		/* logerror( "%X: Read from P0\n", activecpu_get_pc() ); */ return cpunum_get_reg( 0, SM8500_P0 );
+	case SM8521_P1:		/* logerror( "%X: Read from P1\n", activecpu_get_pc() ); */ return cpunum_get_reg( 0, SM8500_P1 );
+	case SM8521_P2:		/* logerror( "%X: Read from P2\n", activecpu_get_pc() ); */ return cpunum_get_reg( 0, SM8500_P2 );
 	case SM8521_P3:		return cpunum_get_reg( 0, SM8500_P3 );
 	case SM8521_SYS:	return cpunum_get_reg( 0, SM8500_SYS );
 	case SM8521_CKC:	return cpunum_get_reg( 0, SM8500_CKC );
@@ -378,8 +429,8 @@ void gamecom_dma_init(void) {
 	gamecom_dma.palette[3] = ( internal_registers[SM8521_DMPL] & 0xC0 ) >> 6;
 	gamecom_dma.source_mask = 0x1FFF;
 	gamecom_dma.dest_mask = 0x1FFF;
-	logerror("DMA: width %Xx%X, source (%X,%X), dest (%X,%X), transfer_mode %X, banks %X \n", gamecom_dma.width_x, gamecom_dma.width_y, gamecom_dma.source_x, gamecom_dma.source_y, gamecom_dma.dest_x, gamecom_dma.dest_y, gamecom_dma.transfer_mode, internal_registers[SM8521_DMVP] );
-	logerror( "   Palette: %d, %d, %d, %d\n", gamecom_dma.palette[0], gamecom_dma.palette[1], gamecom_dma.palette[2], gamecom_dma.palette[3] );
+//	logerror("DMA: width %Xx%X, source (%X,%X), dest (%X,%X), transfer_mode %X, banks %X \n", gamecom_dma.width_x, gamecom_dma.width_y, gamecom_dma.source_x, gamecom_dma.source_y, gamecom_dma.dest_x, gamecom_dma.dest_y, gamecom_dma.transfer_mode, internal_registers[SM8521_DMVP] );
+//	logerror( "   Palette: %d, %d, %d, %d\n", gamecom_dma.palette[0], gamecom_dma.palette[1], gamecom_dma.palette[2], gamecom_dma.palette[3] );
 	switch( gamecom_dma.transfer_mode ) {
 	case 0x00:
 		/* VRAM->VRAM */
@@ -388,7 +439,7 @@ void gamecom_dma_init(void) {
 		break;
 	case 0x02:
 		/* ROM->VRAM */
-		logerror( "DMA DMBR = %X\n", internal_registers[SM8521_DMBR] );
+//		logerror( "DMA DMBR = %X\n", internal_registers[SM8521_DMBR] );
 		gamecom_dma.source_width = 64;
 		if ( internal_registers[SM8521_DMBR] < 16 ) {
 			gamecom_dma.source_bank = memory_region(REGION_USER1) + (internal_registers[SM8521_DMBR] << 14);
