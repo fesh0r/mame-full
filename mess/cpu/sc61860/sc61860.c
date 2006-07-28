@@ -291,6 +291,6 @@ void sc61860_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + SC61860_X:		sprintf(info->s = cpuintrf_temp_str(), "X: %.2x%.2x", sc61860.ram[XH], sc61860.ram[XL]);break;
 		case CPUINFO_STR_REGISTER + SC61860_Y:		sprintf(info->s = cpuintrf_temp_str(), "Y: %.2x%.2x", sc61860.ram[YH], sc61860.ram[YL]);break;
 		case CPUINFO_STR_REGISTER + SC61860_CARRY:	sprintf(info->s = cpuintrf_temp_str(), "Carry: %d", sc61860.carry);break;
-		case CPUINFO_STR_REGISTER + SC61860_ZERO:	sprintf(info->s = cpuintrf_temp_str(), "Carry: %d", sc61860.zero);break;
+		case CPUINFO_STR_REGISTER + SC61860_ZERO:	sprintf(info->s = cpuintrf_temp_str(), "Zero: %d", sc61860.zero);break;
 	}
 }
