@@ -134,20 +134,23 @@ static int pc1350_addr[4]={ 0, 0x40, 0x1e, 0x5e };
 
 VIDEO_UPDATE( pc1350 )
 {
-	int x, y, i, j, k;
+	int x, y, i, j, k, b;
 	int color[2];
 	/* HJB: we cannot initialize array with values from other arrays, thus... */
     color[0] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][0]];
 	color[1] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][1]];
 
-	for (k=0, y=DOWN; k<4; y+=16,k++) {
-		for (x=RIGHT, i=pc1350_addr[k]; i<0xa00; i+=0x200) {
-			for (j=0; j<=0x1d; j++, x+=2) {
-				drawgfx(bitmap, Machine->gfx[0], 
-						pc1350_lcd.reg[j+i],
-						PC1350_CONTRAST,0,0,
-						x,y,
-						0, TRANSPARENCY_NONE,0);
+	for (k=0, y=DOWN; k<4; y+=16,k++)
+	{
+		for (x=RIGHT, i=pc1350_addr[k]; i<0xa00; i+=0x200)
+		{
+			for (j=0; j<=0x1d; j++, x+=2)
+			{
+				for (b = 0; b < 8; b++)
+				{
+					plot_box(bitmap, x, y + b * 2, 2, 2,
+						color[(pc1350_lcd.reg[j+i] >> b) & 1]);
+				}
 			}
 		}
 	}

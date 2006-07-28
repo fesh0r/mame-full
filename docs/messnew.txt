@@ -39,6 +39,8 @@ System Driver Changes:
 
 - [MBEE] Fixed reset.  [Robbert, R. Belmont]
 
+- [PC1350] Fixed regression introduced in 0.106.  (bug #900) [Nate Woods]
+
 - [T1000HX] Fixed invisible text regression introduced in 0.106.  (bug #899)
   [Nate Woods]
 

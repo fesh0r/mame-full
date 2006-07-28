@@ -494,21 +494,6 @@ static gfx_layout pc1251_charlayout =
 	1*8
 };
 
-static gfx_layout pc1350_charlayout =
-{
-	2,16,
-	256,                                    /* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0,0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0 },
-	/* y offsets */
-	{
-		7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
-	},
-	1*8
-};
-
 static gfx_decode pc1401_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 8 },
     { -1 } /* end of array */
@@ -516,11 +501,6 @@ static gfx_decode pc1401_gfxdecodeinfo[] = {
 
 static gfx_decode pc1251_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     0, 8 },
-    { -1 } /* end of array */
-};
-
-static gfx_decode pc1350_gfxdecodeinfo[] = {
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 
@@ -620,7 +600,6 @@ static MACHINE_DRIVER_START( pc1350 )
 	MDRV_VISIBLE_AREA(0, 640-1, 0, 252-1)
 //	MDRV_SCREEN_SIZE(640, 255)
 //	MDRV_VISIBLE_AREA(0, 640-1, 0, 255-1)
-	MDRV_GFXDECODE( pc1350_gfxdecodeinfo )
 
 	MDRV_VIDEO_UPDATE( pc1350 )
 MACHINE_DRIVER_END

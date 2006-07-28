@@ -160,10 +160,6 @@ static void pc1350_power_up(int param)
 
 MACHINE_START( pc1350 )
 {
-	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
-	for (i=0; i<256; i++) gfx[i]=i;
-
 	timer_pulse(1/500.0, 0,sc61860_2ms_tick);
 	timer_set(1,0,pc1350_power_up);
 
