@@ -424,7 +424,7 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	
 	// set up device and CRC, if specified
 	pInfo->devclass = devclass;
-	if (device_get_info_fct(&devclass, DEVINFO_PTR_PARTIAL_HASH))
+	if (devclass.gamedrv && device_get_info_fct(&devclass, DEVINFO_PTR_PARTIAL_HASH))
 		nCrc = 0;
 	if (nCrc != 0)
 		snprintf(pInfo->szHash, sizeof(pInfo->szHash) / sizeof(pInfo->szHash[0]), "c:%08x#", nCrc);
