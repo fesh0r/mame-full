@@ -604,7 +604,7 @@ END
 IDD_PROP_DISPLAY DIALOGEX 0, 0, 230, 263
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Display"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,54,9,169,25,
@@ -618,13 +618,13 @@ BEGIN
                     HIDC_KEEPASPECT
     CONTROL         "Throttle",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,76,39,9,0,HIDC_THROTTLE
-    GROUPBOX        "Rotation",IDC_STATIC,4,119,111,55
-    COMBOBOX        IDC_ROTATE,10,129,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+    GROUPBOX        "Rotation",IDC_STATIC,4,88,111,55
+    COMBOBOX        IDC_ROTATE,10,98,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP,0,HIDC_ROTATE
     CONTROL         "Flip screen upside-down",IDC_FLIPY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,146,91,10,0,HIDC_FLIPY
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,115,91,10,0,HIDC_FLIPY
     CONTROL         "Flip screen left-right",IDC_FLIPX,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,158,77,10,0,HIDC_FLIPX
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,127,77,10,0,HIDC_FLIPX
     GROUPBOX        "Gamma Correction",IDC_STATIC,121,103,102,24
     CONTROL         "GammaSlider",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,125,113,71,10,0,HIDC_GAMMA
@@ -655,22 +655,16 @@ BEGIN
                     TBS_NOTICKS | WS_TABSTOP,125,84,71,10,0,HIDC_PRESCALE
     LTEXT           "1.00",IDC_PRESCALEDISP,199,84,15,10,SS_CENTERIMAGE | 
                     NOT WS_GROUP
-    GROUPBOX        "Number of screens",IDC_STATIC,4,87,111,24
-    CONTROL         "GammaSlider",IDC_NUMSCREENS,"msctls_trackbar32",
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,10,97,80,10,0,
-                    HIDC_NUMSCREENS
-    LTEXT           "1",IDC_NUMSCREENSDISP,94,97,15,10,SS_CENTERIMAGE | NOT 
-                    WS_GROUP
     CONTROL         "Use Bilinear filtering",IDC_D3D_FILTER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,12,191,85,11,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,160,85,11,0,
                     HIDC_D3D_FILTER
-    GROUPBOX        "Version",IDC_STATIC,12,205,97,28
-    COMBOBOX        IDC_D3D_VERSION,18,216,85,95,CBS_DROPDOWNLIST | 
+    GROUPBOX        "Version",IDC_STATIC,12,174,97,28
+    COMBOBOX        IDC_D3D_VERSION,18,185,85,95,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_D3D_VERSION
-    GROUPBOX        "Direct3D",IDC_STATIC,4,179,111,60
-    GROUPBOX        "DirectDraw",IDC_STATIC,121,207,102,29
+    GROUPBOX        "Direct3D",IDC_STATIC,4,148,111,60
+    GROUPBOX        "DirectDraw",IDC_STATIC,4,211,110,29
     CONTROL         "Stretch using hardware",IDC_HWSTRETCH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,129,219,85,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,223,85,10,0,
                     HIDC_HWSTRETCH
     COMBOBOX        IDC_VIDEO_MODE,123,48,94,50,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_VIDEO_MODE
@@ -1205,44 +1199,49 @@ BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,62,9,161,25,
                     SS_NOPREFIX
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,179,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,179,97,14,0,0,0x80bb0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,126,179,97,14,
-                    0,0,HIDC_USE_DEFAULT
+                    0,0,0x80bb0401
     GROUPBOX        "Screen",IDC_STATIC,4,63,103,28
     COMBOBOX        IDC_SCREEN,10,73,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_SCREEN
+                    WS_TABSTOP,0,0x80bb03f4
     GROUPBOX        "Resolution",IDC_STATIC,120,68,103,61,WS_GROUP
     LTEXT           "Size",IDC_STATIC,126,80,28,10,SS_CENTERIMAGE | NOT 
                     WS_GROUP
     COMBOBOX        IDC_SIZES,158,79,60,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_SIZES
+                    WS_TABSTOP,0,0x80bb03ed
     LTEXT           "Depth",IDC_RESDEPTHTEXT,126,96,28,10,SS_CENTERIMAGE | 
                     NOT WS_GROUP
     COMBOBOX        IDC_RESDEPTH,158,95,60,63,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_RESDEPTH
+                    WS_TABSTOP,0,0x80bb0479
     LTEXT           "Refresh",IDC_REFRESHTEXT,126,112,28,10,SS_CENTERIMAGE | 
                     NOT WS_GROUP
     COMBOBOX        IDC_REFRESH,158,111,60,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_REFRESH
+                    WS_TABSTOP,0,0x80bb047c
     GROUPBOX        "",IDC_STATIC,4,95,103,28
     LTEXT           "Aspect ratio",IDC_ASPECTRATIOTEXT,13,107,40,10,
                     SS_CENTERIMAGE
     EDITTEXT        IDC_ASPECTRATION,56,106,14,12,ES_RIGHT | ES_AUTOHSCROLL | 
-                    ES_NUMBER,0,HIDC_ASPECTRATION
+                    ES_NUMBER,0,0x80bb0482
     LTEXT           ":",IDC_STATIC,72,107,8,10,SS_CENTERIMAGE | NOT WS_GROUP
     EDITTEXT        IDC_ASPECTRATIOD,76,106,14,12,ES_RIGHT | ES_AUTOHSCROLL | 
-                    ES_NUMBER,0,HIDC_ASPECTRATIOD
+                    ES_NUMBER,0,0x80bb0483
     GROUPBOX        "View",IDC_STATIC,4,127,103,28
     COMBOBOX        IDC_VIEW,10,137,91,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_VIEW
+                    WS_TABSTOP,0,0x80bb03f6
     GROUPBOX        "Screennumber",IDC_SCREENSELECTTEXT,120,33,103,28
     COMBOBOX        IDC_SCREENSELECT,126,44,91,64,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP,0,HIDC_SCREENSELECT
-    CONTROL         "Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,95,38,10,0,HIDC_ASPECT
+                    WS_VSCROLL | WS_TABSTOP,0,0x80bb03f7
+    CONTROL         "Autoselect aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,95,73,10,0,0x80bb04c4
     CONTROL         "Switch resolutions to fit",IDC_SWITCHRES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,135,93,10,0,
-                    HIDC_SWITCHRES
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,135,93,10,0,0x80bb046d
+    GROUPBOX        "Number of screens",IDC_STATIC,4,34,111,27
+    CONTROL         "GammaSlider",IDC_NUMSCREENS,"msctls_trackbar32",
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,10,46,80,10,0,
+                    0x80bb0404
+    LTEXT           "1",IDC_NUMSCREENSDISP,94,46,15,10,SS_CENTERIMAGE | NOT 
+                    WS_GROUP
 END
 
 

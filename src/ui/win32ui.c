@@ -981,7 +981,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	}
 
 	dprintf("Launching MAME32:");
-	dprintf("%s",pCmdLine);
+	dprintf("%s\n",pCmdLine);
 }
 
 static BOOL WaitWithMessageLoop(HANDLE hEvent)
@@ -6521,8 +6521,8 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 // replaces function in src/windows/fileio.c:
 int osd_display_loading_rom_message(const char *name, rom_load_data *romdata)
 {
-	int retval;
-
+	int retval = 0;
+/*
 	if (use_gui_romloading)
 	{
 		options.gui_host = 1;
@@ -6537,7 +6537,7 @@ int osd_display_loading_rom_message(const char *name, rom_load_data *romdata)
 		fflush (stdout);
 		retval = 0;
 	}
-	
+*/	
 	return retval;
 }
 

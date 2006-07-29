@@ -116,6 +116,7 @@ static void InitializeDisplayModeUI(HWND hwnd);
 static void InitializeSoundUI(HWND hwnd);
 static void InitializeSkippingUI(HWND hwnd);
 static void InitializeRotateUI(HWND hwnd);
+static void UpdateScreenUI(HWND hwnd);
 static void InitializeScreenUI(HWND hwnd);
 static void UpdateSelectScreenUI(HWND hwnd);
 static void InitializeSelectScreenUI(HWND hwnd);
@@ -1848,13 +1849,12 @@ static void OptionsToProp(HWND hWnd, options_type* o)
     
 		while (0 < nCount--)
 		{
-			char buffer[100];
         
 			/* Get the view name */
-			ComboBox_GetText(hCtrl, buffer, sizeof(buffer)-1);
+			const char* ptr = (const char*)ComboBox_GetItemData(hCtrl, nCount);
         
 			/* If we match, set nSelection to the right value */
-			if (strcmp (o->screen_params[g_nSelectScreenIndex].view, buffer ) == 0)
+			if (strcmp (o->screen_params[g_nSelectScreenIndex].view, ptr ) == 0)
 				break;
 		}
 		ComboBox_SetCurSel(hCtrl, nCount);
@@ -2459,11 +2459,12 @@ static void AssignScreen(HWND hWnd)
 
 static void AssignView(HWND hWnd)
 {
-	char buffer[100];
-	ComboBox_GetText(hWnd, buffer, sizeof(buffer)-1 );
+	const char* ptr = NULL;
+	if( ComboBox_GetCount(hWnd) > 0 )
+		ptr = (const char*)ComboBox_GetItemData(hWnd, ComboBox_GetCurSel(hWnd));
 
 	FreeIfAllocated(&pGameOpts->screen_params[g_nSelectScreenIndex].view);
-	pGameOpts->screen_params[g_nSelectScreenIndex].view = mame_strdup(buffer);
+	pGameOpts->screen_params[g_nSelectScreenIndex].view = mame_strdup(ptr);
 }
 
 
@@ -3302,6 +3303,9 @@ static void NumScreensSelectionChange(HWND hwnd)
 	/* Set the static display to the new value */
 	snprintf(buf,sizeof(buf), "%d", iNumScreens);
 	Static_SetText(GetDlgItem(hwnd, IDC_NUMSCREENSDISP), buf);
+	//Also Update the ScreenSelect Combo with the new number of screens
+	UpdateSelectScreenUI(hwnd );
+
 }
 
 /* Handle changes to the Flicker slider */
@@ -3577,6 +3581,9 @@ static void UpdateResDepthUI(HWND hwnd)
 		//retrieve the screen Infos
 		DEVMODE devmode;
 		devmode.dmSize = sizeof(devmode);
+		ComboBox_InsertString(hCtrl, nCount, "Auto");
+		ComboBox_SetItemData(hCtrl, nCount++, "auto");
+		
 		ComboBox_GetText(GetDlgItem(hwnd, IDC_SCREEN), buffer, sizeof(buffer)-1);
 		//for(i=0; EnumDisplaySettings(pGameOpts->screen_params[g_nSelectScreenIndex].screen, i, &devmode); i++)
 		for(i=0; EnumDisplaySettings(buffer, i, &devmode); i++)
@@ -3778,13 +3785,19 @@ static void UpdateSelectScreenUI(HWND hwnd)
 	HWND hCtrl = GetDlgItem(hwnd, IDC_SCREENSELECT);
 	if (hCtrl)
 	{
-		int i;
+		int i, curSel;
+		curSel = ComboBox_GetCurSel(hCtrl);
 		ComboBox_ResetContent(hCtrl );
 		for (i = 0; i < NUMSELECTSCREEN && i < pGameOpts->numscreens ; i++)
 		{
 			ComboBox_InsertString(hCtrl, i, g_ComboBoxSelectScreen[i].m_pText);
 			ComboBox_SetItemData( hCtrl, i, g_ComboBoxSelectScreen[i].m_pData);
 		}
+		// Smaller AMount of screens was selected, so use 0
+		if( i< curSel )
+			ComboBox_SetCurSel(hCtrl, 0 );
+		else
+			ComboBox_SetCurSel(hCtrl, curSel );
 	}
 }
 
@@ -3794,8 +3807,7 @@ static void InitializeSelectScreenUI(HWND hwnd)
 	UpdateSelectScreenUI(hwnd);
 }
 
-/* Populate the Screen drop down */
-static void InitializeScreenUI(HWND hwnd)
+static void UpdateScreenUI(HWND hwnd )
 {
 	int iMonitors;
 	DISPLAY_DEVICE dd;
@@ -3818,6 +3830,12 @@ static void InitializeScreenUI(HWND hwnd)
 			}
 		}
 	}
+}
+
+/* Populate the Screen drop down */
+static void InitializeScreenUI(HWND hwnd)
+{
+	UpdateScreenUI(hwnd );
 }
 
 /* Update the refresh drop down */
