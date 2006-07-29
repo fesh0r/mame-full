@@ -643,10 +643,10 @@ try_again:
 	d3d->presentation.SwapEffect					= D3DSWAPEFFECT_DISCARD;
 	d3d->presentation.hDeviceWindow					= window->hwnd;
 #ifdef MESS
-	d3d->presentation.Windowed						= video_config.windowed || win_has_menu(window);
-#else /* !MESS */
+	d3d->presentation.Windowed						= !window->fullscreen || win_has_menu(window);
+#else
 	d3d->presentation.Windowed						= !window->fullscreen;
-#endif /* MESS */
+#endif
 	d3d->presentation.EnableAutoDepthStencil		= FALSE;
 	d3d->presentation.AutoDepthStencilFormat		= D3DFMT_D16;
 	d3d->presentation.Flags							= 0;
@@ -1047,7 +1047,11 @@ static int config_adapter_mode(win_window_info *window)
 	}
 
 	// choose a resolution: window mode case
+#ifdef MESS
+	if (!window->fullscreen || win_has_menu(window))
+#else
 	if (!window->fullscreen)
+#endif
 	{
 		RECT client;
 
