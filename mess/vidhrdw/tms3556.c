@@ -247,7 +247,7 @@ int tms3556_init(int vram_size)
 
 	vdp.vram_size = vram_size;
 
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	if (!tmpbitmap)
 		return 1;
 

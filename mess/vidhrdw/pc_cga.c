@@ -366,7 +366,6 @@ static void pc_cga_check_palette(void)
 					     cga_palette[i + p][1],
 					     cga_palette[i + p][2]);
 		cga.palette = p;
-		schedule_full_refresh();
 		if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 	}
 }
@@ -389,7 +388,6 @@ static void pc_cga_mode_control_w(int data)
 
 	if ((cga.mode_control ^ data) & mask)    /* text/gfx/width change */
 	{
-		schedule_full_refresh();
 		if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 	}
 	cga.mode_control = data;
@@ -406,7 +404,6 @@ static void pc_cga_color_select_w(int data)
 	if( cga.color_select == data )
 		return;
 	cga.color_select = data;
-	schedule_full_refresh();
 	if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 }
 
@@ -424,7 +421,6 @@ static void pc_cga_plantronics_w(int data)
 	data &= 0x70;	/* Only bits 6-4 are used */
 	if (cga.plantronics == data) return;
 	cga.plantronics = data;
-	schedule_full_refresh();	
 	if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 }
 
@@ -488,7 +484,6 @@ WRITE8_HANDLER( pc_cga8_w )
 	case 1: case 3: case 5: case 7:
 		if (crtc6845_port_w(crtc6845, offset, data))
 		{
-			schedule_full_refresh();
 			if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 		}
 		break;
@@ -541,7 +536,7 @@ static void cga_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen[0].maxheight)
+		if (r.min_y >= Machine->screen[0].height)
 			break;
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
@@ -656,7 +651,7 @@ static void cga_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen[0].maxheight)
+		if (r.min_y >= Machine->screen[0].height)
 			break;
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
@@ -734,7 +729,7 @@ static void cga_text_blink_alt(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
-		if (r.min_y >= Machine->drv->screen[0].maxheight)
+		if (r.min_y >= Machine->screen[0].height)
 			break;
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 

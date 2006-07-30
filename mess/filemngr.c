@@ -9,7 +9,9 @@
 #include "driver.h"
 #include "utils.h"
 #include "image.h"
-#include "ui_text.h"
+#include "ui.h"
+#include "uimenu.h"
+#include "uitext.h"
 
 #define SEL_BITS	12
 #define SEL_MASK	((1<<SEL_BITS)-1)
@@ -495,7 +497,7 @@ static int fileselect(int selected, const char *default_selection)
 			fs_item[sel & SEL_MASK].subtext = current_filespecification;
 
 			/* display the menu */
-			ui_draw_menu(fs_item, fs_total, sel & SEL_MASK);
+			ui_menu_draw(fs_item, fs_total, sel & SEL_MASK);
 
 			/* update string with any keys that are pressed */
 			name = update_entered_string();
@@ -514,12 +516,11 @@ static int fileselect(int selected, const char *default_selection)
 				fs_free();
 			}
 
-			schedule_full_refresh();
 			return sel + 1;
 		}
 
 
-		ui_draw_menu(fs_item, fs_total, sel);
+		ui_menu_draw(fs_item, fs_total, sel);
 
 		/* borrowed from usrintrf.c */
 		visible = 0; //Machine->uiheight / (3 * Machine->uifontheight /2) -1;
@@ -579,7 +580,6 @@ static int fileselect(int selected, const char *default_selection)
 						;
 
 					sel |= 1 << SEL_BITS; /* we'll ask for a key */
-					schedule_full_refresh();
 					break;
 
 				case FILESELECT_FILE:
@@ -602,15 +602,12 @@ static int fileselect(int selected, const char *default_selection)
 					/*	fs_chdir(fs_item[sel]); */
 					osd_change_directory(fs_item[sel].text);
 					fs_free();
-
-					schedule_full_refresh();
 					break;
 
 				case FILESELECT_DEVICE:
 					/*	 fs_chdir("/"); */
 					osd_change_device(fs_item[sel].text);
 					fs_free();
-					schedule_full_refresh();
 					break;
 
 				default:
@@ -635,7 +632,6 @@ static int fileselect(int selected, const char *default_selection)
 
 	if (sel == -1 || sel == -2 || sel == -3)
 	{
-		schedule_full_refresh();
 		fs_insession = 0;
 	}
 
@@ -718,7 +714,7 @@ int filemanager(int selected)
 		menu_items[sel & SEL_MASK].subtext = entered_filename;
 
 		/* display the menu */
-		ui_draw_menu(menu_items, total, sel & SEL_MASK);
+		ui_menu_draw(menu_items, total, sel & SEL_MASK);
 
 		/* update string with any keys that are pressed */
 		name = update_entered_string();
@@ -732,11 +728,10 @@ int filemanager(int selected)
 			image_load(img, NULL);
 		}
 
-		schedule_full_refresh();
 		return sel + 1;
 	}
 
-	ui_draw_menu(menu_items, total, sel);
+	ui_menu_draw(menu_items, total, sel);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN, 8))
 		sel = (sel + 1) % total;
@@ -781,22 +776,17 @@ int filemanager(int selected)
 		}
 		else
 		{
-			{
-				if (strcmp(menu_items[sel].text, "---") == 0)
-					entered_filename[0] = '\0';
-				else
-					strcpy(entered_filename, menu_items[sel].text);
-				start_enter_string(entered_filename, (sizeof(entered_filename) / sizeof(entered_filename[0])) - 1, 1);
+			if (strcmp(menu_items[sel].text, "---") == 0)
+				entered_filename[0] = '\0';
+			else
+				strcpy(entered_filename, menu_items[sel].text);
+			start_enter_string(entered_filename, (sizeof(entered_filename) / sizeof(entered_filename[0])) - 1, 1);
 
-				/* flush keyboard buffer */
-				while (code_read_async() != CODE_NONE)
-					;
+			/* flush keyboard buffer */
+			while (code_read_async() != CODE_NONE)
+				;
 
-				sel |= 1 << SEL_BITS;	/* we'll ask for a key */
-
-				/* tell updatescreen() to clean after us (in case the window changes size) */
-				schedule_full_refresh();
-			}
+			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 		}
 	}
 
@@ -805,9 +795,6 @@ int filemanager(int selected)
 
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
-
-	if (sel == -1 || sel == -2)
-		schedule_full_refresh();
 
 	return sel + 1;
 }

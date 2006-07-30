@@ -317,8 +317,6 @@ static void mwa_bank(int bank, int offs, int data)
         {
             logerror("bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data);
             /* Toggle between graphics and text modes? */
-            if ((data ^ laser_latch) & 0x08)
-                schedule_full_refresh();
 			if ((data ^ laser_latch) & 0x01)
 				speaker_level_w(0, data & 1);
             laser_latch = data;

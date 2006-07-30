@@ -9,7 +9,7 @@
 #include <assert.h>
 
 #include "device.h"
-#include "ui_text.h"
+#include "uitext.h"
 #include "driver.h"
 
 

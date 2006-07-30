@@ -8,6 +8,7 @@
 
 #include "devices/cassette.h"
 #include "formats/cassimg.h"
+#include "ui.h"
 
 #define CASSETTE_TAG		"cassette"
 #define ANIMATION_FPS		4
@@ -364,7 +365,8 @@ static void device_display_cassette(mess_image *image)
 		((int) length % 60),
 		(int) length);
 
-	ui_draw_text(buf, x, y);
+	// FIXME
+	//ui_draw_text(buf, x, y);
 }
 
 

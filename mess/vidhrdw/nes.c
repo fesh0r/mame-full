@@ -144,11 +144,11 @@ VIDEO_UPDATE( nes )
 
 			if (nes_fds.current_side == 0)
 			{
-				ui_popup("No disk inserted.");
+				popmessage("No disk inserted.");
 			}
 			else
 			{
-				ui_popup("Disk set to side %d", nes_fds.current_side);
+				popmessage("Disk set to side %d", nes_fds.current_side);
 			}
 		}
 	}

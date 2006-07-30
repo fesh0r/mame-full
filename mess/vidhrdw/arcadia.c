@@ -526,7 +526,7 @@ VIDEO_START( arcadia )
 		arcadia_rectangle[i][5]=arcadia_rectangle[i][6]=arcadia_rectangle[i][7]=arcadia_rectangle[i][4];
 	}
 
-	arcadia_video.bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	arcadia_video.bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	return 0;
 }
 
@@ -701,7 +701,7 @@ INLINE void arcadia_vh_draw_line(mame_bitmap *bitmap,
 		case 0x40: graphics=FALSE;break;
 //		case 0x80:
 //			alien invaders shields are empty 0x80
-//		    ui_popup(5, "graphics code 0x80 used");
+//		    popmessage(5, "graphics code 0x80 used");
 	    }
 	}
 	if (graphics)
@@ -808,7 +808,7 @@ INTERRUPT_GEN( arcadia_video_line )
 
 	if (arcadia_video.line<arcadia_video.ypos)
 	{
-		plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->drv->screen[0].maxwidth, 1, Machine->gfx[0]->colortable[0]);
+		plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->screen[0].width, 1, Machine->gfx[0]->colortable[0]);
 		memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 	}
 	else
@@ -836,7 +836,7 @@ INTERRUPT_GEN( arcadia_video_line )
 		else
 		{
 			arcadia_video.charline=0xd;
-			plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->drv->screen[0].maxwidth, 1, Machine->gfx[0]->colortable[0]);
+			plot_box(arcadia_video.bitmap, 0, arcadia_video.line, Machine->screen[0].width, 1, Machine->gfx[0]->colortable[0]);
 			memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
 		}
 	}

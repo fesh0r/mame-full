@@ -169,7 +169,7 @@ VIDEO_START( vic6560 )
 	pointercolortable[1] = Machine->pens[1];
 	pointercolortable[2] = Machine->pens[0];
 	pointerelement->total_colors = 3;
-	vic6560_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	vic6560_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	add_exit_callback(vic6560_video_stop);
 	return 0;
 }

@@ -123,7 +123,6 @@ static UINT8 pc1512_defaults[] =
 
 static void crtc6845_state_postload(void)
 {
-	schedule_full_refresh();
 	if (dirtybuffer && videoram_size)
 		memset(dirtybuffer, 1, videoram_size);
 }
@@ -172,7 +171,6 @@ void crtc6845_set_clock(struct crtc6845 *crtc, int freq)
 {
 	assert(crtc);
 	crtc->config.freq = freq;
-	schedule_full_refresh();
 }
 
 void crtc6845_time(struct crtc6845 *crtc)
@@ -306,10 +304,6 @@ int crtc6845_port_w(struct crtc6845 *crtc, int offset, UINT8 data)
 				crtc6845_get_cursor(crtc, &cursor);
 				if (crtc->config.cursor_changed)
 					crtc->config.cursor_changed(&cursor);
-				break;
-
-			default:
-				schedule_full_refresh();
 				break;
 			}
 

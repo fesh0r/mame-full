@@ -986,7 +986,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/inputx.o			\
 	$(OBJ)/mess/unicode.o			\
 	$(OBJ)/mess/artworkx.o			\
-	$(OBJ)/mess/mesintrf.o			\
+	$(OBJ)/mess/uimess.o			\
 	$(OBJ)/mess/filemngr.o			\
 	$(OBJ)/mess/tapectrl.o			\
 	$(OBJ)/mess/compcfg.o			\
@@ -996,7 +996,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/pool.o				\
 	$(OBJ)/mess/cheatms.o			\
 	$(OBJ)/mess/opresolv.o			\
-	$(OBJ)/mess/mui_text.o			\
+	$(OBJ)/mess/muitext.o			\
 	$(OBJ)/mess/infomess.o			\
 	$(OBJ)/mess/formats/ioprocs.o	\
 	$(OBJ)/mess/formats/flopimg.o	\

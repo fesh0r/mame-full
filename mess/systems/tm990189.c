@@ -828,12 +828,12 @@ static MACHINE_DRIVER_START(tm990_189_v)
 
 	/* NPW 27-Feb-2006 - ewwww gross!!! maybe this can be fixed when 
 	 * multimonitor support is added?*/
-	LED_display_window_left = machine->screen[0].default_visible_area.min_x;
-	LED_display_window_top = machine->screen[0].default_visible_area.max_y;
-	LED_display_window_width = machine->screen[0].default_visible_area.max_x - machine->screen[0].default_visible_area.min_x;
+	LED_display_window_left = machine->screen[0].defstate.visarea.min_x;
+	LED_display_window_top = machine->screen[0].defstate.visarea.max_y;
+	LED_display_window_width = machine->screen[0].defstate.visarea.max_x - machine->screen[0].defstate.visarea.min_x;
 	LED_display_window_height = 32;
-	machine->screen[0].default_visible_area.max_y += 32;
-	machine->screen[0].maxheight += 32;
+	machine->screen[0].defstate.visarea.max_y += 32;
+	machine->screen[0].defstate.height += 32;
 
 	/* sound hardware */
 	/* one two-level buzzer */

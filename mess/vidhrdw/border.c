@@ -64,7 +64,7 @@ void draw_border(mame_bitmap *bitmap,
 
 	if (NumItems)
 	{
-			int CyclesPerFrame = (int)(Machine->drv->cpu[0].cpu_clock / Machine->drv->screen[0].refresh_rate);
+			int CyclesPerFrame = (int)(Machine->drv->cpu[0].cpu_clock / Machine->screen[0].refresh);
 			logerror ("Event count = %d, curr cycle = %ld, total cycles = %ld \n", (int) NumItems, (long) TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()), (long) CyclesPerFrame);
 	}
 	for (Count = 0; Count < NumItems; Count++)

@@ -1,17 +1,17 @@
 /*********************************************************************
 
-  mesintrf.h
+	uimess.h
 
-  MESS supplement to usrintrf.c.
+	MESS supplement to ui.c.
 
 *********************************************************************/
 
-#ifndef MESINTRF_H
-#define MESINTRF_H
+#ifndef UIMESS_H
+#define UIMESS_H
 
 #include "osdepend.h"
 #include "palette.h"
-#include "usrintrf.h"
+#include "ui.h"
 
 int mess_ui_active(void);
 void mess_ui_update(void);
@@ -26,4 +26,4 @@ int filemanager(int selected);
 /* tape control */
 int tapecontrol(int selected);
 
-#endif /* MESINTRF_H */
+#endif /* UIMESS_H */

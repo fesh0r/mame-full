@@ -4,8 +4,8 @@
 	PeT mess@utanet.at May 2000
 
 ******************************************************************************/
+
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/sym1.h"

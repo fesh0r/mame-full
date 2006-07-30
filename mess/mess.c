@@ -13,11 +13,10 @@
 #include "driver.h"
 #include "devices/flopdrv.h"
 #include "utils.h"
-#include "ui_text.h"
+#include "uitext.h"
 #include "state.h"
 #include "image.h"
 #include "inputx.h"
-#include "artwork.h"
 #include "hash.h"
 
 /* Globals */

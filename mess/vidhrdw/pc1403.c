@@ -28,9 +28,7 @@
  *	      with my own pc1403.
  *****************************************************************************/
 
-
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/pocketc.h"

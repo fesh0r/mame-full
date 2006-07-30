@@ -78,57 +78,6 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 
 
 
-#ifndef NEW_RENDER
-static int mess_activate_artwork(osd_create_params *params)
-{
-	if ((params->width < options.min_width) && (params->height < options.min_height))
-	{
-		options.artwork_res = 2;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-
-
-static mame_file *mess_load_artwork_file(const game_driver **driver)
-{
-	char filename[2048];
-	mame_file *artfile = NULL;
-	const char *s;
-
-	while (*driver)
-	{
-		if ((*driver)->name)
-		{
-			s = override_artfile ? override_artfile : "";
-			do
-			{
-				sprintf(filename, "%s.art", *s ? s : (*driver)->name);
-				if (*s)
-					s += strlen(s) + 1;
-				artfile = mame_fopen((*driver)->name, filename, FILETYPE_ARTWORK, 0);
-			}
-			while(!artfile && *s);
-			if (artfile)
-				break;
-		}
-		*driver = driver_get_clone(*driver);
-	}
-	return artfile;
-}
-
-
-
-artwork_callbacks mess_artwork_callbacks =
-{
-	mess_activate_artwork,
-	mess_load_artwork_file
-};
-#endif /* NEW_RENDER */
-
-
-
 /********************************************************************/
 
 int artwork_get_inputscreen_customizations(png_info *png, int cust_type,

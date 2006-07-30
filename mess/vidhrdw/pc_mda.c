@@ -222,7 +222,6 @@ static void hercules_mode_control_w(int data)
 	MDA_LOG(1,"MDA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, enable %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>3)&1, (data>>5)&1));
 	mda.mode_control = data;
-	schedule_full_refresh();
 }
 
 /*	R-	CRT status register (see #P139)
@@ -247,7 +246,6 @@ static void hercules_config_w(int data)
 {
 	MDA_LOG(1,"HGC_config_w",(errorlog, "$%02x\n", data));
     mda.configuration_switch = data;
-	schedule_full_refresh();
 }
 
 /*************************************************************************
@@ -311,7 +309,7 @@ static void mda_text_inten(mame_bitmap *bitmap, struct crtc6845 *crtc)
 	struct crtc6845_cursor cursor;
 	UINT8 attr;
 
-	char_width = Machine->drv->screen[0].maxwidth / 80;
+	char_width = Machine->screen[0].width / 80;
 
 	crtc6845_time(crtc);
 	crtc6845_get_cursor(crtc, &cursor);
@@ -366,7 +364,7 @@ static void mda_text_blink(mame_bitmap *bitmap, struct crtc6845 *crtc)
 	struct crtc6845_cursor cursor;
 	int char_width;
 
-	char_width = Machine->drv->screen[0].maxwidth / 80;
+	char_width = Machine->screen[0].width / 80;
 
 	crtc6845_time(crtc);
 	crtc6845_get_cursor(crtc, &cursor);
@@ -442,11 +440,11 @@ pc_video_update_proc pc_mda_choosevideomode(int *width, int *height, struct crtc
 	switch (mda.mode_control & 0x2a) { /* text and gfx modes */
 	case 0x08:
 		proc = mda_text_inten;
-		*width *= Machine->drv->screen[0].maxwidth / 80;
+		*width *= Machine->screen[0].width / 80;
 		break;
 	case 0x28:
 		proc = mda_text_blink;
-		*width *= Machine->drv->screen[0].maxwidth / 80;
+		*width *= Machine->screen[0].width / 80;
 		break;
 	case 0x0a:
 	case 0x2a:

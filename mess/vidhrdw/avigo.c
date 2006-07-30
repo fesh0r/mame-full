@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "includes/avigo.h"
 
@@ -257,8 +256,8 @@ VIDEO_UPDATE( avigo )
 
 		char	avigo_text[256];
 		sprintf(avigo_text,"X: %03x Y: %03x",avigo_ad_x, avigo_ad_y);
-		ui_draw_text(avigo_text, 0, 200);
-
+		// FIXME
+		//ui_draw_text(avigo_text, 0, 200);
 	}
 	{
 		int xb,yb,zb,ab,bb;
@@ -269,10 +268,9 @@ VIDEO_UPDATE( avigo )
 		ab = cpunum_read_byte(0,0x0c1d2) & 0x0ff;
 		bb =cpunum_read_byte(0,0x0c1d3) & 0x0ff;
 
-
 		sprintf(avigo_text,"Xb: %02x Yb: %02x zb: %02x ab:%02x bb:%02x",xb, yb,zb,ab,bb);
-		ui_draw_text(avigo_text, 0, 216+16);
-
+		// FIXME
+		//ui_draw_text(avigo_text, 0, 216+16);
 	}
 	return 0;
 }

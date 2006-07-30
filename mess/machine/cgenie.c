@@ -505,7 +505,7 @@ static void tape_put_bit(void)
 				case 0: 	   /* look for sync AA */
 					if( (tape_bits & 0xffff) == 0xcccc )
 					{
-						ui_popup("Tape sync1 written");
+						popmessage("Tape sync1 written");
 						in_sync = 1;
 					}
 					break;
@@ -513,7 +513,7 @@ static void tape_put_bit(void)
 					if( (tape_bits & 0xffff) == 0x3c3c )
 					{
 						in_sync = 2;
-						ui_popup("Tape sync2 written");
+						popmessage("Tape sync2 written");
 						put_bit_count = 16;
 					}
 					break;
@@ -530,14 +530,14 @@ static void tape_put_bit(void)
 				case 0: 	   /* look for sync AA */
 					if( (tape_bits & 0xffff) == 0xcccc )
 					{
-						ui_popup("Tape sync1 written");
+						popmessage("Tape sync1 written");
 						in_sync = 1;
 					}
 					break;
 				case 1: 	   /* look for sync 66 */
 					if( (tape_bits & 0xffff) == 0x3c3c )
 					{
-						ui_popup("Tape sync2 written");
+						popmessage("Tape sync2 written");
 						in_sync = 2;
 						put_bit_count = 16;
 					}
@@ -592,12 +592,12 @@ static void tape_get_byte(void)
 	{
 		if( tape_count < 32 )
 		{
-			ui_popup("Tape load sync1");
+			popmessage("Tape load sync1");
 			value = 0xaa;
 		}
 		else
 		{
-			ui_popup("Tape load '%s' $%04X bytes", tape_name, tape_count);
+			popmessage("Tape load '%s' $%04X bytes", tape_name, tape_count);
 			mame_fread(tape_get_file, &value, 1);
 		}
 		tape_bits |= 0xaaaa;
@@ -647,7 +647,7 @@ static void tape_get_open(void)
 		}
 		if( tape_get_file )
 		{
-			ui_popup("Tape load '%s'", tape_name);
+			popmessage("Tape load '%s'", tape_name);
 			mame_fread(tape_get_file, buffer, sizeof(TAPE_HEADER));
 			if( strncmp(buffer, TAPE_HEADER, sizeof(TAPE_HEADER) - 1) == 0 )
 			{
@@ -681,7 +681,7 @@ static void tape_get_bit(void)
 		{
 			mame_fclose(tape_get_file);
 			tape_get_file = NULL;
-			ui_popup("Tape file closed");
+			popmessage("Tape file closed");
 		}
 		get_bit_count = tape_bits = tape_time = 0;
 	}

@@ -764,14 +764,14 @@ static char *GameInfoScreen(UINT nIndex)
 	{
 		if (drivers[nIndex]->flags & ORIENTATION_SWAP_XY)
 			sprintf(buf,"%d x %d (V) %f Hz",
-					drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1,
-					drv.screen[0].default_visible_area.max_x - drv.screen[0].default_visible_area.min_x + 1,
-					drv.screen[0].refresh_rate);
+					drv.screen[0].defstate.visarea.max_y - drv.screen[0].defstate.visarea.min_y + 1,
+					drv.screen[0].defstate.visarea.max_x - drv.screen[0].defstate.visarea.min_x + 1,
+					drv.screen[0].defstate.refresh);
 		else
 			sprintf(buf,"%d x %d (H) %f Hz",
-					drv.screen[0].default_visible_area.max_x - drv.screen[0].default_visible_area.min_x + 1,
-					drv.screen[0].default_visible_area.max_y - drv.screen[0].default_visible_area.min_y + 1,
-					drv.screen[0].refresh_rate);
+					drv.screen[0].defstate.visarea.max_x - drv.screen[0].defstate.visarea.min_x + 1,
+					drv.screen[0].defstate.visarea.max_y - drv.screen[0].defstate.visarea.min_y + 1,
+					drv.screen[0].defstate.refresh);
 	}
 	return buf;
 }

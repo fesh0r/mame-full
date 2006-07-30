@@ -339,7 +339,7 @@ VIDEO_UPDATE( laser )
 
 	if( laser_frame_time > 0 )
 	{
-		ui_popup("%s", laser_frame_message);
+		popmessage("%s", laser_frame_message);
 	}
 	return 0;
 }
@@ -348,7 +348,6 @@ WRITE8_HANDLER( laser_bg_mode_w )
 {
     if (laser_bg_mode != data)
     {
-        schedule_full_refresh();
         laser_bg_mode = data;
 		logerror("laser border:$%X mode:$%X\n", data >> 4, data & 15);
     }
@@ -358,7 +357,6 @@ WRITE8_HANDLER( laser_two_color_w )
 {
 	if (laser_two_color != data)
 	{
-		schedule_full_refresh();
 		laser_two_color = data;
 		logerror("laser foreground:$%X background:$%X\n", data >> 4, data & 15);
     }

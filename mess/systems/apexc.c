@@ -489,9 +489,7 @@ static PALETTE_INIT( apexc )
 
 static VIDEO_START( apexc )
 {
-	if ((apexc_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == NULL)
-		return 1;
-
+	apexc_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	fillbitmap(apexc_bitmap, Machine->pens[0], &/*Machine->visible_area*/teletyper_window);
 	return 0;
 }

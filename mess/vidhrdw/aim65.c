@@ -3,8 +3,8 @@
 	PeT mess@utanet.at Nov 2000
 
 ******************************************************************************/
+
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/aim65.h"

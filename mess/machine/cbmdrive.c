@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <string.h>
 #include "driver.h"
-/*#include "usrintrf.h" */
 
 #define VERBOSE_DBG 1				   /* general debug messages */
 #include "includes/cbm.h"

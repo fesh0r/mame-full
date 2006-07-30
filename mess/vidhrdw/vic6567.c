@@ -652,7 +652,7 @@ VIDEO_START( vic2 )
 {
 	int i;
 
-	vic2.bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	vic2.bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	if (vic2.vic3) {
 		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 656 / 8);

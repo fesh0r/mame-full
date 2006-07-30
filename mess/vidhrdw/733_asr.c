@@ -184,8 +184,7 @@ void asr733_init(void)
 
 int asr733_init_term(int unit, void (*int_callback)(int state))
 {
-	if ((asr[unit].bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == NULL)
-		return 1;
+	asr[unit].bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	fillbitmap(asr[unit].bitmap, Machine->pens[0], &Machine->visible_area[0]);
 

@@ -95,7 +95,7 @@ VIDEO_START(vc4000)
 		if ((i&0x18)==0x18) background_collision[i]|=0x10;
     }
 
-	vc4000_video.bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	vc4000_video.bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
     return 0;
 }
 
@@ -365,9 +365,9 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
 	int i, j, m, x, line=vc4000_video.line-20;
 	int w, k;
 
-	if (vc4000_video.line>=Machine->drv->screen[0].maxheight) return;
+	if (vc4000_video.line>=Machine->screen[0].height) return;
 
-	plot_box(vc4000_video.bitmap, 0, vc4000_video.line, Machine->drv->screen[0].maxwidth, 1, Machine->pens[(vc4000_video.reg.d.background)&7]);
+	plot_box(vc4000_video.bitmap, 0, vc4000_video.line, Machine->screen[0].width, 1, Machine->pens[(vc4000_video.reg.d.background)&7]);
 
 	if (line<0 || line>=200) return;
 	if (!vc4000_video.reg.d.background&8) return;
@@ -417,7 +417,7 @@ INTERRUPT_GEN( vc4000_video_line )
 {
 	int x,y,i;
 	UINT8 collision[400]={0}; // better alloca or gcc feature of non constant long automatic arrays
-	assert(sizeof(collision)>=Machine->drv->screen[0].maxwidth);
+	assert(sizeof(collision)>=Machine->screen[0].width);
 
 	vc4000_video.line++;
 	vc4000_video.line%=312;

@@ -1863,7 +1863,6 @@ void m6847_init(const m6847_config *cfg)
 	m6847 = auto_malloc(sizeof(*m6847));
 	memset(m6847, 0, sizeof(*m6847));
 	set_dirty();
-	add_full_refresh_callback(set_dirty);
 
 	/* copy configuration */
 	m6847->get_attributes = cfg->get_attributes;

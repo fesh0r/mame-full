@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.18 2006/06/29 12:32:53 npwoods Exp $
+  $Id: pc8801.c,v 1.19 2006/07/30 16:07:57 npwoods Exp $
 
 ***************************************************************************/
 
@@ -87,8 +87,8 @@ static mame_bitmap *wbm1,*wbm2;
 
 void pc8801_video_init (int hireso)
 {
-	wbm1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
-	wbm2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	wbm1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	wbm2 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	pc8801_is_24KHz=hireso;
 	crtcON=0;
 	textON=1;
@@ -873,7 +873,6 @@ WRITE8_HANDLER(pc88sr_disp_31)
   }
   if(gmode!=gmode_new) {
     gmode=gmode_new;
-    schedule_full_refresh();
   }
 }
 
@@ -890,7 +889,6 @@ WRITE8_HANDLER(pc8801_palette_out)
     for(i=0;i<3;i++) {
       if(disp_plane[i] != ((data&(2<<i))==0x00)) {
 	disp_plane[i] = (data&(2<<i))==0x00;
-	schedule_full_refresh();
       }
     }
     return;

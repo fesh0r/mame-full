@@ -78,14 +78,14 @@ struct vectrex_point
 	double time;
 };
 
-static struct vectrex_point vectrex_points[MAX_POINTS];
+static struct vectrex_point vectrex_points[10000];
 void (*vector_add_point_function) (int, int, rgb_t, int) = vectrex_add_point;
 
 void vectrex_add_point (int x, int y, rgb_t color, int intensity)
 {
 	struct vectrex_point *newpoint;
 
-	vectrex_point_index = (vectrex_point_index+1) % MAX_POINTS;
+	vectrex_point_index = (vectrex_point_index+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
 	newpoint = &vectrex_points[vectrex_point_index];
 
 	newpoint->x = x;
@@ -170,10 +170,10 @@ VIDEO_UPDATE( vectrex )
 	i = vectrex_point_index;
 
 	/* Find the oldest vector we want to display */
-	for (v=0; vectrex_points[i].time > starttime && v < MAX_POINTS-1; v++)
+	for (v=0; vectrex_points[i].time > starttime && v < (sizeof(vectrex_points) / sizeof(vectrex_points[0]))-1; v++)
 	{
 		i--;
-		if (i<0) i=MAX_POINTS-1;
+		if (i<0) i=(sizeof(vectrex_points) / sizeof(vectrex_points[0]))-1;
 	}
 
 
@@ -185,7 +185,7 @@ VIDEO_UPDATE( vectrex )
 		correction = MIN(1, (vectrex_points[i].time-starttime)/(vectrex_persistance/2));
 		intensity = vectrex_points[i].intensity*correction;
 		vector_add_point(vectrex_points[i].x,vectrex_points[i].y,vectrex_points[i].col,intensity);
-		i = (i+1) % MAX_POINTS;
+		i = (i+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
 	}
 
 	video_update_vector(screen, bitmap, &Machine->visible_area[0]);
@@ -255,8 +255,8 @@ VIDEO_START( vectrex )
 {
 	int width, height;
 
-	width = Machine->drv->screen[0].maxwidth;
-	height = Machine->drv->screen[0].maxheight;
+	width = Machine->screen[0].width;
+	height = Machine->screen[0].height;
 
 	x_center=((Machine->visible_area[0].max_x
 		  -Machine->visible_area[0].min_x) / 2) << VEC_SHIFT;

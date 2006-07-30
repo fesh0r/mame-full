@@ -433,7 +433,7 @@ static void a800_serial_command(void)
 		{
 			logerror("atari unsupported drive #%d\n", drive+1);
 			sprintf(atari_frame_message, "DRIVE #%d not supported", drive+1);
-			atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+			atari_frame_counter = Machine->screen[0].refresh/2;
 			return;
 		}
 
@@ -444,7 +444,7 @@ static void a800_serial_command(void)
 		{
 			case 'S':   /* status */
 				sprintf(atari_frame_message, "DRIVE #%d STATUS", drive+1);
-				atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+				atari_frame_counter = Machine->screen[0].refresh/2;
 				
 				if (VERBOSE_SERIAL)
 					logerror("atari status\n");
@@ -487,7 +487,7 @@ static void a800_serial_command(void)
 				if( sector < 1 || sector > drv[drive].sectors )
 				{
 					sprintf(atari_frame_message, "DRIVE #%d READ SECTOR #%3d - ERR", drive+1, sector);
-					atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+					atari_frame_counter = Machine->screen[0].refresh/2;
 
 					if (VERBOSE_SERIAL)
 						logerror("atari bad sector #\n");
@@ -500,7 +500,7 @@ static void a800_serial_command(void)
 				if (sector < 4) 	/* sector 1 .. 3 might be different length */
 				{
 					sprintf(atari_frame_message, "DRIVE #%d READ SECTOR #%3d - SD", drive+1, sector);
-                    atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                    atari_frame_counter = Machine->screen[0].refresh/2;
                     offset = (sector - 1) * drv[drive].bseclen + drv[drive].header_skip;
 					for (i = 0; i < 128; i++)
 						add_serin(drv[drive].image[offset++],1);
@@ -508,7 +508,7 @@ static void a800_serial_command(void)
 				else
 				{
 					sprintf(atari_frame_message, "DRIVE #%d READ SECTOR #%3d - %cD", drive+1, sector, (drv[drive].seclen == 128) ? 'S' : 'D');
-                    atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                    atari_frame_counter = Machine->screen[0].refresh/2;
                     offset = (sector - 1) * drv[drive].seclen + drv[drive].header_skip;
 					for (i = 0; i < drv[drive].seclen; i++)
 						add_serin(drv[drive].image[offset++],1);
@@ -525,13 +525,13 @@ static void a800_serial_command(void)
 				{
 					add_serout(drv[drive].bseclen);
 					sprintf(atari_frame_message, "DRIVE #%d WRITE SECTOR #%3d - SD", drive+1, sector);
-					atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+					atari_frame_counter = Machine->screen[0].refresh/2;
                 }
 				else
 				{
 					add_serout(drv[drive].seclen);
 					sprintf(atari_frame_message, "DRIVE #%d WRITE SECTOR #%3d - %cD", drive+1, sector, (drv[drive].seclen == 128) ? 'S' : 'D');
-                    atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                    atari_frame_counter = Machine->screen[0].refresh/2;
                 }
 				break;
 
@@ -544,13 +544,13 @@ static void a800_serial_command(void)
 				{
 					add_serout(drv[drive].bseclen);
 					sprintf(atari_frame_message, "DRIVE #%d PUT SECTOR #%3d - SD", drive+1, sector);
-                    atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                    atari_frame_counter = Machine->screen[0].refresh/2;
                 }
 				else
 				{
 					add_serout(drv[drive].seclen);
 					sprintf(atari_frame_message, "DRIVE #%d PUT SECTOR #%3d - %cD", drive+1, sector, (drv[drive].seclen == 128) ? 'S' : 'D');
-                    atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                    atari_frame_counter = Machine->screen[0].refresh/2;
                 }
 				break;
 
@@ -559,7 +559,7 @@ static void a800_serial_command(void)
 					logerror("atari format SD drive #%d\n", drive+1);
 
 				sprintf(atari_frame_message, "DRIVE #%d FORMAT SD", drive+1);
-				atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+				atari_frame_counter = Machine->screen[0].refresh/2;
                 add_serin('A',0);   /* acknowledge */
 				add_serin('C',0);   /* completed */
 				for (i = 0; i < 128; i++)
@@ -572,7 +572,7 @@ static void a800_serial_command(void)
 					logerror("atari format DD drive #%d\n", drive+1);
 
 				sprintf(atari_frame_message, "DRIVE #%d FORMAT DD", drive+1);
-                atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                atari_frame_counter = Machine->screen[0].refresh/2;
                 add_serin('A',0);   /* acknowledge */
 				add_serin('C',0);   /* completed */
 				for (i = 0; i < 256; i++)
@@ -585,14 +585,14 @@ static void a800_serial_command(void)
 					logerror("atari unknown command #%c\n", atari_fdc.serout_buff[1]);
 
 				sprintf(atari_frame_message, "DRIVE #%d UNKNOWN CMD '%c'", drive+1, atari_fdc.serout_buff[1]);
-                atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                atari_frame_counter = Machine->screen[0].refresh/2;
                 add_serin('N',0);   /* negative acknowledge */
 		}
 	}
 	else
 	{
 		sprintf(atari_frame_message, "serial cmd chksum error");
-		atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+		atari_frame_counter = Machine->screen[0].refresh/2;
 		if (VERBOSE_SERIAL)
 			logerror("BAD\n");
 
@@ -636,7 +636,7 @@ void a800_serial_write(void)
 				for (i = 0; i < 128; i++)
 					drv[drive].image[offset++] = atari_fdc.serout_buff[5+i];
 				sprintf(atari_frame_message, "DRIVE #%d WROTE SECTOR #%3d - SD", drive+1, sector);
-				atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+				atari_frame_counter = Machine->screen[0].refresh/2;
             }
 			else
 			{
@@ -648,7 +648,7 @@ void a800_serial_write(void)
 				for (i = 0; i < drv[drive].seclen; i++)
 					drv[drive].image[offset++] = atari_fdc.serout_buff[5+i];
 				sprintf(atari_frame_message, "DRIVE #%d WROTE SECTOR #%3d - %cD", drive+1, sector, (drv[drive].seclen == 128) ? 'S' : 'D');
-                atari_frame_counter = Machine->drv->screen[0].refresh_rate/2;
+                atari_frame_counter = Machine->screen[0].refresh/2;
             }
 			add_serin('C',0);
 		}

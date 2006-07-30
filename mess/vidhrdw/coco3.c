@@ -822,7 +822,6 @@ static void internal_video_start_coco3(m6847_type type)
 	cfg.new_frame_callback = coco3_new_frame;
 	cfg.custom_prepare_scanline = coco3_prepare_scanline;
 	m6847_init(&cfg);
-	add_full_refresh_callback(coco3_set_dirty);
 
 	/* save state stuff */
 	state_save_register_global_array(video->palette_ram);

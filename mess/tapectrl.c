@@ -8,7 +8,9 @@
 
 #include "driver.h"
 #include "image.h"
-#include "ui_text.h"
+#include "ui.h"
+#include "uimenu.h"
+#include "uitext.h"
 #include "devices/cassette.h"
 
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos)
@@ -60,8 +62,6 @@ int tapecontrol(int selected)
 			sel = -1;
 		if (input_ui_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
-		if (sel == -1 || sel == -2)
-			schedule_full_refresh();
 
 		return sel + 1;
 	}
@@ -125,11 +125,11 @@ int tapecontrol(int selected)
 	if (sel > 255)  /* are we waiting for a new key? */
 	{
 		/* display the menu */
-		ui_draw_menu(menu_item, total, sel & 0xff);
+		ui_menu_draw(menu_item, total, sel & 0xff);
 		return sel + 1;
 	}
 
-	ui_draw_menu(menu_item, total, sel);
+	ui_menu_draw(menu_item, total, sel);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
@@ -153,8 +153,6 @@ int tapecontrol(int selected)
 			if (id < 0) id = device_count(IO_CASSETTE)-1;
 			break;
 		}
-		/* tell updatescreen() to clean after us (in case the window changes size) */
-		schedule_full_refresh();
 	}
 
 	if (input_ui_pressed(IPT_UI_RIGHT))
@@ -166,8 +164,6 @@ int tapecontrol(int selected)
 			if (id > device_count(IO_CASSETTE)-1) id = 0;
 			break;
 		}
-		/* tell updatescreen() to clean after us (in case the window changes size) */
-		schedule_full_refresh();
 	}
 
 	if (input_ui_pressed(IPT_UI_SELECT))
@@ -203,8 +199,6 @@ int tapecontrol(int selected)
 				cassette_seek(img, +1, SEEK_CUR);
 				break;
 			}
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
 		}
 	}
 
@@ -213,12 +207,6 @@ int tapecontrol(int selected)
 
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		schedule_full_refresh();
-	}
 
 	return sel + 1;
 }

@@ -1184,7 +1184,6 @@ int Mame32Main(HINSTANCE    hInstance,
 {
 	dprintf("MAME32 starting\n");
 
-	options.gui_host = 1;
 	use_gui_romloading = TRUE;
 
 	if (__argc != 1)

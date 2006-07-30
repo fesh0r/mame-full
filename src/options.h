@@ -48,7 +48,7 @@ struct _options_entry
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 void options_add_entries(const options_entry *entrylist);

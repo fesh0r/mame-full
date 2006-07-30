@@ -277,16 +277,10 @@ VIDEO_START(sms) {
 	spriteCache = auto_malloc(MAX_X_PIXELS * 16);
 
 	/* Make temp bitmap for rendering */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
-	if (!tmpbitmap) {
-		return (1);
-	}
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	prevBitMapSaved = 0;
-	prevBitMap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
-	if (!prevBitMap) {
-		return (1);
-	}
+	prevBitMap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	set_display_settings();
 
@@ -1060,8 +1054,8 @@ VIDEO_UPDATE(sms) {
 	int x, y;
 
 	if (prevBitMapSaved) {
-	for (y = 0; y < Machine->drv->screen[0].maxheight; y++) {
-		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++) {
+	for (y = 0; y < Machine->screen[0].height; y++) {
+		for (x = 0; x < Machine->screen[0].width; x++) {
 			plot_pixel(bitmap, x, y, (read_pixel(tmpbitmap, x, y) + read_pixel(prevBitMap, x, y)) >> 2);
 			logerror("%x %x %x\n", read_pixel(tmpbitmap, x, y), read_pixel(prevBitMap, x, y), (read_pixel(tmpbitmap, x, y) + read_pixel(prevBitMap, x, y)) >> 2);
 		}

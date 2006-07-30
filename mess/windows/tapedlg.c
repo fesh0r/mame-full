@@ -13,11 +13,7 @@
 #include "tapedlg.h"
 #include "mess.h"
 #include "messres.h"
-#ifdef NEW_RENDER
 #include "window.h"
-#else
-#include "windold.h"
-#endif
 
 //============================================================
 //	PARAMETERS
@@ -126,11 +122,7 @@ void tapedialog_init(void)
 //	is_windowed
 //============================================================
 
-#ifdef NEW_RENDER
 static int is_windowed(void)	{ return video_config.windowed; }
-#else
-static int is_windowed(void)	{ return win_window_mode; }
-#endif
 
 
 

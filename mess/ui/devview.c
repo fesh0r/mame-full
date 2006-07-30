@@ -16,7 +16,7 @@
 #include "driver.h"
 #include "devview.h"
 #include "optionsms.h"
-#include "ui_text.h"
+#include "uitext.h"
 
 #define DEVVIEW_PADDING	10
 

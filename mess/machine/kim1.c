@@ -6,8 +6,8 @@
 	Juergen Buchmueller, Jan 2000
 
 ******************************************************************************/
+
 #include "driver.h"
-#include "artwork.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "includes/kim1.h"
@@ -31,10 +31,6 @@ M6530;
 static M6530 m6530[2];
 
 static void m6530_timer_cb(int chip);
-
-OVERLAY_START( kim1_overlay )
-	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0xff) )
-OVERLAY_END
 
 DRIVER_INIT( kim1 )
 {

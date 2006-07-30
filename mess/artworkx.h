@@ -12,7 +12,6 @@
 #include "driver.h"
 #include "fileio.h"
 #include "palette.h"
-#include "artwork.h"
 #include "png.h"
 
 
@@ -27,18 +26,6 @@
 #define ARTWORK_CUSTTYPE_KEYBOARD	1
 #define ARTWORK_CUSTTYPE_MISC		2
 #define ARTWORK_CUSTTYPE_INVALID	3
-
-
-
-/***************************************************************************
-
-	Globals
-
-***************************************************************************/
-
-#ifndef NEW_RENDER
-extern artwork_callbacks mess_artwork_callbacks;
-#endif /* !NEW_RENDER */
 
 
 

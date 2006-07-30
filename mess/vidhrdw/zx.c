@@ -70,10 +70,10 @@ void zx_ula_bkgnd(int color)
 				fillbitmap(bitmap, Machine->pens[color], &r);
 				old_x = 0;
 			}
-			if (++y == Machine->drv->screen[0].maxheight)
+			if (++y == Machine->screen[0].height)
 				y = 0;
 		}
-		old_x = (new_x + 1) % Machine->drv->screen[0].maxwidth;
+		old_x = (new_x + 1) % Machine->screen[0].width;
 		old_y = new_y;
 		old_c = color;
 		DAC_data_w(0, color ? 255 : 0);
@@ -104,7 +104,7 @@ static void zx_ula_nmi(int param)
 	fillbitmap(bitmap, Machine->pens[1], &r);
 	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
-	if (++ula_scanline_count == Machine->drv->screen[0].maxheight)
+	if (++ula_scanline_count == Machine->screen[0].height)
 		ula_scanline_count = 0;
 }
 
@@ -123,7 +123,7 @@ static void zx_ula_irq(int param)
 		if (++ula_scancode_count == 8)
 			ula_scancode_count = 0;
 		cpunum_set_input_line(0, 0, PULSE_LINE);
-		if (++ula_scanline_count == Machine->drv->screen[0].maxheight)
+		if (++ula_scanline_count == Machine->screen[0].height)
 			ula_scanline_count = 0;
 	}
 }

@@ -27,7 +27,7 @@
 #include "devview.h"
 #include "windows/window.h"
 #include "utils.h"
-#include "ui_text.h"
+#include "uitext.h"
 #include "strconv.h"
 
 #define LOG_SOFTWARE	0

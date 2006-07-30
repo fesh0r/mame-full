@@ -10,8 +10,7 @@
 
 #include "dialog.h"
 #include "mame.h"
-#include "windold.h"
-#include "ui_text.h"
+#include "uitext.h"
 #include "inputx.h"
 #include "utils.h"
 #include "strconv.h"

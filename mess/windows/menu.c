@@ -14,26 +14,21 @@
 // MAME/MESS headers
 #include "mame.h"
 #include "menu.h"
+#include "ui.h"
 #include "messres.h"
 #include "inputx.h"
 #include "windows/video.h"
 #include "dialog.h"
 #include "opcntrl.h"
-#include "ui_text.h"
+#include "uitext.h"
 #include "strconv.h"
 #include "utils.h"
-#include "artwork.h"
 #include "tapedlg.h"
 #include "artworkx.h"
 #include "debug/debugcpu.h"
 #include "inptport.h"
 #include "devices/cassette.h"
-
-#ifdef NEW_RENDER
 #include "windows/window.h"
-#else
-#include "windows/windold.h"
-#endif
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -1138,15 +1133,9 @@ static void setup_joystick_menu(HMENU menu_bar)
 //	set_throttle
 //============================================================
 
-#ifdef NEW_RENDER
 static int is_throttled(void)	{ return video_config.throttle; }
 static int is_windowed(void)	{ return video_config.windowed; }
 static void set_throttle(int t)	{ video_config.throttle = t; }
-#else
-static int is_throttled(void)	{ return throttle; }
-static int is_windowed(void)	{ return win_window_mode; }
-static void set_throttle(int t)	{ throttle = t; }
-#endif
 
 
 
@@ -1161,9 +1150,7 @@ static void prepare_menus(HWND wnd)
 	char buf[MAX_PATH];
 	const char *s;
 	HMENU menu_bar;
-#ifdef NEW_RENDER
 	HMENU video_menu;
-#endif
 	HMENU device_menu;
 	HMENU sub_menu;
 	UINT_PTR new_item;
@@ -1175,13 +1162,11 @@ static void prepare_menus(HWND wnd)
 	const input_port_entry *in;
 	UINT16 in_cat_value = 0;
 	int frameskip;
-#ifdef NEW_RENDER
 	int orientation;
 	LONG_PTR ptr = GetWindowLongPtr(wnd, GWLP_USERDATA);
 	win_window_info *window = (win_window_info *)ptr;
 	const char *view_name;
 	int view_index;
-#endif
 
 	menu_bar = GetMenu(wnd);
 	if (!menu_bar)
@@ -1195,9 +1180,7 @@ static void prepare_menus(HWND wnd)
 
 	frameskip = winvideo_get_frameskip();
 
-#ifdef NEW_RENDER
 	orientation = render_target_get_orientation(window->target);
-#endif
 
 	has_config		= input_has_input_class(INPUT_CLASS_CONFIG);
 	has_dipswitch	= input_has_input_class(INPUT_CLASS_DIPSWITCH);
@@ -1215,9 +1198,7 @@ static void prepare_menus(HWND wnd)
 	}
 
 	set_command_state(menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
-#ifdef NEW_RENDERER
 	set_command_state(menu_bar, ID_FILE_SAVESCREENSHOT,													MFS_GRAYED);
-#endif
 
 	set_command_state(menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
@@ -1243,12 +1224,10 @@ static void prepare_menus(HWND wnd)
 																												: MFS_GRAYED);
 	set_command_state(menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
 
-#ifdef NEW_RENDER
 	set_command_state(menu_bar, ID_VIDEO_ROTATE_0,			(orientation == ROT0)						? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(menu_bar, ID_VIDEO_ROTATE_90,			(orientation == ROT90)						? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(menu_bar, ID_VIDEO_ROTATE_180,		(orientation == ROT180)						? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(menu_bar, ID_VIDEO_ROTATE_270,		(orientation == ROT270)						? MFS_CHECKED : MFS_ENABLED);
-#endif
 
 	set_command_state(menu_bar, ID_FRAMESKIP_AUTO,			(frameskip < 0)								? MFS_CHECKED : MFS_ENABLED);
 	for (i = 0; i < FRAMESKIP_LEVELS; i++)
@@ -1272,7 +1251,6 @@ static void prepare_menus(HWND wnd)
 		}
 	}
 
-#ifdef NEW_RENDER
 	// set up screens in video menu
 	video_menu = find_sub_menu(menu_bar, "&Options\0&Video\0", FALSE);
 	do
@@ -1290,7 +1268,6 @@ static void prepare_menus(HWND wnd)
 			ID_VIDEO_VIEW_0 + i, A2T(view_name));
 		i++;
 	}
-#endif
 
 	// set up device menu; first remove all existing menu items
 	device_menu = find_sub_menu(menu_bar, "&Devices\0", FALSE);
@@ -1364,9 +1341,7 @@ static void prepare_menus(HWND wnd)
 
 void win_toggle_menubar(void)
 {
-#ifdef NEW_RENDER
 	win_window_info *window;
-#endif
 	LONG width_diff;
 	LONG height_diff;
 	DWORD style, exstyle;
@@ -1374,18 +1349,12 @@ void win_toggle_menubar(void)
 	HMENU menu;
 	extern void win_pause_input(int pause_);
 
-#ifdef NEW_RENDER
 	for (window = win_window_list; window != NULL; window = window->next)
-#endif
 	{
 		RECT before_rect = { 100, 100, 200, 200 };
 		RECT after_rect = { 100, 100, 200, 200 };
 
-#ifdef NEW_RENDER
 		hwnd = window->hwnd;
-#else
-		hwnd = win_video_window;
-#endif
 
 		// get current menu
 		menu = GetMenu(hwnd);
@@ -1422,14 +1391,8 @@ void win_toggle_menubar(void)
 				window_rect.right - window_rect.left + width_diff,
 				window_rect.bottom - window_rect.top + height_diff,
 				SWP_NOMOVE | SWP_NOZORDER);
-#ifndef NEW_RENDER
-			win_constrain_to_aspect_ratio(&window_rect, WMSZ_BOTTOM, 0, COORDINATES_DESKTOP);
-#endif
 		}
 
-#ifndef NEW_RENDER
-		win_adjust_window();
-#endif
 		RedrawWindow(hwnd, NULL, NULL, 0);
 	}
 }
@@ -1579,7 +1542,6 @@ static mess_image *decode_deviceoption(int command, int *devoption)
 //	set_window_orientation
 //============================================================
 
-#ifdef NEW_RENDER
 static void set_window_orientation(win_window_info *window, int orientation)
 {
 	render_target_set_orientation(window->target, orientation);
@@ -1587,7 +1549,6 @@ static void set_window_orientation(win_window_info *window, int orientation)
 		render_container_set_orientation(render_container_get_ui(), orientation);
 	winwindow_video_window_update(window);
 }
-#endif // NEW_RENDER
 
 
 
@@ -1604,10 +1565,8 @@ static int invoke_command(HWND wnd, UINT command)
 	UINT16 setting, category;
 	input_port_entry *in;
 	const char *section;
-#ifdef NEW_RENDER
 	LONG_PTR ptr = GetWindowLongPtr(wnd, GWLP_USERDATA);
 	win_window_info *window = (win_window_info *)ptr;
-#endif
 
 	switch(command)
 	{
@@ -1647,7 +1606,6 @@ static int invoke_command(HWND wnd, UINT command)
 			customize_keyboard(wnd);
 			break;
 
-#ifdef NEW_RENDER
 		case ID_VIDEO_ROTATE_0:
 			set_window_orientation(window, ROT0);
 			break;
@@ -1663,7 +1621,6 @@ static int invoke_command(HWND wnd, UINT command)
 		case ID_VIDEO_ROTATE_270:
 			set_window_orientation(window, ROT270);
 			break;
-#endif // NEW_RENDER
 
 		case ID_OPTIONS_PAUSE:
 			pause();
@@ -1774,13 +1731,11 @@ static int invoke_command(HWND wnd, UINT command)
 				// customize joystick
 				customize_joystick(wnd, command - ID_JOYSTICK_0);
 			}
-#ifdef NEW_RENDER
 			else if ((command >= ID_VIDEO_VIEW_0) && (command < ID_VIDEO_VIEW_0 + 1000))
 			{
 				// render views
 				render_target_set_view(window->target, command - ID_VIDEO_VIEW_0);
 			}
-#endif
 			else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
 			{
 				// customize categorized input

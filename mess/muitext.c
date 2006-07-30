@@ -1,4 +1,4 @@
-#include "ui_text.h"
+#include "uitext.h"
 
 const char *mess_default_text[] =
 {

@@ -199,8 +199,6 @@ static void m6545_offset_xy(void)
 	if( off_y > 128 )
 		off_y = 128;
 
-	schedule_full_refresh();
-
 	logerror("6545 offset x:%d  y:%d\n", off_x, off_y);
 }
 
@@ -352,7 +350,6 @@ WRITE8_HANDLER ( m6545_data_w )
 	case 1:
 		if( crt.horizontal_displayed == data )
 			break;
-		schedule_full_refresh();
 		crt.horizontal_displayed = data;
 		logerror("6545 horizontal displayed    %d\n", data);
         break;
@@ -384,7 +381,6 @@ WRITE8_HANDLER ( m6545_data_w )
 	case 6:
 		if( crt.vertical_displayed == data )
 			break;
-		schedule_full_refresh();
 		logerror("6545 vertical displayed      %d\n", data);
         crt.vertical_displayed = data;
 		break;
@@ -516,7 +512,7 @@ VIDEO_UPDATE( mbee )
 			full_refresh = 1;
 		else
 		{
-			ui_popup("%s", mbee_frame_message);
+			popmessage("%s", mbee_frame_message);
 		}
     }
 

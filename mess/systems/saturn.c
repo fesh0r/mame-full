@@ -518,7 +518,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
             ACTIVE LOW
             bit 4(0x10) - Enable Sound System
         */
-		//ui_popup("PDR2 = %02x",smpc_ram[0x77]);
+		//popmessage("PDR2 = %02x",smpc_ram[0x77]);
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k on\n");
@@ -916,13 +916,13 @@ READ32_HANDLER ( stv_io_r32 )
 					case 0xef:  return 0xff000000 | (readinputport(11) << 16) | 0x0000ff00 | (readinputport(16));
 					/*Joystick panel*/
 					default:
-					//ui_popup("%02x MUX DATA",mux_data);
+					//popmessage("%02x MUX DATA",mux_data);
 				    return (readinputport(2) << 16) | (readinputport(3));
 				}
 			}
 			//default:
 			default:
-			//ui_popup("%02x PORT SEL",port_sel);
+			//popmessage("%02x PORT SEL",port_sel);
 			return (readinputport(2) << 16) | (readinputport(3));
 		}
 		case 1:
@@ -936,7 +936,7 @@ READ32_HANDLER ( stv_io_r32 )
 			case 0x10:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			case 0x60:  return 0xffffffff;/**/
 			default:
-			//ui_popup("offs: 2 %02x",port_sel);
+			//popmessage("offs: 2 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -945,7 +945,7 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			default:
-			//ui_popup("offs: 3 %02x",port_sel);
+			//popmessage("offs: 3 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -954,12 +954,12 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ioga[5];
 			default:
-			//ui_popup("offs: 6 %02x",port_sel);
+			//popmessage("offs: 6 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
 		case 7:
-		ui_popup("Read from PORT_AD");
+		popmessage("Read from PORT_AD");
 		i++;
 		return port_ad[i & 7];
 		default:
@@ -1133,7 +1133,7 @@ static UINT32 scu_add_tmp;
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
-	//ui_popup("%02x",DMA_STATUS);
+	//popmessage("%02x",DMA_STATUS);
 	//if (offset == 23)
 	//{
 		//Super Major League reads here???

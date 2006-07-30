@@ -107,7 +107,6 @@ static WRITE8_HANDLER(apf_m1000_pia_out_b_func)
 		if (data & 0x10)	apf_m6847_attr |= M6847_GM0;
 		previous_mode = data;
 	}
-	//	schedule_full_refresh();
 }
 
 static WRITE8_HANDLER(apf_m1000_pia_out_ca2_func)
