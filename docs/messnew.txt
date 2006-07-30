@@ -1,3 +1,37 @@
+0.107.1
+
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+(none)
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+(none)
+
+
+
 0.107
 
 NOTE: This is the first full release of MESS with the new rendering
