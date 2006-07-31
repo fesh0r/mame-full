@@ -128,7 +128,8 @@
 
 ***************************************************************************/
 
-typedef struct
+typedef struct _wd179x_info wd179x_info;
+struct _wd179x_info
 {
 	void   (*callback)(int event);   /* callback for IRQ status */
 	DENSITY   density;				/* FM/MFM, single / double density */
@@ -166,7 +167,7 @@ typedef struct
 	int		data_direction;
 
 	UINT8   ipl;					/* index pulse */
-}	WD179X;
+};
 
 
 
@@ -228,15 +229,15 @@ static UINT8 track_SD[][2] = {
 
 ***************************************************************************/
 
-static void wd179x_complete_command(WD179X *, int delay);
+static void wd179x_complete_command(wd179x_info *, int delay);
 static void wd179x_clear_data_request(void);
 static void wd179x_set_data_request(void);
 static void wd179x_timed_data_request(void);
-static void wd179x_set_irq(WD179X *);
+static void wd179x_set_irq(wd179x_info *);
 static mame_timer *busy_timer = NULL;
 
 /* one wd controlling multiple drives */
-static WD179X wd;
+static wd179x_info wd;
 
 /* this is the drive currently selected */
 static UINT8 current_drive;
@@ -275,7 +276,7 @@ void wd179x_set_side(UINT8 head)
 
 void wd179x_set_density(DENSITY density)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (VERBOSE)
 	{
@@ -290,7 +291,7 @@ void wd179x_set_density(DENSITY density)
 
 static void	wd179x_busy_callback(int dummy)
 {
-	WD179X *w = (WD179X *)dummy;
+	wd179x_info *w = (wd179x_info *)dummy;
 
 	wd179x_set_irq(w);			
 	timer_reset(busy_timer, TIME_NEVER);
@@ -298,7 +299,7 @@ static void	wd179x_busy_callback(int dummy)
 
 
 
-static void wd179x_set_busy(WD179X *w, double milliseconds)
+static void wd179x_set_busy(wd179x_info *w, double milliseconds)
 {
 	w->status |= STA_1_BUSY;
 	timer_adjust(busy_timer, TIME_IN_MSEC(milliseconds), (int)w, 0);
@@ -308,7 +309,7 @@ static void wd179x_set_busy(WD179X *w, double milliseconds)
 
 /* BUSY COUNT DOESN'T WORK PROPERLY! */
 
-static void wd179x_restore(WD179X *w)
+static void wd179x_restore(wd179x_info *w)
 {
 	UINT8 step_counter;
 	
@@ -378,7 +379,7 @@ void wd179x_reset(void)
 
 void wd179x_init(wd179x_type_t type, void (*callback)(int))
 {
-	memset(&wd, 0, sizeof(WD179X));
+	memset(&wd, 0, sizeof(wd));
 	wd.status = STA_1_TRACK0;
 	wd.type = type;
 	wd.callback = callback;
@@ -395,7 +396,7 @@ void wd179x_init(wd179x_type_t type, void (*callback)(int))
 
 
 /* track writing, converted to format commands */
-static void write_track(WD179X * w)
+static void write_track(wd179x_info * w)
 {
 	int i;
 	for (i=0;i+4<w->data_offset;)
@@ -422,7 +423,7 @@ static void write_track(WD179X * w)
 
 
 /* read an entire track */
-static void read_track(WD179X * w)
+static void read_track(wd179x_info * w)
 {
 #if 0
 	UINT8 *psrc;		/* pointer to track format structure */
@@ -582,7 +583,7 @@ static void calc_crc(UINT16 * crc, UINT8 value)
 
 
 /* read the next data address mark */
-static void wd179x_read_id(WD179X * w)
+static void wd179x_read_id(wd179x_info * w)
 {
 	chrn_id id;
 
@@ -639,7 +640,7 @@ static void wd179x_read_id(WD179X * w)
 
 static void wd179x_index_pulse_callback(mess_image *img, int state)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 	if ( img != wd179x_current_image() )
 		return;
 	w->ipl = state;
@@ -654,7 +655,7 @@ static int wd179x_has_side_select(void)
 
 
 
-static int wd179x_find_sector(WD179X *w)
+static int wd179x_find_sector(wd179x_info *w)
 {
 	UINT8 revolution_count;
 	chrn_id id;
@@ -711,7 +712,7 @@ static int wd179x_find_sector(WD179X *w)
 
 
 /* read a sector */
-static void wd179x_read_sector(WD179X *w)
+static void wd179x_read_sector(wd179x_info *w)
 {
 	w->data_offset = 0;
 
@@ -737,7 +738,7 @@ static void wd179x_read_sector(WD179X *w)
 
 
 
-static void	wd179x_set_irq(WD179X *w)
+static void	wd179x_set_irq(wd179x_info *w)
 {
 	w->status &= ~STA_2_BUSY;
 	/* generate an IRQ */
@@ -758,7 +759,7 @@ enum
 
 static void wd179x_misc_timer_callback(int callback_type)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	switch(callback_type) {
 	case MISCCALLBACK_COMMAND:
@@ -786,7 +787,7 @@ when the last byte has been read it causes problems - same byte read again
 or bytes missed */
 /* TJL - I have add a parameter to allow the emulation to specify the delay
 */
-static void wd179x_complete_command(WD179X *w, int delay)
+static void wd179x_complete_command(wd179x_info *w, int delay)
 {
 	int usecs;
 
@@ -804,7 +805,7 @@ static void wd179x_complete_command(WD179X *w, int delay)
 
 
 
-static void wd179x_write_sector(WD179X *w)
+static void wd179x_write_sector(wd179x_info *w)
 {
 	/* at this point, the disc is write enabled, and data
 	 * has been transfered into our buffer - now write it to
@@ -830,7 +831,7 @@ static void wd179x_write_sector(WD179X *w)
 
 
 /* verify the seek operation by looking for a id that has a matching track value */
-static void wd179x_verify_seek(WD179X *w)
+static void wd179x_verify_seek(wd179x_info *w)
 {
 	UINT8 revolution_count;
 	chrn_id id;
@@ -872,7 +873,7 @@ static void wd179x_verify_seek(WD179X *w)
 /* clear a data request */
 static void wd179x_clear_data_request(void)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 //	w->status_drq = 0;
 	if (w->callback)
@@ -885,7 +886,7 @@ static void wd179x_clear_data_request(void)
 /* set data request */
 static void wd179x_set_data_request(void)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (w->status & STA_2_DRQ)
 	{
@@ -905,7 +906,7 @@ static void wd179x_set_data_request(void)
 /* callback to initiate read sector */
 static void	wd179x_read_sector_callback(int code)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	/* ok, start that read! */
 
@@ -926,7 +927,7 @@ static void	wd179x_read_sector_callback(int code)
 /* callback to initiate write sector */
 static void	wd179x_write_sector_callback(int code)
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	/* ok, start that write! */
 
@@ -978,7 +979,7 @@ static void	wd179x_write_sector_callback(int code)
 static void wd179x_timed_data_request(void)
 {
 	int usecs;
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	usecs = floppy_drive_get_datarate_in_us(w->density);
 
@@ -992,7 +993,7 @@ static void wd179x_timed_data_request(void)
 static void wd179x_timed_read_sector_request(void)
 {
 	int usecs;
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	usecs = 40; /* How long should we wait? How about 40 micro seconds? */
 
@@ -1006,7 +1007,7 @@ static void wd179x_timed_read_sector_request(void)
 static void wd179x_timed_write_sector_request(void)
 {
 	int usecs;
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	usecs = 40; /* How long should we wait? How about 40 micro seconds? */
 
@@ -1019,7 +1020,7 @@ static void wd179x_timed_write_sector_request(void)
 /* read the FDC status register. This clears IRQ line too */
  READ8_HANDLER ( wd179x_status_r )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 	int result = w->status;
 
 	if (w->callback)
@@ -1075,7 +1076,7 @@ static void wd179x_timed_write_sector_request(void)
 /* read the FDC track register */
 READ8_HANDLER ( wd179x_track_r )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (VERBOSE)
 		logerror("wd179x_track_r: $%02X\n", w->track_reg);
@@ -1088,7 +1089,7 @@ READ8_HANDLER ( wd179x_track_r )
 /* read the FDC sector register */
 READ8_HANDLER ( wd179x_sector_r )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (VERBOSE)
 		logerror("wd179x_sector_r: $%02X\n", w->sector);
@@ -1101,7 +1102,7 @@ READ8_HANDLER ( wd179x_sector_r )
 /* read the FDC data register */
  READ8_HANDLER ( wd179x_data_r )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (w->data_count >= 1)
 	{
@@ -1157,7 +1158,7 @@ READ8_HANDLER ( wd179x_sector_r )
 /* write the FDC command register */
 WRITE8_HANDLER ( wd179x_command_w )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 	
 	floppy_drive_set_motor_state(wd179x_current_image(), 1);
 	floppy_drive_set_ready_state(wd179x_current_image(), 1,0);
@@ -1465,7 +1466,7 @@ WRITE8_HANDLER ( wd179x_command_w )
 /* write the FDC track register */
 WRITE8_HANDLER ( wd179x_track_w )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 	w->track_reg = data;
 
 	if (VERBOSE)
@@ -1477,7 +1478,7 @@ WRITE8_HANDLER ( wd179x_track_w )
 /* write the FDC sector register */
 WRITE8_HANDLER ( wd179x_sector_w )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 	w->sector = data;
 	if (VERBOSE)
 		logerror("wd179x_sector_w $%02X\n", data);
@@ -1488,7 +1489,7 @@ WRITE8_HANDLER ( wd179x_sector_w )
 /* write the FDC data register */
 WRITE8_HANDLER ( wd179x_data_w )
 {
-	WD179X *w = &wd;
+	wd179x_info *w = &wd;
 
 	if (w->data_count > 0)
 	{
@@ -1497,14 +1498,12 @@ WRITE8_HANDLER ( wd179x_data_w )
 
 		/* put byte into buffer */
 		if (VERBOSE_DATA)
-			logerror("WD179X buffered data: $%02X at offset %d.\n", data, w->data_offset);
+			logerror("wd179x_info buffered data: $%02X at offset %d.\n", data, w->data_offset);
 	
 		w->buffer[w->data_offset++] = data;
 		
 		if (--w->data_count < 1)
 		{
-			w->data_offset = 0;
-
 			if (w->command == FDC_WRITE_TRK)
 				write_track(w);
 			else
