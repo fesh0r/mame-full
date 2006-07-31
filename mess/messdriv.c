@@ -815,6 +815,21 @@ TESTDRIVER( svi328c ) 	/* SVI-328 + 80 column card (Swedish)						*/
 	/* Tiger Electronics */
 	DRIVER( gamecom )	/* Tiger Game.com	*/
 
+	/* Thomson */
+	DRIVER( t9000 )         /* 1980 Thomson T9000 (TO7 prototype) */
+	DRIVER( to7 )           /* 1982 Thomson TO7 */
+	DRIVER( to770 )         /* 1984 Thomson TO7/70 */
+	DRIVER( to770a )        /* 198? Thomson TO7/70 arabic version */
+	DRIVER( mo5 )           /* 1984 Thomson MO5 */
+	DRIVER( mo5e )          /* 1986 Thomson MO5E (export version) */
+	DRIVER( to9 )           /* 1985 Thomson T09 */
+	DRIVER( to8 )           /* 1986 Thomson T08 */
+	DRIVER( to8d )          /* 1987 Thomson T08D */
+	DRIVER( to9p )          /* 1986 Thomson T09+ */
+	DRIVER( mo6 )           /* 1986 Thomson MO6 */
+	DRIVER( mo5nr )         /* 1986 Thomson MO5 NR */
+	DRIVER( pro128 )        /* 1986 Oliveti Prodest PC 128 */
+
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/

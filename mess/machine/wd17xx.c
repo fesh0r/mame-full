@@ -162,8 +162,10 @@ typedef struct
 
 	UINT8	ddam;					/* ddam of sector found - used when reading */
 	UINT8	sector_data_id;
-	mame_timer	*timer, *timer_rs, *timer_ws;
+	mame_timer	*timer, *timer_rs, *timer_ws, *timer_rid;
 	int		data_direction;
+
+	UINT8   ipl;					/* index pulse */
 }	WD179X;
 
 
@@ -353,17 +355,26 @@ static void wd179x_restore(WD179X *w)
 
 
 
-void wd179x_reset(void)
-{
-	wd179x_restore(&wd);
-}
-
-
-
 static void	wd179x_busy_callback(int dummy);
 static void	wd179x_misc_timer_callback(int code);
 static void	wd179x_read_sector_callback(int code);
 static void	wd179x_write_sector_callback(int code);
+static void wd179x_index_pulse_callback(mess_image *img, int state);
+
+void wd179x_reset(void)
+{
+	int i;
+	for (i = 0; i < device_count(IO_FLOPPY); i++)
+	{
+		mess_image *img = image_from_devtype_and_index(IO_FLOPPY, i);
+		floppy_drive_set_index_pulse_callback(img, wd179x_index_pulse_callback);    
+		floppy_drive_set_rpm( img, 300.);
+	}
+
+	wd179x_restore(&wd);
+}
+
+
 
 void wd179x_init(wd179x_type_t type, void (*callback)(int))
 {
@@ -383,8 +394,29 @@ void wd179x_init(wd179x_type_t type, void (*callback)(int))
 
 
 
+/* track writing, converted to format commands */
 static void write_track(WD179X * w)
 {
+	int i;
+	for (i=0;i+4<w->data_offset;)
+	{
+		if (w->buffer[i]==0xfe)
+		{
+			/* got address mark */
+			int track   = w->buffer[i+1];
+			int side    = w->buffer[i+2];
+			int sector  = w->buffer[i+3];
+			int len     = w->buffer[i+4]; 
+			int filler  = 0xe5; /* IBM and Thomson */
+			int density = w->density;
+			floppy_drive_format_sector(wd179x_current_image(),side,sector,track,
+						hd,sector,density?1:0,filler);
+			(void)len;
+			i += 128; /* at least... */
+		}
+		else
+			i++;
+	}
 }
 
 
@@ -583,12 +615,13 @@ static void wd179x_read_id(WD179X * w)
 		w->buffer[4] = crc>>8;
 		w->buffer[5] = crc & 255;
 		
-
 		w->sector = id.C;
-		w->status |= STA_2_BUSY;
-		w->busy_count = 50;
 
-		wd179x_set_data_request();
+		w->status |= STA_2_BUSY;
+		w->busy_count = 0;
+
+		wd179x_complete_command(w, DELAY_DATADONE);
+
 		logerror("read id succeeded.\n");
 	}
 	else
@@ -600,6 +633,16 @@ static void wd179x_read_id(WD179X * w)
 
 		wd179x_complete_command(w, DELAY_ERROR);
 	}
+}
+
+
+
+static void wd179x_index_pulse_callback(mess_image *img, int state)
+{
+	WD179X *w = &wd;
+	if ( img != wd179x_current_image() )
+		return;
+	w->ipl = state;
 }
 
 
@@ -990,13 +1033,9 @@ static void wd179x_timed_write_sector_request(void)
 	/* type 1 command or force int command? */
 	if ((w->command_type==TYPE_I) || (w->command_type==TYPE_IV))
 	{
-
-		/* if disc present toggle index pulse */
-		if (image_exists(wd179x_current_image()))
-		{
-			/* eventually toggle index pulse bit */
-			w->status ^= STA_1_IPL;
-		}
+		/* toggle index pulse */
+		result &= ~STA_1_IPL;
+		if (w->ipl) result |= STA_1_IPL;
 
 		/* set track 0 state */
 		result &=~STA_1_TRACK0;
@@ -1290,7 +1329,8 @@ WRITE8_HANDLER ( wd179x_command_w )
 	{
 		UINT8 newtrack;
 
-		logerror("old track: $%02x new track: $%02x\n", w->track_reg, w->data);
+		if (VERBOSE)
+			logerror("old track: $%02x new track: $%02x\n", w->track_reg, w->data);
 		w->command_type = TYPE_I;
 
 		/* setup step direction */
@@ -1469,6 +1509,8 @@ WRITE8_HANDLER ( wd179x_data_w )
 				write_track(w);
 			else
 				wd179x_write_sector(w);
+
+			w->data_offset = 0;
 
 			wd179x_complete_command(w, DELAY_DATADONE);
 		}

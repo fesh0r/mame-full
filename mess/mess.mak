@@ -318,6 +318,7 @@ DRVLIBS = \
 	$(OBJ)/tatung.a \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/telmac.a \
+	$(OBJ)/thomson.a \
 	$(OBJ)/ti85.a \
 	$(OBJ)/ti99.a \
 	$(OBJ)/tiger.a \
@@ -957,6 +958,15 @@ $(OBJ)/be.a:						\
 	$(OBJ)/mess/vidhrdw/cirrus.o	\
 	$(OBJ)/machine/intelfsh.o		\
 	$(OBJ)/machine/53c810.o
+
+$(OBJ)/thomson.a:			\
+	$(OBJ)/mess/machine/mc6846.o	\
+	$(OBJ)/mess/systems/thomson.o   \
+	$(OBJ)/mess/machine/thomson.o   \
+	$(OBJ)/mess/vidhrdw/thomson.o   \
+	$(OBJ)/mess/devices/thomflop.o \
+	$(OBJ)/mess/formats/thom_dsk.o \
+	$(OBJ)/mess/formats/thom_cas.o
 
 $(OBJ)/tiger.a:				\
 	$(OBJ)/mess/systems/gamecom.o	\

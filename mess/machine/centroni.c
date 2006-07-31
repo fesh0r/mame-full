@@ -46,14 +46,17 @@ void centronics_write_data(int nr, UINT8 data)
 	This->data=data;
 }
 
+UINT8 centronics_read_data(int nr)
+{
+	CENTRONICS *This=cent+nr;
+	return This->data;
+}
+
 /* execute user callback in CENTRONICS_CONFIG when state of control from printer
 has changed */
 static void centronics_timer_callback(int nr)
 {
 	CENTRONICS *This=cent+nr;
-
-	/* don't re-trigger timer */
-	timer_reset(This->timer, TIME_NEVER);
 
 	/* update control state */
 	This->control &=~This->new_control_mask;
@@ -62,6 +65,26 @@ static void centronics_timer_callback(int nr)
 	/* if callback is specified, call it with the new state of the outputs from the printer */
 	if (This->config->handshake_out)
 		This->config->handshake_out(nr, This->control, This->new_control_mask);
+
+	/* phase 2: schedule ack end */
+	if ( This->control & CENTRONICS_ACKNOWLEDGE )
+	{
+		This->new_control_mask = CENTRONICS_ACKNOWLEDGE;
+		This->new_control_data = 0;
+		timer_adjust(This->timer, TIME_IN_USEC(2), nr, 0);
+	}
+	/* phase 3: end */
+	else if ( This->control & CENTRONICS_NOT_BUSY )
+	{
+		timer_adjust(This->timer, TIME_NEVER, nr, 0);
+	}
+	/* phase 1: schedule not busy & ack */
+	else
+	{
+		This->new_control_mask = CENTRONICS_NOT_BUSY | CENTRONICS_ACKNOWLEDGE;
+		This->new_control_data = CENTRONICS_NOT_BUSY | CENTRONICS_ACKNOWLEDGE;
+		timer_adjust(This->timer, TIME_IN_USEC(15), nr, 0);
+	}
 }
 
 void centronics_write_handshake(int nr, int data, int mask)
@@ -72,20 +95,18 @@ void centronics_write_handshake(int nr, int data, int mask)
 	
 	if (neu & CENTRONICS_NO_RESET)
 	{
-		if ( !(This->control&CENTRONICS_STROBE) && (neu&CENTRONICS_STROBE) )
-		{
+	  /* strobe down */
+	  if ( (This->control&CENTRONICS_STROBE) && !(neu&CENTRONICS_STROBE) )
+	  {
+			/* schedule busy */
+			This->new_control_mask = CENTRONICS_NOT_BUSY;
+			This->new_control_data = 0;
+			timer_adjust(This->timer, TIME_IN_USEC(5), nr, 0);
+
+			/* output */
 			printer_output(image_from_devtype_and_index(IO_PRINTER, nr), This->data);
-			
-			/* setup timer for data acknowledge */
-
-			/* set mask for data that has changed */
-			This->new_control_mask = CENTRONICS_ACKNOWLEDGE;
-			/* set data that has changed */
-			This->new_control_data = CENTRONICS_ACKNOWLEDGE;
-
-			/* setup a new timer */
-			timer_adjust(This->timer, TIME_IN_USEC(1), nr, 0);
 		}
+
 	}
 	This->control=neu;
 }
@@ -95,7 +116,9 @@ int centronics_read_handshake(int nr)
 	CENTRONICS *This=cent+nr;
 	UINT8 data=0;
 
-	data |= CENTRONICS_NOT_BUSY;
+	/* state of busy */
+	data |= (This->control & CENTRONICS_NOT_BUSY);
+
 	if (This->config->type == PRINTER_IBM)
 	{
 		data |= CENTRONICS_ONLINE;

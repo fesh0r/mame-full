@@ -1,10 +1,8 @@
 0.107.1
 
-
-
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Thomson computer family  [Antoine Mine]
 
 
 

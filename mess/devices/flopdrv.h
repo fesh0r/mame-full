@@ -92,7 +92,11 @@ struct floppy_drive
 	/* index pulse timer */
 	void	*index_timer;
 	/* index pulse callback */
-	void	(*index_pulse_callback)(mess_image *img);
+	void	(*index_pulse_callback)(mess_image *image, int state);
+	/* rotation per minute => gives index pulse frequency */
+	float rpm;
+	/* current index pulse value */
+	int index;
 
 	void	(*ready_state_change_callback)(mess_image *img, int state);
 
@@ -114,7 +118,7 @@ typedef enum
 	FLOPPY_DRIVE_DS_80
 } floppy_type;
 
-void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *img));
+void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *image, int state));
 
 /* set flag state */
 int floppy_drive_get_flag_state(mess_image *img, int flag);
@@ -152,5 +156,11 @@ void floppy_drive_read_indexed_sector_data(mess_image *img, int side, int sector
 void floppy_drive_write_indexed_sector_data(mess_image *img, int side, int sector_index, const void *pBuffer, int length, int ddam);
 int	floppy_drive_get_datarate_in_us(DENSITY density);
 
+/* set motor speed to get correct index pulses
+   standard RPM are 300 RPM (common) and 360 RPM
+   Note: this actually only works for soft sectored disks: one index pulse per
+   track.
+*/
+void floppy_drive_set_rpm(mess_image *image, float rpm);
 
 #endif /* FLOPDRV_H */

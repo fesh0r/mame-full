@@ -45,6 +45,7 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 	pDrive->index_pulse_callback = NULL;
 	pDrive->ready_state_change_callback = NULL;
 	pDrive->index_timer = timer_alloc(floppy_drive_index_callback);
+	pDrive->index = 0;
 
 	/* all drives are double-sided 80 track - can be overriden in driver! */
 	floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
@@ -54,26 +55,41 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 	/* initialise track */
 	pDrive->current_track = 1;
 
+	/* default RPM */
+	pDrive->rpm = 300;
+
 	floppy_drive_set_disk_image_interface(img, iface);
 	return INIT_PASS;
 }
 
 
 
-/* this callback is executed every 300 times a second to emulate the index
-pulse. What is the length of the index pulse?? */
+/* index pulses at rpm/60 Hz, and stays high 1/20th of time */
 static void	floppy_drive_index_callback(int image_ptr)
 {
 	mess_image *img = (mess_image *) image_ptr;
 	struct floppy_drive *pDrive = get_drive(img);
 
+	double ms = 1000. / (pDrive->rpm / 60.);
+
+	if (pDrive->index)
+	{
+		pDrive->index = 0;
+		timer_adjust(pDrive->index_timer, TIME_IN_MSEC(ms*19/20), (int) img, 0);
+	}
+	else
+	{
+		pDrive->index = 1;
+		timer_adjust(pDrive->index_timer, TIME_IN_MSEC(ms/20), (int) img, 0);
+	}
+
 	if (pDrive->index_pulse_callback)
-		pDrive->index_pulse_callback(img);
+		pDrive->index_pulse_callback(img, pDrive->index);
 }
 
 
 /* set the callback for the index pulse */
-void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *img))
+void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *image, int state))
 {
 	struct floppy_drive *pDrive = get_drive(img);
 	pDrive->index_pulse_callback = callback;
@@ -185,24 +201,20 @@ void floppy_drive_set_motor_state(mess_image *img, int state)
 		if (image_slotexists(img))
 		{
 			struct floppy_drive *pDrive = get_drive(img);
-			double newpulse;
 
-			if (pDrive->index_timer)
+			pDrive->index = 0;
+			if (new_motor_state)
 			{
-				if (new_motor_state)
-				{
-					/* off->on */
-					/* check it's in range */
+				/* off->on */
+				/* check it's in range */
 
-					/* setup timer to trigger at 300 times a second = 300rpm */
-					newpulse = TIME_IN_HZ(300);
-				}
-				else
-				{
-					/* on->off */
-					newpulse = 0;
-				}
-				timer_adjust(pDrive->index_timer, 0, (int) img, newpulse);
+				/* setup timer to trigger at rpm */
+				floppy_drive_index_callback((int)img);
+			}
+			else
+			{
+				/* on->off */
+				timer_adjust(pDrive->index_timer, 0, (int) img, 0);
 			}
 		}
 	}
@@ -485,4 +497,12 @@ int floppy_drive_get_datarate_in_us(DENSITY density)
 	}
 
 	return usecs;
+}
+
+
+
+void floppy_drive_set_rpm(mess_image *img, float rpm)
+{
+	struct floppy_drive *drv = get_drive(img);
+	drv->rpm = rpm;
 }
