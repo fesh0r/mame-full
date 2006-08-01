@@ -456,7 +456,6 @@ static void vdc8563_text_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 	int w=CRTC6845_CHAR_COLUMNS;
 	int h=CRTC6845_CHAR_LINES;
 	int height=CRTC6845_CHAR_HEIGHT;
-	UINT8 ch;
 
 	rect.min_x=Machine->visible_area[0].min_x;
 	rect.max_x=Machine->visible_area[0].max_x;
@@ -468,12 +467,30 @@ static void vdc8563_text_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 			 i=vdc.videoram_start&vdc.mask, j=vdc.colorram_start&vdc.mask; y<h;
 		 y++, rect.min_y+=height, rect.max_y+=height) {
 		for (x=0; x<w; x++, i=(i+1)&vdc.mask, j=(j+1)&vdc.mask) {
-			if (vdc.dirty[i]||vdc.dirty[j]) {
-				ch=vdc.ram[j];
-				drawgfx(bitmap,Machine->gfx[0],
-						vdc.ram[i]|((ch&0x80)<<1), ch&0x7f, 0, 0,
-						Machine->gfx[0]->width*x+8,height*y+height,
-						&rect,TRANSPARENCY_NONE,0);
+			if (vdc.dirty[i]||vdc.dirty[j])
+			{
+				{
+					UINT16 ch, fg, bg;
+					const UINT8 *charptr;
+					int v, h;
+					UINT16 *pixel;
+
+					ch = vdc.ram[i] | ((vdc.ram[j] & 0x80) ? 0x100 : 0);
+					charptr = &vdc.ram[(vdc.fontram_start + (ch * 16)) & vdc.mask];
+					fg = ((vdc.ram[j] & 0x0F) >> 0) + 0x10;
+					bg = ((vdc.ram[j] & 0x70) >> 4) + 0x10;
+
+					for (v = 0; v < 16; v++)
+					{
+						for (h = 0; h < 8; h++)
+						{
+							pixel = ((UINT16 *) bitmap->line[(y * height) + height + v])
+								+ (x * 8) + 8 + h;
+							*pixel = (charptr[v] & (0x80 >> h)) ? fg : bg;
+						}
+					}
+				}
+
 				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
 					int k=height-CRTC6845_CURSOR_TOP;
 					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
@@ -481,7 +498,7 @@ static void vdc8563_text_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 					if (k>0)
 						plot_box(bitmap, Machine->gfx[0]->width*x+8,
 								 height*y+height+CRTC6845_CURSOR_TOP,
-								 Machine->gfx[0]->width, k, Machine->pens[0x10|(ch&0xf)]);
+								 Machine->gfx[0]->width, k, Machine->pens[0x10|(vdc.ram[j]&0xf)]);
 				}
 
 				vdc.dirty[i]=0;

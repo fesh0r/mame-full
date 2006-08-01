@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [C128] Fixed regression introduced in 0.106.  (bug #895) [Nate Woods]
 
 
 
