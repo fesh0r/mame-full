@@ -10534,3 +10534,1350 @@ Emulators:
 EightyOne - http://www.chuntey.com/eightyone/
 
 $end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=t9000
+$bio
+Thomson T9000 (French, Oct 1980)
+
+
+This is the prototype for Thomson's first home computer: the TO7.
+
+
+History and Trivia:
+
+Apart form the different startup menu and the more buggy BIOS, it
+is internally similar to the TO7, and fully compatible.
+
+See the to7 driver for more information.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to7
+$bio
+Thomson TO7 (French, Nov 1982)
+
+
+First computer commercialized by the French company Thomson.
+
+
+Features:
+
+* CPU: 1 MHz Motorola 6809E
+
+* RAM: 8 KB base + 16 KB extension = 24 KB
+
+* ROM: 6 KB BIOS
+
+* Video: 320x200, 8 fixed colors (with proximity constraints)
+
+* Sound: 1-bit buzzer + 6-bit DAC extension
+
+* Keyboard: AZERTY 58-keys French keyboard, with accents
+
+* Game-pad: two 8-way 1-button paddles
+
+* Lightpen: 8-pixel horizontal, 1-pixel vertical resolution
+
+* Cartridge: 4 KB to 64 KB
+
+* Cassette: 900 bauds
+
+* Floppies: up to 4 external drives, 3 different controllers for 
+            2"8 (50 KB), 3"1/2 (320 KB), and 5"1/4 (80 KB or 160 KB) floppies
+
+* Printer port (CENTRONICS)
+
+
+Usage:
+
+
+Cartridges.
+
+You really need a cartridge, as the TO7 is almost unusable without it.
+They have a .m7 or .rom suffix and are loaded with the -cart option.
+A few software were distributed on cartridge. The most important one 
+is the BASIC language that also serves as an OS and loader for many 
+BASIC and binary software.
+
+
+Menu.
+
+From one to three options are available on the startup menu.
+If you have only one, it means there is no cartridge present.
+The last option always allows tuning the lightpen. It is quite useless (even 
+on the real computer).
+The first option shows the cartridge name and allows starting it.
+If the cartridge software is able to read cassettes or floppies, there is an 
+extra middle option that will automatically load the first cassette file or
+some specific floppy file (e.g., with the BASIC 1.0 software, it is
+equivalent to RUN"" on a cassette and RUN"AUTO.BAT" on a floppy).
+Click with the lightpen or use keys 1 to 3 to select an option.
+
+
+Cassettes.
+
+Most games were distributed on a cassette which are loaded from the BASIC 1.0 
+cartridge. Thus, to get foo.k7 working, you need to use the both options 
+"-cart basic.m7 -cass foo.k7". Type 1 in the menu to get the BASIC prompt. 
+Two cases may now arise.
+If the game has a BASIC loader (.BAS, .BAT, .CMP files), type RUN"".  
+If it has a binary loader (.BIN, .ASM files), type LOADM"",,R. 
+Using the wrong command will result in a BASIC error, so you should
+really try both (do not forget to rewind between two retries).
+Also, if you have have the BASIC DOS loaded (see bellow), you must now type
+respectively RUN"CASS:" and LOADM"CASS:",,R because the default device will
+be the floppy drive 0 instead of the cassette reader.
+Then, be patient. TO7 tapes are slow: 900 bauds (you can put throttling on).
+
+Two cassette image formats are recognized: .k7 and .wav. The .wav format is
+simply the raw sound signal. .k7 have been preprocessed and decoded into
+the sequence of bytes the BIOS routines will output.
+For now, you should prefer preprocessed .k7 files rather than .wav files, as the
+demodulation (done in hardware in the TO7) is not well emulated (except when
+the signal is very clean, such as the one output by the emulator when saving).
+
+Cassettes are always saved in the .wav format. Do not forget to put the
+cassette reader into record mode using MESS's in-game menu (Tape Control).
+
+
+Floppies.
+
+First, you must make sure the correct floppy controller is emulated.
+Using MESS's in-game configuration menu, you can select between three
+alternate controllers. The CD 90-351 controller is the most versatile: it
+accepts 5"1/4, 3"1/2 floppies (.sap or .fd suffix, 80 to 320 KB), as well as 
+the 2"8 so-called QuickDisk (.qd suffix, 50 KB). The CD 90-640 controller only 
+accepts 5"1/4 floppies, while the CQ 90-028 only accepts 2"8 floppies.
+After changing the current controller, you must reset the TO7.
+Up to four floppy drives are emulated. They are named -flop0 to -flop3.
+The BASIC 1.0 cartridge is not able to exploit floppies by itself; you need a
+BASIC DOS extension in the form of a boot disk. Put the boot disk in the
+first drive (-flop0) as well as the BASIC 1.0 cartridge, and press 1. You should
+now be able to DIR, LOAD, SAVE. Use DIR"1:", DIR"2:" and DIR"3:" to access to
+floppies in drives -flop1, -flop2 and -flop3. New floppies must be formatted
+using the DSKINI0 (for -flop0) to DSKINI3 (for -flop3) command before 
+being usable.
+Two-sided drives are actually seen as two different drives. A two-sided disk
+must thus be split into two image files put into different slots
+(-flop0 and -flop1 for the first two-sided drive, -flop2 and -flop3 for the
+second two-sided drive).
+Other, non-BASIC cartridges either include their own DOS (e.g., Colorpaint) 
+or require a specific DOS boot disk (e.g., Logo, Forth).
+
+
+Keyboard.
+
+Here is the visual layout of the keyboard:
+
+  STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0  -=  +;  ACC      UP  DOWN
+
+  CTRL    A   Z   E   R   T   Y   U   I   O   P  /?  *:        LEFT RIGHT
+
+  RAZ       Q   S   D   F   G   H   J   K   L    M   ENTER        TOP
+
+  SHIFT       W   X   C   V   B   N   ,<  .>  @^     SHIFT      INS DEL
+
+                         SPACE
+
+Unshifted keys appear on the left, and shifted appear on the right.
+Caps-lock is SHIFT+SPACE.
+Accents are typeset using with the ACC key, followed by A (grave),
+B (acute), C (hat), H (trema), or c (cedilla), then the key to accent.
+
+
+Lightpen.
+
+The main pointing device is the lightpen. A white cross indicates its position
+(added by MESS because the TO7 does not generally provide any visual feedback).
+Move the white cross and click with the mouse button.
+The lightpen horizontal resolution is only 8-pixels.
+
+
+Printer.
+
+A printer port is emulated. Use the -prin option to tell MESS where to put its
+output.
+
+
+Known Issues:
+
+* Cassette: .wav files may not be readable unless generated by the  emulator, 
+  prefer the .k7 format
+
+* RS232 and MODEM extensions are not emulated
+
+* TV overlay extension is not emulated
+
+* Network extension is not emulated
+
+
+History and Trivia:
+
+The TO7 was quite expensive. Especially given that no BASIC cartridge was 
+included and most peripherals (paddles, printers, floppy drives) required 
+costly extensions.
+
+The video system offers a 320x200 active windows with 8 fixed colors, but
+with peculiar constraints to save RAM space.
+Each line is split into 40 spans of 8-pixels and each span can only
+have two different colors (among 8).
+This allows representing 8 pixels with 14 bits (two 3-bit palette entries,
+and 8 1-bit pixel entries) instead of 24 bits.
+
+The TO7 was quickly replaced (in 1984) by its successor, the TO7/70 (more RAM, 
+more colors). See the to770 driver.
+Not many TO7 software are available. Most were designed for the TO7/70 and do
+not work on the TO7.
+
+Many TO7 were actually distributed with the T9000 ROM and have a T9000 startup
+menu!
+
+
+Links: (most are in French)
+
+* FunzyTo7: first T9000, TO7, TO7/70 emulator ever
+  http://www.sylvain-huet.com/hacks
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+  
+* Christophe's Lair: software and documentations
+  http://lair.thomsonistes.org
+
+* Collection Thomson: technical documentations and a few original software
+  http://gfournier.free.fr
+
+* Logiciels MOTO: software and links
+  http://www.logicielsmoto.com
+
+* Serveur 87: software and technical documentation
+  http://serveur87thomson.free.fr
+
+* MO5.COM: links, buy and sell Thomson computers
+  http://www.mo5.com
+
+* Contacthoms: fan site
+  http://a.contacthoms.free.fr
+
+* ToNew: site dedicated to Thomson computers 
+  http://membres.lycos.fr/tonews
+
+* Paris-Thoms: another fan site
+  http://paris-thoms.perso.cegetel.net
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to770
+$bio
+Thomson TO7/70 (French, 1984)
+
+
+Enhanced TO7.
+
+It has improved graphics features (16 colors instead of 8) and more RAM.
+The TO7/70 supports virtually all TO7 software, devices, and extensions 
+(in particular, floppy and game controllers).
+
+
+Features:
+
+We only show the differences with respect to the TO7:
+
+* RAM: 48 KB base + 64 KB extension = 96 KB
+
+* Video: 16 fixed colors instead of 8, but identical proximity constraints
+
+* Lightpen: the horizontal precision has improved to the pixel
+
+
+Usage:
+
+Please read the documentation for the to7 driver.
+
+
+Cartridges, cassettes & floppies.
+
+They have the exact same format and image formats as the TO7 ones: .k7 for 
+byte-processed cassettes, .wav for raw cassettes, .sap or .fd for 80 KB
+or 160 KB 5"1/4 and 320 KB 3"1/2 floppies, .qd for 50 KB 2"8 floppies, and .m7 
+and .rom for cartridge. Moreover, they are used in the exact same way. 
+You need a BASIC 1.0 cartridge to load most cassettes, and an extra BASIC DOS 
+boot floppy to use floppies. The TO7/70 is backward compatible with the TO7.
+However, many TO7/70 software are designed to exploit the enhanced graphics 
+capabilities and RAM space, and will not work on a TO7.
+
+
+BASIC 128.
+
+Of particular interest is the BASIC 128 cartridge. Designed quite late, it
+allows exploiting the full memory of the TO7/70 and all 16 colors from the 
+BASIC. It also provides its own DOS (no need for a DOS boot disk). 
+However, many games were developed before the BASIC 128 appeared and are 
+incompatible with it. 
+Thus, you should  stick to the BASIC 1.0 to play games (most are coded 
+in machine code, and so, can access all colors and RAM this way).      
+
+
+Keyboard.
+
+The TO7/70 keyboard is identical to the TO7 one. In addition, the ACC key can be
+followed by 6, 7, 8, 9, or 0 to typeset é, è, ù, ç, and à directly.
+
+
+History and Trivia:
+
+With the MO5, the TO7/70 was a very popular computer in France, despite its 
+price. This may be due to the government plan "Informatique pour tous" 
+(meaning: "Computer Science for Everyone") to buy schools a large amount of 
+those.
+
+Although it is backward compatible with the TO7, the TO7/70 has some notable
+hardware changes. In particular, a lot of generic chips have been replaced
+with a custom gate-array from Thomson.
+
+The TO7/70 has a large library of games and educational software.
+
+
+Links:
+
+* Thom: TO7/70-only emulator based on Funzy
+  http://nostalgies.thomsonistes.org/thom_home.html
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* See the information for the to7 system for more links.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to770a
+$bio
+Thomson TO7/70 (Arabic, 198?)
+
+
+Arabic version of the TO7/70.
+
+
+Usage:
+
+This TO7/70 seems identical to the original one, except for the altered keyboard
+and different ROM.
+
+It requires a special, 64 KB version of the BASIC 128 cartridge in order
+to typeset Arabic (-cart basic128a.m7).
+Use CTRL+W to switch to Arabic and CTRL+F to switch back to Latin.
+In Latin mode, CTRL+U and CTRL+X allow typesetting in-line Arabic while,
+in Arabic mode, CTRL+E and CTRL+X typeset in-line Latin.
+
+
+See the to770 driver for more informations.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mo5
+$bio
+Thomson MO5 (French, Jun 1984)
+
+
+The MO5 is Thomson's attempt to provide a low-cost version of the
+TO7/70. 
+It is based on the same gate-array technology, but has less memory and is 
+less expandable.
+Please note that it is software incompatible with the TO7 and TO7/70.
+
+
+Features:
+
+* CPU: 1 MHz Motorola 6809E
+
+* RAM: 32 KB base
+
+* ROM: 16 KB including BIOS and BASIC
+
+* Video: 320x200, 16 fixed colors (with proximity constraints)
+
+* Sound: 1-bit buzzer + 6-bit DAC extension
+
+* Keyboard: AZERTY 58-keys French keyboard, with accents
+
+* Game-pad: two 8-way 1-button paddles
+
+* Lightpen: pixel horizontal and vertical resolution
+
+* Cartridge: optional, 4 KB to 64 KB
+
+* Cassette: 1200 bauds, TO7 incompatible
+
+* Floppies: up to 4 external drives, 3 different controllers for
+            2"8 (50 KB), 3"1/2 (320 KB), and 5"1/4 (80 KB or 160 KB) floppies,
+            fully TO7 compatible
+
+* Printer port (CENTRONICS)
+
+
+Usage:
+
+
+Cartridge.
+
+An optional .m5 or .rom cartridge can be used (-cart option).
+Note that, unlike the TO7 and TO7/70, the MO5 is usable without a
+cartridge as the BASIC 1.0 is already included in ROM.
+Due to major system incompatibilities, TO7 and TO7/70 cartridges cannot
+be run on a MO5.
+
+
+Cassettes.
+
+Most games were distributed on cassettes. They are used in the same way as
+for the TO7. You must insert them with the -cass option, and then 
+either type RUN"" (for BASIC programs or loaders) or LOADM"",,R (for binary
+code programs) at the BASIC prompt. Using the wrong option will get you
+an error, so, you should try both.
+Cassette images can be raw sound files (.wav) or demodulates byte streams
+(.k5 or .k7).
+Cassettes are slow, be patient (or put on throttling).
+See the to7 driver for more informations.
+IMPORTANT NOTES: the cassette encoding is different and incompatible with that
+of the TO7, TO7/70. You cannot read TO7 .wav or .k7 files on a MO5.
+For the MO5 format, the .wav format is more robust than .k5 and .k7 and will
+work better. Cassettes are always saved in .wav format.
+
+
+Floppies.
+
+Floppies are used in the same way as for the TO7.
+Here is a quick checklist (see the to7 driver for more informations):
+1) make sure the relevant floppy controller is emulated (see MESS's
+in-game configuration menu, reset if required), 2) insert the MO5 BASIC DOS
+boot disk (not the TO7 one) in drive -flop0 before starting the emulator,
+3) alternatively, insert the disk after starting the emulator and type
+DOS at the BASIC prompt, 4) use the LOAD, DIR, SAVE, DSKINI commands.
+MO5 floppy format and floppy images (.sap, .qd, .fd) are fully compatible with
+the TO7 ones. You can easily read TO7 floppies and load TO7 files on a MO5.
+However, due to major system incompatibilities, TO7 programs will not
+be runnable (except pure BASIC programs).
+
+
+Keyboard.
+
+It is similar to the TO7/70 one:
+
+  STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0  -=  +;  ACC      UP  DOWN
+
+  CTRL    A   Z   E   R   T   Y   U   I   O   P  /?  *:        LEFT RIGHT
+
+  RAZ       Q   S   D   F   G   H   J   K   L    M   ENTER        TOP
+
+  SHIFT       W   X   C   V   B   N   ,<  .>  @^     BASIC      INS DEL
+
+                         SPACE
+
+As in the TO7/70, accented keys are typeset using the ACC key, and CAPS-LOCK
+is toggled with the SHIFT+SPACE combination.
+The only differences are: 1) the right SHIFT key has been replaced with
+a BASIC key to typeset BASIC commands quickly, 2) there is no keyboard LED to
+tell you whether the CAPS-LOCK is on.
+
+
+Known Issues:
+
+* many .k5 and .k7 files use emulator-specific hacks and will not work in MESS,
+  prefer .wav files (yes, I know, the opposite was true for the TO7!)
+
+* Features not implemented: RS232 and network.
+
+
+History and Trivia:
+
+The MO5 is the first Thomson computer with an integrated BASIC.
+Unlike the TO7 and TO7/70, it does not require an external BASIC cartridge 
+to operate.
+
+Also, the MO5 (and its MO5E variant) is the only Thomson computers without
+a startup menu: it starts directly at the BASIC prompt (or whatever cartridge
+was plugged-in).
+
+This is also the first Thomson computer of the so-called MO family (that
+also spawned the MO6 and MO5NR computers) which is incompatible with the
+TO family (TO7, TO7/70, and later TO8, TO9, TO9+) despite being based
+on similar hardware.
+Causes of incompatibility are numerous. The address map is different.
+The calling conventions to BIOS functions are different.
+The Motorola 6846 programmable timer is missing (replaced with a fixed clock). 
+The encoding of colors is incompatible (albeit more reasonable than the
+TO7/70 one that strives for TO7 compatibility). The cassette encoding is
+completely different (albeit more effective, robust, and simpler to implement).
+The reason for all this is not very clear (maybe necessary design
+choices to make the computer cheaper, or an attempt to break with former
+design choices, or a marketing issue).
+As a consequence, you cannot run TO7/70 programs on a MO5 (except pure 
+BASIC programs, supposing that you do not load them from a cassette but, 
+e.g., from a floppy).
+Interestingly enough the floppy controller is the same as the TO7 one (its ROM
+has been designed to work for both families).
+
+It was a main component of the government plan
+"Informatique pour tous" (i.e., "Computer Science for Everyone"). 
+Many MO5 (and a few TO7/70) were bought by the government and put in schools
+to teach computer science to children. 
+Such computers were connected into networks (unfortunately, network is 
+currently not emulated in MESS, but I hope to get it working at some point.)
+Thus, it featured a lot of educational software.
+It was also a great game computer until the TO8 was built.
+
+Unlike the TO7 cassette format, the MO5 cassette format is a quite
+simple MFM encoding (Modified Frequency Modulation) and it is decoded
+fully in software. This gave rise to variants: many games were encoded
+specially and used a special loader in order to prevent people from
+disassembling the raw files. Some emulators use a byte-based format that
+cannot represent these protections, and so, rely on emulator-specific
+hooks. These hooks are not emulated in MESS.
+Thus, you should prefer raw .wav files that faithfully emulate protection 
+schemes in MESS.
+Note that the byte-based format often have the suffix .k5 to differentiate them
+from TO7 files, but many also have a .k7 suffix which is confusing because
+they cannot be run on a TO7.
+
+
+Links:
+
+* Emul5: is a MO5-only emulator
+  http://emul5.thomsonistes.org
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* See the information for the to7 system for generic Thomson links
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mo5e
+$bio
+Thomson MO5E (French, 1984?)
+
+
+Export version of the Thomson MO5 computer.
+
+
+Usage:
+
+Please see the mo5 driver for most usage information.
+
+
+Keyboard.
+
+We emulate the QWERTY version of the MO5E:
+
+  STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0£ -=  +;  ACC      UP  DOWN
+
+  CTRL    Q   W   E   R   T   Y   U   I   O   P  /?  *:        LEFT RIGHT
+
+  RAZ       A   S   D   F   G   H   J   K   L  @^   ENTER         TOP
+
+  SHIFT       Z   X   C   V   B   N   M   ,<  .>    BASIC      INS DEL
+
+                         SPACE
+
+The ACC combinations to get accented letters are a bit different.
+
+
+History and Trivia:
+
+The MO5E features a much nicer case and keyboard than the original one for the 
+French market. 
+Also, two game ports and 6-bit sound are included (they are optional 
+extensions on the MO5, TO7, and TO7/70).
+It exists in both AZERTY and a QWERTY versions.
+Apart form the slightly different BIOS and BASIC ROM, it is internally 
+identical to the MO5, and fully compatible.
+
+It seems that the MO5E was mainly exported to Germany.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to9
+$bio
+Thomson TO9 (French, Sep 1985)
+
+
+Much improved successor of the TO7/70, destined for semi-professional usage.
+Note that it is older than the TO8.
+
+
+Features:
+
+* CPU: 1 MHz Motorola 6809E
+
+* RAM: 112 KB base + 64 KB virtual disk extension
+
+* ROM: 136 KB BIOS, BASIC 1.0, BASIC 128, graphical DOS, 
+       text processor & database software
+
+* Video: 8 video modes
+
+    . legacy 320x200, 16 colors with proximity constraints
+
+    . 320x200, 4 colors, unconstrained
+
+    . 160x200, 16 colors
+
+    . 640x200, 2 colors
+
+    . 320x200, two 2-color pages that can be overlaid
+
+    . 160x200, four 2-color pages that can be overlaid
+
+* Palette: 16 colors to be chosen among 4096.
+
+* Sound: 1-bit buzzer + 6-bit DAC extension
+
+* Keyboard: AZERTY 81-keys, French with accents, keypad & function keys
+
+* Game-pad: two 8-way 1-button paddles
+
+* Mouse (not emulated)
+
+* Lightpen
+
+* Cartridge: optional, TO7 compatible
+
+* Cassette: 900 bauds, TO7 compatible
+
+* Floppy: integrated controller and 3"1/2 drive + 2 external 3"1/2 drives,
+          TO7-compatible 320 KB floppies
+
+* Printer port (CENTRONICS)
+
+
+Usage:
+
+
+Menu.
+
+From the startup menu, press SHIFT+1 and SHIFT+2 to access the internal
+software (text-processor and database), SHIFT+3 to get the BASIC 128,
+SHIFT+4 for the old BASIC 1.0, SHIFT+5 to change the color palette, and
+SHIFT+6 to access the graphical DOS.
+
+
+Cartridges.
+
+An optional cartridge can be inserted with the -cart option. It can be
+started from the startup menu by pressing SHIFT+0.
+The TO9 can run TO7 and TO7/70 cartridges, but not MO5 ones.
+
+
+Cassettes.
+
+They have the same format as the TO7 and TO7/70 ones, and MESS recognizes the
+same image types (.wav and .k7).
+We recall that cassettes are loaded with one of the two following BASIC
+commands: RUN"" (for BASIC files), or LOADM"",,R (for binary files).
+Please see the to7 driver for more informations.
+Thanks to the backward compatibility, you should be able to run most TO7
+and TO7/70 software, provided that you load them from the old BASIC 1.0 and 
+not the BASIC 128.
+Note that to use cassettes with the BASIC 128, you must use the commands
+RUN"CASS:" and LOADM"CASS:",,R respectively because the cassette device
+is no longer the default one.
+
+
+Floppies.
+
+The TO9 has an internal 3"1/2 drive, and allows two more external 3"1/2 drives 
+to be connected. They are named -flop0, -flop2, -flop3. 
+In theory, drive number 1 (-flop1) does not exist: it corresponds to the 
+hypothetical second side of the one-sided internal drive.
+But MESS emulates -flop1 anyway...
+Due to the fixed internal controller, only 3"1/2 floppies can be used. 
+2"8 floppies will no work while 5"1/4 floppies might work partially.
+Floppies are TO7, TO7/70 and MO5 compatible. The same .fd and .sap image 
+formats are recognized.
+Floppies can be used directly form the BASIC 128 (SHIFT+3).
+Then use the commands DIR, LOAD, SAVE, RUN, DSKINI as usual (see the to7 
+driver).
+Most games are bottable. Simply insert the floppy in drive 0 (-flop0) and
+press D in the startup menu.
+Using floppies with the old BASIC 1.0 is also possible, but more complex.
+You must first insert a BASIC DOS boot disk in drive 0, and then
+start the BASIC (SHIFT+4) in the startup menu.
+The graphical DOS (SHIFT+6, then select a drive number) allows formatting and 
+copying floppies, but not running them. 
+Note that the 5-th drive, numbered 4, does not correspond to a real floppy,
+but to a 64 KB RAM disk.
+
+
+Keyboard.
+
+The keyboard is AZERTY, with a keypad, a CAPS-LOCK key and function keys.
+
+  F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
+
+  #@   *1  é2  "3  '4  (5  _6  è7  !8  ç9  à0  )°  -\  =+  ACC       UP           7   8   9
+
+ STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&    ENTER  LEFT  RIGHT      4   5   6
+
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN          1   2   3
+
+CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  SHIFT   HOME   INS  DEL        0   .  ENT
+
+                  SPACE
+
+As for modern AZERTY keyboards, SHIFT must be hold to enter digits.
+
+
+Mouse.
+
+Currently not emulated.
+
+
+Video.
+
+MESS has two emulation modes: low-resolution and high-resolution. 
+The default is low-resolution, which is fast and sufficient to emulate most 
+graphical modes (160x200 and 320x200 resolution). To represent faithfully
+the 640x200 TO9 mode, you should switch to the slower, high-resolution 
+emulation mode in MESS's in-game menu.
+
+
+Known Issues:
+
+* External controller (masking the internal one) not emulated,
+  5"1/4 and 2"8 floppies will not work
+
+* Mouse not emulated
+
+* MODEM and RS232 ports not emulated
+
+
+History and Trivia:
+
+The TO9 was a high-end product destined to a semi-professional usage.
+It includes lots of RAM, software in ROM, a 3"1/2 floppy drive. It has a
+desktop look with a separate keyboard and an optional mouse.
+It is a TO family computer, backward compatible with the TO7 and TO7/70
+(but not the MO5).
+It is the first Thomson computer based on the new video gate-array that
+increases greatly the video capabilities.
+Also, it is the first Thomson to have a dedicated keyboard chip (former ones
+relied on CPU pooling).
+
+Alas it had many problems.
+The text-processor and database management software included in ROM were
+quite buggy. Even the BASIC 128 was not able to access the full power of
+the TO9 (in particular, the 64 KB RAM extension could only be used as a 
+virtual RAM disk, not as a main memory). The integrated floppy drive was
+one-sided.
+It was considered somewhat immature and quickly replaced with the improved TO9+.
+
+
+Links:
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* See the information for the to7 system for generic Thomson links
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to8
+$bio
+Thomson TO8 (French, Sep 1986?)
+
+
+Successor of the TO7/70 as a home-computer.
+Note that it is more recent than the TO9.
+
+
+Features:
+
+* CPU: 1 MHz Motorola 6809E
+
+* RAM: 256 KB base + 256 KB extended = 512 KB
+
+* ROM: 96 KB BIOS, BASIC 1.0, BASIC 512, graphical DOS
+
+* Video: 8 video modes (same as TO9)
+
+    . legacy 320x200, 16 colors with proximity constraints
+
+    . 320x200, 4 colors, unconstrained
+
+    . 160x200, 16 colors
+
+    . 640x200, 2 colors
+
+    . 320x200, two 2-color pages that can be overlaid
+
+    . 160x200, four 2-color pages that can be overlaid
+
+* Palette: 16 colors to be chosen among 4096.
+
+* Sound: 6-bit DAC extension
+
+* Keyboard: AZERTY 81-keys, French with accents, identical to TO9
+
+* Game-pad: two 8-way 2-button paddles
+
+* Mouse (exclusive with game-pad)
+
+* Lightpen
+
+* Cartridge: optional, TO7 compatible
+
+* Cassette: 900 bauds, TO7 compatible
+
+* Floppy: integrated versatile controller, 
+          up to four external 2"8, 3"1/2 or 5"1/4 drives,
+          TO7-compatible floppies
+
+* Printer port (CENTRONICS)
+
+
+Usage:
+
+
+Menu.
+
+From the startup menu, press SHIFT+1 for the BASIC 512, SHIFT+2 for the 
+legacy BASIC 1.0, SHIFT+3 to set preferences (color palette and switch between
+lightpen and mouse), SHIFT+5 to get the graphical DOS. SHIFT+4 is a loader
+for special kinds of floppy software (CHG applications).
+
+
+Cartridges.
+
+An optional cartridge can be inserted with -cart option. It can be
+started from the startup menu by pressing SHIFT+0.
+The TO8 can run TO7 and TO7/70 cartridges, but not MO5 ones.
+
+
+Cassettes.
+
+They have the same format as the TO7 and TO7/70 ones, and MESS recognizes the
+same image types (.wav and .k7).
+We recall that cassettes are loaded with one of the two following BASIC
+commands: RUN"" (for BASIC files), or LOADM"",,R (for binary files).
+Please see the to7 driver for more informations.
+Thanks to the backward compatibility, you should be able to run most TO7
+and TO7/70 software, provided that you load them from the old BASIC 1.0 and 
+not the BASIC 512. 
+Note that to use cassettes with the BASIC 512, you must use the commands
+RUN"CASS:" and LOADM"CASS:",,R respectively because the cassette device
+is no longer the default one.
+
+
+Floppies.
+
+The TO8 has a versatile internal floppy controller that allows plugging up 
+to four 2"8, 3"1/2 or 5"1/4 drives. MESS emulates all of this in 
+devices -flop0 to -flop3. They accept .sap and .fd images (both can 
+correspond to 160 KB 5"1/4 or 320 KB 3"1/2 floppies) as well as
+.qd images (50 KB 2"8 floppies). 
+They are fully compatible with the TO7, TO7/70, MO5 and TO9 floppy images.
+The software they contain may, however, be incompatible. The TO8 can 
+generally run all TO7, TO7/70 and TO9 software, but not software from the
+MO family (e.g., MO5).
+You can exploit floppies from the BASIC 512 using the commands DIR, LOAD, RUN,
+SAVE and DSKINI0 (DIR"1:", LOAD"1:", ..., DSKINI1 for -flop1, and so on).
+Most game floppies are bottable; they are run using the B option in the 
+startup menu.
+Some games are not bottable. You must start the regular BASIC 512 (SHIFT+3), 
+then use DIR to see which programs are likely to be loaders, and launch
+them manually with a RUN"XYZ.BAS" or LOADM"XYZ.BIN",,R command.
+A few rare games are actually BASIC 1.0 boot disks, incompatible with
+the BASIC 512; they are run using the C command in the startup menu.
+Finally, the SHIFT+4 option in the startup menu provides a special launcher
+for applications with the .CHG suffix (e.g., Multiplan, Paragraphe).
+As for all Thomsons, double-sided drives are considered as two one-sided drives
+(either -flop0 and -flop1, or -flop2 and -flop3). So, two-sided floppies must
+be split into two images and put into two MESS floppy devices.
+Drive number 4 corresponds to a virtual RAM disk that must first be setup using
+the SHIFT+3 option in the startup menu.
+The graphical DOS (SHIFT+5, then select a drive) allows you to DIR, format
+or copy disks, but not to launch programs.
+
+
+Keyboard.
+
+The keyboard layout is exactly the same as the TO9 one:
+
+  F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
+
+  #@   *1  é2  "3  '4  (5  _6  è7  !8  ç9  à0  )°  -\  =+  ACC       UP         7   8   9
+
+ STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&    ENTER  LEFT  RIGHT    4   5   6
+
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN        1   2   3
+
+CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  SHIFT   HOME   INS  DEL      0   .   ENT
+
+                  SPACE
+
+
+Mouse.
+
+A mouse is emulated. However, you cannot use both a mouse and a game-pad as
+they are connected to the same port. Use MESS's in-game configuration to select
+between the two. The startup menu automatically detects the presence of a 
+mouse. It then disables the lightpen and use the mouse as a pointer device
+instead. You can revert to the lightpen using the SHIFT+3, and then SHIFT+2
+(useful when you revert to game-pad in MESS's in-game configuration, or if
+a mouse was incorrectly detected when you actually moved a game-pad).
+The white cross disappears when a mouse is emulated.
+Also, you can switch between a game-pad and a mouse dynamically, without
+resetting.
+
+
+Video.
+
+As for the TO9, you should switch to high-resolution video emulation in
+MESS's in-game menu if you intend to use software in 640x200.
+Otherwise, the low-resolution video emulation is sufficient and faster.
+
+
+Known Issues:
+
+* Keyboard: the keyboard emulation is not accurate;
+  in order to prevent the keyboard from hanging the whole computer, 
+  undocumented hacks have been introduced; it seems usable for now
+
+* Mouse: movement is jittery
+
+* Video: graphical glitches have been reported on games that use
+  hardware video page switching
+
+* Mouse and paddles: they cannot be used at the same time, but this is
+  not a bug (!)
+
+
+History and Trivia:
+
+While the TO9 was a high-end semi-professional computer, the TO8 was
+meant to replace the TO7/70 as a home computer.
+It has a more compact Amiga-like look, no separate keyboard, and less 
+extension slots. Also, it has no integrated floppy drive, and less application
+software in ROM.
+Despite this, it is considered a much superior computer.
+It improves on the gate-array technology developed for the TO9 (the TO8
+version is so mature that it will be reused unchanged on the TO9+ and MO6).
+This allows a better and more flexible use of the address space (in particular,
+video page switching is now available in all video modes).
+The TO8 has more RAM: 256 KB expandable up to 512 KB.
+The integrated controller is very versatile (again, a custom Thomson
+gate-array that will be reused) and allows connecting any Thomson floppy 
+drive (5"1/4, 3"1/2 and 2"8).
+The BASIC 128 has been replaced with a BASIC 512 that allows accessing the
+whole memory (but a part can still be devoted to a virtual RAM disk).
+The two missing TO9 application software could still be bought on floppies;
+they have been substantially debugged.
+The music extension and second generation game ports (allowing 2-button paddles
+and a mouse) are included.
+
+The TO8 was very popular and became the de-facto gaming computer in the Thomson
+family.
+
+
+Links:
+
+* TEO: TO8 emulator
+  http://nostalgies.thomsonistes.org/teo_home.html
+
+* EmuTO8: another TO8-only emulator
+  http://membres.lycos.fr/jth/emuto8.html
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* AMITO8: TO8 and Amiga emulation site
+  http://membres.lycos.fr/amito8
+
+* See the information for the to7 system for generic Thomson links
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to8d
+$bio
+Thomson TO8D (French, Dec 1987)
+
+
+This is simply a TO8 with an integrated 3"1/2 floppy drive.
+
+As MESS emulates up to four 3"1/2, 5"1/4 and 2"8 floppy drives on the TO8
+anyway, you won't see much difference between the TO8 and TO8D (except 
+for the slightly different startup menu).
+
+
+Please see the documentation for the to8 driver.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=to9p
+$bio
+Thomson TO9+ (French, Sep 1986?)
+
+
+Successor of the TO9.
+
+
+Features:
+
+We only show the difference with the TO8 and the TO9:
+
+* RAM: 512 KB
+
+* ROM: 96 KB BIOS, BASIC 1.0, BASIC 512, graphical DOS
+
+* Video: similar to TO8
+
+* Mouse: similar to TO8
+
+* Floppy: integrated versatile controller,
+          integrated two-sided 3"1/2 floppy drive 
+          (extendable to up to four 3"1/2, 5"1/4 or 2"8 drives)
+
+
+Usage:
+
+Please read the documentation for the to8 driver.
+
+IMPORTANT NOTE: the TO9+ and TO9 differ in the way the mouse and the
+floppy drives are managed. In these respects, the TO9+ behave as
+the TO8, not the TO9.
+
+
+Known Issues:
+
+* Mouse and video: see the to8 driver
+
+* Unemulated features: MODEM, RS232.
+
+
+History and Trivia:
+
+Despite its name, the TO9+ is much more based on TO8 technology than
+TO9 (same video and memory systems, same floppy controller, same mouse,
+similar startup menu).
+However, as the TO9, it is intended as a semi-professional product.
+It keeps the desktop look of the TO9, with the separate keyboard.
+It now has 512 KB of RAM (inextensible), the BASIC 512, and an integrated 
+3"1/2 floppy drive (double-sided, unlike the TO9 one). 
+Also, software formerly provided in the TO9 ROM are now supplied on floppies.
+Finally, it has enhanced communication capabilities by integrating
+either a MODEM or a RS232 extension (not emulated, alas).
+
+
+Links:
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* See the information for the to7 system for generic Thomson links
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mo6
+$bio
+Thomson MO6 (French, Sep 1986?)
+
+
+Long-awaited successor to the MO5.
+
+
+Features:
+
+* CPU: 1 MHz Motorola 6809E
+
+* RAM: 128 KB
+
+* ROM: 64 KB BIOS, BASIC 1.0, BASIC 128
+
+* Video: 8 video modes (similar to TO8)
+
+    . legacy 320x200, 16 colors with proximity constraints
+
+    . 320x200, 4 colors, unconstrained
+
+    . 160x200, 16 colors
+
+    . 640x200, 2 colors
+
+    . 320x200, two 2-color pages that can be overlaid
+
+    . 160x200, four 2-color pages that can be overlaid
+
+* Palette: 16 colors to be chosen among 4096.
+
+* Sound: 1-bit buzzer + 6-bit DAC extension
+
+* Keyboard: AZERTY 69-keys, French with accents
+
+* Game-pad: two 8-way 2-button paddles
+
+* Mouse (exclusive with game-pad)
+
+* Lightpen
+
+* Cartridge: optional, MO5 compatible
+
+* Cassette: 1200 bauds (MO5 compatible) and 2400 bauds
+
+* Floppy: requires an external controller (TO7, TO7/70 and MO5 compatible),
+          up to four external 2"8, 3"1/2 or 5"1/4 drives,
+          TO7-compatible floppies
+
+* Printer port (CENTRONICS)
+
+
+Usage:
+
+
+Menu.
+
+From the startup menu, press 1 for the BASIC 128, 2 for the legacy BASIC 1.0, 
+and 3 to set preferences (color palette, switch between lightpen and mouse,
+and change cassette speed).
+
+
+Cartridges.
+
+An optional cartridge can be inserted with the -cart option.
+It can be started from the startup menu by pressing 0.
+The MO6 can run MO5 cartridges, not TO7, TO7/70 ones.
+
+
+Cassettes.
+
+Most MO6 software are provided on cassettes.
+Two cassette formats are available: 1200 bauds and 2400 bauds (double-speed).
+1200 bauds cassettes are compatible with the MO5.
+MESS recognizes two kinds of cassette images: raw sound (.wav) and preprocessed
+byte-level cassettes (.k5,.k7).
+We recall that cassettes are loaded with one of the two following
+commands: RUN"" (for BASIC files) or LOADM"",,R (for binary files), when using
+the legacy BASIC 1.0.
+If you use the newer BASIC 128, you must type RUN"CASS:" and LOADM"CASS:",,R 
+instead.
+The MO6 should load and run most MO5 software, provided you use the legacy
+BASIC 1.0. New, MO6 software generally also work on the BASIC 1.0.
+To improve the compatibility, use preferably .wav image formats and disable
+the external floppy controller in MESS's in-game menu.
+The MO6 cannot load cassettes in the "TO" format (TO7, TO7/70, etc.).
+
+
+Floppies.
+
+As the MO5, TO7, TO7/70, and unlike the TO8, TO9, the MO6 does not have
+an internal floppy controller. You must first ensure that the relevant
+external floppy controller is activated in MESS's in-game configuration
+menu. Prefer the CD 90-351 controller which is the most versatile: it
+accepts 5"1/4, 3"1/2 floppies (.sap or .fd suffix, 80 KB to 320 KB), as well as 
+2"8 floppies (.qd suffix, 50 KB).
+Four drives are emulated: -flop0 to -flop3. They are available directly
+from the BASIC 128 using the commands DIR, LOAD, RUN, SAVE, DSKINI0
+(or DIR"1:" ... DSKINI1 for drive number 1, and so on).
+The floppy format and floppy images are fully compatible with all other
+Thomson computers (TO and MO families). However, only MO5, MO6 and pure
+BASIC software will run correctly.
+
+
+Keyboard.
+
+The keyboard is a mix between the MO5 and TO9 ones.
+There are function keys, a CAPS-LOCK (with LED) and modern AZERTY-like layout, 
+but also a BASIC key and no keypad.
+
+  F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
+
+  #@   1*  2é  3"  4'  5(  6_  7è  8!  9ç  0à  )°  -\  =+  ACC       UP
+
+ STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&     ENTER  LEFT  RIGHT
+
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN
+
+CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  BASIC   HOME   INS  DEL
+
+                  SPACE
+
+Also, as in the MO5 but unlike the TO9, digits are obtained with the SHIFT
+key is unpressed.
+
+
+Mouse.
+
+The mouse behaves as the TO8 one, i.e., you must choose whether a mouse or
+a game-pad is connected to the port using MESS's in-game menu (both cannot
+exist at the same time, but you can switch between them dynamically, without
+a reset).
+The startup menu will then automatically detects the presence of the
+mouse and disables the lightpen. Use the startup preference menu (2) to
+revert back to lightpen pointing device.
+
+
+Video.
+
+As for the TO9, you should switch to high-resolution video emulation in
+MESS's in-game menu if you intend to use software in 640x200 resolution.
+Otherwise, the low-resolution video emulation is sufficient and faster.
+
+
+Fun.
+
+In the startup menu, try holding M, O and 6 at the same time.
+
+
+Known Issues:
+
+* Mouse and video: see the to8 driver
+
+* Cassette: .k5,.k7 compatibility issues, prefer .wav files
+
+
+History and Trivia:
+
+The MO6 is the long-awaited successor of the MO5.
+That is, a MO5-compatible computer and a cheap alternative to the TO8/TO9.
+It uses the same technology as the TO8. 
+In particular, the very same gate-array is used for the video and memory 
+management. It is versatile enough to adapt to a MO5-like address map and
+emulate the legacy 320x200 MO5 video mode instead of the legacy TO7/70
+one).
+It also provides many enhancements from the TO8 (4096 color palette, various 
+video modes, hardware video page flip, flexible memory management, etc.).
+
+The MO6 was made cheaper than the TO8 by limiting the memory to 128 KB (not 
+expandable, in theory) and making it cassette-based (there is no floppy drive, 
+an not even an internal floppy controller: it must be added as in the TO7 and 
+MO5). Even the keyboard shrank and reverted to an archaic management based on
+CPU pooling (no dedicated keyboard CPU anymore).
+
+
+Links:
+
+* DCMOTO universal Thomson emulator, with many software and documentations
+  http://dcmoto.free.fr
+
+* See the information for the to7 system for generic Thomson links
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mo5nr
+$bio
+Thomson MO5NR (French, 1986?)
+
+
+Network-enhanced MO6.
+
+
+Features:
+
+We only show the difference with the MO6:
+
+* Keyboard: 58-keys, AZERTY, no CAPS-LOCK, no LED
+
+* Integrated network controller (not emulated)
+
+
+Usage:
+
+Please read the mo6 driver documentation.
+
+
+History and Trivia:
+
+Although the MO5NR is MO5-compatible, it is heavily based on MO6 design.
+It uses the same gate-array from the TO8, features the same video capabilities
+and memory.
+Also, it incorporates the network extension (alas not emulated) that can be
+disabled, or masked by an external floppy controller.
+
+
+Keyboard.
+
+The keyboard actually has a MO5 layout (without CAPS-LOCK, LED, or
+function keys), not a MO6 one.
+
+  STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0  -=  +;  ACC      INS 
+
+  CTRL    A   Z   E   R   T   Y   U   I   O   P  /?  *:         DEL
+
+  RAZ       Q   S   D   F   G   H   J   K   L    M   ENTER      UP
+
+  SHIFT       W   X   C   V   B   N   ,<  .>  @^     BASIC   LEFT RIGHT  
+
+                   SPACE                                        DOWN
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=pro128
+$bio
+Olivetti Prodest PC 128 (Franco-Italian, 1986?)
+
+
+Italian version of the MO6.
+
+
+Features:
+
+We only show the difference with the MO6:
+
+* Keyboard: QWERTY 69-keys, French with accents
+
+
+Usage:
+
+Please read the mo6 driver documentation.
+
+
+Keyboard.
+
+The keyboard is a QWERTY version of the MO6 one.
+
+  F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
+
+  [{   1!  2"  3S 4$   5%  6&  7/  8(  9)  0=  ç?  '£  ]}  ACC       UP
+
+ STOP    Q   W   E   R   T   Y   U   I   O   P  ?@  +*    ENTER  LEFT  RIGHT
+
+ CTRL ><  A   S   D   F   G   H   J   K   L   N   !"  #^            DOWN
+
+CAPS SHIFT Z   X   C   V   B   N   M   ,;  .:  (_  BASIC   HOME   INS  DEL
+
+                  SPACE
+
+
+History and Trivia:
+
+This Italian flavor of the MO6 was built by Thomson and sold by
+Olivetti.
+
+$end
+
