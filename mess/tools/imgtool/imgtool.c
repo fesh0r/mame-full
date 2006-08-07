@@ -33,6 +33,8 @@ struct _imgtool_partition
 {
 	imgtool_image *image;
 	int partition_index;
+	UINT64 base_block;
+	UINT64 block_count;
 
 	imgtool_class imgclass;
 	size_t partition_extra_bytes;
@@ -357,8 +359,8 @@ done:
 
 
 /*-------------------------------------------------
-    imgtool_image_get_sector_size - gets the size of a sector
-	on an image
+    imgtool_image_get_sector_size - gets the size
+	of a particular sector on an image
 -------------------------------------------------*/
 
 imgtoolerr_t imgtool_image_get_sector_size(imgtool_image *image, UINT32 track, UINT32 head,
@@ -369,6 +371,37 @@ imgtoolerr_t imgtool_image_get_sector_size(imgtool_image *image, UINT32 track, U
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
 	return image->module->get_sector_size(image, track, head, sector, length);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_get_geometry - gets the geometry
+	of an image; note that this may disagree with
+	particular sectors; this is a common copy
+	protection scheme
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_get_geometry(imgtool_image *image, UINT32 *tracks, UINT32 *heads, UINT32 *sectors)
+{
+	UINT32 dummy;
+
+	/* some sanitization, to make the callbacks easier to implement */
+	if (!tracks)
+		tracks = &dummy;
+	if (!heads)
+		heads = &dummy;
+	if (!sectors)
+		sectors = &dummy;
+	*tracks = 0;
+	*heads = 0;
+	*sectors = 0;
+
+	/* implemented? */
+	if (!image->module->get_geometry)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->get_geometry(image, tracks, heads, sectors);
 }
 
 
@@ -406,8 +439,8 @@ imgtoolerr_t imgtool_image_write_sector(imgtool_image *image, UINT32 track, UINT
 
 
 /*-------------------------------------------------
-    imgtool_image_get_block_size - gets the size of a standard
-	block on an image
+    imgtool_image_get_block_size - gets the size of
+	a standard block on an image
 -------------------------------------------------*/
 
 imgtoolerr_t imgtool_image_get_block_size(imgtool_image *image, UINT32 *length)
@@ -423,8 +456,8 @@ imgtoolerr_t imgtool_image_get_block_size(imgtool_image *image, UINT32 *length)
 
 
 /*-------------------------------------------------
-    imgtool_image_read_block - reads a standard block on an
-	image
+    imgtool_image_read_block - reads a standard
+	block on an image
 -------------------------------------------------*/
 
 imgtoolerr_t imgtool_image_read_block(imgtool_image *image, UINT64 block, void *buffer)
@@ -439,8 +472,8 @@ imgtoolerr_t imgtool_image_read_block(imgtool_image *image, UINT64 block, void *
 
 
 /*-------------------------------------------------
-    imgtool_image_write_block - writes a standard block on an
-	image
+    imgtool_image_write_block - writes a standard
+	block on an image
 -------------------------------------------------*/
 
 imgtoolerr_t imgtool_image_write_block(imgtool_image *image, UINT64 block, const void *buffer)
@@ -450,6 +483,58 @@ imgtoolerr_t imgtool_image_write_block(imgtool_image *image, UINT64 block, const
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
 	return image->module->write_block(image, buffer, block);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_clear_block - clears a standard
+	block on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_clear_block(imgtool_image *image, UINT64 block, UINT8 data)
+{
+	imgtoolerr_t err;
+	UINT8 *block_data = NULL;
+	UINT32 length;
+
+	err = imgtool_image_get_block_size(image, &length);
+	if (err)
+		goto done;
+
+	block_data = malloc(length);
+	if (!block_data)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(block_data, data, length);
+
+	err = imgtool_image_write_block(image, block, block_data);
+	if (err)
+		goto done;
+
+done:
+	if (block_data)
+		free(block_data);
+	return err;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_image_list_partitions - lists the
+	partitions on an image
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_image_list_partitions(imgtool_image *image, imgtool_partition_info *partitions, size_t len)
+{
+	/* implemented? */
+	if (!image->module->list_partitions)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	memset(partitions, '\0', sizeof(*partitions) * len);
+	return image->module->list_partitions(image, partitions, len);
 }
 
 
@@ -503,14 +588,48 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_partition *p;
-	const imgtool_class *imgclass;
+	imgtool_class imgclass;
+	imgtool_partition_info partition_info[32];
+	UINT64 base_block, block_count;
 	size_t partition_extra_bytes;
+	imgtoolerr_t (*open_partition)(imgtool_partition *partition, UINT64 first_block, UINT64 block_count);
 
-	/* identify the image class */
-	imgclass = &imgtool_image_module(image)->imgclass;
+	if (image->module->list_partitions)
+	{
+		/* this image supports partitions */
+		if ((partition_index < 0) || (partition_index >= (sizeof(partition_info) / sizeof(partition_info[0]))))
+			return IMGTOOLERR_INVALIDPARTITION;
+
+		/* retrieve the info on the partitions */
+		memset(partition_info, '\0', sizeof(partition_info));
+		err = image->module->list_partitions(image, partition_info, sizeof(partition_info) / sizeof(partition_info[0]));
+		if (err)
+			return err;
+
+		/* is this a valid partition */
+		if (!partition_info[partition_index].get_info)
+			return IMGTOOLERR_INVALIDPARTITION;
+
+		/* use this partition */
+		memset(&imgclass, 0, sizeof(imgclass));
+		imgclass.get_info = partition_info[partition_index].get_info;
+		base_block = partition_info[partition_index].base_block;
+		block_count = partition_info[partition_index].block_count;
+	}
+	else
+	{
+		/* this image does not support partitions */
+		if (partition_index != 0)
+			return IMGTOOLERR_INVALIDPARTITION;
+
+		/* identify the image class */
+		imgclass = imgtool_image_module(image)->imgclass;
+		base_block = 0;
+		block_count = ~0;
+	}
 
 	/* does this partition type have extra bytes? */
-	partition_extra_bytes = imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PARTITION_EXTRA_BYTES);
+	partition_extra_bytes = imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_PARTITION_EXTRA_BYTES);
 
 	/* allocate the new partition object */
 	p = (imgtool_partition *) malloc(sizeof(*p) + partition_extra_bytes);
@@ -519,41 +638,43 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 		err = IMGTOOLERR_OUTOFMEMORY;
 		goto done;
 	}
-	memset(p, 0, sizeof(*p));
+	memset(p, 0, sizeof(*p) + partition_extra_bytes);
 
 	/* fill out the structure */
 	p->image						= image;
 	p->partition_index				= partition_index;
-	p->imgclass						= *imgclass;
+	p->base_block					= base_block;
+	p->block_count					= block_count;
+	p->imgclass						= imgclass;
 	p->partition_extra_bytes		= partition_extra_bytes;
-	p->directory_extra_bytes		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES);
-	p->path_separator				= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
-	p->alternate_path_separator		= (char) imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
-	p->prefer_ucase					= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
-	p->supports_creation_time		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME) ? 1 : 0;
-	p->supports_lastmodified_time	= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME) ? 1 : 0;
-	p->supports_bootblock			= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK) ? 1 : 0;
-	p->begin_enum					= (imgtoolerr_t (*)(imgtool_directory *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
-	p->next_enum					= (imgtoolerr_t (*)(imgtool_directory *, imgtool_dirent *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
-	p->free_space					= (imgtoolerr_t (*)(imgtool_partition *, UINT64 *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_FREE_SPACE);
-	p->read_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_READ_FILE);
-	p->write_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_WRITE_FILE);
-	p->delete_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_FILE);
-	p->list_forks					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_forkent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_FORKS);
-	p->create_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_CREATE_DIR);
-	p->delete_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_DELETE_DIR);
-	p->list_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, UINT32 *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_LIST_ATTRS);
-	p->get_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ATTRS);
-	p->set_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, const imgtool_attribute *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SET_ATTRS);
-	p->attr_name					= (imgtoolerr_t (*)(UINT32, const imgtool_attribute *, char *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_ATTR_NAME);
-	p->get_iconinfo					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_ICON_INFO);
-	p->suggest_transfer				= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
-	p->get_chain					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(imgclass, IMGTOOLINFO_PTR_GET_CHAIN);
-	p->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
-	p->writefile_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(imgclass, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC));
+	p->directory_extra_bytes		= imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_DIRECTORY_EXTRA_BYTES);
+	p->path_separator				= (char) imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_PATH_SEPARATOR);
+	p->alternate_path_separator		= (char) imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_ALTERNATE_PATH_SEPARATOR);
+	p->prefer_ucase					= imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_PREFER_UCASE) ? 1 : 0;
+	p->supports_creation_time		= imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_SUPPORTS_CREATION_TIME) ? 1 : 0;
+	p->supports_lastmodified_time	= imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_SUPPORTS_LASTMODIFIED_TIME) ? 1 : 0;
+	p->supports_bootblock			= imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_SUPPORTS_BOOTBLOCK) ? 1 : 0;
+	p->begin_enum					= (imgtoolerr_t (*)(imgtool_directory *, const char *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_BEGIN_ENUM);
+	p->next_enum					= (imgtoolerr_t (*)(imgtool_directory *, imgtool_dirent *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_NEXT_ENUM);
+	p->free_space					= (imgtoolerr_t (*)(imgtool_partition *, UINT64 *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_FREE_SPACE);
+	p->read_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_READ_FILE);
+	p->write_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const char *, imgtool_stream *, option_resolution *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_WRITE_FILE);
+	p->delete_file					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_DELETE_FILE);
+	p->list_forks					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_forkent *, size_t)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_LIST_FORKS);
+	p->create_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_CREATE_DIR);
+	p->delete_dir					= (imgtoolerr_t (*)(imgtool_partition *, const char *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_DELETE_DIR);
+	p->list_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, UINT32 *, size_t)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_LIST_ATTRS);
+	p->get_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, imgtool_attribute *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_GET_ATTRS);
+	p->set_attrs					= (imgtoolerr_t (*)(imgtool_partition *, const char *, const UINT32 *, const imgtool_attribute *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_SET_ATTRS);
+	p->attr_name					= (imgtoolerr_t (*)(UINT32, const imgtool_attribute *, char *, size_t)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_ATTR_NAME);
+	p->get_iconinfo					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_iconinfo *)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_GET_ICON_INFO);
+	p->suggest_transfer				= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_transfer_suggestion *, size_t))  imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_SUGGEST_TRANSFER);
+	p->get_chain					= (imgtoolerr_t (*)(imgtool_partition *, const char *, imgtool_chainent *, size_t)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_GET_CHAIN);
+	p->writefile_optguide			= (const struct OptionGuide *) imgtool_get_info_ptr(&imgclass, IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE);
+	p->writefile_optspec			= auto_strdup_allow_null(imgtool_get_info_ptr(&imgclass, IMGTOOLINFO_STR_WRITEFILE_OPTSPEC));
 
 	/* mask out if writing is untested */
-	if (global_omit_untested && imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_WRITING_UNTESTED))
+	if (global_omit_untested && imgtool_get_info_int(&imgclass, IMGTOOLINFO_INT_WRITING_UNTESTED))
 	{
 		p->write_file = NULL;
 		p->delete_file = NULL;
@@ -561,6 +682,16 @@ imgtoolerr_t imgtool_partition_open(imgtool_image *image, int partition_index, i
 		p->delete_dir = NULL;
 		p->writefile_optguide = NULL;
 		p->writefile_optspec = NULL;
+	}
+
+	/* call the partition open function, if present */
+	open_partition = (imgtoolerr_t (*)(imgtool_partition *, UINT64, UINT64)) imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_OPEN_PARTITION);
+	if (open_partition)
+	{
+		/* we have an open partition function */
+		err = (*open_partition)(p, base_block, block_count);
+		if (err)
+			goto done;
 	}
 
 done:
@@ -1981,6 +2112,46 @@ done:
 	if (alloc_path)
 		free(alloc_path);
 	return err;
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_get_block_size - gets the
+	size of a standard block on a partition
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_partition_get_block_size(imgtool_partition *partition, UINT32 *length)
+{
+	return imgtool_image_get_block_size(partition->image, length);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_read_block - reads a standard
+	block on a partition
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_partition_read_block(imgtool_partition *partition, UINT64 block, void *buffer)
+{
+	if (block >= partition->block_count)
+		return IMGTOOLERR_SEEKERROR;
+	return imgtool_image_read_block(partition->image, block + partition->base_block, buffer);
+}
+
+
+
+/*-------------------------------------------------
+    imgtool_partition_write_block - writes a
+	standard block on a partition
+-------------------------------------------------*/
+
+imgtoolerr_t imgtool_partition_write_block(imgtool_partition *partition, UINT64 block, const void *buffer)
+{
+	if (block >= partition->block_count)
+		return IMGTOOLERR_SEEKERROR;
+	return imgtool_image_write_block(partition->image, block + partition->base_block, buffer);
 }
 
 

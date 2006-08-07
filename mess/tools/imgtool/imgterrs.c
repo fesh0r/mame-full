@@ -37,7 +37,8 @@ static const char *msgs[] =
 	"Directory not empty",
 	"Seek error",
 	"File system does not support forks",
-	"Fork not found"
+	"Fork not found",
+	"Invalid partition"
 };
 
 

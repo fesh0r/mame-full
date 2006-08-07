@@ -189,6 +189,7 @@ enum
 	IMGTOOLINFO_PTR_SUGGEST_TRANSFER,
 	IMGTOOLINFO_PTR_GET_CHAIN,
 	IMGTOOLINFO_PTR_GET_SECTOR_SIZE,
+	IMGTOOLINFO_PTR_GET_GEOMETRY,
 	IMGTOOLINFO_PTR_READ_SECTOR,
 	IMGTOOLINFO_PTR_WRITE_SECTOR,
 	IMGTOOLINFO_PTR_READ_BLOCK,
@@ -197,6 +198,7 @@ enum
 	IMGTOOLINFO_PTR_CREATEIMAGE_OPTGUIDE,
 	IMGTOOLINFO_PTR_WRITEFILE_OPTGUIDE,
 	IMGTOOLINFO_PTR_MAKE_CLASS,
+	IMGTOOLINFO_PTR_LIST_PARTITIONS,
 
 	IMGTOOLINFO_PTR_CLASS_SPECIFIC = 0x18000,
 
@@ -230,6 +232,16 @@ struct _imgtool_class
 
 
 
+typedef struct _imgtool_partition_info imgtool_partition_info;
+struct _imgtool_partition_info
+{
+	imgtool_get_info get_info;
+	UINT64 base_block;
+	UINT64 block_count;
+};
+
+
+
 union imgtoolinfo
 {
 	INT64	i;											/* generic integers */
@@ -240,12 +252,12 @@ union imgtoolinfo
 	imgtoolerr_t	(*open)				(imgtool_image *image, imgtool_stream *stream);
 	void			(*close)			(imgtool_image *image);
 	imgtoolerr_t	(*create)			(imgtool_image *image, imgtool_stream *stream, option_resolution *opts);
-	imgtoolerr_t	(*open_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 	imgtoolerr_t	(*create_partition)	(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 	void			(*info)				(imgtool_image *image, char *string, size_t len);
 	imgtoolerr_t	(*begin_enum)		(imgtool_directory *enumeration, const char *path);
 	imgtoolerr_t	(*next_enum)		(imgtool_directory *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)		(imgtool_directory *enumeration);
+	imgtoolerr_t	(*open_partition)	(imgtool_partition *partition, UINT64 first_block, UINT64 block_count);
 	imgtoolerr_t	(*free_space)		(imgtool_partition *partition, UINT64 *size);
 	imgtoolerr_t	(*read_file)		(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *destf);
 	imgtoolerr_t	(*write_file)		(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts);
@@ -261,10 +273,12 @@ union imgtoolinfo
 	imgtoolerr_t	(*suggest_transfer)	(imgtool_partition *partition, const char *path, imgtool_transfer_suggestion *suggestions, size_t suggestions_length);
 	imgtoolerr_t	(*get_chain)		(imgtool_partition *partition, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*get_sector_size)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
+	imgtoolerr_t	(*get_geometry)		(imgtool_image *image, UINT32 *tracks, UINT32 *heads, UINT32 *sectors);
 	imgtoolerr_t	(*read_sector)		(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
 	imgtoolerr_t	(*write_sector)		(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
 	imgtoolerr_t	(*read_block)		(imgtool_image *image, void *buffer, UINT64 block);
 	imgtoolerr_t	(*write_block)		(imgtool_image *image, const void *buffer, UINT64 block);
+	imgtoolerr_t	(*list_partitions)	(imgtool_image *image, imgtool_partition_info *partitions, size_t len);
 	int				(*approve_filename_char)(unicode_char_t ch);
 	int				(*make_class)(int index, imgtool_class *imgclass);
 
@@ -338,11 +352,12 @@ struct _imgtool_module
 	void			(*info)			(imgtool_image *image, char *string, size_t len);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
+	imgtoolerr_t	(*get_geometry)	(imgtool_image *image, UINT32 *track, UINT32 *heads, UINT32 *sectors);
 	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);
 	imgtoolerr_t	(*write_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len);
 	imgtoolerr_t	(*read_block)	(imgtool_image *image, void *buffer, UINT64 block);
 	imgtoolerr_t	(*write_block)	(imgtool_image *image, const void *buffer, UINT64 block);
-	int				(*approve_filename_char)(unicode_char_t ch);
+	imgtoolerr_t	(*list_partitions)(imgtool_image *image, imgtool_partition_info *partitions, size_t len);
 
 	UINT32 block_size;
 

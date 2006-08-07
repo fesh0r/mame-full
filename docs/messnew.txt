@@ -20,7 +20,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- More refactoring; FAT partition support now internally separate from floppy
+  and hard drive code.  [Nate Woods]
 
 
 
