@@ -122,4 +122,6 @@ void crtc6845_start(void);
 
 void crtc6845_set_personality(m6845_personality_t personality);
 
-
+int crtc6845_get_register(int reg);
+int crtc6845_get_scanline_counter(void);
+int crtc6845_get_row_counter(void);

@@ -669,6 +669,23 @@ void crtc6845_set_personality(m6845_personality_t p)
 	personality = p;
 }
 
+// A few helper functions to help avoid heavy use of crtc6845_get/set_state()
+int crtc6845_get_register(int reg)
+{
+	return crtc.registers[reg];
+}
+
+int crtc6845_get_scanline_counter()
+{
+	return crtc.Scan_Line_Counter;
+}
+
+int crtc6845_get_row_counter()
+{
+	return crtc.Character_Row_Counter;
+}
+
+
 #if 0
 
 /* KT:

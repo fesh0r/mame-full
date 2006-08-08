@@ -10,6 +10,10 @@ System Driver Changes:
 ----------------------
 - [C128] Fixed regression introduced in 0.106.  (bug #895) [Nate Woods]
 
+- [CPCPLUS] Added sound DMA emulation, improved the soft scroll registers and
+  various other little things to make more games actually work.  [Barry
+  Rodewald]
+
 
 
 User Interface Changes:

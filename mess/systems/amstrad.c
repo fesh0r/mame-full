@@ -22,37 +22,45 @@
   June 2006  - Very preliminary CPC+ support.  CPR cart image handling, secondary ROM register, ASIC unlock detection
                Supported:  
 			   12-bit palette, 
-			   12-bit hardware sprites (works from what I've seen, locations are a touch off in some games),
+			   12-bit hardware sprites (largely works from what I've seen, some games have display issues),
 			   Programmable Raster Interrupt (seems to work), 
-			   Split screen registers (needs a better way to change the CRTC memory address after the scanline expected)
+			   Split screen registers,
+			   Soft scroll registers (only byte-by-byre horizontally for now),
+			   Analogue controls (may well be completely wrong, I have no idea on how these should work),
+			   Vectored interrupts for Z80 interrupt mode 2 (used by Pang),
+			   DMA sound channels (may still be some issues, noticable in Navy Seals and Copter 271)
 			   04/07/06:  Added interrupt vector support for IM 2.
 			              Added soft scroll register implementation.  Vertical adjustments are a bit shaky.
 			   05/07/06:  Fixed hardware sprite offsets
 			   14/07/06:  Added basic analogue control support.
+			   04/08/06:  Fixed PRI and Split screen scanline offsets (based on code in Arnold ;))
+			              Implemented DMA sound channels
+			   06/08/06:  Fixed CRTC palette if the ASIC was re-locked after already being unlocked and used.
+			              This fixes Klax, which is now playable.
+			   08/08/06:  Fixed up vertical soft scroll, now we just need to get a finer detail on horizontal soft scroll
+			              (Only works on a byte level for now)
+						  Fixed DMA pause function when the prescaler is set to 0.
 
-			   Known issues with some games (as at 06/07/06):
-			   Burnin' Rubber:  starts, has flickery on title screen, restarts just after race start
-			   Robocop 2:  playable, but sprites cut out for some reason (IRQ related, I think) every now and then. Split screen is a bit off too.
+			   Tested with the Arnold 5 Diagnostic Cartridge.  Mostly works fine, but the soft scroll test is
+			   noticably wrong.
+
+			   Known issues with some games (as at 08/08/06):
+			   Robocop 2:  playable, but sprites cut out for some reason (possibly IRQ related, I think) every now and then.
 			   Navy Seals:  Playable, but has similar problems to Robocop 2.
-			   Klax:  Loads, blacks out when it should be at full brightness
-			   Pang:  Crashes MESS at title screen
-			   Pro Tennis Tour:  playable, but the effect used after each game doesn't work right
+			   Dick Tracy:  Sprite visibility issues
 			   Switchblade:  has some slowdown when numerous enemies are on screen (normal?)
-			   Copter 271:  locks up at the Loriciel logo.  Looks like it requires DMA emulation
 			   Epyx World of Sports: doesn't start at all.
 			   Tennis Cup II:  controls don't seem to work.
 			   Fire and Forget II:  playable, but the top half of the screen flickers
-			   Crazy Cars II:  restarts when you attempt to start a game.
-			   No Exit:  no display.
-			   Pinball Magic:  controls do not work, title should be coloured, but isn't.
-			   Fluff (CPC+ only disk game): background doesn't scroll
+			   Crazy Cars II:  playable, with slight shaking of horizon
+			   No Exit:  Display is wrong, but usable, uses demo-like techniques.
 
 
 Some bugs left :
 ----------------
     - CRTC all type support (0,1,2,3,4) ?
     - Gate Array and CRTC aren't synchronised. (The Gate Array can change the color every microseconds?) So the multi-rasters in one line aren't supported (see yao demo p007's part)!
-    - Implement full Asic for CPC+ emulation.  Missing sound DMA access and interrupts, analogue inputs, 8-bit printer port
+    - Implement full Asic for CPC+ emulation.  Soft scroll is rather dodgy.  8-bit printer port (bit 3 of CRTC reg 12) not implemented.
  ******************************************************************************/
 #include "driver.h"
 
@@ -104,8 +112,15 @@ int amstrad_plus_irq_cause;  // part of the interrupt vector for IM 2.  6 = rast
 int amstrad_plus_scroll_x;  // soft scroll - horizontal (0-15), in mode 2 pixels
 int amstrad_plus_scroll_y;  // soft scroll - vertical (0-7), in scanlines
 int amstrad_plus_scroll_border;  // soft scroll - extend border, any program that uses soft scrolling should enable this
+int amstrad_plus_dma_status;
+int amstrad_plus_dma_0_addr;   // DMA channel address
+int amstrad_plus_dma_1_addr; 
+int amstrad_plus_dma_2_addr; 
+int amstrad_plus_dma_prescaler[3];  // DMA channel prescaler
+int amstrad_plus_dma_clear;  // set if DMA interrupts are to be cleared automatically
 
 extern int amstrad_scanline;
+extern int prev_reg;
 
 void amstrad_plus_seqcheck(int data);
 static WRITE8_HANDLER( amstrad_plus_asic_4000_w );
@@ -205,6 +220,7 @@ static void update_psg(void)
   	} break;
   	case 3: {/* b6 and b7 = 1 ? : The register will now be selected and the user can read from or write to it.  The register will remain selected until another is chosen.*/
   		AY8910_control_port_0_w(0, ppi_port_outputs[amstrad_ppi_PortA]);
+		prev_reg = ppi_port_outputs[amstrad_ppi_PortA];
   	} break;
   	default: {
     } break;
@@ -448,9 +464,21 @@ void AmstradCPC_SetLowerRom(int Data)
 		amstrad_plus_lower = Data & 0x07;  // only lower 8 cart banks available for lower ROM
 		amstrad_plus_lower_addr = (Data & 0x18) >> 3;  // address of lower ROM area
 		if(amstrad_plus_lower_addr == 3)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_r);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_w);
 			amstrad_plus_asic_regpage = 1;  // enable ASIC registers
+		}
 		else
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MRA8_BANK3);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_BANK4);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_BANK11);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK12);
 			amstrad_plus_asic_regpage = 0;  // disable ASIC registers
+		}
 //		logerror("SYS: Secondary ROM select (lower ROM) - data = %02x - cart bank %i, addr %i\n",Data,amstrad_plus_lower,amstrad_plus_lower_addr);
 	}
 	else
@@ -600,6 +628,66 @@ static WRITE8_HANDLER( amstrad_plus_asic_6000_w )
 				cpunum_set_input_line_vector(0, 0, vector);
 				logerror("ASIC: IM 2 vector write %02x, data = &%02x\n",vector,data);
 			}
+			amstrad_plus_dma_clear = data & 0x01;
+		}
+		// DMA channels
+		switch(offset)
+		{
+		case 0x0c00:
+		case 0x0c01:
+			amstrad_plus_dma_0_addr = (amstrad_plus_asic_ram[0x2c01] << 8) + amstrad_plus_asic_ram[0x2c00];
+			amstrad_plus_dma_status &= ~0x01;
+			logerror("ASIC: DMA 0 address set to &%04x\n",amstrad_plus_dma_0_addr);
+			break;
+		case 0x0c04:
+		case 0x0c05:
+			amstrad_plus_dma_1_addr = (amstrad_plus_asic_ram[0x2c05] << 8) + amstrad_plus_asic_ram[0x2c04];
+			amstrad_plus_dma_status &= ~0x02;
+			logerror("ASIC: DMA 1 address set to &%04x\n",amstrad_plus_dma_1_addr);
+			break;
+		case 0x0c08:
+		case 0x0c09:
+			amstrad_plus_dma_2_addr = (amstrad_plus_asic_ram[0x2c09] << 8) + amstrad_plus_asic_ram[0x2c08];
+			amstrad_plus_dma_status &= ~0x04;
+			logerror("ASIC: DMA 2 address set to &%04x\n",amstrad_plus_dma_2_addr);
+			break;
+		case 0x0c02:
+			amstrad_plus_dma_prescaler[0] = data + 1;
+			logerror("ASIC: DMA 0 pause prescaler set to %i\n",data);
+			break;
+		case 0x0c06:
+			amstrad_plus_dma_prescaler[1] = data + 1;
+			logerror("ASIC: DMA 1 pause prescaler set to %i\n",data);
+			break;
+		case 0x0c0a:
+			amstrad_plus_dma_prescaler[2] = data + 1;
+			logerror("ASIC: DMA 2 pause prescaler set to %i\n",data);
+			break;
+		case 0x0c0f:
+			amstrad_plus_dma_status = data;
+			logerror("ASIC: DMA status write - %02x\n",data);
+			if(data & 0x40)
+			{
+				logerror("ASIC: DMA 0 IRQ acknowledge\n");
+				cpunum_set_input_line(0,0,CLEAR_LINE);
+				amstrad_plus_irq_cause = 0x06;
+				amstrad_plus_asic_ram[0x2c0f] &= ~0x40;
+			}
+			if(data & 0x20)
+			{
+				logerror("ASIC: DMA 1 IRQ acknowledge\n");
+				cpunum_set_input_line(0,0,CLEAR_LINE);
+				amstrad_plus_irq_cause = 0x06;
+				amstrad_plus_asic_ram[0x2c0f] &= ~0x20;
+			}
+			if(data & 0x10)
+			{
+				logerror("ASIC: DMA 2 IRQ acknowledge\n");
+				cpunum_set_input_line(0,0,CLEAR_LINE);
+				amstrad_plus_irq_cause = 0x06;
+				amstrad_plus_asic_ram[0x2c0f] &= ~0x10;
+			}
+			break;
 		}
 	}
 	else
@@ -648,7 +736,20 @@ static READ8_HANDLER( amstrad_plus_asic_6000_r )
 		{
 			return 0x00;
 		}
-
+/*		if(offset == 0x0c0f)  // DMA status and control
+		{
+			int result = 0;
+			if(amstrad_plus_irq_cause == 0x00)
+				result |= 0x40;
+			if(amstrad_plus_irq_cause == 0x02)
+				result |= 0x20;
+			if(amstrad_plus_irq_cause == 0x04)
+				result |= 0x10;
+			if(amstrad_plus_irq_cause == 0x06)
+				result |= 0x80;
+			return result;
+		}
+*/
 		return amstrad_plus_asic_ram[offset+0x2000];
 	}
 
@@ -840,8 +941,6 @@ Bit 4 controls the interrupt generation. It can be used to delay interrupts.*/
   			if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<4)) != 0) {
             amstrad_CRTC_HS_Counter = 0;
   			    cpunum_set_input_line(0,0, CLEAR_LINE);
-				if(amstrad_plus_pri != 0 && amstrad_plus_asic_enabled != 0)
-					amstrad_plus_asic_ram[0x2c0f] &= ~0x80;
 
   			}
 /* b3b2 != 0 then change the state of upper or lower rom area and rethink memory */
@@ -1453,11 +1552,24 @@ static WRITE8_HANDLER(multiface_io_write)
 /* this ensures that the next interrupt is no closer than 32 lines */
 static int 	amstrad_cpu_acknowledge_int(int cpu)
 {
+	// DMA interrupts can be automatically cleared if bit 0 of &6805 is set to 0
+	if(amstrad_plus_asic_enabled != 0 && amstrad_plus_irq_cause != 0x06 && amstrad_plus_dma_clear & 0x01)
+	{
+		logerror("IRQ: Not cleared, IRQ was called by DMA [%i]\n",amstrad_plus_irq_cause);
+		amstrad_plus_asic_ram[0x2c0f] &= ~0x80;  // not a raster interrupt, so this bit is reset
+		return (amstrad_plus_asic_ram[0x2805] & 0xf8) + amstrad_plus_irq_cause;
+	}
 	cpunum_set_input_line(0,0, CLEAR_LINE);
 	amstrad_CRTC_HS_Counter &= 0x1F;
-	if(amstrad_plus_pri != 0 && amstrad_plus_asic_enabled != 0)
+	if(amstrad_plus_asic_enabled != 0)
 	{
-		amstrad_plus_asic_ram[0x2c0f] &= ~0x80;
+		if(amstrad_plus_irq_cause == 6)  // bit 7 is set "if last interrupt acknowledge cycle was caused by a raster interrupt"
+			amstrad_plus_asic_ram[0x2c0f] |= 0x80;
+		else
+		{
+			amstrad_plus_asic_ram[0x2c0f] &= ~0x80;
+			amstrad_plus_asic_ram[0x2c0f] &= (0x40 >> amstrad_plus_irq_cause/2);
+		}
 		return (amstrad_plus_asic_ram[0x2805] & 0xf8) + amstrad_plus_irq_cause;
 	}
 	return 0xFF;
@@ -1628,16 +1740,16 @@ static void amstrad_common_init(void)
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MRA8_BANK1);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MRA8_BANK2);
-	if(amstrad_system_type == SYSTEM_CPC)
-	{
+//	if(amstrad_system_type == SYSTEM_CPC)
+//	{
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MRA8_BANK3);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_BANK4);
-	}
-	else
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_r);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_r);
-	}
+//	}
+//	else
+//	{
+//		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_r);
+//		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_r);
+//	}
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MRA8_BANK5);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, MRA8_BANK6);
 
@@ -1646,16 +1758,16 @@ static void amstrad_common_init(void)
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_BANK9);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_BANK10);
-	if(amstrad_system_type == SYSTEM_CPC)
-	{
+//	if(amstrad_system_type == SYSTEM_CPC)
+//	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_BANK11);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK12);
-	}
-	else
-	{
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_w);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_w);
-	}
+//	}
+//	else
+//	{
+//		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, amstrad_plus_asic_4000_w);
+//		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, amstrad_plus_asic_6000_w);
+//	}
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_BANK13);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, MWA8_BANK14);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_BANK15);
@@ -1747,6 +1859,15 @@ static MACHINE_RESET( plus )
 	amstrad_plus_scroll_x = 0;
 	amstrad_plus_scroll_y = 0;
 	amstrad_plus_scroll_border = 0;  // disable soft scroll
+	amstrad_plus_dma_status = 0;  // disable all DMA channels
+	amstrad_plus_dma_0_addr = 0;
+	amstrad_plus_dma_prescaler[0] = 0;
+	amstrad_plus_dma_1_addr = 0;
+	amstrad_plus_dma_prescaler[1] = 0;
+	amstrad_plus_dma_2_addr = 0;
+	amstrad_plus_dma_prescaler[2] = 0;
+	amstrad_plus_dma_clear = 1;  // by default, DMA interrupts must be cleared by writing to the DSCR (&6c0f)
+	amstrad_plus_irq_cause = 6;
 
 	amstrad_common_init();
 	amstrad_reset_machine();
