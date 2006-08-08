@@ -1198,7 +1198,6 @@ static void prepare_menus(HWND wnd)
 	}
 
 	set_command_state(menu_bar, ID_FILE_SAVESTATE,			state_filename[0] != '\0'					? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(menu_bar, ID_FILE_SAVESCREENSHOT,													MFS_GRAYED);
 
 	set_command_state(menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
