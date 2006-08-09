@@ -96,13 +96,13 @@ VIDEO_UPDATE( galaxy )
 	
 		if (sx>=0 && sx<32*8)
 		{
-       			if ((code>63 && code<96) || (code>127 && code<192))
+			if ((code>63 && code<96) || (code>127 && code<192))
 				code-=64;
-       			if (code>191)
+			if (code>191)
 				code-=128;
 			sy = (offs / 32) * 13;
 			drawgfx(bitmap, Machine->gfx[0], code & 0x7f, 1, 0,0, sx,sy,
-				&Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+				NULL, TRANSPARENCY_NONE, 0);
 		}
 	}
 
