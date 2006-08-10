@@ -188,7 +188,7 @@ VIDEO_UPDATE( vectrex )
 		i = (i+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
 	}
 
-	video_update_vector(screen, bitmap, &Machine->visible_area[0]);
+	video_update_vector(screen, bitmap, cliprect);
 	vector_clear_list();
 	return 0;
 }
@@ -258,10 +258,10 @@ VIDEO_START( vectrex )
 	width = Machine->screen[0].width;
 	height = Machine->screen[0].height;
 
-	x_center=((Machine->visible_area[0].max_x
-		  -Machine->visible_area[0].min_x) / 2) << VEC_SHIFT;
-	y_center=((Machine->visible_area[0].max_y
-		  -Machine->visible_area[0].min_y) / 2 - 10) << VEC_SHIFT;
+	x_center=((Machine->screen[0].visarea.max_x
+		  -Machine->screen[0].visarea.min_x) / 2) << VEC_SHIFT;
+	y_center=((Machine->screen[0].visarea.max_y
+		  -Machine->screen[0].visarea.min_y) / 2 - 10) << VEC_SHIFT;
 	x_max = Machine->visible_area[0].max_x << VEC_SHIFT;
 	y_max = Machine->visible_area[0].max_y << VEC_SHIFT;
 
