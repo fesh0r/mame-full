@@ -34,6 +34,8 @@ Source Changes:
 - The core is based on MAME 0.107u3.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- Made cassette .wav file loading slightly more tolerant.  [Nate Woods]
+
 
 
 0.107

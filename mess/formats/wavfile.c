@@ -65,6 +65,7 @@ static casserr_t wavfile_process(cassette_image *cassette, struct CassetteOption
 	UINT8 tag_header[8];
 	UINT8 format_tag[16];
 	UINT32 stated_size;
+	UINT64 file_size;
 	UINT32 tag_size;
 	UINT32 tag_samples;
 	UINT64 offset;
@@ -75,17 +76,21 @@ static casserr_t wavfile_process(cassette_image *cassette, struct CassetteOption
 	UINT16 block_align = 0;
 	int waveform_flags = 0;
 
+	/* read header */
 	cassette_image_read(cassette, file_header, 0, sizeof(file_header));
 	offset = sizeof(file_header);
 
+	/* check magic numbers */
 	if (memcmp(&file_header[0], magic1, 4))
 		return CASSETTE_ERROR_INVALIDIMAGE;
 	if (memcmp(&file_header[8], magic2, 4))
 		return CASSETTE_ERROR_INVALIDIMAGE;
-		
+	
+	/* read and sanity check size */
 	stated_size = get_leuint32(&file_header[4]) + 8;
-	if (stated_size > cassette_image_size(cassette))
-		return CASSETTE_ERROR_INVALIDIMAGE;
+	file_size = cassette_image_size(cassette);
+	if (stated_size > file_size)
+		stated_size = (UINT32) file_size;
 
 	while(offset < stated_size)
 	{
@@ -114,18 +119,19 @@ static casserr_t wavfile_process(cassette_image *cassette, struct CassetteOption
 			if (opts->sample_frequency * opts->bits_per_sample * opts->channels / 8 != bytes_per_second)
 				return CASSETTE_ERROR_INVALIDIMAGE;
 
-			switch(opts->bits_per_sample) {
-			case 8:
-				waveform_flags = CASSETTE_WAVEFORM_8BIT;
-				break;
-			case 16:
-				waveform_flags = CASSETTE_WAVEFORM_16BITLE;
-				break;
-			case 32:
-				waveform_flags = CASSETTE_WAVEFORM_32BITLE;
-				break;
-			default:
-				return CASSETTE_ERROR_INVALIDIMAGE;
+			switch(opts->bits_per_sample)
+			{
+				case 8:
+					waveform_flags = CASSETTE_WAVEFORM_8BIT;
+					break;
+				case 16:
+					waveform_flags = CASSETTE_WAVEFORM_16BITLE;
+					break;
+				case 32:
+					waveform_flags = CASSETTE_WAVEFORM_32BITLE;
+					break;
+				default:
+					return CASSETTE_ERROR_INVALIDIMAGE;
 			}
 		}
 		else if (!memcmp(tag_header, data_tag_id, 4))
