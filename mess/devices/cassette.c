@@ -331,7 +331,8 @@ static void device_unload_cassette(mess_image *image)
 static void device_display_cassette(mess_image *image)
 {
 	char buf[65];
-	int x, y, n;
+	float x, y;
+	int n;
 	double position, length;
 	cassette_state uistate;
 
@@ -347,8 +348,8 @@ static void device_display_cassette(mess_image *image)
 	uistate = cassette_get_state(image) & CASSETTE_MASK_UISTATE;
 
 	/* choose a location on the screen */
-	x = image_index_in_device(image) * 0 * 16 + 1;
-	y = ui_get_line_height() - 9;
+	x = 0.0f;
+	y = image_index_in_device(image) * ui_get_line_height();
 
 	/* choose which frame of the animation we are at */
 	n = ((int) position / ANIMATION_FPS) % ANIMATION_FRAMES;
@@ -365,8 +366,8 @@ static void device_display_cassette(mess_image *image)
 		((int) length % 60),
 		(int) length);
 
-	// FIXME
-	//ui_draw_text(buf, x, y);
+	/* draw the cassette */
+	ui_draw_text_box(buf, JUSTIFY_LEFT, x, y, UI_FILLCOLOR);
 }
 
 
