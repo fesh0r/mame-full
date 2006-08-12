@@ -18,7 +18,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- Fixed UI toggle message to work reasonably with the new renderer/UI system.
+  [R. Belmont]
 
 
 
