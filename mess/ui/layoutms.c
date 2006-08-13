@@ -87,7 +87,6 @@ DIRECTORYINFO g_directoryInfo[] =
 	{ "Ini Files",             GetIniDir,       SetIniDir,       FALSE, DIRDLG_INI },
 	{ "CRC",                   GetCrcDir,       SetCrcDir,       FALSE, 0 },
 	{ "Config",                GetCfgDir,       SetCfgDir,       FALSE, DIRDLG_CFG },
-	{ "High Scores",           GetHiDir,        SetHiDir,        FALSE, DIRDLG_HI },
 	{ "Snapshots",             GetImgDir,       SetImgDir,       FALSE, DIRDLG_IMG },
 	{ "Input files (*.inp)",   GetInpDir,       SetInpDir,       FALSE, DIRDLG_INP },
 	{ "State",                 GetStateDir,     SetStateDir,     FALSE, 0 },

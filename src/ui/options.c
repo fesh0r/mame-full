@@ -423,7 +423,6 @@ static const REG_OPTION global_game_options[] =
 	{ "nvram_directory",        RO_STRING,  offsetof(settings_type, nvramdir),         "nvram" },
 	{ "memcard_directory",      RO_STRING,  offsetof(settings_type, memcarddir),       "memcard" },
 	{ "input_directory",        RO_STRING,  offsetof(settings_type, inpdir),           "inp" },
-	{ "hiscore_directory",      RO_STRING,  offsetof(settings_type, hidir),            "hi" },
 	{ "state_directory",        RO_STRING,  offsetof(settings_type, statedir),         "sta" },
 	{ "artwork_directory",      RO_STRING,  offsetof(settings_type, artdir),           "artwork" },
 	{ "snapshot_directory",     RO_STRING,  offsetof(settings_type, imgdir),           "snap" },
@@ -1455,19 +1454,6 @@ void SetCfgDir(const char* path)
 
 	if (path != NULL)
 		settings.cfgdir = mame_strdup(path);
-}
-
-const char* GetHiDir(void)
-{
-	return settings.hidir;
-}
-
-void SetHiDir(const char* path)
-{
-	FreeIfAllocated(&settings.hidir);
-
-	if (path != NULL)
-		settings.hidir = mame_strdup(path);
 }
 
 const char* GetNvramDir(void)

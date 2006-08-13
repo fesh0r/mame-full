@@ -22,6 +22,7 @@
 #define IDS_UI_LINEUPICONS              92
 #define IDS_UI_REFRESH                  93
 #define IDS_UI_CUSTOMIZE                94
+#define ID_TOOLBAR_EDIT                 95
 #define IDD_MAIN                        101
 #define IDA_TAB_KEYS                    106
 #define IDI_MAME32_ICON                 107
@@ -233,9 +234,7 @@
 #define IDC_SYNCREFRESH                 1141
 #define IDC_USE_MOUSE                   1143
 #define IDC_THROTTLE                    1144
-#define IDC_RESDEPTH                    1145
 #define IDC_VOLUMETEXT                  1146
-#define IDC_RESDEPTHTEXT                1147
 #define IDC_REFRESH                     1148
 #define IDC_REFRESHTEXT                 1149
 #define IDC_EFFECT                      1150

@@ -35,6 +35,7 @@
 
 #include "bitmask.h"
 #include "options.h"
+#include "..\windows\config.h"
 #include "m32util.h"
 #include "audit32.h"
 #include "Properties.h"
@@ -100,7 +101,17 @@ void AuditDialog(HWND hParent)
 
 void InitGameAudit(int gameIndex)
 {
+	int argc = 0;
+	char *args[2];
+	char **argv = args;
+	char pModule[_MAX_PATH];
+	char name[_MAX_PATH];
+	strcpy( name, drivers[gameIndex]->name );
+	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
+	argv[argc++] = pModule;
+	argv[argc++] = name;
 	rom_index = gameIndex;
+	cli_frontend_init(argc, argv );
 }
 
 const char * GetAuditString(int audit_result)

@@ -18,7 +18,6 @@
 #define DIRDLG_SAMPLES      0x0020
 #define DIRDLG_INI		    0x0040
 #define DIRDLG_CFG          0x0100
-#define DIRDLG_HI           0x0200
 #define DIRDLG_IMG          0x0400
 #define DIRDLG_INP          0x0800
 #define DIRDLG_CTRLR        0x1000

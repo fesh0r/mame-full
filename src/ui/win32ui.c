@@ -823,7 +823,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	else
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -input_directory \"%s\"",GetInpDir());
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -hiscore_directory \"%s\"",  GetHiDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -state_directory \"%s\"",    GetStateDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -artpath \"%s\"",	GetArtDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
@@ -837,7 +836,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %s",pOpts->bios);
 	if (pOpts->cheat)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -c %d",                   pOpts->cheat );
+        sprintf(&pCmdLine[strlen(pCmdLine)], " -%sc",                   pOpts->cheat ? "" : "no" );
 	/* save states and input recording */
 	if (g_pSaveStateName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
@@ -1825,6 +1824,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	extern const char *mameinfo_filename;
 	LONG common_control_version = GetCommonControlVersion();
 	int validity_failed = 0;
+	int argc = 0;
+	char *args[4];
+	char **argv = args;
+	char pModule[_MAX_PATH];
+	char name[_MAX_PATH];
 
 	srand((unsigned)time(NULL));
 
@@ -1834,6 +1838,14 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	init_resource_tracking();
 	begin_resource_tracking();
+
+	strcpy( name, drivers[0]->name );
+	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
+	argv[argc++] = pModule;
+	argv[argc++] = name;
+	cli_frontend_init(argc, argv );
+
+
 
 	// Count the number of games
 	game_count = 0;
@@ -2211,6 +2223,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	return TRUE;
 }
+
 
 static void Win32UI_exit()
 {

@@ -19,6 +19,13 @@
 ***************************************************************************/
 
 #define WIN32_LEAN_AND_MEAN
+
+#ifdef _MSC_VER
+#ifndef NONAMELESSUNION
+#define NONAMELESSUNION 
+#endif
+#endif
+
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
@@ -578,7 +585,11 @@ INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPA
 					tvi.lParam = (LPARAM)folders[i];
 					tvi.iImage = GetTreeViewIconIndex(folders[i]->m_nIconId);
 					tvi.iSelectedImage = 0;
+#if defined(__GNUC__) /* bug in commctrl.h */
 					tvis.item = tvi;
+#else
+					tvis.DUMMYUNIONNAME.item = tvi;
+#endif
 					
 					hti = TreeView_InsertItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),&tvis);
 
@@ -595,7 +606,11 @@ INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPA
 							tvi.lParam = (LPARAM)folders[jj];
 							tvi.iImage = GetTreeViewIconIndex(folders[jj]->m_nIconId);
 							tvi.iSelectedImage = 0;
+#if defined(__GNUC__) /* bug in commctrl.h */
 					        tvis.item = tvi;
+#else
+					        tvis.DUMMYUNIONNAME.item = tvi;
+#endif							
 							hti_child = TreeView_InsertItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),&tvis);
 							if (folders[jj] == default_selection)
 							    TreeView_SelectItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),hti_child);
