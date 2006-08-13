@@ -1439,27 +1439,31 @@ static int compis_gdc_start (const compis_gdc_interface *intf)
 
 VIDEO_UPDATE(compis_gdc)
 {
-   /* TODO - copy only the dirty parts of the memory to the bitmap */
-   /* Or plot stuff in write-functions until scrolling occurs */
-	if (gdc_mess.dirty) 
+	int dirty;
+
+	/* TODO - copy only the dirty parts of the memory to the bitmap */
+	/* Or plot stuff in write-functions until scrolling occurs */
+	dirty = gdc_mess.dirty;
+	if (dirty) 
 	{
 /*      TYP_GDC_REGS_DISPLAY* dispregs = &gdc.registers.display; */
-      UINT32 base_addr = gdc_get_base_addr(&gdc);
-      /* FIXME: Should be found in the parameters instead */
-      UINT32 end_addr = base_addr + gdc_partition_length(&gdc);
-         /* dispregs->words_per_line * dispregs->lines_per_field; */
-      UINT32 address;
-      for( address = base_addr; address < end_addr; ++address ) {
-         gdc_plot_word( (address - gdc_get_base_addr(&gdc)) %
-                        gdc_mess.vramsize,
-                        gdc_mess.vram[address % gdc_mess.vramsize]);
-      }
+		UINT32 base_addr = gdc_get_base_addr(&gdc);
+		/* FIXME: Should be found in the parameters instead */
+		UINT32 end_addr = base_addr + gdc_partition_length(&gdc);
+			/* dispregs->words_per_line * dispregs->lines_per_field; */
+		UINT32 address;
+		for( address = base_addr; address < end_addr; ++address )
+		{
+			gdc_plot_word( (address - gdc_get_base_addr(&gdc)) %
+						gdc_mess.vramsize,
+						gdc_mess.vram[address % gdc_mess.vramsize]);
+		}
 		copybitmap(bitmap,
-                 gdc_mess.tmpbmp, 0, 0, 0, 0,
-                 NULL, TRANSPARENCY_NONE, 0);
+					gdc_mess.tmpbmp, 0, 0, 0, 0,
+					NULL, TRANSPARENCY_NONE, 0);
 		gdc_mess.dirty = 0;
 	}
-	return 0;
+	return dirty ? 0 : UPDATE_HAS_NOT_CHANGED;
 }
 
 VIDEO_START ( compis_gdc )
