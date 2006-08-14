@@ -63,8 +63,8 @@ static int thom_update_screen_size( void )
 
   new_w = ( 320 + thom_bwidth * 2 ) * ( thom_hires + 1 ) - 1;
   new_h = ( 200 + thom_bheight * 2 ) * (thom_hires + 1 ) - 1;
-  if ( ( Machine->visible_area[0].max_x != new_w ) ||
-       ( Machine->visible_area[0].max_y != new_h ) ) 
+  if ( ( Machine->screen[0].visarea.max_x != new_w ) ||
+       ( Machine->screen[0].visarea.max_y != new_h ) ) 
     changed = 1;
   set_visible_area( 0, 0, new_w, 0, new_h );
 

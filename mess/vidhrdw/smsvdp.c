@@ -340,7 +340,7 @@ INTERRUPT_GEN(sms) {
 		logerror("l %04x, pc: %04x\n", currentLine, activecpu_get_pc());
 #endif
 		if ( IS_GAMEGEAR ) {
-			if ((currentLine >= Machine->visible_area[0].min_y) && (currentLine <= Machine->visible_area[0].max_y)) {
+			if ((currentLine >= Machine->screen[0].visarea.min_y) && (currentLine <= Machine->screen[0].visarea.max_y)) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
 				if (code_pressed(KEYCODE_T)) {
@@ -1061,10 +1061,10 @@ VIDEO_UPDATE(sms) {
 		}
 	}
 	} else {
-		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	}
 	if (!prevBitMapSaved) {
-		copybitmap(prevBitMap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+		copybitmap(prevBitMap, tmpbitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	//prevBitMapSaved = 1;
 	}
 	return 0;

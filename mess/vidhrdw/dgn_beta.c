@@ -46,7 +46,7 @@ logerror("DgnBeta Video update !\n");
 			{
 				drawgfx(bitmap,Machine->gfx[dgnbeta_font],
 						videoram[i*2], 0, 0, 0, 8*x,height*y,
-						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 				dirtybuffer[i]=0;
 			}
 		}

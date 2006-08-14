@@ -63,7 +63,7 @@ VIDEO_UPDATE( kim1 )
         int sx = Machine->screen[0].width - 212 + x * 30 + ((x >= 4) ? 6 : 0);
 
 		drawgfx (bitmap, Machine->gfx[0], videoram[2 * x + 0], videoram[2 * x + 1],
-			0, 0, sx, sy, &Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+			0, 0, sx, sy, &Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
     }
 
     for (y = 0; y < 6; y++)
@@ -88,7 +88,7 @@ VIDEO_UPDATE( kim1 )
 
             videoram[6 * 2 + code] = color;
 			drawgfx (bitmap, Machine->gfx[1], layout[y][x], color,
-				0, 0, sx, sy, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+				0, 0, sx, sy, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
         }
     }
 	return 0;

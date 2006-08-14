@@ -65,7 +65,7 @@ void zx_ula_bkgnd(int color)
 			else
 			{
 				r.min_x = old_x;
-				r.max_x = Machine->visible_area[0].max_x;
+				r.max_x = Machine->screen[0].visarea.max_x;
 				r.min_y = r.max_y = y;
 				fillbitmap(bitmap, Machine->pens[color], &r);
 				old_x = 0;
@@ -97,7 +97,7 @@ static void zx_ula_nmi(int param)
 	 * An NMI is issued on the ZX81 every 64us for the blanked
 	 * scanlines at the top and bottom of the display.
 	 */
-	rectangle r = Machine->visible_area[0];
+	rectangle r = Machine->screen[0].visarea;
 	mame_bitmap *bitmap = tmpbitmap;
 
 	r.min_y = r.max_y = cpu_getscanline();

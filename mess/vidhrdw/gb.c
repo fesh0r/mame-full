@@ -133,7 +133,7 @@ void gb_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		rectangle r = Machine->visible_area[0];
+		rectangle r = Machine->screen[0].visarea;
 		r.min_y = r.max_y = yindex;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}
@@ -350,7 +350,7 @@ void sgb_refresh_scanline (void)
 			return;
 		case 2:	/* Blank screen (black) */
 			{
-				rectangle r = Machine->visible_area[0];
+				rectangle r = Machine->screen[0].visarea;
 				r.min_x = SGB_XOFFSET;
 				r.max_x -= SGB_XOFFSET;
 				r.min_y = SGB_YOFFSET;
@@ -359,7 +359,7 @@ void sgb_refresh_scanline (void)
 			} return;
 		case 3:	/* Blank screen (white - or should it be color 0?) */
 			{
-				rectangle r = Machine->visible_area[0];
+				rectangle r = Machine->screen[0].visarea;
 				r.min_x = SGB_XOFFSET;
 				r.max_x -= SGB_XOFFSET;
 				r.min_y = SGB_YOFFSET;
@@ -377,7 +377,7 @@ void sgb_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		rectangle r = Machine->visible_area[0];
+		rectangle r = Machine->screen[0].visarea;
 		r.min_x = SGB_XOFFSET;
 		r.max_x -= SGB_XOFFSET;
 		r.min_y = r.max_y = yindex + SGB_YOFFSET;
@@ -676,7 +676,7 @@ void gbc_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		rectangle r = Machine->visible_area[0];
+		rectangle r = Machine->screen[0].visarea;
 		r.min_y = r.max_y = yindex;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}

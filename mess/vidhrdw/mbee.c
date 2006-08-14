@@ -243,8 +243,8 @@ static void m6545_update_strobe(int param)
 {
 	int data = 0, y = cpu_getscanline();
 
-	if( y < Machine->visible_area[0].min_y ||
-		y > Machine->visible_area[0].max_y )
+	if( y < Machine->screen[0].visarea.min_y ||
+		y > Machine->screen[0].visarea.max_y )
 		data |= 0x20;	/* vertical blanking */
 	if( crt.lpen_strobe )
 		data |= 0x40;	/* lpen register full */
@@ -538,7 +538,7 @@ VIDEO_UPDATE( mbee )
 			code = videoram[offs];
 			color = colorram[offs];
 			drawgfx( bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 			dirtybuffer[offs] = 0;
 			if( offs == cursor && (crt.cursor_top & 0x60) != 0x20 )
 			{

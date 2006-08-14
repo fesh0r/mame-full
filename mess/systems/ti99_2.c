@@ -170,7 +170,7 @@ static VIDEO_UPDATE(ti99_2)
 
 			/* Is the char code masked or not ??? */
 			drawgfx(tmpbitmap, Machine->gfx[0], videoram[i] & 0x7F, 0,
-			          0, 0, sx, sy, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+			          0, 0, sx, sy, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 		}
 
 		sx += 8;
@@ -181,7 +181,7 @@ static VIDEO_UPDATE(ti99_2)
 		}
 	}
 
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	return 0;
 }
 

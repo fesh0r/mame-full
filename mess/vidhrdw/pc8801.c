@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.19 2006/07/30 16:07:57 npwoods Exp $
+  $Id: pc8801.c,v 1.20 2006/08/14 21:38:26 npwoods Exp $
 
 ***************************************************************************/
 
@@ -493,7 +493,7 @@ VIDEO_UPDATE( pc8801 )
 		  ((attr_new&TX_REV) ? 8 : 0)
 		  + ((attr_new&TX_COL_MASK)>>TX_COL_SHIFT),
 		  0,0,x*8,y*BLOCK_YSIZE,
-		  &Machine->visible_area[0],TRANSPARENCY_PEN,
+		  &Machine->screen[0].visarea,TRANSPARENCY_PEN,
 		  (attr_new&TX_REV) ? 1 : 0);
 	}
 	if(attr_new&TX_UL) {
@@ -593,9 +593,9 @@ VIDEO_UPDATE( pc8801 )
   }
 
   copybitmap(wbm1,wbm2,0,0,0,0,
-	     &Machine->visible_area[0],TRANSPARENCY_PEN,palette_transparent_pen);
+	     &Machine->screen[0].visarea,TRANSPARENCY_PEN,palette_transparent_pen);
   copybitmap(bitmap,wbm1,0,0,0,0,
-	     &Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	     &Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }
 
