@@ -145,6 +145,8 @@ void *imgtool_directory_extrabytes(imgtool_directory *enumeration);
 imgtool_partition *imgtool_directory_partition(imgtool_directory *directory);
 imgtool_image *imgtool_directory_image(imgtool_directory *enumeration);
 
+/* ----- special ----- */
 int imgtool_validitychecks(void);
+void unknown_partition_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info);
 
 #endif /* IMGTOOL_H */

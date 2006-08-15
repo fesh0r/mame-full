@@ -2283,11 +2283,15 @@ const char *imgtool_partition_path_concatenate(imgtool_partition *partition, con
 {
 	char path_separator;
 	size_t len;
-	char *buffer = imgtool_temp_str();
-	size_t buffer_len = 256;
+	char *buffer;
+	size_t buffer_len;
 
 	path_separator = (char) imgtool_partition_get_info_int(partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
 	len = strlen(path1);
+
+	/* prepare buffer */
+	buffer = imgtool_temp_str();
+	buffer_len = 256;
 
 	if (!strcmp(path2, "."))
 	{
@@ -2301,12 +2305,18 @@ const char *imgtool_partition_path_concatenate(imgtool_partition *partition, con
 			len--;
 		while((len > 0) && (path1[len - 1] != path_separator))
 			len--;
-		snprintf(buffer, MIN(len + 1, buffer_len), "%s", path1);
+		while((len > 1) && (path1[len - 1] == path_separator))
+			len--;
+		snprintf(buffer, buffer_len, "%s", path1);
+		buffer[len] = '\0';
 	}
 	else
 	{
 		/* append a path */
-		snprintf(buffer, buffer_len, "%s%c%s", path1, path_separator, path2);
+		if ((strlen(path1) > 0) && (path1[strlen(path1) - 1] != path_separator))
+			snprintf(buffer, buffer_len, "%s%c%s", path1, path_separator, path2);
+		else
+			snprintf(buffer, buffer_len, "%s%s", path1, path2);
 	}
 	return buffer;
 }
@@ -2506,4 +2516,21 @@ imgtool_partition *imgtool_directory_partition(imgtool_directory *directory)
 imgtool_image *imgtool_directory_image(imgtool_directory *directory)
 {
 	return directory->partition->image;
+}
+
+
+
+/*-------------------------------------------------
+    unknown_partition_get_info - represents an
+	unknown partition
+-------------------------------------------------*/
+
+void unknown_partition_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case IMGTOOLINFO_STR_NAME:							strcpy(info->s = imgtool_temp_str(), "unknown"); break;
+		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "Unknown partition type"); break;
+	}
 }

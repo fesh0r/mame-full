@@ -50,6 +50,8 @@ void imgtool_library_close(imgtool_library *library)
 static void imgtool_library_add_class(imgtool_library *library, const imgtool_class *imgclass)
 {
 	imgtool_module *module;
+	char *s1, *s2;
+	size_t len;
 
 	/* allocate the module and place it in the chain */
 	module = auto_malloc(sizeof(*module));
@@ -61,10 +63,19 @@ static void imgtool_library_add_class(imgtool_library *library, const imgtool_cl
 		library->first = module;
 	library->last = module;
 
+	/* extensions have a weird format */
+	s1 = imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_FILE_EXTENSIONS);
+	len = strlen(s1);;
+	s2 = auto_malloc(len + 2);
+	strcpy(s2, s1);
+	s2[len + 1] = '\0';
+	while((s1 = strchr(s2, ',')) != NULL)
+		*s1 = '\0';
+	module->extensions = s2;
+
 	module->imgclass					= *imgclass;
 	module->name						= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_NAME));
 	module->description					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_DESCRIPTION));
-	module->extensions					= auto_strdup(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_FILE_EXTENSIONS));
 	module->eoln						= auto_strdup_allow_null(imgtool_get_info_string(imgclass, IMGTOOLINFO_STR_EOLN));
 	module->initial_path_separator		= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_INITIAL_PATH_SEPARATOR) ? 1 : 0;
 	module->open_is_strict				= imgtool_get_info_int(imgclass, IMGTOOLINFO_INT_OPEN_IS_STRICT) ? 1 : 0;

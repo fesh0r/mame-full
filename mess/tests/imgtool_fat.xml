@@ -20,7 +20,7 @@
 
 <imgtooltest name="fat_chd">
 	<!-- Testing the underlying disk -->
-	<createimage driver="pc_chd_fat"/>
+	<createimage driver="pc_chd"/>
 	<checkdirectory/>
 
 	<putfile name="1.TXT">'Hello World!'</putfile>

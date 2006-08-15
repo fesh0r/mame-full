@@ -30,7 +30,8 @@ User Interface Changes:
 Imgtool Changes:
 ----------------
 - More refactoring; FAT partition support now internally separate from floppy
-  and hard drive code.  [Nate Woods]
+  and hard drive code.  PC hard drive module now named "pc_chd" and not
+  explicitly tied to FAT.  [Nate Woods]
 
 
 
