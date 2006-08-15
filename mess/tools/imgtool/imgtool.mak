@@ -42,6 +42,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/ti990hd.o		\
 	$(OBJ)/mess/tools/imgtool/concept.o		\
 	$(OBJ)/mess/tools/imgtool/fat.o			\
+	$(OBJ)/mess/tools/imgtool/pc_flop.o		\
 	$(OBJ)/mess/tools/imgtool/pc_hard.o		\
 	$(OBJ)/mess/tools/imgtool/prodos.o		\
 	$(OBJ)/mess/tools/imgtool/vzdos.o		\

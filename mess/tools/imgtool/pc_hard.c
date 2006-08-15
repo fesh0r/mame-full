@@ -67,7 +67,6 @@ static const char fat16_string[8] = { 'F', 'A', 'T', '1', '6', ' ', ' ', ' ' };
 static const char fat32_string[8] = { 'F', 'A', 'T', '3', '2', ' ', ' ', ' ' };
 
 /* imports from fat.c */
-extern imgtoolerr_t fat_partition_create(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 extern void fat_get_info(const imgtool_class *imgclass, UINT32 state, union imgtoolinfo *info);
 
 
@@ -126,6 +125,8 @@ static imgtoolerr_t pc_chd_partition_create(imgtool_image *image, int partition_
 	UINT8 *partition_entry;
 	UINT32 first_cylinder, first_head, first_sector;
 	UINT32 last_cylinder, last_head, last_sector;
+	imgtool_class imgclass = { fat_get_info };
+	imgtoolerr_t (*fat_partition_create)(imgtool_image *image, UINT64 first_block, UINT64 block_count);
 
 	/* sanity checks */
 	assert((partition_index >= 0) && (partition_index <= 3));
@@ -133,6 +134,10 @@ static imgtoolerr_t pc_chd_partition_create(imgtool_image *image, int partition_
 	/* compute geometry */
 	pc_chd_locate_block(image, first_block, &first_cylinder, &first_head, &first_sector);
 	pc_chd_locate_block(image, first_block + block_count - 1, &last_cylinder, &last_head, &last_sector);
+
+	/* load fat_partition_create */
+	fat_partition_create = (imgtoolerr_t (*)(imgtool_image *, UINT64, UINT64))
+		imgtool_get_info_fct(&imgclass, IMGTOOLINFO_PTR_CREATE_PARTITION);
 
 	/* first create the actual partition */
 	err = fat_partition_create(image, first_block, block_count);
