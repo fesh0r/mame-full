@@ -1121,7 +1121,7 @@ static void vic2_drawlines (int first, int last)
 	if (first == last)
 		return;
 	vic2.lastline = last;
-	if (skip_this_frame ())
+	if (video_skip_this_frame ())
 		return;
 
 

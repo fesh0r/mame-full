@@ -66,7 +66,7 @@ static int thom_update_screen_size( void )
   if ( ( Machine->screen[0].visarea.max_x != new_w ) ||
        ( Machine->screen[0].visarea.max_y != new_h ) ) 
     changed = 1;
-  set_visible_area( 0, 0, new_w, 0, new_h );
+  video_screen_set_visarea( 0, 0, new_w, 0, new_h );
 
   return changed;
 }

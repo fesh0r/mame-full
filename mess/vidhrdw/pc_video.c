@@ -98,7 +98,7 @@ VIDEO_UPDATE( pc_video )
 				pc_current_height = Machine->screen[0].height;
 
 			if ((pc_current_width > 100) && (pc_current_height > 100))
-				set_visible_area(0, 0, pc_current_width-1, 0, pc_current_height-1);
+				video_screen_set_visarea(0, 0, pc_current_width-1, 0, pc_current_height-1);
 
 			fillbitmap(bitmap, 0, cliprect);
 		}

@@ -176,7 +176,7 @@ static void vic3_drawlines (int first, int last)
 	if (first == last)
 		return;
 	vic2.lastline = last;
-	if (skip_this_frame ())
+	if (video_skip_this_frame ())
 		return;
 
 	/* top part of display not rastered */
@@ -771,10 +771,10 @@ INTERRUPT_GEN( vic3_raster_irq )
 		if ((new_columns!=columns)||(new_raws!=raws)) {
 			raws=new_raws;
 			columns=new_columns;
-			set_visible_area(0, 0,columns+16-1,0, raws+16-1);
+			video_screen_set_visarea(0, 0,columns+16-1,0, raws+16-1);
 		}
 		if (VIC3_BITPLANES) {
-			if (!skip_this_frame ()) vic3_draw_bitplanes();
+			if (!video_skip_this_frame ()) vic3_draw_bitplanes();
 		} else {
 			if (vic2.on) vic2_drawlines (vic2.lastline, vic2.lines);
 		}

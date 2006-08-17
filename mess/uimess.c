@@ -52,7 +52,7 @@ void mess_ui_update(void)
 		{
 			if (toggled)
 			{
-				ui_popup("%s\n%s\n%s\n%s\n%s\n%s\n",
+				popmessage("%s\n%s\n%s\n%s\n%s\n%s\n",
 					ui_getstring(UI_keyb1),
 					ui_getstring(UI_keyb2),
 					ui_getstring(UI_keyb3),
@@ -65,7 +65,7 @@ void mess_ui_update(void)
 		{
 			if (toggled)
 			{
-				ui_popup("%s\n%s\n%s\n%s\n%s\n%s\n",
+				popmessage("%s\n%s\n%s\n%s\n%s\n%s\n",
 					ui_getstring(UI_keyb1),
 					ui_getstring(UI_keyb2),
 					ui_getstring(UI_keyb4),

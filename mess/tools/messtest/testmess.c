@@ -178,7 +178,7 @@ static void dump_screenshot(int write_file)
 						break;
 				}
 
-				snapshot_save_screen_indexed(fp, scrnum);
+				video_screen_save_snapshot(fp, scrnum);
 				mame_fclose(fp);
 				report_message(MSG_INFO, "Saved screenshot as %s", buf);
 			}

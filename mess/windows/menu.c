@@ -1582,7 +1582,7 @@ static int invoke_command(HWND wnd, UINT command)
 			break;
 
 		case ID_FILE_SAVESCREENSHOT:
-			snapshot_save_all_screens();
+			video_save_active_screen_snapshots();
 			break;
 
 		case ID_FILE_EXIT:

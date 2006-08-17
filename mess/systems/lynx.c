@@ -94,7 +94,7 @@ void lynx_draw_lines(int newline)
 	UINT8 byte;
 	UINT16 *line;
 
-	if (skip_this_frame()) newline=-1;
+	if (video_skip_this_frame()) newline=-1;
 
 	if (newline==-1)
 		yend = 102;
@@ -184,7 +184,7 @@ void lynx_draw_lines(int newline)
 		{
 			width=w;
 			height=h;
-			set_visible_area(0, 0, width-1, 0, height-1);
+			video_screen_set_visarea(0, 0, width-1, 0, height-1);
 		}
 	}
 }

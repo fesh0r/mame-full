@@ -249,7 +249,7 @@ static void set_display_settings( void ) {
 	}
 	start_top_border = start_blanking + 19;
 	if ( ! IS_GAMEGEAR ) {
-		set_visible_area( 0, LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
+		video_screen_set_visarea( 0, LBORDER_X_PIXELS, LBORDER_X_PIXELS + 255, TBORDER_Y_PIXELS, TBORDER_Y_PIXELS + y_pixels - 1 );
 	}
 	isCRAMDirty = 1;
 }
@@ -335,7 +335,7 @@ INTERRUPT_GEN(sms) {
 		}
 	}
 
-	if (!skip_this_frame()) {
+	if (!video_skip_this_frame()) {
 #ifdef LOG_CURLINE
 		logerror("l %04x, pc: %04x\n", currentLine, activecpu_get_pc());
 #endif

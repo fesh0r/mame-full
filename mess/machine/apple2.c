@@ -768,7 +768,7 @@ void apple2_interrupt(void)
 			cpunum_set_input_line(0, M6502_IRQ_LINE, PULSE_LINE);
 	}
 
-	force_partial_update(0, scanline);
+	video_screen_update_partial(0, scanline);
 
 	profiler_mark(PROFILER_END);
 }

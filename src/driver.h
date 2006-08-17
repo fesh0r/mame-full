@@ -68,6 +68,7 @@
 #include "sound.h"
 #include "input.h"
 #include "inptport.h"
+#include "output.h"
 #include "tilemap.h"
 #include "state.h"
 #include "romload.h"

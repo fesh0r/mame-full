@@ -1049,7 +1049,7 @@ static void ted7360_drawlines (int first, int last)
 
 	lastline = last;
 
-	if (skip_this_frame ())
+	if (video_skip_this_frame ())
 		return;
 
 	/* top part of display not rastered */
