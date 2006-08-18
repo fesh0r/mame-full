@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
@@ -12,8 +10,6 @@
 #include "hash.h"
 
 
-/* Uncomment this to dump reams of ppu state info to the errorlog */
-//#define LOG_PPU
 
 /* Uncomment this to dump info about the inputs to the errorlog */
 //#define LOG_JOY
@@ -26,8 +22,6 @@ UINT8 battery_data[BATTERY_SIZE];
 
 struct nes_struct nes;
 struct fds_struct nes_fds;
-
-int ppu_scanlines_per_frame;
 
 static UINT32 in_0[3];
 static UINT32 in_1[3];
