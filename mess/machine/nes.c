@@ -3,7 +3,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
 #include "sound/nes_apu.h"
