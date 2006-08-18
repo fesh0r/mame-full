@@ -1,7 +1,6 @@
 /*
 	TODO:
 	. 5 has some issues, RAM banking needs hardware flags to determine size
-	. 9 & 10 have minor probs: needs PPU to emulate sprite caching Most visible on Punch-Out! (9)
 	. 13 needs banked VRAM. -see Videomation
 	. 64 has some IRQ problems - see Skull & Crossbones
 	. 67 display issues, but vrom fixed
@@ -21,7 +20,7 @@
 #include <string.h>
 
 #include "cpu/m6502/m6502.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "osdepend.h"
 #include "driver.h"
 #include "includes/nes.h"
@@ -35,7 +34,7 @@
 int prg_mask;
 
 int IRQ_enable, IRQ_enable_latch;
-UINT16 IRQ_count, IRQ_count_latch;
+UINT16 IRQ_count, IRQ_count_latch, IRQ_reload;
 UINT8 IRQ_status;
 UINT8 IRQ_mode_jaleco;
 
@@ -79,6 +78,22 @@ static int mapper41_chr, mapper41_reg2;
 
 static int mapper_warning;
 
+static mame_timer	*nes_irq_timer;
+
+#ifdef MAME_DEBUG
+static void trigger_debugger(void)
+{
+	extern int debug_key_pressed;
+	debug_key_pressed = 1;
+}
+#endif
+
+static void nes_irq_callback (int num)
+{
+	cpunum_set_input_line (0, M6502_IRQ_LINE, HOLD_LINE);
+	mame_timer_adjust(nes_irq_timer, time_never, 0, time_never);
+}
+
 WRITE8_HANDLER( nes_low_mapper_w )
 {
 	if (mmc_write_low) (*mmc_write_low)(offset, data);
@@ -96,7 +111,7 @@ WRITE8_HANDLER( nes_low_mapper_w )
 }
 
 /* Handle mapper reads from $4100-$5fff */
- READ8_HANDLER( nes_low_mapper_r )
+READ8_HANDLER( nes_low_mapper_r )
 {
 	if (mmc_read_low)
 		return (*mmc_read_low)(offset);
@@ -124,7 +139,7 @@ WRITE8_HANDLER ( nes_mid_mapper_w )
 	}
 }
 
- READ8_HANDLER ( nes_mid_mapper_r )
+READ8_HANDLER ( nes_mid_mapper_r )
 {
 	if ((nes.mid_ram_enable) || (nes.mapper == 5))
 		return battery_ram[offset];
@@ -247,83 +262,83 @@ static void prg32 (int bank)
 static void chr8 (int bank)
 {
 	bank &= (nes.chr_chunks - 1);
-	ppu2c03b_set_videorom_bank(0, 0, 8, bank, 512);
+	ppu2c0x_set_videorom_bank(0, 0, 8, bank, 512);
 }
 
 static void chr4_0 (int bank)
 {
 	bank &= ((nes.chr_chunks << 1) - 1);
-	ppu2c03b_set_videorom_bank(0, 0, 4, bank, 256);
+	ppu2c0x_set_videorom_bank(0, 0, 4, bank, 256);
 }
 
 static void chr4_4 (int bank)
 {
 	bank &= ((nes.chr_chunks << 1) - 1);
-	ppu2c03b_set_videorom_bank(0, 4, 4, bank, 256);
+	ppu2c0x_set_videorom_bank(0, 4, 4, bank, 256);
 }
 
 static void chr2_0 (int bank)
 {
 	bank &= ((nes.chr_chunks << 2) - 1);
-	ppu2c03b_set_videorom_bank(0, 0, 2, bank, 128);
+	ppu2c0x_set_videorom_bank(0, 0, 2, bank, 128);
 }
 
 static void chr2_2 (int bank)
 {
 	bank &= ((nes.chr_chunks << 2) - 1);
-	ppu2c03b_set_videorom_bank(0, 2, 2, bank, 128);
+	ppu2c0x_set_videorom_bank(0, 2, 2, bank, 128);
 }
 
 static void chr2_4 (int bank)
 {
 	bank &= ((nes.chr_chunks << 2) - 1);
-	ppu2c03b_set_videorom_bank(0, 4, 2, bank, 128);
+	ppu2c0x_set_videorom_bank(0, 4, 2, bank, 128);
 }
 
 static void chr2_6 (int bank)
 {
 	bank &= ((nes.chr_chunks << 2) - 1);
-	ppu2c03b_set_videorom_bank(0, 6, 2, bank, 128);
+	ppu2c0x_set_videorom_bank(0, 6, 2, bank, 128);
 }
 static void chr1_0 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 0, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 0, 1, bank, 64);
 }
 static void chr1_1 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 1, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 1, 1, bank, 64);
 }
 static void chr1_2 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 2, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 2, 1, bank, 64);
 }
 static void chr1_3 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 3, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 3, 1, bank, 64);
 }
 static void chr1_4 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 4, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 4, 1, bank, 64);
 }
 static void chr1_5 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 5, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 5, 1, bank, 64);
 }
 static void chr1_6 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 6, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 6, 1, bank, 64);
 }
 static void chr1_7 (int bank)
 {
 	bank &= ((nes.chr_chunks << 3) - 1);
-	ppu2c03b_set_videorom_bank(0, 7, 1, bank, 64);
+	ppu2c0x_set_videorom_bank(0, 7, 1, bank, 64);
 }
 
 
@@ -370,10 +385,10 @@ static WRITE8_HANDLER( mapper1_w )
 
 				switch (MMC1_reg & 0x03)
 				{
-					case 0: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-					case 1: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
-					case 2: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-					case 3: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+					case 0: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 1: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
+					case 2: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 3: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
 				}
 
 				MMC1_SizeVrom_4k = (MMC1_reg & 0x10);
@@ -452,7 +467,7 @@ static WRITE8_HANDLER( mapper1_w )
 					if (!MMC1_SizeVrom_4k)
 					{
 						int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-						ppu2c03b_set_videorom_bank(0, 0, 8, bank, 256);
+						ppu2c0x_set_videorom_bank(0, 0, 8, bank, 256);
 #ifdef LOG_MMC
 						logerror("MMC1 8k VROM switch: %02x\n", MMC1_reg);
 #endif
@@ -460,7 +475,7 @@ static WRITE8_HANDLER( mapper1_w )
 					else
 					{
 						int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-						ppu2c03b_set_videorom_bank(0, 0, 4, bank, 256);
+						ppu2c0x_set_videorom_bank(0, 0, 4, bank, 256);
 #ifdef LOG_MMC
 						logerror("MMC1 4k VROM switch (low): %02x\n", MMC1_reg);
 #endif
@@ -491,7 +506,7 @@ static WRITE8_HANDLER( mapper1_w )
 				if (MMC1_SizeVrom_4k)
 				{
 					int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-					ppu2c03b_set_videorom_bank(0, 4, 4, bank, 256);
+					ppu2c0x_set_videorom_bank(0, 4, 4, bank, 256);
 #ifdef LOG_MMC
 					logerror("MMC1 4k VROM switch (high): %02x\n", MMC1_reg);
 #endif
@@ -608,27 +623,36 @@ static void mapper4_set_prg (void)
 static void mapper4_set_chr (void)
 {
 	UINT8 chr_page = (MMC3_cmd & 0x80) >> 5;
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
 }
 
 static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
 {
-	if ((scanline < BOTTOM_VISIBLE_SCANLINE) || (scanline == ppu_scanlines_per_frame-1))
+	if ((scanline < PPU_BOTTOM_VISIBLE_SCANLINE) /*|| (scanline == ppu_scanlines_per_frame-1)*/)
 	{
-//		if ((IRQ_enable) && (PPU_Control1 & 0x18))
-		if ((IRQ_enable) && !blanked)
+		int priorCount = IRQ_count;
+		if ((IRQ_count == 0) || IRQ_reload)
 		{
-			if (IRQ_count == 0)
-			{
-				IRQ_count = IRQ_count_latch;
-				cpunum_set_input_line (0, M6502_IRQ_LINE, HOLD_LINE);
-			}
+			IRQ_count = IRQ_count_latch;
+			IRQ_reload = 0;
+		}
+		else
 			IRQ_count --;
+
+		if (IRQ_enable && !blanked && (IRQ_count == 0) && priorCount)
+		{
+logerror("irq fired, scanline: %d (MAME %d, beam pos: %d)\n", scanline, cpu_getscanline(), cpu_gethorzbeampos());
+#ifdef MAME_DEBUG
+//if (scanline == 193)
+//	trigger_debugger();
+#endif
+			cpunum_set_input_line (0, M6502_IRQ_LINE, HOLD_LINE);
+//			mame_timer_adjust(nes_irq_timer, MAME_TIME_IN_CYCLES(4, 0), 0, time_never);
 		}
 	}
 }
@@ -694,49 +718,48 @@ static WRITE8_HANDLER( mapper4_w )
 		}
 		case 0x2000: /* $a000 */
 			if (data & 0x40)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 			else
 			{
 				if (data & 0x01)
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 				else
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			}
 			break;
 
 		case 0x2001: /* $a001 - extra RAM enable/disable */
 			nes.mid_ram_enable = data;
 #ifdef LOG_MMC
-			logerror("     MMC3 mid_ram enable: %02x\n", data);
+			logerror("     MMC3 mid_ram enable: %02x\n", 0);
 #endif
 			break;
 
 		case 0x4000: /* $c000 - IRQ scanline counter */
-			IRQ_count = data;
+			IRQ_count_latch = data;
 #ifdef LOG_MMC
-			logerror("     MMC3 set irq count: %02x\n", data);
+//			logerror("     MMC3 set irq count latch: %02x (scanline %d)\n", data, ppu2c0x_get_current_scanline(0));
 #endif
 			break;
 
 		case 0x4001: /* $c001 - IRQ scanline latch */
-			IRQ_count_latch = data;
+			IRQ_reload = 1;
 #ifdef LOG_MMC
-			logerror("     MMC3 set irq count latch: %02x\n", data);
+//			logerror("     MMC3 set irq reload (scanline %d)\n", ppu2c0x_get_current_scanline(0));
 #endif
 			break;
 
 		case 0x6000: /* $e000 - Disable IRQs */
 			IRQ_enable = 0;
-			IRQ_count = IRQ_count_latch; /* TODO: verify this */
 #ifdef LOG_MMC
-			logerror("     MMC3 disable irqs: %02x\n", data);
+			logerror("     MMC3 disable irqs\n");
 #endif
 			break;
 
 		case 0x6001: /* $e001 - Enable IRQs */
 			IRQ_enable = 1;
 #ifdef LOG_MMC
-			logerror("     MMC3 enable irqs: %02x\n", data);
+			logerror("     MMC3 enable irqs\n");
 #endif
 			break;
 
@@ -802,8 +825,8 @@ static WRITE8_HANDLER( mapper118_w )
 #endif
 			switch (data & 0x02)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
 			}
 			break;
 
@@ -854,7 +877,7 @@ static void mapper5_irq ( int num, int scanline, int vblank, int blanked )
 #if 1
 	if (scanline == 0)
 		IRQ_status |= 0x40;
-	else if (scanline > BOTTOM_VISIBLE_SCANLINE)
+	else if (scanline > PPU_BOTTOM_VISIBLE_SCANLINE)
 		IRQ_status &= ~0x40;
 #endif
 
@@ -1099,7 +1122,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[0] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+					ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 //					nes_vram_sprite[0] = vrom_bank[0] * 64;
 //					vrom_next[0] = 4;
 //					vrom_page_a = 1;
@@ -1119,7 +1142,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[1] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+					ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 //					nes_vram_sprite[1] = vrom_bank[0] * 64;
 //					vrom_next[1] = 5;
 //					vrom_page_a = 1;
@@ -1135,7 +1158,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[2] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+					ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 //					nes_vram_sprite[2] = vrom_bank[0] * 64;
 //					vrom_next[2] = 6;
 //					vrom_page_a = 1;
@@ -1158,7 +1181,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[3] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+					ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 //					nes_vram_sprite[3] = vrom_bank[0] * 64;
 //					vrom_next[3] = 7;
 //					vrom_page_a = 1;
@@ -1174,7 +1197,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[4] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+					ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 //					nes_vram_sprite[4] = vrom_bank[0] * 64;
 //					vrom_next[0] = 0;
 //					vrom_page_a = 0;
@@ -1194,7 +1217,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[5] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+					ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 //					nes_vram_sprite[5] = vrom_bank[0] * 64;
 //					vrom_next[1] = 1;
 //					vrom_page_a = 0;
@@ -1210,7 +1233,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[6] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+					ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 //					nes_vram_sprite[6] = vrom_bank[0] * 64;
 //					vrom_next[2] = 2;
 //					vrom_page_a = 0;
@@ -1238,7 +1261,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[7] = data;
 //					mapper5_sync_vrom(0);
-					ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+					ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 //					nes_vram_sprite[7] = vrom_bank[0] * 64;
 //					vrom_next[3] = 3;
 //					vrom_page_a = 0;
@@ -1256,7 +1279,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[0]] = data * 64;
 //					nes_vram[0 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[0] = data * 64;
-					ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 4, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1281,7 +1304,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[1]] = data * 64;
 //					nes_vram[1 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[1] = data * 64;
-					ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 5, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1301,7 +1324,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[2]] = data * 64;
 //					nes_vram[2 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[2] = data * 64;
-					ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 6, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1335,7 +1358,7 @@ static WRITE8_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[3]] = data * 64;
 //					nes_vram[3 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[3] = data * 64;
-					ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 7, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1376,9 +1399,9 @@ static WRITE8_HANDLER( mapper5_w )
 static WRITE8_HANDLER( mapper7_w )
 {
 	if (data & 0x10)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 
 	prg32 (data);
 }
@@ -1460,9 +1483,9 @@ static WRITE8_HANDLER( mapper9_w )
 			break;
 		case 0x7000:
 			if (data&1)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		default:
 			logerror("MMC2 uncaught w: %04x:%02x\n", offset, data);
@@ -1533,9 +1556,9 @@ static WRITE8_HANDLER( mapper10_w )
 			break;
 		case 0x7000:
 			if (data&1)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		default:
 			logerror("MMC4 uncaught w: %04x:%02x\n", offset, data);
@@ -1573,9 +1596,9 @@ static WRITE8_HANDLER( mapper15_w )
 	{
 		case 0x0000:
 			if (data & 0x40)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			memory_set_bankptr (1, &nes.rom[bank + base]);
 			memory_set_bankptr (2, &nes.rom[bank + (base ^ 0x2000)]);
 			memory_set_bankptr (3, &nes.rom[bank + (base ^ 0x4000)]);
@@ -1596,9 +1619,9 @@ static WRITE8_HANDLER( mapper15_w )
 
 		case 0x0003:
 			if (data & 0x40)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			memory_set_bankptr (3, &nes.rom[bank + base]);
 			memory_set_bankptr (4, &nes.rom[bank + (base ^ 0x2000)]);
         	break;
@@ -1656,19 +1679,20 @@ static WRITE8_HANDLER( mapper16_w )
 			prg16_89ab (data);
 			break;
 		case 9:
-			switch (data & 0x03) {
-			case 0:
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
-				break;
-			case 1:
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-				break;
-			case 2:
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
-				break;
-			case 3:
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
-				break;
+			switch (data & 0x03)
+			{
+				case 0:
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
+					break;
+				case 1:
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
+					break;
+				case 2:
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
+					break;
+				case 3:
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
+					break;
 			}
 			break;
 		case 0x0a:
@@ -1695,16 +1719,16 @@ static WRITE8_HANDLER( mapper17_l_w )
 		/* $42fe - mirroring */
 		case 0x1fe:
 			if (data & 0x10)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 			break;
 		/* $42ff - mirroring */
 		case 0x1ff:
 			if (data & 0x10)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		/* $4501 - $4503 */
 //		case 0x401:
@@ -1731,7 +1755,7 @@ static WRITE8_HANDLER( mapper17_l_w )
 		case 0x416:
 		case 0x417:
 			data &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, offset & 0x07, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, offset & 0x07, 1, data, 64);
 			break;
 		default:
 			logerror("** uncaught mapper 17 write, offset: %04x, data: %02x\n", offset, data);
@@ -1741,7 +1765,7 @@ static WRITE8_HANDLER( mapper17_l_w )
 
 static void jaleco_irq ( int num, int scanline, int vblank, int blanked )
 {
-	if (scanline <= BOTTOM_VISIBLE_SCANLINE)
+	if (scanline <= PPU_BOTTOM_VISIBLE_SCANLINE)
 	{
 		/* Increment & check the IRQ scanline counter */
 		if (IRQ_enable)
@@ -1832,97 +1856,97 @@ static WRITE8_HANDLER( mapper18_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x2001:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x2002:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x2003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 
 /* LBO - these are unverified */
@@ -1963,10 +1987,10 @@ static WRITE8_HANDLER( mapper18_w )
 		case 0x7002: /* Misc */
 			switch (data & 0x03)
 			{
-				case 0: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 1: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
-				case 2: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 3: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 1: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 2: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 3: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
 			}
 			break;
 
@@ -2020,7 +2044,7 @@ static WRITE8_HANDLER( mapper19_w )
 		case 0x3000:
 		case 0x3800:
 			/* Switch 1k VROM at $0000-$1c00 */
-			ppu2c03b_set_videorom_bank(0, offset / 0x800, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, offset / 0x800, 1, data, 64);
 			break;
 
 		case 0x6000:
@@ -2060,7 +2084,7 @@ static void fds_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
- READ8_HANDLER ( fds_r )
+READ8_HANDLER ( fds_r )
 {
 	int ret = 0x00;
 	static int last_side = 0;
@@ -2137,9 +2161,9 @@ WRITE8_HANDLER ( fds_w )
 			if (data & 0x02) nes_fds.head_position = 0;
 			nes_fds.read_mode = data & 0x04;
 			if (data & 0x08)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			if ((!(data & 0x40)) && (nes_fds.write_reg & 0x40))
 				nes_fds.head_position -= 2; // ???
 			IRQ_enable_latch = data & 0x80;
@@ -2179,10 +2203,10 @@ static WRITE8_HANDLER( konami_vrc2a_w )
 			case 0x1000:
 				switch (data & 0x03)
 				{
-					case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-					case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-					case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-					case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+					case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+					case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 				}
 				break;
 
@@ -2213,15 +2237,19 @@ static WRITE8_HANDLER( konami_vrc2a_w )
 				int bank = (offset & 0x7000) / 0x0800 + (offset & 0x0001);
 				vrom_bank[bank] = data >> 1;
 				vrom_bank[bank] &= ((nes.chr_chunks << 3) - 1);
-				ppu2c03b_set_videorom_bank(0, bank, 1, vrom_bank[bank], 64);
+				ppu2c0x_set_videorom_bank(0, bank, 1, vrom_bank[bank], 64);
 			}
 			break;
 
 		case 0x7000:
-			IRQ_count_latch = data;
+			/* Set low 4 bits of latch */
+			IRQ_count_latch &= ~0x0f;
+			IRQ_count_latch |= data & 0x0f;
 			break;
 		case 0x7001:
-			IRQ_enable = IRQ_enable_latch;
+			/* Set high 4 bits of latch */
+			IRQ_count_latch &= ~0xf0;
+			IRQ_count_latch |= (data << 4) & 0xf0;
 			break;
 		case 0x7002:
 			IRQ_count = IRQ_count_latch;
@@ -2253,10 +2281,10 @@ static WRITE8_HANDLER( konami_vrc2b_w )
 			case 0x1000:
 				switch (data & 0x03)
 				{
-					case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-					case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-					case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-					case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+					case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+					case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 				}
 				break;
 
@@ -2283,103 +2311,107 @@ static WRITE8_HANDLER( konami_vrc2b_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x6000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6001:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6002:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x6003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x7000:
-			IRQ_count_latch = data;
+			/* Set low 4 bits of latch */
+			IRQ_count_latch &= ~0x0f;
+			IRQ_count_latch |= data & 0x0f;
 			break;
 		case 0x7001:
-			IRQ_enable = IRQ_enable_latch;
+			/* Set high 4 bits of latch */
+			IRQ_count_latch &= ~0xf0;
+			IRQ_count_latch |= (data << 4) & 0xf0;
 			break;
 		case 0x7002:
 			IRQ_count = IRQ_count_latch;
@@ -2405,10 +2437,10 @@ static WRITE8_HANDLER( konami_vrc4_w )
 		case 0x1000:
 			switch (data & 0x03)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 
@@ -2423,105 +2455,105 @@ static WRITE8_HANDLER( konami_vrc4_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3001:
 		case 0x3004:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3003:
 		case 0x3006:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4001:
 		case 0x4004:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4003:
 		case 0x4006:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5001:
 		case 0x5004:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5003:
 		case 0x5006:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x6000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6002:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6001:
 		case 0x6004:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x6003:
 		case 0x6006:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x7000:
 			/* Set low 4 bits of latch */
@@ -2576,10 +2608,10 @@ static WRITE8_HANDLER( konami_vrc6a_w )
 		case 0x3003:
 			switch (data & 0x0c)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 0x04: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-				case 0x08: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x0c: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x04: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x08: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x0c: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x4000: case 0x4001: case 0x4002: case 0x4003:
@@ -2591,7 +2623,7 @@ static WRITE8_HANDLER( konami_vrc6a_w )
 		case 0x5002:
 		case 0x5003:
 			/* switch 1k VROM at $0000-$0c00 */
-			ppu2c03b_set_videorom_bank(0, (offset & 3) + 0, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, (offset & 3) + 0, 1, data, 64);
 			break;
 
 		case 0x6000:
@@ -2599,7 +2631,7 @@ static WRITE8_HANDLER( konami_vrc6a_w )
 		case 0x6002:
 		case 0x6003:
 			/* switch 1k VROM at $1000-$1c00 */
-			ppu2c03b_set_videorom_bank(0, (offset & 3) + 4, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, (offset & 3) + 4, 1, data, 64);
 			break;
 
 		case 0x7000:
@@ -2639,10 +2671,10 @@ static WRITE8_HANDLER( konami_vrc6b_w )
 		case 0x3003:
 			switch (data & 0x0c)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 0x04: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-				case 0x08: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x0c: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x04: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x08: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x0c: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x4000: case 0x4001: case 0x4002: case 0x4003:
@@ -2651,35 +2683,35 @@ static WRITE8_HANDLER( konami_vrc6b_w )
 			break;
 		case 0x5000:
 			/* Switch 1k VROM at $0000 */
-			ppu2c03b_set_videorom_bank(0, 0, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, data, 64);
 			break;
 		case 0x5002:
 			/* Switch 1k VROM at $0400 */
-			ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, data, 64);
 			break;
 		case 0x5001:
 			/* Switch 1k VROM at $0800 */
-			ppu2c03b_set_videorom_bank(0, 2, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, data, 64);
 			break;
 		case 0x5003:
 			/* Switch 1k VROM at $0c00 */
-			ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, data, 64);
 			break;
 		case 0x6000:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x6002:
 			/* Switch 1k VROM at $1400 */
-			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x6001:
 			/* Switch 1k VROM at $1800 */
-			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x6003:
 			/* Switch 1k VROM at $1c00 */
-			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		case 0x7000:
 			IRQ_count_latch = data;
@@ -2717,9 +2749,9 @@ static WRITE8_HANDLER( mapper32_w )
 		case 0x1000:
 			bankSel = data & 0x02;
 			if (data & 0x01)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		case 0x2000:
 			/* Switch 8k bank at $A000 */
@@ -2727,7 +2759,7 @@ static WRITE8_HANDLER( mapper32_w )
 			break;
 		case 0x3000:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, offset & 0x07, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, offset & 0x07, 1, data, 64);
 			break;
 		default:
 			logerror("Uncaught mapper 32 write, addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -2754,27 +2786,27 @@ static WRITE8_HANDLER( mapper33_w )
 			break;
 		case 0x0002:
 			/* Switch 2k VROM at $0000 */
-			ppu2c03b_set_videorom_bank(0, 0, 2, data, 128);
+			ppu2c0x_set_videorom_bank(0, 0, 2, data, 128);
 			break;
 		case 0x0003:
 			/* Switch 2k VROM at $0800 */
-			ppu2c03b_set_videorom_bank(0, 2, 2, data, 128);
+			ppu2c0x_set_videorom_bank(0, 2, 2, data, 128);
 			break;
 		case 0x2000:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x2001:
 			/* Switch 1k VROM at $1400 */
-			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x2002:
 			/* Switch 1k VROM at $1800 */
-			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x2003:
 			/* Switch 1k VROM at $1c00 */
-			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		default:
 			logerror("Uncaught mapper 33 write, addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -2851,9 +2883,9 @@ static WRITE8_HANDLER( mapper41_m_w )
 	logerror("mapper41_m_w, offset: %04x, data: %02x\n", offset, data);
 #endif
 	if (offset & 0x20)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 
 	mapper41_reg2 = offset & 0x04;
 	mapper41_chr &= ~0x0c;
@@ -2903,8 +2935,8 @@ static WRITE8_HANDLER( mapper64_w )
 
 			if (data & 0x10)
 			{
-				ppu2c03b_set_videorom_bank(0, 1, 1, 0, 64);
-				ppu2c03b_set_videorom_bank(0, 3, 1, 0, 64);
+				ppu2c0x_set_videorom_bank(0, 1, 1, 0, 64);
+				ppu2c0x_set_videorom_bank(0, 3, 1, 0, 64);
 			}
 
 			page = chr >> 10;
@@ -2929,27 +2961,27 @@ static WRITE8_HANDLER( mapper64_w )
 			switch (cmd)
 			{
 				case 0:
-					ppu2c03b_set_videorom_bank(0, page, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page, 2, data, 64);
 					break;
 
 				case 1:
-					ppu2c03b_set_videorom_bank(0, page ^ 2, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page ^ 2, 2, data, 64);
 					break;
 
 				case 2:
-					ppu2c03b_set_videorom_bank(0, page ^ 4, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page ^ 4, 2, data, 64);
 					break;
 
 				case 3:
-					ppu2c03b_set_videorom_bank(0, page ^ 5, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page ^ 5, 2, data, 64);
 					break;
 
 				case 4:
-					ppu2c03b_set_videorom_bank(0, page ^ 6, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page ^ 6, 2, data, 64);
 					break;
 
 				case 5:
-					ppu2c03b_set_videorom_bank(0, page ^ 7, 2, data, 64);
+					ppu2c0x_set_videorom_bank(0, page ^ 7, 2, data, 64);
 					break;
 
 				case 6:
@@ -2981,11 +3013,11 @@ static WRITE8_HANDLER( mapper64_w )
 					break;
 				case 8:
 					/* Switch 1k VROM at $0400 */
-					ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 1, 1, data, 64);
 					break;
 				case 9:
 					/* Switch 1k VROM at $0C00 */
-					ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, 3, 1, data, 64);
 					break;
 				case 15:
 					data &= prg_mask;
@@ -3006,13 +3038,13 @@ static WRITE8_HANDLER( mapper64_w )
 		case 0x2000:
 			/* Not sure if the one-screen mirroring applies to this mapper */
 			if (data & 0x40)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 			else
 			{
 				if (data & 0x01)
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 				else
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			}
 			break;
 		case 0x4000: /* $c000 - IRQ scanline counter */
@@ -3067,9 +3099,9 @@ static WRITE8_HANDLER( mapper65_w )
 			break;
 		case 0x1001:
 			if (data & 0x80)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		case 0x1005:
 			IRQ_count = data << 1;
@@ -3096,7 +3128,7 @@ static WRITE8_HANDLER( mapper65_w )
 		case 0x3006:
 		case 0x3007:
 			/* Switch 1k VROM at $0000-$1c00 */
-			ppu2c03b_set_videorom_bank(0, offset & 7, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, offset & 7, 1, data, 64);
 			break;
 
 		case 0x4000:
@@ -3178,10 +3210,10 @@ static WRITE8_HANDLER( mapper67_w )
 		case 0x6801:
 			switch(data&3)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x7800:
@@ -3202,10 +3234,10 @@ static void mapper68_mirror (int m68_mirror, int m0, int m1)
 
 	switch (m68_mirror)
 	{
-		case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-		case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-		case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-		case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+		case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+		case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+		case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+		case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 		case 0x10:
 			ppu_mirror_custom_vrom (0, (m0 << 10) + M68_OFFSET);
 			ppu_mirror_custom_vrom (1, (m1 << 10) + M68_OFFSET);
@@ -3294,7 +3326,7 @@ static WRITE8_HANDLER( mapper69_w )
 			switch (cmd)
 			{
 				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-					ppu2c03b_set_videorom_bank(0, cmd, 1, data, 64);
+					ppu2c0x_set_videorom_bank(0, cmd, 1, data, 64);
 					break;
 
 				/* TODO: deal with bankswitching/write-protecting the mid-mapper area */
@@ -3321,10 +3353,10 @@ static WRITE8_HANDLER( mapper69_w )
 				case 12:
 					switch (data & 0x03)
 					{
-						case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-						case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-						case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-						case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+						case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+						case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+						case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+						case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 					}
 					break;
 				case 13:
@@ -3357,11 +3389,11 @@ static WRITE8_HANDLER( mapper70_w )
 
 #if 1
 	if (data & 0x80)
-//		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+//		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 	else
-//		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+//		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 #endif
 }
 
@@ -3432,9 +3464,9 @@ static WRITE8_HANDLER( mapper75_w )
 			break;
 		case 0x1000: /* TODO: verify */
 			if (data & 0x01)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			/* vrom banking as well? */
 			break;
 		case 0x2000:
@@ -3472,7 +3504,7 @@ static WRITE8_HANDLER( mapper76_w )
 			default:logerror("mapper76 unsupported command: %02x, data: %02x\n", cmd, data);break;
 			}
 		}
-	case 0x2000: (data&1)?ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ):ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);break;
+	case 0x2000: (data&1)?ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ):ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);break;
 	default: logerror("mapper76 unmapped write, offset: %04x, data: %02x\n", offset, data);break;
 	}
 }
@@ -3566,19 +3598,19 @@ static WRITE8_HANDLER( mapper80_m_w )
 			break;
 		case 0x1ef2:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x1ef3:
 			/* Switch 1k VROM at $1400 */
-			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x1ef4:
 			/* Switch 1k VROM at $1800 */
-			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x1ef5:
 			/* Switch 1k VROM at $1c00 */
-			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		case 0x1efa: case 0x1efb:
 			/* Switch 8k ROM at $8000 */
@@ -3624,19 +3656,19 @@ static WRITE8_HANDLER( mapper82_m_w )
 			break;
 		case 0x1ef2:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, 4 ^ vrom_switch, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 4 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef3:
 			/* Switch 1k VROM at $1400 */
-			ppu2c03b_set_videorom_bank(0, 5 ^ vrom_switch, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 5 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef4:
 			/* Switch 1k VROM at $1800 */
-			ppu2c03b_set_videorom_bank(0, 6 ^ vrom_switch, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 6 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef5:
 			/* Switch 1k VROM at $1c00 */
-			ppu2c03b_set_videorom_bank(0, 7 ^ vrom_switch, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 7 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef6:
 			//doc says 1= swapped. Causes in-game issues, but mostly fixes title screen
@@ -3685,44 +3717,44 @@ static WRITE8_HANDLER( konami_vrc7_w )
 
 		case 0x2000:
 			/* Switch 1k VROM at $0000 */
-			ppu2c03b_set_videorom_bank(0, 0, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 0, 1, data, 64);
 			break;
 		case 0x2008: case 0x2010: case 0x2018:
 			/* Switch 1k VROM at $0400 */
-			ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 1, 1, data, 64);
 			break;
 		case 0x3000:
 			/* Switch 1k VROM at $0800 */
-			ppu2c03b_set_videorom_bank(0, 2, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 2, 1, data, 64);
 			break;
 		case 0x3008: case 0x3010: case 0x3018:
 			/* Switch 1k VROM at $0c00 */
-			ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 3, 1, data, 64);
 			break;
 		case 0x4000:
 			/* Switch 1k VROM at $1000 */
-			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x4008: case 0x4010: case 0x4018:
 			/* Switch 1k VROM at $1400 */
-			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x5000:
 			/* Switch 1k VROM at $1800 */
-			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x5008: case 0x5010: case 0x5018:
 			/* Switch 1k VROM at $1c00 */
-			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
+			ppu2c0x_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 
 		case 0x6000:
 			switch (data & 0x03)
 			{
-				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
-				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
-				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
-				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 0x00: ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x6008: case 0x6010: case 0x6018:
@@ -3773,7 +3805,7 @@ static WRITE8_HANDLER( mapper89_w )
 	prg16_89ab((data>>4)&7);
 	chr=(data&7)|((data&0x80)?8:0);
 	chr8(chr);
-	(data&8)?ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH):ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+	(data&8)?ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH):ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 
 }
 
@@ -3872,8 +3904,8 @@ static WRITE8_HANDLER( mapper97_w )
 	if(offset&0x4000)
 		return;
 	if(data&0x80)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-	else ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
+	else ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	prg16_cdef(data&0x0F);
 }
 static WRITE8_HANDLER( mapper101_m_w )
@@ -3984,9 +4016,9 @@ static WRITE8_HANDLER( mapper225_w )
 		prg32 (bank);
 
 	if (offset & 0x2000)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
 static WRITE8_HANDLER( mapper226_w )
@@ -4012,9 +4044,9 @@ static WRITE8_HANDLER( mapper226_w )
 	hi_bank = reg0 & 0x01;
 	size_16 = reg0 & 0x20;
 	if (reg0 & 0x40)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 
 	bank = ((reg0 & 0x1e) >> 1) | ((reg1 & 0x01) << 4);
 
@@ -4065,9 +4097,9 @@ static WRITE8_HANDLER( mapper227_w )
 	}
 
 	if (offset & 0x02)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
 static WRITE8_HANDLER( mapper228_w )
@@ -4116,9 +4148,9 @@ static WRITE8_HANDLER( mapper228_w )
 	}
 
 	if (offset & 0x2000)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 
 	/* Now handle vrom banking */
 	chr = (data & 0x03) + ((offset & 0x0f) << 2);
@@ -4132,9 +4164,9 @@ static WRITE8_HANDLER( mapper229_w )
 #endif
 
 	if (offset & 0x20)
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 
 	if ((offset & 0x1e) == 0)
 	{
@@ -4178,23 +4210,25 @@ int mapper_reset (int mapperNum)
 	const mmc *mapper;
 
 	/* Set the vram bank-switch values to the default */
-	ppu2c03b_set_videorom_bank(0, 0, 8, 0, 64);
+	ppu2c0x_set_videorom_bank(0, 0, 8, 0, 64);
 	
 	/* Set the mapper irq callback */
 	mapper = nes_mapper_lookup(mapperNum);
-	ppu2c03b_set_scanline_callback (0, mapper ? mapper->mmc_irq : NULL);
+	ppu2c0x_set_scanline_callback (0, mapper ? mapper->mmc_scanline : NULL);
+	ppu2c0x_set_hblank_callback (0, mapper ? mapper->mmc_hblank :  NULL);
 
+	if (!nes_irq_timer)
+		nes_irq_timer = mame_timer_alloc(nes_irq_callback);
+		
 	mapper_warning = 0;
 	/* 8k mask */
 	prg_mask = ((nes.prg_chunks << 1) - 1);
 
 	MMC5_vram_control = 0;
 
-	if (mapperNum != 20)
-	{
-		/* Point the WRAM/battery area to the first RAM bank */
+	/* Point the WRAM/battery area to the first RAM bank */
+	if (mapperNum != 20 && mapperNum != 40)
 		memory_set_bankptr (5, &nes.wram[0x0000]);
-	}
 
 	switch (mapperNum)
 	{
@@ -4252,6 +4286,7 @@ int mapper_reset (int mapperNum)
 			/* Can switch 8k prg banks */
 			IRQ_enable = 0;
 			IRQ_count = IRQ_count_latch = 0;
+			IRQ_reload = 0;
 			MMC3_prg0 = 0xfe;
 			MMC3_prg1 = 0xff;
 			MMC3_cmd = 0;
@@ -4271,7 +4306,7 @@ int mapper_reset (int mapperNum)
 			break;
 		case 7:
 			/* Bankswitches 32k at a time */
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+			ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
@@ -4426,11 +4461,11 @@ int mapper_reset (int mapperNum)
 		case 89:
 			prg16_89ab(0);
 			prg16_cdef(nes.prg_chunks-1);
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+			ppu2c0x_set_mirroring(0, PPU_MIRROR_LOW);
 			break;
 
 		case 91:
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+			ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			prg16_89ab (nes.prg_chunks-1);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
@@ -4483,86 +4518,86 @@ int mapper_reset (int mapperNum)
 
 static mmc mmc_list[] =
 {
-/*	INES   DESC						LOW_W, LOW_R, MED_W, HIGH_W, PPU_latch, IRQ */
-	{ 0, "No Mapper",				NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 1, "MMC1",					NULL, NULL, NULL, mapper1_w, NULL, NULL },
-	{ 2, "74161/32 ROM sw",			NULL, NULL, NULL, mapper2_w, NULL, NULL },
-	{ 3, "74161/32 VROM sw",		NULL, NULL, NULL, mapper3_w, NULL, NULL },
-	{ 4, "MMC3",					NULL, NULL, NULL, mapper4_w, NULL, mapper4_irq },
-	{ 5, "MMC5",					mapper5_l_w, mapper5_l_r, NULL, mapper5_w, NULL, mapper5_irq },
-	{ 7, "ROM Switch",				NULL, NULL, NULL, mapper7_w, NULL, NULL },
-	{ 8, "FFE F3xxxx",				NULL, NULL, NULL, mapper8_w, NULL, NULL },
-	{ 9, "MMC2",					NULL, NULL, NULL, mapper9_w, mapper9_latch, NULL},
-	{ 10, "MMC4",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL },
-	{ 11, "Color Dreams Mapper",	NULL, NULL, NULL, mapper11_w, NULL, NULL },
-	{ 13, "CP-ROM",					NULL, NULL,	NULL, mapper13_w, NULL, NULL }, //needs CHR-RAM hooked up
-	{ 15, "100-in-1",				NULL, NULL, NULL, mapper15_w, NULL, NULL },
-	{ 16, "Bandai",					NULL, NULL, mapper16_w, mapper16_w, NULL, bandai_irq },
-	{ 17, "FFE F8xxx",				mapper17_l_w, NULL, NULL, NULL, NULL, mapper4_irq },
-	{ 18, "Jaleco",					NULL, NULL, NULL, mapper18_w, NULL, jaleco_irq },
-	{ 19, "Namco 106",				mapper19_l_w, NULL, NULL, mapper19_w, NULL, namcot_irq },
-	{ 20, "Famicom Disk System",	NULL, NULL, NULL, NULL, NULL, fds_irq },
-	{ 21, "Konami VRC 4",			NULL, NULL, NULL, konami_vrc4_w, NULL, konami_irq },
-	{ 22, "Konami VRC 2a",			NULL, NULL, NULL, konami_vrc2a_w, NULL, konami_irq },
-	{ 23, "Konami VRC 2b",			NULL, NULL, NULL, konami_vrc2b_w, NULL, konami_irq },
-	{ 24, "Konami VRC 6a",			NULL, NULL, NULL, konami_vrc6a_w, NULL, konami_irq },
-	{ 25, "Konami VRC 4",			NULL, NULL, NULL, konami_vrc4_w, NULL, konami_irq },
-	{ 26, "Konami VRC 6b",			NULL, NULL, NULL, konami_vrc6b_w, NULL, konami_irq },
-	{ 32, "Irem G-101",				NULL, NULL, NULL, mapper32_w, NULL, NULL },
-	{ 33, "Taito TC0190",			NULL, NULL, NULL, mapper33_w, NULL, NULL },
-	{ 34, "Nina-1",					NULL, NULL, mapper34_m_w, mapper34_w, NULL, NULL },
-	{ 40, "SMB2j (bootleg)",		NULL, NULL, NULL, mapper40_w, NULL, mapper40_irq },
-	{ 41, "Caltron 6-in-1",			NULL, NULL, mapper41_m_w, mapper41_w, NULL, NULL },
+/*	INES   DESC						LOW_W, LOW_R, MED_W, HIGH_W, PPU_latch, scanline CB, hblank CB */
+	{ 0, "No Mapper",				NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, "MMC1",					NULL, NULL, NULL, mapper1_w, NULL, NULL, NULL },
+	{ 2, "74161/32 ROM sw",			NULL, NULL, NULL, mapper2_w, NULL, NULL, NULL },
+	{ 3, "74161/32 VROM sw",		NULL, NULL, NULL, mapper3_w, NULL, NULL, NULL },
+	{ 4, "MMC3",					NULL, NULL, NULL, mapper4_w, NULL, NULL, mapper4_irq },
+	{ 5, "MMC5",					mapper5_l_w, mapper5_l_r, NULL, mapper5_w, NULL, NULL, mapper5_irq },
+	{ 7, "ROM Switch",				NULL, NULL, NULL, mapper7_w, NULL, NULL, NULL },
+	{ 8, "FFE F3xxxx",				NULL, NULL, NULL, mapper8_w, NULL, NULL, NULL },
+	{ 9, "MMC2",					NULL, NULL, NULL, mapper9_w, mapper9_latch, NULL, NULL},
+	{ 10, "MMC4",					NULL, NULL, NULL, mapper10_w, mapper10_latch, NULL, NULL },
+	{ 11, "Color Dreams Mapper",	NULL, NULL, NULL, mapper11_w, NULL, NULL, NULL },
+	{ 13, "CP-ROM",					NULL, NULL,	NULL, mapper13_w, NULL, NULL, NULL }, //needs CHR-RAM hooked up
+	{ 15, "100-in-1",				NULL, NULL, NULL, mapper15_w, NULL, NULL, NULL },
+	{ 16, "Bandai",					NULL, NULL, mapper16_w, mapper16_w, NULL,NULL,  bandai_irq },
+	{ 17, "FFE F8xxx",				mapper17_l_w, NULL, NULL, NULL, NULL, NULL, mapper4_irq },
+	{ 18, "Jaleco",					NULL, NULL, NULL, mapper18_w, NULL, NULL, jaleco_irq },
+	{ 19, "Namco 106",				mapper19_l_w, NULL, NULL, mapper19_w, NULL, NULL, namcot_irq },
+	{ 20, "Famicom Disk System",	NULL, NULL, NULL, NULL, NULL, NULL, fds_irq },
+	{ 21, "Konami VRC 4",			NULL, NULL, NULL, konami_vrc4_w, NULL, NULL, konami_irq },
+	{ 22, "Konami VRC 2a",			NULL, NULL, NULL, konami_vrc2a_w, NULL, NULL, konami_irq },
+	{ 23, "Konami VRC 2b",			NULL, NULL, NULL, konami_vrc2b_w, NULL, NULL, konami_irq },
+	{ 24, "Konami VRC 6a",			NULL, NULL, NULL, konami_vrc6a_w, NULL, NULL, konami_irq },
+	{ 25, "Konami VRC 4",			NULL, NULL, NULL, konami_vrc4_w, NULL, NULL, konami_irq },
+	{ 26, "Konami VRC 6b",			NULL, NULL, NULL, konami_vrc6b_w, NULL, NULL, konami_irq },
+	{ 32, "Irem G-101",				NULL, NULL, NULL, mapper32_w, NULL, NULL, NULL },
+	{ 33, "Taito TC0190",			NULL, NULL, NULL, mapper33_w, NULL, NULL, NULL },
+	{ 34, "Nina-1",					NULL, NULL, mapper34_m_w, mapper34_w, NULL, NULL, NULL },
+	{ 40, "SMB2j (bootleg)",		NULL, NULL, NULL, mapper40_w, NULL, NULL, mapper40_irq },
+	{ 41, "Caltron 6-in-1",			NULL, NULL, mapper41_m_w, mapper41_w, NULL, NULL, NULL },
 // 42 - "Mario Baby" pirate cart
-	{ 64, "Tengen",					NULL, NULL, mapper64_m_w, mapper64_w, NULL, mapper4_irq },
-	{ 65, "Irem H3001",				NULL, NULL, NULL, mapper65_w, NULL, irem_irq },
-	{ 66, "74161/32 Jaleco",		NULL, NULL, NULL, mapper66_w, NULL, NULL },
-	{ 67, "SunSoft 3",				NULL, NULL, NULL, mapper67_w, NULL, mapper4_irq },
-	{ 68, "SunSoft 4",				NULL, NULL, NULL, mapper68_w, NULL, NULL },
-	{ 69, "SunSoft 5",				NULL, NULL, NULL, mapper69_w, NULL, sunsoft_irq },
-	{ 70, "74161/32 Bandai",		NULL, NULL, NULL, mapper70_w, NULL, NULL },
-	{ 71, "Camerica",				NULL, NULL, mapper71_m_w, mapper71_w, NULL, NULL },
-	{ 72, "74161/32 Jaleco",		NULL, NULL, NULL, mapper72_w, NULL, NULL },
-	{ 73, "Konami VRC 3",			NULL, NULL, NULL, mapper73_w, NULL, konami_irq },
-	{ 75, "Konami VRC 1",			NULL, NULL, NULL, mapper75_w, NULL, NULL },
-	{ 76, "Namco 109",				NULL, NULL, NULL, mapper76_w, NULL, NULL },
-	{ 77, "74161/32 ?",				NULL, NULL, NULL, mapper77_w, NULL, NULL },
-	{ 78, "74161/32 Irem",			NULL, NULL, NULL, mapper78_w, NULL, NULL },
-	{ 79, "Nina-3 (AVE)",			mapper79_l_w, NULL, mapper79_w, mapper79_w, NULL, NULL },
-	{ 80, "Taito X1-005",			NULL, NULL, mapper80_m_w, NULL, NULL, NULL },
-	{ 82, "Taito C075",				NULL, NULL, mapper82_m_w, NULL, NULL, NULL },
+	{ 64, "Tengen",					NULL, NULL, mapper64_m_w, mapper64_w, NULL, NULL, mapper4_irq },
+	{ 65, "Irem H3001",				NULL, NULL, NULL, mapper65_w, NULL, NULL, irem_irq },
+	{ 66, "74161/32 Jaleco",		NULL, NULL, NULL, mapper66_w, NULL, NULL, NULL },
+	{ 67, "SunSoft 3",				NULL, NULL, NULL, mapper67_w, NULL, NULL, mapper4_irq },
+	{ 68, "SunSoft 4",				NULL, NULL, NULL, mapper68_w, NULL, NULL, NULL },
+	{ 69, "SunSoft 5",				NULL, NULL, NULL, mapper69_w, NULL, NULL, sunsoft_irq },
+	{ 70, "74161/32 Bandai",		NULL, NULL, NULL, mapper70_w, NULL, NULL, NULL },
+	{ 71, "Camerica",				NULL, NULL, mapper71_m_w, mapper71_w, NULL, NULL, NULL },
+	{ 72, "74161/32 Jaleco",		NULL, NULL, NULL, mapper72_w, NULL, NULL, NULL },
+	{ 73, "Konami VRC 3",			NULL, NULL, NULL, mapper73_w, NULL, NULL, konami_irq },
+	{ 75, "Konami VRC 1",			NULL, NULL, NULL, mapper75_w, NULL, NULL, NULL },
+	{ 76, "Namco 109",				NULL, NULL, NULL, mapper76_w, NULL, NULL, NULL },
+	{ 77, "74161/32 ?",				NULL, NULL, NULL, mapper77_w, NULL, NULL, NULL },
+	{ 78, "74161/32 Irem",			NULL, NULL, NULL, mapper78_w, NULL, NULL, NULL },
+	{ 79, "Nina-3 (AVE)",			mapper79_l_w, NULL, mapper79_w, mapper79_w, NULL, NULL, NULL },
+	{ 80, "Taito X1-005",			NULL, NULL, mapper80_m_w, NULL, NULL, NULL, NULL },
+	{ 82, "Taito C075",				NULL, NULL, mapper82_m_w, NULL, NULL, NULL, NULL },
 // 83
-	{ 84, "Pasofami",				NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 85, "Konami VRC 7",			NULL, NULL, NULL, konami_vrc7_w, NULL, konami_irq },
-	{ 86, "Jaleco Early Mapper 2",				NULL, NULL, NULL, mapper86_w, NULL, NULL },
-	{ 87, "74161/32 VROM sw-a",		NULL, NULL, mapper87_m_w, NULL, NULL, NULL },
-	{ 88, "Namco 118",				NULL, NULL, NULL, mapper4_w, NULL, mapper4_irq },
-	{ 89, "Sunsoft Early",			NULL, NULL, NULL, mapper89_w, NULL, NULL },
+	{ 84, "Pasofami",				NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 85, "Konami VRC 7",			NULL, NULL, NULL, konami_vrc7_w, NULL, NULL, konami_irq },
+	{ 86, "Jaleco Early Mapper 2",	NULL, NULL, NULL, mapper86_w, NULL, NULL, NULL },
+	{ 87, "74161/32 VROM sw-a",		NULL, NULL, mapper87_m_w, NULL, NULL, NULL, NULL },
+	{ 88, "Namco 118",				NULL, NULL, NULL, mapper4_w, NULL, NULL, mapper4_irq },
+	{ 89, "Sunsoft Early",			NULL, NULL, NULL, mapper89_w, NULL, NULL, NULL },
 // 90 - pirate mapper
-	{ 91, "HK-SF3 (bootleg)",		NULL, NULL, mapper91_m_w, NULL, NULL, NULL },
-	{ 92, "Jaleco Early Mapper 1",	NULL, NULL, NULL, mapper92_w, NULL, NULL },
-	{ 93, "Sunsoft LS161",			NULL, NULL, mapper93_m_w, mapper93_w, NULL, NULL },
-	{ 94, "Capcom LS161",			NULL, NULL, NULL, mapper94_w, NULL, NULL },
-	{ 95, "Namco ??",				NULL, NULL, NULL, mapper95_w, NULL, NULL },
-	{ 96, "74161/32",			NULL, NULL, NULL, mapper96_w, NULL, NULL },
-	{ 97, "Irem - PRG HI",			NULL, NULL, NULL, mapper97_w, NULL, NULL },
+	{ 91, "HK-SF3 (bootleg)",		NULL, NULL, mapper91_m_w, NULL, NULL, NULL, NULL },
+	{ 92, "Jaleco Early Mapper 1",	NULL, NULL, NULL, mapper92_w, NULL, NULL, NULL },
+	{ 93, "Sunsoft LS161",			NULL, NULL, mapper93_m_w, mapper93_w, NULL, NULL, NULL },
+	{ 94, "Capcom LS161",			NULL, NULL, NULL, mapper94_w, NULL, NULL, NULL },
+	{ 95, "Namco ??",				NULL, NULL, NULL, mapper95_w, NULL, NULL, NULL },
+	{ 96, "74161/32",				NULL, NULL, NULL, mapper96_w, NULL, NULL, NULL },
+	{ 97, "Irem - PRG HI",			NULL, NULL, NULL, mapper97_w, NULL, NULL, NULL },
 // 99 - vs. system
 // 100 - images hacked to work with nesticle
-	{ 101, "?? LS161",				NULL, NULL, mapper101_m_w, mapper101_w, NULL, NULL },
-	{ 113, "Sachen/Hacker/Nina",	mapper113_l_w, NULL, NULL, NULL, NULL, NULL },
-	{ 118, "MMC3?",					NULL, NULL, NULL, mapper118_w, NULL, mapper4_irq },
+	{ 101, "?? LS161",				NULL, NULL, mapper101_m_w, mapper101_w, NULL, NULL, NULL },
+	{ 113, "Sachen/Hacker/Nina",	mapper113_l_w, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 118, "MMC3?",					NULL, NULL, NULL, mapper118_w, NULL, NULL, mapper4_irq },
 // 119 - Pinbot
-	{ 133, "Sachen",				mapper133_l_w, NULL, NULL, NULL, NULL, NULL },
-	{ 144, "AGCI 50282",			NULL, NULL, NULL, mapper144_w, NULL, NULL }, //Death Race only
-	{ 180, "Nihon Bussan - PRG HI",	NULL, NULL, NULL, mapper180_w, NULL, NULL },
-	{ 184, "Sunsoft VROM/4K",		NULL, NULL, mapper184_m_w, NULL, NULL, NULL },
-	{ 225, "72-in-1 bootleg",		NULL, NULL, NULL, mapper225_w, NULL, NULL },
-	{ 226, "76-in-1 bootleg",		NULL, NULL, NULL, mapper226_w, NULL, NULL },
-	{ 227, "1200-in-1 bootleg",		NULL, NULL, NULL, mapper227_w, NULL, NULL },
-	{ 228, "Action 52",				NULL, NULL, NULL, mapper228_w, NULL, NULL },
-	{ 229, "31-in-1",				NULL, NULL, NULL, mapper229_w, NULL, NULL },
-//	{ 230, "22-in-1",				NULL, NULL, NULL, mapper230_w, NULL, NULL },
-	{ 231, "Nina-7 (AVE)",			NULL, NULL, NULL, mapper231_w, NULL, NULL }
+	{ 133, "Sachen",				mapper133_l_w, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 144, "AGCI 50282",			NULL, NULL, NULL, mapper144_w, NULL, NULL, NULL }, //Death Race only
+	{ 180, "Nihon Bussan - PRG HI",	NULL, NULL, NULL, mapper180_w, NULL, NULL, NULL },
+	{ 184, "Sunsoft VROM/4K",		NULL, NULL, mapper184_m_w, NULL, NULL, NULL, NULL },
+	{ 225, "72-in-1 bootleg",		NULL, NULL, NULL, mapper225_w, NULL, NULL, NULL },
+	{ 226, "76-in-1 bootleg",		NULL, NULL, NULL, mapper226_w, NULL, NULL, NULL },
+	{ 227, "1200-in-1 bootleg",		NULL, NULL, NULL, mapper227_w, NULL, NULL, NULL },
+	{ 228, "Action 52",				NULL, NULL, NULL, mapper228_w, NULL, NULL, NULL },
+	{ 229, "31-in-1",				NULL, NULL, NULL, mapper229_w, NULL, NULL, NULL },
+//	{ 230, "22-in-1",				NULL, NULL, NULL, mapper230_w, NULL, NULL, NULL },
+	{ 231, "Nina-7 (AVE)",			NULL, NULL, NULL, mapper231_w, NULL, NULL, NULL }
 // 234 - maxi-15
 };
 

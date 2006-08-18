@@ -9,13 +9,8 @@
 #ifndef NES_H
 #define NES_H
 
-#define BOTTOM_VISIBLE_SCANLINE		239		/* The bottommost visible scanline */
-#define NMI_SCANLINE     			243
-#define NTSC_SCANLINES_PER_FRAME	262.5
-#define PAL_SCANLINES_PER_FRAME		312.5		/* in theory--needs verification */
-
 #define NTSC_CLOCK		N2A03_DEFAULTCLOCK	/* 1.789772 MHz */
-#define PAL_CLOCK		(26601712.0/15)		/* 1.773447 MHz */
+#define PAL_CLOCK		(26601712.0/16)		/* 1.662607 MHz */
 
 #define PORT_PAD0		0
 #define PORT_PAD1		1
@@ -34,8 +29,6 @@
 
 void ppu_mirror_custom (int page, int address);
 void ppu_mirror_custom_vrom (int page, int address);
-
-extern int ppu_scanlines_per_frame;
 
 WRITE8_HANDLER ( nes_IN0_w );
 WRITE8_HANDLER ( nes_IN1_w );
@@ -116,5 +109,4 @@ VIDEO_START( nes_pal );
 VIDEO_UPDATE( nes );
 
 #endif /* NES_H */
-
 

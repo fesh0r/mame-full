@@ -392,7 +392,7 @@ $(OBJ)/nintendo.a:					\
 	$(OBJ)/mess/machine/gb.o		\
 	$(OBJ)/mess/systems/gb.o		\
 	$(OBJ)/mess/machine/nes_mmc.o	\
-	$(OBJ)/vidhrdw/ppu2c03b.o		\
+	$(OBJ)/mess/vidhrdw/ppu2c0x.o	\
 	$(OBJ)/mess/vidhrdw/nes.o		\
 	$(OBJ)/mess/machine/nes.o		\
 	$(OBJ)/mess/systems/nes.o		\

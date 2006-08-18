@@ -18,6 +18,9 @@ System Driver Changes:
   
 - [EP128] Fixed regression introduced in 0.106.  (bug #908) [Nate Woods]
 
+- [NES] Various improvements, such as timing and PPU improvements.  [Brad
+  Oliver]
+
 
 
 User Interface Changes:

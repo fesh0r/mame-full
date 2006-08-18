@@ -12,7 +12,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
 #include "devices/cartslot.h"
@@ -38,12 +38,12 @@ static WRITE8_HANDLER( psg_4017_w )
 
 static WRITE8_HANDLER(nes_vh_sprite_dma_w)
 {
-	ppu2c03b_spriteram_dma(data);
+	ppu2c0x_spriteram_dma(0, data);
 }
 
 static ADDRESS_MAP_START( nes_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM		AM_MIRROR(0x1800)	/* RAM */
-	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_0_r,     ppu2c03b_0_w)		/* PPU registers */
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c0x_0_r,     ppu2c0x_0_w)			/* PPU registers */
 	AM_RANGE(0x4000, 0x4013) AM_READWRITE(NESPSG_0_r, NESPSG_0_w)			/* PSG primary registers */
 	AM_RANGE(0x4014, 0x4014) AM_WRITE(nes_vh_sprite_dma_w)				/* stupid address space hole */
 	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg_4015_r, psg_4015_w)			/* PSG status / first control register */
@@ -262,9 +262,7 @@ ROM_START( famicom )
     ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, CRC(5e607dcf) SHA1(57fe1bdee955bb48d357e463ccbf129496930b62))
 
     ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
-
     ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
-
     ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
@@ -273,9 +271,7 @@ ROM_START( famitwin )
     ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, CRC(4df24a6c) SHA1(e4e41472c454f928e53eb10e0509bf7d1146ecc1))
 
     ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
-
     ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
-
     ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
@@ -285,8 +281,12 @@ static MACHINE_DRIVER_START( nes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", N2A03, NTSC_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(nes_map, 0)
-	MDRV_FRAMES_PER_SECOND(60/1.001)
-	MDRV_VBLANK_DURATION((113.75/(NTSC_CLOCK/1000000)) * (NTSC_SCANLINES_PER_FRAME-(BOTTOM_VISIBLE_SCANLINE+1)))
+	MDRV_FRAMES_PER_SECOND(60.098)
+	// This isn't used so much to calulate the vblank duration (the PPU code tracks that manually) but to determine
+	// the number of cycles in each scanline for the PPU scanline timer. Since the PPU has 20 vblank scanlines + 2
+	// non-rendering scanlines, we compensate. This ends up being 2500 cycles for the non-rendering portion, 2273
+	// cycles for the actual vblank period.
+	MDRV_VBLANK_DURATION((113.66/(NTSC_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_NTSC-PPU_VBLANK_FIRST_SCANLINE+1+2))
 
 	MDRV_MACHINE_START( nes )
 
@@ -312,8 +312,9 @@ static MACHINE_DRIVER_START( nespal )
 
 	/* basic machine hardware */
 	MDRV_CPU_REPLACE("main", N2A03, PAL_CLOCK)
-	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_VBLANK_DURATION((113.75/(PAL_CLOCK/1000000)) * (PAL_SCANLINES_PER_FRAME-(BOTTOM_VISIBLE_SCANLINE+1)))
+	MDRV_FRAMES_PER_SECOND(53.355)
+	MDRV_VBLANK_DURATION((106.53/(PAL_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_PAL-PPU_VBLANK_FIRST_SCANLINE+1+2))
+
 	MDRV_VIDEO_START(nes_pal)
 
     /* sound hardware */

@@ -10,7 +10,8 @@ typedef struct __mmc
 	write8_handler mmc_write_mid; /* $6000-$7fff write routine */
 	write8_handler mmc_write; /* $8000-$ffff write routine */
 	void (*ppu_latch)(offs_t offset);
-	ppu2c03b_scanline_cb mmc_irq;
+	ppu2c0x_scanline_cb		mmc_scanline;
+	ppu2c0x_hblank_cb		mmc_hblank;
 } mmc;
 
 const mmc *nes_mapper_lookup(int mapper);

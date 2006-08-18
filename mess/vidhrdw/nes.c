@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
+#include <math.h>
+
 #include "driver.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "vidhrdw/generic.h"
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
@@ -22,62 +24,68 @@ static void ppu_nmi(int num, int *ppu_regs)
 
 static void nes_vh_reset(void)
 {
-	ppu2c03b_reset( 0, 1 );
+	ppu2c0x_reset( 0, 1 );
 }
 
-static void nes_vh_start(int ppu_scanlines_per_frame)
+
+
+static void nes_vh_start(ppu_t ppu_type, double scanlines_per_frame)
 {
-	ppu2c03b_interface ppu_interface;
+	ppu2c0x_interface ppu_interface;
 
 	nes_zapper_hack = NULL;
 
 	memset(&ppu_interface, 0, sizeof(ppu_interface));
+	ppu_interface.type				= ppu_type;
 	ppu_interface.num				= 1;
 	ppu_interface.vrom_region[0]	= nes.chr_chunks ? REGION_GFX1 : REGION_INVALID;
 	ppu_interface.mirroring[0]		= PPU_MIRROR_NONE;
 	ppu_interface.nmi_handler[0]	= ppu_nmi;
 
-	ppu2c03b_init(&ppu_interface);
-	ppu2c03b_set_vidaccess_callback(0, nes_ppu_vidaccess);
-	ppu2c03b_set_scanlines_per_frame(0, ppu_scanlines_per_frame);
+	ppu2c0x_init(&ppu_interface);
+	ppu2c0x_set_vidaccess_callback(0, nes_ppu_vidaccess);
+	ppu2c0x_set_scanlines_per_frame(0, ceil(scanlines_per_frame));
 
 	if (nes.four_screen_vram)
 	{
-		/* TODO: figure out what to do here */
+		ppu2c0x_set_mirroring(0, PPU_MIRROR_4SCREEN);
 	}
 	else
 	{
-		switch(nes.hard_mirroring) {
-		case 0:
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
-			break;
-		case 1:
-			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
-			break;
+		switch(nes.hard_mirroring)
+		{
+			case 0:
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
+				break;
+			case 1:
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
+				break;
 		}
 	}
 
 	add_reset_callback(nes_vh_reset);
 
 	/* Reset the mapper variables. Will also mark the char-gen ram as dirty */
-	mapper_reset (nes.mapper);
+	mapper_reset(nes.mapper);
 }
+
+
 
 VIDEO_START( nes_ntsc )
 {
-	nes_vh_start(NTSC_SCANLINES_PER_FRAME);
+	nes_vh_start(PPU_2C02, PPU_NTSC_SCANLINES_PER_FRAME);
 	return 0;
 }
 
 VIDEO_START( nes_pal )
 {
-	nes_vh_start(PAL_SCANLINES_PER_FRAME);
+	nes_vh_start(PPU_2C07, PPU_PAL_SCANLINES_PER_FRAME);
 	return 0;
 }
 
 PALETTE_INIT( nes )
 {
-	ppu2c03b_init_palette(0);
+	ppu2c0x_init_palette(0);
 }
 
 static void draw_sight(mame_bitmap *bitmap, int playerNum, int x_center, int y_center)
@@ -117,7 +125,7 @@ VIDEO_UPDATE( nes )
 	nes_zapper_hack = bitmap;
 
 	/* render the ppu */
-	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
+	ppu2c0x_render( 0, bitmap, 0, 0, 0, 0 );
 
 	/* figure out what sights to draw, and draw them */
 	if ((readinputport(PORT_CONFIG1) & 0x000f) == 0x0002)
