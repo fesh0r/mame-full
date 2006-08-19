@@ -263,9 +263,7 @@ int ppu2c0x_init( const ppu2c0x_interface *interface )
 		return -1;
 
 	chips = auto_malloc( intf->num * sizeof( ppu2c0x_chip ) );
-
-	if ( chips == 0 )
-		return -1;
+	memset(chips, 0, intf->num * sizeof( ppu2c0x_chip ));
 
 	/* intialize our virtual chips */
 	for( i = 0; i < intf->num; i++ )
