@@ -250,7 +250,7 @@ static gfx_layout ppu_charlayout =
  *  PPU Initialization and Disposal
  *
  *************************************/
-int ppu2c0x_init( const ppu2c0x_interface *interface )
+void ppu2c0x_init( const ppu2c0x_interface *interface )
 {
 	int i;
 
@@ -259,8 +259,7 @@ int ppu2c0x_init( const ppu2c0x_interface *interface )
 	memcpy(intf, interface, sizeof(*interface));
 
 	/* safety check */
-	if ( intf->num <= 0 )
-		return -1;
+	assert_always ( intf->num > 0, "Invalid intf->num" );
 
 	chips = auto_malloc( intf->num * sizeof( ppu2c0x_chip ) );
 	memset(chips, 0, intf->num * sizeof( ppu2c0x_chip ));
@@ -303,10 +302,6 @@ int ppu2c0x_init( const ppu2c0x_interface *interface )
 		chips[i].spriteram = auto_malloc( SPRITERAM_SIZE );
 		chips[i].dirtychar = auto_malloc( CHARGEN_NUM_CHARS );
 		chips[i].colortable_mono = auto_malloc( sizeof( default_colortable_mono ) );
-
-		/* see if it failed */
-		if ( !chips[i].bitmap || !chips[i].videoram || !chips[i].spriteram || !chips[i].dirtychar || !chips[i].colortable_mono )
-			return -1;
 
 		/* clear videoram & spriteram */
 		memset( chips[i].videoram, 0, VIDEORAM_SIZE );
@@ -352,9 +347,6 @@ int ppu2c0x_init( const ppu2c0x_interface *interface )
 		/* setup our videoram handlers based on mirroring */
 		ppu2c0x_set_mirroring( i, intf->mirroring[i] );
 	}
-
-	/* success */
-	return 0;
 }
 
 static void hblank_callback (int num)
@@ -370,7 +362,7 @@ static void hblank_callback (int num)
 	if (this_ppu->hblank_callback_proc)
 		(*this_ppu->hblank_callback_proc) (num, this_ppu->scanline, vblank, blanked);
 
-	mame_timer_adjust(chips[num].hblank_timer, time_never, 0, time_never);
+	mame_timer_adjust(chips[num].hblank_timer, time_never, num, time_never);
 }
 
 static void nmi_callback (int num)
@@ -381,7 +373,7 @@ static void nmi_callback (int num)
 	if (intf->nmi_handler[num])
 		(*intf->nmi_handler[num]) (num, ppu_regs);
 
-	mame_timer_adjust(chips[num].nmi_timer, time_never, 0, time_never);
+	mame_timer_adjust(chips[num].nmi_timer, time_never, num, time_never);
 }
 
 static void draw_background( const int num, UINT8 *line_priority )
@@ -876,7 +868,7 @@ logerror("vlbank starting\n");
 			// a game can read the high bit of $2002 before the NMI is called (potentially resetting the bit
 			// via a read from $2002 in the NMI handler).
 			// B-Wings is an example game that needs this.
-			mame_timer_adjust(this_ppu->nmi_timer, MAME_TIME_IN_CYCLES(4, 0), 0, time_never);
+			mame_timer_adjust(this_ppu->nmi_timer, MAME_TIME_IN_CYCLES(4, 0), num, time_never);
 		}
 	}
 
@@ -927,7 +919,7 @@ logerror("vlbank ending\n");
 		next_scanline = 0;
 
 	// Call us back when the hblank starts for this scanline
-	mame_timer_adjust(this_ppu->hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), 0, time_never); // еее FIXME - hardcoding NTSC, need better calculation
+	mame_timer_adjust(this_ppu->hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // еее FIXME - hardcoding NTSC, need better calculation
 
 	// trigger again at the start of the next scanline
 	mame_timer_adjust(this_ppu->scanline_timer, cpu_getscanlinetime_mt( next_scanline * this_ppu->scan_scale), num, make_mame_time(0,0));
@@ -955,10 +947,10 @@ void ppu2c0x_reset( int num, int scan_scale )
 	/* set the scan scale (this is for dual monitor vertical setups) */
 	chips[num].scan_scale = scan_scale;
 
-	mame_timer_adjust(chips[num].nmi_timer, time_never, 0, time_never);
+	mame_timer_adjust(chips[num].nmi_timer, time_never, num, time_never);
 
 	// Call us back when the hblank starts for this scanline
-	mame_timer_adjust(chips[num].hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), 0, time_never); // еее FIXME - hardcoding NTSC, need better calculation
+	mame_timer_adjust(chips[num].hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // еее FIXME - hardcoding NTSC, need better calculation
 
 	// Call us back at the start of the next scanline
 	mame_timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime_mt(1), num, make_mame_time(0,0));
