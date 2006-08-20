@@ -52,46 +52,6 @@
 #endif
 
 
-/*********************** throttling ************************/
-
-#if AUTO_THROTTLE && !defined(WIN32)
-
-/* in xmame.h */
-extern int throttle;
-extern int frameskip;
-extern int autoframeskip;
-
-static int auto_throttle;
-
-static void thom_cass_throttle( int data )
-{
-  if ( !auto_throttle && data ) {
-    /* forced throttling on */
-    throttle = 0;
-    frameskip = 11;
-    autoframeskip = 0;
-    auto_throttle = 1;
-  }
-  else if ( auto_throttle && !data ) {
-    /* forced throttling off */
-    auto_throttle = 0;
-    throttle = 1;
-    frameskip = 0;
-    autoframeskip = 1;
-  }
-}
-
-#else
-
-static void thom_cass_throttle( int data )
-{
-  /* do nothing */
-}
-
-#endif
-
-
-
 /*************************** I / O **************************/
 
 
@@ -209,8 +169,6 @@ WRITE8_HANDLER ( to7_set_cassette_motor )
 
   cassette_change_state( img, data ? CASSETTE_MOTOR_DISABLED : 
 			 CASSETTE_MOTOR_ENABLED, CASSETTE_MASK_MOTOR );
-
-  thom_cass_throttle( !data );
 }
 
 
@@ -279,8 +237,6 @@ WRITE8_HANDLER ( mo5_set_cassette_motor )
 
   cassette_change_state( img, data ? CASSETTE_MOTOR_DISABLED : 
 			 CASSETTE_MOTOR_ENABLED, CASSETTE_MASK_MOTOR );
-
-  thom_cass_throttle( !data );
 }
 
 
