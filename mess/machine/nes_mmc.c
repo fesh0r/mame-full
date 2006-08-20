@@ -80,14 +80,6 @@ static int mapper_warning;
 
 static mame_timer	*nes_irq_timer;
 
-#ifdef MAME_DEBUG
-static void trigger_debugger(void)
-{
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-}
-#endif
-
 static void nes_irq_callback (int num)
 {
 	cpunum_set_input_line (0, M6502_IRQ_LINE, HOLD_LINE);
@@ -647,10 +639,6 @@ static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
 		if (IRQ_enable && !blanked && (IRQ_count == 0) && priorCount)
 		{
 logerror("irq fired, scanline: %d (MAME %d, beam pos: %d)\n", scanline, cpu_getscanline(), cpu_gethorzbeampos());
-#ifdef MAME_DEBUG
-//if (scanline == 193)
-//	trigger_debugger();
-#endif
 			cpunum_set_input_line (0, M6502_IRQ_LINE, HOLD_LINE);
 //			mame_timer_adjust(nes_irq_timer, MAME_TIME_IN_CYCLES(4, 0), 0, time_never);
 		}
