@@ -20,6 +20,8 @@ System Driver Changes:
 
 - [NES] Various improvements, such as timing and PPU improvements.  (bug #816)
   [Brad Oliver]
+  
+- [SPECTRUM] Added TZX/TAP cassette format support.  [Wilbert Pol]
 
 
 
