@@ -149,6 +149,7 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "devices/cassette.h"
 #include "sound/ay8910.h"
 #include "sound/speaker.h"
+#include "formats/tzx_cas.h"
 
 /* +3 hardware */
 #include "machine/nec765.h"
@@ -175,6 +176,9 @@ static struct AY8910interface spectrum_ay_interface =
  bit 3: MIC/Tape Output
  bit 2-0: border colour
 */
+
+static int		motor_toggle_previous = 0;
+static int		cassette_motor_mode = 0;
 
 int PreviousFE = 0;
 
@@ -228,6 +232,16 @@ static  READ8_HANDLER(spectrum_port_fe_r)
    int cs_extra3 = readinputport(10) & 0x1f;
    int ss_extra1 = readinputport(11) & 0x1f;
    int ss_extra2 = readinputport(12) & 0x1f;
+
+	if ( readinputport(17) & 0x01 ) {
+		if ( motor_toggle_previous == 0 ) {
+			cassette_motor_mode = cassette_motor_mode ^ 0x01;
+			cassette_change_state( image_from_devtype_and_index( IO_CASSETTE, 0 ), cassette_motor_mode ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED, CASSETTE_MASK_MOTOR );
+		}
+		motor_toggle_previous = 1;
+	} else {
+		motor_toggle_previous = 0;
+	}
 
    /* Caps - V */
    if ((lines & 1)==0)
@@ -1891,6 +1905,9 @@ INPUT_PORTS_START( spectrum )
 	PORT_DIPSETTING(0x20, "Disabled" )
 	PORT_BIT(0x1f, IP_ACTIVE_LOW, IPT_UNUSED)
 
+	PORT_START /* [17] Toggle cassette motor */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Motor") PORT_CODE(KEYCODE_F1)
+
 INPUT_PORTS_END
 
 static unsigned char spectrum_palette[16*3] = {
@@ -2243,9 +2260,10 @@ static void spectrum_common_cassette_getinfo(const device_class *devclass, UINT3
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_COUNT:							info->i = 1; break;
-
-		default:										cassette_device_getinfo(devclass, state, info); break;
+		case DEVINFO_INT_COUNT:				info->i = 1; break;
+		case DEVINFO_INT_CASSETTE_DEFAULT_STATE:	info->i = CASSETTE_PLAY | CASSETTE_SPEAKER_ENABLED | CASSETTE_MOTOR_DISABLED; break;
+		case DEVINFO_PTR_CASSETTE_FORMATS:		info->p = (void *)tzx_cassette_formats; break;
+		default:					cassette_device_getinfo(devclass, state, info); break;
 	}
 }
 

@@ -508,6 +508,7 @@ $(OBJ)/sinclair.a: \
 	$(OBJ)/mess/machine/spectrum.o		\
 	$(OBJ)/mess/formats/zx81_p.o		\
 	$(OBJ)/mess/systems/ql.o		\
+	$(OBJ)/mess/formats/tzx_cas.o		\
 
 $(OBJ)/apple.a:   \
 	$(OBJ)/mess/vidhrdw/apple2.o		\
