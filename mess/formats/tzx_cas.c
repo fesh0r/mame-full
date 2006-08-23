@@ -71,7 +71,7 @@ static INT16	wave_data;
 static int	block_count;
 static UINT8**	blocks;
 
-INLINE void toggle_wave_data() {
+static void toggle_wave_data(void) {
 	if ( wave_data == WAVE_LOW ) {
 		wave_data = WAVE_HIGH;
 	} else {
@@ -364,7 +364,6 @@ static int tzx_cas_do_work( INT16 **buffer ) {
 }
 
 static int tzx_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
-	int current_block;
 	int size = 0;
 
 	/* Header size plus major and minor version number */
@@ -424,8 +423,6 @@ static int tap_cas_to_wav_size( const UINT8 *casdata, int caslen ) {
 		p += data_size;
 	}
 	return size;
-cleanup:
-	return -1;
 }
 
 static int tap_cas_fill_wave( INT16 *buffer, int length, UINT8 *bytes ) {
