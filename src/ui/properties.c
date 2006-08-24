@@ -128,7 +128,6 @@ static void InitializeDefaultInputUI(HWND hWnd);
 static void InitializeAnalogAxesUI(HWND hWnd);
 static void InitializeEffectUI(HWND hWnd);
 static void InitializeBIOSUI(HWND hwnd);
-static void InitializeLEDModeUI(HWND hwnd);
 static void InitializeControllerMappingUI(HWND hwnd);
 static void PropToOptions(HWND hWnd, options_type *o);
 static void OptionsToProp(HWND hWnd, options_type *o);
@@ -179,7 +178,6 @@ static int  g_nFullScreenGammaIndex = 0;
 static int  g_nFullScreenBrightnessIndex = 0;
 static int  g_nFullScreenContrastIndex = 0;
 static int  g_nEffectIndex     = 0;
-static int  g_nLedmodeIndex     = 0;
 static int  g_nBiosIndex     = 0;
 static int  g_nA2DIndex		   = 0;
 static int  g_nPaddleIndex = 0;
@@ -215,7 +213,6 @@ static DWORD dwHelpIDs[] =
 	
 	IDC_A2D,				HIDC_A2D,
 	IDC_ANTIALIAS,          HIDC_ANTIALIAS,
-	IDC_ARTWORK,            HIDC_ARTWORK,
 	IDC_ARTWORK_CROP,		HIDC_ARTWORK_CROP,
 	IDC_ASPECTRATIOD,       HIDC_ASPECTRATIOD,
 	IDC_ASPECTRATION,       HIDC_ASPECTRATION,
@@ -248,7 +245,6 @@ static DWORD dwHelpIDs[] =
 	IDC_KEEPASPECT,         HIDC_KEEPASPECT,
 	IDC_LANGUAGECHECK,      HIDC_LANGUAGECHECK,
 	IDC_LANGUAGEEDIT,       HIDC_LANGUAGEEDIT,
-	IDC_LEDS,				HIDC_LEDS,
 	IDC_LOG,                HIDC_LOG,
 	IDC_SLEEP,				HIDC_SLEEP,
 	IDC_MAXIMIZE,           HIDC_MAXIMIZE,
@@ -286,7 +282,6 @@ static DWORD dwHelpIDs[] =
 	IDC_AUDIO_LATENCY,      HIDC_AUDIO_LATENCY,
 	IDC_BIOS,               HIDC_BIOS,
 	IDC_STRETCH_SCREENSHOT_LARGER, HIDC_STRETCH_SCREENSHOT_LARGER,
-	IDC_LEDMODE,			HIDC_LEDMODE,
 	IDC_SCREEN,             HIDC_SCREEN,
 	IDC_ANALOG_AXES,		HIDC_ANALOG_AXES,
 	IDC_PADDLE,				HIDC_PADDLE,
@@ -321,18 +316,6 @@ static struct ComboBoxEffect
 
 #define NUMEFFECTS (sizeof(g_ComboBoxEffect) / sizeof(g_ComboBoxEffect[0]))
 
-
-static struct ComboBoxLedmode
-{
-	const char*	m_pText;
-	const char* m_pData;
-} g_ComboBoxLedmode[] = 
-{
-	{ "PS/2 Keyboard",                  "ps/2"    },
-	{ "USB Keyboard",                   "usb"     },
-};
-
-#define NUMLEDMODES (sizeof(g_ComboBoxLedmode) / sizeof(g_ComboBoxLedmode[0]))
 
 static struct ComboBoxVideo
 {
@@ -378,8 +361,8 @@ static struct ComboBoxView
 } g_ComboBoxView[] = 
 {
 	{ "Auto",		      "auto"    },
-	{ "Standard",         "standard"    },
-	{ "Native",           "native"   },
+	{ "Standard",         "standard"    }, 
+	{ "Pixel Aspect",     "\"pixel aspect\""   }, 
 	{ "Cocktail",         "cocktail"     },
 };
 #define NUMVIEW (sizeof(g_ComboBoxView) / sizeof(g_ComboBoxView[0]))
@@ -1168,12 +1151,6 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				changed = ReadControl(hDlg, wID);
 				break;
 
-			case IDC_LEDMODE:
-				if (wNotifyCode == CBN_SELCHANGE)
-				{
-					changed = TRUE;
-				}
-				break;
 			case IDC_D3D_VERSION:
 				if (wNotifyCode == CBN_SELCHANGE)
 				{
@@ -1711,8 +1688,8 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	char buf[100];
 	int  h = 0;
 	int  w = 0;
-	int	 d = 0;
 	int  n = 0;
+	int  d = 0;
 	o->gfx_refresh = 0;
 	g_bInternalSet = TRUE;
 
@@ -2105,7 +2082,7 @@ static void SetPropEnabledControls(HWND hWnd)
 	BOOL ddraw = FALSE;
 	BOOL d3d = FALSE;
 	BOOL gdi = FALSE;
-	BOOL useart = FALSE;
+	BOOL useart = TRUE;
 	BOOL multimon = (DirectDraw_GetNumDisplays() >= 2);
 	int joystick_attached = 0;
 	int in_window = 0;
@@ -2168,11 +2145,6 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd, IDC_NUMSCREENSDISP),             (ddraw || d3d) && multimon);
 	EnableWindow(GetDlgItem(hWnd, IDC_SCREENSELECT),               (ddraw || d3d) && multimon);
 	EnableWindow(GetDlgItem(hWnd, IDC_SCREENSELECTTEXT),           (ddraw || d3d) && multimon);
-
-	/* Artwork options */
-	hCtrl = GetDlgItem(hWnd, IDC_ARTWORK);
-		
-	useart = Button_GetCheck(hCtrl);
 
 	EnableWindow(GetDlgItem(hWnd, IDC_ARTWORK_CROP),	useart);
 	EnableWindow(GetDlgItem(hWnd, IDC_BACKDROPS),		useart);
@@ -2262,13 +2234,6 @@ static void SetPropEnabledControls(HWND hWnd)
 		EnableWindow(GetDlgItem(hWnd, IDC_FRAMESKIP), FALSE);
 	else
 		EnableWindow(GetDlgItem(hWnd, IDC_FRAMESKIP), TRUE);
-
-
-	// misc
-	if (Button_GetCheck(GetDlgItem(hWnd, IDC_LEDS)))
-		EnableWindow(GetDlgItem(hWnd, IDC_LEDMODE), TRUE);
-	else
-		EnableWindow(GetDlgItem(hWnd, IDC_LEDMODE), FALSE);
 
 	if (nIndex <= -1 || DriverHasOptionalBIOS(nIndex))
 		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),TRUE);
@@ -2410,7 +2375,7 @@ static void AssignView(HWND hWnd)
 	if( ptr != NULL )
 		pGameOpts->screen_params[g_nSelectScreenIndex].view = mame_strdup(ptr);
 	else
-		//defalt to auto
+		//default to auto
 		pGameOpts->screen_params[g_nSelectScreenIndex].view = mame_strdup("auto");
 }
 
@@ -2528,15 +2493,6 @@ static void AssignAnalogAxes(HWND hWnd)
 		FreeIfAllocated(&pGameOpts->digital);
 		pGameOpts->digital = mame_strdup("");
 	}
-}
-
-static void AssignLedmode(HWND hWnd)
-{
-	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nLedmodeIndex);
-
-	FreeIfAllocated(&pGameOpts->ledmode);
-	if (ptr != NULL)
-		pGameOpts->ledmode = mame_strdup(ptr);
 }
 
 static void AssignBios(HWND hWnd)
@@ -2709,12 +2665,6 @@ static void ResetDataMap(void)
 		}
 	}
 	g_nBiosIndex = 0;
-	g_nLedmodeIndex = 0;
-	for (i = 0; i < NUMLEDMODES; i++)
-	{
-		if (!mame_stricmp(pGameOpts->ledmode, g_ComboBoxLedmode[i].m_pData))
-			g_nLedmodeIndex = i;
-	}
 	g_nVideoIndex = 0;
 	for (i = 0; i < NUMVIDEO; i++)
 	{
@@ -2865,7 +2815,6 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_AUDIO_LATENCY_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->audio_latency, 0, 0, 0);
 
 	/* misc artwork options */
-	DataMapAdd(IDC_ARTWORK,       DM_BOOL, CT_BUTTON,   &pGameOpts->use_artwork,   DM_BOOL, &pGameOpts->use_artwork,   0, 0, 0);
 	DataMapAdd(IDC_BACKDROPS,     DM_BOOL, CT_BUTTON,   &pGameOpts->backdrops,     DM_BOOL, &pGameOpts->backdrops,     0, 0, 0);
 	DataMapAdd(IDC_OVERLAYS,      DM_BOOL, CT_BUTTON,   &pGameOpts->overlays,      DM_BOOL, &pGameOpts->overlays,      0, 0, 0);
 	DataMapAdd(IDC_BEZELS,        DM_BOOL, CT_BUTTON,   &pGameOpts->bezels,        DM_BOOL, &pGameOpts->bezels,        0, 0, 0);
@@ -2877,8 +2826,6 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_LOG,           DM_BOOL, CT_BUTTON,   &pGameOpts->errorlog,      DM_BOOL, &pGameOpts->errorlog,      0, 0, 0);
 	DataMapAdd(IDC_SLEEP,         DM_BOOL, CT_BUTTON,   &pGameOpts->sleep,         DM_BOOL, &pGameOpts->sleep,         0, 0, 0);
 	DataMapAdd(IDC_OLD_TIMING,    DM_BOOL, CT_BUTTON,   &pGameOpts->old_timing,    DM_BOOL, &pGameOpts->old_timing,    0, 0, 0);
-	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          DM_BOOL, &pGameOpts->leds,          0, 0, 0);
-	DataMapAdd(IDC_LEDMODE,       DM_INT,  CT_COMBOBOX, &g_nLedmodeIndex,		   DM_STRING, &pGameOpts->ledmode,  0, 0, AssignLedmode);
 	DataMapAdd(IDC_HIGH_PRIORITY, DM_INT, CT_SLIDER,   &g_nPriorityIndex, DM_INT, &pGameOpts->priority, 0, 0, AssignPriority);
 	DataMapAdd(IDC_HIGH_PRIORITYTXT, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->priority, 0, 0, 0);
 	DataMapAdd(IDC_SKIP_GAME_INFO, DM_BOOL, CT_BUTTON,  &pGameOpts->skip_gameinfo, DM_BOOL, &pGameOpts->skip_gameinfo, 0, 0, 0);
@@ -3052,7 +2999,6 @@ static void InitializeOptions(HWND hDlg)
 	InitializeAnalogAxesUI(hDlg);
 	InitializeEffectUI(hDlg);
 	InitializeBIOSUI(hDlg);
-	InitializeLEDModeUI(hDlg);
 	InitializeControllerMappingUI(hDlg);
 	InitializeD3DVersionUI(hDlg);
 	InitializeVideoUI(hDlg);
@@ -3396,7 +3342,6 @@ static void A2DSelectionChange(HWND hwnd)
 	Static_SetText(GetDlgItem(hwnd, IDC_A2DDISP), buf);
 }
 
-
 /* Handle changes to the Refresh drop down */
 static void RefreshSelectionChange(HWND hWnd, HWND hWndCtrl)
 {
@@ -3406,7 +3351,9 @@ static void RefreshSelectionChange(HWND hWnd, HWND hWndCtrl)
 	if (nCurSelection != CB_ERR)
 	{
 		int nRefresh  = 0;
+    
 		nRefresh = ComboBox_GetItemData(hWndCtrl, nCurSelection);
+
 		UpdateDisplayModeUI(hWnd, nRefresh);
 	}
 }
@@ -3467,7 +3414,6 @@ static void ThreadPrioritySelectionChange(HWND hwnd)
 
 }
 
-
 /* Adjust possible choices in the Screen Size drop down */
 static void UpdateDisplayModeUI(HWND hwnd, DWORD dwRefresh)
 {
@@ -3505,7 +3451,7 @@ static void UpdateDisplayModeUI(HWND hwnd, DWORD dwRefresh)
 	ComboBox_GetText(GetDlgItem(hwnd, IDC_SCREEN), buffer, sizeof(buffer)-1);
 	for(i=0; EnumDisplaySettings(buffer, i, &devmode); i++)
 	{
-		if ((devmode.dmBitsPerPel == 32 ) // Only 32 bit depth s suported by core
+		if ((devmode.dmBitsPerPel == 32 ) // Only 32 bit depth supported by core
 		&&  (devmode.dmDisplayFrequency == dwRefresh || dwRefresh == 0))
 		{
 			sprintf(buf, "%li x %li", devmode.dmPelsWidth,
@@ -3854,23 +3800,6 @@ static void InitializeDefaultInputUI(HWND hwnd)
 static void InitializeEffectUI(HWND hwnd)
 {
 }
-
-/* Populate the LED mode drop down */
-static void InitializeLEDModeUI(HWND hwnd)
-{
-	HWND hCtrl = GetDlgItem(hwnd, IDC_LEDMODE);
-
-	if (hCtrl)
-	{
-		int i;
-		for (i = 0; i < NUMLEDMODES; i++)
-		{
-			ComboBox_InsertString(hCtrl, i, g_ComboBoxLedmode[i].m_pText);
-			ComboBox_SetItemData( hCtrl, i, g_ComboBoxLedmode[i].m_pData);
-		}
-	}
-}
-
 
 static void InitializeControllerMappingUI(HWND hwnd)
 {

@@ -372,7 +372,6 @@ static const REG_OPTION regGameOpts[] =
 	{ "audio_latency",          RO_INT,     offsetof(options_type, audio_latency),                   "1" },
 
 	// misc artwork options
-	{ "artwork",                RO_BOOL,    offsetof(options_type, use_artwork),                     "1" },
 	{ "backdrop",               RO_BOOL,    offsetof(options_type, backdrops),                       "1" },
 	{ "overlay",                RO_BOOL,    offsetof(options_type, overlays),                        "1" },
 	{ "bezel",                  RO_BOOL,    offsetof(options_type, bezels),                          "1" },
@@ -384,15 +383,16 @@ static const REG_OPTION regGameOpts[] =
 	{ "log",                    RO_BOOL,    offsetof(options_type, errorlog),                        "0" },
 	{ "sleep",                  RO_BOOL,    offsetof(options_type, sleep),                           "1" },
 	{ "rdtsc",                  RO_BOOL,    offsetof(options_type, old_timing),                      "0" },
-	{ "leds",                   RO_BOOL,    offsetof(options_type, leds),                            "1" },
-	{ "led_mode",               RO_STRING,  offsetof(options_type, ledmode),                         "ps/2" },
 	{ "priority",               RO_INT,     offsetof(options_type, priority),                        "0" },
 	{ "skip_gameinfo",          RO_BOOL,    offsetof(options_type, skip_gameinfo),                   "0" },
 #ifdef MESS
 	{ "skip_warnings",          RO_BOOL,    offsetof(options_type, skip_warnings),     "0" },
 #endif
 	{ "bios",                   RO_STRING,  offsetof(options_type, bios),                            "default" },
+#ifdef MESS
 	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "0" },
+#endif
+	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "1" },
 
 #ifdef MESS
 	/* mess options */

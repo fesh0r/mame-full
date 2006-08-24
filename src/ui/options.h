@@ -179,7 +179,6 @@ typedef struct
 	int    audio_latency;
 
 	/* Misc artwork options */
-	BOOL   use_artwork;
 	BOOL   backdrops;
 	BOOL   overlays;
 	BOOL   bezels;
