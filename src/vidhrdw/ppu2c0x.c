@@ -204,7 +204,7 @@ void ppu2c0x_init_palette( int first_entry )
 
 				u = sat * cos( rad );
 				v = sat * sin( rad );
-  
+
 				/* Transform to RGB */
 				R = ( y + Kv * v ) * 255.0;
 				G = ( y - ( Kb * Ku * u + Kr * Kv * v) / (1 - Kb - Kr) ) * 255.0;
@@ -357,7 +357,7 @@ static void hblank_callback (int num)
 	int blanked = ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) ) == 0;
 	int vblank = ((this_ppu->scanline >= PPU_VBLANK_FIRST_SCANLINE-1) && (this_ppu->scanline < this_ppu->scanlines_per_frame-1)) ? 1 : 0;
 
-//	update_scanline (num);
+//  update_scanline (num);
 
 	if (this_ppu->hblank_callback_proc)
 		(*this_ppu->hblank_callback_proc) (num, this_ppu->scanline, vblank, blanked);
@@ -640,7 +640,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 						if ( ( spriteXPos + pixel ) < VISIBLE_SCREEN_WIDTH )
 							line_priority[ spriteXPos + pixel ] |= 0x01;
 					}
-					
+
 					/* set the "sprite 0 hit" flag if appropriate */
 					if ( spriteIndex == 0 && (pixelData & 0x03) && ((spriteXPos + pixel) < 255) && ( line_priority[ spriteXPos + pixel ] & 0x02 ))
 						ppu_regs[PPU_STATUS] |= PPU_STATUS_SPRITE0_HIT;
@@ -672,7 +672,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 							drawn = 1;
 						}
 					}
-					
+
 					/* set the "sprite 0 hit" flag if appropriate */
 					if ( spriteIndex == 0 && (pixelData & 0x03) && ((spriteXPos + pixel) < 255) && ( line_priority[ spriteXPos + pixel ] & 0x02 ))
 						ppu_regs[PPU_STATUS] |= PPU_STATUS_SPRITE0_HIT;
@@ -687,7 +687,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 			if ( spriteCount == 8 )
 			{
 				ppu_regs[PPU_STATUS] |= PPU_STATUS_8SPRITES;
-//				logerror ("> 8 sprites, scanline: %d\n", scanline);
+//              logerror ("> 8 sprites, scanline: %d\n", scanline);
 
 				/* the real NES only draws up to 8 sprites - the rest should be invisible */
 				break;
@@ -860,7 +860,7 @@ static void scanline_callback( int num )
 logerror("vlbank starting\n");
 		/* We just entered VBLANK */
 		ppu_regs[PPU_STATUS] |= PPU_STATUS_VBLANK;
-		
+
 		/* If NMI's are set to be triggered, go for it */
 		if (ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI)
 		{
@@ -919,7 +919,7 @@ logerror("vlbank ending\n");
 		next_scanline = 0;
 
 	// Call us back when the hblank starts for this scanline
-	mame_timer_adjust(this_ppu->hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // ¥¥¥ FIXME - hardcoding NTSC, need better calculation
+	mame_timer_adjust(this_ppu->hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // ??? FIXME - hardcoding NTSC, need better calculation
 
 	// trigger again at the start of the next scanline
 	mame_timer_adjust(this_ppu->scanline_timer, cpu_getscanlinetime_mt( next_scanline * this_ppu->scan_scale), num, make_mame_time(0,0));
@@ -950,7 +950,7 @@ void ppu2c0x_reset( int num, int scan_scale )
 	mame_timer_adjust(chips[num].nmi_timer, time_never, num, time_never);
 
 	// Call us back when the hblank starts for this scanline
-	mame_timer_adjust(chips[num].hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // ¥¥¥ FIXME - hardcoding NTSC, need better calculation
+	mame_timer_adjust(chips[num].hblank_timer, MAME_TIME_IN_CYCLES(86.67, 0), num, time_never); // ??? FIXME - hardcoding NTSC, need better calculation
 
 	// Call us back at the start of the next scanline
 	mame_timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime_mt(1), num, make_mame_time(0,0));
@@ -1007,7 +1007,7 @@ void ppu2c0x_reset( int num, int scan_scale )
 int ppu2c0x_r( int num, offs_t offset )
 {
 	ppu2c0x_chip* this_ppu;
-	
+
 	/* check bounds */
 	if ( num >= intf->num )
 	{
@@ -1081,7 +1081,7 @@ void ppu2c0x_w( int num, offs_t offset, UINT8 data )
 {
 	ppu2c0x_chip* this_ppu;
 	int color_base;
-	
+
 	/* check bounds */
 	if ( num >= intf->num )
 	{
@@ -1230,7 +1230,7 @@ void ppu2c0x_w( int num, offs_t offset, UINT8 data )
 				else if ( tempAddr >= 0x3f00 )
 				{
 					int colorEmphasis = (this_ppu->regs[PPU_CONTROL1] & PPU_CONTROL1_COLOR_EMPHASIS) * 2;
-					
+
 					/* store the data */
 					if (tempAddr & 0x03)
 						this_ppu->videoram[tempAddr & 0x3F1F] = data;
@@ -1312,7 +1312,7 @@ void ppu2c0x_spriteram_dma (int num, const UINT8 page)
 	// should last 513 CPU cycles.
 	activecpu_adjust_icount(-513);
 
-	// ¥¥¥ÊTODO : need to account for PPU rendering - this is roughly 4.5 scanlines eaten up.
+	// ????TODO : need to account for PPU rendering - this is roughly 4.5 scanlines eaten up.
 	// Because the DMA is only useful during vblank, this may not be strictly necessary since
 	// the scanline timers should catch us up before drawing actually happens.
 #if 0
@@ -1426,7 +1426,7 @@ int ppu2c0x_get_current_scanline( int num )
 void ppu2c0x_set_mirroring( int num, int mirroring )
 {
 	ppu2c0x_chip* this_ppu;
-	
+
 	/* check bounds */
 	if ( num >= intf->num )
 	{
