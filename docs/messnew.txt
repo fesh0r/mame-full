@@ -14,7 +14,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a bug that caused the GUI to fumble on paths with spaces
+  in them.  (bug #918) [Nate Woods]
 
 
 
