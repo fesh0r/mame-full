@@ -36,7 +36,7 @@ const options_entry mess_opts[] =
 	{ NULL,							NULL,   OPTION_HEADER,		"MESS SPECIFIC OPTIONS" },
 	{ "newui;nu",                   "1",    OPTION_BOOLEAN,		"use the new MESS UI" },
     { "ramsize;ram",				NULL,	0,					"size of RAM (if supported by driver)" },
-	{ "threads;thr",				NULL,	0,					"number of threads to use for parallel operations" },
+	{ "threads;thr",				"0",	0,					"number of threads to use for parallel operations" },
 	{ "natural;nat",				"0",	OPTION_BOOLEAN,		"specifies whether to use a natural keyboard or not" },
 	{ "min_width;mw",				"200",	0,					"specifies the minimum width for the display" },
 	{ "min_height;mh",				"200",	0,					"specifies the minimum height for the display" },
