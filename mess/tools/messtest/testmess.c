@@ -257,6 +257,9 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	options.ram = current_testcase.ram;
 	options.samplerate = 44100;
 	options.mame_debug = 1;
+	options.brightness = 1.0;
+	options.contrast = 1.0;
+	options.gamma = 1.0;
 
 	/* preload any needed images */
 	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
@@ -316,7 +319,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 
 int osd_init(void)
 {
-	target = render_target_alloc(NULL, FALSE);
+	target = render_target_alloc(NULL, 0);
 	render_target_set_orientation(target, 0);
 	return 0;
 }
