@@ -261,11 +261,18 @@ void *vic6560_custom_start(int clock, const struct CustomSound_interface *config
 	}
 	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
 
-	tone = (INT16*) auto_malloc (tonesize * sizeof (tone[0]));
-
-	for (i = 0; i < tonesize; i++)
+	if (tonesize > 0)
 	{
-		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
+		tone = (INT16*) auto_malloc (tonesize * sizeof (tone[0]));
+
+		for (i = 0; i < tonesize; i++)
+		{
+			tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
+		}
+	}
+	else
+	{
+		tone = NULL;
 	}
 	return (void *) ~0;
 }
