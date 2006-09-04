@@ -815,6 +815,15 @@ ROM_START(apple2c3)
 	ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(bc5a79ff) SHA1(5338d9baa7ae202457b6500fde5883dbdc86e5d3))
 ROM_END
 
+ROM_START(apple2c4)
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC(b081df66) SHA1(7060de104046736529c1e8a687a0dd7b84f8c51b))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC(2651014d) SHA1(b2b5d87f52693817fc747df087a4aa1ddcdb1f10))
+
+	ROM_REGION(0x8700,REGION_CPU1,0)
+	ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(06f53328) SHA1(015061597c4cda7755aeb88b735994ffd2f235ca))
+ROM_END
+
 ROM_START(laser128)
 	ROM_REGION(0x2000,REGION_GFX1,0)
 	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC(b081df66) SHA1(7060de104046736529c1e8a687a0dd7b84f8c51b))
@@ -916,4 +925,5 @@ COMP( 1987, laser128, 0,        apple2c0,	apple2c,  apple2e,  0,   apple2e,	"Vid
 COMP( 1987, las128ex, apple2c,  0,			apple2c,  apple2e,  0,   apple2e,	"Video Technology", "Laser 128ex (rev 4a)",		GAME_NOT_WORKING )
 COMP( 1985, apple2c0, apple2c,  0,			apple2c,  apple2e,  0,   apple2e,	"Apple Computer", "Apple //c (UniDisk 3.5)" , 0)
 COMP( 1986, apple2c3, apple2c,  0,			apple2c,  apple2e,  0,	 apple2e,	"Apple Computer", "Apple //c (Original Memory Expansion)" , 0)
+COMP( 1986, apple2c4, apple2c,  0,			apple2c,  apple2e,  0,	 apple2e,	"Apple Computer", "Apple //c (rev 4)" , GAME_NOT_WORKING )
 COMP( 1988, apple2cp, apple2c,  0,			apple2c,  apple2e,  0,	 apple2e,	"Apple Computer", "Apple //c Plus" , 0)
