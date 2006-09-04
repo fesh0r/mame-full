@@ -18,6 +18,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows] Fixed a bug that caused the Pause menu item to always appear as
+  checked.  (bug #926) [Nate Woods]
+
 - [Windows GUI] Fixed a bug that caused the GUI to fumble on paths with spaces
   in them.  (bug #918) [Nate Woods]
 

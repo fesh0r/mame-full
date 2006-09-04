@@ -934,6 +934,17 @@ void winwindow_ui_pause_from_window_thread(int pause)
 
 
 //============================================================
+//  winwindow_ui_is_paused
+//============================================================
+
+int winwindow_ui_is_paused(void)
+{
+	return mame_is_paused() && ui_temp_was_paused;
+}
+
+
+
+//============================================================
 //  wnd_extra_width
 //  (window thread)
 //============================================================
