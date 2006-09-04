@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [CBM] Fixed SID code to remove potential divide by zero issues.  (bug #936)
+  [Nate Woods]
+
 - [VIC20] Fixed bug that caused the driver to fail when sound was disabled.
   (bug #930) [Nate Woods]
 

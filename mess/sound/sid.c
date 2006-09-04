@@ -20,8 +20,8 @@
 #include "sidenvel.h"
 #include "sid.h"
 
-float filterTable[0x800];
-float bandPassParam[0x800];
+static float *filterTable;
+static float *bandPassParam;
 #define lowPassParam filterTable
 float filterResTable[16];
 
@@ -159,7 +159,6 @@ void filterTableInit(void)
 	/* by purpose. */
 	const float filterRefFreq = 44100.0;
 
-/*	extern float filterTable[0x800]; */
 	float yMax = 1.0;
 	float yMin = 0.01;
 	float yAdd;
@@ -169,43 +168,52 @@ void filterTableInit(void)
 	float resDyMin;
 	float resDy;
 
-	uk = 0;
-	for ( rk = 0; rk < 0x800; rk++ )
-	{
-		filterTable[uk] = (((exp(rk/0x800*log(400.0))/60.0)+0.05)
-			*filterRefFreq) / options.samplerate;
-		if ( filterTable[uk] < yMin )
-			filterTable[uk] = yMin;
-		if ( filterTable[uk] > yMax )
-			filterTable[uk] = yMax;
-		uk++;
-	}
+	filterTable = NULL;
+	bandPassParam = NULL;
 
-	/*extern float bandPassParam[0x800]; */
-	yMax = 0.22;
-	yMin = 0.05;  /* less for some R1/R4 chips */
-	yAdd = (yMax-yMin)/2048.0;
-	yTmp = yMin;
-	uk = 0;
-	/* Some C++ compilers still have non-local scope! */
-	for ( rk2 = 0; rk2 < 0x800; rk2++ )
+	if (options.samplerate != 0)
 	{
-		bandPassParam[uk] = (yTmp*filterRefFreq) / options.samplerate;
-		yTmp += yAdd;
-		uk++;
-	}
+		filterTable = auto_malloc(sizeof(*filterTable) * 0x800);
+		bandPassParam = auto_malloc(sizeof(*bandPassParam) * 0x800);
 
-	/*extern float filterResTable[16]; */
-	resDyMax = 1.0;
-	resDyMin = 2.0;
-	resDy = resDyMin;
-	for ( uk = 0; uk < 16; uk++ )
-	{
-		filterResTable[uk] = resDy;
-		resDy -= (( resDyMin - resDyMax ) / 15 );
+		uk = 0;
+		for ( rk = 0; rk < 0x800; rk++ )
+		{
+			filterTable[uk] = (((exp(rk/0x800*log(400.0))/60.0)+0.05)
+				*filterRefFreq) / options.samplerate;
+			if ( filterTable[uk] < yMin )
+				filterTable[uk] = yMin;
+			if ( filterTable[uk] > yMax )
+				filterTable[uk] = yMax;
+			uk++;
+		}
+
+		/*extern float bandPassParam[0x800]; */
+		yMax = 0.22;
+		yMin = 0.05;  /* less for some R1/R4 chips */
+		yAdd = (yMax-yMin)/2048.0;
+		yTmp = yMin;
+		uk = 0;
+		/* Some C++ compilers still have non-local scope! */
+		for ( rk2 = 0; rk2 < 0x800; rk2++ )
+		{
+			bandPassParam[uk] = (yTmp*filterRefFreq) / options.samplerate;
+			yTmp += yAdd;
+			uk++;
+		}
+
+		/*extern float filterResTable[16]; */
+		resDyMax = 1.0;
+		resDyMin = 2.0;
+		resDy = resDyMin;
+		for ( uk = 0; uk < 16; uk++ )
+		{
+			filterResTable[uk] = resDy;
+			resDy -= (( resDyMin - resDyMax ) / 15 );
+		}
+		filterResTable[0] = resDyMin;
+		filterResTable[15] = resDyMax;
 	}
-	filterResTable[0] = resDyMin;
-	filterResTable[15] = resDyMax;
 }
 
 void sid6581_init (SID6581 *This)
@@ -247,80 +255,81 @@ void sid6581_init (SID6581 *This)
 
 void sid6581_port_w (SID6581 *This, int offset, int data)
 {
-    DBG_LOG (1, "sid6581 write", ("offset %.2x value %.2x\n", offset, data));
-    offset &= 0x1f;
+	DBG_LOG (1, "sid6581 write", ("offset %.2x value %.2x\n", offset, data));
+	offset &= 0x1f;
 
-    switch (offset)
-    {
-    case 0x19: case 0x1a: case 0x1b: case 0x1c:
-    case 0x1d:
-    case 0x1e:
-    case 0x1f:
-	break;
-    case 0x15: case 0x16: case 0x17: 
-    case 0x18:
-	stream_update(This->mixer_channel,0);
-	This->reg[offset] = data;
-	This->masterVolume = ( This->reg[0x18] & 15 );
-	This->masterVolumeAmplIndex = This->masterVolume << 8;	    
-
-	if ((This->reg[0x18]&0x80) &&
-	    ((This->reg[0x17]&This->optr3.filtVoiceMask)==0))
-	    This->optr3_outputmask = 0;     /* off */
-	else
-	    This->optr3_outputmask = ~0;  /* on */
-	
-	This->filter.Type = This->reg[0x18] & 0x70;
-	if (This->filter.Type != This->filter.CurType)
+	switch (offset)
 	{
-	    This->filter.CurType = This->filter.Type;
-	    This->optr1.filtLow = (This->optr1.filtRef = 0);
-	    This->optr2.filtLow = (This->optr2.filtRef = 0);
-	    This->optr3.filtLow = (This->optr3.filtRef = 0);
-	}
-	if ( This->filter.Enabled )
-	{
-	    This->filter.Value = 0x7ff & ( (This->reg[0x15]&7) | ( (UINT16)This->reg[0x16] << 3 ));
-	    if (This->filter.Type == 0x20)
-		This->filter.Dy = bandPassParam[This->filter.Value];
-	    else
-		This->filter.Dy = lowPassParam[This->filter.Value];
-	    This->filter.ResDy = filterResTable[This->reg[0x17] >> 4] - This->filter.Dy;
-	    if ( This->filter.ResDy < 1.0 )
-		This->filter.ResDy = 1.0;
-	}
+		case 0x19: case 0x1a: case 0x1b: case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			break;
+		case 0x15: case 0x16: case 0x17: 
+		case 0x18:
+			stream_update(This->mixer_channel,0);
+			This->reg[offset] = data;
+			This->masterVolume = ( This->reg[0x18] & 15 );
+			This->masterVolumeAmplIndex = This->masterVolume << 8;	    
 
-	sidEmuSet( &This->optr1 );
-	sidEmuSet( &This->optr3 );	
-	sidEmuSet( &This->optr2 );
-
-	// relies on sidEmuSet also for other channels!
-	sidEmuSet2( &This->optr1 );
-	sidEmuSet2( &This->optr2 );
-	sidEmuSet2( &This->optr3 );
-
-	break;
-    default:
-	stream_update(This->mixer_channel,0);
-	This->reg[offset] = data;
+			if ((This->reg[0x18]&0x80) &&
+				((This->reg[0x17]&This->optr3.filtVoiceMask)==0))
+				This->optr3_outputmask = 0;     /* off */
+			else
+				This->optr3_outputmask = ~0;  /* on */
 	
-	if (offset<7) {
-	    This->optr1.reg[offset] = data;
-	} else if (offset<14) {
-	    This->optr2.reg[offset-7] = data;
-	} else if (offset<21) {
-	    This->optr3.reg[offset-14] = data;
+			This->filter.Type = This->reg[0x18] & 0x70;
+			if (This->filter.Type != This->filter.CurType)
+			{
+				This->filter.CurType = This->filter.Type;
+				This->optr1.filtLow = (This->optr1.filtRef = 0);
+				This->optr2.filtLow = (This->optr2.filtRef = 0);
+				This->optr3.filtLow = (This->optr3.filtRef = 0);
+			}
+			if ( This->filter.Enabled )
+			{
+				This->filter.Value = 0x7ff & ( (This->reg[0x15]&7) | ( (UINT16)This->reg[0x16] << 3 ));
+				if (This->filter.Type == 0x20)
+					This->filter.Dy = bandPassParam ? bandPassParam[This->filter.Value] : 0.0;
+				else
+					This->filter.Dy = lowPassParam ? lowPassParam[This->filter.Value] : 0.0;
+				This->filter.ResDy = filterResTable[This->reg[0x17] >> 4] - This->filter.Dy;
+				if ( This->filter.ResDy < 1.0 )
+					This->filter.ResDy = 1.0;
+			}
+
+			sidEmuSet( &This->optr1 );
+			sidEmuSet( &This->optr3 );	
+			sidEmuSet( &This->optr2 );
+
+			// relies on sidEmuSet also for other channels!
+			sidEmuSet2( &This->optr1 );
+			sidEmuSet2( &This->optr2 );
+			sidEmuSet2( &This->optr3 );
+			break;
+
+		default:
+			stream_update(This->mixer_channel,0);
+			This->reg[offset] = data;
+
+			if (offset<7) {
+				This->optr1.reg[offset] = data;
+			} else if (offset<14) {
+				This->optr2.reg[offset-7] = data;
+			} else if (offset<21) {
+				This->optr3.reg[offset-14] = data;
+			}
+
+			sidEmuSet( &This->optr1 );
+			sidEmuSet( &This->optr3 );	
+			sidEmuSet( &This->optr2 );
+
+			// relies on sidEmuSet also for other channels!
+			sidEmuSet2( &This->optr1 );
+			sidEmuSet2( &This->optr2 );
+			sidEmuSet2( &This->optr3 );
+			break;
 	}
-
-	sidEmuSet( &This->optr1 );
-	sidEmuSet( &This->optr3 );	
-	sidEmuSet( &This->optr2 );
-
-	// relies on sidEmuSet also for other channels!
-	sidEmuSet2( &This->optr1 );
-	sidEmuSet2( &This->optr2 );
-	sidEmuSet2( &This->optr3 );
-    }
 }
 
 int sid6581_port_r (SID6581 *This, int offset)
