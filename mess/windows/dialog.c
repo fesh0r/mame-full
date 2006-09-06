@@ -18,6 +18,7 @@
 #include "pool.h"
 #include "winutils.h"
 #include "windows/input.h"
+#include "windows/window.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -1549,18 +1550,12 @@ char *win_dialog_strdup(dialog_box *dialog, const char *s)
 
 static void before_display_dialog(void)
 {
-	extern void win_timer_enable(int enabled);
-
 #ifdef UNDER_CE
 	// on WinCE, suspend GAPI
 	gx_suspend();
 #endif
 
-	// disable sound while in the dialog
-	osd_sound_enable(0);
-
-	// disable the timer while in the dialog
-	win_timer_enable(0);
+	winwindow_ui_pause_from_window_thread(TRUE);
 }
 
 
@@ -1571,18 +1566,12 @@ static void before_display_dialog(void)
 
 static void after_display_dialog(void)
 {
-	extern void win_timer_enable(int enabled);
-
 #ifdef UNDER_CE
 	// on WinCE, resume GAPI
 	gx_resume();
 #endif
 
-	// reenable timer
-	win_timer_enable(1);
-
-	// reenable sound
-	osd_sound_enable(1);
+	winwindow_ui_pause_from_window_thread(FALSE);
 }
 
 
