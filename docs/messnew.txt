@@ -36,7 +36,10 @@ Source Changes:
 ----------------
 - The core is based on MAME 0.108u2.  This incorporates all features of the
   update to this core.  [MAME team]
-  
+
+- Fixed improper use of options.sample_rate in drivers to use
+  Machine->sample_rate.  (bug #939)  [Oliver Stoeneburg]
+
 - [Windows] Fixed incorrect "Illegal integer value for threads" error.  (bug
   #920) [Nate Woods]
 

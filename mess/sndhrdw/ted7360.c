@@ -56,7 +56,7 @@ void ted7360_soundport_w (int offset, int data)
 			ted7360[offset] = (ted7360[offset] & ~3) | (data & 3);
 		else
 			ted7360[offset] = data;
-		tone1samples = options.samplerate / TONE_FREQUENCY (TONE1_VALUE);
+		tone1samples = Machine->sample_rate / TONE_FREQUENCY (TONE1_VALUE);
 		DBG_LOG (1, "ted7360", ("tone1 %d %d sample:%d\n",
 					TONE1_VALUE, TONE_FREQUENCY(TONE1_VALUE), tone1samples));
 
@@ -64,11 +64,11 @@ void ted7360_soundport_w (int offset, int data)
 	case 0xf:
 	case 0x10:
 		ted7360[offset] = data;
-		tone2samples = options.samplerate / TONE_FREQUENCY (TONE2_VALUE);
+		tone2samples = Machine->sample_rate / TONE_FREQUENCY (TONE2_VALUE);
 		DBG_LOG (1, "ted7360", ("tone2 %d %d sample:%d\n",
 					TONE2_VALUE, TONE_FREQUENCY(TONE2_VALUE), tone2samples));
 
-		noisesamples = (int) ((double) NOISE_FREQUENCY_MAX * options.samplerate
+		noisesamples = (int) ((double) NOISE_FREQUENCY_MAX * Machine->sample_rate
 							  * NOISE_BUFFER_SIZE_SEC / NOISE_FREQUENCY);
 		DBG_LOG (1, "ted7360", ("noise %d sample:%d\n",
 					NOISE_FREQUENCY, noisesamples));
@@ -147,7 +147,7 @@ void *ted7360_custom_start (int clock, const struct CustomSound_interface *confi
 {
 	int i;
 
-	channel = stream_create(0, 1, options.samplerate, 0, ted7360_update);
+	channel = stream_create(0, 1, Machine->sample_rate, 0, ted7360_update);
 
 	/* buffer for fastest played sample for 5 second
 	 * so we have enough data for min 5 second */

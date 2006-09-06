@@ -31,7 +31,7 @@ void vc4000_soundport_w (int offset, int data)
 	    vc4000_sound.pos = 0;
 	    vc4000_sound.level = TRUE;
 	    // frequency 7874/(data+1)
-	    vc4000_sound.size=options.samplerate*(data+1)/7874;
+	    vc4000_sound.size=Machine->sample_rate*(data+1)/7874;
 	    break;
 	}
 }
@@ -69,10 +69,7 @@ static void vc4000_update(void *param,stream_sample_t **inputs, stream_sample_t 
 
 void *vc4000_custom_start(int clock, const struct CustomSound_interface *config)
 {
-    if (!options.samplerate)
-		return NULL;
-    
-    vc4000_sound.channel = stream_create(0, 1, options.samplerate, 0, vc4000_update);
+    vc4000_sound.channel = stream_create(0, 1, Machine->sample_rate, 0, vc4000_update);
     return (void *) ~0;
 }
 

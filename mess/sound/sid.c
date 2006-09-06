@@ -168,52 +168,46 @@ void filterTableInit(void)
 	float resDyMin;
 	float resDy;
 
-	filterTable = NULL;
-	bandPassParam = NULL;
+	filterTable = auto_malloc(sizeof(*filterTable) * 0x800);
+	bandPassParam = auto_malloc(sizeof(*bandPassParam) * 0x800);
 
-	if (options.samplerate != 0)
+	uk = 0;
+	for ( rk = 0; rk < 0x800; rk++ )
 	{
-		filterTable = auto_malloc(sizeof(*filterTable) * 0x800);
-		bandPassParam = auto_malloc(sizeof(*bandPassParam) * 0x800);
-
-		uk = 0;
-		for ( rk = 0; rk < 0x800; rk++ )
-		{
-			filterTable[uk] = (((exp(rk/0x800*log(400.0))/60.0)+0.05)
-				*filterRefFreq) / options.samplerate;
-			if ( filterTable[uk] < yMin )
-				filterTable[uk] = yMin;
-			if ( filterTable[uk] > yMax )
-				filterTable[uk] = yMax;
-			uk++;
-		}
-
-		/*extern float bandPassParam[0x800]; */
-		yMax = 0.22;
-		yMin = 0.05;  /* less for some R1/R4 chips */
-		yAdd = (yMax-yMin)/2048.0;
-		yTmp = yMin;
-		uk = 0;
-		/* Some C++ compilers still have non-local scope! */
-		for ( rk2 = 0; rk2 < 0x800; rk2++ )
-		{
-			bandPassParam[uk] = (yTmp*filterRefFreq) / options.samplerate;
-			yTmp += yAdd;
-			uk++;
-		}
-
-		/*extern float filterResTable[16]; */
-		resDyMax = 1.0;
-		resDyMin = 2.0;
-		resDy = resDyMin;
-		for ( uk = 0; uk < 16; uk++ )
-		{
-			filterResTable[uk] = resDy;
-			resDy -= (( resDyMin - resDyMax ) / 15 );
-		}
-		filterResTable[0] = resDyMin;
-		filterResTable[15] = resDyMax;
+		filterTable[uk] = (((exp(rk/0x800*log(400.0))/60.0)+0.05)
+			*filterRefFreq) / Machine->sample_rate;
+		if ( filterTable[uk] < yMin )
+			filterTable[uk] = yMin;
+		if ( filterTable[uk] > yMax )
+			filterTable[uk] = yMax;
+		uk++;
 	}
+
+	/*extern float bandPassParam[0x800]; */
+	yMax = 0.22;
+	yMin = 0.05;  /* less for some R1/R4 chips */
+	yAdd = (yMax-yMin)/2048.0;
+	yTmp = yMin;
+	uk = 0;
+	/* Some C++ compilers still have non-local scope! */
+	for ( rk2 = 0; rk2 < 0x800; rk2++ )
+	{
+		bandPassParam[uk] = (yTmp*filterRefFreq) / Machine->sample_rate;
+		yTmp += yAdd;
+		uk++;
+	}
+
+	/*extern float filterResTable[16]; */
+	resDyMax = 1.0;
+	resDyMin = 2.0;
+	resDy = resDyMin;
+	for ( uk = 0; uk < 16; uk++ )
+	{
+		filterResTable[uk] = resDy;
+		resDy -= (( resDyMin - resDyMax ) / 15 );
+	}
+	filterResTable[0] = resDyMin;
+	filterResTable[15] = resDyMax;
 }
 
 void sid6581_init (SID6581 *This)

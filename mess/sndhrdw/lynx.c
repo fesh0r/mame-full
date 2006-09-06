@@ -366,9 +366,9 @@ void lynx_audio_reset(void)
 
 void *lynx_custom_start(int clock, const struct CustomSound_interface *config)
 {
-	mixer_channel = stream_create(0, 1, options.samplerate, 0, lynx_update);
+	mixer_channel = stream_create(0, 1, Machine->sample_rate, 0, lynx_update);
 
-	usec_per_sample = 1000000 / options.samplerate;
+	usec_per_sample = 1000000 / Machine->sample_rate;
 
 	lynx_audio_init();
 	return (void *) ~0;
@@ -378,9 +378,9 @@ void *lynx_custom_start(int clock, const struct CustomSound_interface *config)
 
 void *lynx2_custom_start(int clock, const struct CustomSound_interface *config)
 {
-    mixer_channel = stream_create(0, 2, options.samplerate, 0, lynx2_update);
+    mixer_channel = stream_create(0, 2, Machine->sample_rate, 0, lynx2_update);
 
-    usec_per_sample = 1000000 / options.samplerate;
+    usec_per_sample = 1000000 / Machine->sample_rate;
     
     lynx_audio_init();
 	return (void *) ~0;

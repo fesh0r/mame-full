@@ -35,7 +35,7 @@ void arcadia_soundport_w (int offset, int data)
 	    arcadia_sound.pos = 0;
 	    arcadia_sound.level = TRUE;
 	    // frequency 7874/(data+1)
-            arcadia_sound.size=options.samplerate*((data&0x7f)+1)/7874;
+            arcadia_sound.size=Machine->sample_rate*((data&0x7f)+1)/7874;
 	    break;
 	}
 }
@@ -73,10 +73,7 @@ static void arcadia_update(void *param,stream_sample_t **inputs, stream_sample_t
 
 void *arcadia_custom_start(int clock, const struct CustomSound_interface *config)
 {
-    if (!options.samplerate)
-		return NULL;
-    
-    arcadia_sound.channel = stream_create(0, 1, options.samplerate, 0, arcadia_update);
+    arcadia_sound.channel = stream_create(0, 1, Machine->sample_rate, 0, arcadia_update);
     return (void *) ~0;
 }
 

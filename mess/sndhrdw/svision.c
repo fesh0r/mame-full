@@ -26,9 +26,9 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
     case 1:
 	if (channel->reg[0]) {
 	    if (channel==svision_channel) 
-		channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
+		channel->size=(int)((Machine->sample_rate*channel->reg[0]<<6)/4e6);
 	    else
-		channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
+		channel->size=(int)((Machine->sample_rate*channel->reg[0]<<6)/4e6);
 	} else channel->size=0;
 	channel->pos=0;
     }
@@ -79,7 +79,7 @@ static void svision_update (void *param,stream_sample_t **inputs, stream_sample_
 
 void *svision_custom_start(int clock, const struct CustomSound_interface *config)
 {
-	mixer_channel = stream_create(0, 2, options.samplerate, 0, svision_update);
+	mixer_channel = stream_create(0, 2, Machine->sample_rate, 0, svision_update);
 	return (void *) ~0;
 }
 
