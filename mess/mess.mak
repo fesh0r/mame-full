@@ -1053,9 +1053,6 @@ COREOBJS +=							\
 
 
 
-# additional tools
-TOOLS = dat2html$(EXE) messtest$(EXE) chdman$(EXE) messdocs$(EXE) imgtool$(EXE)
-
 include mess/tools/imgtool/imgtool.mak
 
 DAT2HTML_OBJS =								\
@@ -1109,3 +1106,11 @@ $(OBJ)/render.o:	$(OBJ)/mess/layout/horizont.lh \
 
 
 $(OBJ)/mess/systems/coco.o:	$(OBJ)/mess/layout/coco3.lh
+
+
+
+#-------------------------------------------------
+# MESS tool targets
+#-------------------------------------------------
+
+TOOLS += dat2html$(EXE) messtest$(EXE) messdocs$(EXE) imgtool$(EXE)

@@ -71,9 +71,6 @@ X86_PPC_DRC = 1
 # uncomment next line if you are building for a 64-bit target
 # PTR64 = 1
 
-# uncomment next line to use cygwin compiler
-# COMPILESYSTEM_CYGWIN	= 1
-
 # uncomment next line to build expat as part of MAME build
 BUILD_EXPAT = 1
 
@@ -122,7 +119,6 @@ RM = @rm -f
 WINDOWS_PROGRAM = -mwindows
 CONSOLE_PROGRAM = -mconsole
 
-SUFFIX =
 WINUI = 1
 
 #-------------------------------------------------
@@ -271,11 +267,6 @@ else
 MAPFLAGS =
 endif
 
-ifdef COMPILESYSTEM_CYGWIN
-CFLAGS += -mno-cygwin
-LDFLAGS	+= -mno-cygwin
-endif
-
 
 
 #-------------------------------------------------
@@ -399,13 +390,43 @@ include mess/cpu/cpu.mak
 include mess/sound/sound.mak
 
 # combine the various definitions to one
-CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)
+CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
 
 
 
 #-------------------------------------------------
 # primary targets
 #-------------------------------------------------
+
+emulator: maketree $(EMULATORALL)
+
+extra: $(TOOLS)
+
+maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
+
+clean:
+	@echo Deleting object tree $(OBJ)...
+	$(RM) -r $(OBJ)
+	@echo Deleting $(EMULATORALL)...
+	$(RM) $(EMULATORALL)
+	@echo Deleting $(TOOLS)...
+	$(RM) $(TOOLS)
+
+
+
+#-------------------------------------------------
+# directory targets
+#-------------------------------------------------
+
+$(sort $(OBJDIRS)):
+	$(MD) $@
+
+
+
+#-------------------------------------------------
+# executable targets and dependencies
+#-------------------------------------------------
+
 
 ifeq ($(MAMEOS),windows)
 
@@ -440,19 +461,21 @@ $(EMULATORCLI):	$(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $
 
 endif
 
-
-
-#############################################################################
-
 file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
-
-xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT) $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 	@echo Compiling $@...
@@ -542,46 +565,8 @@ $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@
 	$(AR) -cr $@ $^
-	
-%$(EXE):
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 mess.chm: $(MESSDOCS)
 	$(MESSDOCS) docs/wintoc.xml obj/help
 	$(HHC) obj\\help\\mess.hhp
 	@cp obj/help/mess.chm $@
-	
-makedir:
-	@echo make makedir is no longer necessary, just type make
-
-$(sort $(OBJDIRS)):
-	$(MD) $@
-
-maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
-
-clean: cleantools cleantexts
-	@echo Deleting object tree $(OBJ)...
-	$(RM) -r $(OBJ) lib$(NAME).a
-	@echo Deleting $(EMULATORALL)...
-	$(RM) $(EMULATORALL)
-	@echo Deleting Map file...
-	$(RM) $(NAME).map
-	@echo Deleting $(MESSDOCS)
-	$(RM) $(MESSDOCS)
-	@echo Deleting $(MESSTEST)
-	$(RM) $(MESSTEST)
-	
-cleantools:
-	@echo Cleaning Tools
-	$(RM) $(MESSTOOLS)
-
-cleantexts:
-	@echo Cleaning Text Files
-	$(RM) $(TEXTS)
-	@echo Removing Sysinfo directory contents
-	$(RM) -r sysinfo	
-
-tests:	$(MESSTEST)
-	$(MESSTEST) mess/tools/messtest/tests.xml
-

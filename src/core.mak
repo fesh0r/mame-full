@@ -138,4 +138,4 @@ endif
 # set of tool targets
 #-------------------------------------------------
 
-TOOLS += romcmp$(EXE) chdman$(EXE) jedutil$(EXE)
+TOOLS += romcmp$(EXE) chdman$(EXE) jedutil$(EXE) file2str$(EXE)
