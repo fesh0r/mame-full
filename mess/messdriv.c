@@ -222,33 +222,26 @@ TESTDRIVER( pcw16 )		/* 1995 PCW16										*/
 TESTDRIVER( nc200 )		/* 19?? NC200										*/
 
 	/* APPLE */
-/*
- * CPU Model			 Month			 Year
- * -------------		 -----			 ----
- *
- * Apple III Plus		 December		 1983
- * Apple IIgs			 September		 1986
- * Apple IIc ROM 4		 ?				 198?
- */
-	DRIVER( apple1 )	/* 1976 Apple 1 									*/
-	DRIVER( apple2 )	/* 1977 Apple ][ 									*/
-	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
-	DRIVER( apple2e )	/* 1983 Apple //e									*/
-	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
-	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
-	DRIVER( apple2c )	/* 1984 Apple //c									*/
-	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
-	DRIVER( apple2c3 )	/* 1986 Apple //c (Original Mem. Exp.)				*/
-	DRIVER( apple2c4 )	/* 1986 Apple //c (rev 4)							*/
-	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
-TESTDRIVER( apple2g0 )  /* 1986 Apple IIgs ROM00							*/
-	DRIVER( apple2g1 )	/* 1987 Apple IIgs ROM01							*/
-	DRIVER( apple2gs )	/* 1989 Apple IIgs ROM03							*/
-	DRIVER( apple3 )    /* 1980 Apple ///     								*/
-	DRIVER( ace100 )    /* 1982 Franklin Ace 100							*/
-	DRIVER( laser128 )  /* 1987 Laser 128									*/
-	DRIVER( las128ex )  /* 1987 Laser 128 EX								*/
-TESTDRIVER( las3000 )   /* 1983 Laser 3000									*/
+	DRIVER( apple1 )	/* Jul 1976 Apple 1 								*/
+	DRIVER( apple2 )	/* Apr 1977 Apple ][ 								*/
+	DRIVER( apple2p )	/* Jun 1979 Apple ][+ 								*/
+	DRIVER( apple2e )	/* Jan 1983 Apple //e								*/
+	DRIVER( apple2ee )	/* Mar 1985 Apple //e Enhanced						*/
+	DRIVER( apple2ep )	/* Jan 1987 Apple //e Platinum						*/
+	DRIVER( apple2c )	/* Apr 1984 Apple //c								*/
+	DRIVER( apple2c0 )	/* ??? 1985 Apple //c (3.5 ROM) 					*/
+	DRIVER( apple2c3 )	/* Sep 1986 Apple //c (Original Mem. Exp.)			*/
+	DRIVER( apple2c4 )	/* ??? 198? Apple //c (rev 4)						*/
+	DRIVER( apple2cp )	/* Sep 1988 Apple //c+								*/
+TESTDRIVER( apple2g0 )  /* Sep 1986 Apple IIgs ROM00						*/
+	DRIVER( apple2g1 )	/* ??? 1987 Apple IIgs ROM01						*/
+	DRIVER( apple2gs )	/* Aug 1989 Apple IIgs ROM03						*/
+	DRIVER( apple3 )    /* May 1980 Apple ///     							*/
+						/* Dec 1983 Apple ///+								*/
+	DRIVER( ace100 )    /* ??? 1982 Franklin Ace 100						*/
+	DRIVER( laser128 )  /* ??? 1987 Laser 128								*/
+	DRIVER( las128ex )  /* ??? 1987 Laser 128 EX							*/
+TESTDRIVER( las3000 )   /* ??? 1983 Laser 3000								*/
 
 /*
  * Lisa 				 January			 1983
