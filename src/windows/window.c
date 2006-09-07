@@ -299,7 +299,8 @@ static void winwindow_exit(void)
 	}
 
 	// kill the UI pause event
-	CloseHandle(ui_pause_event);
+	if (ui_pause_event)
+		CloseHandle(ui_pause_event);
 
 	// kill the window thread ready event
 	if (window_thread_ready_event)
