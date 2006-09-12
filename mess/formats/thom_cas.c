@@ -28,11 +28,6 @@
    files are more compact anyway.
 */
 
-#define AUTO_THROTTLE 1
-/* throttle mode forced when the cassette motor is on (to speed up things)
-   (only works for unix)
-*/
-
 #define VERBOSE 0 /* 0, 1 or 2 */
 
 

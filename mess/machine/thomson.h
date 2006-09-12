@@ -14,7 +14,7 @@
 #define THOM_INPUT_GAME      3 /* 2-5 ports: joystick, mouse */
 #define THOM_INPUT_KEYBOARD  8 /* 8-10 lines */
 #define THOM_INPUT_CONFIG   18 /* machine-specific options */
-#define THOM_INPUT_FCONFIG  19 /* floppy options */
+#define THOM_INPUT_FCONFIG  19 /* floppy / network options */
 #define THOM_INPUT_VCONFIG  20 /* video options */
 
 /* 6821 PIAs */

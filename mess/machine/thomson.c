@@ -129,6 +129,11 @@ static UINT8 thom_cart_write;    /* cartridge write mode */
 #define THOM_CART_READ_WRITE    1 /* write performs bank switching */
 #define THOM_CART_WRITE_SWITCH  2 /* actual RAM */
 
+static void thom_set_caps_led ( int led )
+{
+  output_set_value( "led0", led );
+}
+
 
 /* ------------ serial ------------ */
 
@@ -348,7 +353,7 @@ static READ8_HANDLER ( to7_sys_portb_in )
   return to7_lightpen_gpl( TO7_LIGHTPEN_DECAL, to7_lightpen_step ) & 0xff;
 }
 
-static pia6821_interface to7_sys = {
+static const pia6821_interface to7_sys = {
   to7_sys_porta_in, to7_sys_portb_in, 
   NULL, NULL, NULL, NULL,
   NULL, to7_sys_portb_out, to7_set_cassette_motor, to7_sys_cb2_out,
@@ -463,7 +468,7 @@ static void to7_io_in_callback ( int id, unsigned long state )
 #endif
 }
 
-static pia6821_interface to7_io = {
+static const pia6821_interface to7_io = {
   to7_io_porta_in, NULL, NULL, NULL, NULL, NULL,
   to7_io_porta_out, to7_io_portb_out, NULL, to7_io_cb2_out,
   thom_firq_1, thom_firq_1
@@ -533,7 +538,7 @@ static void to7_rf57932_init( void )
    TODO!
  */
 
-static pia6821_interface to7_pia_modem = {
+static const pia6821_interface to7_pia_modem = {
   NULL, NULL, NULL, NULL, NULL, NULL,
   NULL, NULL, NULL, NULL, 
   NULL, NULL
@@ -605,7 +610,7 @@ static READ8_HANDLER ( to7_game_portb_in )
   return readinputport( THOM_INPUT_GAME + 1 ); 
 }
 
-static pia6821_interface to7_game = {
+static const pia6821_interface to7_game = {
   to7_game_porta_in, to7_game_portb_in,
   NULL, NULL, NULL, NULL,
   NULL, to7_game_portb_out, NULL, NULL,
@@ -705,6 +710,7 @@ MACHINE_START ( to7 )
   /* save-state */
   state_save_register_global( thom_cart_nb_banks );
   state_save_register_global( thom_cart_bank );
+  state_save_register_global( thom_cart_write );
   state_save_register_global( to7_keyline );
   state_save_register_global( to7_lightpen );
   state_save_register_global( to7_lightpen_step );
@@ -769,7 +775,7 @@ static WRITE8_HANDLER ( to770_sys_portb_out )
   to770_update_ram_bank();
 }
 
-static pia6821_interface to770_sys = {
+static const pia6821_interface to770_sys = {
   to770_sys_porta_in, NULL,
   NULL, NULL, NULL, NULL,
   NULL, to770_sys_portb_out, to7_set_cassette_motor, to770_sys_cb2_out,
@@ -890,6 +896,7 @@ MACHINE_START ( to770 )
   /* save-state */
   state_save_register_global( thom_cart_nb_banks );
   state_save_register_global( thom_cart_bank );
+  state_save_register_global( thom_cart_write );
   state_save_register_global( to7_keyline );
   state_save_register_global( to7_lightpen );
   state_save_register_global( to7_lightpen_step );
@@ -932,6 +939,12 @@ static void mo5_periodic_cb ( int dummy )
   pia_set_input_cb1( THOM_PIA_SYS, 0 );
 }
 
+static void mo5_init_timer(void)
+{
+  /* time is a faster than 50 Hz to match video framerate */
+  timer_adjust( mo5_periodic_timer, TIME_NOW, 0, TIME_IN_USEC( 19968 ) );
+}
+
 
 /* ------------ system PIA 6821 ------------ */
 
@@ -967,7 +980,7 @@ static READ8_HANDLER ( mo5_sys_portb_in )
   return ( readinputport( THOM_INPUT_KEYBOARD+lin ) & (1 << col) ) ? 0x80 : 0;
 }
 
-static pia6821_interface mo5_sys = {
+static const pia6821_interface mo5_sys = {
   mo5_sys_porta_in, mo5_sys_portb_in,
   NULL, NULL, NULL, NULL,
   mo5_sys_porta_out, mo5_sys_portb_out, mo5_set_cassette_motor, NULL,
@@ -1117,7 +1130,7 @@ MACHINE_RESET( mo5 )
   to7_io_reset();
   to7_modem_reset();
   to7_rf57932_reset();
-  timer_adjust( mo5_periodic_timer, TIME_NOW, 0, TIME_IN_MSEC( 20 ) );
+  mo5_init_timer();
 
   /* video */
   thom_set_video_mode( THOM_VMODE_MO5 );
@@ -1244,7 +1257,10 @@ static void to9_set_video_mode( UINT8 data, int style )
     break;
   case 0x21: thom_set_video_mode( THOM_VMODE_BITMAP4 );     break;
   case 0x41: thom_set_video_mode( THOM_VMODE_BITMAP4_ALT ); break; 
-  case 0x2a: thom_set_video_mode( THOM_VMODE_80 );          break;
+  case 0x2a:
+    if ( style==0 ) thom_set_video_mode( THOM_VMODE_80_TO9 );
+    else            thom_set_video_mode( THOM_VMODE_80 );
+    break;
   case 0x7b: thom_set_video_mode( THOM_VMODE_BITMAP16 );    break;
   case 0x24: thom_set_video_mode( THOM_VMODE_PAGE1 );       break;
   case 0x25: thom_set_video_mode( THOM_VMODE_PAGE2 );       break;
@@ -1875,7 +1891,7 @@ static WRITE8_HANDLER ( to9_sys_portb_out )
     logerror( "to9_sys_portb_out: overlay not handled\n" );
 }
 
-static pia6821_interface to9_sys = {
+static const pia6821_interface to9_sys = {
   to9_sys_porta_in, NULL,
   NULL, NULL, NULL, NULL,
   to9_sys_porta_out, to9_sys_portb_out, to7_set_cassette_motor, NULL,
@@ -1969,6 +1985,7 @@ MACHINE_START ( to9 )
   /* save-state */
   state_save_register_global( thom_cart_nb_banks );
   state_save_register_global( thom_cart_bank );
+  state_save_register_global( thom_cart_write );
   state_save_register_global( to7_lightpen );
   state_save_register_global( to7_lightpen_step );
   state_save_register_global( to9_soft_bank );
@@ -2344,7 +2361,7 @@ static WRITE8_HANDLER ( to8_game_portb_out )
   to8_sound_update();
 }
 
-static pia6821_interface to8_game = {
+static const pia6821_interface to8_game = {
   to8_game_porta_in, to8_game_portb_in,
   NULL, NULL, NULL, NULL,
   NULL, to8_game_portb_out, NULL, to8_game_cp2_out,
@@ -2681,7 +2698,7 @@ static WRITE8_HANDLER ( to8_sys_portb_out )
     logerror( "to8_sys_portb_out: overlay not handled\n" );
 }
 
-static pia6821_interface to8_sys = {
+static const pia6821_interface to8_sys = {
   to8_sys_porta_in, NULL,
   NULL, NULL, NULL, NULL,
   to9_sys_porta_out, to8_sys_portb_out, to7_set_cassette_motor, NULL,
@@ -2772,6 +2789,8 @@ MACHINE_RESET ( to8 )
   pia_set_input_b( THOM_PIA_SYS, 0xf8 );
   
   /* memory */
+  to8_cart_vpage = 0;
+  to8_data_vpage = 0;
   to8_soft_bank = 0;
   to8_update_ram_bank();
   to8_update_cart_bank();
@@ -2839,7 +2858,7 @@ MACHINE_START ( to8 )
 
 /* ------------ system PIA 6821 ------------ */
 
-static pia6821_interface to9p_sys = {
+static const pia6821_interface to9p_sys = {
   to9_sys_porta_in, NULL,
   NULL, NULL, NULL, NULL,
   to9_sys_porta_out, to8_sys_portb_out, to7_set_cassette_motor, NULL,
@@ -2910,6 +2929,8 @@ MACHINE_RESET ( to9p )
   pia_set_input_b( THOM_PIA_SYS, 0xf8 );
   
   /* memory */
+  to8_cart_vpage = 0;
+  to8_data_vpage = 0;
   to8_soft_bank = 0;
   to8_update_ram_bank();
   to8_update_cart_bank();
@@ -3144,7 +3165,7 @@ static WRITE8_HANDLER ( mo6_game_cb2_out )
 			      CENTRONICS_STROBE );
 }
  
-static pia6821_interface mo6_game = {
+static const pia6821_interface mo6_game = {
   to8_game_porta_in, to8_game_portb_in,
   NULL, mo6_game_cb1_in, NULL, NULL,
   mo6_game_porta_out, mo6_game_portb_out, NULL, mo6_game_cb2_out,
@@ -3223,7 +3244,7 @@ static WRITE8_HANDLER ( mo6_sys_portb_out )
 #endif
 }
 
-static pia6821_interface mo6_sys = {
+static const pia6821_interface mo6_sys = {
   mo6_sys_porta_in, mo6_sys_portb_in,
   NULL, NULL, NULL, NULL,
   mo6_sys_porta_out, mo6_sys_portb_out, mo5_set_cassette_motor, NULL,
@@ -3401,7 +3422,7 @@ MACHINE_RESET ( mo6 )
   thom_centronics_reset();
   to7_modem_reset();
   to7_rf57932_reset();
-  timer_adjust( mo5_periodic_timer, TIME_NOW, 0, TIME_IN_MSEC( 20 ) );
+  mo5_init_timer();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -3418,6 +3439,8 @@ MACHINE_RESET ( mo6 )
   thom_set_mode_point( 0 );
 
   /* memory */
+  to8_cart_vpage = 0;
+  to8_data_vpage = 0;
   mo6_update_ram_bank();
   mo6_update_cart_bank();
   /* mo5_reg_cart not reset */
@@ -3470,6 +3493,7 @@ MACHINE_START ( mo6 )
   state_save_register_global( to8_reg_sys2 );
   state_save_register_global( to8_lightpen_intr );
   state_save_register_global( to8_data_vpage );
+  state_save_register_global( to8_cart_vpage );
   state_save_register_global( mo5_reg_cart );
   state_save_register_global_pointer( (mem + 0x10000), 0x10000 );
   state_save_register_global_pointer( thom_vram, 0x4000 * 8 );
@@ -3479,13 +3503,6 @@ MACHINE_START ( mo6 )
 
 
 /***************************** MO5 NR *************************/
-
-
-/* ------------ game 6821 PIA ------------ */
-
-
-/* ------------ system PIA 6821 ------------ */
-
 
 /* ------------ network ( & external floppy) ------------ */
 
@@ -3575,7 +3592,7 @@ static WRITE8_HANDLER ( mo5nr_sys_porta_out )
   mo6_sound_update();                        /* bit 2: sound mute */
 }
 
-static pia6821_interface mo5nr_sys = {
+static const pia6821_interface mo5nr_sys = {
   mo6_sys_porta_in, mo5nr_sys_portb_in,
   NULL, NULL, NULL, NULL,
   mo5nr_sys_porta_out, mo6_sys_portb_out, mo5_set_cassette_motor, NULL,
@@ -3587,7 +3604,7 @@ static pia6821_interface mo5nr_sys = {
 
 /* similar to the MO6, without the printer */
 
-static pia6821_interface mo5nr_game = {
+static const pia6821_interface mo5nr_game = {
   to8_game_porta_in, to8_game_portb_in,
   NULL, NULL, NULL, NULL,
   mo6_game_porta_out, mo6_game_portb_out, NULL, NULL,
@@ -3624,7 +3641,7 @@ MACHINE_RESET ( mo5nr )
   thom_centronics_reset();
   to7_modem_reset();
   to7_rf57932_reset();
-  timer_adjust( mo5_periodic_timer, TIME_NOW, 0, TIME_IN_MSEC( 20 ) );
+  mo5_init_timer();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -3644,6 +3661,8 @@ MACHINE_RESET ( mo5nr )
   pia_set_input_b( THOM_PIA_SYS, 0xf8 );
   
   /* memory */
+  to8_cart_vpage = 0;
+  to8_data_vpage = 0;
   mo6_update_ram_bank();
   mo6_update_cart_bank();
   /* mo5_reg_cart not reset */

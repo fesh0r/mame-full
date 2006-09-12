@@ -10620,7 +10620,7 @@ Click with the lightpen or use keys 1 to 3 to select an option.
 
 Cassettes.
 
-Most games were distributed on a cassette which are loaded from the BASIC 1.0 
+Most games were distributed on cassettes which are loaded from the BASIC 1.0 
 cartridge. Thus, to get foo.k7 working, you need to use the both options 
 "-cart basic.m7 -cass foo.k7". Type 1 in the menu to get the BASIC prompt. 
 Two cases may now arise.
@@ -10628,7 +10628,7 @@ If the game has a BASIC loader (.BAS, .BAT, .CMP files), type RUN"".
 If it has a binary loader (.BIN, .ASM files), type LOADM"",,R. 
 Using the wrong command will result in a BASIC error, so you should
 really try both (do not forget to rewind between two retries).
-Also, if you have have the BASIC DOS loaded (see bellow), you must now type
+Also, if you have the BASIC DOS loaded (see below), you must now type
 respectively RUN"CASS:" and LOADM"CASS:",,R because the default device will
 be the floppy drive 0 instead of the cassette reader.
 Then, be patient. TO7 tapes are slow: 900 bauds (you can put throttling on).
@@ -10641,7 +10641,7 @@ demodulation (done in hardware in the TO7) is not well emulated (except when
 the signal is very clean, such as the one output by the emulator when saving).
 
 Cassettes are always saved in the .wav format. Do not forget to put the
-cassette reader into record mode using MESS's in-game menu (Tape Control).
+cassette reader into record mode using MESS's in-game menu.
 
 
 Floppies.
@@ -10659,7 +10659,7 @@ BASIC DOS extension in the form of a boot disk. Put the boot disk in the
 first drive (-flop0) as well as the BASIC 1.0 cartridge, and press 1. You should
 now be able to DIR, LOAD, SAVE. Use DIR"1:", DIR"2:" and DIR"3:" to access to
 floppies in drives -flop1, -flop2 and -flop3. New floppies must be formatted
-using the DSKINI0 (for -flop0) to DSKINI3 (for -flop3) command before 
+using the DSKINI0 (for -flop0) to DSKINI3 (for -flop3) commands before 
 being usable.
 Two-sided drives are actually seen as two different drives. A two-sided disk
 must thus be split into two image files put into different slots
@@ -10685,7 +10685,7 @@ Here is the visual layout of the keyboard:
 
 Unshifted keys appear on the left, and shifted appear on the right.
 Caps-lock is SHIFT+SPACE.
-Accents are typeset using with the ACC key, followed by A (grave),
+Accents are typeset with the ACC key, followed by A (grave),
 B (acute), C (hat), H (trema), or c (cedilla), then the key to accent.
 
 
@@ -11004,7 +11004,7 @@ The MO5 is the first Thomson computer with an integrated BASIC.
 Unlike the TO7 and TO7/70, it does not require an external BASIC cartridge 
 to operate.
 
-Also, the MO5 (and its MO5E variant) is the only Thomson computers without
+Also, the MO5 (and its MO5E variant) is the only Thomson computer without
 a startup menu: it starts directly at the BASIC prompt (or whatever cartridge
 was plugged-in).
 
@@ -11037,7 +11037,7 @@ Thus, it featured a lot of educational software.
 It was also a great game computer until the TO8 was built.
 
 Unlike the TO7 cassette format, the MO5 cassette format is a quite
-simple MFM encoding (Modified Frequency Modulation) and it is decoded
+simple MFM encoding (Modified Frequency Modulation) and is decoded
 fully in software. This gave rise to variants: many games were encoded
 specially and used a special loader in order to prevent people from
 disassembling the raw files. Some emulators use a byte-based format that
@@ -11045,7 +11045,7 @@ cannot represent these protections, and so, rely on emulator-specific
 hooks. These hooks are not emulated in MESS.
 Thus, you should prefer raw .wav files that faithfully emulate protection 
 schemes in MESS.
-Note that the byte-based format often have the suffix .k5 to differentiate them
+Note that byte-based images often use the suffix .k5 to differentiate them
 from TO7 files, but many also have a .k7 suffix which is confusing because
 they cannot be run on a TO7.
 
@@ -11100,7 +11100,7 @@ The MO5E features a much nicer case and keyboard than the original one for the
 French market. 
 Also, two game ports and 6-bit sound are included (they are optional 
 extensions on the MO5, TO7, and TO7/70).
-It exists in both AZERTY and a QWERTY versions.
+It exists in both AZERTY and QWERTY versions.
 Apart form the slightly different BIOS and BASIC ROM, it is internally 
 identical to the MO5, and fully compatible.
 
@@ -11138,9 +11138,13 @@ Features:
 
     . 640x200, 2 colors
 
-    . 320x200, two 2-color pages that can be overlaid
+    . 320x200, two 2-color pages
 
-    . 160x200, four 2-color pages that can be overlaid
+    . 320x200, two overlaid pages, 3 colors
+
+    . 160x200, four 2-color pages
+
+    . 160x200, four overlaid pages, 5 colors
 
 * Palette: 16 colors to be chosen among 4096.
 
@@ -11268,13 +11272,13 @@ Known Issues:
 History and Trivia:
 
 The TO9 was a high-end product destined to a semi-professional usage.
-It includes lots of RAM, software in ROM, a 3"1/2 floppy drive. It has a
+ It included lots of RAM, software in ROM, a 3"1/2 floppy drive. It had a 
 desktop look with a separate keyboard and an optional mouse.
-It is a TO family computer, backward compatible with the TO7 and TO7/70
+It was a TO family computer, backward compatible with the TO7 and TO7/70 
 (but not the MO5).
-It is the first Thomson computer based on the new video gate-array that
-increases greatly the video capabilities.
-Also, it is the first Thomson to have a dedicated keyboard chip (former ones
+It was the first Thomson computer based on the new video gate-array that 
+increased greatly the video capabilities.
+ Also, it was the first Thomson to have a dedicated keyboard chip (former ones 
 relied on CPU pooling).
 
 Alas it had many problems.
@@ -11324,9 +11328,13 @@ Features:
 
     . 640x200, 2 colors
 
-    . 320x200, two 2-color pages that can be overlaid
+    . 320x200, two 2-color pages
 
-    . 160x200, four 2-color pages that can be overlaid
+    . 320x200, two overlaid pages, 3 colors
+
+    . 160x200, four 2-color pages
+
+    . 160x200, four overlaid pages, 5 colors
 
 * Palette: 16 colors to be chosen among 4096.
 
@@ -11364,7 +11372,7 @@ for special kinds of floppy software (CHG applications).
 
 Cartridges.
 
-An optional cartridge can be inserted with -cart option. It can be
+An optional cartridge can be inserted with the -cart option. It can be
 started from the startup menu by pressing SHIFT+0.
 The TO8 can run TO7 and TO7/70 cartridges, but not MO5 ones.
 
@@ -11437,8 +11445,10 @@ Mouse.
 A mouse is emulated. However, you cannot use both a mouse and a game-pad as
 they are connected to the same port. Use MESS's in-game configuration to select
 between the two. The startup menu automatically detects the presence of a 
-mouse. It then disables the lightpen and use the mouse as a pointer device
-instead. You can revert to the lightpen using the SHIFT+3, and then SHIFT+2
+mouse. It then disables the lightpen and uses the mouse as the pointer device
+instead. 
+You can revert to the lightpen using SHIFT+3 in the startup menu, 
+and then SHIFT+2
 (useful when you revert to game-pad in MESS's in-game configuration, or if
 a mouse was incorrectly detected when you actually moved a game-pad).
 The white cross disappears when a mouse is emulated.
@@ -11475,10 +11485,10 @@ meant to replace the TO7/70 as a home computer.
 It has a more compact Amiga-like look, no separate keyboard, and less 
 extension slots. Also, it has no integrated floppy drive, and less application
 software in ROM.
-Despite this, it is considered a much superior computer.
+Despite this, it is considered much superior to the TO9.
 It improves on the gate-array technology developed for the TO9 (the TO8
 version is so mature that it will be reused unchanged on the TO9+ and MO6).
-This allows a better and more flexible use of the address space (in particular,
+It allows a better and more flexible use of the address space (in particular,
 video page switching is now available in all video modes).
 The TO8 has more RAM: 256 KB expandable up to 512 KB.
 The integrated controller is very versatile (again, a custom Thomson
@@ -11549,9 +11559,9 @@ We only show the difference with the TO8 and the TO9:
 
 * ROM: 96 KB BIOS, BASIC 1.0, BASIC 512, graphical DOS
 
-* Video: similar to TO8
+* Video: similar to the TO8
 
-* Mouse: similar to TO8
+* Mouse: similar to the TO8
 
 * Floppy: integrated versatile controller,
           integrated two-sided 3"1/2 floppy drive 
@@ -11625,9 +11635,13 @@ Features:
 
     . 640x200, 2 colors
 
-    . 320x200, two 2-color pages that can be overlaid
+    . 320x200, two 2-color pages
 
-    . 160x200, four 2-color pages that can be overlaid
+    . 320x200, two overlaid pages, 3 colors
+
+    . 160x200, four 2-color pages
+
+    . 160x200, four overlaid pages, 5 colors
 
 * Palette: 16 colors to be chosen among 4096.
 
@@ -11682,7 +11696,7 @@ the legacy BASIC 1.0.
 If you use the newer BASIC 128, you must type RUN"CASS:" and LOADM"CASS:",,R 
 instead.
 The MO6 should load and run most MO5 software, provided you use the legacy
-BASIC 1.0. New, MO6 software generally also work on the BASIC 1.0.
+BASIC 1.0. New, MO6 software generally also work with the BASIC 1.0.
 To improve the compatibility, use preferably .wav image formats and disable
 the external floppy controller in MESS's in-game menu.
 The MO6 cannot load cassettes in the "TO" format (TO7, TO7/70, etc.).
@@ -11732,9 +11746,9 @@ The mouse behaves as the TO8 one, i.e., you must choose whether a mouse or
 a game-pad is connected to the port using MESS's in-game menu (both cannot
 exist at the same time, but you can switch between them dynamically, without
 a reset).
-The startup menu will then automatically detects the presence of the
-mouse and disables the lightpen. Use the startup preference menu (2) to
-revert back to lightpen pointing device.
+The startup menu will then automatically detect the presence of the
+mouse and disable the lightpen. Use the startup preference menu (2) to
+revert back to the lightpen.
 
 
 Video.
@@ -11764,11 +11778,11 @@ It uses the same technology as the TO8.
 In particular, the very same gate-array is used for the video and memory 
 management. It is versatile enough to adapt to a MO5-like address map and
 emulate the legacy 320x200 MO5 video mode instead of the legacy TO7/70
-one).
+one.
 It also provides many enhancements from the TO8 (4096 color palette, various 
 video modes, hardware video page flip, flexible memory management, etc.).
 
-The MO6 was made cheaper than the TO8 by limiting the memory to 128 KB (not 
+The MO6 was made cheaper than the TO8 by limiting its memory to 128 KB (not 
 expandable, in theory) and making it cassette-based (there is no floppy drive, 
 an not even an internal floppy controller: it must be added as in the TO7 and 
 MO5). Even the keyboard shrank and reverted to an archaic management based on

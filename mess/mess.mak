@@ -961,6 +961,7 @@ $(OBJ)/be.a:						\
 	$(OBJ)/machine/53c810.o
 
 $(OBJ)/thomson.a:			\
+	$(OBJ)/mess/machine/mc6854.o    \
 	$(OBJ)/mess/machine/mc6846.o	\
 	$(OBJ)/mess/systems/thomson.o   \
 	$(OBJ)/mess/machine/thomson.o   \

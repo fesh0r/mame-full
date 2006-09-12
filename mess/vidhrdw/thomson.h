@@ -18,15 +18,10 @@
       47 top border lines (~3 ms)
    + 200 active lines (12.8 ms)
    +  47 bottom border lines (~3 ms)
-   +     vertical retrace
+   +     vertical retrace (~1 ms)
 
    TO9 and up introduced a half (160 pixels) and double (640 pixels)
    horizontal mode, but still in 40 us (no change in refresh rate).
-
-   One frame is 312 lines non-interlaced, but the SECAM format imposes
-   625 lines with interlacing, which gives 312.5 lines non-interlaced.
-   In order for the CPU to "see" only 312 lines in 20 ms, the clock is
-   slowed down from 1 MHz to 0.9984 MHz.
 */
 
 
@@ -34,7 +29,7 @@
 
 /***************************** dimensions **************************/
 
-/* original screen dimension (ùay be different from emulated screen!) */
+/* original screen dimension (may be different from emulated screen!) */
 #define THOM_ACTIVE_WIDTH  320
 #define THOM_BORDER_WIDTH   56
 #define THOM_ACTIVE_HEIGHT 200
@@ -55,7 +50,7 @@
 /* page 0 is banked */
 #define THOM_VRAM_BANK 1
 
-UINT8* thom_vram;
+extern UINT8* thom_vram;
 
 /*********************** video signals *****************************/
 
@@ -118,7 +113,8 @@ extern void thom_set_palette ( unsigned index, UINT16 color );
 #define THOM_VMODE_OVERLAY     8
 #define THOM_VMODE_OVERLAY3    9
 #define THOM_VMODE_TO9        10
-#define THOM_VMODE_NB         11
+#define THOM_VMODE_80_TO9     11
+#define THOM_VMODE_NB         12
 
 /* change the current video-mode */
 extern void thom_set_video_mode ( unsigned mode );
@@ -126,17 +122,8 @@ extern void thom_set_video_mode ( unsigned mode );
 /* select which video page shown among the 4 available */
 extern void thom_set_video_page ( unsigned page );
 
-
-/* TO7 TO7/70 caps-lock led integrated in the keyboard (2 = no led) */
-extern void thom_set_caps_led ( int led );
-
-#define THOM_LED_ON   0
-#define THOM_LED_OFF  1
-#define THOM_NO_LED   2 /* no led (e.g., MO5) */
-
-
 /* to tell there is some floppy activity, stays up for a few frames */
-extern void thom_floppy_icon ( int write );
+extern void thom_floppy_active ( int write );
 
 
 /***************************** TO7 / T9000 *************************/

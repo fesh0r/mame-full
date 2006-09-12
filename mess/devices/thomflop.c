@@ -16,6 +16,7 @@
 #include "devices/flopdrv.h"
 #include "devices/thomflop.h"
 #include "formats/thom_dsk.h"
+#include "machine/mc6854.h"
 
 #define VERBOSE 0  /* 0, 1 or 2 */
 
@@ -24,7 +25,7 @@
 #if VERBOSE > 1
 #define LOG(x)	logerror x
 #define VLOG(x)	logerror x
-#elif VERBOSE > 0
+#elif VERBOSE
 #define LOG(x)	logerror x
 #define VLOG(x)
 #else
@@ -249,6 +250,7 @@ static WRITE8_HANDLER( to7_5p14_w )
     to7_5p14_select = data;
 
     if ( drive != -1 ) {
+      thom_floppy_active( 0 );
       wd179x_set_drive( drive );
       wd179x_set_side( side );
       LOG(( "%f $%04x to7_5p14_w: $%02X set drive=%i side=%i density=%s\n", 
@@ -362,7 +364,7 @@ static mess_image * to7_qdd_image ( void )
   return image_from_devtype_and_index( IO_FLOPPY, 0 );
 }
 
-/* update MC6850 status register */
+/* update MC6852 status register */
 static void to7_qdd_stat_update( void )
 {
   int flags = floppy_drive_get_flag_state( to7_qdd_image(), -1 );
@@ -406,8 +408,6 @@ static UINT8 to7_qdd_read_byte( void )
   VLOG(( "%f $%04x to7_qdd_read_byte: RDATA off=%i/%i data=$%02X\n", 
 	 timer_get_time(), activecpu_get_previouspc(), 
 	 to7qdd->data_idx, to7qdd->data_size, data ));
-  
-  if ( ! ( to7qdd->data_idx & 64 ) ) thom_floppy_icon( 0 );
   
   to7qdd->data_idx++;
   to7qdd->start_idx = to7qdd->data_idx;
@@ -492,8 +492,6 @@ static void to7_qdd_write_byte( UINT8 data )
     
     else to7qdd->data_crc += data;
   }
-  
-  if (!(to7qdd->data_idx & 64)) thom_floppy_icon( 1 );
 }
 
 static READ8_HANDLER ( to7_qdd_r )
@@ -616,6 +614,7 @@ static WRITE8_HANDLER( to7_qdd_w )
     break;
 
   case 12: /* motor pulse ? */
+    thom_floppy_active( 0 );
     VLOG(( "%f $%04x to7_qdd_w: MOTOR=$%02X\n",
 	   timer_get_time(), activecpu_get_previouspc(), data ));
     break;
@@ -639,7 +638,8 @@ static void to7_qdd_reset( void )
     floppy_drive_set_ready_state( img, FLOPPY_DRIVE_READY, 0 );
     floppy_drive_set_motor_state( img, 1 );
     /* pulse each time the whole-disk spiraling track ends */
-    floppy_drive_set_rpm( img, 423. / 25. );
+    /* at 90us per byte read, the disk can be read in 6s */
+    floppy_drive_set_rpm( img, 60. / 6. );
   }
 
   to7qdd->ctrl1 |= QDD_C1_TRESET | QDD_C1_RRESET; /* reset */
@@ -660,6 +660,7 @@ static void to7_qdd_init( void )
   state_save_register_global( to7qdd->ctrl1 );
   state_save_register_global( to7qdd->ctrl2 );
   state_save_register_global( to7qdd->ctrl3 );
+  state_save_register_global( to7qdd->drive );
   state_save_register_global( to7qdd->data_idx );
   state_save_register_global( to7qdd->start_idx );
   state_save_register_global( to7qdd->data_size );
@@ -844,8 +845,6 @@ static UINT8 to8_floppy_read_byte ( void )
   if ( thmfc1->data_idx >= thmfc1->data_finish )
     thmfc1->stat0 |= THMFC1_STAT0_FINISHED;
   
-  if (!(thmfc1->data_idx & 64)) thom_floppy_icon( 0 );
-  
   return data;
 }
 
@@ -876,8 +875,6 @@ static UINT8 to8_floppy_raw_read_byte ( void )
 	 thmfc1->data_raw_idx, thmfc1->data_raw_size, data ));
   
   thmfc1->data_raw_idx++;
-  
-  if (!(thmfc1->data_raw_idx & 64)) thom_floppy_icon( 0 );
   
   return data;
 }  
@@ -956,9 +953,6 @@ static void to8_floppy_qdd_write_byte ( UINT8 data )
     }
     
     else thmfc1->data_crc += data;
-    
-    if (!(thmfc1->data_raw_idx & 64)) thom_floppy_icon( 1 );
-    
   }
   
   else {
@@ -981,8 +975,6 @@ static void to8_floppy_write_byte ( UINT8 data )
   if ( thmfc1->data_idx >= thmfc1->data_size - 1 )
     to8_floppy_cmd_complete_cb( 0 );
   else thmfc1->data_idx++;
-  
-  if (!(thmfc1->data_idx & 64)) thom_floppy_icon( 1 );
 }
 
 /* intelligent formatting */
@@ -1195,6 +1187,7 @@ WRITE8_HANDLER ( to8_floppy_w )
      }
 
       img = to8_floppy_image();
+      thom_floppy_active( 0 );
       
       LOG (( "%f $%04x to8_floppy_w: CMD2=$%02X drv=%i step=%i motor=%i\n",
 	     timer_get_time(), activecpu_get_previouspc(), data, 
@@ -1269,6 +1262,7 @@ void to8_floppy_reset( void )
     mess_image * img = image_from_devtype_and_index( IO_FLOPPY, i );
     floppy_drive_set_index_pulse_callback( img, to8_floppy_index_pulse_cb );
     floppy_drive_set_ready_state( img, FLOPPY_DRIVE_READY, 0 );
+    floppy_drive_seek( img, - floppy_drive_get_current_track( img ) );
   }
 
   thom_floppy_set_density( DEN_MFM_LO );
@@ -1308,6 +1302,7 @@ void to8_floppy_init( void )
   state_save_register_global( thmfc1->ipl );
   state_save_register_global( thmfc1->data_idx );
   state_save_register_global( thmfc1->data_size );
+  state_save_register_global( thmfc1->data_finish );
   state_save_register_global( thmfc1->stat0 );
   state_save_register_global( thmfc1->data_raw_idx );
   state_save_register_global( thmfc1->data_raw_size );
@@ -1318,6 +1313,143 @@ void to8_floppy_init( void )
 
 
 
+/*********************** Network ************************/
+
+/* The network extension is built as an external floppy controller.
+   It uses the same ROM and I/O space, and so, it is natural to have the
+   toplevel network emulation here!
+ */
+
+/* NOTE: This is work in progress! 
+   For the moment, only hand-checks works: the TO7 can take the line, then
+   perform a DKBOOT request. We do not have the server emulated yet, so,
+   no way to answer the request.
+ */
+
+static void ans4( int dummy )
+{
+   LOG(( "%f ans4\n", timer_get_time() ));
+   mc6854_set_cts( 0 );
+}
+
+static void ans3( int dummy )
+{
+   LOG(( "%f ans3\n", timer_get_time() ));
+   mc6854_set_cts( 1 );
+   timer_set(  TIME_IN_USEC( 100 ), 0, ans4 );
+}
+
+static void ans2( int dummy )
+{
+   LOG(( "%f ans2\n", timer_get_time() ));
+   mc6854_set_cts( 0 );
+   timer_set(  TIME_IN_USEC( 100 ), 0, ans3 );
+}
+
+static void ans( int dummy )
+{
+   LOG(( "%f ans\n", timer_get_time() ));
+   mc6854_set_cts( 1 );
+   timer_set(  TIME_IN_USEC( 100 ), 0, ans2 );
+}
+/* consigne DKBOOT
+
+   MO5 BASIC
+   $00 $00 $01 $00 $00 $00 $00 $00 $00 $00 $01 $00<$41 $00 $FF $20 
+   $3D $4C $01 $60 $20 $3C $4F $01 $05 $20 $3F $9C $19 $25 $03 $11
+   $93 $15 $10 $25 $32 $8A $7E $FF $E1 $FD $E9 $41>$00 $00 $00 $00 
+   $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00
+
+   TO7/70 BASIC
+   $00 $00 $01 $00 $00 $00 $00 $00 $00 $00 $02 $00<$20 $42 $41 $53 
+   $49 $43 $20 $4D $49 $43 $52 $4F $53 $4F $46 $54 $20 $31 $2E $30
+   $04 $00 $00 $00 $00 $00 $60 $FF $37 $9B $37 $9C>$00 $00 $00 $00 
+   $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00
+
+   TO7 BASIC
+   $00 $00 $01 $00 $00 $00 $00 $00 $00 $00 $00 $00<$20 $42 $41 $53 
+   $49 $43 $20 $4D $49 $43 $52 $4F $53 $4F $46 $54 $20 $31 $2E $30
+   $04 $00 $00 $00 $00 $00 $60 $FF $37 $9B $37 $9C>$00 $00 $00 $00 
+   $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00
+
+   TO7 LOGO
+   $00 $00 $01 $00 $00 $00 $00 $00 $00 $00 $00 $00<$00 $00 $00 $00 
+   $00 $20 $4C $4F $47 $4F $04 $00 $00 $00 $00 $00 $00 $00 $00 $00
+   $00 $00 $00 $00 $00 $00 $AA $FF $01 $16 $00 $C8>$00 $00 $00 $00 
+   $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00
+
+
+*/
+
+static void to7_network_got_frame( UINT8* data, int length )
+{
+  int i;
+  LOG(( "%f to7_network_got_frame:", timer_get_time() ));
+  for ( i = 0; i < length; i++ )
+    LOG(( " $%02X", data[i] ));
+  LOG(( "\n" ));
+
+  if ( data[1] == 0xff ) {
+    LOG(( "to7_network_got_frame: %i phones %i\n", data[2], data[0] ));
+    timer_set(  TIME_IN_USEC( 100 ), 0, ans  );
+    mc6854_set_cts( 0 );
+  }
+  else if ( ! data[1] ) {
+    char name[33];
+    int i;
+    memcpy( name, data + 12, 32 );    
+    name[32] = 0;
+    for (i=0;i<32;i++) 
+      if ( name[i]<32 || name[i]>=127 ) name[i]=' ';
+    LOG(( "to7_network_got_frame: DKBOOT system=%s appli=\"%s\"\n",
+	  (data[10] == 0) ? "TO7" : (data[10] == 1) ? "MO5" :
+	  (data[10] == 2) ? "TO7/70" : "?", name ));
+  }
+  
+}
+
+static const mc6854_interface network_iface = 
+  { NULL, to7_network_got_frame, NULL, NULL };
+
+static void to7_network_init( void )
+{
+  LOG(( "to7_network_init: NR 07-005 network extension\n" ));
+  logerror( "to7_network_init: network not handled!\n" );
+  mc6854_config( &network_iface  );
+}
+
+static void to7_network_reset( void )
+{
+  LOG(( "to7_network_reset: NR 07-005 network extension\n" ));
+  mc6854_reset();
+  mc6854_set_cts( 1 );
+}
+
+static READ8_HANDLER ( to7_network_r )
+{
+  if ( offset >= 0 && offset < 4 ) return mc6854_r( offset );
+
+  if ( offset == 8 ) {
+    /* network ID of the computer */
+    UINT8 id = readinputport( THOM_INPUT_FCONFIG ) >> 3;
+    VLOG(( "%f $%04x to7_network_r: read id $%02X\n",
+	   timer_get_time(), activecpu_get_previouspc(), id ));
+    return id;
+  }
+
+  logerror( "%f $%04x to7_network_r: invalid read offset %i\n",
+	    timer_get_time(), activecpu_get_previouspc(), offset );
+  return 0;
+}
+
+static WRITE8_HANDLER ( to7_network_w )
+{
+  if ( offset >= 0 && offset < 4 ) return mc6854_w( offset, data );
+  else {
+    logerror( "%f $%04x to7_network_w: invalid write offset %i (data=$%02X)\n",
+	      timer_get_time(), activecpu_get_previouspc(), offset, data );
+  }
+}
 
 
 /*********************** TO7 dispatch ************************/
@@ -1336,11 +1468,12 @@ UINT8 to7_controller_type;
 
 void to7_floppy_init ( void* base )
 {
-  memory_configure_bank( THOM_FLOP_BANK, 0, 7, base, 0x800 );
+  memory_configure_bank( THOM_FLOP_BANK, 0, 8, base, 0x800 );
   state_save_register_global( to7_controller_type );
   to7_5p14_init();
   to7_qdd_init();
   to8_floppy_init();
+  to7_network_init();
 }
 
 void to7_floppy_reset ( void )
@@ -1364,6 +1497,11 @@ void to7_floppy_reset ( void )
     to7_qdd_reset(); 
     break;
 
+  case 4:  
+    memory_set_bank( THOM_FLOP_BANK, 7 );
+    to7_network_reset(); 
+    break;
+
   default:
     memory_set_bank( THOM_FLOP_BANK, 0); 
     break;
@@ -1382,6 +1520,9 @@ READ8_HANDLER ( to7_floppy_r )
     
   case 3:  
     return to7_qdd_r( offset );
+
+  case 4:  
+    return to7_network_r( offset );
   }
 
   return 0;
@@ -1405,6 +1546,10 @@ WRITE8_HANDLER ( to7_floppy_w )
 
   case 3:  
     to7_qdd_w( offset, data ); 
+    break;
+
+  case 4:  
+    to7_network_w( offset, data ); 
     break;
   }
 }

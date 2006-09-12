@@ -150,7 +150,7 @@ static void thom_floppy_show ( thom_floppy_drive* d )
     PRINT (( "thom_floppy: floppy name \"%s\"\n", name ));
 
     /* BASIC directory */
-    dir += d->sector_size;
+    dir += d->sector_size*2;
     for ( j = 0; j < d->sector_size * 14 / 32; j++, dir += 32 ) {
       char name[] = "01234567.ABC";
       char comment[] = "01234567";
@@ -179,7 +179,9 @@ static thom_floppy_drive* thom_floppy_drive_of_image ( mess_image *image )
 static void thom_floppy_seek ( mess_image *image, int physical_track )
 {
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
+  thom_floppy_active( 0 );
   if ( physical_track < 0 ) physical_track = 0;
+  if ( physical_track >= 80 ) physical_track = 79;
   LOG(( "%f thom_floppy_seek: dev=%i track=%i\n", 
 	timer_get_time(), d - thom_floppy_drives, physical_track ));
   d->cur_track = physical_track;
@@ -204,6 +206,7 @@ static void thom_floppy_get_id ( mess_image* image, chrn_id* id,
 	 d - thom_floppy_drives, trk, id_index, physical_side,
 	 (thom_density == DEN_FM_LO) ? "FM" : "MFM", 
 	 (d->density == DEN_FM_LO) ? "FM" : "MFM" ));
+  thom_floppy_active( 0 );
   if ( thom_floppy_sector_ptr( d, id_index+1, trk, 0 ) && 
 #if 0
        /* fails with bobwinter */
@@ -240,16 +243,15 @@ thom_floppy_read_sector_data_into_buffer ( mess_image* image, int side,
 {
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
   UINT8* src = thom_floppy_sector_ptr( d, index1, d->cur_track, 0 );
+  thom_floppy_active( 0 );
   LOG(( "thom_floppy_read_sector_data_into_buffer: dev=%i track=%i idx=%i side=%i len=%i\n",
 	d - thom_floppy_drives, d->cur_track, index1, side, length ));
   if ( length > d->sector_size ) {
     logerror( "thom_floppy_read_sector_data_into_buffer: sector size %i truncated to %i\n", length, d->sector_size );
     length = d->sector_size;
   }
-  if ( src ) {
+  if ( src )
     memcpy( ptr, src, length );
-    thom_floppy_icon( 0 );
-  }
 }
 
 static void 
@@ -259,6 +261,7 @@ thom_floppy_write_sector_data_from_buffer ( mess_image *image, int side,
 {
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
   UINT8* dst = thom_floppy_sector_ptr( d, data_id, d->cur_track, 0 );
+  thom_floppy_active( 1 );
   LOG(( "thom_floppy_write_sector_data_into_buffer: dev=%i track=%i idx=%i side=%i ddam=%i len=%i\n",
 	d - thom_floppy_drives, d->cur_track, data_id, side, ddam, length ));
   if ( length > d->sector_size ) {
@@ -268,7 +271,6 @@ thom_floppy_write_sector_data_from_buffer ( mess_image *image, int side,
   if ( dst ) {
     memcpy( dst, ptr, length );
     d->has_changed = 1;
-    thom_floppy_icon( 1 );
   }
 }
 
@@ -279,6 +281,7 @@ thom_floppy_format_sector ( mess_image *image, int side, int sector_index,
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
   int sector_size = 128 << n;
   UINT8* dst;
+  thom_floppy_active( 1 );
   LOG(( "thom_floppy_format_sector: dev=%i track=%i/%i side=%i/%i idx=%i/%i c=%i h=%i r=%i n=%i filler=$%02X\n",
 	d - thom_floppy_drives, 
 	d->cur_track, d->tracks, side, d->sides, sector_index, d->sectors,
@@ -303,7 +306,6 @@ thom_floppy_format_sector ( mess_image *image, int side, int sector_index,
     memset( dst, filler, d->sector_size );
     * thom_floppy_sector_flag( d, r, d->cur_track, 0 ) = THOM_SECT_OK;
     d->has_changed = 1;
-    thom_floppy_icon( 1 );
   }
   else logerror( "thom_floppy_format_sector: invalid operation\n" );
 }

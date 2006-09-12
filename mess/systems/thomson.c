@@ -65,7 +65,6 @@
    - midi extension (@)
    - TV overlay (IN 57-001), digitisation extension (@)
    - barcode reader (@)
-   - NR 07-005 MO5 extension, MO5NR: network (@)
    - speech synthesis extension
 
    (@) means MESS is lacking support for this kind of device / feature anyway
@@ -464,7 +463,7 @@ boot floppy.
 * video:
     320x200 pixels with color constraints (2 colors per horizontal
     8-pixel span), 8-color pixel palette,
-    50 Hz (SECAM)
+    50 Hz (tweaked SECAM)
 
 * devices:
   - AZERTY keyboard, 58-keys, French with accents
@@ -577,12 +576,24 @@ ADDRESS_MAP_END
      ROM_LOAD ( "cq90-028.rom", base+0x3000, 0x7c0,			\
 		MD5(0f58e167bf6ebcd2cbba946be2084fbe) )			
      
+/* external floppy / network controller: 8 banks */     
+#define ROM_FLOPPY5( base )				\
+  ROM_FLOPPY( base )					\
+  ROM_LOAD ( "nano5.rom", base+0x3800, 0x7c0,	\
+	     MD5(06ff309276d4fc656e99a8ad1ca67899) )
+
+#define ROM_FLOPPY7( base )				\
+  ROM_FLOPPY( base )					\
+  ROM_LOAD ( "nano7.rom", base+0x3800, 0x7c0,	\
+	     MD5(77da8cfc9e0a14ef2ed7034f5941b542) )
+     
+
 ROM_START ( to7 )
      ROM_REGION ( 0x28000, REGION_CPU1, 0 )
      ROM_LOAD ( "to7.rom", 0xe800, 0x1800,
 		MD5(5bf18521bf35293de942645f690b2845) )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
-     ROM_FLOPPY ( 0x24000 )
+     ROM_FLOPPY7 ( 0x24000 )
 ROM_END
 
 ROM_START ( t9000 )
@@ -590,7 +601,7 @@ ROM_START ( t9000 )
      ROM_LOAD ( "t9000.rom", 0xe800, 0x1800,
 		MD5(b3007f26e7b621c1a4f0fd2c287f80b9) )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
-     ROM_FLOPPY ( 0x24000 )
+     ROM_FLOPPY7 ( 0x24000 )
 ROM_END
 
 
@@ -622,7 +633,41 @@ INPUT_PORTS_START ( to7_fconfig )
      PORT_CONFSETTING ( 0x01, "CD 90-640 (5\"1/4)" )
      PORT_CONFSETTING ( 0x02, "CD 90-351 (3\"1/2)" )
      PORT_CONFSETTING ( 0x03, "CQ 90-028 (2\"8 QDD)" )
-     //PORT_CONFSETTING ( 0x04, "Network" )
+     PORT_CONFSETTING ( 0x04, "Network" )
+
+     PORT_CONFNAME ( 0xf8, 0x08, "Network ID" )
+     PORT_CONFSETTING ( 0x00, "0 (Master)" );
+     PORT_CONFSETTING ( 0x08, "1" );
+     PORT_CONFSETTING ( 0x10, "2" );
+     PORT_CONFSETTING ( 0x18, "3" );
+     PORT_CONFSETTING ( 0x20, "4" );
+     PORT_CONFSETTING ( 0x28, "5" );
+     PORT_CONFSETTING ( 0x30, "6" );
+     PORT_CONFSETTING ( 0x38, "7" );
+     PORT_CONFSETTING ( 0x40, "8" );
+     PORT_CONFSETTING ( 0x48, "9" );
+     PORT_CONFSETTING ( 0x50, "10" );
+     PORT_CONFSETTING ( 0x58, "11" );
+     PORT_CONFSETTING ( 0x60, "12" );
+     PORT_CONFSETTING ( 0x68, "13" );
+     PORT_CONFSETTING ( 0x70, "14" );
+     PORT_CONFSETTING ( 0x78, "15" );
+     PORT_CONFSETTING ( 0x80, "16" );
+     PORT_CONFSETTING ( 0x88, "17" );
+     PORT_CONFSETTING ( 0x90, "18" );
+     PORT_CONFSETTING ( 0x98, "19" );
+     PORT_CONFSETTING ( 0xa0, "20" );
+     PORT_CONFSETTING ( 0xa8, "21" );
+     PORT_CONFSETTING ( 0xb0, "22" );
+     PORT_CONFSETTING ( 0xb8, "23" );
+     PORT_CONFSETTING ( 0xc0, "24" );
+     PORT_CONFSETTING ( 0xc8, "25" );
+     PORT_CONFSETTING ( 0xd0, "26" );
+     PORT_CONFSETTING ( 0xd8, "27" );
+     PORT_CONFSETTING ( 0xe0, "28" );
+     PORT_CONFSETTING ( 0xe8, "29" );
+     PORT_CONFSETTING ( 0xf0, "30" );
+     PORT_CONFSETTING ( 0xf8, "31" );
 
 INPUT_PORTS_END
 
@@ -738,25 +783,26 @@ static MACHINE_DRIVER_START ( to7 )
      MDRV_MACHINE_RESET ( to7 )     
   
 /* cpu */
-/* NOTE: the frequency is close to but not exactly 1 MHz to compensate
-   for the difference between the 624-line video output and the 625-line
-   SECAM video format.
- */
-     MDRV_CPU_ADD_TAG ( "main", M6809, 998400 ) /* almost 1 MHz */
+     MDRV_CPU_ADD_TAG ( "main", M6809, 1000000 )
      MDRV_CPU_PROGRAM_MAP ( to7, 0 )
   
 /* video */
-     MDRV_FRAMES_PER_SECOND ( 50 )
+/* Finally, I figured it out. The video hardware overclocks the SECAM 
+   framerate from 50 Hz to 1/0.019968 Hz to get 312 64us lines per frame,
+   i.e., 19.968 ms per frame, not 20 ms
+*/
+     MDRV_FRAMES_PER_SECOND ( /*50*/ 1./0.019968 )
      MDRV_INTERLEAVE ( 0 )
      MDRV_VIDEO_ATTRIBUTES ( VIDEO_TYPE_RASTER )
-     MDRV_SCREEN_MAXSIZE ( THOM_TOTAL_WIDTH * 2, THOM_TOTAL_HEIGHT * 2 )
-     MDRV_SCREEN_VISIBLE_AREA ( 0, THOM_TOTAL_WIDTH * 2 - 1, 
+     MDRV_SCREEN_SIZE ( THOM_TOTAL_WIDTH * 2, THOM_TOTAL_HEIGHT * 2 )
+     MDRV_VISIBLE_AREA ( 0, THOM_TOTAL_WIDTH * 2 - 1, 
 				0, THOM_TOTAL_HEIGHT * 2 - 1 )
      MDRV_PALETTE_LENGTH ( 4097 ) /* 12-bit color + transparency */
      MDRV_PALETTE_INIT ( thom )
      MDRV_VIDEO_START ( thom )
      MDRV_VIDEO_UPDATE ( thom )
      MDRV_VIDEO_EOF ( thom )
+     MDRV_DEFAULT_LAYOUT( "thomson" )
 
 /* sound */
      MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -864,7 +910,7 @@ ROM_START ( to770 )
      ROM_REGION ( 0x40000, REGION_CPU1, 0 )
      ROM_LOAD ( "to770.rom", 0xe800, 0x1800, /* BIOS */
 		MD5(61402c35b75faeb4b74b815f323fff3d) )
-     ROM_FLOPPY ( 0x3c000 )
+     ROM_FLOPPY7 ( 0x3c000 )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
 ROM_END
 
@@ -872,7 +918,7 @@ ROM_START ( to770a )
      ROM_REGION ( 0x40000, REGION_CPU1, 0 )
      ROM_LOAD ( "to770a.rom", 0xe800, 0x1800,
 		MD5(6b63aa135107beee243967a2da0e5453) )
-     ROM_FLOPPY ( 0x3c000 )
+     ROM_FLOPPY7 ( 0x3c000 )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
 ROM_END
 
@@ -986,7 +1032,8 @@ Unlike the TO7, the BASIC 1.0 is integrated and the MO5 can be used "as-is".
   - optional cartridge, up to 64 KB, incompatible with TO7,
     masks the integrated BASIC ROM
   - game & music, I/O, floppy extensions: identical to TO7
-  - NR 07-005: network extension, comes with 2 KB ROM & 64 KB RAM
+  - NR 07-005: network extension, MC 6854 based, 2 KB ROM & 64 KB RAM
+    (build by the French Leanord company)
  
 
 MO5E (1986)
@@ -1036,13 +1083,9 @@ ROM_START ( mo5 )
      ROM_REGION ( 0x38000, REGION_CPU1, 0 )
      ROM_LOAD ( "mo5.rom", 0xf000, 0x1000,
 		MD5(ab3533a7132f90933acce80e256ae459) )
-/*
-     ROM_LOAD ( "basic5.rom", 0x10000, 0x4000,
-		MD5(06023716e0cfe086ca874a1f65f0363d) )
-*/
      ROM_LOAD ( "basic5.rom", 0x11000, 0x3000,
 		MD5(f992a912093d3e8f165f225f74345b57) )
-     ROM_FLOPPY ( 0x34000 )
+     ROM_FLOPPY5 ( 0x34000 )
 ROM_END
 
 ROM_START ( mo5e )
@@ -1051,7 +1094,7 @@ ROM_START ( mo5e )
 		MD5(434c42b96c31a341e13085048cdc8eae) )
      ROM_LOAD ( "basic5e.rom", 0x11000, 0x3000,
 		MD5(6404a7f49ec28937decd905d2a3cbb28) )
-     ROM_FLOPPY ( 0x34000 )
+     ROM_FLOPPY5 ( 0x34000 )
 ROM_END
 
 
@@ -1155,7 +1198,7 @@ It was replaced quickly with the improved TO9+.
   - 1 MHz Motorola 6809E CPU
   - 1 Motorola 6821 PIA (+2 for game, modem extensions)
   - 1 Motorola 6846 timer, PIA
-  - 1 Motorola 6804 + 1 Motorola 6850 (keyboard & mouse control)
+  - 1 Motorola 6805 + 1 Motorola 6850 (keyboard & mouse control)
   - 1 Western Digital 2793 (disk controller)
   - 3 gate-arrays (address decoding, system, video)
 
@@ -1632,7 +1675,7 @@ It uses the same video gate-array and floppy controller.
 The differences with the TO8 are:
 
 * chips:
-  - 1 Motorola 6804 + 1 Motorola 6850 (keyboard)
+  - 1 Motorola 6805 + 1 Motorola 6850 (keyboard)
   - 3 Motorola 6821 PIAs (system, game, modem)
 
 * memory:
@@ -1849,7 +1892,7 @@ ROM_START ( mo6 )
      ROM_LOAD ( "basic6-3.rom", 0x2c000, 0x4000,
 		MD5(c2c4dab28d42adf4ea264270ea889c4f) )
 
-     ROM_FLOPPY ( 0x50000 )
+     ROM_FLOPPY5 ( 0x50000 )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
 ROM_END
 
@@ -1872,7 +1915,7 @@ ROM_START ( pro128 )
      ROM_LOAD ( "basico-3.rom", 0x2c000, 0x4000,
 		MD5(5e31d779961ed1ae7fc800489277f96a) )
 
-     ROM_FLOPPY ( 0x50000 )
+     ROM_FLOPPY5 ( 0x50000 )
      ROM_FILL ( 0x10000, 0x10000, 0x39 )
 ROM_END
 
@@ -2087,7 +2130,7 @@ It is both MO5 and MO6 compatible (but not TO-compatible).
 Here are the differences between the MO6 and MO5NR:
 
 * chips:
-  - integrated EF 6854 network controller
+  - integrated MC 6854 network controller
 
 * memory: 
   - extra 2 KB ROM for the integrated network controller,
@@ -2162,7 +2205,7 @@ ROM_START ( mo5nr )
      ROM_LOAD ( "basicn-3.rom", 0x2c000, 0x4000,
 		MD5(c67c65ac66c5f82bea3fcb83c2308a51) )
 
-     ROM_FLOPPY ( 0x50000 )
+     ROM_FLOPPY5 ( 0x50000 )
      ROM_FILL ( 0x10000, 0x10000, 0x39 ) /* TODO: network ROM */
 ROM_END
 
