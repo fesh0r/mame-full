@@ -477,6 +477,10 @@ jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
+dat2html$(EXE): $(DAT2HTML_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+
 messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
