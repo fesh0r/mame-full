@@ -1444,11 +1444,13 @@ static READ8_HANDLER ( to7_network_r )
 
 static WRITE8_HANDLER ( to7_network_w )
 {
-  if ( offset >= 0 && offset < 4 ) return mc6854_w( offset, data );
-  else {
-    logerror( "%f $%04x to7_network_w: invalid write offset %i (data=$%02X)\n",
-	      timer_get_time(), activecpu_get_previouspc(), offset, data );
-  }
+	if ( offset >= 0 && offset < 4 )
+		mc6854_w( offset, data );
+	else
+	{
+		logerror( "%f $%04x to7_network_w: invalid write offset %i (data=$%02X)\n",
+			timer_get_time(), activecpu_get_previouspc(), offset, data );
+	}
 }
 
 
