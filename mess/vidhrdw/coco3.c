@@ -80,7 +80,7 @@ struct _coco3_video
 	UINT32 video_position;
 	UINT8 line_in_row;
 	UINT8 blink;
-	UINT8 dirty;
+	UINT8 dirty[2];
 	UINT8 video_type;
 
 	/* video state; every scanline the video state for the scanline is copied
@@ -429,11 +429,11 @@ VIDEO_UPDATE( coco3 )
 	else
 	{
 		/* CoCo 3 graphics */
-		if (video->dirty)
+		if (video->dirty[screen])
 		{
 			for (row = cliprect->min_y; row <= cliprect->max_y; row++)
 				coco3_render_scanline(bitmap, row);
-			video->dirty = FALSE;
+			video->dirty[screen] = FALSE;
 		}
 		else
 		{
@@ -453,7 +453,9 @@ VIDEO_UPDATE( coco3 )
 
 static void coco3_set_dirty(void)
 {
-	video->dirty = TRUE;
+	int i;
+	for (i = 0; i < sizeof(video->dirty) / sizeof(video->dirty[0]); i++)
+		video->dirty[i] = TRUE;
 }
 
 
@@ -610,7 +612,8 @@ static void coco3_prepare_scanline(int scanline)
 			dirty = TRUE;
 		}
 	}
-	video->dirty = dirty ? TRUE : FALSE;
+	if (dirty)
+		coco3_set_dirty();
 }
 
 
@@ -782,7 +785,7 @@ static void internal_video_start_coco3(m6847_type type)
 	/* allocate video */
 	video = auto_malloc(sizeof(*video));
 	memset(video, 0, sizeof(*video));
-	video->dirty = TRUE;
+	coco3_set_dirty();
 
 	/* initialize palette */
 	for (i = 0; i < 64; i++)
@@ -850,5 +853,5 @@ VIDEO_START( coco3p )
 void coco3_vh_blink(void)
 {
 	video->blink = !video->blink;
-	video->dirty = TRUE;
+	coco3_set_dirty();
 }

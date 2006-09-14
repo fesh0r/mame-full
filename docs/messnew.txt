@@ -11,6 +11,9 @@ System Driver Changes:
 - [CBM] Fixed SID code to remove potential divide by zero issues.  (bug #936)
   [Nate Woods]
 
+- [COCO3] Fixed a bug that could cause hi-res text and graphics to not display
+  properly when RGB is enabled.  (bug #938) [Nate Woods]
+
 - [THOMSON] Improved video emulation, floppy disk support, preliminary network
   extension support, and LEDs.  [Antoine Mine]
 
