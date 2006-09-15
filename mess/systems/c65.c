@@ -342,6 +342,7 @@ static MACHINE_DRIVER_START( c65 )
 	MDRV_IMPORT_FROM( vh_vic2 )
 	MDRV_SCREEN_SIZE(656, 416)
 	MDRV_VISIBLE_AREA(0, 656 - 1, 0, 416 - 1)
+	MDRV_PALETTE_LENGTH(sizeof(vic3_palette) / sizeof(vic3_palette[0]) / 3)
 	MDRV_PALETTE_INIT( c65 )
 
 	/* sound hardware */

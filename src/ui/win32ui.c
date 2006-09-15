@@ -1822,7 +1822,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	srand((unsigned)time(NULL));
 
 #ifdef MAME_DEBUG
-	validity_failed = mame_validitychecks(-1);
+	/* NPW 16-Sep-2006 - commenting this out because this cannot be run outside of MAME */
+	//validity_failed = mame_validitychecks(-1);
 #endif // MAME_DEBUG
 
 	init_resource_tracking();
