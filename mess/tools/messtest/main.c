@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
 
 	/* since the cpuintrf and sndintrf structures are filled dynamically now, we
 	 * have to init first */
-	cpuintrf_init();
-	sndintrf_init();
+	cpuintrf_init(NULL);
+	sndintrf_init(NULL);
 	
 	/* register options */
 	options_add_entries(messtest_opts);

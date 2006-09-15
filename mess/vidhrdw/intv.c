@@ -9,7 +9,7 @@ VIDEO_START( intv )
 {
 	//int i,j,k;
 
-	if (video_start_generic_bitmapped())
+	if (video_start_generic_bitmapped(machine))
 		return 1;
 
 /*
@@ -775,10 +775,10 @@ VIDEO_START( intvkbd )
 	videoram_size = 0x0800;
 	videoram = auto_malloc(videoram_size);
 
-    if (video_start_generic())
+    if (video_start_generic(machine))
         return 1;
 
-	return video_start_intv();
+	return video_start_intv(machine);
 }
 
 /* very rudimentary support for the tms9927 character generator IC */
@@ -841,7 +841,7 @@ VIDEO_UPDATE( intvkbd )
 //	char c;
 
 	/* Draw the underlying INTV screen first */
-	video_update_intv(screen, bitmap, cliprect);
+	video_update_intv(machine, screen, bitmap, cliprect);
 
 	/* if the intvkbd text is not blanked, overlay it */
 	if (!intvkbd_text_blanked)

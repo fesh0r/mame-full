@@ -71,7 +71,7 @@ UINT8 gb_ie;
 UINT8 *gb_dummy_rom_bank = NULL;
 UINT8 *gb_dummy_ram_bank = NULL;
 
-static void gb_machine_stop(void);
+static void gb_machine_stop(running_machine *machine);
 void (*refresh_scanline)(void);
 
 #ifdef MAME_DEBUG
@@ -293,10 +293,10 @@ MACHINE_RESET( gbc )
 
 	/* NPW 25-Jun-2006 - how will battery backed RAM be saved? */
 	if (0)
-		add_exit_callback(gb_machine_stop);
+		add_exit_callback(Machine, gb_machine_stop);
 }
 
-static void gb_machine_stop(void)
+static void gb_machine_stop(running_machine *machine)
 {
 /*	int I; */
 

@@ -930,7 +930,7 @@ WRITE8_HANDLER ( ted7360_port_w )
 	return val;
 }
 
-static void ted7360_video_stop(void)
+static void ted7360_video_stop(running_machine *machine)
 {
 	freegfx(cursorelement);
 }
@@ -943,7 +943,7 @@ VIDEO_START( ted7360 )
 	cursorcolortable[1] = Machine->pens[1];
 	cursorelement->total_colors = 2;
 	ted7360_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	add_exit_callback(ted7360_video_stop);
+	add_exit_callback(machine, ted7360_video_stop);
 	return 0;
 }
 

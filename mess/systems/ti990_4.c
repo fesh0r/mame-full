@@ -312,7 +312,7 @@ ROM_START(ti990_4)
 
 ROM_END
 
-static void init_ti990_4(void)
+static DRIVER_INIT( ti990_4 )
 {
 #if VIDEO_911
 	vdt911_init();

@@ -22,7 +22,7 @@ static void ppu_nmi(int num, int *ppu_regs)
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static void nes_vh_reset(void)
+static void nes_vh_reset(running_machine *machine)
 {
 	ppu2c0x_reset( 0, 1 );
 }
@@ -63,7 +63,7 @@ static void nes_vh_start(ppu_t ppu_type, double scanlines_per_frame)
 		}
 	}
 
-	add_reset_callback(nes_vh_reset);
+	add_reset_callback(Machine, nes_vh_reset);
 
 	/* Reset the mapper variables. Will also mark the char-gen ram as dirty */
 	mapper_reset(nes.mapper);

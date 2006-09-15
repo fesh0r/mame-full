@@ -306,7 +306,7 @@ static const UINT8 palette[] =
 	0x80,0x80,0x80	/* light gray */
 };
 
-static const UINT16 colortable[] =
+static const UINT16 pdp1_colortable[] =
 {
 	pen_panel_bg, pen_panel_caption,
 	pen_typewriter_bg, pen_black,
@@ -314,7 +314,7 @@ static const UINT16 colortable[] =
 };
 
 /* Initialise the palette */
-static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned char *dummy)
+static PALETTE_INIT( pdp1 )
 {
 	/* rgb components for the two color emissions */
 	const double r1 = .1, g1 = .1, b1 = .924, r2 = .7, g2 = .7, b2 = .076;
@@ -343,18 +343,18 @@ static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned cha
 		g = (int) ((g1*cur_level_1 + g2*cur_level_2) + .5);
 		b = (int) ((b1*cur_level_1 + b2*cur_level_2) + .5);
 		/* write color in palette */
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 		/* apply decay for next iteration */
 		cur_level_1 *= decay_1;
 		cur_level_2 *= decay_2;
 	}
 
-	palette_set_color(0, 0, 0, 0);
+	palette_set_color(machine, 0, 0, 0, 0);
 
 	/* load static palette */
-	palette_set_colors(pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
+	palette_set_colors(machine, pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
 
-	memcpy(sys_colortable, colortable, sizeof(colortable));
+	memcpy(colortable, pdp1_colortable, sizeof(pdp1_colortable));
 }
 
 
@@ -414,7 +414,7 @@ static MACHINE_DRIVER_START(pdp1)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(pen_crt_num_levels + (sizeof(palette) / sizeof(palette[0]) / 3))
-	MDRV_COLORTABLE_LENGTH(sizeof(colortable) / sizeof(colortable[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(pdp1_colortable) / sizeof(pdp1_colortable[0]))
 
 	MDRV_PALETTE_INIT(pdp1)
 	MDRV_VIDEO_START(pdp1)

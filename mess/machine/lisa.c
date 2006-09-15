@@ -1084,7 +1084,7 @@ NVRAM_HANDLER(lisa)
 	lisa_features.has_mac_xl_video = 0;
 }*/
 
-void init_lisa2(void)
+DRIVER_INIT( lisa2 )
 {
 	lisa_model = lisa2;
 	lisa_features.has_fast_timers = 0;
@@ -1093,7 +1093,7 @@ void init_lisa2(void)
 	lisa_features.has_mac_xl_video = 0;
 }
 
-void init_lisa210(void)
+DRIVER_INIT( lisa210 )
 {
 	lisa_model = lisa210;
 	lisa_features.has_fast_timers = 1;
@@ -1102,7 +1102,7 @@ void init_lisa210(void)
 	lisa_features.has_mac_xl_video = 0;
 }
 
-void init_mac_xl(void)
+DRIVER_INIT( mac_xl )
 {
 	lisa_model = mac_xl;
 	lisa_features.has_fast_timers = 1;

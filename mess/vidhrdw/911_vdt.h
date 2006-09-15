@@ -52,7 +52,7 @@ typedef struct vdt911_init_params_t
 	void (*int_callback)(int state);
 } vdt911_init_params_t;
 
-void palette_init_vdt911(unsigned short *colortable, const unsigned char *dummy);
+PALETTE_INIT( vdt911 );
 
 void vdt911_init(void);
 int vdt911_init_term(int unit, const vdt911_init_params_t *params);

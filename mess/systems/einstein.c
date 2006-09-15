@@ -1413,7 +1413,7 @@ static MACHINE_RESET( einstein )
 
 static MACHINE_RESET( einstein2 )
 {
-	machine_reset_einstein();
+	machine_reset_einstein(machine);
 	einstein_80col_init();
 }
 
@@ -1662,8 +1662,8 @@ static VIDEO_UPDATE( einstein_80col )
 
 static VIDEO_UPDATE( einstein2 )
 {
-	video_update_tms9928a(screen, bitmap, cliprect);
-	video_update_einstein_80col(screen, bitmap, cliprect);
+	video_update_tms9928a(machine, screen, bitmap, cliprect);
+	video_update_einstein_80col(machine, screen, bitmap, cliprect);
 	return 0;
 }
 

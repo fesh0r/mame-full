@@ -308,7 +308,7 @@ unsigned char	bbc_palette[8*3]=
 
 static PALETTE_INIT( bbc )
 {
-	palette_set_colors(0, bbc_palette, sizeof(bbc_palette) / 3);
+	palette_set_colors(machine, 0, bbc_palette, sizeof(bbc_palette) / 3);
 	memcpy(colortable,bbc_colour_table,sizeof(bbc_colour_table));
 }
 

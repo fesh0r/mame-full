@@ -230,9 +230,9 @@ static MACHINE_RESET( tm990_189_v )
 	Supports EIA and TTY terminals, and an optional 9918 controller.
 */
 
-static void palette_init_tm990_189(unsigned short *colortable, const unsigned char *dummy)
+static PALETTE_INIT( tm990_189 )
 {
-	palette_set_colors(0, tm990_189_palette, tm990_189_palette_size);
+	palette_set_colors(machine, 0, tm990_189_palette, tm990_189_palette_size);
 
 	/*memcpy(colortable, & tm990_189_colortable, sizeof(tm990_189_colortable));*/
 }
@@ -306,7 +306,7 @@ static VIDEO_UPDATE( tm990_189 )
 
 static VIDEO_UPDATE( tm990_189_v )
 {
-	video_update_tms9928a(screen, bitmap, cliprect);
+	video_update_tms9928a(machine, screen, bitmap, cliprect);
 
 	plot_box(bitmap, LED_display_window_left, LED_display_window_top, LED_display_window_width, LED_display_window_height, Machine->pens[1]);
 	update_common(bitmap,

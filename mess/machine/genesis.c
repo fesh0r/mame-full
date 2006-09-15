@@ -1027,7 +1027,7 @@ VIDEO_START(genesis)
 {
 	genesis_vdp_start (&genesis_vdp);
 	oldscreenmode = 0xff; // driver specific
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 VIDEO_UPDATE(genesis)
@@ -1071,11 +1071,11 @@ VIDEO_UPDATE(genesis)
 		g = (paldat & 0x00e0) >>4;
 		b = (paldat & 0x0e00) >>8;
 
-		palette_set_color(i,r<<4,g<<4,b<<4);
+		palette_set_color(machine, i,r<<4,g<<4,b<<4);
 
 	}
 
-	video_update_generic_bitmapped(screen, bitmap, cliprect);
+	video_update_generic_bitmapped(machine, screen, bitmap, cliprect);
 	return 0;
 }
 
@@ -1377,7 +1377,7 @@ READ16_HANDLER ( genesis_68000_io_r )
 
 
 //	return 0x30;
-//	return mame_rand();
+//	return mame_rand(machine);
 //	return 0xff;
 }
 
@@ -1530,7 +1530,7 @@ UINT16 genesis_vdp_control_read ( genvdp *current_vdp )
 
 	return retvalue;
 
-//	return mame_rand();
+//	return mame_rand(machine);
 }
 
 UINT16 genesis_vdp_hvcounter_read ( genvdp *current_vdp )

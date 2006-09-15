@@ -533,14 +533,14 @@ static VIDEO_UPDATE( svi318_80col )
 
 VIDEO_UPDATE( svi328b )
 {
-	video_update_tms9928a(screen, bitmap, cliprect);
-	video_update_svi318_80col(screen, bitmap, cliprect);
+	video_update_tms9928a(machine, screen, bitmap, cliprect);
+	video_update_svi318_80col(machine, screen, bitmap, cliprect);
 	return 0;
 }
 
 MACHINE_RESET( svi328b )
 {
-	machine_reset_svi318();
+	machine_reset_svi318(machine);
 	svi318_80col_init();
 }
 

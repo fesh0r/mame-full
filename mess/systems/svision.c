@@ -266,7 +266,7 @@ static unsigned char svision_palette[] =
 
 static PALETTE_INIT( svision )
 {
-	palette_set_colors(0, svision_palette, sizeof(svision_palette) / 3);
+	palette_set_colors(machine, 0, svision_palette, sizeof(svision_palette) / 3);
 }
 
 static VIDEO_UPDATE( svision )

@@ -33,7 +33,7 @@
 
 #include "includes/c64.h"
 
-static void c64_driver_shutdown (void);
+static void c64_driver_shutdown (running_machine *machine);
 
 unsigned char c65_keyline = { 0xff };
 UINT8 c65_6511_port=0xff;
@@ -841,7 +841,7 @@ static void c64_common_driver_init (void)
 					  c64_vic_interrupt);
 	}
 	cia_reset();
-	add_exit_callback(c64_driver_shutdown);
+	add_exit_callback(Machine, c64_driver_shutdown);
 }
 
 DRIVER_INIT( c64 )
@@ -879,7 +879,7 @@ DRIVER_INIT( sx64 )
 	vc1541_config (0, 0, &vc1541);
 }
 
-static void c64_driver_shutdown (void)
+static void c64_driver_shutdown (running_machine *machine)
 {
 	if (c64_tape_on)
 		vc20_tape_close ();

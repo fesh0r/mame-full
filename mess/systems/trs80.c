@@ -259,7 +259,7 @@ static unsigned short trs80_colortable[] =
 /* Initialise the palette */
 static PALETTE_INIT( trs80 )
 {
-	palette_set_colors(0, trs80_palette, sizeof(trs80_palette)/3);
+	palette_set_colors(machine, 0, trs80_palette, sizeof(trs80_palette)/3);
 	memcpy(colortable,trs80_colortable,sizeof(trs80_colortable));
 }
 

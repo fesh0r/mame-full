@@ -154,7 +154,7 @@ void vic6561_init (int (*dma_read) (int), int (*dma_read_color) (int))
 	vic656x_init ();
 }
 
-static void vic6560_video_stop(void)
+static void vic6560_video_stop(running_machine *machine)
 {
 	freegfx(pointerelement);
 }
@@ -170,7 +170,7 @@ VIDEO_START( vic6560 )
 	pointercolortable[2] = Machine->pens[0];
 	pointerelement->total_colors = 3;
 	vic6560_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	add_exit_callback(vic6560_video_stop);
+	add_exit_callback(machine, vic6560_video_stop);
 	return 0;
 }
 

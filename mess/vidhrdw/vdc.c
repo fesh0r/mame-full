@@ -287,7 +287,7 @@ WRITE8_HANDLER ( vce_w )
                 r = ((vdc.vce_data[i].w >> 3) & 7) << 5;
                 g = ((vdc.vce_data[i].w >> 6) & 7) << 5;
                 b = ((vdc.vce_data[i].w >> 0) & 7) << 5;
-                palette_set_color(i, r, g, b);
+                palette_set_color(Machine, i, r, g, b);
              }
 
              /* bump internal address */

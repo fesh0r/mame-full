@@ -15,7 +15,7 @@
 VIDEO_START( enterprise )
 {
 	Nick_vh_start();
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 /***************************************************************************
@@ -26,6 +26,6 @@ VIDEO_START( enterprise )
 VIDEO_UPDATE( enterprise )
 {
 	Nick_DoScreen(tmpbitmap);
-	return video_update_generic_bitmapped(screen, bitmap, cliprect);
+	return video_update_generic_bitmapped(machine, screen, bitmap, cliprect);
 }
 

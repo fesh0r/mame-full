@@ -108,30 +108,30 @@ static unsigned short colortable_abc800c[] =
 
 static PALETTE_INIT( abc80 )
 {
-	palette_set_color( 0, 0x00, 0x00, 0x00); // black
-	palette_set_color( 1, 0xff, 0xff, 0xff); // white
+	palette_set_color(machine,  0, 0x00, 0x00, 0x00); // black
+	palette_set_color(machine,  1, 0xff, 0xff, 0xff); // white
 
 	memcpy(colortable, colortable_abc80, sizeof(colortable_abc80));
 }
 
 static PALETTE_INIT( abc800m )
 {
-	palette_set_color( 0, 0x00, 0x00, 0x00); // black
-	palette_set_color( 1, 0xff, 0xff, 0x00); // yellow (really white, but blue signal is disconnected from monitor)
+	palette_set_color(machine,  0, 0x00, 0x00, 0x00); // black
+	palette_set_color(machine,  1, 0xff, 0xff, 0x00); // yellow (really white, but blue signal is disconnected from monitor)
 
 	memcpy(colortable, colortable_abc80, sizeof(colortable_abc80));
 }
 
 static PALETTE_INIT( abc800c )	// probably wrong
 {
-	palette_set_color( 0, 0x00, 0x00, 0x00); // black
-	palette_set_color( 1, 0x00, 0x00, 0xff); // blue
-	palette_set_color( 2, 0xff, 0x00, 0x00); // red
-	palette_set_color( 3, 0xff, 0x00, 0xff); // magenta
-	palette_set_color( 4, 0x00, 0xff, 0x00); // green
-	palette_set_color( 5, 0x00, 0xff, 0xff); // cyan
-	palette_set_color( 6, 0xff, 0xff, 0x00); // yellow
-	palette_set_color( 7, 0xff, 0xff, 0xff); // white
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00); // black
+	palette_set_color(machine, 1, 0x00, 0x00, 0xff); // blue
+	palette_set_color(machine, 2, 0xff, 0x00, 0x00); // red
+	palette_set_color(machine, 3, 0xff, 0x00, 0xff); // magenta
+	palette_set_color(machine, 4, 0x00, 0xff, 0x00); // green
+	palette_set_color(machine, 5, 0x00, 0xff, 0xff); // cyan
+	palette_set_color(machine, 6, 0xff, 0xff, 0x00); // yellow
+	palette_set_color(machine, 7, 0xff, 0xff, 0xff); // white
 
 	memcpy(colortable, colortable_abc800c, sizeof(colortable_abc800c));
 }

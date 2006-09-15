@@ -46,7 +46,7 @@ unsigned char   electron_palette[8*3]=
 
 static PALETTE_INIT( electron )
 {
-	palette_set_colors(0, electron_palette, sizeof(electron_palette) / 3);
+	palette_set_colors(machine, 0, electron_palette, sizeof(electron_palette) / 3);
 	memcpy(colortable,electron_colour_table,sizeof(electron_colour_table));
 }
 

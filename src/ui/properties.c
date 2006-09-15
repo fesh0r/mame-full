@@ -654,7 +654,7 @@ static char *GameInfoCPU(UINT nIndex)
 
 	ZeroMemory(buf, sizeof(buf));
 
-	cpuintrf_init();
+	cpuintrf_init(NULL);
 
 	i = 0;
 	while (i < MAX_CPU && drv.cpu[i].cpu_type)

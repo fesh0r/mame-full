@@ -37,7 +37,7 @@ struct _sam6883_interface
 };
 
 /* initialize the SAM */
-void sam_init(const sam6883_interface *intf);
+void sam_init(running_machine *machine, const sam6883_interface *intf);
 
 /* set the state of the SAM */
 void sam_set_state(UINT16 state, UINT16 mask);

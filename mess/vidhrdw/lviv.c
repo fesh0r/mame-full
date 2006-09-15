@@ -31,7 +31,7 @@ unsigned short lviv_colortable[1][4] =
 
 PALETTE_INIT( lviv )
 {
-	palette_set_colors(0, lviv_palette, sizeof(lviv_palette) / 3);
+	palette_set_colors(machine, 0, lviv_palette, sizeof(lviv_palette) / 3);
 	memcpy(colortable, lviv_colortable, sizeof (lviv_colortable));
 }
 

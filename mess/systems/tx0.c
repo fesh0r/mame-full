@@ -21,7 +21,7 @@ static UINT32 *tx0_memory;
 
 	Set up the tx0_memory pointer
 */
-static void init_tx0(void)
+static DRIVER_INIT( tx0 )
 {
 	UINT8 *dst;
 
@@ -280,7 +280,7 @@ static PALETTE_INIT( tx0 )
 		g = (int) ((g1*cur_level_1 + g2*cur_level_2) + .5);
 		b = (int) ((b1*cur_level_1 + b2*cur_level_2) + .5);
 		/* write color in palette */
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 		/* apply decay for next iteration */
 		cur_level_1 *= decay_1;
 		cur_level_2 *= decay_2;
@@ -300,10 +300,10 @@ static PALETTE_INIT( tx0 )
 		printf("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);*/
 #endif
 
-	palette_set_color(0, 0, 0, 0);
+	palette_set_color(machine, 0, 0, 0, 0);
 
 	/* load static palette */
-	palette_set_colors(pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
+	palette_set_colors(machine, pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
 
 	memcpy(colortable, tx0_colortable, sizeof(tx0_colortable));
 }

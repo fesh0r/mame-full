@@ -26,7 +26,7 @@ extern UINT8 microtan_chunky_graphics;
 extern UINT8 *microtan_chunky_buffer;
 
 /* from mess/machine/microtan.c */
-void init_microtan(void);
+DRIVER_INIT( microtan );
 MACHINE_RESET( microtan );
 
 SNAPSHOT_LOAD( microtan );

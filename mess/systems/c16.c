@@ -594,7 +594,7 @@ INPUT_PORTS_END
 /* Initialise the c16 palette */
 static PALETTE_INIT( c16 )
 {
-	palette_set_colors(0, ted7360_palette, sizeof(ted7360_palette) / 3);
+	palette_set_colors(machine, 0, ted7360_palette, sizeof(ted7360_palette) / 3);
 }
 
 #if 0
@@ -782,14 +782,14 @@ static MACHINE_DRIVER_START( c364 )
 	MDRV_CPU_PROGRAM_MAP(c364_readmem, c364_writemem)
 MACHINE_DRIVER_END
 
-#define init_c16		c16_driver_init
-#define init_c16hun 	c16_driver_init
-#define init_c16c		c16_driver_init
-#define init_c16v		c16_driver_init
-#define init_plus4		c16_driver_init
-#define init_plus4c 	c16_driver_init
-#define init_plus4v 	c16_driver_init
-#define init_c364		c16_driver_init
+DRIVER_INIT( c16 )		{ c16_driver_init(); }
+DRIVER_INIT( c16hun )	{ c16_driver_init(); }
+DRIVER_INIT( c16c )		{ c16_driver_init(); }
+DRIVER_INIT( c16v )		{ c16_driver_init(); }
+DRIVER_INIT( plus4 )	{ c16_driver_init(); }
+DRIVER_INIT( plus4c )	{ c16_driver_init(); }
+DRIVER_INIT( plus4v )	{ c16_driver_init(); }
+DRIVER_INIT( c364 )		{ c16_driver_init(); }
 
 static void c16cart_device_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {

@@ -482,7 +482,7 @@ static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
 static PALETTE_INIT( apexc )
 {
-	palette_set_colors(0, apexc_palette, APEXC_PALETTE_SIZE);
+	palette_set_colors(machine, 0, apexc_palette, APEXC_PALETTE_SIZE);
 
 	memcpy(colortable, & apexc_colortable, sizeof(apexc_colortable));
 }
@@ -662,7 +662,7 @@ enum
 };
 
 /* apexc driver init : builds a font for use by the teletyper */
-static void init_apexc(void)
+static DRIVER_INIT(apexc)
 {
 	UINT8 *dst;
 

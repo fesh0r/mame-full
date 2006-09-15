@@ -31,7 +31,7 @@ VIDEO_START( cgenie )
 {
 	videoram_size = 0x4000;
 
-	if( video_start_generic() != 0 )
+	if( video_start_generic(machine) != 0 )
         return 1;
 
     dlybitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);

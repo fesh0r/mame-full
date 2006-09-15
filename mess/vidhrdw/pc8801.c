@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.20 2006/08/14 21:38:26 npwoods Exp $
+  $Id: pc8801.c,v 1.21 2006/09/15 02:51:43 npwoods Exp $
 
 ***************************************************************************/
 
@@ -604,12 +604,12 @@ PALETTE_INIT( pc8801 )
 	int i;
 
 	for (i = 0; i < 8; i++)
-		palette_set_color(i, 0, 0, 0);	/* for graphics */
+		palette_set_color(machine, i, 0, 0, 0);	/* for graphics */
 
 	/* for text */
 	for (i = 0; i < 8; i++)
 	{
-		palette_set_color(i+8,
+		palette_set_color(machine, i+8,
 			(i & 2) ? 0xff : 0x00,
 			(i & 4) ? 0xff : 0x00,
 			(i & 1) ? 0xff : 0x00);
@@ -620,8 +620,8 @@ PALETTE_INIT( pc8801 )
 	}
 
 	/* for background and scanline */
-	palette_set_color(16, 0, 0, 0);
-	palette_set_color(17, 0, 0, 0);
+	palette_set_color(machine, 16, 0, 0, 0);
+	palette_set_color(machine, 17, 0, 0, 0);
 }
 
 WRITE8_HANDLER(pc8801_crtc_write)
@@ -916,5 +916,5 @@ WRITE8_HANDLER(pc8801_palette_out)
 	r[offset] = (data & 2) ? 0xff : 0x00;
 	g[offset] = (data & 4) ? 0xff : 0x00;
   }
-  palette_set_color(palno,r[offset],g[offset],b[offset]);
+  palette_set_color(Machine, palno,r[offset],g[offset],b[offset]);
 }

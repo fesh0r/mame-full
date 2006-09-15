@@ -159,7 +159,7 @@ PALETTE_INIT( avigo )
 {
 /*	char *backdrop_name;
     int used = 2; */
-	palette_set_colors(0, avigo_palette, sizeof(avigo_palette) / 3);
+	palette_set_colors(machine, 0, avigo_palette, sizeof(avigo_palette) / 3);
     memcpy(colortable, avigo_colour_table, sizeof (avigo_colour_table));
 
 	/* load backdrop */

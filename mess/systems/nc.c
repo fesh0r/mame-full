@@ -128,8 +128,8 @@ static int nc_membank_rom_mask;
 static int nc_membank_internal_ram_mask;
 int nc_membank_card_ram_mask;
 
-static void nc100_machine_stop(void);
-static void nc200_machine_stop(void);
+static void nc100_machine_stop(running_machine *machine);
+static void nc200_machine_stop(running_machine *machine);
 
 /*
 	Port 0x00:
@@ -976,7 +976,7 @@ static CENTRONICS_CONFIG nc100_cent_config[1]={
 	},
 };
 
-static void nc100_machine_reset(void)
+static void nc100_machine_reset(running_machine *machine)
 {
     /* 256k of rom */
     nc_membank_rom_mask = 0x0f;
@@ -1006,7 +1006,7 @@ static void nc100_machine_reset(void)
 	nc_irq_latch_mask = (1<<0) | (1<<1);
 }
 
-static void nc100_machine_stop(void)
+static void nc100_machine_stop(running_machine *machine)
 {
 	nc_common_open_stream_for_writing();
 	tc8521_save_stream(file);
@@ -1018,8 +1018,8 @@ static MACHINE_START( nc100 )
 {
     nc_type = NC_TYPE_1xx;
 
-	add_reset_callback(nc100_machine_reset);
-	add_exit_callback(nc100_machine_stop);
+	add_reset_callback(machine, nc100_machine_reset);
+	add_exit_callback(machine, nc100_machine_stop);
 	return 0;
 }
 
@@ -1373,7 +1373,7 @@ static void nc200_floppy_drive_index_callback(int drive_id)
 //	nc_update_interrupts();
 }
 
-static void nc200_machine_reset(void)
+static void nc200_machine_reset(running_machine *machine)
 {
 	/* 512k of rom */
 	nc_membank_rom_mask = 0x1f;
@@ -1412,7 +1412,7 @@ static void nc200_machine_reset(void)
 	nc200_video_set_backlight(0);
 }
 
-static void nc200_machine_stop(void)
+static void nc200_machine_stop(running_machine *machine)
 {
 	nc_common_open_stream_for_writing();
 	if (file)
@@ -1427,8 +1427,8 @@ static MACHINE_START( nc200 )
 {
     nc_type = NC_TYPE_200;
 
-	add_reset_callback(nc200_machine_reset);
-	add_exit_callback(nc200_machine_stop);
+	add_reset_callback(machine, nc200_machine_reset);
+	add_exit_callback(machine, nc200_machine_stop);
 	return 0;
 }
 

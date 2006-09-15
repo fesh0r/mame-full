@@ -120,7 +120,7 @@ static void coco3_sam_set_maptype(int val);
 static const UINT8 *coco3_sam_get_rambase(void);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
-static void coco_machine_stop(void);
+static void coco_machine_stop(running_machine *machine);
 
 /* Are we a CoCo or a Dragon ? */
 typedef enum
@@ -2309,7 +2309,7 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartbank
 };
 
-static void generic_init_machine(const pia6821_interface *piaintf, const sam6883_interface *samintf,
+static void generic_init_machine(running_machine *machine, const pia6821_interface *piaintf, const sam6883_interface *samintf,
 	const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback,
 	void (*recalc_interrupts_)(int dummy))
 {
@@ -2330,7 +2330,7 @@ static void generic_init_machine(const pia6821_interface *piaintf, const sam6883
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
 	pia_reset();
 
-	sam_init(samintf);
+	sam_init(machine, samintf);
 
 	/* HACK for bankswitching carts */
 	if( is_Orch90() )
@@ -2347,13 +2347,13 @@ static void generic_init_machine(const pia6821_interface *piaintf, const sam6883
 	cpuintrf_set_dasm_override(coco_dasm_override);
 #endif
 
-	add_exit_callback(coco_machine_stop);
+	add_exit_callback(machine, coco_machine_stop);
 }
 
 MACHINE_START( dragon32 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+	generic_init_machine(machine, coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_DRAGON;
 	return 0;
@@ -2362,7 +2362,7 @@ MACHINE_START( dragon32 )
 MACHINE_START( dragon64 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
 	
 	coco_or_dragon = AM_DRAGON;
@@ -2372,7 +2372,7 @@ MACHINE_START( dragon64 )
 MACHINE_START( dgnalpha )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
+	generic_init_machine(machine, dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
     	
 	acia_6551_init();
 	
@@ -2389,7 +2389,7 @@ MACHINE_START( dgnalpha )
 MACHINE_START( coco )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+	generic_init_machine(machine, coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
 	return 0;
@@ -2398,13 +2398,13 @@ MACHINE_START( coco )
 MACHINE_START( coco2 )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+	generic_init_machine(machine, coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_COCO;
 	return 0;
 }
 
-static void coco3_machine_reset(void)
+static void coco3_machine_reset(running_machine *machine)
 {
 	int i;
 
@@ -2429,9 +2429,9 @@ MACHINE_START( coco3 )
 {
 	int portnum;
 
-	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
+	generic_init_machine(machine, coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
 
-	coco3_machine_reset();
+	coco3_machine_reset(machine);
 	coco3_timer_init();
 
 	coco3_interupt_line = 0;
@@ -2448,11 +2448,11 @@ MACHINE_START( coco3 )
 	state_save_register_global(gime_firq);
 	state_save_register_func_postload(coco3_state_postload);
 
-	add_reset_callback(coco3_machine_reset);
+	add_reset_callback(machine, coco3_machine_reset);
 	return 0;
 }
 
-static void coco_machine_stop(void)
+static void coco_machine_stop(running_machine *machine)
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();

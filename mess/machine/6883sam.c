@@ -91,7 +91,7 @@ static const UINT8 sam_video_mode_row_pitches[] =
 	32	/* 7 - Reserved/Invalid */
 };
 
-static void sam_reset(void);
+static void sam_reset(running_machine *machine);
 
 static void update_sam(void)
 {
@@ -119,13 +119,13 @@ static void update_sam(void)
 
 
 
-void sam_init(const sam6883_interface *intf)
+void sam_init(running_machine *machine, const sam6883_interface *intf)
 {
 	sam.state = 0;
 	sam.old_state = ~0;
 	sam.intf = intf;
 
-	add_reset_callback(sam_reset);
+	add_reset_callback(machine, sam_reset);
 
 	/* save state registration */
 	state_save_register_item("6883sam", 0, sam.state);
@@ -135,7 +135,7 @@ void sam_init(const sam6883_interface *intf)
 
 
 
-static void sam_reset(void)
+static void sam_reset(running_machine *machine)
 {
 	sam.state = 0;
 	sam.old_state = ~0;

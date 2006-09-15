@@ -32,7 +32,7 @@ static unsigned short studio2_colortable[1][2] = {
 
 static PALETTE_INIT( studio2 )
 {
-	palette_set_colors(0, studio2_palette, sizeof(studio2_palette) / 3);
+	palette_set_colors(machine, 0, studio2_palette, sizeof(studio2_palette) / 3);
 	memcpy(colortable,studio2_colortable,sizeof(studio2_colortable));
 }
 

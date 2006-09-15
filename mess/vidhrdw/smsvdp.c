@@ -1000,22 +1000,22 @@ void sms_update_palette(void) {
 #ifdef LOG_COLOR
 		logerror( "Switched palette to TMS9918 palette\n" );
 #endif
-		palette_set_color( 0,   0,   0,   0 );
-		palette_set_color( 1,   0,   0,   0 );
-		palette_set_color( 2,  33, 200,  66 );
-		palette_set_color( 3,  94, 220, 120 );
-		palette_set_color( 4,  84,  85, 237 );
-		palette_set_color( 5, 125, 118, 252 );
-		palette_set_color( 6, 212,  82,  77 );
-		palette_set_color( 7,  66, 235, 245 );
-		palette_set_color( 8, 252,  85,  84 );
-		palette_set_color( 9, 255, 121, 120 );
-		palette_set_color(10, 212, 193,  84 );
-		palette_set_color(11, 230, 206, 128 );
-		palette_set_color(12,  33, 176,  59 );
-		palette_set_color(13, 201,  91, 186 );
-		palette_set_color(14, 204, 204, 204 );
-		palette_set_color(15, 255, 255, 255 );
+		palette_set_color(Machine,  0,   0,   0,   0 );
+		palette_set_color(Machine,  1,   0,   0,   0 );
+		palette_set_color(Machine,  2,  33, 200,  66 );
+		palette_set_color(Machine,  3,  94, 220, 120 );
+		palette_set_color(Machine,  4,  84,  85, 237 );
+		palette_set_color(Machine,  5, 125, 118, 252 );
+		palette_set_color(Machine,  6, 212,  82,  77 );
+		palette_set_color(Machine,  7,  66, 235, 245 );
+		palette_set_color(Machine,  8, 252,  85,  84 );
+		palette_set_color(Machine,  9, 255, 121, 120 );
+		palette_set_color(Machine, 10, 212, 193,  84 );
+		palette_set_color(Machine, 11, 230, 206, 128 );
+		palette_set_color(Machine, 12,  33, 176,  59 );
+		palette_set_color(Machine, 13, 201,  91, 186 );
+		palette_set_color(Machine, 14, 204, 204, 204 );
+		palette_set_color(Machine, 15, 255, 255, 255 );
 		return;
 	}
 
@@ -1027,7 +1027,7 @@ void sms_update_palette(void) {
 				r = ((ggCRAM[i * 2 + 0] >> 0) & 0x0F) << 4;
 				g = ((ggCRAM[i * 2 + 0] >> 4) & 0x0F) << 4;
 				b = ((ggCRAM[i * 2 + 1] >> 0) & 0x0F) << 4;
-				palette_set_color(i, r, g, b);
+				palette_set_color(Machine, i, r, g, b);
 #ifdef LOG_COLOR
 				logerror("pallette set for i %x r %x g %x b %x\n", i, r, g, b);
 #endif
@@ -1041,7 +1041,7 @@ void sms_update_palette(void) {
 				r = ((smsCRAM[i] >> 0) & 0x03) << 6;
 				g = ((smsCRAM[i] >> 2) & 0x03) << 6;
 				b = ((smsCRAM[i] >> 4) & 0x03) << 6;
-				palette_set_color(i, r, g, b);
+				palette_set_color(Machine, i, r, g, b);
 #ifdef LOG_COLOR
 				logerror("pallette set for i %x r %x g %x b %x\n", i, r, g, b);
 #endif

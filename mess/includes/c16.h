@@ -161,8 +161,7 @@ extern WRITE8_HANDLER(c16_switch_to_ram);
 extern int c16_read_keyboard (int databus);
 extern void c16_interrupt (int);
 
-extern void c16_driver_init (void);
-extern void c16_driver_shutdown (void);
+extern void c16_driver_init(void);
 extern MACHINE_RESET( c16 );
 extern INTERRUPT_GEN( c16_frame_interrupt );
 

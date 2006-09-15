@@ -266,7 +266,7 @@ static int external_entity_handler(XML_Parser parser,
 		for (i = 0; buf[i]; i++)
 			buf[i] = toupper(buf[i]);
 
-		code_init();
+		code_init(NULL);
 		c = token_to_code(buf);
 
 		if (c != CODE_NONE)

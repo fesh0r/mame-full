@@ -38,7 +38,7 @@ static unsigned char nc_palette[NC_NUM_COLOURS * 3] =
 /* Initialise the palette */
 PALETTE_INIT( nc )
 {
-	palette_set_colors(0, nc_palette, sizeof(nc_palette) / 3);
+	palette_set_colors(machine, 0, nc_palette, sizeof(nc_palette) / 3);
 	memcpy(colortable, nc_colour_table, sizeof (nc_colour_table));
 }
 

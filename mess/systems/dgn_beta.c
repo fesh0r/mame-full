@@ -316,7 +316,7 @@ static void dgnbeta_floppy_getinfo(const device_class *devclass, UINT32 state, u
 
 static PALETTE_INIT( dgnbeta )
 {
-	palette_set_colors(0, dgnbeta_palette, sizeof(dgnbeta_palette) / 3);
+	palette_set_colors(machine, 0, dgnbeta_palette, sizeof(dgnbeta_palette) / 3);
 	memcpy(colortable, dgnbeta_colortable, sizeof(colortable));
 }
 

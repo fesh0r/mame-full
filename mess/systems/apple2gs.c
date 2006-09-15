@@ -97,8 +97,8 @@ INPUT_PORTS_END
 static PALETTE_INIT( apple2gs )
 {
 	extern PALETTE_INIT( apple2 );
-	palette_init_apple2(colortable, color_prom);
-	palette_set_colors(0, apple2gs_palette, sizeof(apple2gs_palette) / 3);
+	palette_init_apple2(machine, colortable, color_prom);
+	palette_set_colors(machine, 0, apple2gs_palette, sizeof(apple2gs_palette) / 3);
 }
 
 static READ8_HANDLER( apple2gs_adc_read )

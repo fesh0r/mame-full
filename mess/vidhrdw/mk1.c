@@ -21,7 +21,7 @@ static unsigned short mk1_colortable[] =
 
 PALETTE_INIT( mk1 )
 {
-	palette_set_colors(0, mk1_palette, sizeof(mk1_palette) / 3);
+	palette_set_colors(machine, 0, mk1_palette, sizeof(mk1_palette) / 3);
 	memcpy(colortable, mk1_colortable, sizeof(mk1_colortable));
 }
 

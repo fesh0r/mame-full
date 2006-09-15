@@ -856,7 +856,7 @@ void CreateCPUFolders(int parent_index)
 	LPTREEFOLDER map[CPU_COUNT];
 
 	ZeroMemory(map, sizeof(map));
-	cpuintrf_init();
+	cpuintrf_init(NULL);
 
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
@@ -913,7 +913,7 @@ void CreateSoundFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 	LPTREEFOLDER map[SOUND_COUNT];
 
-	sndintrf_init();
+	sndintrf_init(NULL);
 
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);

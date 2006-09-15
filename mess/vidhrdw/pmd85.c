@@ -25,7 +25,7 @@ unsigned short pmd85_colortable[1][3] ={
 
 PALETTE_INIT( pmd85 )
 {
-	palette_set_colors(0, pmd85_palette, sizeof(pmd85_palette) / 3);
+	palette_set_colors(machine, 0, pmd85_palette, sizeof(pmd85_palette) / 3);
 	memcpy(colortable, pmd85_colortable, sizeof (pmd85_colortable));
 }
 

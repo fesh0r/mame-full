@@ -298,7 +298,7 @@ static short bw_colortable[] =
 
 static PALETTE_INIT( super80_bw )
 {
-	palette_set_colors(0, bw_palette, sizeof(bw_palette) / 3);
+	palette_set_colors(machine, 0, bw_palette, sizeof(bw_palette) / 3);
 	memcpy(colortable, & bw_colortable, sizeof(bw_colortable));
 }
 

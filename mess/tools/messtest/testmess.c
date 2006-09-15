@@ -317,7 +317,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 
 
 
-int osd_init(void)
+int osd_init(running_machine *machine)
 {
 	target = render_target_alloc(NULL, 0);
 	render_target_set_orientation(target, 0);
@@ -835,7 +835,7 @@ static void command_end(void)
 	/* at the end of our test */
 	state = STATE_DONE;
 	final_time = timer_get_time();
-	mame_schedule_exit();
+	mame_schedule_exit(Machine);
 }
 
 
@@ -884,7 +884,7 @@ int osd_update(mame_time emutime)
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
 	{
-		mame_schedule_exit();
+		mame_schedule_exit(Machine);
 		goto done;
 	}
 

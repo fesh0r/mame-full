@@ -113,7 +113,7 @@ static int put_cycles = 0;
 static int get_cycles = 0;
 
 /* a prototype to be called from cgenie_stop_machine */
-static void tape_put_close(void);
+static void tape_put_close(running_machine *machine);
 
 
 static OPBASE_HANDLER (opbaseoverride)
@@ -222,7 +222,7 @@ static OPBASE_HANDLER (opbaseoverride)
 
 static void cgenie_fdc_callback(int);
 
-static void cgenie_machine_reset(void)
+static void cgenie_machine_reset(running_machine *machine)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -323,8 +323,8 @@ MACHINE_START( cgenie )
 	videoram = mess_ram;
 	memory_set_bankptr(1, mess_ram);
 
-	add_reset_callback(cgenie_machine_reset);
-	add_exit_callback(tape_put_close);
+	add_reset_callback(machine, cgenie_machine_reset);
+	add_exit_callback(machine, tape_put_close);
 	return 0;
 }
 
@@ -471,7 +471,7 @@ static void tape_put_byte(UINT8 value)
  * eventuall flush output buffer and close an open
  * virtual tape output file.
  *******************************************************************/
-static void tape_put_close(void)
+static void tape_put_close(running_machine *machine)
 {
 	tape_count = 0;
 }
@@ -491,7 +491,7 @@ static void tape_put_bit(void)
 	if( diff > 4000 )
 	{
 		/* reset tape output */
-		tape_put_close();
+		tape_put_close(Machine);
 		put_bit_count = tape_bits = in_sync = 0;
 	}
 	else
@@ -788,7 +788,7 @@ WRITE8_HANDLER( cgenie_port_ff_w )
 				b = 15;
 			}
 		}
-		palette_set_color(0, r, g, b);
+		palette_set_color(Machine, 0, r, g, b);
 	}
 
 	/* character mode changed ? */

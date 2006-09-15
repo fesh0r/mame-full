@@ -109,7 +109,7 @@ PALETTE_INIT( ti85 )
 	int i;
 
 	for (i = 0; i < used; i++)
-		palette_set_color(i, ti85_palette[i][0], ti85_palette[i][1], ti85_palette[i][2]);
+		palette_set_color(machine, i, ti85_palette[i][0], ti85_palette[i][1], ti85_palette[i][2]);
 	memcpy (colortable, ti85_colortable, sizeof (ti85_colortable));
 
 	if (!strncmp(Machine->gamedrv->name, "ti81", 4))

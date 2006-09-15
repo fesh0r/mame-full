@@ -717,7 +717,7 @@ UINT8 apple2_getfloatingbusvalue(void)
  * Machine reset
  * ----------------------------------------------------------------------- */
 
-static void apple2_reset(void)
+static void apple2_reset(running_machine *machine)
 {
 	int need_intcxrom, i;
 
@@ -1501,7 +1501,7 @@ const apple2_slotdevice apple2_slot_iwm =
  * Driver init
  * ----------------------------------------------------------------------- */
 
-void apple2_init_common(const apple2_config *config)
+void apple2_init_common(running_machine *machine, const apple2_config *config)
 {
 	int i;
 	void *token;
@@ -1509,7 +1509,7 @@ void apple2_init_common(const apple2_config *config)
 	a2 = 0;
 
 	AY3600_init();
-	add_reset_callback(apple2_reset);
+	add_reset_callback(machine, apple2_reset);
 
 	/* copy configuration */
 	a2_config = auto_malloc(sizeof(*config));
@@ -1584,7 +1584,7 @@ MACHINE_START( apple2 )
 	if (!strcmp(Machine->gamedrv->name, "apple2cp"))
 		apple2cp_ce00_ram = auto_malloc(0x200);
 
-	apple2_init_common(&a2_cfg);
+	apple2_init_common(machine, &a2_cfg);
 
 	/* setup memory */
 	memset(&mem_cfg, 0, sizeof(mem_cfg));
@@ -1594,7 +1594,7 @@ MACHINE_START( apple2 )
 	apple2_setup_memory(&mem_cfg);
 
 	/* perform initial reset */
-	apple2_reset();
+	apple2_reset(machine);
 	return 0;
 }
 

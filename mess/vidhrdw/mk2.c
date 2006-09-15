@@ -22,7 +22,7 @@ unsigned short mk2_colortable[] = {
 
 PALETTE_INIT( mk2 )
 {
-	palette_set_colors(0, mk2_palette, sizeof(mk2_palette) / 3);
+	palette_set_colors(machine, 0, mk2_palette, sizeof(mk2_palette) / 3);
 	memcpy(colortable, mk2_colortable, sizeof(mk2_colortable));
 }
 
@@ -31,7 +31,7 @@ VIDEO_START( mk2 )
 	// artwork seams to need this
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 static const char led[]={

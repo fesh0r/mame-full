@@ -760,7 +760,7 @@ WRITE8_HANDLER( videoram2_w ) { videoram_w(offset + 0x2000, data); }
 WRITE8_HANDLER( videoram3_w ) { videoram_w(offset + 0x3000, data); }
 WRITE8_HANDLER( pcgram_w ) { videoram_w(offset + 0x4000, data); }
 
-void init_mz800(void)
+DRIVER_INIT( mz800 )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 

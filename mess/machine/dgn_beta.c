@@ -970,7 +970,7 @@ INTERRUPT_GEN( dgn_beta_frame_interrupt )
 
 /********************************* Machine/Driver Initialization ****************************************/
 
-static void dgnbeta_reset(void)
+static void dgnbeta_reset(running_machine *machine)
 {
 	system_rom = memory_region(REGION_CPU1);
 
@@ -1017,8 +1017,8 @@ MACHINE_START( dgnbeta )
 	cpuintrf_set_dasm_override(dgnbeta_dasm_override);
 #endif
 
-	add_reset_callback(dgnbeta_reset);
-	dgnbeta_reset();
+	add_reset_callback(machine, dgnbeta_reset);
+	dgnbeta_reset(machine);
 	return 0;
 }
 

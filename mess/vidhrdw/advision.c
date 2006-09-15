@@ -44,20 +44,21 @@ PALETTE_INIT( advision )
 	for( i = 0; i < 8; i++ )
 	{
 		/* 8 shades of RED */
-		palette_set_color(i, i * 0x22, 0x00, 0x00);
+		palette_set_color(machine, i, i * 0x22, 0x00, 0x00);
 		colortable[i*2+0] = 0;
 		colortable[i*2+0] = i;
 	}
 
-	palette_set_color(8, 0x55, 0x55, 0x55);	/* DK GREY - for MAME text only */
-	palette_set_color(9, 0xf0, 0xf0, 0xf0);	/* LT GREY - for MAME text only */
+	palette_set_color(machine, 8, 0x55, 0x55, 0x55);	/* DK GREY - for MAME text only */
+	palette_set_color(machine, 9, 0xf0, 0xf0, 0xf0);	/* LT GREY - for MAME text only */
 }
 
 void advision_vh_write(int data)
 {
-	if (advision_videobank >= 1 && advision_videobank <=5) {
+	if (advision_videobank >= 1 && advision_videobank <=5)
+	{
 		advision_led_latch[advision_videobank] = data;
-}
+	}
 }
 
 void advision_vh_update(int x)

@@ -458,7 +458,8 @@ done:
 //============================================================
 
 static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
-	DWORD fileproc_flags, void (*mameproc)(const char *))
+	DWORD fileproc_flags, void (*mameproc)(running_machine *machine, const char *),
+	running_machine *machine)
 {
 #ifdef UNICODE
 	WCHAR filenamew[MAX_PATH];
@@ -511,7 +512,7 @@ static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 			"%S", filenamew);
 #endif
 
-		mameproc(state_filename);
+		mameproc(machine, state_filename);
 	}
 	if (dir)
 		free(dir);
@@ -519,19 +520,19 @@ static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 
 
 
-void state_load(HWND wnd)
+void state_load(HWND wnd, running_machine *machine)
 {
-	state_dialog(wnd, GetOpenFileName, OFN_FILEMUSTEXIST, mame_schedule_load);
+	state_dialog(wnd, GetOpenFileName, OFN_FILEMUSTEXIST, mame_schedule_load, machine);
 }
 
-void state_save_as(HWND wnd)
+void state_save_as(HWND wnd, running_machine *machine)
 {
-	state_dialog(wnd, GetSaveFileName, OFN_OVERWRITEPROMPT, mame_schedule_save);
+	state_dialog(wnd, GetSaveFileName, OFN_OVERWRITEPROMPT, mame_schedule_save, machine);
 }
 
-void state_save(void)
+void state_save(running_machine *machine)
 {
-	mame_schedule_save(state_filename);
+	mame_schedule_save(machine, state_filename);
 }
 
 
@@ -939,9 +940,9 @@ static void paste(void)
 //	pause
 //============================================================
 
-static void pause(void)
+static void pause(running_machine *machine)
 {
-	mame_pause(!mame_is_paused());
+	mame_pause(machine, !mame_is_paused(machine));
 }
 
 
@@ -1570,15 +1571,15 @@ static int invoke_command(HWND wnd, UINT command)
 	switch(command)
 	{
 		case ID_FILE_LOADSTATE:
-			state_load(wnd);
+			state_load(wnd, Machine);
 			break;
 
 		case ID_FILE_SAVESTATE:
-			state_save();
+			state_save(Machine);
 			break;
 
 		case ID_FILE_SAVESTATE_AS:
-			state_save_as(wnd);
+			state_save_as(wnd, Machine);
 			break;
 
 		case ID_FILE_SAVESCREENSHOT:
@@ -1586,7 +1587,7 @@ static int invoke_command(HWND wnd, UINT command)
 			break;
 
 		case ID_FILE_EXIT:
-			mame_schedule_exit();
+			mame_schedule_exit(Machine);
 			break;
 
 		case ID_EDIT_PASTE:
@@ -1622,15 +1623,15 @@ static int invoke_command(HWND wnd, UINT command)
 			break;
 
 		case ID_OPTIONS_PAUSE:
-			pause();
+			pause(Machine);
 			break;
 
 		case ID_OPTIONS_HARDRESET:
-			mame_schedule_hard_reset();
+			mame_schedule_hard_reset(Machine);
 			break;
 
 		case ID_OPTIONS_SOFTRESET:
-			mame_schedule_soft_reset();
+			mame_schedule_soft_reset(Machine);
 			break;
 
 		case ID_OPTIONS_THROTTLE:

@@ -215,7 +215,7 @@ static unsigned short arcadia_colortable[1][2] = {
 
 static PALETTE_INIT( arcadia )
 {
-	palette_set_colors(0, arcadia_palette, sizeof (arcadia_palette)/3);
+	palette_set_colors(machine, 0, arcadia_palette, sizeof (arcadia_palette)/3);
     memcpy(colortable, arcadia_colortable,sizeof(arcadia_colortable));
 }
 
@@ -349,7 +349,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-static void init_arcadia(void)
+static DRIVER_INIT( arcadia )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);

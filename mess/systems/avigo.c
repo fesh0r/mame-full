@@ -410,7 +410,7 @@ static OPBASE_HANDLER( avigo_opbase_handler )
 	return address;
 }
 
-static void avigo_machine_reset(void)
+static void avigo_machine_reset(running_machine *machine)
 {
 	int i;
 	unsigned char *addr;
@@ -501,7 +501,7 @@ static void avigo_machine_reset(void)
 	avigo_refresh_memory();
 }
 
-static void avigo_machine_stop(void)
+static void avigo_machine_stop(running_machine *machine)
 {
 	/* store and free flash memory */
 	amd_flash_store(0, "avigof1.nv");
@@ -520,8 +520,8 @@ static MACHINE_START( avigo )
 	/* an interrupt is generated when the pen is pressed to the screen */
 	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
 
-	add_reset_callback(avigo_machine_reset);
-	add_exit_callback(avigo_machine_stop);
+	add_reset_callback(machine, avigo_machine_reset);
+	add_exit_callback(machine, avigo_machine_stop);
 	return 0;
 }
 

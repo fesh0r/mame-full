@@ -62,4 +62,4 @@ extern WRITE8_HANDLER( videoram2_w );
 extern WRITE8_HANDLER( videoram3_w );
 extern WRITE8_HANDLER( pcgram_w );
 
-extern void init_mz800(void);
+extern DRIVER_INIT( mz800 );

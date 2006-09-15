@@ -895,7 +895,7 @@ VIDEO_START ( thom )
   thom_init_cb = NULL;
   thom_init_timer = mame_timer_alloc( thom_set_init );
   
-  video_eof_thom();
+  video_eof_thom(machine);
 
   state_save_register_global( thom_bwidth );
   state_save_register_global( thom_bheight );
@@ -916,7 +916,7 @@ PALETTE_INIT ( thom )
     UINT8 g = 255. * pow( ((i>> 4) & 15) / 15., gamma );
     UINT8 b = 255. * pow( ((i >> 8) & 15) / 15., gamma );
     /* UINT8 alpha = i & 0x1000 ? 0 : 255;  TODO: transparency */
-    palette_set_color( i, r, g, b );
+    palette_set_color(machine,  i, r, g, b );
   }
 }
 

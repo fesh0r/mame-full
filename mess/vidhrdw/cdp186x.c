@@ -18,14 +18,14 @@ PALETTE_INIT( tmc2000 )
 {
 	int background_color_sequence[] = { 5, 7, 6, 3 };
 
-	palette_set_color( 0, 0x4c, 0x96, 0x1c ); // white
-	palette_set_color( 1, 0x4c, 0x00, 0x1c ); // purple
-	palette_set_color( 2, 0x00, 0x96, 0x1c ); // cyan
-	palette_set_color( 3, 0x00, 0x00, 0x1c ); // blue
-	palette_set_color( 4, 0x4c, 0x96, 0x00 ); // yellow
-	palette_set_color( 5, 0x4c, 0x00, 0x00 ); // red
-	palette_set_color( 6, 0x00, 0x96, 0x00 ); // green
-	palette_set_color( 7, 0x00, 0x00, 0x00 ); // black
+	palette_set_color(machine,  0, 0x4c, 0x96, 0x1c ); // white
+	palette_set_color(machine,  1, 0x4c, 0x00, 0x1c ); // purple
+	palette_set_color(machine,  2, 0x00, 0x96, 0x1c ); // cyan
+	palette_set_color(machine,  3, 0x00, 0x00, 0x1c ); // blue
+	palette_set_color(machine,  4, 0x4c, 0x96, 0x00 ); // yellow
+	palette_set_color(machine,  5, 0x4c, 0x00, 0x00 ); // red
+	palette_set_color(machine,  6, 0x00, 0x96, 0x00 ); // green
+	palette_set_color(machine,  7, 0x00, 0x00, 0x00 ); // black
 
 	cdp1864_set_background_color_sequence_w(background_color_sequence);
 }
@@ -34,14 +34,14 @@ PALETTE_INIT( tmc2000e )	// TODO: incorrect colors?
 {
 	int background_color_sequence[] = { 2, 0, 1, 4 };
 
-	palette_set_color( 0, 0x00, 0x00, 0x00 ); // black		  0 % of max luminance
-	palette_set_color( 1, 0x00, 0x97, 0x00 ); // green		 59
-	palette_set_color( 2, 0x00, 0x00, 0x1c ); // blue		 11
-	palette_set_color( 3, 0x00, 0xb3, 0xb3 ); // cyan		 70
-	palette_set_color( 4, 0x4c, 0x00, 0x00 ); // red		 30
-	palette_set_color( 5, 0xe3, 0xe3, 0x00 ); // yellow		 89
-	palette_set_color( 6, 0x68, 0x00, 0x68 ); // magenta	 41
-	palette_set_color( 7, 0xff, 0xff, 0xff ); // white		100
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00 ); // black		  0 % of max luminance
+	palette_set_color(machine, 1, 0x00, 0x97, 0x00 ); // green		 59
+	palette_set_color(machine, 2, 0x00, 0x00, 0x1c ); // blue		 11
+	palette_set_color(machine, 3, 0x00, 0xb3, 0xb3 ); // cyan		 70
+	palette_set_color(machine, 4, 0x4c, 0x00, 0x00 ); // red		 30
+	palette_set_color(machine, 5, 0xe3, 0xe3, 0x00 ); // yellow		 89
+	palette_set_color(machine, 6, 0x68, 0x00, 0x68 ); // magenta	 41
+	palette_set_color(machine, 7, 0xff, 0xff, 0xff ); // white		100
 	
 	cdp1864_set_background_color_sequence_w(background_color_sequence);
 }
@@ -131,14 +131,14 @@ static unsigned short colortable_cdp1869[] =
 
 PALETTE_INIT( cdp1869 )
 {
-	palette_set_color( 0, 0x00, 0x00, 0x00 ); // black		  0 % of max luminance
-	palette_set_color( 1, 0x00, 0x97, 0x00 ); // green		 59
-	palette_set_color( 2, 0x00, 0x00, 0x1c ); // blue		 11
-	palette_set_color( 3, 0x00, 0xb3, 0xb3 ); // cyan		 70
-	palette_set_color( 4, 0x4c, 0x00, 0x00 ); // red		 30
-	palette_set_color( 5, 0xe3, 0xe3, 0x00 ); // yellow		 89
-	palette_set_color( 6, 0x68, 0x00, 0x68 ); // magenta	 41
-	palette_set_color( 7, 0xff, 0xff, 0xff ); // white		100
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00 ); // black		  0 % of max luminance
+	palette_set_color(machine, 1, 0x00, 0x97, 0x00 ); // green		 59
+	palette_set_color(machine, 2, 0x00, 0x00, 0x1c ); // blue		 11
+	palette_set_color(machine, 3, 0x00, 0xb3, 0xb3 ); // cyan		 70
+	palette_set_color(machine, 4, 0x4c, 0x00, 0x00 ); // red		 30
+	palette_set_color(machine, 5, 0xe3, 0xe3, 0x00 ); // yellow		 89
+	palette_set_color(machine, 6, 0x68, 0x00, 0x68 ); // magenta	 41
+	palette_set_color(machine, 7, 0xff, 0xff, 0xff ); // white		100
 
 	memcpy(colortable, colortable_cdp1869, sizeof(colortable_cdp1869));
 }
@@ -232,7 +232,7 @@ VIDEO_UPDATE( cdp1869 )
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
 	if (cdp1869.dispoff)
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	else
 	{
 		fillbitmap(bitmap, cdp1869.bkg, cliprect);

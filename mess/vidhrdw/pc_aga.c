@@ -109,7 +109,7 @@ PALETTE_INIT( pc_aga )
 {
 	int i;
 	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
-		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+		palette_set_color(machine, i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
 	memcpy(colortable,cga_colortable,sizeof(cga_colortable));
 	memcpy((char*)colortable+sizeof(cga_colortable), mda_colortable, sizeof(mda_colortable));
 }
@@ -231,7 +231,7 @@ VIDEO_START( pc200 )
 {
 	int buswidth;
 
-	if (video_start_pc_aga())
+	if (video_start_pc_aga(machine))
 		return 1;
 
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);

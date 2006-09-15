@@ -25,7 +25,7 @@ struct call_data
 	void *param;
 };
 
-static void win_parallel_exit(void);
+static void win_parallel_exit(running_machine *machine);
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -181,11 +181,11 @@ int win_parallel_init(void)
 			set_thread_ideal_processor(GetCurrentThread(), 0);
 	}
 
-	add_exit_callback(win_parallel_exit);
+	add_exit_callback(Machine, win_parallel_exit);
 	return 0;
 
 error:
-	win_parallel_exit();
+	win_parallel_exit(Machine);
 	return -1;
 }
 
@@ -193,7 +193,7 @@ error:
 //	win_parallel_exit
 //============================================================
 
-static void win_parallel_exit(void)
+static void win_parallel_exit(running_machine *machine)
 {
 	int i;
 	HANDLE *threads = NULL;

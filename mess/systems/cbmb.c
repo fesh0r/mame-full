@@ -732,7 +732,7 @@ static gfx_decode cbm700_gfxdecodeinfo[] =
 
 static PALETTE_INIT( cbm700 )
 {
-	palette_set_colors(0, cbm700_palette, sizeof(cbm700_palette) / 3);
+	palette_set_colors(machine, 0, cbm700_palette, sizeof(cbm700_palette) / 3);
     memcpy(colortable,cbmb_colortable,sizeof(cbmb_colortable));
 }
 
@@ -930,11 +930,11 @@ static MACHINE_DRIVER_START( cbm500 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
-#define init_cbm500 cbm500_driver_init
-#define init_cbm600 cbm600_driver_init
-#define init_cbm600hu cbm600hu_driver_init
-#define init_cbm600pal cbm600pal_driver_init
-#define init_cbm700 cbm700_driver_init
+static DRIVER_INIT( cbm500 )	{ cbm500_driver_init(); }
+static DRIVER_INIT( cbm600 )	{ cbm600_driver_init(); }
+static DRIVER_INIT( cbm600hu )	{ cbm600hu_driver_init(); }
+static DRIVER_INIT( cbm600pal )	{ cbm600pal_driver_init(); }
+static DRIVER_INIT( cbm700 )	{ cbm700_driver_init(); }
 
 static void cbmb_cbmcartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {

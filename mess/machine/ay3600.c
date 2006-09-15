@@ -388,7 +388,7 @@ static void AY3600_poll(int dummy)
 	{
 		reset_flag = 0;
 		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
-		mame_schedule_soft_reset();
+		mame_schedule_soft_reset(Machine);
 	}
 
 	/* run through real keys and see what's being pressed */

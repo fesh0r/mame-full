@@ -442,16 +442,11 @@ static void c16_common_driver_init (void)
 #endif
 }
 
-void c16_driver_init (void)
+void c16_driver_init(void)
 {
 	c16_common_driver_init ();
 	ted7360_init (C16_PAL);
 	ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
-}
-
-void c16_driver_shutdown (void)
-{
-	vc20_tape_close ();
 }
 
 static WRITE8_HANDLER(c16_sidcart_16k)

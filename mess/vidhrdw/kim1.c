@@ -18,7 +18,7 @@ PALETTE_INIT( kim1 )
 	/* initialize 16 colors with shades of red (orange) */
     for (i = 0; i < 16; i++)
     {
-		palette_set_color(i,
+		palette_set_color(machine, i,
 			24 + (i + 1) * (i + 1) - 1,
 			(i + 1) * (i + 1) / 4,
 			0);
@@ -26,11 +26,11 @@ PALETTE_INIT( kim1 )
         colortable[2 * i + 1] = i;
     }
 
-	palette_set_color(16,   0,   0,   0);
-	palette_set_color(17,  30,  30,  30);
-	palette_set_color(18,  90,  90,  90);
-	palette_set_color(19,  50,  50,  50);
-	palette_set_color(20, 255, 255, 255);
+	palette_set_color(machine, 16,   0,   0,   0);
+	palette_set_color(machine, 17,  30,  30,  30);
+	palette_set_color(machine, 18,  90,  90,  90);
+	palette_set_color(machine, 19,  50,  50,  50);
+	palette_set_color(machine, 20, 255, 255, 255);
 
     colortable[2 * 16 + 0 * 4 + 0] = 17;
     colortable[2 * 16 + 0 * 4 + 1] = 18;
@@ -48,22 +48,22 @@ VIDEO_START( kim1 )
     videoram_size = 6 * 2 + 24;
     videoram = auto_malloc (videoram_size);
 
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 VIDEO_UPDATE( kim1 )
 {
     int x, y;
 
-	fillbitmap(bitmap, get_black_pen(), NULL);
+	fillbitmap(bitmap, get_black_pen(machine), NULL);
 
     for (x = 0; x < 6; x++)
     {
         int sy = 408;
-        int sx = Machine->screen[0].width - 212 + x * 30 + ((x >= 4) ? 6 : 0);
+        int sx = machine->screen[0].width - 212 + x * 30 + ((x >= 4) ? 6 : 0);
 
-		drawgfx (bitmap, Machine->gfx[0], videoram[2 * x + 0], videoram[2 * x + 1],
-			0, 0, sx, sy, &Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
+		drawgfx (bitmap, machine->gfx[0], videoram[2 * x + 0], videoram[2 * x + 1],
+			0, 0, sx, sy, &machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
     }
 
     for (y = 0; y < 6; y++)
@@ -81,14 +81,14 @@ VIDEO_UPDATE( kim1 )
 				{ 4,  5,  6,  7},
 				{ 0,  1,  2,  3}
             };
-            int sx = Machine->screen[0].width - 182 + x * 37;
+            int sx = machine->screen[0].width - 182 + x * 37;
             int color, code = layout[y][x];
 
             color = (readinputport (code / 7) & (0x40 >> (code % 7))) ? 0 : 1;
 
             videoram[6 * 2 + code] = color;
-			drawgfx (bitmap, Machine->gfx[1], layout[y][x], color,
-				0, 0, sx, sy, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
+			drawgfx (bitmap, machine->gfx[1], layout[y][x], color,
+				0, 0, sx, sy, &machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
         }
     }
 	return 0;

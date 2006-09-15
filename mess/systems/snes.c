@@ -173,7 +173,7 @@ static PALETTE_INIT( snes )
 		r = (i & 0x1F) << 3;
 		g = ((i >> 5) & 0x1F) << 3;
 		b = ((i >> 10) & 0x1F) << 3;
-		palette_set_color( i, r, g, b );
+		palette_set_color(machine,  i, r, g, b );
 	}
 
 	/* The colortable can be black */
@@ -246,7 +246,7 @@ static void snes_save_sram(void)
 
 
 
-static void snes_machine_stop(void)
+static void snes_machine_stop(running_machine *machine)
 {
 	/* Save SRAM */
 	if( snes_cart.sram > 0 )
@@ -255,8 +255,8 @@ static void snes_machine_stop(void)
 
 static MACHINE_START( snes_mess )
 {
-	add_exit_callback(snes_machine_stop);
-	return machine_start_snes();
+	add_exit_callback(machine, snes_machine_stop);
+	return machine_start_snes(machine);
 }
 
 static int device_load_snes_cart(mess_image *image, mame_file *file)
@@ -309,7 +309,7 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 		"UNKNOWN"
 	};
 
-	if( new_memory_region(REGION_CPU1, 0x1000000,0) )
+	if( new_memory_region(Machine, REGION_CPU1, 0x1000000,0) )
 	{
 		logerror("Memory allocation failed reading rom!\n");
 		return INIT_FAIL;

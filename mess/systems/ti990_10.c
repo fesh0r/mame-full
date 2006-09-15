@@ -118,7 +118,7 @@ static void lrex_callback(void)
 */
 
 
-static int video_start_ti990_10(void)
+static VIDEO_START( ti990_10 )
 {
 	const vdt911_init_params_t params =
 	{
@@ -276,7 +276,7 @@ ROM_START(ti990_10)
 
 ROM_END
 
-static void init_ti990_10(void)
+static DRIVER_INIT( ti990_10 )
 {
 #if 0
 	/* load specific ti990/12 rom page */

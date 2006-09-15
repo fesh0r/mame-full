@@ -53,7 +53,7 @@ unsigned char pcw16_palette[PCW16_NUM_COLOURS * 3] =
 /* Initialise the palette */
 PALETTE_INIT( pcw16 )
 {
-	palette_set_colors(0, pcw16_palette, sizeof(pcw16_palette) / 3);
+	palette_set_colors(machine, 0, pcw16_palette, sizeof(pcw16_palette) / 3);
 	memcpy(colortable, pcw16_colour_table, sizeof (pcw16_colour_table));
 }
 

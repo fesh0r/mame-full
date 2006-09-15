@@ -495,10 +495,6 @@ static UINT8 controller_table[] =
 
 /* Intellivision console + keyboard component */
 
-void init_intvkbd(void)
-{
-}
-
 DEVICE_LOAD( intvkbd_cart )
 {
 	int id = image_index_in_device(image);

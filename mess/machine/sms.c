@@ -487,7 +487,7 @@ DEVICE_LOAD( sms_cart )
 
 	/* Create a new memory region to hold the ROM. */
 	/* Make sure the region holds only complete (0x4000) rom banks */
-	if (new_memory_region(REGION_USER2, ((size&0x3FFF) ? (((size>>14)+1)<<14) : size), ROM_REQUIRED)) {
+	if (new_memory_region(Machine, REGION_USER2, ((size&0x3FFF) ? (((size>>14)+1)<<14) : size), ROM_REQUIRED)) {
 		logerror("Memory allocation failed reading roms!\n");
 		return INIT_FAIL;
 	}

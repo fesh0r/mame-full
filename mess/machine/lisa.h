@@ -19,9 +19,9 @@ VIDEO_UPDATE( lisa );
 
 extern NVRAM_HANDLER(lisa);
 
-void init_lisa2(void);
-void init_lisa210(void);
-void init_mac_xl(void);
+DRIVER_INIT( lisa2 );
+DRIVER_INIT( lisa210 );
+DRIVER_INIT( mac_xl );
 
 MACHINE_RESET( lisa );
 

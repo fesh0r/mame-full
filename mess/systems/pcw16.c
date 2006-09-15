@@ -108,7 +108,7 @@
 
 #include "includes/28f008sa.h"
 
-static void pcw16_machine_stop(void);
+static void pcw16_machine_stop(running_machine *machine);
 
 // interrupt counter
 unsigned long pcw16_interrupt_counter;
@@ -1384,10 +1384,10 @@ static MACHINE_RESET( pcw16 )
 	beep_set_state(0,0);
 	beep_set_frequency(0,3750);
 
-	add_exit_callback(pcw16_machine_stop);
+	add_exit_callback(machine, pcw16_machine_stop);
 }
 
-static void pcw16_machine_stop(void)
+static void pcw16_machine_stop(running_machine *machine)
 {
 	/* flash 0 */
 	flash_store(0,"pcw16f1.nv");

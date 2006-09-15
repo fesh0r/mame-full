@@ -181,7 +181,7 @@ VIDEO_START( odyssey2 )
 
 PALETTE_INIT( odyssey2 )
 {
-	palette_set_colors(0, odyssey2_colors, sizeof(odyssey2_colors) / 3);
+	palette_set_colors(machine, 0, odyssey2_colors, sizeof(odyssey2_colors) / 3);
 	colortable[0] = 0;
 	colortable[1] = 1;
 }

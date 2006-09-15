@@ -265,7 +265,7 @@ static void setup_beep(int dummy) {
 	beep_set_frequency( 0, 300 );
 }
 
-static void electron_reset(void)
+static void electron_reset(running_machine *machine)
 {
 	memory_set_bank(2, 0);
 
@@ -292,7 +292,7 @@ MACHINE_START( electron )
 	ula.interrupt_control = 0x00;
 	timer_set( 0.0, 0, setup_beep );
 	electron_tape_timer = timer_alloc( electron_tape_timer_handler );
-	add_reset_callback(electron_reset);
+	add_reset_callback(machine, electron_reset);
 	return 0;
 }
 

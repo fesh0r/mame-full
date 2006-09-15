@@ -114,30 +114,21 @@ static void common_init_machine(int base)
 	}
 }
 
-static void vtech1_machine_stop(void)
-{
-	/* FIXME: memory should be freed here, but then it crashes on hard resets? */
-	/* if (banked_mem) free(banked_mem); */
-}
-
 MACHINE_START(laser110)
 {
 	common_init_machine(0x8000);
-	add_exit_callback(vtech1_machine_stop);
 	return 0;
 }
 
 MACHINE_START(laser210)
 {
 	common_init_machine(0x9000);
-	add_exit_callback(vtech1_machine_stop);
 	return 0;
 }
 
 MACHINE_START(laser310)
 {
 	common_init_machine(0xb800);
-	add_exit_callback(vtech1_machine_stop);
 	return 0;
 }
 

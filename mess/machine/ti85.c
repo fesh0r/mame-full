@@ -95,12 +95,12 @@ static UINT8 ti85_serial_status = TI85_SEND_STOP;
 static UINT8 * ti85_receive_buffer;
 static UINT8 * ti85_receive_data;
 
-static void ti85_free_serial_data_memory (void);
+static void ti85_free_serial_data_memory (running_machine *machine);
 
 static int ti85_receive_serial (UINT8*, UINT32);
 static int ti85_send_serial (UINT8*, UINT32);
 
-static void ti85_reset_serial (void);
+static void ti85_reset_serial (running_machine *machine);
 static void ti85_update_serial (void);
 static void ti85_send_variables (void);
 static void ti85_send_backup (void);
@@ -231,8 +231,8 @@ MACHINE_START( ti85 )
 	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x010000);
 	memory_set_bankptr(2,memory_region(REGION_CPU1) + 0x014000);
 
-	add_reset_callback(ti85_reset_serial);
-	add_exit_callback(ti85_free_serial_data_memory);
+	add_reset_callback(machine, ti85_reset_serial);
+	add_exit_callback(machine, ti85_free_serial_data_memory);
 	return 0;
 }
 
@@ -272,8 +272,8 @@ MACHINE_START( ti86 )
 		timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 	}
 
-	add_reset_callback(ti85_reset_serial);
-	add_exit_callback(ti85_free_serial_data_memory);
+	add_reset_callback(machine, ti85_reset_serial);
+	add_exit_callback(machine, ti85_free_serial_data_memory);
 	return 0;
 }
 
@@ -662,7 +662,7 @@ SNAPSHOT_LOAD( ti8x )
 
 DEVICE_INIT( ti85_serial )
 {
-	ti85_free_serial_data_memory();
+	ti85_free_serial_data_memory(Machine);
 	ti85_receive_serial (NULL,0);
 	return INIT_PASS;
 }
@@ -698,7 +698,7 @@ DEVICE_LOAD( ti85_serial )
 
 DEVICE_UNLOAD( ti85_serial )
 {
-	ti85_free_serial_data_memory();
+	ti85_free_serial_data_memory(Machine);
 	ti85_serial_status = TI85_SEND_STOP;
 	ti85_free_serial_stream (&ti85_serial_stream);
 }
@@ -725,7 +725,7 @@ static int ti85_alloc_serial_data_memory (UINT32 size)
 	return 1;
 }
 
-static void ti85_free_serial_data_memory (void)
+static void ti85_free_serial_data_memory (running_machine *machine)
 {
 	if (ti85_receive_buffer)
 	{
@@ -825,7 +825,7 @@ void ti85_update_serial (void)
 		else
 		{
 			ti85_receive_serial(NULL, 0);
-			ti85_free_serial_data_memory();
+			ti85_free_serial_data_memory(Machine);
 			if (readinputport(10)&0x01)
 			{
 				ti85_serial_status = TI85_PREPARE_SCREEN_REQUEST;
@@ -855,11 +855,11 @@ void ti85_update_serial (void)
 	}
 }
 
-static void ti85_reset_serial (void)
+static void ti85_reset_serial (running_machine *machine)
 {
 	ti85_receive_serial(NULL, 0);
 	ti85_send_serial(NULL, 0);
-	ti85_free_serial_data_memory();
+	ti85_free_serial_data_memory(machine);
 	ti85_red_in = 0x01;
 	ti85_white_in = 0x01;
 	ti85_red_out = 0x00;
@@ -925,7 +925,7 @@ static void ti85_send_variables (void)
 						break;
 					case 0x03:	//out of memory
 						variable_number = 0;
-						ti85_free_serial_data_memory();
+						ti85_free_serial_data_memory(Machine);
 						ti85_serial_status = TI85_SEND_STOP;
 						break;
 				}
@@ -939,7 +939,7 @@ static void ti85_send_variables (void)
 				{
 					case 0x01:	//exit
 						variable_number = 0;
-						ti85_free_serial_data_memory();
+						ti85_free_serial_data_memory(Machine);
 						ti85_serial_status = TI85_SEND_STOP;
 						break;
 					case 0x02:	//skip
@@ -981,7 +981,7 @@ static void ti85_send_variables (void)
 			{
 				logerror ("OK received\n");
 				ti85_convert_stream_to_data (ti85_receive_buffer, 4*8, ti85_receive_data);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				ti85_serial_status = TI85_SEND_STOP;
 			}
 			break;
@@ -1031,7 +1031,7 @@ static void ti85_send_backup (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 5*8, ti85_receive_data);
 				variable_number = 0;
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				ti85_serial_status = TI85_SEND_STOP;
 			}
 			break;
@@ -1055,7 +1055,7 @@ static void ti85_send_backup (void)
 			if(!ti85_send_serial(ti85_serial_stream.end,ti85_serial_stream.end_size))
 			{
 				variable_number = 0;
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				ti85_serial_status = TI85_SEND_STOP;
 			}
 			break;
@@ -1090,7 +1090,7 @@ static void ti85_receive_variables (void)
 			if(!var_data)
 				ti85_serial_status = TI85_SEND_STOP;
 			memcpy (var_data, ti85_receive_data+2, 5);
-			ti85_free_serial_data_memory();
+			ti85_free_serial_data_memory(Machine);
 			if (!ti85_alloc_serial_data_memory(var_data[0]-1))
 			{
 				free(var_data); var_data = NULL;
@@ -1104,7 +1104,7 @@ static void ti85_receive_variables (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, (var_data[0]-1)*8, ti85_receive_data);
 				memcpy (var_data+5, ti85_receive_data, var_data[0]-3);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (8))
 				{
 					free(var_data); var_data = NULL;
@@ -1124,7 +1124,7 @@ static void ti85_receive_variables (void)
 		case TI85_SEND_CONTINUE:
 			if(!ti85_send_serial(ti85_receive_buffer+4*8, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory(4))
 				{
 					free(var_data); var_data = NULL;
@@ -1139,7 +1139,7 @@ static void ti85_receive_variables (void)
 			if(!ti85_receive_serial (ti85_receive_buffer, 4*8))
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 4*8, ti85_receive_data);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory(var_data[2]+var_data[3]*256+6))
 				{
 					free(var_data); var_data = NULL;
@@ -1155,7 +1155,7 @@ static void ti85_receive_variables (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, (var_data[2]+var_data[3]*256+6)*8, ti85_receive_data);
 				memcpy (var_data+var_data[0]+2, ti85_receive_data+2, var_data[2]+var_data[3]*256+2);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (4))
 				{
 					free(var_data); var_data = NULL;
@@ -1170,7 +1170,7 @@ static void ti85_receive_variables (void)
 		case TI85_SEND_OK_2:
 			if(!ti85_send_serial(ti85_receive_buffer, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory(7))
 				{
 					free(var_data); var_data = NULL;
@@ -1223,7 +1223,7 @@ static void ti85_receive_variables (void)
 					ti85_serial_status = TI85_RECEIVE_HEADER_1;
 				else
 				{
-					ti85_free_serial_data_memory();
+					ti85_free_serial_data_memory(Machine);
 					if(!ti85_alloc_serial_data_memory (4))
 					{
 						free(var_data); var_data = NULL;
@@ -1239,7 +1239,7 @@ static void ti85_receive_variables (void)
 		case TI85_SEND_OK_3:
 			if(!ti85_send_serial(ti85_receive_buffer, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				variable_number = 0;
 				ti85_serial_status =  TI85_SEND_STOP;
 				sprintf (var_file_name, "%08d.85g", var_file_number);
@@ -1302,7 +1302,7 @@ static void ti85_receive_backup (void)
 				backup_file_data[0x35] = (backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x11)&0x00ff;
 				backup_file_data[0x36] = ((backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x11)&0xff00)>>8;
 				memcpy(backup_file_data+0x37, ti85_receive_data+0x02, 0x0b);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (8))
 				{
 					free(backup_file_data); backup_file_data = NULL;
@@ -1322,7 +1322,7 @@ static void ti85_receive_backup (void)
 		case TI85_SEND_CONTINUE:
 			if(!ti85_send_serial(ti85_receive_buffer+4*8, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory(4))
 				{
 					free(backup_file_data); backup_file_data = NULL;
@@ -1337,7 +1337,7 @@ static void ti85_receive_backup (void)
 			if(!ti85_receive_serial (ti85_receive_buffer, 4*8))
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 4*8, ti85_receive_data);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory(backup_data_size[backup_variable_number]+6))
 				{
 					free(backup_file_data); backup_file_data = NULL;
@@ -1364,7 +1364,7 @@ static void ti85_receive_backup (void)
 						memcpy(backup_file_data+0x42+backup_data_size[0]+backup_data_size[1]+0x04, ti85_receive_data+0x02, backup_data_size[2]+0x02);
 						break;
 				}
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (4))
 				{
 					free(backup_file_data); backup_file_data = NULL;
@@ -1379,7 +1379,7 @@ static void ti85_receive_backup (void)
 		case TI85_SEND_OK_2:
 			if(!ti85_send_serial(ti85_receive_buffer, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				backup_variable_number++;
 				if (backup_variable_number<3)
 				{
@@ -1441,7 +1441,7 @@ static void ti85_receive_screen (void)
 		case TI85_SEND_SCREEN_REQUEST:
 			if(!ti85_send_serial(ti85_receive_buffer, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (4))
 				{
 					ti85_serial_status = TI85_SEND_STOP;
@@ -1454,7 +1454,7 @@ static void ti85_receive_screen (void)
 			if(!ti85_receive_serial (ti85_receive_buffer, 4*8))
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 4*8, ti85_receive_data);
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (1030))
 				{
 					ti85_serial_status = TI85_SEND_STOP;
@@ -1474,7 +1474,7 @@ static void ti85_receive_screen (void)
 					image_file_data = malloc (0x49+1008);
 					if(!image_file_data)
 					{
-						ti85_free_serial_data_memory();
+						ti85_free_serial_data_memory(Machine);
 						ti85_serial_status = TI85_SEND_OK;
 						return;
 					}
@@ -1502,7 +1502,7 @@ static void ti85_receive_screen (void)
 					free(image_file_data);
 					image_file_number++;
 				}
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				if(!ti85_alloc_serial_data_memory (4))
 				{
 					ti85_serial_status = TI85_SEND_STOP;
@@ -1515,7 +1515,7 @@ static void ti85_receive_screen (void)
 		case TI85_SEND_OK:
 			if(!ti85_send_serial(ti85_receive_buffer, 4*8))
 			{
-				ti85_free_serial_data_memory();
+				ti85_free_serial_data_memory(Machine);
 				ti85_serial_status = TI85_SEND_STOP;
 			}
 			break;

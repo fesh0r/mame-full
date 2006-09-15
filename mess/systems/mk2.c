@@ -235,7 +235,7 @@ static RRIOT_CONFIG riot={
 	mk2_irq
 };
 
-static void init_mk2(void)
+static DRIVER_INIT( mk2 )
 {
 	rriot_init(0,&riot);
 }

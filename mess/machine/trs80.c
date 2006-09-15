@@ -65,7 +65,7 @@ static int get_cycles = 0;		/* cycle count at last input port read */
 
 static void tape_put_byte(UINT8 value);
 static void tape_get_open(void);
-static void tape_put_close(void);
+static void tape_put_close(running_machine *machine);
 
 #define FW TRS80_FONT_W
 #define FH TRS80_FONT_H
@@ -283,7 +283,7 @@ DEVICE_LOAD( trs80_floppy )
 
 static void trs80_fdc_callback(int);
 
-static void trs80_machine_reset(void)
+static void trs80_machine_reset(running_machine *machine)
 {
 	if (cas_size)
 	{
@@ -324,8 +324,8 @@ MACHINE_START( trs80 )
 		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
 	}
 
-	add_reset_callback(trs80_machine_reset);
-	add_exit_callback(tape_put_close);
+	add_reset_callback(machine, trs80_machine_reset);
+	add_exit_callback(machine, tape_put_close);
 	return 0;
 }
 
@@ -374,7 +374,7 @@ static void tape_put_byte(UINT8 value)
 	}
 }
 
-static void tape_put_close(void)
+static void tape_put_close(running_machine *machine)
 {
 	/* file open ? */
 	if (tape_put_file)
@@ -475,7 +475,7 @@ WRITE8_HANDLER( trs80_port_ff_w )
 			if (diff > 4000)
 			{
 				/* reset tape output */
-				tape_put_close();
+				tape_put_close(Machine);
 				put_bit_count = tape_bits = in_sync = 0;
 			}
 			else

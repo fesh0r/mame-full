@@ -963,7 +963,7 @@ static struct LSI53C810interface scsi53c810_intf =
 
 NVRAM_HANDLER( bebox )
 {
-	nvram_handler_intelflash(0, file, read_or_write);
+	nvram_handler_intelflash(machine, 0, file, read_or_write);
 }
 
 MACHINE_RESET( bebox )

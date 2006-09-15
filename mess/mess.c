@@ -27,7 +27,7 @@ UINT8 *mess_ram;
 UINT8 mess_ram_default_value = 0xCD;
 
 static int devices_initialload(const game_driver *gamedrv);
-static void devices_exit(void);
+static void devices_exit(running_machine *machine);
 
 
 static int ram_init(const game_driver *gamedrv)
@@ -89,7 +89,7 @@ static int ram_init(const game_driver *gamedrv)
  *  ith all user specified image names.
  ****************************************************************************/
 
-int devices_init(const game_driver *gamedrv)
+int devices_init(running_machine *machine)
 {
 	int i;
 	const struct IODevice *dev;
@@ -109,17 +109,17 @@ int devices_init(const game_driver *gamedrv)
 	inputx_init();
 
 	/* allocate the IODevice struct */
-	Machine->devices = devices_allocate(Machine->gamedrv);
-	if (!Machine->devices)
+	machine->devices = devices_allocate(Machine->gamedrv);
+	if (!machine->devices)
 		return 1;
 
 	/* Check that the driver supports all devices requested (options struct)*/
 	for( i = 0; i < options.image_count; i++ )
 	{
 		if (options.image_files[i].device_tag)
-			dev = device_find_tag(Machine->devices, options.image_files[i].device_tag);
+			dev = device_find_tag(machine->devices, options.image_files[i].device_tag);
 		else
-			dev = device_find(Machine->devices, options.image_files[i].device_type);
+			dev = device_find(machine->devices, options.image_files[i].device_type);
 
 		if (!dev)
 		{
@@ -129,13 +129,13 @@ int devices_init(const game_driver *gamedrv)
 	}
 
 	/* initialize RAM code */
-	if (ram_init(gamedrv))
+	if (ram_init(machine->gamedrv))
 		return 1;
 
 	/* init all devices */
 	image_init();
-	add_exit_callback(devices_exit);
-	return devices_initialload(gamedrv);
+	add_exit_callback(machine, devices_exit);
+	return devices_initialload(machine->gamedrv);
 }
 
 
@@ -248,7 +248,7 @@ error:
  * Call the exit() functions for all devices of a
  * driver for all images.
  */
-static void devices_exit(void)
+static void devices_exit(running_machine *machine)
 {
 	/* unload all devices */
 	image_unload_all(FALSE);
@@ -317,11 +317,11 @@ void ram_dump(const char *filename)
 
 
 
-void mess_config_init(void)
+void mess_config_init(running_machine *machine)
 {
 #ifdef WIN32
-	extern void win_mess_config_init(void);
-	win_mess_config_init();
+	extern void win_mess_config_init(running_machine *machine);
+	win_mess_config_init(machine);
 #endif
 }
 

@@ -64,7 +64,7 @@ cpm_dph dph[NDSK] = {
 	{ 0, 0, 0, 0, DIRBUF, DPB3, 0, 0 }
 };
 
-static void cpm_exit(void);
+static void cpm_exit(running_machine *machine);
 
 #include "cpm_disk.c"
 
@@ -260,7 +260,7 @@ int cpm_init(int n, const char *ids[])
 
 	cpm_jumptable();
 
-	add_exit_callback(cpm_exit);
+	add_exit_callback(Machine, cpm_exit);
 	return 0;
 }
 
@@ -268,7 +268,7 @@ int cpm_init(int n, const char *ids[])
  *	cpm_exit
  *	Shut down the BIOS simulation; close image files; exit osd_fdc
  *****************************************************************************/
-static void cpm_exit(void)
+static void cpm_exit(running_machine *machine)
 {
 	int d;
 

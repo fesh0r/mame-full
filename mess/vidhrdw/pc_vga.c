@@ -182,7 +182,7 @@ MACHINE_DRIVER_END
 
 static PALETTE_INIT( ega )
 {
-	palette_set_colors(0, ega_palette, sizeof(ega_palette) / 3);
+	palette_set_colors(machine, 0, ega_palette, sizeof(ega_palette) / 3);
 	memcpy(colortable, vga_colortable,0x200);
 }
 
@@ -190,7 +190,7 @@ static PALETTE_INIT( vga )
 {
 	int i;
 	for (i = 0; i < 0x100; i++)
-		palette_set_color(i, 0, 0, 0);
+		palette_set_color(machine, i, 0, 0, 0);
 
 	memcpy(colortable, vga_colortable,0x200);
 }
@@ -1322,7 +1322,7 @@ static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height, stru
 		{
 			for (i=0; i<256;i++)
 			{
-				palette_set_color(i,(vga.dac.color[i].red & 0x3f) << 2,
+				palette_set_color(Machine, i,(vga.dac.color[i].red & 0x3f) << 2,
 									 (vga.dac.color[i].green & 0x3f) << 2,
 									 (vga.dac.color[i].blue & 0x3f) << 2);
 			}

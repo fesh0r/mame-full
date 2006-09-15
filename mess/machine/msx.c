@@ -320,7 +320,7 @@ static ppi8255_interface msx_ppi8255_interface =
 
 static struct tc8521_interface tc = { NULL };
 
-DRIVER_INIT( msx )
+static void msx_init(void)
 {
 	int i, n;
 
@@ -376,9 +376,14 @@ DRIVER_INIT( msx )
 	}
 }
 
+DRIVER_INIT( msx )
+{
+	msx_init();
+}
+
 DRIVER_INIT( msx2 )
 {
-	init_msx ();
+	msx_init();
 	tc8521_init (&tc);
 }
 

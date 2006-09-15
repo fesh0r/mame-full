@@ -60,7 +60,7 @@ struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 
 	if (videoram_size)
 	{
-		if (video_start_generic())
+		if (video_start_generic(Machine))
 			return NULL;
 	}
 

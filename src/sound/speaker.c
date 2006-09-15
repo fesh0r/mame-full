@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	speaker.c
+    speaker.c
 
-	Sound driver to emulate a simple speaker,
-	driven by one or more output bits
+    Sound driver to emulate a simple speaker,
+    driven by one or more output bits
 
 ****************************************************************************/
 

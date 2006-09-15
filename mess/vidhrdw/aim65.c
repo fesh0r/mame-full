@@ -74,7 +74,7 @@ static unsigned char aim65_palette[] =
 
 PALETTE_INIT( aim65 )
 {
-	palette_set_colors(0, aim65_palette, sizeof(aim65_palette) / 3);
+	palette_set_colors(machine, 0, aim65_palette, sizeof(aim65_palette) / 3);
 }
 
 VIDEO_START( aim65 )
@@ -91,7 +91,7 @@ VIDEO_START( aim65 )
 	}
 #endif
     
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 static const char led[] = {

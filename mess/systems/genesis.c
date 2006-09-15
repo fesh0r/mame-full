@@ -494,7 +494,7 @@ DRIVER_INIT(gen_usa)
     D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
     D6 : Video type is 1= PAL, 0= NTSC
 */
-	init_genesis();
+	init_genesis(machine);
 }
 
 
@@ -503,7 +503,7 @@ DRIVER_INIT(gen_eur)
 	genesis_is_ntsc = 0;   // vdp status flag ...
 	genesis_region = 0xc0; // read via io
 
-	init_genesis();
+	init_genesis(machine);
 }
 
 
@@ -512,7 +512,7 @@ DRIVER_INIT(gen_jpn)
 	genesis_is_ntsc = 1;   // vdp status flag ...
 	genesis_region = 0x00; // read via io
 
-	init_genesis();
+	init_genesis(machine);
 }
 
 

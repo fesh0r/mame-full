@@ -192,7 +192,7 @@ static void wswan_rtc_callback( int dummy ) {
 	}
 }
 
-static void wswan_machine_stop( void ) {
+static void wswan_machine_stop( running_machine *machine ) {
 	if ( eeprom.size ) {
 		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), eeprom.data, eeprom.size );
 	}
@@ -207,14 +207,14 @@ static void wswan_setup_bios( void ) {
 
 MACHINE_START( wswan ) {
 	system_type = WSWAN;
-	add_exit_callback( wswan_machine_stop );
+	add_exit_callback( machine, wswan_machine_stop );
 	wswan_setup_bios();
 	return 0;
 }
 
 MACHINE_START( wscolor ) {
 	system_type = WSC;
-	add_exit_callback( wswan_machine_stop );
+	add_exit_callback( machine, wswan_machine_stop );
 	wswan_setup_bios();
 	return 0;
 }

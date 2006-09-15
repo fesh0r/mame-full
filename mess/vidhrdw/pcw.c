@@ -40,7 +40,7 @@ static unsigned char pcw_palette[PCW_NUM_COLOURS * 3] =
 /* Initialise the palette */
 PALETTE_INIT( pcw )
 {
-	palette_set_colors(0, pcw_palette, sizeof(pcw_palette) / 3);
+	palette_set_colors(machine, 0, pcw_palette, sizeof(pcw_palette) / 3);
 	memcpy(colortable, pcw_colour_table, sizeof (pcw_colour_table));
 }
 

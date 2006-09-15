@@ -5,13 +5,6 @@ else
 SOUNDDEFS += -DHAS_BEEP=0
 endif
 
-ifneq ($(filter SPEAKER,$(SOUNDS)),)
-SOUNDDEFS += -DHAS_SPEAKER=1
-SOUNDOBJS += $(OBJ)/mess/sound/speaker.o
-else
-SOUNDDEFS += -DHAS_SPEAKER=0
-endif
-
 ifneq ($(filter WAVE,$(SOUNDS)),)
 SOUNDDEFS += -DHAS_WAVE=1
 SOUNDOBJS += $(OBJ)/mess/sound/wave.o

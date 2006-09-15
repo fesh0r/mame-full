@@ -40,7 +40,7 @@ static void reader_callback(int dummy);
 static void puncher_callback(int nac);
 static void tyo_callback(int nac);
 static void dpy_callback(int dummy);
-static void pdp1_machine_stop(void);
+static void pdp1_machine_stop(running_machine *machine);
 
 
 /* pointer to pdp-1 RAM */
@@ -155,7 +155,7 @@ static OPBASE_HANDLER(setOPbasefunc)
 }
 
 
-static void pdp1_machine_reset(void)
+static void pdp1_machine_reset(running_machine *machine)
 {
 	int config;
 
@@ -179,7 +179,7 @@ static void pdp1_machine_reset(void)
 }
 
 
-static void pdp1_machine_stop(void)
+static void pdp1_machine_stop(running_machine *machine)
 {
 	/* the core will take care of freeing the timers, BUT we must set the variables
 	to NULL if we don't want to risk confusing the tape image init function */
@@ -330,8 +330,8 @@ MACHINE_START( pdp1 )
 
 	memory_set_opbase_handler(0, setOPbasefunc);
 
-	add_reset_callback(pdp1_machine_reset);
-	add_exit_callback(pdp1_machine_stop);
+	add_reset_callback(machine, pdp1_machine_reset);
+	add_exit_callback(machine, pdp1_machine_stop);
 	return 0;
 }
 

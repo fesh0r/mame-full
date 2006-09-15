@@ -60,7 +60,7 @@ static UINT8 *c128_ram;
 static void c128_set_m8502_read_handler(UINT16 start, UINT16 end, read8_handler rh)
 {
 	int cpunum;
-	cpunum = mame_find_cpu_index("m8502");
+	cpunum = mame_find_cpu_index(Machine, "m8502");
 	memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, rh);
 }
 
@@ -837,12 +837,12 @@ MACHINE_RESET( c128 )
 
 VIDEO_START( c128 )
 {
-	return video_start_vdc8563() || video_start_vic2();
+	return video_start_vdc8563(machine) || video_start_vic2(machine);
 }
 
 VIDEO_UPDATE( c128 )
 {
-	video_update_vdc8563(screen, bitmap, cliprect);
-	video_update_vic2(screen, bitmap, cliprect);
+	video_update_vdc8563(machine, screen, bitmap, cliprect);
+	video_update_vic2(machine, screen, bitmap, cliprect);
 	return 0;
 }

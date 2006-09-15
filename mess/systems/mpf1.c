@@ -124,9 +124,9 @@ static UINT8 kbdlatch;
 
 static PALETTE_INIT( mpf1 )
 {
-	palette_set_color(0, 0x00, 0x00, 0x00);
-	palette_set_color(1, 0xff, 0x00, 0x00);
-	palette_set_color(2, 0x00, 0xff, 0x00);
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 1, 0xff, 0x00, 0x00);
+	palette_set_color(machine, 2, 0x00, 0xff, 0x00);
 }
 
 
@@ -136,7 +136,7 @@ static VIDEO_START( mpf1 )
     videoram_size = 6 * 2 + 24;
     videoram = auto_malloc (videoram_size);
 
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 

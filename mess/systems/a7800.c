@@ -246,7 +246,7 @@ static unsigned short a7800_colortable[] =
 static PALETTE_INIT(a7800)
 {
 
-	palette_set_colors(0, a7800_palette, sizeof(a7800_palette) / 3);
+	palette_set_colors(machine, 0, a7800_palette, sizeof(a7800_palette) / 3);
     memcpy(colortable,a7800_colortable,sizeof(a7800_colortable));
 
 }
@@ -254,7 +254,7 @@ static PALETTE_INIT(a7800)
 
 static PALETTE_INIT(a7800p)
 {
-	palette_set_colors(0, a7800p_palette, sizeof(a7800p_palette) / 3);
+	palette_set_colors(machine, 0, a7800p_palette, sizeof(a7800p_palette) / 3);
     memcpy(colortable,a7800_colortable,sizeof(a7800_colortable));
 }
 

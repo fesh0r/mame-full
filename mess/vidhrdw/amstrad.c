@@ -179,9 +179,9 @@ unsigned char amstrad_green_palette[32 * 3] =
 PALETTE_INIT( amstrad_cpc )
 {
    	if ( ((readinputportbytag("green_display")) & 0x01)==0 )
-	   palette_set_colors(0, amstrad_palette, sizeof(amstrad_palette) / 3);
+	   palette_set_colors(machine, 0, amstrad_palette, sizeof(amstrad_palette) / 3);
    	else
-	   palette_set_colors(0, amstrad_green_palette, sizeof(amstrad_green_palette) / 3);   	
+	   palette_set_colors(machine, 0, amstrad_green_palette, sizeof(amstrad_green_palette) / 3);   	
 }
 
 /*************************************************************************/
@@ -242,7 +242,7 @@ PALETTE_INIT( kccomp )
 	for (i=0; i<32; i++)
 	{
 		colortable[i] = i;
-		palette_set_color(i,
+		palette_set_color(machine, i,
 			kccomp_get_colour_element((color_prom[i]>>2) & 0x03),
 			kccomp_get_colour_element((color_prom[i]>>4) & 0x03),
 			kccomp_get_colour_element((color_prom[i]>>0) & 0x03));
@@ -260,7 +260,7 @@ PALETTE_INIT( amstrad_plus )
 {
 	int i;
 
-	palette_set_colors(0, amstrad_palette, sizeof(amstrad_palette) / 3);
+	palette_set_colors(machine, 0, amstrad_palette, sizeof(amstrad_palette) / 3);
 	for ( i = 0; i < 0x1000; i++ ) 
 	{
 		int r, g, b;
@@ -273,14 +273,14 @@ PALETTE_INIT( amstrad_plus )
 		g = ( g << 4 ) | ( g );
 		b = ( b << 4 ) | ( b );
 
-		palette_set_color(i+48, g, r, b);
+		palette_set_color(machine, i+48, g, r, b);
 		colortable[i+48] = i+48;  // take into account the original palette, and sprite palette
 	}
 }
 
 void amstrad_plus_setspritecolour(unsigned int off, int r, int g, int b)
 {
-	palette_set_color((off/2) + 33, r, g, b);
+	palette_set_color(Machine, (off/2) + 33, r, g, b);
 }
 
 static void amstrad_init_lookups(void)

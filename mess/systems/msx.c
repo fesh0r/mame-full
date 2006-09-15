@@ -712,7 +712,7 @@ static struct AY8910interface ay8910_interface =
 
 static VIDEO_START( msx2 )
 {
-	return v9938_init (MODEL_V9938, 0x20000, msx_vdp_interrupt);
+	return v9938_init(machine, MODEL_V9938, 0x20000, msx_vdp_interrupt);
 }
 
 static const TMS9928a_interface tms9928a_interface =

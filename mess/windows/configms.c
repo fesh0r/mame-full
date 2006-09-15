@@ -262,18 +262,18 @@ void win_add_mess_device_options(const game_driver *gamedrv)
 
 
 
-static void win_mess_exit(void)
+static void win_mess_exit(running_machine *machine)
 {
 	if (win_write_config)
-		write_config(NULL, Machine->gamedrv);
+		write_config(NULL, machine->gamedrv);
 }
 
 
 
-void win_mess_config_init(void)
+void win_mess_config_init(running_machine *machine)
 {
 	config_register("device_directories", device_dirs_load, device_dirs_save);
-	add_exit_callback(win_mess_exit);
+	add_exit_callback(machine, win_mess_exit);
 }
 
 

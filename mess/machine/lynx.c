@@ -1163,7 +1163,7 @@ WRITE8_HANDLER( lynx_memory_config_w )
 	memory_set_bank(4, (data & 8) ? 1 : 0);
 }
 
-static void lynx_reset(void)
+static void lynx_reset(running_machine *machine)
 {
 	int i;
 	lynx_memory_config_w(0, 0);
@@ -1210,6 +1210,6 @@ MACHINE_START( lynx )
 
 	memset(&suzy, 0, sizeof(suzy));
 
-	add_reset_callback(lynx_reset);
+	add_reset_callback(machine, lynx_reset);
 	return 0;
 }

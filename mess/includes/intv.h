@@ -15,8 +15,6 @@ extern UINT8 intv_gram[];
 extern UINT8 intv_gramdirtybytes[];
 extern UINT16 intv_ram16[];
 
-extern DRIVER_INIT( intv );
-
 DEVICE_INIT( intv_cart );
 DEVICE_LOAD( intv_cart );
 
@@ -39,7 +37,6 @@ READ8_HANDLER( intv_left_control_r );
 /* for the console + keyboard component... */
 extern int intvkbd_text_blanked;
 
-DRIVER_INIT( intvkbd );
 DEVICE_LOAD( intvkbd_cart );
 
 extern UINT16 *intvkbd_dualport_ram;

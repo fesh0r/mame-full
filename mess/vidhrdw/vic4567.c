@@ -743,7 +743,7 @@ INTERRUPT_GEN( vic3_raster_irq )
 		vic2.rasterline = 0;
 		if (vic3.palette_dirty) {
 			for (i=0; i<256; i++) {
-				palette_set_color(i,vic3.palette[i].red<<4,
+				palette_set_color(Machine, i,vic3.palette[i].red<<4,
 									 vic3.palette[i].green<<4,
 									 vic3.palette[i].blue<<4);
 			}

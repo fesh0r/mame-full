@@ -396,7 +396,7 @@ static UINT8 *sRAM_ptr_8;
 	initialization, cart loading, etc.
 */
 
-void init_ti99_4(void)
+DRIVER_INIT( ti99_4 )
 {
 	int i, j;
 
@@ -417,7 +417,7 @@ void init_ti99_4(void)
 		}
 }
 
-void init_ti99_4a(void)
+DRIVER_INIT( ti99_4a )
 {
 	ti99_model = model_99_4a;
 	has_evpc = FALSE;
@@ -427,7 +427,7 @@ void init_ti99_4a(void)
 	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
-void init_ti99_4ev(void)
+DRIVER_INIT( ti99_4ev )
 {
 	ti99_model = model_99_4a;
 	has_evpc = TRUE;
@@ -439,7 +439,7 @@ void init_ti99_4ev(void)
 	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
-void init_ti99_8(void)
+DRIVER_INIT( ti99_8 )
 {
 	ti99_model = model_99_8;
 	has_evpc = FALSE;
@@ -457,7 +457,7 @@ void init_ti99_8(void)
 	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
-void init_ti99_4p(void)
+DRIVER_INIT( ti99_4p )
 {
 	ti99_model = model_99_4p;
 	has_evpc = TRUE;
@@ -856,9 +856,9 @@ void machine_stop_ti99(void)
 /*
 	video initialization.
 */
-int video_start_ti99_4ev(void)
+VIDEO_START( ti99_4ev )
 {
-	return v9938_init(MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
+	return v9938_init(Machine, MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
 }
 
 /*

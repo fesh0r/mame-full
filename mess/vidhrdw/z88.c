@@ -35,7 +35,7 @@ static unsigned char z88_palette[Z88_NUM_COLOURS * 3] =
 /* Initialise the palette */
 PALETTE_INIT( z88 )
 {
-	palette_set_colors(0, z88_palette, sizeof(z88_palette) / 3);
+	palette_set_colors(machine, 0, z88_palette, sizeof(z88_palette) / 3);
 	memcpy(colortable, z88_colour_table, sizeof (z88_colour_table));
 }
 

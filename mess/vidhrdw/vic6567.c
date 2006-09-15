@@ -1344,7 +1344,7 @@ VIDEO_UPDATE( vic2 )
 
 static PALETTE_INIT( vic2 )
 {
-	palette_set_colors(0, vic2_palette, sizeof(vic2_palette) / 3);
+	palette_set_colors(machine, 0, vic2_palette, sizeof(vic2_palette) / 3);
 }
 
 MACHINE_DRIVER_START( vh_vic2 )

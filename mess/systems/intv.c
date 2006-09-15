@@ -59,8 +59,8 @@ static PALETTE_INIT( intv )
 	int i,j;
 
 	/* Two copies of the palette */
-	palette_set_colors(0, intv_palette, sizeof(intv_palette) / 3);
-	palette_set_colors(sizeof(intv_palette) / 3, intv_palette, sizeof(intv_palette) / 3);
+	palette_set_colors(machine, 0, intv_palette, sizeof(intv_palette) / 3);
+	palette_set_colors(machine, sizeof(intv_palette) / 3, intv_palette, sizeof(intv_palette) / 3);
 
     /* Two copies of the color table */
     for(i=0;i<16;i++)
@@ -497,6 +497,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY      FULLNAME */
-CONS( 1979, intv,		0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision", GAME_NOT_WORKING )
-CONS( 1981, intvsrs,	0,		0,		intv,     intv, 	intv,		intv,		"Mattel",    "Intellivision (Sears)", GAME_NOT_WORKING )
-COMP( 1981, intvkbd,	0,		0,		intvkbd,  intvkbd, 	intvkbd,	intvkbd,	"Mattel",    "Intellivision Keyboard Component (Unreleased)", GAME_NOT_WORKING)
+CONS( 1979, intv,		0,		0,		intv,     intv, 	NULL,		intv,		"Mattel",    "Intellivision", GAME_NOT_WORKING )
+CONS( 1981, intvsrs,	0,		0,		intv,     intv, 	NULL,		intv,		"Mattel",    "Intellivision (Sears)", GAME_NOT_WORKING )
+COMP( 1981, intvkbd,	0,		0,		intvkbd,  intvkbd, 	NULL,		intvkbd,	"Mattel",    "Intellivision Keyboard Component (Unreleased)", GAME_NOT_WORKING)

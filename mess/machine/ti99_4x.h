@@ -146,11 +146,11 @@ enum
 
 /* prototypes for machine code */
 
-void init_ti99_4(void);
-void init_ti99_4a(void);
-void init_ti99_4ev(void);
-void init_ti99_8(void);
-void init_ti99_4p(void);
+DRIVER_INIT( ti99_4 );
+DRIVER_INIT( ti99_4a );
+DRIVER_INIT( ti99_4ev );
+DRIVER_INIT( ti99_8 );
+DRIVER_INIT( ti99_4p );
 
 MACHINE_RESET( ti99 );
 
@@ -164,9 +164,9 @@ DEVICE_INIT( ti99_hd );
 DEVICE_LOAD( ti99_hd );
 DEVICE_UNLOAD( ti99_hd );
 
-int video_start_ti99_4(void);
-int video_start_ti99_4a(void);
-int video_start_ti99_4ev(void);
+VIDEO_START( ti99_4 );
+VIDEO_START( ti99_4a );
+VIDEO_START( ti99_4ev );
 void ti99_vblank_interrupt(void);
 void ti99_4ev_hblank_interrupt(void);
 

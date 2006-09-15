@@ -53,7 +53,7 @@ static unsigned short dai_4_colours_palette[4];
 
 PALETTE_INIT( dai )
 {
-	palette_set_colors(0, dai_palette, sizeof(dai_palette) / 3);
+	palette_set_colors(machine, 0, dai_palette, sizeof(dai_palette) / 3);
 	memcpy(colortable, dai_colortable, sizeof (dai_colortable));
 }
 

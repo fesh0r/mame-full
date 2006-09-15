@@ -501,7 +501,7 @@ BOOL OptionsInit()
 #endif /* MAME_DEBUG */
 
 	num_games = GetNumGames();
-	code_init();
+	code_init(NULL);
 	// Load all default settings
 	LoadDefaultOptions(&settings, regSettings);
 	LoadDefaultOptions(&settings, global_game_options);

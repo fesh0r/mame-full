@@ -1399,14 +1399,13 @@ static unsigned char COMPIS_palette[16*3] =
 
 static PALETTE_INIT( compis_gdc )
 {
-	palette_set_colors(0, COMPIS_palette, COMPIS_PALETTE_SIZE);
+	palette_set_colors(machine, 0, COMPIS_palette, COMPIS_PALETTE_SIZE);
 }
 
 static compis_gdc_interface sIntf;
 
 static int compis_gdc_start (const compis_gdc_interface *intf)
 {
-	int res;
 	/* Only 32KB or 128KB of VRAM */
 	switch(intf->vramsize)
 	{
@@ -1433,8 +1432,7 @@ static int compis_gdc_start (const compis_gdc_interface *intf)
 	}
 	gdc_fifo_reset(&gdc);
 	videoram_size = gdc_mess.vramsize;
-	res = video_start_generic_bitmapped();
-	return res;
+	return video_start_generic_bitmapped(Machine);
 }
 
 VIDEO_UPDATE(compis_gdc)

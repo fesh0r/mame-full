@@ -1932,7 +1932,7 @@ MACHINE_RESET( kc85_4 )
 
 MACHINE_RESET( kc85_4d )
 {
-	machine_reset_kc85_4();
+	machine_reset_kc85_4(machine);
 	kc_disc_interface_init();
 }
 

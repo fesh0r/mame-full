@@ -109,7 +109,7 @@ static void dai_sh_update(void *param,stream_sample_t **inputs, stream_sample_t 
 
 		/* noise channel */
 
-		*sample_left += mame_rand()&0x01 ? dai_noise_volume_table[dai_noise_volume] : -dai_noise_volume_table[dai_noise_volume];
+		*sample_left += mame_rand(Machine)&0x01 ? dai_noise_volume_table[dai_noise_volume] : -dai_noise_volume_table[dai_noise_volume];
 
 		sample_left++;
 		sample_right++;

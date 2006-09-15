@@ -538,7 +538,7 @@ static MACHINE_RESET( spectrum_128 )
 	spectrum_128_port_7ffd_data = 0;
 	spectrum_128_update_memory();
 
-	machine_reset_spectrum();
+	machine_reset_spectrum(machine);
 }
 
 /****************************************************************************************************/
@@ -847,7 +847,7 @@ static MACHINE_RESET( spectrum_plus3 )
 	spectrum_plus3_port_1ffd_data = 0;
 	spectrum_plus3_update_memory();
 
-	machine_reset_spectrum();
+	machine_reset_spectrum(machine);
 }
 
 
@@ -1314,7 +1314,7 @@ static MACHINE_RESET( ts2068 )
 	ts2068_port_f4_data = 0;
 	ts2068_update_memory();
 
-	machine_reset_spectrum();
+	machine_reset_spectrum(machine);
 }
 
 
@@ -1373,7 +1373,7 @@ static MACHINE_RESET( tc2048 )
 	memory_set_bankptr(2, mess_ram);
 	ts2068_port_ff_data = 0;
 
-	machine_reset_spectrum();
+	machine_reset_spectrum(machine);
 }
 
 
@@ -1944,7 +1944,7 @@ static unsigned short spectrum_colortable[128*2] = {
 /* Initialise the palette */
 static PALETTE_INIT( spectrum )
 {
-	palette_set_colors(0, spectrum_palette, sizeof(spectrum_palette) / 3);
+	palette_set_colors(machine, 0, spectrum_palette, sizeof(spectrum_palette) / 3);
 	memcpy(colortable, spectrum_colortable, sizeof(spectrum_colortable));
 }
 

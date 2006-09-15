@@ -543,7 +543,7 @@ static PALETTE_INIT( pet64 )
 {
 	int i;
 	for (i=0; i<16; i++)
-		palette_set_color(i, 0, vic2_palette[i*3+1], 0);
+		palette_set_color(machine, i, 0, vic2_palette[i*3+1], 0);
 }
 
 ROM_START (ultimax)

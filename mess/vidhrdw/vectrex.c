@@ -188,7 +188,7 @@ VIDEO_UPDATE( vectrex )
 		i = (i+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
 	}
 
-	video_update_vector(screen, bitmap, cliprect);
+	video_update_vector(machine, screen, bitmap, cliprect);
 	vector_clear_list();
 	return 0;
 }
@@ -277,12 +277,9 @@ VIDEO_START( vectrex )
 	timer_adjust(imager_timer, 1.0/imager_freq, 2, 1.0/imager_freq);
 
 
-	if (video_start_vector())
-		return 1;
-
 	lp_t = mame_timer_alloc(lightpen_trigger);
 
-	return 0;
+	return video_start_vector(machine);
 }
 
 
@@ -510,9 +507,6 @@ WRITE8_HANDLER( raaspec_led_w )
 
 VIDEO_START( raaspec )
 {
-	if (video_start_vector())
-		return 1;
-
 	x_center=((Machine->screen[0].visarea.max_x
 		  -Machine->screen[0].visarea.min_x)/2) << VEC_SHIFT;
 	y_center=((Machine->screen[0].visarea.max_y
@@ -525,5 +519,5 @@ VIDEO_START( raaspec )
 	z_factor = 2;
 
 	raaspec_led_w (0, 0xff);
-	return 0;
+	return video_start_vector(machine);
 }

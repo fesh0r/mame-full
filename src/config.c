@@ -68,12 +68,12 @@ static int config_save_xml(mame_file *file, int type);
  *
  *************************************/
 
-void config_init(void)
+void config_init(running_machine *machine)
 {
 	typelist = NULL;
 
 #ifdef MESS
-	mess_config_init();
+	mess_config_init(machine);
 #endif
 }
 

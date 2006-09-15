@@ -30,7 +30,7 @@ static UINT32 in_1_shift;
 
 /* local prototypes */
 static void init_nes_core(void);
-static void nes_machine_stop(void);
+static void nes_machine_stop(running_machine *machine);
 
 static mess_image *cartslot_image(void)
 {
@@ -135,7 +135,7 @@ int nes_ppu_vidaccess( int num, int address, int data )
 	return data;
 }
 
-static void nes_machine_reset(void)
+static void nes_machine_reset(running_machine *machine)
 {
 	/* Some carts have extra RAM and require it on at startup, e.g. Metroid */
 	nes.mid_ram_enable = 1;
@@ -151,8 +151,8 @@ static void nes_machine_reset(void)
 MACHINE_START( nes )
 {
 	init_nes_core();
-	add_reset_callback(nes_machine_reset);
-	add_exit_callback(nes_machine_stop);
+	add_reset_callback(machine, nes_machine_reset);
+	add_exit_callback(machine, nes_machine_stop);
 
 	if (!image_exists(image_from_devtype_and_index(IO_CARTSLOT, 0)))
 	{
@@ -165,7 +165,7 @@ MACHINE_START( nes )
 	return 0;
 }
 
-static void nes_machine_stop(void)
+static void nes_machine_stop(running_machine *machine)
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)
@@ -177,12 +177,18 @@ static void nes_machine_stop(void)
 static int zapper_hit_pixel(const UINT32 *input)
 {
 	UINT16 pix = 0;
+	rgb_t col;
 	UINT8 r, g, b;
 	extern mame_bitmap *nes_zapper_hack;
 
 	if (nes_zapper_hack)
 		pix = read_pixel(nes_zapper_hack, input[1], input[2]);
-	palette_get_color(pix, &r, &g, &b);
+
+	col = palette_get_color(Machine, pix);
+	r = (UINT8) (col >> 16);
+	g = (UINT8) (col >> 8);
+	b = (UINT8) (col >> 0);
+
 	return (((UINT16) r) + ((UINT16) g) + ((UINT16) b)) >= 240*3;
 }
 
@@ -434,13 +440,13 @@ DEVICE_LOAD(nes_cart)
 	if (nes.four_screen_vram) logerror("-- 4-screen VRAM\n");
 
 	/* Free the regions that were allocated by the ROM loader */
-	free_memory_region (REGION_CPU1);
-	free_memory_region (REGION_GFX1);
+	free_memory_region (Machine, REGION_CPU1);
+	free_memory_region (Machine, REGION_GFX1);
 
 	/* Allocate them again with the proper size */
-	if (new_memory_region(REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000,0))
+	if (new_memory_region(Machine, REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000,0))
 		goto outofmemory;
-	if (nes.chr_chunks && new_memory_region(REGION_GFX1, nes.chr_chunks * 0x2000,0))
+	if (nes.chr_chunks && new_memory_region(Machine, REGION_GFX1, nes.chr_chunks * 0x2000,0))
 		goto outofmemory;
 
 	nes.rom = memory_region(REGION_CPU1);

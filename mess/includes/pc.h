@@ -1,14 +1,14 @@
 #include "driver.h"
 
-void init_pccga(void);
-void init_pcmda(void);
-void init_europc(void);
-void init_bondwell(void);
-void init_pc200(void);
-void init_pc1512(void);
-void init_pc1640(void);
-void init_pc_vga(void);
-void init_t1000hx(void);
+DRIVER_INIT( pccga );
+DRIVER_INIT( pcmda );
+DRIVER_INIT( europc );
+DRIVER_INIT( bondwell );
+DRIVER_INIT( pc200 );
+DRIVER_INIT( pc1512 );
+DRIVER_INIT( pc1640 );
+DRIVER_INIT( pc_vga );
+DRIVER_INIT( t1000hx );
 
 MACHINE_RESET( pc_mda );
 MACHINE_RESET( pc_cga );

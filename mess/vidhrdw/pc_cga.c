@@ -362,7 +362,7 @@ static void pc_cga_check_palette(void)
 	if (p != cga.palette)
 	{
 		for(i = 0; i < (sizeof(cga_palette) / (3 * CGA_PALETTE_SETS)); i++)
-			palette_set_color(i, cga_palette[i + p][0], 
+			palette_set_color(Machine, i, cga_palette[i + p][0], 
 					     cga_palette[i + p][1],
 					     cga_palette[i + p][2]);
 		cga.palette = p;
