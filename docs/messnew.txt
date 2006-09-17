@@ -17,6 +17,8 @@ System Driver Changes:
 - [THOMSON] Improved video emulation, floppy disk support, preliminary network
   extension support, and LEDs.  [Antoine Mine]
 
+- [THOMSON] Added CRCs to the BIOS declarations.  (bug #942)  [Antoine Mine]
+
 - [VIC20] Fixed bug that caused the driver to fail when sound was disabled.
   (bug #930) [Nate Woods]
 
