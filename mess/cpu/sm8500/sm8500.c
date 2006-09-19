@@ -102,6 +102,7 @@ static void sm8500_init(int index, int clock, const void *config, int (*irqcallb
 		regs.config.handle_dma = NULL;
 		regs.config.handle_timers = NULL;
 	}
+	regs.register_base = regs.internal_ram;
 }
 
 static void sm8500_reset( void )
