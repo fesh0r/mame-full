@@ -38,7 +38,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- Fixed the listfilters command.  (bug #945) [Tim Lindner]
 
 
 

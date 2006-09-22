@@ -739,7 +739,7 @@ static int cmd_listfilters(const struct command *c, int argc, char *argv[])
 	{
 		fprintf(stdout, "  %-11s%s\n",
 			filter_get_info_string(filters[i], FILTINFO_STR_NAME),
-			filter_get_info_string(filters[i], FILTINFO_STR_NAME));
+			filter_get_info_string(filters[i], FILTINFO_STR_HUMANNAME));
 	}
 
 	return 0;
