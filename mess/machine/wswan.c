@@ -23,8 +23,8 @@ TODO:
 
 enum enum_system { WSWAN=0, WSC };
 enum enum_sram { SRAM_NONE=0, SRAM_64K, SRAM_256K, SRAM_512K, SRAM_1M, SRAM_2M, EEPROM_1K, EEPROM_16K, EEPROM_8K, SRAM_UNKNOWN };
-const char* wswan_sram_str[] = { "none", "64K SRAM", "256K SRAM", "512K SRAM", "1M SRAM", "2M SRAM", "1K EEPROM", "16K EEPROM", "8K EEPROM", "Unknown" };
-const int wswan_sram_size[] = { 0, 64*1024, 256*1024, 512*1024, 1024*1024, 2*1024*1024,  1024, 16*1024, 8*1024, 0 };
+const char* wswan_sram_str[] = { "none", "64Kbit SRAM", "256Kbit SRAM", "512Kbit SRAM", "1Mbit SRAM", "2Mbit SRAM", "1Kbit EEPROM", "16Kbit EEPROM", "8Kbit EEPROM", "Unknown" };
+const int wswan_sram_size[] = { 0, 64*1024/8, 256*1024/8, 512*1024/8, 1024*1024/8, 2*1024*1024/8,  1024/8, 16*1024/8, 8*1024/8, 0 };
 
 struct EEPROM {
 	UINT8	mode;		/* eeprom mode */
@@ -34,6 +34,7 @@ struct EEPROM {
 	UINT8	write_enabled;	/* write enabled yes/no */
 	int	size;		/* size of eeprom/sram area */
 	UINT8	*data;		/* pointer to start of sram/eeprom data */
+	UINT8	*page;		/* pointer to current sram/eeprom page */
 };
 
 struct RTC {
@@ -96,6 +97,7 @@ static UINT8 ws_portram_init[256] =
 
 	f000:ffc0
 	FC             cld
+        BC 00 20       mov sp,2000h
 	68 00 00       push 0000h
 	07             pop es
 	68 00 F0       push F000h
@@ -104,7 +106,6 @@ static UINT8 ws_portram_init[256] =
 	BE E0 FF       mov si,FFE0h
 	B9 10 00       mov cx,0010h
 	F3 A4          rep movsb
-	BC 00 20       mov sp,2000h
 	B0 2F          mov al,2Fh
 	E6 C0          out al,C0h
 	EA 00 04 00 00 jmp 0000:0400
@@ -117,8 +118,8 @@ static UINT8 ws_portram_init[256] =
 
 */
 static UINT8 ws_fake_bios_code[] = {
-	0xfc, 0x68, 0x00, 0x00, 0x07, 0x68, 0x00, 0xf0, 0x1f, 0xbf, 0x00, 0x04, 0xbe, 0xe0, 0xff, 0xb9,
-	0x10, 0x00, 0xf3, 0xa4, 0xbc, 0x00, 0x20, 0xb0, 0x2f, 0xe6, 0xc0, 0xea, 0x00, 0x04, 0x00, 0x00,
+	0xfc, 0xbc, 0x00, 0x20, 0x68, 0x00, 0x00, 0x07, 0x68, 0x00, 0xf0, 0x1f, 0xbf, 0x00, 0x04, 0xbe,
+	0xe0, 0xff, 0xb9, 0x10, 0x00, 0xf3, 0xa4, 0xb0, 0x2f, 0xe6, 0xc0, 0xea, 0x00, 0x04, 0x00, 0x00,
 	0xe4, 0xa0, 0x0c, 0x01, 0xe6, 0xa0, 0xea, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0xea, 0xc0, 0xff, 0x00, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
@@ -240,7 +241,6 @@ MACHINE_RESET( wswan )
 	memset( &sound_dma, 0, sizeof( sound_dma ) );
 
 	/* Switch in the banks */
-	memory_set_bankptr( 1, eeprom.data );
 	memory_set_bankptr( 2, ROMMap[(ROMBanks - 1) & (ROMBanks - 1)] );
 	memory_set_bankptr( 3, ROMMap[(ROMBanks - 1) & (ROMBanks - 1)] );
 	memory_set_bankptr( 4, ROMMap[(ROMBanks - 12) & (ROMBanks - 1)] );
@@ -267,7 +267,7 @@ MACHINE_RESET( wswan )
 
 NVRAM_HANDLER( wswan ) {
 	if ( read_or_write ) {
-		/* Load the EEPROM data */
+		/* Save the EEPROM data */
 		mame_fwrite( file, internal_eeprom, INTERNAL_EEPROM_SIZE );
 	} else {
 		/* Load the EEPROM data */
@@ -278,6 +278,22 @@ NVRAM_HANDLER( wswan ) {
 			memset( internal_eeprom, 0xFF, sizeof( internal_eeprom ) );
 		}
 	}
+}
+
+READ8_HANDLER( wswan_sram_r )
+{
+	if ( eeprom.data == NULL ) {
+		return 0xFF;
+	}
+	return eeprom.page[ offset & ( eeprom.size - 1 ) ];
+}
+
+WRITE8_HANDLER( wswan_sram_w )
+{
+	if ( eeprom.data == NULL ) {
+		return;
+	}
+	eeprom.page[ offset & ( eeprom.size - 1 ) ] = data;
 }
 
 READ8_HANDLER( wswan_port_r )
@@ -1009,7 +1025,7 @@ WRITE8_HANDLER( wswan_port_w )
 				   Bit 0-7 - SRAM bank to select
 				*/
 			if ( eeprom.mode == SRAM_64K || eeprom.mode == SRAM_256K || eeprom.mode == SRAM_512K || eeprom.mode == SRAM_1M || eeprom.mode == SRAM_2M ) {
-				memory_set_bankptr( 1, &eeprom.data[ ( data * 64 * 1024 ) & ( eeprom.size - 1 ) ] );
+				eeprom.page = &eeprom.data[ ( data * 64 * 1024 ) & ( eeprom.size - 1 ) ];
 			}
 			break;
 		case 0xc2:	/* ROM bank select for segment 2 (0x20000 - 0x2ffff)
@@ -1247,6 +1263,7 @@ DEVICE_INIT(wswan_cart)
 	/* Initialize EEPROM structure */
 	memset( &eeprom, 0, sizeof( eeprom ) );
 	eeprom.data = NULL;
+	eeprom.page = NULL;
 
 	/* Initialize RTC structure */
 	rtc.present = 0;
@@ -1321,6 +1338,7 @@ DEVICE_LOAD(wswan_cart)
 	if ( eeprom.size != 0 ) {
 		eeprom.data = auto_malloc( eeprom.size );
 		image_battery_load( image, eeprom.data, eeprom.size );
+		eeprom.page = eeprom.data;
 	}
 
 	logerror( "Image Name: %s\n", image_longname( image ) );
