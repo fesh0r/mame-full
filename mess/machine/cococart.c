@@ -389,7 +389,9 @@ WRITE8_HANDLER(dragon_floppy_w)
 		wd179x_command_w(0, data);
 
 		/* disk head is encoded in the command byte */
-		wd179x_set_side((data & 0x02) ? 1 : 0);
+		/* Only for type 3 & 4 commands */
+		if (data & 0x80)
+			wd179x_set_side((data & 0x02) ? 1 : 0);
 		break;
 	case 1:
 		wd179x_track_w(0, data);

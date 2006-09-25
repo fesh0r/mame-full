@@ -47,6 +47,7 @@ extern UINT8 coco3_gimereg[16];
 
 MACHINE_START( dragon32 );
 MACHINE_START( dragon64 );
+MACHINE_START( tanodr64 );
 MACHINE_START( dgnalpha );
 MACHINE_START( coco );
 MACHINE_START( coco2 );

@@ -565,6 +565,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( dragon64 )	/* Dragon 64 										*/
 	DRIVER( dgnalpha )	/* Dragon Alpha 									*/
 	DRIVER( dgnbeta )	/* Dragon Beta 									*/
+	DRIVER( tanodr64 )	/* Tano Dragon 64 (NTSC) 								*/
 	DRIVER( cp400 ) 	/* Prologica CP400									*/
 	DRIVER( mc10 )		/* MC-10											*/
 

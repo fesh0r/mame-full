@@ -2369,6 +2369,17 @@ MACHINE_START( dragon64 )
 	return 0;
 }
 
+MACHINE_START( tanodr64 )
+{
+	memory_set_bankptr(1, &mess_ram[0]);
+	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+	acia_6551_init();
+	
+	coco_or_dragon = AM_DRAGON;
+
+	return 0;
+}
+
 MACHINE_START( dgnalpha )
 {
 	memory_set_bankptr(1, &mess_ram[0]);
