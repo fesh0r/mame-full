@@ -111,6 +111,7 @@ extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);
 
+extern MACHINE_START( gb );
 extern MACHINE_RESET( gb );
 
 extern MACHINE_RESET( gbpocket );

@@ -167,6 +167,12 @@ static void gb_init(void)
 	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
 }
 
+MACHINE_START( gb )
+{
+	add_exit_callback(machine, gb_machine_stop);
+	return 0;
+}
+
 MACHINE_RESET( gb )
 {
         gb_init();
@@ -290,16 +296,10 @@ MACHINE_RESET( gbc )
 
 	/* set the scanline refresh function */
 	refresh_scanline = gbc_refresh_scanline;
-
-	/* NPW 25-Jun-2006 - how will battery backed RAM be saved? */
-	if (0)
-		add_exit_callback(Machine, gb_machine_stop);
 }
 
 static void gb_machine_stop(running_machine *machine)
 {
-/*	int I; */
-
 	/* Don't save if there was no battery */
 	if( !(CartType & BATTERY) )
 		return;
@@ -308,17 +308,6 @@ static void gb_machine_stop(running_machine *machine)
 	   built in macros is because they force the filename to be the name of
 	   the machine.  We need to have a separate name for each game. */
 	image_battery_save(image_from_devtype_and_index(IO_CARTSLOT, 0), gb_cart_ram, RAMBanks * 0x2000 );
-
-	/* FIXME: We should release memory here, but this function is called upon reset
-	   and we don't reload the rom, so we're going to have to leak for now. */
-/*	for( I = 0; I < RAMBanks; I++ )
-	{
-		free( RAMMap[I] );
-	}
-	for( I = 0; I < ROMBanks; I++ )
-	{
-		free( ROMMap[I] );
-	}*/
 }
 
 WRITE8_HANDLER( gb_rom_bank_select_mbc1 )
