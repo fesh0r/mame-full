@@ -6,6 +6,7 @@
  * 06/17/2000 by Mike Haaland <mhaaland@hypertech.com>
  */
 
+#include <stdio.h>
 #include "dirent.h"
 
 #ifdef WIN32

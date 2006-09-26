@@ -427,7 +427,7 @@ static void thom_close_sap(imgtool_image *img)
 static UINT8* thom_get_sector(thom_floppy* f, unsigned head, 
 			      unsigned track, unsigned sector)
 {
-  assert( heads < f->heads);
+  assert( head < f->heads);
   assert( track < f->tracks );
   assert( sector > 0 && sector <= 16 );
   return & f->data[ ( (head * f->tracks + track) * 16 + (sector-1) ) * 

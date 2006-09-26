@@ -345,8 +345,8 @@ static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *p
 	header[0x0001] = (UINT8) (total_sectors >>  8);
 	header[0x0002] = (UINT8) (total_sectors >>  0);
 	header[0x0003] = (UINT8) sectors;
-	header[0x0004] = (UINT8) ((total_sectors + 7) / 8) >> 8;
-	header[0x0005] = (UINT8) ((total_sectors + 7) / 8) >> 0;
+	header[0x0004] = (UINT8) (((total_sectors + 7) / 8) >> 8);
+	header[0x0005] = (UINT8) (((total_sectors + 7) / 8) >> 0);
 	header[0x0006] = 0x00;
 	header[0x0007] = 0x01;
 	header[0x0008] = 0x00;
@@ -358,8 +358,8 @@ static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *p
 	header[0x000e] = (UINT8) rand();
 	header[0x000f] = (UINT8) rand();
 	header[0x0010] = (heads == 2) ? 3 : 2;
-	header[0x0011] = (UINT8) sectors >> 8;
-	header[0x0012] = (UINT8) sectors >> 0;
+	header[0x0011] = (UINT8) (sectors >> 8);
+	header[0x0012] = (UINT8) (sectors >> 0);
 	header[0x001A] = (UINT8) ltime->tm_year;
 	header[0x001B] = (UINT8) ltime->tm_mon + 1;
 	header[0x001C] = (UINT8) ltime->tm_mday;

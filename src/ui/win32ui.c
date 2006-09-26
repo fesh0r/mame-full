@@ -5768,7 +5768,7 @@ static void MamePlayRecordGame()
 	}
 }
 
-static void MamePlayGame()
+static void MamePlayGame(void)
 {
 	int nGame;
 
