@@ -55,6 +55,10 @@ const filter_getinfoproc filters[] =
 	filter_macbinary_getinfo,
 	filter_vzsnapshot_getinfo,
 	filter_vzbas_getinfo,
+	filter_thombas5_getinfo,
+	filter_thombas7_getinfo,
+	filter_thombas128_getinfo,
+	filter_thomcrypt_getinfo,
 	NULL
 };
 

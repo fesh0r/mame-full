@@ -104,5 +104,8 @@ MODULE(pc_floppy)
 MODULE(pc_chd)
 MODULE(prodos_525)
 MODULE(prodos_35)
+MODULE(thom_fd_basic)
+MODULE(thom_qd_basic)
+MODULE(thom_sap_basic)
 
 #endif /* MODULES_RECURSIVE */

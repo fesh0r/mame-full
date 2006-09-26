@@ -47,6 +47,8 @@ Imgtool Changes:
 ----------------
 - Fixed the listfilters command.  (bug #945) [Tim Lindner]
 
+- Added Thomson support.  [Antoine Mine]
+
 
 
 Source Changes:
