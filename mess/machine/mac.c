@@ -74,7 +74,7 @@ static WRITE8_HANDLER(mac_via_out_a);
 static WRITE8_HANDLER(mac_via_out_b);
 static WRITE8_HANDLER(mac_via_out_cb2);
 static void mac_via_irq(int state);
-static unsigned mac_dasm_override(int cpunum, char *buffer, unsigned pc);
+static offs_t mac_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
 static struct via6522_interface mac_via6522_intf =
 {
@@ -1355,7 +1355,7 @@ static void mac_driver_init(mac_model_t model)
 
 	inquiry_timeout = mame_timer_alloc(inquiry_timeout_func);
 
-	cpuintrf_set_dasm_override(mac_dasm_override);
+	cpuintrf_set_dasm_override(0, mac_dasm_override);
 
 	/* save state stuff */
 	state_save_register_global(mac_overlay);
@@ -2282,13 +2282,13 @@ static const char *lookup_trap(UINT16 opcode)
 
 
 
-static unsigned mac_dasm_override(int cpunum, char *buffer, unsigned pc)
+static offs_t mac_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	UINT16 opcode;
 	unsigned result = 0;
 	const char *trap;
 
-	opcode = cpu_readop16(pc);
+	opcode = *((UINT16 *) oprom);
 	if ((opcode & 0xF000) == 0xA000)
 	{
 		trap = lookup_trap(opcode);

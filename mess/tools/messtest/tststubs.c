@@ -175,6 +175,10 @@ int win_mess_config_init(void)
 	return 0;
 }
 
+void osd_break_into_debugger(const char *message)
+{
+}
+
 //============================================================
 //	osd_alloc_executable
 //============================================================

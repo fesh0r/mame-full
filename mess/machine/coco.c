@@ -168,7 +168,7 @@ static int count_bank(void);
 static int is_Orch90(void);
 
 #ifdef MAME_DEBUG
-static unsigned coco_dasm_override(int cpunum, char *buffer, unsigned pc);
+static offs_t coco_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif /* MAME_DEBUG */
 
 
@@ -2344,7 +2344,7 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 		input_port_set_changed_callback(portnum, ~0, coco_poll_keyboard, NULL);
 
 #ifdef MAME_DEBUG
-	cpuintrf_set_dasm_override(coco_dasm_override);
+	cpuintrf_set_dasm_override(0, coco_dasm_override);
 #endif
 
 	add_exit_callback(machine, coco_machine_stop);
@@ -2626,14 +2626,14 @@ static const char *os9syscalls[] =
 };
 
 
-static unsigned coco_dasm_override(int cpunum, char *buffer, unsigned pc)
+static offs_t coco_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	unsigned call;
 	unsigned result = 0;
 
-	if ((cpu_readop(pc + 0) == 0x10) && (cpu_readop(pc + 1) == 0x3F))
+	if ((oprom[0] == 0x10) && (oprom[1] == 0x3F))
 	{
-		call = cpu_readop(pc + 2);
+		call = oprom[2];
 		if ((call >= 0) && (call < sizeof(os9syscalls) / sizeof(os9syscalls[0])) && os9syscalls[call])
 		{
 			sprintf(buffer, "OS9   %s", os9syscalls[call]);
