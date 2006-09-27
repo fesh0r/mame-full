@@ -397,8 +397,6 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 			if (i >= size)
 			{
 				icon_index = append_associated_icon(window, extension);
-				if (icon_index < 0)
-					return IMGTOOLERR_UNEXPECTED;
 				if (pile_puts(&info->iconlist_extensions, extension))
 					return IMGTOOLERR_OUTOFMEMORY;
 				if (pile_putc(&info->iconlist_extensions, '\0'))
@@ -411,10 +409,17 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 
 	memset(&lvi, 0, sizeof(lvi));
 	lvi.iItem = ListView_GetItemCount(info->listview);
-	lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
+	lvi.mask = LVIF_TEXT | LVIF_PARAM;
 	lvi.pszText = U2T((char *) entry->filename);
-	lvi.iImage = icon_index;
 	lvi.lParam = index;
+
+	// if we have an icon, use it
+	if (icon_index >= 0)
+	{
+		lvi.mask |= LVIF_IMAGE;
+		lvi.iImage = icon_index;
+	}
+
 	new_index = ListView_InsertItem(info->listview, &lvi);
 
 	if (entry->directory)

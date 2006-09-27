@@ -49,6 +49,9 @@ Imgtool Changes:
 
 - Added Thomson support.  [Antoine Mine]
 
+- [Windows] Modified wimgtool so that it will function properly if it cannot
+  locate an icon for a given file extension.  [Nate Woods]
+
 
 
 Source Changes:
