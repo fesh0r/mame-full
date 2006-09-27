@@ -391,8 +391,9 @@ static const REG_OPTION regGameOpts[] =
 	{ "bios",                   RO_STRING,  offsetof(options_type, bios),                            "default" },
 #ifdef MESS
 	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "0" },
-#endif
+#else
 	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "1" },
+#endif
 
 #ifdef MESS
 	/* mess options */
