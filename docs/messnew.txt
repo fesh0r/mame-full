@@ -9,6 +9,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [C64] Fixed issues found by the TRAP4, TRAP5, and TRAP6 tests of the c64
+  test suite.  (bug #952) [Wilbert Pol]
+
 - [CBM] Fixed SID code to remove potential divide by zero issues.  (bug #936)
   [Nate Woods]
 
