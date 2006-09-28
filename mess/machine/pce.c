@@ -30,8 +30,7 @@ DEVICE_LOAD(pce_cart)
 	logerror("*** DEVICE_LOAD(pce_cart) : %s\n", image_filename(image));
 
 	/* open file to get size */
-	if( new_memory_region(Machine, REGION_CPU1,PCE_ROM_MAXSIZE,0) )
-		return 1;
+	new_memory_region(Machine, REGION_CPU1,PCE_ROM_MAXSIZE,0);
 	ROM = memory_region(REGION_CPU1);
 
 	size = image_length( image );

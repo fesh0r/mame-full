@@ -366,6 +366,7 @@ DEVICE_LOAD(nes_cart)
 	int i;
 
 	/* Verify the file is in iNES format */
+	memset(magic, '\0', sizeof(magic));
 	mame_fread (file, magic, 4);
 
 	if ((magic[0] != 'N') ||
@@ -444,10 +445,9 @@ DEVICE_LOAD(nes_cart)
 	free_memory_region (Machine, REGION_GFX1);
 
 	/* Allocate them again with the proper size */
-	if (new_memory_region(Machine, REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000,0))
-		goto outofmemory;
-	if (nes.chr_chunks && new_memory_region(Machine, REGION_GFX1, nes.chr_chunks * 0x2000,0))
-		goto outofmemory;
+	new_memory_region(Machine, REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000,0);
+	if (nes.chr_chunks)
+		new_memory_region(Machine, REGION_GFX1, nes.chr_chunks * 0x2000,0);
 
 	nes.rom = memory_region(REGION_CPU1);
 	nes.vrom = memory_region(REGION_GFX1);
@@ -512,10 +512,6 @@ DEVICE_LOAD(nes_cart)
 		image_battery_load(image, battery_data, BATTERY_SIZE);
 
 	return INIT_PASS;
-
-outofmemory:
-	logerror("Memory allocation failed reading roms!\n");
-	return INIT_FAIL;
 
 bad:
 	logerror("BAD section hit during LOAD ROM.\n");

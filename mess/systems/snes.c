@@ -309,11 +309,7 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 		"UNKNOWN"
 	};
 
-	if( new_memory_region(Machine, REGION_CPU1, 0x1000000,0) )
-	{
-		logerror("Memory allocation failed reading rom!\n");
-		return INIT_FAIL;
-	}
+	new_memory_region(Machine, REGION_CPU1, 0x1000000,0);
 
 	snes_ram = memory_region( REGION_CPU1 );
 	memset( snes_ram, 0, 0x1000000 );
