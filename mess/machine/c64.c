@@ -61,12 +61,14 @@ UINT8 *c64_kernal;
 UINT8 *c64_chargen;
 UINT8 *c64_roml=0;
 UINT8 *c64_romh=0;
+UINT8 *c64_io_mirror = NULL;
 
 static UINT8 *roml=0, *romh=0;
 static int ultimax = 0;
 int c64_tape_on = 1;
 static int c64_cia1_on = 1;
 static UINT8 cartridge = 0;
+static int c64_io_enabled = 0;
 static enum
 {
 	CartridgeAuto = 0, CartridgeUltimax, CartridgeC64,
@@ -467,6 +469,7 @@ static void c64_supergames_w(int offset, int value)
 
 WRITE8_HANDLER( c64_write_io )
 {
+	c64_io_mirror[ offset ] = data;
 	if (offset < 0x400) {
 		vic2_port_w (offset & 0x3ff, data);
 	} else if (offset < 0x800) {
@@ -626,11 +629,13 @@ static void c64_bankswitch (int reset)
 	if ((!c64_game && c64_exrom)
 		|| (charen && (loram || hiram)))
 	{
+		c64_io_enabled = 1;
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, c64_read_io);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, c64_write_io);
 	}
 	else
 	{
+		c64_io_enabled = 0;
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_BANK5);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_BANK6);
 		memory_set_bankptr (6, c64_memory + 0xd000);
@@ -902,8 +907,23 @@ void c64_common_init_machine (void)
 	vicirq = 0;
 }
 
+OPBASE_HANDLER( c64_opbase ) {
+	if ( ( ( address & 0xf000 ) == 0xd000 ) && c64_io_enabled ) {
+		opcode_mask = 0x0fff;
+		opcode_arg_base = c64_io_mirror;
+		opcode_base = c64_io_mirror;
+		opcode_memory_min = 0xd000;
+		opcode_memory_max = 0x0fff;
+		return -1;
+	}
+	return address;
+}
+
 MACHINE_START( c64 )
 {
+	if ( ! c64_io_mirror ) {
+		c64_io_mirror = auto_malloc( 0x1000 );
+	}
 	c64_common_init_machine ();
 
 	c64_rom_recognition ();
@@ -913,6 +933,7 @@ MACHINE_START( c64 )
 		c128_bankswitch_64 (1);
 	if (!ultimax)
 		c64_bankswitch (1);
+	memory_set_opbase_handler( 0, c64_opbase );
 	return 0;
 }
 
