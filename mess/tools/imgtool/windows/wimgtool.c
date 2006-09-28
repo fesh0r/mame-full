@@ -436,21 +436,29 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 
 	// set creation time, if supported
-	if (features.supports_creation_time && (entry->creation_time != 0))
+	if (features.supports_creation_time)
 	{
-		local_time = localtime(&entry->creation_time);
-		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
-		rtrim(buffer);
-		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
+		if (entry->creation_time != 0)
+		{
+			local_time = localtime(&entry->creation_time);
+			_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
+			rtrim(buffer);
+			ListView_SetItemText(info->listview, new_index, column_index, buffer);
+		}
+		column_index++;
 	}
 
 	// set last modified time, if supported
-	if (features.supports_lastmodified_time && (entry->lastmodified_time != 0))
+	if (features.supports_lastmodified_time)
 	{
-		local_time = localtime(&entry->lastmodified_time);
-		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
-		rtrim(buffer);
-		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
+		if (entry->lastmodified_time != 0)
+		{
+			local_time = localtime(&entry->lastmodified_time);
+			_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
+			rtrim(buffer);
+			ListView_SetItemText(info->listview, new_index, column_index, buffer);
+		}
+		column_index++;
 	}
 
 	// set attributes and corruption notice
