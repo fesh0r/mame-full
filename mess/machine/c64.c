@@ -921,9 +921,7 @@ OPBASE_HANDLER( c64_opbase ) {
 
 MACHINE_START( c64 )
 {
-	if ( ! c64_io_mirror ) {
-		c64_io_mirror = auto_malloc( 0x1000 );
-	}
+	c64_io_mirror = auto_malloc( 0x1000 );
 	c64_common_init_machine ();
 
 	c64_rom_recognition ();
