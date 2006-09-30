@@ -44,6 +44,9 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug that caused the GUI to fumble on paths with spaces
   in them.  (bug #918) [Nate Woods]
 
+- [Windows GUI] The GUI will no longer process software entries when an
+  emulation is running.  (bug #940) [Nate Woods]
+
 
 
 Imgtool Changes:

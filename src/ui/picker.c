@@ -427,7 +427,7 @@ void Picker_ResetColumnDisplay(HWND hWnd)
 
 
 
-static void Picker_ClearIdle(HWND hwndPicker)
+void Picker_ClearIdle(HWND hwndPicker)
 {
 	struct PickerInfo *pPickerInfo;
 

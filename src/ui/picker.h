@@ -77,6 +77,7 @@ int Picker_GetSelectedItem(HWND hwndPicker);
 void Picker_SetSelectedItem(HWND hwndPicker, int nItem);
 void Picker_SetSelectedPick(HWND hwndPicker, int nIndex);
 int Picker_GetNumColumns(HWND hWnd);
+void Picker_ClearIdle(HWND hwndPicker);
 void Picker_ResetIdle(HWND hwndPicker);
 BOOL Picker_IsIdling(HWND hwndPicker);
 void Picker_SetHeaderImageList(HWND hwndPicker, HIMAGELIST hHeaderImages);

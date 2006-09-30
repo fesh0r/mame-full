@@ -645,6 +645,14 @@ static int CommandToString[] =
 	-1
 };
 
+static const int s_nPickers[] =
+{
+	IDC_LIST
+#ifdef MESS
+	,IDC_SWLIST
+#endif
+};
+
 /* How to resize main window */
 static ResizeItem main_resize_items[] =
 {
@@ -1090,8 +1098,9 @@ static DWORD RunMAME(int nGameIndex)
 	char pCmdLine[2048];
 	HWND hGameWnd = NULL;
 	long lGameWndStyle = 0;
-	int UIPriority = GetThreadPriority(GetCurrentThread());
-	//Save the Priority
+	int UIPriority = GetThreadPriority(GetCurrentThread());	//Save the Priority
+	BOOL bPickerIdling[sizeof(s_nPickers) / sizeof(s_nPickers[0])];
+	int i;
 
 #ifdef MESS
 	SaveGameOptions(nGameIndex);
@@ -1135,6 +1144,15 @@ static DWORD RunMAME(int nGameIndex)
 		}
 		time(&start);
 
+		// Save idling info
+		for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+		{
+			HWND hwndPicker = GetDlgItem(hMain, s_nPickers[i]);
+			bPickerIdling[i] = Picker_IsIdling(hwndPicker);
+			if (bPickerIdling[i])
+				Picker_ClearIdle(hwndPicker);
+		}
+
 		// Wait until child process exits.
 		WaitWithMessageLoop(pi.hProcess);
 
@@ -1155,6 +1173,14 @@ static DWORD RunMAME(int nGameIndex)
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
+
+		// Restore idling, if necessary
+		for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+		{
+			HWND hwndPicker = GetDlgItem(hMain, s_nPickers[i]);
+			if (bPickerIdling[i])
+				Picker_ResetIdle(hwndPicker);
+		}
 
 #ifdef MESS
 		LoadGameOptions(nGameIndex);
@@ -2417,10 +2443,8 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 				SetSplitterPos(i, nSplitterOffset[i]);
 			SetWindowState(state);
 
-			Picker_SaveColumnWidths(hwndList);
-#ifdef MESS
-			Picker_SaveColumnWidths(GetDlgItem(hMain, IDC_SWLIST));
-#endif /* MESS */
+			for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+				Picker_SaveColumnWidths(GetDlgItem(hMain, s_nPickers[i]));
 
 			GetWindowRect(hWnd, &rect);
 			area.x		= rect.left;
@@ -3877,6 +3901,7 @@ static void PressKey(HWND hwnd, UINT vk)
 static void SetView(int menu_id)
 {
 	BOOL force_reset = FALSE;
+	int i;
 
 	// first uncheck previous menu item, check new one
 	CheckMenuRadioItem(GetMenu(hMain), ID_VIEW_LARGE_ICON, ID_VIEW_GROUPED, menu_id, MF_CHECKED);
@@ -3888,18 +3913,13 @@ static void SetView(int menu_id)
 		force_reset = TRUE;
 	}
 
-	Picker_SetViewID(hwndList, menu_id - ID_VIEW_LARGE_ICON);
-#ifdef MESS
-	Picker_SetViewID(GetDlgItem(hMain, IDC_SWLIST), menu_id - ID_VIEW_LARGE_ICON);
-#endif
-
+	for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+		Picker_SetViewID(GetDlgItem(hMain, s_nPickers[i]), menu_id - ID_VIEW_LARGE_ICON);
 
 	if (force_reset)
 	{
-		Picker_Sort(hwndList);
-#ifdef MESS
-		Picker_Sort(GetDlgItem(hMain, IDC_SWLIST));
-#endif
+		for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+			Picker_Sort(GetDlgItem(hMain, s_nPickers[i]));
 	}
 }
 
@@ -5102,6 +5122,7 @@ static void CreateIcons(void)
 	HICON hIcon;
 	int icon_count;
 	DWORD dwStyle;
+	int i;
 
 	icon_count = 0;
 	while(g_iconData[icon_count].icon_name)
@@ -5143,10 +5164,8 @@ static void CreateIcons(void)
 	hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IDI_HEADER_DOWN));
 	ImageList_AddIcon(hHeaderImages,hIcon);
 
-	Picker_SetHeaderImageList(hwndList, hHeaderImages);
-#ifdef MESS
-	Picker_SetHeaderImageList(GetDlgItem(hMain, IDC_SWLIST), hHeaderImages);
-#endif
+	for (i = 0; i < sizeof(s_nPickers) / sizeof(s_nPickers[0]); i++)
+		Picker_SetHeaderImageList(GetDlgItem(hMain, s_nPickers[i]), hHeaderImages);
 }
 
 
