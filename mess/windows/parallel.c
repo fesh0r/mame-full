@@ -77,11 +77,7 @@ static void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 
 INLINE DWORD get_processor_count(void)
 {
-#if defined(_MSC_VER) && (_MSC_VER >= 1400)
-	SYSTEM sysinfo;
-#else
 	SYSTEM_INFO sysinfo;
-#endif
 	GetSystemInfo(&sysinfo);
 	return sysinfo.dwNumberOfProcessors;
 }
