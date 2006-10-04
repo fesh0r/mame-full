@@ -1006,7 +1006,7 @@ WRITE8_HANDLER ( apple2_c05x_w )
 READ8_HANDLER ( apple2_c06x_r )
 {
 	int result = 0;
-	switch (offset & 0x07)
+	switch (offset & 0x0F)
 	{
 		case 0x01:
 			/* Open-Apple/Joystick button 0 */
@@ -1035,6 +1035,12 @@ READ8_HANDLER ( apple2_c06x_r )
 		case 0x07:
 			/* Y Joystick 2 axis */
 			result = timer_get_time() < joystick_y2_time;
+			break;
+		default:
+			/* c060 Empty Cassette head read 
+			 * and any other non joystick c06 port returns this according to applewin
+			 */
+			return apple2_getfloatingbusvalue();
 			break;
 	}
 	return result ? 0x80 : 0x00;
