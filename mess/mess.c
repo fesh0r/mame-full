@@ -289,10 +289,13 @@ void showmessinfo(void)
 	showmessdisclaimer();
 
 	printf(
-		"Usage:  MESS <system> <device> <software> <options>\n\n"
-		"        MESS -list        for a brief list of supported systems\n"
-		"        MESS -listdevices for a full list of supported devices\n"
-		"        MESS -showusage   to see usage instructions\n"
+		"Usage:  MESS <system> <device> <software> <options>\n"
+		"\n"
+		"        MESS -showusage    for a brief list of options\n"
+		"        MESS -showconfig   for a list of configuration options\n"
+		"        MESS -listdevices  for a full list of supported devices\n"
+		"        MESS -createconfig to create a mess.ini\n"
+		"\n"
 		"See mess.txt for help, readme.txt for options.\n");
 }
 

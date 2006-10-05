@@ -14,7 +14,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- Changed base help message, to reflect the actual command line options
+  available.  [Nate Woods]
 
 
 
