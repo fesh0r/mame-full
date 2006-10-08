@@ -1356,13 +1356,15 @@ HICON FormatICOInMemoryToHICON(PBYTE ptrBuffer, UINT nBufferSize)
 
 HICON LoadIconFromFile(const char *iconname)
 {
-	HICON       hIcon = 0;
+	HICON hIcon = 0;
 	struct stat file_stat;
-	char        tmpStr[MAX_PATH];
-	char        tmpIcoName[MAX_PATH];
+	char tmpStr[MAX_PATH];
+	char tmpIcoName[MAX_PATH];
 	const char* sDirName = GetImgDir();
-	PBYTE       bufferPtr;
-	UINT        bufferLen;
+	PBYTE bufferPtr;
+	zip_error ziperr;
+	zip_file *zip;
+	const zip_file_header *entry;
 
 	sprintf(tmpStr, "%s/%s.ico", GetIconsDir(), iconname);
 	if (stat(tmpStr, &file_stat) != 0
@@ -1374,13 +1376,29 @@ HICON LoadIconFromFile(const char *iconname)
 		{
 			sprintf(tmpStr, "%s/icons.zip", GetIconsDir());
 			sprintf(tmpIcoName, "%s.ico", iconname);
-			if (stat(tmpStr, &file_stat) == 0)
+
+			ziperr = zip_file_open(tmpStr, &zip);
+			if (ziperr != ZIPERR_NONE)
 			{
-				if (load_zipped_file(OSD_FILETYPE_ICON,0,tmpStr, tmpIcoName, &bufferPtr, &bufferLen) == 0)
+				entry = zip_file_first_file(zip);
+				while(!hIcon && entry)
 				{
-					hIcon = FormatICOInMemoryToHICON(bufferPtr, bufferLen);
-					free(bufferPtr);
+					if (!mame_stricmp(entry->filename, tmpIcoName))
+					{
+						bufferPtr = malloc(entry->uncompressed_length);
+						if (bufferPtr)
+						{
+							ziperr = zip_file_decompress(zip, bufferPtr, entry->uncompressed_length);
+							if (ziperr == ZIPERR_NONE)
+							{
+								hIcon = FormatICOInMemoryToHICON(bufferPtr, entry->uncompressed_length);
+							}
+							free(bufferPtr);
+						}
+					}
+					entry = zip_file_next_file(zip);
 				}
+				zip_file_close(zip);
 			}
 		}
 	}
@@ -5606,6 +5624,7 @@ static void MamePlayBackGame()
 
 	if (CommonFileDialog(GetOpenFileName, filename, FILETYPE_INPUT_FILES))
 	{
+		mame_file_error fileerr;
 		mame_file* pPlayBack;
 		char drive[_MAX_DRIVE];
 		char dir[_MAX_DIR];
@@ -5622,9 +5641,9 @@ static void MamePlayBackGame()
 		if (path[strlen(path)-1] == '\\')
 			path[strlen(path)-1] = 0; // take off trailing back slash
 
-		set_pathlist(FILETYPE_INPUTLOG,path);
-		pPlayBack = mame_fopen(fname,NULL,FILETYPE_INPUTLOG,0);
-		if (pPlayBack == NULL)
+		options_set_string(SEARCHPATH_INPUTLOG, path);
+		fileerr = mame_fopen(SEARCHPATH_INPUTLOG, fname, OPEN_FLAG_READ, &pPlayBack);
+		if (fileerr != FILERR_NONE)
 		{
 			MameMessageBox("Could not open '%s' as a valid input file.", filename);
 			return;
@@ -5722,7 +5741,7 @@ static void MameLoadState()
 		}
 #endif // MESS
 
-		pSaveState = mame_fopen(NULL,state_fname,FILETYPE_STATE,0);
+		mame_fopen(SEARCHPATH_STATE, state_fname, OPEN_FLAG_READ, &pSaveState);
 		if (pSaveState == NULL)
 		{
 			MameMessageBox("Could not open '%s' as a valid savestate file.", filename);

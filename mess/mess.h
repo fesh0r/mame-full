@@ -11,6 +11,8 @@
 
 #include <stdarg.h>
 
+struct SystemConfigurationParamBlock;
+
 #include "osdepend.h"
 #include "device.h"
 #include "driver.h"

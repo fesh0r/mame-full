@@ -152,6 +152,7 @@ static struct messtest_testcase current_testcase;
 
 static void dump_screenshot(int write_file)
 {
+	mame_file_error filerr;
 	mame_file *fp;
 	char buf[128];
 	int is_blank = 0;
@@ -164,8 +165,8 @@ static void dump_screenshot(int write_file)
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 			(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
 			current_testcase.name, screenshot_num);
-		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
-		if (fp)
+		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, buf, OPEN_FLAG_WRITE, &fp);
+		if (filerr == FILERR_NONE)
 		{
 			screenmask = render_get_live_screens_mask();
 
@@ -179,13 +180,13 @@ static void dump_screenshot(int write_file)
 				}
 
 				video_screen_save_snapshot(fp, scrnum);
-				mame_fclose(fp);
 				report_message(MSG_INFO, "Saved screenshot as %s", buf);
 			}
 			else
 			{
 				report_message(MSG_INFO, "Could not save screenshot; no live screen");
 			}
+			mame_fclose(fp);
 		}
 
 		if (screenshot_num >= 0)

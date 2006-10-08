@@ -12,7 +12,6 @@
 #include <assert.h>
 
 #include "formats/flopimg.h"
-#include "fileio.h"
 #include "osdepend.h"
 #include "unicode.h"
 #include "device.h"

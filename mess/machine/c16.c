@@ -627,7 +627,8 @@ static int c16_rom_load(mess_image *img)
 	{
 		unsigned short in;
 
-		mame_fread_lsbfirst(fp, &in, 2);
+		mame_fread(fp, &in, 2);
+		in = LITTLE_ENDIANIZE_INT16(in);
 		logerror("rom prg %.4x\n", in);
 		addr = in + 0x20000;
 		size -= 2;

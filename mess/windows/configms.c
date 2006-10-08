@@ -57,6 +57,7 @@ const options_entry mess_opts[] =
  */
 int write_config(const char* filename, const game_driver *gamedrv)
 {
+	mame_file_error filerr;
 	mame_file *f;
 	char buffer[128];
 	int retval = 1;
@@ -67,8 +68,8 @@ int write_config(const char* filename, const game_driver *gamedrv)
 		filename = buffer;
 	}
 
-	f = mame_fopen(buffer, NULL, FILETYPE_INI, 1);
-	if (!f)
+	filerr = mame_fopen(SEARCHPATH_INI, buffer, OPEN_FLAG_WRITE, &f);
+	if (filerr != FILERR_NONE)
 		goto done;
 
 	options_output_ini_mame_file(f);

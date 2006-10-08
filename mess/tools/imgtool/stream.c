@@ -46,8 +46,9 @@ struct _imgtool_stream
 static imgtool_stream *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
 	imgtool_stream *imgfile = NULL;
+	zip_error ziperr;
 	zip_file *z = NULL;
-	zip_entry *zipent;
+	const zip_file_header *zipent;
 	FILE *f;
 
 	if (read_or_write)
@@ -68,32 +69,30 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 	imgfile->write_protect = 1;
 	imgfile->position = 0;
 
-	z = openzip(0, 0, zipname);
+	ziperr = zip_file_open(zipname, &z);
 	if (!z)
 		goto error;
 
-	do
-	{
-		zipent = readzip(z);
-		if (!zipent)
-			goto error;
-	}
-	while(subname && strcmp(subname, zipent->name));
+	zipent = zip_file_first_file(z);
+	while(zipent && strcmp(subname, zipent->filename))
+		zipent = zip_file_next_file(z);
+	if (!zipent)
+		goto error;
 
-	imgfile->u.m.bufsz = zipent->uncompressed_size;
-	imgfile->u.m.buf = malloc(zipent->uncompressed_size);
+	imgfile->u.m.bufsz = zipent->uncompressed_length;
+	imgfile->u.m.buf = malloc(zipent->uncompressed_length);
 	if (!imgfile->u.m.buf)
 		goto error;
 
-	if (readuncompresszip(z, zipent, imgfile->u.m.buf))
+	if (zip_file_decompress(z, imgfile->u.m.buf, zipent->uncompressed_length))
 		goto error;
 
-	closezip(z);
+	zip_file_close(z);
 	return imgfile;
 
 error:
 	if (z)
-		closezip(z);
+		zip_file_close(z);
 	if (imgfile)
 	{
 		if (imgfile->u.m.buf)

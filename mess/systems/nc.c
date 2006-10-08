@@ -492,20 +492,20 @@ static void nc_common_store_memory_to_stream(void)
 
 static void nc_common_open_stream_for_reading(void)
 {
-	char filename[13];
+	char filename[MAX_DRIVER_NAME_CHARS + 5];
 
 	sprintf(filename,"%s.nv", Machine->gamedrv->name);
 
-	file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_MEMCARD, OSD_FOPEN_READ);
+	mame_fopen(SEARCHPATH_MEMCARD, filename, OPEN_FLAG_READ, &file);
 }
 
 static void nc_common_open_stream_for_writing(void)
 {
-    char filename[13];
+    char filename[MAX_DRIVER_NAME_CHARS + 5];
 
     sprintf(filename,"%s.nv", Machine->gamedrv->name);
 
-    file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+	mame_fopen(SEARCHPATH_MEMCARD, filename, OPEN_FLAG_WRITE, &file);
 }
 
 

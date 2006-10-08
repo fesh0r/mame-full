@@ -38,7 +38,8 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 		goto error;
 	}
 
-	mame_fread_lsbfirst(fp, &address, 2);
+	mame_fread(fp, &address, 2);
+	address = LITTLE_ENDIANIZE_INT16(address);
 	snapshot_size -= 2;
 
 	data = malloc(snapshot_size);
@@ -200,7 +201,8 @@ static DEVICE_LOAD(cbm_rom)
 	{
 		unsigned short in;
 
-		mame_fread_lsbfirst (file, &in, 2);
+		mame_fread (file, &in, 2);
+		in = LITTLE_ENDIANIZE_INT16(in);
 		logerror("rom prg %.4x\n", in);
 		size -= 2;
 
@@ -233,11 +235,14 @@ static DEVICE_LOAD(cbm_rom)
 			unsigned char buffer[10], number;
 
 			mame_fread (file, buffer, 6);
-			mame_fread_msbfirst (file, &segsize, 2);
+			mame_fread (file, &segsize, 2);
+			segsize = BIG_ENDIANIZE_INT16(segsize);
 			mame_fread (file, buffer + 6, 3);
 			mame_fread (file, &number, 1);
-			mame_fread_msbfirst (file, &adr, 2);
-			mame_fread_msbfirst (file, &in, 2);
+			mame_fread (file, &adr, 2);
+			adr = BIG_ENDIANIZE_INT16(adr);
+			mame_fread (file, &in, 2);
+			in = BIG_ENDIANIZE_INT16(in);
 			logerror("%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
 				buffer, buffer[4], buffer[5], segsize,
 				buffer[6], buffer[7], buffer[8], number,

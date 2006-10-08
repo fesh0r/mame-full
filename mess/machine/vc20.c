@@ -692,7 +692,8 @@ DEVICE_LOAD(vc20_rom)
 			{
 				unsigned short in;
 
-				mame_fread_lsbfirst (file, &in, 2);
+				mame_fread(file, &in, 2);
+				in = LITTLE_ENDIANIZE_INT16(in);
 				logerror("rom prg %.4x\n", in);
 				addr = in;
 				size -= 2;

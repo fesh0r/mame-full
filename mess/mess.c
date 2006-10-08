@@ -303,14 +303,18 @@ void showmessinfo(void)
 
 void ram_dump(const char *filename)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
+	/* use a default filename */
 	if (!filename)
 		filename = "ram.bin";
 
-	file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_NVRAM, OSD_FOPEN_WRITE);
-	if (file)
+	/* open the file */
+	filerr = mame_fopen(NULL, filename, OPEN_FLAG_WRITE, &file);
+	if (filerr == FILERR_NONE)
 	{
+		/* write the data */
 		mame_fwrite(file, mess_ram, mess_ram_size);
 
 		/* close file */

@@ -137,12 +137,13 @@ void amd_flash_finish(int index1)
 
 void amd_flash_store(int index1, const char *flash_name)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
 	if (amd_flash[index1].base!=NULL)
 	{
-		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
-		if (file)
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, flash_name, OPEN_FLAG_WRITE, &file);
+		if (filerr == FILERR_NONE)
 		{
 			mame_fwrite(file, amd_flash[index1].base, (1024*1024));
 			mame_fclose(file);
@@ -152,14 +153,15 @@ void amd_flash_store(int index1, const char *flash_name)
 
 
 
-void	amd_flash_restore(int index1, const char *flash_name)
+void amd_flash_restore(int index1, const char *flash_name)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
 	if (amd_flash[index1].base!=NULL)
 	{
-		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_READ);
-		if (file)
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, flash_name, OPEN_FLAG_READ, &file);
+		if (filerr == FILERR_NONE)
 		{
 			mame_fread(file, amd_flash[index1].base, (1024*1024));
 			mame_fclose(file);

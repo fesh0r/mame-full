@@ -121,11 +121,11 @@ void ti99_ide_init(int in_tms9995_mode)
 
 int ti99_ide_load_memcard(void)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
-
-	file = mame_fopen(Machine->gamedrv->name, "ide", FILETYPE_MEMCARD, OSD_FOPEN_READ);
-	if (! file)
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, "ide.nv", OPEN_FLAG_READ, &file);
+	if (filerr != FILERR_NONE)
 		return /*1*/0;
 	if (rtc65271_file_load(file))
 	{
@@ -139,13 +139,13 @@ int ti99_ide_load_memcard(void)
 
 int ti99_ide_save_memcard(void)
 {
+	mame_file_error filerr;
 	mame_file *file;
-
 
 	/*if (ti99_ide_get_dirty_flag())*/
 	{
-		file = mame_fopen(Machine->gamedrv->name, "ide", FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
-		if (! file)
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, "ide.nv", OPEN_FLAG_WRITE, &file);
+		if (filerr != FILERR_NONE)
 			return 1;
 		if (rtc65271_file_save(file))
 		{

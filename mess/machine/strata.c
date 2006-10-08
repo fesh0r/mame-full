@@ -102,6 +102,7 @@ int strataflash_init(int id)
 int strataflash_load(int id, mame_file *file)
 {
 	UINT8 buf;
+	int i;
 
 	if (id >= MAX_STRATA)
 	{
@@ -121,12 +122,22 @@ int strataflash_load(int id, mame_file *file)
 	strata[id].master_lock = buf & 1;
 
 	/* main FEEPROM area */
-	if (mame_fread_lsbfirst(file, strata[id].data_ptr, FEEPROM_SIZE) != FEEPROM_SIZE)
+	if (mame_fread(file, strata[id].data_ptr, FEEPROM_SIZE) != FEEPROM_SIZE)
 		return 1;
+	for (i = 0; i < FEEPROM_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].data_ptr[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
 
 	/* protection registers */
-	if (mame_fread_lsbfirst(file, strata[id].prot_regs, PROT_REGS_SIZE) != PROT_REGS_SIZE)
+	if (mame_fread(file, strata[id].prot_regs, PROT_REGS_SIZE) != PROT_REGS_SIZE)
 		return 1;
+	for (i = 0; i < PROT_REGS_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].prot_regs[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
 
 	/* block lock flags */
 	if (mame_fread(file, strata[id].blocklock, BLOCKLOCK_SIZE) != BLOCKLOCK_SIZE)
@@ -141,6 +152,7 @@ int strataflash_load(int id, mame_file *file)
 int strataflash_save(int id, mame_file *file)
 {
 	UINT8 buf;
+	int i;
 
 	if (id >= MAX_STRATA)
 	{
@@ -160,12 +172,32 @@ int strataflash_save(int id, mame_file *file)
 		return 1;
 
 	/* main FEEPROM area */
-	if (mame_fwrite_lsbfirst(file, strata[id].data_ptr, FEEPROM_SIZE) != FEEPROM_SIZE)
+	for (i = 0; i < FEEPROM_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].data_ptr[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
+	if (mame_fwrite(file, strata[id].data_ptr, FEEPROM_SIZE) != FEEPROM_SIZE)
 		return 1;
+	for (i = 0; i < FEEPROM_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].data_ptr[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
 
 	/* protection registers */
-	if (mame_fwrite_lsbfirst(file, strata[id].prot_regs, PROT_REGS_SIZE) != PROT_REGS_SIZE)
+	for (i = 0; i < PROT_REGS_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].prot_regs[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
+	if (mame_fwrite(file, strata[id].prot_regs, PROT_REGS_SIZE) != PROT_REGS_SIZE)
 		return 1;
+	for (i = 0; i < PROT_REGS_SIZE; i += 2)
+	{
+		UINT16 *ptr = (UINT16 *) (&strata[id].prot_regs[i]);
+		*ptr = LITTLE_ENDIANIZE_INT16(*ptr);
+	}
 
 	/* block lock flags */
 	if (mame_fwrite(file, strata[id].blocklock, BLOCKLOCK_SIZE) != BLOCKLOCK_SIZE)

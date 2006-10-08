@@ -170,14 +170,9 @@ void FreeScreenShot(void)
 	current_image_type = -1;
 }
 
-void SetCorePathList(int file_type,const char *s)
-{
-	// we have to pass in a malloc()'d string; core will free it later
-	set_pathlist(file_type, mame_strdup(s));
-}
-
 BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 {
+	mame_file_error filerr;
 	mame_file *mfile = NULL;
 	BOOL success;
 	const char *zip_name = NULL;
@@ -189,31 +184,31 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 	switch (pic_type)
 	{
 	case TAB_SCREENSHOT :
-		SetCorePathList(FILETYPE_ARTWORK,GetImgDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetImgDir());
 		zip_name = "snap";
 		break;
 	case TAB_FLYER :
-		SetCorePathList(FILETYPE_ARTWORK,GetFlyerDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetFlyerDir());
 		zip_name = "flyers";
 		break;
 	case TAB_CABINET :
-		SetCorePathList(FILETYPE_ARTWORK,GetCabinetDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetCabinetDir());
 		zip_name = "cabinets";
 		break;
 	case TAB_MARQUEE :
-		SetCorePathList(FILETYPE_ARTWORK,GetMarqueeDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetMarqueeDir());
 		zip_name = "marquees";
 		break;
 	case TAB_TITLE :
-		SetCorePathList(FILETYPE_ARTWORK,GetTitlesDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetTitlesDir());
 		zip_name = "titles";
 		break;
 	case TAB_CONTROL_PANEL :
-		SetCorePathList(FILETYPE_ARTWORK,GetControlPanelDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetControlPanelDir());
 		zip_name = "cpanel";
 		break;
 	case BACKGROUND :
-		SetCorePathList(FILETYPE_ARTWORK,GetBgDir());
+		options_set_string(SEARCHPATH_ARTWORK,GetBgDir());
 		zip_name = "bkground";
 		break;
 	default :
@@ -222,13 +217,13 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 	}
 	
 	// look for the raw file
-	mfile = mame_fopen(NULL,pngfilename,FILETYPE_ARTWORK,0);
-	if (mfile == NULL)
-	{
-		// and look for the zip
-		mfile = mame_fopen(zip_name,pngfilename,FILETYPE_ARTWORK,0);
-	}
-	if (mfile == NULL)
+	filerr = mame_fopen(SEARCHPATH_ARTWORK, pngfilename, OPEN_FLAG_READ, &mfile);
+//	if (mfile == NULL)
+//	{
+//		// and look for the zip
+//		mfile = mame_fopen(zip_name,pngfilename,FILETYPE_ARTWORK,0);
+//	}
+	if (filerr != FILERR_NONE)
 		return FALSE;
 
 	success = png_read_bitmap(mfile, phDIB, pPal);

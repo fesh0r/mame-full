@@ -176,11 +176,16 @@ static chd_interface mess_hard_disk_interface =
 
 static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
+	mame_file_error filerr;
+	mame_file *file;
 	mess_image *img = decode_image_ref(filename);
 
 	/* used when experimenting with CHDs */
 	if (USE_CHD_OPEN && !img)
-		return (chd_interface_file *) mame_fopen(NULL, filename, FILETYPE_IMAGE, 0);
+	{
+		filerr = mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ, &file);
+		return (chd_interface_file *) file;
+	}
 
 	/* invalid "file name"? */
 	assert(img);

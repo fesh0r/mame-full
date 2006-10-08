@@ -85,6 +85,7 @@ int artwork_get_inputscreen_customizations(png_info *png, int cust_type,
 	struct inputform_customization *customizations,
 	int customizations_length)
 {
+	mame_file_error filerr;
 	mame_file *file;
 	char buffer[1000];
 	char current_section[64];
@@ -120,8 +121,8 @@ int artwork_get_inputscreen_customizations(png_info *png, int cust_type,
 	/* open the INI file, if available */
 	if (ini_filename)
 	{
-		file = mame_fopen(Machine->gamedrv->name, ini_filename, FILETYPE_ARTWORK, 0);
-		if (file)
+		filerr = mame_fopen(SEARCHPATH_ARTWORK, ini_filename, OPEN_FLAG_READ, &file);
+		if (filerr == FILERR_NONE)
 		{
 			/* loop until we run out of lines */
 			while (customizations_length && mame_fgets(buffer, sizeof(buffer), file))
@@ -189,8 +190,8 @@ int artwork_get_inputscreen_customizations(png_info *png, int cust_type,
 	memset(png, 0, sizeof(*png));
 	if (png_filename && item_count > 0)
 	{
-		file = mame_fopen(Machine->gamedrv->name, png_filename, FILETYPE_ARTWORK, 0);
-		if (file)
+		filerr = mame_fopen(SEARCHPATH_ARTWORK, ini_filename, OPEN_FLAG_READ, &file);
+		if (filerr == FILERR_NONE)
 		{
 			png_read_file(file, png);
 			mame_fclose(file);

@@ -442,6 +442,8 @@ DEVICE_LOAD( cgenie_floppy )
  *******************************************************************/
 static void tape_put_byte(UINT8 value)
 {
+	mame_file *file;
+
 	if( tape_count < 9 )
 	{
 		tape_name[0] = '\0';
@@ -457,7 +459,7 @@ static void tape_put_byte(UINT8 value)
 				sprintf(tape_name, "%-6.6s.cas", tape_buffer + 2);
 			else
 				strcpy(tape_name, "unknown.cas");
-			mame_fopen(Machine->gamedrv->name, tape_name, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+			mame_fopen(SEARCHPATH_IMAGE, tape_name, OPEN_FLAG_WRITE, &file);
 		}
 	}
 	else
@@ -643,7 +645,7 @@ static void tape_get_open(void)
 		if (tape_name[0] != ' ')
 		{
 			logerror("tape_get_open '%s'\n", tape_name);
-			tape_get_file = mame_fopen(Machine->gamedrv->name, tape_name, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			mame_fopen(SEARCHPATH_IMAGE, tape_name, OPEN_FLAG_READ, &tape_get_file);
 		}
 		if( tape_get_file )
 		{

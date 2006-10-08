@@ -88,6 +88,7 @@ static struct GameSample *vc20_read_wav_sample (mame_file *f)
 	UINT16 bits, temp16;
 	char buf[32];
 	struct GameSample *result;
+	int i;
 
 	/* read the core header and make sure it's a WAVE file */
 	offset += mame_fread (f, buf, 4);
@@ -126,12 +127,14 @@ static struct GameSample *vc20_read_wav_sample (mame_file *f)
 	}
 
 	/* read the format -- make sure it is PCM */
-	offset += mame_fread_lsbfirst (f, &temp16, 2);
+	offset += mame_fread(f, &temp16, 2);
+	temp16 = LITTLE_ENDIANIZE_INT16(temp16);
 	if (temp16 != 1)
 		return NULL;
 
 	/* number of channels -- only mono is supported */
-	offset += mame_fread_lsbfirst (f, &temp16, 2);
+	offset += mame_fread(f, &temp16, 2);
+	temp16 = LITTLE_ENDIANIZE_INT16(temp16);
 	if (temp16 != 1)
 		return NULL;
 
@@ -143,7 +146,8 @@ static struct GameSample *vc20_read_wav_sample (mame_file *f)
 	offset += mame_fread (f, buf, 6);
 
 	/* bits/sample */
-	offset += mame_fread_lsbfirst (f, &bits, 2);
+	offset += mame_fread(f, &bits, 2);
+	bits = LITTLE_ENDIANIZE_INT16(bits);
 	if (bits != 8 && bits != 16)
 		return NULL;
 
@@ -190,7 +194,12 @@ static struct GameSample *vc20_read_wav_sample (mame_file *f)
 	else
 	{
 		/* 16-bit data is fine as-is */
-		mame_fread_lsbfirst (f, result->data, length);
+		mame_fread(f, result->data, length);
+		for (i = 0; i < length; i += 2)
+		{
+			UINT16 *ptr = (UINT16 *) (&result->data[i]);
+			*ptr = LITTLE_ENDIANIZE_INT16(ptr);
+		}
 	}
 	return result;
 #endif

@@ -118,22 +118,21 @@ const char * GetAuditString(int audit_result)
 {
 	switch (audit_result)
 	{
-	case CORRECT :
-	case BEST_AVAILABLE :
-	case MISSING_OPTIONAL :
-		return "Yes";
+		case CORRECT:
+		case BEST_AVAILABLE:
+			return "Yes";
 
-	case NOTFOUND :
-	case INCORRECT :
-	case CLONE_NOTFOUND :
-		return "No";
-		break;
+		case INCORRECT:
+		case NOTFOUND:
+			return "No";
+			break;
 
-	case UNKNOWN :
-		return "?";
+		case UNKNOWN:
+			return "?";
 
-	default:
-		dprintf("unknown audit value %i",audit_result);
+		default:
+			dprintf("unknown audit value %i",audit_result);
+			break;
 	}
 
 	return "?";
@@ -146,13 +145,12 @@ BOOL IsAuditResultKnown(int audit_result)
 
 BOOL IsAuditResultYes(int audit_result)
 {
-	return audit_result == CORRECT || audit_result == BEST_AVAILABLE || 
-		audit_result == MISSING_OPTIONAL;
+	return audit_result == AUDIT_STATUS_GOOD;
 }
 
 BOOL IsAuditResultNo(int audit_result)
 {
-	return audit_result == NOTFOUND || audit_result == INCORRECT || audit_result == CLONE_NOTFOUND;
+	return audit_result == AUDIT_STATUS_NOT_FOUND || audit_result == AUDIT_STATUS_FOUND_INVALID || audit_result == AUDIT_STATUS_ERROR;
 }
 
 
@@ -164,7 +162,14 @@ BOOL IsAuditResultNo(int audit_result)
 int Mame32VerifyRomSet(int game)
 {
 	int iStatus;
-	iStatus = audit_verify_roms(game, (verify_printf_proc)DetailsPrintf);
+	audit_record *audit;
+	int audit_records;
+
+	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
+	iStatus = audit_summary(game, audit_records, audit, DetailsPrintf);
+	if (audit_records > 0)
+		free(audit);
+
 	SetRomAuditResults(game, iStatus);
 	return iStatus;
 }
@@ -173,7 +178,14 @@ int Mame32VerifyRomSet(int game)
 int Mame32VerifySampleSet(int game)
 {
 	int iStatus;
-	iStatus = audit_verify_samples(game, (verify_printf_proc)DetailsPrintf);
+	audit_record *audit;
+	int audit_records;
+
+	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
+	iStatus = audit_summary(game, audit_records, audit, DetailsPrintf);
+	if (audit_records > 0)
+		free(audit);
+
 	SetSampleAuditResults(game, iStatus);
 	return iStatus;
 }
@@ -320,7 +332,6 @@ static void ProcessNextRom()
 	{
 	case BEST_AVAILABLE: /* correct, incorrect or separate count? */
 	case CORRECT:
-	case MISSING_OPTIONAL:
 		roms_correct++;
 		sprintf(buffer, "%i", roms_correct);
 		SendDlgItemMessage(hAudit, IDC_ROMS_CORRECT, WM_SETTEXT, 0, (LPARAM)buffer);
@@ -443,17 +454,12 @@ static const char * StatusString(int iStatus)
 		ptr = "Best available";
 		break;
 		
-	case CLONE_NOTFOUND:
 	case NOTFOUND:
 		ptr = "Not found";
 		break;
 		
 	case INCORRECT:
 		ptr = "Failed";
-		break;
-
-	case MISSING_OPTIONAL:
-		ptr = "Missing optional";
 		break;
 	}
 

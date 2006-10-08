@@ -196,13 +196,14 @@ void flash_finish(int index1)
 
 void flash_store(int index1, const char *flash_name)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
 	if (flash[index1].base!=NULL)
 	{
-		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, flash_name, OPEN_FLAG_WRITE, &file);
 
-		if (file)
+		if (filerr == FILERR_NONE)
 		{
 			mame_fwrite(file, flash[index1].base, (1024*1024));
 	
@@ -215,13 +216,14 @@ void flash_store(int index1, const char *flash_name)
 
 void flash_restore(int index1, const char *flash_name)
 {
+	mame_file_error filerr;
 	mame_file *file;
 
 	if (flash[index1].base!=NULL)
 	{
-		file = mame_fopen(Machine->gamedrv->name, flash_name, FILETYPE_MEMCARD,OSD_FOPEN_READ);
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, flash_name, OPEN_FLAG_READ, &file);
 
-		if (file)
+		if (filerr == FILERR_NONE)
 		{
 			mame_fread(file, flash[index1].base, (1024*1024));
 	
@@ -231,7 +233,7 @@ void flash_restore(int index1, const char *flash_name)
 }
 
 
-void	flash_reset(int index1)
+void flash_reset(int index1)
 {
 	flash[index1].flash_status = FLASH_STATUS_WRITE_STATE_MACHINE_STATUS_READY;
 	flash[index1].flash_command = FLASH_COMMAND_READ_ARRAY_OR_RESET;

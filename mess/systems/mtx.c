@@ -413,6 +413,7 @@ static void mtx_save_hack(int start, int length)
 {
 	int i;
 	int saved = 0;
+	mame_file_error filerr;
 	mame_file *f;
 	static char filename[16] = "";
 
@@ -448,8 +449,8 @@ static void mtx_save_hack(int start, int length)
 	{
 		logerror("saving buffer into '%s', ", filename);
 
-		if ((f = mame_fopen(Machine->gamedrv->name, filename,
-						FILETYPE_IMAGE, 1)) != 0)
+		filerr = mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_WRITE, &f);
+		if (filerr == FILERR_NONE)
 		{
 			saved = mame_fwrite(f, mtx_savebuffer, mtx_saveindex);
 			mame_fclose(f);
@@ -470,6 +471,7 @@ static void mtx_load_hack(int start, int length)
 {
 	int i;
 	int filesize;
+	mame_file_error filerr;
 	mame_file *f;
 	static char filename[16] = "";
 
@@ -486,8 +488,8 @@ static void mtx_load_hack(int start, int length)
 
 		filename[i+1] = '\0';
 		logerror("loading '%s' into buffer, ", filename);
-		if ((f = mame_fopen(Machine->gamedrv->name, filename,
-						FILETYPE_IMAGE, 0)) != 0)
+		filerr = mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ, &f);
+		if (filerr == FILERR_NONE)
 		{
 			filesize = mame_fsize(f);
 			if (filesize > 65536)

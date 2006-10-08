@@ -11,7 +11,6 @@
 
 #include "osd_mess.h"
 #include "opresolv.h"
-#include "fileio.h"
 #include "mamecore.h"
 
 /*************************************

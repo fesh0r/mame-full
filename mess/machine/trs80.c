@@ -349,7 +349,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
 				sprintf(filename, "basic%c.cas", tape_buffer[4]);
-				tape_put_file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, OSD_FOPEN_RW);
+				mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &tape_put_file);
 				mame_fwrite(tape_put_file, zeroes, 256);
 				mame_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -361,7 +361,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
 				sprintf(filename, "%-6.6s.cas", tape_buffer+2);
-				tape_put_file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, OSD_FOPEN_RW);
+				mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &tape_put_file);
 				mame_fwrite(tape_put_file, zeroes, 256);
 				mame_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -442,7 +442,7 @@ static void tape_get_open(void)
 
 		sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
 		logerror("filename %s\n", filename);
-		tape_get_file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, OSD_FOPEN_READ);
+		mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ, &tape_get_file);
 		tape_count = 0;
 	}
 }

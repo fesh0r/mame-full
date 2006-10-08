@@ -73,8 +73,8 @@ static void encode_image_ref(const imgtool_stream *stream, char encoded_image_re
 	char buf[encoded_image_ref_len_len+1];
 
 	/* print, leaving len as 0 */
-	snprintf(encoded_image_ref, encoded_image_ref_max_len, encoded_image_ref_format "%n",
-				0, (void *) stream, &actual_len);
+	actual_len = snprintf(encoded_image_ref, encoded_image_ref_max_len,
+		encoded_image_ref_format, 0, (void *) stream);
 
 	/* debug check: has the buffer been filled */
 	assert(actual_len < (encoded_image_ref_max_len-1));

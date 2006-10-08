@@ -469,7 +469,7 @@ BOOL DriverSupportsSaveState(int driver_index)
 
 void FlushFileCaches(void)
 {
-	unzip_cache_clear();
+	zip_file_cache_clear();
 }
 
 void FreeIfAllocated(char **s)

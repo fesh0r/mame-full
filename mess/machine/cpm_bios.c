@@ -256,7 +256,7 @@ int cpm_init(int n, const char *ids[])
 	}
 
 	/* create a file to receive list output (ie. PIP LST:=FILE.EXT) */
-	lp = mame_fopen(Machine->gamedrv->name, "cpm.lst", FILETYPE_IMAGE, 1);
+	mame_fopen(SEARCHPATH_IMAGE, "cpm.lst", OPEN_FLAG_WRITE, &lp);
 
 	cpm_jumptable();
 

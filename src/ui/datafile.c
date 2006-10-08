@@ -328,7 +328,7 @@ static UINT8 ParseOpen(const char *pszFilename)
 {
         /* Open file up in binary mode */
 
-        fp = mame_fopen (NULL, pszFilename, FILETYPE_HISTORY, 0);
+        mame_fopen(NULL, pszFilename, OPEN_FLAG_READ, &fp);
 
         /* If this is NULL, return FALSE. We can't open it */
 

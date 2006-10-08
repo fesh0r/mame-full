@@ -594,12 +594,11 @@ BOOL OptionsInit()
 	LoadOptionsAndSettings();
 
 	// have our mame core (file code) know about our rom path
-	// this leaks a little, but the win32 file core writes to this string
-	set_pathlist(FILETYPE_ROM,mame_strdup(settings.romdirs));
-	set_pathlist(FILETYPE_SAMPLE,mame_strdup(settings.sampledirs));
+	options_set_string(SEARCHPATH_ROM, settings.romdirs);
+	options_set_string(SEARCHPATH_SAMPLE, settings.sampledirs);
 #ifdef MESS
-	set_pathlist(FILETYPE_IMAGE, mame_strdup(settings.mess.softwaredirs));
-	set_pathlist(FILETYPE_HASH, mame_strdup(settings.mess.hashdir));
+	options_set_string(SEARCHPATH_IMAGE, settings.mess.softwaredirs);
+	options_set_string(SEARCHPATH_HASH, settings.mess.hashdir);
 #endif
 	return TRUE;
 
@@ -1380,8 +1379,7 @@ void SetRomDirs(const char* paths)
 		settings.romdirs = mame_strdup(paths);
 
 		// have our mame core (file code) know about it
-		// this leaks a little, but the win32 file core writes to this string
-		set_pathlist(FILETYPE_ROM,mame_strdup(settings.romdirs));
+		options_set_string(SEARCHPATH_ROM, settings.romdirs);
 	}
 }
 
@@ -1399,8 +1397,7 @@ void SetSampleDirs(const char* paths)
 		settings.sampledirs = mame_strdup(paths);
 		
 		// have our mame core (file code) know about it
-		// this leaks a little, but the win32 file core writes to this string
-		set_pathlist(FILETYPE_SAMPLE,mame_strdup(settings.sampledirs));
+		options_set_string(SEARCHPATH_SAMPLE, settings.sampledirs);
 	}
 
 }

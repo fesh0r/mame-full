@@ -1223,12 +1223,18 @@ INTERRUPT_GEN( tx0_interrupt )
 		if (control_transitions & tx0_cm_sel)
 		{
 			if (tsr_index >= 2)
-				cpunum_set_reg(0, TX0_CM_SEL, (UINT32) (cpunum_get_reg(0, TX0_CM_SEL) ^ (1 << (tsr_index - 2))));
+			{
+				UINT32 cm_sel = (UINT32) cpunum_get_reg(0, TX0_CM_SEL);
+				cpunum_set_reg(0, TX0_CM_SEL, cm_sel ^ (1 << (tsr_index - 2)));
+			}
 		}
 		if (control_transitions & tx0_lr_sel)
 		{
 			if (tsr_index >= 2)
-				cpunum_set_reg(0, TX0_LR_SEL, (UINT32) (cpunum_get_reg(0, TX0_LR_SEL) ^ (1 << (tsr_index - 2))));
+			{
+				UINT32 lr_sel = (UINT32) cpunum_get_reg(0, TX0_LR_SEL);
+				cpunum_set_reg(0, TX0_LR_SEL, (lr_sel ^ (1 << (tsr_index - 2))));
+			}
 		}
 
 		/* remember new state of control keys */

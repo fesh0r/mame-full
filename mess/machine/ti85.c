@@ -1071,10 +1071,11 @@ static void ti85_receive_variables (void)
 	static UINT32 var_file_number = 0;
 	static char var_file_name[] = "00000000.85g";
 	static int variable_number = 0;
-	void * var_file;
+	mame_file * var_file;
 	static UINT8* var_file_data = NULL;
 	UINT8* temp;
 	static int var_file_size = 0;
+	mame_file_error filerr;
 
 	switch (ti85_serial_status)
 	{
@@ -1243,8 +1244,8 @@ static void ti85_receive_variables (void)
 				variable_number = 0;
 				ti85_serial_status =  TI85_SEND_STOP;
 				sprintf (var_file_name, "%08d.85g", var_file_number);
-				var_file = mame_fopen(Machine->gamedrv->name, var_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				if( var_file )
+				filerr = mame_fopen(SEARCHPATH_IMAGE, var_file_name, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &var_file);
+				if (filerr == FILERR_NONE)
 				{
 					mame_fwrite(var_file, var_file_data, var_file_size);
 					mame_fclose(var_file);
@@ -1275,10 +1276,11 @@ static void ti85_receive_backup (void)
 	static int backup_variable_number = 0;
 	static int backup_data_size[3];
 
+	mame_file_error filerr;
 	static UINT8* backup_file_data = NULL;
 	static UINT32 backup_file_number = 0;
 	char backup_file_name[] = "00000000.85b";
-	void * backup_file;
+	mame_file * backup_file;
 
 	switch (ti85_serial_status)
 	{
@@ -1398,8 +1400,8 @@ static void ti85_receive_backup (void)
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]] = ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0x00ff;
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x01] = (ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0xff00)>>8;
 					sprintf (backup_file_name, "%08d.85b", backup_file_number);
-					backup_file = mame_fopen(Machine->gamedrv->name, backup_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-					if( backup_file )
+					filerr = mame_fopen(SEARCHPATH_IMAGE, backup_file_name, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &backup_file);
+					if (filerr == FILERR_NONE)
 					{
 						mame_fwrite(backup_file, backup_file_data, 0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x02);
 						mame_fclose(backup_file);
@@ -1424,7 +1426,8 @@ static void ti85_receive_screen (void)
 {
 	static UINT32 image_file_number = 0;
 	char image_file_name[] = "00000000.85i";
-	void * image_file;
+	mame_file_error filerr;
+	mame_file * image_file;
 	UINT8 * image_file_data;
 
 	switch (ti85_serial_status)
@@ -1468,8 +1471,8 @@ static void ti85_receive_screen (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 1030*8, ti85_receive_data);
 				sprintf (image_file_name, "%08d.85i", image_file_number);
-				image_file = mame_fopen(Machine->gamedrv->name, image_file_name, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				if( image_file )
+				filerr = mame_fopen(SEARCHPATH_IMAGE, image_file_name, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &image_file);
+				if (filerr == FILERR_NONE)
 				{
 					image_file_data = malloc (0x49+1008);
 					if(!image_file_data)

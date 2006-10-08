@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "pool.h"
 #include "hashfile.h"
+#include "mamecore.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -49,7 +50,7 @@ struct _mess_image
 static struct _mess_image *images;
 static UINT32 multiple_dev_mask;
 
-static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write, osd_file_error *error);
+static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_file_error *error);
 
 
 
@@ -178,7 +179,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	UINT8 *buffer = NULL;
 	UINT64 size;
 	unsigned int readable, writeable, creatable;
-	osd_file_error ferr = 0;
+	mame_file_error ferr = FILERR_NONE;
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
@@ -243,24 +244,24 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 
 	if (readable && !writeable)
 	{
-		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ, &ferr);
+		file = image_fopen_custom(img, OPEN_FLAG_READ, &ferr);
 	}
 	else if (!readable && writeable)
 	{
-		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_WRITE, &ferr);
+		file = image_fopen_custom(img, OPEN_FLAG_WRITE, &ferr);
 		img->writeable = file ? 1 : 0;
 	}
 	else if (readable && writeable)
 	{
-		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW, &ferr);
+		file = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &ferr);
 		img->writeable = file ? 1 : 0;
 
 		if (!file)
 		{
-			file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ, &ferr);
+			file = image_fopen_custom(img, OPEN_FLAG_READ, &ferr);
 			if (!file && creatable)
 			{
-				file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE, &ferr);
+				file = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &ferr);
 				img->writeable = file ? 1 : 0;
 				img->created = file ? 1 : 0;
 			}
@@ -272,13 +273,13 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	{
 		switch(ferr)
 		{
-			case FILEERR_OUT_OF_MEMORY:
+			case FILERR_OUT_OF_MEMORY:
 				img->err = IMAGE_ERROR_OUTOFMEMORY;
 				break;
-			case FILEERR_NOT_FOUND:
+			case FILERR_NOT_FOUND:
 				img->err = IMAGE_ERROR_FILENOTFOUND;
 				break;
-			case FILEERR_ALREADY_OPEN:
+			case FILERR_ALREADY_OPEN:
 				img->err = IMAGE_ERROR_ALREADYOPEN;
 				break;
 			default:
@@ -728,8 +729,9 @@ const char *image_filedir(mess_image *img)
 				if (strchr("\\/:", *s))
 				{
 					*s = '\0';
-					if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
-						break;
+					//FIXME
+					//if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
+					//	break;
 				}
 			}
 		}
@@ -907,6 +909,7 @@ static char *battery_nvramfilename(mess_image *img)
 /* load battery backed nvram from a driver subdir. in the nvram dir. */
 int image_battery_load(mess_image *img, void *buffer, int length)
 {
+	mame_file_error filerr;
 	mame_file *f;
 	int bytes_read = 0;
 	int result = FALSE;
@@ -918,8 +921,9 @@ int image_battery_load(mess_image *img, void *buffer, int length)
 		nvram_filename = battery_nvramfilename(img);
 		if (nvram_filename)
 		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
-			if (f)
+			filerr = mame_fopen(SEARCHPATH_NVRAM, nvram_filename, OPEN_FLAG_READ, &f);
+			free(nvram_filename);
+			if (filerr == FILERR_NONE)
 			{
 				bytes_read = mame_fread(f, buffer, length);
 				mame_fclose(f);
@@ -939,6 +943,7 @@ int image_battery_load(mess_image *img, void *buffer, int length)
 /* save battery backed nvram to a driver subdir. in the nvram dir. */
 int image_battery_save(mess_image *img, const void *buffer, int length)
 {
+	mame_file_error filerr;
 	mame_file *f;
 	char *nvram_filename;
 
@@ -948,7 +953,7 @@ int image_battery_save(mess_image *img, const void *buffer, int length)
 		nvram_filename = battery_nvramfilename(img);
 		if (nvram_filename)
 		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
+			filerr = mame_fopen(SEARCHPATH_NVRAM, nvram_filename, OPEN_FLAG_WRITE, &f);
 			free(nvram_filename);
 			if (f)
 			{
@@ -1089,8 +1094,9 @@ int image_index_in_device(mess_image *img)
 char *mess_try_image_file_as_zip(int pathindex, const char *path,
 	const struct IODevice *dev)
 {
+	zip_error ziperr;
 	zip_file *zip = NULL;
-	zip_entry *zipentry = NULL;
+	const zip_file_header *zipentry;
 	char *name;
 	const char *ext;
 	int is_zip;
@@ -1106,35 +1112,37 @@ char *mess_try_image_file_as_zip(int pathindex, const char *path,
 
 	if (is_zip)
 	{
-		zip = openzip(FILETYPE_IMAGE, pathindex, path);
-		if (!zip)
+		ziperr = zip_file_open(path, &zip);
+		if (ziperr != ZIPERR_NONE)
 			goto done;
 	
-		while((zipentry = readzip(zip)) != NULL)
+		zipentry = zip_file_first_file(zip);
+		while (zipentry)
 		{
-			ext = strrchr(zipentry->name, '.');
+			ext = strrchr(zipentry->filename, '.');
 			if (!dev || (ext && findextension(dev->file_extensions, ext)))
 			{
-				new_path = malloc(strlen(path) + 1 + strlen(zipentry->name) + 1);
+				new_path = malloc(strlen(path) + 1 + strlen(zipentry->filename) + 1);
 				if (!new_path)
 					goto done;
 				strcpy(new_path, path);
 				strcat(new_path, path_sep);
-				strcat(new_path, zipentry->name);
+				strcat(new_path, zipentry->filename);
 				break;
 			}
+			zipentry = zip_file_next_file(zip);
 		}
 	}
 
 done:
 	if (zip)
-		closezip(zip);
+		zip_file_close(zip);
 	return new_path;
 }
 
 
 
-static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write, osd_file_error *error)
+static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_file_error *error)
 {
 	const char *sysname;
 	char *lpExt;
@@ -1156,17 +1164,18 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		sysname = gamedrv->name;
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 
-		img->fp = mame_fopen_error(sysname, img->name, filetype, read_or_write, error);
+		*error = mame_fopen(SEARCHPATH_IMAGE, img->name, openflags, &img->fp);
 
-		if (img->fp && (read_or_write == OSD_FOPEN_READ))
+		if ((*error == FILERR_NONE) && (openflags == OPEN_FLAG_READ))
 		{
 			lpExt = strrchr( img->name, '.' );
 			if (lpExt && (mame_stricmp( lpExt, ".ZIP" ) == 0))
 			{
+				zip_error ziperr;
 				int pathindex;
-				int pathcount = osd_get_path_count(filetype);
+				int pathcount = 1; // FIXME osd_get_path_count(filetype);
 				zip_file *zipfile;
-				zip_entry *zipentry;
+				const zip_file_header *zipentry;
 				char *newname;
 				char *name;
 				char *zipname;
@@ -1195,14 +1204,14 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 
 				for (pathindex = 0; pathindex < pathcount; pathindex++)
 				{
-					zipfile = openzip(filetype, pathindex, zipname);
-					if (zipfile)
+					ziperr = zip_file_open(zipname, &zipfile);
+					if (ziperr != ZIPERR_NONE)
 					{
-						zipentry = readzip(zipfile);
+						zipentry = zip_file_first_file(zipfile);
 						while( zipentry )
 						{
 							/* mess doesn't support paths in zip files */
-							name = osd_basename( zipentry->name );
+							name = osd_basename( (char *) zipentry->filename );
 							lpExt = strrchr(name, '.');
 							if (lpExt)
 							{
@@ -1228,16 +1237,16 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 									ext += strlen(ext) + 1;
 								}
 							}
-							zipentry = readzip(zipfile);
+							zipentry = zip_file_next_file(zipfile);
 						}
-						closezip(zipfile);
+						zip_file_close(zipfile);
 					}
 					if( !newname )
 					{
 						return NULL;
 					}
-					img->fp = mame_fopen_error(sysname, newname, filetype, read_or_write, error);
-					if (img->fp)
+					*error = mame_fopen(SEARCHPATH_IMAGE, newname, openflags, &img->fp);
+					if (*error == FILERR_NONE)
 					{
 						image_freeptr(img, img->name);
 						img->name = newname;

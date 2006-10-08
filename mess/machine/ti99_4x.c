@@ -492,6 +492,7 @@ DEVICE_LOAD( ti99_cart )
 	const char *name = image_filename(image);
 	const char *ch, *ch2;
 	int id = image_index_in_device(image);
+	int i;
 	slot_type_t type = (slot_type_t) id;
 
 	/* There is a circuitry in TI99/4(a) that resets the console when a
@@ -560,7 +561,9 @@ DEVICE_LOAD( ti99_cart )
 		}
 		else
 		{
-			mame_fread_msbfirst(file, cartridge_pages[0], 0x2000);
+			mame_fread(file, cartridge_pages[0], 0x2000);
+			for (i = 0; i < 0x1000; i++)
+				cartridge_pages[0][i] = BIG_ENDIANIZE_INT16(cartridge_pages[0][i]);
 			current_page_ptr = cartridge_pages[0];
 		}
 		break;
@@ -574,7 +577,9 @@ DEVICE_LOAD( ti99_cart )
 		}
 		else
 		{
-			mame_fread_msbfirst(file, cartridge_pages[1], 0x2000);
+			mame_fread(file, cartridge_pages[1], 0x2000);
+			for (i = 0; i < 0x1000; i++)
+				cartridge_pages[1][i] = BIG_ENDIANIZE_INT16(cartridge_pages[1][i]);
 			current_page_ptr = cartridge_pages[0];
 		}
 		break;

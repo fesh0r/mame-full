@@ -72,13 +72,6 @@ static const TCHAR s_szSoftwarePickerProp[] = TEXT("SWPICKER");
 
 
 
-static zip_file *OpenZipFile(LPCTSTR pszFilename)
-{
-	return openzip(FILETYPE_IMAGE, 0, pszFilename); 
-}
-
-
-
 static LPCTSTR NormalizePath(LPCTSTR pszPath, LPTSTR pszBuffer, size_t nBufferSize)
 {
 	BOOL bChanged = FALSE;
@@ -278,6 +271,10 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 	if (pFileInfo->pszZipEntryName)
 	{
 		// this is in a ZIP file
+		zip_file *zip;
+		zip_error ziperr;
+		const zip_file_header *zipent;
+		const char *zip_entry_name;
 
 		// open the ZIP file
 		nLength = pFileInfo->pszZipEntryName - pFileInfo->szFilename;
@@ -285,12 +282,32 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 		memcpy(pszZipName, pFileInfo->szFilename, nLength * sizeof(TCHAR));
 		pszZipName[nLength - 1] = '\0';
 
-		if (load_zipped_file(FILETYPE_IMAGE, 0, T2A(pszZipName), T2A(pFileInfo->pszZipEntryName),
-			&pBuffer, &nLength) == 0)
+		// get the entry name
+		zip_entry_name = T2A(pFileInfo->pszZipEntryName);
+
+		ziperr = zip_file_open(T2A(pszZipName), &zip);
+		if (ziperr != ZIPERR_NONE)
 		{
-			ComputeFileHash(pPickerInfo, pFileInfo, pBuffer, nLength);
-			free(pBuffer);
-			rc = TRUE;
+			zipent = zip_file_first_file(zip);
+			while(!rc && zipent)
+			{
+				if (!mame_stricmp(zip->filename, zip_entry_name))
+				{
+					pBuffer = malloc(zipent->uncompressed_length);
+					if (pBuffer)
+					{
+						ziperr = zip_file_decompress(zip, pBuffer, zipent->uncompressed_length);
+						if (ziperr != ZIPERR_NONE)
+						{
+							ComputeFileHash(pPickerInfo, pFileInfo, pBuffer, zipent->uncompressed_length);
+							rc = TRUE;
+						}
+						free(pBuffer);
+					}
+				}
+				zipent = zip_file_next_file(zip);
+			}
+			zip_file_close(zip);
 		}
 	}
 	else
@@ -464,14 +481,14 @@ error:
 
 
 static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
-	BOOL bForce, zip_file *pZip, zip_entry *pZipEnt)
+	BOOL bForce, zip_file *pZip, const zip_file_header *pZipEnt)
 {
 	LPCTSTR pszZipSubPath;
 	LPTSTR s;
 	int nLength;
 	int nZipEntryNameLength;
 
-	pszZipSubPath = A2T(pZipEnt->name);
+	pszZipSubPath = A2T(pZipEnt->filename);
 
 	// special case; skip first two characters if they are './'
 	if ((pszZipSubPath[0] == '.') && (pszZipSubPath[1] == '/'))
@@ -487,7 +504,7 @@ static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
 	_sntprintf(s, nLength, TEXT("%s\\%s"), pszZipPath, pszZipSubPath);
 
 	return SoftwarePicker_AddFileEntry(hwndPicker, s, 
-		nZipEntryNameLength, pZipEnt->crc32, bForce);
+		nZipEntryNameLength, pZipEnt->crc, bForce);
 }
 
 
@@ -497,23 +514,24 @@ static BOOL SoftwarePicker_InternalAddFile(HWND hwndPicker, LPCTSTR pszFilename,
 {
 	LPCTSTR s;
 	BOOL rc = TRUE;
+	zip_error ziperr;
 	zip_file *pZip;
-	zip_entry *pZipEnt;
+	const zip_file_header *pZipEnt;
 
 	s = _tcsrchr(pszFilename, '.');
 	if (s && (!_tcsicmp(s, TEXT(".zip"))))
 	{
-		pZip = OpenZipFile(pszFilename);
-		if (pZip)
+		ziperr = zip_file_open(pszFilename, &pZip);
+		if (ziperr != ZIPERR_NONE)
 		{
-			while(rc && (pZipEnt = readzip(pZip)) != NULL)
+			pZipEnt = zip_file_first_file(pZip);
+			while(rc && pZipEnt)
 			{
 				rc = SoftwarePicker_AddZipEntFile(hwndPicker, pszFilename,
 					bForce, pZip, pZipEnt);
-				if (!rc)
-					return FALSE;
+				pZipEnt = zip_file_next_file(pZip);
 			}
-			closezip(pZip);
+			zip_file_close(pZip);
 		}
 	}
 	else

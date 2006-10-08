@@ -355,6 +355,8 @@ static void preload_use_proc(hash_file *hashfile, void *param, struct hash_info 
 hash_file *hashfile_open(const char *sysname, int is_preload,
 	void (*error_proc)(const char *message))
 {
+	mame_file_error filerr;
+	char *fname;
 	hash_file *hashfile;
 	
 	hashfile = malloc(sizeof(struct _hash_file));
@@ -365,8 +367,11 @@ hash_file *hashfile_open(const char *sysname, int is_preload,
 	hashfile->error_proc = error_proc;
 
 	/* open a file */
-	hashfile->file = mame_fopen(sysname, sysname, FILETYPE_HASH, 0);
-	if (!hashfile->file)
+	fname = assemble_2_strings(sysname, ".cfg");
+	filerr = mame_fopen(SEARCHPATH_HASH, sysname, OPEN_FLAG_READ, &hashfile->file);
+	free(fname);
+
+	if (filerr != FILERR_NONE)
 		goto error;
 
 	if (is_preload)

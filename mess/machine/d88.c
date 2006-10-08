@@ -64,19 +64,19 @@ DEVICE_LOAD(d88image_floppy)
 	w->write_protected = (tmp8&0x10 || !w->mode);
 	mame_fread(w->image_file, &tmp8, 1);
 	w->disktype = tmp8 >> 4;
-	mame_fread_lsbfirst(w->image_file, &tmp32, 4);
-	w->image_size=tmp32;
+	mame_fread(w->image_file, &tmp32, 4);
+	w->image_size = LITTLE_ENDIANIZE_INT32(tmp32);
 
 	for(i = 0; i<D88_NUM_TRACK; i++)
 	{
 		mame_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
-		mame_fread_lsbfirst(w->image_file, &tmp32, 4);
-		toffset = tmp32;
+		mame_fread(w->image_file, &tmp32, 4);
+		toffset = LITTLE_ENDIANIZE_INT32(tmp32);
 		if(toffset)
 		{
 			mame_fseek(w->image_file, toffset + 4, SEEK_SET);
-			mame_fread_lsbfirst(w->image_file, &tmp16, 2);
-			w->num_sects[i] = tmp16;
+			mame_fread(w->image_file, &tmp16, 2);
+			w->num_sects[i] = LITTLE_ENDIANIZE_INT16(tmp16);
 			w->sects[i] = image_malloc(image, sizeof(d88sect)*w->num_sects[i]);
 			mame_fseek(w->image_file, toffset, SEEK_SET);
 
@@ -86,7 +86,7 @@ DEVICE_LOAD(d88image_floppy)
 				mame_fread(w->image_file, &(w->sects[i][j].H), 1);
 				mame_fread(w->image_file, &(w->sects[i][j].R), 1);
 				mame_fread(w->image_file, &(w->sects[i][j].N), 1);
-				mame_fread_lsbfirst(w->image_file, &tmp16, 2);
+				mame_fread(w->image_file, &tmp16, 2);
 				mame_fread(w->image_file, &tmp8, 1);
 					w->sects[i][j].den=tmp8&0x40 ?
 					(w->disktype==2 ? DEN_FM_HI : DEN_FM_LO) :
@@ -105,9 +105,9 @@ DEVICE_LOAD(d88image_floppy)
 				}
 				for(k=0;k<5;k++)
 					mame_fread(w->image_file, &tmp8, 1);
-				mame_fread_lsbfirst(w->image_file, &tmp16, 2);
-				w->sects[i][j].offset = osd_ftell(w->image_file);
-				mame_fseek(w->image_file, tmp16, SEEK_CUR);
+				mame_fread(w->image_file, &tmp16, 2);
+				w->sects[i][j].offset = mame_ftell(w->image_file);
+				mame_fseek(w->image_file, LITTLE_ENDIANIZE_INT16(tmp16), SEEK_CUR);
 			}
 		}
 		else

@@ -580,8 +580,10 @@ DEVICE_LOAD( mekd2_cart )
 		logerror( "mekd2_rom_load: magic '%s' not found\n", magic);
 		return INIT_FAIL;
 	}
-	mame_fread_lsbfirst(file, &addr, 2);
-	mame_fread_lsbfirst(file, &size, 2);
+	mame_fread(file, &addr, 2);
+	addr = LITTLE_ENDIANIZE_INT16(addr);
+	mame_fread(file, &size, 2);
+	size = LITTLE_ENDIANIZE_INT16(size);
 	mame_fread(file, &ident, 1);
 /*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
 	while (size-- > 0)
