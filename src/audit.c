@@ -98,38 +98,41 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 			if (ROMREGION_ISROMDATA(region) || ROMREGION_ISDISKDATA(region))
 				records++;
 
-	/* allocate memory for the records */
-	*audit = malloc_or_die(sizeof(**audit) * records);
-	memset(*audit, 0, sizeof(**audit) * records);
-	record = *audit;
-
-	/* iterate over regions and ROMs */
-	for (region = rom_first_region(drivers[game]); region; region = rom_next_region(region))
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			int shared = rom_used_by_parent(gamedrv, rom, NULL);
-
-			/* audit a file */
-			if (ROMREGION_ISROMDATA(region))
-			{
-				if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
-					foundany = TRUE;
-			}
-
-			/* audit a disk */
-			else if (ROMREGION_ISDISKDATA(region))
-			{
-				if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
-					foundany = TRUE;
-			}
-		}
-
-	/* if we found nothing, we don't have the set at all */
-	if (!foundany)
+	if (records > 0)
 	{
-		free(*audit);
-		*audit = NULL;
-		records = 0;
+		/* allocate memory for the records */
+		*audit = malloc_or_die(sizeof(**audit) * records);
+		memset(*audit, 0, sizeof(**audit) * records);
+		record = *audit;
+
+		/* iterate over regions and ROMs */
+		for (region = rom_first_region(drivers[game]); region; region = rom_next_region(region))
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			{
+				int shared = rom_used_by_parent(gamedrv, rom, NULL);
+
+				/* audit a file */
+				if (ROMREGION_ISROMDATA(region))
+				{
+					if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
+						foundany = TRUE;
+				}
+
+				/* audit a disk */
+				else if (ROMREGION_ISDISKDATA(region))
+				{
+					if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
+						foundany = TRUE;
+				}
+			}
+
+		/* if we found nothing, we don't have the set at all */
+		if (!foundany)
+		{
+			free(*audit);
+			*audit = NULL;
+			records = 0;
+		}
 	}
 	return records;
 }

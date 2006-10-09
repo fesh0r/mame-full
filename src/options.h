@@ -30,6 +30,7 @@
 /* options defined and used by the core */
 #ifdef MESS
 #define OPTION_ROMPATH				"biospath"
+#define OPTION_HASH_DIRECTORY		"hash_directory"
 #else
 #define OPTION_ROMPATH				"rompath"
 #endif

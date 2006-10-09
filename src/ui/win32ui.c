@@ -1378,7 +1378,7 @@ HICON LoadIconFromFile(const char *iconname)
 			sprintf(tmpIcoName, "%s.ico", iconname);
 
 			ziperr = zip_file_open(tmpStr, &zip);
-			if (ziperr != ZIPERR_NONE)
+			if (ziperr == ZIPERR_NONE)
 			{
 				entry = zip_file_first_file(zip);
 				while(!hIcon && entry)

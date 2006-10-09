@@ -484,6 +484,39 @@ int num_folder_filters;
 
 
 
+static const options_entry windows_opts[] =
+{
+	// file and directory options
+	{ NULL,                       NULL,       OPTION_HEADER,     "PATH AND DIRECTORY OPTIONS" },
+#ifndef MESS
+	{ "rompath;rp",               "roms",     0,                 "path to ROMsets and hard disk images" },
+#else
+	{ "biospath;bp",              "bios",     0,                 "path to BIOS sets" },
+	{ "softwarepath;swp",         "software", 0,                 "path to software" },
+	{ "hash_directory;hash",      "hash",     0,                 "path to hash files" },
+#endif
+	{ "samplepath;sp",            "samples",  0,                 "path to samplesets" },
+#ifdef __WIN32__
+	{ "inipath",                  ".;ini",    0,                 "path to ini files" },
+#else
+	{ "inipath",                  "$HOME/.mame;.;ini", 0,        "path to ini files" },
+#endif
+	{ "cfg_directory",            "cfg",      0,                 "directory to save configurations" },
+	{ "nvram_directory",          "nvram",    0,                 "directory to save nvram contents" },
+	{ "memcard_directory",        "memcard",  0,                 "directory to save memory card contents" },
+	{ "input_directory",          "inp",      0,                 "directory to save input device logs" },
+	{ "state_directory",          "sta",      0,                 "directory to save states" },
+	{ "artpath;artwork_directory","artwork",  0,                 "path to artwork files" },
+	{ "snapshot_directory",       "snap",     0,                 "directory to save screenshots" },
+	{ "diff_directory",           "diff",     0,                 "directory to save hard drive image difference files" },
+	{ "ctrlrpath;ctrlr_directory","ctrlr",    0,                 "path to controller definitions" },
+	{ "comment_directory",        "comments", 0,                 "directory to save debugger comments" },
+	{ "cheat_file",               "cheat.dat",0,                 "cheat filename" },
+	{ NULL }
+};
+
+
+	
 /***************************************************************************
     External functions  
  ***************************************************************************/
@@ -594,6 +627,7 @@ BOOL OptionsInit()
 	LoadOptionsAndSettings();
 
 	// have our mame core (file code) know about our rom path
+	options_add_entries(windows_opts);
 	options_set_string(SEARCHPATH_ROM, settings.romdirs);
 	options_set_string(SEARCHPATH_SAMPLE, settings.sampledirs);
 #ifdef MESS
