@@ -64,6 +64,7 @@ static void MessUpdateSoftwareList(void);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static void MessReadMountedSoftware(int nGame);
+static void MessRefreshPicker(int nGame);
 static BOOL CreateMessIcons(void);
 
 static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
@@ -539,6 +540,17 @@ static void MessRemoveImage(int nGame, device_class devclass, LPCTSTR pszFilenam
 
 static void MessReadMountedSoftware(int nGame)
 {
+	// First read stuff into device view
+	DevView_Refresh(GetDlgItem(hMain, IDC_SWDEVVIEW));
+
+	// Now read stuff into picker
+	MessRefreshPicker(nGame);
+}
+
+
+
+static void MessRefreshPicker(int nGame)
+{
 	HWND hwndSoftware;
 	int i, id, nPos;
 	LVFINDINFO lvfi;
@@ -547,10 +559,6 @@ static void MessReadMountedSoftware(int nGame)
 	const struct IODevice *pDevice;
 	LPCTSTR pszSoftware;
 
-	// First read stuff into device view
-	DevView_Refresh(GetDlgItem(hMain, IDC_SWDEVVIEW));
-
-	// Now read stuff into picker
 	begin_resource_tracking();
 
 	hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
@@ -866,6 +874,7 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nGame,
 	const struct IODevice *dev, int nID, LPCTSTR pszFilename)
 {
 	MessSpecifyImage(nGame, &dev->devclass, nID, pszFilename);
+	MessRefreshPicker(nGame);
 }
 
 
