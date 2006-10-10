@@ -50,7 +50,7 @@ struct _mess_image
 static struct _mess_image *images;
 static UINT32 multiple_dev_mask;
 
-static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_file_error *error);
+static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags);
 
 
 
@@ -175,11 +175,10 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	const char *s;
 	char *newname;
 	int err = INIT_PASS;
-	mame_file *file = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
 	unsigned int readable, writeable, creatable;
-	mame_file_error ferr = FILERR_NONE;
+	mame_file_error filerr = FILERR_NONE;
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
@@ -221,7 +220,6 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* prepare to open the file */
 	img->created = 0;
 	img->writeable = 0;
-	file = NULL;
 	if (dev->getdispositions)
 	{
 		dev->getdispositions(dev, image_index_in_device(img), &readable, &writeable, &creatable);
@@ -237,41 +235,45 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	s = strrchr(img->name, '.');
 	if (s && !mame_stricmp(s, ".ZIP"))
 	{
-		/* ZIP files are writeable */
+		/* ZIP files are read only */
 		writeable = 0;
 		creatable = 0;
 	}
 
-	if (readable && !writeable)
+	if (!img->fp && readable && writeable)
 	{
-		file = image_fopen_custom(img, OPEN_FLAG_READ, &ferr);
+		/* open for read/write */
+		filerr = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE);
+		if (filerr == FILERR_NONE)
+			img->writeable = TRUE;
 	}
-	else if (!readable && writeable)
+	if (!img->fp && readable)
 	{
-		file = image_fopen_custom(img, OPEN_FLAG_WRITE, &ferr);
-		img->writeable = file ? 1 : 0;
+		/* open for read */
+		filerr = image_fopen_custom(img, OPEN_FLAG_READ);
 	}
-	else if (readable && writeable)
+	if (!img->fp && !readable && writeable)
 	{
-		file = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &ferr);
-		img->writeable = file ? 1 : 0;
-
-		if (!file)
+		/* open for writing */
+		filerr = image_fopen_custom(img, OPEN_FLAG_WRITE);
+		if (filerr == FILERR_NONE)
+			img->writeable = TRUE;
+	}
+	if (!img->fp && readable && writeable && creatable)
+	{
+		/* open for creating */
+		filerr = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+		if (filerr == FILERR_NONE)
 		{
-			file = image_fopen_custom(img, OPEN_FLAG_READ, &ferr);
-			if (!file && creatable)
-			{
-				file = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &ferr);
-				img->writeable = file ? 1 : 0;
-				img->created = file ? 1 : 0;
-			}
+			img->writeable = TRUE;
+			img->created = TRUE;
 		}
 	}
 
 	/* did this attempt succeed? */
-	if (!file)
+	if (!img->fp)
 	{
-		switch(ferr)
+		switch(filerr)
 		{
 			case FILERR_OUT_OF_MEMORY:
 				img->err = IMAGE_ERROR_OUTOFMEMORY;
@@ -292,15 +294,20 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* if applicable, call device verify */
 	if (dev->imgverify && !image_has_been_created(img))
 	{
-		size = mame_fsize(file);
-		buffer = malloc(size);
+		size = mame_fsize(img->fp);
+		if (size != (size_t) size)
+		{
+			img->err = IMAGE_ERROR_OUTOFMEMORY;
+			goto error;
+		}
+		buffer = malloc((size_t) size);
 		if (!buffer)
 		{
 			img->err = IMAGE_ERROR_OUTOFMEMORY;
 			goto error;
 		}
 
-		if (mame_fread(file, buffer, (UINT32) size) != size)
+		if (mame_fread(img->fp, buffer, (UINT32) size) != size)
 		{
 			img->err = IMAGE_ERROR_INVALIDIMAGE;
 			goto error;
@@ -313,7 +320,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 			goto error;
 		}
 
-		mame_fseek(file, 0, SEEK_SET);
+		mame_fseek(img->fp, 0, SEEK_SET);
 
 		free(buffer);
 		buffer = NULL;
@@ -322,7 +329,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* call device load or create */
 	if (image_has_been_created(img) && dev->create)
 	{
-		err = dev->create(img, file, create_format, create_args);
+		err = dev->create(img, img->fp, create_format, create_args);
 		if (err)
 		{
 			if (!img->err)
@@ -333,7 +340,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	else if (dev->load)
 	{
 		/* using device load */
-		err = dev->load(img, file);
+		err = dev->load(img, img->fp);
 		if (err)
 		{
 			if (!img->err)
@@ -347,13 +354,15 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	return INIT_PASS;
 
 error:
-	if (file)
-		mame_fclose(file);
 	if (buffer)
 		free(buffer);
 	if (img)
 	{
-		img->fp = NULL;
+		if (img->fp)
+		{
+			mame_fclose(img->fp);
+			img->fp = NULL;
+		}
 		img->name = NULL;
 		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
 	}
@@ -1142,31 +1151,23 @@ done:
 
 
 
-static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_file_error *error)
+static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags)
 {
+	mame_file_error filerr;
 	const char *sysname;
 	char *lpExt;
 	const game_driver *gamedrv = Machine->gamedrv;
 
 	assert(img);
 
-	if (!img->name)
-		return NULL;
-
-	if (img->fp)
-	{
-		/* If already open, we won't open the file again until it is closed. */
-		return NULL;
-	}
-
 	do
 	{
 		sysname = gamedrv->name;
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 
-		*error = mame_fopen(SEARCHPATH_IMAGE, img->name, openflags, &img->fp);
+		filerr = mame_fopen(SEARCHPATH_IMAGE, img->name, openflags, &img->fp);
 
-		if ((*error == FILERR_NONE) && (openflags == OPEN_FLAG_READ))
+		if ((filerr == FILERR_NONE) && (openflags == OPEN_FLAG_READ))
 		{
 			lpExt = strrchr( img->name, '.' );
 			if (lpExt && (mame_stricmp( lpExt, ".ZIP" ) == 0))
@@ -1228,7 +1229,7 @@ static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_fil
 										}
 										newname = image_malloc(img, strlen(img->name) + 1 + strlen(name) + 1);
 										if (!newname)
-											return NULL;
+											return FILERR_OUT_OF_MEMORY;
 
 										strcpy(newname, img->name);
 										strcat(newname, osd_path_separator());
@@ -1243,10 +1244,10 @@ static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_fil
 					}
 					if( !newname )
 					{
-						return NULL;
+						return FILERR_OUT_OF_MEMORY;
 					}
-					*error = mame_fopen(SEARCHPATH_IMAGE, newname, openflags, &img->fp);
-					if (*error == FILERR_NONE)
+					filerr = mame_fopen(SEARCHPATH_IMAGE, newname, openflags, &img->fp);
+					if (filerr == FILERR_NONE)
 					{
 						image_freeptr(img, img->name);
 						img->name = newname;
@@ -1267,6 +1268,6 @@ static mame_file *image_fopen_custom(mess_image *img, UINT32 openflags, mame_fil
 		img->hash = NULL;
 	}
 
-	return img->fp;
+	return filerr;
 }
 
