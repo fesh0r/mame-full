@@ -50,7 +50,7 @@ struct _mess_image
 static struct _mess_image *images;
 static UINT32 multiple_dev_mask;
 
-static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags);
+static mame_file_error image_load_internal_2(mess_image *img, UINT32 openflags);
 
 
 
@@ -243,26 +243,26 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	if (!img->fp && readable && writeable)
 	{
 		/* open for read/write */
-		filerr = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE);
+		filerr = image_load_internal_2(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE);
 		if (filerr == FILERR_NONE)
 			img->writeable = TRUE;
 	}
 	if (!img->fp && readable)
 	{
 		/* open for read */
-		filerr = image_fopen_custom(img, OPEN_FLAG_READ);
+		filerr = image_load_internal_2(img, OPEN_FLAG_READ);
 	}
 	if (!img->fp && !readable && writeable)
 	{
 		/* open for writing */
-		filerr = image_fopen_custom(img, OPEN_FLAG_WRITE);
+		filerr = image_load_internal_2(img, OPEN_FLAG_WRITE);
 		if (filerr == FILERR_NONE)
 			img->writeable = TRUE;
 	}
 	if (!img->fp && readable && writeable && creatable)
 	{
 		/* open for creating */
-		filerr = image_fopen_custom(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+		filerr = image_load_internal_2(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
 		if (filerr == FILERR_NONE)
 		{
 			img->writeable = TRUE;
@@ -1151,10 +1151,10 @@ done:
 
 
 
-static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags)
+static mame_file_error image_load_internal_2(mess_image *img, UINT32 openflags)
 {
 	mame_file_error filerr;
-	const char *sysname;
+	char *fname;
 	char *lpExt;
 	const game_driver *gamedrv = Machine->gamedrv;
 
@@ -1162,10 +1162,12 @@ static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags)
 
 	do
 	{
-		sysname = gamedrv->name;
-		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
+		logerror("image_load_internal_2: trying %s for system %s\n", img->name, gamedrv->name);
 
+		/* try to open the file */
+		fname = assemble_3_strings(gamedrv->name, "/", img->name);
 		filerr = mame_fopen(SEARCHPATH_IMAGE, img->name, openflags, &img->fp);
+		free(fname);
 
 		if ((filerr == FILERR_NONE) && (openflags == OPEN_FLAG_READ))
 		{
@@ -1191,14 +1193,14 @@ static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags)
 
 				newname = NULL;
 
-				zipname = image_malloc( img, strlen( sysname ) + 1 + strlen( img->name ) + 1 );
+				zipname = image_malloc( img, strlen( gamedrv->name ) + 1 + strlen( img->name ) + 1 );
 				if( osd_is_absolute_path( img->name ) )
 				{
 					strcpy( zipname, img->name );
 				}
 				else
 				{
-					strcpy( zipname, sysname );
+					strcpy( zipname, gamedrv->name );
 					strcat( zipname, osd_path_separator() );
 					strcat( zipname, img->name );
 				}
@@ -1263,7 +1265,7 @@ static mame_file_error image_fopen_custom(mess_image *img, UINT32 openflags)
 
 	if (img->fp)
 	{
-		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
+		logerror("image_fopen: found image %s for system %s\n", img->name, gamedrv->name);
 		img->length = mame_fsize(img->fp);
 		img->hash = NULL;
 	}
