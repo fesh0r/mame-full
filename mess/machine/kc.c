@@ -42,33 +42,30 @@ bit 0: TRUCK */
 
 
 /* load image */
-static int kc_load(mame_file *file, unsigned char **ptr)
+static int kc_load(mess_image *image, unsigned char **ptr)
 {
-	if (file)
+	int datasize;
+	unsigned char *data;
+
+	/* get file size */
+	datasize = image_length(image);
+
+	if (datasize!=0)
 	{
-		int datasize;
-		unsigned char *data;
+		/* malloc memory for this data */
+		data = malloc(datasize);
 
-		/* get file size */
-		datasize = mame_fsize(file);
-
-		if (datasize!=0)
+		if (data!=NULL)
 		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
+			/* read whole file */
+			image_fread(image, data, datasize);
 
-			if (data!=NULL)
-			{
-				/* read whole file */
-				mame_fread(file, data, datasize);
+			*ptr = data;
 
-				*ptr = data;
+			logerror("File loaded!\r\n");
 
-				logerror("File loaded!\r\n");
-
-				/* ok! */
-				return 1;
-			}
+			/* ok! */
+			return 1;
 		}
 	}
 
@@ -101,7 +98,7 @@ QUICKLOAD_LOAD(kc)
 	int datasize;
 	int i;
 
-	if (!kc_load(fp, &data))
+	if (!kc_load(image, &data))
 		return INIT_FAIL;
 
 	header = (struct kcc_header *) data;
@@ -134,7 +131,7 @@ static unsigned char kc85_disc_hw_input_gate;
 
 DEVICE_LOAD( kc85_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;

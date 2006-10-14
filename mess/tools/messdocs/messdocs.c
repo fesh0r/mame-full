@@ -71,13 +71,13 @@ static void combine_path(char *buf, size_t buflen, const char *relpath)
 	for (i = 0; buf[i]; i++)
 	{
 		if (osd_is_path_separator(buf[i]))
-			buf[i] = PATH_SEPARATOR;
+			buf[i] = PATH_SEPARATOR[0];
 	}
 	
 	while(osd_is_path_separator(buf[--i]))
 		;
 	i++;
-	buf[i++] = PATH_SEPARATOR;
+	buf[i++] = PATH_SEPARATOR[0];
 	buf[i] = '\0';
 
 	while(relpath[0])
@@ -143,7 +143,7 @@ static void copy_file_to_dest(const char *dest_dir, const char *src_dir, const c
 		{
 			dest_path[i] = '\0';
 			osd_mkdir(dest_path);
-			dest_path[i] = PATH_SEPARATOR;
+			dest_path[i] = PATH_SEPARATOR[0];
 		}
 	}
 
@@ -317,7 +317,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 					sysname = sysinfo_array[sys_count].name;
 					sys_count++;
 
-					snprintf(sysfilename, sizeof(sysfilename), "%s%c%s%c%s.htm", state->dest_dir, PATH_SEPARATOR, destpath, PATH_SEPARATOR, s);
+					snprintf(sysfilename, sizeof(sysfilename), "%s%s%s%s%s.htm", state->dest_dir, PATH_SEPARATOR, destpath, PATH_SEPARATOR, s);
 
 					if (sysfile)
 						fclose(sysfile);
@@ -376,7 +376,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		{
 			fprintf(state->chm_toc, "\t<LI> <OBJECT type=\"text/sitemap\">\n");
 			fprintf(state->chm_toc, "\t\t<param name=\"Name\" value=\"%s\">\n", sysinfo_array[i].desc);
-			fprintf(state->chm_toc, "\t\t<param name=\"Local\" value=\"%s%c%s.htm\">\n", destpath, PATH_SEPARATOR, sysinfo_array[i].name);
+			fprintf(state->chm_toc, "\t\t<param name=\"Local\" value=\"%s%s%s.htm\">\n", destpath, PATH_SEPARATOR, sysinfo_array[i].name);
 			fprintf(state->chm_toc, "\t\t</OBJECT>\n");
 		}
 
@@ -422,10 +422,6 @@ static int rmdir_recursive(const char *dir_path)
 	struct dirent *ent;
 	struct stat s;
 	char *newpath;
-	char path_sep[2];
-
-	path_sep[0] = PATH_SEPARATOR;
-	path_sep[1] = '\0';
 
 	dir = opendir(dir_path);
 	if (dir)
@@ -439,7 +435,7 @@ static int rmdir_recursive(const char *dir_path)
 					return -1;
 
 				strcpy(newpath, dir_path);
-				strcat(newpath, path_sep);
+				strcat(newpath, PATH_SEPARATOR);
 				strcat(newpath, ent->d_name);
 
 				stat(newpath, &s);
@@ -470,10 +466,6 @@ int messdocs(const char *toc_filename, const char *dest_dir, const char *help_pr
 	FILE *chm_hhp;
 	int i;
 	char *s;
-	char path_sep[2];
-
-	path_sep[0] = PATH_SEPARATOR;
-	path_sep[1] = '\0';
 
 	memset(&state, 0, sizeof(state));
 	pool_init(&state.pool);
@@ -502,7 +494,7 @@ int messdocs(const char *toc_filename, const char *dest_dir, const char *help_pr
 	if (!s)
 		goto outofmemory;
 	strcpy(s, dest_dir);
-	strcat(s, path_sep);
+	strcat(s, PATH_SEPARATOR);
 	strcat(s, help_contents_filename);
 	state.chm_toc = fopen(s, "w");
 	state.dest_dir = dest_dir;
@@ -555,7 +547,7 @@ int messdocs(const char *toc_filename, const char *dest_dir, const char *help_pr
 	if (!s)
 		goto outofmemory;
 	strcpy(s, dest_dir);
-	strcat(s, path_sep);
+	strcat(s, PATH_SEPARATOR);
 	strcat(s, help_project_filename);
 	chm_hhp = fopen(s, "w");
 	if (!chm_hhp)

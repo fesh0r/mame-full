@@ -193,14 +193,14 @@ int audit_samples(int game, audit_record **audit)
 					char *fname;
 
 					/* attempt to access the file from the game driver name */
-					fname = assemble_4_strings(gamedrv->name, "/", intf->samplenames[sampnum], ".wav");
+					fname = assemble_4_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
 					filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 					free(fname);
 
 					/* attempt to access the file from the shared driver name */
 					if (filerr != FILERR_NONE && sharedname != NULL)
 					{
-						fname = assemble_4_strings(sharedname, "/", intf->samplenames[sampnum], ".wav");
+						fname = assemble_4_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
 						filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 						free(fname);
 					}
@@ -361,7 +361,7 @@ static int audit_one_rom(const rom_entry *rom, const game_driver *gamedrv, UINT3
 		char *fname;
 
 		/* open the file if we can */
-		fname = assemble_3_strings(drv->name, "/", ROM_GETNAME(rom));
+		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, ROM_GETNAME(rom));
 	    if (has_crc)
 			filerr = mame_fopen_crc(SEARCHPATH_ROM, fname, crc, OPEN_FLAG_READ, &file);
 		else
@@ -549,7 +549,7 @@ static chd_interface_file *audit_chd_open(const char *filename, const char *mode
 		mame_file *file;
 		char *fname;
 
-		fname = assemble_3_strings(drv->name, "/", filename);
+		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, filename);
 		filerr = mame_fopen(SEARCHPATH_IMAGE, fname, OPEN_FLAG_READ, &file);
 		free(fname);
 

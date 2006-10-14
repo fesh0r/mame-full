@@ -1287,13 +1287,13 @@ DEVICE_LOAD(wswan_cart)
 
 	ws_ram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0 );
 	memset( ws_ram, 0, 0xFFFF );
-	ROMBanks = mame_fsize( file ) / 65536;
+	ROMBanks = image_length( image ) / 65536;
 
 	for( ii = 0; ii < ROMBanks; ii++ )
 	{
 		if( (ROMMap[ii] = (UINT8 *)malloc( 0x10000 )) )
 		{
-			if( mame_fread( file, ROMMap[ii], 0x10000 ) != 0x10000 )
+			if( image_fread( image, ROMMap[ii], 0x10000 ) != 0x10000 )
 			{
 				logerror( "Error while reading loading rom!\n" );
 				return INIT_FAIL;

@@ -149,7 +149,7 @@ DEVICE_LOAD( smartmedia )
 
 	//mess_hd_get_hard_disk_file(image)
 
-	bytes_read = mame_fread(file, &custom_header, sizeof(custom_header));
+	bytes_read = image_fread(image, &custom_header, sizeof(custom_header));
 	if (bytes_read != sizeof(custom_header))
 	{
 		return INIT_FAIL;
@@ -176,9 +176,9 @@ DEVICE_LOAD( smartmedia )
 	smartmedia[id].pagereg = auto_malloc(smartmedia[id].page_total_size);
 	smartmedia[id].id[0] = smartmedia[id].id[1] = 0;
 
-	mame_fread(file, smartmedia[id].id, 2);
-	mame_fread(file, &smartmedia[id].mp_opcode, 1);
-	mame_fread(file, smartmedia[id].data_ptr, smartmedia[id].page_total_size*smartmedia[id].num_pages);
+	image_fread(image, smartmedia[id].id, 2);
+	image_fread(image, &smartmedia[id].mp_opcode, 1);
+	image_fread(image, smartmedia[id].data_ptr, smartmedia[id].page_total_size*smartmedia[id].num_pages);
 
 	return INIT_PASS;
 }

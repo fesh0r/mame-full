@@ -51,12 +51,12 @@ static int led;		// a.k.a. flag3
 static int pio_out_buffer;
 static int pio_in_buffer;
 
-static mame_file *pio_fp;
+static mess_image *pio_fp;
 static int pio_readable;
 static int pio_writable;
 static int pio_write = 1/*0*/;	// 1 if image is to be written to
 
-static mame_file *rs232_fp;
+static mess_image *rs232_fp;
 
 static const ti99_peb_card_handlers_t rs232_handlers =
 {
@@ -86,7 +86,7 @@ DEVICE_LOAD( ti99_4_pio )
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return INIT_FAIL;
 
-	pio_fp = file;
+	pio_fp = image;
 	/* tell whether the image is writable */
 	pio_readable = ! image_has_been_created(image);
 	/* tell whether the image is writable */
@@ -126,7 +126,7 @@ DEVICE_LOAD( ti99_4_rs232 )
 	if (id != 0)
 		return INIT_FAIL;
 
-	rs232_fp = file;
+	rs232_fp = image;
 
 	if (rs232_fp)
 	{
@@ -217,7 +217,7 @@ static void xmit_callback(int which, int data)
 	UINT8 buf = data;
 
 	if (rs232_fp)
-		mame_fwrite(rs232_fp, &buf, 1);
+		image_fwrite(rs232_fp, &buf, 1);
 }
 
 /*
@@ -309,7 +309,7 @@ static void rs232_cru_w(int offset, int data)
 					{	/* write data strobe */
 						/* write data and acknowledge */
 						UINT8 buf = pio_out_buffer;
-						if (mame_fwrite(pio_fp, &buf, 1))
+						if (image_fwrite(pio_fp, &buf, 1))
 							pio_handshakein = 1;
 					}
 					else
@@ -325,7 +325,7 @@ static void rs232_cru_w(int offset, int data)
 					{	/* receiver ready */
 						/* send data and strobe */
 						UINT8 buf;
-						if (mame_fread(pio_fp, &buf, 1))
+						if (image_fread(pio_fp, &buf, 1))
 							pio_in_buffer = buf;
 						pio_handshakein = 0;
 					}

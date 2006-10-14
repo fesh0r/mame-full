@@ -141,11 +141,11 @@ DEVICE_LOAD( a800_floppy )
 		memset(buff, 0, 256);
 		/* default to 720 sectors */
 		for( sector = 0; sector < 720; sector++ )
-			mame_fwrite(file, buff, 256);
-		mame_fseek(file, 0, SEEK_SET);
+			image_fwrite(image, buff, 256);
+		image_fseek(image, 0, SEEK_SET);
 	}
 
-	size = mame_fread(file, drv[id].image, MAXSIZE);
+	size = image_fread(image, drv[id].image, MAXSIZE);
 	if( size <= 0 )
 	{
 		drv[id].image = NULL;

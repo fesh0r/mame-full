@@ -20,7 +20,7 @@ static void dis_callback(int dummy);
 /* tape reader registers */
 typedef struct tape_reader_t
 {
-	mame_file *fd;	/* file descriptor of tape image */
+	mess_image *fd;	/* file descriptor of tape image */
 
 	int motor_on;	/* 1-bit reader motor on */
 
@@ -36,7 +36,7 @@ static tape_reader_t tape_reader;
 /* tape puncher registers */
 typedef struct tape_puncher_t
 {
-	mame_file *fd;	/* file descriptor of tape image */
+	mess_image *fd;	/* file descriptor of tape image */
 
 	mame_timer *timer;	/* timer to generate completion pulses */
 } tape_puncher_t;
@@ -47,7 +47,7 @@ static tape_puncher_t tape_puncher;
 /* typewriter registers */
 typedef struct typewriter_t
 {
-	mame_file *fd;	/* file descriptor of output image */
+	mess_image *fd;	/* file descriptor of output image */
 
 	mame_timer *prt_timer;/* timer to generate completion pulses */
 } typewriter_t;
@@ -63,7 +63,6 @@ static mame_timer *dis_timer;
 typedef struct magtape_t
 {
 	mess_image *img;		/* image descriptor */
-	mame_file *fd;			/* file descriptor */
 
 	enum
 	{
@@ -220,7 +219,7 @@ DEVICE_LOAD( tx0_tape )
 	{
 	case 0:
 		/* reader unit */
-		tape_reader.fd = file;
+		tape_reader.fd = image;
 
 		/* start motor */
 		tape_reader.motor_on = 1;
@@ -245,7 +244,7 @@ DEVICE_LOAD( tx0_tape )
 
 	case 1:
 		/* punch unit */
-		tape_puncher.fd = file;
+		tape_puncher.fd = image;
 		break;
 	}
 
@@ -281,7 +280,7 @@ DEVICE_UNLOAD( tx0_tape )
 */
 static int tape_read(UINT8 *reply)
 {
-	if (tape_reader.fd && (mame_fread(tape_reader.fd, reply, 1) == 1))
+	if (tape_reader.fd && (image_fread(tape_reader.fd, reply, 1) == 1))
 		return 0;	/* unit OK */
 	else
 		return 1;	/* unit not ready */
@@ -293,7 +292,7 @@ static int tape_read(UINT8 *reply)
 static void tape_write(UINT8 data)
 {
 	if (tape_puncher.fd)
-		mame_fwrite(tape_puncher.fd, & data, 1);
+		image_fwrite(tape_puncher.fd, & data, 1);
 }
 
 /*
@@ -435,7 +434,7 @@ void tx0_io_p7h(void)
 DEVICE_LOAD(tx0_typewriter)
 {
 	/* open file */
-	typewriter.fd = file;
+	typewriter.fd = image;
 
 	return INIT_PASS;
 }
@@ -452,7 +451,7 @@ static void typewriter_out(UINT8 data)
 {
 	tx0_typewriter_drawchar(data);
 	if (typewriter.fd)
-		mame_fwrite(typewriter.fd, & data, 1);
+		image_fwrite(typewriter.fd, & data, 1);
 }
 
 /*
@@ -575,7 +574,7 @@ DEVICE_INIT( tx0_magtape )
 */
 DEVICE_LOAD( tx0_magtape )
 {
-	magtape.fd = file;
+	magtape.img = image;
 
 	magtape.irg_pos = MTIRGP_END;
 
@@ -594,7 +593,7 @@ DEVICE_LOAD( tx0_magtape )
 
 DEVICE_UNLOAD( tx0_magtape )
 {
-	magtape.fd = NULL;
+	magtape.img = NULL;
 
 	if (magtape.timer)
 	{
@@ -642,7 +641,7 @@ static void magtape_callback(int dummy)
 
 				magtape.binary_flag = (mar & 020 >> 4);
 
-				if (magtape.fd)
+				if (magtape.img)
 					schedule_select();
 			}
 
@@ -687,21 +686,21 @@ static void magtape_callback(int dummy)
 		switch (magtape.command)
 		{
 		case 0:	/* backspace */
-			if (mame_ftell(magtape.fd) == 0)
+			if (image_ftell(magtape.img) == 0)
 			{	/* tape at ldp */
 				magtape.state = MTS_UNSELECTING;
 				cpunum_set_reg(0, TX0_PF, cpunum_get_reg(0, TX0_PF) | PF_RWC);
 				schedule_unselect();
 			}
-			else if (mame_fseek(magtape.fd, -1, SEEK_CUR))
+			else if (image_fseek(magtape.img, -1, SEEK_CUR))
 			{	/* eject tape */
 				image_unload(magtape.img);
 			}
-			else if (mame_fread(magtape.fd, &buf, 1) != 1)
+			else if (image_fread(magtape.img, &buf, 1) != 1)
 			{	/* eject tape */
 				image_unload(magtape.img);
 			}
-			else if (mame_fseek(magtape.fd, -1, SEEK_CUR))
+			else if (image_fseek(magtape.img, -1, SEEK_CUR))
 			{	/* eject tape */
 				image_unload(magtape.img);
 			}
@@ -795,15 +794,15 @@ static void magtape_callback(int dummy)
 			break;
 
 		case 1:	/* read */
-			if (mame_fread(magtape.fd, &buf, 1) != 1)
+			if (image_fread(magtape.img, &buf, 1) != 1)
 			{	/* I/O error or EOF? */
 				/* The MAME fileio layer makes it very hard to make the
 				difference...  MAME seems to assume that I/O errors never
 				happen, whereas it is really easy to cause one by
 				deconnecting an external drive the image is located on!!! */
 				UINT64 offs;
-				offs = mame_ftell(magtape.fd);
-				if (mame_fseek(magtape.fd, 0, SEEK_END) || (offs != mame_ftell(magtape.fd)))
+				offs = image_ftell(magtape.img);
+				if (image_fseek(magtape.img, 0, SEEK_END) || (offs != image_ftell(magtape.img)))
 				{	/* I/O error */
 					/* eject tape */
 					image_unload(magtape.img);
@@ -956,9 +955,9 @@ static void magtape_callback(int dummy)
 		case 2:	/* rewind */
 			magtape.state = MTS_UNSELECTING;
 			/* we rewind at 10*read speed (I don't know the real value) */
-			timer_adjust(magtape.timer, TIME_IN_USEC(6.6)*mame_ftell(magtape.fd), 0, 0.);
+			timer_adjust(magtape.timer, TIME_IN_USEC(6.6)*image_ftell(magtape.img), 0, 0.);
 			//schedule_unselect();
-			mame_fseek(magtape.fd, 0, SEEK_END);
+			image_fseek(magtape.img, 0, SEEK_END);
 			magtape.irg_pos = MTIRGP_END;
 			break;
 
@@ -1038,7 +1037,7 @@ static void magtape_callback(int dummy)
 			if (magtape.state != MTS_UNSELECTING)
 			{	/* write data word */
 				magtape.long_parity ^= buf;
-				if (mame_fwrite(magtape.fd, &buf, 1) != 1)
+				if (image_fwrite(magtape.img, &buf, 1) != 1)
 				{	/* I/O error */
 					/* eject tape */
 					image_unload(magtape.img);

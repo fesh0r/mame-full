@@ -40,14 +40,14 @@
 
 /* serial */
 extern int  thom_serial_init   ( mess_image* image );
-extern int  thom_serial_load   ( mess_image* image, mame_file* file );
+extern int  thom_serial_load   ( mess_image* image );
 extern void thom_serial_unload ( mess_image* image );
 
 
 /***************************** TO7 / T9000 *************************/
 
 /* cartridge bank-switching */
-extern int to7_cartridge_load ( mess_image* image, mame_file* file );
+extern int to7_cartridge_load ( mess_image* image );
 extern WRITE8_HANDLER ( to7_cartridge_w );
 
 extern MACHINE_START ( to7 );
@@ -71,7 +71,7 @@ extern READ8_HANDLER  ( mo5_gatearray_r );
 extern WRITE8_HANDLER ( mo5_gatearray_w );
 
 /* cartridge / extended RAM bank-switching */
-extern int mo5_cartridge_load ( mess_image* image, mame_file* file );
+extern int mo5_cartridge_load ( mess_image* image );
 extern WRITE8_HANDLER ( mo5_ext_w );
 extern WRITE8_HANDLER ( mo5_cartridge_w );
 

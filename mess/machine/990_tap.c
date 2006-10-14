@@ -40,7 +40,6 @@ static void update_interrupt(void);
 typedef struct tape_unit_t
 {
 	mess_image *img;		/* image descriptor */
-	mame_file *fd;			/* file descriptor */
 	unsigned int bot : 1;	/* TRUE if we are at the beginning of tape */
 	unsigned int eot : 1;	/* TRUE if we are at the end of tape */
 	unsigned int wp : 1;	/* TRUE if tape is write-protected */
@@ -120,7 +119,6 @@ DEVICE_INIT( ti990_tape )
 	memset(t, 0, sizeof(*t));
 
 	t->img = image;
-	t->fd = NULL;
 	t->wp = 1;
 	t->bot = 0;
 	t->eot = 0;
@@ -148,8 +146,6 @@ DEVICE_LOAD( ti990_tape )
 	t = &tpc.t[id];
 	memset(t, 0, sizeof(*t));
 
-	/* open file */
-	t->fd = file;
 	/* tell whether the image is writable */
 	t->wp = ! image_is_writable(image);
 
@@ -170,14 +166,9 @@ DEVICE_UNLOAD( ti990_tape )
 		return;
 
 	t = &tpc.t[id];
-
-	if (t->fd)
-	{
-		t->fd = NULL;
-		t->wp = 1;
-		t->bot = 0;
-		t->eot = 0;
-	}
+	t->wp = 1;
+	t->bot = 0;
+	t->eot = 0;
 }
 
 /*
@@ -266,7 +257,7 @@ static void cmd_read_binary_forward(void)
 		update_interrupt();
 		return;
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
@@ -289,7 +280,7 @@ static void cmd_read_binary_forward(void)
 	char_count = tpc.w[4];
 	read_offset = tpc.w[3];
 
-	bytes_read = mame_fread(tpc.t[tap_sel].fd, buffer, 4);
+	bytes_read = image_fread(tpc.t[tap_sel].img, buffer, 4);
 	if (bytes_read != 4)
 	{
 		if (bytes_read == 0)
@@ -342,7 +333,7 @@ static void cmd_read_binary_forward(void)
 	/* skip up to read_offset bytes */
 	chunk_len = (read_offset > rec_count) ? rec_count : read_offset;
 
-	if (mame_fseek(tpc.t[tap_sel].fd, chunk_len, SEEK_CUR))
+	if (image_fseek(tpc.t[tap_sel].img, chunk_len, SEEK_CUR))
 	{	/* eject tape */
 		logerror("Tape error\n");
 		image_unload(tpc.t[tap_sel].img);
@@ -368,7 +359,7 @@ static void cmd_read_binary_forward(void)
 	for (; chunk_len>0; )
 	{
 		bytes_to_read = (chunk_len < sizeof(buffer)) ? chunk_len : sizeof(buffer);
-		bytes_read = mame_fread(tpc.t[tap_sel].fd, buffer, bytes_to_read);
+		bytes_read = image_fread(tpc.t[tap_sel].img, buffer, bytes_to_read);
 
 		if (bytes_read & 1)
 		{
@@ -407,7 +398,7 @@ static void cmd_read_binary_forward(void)
 
 	if (rec_count)
 	{	/* skip end of record */
-		if (mame_fseek(tpc.t[tap_sel].fd, rec_count, SEEK_CUR))
+		if (image_fseek(tpc.t[tap_sel].img, rec_count, SEEK_CUR))
 		{	/* eject tape */
 			logerror("Tape error\n");
 			image_unload(tpc.t[tap_sel].img);
@@ -419,7 +410,7 @@ static void cmd_read_binary_forward(void)
 	}
 
 skip_trailer:
-	if (mame_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+	if (image_fread(tpc.t[tap_sel].img, buffer, 4) != 4)
 	{	/* eject tape */
 		logerror("Tape error\n");
 		image_unload(tpc.t[tap_sel].img);
@@ -485,7 +476,7 @@ static void cmd_record_skip_forward(void)
 		update_interrupt();
 		return;
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
@@ -509,7 +500,7 @@ static void cmd_record_skip_forward(void)
 
 	while (record_count > 0)
 	{
-		bytes_read = mame_fread(tpc.t[tap_sel].fd, buffer, 4);
+		bytes_read = image_fread(tpc.t[tap_sel].img, buffer, 4);
 		if (bytes_read != 4)
 		{
 			if (bytes_read == 0)
@@ -554,7 +545,7 @@ static void cmd_record_skip_forward(void)
 		}
 
 		/* skip record data */
-		if (mame_fseek(tpc.t[tap_sel].fd, reclen, SEEK_CUR))
+		if (image_fseek(tpc.t[tap_sel].img, reclen, SEEK_CUR))
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -563,7 +554,7 @@ static void cmd_record_skip_forward(void)
 			goto update_registers;
 		}
 
-		if (mame_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+		if (image_fread(tpc.t[tap_sel].img, buffer, 4) != 4)
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -622,7 +613,7 @@ static void cmd_record_skip_reverse(void)
 		update_interrupt();
 		return;
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
@@ -646,7 +637,7 @@ static void cmd_record_skip_reverse(void)
 
 	while (record_count > 0)
 	{
-		if (mame_ftell(tpc.t[tap_sel].fd) == 0)
+		if (image_ftell(tpc.t[tap_sel].img) == 0)
 		{	/* bot */
 			tpc.t[tap_sel].bot = 1;
 			tpc.w[0] |= w0_BOT;
@@ -654,7 +645,7 @@ static void cmd_record_skip_reverse(void)
 			update_interrupt();
 			goto update_registers;
 		}
-		if (mame_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+		if (image_fseek(tpc.t[tap_sel].img, -4, SEEK_CUR))
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -662,7 +653,7 @@ static void cmd_record_skip_reverse(void)
 			update_interrupt();
 			goto update_registers;
 		}
-		bytes_read = mame_fread(tpc.t[tap_sel].fd, buffer, 4);
+		bytes_read = image_fread(tpc.t[tap_sel].img, buffer, 4);
 		if (bytes_read != 4)
 		{
 			/* illegitimate EOF */
@@ -690,7 +681,7 @@ static void cmd_record_skip_reverse(void)
 		if (reclen == 0)
 		{
 			logerror("record skip reverse: found EOF\n");
-			if (mame_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+			if (image_fseek(tpc.t[tap_sel].img, -4, SEEK_CUR))
 			{	/* eject tape */
 				image_unload(tpc.t[tap_sel].img);
 				tpc.w[0] |= w0_offline;
@@ -704,7 +695,7 @@ static void cmd_record_skip_reverse(void)
 			goto update_registers;
 		}
 
-		if (mame_fseek(tpc.t[tap_sel].fd, -reclen-8, SEEK_CUR))
+		if (image_fseek(tpc.t[tap_sel].img, -reclen-8, SEEK_CUR))
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -713,7 +704,7 @@ static void cmd_record_skip_reverse(void)
 			goto update_registers;
 		}
 
-		if (mame_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+		if (image_fread(tpc.t[tap_sel].img, buffer, 4) != 4)
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -740,7 +731,7 @@ static void cmd_record_skip_reverse(void)
 			goto update_registers;
 		}
 
-		if (mame_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+		if (image_fseek(tpc.t[tap_sel].img, -4, SEEK_CUR))
 		{	/* eject tape */
 			image_unload(tpc.t[tap_sel].img);
 			tpc.w[0] |= w0_offline;
@@ -773,7 +764,7 @@ static void cmd_rewind(void)
 		update_interrupt();
 		return;
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
@@ -792,7 +783,7 @@ static void cmd_rewind(void)
 
 	tpc.t[tap_sel].eot = 0;
 
-	if (mame_fseek(tpc.t[tap_sel].fd, 0, SEEK_SET))
+	if (image_fseek(tpc.t[tap_sel].img, 0, SEEK_SET))
 	{	/* eject tape */
 		image_unload(tpc.t[tap_sel].img);
 		tpc.w[0] |= w0_offline;
@@ -820,7 +811,7 @@ static void cmd_rewind_and_offline(void)
 		update_interrupt();
 		return;
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
@@ -857,7 +848,7 @@ static void read_transport_status(void)
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 	}
-	else if (! tpc.t[tap_sel].fd)
+	else if (! image_exists(tpc.t[tap_sel].img))
 	{	/* offline */
 		tpc.w[0] |= w0_offline;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;

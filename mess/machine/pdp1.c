@@ -78,7 +78,7 @@ enum
 /* tape reader registers */
 typedef struct tape_reader_t
 {
-	mame_file *fd;	/* file descriptor of tape image */
+	mess_image *fd;	/* file descriptor of tape image */
 
 	int motor_on;	/* 1-bit reader motor on */
 
@@ -97,7 +97,7 @@ static tape_reader_t tape_reader;
 /* tape puncher registers */
 typedef struct tape_puncher_t
 {
-	mame_file *fd;	/* file descriptor of tape image */
+	mess_image *fd;	/* file descriptor of tape image */
 
 	mame_timer *timer;	/* timer to generate completion pulses */
 } tape_puncher_t;
@@ -108,7 +108,7 @@ static tape_puncher_t tape_puncher;
 /* typewriter registers */
 typedef struct typewriter_t
 {
-	mame_file *fd;	/* file descriptor of output image */
+	mess_image *fd;	/* file descriptor of output image */
 
 	int tb;			/* typewriter buffer */
 
@@ -128,7 +128,7 @@ static lightpen_t lightpen;
 /* MIT parallel drum (mostly similar to type 23) */
 typedef struct parallel_drum_t
 {
-	mame_file *fd;	/* file descriptor of drum image */
+	mess_image *fd;	/* file descriptor of drum image */
 
 	int il;			/* initial location (12-bit) */
 	int wc;			/* word counter (12-bit) */
@@ -393,7 +393,7 @@ DEVICE_LOAD( pdp1_tape )
 	{
 	case 0:
 		/* reader unit */
-		tape_reader.fd = file;
+		tape_reader.fd = image;
 
 		/* start motor */
 		tape_reader.motor_on = 1;
@@ -418,7 +418,7 @@ DEVICE_LOAD( pdp1_tape )
 
 	case 1:
 		/* punch unit */
-		tape_puncher.fd = file;
+		tape_puncher.fd = image;
 		break;
 	}
 
@@ -454,7 +454,7 @@ DEVICE_UNLOAD( pdp1_tape )
 */
 static int tape_read(UINT8 *reply)
 {
-	if (tape_reader.fd && (mame_fread(tape_reader.fd, reply, 1) == 1))
+	if (tape_reader.fd && (image_fread(tape_reader.fd, reply, 1) == 1))
 		return 0;	/* unit OK */
 	else
 		return 1;	/* unit not ready */
@@ -466,7 +466,7 @@ static int tape_read(UINT8 *reply)
 static void tape_write(UINT8 data)
 {
 	if (tape_puncher.fd)
-		mame_fwrite(tape_puncher.fd, & data, 1);
+		image_fwrite(tape_puncher.fd, & data, 1);
 }
 
 /*
@@ -726,7 +726,7 @@ void iot_ppb(int op2, int nac, int mb, int *io, int ac)
 DEVICE_LOAD(pdp1_typewriter)
 {
 	/* open file */
-	typewriter.fd = file;
+	typewriter.fd = image;
 
 	io_status |= io_st_tyo;
 
@@ -749,7 +749,7 @@ static void typewriter_out(UINT8 data)
 	pdp1_typewriter_drawchar(data);
 	if (typewriter.fd)
 #if 1
-		mame_fwrite(typewriter.fd, & data, 1);
+		image_fwrite(typewriter.fd, & data, 1);
 #else
 	{
 		static const char ascii_table[2][64] =
@@ -802,7 +802,7 @@ static void typewriter_out(UINT8 data)
 			//color = color_typewriter_black;
 			{
 				static char black[5] = { '\033', '[', '3', '0', 'm' };
-				mame_fwrite(typewriter.fd, black, sizeof(black));
+				image_fwrite(typewriter.fd, black, sizeof(black));
 			}
 			break;
 
@@ -811,7 +811,7 @@ static void typewriter_out(UINT8 data)
 			//color = color_typewriter_red;
 			{
 				static char red[5] = { '\033', '[', '3', '1', 'm' };
-				mame_fwrite(typewriter.fd, red, sizeof(red));
+				image_fwrite(typewriter.fd, red, sizeof(red));
 			}
 			break;
 
@@ -829,7 +829,7 @@ static void typewriter_out(UINT8 data)
 			/* Carriage Return */
 			{
 				static char line_end[2] = { '\r', '\n' };
-				mame_fwrite(typewriter.fd, line_end, sizeof(line_end));
+				image_fwrite(typewriter.fd, line_end, sizeof(line_end));
 			}
 			break;
 
@@ -838,7 +838,7 @@ static void typewriter_out(UINT8 data)
 
 			if ((data != 040) && (data != 056))	/* 040 and 056 are non-spacing characters: don't try to print right now */
 				/* print character (lookup ASCII equivalent in table) */
-				mame_fwrite(typewriter.fd, & ascii_table[case_shift][data], 1);
+				image_fwrite(typewriter.fd, & ascii_table[case_shift][data], 1);
 
 			break;
 		}
@@ -1058,7 +1058,7 @@ static void parallel_drum_init(void)
 DEVICE_LOAD(pdp1_drum)
 {
 	/* open file */
-	parallel_drum.fd = file;
+	parallel_drum.fd = image;
 
 	return INIT_PASS;
 }
@@ -1092,7 +1092,7 @@ static UINT32 drum_read(int field, int position)
 	int offset = (field*4096+position)*3;
 	UINT8 buf[3];
 
-	if (parallel_drum.fd && (!mame_fseek(parallel_drum.fd, offset, SEEK_SET)) && (mame_fread(parallel_drum.fd, buf, 3) == 3))
+	if (parallel_drum.fd && (!image_fseek(parallel_drum.fd, offset, SEEK_SET)) && (image_fread(parallel_drum.fd, buf, 3) == 3))
 		return ((buf[0] << 16) | (buf[1] << 8) | buf[2]) & 0777777;
 
 	return 0;
@@ -1112,8 +1112,8 @@ static void drum_write(int field, int position, UINT32 data)
 		buf[1] = data >> 8;
 		buf[2] = data;
 
-		mame_fseek(parallel_drum.fd, offset, SEEK_SET);
-		mame_fwrite(parallel_drum.fd, buf, 3);
+		image_fseek(parallel_drum.fd, offset, SEEK_SET);
+		image_fwrite(parallel_drum.fd, buf, 3);
 	}
 }
 

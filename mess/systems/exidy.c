@@ -97,9 +97,9 @@
 #include "image.h"
 #include "inputx.h"
 
-static int device_load_exidy_floppy(mess_image *image, mame_file *file)
+static int device_load_exidy_floppy(mess_image *image)
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		/* not correct */
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);

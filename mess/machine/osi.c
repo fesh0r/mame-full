@@ -52,9 +52,9 @@ DRIVER_INIT( sb2m600 )
 DEVICE_LOAD( sb2m600_cassette )
 {
 	sb2m600_tape_image = (UINT8 *)image_malloc(image, sb2m600_tape_size);
-	sb2m600_tape_size = mame_fsize(file);
+	sb2m600_tape_size = image_length(image);
 
-	if (!sb2m600_tape_image || (mame_fread(file, sb2m600_tape_image, sb2m600_tape_size) != sb2m600_tape_size))
+	if (!sb2m600_tape_image || (image_fread(image, sb2m600_tape_image, sb2m600_tape_size) != sb2m600_tape_size))
 	{
 		return INIT_FAIL;
 	}

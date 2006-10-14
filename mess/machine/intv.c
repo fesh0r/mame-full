@@ -316,7 +316,7 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-static int intv_load_rom_file(mess_image *image, mame_file *romfile, int required)
+static int intv_load_rom_file(mess_image *image, int required)
 {
     int i;
 
@@ -333,26 +333,15 @@ static int intv_load_rom_file(mess_image *image, mame_file *romfile, int require
 
 	UINT8 *memory = memory_region(REGION_CPU1);
 
-	if (romfile == NULL)
-	{
-		if (required)
-		{
-			printf("intv requires cartridge!\n");
-			return INIT_FAIL;
-		}
-		else
-			printf("intvkbd legacy cartridge slot empty - ok\n");
-	}
-
-	mame_fread(romfile,&temp,1);			/* header */
+	image_fread(image, &temp,1);			/* header */
 	if (temp != 0xa8)
 	{
 		return INIT_FAIL;
 	}
 
-	mame_fread(romfile,&num_segments,1);
+	image_fread(image, &num_segments,1);
 
-	mame_fread(romfile,&temp,1);
+	image_fread(image, &temp,1);
 	if (temp != (num_segments ^ 0xff))
 	{
 		return INIT_FAIL;
@@ -360,28 +349,28 @@ static int intv_load_rom_file(mess_image *image, mame_file *romfile, int require
 
 	for(i=0;i<num_segments;i++)
 	{
-		mame_fread(romfile,&start_seg,1);
+		image_fread(image,&start_seg,1);
 		current_address = start_seg*0x100;
 
-		mame_fread(romfile,&end_seg,1);
+		image_fread(image,&end_seg,1);
 		end_address = end_seg*0x100 + 0xff;
 
 		while(current_address <= end_address)
 		{
-			mame_fread(romfile,&low_byte,1);
+			image_fread(image,&low_byte,1);
 			memory[(current_address<<1)+1] = low_byte;
-			mame_fread(romfile,&high_byte,1);
+			image_fread(image,&high_byte,1);
 			memory[current_address<<1] = high_byte;
 			current_address++;
 		}
 
-		mame_fread(romfile,&temp,1);
-		mame_fread(romfile,&temp,1);
+		image_fread(image,&temp,1);
+		image_fread(image,&temp,1);
 	}
 
 	for(i=0;i<(16+32+2);i++)
 	{
-		mame_fread(romfile,&temp,1);
+		image_fread(image,&temp,1);
 	}
 	return INIT_PASS;
 }
@@ -416,7 +405,7 @@ DEVICE_LOAD( intv_cart )
 	memory[0x7000<<1] = 0xff;
 	memory[(0x7000<<1)+1] = 0xff;
 
-	return intv_load_rom_file(image, file, 1);
+	return intv_load_rom_file(image, 1);
 }
 
 DRIVER_INIT( intv )
@@ -508,21 +497,15 @@ DEVICE_LOAD( intvkbd_cart )
 		memory[0x4800<<1] = 0xff;
 		memory[(0x4800<<1)+1] = 0xff;
 
-		intv_load_rom_file(image, file, 0);
+		intv_load_rom_file(image, 0);
 	}
 
 	if (id == 1) /* Keyboard component cartridge slot */
 	{
 		UINT8 *memory = memory_region(REGION_CPU2);
 
-		if (file == NULL)
-		{
-			logerror("intvkbd cartridge slot empty - ok\n");
-			return INIT_PASS;
-		}
-
 		/* Assume an 8K cart, like BASIC */
-		mame_fread(file,&memory[0xe000],0x2000);
+		image_fread(image,&memory[0xe000],0x2000);
 	}
 
 	return INIT_PASS;

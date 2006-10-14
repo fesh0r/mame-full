@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [APPLE2] Fixed stray C06x reads [Chad]
 
+- [CPSCHNGR] Fixed regression introduced in 0.109.  [Dr. Zer0]
+
 
 
 User Interface Changes:
@@ -30,8 +32,14 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.109u1.  This incorporates all features of the
+- The core is based on MAME 0.109u2.  This incorporates all features of the
   update to this core.  [MAME team]
+
+- All image file accessing is now done through image.h, rather than using
+  mame_file objects.  [Nate Woods]
+
+- Introduced an image_ptr() call, which returns a pointer to all image data
+  valid for the lifetime of the image.  [Nate Woods]
 
 
 

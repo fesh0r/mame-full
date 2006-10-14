@@ -18,7 +18,7 @@ typedef struct {
 	int dir;
 	int wprot;
 	int disk_changed;
-	mame_file *f;
+	mess_image *f;
 	int cyl;
 	unsigned char mfm[544*2*11];
 	int	cached;
@@ -59,7 +59,7 @@ static DEVICE_LOAD(amiga_fdc)
 	int id = image_index_in_device(image);
 
 	fdc_status[id].disk_changed = 1;
-	fdc_status[id].f = file;
+	fdc_status[id].f = image;
 	fdc_status[id].disk_changed = 0;
 
 	fdc_sel = 0x0f;
@@ -247,13 +247,13 @@ static void setup_fdc_buffer( int drive )
 	if ( fdc_status[drive].cached == offset )
 		return;
 
-	if ( mame_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
-		logerror("FDC: mame_fseek failed!\n" );
+	if ( image_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
+		logerror("FDC: image_fseek failed!\n" );
 		fdc_status[drive].f = NULL;
 		fdc_status[drive].disk_changed = 1;
 	}
 
-	mame_fread( fdc_status[drive].f, temp_cyl, len );
+	image_fread( fdc_status[drive].f, temp_cyl, len );
 
 	for ( sector = 0; sector < 11; sector++ ) {
 		unsigned char secbuf[544];

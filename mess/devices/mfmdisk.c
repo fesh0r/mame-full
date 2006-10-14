@@ -303,20 +303,12 @@ int	mfm_disk_id(int id)
 
 
 /* load image */
-int device_load_mfm_disk(mess_image *image, mame_file *file)
+int device_load_mfm_disk(mess_image *image)
 {
-	UINT64 datasize;
 	struct mfm_disk_info *pDisk = get_disk(image);
 
-	datasize = mame_fsize(file);
-	if (datasize <= 0)
-		return INIT_FAIL;
-
-	pDisk->pData = image_malloc(image, datasize);
+	pDisk->pData = image_ptr(image);
 	if (!pDisk->pData)
-		return INIT_FAIL;
-
-	if (mame_fread(file, pDisk->pData, datasize) != datasize)
 		return INIT_FAIL;
 
 	pDisk->NumTracks = mfm_get_long(&pDisk->pData[12]);

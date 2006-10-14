@@ -121,21 +121,15 @@ static void device_exit_cbm_drive(mess_image *image)
 
 
 /* open an d64 image */
-static int device_load_cbm_drive(mess_image *image, mame_file *file)
+static int device_load_cbm_drive(mess_image *image)
 {
-	int size;
 	int id = image_index_in_device(image);
 
 	cbm_drive[id].drive = 0;
 	cbm_drive[id].image = NULL;
 
-	size = mame_fsize(file);
-
-	cbm_drive[id].image = (UINT8*) image_malloc(image, size);
+	cbm_drive[id].image = image_ptr(image);
 	if (!cbm_drive[id].image)
-		return INIT_FAIL;
-
-	if (size != mame_fread (file, cbm_drive[id].image, size))
 		return INIT_FAIL;
 
 	cbm_drive[id].drive = D64_IMAGE;

@@ -73,7 +73,7 @@ static int ide_hd_init(mess_image *image)
 	ide_hd_load - Load an IDE hard disk image
 -------------------------------------------------*/
 
-static int ide_hd_load(mess_image *image, mame_file *file)
+static int ide_hd_load(mess_image *image)
 {
 	int result, which_bus, which_address;
 	struct ide_interface *intf;
@@ -83,7 +83,7 @@ static int ide_hd_load(mess_image *image, mame_file *file)
 	ide_get_params(image, &which_bus, &which_address, &intf, NULL, &parent_load, NULL);
 
 	/* call the parent load function */
-	result = parent_load(image, file);
+	result = parent_load(image);
 	if (result != INIT_PASS)
 		return result;
 

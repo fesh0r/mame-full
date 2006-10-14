@@ -129,7 +129,7 @@ static DEVICE_LOAD(n64_cart)
 	int i, length;
 	UINT8 *cart = memory_region(REGION_USER2);
 	
-	length = mame_fread(file, cart, 0x4000000);
+	length = image_fread(image, cart, 0x4000000);
 	
 	if (cart[0] == 0x37 && cart[1] == 0x80)
 	{

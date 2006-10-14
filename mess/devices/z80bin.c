@@ -19,15 +19,15 @@ static QUICKLOAD_LOAD( z80bin )
 	UINT16 start_addr, end_addr, exec_addr, i;
 	UINT8 data;
 
-	mame_fseek(fp, 7, SEEK_SET);
+	image_fseek(image, 7, SEEK_SET);
 
-	while((ch = mame_fgetc(fp)) != 0x1A)
+	while((ch = image_fgetc(image)) != 0x1A)
 	{
 		if (ch == EOF)
 			return INIT_FAIL;
 	}
 
-	if (mame_fread(fp, args, sizeof(args)) != sizeof(args))
+	if (image_fread(image, args, sizeof(args)) != sizeof(args))
 		return INIT_FAIL;
 
 	exec_addr	= LITTLE_ENDIANIZE_INT16(args[0]);
@@ -36,7 +36,7 @@ static QUICKLOAD_LOAD( z80bin )
 
 	for (i = start_addr; i <= end_addr; i++)
 	{
-		if (mame_fread(fp, &data, 1) != 1)
+		if (image_fread(image, &data, 1) != 1)
 			return INIT_FAIL;
 		program_write_byte(i, data);
 	}

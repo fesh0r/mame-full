@@ -367,7 +367,7 @@ DEVICE_LOAD(nes_cart)
 
 	/* Verify the file is in iNES format */
 	memset(magic, '\0', sizeof(magic));
-	mame_fread (file, magic, 4);
+	image_fread(image, magic, 4);
 
 	if ((magic[0] != 'N') ||
 		(magic[1] != 'E') ||
@@ -397,12 +397,12 @@ DEVICE_LOAD(nes_cart)
 	{
 		// image_extrainfo() resets the file position back to start.
 		// Let's skip past the magic header once again.
-		mame_fseek (file, 4, SEEK_SET);
+		image_fseek (image, 4, SEEK_SET);
 
-		mame_fread (file, &nes.prg_chunks, 1);
-		mame_fread (file, &nes.chr_chunks, 1);
+		image_fread (image, &nes.prg_chunks, 1);
+		image_fread (image, &nes.chr_chunks, 1);
 		/* Read the first ROM option byte (offset 6) */
-		mame_fread (file, &m, 1);
+		image_fread (image, &m, 1);
 
 		/* Interpret the iNES header flags */
 		nes.mapper = (m & 0xf0) >> 4;
@@ -410,10 +410,10 @@ DEVICE_LOAD(nes_cart)
 
 
 		/* Read the second ROM option byte (offset 7) */
-		mame_fread (file, &m, 1);
+		image_fread (image, &m, 1);
 
 		/* Check for skanky headers */
-		mame_fread (file, &skank, 8);
+		image_fread (image, &skank, 8);
 
 		/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
 		/* We only check the first 4 unused bytes for now */
@@ -455,23 +455,23 @@ DEVICE_LOAD(nes_cart)
 	nes.wram = memory_region(REGION_USER1);
 
 	/* Position past the header */
-	mame_fseek (file, 16, SEEK_SET);
+	image_fseek (image, 16, SEEK_SET);
 
 	/* Load the 0x200 byte trainer at 0x7000 if it exists */
 	if (nes.trainer)
 	{
-		mame_fread (file, &nes.wram[0x1000], 0x200);
+		image_fread (image, &nes.wram[0x1000], 0x200);
 	}
 
 	/* Read in the program chunks */
 	if (nes.prg_chunks == 1)
 	{
-		mame_fread (file, &nes.rom[0x14000], 0x4000);
+		image_fread (image, &nes.rom[0x14000], 0x4000);
 		/* Mirror this bank into $8000 */
 		memcpy (&nes.rom[0x10000], &nes.rom [0x14000], 0x4000);
 	}
 	else
-		mame_fread (file, &nes.rom[0x10000], 0x4000 * nes.prg_chunks);
+		image_fread (image, &nes.rom[0x10000], 0x4000 * nes.prg_chunks);
 
 #ifdef SPLIT_PRG
 {
@@ -498,7 +498,7 @@ DEVICE_LOAD(nes_cart)
 	/* Read in any chr chunks */
 	if (nes.chr_chunks > 0)
 	{
-		mame_fread (file, nes.vrom, nes.chr_chunks * 0x2000);
+		image_fread (image, nes.vrom, nes.chr_chunks * 0x2000);
 		if (nes.mapper == 2)
 			logerror("Warning: VROM has been found in VRAM-based mapper. Either the mapper is set wrong or the ROM image is incorrect.\n");
 	}
@@ -535,17 +535,17 @@ DEVICE_LOAD(nes_disk)
 	unsigned char magic[4];
 
 	/* See if it has a fucking redundant header on it */
-	mame_fread (file, magic, 4);
+	image_fread(image, magic, 4);
 	if ((magic[0] == 'F') &&
 		(magic[1] == 'D') &&
 		(magic[2] == 'S'))
 	{
 		/* Skip past the fucking redundant header */
-		mame_fseek (file, 0x10, SEEK_SET);
+		image_fseek (image, 0x10, SEEK_SET);
 	}
 	else
 		/* otherwise, point to the start of the image */
-		mame_fseek (file, 0, SEEK_SET);
+		image_fseek (image, 0, SEEK_SET);
 
 	/* clear some of the cart variables we don't use */
 	nes.trainer = 0;
@@ -560,13 +560,13 @@ DEVICE_LOAD(nes_disk)
 	nes_fds.data = NULL;
 
 	/* read in all the sides */
-	while (!mame_feof (file))
+	while (!image_feof (image))
 	{
 		nes_fds.sides ++;
 		nes_fds.data = image_realloc(image, nes_fds.data, nes_fds.sides * 65500);
 		if (!nes_fds.data)
 			return INIT_FAIL;
-		mame_fread (file, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
+		image_fread (image, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
 	}
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);

@@ -215,7 +215,7 @@ static int genesis_verify_cart(unsigned char *temp,unsigned int len)
 	return retval;
 }
 
-int device_load_genesis_cart(mess_image *image, mame_file *file)
+int device_load_genesis_cart(mess_image *image)
 {
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;
@@ -230,7 +230,7 @@ int device_load_genesis_cart(mess_image *image, mame_file *file)
 
 //	genesis_soundram = memory_region(REGION_CPU2);
 
-    length = mame_fread(file, rawROM + 0x2000, 0x400200);
+    length = image_fread(image, rawROM + 0x2000, 0x400200);
 	logerror("image length = 0x%x\n", length);
 
 	if (length < 1024 + 512)

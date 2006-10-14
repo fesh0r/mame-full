@@ -607,7 +607,7 @@ MACHINE_RESET( vc20 )
 	via_0_ca1_w (0, vc20_via0_read_ca1(0) );
 }
 
-static int vc20_rom_id(mess_image *img, mame_file *romfile)
+static int vc20_rom_id(mess_image *image)
 {
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
@@ -615,17 +615,17 @@ static int vc20_rom_id(mess_image *img, mame_file *romfile)
 	const char *cp;
 	int retval;
 
-	logerror("vc20_rom_id %s\n", image_filename(img));
+	logerror("vc20_rom_id %s\n", image_filename(image));
 
 	retval = 0;
 
-	mame_fseek (romfile, 4, SEEK_SET);
-	mame_fread (romfile, buffer, sizeof (magic));
+	image_fseek (image, 4, SEEK_SET);
+	image_fread (image, buffer, sizeof (magic));
 
 	if (!memcmp (buffer, magic, sizeof (magic)))
 		retval = 1;
 
-	cp = image_filetype(img);
+	cp = image_filetype(image);
 	if (cp)
 	{
 		if ((mame_stricmp (cp, "a0") == 0)
@@ -639,9 +639,9 @@ static int vc20_rom_id(mess_image *img, mame_file *romfile)
 	}
 
 		if (retval)
-			logerror("rom %s recognized\n", image_filename(img));
+			logerror("rom %s recognized\n", image_filename(image));
 		else
-			logerror("rom %s not recognized\n", image_filename(img));
+			logerror("rom %s not recognized\n", image_filename(image));
 
 	return retval;
 }
@@ -659,11 +659,11 @@ DEVICE_LOAD(vc20_rom)
 	const char *cp;
 	int addr = 0;
 
-	if (!vc20_rom_id(image, file))
+	if (!vc20_rom_id(image))
 		return 1;
-	mame_fseek (file, 0, SEEK_SET);
+	image_fseek(image, 0, SEEK_SET);
 
-	size = mame_fsize (file);
+	size = image_length(image);
 
 	cp = image_filetype(image);
 	if (cp)
@@ -692,7 +692,7 @@ DEVICE_LOAD(vc20_rom)
 			{
 				unsigned short in;
 
-				mame_fread(file, &in, 2);
+				image_fread(image, &in, 2);
 				in = LITTLE_ENDIANIZE_INT16(in);
 				logerror("rom prg %.4x\n", in);
 				addr = in;
@@ -713,7 +713,7 @@ DEVICE_LOAD(vc20_rom)
 	}
 
 	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(image), addr, size);
-	read_ = mame_fread (file, mem + addr, size);
+	read_ = image_fread(image, mem + addr, size);
 	if (read_ != size)
 		return 1;
 	return 0;

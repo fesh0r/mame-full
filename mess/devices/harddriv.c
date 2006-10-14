@@ -177,12 +177,12 @@ static chd_interface mess_hard_disk_interface =
 static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
 	mame_file_error filerr;
-	mame_file *file;
 	mess_image *img = decode_image_ref(filename);
 
 	/* used when experimenting with CHDs */
 	if (USE_CHD_OPEN && !img)
 	{
+		mame_file *file;
 		filerr = mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ, &file);
 		return (chd_interface_file *) file;
 	}
@@ -195,7 +195,7 @@ static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (chd_interface_file *) image_fp(img);
+	return (chd_interface_file *) img;
 }
 
 
@@ -323,14 +323,14 @@ error:
 
 
 
-int device_load_mess_hd(mess_image *image, mame_file *file)
+int device_load_mess_hd(mess_image *image)
 {
 	return internal_load_mess_hd(image, NULL);
 }
 
 
 
-static int device_create_mess_hd(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
+static int device_create_mess_hd(mess_image *image, int create_format, option_resolution *create_args)
 {
 	int err;
 	char metadata[256];

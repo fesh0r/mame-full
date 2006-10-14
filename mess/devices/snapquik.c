@@ -15,7 +15,6 @@ struct snapquick_info
 {
 	const struct IODevice *dev;
 	mess_image *img;
-	mame_file *fp;
 	int file_size;
 	struct snapquick_info *next;
 };
@@ -33,20 +32,20 @@ static void snapquick_processsnapshot(int arg)
 	si = (struct snapquick_info *) arg;
 	loadproc = (snapquick_loadproc) device_get_info_fct(&si->dev->devclass, DEVINFO_PTR_SNAPSHOT_LOAD);
 	file_type = image_filetype(si->img);
-	loadproc(si->fp, file_type, si->file_size);
+	loadproc(si->img, file_type, si->file_size);
 	image_unload(si->img);
 }
 
 
 
-static int device_load_snapquick(mess_image *image, mame_file *file)
+static int device_load_snapquick(mess_image *image)
 {
 	const struct IODevice *dev;
 	struct snapquick_info *si;
 	double delay;
 	int file_size;
 
-	file_size = mame_fsize(file);
+	file_size = image_length(image);
 	if (file_size <= 0)
 		return INIT_FAIL;
 
@@ -59,7 +58,6 @@ static int device_load_snapquick(mess_image *image, mame_file *file)
 
 	si->dev = dev;
 	si->img = image;
-	si->fp = file;
 	si->file_size = file_size;
 	si->next = snapquick_infolist;
 	snapquick_infolist = si;

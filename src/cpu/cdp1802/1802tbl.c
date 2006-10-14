@@ -212,26 +212,26 @@ INLINE UINT16 cdp1802_read_operand_word(void)
 	return a;
 }
 
-INLINE void cdp1802_long_branch(bool flag)
+INLINE void cdp1802_long_branch(int flag)
 {
 	UINT16 new = cdp1802_read_operand_word();
 	if (flag) PC = new;
 }
 
-INLINE void cdp1802_long_skip(bool flag)
+INLINE void cdp1802_long_skip(int flag)
 {
 	if (flag) PC += 2;
 }
 
-INLINE void cdp1802_short_branch(bool flag)
+INLINE void cdp1802_short_branch(int flag)
 {
 	UINT8 new = cpu_readop(PC++);
 	if (flag) R0(P) = new;
 }
 
-INLINE void cdp1802_short_branch_ef(bool flag, int mask)
+INLINE void cdp1802_short_branch_ef(int flag, int mask)
 {
-	bool b = 0;
+	int b = 0;
 	UINT8 new = cpu_readop(PC++);
 
 	if (cdp1802.config && cdp1802.config->in_ef)
@@ -240,7 +240,7 @@ INLINE void cdp1802_short_branch_ef(bool flag, int mask)
 	if (flag == b) R0(P) = new;
 }
 
-INLINE void cdp1802_q(bool level)
+INLINE void cdp1802_q(int level)
 {
 	Q = level;
 
@@ -274,7 +274,7 @@ INLINE void cdp1802_in_n(int n)
 static void cdp1802_instruction(void)
 {
 	int oper;
-	bool b;
+	int b;
 
 #ifdef LOG_ICODE
 	if (PC == 0x6b) cdp1802_log_icode(); // if you want to have the icodes in the debuglog
@@ -315,22 +315,22 @@ static void cdp1802_instruction(void)
 		case 0x68:
 			/*
 
-				A note about INP 0 (0x68) from Tom Pittman's "A Short Course in Programming":
+                A note about INP 0 (0x68) from Tom Pittman's "A Short Course in Programming":
 
-				If you look carefully, you will notice that we never studied the opcode "68". 
-				That's because it is not a defined 1802 instruction. It has the form of an INP 
-				instruction, but 0 is not a defined input port, so if you execute it (try it!) 
-				nothing is input. "Nothing" is the answer to a question; it is data, and something 
-				will be put in the accumulator and memory (so now you know what the computer uses 
-				to mean "nothing"). 
-				
-				However, since the result of the "68" opcode is unpredictable, it should not be 
-				used in your programs. In fact, "68" is the first byte of a series of additional 
-				instructions for the 1804 and 1805 microprocessors. 
+                If you look carefully, you will notice that we never studied the opcode "68".
+                That's because it is not a defined 1802 instruction. It has the form of an INP
+                instruction, but 0 is not a defined input port, so if you execute it (try it!)
+                nothing is input. "Nothing" is the answer to a question; it is data, and something
+                will be put in the accumulator and memory (so now you know what the computer uses
+                to mean "nothing").
 
-				http://www.ittybittycomputers.com/IttyBitty/ShortCor.htm
+                However, since the result of the "68" opcode is unpredictable, it should not be
+                used in your programs. In fact, "68" is the first byte of a series of additional
+                instructions for the 1804 and 1805 microprocessors.
 
-			*/
+                http://www.ittybittycomputers.com/IttyBitty/ShortCor.htm
+
+            */
 			cdp1802_in_n(oper & 7);
 			break;
 		default:

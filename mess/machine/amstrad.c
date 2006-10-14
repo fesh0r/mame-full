@@ -185,7 +185,7 @@ SNAPSHOT_LOAD(amstrad)
 		return INIT_FAIL;
 
 	/* read whole file */
-	mame_fread(fp, snapshot, snapshot_size);
+	image_fread(image, snapshot, snapshot_size);
 
 	if (memcmp(snapshot, "MV - SNA", 8))
 	{
@@ -218,7 +218,7 @@ DEVICE_LOAD(amstrad_plus_cartridge)
 
 	logerror("CPR: loading RIFF format CPC cartridge file\n");
 	// load RIFF chunk
-	result = mame_fread(file,header,12);
+	result = image_fread(image,header,12);
 	if(result != 12)
 	{
 		logerror("CPR: failed to read from cart image\n");
@@ -241,14 +241,14 @@ DEVICE_LOAD(amstrad_plus_cartridge)
 	// read some chunks
 	while(bytes_to_read > 0)
 	{
-		result = mame_fread(file,chunkid,4);
+		result = image_fread(image,chunkid,4);
 		if(result != 4)
 		{
 			logerror("CPR: failed to read from cart image\n");
 			return INIT_FAIL;
 		}
 		bytes_to_read -= result;
-		result = mame_fread(file,chunklen,4);
+		result = image_fread(image,chunklen,4);
 		if(result != 4)
 		{
 			logerror("CPR: failed to read from cart image\n");
@@ -273,7 +273,7 @@ DEVICE_LOAD(amstrad_plus_cartridge)
 				// load block into ROM area
 				if(chunksize > 16384)
 					chunksize = 16384;
-				result = mame_fread(file,mem+(0x4000*ramblock),chunksize);
+				result = image_fread(image,mem+(0x4000*ramblock),chunksize);
 				if(result != chunksize)
 				{
 					logerror("CPR: Read %i-byte chunk, expected %i bytes\n",result,chunksize);
@@ -288,7 +288,7 @@ DEVICE_LOAD(amstrad_plus_cartridge)
 			logerror("CPR: Unknown chunk '%4s', skipping %i bytes\n",chunkid,chunksize);
 			if(chunksize != 0)
 			{
-				mame_fseek(file,chunksize,SEEK_CUR);
+				image_fseek(image,chunksize,SEEK_CUR);
 				bytes_to_read -= chunksize;
 			}
 		}

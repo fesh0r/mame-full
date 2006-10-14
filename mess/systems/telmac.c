@@ -895,7 +895,7 @@ logerror("memwrite ok\n");
 
 	free(buffer);
 */
-	mame_fread(fp, memory_region(REGION_CPU1) + 0x6300, 0x9500);
+	image_fread(image, memory_region(REGION_CPU1) + 0x6300, 0x9500);
 
 	return INIT_PASS;
 }

@@ -20,11 +20,7 @@ int printer_status(mess_image *img, int newstatus)
 void printer_output(mess_image *img, int data)
 {
 	UINT8 d = data;
-	mame_file *fp;
-
-	fp = image_fp(img);
-	if (fp)
-		mame_fwrite(fp, &d, 1);
+	image_fwrite(img, &d, 1);
 }
 
 

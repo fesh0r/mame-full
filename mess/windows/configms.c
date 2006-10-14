@@ -337,7 +337,7 @@ void win_mess_extract_options(void)
 	const char *s;
 	int i, j;
 
-	arg = options_get_string("ramsize", TRUE);
+	arg = options_get_string("ramsize");
 	if (arg)
 	{
 		specified_ram = ram_parse_string(arg);
@@ -348,15 +348,15 @@ void win_mess_extract_options(void)
 		}
 	}
 
-	options.skip_warnings = options_get_bool("skip_warnings", TRUE);
-	options.disable_normal_ui = options_get_bool("newui", TRUE);
+	options.skip_warnings = options_get_bool("skip_warnings");
+	options.disable_normal_ui = options_get_bool("newui");
 	options.ram = specified_ram;
-	options.min_width = options_get_int("min_width", TRUE);
-	options.min_height = options_get_int("min_height", TRUE);
+	options.min_width = options_get_int("min_width");
+	options.min_height = options_get_int("min_height");
 
-	win_task_count = options_get_int("threads", TRUE);
-	win_use_natural_keyboard = options_get_bool("natural", TRUE);
-	win_write_config = options_get_bool("writeconfig", TRUE);
+	win_task_count = options_get_int("threads");
+	win_use_natural_keyboard = options_get_bool("natural");
+	win_write_config = options_get_bool("writeconfig");
 
 	if (device_options)
 	{
@@ -371,7 +371,7 @@ void win_mess_extract_options(void)
 				while((s = strchr(optionname, ';')) != NULL)
 					optionname = s + 1;
 
-				filename = options_get_string(optionname, TRUE);
+				filename = options_get_string(optionname);
 
 				if (filename)
 				{

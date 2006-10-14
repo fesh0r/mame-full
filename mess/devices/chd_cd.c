@@ -172,7 +172,7 @@ static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (chd_interface_file *) image_fp(img);
+	return (chd_interface_file *) img;
 }
 
 
@@ -185,25 +185,24 @@ static void mess_chd_close(chd_interface_file *file)
 
 static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fread((mame_file *)file, buffer, count);
+	image_fseek((mess_image *)file, offset, SEEK_SET);
+	return image_fread((mess_image *)file, buffer, count);
 }
 
 
 
 static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fwrite((mame_file *)file, buffer, count);
+	image_fseek((mess_image *)file, offset, SEEK_SET);
+	return image_fwrite((mess_image *)file, buffer, count);
 }
 
 
 
 static UINT64 mess_chd_length(chd_interface_file *file)
 {
-	return mame_fsize((mame_file *)file);
+	return image_length((mess_image *)file);
 }
-
 
 
 
@@ -276,16 +275,9 @@ error:
 
 
 
-int device_load_mess_cd(mess_image *image, mame_file *file)
+int device_load_mess_cd(mess_image *image)
 {
 	return internal_load_mess_cd(image, NULL);
-}
-
-
-
-static int device_create_mess_cd(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
-{
-	return INIT_FAIL;   	// cd-roms are not writable
 }
 
 
@@ -357,7 +349,6 @@ void cdrom_device_getinfo(const device_class *devclass, UINT32 state, union devi
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case DEVINFO_PTR_INIT:						info->init = device_init_mess_cd; break;
 		case DEVINFO_PTR_LOAD:						info->load = device_load_mess_cd; break;
-		case DEVINFO_PTR_CREATE:					info->create = device_create_mess_cd; break;
 		case DEVINFO_PTR_UNLOAD:					info->unload = device_unload_mess_cd; break;
 		case DEVINFO_PTR_CREATE_OPTGUIDE:			info->p = (void *) mess_cd_option_guide; break;
 		case DEVINFO_PTR_CREATE_OPTSPEC+0:			info->p = (void *) mess_cd_option_spec;

@@ -301,7 +301,7 @@ ROM_START( fnvision )
     ROM_LOAD( "funboot.rom", 0xc000, 0x0800, CRC(05602697) SHA1(c280b20c8074ba9abb4be4338b538361dfae517f) )
 ROM_END
 
-int device_load_fnvision_cart(mess_image *image, mame_file *file)
+int device_load_fnvision_cart(mess_image *image)
 {
 	/*
 
@@ -321,35 +321,32 @@ int device_load_fnvision_cart(mess_image *image, mame_file *file)
 
 	*/
 
-	if (file)
+	int size = image_fread(image, memory_region(REGION_CPU1) + 0x8000, 0x4000);
+
+	switch (size)
 	{
-		int size = mame_fread(file, memory_region(REGION_CPU1) + 0x8000, 0x4000);
+	case 0x1000:
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0x3000, MRA8_ROM);
+		break;
+	case 0x2000:
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0x2000, MRA8_ROM);
+		break;
+	case 0x4000:
+		size = image_fread(image, memory_region(REGION_CPU1) + 0x4000, 0x4000);
 
 		switch (size)
 		{
+		case 0x0800:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x47ff, 0, 0x3800, MRA8_ROM);
+			break;
 		case 0x1000:
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0x3000, MRA8_ROM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4fff, 0, 0x3000, MRA8_ROM);
 			break;
 		case 0x2000:
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0x2000, MRA8_ROM);
-			break;
-		case 0x4000:
-			size = mame_fread(file, memory_region(REGION_CPU1) + 0x4000, 0x4000);
-
-			switch (size)
-			{
-			case 0x0800:
-				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x47ff, 0, 0x3800, MRA8_ROM);
-				break;
-			case 0x1000:
-				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4fff, 0, 0x3000, MRA8_ROM);
-				break;
-			case 0x2000:
-				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0x2000, MRA8_ROM);
-				break;
-			}
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0x2000, MRA8_ROM);
 			break;
 		}
+		break;
 	}
 
 	return 0;

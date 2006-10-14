@@ -29,8 +29,6 @@ static UINT8 keyline[10] =
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-static mame_file *rom_fp[2] = {0};
-
 /*
  * tia6523
  *
@@ -556,24 +554,28 @@ MACHINE_RESET( c16 )
 
 	cbm_serial_reset_write (0);
 
-	for (i = 0;  (i < sizeof (rom_fp) / sizeof (rom_fp[0])) && rom_fp[i]; i++)
-		c16_rom_load(image_from_devtype_and_index(IO_CARTSLOT, i));
+	for (i = 0; i < 2; i++)
+	{
+		mess_image *image = image_from_devtype_and_index(IO_CARTSLOT, i);
+		if (image)
+			c16_rom_load(image);
+	}
 }
 
-static int c16_rom_id(mess_image *img, mame_file *romfile)
+static int c16_rom_id(mess_image *image)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
 	int retval = 0;
 	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
-	const char *name = image_filename(img);
+	const char *name = image_filename(image);
 	char *cp;
 
 	logerror("c16_rom_id %s\n", name);
 	retval = 0;
 
-	mame_fseek (romfile, 7, SEEK_SET);
-	mame_fread (romfile, buffer, sizeof (magic));
+	image_fseek (image, 7, SEEK_SET);
+	image_fread (image, buffer, sizeof (magic));
 
 	if (memcmp (magic, buffer, sizeof (magic)) == 0)
 	{
@@ -596,38 +598,27 @@ static int c16_rom_id(mess_image *img, mame_file *romfile)
 
 DEVICE_LOAD(c16_rom)
 {
-	int id = image_index_in_device(image);
-	rom_fp[id] = file;
-	return (rom_fp[id] && !c16_rom_id(image, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
+	return (!c16_rom_id(image)) ? INIT_FAIL : INIT_PASS;
 }
 
-DEVICE_UNLOAD(c16_rom)
-{
-	int id = image_index_in_device(image);
-	rom_fp[id] = NULL;
-}
-
-static int c16_rom_load(mess_image *img)
+static int c16_rom_load(mess_image *image)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
-	mame_file *fp = image_fp(img);
 	int size, read_;
 	const char *filetype;
 	static unsigned int addr = 0;
 
-	if (fp == NULL)
-		return INIT_FAIL;
-	if (!c16_rom_id(img, fp))
+	if (!c16_rom_id(image))
 		return 1;
 
-	size = mame_fsize (fp);
+	size = image_length (image);
 
-	filetype = image_filetype(img);	
+	filetype = image_filetype(image);	
 	if (filetype && !mame_stricmp (filetype, "prg"))
 	{
 		unsigned short in;
 
-		mame_fread(fp, &in, 2);
+		image_fread(image, &in, 2);
 		in = LITTLE_ENDIANIZE_INT16(in);
 		logerror("rom prg %.4x\n", in);
 		addr = in + 0x20000;
@@ -638,7 +629,7 @@ static int c16_rom_load(mess_image *img)
 		addr = 0x20000;
 	}
 	logerror("loading rom at %.5x size:%.4x\n", addr, size);
-	read_ = mame_fread (fp, mem + addr, size);
+	read_ = image_fread (image, mem + addr, size);
 	addr += size;
 	if (read_ != size)
 		return 1;

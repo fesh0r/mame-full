@@ -222,7 +222,7 @@ DEVICE_LOAD( a7800_cart )
 	a7800_stick_type = 1;
 
 	/* Load and decode the header */
-	mame_fread( file, header, 128 );
+	image_fread( image, header, 128 );
 
 	/* Check the cart */
 	if( a7800_verify_cart((char *)header) == IMAGE_VERIFY_FAIL)
@@ -245,7 +245,7 @@ DEVICE_LOAD( a7800_cart )
 
 		start = 0x10000 - len;
 		a7800_cartridge_rom = memory + start;
-		mame_fread(file, a7800_cartridge_rom, len);
+		image_fread(image, a7800_cartridge_rom, len);
 	}
 	else if( a7800_cart_type & 0x02 )
 	{
@@ -254,12 +254,12 @@ DEVICE_LOAD( a7800_cart )
 		/* Extra ROM at $4000 */
 		if( a7800_cart_type & 0x08 )
 		{
-			mame_fread(file, memory + 0x4000, 0x4000 );
+			image_fread(image, memory + 0x4000, 0x4000 );
 			len -= 0x4000;
 		}
 
 		a7800_cartridge_rom = memory + 0x10000;
-		mame_fread(file, a7800_cartridge_rom, len);
+		image_fread(image, a7800_cartridge_rom, len);
 
 		/* bank 0 */
 		memcpy( memory + 0x8000, memory + 0x10000, 0x4000);
@@ -285,7 +285,7 @@ DEVICE_LOAD( a7800_cart )
 		logerror( "Cart type: %x Absolute\n",a7800_cart_type );
 
 		a7800_cartridge_rom = memory + 0x10000;
-		mame_fread(file, a7800_cartridge_rom, len );
+		image_fread(image, a7800_cartridge_rom, len );
 
 		/* bank 0 */
 		memcpy( memory + 0x4000, memory + 0x10000, 0x4000 );
@@ -300,7 +300,7 @@ DEVICE_LOAD( a7800_cart )
 		logerror( "Cart type: %x Activision\n",a7800_cart_type );
 
 		a7800_cartridge_rom = memory + 0x10000;
-		mame_fread( file, a7800_cartridge_rom, len );
+		image_fread(image, a7800_cartridge_rom, len );
 
 		/* bank 0 */
 		memcpy( memory + 0xA000, memory + 0x10000, 0x4000 );

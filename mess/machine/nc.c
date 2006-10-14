@@ -25,8 +25,6 @@ extern int nc_membank_card_ram_mask;
 /* save card data back */
 static void	nc_card_save(mess_image *image)
 {
-	mame_file *file;
-
 	/* if there is no data to write, quit */
 	if (!nc_card_ram || !nc_card_size)
 		return;
@@ -34,8 +32,7 @@ static void	nc_card_save(mess_image *image)
 	logerror("attempting card save\n");
 
 	/* write data */
-	file = image_fp(image);
-	mame_fwrite(file, nc_card_ram, nc_card_size);
+	image_fwrite(image, nc_card_ram, nc_card_size);
 
 	logerror("write succeeded!\r\n");
 }
@@ -61,39 +58,36 @@ static int nc_card_calculate_mask(int size)
 
 
 /* load card image */
-static int nc_card_load(mess_image *image, mame_file *file, unsigned char **ptr)
+static int nc_card_load(mess_image *image, unsigned char **ptr)
 {
-	if (file)
+	int datasize;
+	unsigned char *data;
+
+	/* get file size */
+	datasize = image_length(image);
+
+	if (datasize!=0)
 	{
-		int datasize;
-		unsigned char *data;
+		/* malloc memory for this data */
+		data = malloc(datasize);
 
-		/* get file size */
-		datasize = mame_fsize(file);
-
-		if (datasize!=0)
+		if (data!=NULL)
 		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
+			nc_card_size = datasize;
 
-			if (data!=NULL)
-			{
-				nc_card_size = datasize;
+			/* read whole file */
+			image_fread(image, data, datasize);
 
-				/* read whole file */
-				mame_fread(file, data, datasize);
+			*ptr = data;
 
-				*ptr = data;
+			logerror("File loaded!\r\n");
 
-				logerror("File loaded!\r\n");
+			nc_membank_card_ram_mask = nc_card_calculate_mask(datasize);
 
-				nc_membank_card_ram_mask = nc_card_calculate_mask(datasize);
+			logerror("Mask: %02x\n",nc_membank_card_ram_mask);
 
-				logerror("Mask: %02x\n",nc_membank_card_ram_mask);
-
-				/* ok! */
-				return 1;
-			}
+			/* ok! */
+			return 1;
 		}
 	}
 
@@ -116,7 +110,7 @@ DEVICE_LOAD( nc_pcmcia_card )
 	/* filename specified */
 
 	/* attempt to load file */
-	if (nc_card_load(image, file, &nc_card_ram))
+	if (nc_card_load(image, &nc_card_ram))
 	{
 		if (nc_card_ram!=NULL)
 		{

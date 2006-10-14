@@ -38,11 +38,11 @@ static int fmt[NDSK] = {0,};		/* index of disk formats */
 static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
 static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
-static mame_file *fp[NDSK] = {NULL, };	/* image file pointer */
+static mess_image *fp[NDSK] = {NULL, };	/* image file pointer */
 static int ff[NDSK] = {0, };            /* image filenames specified flags */
 static mame_file *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
-//static mame_file *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
-//static mame_file *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
+//static mess_image *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
+//static mess_image *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
 static int dma = 0; 				/* DMA transfer address */
 
 static UINT8 zeropage0[8] =
@@ -118,7 +118,7 @@ DEVICE_LOAD( cpm_floppy )
 	ff[id] = TRUE;
 
 	/* now try to open the image if a filename is given */
-	fp[id] = file;
+	fp[id] = image;
 	mode[id] = image_is_writable(image);
 
 	return INIT_PASS;
@@ -441,7 +441,7 @@ static void cpm_disk_image_seek(void)
 		break;
 
 	}
-	mame_fseek(fp[curdisk], offs, SEEK_SET);
+	image_fseek(fp[curdisk], offs, SEEK_SET);
 }
 
 
@@ -539,7 +539,7 @@ int cpm_disk_read_sector(void)
 			if (fp[curdisk])
 			{
 				cpm_disk_image_seek();
-				if (mame_fread(fp[curdisk], &RAM[dma], RECL) == RECL)
+				if (image_fread(fp[curdisk], &RAM[dma], RECL) == RECL)
 					result = 0;
 			}
 		}
@@ -569,7 +569,7 @@ int cpm_disk_write_sector(void)
 			if (fp[curdisk])
 			{
 				cpm_disk_image_seek();
-				if (mame_fwrite(fp[curdisk], &RAM[dma], RECL) == RECL)
+				if (image_fwrite(fp[curdisk], &RAM[dma], RECL) == RECL)
 					result = 0;
 			}
 		}

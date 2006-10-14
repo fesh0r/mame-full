@@ -195,24 +195,24 @@ static floppy_interface mess_floppy_interface =
 
 /* ----------------------------------------------------------------------- */
 
-static int mame_fseek_thunk(void *file, INT64 offset, int whence)
+static int image_fseek_thunk(void *file, INT64 offset, int whence)
 {
-	return mame_fseek((mame_file *) file, offset, whence);
+	return image_fseek((mess_image *) file, offset, whence);
 }
 
-static size_t mame_fread_thunk(void *file, void *buffer, size_t length)
+static size_t image_fread_thunk(void *file, void *buffer, size_t length)
 {
-	return mame_fread((mame_file *) file, buffer, length);
+	return image_fread((mess_image *) file, buffer, length);
 }
 
-static size_t mame_fwrite_thunk(void *file, const void *buffer, size_t length)
+static size_t image_fwrite_thunk(void *file, const void *buffer, size_t length)
 {
-	return mame_fwrite((mame_file *) file, buffer, length);
+	return image_fwrite((mess_image *) file, buffer, length);
 }
 
-static UINT64 mame_fsize_thunk(void *file)
+static UINT64 image_fsize_thunk(void *file)
 {
-	return mame_fsize((mame_file *) file);
+	return image_length((mess_image *) file);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -220,10 +220,10 @@ static UINT64 mame_fsize_thunk(void *file)
 struct io_procs mess_ioprocs =
 {
 	NULL,
-	mame_fseek_thunk,
-	mame_fread_thunk,
-	mame_fwrite_thunk,
-	mame_fsize_thunk
+	image_fseek_thunk,
+	image_fread_thunk,
+	image_fwrite_thunk,
+	image_fsize_thunk
 };
 
 
@@ -241,7 +241,7 @@ static int device_init_floppy(mess_image *image)
 
 
 
-static int internal_floppy_device_load(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
+static int internal_floppy_device_load(mess_image *image, int create_format, option_resolution *create_args)
 {
 	floperr_t err;
 	struct mess_flopimg *flopimg;
@@ -261,7 +261,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	{
 		/* creating an image */
 		assert(create_format >= 0);
-		err = floppy_create(file, &mess_ioprocs, &floppy_options[create_format], create_args, &flopimg->floppy);
+		err = floppy_create(image, &mess_ioprocs, &floppy_options[create_format], create_args, &flopimg->floppy);
 		if (err)
 			goto error;
 	}
@@ -270,7 +270,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 		/* opening an image */
 		floppy_flags = image_is_writable(image) ? FLOPPY_FLAGS_READWRITE : FLOPPY_FLAGS_READONLY;
 		extension = image_filetype(image);
-		err = floppy_open_choices(file, &mess_ioprocs, extension, floppy_options, floppy_flags, &flopimg->floppy);
+		err = floppy_open_choices(image, &mess_ioprocs, extension, floppy_options, floppy_flags, &flopimg->floppy);
 		if (err)
 			goto error;
 	}
@@ -296,16 +296,16 @@ error:
 
 
 
-static int device_load_floppy(mess_image *image, mame_file *file)
+static int device_load_floppy(mess_image *image)
 {
-	return internal_floppy_device_load(image, file, -1, NULL);
+	return internal_floppy_device_load(image, -1, NULL);
 }
 
 
 
-static int device_create_floppy(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
+static int device_create_floppy(mess_image *image, int create_format, option_resolution *create_args)
 {
-	return internal_floppy_device_load(image, file, create_format, create_args);
+	return internal_floppy_device_load(image, create_format, create_args);
 }
 
 

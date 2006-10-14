@@ -245,7 +245,7 @@ static int device_init_cassette(mess_image *image)
 
 
 
-static int device_load_cassette(mess_image *image, mame_file *file)
+static int device_load_cassette(mess_image *image)
 {
 	casserr_t err;
 	int cassette_flags;
@@ -266,7 +266,7 @@ static int device_load_cassette(mess_image *image, mame_file *file)
 	{
 		/* creating an image */
 		create_opts = (const struct CassetteOptions *) device_get_info_ptr(&dev->devclass, DEVINFO_PTR_CASSETTE_OPTIONS);
-		err = cassette_create(file, &mess_ioprocs, &wavfile_format, create_opts, CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT, &tag->cassette);
+		err = cassette_create(image, &mess_ioprocs, &wavfile_format, create_opts, CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT, &tag->cassette);
 		if (err)
 			goto error;
 	}
@@ -278,7 +278,7 @@ static int device_load_cassette(mess_image *image, mame_file *file)
 			is_writable = image_is_writable(image); 
 			cassette_flags = is_writable ? (CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT) : CASSETTE_FLAG_READONLY;
 			extension = image_filetype(image);
-			err = cassette_open_choices(file, &mess_ioprocs, extension, formats, cassette_flags, &tag->cassette);
+			err = cassette_open_choices(image, &mess_ioprocs, extension, formats, cassette_flags, &tag->cassette);
 
 			/* this is kind of a hack */
 			if (err && is_writable)

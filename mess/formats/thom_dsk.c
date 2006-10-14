@@ -53,7 +53,6 @@ typedef struct {
   UINT8  cur_track;
 
   /* for write-back */
-  mame_file*  file;
   mess_image* image;
   UINT8       has_changed;
 
@@ -324,10 +323,10 @@ static floppy_interface thom_floppy_interface = {
 
 /*********************** .fd format ************************/
 
-static int thom_floppy_fd_load ( mess_image* image, mame_file* file )
+static int thom_floppy_fd_load ( mess_image* image )
 {
   thom_floppy_drive* d = thom_floppy_drives + image_index_in_device( image );
-  int size = mame_fsize( file );
+  int size = image_length( image );
 
   /* O-sized => create */
   if ( !size ) {
@@ -348,7 +347,7 @@ static int thom_floppy_fd_load ( mess_image* image, mame_file* file )
   /* load */
   d->data = malloc( size );
   assert( d->data );
-  if ( mame_fread( file, d->data, size ) != size ) {
+  if ( image_fread( image, d->data, size ) != size ) {
     logerror( "thom_floppy_fd_load: read error\n" );
     goto error;
   }
@@ -417,8 +416,8 @@ void thom_floppy_fd_save ( mess_image* image )
   PRINT (( "thom_floppy_fd_save: saving floppy %i, %i KB\n",
 	   d - thom_floppy_drives, size / 1024 ));
   /* TODO: truncation */
-  mame_fseek( d->file, 0, SEEK_SET );
-  mame_fwrite( d->file, d->data, size );
+  image_fseek( image, 0, SEEK_SET );
+  image_fwrite( image, d->data, size );
 }
 
 
@@ -431,10 +430,10 @@ void thom_floppy_fd_save ( mess_image* image )
    many contiguous sectors can be read in one pass
  */
 
-static int thom_floppy_qd_load ( mess_image* image, mame_file* file )
+static int thom_floppy_qd_load ( mess_image* image )
 {
   thom_floppy_drive* d = thom_floppy_drives + image_index_in_device( image );
-  int size = mame_fsize( file );
+  int size = image_length( image );
   
    /* only one format, TODO two-sided images */
   if ( size == 51200 || size == 0 ) {
@@ -461,7 +460,7 @@ static int thom_floppy_qd_load ( mess_image* image, mame_file* file )
     return INIT_PASS;
   }
 
-  if ( mame_fread( file, d->data, size ) != size ) {
+  if ( image_fread( image, d->data, size ) != size ) {
     logerror( "thom_floppy_qd_load: read error\n" );
     goto error;
   }
@@ -488,8 +487,8 @@ void thom_floppy_qd_save ( mess_image* image )
   PRINT (( "thom_floppy_qd_save: saving floppy %i, %i KB\n",
 	   d - thom_floppy_drives, size / 1024 ));
   /* TODO: truncation */
-  mame_fseek( d->file, 0, SEEK_SET );
-  mame_fwrite( d->file, d->data, size );
+  image_fseek( image, 0, SEEK_SET );
+  image_fwrite( image, d->data, size );
 }
 
 
@@ -520,12 +519,12 @@ static UINT16 thom_sap_crc( UINT8* data, int size )
 }
 
 /* TODO: protection */
-static int thom_floppy_sap_load ( mess_image* image, mame_file* file )
+static int thom_floppy_sap_load ( mess_image* image )
 {
   int drive = image_index_in_device( image );
   thom_floppy_drive* d = thom_floppy_drives + drive;
   UINT8 buf[262];
-  int size = mame_fsize( file );
+  int size = image_length( image );
   int i, format;
 
   /* O-sized => create */
@@ -545,14 +544,14 @@ static int thom_floppy_sap_load ( mess_image* image, mame_file* file )
   }
 
   /* check header */
-  mame_fread( file, buf, 66 );
+  image_fread( image, buf, 66 );
   if ( memcmp( buf+1, sap_header+1, 65 ) ) {
     logerror( "thom_floppy_sap_load: invalid sap header\n" );
     return INIT_FAIL;
   }
 
   /* guess format */
-  mame_fread( file, buf, 4 );
+  image_fread( image, buf, 4 );
   format = buf[0];
   d->sides = 1; /* always one side per sap file */
   d->density = (format==1) ? DEN_FM_LO : DEN_MFM_LO;
@@ -561,8 +560,8 @@ static int thom_floppy_sap_load ( mess_image* image, mame_file* file )
   d->sectors = 16;
   for ( i = 66; i+4 < size; i += d->sector_size + 6 ) {
     int fmt, prot, track, sector;
-    mame_fseek( file, i, SEEK_SET );
-    mame_fread( file, buf, 4 );
+    image_fseek( image, i, SEEK_SET );
+    image_fread( image, buf, 4 );
     fmt    = buf[0];
     prot   = buf[1];
     track  = buf[2];
@@ -592,8 +591,8 @@ static int thom_floppy_sap_load ( mess_image* image, mame_file* file )
     int j, fmt, prot, track, sector;
 
     /* load */
-    mame_fseek( file, i * (d->sector_size + 6) + 66, SEEK_SET  );
-    mame_fread( file, buf, d->sector_size + 6 );
+    image_fseek( image, i * (d->sector_size + 6) + 66, SEEK_SET  );
+    image_fread( image, buf, d->sector_size + 6 );
     fmt    = buf[0];
     prot   = buf[1];
     track  = buf[2];
@@ -647,8 +646,8 @@ static void thom_floppy_sap_save ( mess_image* image )
   /* TODO: truncation */
 
   /* write header*/
-  mame_fseek( d->file, 0, SEEK_SET );
-  mame_fwrite( d->file, sap_header, 66 );
+  image_fseek( image, 0, SEEK_SET );
+  image_fwrite( image, sap_header, 66 );
 
   /* get format */
   format = (d->sector_size == 128) ? 1 : 0;
@@ -676,7 +675,7 @@ static void thom_floppy_sap_save ( mess_image* image )
       for ( i = 0; i < d->sector_size; i++ ) 
 	buf[ i + 4 ] ^= sap_magic_num;
 
-      mame_fwrite( d->file, buf, d->sector_size + 6 );
+      image_fwrite( image, buf, d->sector_size + 6 );
     }
 }
 
@@ -700,13 +699,12 @@ int thom_floppy_init ( mess_image *image )
   return floppy_drive_init( image, &thom_floppy_interface );
 }
 
-int thom_floppy_load ( mess_image* image, mame_file* file )
+int thom_floppy_load ( mess_image* image )
 {
   const char* typ = image_filetype( image );
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
   thom_floppy_reset( d );
 
-  d->file = file;
   d->image = image;
   d->has_changed = 0;
   d->cur_track = 0;
@@ -714,11 +712,11 @@ int thom_floppy_load ( mess_image* image, mame_file* file )
   /* dispatch according to extension */
   if ( typ ) {
     if ( !mame_stricmp( typ, "sap" ) ) 
-      return thom_floppy_sap_load( image, file );
+      return thom_floppy_sap_load( image );
     else if ( !mame_stricmp( typ, "fd" ) ) 
-      return thom_floppy_fd_load( image, file );
+      return thom_floppy_fd_load( image );
     else if ( !mame_stricmp( typ, "qd" ) ) 
-      return thom_floppy_qd_load( image, file );
+      return thom_floppy_qd_load( image );
   }
 
   return INIT_FAIL;
@@ -736,14 +734,13 @@ void thom_floppy_unload ( mess_image *image )
   thom_floppy_reset( d );
 }
 
-int  thom_floppy_create ( mess_image *image, mame_file *file, 
+int  thom_floppy_create ( mess_image *image, 
 			  int create_format, option_resolution *args )
 {
   thom_floppy_drive* d = thom_floppy_drive_of_image( image );
   const char* typ = image_filetype( image );
   thom_floppy_reset( d );
 
-  d->file = file;
   d->image = image;
   d->cur_track = 0;
   if ( typ && !mame_stricmp( typ, "qd" ) )  {

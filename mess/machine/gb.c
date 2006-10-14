@@ -1239,7 +1239,7 @@ DEVICE_LOAD(gb_cart)
 	J = filesize % 0x4000;
 	if ( J == 512 ) {
 		logerror( "Rom-header found, skipping\n" );
-		mame_fseek( file, J, SEEK_SET );
+		image_fseek( image, J, SEEK_SET );
 		filesize -= 512;
 	}
 
@@ -1253,7 +1253,7 @@ DEVICE_LOAD(gb_cart)
 	gb_cart = auto_malloc( filesize );
 
 	/* Read cartridge */
-	if ( mame_fread( file, gb_cart, filesize ) != filesize ) {
+	if ( image_fread( image, gb_cart, filesize ) != filesize ) {
 		logerror( "Error loading cartridge: Unable to read from file: %s.\n", image_filename(image) );
 		return INIT_FAIL;
 	}
@@ -1973,7 +1973,7 @@ DEVICE_LOAD(megaduck_cart)
 	gb_cart = auto_malloc( filesize );
 
 	/* Read cartridge */
-	if (mame_fread (file, gb_cart, filesize) != filesize) {
+	if (image_fread (image, gb_cart, filesize) != filesize) {
 		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
 		return INIT_FAIL;
 	}

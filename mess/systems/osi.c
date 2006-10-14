@@ -12,7 +12,7 @@ extern discrete_sound_block sb2m600_discrete_interface[];
 READ8_HANDLER( osi_keyboard_r );
 WRITE8_HANDLER ( sb2m600b_keyboard_w );
 WRITE8_HANDLER ( uk101_keyboard_w );
-int device_load_sb2m600_cassette(mess_image *image, mame_file *file);
+int device_load_sb2m600_cassette(mess_image *image);
 void device_unload_sb2m600_cassette(mess_image *image);
 READ8_HANDLER( osi470_floppy_status_r );
 WRITE8_HANDLER( osi470_floppy_control_w );

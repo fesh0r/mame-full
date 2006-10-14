@@ -573,13 +573,13 @@ void serial_device_connect(mess_image *image, struct serial_connection *connecti
 
 
 /* load image */
-static int serial_device_load_internal(mess_image *image, mame_file *file, unsigned char **ptr, int *pDataSize)
+static int serial_device_load_internal(mess_image *image, unsigned char **ptr, int *pDataSize)
 {
 	int datasize;
 	unsigned char *data;
 
 	/* get file size */
-	datasize = mame_fsize(file);
+	datasize = image_length(image);
 
 	if (datasize!=0)
 	{
@@ -589,13 +589,10 @@ static int serial_device_load_internal(mess_image *image, mame_file *file, unsig
 		if (data!=NULL)
 		{
 			/* read whole file */
-			mame_fread(file, data, datasize);
+			image_fread(image, data, datasize);
 
 			*ptr = data;
 			*pDataSize = datasize;
-
-			/* close file */
-			mame_fclose(file);
 
 			logerror("File loaded!\r\n");
 
@@ -644,7 +641,6 @@ int serial_device_init(mess_image *image)
 int serial_device_load(mess_image *image)
 {
 	int id = image_index_in_device(image);
-	mame_file *fp = image_fp(image);
 	int data_length;
 	unsigned char *data;
 
@@ -653,7 +649,7 @@ int serial_device_load(mess_image *image)
 		return INIT_FAIL;
 
 	/* load file and setup transmit data */
-	if (serial_device_load_internal(image, fp, &data, &data_length))
+	if (serial_device_load_internal(image, &data, &data_length))
 	{
 		data_stream_init(&serial_devices[id].transmit, data, data_length);
 		return INIT_PASS;

@@ -86,16 +86,16 @@ enum
 
 struct IODevice;
 
-typedef int (*device_init_handler)(mess_image *img);
-typedef void (*device_exit_handler)(mess_image *img);
-typedef int (*device_load_handler)(mess_image *img, mame_file *fp);
-typedef int (*device_create_handler)(mess_image *img, mame_file *fp, int format_type, option_resolution *format_options);
-typedef void (*device_unload_handler)(mess_image *img);
+typedef int (*device_init_handler)(mess_image *image);
+typedef void (*device_exit_handler)(mess_image *image);
+typedef int (*device_load_handler)(mess_image *image);
+typedef int (*device_create_handler)(mess_image *image, int format_type, option_resolution *format_options);
+typedef void (*device_unload_handler)(mess_image *image);
 typedef int (*device_verify_handler)(const UINT8 *buf, size_t size);
 typedef void (*device_partialhash_handler)(char *, const unsigned char *, unsigned long, unsigned int);
 typedef void (*device_getdispositions_handler)(const struct IODevice *dev, int id,
 	unsigned int *readable, unsigned int *writeable, unsigned int *creatable);
-typedef void (*device_display_handler)(mess_image *img);
+typedef void (*device_display_handler)(mess_image *image);
 typedef const char *(*device_getname_handler)(const struct IODevice *dev, int id, char *buf, size_t bufsize);
 
 struct _device_class;

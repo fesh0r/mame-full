@@ -356,7 +356,7 @@ static const struct cartridge_slot *coco_cart_interface;
   changing to make it worthy of Microsoft.
 ***************************************************************************/
 
-static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
+static int load_pak_into_region(mess_image *image, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
 {
 	if (*paklen)
 	{
@@ -366,7 +366,7 @@ static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 
 			int skiplen;
 
 			skiplen = segaddr - *pakbase;
-			if (mame_fseek(fp, skiplen, SEEK_CUR))
+			if (image_fseek(image, skiplen, SEEK_CUR))
 			{
 				if (LOG_PAK)
 					logerror("Could not fully read PAK.\n");
@@ -385,7 +385,7 @@ static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 
 			if (seglen > *paklen)
 				seglen = *paklen;
 
-			if (mame_fread(fp, mem, seglen) < seglen)
+			if (image_fread(image, mem, seglen) < seglen)
 			{
 				if (LOG_PAK)
 					logerror("Could not fully read PAK.\n");
@@ -444,7 +444,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	sam_set_state(trailer->sam, 0x7fff);
 }
 
-static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index, int pakbase_index)
+static int generic_pak_load(mess_image *image, int rambase_index, int rombase_index, int pakbase_index)
 {
 	UINT8 *ROM;
 	UINT8 *rambase;
@@ -470,7 +470,7 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 		return INIT_FAIL;
 	}
 
-	if (mame_fread(fp, &header, sizeof(header)) < sizeof(header))
+	if (image_fread(image, &header, sizeof(header)) < sizeof(header))
 	{
 		if (LOG_PAK)
 			logerror("Could not fully read PAK.\n");
@@ -482,14 +482,14 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 	if (pakstart == 0xc000)
 		cart_inserted = 1;
 
-	if (mame_fseek(fp, paklength, SEEK_CUR))
+	if (image_fseek(image, paklength, SEEK_CUR))
 	{
 		if (LOG_PAK)
 			logerror("Could not fully read PAK.\n");
 		return INIT_FAIL;
 	}
 
-	trailerlen = mame_fread(fp, trailerraw, sizeof(trailerraw));
+	trailerlen = image_fread(image, trailerraw, sizeof(trailerraw));
 	if (trailerlen)
 	{
 		if (pak_decode_trailer(trailerraw, trailerlen, &trailer))
@@ -502,7 +502,7 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 		trailer_load = 1;
 	}
 
-	if (mame_fseek(fp, sizeof(pak_header), SEEK_SET))
+	if (image_fseek(image, sizeof(pak_header), SEEK_SET))
 	{
 		if (LOG_PAK)
 			logerror("Unexpected error while reading PAK.\n");
@@ -526,7 +526,7 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 	memcpy(rambase + 0xC000, pakbase, 0x3F00);
 
 	/* Get the RAM portion */
-	if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0xff00))
+	if (load_pak_into_region(image, &pakstart, &paklength, rambase, 0x0000, 0xff00))
 		return INIT_FAIL;
 
 	memcpy(pakbase, rambase + 0xC000, 0x3F00);
@@ -538,12 +538,12 @@ static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index,
 
 SNAPSHOT_LOAD ( coco_pak )
 {
-	return generic_pak_load(fp, 0x0000, 0x0000, 0x4000);
+	return generic_pak_load(image, 0x0000, 0x0000, 0x4000);
 }
 
 SNAPSHOT_LOAD ( coco3_pak )
 {
-	return generic_pak_load(fp, (0x70000 % mess_ram_size), 0x0000, 0xc000);
+	return generic_pak_load(image, (0x70000 % mess_ram_size), 0x0000, 0xc000);
 }
 
 /***************************************************************************
@@ -553,12 +553,12 @@ SNAPSHOT_LOAD ( coco3_pak )
   be used in place of PAK files, when possible
 ***************************************************************************/
 
-static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 destlength)
+static int generic_rom_load(mess_image *image, UINT8 *dest, UINT16 destlength)
 {
 	UINT8 *rombase;
 	int   romsize;
 
-	romsize = mame_fsize(fp);
+	romsize = image_length(image);
 
 	/* The following hack is for Arkanoid running on the CoCo2.
 		The issuse is the CoCo2 hardware only allows the cartridge
@@ -567,11 +567,11 @@ static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 
 		from a CoCo2. Thus we need to skip ahead in the ROM file. On
 		the CoCo3 the entire 32K ROM is accessable. */
 
-	if (image_crc(img) == 0x25C3AA70)     /* Test for Arkanoid  */
+	if (image_crc(image) == 0x25C3AA70)     /* Test for Arkanoid  */
 	{
 		if ( destlength == 0x4000 )						/* Test if CoCo2      */
 		{
-			mame_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
+			image_fseek( image, 0x4000, SEEK_SET );			/* Move ahead in file */
 			romsize -= 0x4000;							/* Adjust ROM size    */
 		}
 	}
@@ -579,7 +579,7 @@ static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 
 	if (romsize > destlength)
 		romsize = destlength;
 
-	mame_fread(fp, dest, romsize);
+	image_fread(image, dest, romsize);
 
 	cart_inserted = 1;
 
@@ -601,7 +601,7 @@ static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 
 DEVICE_LOAD(coco_rom)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(image, file, &ROM[0x4000], 0x4000);
+	return generic_rom_load(image, &ROM[0x4000], 0x4000);
 }
 
 DEVICE_UNLOAD(coco_rom)
@@ -618,20 +618,18 @@ DEVICE_LOAD(coco3_rom)
 	int		count;
 
 	count = count_bank();
-	if (file)
-		mame_fseek(file, 0, SEEK_SET);
 
 	if( count == 0 )
 	{
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM size is 32K max */
-		return generic_rom_load(image, file, &ROM[0x8000], 0x8000);
+		return generic_rom_load(image, &ROM[0x8000], 0x8000);
 	}
 	else
 	{
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM bank is 16K max */
-		return generic_rom_load(image, file, &ROM[0x8000], 0x4000);
+		return generic_rom_load(image, &ROM[0x8000], 0x4000);
 	}
 }
 
@@ -2273,17 +2271,14 @@ static int is_Orch90(void)
 
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
-	mame_file *fp;
-
 	if (count_bank() > 0)
 	{
 		/* pin variable to proper bit width */
 		bank &= count_bank();
 
 		/* read the bank */
-		fp = image_fp(cartslot_image());
-		mame_fseek(fp, bank * 0x4000, SEEK_SET);
-		mame_fread(fp, cartpos, 0x4000);
+		image_fseek(cartslot_image(), bank * 0x4000, SEEK_SET);
+		image_fread(cartslot_image(), cartpos, 0x4000);
 	}
 }
 

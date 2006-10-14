@@ -104,25 +104,33 @@ void *image_lookuptag(mess_image *img, const char *tag);
   These provide information about the device; and about the mounted image
 ****************************************************************************/
 
-mame_file *image_fp(mess_image *img);
-const struct IODevice *image_device(mess_image *img);
-int image_exists(mess_image *img);
-int image_slotexists(mess_image *img);
+const struct IODevice *image_device(mess_image *image);
+int image_exists(mess_image *image);
+int image_slotexists(mess_image *image);
 
-const char *image_typename_id(mess_image *img);
-const char *image_filename(mess_image *img);
-const char *image_basename(mess_image *img);
-const char *image_basename_noext(mess_image *img);
-const char *image_filetype(mess_image *img);
-const char *image_filedir(mess_image *img);
-unsigned int image_length(mess_image *img);
-const char *image_hash(mess_image *img);
-UINT32 image_crc(mess_image *img);
+const char *image_typename_id(mess_image *image);
+const char *image_filename(mess_image *image);
+const char *image_basename(mess_image *image);
+const char *image_basename_noext(mess_image *image);
+const char *image_filetype(mess_image *image);
+const char *image_filedir(mess_image *image);
+UINT64 image_length(mess_image *image);
+const char *image_hash(mess_image *image);
+UINT32 image_crc(mess_image *image);
 
-int image_is_writable(mess_image *img);
-int image_has_been_created(mess_image *img);
-int image_get_open_mode(mess_image *img);
-void image_make_readonly(mess_image *img);
+int image_is_writable(mess_image *image);
+int image_has_been_created(mess_image *image);
+int image_get_open_mode(mess_image *image);
+void image_make_readonly(mess_image *image);
+
+UINT32 image_fread(mess_image *image, void *buffer, UINT32 length);
+UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length);
+int image_fseek(mess_image *image, INT64 offset, int whence);
+UINT64 image_ftell(mess_image *image);
+int image_fgetc(mess_image *image);
+int image_feof(mess_image *image);
+
+void *image_ptr(mess_image *image);
 
 
 
@@ -204,8 +212,8 @@ mess_image *image_from_devtype_and_index(iodevice_t type, int id);
 
 #define	DEVICE_INIT(name)	int device_init_##name(mess_image *image)
 #define DEVICE_EXIT(name)	void device_exit_##name(mess_image *image)
-#define DEVICE_LOAD(name)	int device_load_##name(mess_image *image, mame_file *file)
-#define DEVICE_CREATE(name)	int device_create_##name(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
+#define DEVICE_LOAD(name)	int device_load_##name(mess_image *image)
+#define DEVICE_CREATE(name)	int device_create_##name(mess_image *image, int create_format, option_resolution *create_args)
 #define DEVICE_UNLOAD(name)	void device_unload_##name(mess_image *image)
 
 #endif /* IMAGE_H */

@@ -27,7 +27,7 @@ extern UINT8 *sam_screen;
 
 DEVICE_LOAD( coupe_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 80, 2, 10, 512, 1, 0, FALSE);
 		return INIT_PASS;

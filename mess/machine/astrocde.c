@@ -27,8 +27,7 @@ DEVICE_LOAD(astrocade_rom)
 	int size = 0;
 
     /* load a cartidge  */
-	if (file)
-		size = mame_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);
+	size = image_fread(image, memory_region(REGION_CPU1) + 0x2000, 0x8000);
 	return 0;
 }
 

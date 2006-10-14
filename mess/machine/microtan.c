@@ -844,17 +844,14 @@ SNAPSHOT_LOAD( microtan )
 {
 	UINT8 *snapshot_buff;
 
-	snapshot_buff = malloc(snapshot_size);
-	mame_fread(fp, snapshot_buff, snapshot_size);
+	snapshot_buff = image_ptr(image);
+	if (!snapshot_buff)
+		return INIT_FAIL;
 
 	if (microtan_varify_snapshot(snapshot_buff, snapshot_size)==IMAGE_VERIFY_FAIL)
-	{
-		free(snapshot_buff);
 		return INIT_FAIL;
-	}
 
 	microtan_snapshot_copy(snapshot_buff, snapshot_size);
-	free(snapshot_buff);
 	return INIT_PASS;
 }
 
@@ -880,7 +877,7 @@ QUICKLOAD_LOAD( microtan_hexfile )
 		LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", quickload_size));
 		return INIT_FAIL;
 	}
-	mame_fread(fp, buff, quickload_size);
+	image_fread(image, buff, quickload_size);
 
     buff[quickload_size] = '\0';
 

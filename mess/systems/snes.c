@@ -259,7 +259,7 @@ static MACHINE_START( snes_mess )
 	return machine_start_snes(machine);
 }
 
-static int device_load_snes_cart(mess_image *image, mame_file *file)
+static int device_load_snes_cart(mess_image *image)
 {
 	int i;
 	UINT16 totalblocks, readblocks;
@@ -316,13 +316,13 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 
 	/* Check for a header (512 bytes) */
 	offset = 512;
-	mame_fread( file, header, 512 );
+	image_fread( image, header, 512 );
 	if( (header[8] == 0xaa) && (header[9] == 0xbb) && (header[10] == 0x04) )
 	{
 		/* Found an SWC identifier */
 		logerror( "Found header(SWC) - Skipped\n" );
 	}
-	else if( (header[0] | (header[1] << 8)) == (((mame_fsize(file) - 512) / 1024) / 8) )
+	else if( (header[0] | (header[1] << 8)) == (((image_length(image) - 512) / 1024) / 8) )
 	{
 		/* Some headers have the rom size at the start, if this matches with the
 		 * actual rom size, we probably have a header */
@@ -339,12 +339,12 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 		/* No header found so go back to the start of the file */
 		logerror( "No header found.\n" );
 		offset = 0;
-		mame_fseek( file, offset, SEEK_SET );
+		image_fseek( image, offset, SEEK_SET );
 	}
 
 	/* We need to take a sample of 128kb to test what mode we need to be in */
-	mame_fread( file, sample, 0xffff );
-	mame_fseek( file, offset, SEEK_SET );	/* Rewind */
+	image_fread( image, sample, 0xffff );
+	image_fseek( image, offset, SEEK_SET );	/* Rewind */
 	/* Now to determine if this is a lo-ROM or a hi-ROM */
 	valid_mode20 = snes_validate_infoblock( sample, 0x7fc0 );
 	valid_mode21 = snes_validate_infoblock( sample, 0xffc0 );
@@ -360,7 +360,7 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 	}
 
 	/* Find the number of blocks in this ROM */
-	totalblocks = ((mame_fsize(file) - offset) >> (snes_cart.mode == SNES_MODE_20 ? 15 : 16));
+	totalblocks = ((image_length(image) - offset) >> (snes_cart.mode == SNES_MODE_20 ? 15 : 16));
 
 	/* FIXME: Insert crc check here */
 
@@ -379,7 +379,7 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 		i = 0;
 		while( i < 96 && readblocks <= totalblocks )
 		{
-			mame_fread( file, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
+			image_fread( image, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
 			readblocks++;
 		}
 	}
@@ -396,14 +396,14 @@ static int device_load_snes_cart(mess_image *image, mame_file *file)
 		i = 0;
 		while( i < 64 && readblocks <= totalblocks )
 		{
-			mame_fread( file, &snes_ram[0xc00000 + (i++ * 0x10000)], 0x10000);
+			image_fread( image, &snes_ram[0xc00000 + (i++ * 0x10000)], 0x10000);
 			readblocks++;
 		}
 		/* read the next 32 blocks */
 		i = 0;
 		while( i < 32 && readblocks <= totalblocks )
 		{
-			mame_fread( file, &snes_ram[0x400000 + (i++ * 0x10000)], 0x10000);
+			image_fread( image, &snes_ram[0x400000 + (i++ * 0x10000)], 0x10000);
 			readblocks++;
 		}
 	}

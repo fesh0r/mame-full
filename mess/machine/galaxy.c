@@ -141,7 +141,7 @@ SNAPSHOT_LOAD( galaxy )
 			return INIT_FAIL;
 	}
 
-	mame_fread(fp, snapshot_data, snapshot_size);
+	image_fread(image, snapshot_data, snapshot_size);
 	
 	galaxy_setup_snapshot(snapshot_data, snapshot_size);
 

@@ -324,7 +324,7 @@ SNAPSHOT_LOAD( lviv )
 		return INIT_FAIL;
 	}
 
-	mame_fread(fp, lviv_snapshot_data, LVIV_SNAPSHOT_SIZE);
+	image_fread(image, lviv_snapshot_data, LVIV_SNAPSHOT_SIZE);
 
 	if( lviv_verify_snapshot(lviv_snapshot_data, snapshot_size) == IMAGE_VERIFY_FAIL)
 	{

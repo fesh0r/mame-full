@@ -1482,7 +1482,7 @@ WRITE8_HANDLER ( BBC_SerialULA_w )
 
 DEVICE_LOAD( bbc_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
@@ -2054,7 +2054,7 @@ DEVICE_LOAD( bbcb_cart )
 	int size, read_;
 	int addr = 0;
 
-	size = mame_fsize (file);
+	size = image_length (image);
 
     addr = 0x8000 + (0x4000 * image_index_in_device(image));
 
@@ -2064,11 +2064,11 @@ DEVICE_LOAD( bbcb_cart )
 
 	switch (size) {
 	case 0x2000:
-		read_ = mame_fread (file, mem + addr, size);
-		read_ = mame_fread (file, mem + addr + 0x2000, size);
+		read_ = image_fread(image, mem + addr, size);
+		read_ = image_fread(image, mem + addr + 0x2000, size);
 		break;
 	case 0x4000:
-		read_ = mame_fread (file, mem + addr, size);
+		read_ = image_fread(image, mem + addr, size);
 		break;
 	default:
 		read_ = 0;

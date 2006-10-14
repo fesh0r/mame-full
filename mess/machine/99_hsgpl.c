@@ -206,33 +206,6 @@ static int ti99_hsgpl_get_dirty_flag(void)
 }
 
 
-#if 0
-DEVICE_LOAD(ti99_hsgpl)
-{
-	hsgpl.is_image_writable = image_is_writable(image);
-
-	if (image_has_been_created(image))
-		/* There is nothing wrong with creating an image here */
-		return INIT_PASS;
-
-	if (ti99_hsgpl_file_load(file))
-		return INIT_FAIL;
-
-	return INIT_PASS;
-}
-
-DEVICE_UNLOAD(ti99_hsgpl)
-{
-	if (hsgpl.is_image_writable && ti99_hsgpl_get_dirty_flag())
-	{
-		if (mame_fseek(image_fp(image), 0, SEEK_SET))
-			return;
-
-		if (ti99_hsgpl_file_save(image_fp(image)))
-			return;
-	}
-}
-#endif
 
 int ti99_hsgpl_load_memcard(void)
 {

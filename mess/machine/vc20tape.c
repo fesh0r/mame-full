@@ -78,7 +78,7 @@ struct
 /* from sound/samples.c no changes (static declared) */
 /* readsamples not useable (loads files only from sample or game directory) */
 /* and doesn't search the rompath */
-static struct GameSample *vc20_read_wav_sample (mame_file *f)
+static struct GameSample *vc20_read_wav_sample (mess_image *image)
 {
 	/* NPW 28-Feb-2005 - this code sucks */
 	return NULL;
@@ -280,17 +280,17 @@ static void vc20_wav_state (void)
 #endif
 }
 
-static void vc20_wav_open(mess_image *img, mame_file *fp)
+static void vc20_wav_open(mess_image *image)
 {
-	if ((wav.sample = vc20_read_wav_sample (fp)) == NULL)
+	if ((wav.sample = vc20_read_wav_sample (image)) == NULL)
 	{
-		logerror("tape %s could not be loaded\n", image_filename(img));
+		logerror("tape %s could not be loaded\n", image_filename(image));
 		return;
 	}
-	logerror("tape %s loaded\n", image_filename(img));
+	logerror("tape %s loaded\n", image_filename(image));
 
 	tape.type = TAPE_WAV;
-	wav.img = img;
+	wav.img = image;
 	wav.pos = 0;
 	tape.on = 1;
 	wav.state = 2;
@@ -406,27 +406,27 @@ static void vc20_prg_state (void)
 	}
 }
 
-static void vc20_prg_open(mess_image *img, mame_file *fp)
+static void vc20_prg_open(mess_image *image)
 {
 	const char *name;
 	int i;
 
-	prg.length = mame_fsize (fp);
-	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
+	prg.length = image_length(image);
+	prg.prg = image_ptr(image);
+	if (!prg.prg)
 	{
-		logerror("tape %s could not be loaded\n", image_filename(img));
+		logerror("tape %s could not be loaded\n", image_filename(image));
 		return;
 	}
-	mame_fread (fp, prg.prg, prg.length);
-	logerror("tape %s loaded\n", image_filename(img));
+	logerror("tape %s loaded\n", image_filename(image));
 
-	name = image_filename(img);
+	name = image_filename(image);
     for (i = 0; name[i] != 0; i++)
 		prg.name[i] = toupper (name[i]);
 	for (; i < 16; i++)
 		prg.name[i] = ' ';
 
-	prg.img = img;
+	prg.img = image;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
 	prg.statebyte = 0;
@@ -912,7 +912,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-static int device_load_vc20_tape(mess_image *image, mame_file *file)
+static int device_load_vc20_tape(mess_image *image)
 {
 	const char *cp;
 
@@ -924,17 +924,14 @@ static int device_load_vc20_tape(mess_image *image, mame_file *file)
 	tape.motor = 0;
 	tape.data = 0;
 
-	if (!file)
-		return INIT_PASS;
-
 	cp = image_filetype(image);
 	if (!cp)
 		return INIT_FAIL;
 
 	if (mame_stricmp (cp, "wav") == 0)
-		vc20_wav_open(image, file);
+		vc20_wav_open(image);
 	else if (mame_stricmp (cp, "prg") == 0)
-		vc20_prg_open(image, file);
+		vc20_prg_open(image);
 	else
 		return INIT_FAIL;
 	return INIT_PASS;

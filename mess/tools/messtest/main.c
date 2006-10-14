@@ -77,9 +77,9 @@ static void handle_arg(const char *arg)
 	/* setup options */
 	memset(&opts, 0, sizeof(opts));
 	opts.script_filename = arg;
-	if (options_get_bool("preservedir", TRUE))
+	if (options_get_bool("preservedir"))
 		opts.preserve_directory = 1;
-	if (options_get_bool("dumpscreenshots", TRUE))
+	if (options_get_bool("dumpscreenshots"))
 		opts.dump_screenshots = 1;
 
 	if (messtest(&opts, &this_test_count, &this_failure_count))

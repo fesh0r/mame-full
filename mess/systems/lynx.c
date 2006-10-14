@@ -323,7 +323,7 @@ static void lynx_crc_keyword(mess_image *image)
     }
 }
 
-static int device_load_lynx_cart(mess_image *image, mame_file *file)
+static int device_load_lynx_cart(mess_image *image)
 {
 	UINT8 *rom = memory_region(REGION_USER1);
 	int size;
@@ -336,8 +336,8 @@ static int device_load_lynx_cart(mess_image *image, mame_file *file)
    22 chars manufacturer
 */
 
-	size = mame_fsize(file);
-	if (mame_fread(file, header, 0x40)!=0x40)
+	size = image_length(image);
+	if (image_fread(image, header, 0x40)!=0x40)
 	{
 		logerror("%s load error\n", image_filename(image));
 		return 1;
@@ -355,7 +355,7 @@ static int device_load_lynx_cart(mess_image *image, mame_file *file)
 	logerror ("%s %dkb cartridge with %dbyte granularity from %s\n",
 			  header+10,size/1024,lynx_granularity, header+42);
 
-	if (mame_fread(file, rom, size) != size)
+	if (image_fread(image, rom, size) != size)
 	{
 		logerror("%s load error\n", image_filename(image));
 		return 1;
@@ -373,13 +373,13 @@ static QUICKLOAD_LOAD( lynx )
 	// maybe the first 2 bytes must be used to identify the endianess of the file
 	UINT16 start;
 
-	if (mame_fread(fp, header, sizeof(header)) != sizeof(header))
+	if (image_fread(image, header, sizeof(header)) != sizeof(header))
 		return INIT_FAIL;
 
 	quickload_size -= sizeof(header);
 	start = header[3] | (header[2]<<8); //! big endian format in file format for little endian cpu
 
-	if (mame_fread(fp, rom+start, quickload_size) != quickload_size)
+	if (image_fread(image, rom+start, quickload_size) != quickload_size)
 		return INIT_FAIL;
 
 	rom[0xfffc+0x200] = start&0xff;

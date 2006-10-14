@@ -113,9 +113,9 @@ static int detect_super_chip(void)
 }
 
 
-static int device_load_a2600_cart(mess_image *image, mame_file *file)
+static int device_load_a2600_cart(mess_image *image)
 {
-	cart_size = mame_fsize(file);
+	cart_size = image_length(image);
 
 	switch (cart_size)
 	{
@@ -134,7 +134,7 @@ static int device_load_a2600_cart(mess_image *image, mame_file *file)
 
 	current_bank = 0;
 
-	mame_fread(file, CART, cart_size);
+	image_fread(image, CART, cart_size);
 
 	return 0;
 }

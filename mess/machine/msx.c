@@ -97,7 +97,7 @@ DEVICE_LOAD (msx_cart)
 
 	id = image_index_in_device (image);
 
-	size = mame_fsize (file);
+	size = image_length (image);
 	if (size < 0x2000) {
 		logerror ("cart #%d: error: file is smaller than 2kb, too small "
 				  "to be true!\n", id);
@@ -118,7 +118,7 @@ DEVICE_LOAD (msx_cart)
 	if (size < size_aligned) {
 		memset (mem, 0xff, size_aligned);
 	}
-	if (mame_fread (file, mem, size) != size) {
+	if (image_fread(image, mem, size) != size) {
 		logerror ("cart #%d: %s: can't read full %d bytes\n", 
 						id, image_filename (image), size);
 		return INIT_FAIL;
@@ -649,7 +649,7 @@ DEVICE_LOAD( msx_floppy )
 
 	if (! image_has_been_created(image))
 		{
-		size = mame_fsize (file);
+		size = image_length(image);
 
 		switch (size)
 			{
@@ -664,7 +664,7 @@ DEVICE_LOAD( msx_floppy )
 	else
 		return INIT_FAIL;
 
-	if (device_load_basicdsk_floppy (image, file) != INIT_PASS)
+	if (device_load_basicdsk_floppy (image) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry (image, 80, heads, 9, 512, 1, 0, FALSE);

@@ -22,19 +22,6 @@ else
 CPUDEFS += -DHAS_APEXC=0
 endif
 
-
-ifneq ($(filter CDP1802,$(CPUS)),)
-CDPD = mess/cpu/cdp1802
-OBJDIRS += $(OBJ)/$(CDPD)
-CPUDEFS += -DHAS_CDP1802=1
-CPUOBJS += $(OBJ)/$(CDPD)/cdp1802.o
-DBGOBJS += $(OBJ)/$(CDPD)/1802dasm.o
-$(OBJ)/$(CDPD)/cdp1802.o: $(CDPD)/1802tbl.c
-else
-CPUDEFS += -DHAS_CDP1802=0
-endif
-
-
 ifneq ($(filter CP1610,$(CPUS)),)
 CPD = mess/cpu/cp1610
 OBJDIRS += $(OBJ)/$(CPD)

@@ -111,7 +111,7 @@ static void psxexe_conv32( UINT32 *p_uint32 )
 
 static QUICKLOAD_LOAD( psx_exe_load )
 {
-	if( mame_fread( fp, &m_psxexe_header, sizeof( m_psxexe_header ) ) != sizeof( m_psxexe_header ) )
+	if( image_fread( image, &m_psxexe_header, sizeof( m_psxexe_header ) ) != sizeof( m_psxexe_header ) )
 	{
 		logerror( "psx_exe_load: invalid exe\n" );
 		return INIT_FAIL;
@@ -146,7 +146,7 @@ static QUICKLOAD_LOAD( psx_exe_load )
 		logerror( "psx_exe_load: out of memory\n" );
 		return INIT_FAIL;
 	}
-	mame_fread( fp, m_p_psxexe, m_psxexe_header.t_size );
+	image_fread( image, m_p_psxexe, m_psxexe_header.t_size );
 	memory_set_opbase_handler( 0, psx_setopbase );
 	return INIT_PASS;
 }

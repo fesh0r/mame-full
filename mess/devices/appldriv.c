@@ -287,13 +287,13 @@ static int device_init_apple525_floppy(mess_image *image)
 
 
 
-static int device_load_apple525_floppy(mess_image *image, mame_file *file)
+static int device_load_apple525_floppy(mess_image *image)
 {
 	int result;
 	device_load_handler parent_load;
 
 	parent_load = (device_load_handler) device_get_info_fct(&parent_devclass, DEVINFO_PTR_LOAD);
-	result = parent_load(image, file);
+	result = parent_load(image);
 
 	floppy_drive_seek(image, -999);
 	floppy_drive_seek(image, +35/2);

@@ -90,7 +90,6 @@ static char tape_interrupt_enable;
 static mame_timer *tape_interrupt_timer;
 
 /* parallel interface state */
-static mame_file *printer_fp;
 static UINT8 printer_data;
 static char printer_strobe;
 
@@ -126,6 +125,12 @@ static void tutor_vblank_interrupt(void)
 	TMS9928A_interrupt();
 }
 
+static mess_image *printer_fp(void)
+{
+	return image_from_devtype_and_index(IO_PARALLEL, 0);
+}
+
+
 /*
 	Keyboard:
 
@@ -145,10 +150,9 @@ static READ8_HANDLER(read_keyboard)
 	return readinputport(offset);
 }
 
-static int device_load_tutor_cart(mess_image *image, mame_file *file)
+static int device_load_tutor_cart(mess_image *image)
 {
-	mame_fread(file, memory_region(REGION_CPU1) + cartridge_base, 0x6000);
-
+	image_fread(image, memory_region(REGION_CPU1) + cartridge_base, 0x6000);
 	return INIT_PASS;
 }
 
@@ -292,18 +296,6 @@ static WRITE8_HANDLER(tutor_cassette_w)
 	}
 }
 
-static int device_load_tutor_printer(mess_image *image, mame_file *file)
-{
-	printer_fp = file;
-
-	return INIT_PASS;
-}
-
-static void device_unload_tutor_printer(mess_image *image)
-{
-	printer_fp = NULL;
-}
-
 /* memory handlers */
 static  READ8_HANDLER(tutor_printer_r)
 {
@@ -313,7 +305,7 @@ static  READ8_HANDLER(tutor_printer_r)
 	{
 	case 0x20:
 		/* busy */
-		reply = (printer_fp) ? 0xff : 0x00;
+		reply = printer_fp() ? 0xff : 0x00;
 		break;
 
 	default:
@@ -340,8 +332,8 @@ static WRITE8_HANDLER(tutor_printer_w)
 		if (data && ! printer_strobe)
 		{
 			/* strobe is asserted: output data */
-			if (printer_fp)
-				mame_fwrite(printer_fp, & printer_data, 1);
+			if (printer_fp())
+				image_fwrite(printer_fp(), & printer_data, 1);
 		}
 		printer_strobe = data != 0;
 		break;
@@ -645,10 +637,6 @@ static void tutor_parallel_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_INT_WRITEABLE:						info->i = 1; break;
 		case DEVINFO_INT_CREATABLE:						info->i = 1; break;
 		case DEVINFO_INT_COUNT:							info->i = 1; break;
-
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case DEVINFO_PTR_LOAD:							info->load = device_load_tutor_printer; break;
-		case DEVINFO_PTR_UNLOAD:						info->unload = device_unload_tutor_printer; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case DEVINFO_STR_FILE_EXTENSIONS:				strcpy(info->s = device_temp_str(), ""); break;

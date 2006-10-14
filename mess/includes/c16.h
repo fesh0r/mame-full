@@ -166,6 +166,5 @@ extern MACHINE_RESET( c16 );
 extern INTERRUPT_GEN( c16_frame_interrupt );
 
 extern DEVICE_LOAD(c16_rom);
-extern DEVICE_UNLOAD(c16_rom);
 
 #endif

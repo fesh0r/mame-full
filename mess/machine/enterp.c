@@ -26,7 +26,7 @@ MACHINE_RESET( enterprise )
 
 DEVICE_LOAD( enterprise_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;

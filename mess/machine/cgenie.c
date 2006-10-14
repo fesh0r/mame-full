@@ -122,7 +122,6 @@ static OPBASE_HANDLER (opbaseoverride)
 	mess_image *img;
 	UINT8 *buff, *s, data;
 	UINT16 size, entry = 0, block_len, block_ofs = 0;
-	mame_file *cmd;
 
 	/* check if the BASIC prompt is visible on the screen */
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
@@ -140,8 +139,7 @@ static OPBASE_HANDLER (opbaseoverride)
 				return address;
 			}
 
-			cmd = image_fp(img);
-			size = mame_fread(cmd, buff, 65536);
+			size = image_fread(img, buff, 65536);
 			s = buff;
 			if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
 			{
@@ -350,17 +348,17 @@ DEVICE_LOAD( cgenie_floppy )
 	short dir_length = 0;
 
 	/* A Floppy Isnt manditory, so return if none */
-	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
+	if (device_load_basicdsk_floppy(image) != INIT_PASS)
 		return INIT_FAIL;
 
 	/* determine image geometry */
-	mame_fseek(file, 0, SEEK_SET);
+	image_fseek(image, 0, SEEK_SET);
 
 	/* determine geometry from disk contents */
 	for( i = 0; i < 12; i++ )
 	{
-		mame_fseek(file, pd_list[i].SPT * 256, SEEK_SET);
-		mame_fread(file, buff, 16);
+		image_fseek(image, pd_list[i].SPT * 256, SEEK_SET);
+		image_fread(image, buff, 16);
 		/* find an entry with matching DDSL */
 		if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
 			continue;
@@ -374,9 +372,9 @@ DEVICE_LOAD( cgenie_floppy )
 		for( j = 16; j < 32; j += 8 )
 		{
 			dir_offset = dir_sector * 256 + j * 32;
-			if( mame_fseek(file, dir_offset, SEEK_SET) < 0 )
+			if( image_fseek(image, dir_offset, SEEK_SET) < 0 )
 				break;
-			if( mame_fread(file, buff, 16) != 16 )
+			if( image_fread(image, buff, 16) != 16 )
 				break;
 			if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
 				!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )

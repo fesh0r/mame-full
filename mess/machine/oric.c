@@ -1078,13 +1078,13 @@ DEVICE_INIT( oric_floppy )
 DEVICE_LOAD( oric_floppy )
 {
 	/* attempt to open mfm disk */
-	if (device_load_mfm_disk(image, file) == INIT_PASS)
+	if (device_load_mfm_disk(image) == INIT_PASS)
 	{
 		floppy_drive_set_disk_image_interface(image, &mfm_disk_floppy_interface);
 		return INIT_PASS;
 	}
 
-	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
+	if (device_load_basicdsk_floppy(image) == INIT_PASS)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */

@@ -21,7 +21,7 @@ typedef struct {
 
 typedef struct
 {
-	void	*image_file;			/* file handle for disc image */
+	mess_image	*image_file;			/* file handle for disc image */
 	int 	mode;				/* open mode == 0 read only, != 0 read/write */
 	unsigned long image_size;		/* size of image file */
 

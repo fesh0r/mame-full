@@ -302,14 +302,14 @@ DEVICE_LOAD( studio2_cart ) {
 	}
 
 	/* read ST2 header */
-	if ( mame_fread( file, header, ST2_HEADER_SIZE ) != ST2_HEADER_SIZE ) {
+	if ( image_fread(image, header, ST2_HEADER_SIZE ) != ST2_HEADER_SIZE ) {
 		logerror( "Error loading cartridge: Unable to read header from file: %s.\n", image_filename( image ) );
 		return INIT_FAIL;
 	}
 	filesize -= ST2_HEADER_SIZE;
 	/* Read ST2 cartridge contents */
 	ptr = ((UINT8 *)memory_region( REGION_CPU1 ) ) + 0x0400;
-	if ( mame_fread( file, ptr, filesize ) != filesize ) {
+	if ( image_fread(image, ptr, filesize ) != filesize ) {
 		logerror( "Error loading cartridge: Unable to read contents from file: %s.\n", image_filename( image ) );
 		return INIT_FAIL;
 	}

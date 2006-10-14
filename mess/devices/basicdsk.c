@@ -23,7 +23,7 @@ typedef struct
 typedef struct
 {
 	const char *image_name; 		/* file name for disc image */
-	void	*image_file;			/* file handle for disc image */
+	mess_image	*image_file;			/* file handle for disc image */
 	int 	mode;					/* open mode == 0 read only, != 0 read/write */
 	unsigned long image_size;		/* size of image file */
 
@@ -89,11 +89,11 @@ int device_init_basicdsk_floppy(mess_image *image)
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int device_load_basicdsk_floppy(mess_image *image, mame_file *file)
+int device_load_basicdsk_floppy(mess_image *image)
 {
 	basicdsk *w = get_basicdsk(image);
 
-	w->image_file = file;
+	w->image_file = image;
 	w->mode = image_is_writable(image);
 
 	/* this will be setup in the set_geometry function */
@@ -293,7 +293,7 @@ static int basicdsk_seek(basicdsk * w, UINT8 t, UINT8 h, UINT8 s)
 		return 0;
 	}
 
-	if (mame_fseek(w->image_file, offset, SEEK_SET) < 0)
+	if (image_fseek(w->image_file, offset, SEEK_SET) < 0)
 	{
 		logerror("basicdsk seek failed\n");
 		return 0;
@@ -351,8 +351,7 @@ static int basicdsk_seek(basicdsk * w, UINT8 t, UINT8 h, UINT8 s)
         }
         return;
     }
-	else
-	if (mame_fread(w->image_file, w->buffer, w->sector_length) != w->sector_length)
+	else if (image_fread(w->image_file, w->buffer, w->sector_length) != w->sector_length)
 	{
 		w->status = STA_2_LOST_DAT;
 		return;
@@ -372,15 +371,14 @@ static int basicdsk_seek(basicdsk * w, UINT8 t, UINT8 h, UINT8 s)
 /* write a sector */
 static void basicdsk_write_sector(basicdsk *w)
 {
-
 	if (w->image_file == REAL_FDD)
 	{
                 osd_fdc_put_sector(w->track, w->head, w->head, w->sector, w->buffer, w->write_cmd & FDC_DELETED_AM);
 		return;
 	}
 
-        seek(w, w->track, w->head, w->sector);
-        mame_fwrite(w->image_file, w->buffer, w->data_offset)
+    seek(w, w->track, w->head, w->sector);
+    image_fwrite(w->image_file, w->buffer, w->data_offset)
 }
 
 
@@ -486,7 +484,7 @@ int cnt;
 			w->status = seek(w, w->track, w->head, w->dam_list[cnt][2]);
 			if (w->status == 0)
 			{
-				if (mame_fwrite(w->image_file, &w->buffer[w->dam_data[cnt]], w->sector_length) != w->sector_length)
+				if (image_fwrite(w->image_file, &w->buffer[w->dam_data[cnt]], w->sector_length) != w->sector_length)
 				{
 					w->status = STA_2_LOST_DAT;
 					return;
@@ -567,7 +565,7 @@ static void basicdsk_write_sector_data_from_buffer(mess_image *img, int side, in
 
 	if (basicdsk_seek(w, w->track, side, index1)&&w->mode)
 	{
-		mame_fwrite(w->image_file, ptr, length);
+		image_fwrite(w->image_file, ptr, length);
 	}
 
 	basicdsk_set_ddam(img, w->track, side, index1, ddam);
@@ -579,7 +577,7 @@ static void basicdsk_read_sector_data_into_buffer(mess_image *img, int side, int
 
 	if (basicdsk_seek(w, w->track, side, index1))
 	{
-		mame_fread(w->image_file, ptr, length);
+		image_fread(w->image_file, ptr, length);
 	}
 }
 

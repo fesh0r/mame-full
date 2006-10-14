@@ -67,7 +67,7 @@ static int device_init_coco_vhd(mess_image *image)
 
 
 
-static int device_load_coco_vhd(mess_image *image, mame_file *file)
+static int device_load_coco_vhd(mess_image *image)
 {
 	vhdStatus = 0xff; /* -1, Power on state */
 	logicalRecordNumber = 0;
@@ -80,19 +80,19 @@ static int device_load_coco_vhd(mess_image *image, mame_file *file)
 
 static void coco_vhd_readwrite(UINT8 data)
 {
-	mame_file *vhdfile;
+	mess_image *vhdfile;
 	int result;
 	int phyOffset;
 	long nBA = bufferAddress;
 
-	vhdfile = image_fp(vhd_image());
+	vhdfile = vhd_image();
 	if (!vhdfile)
 	{
 		vhdStatus = 2; /* No VHD attached */
 		return;
 	}
 
-	result = mame_fseek(vhdfile, ((logicalRecordNumber)) * 256, SEEK_SET);
+	result = image_fseek(vhdfile, ((logicalRecordNumber)) * 256, SEEK_SET);
 
 	if (result < 0)
 	{
@@ -104,7 +104,7 @@ static void coco_vhd_readwrite(UINT8 data)
 
 	switch(data) {
 	case 0: /* Read sector */
-		result = mame_fread(vhdfile, &(mess_ram[phyOffset]), 256);
+		result = image_fread(vhdfile, &(mess_ram[phyOffset]), 256);
 
 		if( result != 256 )
 		{
@@ -116,7 +116,7 @@ static void coco_vhd_readwrite(UINT8 data)
 		break;
 
 	case 1: /* Write Sector */
-		result = mame_fwrite(vhdfile, &(mess_ram[phyOffset]), 256);
+		result = image_fwrite(vhdfile, &(mess_ram[phyOffset]), 256);
 
 		if (result != 256)
 		{

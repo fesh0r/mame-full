@@ -471,12 +471,12 @@ DEVICE_LOAD( sms_cart )
 	int size;
 
 	/* Get file size */
-	size = mame_fsize(file);
+	size = image_length(image);
 
 	/* Check for 512-byte header */
 	if ((size / 512) & 1)
 	{
-		mame_fseek(file, 512, SEEK_SET);
+		image_fseek(image, 512, SEEK_SET);
 		size -= 512;
 	}
 
@@ -491,7 +491,7 @@ DEVICE_LOAD( sms_cart )
 	ROM = memory_region(REGION_USER2);
 
 	/* Load ROM banks */
-	size = mame_fread(file, ROM, size);
+	size = image_fread(image, ROM, size);
 
 	/* check the image */
 	if ( ! HAS_BIOS ) {

@@ -289,7 +289,7 @@ int smc92x4_hd_load(mess_image *image, int disk_unit)
 {
 	const hard_disk_info *info;
 
-	if (device_load_mess_hd(image, image_fp(image)) == INIT_PASS)
+	if (device_load_mess_hd(image) == INIT_PASS)
 	{
 		hd[disk_unit].hd_handle = mess_hd_get_hard_disk_file(image);
 		hd[disk_unit].wp = !image_is_writable(image);

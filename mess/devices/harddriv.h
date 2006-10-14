@@ -16,7 +16,7 @@
 const struct IODevice *mess_hd_device_specify(struct IODevice *iodev, int count);
 
 int device_init_mess_hd(mess_image *image);
-int device_load_mess_hd(mess_image *image, mame_file *file);
+int device_load_mess_hd(mess_image *image);
 void device_unload_mess_hd(mess_image *image);
 
 hard_disk_file *mess_hd_get_hard_disk_file(mess_image *image);

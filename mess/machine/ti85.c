@@ -645,7 +645,7 @@ SNAPSHOT_LOAD( ti8x )
 	if (!(ti8x_snapshot_data = malloc(snapshot_size)))
 		return INIT_FAIL;
 
-	mame_fread(fp, ti8x_snapshot_data, snapshot_size);
+	image_fread(image, ti8x_snapshot_data, snapshot_size);
 
 	switch (ti_calculator_model)
 	{
@@ -674,12 +674,12 @@ DEVICE_LOAD( ti85_serial )
 
 	if (ti85_serial_status != TI85_SEND_STOP) return INIT_FAIL;
 
-	file_size = mame_fsize(file);
+	file_size = image_length(image);
 
 	if (file_size != 0)
 	{
 		file_data = (UINT8*) auto_malloc(file_size);
-		mame_fread(file, file_data, file_size);
+		image_fread(image, file_data, file_size);
 
 		if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
 		{

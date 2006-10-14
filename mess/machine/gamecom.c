@@ -616,7 +616,7 @@ DEVICE_LOAD( gamecom_cart )
 		logerror( "Error loading cartridge: Invalid file size.\n" );
 		return INIT_FAIL;
 	}
-	if ( mame_fread( file, cartridge1 + load_offset, filesize ) != filesize ) {
+	if ( image_fread( image, cartridge1 + load_offset, filesize ) != filesize ) {
 		logerror( "Error loading cartridge: Unable to read from file: %s.\n", image_filename(image) );
 		return INIT_FAIL;
 	}

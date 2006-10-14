@@ -305,7 +305,7 @@ SNAPSHOT_LOAD( primo )
 	if (!(snapshot_data = (UINT8*) malloc(snapshot_size)))
 		return INIT_FAIL;
 
-	if (mame_fread(fp, snapshot_data, snapshot_size) != snapshot_size)
+	if (image_fread(image, snapshot_data, snapshot_size) != snapshot_size)
 	{
 		free(snapshot_data);
 		return INIT_FAIL;
@@ -355,7 +355,7 @@ QUICKLOAD_LOAD( primo )
 	if (!(quickload_data = (UINT8*) malloc(quickload_size)))
 		return INIT_FAIL;
 
-	if (mame_fread(fp, quickload_data, quickload_size) != quickload_size)
+	if (image_fread(image, quickload_data, quickload_size) != quickload_size)
 	{
 		free(quickload_data);
 		return INIT_FAIL;

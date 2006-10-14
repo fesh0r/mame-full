@@ -40,7 +40,7 @@ int adam_cart_verify(const UINT8 *cartdata, size_t size)
 
 DEVICE_LOAD( adam_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		/* img, tracks, sides, sectors_per_track, sector_length, first_sector_id, offset_track_zero, track_skipping */
 		basicdsk_set_geometry(image, 40, 1, 8, 512, 0, 0, FALSE);

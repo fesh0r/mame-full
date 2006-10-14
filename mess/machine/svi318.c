@@ -50,8 +50,8 @@ DEVICE_LOAD( svi318_cart )
 		return INIT_FAIL;
 
 	memset(p, 0xff, 0x8000);
-	size = mame_fsize(file);
-	if (mame_fread(file, p, size) != size)
+	size = image_length(image);
+	if (image_fread(image, p, size) != size)
 	{
 		logerror ("can't read file %s\n", image_filename(image) );
 		return INIT_FAIL;
@@ -339,7 +339,7 @@ DEVICE_LOAD( svi318_floppy )
 
 	if (!image_has_been_created(image))
 	{
-		size = mame_fsize (file);
+		size = image_length (image);
 
 		switch (size)
 		{
@@ -352,11 +352,11 @@ DEVICE_LOAD( svi318_floppy )
 		default:
 			return INIT_FAIL;
 		}
-		}
+	}
 	else
 		return INIT_FAIL;
 
-	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
+	if (device_load_basicdsk_floppy(image) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry(image, 40, svi318_fdc.heads[id], 17, 256, 1, 0, FALSE);

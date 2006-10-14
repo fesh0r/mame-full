@@ -207,7 +207,7 @@ SNAPSHOT_LOAD(vtech1)
 	if (!snapshot_data)
 		return INIT_FAIL;
 
-	mame_fread(fp, snapshot_data, snapshot_size);
+	image_fread(image, snapshot_data, snapshot_size);
 	vtech1_snapshot_copy(snapshot_data, snapshot_size);
 	free(snapshot_data);
 	return INIT_PASS;
@@ -218,17 +218,12 @@ SNAPSHOT_LOAD(vtech1)
  Floppy Handling
 ******************************************************************************/
 
-static mame_file *vtech1_file(void)
+static mess_image *vtech1_file(void)
 {
-	mess_image *img;
-	mame_file *file;
-
 	if (vtech1_drive < 0)
 		return NULL;
 
-	img = image_from_devtype_and_index(IO_FLOPPY, vtech1_drive);
-	file = image_fp(img);
-	return file;
+	return image_from_devtype_and_index(IO_FLOPPY, vtech1_drive);
 }
 
 /*
@@ -271,8 +266,8 @@ static void vtech1_get_track(void)
 		int size, offs;
 		size = TRKSIZE_VZ;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(vtech1_file(), offs, SEEK_SET);
-		size = mame_fread(vtech1_file(), vtech1_fdc_data, size);
+		image_fseek(vtech1_file(), offs, SEEK_SET);
+		size = image_fread(vtech1_file(), vtech1_fdc_data, size);
 		if (LOG_VTECH1_FDC)
 			logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
@@ -287,8 +282,8 @@ static void vtech1_put_track(void)
 	{
 		int size, offs;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(vtech1_file(), offs + vtech1_fdc_start, SEEK_SET);
-		size = mame_fwrite(vtech1_file(), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
+		image_fseek(vtech1_file(), offs + vtech1_fdc_start, SEEK_SET);
+		size = image_fwrite(vtech1_file(), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
 		if (LOG_VTECH1_FDC)
 			logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }

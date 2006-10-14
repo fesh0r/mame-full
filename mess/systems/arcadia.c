@@ -259,18 +259,18 @@ ROM_START(vcg)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int device_load_arcadia_cart(mess_image *image, mame_file *file)
+static int device_load_arcadia_cart(mess_image *image)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
 	memset(rom, 0, 0x8000);
-	size = mame_fsize(file);
+	size = image_length(image);
 
 	if (size > memory_region_length(REGION_CPU1))
 		size = memory_region_length(REGION_CPU1);
 
-	if (mame_fread(file, rom, size) != size)
+	if (image_fread(image, rom, size) != size)
 		return INIT_FAIL;
 
 	if (size > 0x1000)

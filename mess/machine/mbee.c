@@ -208,11 +208,11 @@ void mbee_interrupt(void)
 
 DEVICE_LOAD( mbee_cart )
 {
-	int size = mame_fsize(file);
+	int size = image_length(image);
 	UINT8 *mem = malloc(size);
 	if( mem )
 	{
-		if( mame_fread(file, mem, size) == size )
+		if( image_fread(image, mem, size) == size )
 		{
 			memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
 		}

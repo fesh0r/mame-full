@@ -7,7 +7,7 @@
 
 UINT8 *cbmb_memory;
 
-static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapshot_size,
+static int general_cbm_loadsnap(mess_image *image, const char *file_type, int snapshot_size,
 	offs_t offset, void (*cbm_sethiaddress)(UINT16 hiaddress))
 {
 	char buffer[7];
@@ -26,11 +26,11 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	else if (!mame_stricmp(file_type, "p00"))
 	{
 		/* p00 files */
-		if (mame_fread(fp, buffer, sizeof(buffer)) != sizeof(buffer))
+		if (image_fread(image, buffer, sizeof(buffer)) != sizeof(buffer))
 			goto error;
 		if (memcmp(buffer, "C64File", sizeof(buffer)))
 			goto error;
-		mame_fseek(fp, 26, SEEK_SET);
+		image_fseek(image, 26, SEEK_SET);
 		snapshot_size -= 26;
 	}
 	else
@@ -38,7 +38,7 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 		goto error;
 	}
 
-	mame_fread(fp, &address, 2);
+	image_fread(image, &address, 2);
 	address = LITTLE_ENDIANIZE_INT16(address);
 	snapshot_size -= 2;
 
@@ -46,7 +46,7 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	if (!data)
 		goto error;
 
-	bytesread = mame_fread(fp, data, snapshot_size);
+	bytesread = image_fread(image, data, snapshot_size);
 	if (bytesread != snapshot_size)
 		goto error;
 
@@ -75,17 +75,17 @@ static void cbm_quick_sethiaddress(UINT16 hiaddress)
 
 QUICKLOAD_LOAD( cbm_c16 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm_c64 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm_vc20 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_quick_sethiaddress);
 }
 
 static void cbm_pet_quick_sethiaddress(UINT16 hiaddress)
@@ -100,7 +100,7 @@ static void cbm_pet_quick_sethiaddress(UINT16 hiaddress)
 
 QUICKLOAD_LOAD( cbm_pet )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_pet_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_pet_quick_sethiaddress);
 }
 
 static void cbm_pet1_quick_sethiaddress(UINT16 hiaddress)
@@ -115,7 +115,7 @@ static void cbm_pet1_quick_sethiaddress(UINT16 hiaddress)
 
 QUICKLOAD_LOAD( cbm_pet1 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_pet1_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_pet1_quick_sethiaddress);
 }
 
 static void cbmb_quick_sethiaddress(UINT16 hiaddress)
@@ -126,12 +126,12 @@ static void cbmb_quick_sethiaddress(UINT16 hiaddress)
 
 QUICKLOAD_LOAD( cbmb )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0x10000, cbmb_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0x10000, cbmb_quick_sethiaddress);
 }
 
 QUICKLOAD_LOAD( cbm500 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbmb_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbmb_quick_sethiaddress);
 }
 
 static void cbm_c65_quick_sethiaddress(UINT16 hiaddress)
@@ -142,7 +142,7 @@ static void cbm_c65_quick_sethiaddress(UINT16 hiaddress)
 
 QUICKLOAD_LOAD( cbm_c65 )
 {
-	return general_cbm_loadsnap(fp, file_type, quickload_size, 0, cbm_c65_quick_sethiaddress);
+	return general_cbm_loadsnap(image, file_type, quickload_size, 0, cbm_c65_quick_sethiaddress);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -187,21 +187,16 @@ static DEVICE_LOAD(cbm_rom)
 	if (i >= sizeof(cbm_rom) / sizeof(cbm_rom[0]))
 		return INIT_FAIL;
 
-	if (!file)
-	{
-		return INIT_PASS;
-	}
-
 	dev = cbm_rom_find_device();
 
-	size = mame_fsize (file);
+	size = image_length(image);
 
 	filetype = image_filetype(image);
 	if (filetype && !mame_stricmp(filetype, "prg"))
 	{
 		unsigned short in;
 
-		mame_fread (file, &in, 2);
+		image_fread (image, &in, 2);
 		in = LITTLE_ENDIANIZE_INT16(in);
 		logerror("rom prg %.4x\n", in);
 		size -= 2;
@@ -214,17 +209,17 @@ static DEVICE_LOAD(cbm_rom)
 
 		cbm_rom[i].addr=in;
 		cbm_rom[i].size=size;
-		read_ = mame_fread (file, cbm_rom[i].chip, size);
+		read_ = image_fread (image, cbm_rom[i].chip, size);
 		if (read_ != size)
 			return INIT_FAIL;
 	}
 	else if (filetype && !mame_stricmp (filetype, "crt"))
 	{
 		unsigned short in;
-		mame_fseek (file, 0x18, SEEK_SET);
-		mame_fread( file, &cbm_c64_exrom, 1);
-		mame_fread( file, &cbm_c64_game, 1);
-		mame_fseek (file, 64, SEEK_SET);
+		image_fseek(image, 0x18, SEEK_SET);
+		image_fread(image, &cbm_c64_exrom, 1);
+		image_fread(image, &cbm_c64_game, 1);
+		image_fseek(image, 64, SEEK_SET);
 		j = 64;
 
 		logerror("loading rom %s size:%.4x\n", image_filename(image), size);
@@ -234,14 +229,14 @@ static DEVICE_LOAD(cbm_rom)
 			unsigned short segsize;
 			unsigned char buffer[10], number;
 
-			mame_fread (file, buffer, 6);
-			mame_fread (file, &segsize, 2);
+			image_fread(image, buffer, 6);
+			image_fread(image, &segsize, 2);
 			segsize = BIG_ENDIANIZE_INT16(segsize);
-			mame_fread (file, buffer + 6, 3);
-			mame_fread (file, &number, 1);
-			mame_fread (file, &adr, 2);
+			image_fread(image, buffer + 6, 3);
+			image_fread(image, &number, 1);
+			image_fread(image, &adr, 2);
 			adr = BIG_ENDIANIZE_INT16(adr);
-			mame_fread (file, &in, 2);
+			image_fread(image, &in, 2);
 			in = BIG_ENDIANIZE_INT16(in);
 			logerror("%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
 				buffer, buffer[4], buffer[5], segsize,
@@ -255,7 +250,7 @@ static DEVICE_LOAD(cbm_rom)
 
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=in;
-			read_ = mame_fread (file, cbm_rom[i].chip, in);
+			read_ = image_fread(image, cbm_rom[i].chip, in);
 			i++;
 			if (read_ != in)
 				return INIT_FAIL;
@@ -307,7 +302,7 @@ static DEVICE_LOAD(cbm_rom)
 
 		cbm_rom[i].addr=adr;
 		cbm_rom[i].size=size;
-		read_ = mame_fread (file, cbm_rom[i].chip, size);
+		read_ = image_fread(image, cbm_rom[i].chip, size);
 
 		if (read_ != size)
 			return INIT_FAIL;

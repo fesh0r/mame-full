@@ -1,21 +1,21 @@
 /*****************************************************************************
  *
- *	 cdp1802.h
- *	 portable cosmac cdp1802 emulator interface
+ *   cdp1802.h
+ *   portable cosmac cdp1802 emulator interface
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   peter.trauner@jk.uni-linz.ac.at
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     peter.trauner@jk.uni-linz.ac.at
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -74,7 +74,7 @@ enum {
 
 typedef struct {
 	/* called after execution of an instruction with cycles,
-	   return cycles taken by dma hardware */
+       return cycles taken by dma hardware */
 	void (*dma)(int cycles);
 	void (*out_q)(int level);
 	int (*in_ef)(void);

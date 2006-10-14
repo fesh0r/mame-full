@@ -641,20 +641,20 @@ static DEVICE_LOAD( kim1_cassette )
 	UINT16 addr, size;
 	UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-	mame_fread(file, buff, sizeof (buff));
+	image_fread(image, buff, sizeof (buff));
 	if (memcmp(buff, magic, sizeof (buff)))
 	{
 		logerror("kim1_rom_load: magic '%s' not found\n", magic);
 		return INIT_FAIL;
 	}
-	mame_fread(file, &addr, 2);
+	image_fread(image, &addr, 2);
 	addr = LITTLE_ENDIANIZE_INT16(addr);
-	mame_fread(file, &size, 2);
+	image_fread(image, &size, 2);
 	size = LITTLE_ENDIANIZE_INT16(size);
-	mame_fread(file, &ident, 1);
+	image_fread(image, &ident, 1);
 	logerror("kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident);
 	while (size-- > 0)
-		mame_fread(file, &RAM[addr++], 1);
+		image_fread(image, &RAM[addr++], 1);
 	return INIT_PASS;
 }
 

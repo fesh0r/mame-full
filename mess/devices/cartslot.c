@@ -31,7 +31,7 @@ static int parse_rom_name(const rom_entry *roment, int *position, const char **e
 
 
 
-static int load_cartridge(const rom_entry *romrgn, const rom_entry *roment, mame_file *file)
+static int load_cartridge(const rom_entry *romrgn, const rom_entry *roment, mess_image *image)
 {
 	UINT32 region, flags;
 	offs_t offset, length, read_length, pos = 0, len;
@@ -45,17 +45,17 @@ static int load_cartridge(const rom_entry *romrgn, const rom_entry *roment, mame
 	flags = ROM_GETFLAGS(roment);
 	ptr = ((UINT8 *) memory_region(region)) + offset;
 
-	if (file)
+	if (image)
 	{
 		/* must this be full size */
 		if (flags & ROM_FULLSIZE)
 		{
-			if (mame_fsize(file) != length)
+			if (image_length(image) != length)
 				return INIT_FAIL;
 		}
 
 		/* read the ROM */
-		pos = read_length = mame_fread(file, ptr, length);
+		pos = read_length = image_fread(image, ptr, length);
 
 		/* do we need to mirror the ROM? */
 		if (flags & ROM_MIRROR)
@@ -112,7 +112,7 @@ static int load_cartridge(const rom_entry *romrgn, const rom_entry *roment, mame
 
 
 
-static int process_cartridge(mess_image *image, mame_file *file)
+static int process_cartridge(mess_image *image, mess_image *file)
 {
 	const rom_entry *romrgn, *roment;
 	int position, result;
@@ -148,9 +148,9 @@ static int device_init_cartslot_specified(mess_image *image)
 	return 0;
 }
 
-static int device_load_cartslot_specified(mess_image *image, mame_file *file)
+static int device_load_cartslot_specified(mess_image *image)
 {
-	return process_cartridge(image, file);
+	return process_cartridge(image, image);
 }
 
 static void device_unload_cartslot_specified(mess_image *image)

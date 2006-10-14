@@ -182,9 +182,9 @@ static const tms9902reset_param tms9902_params =
 	xmit_callback			/* called when a character is transmitted */
 };
 
-static mame_file *rs232_fp;
+static mess_image *rs232_fp;
 static UINT8 rs232_rts;
-static void *rs232_input_timer;
+static mame_timer *rs232_input_timer;
 
 static MACHINE_RESET( tm990_189 )
 {
@@ -446,7 +446,7 @@ static void rs232_input_callback(int dummy)
 
 	if (/*rs232_rts &&*/ /*(mame_ftell(rs232_fp) < mame_fsize(rs232_fp))*/1)
 	{
-		if (mame_fread(rs232_fp, &buf, 1) == 1)
+		if (image_fread(rs232_fp, &buf, 1) == 1)
 			tms9902_push_data(0, buf);
 	}
 }
@@ -454,14 +454,14 @@ static void rs232_input_callback(int dummy)
 /*
 	Initialize rs232 unit and open image
 */
-static int device_load_tm990_189_rs232(mess_image *image, mame_file *file)
+static int device_load_tm990_189_rs232(mess_image *image)
 {
 	int id = image_index_in_device(image);
 
 	if (id != 0)
 		return INIT_FAIL;
 
-	rs232_fp = file;
+	rs232_fp = image;
 
 	tms9902_set_dsr(id, 1);
 	rs232_input_timer = timer_alloc(rs232_input_callback);
@@ -498,7 +498,7 @@ static void xmit_callback(int which, int data)
 	UINT8 buf = data;
 
 	if (rs232_fp)
-		mame_fwrite(rs232_fp, &buf, 1);
+		image_fwrite(rs232_fp, &buf, 1);
 }
 
 /*

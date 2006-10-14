@@ -59,13 +59,13 @@ static dsk_drive *get_drive(mess_image *img)
 }
 
 /* load image */
-static int dsk_load(mame_file *file, mess_image *img, unsigned char **ptr)
+static int dsk_load(mess_image *img, unsigned char **ptr)
 {
 	int datasize;
 	unsigned char *data;
 
 	/* get file size */
-	datasize = mame_fsize(file);
+	datasize = image_length(img);
 
 	if (datasize!=0)
 	{
@@ -75,7 +75,7 @@ static int dsk_load(mame_file *file, mess_image *img, unsigned char **ptr)
 		if (data!=NULL)
 		{
 			/* read whole file */
-			mame_fread(file, data, datasize);
+			image_fread(img, data, datasize);
 
 			*ptr = data;
 
@@ -106,13 +106,13 @@ static int device_init_dsk_floppy(mess_image *image)
 
 
 /* load floppy */
-static int device_load_dsk_floppy(mess_image *image, mame_file *file)
+static int device_load_dsk_floppy(mess_image *image)
 {
 	int id = image_index_in_device(image);
 	dsk_drive *thedrive = &drives[id];
 
 	/* load disk image */
-	if (dsk_load(file, image, &thedrive->data))
+	if (dsk_load(image, &thedrive->data))
 	{
 		if (thedrive->data)
 		{
@@ -129,30 +129,23 @@ static int device_load_dsk_floppy(mess_image *image, mame_file *file)
 
 static int dsk_save(mess_image *img, unsigned char **ptr)
 {
-	mame_file *file;
+	int datasize;
+	unsigned char *data;
 
-	file = image_fp(img);
+	/* get file size */
+	datasize = image_length(img);
 
-	if (file)
+	if (datasize!=0)
 	{
-		int datasize;
-		unsigned char *data;
-
-		/* get file size */
-		datasize = mame_fsize(file);
-
-		if (datasize!=0)
+		data = *ptr;
+		if (data!=NULL)
 		{
-			data = *ptr;
-			if (data!=NULL)
-			{
-				mame_fwrite(file, data, datasize);
+			image_fwrite(img, data, datasize);
 
-				/* ok! */
-				return 1;
-			}
+			/* ok! */
+			return 1;
 		}
-	};
+	}
 
 	return 0;
 }

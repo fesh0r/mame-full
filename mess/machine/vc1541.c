@@ -628,13 +628,8 @@ static struct via6522_interface via2 =
 
 DEVICE_LOAD(vc1541)
 {
-	int size;
-
-	size = mame_fsize (file);
-	if (!(vc1541->d64.data = (UINT8*) image_malloc(image, size)))
-		return INIT_FAIL;
-
-	if (size != mame_fread (file, vc1541->d64.data, size))
+	vc1541->d64.data = image_ptr(image);
+	if (!vc1541->d64.data)
 		return INIT_FAIL;
 
 	logerror("floppy image %s loaded\n", image_filename(image));

@@ -284,7 +284,7 @@ QUICKLOAD_LOAD(atom)
 	if (!quickload_data)
 		return INIT_FAIL;
 
-	if (mame_fread(fp, quickload_data, quickload_size) != quickload_size)
+	if (image_fread(image, quickload_data, quickload_size) != quickload_size)
 	{
 		free(quickload_data);
 		return INIT_FAIL;
@@ -334,7 +334,7 @@ QUICKLOAD_LOAD(atom)
 /* load floppy */
 DEVICE_LOAD( atom_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */

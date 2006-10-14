@@ -40,12 +40,12 @@ DEVICE_LOAD(pce_cart)
 	{
 		logerror("*** DEVICE_LOAD(pce_cart) : Header present\n");
 		size -= 512;
-		mame_fseek(file, 512, SEEK_SET);
+		image_fseek(image, 512, SEEK_SET);
 	}
 	if ( size > PCE_ROM_MAXSIZE )
 		size = PCE_ROM_MAXSIZE;
 
-	mame_fread(file, ROM, size);
+	image_fread(image, ROM, size);
 
 	extrainfo = image_extrainfo( image );
 	if ( extrainfo )

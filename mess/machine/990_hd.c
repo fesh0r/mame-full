@@ -79,7 +79,6 @@ typedef struct hd_unit_t
 	mess_image *img;						/* image descriptor */
 	enum { format_mame, format_old } format;
 	hard_disk_file *hd_handle;		/* mame hard disk descriptor - only if format == format_mame */
-	mame_file *fd;							/* file descriptor - only if format == format_old */
 	unsigned int wp : 1;					/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;				/* TRUE when a disk has just been connected */
 
@@ -179,7 +178,6 @@ DEVICE_INIT( ti990_hd )
 	d->img = image;
 	d->format = format_mame;	/* don't care */
 	d->hd_handle = NULL;
-	d->fd = NULL;
 	d->wp = 1;
 	d->unsafe = 1;
 
@@ -212,7 +210,7 @@ DEVICE_LOAD( ti990_hd )
 
 	d = &hdc.d[id];
 
-	bytes_read = mame_fread(file, tag, sizeof(tag));
+	bytes_read = image_fread(image, tag, sizeof(tag));
 	if (bytes_read != sizeof(tag))
 		return INIT_FAIL;;
 	if (! strncmp(tag, "MComprHD", 8))
@@ -220,13 +218,12 @@ DEVICE_LOAD( ti990_hd )
 		/* standard hard disk format */
 
 		/* open image */
-		if (device_load_mess_hd(image, file))
+		if (device_load_mess_hd(image))
 			return INIT_FAIL;
 
 		/* set file descriptor */
 		d->format = format_mame;
 		d->hd_handle = mess_hd_get_hard_disk_file(image);
-		d->fd = NULL;
 		/* tell whether the image is writable */
 		d->wp = !image_is_writable(image);
 	}
@@ -237,7 +234,6 @@ DEVICE_LOAD( ti990_hd )
 		/* set file descriptor */
 		d->format = format_old;
 		d->hd_handle = NULL;
-		d->fd = file;
 		/* tell whether the image is writable */
 		d->wp = ! image_is_writable(image);
 	}
@@ -263,8 +259,8 @@ DEVICE_LOAD( ti990_hd )
 		/* use custom image header. */
 		/* to convert old header-less images to this format, insert a 16-byte
 		header as follow: 00 00 03 8f  00 00 00 05  00 00 00 21  00 00 01 00 */
-		mame_fseek(d->fd, 0, SEEK_SET);
-		bytes_read = mame_fread(d->fd, &custom_header, sizeof(custom_header));
+		image_fseek(d->img, 0, SEEK_SET);
+		bytes_read = image_fread(d->img, &custom_header, sizeof(custom_header));
 		if (bytes_read != sizeof(custom_header))
 		{
 			device_unload_ti990_hd(image);
@@ -313,7 +309,6 @@ DEVICE_UNLOAD( ti990_hd )
 
 	d->format = format_mame;	/* don't care */
 	d->hd_handle = NULL;
-	d->fd = NULL;
 	d->wp = 1;
 	d->unsafe = 1;
 
@@ -335,7 +330,7 @@ INLINE int is_unit_loaded(int unit)
 		break;
 
 	case format_old:
-		reply = (hdc.d[unit].fd != NULL);
+		reply = (image_exists(hdc.d[unit].img) ? 1 : 0);
 		break;
 	}
 
@@ -458,8 +453,8 @@ static int read_sector(int unit, unsigned int lba, void *buffer, unsigned int by
 
 	case format_old:
 		byte_position = lba*hdc.d[unit].bytes_per_sector + header_len;
-		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
-		bytes_read = mame_fread(hdc.d[unit].fd, buffer, bytes_to_read);
+		image_fseek(hdc.d[unit].img, byte_position, SEEK_SET);
+		bytes_read = image_fread(hdc.d[unit].img, buffer, bytes_to_read);
 		break;
 
 	default:
@@ -488,8 +483,8 @@ static int write_sector(int unit, unsigned int lba, const void *buffer, unsigned
 
 	case format_old:
 		byte_position = lba*hdc.d[unit].bytes_per_sector + header_len;
-		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
-		bytes_written = mame_fwrite(hdc.d[unit].fd, buffer, bytes_to_write);
+		image_fseek(hdc.d[unit].img, byte_position, SEEK_SET);
+		bytes_written = image_fwrite(hdc.d[unit].img, buffer, bytes_to_write);
 		break;
 
 	default:

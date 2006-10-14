@@ -1159,14 +1159,14 @@ MACHINE_DRIVER_END
 
 /* Devices */
 
-int device_load_abc80_floppy(mess_image *image, mame_file *file)
+int device_load_abc80_floppy(mess_image *image)
 {
 	int size, tracks, heads, sectors;
 
 	if (image_has_been_created(image))
 		return INIT_FAIL;
 
-	size = mame_fsize (file);
+	size = image_length (image);
 	switch (size)
 	{
 	case 80*1024: /* Scandia Metric FD2 */
@@ -1193,7 +1193,7 @@ int device_load_abc80_floppy(mess_image *image, mame_file *file)
 		return INIT_FAIL;
 	}
 
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */

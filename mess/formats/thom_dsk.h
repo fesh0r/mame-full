@@ -22,9 +22,9 @@ typedef enum {
 } thom_floppy_type;
 
 extern int  thom_floppy_init   ( mess_image *image );
-extern int  thom_floppy_load   ( mess_image* image, mame_file* file );
+extern int  thom_floppy_load   ( mess_image* image );
 extern void thom_floppy_unload ( mess_image *image);
-extern int  thom_floppy_create ( mess_image *image, mame_file *file, 
+extern int  thom_floppy_create ( mess_image *image, 
 				 int create_format, option_resolution *args );
 
 extern void    thom_floppy_set_density( DENSITY density );

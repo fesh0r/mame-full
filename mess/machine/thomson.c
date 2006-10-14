@@ -178,7 +178,7 @@ void thom_serial_unload ( mess_image *image )
   serial_device_unload( image );
 }
 
-int thom_serial_load ( mess_image* image, mame_file* file )
+int thom_serial_load ( mess_image* image )
 {
   int idx = image_index_in_device( image );
 
@@ -196,11 +196,11 @@ int thom_serial_load ( mess_image* image, mame_file* file )
 
 /* ------------ cartridge ------------ */
 
-int to7_cartridge_load ( mess_image* image, mame_file* file )
+int to7_cartridge_load ( mess_image* image )
 {
   int i,j;
   UINT8* pos = memory_region( REGION_CPU1 ) + 0x10000;
-  offs_t size = mame_fsize ( file );
+  offs_t size = image_length ( image );
   char name[129];
   if ( size <= 0x04000 ) thom_cart_nb_banks = 1;
   else if ( size == 0x08000 ) thom_cart_nb_banks = 2;
@@ -210,7 +210,7 @@ int to7_cartridge_load ( mess_image* image, mame_file* file )
     return INIT_FAIL;
   }
 
-  if ( mame_fread( file, pos, size ) != size ) {
+  if ( image_fread( image, pos, size ) != size ) {
     logerror( "to7_cartridge_load: read error\n" );
     return INIT_FAIL;
   }
@@ -1024,10 +1024,10 @@ WRITE8_HANDLER ( mo5_gatearray_w )
 
 static UINT8 mo5_reg_cart;
 
-int mo5_cartridge_load ( mess_image* image, mame_file* file )
+int mo5_cartridge_load ( mess_image* image )
 {
   UINT8* pos = memory_region(REGION_CPU1) + 0x10000;
-  offs_t size = mame_fsize ( file );
+  UINT64 size = image_length ( image );
   int i,j;
   char name[129];
 
@@ -1035,11 +1035,11 @@ int mo5_cartridge_load ( mess_image* image, mame_file* file )
   else if ( size == 0x08000 ) thom_cart_nb_banks = 2;
   else if ( size == 0x10000 ) thom_cart_nb_banks = 4;
   else {
-    logerror( "mo5_cartridge_load: invalid cartridge size %i\n", size );
+    logerror( "mo5_cartridge_load: invalid cartridge size %u\n", (unsigned) size );
     return INIT_FAIL;
   }
 
-  if ( mame_fread( file, pos, size ) != size ) {
+  if ( image_fread( image, pos, size ) != size ) {
     logerror( "mo5_cartridge_load: read error\n" );
     return INIT_FAIL;
   }
@@ -1050,8 +1050,8 @@ int mo5_cartridge_load ( mess_image* image, mame_file* file )
   name[j] = 0;
   for ( i = 0; name[i]; i++)
     if ( name[i] < ' ' || name[i] >= 127 ) name[i] = '?';
-  PRINT (( "to5_cartridge_load: cartridge \"%s\" banks=%i, size=%i\n",
-	   name, thom_cart_nb_banks, size ));
+  PRINT (( "to5_cartridge_load: cartridge \"%s\" banks=%i, size=%u\n",
+	   name, thom_cart_nb_banks, (unsigned) size ));
 
   return INIT_PASS;
 }

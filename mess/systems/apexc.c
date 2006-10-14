@@ -34,7 +34,7 @@ static MACHINE_START(apexc)
 
 typedef struct cylinder
 {
-	mame_file *fd;
+	mess_image *fd;
 	int writable;
 } cylinder;
 
@@ -43,17 +43,17 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static int device_load_apexc_cylinder(mess_image *image, mame_file *file)
+static int device_load_apexc_cylinder(mess_image *image)
 {
 	/* open file */
-	apexc_cylinder.fd = file;
+	apexc_cylinder.fd = image;
 	/* tell whether the image is writable */
 	apexc_cylinder.writable = image_is_writable(image);
 
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
 
-		mame_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
+		image_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
 			UINT32 *RAM;
@@ -78,7 +78,7 @@ static void device_unload_apexc_cylinder(mess_image *image)
 	if (apexc_cylinder.fd && apexc_cylinder.writable)
 	{	/* save RAM contents */
 		/* rewind file */
-		mame_fseek(apexc_cylinder.fd, 0, SEEK_SET);
+		image_fseek(apexc_cylinder.fd, 0, SEEK_SET);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
 			UINT32 *RAM;
@@ -91,7 +91,7 @@ static void device_unload_apexc_cylinder(mess_image *image)
 		}
 #endif
 		/* write */
-		mame_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
+		image_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 	}
 }
 
@@ -143,7 +143,7 @@ static void device_unload_apexc_cylinder(mess_image *image)
 
 typedef struct tape
 {
-	mame_file *fd;
+	mess_image *fd;
 } tape;
 
 tape apexc_tapes[2];
@@ -180,22 +180,22 @@ static int device_init_apexc_tape(mess_image *image)
 /*
 	Open a tape image
 */
-static int device_load_apexc_tape(mess_image *image, mame_file *file)
+static int device_load_apexc_tape(mess_image *image)
 {
 	int id = image_index_in_device(image);
 	tape *t = &apexc_tapes[id];
 
 	/* open file */
-	t->fd = file;
+	t->fd = image;
 
 	return INIT_PASS;
 }
 
-static  READ8_HANDLER(tape_read)
+static READ8_HANDLER(tape_read)
 {
 	UINT8 reply;
 
-	if (apexc_tapes[0].fd && (mame_fread(apexc_tapes[0].fd, & reply, 1) == 1))
+	if (apexc_tapes[0].fd && (image_fread(apexc_tapes[0].fd, & reply, 1) == 1))
 		return reply & 0x1f;
 	else
 		return 0;	/* unit not ready - I don't know what we should do */
@@ -206,7 +206,7 @@ static WRITE8_HANDLER(tape_write)
 	UINT8 data5 = (data & 0x1f);
 
 	if (apexc_tapes[1].fd)
-		mame_fwrite(apexc_tapes[1].fd, & data5, 1);
+		image_fwrite(apexc_tapes[1].fd, & data5, 1);
 
 	apexc_teletyper_putchar(data & 0x1f);	/* display on screen */
 }

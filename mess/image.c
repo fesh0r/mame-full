@@ -32,7 +32,7 @@ struct _mess_image
 	char *name;
 	char *dir;
 	char *hash;
-	UINT32 length;
+	UINT64 length;
 	char *basename_noext;
 	
 	/* flags */
@@ -45,6 +45,9 @@ struct _mess_image
 	char *year;
 	char *playable;
 	char *extrainfo;
+
+	/* pointer */
+	void *ptr;
 };
 
 static struct _mess_image *images;
@@ -329,7 +332,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* call device load or create */
 	if (image_has_been_created(img) && dev->create)
 	{
-		err = dev->create(img, img->fp, create_format, create_args);
+		err = dev->create(img, create_format, create_args);
 		if (err)
 		{
 			if (!img->err)
@@ -340,7 +343,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	else if (dev->load)
 	{
 		/* using device load */
-		err = dev->load(img, img->fp);
+		err = dev->load(img);
 		if (err)
 		{
 			if (!img->err)
@@ -421,6 +424,7 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 	img->playable = NULL;
 	img->extrainfo = NULL;
 	img->basename_noext = NULL;
+	img->ptr = NULL;
 
 	osd_image_load_status_changed(img, is_final_unload);
 }
@@ -567,7 +571,7 @@ done:
 
 
 
-static int run_hash(mame_file *file,
+static int run_hash(mess_image *image,
 	void (*partialhash)(char *, const unsigned char *, unsigned long, unsigned int),
 	char *dest, unsigned int hash_functions)
 {
@@ -575,15 +579,15 @@ static int run_hash(mame_file *file,
 	UINT8 *buf = NULL;
 
 	*dest = '\0';
-	size = (UINT32) mame_fsize(file);
+	size = (UINT32) image_length(image);
 
 	buf = (UINT8 *) malloc(size);
 	if (!buf)
 		return FALSE;
 
 	/* read the file */
-	mame_fseek(file, 0, SEEK_SET);
-	mame_fread(file, buf, size);
+	image_fseek(image, 0, SEEK_SET);
+	image_fread(image, buf, size);
 
 	if (partialhash)
 		partialhash(dest, buf, size, hash_functions);
@@ -593,7 +597,7 @@ static int run_hash(mame_file *file,
 	/* cleanup */
 	if (buf)
 		free(buf);
-	mame_fseek(file, 0, SEEK_SET);
+	image_fseek(image, 0, SEEK_SET);
 	return TRUE;
 }
 
@@ -603,7 +607,6 @@ static int image_checkhash(mess_image *image)
 {
 	const game_driver *drv;
 	const struct IODevice *dev;
-	mame_file *file;
 	char hash_string[HASH_BUF_SIZE];
 	int rc;
 
@@ -614,7 +617,6 @@ static int image_checkhash(mess_image *image)
 	if (!image->hash && !image->writeable && !image->created)
 	{
 		/* initialize key variables */
-		file = image_fp(image);
 		dev = image_device(image);
 
 		/* do not cause a linear read of 600 megs please */
@@ -622,7 +624,7 @@ static int image_checkhash(mess_image *image)
 		if (dev->type == IO_CDROM)
 			return FALSE;
 
-		if (!run_hash(file, dev->partialhash, hash_string, HASH_CRC | HASH_MD5 | HASH_SHA1))
+		if (!run_hash(image, dev->partialhash, hash_string, HASH_CRC | HASH_MD5 | HASH_SHA1))
 			return FALSE;
 
 		image->hash = image_strdup(image, hash_string);
@@ -648,13 +650,6 @@ static int image_checkhash(mess_image *image)
 
   These provide information about the device; and about the mounted image
 ****************************************************************************/
-
-mame_file *image_fp(mess_image *img)
-{
-	return img->fp;
-}
-
-
 
 const struct IODevice *image_device(mess_image *img)
 {
@@ -763,7 +758,7 @@ const char *image_typename_id(mess_image *image)
 
 
 
-unsigned int image_length(mess_image *img)
+UINT64 image_length(mess_image *img)
 {
 	return img->length;
 }
@@ -809,6 +804,85 @@ int image_has_been_created(mess_image *img)
 void image_make_readonly(mess_image *img)
 {
 	img->writeable = 0;
+}
+
+
+
+UINT32 image_fread(mess_image *image, void *buffer, UINT32 length)
+{
+	return mame_fread(image->fp, buffer, length);
+}
+
+
+
+UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
+{
+	return mame_fwrite(image->fp, buffer, length);
+}
+
+
+
+int image_fseek(mess_image *image, INT64 offset, int whence)
+{
+	return mame_fseek(image->fp, offset, whence);
+}
+
+
+
+UINT64 image_ftell(mess_image *image)
+{
+	return mame_ftell(image->fp);
+}
+
+
+
+int image_fgetc(mess_image *image)
+{
+	return mame_fgetc(image->fp);
+}
+
+
+
+int image_feof(mess_image *image)
+{
+	return mame_feof(image->fp);
+}
+
+
+
+void *image_ptr(mess_image *image)
+{
+	UINT64 size;
+	UINT64 pos;
+	void *ptr;
+
+	if (!image->ptr)
+	{
+		/* get the image size; bomb out if too big */
+		size = image_length(image);
+		if (size != (UINT32) size)
+			return NULL;
+
+		/* allocate the memory */
+		ptr = image_malloc(image, (UINT32) size);
+		if (!ptr)
+			return NULL;
+
+		/* save current position */
+		pos = image_ftell(image);
+
+		/* read all data */
+		image_fseek(image, 0, SEEK_SET);
+		if (image_fread(image, ptr, (UINT32) size) != size)
+			return NULL;
+
+		/* reset position */
+		image_fseek(image, pos, SEEK_SET);
+
+		/* success */
+		image->ptr = ptr;
+	}
+	return image->ptr;
 }
 
 
@@ -1110,7 +1184,6 @@ char *mess_try_image_file_as_zip(int pathindex, const char *path,
 	const char *ext;
 	int is_zip;
 	char *new_path = NULL;
-	char path_sep[2] = { PATH_SEPARATOR, '\0' };
 
 	name = osd_basename((char *) path);
 	if (!name)
@@ -1135,7 +1208,7 @@ char *mess_try_image_file_as_zip(int pathindex, const char *path,
 				if (!new_path)
 					goto done;
 				strcpy(new_path, path);
-				strcat(new_path, path_sep);
+				strcat(new_path, PATH_SEPARATOR);
 				strcat(new_path, zipentry->filename);
 				break;
 			}

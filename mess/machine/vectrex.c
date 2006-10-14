@@ -65,17 +65,15 @@ static int vectrex_verify_cart (char *data)
  *********************************************************************/
 DEVICE_LOAD( vectrex_cart )
 {
-	if (file)
-	{
-		mame_fread (file, memory_region(REGION_CPU1), 0x8000);
+	image_fread(image, memory_region(REGION_CPU1), 0x8000);
 
-		/* check image! */
-		if (vectrex_verify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
-		{
-			logerror("Invalid image!\n");
-			return INIT_FAIL;
-		}
+	/* check image! */
+	if (vectrex_verify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
+	{
+		logerror("Invalid image!\n");
+		return INIT_FAIL;
 	}
+
 	vectrex_imager_angles = narrow_escape_angles;
 
 	/* let's do this 3D detection with a strcmp using data inside the cart images */

@@ -227,12 +227,13 @@ SNAPSHOT_LOAD(apple1)
 	UINT8 *snapbuf, *snapptr;
 	UINT16 start_addr, end_addr, addr;
 
-	filesize = mame_fsize(fp);
-	snapbuf = auto_malloc(filesize);
+	filesize = image_length(image);
 
 	/* Read the snapshot data into a temporary array */
-	if (filesize < SNAP_HEADER_LEN ||
-		mame_fread(fp, snapbuf, filesize) != filesize)
+	if (filesize < SNAP_HEADER_LEN)
+		return INIT_FAIL;
+	snapbuf = image_ptr(image);
+	if (!snapbuf)
 		return INIT_FAIL;
 
 	/* Verify the snapshot header */
