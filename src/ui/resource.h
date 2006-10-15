@@ -301,6 +301,7 @@
 #define IDC_HIGH_PRIORITY_TEXT          1216
 #define IDC_HIGH_PRIORITYTXT            1217
 #define IDC_SELECT_EFFECT               1218
+#define IDC_MULTITHREAD_RENDERING       1219
 #define IDC_ASPECT                      1220
 #define IDC_RESOLUTION                  1221
 #define IDC_LOAD_PROGRESS               1223

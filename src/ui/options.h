@@ -199,6 +199,7 @@ typedef struct
 #endif
 	char   *bios;
 	BOOL   autosave;
+	BOOL   mt_render;
 
 #ifdef MESS
 	struct mess_specific_options mess;
@@ -289,6 +290,7 @@ typedef struct
 #endif
     int      priority;
     BOOL     autosave;
+    BOOL     mt_render;
 
 	// Keyboard control of ui
     KeySeq   ui_key_up;

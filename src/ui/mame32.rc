@@ -838,6 +838,9 @@ BEGIN
     LTEXT           "idle",IDC_STATIC,10,130,12,8
     LTEXT           "-15",IDC_HIGH_PRIORITYTXT,82,121,12,8
     LTEXT           "real-time",IDC_STATIC,61,130,28,8
+    CONTROL         "Multi-threaded rendering",IDC_MULTITHREAD_RENDERING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,96,10,0,
+                    HIDC_MULTITHREAD_RENDERING
 #ifdef MESS
     CONTROL         "Skip warnings",IDC_SKIP_WARNINGS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,180,86,10,0

@@ -394,6 +394,7 @@ static const REG_OPTION regGameOpts[] =
 #else
 	{ "autosave",               RO_BOOL,    offsetof(options_type, autosave),                        "1" },
 #endif
+	{ "mt_render",              RO_BOOL,    offsetof(options_type, mt_render),                       "0" },
 
 #ifdef MESS
 	/* mess options */

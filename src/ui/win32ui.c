@@ -850,6 +850,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
 	if (pOpts->autosave)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -autosave");
+	if (pOpts->mt_render)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -mt");
 	if (g_pPlayBkName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -pb \"%s\"",             g_pPlayBkName);
 	if (g_pRecordName != NULL)
@@ -5736,7 +5738,7 @@ static void MameLoadState()
 				MameMessageBox("'%s' is not a valid savestate file for game '%s'.", filename, selected_filename);
 				return;
 			}
-			set_pathlist(FILETYPE_STATE,path);
+			options_set_string(OPTION_STATE_DIRECTORY, path);
 			state_fname = fname;
 		}
 #endif // MESS

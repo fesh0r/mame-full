@@ -291,6 +291,7 @@ static DWORD dwHelpIDs[] =
 	IDC_TRACKBALL,			HIDC_TRACKBALL,
 	IDC_LIGHTGUNDEVICE,		HIDC_LIGHTGUNDEVICE,
 	IDC_ENABLE_AUTOSAVE,    HIDC_ENABLE_AUTOSAVE,
+	IDC_MULTITHREAD_RENDERING,    HIDC_MULTITHREAD_RENDERING,
 	0,                      0
 };
 
@@ -362,7 +363,7 @@ static struct ComboBoxView
 {
 	{ "Auto",		      "auto"    },
 	{ "Standard",         "standard"    }, 
-	{ "Pixel Aspect",     "\"pixel aspect\""   }, 
+	{ "Pixel Aspect",     "pixel aspect"   }, 
 	{ "Cocktail",         "cocktail"     },
 };
 #define NUMVIEW (sizeof(g_ComboBoxView) / sizeof(g_ComboBoxView[0]))
@@ -1590,6 +1591,14 @@ static void PropToOptions(HWND hWnd, options_type *o)
 		
 		pGameOpts->gfx_refresh = ComboBox_GetItemData(hCtrl, nIndex);
 	}
+	/* bios */
+	hCtrl = GetDlgItem(hWnd, IDC_BIOS);
+	if (hCtrl)
+	{
+		g_nBiosIndex = ComboBox_GetCurSel(hCtrl);
+		FreeIfAllocated(&pGameOpts->bios);
+		pGameOpts->bios = mame_strdup((char*)ComboBox_GetItemData(hCtrl, g_nBiosIndex));
+	}
 
 	/* aspect ratio */
 	hCtrl  = GetDlgItem(hWnd, IDC_ASPECTRATION);
@@ -1794,6 +1803,26 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 			ComboBox_SetCurSel(hCtrl, nSelection);
 		}
 	}
+	/* Bios select list */
+	hCtrl = GetDlgItem(hWnd, IDC_BIOS);
+	if (hCtrl)
+	{
+		const char* cBuffer;
+		int i = 0;
+		int iCount = ComboBox_GetCount( hCtrl );
+		for( i=0; i< iCount; i++ )
+		{
+			cBuffer = (const char*)ComboBox_GetItemData( hCtrl, i );
+			if( strcmp( cBuffer, pGameOpts->bios ) == 0 )
+			{
+				g_nBiosIndex = i;
+				break;
+			}
+
+		}
+		ComboBox_SetCurSel(hCtrl, g_nBiosIndex);
+	}
+
 	/* Screen select list */
 	hCtrl = GetDlgItem(hWnd, IDC_SCREENSELECT);
 	if (hCtrl)
@@ -2665,6 +2694,7 @@ static void ResetDataMap(void)
 		}
 	}
 	g_nBiosIndex = 0;
+
 	g_nVideoIndex = 0;
 	for (i = 0; i < NUMVIDEO; i++)
 	{
@@ -2831,6 +2861,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_SKIP_GAME_INFO, DM_BOOL, CT_BUTTON,  &pGameOpts->skip_gameinfo, DM_BOOL, &pGameOpts->skip_gameinfo, 0, 0, 0);
 	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &g_nBiosIndex,          DM_STRING, &pGameOpts->bios,        0, 0, AssignBios);
 	DataMapAdd(IDC_ENABLE_AUTOSAVE, DM_BOOL, CT_BUTTON,  &pGameOpts->autosave, DM_BOOL, &pGameOpts->autosave, 0, 0, 0);
+	DataMapAdd(IDC_MULTITHREAD_RENDERING, DM_BOOL, CT_BUTTON,  &pGameOpts->mt_render, DM_BOOL, &pGameOpts->mt_render, 0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_SKIP_WARNINGS, DM_BOOL, CT_BUTTON,   &pGameOpts->skip_warnings, DM_BOOL, &pGameOpts->skip_warnings, 0, 0, 0);
 	DataMapAdd(IDC_USE_NEW_UI,    DM_BOOL, CT_BUTTON,   &pGameOpts->mess.use_new_ui,DM_BOOL, &pGameOpts->mess.use_new_ui, 0, 0, 0);
@@ -3886,6 +3917,8 @@ static void InitializeBIOSUI(HWND hwnd)
 				ComboBox_SetItemData( hCtrl, i++, "none");
 				return;
 			}
+			ComboBox_InsertString(hCtrl, i, "Default");
+			ComboBox_SetItemData( hCtrl, i++, "default");
 			thisbios = gamedrv->bios;
 			while (!BIOSENTRY_ISEND(thisbios))
 			{
@@ -3902,11 +3935,19 @@ static void InitializeBIOSUI(HWND hwnd)
 			ComboBox_SetItemData( hCtrl, i++, "none");
 			return;
 		}
+		ComboBox_InsertString(hCtrl, i, "Default");
+		ComboBox_SetItemData( hCtrl, i++, "default");
 		thisbios = gamedrv->bios;
 		while (!BIOSENTRY_ISEND(thisbios))
 		{
 			ComboBox_InsertString(hCtrl, i, thisbios->_description);
-			ComboBox_SetItemData( hCtrl, i++, thisbios->_name);
+			ComboBox_SetItemData( hCtrl, i, thisbios->_name);
+			if( strcmp( thisbios->_name, pGameOpts->bios ) == 0 )
+			{
+				ComboBox_SetCurSel( hCtrl, i );
+				g_nBiosIndex = i;
+			}
+			i++;
 			thisbios++;
 		}
 	}
