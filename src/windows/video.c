@@ -647,7 +647,7 @@ static void update_fps(mame_time emutime)
 			char name[10];
 
 			// make a filename with an underscore prefix
-			sprintf(name, "_%.8s", Machine->gamedrv->name);
+			sprintf(name, "_%.8s.png", Machine->gamedrv->name);
 
 			// write out the screenshot
 			filerr = mame_fopen(SEARCHPATH_SCREENSHOT, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);

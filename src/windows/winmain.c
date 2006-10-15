@@ -11,6 +11,7 @@
 #define _WIN32_WINNT 0x0400
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <commctrl.h>
 #include <mmsystem.h>
 
 // standard includes
@@ -108,6 +109,9 @@ int main(int argc, char **argv)
 	char *ext;
 	int res = 0;
 	HMODULE library;
+	
+	// initialize common controls
+	InitCommonControls();
 
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
