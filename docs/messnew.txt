@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [CPSCHNGR] Fixed regression introduced in 0.109.  [Dr. Zer0]
 
+- [SPECTRUM] Fixed snapshot loading regression introduced in 0.105.  [Chad]
+
 
 
 User Interface Changes:
@@ -40,6 +42,9 @@ Source Changes:
 
 - Introduced an image_ptr() call, which returns a pointer to all image data
   valid for the lifetime of the image.  [Nate Woods]
+
+- Added a specialized exit code for MESS-related initialization.  (bug #931)
+  [Nate Woods]
 
 
 

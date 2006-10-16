@@ -74,8 +74,8 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 /* runs checks to see if device code is proper */
 int mess_validitychecks(void);
 
-/* these are called from mame.c*/
-int devices_init(running_machine *machine);
+/* these are called from mame.c */
+void devices_init(running_machine *machine);
 
 void mess_config_init(running_machine *machine);
 

@@ -30,7 +30,8 @@
 #define MAMERR_NONE				0		/* no error */
 #define MAMERR_FAILED_VALIDITY	1		/* failed validity checks */
 #define MAMERR_MISSING_FILES	2		/* missing files */
-#define MAMERR_FATALERROR		3		/* some other fatale error */
+#define MAMERR_FATALERROR		3		/* some other fatal error */
+#define MAMERR_DEVICE			4		/* device initialization error (MESS-specific) */
 
 
 /* program phases */
