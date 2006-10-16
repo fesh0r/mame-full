@@ -212,8 +212,6 @@ endif
 # compile and linking flags
 #-------------------------------------------------
 
-MESSTOOLS = chdman$(EXE) imgtool$(EXE)
-
 ifeq ($(MAMEOS),windows)
 
 DEFS += -DWIN32 -DWINNT
@@ -222,7 +220,6 @@ EMULATORGUI = $(GUINAME)$(EXE)
 EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 MESSTEST = messtest$(EXE)
 MESSDOCS = messdocs$(EXE)
-MESSTOOLS += wimgtool$(EXE)
 
 else
 
@@ -365,7 +362,7 @@ endif
 # include files which define additional targets
 #-------------------------------------------------
 
-all: maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) $(MESSTOOLS)
+all: maketree emulator extra
 
 
 
@@ -465,7 +462,7 @@ file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 

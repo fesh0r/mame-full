@@ -1115,3 +1115,7 @@ $(OBJ)/mess/systems/coco.o:	$(OBJ)/mess/layout/coco3.lh
 #-------------------------------------------------
 
 TOOLS += dat2html$(EXE) messtest$(EXE) messdocs$(EXE) imgtool$(EXE)
+
+ifeq ($(MAMEOS),windows)
+TOOLS += wimgtool$(EXE)
+endif
