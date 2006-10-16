@@ -188,6 +188,67 @@ static void image_exit(running_machine *machine)
 ****************************************************************************/
 
 /*-------------------------------------------------
+    load_image_by_path - loads an image with a
+	specific path
+-------------------------------------------------*/
+
+static image_error_t load_image_by_path(mess_image *image, const char *software_path,
+	const game_driver *gamedrv, UINT32 open_flags, const char *path)
+{
+	mame_file_error filerr;
+	image_error_t err;
+	char *full_path;
+
+	/* open the file */
+	full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
+	filerr = osd_open(full_path, open_flags, &image->file, &image->length);
+	free(full_path);
+
+	/* did the open succeed? */
+	switch(filerr)
+	{
+		case FILERR_NONE:
+			/* success! */
+			image->writeable = (open_flags & OPEN_FLAG_WRITE) ? 1 : 0;
+			image->created = (open_flags & OPEN_FLAG_CREATE) ? 1 : 0;
+			err = IMAGE_ERROR_SUCCESS;
+			break;
+
+		case FILERR_NOT_FOUND:
+		case FILERR_ACCESS_DENIED:
+			/* file not found (or otherwise cannot open); continue */
+			err = IMAGE_ERROR_SUCCESS;
+			break;
+
+		case FILERR_OUT_OF_MEMORY:
+			/* out of memory */
+			err = IMAGE_ERROR_OUTOFMEMORY;
+			break;
+
+		case FILERR_ALREADY_OPEN:
+			/* this shouldn't happen */
+			err = IMAGE_ERROR_ALREADYOPEN;
+			break;
+
+		case FILERR_FAILURE:
+		case FILERR_TOO_MANY_FILES:
+		case FILERR_INVALID_DATA:
+		default:
+			/* other errors */
+			err = IMAGE_ERROR_INTERNAL;
+			break;
+	}
+
+	if (err)
+		assert(!image->file);
+	else
+		assert(image->file);
+	return err;
+}
+
+
+
+/*-------------------------------------------------
     determine_open_plan - determines which open
 	flags to use, and in what order
 -------------------------------------------------*/
@@ -231,11 +292,9 @@ static int image_load_internal(mess_image *image, const char *path,
 	int is_create, int create_format, option_resolution *create_args)
 {
 	image_error_t err;
-	mame_file_error filerr;
 	const char *software_paths;
 	const char *software_path;
 	char *software_path_list;
-	char *full_path;
 	char *s;
 	const void *buffer;
 	const game_driver *gamedrv;
@@ -290,40 +349,9 @@ static int image_load_internal(mess_image *image, const char *path,
 			while(!image->file && gamedrv)
 			{
 				/* open the file */
-				full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
-				filerr = osd_open(full_path, open_plan[i], &image->file, &image->length);
-				free(full_path);
-
-				/* did the open succeed? */
-				switch(filerr)
-				{
-					case FILERR_NONE:
-						/* success! */
-						assert(image->file);
-						image->writeable = (open_plan[i] & OPEN_FLAG_WRITE) ? 1 : 0;
-						image->created = (open_plan[i] & OPEN_FLAG_CREATE) ? 1 : 0;
-						break;
-
-					case FILERR_NOT_FOUND:
-					case FILERR_ACCESS_DENIED:
-						/* file not found; continue */
-						break;
-
-					case FILERR_OUT_OF_MEMORY:
-						image->err = IMAGE_ERROR_OUTOFMEMORY;
-						goto done;
-
-					case FILERR_ALREADY_OPEN:
-						image->err = IMAGE_ERROR_ALREADYOPEN;
-						goto done;
-
-					case FILERR_FAILURE:
-					case FILERR_TOO_MANY_FILES:
-					case FILERR_INVALID_DATA:
-					default:
-						image->err = IMAGE_ERROR_INTERNAL;
-						goto done;
-				}
+				image->err = load_image_by_path(image, software_path, gamedrv, open_plan[i], path);
+				if (image->err)
+					goto done;
 
 				gamedrv = mess_next_compatible_driver(gamedrv);
 			}
