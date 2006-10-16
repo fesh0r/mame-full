@@ -261,7 +261,7 @@ static void vtech1_get_track(void)
     // sprintf(vtech1_frame_message, "#%d get track %02d", vtech1_drive, vtech1_track_x2[vtech1_drive]/2);
     // vtech1_frame_time = 30;
     /* drive selected or and image file ok? */
-	if (vtech1_drive >= 0 && vtech1_file() != NULL)
+	if (vtech1_drive >= 0 && image_exists(vtech1_file()))
 	{
 		int size, offs;
 		size = TRKSIZE_VZ;
