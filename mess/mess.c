@@ -27,7 +27,6 @@ UINT8 *mess_ram;
 UINT8 mess_ram_default_value = 0xCD;
 
 static int devices_initialload(const game_driver *gamedrv);
-static void devices_exit(running_machine *machine);
 
 
 static int ram_init(const game_driver *gamedrv)
@@ -134,7 +133,6 @@ int devices_init(running_machine *machine)
 
 	/* init all devices */
 	image_init();
-	add_exit_callback(machine, devices_exit);
 	return devices_initialload(machine->gamedrv);
 }
 
@@ -240,23 +238,6 @@ error:
 	if (allocated_slots)
 		free(allocated_slots);
 	return 1;
-}
-
-
-
-/*
- * Call the exit() functions for all devices of a
- * driver for all images.
- */
-static void devices_exit(running_machine *machine)
-{
-	/* unload all devices */
-	image_unload_all(FALSE);
-	image_unload_all(TRUE);
-
-	/* exit all devices */
-	image_exit();
-	Machine->devices = NULL;
 }
 
 

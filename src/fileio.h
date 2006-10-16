@@ -36,7 +36,7 @@
 
 #define SEARCHPATH_ROM			OPTION_ROMPATH
 #ifdef MESS
-#define SEARCHPATH_IMAGE		OPTION_ROMPATH
+#define SEARCHPATH_IMAGE		OPTION_IMAGEPATH
 #define SEARCHPATH_HASH			OPTION_HASH_DIRECTORY
 #else
 #define SEARCHPATH_IMAGE		OPTION_ROMPATH
@@ -183,6 +183,24 @@ INLINE char *assemble_4_strings(const char *s1, const char *s2, const char *s3, 
 	strcat(tempbuf, s2);
 	strcat(tempbuf, s3);
 	strcat(tempbuf, s4);
+	return tempbuf;
+}
+
+
+/*-------------------------------------------------
+    assemble_5_strings - allocate space for four
+    strings and concatenate them into the new
+    buffer
+-------------------------------------------------*/
+
+INLINE char *assemble_5_strings(const char *s1, const char *s2, const char *s3, const char *s4, const char *s5)
+{
+	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + strlen(s5) + 1);
+	strcpy(tempbuf, s1);
+	strcat(tempbuf, s2);
+	strcat(tempbuf, s3);
+	strcat(tempbuf, s4);
+	strcat(tempbuf, s5);
 	return tempbuf;
 }
 

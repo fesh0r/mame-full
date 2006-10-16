@@ -1,3 +1,15 @@
+/****************************************************************************
+
+	image.c
+
+	Code for handling devices/software images
+
+	The UI can call image_load and image_unload to associate and disassociate
+	with disk images on disk.  In fact, devices that unmount on their own (like
+	Mac floppy drives) may call this from within a driver.
+
+****************************************************************************/
+
 #include "image.h"
 #include "mess.h"
 #include "unzip.h"
@@ -7,13 +19,11 @@
 #include "hashfile.h"
 #include "mamecore.h"
 
-/* ----------------------------------------------------------------------- */
 
-enum
-{
-	IMAGE_STATUS_ISLOADING		= 1,
-	IMAGE_STATUS_ISLOADED		= 2
-};
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 struct _mess_image
 {
@@ -27,17 +37,18 @@ struct _mess_image
 	char *err_message;
 
 	/* variables that are only non-zero when an image is mounted */
-	mame_file *fp;
-	UINT32 status;
+	osd_file *file;
 	char *name;
 	char *dir;
 	char *hash;
 	UINT64 length;
+	UINT64 pos;
 	char *basename_noext;
 	
 	/* flags */
 	unsigned int writeable : 1;
 	unsigned int created : 1;
+	unsigned int is_loading : 1;
 
 	/* info read from the hash file */
 	char *longname;
@@ -50,24 +61,34 @@ struct _mess_image
 	void *ptr;
 };
 
-static struct _mess_image *images;
+
+
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+static mess_image *images;
 static UINT32 multiple_dev_mask;
 
-static mame_file_error image_load_internal_2(mess_image *img, UINT32 openflags);
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+static void image_exit(running_machine *machine);
+static void image_clear(mess_image *image);
+static void image_clear_error(mess_image *image);
 
 
 
-#ifdef _MSC_VER
-#define ZEXPORT __stdcall
-#else
-#define ZEXPORT
-#endif
+/***************************************************************************
+    IMAGE SYSTEM INITIALIZATION
+***************************************************************************/
 
-extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
-
-
-
-/* ----------------------------------------------------------------------- */
+/*-------------------------------------------------
+    image_init - initialize the core image system
+-------------------------------------------------*/
 
 int image_init(void)
 {
@@ -122,14 +143,24 @@ int image_init(void)
 		}
 		indx += Machine->devices[i].count;
 	}
+
+	add_exit_callback(Machine, image_exit);
 	return INIT_PASS;
 }
 
 
 
-void image_exit(void)
+/*-------------------------------------------------
+    image_exit - shut down the core image system
+-------------------------------------------------*/
+
+static void image_exit(running_machine *machine)
 {
 	int i, j, indx;
+
+	/* unload all devices */
+	image_unload_all(FALSE);
+	image_unload_all(TRUE);
 
 	indx = 0;
 
@@ -153,296 +184,312 @@ void image_exit(void)
 
 
 /****************************************************************************
-  Device loading and unloading functions
-
-  The UI can call image_load and image_unload to associate and disassociate
-  with disk images on disk.  In fact, devices that unmount on their own (like
-  Mac floppy drives) may call this from within a driver.
+    IMAGE LOADING
 ****************************************************************************/
 
-static void image_clear_error(mess_image *img)
+/*-------------------------------------------------
+    determine_open_plan - determines which open
+	flags to use, and in what order
+-------------------------------------------------*/
+
+static void determine_open_plan(mess_image *image, UINT32 *open_plan)
 {
-	img->err = IMAGE_ERROR_SUCCESS;
-	if (img->err_message)
+	unsigned int readable, writeable, creatable;
+	int i = 0;
+
+	if (image->dev->getdispositions)
 	{
-		free(img->err_message);
-		img->err_message = NULL;
+		image->dev->getdispositions(image->dev, image_index_in_device(image),
+			&readable, &writeable, &creatable);
 	}
+	else
+	{
+		readable = image->dev->readable;
+		writeable = image->dev->writeable;
+		creatable = image->dev->creatable;
+	}
+
+	/* emit flags */
+	if (readable && writeable)
+		open_plan[i++] = OPEN_FLAG_READ | OPEN_FLAG_WRITE;
+	if (!readable && writeable)
+		open_plan[i++] = OPEN_FLAG_WRITE;
+	if (readable)
+		open_plan[i++] = OPEN_FLAG_READ;
+	if (readable && writeable && creatable)
+		open_plan[i++] = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+	open_plan[i] = 0;
 }
 
 
 
-static int image_load_internal(mess_image *img, const char *name, int is_create, int create_format, option_resolution *create_args)
+/*-------------------------------------------------
+    image_load_internal - core image loading
+-------------------------------------------------*/
+
+static int image_load_internal(mess_image *image, const char *path,
+	int is_create, int create_format, option_resolution *create_args)
 {
-	const struct IODevice *dev;
-	const char *s;
-	char *newname;
-	int err = INIT_PASS;
-	UINT8 *buffer = NULL;
-	UINT64 size;
-	unsigned int readable, writeable, creatable;
-	mame_file_error filerr = FILERR_NONE;
+	image_error_t err;
+	mame_file_error filerr;
+	const char *software_paths;
+	const char *software_path;
+	char *software_path_list;
+	char *full_path;
+	char *s;
+	const void *buffer;
+	const game_driver *gamedrv;
+	UINT32 open_plan[4];
+	int i;
 
-	/* unload if we are loaded */
-	if (img->status & IMAGE_STATUS_ISLOADED)
-		image_unload(img);
+	/* we are now loading */
+	image->is_loading = 1;
 
-	/* clear out the error */
-	image_clear_error(img);
-	
-	/* if we are attempting to "load" NULL, then exit at this point */
-	if (!name)
-		return INIT_PASS;
+	/* first unload the image */
+	image_unload(image);
 
-	dev = image_device(img);
-	assert(dev);
-
-	img->status |= IMAGE_STATUS_ISLOADING;
-
-	if (name && *name)
+	/* parse the software paths into a NUL-delimited list */
+	software_paths = options_get_string(SEARCHPATH_IMAGE);
+	software_path_list = malloc((strlen(software_paths) + 2) * sizeof(*software_path_list));
+	if (!software_path_list)
 	{
-		newname = image_strdup(img, name);
-		if (!newname)
-		{
-			err = IMAGE_ERROR_OUTOFMEMORY;
-			goto error;
-		}
+		image->err = IMAGE_ERROR_OUTOFMEMORY;
+		goto done;
 	}
-	else
-		newname = NULL;
+	strcpy(software_path_list, software_paths);
+	strcat(software_path_list, ";");
+	s = software_path_list;
+	while((s = strchr(s, ';')) != NULL)
+		*(s++) = '\0';
 
-	img->name = newname;
-	img->dir = NULL;
+	/* record the filename */
+	image->name = image_strdup(image, path);
+	if (!image->name)
+	{
+		image->err = IMAGE_ERROR_OUTOFMEMORY;
+		goto done;
+	}
 
-	osd_image_load_status_changed(img, 0);
+	/* tell the OSD layer that this is changing */
+	osd_image_load_status_changed(image, 0);
 
 	/* do we need to reset the CPU? */
-	if ((timer_get_time() > 0) && dev->reset_on_load)
+	if ((timer_get_time() > 0) && image->dev->reset_on_load)
 		mame_schedule_soft_reset(Machine);
 
-	/* prepare to open the file */
-	img->created = 0;
-	img->writeable = 0;
-	if (dev->getdispositions)
-	{
-		dev->getdispositions(dev, image_index_in_device(img), &readable, &writeable, &creatable);
-	}
-	else
-	{
-		readable = dev->readable;
-		writeable = dev->writeable;
-		creatable = dev->creatable;
-	}
+	/* determine open plan */
+	determine_open_plan(image, open_plan);
 
-	/* is this a ZIP file? */
-	s = strrchr(img->name, '.');
-	if (s && !mame_stricmp(s, ".ZIP"))
+	/* attempt to open the file in various ways */
+	for (i = 0; !image->file && open_plan[i]; i++)
 	{
-		/* ZIP files are read only */
-		writeable = 0;
-		creatable = 0;
-	}
-
-	if (!img->fp && readable && writeable)
-	{
-		/* open for read/write */
-		filerr = image_load_internal_2(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE);
-		if (filerr == FILERR_NONE)
-			img->writeable = TRUE;
-	}
-	if (!img->fp && readable)
-	{
-		/* open for read */
-		filerr = image_load_internal_2(img, OPEN_FLAG_READ);
-	}
-	if (!img->fp && !readable && writeable)
-	{
-		/* open for writing */
-		filerr = image_load_internal_2(img, OPEN_FLAG_WRITE);
-		if (filerr == FILERR_NONE)
-			img->writeable = TRUE;
-	}
-	if (!img->fp && readable && writeable && creatable)
-	{
-		/* open for creating */
-		filerr = image_load_internal_2(img, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
-		if (filerr == FILERR_NONE)
+		software_path = software_path_list;
+		while(!image->file && *software_path)
 		{
-			img->writeable = TRUE;
-			img->created = TRUE;
+			gamedrv = Machine->gamedrv;
+			while(!image->file && gamedrv)
+			{
+				/* open the file */
+				full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
+				filerr = osd_open(full_path, open_plan[i], &image->file, &image->length);
+				free(full_path);
+
+				/* did the open succeed? */
+				switch(filerr)
+				{
+					case FILERR_NONE:
+						/* success! */
+						assert(image->file);
+						image->writeable = (open_plan[i] & OPEN_FLAG_WRITE) ? 1 : 0;
+						image->created = (open_plan[i] & OPEN_FLAG_CREATE) ? 1 : 0;
+						break;
+
+					case FILERR_NOT_FOUND:
+					case FILERR_ACCESS_DENIED:
+						/* file not found; continue */
+						break;
+
+					case FILERR_OUT_OF_MEMORY:
+						image->err = IMAGE_ERROR_OUTOFMEMORY;
+						goto done;
+
+					case FILERR_ALREADY_OPEN:
+						image->err = IMAGE_ERROR_ALREADYOPEN;
+						goto done;
+
+					case FILERR_FAILURE:
+					case FILERR_TOO_MANY_FILES:
+					case FILERR_INVALID_DATA:
+					default:
+						image->err = IMAGE_ERROR_INTERNAL;
+						goto done;
+				}
+
+				gamedrv = mess_next_compatible_driver(gamedrv);
+			}
+			software_path += strlen(software_path) + 1;
 		}
 	}
 
-	/* did this attempt succeed? */
-	if (!img->fp)
+	/* did we fail to find the file? */
+	if (!image->file)
 	{
-		switch(filerr)
-		{
-			case FILERR_OUT_OF_MEMORY:
-				img->err = IMAGE_ERROR_OUTOFMEMORY;
-				break;
-			case FILERR_NOT_FOUND:
-				img->err = IMAGE_ERROR_FILENOTFOUND;
-				break;
-			case FILERR_ALREADY_OPEN:
-				img->err = IMAGE_ERROR_ALREADYOPEN;
-				break;
-			default:
-				img->err = IMAGE_ERROR_INTERNAL;
-				break;
-		}
-		goto error;
+		image->err = IMAGE_ERROR_FILENOTFOUND;
+		goto done;
 	}
 
 	/* if applicable, call device verify */
-	if (dev->imgverify && !image_has_been_created(img))
+	if (image->dev->imgverify && !image_has_been_created(image))
 	{
-		size = mame_fsize(img->fp);
-		if (size != (size_t) size)
-		{
-			img->err = IMAGE_ERROR_OUTOFMEMORY;
-			goto error;
-		}
-		buffer = malloc((size_t) size);
+		/* access the memory */
+		buffer = image_ptr(image);
 		if (!buffer)
 		{
-			img->err = IMAGE_ERROR_OUTOFMEMORY;
-			goto error;
+			image->err = IMAGE_ERROR_OUTOFMEMORY;
+			goto done;
 		}
 
-		if (mame_fread(img->fp, buffer, (UINT32) size) != size)
-		{
-			img->err = IMAGE_ERROR_INVALIDIMAGE;
-			goto error;
-		}
-
-		err = dev->imgverify(buffer, size);
+		/* verify the file */
+		err = image->dev->imgverify(buffer, (size_t) image->length);
 		if (err)
 		{
-			img->err = IMAGE_ERROR_INVALIDIMAGE;
-			goto error;
+			image->err = IMAGE_ERROR_INVALIDIMAGE;
+			goto done;
 		}
-
-		mame_fseek(img->fp, 0, SEEK_SET);
-
-		free(buffer);
-		buffer = NULL;
 	}
 
 	/* call device load or create */
-	if (image_has_been_created(img) && dev->create)
+	if (image_has_been_created(image) && image->dev->create)
 	{
-		err = dev->create(img, create_format, create_args);
+		err = image->dev->create(image, create_format, create_args);
 		if (err)
 		{
-			if (!img->err)
-				img->err = IMAGE_ERROR_UNSPECIFIED;
-			goto error;
+			if (!image->err)
+				image->err = IMAGE_ERROR_UNSPECIFIED;
+			goto done;
 		}
 	}
-	else if (dev->load)
+	else if (image->dev->load)
 	{
 		/* using device load */
-		err = dev->load(img);
+		err = image->dev->load(image);
 		if (err)
 		{
-			if (!img->err)
-				img->err = IMAGE_ERROR_UNSPECIFIED;
-			goto error;
+			if (!image->err)
+				image->err = IMAGE_ERROR_UNSPECIFIED;
+			goto done;
 		}
 	}
 
-	img->status &= ~IMAGE_STATUS_ISLOADING;
-	img->status |= IMAGE_STATUS_ISLOADED;
-	return INIT_PASS;
+	/* success! */
 
-error:
-	if (buffer)
-		free(buffer);
-	if (img)
+done:
+	if (software_path_list)
+		free(software_path_list);
+	if (image->err)
+		image_clear(image);
+	image->is_loading = 1;
+	return image->err ? INIT_FAIL : INIT_PASS;
+}
+
+
+
+/*-------------------------------------------------
+    image_load - load an image into MESS
+-------------------------------------------------*/
+
+int image_load(mess_image *image, const char *path)
+{
+	return image_load_internal(image, path, FALSE, 0, NULL);
+}
+
+
+
+/*-------------------------------------------------
+    image_create - create a MESS image
+-------------------------------------------------*/
+
+int image_create(mess_image *image, const char *path, int create_format, option_resolution *create_args)
+{
+	return image_load_internal(image, path, TRUE, create_format, create_args);
+}
+
+
+
+/*-------------------------------------------------
+    image_clear - clear all internal data pertaining
+	to an image
+-------------------------------------------------*/
+
+static void image_clear(mess_image *image)
+{
+	if (image->file)
 	{
-		if (img->fp)
-		{
-			mame_fclose(img->fp);
-			img->fp = NULL;
-		}
-		img->name = NULL;
-		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
+		osd_close(image->file);
+		image->file = NULL;
 	}
 
-	osd_image_load_status_changed(img, 0);
-
-	return INIT_FAIL;
+	pool_exit(&image->mempool);
+	image->writeable = 0;
+	image->created = 0;
+	image->name = NULL;
+	image->dir = NULL;
+	image->hash = NULL;
+	image->length = 0;
+	image->pos = 0;
+	image->longname = NULL;
+	image->manufacturer = NULL;
+	image->year = NULL;
+	image->playable = NULL;
+	image->extrainfo = NULL;
+	image->basename_noext = NULL;
+	image->ptr = NULL;
 }
 
 
 
-int image_load(mess_image *img, const char *name)
+/*-------------------------------------------------
+    image_unload_internal - internal call to unload
+	images
+-------------------------------------------------*/
+
+static void image_unload_internal(mess_image *image, int is_final_unload)
 {
-	return image_load_internal(img, name, 0, 0, NULL);
-}
-
-
-
-int image_create(mess_image *img, const char *name, int create_format, option_resolution *create_args)
-{
-	return image_load_internal(img, name, 1, create_format, create_args);
-}
-
-
-
-static void image_unload_internal(mess_image *img, int is_final_unload)
-{
-	const struct IODevice *dev;
-	int type = image_devtype(img);
-
-	if ((img->status & IMAGE_STATUS_ISLOADED) == 0)
+	/* is there an actual image loaded? */
+	if (!image->file)
 		return;
 
-	dev = device_find(Machine->devices, type);
-	assert(dev);
+	/* call the unload function */
+	if (image->dev->unload)
+		image->dev->unload(image);
 
-	if (dev->unload)
-		dev->unload(img);
-
-	if (img->fp)
-	{
-		mame_fclose(img->fp);
-		img->fp = NULL;
-	}
-	pool_exit(&img->mempool);
-
-	image_clear_error(img);
-	img->status = 0;
-	img->name = NULL;
-	img->dir = NULL;
-	img->hash = NULL;
-	img->length = 0;
-	img->longname = NULL;
-	img->manufacturer = NULL;
-	img->year = NULL;
-	img->playable = NULL;
-	img->extrainfo = NULL;
-	img->basename_noext = NULL;
-	img->ptr = NULL;
-
-	osd_image_load_status_changed(img, is_final_unload);
+	image_clear(image);
+	image_clear_error(image);
+	osd_image_load_status_changed(image, is_final_unload);
 }
 
 
 
-void image_unload(mess_image *img)
+/*-------------------------------------------------
+    image_unload - main call to unload an image
+-------------------------------------------------*/
+
+void image_unload(mess_image *image)
 {
-	image_unload_internal(img, FALSE);
+	image_unload_internal(image, FALSE);
 }
 
 
+
+/*-------------------------------------------------
+    image_unload_all - unload all images
+-------------------------------------------------*/
 
 void image_unload_all(int ispreload)
 {
 	int id;
 	const struct IODevice *dev;
-	mess_image *img;
+	mess_image *image;
 
 	if (!ispreload)
 		osd_begin_final_unloading();
@@ -460,10 +507,10 @@ void image_unload_all(int ispreload)
 				/* all instances */
 				for (id = 0; id < dev->count; id++)
 				{
-					img = image_from_device_and_index(dev, id);
+					image = image_from_device_and_index(dev, id);
 
 					/* unload this image */
-					image_unload_internal(img, TRUE);
+					image_unload_internal(image, TRUE);
 				}
 			}
 		}
@@ -473,10 +520,32 @@ void image_unload_all(int ispreload)
 
 
 /****************************************************************************
-  Error handling calls
+    ERROR HANDLING
 ****************************************************************************/
 
-const char *image_error(mess_image *img)
+/*-------------------------------------------------
+    image_clear_error - clear out any specified
+	error
+-------------------------------------------------*/
+
+static void image_clear_error(mess_image *image)
+{
+	image->err = IMAGE_ERROR_SUCCESS;
+	if (image->err_message)
+	{
+		free(image->err_message);
+		image->err_message = NULL;
+	}
+}
+
+
+
+/*-------------------------------------------------
+    image_error - returns the error text for an image
+	error
+-------------------------------------------------*/
+
+const char *image_error(mess_image *image)
 {
 	static const char *messages[] =
 	{
@@ -490,20 +559,24 @@ const char *image_error(mess_image *img)
 		"Unspecified error"
 	};
 
-	return img->err_message ? img->err_message : messages[img->err];
+	return image->err_message ? image->err_message : messages[image->err];
 }
 
 
 
-void image_seterror(mess_image *img, image_error_t err, const char *message)
+/*-------------------------------------------------
+    image_seterror - specifies an error on an image
+-------------------------------------------------*/
+
+void image_seterror(mess_image *image, image_error_t err, const char *message)
 {
-	image_clear_error(img);
-	img->err = err;
+	image_clear_error(image);
+	image->err = err;
 	if (message)
 	{
-		img->err_message = malloc(strlen(message) + 1);
-		if (img->err_message)
-			strcpy(img->err_message, message);
+		image->err_message = malloc(strlen(message) + 1);
+		if (image->err_message)
+			strcpy(image->err_message, message);
 	}
 }
 
@@ -611,7 +684,7 @@ static int image_checkhash(mess_image *image)
 	int rc;
 
 	/* this call should not be made when the image is not loaded */
-	assert(image->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	assert(image->file);
 
 	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
 	if (!image->hash && !image->writeable && !image->created)
@@ -810,42 +883,63 @@ void image_make_readonly(mess_image *img)
 
 UINT32 image_fread(mess_image *image, void *buffer, UINT32 length)
 {
-	return mame_fread(image->fp, buffer, length);
+	osd_read(image->file, buffer, image->pos, length, &length);
+	image->pos += length;
+	return length;
 }
 
 
 
 UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
 {
-	return mame_fwrite(image->fp, buffer, length);
+	osd_write(image->file, buffer, image->pos, length, &length);
+	image->pos += length;
+	return length;
 }
 
 
 
 int image_fseek(mess_image *image, INT64 offset, int whence)
 {
-	return mame_fseek(image->fp, offset, whence);
+	switch(whence)
+	{
+		case SEEK_SET:
+			image->pos = offset;
+			break;
+		case SEEK_CUR:
+			image->pos += offset;
+			break;
+		case SEEK_END:
+			image->pos = image->length + offset;
+			break;
+	}
+	if (image->pos > image->length)
+		image->pos = image->length;
+	return 0;
 }
 
 
 
 UINT64 image_ftell(mess_image *image)
 {
-	return mame_ftell(image->fp);
+	return image->pos;
 }
 
 
 
 int image_fgetc(mess_image *image)
 {
-	return mame_fgetc(image->fp);
+	char ch;
+	if (image_fread(image, &ch, 1) != 1)
+		ch = '\0';
+	return ch;
 }
 
 
 
 int image_feof(mess_image *image)
 {
-	return mame_feof(image->fp);
+	return image->pos >= image->length;
 }
 
 
@@ -895,33 +989,33 @@ void *image_ptr(mess_image *image)
   able to eliminate the need for a unload function.
 ****************************************************************************/
 
-void *image_malloc(mess_image *img, size_t size)
+void *image_malloc(mess_image *image, size_t size)
 {
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_malloc(&img->mempool, size);
+	assert(image->file || image->is_loading);
+	return pool_malloc(&image->mempool, size);
 }
 
 
 
-void *image_realloc(mess_image *img, void *ptr, size_t size)
+void *image_realloc(mess_image *image, void *ptr, size_t size)
 {
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_realloc(&img->mempool, ptr, size);
+	assert(image->file || image->is_loading);
+	return pool_realloc(&image->mempool, ptr, size);
 }
 
 
 
-char *image_strdup(mess_image *img, const char *src)
+char *image_strdup(mess_image *image, const char *src)
 {
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_strdup(&img->mempool, src);
+	assert(image->file || image->is_loading);
+	return pool_strdup(&image->mempool, src);
 }
 
 
 
-void image_freeptr(mess_image *img, void *ptr)
+void image_freeptr(mess_image *image, void *ptr)
 {
-	pool_freeptr(&img->mempool, ptr);
+	pool_freeptr(&image->mempool, ptr);
 }
 
 
@@ -1169,180 +1263,3 @@ int image_index_in_device(mess_image *img)
 	assert(indx < img->dev->count);
 	return indx;
 }
-
-
-
-/* this code tries opening the image as a raw ZIP file, and if relevant, returns the
- * zip file and the entry */
-char *mess_try_image_file_as_zip(int pathindex, const char *path,
-	const struct IODevice *dev)
-{
-	zip_error ziperr;
-	zip_file *zip = NULL;
-	const zip_file_header *zipentry;
-	char *name;
-	const char *ext;
-	int is_zip;
-	char *new_path = NULL;
-
-	name = osd_basename((char *) path);
-	if (!name)
-		goto done;
-
-	ext = strrchr(name, '.');
-	is_zip = (ext && !mame_stricmp(ext, ".zip"));
-
-	if (is_zip)
-	{
-		ziperr = zip_file_open(path, &zip);
-		if (ziperr != ZIPERR_NONE)
-			goto done;
-	
-		zipentry = zip_file_first_file(zip);
-		while (zipentry)
-		{
-			ext = strrchr(zipentry->filename, '.');
-			if (!dev || (ext && findextension(dev->file_extensions, ext)))
-			{
-				new_path = malloc(strlen(path) + 1 + strlen(zipentry->filename) + 1);
-				if (!new_path)
-					goto done;
-				strcpy(new_path, path);
-				strcat(new_path, PATH_SEPARATOR);
-				strcat(new_path, zipentry->filename);
-				break;
-			}
-			zipentry = zip_file_next_file(zip);
-		}
-	}
-
-done:
-	if (zip)
-		zip_file_close(zip);
-	return new_path;
-}
-
-
-
-static mame_file_error image_load_internal_2(mess_image *img, UINT32 openflags)
-{
-	mame_file_error filerr;
-	char *fname;
-	char *lpExt;
-	const game_driver *gamedrv = Machine->gamedrv;
-
-	assert(img);
-
-	do
-	{
-		logerror("image_load_internal_2: trying %s for system %s\n", img->name, gamedrv->name);
-
-		/* try to open the file */
-		fname = assemble_3_strings(gamedrv->name, "/", img->name);
-		filerr = mame_fopen(SEARCHPATH_IMAGE, img->name, openflags, &img->fp);
-		free(fname);
-
-		if ((filerr == FILERR_NONE) && (openflags == OPEN_FLAG_READ))
-		{
-			lpExt = strrchr( img->name, '.' );
-			if (lpExt && (mame_stricmp( lpExt, ".ZIP" ) == 0))
-			{
-				zip_error ziperr;
-				int pathindex;
-				int pathcount = 1; // FIXME osd_get_path_count(filetype);
-				zip_file *zipfile;
-				const zip_file_header *zipentry;
-				char *newname;
-				char *name;
-				char *zipname;
-				const char *ext;
-				const struct IODevice *dev;
-
-				mame_fclose( img->fp );
-				img->fp = NULL;
-
-				dev = image_device(img);
-				assert(dev);
-
-				newname = NULL;
-
-				zipname = image_malloc( img, strlen( gamedrv->name ) + 1 + strlen( img->name ) + 1 );
-				if( osd_is_absolute_path( img->name ) )
-				{
-					strcpy( zipname, img->name );
-				}
-				else
-				{
-					strcpy( zipname, gamedrv->name );
-					strcat( zipname, osd_path_separator() );
-					strcat( zipname, img->name );
-				}
-
-				for (pathindex = 0; pathindex < pathcount; pathindex++)
-				{
-					ziperr = zip_file_open(zipname, &zipfile);
-					if (ziperr != ZIPERR_NONE)
-					{
-						zipentry = zip_file_first_file(zipfile);
-						while( zipentry )
-						{
-							/* mess doesn't support paths in zip files */
-							name = osd_basename( (char *) zipentry->filename );
-							lpExt = strrchr(name, '.');
-							if (lpExt)
-							{
-								lpExt++;
-
-								ext = dev->file_extensions;
-								while(*ext)
-								{
-									if( mame_stricmp( lpExt, ext ) == 0 )
-									{
-										if( newname )
-										{
-											image_freeptr( img, newname );
-										}
-										newname = image_malloc(img, strlen(img->name) + 1 + strlen(name) + 1);
-										if (!newname)
-											return FILERR_OUT_OF_MEMORY;
-
-										strcpy(newname, img->name);
-										strcat(newname, osd_path_separator());
-										strcat(newname, name);
-									}
-									ext += strlen(ext) + 1;
-								}
-							}
-							zipentry = zip_file_next_file(zipfile);
-						}
-						zip_file_close(zipfile);
-					}
-					if( !newname )
-					{
-						return FILERR_OUT_OF_MEMORY;
-					}
-					filerr = mame_fopen(SEARCHPATH_IMAGE, newname, openflags, &img->fp);
-					if (filerr == FILERR_NONE)
-					{
-						image_freeptr(img, img->name);
-						img->name = newname;
-						break;
-					}
-				}
-				image_freeptr( img, zipname );
-			}
-		}
-		gamedrv = mess_next_compatible_driver(gamedrv);
-	}
-	while(!img->fp && gamedrv);
-
-	if (img->fp)
-	{
-		logerror("image_fopen: found image %s for system %s\n", img->name, gamedrv->name);
-		img->length = mame_fsize(img->fp);
-		img->hash = NULL;
-	}
-
-	return filerr;
-}
-
