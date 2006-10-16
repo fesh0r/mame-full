@@ -197,12 +197,17 @@ static image_error_t load_image_by_path(mess_image *image, const char *software_
 {
 	mame_file_error filerr;
 	image_error_t err;
-	char *full_path;
+	char *full_path = NULL;
 
 	/* open the file */
-	full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
-	filerr = osd_open(full_path, open_flags, &image->file, &image->length);
-	free(full_path);
+	if (software_path)
+	{
+		full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
+		path = full_path;
+	}
+	filerr = osd_open(path, open_flags, &image->file, &image->length);
+	if (full_path)
+		free(full_path);
 
 	/* did the open succeed? */
 	switch(filerr)
@@ -294,7 +299,7 @@ static int image_load_internal(mess_image *image, const char *path,
 	image_error_t err;
 	const char *software_paths;
 	const char *software_path;
-	char *software_path_list;
+	char *software_path_list = NULL;
 	char *s;
 	const void *buffer;
 	const game_driver *gamedrv;
@@ -307,19 +312,22 @@ static int image_load_internal(mess_image *image, const char *path,
 	/* first unload the image */
 	image_unload(image);
 
-	/* parse the software paths into a NUL-delimited list */
-	software_paths = options_get_string(SEARCHPATH_IMAGE);
-	software_path_list = malloc((strlen(software_paths) + 2) * sizeof(*software_path_list));
-	if (!software_path_list)
+	if (!osd_is_absolute_path(path))
 	{
-		image->err = IMAGE_ERROR_OUTOFMEMORY;
-		goto done;
+		/* parse the software paths into a NUL-delimited list */
+		software_paths = options_get_string(SEARCHPATH_IMAGE);
+		software_path_list = malloc((strlen(software_paths) + 2) * sizeof(*software_path_list));
+		if (!software_path_list)
+		{
+			image->err = IMAGE_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+		strcpy(software_path_list, software_paths);
+		strcat(software_path_list, ";");
+		s = software_path_list;
+		while((s = strchr(s, ';')) != NULL)
+			*(s++) = '\0';
 	}
-	strcpy(software_path_list, software_paths);
-	strcat(software_path_list, ";");
-	s = software_path_list;
-	while((s = strchr(s, ';')) != NULL)
-		*(s++) = '\0';
 
 	/* record the filename */
 	image->name = image_strdup(image, path);
@@ -343,7 +351,7 @@ static int image_load_internal(mess_image *image, const char *path,
 	for (i = 0; !image->file && open_plan[i]; i++)
 	{
 		software_path = software_path_list;
-		while(!image->file && *software_path)
+		do
 		{
 			gamedrv = Machine->gamedrv;
 			while(!image->file && gamedrv)
@@ -355,8 +363,10 @@ static int image_load_internal(mess_image *image, const char *path,
 
 				gamedrv = mess_next_compatible_driver(gamedrv);
 			}
-			software_path += strlen(software_path) + 1;
+			if (software_path)
+				software_path += strlen(software_path) + 1;
 		}
+		while(!image->file && software_path && *software_path);
 	}
 
 	/* did we fail to find the file? */
