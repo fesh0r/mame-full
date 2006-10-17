@@ -10,6 +10,8 @@
 
 ****************************************************************************/
 
+#include <ctype.h>
+
 #include "image.h"
 #include "mess.h"
 #include "unzip.h"
@@ -188,6 +190,129 @@ static void image_exit(running_machine *machine)
 ****************************************************************************/
 
 /*-------------------------------------------------
+    is_loaded - quick check to determine whether an
+	image is loaded
+-------------------------------------------------*/
+
+static int is_loaded(mess_image *image)
+{
+	return image->file || image->ptr;
+}
+
+
+
+/*-------------------------------------------------
+    load_zip_path - loads a ZIP file with a
+	specific path
+-------------------------------------------------*/
+
+static image_error_t load_zip_path(mess_image *image, const char *path)
+{
+	image_error_t err = IMAGE_ERROR_FILENOTFOUND;
+	zip_file *zip = NULL;
+	zip_error ziperr;
+	const zip_file_header *header;
+	const char *zip_extension = ".zip";
+	char zip_segment[8];
+	char *s;
+	char *path_copy;
+	const char *zip_file_path;
+	const char *zip_entry;
+	void *ptr;
+	int i;
+
+	/* create our own copy of the path */
+	path_copy = malloc(strlen(path) + 1);
+	if (!path_copy)
+	{
+		err = IMAGE_ERROR_OUTOFMEMORY;
+		goto done;
+	}
+	strcpy(path_copy, path);
+
+	/* make path_copy lowercase */
+	for (i = 0; path_copy[i]; i++)
+		path_copy[i] = tolower(path_copy[i]);
+
+	/* search for a ZIP file */
+	sprintf(zip_segment, "%s%s", zip_extension, PATH_SEPARATOR);
+	s = strrchr(path_copy, '.');
+	if (!s || mame_stricmp(s, ".zip"))
+		s = strstr(path_copy, zip_segment);
+	if (s)
+	{
+		s += strlen(zip_extension);
+		*s = '\0';
+		zip_file_path = path_copy;
+		if (*s)
+			zip_entry = s + strlen(PATH_SEPARATOR);
+		else
+			zip_entry = NULL;
+
+		ziperr = zip_file_open(zip_file_path, &zip);
+		if (ziperr == ZIPERR_NONE)
+		{
+			/* iterate through the zip file */
+			header = zip_file_first_file(zip);
+			if (zip_entry)
+			{
+				/* find the entry in question */
+				while(header)
+				{
+					if (!mame_stricmp(header->filename, zip_entry))
+						break;
+					header = zip_file_next_file(zip);
+				}
+			}
+			else if (header)
+			{
+				/* use the first entry; tough part is we have to change the name */
+				s = image_malloc(image, strlen(image->name) + strlen(PATH_SEPARATOR) + strlen(header->filename) + 1);
+				if (!s)
+				{
+					err = IMAGE_ERROR_OUTOFMEMORY;
+					goto done;
+				}
+				strcpy(s, image->name);
+				strcat(s, PATH_SEPARATOR);
+				strcat(s, header->filename);
+				image->name = s;
+			}
+
+			/* did we find an entry? */
+			if (header)
+			{
+				ptr = image_malloc(image, header->uncompressed_length);
+				if (!ptr)
+				{
+					err = IMAGE_ERROR_OUTOFMEMORY;
+					goto done;
+				}
+
+				ziperr = zip_file_decompress(zip, ptr, header->uncompressed_length);
+				if (ziperr == ZIPERR_NONE)
+				{
+					/* success! */
+					err = IMAGE_ERROR_SUCCESS;
+					image->ptr = ptr;
+					image->length = header->uncompressed_length;
+				}
+			}
+
+		}
+	}
+
+done:
+	if (path_copy)
+		free(path_copy);
+	if (zip)
+		zip_file_close(zip);
+	return err;
+}
+
+
+
+/*-------------------------------------------------
     load_image_by_path - loads an image with a
 	specific path
 -------------------------------------------------*/
@@ -195,59 +320,70 @@ static void image_exit(running_machine *machine)
 static image_error_t load_image_by_path(mess_image *image, const char *software_path,
 	const game_driver *gamedrv, UINT32 open_flags, const char *path)
 {
-	mame_file_error filerr;
-	image_error_t err;
+	mame_file_error filerr = FILERR_NOT_FOUND;
+	image_error_t err = IMAGE_ERROR_FILENOTFOUND;
 	char *full_path = NULL;
+	const char *file_extension;
 
-	/* open the file */
+	/* assemble the path */
 	if (software_path)
 	{
 		full_path = assemble_5_strings(software_path, PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, path);
 		path = full_path;
 	}
-	filerr = osd_open(path, open_flags, &image->file, &image->length);
-	if (full_path)
-		free(full_path);
 
-	/* did the open succeed? */
-	switch(filerr)
+	/* quick check to see if the file is a ZIP file */
+	file_extension = strrchr(path, '.');
+	if (!file_extension || mame_stricmp(file_extension, ".zip"))
 	{
-		case FILERR_NONE:
-			/* success! */
-			image->writeable = (open_flags & OPEN_FLAG_WRITE) ? 1 : 0;
-			image->created = (open_flags & OPEN_FLAG_CREATE) ? 1 : 0;
-			err = IMAGE_ERROR_SUCCESS;
-			break;
+		filerr = osd_open(path, open_flags, &image->file, &image->length);
 
-		case FILERR_NOT_FOUND:
-		case FILERR_ACCESS_DENIED:
-			/* file not found (or otherwise cannot open); continue */
-			err = IMAGE_ERROR_SUCCESS;
-			break;
+		/* did the open succeed? */
+		switch(filerr)
+		{
+			case FILERR_NONE:
+				/* success! */
+				image->writeable = (open_flags & OPEN_FLAG_WRITE) ? 1 : 0;
+				image->created = (open_flags & OPEN_FLAG_CREATE) ? 1 : 0;
+				err = IMAGE_ERROR_SUCCESS;
+				break;
 
-		case FILERR_OUT_OF_MEMORY:
-			/* out of memory */
-			err = IMAGE_ERROR_OUTOFMEMORY;
-			break;
+			case FILERR_NOT_FOUND:
+			case FILERR_ACCESS_DENIED:
+				/* file not found (or otherwise cannot open); continue */
+				err = IMAGE_ERROR_SUCCESS;
+				break;
 
-		case FILERR_ALREADY_OPEN:
-			/* this shouldn't happen */
-			err = IMAGE_ERROR_ALREADYOPEN;
-			break;
+			case FILERR_OUT_OF_MEMORY:
+				/* out of memory */
+				err = IMAGE_ERROR_OUTOFMEMORY;
+				break;
 
-		case FILERR_FAILURE:
-		case FILERR_TOO_MANY_FILES:
-		case FILERR_INVALID_DATA:
-		default:
-			/* other errors */
-			err = IMAGE_ERROR_INTERNAL;
-			break;
+			case FILERR_ALREADY_OPEN:
+				/* this shouldn't happen */
+				err = IMAGE_ERROR_ALREADYOPEN;
+				break;
+
+			case FILERR_FAILURE:
+			case FILERR_TOO_MANY_FILES:
+			case FILERR_INVALID_DATA:
+			default:
+				/* other errors */
+				err = IMAGE_ERROR_INTERNAL;
+				break;
+		}
 	}
 
+	/* special case for ZIP files */
+	if ((filerr == FILERR_NOT_FOUND) && (open_flags == OPEN_FLAG_READ))
+		err = load_zip_path(image, path);
+
 	if (err)
-		assert(!image->file);
+		assert(!is_loaded(image));
 	else
-		assert(image->file);
+		assert(is_loaded(image));
+	if (full_path)
+		free(full_path);
 	return err;
 }
 
@@ -354,7 +490,7 @@ static int image_load_internal(mess_image *image, const char *path,
 		do
 		{
 			gamedrv = Machine->gamedrv;
-			while(!image->file && gamedrv)
+			while(!is_loaded(image) && gamedrv)
 			{
 				/* open the file */
 				image->err = load_image_by_path(image, software_path, gamedrv, open_plan[i], path);
@@ -366,11 +502,11 @@ static int image_load_internal(mess_image *image, const char *path,
 			if (software_path)
 				software_path += strlen(software_path) + 1;
 		}
-		while(!image->file && software_path && *software_path);
+		while(!is_loaded(image) && software_path && *software_path);
 	}
 
 	/* did we fail to find the file? */
-	if (!image->file)
+	if (!is_loaded(image))
 	{
 		image->err = IMAGE_ERROR_FILENOTFOUND;
 		goto done;
@@ -494,7 +630,7 @@ static void image_clear(mess_image *image)
 static void image_unload_internal(mess_image *image, int is_final_unload)
 {
 	/* is there an actual image loaded? */
-	if (!image->file)
+	if (!is_loaded(image))
 		return;
 
 	/* call the unload function */
@@ -722,7 +858,7 @@ static int image_checkhash(mess_image *image)
 	int rc;
 
 	/* this call should not be made when the image is not loaded */
-	assert(image->file);
+	assert(is_loaded(image));
 
 	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
 	if (!image->hash && !image->writeable && !image->created)
@@ -921,7 +1057,15 @@ void image_make_readonly(mess_image *img)
 
 UINT32 image_fread(mess_image *image, void *buffer, UINT32 length)
 {
-	osd_read(image->file, buffer, image->pos, length, &length);
+	length = MIN(length, image->length - image->pos);
+
+	if (image->file)
+		osd_read(image->file, buffer, image->pos, length, &length);
+	else if (image->ptr)
+		memcpy(buffer, ((UINT8 *) image->ptr) + image->pos, length);
+	else
+		length = 0;
+
 	image->pos += length;
 	return length;
 }
@@ -930,7 +1074,15 @@ UINT32 image_fread(mess_image *image, void *buffer, UINT32 length)
 
 UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
 {
-	osd_write(image->file, buffer, image->pos, length, &length);
+	length = MIN(length, image->length - image->pos);
+
+	if (image->file)
+		osd_write(image->file, buffer, image->pos, length, &length);
+	else if (image->ptr)
+		memcpy(((UINT8 *) image->ptr) + image->pos, buffer, length);
+	else
+		length = 0;
+
 	image->pos += length;
 	return length;
 }
@@ -1029,7 +1181,7 @@ void *image_ptr(mess_image *image)
 
 void *image_malloc(mess_image *image, size_t size)
 {
-	assert(image->file || image->is_loading);
+	assert(is_loaded(image) || image->is_loading);
 	return pool_malloc(&image->mempool, size);
 }
 
@@ -1037,7 +1189,7 @@ void *image_malloc(mess_image *image, size_t size)
 
 void *image_realloc(mess_image *image, void *ptr, size_t size)
 {
-	assert(image->file || image->is_loading);
+	assert(is_loaded(image) || image->is_loading);
 	return pool_realloc(&image->mempool, ptr, size);
 }
 
@@ -1045,7 +1197,7 @@ void *image_realloc(mess_image *image, void *ptr, size_t size)
 
 char *image_strdup(mess_image *image, const char *src)
 {
-	assert(image->file || image->is_loading);
+	assert(is_loaded(image) || image->is_loading);
 	return pool_strdup(&image->mempool, src);
 }
 
