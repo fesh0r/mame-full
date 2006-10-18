@@ -764,6 +764,7 @@ static int c65_dma_read_color (int offset)
 static void c65_common_driver_init (void)
 {
 	c64_memory = auto_malloc(0x10000);
+	memset(c64_memory, 0, 0x10000);
 	memory_set_bankptr(11, c64_memory + 0x00000);
 	memory_set_bankptr(12, c64_memory + 0x08000);
 	memory_set_bankptr(13, c64_memory + 0x0a000);
