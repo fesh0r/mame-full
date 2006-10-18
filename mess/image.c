@@ -380,8 +380,6 @@ static image_error_t load_image_by_path(mess_image *image, const char *software_
 
 	if (err)
 		assert(!is_loaded(image));
-	else
-		assert(is_loaded(image));
 	if (full_path)
 		free(full_path);
 	return err;
