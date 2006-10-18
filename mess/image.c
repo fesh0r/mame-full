@@ -351,7 +351,7 @@ static image_error_t load_image_by_path(mess_image *image, const char *software_
 			case FILERR_NOT_FOUND:
 			case FILERR_ACCESS_DENIED:
 				/* file not found (or otherwise cannot open); continue */
-				err = IMAGE_ERROR_SUCCESS;
+				err = IMAGE_ERROR_FILENOTFOUND;
 				break;
 
 			case FILERR_OUT_OF_MEMORY:
@@ -375,11 +375,16 @@ static image_error_t load_image_by_path(mess_image *image, const char *software_
 	}
 
 	/* special case for ZIP files */
-	if ((filerr == FILERR_NOT_FOUND) && (open_flags == OPEN_FLAG_READ))
+	if ((err == IMAGE_ERROR_FILENOTFOUND) && (open_flags == OPEN_FLAG_READ))
 		err = load_zip_path(image, path);
 
+	/* check to make sure that our reported error is reflective of the actual status */
 	if (err)
 		assert(!is_loaded(image));
+	else
+		assert(is_loaded(image));
+
+	/* free up memory, and exit */
 	if (full_path)
 		free(full_path);
 	return err;
@@ -392,7 +397,7 @@ static image_error_t load_image_by_path(mess_image *image, const char *software_
 	flags to use, and in what order
 -------------------------------------------------*/
 
-static void determine_open_plan(mess_image *image, UINT32 *open_plan)
+static void determine_open_plan(mess_image *image, int is_create, UINT32 *open_plan)
 {
 	unsigned int readable, writeable, creatable;
 	int i = 0;
@@ -410,11 +415,11 @@ static void determine_open_plan(mess_image *image, UINT32 *open_plan)
 	}
 
 	/* emit flags */
-	if (readable && writeable)
+	if (!is_create && readable && writeable)
 		open_plan[i++] = OPEN_FLAG_READ | OPEN_FLAG_WRITE;
-	if (!readable && writeable)
+	if (!is_create && !readable && writeable)
 		open_plan[i++] = OPEN_FLAG_WRITE;
-	if (readable)
+	if (!is_create && readable)
 		open_plan[i++] = OPEN_FLAG_READ;
 	if (readable && writeable && creatable)
 		open_plan[i++] = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
@@ -479,7 +484,7 @@ static int image_load_internal(mess_image *image, const char *path,
 		mame_schedule_soft_reset(Machine);
 
 	/* determine open plan */
-	determine_open_plan(image, open_plan);
+	determine_open_plan(image, is_create, open_plan);
 
 	/* attempt to open the file in various ways */
 	for (i = 0; !image->file && open_plan[i]; i++)
@@ -492,7 +497,7 @@ static int image_load_internal(mess_image *image, const char *path,
 			{
 				/* open the file */
 				image->err = load_image_by_path(image, software_path, gamedrv, open_plan[i], path);
-				if (image->err)
+				if (image->err && (image->err != IMAGE_ERROR_FILENOTFOUND))
 					goto done;
 
 				gamedrv = mess_next_compatible_driver(gamedrv);
@@ -1072,7 +1077,9 @@ UINT32 image_fread(mess_image *image, void *buffer, UINT32 length)
 
 UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
 {
-	length = MIN(length, image->length - image->pos);
+	/* if we are not associated with a file, clip the length */
+	if (!image->file)
+		length = MIN(length, image->length - image->pos);
 
 	if (image->file)
 		osd_write(image->file, buffer, image->pos, length, &length);
@@ -1082,6 +1089,12 @@ UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
 		length = 0;
 
 	image->pos += length;
+
+	/* did we grow the file? */
+	if (image->length < image->pos)
+		image->length = image->pos;
+
+	/* return */
 	return length;
 }
 
