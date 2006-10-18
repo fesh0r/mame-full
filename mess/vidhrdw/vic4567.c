@@ -31,7 +31,7 @@ WRITE8_HANDLER( vic3_palette_w )
 	vic3.palette_dirty=1;
 }
 
-extern void vic4567_init (int pal, int (*dma_read) (int),
+void vic4567_init (int pal, int (*dma_read) (int),
 						  int (*dma_read_color) (int), void (*irq) (int),
 						  void (*param_port_changed)(int))
 {
@@ -46,6 +46,8 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 	vic2.pal = pal;
 	vic2.port_changed = param_port_changed;
 	vic2.on = TRUE;
+
+	state_save_register_global_array(vic2.reg);
 }
 
 WRITE8_HANDLER ( vic3_port_w )
