@@ -18,6 +18,7 @@
 #include "sound/dac.h"
 #include "machine/thomson.h"
 #include "vidhrdw/thomson.h"
+#include "sndhrdw/mea8000.h"
 #include "devices/cartslot.h"
 #include "includes/centroni.h"
 #include "includes/serial.h"
@@ -564,6 +565,24 @@ static void to7_modem_init( void )
 }
 
 
+/* ------------  dispatch MODEM / speech extension ------------ */
+
+READ8_HANDLER ( to7_modem_mea8000_r )
+{
+  if ( readinputport( THOM_INPUT_MCONFIG ) & 1 )
+    return mea8000_r( offset );
+  else
+    return acia6850_0_r( offset );
+}
+
+WRITE8_HANDLER ( to7_modem_mea8000_w )
+{
+  if ( readinputport( THOM_INPUT_MCONFIG ) & 1 )
+    mea8000_w( offset, data );
+  else
+    acia6850_0_w( offset, data );
+}
+
 /* ------------ CM 90-112 music & game extension ------------ */
 
 /* features:
@@ -663,6 +682,7 @@ MACHINE_RESET ( to7 )
   to7_io_reset();
   to7_modem_reset();
   to7_rf57932_reset();
+  mea8000_reset();
 
   /* video */
   thom_set_video_mode( THOM_VMODE_TO770 );
@@ -697,6 +717,7 @@ MACHINE_START ( to7 )
   to7_io_init();
   to7_modem_init();
   to7_rf57932_init();
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
 
   /* memory */
   thom_cart_bank = 0;
@@ -847,6 +868,7 @@ MACHINE_RESET( to770 )
   to7_io_reset();
   to7_modem_reset();
   to7_rf57932_reset();
+  mea8000_reset();
 
   /* bank selection PIA input float to 1 */
   pia_set_input_b( THOM_PIA_SYS, 0xf8 );
@@ -885,6 +907,7 @@ MACHINE_START ( to770 )
   to7_io_init();
   to7_modem_init();
   to7_rf57932_init();
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
 
   /* memory */
   thom_cart_bank = 0;
@@ -1131,6 +1154,7 @@ MACHINE_RESET( mo5 )
   to7_modem_reset();
   to7_rf57932_reset();
   mo5_init_timer();
+  mea8000_reset();
 
   /* video */
   thom_set_video_mode( THOM_VMODE_MO5 );
@@ -1165,6 +1189,7 @@ MACHINE_START ( mo5 )
   to7_modem_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
 
   /* memory */
   thom_cart_bank = 0;
@@ -1937,6 +1962,7 @@ MACHINE_RESET ( to9 )
   thom_centronics_reset();
   to7_modem_reset();
   to7_rf57932_reset();
+  mea8000_reset();
 
   /* video */
   thom_set_video_mode( THOM_VMODE_TO9 );
@@ -1974,6 +2000,7 @@ MACHINE_START ( to9 )
   to9_palette_init();
   to7_modem_init();
   to7_rf57932_init();
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
 
   /* memory */
   thom_vram = mem + 0x68000;
@@ -2769,6 +2796,7 @@ MACHINE_RESET ( to8 )
   thom_centronics_reset();
   to7_modem_reset();
   to7_rf57932_reset();
+  mea8000_reset();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -2816,6 +2844,7 @@ MACHINE_START ( to8 )
   to9_palette_init();
   to7_modem_init();
   to7_rf57932_init();
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
   
   /* memory */
   thom_cart_bank = 0;
@@ -2909,6 +2938,7 @@ MACHINE_RESET ( to9p )
   thom_centronics_reset();
   to7_modem_reset();
   to7_rf57932_reset();
+  mea8000_reset();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -2956,6 +2986,7 @@ MACHINE_START ( to9p )
   to9_palette_init();
   to7_modem_init();
   to7_rf57932_init();
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
   
   /* memory */
   thom_cart_bank = 0;
@@ -3423,6 +3454,7 @@ MACHINE_RESET ( mo6 )
   to7_modem_reset();
   to7_rf57932_reset();
   mo5_init_timer();
+  mea8000_reset();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -3463,6 +3495,7 @@ MACHINE_START ( mo6 )
   to7_modem_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
   
   /* memory */
   thom_cart_bank = 0;
@@ -3642,6 +3675,7 @@ MACHINE_RESET ( mo5nr )
   to7_modem_reset();
   to7_rf57932_reset();
   mo5_init_timer();
+  mea8000_reset();
 
   /* gate-array */
   to7_lightpen = 0;
@@ -3685,6 +3719,7 @@ MACHINE_START ( mo5nr )
   to7_modem_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
+  mea8000_config( THOM_SOUND_SPEECH, NULL );
   
   /* memory */
   thom_cart_bank = 0;

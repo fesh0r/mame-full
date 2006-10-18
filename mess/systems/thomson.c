@@ -65,7 +65,6 @@
    - midi extension (@)
    - TV overlay (IN 57-001), digitisation extension (@)
    - barcode reader (@)
-   - speech synthesis extension
 
    (@) means MESS is lacking support for this kind of device / feature anyway
 
@@ -87,6 +86,7 @@
 #include "includes/6551.h"
 #include "machine/thomson.h"
 #include "vidhrdw/thomson.h"
+#include "sndhrdw/mea8000.h"
 #include "devices/cartslot.h"
 #include "devices/printer.h"
 #include "devices/cassette.h"
@@ -97,6 +97,9 @@
 
 
 /**************************** common *******************************/
+
+/* layout */
+static const char layout_thomson[] = "thomson";
 
 #define KEY(pos,name,key)				\
   PORT_BIT  ( 1<<(pos), IP_ACTIVE_LOW, IPT_KEYBOARD )	\
@@ -507,7 +510,8 @@ boot floppy.
   - alternate QDD floppy drive extension
     . CQ 90-028 floppy controller, based on a Motorola 6852 SSDA
     . QD 90-028 quickdrive 2"8 (QDD), only one drive, signe side
-
+  - speech synthesis extension: based on a Philips / Signetics MEA 8000
+    (cannot be used with the MODEM)
 
 
 T9000 (1980)
@@ -543,7 +547,8 @@ static ADDRESS_MAP_START ( to7, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e0, 0xe7e3 ) AM_READWRITE ( pia_2_r, pia_2_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
+						to7_modem_mea8000_w )
      AM_RANGE ( 0xe800, 0xffff ) AM_ROM       /* system bios  */
 
 /* 0x10000 - 0x1ffff: 64 KB external ROM cartridge */
@@ -632,6 +637,15 @@ INPUT_PORTS_START ( to7_vconfig )
      PORT_CONFNAME ( 0x04, 0x00, "Resolution" )
      PORT_CONFSETTING ( 0x00, DEF_STR ( Low ) )
      PORT_CONFSETTING ( 0x04, DEF_STR ( High  ) )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( to7_mconfig )
+     PORT_START_TAG ( "mconfig" )
+
+     PORT_CONFNAME ( 0x01, 0x01, "E7FE-F port" )
+     PORT_CONFSETTING ( 0x00, "Modem (unemulated)" )
+     PORT_CONFSETTING ( 0x01, "Speech" )
 
 INPUT_PORTS_END
 
@@ -763,6 +777,7 @@ INPUT_PORTS_START ( to7 )
      PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to7_fconfig )
      PORT_INCLUDE ( to7_vconfig )
+     PORT_INCLUDE ( to7_mconfig )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( t9000 )
@@ -812,7 +827,7 @@ static MACHINE_DRIVER_START ( to7 )
      MDRV_VIDEO_START ( thom )
      MDRV_VIDEO_UPDATE ( thom )
      MDRV_VIDEO_EOF ( thom )
-     MDRV_DEFAULT_LAYOUT( "thomson" )
+     MDRV_DEFAULT_LAYOUT( layout_thomson )
 
 /* sound */
      MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -820,6 +835,8 @@ static MACHINE_DRIVER_START ( to7 )
      MDRV_SOUND_ROUTE( ALL_OUTPUTS, "mono", 1.) /* 1-bit buzzer */
      MDRV_SOUND_ADD ( DAC, 0 )
      MDRV_SOUND_ROUTE( ALL_OUTPUTS, "mono", 1.) /* 6-bit game extention DAC */
+     MDRV_SOUND_ADD ( DAC, 0 )
+     MDRV_SOUND_ROUTE( ALL_OUTPUTS, "mono", 1.) /* speech synthesis */
 
 MACHINE_DRIVER_END
 
@@ -902,7 +919,8 @@ static ADDRESS_MAP_START ( to770, ADDRESS_SPACE_PROGRAM, 8 )
                                                 to770_gatearray_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
+						to7_modem_mea8000_w )
      AM_RANGE ( 0xe800, 0xffff ) AM_ROM       /* system bios  */
 
 /* 0x10000 - 0x1ffff: 64 KB external ROM cartridge */
@@ -1046,7 +1064,7 @@ Unlike the TO7, the BASIC 1.0 is integrated and the MO5 can be used "as-is".
   - game & music, I/O, floppy extensions: identical to TO7
   - NR 07-005: network extension, MC 6854 based, 2 KB ROM & 64 KB RAM
     (build by the French Leanord company)
- 
+  - speech synthesis extension: identical to TO7
 
 MO5E (1986)
 ----
@@ -1076,6 +1094,7 @@ static ADDRESS_MAP_START ( mo5, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xa7e4, 0xa7e7 ) AM_READWRITE ( mo5_gatearray_r,
 						mo5_gatearray_w )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
+     AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_ROMBANK   ( THOM_CART_BANK )
                                  AM_WRITE     ( mo5_cartridge_w )
      AM_RANGE ( 0xf000, 0xffff ) AM_ROM       /* system bios */
@@ -1257,6 +1276,7 @@ It was replaced quickly with the improved TO9+.
     . integrated one-sided double-density 3"1/2
     . external two-sided double-density 3"1/2, 5"1/4 or QDD (extension)
     . floppies are TO7 and MO5 compatible
+  - speech synthesis extension: identical to TO7
 
 **********************************************************************/
 
@@ -1280,7 +1300,8 @@ static ADDRESS_MAP_START ( to9, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
+						to7_modem_mea8000_w )
      AM_RANGE ( 0xe800, 0xffff ) AM_ROM       /* system bios  */
 
 /* 0x10000 - 0x1ffff:  64 KB external ROM cartridge */
@@ -1445,6 +1466,7 @@ INPUT_PORTS_START ( to9 )
      PORT_INCLUDE ( to9_config )
      PORT_INCLUDE ( to9_fconfig )
      PORT_INCLUDE ( to7_vconfig )
+     PORT_INCLUDE ( to7_mconfig )
 INPUT_PORTS_END
 
 
@@ -1522,6 +1544,7 @@ Thomson family.
    . no integrated drive
    . up to two external two-sided double-density 3"1/2, 5"1/4 or QDD drives
    . floppies are TO7 and MO5 compatible
+  - speech synthesis extension: identical to TO7
 
 
 
@@ -1558,7 +1581,8 @@ static ADDRESS_MAP_START ( to8, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
+						to7_modem_mea8000_w )
      AM_RANGE ( 0xe800, 0xffff ) AM_ROMBANK   ( TO8_BIOS_BANK ) /* 2 * 6 KB */
 
 /* 0x10000 - 0x1ffff:  64 KB external ROM cartridge */
@@ -1651,6 +1675,7 @@ INPUT_PORTS_START ( to8 )
      PORT_INCLUDE ( to8_config )
      PORT_INCLUDE ( to9_fconfig )
      PORT_INCLUDE ( to7_vconfig )
+     PORT_INCLUDE ( to7_mconfig )
 INPUT_PORTS_END
 
 
@@ -1726,6 +1751,7 @@ The differences with the TO8 are:
   - floppy: one two-sided double-density 3"1/2 floppy drive is integrated
   - RS 52-932 RS232 extension ?
   - digitisation extension
+  - speech synthesis extension: identical to TO7, but masks the internal modem
 
 **********************************************************************/
 
@@ -1755,7 +1781,8 @@ static ADDRESS_MAP_START ( to9p, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
+						to7_modem_mea8000_w )
      AM_RANGE ( 0xe800, 0xffff ) AM_ROMBANK   ( TO8_BIOS_BANK ) /* 2 * 6 KB */
 
 /* 0x10000 - 0x1ffff:  64 KB external ROM cartridge */
@@ -1902,6 +1929,7 @@ static ADDRESS_MAP_START ( mo6, ADDRESS_SPACE_PROGRAM, 8 )
 						mo6_gatearray_w )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+     AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_ROMBANK   ( THOM_CART_BANK )
                                  AM_WRITE     ( mo6_cartridge_w )
      AM_RANGE ( 0xf000, 0xffff ) AM_ROMBANK   ( TO8_BIOS_BANK )
@@ -2198,7 +2226,6 @@ Here are the differences between the MO6 and MO5NR:
   - CENTRONICS printer handled differently
   - MO5-compatible network
   - extern floppy controller & drive possible, masks the network
-  - MD 90-120: MODEM extension (identical to the TO7?)
 
 **********************************************************************/
 
@@ -2226,7 +2253,7 @@ static ADDRESS_MAP_START ( mo5nr, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
      AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
      AM_RANGE ( 0xa7f8, 0xa7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
-     AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( acia6850_0_r, acia6850_0_w )
+     AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_RAMBANK   ( THOM_CART_BANK ) /* 8 * 16 KB */
                                  AM_WRITE     ( mo6_cartridge_w )
      AM_RANGE ( 0xf000, 0xffff ) AM_ROMBANK   ( TO8_BIOS_BANK )

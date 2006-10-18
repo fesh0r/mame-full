@@ -968,7 +968,8 @@ $(OBJ)/thomson.a:			\
 	$(OBJ)/mess/vidhrdw/thomson.o   \
 	$(OBJ)/mess/devices/thomflop.o \
 	$(OBJ)/mess/formats/thom_dsk.o \
-	$(OBJ)/mess/formats/thom_cas.o
+	$(OBJ)/mess/formats/thom_cas.o \
+	$(OBJ)/mess/sndhrdw/mea8000.o
 
 $(OBJ)/tiger.a:				\
 	$(OBJ)/mess/systems/gamecom.o	\

@@ -16,6 +16,7 @@
 #define THOM_INPUT_CONFIG   18 /* machine-specific options */
 #define THOM_INPUT_FCONFIG  19 /* floppy / network options */
 #define THOM_INPUT_VCONFIG  20 /* video options */
+#define THOM_INPUT_MCONFIG  21 /* modem / speech options */
 
 /* 6821 PIAs */
 #define THOM_PIA_SYS    0  /* system PIA */
@@ -24,8 +25,9 @@
 #define THOM_PIA_MODEM  3  /* MD 90-120 MODEM extension */
 
 /* sound ports */
-#define THOM_SOUND_BUZ   0 /* 1-bit buzzer */
-#define THOM_SOUND_GAME  1 /* 6-bit game port DAC */
+#define THOM_SOUND_BUZ    0 /* 1-bit buzzer */
+#define THOM_SOUND_GAME   1 /* 6-bit game port DAC */
+#define THOM_SOUND_SPEECH 2 /* speach synthesis */
 
 /* serial devices */
 #define THOM_SERIAL_CC90323  0 /* RS232 port in I/O extension */
@@ -49,6 +51,10 @@ extern void thom_serial_unload ( mess_image* image );
 /* cartridge bank-switching */
 extern int to7_cartridge_load ( mess_image* image );
 extern WRITE8_HANDLER ( to7_cartridge_w );
+
+/* dispatch MODEM or speech synthesis extension */
+extern READ8_HANDLER ( to7_modem_mea8000_r );
+extern WRITE8_HANDLER ( to7_modem_mea8000_w );
 
 extern MACHINE_START ( to7 );
 extern MACHINE_RESET ( to7 );

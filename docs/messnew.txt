@@ -14,6 +14,9 @@ System Driver Changes:
 
 - [SPECTRUM] Fixed snapshot loading regression introduced in 0.105.  [Chad]
 
+- [THOMSON] Added support for speech synthesis with the Phillips MEA 8000
+  chipset.  [Antoine Mine]
+
 
 
 User Interface Changes:
