@@ -99,6 +99,7 @@ struct messtest_testcase
 	/* options */
 	UINT32 ram;
 	unsigned int wavwrite : 1;
+	unsigned int enabled : 1;
 };
 
 struct messtest_specific_state
@@ -1398,47 +1399,61 @@ void node_testmess(xml_data_node *node)
 	attr_node = xml_get_attribute(node, "wavwrite");
 	current_testcase.wavwrite = attr_node && (atoi(attr_node->value) != 0);
 
+	/* 'enabled' attribute */
+	attr_node = xml_get_attribute(node, "enabled");
+	current_testcase.enabled = (!attr_node || atoi(attr_node->value)) ? TRUE : FALSE;
+
 	/* report the beginning of the test case */
 	report_testcase_begin(current_testcase.name);
-	current_testcase.commands = NULL;
 
-	for (child_node = node->child; child_node; child_node = child_node->next)
+	if (current_testcase.enabled)
 	{
-		if (!strcmp(child_node->name, "wait"))
-			node_wait(child_node);
-		else if (!strcmp(child_node->name, "input"))
-			node_input(child_node);
-		else if (!strcmp(child_node->name, "rawinput"))
-			node_rawinput(child_node);
-		else if (!strcmp(child_node->name, "switch"))
-			node_switch(child_node);
-		else if (!strcmp(child_node->name, "screenshot"))
-			node_screenshot(child_node);
-		else if (!strcmp(child_node->name, "checkblank"))
-			node_checkblank(child_node);
-		else if (!strcmp(child_node->name, "imagecreate"))
-			node_imagecreate(child_node);
-		else if (!strcmp(child_node->name, "imageload"))
-			node_imageload(child_node);
-		else if (!strcmp(child_node->name, "memverify"))
-			node_memverify(child_node);
-		else if (!strcmp(child_node->name, "imageverify"))
-			node_imageverify(child_node);
-		else if (!strcmp(child_node->name, "trace"))
-			node_trace(child_node);
+		current_testcase.commands = NULL;
+
+		for (child_node = node->child; child_node; child_node = child_node->next)
+		{
+			if (!strcmp(child_node->name, "wait"))
+				node_wait(child_node);
+			else if (!strcmp(child_node->name, "input"))
+				node_input(child_node);
+			else if (!strcmp(child_node->name, "rawinput"))
+				node_rawinput(child_node);
+			else if (!strcmp(child_node->name, "switch"))
+				node_switch(child_node);
+			else if (!strcmp(child_node->name, "screenshot"))
+				node_screenshot(child_node);
+			else if (!strcmp(child_node->name, "checkblank"))
+				node_checkblank(child_node);
+			else if (!strcmp(child_node->name, "imagecreate"))
+				node_imagecreate(child_node);
+			else if (!strcmp(child_node->name, "imageload"))
+				node_imageload(child_node);
+			else if (!strcmp(child_node->name, "memverify"))
+				node_memverify(child_node);
+			else if (!strcmp(child_node->name, "imageverify"))
+				node_imageverify(child_node);
+			else if (!strcmp(child_node->name, "trace"))
+				node_trace(child_node);
+		}
+
+		memset(&new_command, 0, sizeof(new_command));
+		new_command.command_type = MESSTEST_COMMAND_END;
+		if (!append_command())
+		{
+			error_outofmemory();
+			return;
+		}
+
+		result = run_test(0, NULL);
+	}
+	else
+	{
+		/* report that the test case was skipped */
+		report_message(MSG_INFO, "Test case skipped");
+		result = 0;
 	}
 
-	memset(&new_command, 0, sizeof(new_command));
-	new_command.command_type = MESSTEST_COMMAND_END;
-	if (!append_command())
-	{
-		error_outofmemory();
-		return;
-	}
-
-	result = run_test(0, NULL);
 	report_testcase_ran(result);
-
 	pile_delete(&command_pile);
 	pool_exit(&command_pool);
 }

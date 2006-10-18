@@ -46,6 +46,8 @@ Source Changes:
 - Added a specialized exit code for MESS-related initialization.  (bug #931)
   [Nate Woods]
 
+- Added the ability to disable tests in Messtest.  [Nate Woods]
+
 
 
 0.109
