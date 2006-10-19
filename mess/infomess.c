@@ -195,8 +195,8 @@ int frontend_listdevices(FILE *output)
 
 	i = 0;
 
-	printf(" SYSTEM      DEVICE NAME (brief)   IMAGE FILE EXTENSIONS SUPPORTED    \n");
-	printf("----------  --------------------  ------------------------------------\n");
+	fprintf(output, " SYSTEM      DEVICE NAME (brief)   IMAGE FILE EXTENSIONS SUPPORTED    \n");
+	fprintf(output, "----------  --------------------  ------------------------------------\n");
 
 	while (drivers[i])
 	{

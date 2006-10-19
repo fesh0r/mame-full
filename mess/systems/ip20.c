@@ -38,7 +38,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
 		logerror( "%08x: %s", activecpu_get_pc(), buf );
-//		printf("%08x: %s", activecpu_get_pc(), buf);
+//		mame_printf_info("%08x: %s", activecpu_get_pc(), buf);
 	}
 }
 
@@ -287,14 +287,14 @@ static WRITE32_HANDLER( hpc_w )
 		{
 			UINT32 next;
 
-			printf("DMA activated for SCSI0\n");
-			printf("Descriptor block:\n");
-			printf("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
+			mame_printf_info("DMA activated for SCSI0\n");
+			mame_printf_info("Descriptor block:\n");
+			mame_printf_info("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
 				program_read_dword(nHPC_SCSI0Descriptor), program_read_dword(nHPC_SCSI0Descriptor+4),
 				program_read_dword(nHPC_SCSI0Descriptor+8));
 
 			next = program_read_dword(nHPC_SCSI0Descriptor+8);
-			printf("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
+			mame_printf_info("CTL: %08x BUFPTR: %08x DESCPTR %08x\n",
 				program_read_dword(next), program_read_dword(next+4),
 				program_read_dword(next+8));
 		}
@@ -401,7 +401,7 @@ static WRITE32_HANDLER( hpc_w )
 		if( ( data & 0x000000ff ) >= 0x00000020 )
 		{
 //			verboselog( 2, "HPC DUART1 Channel B Control Write: %08x (%08x) %c\n", data, mem_mask, data & 0x000000ff );
-			//printf( "%c", data & 0x000000ff );
+			//mame_printf_info( "%c", data & 0x000000ff );
 		}
 		else
 		{
@@ -412,7 +412,7 @@ static WRITE32_HANDLER( hpc_w )
 		if( ( data & 0x000000ff ) >= 0x00000020 || ( data & 0x000000ff ) == 0x0d || ( data & 0x000000ff ) == 0x0a )
 		{
 			verboselog( 2, "HPC DUART1 Channel B Data Write: %08x (%08x) %c\n", data, mem_mask, data & 0x000000ff );
-			printf( "%c", data & 0x000000ff );
+			mame_printf_info( "%c", data & 0x000000ff );
 		}
 		else
 		{
@@ -420,37 +420,37 @@ static WRITE32_HANDLER( hpc_w )
 		}
 		break;
 	case 0x0d18:
-		printf("HPC DUART1 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		mame_printf_info("HPC DUART1 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d1c:
 		verboselog( 2, "HPC DUART1 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d20:
-		printf("HPC DUART2 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+		mame_printf_info("HPC DUART2 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d24:
 		verboselog( 2, "HPC DUART2 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d28:
-		printf("HPC DUART2 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		mame_printf_info("HPC DUART2 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d2c:
 		verboselog( 2, "HPC DUART2 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d30:
-		printf("HPC DUART3 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
+		mame_printf_info("HPC DUART3 Channel B Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d34:
 		verboselog( 2, "HPC DUART3 Channel B Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d38:
-		printf("HPC DUART3 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
+		mame_printf_info("HPC DUART3 Channel A Control Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	case 0x0d3c:
 		verboselog( 2, "HPC DUART3 Channel A Data Write: %08x (%08x)\n", data, mem_mask );
 		break;
 	default:
-		printf("Unmapped HPC write: 0x%08x (%08x): %08x\n", 0x1fb80000 + offset, mem_mask, data);
+		mame_printf_info("Unmapped HPC write: 0x%08x (%08x): %08x\n", 0x1fb80000 + offset, mem_mask, data);
 		break;
 	}
 }
@@ -458,13 +458,13 @@ static WRITE32_HANDLER( hpc_w )
 // INT/INT2/INT3 interrupt controllers
 static READ32_HANDLER( int_r )
 {
-	printf("INT: read @ ofs %x (mask %x) (PC=%x)\n", offset, mem_mask, activecpu_get_pc());
+	mame_printf_info("INT: read @ ofs %x (mask %x) (PC=%x)\n", offset, mem_mask, activecpu_get_pc());
 	return 0;
 }
 
 static WRITE32_HANDLER( int_w )
 {
-	printf("INT: write %x to ofs %x (mask %x) (PC=%x)\n", data, offset, mem_mask, activecpu_get_pc());
+	mame_printf_info("INT: write %x to ofs %x (mask %x) (PC=%x)\n", data, offset, mem_mask, activecpu_get_pc());
 }
 
 static INTERRUPT_GEN( ip20_update_chips )

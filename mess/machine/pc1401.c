@@ -288,7 +288,7 @@ DRIVER_INIT( pc1401 )
 	};
 
 	for (i=0; i<sizeof(sucker);i++) pc1401_mem[0x4000+i]=sucker[i];
-	printf("%d %d\n",i, 0x4000+i);
+	logerror("%d %d\n",i, 0x4000+i);
 #endif
 	for (i=0; i<128; i++) gfx[i]=i;
 

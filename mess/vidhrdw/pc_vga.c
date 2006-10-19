@@ -932,9 +932,9 @@ WRITE8_HANDLER(vga_port_03c0_w)
 #if 0
 				if (vga.dac.write_index==64) {
 					int i;
-					printf("start palette\n");
+					mame_printf_debug("start palette\n");
 					for (i=0;i<64;i++) {
-						printf(" 0x%.2x, 0x%.2x, 0x%.2x,\n",
+						mame_printf_debug(" 0x%.2x, 0x%.2x, 0x%.2x,\n",
 							   vga.dac.color[i].red*4,
 							   vga.dac.color[i].green*4,
 							   vga.dac.color[i].blue*4);

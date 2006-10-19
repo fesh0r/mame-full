@@ -239,7 +239,7 @@ SNAPSHOT_LOAD(apple1)
 	/* Verify the snapshot header */
 	if (apple1_verify_header(snapbuf) == IMAGE_VERIFY_FAIL)
 	{
-		printf("apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
+		logerror("apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
 		return INIT_FAIL;
 	}
 
@@ -254,7 +254,7 @@ SNAPSHOT_LOAD(apple1)
 	if ((start_addr < 0xE000 && end_addr > mess_ram_size - 1)
 		|| end_addr > 0xEFFF)
 	{
-		printf("apple1 - Snapshot won't fit in this memory configuration;\n"
+		logerror("apple1 - Snapshot won't fit in this memory configuration;\n"
 			   "needs memory from $%04X to $%04X.\n", start_addr, end_addr);
 		return INIT_FAIL;
 	}

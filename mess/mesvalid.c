@@ -33,14 +33,14 @@ static int validate_device(const device_class *devclass)
 	/* sanity check device type */
 	if (devtype >= IO_COUNT)
 	{
-		printf("%s: invalid device type %i\n", devclass->gamedrv->name, (int) devtype);
+		mame_printf_error("%s: invalid device type %i\n", devclass->gamedrv->name, (int) devtype);
 		error = 1;
 	}
 
 	/* sanity check device count */
 	if ((devcount <= 0) || (devcount > MAX_DEV_INSTANCES))
 	{
-		printf("%s: device type '%s' has an invalid device count %i\n", devclass->gamedrv->name, device_typename(devtype), (int) devcount);
+		mame_printf_error("%s: device type '%s' has an invalid device count %i\n", devclass->gamedrv->name, device_typename(devtype), (int) devcount);
 		error = 1;
 	}
 
@@ -55,7 +55,7 @@ static int validate_device(const device_class *devclass)
 	s = device_get_info_string(devclass, DEVINFO_STR_FILE_EXTENSIONS);
 	if (!s)
 	{
-		printf("%s: device type '%s' has null file extensions\n", devclass->gamedrv->name, device_typename(devtype));
+		mame_printf_error("%s: device type '%s' has null file extensions\n", devclass->gamedrv->name, device_typename(devtype));
 		error = 1;
 	}
 	else
@@ -84,7 +84,7 @@ static int validate_device(const device_class *devclass)
 			}
 			if (is_invalid)
 			{
-				printf("%s: device type '%s' has an invalid extension '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
+				mame_printf_error("%s: device type '%s' has an invalid extension '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
 				error = 1;
 			}
 			s2++;
@@ -99,7 +99,7 @@ static int validate_device(const device_class *devclass)
 			}
 			if (is_invalid)
 			{
-				printf("%s: device type '%s' has duplicate extensions '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
+				mame_printf_error("%s: device type '%s' has duplicate extensions '%s'\n", devclass->gamedrv->name, device_typename(devtype), s1);
 				error = 1;
 			}
 
@@ -114,7 +114,7 @@ static int validate_device(const device_class *devclass)
 		case IO_SNAPSHOT:
 			if (devcount != 1)
 			{
-				printf("%s: there can only be one instance of devices of type '%s'\n", devclass->gamedrv->name, device_typename(devtype));
+				mame_printf_error("%s: there can only be one instance of devices of type '%s'\n", devclass->gamedrv->name, device_typename(devtype));
 				error = 1;
 			}
 			/* fallthrough */
@@ -124,7 +124,7 @@ static int validate_device(const device_class *devclass)
 				|| device_get_info_int(devclass, DEVINFO_INT_WRITEABLE)
 				|| device_get_info_int(devclass, DEVINFO_INT_CREATABLE))
 			{
-				printf("%s: devices of type '%s' has invalid open modes\n", devclass->gamedrv->name, device_typename(devtype));
+				mame_printf_error("%s: devices of type '%s' has invalid open modes\n", devclass->gamedrv->name, device_typename(devtype));
 				error = 1;
 			}
 			break;
@@ -137,7 +137,7 @@ static int validate_device(const device_class *devclass)
 	optcount = device_get_info_int(devclass, DEVINFO_INT_CREATE_OPTCOUNT);
 	if ((optcount < 0) || (optcount >= DEVINFO_CREATE_OPTMAX))
 	{
-		printf("%s: device type '%s' has an invalid creation optcount\n", devclass->gamedrv->name, device_typename(devtype));
+		mame_printf_error("%s: device type '%s' has an invalid creation optcount\n", devclass->gamedrv->name, device_typename(devtype));
 		error = 1;
 	}
 	else
@@ -146,19 +146,19 @@ static int validate_device(const device_class *devclass)
 		{
 			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTNAME + i))
 			{
-				printf("%s: device type '%s' create option #%d: name not present\n",
+				mame_printf_error("%s: device type '%s' create option #%d: name not present\n",
 					devclass->gamedrv->name, device_typename(devtype), i);
 				error = 1;
 			}
 			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTDESC + i))
 			{
-				printf("%s: device type '%s' create option #%d: description not present\n",
+				mame_printf_error("%s: device type '%s' create option #%d: description not present\n",
 					devclass->gamedrv->name, device_typename(devtype), i);
 				error = 1;
 			}
 			if (!device_get_info_string(devclass, DEVINFO_STR_CREATE_OPTEXTS + i))
 			{
-				printf("%s: device type '%s' create option #%d: extensions not present\n",
+				mame_printf_error("%s: device type '%s' create option #%d: extensions not present\n",
 					devclass->gamedrv->name, device_typename(devtype), i);
 				error = 1;
 			}
@@ -199,7 +199,7 @@ int mess_validitychecks(void)
 		name = mess_default_text[UI_cartridge - IO_CARTSLOT - UI_last_mame_entry + devtype];
 		if (!name || !name[0])
 		{
-			printf("Device type %d does not have an associated UI string\n", devtype);
+			mame_printf_error("Device type %d does not have an associated UI string\n", devtype);
 			error = 1;
 		}
 	}
@@ -214,7 +214,7 @@ int mess_validitychecks(void)
 		{
 			if (drivers[i]->compatible_with && !(drivers[i]->compatible_with->flags & NOT_A_DRIVER))
 			{
-				printf("%s: both compatbile_with and clone_of are specified\n", drivers[i]->name);
+				mame_printf_error("%s: both compatbile_with and clone_of are specified\n", drivers[i]->name);
 				error = 1;
 			}
 
@@ -225,7 +225,7 @@ int mess_validitychecks(void)
 			}
 			if (!drivers[j])
 			{
-				printf("%s: is a clone of %s, which is not in drivers[]\n", drivers[i]->name, driver_get_clone(drivers[i])->name);
+				mame_printf_error("%s: is a clone of %s, which is not in drivers[]\n", drivers[i]->name, driver_get_clone(drivers[i])->name);
 				error = 1;
 			}
 		}
@@ -240,7 +240,7 @@ int mess_validitychecks(void)
 			}
 			if (!drivers[j])
 			{
-				printf("%s: is compatible with %s, which is not in drivers[]\n", drivers[i]->name, drivers[i]->compatible_with->name);
+				mame_printf_error("%s: is compatible with %s, which is not in drivers[]\n", drivers[i]->name, drivers[i]->compatible_with->name);
 				error = 1;
 			}
 		}

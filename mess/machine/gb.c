@@ -259,14 +259,8 @@ MACHINE_RESET( gbc )
 	/* Allocate memory for video ram */
 	for( ii = 0; ii < 2; ii++ )
 	{
-		if( (GBC_VRAMMap[ii] = malloc (0x2000)) )
-		{
-			memset (GBC_VRAMMap[ii], 0, 0x2000);
-		}
-		else
-		{
-			printf("Error allocating video memory\n");
-		}
+		GBC_VRAMMap[ii] = malloc_or_die (0x2000);
+		memset (GBC_VRAMMap[ii], 0, 0x2000);
 	}
 	GBC_VRAMBank = 0;
 	memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);

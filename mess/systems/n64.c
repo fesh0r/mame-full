@@ -160,7 +160,7 @@ static DEVICE_LOAD(n64_cart)
 		}		
 	}
 	
-	printf("cart length = %d\n", length);
+	logerror("cart length = %d\n", length);
 	return INIT_PASS;
 }
 

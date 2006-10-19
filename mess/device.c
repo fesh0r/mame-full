@@ -360,7 +360,7 @@ int device_valididtychecks(void)
 
 	if ((sizeof(device_info_array) / sizeof(device_info_array[0])) != IO_COUNT)
 	{
-		printf("device_info_array array should match size of IO_* enum\n");
+		mame_printf_error("device_info_array array should match size of IO_* enum\n");
 		error = 1;
 	}
 
@@ -369,20 +369,20 @@ int device_valididtychecks(void)
 	{
 		if (device_info_array[i].type != i)
 		{
-			printf("Device struct array order mismatch\n");
+			mame_printf_error("Device struct array order mismatch\n");
 			error = 1;
 			break;
 		}
 
 		if (!device_info_array[i].name)
 		{
-			printf("device_info_array[%d].name appears to be NULL\n", i);
+			mame_printf_error("device_info_array[%d].name appears to be NULL\n", i);
 			error = 1;
 		}
 
 		if (!device_info_array[i].shortname)
 		{
-			printf("device_info_array[%d].shortname appears to be NULL\n", i);
+			mame_printf_error("device_info_array[%d].shortname appears to be NULL\n", i);
 			error = 1;
 		}
 	}

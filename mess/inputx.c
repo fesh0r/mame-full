@@ -513,7 +513,7 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 					{
 						if (codes[i].port[j] >= port_count)
 						{
-							printf("%s: invalid inputx translation for code %i port %i\n", gamedrv->name, i, j);
+							mame_printf_error("%s: invalid inputx translation for code %i port %i\n", gamedrv->name, i, j);
 							error = 1;
 						}
 					}
@@ -528,7 +528,7 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 		{
 			if (last_char >= charinfo[i].ch)
 			{
-				printf("inputx: charinfo is out of order; 0x%08x should be higher than 0x%08x\n", charinfo[i].ch, last_char);
+				mame_printf_error("inputx: charinfo is out of order; 0x%08x should be higher than 0x%08x\n", charinfo[i].ch, last_char);
 				error = 1;
 			}
 			last_char = charinfo[i].ch;
@@ -540,7 +540,7 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 			ci = find_charinfo(charinfo[i].ch);
 			if (ci != &charinfo[i])
 			{
-				printf("inputx: expected find_charinfo(0x%08x) to work properly\n", charinfo[i].ch);
+				mame_printf_error("inputx: expected find_charinfo(0x%08x) to work properly\n", charinfo[i].ch);
 				error = 1;
 			}
 		}

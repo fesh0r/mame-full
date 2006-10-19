@@ -110,7 +110,7 @@ void exploreKeyboard(void)
     bool controlKey, shiftKey;
     int i, keyboard[10];
 
-//printf("Exploring Keyboard.............\n");
+//logerror("Exploring Keyboard.............\n");
     for(i=0;i<=255;i++) {if (KbRepeatTable[i]>0) KbRepeatTable[i]++;} /* Update repeat table */
 
     keyboard[0] = input_port_9_r(0);
@@ -545,16 +545,16 @@ If you have the source listing or the Rom dump, please send us.
 		{
 			case 1: /* Request to synchronize the Z80 clock */
 				memory_region(REGION_CPU1)[offset] = 0x81;
-				//printf("Synchronizing the Z80 clock\n");
+				//logerror("Synchronizing the Z80 clock\n");
 				break;
 			case 2: /* Request to synchronize the Master 6801 clock */
 				memory_region(REGION_CPU1)[offset] = 0x82;
-				//printf("Synchronizing the Master 6801 clock\n");
+				//logerror("Synchronizing the Master 6801 clock\n");
 				break;
 			case 3: /* Request to relocate adam_pcb */
 				memory_region(REGION_CPU1)[offset] = 0x83; /* Must return 0x83 if success */
 				//memory_region(REGION_CPU1)[offset] = 0x9B; /* Time Out */
-				printf("Request to relocate adam_pcb from %04Xh to %04Xh... not implemented... but returns OK\n", adam_pcb, (memory_region(REGION_CPU1)[adam_pcb+1]&memory_region(REGION_CPU1)[adam_pcb+2]<<8));
+				logerror("Request to relocate adam_pcb from %04Xh to %04Xh... not implemented... but returns OK\n", adam_pcb, (memory_region(REGION_CPU1)[adam_pcb+1]&memory_region(REGION_CPU1)[adam_pcb+2]<<8));
 				break;
 		}
 	}
@@ -564,7 +564,7 @@ If you have the source listing or the Rom dump, please send us.
 		statusDCB = (adam_pcb+4)+(DCB_Num-1)*21;
 		if (offset==statusDCB)
 		{
-			//printf("Accesing DCB %02Xh\n", DCB_Num);
+			//logerror("Accesing DCB %02Xh\n", DCB_Num);
 			deviceNum = (memory_region(REGION_CPU1)[statusDCB+0x10]&0x0F)+(memory_region(REGION_CPU1)[statusDCB+0x09]<<4);
 			buffer=(memory_region(REGION_CPU1)[statusDCB+0x01])+(memory_region(REGION_CPU1)[statusDCB+0x02]<<8);
 			byteCount=(memory_region(REGION_CPU1)[statusDCB+0x03])+(memory_region(REGION_CPU1)[statusDCB+0x04]<<8);
@@ -609,18 +609,18 @@ If you have the source listing or the Rom dump, please send us.
 					{
 						memory_region(REGION_CPU1)[statusDCB] = 0x9B; /* Time Out - No Device Found*/
 					}
-					//printf("   Requesting Status Device %02d=%02Xh\n", deviceNum, memory_region(REGION_CPU1)[statusDCB]);
+					//logerror("   Requesting Status Device %02d=%02Xh\n", deviceNum, memory_region(REGION_CPU1)[statusDCB]);
 					break;
 				case 2: /* Soft reset */
 					memory_region(REGION_CPU1)[statusDCB] = 0x80;
-					//printf("   Reseting Device %02d\n", deviceNum);
+					//logerror("   Reseting Device %02d\n", deviceNum);
 					break;
 				case 3: /* Write Data */
-					//printf("   Requesting Write to Device %02d\n", deviceNum);
+					//logerror("   Requesting Write to Device %02d\n", deviceNum);
 					if (deviceNum==2)
 					{
 						memory_region(REGION_CPU1)[statusDCB] = 0x80; /* Ok, char sent to printer... no really */
-						//printf("   Requesting Write %2d bytes on buffer [%04xh] to Device %02d\n", byteCount, buffer,deviceNum);
+						//logerror("   Requesting Write %2d bytes on buffer [%04xh] to Device %02d\n", byteCount, buffer,deviceNum);
 					}
 					else
 					{
@@ -683,7 +683,7 @@ If you have the source listing or the Rom dump, please send us.
 					{
 						memory_region(REGION_CPU1)[statusDCB] = 0x9B;
 					}
-					//printf("   Requesting Read %2d bytes on buffer [%04xh] from Device %02d\n", byteCount, buffer,deviceNum);
+					//logerror("   Requesting Read %2d bytes on buffer [%04xh] from Device %02d\n", byteCount, buffer,deviceNum);
 					break;
 				default:
 					memory_region(REGION_CPU1)[statusDCB] = 0x9B; /* Other */
@@ -713,7 +713,7 @@ WRITE8_HANDLER( common_writes_w )
 
  READ8_HANDLER( adamnet_r )
 {  
-    //printf("adam_net_data Read %2xh\n",adam_net_data);
+    //logerror("adam_net_data Read %2xh\n",adam_net_data);
     return adam_net_data;
 }
 
@@ -786,7 +786,7 @@ WRITE8_HANDLER( adam_memory_map_controller_w )
     adam_lower_memory = (data & 0x03);
     adam_upper_memory = (data & 0x0C)>>2;
     set_memory_banks();
-    //printf("Configurando la memoria, L:%02xh, U:%02xh\n", adam_lower_memory, adam_upper_memory);
+    //logerror("Configurando la memoria, L:%02xh, U:%02xh\n", adam_lower_memory, adam_upper_memory);
 }
 
  READ8_HANDLER(adam_video_r)
@@ -801,7 +801,7 @@ WRITE8_HANDLER(adam_video_w)
 
  READ8_HANDLER( master6801_ram_r )
 {  
-    /*printf("Offset %04Xh = %02Xh\n",offset ,memory_region(REGION_CPU1)[offset]);*/
+    /*logerror("Offset %04Xh = %02Xh\n",offset ,memory_region(REGION_CPU1)[offset]);*/
     return memory_region(REGION_CPU1)[offset+0x4000];
 }
 

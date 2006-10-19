@@ -15,7 +15,7 @@
 
 #define VERBOSE 0  /* 0, 1 or 2 */
 
-#define PRINT(x) printf x
+#define PRINT(x) mame_printf_info x
 
 #if VERBOSE > 1
 #define LOG(x)	logerror x

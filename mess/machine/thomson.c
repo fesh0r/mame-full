@@ -36,7 +36,7 @@
 
 #define DISABLE_AUDIO 0
 
-#define PRINT(x) printf x
+#define PRINT(x) mame_printf_info x
 
 #if VERBOSE
 #define LOG(x)	logerror x

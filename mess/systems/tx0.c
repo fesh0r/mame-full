@@ -294,10 +294,10 @@ static PALETTE_INIT( tx0 )
 		else
 			recommended_pen_crt_num_levels = ceil(log(cut_level)/log(decay_2))+1;
 		if (recommended_pen_crt_num_levels != pen_crt_num_levels)
-			printf("File %s line %d: recommended value for pen_crt_num_levels is %d\n", __FILE__, __LINE__, recommended_pen_crt_num_levels);
+			mame_printf_debug("File %s line %d: recommended value for pen_crt_num_levels is %d\n", __FILE__, __LINE__, recommended_pen_crt_num_levels);
 	}
 	/*if ((cur_level_1 > 255.*cut_level) || (cur_level_2 > 255.*cut_level))
-		printf("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);*/
+		mame_printf_debug("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);*/
 #endif
 
 	palette_set_color(machine, 0, 0, 0, 0);

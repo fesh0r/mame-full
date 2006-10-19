@@ -247,7 +247,7 @@ static READ32_HANDLER( hpc3_pbus6_r )
 	case 0xa4/4:
 	case 0xa8/4:
 	case 0xac/4:
-//		printf("INT3: r @ %x mask %08x (PC=%x)\n", offset*4, mem_mask, activecpu_get_pc());
+//		mame_printf_info("INT3: r @ %x mask %08x (PC=%x)\n", offset*4, mem_mask, activecpu_get_pc());
 		return int3_regs[offset-0x80/4];
 		break;
 	case 0xb0/4:
@@ -300,7 +300,7 @@ static WRITE32_HANDLER( hpc3_pbus6_w )
 		cChar = data & 0x000000ff;
 		if( cChar >= 0x20 || cChar == 0x0d || cChar == 0x0a )
 		{
-//			printf( "%c", cChar );
+//			mame_printf_info( "%c", cChar );
 		}
 		break;
 	case 0x034/4:
@@ -315,7 +315,7 @@ static WRITE32_HANDLER( hpc3_pbus6_w )
 		cChar = data & 0x000000ff;
 		if( cChar >= 0x20 || cChar == 0x0d || cChar == 0x0a )
 		{
-//			printf( "%c", cChar );
+//			mame_printf_info( "%c", cChar );
 		}
 		break;
 	case 0x40/4:
@@ -334,7 +334,7 @@ static WRITE32_HANDLER( hpc3_pbus6_w )
 	case 0x9c/4:
 	case 0xa0/4:
 	case 0xa4/4:
-//		printf("INT3: w %x to %x (reg %d) mask %08x (PC=%x)\n", data, offset*4, offset-0x80/4, mem_mask, activecpu_get_pc());
+//		mame_printf_info("INT3: w %x to %x (reg %d) mask %08x (PC=%x)\n", data, offset*4, offset-0x80/4, mem_mask, activecpu_get_pc());
 		int3_regs[offset-0x80/4] = data;
 
 		// if no local0 interrupts now, clear the input to the CPU
@@ -581,7 +581,7 @@ static WRITE32_HANDLER( hpc3_pbus4_w )
 
 static READ32_HANDLER( rtc_r )
 {
-//	printf("RTC_R: offset %x = %x (PC=%x)\n", offset, nRTC_Regs[offset], activecpu_get_pc());
+//	mame_printf_info("RTC_R: offset %x = %x (PC=%x)\n", offset, nRTC_Regs[offset], activecpu_get_pc());
 
 	if( offset <= 0x0d )
 	{
@@ -748,7 +748,7 @@ static WRITE32_HANDLER( rtc_w )
 {
 	RTC_WRITECNT++;
 
-//	printf("RTC_W: offset %x => %x (PC=%x)\n", data, offset, activecpu_get_pc());
+//	mame_printf_info("RTC_W: offset %x => %x (PC=%x)\n", data, offset, activecpu_get_pc());
 
 	if( offset <= 0x0d )
 	{
@@ -888,7 +888,7 @@ static WRITE32_HANDLER( rtc_w )
 
 static READ32_HANDLER( unk_r )
 {
-//	printf("UNK_R: PC=%x\n", activecpu_get_pc());
+//	mame_printf_info("UNK_R: PC=%x\n", activecpu_get_pc());
 	return 0x12345678;
 }
 
@@ -1096,7 +1096,7 @@ static void ip22_dma(int refcon)
 	if( nPBUS_DMA_Active )
 	{
 		INT16 temp16;
-//		printf( "nPBUS_DMA_CurPtr - 0x08000000/4 = %08x\n", (nPBUS_DMA_CurPtr - 0x08000000)/4 );
+//		mame_printf_info( "nPBUS_DMA_CurPtr - 0x08000000/4 = %08x\n", (nPBUS_DMA_CurPtr - 0x08000000)/4 );
 		verboselog( 0, "nPBUS_DMA_CurPtr - 0x08000000/4 = %08x\n", (nPBUS_DMA_CurPtr - 0x08000000)/4 );
 		temp16 = ( ip22_mainram[(nPBUS_DMA_CurPtr - 0x08000000)/4] & 0xffff0000 ) >> 16;
 		temp16 = ( ( temp16 & 0xff00 ) >> 8 ) | ( ( temp16 & 0x00ff ) << 8 );
@@ -1247,7 +1247,7 @@ static MACHINE_RESET( ip225015 )
 
 static void dump_chain(UINT32 ch_base)
 {
-//	printf("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
+//	mame_printf_info("node: %08x %08x %08x (len = %x)\n", program_read_dword(ch_base), program_read_dword(ch_base+4), program_read_dword(ch_base+8), program_read_dword(ch_base+4) & 0x3fff);
 
 	if ((program_read_dword(ch_base+8) != 0) && !(program_read_dword(ch_base+4) & 0x80000000))
 	{
@@ -1283,8 +1283,8 @@ static void scsi_irq(int state)
 				rptr = program_read_dword(nHPC_SCSI0Descriptor);
 				length = program_read_dword(nHPC_SCSI0Descriptor+4) & 0x3fff;
 
-/*				printf("DMA to device: length %x\n", length);
-				printf("first words: %08x %08x %08x %08x\n",
+/*				mame_printf_info("DMA to device: length %x\n", length);
+				mame_printf_info("first words: %08x %08x %08x %08x\n",
 					program_read_dword(rptr),
 					program_read_dword(rptr+4),
 					program_read_dword(rptr+8),
@@ -1340,7 +1340,7 @@ static void scsi_irq(int state)
 				wptr = program_read_dword(nHPC_SCSI0Descriptor);
 				sptr = 0;
 
-//				printf("DMA from device: %d words @ %x\n", words, wptr);
+//				mame_printf_info("DMA from device: %d words @ %x\n", words, wptr);
 
 				dump_chain(nHPC_SCSI0Descriptor);
 

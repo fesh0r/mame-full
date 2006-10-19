@@ -26,7 +26,7 @@
 #define LOG(x)
 #endif
 
-#define PRINT(x) printf x
+#define PRINT(x) mame_printf_info x
 
 
 /* One GPL is what is drawn in 1 us by the video system in the active window.

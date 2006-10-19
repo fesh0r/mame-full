@@ -38,10 +38,7 @@ void sidInitMixerEngine(void)
 
 	filterAmpl = 0.7;
 
-	ampMod1x8=(INT8*)malloc(256*256);
-	if (!ampMod1x8) {
-		printf("out of memory\n");exit(1);
-	}
+	ampMod1x8=(INT8*)malloc_or_die(256*256);
 
 	uk = 0;
 	for ( si = 0; si < 256; si++ )

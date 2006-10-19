@@ -580,7 +580,7 @@ void wswan_refresh_scanline(void)
 			wswan_draw_foreground_0();
 			break;
 		case 1:	/* ??? */
-			printf( "Unknown foreground mode 1 set\n" );
+			logerror( "Unknown foreground mode 1 set\n" );
 			break;
 		case 2:	/* FG only inside window area */
 			if ( vdp.current_line >= vdp.window_fg_top && vdp.current_line <= vdp.window_fg_bottom ) {

@@ -330,7 +330,7 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 
 		case NICK_4_COLOUR_MODE:
 		{
-			//printf("4 colour\r\n");
+			//mame_printf_info("4 colour\r\n");
 
 			/* left margin attributes */
 			if (Nick.LPT.LM & NICK_LM_MSBALT)
@@ -359,7 +359,7 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 
 		case NICK_16_COLOUR_MODE:
 		{
-			//printf("16 colour\r\n");
+			//mame_printf_info("16 colour\r\n");
 
 			/* left margin attributes */
 			if (Nick.LPT.LM & NICK_LM_MSBALT)
@@ -484,7 +484,7 @@ static void Nick_WritePixelsLPIXEL(unsigned char DataByte, unsigned char CharInd
 
 		case NICK_4_COLOUR_MODE:
 		{
-			//printf("4 colour\r\n");
+			//mame_printf_info("4 colour\r\n");
 
 			/* left margin attributes */
 			if (Nick.LPT.LM & NICK_LM_MSBALT)
@@ -515,7 +515,7 @@ static void Nick_WritePixelsLPIXEL(unsigned char DataByte, unsigned char CharInd
 
 		case NICK_16_COLOUR_MODE:
 		{
-			//printf("16 colour\r\n");
+			//mame_printf_info("16 colour\r\n");
 
 			/* left margin attributes */
 			if (Nick.LPT.LM & NICK_LM_MSBALT)
@@ -764,14 +764,14 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 
 			case NICK_ATTR_MODE:
 			{
-				//printf("attr mode\r\n");
+				//mame_printf_info("attr mode\r\n");
                             Nick_DoAttr(ClocksVisible);
 			}
 			break;
 
 			case NICK_CH256_MODE:
 			{
-				//printf("ch256 mode\r\n");
+				//mame_printf_info("ch256 mode\r\n");
 				Nick_DoCh256(ClocksVisible);
 			}
 			break;
@@ -784,7 +784,7 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 
 			case NICK_CH64_MODE:
 			{
-				//printf("ch64 mode\r\n");
+				//mame_printf_info("ch64 mode\r\n");
 				Nick_DoCh64(ClocksVisible);
 			}
 			break;
@@ -904,7 +904,7 @@ int	Nick_reg_r(int RegIndex)
 
 void	Nick_reg_w(int RegIndex, int Data)
 {
-	//printf("Nick write %02x %02x\r\n",RegIndex, Data);
+	//mame_printf_info("Nick write %02x %02x\r\n",RegIndex, Data);
 
   /* write to a nick register */
   Nick.Reg[RegIndex & 0x0f] = Data;

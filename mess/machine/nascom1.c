@@ -165,7 +165,7 @@ int	nascom1_init_cartridge(int id, mame_file *file)
 		while (!done)
 		{
 			mame_fread(file, (void *)fileaddr, 4);
-			printf ("%4.4s\n", fileaddr);
+			logerror ("%4.4s\n", fileaddr);
 			if (fileaddr[0] == '.')
 			{
 				done = 1;
@@ -173,7 +173,7 @@ int	nascom1_init_cartridge(int id, mame_file *file)
 			else
 			{
 				/* vsscanf (fileaddr, "%4X", &addr); */
-			    /* printf ("%04X: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+			    /* logerror ("%04X: %02X %02X %02X %02X %02X %02X %02X %02X\n",
 							  addr, filebyt1, filebyt2, filebyt3, filebyt4,
 									filebyt5, filebyt6, filebyt7, filebyt8); */
 

@@ -495,7 +495,7 @@ static void strataflash_w(int id, offs_t offset, int data, bus_width_t bus_width
 			strata[id].status &= 0xC5;
 			break;
 		default:
-			printf("Unknown flash mode byte %x\n", data);
+			logerror("Unknown flash mode byte %x\n", data);
 			break;
 		}
 		break;

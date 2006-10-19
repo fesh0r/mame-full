@@ -53,13 +53,13 @@ MACHINE_RESET( advision )
      if (advision_videobank == 0x06) {
 		    if (d & 0x01) {
 	   			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
-	   		/*	printf("RELEASE RESET\n"); */
+	   		/*	logerror("RELEASE RESET\n"); */
 				wLpointer=0;
 				rLpointer=0;
 			}
 			else {
 				cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
-			/*	printf("SET RESET\n");*/
+			/*	logerror("SET RESET\n");*/
 			}
 
 		}
@@ -86,13 +86,13 @@ READ8_HANDLER ( advision_getL )
 
 	if (rLpointer > 1) rLpointer = 0; */
 
-	/* printf("READ L: %x\n",d); */
+	/* logerror("READ L: %x\n",d); */
 
 	return d;
 }
 
 static void update_dac(void) {
-/*	printf("Clock: %x D: %x  G:%x \n",activecpu_get_icount(),Dvalue, Gvalue); */
+/*	logerror("Clock: %x D: %x  G:%x \n",activecpu_get_icount(),Dvalue, Gvalue); */
 
   	if (Gvalue == 0 && Dvalue == 0)
 		DAC_data_w(0, 0xff);
@@ -119,7 +119,7 @@ static void sound_write(int data)
 {
 	Lvalue[wLpointer] = ((data & 0xF0) >> 4);
 	if (wLpointer < 3) wLpointer++;
-	/* printf("WRITE L: %x\n",data); */
+	/* logerror("WRITE L: %x\n",data); */
 }
 
 /***** 8048 Ports ************************/

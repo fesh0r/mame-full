@@ -219,7 +219,7 @@ void devices_init(running_machine *machine)
 
 void showmessdisclaimer(void)
 {
-	printf(
+	mame_printf_info(
 		"MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
 		"several computer and console systems. But hardware is useless without software\n"
 		"so a file dump of the BIOS, cartridges, discs, and cassettes which run on that\n"
@@ -235,7 +235,7 @@ void showmessdisclaimer(void)
 
 void showmessinfo(void)
 {
-	printf(
+	mame_printf_info(
 		"M.E.S.S. v%s\n"
 		"Multiple Emulation Super System - Copyright (C) 1997-2004 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
@@ -244,7 +244,7 @@ void showmessinfo(void)
 
 	showmessdisclaimer();
 
-	printf(
+	mame_printf_info(
 		"Usage:  MESS <system> <device> <software> <options>\n"
 		"\n"
 		"        MESS -showusage    for a brief list of options\n"
