@@ -20,7 +20,7 @@ T1	Mirror sync pulse
 
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
-#include "cpu/cop411/cop411.h"
+#include "cpu/cop400/cop400.h"
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
 #include "devices/cartslot.h"
@@ -46,9 +46,9 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(advision_sound_ports, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x00, 0xFF)			AM_RAM
-	AM_RANGE(COP411_L, COP411_L)    AM_READ(advision_getL)
-	AM_RANGE(COP411_G, COP411_G) 	AM_WRITE(advision_putG)
-	AM_RANGE(COP411_D, COP411_D)    AM_WRITE(advision_putD)
+	AM_RANGE(COP400_PORT_L, COP400_PORT_L)    AM_READ(advision_getL)
+	AM_RANGE(COP400_PORT_G, COP400_PORT_G) 	AM_WRITE(advision_putG)
+	AM_RANGE(COP400_PORT_D, COP400_PORT_D)    AM_WRITE(advision_putD)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( advision )

@@ -1,16 +1,5 @@
 # Rules for MESS CPU's
 
-ifneq ($(filter COP411,$(CPUS)),)
-COP411D = mess/cpu/cop411
-OBJDIRS += $(OBJ)/$(COP411D)
-CPUDEFS += -DHAS_COP411=1
-CPUOBJS += $(OBJ)/$(COP411D)/cop411.o
-DBGOBJS += $(OBJ)/$(COP411D)/cop411ds.o
-$(OBJ)/$(COP411D)/cop411.o: $(COP411D)/cop411.c $(COP411D)/cop411.h
-else
-CPUDEFS += -DHAS_COP411=0
-endif
-
 ifneq ($(filter APEXC,$(CPUS)),)
 APEXCD = mess/cpu/apexc
 OBJDIRS += $(OBJ)/$(APEXCD)

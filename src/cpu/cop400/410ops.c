@@ -28,9 +28,9 @@
 
 #define IN_G()			IN(COP400_PORT_G)
 #define IN_L()			IN(COP400_PORT_L)
-#define OUT_G(A)		OUT(COP400_PORT_G,A)
-#define OUT_L(A)		OUT(COP400_PORT_L,A)
-#define OUT_D(A)		OUT(COP400_PORT_D,A)
+#define OUT_G(A)		OUT(COP400_PORT_G, (A) & R.G_mask)
+#define OUT_L(A)		OUT(COP400_PORT_L, (A))
+#define OUT_D(A)		OUT(COP400_PORT_D, (A) & R.D_mask)
 
 #ifndef PUSH
 #define PUSH(addr) 		{ SB = SA; SA = addr; }
@@ -306,7 +306,7 @@ INLINE void lqid(void)
 
 INLINE void nop(void) { }
 
-INLINE void obd(void) { OUT_D(B & 0x0F); }
+INLINE void obd(void) { OUT_D(B); }
 
 INLINE void omg(void) { WRITE_G(RAM(B)); }
 
