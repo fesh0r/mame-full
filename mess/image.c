@@ -190,6 +190,61 @@ static void image_exit(running_machine *machine)
 ****************************************************************************/
 
 /*-------------------------------------------------
+    set_image_filename - specifies the filename of
+	an image
+-------------------------------------------------*/
+
+static image_error_t set_image_filename(mess_image *image, const char *filename, const char *zippath)
+{
+	image_error_t err = IMAGE_ERROR_SUCCESS;
+	char *alloc_filename = NULL;
+	char *new_name;
+	char *new_dir;
+	int pos;
+
+	/* create the directory string */
+	new_dir = image_strdup(image, filename);
+	for (pos = strlen(new_dir); (pos > 0); pos--)
+	{
+		if (strchr(":\\/", new_dir[pos - 1]))
+		{
+			new_dir[pos] = '\0';
+			break;
+		}
+	}
+
+	/* do we have to concatenate the names? */
+	if (zippath)
+	{
+		alloc_filename = assemble_3_strings(filename, PATH_SEPARATOR, zippath);
+		filename = alloc_filename;
+	}
+
+	/* copy the string */
+	new_name = image_strdup(image, filename);
+	if (!new_name)
+	{
+		err = IMAGE_ERROR_OUTOFMEMORY;
+		goto done;
+	}
+
+	/* set the new name and dir */
+	if (image->name)
+		image_freeptr(image, image->name);
+	if (image->dir)
+		image_freeptr(image, image->dir);
+	image->name = new_name;
+	image->dir = new_dir;
+
+done:
+	if (alloc_filename)
+		free(alloc_filename);
+	return err;
+}
+
+
+
+/*-------------------------------------------------
     is_loaded - quick check to determine whether an
 	image is loaded
 -------------------------------------------------*/
@@ -267,16 +322,9 @@ static image_error_t load_zip_path(mess_image *image, const char *path)
 			else if (header)
 			{
 				/* use the first entry; tough part is we have to change the name */
-				s = image_malloc(image, strlen(image->name) + strlen(PATH_SEPARATOR) + strlen(header->filename) + 1);
-				if (!s)
-				{
-					err = IMAGE_ERROR_OUTOFMEMORY;
+				err = set_image_filename(image, image->name, header->filename);
+				if (err)
 					goto done;
-				}
-				strcpy(s, image->name);
-				strcat(s, PATH_SEPARATOR);
-				strcat(s, header->filename);
-				image->name = s;
 			}
 
 			/* did we find an entry? */
@@ -469,12 +517,9 @@ static int image_load_internal(mess_image *image, const char *path,
 	}
 
 	/* record the filename */
-	image->name = image_strdup(image, path);
-	if (!image->name)
-	{
-		image->err = IMAGE_ERROR_OUTOFMEMORY;
+	image->err = set_image_filename(image, path, NULL);
+	if (image->err)
 		goto done;
-	}
 
 	/* tell the OSD layer that this is changing */
 	osd_image_load_status_changed(image, 0);
@@ -971,29 +1016,9 @@ const char *image_filetype(mess_image *img)
 
 
 
-const char *image_filedir(mess_image *img)
+const char *image_filedir(mess_image *image)
 {
-	char *s;
-
-	if (!img->dir)
-	{
-		img->dir = image_strdup(img, img->name);
-		if (img->dir)
-		{
-			s = img->dir + strlen(img->dir);
-			while(--s > img->dir)
-			{
-				if (strchr("\\/:", *s))
-				{
-					*s = '\0';
-					//FIXME
-					//if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
-					//	break;
-				}
-			}
-		}
-	}
-	return img->dir;
+	return image->dir;
 }
 
 
