@@ -557,7 +557,7 @@ MACHINE_RESET( c16 )
 	for (i = 0; i < 2; i++)
 	{
 		mess_image *image = image_from_devtype_and_index(IO_CARTSLOT, i);
-		if (image)
+		if (image_exists(image))
 			c16_rom_load(image);
 	}
 }
