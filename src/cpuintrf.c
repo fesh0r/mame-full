@@ -167,6 +167,8 @@ void rsp_get_info(UINT32 state, union cpuinfo *info);
 void alpha8201_get_info(UINT32 state, union cpuinfo *info);
 void alpha8301_get_info(UINT32 state, union cpuinfo *info);
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
+void cop420_get_info(UINT32 state, union cpuinfo *info);
+void cop410_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
@@ -677,6 +679,12 @@ static const struct
 #endif
 #if (HAS_CDP1802)
 	{ CPU_CDP1802, cdp1802_get_info },
+#endif
+#if (HAS_COP420)
+	{ CPU_COP420, cop420_get_info },
+#endif
+#if (HAS_COP410)
+	{ CPU_COP410, cop410_get_info },
 #endif
 
 #ifdef MESS

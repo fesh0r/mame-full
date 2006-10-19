@@ -254,7 +254,7 @@ static void video_exit(running_machine *machine)
 	if (fps_frames_displayed != 0)
 	{
 		cycles_t cps = osd_cycles_per_second();
-		printf("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
+		mame_printf_info("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
 	}
 }
 

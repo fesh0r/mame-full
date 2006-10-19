@@ -67,5 +67,21 @@ void CLIB_DECL fatalerror(const char *text,...)
 	exit(-1);
 }
 
+void mame_printf_error(const char *format, ...)
+{
+}
+
+void mame_printf_warning(const char *format, ...)
+{
+}
+
+void mame_printf_info(const char *format, ...)
+{
+}
+
+void mame_printf_debug(const char *format, ...)
+{
+}
+
 
 

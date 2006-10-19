@@ -166,7 +166,7 @@ int Mame32VerifyRomSet(int game)
 	int audit_records;
 
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
-	iStatus = audit_summary(game, audit_records, audit, DetailsPrintf);
+	iStatus = audit_summary(game, audit_records, audit, TRUE);
 	if (audit_records > 0)
 		free(audit);
 
@@ -182,7 +182,7 @@ int Mame32VerifySampleSet(int game)
 	int audit_records;
 
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
-	iStatus = audit_summary(game, audit_records, audit, DetailsPrintf);
+	iStatus = audit_summary(game, audit_records, audit, TRUE);
 	if (audit_records > 0)
 		free(audit);
 

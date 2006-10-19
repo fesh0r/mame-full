@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 	char *ext;
 	int res = 0;
 	HMODULE library;
-	
+
 	// initialize common controls
 	InitCommonControls();
 
@@ -298,7 +298,7 @@ void osd_lock_acquire(osd_lock *lock)
 	EnterCriticalSection(&lock->critsect);
 #if DEBUG_SLOW_LOCKS
 	cycles = osd_cycles() - cycles;
-	if (cycles > 10000) printf("Blocked %d cycles on lock acquire\n", (int)cycles);
+	if (cycles > 10000) mame_printf_warning("Blocked %d cycles on lock acquire\n", (int)cycles);
 #endif
 }
 

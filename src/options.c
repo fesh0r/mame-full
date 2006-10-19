@@ -346,7 +346,7 @@ int options_parse_command_line(int argc, char **argv)
 			newdata = argv[++arg];
 		else
 		{
-			printf("Error: option %s expected a parameter\n", argv[arg]);
+			mame_printf_error("Error: option %s expected a parameter\n", argv[arg]);
 			return 1;
 		}
 
@@ -392,7 +392,7 @@ int options_parse_ini_file(mame_file *inifile)
 		/* if we hit the end early, print a warning and continue */
 		if (*temp == 0)
 		{
-			printf("Warning: invalid line in INI: %s", giant_string_buffer);
+			mame_printf_warning("Warning: invalid line in INI: %s", giant_string_buffer);
 			continue;
 		}
 
@@ -414,7 +414,7 @@ int options_parse_ini_file(mame_file *inifile)
 		data = find_entry_data(optionname, FALSE);
 		if (data == NULL)
 		{
-			printf("Warning: unknown option in INI: %s\n", optionname);
+			mame_printf_warning("Warning: unknown option in INI: %s\n", optionname);
 			continue;
 		}
 		if ((data->flags & (OPTION_DEPRECATED | OPTION_INTERNAL)) != 0)
@@ -501,11 +501,11 @@ void options_output_help(void)
 	{
 		/* header: just print */
 		if ((data->flags & OPTION_HEADER) != 0)
-			printf("\n#\n# %s\n#\n", data->description);
+			mame_printf_info("\n#\n# %s\n#\n", data->description);
 
 		/* otherwise, output entries for all non-deprecated items */
 		else if ((data->flags & (OPTION_DEPRECATED | OPTION_INTERNAL)) == 0 && data->description != NULL)
-			printf("-%-20s%s\n", data->names[0], data->description);
+			mame_printf_info("-%-20s%s\n", data->names[0], data->description);
 	}
 }
 
@@ -545,16 +545,18 @@ int options_get_bool(const char *name)
 	options_data *data = find_entry_data(name, FALSE);
 	int value = FALSE;
 
-	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1 || value < 0 || value > 1)
+	if (data == NULL)
+		mame_printf_error("Unexpected boolean option %s queried\n", name);
+	else if (data->data == NULL || sscanf(data->data, "%d", &value) != 1 || value < 0 || value > 1)
 	{
-		if (data != NULL && data->defdata != NULL)
+		if (data->defdata != NULL)
 		{
 			options_set_string(name, data->defdata);
 			sscanf(data->data, "%d", &value);
 		}
 		if (!data->error_reported)
 		{
-			printf("Illegal boolean value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+			mame_printf_error("Illegal boolean value for %s; reverting to %d\n", data->names[0], value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -572,16 +574,18 @@ int options_get_int(const char *name)
 	options_data *data = find_entry_data(name, FALSE);
 	int value = 0;
 
-	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1)
+	if (data == NULL)
+		mame_printf_error("Unexpected integer option %s queried\n", name);
+	else if (data->data == NULL || sscanf(data->data, "%d", &value) != 1)
 	{
-		if (data != NULL && data->defdata != NULL)
+		if (data->defdata != NULL)
 		{
 			options_set_string(name, data->defdata);
 			sscanf(data->data, "%d", &value);
 		}
 		if (!data->error_reported)
 		{
-			printf("Illegal integer value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+			mame_printf_error("Illegal integer value for %s; reverting to %d\n", data->names[0], value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -599,16 +603,18 @@ float options_get_float(const char *name)
 	options_data *data = find_entry_data(name, FALSE);
 	float value = 0;
 
-	if (data == NULL || data->data == NULL || sscanf(data->data, "%f", &value) != 1)
+	if (data == NULL)
+		mame_printf_error("Unexpected float option %s queried\n", name);
+	else if (data->data == NULL || sscanf(data->data, "%f", &value) != 1)
 	{
-		if (data != NULL && data->defdata != NULL)
+		if (data->defdata != NULL)
 		{
 			options_set_string(name, data->defdata);
 			sscanf(data->data, "%f", &value);
 		}
 		if (!data->error_reported)
 		{
-			printf("Illegal float value for %s; reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)value);
+			mame_printf_error("Illegal float value for %s; reverting to %f\n", data->names[0], (double)value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -627,16 +633,18 @@ int options_get_int_range(const char *name, int minval, int maxval)
 	options_data *data = find_entry_data(name, FALSE);
 	int value = 0;
 
-	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1)
+	if (data == NULL)
+		mame_printf_error("Unexpected integer option %s queried\n", name);
+	else if (data->data == NULL || sscanf(data->data, "%d", &value) != 1)
 	{
-		if (data != NULL && data->defdata != NULL)
+		if (data->defdata != NULL)
 		{
 			options_set_string(name, data->defdata);
 			value = options_get_int(name);
 		}
 		if (!data->error_reported)
 		{
-			printf("Illegal integer value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+			mame_printf_error("Illegal integer value for %s; reverting to %d\n", data->names[0], value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -646,7 +654,7 @@ int options_get_int_range(const char *name, int minval, int maxval)
 		value = options_get_int(name);
 		if (!data->error_reported)
 		{
-			printf("Invalid %s value (must be between %d and %d); reverting to %d\n", (data == NULL) ? "??" : data->names[0], minval, maxval, value);
+			mame_printf_error("Invalid %s value (must be between %d and %d); reverting to %d\n", data->names[0], minval, maxval, value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -666,16 +674,18 @@ float options_get_float_range(const char *name, float minval, float maxval)
 	options_data *data = find_entry_data(name, FALSE);
 	float value = 0;
 
-	if (data == NULL || data->data == NULL || sscanf(data->data, "%f", &value) != 1)
+	if (data == NULL)
+		mame_printf_error("Unexpected float option %s queried\n", name);
+	else if (data->data == NULL || sscanf(data->data, "%f", &value) != 1)
 	{
-		if (data != NULL && data->defdata != NULL)
+		if (data->defdata != NULL)
 		{
 			options_set_string(name, data->defdata);
 			value = options_get_float(name);
 		}
 		if (!data->error_reported)
 		{
-			printf("Illegal float value for %s; reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)value);
+			mame_printf_error("Illegal float value for %s; reverting to %f\n", data->names[0], (double)value);
 			data->error_reported = TRUE;
 		}
 	}
@@ -685,7 +695,7 @@ float options_get_float_range(const char *name, float minval, float maxval)
 		value = options_get_float(name);
 		if (!data->error_reported)
 		{
-			printf("Invalid %s value (must be between %f and %f); reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)minval, (double)maxval, (double)value);
+			mame_printf_error("Invalid %s value (must be between %f and %f); reverting to %f\n", data->names[0], (double)minval, (double)maxval, (double)value);
 			data->error_reported = TRUE;
 		}
 	}
