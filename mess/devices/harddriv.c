@@ -177,10 +177,10 @@ static chd_interface mess_hard_disk_interface =
 static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 {
 	mame_file_error filerr;
-	mess_image *img = decode_image_ref(filename);
+	mess_image *image = decode_image_ref(filename);
 
 	/* used when experimenting with CHDs */
-	if (USE_CHD_OPEN && !img)
+	if (USE_CHD_OPEN && !image)
 	{
 		mame_file *file;
 		filerr = mame_fopen(SEARCHPATH_IMAGE, filename, OPEN_FLAG_READ, &file);
@@ -188,14 +188,14 @@ static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 	}
 
 	/* invalid "file name"? */
-	assert(img);
+	assert(image);
 
 	/* read-only fp? */
-	if (!image_is_writable(img) && !(mode[0] == 'r' && !strchr(mode, '+')))
+	if (!image_is_writable(image) && !(mode[0] == 'r' && !strchr(mode, '+')))
 		return NULL;
 
 	/* otherwise return file pointer */
-	return (chd_interface_file *) img;
+	return (chd_interface_file *) image;
 }
 
 
@@ -208,23 +208,23 @@ static void mess_chd_close(chd_interface_file *file)
 
 static UINT32 mess_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fread((mame_file *)file, buffer, count);
+	image_fseek((mess_image *)file, offset, SEEK_SET);
+	return image_fread((mess_image *)file, buffer, count);
 }
 
 
 
 static UINT32 mess_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fwrite((mame_file *)file, buffer, count);
+	image_fseek((mess_image *)file, offset, SEEK_SET);
+	return image_fwrite((mess_image *)file, buffer, count);
 }
 
 
 
 static UINT64 mess_chd_length(chd_interface_file *file)
 {
-	return mame_fsize((mame_file *)file);
+	return image_length((mess_image *)file);
 }
 
 

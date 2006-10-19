@@ -500,8 +500,11 @@ static int image_load_internal(mess_image *image, const char *path,
 				if (image->err && (image->err != IMAGE_ERROR_FILENOTFOUND))
 					goto done;
 
+				/* move on to the next driver */
 				gamedrv = mess_next_compatible_driver(gamedrv);
 			}
+
+			/* move on to the next entry in the software path; if we can */
 			if (software_path)
 				software_path += strlen(software_path) + 1;
 		}
@@ -1082,9 +1085,20 @@ UINT32 image_fwrite(mess_image *image, const void *buffer, UINT32 length)
 		length = MIN(length, image->length - image->pos);
 
 	if (image->file)
+	{
 		osd_write(image->file, buffer, image->pos, length, &length);
+
+		/* since we've written to the file, we may need to invalidate the pointer */
+		if (image->ptr)
+		{
+			image_freeptr(image, image->ptr);
+			image->ptr = NULL;
+		}
+	}
 	else if (image->ptr)
+	{
 		memcpy(((UINT8 *) image->ptr) + image->pos, buffer, length);
+	}
 	else
 		length = 0;
 
