@@ -276,6 +276,11 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();
+	mame_set_output_channel(OUTPUT_CHANNEL_ERROR, mame_null_output_callback, NULL, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_WARNING, mame_null_output_callback, NULL, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, mame_null_output_callback, NULL, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_DEBUG, mame_null_output_callback, NULL, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_LOG, mame_null_output_callback, NULL, NULL, NULL);
 	run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
 

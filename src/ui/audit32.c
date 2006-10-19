@@ -158,15 +158,26 @@ BOOL IsAuditResultNo(int audit_result)
     Internal functions
  ***************************************************************************/
 
+static void Mame32Output(void *param, const char *format, va_list argptr)
+{
+	char buffer[512];
+	vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), format, argptr);
+	DetailsPrintf("%s", buffer);
+}
+
 // Verifies the ROM set while calling SetRomAuditResults	
 int Mame32VerifyRomSet(int game)
 {
 	int iStatus;
 	audit_record *audit;
 	int audit_records;
+	output_callback prevcb;
+	void *prevparam;
 
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
 	iStatus = audit_summary(game, audit_records, audit, TRUE);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb, prevparam, NULL, NULL);
 	if (audit_records > 0)
 		free(audit);
 
@@ -180,9 +191,13 @@ int Mame32VerifySampleSet(int game)
 	int iStatus;
 	audit_record *audit;
 	int audit_records;
+	output_callback prevcb;
+	void *prevparam;
 
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
 	iStatus = audit_summary(game, audit_records, audit, TRUE);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb, prevparam, NULL, NULL);
 	if (audit_records > 0)
 		free(audit);
 
