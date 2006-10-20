@@ -62,6 +62,8 @@ typedef struct
 	UINT1	timerlatch;
 	UINT16	counter;
 	UINT4	RAM[64];
+	UINT8	G_mask;
+	UINT8	D_mask;
 } COP420_Regs;
 
 static COP420_Regs R;
@@ -165,6 +167,10 @@ static offs_t cop420_dasm(char *buffer, offs_t pc)
 static void cop420_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i;
+
+	memset(&R, 0, sizeof(R));
+	R.G_mask = 0x0F;
+	R.D_mask = 0x0F;
 
 	for (i=0; i<256; i++) InstLen[i]=1;
 
@@ -350,7 +356,7 @@ void cop420_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP420"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP400"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP420"); break;
 		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2006 MAME Team"); break;
