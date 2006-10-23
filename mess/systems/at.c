@@ -483,6 +483,9 @@ static MACHINE_DRIVER_START( atvga )
 
 	MDRV_IMPORT_FROM( pcvideo_vga )
 
+	MDRV_MACHINE_START( at )
+	MDRV_MACHINE_RESET( at )
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(CUSTOM, 0)

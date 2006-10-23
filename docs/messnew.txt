@@ -8,7 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [APPLE2] Fixed stray C06x reads [Chad]
+- [APPLE2] Fixed stray C06x reads. [Chad]
+
+- [ATVGA] Fixed lockups.  [Barry Rodewald]
 
 - [CPSCHNGR] Fixed regression introduced in 0.109.  [Dr. Zer0]
 
