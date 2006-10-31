@@ -178,6 +178,8 @@ static void z80gb_reset(void)
 	CheckInterrupts = 0;
 	Regs.w.leavingHALT = 0;
 	Regs.w.doHALTbug = 0;
+	gb_speed_change_pending = 0;
+	gb_speed = 1;
 }
 
 INLINE void z80gb_ProcessInterrupts (void)
@@ -256,7 +258,7 @@ static int z80gb_execute (int cycles)
 #include "opc_main.h"
 			}
 		}
-		z80gb_ICount -= ICycles;
+		z80gb_ICount -= ICycles / gb_speed;
 		gb_divcount += ICycles;
 		if (TIMEFRQ & 0x04)
 		{

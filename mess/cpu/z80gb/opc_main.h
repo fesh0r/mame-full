@@ -229,6 +229,10 @@ case 0x0F: /*	   RRCA */
   }
   break;
 case 0x10: /*	   STOP */
+  if ( gb_speed_change_pending ) {
+    gb_speed = ( gb_speed == 1 ) ? 2 : 1;
+  }
+  gb_speed_change_pending = 0;
   break;
 case 0x11: /*	   LD DE,n16 */
 

@@ -1485,6 +1485,8 @@ void gb_scanline_interrupt (void)
 	/* The rest only makes sense if the display is enabled */
 	if (LCDCONT & 0x80)
 	{
+		CURLINE = ( CURLINE + 1 ) % 154;
+
 		if (CURLINE < 144)
 		{
 			/* Set Mode 2 lcdstate */
@@ -1512,7 +1514,6 @@ void gb_scanline_interrupt (void)
 					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 			}
 		}
-		CURLINE = (CURLINE + 1) % 154;
 
 		if ( CURLINE == CMPLINE )
 		{
@@ -1701,11 +1702,13 @@ WRITE8_HANDLER ( gbc_video_w )
 		case 0x0D:	/* KEY1 - Prepare speed switch */
 			if( data & 0x1 )
 			{
+				gb_speed_change_pending = 1;
+				/* FIXME/TODO: This update should actually be done by the STOP instruction */
 				data = (gb_vid_regs[offset] & 0x80)?0x00:0x80;
 /*				cpunum_set_clockscale( 0, (data & 0x80)?2.0:1.0 );*/
-#ifdef V_GENERAL
-				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
-#endif /* V_GENERAL */
+/* #ifdef V_GENERAL */
+/*				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" ); */
+/* #endif */ /* V_GENERAL */
 			}
 			break;
 		case 0x0F:	/* VBK - VRAM bank select */

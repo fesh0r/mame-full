@@ -89,6 +89,8 @@ EXTERN unsigned int gb_divcount;
 EXTERN unsigned int gb_timer_count;
 EXTERN UINT8 gb_timer_shift;
 EXTERN UINT8 gb_tile_no_mod;
+EXTERN UINT8 gb_speed_change_pending;			/* 1 - change pending */
+EXTERN UINT8 gb_speed;					/* 1 - low speed, 2 - hi speed */
 
 extern WRITE8_HANDLER( gb_rom_bank_select_mbc1 );
 extern WRITE8_HANDLER( gb_ram_bank_select_mbc1 );
