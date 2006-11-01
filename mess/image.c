@@ -1339,7 +1339,6 @@ int image_battery_load(mess_image *img, void *buffer, int length)
 		if (nvram_filename)
 		{
 			filerr = mame_fopen(SEARCHPATH_NVRAM, nvram_filename, OPEN_FLAG_READ, &f);
-			free(nvram_filename);
 			if (filerr == FILERR_NONE)
 			{
 				bytes_read = mame_fread(f, buffer, length);
