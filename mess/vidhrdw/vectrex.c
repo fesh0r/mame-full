@@ -55,11 +55,13 @@ static int blank;
  *                 4 : MPU sound resistive netowrk
  */
 
-#define ASIG_X 0
-#define ASIG_Y 1
+#define ASIG_Y 0
+#define ASIG_X 1
 #define ASIG_ZR 2
 #define ASIG_Z 3
 #define ASIG_MPU 4
+
+#define NVECT 10000
 
 static int analog_sig[5];
 
@@ -78,14 +80,14 @@ struct vectrex_point
 	double time;
 };
 
-static struct vectrex_point vectrex_points[10000];
+static struct vectrex_point vectrex_points[NVECT];
 void (*vector_add_point_function) (int, int, rgb_t, int) = vectrex_add_point;
 
 void vectrex_add_point (int x, int y, rgb_t color, int intensity)
 {
 	struct vectrex_point *newpoint;
 
-	vectrex_point_index = (vectrex_point_index+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
+	vectrex_point_index = (vectrex_point_index+1) % NVECT;
 	newpoint = &vectrex_points[vectrex_point_index];
 
 	newpoint->x = x;
@@ -141,8 +143,8 @@ static void lightpen_show (void)
 			color=0x00ffffff;
 		}
 		
-		pen_x = readinputport(7)*(x_max/0xff);
-		pen_y = readinputport(8)*(y_max/0xff);
+		pen_x = readinputport(8)*(x_max/0xff);
+		pen_y = readinputport(7)*(y_max/0xff);
 
 		vector_add_point(pen_x-250000,pen_y-250000,0,0xff);
 		vector_add_point(pen_x+250000,pen_y+250000,color,0xff);
@@ -158,34 +160,30 @@ static void lightpen_show (void)
  *********************************************************************/
 VIDEO_UPDATE( vectrex )
 {
-	int i, v, intensity;
-	double starttime, correction;
+	int i, v;
+	double starttime;
 
 	vectrex_configuration();
 	lightpen_show();
 
 	starttime = timer_get_time() - vectrex_persistance;
 	if (starttime < 0) starttime = 0;
-
 	i = vectrex_point_index;
 
 	/* Find the oldest vector we want to display */
-	for (v=0; vectrex_points[i].time > starttime && v < (sizeof(vectrex_points) / sizeof(vectrex_points[0]))-1; v++)
+	for (v=0; ((vectrex_points[i].time > starttime) && (v < NVECT)); v++)
 	{
 		i--;
-		if (i<0) i=(sizeof(vectrex_points) / sizeof(vectrex_points[0]))-1;
+		if (i<0) i = NVECT - 1;
 	}
-
 
 	/* start black */
 	vector_add_point(vectrex_points[i].x, vectrex_points[i].y, vectrex_points[i].col, 0);
 
 	while (i != vectrex_point_index)
 	{
-		correction = MIN(1, (vectrex_points[i].time-starttime)/(vectrex_persistance/2));
-		intensity = vectrex_points[i].intensity*correction;
-		vector_add_point(vectrex_points[i].x,vectrex_points[i].y,vectrex_points[i].col,intensity);
-		i = (i+1) % (sizeof(vectrex_points) / sizeof(vectrex_points[0]));
+		vector_add_point(vectrex_points[i].x,vectrex_points[i].y,vectrex_points[i].col, vectrex_points[i].intensity);
+		i = (i+1) % NVECT;
 	}
 
 	video_update_vector(machine, screen, bitmap, cliprect);
@@ -211,7 +209,7 @@ INLINE void vectrex_zero_integrators(void)
 		MIN((int)(last_point_z*((timer_get_time()-last_point_starttime)*3E4)),255));
 	last_point = 0;
 
-	x_int=x_center-(analog_sig[ASIG_ZR]*INT_PER_CLOCK);
+	x_int=x_center+(analog_sig[ASIG_ZR]*INT_PER_CLOCK);
 	y_int=y_center+(analog_sig[ASIG_ZR]*INT_PER_CLOCK);
 	vector_add_point_function (x_int, y_int, vectrex_beam_color, 0);
 }
@@ -244,7 +242,7 @@ INLINE void vectrex_solid_line(double int_time, int blank)
 	last_point = 0;
 
 	x_int += (int)(length * (analog_sig[ASIG_X] - analog_sig[ASIG_ZR]));
-	y_int -= (int)(length * (analog_sig[ASIG_Y] + analog_sig[ASIG_ZR]));
+	y_int += (int)(length * (analog_sig[ASIG_Y] + analog_sig[ASIG_ZR]));
 	vector_add_point_function(x_int, y_int, vectrex_beam_color, z * blank);
 }
 
@@ -325,7 +323,7 @@ static WRITE8_HANDLER ( v_via_pb_w )
 				 */
 				double a2, b2, ab, d2;
 				ab = (double)(pen_x-x_int)*analog_sig[ASIG_X]
-					-(double)(pen_y-y_int)*analog_sig[ASIG_Y];
+					+(double)(pen_y-y_int)*analog_sig[ASIG_Y];
 				if (ab>0)
 				{
 					a2 = (analog_sig[ASIG_X]*analog_sig[ASIG_X]
@@ -394,8 +392,8 @@ static WRITE8_HANDLER ( v_via_pa_w )
 		vectrex_solid_line(time_now - start_time, blank);
 		start_time = time_now;
 	}
-	/* DAC output always goes into X integrator */
-	vectrex_via_out[PORTA] = analog_sig[ASIG_X] = (signed char)data;
+	/* DAC output always goes into Y integrator */
+	vectrex_via_out[PORTA] = analog_sig[ASIG_Y] = (signed char)data;
 
 	if (!(vectrex_via_out[PORTB] & 0x1))
 		/* MUX is enabled, so check with which signal the MUX
@@ -450,59 +448,12 @@ static struct via6522_interface spectrum1_via6522_interface =
 	/*outputs: A/B,CA/B1,CA/B2 */ v_via_pa_w, v_via_pb_w, 0, 0, v_via_ca2_w, v_via_cb2_w,
 	/*irq                      */ v_via_irq,
 };
-/*
-static const char *radius_8_led =
-	"     111111     \r"
-	"   1111111111   \r"
-	"  111111111111  \r"
-	" 11111111111111 \r"
-	" 11111111111111 \r"
-	"1111111111111111\r"
-	"1111111111111111\r"
-	"1111111111111111\r"
-	"1111111111111111\r"
-	"1111111111111111\r"
-	"1111111111111111\r"
-	" 11111111111111 \r"
-	" 11111111111111 \r"
-	"  111111111111  \r"
-	"   1111111111   \r"
-	"     111111     \r";
-*/
 
 WRITE8_HANDLER( raaspec_led_w )
 {
 	logerror("Spectrum I+ LED: %i%i%i%i%i%i%i%i\n",
 				 (data>>7)&0x1, (data>>6)&0x1, (data>>5)&0x1, (data>>4)&0x1,
 				 (data>>3)&0x1, (data>>2)&0x1, (data>>1)&0x1, data&0x1);
-
-#if 0
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		y = clip.min_y = tmpbitmap->width - 16;
-		width = 16;
-		clip.max_y = tmpbitmap->width -1;
-	}
-	else
-	{
-		y = clip.min_y = tmpbitmap->height - 16;
-		width = 16;
-		clip.max_y = tmpbitmap->height -1;
-	}
-
-	for (i=0; i<8; i++)
-	{
-		if (((data^old_data) >> i) & 0x1)
-		{
-			clip.min_x = i*width;
-			clip.max_x = (i+1)*width-1;
-
-			if (((data >> i) & 0x1) == 0)
-				draw_led(tmpbitmap, radius_8_led, 1, i*width, y);
-		}
-	}
-	old_data=data;
-#endif
 }
 
 VIDEO_START( raaspec )
