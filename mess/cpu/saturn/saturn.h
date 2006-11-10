@@ -47,7 +47,8 @@ HP38G             09/??/95              1LT8             Yorke
 #define SATURN_INT_IRQ	1
 #define SATURN_INT_NMI	2
 
-typedef struct {
+typedef struct
+{
 	void (*out)(int);
 	int (*in)(void);
 	void (*reset)(void);
@@ -58,7 +59,7 @@ typedef struct {
 } SATURN_CONFIG;
 
 #ifdef MAME_DEBUG
-unsigned saturn_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+unsigned saturn_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
 #endif /* MAME_DEBUG */
 
 void saturn_get_info(UINT32 state, union cpuinfo *info);

@@ -10,29 +10,12 @@
 #include "i86.h"
 #include "i86intf.h"
 
-extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
+extern int i386_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size);
 
 
 /* All pre-i286 CPUs have a 1MB address space */
 #define AMASK	0xfffff
 
-
-static UINT8 i86_reg_layout[] =
-{
-	I86_AX, I86_BX, I86_DS, I86_ES, I86_SS, I86_FLAGS, I86_CS, I86_VECTOR, -1,
-	I86_CX, I86_DX, I86_SI, I86_DI, I86_SP, I86_BP, I86_IP,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i86_win_layout[] =
-{
-	0, 0, 80, 3,					   /* register window (top rows) */
-	0, 4, 34, 18,					   /* disassembler window (left colums) */
-	35, 4, 45, 9,					   /* memory #1 window (right, upper middle) */
-	35, 13, 45, 8,					   /* memory #2 window (right, lower middle) */
-	0, 23, 80, 1,					   /* command line window (bottom rows) */
-};
 
 /* I86 registers */
 typedef union
@@ -257,12 +240,12 @@ static int i86_execute(int num_cycles)
 }
 
 
-static offs_t i86_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t i86_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
 #else
-	sprintf(buffer, "$%02X", cpu_readop(pc));
+	sprintf(buffer, "$%02X", oprom[0]);
 	return 1;
 #endif
 }
@@ -316,12 +299,12 @@ static int i186_execute(int num_cycles)
 	return num_cycles - i86_ICount;
 }
 
-static offs_t i186_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t i186_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
 #else
-	sprintf(buffer, "$%02X", cpu_readop(pc));
+	sprintf(buffer, "$%02X", oprom[0]);
 	return 1;
 #endif
 }
@@ -444,12 +427,12 @@ static int v30_execute(int num_cycles)
 	return num_cycles - i86_ICount;
 }
 
-static offs_t v30_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t v30_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
 #else
-	sprintf(buffer, "$%02X", cpu_readop(pc));
+	sprintf(buffer, "$%02X", oprom[0]);
 	return 1;
 #endif
 }
@@ -576,10 +559,8 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = i86_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = i86_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i86_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i86_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i86_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i86_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i86_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8086"); break;
@@ -660,7 +641,7 @@ void i186_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i186_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i186_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80186"); break;
@@ -684,7 +665,7 @@ void i188_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i186_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i186_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80188"); break;
@@ -710,7 +691,7 @@ void v20_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = v30_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v30_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = v30_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v30_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V20"); break;
@@ -756,7 +737,7 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = v30_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v30_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = v30_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v30_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V30"); break;
@@ -802,7 +783,7 @@ void v33_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = v33_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v33_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v33_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = v33_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v33_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V33"); break;

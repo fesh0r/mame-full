@@ -89,6 +89,7 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 	const rom_entry *region, *rom;
 	audit_record *record;
 	int foundany = FALSE;
+	int allshared = TRUE;
 	int records;
 
 	/* determine the number of records we will generate */
@@ -96,7 +97,11 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 	for (region = rom_first_region(gamedrv); region != NULL; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom != NULL; rom = rom_next_file(rom))
 			if (ROMREGION_ISROMDATA(region) || ROMREGION_ISDISKDATA(region))
+			{
+				if (allshared && !rom_used_by_parent(gamedrv, rom, NULL))
+					allshared = FALSE;
 				records++;
+			}
 
 	if (records > 0)
 	{
@@ -114,14 +119,14 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 				/* audit a file */
 				if (ROMREGION_ISROMDATA(region))
 				{
-					if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
+					if (audit_one_rom(rom, gamedrv, validation, record++) && (!shared || allshared))
 						foundany = TRUE;
 				}
 
 				/* audit a disk */
 				else if (ROMREGION_ISDISKDATA(region))
 				{
-					if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
+					if (audit_one_disk(rom, gamedrv, validation, record++) && (!shared || allshared))
 						foundany = TRUE;
 				}
 			}
@@ -159,6 +164,9 @@ int audit_samples(int game, audit_record **audit)
 		{
 			struct Samplesinterface *intf = (struct Samplesinterface *)config.sound[sndnum].config;
 
+			if (intf->samplenames == NULL)
+				continue;
+
 			/* iterate over samples in this entry */
 			for (sampnum = 0; intf->samplenames[sampnum] != NULL; sampnum++)
 				if (intf->samplenames[sampnum][0] != '*')
@@ -193,14 +201,14 @@ int audit_samples(int game, audit_record **audit)
 					char *fname;
 
 					/* attempt to access the file from the game driver name */
-					fname = assemble_4_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
+					fname = assemble_3_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum]);
 					filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 					free(fname);
 
 					/* attempt to access the file from the shared driver name */
 					if (filerr != FILERR_NONE && sharedname != NULL)
 					{
-						fname = assemble_4_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
+						fname = assemble_3_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum]);
 						filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 						free(fname);
 					}
@@ -445,7 +453,7 @@ static int audit_one_disk(const rom_entry *rom, const game_driver *gamedrv, UINT
 	/* open the disk */
 	chd_gamedrv = gamedrv;
 	chd_set_interface(&audit_chd_interface);
-	source = chd_open(record->name, 0, NULL);
+	source = open_disk_image(gamedrv,rom);
 
 	/* if we failed, report the error */
 	if (source == NULL)

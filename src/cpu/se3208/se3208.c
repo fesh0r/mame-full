@@ -36,22 +36,6 @@ typedef struct
 #define FLAG_ENI	0x2000
 #define FLAG_NMI	0x4000
 
-static UINT8 SE3208_reg_layout[] = {
-	SE3208_PC, 	SE3208_SR, 	SE3208_SP, 	SE3208_ER,  SE3208_PPC, -1,
-	SE3208_R0, 	SE3208_R1, 	SE3208_R2, 	SE3208_R3,  -1,
-	SE3208_R4, 	SE3208_R5, 	SE3208_R6, 	SE3208_R7,  -1,
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 SE3208_win_layout[] = {
-	0, 0,80, 6,	/* register window (top rows) */
-	0, 7,39,15,	/* disassembler window  */
-	40, 7,39, 7,	/* memory #1 window (left) */
-	40,15,39, 7,	/* memory #2 window (right) */
-	0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 static _SE3208Context Context;
 static int SE3208_ICount;
 
@@ -1840,12 +1824,12 @@ static void set_irq_line(int line,int state)
 		Context.IRQ=state;
 }
 
-static offs_t SE3208_Dasm(char *buffer, offs_t pc)
+static offs_t SE3208_Dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return SE3208Dasm(pc,buffer);
+	return SE3208Dasm(pc,buffer,oprom);
 #else
-	sprintf( buffer, "$%02X", cpu_readop16(pc) );
+	sprintf( buffer, "$%02X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }
@@ -1931,10 +1915,8 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = SE3208_Exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = SE3208_Run;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = SE3208_Dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = SE3208_Dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &SE3208_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = SE3208_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = SE3208_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SE3208"); break;

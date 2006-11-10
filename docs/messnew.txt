@@ -22,7 +22,7 @@ System Driver Changes:
 - [DGNBETA] Fixed regression in disk code that prevented booting and a keyboard
   error.  Rewrote the video code.  [Phill Harvey-Smith]
 
-- [GBCOLOR] Fixed sound under double speed mode.  (bug #300) [Wilbert Pol]
+- [GBCOLOR] Added double speed mode support.  (bug #300) [Wilbert Pol]
 
 - [PC1512/1640] Fixed Amstrad keyboard.  [Andrew Jenner]
 
@@ -51,7 +51,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.109u3.  This incorporates all features of the
+- The core is based on MAME 0.110.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - All image file accessing is now done through image.h, rather than using

@@ -1553,7 +1553,7 @@ cancel:
 ***************************************************************************/
 
 /*-------------------------------------------------
-    get_tm_time - converts a MAME 
+    get_tm_time - converts a MAME
 -------------------------------------------------*/
 
 static void get_tm_time(struct tm *t, mame_system_tm *systm)

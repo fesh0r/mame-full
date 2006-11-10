@@ -70,7 +70,7 @@ static const instr_desc instructions[16] =
 	{ "A",		store },		{ "S",		swap }
 };
 
-unsigned apexc_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned apexc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes)
 {
 	UINT32 instruction;			/* 32-bit machine instruction */
 	int x, y, function, c6, vector;	/* instruction fields */

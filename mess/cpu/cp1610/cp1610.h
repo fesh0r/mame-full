@@ -38,7 +38,7 @@ extern int cp1610_icount;				 /* cycle count */
 void cp1610_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned DasmCP1610( char *dst, unsigned pc );
+unsigned cp1610_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
 #endif
 
 // Temporary

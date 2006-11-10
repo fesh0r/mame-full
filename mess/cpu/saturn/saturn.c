@@ -60,63 +60,6 @@ typedef union {
 #endif
 
 
-/* Layout of the registers in the debugger */
-static UINT8 saturn_reg_layout[] =
-{
-	SATURN_A,
-	SATURN_RSTK0,
-    SATURN_PC,
-	-1,
-
-	SATURN_B,
-	SATURN_RSTK1,
-	SATURN_D0,
-	-1,
-
-	SATURN_C,
-	SATURN_RSTK2,
-	SATURN_D1,
-	-1,
-
-	SATURN_D,
-	SATURN_RSTK3,
-	SATURN_P,
-	-1,
-
-	SATURN_R0,
-	SATURN_RSTK4,
-	SATURN_HST,
-	-1,
-
-	SATURN_R1,
-	SATURN_RSTK5,
-	SATURN_ST,
-	-1,
-
-	SATURN_R2,
-	SATURN_RSTK6,
-	SATURN_OUT,
-	-1,
-
-	SATURN_R3,
-	SATURN_RSTK7,
-	SATURN_IN,
-	-1,
-
-	SATURN_R4,
-	SATURN_IRQ_STATE,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 saturn_win_layout[] = {
-	 0, 0,80, 9,	/* register window (top, right rows) */
-	 0,10,35,12,	/* disassembler window (left colums) */
-	36,10,44, 6,	/* memory #1 window (right, upper middle) */
-	36,17,44, 5,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /****************************************************************************
  * The 6502 registers.
  ****************************************************************************/
@@ -440,11 +383,9 @@ void saturn_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = saturn_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;							break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = saturn_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = saturn_dasm;		break;
 #endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &saturn_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = saturn_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = saturn_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Saturn");	break;

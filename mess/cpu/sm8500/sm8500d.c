@@ -181,7 +181,7 @@ static const sm8500dasm mnemonic[256] = {
 
 };
 
-unsigned sm8500_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes )
+unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes )
 {
 	const sm8500dasm *instr;
 	const char *symbol, *symbol2;

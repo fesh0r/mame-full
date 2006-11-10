@@ -63,19 +63,6 @@ static int tms7000_icount;
 static int tms7000_div_by_16_trigger;
 static int tms7000_cycles_per_INT2;
 
-static UINT8 tms7000_reg_layout[] = {
-	TMS7000_PC, TMS7000_SP, TMS7000_ST, TMS7000_IDLE, TMS7000_T1_CL, TMS7000_T1_PS, TMS7000_T1_DEC, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 tms7000_win_layout[] = {
-	27, 0,53, 2,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 3,53, 9,	/* memory #1 window (right, upper middle) */
-	27,13,53, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define RM(Addr) ((unsigned)program_read_byte_8(Addr))
 #define WM(Addr,Value) (program_write_byte_8(Addr,Value))
 
@@ -346,11 +333,9 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_EXECUTE:	info->execute = tms7000_execute;	break;
         case CPUINFO_PTR_BURN:	info->burn = NULL;	/* Not supported */break;
 #ifdef MAME_DEBUG
-        case CPUINFO_PTR_DISASSEMBLE_NEW:	info->disassemble_new = tms7000_dasm;	break;
+        case CPUINFO_PTR_DISASSEMBLE:	info->disassemble = tms7000_dasm;	break;
 #endif
         case CPUINFO_PTR_INSTRUCTION_COUNTER:	info->icount = &tms7000_icount;	break;
-        case CPUINFO_PTR_REGISTER_LAYOUT:	info->p = tms7000_reg_layout;	break;
-        case CPUINFO_PTR_WINDOW_LAYOUT:	info->p = tms7000_win_layout;	break;
 
         /* --- the following bits of info are returned as NULL-terminated strings --- */
         case CPUINFO_STR_NAME:	strcpy(info->s = cpuintrf_temp_str(), "TMS7000"); break;

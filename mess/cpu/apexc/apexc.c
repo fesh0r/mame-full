@@ -850,24 +850,6 @@ static void apexc_set_info(UINT32 state, union cpuinfo *info)
 
 void apexc_get_info(UINT32 state, union cpuinfo *info)
 {
-	static /*const*/ UINT8 apexc_reg_layout[] =
-	{
-		APEXC_CR, -1,
-		APEXC_A, APEXC_R, -1,
-		APEXC_ML, APEXC_WS, -1,
-		APEXC_STATE, 0
-	};
-
-	/* OK, I have no idea what would be the best layout */
-	static /*const*/ UINT8 apexc_win_layout[] =
-	{
-		48, 0,32,13,	/* register window (top right) */
-		 0, 0,47,13,	/* disassembler window (top left) */
-		 0,14,47, 8,	/* memory #1 window (left, middle) */
-		48,14,32, 8,	/* memory #2 window (right, middle) */
-		 0,23,80, 1 	/* command line window (bottom rows) */
-	};
-
 	switch (state)
 	{
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(apexc);				break;
@@ -917,11 +899,9 @@ void apexc_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = apexc_dasm;		break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = apexc_dasm;		break;
 #endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &apexc_ICount;			break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = apexc_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = apexc_win_layout;				break;
 
 	case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "APEXC"); break;
 	case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "APEC"); break;

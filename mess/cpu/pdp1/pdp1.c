@@ -348,23 +348,6 @@
 #define LOG_IOT_EXTRA 0
 #endif
 
-/* Layout of the registers in the debugger */
-static UINT8 pdp1_reg_layout[] =
-{
-	PDP1_PC, PDP1_IR, PDP1_MB, PDP1_MA, PDP1_AC, PDP1_IO, PDP1_PF, -1,
-	PDP1_TW, PDP1_TA, PDP1_SS, PDP1_SNGL_STEP, PDP1_SNGL_INST, -1,
-	PDP1_RUN, PDP1_CYC, PDP1_DEFER, PDP1_OV, PDP1_RIM, PDP1_EXD, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 pdp1_win_layout[] =
-{
-	 0,  0, 80,  4, /* register window (top rows) */
-	 0,  5, 24, 17, /* disassembler window (left colums) */
-	25,  5, 55,  8, /* memory #1 window (right, upper middle) */
-	25, 14, 55,  8, /* memory #2 window (right, lower middle) */
-	0,	23, 80,  1, /* command line window (bottom rows) */
-};
 
 static void execute_instruction(void);
 static void null_iot (int op2, int nac, int mb, int *io, int ac);
@@ -1049,11 +1032,9 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = pdp1_dasm;			break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = pdp1_dasm;			break;
 #endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pdp1_ICount;			break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pdp1_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pdp1_win_layout;				break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "PDP1");	break;

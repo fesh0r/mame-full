@@ -152,58 +152,24 @@ static void arm7_set_context(void *src)
     }
 }
 
-static offs_t arm7_dasm(char *buffer, offs_t pc)
+static offs_t arm7_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	if( T_IS_SET(GET_CPSR) )
 	{
-		thumb_disasm( buffer, pc, READ16(pc));
+		thumb_disasm( buffer, pc, oprom[0] | (oprom[1] << 8));
 		return 2;
 	}
 	else
 	{
-    	arm7_disasm( buffer, pc, READ32(pc));
+    	arm7_disasm( buffer, pc, oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24));
 	}
     return 4;
 #else
-    sprintf(buffer, "$%08x", READ32(pc));
+    sprintf(buffer, "$%08x", oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24));
     return 4;
 #endif
 }
-
-static UINT8 arm7_reg_layout[] =
-{
-    -1,
-    ARM7_R0,  ARM7_IR13, -1,
-    ARM7_R1,  ARM7_IR14, -1,
-    ARM7_R2,  ARM7_ISPSR, -1,
-    ARM7_R3,  -1,
-    ARM7_R4,  ARM7_FR8,  -1,
-    ARM7_R5,  ARM7_FR9,  -1,
-    ARM7_R6,  ARM7_FR10, -1,
-    ARM7_R7,  ARM7_FR11, -1,
-    ARM7_R8,  ARM7_FR12, -1,
-    ARM7_R9,  ARM7_FR13, -1,
-    ARM7_R10, ARM7_FR14, -1,
-    ARM7_R11, ARM7_FSPSR, -1,
-    ARM7_R12, -1,
-    ARM7_R13, ARM7_AR13, -1,
-    ARM7_R14, ARM7_AR14, -1,
-    ARM7_R15, ARM7_ASPSR, -1,
-    -1,
-    ARM7_SR13, ARM7_UR13, -1,
-    ARM7_SR14, ARM7_UR14, -1,
-    ARM7_SSPSR, ARM7_USPSR, 0
-};
-
-
-static UINT8 arm7_win_layout[] = {
-     0, 0,30,17,    /* register window (top rows) */
-    31, 0,49,17,    /* disassembler window (left colums) */
-     0,18,48, 4,    /* memory #1 window (right, upper middle) */
-    49,18,31, 4,    /* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
 
 
 /**************************************************************************
@@ -380,10 +346,8 @@ void arm7_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_EXIT:                          info->exit = arm7_exit;                 break;
         case CPUINFO_PTR_EXECUTE:                       info->execute = arm7_execute;           break;
         case CPUINFO_PTR_BURN:                          info->burn = NULL;                      break;
-        case CPUINFO_PTR_DISASSEMBLE:                   info->disassemble = arm7_dasm;          break;
+        case CPUINFO_PTR_DISASSEMBLE:	                info->disassemble = arm7_dasm;	        break;
         case CPUINFO_PTR_INSTRUCTION_COUNTER:           info->icount = &ARM7_ICOUNT;            break;
-        case CPUINFO_PTR_REGISTER_LAYOUT:               info->p = arm7_reg_layout;              break;
-        case CPUINFO_PTR_WINDOW_LAYOUT:                 info->p = arm7_win_layout;              break;
 
         /* --- the following bits of info are returned as NULL-terminated strings --- */
         case CPUINFO_STR_NAME:                          strcpy(info->s = cpuintrf_temp_str(), "ARM7"); break;

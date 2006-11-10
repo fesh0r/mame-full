@@ -22,21 +22,6 @@ typedef struct {
 	void (*function) (void);
 }	s_opcode;
 
-/* Layout of the registers in the debugger */
-static UINT8 cop410_reg_layout[] = {
-	   COP400_PC, COP400_A, COP400_B, COP400_C, COP400_EN, COP400_G, COP400_Q,
-       COP400_SA, COP400_SB, COP400_SIO, COP400_SKL, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 cop410_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define UINT1	UINT8
 #define UINT4	UINT8
 #define UINT6	UINT8
@@ -146,12 +131,12 @@ static s_opcode cop410_opcode_main[256]=
 	{1, jp			},{1, jp		},{1, jp		},{1, jp			},{1, jp		},{1, jp		},{1, jp		},{1, jid		}
 };
 
-static offs_t cop410_dasm(char *buffer, offs_t pc)
+static offs_t cop410_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return DasmCOP410(buffer,pc);
+	return DasmCOP410(buffer,pc,oprom);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -176,6 +161,24 @@ static void cop410_init(int index, int clock, const void *config, int (*irqcallb
 	for (i=0x18; i<0x20; i++) LBIops[i] = 1;
 	for (i=0x28; i<0x30; i++) LBIops[i] = 1;
 	for (i=0x38; i<0x40; i++) LBIops[i] = 1;
+
+	state_save_register_item("cop410", index, PC);
+	state_save_register_item("cop410", index, R.PREVPC);
+	state_save_register_item("cop410", index, A);
+	state_save_register_item("cop410", index, B);
+	state_save_register_item("cop410", index, C);
+	state_save_register_item("cop410", index, EN);
+	state_save_register_item("cop410", index, G);
+	state_save_register_item("cop410", index, Q);
+	state_save_register_item("cop410", index, SA);
+	state_save_register_item("cop410", index, SB);
+	state_save_register_item("cop410", index, SIO);
+	state_save_register_item("cop410", index, SKL);
+	state_save_register_item("cop410", index, skip);
+	state_save_register_item("cop410", index, skipLBI);
+	state_save_register_item_array("cop410", index, R.RAM);
+	state_save_register_item("cop410", index, R.G_mask);
+	state_save_register_item("cop410", index, R.D_mask);
 }
 
 static void cop411_init(int index, int clock, const void *config, int (*irqcallback)(int))
@@ -351,8 +354,6 @@ void cop410_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cop410_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop410_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cop410_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cop410_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP410"); break;

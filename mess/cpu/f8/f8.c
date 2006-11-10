@@ -91,28 +91,6 @@ static UINT8 timer_shifter[256];
 			f8.w |= O;			\
 	}
 
-/* Layout of the registers in the debugger */
-static UINT8 f8_reg_layout[] = {
-	F8_PC0, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS, -1,
-        F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL, -1,
-        F8_R0, F8_R1, F8_R2, F8_R3, F8_R4, F8_R5, F8_R6, F8_R7, F8_R8, -1,
-        F8_R16, F8_R17, F8_R18, F8_R19, F8_R20, F8_R21, F8_R22, F8_R23, -1,
-        F8_R24, F8_R25, F8_R26, F8_R27, F8_R28, F8_R29, F8_R30, F8_R31, -1,
-        F8_R32, F8_R33, F8_R34, F8_R35, F8_R36, F8_R37, F8_R38, F8_R39, -1,
-        F8_R40, F8_R41, F8_R42, F8_R43, F8_R44, F8_R45, F8_R46, F8_R47, -1,
-        F8_R48, F8_R49, F8_R50, F8_R51, F8_R52, F8_R53, F8_R54, F8_R55, -1,
-        F8_R56, F8_R57, F8_R58, F8_R59, F8_R60, F8_R61, F8_R62, F8_R63, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 f8_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 /******************************************************************************
  * ROMC (ROM cycles)
  * This is what the Fairchild F8 CPUs use instead of an address bus
@@ -1913,7 +1891,7 @@ static void f8_set_context (void *src)
 }
 
 #ifdef MAME_DEBUG
-unsigned f8_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+unsigned f8_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
 #endif
 
 static void f8_init (int index, int clock, const void *config, int (*irqcallback)(int))
@@ -2137,11 +2115,9 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = f8_dasm;		break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = f8_dasm;		break;
 #endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &f8_icount;				break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = f8_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = f8_win_layout;				break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 			strcpy(info->s = cpuintrf_temp_str(), "F8");			break;

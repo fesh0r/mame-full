@@ -92,26 +92,6 @@
 
 extern FILE * errorlog;
 
-static UINT8 reg_layout[] = {
-	H6280_PC, H6280_S, H6280_P, H6280_A, H6280_X, H6280_Y, -1,
-	H6280_IRQ_MASK, H6280_TIMER_STATE, H6280_NMI_STATE, H6280_IRQ1_STATE, H6280_IRQ2_STATE, H6280_IRQT_STATE,
-#ifdef MAME_DEBUG
-	-1,
-	H6280_M1, H6280_M2, H6280_M3, H6280_M4, -1,
-	H6280_M5, H6280_M6, H6280_M7, H6280_M8,
-#endif
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 win_layout[] = {
-	25, 0,55, 4,	/* register window (top rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 static int 	h6280_ICount = 0;
 
 /****************************************************************************
@@ -331,12 +311,12 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t h6280_dasm(char *buffer, offs_t pc)
+static offs_t h6280_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-    return Dasm6280(buffer,pc);
+    return Dasm6280(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -480,7 +460,7 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 7;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 17 + 6*65536;					break;
 
@@ -538,8 +518,6 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = h6280_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &h6280_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = reg_layout;					break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = win_layout;					break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = h6280_translate;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

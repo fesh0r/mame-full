@@ -17,24 +17,6 @@
 #define LOG 0
 #define LOG_EXTRA 0
 
-/* Layout of the registers in the debugger */
-static UINT8 tx0_reg_layout[] =
-{
-	TX0_PC, TX0_IR, TX0_MBR, TX0_MAR, TX0_AC, TX0_LR, -1,
-	TX0_XR, TX0_TBR, TX0_TAC, TX0_STOP_CYC0, TX0_STOP_CYC1, -1,
-	TX0_RUN, TX0_RIM, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 tx0_win_layout[] =
-{
-	 0,  0, 80,  4, /* register window (top rows) */
-	 0,  5, 24, 17, /* disassembler window (left colums) */
-	25,  5, 55,  8, /* memory #1 window (right, upper middle) */
-	25, 14, 55,  8, /* memory #2 window (right, lower middle) */
-	0,	23, 80,  1, /* command line window (bottom rows) */
-};
-
 static void execute_instruction_64kw(void);
 static void execute_instruction_8kw(void);
 static void pulse_reset(void);
@@ -539,11 +521,9 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = tx0_dasm_64kw;		break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_64kw;		break;
 #endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "TX-0");	break;
@@ -669,11 +649,9 @@ void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = tx0_dasm_8kw;	break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_8kw;	break;
 #endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "TX-0");	break;

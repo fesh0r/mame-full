@@ -28,19 +28,6 @@
 #define FLAG_H  0x20
 #define FLAG_C  0x10
 
-static UINT8 z80gb_reg_layout[] = {
-	Z80GB_PC, Z80GB_SP, Z80GB_AF, Z80GB_BC, Z80GB_DE, Z80GB_HL, -1,
-	Z80GB_IRQ_STATE, 0
-};
-
-static UINT8 z80gb_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 /* Nr of cycles to run */
 extern int z80gb_ICount;
 
@@ -413,11 +400,9 @@ void z80gb_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = z80gb_burn;						break;
 
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = z80gb_dasm;	break;
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z80gb_dasm;	break;
 #endif
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z80gb_ICount;			break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z80gb_reg_layout;				break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z80gb_win_layout;				break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "Z80GB"); break;

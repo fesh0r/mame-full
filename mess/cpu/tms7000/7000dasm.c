@@ -359,7 +359,7 @@ static opcodeinfo opcodes[] = {
 	{0x00, "NOP", 23, 0 }
 };
 
-unsigned tms7000_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes )
+unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes )
 {
 	int opcode, i, size = 1;
 	const char *sym1;

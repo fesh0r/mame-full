@@ -929,58 +929,23 @@ static int r3000_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 r3000_reg_layout[] =
-{
-	R3000_PC,		R3000_SR,		-1,
-	R3000_R0,	 	R3000_R16,		-1,
-	R3000_R1, 		R3000_R17,		-1,
-	R3000_R2, 		R3000_R18,		-1,
-	R3000_R3, 		R3000_R19,		-1,
-	R3000_R4, 		R3000_R20,		-1,
-	R3000_R5, 		R3000_R21,		-1,
-	R3000_R6, 		R3000_R22,		-1,
-	R3000_R7, 		R3000_R23,		-1,
-	R3000_R8,		R3000_R24,		-1,
-	R3000_R9,		R3000_R25,		-1,
-	R3000_R10,		R3000_R26,		-1,
-	R3000_R11,		R3000_R27,		-1,
-	R3000_R12,		R3000_R28,		-1,
-	R3000_R13,		R3000_R29,		-1,
-	R3000_R14,		R3000_R30,		-1,
-	R3000_R15,		R3000_R31,		0
-};
-
-static UINT8 r3000_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t r3000_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t r3000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	extern unsigned dasmr3k(char *, unsigned, UINT32);
-	UINT32 op = *(UINT32 *)opram;
+	UINT32 op = *(UINT32 *)oprom;
 	if (r3000.bigendian)
 		op = BIG_ENDIANIZE_INT32(op);
 	else
 		op = LITTLE_ENDIANIZE_INT32(op);
+
+#ifdef MAME_DEBUG
 	return dasmr3k(buffer, pc, op);
 #else
-	sprintf(buffer, "$%04X", ROPCODE(pc));
-	return 2;
+	sprintf(buffer, "$%08X", op);
+	return 4;
 #endif
 }
 
@@ -1324,10 +1289,8 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = r3000_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = r3000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = r3000_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = r3000_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = r3000_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = r3000_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R3000"); break;

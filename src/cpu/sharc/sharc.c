@@ -6,7 +6,7 @@
 #include "sharc.h"
 #include "debugger.h"
 
-static offs_t sharc_dasm(char *buffer, offs_t pc);
+static offs_t sharc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 static void sharc_dma_exec(int channel);
 static void check_interrupts(void);
 
@@ -392,24 +392,22 @@ void sharc_external_dma_write(UINT32 address, UINT64 data)
 	}
 }
 
-static offs_t sharc_dasm(char *buffer, offs_t pc)
+static offs_t sharc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT64 op = 0;
+	UINT32 flags = 0;
 
-	if (pc >= 0x20000 && pc < 0x30000)
-	{
-		op = ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 0]) << 32) |
-			 ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 1]) << 16) |
-			 ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 2]) <<  0);
-	}
+	op = ((UINT64)oprom[0] << 0)  | ((UINT64)oprom[1] << 8) |
+		 ((UINT64)oprom[2] << 16) | ((UINT64)oprom[3] << 24) |
+		 ((UINT64)oprom[4] << 32) | ((UINT64)oprom[5] << 40);
 
 #ifdef MAME_DEBUG
-	sharc_dasm_one(buffer, pc, op);
+	flags = sharc_dasm_one(buffer, pc, op);
 #else
 	sprintf(buffer, "$%04X%08X", (UINT32)((op >> 32) & 0xffff), (UINT32)(op));
 #endif
 
-	return 1;
+	return 1 | flags | DASMFLAG_SUPPORTED;
 }
 
 
@@ -691,35 +689,6 @@ static int sharc_execute(int cycles)
 	return cycles - sharc_icount;
 }
 
-/*****************************************************************************/
-
-/* Debugger definitions */
-
-static UINT8 sharc_reg_layout[] =
-{
-	SHARC_PC,		SHARC_PCSTK,	-1,
-	SHARC_FADDR,	SHARC_DADDR,	-1,
-	SHARC_IMASK,	SHARC_ASTAT,	-1,
-	SHARC_LCNTR,	SHARC_SYSSTAT,	-1,
-	SHARC_R0,		SHARC_R8,		-1,
-	SHARC_R1,		SHARC_R9,		-1,
-	SHARC_R2,		SHARC_R10,		-1,
-	SHARC_R3,		SHARC_R11,		-1,
-	SHARC_R4,		SHARC_R12,		-1,
-	SHARC_R5,		SHARC_R13,		-1,
-	SHARC_R6,		SHARC_R14,		-1,
-	SHARC_R7,		SHARC_R15,		0
-};
-
-static UINT8 sharc_win_layout[] =
-{
-	 0,16,34,17,	/* register window (top rows) */
-	 0, 0,80,15,	/* disassembler window (left colums) */
-	35,16,45, 2,	/* memory #2 window (right, lower middle) */
-	35,19,45, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -809,10 +778,10 @@ void adsp21062_set_info(UINT32 state, union cpuinfo *info)
 
 static int sharc_debug_read(int space, UINT32 offset, int size, UINT64 *value)
 {
-	offset >>= 2;
-
 	if (space == ADDRESS_SPACE_PROGRAM)
 	{
+		offset >>= 3;
+
 		if (offset >= 0x20000 && offset < 0x30000)
 		{
 			*value = pm_read48(offset);
@@ -824,6 +793,8 @@ static int sharc_debug_read(int space, UINT32 offset, int size, UINT64 *value)
 	}
 	else if (space == ADDRESS_SPACE_DATA)
 	{
+		offset >>= 2;
+
 		if (offset >= 0x20000)
 		{
 			*value = dm_read32(offset/4);
@@ -838,28 +809,30 @@ static int sharc_debug_read(int space, UINT32 offset, int size, UINT64 *value)
 
 static int sharc_debug_readop(UINT32 offset, int size, UINT64 *value)
 {
-	offset >>= 2;
+	UINT64 mask = (size < 8) ? (((UINT64)1 << (8 * size)) - 1) : ~(UINT64)0;
+	int shift = 8 * (offset & 7);
+	offset >>= 3;
 
 	if (offset >= 0x20000 && offset < 0x28000)
 	{
 		UINT64 op = ((UINT64)(sharc.internal_ram_block0[((offset-0x20000) * 3) + 0]) << 32) |
 					((UINT64)(sharc.internal_ram_block0[((offset-0x20000) * 3) + 1]) << 16) |
 					((UINT64)(sharc.internal_ram_block0[((offset-0x20000) * 3) + 2]) << 0);
-		*value = op;
+		*value = (op >> shift) & mask;
 	}
 	else if (offset >= 0x28000 && offset < 0x30000)
 	{
 		UINT64 op = ((UINT64)(sharc.internal_ram_block1[((offset-0x28000) * 3) + 0]) << 32) |
 					((UINT64)(sharc.internal_ram_block1[((offset-0x28000) * 3) + 1]) << 16) |
 					((UINT64)(sharc.internal_ram_block1[((offset-0x28000) * 3) + 2]) << 0);
-		*value = op;
+		*value = (op >> shift) & mask;
 	}
 
 	return 1;
 }
 
 // This is just used to stop the debugger from complaining about executing from I/O space
-static ADDRESS_MAP_START( internal_pgm, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( internal_pgm, ADDRESS_SPACE_PROGRAM, 64 )
 	AM_RANGE(0x20000, 0x7ffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -878,9 +851,9 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -2;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -3;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -2;					break;
@@ -969,8 +942,6 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sharc_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sharc_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sharc_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sharc_win_layout;				break;
 		case CPUINFO_PTR_READ:							info->read = sharc_debug_read;			break;
 		case CPUINFO_PTR_READOP:						info->readop = sharc_debug_readop;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal_pgm; break;

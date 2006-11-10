@@ -52,21 +52,6 @@ int cp1610_icount;
 
 static cp1610_Regs cp1610;
 
-/* Layout of the registers in the debugger */
-static UINT8 cp1610_reg_layout[] = {
-	CP1610_R0, CP1610_R1, CP1610_R2, CP1610_R3,
-	CP1610_R4, CP1610_R5, CP1610_R6, CP1610_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 cp1610_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 /* clear all flags */
 #define CLR_SZOC                \
 	cp1610.flags &= ~(S|Z|C|OV)
@@ -3399,17 +3384,6 @@ static void cp1610_set_context (void *src)
 		cp1610 = *(cp1610_Regs *) src;
 }
 
-unsigned cp1610_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return DasmCP1610( buffer, pc );
-    return 1;
-#else
-	sprintf( buffer, "$%04X", cp1610_readop(pc) );
-	return 1;
-#endif
-}
-
 void cp1610_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	cp1610.intr_enabled = 0;
@@ -3517,10 +3491,10 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = cp1610_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
+#ifdef MAME_DEBUG
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cp1610_dasm;		break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cp1610_icount;			break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cp1610_reg_layout;			break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cp1610_win_layout;			break;
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
 	case CPUINFO_STR_NAME: 			strcpy(info->s = cpuintrf_temp_str(), "CP1610");		break;

@@ -56,21 +56,6 @@
 #define LOG(x)
 #endif
 
-static UINT8 z8000_reg_layout[] = {
-	Z8000_PC, Z8000_NSP, Z8000_FCW, Z8000_PSAP, Z8000_REFRESH, -1,
-	Z8000_R0, Z8000_R1, Z8000_R2, Z8000_R3, Z8000_R4, Z8000_R5, Z8000_R6, Z8000_R7, -1,
-	Z8000_R8, Z8000_R9, Z8000_R10,Z8000_R11,Z8000_R12,Z8000_R13,Z8000_R14,Z8000_R15,-1,
-	Z8000_IRQ_REQ, Z8000_IRQ_SRV, Z8000_IRQ_VEC, 0
-};
-
-static UINT8 z8000_win_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,26,17,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /* opcode execution table */
 Z8000_exec *z8000_exec = NULL;
 
@@ -589,12 +574,12 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t z8000_dasm(char *buffer, offs_t pc)
+static offs_t z8000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-    return DasmZ8000(buffer,pc);
+    return DasmZ8000(buffer,pc,oprom);
 #else
-	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
 	return 2;
 #endif
 }
@@ -716,10 +701,8 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = z8000_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = z8000_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z8000_dasm;					break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z8000_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z8000_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z8000_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z8000_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Z8002"); break;

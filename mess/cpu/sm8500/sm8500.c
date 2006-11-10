@@ -24,20 +24,6 @@
 #define FLAG_B	0x02
 #define FLAG_I	0x01
 
-static UINT8 sm8500_reg_layout[] = {
-	SM8500_RR0, SM8500_RR2, SM8500_RR4, SM8500_RR6, SM8500_RR8, -1,
-	SM8500_RR10, SM8500_RR12, SM8500_RR14, SM8500_PC, SM8500_SP, -1,
-	SM8500_PS, SM8500_SYS16, 0
-};
-
-static UINT8 sm8500_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows */
-	 0, 0,26,22,	/* disassembler window (left column) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (rgiht, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 typedef struct {
 	SM8500_CONFIG config;
 	UINT16 PC;
@@ -513,11 +499,9 @@ void sm8500_get_info( UINT32 state, union cpuinfo *info )
 	case CPUINFO_PTR_EXECUTE:				info->execute = sm8500_execute; break;
 	case CPUINFO_PTR_BURN:					info->burn = sm8500_burn; break;
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE_NEW:			info->disassemble_new = sm8500_dasm; break;
+	case CPUINFO_PTR_DISASSEMBLE:			info->disassemble = sm8500_dasm; break;
 #endif
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sm8500_icount; break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:			info->p = sm8500_reg_layout; break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:				info->p = sm8500_win_layout; break;
 
 	case CPUINFO_STR_NAME:					strcpy( info->s = cpuintrf_temp_str(), "sm8500" ); break;
 	case CPUINFO_STR_CORE_FAMILY:				strcpy( info->s = cpuintrf_temp_str(), "Sharp SM8500" ); break;

@@ -2041,7 +2041,7 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
     char    readbuf[256];
     char*   p;
     char*   name;
-    int     id, current_id;
+    int     id, current_id, i;
     LPTREEFOLDER lpTemp = NULL;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
@@ -2126,7 +2126,8 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
             }
 
             /* IMPORTANT: This assumes that all driver names are lowercase! */
-            strlwr( name );
+            for (i = 0; name[i]; i++)
+				name[i] = tolower(name[i]);
 
 			if (lpTemp == NULL)
 			{

@@ -818,6 +818,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/konamigx.o $(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o \
 	$(OBJ)/drivers/konamim2.o \
+	$(OBJ)/drivers/ksys573.o $(OBJ)/machine/x76f041.o \
 	$(OBJ)/drivers/labyrunr.o $(OBJ)/vidhrdw/labyrunr.o \
 	$(OBJ)/drivers/lethal.o $(OBJ)/vidhrdw/lethal.o \
 	$(OBJ)/drivers/mainevt.o $(OBJ)/vidhrdw/mainevt.o \
@@ -1511,6 +1512,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/shangkid.o $(OBJ)/vidhrdw/shangkid.o \
 	$(OBJ)/drivers/skyarmy.o \
 	$(OBJ)/drivers/sliver.o \
+	$(OBJ)/drivers/smstrv.o \
 	$(OBJ)/drivers/sprcros2.o $(OBJ)/vidhrdw/sprcros2.o \
 	$(OBJ)/drivers/ssfindo.o \
 	$(OBJ)/drivers/ssingles.o \
@@ -1520,6 +1522,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/tattack.o \
 	$(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o \
 	$(OBJ)/drivers/tcl.o \
+	$(OBJ)/drivers/tetriunk.o \
 	$(OBJ)/drivers/thedeep.o $(OBJ)/vidhrdw/thedeep.o \
 	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o $(OBJ)/sndhrdw/tiamc1.o \
 	$(OBJ)/drivers/tickee.o $(OBJ)/vidhrdw/tickee.o \

@@ -120,7 +120,7 @@ static void beta_Set_VSync(int offset, int data)
 	{
 		beta_scr_y = 0;
 	}
-	dgn_beta_frame_interrupt(data);
+	dgn_beta_frame_interrupt();
 }
 
 static void beta_Set_DE(int offset, int data)

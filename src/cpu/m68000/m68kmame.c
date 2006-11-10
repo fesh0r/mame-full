@@ -203,27 +203,6 @@ static void set_irq_line(int irqline, int state)
 
 #ifndef A68K0
 
-static UINT8 m68000_reg_layout[] = {
-	M68K_PC, M68K_ISP, -1,
-	M68K_SR, M68K_USP, -1,
-	M68K_D0, M68K_A0, -1,
-	M68K_D1, M68K_A1, -1,
-	M68K_D2, M68K_A2, -1,
-	M68K_D3, M68K_A3, -1,
-	M68K_D4, M68K_A4, -1,
-	M68K_D5, M68K_A5, -1,
-	M68K_D6, M68K_A6, -1,
-	M68K_D7, M68K_A7, 0
-};
-
-static UINT8 m68000_win_layout[] = {
-	48, 0,32,13,	/* register window (top right) */
-	 0, 0,47,13,	/* disassembler window (top left) */
-	 0,14,47, 8,	/* memory #1 window (left, middle) */
-	48,14,32, 8,	/* memory #2 window (right, middle) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 static void m68000_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
@@ -260,13 +239,13 @@ static void m68000_set_context(void *src)
 	m68k_set_context(src);
 }
 
-static offs_t m68000_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68000);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68000);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
 	return 2;
 #endif
 }
@@ -312,13 +291,13 @@ static void m68008_set_context(void *src)
 	m68k_set_context(src);
 }
 
-static offs_t m68008_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68008_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68008);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68008);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
 	return 2;
 #endif
 }
@@ -330,21 +309,6 @@ static offs_t m68008_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
  ****************************************************************************/
 #if HAS_M68010
 
-static UINT8 m68010_reg_layout[] = {
-	M68K_PC,  M68K_ISP, -1,
-	M68K_SR,  M68K_USP, -1,
-	M68K_SFC, M68K_VBR, -1,
-	M68K_DFC, -1,
-	M68K_D0,  M68K_A0, -1,
-	M68K_D1,  M68K_A1, -1,
-	M68K_D2,  M68K_A2, -1,
-	M68K_D3,  M68K_A3, -1,
-	M68K_D4,  M68K_A4, -1,
-	M68K_D5,  M68K_A5, -1,
-	M68K_D6,  M68K_A6, -1,
-	M68K_D7,  M68K_A7, 0
-};
-
 void m68010_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
@@ -354,13 +318,13 @@ void m68010_init(int index, int clock, const void *config, int (*irqcallback)(in
 	m68k_set_int_ack_callback(irqcallback);
 }
 
-static offs_t m68010_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68010_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68010);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68010);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
 	return 2;
 #endif
 }
@@ -376,30 +340,6 @@ static offs_t m68010_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
-
-static UINT8 m68020_reg_layout[] = {
-	M68K_PC,  M68K_MSP, -1,
-	M68K_SR,  M68K_ISP, -1,
-	M68K_SFC, M68K_USP, -1,
-	M68K_DFC, M68K_VBR, -1,
-	M68K_D0,  M68K_A0, -1,
-	M68K_D1,  M68K_A1, -1,
-	M68K_D2,  M68K_A2, -1,
-	M68K_D3,  M68K_A3, -1,
-	M68K_D4,  M68K_A4, -1,
-	M68K_D5,  M68K_A5, -1,
-	M68K_D6,  M68K_A6, -1,
-	M68K_D7,  M68K_A7, 0
-};
-
-static UINT8 m68020_win_layout[] = {
-	48, 0,32,13,	/* register window (top right) */
-	 0, 0,47,13,	/* disassembler window (top left) */
-	 0,14,47, 8,	/* memory #1 window (left, middle) */
-	48,14,32, 8,	/* memory #2 window (right, middle) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 
 static void m68020_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -437,13 +377,13 @@ static void m68020_set_context(void *src)
 	m68k_set_context(src);
 }
 
-static offs_t m68020_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68020);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68020);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
 	return 2;
 #endif
 }
@@ -464,13 +404,13 @@ static void m68ec020_init(int index, int clock, const void *config, int (*irqcal
 	m68k_set_int_ack_callback(irqcallback);
 }
 
-static offs_t m68ec020_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68ec020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68EC020);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68EC020);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
 	return 2;
 #endif
 }
@@ -483,30 +423,6 @@ static offs_t m68ec020_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram,
 /****************************************************************************
  * M68040 section
  ****************************************************************************/
-
-static UINT8 m68040_reg_layout[] = {
-	M68K_PC,  M68K_MSP, -1,
-	M68K_SR,  M68K_ISP, -1,
-	M68K_SFC, M68K_USP, -1,
-	M68K_DFC, M68K_VBR, -1,
-	M68K_D0,  M68K_A0, -1,
-	M68K_D1,  M68K_A1, -1,
-	M68K_D2,  M68K_A2, -1,
-	M68K_D3,  M68K_A3, -1,
-	M68K_D4,  M68K_A4, -1,
-	M68K_D5,  M68K_A5, -1,
-	M68K_D6,  M68K_A6, -1,
-	M68K_D7,  M68K_A7, 0
-};
-
-static UINT8 m68040_win_layout[] = {
-	48, 0,32,13,	/* register window (top right) */
-	 0, 0,47,13,	/* disassembler window (top left) */
-	 0,14,47, 8,	/* memory #1 window (left, middle) */
-	48,14,32, 8,	/* memory #2 window (right, middle) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 
 static void m68040_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -544,13 +460,13 @@ static void m68040_set_context(void *src)
 	m68k_set_context(src);
 }
 
-static offs_t m68040_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t m68040_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble_raw(buffer, pc, oprom, opram, bytes, M68K_CPU_TYPE_68040);
+	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68040);
 #else
-	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
 	return 2;
 #endif
 }
@@ -689,10 +605,8 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68000_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68000_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68000_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68000_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68000_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68000"); break;
@@ -868,10 +782,8 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68008_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68008_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68008_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68008_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68000_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68000_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68008"); break;
@@ -964,8 +876,7 @@ void m68010_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m68010_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = m68010_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68010_dasm;	break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68010_reg_layout;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68010_dasm;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68010"); break;
@@ -1119,10 +1030,8 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68020_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68020_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68020_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68020_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68020_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68020_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68020"); break;
@@ -1216,7 +1125,7 @@ void m68ec020_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m68ec020_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = m68ec020_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68ec020_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68ec020_dasm;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68EC020"); break;
@@ -1365,10 +1274,8 @@ void m68040_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68040_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68040_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68040_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68040_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68040_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68040_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68040"); break;

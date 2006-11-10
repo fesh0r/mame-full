@@ -2433,53 +2433,14 @@ int mips3_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 mips3_reg_layout[] =
-{
-	MIPS3_PC,		MIPS3_SR,		-1,
-	MIPS3_EPC,		MIPS3_CAUSE,	-1,
-	MIPS3_COUNT,	MIPS3_COMPARE,	-1,
-	MIPS3_HI,		MIPS3_LO,		-1,
-	MIPS3_R0,	 	MIPS3_R16,		-1,
-	MIPS3_R1, 		MIPS3_R17,		-1,
-	MIPS3_R2, 		MIPS3_R18,		-1,
-	MIPS3_R3, 		MIPS3_R19,		-1,
-	MIPS3_R4, 		MIPS3_R20,		-1,
-	MIPS3_R5, 		MIPS3_R21,		-1,
-	MIPS3_R6, 		MIPS3_R22,		-1,
-	MIPS3_R7, 		MIPS3_R23,		-1,
-	MIPS3_R8,		MIPS3_R24,		-1,
-	MIPS3_R9,		MIPS3_R25,		-1,
-	MIPS3_R10,		MIPS3_R26,		-1,
-	MIPS3_R11,		MIPS3_R27,		-1,
-	MIPS3_R12,		MIPS3_R28,		-1,
-	MIPS3_R13,		MIPS3_R29,		-1,
-	MIPS3_R14,		MIPS3_R30,		-1,
-	MIPS3_R15,		MIPS3_R31,		0
-};
-
-static UINT8 mips3_win_layout[] =
-{
-	 0, 0,45,20,	/* register window (top rows) */
-	46, 0,33,14,	/* disassembler window (left colums) */
-	 0,21,45, 1,	/* memory #1 window (right, upper middle) */
-	46,15,33, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t mips3_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t mips3_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	extern unsigned dasmmips3(char *, unsigned, UINT32);
-	UINT32 op = *(UINT32 *)opram;
+	UINT32 op = *(UINT32 *)oprom;
 	if (mips3.bigendian)
 		op = BIG_ENDIANIZE_INT32(op);
 	else
@@ -2933,10 +2894,8 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = mips3_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = mips3_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = mips3_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mips3_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips3_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mips3_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mips3_win_layout;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

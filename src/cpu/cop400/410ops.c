@@ -31,6 +31,7 @@
 #define OUT_G(A)		OUT(COP400_PORT_G, (A) & R.G_mask)
 #define OUT_L(A)		OUT(COP400_PORT_L, (A))
 #define OUT_D(A)		OUT(COP400_PORT_D, (A) & R.D_mask)
+#define OUT_SK(A)		OUT(COP400_PORT_SK,A)
 
 #ifndef PUSH
 #define PUSH(addr) 		{ SB = SA; SA = addr; }
@@ -45,17 +46,16 @@ INLINE void illegal(void)
 INLINE void WRITE_SK(UINT8 data)
 {
 	SKL = data;
-/*
-    if (EN & 0x01)
-    {
-        WRITE_SK(SKL);
-    }
-    else
-    {
-        // NOT IMPLEMENTED
-        WRITE_SK(SKL);
-    }
-*/
+
+	if (EN & 0x01)
+	{
+		OUT_SK(SKL);
+	}
+	else
+	{
+		// NOT IMPLEMENTED
+		OUT_SK(SKL);
+	}
 }
 
 INLINE void WRITE_Q(UINT8 data)

@@ -46,20 +46,6 @@
 #endif
 
 
-static UINT8 konami_reg_layout[] = {
-	KONAMI_PC, KONAMI_S, KONAMI_CC, KONAMI_A, KONAMI_B, KONAMI_X, -1,
-	KONAMI_Y, KONAMI_U, KONAMI_DP, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 konami_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /* Konami Registers */
 typedef struct
 {
@@ -498,10 +484,10 @@ static void state_save(void *file, const char *module)
 }
 #endif
 
-static offs_t konami_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t konami_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-    return Dasmknmi(buffer, pc, oprom, opram, bytes);
+    return Dasmknmi(buffer, pc, oprom, opram);
 #else
 	sprintf( buffer, "$%02X", *oprom );
 	return 1;
@@ -637,10 +623,8 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = konami_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = konami_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = konami_dasm;	break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = konami_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = konami_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = konami_win_layout;			break;
 		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->f = (genf *)konami.setlines_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

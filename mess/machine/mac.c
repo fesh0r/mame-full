@@ -73,7 +73,7 @@ static WRITE8_HANDLER(mac_via_out_a);
 static WRITE8_HANDLER(mac_via_out_b);
 static WRITE8_HANDLER(mac_via_out_cb2);
 static void mac_via_irq(int state);
-static offs_t mac_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+static offs_t mac_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 static struct via6522_interface mac_via6522_intf =
 {
@@ -2283,7 +2283,7 @@ static const char *lookup_trap(UINT16 opcode)
 
 
 
-static offs_t mac_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t mac_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT16 opcode;
 	unsigned result = 0;

@@ -79,9 +79,7 @@ void dgnbeta_ram_bG_w(offs_t offset, UINT8 data);
 /* mc6845 video display generator */
 void init_video(void);
 extern VIDEO_UPDATE( dgnbeta );
-//INTERRUPT_GEN( dgn_beta_frame_interrupt );
-
-void dgn_beta_frame_interrupt (int data);
+INTERRUPT_GEN( dgn_beta_frame_interrupt );
 
 READ8_HANDLER(dgnbeta_6845_r);
 WRITE8_HANDLER(dgnbeta_6845_w);

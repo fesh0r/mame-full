@@ -55,7 +55,7 @@ extern WRITE8_HANDLER( tms7000_internal_w );
 extern  READ8_HANDLER( tms7000_internal_r );
 
 #ifdef MAME_DEBUG
-extern unsigned tms7000_dasm( char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes );
+extern unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes );
 #endif
 
 #endif /* _TMS7000_H */

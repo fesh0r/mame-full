@@ -91,6 +91,7 @@ static UINT64 get_beamx(UINT32 ref);
 static UINT64 get_beamy(UINT32 ref);
 static void set_tempvar(UINT32 ref, UINT64 value);
 static void set_logunmap(UINT32 ref, UINT64 value);
+static UINT64 get_current_pc(UINT32 ref);
 static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
@@ -214,6 +215,9 @@ void debug_cpu_init(running_machine *machine)
 
 		/* allocate a symbol table */
 		debug_cpuinfo[cpunum].symtable = symtable_alloc(global_symtable);
+
+		/* add a global symbol for the current instruction pointer */
+		symtable_add_register(debug_cpuinfo[cpunum].symtable, "curpc", 0, get_current_pc, 0);
 
 		/* add all registers into it */
 		for (regnum = 0; regnum < MAX_REGS; regnum++)
@@ -660,6 +664,17 @@ static void set_logunmap(UINT32 ref, UINT64 value)
 
 
 /*-------------------------------------------------
+    get_current_pc - getter callback for a CPU's
+    current instruction pointer
+-------------------------------------------------*/
+
+static UINT64 get_current_pc(UINT32 ref)
+{
+	return activecpu_get_pc();
+}
+
+
+/*-------------------------------------------------
     get_cpu_reg - getter callback for a CPU's
     register symbols
 -------------------------------------------------*/
@@ -694,7 +709,11 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 void mame_debug_hook(void)
 {
 	int cpunum = cpu_getactivecpu();
+	offs_t curpc = activecpu_get_pc();
 	debug_cpu_info *info = &debug_cpuinfo[cpunum];
+
+	/* update the history */
+	info->pc_history[info->pc_history_index++ % DEBUG_HISTORY_SIZE] = curpc;
 
 	/* quick out if we are ignoring */
 	if (info->ignoring)
@@ -738,7 +757,7 @@ void mame_debug_hook(void)
 		}
 
 		/* check the temp running breakpoint and break if we hit it */
-		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && activecpu_get_pc() == info->temp_breakpoint_pc)
+		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && curpc == info->temp_breakpoint_pc)
 		{
 			execution_state = EXECUTION_STATE_STOPPED;
 			debug_console_printf("Stopped at temporary breakpoint %X on CPU %d\n", info->temp_breakpoint_pc, cpunum);
@@ -747,13 +766,13 @@ void mame_debug_hook(void)
 
 		/* check for execution breakpoints */
 		if (info->first_bp)
-			debug_check_breakpoints(cpunum, activecpu_get_pc());
+			debug_check_breakpoints(cpunum, curpc);
 
 		/* handle single stepping */
 		if (steps_until_stop > 0 && (execution_state >= EXECUTION_STATE_STEP_INTO && execution_state <= EXECUTION_STATE_STEP_OUT))
 		{
 			/* is this an actual step? */
-			if (step_overout_breakpoint == ~0 || (cpunum == step_overout_cpunum && activecpu_get_pc() == step_overout_breakpoint))
+			if (step_overout_breakpoint == ~0 || (cpunum == step_overout_cpunum && curpc == step_overout_breakpoint))
 			{
 				/* decrement the count and reset the breakpoint */
 				steps_until_stop--;
@@ -841,25 +860,21 @@ void mame_debug_hook(void)
 
 static UINT32 dasm_wrapped(char *buffer, offs_t pc)
 {
-	if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
+	int maxbytes = activecpu_max_instruction_bytes();
+	UINT8 opbuf[64], argbuf[64];
+	offs_t pcbyte;
+	int numbytes;
+
+	/* fetch the bytes up to the maximum */
+	pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	for (numbytes = 0; numbytes < maxbytes; numbytes++)
 	{
-		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
-		int maxbytes = activecpu_max_instruction_bytes();
-		UINT8 opbuf[64], argbuf[64];
-		offs_t pcbyte;
-		int numbytes;
-
-		/* fetch the bytes up to the maximum */
-		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
-		for (numbytes = 0; numbytes < maxbytes; numbytes++)
-		{
-			opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
-			argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
-		}
-
-		return activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
+		opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+		argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
 	}
-	return activecpu_dasm(buffer, pc);
+
+	return activecpu_dasm(buffer, pc, opbuf, argbuf);
 }
 
 
@@ -1926,7 +1941,11 @@ void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 UINT64 debug_read_opcode(offs_t address, int size, int arg)
 {
 	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	offs_t lowbits_mask;
 	const void *ptr;
+
+	/* keep in logical range */
+	address &= info->space[ADDRESS_SPACE_PROGRAM].logbytemask;
 
 	/* shortcut if we have a custom routine */
 	if (info->readop)
@@ -1936,9 +1955,25 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 			return result;
 	}
 
+	/* if we're bigger than the address bus, break into smaller pieces */
+	if (size > info->space[ADDRESS_SPACE_PROGRAM].databytes)
+	{
+		int halfsize = size / 2;
+		UINT64 r0 = debug_read_opcode(address + 0, halfsize, arg);
+		UINT64 r1 = debug_read_opcode(address + halfsize, halfsize, arg);
+
+		if (info->endianness == CPU_IS_LE)
+			return r0 | (r1 << (8 * halfsize));
+		else
+			return r1 | (r0 << (8 * halfsize));
+	}
+
 	/* translate to physical first */
 	if (info->translate && !(*info->translate)(ADDRESS_SPACE_PROGRAM, &address))
 		return ~(UINT64)0 & (~(UINT64)0 >> (64 - 8*size));
+
+	/* keep in physical range */
+	address &= info->space[ADDRESS_SPACE_PROGRAM].physbytemask;
 
 	/* adjust the address */
 	memory_set_opbase(address);
@@ -1997,9 +2032,12 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 	}
 
 	/* get pointer to data */
-	ptr = memory_get_op_ptr(cpu_getactivecpu(), address, arg);
+	/* note that we query aligned to the bus width, and then add back the low bits */
+	lowbits_mask = info->space[ADDRESS_SPACE_PROGRAM].databytes - 1;
+	ptr = memory_get_op_ptr(cpu_getactivecpu(), address & ~lowbits_mask, arg);
 	if (!ptr)
 		return ~(UINT64)0 & (~(UINT64)0 >> (64 - 8*size));
+	ptr = (UINT8 *)ptr + (address & lowbits_mask);
 
 	/* gross! */
 //  if (osd_is_bad_read_ptr(ptr, size))
