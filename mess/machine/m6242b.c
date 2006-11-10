@@ -4,12 +4,11 @@
    Copyright 2001
 */
 
-#include <time.h>
 #include "driver.h"
 #include "m6242b.h"
 #include "mscommon.h"
 
-static void UpdateTimeRegisters( void );
+static void update_time_registers( void );
 
 int		m6242_register_table[0x10];
 
@@ -58,7 +57,7 @@ void m6242_init( int time_1224 )
    This reads the currently latched register address.
 */
 
- READ8_HANDLER ( m6242_address_r )
+READ8_HANDLER ( m6242_address_r )
 {
 	return m6242_register;
 }
@@ -83,8 +82,7 @@ WRITE8_HANDLER ( m6242_address_w )
 	m6242_register = data & 0x0f;
 
 	/* Update time whenever address register is written to */
-
-	UpdateTimeRegisters();
+	update_time_registers();
 }
 
 /* m6242_address_w
@@ -97,51 +95,42 @@ WRITE8_HANDLER ( m6242_data_w )
 	m6242_register_table[ m6242_register ] = data;
 }
 
-static void UpdateTimeRegisters( void )
+static void update_time_registers( void )
 {
-	/* This routine will (hopefully) call a standard 'C' library routine to get the current
-	   date and time and then fill in the time registers.
-	*/
-
-	time_t		t;
-	struct tm 	*tmtime;
+	mame_system_time systime;
 	
-	/* Get seconds from epoch */
-	t=time(NULL);
-	if (t==-1) return;
+	/* get the current date/time from the core */
+	mame_get_current_datetime(Machine, &systime);
 	
-	/* Convert seconds to local time */
-	tmtime=localtime(&t);
-
-	m6242_register_table[ 0x00 ] = dec_2_bcd(tmtime->tm_sec) & 0x0f;
-	m6242_register_table[ 0x01 ] = dec_2_bcd(tmtime->tm_sec) >> 4;
-	m6242_register_table[ 0x02 ] = dec_2_bcd(tmtime->tm_min) & 0x0f;
-	m6242_register_table[ 0x03 ] = dec_2_bcd(tmtime->tm_min) >> 4;
+	m6242_register_table[ 0x00 ] = dec_2_bcd(systime.local_time.second) & 0x0f;
+	m6242_register_table[ 0x01 ] = dec_2_bcd(systime.local_time.second) >> 4;
+	m6242_register_table[ 0x02 ] = dec_2_bcd(systime.local_time.minute) & 0x0f;
+	m6242_register_table[ 0x03 ] = dec_2_bcd(systime.local_time.minute) >> 4;
 	
 	if ( m6242_register_table[ 0x0F ] & 0x04 ) /* should we supply 24 hour time */
 	{
-		m6242_register_table[ 0x04 ] = dec_2_bcd(tmtime->tm_hour) & 0x0f;
-		m6242_register_table[ 0x05 ] = dec_2_bcd(tmtime->tm_hour) >> 4;
+		m6242_register_table[ 0x04 ] = dec_2_bcd(systime.local_time.hour) & 0x0f;
+		m6242_register_table[ 0x05 ] = dec_2_bcd(systime.local_time.hour) >> 4;
 	}
 	else /* Nope, 12 hour time is requested */
 	{
-		int	val = tmtime->tm_hour;
+		int	val = systime.local_time.hour;
 		
-		if( tmtime->tm_hour > 12 )
+		if( systime.local_time.hour > 12 )
 			val -= 12;
 			
 		m6242_register_table[ 0x04 ] = dec_2_bcd(val) & 0x0f;
 		m6242_register_table[ 0x05 ] = dec_2_bcd(val) >> 4;
 		
-		if( tmtime->tm_hour > 12 )	/* set bit high if PM */
+		if( systime.local_time.hour > 12 )	/* set bit high if PM */
 			m6242_register_table[ 0x05 ] += 0x04;
 	}
 	
-	m6242_register_table[ 0x06 ] = dec_2_bcd(tmtime->tm_mday) & 0x0f;
-	m6242_register_table[ 0x07 ] = dec_2_bcd(tmtime->tm_mday) >> 4;
-	m6242_register_table[ 0x08 ] = dec_2_bcd(tmtime->tm_mon+1) & 0x0f;
-	m6242_register_table[ 0x09 ] = dec_2_bcd(tmtime->tm_mon+1) >> 4;
-	m6242_register_table[ 0x0A ] = dec_2_bcd(tmtime->tm_year%100) & 0x0f;
-	m6242_register_table[ 0x0B ] = dec_2_bcd(tmtime->tm_year%100) >> 4;
-	m6242_register_table[ 0x0C ] = dec_2_bcd(tmtime->tm_wday) & 0x0f;
+	m6242_register_table[ 0x06 ] = dec_2_bcd(systime.local_time.mday) & 0x0f;
+	m6242_register_table[ 0x07 ] = dec_2_bcd(systime.local_time.mday) >> 4;
+	m6242_register_table[ 0x08 ] = dec_2_bcd(systime.local_time.month + 1) & 0x0f;
+	m6242_register_table[ 0x09 ] = dec_2_bcd(systime.local_time.month + 1) >> 4;
+	m6242_register_table[ 0x0A ] = dec_2_bcd(systime.local_time.year%100) & 0x0f;
+	m6242_register_table[ 0x0B ] = dec_2_bcd(systime.local_time.year%100) >> 4;
+	m6242_register_table[ 0x0C ] = dec_2_bcd(systime.local_time.weekday) & 0x0f;
 }

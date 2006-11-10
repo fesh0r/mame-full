@@ -412,27 +412,6 @@ static int tx0_execute_8kw(int cycles)
 }
 
 
-static unsigned tx0_dasm_64kw(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return dasmtx0_64kw(buffer, pc);
-#else
-	sprintf (buffer, "0%06o", tx0_read (pc));
-	return 1;
-#endif
-}
-
-static unsigned tx0_dasm_8kw(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return dasmtx0_8kw(buffer, pc);
-#else
-	sprintf (buffer, "0%06o", tx0_read (pc));
-	return 1;
-#endif
-}
-
-
 static void tx0_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -559,7 +538,9 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_64kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_64kw;		break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = tx0_dasm_64kw;		break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;
@@ -687,7 +668,9 @@ void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = tx0_execute_8kw;		break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tx0_dasm_8kw;		break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = tx0_dasm_8kw;	break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tx0_ICount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tx0_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tx0_win_layout;				break;

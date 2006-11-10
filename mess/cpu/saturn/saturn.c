@@ -169,12 +169,6 @@ static Saturn_Regs saturn;
  *
  *****************************************************************************/
 
-static unsigned saturn_dasm(char *buffer, unsigned pc)
-{
-	sprintf( buffer, "$%X", cpu_readop(pc) );
-	return 1;
-}
-
 static void saturn_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	saturn.config = (SATURN_CONFIG *) config;
@@ -445,7 +439,9 @@ void saturn_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = saturn_reset;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = saturn_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;							break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = saturn_dasm;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = saturn_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &saturn_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = saturn_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = saturn_win_layout;				break;

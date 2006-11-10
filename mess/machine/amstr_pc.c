@@ -270,7 +270,7 @@ WRITE8_HANDLER( pc1640_mouse_y_w )
 
 INPUT_PORTS_START( amstrad_keyboard )
 
-    PORT_START  /* IN4 */
+	PORT_START_TAG("pc_keyboard_0")
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
 	AMSTRAD_HELPER( 0x0002, "Esc",          KEYCODE_ESC,        CODE_NONE )
 	AMSTRAD_HELPER( 0x0004, "1 !",          KEYCODE_1,          CODE_NONE )
@@ -288,7 +288,7 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE,  CODE_NONE )
 	AMSTRAD_HELPER( 0x8000, "Tab",          KEYCODE_TAB,        CODE_NONE )
 
-	PORT_START	/* IN5 */
+	PORT_START_TAG("pc_keyboard_1")
 	AMSTRAD_HELPER( 0x0001, "Q",            KEYCODE_Q,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0002, "W",            KEYCODE_W,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0004, "E",            KEYCODE_E,          CODE_NONE )
@@ -306,7 +306,7 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000, "A",            KEYCODE_A,          CODE_NONE )
 	AMSTRAD_HELPER( 0x8000, "S",            KEYCODE_S,          CODE_NONE )
 
-	PORT_START	/* IN6 */
+	PORT_START_TAG("pc_keyboard_2")
 	AMSTRAD_HELPER( 0x0001, "D",            KEYCODE_D,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0002, "F",            KEYCODE_F,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0004, "G",            KEYCODE_G,          CODE_NONE )
@@ -324,7 +324,7 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000, "C",            KEYCODE_C,          CODE_NONE )
 	AMSTRAD_HELPER( 0x8000, "V",            KEYCODE_V,          CODE_NONE )
 
-	PORT_START	/* IN7 */
+	PORT_START_TAG("pc_keyboard_3")
 	AMSTRAD_HELPER( 0x0001, "B",            KEYCODE_B,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0002, "N",            KEYCODE_N,          CODE_NONE )
 	AMSTRAD_HELPER( 0x0004, "M",            KEYCODE_M,          CODE_NONE )
@@ -342,7 +342,7 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000, "F4",           KEYCODE_F4,         CODE_NONE )
 	AMSTRAD_HELPER( 0x8000, "F5",           KEYCODE_F5,         CODE_NONE )
 
-	PORT_START	/* IN8 */
+	PORT_START_TAG("pc_keyboard_4")
 	AMSTRAD_HELPER( 0x0001, "F6",           KEYCODE_F6,         CODE_NONE )
 	AMSTRAD_HELPER( 0x0002, "F7",           KEYCODE_F7,         CODE_NONE )
 	AMSTRAD_HELPER( 0x0004, "F8",           KEYCODE_F8,         CODE_NONE )
@@ -360,7 +360,7 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD,   CODE_NONE )
 	AMSTRAD_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END )
 
-	PORT_START	/* IN9 key codes 0x50 */
+	PORT_START_TAG("pc_keyboard_5")
 	AMSTRAD_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD,      CODE_NONE )
 	AMSTRAD_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN )
 	AMSTRAD_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT )
@@ -369,10 +369,10 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x0040, "?(84/102)\\",	KEYCODE_BACKSLASH2,	CODE_NONE )
 	PORT_BIT ( 0xff80, 0x0000, IPT_UNUSED )
 
-	PORT_START	/* IN10 */
+	PORT_START_TAG("pc_keyboard_6")
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 
-	PORT_START	/* IN11 key codes 0x70 */
+	PORT_START_TAG("pc_keyboard_7")
 	PORT_BIT ( 0x806e, 0x0000, IPT_UNUSED )
 	AMSTRAD_HELPER( 0x0001, "-->",			CODE_DEFAULT,    CODE_NONE )
 	AMSTRAD_HELPER( 0x0010,	"?Enter",		CODE_DEFAULT,    CODE_NONE )
@@ -385,13 +385,13 @@ INPUT_PORTS_START( amstrad_keyboard )
 	AMSTRAD_HELPER( 0x4000,	"Amstrad Mouse Button left",	KEYCODE_F11, CODE_NONE )
 	AMSTRAD_HELPER( 0x2000,	"Amstrad Mouse Button right",	KEYCODE_F12, CODE_NONE )
 
-	PORT_START	/* IN12 */
+	PORT_START_TAG("pc_mouse_misc")
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 
-	PORT_START /* IN13 Mouse - X AXIS */
+	PORT_START_TAG( "pc_mouse_x" ) /* Mouse - X AXIS */  
 	PORT_BIT( 0xff, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1) PORT_REVERSE
 
-	PORT_START /* IN14 Mouse - Y AXIS */
+	PORT_START_TAG( "pc_mouse_y" ) /* Mouse - Y AXIS */
 	PORT_BIT( 0xff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) PORT_PLAYER(1)
 
 INPUT_PORTS_END

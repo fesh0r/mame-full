@@ -35,10 +35,6 @@
 
 #include "cpuintrf.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct {
     bool (*reset)(void);
     bool (*brk)(void);
@@ -51,7 +47,7 @@ typedef struct {
 } SC61860_CONFIG;
 
 #ifdef MAME_DEBUG
-unsigned sc61860_dasm(char *dst, unsigned oldpc);
+unsigned sc61860_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 /* timer_pulse(1/500.0, 0,sc61860_2ms_tick) */
@@ -60,9 +56,5 @@ void sc61860_2ms_tick(int param);
 UINT8 *sc61860_internal_ram(void);
 
 void sc61860_get_info(UINT32 state, union cpuinfo *info);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

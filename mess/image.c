@@ -1314,72 +1314,75 @@ const char *image_extrainfo(mess_image *img)
   image; typically for cartridges.
 ****************************************************************************/
 
-static char *battery_nvramfilename(mess_image *img)
+/*-------------------------------------------------
+    open_battery_file - opens the battery backed
+	NVRAM file for an image
+-------------------------------------------------*/
+
+static mame_file_error open_battery_file(mess_image *image, UINT32 openflags, mame_file **file)
 {
-	const char *filename;
-	filename = image_filename(img);
-	return strip_extension(osd_basename((char *) filename));
+	mame_file_error filerr;
+	char *basename_noext;
+	char *fname;
+
+	basename_noext = strip_extension(image_basename(image));
+	if (!basename_noext)
+		return FILERR_OUT_OF_MEMORY;
+	fname = assemble_4_strings(Machine->gamedrv->name, PATH_SEPARATOR, basename_noext, ".nv");
+	filerr = mame_fopen(SEARCHPATH_NVRAM, fname, openflags, file);
+	free(fname);
+	free(basename_noext);
+	return filerr;
 }
 
 
 
-/* load battery backed nvram from a driver subdir. in the nvram dir. */
-int image_battery_load(mess_image *img, void *buffer, int length)
+/*-------------------------------------------------
+    image_battery_load - retrieves the battery
+	backed RAM for an image
+-------------------------------------------------*/
+
+void image_battery_load(mess_image *image, void *buffer, int length)
 {
 	mame_file_error filerr;
-	mame_file *f;
+	mame_file *file;
 	int bytes_read = 0;
-	int result = FALSE;
-	char *nvram_filename;
 
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
+	assert_always(buffer && (length > 0), "Must specify sensical buffer/length");
+
+	/* try to open the battery file and read it in, if possible */
+	filerr = open_battery_file(image, OPEN_FLAG_READ, &file);
+	if (filerr == FILERR_NONE)
 	{
-		nvram_filename = battery_nvramfilename(img);
-		if (nvram_filename)
-		{
-			filerr = mame_fopen(SEARCHPATH_NVRAM, nvram_filename, OPEN_FLAG_READ, &f);
-			if (filerr == FILERR_NONE)
-			{
-				bytes_read = mame_fread(f, buffer, length);
-				mame_fclose(f);
-				result = TRUE;
-			}
-			free(nvram_filename);
-		}
-
-		/* fill remaining bytes (if necessary) */
-		memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
+		bytes_read = mame_fread(file, buffer, length);
+		mame_fclose(file);
 	}
-	return result;
+
+	/* fill remaining bytes (if necessary) */
+	memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
 }
 
 
 
-/* save battery backed nvram to a driver subdir. in the nvram dir. */
-int image_battery_save(mess_image *img, const void *buffer, int length)
+/*-------------------------------------------------
+    image_battery_save - stores the battery
+	backed RAM for an image
+-------------------------------------------------*/
+
+void image_battery_save(mess_image *image, const void *buffer, int length)
 {
 	mame_file_error filerr;
-	mame_file *f;
-	char *nvram_filename;
+	mame_file *file;
 
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
+	assert_always(buffer && (length > 0), "Must specify sensical buffer/length");
+
+	/* try to open the battery file and write it out, if possible */
+	filerr = open_battery_file(image, OPEN_FLAG_WRITE, &file);
+	if (filerr == FILERR_NONE)
 	{
-		nvram_filename = battery_nvramfilename(img);
-		if (nvram_filename)
-		{
-			filerr = mame_fopen(SEARCHPATH_NVRAM, nvram_filename, OPEN_FLAG_WRITE, &f);
-			free(nvram_filename);
-			if (f)
-			{
-				mame_fwrite(f, buffer, length);
-				mame_fclose(f);
-				return TRUE;
-			}
-		}
+		mame_fwrite(file, buffer, length);
+		mame_fclose(file);
 	}
-	return FALSE;
 }
 
 

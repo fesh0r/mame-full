@@ -1913,18 +1913,8 @@ static void f8_set_context (void *src)
 }
 
 #ifdef MAME_DEBUG
-unsigned DasmF8( char *dst, unsigned pc );
+unsigned f8_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
-
-unsigned f8_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return DasmF8( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
-}
 
 static void f8_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -2146,7 +2136,9 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = f8_execute;				break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = f8_dasm;			break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = f8_dasm;		break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &f8_icount;				break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = f8_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = f8_win_layout;				break;

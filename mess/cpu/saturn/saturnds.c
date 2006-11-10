@@ -1270,10 +1270,9 @@ static const int field_adr_a[]=
 static const int field_adr_b[]=
 { FieldP, FieldWP, FieldXS, FieldX, FieldS, FieldM, FieldB, FieldW };
 
-unsigned saturn_dasm(char *dst, unsigned oldpc)
+unsigned saturn_dasm(char *dst, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int adr=0;
-	int pc=oldpc;
 
 	int cont=1; // operation still not complete disassembled
 	char bin[10]; int binsize=0; // protocollizing fetched nibbles
@@ -1283,8 +1282,9 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 
 	int i,c,v;
 	
-	while (cont) {
-		op=PEEK_OP(pc++);
+	while (cont)
+	{
+		op=*(oprom++);
 		level+=op;
 		switch (level->sel) {
 		case Illegal: 
@@ -1317,39 +1317,39 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				strcpy(dst, mnemonics[level->mnemonic].name[set]);
 				break;
 			case Imm:
-				sprintf(dst, mnemonics[level->mnemonic].name[set], PEEK_OP(pc++));
+				sprintf(dst, mnemonics[level->mnemonic].name[set], *(oprom++));
 				break;
 			case ImmCount: 
-				sprintf(dst, mnemonics[level->mnemonic].name[set], PEEK_OP(pc++)+1);
+				sprintf(dst, mnemonics[level->mnemonic].name[set], *(oprom++)+1);
 				break;
 			case AdrCount: // mnemonics have string %s for address field
-				snprintf(number,sizeof(number),"%x",PEEK_OP(pc++)+1);
+				snprintf(number,sizeof(number),"%x",*(oprom++)+1);
 				sprintf(dst, mnemonics[level->mnemonic].name[set], number);
 				break;
 			case Imm2:
-				v=PEEK_OP(pc++);
-				v|=PEEK_OP(pc++)<<4;
+				v=*(oprom++);
+				v|=*(oprom++)<<4;
 				sprintf(dst, mnemonics[level->mnemonic].name[set], v);
 				break;
 			case Imm4:
-				v=PEEK_OP(pc++);
-				v|=PEEK_OP(pc++)<<4;
-				v|=PEEK_OP(pc++)<<8;
-				v|=PEEK_OP(pc++)<<12;
+				v=*(oprom++);
+				v|=*(oprom++)<<4;
+				v|=*(oprom++)<<8;
+				v|=*(oprom++)<<12;
 				sprintf(dst, mnemonics[level->mnemonic].name[set], v);
 				break;
 			case Imm5:
-				v=PEEK_OP(pc++);
-				v|=PEEK_OP(pc++)<<4;
-				v|=PEEK_OP(pc++)<<8;
-				v|=PEEK_OP(pc++)<<12;
-				v|=PEEK_OP(pc++)<<16;
+				v=*(oprom++);
+				v|=*(oprom++)<<4;
+				v|=*(oprom++)<<8;
+				v|=*(oprom++)<<12;
+				v|=*(oprom++)<<16;
 				sprintf(dst, mnemonics[level->mnemonic].name[set], v);
 				break;
 			case ImmCload:
-				c=i=PEEK_OP(pc++);
+				c=i=*(oprom++);
 				number[i+1]=0;
-				for (;i>=0; i--) number[i]=number_2_hex[PEEK_OP(pc++)];
+				for (;i>=0; i--) number[i]=number_2_hex[*(oprom++)];
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c+1, number);
 				break;
 			case Dis3:
@@ -1420,7 +1420,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				pc+=2;
 				break;
 			case TestBranchRet:
-				i=PEEK_OP(pc++);
+				i=*(oprom++);
 				v=saturn_peekop_dis8(pc);
 				if (v==0) {
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], i);
@@ -1432,7 +1432,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				pc+=2;
 				break;
 			case ImmBranch:
-				i=PEEK_OP(pc++);
+				i=*(oprom++);
 				v=saturn_peekop_dis8(pc);
 				c=(pc+v)&0xfffff;
 				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
@@ -1467,21 +1467,19 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				sprintf(dst, mnemonics[level->mnemonic].name[set], W );
 				break;
 			case AdrA:
-				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_a[PEEK_OP(pc++)] );
+				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_a[*(oprom++)] );
 				break;
 			case AdrAF:
-				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_af[PEEK_OP(pc++)] );
+				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_af[*(oprom++)] );
 				break;
 			case AdrB:
-				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_b[PEEK_OP(pc++)&0x7] );
+				sprintf(dst, mnemonics[level->mnemonic].name[set], adr_b[*(oprom++)&0x7] );
 				break;
-			default:
-				*(char*)0=1;
 			}
 			break;
 		}
 		level = opcodes[level->sel];
 	}
 
-	return pc-oldpc;
+	return oprom - opram;
 }

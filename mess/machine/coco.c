@@ -56,6 +56,11 @@ Dragon Alpha code added 21-Oct-2004,
 Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machine.
 	P.Harvey-Smith, 11-Aug-2005.
 
+Re-implemented Alpha NMI enable/disable, using direct PIA reads, rather than
+keeping track of it in a variable in the driver.
+	P.Harvey-Smith, 25-Sep-2006.
+
+
 ***************************************************************************/
 
 #include <math.h>
@@ -87,6 +92,7 @@ static UINT8 coco3_mmu[16];
 static UINT8 coco3_interupt_line;
 static UINT8 gime_firq, gime_irq;
 static int cart_line, cart_inserted;
+static UINT16 cart_bank_size;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
@@ -144,6 +150,14 @@ static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after re
 
 /* End Dragon Alpha */
 
+/* Dragon Plus */
+static int dragon_plus_reg;			/* Dragon plus control reg */
+
+/* MegaCart CTRL reg, bit 1 selects 8K or 16K banking */
+int MegaCTRL;
+int MegaBank;	// Copy of bank reg so that we can peek it
+/* End Mega Cart */
+
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
  * don't have to worry abount accidently committing a version of the driver
@@ -166,6 +180,7 @@ static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after re
 
 static int count_bank(void);
 static int is_Orch90(void);
+static int is_megacart(void);
 
 #ifdef MAME_DEBUG
 static offs_t coco_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
@@ -1061,6 +1076,10 @@ static void coco_sound_update(void)
 	}
 }
 
+/* 
+	Dragon Alpha AY-3-8912	
+*/
+
 READ8_HANDLER ( dgnalpha_psg_porta_read )
 {	
 	return 0;
@@ -1403,7 +1422,7 @@ static void dragon_page_rom(int	romswitch)
 
 static void	dgnalpha_fdc_callback(int event)
 {
-	/* As far as I can tell, the NMI just goes straight onto the processor line on the alpha */
+	/* The NMI line on the alphaAlpha is gated through IC16 (early PLD), and is gated by pia2 CA2  */
 	/* The DRQ line goes through pia2 cb1, in exactly the same way as DRQ from DragonDos does */
 	/* for pia1 cb1 */
 	switch(event) 
@@ -1412,11 +1431,13 @@ static void	dgnalpha_fdc_callback(int event)
 			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 			break;
 		case WD179X_IRQ_SET:
-		    if(dgnalpha_just_reset)
-				dgnalpha_just_reset=0;
+			if(dgnalpha_just_reset)
+			{
+				dgnalpha_just_reset = 0;
+			}
 			else
 			{
-				if (pia_2_ca2_r(0)) 
+				if (pia_get_output_ca2(2)) 
 					cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 			}
 			break;
@@ -1530,6 +1551,56 @@ static READ8_HANDLER ( d_pia1_pb_r_coco2 )
 	else
 		result = (pia_get_output_b(0) & 0x40) >> 4;		/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
 	return result;
+}
+
+
+/*
+	Compusense Dragon Plus Control register
+*/
+
+/* The read handler will eventually return the 6845 status */
+READ8_HANDLER ( plus_reg_r )
+{
+	return 0;
+}
+
+/* 
+	When writing the bits have the following meanings :
+
+	bit	value	purpose
+	0	0	First 2k of memory map determined by bits 1 & 2	
+		1	6845 display RAM mapped into first 2K of map, 
+			
+	2,1	0,0	Normal bottom 32K or ram mapped (from mainboard).
+		0,1	First 32K of plus RAM mapped into $0000-$7FFF
+		1,0	Second 32K of plus RAM mapped into $0000-$7FFF
+		1,1	Undefined. I will assume that it's the same as 00.
+	3-7		Unused.
+*/
+WRITE8_HANDLER ( plus_reg_w )
+{
+	UINT8 *readbank1;
+	write8_handler writebank1;
+	
+	int map;
+	
+	dragon_plus_reg = data;
+	
+	map = (data & 0x06)>>1;
+	
+	switch (map)
+	{
+		case 0x00	: readbank1=&mess_ram[0x00000]; break;
+		case 0x01	: readbank1=&mess_ram[0x10000]; break;
+		case 0x02	: readbank1=&mess_ram[0x18000]; break;
+		case 0x03	: readbank1=&mess_ram[0x00000]; break;
+		default	: readbank1=&mess_ram[0x00000]; break; // Just to shut the compiler up !	
+	}	
+
+	writebank1 = MWA8_BANK1;
+	memory_set_bankptr(1, readbank1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, writebank1);
+	
 }
 
 
@@ -2235,6 +2306,8 @@ static int count_bank(void)
 
 	crc = image_crc(img);
 
+	cart_bank_size = 0x4000;
+
 	switch( crc )
 	{
 		case 0x83bd6056:		/* Mind-Roll */
@@ -2249,9 +2322,20 @@ static int count_bank(void)
 			logerror("ROM cartridge bankswitching enabled: RoboCop (26-3164)\n");
 			return 7;
 			break;
-		default:				/* No bankswitching */
-			return 0;
-			break;
+		default:
+			if (is_megacart())
+			{   
+				// Select Mega cart bank size 8k or 16K
+				// Mega cart can hold up to a 512megabit rom, banks are 8k or 16K
+				cart_bank_size=(MegaCTRL & 0x02) ? 0x4000 : 0x2000; 
+				return 0x3F;	
+				break;
+			}
+			else
+			{
+				return 0;
+				break;
+			}
 	}
 }
 
@@ -2269,6 +2353,28 @@ static int is_Orch90(void)
 	return crc == 0x15FB39AF;
 }
 
+/* Detect Megacart code, looks for Megacart magic number at offset 4 in file */
+static int is_megacart(void)
+{
+	UINT32		Magic;
+	int		ret;
+	mess_image 	*img;
+
+	img = cartslot_image();
+	
+	if (image_exists(img))					// Check that  cart is mounted
+	{
+		image_fseek(cartslot_image(), 4, SEEK_SET);	// Mega cart magic no at offset 4
+		image_fread(cartslot_image(), &Magic, sizeof(Magic));	// 4 bytes long
+	
+		ret = (Magic == 0x12210968);			// return true if magic no found
+	}
+	else
+		ret = 0;					// Return 0 if image not open
+		
+	return ret;
+}
+
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
 	if (count_bank() > 0)
@@ -2277,8 +2383,8 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 		bank &= count_bank();
 
 		/* read the bank */
-		image_fseek(cartslot_image(), bank * 0x4000, SEEK_SET);
-		image_fread(cartslot_image(), cartpos, 0x4000);
+		image_fseek(cartslot_image(), bank * cart_bank_size, SEEK_SET);
+		image_fread(cartslot_image(), cartpos, cart_bank_size);
 	}
 }
 
@@ -2329,9 +2435,16 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 
 	/* HACK for bankswitching carts */
 	if( is_Orch90() )
+	{
 		cartslottype = &cartridge_Orch90;
+	}
 	else
-	    cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
+	{
+		if (is_megacart())
+			cartslottype = &cartridge_banks_mega;
+		else
+			cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
+	}
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 
@@ -2359,6 +2472,19 @@ MACHINE_START( dragon64 )
 	memory_set_bankptr(1, &mess_ram[0]);
 	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
+	
+	coco_or_dragon = AM_DRAGON;
+	return 0;
+}
+
+MACHINE_START( d64plus )
+{
+	memory_set_bankptr(1, &mess_ram[0]);
+	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+	acia_6551_init();
+	
+	dragon_plus_reg = 0;
+	plus_reg_w(0,0);
 	
 	coco_or_dragon = AM_DRAGON;
 	return 0;

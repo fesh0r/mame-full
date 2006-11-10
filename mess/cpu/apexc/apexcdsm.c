@@ -70,7 +70,7 @@ static const instr_desc instructions[16] =
 	{ "A",		store },		{ "S",		swap }
 };
 
-unsigned DasmAPEXC(char *buffer, unsigned pc)
+unsigned apexc_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	UINT32 instruction;			/* 32-bit machine instruction */
 	int x, y, function, c6, vector;	/* instruction fields */
@@ -79,7 +79,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 	char mnemonic[9];			/* storage for generated mnemonic */
 
 	/* read the instruction to disassemble */
-	instruction = apexc_readop(pc);
+	instruction = *((UINT32 *) oprom);
 
 	/* isolate the instruction fields */
 	x = (instruction >> 22) & 0x3FF;

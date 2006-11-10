@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Dragon 64 + Compusense Plus addon  [Phill Harvey-Smith]
 
 
 
@@ -12,7 +12,19 @@ System Driver Changes:
 
 - [ATVGA] Fixed lockups.  [Barry Rodewald]
 
+- [ATVGA] Fixed Video Display Disable bit and 256 color VGA for programs that
+  expect linear video memory.  [Barry Rodewald]
+
+- [CPCPLUS] Changed FPS from 50 to 50.080128205128205.  [Barry Rodewald]
+  
 - [CPSCHNGR] Fixed regression introduced in 0.109.  [Dr. Zer0]
+
+- [DGNBETA] Fixed regression in disk code that prevented booting and a keyboard
+  error.  Rewrote the video code.  [Phill Harvey-Smith]
+
+- [GBCOLOR] Fixed sound under double speed mode.  (bug #300) [Wilbert Pol]
+
+- [PC1512/1640] Fixed Amstrad keyboard.  [Andrew Jenner]
 
 - [SPECTRUM] Fixed snapshot loading regression introduced in 0.105.  [Chad]
 
@@ -52,6 +64,14 @@ Source Changes:
   [Nate Woods]
 
 - Added the ability to disable tests in Messtest.  [Nate Woods]
+
+- Real time clocks now retrieve default times from the core.  [Nate Woods]
+
+- I286 fixes.  [Barry Rodewald]
+
+- Changed image_battery_load() and image_battery_save() to not return error
+  codes; clients of these functions should not act differently if these files
+  can't be loaded or saved.  [Nate Woods]
 
 
 

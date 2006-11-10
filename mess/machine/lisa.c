@@ -44,8 +44,6 @@
 #include "cpu/m68000/m68k.h"
 #include "sound/speaker.h"
 
-#include <time.h>
-
 
 /*
 	pointers with RAM & ROM location
@@ -1036,22 +1034,21 @@ NVRAM_HANDLER(lisa)
 
 		{
 			/* Now we copy the host clock into the Lisa clock */
-			/* All these functions should be ANSI */
-			time_t cur_time = time(NULL);
-			struct tm expanded_time = *localtime(& cur_time);
+			mame_system_time systime;
+			mame_get_base_datetime(Machine, &systime);
 
 			clock_regs.alarm = 0xfffffL;
 			/* The clock count starts on 1st January 1980 */
-			clock_regs.years = (expanded_time.tm_year - 1980) & 0xf;
-			clock_regs.days1 = (expanded_time.tm_yday + 1) / 100;
-			clock_regs.days2 = ((expanded_time.tm_yday + 1) / 10) % 10;
-			clock_regs.days3 = (expanded_time.tm_yday + 1) % 10;
-			clock_regs.hours1 = expanded_time.tm_hour / 10;
-			clock_regs.hours2 = expanded_time.tm_hour % 10;
-			clock_regs.minutes1 = expanded_time.tm_min / 10;
-			clock_regs.minutes2 = expanded_time.tm_min % 10;
-			clock_regs.seconds1 = expanded_time.tm_sec / 10;
-			clock_regs.seconds2 = expanded_time.tm_sec % 10;
+			clock_regs.years = (systime.local_time.year - 1980) & 0xf;
+			clock_regs.days1 = (systime.local_time.day + 1) / 100;
+			clock_regs.days2 = ((systime.local_time.day + 1) / 10) % 10;
+			clock_regs.days3 = (systime.local_time.day + 1) % 10;
+			clock_regs.hours1 = systime.local_time.hour / 10;
+			clock_regs.hours2 = systime.local_time.hour % 10;
+			clock_regs.minutes1 = systime.local_time.minute / 10;
+			clock_regs.minutes2 = systime.local_time.minute % 10;
+			clock_regs.seconds1 = systime.local_time.second / 10;
+			clock_regs.seconds2 = systime.local_time.second % 10;
 			clock_regs.tenths = 0;
 		}
 		clock_regs.clock_mode = timer_disable;

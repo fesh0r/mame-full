@@ -458,7 +458,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I286_IP:			info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I286_SP:			info->i = I.regs.w[SP];					break;
-		case CPUINFO_INT_REGISTER + I286_FLAGS: 		CompressFlags(); info->i = I.flags;		break;
+		case CPUINFO_INT_REGISTER + I286_FLAGS: 		I.flags = CompressFlags(); info->i = I.flags;		break;
 		case CPUINFO_INT_REGISTER + I286_AX:			info->i = I.regs.w[AX];					break;
 		case CPUINFO_INT_REGISTER + I286_CX:			info->i = I.regs.w[CX];					break;
 		case CPUINFO_INT_REGISTER + I286_DX:			info->i = I.regs.w[DX];					break;

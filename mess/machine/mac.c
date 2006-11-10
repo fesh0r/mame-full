@@ -35,6 +35,7 @@
 
 ****************************************************************************/
 
+#include <time.h>
 
 #include "driver.h"
 #include "state.h"
@@ -46,8 +47,6 @@
 #include "devices/sonydriv.h"
 #include "machine/ncr5380.h"
 #include "includes/mac.h"
-
-#include <time.h>
 
 #ifdef MAME_DEBUG
 #define LOG_VIA			0
@@ -1070,9 +1069,11 @@ NVRAM_HANDLER( mac )
 		{
 			/* Now we copy the host clock into the Mac clock */
 			/* Cool, isn't it ? :-) */
-			/* All these functions should be ANSI */
+			mame_system_time systime;
 			struct tm mac_reference;
 			UINT32 seconds;
+
+			mame_get_base_datetime(Machine, &systime);
 
 			/* The count starts on 1st January 1904 */
 			mac_reference.tm_sec = 0;
@@ -1083,7 +1084,7 @@ NVRAM_HANDLER( mac )
 			mac_reference.tm_year = 4;
 			mac_reference.tm_isdst = 0;
 
-			seconds = difftime(time(NULL), mktime(& mac_reference));
+			seconds = difftime((time_t) systime.time, mktime(& mac_reference));
 
 			if (LOG_RTC)
 				logerror("second count 0x%lX\n", (unsigned long) seconds);

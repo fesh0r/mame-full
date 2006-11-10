@@ -563,6 +563,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)					*/
 	DRIVER( dragon32 )	/* Dragon 32 										*/
 	DRIVER( dragon64 )	/* Dragon 64 										*/
+	DRIVER( d64plus )	/* Dragon 64 + Compusense Plus addon				*/
 	DRIVER( dgnalpha )	/* Dragon Alpha 									*/
 	DRIVER( dgnbeta )	/* Dragon Beta 									*/
 	DRIVER( tanodr64 )	/* Tano Dragon 64 (NTSC) 								*/

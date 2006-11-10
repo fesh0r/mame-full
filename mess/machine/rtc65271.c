@@ -16,7 +16,6 @@
 */
 
 #include <math.h>
-#include <time.h>
 #include "mame.h"
 #include "rtc65271.h"
 
@@ -224,32 +223,32 @@ int rtc65271_file_load(mame_file *file)
 	/*rtc.dirty = FALSE;*/
 
 	{
-		/* Now we copy the host clock into the rtc */
-		/* All these functions should be ANSI */
-		time_t cur_time = time(NULL);
-		struct tm expanded_time = *localtime(& cur_time);
+		mame_system_time systime;
+
+		/* get the current date/time from the core */
+		mame_get_current_datetime(Machine, &systime);
 
 		/* set clock registers */
-		rtc.regs[reg_second] = expanded_time.tm_sec;
-		rtc.regs[reg_minute] = expanded_time.tm_min;
+		rtc.regs[reg_second] = systime.local_time.second;
+		rtc.regs[reg_minute] = systime.local_time.minute;
 		if (rtc.regs[reg_B] & reg_B_24h)
 			/* 24-hour mode */
-			rtc.regs[reg_hour] = expanded_time.tm_hour;
+			rtc.regs[reg_hour] = systime.local_time.hour;
 		else
 		{	/* 12-hour mode */
-			if (expanded_time.tm_hour >= 12)
+			if (systime.local_time.hour >= 12)
 			{
 				rtc.regs[reg_hour] = 0x80;
-				expanded_time.tm_hour -= 12;
+				systime.local_time.hour -= 12;
 			}
 			else
 				rtc.regs[reg_hour] = 0;
-			rtc.regs[reg_hour] |= expanded_time.tm_hour ? expanded_time.tm_hour : 12;
+			rtc.regs[reg_hour] |= systime.local_time.hour ? systime.local_time.hour : 12;
 		}
-		rtc.regs[reg_weekday] = expanded_time.tm_wday + 1;
-		rtc.regs[reg_monthday] = expanded_time.tm_mday;
-		rtc.regs[reg_month] = expanded_time.tm_mon + 1;
-		rtc.regs[reg_year] = expanded_time.tm_year % 100;
+		rtc.regs[reg_weekday] = systime.local_time.weekday + 1;
+		rtc.regs[reg_monthday] = systime.local_time.mday;
+		rtc.regs[reg_month] = systime.local_time.month + 1;
+		rtc.regs[reg_year] = systime.local_time.year % 100;
 		if (! (rtc.regs[reg_B] & reg_B_DM))
 		{	/* BCD mode */
 			rtc.regs[reg_second] = binary_to_BCD(rtc.regs[reg_second]);

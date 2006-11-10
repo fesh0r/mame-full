@@ -19,9 +19,15 @@ static const struct cartridge_callback *cartcallbacks;
 /***************************************************************************
   Floppy disk controller
  ***************************************************************************
- * The CoCo and Dragon both use the Western Digital 1793 floppy disk
- * controller.  The wd1793's variables are mapped to $ff48-$ff4b on the CoCo
- * and on $ff40-$ff43 on the Dragon.  In addition, there is another register
+ * The CoCo and Dragon both use the Western Digital floppy disk controllers.
+ * The CoCo uses either the WD1793 or the WD1773, the Dragon uses the WD2797,
+ * which mostly uses the same command set with some subtle differences, most
+ * notably the 2797 handles disk side select internally. The Dragon Alpha also
+ * uses the WD2797, however as this is a built in interface and not an external
+ * cartrige, it is delt with in the main coco.c file.
+ *
+ * The wd's variables are mapped to $ff48-$ff4b on the CoCo and on $ff40-$ff43 
+ * on the Dragon.  In addition, there is another register
  * called DSKREG that controls the interface with the wd1793.  DSKREG is
  * detailed below:  But they appear to be
  *
@@ -455,7 +461,7 @@ static WRITE8_HANDLER(cartridge_banks_io_w)
 		LOG( ("Bankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 }
 
-static  READ8_HANDLER(cartridge_banks_io_r)
+static READ8_HANDLER(cartridge_banks_io_r)
 {
 /* TJL- trying to turn this into a generic banking call */
 	if (offset == 0 )
@@ -464,6 +470,45 @@ static  READ8_HANDLER(cartridge_banks_io_r)
 		LOG( ("Bankswitch: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 		
 	return 0;
+}
+
+extern int MegaCTRL;	// Control reg
+extern int MegaBank;	// Bank reg
+// Mega Cart, by PHS.
+// This could possibly be merged with normal bank.
+static WRITE8_HANDLER(cartridge_banks_mega_io_w)
+{
+	switch (offset)
+	{
+		// Bank reg.
+		case 0x10: 	if(MegaCTRL & 2)	// 16K banks.
+					data=data>>1;
+				cartcallbacks->setbank(data);
+		
+				LOG( ("MegaBankswitch: set bank: %d\n", data ) );
+				break;
+		// CTRL reg
+		case 0x12:	MegaCTRL = data;
+				break;
+
+		default : LOG( ("MegaBankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+	}
+}
+
+static READ8_HANDLER(cartridge_banks_mega_io_r)
+{
+	switch (offset)
+	{
+		// Bank reg.
+		case 0x10: 	return MegaBank;
+				break;
+		// CTRL reg
+		case 0x12:	return MegaCTRL;
+				break;
+
+		default : LOG( ("MegaBankswitch: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+			   return 0;
+	}
 }
 
 static WRITE8_HANDLER(cartridge_std_io_w)
@@ -503,6 +548,15 @@ const struct cartridge_slot cartridge_banks =
 	NULL,
 	cartridge_banks_io_r,
 	cartridge_banks_io_w,
+	NULL
+};
+
+const struct cartridge_slot cartridge_banks_mega =
+{
+	cartidge_standard_init,
+	NULL,
+	cartridge_banks_mega_io_r,
+	cartridge_banks_mega_io_w,
 	NULL
 };
 

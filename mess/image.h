@@ -170,8 +170,8 @@ const char *image_extrainfo(mess_image *img);
   image; typically for cartridges.
 ****************************************************************************/
 
-int image_battery_load(mess_image *img, void *buffer, int length);
-int image_battery_save(mess_image *img, const void *buffer, int length);
+void image_battery_load(mess_image *img, void *buffer, int length);
+void image_battery_save(mess_image *img, const void *buffer, int length);
 
 
 

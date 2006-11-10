@@ -637,11 +637,19 @@ static READ8_HANDLER(vga_crtc_r)
 			if (diff%columns<vga.monitor.get_sync_columns()) data|=1;
 		}
 #elif 1
-		if (vga.monitor.retrace) {
-			data|=9;
-			if (timer_get_time()-vga.monitor.start_time>300e-6) vga.monitor.retrace=0;
-		} else {
-			if (timer_get_time()-vga.monitor.start_time>15e-3) vga.monitor.retrace=1;
+		if (vga.monitor.retrace) 
+		{
+			data |= 1;
+			if (timer_get_time()-vga.monitor.start_time>300e-6) 
+			{
+				data |= 8;
+				vga.monitor.retrace=0;
+			}
+		} 
+		else 
+		{
+			if (timer_get_time()-vga.monitor.start_time>15e-3)
+				vga.monitor.retrace=1;
 			vga.monitor.start_time=timer_get_time();
 		}
 #else
@@ -1266,21 +1274,46 @@ static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 	int pos, line, column, c, addr;
 	UINT16 *bitmapline;
 
-	for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH)
+	if(vga.sequencer.data[4] & 0x08)
 	{
-		bitmapline = (UINT16 *) bitmap->line[line];
-		addr %= vga.svga_intf.vram_size;
-
-		for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
+		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH)
 		{
-			bitmapline[c+0] = vga.memory[pos+0];
-			bitmapline[c+1] = vga.memory[pos+1];
-			bitmapline[c+2] = vga.memory[pos+2];
-			bitmapline[c+3] = vga.memory[pos+3];
-			bitmapline[c+4] = vga.memory[pos+0x10];
-			bitmapline[c+5] = vga.memory[pos+0x11];
-			bitmapline[c+6] = vga.memory[pos+0x12];
-			bitmapline[c+7] = vga.memory[pos+0x13];
+			bitmapline = (UINT16 *) bitmap->line[line];
+			addr %= vga.svga_intf.vram_size;
+			for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
+			{
+				if(pos + 0x20 > vga.svga_intf.vram_size)
+					return;
+				bitmapline[c+0] = vga.memory[pos+0];
+				bitmapline[c+1] = vga.memory[pos+1];
+				bitmapline[c+2] = vga.memory[pos+2];
+				bitmapline[c+3] = vga.memory[pos+3];
+				bitmapline[c+4] = vga.memory[pos+0x10];
+				bitmapline[c+5] = vga.memory[pos+0x11];
+				bitmapline[c+6] = vga.memory[pos+0x12];
+				bitmapline[c+7] = vga.memory[pos+0x13];
+			}
+		}
+	}
+	else
+	{
+		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH/4)
+		{
+			bitmapline = (UINT16 *) bitmap->line[line];
+			addr %= vga.svga_intf.vram_size;
+			for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x08)
+			{
+				if(pos + 0x08 > vga.svga_intf.vram_size)
+					return;
+				bitmapline[c+0] = vga.memory[pos+0];
+				bitmapline[c+1] = vga.memory[pos+1];
+				bitmapline[c+2] = vga.memory[pos+2];
+				bitmapline[c+3] = vga.memory[pos+3];
+				bitmapline[c+4] = vga.memory[pos+4];
+				bitmapline[c+5] = vga.memory[pos+5];
+				bitmapline[c+6] = vga.memory[pos+6];
+				bitmapline[c+7] = vga.memory[pos+7];
+			}
 		}
 	}
 }

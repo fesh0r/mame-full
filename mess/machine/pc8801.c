@@ -15,7 +15,6 @@
 
 ***************************************************************************/
 
-#include <time.h>
 #include "mscommon.h"
 #include "driver.h"
 #include "timer.h"
@@ -62,31 +61,32 @@ WRITE8_HANDLER(pc8801_calender)
 
 static void calender_strobe(void)
 {
-  struct tm *tc;
-  time_t t;
+	mame_system_time systime;
 
-  switch(calender_save&0x07) {
-  case 0:
-    calender_hold=1;
-    return;
-  case 1:
-    calender_hold=0;
-    return;
-  case 2:
-    /* time set (not yet) */
-    calender_hold=1;
-    return;
-  case 3:
-    t = time(NULL);
-    tc = localtime(&t);
-    calender_reg[4] = (tc->tm_mon+1) * 16 + tc->tm_wday;
-    calender_reg[3] = dec_2_bcd(tc->tm_mday);
-    calender_reg[2] = dec_2_bcd(tc->tm_hour);
-    calender_reg[1] = dec_2_bcd(tc->tm_min);
-    calender_reg[0] = dec_2_bcd(tc->tm_sec);
-    calender_hold=1;
-    return;
-  }
+	switch(calender_save&0x07)
+	{
+		case 0:
+			calender_hold = 1;
+			break;
+		case 1:
+			calender_hold = 0;
+			break;
+		case 2:
+			/* time set (not yet) */
+			calender_hold = 1;
+			break;
+		case 3:
+			/* get the current date/time from the core */
+			mame_get_current_datetime(Machine, &systime);
+
+			calender_reg[4] = (systime.local_time.month + 1) * 16 + systime.local_time.weekday;
+			calender_reg[3] = dec_2_bcd(systime.local_time.mday);
+			calender_reg[2] = dec_2_bcd(systime.local_time.hour);
+			calender_reg[1] = dec_2_bcd(systime.local_time.minute);
+			calender_reg[0] = dec_2_bcd(systime.local_time.second);
+			calender_hold = 1;
+			break;
+	}
 }
 
 static void calender_shift(void)

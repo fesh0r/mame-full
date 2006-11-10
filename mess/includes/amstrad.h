@@ -59,7 +59,7 @@ This gives a total of 19968 NOPs per frame. */
 
 /* number of us cycles per frame (measured) */
 #define AMSTRAD_US_PER_SCANLINE   64
-#define AMSTRAD_FPS               50
+#define AMSTRAD_FPS               50.080128205128205
 
 extern VIDEO_START( amstrad );
 extern VIDEO_UPDATE( amstrad );

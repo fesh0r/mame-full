@@ -2,12 +2,12 @@
 #include <string.h>
 #include "cpu/pdp1/tx0.h"
 
-unsigned dasmtx0_64kw(char *buffer, unsigned _pc)
+unsigned tx0_dasm_64kw(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int md;
 	int x;
 
-	md = READ_TX0_18BIT(_pc);
+	md = *((UINT32 *) oprom);
 
 	x = md & 0177777;
 	switch (md >> 16)
@@ -28,12 +28,12 @@ unsigned dasmtx0_64kw(char *buffer, unsigned _pc)
 	return 1;
 }
 
-unsigned dasmtx0_8kw(char *buffer, unsigned _pc)
+unsigned tx0_dasm_8kw(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int md;
 	int x;
 
-	md = READ_TX0_18BIT(_pc);
+	md = *((UINT32 *) oprom);
 
 	x = md & 0017777;
 	switch (md >> 13)

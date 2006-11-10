@@ -1,4 +1,3 @@
-#include <time.h>
 #include "driver.h"
 #include "ds1315.h"
 #include "mscommon.h"
@@ -115,26 +114,21 @@ static void ds1315_fill_raw_data( void )
 	   date and time and then fill in the raw data struct.
 	*/
 
-	time_t		t;
-	struct tm 	*tmtime;
-	int			raw[8], i, j;
+	mame_system_time systime;
+	int raw[8], i, j;
 	
-	/* Get seconds from epoch */
-	t=time(NULL);
-	if (t==-1) return;
+	/* get the current date/time from the core */
+	mame_get_current_datetime(Machine, &systime);
 	
-	/* Convert seconds to local time */
-	tmtime=localtime(&t);
-
 	raw[0] = 0;	/* tenths and hundreths of seconds are always zero */
-	raw[1] = dec_2_bcd(tmtime->tm_sec);
-	raw[2] = dec_2_bcd(tmtime->tm_min);
-	raw[3] = dec_2_bcd(tmtime->tm_hour);
+	raw[1] = dec_2_bcd(systime.local_time.second);
+	raw[2] = dec_2_bcd(systime.local_time.minute);
+	raw[3] = dec_2_bcd(systime.local_time.hour);
 
-	raw[4] = dec_2_bcd(tmtime->tm_wday);
-	raw[5] = dec_2_bcd(tmtime->tm_mday);
-	raw[6] = dec_2_bcd(tmtime->tm_mon+1);
-	raw[7] = dec_2_bcd(tmtime->tm_year); /* Epoch is 1900 */
+	raw[4] = dec_2_bcd(systime.local_time.day);
+	raw[5] = dec_2_bcd(systime.local_time.mday);
+	raw[6] = dec_2_bcd(systime.local_time.month + 1);
+	raw[7] = dec_2_bcd(systime.local_time.year - 1900); /* Epoch is 1900 */
 
 	/* Ok now we have the raw bcd bytes. Now we need to push them into our bit array */
 	

@@ -42,7 +42,7 @@ documentation still exists.
 #include "inputx.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
-#include "includes/crtc6845.h"
+#include "vidhrdw/m6845.h"
 #include "includes/coco.h"
 #include "includes/dgn_beta.h"
 #include "devices/basicdsk.h"
@@ -74,32 +74,6 @@ unsigned char dgnbeta_palette[] =
 	0x80,0x00,0x80,		/* magenta */
 	0x00,0x80,0x80,		/* cyan */
 	0x80,0x80,0x80		/* white */
-};
-
-static unsigned short dgnbeta_colortable[][8] =
-{
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	/* reverse */
-//	{ 1, 0 }
-};
-
-static gfx_layout dgnbeta_charlayout =
-{
-	8,9,
-	256,                    /* 512 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0,1,2,3,4,5,6,7,8,9 },
-	/* y offsets */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8,},
-	16*8			/* Each char is 16 bytes apart */
-};
-
-static gfx_decode dgnbeta_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &dgnbeta_charlayout, 0, 1 },
-	{ -1 } /* end of array */
 };
 
 /*
@@ -172,7 +146,7 @@ static ADDRESS_MAP_START( dgnbeta_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xFC20, 0xFC23)	AM_READWRITE(pia_0_r		,pia_0_w)
 	AM_RANGE(0xFC24, 0xFC27)	AM_READWRITE(pia_1_r		,pia_1_w)
 	AM_RANGE(0xFC28, 0xfC7F)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)	
-	AM_RANGE(0xfc80, 0xfc81)	AM_READWRITE(crtc6845_0_port_r	,crtc6845_0_port_w)	
+	AM_RANGE(0xfc80, 0xfc81)	AM_READWRITE(dgnbeta_6845_r	,dgnbeta_6845_w)	
 	AM_RANGE(0xfc82, 0xfCBF)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
 	AM_RANGE(0xFCC0, 0xFCC3)	AM_READWRITE(pia_2_r		,pia_2_w)
 	AM_RANGE(0xfcC4, 0xfcdf)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
@@ -189,9 +163,28 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( dgnbeta )
 	PORT_START /* Key ROw 0 */
+	/* Return shift if either shift key pressed */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("L-SHIFT") PORT_CODE(KEYCODE_LSHIFT) PORT_CHAR(UCHAR_SHIFT_1)
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("R-SHIFT") PORT_CODE(KEYCODE_RSHIFT) PORT_CHAR(UCHAR_SHIFT_1)
+	
+	/* Return FuNction key, if either ALT key pressed */
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("L-ALT") PORT_CODE(KEYCODE_LALT) 
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("R-ALT") PORT_CODE(KEYCODE_RALT)
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("CLEAR") PORT_CODE(KEYCODE_HOME) PORT_CHAR(12)
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("8  (") PORT_CODE(KEYCODE_8) PORT_CHAR('8') 
+
+
+	/* Set control on either CTRL key */
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("L-Ctrl") PORT_CODE(KEYCODE_LCONTROL)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("R-Ctrl") PORT_CODE(KEYCODE_RCONTROL)
+	
+	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("CapsLock") PORT_CODE(KEYCODE_CAPSLOCK);
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("ESC") PORT_CODE(KEYCODE_ESC) PORT_CHAR(0x1B) 
+
+/*	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("CLEAR") PORT_CODE(KEYCODE_HOME) PORT_CHAR(12)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("8  (") PORT_CODE(KEYCODE_8) PORT_CHAR('8') 
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("ESC") PORT_CODE(KEYCODE_ESC) PORT_CHAR(0x1B) 
+*/
 
 	PORT_START /* Key row 2 */
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("b") PORT_CODE(KEYCODE_B) PORT_CHAR('b') 
@@ -280,7 +273,7 @@ INPUT_PORTS_END
 
 static const char *dgnbeta_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
-	/* CoCo people like their floppy drives zero counted */
+	/* Dragon people like their floppy drives zero counted */
 	snprintf(buf, bufsize, "Floppy #%d", id);
 	return buf;
 }
@@ -317,7 +310,6 @@ static void dgnbeta_floppy_getinfo(const device_class *devclass, UINT32 state, u
 static PALETTE_INIT( dgnbeta )
 {
 	palette_set_colors(machine, 0, dgnbeta_palette, sizeof(dgnbeta_palette) / 3);
-	memcpy(colortable, dgnbeta_colortable, sizeof(colortable));
 }
 
 static MACHINE_DRIVER_START( dgnbeta )
@@ -331,21 +323,17 @@ static MACHINE_DRIVER_START( dgnbeta )
 
 	MDRV_FRAMES_PER_SECOND(DGNBETA_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(100)
-	MDRV_CPU_VBLANK_INT(dgn_beta_frame_interrupt,1)		/* Call once / vblank */
 	
 	MDRV_MACHINE_START( dgnbeta )
 
 	/* video hardware */
 	
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(640, 480)
-	MDRV_VISIBLE_AREA(0, 640 - 1, 0, 480 - 1)
-	MDRV_GFXDECODE( dgnbeta_gfxdecodeinfo )
+	MDRV_SCREEN_SIZE(900,700)
+	MDRV_VISIBLE_AREA(0, 899, 0, 699)
 	MDRV_PALETTE_LENGTH(sizeof (dgnbeta_palette) / sizeof (dgnbeta_palette[0]) / 3)
-	MDRV_COLORTABLE_LENGTH(sizeof (dgnbeta_colortable) / sizeof(dgnbeta_colortable[0][0]))
 	MDRV_PALETTE_INIT( dgnbeta )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 
-	MDRV_VIDEO_START( generic )
 	MDRV_VIDEO_UPDATE( dgnbeta )
 MACHINE_DRIVER_END
 

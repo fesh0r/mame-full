@@ -75,7 +75,7 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info);
 #define OPR 037
 
 #ifdef MAME_DEBUG
-extern unsigned dasmpdp1(char *buffer, unsigned pc);
+unsigned pdp1_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 #endif /* _PDP1_H */

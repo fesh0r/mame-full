@@ -75,6 +75,11 @@ READ8_HANDLER( coco3_pia_1_r );
 void coco3_horizontal_sync_callback(int data);
 void coco3_field_sync_callback(int data);
 void coco3_gime_field_sync_callback(void);
+
+/* Compusense Dragon Plus board */
+READ8_HANDLER ( plus_reg_r );
+WRITE8_HANDLER ( plus_reg_w );
+
 READ8_HANDLER( dragon_alpha_mapped_irq_r );
 
 /* Dragon Alpha AY-8912 */

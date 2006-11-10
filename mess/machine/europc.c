@@ -1,4 +1,3 @@
-#include <time.h>
 #include "driver.h"
 #include "includes/europc.h"
 #include "machine/pcshare.h"
@@ -230,23 +229,18 @@ static struct {
 
 void europc_rtc_set_time(void)
 {
-	time_t t;
-	struct tm *tmtime;
+	mame_system_time systime;
 
-	t=time(NULL);
-	if (t==-1) return;
+	/* get the current date/time from the core */
+	mame_get_current_datetime(Machine, &systime);
 
-	tmtime=gmtime(&t);
+	europc_rtc.data[0] = dec_2_bcd(systime.utc_time.second);
+	europc_rtc.data[1] = dec_2_bcd(systime.utc_time.minute);
+	europc_rtc.data[2] = dec_2_bcd(systime.utc_time.hour);
 
-	europc_rtc.data[0]=dec_2_bcd(tmtime->tm_sec);
-	europc_rtc.data[1]=dec_2_bcd(tmtime->tm_min);
-	europc_rtc.data[2]=dec_2_bcd(tmtime->tm_hour);
-
-	europc_rtc.data[3]=dec_2_bcd(tmtime->tm_mday);
-	europc_rtc.data[4]=dec_2_bcd(tmtime->tm_mon+1);
-	europc_rtc.data[5]=dec_2_bcd(tmtime->tm_year%100);
-
-	// freeing of gmtime??
+	europc_rtc.data[3] = dec_2_bcd(systime.utc_time.mday);
+	europc_rtc.data[4] = dec_2_bcd(systime.utc_time.month + 1);
+	europc_rtc.data[5] = dec_2_bcd(systime.utc_time.year % 100);
 }
 
 static void europc_rtc_timer(int param)
@@ -334,12 +328,17 @@ static void europc_rtc_save_stream(mame_file *file)
 
 NVRAM_HANDLER( europc_rtc )
 {
-	if (file==NULL) {
-		// init only 
-//		europc_rtc_set_time();
-	} else if (read_or_write) {
+	if (file == NULL)
+	{
+		/* init only */
+		/* europc_rtc_set_time(); */
+	}
+	else if (read_or_write)
+	{
 		europc_rtc_save_stream(file);
-	} else {
+	}
+	else
+	{
 		europc_rtc_load_stream(file);
 		europc_rtc_set_time();
 	}

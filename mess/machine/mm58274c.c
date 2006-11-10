@@ -1,4 +1,7 @@
-/*
+/***************************************************************************
+
+	mm58274c.c
+
 	mm58274c emulation
 
 	Reference:
@@ -12,9 +15,9 @@
 	* Support interrupt pin output
 
 	Raphael Nabet, 2002
-*/
 
-#include <time.h>
+***************************************************************************/
+
 #include "mm58274c.h"
 
 static void rtc_interrupt_callback(int which);
@@ -89,40 +92,40 @@ void mm58274c_init(int which, int mode24)
 	rtc[which].interrupt_timer = timer_alloc(rtc_interrupt_callback);
 
 	{
-		/* Now we copy the host clock into the rtc */
-		/* All these functions should be ANSI */
-		time_t cur_time = time(NULL);
-		struct tm expanded_time = *localtime(& cur_time);
+		mame_system_time systime;
+		
+		/* get the current date/time from the core */
+		mame_get_current_datetime(Machine, &systime);
 
-		rtc[which].clk_set = expanded_time.tm_year & 3 << 2;
+		rtc[which].clk_set = systime.local_time.year & 3 << 2;
 		if (mode24)
 			rtc[which].clk_set |= clk_set_24;
 
 		/* The clock count starts on 1st January 1900 */
-		rtc[which].wday = expanded_time.tm_wday ? expanded_time.tm_wday : 7;
-		rtc[which].years1 = (expanded_time.tm_year / 10) % 10;
-		rtc[which].years2 = expanded_time.tm_year % 10;
-		rtc[which].months1 = (expanded_time.tm_mon + 1) / 10;
-		rtc[which].months2 = (expanded_time.tm_mon + 1) % 10;
-		rtc[which].days1 = expanded_time.tm_mday / 10;
-		rtc[which].days2 = expanded_time.tm_mday % 10;
+		rtc[which].wday = systime.local_time.weekday ? systime.local_time.weekday : 7;
+		rtc[which].years1 = (systime.local_time.year / 10) % 10;
+		rtc[which].years2 = systime.local_time.year % 10;
+		rtc[which].months1 = (systime.local_time.month + 1) / 10;
+		rtc[which].months2 = (systime.local_time.month + 1) % 10;
+		rtc[which].days1 = systime.local_time.mday / 10;
+		rtc[which].days2 = systime.local_time.mday % 10;
 		if (! mode24)
 		{
 			/* 12-hour mode */
-			if (expanded_time.tm_hour > 12)
+			if (systime.local_time.hour > 12)
 			{
-				expanded_time.tm_hour -= 12;
+				systime.local_time.hour -= 12;
 				rtc[which].clk_set |= clk_set_pm;
 			}
-			if (expanded_time.tm_hour == 0)
-				expanded_time.tm_hour = 12;
+			if (systime.local_time.hour == 0)
+				systime.local_time.hour = 12;
 		}
-		rtc[which].hours1 = expanded_time.tm_hour / 10;
-		rtc[which].hours2 = expanded_time.tm_hour % 10;
-		rtc[which].minutes1 = expanded_time.tm_min / 10;
-		rtc[which].minutes2 = expanded_time.tm_min % 10;
-		rtc[which].seconds1 = expanded_time.tm_sec / 10;
-		rtc[which].seconds2 = expanded_time.tm_sec % 10;
+		rtc[which].hours1 = systime.local_time.hour / 10;
+		rtc[which].hours2 = systime.local_time.hour % 10;
+		rtc[which].minutes1 = systime.local_time.minute / 10;
+		rtc[which].minutes2 = systime.local_time.minute % 10;
+		rtc[which].seconds1 = systime.local_time.second / 10;
+		rtc[which].seconds2 = systime.local_time.second % 10;
 		rtc[which].tenths = 0;
 	}
 }

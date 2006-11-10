@@ -815,16 +815,6 @@ static int apexc_execute(int cycles)
 	return cycles - apexc_ICount;
 }
 
-static unsigned apexc_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return DasmAPEXC(buffer,pc);
-#else
-	sprintf(buffer, "$%08X", cpu_readop(pc));
-	return 1;
-#endif
-}
-
 static void apexc_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -926,7 +916,9 @@ void apexc_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = apexc_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = apexc_dasm;			break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = apexc_dasm;		break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &apexc_ICount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = apexc_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = apexc_win_layout;				break;

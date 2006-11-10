@@ -19,12 +19,12 @@ INLINE void ea (void)
 
 #define IN if (ib) sprintf(buffer+strlen(buffer)," i")
 
-unsigned dasmpdp1 (char *buffer, unsigned _pc)
+unsigned pdp1_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int md;
 	int etime = 0;
 
-	md = READ_PDP_18BIT (_pc);
+	md = *((UINT32 *) oprom);
 
 	y = md & 07777;
 	ib = (md >> 12) & 1;			   /* */

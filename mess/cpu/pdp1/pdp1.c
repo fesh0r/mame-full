@@ -886,17 +886,6 @@ static int pdp1_execute(int cycles)
 }
 
 
-static unsigned pdp1_dasm (char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return dasmpdp1 (buffer, pc);
-#else
-	sprintf (buffer, "0%06o", READ_PDP_18BIT (pc));
-	return 1;
-#endif
-}
-
-
 static void pdp1_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -1059,7 +1048,9 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:						info->execute = pdp1_execute;			break;
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
-	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = pdp1_dasm;			break;
+#ifdef MAME_DEBUG
+	case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = pdp1_dasm;			break;
+#endif /* MAME_DEBUG */
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pdp1_ICount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pdp1_reg_layout;				break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pdp1_win_layout;				break;

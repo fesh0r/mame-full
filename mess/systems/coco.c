@@ -93,6 +93,28 @@ static ADDRESS_MAP_START( d64_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1, 0x3ff0)
 ADDRESS_MAP_END
 
+/* 
+	Dragon 64 with compusense Plus addon, this provided an extra 64K of memory
+	and an 80x25 column text display, provided by a motorola 6845.
+	
+	Currently only the memory is emulated.	
+*/
+
+static ADDRESS_MAP_START( d64_plus_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
+	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
+	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,pia_0_w)		AM_MIRROR(0x0018)
+	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,acia_6551_w)	AM_MIRROR(0x0018)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,pia_1_w)
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,	coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf) AM_NOP
+	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
+	AM_RANGE(0xffe0, 0xffe1) AM_NOP
+	AM_RANGE(0xffe2, 0xffe2) AM_READWRITE(plus_reg_r,plus_reg_w)	/* Dragon plus control / status reg */
+	AM_RANGE(0xffe3, 0xffef) AM_NOP
+	AM_RANGE(0xfff0, 0xffff) AM_ROM AM_REGION(REGION_CPU1,0x3ff0)
+ADDRESS_MAP_END
 
 /* 
 	The Dragon Alpha was a prototype in development when Dragon Data went bust, 
@@ -528,6 +550,29 @@ static MACHINE_DRIVER_START( dragon64 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( d64plus )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6809E, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_PROGRAM_MAP(d64_plus_map, 0)
+	MDRV_FRAMES_PER_SECOND(M6847_PAL_FRAMES_PER_SECOND)
+
+	MDRV_MACHINE_START( dragon64 )
+
+	/* video hardware */
+	MDRV_VIDEO_START(dragon)
+	MDRV_VIDEO_UPDATE(m6847)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(320, 25+192+26)
+	MDRV_VISIBLE_AREA(0, 319, 1, 239)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( dgnalpha )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809E, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
@@ -707,6 +752,13 @@ ROM_START(dragon32)
 ROM_END
 
 ROM_START(dragon64)
+	ROM_REGION(0x10000,REGION_CPU1,0)
+	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, CRC(60a4634c) SHA1(f119506eaa3b4b70b9aa0dd83761e8cbe043d042))
+	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, CRC(17893a42) SHA1(e3c8986bb1d44269c4587b04f1ca27a70b0aaa2e))
+	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
+ROM_END
+
+ROM_START(d64plus)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, CRC(60a4634c) SHA1(f119506eaa3b4b70b9aa0dd83761e8cbe043d042))
 	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, CRC(17893a42) SHA1(e3c8986bb1d44269c4587b04f1ca27a70b0aaa2e))
@@ -1052,6 +1104,11 @@ SYSTEM_CONFIG_START(dragon64)
 	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(d64plus)
+	CONFIG_IMPORT_FROM	( generic_dragon )
+	CONFIG_RAM_DEFAULT	(128 * 1024)		// 64K normal RAM + 64K on plus board.
+SYSTEM_CONFIG_END
+
 SYSTEM_CONFIG_START(tanodr64)
 	CONFIG_IMPORT_FROM	( generic_dragon )
 	CONFIG_RAM_DEFAULT	(64 * 1024)
@@ -1072,6 +1129,7 @@ COMP(  1986,	coco3p,		coco, 	0,		coco3p,		coco3,		0,		coco3,		"Tandy Radio Shack
 COMP(  19??,	coco3h,		coco,	0,		coco3h,		coco3,		0,		coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED)
 COMP(  1982,	dragon32,	coco,	0,		dragon32,	dragon32,	0,		dragon32,	"Dragon Data Ltd",    "Dragon 32" , 0)
 COMP(  1983,	dragon64,	coco,	0,		dragon64,	dragon32,	0,		dragon64,	"Dragon Data Ltd",    "Dragon 64" , 0)
+COMP(  1983,	d64plus,	coco,	0,	d64plus,	dragon32,	0,	d64plus,	"Dragon Data Ltd",    "Dragon 64 Plus" , 0)
 COMP(  1983,	tanodr64,	coco,	0,	tanodr64,	dragon32,	0,	tanodr64,	"Dragon Data Ltd/Tano Ltd","Tano Dragon 64 (NTSC)" , 0)
 COMP(  1984,	dgnalpha,	coco,	0,		dgnalpha,	dragon32,	0,		dgnalpha,	"Dragon Data Ltd",    "Dragon Alpha Prototype" , 0)
 COMP(  1984,	cp400,		coco, 	0,		coco,		coco,		0,		coco,		"Prologica",          "CP400" , 0)

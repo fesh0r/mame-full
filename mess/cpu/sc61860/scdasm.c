@@ -164,10 +164,9 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 	{ 0 }, { 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 }, { 0 },
 };
 
-unsigned sc61860_dasm(char *dst, unsigned oldpc)
+unsigned sc61860_dasm(char *dst, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-	int pc=oldpc;
-	int oper=PEEK_OP(pc++);
+	int oper=*(oprom++);
 	int t;
 	UINT16 adr;
 
@@ -179,34 +178,32 @@ unsigned sc61860_dasm(char *dst, unsigned oldpc)
 		switch(oper&0xe0) {
 		case 0xe0:
 			sprintf(dst,"%-6s%.4x",table[oper&0xe0].mnemonic,
-					PEEK_OP(pc++)|((oper&0x1f)<<8));
+					*(oprom++)|((oper&0x1f)<<8));
 			break;
 		default:
 			switch (table[oper].adr) {
 			case Ill: sprintf(dst,"?%.2x",oper);break;
 			case Imp: sprintf(dst,"%s",table[oper].mnemonic); break;
-			case Imm: sprintf(dst,"%-6s%.2x",table[oper].mnemonic, PEEK_OP(pc++)); break;
+			case Imm: sprintf(dst,"%-6s%.2x",table[oper].mnemonic, *(oprom++)); break;
 			case ImmW:
-				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
+				adr=(oprom[0]<<8)|oprom[1];oprom+=2;
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr);
 				break;
 			case Abs:
-				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
+				adr=(oprom[0]<<8)|oprom[1];oprom+=2;
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr);
 				break;
 			case RelM:
-				adr=pc-PEEK_OP(pc);
-				pc++;
+				adr=pc-*(oprom++);
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case RelP:
-				adr=pc+PEEK_OP(pc);
-				pc++;
+				adr=pc+*(oprom++);
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case Ptc:
-				t=PEEK_OP(pc++);
-				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
+				t=*(oprom++);
+				adr=(oprom[0]<<8)|oprom[1];oprom+=2;
 				sprintf(dst,"%-6s%.2x,%.4x",table[oper].mnemonic,t, adr);
 				break;
 			case Etc:
@@ -220,7 +217,7 @@ unsigned sc61860_dasm(char *dst, unsigned oldpc)
 		}
 		break;
 	}
-	return pc-oldpc;
+	return oprom - opram;
 }
 #endif	/* MAME_DEBUG */
 

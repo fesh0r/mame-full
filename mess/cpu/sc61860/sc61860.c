@@ -125,14 +125,6 @@ static void sc61860_reset(void)
 	change_pc(sc61860.pc);
 }
 
-#ifndef MAME_DEBUG
-static unsigned sc61860_dasm(char *buffer, unsigned pc)
-{
-	sprintf( buffer, "$%X", cpu_readop(pc) );
-	return 1;
-}
-#endif /* MAME_DEBUG */
-
 static void sc61860_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	sc61860.config = (SC61860_CONFIG *) config;
@@ -259,7 +251,9 @@ void sc61860_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = sc61860_reset;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = sc61860_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sc61860_dasm;					break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = sc61860_dasm;					break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sc61860_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sc61860_reg_layout;	break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sc61860_win_layout;	break;

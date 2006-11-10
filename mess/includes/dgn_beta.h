@@ -22,6 +22,8 @@
 #define ROMPageValue			0xFE		/* Page with boot ROM */
 #define IOPageValue			0xFF		/* Page with I/O & Boot ROM */
 
+#define TextVidBasePage			0x18		/* Base page of text video ram */
+
 /***** Keyboard stuff *****/
 #define	NoKeyrows			0x0a		/* Number of rows in keyboard */
 
@@ -38,6 +40,16 @@
 #define ENPCtrl				0x20		/* PA5 on PIA */
 #define DDenCtrl			0x40		/* PA6 on PIA */
 
+/***** Video Modes *****/
+
+typedef enum 
+{
+	TEXT_40x25,					/* Text mode 40x25 */
+	TEXT_80x25,					/* Text mode 80x25 */
+	GRAPH_320x256x4,				/* Graphics 320x256x4 */
+	GRAPH_320x256x16,				/* Graphics 320x256x16 */
+	GRAPH_640x512x2					/* Graphics 640X512X2 */
+} BETA_VID_MODES;
 	
 MACHINE_START( dgnbeta );
 
@@ -67,7 +79,12 @@ void dgnbeta_ram_bG_w(offs_t offset, UINT8 data);
 /* mc6845 video display generator */
 void init_video(void);
 extern VIDEO_UPDATE( dgnbeta );
-INTERRUPT_GEN( dgn_beta_frame_interrupt );
+//INTERRUPT_GEN( dgn_beta_frame_interrupt );
+
+void dgn_beta_frame_interrupt (int data);
+
+READ8_HANDLER(dgnbeta_6845_r);
+WRITE8_HANDLER(dgnbeta_6845_w);
 
 /*  WD2797 FDC */
 READ8_HANDLER(dgnbeta_wd2797_r);
