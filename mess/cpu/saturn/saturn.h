@@ -59,7 +59,7 @@ typedef struct
 } SATURN_CONFIG;
 
 #ifdef MAME_DEBUG
-unsigned saturn_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
+unsigned saturn_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif /* MAME_DEBUG */
 
 void saturn_get_info(UINT32 state, union cpuinfo *info);

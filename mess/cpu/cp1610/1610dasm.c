@@ -3,7 +3,7 @@
 #include "debugger.h"
 #include "cp1610.h"
 
-unsigned cp1610_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
+unsigned cp1610_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT16 op = oprom[0];
 	UINT16 subop;

@@ -54,8 +54,8 @@ INLINE void sm85cpu_mem_writeword( UINT32 address, UINT16 value )
 }
 
 #ifdef MAME_DEBUG
-extern unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes );
-#endif
+extern unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram );
+#endif /* MAME_DEBUG */
 
 #endif
 

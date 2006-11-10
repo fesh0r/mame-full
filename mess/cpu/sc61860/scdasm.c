@@ -164,7 +164,7 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 	{ 0 }, { 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 }, { 0 },
 };
 
-unsigned sc61860_dasm(char *dst, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned sc61860_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int oper=*(oprom++);
 	int t;

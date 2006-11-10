@@ -19,7 +19,7 @@ INLINE void ea (void)
 
 #define IN if (ib) sprintf(buffer+strlen(buffer)," i")
 
-unsigned pdp1_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned pdp1_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int md;
 	int etime = 0;

@@ -94,7 +94,7 @@ static UINT8 *system_rom;
 #endif /* MAME_DEBUG */
 
 #ifdef MAME_DEBUG
-static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif /* MAME_DEBUG */
 
 static READ8_HANDLER(d_pia0_pa_r);
@@ -1180,7 +1180,7 @@ static const char *os9syscalls[] =
 };
 
 
-static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	unsigned call;
 	unsigned result = 0;

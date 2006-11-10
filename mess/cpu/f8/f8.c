@@ -1891,8 +1891,8 @@ static void f8_set_context (void *src)
 }
 
 #ifdef MAME_DEBUG
-unsigned f8_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
-#endif
+unsigned f8_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 static void f8_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {

@@ -8,7 +8,7 @@ static const char *rname[16] = {
 	"R8", "J",  "HU", "HL", "KU", "KL", "QU", "QL"
 };
 
-unsigned f8_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes)
+unsigned f8_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT8 op = oprom[0];
 	UINT16 ea;

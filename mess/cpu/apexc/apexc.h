@@ -31,8 +31,8 @@ without danger */
 #endif
 
 #ifdef MAME_DEBUG
-unsigned apexc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
-#endif
+unsigned apexc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 #define apexc_readop(address)	apexc_readmem(address)
 

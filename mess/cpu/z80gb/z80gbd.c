@@ -214,7 +214,7 @@ static z80gbdasm mnemonic_main[256]= {
 
 static unsigned z80gb_get_reg(int reg) { union cpuinfo info; z80gb_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
-unsigned z80gb_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes )
+unsigned z80gb_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	z80gbdasm *d;
 	const char *symbol, *src;

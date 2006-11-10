@@ -50,7 +50,7 @@ typedef UINT32 DWORD;
 #include "v30mz.h"
 #include "necintrf.h"
 
-extern int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
+extern int necv_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size);
 
 /* NEC registers */
 typedef union

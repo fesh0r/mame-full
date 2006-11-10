@@ -1270,7 +1270,7 @@ static const int field_adr_a[]=
 static const int field_adr_b[]=
 { FieldP, FieldWP, FieldXS, FieldX, FieldS, FieldM, FieldB, FieldW };
 
-unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes)
+unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int adr=0;
 

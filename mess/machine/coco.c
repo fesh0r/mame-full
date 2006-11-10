@@ -183,7 +183,7 @@ static int is_Orch90(void);
 static int is_megacart(void);
 
 #ifdef MAME_DEBUG
-static offs_t coco_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes);
+static offs_t coco_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif /* MAME_DEBUG */
 
 
@@ -2747,7 +2747,7 @@ static const char *os9syscalls[] =
 };
 
 
-static offs_t coco_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int bytes)
+static offs_t coco_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	unsigned call;
 	unsigned result = 0;
