@@ -66,7 +66,6 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 8;
 			break;
 		case 0x28: 	// READ (10 byte)
-			cdrom_stop_audio(cdrom);
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<8 | pCmdBuf[8];
 
