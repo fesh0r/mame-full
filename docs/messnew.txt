@@ -13,7 +13,8 @@ System Driver Changes:
 - [ATVGA] Fixed lockups.  [Barry Rodewald]
 
 - [ATVGA] Fixed Video Display Disable bit and 256 color VGA for programs that
-  expect linear video memory.  [Barry Rodewald]
+  expect linear video memory, and implemented the Line Compare Register.
+  [Barry Rodewald]
 
 - [CPCPLUS] Changed FPS from 50 to 50.080128205128205.  [Barry Rodewald]
   

@@ -208,6 +208,7 @@ static struct
 
 	UINT8 miscellaneous_output;
 	UINT8 feature_control;
+	UINT16 line_compare;  // for split-screen use.
 
 	struct
 	{
@@ -705,7 +706,8 @@ static WRITE8_HANDLER(vga_crtc_w)
 					(vga.crtc.index < vga.svga_intf.crtc_regcount) ? "" : "?",
 					data);
 			}
-
+			if(vga.crtc.index == 0x18 || vga.crtc.index == 0x07 || vga.crtc.index == 0x19 ) // Line compare
+				vga.line_compare = (((vga.crtc.data[0x09] & 0x40) << 3) | ((vga.crtc.data[0x07] & 0x10) << 4) | vga.crtc.data[0x18])/2;
 			if (vga.crtc.index < vga.svga_intf.crtc_regcount)
 				vga.crtc.data[vga.crtc.index] = data;
 			break;
@@ -1028,6 +1030,14 @@ void pc_vga_reset(void)
    so I introduced the reset to switch to b8000 area */
 	vga.sequencer.data[4] = 0;
 	vga_cpu_interface();
+
+	vga.line_compare = 0x3ff;
+	// set CRTC register to match the line compare value
+	vga.crtc.data[0x18] = vga.line_compare & 0xff;
+	if(vga.line_compare & 0x100)
+		vga.crtc.data[0x07] |= 0x10;
+	if(vga.line_compare & 0x200)
+		vga.crtc.data[0x09] |= 0x40;
 }
 
 
@@ -1271,16 +1281,21 @@ static void vga_vh_ega(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int pos, line, column, c, addr;
+	int pos, line, column, c, addr, curr_addr;
 	UINT16 *bitmapline;
-
+	
+	curr_addr = 0;
 	if(vga.sequencer.data[4] & 0x08)
 	{
-		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH)
+		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH, curr_addr+=VGA_LINE_LENGTH)
 		{
+			if(line < (vga.line_compare & 0xff))
+				curr_addr = addr;
+			if(line == (vga.line_compare & 0xff))
+				curr_addr = 0;
 			bitmapline = (UINT16 *) bitmap->line[line];
 			addr %= vga.svga_intf.vram_size;
-			for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
+			for (pos=curr_addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
 			{
 				if(pos + 0x20 > vga.svga_intf.vram_size)
 					return;
@@ -1297,11 +1312,15 @@ static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 	else
 	{
-		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH/4)
+		for (addr = VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH/4, curr_addr+=VGA_LINE_LENGTH/4)
 		{
+			if(line < (vga.line_compare & 0xff))
+				curr_addr = addr;
+			if(line == (vga.line_compare & 0xff))
+				curr_addr = 0;
 			bitmapline = (UINT16 *) bitmap->line[line];
 			addr %= vga.svga_intf.vram_size;
-			for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x08)
+			for (pos=curr_addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x08)
 			{
 				if(pos + 0x08 > vga.svga_intf.vram_size)
 					return;
