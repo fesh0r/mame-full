@@ -166,7 +166,7 @@ static void dump_screenshot(int write_file)
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 			(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
 			current_testcase.name, screenshot_num);
-		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, buf, OPEN_FLAG_WRITE, &fp);
+		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, buf, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
 		if (filerr == FILERR_NONE)
 		{
 			screenmask = render_get_live_screens_mask();
@@ -185,9 +185,14 @@ static void dump_screenshot(int write_file)
 			}
 			else
 			{
-				report_message(MSG_INFO, "Could not save screenshot; no live screen");
+				report_message(MSG_FAILURE, "Could not save screenshot; no live screen");
 			}
 			mame_fclose(fp);
+		}
+		else
+		{
+			/* report the error */
+			report_message(MSG_FAILURE, "Could not save screenshot; error #%d", filerr);
 		}
 
 		if (screenshot_num >= 0)
