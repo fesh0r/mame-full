@@ -29,9 +29,10 @@ int win_write_config;
 //	LOCAL VARIABLES
 //============================================================
 
+static int added_device_options;
 static char *dev_dirs[IO_COUNT];
 
-const options_entry mess_opts[] =
+static const options_entry mess_opts[] =
 {
 	{ NULL,							NULL,   OPTION_HEADER,		"MESS SPECIFIC OPTIONS" },
 	{ "newui;nu",                   "1",    OPTION_BOOLEAN,		"use the new MESS UI" },
@@ -214,7 +215,7 @@ void win_add_mess_device_options(const game_driver *gamedrv)
 		// add a separator
 		opts = auto_malloc(sizeof(*opts) * 2);
 		memset(opts, 0, sizeof(*opts) * 2);
-		opts[0].name = "MESS devices";
+		opts[0].description = "MESS DEVICES";
 		opts[0].flags = OPTION_HEADER;
 		options_add_entries(opts);
 
@@ -389,13 +390,24 @@ void win_mess_extract_options(void)
 
 
 
-void win_mess_driver_name_callback(const char *arg)
+static void win_mess_driver_name_callback(const char *arg)
 {
 	int drvnum;
-	drvnum = driver_get_index(arg);
-	if (drvnum >= 0)
-		win_add_mess_device_options(drivers[drvnum]);
+
+	if (!added_device_options)
+	{
+		drvnum = driver_get_index(arg);
+		if (drvnum >= 0)
+			win_add_mess_device_options(drivers[drvnum]);
+		added_device_options = TRUE;
+	}
 }
 
 
 
+void win_mess_options_init(void)
+{
+	added_device_options = FALSE;
+	options_add_entries(mess_opts);
+	options_set_option_callback(OPTION_UNADORNED(0), win_mess_driver_name_callback);
+}
