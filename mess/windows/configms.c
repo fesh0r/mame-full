@@ -68,7 +68,7 @@ int write_config(const char* filename, const game_driver *gamedrv)
 		filename = buffer;
 	}
 
-	filerr = mame_fopen(SEARCHPATH_INI, buffer, OPEN_FLAG_WRITE, &f);
+	filerr = mame_fopen(SEARCHPATH_INI, buffer, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &f);
 	if (filerr != FILERR_NONE)
 		goto done;
 
