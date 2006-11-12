@@ -286,7 +286,7 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 		zip_entry_name = T2A(pFileInfo->pszZipEntryName);
 
 		ziperr = zip_file_open(T2A(pszZipName), &zip);
-		if (ziperr != ZIPERR_NONE)
+		if (ziperr == ZIPERR_NONE)
 		{
 			zipent = zip_file_first_file(zip);
 			while(!rc && zipent)
@@ -297,7 +297,7 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 					if (pBuffer)
 					{
 						ziperr = zip_file_decompress(zip, pBuffer, zipent->uncompressed_length);
-						if (ziperr != ZIPERR_NONE)
+						if (ziperr == ZIPERR_NONE)
 						{
 							ComputeFileHash(pPickerInfo, pFileInfo, pBuffer, zipent->uncompressed_length);
 							rc = TRUE;
@@ -522,7 +522,7 @@ static BOOL SoftwarePicker_InternalAddFile(HWND hwndPicker, LPCTSTR pszFilename,
 	if (s && (!_tcsicmp(s, TEXT(".zip"))))
 	{
 		ziperr = zip_file_open(pszFilename, &pZip);
-		if (ziperr != ZIPERR_NONE)
+		if (ziperr  == ZIPERR_NONE)
 		{
 			pZipEnt = zip_file_first_file(pZip);
 			while(rc && pZipEnt)
