@@ -48,7 +48,7 @@
 #define IWM_Q7		0x80
 
 
-static UINT8 applefdc_writebyte;
+static UINT8 applefdc_writebyte=0;
 static UINT8 applefdc_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
 /*
@@ -351,7 +351,15 @@ UINT8 applefdc_r(offs_t offset)
 			switch(offset)
 			{
 				case 0x0C:
-					result = applefdc_read_reg(0);
+					if (applefdc_lines & IWM_Q7)
+					{
+						if (iwm_intf.write_data)
+							iwm_intf.write_data(applefdc_writebyte);
+						result = 0;
+					}
+					else
+						result = applefdc_read_reg(0);
+						
 					break;
 				case 0x0D:
 					result = applefdc_read_reg(IWM_Q6);
