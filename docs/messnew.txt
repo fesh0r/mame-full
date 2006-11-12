@@ -25,6 +25,8 @@ System Driver Changes:
 
 - [GBCOLOR] Added double speed mode support.  (bug #300) [Wilbert Pol]
 
+- [MPF1] New artwork.  [Giel van Schijndel]
+
 - [PC1512/1640] Fixed Amstrad keyboard.  [Andrew Jenner]
 
 - [SPECTRUM] Fixed snapshot loading regression introduced in 0.105.  [Chad]
