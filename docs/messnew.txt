@@ -25,7 +25,7 @@ System Driver Changes:
 
 - [GBCOLOR] Added double speed mode support.  (bug #300) [Wilbert Pol]
 
-- [MPF1] New artwork.  [Giel van Schijndel]
+- [MPF1] New artwork.  (bug #964) [Giel van Schijndel]
 
 - [PC1512/1640] Fixed Amstrad keyboard.  [Andrew Jenner]
 
