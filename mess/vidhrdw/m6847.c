@@ -74,7 +74,7 @@
 #define LOG_FS			0
 #define LOG_HS			0
 #define LOG_STATS		0
-#define LOG_PREPARE		1
+#define LOG_PREPARE		0
 
 typedef struct _m6847_variant m6847_variant;
 struct _m6847_variant
