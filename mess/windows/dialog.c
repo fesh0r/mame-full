@@ -1098,6 +1098,43 @@ static void seqselect_settext(HWND editwnd)
 
 
 //============================================================
+//	seqselect_read_from_main_thread
+//============================================================
+
+static void seqselect_read_from_main_thread(void *param)
+{
+	struct seqselect_stuff *stuff;
+	LONG_PTR lp;
+	HWND editwnd;
+	int ret;
+
+	// get the basics
+	editwnd = (HWND) param;
+	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	stuff = (struct seqselect_stuff *) lp;
+
+	// the Win32 OSD code thinks that we are paused, we need to temporarily
+	// unpause ourselves or else we will block
+	winwindow_ui_pause_from_main_thread(FALSE);
+
+	// we are in the middle of selecting a seq; we need to poll
+	wininput_poll();
+
+	ret = seq_read_async(&stuff->newcode, stuff->record_first_insert);
+	if (ret >= 0)
+	{
+		stuff->record_first_insert = ret != 0;
+		seqselect_settext(editwnd);
+		seq_read_async_start(stuff->is_analog);
+	}
+
+	// repause the OSD code
+	winwindow_ui_pause_from_main_thread(TRUE);
+}
+
+
+
+//============================================================
 //	seqselect_wndproc
 //============================================================
 
@@ -1125,16 +1162,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	case WM_TIMER:
 		if (wparam == TIMER_ID)
 		{
-			// we are in the middle of selecting a seq; we need to poll
-			wininput_poll();
-
-			ret = seq_read_async(&stuff->newcode, stuff->record_first_insert);
-			if (ret >= 0)
-			{
-				stuff->record_first_insert = ret != 0;
-				seqselect_settext(editwnd);
-				seq_read_async_start(stuff->is_analog);
-			}
+			winwindow_ui_exec_on_main_thread(seqselect_read_from_main_thread, (void *) editwnd);
 			result = 0;
 			call_baseclass = FALSE;
 		}

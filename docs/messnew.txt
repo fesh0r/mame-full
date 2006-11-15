@@ -10,6 +10,9 @@ System Driver Changes:
 ----------------------
 - [APPLE2] Fixed stray C06x reads. [Chad]
 
+- [APPLE2] Fixed write support on 5.25" drives under certain situations.
+  [Chad]
+
 - [ATVGA] Fixed lockups.  [Barry Rodewald]
 
 - [ATVGA] Fixed Video Display Disable bit and 256 color VGA for programs that
@@ -40,6 +43,8 @@ User Interface Changes:
 -----------------------
 - Changed base help message, to reflect the actual command line options
   available.  [Nate Woods]
+
+- [Windows] Fixed customize input dialogs.  [Nate Woods]
 
 - [Windows GUI] Fixed a bug that could cause changes in the device view to
   not be reflected in the picker.  [Nate Woods]
