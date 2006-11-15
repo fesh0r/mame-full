@@ -1144,7 +1144,6 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	INT_PTR result = 0;
 	LONG_PTR lp;
 	BOOL call_baseclass = TRUE;
-	int ret;
 
 	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
 	stuff = (struct seqselect_stuff *) lp;

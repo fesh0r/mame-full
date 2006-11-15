@@ -8,7 +8,7 @@
 //============================================================
 
 #define LOG_THREADS			0
-#define LOG_TEMP_PAUSE		1
+#define LOG_TEMP_PAUSE		0
 
 // Needed for RAW Input
 #define _WIN32_WINNT 0x501
@@ -966,7 +966,7 @@ void winwindow_ui_pause_from_window_thread(int pause)
 
 
 //============================================================
-//  winwindow_ui_is_paused
+//  winwindow_ui_exec_on_main_thread
 //  (window thread)
 //============================================================
 
