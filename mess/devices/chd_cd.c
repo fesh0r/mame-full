@@ -107,11 +107,11 @@ int chdcd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 co
 
 
 
-chd_file *chdcd_open_ref(void *ref, int writeable, chd_file *parent)
+chd_error chdcd_open_ref(void *ref, int mode, chd_file *parent, chd_file **chd)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
-	return chd_open(filename, writeable, parent);
+	return chd_open(filename, mode, parent, chd);
 }
 
 
@@ -234,7 +234,7 @@ int device_init_mess_cd(mess_image *image)
 /*************************************
  *
  *	device_load_mess_cd()
- *  	device_create_mess_cd()
+ *	device_create_mess_cd()
  *
  *	Device load and create
  *
@@ -242,7 +242,7 @@ int device_init_mess_cd(mess_image *image)
 
 static int internal_load_mess_cd(mess_image *image, const char *metadata)
 {
-	int err = 0;
+	chd_error err = 0;
 	struct mess_cd *cd;
 	chd_file *chd;
 	int id = image_index_in_device(image);
@@ -250,9 +250,8 @@ static int internal_load_mess_cd(mess_image *image, const char *metadata)
 	cd = get_drive(image);
 
 	/* open the CHD file */
-	chd = chdcd_open_ref(image, 0, NULL);	// CDs are never writable
-
-	if (!chd)
+	err = chdcd_open_ref(image, CHD_OPEN_READ, NULL, &chd);	/* CDs are never writable */
+	if (err)
 		goto error;
 
 	/* open the CD-ROM file */
@@ -266,8 +265,6 @@ static int internal_load_mess_cd(mess_image *image, const char *metadata)
 error:
 	if (chd)
 		chd_close(chd);
-
-	err = chd_get_last_error();
 	if (err)
 		image_seterror(image, IMAGE_ERROR_UNSPECIFIED, chd_get_error_string(err));
 	return INIT_FAIL;

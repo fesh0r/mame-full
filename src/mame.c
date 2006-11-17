@@ -1110,6 +1110,7 @@ static running_machine *create_machine(int game)
 	machine->drv = malloc(sizeof(*machine->drv));
 	if (machine->drv == NULL)
 		goto error;
+	machine->basename = mame_strdup(machine->gamedrv->name);
 	expand_machine_driver(machine->gamedrv->drv, (machine_config *)machine->drv);
 
 	/* allocate the driver data */
@@ -1162,6 +1163,8 @@ static void destroy_machine(running_machine *machine)
 		free((machine_config *)machine->drv);
 	if (machine->mame_data != NULL)
 		free(machine->mame_data);
+	if (machine->basename != NULL)
+		free((void *)machine->basename);
 	free(machine);
 	Machine = NULL;
 }
@@ -1562,6 +1565,7 @@ static void get_tm_time(struct tm *t, mame_system_tm *systm)
 	systm->minute	= t->tm_min;
 	systm->hour		= t->tm_hour;
 	systm->mday		= t->tm_mday;
+	systm->month	= t->tm_mon;
 	systm->year		= t->tm_year + 1900;
 	systm->weekday	= t->tm_wday;
 	systm->day		= t->tm_yday;

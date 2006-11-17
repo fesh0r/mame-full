@@ -31,12 +31,18 @@ enum
 
 
 
-static imgtoolerr_t imghd_chd_getlasterror(void)
+/* this should not be necessary, but I'd rather introduce a spectacular rather
+ * than a subtle crash */
+static void chd_save_interface(chd_interface *intf)
 {
-	int chderr;
-	imgtoolerr_t err;
+	memset(intf, 0, sizeof(*intf));
+}
 
-	chderr = chd_get_last_error();
+
+
+static imgtoolerr_t map_chd_error(chd_error chderr)
+{
+	imgtoolerr_t err;
 
 	switch(chderr)
 	{
@@ -224,15 +230,15 @@ imgtoolerr_t imghd_create(imgtool_stream *stream, UINT32 hunksize, UINT32 cylind
 	rc = chd_create(encoded_image_ref, logicalbytes, hunksize, CHDCOMPRESSION_NONE, NULL);
 	if (rc != CHDERR_NONE)
 	{
-		err = imghd_chd_getlasterror();
+		err = map_chd_error(rc);
 		goto done;
 	}
 
 	/* open the new hard drive */
-	chd = chd_open(encoded_image_ref, 1, NULL);
-	if (!chd)
+	rc = chd_open(encoded_image_ref, CHD_OPEN_READWRITE, NULL, &chd);
+	if (rc != CHDERR_NONE)
 	{
-		err = imghd_chd_getlasterror();
+		err = map_chd_error(rc);
 		goto done;
 	}
 
@@ -241,7 +247,7 @@ imgtoolerr_t imghd_create(imgtool_stream *stream, UINT32 hunksize, UINT32 cylind
 	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
 	if (rc != CHDERR_NONE)
 	{
-		err = imghd_chd_getlasterror();
+		err = map_chd_error(rc);
 		goto done;
 	}
 
@@ -258,7 +264,8 @@ imgtoolerr_t imghd_create(imgtool_stream *stream, UINT32 hunksize, UINT32 cylind
 	totalhunks = (logicalbytes + hunksize - 1) / hunksize;
 	for (hunknum = 0; hunknum < totalhunks; hunknum++)
 	{
-		if (chd_write(chd, hunknum, 1, cache) != 1)
+		rc = chd_write(chd, hunknum, cache);
+		if (rc)
 		{
 			err = IMGTOOLERR_WRITEERROR;
 			goto done;
@@ -284,6 +291,7 @@ done:
 */
 imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard_disk)
 {
+	chd_error chderr;
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	char encoded_image_ref[encoded_image_ref_max_len];
 	chd_interface interface_save;
@@ -296,10 +304,10 @@ imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
 
-	hard_disk->chd = chd_open(encoded_image_ref, !stream_isreadonly(stream), NULL);
-	if (!hard_disk->chd)
+	chderr = chd_open(encoded_image_ref, stream_isreadonly(stream) ? CHD_OPEN_READ : CHD_OPEN_READWRITE, NULL, &hard_disk->chd);
+	if (chderr)
 	{
-		err = imghd_chd_getlasterror();
+		err = map_chd_error(chderr);
 		goto done;
 	}
 
@@ -365,7 +373,7 @@ imgtoolerr_t imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT
 	reply = hard_disk_read(disk->hard_disk, lbasector, numsectors, buffer);
 	chd_set_interface(&interface_save);
 
-	return reply ? IMGTOOLERR_SUCCESS : imghd_chd_getlasterror();
+	return reply ? IMGTOOLERR_SUCCESS : map_chd_error(reply);
 }
 
 
@@ -385,7 +393,7 @@ imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UIN
 	reply = hard_disk_write(disk->hard_disk, lbasector, numsectors, buffer);
 	chd_set_interface(&interface_save);
 
-	return reply ? IMGTOOLERR_SUCCESS : imghd_chd_getlasterror();
+	return reply ? IMGTOOLERR_SUCCESS : map_chd_error(reply);
 }
 
 

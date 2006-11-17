@@ -121,11 +121,11 @@ int chd_create_ref(void *ref, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 comp
 
 
 
-chd_file *chd_open_ref(void *ref, int writeable, chd_file *parent)
+chd_error chd_open_ref(void *ref, int mode, chd_file *parent, chd_file **chd)
 {
 	char filename[ENCODED_IMAGE_REF_LEN];
 	encode_ptr(ref, filename);
-	return chd_open(filename, writeable, parent);
+	return chd_open(filename, mode, parent, chd);
 }
 
 
@@ -266,7 +266,7 @@ int device_init_mess_hd(mess_image *image)
 
 static int internal_load_mess_hd(mess_image *image, const char *metadata)
 {
-	int err = 0;
+	chd_error err = 0;
 	struct mess_hd *hd;
 	chd_file *chd;
 	int is_writeable;
@@ -278,12 +278,10 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	do
 	{
 		is_writeable = image_is_writable(image);
-		chd = chd_open_ref(image, is_writeable, NULL);
+		err = chd_open_ref(image, is_writeable ? CHD_OPEN_READWRITE : CHD_OPEN_READ, NULL, &chd);
 
 		if (!chd)
 		{
-			err = chd_get_last_error();
-
 			/* special case; if we get CHDERR_FILE_NOT_WRITEABLE, make the
 			 * image read only and repeat */
 			if (err == CHDERR_FILE_NOT_WRITEABLE)
@@ -292,33 +290,32 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	}
 	while(!chd && is_writeable && (err == CHDERR_FILE_NOT_WRITEABLE));
 	if (!chd)
-		goto error;
+		goto done;
 
 	/* if we created the image and hence, have metadata to set, set the metadata */
 	if (metadata)
 	{
 		err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
 		if (err != CHDERR_NONE)
-			goto error;
+			goto done;
 	}
 
 	/* open the hard disk file */
 	hd->hard_disk_handle = hard_disk_open(chd);
 	if (!hd->hard_disk_handle)
-		goto error;
+		goto done;
 
 	drive_handles[id] = hd->hard_disk_handle;
 
-	return INIT_PASS;
-
-error:
-	if (chd)
-		chd_close(chd);
-
-	err = chd_get_last_error();
+done:
 	if (err)
+	{
+		if (chd)
+			chd_close(chd);
+
 		image_seterror(image, IMAGE_ERROR_UNSPECIFIED, chd_get_error_string(err));
-	return INIT_FAIL;
+	}
+	return err ? INIT_FAIL : INIT_PASS;
 }
 
 

@@ -865,7 +865,7 @@ layout_file *layout_file_load(const char *dirname, const char *filename)
 		mame_file *layoutfile;
 		char *fname;
 
-		if (dirname)
+		if (dirname != NULL)
 			fname = assemble_4_strings(dirname, PATH_SEPARATOR, filename, ".lay");
 		else
 			fname = assemble_2_strings(filename, ".lay");
