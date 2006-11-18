@@ -92,6 +92,7 @@ static UINT8 coco3_mmu[16];
 static UINT8 coco3_interupt_line;
 static UINT8 gime_firq, gime_irq;
 static int cart_line, cart_inserted;
+static int dclg_state;
 static UINT16 cart_bank_size;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
@@ -100,6 +101,7 @@ static READ8_HANDLER ( d_pia1_cb1_r );
 static READ8_HANDLER ( d_pia1_pa_r );
 static READ8_HANDLER ( d_pia1_pb_r_coco );
 static READ8_HANDLER ( d_pia1_pb_r_coco2 );
+static READ8_HANDLER ( d_pia1_pa_r_coco3 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
 static WRITE8_HANDLER ( d_pia0_pb_w );
 static WRITE8_HANDLER ( dragon64_pia1_pb_w );
@@ -275,7 +277,7 @@ static const pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ 0, d_pia1_pb_r_coco2, 0, 0, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r_coco3, d_pia1_pb_r_coco2, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, coco3_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
@@ -903,7 +905,8 @@ typedef enum
 	JOYSTICKMODE_NORMAL			= 0x00,
 	JOYSTICKMODE_HIRES			= 0x10,
 	JOYSTICKMODE_HIRES_CC3MAX	= 0x30,
-	JOYSTICKMODE_RAT			= 0x20
+	JOYSTICKMODE_RAT			= 0x20,
+	JOYSTICKMODE_DCLG           = 0x40
 } joystick_mode_t;
 
 static joystick_mode_t joystick_mode(void)
@@ -1286,12 +1289,29 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	 *    1:	Serial out (CoCo), Printer strobe (Dragon)
 	 */
 	UINT8 dac = pia_get_output_a(1) & 0xFC;
-
+	static int dclg_previous_bit;
+	
 	coco_sound_update();
 	coco_update_keyboard();
 
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(dac >= 0x80);
+	else if( joystick_mode() == JOYSTICKMODE_DCLG )
+	{
+		int dclg_this_bit = ((data & 2) >> 1);
+		
+		if( dclg_previous_bit == 1 )
+		{
+			if( dclg_this_bit == 0 )
+			{
+				/* Clock Diecom Light gun interface on a high to low transistion */
+				dclg_state++;
+				dclg_state &= 0x0f;
+			}
+		}
+
+		dclg_previous_bit = dclg_this_bit;
+	}
 	else
 		cassette_output(cassette_device_image(), ((int) dac - 0x80) / 128.0);
 
@@ -1535,7 +1555,66 @@ static READ8_HANDLER ( d_pia1_pb_r_coco )
 	return result;
 }
 
+static READ8_HANDLER ( d_pia1_pa_r_coco3 )
+{
+	int result;
+	int joystick;
+	
+	result = pia_get_output_a(0);
+	joystick = pia_get_output_cb2(0);
+	
+	if( (joystick_mode() == JOYSTICKMODE_DCLG) && (!joystick) )
+	{
+		int dclg_output;
+		static const int dclg_table[] = {0, 14, 30, 49 };
+		UINT8 dac;
+		int joystick_axis;
+		static int dclg_timer;
+		
+		dclg_output = 0;
+		dac = pia_get_output_a(1) >> 2;
+		joystick_axis = pia_get_output_ca2(0);
+		
+		/* Diecom light gun interface */
+		if( joystick_axis )
+		{
+			if( dclg_state == 15 )
+				dclg_output |= 0x01;
+			
+			if( dclg_state == 7 )
+			{	
+				if( cpu_getscanline() == readinputportbytag("dclg_y") )
+				{
+					dclg_output |= 0x02;
+					dclg_timer = readinputportbytag("dclg_x") << 1;
+				}
+			}
+		}
+		else
+		{
+			if( (dclg_state > 7) && (dclg_state < 16 ) )
+			{
+				/* bit shift timer data on state 8 thru 15 */
+				if( ((dclg_timer >> (dclg_state-8+1)) & 0x01) == 1 )
+					dclg_output |= 0x01;
+				
+				/* Bit 9 of timer is only avaiable if state == 8*/
+				if( dclg_state == 8 )
+				{
+					if( ((dclg_timer >> 9) & 0x01) == 1 )
+						dclg_output |= 0x02;
+				}
+			}
+		}
 
+		if (dac <= dclg_table[dclg_output] )
+			result |= 0x80;
+		else
+			result &= ~0x80;
+	}
+	
+	return result;
+}
 
 static READ8_HANDLER ( d_pia1_pb_r_coco2 )
 {

@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [COCO] Implemented Diecom Light Gun Adapter.  (bug #971) [Tim Lindner]
+
 - [SVISION] Fixed the aspect ratio.  [Peter Trauner]
 
 
