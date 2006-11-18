@@ -13,6 +13,7 @@
 #include "includes/svision.h"
 #include "devices/cartslot.h"
 
+#include "svision.lh"
 /*
 supervision
 watara
@@ -337,6 +338,7 @@ static MACHINE_DRIVER_START( svision )
 	MDRV_PALETTE_INIT( svision )
 
 	MDRV_VIDEO_UPDATE( svision )
+	MDRV_DEFAULT_LAYOUT(layout_svision)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

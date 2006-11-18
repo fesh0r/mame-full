@@ -1108,6 +1108,7 @@ $(OBJ)/render.o:	$(OBJ)/mess/layout/horizont.lh \
 
 
 $(OBJ)/mess/systems/coco.o:	$(OBJ)/mess/layout/coco3.lh
+$(OBJ)/mess/systems/svision.o:	$(OBJ)/mess/layout/svision.lh
 
 
 
