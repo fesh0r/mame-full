@@ -10552,6 +10552,11 @@ is internally similar to the TO7, and fully compatible.
 
 See the to7 driver for more information.
 
+
+Links:
+
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -10574,7 +10579,7 @@ Features:
 
 * Video: 320x200, 8 fixed colors (with proximity constraints)
 
-* Sound: 1-bit buzzer + 6-bit DAC extension
+* Sound: 1-bit buzzer + 6-bit DAC extension + speech synthesis extension
 
 * Keyboard: AZERTY 58-keys French keyboard, with accents
 
@@ -10586,8 +10591,7 @@ Features:
 
 * Cassette: 900 bauds
 
-* Floppies: up to 4 external drives, 3 different controllers for 
-            2"8 (50 KB), 3"1/2 (320 KB), and 5"1/4 (80 KB or 160 KB) floppies
+* Floppies: up to 4 external drives, 3 different controllers for 2"8 (50 KB), 3"1/2 (320 KB), and 5"1/4 (80 KB or 160 KB) floppies
 
 * Printer port (CENTRONICS)
 
@@ -10631,7 +10635,7 @@ really try both (do not forget to rewind between two retries).
 Also, if you have the BASIC DOS loaded (see below), you must now type
 respectively RUN"CASS:" and LOADM"CASS:",,R because the default device will
 be the floppy drive 0 instead of the cassette reader.
-Then, be patient. TO7 tapes are slow: 900 bauds (you can put throttling on).
+Then, be patient. TO7 tapes are slow: 900 bauds (you can put throttling off).
 
 Two cassette image formats are recognized: .k7 and .wav. The .wav format is
 simply the raw sound signal. .k7 have been preprocessed and decoded into
@@ -10671,7 +10675,7 @@ or require a specific DOS boot disk (e.g., Logo, Forth).
 
 Keyboard.
 
-Here is the visual layout of the keyboard:
+Here is the visual layout of the keyboard.
 
   STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0  -=  +;  ACC      UP  DOWN
 
@@ -10714,6 +10718,8 @@ Known Issues:
 
 * Network extension is not emulated
 
+* Speech synthesis sounds terrible
+
 
 History and Trivia:
 
@@ -10737,37 +10743,29 @@ Many TO7 were actually distributed with the T9000 ROM and have a T9000 startup
 menu!
 
 
-Links: (most are in French)
+Links:
 
-* FunzyTo7: first T9000, TO7, TO7/70 emulator ever
-  http://www.sylvain-huet.com/hacks
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
-  
-* Christophe's Lair: software and documentations
-  http://lair.thomsonistes.org
+* FunzyTo7: first T9000, TO7, TO7/70 emulator ever - http://www.sylvain-huet.com/hacks
 
-* Collection Thomson: technical documentations and a few original software
-  http://gfournier.free.fr
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr  
 
-* Logiciels MOTO: software and links
-  http://www.logicielsmoto.com
+* Christophe's Lair: software and documentations - http://lair.thomsonistes.org
 
-* Serveur 87: software and technical documentation
-  http://serveur87thomson.free.fr
+* Collection Thomson: technical documentations and a few original software - http://gfournier.free.fr
 
-* MO5.COM: links, buy and sell Thomson computers
-  http://www.mo5.com
+* Logiciels MOTO: software and links - http://www.logicielsmoto.com
 
-* Contacthoms: fan site
-  http://a.contacthoms.free.fr
+* Serveur 87: software and technical documentation - http://serveur87thomson.free.fr
 
-* ToNew: site dedicated to Thomson computers 
-  http://membres.lycos.fr/tonews
+* MO5.COM: links, buy and sell Thomson computers - http://www.mo5.com
 
-* Paris-Thoms: another fan site
-  http://paris-thoms.perso.cegetel.net
+* Contacthoms: fan site - http://a.contacthoms.free.fr
+
+* ToNew: site dedicated to Thomson computers -  http://membres.lycos.fr/tonews
+
+* Paris-Thoms: another fan site - http://paris-thoms.perso.cegetel.net
 
 $end
 
@@ -10787,7 +10785,7 @@ The TO7/70 supports virtually all TO7 software, devices, and extensions
 
 Features:
 
-We only show the differences with respect to the TO7:
+We only show the differences with respect to the TO7.
 
 * RAM: 48 KB base + 64 KB extension = 96 KB
 
@@ -10827,7 +10825,8 @@ in machine code, and so, can access all colors and RAM this way).
 Keyboard.
 
 The TO7/70 keyboard is identical to the TO7 one. In addition, the ACC key can be
-followed by 6, 7, 8, 9, or 0 to typeset é, è, ù, ç, and à directly.
+followed by 6, 7, 8, 9, or 0 to typeset eacute, egrave, ugrave, ccedilla, 
+and agrave directly.
 
 
 History and Trivia:
@@ -10846,11 +10845,11 @@ The TO7/70 has a large library of games and educational software.
 
 Links:
 
-* Thom: TO7/70-only emulator based on Funzy
-  http://nostalgies.thomsonistes.org/thom_home.html
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* Thom: TO7/70-only emulator based on Funzy - http://nostalgies.thomsonistes.org/thom_home.html
+
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
 
 * See the information for the to7 system for more links.
 
@@ -10880,6 +10879,11 @@ in Arabic mode, CTRL+E and CTRL+X typeset in-line Latin.
 
 See the to770 driver for more informations.
 
+
+Links:
+
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -10906,7 +10910,7 @@ Features:
 
 * Video: 320x200, 16 fixed colors (with proximity constraints)
 
-* Sound: 1-bit buzzer + 6-bit DAC extension
+* Sound: 1-bit buzzer + 6-bit DAC extension + speech synthesis extension
 
 * Keyboard: AZERTY 58-keys French keyboard, with accents
 
@@ -10946,7 +10950,7 @@ code programs) at the BASIC prompt. Using the wrong option will get you
 an error, so, you should try both.
 Cassette images can be raw sound files (.wav) or demodulates byte streams
 (.k5 or .k7).
-Cassettes are slow, be patient (or put on throttling).
+Cassettes are slow, be patient (or put off throttling).
 See the to7 driver for more informations.
 IMPORTANT NOTES: the cassette encoding is different and incompatible with that
 of the TO7, TO7/70. You cannot read TO7 .wav or .k7 files on a MO5.
@@ -10957,7 +10961,7 @@ work better. Cassettes are always saved in .wav format.
 Floppies.
 
 Floppies are used in the same way as for the TO7.
-Here is a quick checklist (see the to7 driver for more informations):
+Here is a quick checklist (see the to7 driver for more informations).
 1) make sure the relevant floppy controller is emulated (see MESS's
 in-game configuration menu, reset if required), 2) insert the MO5 BASIC DOS
 boot disk (not the TO7 one) in drive -flop0 before starting the emulator,
@@ -10971,7 +10975,7 @@ be runnable (except pure BASIC programs).
 
 Keyboard.
 
-It is similar to the TO7/70 one:
+It is similar to the TO7/70 one.
 
   STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0  -=  +;  ACC      UP  DOWN
 
@@ -10996,6 +11000,8 @@ Known Issues:
   prefer .wav files (yes, I know, the opposite was true for the TO7!)
 
 * Features not implemented: RS232 and network.
+
+* Speech synthesis sounds terrible
 
 
 History and Trivia:
@@ -11052,11 +11058,11 @@ they cannot be run on a TO7.
 
 Links:
 
-* Emul5: is a MO5-only emulator
-  http://emul5.thomsonistes.org
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* Emul5: is a MO5-only emulator - http://emul5.thomsonistes.org
+
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
 
 * See the information for the to7 system for generic Thomson links
 
@@ -11079,7 +11085,7 @@ Please see the mo5 driver for most usage information.
 
 Keyboard.
 
-We emulate the QWERTY version of the MO5E:
+We emulate the QWERTY version of the MO5E.
 
   STOP  1!  2"  3#  4$  5%  6&  7'  8(  9)  0£ -=  +;  ACC      UP  DOWN
 
@@ -11105,6 +11111,11 @@ Apart form the slightly different BIOS and BASIC ROM, it is internally
 identical to the MO5, and fully compatible.
 
 It seems that the MO5E was mainly exported to Germany.
+
+
+Links:
+
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
 
 $end
 
@@ -11148,7 +11159,7 @@ Features:
 
 * Palette: 16 colors to be chosen among 4096.
 
-* Sound: 1-bit buzzer + 6-bit DAC extension
+* Sound: 1-bit buzzer + 6-bit DAC extension + speech synthesis extension
 
 * Keyboard: AZERTY 81-keys, French with accents, keypad & function keys
 
@@ -11232,15 +11243,16 @@ The keyboard is AZERTY, with a keypad, a CAPS-LOCK key and function keys.
 
   F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
 
-  #@   *1  é2  "3  '4  (5  _6  è7  !8  ç9  à0  )°  -\  =+  ACC       UP           7   8   9
+  #@   *1  e2  "3  '4  (5  _6  e7  !8  c9  a0  )°  -\  =+  ACC       UP           7   8   9
 
  STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&    ENTER  LEFT  RIGHT      4   5   6
 
- CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN          1   2   3
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   u%  ]}            DOWN          1   2   3
 
 CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  SHIFT   HOME   INS  DEL        0   .  ENT
 
                   SPACE
+
 
 As for modern AZERTY keyboards, SHIFT must be hold to enter digits.
 
@@ -11268,6 +11280,8 @@ Known Issues:
 
 * MODEM and RS232 ports not emulated
 
+* Speech synthesis sounds terrible
+
 
 History and Trivia:
 
@@ -11292,8 +11306,9 @@ It was considered somewhat immature and quickly replaced with the improved TO9+.
 
 Links:
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
+
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
 
 * See the information for the to7 system for generic Thomson links
 
@@ -11338,7 +11353,7 @@ Features:
 
 * Palette: 16 colors to be chosen among 4096.
 
-* Sound: 6-bit DAC extension
+* Sound: 6-bit DAC extension + speech synthesis extension
 
 * Keyboard: AZERTY 81-keys, French with accents, identical to TO9
 
@@ -11414,7 +11429,7 @@ A few rare games are actually BASIC 1.0 boot disks, incompatible with
 the BASIC 512; they are run using the C command in the startup menu.
 Finally, the SHIFT+4 option in the startup menu provides a special launcher
 for applications with the .CHG suffix (e.g., Multiplan, Paragraphe).
-As for all Thomsons, double-sided drives are considered as two one-sided drives
+As for all Thomson, double-sided drives are considered as two one-sided drives
 (either -flop0 and -flop1, or -flop2 and -flop3). So, two-sided floppies must
 be split into two images and put into two MESS floppy devices.
 Drive number 4 corresponds to a virtual RAM disk that must first be setup using
@@ -11425,15 +11440,15 @@ or copy disks, but not to launch programs.
 
 Keyboard.
 
-The keyboard layout is exactly the same as the TO9 one:
+The keyboard layout is exactly the same as the TO9 one.
 
   F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
 
-  #@   *1  é2  "3  '4  (5  _6  è7  !8  ç9  à0  )°  -\  =+  ACC       UP         7   8   9
+  #@   *1  e2  "3  '4  (5  _6  e7  !8  c9  a0  )°  -\  =+  ACC       UP         7   8   9
 
  STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&    ENTER  LEFT  RIGHT    4   5   6
 
- CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN        1   2   3
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   u%  ]}            DOWN        1   2   3
 
 CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  SHIFT   HOME   INS  DEL      0   .   ENT
 
@@ -11477,6 +11492,8 @@ Known Issues:
 * Mouse and paddles: they cannot be used at the same time, but this is
   not a bug (!)
 
+* Speech synthesis sounds terrible
+
 
 History and Trivia:
 
@@ -11507,17 +11524,15 @@ family.
 
 Links:
 
-* TEO: TO8 emulator
-  http://nostalgies.thomsonistes.org/teo_home.html
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
 
-* EmuTO8: another TO8-only emulator
-  http://membres.lycos.fr/jth/emuto8.html
+* TEO: TO8 emulator - http://nostalgies.thomsonistes.org/teo_home.html
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* EmuTO8: another TO8-only emulator - http://membres.lycos.fr/jth/emuto8.html
 
-* AMITO8: TO8 and Amiga emulation site
-  http://membres.lycos.fr/amito8
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
+
+* AMITO8: TO8 and Amiga emulation site - http://membres.lycos.fr/amito8
 
 * See the information for the to7 system for generic Thomson links
 
@@ -11539,6 +11554,11 @@ for the slightly different startup menu).
 
 Please see the documentation for the to8 driver.
 
+
+Links:
+
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -11553,7 +11573,7 @@ Successor of the TO9.
 
 Features:
 
-We only show the difference with the TO8 and the TO9:
+We only show the difference with the TO8 and the TO9.
 
 * RAM: 512 KB
 
@@ -11579,7 +11599,7 @@ the TO8, not the TO9.
 
 Known Issues:
 
-* Mouse and video: see the to8 driver
+* Mouse, video, sound: see the to8 driver
 
 * Unemulated features: MODEM, RS232.
 
@@ -11600,8 +11620,9 @@ either a MODEM or a RS232 extension (not emulated, alas).
 
 Links:
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* Thomson driver main page - http://www.di.ens.fr/~mine/mess
+
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
 
 * See the information for the to7 system for generic Thomson links
 
@@ -11645,7 +11666,7 @@ Features:
 
 * Palette: 16 colors to be chosen among 4096.
 
-* Sound: 1-bit buzzer + 6-bit DAC extension
+* Sound: 1-bit buzzer + 6-bit DAC extension + speech synthesis extension
 
 * Keyboard: AZERTY 69-keys, French with accents
 
@@ -11726,11 +11747,11 @@ but also a BASIC key and no keypad.
 
   F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
 
-  #@   1*  2é  3"  4'  5(  6_  7è  8!  9ç  0à  )°  -\  =+  ACC       UP
+  #@   1*  2e  3"  4'  5(  6_  7e  8!  9c  0a  )°  -\  =+  ACC       UP
 
  STOP    A   Z   E   R   T   Y   U   I   O   P  ^"  $&     ENTER  LEFT  RIGHT
 
- CTRL  [{ Q   S   D   F   G   H   J   K   L   M   ù%  ]}            DOWN
+ CTRL  [{ Q   S   D   F   G   H   J   K   L   M   u%  ]}            DOWN
 
 CAPS SHIFT W   X   C   V   B   N   ,?  ;.  :/  ><  BASIC   HOME   INS  DEL
 
@@ -11765,7 +11786,7 @@ In the startup menu, try holding M, O and 6 at the same time.
 
 Known Issues:
 
-* Mouse and video: see the to8 driver
+* Mouse, video, sound: see the to8 driver
 
 * Cassette: .k5,.k7 compatibility issues, prefer .wav files
 
@@ -11791,8 +11812,9 @@ CPU pooling (no dedicated keyboard CPU anymore).
 
 Links:
 
-* DCMOTO universal Thomson emulator, with many software and documentations
-  http://dcmoto.free.fr
+* Main page for all Thomson drivers - http://www.di.ens.fr/~mine/mess
+
+* DCMOTO: universal Thomson emulator, with many software and documentations - http://dcmoto.free.fr
 
 * See the information for the to7 system for generic Thomson links
 
@@ -11810,7 +11832,7 @@ Network-enhanced MO6.
 
 Features:
 
-We only show the difference with the MO6:
+We only show the difference with the MO6.
 
 * Keyboard: 58-keys, AZERTY, no CAPS-LOCK, no LED
 
@@ -11847,6 +11869,10 @@ function keys), not a MO6 one.
                    SPACE                                        DOWN
 
 
+Links:
+
+* Main page for all Thomson drivers - http://www.di.ens.fr/~mine/mess
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -11861,9 +11887,9 @@ Italian version of the MO6.
 
 Features:
 
-We only show the difference with the MO6:
+We only show the difference with the MO6.
 
-* Keyboard: QWERTY 69-keys, French with accents
+* Keyboard: QWERTY 69-keys, Italian
 
 
 Usage:
@@ -11877,7 +11903,7 @@ The keyboard is a QWERTY version of the MO6 one.
 
   F1/F6   F2/F7   F3/F8   F4/F9   F5/F10
 
-  [{   1!  2"  3S 4$   5%  6&  7/  8(  9)  0=  ç?  '£  ]}  ACC       UP
+  [{   1!  2"  3S  4$  5%  6&  7/  8(  9)  0=  ç?  '£  ]}  ACC       UP
 
  STOP    Q   W   E   R   T   Y   U   I   O   P  ?@  +*    ENTER  LEFT  RIGHT
 
@@ -11892,6 +11918,11 @@ History and Trivia:
 
 This Italian flavor of the MO6 was built by Thomson and sold by
 Olivetti.
+
+
+Links:
+
+* Main page for all Thomson drivers - http://www.di.ens.fr/~mine/mess
 
 $end
 
