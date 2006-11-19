@@ -369,6 +369,6 @@ CONSB(	1986,	smspal,	sms, smspal,	0,			smspal,		sms,	0,		sms,		"Sega",			"Sega M
 CONSB(  1984,   smsm3,	0, smsj,              0,                      sms,            sms,    0,              sms,            "Sega",                 "Sega Mark III" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 )
 CONSB(	1985,	smsj21,		smsm3, smsj,		0,			smsfm,		sms,	0,		sms,		"Sega",			"Sega Master System/Samsung Gamboy" , FLAG_REGION_JAPAN | FLAG_BIOS_2000 | FLAG_FM )
 
-CONSB(	1990,	gamegear,	0, gamegear,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Sega Game Gear - European/American" , FLAG_GAMEGEAR | FLAG_BIOS_0400 )
+CONSB(	1990,	gamegear,	0, gamegear,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Sega Game Gear - European/American" , FLAG_GAMEGEAR )
 CONSB(	1990,	gamegeaj,	gamegear, gamegear,	0,			gamegear,	sms,	0,		gamegear,	"Sega",			"Sega Game Gear - Japanese" , FLAG_REGION_JAPAN | FLAG_GAMEGEAR | FLAG_BIOS_0400 )
 
