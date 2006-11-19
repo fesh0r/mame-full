@@ -1,5 +1,6 @@
 /*
 	vidhrdw/dgn_beta.c
+new
 */
 
 #include "driver.h"
@@ -120,7 +121,7 @@ static void beta_Set_VSync(int offset, int data)
 	{
 		beta_scr_y = 0;
 	}
-	dgn_beta_frame_interrupt();
+	dgn_beta_frame_interrupt(data);
 }
 
 static void beta_Set_DE(int offset, int data)

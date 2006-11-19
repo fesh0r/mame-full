@@ -49,6 +49,10 @@
 	boot track, however the rest of the disk is double density.
 	Booted completely to OS-9, including running startup script.
 	
+  2006-09-27
+  
+	Clean up of IRQ/FIRQ handling code allows correct booting again.
+	
 ***************************************************************************/
 
 #include <math.h>
@@ -69,29 +73,21 @@ static UINT8 *system_rom;
 /* Only log errors if debugging ! */
 #ifdef MAME_DEBUG
 
-//#define LOG_BANK_UPDATE
-//#define LOG_DEFAULT_TASK
-//#define LOG_PAGE_WRITE
-//#define LOG_HALT
-//#define LOG_TASK
-#define LOG_KEYBOARD
-
+//#define LOG_BANK_UPDATE	1
+//#define LOG_DEFAULT_TASK	1
+//#define LOG_PAGE_WRITE	1
+#define LOG_HALT	1
+//#define LOG_TASK	1
+//#define LOG_KEYBOARD	1
+//#define LOG_VIDEO	1
+#define LOG_DISK	1
+#define LOG_INTS	1
 #endif
 
-/* These sets of defines control logging.  When MAME_DEBUG is off, all logging
- * is off.  There is a different set of defines for when MAME_DEBUG is on so I
- * don't have to worry abount accidently committing a version of the driver
- * with logging enabled after doing some debugging work
- *
- * Logging options marked as "Sparse" are logging options that happen rarely,
- * and should not get in the way.  As such, these options are always on
- * (assuming MAME_DEBUG is on).  "Frequent" options are options that happen
- * enough that they might get in the way.
- */
-
-#ifdef MAME_DEBUG
-#else /* !MAME_DEBUG */
-#endif /* MAME_DEBUG */
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
+#include "debug/debugcon.h"
+#endif
 
 #ifdef MAME_DEBUG
 static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -132,6 +128,8 @@ static int KInDat_next;			/* Next data bit to input */
 static int KAny_next;				/* Next value for KAny */
 static int d_pia1_pa_last;
 static int d_pia1_pb_last;
+static int DMA_NMI_LAST;
+//static int DMA_NMI;				/* DMA cpu has received an NMI */
 
 int SelectedKeyrow(int	Rows);
 
@@ -326,7 +324,10 @@ static void SetDefaultTask(void)
 	PageRegs[TaskReg][IOPage+1].value=IOPageValue;
 
 	UpdateBanks(0,IOPage+1);
-	videoram=PageRegs[TaskReg][VideoPage].memory;
+//	videoram=PageRegs[TaskReg][VideoPage].memory;
+	/* Map video ram to base of area it can use, that way we can take the literal RA */
+	/* from the 6845 without having to mask it ! */
+	videoram=&mess_ram[TextVidBasePage*RamPageSize];
 }
 
 // Return the value of a page register
@@ -661,9 +662,21 @@ static WRITE8_HANDLER(d_pia1_pa_w)
 	
 	/* Set density of WD2797 */
 	if (data & DDenCtrl) 
-		wd179x_set_density(DEN_MFM_LO);
+	{
+		wd179x_set_density(DEN_FM_LO);
+#ifdef MAME_DEBUG
+		if (LOG_DISK)
+			logerror("Set density low %d\n",(data & DDenCtrl));
+#endif
+	}
 	else
-		wd179x_set_density(DEN_MFM_HI);
+	{
+		wd179x_set_density(DEN_MFM_LO);
+#ifdef MAME_DEBUG
+		if (LOG_DISK)
+			logerror("Set density high %d\n",(data & DDenCtrl));
+#endif
+	}
 }
 
 static READ8_HANDLER(d_pia1_pb_r)
@@ -713,7 +726,7 @@ static void d_pia1_irq_b(int state)
 		DMA CPU NMI	PA7
 		
 		Graphics control PB0..PB7 ???
-		VSYNC intutrrupt CB2
+		VSYNC intutrupt CB2
 */
 static READ8_HANDLER(d_pia2_pa_r)
 {
@@ -731,15 +744,28 @@ static WRITE8_HANDLER(d_pia2_pa_w)
 #endif
 
 	/* Bit 7 of $FFC0, seems to control NMI on second CPU */
-	if(data & 0x80)
-		NMI=CLEAR_LINE;
-	else
-		NMI=ASSERT_LINE;
+	NMI=(data & 0x80);
 	
-	cpunum_set_input_line(1,INPUT_LINE_NMI,NMI);		
-	
-	if(NMI==ASSERT_LINE) 
-		cpu_yield();
+	/* only take action if NMI changed */
+	if(NMI!=DMA_NMI_LAST) 
+	{
+#ifdef LOG_INTS
+		logerror("cpu1 NMI : %d\n",NMI);
+//		debug_console_printf("cpu1 NMI : %d\n",NMI);
+#endif
+		if(!NMI)
+		{
+			cpunum_set_input_line(1,INPUT_LINE_NMI,ASSERT_LINE);
+			logerror("cpu_yield()\n");
+			cpu_yield();	/* Let DMA CPU run */
+		}
+		else
+		{
+			cpunum_set_input_line(1,INPUT_LINE_NMI,CLEAR_LINE);
+		}
+
+		DMA_NMI_LAST=NMI;	/* Save it for next time */
+	}
 
 	OldEnableMap=EnableMapRegs;
 	/* Bit 6 seems to enable memory paging */
@@ -795,13 +821,13 @@ static WRITE8_HANDLER(d_pia2_pb_w)
 
 static void d_pia2_irq_a(int state)
 {
-	logerror("PIA2 IRQ1 Asserted !\n");
+	logerror("PIA2 IRQ1 state=%02X\n",state);
 	cpu0_recalc_irq(state);
 }
 
 static void d_pia2_irq_b(int state)
 {
-	logerror("PIA2 IRQ2 Asserted !\n");
+	logerror("PIA2 IRQ2 state=%02X\n",state);
 	cpu0_recalc_irq(state);
 }
 
@@ -809,38 +835,50 @@ static void d_pia2_irq_b(int state)
 /* CPU 0 */
 static void cpu0_recalc_irq(int state)
 {
-	if (state == ASSERT_LINE)
-	{
-		logerror("CPU 0 IRQ Aserted\n");
-		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
-	}
+	UINT8 pia0_irq_a = pia_get_irq_a(0);
+	UINT8 pia1_irq_a = pia_get_irq_a(1);
+	UINT8 pia1_irq_b = pia_get_irq_b(1);
+	UINT8 pia2_irq_a = pia_get_irq_a(2);
+	UINT8 pia2_irq_b = pia_get_irq_b(2);
+	UINT8 IRQ;
+	
+	if (pia0_irq_a || pia1_irq_a || pia1_irq_b || pia2_irq_a || pia2_irq_b)
+		IRQ = ASSERT_LINE;
 	else
-	{
-		logerror("CPU 0 IRQ cleared\n");
-		cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
-	}
+		IRQ = CLEAR_LINE;
+
+	cpunum_set_input_line(0, M6809_IRQ_LINE, IRQ);
+#ifdef LOG_INTS
+	logerror("cpu0 IRQ : %d\n",IRQ);
+#endif
 }
 
 static void cpu0_recalc_firq(int state)
 {
-	if (state == ASSERT_LINE)
-		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-	else
-		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
+	UINT8 pia0_irq_b = pia_get_irq_b(0);
+	UINT8 FIRQ;
 	
+	if (pia0_irq_b)
+		FIRQ = ASSERT_LINE;
+	else
+		FIRQ = CLEAR_LINE;
+		
+	cpunum_set_input_line(0, M6809_FIRQ_LINE, FIRQ);
+	
+#ifdef LOG_INTS
+	logerror("cpu0 FIRQ : %d\n",FIRQ);
+#endif
 }
 
 /* CPU 1 */
 
 static void cpu1_recalc_firq(int state)
 {
-	if (state == ASSERT_LINE)
-		cpunum_set_input_line(1, M6809_FIRQ_LINE, ASSERT_LINE);
-	else
-		cpunum_set_input_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(1, M6809_FIRQ_LINE, state);
+#ifdef LOG_INTS
+	logerror("cpu1 FIRQ : %d\n",state);
+#endif
 }
-
-
 
 /********************************************************************************************/
 /* Dragon Beta onboard FDC */
@@ -848,7 +886,7 @@ static void cpu1_recalc_firq(int state)
 
 static void dgnbeta_fdc_callback(int event)
 {
-	/* The INTRQ line goes through pia3 ca1, in exactly the same way as DRQ from DragonDos does */
+	/* The INTRQ line goes through pia2 ca1, in exactly the same way as DRQ from DragonDos does */
 	/* DRQ is routed through various logic to the FIRQ inturrupt line on *BOTH* CPUs */
 	
 	switch(event) 
@@ -868,6 +906,11 @@ static void dgnbeta_fdc_callback(int event)
 			cpu1_recalc_firq(ASSERT_LINE);
 			break;		
 	}
+
+#ifdef MAME_DEBUG
+	if (LOG_DISK)
+		logerror("dgnbeta_fdc_callback(%d)\n",event);
+#endif
 }
 
  READ8_HANDLER(dgnbeta_wd2797_r)
@@ -878,6 +921,10 @@ static void dgnbeta_fdc_callback(int event)
 	{
 		case 0:
 			result = wd179x_status_r(0);
+#ifdef MAME_DEBUG
+			if (LOG_DISK)
+				logerror("Disk status=%2.2X\n",result);
+#endif
 			break;
 		case 1:
 			result = wd179x_track_r(0);
@@ -901,7 +948,9 @@ WRITE8_HANDLER(dgnbeta_wd2797_w)
 	{
 		case 0:
 			/* disk head is encoded in the command byte */
-			wd179x_set_side((data & 0x02) ? 1 : 0);
+			/* But only for Type 3/4 commands */
+			if(data & 0x80)
+				wd179x_set_side((data & 0x02) ? 1 : 0);
 			wd179x_command_w(0, data);
 			break;
 		case 1:
@@ -920,7 +969,7 @@ WRITE8_HANDLER(dgnbeta_wd2797_w)
 void ScanInKeyboard(void)
 {
 	int	Idx;
-	int	Row = 0;
+	int	Row;// = 0x7F;
 	
 #ifdef LOG_KEYBOARD
 	logerror("Scanning Host keyboard\n");
@@ -930,7 +979,7 @@ void ScanInKeyboard(void)
 	{
 		switch (Idx)
 		{
-			case 0 : Row=input_port_0_r(0) | 0x33; break;
+			case 0 : Row=input_port_0_r(0) /*| 0x33*/; break;
 			case 1 : Row=input_port_1_r(0); break;
 			case 2 : Row=input_port_2_r(0); break;
 			case 3 : Row=input_port_3_r(0); break;
@@ -940,6 +989,7 @@ void ScanInKeyboard(void)
 			case 7 : Row=input_port_7_r(0); break;
 			case 8 : Row=input_port_8_r(0); break;
 			case 9 : Row=input_port_9_r(0); break;
+			default : Row=0x7F; break;
 		}
 		Keyboard[Idx]=Row;
 #ifdef LOG_KEYBOARD
@@ -953,19 +1003,35 @@ void ScanInKeyboard(void)
 }
 
 /* VBlank inturrupt */
-
-extern UINT8 pia_get_ctl_b(int which);
-
-INTERRUPT_GEN( dgn_beta_frame_interrupt )
+void dgn_beta_frame_interrupt (int data)
 {
-	/* Toggle PIA line, so it recognises inturrupt */
-	pia_2_cb2_w(0,CLEAR_LINE);
-	pia_2_cb2_w(0,ASSERT_LINE);
-//	cpu0_recalc_irq(ASSERT_LINE);
+	/* Set PIA line, so it recognises inturrupt */
+	if (!data) 
+	{
+		pia_2_cb2_w(0,ASSERT_LINE);
+	}
+	else
+	{
+		pia_2_cb2_w(0,CLEAR_LINE);
+	}
+#ifdef LOG_VIDEO
 	logerror("Vblank\n");
+#endif
 	ScanInKeyboard();
 }	
 
+void dgn_beta_line_interrupt (int data)
+{
+//	/* Set PIA line, so it recognises inturrupt */
+//	if (data) 
+//	{
+//		pia_0_cb1_w(0,ASSERT_LINE);
+//	}
+//	else
+//	{
+//		pia_0_cb1_w(0,CLEAR_LINE);
+//	}
+}
 
 
 /********************************* Machine/Driver Initialization ****************************************/
@@ -998,6 +1064,9 @@ static void dgnbeta_reset(running_machine *machine)
 	KInDat_next=0x00;			/* Next data bit to input */
 	KAny_next=0x00;				/* Next value for KAny */
 	
+	DMA_NMI_LAST=0x80;			/* start with DMA NMI inactive, as pulled up */
+//	DMA_NMI=CLEAR_LINE;			/* start with DMA NMI inactive */
+	
 	wd179x_reset();
 	wd179x_set_density(DEN_MFM_LO);
 	wd179x_set_drive(0);
@@ -1014,7 +1083,7 @@ MACHINE_START( dgnbeta )
 	
 	wd179x_init(WD_TYPE_179X,dgnbeta_fdc_callback);
 #ifdef MAME_DEBUG
-	cpuintrf_set_dasm_override(0, dgnbeta_dasm_override);
+	cpuintrf_set_dasm_override(0,dgnbeta_dasm_override);
 #endif
 
 	add_reset_callback(machine, dgnbeta_reset);

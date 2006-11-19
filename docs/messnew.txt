@@ -10,6 +10,9 @@ System Driver Changes:
 ----------------------
 - [COCO] Implemented Diecom Light Gun Adapter.  (bug #971) [Tim Lindner]
 
+- [DGNBETA] Fixed regressions introduced in 0.110.  (bug #970) [Phill
+  Harvey-Smith]
+
 - [SVISION] Fixed the aspect ratio.  [Peter Trauner]
 
 
