@@ -85,6 +85,8 @@ EXTERN UINT8 gb_spal1[4];				/* Sprite 1 palette				*/
 EXTERN UINT8 *gb_chrgen;				/* Character generator			*/
 EXTERN UINT8 *gb_bgdtab;				/* Background character table	*/
 EXTERN UINT8 *gb_wndtab;				/* Window character table		*/
+EXTERN UINT8 *gb_oam;
+EXTERN UINT8 *gb_vram;
 EXTERN unsigned int gb_divcount;
 EXTERN unsigned int gb_timer_count;
 EXTERN UINT8 gb_timer_shift;
@@ -112,6 +114,8 @@ extern DEVICE_LOAD(gb_cart);
 extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);
+extern WRITE8_HANDLER( gb_oam_w );
+extern WRITE8_HANDLER( gb_vram_w );
 
 extern MACHINE_START( gb );
 extern MACHINE_RESET( gb );

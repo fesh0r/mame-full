@@ -1470,6 +1470,42 @@ DEVICE_LOAD(gb_cart)
 	return INIT_PASS;
 }
 
+WRITE8_HANDLER( gb_oam_w ) {
+	/* Ignore write when LCD is on and STAT is 02 or 03 */
+	if ( ( LCDCONT & 0x80 ) && ( LCDSTAT & 0x02 ) ) {
+		return;
+	}
+	gb_oam[offset] = data;
+}
+
+WRITE8_HANDLER( gb_vram_w ) {
+	/* Ignore write when LCD is on and STAT is not 03 */
+	if ( LCDCONT & 0x80 && ( ( LCDSTAT & 0x03 ) == 0x03 ) ) {
+		return;
+	}
+	gb_vram[offset] = data;
+}
+
+void gb_increment_scanline( void ) {
+	CURLINE = ( CURLINE + 1 ) % 154;
+	if ( CURLINE == CMPLINE ) {
+		LCDSTAT |= 0x04;
+		/* Generate lcd interrupt if requested */
+		if ( LCDSTAT & 0x40 )
+			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+	} else {
+		LCDSTAT &= 0xFB;
+	}
+}
+
+int	gb_skip_increment_scanline = 0;
+
+/* Handle changing LY to 00 on line 153 */
+void gb_scanline_start_frame( int param ) {
+	gb_increment_scanline();
+	gb_skip_increment_scanline = 1;
+}
+
 void gb_scanline_interrupt (void)
 {
 	/* This is a little dodgy, but it works... mostly */
@@ -1478,52 +1514,42 @@ void gb_scanline_interrupt (void)
 	if ( count )
 		return;
 
-	/* First let's draw the current scanline */
+	/* skip incrementing scanline when entering scanline 0 */
+	if ( ! gb_skip_increment_scanline ) {
+		gb_increment_scanline();
+	} else {
+		gb_skip_increment_scanline = 0;
+	}
+
 	if (CURLINE < 144)
-		refresh_scanline ();
-
-	/* The rest only makes sense if the display is enabled */
-	if (LCDCONT & 0x80)
 	{
-		CURLINE = ( CURLINE + 1 ) % 154;
-
-		if (CURLINE < 144)
-		{
+		if ( LCDCONT & 0x80 ) {
 			/* Set Mode 2 lcdstate */
 			LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
 			/* Generate lcd interrupt if requested */
 			if (LCDSTAT & 0x20)
 				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-
-			/* First  lcdstate change after aprox 19 uS */
-			timer_set (19.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
-			/* Second lcdstate change after aprox 60 uS */
-			timer_set (60.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode0);
-		}
-		else
-		{
-			/* Generate VBlank interrupt */
-			if (CURLINE == 144)
-			{
-				/* Cause VBlank interrupt */
-				cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
-				/* Set VBlank lcdstate */
-				LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
-				/* Generate lcd interrupt if requested */
-				if( LCDSTAT & 0x10 )
-					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-			}
 		}
 
-		if ( CURLINE == CMPLINE )
+		/* First  lcdstate change after aprox 80 clock cycles / 19 uS */
+		timer_set ( TIME_IN_CYCLES(80,0), 0, gb_scanline_interrupt_set_mode3);
+	}
+	else
+	{
+		/* Generate VBlank interrupt (if display is enabled) */
+		if (CURLINE == 144 && ( LCDCONT & 0x80 ) )
 		{
-			LCDSTAT |= 0x04;
+			/* Cause VBlank interrupt */
+			cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
+			/* Set VBlank lcdstate */
+			LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
 			/* Generate lcd interrupt if requested */
-			if ( LCDSTAT & 0x40 )
+			if( LCDSTAT & 0x10 )
 				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 		}
-		else
-			LCDSTAT &= 0xFB;
+		if ( CURLINE == 153 ) {
+			timer_set( TIME_IN_CYCLES(32,0), 0, gb_scanline_start_frame );
+		}
 	}
 
 	/* Generate serial IO interrupt */
@@ -1540,6 +1566,9 @@ void gb_scanline_interrupt (void)
 
 void gb_scanline_interrupt_set_mode0 (int param)
 {
+	/* refresh current scanline */
+	refresh_scanline();
+
 	/* only perform mode changes when LCD controller is still on */
 	if (LCDCONT & 0x80)
 	{
@@ -1557,12 +1586,15 @@ void gb_scanline_interrupt_set_mode0 (int param)
 
 void gb_scanline_interrupt_set_mode3 (int param)
 {
+	int mode3_cycles = 172;
+
 	/* only perform mode changes when LCD controller is still on */
-	if (LCDCONT & 0x80)
-	{
+	if (LCDCONT & 0x80) {
 		/* Set Mode 3 lcdstate */
 		LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
 	}
+	/* Second lcdstate change after aprox 172+#sprites*10 clock cycles / 60 uS */
+	timer_set ( TIME_IN_CYCLES(mode3_cycles,0), 0, gb_scanline_interrupt_set_mode0);
 }
 
 void gbc_hdma(UINT16 length)
@@ -1617,6 +1649,7 @@ WRITE8_HANDLER ( gb_video_w )
 		}
 		break;
 	case 0x01:						/* STAT - LCD Status */
+		data |= 0x80;					/* high bit is always set */
 		data = (data & 0xF8) | (LCDSTAT & 0x07);
 		break;
 	case 0x04:						/* LY - LCD Y-coordinate */
@@ -1624,7 +1657,7 @@ WRITE8_HANDLER ( gb_video_w )
 		break;
 	case 0x06:						/* DMA - DMA Transfer and Start Address */
 		{
-			UINT8 *P = memory_get_write_ptr(0, ADDRESS_SPACE_PROGRAM, 0xFE00 );
+			UINT8 *P = gb_oam;
 			offset = (UINT16) data << 8;
 			for (data = 0; data < 0xA0; data++)
 				*P++ = program_read_byte_8 (offset++);

@@ -107,7 +107,7 @@ INLINE void gb_update_sprites (void)
 struct layer_struct
 {
 	UINT8  enabled;
-	UINT16 *bg_tiles;
+	UINT8  *bg_tiles;
 	UINT8  *bg_map;
 	UINT8  xindex;
 	UINT8  xshift;
@@ -119,6 +119,13 @@ struct layer_struct
 	INT16  bgline;
 };
 
+struct gb_lcd_struct {
+	int	window_lines_drawn;
+	int	window_enabled;
+	int	window_start_line;
+} gb_lcd;
+
+/* this should be recoded to become incremental */
 void gb_refresh_scanline (void)
 {
 	mame_bitmap *bitmap = tmpbitmap;
@@ -129,6 +136,12 @@ void gb_refresh_scanline (void)
 	struct layer_struct layer[2];
 
 	profiler_mark(PROFILER_VIDEO);
+
+	/* Take care of some initializations */
+	if ( CURLINE == 0x00 ) {
+		gb_lcd.window_lines_drawn = 0;
+		gb_lcd.window_enabled = 0;
+	}
 
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
@@ -158,7 +171,7 @@ void gb_refresh_scanline (void)
 
 		layer[0].bg_map = gb_bgdtab;
 		layer[0].bg_map += (bgline << 2) & 0x3E0;
-		layer[0].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[0].bg_tiles = gb_chrgen + ( (bgline & 7) << 1 );
 		layer[0].xindex = SCROLLX >> 3;
 		layer[0].xshift = SCROLLX & 7;
 		layer[0].xstart = 0;
@@ -169,19 +182,27 @@ void gb_refresh_scanline (void)
 	{
 		int bgline, xpos;
 
-		bgline = (CURLINE - WNDPOSY) & 0xFF;
+		/* Check if window was just enabled */
+		if ( ! gb_lcd.window_enabled ) {
+			gb_lcd.window_start_line = CURLINE;
+		}
+		gb_lcd.window_enabled = 1;
+		/* this also seems to be influenced by the scrolly register and the time window was enabled */
+		bgline = (gb_lcd.window_start_line + SCROLLY + gb_lcd.window_lines_drawn) & 0xFF;
 		xpos = WNDPOSX - 7;		/* Window is offset by 7 pixels */
 		if (xpos < 0)
 			xpos = 0;
 
 		layer[1].bg_map = gb_wndtab;
 		layer[1].bg_map += (bgline << 2) & 0x3E0;
-		layer[1].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[1].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
 		layer[1].xindex = 0;
 		layer[1].xshift = 0;
 		layer[1].xstart = xpos;
 		layer[1].xend = 160 - xpos;
 		layer[0].xend = xpos;
+	} else {
+		gb_lcd.window_enabled = 0;
 	}
 
 	while (l < 2)
@@ -190,8 +211,9 @@ void gb_refresh_scanline (void)
 		 * BG display on
 		 */
 		UINT8 *map, xidx, bit, i;
-		UINT16 *tiles, data;
-		int xindex;
+		UINT8 *tiles;
+		UINT16 data;
+		int xindex, tile_index;
 
 		if (!layer[l].enabled)
 		{
@@ -205,10 +227,10 @@ void gb_refresh_scanline (void)
 		bit = layer[l].xshift;
 		i = layer[l].xend;
 
-		data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8] << bit);
-#ifndef LSB_FIRST
-		data = (data << 8) | (data >> 8);
-#endif
+		tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
+		data = tiles[tile_index] | ( tiles[tile_index+1] << 8 ); 
+		data <<= bit;
+
 		xindex = layer[l].xstart;
 		while (i)
 		{
@@ -224,13 +246,18 @@ void gb_refresh_scanline (void)
 			}
 			xidx = (xidx + 1) & 31;
 			bit = 0;
-			data = tiles[(map[xidx] ^ gb_tile_no_mod) * 8];
+			tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
+			data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
 		}
 		l++;
 	}
 
 	if (LCDCONT & 0x02)
 		gb_update_sprites();
+
+	if ( layer[1].enabled ) {
+		gb_lcd.window_lines_drawn++;
+	}
 
 	profiler_mark(PROFILER_END);
 }
@@ -404,7 +431,7 @@ void sgb_refresh_scanline (void)
 
 		layer[0].bg_map = gb_bgdtab;
 		layer[0].bg_map += (bgline << 2) & 0x3E0;
-		layer[0].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[0].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
 		layer[0].xindex = SCROLLX >> 3;
 		layer[0].xshift = SCROLLX & 7;
 		layer[0].xstart = 0;
@@ -423,7 +450,7 @@ void sgb_refresh_scanline (void)
 
 		layer[1].bg_map = gb_wndtab;
 		layer[1].bg_map += (bgline << 2) & 0x3E0;
-		layer[1].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[1].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
 		layer[1].xindex = 0;
 		layer[1].xshift = 0;
 		layer[1].xstart = xpos;
@@ -437,8 +464,9 @@ void sgb_refresh_scanline (void)
 		 * BG display on
 		 */
 		UINT8 *map, xidx, bit, i, pal;
-		UINT16 *tiles, data;
-		int xindex;
+		UINT8 *tiles;
+		UINT16 data;
+		int xindex, tile_index;
 
 		if (!layer[l].enabled)
 		{
@@ -452,10 +480,11 @@ void sgb_refresh_scanline (void)
 		bit = layer[l].xshift;
 		i = layer[l].xend;
 
-		data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8] << bit);
-#ifndef LSB_FIRST
-		data = (data << 8) | (data >> 8);
-#endif
+
+		tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
+		data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
+		data <<= bit;
+
 		xindex = layer[l].xstart;
 
 		/* Figure out which palette we're using */
@@ -476,7 +505,8 @@ void sgb_refresh_scanline (void)
 			xidx = (xidx + 1) & 31;
 			pal = sgb_pal_map[(xindex >> 3)][(yindex >> 3)] << 2;
 			bit = 0;
-			data = tiles[(map[xidx] ^ gb_tile_no_mod) * 8];
+			tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
+			data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
 		}
 		l++;
 	}
