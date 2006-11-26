@@ -211,7 +211,7 @@ extern WRITE8_HANDLER ( odyssey2_video_w )
 {
 	/* Update the sound */
 	if( offset >= 0xa7 && offset <= 0xaa )
-		stream_update( odyssey2_sh_channel, 0 );
+		stream_update( odyssey2_sh_channel );
 
 	o2_vdc.reg[offset]=data;
 }

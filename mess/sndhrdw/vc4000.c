@@ -23,7 +23,7 @@ static struct
 
 void vc4000_soundport_w (int offset, int data)
 {
-	stream_update(vc4000_sound.channel,0);
+	stream_update(vc4000_sound.channel);
 	vc4000_sound.reg[offset] = data;
 	switch (offset)
 	{

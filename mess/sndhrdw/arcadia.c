@@ -27,7 +27,7 @@ static struct
 
 void arcadia_soundport_w (int offset, int data)
 {
-	stream_update(arcadia_sound.channel,0);
+	stream_update(arcadia_sound.channel);
 	arcadia_sound.reg[offset] = data;
 	switch (offset)
 	{

@@ -375,7 +375,7 @@ void gb_sound_w_internal(int offset, UINT8 data ) {
 WRITE8_HANDLER( gb_sound_w )
 {
 	/* change in registers so update first */
-	stream_update(channel, 0);
+	stream_update(channel);
 
 	/* Only register NR52 is accessible if the sound controller is disabled */
 	if( !snd_control.on && offset != NR52 )

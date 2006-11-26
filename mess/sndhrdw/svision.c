@@ -18,7 +18,7 @@ SVISION_CHANNEL svision_channel[2];
 
 void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 {
-    stream_update(mixer_channel,0);
+    stream_update(mixer_channel);
     logerror("%.6f channel 1 write %d %02x\n", timer_get_time(),offset&3, data);
     channel->reg[offset]=data;
     switch (offset) {

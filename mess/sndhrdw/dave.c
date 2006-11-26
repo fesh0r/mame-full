@@ -279,7 +279,7 @@ static WRITE8_HANDLER(Dave_sound_w)
 	//logerror("sound w: %04x %02x\n",offset,data);
 
 	/* update stream */
-	stream_update(dave.sound_stream,0);
+	stream_update(dave.sound_stream);
 
 	/* new write */
 	switch (offset)

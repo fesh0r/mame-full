@@ -125,7 +125,7 @@ void lynx_audio_count_down(int nr)
 {
     LYNX_AUDIO *This=lynx_audio+nr;
     if (This->reg.n.control1&8 && (This->reg.n.control1&7)!=7) return;
-    if (nr==0) stream_update(mixer_channel,0);
+    if (nr==0) stream_update(mixer_channel);
     This->count--;
 }
 
@@ -185,7 +185,7 @@ static UINT8 master_enable;
 UINT8 lynx_audio_read(int offset)
 {
     UINT8 data=0;
-    stream_update(mixer_channel,0);
+    stream_update(mixer_channel);
     switch (offset) {
     case 0x20: case 0x21: case 0x22: case 0x24: case 0x25:
     case 0x28: case 0x29: case 0x2a: case 0x2c: case 0x2d: 
@@ -220,7 +220,7 @@ void lynx_audio_write(int offset, UINT8 data)
 {
 //	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
     LYNX_AUDIO *channel=lynx_audio+((offset>>3)&3);
-    stream_update(mixer_channel,0);
+    stream_update(mixer_channel);
     switch (offset) {
     case 0x20: case 0x22: case 0x24: case 0x26:
     case 0x28: case 0x2a: case 0x2c: case 0x2e:

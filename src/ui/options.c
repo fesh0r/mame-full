@@ -415,7 +415,7 @@ static const REG_OPTION global_game_options[] =
 #ifdef MESS
 	{ "biospath",               RO_STRING,  offsetof(settings_type, romdirs),          "bios" },
 	{ "softwarepath",           RO_STRING,  offsetof(settings_type, mess.softwaredirs),"software" },
-	{ "hash_directory",         RO_STRING,  offsetof(settings_type, mess.hashdir),     "hash" },
+	{ "hashpath",               RO_STRING,  offsetof(settings_type, mess.hashdir),     "hash" },
 #else
 	{ "rompath",                RO_STRING,  offsetof(settings_type, romdirs),          "roms" },
 #endif

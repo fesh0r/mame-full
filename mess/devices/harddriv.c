@@ -295,7 +295,7 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	/* if we created the image and hence, have metadata to set, set the metadata */
 	if (metadata)
 	{
-		err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
+		err = chd_set_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, strlen(metadata) + 1);
 		if (err != CHDERR_NONE)
 			goto done;
 	}

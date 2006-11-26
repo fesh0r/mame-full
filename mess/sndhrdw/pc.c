@@ -69,7 +69,7 @@ void pc_sh_speaker(int data)
 	if( mode == speaker_gate )
 		return;
 
-    stream_update(channel,0);
+    stream_update(channel);
 
     switch( mode )
 	{
@@ -90,7 +90,7 @@ void pc_sh_speaker(int data)
 
 void pc_sh_speaker_change_clock(double pc_clock)
 {
-    stream_update(channel,0);
+    stream_update(channel);
 }
 
 

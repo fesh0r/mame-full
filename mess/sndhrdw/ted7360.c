@@ -46,7 +46,7 @@ static UINT8 *noise;
 
 void ted7360_soundport_w (int offset, int data)
 {
-	stream_update(channel,0);
+	stream_update(channel);
 	/*    int old=ted7360[offset]; */
 	switch (offset)
 	{

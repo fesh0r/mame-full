@@ -71,7 +71,7 @@ static INT8 *noise;
 void vic6560_soundport_w (int offset, int data)
 {
     int old = vic6560[offset];
-	stream_update(channel, 0);
+	stream_update(channel);
 
 	switch (offset)
 	{

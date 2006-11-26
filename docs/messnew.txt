@@ -33,11 +33,13 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.110u2.  This incorporates all features of the
+- The core is based on MAME 0.110u3.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Removed a stub disassembler from the v30mz core, as per MAME conventions.
   [Nate Woods]
+
+- Renamed the "hash_directory" option to "hashpath".  [Aaron Giles]
 
 
 

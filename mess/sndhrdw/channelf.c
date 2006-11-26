@@ -18,7 +18,7 @@ void channelf_sound_w(int mode)
 	if (mode == sound_mode)
 		return;
 
-    stream_update(channel, 0);
+    stream_update(channel);
 	sound_mode = mode;
 
     switch(mode)

@@ -56,7 +56,7 @@ void wswan_ch_set_freq( struct CHAN *ch, UINT16 freq ) {
 }
 
 WRITE8_HANDLER( wswan_sound_port_w ) {
-	stream_update( channel, 0 );
+	stream_update( channel);
 	switch( offset ) {
 	case 0x80:				/* Audio 1 freq (lo) */
 		wswan_ch_set_freq( &snd.audio1, ( snd.audio1.freq & 0xFF00 ) | data );

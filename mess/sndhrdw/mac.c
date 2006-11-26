@@ -106,7 +106,7 @@ void mac_set_sound_buffer(int buffer)
 */
 void mac_set_volume(int volume)
 {
-	stream_update(mac_stream, 0);
+	stream_update(mac_stream);
 
 	volume = (100 / 7) * volume;
 
@@ -129,7 +129,7 @@ void mac_sh_updatebuffer(void)
 	if (snd_cache_len >= SND_CACHE_SIZE)
 	{
 		/* clear buffer */
-		stream_update(mac_stream, 0);
+		stream_update(mac_stream);
 	}
 
 	if (snd_cache_len >= SND_CACHE_SIZE)

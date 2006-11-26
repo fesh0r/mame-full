@@ -108,7 +108,7 @@ void beep_set_state( int num, int on )
 	if (info->enable == on)
 		return;
 
-	stream_update( info->stream, 0 );
+	stream_update(info->stream);
 
 	info->enable = on;
 	/* restart wave from beginning */
@@ -131,7 +131,7 @@ void beep_set_frequency(int num,int frequency)
 	if (info->frequency == frequency)
 		return;
 
-	stream_update(info->stream,num);
+	stream_update(info->stream);
 	info->frequency = frequency;
 	info->signal = 0x07fff;
 	info->incr = 0;
@@ -149,7 +149,7 @@ void beep_set_volume(int num, int volume)
 {
 	struct beep_sound *info = sndti_token(SOUND_BEEP, num);
 
-	stream_update( info->stream, 0 );
+	stream_update(info->stream);
 
 	volume = 100 * volume / 7;
 

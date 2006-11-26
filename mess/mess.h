@@ -18,7 +18,6 @@ struct SystemConfigurationParamBlock;
 #include "driver.h"
 #include "image.h"
 #include "artworkx.h"
-#include "config.h"
 
 
 
