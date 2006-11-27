@@ -58,34 +58,6 @@ static dsk_drive *get_drive(mess_image *img)
 	return &drives[image_index_in_device(img)];
 }
 
-/* load image */
-static int dsk_load(mess_image *img, unsigned char **ptr)
-{
-	int datasize;
-	unsigned char *data;
-
-	/* get file size */
-	datasize = image_length(img);
-
-	if (datasize!=0)
-	{
-		/* malloc memory for this data */
-		data = image_malloc(img, datasize);
-
-		if (data!=NULL)
-		{
-			/* read whole file */
-			image_fread(img, data, datasize);
-
-			*ptr = data;
-
-			/* ok! */
-			return 1;
-		}
-	}
-	return 0;
-}
-
 static int dsk_floppy_verify(UINT8 *diskimage_data)
 {
 	if ( (memcmp(diskimage_data, "MV - CPC", 8)==0) || 	/* standard disk image? */
@@ -112,17 +84,15 @@ static int device_load_dsk_floppy(mess_image *image)
 	dsk_drive *thedrive = &drives[id];
 
 	/* load disk image */
-	if (dsk_load(image, &thedrive->data))
+	thedrive->data = (unsigned char *) image_ptr(image);
+	if (thedrive->data)
 	{
-		if (thedrive->data)
-		{
-			dsk_disk_image_init(thedrive); /* initialise dsk */
-			floppy_drive_set_disk_image_interface(image, &dsk_floppy_interface);
-			if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
-            	return INIT_PASS;
-			else
-            	return INIT_PASS;
-		}
+		dsk_disk_image_init(thedrive); /* initialise dsk */
+		floppy_drive_set_disk_image_interface(image, &dsk_floppy_interface);
+		if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
+        	return INIT_PASS;
+		else
+        	return INIT_PASS;
 	}
 	return INIT_PASS;
 }

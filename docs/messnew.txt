@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [A7800] Updated palette file.  [Nabuko78]
 
+- [AMSTRAD] Minor floppy disk cleanup.  [Nate Woods]
+
 - [COCO] Implemented Diecom Light Gun Adapter.  (bug #971) [Tim Lindner]
 
 - [DGNBETA] Fixed regressions introduced in 0.110.  (bug #970) [Phill

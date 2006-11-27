@@ -100,14 +100,13 @@ static struct mess_hd *get_drive(mess_image *img)
  *************************************/
 
 #define ENCODED_IMAGE_REF_PREFIX	"/:/M/E/S/S//i/m/a/g/e//#"
-#define ENCODED_IMAGE_REF_FORMAT	(ENCODED_IMAGE_REF_PREFIX "%016x")
-#define ENCODED_IMAGE_REF_LEN		(sizeof(ENCODED_IMAGE_REF_PREFIX)+16)
+#define ENCODED_IMAGE_REF_FORMAT	(ENCODED_IMAGE_REF_PREFIX "%p.chd")
+#define ENCODED_IMAGE_REF_LEN		(sizeof(ENCODED_IMAGE_REF_PREFIX)+20)
 
 
 static void encode_ptr(void *ptr, char filename[ENCODED_IMAGE_REF_LEN])
 {
-	snprintf(filename, ENCODED_IMAGE_REF_LEN, ENCODED_IMAGE_REF_FORMAT,
-		(unsigned int) ptr);
+	snprintf(filename, ENCODED_IMAGE_REF_LEN, ENCODED_IMAGE_REF_FORMAT, ptr);
 }
 
 
@@ -142,12 +141,19 @@ chd_error chd_open_ref(void *ref, int mode, chd_file *parent, chd_file **chd)
 
 static mess_image *decode_image_ref(const char encoded_image_ref[ENCODED_IMAGE_REF_LEN])
 {
-	unsigned int ptr;
+	void *ptr;
+	char c[5] = { 0, };
 
-	if (sscanf(encoded_image_ref, ENCODED_IMAGE_REF_FORMAT, &ptr) == 1)
-		return (mess_image *) ptr;
+	/* scan the reference */
+	if (sscanf(encoded_image_ref, ENCODED_IMAGE_REF_PREFIX "%p%c%c%c%c", &ptr, &c[0], &c[1], &c[2], &c[3]) != 5)
+		return NULL;
 
-	return NULL;
+	/* check for the correct file extension */
+	if (strcmp(c, ".chd"))
+		return NULL;
+
+	/* success */
+	return (mess_image *) ptr;
 }
 
 
@@ -188,7 +194,8 @@ static chd_interface_file *mess_chd_open(const char *filename, const char *mode)
 	}
 
 	/* invalid "file name"? */
-	assert(image);
+	if (!image)
+		return NULL;
 
 	/* read-only fp? */
 	if (!image_is_writable(image) && !(mode[0] == 'r' && !strchr(mode, '+')))
