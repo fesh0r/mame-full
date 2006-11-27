@@ -285,15 +285,13 @@ static int internal_load_mess_hd(mess_image *image, const char *metadata)
 	do
 	{
 		is_writeable = image_is_writable(image);
+		chd = NULL;
 		err = chd_open_ref(image, is_writeable ? CHD_OPEN_READWRITE : CHD_OPEN_READ, NULL, &chd);
 
-		if (!chd)
-		{
-			/* special case; if we get CHDERR_FILE_NOT_WRITEABLE, make the
-			 * image read only and repeat */
-			if (err == CHDERR_FILE_NOT_WRITEABLE)
-				image_make_readonly(image);
-		}
+		/* special case; if we get CHDERR_FILE_NOT_WRITEABLE, make the
+		 * image read only and repeat */
+		if (err == CHDERR_FILE_NOT_WRITEABLE)
+			image_make_readonly(image);
 	}
 	while(!chd && is_writeable && (err == CHDERR_FILE_NOT_WRITEABLE));
 	if (!chd)
