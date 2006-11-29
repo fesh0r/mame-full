@@ -37,6 +37,9 @@ Source Changes:
 ----------------
 - The core is based on MAME 0.110u3.  This incorporates all features of the
   update to this core.  [MAME team]
+
+- Fixed opening up specific images within zip files that contain multiple
+  images.  (bug #973) [Nate Woods]
   
 - Removed a stub disassembler from the v30mz core, as per MAME conventions.
   [Nate Woods]

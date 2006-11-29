@@ -297,12 +297,9 @@ static image_error_t load_zip_path(mess_image *image, const char *path)
 	if (s)
 	{
 		s += strlen(zip_extension);
-		*s = '\0';
+		*(s++) = '\0';
 		zip_file_path = path_copy;
-		if (*s)
-			zip_entry = s + strlen(PATH_SEPARATOR);
-		else
-			zip_entry = NULL;
+		zip_entry = *s ? s : NULL;
 
 		ziperr = zip_file_open(zip_file_path, &zip);
 		if (ziperr == ZIPERR_NONE)
