@@ -241,7 +241,8 @@ SYSTEM_BIOS_START( sms )
 /*	SYSTEM_BIOS_ADD( 1, "missiled", "US/European BIOS with Missile Defense 3D (1986)" ) smsumd3d */
 	SYSTEM_BIOS_ADD( 1, "hangonsh", "US/European BIOS v2.4 with Hang On and Safari Hunt (1988)" ) /* smsuhs24 */
 	SYSTEM_BIOS_ADD( 2, "hangon", "US/European BIOS v3.4 with Hang On (1988)" ) /* smseh34 */
-	SYSTEM_BIOS_ADD( 3, "alexkidd", "US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smsuam */
+	SYSTEM_BIOS_ADD( 3, "missiled", "US/European BIOS v4.4 with Missile Defense 3D (1988)" )
+	SYSTEM_BIOS_ADD( 4, "alexkidd", "US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smsuam */
 SYSTEM_BIOS_END
 
 SYSTEM_BIOS_START( smsj )
@@ -257,17 +258,18 @@ SYSTEM_BIOS_START( smspal )
 /*	SYSTEM_BIOS_ADD( 1, "missiled", "US/European BIOS with Missile Defense 3D (1986)" ) smsemd3d */
 	SYSTEM_BIOS_ADD( 1, "hangonsh", "Sega Master System Plus - US/European BIOS v2.4 with Hang On and Safari Hunt (1988)" ) /* smsehs24 */
 	SYSTEM_BIOS_ADD( 2, "hangon", "Sega Master System - US/European BIOS v3.4 with Hang On (1988)" ) /* smseh34 */
-        SYSTEM_BIOS_ADD( 3, "alexkidd", "Sega Master System II - US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smseam */
-        SYSTEM_BIOS_ADD( 4, "sonic", "Sega Master System II/Tec Toy Master System III Compact (Brazil) - European/Brazilian BIOS with Sonic the Hedgehog (1991)" ) /* smsesh, smsbsh */
+	SYSTEM_BIOS_ADD( 3, "missiled", "US/European BIOS v4.4 with Missile Defense 3D (1988)" )
+        SYSTEM_BIOS_ADD( 4, "alexkidd", "Sega Master System II - US/European BIOS with Alex Kidd in Miracle World (1990)" ) /* smseam */
+        SYSTEM_BIOS_ADD( 5, "sonic", "Sega Master System II/Tec Toy Master System III Compact (Brazil) - European/Brazilian BIOS with Sonic the Hedgehog (1991)" ) /* smsesh, smsbsh */
 SYSTEM_BIOS_END
 
 ROM_START(sms)
 	ROM_REGION(CPU_ADDRESSABLE_SIZE, REGION_CPU1, 0)
 	ROM_REGION(0x40000, REGION_USER1, 0)
 	ROMX_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7), ROM_BIOS(1))
-        ROMX_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df), ROM_BIOS(2))
-        ROMX_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517), ROM_BIOS(3))
-        ROMX_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e), ROM_BIOS(4))
+	ROMX_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517), ROM_BIOS(2))
+	ROMX_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e), ROM_BIOS(3))
+	ROMX_LOAD("missiled.rom", 0x0000, 0x20000, CRC(E79BB689) SHA1(aa92ae576ca670b00855e278378d89e9f85e0351), ROM_BIOS(4))
 	ROMX_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051), ROM_BIOS(5))
 ROM_END
 
@@ -277,8 +279,9 @@ ROM_START(smspal)
 	ROMX_LOAD("bios13fx.rom", 0x0000, 0x2000, CRC(0072ED54) SHA1(c315672807d8ddb8d91443729405c766dd95cae7), ROM_BIOS(1))
 	ROMX_LOAD("hshbios.rom", 0x0000, 0x20000, CRC(91E93385) SHA1(9e179392cd416af14024d8f31c981d9ee9a64517), ROM_BIOS(2))
 	ROMX_LOAD("hangbios.rom", 0x0000, 0x20000, CRC(8EDF7AC6) SHA1(51fd6d7990f62cd9d18c9ecfc62ed7936169107e), ROM_BIOS(3))
-	ROMX_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051), ROM_BIOS(4))
-	ROMX_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df), ROM_BIOS(5))
+	ROMX_LOAD("missiled.rom", 0x0000, 0x20000, CRC(E79BB689) SHA1(aa92ae576ca670b00855e278378d89e9f85e0351), ROM_BIOS(4))
+	ROMX_LOAD("akbios.rom", 0x0000, 0x20000, CRC(CF4A09EA) SHA1(3af7b66248d34eb26da40c92bf2fa4c73a46a051), ROM_BIOS(5))
+	ROMX_LOAD("sonbios.rom", 0x0000, 0x40000, CRC(81C3476B) SHA1(6aca0e3dffe461ba1cb11a86cd4caf5b97e1b8df), ROM_BIOS(6))
 ROM_END
 
 ROM_START(smsm3)
