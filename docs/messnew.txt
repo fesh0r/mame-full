@@ -46,6 +46,9 @@ Source Changes:
 
 - Renamed the "hash_directory" option to "hashpath".  [Aaron Giles]
 
+- Fixed regression introduced in 0.110 that caused battery backed NVRAM files
+  to not be written unless the file already existed.  (bug #974) [Nate Woods]
+
 
 
 0.110

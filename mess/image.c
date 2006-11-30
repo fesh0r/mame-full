@@ -1374,7 +1374,7 @@ void image_battery_save(mess_image *image, const void *buffer, int length)
 	assert_always(buffer && (length > 0), "Must specify sensical buffer/length");
 
 	/* try to open the battery file and write it out, if possible */
-	filerr = open_battery_file(image, OPEN_FLAG_WRITE, &file);
+	filerr = open_battery_file(image, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
 	if (filerr == FILERR_NONE)
 	{
 		mame_fwrite(file, buffer, length);
