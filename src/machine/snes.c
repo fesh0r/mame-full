@@ -72,7 +72,7 @@ static void snes_latch_counters(void)
 	snes_ram[STAT78] |= 0x40;	// indicate we latched
 	read_ophct = read_opvct = 0;	// clear read flags
 
-//	printf("latched @ H %d V %d\n", snes_ppu.beam.latch_horz, snes_ppu.beam.latch_vert);
+//  printf("latched @ H %d V %d\n", snes_ppu.beam.latch_horz, snes_ppu.beam.latch_vert);
 }
 
 static void snes_nmi_tick(int ref)
@@ -135,7 +135,7 @@ static void snes_scanline_tick(int ref)
 
 		if (setirq)
 		{
-//			printf("HIRQ @ %d, %d\n", pixel*snes_htmult, snes_ppu.beam.current_vert);
+//          printf("HIRQ @ %d, %d\n", pixel*snes_htmult, snes_ppu.beam.current_vert);
 			if (pixel == 0)
 			{
 				snes_hirq_tick(0);
@@ -1078,7 +1078,7 @@ WRITE8_HANDLER( snes_w_io )
 					visarea.max_x = SNES_SCR_WIDTH - 1;
 					snes_htmult = 1;
 				}
-				
+
 				if ((snes_ram[STAT78] & 0x10) == SNES_NTSC)
 				{
 					video_screen_configure(0, SNES_HTOTAL*snes_htmult, SNES_VTOTAL_NTSC, &visarea, Machine->screen[0].refresh);

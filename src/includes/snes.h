@@ -4,16 +4,16 @@
 #include "sound/custom.h"
 
 /*
-	SNES timing theory:
+    SNES timing theory:
 
-	the master clock drives the CPU and PPU
-	4  MC ticks = 1 PPU dot
-	6  MC ticks = 1 65816 cycle for 3.58 MHz (3.579545)
-	8  MC ticks = 1 65816 cycle for 2.68 MHz (2.684659)
-	12 MC ticks = 1 65816 cycle for 1.78 MHz (1.789772)
+    the master clock drives the CPU and PPU
+    4  MC ticks = 1 PPU dot
+    6  MC ticks = 1 65816 cycle for 3.58 MHz (3.579545)
+    8  MC ticks = 1 65816 cycle for 2.68 MHz (2.684659)
+    12 MC ticks = 1 65816 cycle for 1.78 MHz (1.789772)
 
-	Each scanline has 341 readable positions and 342 actual dots.
-	This is because 2 dots are "long" dots that last 6 MC ticks, resulting in 1 extra dot per line.
+    Each scanline has 341 readable positions and 342 actual dots.
+    This is because 2 dots are "long" dots that last 6 MC ticks, resulting in 1 extra dot per line.
 */
 
 #define MCLK_NTSC	(21477272)	/* verified */
