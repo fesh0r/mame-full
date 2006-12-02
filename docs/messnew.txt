@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [A7800] Updated palette file.  [Nabuko78]
+- [A7800] Updated palette.  [Nabuko78]
 
 - [AMSTRAD] Minor floppy disk cleanup.  [Nate Woods]
 
