@@ -12,7 +12,7 @@
  *	   source file that it has been changed.  If you're a nice person, you
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
- *	   tlindner@ix.netcom.com
+ *	   tlindner@macmess.org
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/

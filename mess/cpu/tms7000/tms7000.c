@@ -12,7 +12,7 @@
  *	   source file that it has been changed.  If you're a nice person, you
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
- *	   tlindner@ix.netcom.com
+ *	   tlindner@macmess.org
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************
@@ -414,7 +414,7 @@ static void tms7000_check_IRQ_lines( void )
 			if( tms7000.pf[0] & 0x01 ) /* INT1 Enable bit */
 			{
 				tms7000_do_interrupt( 0xfffc, TMS7000_IRQ1_LINE );
-				tms7000.pf[0] &= ~0x02;
+				tms7000.pf[0] &= ~0x02; /* Data Manual, page: 9-41 */
 				return;
 			}
 		}
@@ -433,7 +433,7 @@ static void tms7000_check_IRQ_lines( void )
 			if( tms7000.pf[0] & 0x10 ) /* INT3 Enable bit */
 			{
 				tms7000_do_interrupt( 0xfff8, TMS7000_IRQ3_LINE );
-				tms7000.pf[0] &= ~0x20;
+				tms7000.pf[0] &= ~0x20; /* Data Manual, page: 9-41 */
 				return;
 			}
 		}

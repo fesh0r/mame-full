@@ -308,30 +308,30 @@ static opcodeinfo opcodes[] = {
 	{0x5A, "SUB", 5, 0 },
 	{0x7A, "SUB", 6, 0 },
 
-	{0xFF, "TRAP 0", 44, 0 },
-	{0xFE, "TRAP 1", 44, 0 },
-	{0xFD, "TRAP 2", 44, 0 },
-	{0xFC, "TRAP 3", 44, 0 },
-	{0xFB, "TRAP 4", 44, 0 },
-	{0xFA, "TRAP 5", 44, 0 },
-	{0xF9, "TRAP 6", 44, 0 },
-	{0xF8, "TRAP 7", 44, 0 },
-	{0xF7, "TRAP 8", 44, 0 },
-	{0xF6, "TRAP 9", 44, 0 },
-	{0xF5, "TRAP 10", 44, 0 },
-	{0xF4, "TRAP 11", 44, 0 },
-	{0xF3, "TRAP 12", 44, 0 },
-	{0xF2, "TRAP 13", 44, 0 },
-	{0xF1, "TRAP 14", 44, 0 },
-	{0xF0, "TRAP 15", 44, 0 },
-	{0xEF, "TRAP 16", 44, 0 },
-	{0xEE, "TRAP 17", 44, 0 },
-	{0xED, "TRAP 18", 44, 0 },
-	{0xEC, "TRAP 19", 44, 0 },
-	{0xEB, "TRAP 20", 44, 0 },
-	{0xEA, "TRAP 21", 44, 0 },
-	{0xE9, "TRAP 22", 44, 0 },
-	{0xE8, "TRAP 23", 44, 0 },
+	{0xFF, "TRAP 0", 44, DASMFLAG_STEP_OVER },
+	{0xFE, "TRAP 1", 44, DASMFLAG_STEP_OVER },
+	{0xFD, "TRAP 2", 44, DASMFLAG_STEP_OVER },
+	{0xFC, "TRAP 3", 44, DASMFLAG_STEP_OVER },
+	{0xFB, "TRAP 4", 44, DASMFLAG_STEP_OVER },
+	{0xFA, "TRAP 5", 44, DASMFLAG_STEP_OVER },
+	{0xF9, "TRAP 6", 44, DASMFLAG_STEP_OVER },
+	{0xF8, "TRAP 7", 44, DASMFLAG_STEP_OVER },
+	{0xF7, "TRAP 8", 44, DASMFLAG_STEP_OVER },
+	{0xF6, "TRAP 9", 44, DASMFLAG_STEP_OVER },
+	{0xF5, "TRAP 10", 44, DASMFLAG_STEP_OVER },
+	{0xF4, "TRAP 11", 44, DASMFLAG_STEP_OVER },
+	{0xF3, "TRAP 12", 44, DASMFLAG_STEP_OVER },
+	{0xF2, "TRAP 13", 44, DASMFLAG_STEP_OVER },
+	{0xF1, "TRAP 14", 44, DASMFLAG_STEP_OVER },
+	{0xF0, "TRAP 15", 44, DASMFLAG_STEP_OVER },
+	{0xEF, "TRAP 16", 44, DASMFLAG_STEP_OVER },
+	{0xEE, "TRAP 17", 44, DASMFLAG_STEP_OVER },
+	{0xED, "TRAP 18", 44, DASMFLAG_STEP_OVER },
+	{0xEC, "TRAP 19", 44, DASMFLAG_STEP_OVER },
+	{0xEB, "TRAP 20", 44, DASMFLAG_STEP_OVER },
+	{0xEA, "TRAP 21", 44, DASMFLAG_STEP_OVER },
+	{0xE9, "TRAP 22", 44, DASMFLAG_STEP_OVER },
+	{0xE8, "TRAP 23", 44, DASMFLAG_STEP_OVER },
 
 	{0xB7, "SWAP A", 23, 0 },
 	{0xC7, "SWAP B", 23, 0 },
@@ -388,7 +388,7 @@ unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 
 				switch( of[j].decode[k] )
 				{
 					case DONE:
-						return size;
+						break;
 					case NONE:
 						buffer += sprintf (buffer, "%s", of[j].opstr[k]);
 						break;
@@ -418,7 +418,7 @@ unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 
 						break;
 					case PCREL:
 						b = (INT8)opram[pos++];
-						sym1 = set_ea_info(EA_DST, pc, b, EA_REL_PC);
+						sym1 = set_ea_info(EA_DST, pc+2+k, b, EA_REL_PC);
 						buffer += sprintf (buffer, of[j].opstr[k], sym1);
 						size += 1;
 						break;
