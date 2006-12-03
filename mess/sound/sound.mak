@@ -25,3 +25,10 @@ SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sou
 else
 SOUNDDEFS += -DHAS_SID8580=0
 endif
+
+ifneq ($(filter SP0256,$(SOUNDS)),)
+SOUNDDEFS += -DHAS_SP0256=1
+SOUNDOBJS += $(OBJ)/mess/sound/sp0256.o
+else
+SOUNDDEFS += -DHAS_SP0256=0
+endif

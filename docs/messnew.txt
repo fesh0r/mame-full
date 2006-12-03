@@ -49,6 +49,8 @@ Source Changes:
 - Fixed regression introduced in 0.110 that caused battery backed NVRAM files
   to not be written unless the file already existed.  (bug #974) [Nate Woods]
 
+- Added an SP0256 sound core.  [tim lindner]
+
 
 
 0.110
