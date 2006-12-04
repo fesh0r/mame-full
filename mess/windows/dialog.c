@@ -1623,20 +1623,19 @@ static void after_display_dialog(void)
 
 void win_dialog_runmodal(HWND wnd, dialog_box *dialog)
 {
-	struct _dialog_box *di;
-	
-	di = (struct _dialog_box *) dialog;
-	assert(di);
+	assert(dialog);
 
 	// finishing touches on the dialog
-	dialog_prime(di);
+	dialog_prime(dialog);
 
 	// show the dialog
 	before_display_dialog();
+#ifndef UNICODE
 	if (GetVersion() & 0x80000000)
-		DialogBoxIndirectParamA(NULL, di->handle, wnd, dialog_proc, (LPARAM) di);
+		DialogBoxIndirectParamA(NULL, dialog->handle, wnd, dialog_proc, (LPARAM) dialog);
 	else
-		DialogBoxIndirectParamW(NULL, di->handle, wnd, dialog_proc, (LPARAM) di);
+#endif // UNICODE
+		DialogBoxIndirectParamW(NULL, dialog->handle, wnd, dialog_proc, (LPARAM) dialog);
 	after_display_dialog();
 }
 
