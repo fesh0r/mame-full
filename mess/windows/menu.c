@@ -557,7 +557,8 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	const char *optspec;
 	struct file_dialog_params *params;
 	int has_option;
-	TCHAR buf1[128];
+	TCHAR buf1t[128];
+	char *buf1;
 
 	params = (struct file_dialog_params *) changed_param;
 
@@ -581,7 +582,8 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	while((wnd = FindWindowEx(dlgwnd, wnd, NULL, NULL)) != NULL)
 	{
 		// get label text, removing trailing NULL
-		GetWindowText(wnd, buf1, sizeof(buf1) / sizeof(buf1[0]));
+		GetWindowText(wnd, buf1t, sizeof(buf1t) / sizeof(buf1t[0]));
+		buf1 = T2A(buf1t);
 		assert(buf1[strlen(buf1)-1] == ':');
 		buf1[strlen(buf1)-1] = '\0';
 
@@ -820,7 +822,7 @@ static void change_device(HWND wnd, mess_image *img, int is_save)
 	dialog_box *dialog = NULL;
 	char filter[2048];
 	char filename[MAX_PATH];
-	TCHAR buffer[512];
+	char buffer[512];
 	char *s;
 	const struct IODevice *dev = image_device(img);
 	const char *initial_dir;
@@ -884,11 +886,11 @@ static void change_device(HWND wnd, mess_image *img, int is_save)
 		// error?
 		if (err)
 		{
-			_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
-				TEXT("Error when %s the image: %s"),
-				is_save ? TEXT("creating") : TEXT("loading"),
+			snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
+				"Error when %s the image: %s",
+				is_save ? "creating" : "loading",
 				image_error(img));
-			MessageBox(wnd, buffer, APPNAME, MB_OK);
+			MessageBox(wnd, A2T(buffer), A2T(APPNAME), MB_OK);
 		}
 	}
 
@@ -1255,9 +1257,17 @@ static void prepare_menus(HWND wnd)
 	video_menu = find_sub_menu(menu_bar, "&Options\0&Video\0", FALSE);
 	do
 	{
-		GetMenuString(video_menu, 0, buf, sizeof(buf) / sizeof(buf[0]), MF_BYPOSITION);
-		if (buf[0])
+		MENUITEMINFO mii;
+		memset(&mii, 0, sizeof(mii));
+		mii.cbSize = sizeof(mii);
+		mii.fMask = MIIM_TYPE;
+		mii.fType = MFT_STRING;
+		mii.dwItemData = (DWORD_PTR) buf;
+		mii.cch = sizeof(buf) / sizeof(buf[0]);
+		if (GetMenuItemInfo(video_menu, 0, MF_BYPOSITION, &mii) && buf[0])
 			RemoveMenu(video_menu, 0, MF_BYPOSITION);
+		else
+			buf[0] = '\0';
 	}
 	while(buf[0]);
 	i = 0;

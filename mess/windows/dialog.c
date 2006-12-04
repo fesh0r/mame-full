@@ -994,7 +994,7 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 		goto error;
 	x += dialog->layout->combo_width - DIM_ADJUSTER_SCR_WIDTH;
 
-	_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]),
 		is_percentage ? TEXT("%d%%") : TEXT("%d"),
 		default_value);
 	s = win_dialog_tcsdup(dialog, buf);
@@ -1567,6 +1567,20 @@ void *win_dialog_malloc(dialog_box *dialog, size_t size)
 char *win_dialog_strdup(dialog_box *dialog, const char *s)
 {
 	return pool_strdup(&dialog->mempool, s);
+}
+
+
+
+//============================================================
+//	win_dialog_wcsdup
+//============================================================
+
+WCHAR *win_dialog_wcsdup(dialog_box *dialog, const WCHAR *s)
+{
+	WCHAR *result = (WCHAR *) pool_malloc(&dialog->mempool, (wcslen(s) + 1) * sizeof(*s));
+	if (result)
+		wcscpy(result, s);
+	return result;
 }
 
 
