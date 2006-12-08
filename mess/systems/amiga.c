@@ -248,9 +248,12 @@ static DRIVER_INIT( amiga )
 		amiga_cia_0_portA_w, NULL,               /* CIA0 port A & B write */
 		NULL, NULL,                              /* CIA1 port A & B read */
 		NULL, amiga_fdc_control_w,               /* CIA1 port A & B write */
-		amiga_read_joy0dat,	amiga_read_joy1dat,  /* read_joy0dat & read_joy1dat */
-		amiga_read_dskbytr,	amiga_write_dsklen,  /* read_dskbytr & write_dsklen */
-		NULL, NULL                               /* interrupt & reset callback */
+		amiga_read_joy0dat,	amiga_read_joy1dat,  /* joy0dat_r & joy1dat_r */
+		NULL,                                    /* potgo_w */
+		amiga_read_dskbytr,	amiga_write_dsklen,  /* dskbytr_r & dsklen_w */
+		NULL,                                    /* serdat_w */
+		NULL,                                    /* scanline0_callback */
+		NULL                                     /* reset_callback */
 	};
 
 	amiga_machine_config(&amiga_intf);
@@ -269,9 +272,12 @@ static DRIVER_INIT( cdtv )
 		amiga_cia_0_portA_w, NULL,               /* CIA0 port A & B write */
 		NULL, NULL,                              /* CIA1 port A & B read */
 		NULL, NULL,                              /* CIA1 port A & B write */
-		amiga_read_joy0dat,	amiga_read_joy1dat,  /* read_joy0dat & read_joy1dat */
-		amiga_read_dskbytr,	amiga_write_dsklen,  /* read_dskbytr & write_dsklen */
-		NULL, NULL                               /* interrupt & reset callback */
+		amiga_read_joy0dat,	amiga_read_joy1dat,  /* joy0dat_r & joy1dat_r */
+		NULL,                                    /* potgo_w */
+		amiga_read_dskbytr,	amiga_write_dsklen,  /* dskbytr_r & dsklen_w */
+		NULL,                                    /* serdat_w */
+		NULL,                                    /* scanline0_callback */
+		NULL                                     /* reset_callback */
 	};
 
 	amiga_machine_config(&amiga_intf);

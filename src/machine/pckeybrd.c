@@ -1028,7 +1028,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_EQUALS) PORT_CHAR('=') PORT_CHAR('+')	/* =                           0D  8D */
 	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(8)			/* Backspace                   0E  8E */
 	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_TAB) PORT_CHAR(9)			/* Tab                         0F  8F */
-		
+
 	PORT_START_TAG("pc_keyboard_1")
 	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Q) PORT_CHAR('Q') /* Q                           10  90 */
 	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_W) PORT_CHAR('W') /* W                           11  91 */
@@ -1046,7 +1046,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LCONTROL) PORT_CHAR(UCHAR_MAMEKEY(LCONTROL))      /* Left Ctrl                   1D  9D */
 	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_A) PORT_CHAR('A') /* A                           1E  9E */
 	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_S) PORT_CHAR('S') /* S                           1F  9F */
-		
+
 	PORT_START_TAG("pc_keyboard_2")
 	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_D) PORT_CHAR('D') /* D                           20  A0 */
 	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F) PORT_CHAR('F') /* F                           21  A1 */
@@ -1064,7 +1064,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_X) PORT_CHAR('X') /* X                           2D  AD */
 	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_C) PORT_CHAR('C') /* C                           2E  AE */
 	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_V) PORT_CHAR('V') /* V                           2F  AF */
-		
+
 	PORT_START_TAG("pc_keyboard_3")
 	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_B) PORT_CHAR('B') /* B                           30  B0 */
 	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_N) PORT_CHAR('N') /* N                           31  B1 */
@@ -1082,7 +1082,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F3) PORT_CHAR(UCHAR_MAMEKEY(F3))			/* F3                          3D  BD */
 	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F4) PORT_CHAR(UCHAR_MAMEKEY(F4))			/* F4                          3E  BE */
 	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F5) PORT_CHAR(UCHAR_MAMEKEY(F5))			/* F5                          3F  BF */
-		
+
 	PORT_START_TAG("pc_keyboard_4")
 	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F6) PORT_CHAR(UCHAR_MAMEKEY(F6))			 /* F6                          40  C0 */
 	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F7) PORT_CHAR(UCHAR_MAMEKEY(F7))			 /* F7                          41  C1 */
@@ -1100,7 +1100,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PC_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT ) /* Keypad 6  (Right arrow)     4D  CD */
 	PC_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD,   CODE_NONE )     /* Keypad +                    4E  CE */
 	PC_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END )   /* Keypad 1  (End)             4F  CF */
-		
+
 	PORT_START_TAG("pc_keyboard_5")
 	PC_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN )   /* Keypad 2  (Down arrow)      50  D0 */
 	PC_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN )   /* Keypad 3  (PgDn)            51  D1 */
@@ -1109,10 +1109,10 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
 	PC_KEYB_HELPER( 0x0040, "(84/102)\\",   KEYCODE_BACKSLASH2, CODE_NONE )      /* Backslash 2                 56  D6 */
 	PORT_BIT ( 0xff80, 0x0000, IPT_UNUSED )
-		
+
 	PORT_START_TAG("pc_keyboard_6")
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-		
+
 	PORT_START_TAG("pc_keyboard_7")
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 INPUT_PORTS_END
@@ -1140,7 +1140,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "= +",          KEYCODE_EQUALS      ) /* =                           0D  8D */
 	AT_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE   ) /* Backspace                   0E  8E */
 	AT_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB         ) /* Tab                         0F  8F */
-		
+
 	PORT_START_TAG("pc_keyboard_1")
 	AT_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q           ) /* Q                           10  90 */
 	AT_KEYB_HELPER( 0x0002, "W",            KEYCODE_W           ) /* W                           11  91 */
@@ -1158,7 +1158,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "L-Ctrl",       KEYCODE_LCONTROL    ) /* Left Ctrl                   1D  9D */
 	AT_KEYB_HELPER( 0x4000, "A",            KEYCODE_A           ) /* A                           1E  9E */
 	AT_KEYB_HELPER( 0x8000, "S",            KEYCODE_S           ) /* S                           1F  9F */
-		
+
 	PORT_START_TAG("pc_keyboard_2")
 	AT_KEYB_HELPER( 0x0001, "D",            KEYCODE_D           ) /* D                           20  A0 */
 	AT_KEYB_HELPER( 0x0002, "F",            KEYCODE_F           ) /* F                           21  A1 */
@@ -1176,7 +1176,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "X",            KEYCODE_X           ) /* X                           2D  AD */
 	AT_KEYB_HELPER( 0x4000, "C",            KEYCODE_C           ) /* C                           2E  AE */
 	AT_KEYB_HELPER( 0x8000, "V",            KEYCODE_V           ) /* V                           2F  AF */
-		
+
 	PORT_START_TAG("pc_keyboard_3")
 	AT_KEYB_HELPER( 0x0001, "B",            KEYCODE_B           ) /* B                           30  B0 */
 	AT_KEYB_HELPER( 0x0002, "N",            KEYCODE_N           ) /* N                           31  B1 */
@@ -1194,7 +1194,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "F3",           KEYCODE_F3          ) /* F3                          3D  BD */
 	AT_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4          ) /* F4                          3E  BE */
 	AT_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5          ) /* F5                          3F  BF */
-		
+
 	PORT_START_TAG("pc_keyboard_4")
 	AT_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6          ) /* F6                          40  C0 */
 	AT_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7          ) /* F7                          41  C1 */
@@ -1212,7 +1212,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD       ) /* Keypad 6  (Right arrow)     4D  CD */
 	AT_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD    ) /* Keypad +                    4E  CE */
 	AT_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD       ) /* Keypad 1  (End)             4F  CF */
-		
+
 	PORT_START_TAG("pc_keyboard_5")
 	AT_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD       ) /* Keypad 2  (Down arrow)      50  D0 */
 	AT_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD       ) /* Keypad 3  (PgDn)            51  D1 */
@@ -1223,7 +1223,7 @@ INPUT_PORTS_START( at_keyboard )
 	AT_KEYB_HELPER( 0x0080, "(MF2)F11",		KEYCODE_F11         ) /* F11                         57  D7 */
 	AT_KEYB_HELPER( 0x0100, "(MF2)F12",		KEYCODE_F12         ) /* F12                         58  D8 */
 	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
-		
+
 	PORT_START_TAG("pc_keyboard_6")
 	AT_KEYB_HELPER( 0x0001, "(MF2)KP Enter",		KEYCODE_ENTER_PAD   ) /* PAD Enter                   60  e0 */
 	AT_KEYB_HELPER( 0x0002, "(MF2)Right Control",	KEYCODE_RCONTROL    ) /* Right Control               61  e1 */
