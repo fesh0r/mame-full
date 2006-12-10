@@ -326,6 +326,9 @@ READ8_HANDLER( wswan_port_r )
 			value = sound_dma.enable;
 			break;
 		case 0xA0:		/* Hardware type */
+					/* Bit 0 - Disable/enable Bios */
+					/* Bit 1 - Determine mono/color */
+					/* Bit 2 - Determine color/crystal */
 			value = value & ~ 0x02;
 			if ( system_type == WSC ) {
 				value |= 2;
