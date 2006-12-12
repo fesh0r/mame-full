@@ -31,7 +31,7 @@
 ***************************************************************************/
 
 #include <stdio.h>
-#include "driver.h"
+#include "mame.h"
 #include "vidhrdw/generic.h"
 #include "state.h"
 

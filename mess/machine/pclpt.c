@@ -4,7 +4,7 @@
   started as some ttl's, is now available on several multi io chips
 */
 
-#include "driver.h"
+#include "mame.h"
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
 #include "memconv.h"
