@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "mame.h"
+#include "osdepend.h"
 
 #ifdef WIN32
 #include <windows.h>

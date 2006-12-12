@@ -9,8 +9,6 @@
 #ifndef UIMESS_H
 #define UIMESS_H
 
-#include "osdepend.h"
-#include "palette.h"
 #include "ui.h"
 
 int mess_ui_active(void);

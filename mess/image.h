@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include "fileio.h"
 #include "utils.h"
-#include "osdepend.h"
 #include "opresolv.h"
 #include "driver.h"
 
