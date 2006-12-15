@@ -40,7 +40,6 @@
 #ifdef MESS
 #define OPTION_ROMPATH				"biospath"
 #define OPTION_HASHPATH				"hashpath"
-#define OPTION_IMAGEPATH			"softwarepath"
 #else
 #define OPTION_ROMPATH				"rompath"
 #endif

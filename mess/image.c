@@ -491,10 +491,8 @@ static int image_load_internal(mess_image *image, const char *path,
 	int is_create, int create_format, option_resolution *create_args)
 {
 	image_error_t err;
-	const char *software_paths;
 	const char *software_path;
 	char *software_path_list = NULL;
-	char *s;
 	const void *buffer;
 	const game_driver *gamedrv;
 	UINT32 open_plan[4];
@@ -505,23 +503,6 @@ static int image_load_internal(mess_image *image, const char *path,
 
 	/* first unload the image */
 	image_unload(image);
-
-	if (!osd_is_absolute_path(path))
-	{
-		/* parse the software paths into a NUL-delimited list */
-		software_paths = options_get_string(SEARCHPATH_IMAGE);
-		software_path_list = malloc((strlen(software_paths) + 2) * sizeof(*software_path_list));
-		if (!software_path_list)
-		{
-			image->err = IMAGE_ERROR_OUTOFMEMORY;
-			goto done;
-		}
-		strcpy(software_path_list, software_paths);
-		strcat(software_path_list, ";");
-		s = software_path_list;
-		while((s = strchr(s, ';')) != NULL)
-			*(s++) = '\0';
-	}
 
 	/* record the filename */
 	image->err = set_image_filename(image, path, NULL);

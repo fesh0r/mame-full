@@ -14,7 +14,11 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- Changed -biospath command line option to be -rompath.  -biospath still works
+  but it is secondary and configuration files created by MESS will use
+  -rompath.  Also removed -softwarepath, paths passed on the command line will
+  now be absolute.  The concept of software paths will continue within the
+  MESS GUI.  [Nate Woods]
   
 
 

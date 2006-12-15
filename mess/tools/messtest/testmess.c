@@ -151,6 +151,13 @@ static struct messtest_testcase current_testcase;
 
 
 
+static char *assemble_software_path(const game_driver *gamedrv, const char *filename)
+{
+	return assemble_5_strings("software", PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, filename);
+}
+
+
+
 static void dump_screenshot(int write_file)
 {
 	mame_file_error filerr;
@@ -228,6 +235,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	messtest_result_t rc;
 	clock_t begin_time;
 	double real_run_time;
+	char *fullpath = NULL;
 
 	/* lookup driver */
 	for (driver_num = 0; drivers[driver_num]; driver_num++)
@@ -271,7 +279,8 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	/* preload any needed images */
 	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
 	{
-		options.image_files[options.image_count].name = current_command->u.image_args.filename;
+		fullpath = assemble_software_path(drivers[driver_num], current_command->u.image_args.filename);
+		options.image_files[options.image_count].name = fullpath;
 		options.image_files[options.image_count].device_type = current_command->u.image_args.device_type;
 		options.image_files[options.image_count].device_index = -1;
 		options.image_count++;
@@ -324,6 +333,8 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 		results->rc = rc;
 		results->runtime_hash = runtime_hash;
 	}
+	if (fullpath)
+		free(fullpath);
 	return rc;
 }
 
@@ -599,6 +610,9 @@ static void command_image_loadcreate(void)
 	char buf[128];
 	const struct IODevice *dev;
 	const char *file_extensions;
+	char *filepath;
+	int success;
+	const game_driver *gamedrv;
 
 	device_slot = current_command->u.image_args.device_slot;
 	device_type = current_command->u.image_args.device_type;
@@ -662,29 +676,34 @@ static void command_image_loadcreate(void)
 		filename = buf;
 	}
 
-	/* actually create or load the image */
-	switch(current_command->command_type)
+	success = FALSE;
+	for (gamedrv = Machine->gamedrv; !success && gamedrv; gamedrv = mess_next_compatible_driver(gamedrv))
 	{
-		case MESSTEST_COMMAND_IMAGE_CREATE:
-			if (image_create(image, filename, format_index, NULL))
-			{
-				state = STATE_ABORTED;
-				report_message(MSG_FAILURE, "Failed to create image '%s': %s", filename, image_error(image));
-				return;
-			}
-			break;
-		
-		case MESSTEST_COMMAND_IMAGE_LOAD:
-			if (image_load(image, filename))
-			{
-				state = STATE_ABORTED;
-				report_message(MSG_FAILURE, "Failed to load image '%s': %s", filename, image_error(image));
-				return;
-			}
-			break;
+		/* assemble the full path */
+		filepath = assemble_software_path(gamedrv, filename);
 
-		default:
-			break;
+		/* actually create or load the image */
+		switch(current_command->command_type)
+		{
+			case MESSTEST_COMMAND_IMAGE_CREATE:
+				success = (image_create(image, filepath, format_index, NULL) == INIT_PASS);
+				break;
+			
+			case MESSTEST_COMMAND_IMAGE_LOAD:
+				success = (image_load(image, filepath) == INIT_PASS);
+				break;
+
+			default:
+				fatalerror("Unexpected error");
+				break;
+		}
+		free(filepath);
+	}
+	if (!success)
+	{
+		state = STATE_ABORTED;
+		report_message(MSG_FAILURE, "Failed to load/create image '%s': %s", filename, image_error(image));
+		return;
 	}
 }
 
