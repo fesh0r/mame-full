@@ -66,6 +66,7 @@ These are yet to be implemented.
 
 unsigned char dgnbeta_palette[] =
 {
+	/*normal brightness */
 	0x00,0x00,0x00, 	/* black */
 	0x80,0x00,0x00,		/* red */
 	0x00,0x80,0x00, 	/* green */
@@ -73,7 +74,17 @@ unsigned char dgnbeta_palette[] =
 	0x00,0x00,0x80,		/* blue */
 	0x80,0x00,0x80,		/* magenta */
 	0x00,0x80,0x80,		/* cyan */
-	0x80,0x80,0x80		/* white */
+	0x80,0x80,0x80,		/* white */
+
+	/*enhanced brightness*/
+	0x00,0x00,0x00, 	/* black */
+	0xFF,0x00,0x00,		/* red */
+	0x00,0xFF,0x00, 	/* green */
+	0xFF,0xFF,0x00,		/* yellow */
+	0x00,0x00,0xFF,		/* blue */
+	0xFF,0x00,0xFF,		/* magenta */
+	0x00,0xFF,0xFF,		/* cyan */
+	0xFF,0xFF,0xFF		/* white */
 };
 
 /*
@@ -147,7 +158,8 @@ static ADDRESS_MAP_START( dgnbeta_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xFC24, 0xFC27)	AM_READWRITE(pia_1_r		,pia_1_w)
 	AM_RANGE(0xFC28, 0xfC7F)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)	
 	AM_RANGE(0xfc80, 0xfc81)	AM_READWRITE(dgnbeta_6845_r	,dgnbeta_6845_w)	
-	AM_RANGE(0xfc82, 0xfCBF)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
+	AM_RANGE(0xfc82, 0xfC9F)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
+	AM_RANGE(0xFCA0, 0xFCA3)	AM_READWRITE(MRA8_NOP		,colour_ram_w)		/* 4x4bit colour ram for graphics modes */
 	AM_RANGE(0xFCC0, 0xFCC3)	AM_READWRITE(pia_2_r		,pia_2_w)
 	AM_RANGE(0xfcC4, 0xfcdf)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
 	AM_RANGE(0xfce0, 0xfce3)	AM_READWRITE(dgnbeta_wd2797_r	,dgnbeta_wd2797_w)	/* Onboard disk interface */
@@ -156,7 +168,6 @@ static ADDRESS_MAP_START( dgnbeta_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfe10, 0xfEff)	AM_READWRITE(MRA8_NOP		,MWA8_NOP)
 	AM_RANGE(0xFF00, 0xFFFF) 	AM_READWRITE(MRA8_BANK17	,MWA8_BANK17)
 
-//	AM_RANGE(0x1F000, 0x1FFFF) 	AM_READWRITE(MRA8_BANK32	,MWA8_BANK32) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 ADDRESS_MAP_END
 
 
@@ -290,18 +301,18 @@ static void dgnbeta_floppy_getinfo(const device_class *devclass, UINT32 state, u
 		case DEVINFO_PTR_FLOPPY_OPTIONS:				info->p = (void *) floppyoptions_coco; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case DEVINFO_STR_NAME+0:						strcpy(info->s = device_temp_str(), "floppydisk0"); break;
-		case DEVINFO_STR_NAME+1:						strcpy(info->s = device_temp_str(), "floppydisk1"); break;
-		case DEVINFO_STR_NAME+2:						strcpy(info->s = device_temp_str(), "floppydisk2"); break;
-		case DEVINFO_STR_NAME+3:						strcpy(info->s = device_temp_str(), "floppydisk3"); break;
-		case DEVINFO_STR_SHORT_NAME+0:					strcpy(info->s = device_temp_str(), "flop0"); break;
-		case DEVINFO_STR_SHORT_NAME+1:					strcpy(info->s = device_temp_str(), "flop1"); break;
-		case DEVINFO_STR_SHORT_NAME+2:					strcpy(info->s = device_temp_str(), "flop2"); break;
-		case DEVINFO_STR_SHORT_NAME+3:					strcpy(info->s = device_temp_str(), "flop3"); break;
-		case DEVINFO_STR_DESCRIPTION+0:					strcpy(info->s = device_temp_str(), "Floppy #0"); break;
-		case DEVINFO_STR_DESCRIPTION+1:					strcpy(info->s = device_temp_str(), "Floppy #1"); break;
-		case DEVINFO_STR_DESCRIPTION+2:					strcpy(info->s = device_temp_str(), "Floppy #2"); break;
-		case DEVINFO_STR_DESCRIPTION+3:					strcpy(info->s = device_temp_str(), "Floppy #3"); break;
+		case DEVINFO_STR_NAME+0:		strcpy(info->s = device_temp_str(), "floppydisk0"); break;
+		case DEVINFO_STR_NAME+1:		strcpy(info->s = device_temp_str(), "floppydisk1"); break;
+		case DEVINFO_STR_NAME+2:		strcpy(info->s = device_temp_str(), "floppydisk2"); break;
+		case DEVINFO_STR_NAME+3:		strcpy(info->s = device_temp_str(), "floppydisk3"); break;
+		case DEVINFO_STR_SHORT_NAME+0:		strcpy(info->s = device_temp_str(), "flop0"); break;
+		case DEVINFO_STR_SHORT_NAME+1:		strcpy(info->s = device_temp_str(), "flop1"); break;
+		case DEVINFO_STR_SHORT_NAME+2:		strcpy(info->s = device_temp_str(), "flop2"); break;
+		case DEVINFO_STR_SHORT_NAME+3:		strcpy(info->s = device_temp_str(), "flop3"); break;
+		case DEVINFO_STR_DESCRIPTION+0:	strcpy(info->s = device_temp_str(), "Floppy #0"); break;
+		case DEVINFO_STR_DESCRIPTION+1:	strcpy(info->s = device_temp_str(), "Floppy #1"); break;
+		case DEVINFO_STR_DESCRIPTION+2:	strcpy(info->s = device_temp_str(), "Floppy #2"); break;
+		case DEVINFO_STR_DESCRIPTION+3:	strcpy(info->s = device_temp_str(), "Floppy #3"); break;
 
 		default:										floppy_device_getinfo(devclass, state, info); break;
 	}
@@ -328,8 +339,8 @@ static MACHINE_DRIVER_START( dgnbeta )
 
 	/* video hardware */
 	
-	MDRV_SCREEN_SIZE(900,700)
-	MDRV_VISIBLE_AREA(0, 899, 0, 699)
+	MDRV_SCREEN_SIZE(700,550)
+	MDRV_VISIBLE_AREA(0, 699, 0, 549)
 	MDRV_PALETTE_LENGTH(sizeof (dgnbeta_palette) / sizeof (dgnbeta_palette[0]) / 3)
 	MDRV_PALETTE_INIT( dgnbeta )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
@@ -337,18 +348,38 @@ static MACHINE_DRIVER_START( dgnbeta )
 	MDRV_VIDEO_UPDATE( dgnbeta )
 MACHINE_DRIVER_END
 
+SYSTEM_BIOS_START( dgnbeta )
+        SYSTEM_BIOS_ADD( 0, "bootrom", "Dragon beta OS9 boot rom (1984)" ) 
+        SYSTEM_BIOS_ADD( 1, "testrom", "Dragon beta test rom (1984?)" ) 
+        SYSTEM_BIOS_ADD( 2, "cfiles", "cfiles rom" ) 
+        SYSTEM_BIOS_ADD( 3, "dfiles", "dfiles rom" ) 
+SYSTEM_BIOS_END
+
 ROM_START(dgnbeta)
 	ROM_REGION(0x4000,REGION_CPU1,0)
-	ROM_LOAD("beta_bt.rom"	,0x0000	,0x4000	,CRC(4c54c1de) SHA1(141d9fcd2d187c305dff83fce2902a30072aed76))
+	ROMX_LOAD("beta_bt.rom"		,0x0000	,0x4000	,CRC(4c54c1de) SHA1(141d9fcd2d187c305dff83fce2902a30072aed76), ROM_BIOS(1))
+	ROMX_LOAD("beta_tst.rom"	,0x2000	,0x2000	,CRC(01d79d00) SHA1(343e08cf7656b5e8970514868df37ea0af1e2362), ROM_BIOS(2))
+	ROMX_LOAD("beta_cfi.rom"	,0x2000	,0x2000	,CRC(d312e4c0) SHA1(5c00daac488eaf8d36d66de6ec6c746ab7b78ecf), ROM_BIOS(3))
+	ROMX_LOAD("beta_dfi.rom"	,0x2000	,0x2000	,CRC(c4ad7f64) SHA1(50aa92a1c383321485d5a1aa41dfe4f90b3beaed), ROM_BIOS(4))
 
 	ROM_REGION (0x2000, REGION_GFX1, 0)
 	ROM_LOAD("betachar.rom"	,0x0000	,0x2000	,CRC(ca79d66c) SHA1(8e2090d471dd97a53785a7f44a49d3c8c85b41f2)) 	
 ROM_END
 
+/* Ram size can now be configured, since the machine was known as either the Dragon Beta or */
+/* the Dragon 128, I have added a config for 128K, however, the only working machine known  */
+/* to exist was fitted with 256K, so I have made this the default. Also available           */
+/* documentation seems to sugest a maximum of 768K, so I have included configs increasing   */
+/* in blocks of 128K up to this maximum.                                                    */
 SYSTEM_CONFIG_START(dgnbeta)
-	CONFIG_RAM(RamSize * 1024)
+	CONFIG_RAM(128 * 1024)
+	CONFIG_RAM_DEFAULT(RamSize * 1024)		
+	CONFIG_RAM(384 * 1024)
+	CONFIG_RAM(512 * 1024)
+	CONFIG_RAM(640 * 1024)
+	CONFIG_RAM(768 * 1024)
 	CONFIG_DEVICE( dgnbeta_floppy_getinfo )
 SYSTEM_CONFIG_END
 
-/*     YEAR	NAME		PARENT	COMPAT		MACHINE    	INPUT		INIT    	CONFIG		COMPANY			FULLNAME */
-COMP(  1984,	dgnbeta,	0,	0,		dgnbeta,	dgnbeta,	0,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" , 0)
+/*      YEAR	NAME		PARENT	BIOS		COMPAT		MACHINE    	INPUT		INIT    CONFIG		COMPANY			FULLNAME */
+COMPB(  1984,	dgnbeta,	0,	dgnbeta,	0,		dgnbeta,	dgnbeta,	0,	dgnbeta,	"Dragon Data Ltd",    "Dragon Beta Prototype" , 0)

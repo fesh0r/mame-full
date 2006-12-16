@@ -76,12 +76,12 @@ static UINT8 *system_rom;
 //#define LOG_BANK_UPDATE	1
 //#define LOG_DEFAULT_TASK	1
 //#define LOG_PAGE_WRITE	1
-#define LOG_HALT	1
+//#define LOG_HALT	1
 //#define LOG_TASK	1
 //#define LOG_KEYBOARD	1
 //#define LOG_VIDEO	1
-#define LOG_DISK	1
-#define LOG_INTS	1
+#define LOG_DISK	0
+//#define LOG_INTS	1
 #endif
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
@@ -91,6 +91,12 @@ static UINT8 *system_rom;
 
 #ifdef MAME_DEBUG
 static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+static void ToggleDatLog(int ref, int params, const char *param[]);
+static void DumpKeys(int ref, int params, const char *param[]);
+
+static int LogDatWrites;
+#endif
 #endif /* MAME_DEBUG */
 
 static READ8_HANDLER(d_pia0_pa_r);
@@ -130,6 +136,9 @@ static int d_pia1_pa_last;
 static int d_pia1_pb_last;
 static int DMA_NMI_LAST;
 //static int DMA_NMI;				/* DMA cpu has received an NMI */
+
+#define INVALID_KEYROW	-1			/* no ketrow selected */
+#define NO_KEY_PRESSED	0x7F			/* retrurned by hardware if no key pressed */
 
 int SelectedKeyrow(int	Rows);
 
@@ -249,12 +258,15 @@ static void UpdateBanks(int first, int last)
 		//
 		// Map block, $00-$BF are ram, $FC-$FF are Boot ROM
 		//
-
-		if ((MapPage*4) < (RamSize-1))		// Block is ram
+		if ((MapPage*4) < ((mess_ram_size / 1024)-1))		// Block is ram
 		{
 			if (!IsIOPage(Page)) 		
 			{
 				readbank = &mess_ram[MapPage*RamPageSize];
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+				if(LogDatWrites)
+					debug_console_printf("Mapping page %X, pageno=%X, mess_ram[%X]\n",Page,MapPage,(MapPage*RamPageSize));
+#endif
 			}
 			else
 			{
@@ -300,6 +312,7 @@ static void SetDefaultTask(void)
 
 #ifdef LOG_DEFAULT_TASK	
 	logerror("SetDefaultTask()\n");
+	debug_console_printf("Set Default task\n");
 #endif
 
 	TaskReg=NoPagingTask;
@@ -324,7 +337,7 @@ static void SetDefaultTask(void)
 	PageRegs[TaskReg][IOPage+1].value=IOPageValue;
 
 	UpdateBanks(0,IOPage+1);
-//	videoram=PageRegs[TaskReg][VideoPage].memory;
+
 	/* Map video ram to base of area it can use, that way we can take the literal RA */
 	/* from the 6845 without having to mask it ! */
 	videoram=&mess_ram[TextVidBasePage*RamPageSize];
@@ -461,6 +474,12 @@ Shifter		Row being scanned
 etc.
 
 Returns row number or -1 if none selected.
+
+2006-12-03, P.Harvey-Smith, modified to scan from msb to lsb, and stop at 
+first row with zero, as the beta_test fills the shifter with zeros, rather 
+than using a walking zero as the OS-9 driver does. This meant that SelectKeyrow
+never moved past the first row, by scanning for the last active row
+the beta_test rom works, and it does not break the OS-9 driver :)
 */
 int SelectedKeyrow(int	Rows)
 {
@@ -469,23 +488,37 @@ int SelectedKeyrow(int	Rows)
 	int	Mask;	/* Mask to test row */
 	int	Found;	/* Set true when found */
 	
-	Row=-1;		/* Pretend no rows selected */
-	Mask=0x01;	/* Start with row 0 */
-	Found=0;	/* Start with not found */
+	Row=INVALID_KEYROW;	/* Pretend no rows selected */
+	Mask=0x200;		/* Start with row 9 */
+	Found=0;		/* Start with not found */
+	Idx=9;
 	
-	for(Idx=0;((Idx<NoKeyrows) && !Found);Idx++)
+	while ((Mask>0) && !Found)
 	{
-		if(((Rows & Mask)==0) && !Found)
+		if((~Rows & Mask) && !Found)
 		{
 			Row=Idx;		/* Get row */
 			Found=1;		/* Mark as found */
 		}
-		Mask=Mask<<1;			/* Select next bit */
+		Idx=Idx-1;			/* Decrement row count */
+		Mask=Mask>>1;			/* Select next bit */
 	}
-	
-	logerror("\nSelected row %d Rowshifter=%02X Mask=%02X\n",Row,Rows,Mask);
-	
+		
 	return Row;
+}
+
+/* GetKeyRow, returns the value of a keyrow, checking for invalid rows */
+/* and returning no key pressed if row is invalid */
+int GetKeyRow(int RowNo)
+{
+	if(RowNo==INVALID_KEYROW)
+	{
+		return NO_KEY_PRESSED;	/* row is invalid, so return no key down */
+	}
+	else
+	{
+		return Keyboard[RowNo];	/* Else return keyboard data */
+	}
 }
 
 /*********************************** PIA Handlers ************************/
@@ -494,14 +527,15 @@ int SelectedKeyrow(int	Rows)
 		The Printer port, side A,
 		PB0	R16 (pullup) -> Printer Port (PL1)
 		PB1	Printer Port
-		PB2 	Keyboard
+		PB2 	Keyboard (any key).
 		PB3	D4 -> R37 -> TR1 switching circuit -> PL5
-		PB4	Keyboard
-		PB5	Keyboard
+		PB4	Keyboard Data out, clocked by CB2.
+		        positive edge clocks data out of the input shift register.
+		PB5	Keyboard data in, clocked by PB4.
 		PB6	R79 -> I99/6/7416 -> PL9/26/READY (from floppy)
 		PB7	Printer port
 		CB1	I36/39/6845(Horz Sync)
-		CB2	Keyboard (out)
+		CB2	Keyboard (out) Low loads input shift reg
 */
 static READ8_HANDLER(d_pia0_pa_r)
 {
@@ -527,19 +561,34 @@ static READ8_HANDLER(d_pia0_pb_r)
 	Selected=SelectedKeyrow(RowShifter);
 	
 	/* Scan the whole keyboard, if output shifter is all low */
+	/* This actually scans in the keyboard */
 	if(RowShifter==0x00)
 	{
 		for(Idx=0;Idx<NoKeyrows;Idx++)
 		{
+			switch (Idx)
+			{
+				case 0 : Keyboard[Idx]=input_port_0_r(0); break;
+				case 1 : Keyboard[Idx]=input_port_1_r(0); break;
+				case 2 : Keyboard[Idx]=input_port_2_r(0); break;
+				case 3 : Keyboard[Idx]=input_port_3_r(0); break;
+				case 4 : Keyboard[Idx]=input_port_4_r(0); break;
+				case 5 : Keyboard[Idx]=input_port_5_r(0); break;
+				case 6 : Keyboard[Idx]=input_port_6_r(0); break;
+				case 7 : Keyboard[Idx]=input_port_7_r(0); break;
+				case 8 : Keyboard[Idx]=input_port_8_r(0); break;
+				case 9 : Keyboard[Idx]=input_port_9_r(0); break;
+			}
+			
 			if(Keyboard[Idx]!=0x7F)
 			{
 				KAny_next=1;
 			}
 		}
 	}
-	else	/* Just scan current row */
+	else	/* Just scan current row, from previously read values */
 	{
-		if(Keyboard[Selected]!=0x7F)
+		if(GetKeyRow(Selected)!=NO_KEY_PRESSED)
 		{
 			KAny_next=1;
 		}
@@ -557,13 +606,15 @@ static READ8_HANDLER(d_pia0_pb_r)
 static WRITE8_HANDLER(d_pia0_pb_w)
 {
 	int	InClkState;
-
+	int	OutClkState;
+	
 #ifdef LOG_KEYBOARD
 	logerror("PB Write\n");
 #endif
 	
-	InClkState=data & KInClk;
-
+	InClkState	= data & KInClk;
+	OutClkState	= data & KOutClk;
+	
 #ifdef LOG_KEYBOARD
 	logerror("InClkState=$%02X OldInClkState=$%02X Keyrow=$%02X ",InClkState,(d_pia0_pb_last & KInClk),Keyrow);
 #endif
@@ -572,7 +623,7 @@ static WRITE8_HANDLER(d_pia0_pb_w)
 	if ((InClkState) != (d_pia0_pb_last & KInClk))
 	{
 		/* Clock in bit */
-		if(!InClkState)
+		if(InClkState)
 		{
 			KInDat_next=(~Keyrow & 0x40)>>6;
 			Keyrow = ((Keyrow<<1) | 0x01) & 0x7F ;
@@ -581,25 +632,29 @@ static WRITE8_HANDLER(d_pia0_pb_w)
 #endif
 		}
 	}
-	
+		
 	d_pia0_pb_last=data;
 }
 
 static WRITE8_HANDLER(d_pia0_cb2_w)
 {
+	int	RowNo;
 #ifdef LOG_KEYBOARD
 	logerror("\nCB2 Write\n");
 #endif
-	/* Clock data from PB4 into shift regiester */
-	if(data==0)
+	/* load keyrow on rising edge of CB2 */
+	if((data==1) && (d_pia0_cb2_last==0))
 	{	
-		Keyrow=Keyboard[SelectedKeyrow(RowShifter)];
-		
+		RowNo=SelectedKeyrow(RowShifter);
+		Keyrow=GetKeyRow(RowNo);
+
+		/* Output clock rising edge, clock CB2 value into rowshifterlow to high transition */
+		/* In the beta the shift registers are a cmos 4015, and a cmos 4013 in series */
 		RowShifter = (RowShifter<<1) | ((d_pia0_pb_last & KOutDat)>>4);
 		RowShifter &= 0x3FF;
-
 #ifdef LOG_KEYBOARD
 		logerror("Rowshifter=$%02X Keyrow=$%02X\n",RowShifter,Keyrow);
+		debug_console_printf("rowshifter clocked, value=%3X, RowNo=%d, Keyrow=%2X\n",RowShifter,RowNo,Keyrow);
 #endif
 	}
 	
@@ -817,6 +872,8 @@ static READ8_HANDLER(d_pia2_pb_r)
 
 static WRITE8_HANDLER(d_pia2_pb_w)
 {
+	/* Update top video address lines */
+	vid_set_gctrl(data);
 }
 
 static void d_pia2_irq_a(int state)
@@ -966,11 +1023,14 @@ WRITE8_HANDLER(dgnbeta_wd2797_w)
 }
 
 /* Scan physical keyboard into Keyboard array */
+/* gonna try and sync this more closely with hardware as keyboard being scanned */
+/* on *EVERY* vblank ! */
 void ScanInKeyboard(void)
 {
+#if 0
 	int	Idx;
-	int	Row;// = 0x7F;
-	
+	int	Row;
+
 #ifdef LOG_KEYBOARD
 	logerror("Scanning Host keyboard\n");
 #endif
@@ -1000,6 +1060,7 @@ void ScanInKeyboard(void)
 		}
 #endif
 	}
+#endif
 }
 
 /* VBlank inturrupt */
@@ -1070,6 +1131,8 @@ static void dgnbeta_reset(running_machine *machine)
 	wd179x_reset();
 	wd179x_set_density(DEN_MFM_LO);
 	wd179x_set_drive(0);
+
+	videoram=mess_ram;			/* Point video ram at the start of physical ram */
 }
 
 
@@ -1088,6 +1151,12 @@ MACHINE_START( dgnbeta )
 
 	add_reset_callback(machine, dgnbeta_reset);
 	dgnbeta_reset(machine);
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	/* setup debug commands */
+	debug_console_register_command("beta_dat_log", CMDFLAG_NONE, 0, 0, 0,ToggleDatLog);
+	debug_console_register_command("beta_key_dump", CMDFLAG_NONE, 0, 0, 0,DumpKeys);
+	LogDatWrites=0;
+#endif	
 	return 0;
 }
 
@@ -1266,6 +1335,23 @@ static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom,
 	return result;
 }
 
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+static void ToggleDatLog(int ref, int params, const char *param[])
+{
+	LogDatWrites=!LogDatWrites;
 
+	debug_console_printf("DAT register write info set : %d\n",LogDatWrites);
+}
+
+static void DumpKeys(int ref, int params, const char *param[])
+{
+	int Idx;
+	
+	for(Idx=0;Idx<NoKeyrows;Idx++)
+	{
+		debug_console_printf("KeyRow[%d]=%2X\n",Idx,Keyboard[Idx]);
+	}
+}
+#endif
 
 #endif /* MAME_DEBUG */

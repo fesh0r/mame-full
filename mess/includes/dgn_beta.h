@@ -79,7 +79,10 @@ void dgnbeta_ram_bG_w(offs_t offset, UINT8 data);
 /* mc6845 video display generator */
 void init_video(void);
 extern VIDEO_UPDATE( dgnbeta );
-//INTERRUPT_GEN( dgn_beta_frame_interrupt );
+void vid_set_gctrl(int data);
+
+/* 74HC670 4x4bit colour ram */
+WRITE8_HANDLER(colour_ram_w);
 
 void dgn_beta_frame_interrupt (int data);
 void dgn_beta_line_interrupt (int data);
