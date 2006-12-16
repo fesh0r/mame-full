@@ -18,6 +18,7 @@
 #include "messres.h"
 #include "inputx.h"
 #include "windows/video.h"
+#include "windows/input.h"
 #include "dialog.h"
 #include "opcntrl.h"
 #include "uitext.h"
@@ -1357,7 +1358,6 @@ void win_toggle_menubar(void)
 	DWORD style, exstyle;
 	HWND hwnd;
 	HMENU menu;
-	extern void win_pause_input(int pause_);
 
 	for (window = win_window_list; window != NULL; window = window->next)
 	{
@@ -1375,7 +1375,7 @@ void win_toggle_menubar(void)
 		AdjustWindowRectEx(&before_rect, style, menu ? TRUE : FALSE, exstyle);
 
 		// toggle the menu
-		win_pause_input(1);
+		win_pause_input(Machine, 1);
 		if (menu)
 		{
 			SetProp(hwnd, TEXT("menu"), (HANDLE) menu);
@@ -1386,7 +1386,7 @@ void win_toggle_menubar(void)
 			menu = (HMENU) GetProp(hwnd, TEXT("menu"));
 		}
 		SetMenu(hwnd, menu);
-		win_pause_input(0);
+		win_pause_input(Machine, 0);
 
 		// get after rect, and width/height diff
 		AdjustWindowRectEx(&after_rect, style, menu ? TRUE : FALSE, exstyle);

@@ -22,6 +22,9 @@ User Interface Changes:
   -rompath.  Also removed -softwarepath, paths passed on the command line will
   now be absolute.  The concept of software paths will continue within the
   MESS GUI.  [Nate Woods]
+
+- [Windows] Fixed bug that could cause the loss of mouse capture when toggling
+  the menu bar.  (bug #977) [Nate Woods]
   
 
 
