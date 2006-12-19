@@ -100,7 +100,8 @@ process on the various <a href="http://www.mess.org/">MESS</a> drivers.</p>
 <li>The ROM chips within a computer system, that usually contain some form of BASIC or the like</li>
 <li>The ROM chips within a game cartridge for a console system</li>
 </ol>
-<p>For the sake of clarity, the official <a href="http://www.mess.org/">MESS</a> terminology for #1 is "BIOS", after what they are typically called in Intel PC systems, and the term "ROM" is avoided. The term "cartridge image" is used to refer to #2, where "image" is a generic term that applies to downloaded images of removable media, whether they be a cartridge, a floppy drive, or a hard
+<p>
+    In <a href="http://www.mess.org/">MESS</a>, #1 are also termed as "BIOS", after what they are typically called in Intel PC systems. The term "cartridge image" is used to refer to #2, where "image" is a generic term that applies to downloaded images of removable media, whether they be a cartridge, a floppy drive, or a hard
 disk.</p>
 <h2 id="s03">Where do I get BIOSes/ROMs?/How do I use my old software with MESS?</h2>
 <p>In most cases, old software is physically incompatible with modern computers. No matter how hard you push, an Atari cartridge just plain won't fit in your computer's floppy drive. Folding up old 5 1/4" diskettes so they fit in a 3 1/2" drive will only break your disks. Obviously there is a problem here - how do I get that software into my PC so an emulator can use it?</p>
@@ -108,7 +109,7 @@ disk.</p>
 <p>Now, originally emulation was just for hobbyists who had all this special equipment, but some of them put these BIOSes and images up on the Internet for people to download, on the honor system that people would only download the BIOSes and images that they owned the original software for. Unfortunately, a lot of people came along who just wanted to download free games and did not care about
 preservation, and gave the emulation community a bad name among software companies. There are many BIOSes/images sites on the Internet, using a search engine should turn up the ones you want. But remember: downloading pirated BIOSes/images that you do not own is illegal. Some people say that the copyrights have expired or that you can download it if you delete it after 24 hours, but they are
 wrong. It is up to you whether you want to ignore the law, as most of the games are not and will not ever be sold again.</p>
-<p>Most systems require BIOSes. <a href="http://www.mess.org/">MESS</a> is very picky about its BIOSes -- they must be exactly the ones it is expecting, otherwise it may not work.</p>
+<p>Most systems require BIOSes. <a href="http://www.mess.org/">MESS</a> is very picky about its BIOSes – they must be exactly the ones it is expecting, otherwise it may not work.</p>
 <h2 id="s04">Okay, I got some BIOSes and images, now where do I put them?</h2>
 <p>BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a href="http://www.mess.org/">MESS</a>. Game images should go into the SOFTWARE\[system name] folder. They can still be zipped, but only one image per zip file.</p>
 <h2 id="s05">How do I start the MESS application?</h2>
@@ -145,10 +146,12 @@ mess/snap/a2600/junglehunt.png &lt;&lt;&lt; This is an in-game screenshot of the
 <h2 id="h03">How do I compile/build/debug MESS for Windows?</h2>
 <p>For Windows, see the <a href="windows/compile.htm">How to compile MESS (Win32)</a> document. Compiling <a href="http://www.mess.org/">MESS</a> for Windows requires the <a href="http://www.mingw.org">MinGW</a> toolkit, a variant of <a href="http://gcc.gnu.org">GCC</a>. <a href="http://www.mingw.org">MinGW</a> comes with a variant of GDB for debugging.</p>
 <h2 id="h04">How do I compile/build/debug MESS with Visual C?</h2>
-<p>On the <a href="http://www.mess.org/">MESS</a> download site, there are Visual C project files but they are extremely outdated. In theory, one could grab the <a href="http://www.vcmame.net/">VCMame</a> project files and port them over to build <a href="http://www.mess.org/">MESS</a>, but to my knowledge no one has done this yet.</p>
-<p>There is also an alternative makefile (makefile.vc) that uses the Visual C command line compilers but the makefile itself requires <a href="http://www.gnu.org/software/make/">GNU make</a> rather than nmake. Using the Microsoft compilers allows one to use the Visual C debugger to debug <a href="http://www.mess.org/">MESS</a>, but one does not get the full benefits of the IDE.</p>
+<p>
+    You can invoke the build with MSVC_BUILD=1 and the build will use Visual C instead
+    of <a href="http://www.mingw.org">MinGW</a>.&nbsp; Note that <a href="http://www.mingw.org">
+        MinGW</a> is still required as <a href="http://www.gnu.org/software/make/">GNU make</a> is used rather than nmake. Using the Microsoft compilers allows one to use the Visual C debugger to debug <a href="http://www.mess.org/">MESS</a>, but one does not get the full benefits of the IDE.</p>
 <h2 id="h05">How do I compile/build/debug MESS for Un*x?</h2>
-<p>See <a href="http://x.mame.net/">http://x.mame.net/</a>.</p>
+<p>See <a href="http://rbelmont.mameworld.info/?page_id=163">SDLMESS</a>.</p>
 <h2 id="h06">How do I contribute to the MESS project?</h2>
 <p>If you have programming skills, you can download the source and fix bugs, improve emulation on existing systems or add a new one! If you fix anything, be sure to submit the fixes so they can be included in the source. Be advised that corrections or additions may not be accepted if they are hackish in nature; <a href="http://www.mess.org/">MESS</a> strives for accuracy both in emulation and in
 the source code. Another major concern is the verifiability of the changes. One major obstacle in <a href="http://www.mess.org/">MESS</a> that often the <a href="http://www.mess.org/">MESS</a> maintainer may understand the system much less than you do, and it can be very difficult for the <a href="http://www.mess.org/">MESS</a> maintainer to validate any changes, so changes submitted
