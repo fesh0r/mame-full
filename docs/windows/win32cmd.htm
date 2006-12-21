@@ -25,71 +25,21 @@ settings.<br /></p>
 <hr width="95%" />
 <h2>Command Line Options</h2>
 <p class="normal">MESS for Win32 uses a straightforward command format to execute. Heres what it looks like...</p>
-<p align="center" class="Tutorial"><span class="command">MESS &lt;system&gt; &lt;device&gt; &lt;software_name&gt; -options</span></p>
-<p class="normal"><span class="command">System</span> - Is the name of the system to be used which can be found <a href="suppsys.htm" target="_blank">here</a> .</p>
-<p class="normal"><span class="command">Device</span> - Is the name of the device MESS need to emulate to load the software. This option is relevant
-to the system you want to use for example an Atari 2600 uses a cartridge therefore this option would say <span class="command">-cart</span></p>
-<p class="normal">Heres a breakdown of the device names...</p>
-<table width="95%" border="1" align="center">
-<tr>
-<td width="19%" class="tablehead">-cartridge / -cart</td>
-<td width="81%" class="TableDesc">Cartridge based software</td>
-</tr>
-<tr>
-<td class="tablehead">-floppydisk / -flop</td>
-<td class="TableDesc">Floppy disk based software</td>
-</tr>
-<tr>
-<td class="tablehead">-quickload / -quik</td>
-<td class="TableDesc">Quick Saved Memory</td>
-</tr>
-<tr>
-<td class="tablehead">-printer / -prin</td>
-<td class="TableDesc">Output to printer</td>
-</tr>
-<tr>
-<td class="tablehead">-snapshot / -dump</td>
-<td class="TableDesc">Memory dump (e.g. exact copy of a systems memory that can be reloaded and run)</td>
-</tr>
-<tr>
-<td class="tablehead">-cassette / -cass</td>
-<td class="TableDesc">Cassette tape image</td>
-</tr>
-<tr>
-<td class="tablehead">-harddisk / -hard</td>
-<td class="TableDesc">Hard drive image</td>
-</tr>
-<tr>
-<td class="tablehead">-parallel / -parl</td>
-<td class="TableDesc">Data normally loaded through a parallel (printer) port.</td>
-</tr>
-<tr>
-<td class="tablehead">-punchcard / -pcrd</td>
-<td class="TableDesc">Punch card data</td>
-</tr>
-<tr>
-<td class="tablehead">-punchtape / -ptap</td>
-<td class="TableDesc">Punch tape data</td>
-</tr>
-<tr>
-<td class="tablehead">-serial / -serl</td>
-<td class="TableDesc">Data normally loaded through a serial port</td>
-</tr>
-<tr>
-<td class="tablehead">-cylinder / -cyln</td>
-<td class="TableDesc">Data loaded from a metal cylinder (really old computers used these)</td>
-</tr>
-</table>
-<p class="normal">You can find out the devices used and what file extensions can be used by typing</p>
-<p align="center" class="Tutorial"><span class="command">MESS &lt;System&gt; -listdevices</span></p>
-<p class="normal">From there it's up to you to decide what the software is. The way to look at it is that most consoles used cartridges, most
-computers used cassettes or floppy disks and newer computers used harddisks. You probably wont find many hard disk images about and most of the other
-devices (e.g. punchcard) are very obselete. Snapshot is probably the most commonly found file especially in home computer emulation as it is a
-complete system dump and when loaded will run software from exactly the point that it was saved from.</p>
-<p class="normal"><span class="command">Software_Name</span> - is the name of the file that you want to run in MESS. You must remember that you need
-the <font color="#FF0000">whole</font> file name including the file extension (e.g. frogger.a26 or frogger.zip)</p>
-<p class="normal"><span class="command">Options</span> - Finally you have the options. Most of the options are exactly the same as Mame but there are
-a few exclusives.</p>
+<p align="center" class="Tutorial"><span class="command">MESS &lt;system&gt; &lt;options...&gt;</span></p>
+<p class="normal">
+    The <strong><span style="color: #008000; font-family: Courier New">&lt;system&gt;</span></strong>
+    option is the name of the system (for a complete list, check <a href="suppsys.htm" target="_blank">here</a>).&nbsp; The <span style="color: #008000; font-family: Courier New">
+            <strong>&lt;options...&gt;</strong><span style="color: #000000; font-family: Times New Roman">
+                include both device options as well as options found in Mame.&nbsp; Each system
+                has its own list of device types; some of these are common to multiple systems,
+                whereas some others are specific to certain systems.&nbsp; Cartridges on the NES
+                and Atari 2600 are both specified with the <span style="color: #008000; font-family: Courier New">
+                    <strong>-cart</strong><span style="color: #000000; font-family: Times New Roman"> option.&nbsp;
+                        The Apple II floppy disk is specified with <span style="color: #008000; font-family: Courier New">
+                            <strong>-s6d1</strong><span style="color: #000000; font-family: Times New Roman"> (Slot
+                                6 Disk 1).&nbsp; One can obtain a complete list of what </span></span></span>
+                </span></span></span>devices are used for any given system by typing:&nbsp;
+    <span class="command">MESS -listdevices</span></p>
 <p class="normal"><span class="Tutorial">These are all the command line options that MESS uses...<br /></span></p>
 <table width="888" border="1" cellpadding="3" align="center">
 <tr>
@@ -100,124 +50,34 @@ a few exclusives.</p>
 <td width="519" colspan="-1" class="Maintext">Show the help message</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-list / -ls</td>
-<td width="519" colspan="-1" class="Maintext">List supported games matching gamename, or all, gamename may contain * and ? wildcards</td>
-</tr>
-<tr>
 <td width="345" class="tablehead">-listfull / -ll</td>
 <td width="519" colspan="-1" class="Maintext">Lists all games as short name, full name</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listgames</td>
-<td width="519" colspan="-1" class="Maintext">Lists all games as year, manufacturer and full name</td>
 </tr>
 <tr>
 <td width="345" class="tablehead">-listdetails</td>
 <td width="519" colspan="-1" class="Maintext">Lists all games with detailed info</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-gamelist</td>
-<td width="519" colspan="-1" class="Maintext">Outputs the gamelist.txt file</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listsourcefile</td>
-<td width="519" colspan="-1" class="Maintext">Lists all sourcefile names</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listgamespersourcefile</td>
-<td colspan="-1" class="Maintext" width="519">Lists all the games in a sourcefile</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listinfo / -li</td>
-<td width="519" colspan="-1" class="Maintext">Lists all available info on a driver</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listxml / -lx</td>
+<td class="TableMenu" width="345">
+    <strong>-listxml / -lx</strong></td>
 <td colspan="-1" class="Maintext" width="519">Lists all available info on a driver in XML format</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-listclones / -lc</td>
-<td width="519" colspan="-1" class="Maintext">Lists only clones</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listsamdir</td>
-<td width="519" colspan="-1" class="Maintext">Lists the shared sample folder</td>
+<td width="345" class="tablehead" style="height: 31px">-listclones / -lc</td>
+<td width="519" colspan="-1" class="Maintext" style="height: 31px">Lists only clones</td>
 </tr>
 <tr>
 <td width="345" class="tablehead">-listcrc</td>
 <td width="519" colspan="-1" class="Maintext">Lists rom checksums</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-listmd5</td>
-<td colspan="-1" class="Maintext" width="519">Lists the checksums used in hard disk based games</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listsha1</td>
-<td colspan="-1" class="Maintext" width="519">Lists all roms using tha sha1 checksum</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listdupcrc</td>
-<td width="519" colspan="-1" class="Maintext">Lists roms with duplicate crc's</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listwrongmerge / -lwm</td>
-<td width="519" colspan="-1" class="Maintext">Lists roms with wrong merge attempts done on them</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listromsize / -lrs</td>
-<td width="519" colspan="-1" class="Maintext">Lists rom sizes</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listromdistribution</td>
-<td colspan="-1" class="Maintext" width="519">Lists the distribution of roms MESS support by year and size</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listromnumber</td>
-<td colspan="-1" class="Maintext" width="519">Lists games by how many roms they contain</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listpalettesize / -lps</td>
-<td colspan="-1" class="Maintext" width="519">Lists games by name, year and how many colours it supports.</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-listcpu</td>
-<td width="519" colspan="-1" class="Maintext">Lists cpu's used in drivers</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listcpuclass</td>
-<td colspan="-1" class="Maintext" width="519">Lists by year how many games have 8, 16 or 32bit processors.</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listnosound</td>
-<td colspan="-1" class="Maintext" width="519">Lists game that don't support sound yet</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listsound</td>
-<td colspan="-1" class="Maintext" width="519">Lists how many games support the different sound chips emulated in MESS</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listnvram</td>
-<td colspan="-1" class="Maintext" width="519">Lists how many game support NVRAM data saving</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-wrongorientation</td>
-<td width="519" colspan="-1" class="Maintext">Lists games with wrong screen orientation</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-wrongfps</td>
-<td width="519" colspan="-1" class="Maintext">Lists games with wrong fps</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-listdevices</td>
+<td class="TableMenu" width="345">
+    <strong>-listdevices</strong></td>
 <td colspan="-1" class="Maintext" width="519">Lists the devices used by a system in MESS</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-listtext</td>
-<td colspan="-1" class="Maintext" width="519">Lists the file extensions used by a system in MESS</td>
-</tr>
-<tr>
 <td width="345" class="tablehead">-listroms</td>
-<td width="519" colspan="-1" class="Maintext">Displays ROMs required by the specified game</td>
+<td width="519" colspan="-1" class="Maintext">Displays ROMs required by the specified system</td>
 </tr>
 <tr>
 <td width="345" class="tablehead">-listsamples</td>
@@ -236,10 +96,6 @@ a few exclusives.</p>
 <td width="519" colspan="-1" class="Maintext">Checks that all samplesets have the correct samples in them.</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-vsam</td>
-<td colspan="-1" class="Maintext" width="519">Check that an individual sampleset has the correct samples in it.</td>
-</tr>
-<tr>
 <td width="345" class="tablehead">-romident</td>
 <td width="519" colspan="-1" class="Maintext">Checks an unknown romset against MESS romsets to see what it belongs to</td>
 </tr>
@@ -248,34 +104,26 @@ a few exclusives.</p>
 <td width="519" colspan="-1" class="Maintext">Same as above but with less info</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-sortname</td>
-<td width="519" colspan="-1" class="Maintext">Sort by descriptive name (e.g. Pacman (Japan))</td>
-</tr>
-<tr>
-<td width="345" class="tablehead">-sortdriver</td>
-<td width="519" colspan="-1" class="Maintext">Sort by driver name (e.g. puckman)</td>
-</tr>
-<tr>
 <td colspan="2" class="TableTitle" width="874">*** Windows path and folder options ***</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-biospath / -bp</td>
-<td width="519" colspan="-1" class="Maintext">Specify path for bios files</td>
+<td width="345" class="tablehead">
+    -rompath / -rp</td>
+<td width="519" colspan="-1" class="Maintext">Specify path for ROM files</td>
 </tr>
 <tr>
-<td width="345" class="tablehead">-softwarepath / -swp</td>
-<td width="519" colspan="-1" class="Maintext">Specify path for system software</td>
+<td class="TableMenu" width="345">
+    <strong>-hashpath / -hash</strong></td>
+<td colspan="-1" class="Maintext" width="519">Specify path for software hash check files</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-crcpath / -crc</td>
-<td colspan="-1" class="Maintext" width="519">Specify path for software crc check files</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-inipath</td>
+<td class="TableMenu" width="345">
+        <strong>-inipath</strong></td>
 <td colspan="-1" class="Maintext" width="519">Specify path for game ini files</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-samplepath / -sp</td>
+<td class="TableMenu" width="345">
+        <strong>-samplepath / -sp</strong></td>
 <td colspan="-1" class="Maintext" width="519">Specify path for system samples</td>
 </tr>
 <tr>
@@ -311,14 +159,8 @@ a few exclusives.</p>
 <td width="519" colspan="-1" class="Maintext">Specify the folder for screenshots (.png format)</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-ctrlr_directory name
-<p class="fixedsize">Lets you specify a folder for MESS to look in for you controller ini files.</p>
-</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-diff_directory name
-<p class="fixedsize">Lets you specify a folder for MESS to look in for you hard drive difference files.</p>
-</td>
+<td width="345" class="tablehead">-ctrlr_directory</td>
+<td width="519" colspan="-1" class="MainText">Lets you specify a folder for MESS to look in for you controller ini files.</td>
 </tr>
 <tr>
 <td width="345" class="tablehead">-cheat_file</td>
@@ -561,103 +403,6 @@ rgbmaxbright</p>
 <td colspan="-1" class="Maintext" width="519">Uses the new MESS windows user interface for options instead of Mames screen based one</td>
 </tr>
 <tr>
-<td class="TableMenu" width="345">-cartridge / -cart</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were a cartridge</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-floppydisk / -flop</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were on a floppy disk</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-harddisk / -hard</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were a harddisk</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-cylinder / -cyln</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were on a cylinder storage device</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-cassette / -cass</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were on a cassette tape</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-punchcard / -pcrd</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were a on punchcard</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-punchtape / -ptap</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were on punchtape</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-printer / -prin</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were from a printer</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-serial / -serl</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it was sent through a serial port</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-parallel / -parl</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it was sent through a parallel port</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-snapshot / -dump</td>
-<td colspan="-1" class="Maintext" width="519">Opens a system dump files straight to memory</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-quickload / -quik</td>
-<td colspan="-1" class="Maintext" width="519">Opens a software file as if it were a quickload file</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-cartridge_dir</td>
-<td colspan="-1" class="Maintext" width="519">Sets the default cartridge sub folder (useful if you want to separate different types of in system
-software folders)</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-floppydisk_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for floppydisks</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-harddisk_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for harddisks</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-cylinder_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for cylinders</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-cassette_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for cassettes</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-punchcard_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for punchcards</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-punchtape_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for punchtape</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-printer_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for printer files</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-serial_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for serial data</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-parallel_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for parallel data</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-snapshot_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for system snapshots</td>
-</tr>
-<tr>
-<td class="TableMenu" width="345">-quickload_dir</td>
-<td colspan="-1" class="Maintext" width="519">Same as above but for quickload files</td>
-</tr>
-<tr>
 <td class="TableMenu" width="345">-ramsize / -ram</td>
 <td colspan="-1" class="Maintext" width="519">Lets you set the amount of RAM a system can use (if the system supports it)</td>
 </tr>
@@ -872,145 +617,213 @@ also a few numerical options (e.g. gamma) and a few that require a text answer (
 <table width="35%" border="1" align="center" cellpadding="3" bordercolor="#000000" class="command">
 <tr>
 <td>
-<p>### mess.ini ###</p>
-<p>### Frontend Related ###<br /></p>
-<p>### Windows path and directory options ###<br />
-biospath bios<br />
-softwarepath software<br />
-CRC_directory crc<br />
-samplepath samples<br />
-inipath ini<br />
-cfg_directory cfg<br />
-nvram_directory nvram<br />
-memcard_directory memcard<br />
-input_directory inp<br />
-hiscore_directory hi<br />
-state_directory sta<br />
-artwork_directory artwork<br />
-snapshot_directory snap<br />
-diff_directory diff<br />
-ctrlr_directory ctrlr<br />
-cheat_file cheat.dat<br /></p>
-<p>### Windows video options ###<br />
-autoframeskip 1<br />
-frameskip 0<br />
-waitvsync 0<br />
-triplebuffer 0<br />
-window 1<br />
-ddraw 1<br />
-direct3d 0<br />
-hwstretch 1<br />
-cleanstretch auto<br />
-resolution auto<br />
-zoom 2<br />
-refresh 0<br />
-scanlines 0<br />
-switchres 1<br />
-switchbpp 1<br />
-maximize 0<br />
-keepaspect 1<br />
-matchrefresh 0<br />
-syncrefresh 0<br />
-throttle 1<br />
-full_screen_brightness 1.000000<br />
-frames_to_run 0<br />
-effect none<br />
-screen_aspect 4:3<br />
-sleep 0<br />
-rdtsc 1<br />
-high_priority 0</p>
-<p>### Windows Direct3D 2D video options ###<br />
-d3dtexmanage 1<br />
-d3dfilter 1<br />
-d3dfeedback 0<br />
-d3dscan 100<br />
-d3deffectrotate 1<br />
-d3dprescale auto<br />
-d3deffect auto<br />
-# d3dcustom &lt;NULL&gt; (not set)<br />
-# d3dexpert &lt;NULL&gt; (not set)</p>
-<p>### Windows sound options ###<br />
-audio_latency 1</p>
-<p>### Input device options ###<br />
-mouse 0<br />
-joystick 0<br />
-lightgun 0<br />
-steadykey 0<br />
-keyboard_leds 0<br />
-a2d_deadzone 0.300000<br />
-ctrlr Standard</p>
-<p>### MESS specific options ###<br />
-newui 1<br />
-# cartridge &lt;NULL&gt; (not set)<br />
-# floppydisk &lt;NULL&gt; (not set)<br />
-# harddisk &lt;NULL&gt; (not set)<br />
-# cylinder &lt;NULL&gt; (not set)<br />
-# cassette &lt;NULL&gt; (not set)<br />
-# punchcard &lt;NULL&gt; (not set)<br />
-# punchtape &lt;NULL&gt; (not set)<br />
-# printer &lt;NULL&gt; (not set)<br />
-# serial &lt;NULL&gt; (not set)<br />
-# parallel &lt;NULL&gt; (not set)<br />
-# snapshot &lt;NULL&gt; (not set)<br />
-# quickload &lt;NULL&gt; (not set)<br />
-# cartridge_dir &lt;NULL&gt; (not set)<br />
-# floppydisk_dir &lt;NULL&gt; (not set)<br />
-# harddisk_dir &lt;NULL&gt; (not set)<br />
-# cylinder_dir &lt;NULL&gt; (not set)<br />
-# cassette_dir &lt;NULL&gt; (not set)<br />
-# punchcard_dir &lt;NULL&gt; (not set)<br />
-# punchtape_dir &lt;NULL&gt; (not set)<br />
-# printer_dir &lt;NULL&gt; (not set)<br />
-# serial_dir &lt;NULL&gt; (not set)<br />
-# parallel_dir &lt;NULL&gt; (not set)<br />
-# snapshot_dir &lt;NULL&gt; (not set)<br />
-# quickload_dir &lt;NULL&gt; (not set)<br />
-# ramsize &lt;NULL&gt; (not set)<br />
-threads 0<br />
-natural 0<br />
-min_width 200<br />
-min_height 200<br />
-writeconfig 0</p>
-<p>### Mame CORE video options ###<br />
-norotate 0<br />
-ror 0<br />
-rol 0<br />
-autoror 0<br />
-autorol 0<br />
-flipx 0<br />
-flipy 0<br />
-gamma 1.000000<br />
-brightness 1.000000<br />
-pause_brightness 0.650000</p>
-<p>### Mame CORE vector game options ###<br />
-antialias 1<br />
-translucency 1<br />
-beam 1.000000<br />
-flicker 0.000000<br />
-intensity 1.500000</p>
-<p>### Mame CORE sound options ###<br />
-samplerate 44100<br />
-samples 1<br />
-sound 1<br />
-volume 0</p>
-<p>### Mame CORE misc options ###<br />
-artwork 1<br />
-use_backdrops 1<br />
-use_overlays 1<br />
-use_bezels 1<br />
-artwork_crop 0<br />
-artwork_resolution 0<br />
-cheat 0<br />
-debug 0<br />
-# playback &lt;NULL&gt; (not set)<br />
-# record &lt;NULL&gt; (not set)<br />
-log 0<br />
-oslog 0<br />
-skip_gameinfo 0<br />
-bios 0</p>
-<p>### Configuration options ###<br />
-readconfig 1<br />
-verbose 0</p>
+<pre>
+#
+# CORE SEARCH PATH OPTIONS
+#
+rompath                   roms
+hashpath                  hash
+softwarepath              software
+samplepath                samples
+artpath                   artwork
+ctrlrpath                 ctrlr
+inipath                   .;ini
+fontpath                  .
+
+#
+# CORE OUTPUT DIRECTORY OPTIONS
+#
+cfg_directory             cfg
+nvram_directory           nvram
+memcard_directory         memcard
+input_directory           inp
+state_directory           sta
+snapshot_directory        snap
+diff_directory            diff
+comment_directory         comments
+
+#
+# CORE FILENAME OPTIONS
+#
+cheat_file                cheat.dat
+
+#
+# CONFIGURATION OPTIONS
+#
+readconfig                1
+skip_gameinfo             0
+
+#
+# MISC OPTIONS
+#
+bios                      default
+cheat                     0
+
+#
+# STATE/PLAYBACK OPTIONS
+#
+# state                   &lt;NULL&gt; (not set)
+autosave                  0
+# playback                &lt;NULL&gt; (not set)
+# record                  &lt;NULL&gt; (not set)
+# mngwrite                &lt;NULL&gt; (not set)
+# wavwrite                &lt;NULL&gt; (not set)
+
+#
+# DEBUGGING OPTIONS
+#
+log                       0
+oslog                     0
+verbose                   0
+
+#
+# PERFORMANCE OPTIONS
+#
+autoframeskip             0
+frameskip                 0
+frames_to_run             0
+throttle                  1
+sleep                     1
+rdtsc                     0
+priority                  0
+multithreading            0
+
+#
+# VIDEO OPTIONS
+#
+video                     d3d
+numscreens                1
+window                    0
+maximize                  1
+keepaspect                1
+prescale                  1
+effect                    none
+pause_brightness          0.65
+waitvsync                 0
+syncrefresh               0
+
+#
+# VIDEO ROTATION OPTIONS
+#
+rotate                    1
+ror                       0
+rol                       0
+autoror                   0
+autorol                   0
+flipx                     0
+flipy                     0
+
+#
+# DIRECTDRAW-SPECIFIC OPTIONS
+#
+hwstretch                 1
+
+#
+# DIRECT3D-SPECIFIC OPTIONS
+#
+d3dversion                9
+filter                    1
+
+#
+# PER-WINDOW VIDEO OPTIONS
+#
+screen                    auto
+aspect                    auto
+resolution                auto
+view                      auto
+screen0                   auto
+aspect0                   auto
+resolution0               auto
+view0                     auto
+screen1                   auto
+aspect1                   auto
+resolution1               auto
+view1                     auto
+screen2                   auto
+aspect2                   auto
+resolution2               auto
+view2                     auto
+screen3                   auto
+aspect3                   auto
+resolution3               auto
+view3                     auto
+
+#
+# FULL SCREEN OPTIONS
+#
+triplebuffer              0
+switchres                 0
+full_screen_brightness    1.0
+full_screen_contrast      1.0
+full_screen_gamma         1.0
+
+#
+# GAME SCREEN OPTIONS
+#
+brightness                1.0
+contrast                  1.0
+gamma                     1.0
+
+#
+# VECTOR RENDERING OPTIONS
+#
+antialias                 1
+beam                      1.0
+flicker                   0
+
+#
+# ARTWORK OPTIONS
+#
+artwork_crop              0
+use_backdrops             1
+use_overlays              1
+use_bezels                1
+
+#
+# SOUND OPTIONS
+#
+sound                     1
+samplerate                48000
+samples                   1
+volume                    0
+audio_latency             1
+
+#
+# INPUT DEVICE OPTIONS
+#
+# ctrlr                   &lt;NULL&gt; (not set)
+mouse                     0
+joystick                  0
+lightgun                  0
+dual_lightgun             0
+offscreen_reload          0
+steadykey                 0
+a2d_deadzone              0.3
+digital                   none
+
+#
+# AUTOMATIC DEVICE SELECTION OPTIONS
+#
+paddle_device             keyboard
+adstick_device            keyboard
+pedal_device              keyboard
+dial_device               keyboard
+trackball_device          keyboard
+lightgun_device           keyboard
+mouse_device              mouse
+
+#
+# MESS SPECIFIC OPTIONS
+#
+newui                     1
+# ramsize                 &lt;NULL&gt; (not set)
+threads                   0
+natural                   0
+min_width                 200
+min_height                200
+writeconfig               0
+skip_warnings             0
+</pre>
 </td>
 </tr>
 </table>

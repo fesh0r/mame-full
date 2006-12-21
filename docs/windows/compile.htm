@@ -15,7 +15,7 @@ identical)</p>
 written in C, with some assembler hacks in speed-critical places. The Win32 version of <a href="http://www.mess.org/">MESS</a> is compiled with
 <a href="http://www.mingw.org/">MinGW</a>, which is the minimalist Win32 port of a C compiler called <a href="http://gcc.gnu.org/">GCC</a> and its
 libraries.</p>
-<p>This particular how-to is written for <a href="http://www.mess.org/">MESS</a> 0.80, but with a bit of luck you can compile other versions with the
+<p>This particular how-to is written for <a href="http://www.mess.org/">MESS</a> 0.111, but with a bit of luck you can compile other versions with the
 help of this page. This how-to tells how to compile the Win32 version of <a href="http://www.mess.org/">MESS</a>, which includes both the command
 line and GUI versions.</p>
 <p>The MinGW development environment will be installed to <span class="filename">C:\MINGW</span> and <a href="http://www.mess.org/">MESS</a> sources
@@ -71,38 +71,24 @@ other versions of the following files.</p>
 <td><span><b>Description</b></span></td>
 </tr>
 <tr>
-<td><span><a href="http://prdownloads.sourceforge.net/mingw/MinGW-2.0.0-3.exe?download">MinGW-2.0.0-3.exe</a></span></td>
-<td><span>12525 kB</span></td>
-<td><span>MinGW 2.0.0 compile environment for use in Windows.</span></td>
+<td><span><a href="http://mamedev.org/tools/mingw-mame-20060210.exe">mingw-mame-20060210.exe</a></span></td>
+<td><span>6718 kB</span></td>
+<td><span>MinGW tools for MAME/MESS.</span></td>
 </tr>
 <tr>
-<td><span><a href="http://www.mame.net/downmain.html">mingw-over.zip</a></span></td>
-<td><span>549 kB</span></td>
-<td><span>Other files needed to compile <a href="http://www.mess.org/">MESS</a> in the MinGW compile environment. Uncompress this over the MinGW
-directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
-</tr>
-<tr>
-<td><span><a href="http://prdownloads.sf.net/mingw/gcc-3.2.2-20030208-1.tar.gz">gcc-3.2.2-20030208-1.tar.gz</a></span></td>
-<td><span>7148 kB</span></td>
-<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for <a href="http://www.mess.org/">MESS</a> 0.80. Uncompress this over the MinGW
-directory.</span></td>
-</tr>
-<tr>
-<td><span><a href="http://www.mame.net/zips/dx70_mgw.zip">dx70_mgw.zip</a></span></td>
-<td><span>240 kB</span></td>
-<td><span>DirectX 7.0 headers, required for <a href="http://www.mess.org/">MESS</a> 0.80. Uncompress this over the MinGW directory.</span></td>
+<td><span><a href="http://alleg.sourceforge.net/files/dx80_mgw.zip">dx80_mgw.zip</a></span></td>
+<td><span>451 kB</span></td>
+<td><span>DirectX 8.0 headers, required for <a href="http://www.mess.org/">MESS</a> 0.111. Uncompress this over the MinGW directory.</span></td>
 </tr>
 </table>
 <hr />
 <h2>4. Uncompress MinGW</h2>
 <p>Next we will uncompress the MinGW files and set up some environment variables so that MinGW is functional. First run the MinGW installer, which
-will install a fresh MinGW installation.&nbsp; Now you need to add a few associated files to the MiNGW installation.&nbsp; Open up a command prompt.
+will install a fresh MinGW installation.&nbsp; Now you need to add a few associated files to the MinGW installation.&nbsp; Open up a command prompt.
 You can find it either from under Start Menu&nbsp;--&gt; Programs, or you can simply select Run and type command.com into the dialog box. When you
 have it open, type <span class="command">cd \Program Files\MinGW</span> &nbsp;and hit enter to change to the correct directory. After that, type</p>
 <ul>
-<li><span class="command">gunzip c:\download\gcc-3.2.2-20030208-1.tar.gz</span></li>
-<li><span class="command">tar -xvf gcc-3.2.2-20030208-1.tar</span></li>
-<li><span class="command"><span class="command">unzip c:\download\dx70_mgw.zip -d c:\</span></span></li>
+<li><span class="command"><span class="command">unzip c:\download\dx80_mgw.zip -d c:\</span></span></li>
 </ul>
 <p>If you do not see the message "1 archive was successfully processed.", re-download the archives. If you get a "Bad commmand or file name", verify
 once again that you have <span class="filename">unzip.exe</span> in <span class="filename">c:\windows\command\</span></p>
@@ -129,22 +115,22 @@ override on the <a href="http://www.mame.net/">MAME</a> source.&nbsp; Therefore 
 <td><span><b>Description</b></span></td>
 </tr>
 <tr>
-<td><a href="http://mirrors.xmission.com/mame/main/mame080s.zip"><b>mame080s.zip</b></a></td>
-<td>9208 kB</td>
-<td>This is the source archive of <a href="http://www.mame.net/">MAME</a> 0.80.</td>
+<td><a href="http://www.mamedev.org/releases/mame0111s.zip"><b>mame0111s.zip</b></a></td>
+<td>12136 kB</td>
+<td>This is the source archive of <a href="http://www.mame.net/">MAME</a> 0.111.</td>
 </tr>
 <tr>
-<td><a href="http://www.retrogames.com/mess/mess080s.zip"><b>mess080s.zip</b></a></td>
-<td>2717 kB</td>
-<td>This is the source archive of <a href="http://www.mess.org/">MESS</a> 0.80.</td>
+<td><a href="http://www.mess.org/files/mess0111s.zip"><b>mess0111s.zip</b></a></td>
+<td>10819 kB</td>
+<td>This is the source archive of <a href="http://www.mess.org/">MESS</a> 0.111.</td>
 </tr>
 </table>
 <p>Go to the download directory by typing <span class="command">cd \download</span> and uncompress the <a href="http://www.mame.net/">MAME</a> and
 <a href="http://www.mess.org/">MESS</a> sources by typing the following commands</p>
 <ul>
-<li><span class="command">unzip mame080s.zip</span></li>
+<li><span class="command">unzip mame0111s.zip</span></li>
 <li><span class="command">unzip mame.zip -d c:\mingw\mess\</span></li>
-<li><span class="command">unzip</span> <span class="command">mess080s.zip -d c:\mingw\mess\</span> .</li>
+<li><span class="command">unzip</span> <span class="command">mess0111s.zip -d c:\mingw\mess\</span> .</li>
 </ul>
 <p>Then you can compile <a href="http://www.mess.org/">MESS</a>. Type <span class="command">make -f makefile.mes</span> and hit enter. This will
 finally compile <a href="http://www.mess.org/">MESS</a> itself. If you want to compile the CPU optimized versions, type <span class="command">make -f

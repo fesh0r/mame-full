@@ -33,123 +33,211 @@ appear. Right click over this file and select rename. In the box type the name o
 <table width="35%" border="1" cellpadding="3" align="center">
 <tr>
 <td>
-<pre class="fixedsize">
-### mess.ini ###
+<pre class="fixedsize">#
+# CORE SEARCH PATH OPTIONS
+#
+rompath                   roms
+hashpath                  hash
+softwarepath              software
+samplepath                samples
+artpath                   artwork
+ctrlrpath                 ctrlr
+inipath                   .;ini
+fontpath                  .
 
-### Frontend Related ###
-clones 1
+#
+# CORE OUTPUT DIRECTORY OPTIONS
+#
+cfg_directory             cfg
+nvram_directory           nvram
+memcard_directory         memcard
+input_directory           inp
+state_directory           sta
+snapshot_directory        snap
+diff_directory            diff
+comment_directory         comments
 
-### Windows path and directory options ###
-biospath bios
-softwarepath software
-CRC_directory crc
-samplepath samples
-inipath ini
-cfg_directory cfg
-nvram_directory nvram
-memcard_directory memcard
-input_directory inp
-hiscore_directory hi
-state_directory sta
-artwork_directory artwork
-snapshot_directory snap
-diff_directory diff
-ctrlr_directory ctrlr
-cheat_file cheat.dat
-sysinfo_file sysinfo.dat
-messinfo_file messinfo.dat
+#
+# CORE FILENAME OPTIONS
+#
+cheat_file                cheat.dat
 
-### Windows video options ###
-autoframeskip 1
-frameskip 0
-waitvsync 0
-triplebuffer 0
-window 1
-ddraw 1
-direct3d 0
-hwstretch 1
-cleanstretch auto
-resolution auto
-zoom 2
-refresh 0
-scanlines 0
-switchres 1
-switchbpp 1
-maximize 0
-keepaspect 1
-matchrefresh 0
-syncrefresh 0
-throttle 1
-full_screen_brightness 1.000000
-frames_to_run 0
-effect none
-screen_aspect 4:3
-sleep 0
-rdtsc 1
-high_priority 0
+#
+# CONFIGURATION OPTIONS
+#
+readconfig                1
+skip_gameinfo             0
 
-### Windows Direct3D 2D video options ###
-d3dtexmanage 1
-d3dfilter 1
-d3dfeedback 0
-d3dscan 100
-d3deffectrotate 1
-d3dprescale auto
-d3deffect auto
-# d3dcustom &lt;NULL&gt; (not set)
-# d3dexpert &lt;NULL&gt; (not set)
+#
+# MISC OPTIONS
+#
+bios                      default
+cheat                     0
 
-### Windows sound options ###
-audio_latency 1
+#
+# STATE/PLAYBACK OPTIONS
+#
+# state                   &lt;NULL&gt; (not set)
+autosave                  0
+# playback                &lt;NULL&gt; (not set)
+# record                  &lt;NULL&gt; (not set)
+# mngwrite                &lt;NULL&gt; (not set)
+# wavwrite                &lt;NULL&gt; (not set)
 
-### Input device options ###
-mouse 0
-joystick 0
-lightgun 0
-steadykey 0
-keyboard_leds 0
-a2d_deadzone 0.300000
-ctrlr Standard
+#
+# DEBUGGING OPTIONS
+#
+log                       0
+oslog                     0
+verbose                   0
 
-### MESS specific options ###
-newui 1
-# cartridge &lt;NULL&gt; (not set)
-# floppydisk &lt;NULL&gt; (not set)
-# harddisk &lt;NULL&gt; (not set)
-# cylinder &lt;NULL&gt; (not set)
-# cassette &lt;NULL&gt; (not set)
-# punchcard &lt;NULL&gt; (not set)
-# punchtape &lt;NULL&gt; (not set)
-# printer &lt;NULL&gt; (not set)
-# serial &lt;NULL&gt; (not set)
-# parallel &lt;NULL&gt; (not set)
-# snapshot &lt;NULL&gt; (not set)
-# quickload &lt;NULL&gt; (not set)
-# cartridge_dir &lt;NULL&gt; (not set)
-# floppydisk_dir &lt;NULL&gt; (not set)
-# harddisk_dir &lt;NULL&gt; (not set)
-# cylinder_dir &lt;NULL&gt; (not set)
-# cassette_dir &lt;NULL&gt; (not set)
-# punchcard_dir &lt;NULL&gt; (not set)
-# punchtape_dir &lt;NULL&gt; (not set)
-# printer_dir &lt;NULL&gt; (not set)
-# serial_dir &lt;NULL&gt; (not set)
-# parallel_dir &lt;NULL&gt; (not set)
-# snapshot_dir &lt;NULL&gt; (not set)
-# quickload_dir &lt;NULL&gt; (not set)
-# ramsize &lt;NULL&gt; (not set)
-threads 0
-natural 0
-min_width 200
-min_height 200
-writeconfig 0
+#
+# PERFORMANCE OPTIONS
+#
+autoframeskip             0
+frameskip                 0
+frames_to_run             0
+throttle                  1
+sleep                     1
+rdtsc                     0
+priority                  0
+multithreading            0
 
-### Mame CORE video options ###
-norotate 0
-ror 0
-rol 0
-autoror 0
-                        
+#
+# VIDEO OPTIONS
+#
+video                     d3d
+numscreens                1
+window                    0
+maximize                  1
+keepaspect                1
+prescale                  1
+effect                    none
+pause_brightness          0.65
+waitvsync                 0
+syncrefresh               0
+
+#
+# VIDEO ROTATION OPTIONS
+#
+rotate                    1
+ror                       0
+rol                       0
+autoror                   0
+autorol                   0
+flipx                     0
+flipy                     0
+
+#
+# DIRECTDRAW-SPECIFIC OPTIONS
+#
+hwstretch                 1
+
+#
+# DIRECT3D-SPECIFIC OPTIONS
+#
+d3dversion                9
+filter                    1
+
+#
+# PER-WINDOW VIDEO OPTIONS
+#
+screen                    auto
+aspect                    auto
+resolution                auto
+view                      auto
+screen0                   auto
+aspect0                   auto
+resolution0               auto
+view0                     auto
+screen1                   auto
+aspect1                   auto
+resolution1               auto
+view1                     auto
+screen2                   auto
+aspect2                   auto
+resolution2               auto
+view2                     auto
+screen3                   auto
+aspect3                   auto
+resolution3               auto
+view3                     auto
+
+#
+# FULL SCREEN OPTIONS
+#
+triplebuffer              0
+switchres                 0
+full_screen_brightness    1.0
+full_screen_contrast      1.0
+full_screen_gamma         1.0
+
+#
+# GAME SCREEN OPTIONS
+#
+brightness                1.0
+contrast                  1.0
+gamma                     1.0
+
+#
+# VECTOR RENDERING OPTIONS
+#
+antialias                 1
+beam                      1.0
+flicker                   0
+
+#
+# ARTWORK OPTIONS
+#
+artwork_crop              0
+use_backdrops             1
+use_overlays              1
+use_bezels                1
+
+#
+# SOUND OPTIONS
+#
+sound                     1
+samplerate                48000
+samples                   1
+volume                    0
+audio_latency             1
+
+#
+# INPUT DEVICE OPTIONS
+#
+# ctrlr                   &lt;NULL&gt; (not set)
+mouse                     0
+joystick                  0
+lightgun                  0
+dual_lightgun             0
+offscreen_reload          0
+steadykey                 0
+a2d_deadzone              0.3
+digital                   none
+
+#
+# AUTOMATIC DEVICE SELECTION OPTIONS
+#
+paddle_device             keyboard
+adstick_device            keyboard
+pedal_device              keyboard
+dial_device               keyboard
+trackball_device          keyboard
+lightgun_device           keyboard
+mouse_device              mouse
+
+#
+# MESS SPECIFIC OPTIONS
+#
+newui                     1
+# ramsize                 &lt;NULL&gt; (not set)
+threads                   0
+natural                   0
+min_width                 200
+min_height                200
+writeconfig               0
+skip_warnings             0
 </pre></td>
 </tr>
 </table>
@@ -170,8 +258,7 @@ specific parent rom sets that will be used by all of the clones or you can make 
 <table width="52%" border="1" align="center">
 <tr>
 <td class="consoletext">
-<pre>
-parsing mess.ini...OK.
+<pre>parsing mess.ini...OK.
 parsing /a2600.ini...N/A
 parsing root.ini...N/A
 parsing a2600.ini...N/A
@@ -204,14 +291,12 @@ it to run fullscreen as it was easier to see. The d3d option made MESS use my 3D
 <table width="27%" border="1" align="center">
 <tr>
 <td>
-<pre class="fixedsize">
-#Atari 2600 Fullscreen
+<pre class="fixedsize">#Atari 2600 Fullscreen
 window 0
 direct3d 1
 </pre></td>
 </tr>
 </table>
-<p class="normal">&nbsp;</p>
 <p class="normal">Once you are happy with your file save it and run MESS and it will use your new settings.</p>
 </body>
 </html>
