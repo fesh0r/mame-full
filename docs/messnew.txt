@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [AMIGA] Fixed regressions; now boots properly.  [Ernesto Corvi]
 
+- [ATARI] Fixed hang on reset bug.  (bug #982) [Nate Woods]
+
 - [DGNBETA] More fully implemented certain graphics modes.  [Phill
   Harvey-Smith]
 
