@@ -49,7 +49,8 @@ typedef enum
 	MESSTEST_COMMAND_IMAGE_PRELOAD,
 	MESSTEST_COMMAND_VERIFY_MEMORY,
 	MESSTEST_COMMAND_VERIFY_IMAGE,
-	MESSTEST_COMMAND_TRACE
+	MESSTEST_COMMAND_TRACE,
+	MESSTEST_COMMAND_RESET
 } messtest_command_type_t;
 
 struct messtest_command
@@ -861,6 +862,13 @@ static void command_trace(void)
 
 
 
+static void command_reset(void)
+{
+	mame_schedule_soft_reset(Machine);
+}
+
+
+
 static void command_end(void)
 {
 	/* at the end of our test */
@@ -893,6 +901,7 @@ static const struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_VERIFY_MEMORY,	command_verify_memory },
 	{ MESSTEST_COMMAND_VERIFY_IMAGE,	command_verify_image },
 	{ MESSTEST_COMMAND_TRACE,			command_trace },
+	{ MESSTEST_COMMAND_RESET,			command_reset },
 	{ MESSTEST_COMMAND_END,				command_end }
 };
 
@@ -1395,6 +1404,21 @@ static void node_trace(xml_data_node *node)
 
 
 
+static void node_reset(xml_data_node *node)
+{
+	/* <reset> - perform a reset */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_RESET;
+
+	if (!append_command())
+	{
+		error_outofmemory();
+		return;
+	}
+}
+
+
+
 void node_testmess(xml_data_node *node)
 {
 	xml_data_node *child_node;
@@ -1463,6 +1487,8 @@ void node_testmess(xml_data_node *node)
 				node_imageverify(child_node);
 			else if (!strcmp(child_node->name, "trace"))
 				node_trace(child_node);
+			else if (!strcmp(child_node->name, "reset"))
+				node_reset(child_node);
 		}
 
 		memset(&new_command, 0, sizeof(new_command));
