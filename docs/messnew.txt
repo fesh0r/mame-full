@@ -16,6 +16,8 @@ System Driver Changes:
 
 - [DGNBETA] More fully implemented certain graphics modes.  [Phill
   Harvey-Smith]
+  
+- [IP204415] Fixed driver.  (bug #986) [Nate Woods]
 
 
 
