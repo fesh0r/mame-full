@@ -38,8 +38,8 @@ typedef struct tx0_reset_param_t
 } tx0_reset_param_t;
 
 /* PUBLIC FUNCTIONS */
-void tx0_64kw_get_info(UINT32 state, union cpuinfo *info);
-void tx0_8kw_get_info(UINT32 state, union cpuinfo *info);
+void tx0_64kw_get_info(UINT32 state, cpuinfo *info);
+void tx0_8kw_get_info(UINT32 state, cpuinfo *info);
 
 #define READ_TX0_18BIT(A) ((signed)program_read_dword_32be((A)<<2))
 #define WRITE_TX0_18BIT(A,V) (program_write_dword_32be((A)<<2,(V)))

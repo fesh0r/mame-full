@@ -268,7 +268,7 @@ static void saturn_state_load(void *file)
  * Generic set_info
  **************************************************************************/
 
-static void saturn_set_info(UINT32 state, union cpuinfo *info)
+static void saturn_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -313,7 +313,7 @@ static void saturn_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void saturn_get_info(UINT32 state, union cpuinfo *info)
+void saturn_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

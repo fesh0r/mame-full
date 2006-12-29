@@ -6,7 +6,7 @@
 #define ENVELOPE_H
 
 
-extern void enveEmuInit(UINT32 updateFreq, bool measuredValues);
+extern void enveEmuInit(UINT32 updateFreq, int measuredValues);
 void enveEmuResetOperator(sidOperator* pVoice);
 
 

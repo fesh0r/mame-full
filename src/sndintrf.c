@@ -146,14 +146,11 @@ void es8712_get_info(void *token, UINT32 state, sndinfo *info);
 void rf5c400_get_info(void *token, UINT32 state, sndinfo *info);
 void speaker_get_info(void *token, UINT32 state, sndinfo *info);
 void cdp1869_get_info(void *token, UINT32 state, sndinfo *info);
-
-#ifdef MESS
 void beep_get_info(void *token, UINT32 state, sndinfo *info);
 void wave_get_info(void *token, UINT32 state, sndinfo *info);
 void sid6581_get_info(void *token, UINT32 state, sndinfo *info);
 void sid8580_get_info(void *token, UINT32 state, sndinfo *info);
 void sp0256_get_info(void *token, UINT32 state, sndinfo *info);
-#endif
 
 void filter_volume_get_info(void *token, UINT32 state, sndinfo *info);
 void filter_rc_get_info(void *token, UINT32 state, sndinfo *info);

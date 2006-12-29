@@ -84,19 +84,17 @@ static UINT8 *system_rom;
 //#define LOG_INTS	1
 #endif
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
 #include "debug/debugcon.h"
-#endif
+#endif /* MAME_DEBUG */
 
 #ifdef MAME_DEBUG
 static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 static void ToggleDatLog(int ref, int params, const char *param[]);
 static void DumpKeys(int ref, int params, const char *param[]);
 
 static int LogDatWrites;
-#endif
 #endif /* MAME_DEBUG */
 
 static READ8_HANDLER(d_pia0_pa_r);
@@ -263,7 +261,7 @@ static void UpdateBanks(int first, int last)
 			if (!IsIOPage(Page)) 		
 			{
 				readbank = &mess_ram[MapPage*RamPageSize];
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 				if(LogDatWrites)
 					debug_console_printf("Mapping page %X, pageno=%X, mess_ram[%X]\n",Page,MapPage,(MapPage*RamPageSize));
 #endif
@@ -1147,16 +1145,16 @@ MACHINE_START( dgnbeta )
 	wd179x_init(WD_TYPE_179X,dgnbeta_fdc_callback);
 #ifdef MAME_DEBUG
 	cpuintrf_set_dasm_override(0,dgnbeta_dasm_override);
-#endif
+#endif /* MAME_DEBUG */
 
 	add_reset_callback(machine, dgnbeta_reset);
 	dgnbeta_reset(machine);
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	/* setup debug commands */
 	debug_console_register_command("beta_dat_log", CMDFLAG_NONE, 0, 0, 0,ToggleDatLog);
 	debug_console_register_command("beta_key_dump", CMDFLAG_NONE, 0, 0, 0,DumpKeys);
 	LogDatWrites=0;
-#endif	
+#endif	/* MAME_DEBUG */
 	return 0;
 }
 
@@ -1335,7 +1333,7 @@ static offs_t dgnbeta_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom,
 	return result;
 }
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 static void ToggleDatLog(int ref, int params, const char *param[])
 {
 	LogDatWrites=!LogDatWrites;

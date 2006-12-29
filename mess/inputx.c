@@ -13,9 +13,9 @@
 #include "inptport.h"
 #include "mame.h"
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcon.h"
-#endif
+#endif /* MAME_DEBUG */
 
 #define NUM_SIMUL_KEYS	(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1)
 #define LOG_INPUTX		0
@@ -568,12 +568,12 @@ static void inputx_timerproc(int dummy);
 
 
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 static void execute_input(int ref, int params, const char *param[])
 {
 	inputx_post_coded(param[0]);
 }
-#endif
+#endif /* MAME_DEBUG */
 
 
 
@@ -621,9 +621,9 @@ void inputx_init(void)
 	charqueue_empty = NULL;
 	keybuffer = NULL;
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	debug_console_register_command("input", CMDFLAG_NONE, 0, 1, 1, execute_input);
-#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
+#endif /* MAME_DEBUG */
 
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)

@@ -14,7 +14,7 @@ enum {
 /****************************************************************************/
 /* Return register contents 												*/
 /****************************************************************************/
-extern void z80gb_get_info(UINT32 state, union cpuinfo *info);
+extern void z80gb_get_info(UINT32 state, cpuinfo *info);
 
 /****************************************************************************/
 /* Memory functions                                                         */

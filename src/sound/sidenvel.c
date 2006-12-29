@@ -32,9 +32,6 @@
 
 #include <math.h>
 
-#define VERBOSE_DBG 0
-#include "includes/cbm.h"
-
 #include "sidvoice.h"
 #include "sid.h"
 
@@ -95,7 +92,7 @@ static UINT32 releaseTabLen;
 static UINT32 releasePos[256];
 
 
-void enveEmuInit( UINT32 updateFreq, bool measuredValues )
+void enveEmuInit( UINT32 updateFreq, int measuredValues )
 {
 	UINT32 i, j, k;
 
@@ -181,7 +178,7 @@ void enveEmuResetOperator(sidOperator* pVoice)
 {
 	/* mute, end of R-phase */
 	pVoice->ADSRctrl = ENVE_MUTE;
-//	pVoice->gateOnCtrl = (pVoice->gateOffCtrl = false);
+//  pVoice->gateOnCtrl = (pVoice->gateOffCtrl = false);
 
 #ifdef SID_FPUENVE
 	pVoice->fenveStep = (pVoice->fenveStepAdd = 0);
@@ -227,11 +224,11 @@ ptr2sidUwordFunc enveModeTable[] =
 	&enveEmuStartShortAttack,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute, &enveEmuMute,
-    /* 32		 */
+    /* 32        */
 	&enveEmuStartAttack, &enveEmuStartRelease,
 	&enveEmuAlterAttack, &enveEmuAlterDecay, &enveEmuAlterSustain, &enveEmuAlterRelease,
 	&enveEmuAlterSustainDecay, &enveEmuMute,
-    /* 48		 */
+    /* 48        */
 	&enveEmuStartShortAttack,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute, &enveEmuMute
@@ -545,7 +542,7 @@ INLINE UINT16 enveEmuShortAttack(sidOperator* pVoice)
 	if ((pVoice->enveStep >= attackTabLen) ||
 		(pVoice->enveShortAttackCount == 0))
 #endif
-/*		return enveEmuStartRelease(pVoice); */
+/*      return enveEmuStartRelease(pVoice); */
 		return enveEmuStartDecay(pVoice);
 	else
 	{
@@ -555,7 +552,7 @@ INLINE UINT16 enveEmuShortAttack(sidOperator* pVoice)
 		pVoice->enveVol = pVoice->enveStep;
 #endif
 	    pVoice->enveShortAttackCount--;
-/*		cout << hex << pVoice->enveShortAttackCount << " / " << pVoice->enveVol << endl; */
+/*      cout << hex << pVoice->enveShortAttackCount << " / " << pVoice->enveVol << endl; */
 		enveEmuEnveAdvance(pVoice);
 		return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 	}

@@ -35,7 +35,7 @@ enum {
 
 extern UINT8* sm8500_internal_ram( void ) ;
 extern unsigned sm8500_get_reg( int regnum );
-extern void sm8500_get_info(UINT32 state, union cpuinfo *info);
+extern void sm8500_get_info(UINT32 state, cpuinfo *info);
 
 UINT8 sm85cpu_mem_readbyte( UINT32 offset );
 void sm85cpu_mem_writebyte( UINT32 offset, UINT8 data );

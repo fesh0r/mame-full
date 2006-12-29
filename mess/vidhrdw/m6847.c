@@ -66,7 +66,7 @@
 #include "m6847.h"
 #include "inputx.h"
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
 #include "debug/debugcon.h"
 #endif
@@ -1709,7 +1709,7 @@ static void fs_rise(int dummy)
  *
  *************************************/
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 
 static void execute_dumpscanline(int ref, int params, const char **param)
 {
@@ -1735,9 +1735,9 @@ static void execute_dumpscanline(int ref, int params, const char **param)
 	}
 }
 
+#endif /* MAME_DEBUG */
 
 
-#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
 
 /*************************************
  *
@@ -1961,10 +1961,10 @@ void m6847_init(const m6847_config *cfg)
 		logerror("\n");
 	}
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	/* setup debug commands */
 	debug_console_register_command("m6847_dumpscanline", CMDFLAG_NONE, 0, 0, 0, execute_dumpscanline);
-#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
+#endif /* MAME_DEBUG */
 }
 
 

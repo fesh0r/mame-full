@@ -13,6 +13,8 @@ Ernesto Corvi & Mariusz Wojcieszek
 #include "sound/custom.h"
 
 
+#define AMIGA_ACTION_REPLAY_1 0
+
 /* A bit of a trick here: some registers are 32-bit. In order to efficiently */
 /* read them on both big-endian and little-endian systems, we store the custom */
 /* registers in 32-bit natural order. This means we need to XOR the register */
@@ -344,6 +346,12 @@ struct _amiga_autoconfig_device
 
 extern UINT16 *amiga_chip_ram;
 extern size_t amiga_chip_ram_size;
+
+#if AMIGA_ACTION_REPLAY_1
+/* Action Replay 1 support */
+extern UINT16 *amiga_ar_ram;
+extern size_t amiga_ar_ram_size;
+#endif
 
 extern UINT16 *amiga_custom_regs;
 extern UINT16 *amiga_expansion_ram;

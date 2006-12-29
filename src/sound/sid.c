@@ -1,6 +1,6 @@
 /*
   copyright peter trauner 2000
-  
+
   based on michael schwend's sid play
 
   Noise generation algorithm is used courtesy of Asger Alstrup Nielsen.
@@ -12,10 +12,9 @@
   MOS-8580 R5 combined waveforms recorded by Dennis "Deadman" Lindroos.
 */
 
-#define VERBOSE_DBG 0
-#include "includes/cbm.h"
 #include <math.h>
 
+#include "mame.h"
 #include "sidvoice.h"
 #include "sidenvel.h"
 #include "sid.h"
@@ -33,7 +32,7 @@ static UINT16 mix16mono[256*maxLogicalVoices];
 static UINT16 zero16bit=0;  /* either signed or unsigned */
 UINT32 splitBufferLen;
 
-void MixerInit(bool threeVoiceAmplify)
+void MixerInit(int threeVoiceAmplify)
 {
 	long si;
 	UINT16 ui;
@@ -58,9 +57,9 @@ void MixerInit(bool threeVoiceAmplify)
 
 INLINE void syncEm(SID6581 *This)
 {
-	bool sync1 = (This->optr1.modulator->cycleLenCount <= 0);
-	bool sync2 = (This->optr2.modulator->cycleLenCount <= 0);
-	bool sync3 = (This->optr3.modulator->cycleLenCount <= 0);
+	int sync1 = (This->optr1.modulator->cycleLenCount <= 0);
+	int sync2 = (This->optr2.modulator->cycleLenCount <= 0);
+	int sync3 = (This->optr3.modulator->cycleLenCount <= 0);
 
 	This->optr1.cycleLenCount--;
 	This->optr2.cycleLenCount--;
@@ -113,7 +112,7 @@ void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, UINT32 bufferLen )
    does n't seam to come from a tone operator
    ghostbusters and goldrunner everything except volume zeroed */
 					      +(This->masterVolume<<2)
-//						  +(*sampleEmuRout)()
+//                        +(*sampleEmuRout)()
 		)];
 		syncEm(This);
     }
@@ -124,7 +123,7 @@ void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, UINT32 bufferLen )
 
 /* Reset. */
 
-bool sidEmuReset(SID6581 *This)
+int sidEmuReset(SID6581 *This)
 {
 	sidClearOperator( &This->optr1 );
 	enveEmuResetOperator( &This->optr1 );
@@ -134,7 +133,7 @@ bool sidEmuReset(SID6581 *This)
 	enveEmuResetOperator( &This->optr3 );
 	This->optr3_outputmask = ~0;  /* on */
 
-//	sampleEmuReset();
+//  sampleEmuReset();
 
 	This->filter.Type = (This->filter.CurType = 0);
 	This->filter.Value = 0;
@@ -249,7 +248,6 @@ void sid6581_init (SID6581 *This)
 
 void sid6581_port_w (SID6581 *This, int offset, int data)
 {
-	DBG_LOG (1, "sid6581 write", ("offset %.2x value %.2x\n", offset, data));
 	offset &= 0x1f;
 
 	switch (offset)
@@ -259,19 +257,19 @@ void sid6581_port_w (SID6581 *This, int offset, int data)
 		case 0x1e:
 		case 0x1f:
 			break;
-		case 0x15: case 0x16: case 0x17: 
+		case 0x15: case 0x16: case 0x17:
 		case 0x18:
 			stream_update(This->mixer_channel);
 			This->reg[offset] = data;
 			This->masterVolume = ( This->reg[0x18] & 15 );
-			This->masterVolumeAmplIndex = This->masterVolume << 8;	    
+			This->masterVolumeAmplIndex = This->masterVolume << 8;
 
 			if ((This->reg[0x18]&0x80) &&
 				((This->reg[0x17]&This->optr3.filtVoiceMask)==0))
 				This->optr3_outputmask = 0;     /* off */
 			else
 				This->optr3_outputmask = ~0;  /* on */
-	
+
 			This->filter.Type = This->reg[0x18] & 0x70;
 			if (This->filter.Type != This->filter.CurType)
 			{
@@ -293,7 +291,7 @@ void sid6581_port_w (SID6581 *This, int offset, int data)
 			}
 
 			sidEmuSet( &This->optr1 );
-			sidEmuSet( &This->optr3 );	
+			sidEmuSet( &This->optr3 );
 			sidEmuSet( &This->optr2 );
 
 			// relies on sidEmuSet also for other channels!
@@ -315,7 +313,7 @@ void sid6581_port_w (SID6581 *This, int offset, int data)
 			}
 
 			sidEmuSet( &This->optr1 );
-			sidEmuSet( &This->optr3 );	
+			sidEmuSet( &This->optr3 );
 			sidEmuSet( &This->optr2 );
 
 			// relies on sidEmuSet also for other channels!
@@ -361,7 +359,6 @@ int sid6581_port_r (SID6581 *This, int offset)
     default:
 	data=This->reg[offset];
     }
-    DBG_LOG (1, "sid6581 read", ("offset %.2x value %.2x\n", offset, data));
     return data;
 }
 

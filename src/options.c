@@ -86,8 +86,7 @@ static const options_entry core_options[] =
 	{ "rompath;rp;biospath;bp",      "roms",      0,                 "path to ROMsets and hard disk images" },
 #ifdef MESS
 	{ "hashpath;hash_directory;hash","hash",      0,                 "path to hash files" },
-	{ "softwarepath;swp",            "software",  0,                 "path to software" },
-#endif
+#endif /* MESS */
 	{ "samplepath;sp",               "samples",   0,                 "path to samplesets" },
 	{ "artpath;artwork_directory",   "artwork",   0,                 "path to artwork files" },
 	{ "ctrlrpath;ctrlr_directory",   "ctrlr",     0,                 "path to controller definitions" },
@@ -361,7 +360,7 @@ int options_parse_command_line(int argc, char **argv)
 		data = find_entry_data(optionname, TRUE);
 		if (data == NULL)
 		{
-			printf("Error: unknown option: %s\n", argv[arg]);
+			mame_printf_error("Error: unknown option: %s\n", argv[arg]);
 			return 1;
 		}
 		if ((data->flags & (OPTION_DEPRECATED | OPTION_INTERNAL)) != 0)

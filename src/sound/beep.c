@@ -1,13 +1,13 @@
 /***************************************************************************
 
-	beep.c
+    beep.c
 
-	This is used for computers/systems which can only output a constant tone.
-	This tone can be turned on and off.
-	e.g. PCW and PCW16 computer systems
-	KT - 25-Jun-2000
+    This is used for computers/systems which can only output a constant tone.
+    This tone can be turned on and off.
+    e.g. PCW and PCW16 computer systems
+    KT - 25-Jun-2000
 
-	Sound handler
+    Sound handler
 
 ****************************************************************************/
 
@@ -28,7 +28,7 @@ struct beep_sound
 
 /*************************************
  *
- *	Stream updater
+ *  Stream updater
  *
  *************************************/
 
@@ -73,7 +73,7 @@ static void beep_sound_update(void *param,stream_sample_t **inputs, stream_sampl
 
 /*************************************
  *
- *	Sound handler start
+ *  Sound handler start
  *
  *************************************/
 
@@ -96,7 +96,7 @@ static void *beep_start(int sndindex, int clock, const void *config)
 
 /*************************************
  *
- *	changing state to on from off will restart tone
+ *  changing state to on from off will restart tone
  *
  *************************************/
 
@@ -120,7 +120,7 @@ void beep_set_state( int num, int on )
 
 /*************************************
  *
- *	setting new frequency starts from beginning
+ *  setting new frequency starts from beginning
  *
  *************************************/
 
@@ -141,7 +141,7 @@ void beep_set_frequency(int num,int frequency)
 
 /*************************************
  *
- *	change a channel volume
+ *  change a channel volume
  *
  *************************************/
 

@@ -87,7 +87,7 @@ the access to the video memory is unclear to me at the moment.
 
 #include "includes/dgn_beta.h"
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
 #include "debug/debugcon.h"
 #endif
@@ -230,7 +230,7 @@ typedef enum {
 void vid_set_gctrl(int data)
 {
 	GCtrl=data;
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	if (LogRegWrites) 
 		debug_console_printf("I28-PB=$%2X, %2X-%s-%s-%s-%s-%s-%s PC=%4X\n",
 				     data,
@@ -277,7 +277,7 @@ static void beta_Set_HSync(int offset, int data)
 		
 //debug_console_printf("HT=%d, HS=%d, HW=%d, (HS+HW)=%d, HT-(HS+HW)=%d\n",HT,HS,HW,(HS+HW),(HT-(HS+HW)));
 //debug_console_printf("Scanline=%d, row=%d\n",crtc6845_get_scanline_counter(),crtc6845_get_row_counter());		
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 		HSyncMin=beta_scr_x;
 #endif
 	}
@@ -307,7 +307,7 @@ static void beta_Set_VSync(int offset, int data)
 			Field=(Field+1) & 0x01;	/* Invert field */
 //			debug_console_printf("Invert field=%d\n",Field);
 		}
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 		VSyncMin=beta_scr_y;
 #endif
 	}
@@ -343,7 +343,7 @@ void init_video(void)
 	DoubleY=1;
 	DrawInterlace=INTERLACE_OFF;	/* No interlace by default */
 	
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	/* setup debug commands */
 	debug_console_register_command("beta_vid_log", CMDFLAG_NONE, 0, 0, 0,ToggleRegLog);
 	debug_console_register_command("beta_vid_fill", CMDFLAG_NONE, 0, 0, 0,FillScreen);
@@ -352,7 +352,7 @@ void init_video(void)
 	debug_console_register_command("beta_vid_limits", CMDFLAG_NONE, 0, 0, 0,ShowVidLimits);
 	debug_console_register_command("beta_vid_clkmax", CMDFLAG_NONE, 0, 0, 1,SetClkMax);
 	LogRegWrites=0;
-#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
+#endif /* MAME_DEBUG */
 }
 
 /**************************/
@@ -728,7 +728,7 @@ WRITE8_HANDLER(dgnbeta_6845_w)
 		crtc6845_address_w(offset,data);
 		VidAddr=data;				/* Record reg being written to */
 	}
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	if (LogRegWrites) 
 		RegLog(offset,data);
 #endif
@@ -746,7 +746,7 @@ WRITE8_HANDLER(colour_ram_w)
  *
  *************************************/
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 static void ToggleRegLog(int ref, int params, const char *param[])
 {
 	LogRegWrites=!LogRegWrites;

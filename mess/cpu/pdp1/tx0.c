@@ -394,7 +394,7 @@ static int tx0_execute_8kw(int cycles)
 }
 
 
-static void tx0_set_info(UINT32 state, union cpuinfo *info)
+static void tx0_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -445,7 +445,7 @@ static void tx0_set_info(UINT32 state, union cpuinfo *info)
 }
 
 
-void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
+void tx0_64kw_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -573,7 +573,7 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
+void tx0_8kw_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

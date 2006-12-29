@@ -3415,7 +3415,7 @@ static void cp1610_set_irq_line(UINT32 irqline, int state)
 	}
 }
 
-static void cp1610_set_info(UINT32 state, union cpuinfo *info)
+static void cp1610_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -3440,7 +3440,7 @@ static void cp1610_set_info(UINT32 state, union cpuinfo *info)
 	return;
 }
 
-void cp1610_get_info(UINT32 state, union cpuinfo *info)
+void cp1610_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

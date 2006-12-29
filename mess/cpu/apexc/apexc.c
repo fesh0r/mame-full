@@ -815,7 +815,7 @@ static int apexc_execute(int cycles)
 	return cycles - apexc_ICount;
 }
 
-static void apexc_set_info(UINT32 state, union cpuinfo *info)
+static void apexc_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -848,7 +848,7 @@ static void apexc_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void apexc_get_info(UINT32 state, union cpuinfo *info)
+void apexc_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

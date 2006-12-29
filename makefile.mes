@@ -42,9 +42,6 @@ endif
 # uncomment next line to include the debugger
 # DEBUG = 1
 
-# uncomment next line to use the new multiwindow debugger
-NEW_DEBUGGER = 1
-
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
@@ -384,7 +381,6 @@ endif
 include src/cpu/cpu.mak
 include src/sound/sound.mak
 include mess/cpu/cpu.mak
-include mess/sound/sound.mak
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
@@ -462,7 +458,7 @@ file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDBGOBJS)
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 

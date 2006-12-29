@@ -981,7 +981,7 @@ int v30mz_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void nec_set_info(UINT32 state, union cpuinfo *info)
+static void nec_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1036,7 +1036,7 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void v30mz_get_info(UINT32 state, union cpuinfo *info)
+void v30mz_get_info(UINT32 state, cpuinfo *info)
 {
 	int flags;
 

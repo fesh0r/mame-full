@@ -11,7 +11,7 @@
 
  Copyright (c) 1998-2000, Joseph Zbiciak, all rights reserved.
  Copyright (c) 2006, tim lindner, all rights reserved.
- 
+
  - This source code is released as freeware for non-commercial purposes.
  - You are free to use and redistribute this code in modified or
    unmodified form, provided you list us in the credits.
@@ -25,7 +25,7 @@
  Note: Bit flipping.
     This emulation flips the bits on every byte of the memory map during
     the sp0256_start() call.
-    
+
     If the memory map contents is modified during execution (becuase of ROM
     bank switching) the sp0256_bitrevbuff() call must be called after the
     section of ROM is modified.
@@ -79,7 +79,7 @@ struct lpc12_t
     INT16   b_coef[6];      /* B0 through B5.                               */
     INT16   z_data[6][2];   /* Time-delay data for the filter stages.       */
     UINT8   r[16];          /* The encoded register set.                    */
-    int     interp; 
+    int     interp;
 };
 
 
@@ -187,7 +187,7 @@ static int lpc12_update(struct lpc12_t *f, int num_samp, INT16 *out, UINT32 *opt
 
                 for (j = 0; j < 6; j++)
                     f->z_data[j][1] = f->z_data[j][0] = 0;
-                
+
             } else
             {
                 samp = 0;
@@ -273,7 +273,7 @@ static int lpc12_update(struct lpc12_t *f, int num_samp, INT16 *out, UINT32 *opt
 
 #ifdef HIGH_QUALITY /* Higher quality than the original, but who cares? */
         out[oidx++ & SCBUF_MASK] = limit(samp) << 2;
-#else 
+#else
         out[oidx++ & SCBUF_MASK] = (limit(samp >> 4) << 8);
 #endif
     }
@@ -627,7 +627,7 @@ static const UINT16 sp0256_datafmt[] =
     /*  176 */  CR( 5,  0,  IP, 0,  0,  0,  0),     /*  Per. Intr.  */
 };
 
-static const INT16 sp0256_df_idx[16 * 8] = 
+static const INT16 sp0256_df_idx[16 * 8] =
 {
     /*  OPCODE 0000 */      -1, -1,     -1, -1,     -1, -1,     -1, -1,
     /*  OPCODE 1000 */      -1, -1,     -1, -1,     -1, -1,     -1, -1,
@@ -679,7 +679,7 @@ static UINT8 bitrev8(UINT8 val)
 void sp0256_bitrevbuff(UINT8 *buffer, unsigned int start, unsigned int length)
 {
 	unsigned int i;
-	
+
 	for( i=start; i<length; i++ )
 		buffer[i] = bitrev8( buffer[i] );
 }
@@ -689,7 +689,7 @@ void sp0256_bitrevbuff(UINT8 *buffer, unsigned int start, unsigned int length)
 /* ======================================================================== */
 static UINT32 sp0256_getb(struct sp0256 *sp, int len)
 {
-    UINT32 data = 0; 
+    UINT32 data = 0;
     UINT32 d0, d1;
 
     /* -------------------------------------------------------------------- */
@@ -716,14 +716,14 @@ static UINT32 sp0256_getb(struct sp0256 *sp, int len)
             sp->fifo_tail++;
             sp->fifo_bitp -= 10;
         }
-    } else 
+    } else
     {
         /* ---------------------------------------------------------------- */
         /*  Figure out which ROMs are being fetched into, and grab two      */
         /*  adjacent bytes.  The byte we're interested in is extracted      */
         /*  from the appropriate bit-boundary between them.                 */
         /* ---------------------------------------------------------------- */
-        int idx0 = (sp->pc    ) >> 3, d0;             
+        int idx0 = (sp->pc    ) >> 3, d0;
         int idx1 = (sp->pc + 8) >> 3, d1;
 
 		d0 = sp->rom[idx0 & 0xffff];
@@ -787,7 +787,7 @@ static void sp0256_micro(struct sp0256 *sp)
             sp->ald      = 0;
             for (i = 0; i < 16; i++)
                 sp->filt.r[i] = 0;
-            
+
             SET_SBY(ASSERT_LINE)
 
             return;
@@ -802,10 +802,10 @@ static void sp0256_micro(struct sp0256 *sp)
         repeat = 0;
         ctrl_xfer = 0;
 
-        LOG(("$%.4X.%.1X: OPCODE %d%d%d%d.%d%d\n", 
-                (sp->pc >> 3) - 1, sp->pc & 7, 
-                !!(opcode & 1), !!(opcode & 2), 
-                !!(opcode & 4), !!(opcode & 8), 
+        LOG(("$%.4X.%.1X: OPCODE %d%d%d%d.%d%d\n",
+                (sp->pc >> 3) - 1, sp->pc & 7,
+                !!(opcode & 1), !!(opcode & 2),
+                !!(opcode & 4), !!(opcode & 8),
                 !!(sp->mode&4), !!(sp->mode&2)));
 
         /* ---------------------------------------------------------------- */
@@ -830,14 +830,14 @@ static void sp0256_micro(struct sp0256 *sp)
                 /* -------------------------------------------------------- */
                 {
                     UINT32 btrg;
-                        
+
                     /* ---------------------------------------------------- */
                     /*  Figure out our branch target.                       */
                     /* ---------------------------------------------------- */
                     btrg = sp->stack;
 
                     sp->stack = 0;
-                    
+
                     /* ---------------------------------------------------- */
                     /*  If the branch target is zero, this is a HLT.        */
                     /*  Otherwise, it's an RTS, so set the PC.              */
@@ -869,8 +869,8 @@ static void sp0256_micro(struct sp0256 *sp)
                 /* -------------------------------------------------------- */
                 /*  Figure out our branch target.                           */
                 /* -------------------------------------------------------- */
-                btrg = sp->page                           | 
-                       (bitrev32(immed4)             >> 17) | 
+                btrg = sp->page                           |
+                       (bitrev32(immed4)             >> 17) |
                        (bitrev32(sp0256_getb(sp, 8)) >> 21);
                 ctrl_xfer = 1;
 
@@ -893,7 +893,7 @@ static void sp0256_micro(struct sp0256 *sp)
             /* ------------------------------------------------------------ */
             case 0x1:
             {
-                sp->mode = ((immed4 & 8) >> 2) | (immed4 & 4) | 
+                sp->mode = ((immed4 & 8) >> 2) | (immed4 & 4) |
                            ((immed4 & 3) << 4);
                 break;
             }
@@ -940,7 +940,7 @@ static void sp0256_micro(struct sp0256 *sp)
             /*  Control transfers to the FIFO cause it to discard the       */
             /*  partial decle that's at the front of the FIFO.              */
             /* ------------------------------------------------------------ */
-            if (sp->fifo_sel && sp->fifo_bitp)  
+            if (sp->fifo_sel && sp->fifo_bitp)
             {
                 LOG(("bitp = %d -> Flush", sp->fifo_bitp));
 
@@ -953,7 +953,7 @@ static void sp0256_micro(struct sp0256 *sp)
 
             continue;
         }
-    
+
         /* ---------------------------------------------------------------- */
         /*  Otherwise, if we have a repeat count, then go grab the data     */
         /*  block and feed it to the filter.                                */
@@ -1036,8 +1036,8 @@ static void sp0256_micro(struct sp0256 *sp)
             if (shf)
                 value <<= shf;
 
-            LOG(("v=%.2X (%c%.2X)  ", value & 0xFF, 
-                     value & 0x80 ? '-' : '+', 
+            LOG(("v=%.2X (%c%.2X)  ", value & 0xFF,
+                     value & 0x80 ? '-' : '+',
                      0xFF & (value & 0x80 ? -value : value)));
 
             sp->silent = 0;
@@ -1055,7 +1055,7 @@ static void sp0256_micro(struct sp0256 *sp)
                 LOG(("%.2X\n", sp->filt.r[prm]));
 
                 continue;
-            } 
+            }
 
             /* ------------------------------------------------------------ */
             /*  If this is a delta update, add to the appropriate field.    */
@@ -1070,7 +1070,7 @@ static void sp0256_micro(struct sp0256 *sp)
 
                 continue;
             }
-                    
+
             /* ------------------------------------------------------------ */
             /*  Otherwise, just write the new value.                        */
             /* ------------------------------------------------------------ */
@@ -1112,7 +1112,7 @@ static void sp0256_update(void *param, stream_sample_t **inputs, stream_sample_t
 		/*  First, drain as much of our scratch buffer as we can into the   */
 		/*  sound buffer.                                                  */
 		/* ---------------------------------------------------------------- */
-		
+
 		while( sp->sc_tail != sp->sc_head )
 		{
 			output[output_index++] = sp->scratch[sp->sc_tail++ & SCBUF_MASK];
@@ -1127,38 +1127,38 @@ static void sp0256_update(void *param, stream_sample_t **inputs, stream_sample_t
 		/* ---------------------------------------------------------------- */
 		if( output_index > length )
 			break;
-		
+
 		samples = length - output_index;
-		
+
 		/* ---------------------------------------------------------------- */
 		/*  Process the current set of filter coefficients as long as the   */
 		/*  repeat count holds up and we have room in our scratch buffer.   */
 		/* ---------------------------------------------------------------- */
 		did_samp = 0;
 		old_idx  = sp->sc_head;
-		if (samples > 0) do 
+		if (samples > 0) do
 		{
 			int do_samp;
-		
+
 			/* ------------------------------------------------------------ */
 			/*  If our repeat count expired, emulate the microsequencer.    */
 			/* ------------------------------------------------------------ */
 			if (sp->filt.rpt <= 0)
 				sp0256_micro(sp);
-	
+
 			/* ------------------------------------------------------------ */
 			/*  Do as many samples as we can.                               */
 			/* ------------------------------------------------------------ */
 			do_samp = samples - did_samp;
 			if (sp->sc_head + do_samp - sp->sc_tail > SCBUF_SIZE)
 				do_samp = sp->sc_tail + SCBUF_SIZE - sp->sc_head;
-	
+
 			if (do_samp == 0) break;
-	
+
 			if (sp->silent && sp->filt.rpt <= 0)
 			{
 				int x, y = sp->sc_head;
-	
+
 				for (x = 0; x < do_samp; x++)
 					sp->scratch[y++ & SCBUF_MASK] = 0;
 				sp->sc_head += do_samp;
@@ -1166,12 +1166,12 @@ static void sp0256_update(void *param, stream_sample_t **inputs, stream_sample_t
 			}
 			else
 			{
-				did_samp += lpc12_update(&sp->filt, do_samp, 
+				did_samp += lpc12_update(&sp->filt, do_samp,
 										 sp->scratch, &sp->sc_head);
 			}
-			
+
 			sp->sc_head &= SCBUF_MASK;
-	
+
 		} while (sp->filt.rpt >= 0 && samples > did_samp);
 	}
 }
@@ -1215,7 +1215,7 @@ static void *sp0256_start(int sndindex, int clock, const void *config)
     /* -------------------------------------------------------------------- */
 	sp->rom = memory_region(intf->memory_region);
 	sp0256_bitrevbuff(sp->rom, 0, 0xffff);
-	
+
 	return sp;
 }
 
@@ -1233,7 +1233,7 @@ void sp0256_reset(void *token)
 	/*  Reset the FIFO and SP0256.                                      */
 	/* ---------------------------------------------------------------- */
 	sp->fifo_head = sp->fifo_tail = sp->fifo_bitp = 0;
-	
+
 	memset(&sp->filt, 0, sizeof(sp->filt));
 	sp->halted   = 1;
 	sp->filt.rpt = -1;
@@ -1291,7 +1291,7 @@ READ16_HANDLER( spb640_r )
     /* -------------------------------------------------------------------- */
     /*  Offset 1 returns the SPB640 FIFO full status on bit 15.             */
     /* -------------------------------------------------------------------- */
-    if (offset == 1) 
+    if (offset == 1)
     {
         return (sp->fifo_head - sp->fifo_tail) >= 64 ? 0x8000 : 0;
     }
@@ -1311,38 +1311,38 @@ WRITE16_HANDLER( spb640_w )
 		sp0256_ALD_w( 0, data & 0xff );
 		return;
 	}
-	
+
 	if( offset == 1 )
 	{
 		/* ---------------------------------------------------------------- */
 		/*  If Bit 10 is set, reset the FIFO, and SP0256.                   */
 		/* ---------------------------------------------------------------- */
-	
+
 		if (data & 0x400)
 		{
 			sp->fifo_head = sp->fifo_tail = sp->fifo_bitp = 0;
 			sp0256_reset(sp);
 			return;
 		}
-	
+
 		/* ---------------------------------------------------------------- */
 		/*  If the FIFO is full, drop the data.                             */
 		/* ---------------------------------------------------------------- */
-		if ((sp->fifo_head - sp->fifo_tail) >= 64) 
+		if ((sp->fifo_head - sp->fifo_tail) >= 64)
 		{
 			LOG(("spb640: Dropped FIFO write\n"));
 			return;
 		}
-	
+
 		/* ---------------------------------------------------------------- */
 		/*  FIFO up the lower 10 bits of the data.                          */
 		/* ---------------------------------------------------------------- */
-	
-		LOG(("spb640: WR_FIFO %.3X %d.%d %d\n", data & 0x3FF, 
+
+		LOG(("spb640: WR_FIFO %.3X %d.%d %d\n", data & 0x3FF,
 				sp->fifo_tail, sp->fifo_bitp, sp->fifo_head));
-	
+
 		sp->fifo[sp->fifo_head++ & 63] = data & 0x3FF;
-	
+
 		return;
 	}
 }

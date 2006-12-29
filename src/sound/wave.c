@@ -1,10 +1,10 @@
 /***************************************************************************
 
-	wave.c
+    wave.c
 
-	Code that interfaces 
-	Functions to handle loading, creation, recording and playback
-	of wave samples for IO_CASSETTE
+    Code that interfaces
+    Functions to handle loading, creation, recording and playback
+    of wave samples for IO_CASSETTE
 
 ****************************************************************************/
 

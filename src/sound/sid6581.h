@@ -1,13 +1,16 @@
 /***************************************************************************
 
-	sid6581.h
+    sid6581.h
 
-	MAME/MESS interface for SID6581 and SID8580 chips
+    MAME/MESS interface for SID6581 and SID8580 chips
 
 ***************************************************************************/
 
 #ifndef SID6581_H
 #define SID6581_H
+
+#include "mame.h"
+#include "memory.h"
 
 typedef enum
 {

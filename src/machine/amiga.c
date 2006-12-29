@@ -33,8 +33,10 @@
  *************************************/
 
 /* 715909 Hz for NTSC, 709379 for PAL */
-#define O2_TIMER_RATE		(TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10))
+#define O2_TIMER_RATE				(TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10))
 
+/* How many CPU cycles we delay until we fire a pending interrupt */
+#define AMIGA_IRQ_DELAY_CYCLES		24
 
 
 /*************************************
@@ -61,6 +63,13 @@ struct _autoconfig_device
 
 UINT16 *amiga_chip_ram;
 size_t amiga_chip_ram_size;
+
+#if AMIGA_ACTION_REPLAY_1
+/* Action Replay 1 support */
+UINT16 *amiga_ar_ram;
+size_t amiga_ar_ram_size;
+#endif
+
 UINT16 *amiga_custom_regs;
 UINT16 *amiga_expansion_ram;
 UINT16 *amiga_autoconfig_mem;
@@ -69,6 +78,7 @@ const amiga_machine_interface *amiga_intf;
 
 static autoconfig_device *autoconfig_list;
 static autoconfig_device *cur_autoconfig;
+static mame_timer * amiga_irq_timer;
 
 const char *amiga_custom_names[0x100] =
 {
@@ -166,7 +176,7 @@ static void custom_reset(void);
 static void autoconfig_reset(void);
 static void amiga_cia_0_irq(int state);
 static void amiga_cia_1_irq(int state);
-
+static void amiga_irq_proc( int param );
 
 
 /*************************************
@@ -202,6 +212,9 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 	cia_intf[1].port[1].read = intf->cia_1_portB_r;
 	cia_intf[1].port[1].write = intf->cia_1_portB_w;
 	cia_config(1, &cia_intf[1]);
+	
+	/* setup the irq timer */
+	amiga_irq_timer = timer_alloc(amiga_irq_proc);
 }
 
 
@@ -252,7 +265,7 @@ INTERRUPT_GEN( amiga_scanline_callback )
 	{
 		/* signal VBLANK IRQ */
 		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
-
+	
 		/* clock the first CIA TOD */
 		cia_clock_tod(0);
 
@@ -314,12 +327,19 @@ static void update_irqs(void)
 
 	/* set the highest IRQ line */
 	if (irq >= 0)
+	{
 		cpunum_set_input_line(0, irq, ASSERT_LINE);
+	}
 	else
 		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
-
+static void amiga_irq_proc( int param )
+{
+	(void)param;
+	update_irqs();
+	timer_reset( amiga_irq_timer, TIME_NEVER );
+}
 
 /*************************************
  *
@@ -1230,15 +1250,17 @@ WRITE16_HANDLER( amiga_custom_w )
 		case REG_INTENA:
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			CUSTOM_REG(offset) = data;
-			update_irqs();
+			timer_adjust( amiga_irq_timer, TIME_IN_CYCLES( AMIGA_IRQ_DELAY_CYCLES, 0 ), 0, 0 );
 			break;
 
 		case REG_INTREQ:
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
+			if ( cia_get_irq( 0 ) ) data |= INTENA_PORTS;
+			if ( cia_get_irq( 1 ) )	data |= INTENA_EXTER;
 			CUSTOM_REG(offset) = data;
 			if (!(data & 0x8000) && (data & INTENA_RBF))
 				CUSTOM_REG(REG_SERDATR) &= ~0x8000;
-			update_irqs();
+			timer_adjust( amiga_irq_timer, TIME_IN_CYCLES( AMIGA_IRQ_DELAY_CYCLES, 0 ), 0, 0 );
 			break;
 
 		case REG_ADKCON:

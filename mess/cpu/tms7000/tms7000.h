@@ -44,8 +44,8 @@ enum {
 
 /* PUBLIC FUNCTIONS */
 extern void tms7000_A6EC1( void ); /* External event counter */
-extern void tms7000_get_info(UINT32 state, union cpuinfo *info);
-extern void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
+extern void tms7000_get_info(UINT32 state, cpuinfo *info);
+extern void tms7000_exl_get_info(UINT32 state, cpuinfo *info);
 
 extern WRITE8_HANDLER( tms70x0_pf_w );
 extern  READ8_HANDLER( tms70x0_pf_r );

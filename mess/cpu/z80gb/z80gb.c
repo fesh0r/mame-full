@@ -325,7 +325,7 @@ static void z80gb_set_irq_line (int irqline, int state)
 	CheckInterrupts = 0;
 }*/
 
-static void z80gb_set_info(UINT32 state, union cpuinfo *info)
+static void z80gb_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -348,7 +348,7 @@ static void z80gb_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void z80gb_get_info(UINT32 state, union cpuinfo *info)
+void z80gb_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

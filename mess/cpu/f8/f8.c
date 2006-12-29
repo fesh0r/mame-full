@@ -1899,7 +1899,7 @@ static void f8_init (int index, int clock, const void *config, int (*irqcallback
 	f8.irq_callback = irqcallback;
 }
 
-static void f8_set_info(UINT32 state, union cpuinfo *info)
+static void f8_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1997,7 +1997,7 @@ static void f8_set_info(UINT32 state, union cpuinfo *info)
 	return;
 }
 
-void f8_get_info(UINT32 state, union cpuinfo *info)
+void f8_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

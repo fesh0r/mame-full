@@ -55,6 +55,6 @@ void sc61860_2ms_tick(int param);
 /* this is though for power on/off of the sharps */
 UINT8 *sc61860_internal_ram(void);
 
-void sc61860_get_info(UINT32 state, union cpuinfo *info);
+void sc61860_get_info(UINT32 state, cpuinfo *info);
 
 #endif

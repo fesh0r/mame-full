@@ -411,7 +411,8 @@ $(OBJ)/amiga.a: \
 	$(OBJ)/sndhrdw/amiga.o			\
 	$(OBJ)/machine/6526cia.o		\
 	$(OBJ)/mess/machine/amigafdc.o	\
-	$(OBJ)/mess/systems/amiga.o
+	$(OBJ)/mess/machine/amigakbd.o	\
+	$(OBJ)/mess/systems/amiga.o		\
 
 $(OBJ)/cbmshare.a: \
 	$(OBJ)/machine/6526cia.o		\

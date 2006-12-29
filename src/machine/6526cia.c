@@ -507,6 +507,11 @@ void cia_issue_index(int which)
 	cia_update_interrupts(cia);
 }
 
+void cia_set_input_sp(int which, int data)
+{
+	cia_state *cia = &cia_array[which];
+	cia->sp = data;
+}
 
 void cia_set_input_cnt(int which, int data)
 {
@@ -529,6 +534,7 @@ void cia_set_input_cnt(int which, int data)
 			cia->serial >>= 1;
 			if (cia->sp)
 				cia->serial |= 0x80;
+			
 			if (++cia->shift == 8)
 			{
 				cia->sdr = cia->serial;
@@ -708,7 +714,7 @@ void cia_write(int which, offs_t offset, UINT8 data)
 					cia_timer_update(timer, timer->latch);
 				}
 			}
-    		break;
+			break;
 
 		/* time of day latches */
 		case CIA_TOD0:

@@ -372,7 +372,7 @@ static void sm8500_set_irq_line( int irqline, int state )
 	}
 }
 
-static void sm8500_set_info( UINT32 state, union cpuinfo *info )
+static void sm8500_set_info( UINT32 state, cpuinfo *info )
 {
 	switch(state)
 	{
@@ -424,7 +424,7 @@ static void sm8500_set_info( UINT32 state, union cpuinfo *info )
 	}
 }
 
-void sm8500_get_info( UINT32 state, union cpuinfo *info )
+void sm8500_get_info( UINT32 state, cpuinfo *info )
 {
 	switch(state)
 	{

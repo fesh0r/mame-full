@@ -13,6 +13,7 @@ ernesto@imagina.com
 #include "sound/custom.h"
 #include "includes/amiga.h"
 #include "machine/amigafdc.h"
+#include "machine/amigakbd.h"
 #include "devices/chd_cd.h"
 #include "inputx.h"
 
@@ -22,10 +23,18 @@ ernesto@imagina.com
 
 static ADDRESS_MAP_START(amiga_mem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE(0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
+#if AMIGA_ACTION_REPLAY_1
+	AM_RANGE(0x9fc000, 0x9fffff) AM_RAMBANK(2) AM_BASE(&amiga_ar_ram) AM_SIZE(&amiga_ar_ram_size)
+#endif
 	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
-	AM_RANGE(0xc00000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)    /* Custom Chips */
+	AM_RANGE(0xc00000, 0xc7ffff) AM_RAM
+	AM_RANGE(0xc80000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)	/* Custom Chips */
 	AM_RANGE(0xe80000, 0xe8ffff) AM_READWRITE(amiga_autoconfig_r, amiga_autoconfig_w)
-	AM_RANGE(0xf00000, 0xf7ffff) AM_NOP	/* reserved */
+#if AMIGA_ACTION_REPLAY_1
+	AM_RANGE(0xf00000, 0xf7ffff) AM_ROM AM_REGION(REGION_USER2, 0)	/* Cart ROM */
+#else
+	AM_RANGE(0xf00000, 0xf7ffff) AM_NOP
+#endif
 	AM_RANGE(0xf80000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* System ROM - mirror */
 ADDRESS_MAP_END
 
@@ -58,7 +67,8 @@ static ADDRESS_MAP_START(cdtv_mem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE(0x000000, 0x0fffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
 	AM_RANGE(0x100000, 0x9fffff) AM_NOP
 	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
-	AM_RANGE(0xc00000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)    /* Custom Chips */
+	AM_RANGE(0xc00000, 0xdeffff) AM_NOP
+	AM_RANGE(0xdf0000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)	/* Custom Chips */
 	AM_RANGE(0xe80000, 0xe8ffff) AM_READWRITE(amiga_autoconfig_r, amiga_autoconfig_w)
 	AM_RANGE(0xf00000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* CDTV & System ROM */
 ADDRESS_MAP_END
@@ -79,7 +89,7 @@ INPUT_PORTS_START( amiga )
 	PORT_START_TAG("CIA0PORTA")
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_SPECIAL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START_TAG("JOY0DAT")
 	PORT_BIT( 0x0303, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(amiga_joystick_convert, "P1JOY")
@@ -91,9 +101,9 @@ INPUT_PORTS_START( amiga )
 
 	PORT_START_TAG("POTGO")
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
 	PORT_BIT( 0xaaff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("P1JOY")
@@ -118,7 +128,10 @@ INPUT_PORTS_START( amiga )
 	PORT_BIT( 0xff, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(5) PORT_MINMAX(0, 255) PORT_PLAYER(2)	
 	
 	PORT_START_TAG("P1MOUSEY")
-	PORT_BIT( 0xff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(5) PORT_MINMAX(0, 255) PORT_PLAYER(2)	
+	PORT_BIT( 0xff, 0x00, IPT_MOUSE_Y) PORT_SENSITIVITY(100) PORT_KEYDELTA(5) PORT_MINMAX(0, 255) PORT_PLAYER(2)
+	
+	PORT_INCLUDE( amiga_keyboard )
+		
 INPUT_PORTS_END
 
 /***************************************************************************
@@ -259,6 +272,9 @@ static DRIVER_INIT( amiga )
 	/* set up memory */
 	memory_configure_bank(1, 0, 1, amiga_chip_ram, 0);
 	memory_configure_bank(1, 1, 1, memory_region(REGION_USER1), 0);
+	
+	/* initialize keyboard */
+	amigakbd_init();
 }
 
 static DRIVER_INIT( cdtv )
@@ -303,6 +319,11 @@ ROM_START(amiga)
 	ROM_COPY(REGION_USER1, 0x000000, 0x040000, 0x040000)
 	ROMX_LOAD("390979.01", 0x000000, 0x080000, CRC(c3bdb240) SHA1(c5839f5cb98a7a8947065c3ed2f14f5f42e334a1), ROM_GROUPWORD | ROM_BIOS(3))	/* identical to 363968.01 */
 	ROMX_LOAD("kick40063", 0x000000, 0x080000, CRC(fc24ae0d) SHA1(3b7f1493b27e212830f989f26ca76c02049f09ca), ROM_GROUPWORD | ROM_BIOS(4))	/* part number? */
+
+#if AMIGA_ACTION_REPLAY_1
+	ROM_REGION16_BE(0x080000, REGION_USER2, 0)
+	ROM_LOAD_OPTIONAL("ar1.bin", 0x000000, 0x010000, CRC(f82c4258) SHA1(843b433b2c56640e045d5fdc854dc6b1a4964e7c))
+#endif
 ROM_END
 
 ROM_START(cdtv)

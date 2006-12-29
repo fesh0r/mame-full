@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	sid6581.c
+    sid6581.c
 
-	MAME/MESS interface for SID6581 and SID8580 chips
+    MAME/MESS interface for SID6581 and SID8580 chips
 
 ***************************************************************************/
 
@@ -39,7 +39,7 @@ static void *sid_start(int sndindex, int clock, const void *config, SIDTYPE sidt
 	memset(sid, 0, sizeof(*sid));
 
 	sid->mixer_channel = stream_create (0, 1,  Machine->sample_rate, (void *) sid, sid_update);
-	sid->PCMfreq = Machine->sample_rate;	
+	sid->PCMfreq = Machine->sample_rate;
 	sid->clock = clock;
 	sid->ad_read = iface ? iface->ad_read : NULL;
 	sid->type = sidtype;

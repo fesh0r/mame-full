@@ -257,7 +257,7 @@ static void tms7000_reset(void)
  * Generic set_info
  **************************************************************************/
 
-static void tms7000_set_info(UINT32 state, union cpuinfo *info)
+static void tms7000_set_info(UINT32 state, cpuinfo *info)
 {
     switch (state)
     {
@@ -282,7 +282,7 @@ static void tms7000_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void tms7000_get_info(UINT32 state, union cpuinfo *info)
+void tms7000_get_info(UINT32 state, cpuinfo *info)
 {
 
     switch( state )
@@ -367,7 +367,7 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
     }
 }
 
-void tms7000_exl_get_info(UINT32 state, union cpuinfo *info)
+void tms7000_exl_get_info(UINT32 state, cpuinfo *info)
 {
     switch( state )
     {

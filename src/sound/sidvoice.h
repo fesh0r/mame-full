@@ -1,6 +1,8 @@
 #ifndef __SIDVOICE_H_
 #define __SIDVOICE_H_
 
+#include "mame.h"
+
 /*
   approximation of the sid6581 chip
   this part is for 1 (of the 3) voices of a chip
@@ -28,22 +30,22 @@ typedef struct _sidOperator
 	UINT16 SIDpulseWidth;
 	UINT8 SIDctrl;
 	UINT8 SIDAD, SIDSR;
-	
+
 	struct _sidOperator* carrier;
 	struct _sidOperator* modulator;
-	bool sync;
-	
+	int sync;
+
 	UINT16 pulseIndex, newPulseIndex;
 	UINT16 curSIDfreq;
 	UINT16 curNoiseFreq;
-	
+
     UINT8 output;//, outputMask;
-	
+
 	char filtVoiceMask;
-	bool filtEnabled;
+	int filtEnabled;
 	float filtLow, filtRef;
 	INT8 filtIO;
-	
+
 	INT32 cycleLenCount;
 #if defined(DIRECT_FIXPOINT)
 	cpuLword cycleLen, cycleAddLen;
@@ -51,7 +53,7 @@ typedef struct _sidOperator
 	UINT32 cycleAddLenPnt;
 	UINT16 cycleLen, cycleLenPnt;
 #endif
-	
+
 	INT8(*outProc)(struct _sidOperator *);
 	void(*waveProc)(struct _sidOperator *);
 
@@ -73,12 +75,12 @@ typedef struct _sidOperator
 #endif
 	UINT32 noiseStep, noiseStepAdd;
 	UINT8 noiseOutput;
-	bool noiseIsLocked;
+	int noiseIsLocked;
 
 	UINT8 ADSRctrl;
-//	bool gateOnCtrl, gateOffCtrl;
+//  int gateOnCtrl, gateOffCtrl;
 	UINT16 (*ADSRproc)(struct _sidOperator *);
-	
+
 #ifdef SID_FPUENVE
 	float fenveStep, fenveStepAdd;
 	UINT32 enveStep;

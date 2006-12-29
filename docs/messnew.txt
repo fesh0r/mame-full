@@ -8,7 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [AMIGA] Fixed regressions; now boots properly.  [Ernesto Corvi]
+- [AMIGA] Fixed regressions; now boots properly.  Also added keyboard support,
+  512KB "slow-ram" support, preliminary support for Datel Action Replay 1 and
+  many floppy controller fixes.  [Ernesto Corvi]
 
 - [ATARI] Fixed hang on reset bug.  (bug #982) [Nate Woods]
 
@@ -38,7 +40,8 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- The core is based on MAME 0.111u1.  This incorporates all features of the
+  update to this core.  [MAME team]
 
 
 

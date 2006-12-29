@@ -6,9 +6,9 @@
 #include <windows.h>
 #endif
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
-#endif
+#endif /* MAME_DEBUG */
 
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
@@ -164,12 +164,12 @@ void osd_lock_free(osd_lock *lock)
 {
 }
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 void osd_wait_for_debugger(void)
 {
 	debug_cpu_go(~0);
 }
-#endif
+#endif // MAME_DEBUG
 
 int win_mess_config_init(void)
 {

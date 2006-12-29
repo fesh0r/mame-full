@@ -41,7 +41,7 @@ typedef struct pdp1_reset_param_t
 #define IOT_NO_COMPLETION_PULSE -1
 
 /* PUBLIC FUNCTIONS */
-void pdp1_get_info(UINT32 state, union cpuinfo *info);
+void pdp1_get_info(UINT32 state, cpuinfo *info);
 
 #define READ_PDP_18BIT(A) ((signed)program_read_dword_32be((A)<<2))
 #define WRITE_PDP_18BIT(A,V) (program_write_dword_32be((A)<<2,(V)))

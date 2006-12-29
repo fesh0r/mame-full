@@ -34,7 +34,7 @@ typedef struct _SID6581
 #endif
 	int reg[0x20];
 
-//	bool sidKeysOn[0x20], sidKeysOff[0x20];
+//  bool sidKeysOn[0x20], sidKeysOff[0x20];
 
 	UINT8 masterVolume;
 	UINT16 masterVolumeAmplIndex;
@@ -42,7 +42,7 @@ typedef struct _SID6581
 
 	struct
 	{
-		bool Enabled;
+		int Enabled;
 		UINT8 Type, CurType;
 		float Dy, ResDy;
 		UINT16 Value;
@@ -54,7 +54,7 @@ typedef struct _SID6581
 
 void sid6581_init (SID6581 *This);
 
-bool sidEmuReset(SID6581 *This);
+int sidEmuReset(SID6581 *This);
 
 int sid6581_port_r (SID6581 *This, int offset);
 void sid6581_port_w (SID6581 *This, int offset, int data);
@@ -63,7 +63,7 @@ void sid_set_type(SID6581 *This, SIDTYPE type);
 
 void initMixerEngine(void);
 void filterTableInit(void);
-extern void MixerInit(bool threeVoiceAmplify);
+extern void MixerInit(int threeVoiceAmplify);
 
 void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, UINT32 bufferLen );
 

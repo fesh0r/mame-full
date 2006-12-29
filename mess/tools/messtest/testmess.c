@@ -22,9 +22,9 @@
 #include "windows/parallel.h"
 #endif
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
-#endif
+#endif /* MAME_DEBUG */
 
 typedef enum
 {
@@ -835,7 +835,7 @@ static void command_verify_image(void)
 
 static void command_trace(void)
 {
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	int cpunum;
 	FILE *file;
 	char filename[256];

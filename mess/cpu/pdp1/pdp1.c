@@ -869,7 +869,7 @@ static int pdp1_execute(int cycles)
 }
 
 
-static void pdp1_set_info(UINT32 state, union cpuinfo *info)
+static void pdp1_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -939,7 +939,7 @@ static void pdp1_set_info(UINT32 state, union cpuinfo *info)
 }
 
 
-void pdp1_get_info(UINT32 state, union cpuinfo *info)
+void pdp1_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

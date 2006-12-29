@@ -15,7 +15,7 @@ enum
 
 extern int apexc_ICount;
 
-void apexc_get_info(UINT32 state, union cpuinfo *info);
+void apexc_get_info(UINT32 state, cpuinfo *info);
 
 #ifndef SUPPORT_ODD_WORD_SIZES
 #define apexc_readmem(address)	program_read_dword_32be((address)<<2)

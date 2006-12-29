@@ -1656,14 +1656,7 @@ static int invoke_command(HWND wnd, UINT command)
 
 #if HAS_DEBUGGER
 		case ID_OPTIONS_DEBUGGER:
-#ifdef NEW_DEBUGGER
 			debug_halt_on_next_instruction();
-#else
-			{
-				extern int debug_key_pressed;
-				debug_key_pressed = 1;
-			}
-#endif
 			break;
 #endif // HAS_DEBUGGER
 

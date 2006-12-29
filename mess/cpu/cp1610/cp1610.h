@@ -35,7 +35,7 @@ enum {
 extern int cp1610_icount;				 /* cycle count */
 
 
-void cp1610_get_info(UINT32 state, union cpuinfo *info);
+void cp1610_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 unsigned cp1610_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

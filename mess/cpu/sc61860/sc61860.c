@@ -149,7 +149,7 @@ static int sc61860_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void sc61860_set_info(UINT32 state, union cpuinfo *info)
+static void sc61860_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -172,7 +172,7 @@ static void sc61860_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void sc61860_get_info(UINT32 state, union cpuinfo *info)
+void sc61860_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{

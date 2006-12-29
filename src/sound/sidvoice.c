@@ -1,5 +1,3 @@
-#define VERBOSE_DBG 0
-#include "includes/cbm.h"
 #include <math.h>
 
 #include "sidvoice.h"
@@ -291,16 +289,16 @@ INLINE void waveCalcCycleLen(sidOperator* pVoice)
 #endif
 	/* If we keep the value cycleLen between 1 <= x <= 65535, */
 	/* the following check is not required. */
-/*	if ( pVoice->cycleLenCount == 0 ) */
-/*	{ */
+/*  if ( pVoice->cycleLenCount == 0 ) */
+/*  { */
 /*#if defined(DIRECT_FIXPOINT) */
-/*		pVoice->waveStep.l = 0; */
+/*      pVoice->waveStep.l = 0; */
 /*#else */
-/*		pVoice->waveStep = (pVoice->waveStepPnt = 0); */
+/*      pVoice->waveStep = (pVoice->waveStepPnt = 0); */
 /*#endif */
-/*		pVoice->cycleLenCount = 0; */
-/*	} */
-/*	else */
+/*      pVoice->cycleLenCount = 0; */
+/*  } */
+/*  else */
 	{
 #if defined(DIRECT_FIXPOINT)
 		register UINT16 diff = pVoice->cycleLenCount - pVoice->cycleLen.w[HI];
@@ -425,7 +423,7 @@ INT8 sidWaveCalcNormal(sidOperator* pVoice)
 	}
 	(*pVoice->waveProc)(pVoice);
 	pVoice->filtIO = ampMod1x8[(*pVoice->ADSRproc)(pVoice)|pVoice->output];
-//	pVoice->filtIO = pVoice->sid->masterVolume; // test for digi sound
+//  pVoice->filtIO = pVoice->sid->masterVolume; // test for digi sound
 	waveCalcFilter(pVoice);
 	return pVoice->filtIO;//&pVoice->outputMask;
 }
@@ -498,15 +496,15 @@ void sidEmuSet(sidOperator* pVoice)
     oldWave = pVoice->SIDctrl;
     enveTemp = pVoice->ADSRctrl;
     pVoice->SIDctrl = (newWave = pVoice->reg[4]|(pVoice->reg[5]<<8));
-    
+
     if (( newWave & 1 ) ==0 )
     {
 		if (( oldWave & 1 ) !=0 )
 		  enveTemp = ENVE_STARTRELEASE;
-/*		else if ( pVoice->gateOnCtrl ) */
-/*		{ */
-/*			enveTemp = ENVE_STARTSHORTATTACK; */
-/*		} */
+/*      else if ( pVoice->gateOnCtrl ) */
+/*      { */
+/*          enveTemp = ENVE_STARTSHORTATTACK; */
+/*      } */
     }
 	else if ( /*pVoice->gateOffCtrl || */((oldWave&1)==0) )
 	{
@@ -621,7 +619,7 @@ void sidEmuSet2(sidOperator* pVoice)
 {
     pVoice->outProc = &sidWaveCalcNormal;
     pVoice->sync = FALSE;
-    
+
     if ( (pVoice->SIDfreq < 16) || ((pVoice->SIDctrl & 8) != 0) )
 //    if ( /*(pVoice->SIDfreq < 16) || */((pVoice->SIDctrl & 8) != 0) )
     {
@@ -678,7 +676,7 @@ void sidEmuSet2(sidOperator* pVoice)
 	    }
 #endif
 	}
-	
+
 	if ((( pVoice->SIDctrl & 0x80 ) == 0x80 ) && ( pVoice->curNoiseFreq != pVoice->SIDfreq ))
 	{
 	    pVoice->curNoiseFreq = pVoice->SIDfreq;
@@ -688,7 +686,7 @@ void sidEmuSet2(sidOperator* pVoice)
 	    else
 		sidModeNormalTable[8] = sidMode80;
 	}
-	
+
 	if (( pVoice->SIDctrl & 2 ) != 0 )
 	{
 	    if ( ( pVoice->modulator->SIDfreq == 0 ) || (( pVoice->modulator->SIDctrl & 8 ) != 0 ) )
@@ -705,7 +703,7 @@ void sidEmuSet2(sidOperator* pVoice)
 		pVoice->sync = TRUE;
 	    }
 	}
-	
+
 	if ((( pVoice->SIDctrl & 0x14 ) == 0x14 ) && ( pVoice->modulator->SIDfreq != 0 ))
 	    pVoice->waveProc = sidModeRingTable[pVoice->SIDctrl >> 4];
 	else
