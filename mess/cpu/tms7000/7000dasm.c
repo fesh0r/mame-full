@@ -1,5 +1,4 @@
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "tms7000.h"
 
 typedef enum { DONE, NONE, UI8, I8, UI16, I16, PCREL, PCABS, TRAP } operandtype;
@@ -362,8 +361,8 @@ static opcodeinfo opcodes[] = {
 unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	int opcode, i, size = 1;
-	const char *sym1;
 	int pos = 0;
+	char tmpbuf[32];
 	
 	opcode = oprom[pos++];
 
@@ -418,22 +417,21 @@ unsigned tms7000_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 
 						break;
 					case PCREL:
 						b = (INT8)opram[pos++];
-						sym1 = set_ea_info(EA_DST, pc+2+k, b, EA_REL_PC);
-						buffer += sprintf (buffer, of[j].opstr[k], sym1);
+						sprintf(tmpbuf, "$%04X", pc+2+k);
+						buffer += sprintf (buffer, of[j].opstr[k], tmpbuf);
 						size += 1;
 						break;
 					case PCABS:
 						c = (UINT16)opram[pos++];
 						c <<= 8;
 						c += opram[pos++];
-						sym1 = set_ea_info(EA_DST, c, EA_UINT16, EA_ABS_PC);
-						buffer += sprintf (buffer, of[j].opstr[k], sym1);
+						sprintf(tmpbuf, "$%04X", c);
+						buffer += sprintf (buffer, of[j].opstr[k], tmpbuf);
 						size += 2;
 						break;
 					case TRAP:
 						vector = 0xffff - ((0xff - opcode) * 2);
 						c = (UINT16)((cpu_readop( vector-1 ) << 8) + cpu_readop( vector ));
-						sym1 = set_ea_info(EA_DST, c, EA_UINT16, EA_ABS_PC);
 						break;
 				}
 			}

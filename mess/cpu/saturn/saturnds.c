@@ -24,7 +24,6 @@
 #include <assert.h>
 #include "driver.h"
 #include "debugger.h"
-#include "debug/eainfo.h"
 
 #include "saturn.h"
 #include "sat.h"
@@ -1356,34 +1355,29 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 				v=saturn_peekop_dis12(pc);
 				c=(pc+v)%0xfffff;
 				pc+=3;
-				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis3Call:
 				v=saturn_peekop_dis12(pc);
 				pc+=3;
 				c=(pc+v)%0xfffff;
-				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis4:
 				v=saturn_peekop_dis16(pc);
 				c=(pc+v)%0xfffff;
 				pc+=4;
-				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis4Call:
 				v=saturn_peekop_dis16(pc);
 				pc+=4;
 				c=(pc+v)%0xfffff;
-				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Abs:
 				v=saturn_peekop_adr(pc);
 				pc+=5;
-				set_ea_info( 0, v, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], v );
 				break;
 			case BranchReturn:
@@ -1392,7 +1386,6 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 					strcpy(dst, mnemonics[level->mnemonic+1].name[set]);
 				} else {
 					c=(pc+v)&0xfffff;
-					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], c);
 				}
 				pc+=2;
@@ -1403,7 +1396,6 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], A);
 				} else {
 					c=(pc+v)&0xfffff;
-					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], A, c);
 				}
 				pc+=2;
@@ -1414,7 +1406,6 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], field_2_string(adr));
 				} else {
 					c=(pc+v)&0xfffff;
-					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], field_2_string(adr), c);
 				}
 				pc+=2;
@@ -1426,7 +1417,6 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], i);
 				} else {
 					c=(pc+v)&0xfffff;
-					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], i, c);
 				}
 				pc+=2;
@@ -1435,7 +1425,6 @@ unsigned saturn_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 				i=*(oprom++);
 				v=saturn_peekop_dis8(pc);
 				c=(pc+v)&0xfffff;
-				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], i, c);
 				pc+=2; // hp48s 13413
 				break;

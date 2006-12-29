@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "z80gb.h"
 
 enum e_mnemonics
@@ -60,166 +59,153 @@ static const UINT32 s_flags[] = {
 
 typedef struct
 {
-	UINT8	access;
 	UINT8	mnemonic;
 	const char *arguments;
 }	z80gbdasm;
 
-#define _0	EA_NONE
-#define _JP EA_ABS_PC
-#define _JR EA_REL_PC
-#define _RM EA_MEM_RD
-#define _WM EA_MEM_WR
-#define _RW EA_MEM_RDWR
-#define _RP EA_PORT_RD
-#define _WP EA_PORT_WR
-
 static z80gbdasm mnemonic_cb[256] = {
-	{_0, zRLC,"b"},     {_0, zRLC,"c"},     {_0, zRLC,"d"},     {_0, zRLC,"e"},
-	{_0, zRLC,"h"},     {_0, zRLC,"l"},     {_RW,zRLC,"(hl)"},  {_0, zRLC,"a"},
-	{_0, zRRC,"b"},     {_0, zRRC,"c"},     {_0, zRRC,"d"},     {_0, zRRC,"e"},
-	{_0, zRRC,"h"},     {_0, zRRC,"l"},     {_RW,zRRC,"(hl)"},  {_0, zRRC,"a"},
-	{_0, zRL,"b"},      {_0, zRL,"c"},      {_0, zRL,"d"},      {_0, zRL,"e"},
-	{_0, zRL,"h"},      {_0, zRL,"l"},      {_RW,zRL,"(hl)"},   {_0, zRL,"a"},
-	{_0, zRR,"b"},      {_0, zRR,"c"},      {_0, zRR,"d"},      {_0, zRR,"e"},
-	{_0, zRR,"h"},      {_0, zRR,"l"},      {_RW,zRR,"(hl)"},   {_0, zRR,"a"},
-	{_0, zSLA,"b"},     {_0, zSLA,"c"},     {_0, zSLA,"d"},     {_0, zSLA,"e"},
-	{_0, zSLA,"h"},     {_0, zSLA,"l"},     {_RW,zSLA,"(hl)"},  {_0, zSLA,"a"},
-	{_0, zSRA,"b"},     {_0, zSRA,"c"},     {_0, zSRA,"d"},     {_0, zSRA,"e"},
-	{_0, zSRA,"h"},     {_0, zSRA,"l"},     {_RW,zSRA,"(hl)"},  {_0, zSRA,"a"},
-	{_0, zSWAP,"b"},    {_0, zSWAP,"c"},    {_0, zSWAP,"d"},    {_0, zSWAP,"e"},
-	{_0, zSWAP,"h"},    {_0, zSWAP,"l"},    {_RW,zSWAP,"(hl)"}, {_0, zSWAP,"a"},
-	{_0, zSRL,"b"},     {_0, zSRL,"c"},     {_0, zSRL,"d"},     {_0, zSRL,"e"},
-	{_0, zSRL,"h"},     {_0, zSRL,"l"},     {_RW,zSRL,"(hl)"},  {_0, zSRL,"a"},
-	{_0, zBIT,"0,b"},   {_0, zBIT,"0,c"},   {_0, zBIT,"0,d"},   {_0, zBIT,"0,e"},
-	{_0, zBIT,"0,h"},   {_0, zBIT,"0,l"},   {_RM,zBIT,"0,(hl)"},{_0, zBIT,"0,a"},
-	{_0, zBIT,"1,b"},   {_0, zBIT,"1,c"},   {_0, zBIT,"1,d"},   {_0, zBIT,"1,e"},
-	{_0, zBIT,"1,h"},   {_0, zBIT,"1,l"},   {_RM,zBIT,"1,(hl)"},{_0, zBIT,"1,a"},
-	{_0, zBIT,"2,b"},   {_0, zBIT,"2,c"},   {_0, zBIT,"2,d"},   {_0, zBIT,"2,e"},
-	{_0, zBIT,"2,h"},   {_0, zBIT,"2,l"},   {_RM,zBIT,"2,(hl)"},{_0, zBIT,"2,a"},
-	{_0, zBIT,"3,b"},   {_0, zBIT,"3,c"},   {_0, zBIT,"3,d"},   {_0, zBIT,"3,e"},
-	{_0, zBIT,"3,h"},   {_0, zBIT,"3,l"},   {_RM,zBIT,"3,(hl)"},{_0, zBIT,"3,a"},
-	{_0, zBIT,"4,b"},   {_0, zBIT,"4,c"},   {_0, zBIT,"4,d"},   {_0, zBIT,"4,e"},
-	{_0, zBIT,"4,h"},   {_0, zBIT,"4,l"},   {_RM,zBIT,"4,(hl)"},{_0, zBIT,"4,a"},
-	{_0, zBIT,"5,b"},   {_0, zBIT,"5,c"},   {_0, zBIT,"5,d"},   {_0, zBIT,"5,e"},
-	{_0, zBIT,"5,h"},   {_0, zBIT,"5,l"},   {_RM,zBIT,"5,(hl)"},{_0, zBIT,"5,a"},
-	{_0, zBIT,"6,b"},   {_0, zBIT,"6,c"},   {_0, zBIT,"6,d"},   {_0, zBIT,"6,e"},
-	{_0, zBIT,"6,h"},   {_0, zBIT,"6,l"},   {_RM,zBIT,"6,(hl)"},{_0, zBIT,"6,a"},
-	{_0, zBIT,"7,b"},   {_0, zBIT,"7,c"},   {_0, zBIT,"7,d"},   {_0, zBIT,"7,e"},
-	{_0, zBIT,"7,h"},   {_0, zBIT,"7,l"},   {_RM,zBIT,"7,(hl)"},{_0, zBIT,"7,a"},
-	{_0, zRES,"0,b"},   {_0, zRES,"0,c"},   {_0, zRES,"0,d"},   {_0, zRES,"0,e"},
-	{_0, zRES,"0,h"},   {_0, zRES,"0,l"},   {_WM,zRES,"0,(hl)"},{_0, zRES,"0,a"},
-	{_0, zRES,"1,b"},   {_0, zRES,"1,c"},   {_0, zRES,"1,d"},   {_0, zRES,"1,e"},
-	{_0, zRES,"1,h"},   {_0, zRES,"1,l"},   {_WM,zRES,"1,(hl)"},{_0, zRES,"1,a"},
-	{_0, zRES,"2,b"},   {_0, zRES,"2,c"},   {_0, zRES,"2,d"},   {_0, zRES,"2,e"},
-	{_0, zRES,"2,h"},   {_0, zRES,"2,l"},   {_WM,zRES,"2,(hl)"},{_0, zRES,"2,a"},
-	{_0, zRES,"3,b"},   {_0, zRES,"3,c"},   {_0, zRES,"3,d"},   {_0, zRES,"3,e"},
-	{_0, zRES,"3,h"},   {_0, zRES,"3,l"},   {_WM,zRES,"3,(hl)"},{_0, zRES,"3,a"},
-	{_0, zRES,"4,b"},   {_0, zRES,"4,c"},   {_0, zRES,"4,d"},   {_0, zRES,"4,e"},
-	{_0, zRES,"4,h"},   {_0, zRES,"4,l"},   {_WM,zRES,"4,(hl)"},{_0, zRES,"4,a"},
-	{_0, zRES,"5,b"},   {_0, zRES,"5,c"},   {_0, zRES,"5,d"},   {_0, zRES,"5,e"},
-	{_0, zRES,"5,h"},   {_0, zRES,"5,l"},   {_WM,zRES,"5,(hl)"},{_0, zRES,"5,a"},
-	{_0, zRES,"6,b"},   {_0, zRES,"6,c"},   {_0, zRES,"6,d"},   {_0, zRES,"6,e"},
-	{_0, zRES,"6,h"},   {_0, zRES,"6,l"},   {_WM,zRES,"6,(hl)"},{_0, zRES,"6,a"},
-	{_0, zRES,"7,b"},   {_0, zRES,"7,c"},   {_0, zRES,"7,d"},   {_0, zRES,"7,e"},
-	{_0, zRES,"7,h"},   {_0, zRES,"7,l"},   {_WM,zRES,"7,(hl)"},{_0, zRES,"7,a"},
-	{_0, zSET,"0,b"},   {_0, zSET,"0,c"},   {_0, zSET,"0,d"},   {_0, zSET,"0,e"},
-	{_0, zSET,"0,h"},   {_0, zSET,"0,l"},   {_WM,zSET,"0,(hl)"},{_0, zSET,"0,a"},
-	{_0, zSET,"1,b"},   {_0, zSET,"1,c"},   {_0, zSET,"1,d"},   {_0, zSET,"1,e"},
-	{_0, zSET,"1,h"},   {_0, zSET,"1,l"},   {_WM,zSET,"1,(hl)"},{_0, zSET,"1,a"},
-	{_0, zSET,"2,b"},   {_0, zSET,"2,c"},   {_0, zSET,"2,d"},   {_0, zSET,"2,e"},
-	{_0, zSET,"2,h"},   {_0, zSET,"2,l"},   {_WM,zSET,"2,(hl)"},{_0, zSET,"2,a"},
-	{_0, zSET,"3,b"},   {_0, zSET,"3,c"},   {_0, zSET,"3,d"},   {_0, zSET,"3,e"},
-	{_0, zSET,"3,h"},   {_0, zSET,"3,l"},   {_WM,zSET,"3,(hl)"},{_0, zSET,"3,a"},
-	{_0, zSET,"4,b"},   {_0, zSET,"4,c"},   {_0, zSET,"4,d"},   {_0, zSET,"4,e"},
-	{_0, zSET,"4,h"},   {_0, zSET,"4,l"},   {_WM,zSET,"4,(hl)"},{_0, zSET,"4,a"},
-	{_0, zSET,"5,b"},   {_0, zSET,"5,c"},   {_0, zSET,"5,d"},   {_0, zSET,"5,e"},
-	{_0, zSET,"5,h"},   {_0, zSET,"5,l"},   {_WM,zSET,"5,(hl)"},{_0, zSET,"5,a"},
-	{_0, zSET,"6,b"},   {_0, zSET,"6,c"},   {_0, zSET,"6,d"},   {_0, zSET,"6,e"},
-	{_0, zSET,"6,h"},   {_0, zSET,"6,l"},   {_WM,zSET,"6,(hl)"},{_0, zSET,"6,a"},
-	{_0, zSET,"7,b"},   {_0, zSET,"7,c"},   {_0, zSET,"7,d"},   {_0, zSET,"7,e"},
-	{_0, zSET,"7,h"},   {_0, zSET,"7,l"},   {_WM,zSET,"7,(hl)"},{_0, zSET,"7,a"}
+	{zRLC,"b"},     {zRLC,"c"},     {zRLC,"d"},     {zRLC,"e"},
+	{zRLC,"h"},     {zRLC,"l"},     {zRLC,"(hl)"},  {zRLC,"a"},
+	{zRRC,"b"},     {zRRC,"c"},     {zRRC,"d"},     {zRRC,"e"},
+	{zRRC,"h"},     {zRRC,"l"},     {zRRC,"(hl)"},  {zRRC,"a"},
+	{zRL,"b"},      {zRL,"c"},      {zRL,"d"},      {zRL,"e"},
+	{zRL,"h"},      {zRL,"l"},      {zRL,"(hl)"},   {zRL,"a"},
+	{zRR,"b"},      {zRR,"c"},      {zRR,"d"},      {zRR,"e"},
+	{zRR,"h"},      {zRR,"l"},      {zRR,"(hl)"},   {zRR,"a"},
+	{zSLA,"b"},     {zSLA,"c"},     {zSLA,"d"},     {zSLA,"e"},
+	{zSLA,"h"},     {zSLA,"l"},     {zSLA,"(hl)"},  {zSLA,"a"},
+	{zSRA,"b"},     {zSRA,"c"},     {zSRA,"d"},     {zSRA,"e"},
+	{zSRA,"h"},     {zSRA,"l"},     {zSRA,"(hl)"},  {zSRA,"a"},
+	{zSWAP,"b"},    {zSWAP,"c"},    {zSWAP,"d"},    {zSWAP,"e"},
+	{zSWAP,"h"},    {zSWAP,"l"},    {zSWAP,"(hl)"}, {zSWAP,"a"},
+	{zSRL,"b"},     {zSRL,"c"},     {zSRL,"d"},     {zSRL,"e"},
+	{zSRL,"h"},     {zSRL,"l"},     {zSRL,"(hl)"},  {zSRL,"a"},
+	{zBIT,"0,b"},   {zBIT,"0,c"},   {zBIT,"0,d"},   {zBIT,"0,e"},
+	{zBIT,"0,h"},   {zBIT,"0,l"},   {zBIT,"0,(hl)"},{zBIT,"0,a"},
+	{zBIT,"1,b"},   {zBIT,"1,c"},   {zBIT,"1,d"},   {zBIT,"1,e"},
+	{zBIT,"1,h"},   {zBIT,"1,l"},   {zBIT,"1,(hl)"},{zBIT,"1,a"},
+	{zBIT,"2,b"},   {zBIT,"2,c"},   {zBIT,"2,d"},   {zBIT,"2,e"},
+	{zBIT,"2,h"},   {zBIT,"2,l"},   {zBIT,"2,(hl)"},{zBIT,"2,a"},
+	{zBIT,"3,b"},   {zBIT,"3,c"},   {zBIT,"3,d"},   {zBIT,"3,e"},
+	{zBIT,"3,h"},   {zBIT,"3,l"},   {zBIT,"3,(hl)"},{zBIT,"3,a"},
+	{zBIT,"4,b"},   {zBIT,"4,c"},   {zBIT,"4,d"},   {zBIT,"4,e"},
+	{zBIT,"4,h"},   {zBIT,"4,l"},   {zBIT,"4,(hl)"},{zBIT,"4,a"},
+	{zBIT,"5,b"},   {zBIT,"5,c"},   {zBIT,"5,d"},   {zBIT,"5,e"},
+	{zBIT,"5,h"},   {zBIT,"5,l"},   {zBIT,"5,(hl)"},{zBIT,"5,a"},
+	{zBIT,"6,b"},   {zBIT,"6,c"},   {zBIT,"6,d"},   {zBIT,"6,e"},
+	{zBIT,"6,h"},   {zBIT,"6,l"},   {zBIT,"6,(hl)"},{zBIT,"6,a"},
+	{zBIT,"7,b"},   {zBIT,"7,c"},   {zBIT,"7,d"},   {zBIT,"7,e"},
+	{zBIT,"7,h"},   {zBIT,"7,l"},   {zBIT,"7,(hl)"},{zBIT,"7,a"},
+	{zRES,"0,b"},   {zRES,"0,c"},   {zRES,"0,d"},   {zRES,"0,e"},
+	{zRES,"0,h"},   {zRES,"0,l"},   {zRES,"0,(hl)"},{zRES,"0,a"},
+	{zRES,"1,b"},   {zRES,"1,c"},   {zRES,"1,d"},   {zRES,"1,e"},
+	{zRES,"1,h"},   {zRES,"1,l"},   {zRES,"1,(hl)"},{zRES,"1,a"},
+	{zRES,"2,b"},   {zRES,"2,c"},   {zRES,"2,d"},   {zRES,"2,e"},
+	{zRES,"2,h"},   {zRES,"2,l"},   {zRES,"2,(hl)"},{zRES,"2,a"},
+	{zRES,"3,b"},   {zRES,"3,c"},   {zRES,"3,d"},   {zRES,"3,e"},
+	{zRES,"3,h"},   {zRES,"3,l"},   {zRES,"3,(hl)"},{zRES,"3,a"},
+	{zRES,"4,b"},   {zRES,"4,c"},   {zRES,"4,d"},   {zRES,"4,e"},
+	{zRES,"4,h"},   {zRES,"4,l"},   {zRES,"4,(hl)"},{zRES,"4,a"},
+	{zRES,"5,b"},   {zRES,"5,c"},   {zRES,"5,d"},   {zRES,"5,e"},
+	{zRES,"5,h"},   {zRES,"5,l"},   {zRES,"5,(hl)"},{zRES,"5,a"},
+	{zRES,"6,b"},   {zRES,"6,c"},   {zRES,"6,d"},   {zRES,"6,e"},
+	{zRES,"6,h"},   {zRES,"6,l"},   {zRES,"6,(hl)"},{zRES,"6,a"},
+	{zRES,"7,b"},   {zRES,"7,c"},   {zRES,"7,d"},   {zRES,"7,e"},
+	{zRES,"7,h"},   {zRES,"7,l"},   {zRES,"7,(hl)"},{zRES,"7,a"},
+	{zSET,"0,b"},   {zSET,"0,c"},   {zSET,"0,d"},   {zSET,"0,e"},
+	{zSET,"0,h"},   {zSET,"0,l"},   {zSET,"0,(hl)"},{zSET,"0,a"},
+	{zSET,"1,b"},   {zSET,"1,c"},   {zSET,"1,d"},   {zSET,"1,e"},
+	{zSET,"1,h"},   {zSET,"1,l"},   {zSET,"1,(hl)"},{zSET,"1,a"},
+	{zSET,"2,b"},   {zSET,"2,c"},   {zSET,"2,d"},   {zSET,"2,e"},
+	{zSET,"2,h"},   {zSET,"2,l"},   {zSET,"2,(hl)"},{zSET,"2,a"},
+	{zSET,"3,b"},   {zSET,"3,c"},   {zSET,"3,d"},   {zSET,"3,e"},
+	{zSET,"3,h"},   {zSET,"3,l"},   {zSET,"3,(hl)"},{zSET,"3,a"},
+	{zSET,"4,b"},   {zSET,"4,c"},   {zSET,"4,d"},   {zSET,"4,e"},
+	{zSET,"4,h"},   {zSET,"4,l"},   {zSET,"4,(hl)"},{zSET,"4,a"},
+	{zSET,"5,b"},   {zSET,"5,c"},   {zSET,"5,d"},   {zSET,"5,e"},
+	{zSET,"5,h"},   {zSET,"5,l"},   {zSET,"5,(hl)"},{zSET,"5,a"},
+	{zSET,"6,b"},   {zSET,"6,c"},   {zSET,"6,d"},   {zSET,"6,e"},
+	{zSET,"6,h"},   {zSET,"6,l"},   {zSET,"6,(hl)"},{zSET,"6,a"},
+	{zSET,"7,b"},   {zSET,"7,c"},   {zSET,"7,d"},   {zSET,"7,e"},
+	{zSET,"7,h"},   {zSET,"7,l"},   {zSET,"7,(hl)"},{zSET,"7,a"}
 };
 
 static z80gbdasm mnemonic_main[256]= {
-	{_0, zNOP,0},		{_0, zLD,"bc,N"},   {_WM,zLD,"(bc),a"}, {_0, zINC,"bc"},
-	{_0, zINC,"b"},     {_0, zDEC,"b"},     {_0, zLD,"b,B"},    {_0, zRLCA,0},
-	{_WM,zLD,"(W),sp"}, {_0, zADD,"hl,bc"}, {_RM,zLD,"a,(bc)"}, {_0, zDEC,"bc"},
-	{_0, zINC,"c"},     {_0, zDEC,"c"},     {_0, zLD,"c,B"},    {_0, zRRCA,0},
-	{_0, zSTOP,0},		{_0, zLD,"de,N"},   {_WM,zLD,"(de),a"}, {_0, zINC,"de"},
-	{_0, zINC,"d"},     {_0, zDEC,"d"},     {_0, zLD,"d,B"},    {_0, zRLA,0},
-	{_JR,zJR,"O"},      {_0, zADD,"hl,de"}, {_RM,zLD,"a,(de)"}, {_0, zDEC,"de"},
-	{_0, zINC,"e"},     {_0, zDEC,"e"},     {_0, zLD,"e,B"},    {_0, zRRA,0},
-	{_JR,zJR,"nz,O"},   {_0, zLD,"hl,N"},   {_WM,zLD,"(hl+),a"},{_0, zINC,"hl"},
-	{_0, zINC,"h"},     {_0, zDEC,"h"},     {_0, zLD,"h,B"},    {_0, zDAA,0},
-	{_JR,zJR,"z,O"},    {_0, zADD,"hl,hl"}, {_RM,zLD,"a,(hl+)"},{_0, zDEC,"hl"},
-	{_0, zINC,"l"},     {_0, zDEC,"l"},     {_0, zLD,"l,B"},    {_0, zCPL,0},
-	{_JR,zJR,"nc,O"},   {_0, zLD,"sp,N"},   {_WM,zLD,"(hl-),a"},{_0, zINC,"sp"},
-	{_RW,zINC,"(hl)"},  {_RW,zDEC,"(hl)"},  {_WM,zLD,"(hl),B"}, {_0, zSCF,0},
-	{_JR,zJR,"c,O"},    {_0, zADD,"hl,sp"}, {_RM,zLD,"a,(hl-)"},{_0, zDEC,"sp"},
-	{_0, zINC,"a"},     {_0, zDEC,"a"},     {_0, zLD,"a,B"},    {_0, zCCF,0},
-	{_0, zLD,"b,b"},    {_0, zLD,"b,c"},    {_0, zLD,"b,d"},    {_0, zLD,"b,e"},
-	{_0, zLD,"b,h"},    {_0, zLD,"b,l"},    {_RM,zLD,"b,(hl)"}, {_0, zLD,"b,a"},
-	{_0, zLD,"c,b"},    {_0, zLD,"c,c"},    {_0, zLD,"c,d"},    {_0, zLD,"c,e"},
-	{_0, zLD,"c,h"},    {_0, zLD,"c,l"},    {_RM,zLD,"c,(hl)"}, {_0, zLD,"c,a"},
-	{_0, zLD,"d,b"},    {_0, zLD,"d,c"},    {_0, zLD,"d,d"},    {_0, zLD,"d,e"},
-	{_0, zLD,"d,h"},    {_0, zLD,"d,l"},    {_RM,zLD,"d,(hl)"}, {_0, zLD,"d,a"},
-	{_0, zLD,"e,b"},    {_0, zLD,"e,c"},    {_0, zLD,"e,d"},    {_0, zLD,"e,e"},
-	{_0, zLD,"e,h"},    {_0, zLD,"e,l"},    {_RM,zLD,"e,(hl)"}, {_0, zLD,"e,a"},
-	{_0, zLD,"h,b"},    {_0, zLD,"h,c"},    {_0, zLD,"h,d"},    {_0, zLD,"h,e"},
-	{_0, zLD,"h,h"},    {_0, zLD,"h,l"},    {_RM,zLD,"h,(hl)"}, {_0, zLD,"h,a"},
-	{_0, zLD,"l,b"},    {_0, zLD,"l,c"},    {_0, zLD,"l,d"},    {_0, zLD,"l,e"},
-	{_0, zLD,"l,h"},    {_0, zLD,"l,l"},    {_RM,zLD,"l,(hl)"}, {_0, zLD,"l,a"},
-	{_WM,zLD,"(hl),b"}, {_WM,zLD,"(hl),c"}, {_WM,zLD,"(hl),d"}, {_WM,zLD,"(hl),e"},
-	{_WM,zLD,"(hl),h"}, {_WM,zLD,"(hl),l"}, {_0, zHLT,0},       {_WM,zLD,"(hl),a"},
-	{_0, zLD,"a,b"},    {_0, zLD,"a,c"},    {_0, zLD,"a,d"},    {_0, zLD,"a,e"},
-	{_0, zLD,"a,h"},    {_0, zLD,"a,l"},    {_RM,zLD,"a,(hl)"}, {_0, zLD,"a,a"},
-	{_0, zADD,"a,b"},   {_0, zADD,"a,c"},   {_0, zADD,"a,d"},   {_0, zADD,"a,e"},
-	{_0, zADD,"a,h"},   {_0, zADD,"a,l"},   {_RM,zADD,"a,(hl)"},{_0, zADD,"a,a"},
-	{_0, zADC,"a,b"},   {_0, zADC,"a,c"},   {_0, zADC,"a,d"},   {_0, zADC,"a,e"},
-	{_0, zADC,"a,h"},   {_0, zADC,"a,l"},   {_RM,zADC,"a,(hl)"},{_0, zADC,"a,a"},
-	{_0, zSUB,"b"},     {_0, zSUB,"c"},     {_0, zSUB,"d"},     {_0, zSUB,"e"},
-	{_0, zSUB,"h"},     {_0, zSUB,"l"},     {_RM,zSUB,"(hl)"},  {_0, zSUB,"a"},
-	{_0, zSBC,"a,b"},   {_0, zSBC,"a,c"},   {_0, zSBC,"a,d"},   {_0, zSBC,"a,e"},
-	{_0, zSBC,"a,h"},   {_0, zSBC,"a,l"},   {_RM,zSBC,"a,(hl)"},{_0, zSBC,"a,a"},
-	{_0, zAND,"b"},     {_0, zAND,"c"},     {_0, zAND,"d"},     {_0, zAND,"e"},
-	{_0, zAND,"h"},     {_0, zAND,"l"},     {_RM,zAND,"(hl)"},  {_0, zAND,"a"},
-	{_0, zXOR,"b"},     {_0, zXOR,"c"},     {_0, zXOR,"d"},     {_0, zXOR,"e"},
-	{_0, zXOR,"h"},     {_0, zXOR,"l"},     {_RM,zXOR,"(hl)"},  {_0, zXOR,"a"},
-	{_0, zOR,"b"},      {_0, zOR,"c"},      {_0, zOR,"d"},      {_0, zOR,"e"},
-	{_0, zOR,"h"},      {_0, zOR,"l"},      {_RM,zOR,"(hl)"},   {_0, zOR,"a"},
-	{_0, zCP,"b"},      {_0, zCP,"c"},      {_0, zCP,"d"},      {_0, zCP,"e"},
-	{_0, zCP,"h"},      {_0, zCP,"l"},      {_RM,zCP,"(hl)"},   {_0, zCP,"a"},
-	{_0, zRET,"nz"},    {_0, zPOP,"bc"},    {_JP,zJP,"nz,A"},   {_JP,zJP,"A"},
-	{_JP,zCALL,"nz,A"}, {_0, zPUSH,"bc"},   {_0, zADD,"a,B"},   {_JP,zRST,"V"},
-	{_0, zRET,"z"},     {_0, zRET,0},       {_JP,zJP,"z,A"},    {_0, zDB,"cb"},
-	{_JP,zCALL,"z,A"},  {_JP,zCALL,"A"},    {_0, zADC,"a,B"},   {_JP,zRST,"V"},
-	{_0, zRET,"nc"},    {_0, zPOP,"de"},    {_JP,zJP,"nc,A"},   {_0, zDB,"d3"},
-	{_JP,zCALL,"nc,A"}, {_0, zPUSH,"de"},   {_0, zSUB,"B"},     {_JP,zRST,"V"},
-	{_0, zRET,"c"},     {_0, zRETI,0},      {_JP,zJP,"c,A"},    {_0, zDB,"db"},
-	{_JP,zCALL,"c,A"},  {_0, zDB,"dd"},     {_0, zSBC,"a,B"},   {_JP,zRST,"V"},
-	{_WM,zLD,"(F),a"},  {_0, zPOP,"hl"},    {_WM,zLD,"(C),a"},  {_0, zDB,"e3"},
-	{_0, zDB,"e4"},     {_0, zPUSH,"hl"},   {_0, zAND,"B"},     {_JP,zRST,"V"},
-	{_0, zADD,"SP,B"},  {_JP,zJP,"(hl)"},   {_WM,zLD,"(W),a"},  {_0, zDB,"eb"},
-	{_0, zDB,"ec"},     {_0, zDB,"ed"},     {_0, zXOR,"B"},     {_JP,zRST,"V"},
-	{_RM,zLD,"a,(F)"},  {_0, zPOP,"af"},    {_RM,zLD,"a,(C)"},  {_0, zDI,0},
-	{_0, zDB,"f4"},     {_0, zPUSH,"af"},   {_0, zOR,"B"},      {_JP,zRST,"V"},
-	{_0, zLD,"hl,sp+B"},{_0, zLD,"sp,hl"},  {_RM,zLD,"a,(W)"},  {_0, zEI,0},
-	{_0, zDB,"fc"},     {_0, zDB,"fd"},     {_0, zCP,"B"},      {_JP,zRST,"V"}
+	{zNOP,0},		{zLD,"bc,N"},   {zLD,"(bc),a"}, {zINC,"bc"},
+	{zINC,"b"},     {zDEC,"b"},     {zLD,"b,B"},    {zRLCA,0},
+	{zLD,"(W),sp"}, {zADD,"hl,bc"}, {zLD,"a,(bc)"}, {zDEC,"bc"},
+	{zINC,"c"},     {zDEC,"c"},     {zLD,"c,B"},    {zRRCA,0},
+	{zSTOP,0},		{zLD,"de,N"},   {zLD,"(de),a"}, {zINC,"de"},
+	{zINC,"d"},     {zDEC,"d"},     {zLD,"d,B"},    {zRLA,0},
+	{zJR,"O"},      {zADD,"hl,de"}, {zLD,"a,(de)"}, {zDEC,"de"},
+	{zINC,"e"},     {zDEC,"e"},     {zLD,"e,B"},    {zRRA,0},
+	{zJR,"nz,O"},   {zLD,"hl,N"},   {zLD,"(hl+),a"},{zINC,"hl"},
+	{zINC,"h"},     {zDEC,"h"},     {zLD,"h,B"},    {zDAA,0},
+	{zJR,"z,O"},    {zADD,"hl,hl"}, {zLD,"a,(hl+)"},{zDEC,"hl"},
+	{zINC,"l"},     {zDEC,"l"},     {zLD,"l,B"},    {zCPL,0},
+	{zJR,"nc,O"},   {zLD,"sp,N"},   {zLD,"(hl-),a"},{zINC,"sp"},
+	{zINC,"(hl)"},  {zDEC,"(hl)"},  {zLD,"(hl),B"}, {zSCF,0},
+	{zJR,"c,O"},    {zADD,"hl,sp"}, {zLD,"a,(hl-)"},{zDEC,"sp"},
+	{zINC,"a"},     {zDEC,"a"},     {zLD,"a,B"},    {zCCF,0},
+	{zLD,"b,b"},    {zLD,"b,c"},    {zLD,"b,d"},    {zLD,"b,e"},
+	{zLD,"b,h"},    {zLD,"b,l"},    {zLD,"b,(hl)"}, {zLD,"b,a"},
+	{zLD,"c,b"},    {zLD,"c,c"},    {zLD,"c,d"},    {zLD,"c,e"},
+	{zLD,"c,h"},    {zLD,"c,l"},    {zLD,"c,(hl)"}, {zLD,"c,a"},
+	{zLD,"d,b"},    {zLD,"d,c"},    {zLD,"d,d"},    {zLD,"d,e"},
+	{zLD,"d,h"},    {zLD,"d,l"},    {zLD,"d,(hl)"}, {zLD,"d,a"},
+	{zLD,"e,b"},    {zLD,"e,c"},    {zLD,"e,d"},    {zLD,"e,e"},
+	{zLD,"e,h"},    {zLD,"e,l"},    {zLD,"e,(hl)"}, {zLD,"e,a"},
+	{zLD,"h,b"},    {zLD,"h,c"},    {zLD,"h,d"},    {zLD,"h,e"},
+	{zLD,"h,h"},    {zLD,"h,l"},    {zLD,"h,(hl)"}, {zLD,"h,a"},
+	{zLD,"l,b"},    {zLD,"l,c"},    {zLD,"l,d"},    {zLD,"l,e"},
+	{zLD,"l,h"},    {zLD,"l,l"},    {zLD,"l,(hl)"}, {zLD,"l,a"},
+	{zLD,"(hl),b"}, {zLD,"(hl),c"}, {zLD,"(hl),d"}, {zLD,"(hl),e"},
+	{zLD,"(hl),h"}, {zLD,"(hl),l"}, {zHLT,0},       {zLD,"(hl),a"},
+	{zLD,"a,b"},    {zLD,"a,c"},    {zLD,"a,d"},    {zLD,"a,e"},
+	{zLD,"a,h"},    {zLD,"a,l"},    {zLD,"a,(hl)"}, {zLD,"a,a"},
+	{zADD,"a,b"},   {zADD,"a,c"},   {zADD,"a,d"},   {zADD,"a,e"},
+	{zADD,"a,h"},   {zADD,"a,l"},   {zADD,"a,(hl)"},{zADD,"a,a"},
+	{zADC,"a,b"},   {zADC,"a,c"},   {zADC,"a,d"},   {zADC,"a,e"},
+	{zADC,"a,h"},   {zADC,"a,l"},   {zADC,"a,(hl)"},{zADC,"a,a"},
+	{zSUB,"b"},     {zSUB,"c"},     {zSUB,"d"},     {zSUB,"e"},
+	{zSUB,"h"},     {zSUB,"l"},     {zSUB,"(hl)"},  {zSUB,"a"},
+	{zSBC,"a,b"},   {zSBC,"a,c"},   {zSBC,"a,d"},   {zSBC,"a,e"},
+	{zSBC,"a,h"},   {zSBC,"a,l"},   {zSBC,"a,(hl)"},{zSBC,"a,a"},
+	{zAND,"b"},     {zAND,"c"},     {zAND,"d"},     {zAND,"e"},
+	{zAND,"h"},     {zAND,"l"},     {zAND,"(hl)"},  {zAND,"a"},
+	{zXOR,"b"},     {zXOR,"c"},     {zXOR,"d"},     {zXOR,"e"},
+	{zXOR,"h"},     {zXOR,"l"},     {zXOR,"(hl)"},  {zXOR,"a"},
+	{zOR,"b"},      {zOR,"c"},      {zOR,"d"},      {zOR,"e"},
+	{zOR,"h"},      {zOR,"l"},      {zOR,"(hl)"},   {zOR,"a"},
+	{zCP,"b"},      {zCP,"c"},      {zCP,"d"},      {zCP,"e"},
+	{zCP,"h"},      {zCP,"l"},      {zCP,"(hl)"},   {zCP,"a"},
+	{zRET,"nz"},    {zPOP,"bc"},    {zJP,"nz,A"},   {zJP,"A"},
+	{zCALL,"nz,A"}, {zPUSH,"bc"},   {zADD,"a,B"},   {zRST,"V"},
+	{zRET,"z"},     {zRET,0},       {zJP,"z,A"},    {zDB,"cb"},
+	{zCALL,"z,A"},  {zCALL,"A"},    {zADC,"a,B"},   {zRST,"V"},
+	{zRET,"nc"},    {zPOP,"de"},    {zJP,"nc,A"},   {zDB,"d3"},
+	{zCALL,"nc,A"}, {zPUSH,"de"},   {zSUB,"B"},     {zRST,"V"},
+	{zRET,"c"},     {zRETI,0},      {zJP,"c,A"},    {zDB,"db"},
+	{zCALL,"c,A"},  {zDB,"dd"},     {zSBC,"a,B"},   {zRST,"V"},
+	{zLD,"(F),a"},  {zPOP,"hl"},    {zLD,"(C),a"},  {zDB,"e3"},
+	{zDB,"e4"},     {zPUSH,"hl"},   {zAND,"B"},     {zRST,"V"},
+	{zADD,"SP,B"},  {zJP,"(hl)"},   {zLD,"(W),a"},  {zDB,"eb"},
+	{zDB,"ec"},     {zDB,"ed"},     {zXOR,"B"},     {zRST,"V"},
+	{zLD,"a,(F)"},  {zPOP,"af"},    {zLD,"a,(C)"},  {zDI,0},
+	{zDB,"f4"},     {zPUSH,"af"},   {zOR,"B"},      {zRST,"V"},
+	{zLD,"hl,sp+B"},{zLD,"sp,hl"},  {zLD,"a,(W)"},  {zEI,0},
+	{zDB,"fc"},     {zDB,"fd"},     {zCP,"B"},      {zRST,"V"}
 };
 
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
 
-static unsigned z80gb_get_reg(int reg) { union cpuinfo info; z80gb_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-
 unsigned z80gb_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	z80gbdasm *d;
 	const char *symbol, *src;
 	char *dst;
-	unsigned PC = pc;
 	INT8 offset = 0;
 	UINT8 op, op1;
 	UINT16 ea = 0;
@@ -244,70 +230,49 @@ unsigned z80gb_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *o
 		while( *src ) {
 			switch( *src ) {
 			case '?':   /* illegal opcode */
-				dst += sprintf( dst, "$%02x,$%02x", op, op1);
+				dst += sprintf( dst, "$%02X,$%02X", op, op1);
 				break;
 			case 'A':
 				ea = opram[pos] + ( opram[pos+1] << 8);
 				pos += 2;
-				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%04X", ea );
 				break;
 			case 'B':   /* Byte op arg */
 				ea = opram[pos++];
-				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%02X", ea );
 				break;
 			case '(':   /* Memory byte at (...) */
 				*dst++ = *src;
 				if( !strncmp( src, "(bc)", 4) ) {
-					ea = z80gb_get_reg( Z80GB_BC );
-					set_ea_info(0, ea, EA_UINT8, d->access);
 				} else if( !strncmp( src, "(de)", 4) ) {
-					ea = z80gb_get_reg( Z80GB_DE );
-					set_ea_info(0, ea, EA_UINT8, d->access);
 				} else if( !strncmp( src, "(hl)", 4) ) {
-					ea = z80gb_get_reg( Z80GB_HL );
-					if( d->access == EA_ABS_PC )
-						set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-					else
-						set_ea_info(0, ea, EA_UINT8, d->access);
 				} else if( !strncmp( src, "(sp)", 4) ) {
-					ea = z80gb_get_reg( Z80GB_SP );
-					set_ea_info(0, ea, EA_UINT16, d->access);
 				} else if( !strncmp( src, "(F)", 3) ) {
 					ea = 0xFF00 + opram[pos++];
-					symbol = set_ea_info(0, ea, EA_UINT8, d->access);
-					dst += sprintf( dst, "%s", symbol );
+					dst += sprintf( dst, "$%02X", ea );
 					src++;
 				} else if( !strncmp( src, "(C)", 3) ) {
-					ea = 0xff00 + (z80gb_get_reg( Z80GB_BC ) & 0xff);
-					symbol = set_ea_info(0, 0xff00, EA_UINT16, EA_VALUE);
-					set_ea_info(1, ea, EA_UINT8, d->access);
-					dst += sprintf( dst, "%s+c", symbol );
+					dst += sprintf( dst, "$FF00+c" );
 					src++;
 				}
 				break;
 			case 'N':   /* Immediate 16 bit */
 				ea = opram[pos] + ( opram[pos+1] << 8 );
 				pos += 2;
-				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE );
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%04X", ea );
 				break;
 			case 'O':   /* Offset relative to PC */
 				offset = (INT8) opram[pos++];
-				symbol = set_ea_info(0, PC, offset + 2, d->access);
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%04X", pc + offset + 2 );
 				break;
 			case 'V':   /* Restart vector */
 				ea = op & 0x38;
-				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%02X", ea );
 				break;
 			case 'W':   /* Memory address word */
 				ea = opram[pos] + ( opram[pos+1] << 8 );
 				pos += 2;
-				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%04X", ea );
 				break;
 			default:
 				*dst++ = *src;

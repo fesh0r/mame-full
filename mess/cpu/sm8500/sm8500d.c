@@ -11,7 +11,6 @@ Sharp sm8500 CPU disassembly
 #include <string.h>
 #include "driver.h"
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "sm8500.h"
 
 enum e_mnemonics
@@ -70,7 +69,6 @@ static const UINT32 s_flags[] = {
 
 typedef struct
 {
-	UINT8	access;
 	UINT8	mnemonic;
 	UINT8	arguments;
 }	sm8500dasm;
@@ -84,12 +82,6 @@ static const UINT8 sm8500_b2w[8] = {
 	0, 8, 2, 10, 4, 12, 6, 14
 };
 
-#define _00	EA_NONE
-#define _JP	EA_ABS_PC
-#define _JR	EA_REL_PC
-#define _RW	EA_MEM_RDWR
-#define _WR	EA_MEM_WR
-
 enum e_addrmodes {
 	AM_R=1, AM_rr, AM_r1, AM_S, AM_rmb, AM_mbr, AM_Ri, AM_rmw, AM_mwr, AM_smw, AM_mws,
 	AM_Sw, AM_iR, AM_rbr, AM_riw, AM_cjp, AM_rib, AM_pi, AM_cbr, AM_i, AM_ii,
@@ -99,92 +91,91 @@ enum e_addrmodes {
 
 static const sm8500dasm mnemonic[256] = {
 	/* 00 - 0F */
-        {_RW,zCLR, AM_R},  {_RW,zNEG,AM_R},   {_RW,zCOM,AM_R},   {_RW,zRR,AM_R},
-        {_RW,zRL, AM_R},   {_RW,zRRC,AM_R},  {_RW,zRLC,AM_R},   {_RW,zSRL,AM_R},
-        {_RW,zINC, AM_R},  {_RW,zDEC,AM_R},  {_RW,zSRA,AM_R},    {_RW,zSLL,AM_R},
-        {_RW,zDA, AM_R},   {_RW,zSWAP,AM_R}, {_RW,zPUSH,AM_R},  {_RW,zPOP,AM_R},
+        {zCLR, AM_R},  {zNEG,AM_R},   {zCOM,AM_R},   {zRR,AM_R},
+        {zRL, AM_R},   {zRRC,AM_R},  {zRLC,AM_R},   {zSRL,AM_R},
+        {zINC, AM_R},  {zDEC,AM_R},  {zSRA,AM_R},    {zSLL,AM_R},
+        {zDA, AM_R},   {zSWAP,AM_R}, {zPUSH,AM_R},  {zPOP,AM_R},
 	/* 10 - 1F */
-        {_00,zCMP,AM_rr},  {_00,zADD,AM_rr},  {_00,zSUB,AM_rr},   {_00,zADC,AM_rr},
-        {_00,zSBC,AM_rr},  {_00,zAND,AM_rr},  {_00,zOR,AM_rr},    {_00,zXOR,AM_rr},
-        {_00,zINCW,AM_S}, {_00,zDECW,AM_S}, {_00,z1A,AM_1A},    {_00,z1B,AM_1B},
-        {_RW,zBCLR,AM_riB}, {_RW,zBSET,AM_riB},   {_00,zPUSHW,AM_S}, {_00,zPOPW,AM_S},
+        {zCMP,AM_rr},  {zADD,AM_rr},  {zSUB,AM_rr},   {zADC,AM_rr},
+        {zSBC,AM_rr},  {zAND,AM_rr},  {zOR,AM_rr},    {zXOR,AM_rr},
+        {zINCW,AM_S}, {zDECW,AM_S}, {z1A,AM_1A},    {z1B,AM_1B},
+        {zBCLR,AM_riB}, {zBSET,AM_riB},   {zPUSHW,AM_S}, {zPOPW,AM_S},
 	/* 20 - 2F */
-        {_00,zCMP,AM_rmb},   {_00,zADD,AM_rmb},  {_00,zSUB,AM_rmb},    {_00,zADC,AM_rmb},
-        {_00,zSBC,AM_rmb},   {_00,zAND,AM_rmb},   {_00,zOR,AM_rmb},    {_00,zXOR,AM_rmb},
-        {_00,zMOV,AM_rmb},  {_00,zMOV,AM_mbr},  {_JR,zBBC,AM_bid},    {_JR,zBBS,AM_bid},
-        {_00,zEXTS,AM_R}, {_00,zDM,AM_i},   {_00,zMOVPS0,AM_i},    {_00,zBTST,AM_Ri},
+        {zCMP,AM_rmb},   {zADD,AM_rmb},  {zSUB,AM_rmb},    {zADC,AM_rmb},
+        {zSBC,AM_rmb},   {zAND,AM_rmb},   {zOR,AM_rmb},    {zXOR,AM_rmb},
+        {zMOV,AM_rmb},  {zMOV,AM_mbr},  {zBBC,AM_bid},    {zBBS,AM_bid},
+        {zEXTS,AM_R}, {zDM,AM_i},   {zMOVPS0,AM_i},    {zBTST,AM_Ri},
 	/* 30 - 3F */
-        {_RW,zCMP,AM_rmw},  {_RW,zADD,AM_rmw},  {_RW,zSUB,AM_rmw},   {_RW,zADC,AM_rmw},
-        {_RW,zSBC,AM_rmw},  {_RW,zAND,AM_rmw},   {_RW,zOR,AM_rmw},    {_RW,zXOR,AM_rmw},
-        {_RW,zMOV,AM_rmw},  {_00,zMOV,AM_mwr},  {_00,zMOVW,AM_smw},  {_00,zMOVW,AM_mws},
-        {_00,zMOVW,AM_ss}, {_00,zDM,AM_R},   {_00,zJMP,AM_2},   {_00,zCALL,AM_2},
+        {zCMP,AM_rmw},  {zADD,AM_rmw},  {zSUB,AM_rmw},   {zADC,AM_rmw},
+        {zSBC,AM_rmw},  {zAND,AM_rmw},   {zOR,AM_rmw},    {zXOR,AM_rmw},
+        {zMOV,AM_rmw},  {zMOV,AM_mwr},  {zMOVW,AM_smw},  {zMOVW,AM_mws},
+        {zMOVW,AM_ss}, {zDM,AM_R},   {zJMP,AM_2},   {zCALL,AM_2},
 	/* 40 - 4F */
-        {_00,zCMP,AM_RR},  {_00,zADD,AM_RR},  {_00,zSUB,AM_RR},   {_00,zADC,AM_RR},
-        {_00,zSBC,AM_RR},  {_00,zAND,AM_RR},  {_00,zOR,AM_RR},    {_00,zXOR,AM_RR},
-        {_00,zMOV,AM_RR},  {_00,zCALL,AM_ii}, {_00,zMOVW,AM_SS},  {_WR,zMOVW,AM_Sw},
-        {_00,zMULT,AM_RR}, {_00,zMULT,AM_iR}, {_00,zBMOV,AM_bR},  {_00,z4F,AM_4F},
+        {zCMP,AM_RR},  {zADD,AM_RR},  {zSUB,AM_RR},   {zADC,AM_RR},
+        {zSBC,AM_RR},  {zAND,AM_RR},  {zOR,AM_RR},    {zXOR,AM_RR},
+        {zMOV,AM_RR},  {zCALL,AM_ii}, {zMOVW,AM_SS},  {zMOVW,AM_Sw},
+        {zMULT,AM_RR}, {zMULT,AM_iR}, {zBMOV,AM_bR},  {z4F,AM_4F},
 	/* 50 - 5F */
-        {_WR,zCMP,AM_iR},  {_WR,zADD,AM_iR},  {_WR,zSUB,AM_iR},   {_WR,zADC,AM_iR},
-        {_WR,zSBC,AM_iR},  {_WR,zAND,AM_iR},  {_WR,zOR,AM_iR},    {_WR,zXOR,AM_iR},
-        {_WR,zMOV, AM_iR}, {_00,zINVLD,0},   {_00,z5A,AM_ii},    {_00,z5B,AM_ii},
-        {_00,zDIV,AM_SS},  {_00,zDIV,AM_iS},   {_00,zMOVM,AM_RiR},  {_00,zMOVM,AM_Rii},
+        {zCMP,AM_iR},  {zADD,AM_iR},  {zSUB,AM_iR},   {zADC,AM_iR},
+        {zSBC,AM_iR},  {zAND,AM_iR},  {zOR,AM_iR},    {zXOR,AM_iR},
+        {zMOV, AM_iR}, {zINVLD,0},   {z5A,AM_ii},    {z5B,AM_ii},
+        {zDIV,AM_SS},  {zDIV,AM_iS},   {zMOVM,AM_RiR},  {zMOVM,AM_Rii},
 	/* 60 - 6F */
-        {_00,zCMPW,AM_SS}, {_00,zADDW,AM_SS}, {_00,zSUBW,AM_SS},  {_00,zADCW,AM_SS},
-        {_00,zSBCW,AM_SS}, {_00,zANDW,AM_SS}, {_00,zORW,AM_SS},   {_00,zXORW,AM_SS},
-        {_00,zCMPW,AM_Sw}, {_00,zADDW,AM_Sw}, {_00,zSUBW,AM_Sw},  {_00,zADCW,AM_Sw},
-        {_00,zSBCW,AM_Sw}, {_00,zANDW,AM_Sw}, {_00,zORW,AM_Sw},   {_00,zXORW,AM_Sw},
+        {zCMPW,AM_SS}, {zADDW,AM_SS}, {zSUBW,AM_SS},  {zADCW,AM_SS},
+        {zSBCW,AM_SS}, {zANDW,AM_SS}, {zORW,AM_SS},   {zXORW,AM_SS},
+        {zCMPW,AM_Sw}, {zADDW,AM_Sw}, {zSUBW,AM_Sw},  {zADCW,AM_Sw},
+        {zSBCW,AM_Sw}, {zANDW,AM_Sw}, {zORW,AM_Sw},   {zXORW,AM_Sw},
 	/* 70 - 7F */
-        {_JR,zDBNZ,AM_rbr}, {_JR,zDBNZ,AM_rbr}, {_JR,zDBNZ,AM_rbr},  {_JR,zDBNZ,AM_rbr},
-        {_JR,zDBNZ,AM_rbr}, {_JR,zDBNZ,AM_rbr}, {_JR,zDBNZ,AM_rbr},  {_JR,zDBNZ,AM_rbr},
-        {_WR,zMOVW,AM_riw}, {_WR,zMOVW,AM_riw}, {_WR,zMOVW,AM_riw},  {_WR,zMOVW,AM_riw},
-        {_WR,zMOVW,AM_riw}, {_WR,zMOVW,AM_riw}, {_WR,zMOVW,AM_riw},  {_WR,zMOVW,AM_riw},
+        {zDBNZ,AM_rbr}, {zDBNZ,AM_rbr}, {zDBNZ,AM_rbr},  {zDBNZ,AM_rbr},
+        {zDBNZ,AM_rbr}, {zDBNZ,AM_rbr}, {zDBNZ,AM_rbr},  {zDBNZ,AM_rbr},
+        {zMOVW,AM_riw}, {zMOVW,AM_riw}, {zMOVW,AM_riw},  {zMOVW,AM_riw},
+        {zMOVW,AM_riw}, {zMOVW,AM_riw}, {zMOVW,AM_riw},  {zMOVW,AM_riw},
 	/* 80 - 8F */
-        {_JR,zBBC,AM_Rbr},  {_JR,zBBC,AM_Rbr},  {_JR,zBBC,AM_Rbr},   {_JR,zBBC,AM_Rbr},
-        {_JR,zBBC,AM_Rbr},  {_JR,zBBC,AM_Rbr},  {_JR,zBBC,AM_Rbr},   {_JR,zBBC,AM_Rbr},
-        {_JR,zBBS,AM_Rbr},  {_JR,zBBS,AM_Rbr},  {_JR,zBBS,AM_Rbr},   {_JR,zBBS,AM_Rbr},
-        {_JR,zBBS,AM_Rbr},  {_JR,zBBS,AM_Rbr},  {_JR,zBBS,AM_Rbr},   {_JR,zBBS,AM_Rbr},
+        {zBBC,AM_Rbr},  {zBBC,AM_Rbr},  {zBBC,AM_Rbr},   {zBBC,AM_Rbr},
+        {zBBC,AM_Rbr},  {zBBC,AM_Rbr},  {zBBC,AM_Rbr},   {zBBC,AM_Rbr},
+        {zBBS,AM_Rbr},  {zBBS,AM_Rbr},  {zBBS,AM_Rbr},   {zBBS,AM_Rbr},
+        {zBBS,AM_Rbr},  {zBBS,AM_Rbr},  {zBBS,AM_Rbr},   {zBBS,AM_Rbr},
 	/* 90 - 9F */
-        {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},   {_JP,zJMP,AM_cjp},
-        {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},   {_JP,zJMP,AM_cjp},
-        {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},   {_JP,zJMP,AM_cjp},
-        {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},  {_JP,zJMP,AM_cjp},   {_JP,zJMP,AM_cjp},
+        {zJMP,AM_cjp},  {zJMP,AM_cjp},  {zJMP,AM_cjp},   {zJMP,AM_cjp},
+        {zJMP,AM_cjp},  {zJMP,AM_cjp},  {zJMP,AM_cjp},   {zJMP,AM_cjp},
+        {zJMP,AM_cjp},  {zJMP,AM_cjp},  {zJMP,AM_cjp},   {zJMP,AM_cjp},
+        {zJMP,AM_cjp},  {zJMP,AM_cjp},  {zJMP,AM_cjp},   {zJMP,AM_cjp},
 	/* A0 - AF */
-        {_00,zBCLR,AM_Rb}, {_00,zBCLR,AM_Rb}, {_00,zBCLR,AM_Rb},  {_00,zBCLR,AM_Rb},
-        {_00,zBCLR,AM_Rb}, {_00,zBCLR,AM_Rb}, {_00,zBCLR,AM_Rb},  {_00,zBCLR,AM_Rb},
-        {_00,zBSET,AM_Rb}, {_00,zBSET,AM_Rb}, {_00,zBSET,AM_Rb},  {_00,zBSET,AM_Rb},
-        {_00,zBSET,AM_Rb}, {_00,zBSET,AM_Rb}, {_00,zBSET,AM_Rb},  {_00,zBSET,AM_Rb},
+        {zBCLR,AM_Rb}, {zBCLR,AM_Rb}, {zBCLR,AM_Rb},  {zBCLR,AM_Rb},
+        {zBCLR,AM_Rb}, {zBCLR,AM_Rb}, {zBCLR,AM_Rb},  {zBCLR,AM_Rb},
+        {zBSET,AM_Rb}, {zBSET,AM_Rb}, {zBSET,AM_Rb},  {zBSET,AM_Rb},
+        {zBSET,AM_Rb}, {zBSET,AM_Rb}, {zBSET,AM_Rb},  {zBSET,AM_Rb},
 	/* B0 - BF */
-        {_00,zMOV,AM_rR},  {_00,zMOV,AM_rR},  {_00,zMOV,AM_rR},   {_00,zMOV,AM_rR},
-        {_00,zMOV,AM_rR},  {_00,zMOV,AM_rR},  {_00,zMOV,AM_rR},   {_00,zMOV,AM_rR},
-        {_00,zMOV,AM_Rr},  {_00,zMOV,AM_Rr},  {_00,zMOV,AM_Rr},   {_00,zMOV,AM_Rr},
-        {_00,zMOV,AM_Rr},  {_00,zMOV,AM_Rr},  {_00,zMOV,AM_Rr},   {_00,zMOV,AM_Rr},
+        {zMOV,AM_rR},  {zMOV,AM_rR},  {zMOV,AM_rR},   {zMOV,AM_rR},
+        {zMOV,AM_rR},  {zMOV,AM_rR},  {zMOV,AM_rR},   {zMOV,AM_rR},
+        {zMOV,AM_Rr},  {zMOV,AM_Rr},  {zMOV,AM_Rr},   {zMOV,AM_Rr},
+        {zMOV,AM_Rr},  {zMOV,AM_Rr},  {zMOV,AM_Rr},   {zMOV,AM_Rr},
 	/* C0 - CF */
-        {_WR,zMOV,AM_rib},  {_WR,zMOV,AM_rib},  {_WR,zMOV,AM_rib},   {_WR,zMOV,AM_rib},
-        {_WR,zMOV,AM_rib},  {_WR,zMOV,AM_rib},  {_WR,zMOV,AM_rib},   {_WR,zMOV,AM_rib},
-        {_WR,zMOV,AM_pi},  {_WR,zMOV,AM_pi},  {_WR,zMOV,AM_pi},   {_WR,zMOV,AM_pi},
-        {_WR,zMOV,AM_pi},  {_WR,zMOV,AM_pi},  {_WR,zMOV,AM_pi},   {_WR,zMOV,AM_pi},
+        {zMOV,AM_rib},  {zMOV,AM_rib},  {zMOV,AM_rib},   {zMOV,AM_rib},
+        {zMOV,AM_rib},  {zMOV,AM_rib},  {zMOV,AM_rib},   {zMOV,AM_rib},
+        {zMOV,AM_pi},  {zMOV,AM_pi},  {zMOV,AM_pi},   {zMOV,AM_pi},
+        {zMOV,AM_pi},  {zMOV,AM_pi},  {zMOV,AM_pi},   {zMOV,AM_pi},
 	/* D0 - DF */
-        {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},    {_JR,zBR,AM_cbr},
-        {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},    {_JR,zBR,AM_cbr},
-        {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},    {_JR,zBR,AM_cbr},
-        {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},   {_JR,zBR,AM_cbr},    {_JR,zBR,AM_cbr},
+        {zBR,AM_cbr},   {zBR,AM_cbr},   {zBR,AM_cbr},    {zBR,AM_cbr},
+        {zBR,AM_cbr},   {zBR,AM_cbr},   {zBR,AM_cbr},    {zBR,AM_cbr},
+        {zBR,AM_cbr},   {zBR,AM_cbr},   {zBR,AM_cbr},    {zBR,AM_cbr},
+        {zBR,AM_cbr},   {zBR,AM_cbr},   {zBR,AM_cbr},    {zBR,AM_cbr},
 	/* E0 - EF */
-        {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},    {_00,zCALS,AM_CALS},
-        {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},    {_00,zCALS,AM_CALS},
-        {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},    {_00,zCALS,AM_CALS},
-        {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},   {_00,zCALS,AM_CALS},    {_00,zCALS,AM_CALS},
+        {zCALS,AM_CALS},   {zCALS,AM_CALS},   {zCALS,AM_CALS},    {zCALS,AM_CALS},
+        {zCALS,AM_CALS},   {zCALS,AM_CALS},   {zCALS,AM_CALS},    {zCALS,AM_CALS},
+        {zCALS,AM_CALS},   {zCALS,AM_CALS},   {zCALS,AM_CALS},    {zCALS,AM_CALS},
+        {zCALS,AM_CALS},   {zCALS,AM_CALS},   {zCALS,AM_CALS},    {zCALS,AM_CALS},
 	/* F0 - FF */
-        {_00,zSTOP,0}, {_00,zHALT,0}, {_00,zINVLD,0},    {_00,zINVLD,0},
-        {_00,zINVLD,0},   {_00,zINVLD,0},   {_00,zINVLD,0},    {_00,zINVLD,0},
-        {_00,zRET,0},  {_00,zIRET,0}, {_00,zCLRC,0},  {_00,zCOMC,0},
-        {_00,zSETC,0}, {_00,zEI,0},   {_00,zDI,0},    {_00,zNOP,0},
+        {zSTOP,0}, {zHALT,0}, {zINVLD,0},    {zINVLD,0},
+        {zINVLD,0},   {zINVLD,0},   {zINVLD,0},    {zINVLD,0},
+        {zRET,0},  {zIRET,0}, {zCLRC,0},  {zCOMC,0},
+        {zSETC,0}, {zEI,0},   {zDI,0},    {zNOP,0},
 
 };
 
 unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	const sm8500dasm *instr;
-	const char *symbol, *symbol2;
 	char *dst;
 	UINT8 op;
 	INT8 offset = 0;
@@ -205,43 +196,30 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 		switch( instr->arguments ) {
 		case AM_R:
 			ea = oprom[pos++];
-			set_ea_info( 0, ea, EA_UINT8, instr->access );
 			dst += sprintf( dst, "R%02Xh", ea );
 			break;
 		case AM_iR:
-			ea = oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			ea = oprom[pos++];
-			set_ea_info( 0, ea, EA_UINT8, instr->access );
-			dst += sprintf( dst, "R%02Xh, %s", ea, symbol );
+			dst += sprintf( dst, "R%02Xh, $%02X", oprom[pos + 1], oprom[pos + 0]);
+			pos += 2;
 			break;
 		case AM_iS:
-			ea = oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			ea = oprom[pos++];
-			set_ea_info( 0, ea, EA_UINT8, instr->access );
-			dst += sprintf( dst, "RR%02Xh, %s", ea, symbol );
+			dst += sprintf( dst, "RR%02Xh, $%02X", oprom[pos + 1], oprom[pos + 0]);
+			pos += 2;
 			break;
 		case AM_Sw:
 			ea2 = oprom[pos++];
 			ea = oprom[pos++] << 8;
 			ea += oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT16, EA_VALUE );
-			set_ea_info( 0, ea2, EA_UINT16, instr->access );
-			dst+= sprintf( dst, "RR%02Xh, %s", ea2, symbol );
+			dst+= sprintf( dst, "RR%02Xh, $%04X", ea2, ea );
 			break;
 		case AM_rib:
 			ea = oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			set_ea_info( 0, (op & 0x07), EA_UINT8, instr->access );
-			dst += sprintf( dst, "r%02Xh, %s", op & 0x07, symbol );
+			dst += sprintf( dst, "r%02Xh, $%02X", op & 0x07, ea );
 			break;
 		case AM_riw:
 			ea = oprom[pos++] << 8;
 			ea += oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT16, EA_VALUE );
-			set_ea_info( 0, (op & 0x07), EA_UINT16, instr->access );
-			dst += sprintf( dst, "rr%02Xh, %s", sm8500_b2w[op & 0x07], symbol );
+			dst += sprintf( dst, "rr%02Xh, $%04X", sm8500_b2w[op & 0x07], ea );
 			break;
 		case AM_rmb:
 			ea = oprom[pos++];
@@ -253,11 +231,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 				dst += sprintf( dst, "(r%02Xh)+", ea & 0x07 ); break;
 			case 0x80:
 				ea2 = oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(r%02Xh)", symbol2, ea & 0x07 );
+					dst += sprintf( dst, "$%02X(r%02Xh)", ea2, ea & 0x07 );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%02X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -273,11 +250,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 				dst += sprintf( dst, "(r%02Xh)+", ea & 0x07 ); break;
 			case 0x80:
 				ea2 = oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(r%02Xh)", symbol2, ea & 0x07 );
+					dst += sprintf( dst, "$%02X(r%02Xh)", ea2, ea & 0x07 );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%02X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -296,11 +272,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			case 0x80:
 				ea2 = oprom[pos++] << 8;
 				ea2 += oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
+					dst += sprintf( dst, "$%04X(rr%02Xh)", ea2, sm8500_b2w[ea & 0x07] );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%04X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -317,11 +292,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			case 0x80:
 				ea2 = oprom[pos++] << 8;
 				ea2 += oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
+					dst += sprintf( dst, "$%04X(rr%02Xh)", ea2, sm8500_b2w[ea & 0x07] );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%04X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -340,11 +314,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			case 0x80:
 				ea2 = oprom[pos++] << 8;
 				ea2 += oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
+					dst += sprintf( dst, "$%04X(rr%02Xh)", ea2, sm8500_b2w[ea & 0x07] );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%04X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -361,11 +334,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			case 0x80:
 				ea2 = oprom[pos++] << 8;
 				ea2 += oprom[pos++];
-				symbol2 = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x07 ) {
-					dst += sprintf( dst, "%s(rr%02Xh)", symbol2, sm8500_b2w[ea & 0x07] );
+					dst += sprintf( dst, "$%04X(rr%02Xh)", ea2, sm8500_b2w[ea & 0x07] );
 				} else {
-					dst += sprintf( dst, "@%s", symbol2 );
+					dst += sprintf( dst, "@$%04X", ea2 );
 				}
 				break;
 			case 0xC0:
@@ -375,19 +347,16 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			break;
 		case AM_cbr:
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
-			dst += sprintf( dst, "%s,%s", sm8500_cond[ op & 0x0F ], symbol );
+			dst += sprintf( dst, "%s,$%04X", sm8500_cond[ op & 0x0F ], pc + pos + offset );
 			break;
 		case AM_rbr:
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
-			dst += sprintf( dst, "r%02Xh,%s", op & 0x07, symbol );
+			dst += sprintf( dst, "r%02Xh,$%04X", op & 0x07, pc + pos + offset );
 			break;
 		case AM_cjp:
 			ea = oprom[pos++] << 8;
 			ea += oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT16, instr->access );
-			dst += sprintf( dst, "%s,%s", sm8500_cond[ op & 0x0F], symbol );
+			dst += sprintf( dst, "%s,$%04X", sm8500_cond[ op & 0x0F], ea );
 			break;
 		case AM_rr:
 			ea = oprom[pos++];
@@ -420,26 +389,21 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			break;
 		case AM_pi:
 			ea = oprom[pos++];
-			symbol = set_ea_info( 1, ea, EA_UINT8, EA_VALUE );
-			set_ea_info( 0, 0x10 + (op & 0x07), EA_UINT8, instr->access );
-			dst += sprintf( dst, "r%02Xh, %s", 0x10 + (op & 0x07), symbol );
+			dst += sprintf( dst, "r%02Xh, $%02X", 0x10 + (op & 0x07), ea );
 			break;
 		case AM_Ri:
 			ea = oprom[pos++];
 			ea2 = oprom[pos++];
-			symbol = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "R%02Xh,%s", ea, symbol );
+			dst += sprintf( dst, "R%02Xh,$%02X", ea, ea2 );
 			break;
 		case AM_i:
 			ea = oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "$%02X", ea );
 			break;
 		case AM_ii:
 			ea = oprom[pos++] << 8;
 			ea += oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT16, EA_VALUE );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "$%04X", ea );
 			break;
 		case AM_ss:
 			ea = oprom[pos++];
@@ -467,11 +431,10 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			case 0x40:
 				ea2 = oprom[pos++] << 8;
 				ea2 += oprom[pos++];
-				symbol = set_ea_info( 0, ea2, EA_UINT16, EA_VALUE );
 				if ( ea & 0x38 ) {
-					dst += sprintf( dst, "@%s(r%02Xh)", symbol, ( ea >> 3 ) & 0x07 );
+					dst += sprintf( dst, "@$%04X(r%02Xh)", ea2, ( ea >> 3 ) & 0x07 );
 				} else {
-					dst += sprintf( dst, "@%s", symbol );
+					dst += sprintf( dst, "@$%04X", ea2 );
 				}
 				break;
 			case 0x80:
@@ -502,8 +465,7 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 		case AM_Rbr:
 			ea = oprom[pos++];
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
-			dst += sprintf( dst, "R%02Xh,#%d,%s", ea, op & 0x07, symbol );
+			dst += sprintf( dst, "R%02Xh,#%d,$%04X", ea, op & 0x07, pc + pos + offset );
 			break;
 		case AM_Rb:
 			ea = oprom[pos++];
@@ -521,18 +483,15 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,", ea );
 			ea = oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "%s,", symbol );
+			dst += sprintf( dst, "$%02X,", ea );
 			ea = oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "$%02X", ea );
 			break;
 		case AM_RiR:
 			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh,", ea );
 			ea = oprom[pos++];
-			symbol = set_ea_info( 0, ea, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "%s,", symbol );
+			dst += sprintf( dst, "$%02X,", ea );
 			ea = oprom[pos++];
 			dst += sprintf( dst, "R%02Xh", ea );
 			break;
@@ -553,23 +512,19 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			break;
 		case AM_CALS:
 			ea = oprom[pos++];
-			symbol = set_ea_info( 0, 0x1000 | ( ( op & 0x0f ) << 8 ) | ea, EA_UINT16, EA_VALUE );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "$%04X", 0x1000 | ( ( op & 0x0f ) << 8 ) | ea );
 			break;
 		case AM_bid:
 			ea = oprom[pos++];
 			ea2 = oprom[pos++];
 			if ( ea & 0x38 ) {
-				symbol = set_ea_info( 0, ea2, EA_UINT8, EA_VALUE );
-				dst += sprintf( dst, "%s(r%02Xh)", symbol, ( ea >> 3 ) & 0x07 );
+				dst += sprintf( dst, "$%02X(r%02Xh)", ea2, ( ea >> 3 ) & 0x07 );
 			} else {
-				symbol = set_ea_info( 0, 0xFF00 + ea2, EA_UINT16, EA_VALUE );
-				dst += sprintf( dst, "%s", symbol );
+				dst += sprintf( dst, "$%04X", 0xFF00 + ea2 );
 			}
 			dst += sprintf( dst, ",#%d,", ea & 0x07 );
 			offset = (INT8) oprom[pos++];
-			symbol = set_ea_info( 0, pc + pos, offset, instr->access );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "$%04X", pc + pos + offset );
 			break;
 		case AM_1A:
 			ea = oprom[pos++];
@@ -611,9 +566,7 @@ unsigned sm8500_dasm( char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 			if ( ! ( ea & 0x80 ) ) {
 				dst += sprintf( dst, "BF," );
 			}
-			dst += sprintf( dst, "R%02Xh,", ea2 );
-			symbol = set_ea_info( 0, ea & 0x07, EA_UINT8, EA_VALUE );
-			dst += sprintf( dst, "%s", symbol );
+			dst += sprintf( dst, "R%02Xh,$%02X", ea2, ea & 0x07 );
 			if ( ea & 0x80 ) {
 				dst += sprintf( dst, ",BF" );
 			}
