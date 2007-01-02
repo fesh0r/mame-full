@@ -35,8 +35,6 @@ Priority:  Todo:                                                  Done:
   1 = should be added later on
   0 = bells and whistles
 
-TODO:
-  GBC - Implement disallow writing to VRAM when STAT == 3
 
 Timers
 ======
@@ -136,7 +134,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_ROMBANK(5)					/* 16k fixed ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)					/* 16k switched ROM bank */
-	AM_RANGE(0x8000, 0x9fff) AM_RAMBANK(4)					/* 8k switched VRAM bank */
+	AM_RANGE(0x8000, 0x9fff) AM_ROMBANK(4) AM_WRITE( gbc_vram_w )		/* 8k switched VRAM bank */
 	AM_RANGE(0xa000, 0xbfff) AM_RAMBANK(2)					/* 8k switched RAM bank (on cartridge) */
 	AM_RANGE(0xc000, 0xcfff) AM_RAM						/* 4k fixed RAM bank */
 	AM_RANGE(0xd000, 0xdfff) AM_RAMBANK(3)					/* 4k switched RAM bank */
@@ -147,7 +145,7 @@ static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound controller */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
 	AM_RANGE(0xff30, 0xff3f) AM_READWRITE( gb_wave_r, gb_wave_w )		/* Wave RAM */
-	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gb_video_r, gbc_video_w )	/* video controller */
+	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gb_video_r, gbc_io2_w )		/* Other I/O and video controller */
 	AM_RANGE(0xff80, 0xfffe) AM_RAM						/* high RAM */
 	AM_RANGE(0xffff, 0xffff) AM_READWRITE( gb_ie_r, gb_ie_w )		/* Interrupt enable register */
 ADDRESS_MAP_END
@@ -155,9 +153,10 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START(megaduck_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_ROMBANK(10)						/* 16k switched ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)						/* 16k switched ROM bank */
-	AM_RANGE(0x8000, 0x9fff) AM_RAM							/* 8k VRAM */
+	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)		/* 8k VRAM */
 	AM_RANGE(0xa000, 0xbfff) AM_NOP							/* unused? */
-	AM_RANGE(0xc000, 0xfe9f) AM_RAM							/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xc000, 0xfe9f) AM_RAM							/* 8k low RAM, echo RAM */
+	AM_RANGE(0xfe00, 0xfe9f) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)		/* OAM RAM */
 	AM_RANGE(0xfea0, 0xfeff) AM_NOP							/* unused */
 	AM_RANGE(0xff00, 0xff0f) AM_READWRITE( gb_io_r, gb_io_w )			/* I/O */
 	AM_RANGE(0xff10, 0xff1f) AM_READWRITE( megaduck_video_r, megaduck_video_w )	/* video controller */
@@ -278,7 +277,7 @@ static MACHINE_DRIVER_START( gameboy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_map, 0)
-	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154)	/* 1 int each scanline ! */
 
 	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)

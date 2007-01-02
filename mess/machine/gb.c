@@ -59,20 +59,17 @@ static UINT8 MBC3RTCBank;			   /* Number of RTC bank for MBC3                 */
 static UINT8 *GBC_RAMMap[8];		   /* (GBC) Addresses of internal RAM banks       */
 static UINT8 GBC_RAMBank;			   /* (GBC) Number of RAM bank currently used     */
 UINT8 *GBC_VRAMMap[2];				   /* (GBC) Addressses of video RAM banks         */
-UINT8 GBC_VRAMBank;					   /* (GBC) Number of video RAM bank currently used */
+UINT8 *gbc_vram_bank;
 static UINT8 sgb_atf_data[4050];	   /* (SGB) Attribute files                       */
 UINT8 *sgb_tile_data;
 UINT8 *gb_cart = NULL;
 UINT8 *gb_cart_ram = NULL;
-UINT8 *gb_vram = NULL;				/* points to start of VRAM area */
 UINT8 gb_io[0x10];
-UINT8 gb_vid_regs[0x40];
 UINT8 gb_ie;
 UINT8 *gb_dummy_rom_bank = NULL;
 UINT8 *gb_dummy_ram_bank = NULL;
 
 static void gb_machine_stop(running_machine *machine);
-void (*refresh_scanline)(void);
 
 #ifdef MAME_DEBUG
 /* #define V_GENERAL*/		/* Display general debug information */
@@ -82,13 +79,9 @@ void (*refresh_scanline)(void);
 static void gb_init_regs(void)
 {
 	/* Initialize the registers */
-	LCDSTAT = 0x00;
-	CURLINE = CMPLINE = 0x00;
 	IFLAGS = ISWITCH = 0x00;
 	SIODATA = 0x00;
 	SIOCONT = 0x7E;
-	SCROLLX = SCROLLY = 0x00;
-	WNDPOSX = WNDPOSY = 0x00;
 
 	gb_io_w( 0x05, 0x00 );		/* TIMECNT */
 	gb_io_w( 0x06, 0x00 );		/* TIMEMOD */
@@ -116,10 +109,6 @@ static void gb_init(void)
 	} else {
 		memory_set_bankptr( 10, ROMMap[0] );
 	}
-
-	/* Initialize palette arrays */
-	for( ii = 0; ii < 4; ii++ )
-		gb_bpal[ii] = gb_spal0[ii] = gb_spal1[ii] = ii;
 
 	/* Set handlers based on the Memory Bank Controller in the cart */
 	switch( MBCType )
@@ -163,7 +152,6 @@ static void gb_init(void)
 			break;
 	}
 
-	gb_vid_regs[0x01] = 0x80;
 	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
 }
 
@@ -177,17 +165,18 @@ MACHINE_RESET( gb )
 {
         gb_init();
 
+	gb_video_init();
+
         /* Enable BIOS rom */
         memory_set_bankptr(5, memory_region(REGION_CPU1) );
         memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : gb_dummy_rom_bank + 0x0100);
-
-	/* set the scanline refresh function */
-	refresh_scanline = gb_refresh_scanline;
 }
 
 MACHINE_RESET( sgb )
 {
 	gb_init();
+
+	sgb_video_init();
 
 	gb_init_regs();
 
@@ -214,23 +203,19 @@ MACHINE_RESET( sgb )
 	{
 		sgb_hack = 1;
 	}
-
-	/* set the scanline refresh function */
-	refresh_scanline = sgb_refresh_scanline;
 }
 
 MACHINE_RESET( gbpocket )
 {
 	gb_init();
 
+	gb_video_init();
+
 	gb_init_regs();
 
 	/* Enable BIOS rom if we have one */
 	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : gb_dummy_rom_bank );
 	memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : gb_dummy_rom_bank + 0x0100);
-
-	/* set the scanline refresh function */
-	refresh_scanline = gb_refresh_scanline;
 }
 
 MACHINE_RESET( gbc )
@@ -239,36 +224,25 @@ MACHINE_RESET( gbc )
 
 	gb_init();
 
+	/* Allocate memory for video ram */
+	for( ii = 0; ii < 2; ii++ ) {
+		GBC_VRAMMap[ii] = auto_malloc(0x2000);
+		memset (GBC_VRAMMap[ii], 0, 0x2000);
+	}
+	gbc_io2_w( 0x0F, 0x00 );
+
+	gbc_video_init();
+
 	gb_init_regs();
 
 	memory_set_bankptr(5, ROMMap[0] ? ROMMap[0] : gb_dummy_rom_bank );
 
 	/* Allocate memory for internal ram */
-	for( ii = 0; ii < 8; ii++ )
-	{
-		if( (GBC_RAMMap[ii] = malloc (0x1000)) )
-			memset (GBC_RAMMap[ii], 0, 0x1000);
-		else
-		{
-			logerror("Error allocating memory\n");
-		}
+	for( ii = 0; ii < 8; ii++ ) {
+		GBC_RAMMap[ii] = auto_malloc(0x1000);
+		memset (GBC_RAMMap[ii], 0, 0x1000);
 	}
-	GBC_RAMBank = 0;
-	memory_set_bankptr (3, GBC_RAMMap[GBC_RAMBank]);
-
-	/* Allocate memory for video ram */
-	for( ii = 0; ii < 2; ii++ )
-	{
-		GBC_VRAMMap[ii] = malloc_or_die (0x2000);
-		memset (GBC_VRAMMap[ii], 0, 0x2000);
-	}
-	GBC_VRAMBank = 0;
-	memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);
-
-	gb_chrgen = GBC_VRAMMap[0];
-	gbc_chrgen = GBC_VRAMMap[1];
-	gb_bgdtab = gb_wndtab = GBC_VRAMMap[0] + 0x1C00;
-	gbc_bgdtab = gbc_wndtab = GBC_VRAMMap[1] + 0x1C00;
+	gbc_io2_w( 0x30, 0x00 );
 
 	/* Initialise registers */
 	gb_io_w( 0x6C, 0xFE );
@@ -287,9 +261,6 @@ MACHINE_RESET( gbc )
 
 	/* HDMA disabled */
 	gbc_hdma_enabled = 0;
-
-	/* set the scanline refresh function */
-	refresh_scanline = gbc_refresh_scanline;
 }
 
 static void gb_machine_stop(running_machine *machine)
@@ -1064,6 +1035,27 @@ READ8_HANDLER ( gb_io_r )
 	}
 }
 
+WRITE8_HANDLER( gb_oam_w ) {
+	if ( gb_video_oam_locked() ) { 
+                return;
+        }
+        gb_oam[offset] = data;
+}
+
+WRITE8_HANDLER( gb_vram_w ) {
+	if ( gb_video_vram_locked() ) {
+                return;
+        }
+        gb_vram[offset] = data;
+}
+
+WRITE8_HANDLER( gbc_vram_w ) {
+	if ( gb_video_vram_locked() ) {
+		return;
+	}
+	gbc_vram_bank[offset] = data;
+}
+
 DEVICE_INIT(gb_cart)
 {
 	int I;
@@ -1330,6 +1322,10 @@ DEVICE_LOAD(gb_cart)
 			MBCType = MBC5;
 			CartType = RUMBLE | SRAM | BATTERY;
 			break;
+		case 0xBE:	/* used in Flash2Advance GB Bridge boot program */
+			MBCType = NONE;
+			CartType = 0;
+			break;
 		case 0xFE:
 			MBCType = HUC3;
 			CartType = 0;
@@ -1470,87 +1466,9 @@ DEVICE_LOAD(gb_cart)
 	return INIT_PASS;
 }
 
-WRITE8_HANDLER( gb_oam_w ) {
-	/* Ignore write when LCD is on and STAT is 02 or 03 */
-	if ( ( LCDCONT & 0x80 ) && ( LCDSTAT & 0x02 ) ) {
-		return;
-	}
-	gb_oam[offset] = data;
-}
-
-WRITE8_HANDLER( gb_vram_w ) {
-	/* Ignore write when LCD is on and STAT is not 03 */
-	if ( LCDCONT & 0x80 && ( ( LCDSTAT & 0x03 ) == 0x03 ) ) {
-		return;
-	}
-	gb_vram[offset] = data;
-}
-
-void gb_increment_scanline( void ) {
-	CURLINE = ( CURLINE + 1 ) % 154;
-	if ( CURLINE == CMPLINE ) {
-		LCDSTAT |= 0x04;
-		/* Generate lcd interrupt if requested */
-		if ( LCDSTAT & 0x40 )
-			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-	} else {
-		LCDSTAT &= 0xFB;
-	}
-}
-
-int	gb_skip_increment_scanline = 0;
-
-/* Handle changing LY to 00 on line 153 */
-void gb_scanline_start_frame( int param ) {
-	gb_increment_scanline();
-	gb_skip_increment_scanline = 1;
-}
-
 void gb_scanline_interrupt (void)
 {
-	/* This is a little dodgy, but it works... mostly */
-	static UINT8 count = 0;
-	count = (count + 1) % 3;
-	if ( count )
-		return;
-
-	/* skip incrementing scanline when entering scanline 0 */
-	if ( ! gb_skip_increment_scanline ) {
-		gb_increment_scanline();
-	} else {
-		gb_skip_increment_scanline = 0;
-	}
-
-	if (CURLINE < 144)
-	{
-		if ( LCDCONT & 0x80 ) {
-			/* Set Mode 2 lcdstate */
-			LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
-			/* Generate lcd interrupt if requested */
-			if (LCDSTAT & 0x20)
-				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-		}
-
-		/* First  lcdstate change after aprox 80 clock cycles / 19 uS */
-		timer_set ( TIME_IN_CYCLES(80,0), 0, gb_scanline_interrupt_set_mode3);
-	}
-	else
-	{
-		/* Generate VBlank interrupt (if display is enabled) */
-		if (CURLINE == 144 && ( LCDCONT & 0x80 ) )
-		{
-			/* Cause VBlank interrupt */
-			cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
-			/* Set VBlank lcdstate */
-			LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
-			/* Generate lcd interrupt if requested */
-			if( LCDSTAT & 0x10 )
-				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-		}
-		if ( CURLINE == 153 ) {
-			timer_set( TIME_IN_CYCLES(32,0), 0, gb_scanline_start_frame );
-		}
-	}
+	gb_video_scanline_interrupt();
 
 	/* Generate serial IO interrupt */
 	if (SIOCount)
@@ -1562,39 +1480,6 @@ void gb_scanline_interrupt (void)
 			cpunum_set_input_line(0, SIO_INT, HOLD_LINE);
 		}
 	}
-}
-
-void gb_scanline_interrupt_set_mode0 (int param)
-{
-	/* refresh current scanline */
-	refresh_scanline();
-
-	/* only perform mode changes when LCD controller is still on */
-	if (LCDCONT & 0x80)
-	{
-		/* Set Mode 0 lcdstate */
-		LCDSTAT &= 0xFC;
-		/* Generate lcd interrupt if requested */
-		if( LCDSTAT & 0x08 )
-			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-
-		/* Check for HBLANK DMA */
-		if( gbc_hdma_enabled && (CURLINE < 144) )
-			gbc_hdma(0x10);
-	}
-}
-
-void gb_scanline_interrupt_set_mode3 (int param)
-{
-	int mode3_cycles = 172;
-
-	/* only perform mode changes when LCD controller is still on */
-	if (LCDCONT & 0x80) {
-		/* Set Mode 3 lcdstate */
-		LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
-	}
-	/* Second lcdstate change after aprox 172+#sprites*10 clock cycles / 60 uS */
-	timer_set ( TIME_IN_CYCLES(mode3_cycles,0), 0, gb_scanline_interrupt_set_mode0);
 }
 
 void gbc_hdma(UINT16 length)
@@ -1621,117 +1506,11 @@ void gbc_hdma(UINT16 length)
 	}
 }
 
-READ8_HANDLER( gb_video_r )
-{
-	switch( offset ) {
-	case 0x06:
-		return 0xFF;
-	case 0x36:
-	case 0x37:
-		return 0;
-	default:
-		return gb_vid_regs[offset];
-	}
-}
-
-WRITE8_HANDLER ( gb_video_w )
-{
-	switch (offset)
-	{
-	case 0x00:						/* LCDC - LCD Control */
-		gb_chrgen = gb_vram + ((data & 0x10) ? 0x0000 : 0x0800);
-		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-		gb_bgdtab = gb_vram + ((data & 0x08) ? 0x1C00 : 0x1800 );
-		gb_wndtab = gb_vram + ((data * 0x40) ? 0x1C00 : 0x1800 );
-		/* if LCD controller is switched off, set STAT to 00 */
-		if ( ! ( data & 0x80 ) ) {
-			LCDSTAT &= ~0x03;
-		}
-		break;
-	case 0x01:						/* STAT - LCD Status */
-		data |= 0x80;					/* high bit is always set */
-		data = (data & 0xF8) | (LCDSTAT & 0x07);
-		break;
-	case 0x04:						/* LY - LCD Y-coordinate */
-		data = 0;
-		break;
-	case 0x06:						/* DMA - DMA Transfer and Start Address */
-		{
-			UINT8 *P = gb_oam;
-			offset = (UINT16) data << 8;
-			for (data = 0; data < 0xA0; data++)
-				*P++ = program_read_byte_8 (offset++);
-		}
-		return;
-	case 0x07:						/* BGP - Background Palette */
-		gb_bpal[0] = data & 0x3;
-		gb_bpal[1] = (data & 0xC) >> 2;
-		gb_bpal[2] = (data & 0x30) >> 4;
-		gb_bpal[3] = (data & 0xC0) >> 6;
-		break;
-	case 0x08:						/* OBP0 - Object Palette 0 */
-		gb_spal0[0] = data & 0x3;
-		gb_spal0[1] = (data & 0xC) >> 2;
-		gb_spal0[2] = (data & 0x30) >> 4;
-		gb_spal0[3] = (data & 0xC0) >> 6;
-		break;
-	case 0x09:						/* OBP1 - Object Palette 1 */
-		gb_spal1[0] = data & 0x3;
-		gb_spal1[1] = (data & 0xC) >> 2;
-		gb_spal1[2] = (data & 0x30) >> 4;
-		gb_spal1[3] = (data & 0xC0) >> 6;
-		break;
-	}
-	gb_vid_regs[ offset ] = data;
-}
-
-WRITE8_HANDLER ( gbc_video_w )
-{
+WRITE8_HANDLER ( gbc_io2_w ) {
 	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
 	static UINT16 BP = 0, OP = 0;
 
-	switch( offset )
-	{
-		case 0x00:	/* LCDC - LCD Control */
-			gb_chrgen = GBC_VRAMMap[0] + ((data & 0x10) ? 0x0000 : 0x0800);
-			gbc_chrgen = GBC_VRAMMap[1] + ((data & 0x10) ? 0x0000 : 0x0800);
-			gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-			gb_bgdtab = GBC_VRAMMap[0] + ((data & 0x08) ? 0x1C00 : 0x1800);
-			gbc_bgdtab = GBC_VRAMMap[1] + ((data & 0x08) ? 0x1C00 : 0x1800);
-			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
-			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
-			/* if LCD controller is switched off, set STAT to 00 */
-			if ( ! ( data & 0x80 ) ) {
-				LCDSTAT &= ~0x03;
-			}
-			break;
-		case 0x07:	/* BGP - GB background palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[1] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[2] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[3] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
-		case 0x08:	/* OBP0 - GB Object 0 palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[4] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[5] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[6] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[7] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
-		case 0x09:	/* OBP1 - GB Object 1 palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[8] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[9] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[10] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[11] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
+	switch( offset ) {
 		case 0x0D:	/* KEY1 - Prepare speed switch */
 			if( data & 0x1 )
 			{
@@ -1745,70 +1524,11 @@ WRITE8_HANDLER ( gbc_video_w )
 			}
 			break;
 		case 0x0F:	/* VBK - VRAM bank select */
-			GBC_VRAMBank = data & 0x1;
-			memory_set_bankptr (4, GBC_VRAMMap[GBC_VRAMBank]);
+			gbc_vram_bank = GBC_VRAMMap[ data & 0x01 ];
+			memory_set_bankptr( 4, gbc_vram_bank );
 			data |= 0xFE;
 			break;
-		case 0x11:	/* HDMA1 - HBL General DMA - Source High */
-			break;
-		case 0x12:	/* HDMA2 - HBL General DMA - Source Low */
-			data &= 0xF0;
-			break;
-		case 0x13:	/* HDMA3 - HBL General DMA - Destination High */
-			data &= 0x1F;
-			break;
-		case 0x14:	/* HDMA4 - HBL General DMA - Destination Low */
-			data &= 0xF0;
-			break;
-		case 0x15:	/* HDMA5 - HBL General DMA - Mode, Length */
-			if( !(data & 0x80) )
-			{
-				if( gbc_hdma_enabled )
-				{
-					gbc_hdma_enabled = 0;
-					data = HDMA5 & 0x80;
-				}
-				else
-				{
-					/* General DMA */
-					gbc_hdma( ((data & 0x7F) + 1) * 0x10 );
-					lcd_time -= ((KEY1 & 0x80)?110:220) + (((data & 0x7F) + 1) * 7.68);
-					data = 0xff;
-				}
-			}
-			else
-			{
-				/* H-Blank DMA */
-				gbc_hdma_enabled = 1;
-				data &= 0x7f;
-			}
-			break;
 		case 0x16:	/* RP - Infrared port */
-		case 0x28:	/* BCPS - Background palette specification */
-			break;
-		case 0x29:	/* BCPD - background palette data */
-			if( GBCBCPS & 0x1 )
-				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((UINT16)(data & 0x7f) << 8) | BP;
-			else
-				BP = data;
-			if( GBCBCPS & 0x80 )
-			{
-				GBCBCPS++;
-				GBCBCPS &= 0xBF;
-			}
-			break;
-		case 0x2A:	/* OCPS - Object palette specification */
-			break;
-		case 0x2B:	/* OCPD - Object palette data */
-			if( GBCOCPS & 0x1 )
-				Machine->remapped_colortable[GBC_PAL_OBJ_OFFSET + ((GBCOCPS & 0x3e) >> 1)] = ((UINT16)(data & 0x7f) << 8) | OP;
-			else
-				OP = data;
-			if( GBCOCPS & 0x80 )
-			{
-				GBCOCPS++;
-				GBCOCPS &= 0xBF;
-			}
 			break;
 		case 0x30:	/* SVBK - RAM bank select */
 			GBC_RAMBank = data & 0x7;
@@ -1836,11 +1556,12 @@ WRITE8_HANDLER ( gbc_video_w )
 			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
 			return;
 		default:
-			/* we didn't handle the write, so pass it to the GB handler */
-			gb_video_w( offset, data );
+			/* we didn't handle the write, so pass it to the gbc video handler */
+			gbc_video_w( offset, data );
 			return;
 	}
 
+	/* Abusing gb_vid_regs a bit here... */
 	gb_vid_regs[offset] = data;
 }
 
@@ -1855,8 +1576,7 @@ MACHINE_RESET( megaduck )
 	/* We may have to add some more stuff here, if not then it can be merged back into gb */
 	gb_init();
 
-	/* set the scanline refresh function */
-	refresh_scanline = gb_refresh_scanline;
+	gb_video_init();
 }
 
 /* Map megaduck video related area on to regular Gameboy video area */

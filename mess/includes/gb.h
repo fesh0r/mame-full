@@ -74,19 +74,13 @@ extern UINT8 gb_vid_regs[];
 #define WNDPOSY gb_vid_regs[0xA] /* Window Y position 						 */
 #define WNDPOSX gb_vid_regs[0xB] /* Window X position 						 */
 
-#define OAM						0xFE00
 #define VRAM					0x8000
 #define DMG_FRAMES_PER_SECOND	59.732155
 #define SGB_FRAMES_PER_SECOND	61.17
 
-EXTERN UINT8 gb_bpal[4];				/* Background palette			*/
-EXTERN UINT8 gb_spal0[4];				/* Sprite 0 palette				*/
-EXTERN UINT8 gb_spal1[4];				/* Sprite 1 palette				*/
 EXTERN UINT8 *gb_chrgen;				/* Character generator			*/
 EXTERN UINT8 *gb_bgdtab;				/* Background character table	*/
 EXTERN UINT8 *gb_wndtab;				/* Window character table		*/
-EXTERN UINT8 *gb_oam;
-EXTERN UINT8 *gb_vram;
 EXTERN unsigned int gb_divcount;
 EXTERN unsigned int gb_timer_count;
 EXTERN UINT8 gb_timer_shift;
@@ -94,40 +88,48 @@ EXTERN UINT8 gb_tile_no_mod;
 EXTERN UINT8 gb_speed_change_pending;			/* 1 - change pending */
 EXTERN UINT8 gb_speed;					/* 1 - low speed, 2 - hi speed */
 
-extern WRITE8_HANDLER( gb_rom_bank_select_mbc1 );
-extern WRITE8_HANDLER( gb_ram_bank_select_mbc1 );
-extern WRITE8_HANDLER( gb_mem_mode_select_mbc1 );
-extern WRITE8_HANDLER( gb_rom_bank_select_mbc2 );
-extern WRITE8_HANDLER( gb_rom_bank_select_mbc3 );
-extern WRITE8_HANDLER( gb_ram_bank_select_mbc3 );
-extern WRITE8_HANDLER( gb_mem_mode_select_mbc3 );
-extern WRITE8_HANDLER( gb_rom_bank_select_mbc5 );
-extern WRITE8_HANDLER( gb_ram_bank_select_mbc5 );
-extern WRITE8_HANDLER( gb_ram_enable );
-extern WRITE8_HANDLER( gb_io_w );
-extern  READ8_HANDLER ( gb_io_r );
-extern WRITE8_HANDLER( gb_bios_w );
-extern READ8_HANDLER( gb_ie_r );
-extern WRITE8_HANDLER( gb_ie_w );
-extern DEVICE_INIT(gb_cart);
-extern DEVICE_LOAD(gb_cart);
-extern void gb_scanline_interrupt(void);
-extern void gb_scanline_interrupt_set_mode0(int param);
-extern void gb_scanline_interrupt_set_mode3(int param);
-extern WRITE8_HANDLER( gb_oam_w );
-extern WRITE8_HANDLER( gb_vram_w );
-
-extern MACHINE_START( gb );
-extern MACHINE_RESET( gb );
-
-extern MACHINE_RESET( gbpocket );
+WRITE8_HANDLER( gb_rom_bank_select_mbc1 );
+WRITE8_HANDLER( gb_ram_bank_select_mbc1 );
+WRITE8_HANDLER( gb_mem_mode_select_mbc1 );
+WRITE8_HANDLER( gb_rom_bank_select_mbc2 );
+WRITE8_HANDLER( gb_rom_bank_select_mbc3 );
+WRITE8_HANDLER( gb_ram_bank_select_mbc3 );
+WRITE8_HANDLER( gb_mem_mode_select_mbc3 );
+WRITE8_HANDLER( gb_rom_bank_select_mbc5 );
+WRITE8_HANDLER( gb_ram_bank_select_mbc5 );
+WRITE8_HANDLER( gb_ram_enable );
+WRITE8_HANDLER( gb_io_w );
+READ8_HANDLER ( gb_io_r );
+WRITE8_HANDLER( gb_bios_w );
+READ8_HANDLER( gb_ie_r );
+WRITE8_HANDLER( gb_ie_w );
+DEVICE_INIT(gb_cart);
+DEVICE_LOAD(gb_cart);
+void gb_scanline_interrupt(void);
+WRITE8_HANDLER ( gbc_io2_w );
+MACHINE_START( gb );
+MACHINE_RESET( gb );
+MACHINE_RESET( gbpocket );
+WRITE8_HANDLER( gb_oam_w );
+WRITE8_HANDLER( gb_vram_w );
+WRITE8_HANDLER( gbc_vram_w );
 
 /* from vidhrdw/gb.c */
-extern READ8_HANDLER( gb_video_r );
-extern WRITE8_HANDLER( gb_video_w );
-extern VIDEO_START( gb );
-extern VIDEO_UPDATE( gb );
-void gb_refresh_scanline(void);
+extern UINT8 *gb_oam;
+extern UINT8 *gb_vram;
+
+READ8_HANDLER( gb_video_r );
+WRITE8_HANDLER( gb_video_w );
+int gb_video_oam_locked( void );
+int gb_video_vram_locked( void );
+VIDEO_START( gb );
+VIDEO_UPDATE( gb );
+void gb_video_scanline_interrupt( void );
+void gb_refresh_scanline( void );
+void gb_video_init( void );
+void sgb_video_init( void );
+void gbc_video_init( void );
+
 EXTERN double lcd_time;
 /* Custom Sound Interface */
 extern READ8_HANDLER( gb_sound_r );
@@ -170,18 +172,18 @@ void sgb_refresh_border(void);
 #define GBC_PAL_OBJ_OFFSET	32		/* Object palette offset				*/
 
 extern UINT8 *GBC_VRAMMap[2];		/* Addressses of GBC video RAM banks	*/
-extern UINT8 GBC_VRAMBank;			/* VRAM bank currently used				*/
 EXTERN UINT8 *gbc_chrgen;			/* Character generator					*/
 EXTERN UINT8 *gbc_bgdtab;			/* Background character table			*/
 EXTERN UINT8 *gbc_wndtab;			/* Window character table				*/
 EXTERN UINT8 gbc_mode;				/* is the GBC in mono/colour mode?		*/
 EXTERN UINT8 gbc_hdma_enabled;		/* is HDMA enabled?						*/
 
-extern MACHINE_RESET( gbc );
-extern WRITE8_HANDLER ( gbc_video_w );
+MACHINE_RESET( gbc );
 extern void gbc_hdma(UINT16 length);
 /* from vidhrdw/gb.c */
 void gbc_refresh_scanline(void);
+WRITE8_HANDLER ( gbc_video_w );
+
 
 /* -- Megaduck specific -- */
 extern DEVICE_LOAD(megaduck_cart);
