@@ -82,11 +82,23 @@ static void ram_init(const game_driver *gamedrv)
 
 
 
-/*****************************************************************************
- *  --Initialise Devices--
- *  Call the init() functions for all devices of a driver
- *  ith all user specified image names.
- ****************************************************************************/
+/*-------------------------------------------------
+    devices_exit - tear down devices for a specific
+	running_machine
+-------------------------------------------------*/
+
+static void devices_exit(running_machine *machine)
+{
+	/* need to clear this out to prevent confusion within the UI */
+	machine->devices = NULL;
+}
+
+
+
+/*-------------------------------------------------
+    devices_init - initialize devices for a specific
+	running_machine
+-------------------------------------------------*/
 
 void devices_init(running_machine *machine)
 {
@@ -117,9 +129,10 @@ void devices_init(running_machine *machine)
 	inputx_init();
 
 	/* allocate the IODevice struct */
-	machine->devices = devices_allocate(Machine->gamedrv);
+	machine->devices = devices_allocate(machine->gamedrv);
 	if (!machine->devices)
 		fatalerror_exitcode(MAMERR_DEVICE, "devices_allocate() failed");
+	add_exit_callback(machine, devices_exit);
 
 	/* Check that the driver supports all devices requested (options struct)*/
 	for( i = 0; i < options.image_count; i++ )
@@ -141,7 +154,7 @@ void devices_init(running_machine *machine)
 
 	/* count number of devices, and record a list of allocated slots */
 	devcount = 0;
-	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	for (dev = machine->devices; dev->type < IO_COUNT; dev++)
 		devcount++;
 	if (devcount > 0)
 	{
@@ -168,14 +181,14 @@ void devices_init(running_machine *machine)
 
 		image = NULL;
 
-		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+		for (dev = machine->devices; dev->type < IO_COUNT; dev++)
 		{
 			if ((dev->type == devtype) && (!devtag || !strcmp(dev->tag, devtag)))
 			{
 				if (devindex >= 0)
 					id = devindex;
 				else
-					id = allocated_slots[dev - Machine->devices]++;
+					id = allocated_slots[dev - machine->devices]++;
 
 				/* try to load this image */
 				image = image_from_device_and_index(dev, id);
@@ -200,7 +213,7 @@ void devices_init(running_machine *machine)
 	}
 
 	/* make sure that any required devices have been allocated */
-	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	for (dev = machine->devices; dev->type < IO_COUNT; dev++)
 	{
 		if (dev->must_be_loaded)
 		{

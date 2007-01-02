@@ -45,6 +45,8 @@ Source Changes:
 - The core is based on MAME 0.111u1.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- Fixed certain crashes that occured on hard reset.  (bug #988) [Nate Woods]
+
 
 
 0.111
