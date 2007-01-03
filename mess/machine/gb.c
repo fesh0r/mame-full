@@ -1575,10 +1575,9 @@ MACHINE_RESET( megaduck )
 	gb_video_init();
 }
 
-/* Map megaduck video related area on to regular Gameboy video area */
-/* Swap two bits, if they're set */
+/*
+ Map megaduck video related area on to regular Gameboy video area
 
-/**************
  Different LCDC register
 
  GameBoy	MegaDuck
@@ -1590,6 +1589,26 @@ MACHINE_RESET( megaduck )
  5			5	- Window Display: 0 - Off, 1 - On
  6			3	- Window Tile Map Display Select: 0 - 9800, 1 - 9C00
  7			7	- LCD Operation
+
+ Different locations of the video registers:
+ Register      GameBoy    MegaDuck
+ LCDC          FF40       FF10  (See different bit order above)
+ STAT          FF41       FF11
+ SCY           FF42       FF12
+ SCX           FF43       FF13
+ LY            FF44       FF18
+ LYC           FF45       FF19
+ DMA           FF46       FF1A
+ BGP           FF47       FF1B
+ OBP0          FF48       FF14
+ OBP1          FF49       FF15
+ WY            FF4A       FF16
+ WX            FF4B       FF17
+ Unused        FF4C       FF4C (?)
+ Unused        FF4D       FF4D (?)
+ Unused        FF4E       FF4E (?)
+ Unused        FF4F       FF4F (?)
+
  **************/
 
  READ8_HANDLER( megaduck_video_r )
@@ -1599,9 +1618,9 @@ MACHINE_RESET( megaduck )
 	if ( (offset & 0x0C) && ((offset & 0x0C) ^ 0x0C) ) {
 		offset ^= 0x0C;
 	}
+	data = gb_video_r( offset );
 	if ( offset )
-		return gb_vid_regs[offset];
-	data = gb_vid_regs[offset];
+		return data;
 	return (data&0xB1) | ((data&0x40)>>3) | ((data&0x0C)>>1) | ((data&0x02)<<5);
 }
 
@@ -1616,32 +1635,15 @@ WRITE8_HANDLER ( megaduck_video_w )
 	gb_video_w(offset, data );
 }
 
-WRITE8_HANDLER( megaduck_sound_w1 )
-{
-	switch(offset) {
-		case 0x00:	gb_sound_w( 0, data );	break;
-		case 0x01:	gb_sound_w( 2, data );	break;
-		case 0x02:	gb_sound_w( 1, data );	break;
-		case 0x03:	gb_sound_w( 3, data );	break;
-		case 0x04:	gb_sound_w( 4, data );	break;
-		case 0x05:	gb_sound_w( 6, data );	break;
-		case 0x07:	gb_sound_w( 7, data );	break;
-		case 0x08:	gb_sound_w( 8, data );	break;
-		case 0x09:	gb_sound_w( 9, data );	break;
-		case 0x06:
-		case 0x0A:
-		case 0x0B:
-		case 0x0C:
-		case 0x0D:
-		case 0x0E:
-		case 0x0F:
-			break;
-	}
-}
+/* Map megaduck audio offset to gameboy audio offsets */
 
 static UINT8 megaduck_sound_offsets[16] = { 0, 2, 1, 3, 4, 6, 5, 7, 8, 9, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
-/* this one needs some work */
+WRITE8_HANDLER( megaduck_sound_w1 )
+{
+	gb_sound_w( megaduck_sound_offsets[offset], data );
+}
+
  READ8_HANDLER( megaduck_sound_r1 )
 {
 	return gb_sound_r( megaduck_sound_offsets[offset] );
