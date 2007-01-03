@@ -73,6 +73,16 @@ static ADDRESS_MAP_START(cdtv_mem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE(0xf00000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* CDTV & System ROM */
 ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START(a1000_mem, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x000000, 0x03ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
+	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
+	AM_RANGE(0xdf0000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)	/* Custom Chips */
+	AM_RANGE(0xe80000, 0xe8ffff) AM_READWRITE(amiga_autoconfig_r, amiga_autoconfig_w)
+	AM_RANGE(0xf80000, 0xfbffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* Bootstrap ROM */
+	AM_RANGE(0xfc0000, 0xffffff) AM_RAMBANK(2)	/* Kickstart RAM */
+ADDRESS_MAP_END
+
 /***************************************************************************
   Inputs
 ***************************************************************************/
@@ -88,8 +98,8 @@ INPUT_PORTS_START( amiga )
 	
 	PORT_START_TAG("CIA0PORTA")
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 
 	PORT_START_TAG("JOY0DAT")
 	PORT_BIT( 0x0303, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(amiga_joystick_convert, "P1JOY")
@@ -101,9 +111,9 @@ INPUT_PORTS_START( amiga )
 
 	PORT_START_TAG("POTGO")
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0xaaff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("P1JOY")
@@ -178,6 +188,25 @@ static MACHINE_DRIVER_START( cdtv )
 	MDRV_IMPORT_FROM(ntsc)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(cdtv_mem, 0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( a1000 )
+	MDRV_IMPORT_FROM(ntsc)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(a1000_mem, 0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pal )
+	MDRV_IMPORT_FROM(ntsc)
+
+	/* adjust for PAL specs */
+	MDRV_CPU_REPLACE("main", M68000, 7093790)
+	MDRV_CPU_VBLANK_INT(amiga_scanline_callback, 312)
+
+	MDRV_FRAMES_PER_SECOND(50)
+
+	MDRV_SCREEN_SIZE(512*2, 312)
+	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 300+8-1)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -312,7 +341,7 @@ SYSTEM_BIOS_START(amiga)
 	SYSTEM_BIOS_ADD(3, "kick31",  "Kickstart 3.1 (40.63)")
 SYSTEM_BIOS_END
 
-ROM_START(amiga)
+ROM_START(a500n)
 	ROM_REGION16_BE(0x080000, REGION_USER1, 0)
 	ROMX_LOAD("315093.01", 0x000000, 0x040000, CRC(a6ce1636) SHA1(11f9e62cf299f72184835b7b2a70a16333fc0d88), ROM_GROUPWORD | ROM_BIOS(2))
 	ROMX_LOAD("315093.02", 0x000000, 0x040000, CRC(c4f0f55f) SHA1(891e9a547772fe0c6c19b610baf8bc4ea7fcb785), ROM_GROUPWORD | ROM_BIOS(1))
@@ -324,6 +353,25 @@ ROM_START(amiga)
 	ROM_REGION16_BE(0x080000, REGION_USER2, 0)
 	ROM_LOAD_OPTIONAL("ar1.bin", 0x000000, 0x010000, CRC(f82c4258) SHA1(843b433b2c56640e045d5fdc854dc6b1a4964e7c))
 #endif
+ROM_END
+
+ROM_START(a500p)
+	ROM_REGION16_BE(0x080000, REGION_USER1, 0)
+	ROMX_LOAD("315093.01", 0x000000, 0x040000, CRC(a6ce1636) SHA1(11f9e62cf299f72184835b7b2a70a16333fc0d88), ROM_GROUPWORD | ROM_BIOS(2))
+	ROMX_LOAD("315093.02", 0x000000, 0x040000, CRC(c4f0f55f) SHA1(891e9a547772fe0c6c19b610baf8bc4ea7fcb785), ROM_GROUPWORD | ROM_BIOS(1))
+	ROM_COPY(REGION_USER1, 0x000000, 0x040000, 0x040000)
+	ROMX_LOAD("390979.01", 0x000000, 0x080000, CRC(c3bdb240) SHA1(c5839f5cb98a7a8947065c3ed2f14f5f42e334a1), ROM_GROUPWORD | ROM_BIOS(3))	/* identical to 363968.01 */
+	ROMX_LOAD("kick40063", 0x000000, 0x080000, CRC(fc24ae0d) SHA1(3b7f1493b27e212830f989f26ca76c02049f09ca), ROM_GROUPWORD | ROM_BIOS(4))	/* part number? */
+
+#if AMIGA_ACTION_REPLAY_1
+	ROM_REGION16_BE(0x080000, REGION_USER2, 0)
+	ROM_LOAD_OPTIONAL("ar1.bin", 0x000000, 0x010000, CRC(f82c4258) SHA1(843b433b2c56640e045d5fdc854dc6b1a4964e7c))
+#endif
+ROM_END
+
+ROM_START(a1000n)
+	ROM_REGION16_BE(0x080000, REGION_USER1, 0)
+	ROMX_LOAD("a1000.bin", 0x000000, 0x002000, CRC(62f11c04) SHA1(c87f9fada4ee4e69f3cca0c36193be822b9f5fe6), ROM_GROUPWORD)
 ROM_END
 
 ROM_START(cdtv)
@@ -364,5 +412,7 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*     YEAR  NAME      PARENT   BIOS     COMPAT   MACHINE  INPUT    INIT     CONFIG   COMPANY                             FULLNAME             FLAGS */
-COMPB( 1987, amiga,    0,       amiga,   0,       ntsc,    amiga,   amiga,   amiga,   "Commodore Business Machines Co.",  "Amiga 500 (NTSC)",  GAME_NOT_WORKING )
-COMP(  1991, cdtv,     0,                0,       cdtv,    amiga,   cdtv,    cdtv,    "Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )
+COMP(  1985, a1000n,   0,                0,       a1000,   amiga,   amiga,   amiga,   "Commodore Business Machines Co.",  "Commodore Amiga 1000 (NTSC-OCS)", GAME_COMPUTER | GAME_NOT_WORKING )
+COMPB( 1987, a500n,    0,       amiga,   0,       ntsc,    amiga,   amiga,   amiga,   "Commodore Business Machines Co.",  "Commodore Amiga 500 (NTSC-OCS)", GAME_COMPUTER | GAME_IMPERFECT_GRAPHICS )
+COMPB( 1987, a500p,    a500n,   amiga,   0,       pal,     amiga,   amiga,   amiga,   "Commodore Business Machines Co.",  "Commodore Amiga 500 (PAL-OCS)", GAME_COMPUTER | GAME_IMPERFECT_GRAPHICS )
+COMP(  1991, cdtv,     0,                0,       cdtv,    amiga,   cdtv,    cdtv,    "Commodore Business Machines Co.",  "Commodore Amiga CDTV (NTSC)", GAME_NOT_WORKING )

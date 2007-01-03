@@ -60,7 +60,6 @@ void (*refresh_scanline)(void);
 int gb_select_sprites( void ) {
 	int	i, yindex, line, height;
 	UINT8	*oam = gb_oam + 39 * 4;
-	UINT8	*vram = gb_vram;
 
 	gb_lcd.sprCount = 0;
 

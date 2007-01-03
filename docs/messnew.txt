@@ -2,7 +2,9 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Amiga 500 NTSC (former "amiga" driver) [Ernesto Corvi]
+- Amiga 500 PAL [Ernesto Corvi]
+- Amiga 1000 NTSC [Ernesto Corvi]
 
 
 

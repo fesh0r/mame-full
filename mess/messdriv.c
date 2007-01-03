@@ -348,7 +348,9 @@ TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)					*/
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 							*/
 TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 
-	DRIVER( amiga ) 	/* Commodore Amiga									*/
+	DRIVER( a500n ) 	/* Commodore Amiga 500 - NTSC						*/
+	DRIVER( a500p ) 	/* Commodore Amiga 500 - PAL						*/
+	DRIVER( a1000n ) 	/* Commodore Amiga 1000 - NTSC						*/
 	DRIVER( cdtv )
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)			*/

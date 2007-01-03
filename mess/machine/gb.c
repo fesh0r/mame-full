@@ -94,9 +94,7 @@ static void gb_init_regs(void)
 
 static void gb_init(void)
 {
-	int ii;
-
-        gb_vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0x8000 );
+	gb_vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0x8000 );
 
 	/* Initialize the memory banks */
 	MBC1Mode = 0;
@@ -1506,10 +1504,8 @@ void gbc_hdma(UINT16 length)
 	}
 }
 
-WRITE8_HANDLER ( gbc_io2_w ) {
-	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
-	static UINT16 BP = 0, OP = 0;
-
+WRITE8_HANDLER ( gbc_io2_w )
+{
 	switch( offset ) {
 		case 0x0D:	/* KEY1 - Prepare speed switch */
 			if( data & 0x1 )

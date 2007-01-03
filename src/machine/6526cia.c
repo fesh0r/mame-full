@@ -340,13 +340,11 @@ static void cia_timer_update(cia_timer *timer, UINT32 new_count)
 static void cia_timer_bump(cia_state *cia, int timer)
 {
 	cia_timer_update(&cia->timer[timer], ~0);
-	if (cia->timer[timer].count > 0x00)
-	{
-		if (cia->timer[timer].count == 0x00)
-			cia_timer_underflow(cia, timer);
-		else
-			cia_timer_update(&cia->timer[timer], cia->timer[timer].count - 1);
-	}
+
+	if (cia->timer[timer].count == 0x00)
+		cia_timer_underflow(cia, timer);
+	else
+		cia_timer_update(&cia->timer[timer], cia->timer[timer].count - 1);
 }
 
 
