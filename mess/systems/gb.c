@@ -389,7 +389,7 @@ static MACHINE_DRIVER_START( megaduck )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP( megaduck_map, 0 )
-	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154)	/* 1 int each scanline ! */
 	MDRV_CPU_CONFIG(megaduck_cpu_reset)
 
 	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
