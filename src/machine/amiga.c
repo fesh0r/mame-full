@@ -1072,10 +1072,12 @@ static void custom_reset(void)
 		case ANGUS_CHIP_RAM_MASK:
 		case FAT_ANGUS_CHIP_RAM_MASK:
 			CUSTOM_REG(REG_VPOSR) = 0x10 << 8;
+			CUSTOM_REG(REG_DENISEID) = 0xFFFF;
 			break;
 
 		case ECS_CHIP_RAM_MASK:
 			CUSTOM_REG(REG_VPOSR) = 0x30 << 8;
+			CUSTOM_REG(REG_DENISEID) = 0xFFFC;
 			break;
 	}
 }
@@ -1155,6 +1157,10 @@ READ16_HANDLER( amiga_custom_r )
 			temp = CUSTOM_REG(REG_CLXDAT);
 			CUSTOM_REG(REG_CLXDAT) = 0;
 			return temp;
+		
+		case REG_DENISEID:
+			return CUSTOM_REG(REG_DENISEID);
+			break;
 	}
 
 #if LOG_CUSTOM
