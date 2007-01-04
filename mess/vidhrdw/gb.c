@@ -239,7 +239,7 @@ void gb_refresh_scanline (void)
 		}
 		gb_lcd.window_enabled = 1;
 		/* this also seems to be influenced by the scrolly register and the time window was enabled */
-		bgline = (gb_lcd.window_start_line + SCROLLY + gb_lcd.window_lines_drawn) & 0xFF;
+		bgline = (gb_lcd.window_start_line - WNDPOSY + SCROLLY + gb_lcd.window_lines_drawn) & 0xFF;
 		xpos = WNDPOSX - 7;		/* Window is offset by 7 pixels */
 		if (xpos < 0)
 			xpos = 0;
