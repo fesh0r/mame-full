@@ -1578,21 +1578,9 @@ MACHINE_RESET( megaduck )
 /*
  Map megaduck video related area on to regular Gameboy video area
 
- Different LCDC register
-
- GameBoy	MegaDuck
- 0			0	- BG & Window Display : 0 - Off, 1 - On
- 1			6	- OBJ Display: 0 - Off, 1 - On
- 2			1	- OBJ Size: 0 - 8x8, 1 - 8x16
- 3			2	- BG Tile Map Display: 0 - 9800, 1 - 9C00
- 4			4	- BG & Window Tile Data Select: 0 - 8800, 1 - 8000
- 5			5	- Window Display: 0 - Off, 1 - On
- 6			3	- Window Tile Map Display Select: 0 - 9800, 1 - 9C00
- 7			7	- LCD Operation
-
  Different locations of the video registers:
  Register      GameBoy    MegaDuck
- LCDC          FF40       FF10  (See different bit order above)
+ LCDC          FF40       FF10  (See different bit order below)
  STAT          FF41       FF11
  SCY           FF42       FF12
  SCX           FF43       FF13
@@ -1609,6 +1597,18 @@ MACHINE_RESET( megaduck )
  Unused        FF4E       FF4E (?)
  Unused        FF4F       FF4F (?)
 
+ Different LCDC register
+
+ GameBoy        MegaDuck
+ 0                      6       - BG & Window Display : 0 - Off, 1 - On
+ 1                      0       - OBJ Display: 0 - Off, 1 - On
+ 2                      1       - OBJ Size: 0 - 8x8, 1 - 8x16
+ 3                      2       - BG Tile Map Display: 0 - 9800, 1 - 9C00
+ 4                      4       - BG & Window Tile Data Select: 0 - 8800, 1 - 8000
+ 5                      5       - Window Display: 0 - Off, 1 - On
+ 6                      3       - Window Tile Map Display Select: 0 - 9800, 1 - 9C00
+ 7                      7       - LCD Operation
+
  **************/
 
  READ8_HANDLER( megaduck_video_r )
@@ -1621,13 +1621,13 @@ MACHINE_RESET( megaduck )
 	data = gb_video_r( offset );
 	if ( offset )
 		return data;
-	return (data&0xB1) | ((data&0x40)>>3) | ((data&0x0C)>>1) | ((data&0x02)<<5);
+	return BITSWAP8(data,7,0,5,4,6,3,2,1);
 }
 
 WRITE8_HANDLER ( megaduck_video_w )
 {
 	if ( !offset ) {
-		data = (data&0xB1) | ((data&0x08)<<3) | ((data&0x06)<<1) | ((data&0x40)>>5);
+		data = BITSWAP8(data,7,3,5,4,2,1,0,6);
 	}
 	if ( (offset & 0x0C) && ((offset & 0x0C) ^ 0x0C) ) {
 		offset ^= 0x0C;
