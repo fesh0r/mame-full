@@ -264,7 +264,7 @@ MACHINE_RESET( gbc )
 static void gb_machine_stop(running_machine *machine)
 {
 	/* Don't save if there was no battery */
-	if( !(CartType & BATTERY) )
+	if( !(CartType & BATTERY) || ! RAMBanks )
 		return;
 
 	/* NOTE: The reason we save the carts RAM this way instead of using MAME's
@@ -1440,7 +1440,7 @@ DEVICE_LOAD(gb_cart)
 	}
 
 	/* Load the saved RAM if this cart has a battery */
-	if( CartType & BATTERY )
+	if( CartType & BATTERY && RAMBanks )
 	{
 		image_battery_load( image, gb_cart_ram, RAMBanks * 0x2000 );
 	}
