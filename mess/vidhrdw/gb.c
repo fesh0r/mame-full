@@ -39,8 +39,6 @@ struct layer_struct {
 
 struct gb_lcd_struct {
 	int	window_lines_drawn;
-	int	window_enabled;
-	int	window_start_line;
 
 	int	lcd_warming_up;		/* Has the video hardware just been switched on? */
 	int	lcd_on;			/* Is the video hardware on? */
@@ -191,7 +189,6 @@ void gb_refresh_scanline (void)
 	/* Take care of some initializations */
 	if ( gb_lcd.current_line == 0x00 ) {
 		gb_lcd.window_lines_drawn = 0;
-		gb_lcd.window_enabled = 0;
 	}
 
 	/* if background or screen disabled clear line */
@@ -233,13 +230,7 @@ void gb_refresh_scanline (void)
 	{
 		int bgline, xpos;
 
-		/* Check if window was just enabled */
-		if ( ! gb_lcd.window_enabled ) {
-			gb_lcd.window_start_line = gb_lcd.current_line;
-		}
-		gb_lcd.window_enabled = 1;
-		/* this also seems to be influenced by the scrolly register and the time window was enabled */
-		bgline = (gb_lcd.window_start_line - WNDPOSY + SCROLLY + gb_lcd.window_lines_drawn) & 0xFF;
+		bgline = gb_lcd.window_lines_drawn;
 		xpos = WNDPOSX - 7;		/* Window is offset by 7 pixels */
 		if (xpos < 0)
 			xpos = 0;
@@ -252,8 +243,6 @@ void gb_refresh_scanline (void)
 		layer[1].xstart = xpos;
 		layer[1].xend = 160 - xpos;
 		layer[0].xend = xpos;
-	} else {
-		gb_lcd.window_enabled = 0;
 	}
 
 	while (l < 2)
