@@ -350,6 +350,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 		{
 			/* Select the upper bits of the ROMMask */
 			ROMBank |= data << 5;
+			ROMBank &= ROMMask;
 			memory_set_bankptr (1, ROMMap[ROMBank] );
 			return;
 		}
