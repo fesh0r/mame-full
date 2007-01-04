@@ -83,6 +83,8 @@ When the line counter is changed it gets checked against the lyc register.
 #include "vidhrdw/generic.h"
 #include "includes/gb.h"
 #include "devices/cartslot.h"
+#include "rendlay.h"
+#include "gb.lh"
 
 /* Initial value of the cpu registers (hacks until we get bios dumps) */
 static UINT16 sgb_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };    /* Super GameBoy                    */
@@ -290,10 +292,10 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_DEFAULT_LAYOUT(layout_gb)
 //	MDRV_SCREEN_SIZE(20*8, 18*8)
 	MDRV_SCREEN_SIZE( 458, 154 )
 	MDRV_VISIBLE_AREA(0*8, 20*8-1, 0*8, 18*8-1)
-	/*MDRV_ASPECT_RATIO(10, 9)*/	/* LCD with square pixels */
 	MDRV_GFXDECODE(gb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(4)
@@ -317,9 +319,9 @@ static MACHINE_DRIVER_START( supergb )
 
 	MDRV_MACHINE_RESET( sgb )
 
+	MDRV_DEFAULT_LAYOUT(layout_horizont)	/* runs on a TV, not an LCD */
 	MDRV_SCREEN_SIZE(32*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
-	/*MDRV_ASPECT_RATIO(4, 3)*/		/* runs on a TV, not an LCD */
 	MDRV_PALETTE_LENGTH(32768)
 	MDRV_COLORTABLE_LENGTH(8*16)	/* 8 palettes of 16 colours */
 	MDRV_PALETTE_INIT(sgb)
