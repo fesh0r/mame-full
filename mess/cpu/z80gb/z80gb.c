@@ -210,7 +210,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 					}
 					Regs.w.enable &= ~IME;
 					IFLAGS &= ~(1 << irqline);
-					ICycles += 12; /* RST cycles (16) + irq latency (2/3/4??) */
+					ICycles += 12; /* Taking an IRQ seems to take about 12 cycles */
 					Regs.w.SP -= 2;
 					mem_WriteWord (Regs.w.SP, Regs.w.PC);
 					Regs.w.PC = 0x40 + irqline * 8;
