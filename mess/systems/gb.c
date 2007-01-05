@@ -93,6 +93,7 @@ static UINT16 gbc_cpu_reset[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x010
 static UINT16 megaduck_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFE, 0x0000 };	/* Megaduck */
 
 static ADDRESS_MAP_START(gb_map, ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x00ff) AM_ROMBANK(5)					/* BIOS or ROM */
 	AM_RANGE(0x0100, 0x3fff) AM_ROMBANK(10)					/* ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)					/* 16k switched ROM bank */
@@ -114,6 +115,7 @@ static ADDRESS_MAP_START(gb_map, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(sgb_map, ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x3fff) AM_ROMBANK(5)					/* 16k fixed ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)					/* 16k switched ROM bank */
 	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)	/* 8k VRAM */
@@ -134,6 +136,7 @@ static ADDRESS_MAP_START(sgb_map, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x3fff) AM_ROMBANK(5)					/* 16k fixed ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)					/* 16k switched ROM bank */
 	AM_RANGE(0x8000, 0x9fff) AM_ROMBANK(4) AM_WRITE( gbc_vram_w )		/* 8k switched VRAM bank */
@@ -153,6 +156,7 @@ static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(megaduck_map, ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x3fff) AM_ROMBANK(10)						/* 16k switched ROM bank */
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)						/* 16k switched ROM bank */
 	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)		/* 8k VRAM */
