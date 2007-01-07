@@ -154,7 +154,12 @@ static struct messtest_testcase current_testcase;
 
 static char *assemble_software_path(const game_driver *gamedrv, const char *filename)
 {
-	return assemble_5_strings("software", PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, filename);
+	char *result;
+	if (osd_is_absolute_path(filename))
+		result = mame_strdup(filename);
+	else
+		result = assemble_5_strings("software", PATH_SEPARATOR, gamedrv->name, PATH_SEPARATOR, filename);
+	return result;
 }
 
 
