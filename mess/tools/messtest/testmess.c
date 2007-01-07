@@ -235,6 +235,34 @@ static void dump_screenshot(int write_file)
 
 
 
+static void messtest_output_error(void *param, const char *format, va_list argptr)
+{
+	char buffer[1024];
+	char *s;
+	int pos, nextpos;
+
+	vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), format, argptr);
+	
+	pos = 0;
+	while(buffer[pos] != '\0')
+	{
+		s = strchr(&buffer[pos], '\n');
+		if (s)
+		{
+			*s = '\0';
+			nextpos = s + 1 - buffer;
+		}
+		else
+		{
+			nextpos = pos + strlen(&buffer[pos]);
+		}
+		report_message(MSG_FAILURE, &buffer[pos]);
+		pos = nextpos;
+	}
+}
+
+
+
 static messtest_result_t run_test(int flags, struct messtest_results *results)
 {
 	int driver_num;
@@ -296,7 +324,7 @@ static messtest_result_t run_test(int flags, struct messtest_results *results)
 	/* perform the test */
 	report_message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();
-	mame_set_output_channel(OUTPUT_CHANNEL_ERROR, mame_null_output_callback, NULL, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_ERROR, messtest_output_error, NULL, NULL, NULL);
 	mame_set_output_channel(OUTPUT_CHANNEL_WARNING, mame_null_output_callback, NULL, NULL, NULL);
 	mame_set_output_channel(OUTPUT_CHANNEL_INFO, mame_null_output_callback, NULL, NULL, NULL);
 	mame_set_output_channel(OUTPUT_CHANNEL_DEBUG, mame_null_output_callback, NULL, NULL, NULL);
