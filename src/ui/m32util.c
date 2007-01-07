@@ -373,10 +373,10 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 
 			gameinfo->usesTrackball = FALSE;
 			gameinfo->usesLightGun = FALSE;
-			if (gamedrv->construct_ipt != NULL)
+			if (gamedrv->ipt != NULL)
 			{
 				begin_resource_tracking();
-				input_ports = input_port_allocate(gamedrv->construct_ipt, NULL);
+				input_ports = input_port_allocate(gamedrv->ipt, NULL);
 				while (1)
 				{
 					UINT32 type;

@@ -380,7 +380,6 @@ endif
 
 include src/cpu/cpu.mak
 include src/sound/sound.mak
-include mess/cpu/cpu.mak
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
@@ -441,7 +440,7 @@ $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE) -o $@
 
 # cli target
-$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
+$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/windows/main.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/windows/climain.o -o $@
 
@@ -470,11 +469,11 @@ jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-dat2html$(EXE): $(DAT2HTML_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
+dat2html$(EXE): $(DAT2HTML_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/restrack.o $(OBJ)/windows/strconv.o $(OSTOOLOBJS) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OSDBGOBJS)
+messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/restrack.o $(OBJ)/windows/strconv.o $(OSTOOLOBJS) $(OSDBGOBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 
@@ -489,12 +488,12 @@ wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSTOOLOBJS) \
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
+		$(OBJ)/windows/strconv.o				\
 		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\
-		$(OBJ)/mess/windows/parallel.o			\
-		$(OBJ)/mess/windows/strconv.o			
+		$(OBJ)/mess/windows/parallel.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition $(ZLIB) $(LIBS) -lwinmm -o $@
 

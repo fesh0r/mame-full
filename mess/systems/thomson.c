@@ -660,38 +660,38 @@ INPUT_PORTS_START ( to7_fconfig )
      PORT_CONFSETTING ( 0x04, "Network" )
 
      PORT_CONFNAME ( 0xf8, 0x08, "Network ID" )
-     PORT_CONFSETTING ( 0x00, "0 (Master)" );
-     PORT_CONFSETTING ( 0x08, "1" );
-     PORT_CONFSETTING ( 0x10, "2" );
-     PORT_CONFSETTING ( 0x18, "3" );
-     PORT_CONFSETTING ( 0x20, "4" );
-     PORT_CONFSETTING ( 0x28, "5" );
-     PORT_CONFSETTING ( 0x30, "6" );
-     PORT_CONFSETTING ( 0x38, "7" );
-     PORT_CONFSETTING ( 0x40, "8" );
-     PORT_CONFSETTING ( 0x48, "9" );
-     PORT_CONFSETTING ( 0x50, "10" );
-     PORT_CONFSETTING ( 0x58, "11" );
-     PORT_CONFSETTING ( 0x60, "12" );
-     PORT_CONFSETTING ( 0x68, "13" );
-     PORT_CONFSETTING ( 0x70, "14" );
-     PORT_CONFSETTING ( 0x78, "15" );
-     PORT_CONFSETTING ( 0x80, "16" );
-     PORT_CONFSETTING ( 0x88, "17" );
-     PORT_CONFSETTING ( 0x90, "18" );
-     PORT_CONFSETTING ( 0x98, "19" );
-     PORT_CONFSETTING ( 0xa0, "20" );
-     PORT_CONFSETTING ( 0xa8, "21" );
-     PORT_CONFSETTING ( 0xb0, "22" );
-     PORT_CONFSETTING ( 0xb8, "23" );
-     PORT_CONFSETTING ( 0xc0, "24" );
-     PORT_CONFSETTING ( 0xc8, "25" );
-     PORT_CONFSETTING ( 0xd0, "26" );
-     PORT_CONFSETTING ( 0xd8, "27" );
-     PORT_CONFSETTING ( 0xe0, "28" );
-     PORT_CONFSETTING ( 0xe8, "29" );
-     PORT_CONFSETTING ( 0xf0, "30" );
-     PORT_CONFSETTING ( 0xf8, "31" );
+     PORT_CONFSETTING ( 0x00, "0 (Master)" )
+     PORT_CONFSETTING ( 0x08, "1" )
+     PORT_CONFSETTING ( 0x10, "2" )
+     PORT_CONFSETTING ( 0x18, "3" )
+     PORT_CONFSETTING ( 0x20, "4" )
+     PORT_CONFSETTING ( 0x28, "5" )
+     PORT_CONFSETTING ( 0x30, "6" )
+     PORT_CONFSETTING ( 0x38, "7" )
+     PORT_CONFSETTING ( 0x40, "8" )
+     PORT_CONFSETTING ( 0x48, "9" )
+     PORT_CONFSETTING ( 0x50, "10" )
+     PORT_CONFSETTING ( 0x58, "11" )
+     PORT_CONFSETTING ( 0x60, "12" )
+     PORT_CONFSETTING ( 0x68, "13" )
+     PORT_CONFSETTING ( 0x70, "14" )
+     PORT_CONFSETTING ( 0x78, "15" )
+     PORT_CONFSETTING ( 0x80, "16" )
+     PORT_CONFSETTING ( 0x88, "17" )
+     PORT_CONFSETTING ( 0x90, "18" )
+     PORT_CONFSETTING ( 0x98, "19" )
+     PORT_CONFSETTING ( 0xa0, "20" )
+     PORT_CONFSETTING ( 0xa8, "21" )
+     PORT_CONFSETTING ( 0xb0, "22" )
+     PORT_CONFSETTING ( 0xb8, "23" )
+     PORT_CONFSETTING ( 0xc0, "24" )
+     PORT_CONFSETTING ( 0xc8, "25" )
+     PORT_CONFSETTING ( 0xd0, "26" )
+     PORT_CONFSETTING ( 0xd8, "27" )
+     PORT_CONFSETTING ( 0xe0, "28" )
+     PORT_CONFSETTING ( 0xe8, "29" )
+     PORT_CONFSETTING ( 0xf0, "30" )
+     PORT_CONFSETTING ( 0xf8, "31" )
 
 INPUT_PORTS_END
 

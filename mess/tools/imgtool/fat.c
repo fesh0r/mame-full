@@ -1148,7 +1148,7 @@ done:
 
 
 
-static void prepend_lfn_bytes(utf16_char_t *lfn_buf, size_t lfn_buflen, size_t *lfn_len,
+static void prepend_lfn_bytes(utf16_char *lfn_buf, size_t lfn_buflen, size_t *lfn_len,
 	const UINT8 *entry, int offset, int chars)
 {
 	UINT16 w;
@@ -1281,8 +1281,8 @@ static imgtoolerr_t fat_read_dirent(imgtool_partition *partition, fat_file *file
 	UINT8 entry[FAT_DIRENT_SIZE];
 	size_t bytes_read;
 	int i, j;
-	unicode_char_t ch;
-	utf16_char_t lfn_buf[512];
+	unicode_char ch;
+	utf16_char lfn_buf[512];
 	size_t lfn_len = 0;
 	int lfn_lastentry = 0;
 	UINT8 lfn_checksum = 0;
@@ -1409,11 +1409,11 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	UINT32 now;
 	size_t created_entry_len = FAT_DIRENT_SIZE;
 	size_t created_entry_pos = 0;
-	unicode_char_t ch;
+	unicode_char ch;
 	char last_short_char = ' ';
 	char short_char = '\0';
 	char cannonical_short_char;
-	utf16_char_t buf[UTF16_CHAR_MAX];
+	utf16_char buf[UTF16_CHAR_MAX];
 	int i, len;
 	int sfn_pos = 0;
 	sfn_disposition_t sfn_disposition = SFN_SUFFICIENT;

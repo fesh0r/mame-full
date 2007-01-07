@@ -58,15 +58,6 @@ int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
 	return rc;
 }
 
-void CLIB_DECL fatalerror(const char *text,...)
-{
-	va_list va;
-	va_start(va, text);
-	vfprintf(stderr, text, va);
-	va_end(va);
-	exit(-1);
-}
-
 void mame_printf_error(const char *format, ...)
 {
 }

@@ -24,7 +24,7 @@
 typedef struct _mess_input_code mess_input_code;
 struct _mess_input_code
 {
-	unicode_char_t ch;
+	unicode_char ch;
 	UINT32 port[NUM_SIMUL_KEYS];
 	const input_port_entry *ipt[NUM_SIMUL_KEYS];
 };
@@ -35,13 +35,13 @@ struct _key_buffer
 	int begin_pos;
 	int end_pos;
 	unsigned int status_keydown : 1;
-	unicode_char_t buffer[4096];
+	unicode_char buffer[4096];
 };
 
 typedef struct _char_info char_info;
 struct _char_info
 {
-	unicode_char_t ch;
+	unicode_char ch;
 	const char *name;
 	const char *alternate;	/* alternative string, in UTF-8 */
 };
@@ -310,12 +310,12 @@ static const char_info charinfo[] =
 
 ***************************************************************************/
 
-static const char_info *find_charinfo(unicode_char_t target_char)
+static const char_info *find_charinfo(unicode_char target_char)
 {
 	int low = 0;
 	int high = sizeof(charinfo) / sizeof(charinfo[0]);
 	int i;
-	unicode_char_t ch;
+	unicode_char ch;
 
 	/* perform a simple binary search to find the proper alternate */
 	while(high > low)
@@ -340,7 +340,7 @@ static const char_info *find_charinfo(unicode_char_t target_char)
 
 ***************************************************************************/
 
-static const char *charstr(unicode_char_t ch)
+static const char *charstr(unicode_char ch)
 {
 	static char buf[16];
 	const char *result = buf;
@@ -379,7 +379,7 @@ static int scan_keys(const input_port_entry *input_ports, mess_input_code *codes
 	const input_port_entry *ipt;
 	const input_port_entry *ipt_key = NULL;
 	UINT32 port = (UINT32) -1;
-	unicode_char_t code;
+	unicode_char code;
 
 	assert(keys < NUM_SIMUL_KEYS);
 
@@ -485,7 +485,7 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 	const input_port_entry *ipt;
 	int port_count, i, j;
 	int error = 0;
-	unicode_char_t last_char = 0;
+	unicode_char last_char = 0;
 	const char_info *ci;
 
 	if (gamedrv)
@@ -493,7 +493,7 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 		if (gamedrv->flags & GAME_COMPUTER)
 		{
 			/* allocate the input ports */
-			*memory = input_port_allocate(gamedrv->construct_ipt, *memory);
+			*memory = input_port_allocate(gamedrv->ipt, *memory);
 			input_ports = *memory;
 
 			codes = build_codes(input_ports);
@@ -559,8 +559,8 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory)
 static mess_input_code *codes;
 static key_buffer *keybuffer;
 static mame_timer *inputx_timer;
-static int (*queue_chars)(const unicode_char_t *text, size_t text_len);
-static int (*accept_char)(unicode_char_t ch);
+static int (*queue_chars)(const unicode_char *text, size_t text_len);
+static int (*accept_char)(unicode_char ch);
 static int (*charqueue_empty)(void);
 static mame_time current_rate;
 
@@ -638,8 +638,8 @@ void inputx_init(void)
 
 
 void inputx_setup_natural_keyboard(
-	int (*queue_chars_)(const unicode_char_t *text, size_t text_len),
-	int (*accept_char_)(unicode_char_t ch),
+	int (*queue_chars_)(const unicode_char *text, size_t text_len),
+	int (*accept_char_)(unicode_char ch),
 	int (*charqueue_empty_)(void))
 {
 	setup_keybuffer();
@@ -661,7 +661,7 @@ static key_buffer *get_buffer(void)
 
 
 
-static const mess_input_code *find_code(unicode_char_t ch)
+static const mess_input_code *find_code(unicode_char ch)
 {
 	int i;
 
@@ -676,7 +676,7 @@ static const mess_input_code *find_code(unicode_char_t ch)
 
 
 
-static int can_post_key_directly(unicode_char_t ch)
+static int can_post_key_directly(unicode_char ch)
 {
 	int rc = FALSE;
 	const mess_input_code *code;
@@ -696,11 +696,11 @@ static int can_post_key_directly(unicode_char_t ch)
 
 
 
-static int can_post_key_alternate(unicode_char_t ch)
+static int can_post_key_alternate(unicode_char ch)
 {
 	const char *s;
 	const char_info *ci;
-	unicode_char_t uchar;
+	unicode_char uchar;
 	int rc;
 
 	ci = find_charinfo(ch);
@@ -722,14 +722,14 @@ static int can_post_key_alternate(unicode_char_t ch)
 
 
 
-int inputx_can_post_key(unicode_char_t ch)
+int inputx_can_post_key(unicode_char ch)
 {
 	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
 }
 
 
 
-static mame_time choose_delay(unicode_char_t ch)
+static mame_time choose_delay(unicode_char ch)
 {
 	subseconds_t delay = 0;
 
@@ -758,7 +758,7 @@ static mame_time choose_delay(unicode_char_t ch)
 
 
 
-static void internal_post_key(unicode_char_t ch)
+static void internal_post_key(unicode_char ch)
 {
 	key_buffer *keybuf;
 
@@ -786,10 +786,10 @@ static int buffer_full(void)
 
 
 
-void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time rate)
+void inputx_postn_rate(const unicode_char *text, size_t text_len, mame_time rate)
 {
 	int last_cr = 0;
-	unicode_char_t ch;
+	unicode_char ch;
 	const char *s;
 	const char_info *ci;
 	const mess_input_code *code;
@@ -893,7 +893,7 @@ void inputx_update(void)
 {
 	const key_buffer *keybuf;
 	const mess_input_code *code;
-	unicode_char_t ch;
+	unicode_char ch;
 	int i;
 	UINT32 value;
 
@@ -927,7 +927,7 @@ void inputx_handle_mess_extensions(input_port_entry *ipt)
 {
 	char buf[256];
 	int i, pos;
-	unicode_char_t ch;
+	unicode_char ch;
 
 	/* process MESS specific extensions to all ports */
 	while(ipt->type != IPT_END)
@@ -958,7 +958,7 @@ void inputx_handle_mess_extensions(input_port_entry *ipt)
 
 
 
-const char *inputx_key_name(unicode_char_t ch)
+const char *inputx_key_name(unicode_char ch)
 {
 	static char buf[2];
 	const char_info *ci;
@@ -1007,12 +1007,12 @@ int inputx_is_posting(void)
 void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 {
 	size_t i, j, key_len, increment;
-	unicode_char_t ch;
+	unicode_char ch;
 
 	static const struct
 	{
 		const char *key;
-		unicode_char_t code;
+		unicode_char code;
 	} codes[] =
 	{
 		{ "BACKSPACE",	8 },
@@ -1081,14 +1081,14 @@ void inputx_postn_coded_rate(const char *text, size_t text_len, mame_time rate)
 
 ***************************************************************************/
 
-void inputx_postn(const unicode_char_t *text, size_t text_len)
+void inputx_postn(const unicode_char *text, size_t text_len)
 {
 	inputx_postn_rate(text, text_len, make_mame_time(0, 0));
 }
 
 
 
-void inputx_post_rate(const unicode_char_t *text, mame_time rate)
+void inputx_post_rate(const unicode_char *text, mame_time rate)
 {
 	size_t len = 0;
 	while(text[len])
@@ -1098,33 +1098,33 @@ void inputx_post_rate(const unicode_char_t *text, mame_time rate)
 
 
 
-void inputx_post(const unicode_char_t *text)
+void inputx_post(const unicode_char *text)
 {
 	inputx_post_rate(text, make_mame_time(0, 0));
 }
 
 
 
-void inputx_postc_rate(unicode_char_t ch, mame_time rate)
+void inputx_postc_rate(unicode_char ch, mame_time rate)
 {
 	inputx_postn_rate(&ch, 1, rate);
 }
 
 
 
-void inputx_postc(unicode_char_t ch)
+void inputx_postc(unicode_char ch)
 {
 	inputx_postc_rate(ch, make_mame_time(0, 0));
 }
 
 
 
-void inputx_postn_utf16_rate(const utf16_char_t *text, size_t text_len, mame_time rate)
+void inputx_postn_utf16_rate(const utf16_char *text, size_t text_len, mame_time rate)
 {
 	size_t len = 0;
-	unicode_char_t c;
-	utf16_char_t w1, w2;
-	unicode_char_t buf[256];
+	unicode_char c;
+	utf16_char w1, w2;
+	unicode_char buf[256];
 
 	while(text_len > 0)
 	{
@@ -1174,14 +1174,14 @@ void inputx_postn_utf16_rate(const utf16_char_t *text, size_t text_len, mame_tim
 
 
 
-void inputx_postn_utf16(const utf16_char_t *text, size_t text_len)
+void inputx_postn_utf16(const utf16_char *text, size_t text_len)
 {
 	inputx_postn_utf16_rate(text, text_len, make_mame_time(0, 0));
 }
 
 
 
-void inputx_post_utf16_rate(const utf16_char_t *text, mame_time rate)
+void inputx_post_utf16_rate(const utf16_char *text, mame_time rate)
 {
 	size_t len = 0;
 	while(text[len])
@@ -1191,7 +1191,7 @@ void inputx_post_utf16_rate(const utf16_char_t *text, mame_time rate)
 
 
 
-void inputx_post_utf16(const utf16_char_t *text)
+void inputx_post_utf16(const utf16_char *text)
 {
 	inputx_post_utf16_rate(text, make_mame_time(0, 0));
 }
@@ -1201,8 +1201,8 @@ void inputx_post_utf16(const utf16_char_t *text)
 void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate)
 {
 	size_t len = 0;
-	unicode_char_t buf[256];
-	unicode_char_t c;
+	unicode_char buf[256];
+	unicode_char c;
 	int rc;
 
 	while(text_len > 0)

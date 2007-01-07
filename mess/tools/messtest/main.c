@@ -108,7 +108,11 @@ static void win_expand_wildcards(int *argc, char **argv[])
 
 
 
-int main(int argc, char *argv[])
+#ifdef WIN32
+int CLIB_DECL utf8_main(int argc, char *argv[])
+#else
+int CLIB_DECL main(int argc, char *argv[])
+#endif
 {
 	int result = -1;
 	clock_t begin_time;

@@ -120,7 +120,9 @@ int osd_is_absolute_path(const char *path)
 
 void osd_mkdir(const char *dir)
 {
-	CreateDirectory(A2T(dir), NULL);
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	CreateDirectory(tempstr, NULL);
+	free(tempstr);
 }
 
 
@@ -131,7 +133,9 @@ void osd_mkdir(const char *dir)
 
 void osd_rmdir(const char *dir)
 {
-	RemoveDirectory(A2T(dir));
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	RemoveDirectory(tempstr);
+	free(tempstr);
 }
 
 
@@ -142,7 +146,9 @@ void osd_rmdir(const char *dir)
 
 void osd_rmfile(const char *filepath)
 {
-	DeleteFile(A2T(filepath));
+	TCHAR *tempstr = tstring_from_utf8(filepath);
+	DeleteFile(tempstr);
+	free(tempstr);
 }
 
 
@@ -153,7 +159,11 @@ void osd_rmfile(const char *filepath)
 
 void osd_copyfile(const char *destfile, const char *srcfile)
 {
-	CopyFile(A2T(srcfile), A2T(destfile), TRUE);
+	TCHAR *t_destfile = tstring_from_utf8(destfile);
+	TCHAR *t_srcfile = tstring_from_utf8(srcfile);
+	CopyFile(t_srcfile, t_destfile, TRUE);
+	free(t_destfile);
+	free(t_srcfile);
 }
 
 
@@ -176,7 +186,9 @@ void osd_getcurdir(char *buffer, size_t buffer_len)
 
 void osd_setcurdir(const char *dir)
 {
-	SetCurrentDirectory(A2T(dir));
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	SetCurrentDirectory(tempstr);
+	free(tempstr);
 }
 
 

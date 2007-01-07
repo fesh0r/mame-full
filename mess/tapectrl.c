@@ -125,11 +125,11 @@ int tapecontrol(int selected)
 	if (sel > 255)  /* are we waiting for a new key? */
 	{
 		/* display the menu */
-		ui_menu_draw(menu_item, total, sel & 0xff);
+		ui_menu_draw(menu_item, total, sel & 0xff, NULL);
 		return sel + 1;
 	}
 
-	ui_menu_draw(menu_item, total, sel);
+	ui_menu_draw(menu_item, total, sel, NULL);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{

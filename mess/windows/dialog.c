@@ -181,7 +181,7 @@ static const WORD dlgitem_combobox[] =	{ 0xFFFF, 0x0085 };
 
 static void dialog_prime(dialog_box *di);
 static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
-	 short width, short height, const WCHAR *str, const WCHAR *class_name, WORD *id);
+	 short width, short height, const char *str, const WCHAR *class_name, WORD *id);
 
 
 
@@ -225,7 +225,7 @@ static void calc_dlgunits_multiple(void)
 			goto done;
 
 		if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
-				0, 0, offset_x, offset_y, A2W(wnd_title), DLGITEM_STATIC, &id))
+				0, 0, offset_x, offset_y, wnd_title, DLGITEM_STATIC, &id))
 			goto done;
 
 		dialog_prime(dialog);
@@ -332,7 +332,7 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 {
 	INT_PTR handled = TRUE;
 	TCHAR buf[32];
-	const char *str;
+	char *str;
 	WORD command;
 
 	if (LOG_WINMSGS)
@@ -341,67 +341,70 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 			(unsigned int) dlgwnd, (unsigned int) msg, (unsigned int) wparam, (unsigned int) lparam);
 	}
 
-	switch(msg) {
-	case WM_INITDIALOG:
-		SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) lparam);
-		dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
-		break;
+	switch(msg)
+	{
+		case WM_INITDIALOG:
+			SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) lparam);
+			dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
+			break;
 
-	case WM_COMMAND:
-		command = LOWORD(wparam);
+		case WM_COMMAND:
+			command = LOWORD(wparam);
 
-		GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
-		str = T2A(buf);
-		if (!strcmp(str, DLGTEXT_OK))
-			command = IDOK;
-		else if (!strcmp(str, DLGTEXT_CANCEL))
-			command = IDCANCEL;
-		else
-			command = 0;
+			GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
+			str = utf8_from_tstring(buf);
+			if (!strcmp(str, DLGTEXT_OK))
+				command = IDOK;
+			else if (!strcmp(str, DLGTEXT_CANCEL))
+				command = IDCANCEL;
+			else
+				command = 0;
+			free(str);
 
-		switch(command) {
-		case IDOK:
-			dialog_trigger(dlgwnd, TRIGGER_APPLY);
-			// fall through
+			switch(command)
+			{
+				case IDOK:
+					dialog_trigger(dlgwnd, TRIGGER_APPLY);
+					// fall through
 
-		case IDCANCEL:
-			EndDialog(dlgwnd, 0);
+				case IDCANCEL:
+					EndDialog(dlgwnd, 0);
+					break;
+
+				default:
+					handled = FALSE;
+					break;
+			}
+			break;
+
+		case WM_SYSCOMMAND:
+			if (wparam == SC_CLOSE)
+			{
+				EndDialog(dlgwnd, 0);
+			}
+			else
+			{
+				handled = FALSE;
+			}
+			break;
+
+		case WM_VSCROLL:
+			if (lparam)
+			{
+				// this scroll message came from an actual scroll bar window;
+				// pass it on
+				SendMessage((HWND) lparam, msg, wparam, lparam);
+			}
+			else
+			{
+				// scroll the dialog
+				win_scroll_window(dlgwnd, wparam, SB_VERT, SCROLL_DELTA_LINE);
+			}
 			break;
 
 		default:
 			handled = FALSE;
 			break;
-		}
-		break;
-
-	case WM_SYSCOMMAND:
-		if (wparam == SC_CLOSE)
-		{
-			EndDialog(dlgwnd, 0);
-		}
-		else
-		{
-			handled = FALSE;
-		}
-		break;
-
-	case WM_VSCROLL:
-		if (lparam)
-		{
-			// this scroll message came from an actual scroll bar window;
-			// pass it on
-			SendMessage((HWND) lparam, msg, wparam, lparam);
-		}
-		else
-		{
-			// scroll the dialog
-			win_scroll_window(dlgwnd, wparam, SB_VERT, SCROLL_DELTA_LINE);
-		}
-		break;
-
-	default:
-		handled = FALSE;
-		break;
 	}
 	return handled;
 }
@@ -474,11 +477,13 @@ static int dialog_write_string(dialog_box *di, const WCHAR *str)
 //============================================================
 
 static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
-	 short width, short height, const WCHAR *str, const WCHAR *class_name, WORD *id)
+	 short width, short height, const char *str, const WCHAR *class_name, WORD *id)
 {
 	DLGITEMTEMPLATE item_template;
 	UINT class_name_length;
 	WORD w;
+	WCHAR *w_str;
+	int rc;
 
 	memset(&item_template, 0, sizeof(item_template));
 	item_template.style = style;
@@ -498,7 +503,11 @@ static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
 	if (dialog_write(di, class_name, class_name_length, 2))
 		return 1;
 
-	if (dialog_write_string(di, str))
+	w_str = str ? wstring_from_utf8(str) : NULL;
+	rc = dialog_write_string(di, w_str);
+	if (w_str)
+		free(w_str);
+	if (rc)
 		return 1;
 
 	w = 0;
@@ -695,6 +704,8 @@ dialog_box *win_dialog_init(const char *title, const struct dialog_layout *layou
 	struct _dialog_box *di;
 	DLGTEMPLATE dlg_template;
 	WORD w[2];
+	WCHAR *w_title;
+	int rc;
 
 	// use default layout if not specified
 	if (!layout)
@@ -721,7 +732,10 @@ dialog_box *win_dialog_init(const char *title, const struct dialog_layout *layou
 	if (dialog_write(di, w, sizeof(w), 2))
 		goto error;
 
-	if (dialog_write_string(di, A2W(title)))
+	w_title = wstring_from_utf8(title);
+	rc = dialog_write_string(di, w_title);
+	free(w_title);
+	if (rc)
 		goto error;
 
 	// set the font, if necessary
@@ -798,43 +812,44 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 	dialog_itemstoreval storeval, void *storeval_param,
 	dialog_itemchangedproc changed, void *changed_param)
 {
+	int rc = 1;
 	short x;
 	short y;
 
 	dialog_new_control(dialog, &x, &y);
 
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, dialog->layout->label_width, DIM_COMBO_ROW_HEIGHT, A2W(item_label), DLGITEM_STATIC, NULL))
-		goto error;
+			x, y, dialog->layout->label_width, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
+		goto done;
 
 	y += DIM_BOX_VERTSKEW;
 
 	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST,
 			x, y, dialog->layout->combo_width, DIM_COMBO_ROW_HEIGHT * 8, NULL, DLGITEM_COMBOBOX, NULL))
-		goto error;
+		goto done;
 	dialog->combo_string_count = 0;
 	dialog->combo_default_value = default_value;
 
 	// add the trigger invoked when the apply button is pressed
 	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_combo_value, 0, 0, storeval, storeval_param))
-		goto error;
+		goto done;
 
 	// if appropriate, add the optional changed trigger
 	if (changed)
 	{
 		if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG | TRIGGER_CHANGED, 0, dialog_combo_changed, (WPARAM) changed, (LPARAM) changed_param, NULL, NULL))
-			goto error;
+			goto done;
 	}
 
 	x += dialog->layout->combo_width + DIM_HORIZONTAL_SPACING;
 	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 
 	dialog_finish_control(dialog, x, y);
-	return 0;
+	rc = 0;
 
-error:
-	return 1;
+done:
+	return rc;
 }
 
 
@@ -983,7 +998,7 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 	dialog_new_control(dialog, &x, &y);
 
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, dialog->layout->label_width, DIM_ADJUSTER_HEIGHT, A2W(item_label), DLGITEM_STATIC, NULL))
+			x, y, dialog->layout->label_width, DIM_ADJUSTER_HEIGHT, item_label, DLGITEM_STATIC, NULL))
 		goto error;
 	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 
@@ -1042,7 +1057,7 @@ int win_dialog_add_slider(dialog_box *dialog, const char *item_label, int defaul
 	dialog_new_control(dialog, &x, &y);
 
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, dialog->layout->label_width, DIM_SLIDER_ROW_HEIGHT, A2W(item_label), DLGITEM_STATIC, NULL))
+			x, y, dialog->layout->label_width, DIM_SLIDER_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
 		goto error;
 
 	y += DIM_BOX_VERTSKEW;
@@ -1085,11 +1100,14 @@ static void seqselect_settext(HWND editwnd)
 	struct seqselect_stuff *stuff;
 	LONG_PTR lp;
 	char buf[512];
+	TCHAR *t_buf;
 
 	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
 	stuff = (struct seqselect_stuff *) lp;
 	seq_name(&stuff->newcode, buf, sizeof(buf) / sizeof(buf[0]));
-	SetWindowText(editwnd, A2T(buf));
+	t_buf = tstring_from_utf8(buf);
+	SetWindowText(editwnd, t_buf);
+	free(t_buf);
 
 	if (GetFocus() == editwnd)
 		SendMessage(editwnd, EM_SETSEL, 0, -1);
@@ -1279,14 +1297,15 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 	short height;
 	short width;
 	const char *port_name;
-	const WCHAR *this_port_name;
-	WCHAR *s;
+	const char *this_port_name;
+	char *s;
 	int seq;
 	int seq_count = 0;
-	const WCHAR *port_suffix[3];
+	const char *port_suffix[3];
 	int seq_types[3];
 	int is_analog[3];
 	int len, i;
+	unicode_char ch;
 
 	port_name = input_port_name(port);
 	assert(port_name);
@@ -1294,17 +1313,17 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 	if (port_type_is_analog(port->type))
 	{
 		seq_types[seq_count] = SEQ_TYPE_STANDARD;
-		port_suffix[seq_count] = L" Analog";
+		port_suffix[seq_count] = " Analog";
 		is_analog[seq_count] = TRUE;
 		seq_count++;
 
 		seq_types[seq_count] = SEQ_TYPE_DECREMENT;
-		port_suffix[seq_count] = L" Dec";
+		port_suffix[seq_count] = " Dec";
 		is_analog[seq_count] = FALSE;
 		seq_count++;
 
 		seq_types[seq_count] = SEQ_TYPE_INCREMENT;
-		port_suffix[seq_count] = L" Inc";
+		port_suffix[seq_count] = " Inc";
 		is_analog[seq_count] = FALSE;
 		seq_count++;
 	}
@@ -1321,14 +1340,17 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 		// create our local name for this entry; also convert from
 		// MAME strings to wide strings
 		len = strlen(port_name);
-		s = (WCHAR *) alloca((len + (port_suffix[seq] ? wcslen(port_suffix[seq])
-			: 0) + 1) * sizeof(WCHAR));
+		s = (char *) alloca((len + (port_suffix[seq] ? strlen(port_suffix[seq])
+			: 0) + 1) * sizeof(*s));
 		for (i = 0; i < len; i++)
-			s[i] = unicode_from_mamechar(port_name[i]);
+		{
+			ch = unicode_from_mamechar(port_name[i]);
+			len += utf8_from_uchar(&s[len], UTF8_CHAR_MAX, ch);
+		}
 		s[len] = '\0';
 
 		if (port_suffix[seq])
-			wcscpy(s + len, port_suffix[seq]);
+			strcpy(s + len, port_suffix[seq]);
 		this_port_name = s;
 
 		if (!r)
@@ -1404,12 +1426,12 @@ int win_dialog_add_standard_buttons(dialog_box *dialog)
 	y = di->size_y + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, A2W(DLGTEXT_CANCEL), DLGITEM_BUTTON, NULL))
+			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_CANCEL, DLGITEM_BUTTON, NULL))
 		return 1;
 
 	x -= DIM_HORIZONTAL_SPACING + DIM_BUTTON_WIDTH;
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, A2W(DLGTEXT_OK), DLGITEM_BUTTON, NULL))
+			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_OK, DLGITEM_BUTTON, NULL))
 		return 1;
 	di->size_y += DIM_BUTTON_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 	return 0;
@@ -1704,9 +1726,11 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 {
 	OPENFILENAME ofn;
 	BOOL result;
-#ifdef UNICODE
-	WCHAR buf[MAX_PATH];
-#endif
+	TCHAR buf[MAX_PATH];
+	TCHAR *t_filter = NULL;
+	TCHAR *t_initial_dir = NULL;
+	TCHAR *t_filename;
+	char *u_filename;
 
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
@@ -1714,11 +1738,19 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 
 	if (filter)
-		ofn.lpstrFilter = A2T(filter);
+	{
+		t_filter = tstring_from_utf8(filter);
+		ofn.lpstrFilter = t_filter;
+	}
 	if (initial_dir)
-		ofn.lpstrInitialDir = A2T(initial_dir);
+	{
+		t_initial_dir = tstring_from_utf8(initial_dir);
+		ofn.lpstrInitialDir = t_initial_dir;
+	}
 	if (dlgtype == FILE_DIALOG_OPEN)
+	{
 		ofn.Flags |= OFN_FILEMUSTEXIST;
+	}
 
 	if (custom_dialog)
 	{
@@ -1731,36 +1763,41 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 		ofn.lpfnHook = file_dialog_hook;
 	}
 
-#ifdef UNICODE
-	mbstowcs(buf, filename, strlen(filename) + 1);
+	t_filename = tstring_from_utf8(filename);
+	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%s"), t_filename);
+	free(t_filename);
+
+	ofn.lpstrFile = t_filename;
 	ofn.nMaxFile = sizeof(buf) / sizeof(buf[0]);
-#else
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = filename_len;
-#endif
 
 	before_display_dialog();
 
-	switch(dlgtype) {
-	case FILE_DIALOG_OPEN:
-		result = GetOpenFileName(&ofn);
-		break;
+	switch(dlgtype)
+	{
+		case FILE_DIALOG_OPEN:
+			result = GetOpenFileName(&ofn);
+			break;
 
-	case FILE_DIALOG_SAVE:
-		result = GetSaveFileName(&ofn);
-		break;
+		case FILE_DIALOG_SAVE:
+			result = GetSaveFileName(&ofn);
+			break;
 
-	default:
-		assert(FALSE);
-		result = FALSE;
-		break;
+		default:
+			assert(FALSE);
+			result = FALSE;
+			break;
 	}
 
 	after_display_dialog();
 
-#ifdef UNICODE
-	strcpyz(filename, buf, filename_len);
-#endif
+	u_filename = utf8_from_tstring(filename);
+	snprintf(filename, filename_len, "%s", u_filename);
+	free(u_filename);
+
+	if (t_filter)
+		free(t_filter);
+	if (t_initial_dir)
+		free(t_initial_dir);
 	return result;
 }
 

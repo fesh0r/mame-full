@@ -497,7 +497,7 @@ static int fileselect(int selected, const char *default_selection)
 			fs_item[sel & SEL_MASK].subtext = current_filespecification;
 
 			/* display the menu */
-			ui_menu_draw(fs_item, fs_total, sel & SEL_MASK);
+			ui_menu_draw(fs_item, fs_total, sel & SEL_MASK, NULL);
 
 			/* update string with any keys that are pressed */
 			name = update_entered_string();
@@ -520,7 +520,7 @@ static int fileselect(int selected, const char *default_selection)
 		}
 
 
-		ui_menu_draw(fs_item, fs_total, sel);
+		ui_menu_draw(fs_item, fs_total, sel, NULL);
 
 		/* borrowed from usrintrf.c */
 		visible = 0; //Machine->uiheight / (3 * Machine->uifontheight /2) -1;
@@ -714,7 +714,7 @@ int filemanager(int selected)
 		menu_items[sel & SEL_MASK].subtext = entered_filename;
 
 		/* display the menu */
-		ui_menu_draw(menu_items, total, sel & SEL_MASK);
+		ui_menu_draw(menu_items, total, sel & SEL_MASK, NULL);
 
 		/* update string with any keys that are pressed */
 		name = update_entered_string();
@@ -731,7 +731,7 @@ int filemanager(int selected)
 		return sel + 1;
 	}
 
-	ui_menu_draw(menu_items, total, sel);
+	ui_menu_draw(menu_items, total, sel, NULL);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN, 8))
 		sel = (sel + 1) % total;

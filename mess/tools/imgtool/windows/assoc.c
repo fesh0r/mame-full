@@ -45,9 +45,10 @@ BOOL win_association_exists(const struct win_association_info *assoc)
 	TCHAR expected[1024];
 	HKEY key1 = NULL;
 	HKEY key2 = NULL;
+	TCHAR *assoc_file_class = tstring_from_utf8(assoc->file_class);
 
 	// first check to see if the extension is there at all
-	if (RegOpenKey(HKEY_CLASSES_ROOT, A2T(assoc->file_class), &key1))
+	if (RegOpenKey(HKEY_CLASSES_ROOT, assoc_file_class, &key1))
 		goto done;
 
 	if (RegOpenKey(key1, TEXT("shell\\open\\command"), &key2))
@@ -64,6 +65,7 @@ done:
 		RegCloseKey(key2);
 	if (key1)
 		RegCloseKey(key1);
+	free(assoc_file_class);
 	return rc;
 }
 
@@ -75,12 +77,13 @@ BOOL win_is_extension_associated(const struct win_association_info *assoc,
 	HKEY key = NULL;
 	TCHAR buf[256];
 	BOOL rc = FALSE;
+	TCHAR *t_extension = tstring_from_utf8(extension);
 
 	// first check to see if the extension is there at all
 	if (!win_association_exists(assoc))
 		goto done;
 
-	if (RegOpenKey(HKEY_CLASSES_ROOT, A2T(extension), &key))
+	if (RegOpenKey(HKEY_CLASSES_ROOT, t_extension, &key))
 		goto done;
 
 	if (reg_query_string(key, buf, sizeof(buf) / sizeof(buf[0])))
@@ -91,6 +94,8 @@ BOOL win_is_extension_associated(const struct win_association_info *assoc,
 done:
 	if (key)
 		RegCloseKey(key);
+	if (t_extension)
+		free(t_extension);
 	return rc;
 }
 
@@ -107,12 +112,13 @@ BOOL win_associate_extension(const struct win_association_info *assoc,
 	DWORD disposition;
 	TCHAR buf[1024];
 	BOOL rc = FALSE;
+	TCHAR *t_extension = tstring_from_utf8(extension);
 
 	if (!is_set)
 	{
 		if (win_is_extension_associated(assoc, extension))
 		{
-			SHDeleteKey(HKEY_CLASSES_ROOT, A2T(extension));
+			SHDeleteKey(HKEY_CLASSES_ROOT, t_extension);
 		}
 	}
 	else
@@ -137,7 +143,7 @@ BOOL win_associate_extension(const struct win_association_info *assoc,
 				goto done;
 		}
 
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, A2T(extension), 0, NULL, 0,
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, t_extension, 0, NULL, 0,
 				KEY_ALL_ACCESS, NULL, &key5, &disposition))
 			goto done;
 		if (RegSetValue(key5, NULL, REG_SZ, assoc->file_class,
@@ -158,5 +164,7 @@ done:
 		RegCloseKey(key2);
 	if (key1)
 		RegCloseKey(key1);
+	if (t_extension)
+		free(t_extension);
 	return rc;
 }

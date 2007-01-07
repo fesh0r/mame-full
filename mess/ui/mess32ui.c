@@ -414,8 +414,9 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 done:
 	if (!bResult)
 	{
-		pszMessage = A2T(szMessage);
+		pszMessage = tstring_from_utf8(szMessage);
 		MessageBox(hParent, pszMessage, MAME32NAME, MB_OK);
+		free((void *) pszMessage);
 	}
 
 	end_resource_tracking();

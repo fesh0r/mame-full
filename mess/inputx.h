@@ -49,30 +49,25 @@ enum
 #define UCHAR_SHIFT_BEGIN	(UCHAR_SHIFT_1)
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
-#define PORT_CHAR(ch)												\
-	port->keyboard.chars[key++] = (ch);								\
+#define PORT_CHAR(ch)	\
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CHAR, ch),
 
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \
-	PORT_BIT(mask, default, IPT_CONFIG_NAME)						\
-	PORT_NAME(name)													\
+	INPUT_PORT_UINT32(INPUT_TOKEN_CONFNAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
 
 #define PORT_CONFSETTING(default,name) \
-	PORT_BIT(0, default, IPT_CONFIG_SETTING)						\
-	PORT_NAME(name)													\
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CONFSETTING, default), INPUT_PORT_PTR(name),
 	
 /* categories */
-#define PORT_CATEGORY(category_) \
-	port->category = (category_);	\
+#define PORT_CATEGORY(category) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY, category),
 
 #define PORT_CATEGORY_CLASS(mask,default,name) 						\
-	PORT_BIT(mask, default, IPT_CATEGORY_NAME)						\
-	PORT_NAME(name)
+	INPUT_PORT_UINT32(INPUT_TOKEN_CATEGORY_NAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
 
 #define PORT_CATEGORY_ITEM(default,name,category) 					\
-	PORT_BIT(0, default, IPT_CATEGORY_SETTING) 						\
-	PORT_NAME(name)													\
-	PORT_CATEGORY(category)
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY_SETTING, default), INPUT_PORT_PTR(name),
 
 
 
@@ -89,8 +84,8 @@ void inputx_handle_mess_extensions(input_port_entry *ipt);
 
 /* called by drivers to setup natural keyboard support */
 void inputx_setup_natural_keyboard(
-	int (*queue_chars)(const unicode_char_t *text, size_t text_len),
-	int (*accept_char)(unicode_char_t ch),
+	int (*queue_chars)(const unicode_char *text, size_t text_len),
+	int (*accept_char)(unicode_char ch),
 	int (*charqueue_empty)(void));
 
 /* run the validity checks */
@@ -98,21 +93,21 @@ int inputx_validitycheck(const game_driver *gamedrv, input_port_entry **memory);
 
 /* these can be called from FEs */
 int inputx_can_post(void);
-int inputx_can_post_key(unicode_char_t ch);
+int inputx_can_post_key(unicode_char ch);
 int inputx_is_posting(void);
-const char *inputx_key_name(unicode_char_t ch);
+const char *inputx_key_name(unicode_char ch);
 
 /* various posting functions; can be called from FEs */
-void inputx_post(const unicode_char_t *text);
-void inputx_post_rate(const unicode_char_t *text, mame_time rate);
-void inputx_postc(unicode_char_t ch);
-void inputx_postc_rate(unicode_char_t ch, mame_time rate);
-void inputx_postn(const unicode_char_t *text, size_t text_len);
-void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time rate);
-void inputx_post_utf16(const utf16_char_t *text);
-void inputx_post_utf16_rate(const utf16_char_t *text, mame_time rate);
-void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
-void inputx_postn_utf16_rate(const utf16_char_t *text, size_t text_len, mame_time rate);
+void inputx_post(const unicode_char *text);
+void inputx_post_rate(const unicode_char *text, mame_time rate);
+void inputx_postc(unicode_char ch);
+void inputx_postc_rate(unicode_char ch, mame_time rate);
+void inputx_postn(const unicode_char *text, size_t text_len);
+void inputx_postn_rate(const unicode_char *text, size_t text_len, mame_time rate);
+void inputx_post_utf16(const utf16_char *text);
+void inputx_post_utf16_rate(const utf16_char *text, mame_time rate);
+void inputx_postn_utf16(const utf16_char *text, size_t text_len);
+void inputx_postn_utf16_rate(const utf16_char *text, size_t text_len, mame_time rate);
 void inputx_post_utf8(const char *text);
 void inputx_post_utf8_rate(const char *text, mame_time rate);
 void inputx_postn_utf8(const char *text, size_t text_len);

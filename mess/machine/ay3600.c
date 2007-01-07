@@ -27,8 +27,8 @@
 
 static void AY3600_poll(int dummy);
 
-static int AY3600_keyboard_queue_chars(const unicode_char_t *text, size_t text_len);
-static int AY3600_keyboard_accept_char(unicode_char_t ch);
+static int AY3600_keyboard_queue_chars(const unicode_char *text, size_t text_len);
+static int AY3600_keyboard_accept_char(unicode_char ch);
 
 static const unsigned char ay3600_key_remap_2[7*8][4] =
 {
@@ -490,7 +490,7 @@ int AY3600_anykey_clearstrobe_r(void)
   Natural keyboard support
 ***************************************************************************/
 
-static UINT8 AY3600_get_keycode(unicode_char_t ch)
+static UINT8 AY3600_get_keycode(unicode_char ch)
 {
 	UINT8 result;
 
@@ -522,7 +522,7 @@ static UINT8 AY3600_get_keycode(unicode_char_t ch)
 
 
 
-static int AY3600_keyboard_queue_chars(const unicode_char_t *text, size_t text_len)
+static int AY3600_keyboard_queue_chars(const unicode_char *text, size_t text_len)
 {
 	if (keywaiting)
 		return 0;
@@ -533,7 +533,7 @@ static int AY3600_keyboard_queue_chars(const unicode_char_t *text, size_t text_l
 
 
 
-static int AY3600_keyboard_accept_char(unicode_char_t ch)
+static int AY3600_keyboard_accept_char(unicode_char ch)
 {
 	return AY3600_get_keycode(ch) != 0;
 }

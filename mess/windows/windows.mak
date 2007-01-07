@@ -15,11 +15,11 @@ OSOBJS += \
 	$(OBJ)/mess/windows/dirutils.o	\
 	$(OBJ)/mess/windows/configms.o	\
 	$(OBJ)/mess/windows/menu.o		\
+	$(OBJ)/mess/windows/messlib.o	\
 	$(OBJ)/mess/windows/opcntrl.o	\
 	$(OBJ)/mess/windows/dialog.o	\
 	$(OBJ)/mess/windows/tapedlg.o	\
 	$(OBJ)/mess/windows/parallel.o	\
-	$(OBJ)/mess/windows/strconv.o	\
 	$(OBJ)/mess/windows/winutils.o	\
 	$(OBJ)/mess/windows/mess.res
 

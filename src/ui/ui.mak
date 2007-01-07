@@ -55,7 +55,6 @@ OSOBJS += \
 	$(OBJ)/mess/ui/mess32ui.o \
 	$(OBJ)/mess/ui/optionsms.o \
  	$(OBJ)/mess/ui/layoutms.o \
-	$(OBJ)/mess/ui/ms32main.o \
 	$(OBJ)/mess/ui/ms32util.o \
 	$(OBJ)/mess/ui/propertiesms.o \
 	$(OBJ)/mess/ui/softwarepicker.o \

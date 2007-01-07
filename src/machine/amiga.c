@@ -217,7 +217,7 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 	cia_intf[1].port[1].read = intf->cia_1_portB_r;
 	cia_intf[1].port[1].write = intf->cia_1_portB_w;
 	cia_config(1, &cia_intf[1]);
-	
+
 	/* setup the timers */
 	amiga_irq_timer = timer_alloc(amiga_irq_proc);
 	amiga_blitter_timer = timer_alloc(amiga_blitter_proc);
@@ -276,7 +276,7 @@ INTERRUPT_GEN( amiga_scanline_callback )
 	{
 		/* signal VBLANK IRQ */
 		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
-	
+
 		/* clock the first CIA TOD */
 		cia_clock_tod(0);
 
@@ -894,7 +894,7 @@ static void amiga_blitter_proc(int param)
 
 	/* signal an interrupt */
 	amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_BLIT, 0);
-	
+
 	/* reset the blitter timer */
 	timer_reset( amiga_irq_timer, TIME_NEVER );
 }
@@ -944,10 +944,10 @@ static void blitter_setup(void)
 	height = ((CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff);
 	if (height == 0)
 		height = 0x400;
-	
+
 	/* compute the blit time */
 	blittime = ticks * height * width;
-		
+
 	/* if 'blitter-nasty' is set, then the blitter takes over the bus. Make the blit semi-immediate */
 	if ( CUSTOM_REG(REG_DMACON) & 0x0400 )
 		blittime = BLITTER_NASTY_DELAY;
@@ -1157,7 +1157,7 @@ READ16_HANDLER( amiga_custom_r )
 			temp = CUSTOM_REG(REG_CLXDAT);
 			CUSTOM_REG(REG_CLXDAT) = 0;
 			return temp;
-		
+
 		case REG_DENISEID:
 			return CUSTOM_REG(REG_DENISEID);
 			break;
@@ -1192,7 +1192,7 @@ WRITE16_HANDLER( amiga_custom_w )
 {
 	UINT16 temp;
 	offset &= 0xff;
-	
+
 #if LOG_CUSTOM
 	logerror("%06X:write to custom %s = %04X\n", safe_activecpu_get_pc(), amiga_custom_names[offset & 0xff], data);
 #endif
@@ -1227,7 +1227,7 @@ WRITE16_HANDLER( amiga_custom_w )
 			CUSTOM_REG(REG_BLTSIZE) = data;
 			blitter_setup();
 			break;
-		
+
 		case REG_SPR0PTH:	case REG_SPR1PTH:	case REG_SPR2PTH:	case REG_SPR3PTH:
 		case REG_SPR4PTH:	case REG_SPR5PTH:	case REG_SPR6PTH:	case REG_SPR7PTH:
 			data &= ( amiga_intf->chip_ram_mask >> 16 );
@@ -1282,19 +1282,19 @@ WRITE16_HANDLER( amiga_custom_w )
 			/* bits BBUSY (14) and BZERO (13) are read-only */
 			data &= 0x9fff;
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
-				
+
 			/* if 'blitter-nasty' has been turned on and we have a blit pending, reschedule it */
 			if ( ( data & 0x400 ) && ( CUSTOM_REG(REG_DMACON) & 0x4000 ) )
 				timer_adjust( amiga_blitter_timer, TIME_IN_CYCLES( BLITTER_NASTY_DELAY, 0 ), 0, 0 );
-						
+
 			break;
 
 		case REG_INTENA:
 			temp = data;
-			
+
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			CUSTOM_REG(offset) = data;
-			
+
 			if ( temp & 0x8000  ) /* if we're enabling irq's, delay a bit */
 				timer_adjust( amiga_irq_timer, TIME_IN_CYCLES( AMIGA_IRQ_DELAY_CYCLES, 0 ), 0, 0 );
 			else /* if we're disabling irq's, process right away */
@@ -1306,12 +1306,12 @@ WRITE16_HANDLER( amiga_custom_w )
 			/* Update serial data line status if appropiate */
 			if (!(data & 0x8000) && (data & INTENA_RBF))
 				CUSTOM_REG(REG_SERDATR) &= ~0x8000;
-			
+
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			if ( cia_get_irq( 0 ) ) data |= INTENA_PORTS;
 			if ( cia_get_irq( 1 ) )	data |= INTENA_EXTER;
 			CUSTOM_REG(offset) = data;
-						
+
 			if ( temp & 0x8000  ) /* if we're generating irq's, delay a bit */
 				timer_adjust( amiga_irq_timer, TIME_IN_CYCLES( AMIGA_IRQ_DELAY_CYCLES, 0 ), 0, 0 );
 			else /* if we're clearing irq's, process right away */
@@ -1333,7 +1333,7 @@ WRITE16_HANDLER( amiga_custom_w )
 		case REG_AUD0DAT:	case REG_AUD1DAT:	case REG_AUD2DAT:	case REG_AUD3DAT:
 			amiga_audio_data_w((offset - REG_AUD0DAT) / 8, data);
 			break;
-		
+
 		case REG_BPL1PTH:	case REG_BPL2PTH:	case REG_BPL3PTH:	case REG_BPL4PTH:
 		case REG_BPL5PTH:	case REG_BPL6PTH:
 			data &= ( amiga_intf->chip_ram_mask >> 16 );

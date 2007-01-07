@@ -35,14 +35,14 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 	DWORD style;
 	int i, x, width, selected;
 	char buf[256];
+	TCHAR *t_buf;
 
 	GetWindowRect(dialog, &dialog_rect);
 
 	if (suggestion_info)
 	{
 		// set up label control
-		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Mode:");
-		control = CreateWindow(TEXT("STATIC"), U2T(buf), WS_CHILD | WS_VISIBLE,
+		control = CreateWindow(TEXT("STATIC"), TEXT("Mode:"), WS_CHILD | WS_VISIBLE,
 			margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
 		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
 		SetProp(control, owner_prop, (HANDLE) 1);
@@ -77,8 +77,10 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 		{
 			// set up label control
 			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
-			control = CreateWindow(TEXT("STATIC"), U2T(buf), WS_CHILD | WS_VISIBLE,
+			t_buf = tstring_from_utf8(buf);
+			control = CreateWindow(TEXT("STATIC"), t_buf, WS_CHILD | WS_VISIBLE,
 				margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
+			free(t_buf);
 			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
 			SetProp(control, owner_prop, (HANDLE) 1);
 

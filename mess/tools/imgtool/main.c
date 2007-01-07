@@ -908,7 +908,11 @@ void win_expand_wildcards(int *argc, char **argv[])
 
 
 
+#ifdef WIN32
+int CLIB_DECL utf8_main(int argc, char *argv[])
+#else
 int CLIB_DECL main(int argc, char *argv[])
+#endif
 {
 	int i;
 	int result;

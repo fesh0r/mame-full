@@ -462,14 +462,15 @@ static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 	DWORD fileproc_flags, void (*mameproc)(running_machine *machine, const char *),
 	running_machine *machine)
 {
-#ifdef UNICODE
-	WCHAR filenamew[MAX_PATH];
-#endif
+	TCHAR t_filename[MAX_PATH];
 	OPENFILENAME ofn;
 	char *dir;
 	int result = 0;
 	char *src;
 	char *dst;
+	TCHAR *t_tempstr;
+	char *tempstr;
+	char *initial_dir;
 
 	if (state_filename[0])
 	{
@@ -491,32 +492,34 @@ static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 		while(*(src++));
 	}
 
+	initial_dir = dir ? tstring_from_utf8(dir) : NULL;
+
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = wnd;
 	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | fileproc_flags;
 	ofn.lpstrFilter = TEXT("State Files (*.sta)\0*.sta\0All Files (*.*);*.*\0");
-	ofn.lpstrInitialDir = A2T(dir);
-#ifdef UNICODE
-	ofn.lpstrFile = filenamew;
-	ofn.nMaxFile = sizeof(filenamew) / sizeof(filenamew[0]);
-#else
-	ofn.lpstrFile = state_filename;
-	ofn.nMaxFile = sizeof(state_filename) / sizeof(state_filename[0]);
-#endif
+	ofn.lpstrInitialDir = initial_dir;
+	ofn.lpstrFile = t_filename;
+	ofn.nMaxFile = sizeof(t_filename) / sizeof(t_filename[0]);
+
+	t_tempstr = tstring_from_utf8(state_filename);
+	_sntprintf(t_filename, sizeof(t_filename) / sizeof(t_filename[0]), TEXT("%s"), t_tempstr);
+	free(t_tempstr);
 
 	result = fileproc(&ofn);
 	if (result)
 	{
-#ifdef UNICODE
-		snprintf(state_filename, sizeof(state_filename) / sizeof(state_filename[0]),
-			"%S", filenamew);
-#endif
+		tempstr = utf8_from_tstring(t_filename);
+		snprintf(state_filename, sizeof(state_filename) / sizeof(state_filename[0]), "%s", tempstr);
+		free(tempstr);
 
 		mameproc(machine, state_filename);
 	}
 	if (dir)
 		free(dir);
+	if (initial_dir)
+		free(initial_dir);
 }
 
 
@@ -558,7 +561,7 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	const char *optspec;
 	struct file_dialog_params *params;
 	int has_option;
-	TCHAR buf1t[128];
+	TCHAR t_buf1[128];
 	char *buf1;
 
 	params = (struct file_dialog_params *) changed_param;
@@ -583,8 +586,8 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	while((wnd = FindWindowEx(dlgwnd, wnd, NULL, NULL)) != NULL)
 	{
 		// get label text, removing trailing NULL
-		GetWindowText(wnd, buf1t, sizeof(buf1t) / sizeof(buf1t[0]));
-		buf1 = T2A(buf1t);
+		GetWindowText(wnd, t_buf1, sizeof(t_buf1) / sizeof(t_buf1[0]));
+		buf1 = utf8_from_tstring(t_buf1);
 		assert(buf1[strlen(buf1)-1] == ':');
 		buf1[strlen(buf1)-1] = '\0';
 
@@ -598,13 +601,14 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 			// we now have the handle to the window, and the guide entry
 			has_option = option_resolution_contains(optspec, guide->parameter);
 
-			SendMessage(wnd, CB_GETLBTEXT, SendMessage(wnd, CB_GETCURSEL, 0, 0), (LPARAM) buf1);
+			SendMessage(wnd, CB_GETLBTEXT, SendMessage(wnd, CB_GETCURSEL, 0, 0), (LPARAM) t_buf1);
 			SendMessage(wnd, CB_RESETCONTENT, 0, 0);
 
 			win_prepare_option_control(wnd,
 				has_option ? guide : NULL,
 				has_option ? optspec : NULL);
 		}
+		free(buf1);
 	}
 }
 
@@ -887,11 +891,19 @@ static void change_device(HWND wnd, mess_image *img, int is_save)
 		// error?
 		if (err)
 		{
+			TCHAR *t_buffer;
+			TCHAR *t_appname;
+
 			snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
 				"Error when %s the image: %s",
 				is_save ? "creating" : "loading",
 				image_error(img));
-			MessageBox(wnd, A2T(buffer), A2T(APPNAME), MB_OK);
+
+			t_buffer = tstring_from_utf8(buffer);
+			t_appname = tstring_from_utf8(APPNAME);
+			MessageBox(wnd, t_buffer, t_appname, MB_OK);
+			free(t_buffer);
+			free(t_appname);
 		}
 	}
 
@@ -967,6 +979,8 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 
 	while(*menutext)
 	{
+		TCHAR *t_menutext = tstring_from_utf8(menutext);
+
 		i = -1;
 		do
 		{
@@ -974,9 +988,14 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 			mii.dwTypeData = buf;
 			mii.cch = sizeof(buf) / sizeof(buf[0]);
 			if (!GetMenuItemInfo(menu, i, TRUE, &mii))
+			{
+				free(t_menutext);
 				return NULL;
+			}
 		}
-		while((mii.fType == MFT_SEPARATOR) || !mii.dwTypeData || strcmp(menutext, T2A(mii.dwTypeData)));
+		while((mii.fType == MFT_SEPARATOR) || !mii.dwTypeData || _tcscmp(t_menutext, mii.dwTypeData));
+
+		free(t_menutext);
 
 		if (!mii.hSubMenu && create_sub_menu)
 		{
@@ -1026,14 +1045,26 @@ static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 
 
 //============================================================
-//	append_menu
+//	append_menu_utf8
 //============================================================
 
-static void append_menu(HMENU menu, UINT flags, UINT_PTR id, int uistring)
+static void append_menu_utf8(HMENU menu, UINT flags, UINT_PTR id, const char *str)
 {
-	const char *str;
-	str = (uistring >= 0) ? ui_getstring(uistring) : NULL;
-	AppendMenu(menu, flags, id, A2T(str));
+	TCHAR *t_str = str ? tstring_from_utf8(str) : NULL;
+	AppendMenu(menu, flags, id, t_str);
+	if (t_str)
+		free(t_str);
+}
+
+
+
+//============================================================
+//	append_menu_uistring
+//============================================================
+
+static void append_menu_uistring(HMENU menu, UINT flags, UINT_PTR id, int uistring)
+{
+	append_menu_utf8(menu, flags, id, (uistring >= 0) ? ui_getstring(uistring) : NULL);
 }
 
 
@@ -1097,13 +1128,13 @@ static void setup_joystick_menu(HMENU menu_bar)
 				for (j = i + 1; (Machine->input_ports[j].type) == IPT_CATEGORY_SETTING; j++)
 				{
 					in_setting = &Machine->input_ports[j];
-					AppendMenu(submenu, MF_STRING, ID_INPUT_0 + j, A2T(in_setting->name));
+					append_menu_utf8(submenu, MF_STRING, ID_INPUT_0 + j, in_setting->name);
 				}
 
 				// tack on the final items and the menu item
 				AppendMenu(submenu, MF_SEPARATOR, 0, NULL);
 				AppendMenu(submenu, MF_STRING, ID_INPUT_0 + i, TEXT("&Configure..."));
-				AppendMenu(joystick_menu, MF_STRING | MF_POPUP, (UINT_PTR) submenu, A2T(in->name));
+				append_menu_utf8(joystick_menu, MF_STRING | MF_POPUP, (UINT_PTR) submenu, in->name);
 				child_count++;
 			}
 		}
@@ -1119,7 +1150,7 @@ static void setup_joystick_menu(HMENU menu_bar)
 			for(i = 0; i < joystick_count; i++)
 			{
 				snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Joystick %i", i + 1);
-				AppendMenu(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, A2T(buf));
+				append_menu_utf8(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, buf);
 				child_count++;
 			}
 		}
@@ -1275,8 +1306,10 @@ static void prepare_menus(HWND wnd)
 	view_index = render_target_get_view(window->target);
 	while((view_name = render_target_get_view_name(window->target, i)) != NULL)
 	{
+		TCHAR *t_view_name = tstring_from_utf8(view_name);
 		InsertMenu(video_menu, i, MF_BYPOSITION | (i == view_index ? MF_CHECKED : 0),
-			ID_VIDEO_VIEW_0 + i, A2T(view_name));
+			ID_VIDEO_VIEW_0 + i, t_view_name);
+		free(t_view_name);
 		i++;
 	}
 
@@ -1304,27 +1337,27 @@ static void prepare_menus(HWND wnd)
 					flags_for_writing |= MF_GRAYED;
 	
 				sub_menu = CreateMenu();
-				append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_OPEN,		UI_mount);
+				append_menu_uistring(sub_menu, MF_STRING,		new_item + DEVOPTION_OPEN,		UI_mount);
 	
 				if (dev->creatable)
-					append_menu(sub_menu, MF_STRING,	new_item + DEVOPTION_CREATE,	UI_create);
+					append_menu_uistring(sub_menu, MF_STRING,	new_item + DEVOPTION_CREATE,	UI_create);
 	
-				append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_CLOSE,		UI_unmount);
+				append_menu_uistring(sub_menu, flags_for_exists,	new_item + DEVOPTION_CLOSE,	UI_unmount);
 
 #if HAS_WAVE
 				if ((dev->type == IO_CASSETTE) && !strcmp(dev->file_extensions, "wav"))
 				{
 					cassette_state state;
 					state = image_exists(img) ? (cassette_get_state(img) & CASSETTE_MASK_UISTATE) : CASSETTE_STOPPED;
-					append_menu(sub_menu, MF_SEPARATOR, 0, -1);
-					append_menu(sub_menu, flags_for_exists	| ((state == CASSETTE_STOPPED)	? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
-					append_menu(sub_menu, flags_for_exists	| ((state == CASSETTE_PLAY)		? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_PLAY,			UI_play);
-					append_menu(sub_menu, flags_for_writing	| ((state == CASSETTE_RECORD)	? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_RECORD,		UI_record);
+					append_menu_uistring(sub_menu, MF_SEPARATOR, 0, -1);
+					append_menu_uistring(sub_menu, flags_for_exists	| ((state == CASSETTE_STOPPED)	? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
+					append_menu_uistring(sub_menu, flags_for_exists	| ((state == CASSETTE_PLAY)		? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_PLAY,			UI_play);
+					append_menu_uistring(sub_menu, flags_for_writing	| ((state == CASSETTE_RECORD)	? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_RECORD,		UI_record);
 #if USE_TAPEDLG
-					append_menu(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_DIALOG,		UI_tapecontrol);
+					append_menu_uistring(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_DIALOG,		UI_tapecontrol);
 #else
-					append_menu(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_REWIND,		UI_rewind);
-					append_menu(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_FASTFORWARD,	UI_fastforward);
+					append_menu_uistring(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_REWIND,		UI_rewind);
+					append_menu_uistring(sub_menu, flags_for_exists,														new_item + DEVOPTION_CASSETTE_FASTFORWARD,	UI_fastforward);
 #endif
 				}
 #endif /* HAS_WAVE */
@@ -1339,7 +1372,7 @@ static void prepare_menus(HWND wnd)
 			}
 
 			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", image_typename_id(img), s);
-			AppendMenu(device_menu, flags, (UINT_PTR) sub_menu, A2T(buf));
+			append_menu_utf8(device_menu, flags, (UINT_PTR) sub_menu, buf);
 		}
 	}
 }
@@ -1500,7 +1533,11 @@ static void help_display(HWND wnd, const char *chapter)
 	if (!is_windowed())
 		winwindow_toggle_full_screen();
 
-	htmlhelp(wnd, A2T(chapter), 0 /*HH_DISPLAY_TOPIC*/, 0);
+	{
+		TCHAR *t_chapter = tstring_from_utf8(chapter);
+		htmlhelp(wnd, t_chapter, 0 /*HH_DISPLAY_TOPIC*/, 0);
+		free(t_chapter);
+	}
 }
 
 
@@ -1791,12 +1828,21 @@ static int invoke_command(HWND wnd, UINT command)
 
 void set_menu_text(HMENU menu_bar, int command, const char *text)
 {
+	TCHAR *t_text;
 	MENUITEMINFO mii;
+
+	// convert to TCHAR
+	t_text = tstring_from_utf8(text);
+
+	// invoke SetMenuItemInfo()
 	memset(&mii, 0, sizeof(mii));
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_TYPE;
-	mii.dwTypeData = (LPTSTR) A2T(text);
+	mii.dwTypeData = t_text;
 	SetMenuItemInfo(menu_bar, command, FALSE, &mii);	
+
+	// cleanup
+	free(t_text);
 }
 
 
@@ -1858,7 +1904,7 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%i", i);
-		AppendMenu(frameskip_menu, MF_STRING, ID_FRAMESKIP_0 + i, A2T(buf));
+		append_menu_utf8(frameskip_menu, MF_STRING, ID_FRAMESKIP_0 + i, buf);
 	}
 
 	// set the help menu to refer to this machine

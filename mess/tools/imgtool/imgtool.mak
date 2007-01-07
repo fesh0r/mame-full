@@ -5,14 +5,13 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/harddisk.o						\
 	$(OBJ)/mamecore.o						\
 	$(OBJ)/md5.o							\
-	$(OBJ)/restrack.o						\
 	$(OBJ)/sha1.o							\
+	$(OBJ)/unicode.o						\
 	$(OBJ)/version.o						\
 	$(OBJ)/mamecore.o						\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\
-	$(OBJ)/mess/unicode.o					\
 	$(OBJ)/mess/formats/ioprocs.o			\
 	$(OBJ)/mess/formats/flopimg.o			\
 	$(OBJ)/mess/formats/cassimg.o			\

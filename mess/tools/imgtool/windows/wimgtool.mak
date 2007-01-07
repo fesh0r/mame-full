@@ -2,7 +2,6 @@ WIMGTOOL_OBJS=\
 	$(IMGTOOL_LIB_OBJS)								\
 	$(OBJ)/mess/pile.o								\
 	$(OBJ)/mess/windows/opcntrl.o					\
-	$(OBJ)/mess/windows/strconv.o					\
 	$(OBJ)/mess/windows/winutils.o					\
 	$(OBJ)/mess/tools/imgtool/stubs.o				\
 	$(OBJ)/mess/tools/imgtool/windows/wmain.o		\

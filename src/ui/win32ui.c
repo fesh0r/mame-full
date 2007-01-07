@@ -1205,8 +1205,8 @@ int Mame32Main(HINSTANCE    hInstance,
 	if (__argc != 1)
 	{
 		/* Rename main because gcc will use it instead of WinMain even with -mwindows */
-		extern int DECL_SPEC main_(int, char**);
-		exit(main_(__argc, __argv));
+		extern int DECL_SPEC mame_main(int, char**);
+		exit(mame_main(__argc, __argv));
 	}
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))
 		return 1;

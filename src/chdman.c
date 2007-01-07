@@ -2,7 +2,7 @@
 
     CHD compression frontend
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -197,23 +197,6 @@ static void usage(void)
 	printf("   or: chdman -diff parent.chd compare.chd diff.chd\n");
 	printf("   or: chdman -setchs inout.chd cylinders heads sectors\n");
 	printf("   or: chdman -split input.chd output.chd length\n");
-	exit(1);
-}
-
-
-/*-------------------------------------------------
-    fatalerror - error hook for assertions
--------------------------------------------------*/
-
-void CLIB_DECL fatalerror(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vfprintf(stderr, text, arg);
-	va_end(arg);
-
 	exit(1);
 }
 
@@ -2218,7 +2201,11 @@ static UINT64 chdman_length(chd_interface_file *file)
     main - entry point
 -------------------------------------------------*/
 
-int main(int argc, char **argv)
+#ifdef _WIN32
+int CLIB_DECL utf8_main(int argc, char **argv)
+#else
+int CLIB_DECL main(int argc, char **argv)
+#endif
 {
 	extern char build_version[];
 	printf("chdman - MAME Compressed Hunks of Data (CHD) manager %s\n", build_version);

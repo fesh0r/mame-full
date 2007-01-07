@@ -4,7 +4,7 @@
 
     Handle input from the user.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -812,7 +812,7 @@ const char *code_name(input_code code)
 	/* a few special other codes */
 	switch (code)
 	{
-		case CODE_NONE : return DEF_STR( None );
+		case CODE_NONE : return "None";
 		case CODE_NOT : return "not";
 		case CODE_OR : return "or";
 	}
@@ -1141,13 +1141,13 @@ char *seq_name(const input_seq *seq, char *buffer, unsigned max)
 		{
 			strcpy(dest, name);
 			dest += strlen(name);
-			max -= strlen(name);
+			max -= (UINT32)strlen(name);
 		}
 	}
 
 	/* if we ended up with nothing, say DEF_STR( None ), otherwise NULL-terminate */
 	if (dest == buffer && 4 + 1 <= max)
-		strcpy(dest, DEF_STR( None ));
+		strcpy(dest, "None");
 	else
 		*dest = 0;
 

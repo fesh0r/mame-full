@@ -274,7 +274,8 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 		zip_file *zip;
 		zip_error ziperr;
 		const zip_file_header *zipent;
-		const char *zip_entry_name;
+		char *zip_file_name;
+		char *zip_entry_name;
 
 		// open the ZIP file
 		nLength = pFileInfo->pszZipEntryName - pFileInfo->szFilename;
@@ -283,9 +284,10 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 		pszZipName[nLength - 1] = '\0';
 
 		// get the entry name
-		zip_entry_name = T2A(pFileInfo->pszZipEntryName);
+		zip_file_name = utf8_from_tstring(pszZipName);
+		zip_entry_name = utf8_from_tstring(pFileInfo->pszZipEntryName);
 
-		ziperr = zip_file_open(T2A(pszZipName), &zip);
+		ziperr = zip_file_open(zip_file_name, &zip);
 		if (ziperr == ZIPERR_NONE)
 		{
 			zipent = zip_file_first_file(zip);
@@ -309,6 +311,8 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 			}
 			zip_file_close(zip);
 		}
+		free(zip_file_name);
+		free(zip_entry_name);
 	}
 	else
 	{
@@ -390,7 +394,7 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	struct FileInfo **ppNewIndex;
 	struct FileInfo *pInfo;
 	int nIndex, nSize;
-	LPCSTR pszExtension, s;
+	LPCSTR pszExtension = NULL, s;
 	const struct IODevice *pDevice = NULL;
 	device_class devclass = {0,};
 
@@ -401,7 +405,8 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	pPickerInfo = GetSoftwarePickerInfo(hwndPicker);
 
 	// look up the device
-	pszExtension = T2A(_tcsrchr(pszFilename, '.'));
+	if (_tcsrchr(pszFilename, '.'))
+		pszExtension = utf8_from_tstring(_tcsrchr(pszFilename, '.'));
 	if (pszExtension && pPickerInfo->pDriver)
 	{
 		pszExtension++;
@@ -483,12 +488,12 @@ error:
 static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
 	BOOL bForce, zip_file *pZip, const zip_file_header *pZipEnt)
 {
-	LPCTSTR pszZipSubPath;
+	LPTSTR pszZipSubPath;
 	LPTSTR s;
 	int nLength;
 	int nZipEntryNameLength;
 
-	pszZipSubPath = A2T(pZipEnt->filename);
+	pszZipSubPath = tstring_from_utf8(pZipEnt->filename);
 
 	// special case; skip first two characters if they are './'
 	if ((pszZipSubPath[0] == '.') && (pszZipSubPath[1] == '/'))
@@ -503,6 +508,7 @@ static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
 	s = (LPTSTR) alloca(nLength * sizeof(TCHAR));
 	_sntprintf(s, nLength, TEXT("%s\\%s"), pszZipPath, pszZipSubPath);
 
+	free(pszZipSubPath);
 	return SoftwarePicker_AddFileEntry(hwndPicker, s, 
 		nZipEntryNameLength, pZipEnt->crc, bForce);
 }
@@ -792,7 +798,9 @@ const TCHAR *SoftwarePicker_GetItemString(HWND hwndPicker, int nRow, int nColumn
 				}
 				if (pszUtf8)
 				{
-					_sntprintf(pszBuffer, nBufferLength, TEXT("%s"), U2T(pszUtf8));
+					char *tempstr = tstring_from_utf8(pszUtf8);
+					_sntprintf(pszBuffer, nBufferLength, TEXT("%s"), tempstr);
+					free(tempstr);
 					s = pszBuffer;
 				}
 			}

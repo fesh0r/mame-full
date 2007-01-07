@@ -505,11 +505,13 @@ void cia_issue_index(int which)
 	cia_update_interrupts(cia);
 }
 
+
 void cia_set_input_sp(int which, int data)
 {
 	cia_state *cia = &cia_array[which];
 	cia->sp = data;
 }
+
 
 void cia_set_input_cnt(int which, int data)
 {
@@ -532,7 +534,7 @@ void cia_set_input_cnt(int which, int data)
 			cia->serial >>= 1;
 			if (cia->sp)
 				cia->serial |= 0x80;
-			
+
 			if (++cia->shift == 8)
 			{
 				cia->sdr = cia->serial;
@@ -699,7 +701,7 @@ void cia_write(int which, offs_t offset, UINT8 data)
 			timer->latch = (timer->latch & 0x00ff) | (data << 8);
 
 			/* if the timer is one-shot, then force a start on it */
-			if ( timer->mode & 0x08 )
+			if (timer->mode & 0x08)
 			{
 				timer->mode |= 1;
 				cia_timer_update(timer, timer->latch);
@@ -708,9 +710,7 @@ void cia_write(int which, offs_t offset, UINT8 data)
 			{
 				/* if the timer is off, update the count */
 				if (!(timer->mode & 0x01))
-				{
 					cia_timer_update(timer, timer->latch);
-				}
 			}
 			break;
 

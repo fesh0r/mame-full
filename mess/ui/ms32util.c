@@ -17,31 +17,23 @@ BOOL DriverUsesMouse(int driver_index)
 	const input_port_entry *input_ports;
 	BOOL retval = FALSE;
 
-	if (drivers[driver_index]->construct_ipt == NULL)
-		return FALSE;
-		
-	begin_resource_tracking();
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt, NULL);
-
-	while (1)
+	if (drivers[driver_index]->ipt)
 	{
-		UINT32 type;
+		begin_resource_tracking();
+		input_ports = input_port_allocate(drivers[driver_index]->ipt, NULL);
 
-		type = input_ports->type;
-
-		if (type == IPT_END)
-			break;
-
-		if (type == IPT_MOUSE_X || type == IPT_MOUSE_Y)
+		while (input_ports->type != IPT_END)
+		{
+			if (input_ports->type == IPT_MOUSE_X || input_ports->type == IPT_MOUSE_Y)
 			{
 				retval = TRUE;
 				break;
 			}
+			input_ports++;
+		}
 
-		input_ports++;
+		end_resource_tracking();
 	}
-
-	end_resource_tracking();
 
 	return retval;
 }

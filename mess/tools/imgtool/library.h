@@ -279,7 +279,7 @@ union imgtoolinfo
 	imgtoolerr_t	(*read_block)		(imgtool_image *image, void *buffer, UINT64 block);
 	imgtoolerr_t	(*write_block)		(imgtool_image *image, const void *buffer, UINT64 block);
 	imgtoolerr_t	(*list_partitions)	(imgtool_image *image, imgtool_partition_info *partitions, size_t len);
-	int				(*approve_filename_char)(unicode_char_t ch);
+	int				(*approve_filename_char)(unicode_char ch);
 	int				(*make_class)(int index, imgtool_class *imgclass);
 
 	const struct OptionGuide *createimage_optguide;
