@@ -440,7 +440,7 @@ $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE) -o $@
 
 # cli target
-$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/windows/main.o
+$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(NAME)lib.$(DLLLINK) $(OBJ)/mess/windows/climain.o -o $@
 

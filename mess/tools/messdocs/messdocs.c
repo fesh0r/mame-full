@@ -577,7 +577,11 @@ error:
 
 
 
-int main(int argc, char *argv[])
+#ifdef _WIN32
+int CLIB_DECL utf8_main(int argc, char **argv)
+#else
+int CLIB_DECL main(int argc, char **argv)
+#endif
 {
 	if (argc != 3)
 	{
@@ -594,7 +598,3 @@ void CLIB_DECL logerror(const char *text,...)
 {
 }
 
-void CLIB_DECL fatalerror(const char *text,...)
-{
-	exit(-1);
-}
