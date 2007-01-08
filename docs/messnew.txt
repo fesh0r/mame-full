@@ -52,6 +52,9 @@ Source Changes:
 
 - Fixed certain crashes that occured on hard reset.  (bug #988) [Nate Woods]
 
+- Fixed bug that caused a crash when a device was passed an empty string at
+  the command line.  (bug #991) [Nate Woods]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 

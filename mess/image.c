@@ -498,6 +498,10 @@ static int image_load_internal(mess_image *image, const char *path,
 	UINT32 open_plan[4];
 	int i;
 
+	/* sanity checks */
+	assert_always(image, "image_load(): image is NULL");
+	assert_always(path, "image_load(): path is NULL");
+
 	/* we are now loading */
 	image->is_loading = 1;
 

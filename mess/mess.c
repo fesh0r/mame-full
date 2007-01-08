@@ -192,7 +192,8 @@ void devices_init(running_machine *machine)
 
 				/* try to load this image */
 				image = image_from_device_and_index(dev, id);
-				result = image_load(image, image_name);
+				if (image_name)
+					result = image_load(image, image_name);
 				break;
 			}
 		}
