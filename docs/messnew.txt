@@ -56,7 +56,7 @@ Source Changes:
   the command line.  (bug #991) [Nate Woods]
 
 - Fixed error reporting when startup images are not properly loaded up.  (bug
-  #928, #992) [Nate Woods]
+  #928, #990, #992) [Nate Woods]
 
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
