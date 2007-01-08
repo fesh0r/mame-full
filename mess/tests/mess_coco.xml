@@ -76,4 +76,10 @@
 	<imageverify type="prin">"FOO"</imageverify>
 </test>
 
+<test name="coco_bug993" driver="coco2b" ramsize="16k">
+	<!-- Tests a bug that would cause the CoCo with 16k RAM to not run properly -->
+	<wait time="2"/>
+	<memverify start="0x480" end="0x481">"OK"</memverify>
+</test>
+
 </tests>
