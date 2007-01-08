@@ -10,9 +10,6 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [GAMEBOY] Updated aspect ratios for gameboy, gbpocket, and gbcolor to 10:9,
-  supergb to 4:3.  [Belegdol]
-
 - [AMIGA] Fixed regressions; now boots properly.  Also added keyboard support,
   512KB "slow-ram" support, preliminary support for Datel Action Replay 1 and
   many floppy controller fixes.  [Ernesto Corvi]
@@ -22,6 +19,9 @@ System Driver Changes:
 - [DGNBETA] More fully implemented certain graphics modes.  [Phill
   Harvey-Smith]
   
+- [GAMEBOY] Updated aspect ratios for gameboy, gbpocket, and gbcolor to 10:9,
+  supergb to 4:3.  [Belegdol]
+
 - [IP204415] Fixed driver.  (bug #986) [Nate Woods]
 
 
@@ -54,6 +54,9 @@ Source Changes:
 
 - Fixed bug that caused a crash when a device was passed an empty string at
   the command line.  (bug #991) [Nate Woods]
+
+- Fixed error reporting when startup images are not properly loaded up.  (bug
+  #928, #992) [Nate Woods]
 
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 

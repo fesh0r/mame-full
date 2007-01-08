@@ -181,34 +181,41 @@ void devices_init(running_machine *machine)
 
 		image = NULL;
 
+		/* search for a matching device */
 		for (dev = machine->devices; dev->type < IO_COUNT; dev++)
 		{
 			if ((dev->type == devtype) && (!devtag || !strcmp(dev->tag, devtag)))
-			{
-				if (devindex >= 0)
-					id = devindex;
-				else
-					id = allocated_slots[dev - machine->devices]++;
+				break;
+		}
 
+		/* did we find the device? */
+		if (dev->type < IO_COUNT)
+		{
+			/* device has been found; now identify the precise slot */
+			if (devindex >= 0)
+				id = devindex;
+			else
+				id = allocated_slots[dev - machine->devices]++;
+
+			/* check to see if we loaded too many devices */
+			if (id >= dev->count)
+				fatalerror_exitcode(MAMERR_DEVICE, "Too many devices of type %d\n", devtype);
+
+			/* only load the image if image_name is specified */
+			if (image_name)
+			{
 				/* try to load this image */
 				image = image_from_device_and_index(dev, id);
-				if (image_name)
-					result = image_load(image, image_name);
-				break;
-			}
-		}
-		if (dev->type >= IO_COUNT)
-		{
-			if (image)
-			{
-				fatalerror_exitcode(MAMERR_DEVICE, "Device %s load (%s) failed: %s\n",
-					device_typename(devtype),
-					osd_basename((char *) image_name),
-					image_error(image));
-			}
-			else
-			{
-				fatalerror_exitcode(MAMERR_DEVICE, "Too many devices of type %d\n", devtype);
+				result = image_load(image, image_name);
+
+				/* did the image load fail? */
+				if (result)
+				{
+					fatalerror_exitcode(MAMERR_DEVICE, "Device %s load (%s) failed: %s\n",
+						device_typename(devtype),
+						osd_basename((char *) image_name),
+						image_error(image));
+				}
 			}
 		}
 	}
