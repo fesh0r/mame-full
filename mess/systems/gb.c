@@ -78,6 +78,187 @@ and is then rolls over to 0.
 When the line counter is changed it gets checked against the lyc register.
 
 
+Mappers used in the gameboy
+===========================
+
+MBC1 Mapper
+===========
+
+The MBC1 mapper has two modes: 2MB ROM/8KB RAM or 512KB ROM/32KB RAM.
+This mode is selected by writing into the 6000-7FFF memory area:
+0bXXXXXXXB - B=0 - 2MB ROM/8KB RAM mode
+             B=1 - 512KB ROM/32KB RAM mode
+The default behaviour is to be in 2MB ROM/8KB RAM mode.
+
+Writing a value ( 0bXXXBBBBB ) into the 2000-3FFF memory area selects the
+lower 5 bits of the ROM bank to select for the 4000-7FFF memory area. If a
+value of 0bXXX00000 is written then this will autmatically be changed to
+0bXXX00001 by the mbc chip.
+
+Writing a value (0bXXXXXXBB ) into the 4000-5FFF memory area either selects
+the RAM bank to use or bits 6 and 7 for the ROM bank to use for the 4000-7FFF
+memory area. This behaviour depends on the memory moddel chosen.
+
+The RAM sections are enabled by writing the value 0bXXX1010 into the 0000-1FFF
+memory area. Writing any other value disables the RAM section.
+
+Some unanswered cases:
+#1 - Set mode 0
+   - Set lower bank bits to 1F
+   - Set high bank bits to 01  => bank #3F
+   - Set mode 1
+   - What ROM bank is now at 4000-7FFF, bank #1F or bank #3F?
+
+#2 - Set mode 1
+   - Set ram area #1
+   - Set mode 0
+   - What ram area is now at A000-BFFF, ram bank 00 or ram bank 01?
+
+
+MBC2 Mapper
+===========
+
+The MBC2 mapper includes 512x4bits of builtin RAM.
+
+0000-1FFF - Writing to this area enables (value 0bXXXX1010) or disables (any
+            other value than 0bXXXX1010) the RAM. In order to perform this
+            function bit 12 of the address must be reset, so usable areas are
+            0000-00FF, 0200-02FF, 0400-04FF, 0600-06FF, ..., 1E00-1EFF.
+2000-3FFF - Writing to this area selects the rom bank to appear at 4000-7FFF.
+            Only bits 3-0 are used to select the bank number. If a value of
+            0bXXXX0000 is written then this is automatically changed into
+            0bXXXX0001 by the mapper.
+            In order to perform the rom banking bit 12 of the address must be
+            set, so usable areas are 2100-21FF, 2300-23FF, 2500-25FF, 2700-
+            27FF, ..., 3F00-3FFF.
+
+Some unanswered cases:
+#1 - Set rom bank to 8 for a 4 bank rom image.
+   - What rom bank appears at 4000-7FFF, bank #0 or bank #1 ?
+
+
+MBC3 Mapper
+===========
+
+The MBC3 mapper cartridges can include a RTC chip.
+
+0000-1FFF - Writing to this area enables (value 0x0A) or disables (0x00) the
+            RAM and RTC registers.
+2000-3FFF - Writing to this area selects the rom bank to appear at 4000-7FFF.
+            Bits 6-0 are used  to select the bank number. If a value of
+            0bX0000000 is written then this is autmatically changed into
+            0bX0000001 by the mapper.
+4000-5FFF - Writing to this area selects the RAM bank or the RTC register to
+            read.
+            XXXX00bb - Select RAM bank bb.
+            XXXX1rrr - Select RTC register rrr. Accepted values for rrr are:
+                       000 - Seconds (0x00-0x3B)
+                       001 - Minutes (0x00-0x3B)
+                       010 - Hours (0x00-0x17)
+                       011 - Bits 7-0 of the day counter
+                       100 - bit 0 - Bit 8 of the day counter
+                             bit 6 - Halt RTC timer ( 0 = timer active, 1 = halted)
+                             bit 7 - Day counter overflow flag
+6000-7FFF - Writing 0x00 followed by 0x01 latches the RTC data. This latching
+            method is used for reading the RTC registers.
+
+Some unanswered cases:
+#1 - Set rom bank to 8(/16/32/64) for a 4(/8/16/32) bank image.
+   - What rom bank appears at 4000-7FFF, bank #0 or bank #1 ?
+
+
+MBC5 Mapper
+===========
+
+0000-1FFF - Writing to this area enables (0x0A) or disables (0x00) the RAM area.
+2000-2FFF - Writing to this area updates bits 7-0 of the rom bank number to
+            appear at 4000-7FFF.
+3000-3FFF - Writing to this area updates bit 8 of the rom bank number to appear
+            at 4000-7FFF.
+4000-5FFF - Writing to this area select the RAM bank number to use. If the
+            cartridge includes a Rumble Pack then bit 3 is used to control
+            rumble motor (0 - disable motor, 1 - enable motor).
+
+
+MBC7 Mapper (Used by Kirby's Tilt n' Tumble)
+===========
+
+Status: not supported yet.
+
+
+TAMA5 Mapper (Used by Tamagotchi 3)
+============
+
+Status: partially supported.
+
+The TAMA5 mapper includes a special RTC chip which communicates through the
+RAM area (0xA000-0xBFFF); most notably addresses 0xA000 and 0xA001 seem to
+be used. In this setup 0xA001 acts like a control register and 0xA000 like
+a data register.
+
+Accepted values by the TAMA5 control register:
+0x00 - Writing to 0xA000 will set bits 3-0 for rom bank selection.
+0x01 - Writing to 0xA000 will set bits (7-?)4 for rom bank selection.
+
+0x04 - Bits 3-0 of the value to write
+0x05 - Bits 4-7 of the value to write
+0x06 - Address control hi
+       bit 0 - Bit 4 for the address
+       bit 3-1 - 000 - Write a byte to the 32 byte memory. The data to be
+                       written must be set in registers 0x04 (lo nibble) and
+                       0x05 (hi nibble).
+               - 001 - Read a byte from the 32 byte memory. The data read
+                       will be available in registers 0x0C (lo nibble) and
+                       0x0D (hi nibble).
+               - 010 - Unknown (occurs just after having started a game and
+                       entered a date) (execution at address 1A19)
+               - 011 - Unknown (not encountered yet)
+               - 100 - Unknown (occurs during booting a game; appears to be
+                       some kind of read command as it is followed by a read
+                       of the 0x0C register) (execution at address 1B5B)
+               - 101 - Unknown (not encountered yet)
+               - 110 - Unknown (not encountered yet)
+               - 111 - Unknown (not encountered yet)
+0x07 - Address control lo
+       bit 3-0 - bits 3-0 for the address
+
+0x0A - After writing this the lowest 2 bits of A000 determine whether the
+       TAMA5 chip is ready to accept the next command. If the lowest 2 bits
+       hold the value 01 then the TAMA5 chip is ready for the next command.
+
+0x0C - Reading from A000 will return bits 3-0 of the data
+0x0D - Reading from A000 will return bits 7-4 of the data
+
+0x04 - RTC controls? -> RTC/memory?
+0x05 - Write time/memomry?
+0x06 - RTC controls?
+0x07 - RTC controls?
+
+Unknown sequences:
+During booting a game (1B5B:
+04 <- 00, 06 <- 08, 07 <- 01, followed by read 0C
+when value read from 0C equals 00 followed by the sequence:
+04 <- 01, 06 <- 08, 07 <- 01, followed by read 0C
+the value read from 0C is checked for non-zero, don't know the consequences for either
+yet.
+
+Initialization after starting a game:
+At address 1A19:
+06 <- 05, 07 <- 02, followed by read 0C, if != 0F => OK, otherwise do something.
+
+
+HuC1 mapper
+===========
+
+Status: not supported yet.
+
+
+HuC3 mapper
+===========
+
+Status: not supported yet.
+
+
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -212,6 +393,10 @@ static unsigned char palette[] =
 	0x41,0x41,0x41,		/* Dark       */
 };
 
+static unsigned char palette_megaduck[] = {
+	0x6B, 0xA6, 0x4A, 0x43, 0x7A, 0x63, 0x25, 0x59, 0x55, 0x12, 0x42, 0x4C
+};
+
 /* Initialise the palette */
 static PALETTE_INIT( gb )
 {
@@ -273,6 +458,14 @@ static PALETTE_INIT( gbc )
 	/* Sprites are supposed to be uninitialized, but we'll make them black */
 	for( ii = 8*4; ii < 16*4; ii++ )
 		colortable[ii] = 0;
+}
+
+static PALETTE_INIT( megaduck ) {
+	int ii;
+	for( ii = 0; ii < 4; ii++) {
+		palette_set_color(machine, ii, palette_megaduck[ii*3+0], palette_megaduck[ii*3+1], palette_megaduck[ii*3+2]);
+		colortable[ii] = ii;
+	}
 }
 
 static struct CustomSound_interface gameboy_sound_interface =
@@ -413,7 +606,7 @@ static MACHINE_DRIVER_START( megaduck )
 	MDRV_GFXDECODE(gb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(4)
-	MDRV_PALETTE_INIT(gb)
+	MDRV_PALETTE_INIT(megaduck)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 	MDRV_SOUND_ADD(CUSTOM, 0)
