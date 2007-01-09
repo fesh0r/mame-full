@@ -22,7 +22,8 @@ ernesto@imagina.com
 ***************************************************************************/
 
 static ADDRESS_MAP_START(amiga_mem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x07ffff) AM_MIRROR(0x80000) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
 #if AMIGA_ACTION_REPLAY_1
 	AM_RANGE(0x9fc000, 0x9fffff) AM_RAMBANK(2) AM_BASE(&amiga_ar_ram) AM_SIZE(&amiga_ar_ram_size)
 #endif
@@ -75,7 +76,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(a1000_mem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE(0x000000, 0x03ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
+	AM_RANGE(0x000000, 0x03ffff) AM_MIRROR(0xc0000) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram) AM_SIZE(&amiga_chip_ram_size)
 	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
 	AM_RANGE(0xdf0000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)	/* Custom Chips */
 	AM_RANGE(0xe80000, 0xe8ffff) AM_READWRITE(amiga_autoconfig_r, amiga_autoconfig_w)
@@ -228,9 +229,16 @@ static void amiga_cia_0_portA_w( UINT8 data )
 	memory_set_bank(1, data & 1);
 
 	/* swap the write handlers between ROM and bank 1 based on the bit */
-	if ((data & 1) == 0)
+	if ((data & 1) == 0) {
+		UINT32 mirror_mask = amiga_chip_ram_size;
+		
+		while( (mirror_mask<<1) < 0x100000 ) {
+			mirror_mask |= ( mirror_mask << 1 );
+		}
+		
 		/* overlay disabled, map RAM on 0x000000 */
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, amiga_chip_ram_size - 1, 0, 0, MWA16_BANK1);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, amiga_chip_ram_size - 1, 0, mirror_mask, MWA16_BANK1);
+	}
 	else
 		/* overlay enabled, map Amiga system ROM on 0x000000 */
 		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM);

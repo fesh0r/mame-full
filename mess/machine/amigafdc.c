@@ -17,6 +17,8 @@
 #define ONE_REV_TIME			200.0 /* ms */
 #define MAX_WORDS_PER_DMA_CYCLE	32 /* 64 bytes per dma cycle */
 #define DISK_DETECT_DELAY		1
+#define MAX_TRACKS				160
+#define MAX_MFM_TRACK_LEN		16384
 
 #include "mame.h"
 #include "amiga.h"
@@ -33,8 +35,12 @@ typedef struct {
 	int wprot;
 	int disk_changed;
 	mess_image *f;
+	UINT32 extinfo[MAX_TRACKS];
+	UINT32 extoffs[MAX_TRACKS];
+	int is_ext_image;
 	int cyl;
-	UINT8 mfm[MAX_TRACK_BYTES];
+	int tracklen;
+	UINT8 mfm[MAX_MFM_TRACK_LEN];
 	int	cached;
 	mame_timer *rev_timer;
 	mame_timer *sync_timer;
@@ -74,9 +80,11 @@ static DEVICE_INIT(amiga_fdc)
 	fdc_status[id].len = 0;
 	fdc_status[id].ptr = 0;
 	fdc_status[id].f = NULL;
+	fdc_status[id].is_ext_image = 0;
+	fdc_status[id].tracklen = MAX_TRACK_BYTES;
 	fdc_status[id].disk_changed = DISK_DETECT_DELAY;
 
-	memset( fdc_status[id].mfm, 0xaa, MAX_TRACK_BYTES );
+	memset( fdc_status[id].mfm, 0xaa, MAX_MFM_TRACK_LEN );
 	
 	fdc_sel = 0x0f;
 	fdc_dir = 0;
@@ -85,6 +93,48 @@ static DEVICE_INIT(amiga_fdc)
 	fdc_rdy = 0;
 	
 	return INIT_PASS;
+}
+
+static void check_extended_image( int id )
+{
+	UINT8	header[8], data[4];
+	
+	fdc_status[id].is_ext_image = 0;
+	
+	if ( image_fseek( fdc_status[id].f, 0, SEEK_SET ) )
+	{
+		logerror("FDC: image_fseek failed!\n" );
+		return;
+	}
+
+	image_fread( fdc_status[id].f, &header, sizeof( header ) );
+	
+	if ( memcmp( header, "UAE--ADF", sizeof( header ) ) == 0 )
+	{
+		int		i;
+		
+		for( i = 0; i < MAX_TRACKS; i++ )
+		{
+			image_fread( fdc_status[id].f, &data, sizeof( data ) );
+			
+			/* data[0,1] = SYNC - data[2,3] = LEN */
+			
+			fdc_status[id].extinfo[i] = data[0];
+			fdc_status[id].extinfo[i] <<= 8;
+			fdc_status[id].extinfo[i] |= data[1];
+			fdc_status[id].extinfo[i] <<= 8;
+			fdc_status[id].extinfo[i] |= data[2];
+			fdc_status[id].extinfo[i] <<= 8;
+			fdc_status[id].extinfo[i] |= data[3];
+			
+			if ( i == 0 )
+				fdc_status[id].extoffs[i] = sizeof( header ) + ( MAX_TRACKS * sizeof( data ) );
+			else
+				fdc_status[id].extoffs[i] = fdc_status[id].extoffs[i-1] + ( fdc_status[id].extinfo[i-1] & 0xffff );
+		}
+		
+		fdc_status[id].is_ext_image = 1;
+	}
 }
 
 static DEVICE_LOAD(amiga_fdc)
@@ -100,6 +150,8 @@ static DEVICE_LOAD(amiga_fdc)
 	timer_reset( fdc_status[id].sync_timer, TIME_NEVER );
 	timer_reset( fdc_status[id].dma_timer, TIME_NEVER );
 	fdc_rdy = 0;
+	
+	check_extended_image( id );
 
 	return INIT_PASS;
 }
@@ -135,7 +187,7 @@ static int fdc_get_curpos( int drive )
 	speed = ( CUSTOM_REG(REG_ADKCON) & 0x100 ) ? 2 : 4;
 
 	bytes = elapsed / ( TIME_IN_USEC( speed * 8 ) );
-	pos = bytes % ( MAX_TRACK_BYTES );
+	pos = bytes % ( fdc_status[drive].tracklen );
 
 	return pos;
 }
@@ -268,11 +320,11 @@ static void fdc_dma_proc( int drive ) {
 		{
 			int dat = ( fdc_status[drive].mfm[cur_pos++] ) << 8;
 
-			cur_pos %= ( MAX_TRACK_BYTES );
+			cur_pos %= ( fdc_status[drive].tracklen );
 
 			dat |= fdc_status[drive].mfm[cur_pos++];
 
-			cur_pos %= ( MAX_TRACK_BYTES );
+			cur_pos %= ( fdc_status[drive].tracklen );
 
 			amiga_chip_ram_w(offset, dat);
 
@@ -348,7 +400,7 @@ void amiga_fdc_setup_dma( void ) {
 				 	break;
 
 			i++;
-			i %= ( MAX_TRACK_BYTES );
+			i %= ( fdc_status[drive].tracklen );
 			time++;
 		} while( i != cur_pos );
 
@@ -391,19 +443,56 @@ static void setup_fdc_buffer( int drive )
 	if ( fdc_status[drive].cached == offset )
 		return;
 
-	if ( image_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
-		logerror("FDC: image_fseek failed!\n" );
-		fdc_status[drive].f = NULL;
-		fdc_status[drive].disk_changed = DISK_DETECT_DELAY;
-	}
-
-	image_fread( fdc_status[drive].f, temp_cyl, len );
-
-	memset( &fdc_status[drive].mfm[0], 0xaa, GAP_TRACK_BYTES );
-	
 #if 0
 	popmessage("T:%d S:%d", fdc_status[drive].cyl, fdc_side );
 #endif
+	
+	if ( fdc_status[drive].is_ext_image )
+	{
+		len = fdc_status[drive].extinfo[offset] & 0xffff;
+			
+		if ( len > ( MAX_MFM_TRACK_LEN - 2 ) )
+			len = MAX_MFM_TRACK_LEN - 2;
+			
+		if ( image_fseek( fdc_status[drive].f, fdc_status[drive].extoffs[offset], SEEK_SET ) )
+		{
+			logerror("FDC: image_fseek failed!\n" );
+			fdc_status[drive].f = NULL;
+			fdc_status[drive].disk_changed = DISK_DETECT_DELAY;
+			return;
+		}
+		
+		/* if SYNC is 0000, then its a regular amiga dos track image */
+		if ( ( fdc_status[drive].extinfo[offset] >> 16 ) == 0x0000 )
+		{
+			image_fread( fdc_status[drive].f, temp_cyl, len );
+			/* fall through to regular load */
+		}
+		else /* otherwise, it's a raw track */
+		{
+			fdc_status[drive].mfm[0] = ( fdc_status[drive].extinfo[offset] >> 24 ) & 0xff;
+			fdc_status[drive].mfm[1] = ( fdc_status[drive].extinfo[offset] >> 16 ) & 0xff;
+			image_fread( fdc_status[drive].f, &fdc_status[drive].mfm[2], len );
+			fdc_status[drive].tracklen = len + 2;
+			fdc_status[drive].cached = offset;
+			return;
+		}
+	}
+	else
+	{
+		if ( image_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) )
+		{
+			logerror("FDC: image_fseek failed!\n" );
+			fdc_status[drive].f = NULL;
+			fdc_status[drive].disk_changed = DISK_DETECT_DELAY;
+			return;
+		}
+		
+		image_fread( fdc_status[drive].f, temp_cyl, len );
+	}
+
+	fdc_status[drive].tracklen = MAX_TRACK_BYTES;
+	memset( &fdc_status[drive].mfm[0], 0xaa, GAP_TRACK_BYTES );
 
 	for ( sector = 0; sector < 11; sector++ ) {
 		int x;
@@ -504,11 +593,14 @@ static void fdc_rev_proc( int drive ) {
 	timer_adjust(fdc_status[drive].rev_timer, TIME_IN_MSEC( ONE_REV_TIME ), drive, 0);
 	fdc_status[drive].rev_timer_started = 1;
 	
-	/* also start the sync timer */
-	time = GAP_TRACK_BYTES + 6;
-	time *= ( CUSTOM_REG(REG_ADKCON) & 0x0100 ) ? 2 : 4;
-	time *= 8;
-	timer_adjust( fdc_status[drive].sync_timer, TIME_IN_USEC( time ), drive, 0 );
+	if ( fdc_status[drive].is_ext_image == 0 )
+	{
+		/* also start the sync timer */
+		time = GAP_TRACK_BYTES + 6;
+		time *= ( CUSTOM_REG(REG_ADKCON) & 0x0100 ) ? 2 : 4;
+		time *= 8;
+		timer_adjust( fdc_status[drive].sync_timer, TIME_IN_USEC( time ), drive, 0 );
+	}
 }
 
 static void start_rev_timer( int drive ) {
