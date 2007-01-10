@@ -35,7 +35,6 @@
 #define JOYSTICK_SENSITIVITY	100
 
 static ADDRESS_MAP_START( coco_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
 	AM_RANGE(0x8000, 0xfeff) AM_RAMBANK(2)
 	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,				pia_0_w)
 	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,			pia_1_w)

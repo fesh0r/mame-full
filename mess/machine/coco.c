@@ -2597,21 +2597,33 @@ MACHINE_START( dgnalpha )
 	return 0;
 }
 
+static void coco12_init_machine(running_machine *machine, const pia6821_interface *piaintf)
+{
+	/* install low RAM; we might have to mirror if there is <32k of RAM */
+	offs_t ram_end = (mess_ram_size < 0x8000) ? (mess_ram_size - 1) : 0x7FFF;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MWA8_BANK1);
+	memory_set_bankptr(1, &mess_ram[0]);
+
+	if (ram_end < 0x7FFF)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, ram_end + 1, 0x7FFF, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, ram_end + 1, 0x7FFF, 0, 0, MWA8_NOP);
+	}
+
+	generic_init_machine(machine, piaintf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+	coco_or_dragon = AM_COCO;
+}
+
 MACHINE_START( coco )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
-
-	coco_or_dragon = AM_COCO;
+	coco12_init_machine(machine, coco_pia_intf);
 	return 0;
 }
 
 MACHINE_START( coco2 )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
-
-	coco_or_dragon = AM_COCO;
+	coco12_init_machine(machine, coco2_pia_intf);
 	return 0;
 }
 
