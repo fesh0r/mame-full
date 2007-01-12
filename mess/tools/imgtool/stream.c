@@ -266,7 +266,7 @@ UINT32 stream_read(imgtool_stream *stream, void *buf, UINT32 sz)
 
 		case IMG_MEM:
 			/* do we have to limit sz? */
-			if (sz < (stream->filesize - stream->position))
+			if (sz > (stream->filesize - stream->position))
 				sz = (UINT32) (stream->filesize - stream->position);
 
 			memcpy(buf, stream->u.buffer + stream->position, sz);
