@@ -217,23 +217,6 @@ enum {
 } FILESELECT_ENTRY_TYPE;
 
 
-static char *fs_dupe(const char *src, int len)
-{
-	char *dst;
-
-	/* malloc space for string + NULL char + extra char.*/
-	dst = malloc(len+2);
-	if (dst)
-	{
-		strcpy(dst, src);
-		/* put in NULL to cut string. */
-		dst[len+1]='\0';
-	}
-	return dst;
-
-}
-
-
 static void fs_free(void)
 {
 	if (fs_chunk > 0)
@@ -306,7 +289,7 @@ static int DECL_SPEC fs_compare(const void *p1, const void *p2)
 
 static void fs_generate_filelist(void)
 {
-	void *dir;
+	osd_directory *dir;
 	int qsort_start, count, i, n;
 	ui_menu_item *tmp_menu_item;
 	int *tmp_types;
@@ -370,31 +353,38 @@ static void fs_generate_filelist(void)
 	}
 
 	/* directory entries */
-	dir = osd_dir_open(".", current_filespecification);
+	dir = osd_opendir(".");
 	if (dir)
 	{
-		int len, filetype;
-		char filename[260];
-		len = osd_dir_get_entry(dir, filename, sizeof(filename), &filetype);
-		while (len > 0)
+		const osd_directory_entry *dirent;
+
+		while((dirent = osd_readdir(dir)) != NULL)
 		{
 			if (fs_total >= MAX_ENTRIES_IN_MENU)
 				break;
-			n = fs_alloc();
-			fs_item[n].text = fs_dupe(filename,len);
-			if (filetype)
+
+			switch(dirent->type)
 			{
-				fs_types[n] = FILESELECT_DIRECTORY;
-				fs_item[n].subtext = fs_directory;
+				case ENTTYPE_DIR:
+					n = fs_alloc();
+					fs_item[n].text = mame_strdup(dirent->name);
+					fs_types[n] = FILESELECT_DIRECTORY;
+					fs_item[n].subtext = fs_directory;
+					break;
+
+				case ENTTYPE_FILE:
+					n = fs_alloc();
+					fs_item[n].text = mame_strdup(dirent->name);
+					fs_types[n] = FILESELECT_FILE;
+					fs_item[n].subtext = fs_file;
+					break;
+
+				default:
+					/* ignore other file types */
+					break;
 			}
-			else
-			{
-				fs_types[n] = FILESELECT_FILE;
-				fs_item[n].subtext = fs_file;
-			}
-			len = osd_dir_get_entry(dir, filename, sizeof(filename), &filetype);
 		}
-		osd_dir_close(dir);
+		osd_closedir(dir);
 	}
 
 	logerror("fs_generate_filelist: sorting %d entries\n", n - qsort_start);

@@ -151,98 +151,16 @@ const char *osd_get_device_name(int idx)
 }
 #endif
 
-void *osd_dir_open(const char *dirname, const char *filemask)
-{
-	char buf[MAX_PATH];
-	OSD_WIN32_FIND_DATA *pfd = NULL;
-	char *tmpbuf = NULL;
-	char *s;
-
-	dirname = resolve_path(dirname, buf, sizeof(buf) / sizeof(buf[0]));
-	if (!dirname)
-		goto error;
-
-	pfd = malloc(sizeof(OSD_WIN32_FIND_DATA));
-	if (!pfd)
-		goto error;
-	memset(pfd, 0, sizeof(*pfd));
-
-	tmpbuf = malloc(strlen(dirname) + strlen(filemask) + 2);
-	if (!tmpbuf)
-		goto error;
-	strcpy(tmpbuf, dirname);
-	s = tmpbuf + strlen(tmpbuf);
-	s[0] = '\\';
-	strcpy(s + 1, filemask);
-
-#ifdef UNICODE
-	pfd->hDir = FindFirstFile(A2W(tmpbuf), &pfd->finddata);
-#else
-	pfd->hDir = FindFirstFile(tmpbuf, &pfd->finddata);
-#endif
-	if (pfd->hDir == INVALID_HANDLE_VALUE)
-		goto error;
-
-	free(tmpbuf);
-	return (void *) pfd;
-
-error:
-	if (pfd)
-		free(pfd);
-	if (tmpbuf)
-		free(tmpbuf);
-	return NULL;
-}
-
-int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
-{
-	int result;
-	OSD_WIN32_FIND_DATA *pfd = (OSD_WIN32_FIND_DATA *) dir;
-
-	if (pfd->bDone) {
-		if (name && namelength)
-			*name = '\0';
-		result = 0;
-	}
-	else {
-		if (name) {
-#ifdef UNICODE
-			_snprintf(name, namelength, "%S", pfd->finddata.cFileName);
-#else
-			strncpyz(name, pfd->finddata.cFileName, namelength);
-#endif
-		}
-#ifdef UNICODE
-		result = wcslen(pfd->finddata.cFileName);
-#else
-		result = strlen(pfd->finddata.cFileName);
-#endif
-
-		if (is_dir)
-			*is_dir = (pfd->finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
-
-		pfd->bDone = FindNextFile(pfd->hDir, &pfd->finddata) == 0;
-	}
-	return result;
-}
-
-void osd_dir_close(void *dir)
-{
-	OSD_WIN32_FIND_DATA *pfd = (OSD_WIN32_FIND_DATA *) dir;
-
-	FindClose(pfd->hDir);
-	free(pfd);
-}
-
 static BOOL dir_exists(const char *s)
 {
-	void *dp;
+	osd_directory *dp;
 	int rc = 0;
 
-	dp = osd_dir_open(s, "*.*");
-	if (dp) {
-		rc = osd_dir_get_entry(dp, NULL, 0, NULL);
-		osd_dir_close(dp);
+	dp = osd_opendir(s);
+	if (dp)
+	{
+		rc = (osd_readdir(dp) != NULL);
+		osd_closedir(dp);
 	}
 	return rc > 0;
 }
