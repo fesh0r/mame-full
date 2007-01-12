@@ -300,13 +300,6 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 ifeq ($(MAMEOS),windows)
 OBJDIRS +=	$(OBJ)/mess/tools/imgtool/windows 						\
 		$(OBJ)/mess/tools/imgtool/windows/res
-
-PLATFORM_TOOL_OBJS =				\
-	$(OBJ)/mess/windows/glob.o		\
-	$(OBJ)/mess/windows/dirutils.o	\
-	$(OBJ)/windows/fileio.o
-else
-PLATFORM_TOOL_OBJS = $(OBJ)/$(MAMEOS)/fileio.o
 endif
 
 
@@ -318,6 +311,8 @@ endif
 CPULIB = $(OBJ)/libcpu.a
 
 SOUNDLIB = $(OBJ)/libsound.a
+
+OSDCORELIB = $(OBJ)/$(MAMEOS)/libocore.a
 
 
 
@@ -425,11 +420,11 @@ else
 DLLLINK=dll
 endif
 
-$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(RESFILE) $(OSDBGOBJS)
+$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(RESFILE) $(EXPAT) $(ZLIB) $(OSDCORELIB)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) -shared $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
 # gui target
 $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
@@ -450,45 +445,39 @@ $(EMULATORCLI):	$(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $
 
 endif
 
-file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
+file2str$(EXE): $(OBJ)/file2str.o $(OSDCORELIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDBGOBJS)
+jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-dat2html$(EXE): $(DAT2HTML_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/restrack.o $(OBJ)/windows/strconv.o $(OSTOOLOBJS) $(OSDBGOBJS)
+dat2html$(EXE): $(DAT2HTML_OBJS) $(OSDCORELIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/restrack.o $(OBJ)/windows/strconv.o $(OSTOOLOBJS) $(OSDBGOBJS)
+messdocs$(EXE): $(MESSDOCS_OBJS) $(OSDCORELIB)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
+imgtool$(EXE): $(IMGTOOL_OBJS) $(ZLIB) $(OSDCORELIB)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSTOOLOBJS) $(OSDBGLDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-wimgtool$(EXE): $(WIMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(ZLIB) $(OSDBGOBJS)
+wimgtool$(EXE): $(WIMGTOOL_OBJS) $(ZLIB) $(OSDCORELIB)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSTOOLOBJS) $(OSDBGLDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
+	$(LD) $(LDFLAGS) $(OSDCORELIB) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
-messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSTOOLOBJS) \
-		$(OBJ)/windows/ticker.o					\
-		$(OBJ)/windows/fileio.o					\
-		$(OBJ)/windows/strconv.o				\
-		$(OBJ)/windows/winalloc.o				\
-		$(OBJ)/mess/windows/dirio.o				\
-		$(OBJ)/mess/windows/dirutils.o			\
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSDCORELIB) \
 		$(OBJ)/mess/windows/glob.o				\
 		$(OBJ)/mess/windows/parallel.o
 	@echo Linking $@...
@@ -505,6 +494,8 @@ $(CPULIB): $(DBGOBJS)
 endif
 
 $(SOUNDLIB): $(SOUNDOBJS)
+
+$(OSDCORELIB): $(OSDCOREOBJS)
 
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
 

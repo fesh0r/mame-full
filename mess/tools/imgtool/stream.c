@@ -12,10 +12,9 @@
 #include <assert.h>
 
 #include "unzip.h"
-#include "osdepend.h"
+#include "osdcore.h"
 #include "imgtool.h"
 #include "utils.h"
-#include "osd_tool.h"
 
 typedef enum
 {
@@ -28,16 +27,13 @@ struct _imgtool_stream
 	imgtype_t imgtype;
 	int write_protect;
 	const char *name; // needed for clear
-	INT64 position;
+	UINT64 position;
+	UINT64 filesize;
 
 	union
 	{
-		osd_tool_file *f;
-		struct
-		{
-			char *buf;
-			size_t bufsz;
-		} m;
+		osd_file *file;
+		UINT8 *buffer;
 	} u;
 };
 
@@ -79,12 +75,12 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 	if (!zipent)
 		goto error;
 
-	imgfile->u.m.bufsz = zipent->uncompressed_length;
-	imgfile->u.m.buf = malloc(zipent->uncompressed_length);
-	if (!imgfile->u.m.buf)
+	imgfile->filesize = zipent->uncompressed_length;
+	imgfile->u.buffer = malloc(zipent->uncompressed_length);
+	if (!imgfile->u.buffer)
 		goto error;
 
-	if (zip_file_decompress(z, imgfile->u.m.buf, zipent->uncompressed_length))
+	if (zip_file_decompress(z, imgfile->u.buffer, zipent->uncompressed_length))
 		goto error;
 
 	zip_file_close(z);
@@ -95,8 +91,8 @@ error:
 		zip_file_close(z);
 	if (imgfile)
 	{
-		if (imgfile->u.m.buf)
-			free(imgfile->u.m.buf);
+		if (imgfile->u.buffer)
+			free(imgfile->u.buffer);
 		free(imgfile);
 	}
 	return NULL;
@@ -106,22 +102,30 @@ error:
 
 imgtool_stream *stream_open(const char *fname, int read_or_write)
 {
+	mame_file_error filerr;
 	const char *ext;
 	imgtool_stream *imgfile = NULL;
-	static const char *write_modes[] = {"rb", "wb", "rb+", "wb+"};
-	osd_tool_file *f = NULL;
+	static const UINT32 write_modes[] =
+	{
+		OPEN_FLAG_READ,
+		OPEN_FLAG_WRITE,
+		OPEN_FLAG_READ | OPEN_FLAG_WRITE,
+		OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE
+	};
+	osd_file *f = NULL;
 	char *buf = NULL;
 	int len, i;
 	imgtool_stream *s = NULL;
 	char c;
+	UINT64 filesize;
 
 	/* maybe we are just a ZIP? */
 	ext = strrchr(fname, '.');
 	if (ext && !mame_stricmp(ext, ".zip"))
 		return stream_open_zip(fname, NULL, read_or_write);
 
-	f = osd_tool_fopen(fname, write_modes[read_or_write]);
-	if (!f)
+	filerr = osd_open(fname, write_modes[read_or_write], &f, &filesize);
+	if (filerr != FILERR_NONE)
 	{
 		if (!read_or_write)
 		{
@@ -162,8 +166,9 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 	memset(imgfile, 0, sizeof(*imgfile));
 	imgfile->imgtype = IMG_FILE;
 	imgfile->position = 0;
+	imgfile->filesize = filesize;
 	imgfile->write_protect = read_or_write ? 0 : 1;
-	imgfile->u.f = f;
+	imgfile->u.file = f;
 	imgfile->name = fname;
 	return imgfile;
 
@@ -171,7 +176,7 @@ error:
 	if (imgfile)
 		free((void *) imgfile);
 	if (f)
-		osd_tool_fclose(f);
+		osd_close(f);
 	if (buf)
 		free(buf);
 	return (imgtool_stream *) NULL;
@@ -190,11 +195,10 @@ imgtool_stream *stream_open_write_stream(int size)
 	imgfile->imgtype = IMG_MEM;
 	imgfile->write_protect = 0;
 	imgfile->position = 0;
+	imgfile->filesize = size;
+	imgfile->u.buffer = malloc(size);
 
-	imgfile->u.m.bufsz = size;
-	imgfile->u.m.buf = malloc(size);
-
-	if (!imgfile->u.m.buf)
+	if (!imgfile->u.buffer)
 	{
 		free(imgfile);
 		return NULL;
@@ -218,8 +222,8 @@ imgtool_stream *stream_open_mem(void *buf, size_t sz)
 	imgfile->position = 0;
 	imgfile->write_protect = 0;
 
-	imgfile->u.m.bufsz = sz;
-	imgfile->u.m.buf = buf;
+	imgfile->filesize = sz;
+	imgfile->u.buffer = buf;
 	return imgfile;
 }
 
@@ -232,11 +236,11 @@ void stream_close(imgtool_stream *s)
 	switch(s->imgtype)
 	{
 		case IMG_FILE:
-			osd_tool_fclose(s->u.f);
+			osd_close(s->u.file);
 			break;
 
 		case IMG_MEM:
-			free(s->u.m.buf);
+			free(s->u.buffer);
 			break;
 
 		default:
@@ -248,62 +252,84 @@ void stream_close(imgtool_stream *s)
 
 
 
-size_t stream_read(imgtool_stream *s, void *buf, size_t sz)
+UINT32 stream_read(imgtool_stream *stream, void *buf, UINT32 sz)
 {
-	size_t result = 0;
+	mame_file_error filerr;
+	UINT32 result = 0;
 
-	switch(s->imgtype)
+	switch(stream->imgtype)
 	{
 		case IMG_FILE:
-			result = osd_tool_fread(s->u.f, s->position, sz, buf);
+			assert(sz == (UINT32) sz);
+			filerr = osd_read(stream->u.file, buf, stream->position, (UINT32) sz, &result);
 			break;
 
 		case IMG_MEM:
-			if ((s->position + sz) > s->u.m.bufsz)
-				result = s->u.m.bufsz - s->position;
-			else
-				result = sz;
-			memcpy(buf, s->u.m.buf + s->position, result);
+			/* do we have to limit sz? */
+			if (sz < (stream->filesize - stream->position))
+				sz = (UINT32) (stream->filesize - stream->position);
+
+			memcpy(buf, stream->u.buffer + stream->position, sz);
+			result = sz;
 			break;
 
 		default:
 			assert(0);
 			break;
 	}
-	s->position += result;
+	stream->position += result;
 	return result;
 }
 
 
 
-size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
+UINT32 stream_write(imgtool_stream *s, const void *buf, UINT32 sz)
 {
-	size_t result = 0;
+	mame_file_error filerr;
+	void *new_buffer;
+	UINT32 result = 0;
 
 	switch(s->imgtype)
 	{
 		case IMG_MEM:
 			if (!s->write_protect)
 			{
-				if (s->u.m.bufsz < s->position + sz)
+				/* do we have to expand the buffer? */
+				if (s->filesize < s->position + sz)
 				{
-					s->u.m.buf = realloc(s->u.m.buf, s->position + sz);
-					s->u.m.bufsz = s->position + sz;
+					/* try to expand the buffer */
+					new_buffer = realloc(s->u.buffer, s->position + sz);
+					if (new_buffer)
+					{
+						s->u.buffer = new_buffer;
+						s->filesize = s->position + sz;
+					}
 				}
-				memcpy(s->u.m.buf + s->position, buf, sz);
+
+				/* do we have to limit sz? */
+				if (sz < (s->filesize - s->position))
+					sz = (UINT32) (s->filesize - s->position);
+
+				memcpy(s->u.buffer + s->position, buf, sz);
 				result = sz;
 			}
 			break;
 
 		case IMG_FILE:
-			result = osd_tool_fwrite(s->u.f, s->position, sz, buf);
+			filerr = osd_write(s->u.file, buf, s->position, sz, &result);
 			break;
 
 		default:
 			assert(0);
 			break;
 	}
+	
+	/* advance the file pointer */
 	s->position += result;
+
+	/* did we grow the file */
+	if (s->position > s->filesize)
+		s->filesize = s->position;
 	return result;
 }
 
@@ -311,23 +337,7 @@ size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
 
 UINT64 stream_size(imgtool_stream *s)
 {
-	UINT64 result = 0;
-
-	switch(s->imgtype)
-	{
-		case IMG_FILE:
-			result = osd_tool_flength(s->u.f);
-			break;
-
-		case IMG_MEM:
-			result = s->u.m.bufsz;
-			break;
-
-		default:
-			assert(0);
-			break;
-	}
-	return result;
+	return s->filesize;
 }
 
 
@@ -339,7 +349,7 @@ void *stream_getptr(imgtool_stream *f)
 	switch(f->imgtype)
 	{
 		case IMG_MEM:
-			ptr = f->u.m.buf;
+			ptr = f->u.buffer;
 			break;
 
 		default:
@@ -380,17 +390,17 @@ int stream_seek(imgtool_stream *s, INT64 pos, int where)
 
 
 
-size_t stream_tell(imgtool_stream *s)
+UINT64 stream_tell(imgtool_stream *s)
 {
-	return (size_t) s->position;
+	return s->position;
 }
 
 
 
-size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
+UINT64 stream_transfer(imgtool_stream *dest, imgtool_stream *source, UINT64 sz)
 {
-	size_t result = 0;
-	size_t readsz;
+	UINT64 result = 0;
+	UINT64 readsz;
 	char buf[1024];
 
 	while(sz && (readsz = stream_read(source, buf, MIN(sz, sizeof(buf)))))
@@ -404,7 +414,7 @@ size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
 
 
 
-size_t stream_transfer_all(imgtool_stream *dest, imgtool_stream *source)
+UINT64 stream_transfer_all(imgtool_stream *dest, imgtool_stream *source)
 {
 	return stream_transfer(dest, source, stream_size(source));
 }
@@ -419,7 +429,7 @@ int stream_crc(imgtool_stream *s, unsigned long *result)
 	switch(s->imgtype)
 	{
 		case IMG_MEM:
-			*result = crc32(0, (unsigned char *) s->u.m.buf, s->u.m.bufsz);
+			*result = crc32(0, (unsigned char *) s->u.buffer, (size_t) s->filesize);
 			break;
 
 		default:
@@ -453,9 +463,11 @@ int file_crc(const char *fname,  unsigned long *result)
 	return err;
 }
 
-size_t stream_fill(imgtool_stream *f, unsigned char b, UINT64 sz)
+
+
+UINT64 stream_fill(imgtool_stream *f, unsigned char b, UINT64 sz)
 {
-	size_t outsz;
+	UINT64 outsz;
 	char buf[1024];
 
 	outsz = 0;
@@ -471,29 +483,6 @@ size_t stream_fill(imgtool_stream *f, unsigned char b, UINT64 sz)
 
 
 
-void stream_clear(imgtool_stream *s)
-{
-	switch(s->imgtype)
-	{
-		case IMG_FILE:
-			if (!s->write_protect)
-			{
-				osd_tool_fclose(s->u.f);
-				s->u.f = osd_tool_fopen(s->name, "wb+");
-				osd_tool_fclose(s->u.f);
-				s->u.f = osd_tool_fopen(s->name, "wb");
-			}
-			break;
-
-		default:
-			/* Need to implement */
-			assert(0);
-			break;
-	}
-}
-
-
-
 int stream_isreadonly(imgtool_stream *s)
 {
 	return s->write_protect;
@@ -501,21 +490,21 @@ int stream_isreadonly(imgtool_stream *s)
 
 
 
-size_t stream_putc(imgtool_stream *stream, char c)
+UINT32 stream_putc(imgtool_stream *stream, char c)
 {
 	return stream_write(stream, &c, 1);
 }
 
 
 
-size_t stream_puts(imgtool_stream *stream, const char *s)
+UINT32 stream_puts(imgtool_stream *stream, const char *s)
 {
 	return stream_write(stream, s, strlen(s));
 }
 
 
 
-size_t stream_printf(imgtool_stream *stream, const char *fmt, ...)
+UINT32 stream_printf(imgtool_stream *stream, const char *fmt, ...)
 {
 	va_list va;
 	char buf[256];

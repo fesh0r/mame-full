@@ -31,7 +31,6 @@ const char *mess_default_text[] =
 	"Create...",
 	"Unmount",
 	"[empty slot]",
-	"Configuration",
 	"Input Devices",
 	"Quit Fileselector",
 	"File Specification",	/* IMPORTANT: be careful to ensure that the following */

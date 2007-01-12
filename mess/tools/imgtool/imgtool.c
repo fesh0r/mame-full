@@ -2534,3 +2534,15 @@ void unknown_partition_get_info(const imgtool_class *imgclass, UINT32 state, uni
 		case IMGTOOLINFO_STR_DESCRIPTION:					strcpy(info->s = imgtool_temp_str(), "Unknown partition type"); break;
 	}
 }
+
+
+
+/*-------------------------------------------------
+    fatalerror - print a message and escape back
+    to the OSD layer
+-------------------------------------------------*/
+
+void CLIB_DECL fatalerror(const char *text, ...)
+{
+	exit(-1);
+}

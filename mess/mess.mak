@@ -171,7 +171,6 @@ CPUS += TMS99010
 CPUS += TX0
 CPUS += COP411
 
-
 #-------------------------------------------------
 # specify available sound cores; some of these are
 # only for MAME and so aren't included

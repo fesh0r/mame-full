@@ -323,10 +323,10 @@ enum
 	INPUT_TOKEN_DIPLOCATION,
 	INPUT_TOKEN_CONDITION,
 	INPUT_TOKEN_ADJUSTER,
-#ifdef MESS
-	INPUT_TOKEN_CHAR,
 	INPUT_TOKEN_CONFNAME,
 	INPUT_TOKEN_CONFSETTING,
+#ifdef MESS
+	INPUT_TOKEN_CHAR,
 	INPUT_TOKEN_CATEGORY,
 	INPUT_TOKEN_CATEGORY_NAME,
 	INPUT_TOKEN_CATEGORY_SETTING,
@@ -559,6 +559,15 @@ struct _input_port_entry
 };
 
 
+typedef struct _inp_header inp_header;
+struct _inp_header
+{
+	char name[9];      /* 8 bytes for game->name + NUL */
+	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
+	char reserved[20]; /* for future use, possible store game options? */
+};
+
+
 
 /***************************************************************************
     MACROS FOR BUILDING INPUT PORTS
@@ -699,6 +708,29 @@ struct _input_port_entry
 /* analog adjuster definition */
 #define PORT_ADJUSTER(default,name) \
 	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_ADJUSTER, default), INPUT_PORT_PTR(name),
+
+/* config definition */
+#define PORT_CONFNAME(mask,default,name) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_CONFNAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
+
+#define PORT_CONFSETTING(default,name) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CONFSETTING, default), INPUT_PORT_PTR(name),
+
+#ifdef MESS
+/* keyboard chars */
+#define PORT_CHAR(ch)	\
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CHAR, ch),
+
+/* categories */
+#define PORT_CATEGORY(category) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY, category),
+
+#define PORT_CATEGORY_CLASS(mask,default,name) 						\
+	INPUT_PORT_UINT32(INPUT_TOKEN_CATEGORY_NAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
+
+#define PORT_CATEGORY_ITEM(default,name,category) 					\
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY_SETTING, default), INPUT_PORT_PTR(name),
+#endif /* MESS */
 
 
 

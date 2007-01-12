@@ -11,17 +11,20 @@ CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
 RCFLAGS += -DMESS
 
 OSOBJS += \
-	$(OBJ)/mess/windows/dirio.o		\
-	$(OBJ)/mess/windows/dirutils.o	\
 	$(OBJ)/mess/windows/configms.o	\
+	$(OBJ)/mess/windows/dialog.o	\
 	$(OBJ)/mess/windows/menu.o		\
+	$(OBJ)/mess/windows/mess.res	\
 	$(OBJ)/mess/windows/messlib.o	\
 	$(OBJ)/mess/windows/opcntrl.o	\
-	$(OBJ)/mess/windows/dialog.o	\
 	$(OBJ)/mess/windows/tapedlg.o	\
+	$(OBJ)/mess/windows/winutils.o
+
+OSDCOREOBJS += \
+	$(OBJ)/mess/windows/dirutils.o	\
+	$(OBJ)/mess/windows/dirio.o		\
 	$(OBJ)/mess/windows/parallel.o	\
-	$(OBJ)/mess/windows/winutils.o	\
-	$(OBJ)/mess/windows/mess.res
+	$(OBJ)/mess/windows/glob.o
 
 ifdef MSVC_BUILD
 MESSTEST_OBJS		+= $(OBJ)/mess/ui/dirent.o

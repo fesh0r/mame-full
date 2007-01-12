@@ -1803,22 +1803,9 @@ static void input_port_detokenize(input_port_init_params *param, const input_por
 				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
 				ipt += INPUT_PORT_PAIR_TOKENS;
 
-				port = input_port_initialize(param, IPT_DIPSWITCH_SETTING, modify_tag, 0xff, defval | (defval << 8));
+				port = input_port_initialize(param, IPT_ADJUSTER, modify_tag, 0xff, defval | (defval << 8));
 				seq_index[0] = seq_index[1] = seq_index[2] = 0;
 				port->name = input_port_string_from_token(*ipt++);
-				break;
-
-#ifdef MESS
-			case INPUT_TOKEN_CHAR:
-				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
-				ipt += INPUT_PORT_PAIR_TOKENS;
-
-				{
-					int ch;
-					for (ch = 0; port->keyboard.chars[ch] != 0; ch++)
-						;
-					port->keyboard.chars[ch] = (unicode_char) val;
-				}
 				break;
 
 			/* configuration definition */
@@ -1839,6 +1826,19 @@ static void input_port_detokenize(input_port_init_params *param, const input_por
 				port = input_port_initialize(param, IPT_CONFIG_SETTING, modify_tag, 0, defval);
 				seq_index[0] = seq_index[1] = seq_index[2] = 0;
 				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+#ifdef MESS
+			case INPUT_TOKEN_CHAR:
+				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				{
+					int ch;
+					for (ch = 0; port->keyboard.chars[ch] != 0; ch++)
+						;
+					port->keyboard.chars[ch] = (unicode_char) val;
+				}
 				break;
 
 			/* category definition */
