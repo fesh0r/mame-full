@@ -547,7 +547,7 @@ glob2(pathbuf, pathend, pattern, pglob)
 	int anymeta;
 	osd_directory_entry *entry = NULL;
 	osd_directory_entry *entry2 = NULL;
-	char buf[MAX_PATH];
+	char buf[_MAX_PATH];
 
 	/*
 	 * Loop over pattern segments until end of pattern or until
