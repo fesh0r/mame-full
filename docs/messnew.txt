@@ -48,7 +48,9 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- Fixed a bug that could cause crashes when opening ZIP files.  [Nate Woods]
+
+- Updated help text.  [Nate Woods]
 
 
 

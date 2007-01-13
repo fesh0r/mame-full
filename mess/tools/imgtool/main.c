@@ -917,6 +917,7 @@ int CLIB_DECL main(int argc, char *argv[])
 	int i;
 	int result;
 	struct command *c;
+	const char *sample_format = "coco_jvc_rsdos";
 
 #ifdef MAME_DEBUG
 	if (imgtool_validitychecks())
@@ -976,13 +977,13 @@ int CLIB_DECL main(int argc, char *argv[])
 		writeusage(stdout, (i == 0), &cmds[i], argv);
 	}
 
-	fprintf(stderr, "\n<format> is the image format, e.g. rsdos\n");
+	fprintf(stderr, "\n<format> is the image format, e.g. %s\n", sample_format);
 	fprintf(stderr, "<imagename> is the image filename; can specify a ZIP file for image name\n");
 
 	fprintf(stderr, "\nExample usage:\n");
-	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", osd_basename(argv[0]));
-	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", osd_basename(argv[0]));
-	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", osd_basename(argv[0]));
+	fprintf(stderr, "\t%s dir %s myimageinazip.zip\n", osd_basename(argv[0]), sample_format);
+	fprintf(stderr, "\t%s get %s myimage.dsk myfile.bin mynewfile.txt\n", osd_basename(argv[0]), sample_format);
+	fprintf(stderr, "\t%s getall %s myimage.dsk\n", osd_basename(argv[0]), sample_format);
 	result = 0;
 	goto done;
 
