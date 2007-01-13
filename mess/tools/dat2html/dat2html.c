@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "osdcore.h"
 #include "utils.h"
 
 void replace_lt_gt(char *line)

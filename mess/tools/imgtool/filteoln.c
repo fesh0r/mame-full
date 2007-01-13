@@ -8,7 +8,9 @@
 
 #include <string.h>
 #include "imgtool.h"
-#include "osdutils.h"
+
+#define EOLN (CRLF == 1 ? "\r" : (CRLF == 2 ? "\n" : (CRLF == 3 ? "\r\n" : NULL)))
+
 
 
 static imgtoolerr_t convert_stream_eolns(imgtool_stream *source, imgtool_stream *dest, const char *eoln)

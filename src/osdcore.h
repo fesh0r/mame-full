@@ -189,6 +189,38 @@ mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UIN
 int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps);
 
 
+/*-----------------------------------------------------------------------------
+    osd_rmfile: deletes a file
+
+    Parameters:
+
+        filename - path to file to delete
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while deleting
+        the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_rmfile(const char *filename);
+
+
+/*-----------------------------------------------------------------------------
+    osd_copyfile: copies a file
+
+    Parameters:
+
+        destfile - path to destination
+
+        srcfile - path to source file
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while copying
+        the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_copyfile(const char *destfile, const char *srcfile);
+
+
 
 /***************************************************************************
     DIRECTORY INTERFACES
@@ -284,6 +316,72 @@ osd_directory_entry *osd_stat(const char *path);
 
 
 /*-----------------------------------------------------------------------------
+    osd_mkdir: creates a directory
+
+    Parameters:
+
+        dir - path to directory to create
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while creating
+        the directory, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_mkdir(const char *dir);
+
+
+/*-----------------------------------------------------------------------------
+    osd_rmdir: removes a directory
+
+    Parameters:
+
+        dir - path to directory to removes
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while deleting
+        the directory, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_rmdir(const char *dir);
+
+
+/*-----------------------------------------------------------------------------
+    osd_getcurdir: retrieves the current working directory
+
+    Parameters:
+
+        buffer - place to store current working directory
+
+        buffer_len - length of buffer
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while deleting
+        the directory, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_getcurdir(char *buffer, size_t buffer_len);
+
+
+/*-----------------------------------------------------------------------------
+    osd_setcurdir: sets the current working directory
+
+    Parameters:
+
+        dir - path to directory to which to change
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while deleting
+        the directory, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_setcurdir(const char *dir);
+
+
+/***************************************************************************
+    PATH INTERFACES
+***************************************************************************/
+
+/*-----------------------------------------------------------------------------
     osd_is_path_separator: returns whether a character is a path separator
 
     Parameters:
@@ -296,6 +394,51 @@ osd_directory_entry *osd_stat(const char *path);
 
 -----------------------------------------------------------------------------*/
 int osd_is_path_separator(char c);
+
+
+/*-----------------------------------------------------------------------------
+    osd_is_absolute_path: returns whether the specified path is absolute
+
+    Parameters:
+
+		path - the path in question
+
+    Return value:
+
+        non-zero if the path is absolute, zero otherwise
+
+-----------------------------------------------------------------------------*/
+int osd_is_absolute_path(const char *path);
+
+
+/*-----------------------------------------------------------------------------
+    osd_dirname: returns the base directory of a file path
+
+    Parameters:
+
+		filename - the path in question
+
+    Return value:
+
+        an allocated path to the directory containing this file
+
+-----------------------------------------------------------------------------*/
+char *osd_dirname(const char *filename);
+
+
+/*-----------------------------------------------------------------------------
+    osd_basename: returns the file or directory name from a full path
+
+    Parameters:
+
+		filename - the path in question
+
+    Return value:
+
+        a pointer to the base name of the file
+
+-----------------------------------------------------------------------------*/
+char *osd_basename(char *filename);
 
 
 /***************************************************************************

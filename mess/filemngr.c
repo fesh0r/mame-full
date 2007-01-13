@@ -432,14 +432,14 @@ static int fileselect(int selected, const char *default_selection)
 		{
 			char *dirname;
 			dirname = osd_dirname((char *) default_selection);
-			osd_change_directory(dirname);
+			osd_setcurdir(dirname);
 			free(dirname);
 		}
 		else
 		{
-			osd_change_directory(mess_path);
-			osd_change_directory("software");
-			osd_change_directory(Machine->gamedrv->name);
+			osd_setcurdir(mess_path);
+			osd_setcurdir("software");
+			osd_setcurdir(Machine->gamedrv->name);
 		}
 	}
 
@@ -590,7 +590,7 @@ static int fileselect(int selected, const char *default_selection)
 
 				case FILESELECT_DIRECTORY:
 					/*	fs_chdir(fs_item[sel]); */
-					osd_change_directory(fs_item[sel].text);
+					osd_setcurdir(fs_item[sel].text);
 					fs_free();
 					break;
 

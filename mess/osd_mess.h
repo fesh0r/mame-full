@@ -55,28 +55,15 @@ void osd_parallelize(void (*task)(void *param, int task_num, int task_count), vo
 
 ******************************************************************************/
 
-/* Returns non-zero if a path is absolute, or zero if relative */
-int osd_is_absolute_path(const char *path);
-
-/* Returns the path separator */
-const char *osd_path_separator(void);
-
-/* Creates a directory; returns zero if successful, non-zero otherwise */
-int osd_create_directory(int pathtype, int pathindex, const char *dirname);
-
 int osd_num_devices(void);
 const char *osd_get_device_name(int i);
 void osd_change_device(const char *vol);
-void osd_change_directory(const char *path);
 const char *osd_get_cwd(void);
 
 void osd_begin_final_unloading(void);
 
 /* used to notify osd code of the load status of an image */
 void osd_image_load_status_changed(mess_image *img, int is_final_unload);
-
-char *osd_dirname(const char *filename);
-char *osd_basename(char *filename);
 
 #endif /* OSD_MESS_H */
 

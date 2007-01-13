@@ -11,9 +11,17 @@
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
+#include <ctype.h>
 
 #include "osdcore.h"
 #include "strconv.h"
+
+
+//============================================================
+//  FUNCTION PROTOTYPES
+//============================================================
+
+extern mame_file_error win_error_to_mame_file_error(DWORD error);
 
 
 //============================================================
@@ -191,4 +199,198 @@ done:
 int osd_is_path_separator(char c)
 {
 	return (c == '/') || (c == '\\');
+}
+
+
+
+//============================================================
+//	osd_is_absolute_path
+//============================================================
+
+int osd_is_absolute_path(const char *path)
+{
+	int result;
+
+	if (osd_is_path_separator(path[0]))
+		result = TRUE;
+#ifndef UNDER_CE
+	else if (isalpha(path[0]))
+		result = (path[1] == ':');
+#endif
+	else
+		result = FALSE;
+	return result;
+}
+
+
+//============================================================
+//	osd_dirname
+//============================================================
+
+char *osd_dirname(const char *filename)
+{
+	char *dirname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	dirname = malloc(strlen(filename) + 1);
+	if (!dirname)
+		return NULL;
+
+	// copy in the name
+	strcpy(dirname, filename);
+
+	// search backward for a slash or a colon
+	for (c = dirname + strlen(dirname) - 1; c >= dirname; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+		{
+			// found it: NULL terminate and return
+			*(c + 1) = 0;
+			return dirname;
+		}
+
+	// otherwise, return an empty string
+	dirname[0] = 0;
+	return dirname;
+}
+
+
+//============================================================
+//	osd_basename
+//============================================================
+
+char *osd_basename(char *filename)
+{
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// start at the end and return when we hit a slash or colon
+	for (c = filename + strlen(filename) - 1; c >= filename; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return c + 1;
+
+	// otherwise, return the whole thing
+	return filename;
+}
+
+
+//============================================================
+//	osd_mkdir
+//============================================================
+
+mame_file_error osd_mkdir(const char *dir)
+{
+	mame_file_error filerr = FILERR_NONE;
+
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	if (!tempstr)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	if (!CreateDirectory(tempstr, NULL))
+	{
+		filerr = win_error_to_mame_file_error(GetLastError());
+		goto done;
+	}
+
+done:
+	if (tempstr)
+		free(tempstr);
+	return filerr;
+}
+
+
+//============================================================
+//	osd_rmdir
+//============================================================
+
+mame_file_error osd_rmdir(const char *dir)
+{
+	mame_file_error filerr = FILERR_NONE;
+
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	if (!tempstr)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	if (!RemoveDirectory(tempstr))
+	{
+		filerr = win_error_to_mame_file_error(GetLastError());
+		goto done;
+	}
+
+done:
+	if (tempstr)
+		free(tempstr);
+	return filerr;
+}
+
+
+//============================================================
+//	osd_getcurdir
+//============================================================
+
+mame_file_error osd_getcurdir(char *buffer, size_t buffer_len)
+{
+	mame_file_error filerr = FILERR_NONE;
+	TCHAR *tempstr = NULL;
+	TCHAR path[_MAX_PATH];
+
+	if (!GetCurrentDirectory(ARRAY_LENGTH(path), path))
+	{
+		filerr = win_error_to_mame_file_error(GetLastError());
+		goto done;
+	}
+
+	tempstr = utf8_from_tstring(path);
+	if (!tempstr)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto done;
+	}
+	snprintf(buffer, buffer_len, "%s", tempstr);
+
+done:
+	if (tempstr)
+		free(tempstr);
+	return filerr;
+}
+
+
+//============================================================
+//	osd_setcurdir
+//============================================================
+
+mame_file_error osd_setcurdir(const char *dir)
+{
+	mame_file_error filerr = FILERR_NONE;
+
+	TCHAR *tempstr = tstring_from_utf8(dir);
+	if (!tempstr)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	if (!SetCurrentDirectory(tempstr))
+	{
+		filerr = win_error_to_mame_file_error(GetLastError());
+		goto done;
+	}
+
+done:
+	if (tempstr)
+		free(tempstr);
+	return filerr;
 }

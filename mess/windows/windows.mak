@@ -21,7 +21,6 @@ OSOBJS += \
 	$(OBJ)/mess/windows/winutils.o
 
 OSDCOREOBJS += \
-	$(OBJ)/mess/windows/dirutils.o	\
 	$(OBJ)/mess/windows/dirio.o		\
 	$(OBJ)/mess/windows/parallel.o	\
 	$(OBJ)/mess/windows/glob.o

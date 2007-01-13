@@ -13,14 +13,6 @@
 #include "mamecore.h"
 
 /* -----------------------------------------------------------------------
- * osdutils.h is a header file that gives overrides for functions we
- * define below, so if a native implementation is available, we can use
- * it
- * ----------------------------------------------------------------------- */
-
-#include "osdutils.h"
-
-/* -----------------------------------------------------------------------
  * strncpyz
  * strncatz
  *
@@ -35,67 +27,6 @@ char *strncatz(char *dest, const char *source, size_t len);
  * Removes all trailing spaces from a string
  * ----------------------------------------------------------------------- */
 void rtrim(char *buf);
-
-/* -----------------------------------------------------------------------
- * strncmpi
- *
- * Case insensitive compares.  If your platform has this function then
- * #define it in "osdutils.h"
- * ----------------------------------------------------------------------- */
-
-#ifndef strncmpi
-int strncmpi(const char *dst, const char *src, size_t n);
-#endif /* strncmpi */
-
-/* -----------------------------------------------------------------------
- * osd_basename
- *
- * Given a pathname, returns the partially qualified path.  If your
- * platform has this function then #define it in "osdutils.h"
- * ----------------------------------------------------------------------- */
-
-#ifndef osd_basename
-char *osd_basename (char *name);
-#endif /* osd_basename */
-
-
-
-/* -----------------------------------------------------------------------
- * osd_mkdir
- * osd_rmdir
- * osd_rmfile
- * osd_copyfile
- * osd_getcurdir
- * osd_setcurdir
- *
- * Misc platform independent dir/file functions.
- * ----------------------------------------------------------------------- */
-
-#ifndef osd_mkdir
-void osd_mkdir(const char *dir);
-#endif /* osd_mkdir */
-
-#ifndef osd_rmdir
-void osd_rmdir(const char *dir);
-#endif /* osd_rmdir */
-
-#ifndef osd_rmfile
-void osd_rmfile(const char *filepath);
-#endif /* osd_rmfile */
-
-#ifndef osd_copyfile
-void osd_copyfile(const char *destfile, const char *srcfile);
-#endif /* osd_copyfile */
-
-#ifndef osd_getcurdir
-void osd_getcurdir(char *buffer, size_t buffer_len);
-#endif /* osd_getcurdir */
-
-#ifndef osd_getcurdir
-void osd_setcurdir(const char *dir);
-#endif /* osd_getcurdir */
-
-
 
 /* -----------------------------------------------------------------------
  * memset16
@@ -256,12 +187,6 @@ INLINE UINT64 pick_integer_le(const void *ptr, size_t offset, size_t size)
 /* -----------------------------------------------------------------------
  * Miscellaneous
  * ----------------------------------------------------------------------- */
-
-#ifndef PATH_SEPARATOR
-#define PATH_SEPARATOR	'/'
-#endif
-
-
 
 /* miscellaneous functions */
 char *stripspace(const char *src);

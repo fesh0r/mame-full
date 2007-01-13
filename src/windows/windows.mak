@@ -71,10 +71,10 @@ endif
 ifdef MSVC_BUILD
 
 # replace the various compilers with vconv.exe prefixes
-CC = @$(subst /,\,$(OBJ))\vconv.exe gcc -I.
-LD = @$(subst /,\,$(OBJ))\vconv.exe ld
-AR = @$(subst /,\,$(OBJ))\vconv.exe ar
-RC = @$(subst /,\,$(OBJ))\vconv.exe windres
+CC = @$(subst /,\\,$(OBJ))\\vconv.exe gcc -I.
+LD = $(subst /,\\,$(OBJ))\\vconv.exe ld
+AR = @$(subst /,\\,$(OBJ))\\vconv.exe ar
+RC = @$(subst /,\\,$(OBJ))\\vconv.exe windres
 
 # make sure we use the multithreaded runtime
 CC += /MT

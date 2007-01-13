@@ -10,8 +10,9 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "imgtool.h"
-#include "osdutils.h"
 #include "utils.h"
+
+#define EOLN (CRLF == 1 ? "\r" : (CRLF == 2 ? "\n" : (CRLF == 3 ? "\r\n" : NULL)))
 
 typedef struct _basictoken_tableent basictoken_tableent;
 struct _basictoken_tableent

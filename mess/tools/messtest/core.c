@@ -24,6 +24,8 @@
 #include "pile.h"
 #include "inputx.h"
 
+#define EOLN (CRLF == 1 ? "\r" : (CRLF == 2 ? "\n" : (CRLF == 3 ? "\r\n" : NULL)))
+
 /* ----------------------------------------------------------------------- */
 
 typedef enum
