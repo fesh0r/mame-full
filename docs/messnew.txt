@@ -67,6 +67,8 @@ Source Changes:
 
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
+- [Windows] Removed redundant directory functions.  [Nate Woods]
+
 
 
 0.111

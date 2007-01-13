@@ -267,6 +267,36 @@ const osd_directory_entry *osd_readdir(osd_directory *dir);
 void osd_closedir(osd_directory *dir);
 
 
+/*-----------------------------------------------------------------------------
+    osd_stat: return a directory entry for a path
+
+    Parameters:
+
+        path - path in question
+
+    Return value:
+
+        an allocated pointer to an osd_directory_entry representing
+        info on the path; even if the file does not exist
+
+-----------------------------------------------------------------------------*/
+osd_directory_entry *osd_stat(const char *path);
+
+
+/*-----------------------------------------------------------------------------
+    osd_is_path_separator: returns whether a character is a path separator
+
+    Parameters:
+
+		c - the character in question
+
+    Return value:
+
+        non-zero if the character is a path separator, zero otherwise
+
+-----------------------------------------------------------------------------*/
+int osd_is_path_separator(char c);
+
 
 /***************************************************************************
     TIMING INTERFACES

@@ -4,15 +4,9 @@
 #include "pool.h"
 #include "sys/stat.h"
 #include "utils.h"
-#include "osdepend.h"
+#include "osdcore.h"
 
 #include "expat/expat.h"
-
-#ifdef _MSC_VER
-#include "ui/dirent.h"
-#else
-#include <dirent.h>
-#endif
 
 struct messdocs_state
 {
@@ -418,36 +412,39 @@ static void data_handler(void *data, const XML_Char *s, int len)
 
 static int rmdir_recursive(const char *dir_path)
 {
-	DIR *dir;
-	struct dirent *ent;
-	struct stat s;
+	osd_directory *dir;
+	const osd_directory_entry *ent;
+	osd_directory_entry *ent2;
 	char *newpath;
 
-	dir = opendir(dir_path);
+	dir = osd_opendir(dir_path);
 	if (dir)
 	{
-		while((ent = readdir(dir)) != NULL)
+		while((ent = osd_readdir(dir)) != NULL)
 		{
-			if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, ".."))
+			if (strcmp(ent->name, ".") && strcmp(ent->name, ".."))
 			{
-				newpath = malloc(strlen(dir_path) + 1 + strlen(ent->d_name) + 1);
+				newpath = malloc(strlen(dir_path) + 1 + strlen(ent->name) + 1);
 				if (!newpath)
 					return -1;
 
 				strcpy(newpath, dir_path);
 				strcat(newpath, PATH_SEPARATOR);
-				strcat(newpath, ent->d_name);
+				strcat(newpath, ent->name);
 
-				stat(newpath, &s);
-				if (S_ISDIR(s.st_mode))
-					rmdir_recursive(newpath);
-				else
-					osd_rmfile(newpath);
-
+				ent2 = osd_stat(newpath);
+				if (ent2)
+				{
+					if (ent2->type == ENTTYPE_DIR)
+						rmdir_recursive(newpath);
+					else
+						osd_rmfile(newpath);
+					free(ent2);
+				}
 				free(newpath);
 			}
 		}
-		closedir(dir);
+		osd_closedir(dir);
 	}
 	osd_rmdir(dir_path);
 	return 0;

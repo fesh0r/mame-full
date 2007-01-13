@@ -74,11 +74,7 @@ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 
 #include <ctype.h>
 
-#ifndef _MSC_VER
-#include <dirent.h>
-#else
-#include "ui/dirent.h"
-#endif
+#include "osdcore.h"
 
 #include <errno.h>
 #include "glob.h"
@@ -117,7 +113,6 @@ struct passwd
 #define getpwuid(h)	(NULL)
 #define getuid()	(0)
 #define lstat		stat
-#define MAXPATHLEN	MAX_PATH
 typedef unsigned int u_int;
 typedef unsigned short u_short;
 typedef unsigned char u_char;
@@ -161,7 +156,7 @@ typedef char Char;
 static int	 DECL_SPEC compare __P((const void *, const void *));
 static void	 g_Ctoc __P((const Char *, char *));
 static int	 g_lstat __P((Char *, struct stat *, glob_t *));
-static DIR	*g_opendir __P((Char *, glob_t *));
+static osd_directory	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((Char *, int));
 #ifdef notdef
 static Char	*g_strcat __P((Char *, const Char *));
@@ -188,7 +183,7 @@ glob(pattern, flags, errfunc, pglob)
 {
 	const u_char *patnext;
 	int c;
-	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
+	Char *bufnext, *bufend, patbuf[_MAX_PATH+1];
 
 	patnext = (u_char *) pattern;
 	if (!(flags & GLOB_APPEND)) {
@@ -202,7 +197,7 @@ glob(pattern, flags, errfunc, pglob)
 	pglob->gl_matchc = 0;
 
 	bufnext = patbuf;
-	bufend = bufnext + MAXPATHLEN;
+	bufend = bufnext + _MAX_PATH;
 	if (flags & GLOB_QUOTE) {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != EOS)
@@ -264,7 +259,7 @@ static int globexp2(ptr, pattern, pglob, rv)
 	int     i;
 	Char   *lm, *ls;
 	const Char *pe, *pm, *pl;
-	Char    patbuf[MAXPATHLEN + 1];
+	Char    patbuf[_MAX_PATH + 1];
 
 	/* copy part up to the brace */
 	for (lm = patbuf, pm = pattern; pm != ptr; *lm++ = *pm++)
@@ -439,7 +434,7 @@ glob0(pattern, pglob)
 {
 	const Char *qpatnext;
 	int c, err, oldpathc;
-	Char *bufnext, patbuf[MAXPATHLEN+1];
+	Char *bufnext, patbuf[_MAX_PATH+1];
 
 	qpatnext = globtilde(pattern, patbuf, sizeof(patbuf) / sizeof(Char), 
 	    pglob);
@@ -530,7 +525,7 @@ glob1(pattern, pglob)
 	Char *pattern;
 	glob_t *pglob;
 {
-	Char pathbuf[MAXPATHLEN+1];
+	Char pathbuf[_MAX_PATH+1];
 
 	/* A null pathname is invalid -- POSIX 1003.1 sect. 2.4. */
 	if (*pattern == EOS)
@@ -548,9 +543,11 @@ glob2(pathbuf, pathend, pattern, pglob)
 	Char *pathbuf, *pathend, *pattern;
 	glob_t *pglob;
 {
-	struct stat sb;
 	Char *p, *q;
 	int anymeta;
+	osd_directory_entry *entry = NULL;
+	osd_directory_entry *entry2 = NULL;
+	char buf[MAX_PATH];
 
 	/*
 	 * Loop over pattern segments until end of pattern or until
@@ -559,17 +556,22 @@ glob2(pathbuf, pathend, pattern, pglob)
 	for (anymeta = 0;;) {
 		if (*pattern == EOS) {		/* End of pattern? */
 			*pathend = EOS;
-			if (g_lstat(pathbuf, &sb, pglob))
+			g_Ctoc(pathbuf, buf);
+			entry = osd_stat(buf);
+			if (!entry)
 				return(0);
 
-			if (((pglob->gl_flags & GLOB_MARK) &&
-			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode)
-			    || (S_ISLNK(sb.st_mode) &&
-			    (g_stat(pathbuf, &sb, pglob) == 0) &&
-			    S_ISDIR(sb.st_mode)))) {
+			if ((((pglob->gl_flags & GLOB_MARK) &&
+			    pathend[-1] != SEP) && (entry->type == ENTTYPE_DIR))
+			    || ((S_ISLNK(sb.st_mode) &&
+			    ((entry2 = osd_stat(buf)) != NULL) &&
+			    (entry2->type == ENTTYPE_DIR)))) {
 				*pathend++ = SEP;
 				*pathend = EOS;
 			}
+			free(entry);
+			if (entry2)
+				free(entry2);
 			++pglob->gl_matchc;
 			return(globextend(pathbuf, pglob));
 		}
@@ -599,10 +601,10 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	Char *pathbuf, *pathend, *pattern, *restpattern;
 	glob_t *pglob;
 {
-	register struct dirent *dp;
-	DIR *dirp;
+	register const osd_directory_entry *dp;
+	osd_directory *dirp;
 	int err;
-	char buf[MAXPATHLEN];
+	char buf[_MAX_PATH];
 
 	/*
 	 * The readdirfunc declaration can't be prototyped, because it is
@@ -610,7 +612,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	 * and dirent.h as taking pointers to differently typed opaque
 	 * structures.
 	 */
-	typedef struct dirent *(*readdirfunc_t)(DIR *);
+	typedef const osd_directory_entry *(*readdirfunc_t)(osd_directory *);
 	readdirfunc_t readdirfunc;
 
 	*pathend = EOS;
@@ -633,15 +635,15 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		readdirfunc = (readdirfunc_t) pglob->gl_readdir;
 	else
-		readdirfunc = readdir;
+		readdirfunc = osd_readdir;
 	while ((dp = (*readdirfunc)(dirp))) {
 		register u_char *sc;
 		register Char *dc;
 
 		/* Initial DOT must be matched literally. */
-		if (dp->d_name[0] == DOT && *pattern != DOT)
+		if (dp->name[0] == DOT && *pattern != DOT)
 			continue;
-		for (sc = (u_char *) dp->d_name, dc = pathend;
+		for (sc = (u_char *) dp->name, dc = pathend;
 		     (*dc++ = *sc++) != EOS;)
 			continue;
 		if (!match(pathend, pattern, restpattern)) {
@@ -656,7 +658,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		(*pglob->gl_closedir)(dirp);
 	else
-		closedir(dirp);
+		osd_closedir(dirp);
 	return(err);
 }
 
@@ -779,12 +781,12 @@ globfree(pglob)
 	}
 }
 
-static DIR *
+static osd_directory *
 g_opendir(str, pglob)
 	register Char *str;
 	glob_t *pglob;
 {
-	char buf[MAXPATHLEN];
+	char buf[_MAX_PATH];
 
 	if (!*str)
 		strcpy(buf, ".");
@@ -794,7 +796,7 @@ g_opendir(str, pglob)
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_opendir)(buf));
 
-	return(opendir(buf));
+	return osd_opendir(buf);
 }
 
 static int
@@ -803,7 +805,7 @@ g_lstat(fn, sb, pglob)
 	struct stat *sb;
 	glob_t *pglob;
 {
-	char buf[MAXPATHLEN];
+	char buf[_MAX_PATH];
 
 	g_Ctoc(fn, buf);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
@@ -817,7 +819,7 @@ g_stat(fn, sb, pglob)
 	struct stat *sb;
 	glob_t *pglob;
 {
-	char buf[MAXPATHLEN];
+	char buf[_MAX_PATH];
 
 	g_Ctoc(fn, buf);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)

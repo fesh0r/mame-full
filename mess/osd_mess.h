@@ -61,9 +61,6 @@ int osd_is_absolute_path(const char *path);
 /* Returns the path separator */
 const char *osd_path_separator(void);
 
-/* Returns non-zero if the char is a path separator */
-int osd_is_path_separator(char ch);
-
 /* Creates a directory; returns zero if successful, non-zero otherwise */
 int osd_create_directory(int pathtype, int pathindex, const char *dirname);
 

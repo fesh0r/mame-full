@@ -26,12 +26,6 @@ OSDCOREOBJS += \
 	$(OBJ)/mess/windows/parallel.o	\
 	$(OBJ)/mess/windows/glob.o
 
-ifdef MSVC_BUILD
-MESSTEST_OBJS		+= $(OBJ)/mess/ui/dirent.o
-MESSDOCS_OBJS		+= $(OBJ)/mess/ui/dirent.o
-PLATFORM_TOOL_OBJS	+= $(OBJ)/mess/ui/dirent.o
-endif
-
 
 
 #-------------------------------------------------

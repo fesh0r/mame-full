@@ -142,3 +142,53 @@ void osd_closedir(osd_directory *dir)
 		CloseHandle(dir->find);
 	free(dir);
 }
+
+
+
+//============================================================
+//  osd_stat
+//============================================================
+
+osd_directory_entry *osd_stat(const char *path)
+{
+	osd_directory_entry *result = NULL;
+	TCHAR *t_path;
+	HANDLE find = INVALID_HANDLE_VALUE;
+	WIN32_FIND_DATA find_data;
+
+	// convert the path to TCHARs
+	t_path = tstring_from_utf8(path);
+	if (t_path == NULL)
+		goto done;
+
+	// attempt to find the first file
+	find = FindFirstFile(t_path, &find_data);
+	if (find == INVALID_HANDLE_VALUE)
+		goto done;
+
+	// create an osd_directory_entry; be sure to make sure that the caller can
+	// free all resources by just freeing the resulting osd_directory_entry
+	result = (osd_directory_entry *) malloc(sizeof(*result) + strlen(path) + 1);
+	if (!result)
+		goto done;
+	strcpy(((char *) result) + sizeof(*result), path);
+	result->name = ((char *) result) + sizeof(*result);
+	result->type = attributes_to_entry_type(find_data.dwFileAttributes);
+	result->size = find_data.nFileSizeLow | ((UINT64) find_data.nFileSizeHigh << 32);
+
+done:
+	if (t_path)
+		free(t_path);
+	return result;
+}
+
+
+
+//============================================================
+//  osd_is_path_separator
+//============================================================
+
+int osd_is_path_separator(char c)
+{
+	return (c == '/') || (c == '\\');
+}
