@@ -67,6 +67,9 @@ Source Changes:
 - Fixed error reporting when startup images are not properly loaded up.  (bug
   #928, #990, #992) [Nate Woods]
 
+- Fixed crash when unmounting images in the old UI file manager.  (bug #998)
+  [Nate Woods]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 - [Windows] COnsolidated some MESS specific OSD code into the MAME OSD core

@@ -638,7 +638,7 @@ int filemanager(int selected)
 	char names[40][64];
 	int sel, total, arrowize, id;
 	const struct IODevice *dev;
-	mess_image *img;
+	mess_image *image;
 
 	sel = selected - 1;
 	total = 0;
@@ -648,9 +648,9 @@ int filemanager(int selected)
 	{
 		for (id = 0; id < dev->count; id++)
 		{
-			img = image_from_device_and_index(dev, id);
-			strcpy( names[total], image_typename_id(img) );
-			name = image_filename(img);
+			image = image_from_device_and_index(dev, id);
+			strcpy( names[total], image_typename_id(image) );
+			name = image_filename(image);
 
 			memset(&menu_items[total], 0, sizeof(menu_items[total]));
 			menu_items[total].text = (names[total]) ? names[total] : "---";
@@ -667,8 +667,8 @@ int filemanager(int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		img = image_from_device_and_index(devices[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
-		sel = fileselect(selected & ~(2 << SEL_BITS), image_filename(img));
+		image = image_from_device_and_index(devices[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
+		sel = fileselect(selected & ~(2 << SEL_BITS), image_filename(image));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
 
@@ -680,8 +680,11 @@ int filemanager(int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			img = image_from_device_and_index(devices[previous_sel], ids[previous_sel]);
-			image_load(img, entered_filename[0] ? entered_filename : NULL);
+			image = image_from_device_and_index(devices[previous_sel], ids[previous_sel]);
+			if (entered_filename[0])
+				image_load(image, entered_filename);
+			else
+				image_unload(image);
 		}
 
 		sel = previous_sel;
@@ -714,8 +717,8 @@ int filemanager(int selected)
 		{
 			/* yes */
 			sel &= SEL_MASK;
-			img = image_from_device_and_index(devices[sel], ids[sel]);
-			image_load(img, NULL);
+			image = image_from_device_and_index(devices[sel], ids[sel]);
+			image_load(image, NULL);
 		}
 
 		return sel + 1;
@@ -733,7 +736,7 @@ int filemanager(int selected)
 	{
 		int os_sel;
 
-		img = NULL;
+		image = NULL;
 
 		/* Return to main menu? */
 		if (sel == total-1)
@@ -744,8 +747,8 @@ int filemanager(int selected)
 		/* no, let the osd code have a crack at changing files */
 		else
 		{
-			img = image_from_device_and_index(devices[sel], ids[sel]);
-			os_sel = osd_select_file(img, entered_filename);
+			image = image_from_device_and_index(devices[sel], ids[sel]);
+			os_sel = osd_select_file(image, entered_filename);
 		}
 
 		if (os_sel != 0)
@@ -753,7 +756,7 @@ int filemanager(int selected)
 			if (os_sel == 1)
 			{
 				/* attempt a filename change */
-				image_load(img, entered_filename);
+				image_load(image, entered_filename);
 			}
 		}
 		/* osd code won't handle it, lets use our clunky interface */
