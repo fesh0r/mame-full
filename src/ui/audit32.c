@@ -177,7 +177,7 @@ int Mame32VerifyRomSet(int game)
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
 	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
 	iStatus = audit_summary(game, audit_records, audit, TRUE);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb, prevparam, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
 	if (audit_records > 0)
 		free(audit);
 
@@ -197,7 +197,7 @@ int Mame32VerifySampleSet(int game)
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
 	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
 	iStatus = audit_summary(game, audit_records, audit, TRUE);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb, prevparam, NULL, NULL);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
 	if (audit_records > 0)
 		free(audit);
 

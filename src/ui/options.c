@@ -632,9 +632,8 @@ BOOL OptionsInit()
 	options_set_string(SEARCHPATH_ROM, settings.romdirs);
 	options_set_string(SEARCHPATH_SAMPLE, settings.sampledirs);
 #ifdef MESS
-	options_set_string(SEARCHPATH_IMAGE, settings.mess.softwaredirs);
 	options_set_string(SEARCHPATH_HASH, settings.mess.hashdir);
-#endif
+#endif // MESS
 	return TRUE;
 
 }
