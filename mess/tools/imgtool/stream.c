@@ -108,7 +108,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 	static const UINT32 write_modes[] =
 	{
 		OPEN_FLAG_READ,
-		OPEN_FLAG_WRITE,
+		OPEN_FLAG_WRITE | OPEN_FLAG_CREATE,
 		OPEN_FLAG_READ | OPEN_FLAG_WRITE,
 		OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE
 	};
