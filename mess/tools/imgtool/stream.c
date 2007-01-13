@@ -70,7 +70,7 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 		goto error;
 
 	zipent = zip_file_first_file(z);
-	while(zipent && strcmp(subname, zipent->filename))
+	while(zipent && subname && strcmp(subname, zipent->filename))
 		zipent = zip_file_next_file(z);
 	if (!zipent)
 		goto error;
