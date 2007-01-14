@@ -257,65 +257,6 @@ int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UIN
 
 
 //============================================================
-//	osd_rmfile
-//============================================================
-
-mame_file_error osd_rmfile(const char *filename)
-{
-	mame_file_error filerr = FILERR_NONE;
-
-	TCHAR *tempstr = tstring_from_utf8(filename);
-	if (!tempstr)
-	{
-		filerr = FILERR_OUT_OF_MEMORY;
-		goto done;
-	}
-
-	if (!DeleteFile(tempstr))
-	{
-		filerr = win_error_to_mame_file_error(GetLastError());
-		goto done;
-	}
-
-done:
-	if (tempstr)
-		free(tempstr);
-	return filerr;
-}
-
-
-//============================================================
-//	osd_copyfile
-//============================================================
-
-mame_file_error osd_copyfile(const char *destfile, const char *srcfile)
-{
-	mame_file_error filerr = FILERR_NONE;
-	TCHAR *t_destfile = tstring_from_utf8(destfile);
-	TCHAR *t_srcfile = tstring_from_utf8(srcfile);
-
-	if (!t_destfile || !t_srcfile)
-	{
-		filerr = FILERR_OUT_OF_MEMORY;
-		goto done;
-	}
-
-	if (!CopyFile(t_srcfile, t_destfile, TRUE))
-	{
-		filerr = win_error_to_mame_file_error(GetLastError());
-		goto done;
-	}
-
-done:
-	if (t_destfile)
-		free(t_destfile);
-	if (t_srcfile)
-		free(t_srcfile);
-	return filerr;
-}
-
-
-//============================================================
 //  create_path_recursive
 //============================================================
 

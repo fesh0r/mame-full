@@ -9,9 +9,9 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include "osd_mess.h"
-#include "opresolv.h"
 #include "mamecore.h"
+#include "osdmess.h"
+#include "opresolv.h"
 
 /*************************************
  *

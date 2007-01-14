@@ -116,13 +116,9 @@ void devices_init(running_machine *machine)
 
 	/* convienient place to call this */
 	{
-		const char *cwd;
-		char *s;
-
-		cwd = osd_get_cwd();
-		s = auto_malloc(strlen(cwd) + 1);
-		strcpy(s, cwd);
-		mess_path = s;
+		char buf[260];
+		osd_getcurdir(buf, ARRAY_LENGTH(buf));
+		mess_path = auto_strdup(buf);
 	}
 
 	/* initialize natural keyboard support */

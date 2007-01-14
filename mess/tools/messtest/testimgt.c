@@ -21,8 +21,7 @@ struct expected_dirent
 static const char *tempfile_name(void)
 {
 	static char buffer[256];
-	strcpy(buffer, "imgtool.tmp");
-	make_filename_temporary(buffer, sizeof(buffer));
+	osd_get_temp_filename(buffer, ARRAY_LENGTH(buffer), NULL);
 	return buffer;
 }
 

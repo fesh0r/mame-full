@@ -293,6 +293,9 @@ static void fs_generate_filelist(void)
 	int qsort_start, count, i, n;
 	ui_menu_item *tmp_menu_item;
 	int *tmp_types;
+	static char curdir[260];
+
+	osd_getcurdir(curdir, ARRAY_LENGTH(curdir));
 
 	/* just to be safe */
 	fs_free();
@@ -309,7 +312,7 @@ static void fs_generate_filelist(void)
 
 	/* current directory */
 	n = fs_alloc();
-	fs_item[n].text = osd_get_cwd();
+	fs_item[n].text = curdir;
 	fs_types[n] = FILESELECT_NONE;
 
 	/* blank line */
@@ -580,7 +583,7 @@ static int fileselect(int selected, const char *default_selection)
 					}
 					else
 					{
-						strncpyz(entered_filename, osd_get_cwd(), sizeof(entered_filename) / sizeof(entered_filename[0]));
+						osd_getcurdir(entered_filename, sizeof(entered_filename) / sizeof(entered_filename[0]));
 						strncatz(entered_filename, fs_item[sel].text, sizeof(entered_filename) / sizeof(entered_filename[0]));
 					}
 

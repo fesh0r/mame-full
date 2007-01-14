@@ -513,30 +513,3 @@ void report_testcase_ran(int failure)
 {
 	is_failure = failure;
 }
-
-
-
-void make_filename_temporary(char *filename, size_t buflen)
-{
-#ifdef WIN32
-	TCHAR tempbuf[MAX_PATH];
-	TCHAR *t_filename;
-	char *u_tempbuf;
-
-	GetTempPath(sizeof(tempbuf) / sizeof(tempbuf[0]), tempbuf);
-	t_filename = tstring_from_utf8(filename);
-	_tcscat(tempbuf, t_filename);
-	free(t_filename);
-	DeleteFile(tempbuf);
-
-	u_tempbuf = utf8_from_tstring(tempbuf);
-	snprintf(filename, buflen, "%s", u_tempbuf);
-	free(u_tempbuf);
-#endif /* WIN32 */
-}
-
-
-
-
-
-

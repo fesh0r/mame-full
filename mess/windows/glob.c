@@ -75,6 +75,7 @@ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #include <ctype.h>
 
 #include "osdcore.h"
+#include "osdmess.h"
 
 #include <errno.h>
 #include "glob.h"

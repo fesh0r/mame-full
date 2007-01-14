@@ -706,7 +706,7 @@ static void command_image_loadcreate(void)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
 			current_testcase.name, file_extensions);
-		make_filename_temporary(buf, sizeof(buf) / sizeof(buf[0]));
+		osd_get_temp_filename(buf, ARRAY_LENGTH(buf), buf);
 		filename = buf;
 	}
 

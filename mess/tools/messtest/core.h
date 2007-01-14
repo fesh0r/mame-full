@@ -81,9 +81,6 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...);
 void report_testcase_begin(const char *testcase_name);
 void report_testcase_ran(int failure);
 
-/* turns a filename into a temporary filename */
-void make_filename_temporary(char *filename, size_t buflen);
-
 void messtest_get_data(xml_data_node *node, mess_pile *pile);
 
 #endif /* CORE_H */
