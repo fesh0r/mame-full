@@ -574,8 +574,6 @@ static WNDPROC g_lpPictureWndProc = NULL;
 
 static POPUPSTRING popstr[MAX_MENUS + 1];
 
-static int *parent_index = NULL;
-
 /* Tool and Status bar variables */
 static HWND hStatusBar = 0;
 static HWND hToolBar   = 0;
@@ -813,11 +811,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	MessCreateCommandLine(pCmdLine, pOpts, drivers[nGameIndex]);
 #endif
 
-#ifdef MESS
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -biospath \"%s\"",           GetRomDirs());
-#else
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -rp \"%s\"",            GetRomDirs());
-#endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -sp \"%s\"",         GetSampleDirs());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -inipath \"%s\"",			GetIniDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cfg_directory \"%s\"",      GetCfgDir());
@@ -1745,6 +1739,24 @@ int GetDriverIndex(const game_driver *driver)
 	return GetGameNameIndex(driver->name);
 }
 
+int GetParentIndex(const game_driver *driver)
+{
+	return GetGameNameIndex(driver->parent);
+}
+
+int GetParentRomSetIndex(const game_driver *driver)
+{
+	int nParentIndex = GetGameNameIndex(driver->parent);
+
+	if( nParentIndex >= 0)
+	{
+		if ((drivers[nParentIndex]->flags & NOT_A_DRIVER) == 0)
+			return nParentIndex;
+	}
+
+	return -1;
+}
+
 int GetGameNameIndex(const char *name)
 {
     driver_data_type *driver_index_info;
@@ -1849,10 +1861,9 @@ void SetMainTitle(void)
 static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	extern int mame_validitychecks(int game);
-	const game_driver *clone_of = NULL;
 	WNDCLASS	wndclass;
 	RECT		rect;
-	int i, j = 0, nSplitterCount;
+	int i, nSplitterCount;
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
 	extern const char *history_filename;
@@ -1866,11 +1877,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	char name[_MAX_PATH];
 
 	srand((unsigned)time(NULL));
-
-#ifdef MAME_DEBUG
-	/* NPW 16-Sep-2006 - commenting this out because this cannot be run outside of MAME */
-	//validity_failed = mame_validitychecks(-1);
-#endif // MAME_DEBUG
 
 	init_resource_tracking();
 	begin_resource_tracking();
@@ -1887,34 +1893,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	game_count = 0;
 	while (drivers[game_count] != 0)
 		game_count++;
-
-	// Create parent index
-	parent_index = auto_malloc(sizeof(*parent_index) * game_count);
-	if (!parent_index)
-		return FALSE;
-	for (i = 0; i < game_count; i++)
-	{
-		parent_index[i] = -1;
-		if (((clone_of = driver_get_clone(drivers[i])) != NULL && (clone_of->flags & NOT_A_DRIVER) == 0))
-		{
-			if (clone_of == drivers[j])
-			{
-				parent_index[i] = j;
-			}
-			else
-			{
-				for (j = 0; j < game_count; j++)
-				{
-					if (clone_of == drivers[j])
-					{
-						parent_index[i] = j;
-						break;
-					}
-				}
-				j = 0;
-			}
-		}
-	}
 
 	/* custom per-game icons */
 	icon_index = auto_malloc(sizeof(int) * game_count);
@@ -2592,7 +2570,6 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			char szFileName[32];
 			char *s;
 			int nGameIndex;
-			const game_driver *drv;
 			int (*pfnGetAuditResults)(int driver_index) = NULL;
 			void (*pfnSetAuditResults)(int driver_index, int audit_results) = NULL;
 
@@ -2611,6 +2588,8 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 			if (pfnGetAuditResults && pfnSetAuditResults)
 			{
+				int nParentIndex = -1;
+
 				snprintf(szFileName, sizeof(szFileName), "%s", (LPCTSTR) lParam);
 				s = strchr(szFileName, '.');
 				if (s)
@@ -2621,9 +2600,9 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 				for (nGameIndex = 0; drivers[nGameIndex]; nGameIndex++)
 				{
-					for (drv = drivers[nGameIndex]; drv; drv = driver_get_clone(drv))
+					for (nParentIndex = nGameIndex; nGameIndex == -1; nParentIndex = GetParentIndex(drivers[nParentIndex]))
 					{
-						if (!mame_stricmp(drv->name, szFileName))
+						if (!mame_stricmp(drivers[nParentIndex]->name, szFileName))
 						{
 							if (pfnGetAuditResults(nGameIndex) != UNKNOWN)
 							{
@@ -3458,12 +3437,13 @@ static void PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 
 static LPCSTR GetCloneParentName(int nItem)
 {
-	const game_driver *clone_of = NULL;
+	int nParentIndex = -1;
+
 	if (DriverIsClone(nItem) == TRUE)
 	{
-		clone_of = driver_get_clone(drivers[nItem]);
-		if( clone_of )
-			return ModifyThe(clone_of->description);
+		nParentIndex = GetParentIndex(drivers[nItem]);
+		if( nParentIndex >= 0)
+			return ModifyThe(drivers[nParentIndex]->description);
 	}
 	return "";
 }
@@ -4948,7 +4928,7 @@ static void GamePicker_EnteringItem(HWND hwndPicker, int nItem)
 
 static int GamePicker_FindItemParent(HWND hwndPicker, int nItem)
 {
-	return parent_index[nItem];
+	return GetParentRomSetIndex(drivers[nItem]);
 }
 
 /* Initialize the Picker and List controls */
@@ -5014,19 +4994,23 @@ static void InitListView()
 static void AddDriverIcon(int nItem,int default_icon_index)
 {
 	HICON hIcon = 0;
-	const game_driver *clone_of = NULL;
-	const game_driver *clone_of_clone = NULL;
+	int nParentIndex = -1;
 
 	/* if already set to rom or clone icon, we've been here before */
 	if (icon_index[nItem] == 1 || icon_index[nItem] == 3)
 		return;
 
 	hIcon = LoadIconFromFile((char *)drivers[nItem]->name);
-	if (hIcon == NULL && ((clone_of = driver_get_clone(drivers[nItem])) != NULL) )
+	if (hIcon == NULL)
 	{
-		hIcon = LoadIconFromFile((char *)clone_of->name);
-		if (hIcon == NULL && ((clone_of_clone = driver_get_clone(clone_of)) != NULL))
-			hIcon = LoadIconFromFile((char *)clone_of_clone->name);
+		nParentIndex = GetParentIndex(drivers[nItem]);
+		if( nParentIndex >= 0)
+		{
+			hIcon = LoadIconFromFile((char *)drivers[nParentIndex]->name);
+			nParentIndex = GetParentIndex(drivers[nParentIndex]);
+			if (hIcon == NULL && nParentIndex >= 0)
+				hIcon = LoadIconFromFile((char *)drivers[nParentIndex]->name);
+		}
 	}
 
 	if (hIcon != NULL)
@@ -7184,16 +7168,17 @@ BOOL MouseHasBeenMoved(void)
 
 BOOL SendIconToEmulationWindow(int nGameIndex)
 {
-	const game_driver *clone_of = NULL;
 	HICON hIcon; 
+	int nParentIndex = -1;
 	hIcon = LoadIconFromFile(drivers[nGameIndex]->name); 
 	if( hIcon == NULL ) 
 	{ 
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			if( ( clone_of = driver_get_clone(drivers[nGameIndex])) != NULL )
-				hIcon = LoadIconFromFile(clone_of->name); 
+			nParentIndex = GetParentIndex(drivers[nGameIndex]);
+			if( nParentIndex >= 0)
+				hIcon = LoadIconFromFile(drivers[nParentIndex]->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
@@ -7274,15 +7259,16 @@ HWND GetGameWindow(void)
 void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 {
 	HICON hIcon; 
-	const game_driver *clone_of = NULL;
+	int nParentIndex = -1;
 	hIcon = LoadIconFromFile(drivers[nGameIndex]->name); 
 	if( hIcon == NULL ) 
 	{ 
 		//Check if clone, if so try parent icon first 
 		if( DriverIsClone(nGameIndex) ) 
 		{ 
-			if( ( clone_of = driver_get_clone(drivers[nGameIndex])) != NULL )
-				hIcon = LoadIconFromFile(clone_of->name); 
+			nParentIndex = GetParentIndex(drivers[nGameIndex]);
+			if( nParentIndex >= 0)
+				hIcon = LoadIconFromFile(drivers[nParentIndex]->name); 
 			if( hIcon == NULL) 
 			{ 
 				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 

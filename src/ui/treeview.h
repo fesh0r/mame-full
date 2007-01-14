@@ -183,6 +183,7 @@ void ResetWhichGamesInFolders(void);
 LPFOLDERDATA FindFilter(DWORD folderID);
 
 BOOL GameFiltered(int nGame, DWORD dwFlags);
+BOOL GetParentFound(int nGame);
 
 LPFILTER_ITEM GetFilterList(void);
 

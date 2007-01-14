@@ -10,11 +10,14 @@
 
 ***************************************************************************/
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+// import the main() from MAME, but rename it so we can call it indirectly
+#define main mame_main
+#include "windows/main.c"
+#undef main
 
 #include "screenshot.h"
 #include "win32ui.h"
+
 
 int WINAPI WinMain(HINSTANCE    hInstance,
                    HINSTANCE    hPrevInstance,

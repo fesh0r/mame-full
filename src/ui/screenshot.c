@@ -88,7 +88,6 @@ BOOL LoadScreenShot(int nGame, int nType)
 #endif /* MESS */
 {
 	BOOL loaded = FALSE;
-	const game_driver *clone_of = NULL, *clone_of_clone = NULL;
 	/* No need to reload the same one again */
 #ifndef MESS
 	if (nGame == current_image_game && nType == current_image_type)
@@ -102,9 +101,13 @@ BOOL LoadScreenShot(int nGame, int nType)
 #ifdef MESS
 	if (lpSoftwareName)
 	{
+		int nParentIndex = -1;
 		loaded = LoadSoftwareScreenShot(drivers[nGame], lpSoftwareName, nType);
-		if (!loaded && ((clone_of = driver_get_clone(drivers[nGame])) != NULL && !(clone_of->flags & NOT_A_DRIVER)))
-			loaded = LoadSoftwareScreenShot(clone_of, lpSoftwareName, nType);
+		if (!loaded && DriverIsClone(nGame) == TRUE)
+		{
+			nParentIndex = GetParentIndex(drivers[nGame]);
+			loaded = LoadSoftwareScreenShot(drivers[nParentIndex], lpSoftwareName, nType);
+		}
 	}
 	if (!loaded)
 #endif /* MESS */
@@ -113,13 +116,16 @@ BOOL LoadScreenShot(int nGame, int nType)
 	}
 
 	/* If not loaded, see if there is a clone and try that */
-	if (!loaded
-	&&	 (clone_of = driver_get_clone(drivers[nGame])) != NULL)
-
+	if (!loaded)
 	{
-		loaded = LoadDIB(clone_of->name, &m_hDIB, &m_hPal, nType);
-		if (!loaded && ( (clone_of_clone = driver_get_clone(clone_of)) != NULL))
-			loaded = LoadDIB(clone_of_clone->name, &m_hDIB, &m_hPal, nType);
+		int nParentIndex = GetParentIndex(drivers[nGame]);
+		if( nParentIndex >= 0)
+		{
+			loaded = LoadDIB(drivers[nParentIndex]->name, &m_hDIB, &m_hPal, nType);
+			nParentIndex = GetParentIndex(drivers[nParentIndex]);
+			if (!loaded && nParentIndex >= 0)
+				loaded = LoadDIB(drivers[nParentIndex]->name, &m_hDIB, &m_hPal, nType);
+		}
 	}
 
 	if (loaded)
@@ -174,6 +180,7 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 {
 	mame_file_error filerr;
 	mame_file *mfile = NULL;
+	char *fname;
 	BOOL success;
 	const char *zip_name = NULL;
 	char *pngfilename = NULL;
@@ -218,11 +225,13 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 	
 	// look for the raw file
 	filerr = mame_fopen(SEARCHPATH_ARTWORK, pngfilename, OPEN_FLAG_READ, &mfile);
-//	if (mfile == NULL)
-//	{
-//		// and look for the zip
-//		mfile = mame_fopen(zip_name,pngfilename,FILETYPE_ARTWORK,0);
-//	}
+	if (filerr != FILERR_NONE)
+	{
+		// and look for the zip
+		fname = assemble_3_strings(zip_name, PATH_SEPARATOR, pngfilename);
+		filerr = mame_fopen(SEARCHPATH_ARTWORK, fname, OPEN_FLAG_READ, &mfile);
+		free(fname);
+	}
 	if (filerr != FILERR_NONE)
 		return FALSE;
 

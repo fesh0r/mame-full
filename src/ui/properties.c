@@ -363,7 +363,7 @@ static struct ComboBoxView
 {
 	{ "Auto",		      "auto"    },
 	{ "Standard",         "standard"    }, 
-	{ "Pixel Aspect",     "pixel aspect"   }, 
+	{ "Pixel Aspect",     "pixel"   }, 
 	{ "Cocktail",         "cocktail"     },
 };
 #define NUMVIEW (sizeof(g_ComboBoxView) / sizeof(g_ComboBoxView[0]))
@@ -972,16 +972,16 @@ char *GameInfoTitle(UINT nIndex)
 static char *GameInfoCloneOf(UINT nIndex)
 {
 	static char buf[1024];
-	const game_driver *clone_of = NULL;
+	int nParentIndex= -1;
 
 	buf[0] = '\0';
 
 	if (DriverIsClone(nIndex))
 	{
-		if( ( clone_of = driver_get_clone(drivers[nIndex])) != NULL )
+		nParentIndex = GetParentIndex(drivers[nIndex]);
 			sprintf(buf, "%s - \"%s\"",
-				ConvertAmpersandString(ModifyThe(clone_of->description)),
-				clone_of->name); 
+			ConvertAmpersandString(ModifyThe(drivers[nParentIndex]->description)),
+			drivers[nParentIndex]->name); 
 	}
 
 	return buf;
@@ -1041,7 +1041,6 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 {
 	RECT rc;
 	int nParentIndex = -1;
-	const game_driver *clone_of = NULL;
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
@@ -1247,8 +1246,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						if( DriverIsClone(g_nGame) )
 						{
 							int nParentIndex = -1;
-							if( (clone_of = driver_get_clone(drivers[g_nGame]))!= NULL);
-							nParentIndex = GetGameNameIndex( clone_of->name );
+							nParentIndex = GetParentIndex( drivers[g_nGame] );
 							if( nParentIndex >= 0)
 								CopyGameOptions(GetGameOptions(nParentIndex, g_nFolder), pGameOpts );
 							else
@@ -1416,8 +1414,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		{
 			if( DriverIsClone(g_nGame) )
 			{
-				if( (clone_of = driver_get_clone(drivers[g_nGame])) != NULL );
-				nParentIndex = GetGameNameIndex( clone_of->name );
+				nParentIndex = GetParentIndex( drivers[g_nGame] );
 			}
 		}
 		//Set the Coloring of the elements

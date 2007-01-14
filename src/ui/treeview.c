@@ -344,8 +344,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	int i;
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 	LPTREEFOLDER lpParent = NULL;
-	const game_driver *clone_of = NULL;
-	
+
 	//Filter out the Bioses on all Folders, except for the Bios Folder
 	if( lpFolder->m_nFolderId != FOLDER_BIOS )
 	{
@@ -381,8 +380,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 		return FALSE;
 
 	// Filter out clones?
-	if (dwMask & F_CLONES
-	&&	( ( (clone_of = driver_get_clone(drivers[nGame]) ) != NULL) && ( (clone_of->flags & NOT_A_DRIVER) == 0)) )
+	if (dwMask & F_CLONES && DriverIsClone(nGame))
 		return TRUE;
 
 	for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
@@ -393,6 +391,34 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 				return TRUE;
 		}
 	}
+	return FALSE;
+}
+
+/* Get the parent of game in this view */
+BOOL GetParentFound(int nGame)
+{
+	int nParentIndex = -1;
+	LPTREEFOLDER lpFolder = GetCurrentFolder();
+
+	if( lpFolder )
+	{
+		nParentIndex = GetParentIndex(drivers[nGame]);
+
+		/* return FALSE if no parent is there in this view */
+		if( nParentIndex == -1)
+			return FALSE;
+
+		/* return FALSE if the folder should be HIDDEN in this view */
+		if (TestBit(lpFolder->m_lpGameBits, nParentIndex) == 0)
+			return FALSE;
+
+		/* return FALSE if the game should be HIDDEN in this view */
+		if (GameFiltered(nParentIndex, lpFolder->m_dwFlags))
+			return FALSE;
+
+		return TRUE;
+	}
+
 	return FALSE;
 }
 
@@ -2041,7 +2067,7 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
     char    readbuf[256];
     char*   p;
     char*   name;
-    int     id, current_id, i;
+    int     id, current_id;
     LPTREEFOLDER lpTemp = NULL;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
@@ -2126,8 +2152,7 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
             }
 
             /* IMPORTANT: This assumes that all driver names are lowercase! */
-            for (i = 0; name[i]; i++)
-				name[i] = tolower(name[i]);
+            strlwr( name );
 
 			if (lpTemp == NULL)
 			{
