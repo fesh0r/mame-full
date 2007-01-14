@@ -107,5 +107,6 @@ MODULE(prodos_35)
 MODULE(thom_fd_basic)
 MODULE(thom_qd_basic)
 MODULE(thom_sap_basic)
+MODULE(cybiko)
 
 #endif /* MODULES_RECURSIVE */
