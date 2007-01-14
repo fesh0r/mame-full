@@ -11,17 +11,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
-#include <ctype.h>
 
 #include "osdcore.h"
 #include "strconv.h"
-
-
-//============================================================
-//  FUNCTION PROTOTYPES
-//============================================================
-
-extern mame_file_error win_error_to_mame_file_error(DWORD error);
 
 
 //============================================================
