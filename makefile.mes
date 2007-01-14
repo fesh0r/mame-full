@@ -314,6 +314,8 @@ SOUNDLIB = $(OBJ)/libsound.a
 
 OSDCORELIB = $(OBJ)/$(MAMEOS)/libocore.a
 
+OSDCORELIB_NOMAIN = $(OBJ)/$(MAMEOS)/libocore_nomain.a
+
 
 
 #-------------------------------------------------
@@ -473,9 +475,9 @@ imgtool$(EXE): $(IMGTOOL_OBJS) $(ZLIB) $(OSDCORELIB)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-wimgtool$(EXE): $(WIMGTOOL_OBJS) $(ZLIB) $(OSDCORELIB)
+wimgtool$(EXE): $(WIMGTOOL_OBJS) $(ZLIB) $(OSDCORELIB_NOMAIN)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(OSDCORELIB) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
+	$(LD) $(LDFLAGS) $(OSDCORELIB_NOMAIN) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(MESSTEST_OBJS) $(OSDCORELIB) \
 		$(OBJ)/mess/windows/glob.o				\
@@ -496,6 +498,8 @@ endif
 $(SOUNDLIB): $(SOUNDOBJS)
 
 $(OSDCORELIB): $(OSDCOREOBJS)
+
+$(OSDCORELIB_NOMAIN): $(OSDCOREOBJS:$(OBJ)/$(MAMEOS)/main.o=)
 
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
 
