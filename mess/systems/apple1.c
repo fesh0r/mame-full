@@ -228,13 +228,13 @@ static MACHINE_DRIVER_START( apple1 )
 	   slows it to 960 kHz. */
 	MDRV_CPU_ADD_TAG("main", M6502, 960000)        /* 1.023 Mhz */
 	MDRV_CPU_PROGRAM_MAP(apple1_map, 0)
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_SCREEN_REFRESH_RATE(60)
 	/* Video is blanked for 70 out of 262 scanlines per refresh cycle.
 	   Each scanline is composed of 65 character times, 40 of which
 	   are visible, and each character time is 7 dot times; a dot time
 	   is 2 cycles of the fundamental 14.31818 MHz oscillator.  The
 	   total blanking time is about 4450 microseconds. */
-	MDRV_VBLANK_DURATION((int) (70 * 65 * 7 * 2 / 14.31818))
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC((int) (70 * 65 * 7 * 2 / 14.31818)))
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_RESET( apple1 )
@@ -242,8 +242,8 @@ static MACHINE_DRIVER_START( apple1 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	/* It would be nice if we could implement some sort of display
 	   overscan here. */
-	MDRV_SCREEN_SIZE(40 * 7, 24 * 8)
-	MDRV_VISIBLE_AREA(0, 40 * 7 - 1, 0, 24 * 8 - 1)
+	MDRV_SCREEN_MAXSIZE(40 * 7, 24 * 8)
+	MDRV_SCREEN_VISIBLE_AREA(0, 40 * 7 - 1, 0, 24 * 8 - 1)
 	MDRV_GFXDECODE(apple1_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof (apple1_palette) / 3)
 	MDRV_COLORTABLE_LENGTH(sizeof(apple1_colortable)/sizeof(unsigned short))

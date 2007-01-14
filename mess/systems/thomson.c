@@ -816,11 +816,11 @@ static MACHINE_DRIVER_START ( to7 )
    framerate from 50 Hz to 1/0.019968 Hz to get 312 64us lines per frame,
    i.e., 19.968 ms per frame, not 20 ms
 */
-     MDRV_FRAMES_PER_SECOND ( /*50*/ 1./0.019968 )
+     MDRV_SCREEN_REFRESH_RATE ( /*50*/ 1./0.019968 )
      MDRV_INTERLEAVE ( 0 )
      MDRV_VIDEO_ATTRIBUTES ( VIDEO_TYPE_RASTER )
-     MDRV_SCREEN_SIZE ( THOM_TOTAL_WIDTH * 2, THOM_TOTAL_HEIGHT * 2 )
-     MDRV_VISIBLE_AREA ( 0, THOM_TOTAL_WIDTH * 2 - 1, 
+     MDRV_SCREEN_MAXSIZE ( THOM_TOTAL_WIDTH * 2, THOM_TOTAL_HEIGHT * 2 )
+     MDRV_SCREEN_VISIBLE_AREA ( 0, THOM_TOTAL_WIDTH * 2 - 1, 
 				0, THOM_TOTAL_HEIGHT * 2 - 1 )
      MDRV_PALETTE_LENGTH ( 4097 ) /* 12-bit color + transparency */
      MDRV_PALETTE_INIT ( thom )

@@ -116,8 +116,8 @@ static gfx_decode t1000sx_gfxdecodeinfo[] =
 
 MACHINE_DRIVER_START( pcvideo_t1000hx )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(80*8, 25*9)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*9-1)
+	MDRV_SCREEN_MAXSIZE(80*8, 25*9)
+	MDRV_SCREEN_VISIBLE_AREA(0,80*8-1, 0,25*9-1)
 	MDRV_GFXDECODE(t1000hx_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
 	MDRV_COLORTABLE_LENGTH(sizeof(pcjr_colortable) / sizeof(pcjr_colortable[0]))

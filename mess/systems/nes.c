@@ -281,18 +281,18 @@ static MACHINE_DRIVER_START( nes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", N2A03, NTSC_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(nes_map, 0)
-	MDRV_FRAMES_PER_SECOND(60.098)
+	MDRV_SCREEN_REFRESH_RATE(60.098)
 	// This isn't used so much to calulate the vblank duration (the PPU code tracks that manually) but to determine
 	// the number of cycles in each scanline for the PPU scanline timer. Since the PPU has 20 vblank scanlines + 2
 	// non-rendering scanlines, we compensate. This ends up being 2500 cycles for the non-rendering portion, 2273
 	// cycles for the actual vblank period.
-	MDRV_VBLANK_DURATION((113.66/(NTSC_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_NTSC-PPU_VBLANK_FIRST_SCANLINE+1+2))
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC((113.66/(NTSC_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_NTSC-PPU_VBLANK_FIRST_SCANLINE+1+2)))
 
 	MDRV_MACHINE_START( nes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_MAXSIZE(32*8, 30*8)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_INIT(nes)
 	MDRV_VIDEO_START(nes_ntsc)
 	MDRV_VIDEO_UPDATE(nes)
@@ -312,8 +312,8 @@ static MACHINE_DRIVER_START( nespal )
 
 	/* basic machine hardware */
 	MDRV_CPU_REPLACE("main", N2A03, PAL_CLOCK)
-	MDRV_FRAMES_PER_SECOND(53.355)
-	MDRV_VBLANK_DURATION((106.53/(PAL_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_PAL-PPU_VBLANK_FIRST_SCANLINE+1+2))
+	MDRV_SCREEN_REFRESH_RATE(53.355)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC((106.53/(PAL_CLOCK/1000000)) * (PPU_VBLANK_LAST_SCANLINE_PAL-PPU_VBLANK_FIRST_SCANLINE+1+2)))
 
 	MDRV_VIDEO_START(nes_pal)
 

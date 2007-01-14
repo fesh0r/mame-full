@@ -176,8 +176,8 @@ static gfx_decode CGA_gfxdecodeinfo[] =
 
 MACHINE_DRIVER_START( pcvideo_cga )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(80*8, 25*8)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
+	MDRV_SCREEN_MAXSIZE(80*8, 25*8)
+	MDRV_SCREEN_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
 	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / (CGA_PALETTE_SETS * sizeof(cga_palette[0])))
 	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
