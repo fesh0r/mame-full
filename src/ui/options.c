@@ -492,7 +492,7 @@ static const options_entry windows_opts[] =
 #ifndef MESS
 	{ "rompath;rp",               "roms",     0,                 "path to ROMsets and hard disk images" },
 #else
-	{ "biospath;bp",              "bios",     0,                 "path to BIOS sets" },
+	{ "rompath;rp",               "roms",     0,                 "path to ROMsets" },
 	{ "softwarepath;swp",         "software", 0,                 "path to software" },
 	{ "hash_directory;hash",      "hash",     0,                 "path to hash files" },
 #endif

@@ -82,7 +82,7 @@ FILTER_ITEM g_filterList[] =
 
 DIRECTORYINFO g_directoryInfo[] =
 {
-	{ "BIOSes",                GetRomDirs,      SetRomDirs,      TRUE,  DIRDLG_ROMS },
+	{ "ROMs",                  GetRomDirs,      SetRomDirs,      TRUE,  DIRDLG_ROMS },
 	{ "Software",              GetSoftwareDirs, SetSoftwareDirs, TRUE,  DIRDLG_SOFTWARE },
 	{ "Ini Files",             GetIniDir,       SetIniDir,       FALSE, DIRDLG_INI },
 	{ "CRC",                   GetCrcDir,       SetCrcDir,       FALSE, 0 },
