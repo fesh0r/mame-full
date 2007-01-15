@@ -1304,7 +1304,7 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 	const char *port_suffix[3];
 	int seq_types[3];
 	int is_analog[3];
-	int len, i;
+	int len, pos, i;
 	unicode_char ch;
 
 	port_name = input_port_name(port);
@@ -1342,12 +1342,13 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 		len = strlen(port_name);
 		s = (char *) alloca((len + (port_suffix[seq] ? strlen(port_suffix[seq])
 			: 0) + 1) * sizeof(*s));
+		pos = 0;
 		for (i = 0; i < len; i++)
 		{
 			ch = unicode_from_mamechar(port_name[i]);
-			len += utf8_from_uchar(&s[len], UTF8_CHAR_MAX, ch);
+			pos += utf8_from_uchar(&s[pos], UTF8_CHAR_MAX, ch);
 		}
-		s[len] = '\0';
+		s[pos] = '\0';
 
 		if (port_suffix[seq])
 			strcpy(s + len, port_suffix[seq]);
