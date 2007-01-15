@@ -145,12 +145,12 @@ BOOL IsAuditResultKnown(int audit_result)
 
 BOOL IsAuditResultYes(int audit_result)
 {
-	return audit_result == AUDIT_STATUS_GOOD;
+	return audit_result == CORRECT || audit_result == BEST_AVAILABLE;
 }
 
 BOOL IsAuditResultNo(int audit_result)
 {
-	return audit_result == AUDIT_STATUS_NOT_FOUND || audit_result == AUDIT_STATUS_FOUND_INVALID || audit_result == AUDIT_STATUS_ERROR;
+	return audit_result == NOTFOUND || audit_result == INCORRECT;
 }
 
 
@@ -194,7 +194,7 @@ int Mame32VerifySampleSet(int game)
 	output_callback prevcb;
 	void *prevparam;
 
-	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
+	audit_records = audit_samples(game, &audit);
 	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
 	iStatus = audit_summary(game, audit_records, audit, TRUE);
 	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
