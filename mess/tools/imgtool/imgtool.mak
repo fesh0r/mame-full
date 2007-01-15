@@ -72,6 +72,7 @@ IMGTOOL_LIB_OBJS =							\
 
 IMGTOOL_OBJS =								\
 	$(IMGTOOL_LIB_OBJS)						\
+	$(OBJ)/mess/toolerr.o					\
 	$(OBJ)/mess/tools/imgtool/stubs.o		\
 	$(OBJ)/mess/tools/imgtool/main.o		\
 

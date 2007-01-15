@@ -1088,6 +1088,7 @@ MESSDOCS_OBJS =								\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
+	$(OBJ)/mess/toolerr.o					\
 	$(EXPAT)								\
 
 MESSTEST_OBJS =								\
