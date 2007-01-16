@@ -963,19 +963,46 @@ static void pause(running_machine *machine)
 
 
 //============================================================
-//	find_submenu
+//	get_menu_item_string
+//============================================================
+
+static BOOL get_menu_item_string(HMENU menu, UINT item, BOOL by_position, HMENU *sub_menu, LPTSTR buffer, size_t buffer_len)
+{
+	MENUITEMINFO mii;
+
+	// clear out results
+	memset(buffer, '\0', sizeof(*buffer) * buffer_len);
+
+	// prepare MENUITEMINFO structure
+	memset(&mii, 0, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_TYPE | (sub_menu ? MIIM_SUBMENU : 0);
+	mii.dwTypeData = buffer;
+	mii.cch = buffer_len;
+
+	// call GetMenuItemInfo()
+	if (!GetMenuItemInfo(menu, item, by_position, &mii))
+		return FALSE;
+
+	// return results
+	if (sub_menu)
+		*sub_menu = mii.hSubMenu;
+	if (mii.fType == MFT_SEPARATOR)
+		_sntprintf(buffer, buffer_len, TEXT("-"));
+	return TRUE;
+}
+
+
+
+//============================================================
+//	find_sub_menu
 //============================================================
 
 static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu)
 {
-	MENUITEMINFO mii;
 	int i;
 	TCHAR buf[128];
-
-	memset(&mii, 0, sizeof(mii));
-	mii.cbSize = sizeof(mii);
-	mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
-	mii.dwTypeData = buf;
+	HMENU sub_menu;
 
 	while(*menutext)
 	{
@@ -984,21 +1011,19 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 		i = -1;
 		do
 		{
-			i++;
-			mii.dwTypeData = buf;
-			mii.cch = sizeof(buf) / sizeof(buf[0]);
-			if (!GetMenuItemInfo(menu, i, TRUE, &mii))
+			if (!get_menu_item_string(menu, ++i, TRUE, &sub_menu, buf, ARRAY_LENGTH(buf)))
 			{
 				free(t_menutext);
 				return NULL;
 			}
 		}
-		while((mii.fType == MFT_SEPARATOR) || !mii.dwTypeData || _tcscmp(t_menutext, mii.dwTypeData));
+		while(_tcscmp(t_menutext, buf));
 
 		free(t_menutext);
 
-		if (!mii.hSubMenu && create_sub_menu)
+		if (!sub_menu && create_sub_menu)
 		{
+			MENUITEMINFO mii;
 			memset(&mii, 0, sizeof(mii));
 			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_SUBMENU;
@@ -1009,7 +1034,7 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 				return NULL;
 			}
 		}
-		menu = mii.hSubMenu;
+		menu = sub_menu;
 		if (!menu)
 			return NULL;
 		menutext += strlen(menutext) + 1;
@@ -1289,19 +1314,11 @@ static void prepare_menus(HWND wnd)
 	video_menu = find_sub_menu(menu_bar, "&Options\0&Video\0", FALSE);
 	do
 	{
-		MENUITEMINFO mii;
-		memset(&mii, 0, sizeof(mii));
-		mii.cbSize = sizeof(mii);
-		mii.fMask = MIIM_TYPE;
-		mii.fType = MFT_STRING;
-		mii.dwItemData = (DWORD_PTR) buf;
-		mii.cch = sizeof(buf) / sizeof(buf[0]);
-		if (GetMenuItemInfo(video_menu, 0, MF_BYPOSITION, &mii) && buf[0])
+		get_menu_item_string(video_menu, 0, TRUE, NULL, buf, ARRAY_LENGTH(buf));
+		if (_tcscmp(buf, TEXT("-")))
 			RemoveMenu(video_menu, 0, MF_BYPOSITION);
-		else
-			buf[0] = '\0';
 	}
-	while(buf[0]);
+	while(_tcscmp(buf, TEXT("-")));
 	i = 0;
 	view_index = render_target_get_view(window->target);
 	while((view_name = render_target_get_view_name(window->target, i)) != NULL)
