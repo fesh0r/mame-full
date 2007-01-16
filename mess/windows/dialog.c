@@ -247,47 +247,6 @@ done:
 
 
 //============================================================
-//	unicode_from_mamechar
-//
-//	This function converts a character from the MAME code page
-//	(defined by the UI font in src/usrintrf.c) to a Unicode
-//	char
-//============================================================
-
-static WCHAR unicode_from_mamechar(char c)
-{
-	WCHAR wc;
-	static const WCHAR specialchars[] =
-	{
-		// 0x00 - 0x1F
-		'\0',	' ',	' ',	' ',	' ',	' ',	' ',	' ',
-		' ',	' ',	0x25CF,	0x25CB,	0x25A0,	0x25A1,	0x25CF,	0x25CF,
-		0x25BA,	0x25CF,	0x2195,	0x203C,	0x25CF,	0x25CF,	0x25CF,	0x266B,
-		0x2191,	0x2193,	0x2192,	0x2190,	' ',	0x2194,	0x25B2,	0x25BC,
-
-		// 0x80 - 0x9F
-		' ',	' ',	0x201A,	0x0192,	0x201E,	0x2026,	0x2020,	0x2021,
-		'^',	0x2030,	0x0160,	'<',	0x0152,	' ',	' ',	' ',
-		' ',	0x2018,	0x2019,	0x201C,	0x201D,	0x25CF,	0x2013,	0x2014,
-		'~',	0x2122, 0x0161,	'>',	0x0153,	' ',	' ',	0x0178
-	};
-
-	if (c & 0x60)
-	{
-		// chars 0x20-0x7F and 0xA0-0xFF match their Unicode equivalents
-		wc = c;
-	}
-	else
-	{
-		// chars 0x00-0x1F and 0x80-0x9F are special
-		wc = specialchars[(c & 0x1F) | ((c & 0x80) ? 0x20 : 0x00)];
-	}
-	return wc;
-}
-
-
-
-//============================================================
 //	dialog_trigger
 //============================================================
 
@@ -1304,8 +1263,7 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 	const char *port_suffix[3];
 	int seq_types[3];
 	int is_analog[3];
-	int len, pos, i;
-	unicode_char ch;
+	int len;
 
 	port_name = input_port_name(port);
 	assert(port_name);
@@ -1342,13 +1300,7 @@ int win_dialog_add_portselect(dialog_box *dialog, input_port_entry *port, const 
 		len = strlen(port_name);
 		s = (char *) alloca((len + (port_suffix[seq] ? strlen(port_suffix[seq])
 			: 0) + 1) * sizeof(*s));
-		pos = 0;
-		for (i = 0; i < len; i++)
-		{
-			ch = unicode_from_mamechar(port_name[i]);
-			pos += utf8_from_uchar(&s[pos], UTF8_CHAR_MAX, ch);
-		}
-		s[pos] = '\0';
+		strcpy(s, port_name);
 
 		if (port_suffix[seq])
 			strcpy(s + len, port_suffix[seq]);

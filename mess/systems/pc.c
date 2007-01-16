@@ -710,7 +710,7 @@ INPUT_PORTS_START( pc200 )
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
 	PORT_DIPSETTING(	0x00, "English/less checks" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" )
+	PORT_DIPSETTING(	0x02, "V.g. v\xC3\xA4nta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
 	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
@@ -798,7 +798,7 @@ INPUT_PORTS_START( pc1512 )
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
 	PORT_DIPSETTING(	0x00, "English/less checks" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" )
+	PORT_DIPSETTING(	0x02, "V.g. v\xC3\xA4nta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
 	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
@@ -894,7 +894,7 @@ INPUT_PORTS_START( pc1640 )
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
 //	PORT_DIPSETTING(	0x00, "PC 512k" ) // machine crashes with ega bios at 0xc0000
 	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" )
+	PORT_DIPSETTING(	0x02, "V.g. v\xC3\xA4nta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
 	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
