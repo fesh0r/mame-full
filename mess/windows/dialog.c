@@ -1749,7 +1749,8 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 
 	after_display_dialog();
 
-	u_filename = utf8_from_tstring(filename);
+	// copy the result into filename
+	u_filename = utf8_from_tstring(ofn.lpstrFile);
 	snprintf(filename, filename_len, "%s", u_filename);
 	free(u_filename);
 
