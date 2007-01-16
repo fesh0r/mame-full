@@ -2539,7 +2539,12 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 
 MACHINE_START( dragon32 )
 {
+	/* install low RAM; we might have to mirror if there is <32k of RAM */
+	offs_t ram_end = (mess_ram_size < 0x8000) ? (mess_ram_size - 1) : 0x7FFF;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MWA8_BANK1);
 	memory_set_bankptr(1, &mess_ram[0]);
+
 	generic_init_machine(machine, coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 
 	coco_or_dragon = AM_DRAGON;
