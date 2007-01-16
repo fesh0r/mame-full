@@ -756,15 +756,8 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 		s += strlen(s) + 1;
 	}
 
-	// add the trailing rparen
-	pos += snprintf(dest + pos, dest_len - pos, ")");
-
-	// get past the \0
-	if (dest_len > 0)
-	{
-		pos++;
-		dest_len--;
-	}
+	// add the trailing rparen and '|' character
+	pos += snprintf(dest + pos, dest_len - pos, ")|");
 
 	// now add the extension list itself
 	s = extensions;
@@ -774,15 +767,8 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 		s += strlen(s) + 1;
 	}
 
-
-	// get past the \0
-	if (dest_len > 0)
-	{
-		pos++;
-		dest_len--;
-		if (dest_len > 0)
-			dest[pos] = '\0';
-	}
+	// append a '|'
+	pos += snprintf(dest + pos, dest_len - pos, "|");
 
 	return pos;
 }
@@ -803,15 +789,11 @@ static void build_generic_filter(const struct IODevice *dev, int is_save, char *
 	s += add_filter_entry(filter, filter_len, "Common image types", dev->file_extensions);
 
 	// all files
-	s += sprintf(s, "All files (*.*)") + 1;
-	s += sprintf(s, "*.*") + 1;
+	s += sprintf(s, "All files (*.*)|*.*|");
 
 	// compressed
 	if (!is_save)
-	{
-		s += sprintf(s, "Compressed Images (*.zip)") + 1;
-		s += sprintf(s, "*.zip") + 1;
-	}
+		s += sprintf(s, "Compressed Images (*.zip)|*.zip|");
 
 	*(s++) = '\0';
 }

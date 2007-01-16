@@ -1683,6 +1683,7 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	TCHAR *t_filter = NULL;
 	TCHAR *t_initial_dir = NULL;
 	TCHAR *t_filename;
+	TCHAR *s;
 	char *u_filename;
 
 	memset(&ofn, 0, sizeof(ofn));
@@ -1694,6 +1695,11 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	{
 		t_filter = tstring_from_utf8(filter);
 		ofn.lpstrFilter = t_filter;
+
+		// convert '|' characters to '\0'
+		s = t_filter;
+		while((s = _tcschr(s, '|')) != NULL)
+			*(s++) = '\0';
 	}
 	if (initial_dir)
 	{
@@ -1720,7 +1726,7 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%s"), t_filename);
 	free(t_filename);
 
-	ofn.lpstrFile = t_filename;
+	ofn.lpstrFile = buf;
 	ofn.nMaxFile = sizeof(buf) / sizeof(buf[0]);
 
 	before_display_dialog();
