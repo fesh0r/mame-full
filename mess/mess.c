@@ -195,7 +195,11 @@ void devices_init(running_machine *machine)
 
 			/* check to see if we loaded too many devices */
 			if (id >= dev->count)
+			{
+				if (allocated_slots)
+					free(allocated_slots);
 				fatalerror_exitcode(MAMERR_DEVICE, "Too many devices of type %d\n", devtype);
+			}
 
 			/* only load the image if image_name is specified */
 			if (image_name)
@@ -207,6 +211,8 @@ void devices_init(running_machine *machine)
 				/* did the image load fail? */
 				if (result)
 				{
+					if (allocated_slots)
+						free(allocated_slots);
 					fatalerror_exitcode(MAMERR_DEVICE, "Device %s load (%s) failed: %s\n",
 						device_typename(devtype),
 						osd_basename((char *) image_name),
@@ -225,11 +231,16 @@ void devices_init(running_machine *machine)
 			{
 				image = image_from_device_and_index(dev, id);
 				if (!image_exists(image))
+				{
+					if (allocated_slots)
+						free(allocated_slots);
 					fatalerror_exitcode(MAMERR_DEVICE, "Driver requires that device %s must have an image to load\n", device_typename(dev->type));
+				}
 			}
 		}
 	}
-	free(allocated_slots);
+	if (allocated_slots)
+		free(allocated_slots);
 }
 
 
