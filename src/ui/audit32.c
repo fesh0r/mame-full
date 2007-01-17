@@ -35,7 +35,6 @@
 
 #include "bitmask.h"
 #include "options.h"
-#include "..\windows\config.h"
 #include "m32util.h"
 #include "audit32.h"
 #include "Properties.h"
@@ -101,38 +100,27 @@ void AuditDialog(HWND hParent)
 
 void InitGameAudit(int gameIndex)
 {
-	int argc = 0;
-	char *args[2];
-	char **argv = args;
-	char pModule[_MAX_PATH];
-	char name[_MAX_PATH];
-	strcpy( name, drivers[gameIndex]->name );
-	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
-	argv[argc++] = pModule;
-	argv[argc++] = name;
 	rom_index = gameIndex;
-	cli_frontend_init(argc, argv );
 }
 
 const char * GetAuditString(int audit_result)
 {
 	switch (audit_result)
 	{
-		case CORRECT:
-		case BEST_AVAILABLE:
-			return "Yes";
+	case CORRECT :
+	case BEST_AVAILABLE :
+		return "Yes";
 
-		case INCORRECT:
-		case NOTFOUND:
-			return "No";
-			break;
+	case NOTFOUND :
+	case INCORRECT :
+		return "No";
+		break;
 
-		case UNKNOWN:
-			return "?";
+	case UNKNOWN :
+		return "?";
 
-		default:
-			dprintf("unknown audit value %i",audit_result);
-			break;
+	default:
+		dprintf("unknown audit value %i",audit_result);
 	}
 
 	return "?";
@@ -165,44 +153,51 @@ static void Mame32Output(void *param, const char *format, va_list argptr)
 	DetailsPrintf("%s", buffer);
 }
 
+static int ProcessAuditResults(int game, audit_record *audit, int audit_records)
+{
+	output_callback prevcb;
+	void *prevparam;
+	int res;
+
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
+	res = audit_summary(game, audit_records, audit, TRUE);
+	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
+
+	return res;
+}
+
 // Verifies the ROM set while calling SetRomAuditResults	
 int Mame32VerifyRomSet(int game)
 {
-	int iStatus;
 	audit_record *audit;
 	int audit_records;
-	output_callback prevcb;
-	void *prevparam;
+	int res;
 
+	// perform the audit
 	audit_records = audit_images(game, AUDIT_VALIDATE_FAST, &audit);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
-	iStatus = audit_summary(game, audit_records, audit, TRUE);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
+	res = ProcessAuditResults(game, audit, audit_records);
 	if (audit_records > 0)
 		free(audit);
 
-	SetRomAuditResults(game, iStatus);
-	return iStatus;
+	SetRomAuditResults(game, res);
+	return res;
 }
 
 // Verifies the Sample set while calling SetSampleAuditResults	
 int Mame32VerifySampleSet(int game)
 {
-	int iStatus;
 	audit_record *audit;
 	int audit_records;
-	output_callback prevcb;
-	void *prevparam;
+	int res;
 
+	// perform the audit
 	audit_records = audit_samples(game, &audit);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, Mame32Output, NULL, &prevcb, &prevparam);
-	iStatus = audit_summary(game, audit_records, audit, TRUE);
-	mame_set_output_channel(OUTPUT_CHANNEL_INFO, prevcb ? prevcb : mame_null_output_callback, prevparam, NULL, NULL);
+	res = ProcessAuditResults(game, audit, audit_records);
 	if (audit_records > 0)
 		free(audit);
 
-	SetSampleAuditResults(game, iStatus);
-	return iStatus;
+	SetSampleAuditResults(game, res);
+	return res;
 }
 
 static DWORD WINAPI AuditThreadProc(LPVOID hDlg)
