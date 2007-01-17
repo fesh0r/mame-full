@@ -17,6 +17,7 @@
 #include "strconv.h"
 #include "attrdlg.h"
 #include "secview.h"
+#include "winutils.h"
 
 const TCHAR wimgtool_class[] = TEXT("wimgtool_class");
 const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");
@@ -175,7 +176,7 @@ void wimgtool_report_error(HWND window, imgtoolerr_t err, const char *imagename,
 		snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s: %s", source, error_text);
 	else
 		message = error_text;
-	MessageBox(window, message, wimgtool_producttext, MB_OK);
+	win_message_box_utf8(window, message, wimgtool_producttext, MB_OK);
 }
 
 
@@ -474,7 +475,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	// set attributes and corruption notice
 	if (entry->attr)
 	{
-		char *tempstr = tstring_from_utf8(entry->attr);
+		TCHAR *tempstr = tstring_from_utf8(entry->attr);
 		ListView_SetItemText(info->listview, new_index, column_index++, tempstr);
 		free(tempstr);
 	}
@@ -591,7 +592,6 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	TCHAR file_title_buf[MAX_PATH];
 	char *file_title;
 	const char *statusbar_text[2];
-	TCHAR *t_buf;
 	TCHAR *t_filename;
 	imgtool_partition_features features;
 
@@ -654,9 +654,8 @@ static imgtoolerr_t full_refresh_image(HWND window)
 		statusbar_text[0] = NULL;
 		statusbar_text[1] = NULL;
 	}
-	t_buf = tstring_from_utf8(buf);
-	SetWindowText(window, t_buf);
-	free(t_buf);
+
+	win_set_window_text_utf8(window, buf);
 	
 	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
 	{

@@ -5,6 +5,74 @@
 //============================================================
 
 #include "winutils.h"
+#include "strconv.h"
+
+
+//============================================================
+//	win_message_box_utf8
+//============================================================
+
+int win_message_box_utf8(HWND window, const char *text, const char *caption, UINT type)
+{
+	int result = 0;
+	TCHAR *t_text = NULL;
+	TCHAR *t_caption = NULL;
+
+	if (text)
+	{
+		t_text = tstring_from_utf8(text);
+		if (!t_text)
+			goto done;
+	}
+
+	if (caption)
+	{
+		t_caption = tstring_from_utf8(caption);
+		if (!t_caption)
+			goto done;
+	}
+
+	result = MessageBox(window, t_text, t_caption, type);
+
+done:
+	if (t_text)
+		free(t_text);
+	if (t_caption)
+		free(t_caption);
+	return result;
+}
+
+
+
+//============================================================
+//	win_set_window_text_utf8
+//============================================================
+
+BOOL win_set_window_text_utf8(HWND window, const char *text)
+{
+	BOOL result = FALSE;
+	TCHAR *t_text = NULL;
+
+	if (text)
+	{
+		t_text = tstring_from_utf8(text);
+		if (!t_text)
+			goto done;
+	}
+
+	result = SetWindowText(window, t_text);
+
+done:
+	if (t_text)
+		free(t_text);
+	return result;
+}
+
+
+
+//============================================================
+//	win_scroll_window
+//============================================================
 
 void win_scroll_window(HWND window, WPARAM wparam, int scroll_bar, int scroll_delta_line)
 {
