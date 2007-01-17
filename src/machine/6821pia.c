@@ -18,6 +18,10 @@
 #define LOG(x)
 #endif
 
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
+#include "debug/debugcon.h"
+#endif
 
 /******************* internal PIA data structure *******************/
 
@@ -274,7 +278,7 @@ int pia_read(int which, int offset)
 
 				/* combine input and output values */
 				val = (p->out_a & p->ddr_a) + (p->in_a & ~p->ddr_a);
-
+			
 				/* IRQ flags implicitly cleared by a read */
 				p->irq_a1 = p->irq_a2 = 0;
 				update_6821_interrupts(p);
@@ -446,7 +450,15 @@ void pia_write(int which, int offset, int data)
 				p->out_a = data;/* & p->ddr_a; */	/* NS990130 - don't mask now, DDR could change later */
 
 				/* send it to the output function */
-				if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, p->out_a & p->ddr_a);	/* NS990130 */
+//				if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, p->out_a & p->ddr_a);	/* NS990130 */
+
+				/* For port A only, if a pin is defined as an input, mimic the internal pullups */
+				/* on that port, by setting any pin used as an input to 1. This behavior is one of */
+				/* the differences between port A and B, and is documented in the 6821 data sheet */
+				/* this is also done when the DDR changes below */
+				/* 2006-12-21, PHS */
+				if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, (p->out_a & p->ddr_a) | (~p->ddr_a));	/* NS990130 */
+
 			}
 
 			/* write DDR register */
@@ -460,7 +472,7 @@ void pia_write(int which, int offset, int data)
 					p->ddr_a = data;
 
 					/* send it to the output function */
-					if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, p->out_a & p->ddr_a);
+					if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, (p->out_a & p->ddr_a) | (~p->ddr_a));	/* NS990130 */
 				}
 			}
 			break;
@@ -609,14 +621,31 @@ void pia_set_input_a(int which, int data)
 
 
 
-/******************* interface setting PIA port A input *******************/
+/******************* interface getting PIA port A output *******************/
 
 int pia_get_output_a(int which)
 {
 	pia6821 *p = pia + which;
+#if 0
 	return (p->out_a & p->ddr_a) + (p->in_a & ~p->ddr_a);
+#endif
+	/* For port A only, if a pin is defined as an input, mimic the internal pullups */
+	/* on that port, by setting any pin used as an input to 1. This behavior is one of */
+	/* the differences between port A and B, and is documented in the 6821 data sheet */
+	/* 2006-12-21, PHS */
+
+	return ((p->out_a & p->ddr_a) | (~p->ddr_a)) & 0xFF;
 }
 
+/******************* interface getting PIA port A input *******************/
+/* As the above now returns pull-ups for input bits, this function allows */
+/* the fetching of what the inpurts are infact set to                     */
+int pia_get_input_a(int which)
+{
+	pia6821 *p = pia + which;
+
+	return (p->in_a & ~p->ddr_a);
+}
 
 
 /******************* interface setting PIA port CA1 input *******************/
@@ -791,7 +820,13 @@ void pia_set_input_cb2(int which, int data)
 int pia_get_output_ca2(int which)
 {
 	pia6821 *p = pia + which;
-	return p->out_ca2;
+	
+	/* As with port A pins, if ca2, is set as an input the output will be pulled up */
+	/* by an internal pullup resistor */
+	if (C2_INPUT(p->ctl_b))
+		return 1;
+	else
+		return p->out_ca2;
 }
 
 
