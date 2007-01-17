@@ -212,3 +212,18 @@ const UINT8 *sam_m6847_get_video_ram(int scanline)
 	ram_base = sam.intf->get_rambase ? sam.intf->get_rambase() : mess_ram;
 	return &ram_base[video_position];
 }
+
+UINT8 get_sam_memorysize(void)
+{
+	return (sam.state & 0x6000) / 0x2000;
+}
+
+UINT8 get_sam_pagemode(void)
+{
+	return (sam.state & 0x0400) / 0x0400;
+}
+
+UINT8 get_sam_maptype(void)
+{
+	return (sam.state & 0x8000) / 0x8000;
+}

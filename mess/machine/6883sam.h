@@ -48,4 +48,9 @@ const UINT8 *sam_m6847_get_video_ram(int scanline);
 /* write to the SAM */
 WRITE8_HANDLER(sam_w);
 
+/* used to get memory size and pagemode independent of callbacks */
+UINT8 get_sam_memorysize(void);
+UINT8 get_sam_pagemode(void);
+UINT8 get_sam_maptype(void);
+
 #endif /* __6833SAM_H__ */
