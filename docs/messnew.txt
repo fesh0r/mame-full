@@ -33,6 +33,8 @@ System Driver Changes:
 - [THOMSON] Fixed device name that clashed with "cc" option on main MESS.  (bug
   #994) [Antoine Mine]
 
+- [VTECH1] Fixed memory leak.  (bug #1021) [Nate Woods]
+
 
 
 User Interface Changes:

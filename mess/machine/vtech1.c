@@ -104,13 +104,14 @@ static void common_init_machine(int base)
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, 0xbfff, 0, 0, MWA8_RAM);
 			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, MRA8_BANK1);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, MWA8_BANK1);        
-			if (!banked_mem) banked_mem = malloc(3 * 0x4000);
+			banked_mem = auto_malloc(3 * 0x4000);
 			memory_set_bankptr(1, banked_mem);
 			break;		
 		default:
 			/* no memory expansion */
 			memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, base, 0xffff, 0, 0, MRA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, 0xffff, 0, 0, MWA8_NOP);		
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, base, 0xffff, 0, 0, MWA8_NOP);
+			break;
 	}
 }
 
