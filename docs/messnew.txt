@@ -28,6 +28,8 @@ System Driver Changes:
 
 - [IP204415] Fixed driver.  (bug #986) [Nate Woods]
 
+- [N64] Added the .bin file extension.  (bug #1016) [Nate Woods]
+
 - [THOMSON] Fixed device name that clashed with "cc" option on main MESS.  (bug
   #994) [Antoine Mine]
 
