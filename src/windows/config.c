@@ -408,10 +408,6 @@ int cli_frontend_init(int argc, char **argv)
 
 	// extract options information
 	extract_options(drivers[drvnum], &drv);
-
-#ifdef MESS
-	win_mess_options_exit();
-#endif // MESS
 	return drvnum;
 }
 

@@ -313,6 +313,9 @@ void osd_begin_final_unloading(void)
 			opt++;
 		}
 	}
+
+	// free up all of the allocated options
+	pool_exit(&mess_options_pool);
 }
 
 
@@ -414,11 +417,3 @@ void win_mess_options_init(void)
 	options_set_option_callback(OPTION_UNADORNED(0), win_mess_driver_name_callback);
 	pool_init(&mess_options_pool);
 }
-
-
-
-void win_mess_options_exit(void)
-{
-	pool_exit(&mess_options_pool);
-}
-
