@@ -72,6 +72,8 @@ Source Changes:
 
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
+- [Windows] Fixed several memory leaks in the Windows code.  [Nate woods]
+
 - [Windows] COnsolidated some MESS specific OSD code into the MAME OSD core
   code and removed redundant directory functions.  [Nate Woods]
 

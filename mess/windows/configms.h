@@ -19,6 +19,7 @@ void set_devicedirectory(int dev, const char *dir);
 
 void win_add_mess_device_options(const game_driver *gamedrv);
 void win_mess_options_init(void);
+void win_mess_options_exit(void);
 void win_mess_config_init(running_machine *machine);
 
 #endif /* CONFIGMS_H */
