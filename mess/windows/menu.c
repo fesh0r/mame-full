@@ -954,6 +954,8 @@ static BOOL get_menu_item_string(HMENU menu, UINT item, BOOL by_position, HMENU 
 
 	// clear out results
 	memset(buffer, '\0', sizeof(*buffer) * buffer_len);
+	if (sub_menu)
+		*sub_menu = NULL;
 
 	// prepare MENUITEMINFO structure
 	memset(&mii, 0, sizeof(mii));
@@ -1015,6 +1017,7 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 				i = GetLastError();
 				return NULL;
 			}
+			sub_menu = mii.hSubMenu;
 		}
 		menu = sub_menu;
 		if (!menu)
