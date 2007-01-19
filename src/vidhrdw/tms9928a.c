@@ -929,7 +929,7 @@ void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB32)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(LEFT_BORDER+32*8+RIGHT_BORDER, top_border+24*8+bottom_border)
 	/* display no border */
 	/*MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER+0*8, LEFT_BORDER+32*8-1, top_border+0*8, top_border+24*8-1)*/
