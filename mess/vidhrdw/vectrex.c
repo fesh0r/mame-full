@@ -14,7 +14,7 @@
 #define SH_DELAY RAMP_DELAY
 
 #define VEC_SHIFT 16
-#define INT_PER_CLOCK 900
+#define INT_PER_CLOCK 600
 #define VECTREX_CLOCK 1500000
 
 #define PORTB 0
@@ -259,7 +259,7 @@ VIDEO_START( vectrex )
 	x_center=((Machine->screen[0].visarea.max_x
 		  -Machine->screen[0].visarea.min_x) / 2) << VEC_SHIFT;
 	y_center=((Machine->screen[0].visarea.max_y
-		  -Machine->screen[0].visarea.min_y) / 2 - 10) << VEC_SHIFT;
+		  -Machine->screen[0].visarea.min_y) / 2) << VEC_SHIFT;
 	x_max = Machine->screen[0].visarea.max_x << VEC_SHIFT;
 	y_max = Machine->screen[0].visarea.max_y << VEC_SHIFT;
 
@@ -461,7 +461,7 @@ VIDEO_START( raaspec )
 	x_center=((Machine->screen[0].visarea.max_x
 		  -Machine->screen[0].visarea.min_x)/2) << VEC_SHIFT;
 	y_center=((Machine->screen[0].visarea.max_y
-		  -Machine->screen[0].visarea.min_y)/2-10) << VEC_SHIFT;
+		  -Machine->screen[0].visarea.min_y)/2) << VEC_SHIFT;
 	x_max = Machine->screen[0].visarea.max_x << VEC_SHIFT;
 	y_max = Machine->screen[0].visarea.max_y << VEC_SHIFT;
 
