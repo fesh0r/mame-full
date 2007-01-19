@@ -744,18 +744,6 @@ VIDEO_UPDATE ( thom )
       draw_scanline16( bitmap, xbleft, ypos+1, xwidth, v, NULL, -1 );
   }
 
-	/* config */
-	if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) 
-	{
-	}
-	else
-	{
-		draw_crosshair( bitmap, 
-			readinputport ( THOM_INPUT_LIGHTPEN     ), 
-			readinputport ( THOM_INPUT_LIGHTPEN + 1 ), 
-			cliprect, 0 ); 
-	}
- 
 	return 0;
 }
 

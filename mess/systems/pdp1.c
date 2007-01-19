@@ -403,13 +403,14 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_CPU_VBLANK_INT(pdp1_interrupt, 1)	/* dummy interrupt: handles input */
 
 	MDRV_SCREEN_REFRESH_RATE(refresh_rate)
-	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_START( pdp1 )
 
 	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_MAXSIZE(virtual_width, virtual_height)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(virtual_width, virtual_height)
 	MDRV_SCREEN_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)

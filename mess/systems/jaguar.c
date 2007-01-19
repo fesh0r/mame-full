@@ -455,13 +455,14 @@ MACHINE_DRIVER_START( jaguar )
 	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
 	MDRV_SCREEN_REFRESH_RATE(60)
-	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(jaguar)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
-	MDRV_SCREEN_MAXSIZE(40*8, 30*8)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(40*8, 30*8)
 	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(65534)
 
@@ -504,8 +505,6 @@ static DRIVER_INIT( jaguar )
 {
 	state_save_register_global(joystick_data);
 	state_save_register_global(eeprom_enable);
-
-	cojag_draw_crosshair = FALSE;
 
 	/* init the sound system and install DSP speedups */
 	cojag_sound_init();

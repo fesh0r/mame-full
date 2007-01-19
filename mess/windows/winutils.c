@@ -71,6 +71,47 @@ done:
 
 
 //============================================================
+//  win_error_to_mame_file_error
+//============================================================
+
+mame_file_error win_error_to_mame_file_error(DWORD error)
+{
+	mame_file_error filerr;
+
+	// convert a Windows error to a mame_file_error
+	switch (error)
+	{
+		case ERROR_SUCCESS:
+			filerr = FILERR_NONE;
+			break;
+
+		case ERROR_OUTOFMEMORY:
+			filerr = FILERR_OUT_OF_MEMORY;
+			break;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			filerr = FILERR_NOT_FOUND;
+			break;
+
+		case ERROR_ACCESS_DENIED:
+			filerr = FILERR_ACCESS_DENIED;
+			break;
+
+		case ERROR_SHARING_VIOLATION:
+			filerr = FILERR_ALREADY_OPEN;
+			break;
+
+		default:
+			filerr = FILERR_FAILURE;
+			break;
+	}
+	return filerr;
+}
+
+
+
+//============================================================
 //	win_scroll_window
 //============================================================
 

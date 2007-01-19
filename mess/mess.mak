@@ -170,7 +170,6 @@ CPUS += M68008
 CPUS += TMS99010
 CPUS += TX0
 CPUS += COP411
-
 #-------------------------------------------------
 # specify available sound cores; some of these are
 # only for MAME and so aren't included
@@ -255,12 +254,13 @@ SOUNDS += CDDA
 #SOUNDS += RF5C400
 SOUNDS += SPEAKER
 #SOUNDS += CDP1869
-SOUNDS += YM2151_ALT
-SOUNDS += WAVE
+#SOUNDS += S14001A
 SOUNDS += BEEP
+SOUNDS += WAVE
 SOUNDS += SID6581
 SOUNDS += SID8580
 #SOUNDS += SP0256
+SOUNDS += YM2151_ALT
 
 # Archive definitions
 DRVLIBS = \

@@ -446,7 +446,7 @@ static int read_sector(int unit, unsigned int lba, void *buffer, unsigned int by
 	switch (hdc.d[unit].format)
 	{
 	case format_mame:
-		bytes_read = hdc.d[unit].bytes_per_sector * hard_disk_read(hdc.d[unit].hd_handle, lba, 1, buffer);
+		bytes_read = hdc.d[unit].bytes_per_sector * hard_disk_read(hdc.d[unit].hd_handle, lba, buffer);
 		if (bytes_read > bytes_to_read)
 			bytes_read = bytes_to_read;
 		break;
@@ -476,7 +476,7 @@ static int write_sector(int unit, unsigned int lba, const void *buffer, unsigned
 	switch (hdc.d[unit].format)
 	{
 	case format_mame:
-		bytes_written = hdc.d[unit].bytes_per_sector * hard_disk_write(hdc.d[unit].hd_handle, lba, 1, buffer);
+		bytes_written = hdc.d[unit].bytes_per_sector * hard_disk_write(hdc.d[unit].hd_handle, lba, buffer);
 		if (bytes_written > bytes_to_write)
 			bytes_written = bytes_to_write;
 		break;

@@ -292,7 +292,7 @@ int pc_hdc_dack_r(void)
 
 	if (hdcdma_read == 0)
 	{
-		hard_disk_read(file, get_lbasector(), 1, hdcdma_data);
+		hard_disk_read(file, get_lbasector(), hdcdma_data);
 		hdcdma_read = 512;
 		hdcdma_size -= 512;
 		hdcdma_src = hdcdma_data;
@@ -334,7 +334,7 @@ void pc_hdc_dack_w(int data)
 
 	if( --hdcdma_write == 0 )
 	{
-		hard_disk_write(file, get_lbasector(), 1, hdcdma_data);
+		hard_disk_write(file, get_lbasector(), hdcdma_data);
 		hdcdma_write = 512;
 		hdcdma_size -= 512;
 

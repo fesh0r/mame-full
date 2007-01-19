@@ -355,7 +355,7 @@ static imgtoolerr_t	pc_chd_image_readsector(imgtool_image *image, UINT32 track, 
 	info = pc_chd_get_image_info(image);
 	return imghd_read(&info->hard_disk,
 		pc_chd_calc_lbasector(info, track, head, sector),
-		1, buffer);
+		buffer);
 }
 
 
@@ -366,7 +366,7 @@ static imgtoolerr_t	pc_chd_image_writesector(imgtool_image *image, UINT32 track,
 	info = pc_chd_get_image_info(image);
 	return imghd_write(&info->hard_disk,
 		pc_chd_calc_lbasector(info, track, head, sector),
-		1, buffer);
+		buffer);
 }
 
 
@@ -375,7 +375,7 @@ static imgtoolerr_t pc_chd_image_readblock(imgtool_image *image, void *buffer, U
 {
 	pc_chd_image_info *info;
 	info = pc_chd_get_image_info(image);
-	return imghd_read(&info->hard_disk, block, 1, buffer);
+	return imghd_read(&info->hard_disk, block, buffer);
 }
 
 
@@ -384,7 +384,7 @@ static imgtoolerr_t pc_chd_image_writeblock(imgtool_image *image, const void *bu
 {
 	pc_chd_image_info *info;
 	info = pc_chd_get_image_info(image);
-	return imghd_write(&info->hard_disk, block, 1, buffer);
+	return imghd_write(&info->hard_disk, block, buffer);
 }
 
 

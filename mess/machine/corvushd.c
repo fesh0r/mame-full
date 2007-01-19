@@ -594,12 +594,12 @@ static UINT8 corvus_write_sector(UINT8 drv, UINT32 sector, UINT8 *buffer, int le
 	// wonderful functionality.
 	//
 	if(len == 512) {
-		hard_disk_write(disk, sector, 1, buffer);
+		hard_disk_write(disk, sector, buffer);
 	} else {
-		hard_disk_read(disk, sector, 1, tbuffer);		// Read the existing data into our temporary buffer
+		hard_disk_read(disk, sector, tbuffer);		// Read the existing data into our temporary buffer
 		memcpy(tbuffer, buffer, len);					// Overlay the data with the buffer passed
 		c->delay += INTERSECTOR_DELAY;					// Add another delay because of the Read / Write
-		hard_disk_write(disk, sector, 1, tbuffer);		// Re-write the data
+		hard_disk_write(disk, sector, tbuffer);		// Re-write the data
 	}
 
 	c->last_cylinder = cylinder;
@@ -709,7 +709,7 @@ static UINT8 corvus_read_sector(UINT8 drv, UINT32 sector, UINT8 *buffer, int len
 	cylinder = (double) sector / (double) c->sectors_per_track / (double) c->tracks_per_cylinder;
 	c->delay = abs(c->last_cylinder - cylinder) * TRACK_SEEK_TIME + INTERSECTOR_DELAY;
 
-	hard_disk_read(disk, sector, 1, tbuffer);
+	hard_disk_read(disk, sector, tbuffer);
 
 	memcpy(buffer, tbuffer, len);
 

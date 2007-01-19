@@ -374,7 +374,7 @@ static int harddisk_read_sector(int which, int disk_unit, int cylinder, int head
 	if (! harddisk_chs_to_lba(which, disk_unit, cylinder, head, sector, &lba))
 		return FALSE;
 
-	if (! hard_disk_read(hd[disk_unit].hd_handle, lba, 1, buf))
+	if (! hard_disk_read(hd[disk_unit].hd_handle, lba, buf))
 	{
 		hfdc[which].status |= ST_TC_DATAERR;
 		return FALSE;
@@ -409,7 +409,7 @@ static int harddisk_write_sector(int which, int disk_unit, int cylinder, int hea
 		buf[i] = (*hfdc[which].dma_read_callback)(which, *dma_address);
 		*dma_address = ((*dma_address) + 1) & 0xffffff;
 	}
-	if (! hard_disk_write(hd[disk_unit].hd_handle, lba, 1, buf))
+	if (! hard_disk_write(hd[disk_unit].hd_handle, lba, buf))
 	{
 		hfdc[which].status |= ST_TC_DATAERR;
 		return FALSE;

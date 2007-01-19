@@ -67,6 +67,7 @@ static int wait_offset = 3;
 #endif
 
 
+
 /*************************************
  *
  *  Tables
@@ -115,12 +116,6 @@ static const UINT16 expand_byte[256] =
 static UINT8 separate_bitplanes[2][64];
 
 
-/*************************************
- *
- *  Copper disassembler
- *
- *************************************/
- 
 
 /*************************************
  *
@@ -245,7 +240,6 @@ static int copper_execute_next(int xpos)
 			(!copper_waitblit || !(CUSTOM_REG(REG_DMACON) & DMACON_BBUSY)))
 		{
 			copper_waiting = FALSE;
-			
 #if GUESS_COPPER_OFFSET
 			return xpos + COPPER_CYCLES_TO_PIXELS(1 + wait_offset);
 #else
@@ -295,7 +289,7 @@ static int copper_execute_next(int xpos)
 		{
 			if (LOG_COPPER)
 				logerror("%02X.%02X: Aborting copper on illegal write\n", last_scanline, xpos / 2);
-			
+
 			copper_waitval = 0xffff;
 			copper_waitmask = 0xffff;
 			copper_waitblit = FALSE;
@@ -315,7 +309,7 @@ static int copper_execute_next(int xpos)
 		{
 			if (LOG_COPPER)
 				logerror("  Waiting for %04x & %04x (currently %04x)\n", copper_waitval, copper_waitmask, (last_scanline << 8) | (xpos >> 1));
-				
+
 			copper_waiting = TRUE;
 		}
 
@@ -383,7 +377,7 @@ static void update_sprite_dma(int scanline)
 {
 	int dmaenable = (CUSTOM_REG(REG_DMACON) & (DMACON_SPREN | DMACON_DMAEN)) == (DMACON_SPREN | DMACON_DMAEN);
 	int num, maxdma;
-	
+
 	/* channels are limited by DDFSTART */
 	maxdma = (CUSTOM_REG(REG_DDFSTRT) - 0x14) / 4;
 	if (maxdma > 8)
@@ -641,7 +635,7 @@ void amiga_render_scanline(int scanline)
 		copper_setpc(CUSTOM_REG_LONG(REG_COP1LCH));
 		ham_color = CUSTOM_REG(REG_COLOR00);
 	}
-	
+
 	/* update sprite data fetching */
 	update_sprite_dma(scanline);
 
@@ -708,7 +702,7 @@ void amiga_render_scanline(int scanline)
 		{
 			odelay = CUSTOM_REG(REG_BPLCON1) & 0xf;
 			edelay = ( CUSTOM_REG(REG_BPLCON1) >> 4 ) & 0x0f;
-			
+
 #if 0 /* Fixes NZS scrolling, but breaks Arcadia hires boot menu */
 			if ( CUSTOM_REG(REG_DDFSTRT) & 0x04 )
 			{
@@ -716,14 +710,12 @@ void amiga_render_scanline(int scanline)
 				edelay = ( edelay + 8 ) & 0x0f;
 			}
 #endif
-			
+
 			obitoffs = 15 + odelay;
 			ebitoffs = 15 + edelay;
-						
+
 			for (p = 0; p < 6; p++)
-			{
 				CUSTOM_REG(REG_BPL1DAT + p) = 0;
-			}
 		}
 
 		/* need to run the sprite engine every pixel to ensure display */
@@ -737,17 +729,15 @@ void amiga_render_scanline(int scanline)
 			int pfpix0 = 0, pfpix1 = 0, collide;
 
 			/* fetch the odd bits if we are within the fetching region */
-			if (x >= ddf_start_pixel && x <= ddf_stop_pixel + odelay )
+			if (x >= ddf_start_pixel && x <= ddf_stop_pixel + odelay)
 			{
 				/* if we need to fetch more data, do it now */
 				if (obitoffs == 15)
-				{
 					for (p = 0; p < planes; p += 2)
 					{
 						CUSTOM_REG(REG_BPL1DAT + p) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BPL1PTH + p * 2));
 						CUSTOM_REG_LONG(REG_BPL1PTH + p * 2) += 2;
 					}
-				}
 
 				/* now assemble the bits */
 				pfpix0 |= assemble_odd_bitplanes(planes, obitoffs);
@@ -760,14 +750,14 @@ void amiga_render_scanline(int scanline)
 					if (obitoffs < 0)
 					{
 						obitoffs = 15;
-					
+
 						for (p = 0; p < planes; p += 2)
 						{
 							CUSTOM_REG(REG_BPL1DAT + p) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BPL1PTH + p * 2));
 							CUSTOM_REG_LONG(REG_BPL1PTH + p * 2) += 2;
 						}
 					}
-					
+
 					pfpix1 |= assemble_odd_bitplanes(planes, obitoffs);
 					obitoffs--;
 				}
@@ -778,19 +768,17 @@ void amiga_render_scanline(int scanline)
 				if (obitoffs < 0)
 					obitoffs = 15;
 			}
-			
+
 			/* fetch the even bits if we are within the fetching region */
-			if (x >= ddf_start_pixel && x <= ddf_stop_pixel + edelay )
+			if (x >= ddf_start_pixel && x <= ddf_stop_pixel + edelay)
 			{
 				/* if we need to fetch more data, do it now */
 				if (ebitoffs == 15)
-				{
 					for (p = 1; p < planes; p += 2)
 					{
 						CUSTOM_REG(REG_BPL1DAT + p) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BPL1PTH + p * 2));
 						CUSTOM_REG_LONG(REG_BPL1PTH + p * 2) += 2;
 					}
-				}
 
 				/* now assemble the bits */
 				pfpix0 |= assemble_even_bitplanes(planes, ebitoffs);
@@ -803,14 +791,14 @@ void amiga_render_scanline(int scanline)
 					if (ebitoffs < 0)
 					{
 						ebitoffs = 15;
-						
+
 						for (p = 1; p < planes; p += 2)
 						{
 							CUSTOM_REG(REG_BPL1DAT + p) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BPL1PTH + p * 2));
 							CUSTOM_REG_LONG(REG_BPL1PTH + p * 2) += 2;
 						}
 					}
-						
+
 					pfpix1 |= assemble_even_bitplanes(planes, ebitoffs);
 					ebitoffs--;
 				}
@@ -933,14 +921,14 @@ void amiga_render_scanline(int scanline)
 		const char *m_lace = "LACE";
 		const char *m_hilace = "HI-LACE";
 		const char *p = m_lores;
-						
+
 		if ( hires ) p = m_hires;
 		if ( ham ) p = m_ham;
 		if ( dualpf ) p = m_dualpf;
 		if ( lace ) p = m_lace;
-			
+
 		if ( hires && lace ) p = m_hilace;
-						
+
 		popmessage("%s(%d pl od=%04x ed=%04x start=%04x stop=%04x)", p, planes, odelay, edelay, CUSTOM_REG(REG_DDFSTRT), CUSTOM_REG(REG_DDFSTOP) );
 	}
 #endif

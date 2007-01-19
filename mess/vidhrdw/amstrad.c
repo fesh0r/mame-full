@@ -1119,7 +1119,7 @@ VIDEO_START( amstrad )
 	x_screen_pos = x_screen_offset;
 	y_screen_pos = y_screen_offset;
 
-	amstrad_bitmap = auto_bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
+	amstrad_bitmap = auto_bitmap_alloc_format(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT, BITMAP_FORMAT_INDEXED16);
 	display_update = 1;
 
 	return 0;

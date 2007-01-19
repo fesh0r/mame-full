@@ -33,9 +33,8 @@ struct _osd_file
 //  FUNCTION PROTOTYPES
 //============================================================
 
-mame_file_error win_error_to_mame_file_error(DWORD error);
-
 static DWORD create_path_recursive(TCHAR *path);
+static mame_file_error error_to_mame_file_error(DWORD error);
 
 
 
@@ -119,7 +118,7 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 		// if we still failed, clean up and free
 		if ((*file)->handle == INVALID_HANDLE_VALUE)
 		{
-			filerr = win_error_to_mame_file_error(error);
+			filerr = error_to_mame_file_error(error);
 			goto error;
 		}
 	}
@@ -155,12 +154,12 @@ mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 len
 	{
 		DWORD error = GetLastError();
 		if (error != NO_ERROR)
-			return win_error_to_mame_file_error(error);
+			return error_to_mame_file_error(error);
 	}
 
 	// then perform the read
 	if (!ReadFile(file->handle, buffer, length, &result, NULL))
-		return win_error_to_mame_file_error(GetLastError());
+		return error_to_mame_file_error(GetLastError());
 	if (actual != NULL)
 		*actual = result;
 	return FILERR_NONE;
@@ -182,12 +181,12 @@ mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UIN
 	{
 		DWORD error = GetLastError();
 		if (error != NO_ERROR)
-			return win_error_to_mame_file_error(error);
+			return error_to_mame_file_error(error);
 	}
 
 	// then perform the read
 	if (!WriteFile(file->handle, buffer, length, &result, NULL))
-		return win_error_to_mame_file_error(GetLastError());
+		return error_to_mame_file_error(GetLastError());
 	if (actual != NULL)
 		*actual = result;
 	return FILERR_NONE;
@@ -285,10 +284,10 @@ static DWORD create_path_recursive(TCHAR *path)
 
 
 //============================================================
-//  win_error_to_mame_file_error
+//  error_to_mame_file_error
 //============================================================
 
-mame_file_error win_error_to_mame_file_error(DWORD error)
+static mame_file_error error_to_mame_file_error(DWORD error)
 {
 	mame_file_error filerr;
 

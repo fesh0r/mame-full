@@ -240,9 +240,10 @@ static MACHINE_DRIVER_START( apple1 )
 	MDRV_MACHINE_RESET( apple1 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	/* It would be nice if we could implement some sort of display
 	   overscan here. */
-	MDRV_SCREEN_MAXSIZE(40 * 7, 24 * 8)
+	MDRV_SCREEN_SIZE(40 * 7, 24 * 8)
 	MDRV_SCREEN_VISIBLE_AREA(0, 40 * 7 - 1, 0, 24 * 8 - 1)
 	MDRV_GFXDECODE(apple1_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof (apple1_palette) / 3)

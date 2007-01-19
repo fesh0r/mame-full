@@ -632,7 +632,7 @@ INLINE void gdc_cmd_pitch(void)
 /*-------------------------------------------------------------------------*/
 INLINE void gdc_cmd_start(void)
 {
-  /*   MDRV_SCREEN_MAXSIZE(gdc.registers.display.words_per_line*16, */
+  /*   MDRV_SCREEN_SIZE(gdc.registers.display.words_per_line*16, */
 /*                      gdc.registers.display.lines_per_field); */
 /*     MDRV_SCREEN_VISIBLE_AREA(0, */
 /*                       gdc.registers.display.words_per_line*16-1, */
@@ -1481,7 +1481,8 @@ void mdrv_compisgdc(machine_config *machine,
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_MAXSIZE(scr_width, scr_height)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(scr_width, scr_height)
 	MDRV_SCREEN_VISIBLE_AREA(0, scr_width-1, 0, scr_height-1)
 	MDRV_PALETTE_LENGTH(COMPIS_PALETTE_SIZE)
 	MDRV_COLORTABLE_LENGTH(0)

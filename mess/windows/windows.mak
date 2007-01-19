@@ -17,11 +17,11 @@ OSOBJS += \
 	$(OBJ)/mess/windows/mess.res	\
 	$(OBJ)/mess/windows/messlib.o	\
 	$(OBJ)/mess/windows/opcntrl.o	\
-	$(OBJ)/mess/windows/tapedlg.o	\
-	$(OBJ)/mess/windows/winutils.o
+	$(OBJ)/mess/windows/tapedlg.o
 
 OSDCOREOBJS += \
 	$(OBJ)/mess/windows/winmess.o	\
+	$(OBJ)/mess/windows/winutils.o	\
 	$(OBJ)/mess/windows/parallel.o	\
 	$(OBJ)/mess/windows/glob.o
 
