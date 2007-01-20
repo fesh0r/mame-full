@@ -54,7 +54,6 @@ int pia_read(int which, int offset);
 void pia_write(int which, int offset, int data);
 void pia_set_input_a(int which, int data);
 int pia_get_output_a(int which);
-int pia_get_input_a(int which);
 void pia_set_input_ca1(int which, int data);
 void pia_set_input_ca2(int which, int data);
 int pia_get_output_ca2(int which);
