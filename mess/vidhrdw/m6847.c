@@ -1963,7 +1963,8 @@ void m6847_init(const m6847_config *cfg)
 
 #ifdef MAME_DEBUG
 	/* setup debug commands */
-	debug_console_register_command("m6847_dumpscanline", CMDFLAG_NONE, 0, 0, 0, execute_dumpscanline);
+	if (options.mame_debug)
+		debug_console_register_command("m6847_dumpscanline", CMDFLAG_NONE, 0, 0, 0, execute_dumpscanline);
 #endif /* MAME_DEBUG */
 }
 

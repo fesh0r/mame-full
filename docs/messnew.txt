@@ -74,6 +74,9 @@ Source Changes:
 - Fixed crash when unmounting images in the old UI file manager.  (bug #998)
   [Nate Woods]
 
+- Fixed various memory leaks in debug builds when the debugger is not enabled.
+  (bug #1018) [Nate Woods]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 - [Windows] Fixed several memory leaks in the Windows code.  [Nate woods]

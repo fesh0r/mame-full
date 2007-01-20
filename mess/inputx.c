@@ -622,7 +622,8 @@ void inputx_init(void)
 	keybuffer = NULL;
 
 #ifdef MAME_DEBUG
-	debug_console_register_command("input", CMDFLAG_NONE, 0, 1, 1, execute_input);
+	if (options.mame_debug)
+		debug_console_register_command("input", CMDFLAG_NONE, 0, 1, 1, execute_input);
 #endif /* MAME_DEBUG */
 
 	/* posting keys directly only makes sense for a computer */

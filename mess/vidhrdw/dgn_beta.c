@@ -345,12 +345,15 @@ void init_video(void)
 	
 #ifdef MAME_DEBUG
 	/* setup debug commands */
-	debug_console_register_command("beta_vid_log", CMDFLAG_NONE, 0, 0, 0,ToggleRegLog);
-	debug_console_register_command("beta_vid_fill", CMDFLAG_NONE, 0, 0, 0,FillScreen);
-	debug_console_register_command("beta_vid_box", CMDFLAG_NONE, 0, 0, 5,ScreenBox);
-	debug_console_register_command("beta_vid", CMDFLAG_NONE, 0, 0, 0,VidToggle);
-	debug_console_register_command("beta_vid_limits", CMDFLAG_NONE, 0, 0, 0,ShowVidLimits);
-	debug_console_register_command("beta_vid_clkmax", CMDFLAG_NONE, 0, 0, 1,SetClkMax);
+	if (options.mame_debug)
+	{
+		debug_console_register_command("beta_vid_log", CMDFLAG_NONE, 0, 0, 0,ToggleRegLog);
+		debug_console_register_command("beta_vid_fill", CMDFLAG_NONE, 0, 0, 0,FillScreen);
+		debug_console_register_command("beta_vid_box", CMDFLAG_NONE, 0, 0, 5,ScreenBox);
+		debug_console_register_command("beta_vid", CMDFLAG_NONE, 0, 0, 0,VidToggle);
+		debug_console_register_command("beta_vid_limits", CMDFLAG_NONE, 0, 0, 0,ShowVidLimits);
+		debug_console_register_command("beta_vid_clkmax", CMDFLAG_NONE, 0, 0, 1,SetClkMax);
+	}
 	LogRegWrites=0;
 #endif /* MAME_DEBUG */
 }

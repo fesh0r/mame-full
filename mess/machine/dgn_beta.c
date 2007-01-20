@@ -1151,8 +1151,11 @@ MACHINE_START( dgnbeta )
 	dgnbeta_reset(machine);
 #ifdef MAME_DEBUG
 	/* setup debug commands */
-	debug_console_register_command("beta_dat_log", CMDFLAG_NONE, 0, 0, 0,ToggleDatLog);
-	debug_console_register_command("beta_key_dump", CMDFLAG_NONE, 0, 0, 0,DumpKeys);
+	if (options.mame_debug)
+	{
+		debug_console_register_command("beta_dat_log", CMDFLAG_NONE, 0, 0, 0,ToggleDatLog);
+		debug_console_register_command("beta_key_dump", CMDFLAG_NONE, 0, 0, 0,DumpKeys);
+	}
 	LogDatWrites=0;
 #endif	/* MAME_DEBUG */
 	return 0;
