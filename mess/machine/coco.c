@@ -94,6 +94,8 @@ static UINT8 gime_firq, gime_irq;
 static int cart_line, cart_inserted;
 static int dclg_state;
 static UINT16 cart_bank_size;
+static UINT8 (*update_keyboard)(void);
+static mame_timer *update_keyboard_timer;
 
 static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
@@ -101,7 +103,6 @@ static READ8_HANDLER ( d_pia1_cb1_r );
 static READ8_HANDLER ( d_pia1_pa_r );
 static READ8_HANDLER ( d_pia1_pb_r_coco );
 static READ8_HANDLER ( d_pia1_pb_r_coco2 );
-static READ8_HANDLER ( d_pia1_pa_r_coco3 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
 static WRITE8_HANDLER ( d_pia0_pb_w );
 static WRITE8_HANDLER ( dragon64_pia1_pb_w );
@@ -109,7 +110,6 @@ static WRITE8_HANDLER ( d_pia1_cb2_w);
 static WRITE8_HANDLER ( d_pia0_cb2_w);
 static WRITE8_HANDLER ( d_pia1_ca2_w);
 static WRITE8_HANDLER ( d_pia0_ca2_w);
-static WRITE8_HANDLER ( coco3_pia0_pb_w );
 static void d_pia0_irq_a(int state);
 static void d_pia0_irq_b(int state);
 static void d_pia1_firq_a(int state);
@@ -277,8 +277,8 @@ static const pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r_coco3, d_pia1_pb_r_coco2, 0, 0, 0, 0,
-		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, coco3_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, d_pia1_pb_r_coco2, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
 
@@ -886,32 +886,99 @@ void coco_set_halt_line(int halt_line)
 
 
 /***************************************************************************
-  Joystick Abstractions
+	Input device abstractions
 ***************************************************************************/
 
-#define JOYSTICK_RIGHT_X	7
-#define JOYSTICK_RIGHT_Y	8
-#define JOYSTICK_LEFT_X		9
-#define JOYSTICK_LEFT_Y		10
-
-static double read_joystick(int joyport)
+enum _coco_input_port
 {
-	return readinputport(joyport) / 255.0;
-}
+	INPUTPORT_RIGHT_JOYSTICK,
+	INPUTPORT_LEFT_JOYSTICK,
+	INPUTPORT_CASSETTE,
+	INPUTPORT_SERIAL
+};
+typedef enum _coco_input_port coco_input_port;
 
-
-typedef enum
+enum _coco_input_device
 {
-	JOYSTICKMODE_NORMAL			= 0x00,
-	JOYSTICKMODE_HIRES			= 0x10,
-	JOYSTICKMODE_HIRES_CC3MAX	= 0x30,
-	JOYSTICKMODE_RAT			= 0x20,
-	JOYSTICKMODE_DCLG           = 0x40
-} joystick_mode_t;
+	INPUTDEVICE_NA,
+	INPUTDEVICE_RIGHT_JOYSTICK,
+	INPUTDEVICE_LEFT_JOYSTICK,
+	INPUTDEVICE_HIRES_INTERFACE,
+	INPUTDEVICE_HIRES_CC3MAX_INTERFACE,
+	INPUTDEVICE_RAT,
+	INPUTDEVICE_DIECOM_LIGHTGUN
+};
+typedef enum _coco_input_device coco_input_device;
 
-static joystick_mode_t joystick_mode(void)
+/*-------------------------------------------------
+    input_device - given an input port, determine
+	which input device, if any, it is hooked up to
+-------------------------------------------------*/
+
+static coco_input_device input_device(coco_input_port port)
 {
-	return (joystick_mode_t) (int) readinputportbytag_safe("joystick_mode", JOYSTICKMODE_NORMAL);
+	coco_input_device result = INPUTDEVICE_NA;
+
+	switch(readinputportbytag_safe("joystick_mode", 0x00))
+	{
+		case 0x00:
+			/* "Normal" */
+			switch(port)
+			{
+				case INPUTPORT_RIGHT_JOYSTICK:	result = INPUTDEVICE_RIGHT_JOYSTICK; break;
+				case INPUTPORT_LEFT_JOYSTICK:	result = INPUTDEVICE_LEFT_JOYSTICK; break;
+				default:						result = INPUTDEVICE_NA; break;
+			}
+			break;
+
+		case 0x10:
+			/* "Hi-Res Interface" */
+			switch(port)
+			{
+				case INPUTPORT_RIGHT_JOYSTICK:	result = INPUTDEVICE_HIRES_INTERFACE; break;
+				case INPUTPORT_LEFT_JOYSTICK:	result = INPUTDEVICE_LEFT_JOYSTICK; break;
+				case INPUTPORT_CASSETTE:		result = INPUTDEVICE_HIRES_INTERFACE; break;
+				default:						result = INPUTDEVICE_NA; break;
+			}
+			break;
+
+		case 0x30:
+			/* "Hi-Res Interface (CoCoMax 3 Style)" */
+			switch(port)
+			{
+				case INPUTPORT_RIGHT_JOYSTICK:	result = INPUTDEVICE_HIRES_CC3MAX_INTERFACE; break;
+				case INPUTPORT_LEFT_JOYSTICK:	result = INPUTDEVICE_LEFT_JOYSTICK; break;
+				case INPUTPORT_CASSETTE:		result = INPUTDEVICE_HIRES_CC3MAX_INTERFACE; break;
+				default:						result = INPUTDEVICE_NA; break;
+			}
+			break;
+
+		case 0x20:
+			/* "The Rat Graphics Mouse" */
+			switch(port)
+			{
+				case INPUTPORT_RIGHT_JOYSTICK:	result = INPUTDEVICE_RAT; break;
+				case INPUTPORT_LEFT_JOYSTICK:	result = INPUTDEVICE_RAT; break;
+				default:						result = INPUTDEVICE_NA; break;
+			}
+			break;
+
+		case 0x40:
+			/* "Diecom Light Gun Adaptor" */
+			switch(port)
+			{
+				case INPUTPORT_RIGHT_JOYSTICK:	result = INPUTDEVICE_HIRES_CC3MAX_INTERFACE; break;
+				case INPUTPORT_LEFT_JOYSTICK:	result = INPUTDEVICE_LEFT_JOYSTICK; break;
+				case INPUTPORT_SERIAL:			result = INPUTDEVICE_DIECOM_LIGHTGUN; break;
+				default:						result = INPUTDEVICE_NA; break;
+			}
+			break;
+
+		default:
+			fatalerror("Invalid joystick_mode");
+			break;
+	}
+	return result;
 }
 
 
@@ -921,16 +988,16 @@ static joystick_mode_t joystick_mode(void)
 ***************************************************************************/
 
 static int coco_hiresjoy_ca = 1;
-static double coco_hiresjoy_xtransitiontime = 0;
-static double coco_hiresjoy_ytransitiontime = 0;
+static mame_time coco_hiresjoy_xtransitiontime;
+static mame_time coco_hiresjoy_ytransitiontime;
 
-static double coco_hiresjoy_computetransitiontime(int inputport)
+static mame_time coco_hiresjoy_computetransitiontime(const char *inputport)
 {
 	double val;
 
-	val = read_joystick(inputport);
+	val = readinputportbytag_safe(inputport, 0) / 255.0;
 
-	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX)
+	if (input_device(INPUTPORT_RIGHT_JOYSTICK) == INPUTDEVICE_HIRES_CC3MAX_INTERFACE)
 	{
 		/* CoCo MAX 3 Interface */
 		val = val * 2500.0 + 400.0;
@@ -941,27 +1008,30 @@ static double coco_hiresjoy_computetransitiontime(int inputport)
 		val = val * 4160.0 + 592.0;
 	}
 
-	return timer_get_time() + (COCO_CPU_SPEED * val);
+	return add_mame_times(mame_timer_get_time(), double_to_mame_time(COCO_CPU_SPEED * val));
 }
 
 static void coco_hiresjoy_w(int data)
 {
-	if (!data && coco_hiresjoy_ca) {
+	if (!data && coco_hiresjoy_ca)
+	{
 		/* Hi to lo */
-		coco_hiresjoy_xtransitiontime = coco_hiresjoy_computetransitiontime(JOYSTICK_RIGHT_X);
-		coco_hiresjoy_ytransitiontime = coco_hiresjoy_computetransitiontime(JOYSTICK_RIGHT_Y);
+		coco_hiresjoy_xtransitiontime = coco_hiresjoy_computetransitiontime("joystick_right_x");
+		coco_hiresjoy_ytransitiontime = coco_hiresjoy_computetransitiontime("joystick_right_y");
 	}
-	else if (data && !coco_hiresjoy_ca) {
+	else if (data && !coco_hiresjoy_ca)
+	{
 		/* Lo to hi */
-		coco_hiresjoy_ytransitiontime = 0;
-		coco_hiresjoy_ytransitiontime = 0;
+		coco_hiresjoy_ytransitiontime = time_zero;
+		coco_hiresjoy_ytransitiontime = time_zero;
 	}
 	coco_hiresjoy_ca = data;
+	(*update_keyboard)();
 }
 
-static int coco_hiresjoy_readone(double transitiontime)
+static int coco_hiresjoy_readone(mame_time transitiontime)
 {
-	return (transitiontime) ? (timer_get_time() >= transitiontime) : 1;
+	return compare_mame_times(mame_timer_get_time(), transitiontime) >= 0;
 }
 
 static int coco_hiresjoy_rx(void)
@@ -1135,11 +1205,23 @@ static WRITE8_HANDLER ( d_pia0_cb2_w )
 
 
 
+static mame_time get_relative_time(mame_time absolute_time)
+{
+	mame_time result;
+	mame_time now = mame_timer_get_time();
+
+	if (compare_mame_times(absolute_time, now) > 0)
+		result = sub_mame_times(absolute_time, now);
+	else
+		result = time_never;
+	return result;
+}
+
+
+
 static UINT8 coco_update_keyboard(void)
 {
 	UINT8 porta = 0x7F;
-	int joyport;
-	const char *joyport_tag;
 	int joyval;
 	static const int joy_rat_table[] = {15, 24, 42, 33 };
 	UINT8 pia0_pb;
@@ -1150,6 +1232,7 @@ static UINT8 coco_update_keyboard(void)
 	joystick_axis = pia_get_output_ca2(0);
 	joystick = pia_get_output_cb2(0);
 
+	/* poll keyoard keys */
 	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
 	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
 	if ((input_port_2_r(0) | pia0_pb) != 0xff) porta &= ~0x04;
@@ -1158,32 +1241,93 @@ static UINT8 coco_update_keyboard(void)
 	if ((input_port_5_r(0) | pia0_pb) != 0xff) porta &= ~0x20;
 	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
 
-	if (joystick_mode() == JOYSTICKMODE_RAT)
+	switch(input_device(joystick ? INPUTPORT_LEFT_JOYSTICK : INPUTPORT_RIGHT_JOYSTICK))
 	{
-		/* The RAT graphic mouse */
-		joyport_tag = joystick_axis ? "rat_mouse_y" : "rat_mouse_x";
-		joyval = readinputportbytag(joyport_tag);
+		case INPUTDEVICE_RIGHT_JOYSTICK:
+			joyval = readinputportbytag_safe(joystick_axis ? "joystick_right_y" : "joystick_right_x", 0x00);
+			if (dac <= joyval)
+				porta |= 0x80;
+			break;
 
-		if ((dac >> 2) <= joy_rat_table[joyval])
-			porta |= 0x80;
+		case INPUTDEVICE_LEFT_JOYSTICK:
+			joyval = readinputportbytag_safe(joystick_axis ? "joystick_left_y" : "joystick_left_x", 0x00);
+			if (dac <= joyval)
+				porta |= 0x80;
+			break;
+
+		case INPUTDEVICE_HIRES_INTERFACE:
+		case INPUTDEVICE_HIRES_CC3MAX_INTERFACE:
+			if (joystick_axis ? coco_hiresjoy_ry() : coco_hiresjoy_rx())
+				porta |= 0x80;
+			break;
+
+		case INPUTDEVICE_RAT:
+			joyval = readinputportbytag_safe(joystick_axis ? "rat_mouse_y" : "rat_mouse_x", 0x00);
+			if ((dac >> 2) <= joy_rat_table[joyval])
+				porta |= 0x80;
+			break;
+
+		case INPUTDEVICE_DIECOM_LIGHTGUN:
+			{
+				int dclg_output;
+				static const int dclg_table[] = {0, 14, 30, 49 };
+				static int dclg_timer;
+				
+				dclg_output = 0;
+				
+				/* Diecom light gun interface */
+				if (joystick_axis)
+				{
+					if (dclg_state == 15)
+						dclg_output |= 0x01;
+					
+					if (dclg_state == 7)
+					{	
+						if (cpu_getscanline() == readinputportbytag_safe("dclg_y", 0))
+						{
+							dclg_output |= 0x02;
+							dclg_timer = readinputportbytag_safe("dclg_x", 0) << 1;
+						}
+					}
+				}
+				else
+				{
+					if ((dclg_state > 7) && (dclg_state < 16 ))
+					{
+						/* bit shift timer data on state 8 thru 15 */
+						if (((dclg_timer >> (dclg_state-8+1)) & 0x01) == 1)
+							dclg_output |= 0x01;
+						
+						/* Bit 9 of timer is only avaiable if state == 8*/
+						if (dclg_state == 8)
+						{
+							if (((dclg_timer >> 9) & 0x01) == 1)
+								dclg_output |= 0x02;
+						}
+					}
+				}
+		 
+				if (dac <= dclg_table[dclg_output])
+					porta |= 0x80;
+			}
+			break;
+
+		default:
+			fatalerror("Invalid value returned by input_device");
+			break;
 	}
-	else if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL))
+
+	/* schedule hires joystick events, if necessary, if necessary */
 	{
-		/* Hi res joystick */
-		if (joystick_axis ? coco_hiresjoy_ry() : coco_hiresjoy_rx())
-			porta |= 0x80;
-	}
-	else
-	{
-		/* Normal joystick */
-		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
-		joyval = read_joystick(joyport) * 64.0;
+		mame_time xtrans = get_relative_time(coco_hiresjoy_xtransitiontime);
+		mame_time ytrans = get_relative_time(coco_hiresjoy_ytransitiontime);
 
-		if ((dac >> 2) <= joyval)
-			porta |= 0x80;
+		mame_timer_reset(update_keyboard_timer,
+			(compare_mame_times(xtrans, ytrans) > 0) ? ytrans : xtrans);
 	}
 
-	porta &= ~readinputport(11);
+	/* sample joystick buttons */
+	porta &= ~readinputportbytag_safe("joystick_buttons", 0);
 	
 	pia_set_input_a(0, porta);
 	return porta;
@@ -1193,6 +1337,7 @@ static UINT8 coco_update_keyboard(void)
 
 static UINT8 coco3_update_keyboard(void)
 {
+	/* the CoCo 3 keyboard update routine must also check for the GIME EI1 interrupt */
 	UINT8 porta;
 	porta = coco_update_keyboard();
 	coco3_raise_interrupt(COCO3_INT_EI1, ((porta & 0x7F) == 0x7F) ? CLEAR_LINE : ASSERT_LINE);
@@ -1201,24 +1346,16 @@ static UINT8 coco3_update_keyboard(void)
 
 
 
-static WRITE8_HANDLER ( d_pia0_pb_w )		{ coco_update_keyboard(); }
-static WRITE8_HANDLER ( coco3_pia0_pb_w )	{ coco3_update_keyboard(); }
-
-static void coco_poll_keyboard(void *param, UINT32 value, UINT32 mask)
-{
-	coco_update_keyboard();
-}
-
-static void coco3_poll_keyboard(void *param, UINT32 value, UINT32 mask)
-{
-	coco3_update_keyboard();
-}
+/* three functions that update the keyboard in varying ways */
+static WRITE8_HANDLER ( d_pia0_pb_w )									{ (*update_keyboard)(); }
+static void coco_poll_keyboard(void *param, UINT32 value, UINT32 mask)	{ (*update_keyboard)(); }
+static void coco_update_keyboard_timerproc(int dummy)					{ (*update_keyboard)(); }
 
 
 
 static WRITE8_HANDLER ( d_pia0_pa_w )
 {
-	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX)
+	if (input_device(INPUTPORT_RIGHT_JOYSTICK) == INPUTDEVICE_HIRES_CC3MAX_INTERFACE)
 		coco_hiresjoy_w(data & 0x04);
 }
 
@@ -1292,11 +1429,12 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	static int dclg_previous_bit;
 	
 	coco_sound_update();
-	coco_update_keyboard();
+	(*update_keyboard)();
 
-	if (joystick_mode() == JOYSTICKMODE_HIRES)
+	if (input_device(INPUTPORT_RIGHT_JOYSTICK) == INPUTDEVICE_HIRES_INTERFACE)
 		coco_hiresjoy_w(dac >= 0x80);
-	else if( joystick_mode() == JOYSTICKMODE_DCLG )
+
+	if (input_device(INPUTPORT_SERIAL) == INPUTDEVICE_DIECOM_LIGHTGUN)
 	{
 		int dclg_this_bit = ((data & 2) >> 1);
 		
@@ -1313,7 +1451,9 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 		dclg_previous_bit = dclg_this_bit;
 	}
 	else
+	{
 		cassette_output(cassette_device_image(), ((int) dac - 0x80) / 128.0);
+	}
 
 	switch(coco_or_dragon)
 	{
@@ -1552,67 +1692,6 @@ static READ8_HANDLER ( d_pia1_pb_r_coco )
 	else
 		result = 0x00;
 			
-	return result;
-}
-
-static READ8_HANDLER ( d_pia1_pa_r_coco3 )
-{
-	int result;
-	int joystick;
-	
-	result = pia_get_output_a(0);
-	joystick = pia_get_output_cb2(0);
-	
-	if( (joystick_mode() == JOYSTICKMODE_DCLG) && (!joystick) )
-	{
-		int dclg_output;
-		static const int dclg_table[] = {0, 14, 30, 49 };
-		UINT8 dac;
-		int joystick_axis;
-		static int dclg_timer;
-		
-		dclg_output = 0;
-		dac = pia_get_output_a(1) >> 2;
-		joystick_axis = pia_get_output_ca2(0);
-		
-		/* Diecom light gun interface */
-		if( joystick_axis )
-		{
-			if( dclg_state == 15 )
-				dclg_output |= 0x01;
-			
-			if( dclg_state == 7 )
-			{	
-				if( cpu_getscanline() == readinputportbytag("dclg_y") )
-				{
-					dclg_output |= 0x02;
-					dclg_timer = readinputportbytag("dclg_x") << 1;
-				}
-			}
-		}
-		else
-		{
-			if( (dclg_state > 7) && (dclg_state < 16 ) )
-			{
-				/* bit shift timer data on state 8 thru 15 */
-				if( ((dclg_timer >> (dclg_state-8+1)) & 0x01) == 1 )
-					dclg_output |= 0x01;
-				
-				/* Bit 9 of timer is only avaiable if state == 8*/
-				if( dclg_state == 8 )
-				{
-					if( ((dclg_timer >> 9) & 0x01) == 1 )
-						dclg_output |= 0x02;
-				}
-			}
-		}
-
-		if (dac <= dclg_table[dclg_output] )
-			result |= 0x80;
-		else
-			result &= ~0x80;
-	}
-	
 	return result;
 }
 
@@ -2496,7 +2575,17 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 	const struct cartridge_slot *cartslottype;
 	int portnum;
 
+	/* clear static variables */
+	coco_hiresjoy_ca = 1;
+	coco_hiresjoy_xtransitiontime = time_zero;
+	coco_hiresjoy_ytransitiontime = time_zero;
+
+	/* set up function pointers */
+	update_keyboard = coco_update_keyboard;
 	recalc_interrupts = recalc_interrupts_;
+
+	/* this timer is used to schedule keyboard updating */
+	update_keyboard_timer = mame_timer_alloc(coco_update_keyboard_timerproc);
 
 	coco_rom = memory_region(REGION_CPU1);
 
@@ -2655,9 +2744,10 @@ static void coco3_state_postload(void)
 
 MACHINE_START( coco3 )
 {
-	int portnum;
-
 	generic_init_machine(machine, coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
+
+	/* CoCo 3 specific function pointers */
+	update_keyboard = coco3_update_keyboard;
 
 	coco3_machine_reset(machine);
 	coco3_timer_init();
@@ -2665,9 +2755,6 @@ MACHINE_START( coco3 )
 	coco3_interupt_line = 0;
 	
 	coco_or_dragon = AM_COCO;
-
-	for (portnum = 0; portnum <= 6; portnum++)
-		input_port_set_changed_callback(portnum, ~0, coco3_poll_keyboard, NULL);
 
 	state_save_register_global_array(coco3_mmu);
 	state_save_register_global_array(coco3_gimereg);
