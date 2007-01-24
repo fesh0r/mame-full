@@ -1020,7 +1020,7 @@ INLINE void pgfx_plot_unit_2bpp(mame_bitmap *bitmap,
 		values[1] = values[1] << 1;	
 	}
 
-	dest = ((UINT16 *) bitmap->line[y]) + x;
+	dest = BITMAP_ADDR16(bitmap, y, x);
 	*(dest++) = palette[(bmap[0] >> 6) & 0x03];
 	*(dest++) = palette[(bmap[0] >> 4) & 0x03];
 	*(dest++) = palette[(bmap[0] >> 2) & 0x03];

@@ -42,7 +42,7 @@ static void primo_draw_scanline(mame_bitmap *bitmap, int primo_scanline)
 	UINT8 data;
 
 	/* set up scanline */
-	UINT16 *scanline = (UINT16*) bitmap->line[primo_scanline];
+	UINT16 *scanline = BITMAP_ADDR16(bitmap, primo_scanline, 0);
 
 	/* address of current line in Primo video memory */
 	const UINT8* primo_video_ram_line = memory_get_read_ptr(0, ADDRESS_SPACE_PROGRAM, primo_video_memory_base + 32*primo_scanline);

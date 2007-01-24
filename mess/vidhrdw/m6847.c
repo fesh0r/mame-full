@@ -1254,7 +1254,7 @@ static void render_scanline(mame_bitmap *bitmap, int scanline)
 	const m6847_pixel *video_data;
 
 	/* get the scanline */
-	line = (UINT32 *) bitmap->line[scanline];
+	line = BITMAP_ADDR32(bitmap, scanline, 0);
 
 	/* choose the border color */
 	border_color = m6847->border[scanline];

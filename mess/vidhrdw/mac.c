@@ -54,7 +54,7 @@ VIDEO_UPDATE( mac )
 
 	for (y = 0; y < Machine->screen[0].height; y++)
 	{
-		line = (UINT16 *) bitmap->line[y];
+		line = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = 0; x < Machine->screen[0].width; x += 16)
 		{

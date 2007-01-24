@@ -133,7 +133,7 @@ VIDEO_UPDATE(concept)
 
 	for (y = 0; y < 560; y++)
 	{
-		line = (UINT16 *) bitmap->line[560-1-y];
+		line = BITMAP_ADDR16(bitmap, 560-1-y, 0);
 		for (x = 0; x < 720; x++)
 			line[720-1-x] = (v[(x+48+y*768)>>4] & (0x8000 >> ((x+48+y*768) & 0xf))) ? 1 : 0;
 	}

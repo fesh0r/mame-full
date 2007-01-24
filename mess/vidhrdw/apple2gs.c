@@ -57,7 +57,7 @@ VIDEO_UPDATE( apple2gs )
 			palette = ((scb & 0x0f) << 4) + 16;
 
 			vram = &apple2gs_slowmem[0x12000 + (row * 160)];
-			scanline = (UINT16 *) bitmap->line[row];
+			scanline = BITMAP_ADDR16(bitmap, row, 0);
 
 			if (scb & 0x80)
 			{
@@ -111,20 +111,20 @@ VIDEO_UPDATE( apple2gs )
 		
 		for (i = 0; i < 192; i++)
 		{
-			scanline = (UINT16 *) bitmap->line[i + 4];
+			scanline = BITMAP_ADDR16(bitmap, i + 4, 0);
 
 			for (j = 0; j < 40; j++)
 			{
 				scanline[j + 0] = apple2gs_bordercolor;
 				scanline[j + 40 + 560] = apple2gs_bordercolor;
 			}
-			memcpy(scanline + 40, apple2gs_legacy_gfx->line[i], 560 * sizeof(UINT16));
+			memcpy(scanline + 40, BITMAP_ADDR16(apple2gs_legacy_gfx, i, 0), 560 * sizeof(UINT16));
 		}
 
 		for (i = 0; i < 4; i++)
 		{
-			memset16(bitmap->line[i + 0], apple2gs_bordercolor, 640);
-			memset16(bitmap->line[i + 4 + 192], apple2gs_bordercolor, 640);
+			memset16(BITMAP_ADDR16(bitmap, i + 0, 0), apple2gs_bordercolor, 640);
+			memset16(BITMAP_ADDR16(bitmap, i + 4 + 192, 0), apple2gs_bordercolor, 640);
 		}
 	}
 	return 0;

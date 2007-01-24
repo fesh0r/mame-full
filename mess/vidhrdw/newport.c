@@ -196,7 +196,7 @@ VIDEO_UPDATE( newport )
 	for( y = cliprect->min_y; y <= cliprect->max_y; y++ )
 	{
 		UINT32 *src = &video_base[1344 * y];
-		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, cliprect->min_x);
 		int x;
 
 		/* loop over columns */

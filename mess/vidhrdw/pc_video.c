@@ -173,7 +173,7 @@ void pc_render_gfx_1bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	{
 		for (sh = 0; sh < height; sh++)
 		{
-			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
+			UINT16 *dest = BITMAP_ADDR16(bitmap, sy * height + sh, 0);
 			const UINT8 *src = &vram[offs | ((sh % interlace) << 13)];
 
 			for (sx = 0; sx < columns; sx++)
@@ -215,10 +215,10 @@ void pc_render_gfx_2bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	{
 		for (sh = 0; sh < height; sh++)
 		{
-    			if (sy*height+sh >= bitmap->height)
-	    			return;
+			if (sy*height+sh >= bitmap->height)
+				return;
 
-			dest = (UINT16 *) bitmap->line[sy * height + sh];
+			dest = BITMAP_ADDR16(bitmap, sy * height + sh, 0);
 			src = &vram[offs | ((sh % interlace) << 13)];
 
 			for (sx = 0; sx < columns; sx++)
@@ -254,7 +254,7 @@ void pc_render_gfx_4bpp(mame_bitmap *bitmap, struct crtc6845 *crtc,
 	{
 		for (sh = 0; sh < height; sh++)
 		{
-			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
+			UINT16 *dest = BITMAP_ADDR16(bitmap, sy * height + sh, 0);
 			const UINT8 *src = &vram[offs | ((sh % interlace) << 13)];
 
 			for (sx = 0; sx < columns; sx++)

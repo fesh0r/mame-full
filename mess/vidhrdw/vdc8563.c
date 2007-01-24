@@ -484,8 +484,7 @@ static void vdc8563_text_screenrefresh (mame_bitmap *bitmap, int full_refresh)
 					{
 						for (h = 0; h < 8; h++)
 						{
-							pixel = ((UINT16 *) bitmap->line[(y * height) + height + v])
-								+ (x * 8) + 8 + h;
+							pixel = BITMAP_ADDR16(bitmap, (y * height) + height + v, (x * 8) + 8 + h);
 							*pixel = (charptr[v] & (0x80 >> h)) ? fg : bg;
 						}
 					}

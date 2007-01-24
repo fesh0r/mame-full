@@ -1199,7 +1199,7 @@ static void vga_vh_text(mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 			for (h = MAX(-line, 0); (h < height) && (line+h < MIN(TEXT_LINES, bitmap->height)); h++)
 			{
-				bitmapline = (UINT16 *) bitmap->line[line+h];
+				bitmapline = BITMAP_ADDR16(bitmap, line+h, 0);
 				bits = font[h<<2];
 
 				assert(bitmapline);
@@ -1247,7 +1247,7 @@ static void vga_vh_ega(mame_bitmap *bitmap, struct crtc6845 *crtc)
 	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
 		 line += height, addr=(addr+EGA_LINE_LENGTH)&0x3ffff)
 	{
-		bitmapline = (UINT16 *) bitmap->line[line];
+		bitmapline = BITMAP_ADDR16(bitmap, line, 0);
 
 		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff)
 		{
@@ -1275,7 +1275,7 @@ static void vga_vh_ega(mame_bitmap *bitmap, struct crtc6845 *crtc)
 			if (line + i >= LINES)
 				break;
 
-			newbitmapline = (UINT16 *) bitmap->line[line+i];
+			newbitmapline = BITMAP_ADDR16(bitmap, line+i, 0);
 			memcpy(newbitmapline, bitmapline, EGA_COLUMNS * 8 * sizeof(UINT16));
 		}
 	}
@@ -1295,7 +1295,7 @@ static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 				curr_addr = addr;
 			if(line == (vga.line_compare & 0xff))
 				curr_addr = 0;
-			bitmapline = (UINT16 *) bitmap->line[line];
+			bitmapline = BITMAP_ADDR16(bitmap, line, 0);
 			addr %= vga.svga_intf.vram_size;
 			for (pos=curr_addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
 			{
@@ -1320,7 +1320,7 @@ static void vga_vh_vga(mame_bitmap *bitmap, struct crtc6845 *crtc)
 				curr_addr = addr;
 			if(line == (vga.line_compare & 0xff))
 				curr_addr = 0;
-			bitmapline = (UINT16 *) bitmap->line[line];
+			bitmapline = BITMAP_ADDR16(bitmap, line, 0);
 			addr %= vga.svga_intf.vram_size;
 			for (pos=curr_addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x08)
 			{

@@ -315,7 +315,7 @@ static void coco3_render_scanline(mame_bitmap *bitmap, int scanline)
 	int i;
 
 	/* get the basics */
-	line = (UINT32 *) bitmap->line[scanline];
+	line = BITMAP_ADDR32(bitmap, scanline, 0);
 	scanline_record = &video->scanlines[scanline];
 	border_color = color(scanline_record->ff9a);
 
@@ -420,7 +420,7 @@ VIDEO_UPDATE( coco3 )
 			/* need to double up all pixels */
 			for (row = cliprect->min_y; row <= cliprect->max_y; row++)
 			{
-				line = (UINT32 *) bitmap->line[row];
+				line = BITMAP_ADDR32(bitmap, row, 0);
 				for (i = 319; i >= 0; i--)
 					line[i * 2 + 0] = line[i * 2 + 1] = line[i];				
 			}

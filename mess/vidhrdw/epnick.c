@@ -943,7 +943,7 @@ void    Nick_DoScreen(mame_bitmap *bm)
   {
 
     /* set write address for line */
-    Nick.dest = bm->line[line];
+    Nick.dest = BITMAP_ADDR16(bm, line, 0);
 
     /* write line */
     Nick_DoLine();

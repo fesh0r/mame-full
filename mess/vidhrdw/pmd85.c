@@ -41,7 +41,7 @@ static void pmd85_draw_scanline(mame_bitmap *bitmap, int pmd85_scanline)
 	UINT8 data;
 
 	/* set up scanline */
-	UINT16 *scanline = (UINT16*) bitmap->line[pmd85_scanline];
+	UINT16 *scanline = BITMAP_ADDR16(bitmap, pmd85_scanline, 0);
 
 	/* address of current line in PMD-85 video memory */
 	UINT8* pmd85_video_ram_line = mess_ram + 0xc000 + 0x40*pmd85_scanline;

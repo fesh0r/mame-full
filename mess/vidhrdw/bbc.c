@@ -464,11 +464,11 @@ static void BBC_Set_HSync(int offset, int data)
 
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
-			BBC_display_left = BBC_bitmap->line[y_screen_pos];
+			BBC_display_left = BITMAP_ADDR16(BBC_bitmap, y_screen_pos, 0);
 			BBC_display_right = BBC_display_left + 800;
 
 		} else {
-			BBC_display_left = BBC_bitmap->line[0];
+			BBC_display_left = BITMAP_ADDR16(BBC_bitmap, 0, 0);
 			BBC_display_right = BBC_display_left;
 		}
 
@@ -488,11 +488,11 @@ static void BBC_Set_VSync(int offset, int data)
 
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
-			BBC_display_left = BBC_bitmap->line[y_screen_pos];
+			BBC_display_left = BITMAP_ADDR16(BBC_bitmap, y_screen_pos, 0);
 			BBC_display_right = BBC_display_left + 800;
 
 		} else {
-			BBC_display_left = BBC_bitmap->line[0];
+			BBC_display_left = BITMAP_ADDR16(BBC_bitmap, 0, 0);
 			BBC_display_right = BBC_display_left;
 		}
 
@@ -599,7 +599,7 @@ VIDEO_UPDATE( bbc )
 
 	BBC_bitmap=bitmap;
 
-	BBC_display_left=BBC_bitmap->line[0];
+	BBC_display_left=BITMAP_ADDR16(BBC_bitmap, 0, 0);
 	BBC_display_right=BBC_display_left;
 	BBC_display=BBC_display_left;
 

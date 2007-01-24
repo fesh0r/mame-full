@@ -128,7 +128,7 @@ static void apple3_video_text40(mame_bitmap *bitmap)
 			{
 				for (col = 0; col < 7; col++)
 				{
-					dest = ((UINT16 *) bitmap->line[y * 8 + row]) + (x * 14 + col * 2);
+					dest = BITMAP_ADDR16(bitmap, y * 8 + row, x * 14 + col * 2);
 					dest[0] = (char_data[row] & (1 << col)) ? fg : bg;
 					dest[1] = (char_data[row] & (1 << col)) ? fg : bg;
 				}
@@ -164,7 +164,7 @@ static void apple3_video_text80(mame_bitmap *bitmap)
 			{
 				for (col = 0; col < 7; col++)
 				{
-					dest = ((UINT16 *) bitmap->line[y * 8 + row]) + (x * 14 + col + 0);
+					dest = BITMAP_ADDR16(bitmap, y * 8 + row, x * 14 + col + 0);
 					dest[0] = (char_data[row] & (1 << col)) ? fg : bg;
 					dest[1] = (char_data[row] & (1 << col)) ? fg : bg;
 				}
@@ -180,7 +180,7 @@ static void apple3_video_text80(mame_bitmap *bitmap)
 			{
 				for (col = 0; col < 7; col++)
 				{
-					dest = ((UINT16 *) bitmap->line[y * 8 + row]) + (x * 14 + col + 7);
+					dest = BITMAP_ADDR16(bitmap, y * 8 + row, x * 14 + col + 7);
 					dest[0] = (char_data[row] & (1 << col)) ? fg : bg;
 					dest[1] = (char_data[row] & (1 << col)) ? fg : bg;
 				}
@@ -205,7 +205,7 @@ static void apple3_video_graphics_hgr(mame_bitmap *bitmap)
 			pix_info = &mess_ram[hgr_map[y]];
 		else
 			pix_info = &mess_ram[hgr_map[y] - 0x2000];
-		ptr = (UINT16 *) bitmap->line[y];
+		ptr = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (i = 0; i < 40; i++)
 		{
@@ -255,7 +255,7 @@ static void apple3_video_graphics_chgr(mame_bitmap *bitmap)
 			pix_info = &mess_ram[hgr_map[y] - 0x2000];
 			col_info = &mess_ram[hgr_map[y]];
 		}
-		ptr = (UINT16 *) bitmap->line[y];
+		ptr = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (i = 0; i < 40; i++)
 		{
@@ -299,7 +299,7 @@ static void apple3_video_graphics_shgr(mame_bitmap *bitmap)
 			pix_info1 = &mess_ram[hgr_map[y] - 0x2000];
 			pix_info2 = &mess_ram[hgr_map[y]];
 		}
-		ptr = (UINT16 *) bitmap->line[y];
+		ptr = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (i = 0; i < 40; i++)
 		{
@@ -327,7 +327,7 @@ static void apple3_video_graphics_chires(mame_bitmap *bitmap)
 
 	for (y = 0; y < 192; y++)
 	{
-		pen = (UINT16 *) bitmap->line[y];
+		pen = BITMAP_ADDR16(bitmap, y, 0);
 		for (i = 0; i < 20; i++)
 		{
 			pix.b.l  = mess_ram[hgr_map[y] - 0x2000 + (i * 2) + (a3 & VAR_VM2 ? 1 : 0) + 0];

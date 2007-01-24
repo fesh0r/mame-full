@@ -147,7 +147,7 @@ int zx_ula_r(int offs, int region)
 		cycles = 4 * (64 - (rreg & 63));
 		timer_set(TIME_IN_CYCLES(cycles, 0), 0, zx_ula_irq);
 		ula_irq_active = 1;
-		scanline = (UINT16 *) bitmap->line[y];
+		scanline = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = 0; x < 256; x += 8)
 		{

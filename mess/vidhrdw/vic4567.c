@@ -196,7 +196,7 @@ static void vic3_drawlines (int first, int last)
 	if (!SCREENON)
 	{
 		for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
-			memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
+			memset16 (BITMAP_ADDR16(vic2.bitmap, line, 0), Machine->pens[0], vic2.bitmap->width);
 		return;
 	}
 	if (COLUMNS40)
@@ -211,7 +211,7 @@ static void vic3_drawlines (int first, int last)
 
 	for (line = first; line < end; line++)
 	{
-		memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+		memset16 (BITMAP_ADDR16(vic2.bitmap, line, 0), Machine->pens[FRAMECOLOR],
 			vic2.bitmap->width);
 	}
 
@@ -340,9 +340,9 @@ static void vic3_drawlines (int first, int last)
 
 		for (i = ybegin; i <= yend; i++)
 		{
-			memset16 (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
-						xbegin);
-			memset16 ((short *) vic2.bitmap->line[yoff + i] + xend,
+			memset16 (BITMAP_ADDR16(vic2.bitmap, yoff + 1, 0),
+						Machine->pens[FRAMECOLOR], xbegin);
+			memset16 (BITMAP_ADDR16(vic2.bitmap, yoff + 1, xend),
 						Machine->pens[FRAMECOLOR], vic2.bitmap->width - xend);
 		}
 	}
@@ -353,7 +353,7 @@ static void vic3_drawlines (int first, int last)
 
 	for (; line < end; line++)
 	{
-		memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+		memset16 (BITMAP_ADDR16(vic2.bitmap, line, 0), Machine->pens[FRAMECOLOR],
 			vic2.bitmap->width);
 	}
 }

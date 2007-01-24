@@ -131,7 +131,7 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 	int i;
 	mame_bitmap *bitmap = tmpbitmap;
 
-	destline = (UINT32 *)(bitmap->line[line]);
+	destline = BITMAP_ADDR32(bitmap, line, 0);
 
 	for (i = 0; i < 320; i++)
 	{

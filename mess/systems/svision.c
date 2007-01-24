@@ -280,7 +280,7 @@ static VIDEO_UPDATE( svision )
 
 	for (y = 0; y < 160; y++)
 	{
-		line = (UINT16 *) bitmap->line[y];
+		line = BITMAP_ADDR16(bitmap, y, 0);
 		vram_line = &vram[y * 0x30];
 
 		for (x = 0; x < 160; x += 4)

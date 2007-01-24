@@ -149,7 +149,7 @@ void video_update_crt(mame_bitmap *bitmap)
 		/* some time has elapsed: let's update the screen */
 		for (y=0; y<window_height; y++)
 		{
-			UINT16 *line = (UINT16 *)bitmap->line[y+window_offset_y];
+			UINT16 *line = BITMAP_ADDR16(bitmap, y+window_offset_y, 0);
 
 			p_i = -1;
 

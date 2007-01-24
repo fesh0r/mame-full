@@ -958,14 +958,14 @@ static void ted7360_draw_character (int ybegin, int yend, int ch, int yoff, int 
 			code = vic_dma_read_rom (chargenaddr + ch * 8 + y);
 		else
 			code = vic_dma_read (chargenaddr + ch * 8 + y);
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff) = color[code >> 7];
-		*((short *) ted7360_bitmap->line[y + yoff] + 1 + xoff) = color[(code >> 6) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 2 + xoff) = color[(code >> 5) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 3 + xoff) = color[(code >> 4) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 4 + xoff) = color[(code >> 3) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 5 + xoff) = color[(code >> 2) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 6 + xoff) = color[(code >> 1) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 7 + xoff) = color[code & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 0 + xoff) = color[code >> 7];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 1 + xoff) = color[(code >> 6) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 2 + xoff) = color[(code >> 5) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 3 + xoff) = color[(code >> 4) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 4 + xoff) = color[(code >> 3) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 5 + xoff) = color[(code >> 2) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 6 + xoff) = color[(code >> 1) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 7 + xoff) = color[code & 1];
 	}
 }
 
@@ -980,14 +980,14 @@ static void ted7360_draw_character_multi (int ybegin, int yend, int ch, int yoff
 			code = vic_dma_read_rom (chargenaddr + ch * 8 + y);
 		else
 			code = vic_dma_read (chargenaddr + ch * 8 + y);
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 1) = multi[code >> 6];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 2) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 3) = multi[(code >> 4) & 3];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 4) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 5) = multi[(code >> 2) & 3];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 6) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 7) = multi[code & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 0 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 1 + xoff) = multi[code >> 6];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 2 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 3 + xoff) = multi[(code >> 4) & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 4 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 5 + xoff) = multi[(code >> 2) & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 6 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 7 + xoff) = multi[code & 3];
 	}
 }
 
@@ -999,14 +999,14 @@ static void ted7360_draw_bitmap (int ybegin, int yend,
 	for (y = ybegin; y <= yend; y++)
 	{
 		code = vic_dma_read (bitmapaddr + ch * 8 + y);
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff) = c16_bitmap[code >> 7];
-		*((short *) ted7360_bitmap->line[y + yoff] + 1 + xoff) = c16_bitmap[(code >> 6) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 2 + xoff) = c16_bitmap[(code >> 5) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 3 + xoff) = c16_bitmap[(code >> 4) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 4 + xoff) = c16_bitmap[(code >> 3) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 5 + xoff) = c16_bitmap[(code >> 2) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 6 + xoff) = c16_bitmap[(code >> 1) & 1];
-		*((short *) ted7360_bitmap->line[y + yoff] + 7 + xoff) = c16_bitmap[code & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 0 + xoff) = c16_bitmap[code >> 7];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 1 + xoff) = c16_bitmap[(code >> 6) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 2 + xoff) = c16_bitmap[(code >> 5) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 3 + xoff) = c16_bitmap[(code >> 4) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 4 + xoff) = c16_bitmap[(code >> 3) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 5 + xoff) = c16_bitmap[(code >> 2) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 6 + xoff) = c16_bitmap[(code >> 1) & 1];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 7 + xoff) = c16_bitmap[code & 1];
 	}
 }
 
@@ -1018,14 +1018,14 @@ static void ted7360_draw_bitmap_multi (int ybegin, int yend,
 	for (y = ybegin; y <= yend; y++)
 	{
 		code = vic_dma_read (bitmapaddr + ch * 8 + y);
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 1) = bitmapmulti[code >> 6];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 2) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 3) = bitmapmulti[(code >> 4) & 3];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 4) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 5) = bitmapmulti[(code >> 2) & 3];
-		*((short *) ted7360_bitmap->line[y + yoff] + xoff + 6) =
-			*((short *) ted7360_bitmap->line[y + yoff] + xoff + 7) = bitmapmulti[code & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 0 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 1 + xoff) = bitmapmulti[code >> 6];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 2 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 3 + xoff) = bitmapmulti[(code >> 4) & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 4 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 5 + xoff) = bitmapmulti[(code >> 2) & 3];
+		*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 6 + xoff) =
+			*BITMAP_ADDR16(ted7360_bitmap, y + yoff, 7 + xoff) = bitmapmulti[code & 3];
 	}
 }
 
@@ -1036,7 +1036,7 @@ static void ted7360_draw_cursor (int ybegin, int yend, int yoff, int xoff,
 
 	for (y = ybegin; y <= yend; y++)
 	{
-		memset16 ((short *) ted7360_bitmap->line[yoff + y] + xoff, color, 8);
+		memset16 (BITMAP_ADDR16(ted7360_bitmap, yoff + y, xoff), color, 8);
 	}
 }
 
@@ -1063,7 +1063,7 @@ static void ted7360_drawlines (int first, int last)
 	if (!SCREENON)
 	{
 		for (line = first; (line < last) && (line < ted7360_bitmap->height); line++)
-			memset16 (ted7360_bitmap->line[line], Machine->pens[0], ted7360_bitmap->width);
+			memset16 (BITMAP_ADDR16(ted7360_bitmap, line, 0), Machine->pens[0], ted7360_bitmap->width);
 		return;
 	}
 
@@ -1078,7 +1078,7 @@ static void ted7360_drawlines (int first, int last)
 		end = y_begin + YPOS;
 	{
 		for (line = first; line < end; line++)
-			memset16 (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
+			memset16 (BITMAP_ADDR16(ted7360_bitmap, line, 0), Machine->pens[FRAMECOLOR],
 				ted7360_bitmap->width);
 	}
 	if (LINES25)
@@ -1180,10 +1180,8 @@ static void ted7360_drawlines (int first, int last)
 
 		for (i = ybegin; i <= yend; i++)
 		{
-			memset16 (ted7360_bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
-				xbegin);
-			memset16 ((short *) ted7360_bitmap->line[yoff + i] + xend,
-				Machine->pens[FRAMECOLOR], ted7360_bitmap->width - xend);
+			memset16 (BITMAP_ADDR16(ted7360_bitmap, yoff + i, 0), Machine->pens[FRAMECOLOR], xbegin);
+			memset16 (BITMAP_ADDR16(ted7360_bitmap, yoff + i, xend), Machine->pens[FRAMECOLOR], ted7360_bitmap->width - xend);
 		}
 	}
 
@@ -1194,8 +1192,7 @@ static void ted7360_drawlines (int first, int last)
 
 	for (; line < end; line++)
 	{
-		memset16 (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
-			ted7360_bitmap->width);
+		memset16 (BITMAP_ADDR16(ted7360_bitmap, line, 0), Machine->pens[FRAMECOLOR], ted7360_bitmap->width);
 	}
 }
 

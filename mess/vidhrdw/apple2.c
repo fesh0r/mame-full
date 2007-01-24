@@ -261,7 +261,7 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 			}
 		}
 
-		p = (UINT16 *) bitmap->line[row];
+		p = BITMAP_ADDR16(bitmap, row, 0);
 
 		for (col = 0; col < columns; col++)
 		{
