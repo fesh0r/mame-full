@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <tchar.h>
 
 #include "dialog.h"
@@ -1400,12 +1401,16 @@ static HBITMAP create_png_bitmap(const png_info *png)
 {
 	HBITMAP bitmap;
 	BITMAPINFOHEADER bitmap_header;
-	UINT8 *bitmap_data;
+	void *bitmap_data;
 	UINT8 *src;
 	UINT8 *dst;
 	int x, y;
 	HDC dc;
-		
+
+	// grab a device context
+	dc = GetDC(NULL);
+
+	// create the bitmap header
 	memset(&bitmap_header, 0, sizeof(bitmap_header));
 	bitmap_header.biSize = sizeof(BITMAPINFOHEADER);
 	bitmap_header.biWidth = png->width;
@@ -1414,9 +1419,14 @@ static HBITMAP create_png_bitmap(const png_info *png)
 	bitmap_header.biBitCount = 24;
 	bitmap_header.biCompression = BI_RGB;
 
-	bitmap_data = alloca(png->width * png->height * 3);
+	// create an HBITMAP
+	bitmap = CreateDIBSection(dc, (BITMAPINFO *) &bitmap_header, DIB_RGB_COLORS, &bitmap_data, NULL, 0);
+	if (!bitmap)
+		goto done;
+
+	// copy the data
 	src = png->image;
-	dst = bitmap_data;
+	dst = (UINT8 *) bitmap_data;
 	for (y = 0; y < png->height; y++)
 	{
 		for (x = 0; x < png->width; x++)
@@ -1448,8 +1458,7 @@ static HBITMAP create_png_bitmap(const png_info *png)
 		}
 	}
 
-	dc = GetDC(NULL);
-	bitmap = CreateDIBitmap(dc, &bitmap_header, CBM_INIT, bitmap_data, (BITMAPINFO *) &bitmap_header, DIB_RGB_COLORS);
+done:
 	ReleaseDC(NULL, dc);
 	return bitmap;
 }

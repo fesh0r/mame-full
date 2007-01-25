@@ -684,8 +684,8 @@ static void fix_V1V2(void)
     logerror("N88-BASIC(V2)");
     break;
   default:
-    logerror("Ileegal basic mode=(%d,%d,%d)\n",is_Nbasic,is_V2mode,pc88sr_is_highspeed);
-    abort();
+    fatalerror("Illegal basic mode=(%d,%d,%d)\n",is_Nbasic,is_V2mode,pc88sr_is_highspeed);
+    break;
   }
   if(is_8MHz) {
     logerror(", 8MHz\n");

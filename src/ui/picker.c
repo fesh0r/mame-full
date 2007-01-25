@@ -16,8 +16,6 @@
 #include <shellapi.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <io.h>
-#include <fcntl.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <string.h>
@@ -379,7 +377,7 @@ static void Picker_InternalResetColumnDisplay(HWND hWnd, BOOL bFirstTime)
 		if (shown[order[i]])
 		{
 			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
-			lvc.pszText = (LPSTR) pPickerInfo->ppszColumnNames[order[i]];
+			lvc.pszText = (LPTSTR) pPickerInfo->ppszColumnNames[order[i]];
 			lvc.iSubItem = nColumn;
 			lvc.cx = widths[order[i]];
 			lvc.fmt = LVCFMT_LEFT;
@@ -1164,8 +1162,8 @@ int Picker_GetNumColumns(HWND hWnd)
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
 {
-	static const CHAR szThreeDots[] = "...";
-	static CHAR szShort[MAX_PATH];
+	static const TCHAR szThreeDots[] = TEXT("...");
+	static TCHAR szShort[MAX_PATH];
 	int nStringLen = lstrlen(lpszLong);
 	int nAddLen;
 	SIZE size;
@@ -1262,7 +1260,7 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	/* Labels are offset by a certain amount */
 	/* This offset is related to the width of a space character */
-	GetTextExtentPoint32(hDC, " ", 1 , &size);
+	GetTextExtentPoint32(hDC, TEXT(" "), 1 , &size);
 	offset = size.cx;
 
 	lvi.mask	   = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_PARAM;
@@ -1513,7 +1511,7 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 		rcItem.left   = rcItem.right;
 		rcItem.right += lvc.cx;
 
-		nRetLen = strlen(szBuff);
+		nRetLen = _tcslen(szBuff);
 		if (nRetLen == 0)
 			continue;
 

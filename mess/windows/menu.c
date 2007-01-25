@@ -470,7 +470,7 @@ static void state_dialog(HWND wnd, BOOL (WINAPI *fileproc)(LPOPENFILENAME),
 	char *dst;
 	TCHAR *t_tempstr;
 	char *tempstr;
-	char *initial_dir;
+	TCHAR *initial_dir;
 
 	if (state_filename[0])
 	{
@@ -1193,6 +1193,7 @@ static void prepare_menus(HWND wnd)
 	int i;
 	const struct IODevice *dev;
 	char buf[MAX_PATH];
+	TCHAR t_buf[MAX_PATH];
 	const char *s;
 	HMENU menu_bar;
 	HMENU video_menu;
@@ -1299,11 +1300,11 @@ static void prepare_menus(HWND wnd)
 	video_menu = find_sub_menu(menu_bar, "&Options\0&Video\0", FALSE);
 	do
 	{
-		get_menu_item_string(video_menu, 0, TRUE, NULL, buf, ARRAY_LENGTH(buf));
-		if (_tcscmp(buf, TEXT("-")))
+		get_menu_item_string(video_menu, 0, TRUE, NULL, t_buf, ARRAY_LENGTH(t_buf));
+		if (_tcscmp(t_buf, TEXT("-")))
 			RemoveMenu(video_menu, 0, MF_BYPOSITION);
 	}
-	while(_tcscmp(buf, TEXT("-")));
+	while(_tcscmp(t_buf, TEXT("-")));
 	i = 0;
 	view_index = render_target_get_view(window->target);
 	while((view_name = render_target_get_view_name(window->target, i)) != NULL)
