@@ -50,7 +50,10 @@ User Interface Changes:
 
 - [Windows] Fixed bug that could cause the loss of mouse capture when toggling
   the menu bar.  (bug #977) [Nate Woods]
-  
+
+- [Windows] Fixed regression when saving and loading save states.  (bug #1035)
+  [Nate Woods]
+
 
 
 Imgtool Changes:
