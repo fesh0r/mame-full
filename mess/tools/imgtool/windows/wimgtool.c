@@ -17,7 +17,7 @@
 #include "strconv.h"
 #include "attrdlg.h"
 #include "secview.h"
-#include "winutils.h"
+#include "winutil.h"
 
 const TCHAR wimgtool_class[] = TEXT("wimgtool_class");
 const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");

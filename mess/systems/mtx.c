@@ -564,9 +564,19 @@ static void mtx_printer_getinfo(const device_class *devclass, UINT32 state, unio
 	}
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	0, 0,
+	mtx_tms9929A_interrupt
+};
+
 static MACHINE_START( mtx512 )
 {
 	unsigned char * romimage;
+
+	TMS9928A_configure(&tms9928a_interface);
 
 	mtx_null_mem = (unsigned char *) auto_malloc (16384);
 
@@ -750,13 +760,6 @@ static struct z80_irq_daisy_chain mtx_daisy_chain[] =
 	{0,0,0,0,-1}
 };
 
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS9929A,
-	0x4000,
-	mtx_tms9929A_interrupt
-};
-
 static MACHINE_DRIVER_START( mtx512 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MTX_SYSTEM_CLOCK)
@@ -771,7 +774,7 @@ static MACHINE_DRIVER_START( mtx512 )
 	MDRV_MACHINE_START( mtx512 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

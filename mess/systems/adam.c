@@ -569,6 +569,20 @@ void resetPCB(void)
 		memory_region(REGION_CPU1)[(adam_pcb+4+i*21)&0xFFFF]=i+1;
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	0, 0,
+	adam_vdp_interrupt
+};
+
+static MACHINE_START( adam )
+{
+	TMS9928A_configure(&tms9928a_interface);
+	return 0;
+}
+
 static MACHINE_RESET( adam )
 {
 	if (image_exists(image_from_devtype_and_index(IO_CARTSLOT, 0)))
@@ -593,13 +607,6 @@ static MACHINE_RESET( adam )
 	timer_pulse(TIME_IN_MSEC(20), 0, adam_paddle_callback);
 } 
 
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS99x8A,
-	0x4000,
-	adam_vdp_interrupt
-};
-
 static MACHINE_DRIVER_START( adam )
 	/* Machine hardware */
 	MDRV_CPU_ADD_TAG("Main", Z80, 3579545)       /* 3.579545 Mhz */
@@ -615,10 +622,11 @@ static MACHINE_DRIVER_START( adam )
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( adam )
 	MDRV_MACHINE_RESET( adam )
 
     /* video hardware */
-	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

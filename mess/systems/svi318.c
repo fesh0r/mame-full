@@ -325,13 +325,6 @@ static struct AY8910interface ay8910_interface =
 	svi318_psg_port_b_w
 };
 
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS9929A,
-	0x4000,
-	svi318_vdp_interrupt
-};
-
 static MACHINE_DRIVER_START( svi318 )
 	/* Basic machine hardware */
 	MDRV_CPU_ADD_TAG( "main", Z80, 3579545 )	/* 3.579545 Mhz */
@@ -342,10 +335,11 @@ static MACHINE_DRIVER_START( svi318 )
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( svi318 )
 	MDRV_MACHINE_RESET( svi318 )
 
 	/* Video hardware */
-	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* Sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

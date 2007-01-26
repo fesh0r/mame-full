@@ -200,6 +200,19 @@ static MACHINE_RESET( tm990_189 )
 	tms9902_init(0, &tms9902_params);
 }
 
+static const TMS9928a_interface tms9918_interface =
+{
+	TMS99x8,
+	0x4000,
+	0, 0,
+	NULL
+};
+
+static MACHINE_START( tm990_189_v )
+{
+	TMS9928A_configure(&tms9918_interface);
+	return 0;
+}
 
 static MACHINE_RESET( tm990_189_v )
 {
@@ -756,13 +769,6 @@ static tms9980areset_param reset_params =
 	idle_callback
 };
 
-static const TMS9928a_interface tms9918_interface =
-{
-	TMS99x8,
-	0x4000,
-	NULL
-};
-
 static MACHINE_DRIVER_START(tm990_189)
 
 	/* basic machine hardware */
@@ -815,6 +821,7 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	/*MDRV_CPU_VBLANK_INT(tm990_189_interrupt, 1)*/
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
+	MDRV_MACHINE_START( tm990_189_v )
 	MDRV_MACHINE_RESET( tm990_189_v )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
@@ -823,7 +830,7 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
-	MDRV_TMS9928A(&tms9918_interface)
+	MDRV_IMPORT_FROM(tms9928a)
 	MDRV_VIDEO_EOF(tm990_189)
 	MDRV_VIDEO_UPDATE(tm990_189_v)
 

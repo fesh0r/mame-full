@@ -12,6 +12,7 @@ typedef struct {
 } SVI_318;
 
 DRIVER_INIT( svi318 );
+MACHINE_START( svi318 );
 MACHINE_RESET( svi318 );
 
 DEVICE_LOAD( svi318_cart );

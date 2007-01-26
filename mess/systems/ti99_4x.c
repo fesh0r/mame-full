@@ -504,34 +504,6 @@ static struct TMS5220interface tms5220interface =
 
 
 
-static const TMS9928a_interface tms9918_interface =
-{
-	TMS99x8,
-	0x4000,
-	tms9901_set_int2
-};
-
-static const TMS9928a_interface tms9929_interface =
-{
-	TMS9929,
-	0x4000,
-	tms9901_set_int2
-};
-
-static const TMS9928a_interface tms9918a_interface =
-{
-	TMS99x8A,
-	0x4000,
-	tms9901_set_int2
-};
-
-static const TMS9928a_interface tms9929a_interface =
-{
-	TMS9929A,
-	0x4000,
-	tms9901_set_int2
-};
-
 static MACHINE_DRIVER_START(ti99_4_60hz)
 
 	/* basic machine hardware */
@@ -547,10 +519,11 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
+	MDRV_MACHINE_START( ti99_4_60hz )
 	MDRV_MACHINE_RESET( ti99 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9918_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -580,10 +553,11 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
+	MDRV_MACHINE_START( ti99_4_50hz )
 	MDRV_MACHINE_RESET( ti99 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9929_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -612,10 +586,11 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
+	MDRV_MACHINE_START( ti99_4a_60hz )
 	MDRV_MACHINE_RESET( ti99 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9918a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -644,10 +619,11 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
+	MDRV_MACHINE_START( ti99_4a_50hz )
 	MDRV_MACHINE_RESET( ti99 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9929a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

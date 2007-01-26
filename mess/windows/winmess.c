@@ -5,6 +5,7 @@
 
 #include "osdmess.h"
 #include "utils.h"
+#include "winutil.h"
 #include "strconv.h"
 
 //============================================================
@@ -12,22 +13,6 @@
 //============================================================
 
 extern mame_file_error win_error_to_mame_file_error(DWORD error);
-
-
-//============================================================
-//  attributes_to_entry_type
-//============================================================
-
-INLINE osd_dir_entry_type attributes_to_entry_type(DWORD attributes)
-{
-	if (attributes == 0xFFFFFFFF)
-		return ENTTYPE_NONE;
-	else if (attributes & FILE_ATTRIBUTE_DIRECTORY)
-		return ENTTYPE_DIR;
-	else
-		return ENTTYPE_FILE;
-}
-
 
 
 //============================================================
@@ -144,7 +129,7 @@ osd_directory_entry *osd_stat(const char *path)
 		goto done;
 	strcpy(((char *) result) + sizeof(*result), path);
 	result->name = ((char *) result) + sizeof(*result);
-	result->type = attributes_to_entry_type(find_data.dwFileAttributes);
+	result->type = win_attributes_to_entry_type(find_data.dwFileAttributes);
 	result->size = find_data.nFileSizeLow | ((UINT64) find_data.nFileSizeHigh << 32);
 
 done:

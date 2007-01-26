@@ -657,6 +657,62 @@ DEVICE_UNLOAD( ti99_hd )
 	smc92x4_hd_unload(image, id);
 }
 
+static const TMS9928a_interface tms9918_interface =
+{
+	TMS99x8,
+	0x4000,
+	0, 0,
+	tms9901_set_int2
+};
+
+MACHINE_START( ti99_4_60hz )
+{
+	TMS9928A_configure(&tms9918_interface);
+	return 0;
+}
+
+static const TMS9928a_interface tms9929_interface =
+{
+	TMS9929,
+	0x4000,
+	0, 0,
+	tms9901_set_int2
+};
+
+MACHINE_START( ti99_4_50hz )
+{
+	TMS9928A_configure(&tms9929_interface);
+	return 0;
+}
+
+static const TMS9928a_interface tms9918a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	0, 0,
+	tms9901_set_int2
+};
+
+MACHINE_START( ti99_4a_60hz )
+{
+	TMS9928A_configure(&tms9918a_interface);
+	return 0;
+}
+
+static const TMS9928a_interface tms9929a_interface =
+{
+	TMS9929A,
+	0x4000,
+	0, 0,
+	tms9901_set_int2
+};
+
+MACHINE_START( ti99_4a_50hz )
+{
+	TMS9928A_configure(&tms9929a_interface);
+	return 0;
+}
+
 /*
 	ti99_init_machine(); called before ti99_load_rom...
 */

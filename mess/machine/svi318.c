@@ -622,6 +622,20 @@ DRIVER_INIT( svi318 )
 	wd179x_init(WD_TYPE_179X, svi_fdc_callback);
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	0, 0,
+	svi318_vdp_interrupt
+};
+
+MACHINE_START( svi318 )
+{
+	TMS9928A_configure(&tms9928a_interface);
+	return 0;
+}
+
 MACHINE_RESET( svi318 )
 {
 	/* video stuff */

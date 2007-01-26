@@ -41,6 +41,7 @@ typedef struct {
 /* start/stop functions */
 extern DRIVER_INIT( msx );
 extern DRIVER_INIT( msx2 );
+extern MACHINE_START( msx );
 extern MACHINE_RESET( msx );
 extern MACHINE_RESET( msx2 );
 extern INTERRUPT_GEN( msx_interrupt );

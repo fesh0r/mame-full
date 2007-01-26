@@ -715,13 +715,6 @@ static VIDEO_START( msx2 )
 	return v9938_init(machine, MODEL_V9938, 0x20000, msx_vdp_interrupt);
 }
 
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS99x8A,
-	0x4000,
-	msx_vdp_interrupt
-};
-
 static MACHINE_DRIVER_START( msx )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)		  /* 3.579545 Mhz */
@@ -732,10 +725,11 @@ static MACHINE_DRIVER_START( msx )
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( msx )
 	MDRV_MACHINE_RESET( msx )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 	MDRV_SCREEN_SIZE(15 + 256 + 15, 27 + 192 + 24)
 	MDRV_SCREEN_VISIBLE_AREA(15 - 8, 15 + 256 + 8 - 1, 27 - 24, 27 + 192 + 24 - 1)
 

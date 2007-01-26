@@ -230,6 +230,7 @@ static const TMS9928a_interface tms9928a_interface =
 {
 	TMS9929,
 	0x4000,
+	0, 0,
 	fnvision_vdp_interrupt
 };
 
@@ -267,6 +268,7 @@ static const pia6821_interface pia0_intf =
 
 static MACHINE_START( fnvision )
 {
+	TMS9928A_configure(&tms9928a_interface);
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
 	return 0;
 }
@@ -288,7 +290,7 @@ static MACHINE_DRIVER_START( fnvision )
 	MDRV_MACHINE_RESET( fnvision )
 
     // video hardware
-	MDRV_TMS9928A(&tms9928a_interface)
+	MDRV_IMPORT_FROM(tms9928a)
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")

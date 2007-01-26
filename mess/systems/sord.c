@@ -471,6 +471,20 @@ static void sordm5_video_interrupt_callback(int state)
 	}
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	0, 0,
+	sordm5_video_interrupt_callback
+};
+
+static MACHINE_START( sord_m5 )
+{
+	TMS9928A_configure(&tms9928a_interface);
+	return 0;
+}
+
 static MACHINE_RESET( sord_m5 )
 {
 	z80ctc_init(0, &sord_m5_ctc_intf);
@@ -624,13 +638,6 @@ static INTERRUPT_GEN( sord_interrupt )
 		cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS9929A,
-	0x4000,
-	sordm5_video_interrupt_callback
-};
-
 static MACHINE_DRIVER_START( sord_m5 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3800000)
@@ -642,10 +649,11 @@ static MACHINE_DRIVER_START( sord_m5 )
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( sord_m5 )
 	MDRV_MACHINE_RESET( sord_m5 )
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

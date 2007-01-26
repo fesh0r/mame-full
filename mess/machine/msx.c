@@ -289,6 +289,20 @@ static void msx_ch_reset_core (void)
 	msx_memory_map_all ();
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	0, 0,
+	msx_vdp_interrupt
+};
+
+MACHINE_START( msx )
+{
+	TMS9928A_configure(&tms9928a_interface);
+	return 0;
+}
+
 MACHINE_RESET( msx )
 {
 	TMS9928A_reset ();

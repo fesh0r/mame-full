@@ -211,19 +211,26 @@ void paddle_callback (int param)
 		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	0, 0,
+	coleco_vdp_interrupt
+};
+
+static MACHINE_START( coleco )
+{
+	TMS9928A_configure(&tms9928a_interface);
+	return 0;
+}
+
 static MACHINE_RESET(coleco)
 {
     cpunum_set_input_line_vector(0, 0, 0xff);
 	memset(&memory_region(REGION_CPU1)[0x6000], 0xff, 0x400);	// initialize RAM
     timer_pulse(TIME_IN_MSEC(20), 0, paddle_callback);
 }
-
-static const TMS9928a_interface tms9928a_interface =
-{
-	TMS99x8A,
-	0x4000,
-	coleco_vdp_interrupt
-};
 
 static MACHINE_DRIVER_START( coleco )
 	// basic machine hardware
@@ -234,10 +241,11 @@ static MACHINE_DRIVER_START( coleco )
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(coleco)
 	MDRV_MACHINE_RESET(coleco)
 
     // video hardware
-	MDRV_TMS9928A(&tms9928a_interface)
+	MDRV_IMPORT_FROM(tms9928a)
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")

@@ -109,6 +109,20 @@ static DRIVER_INIT(tutor)
 	memory_set_bank(1, 0);
 }
 
+static const TMS9928a_interface tms9929a_interface =
+{
+	TMS9929A,
+	0x4000,
+	0, 0,
+	/*tms9901_set_int2*/NULL
+};
+
+static MACHINE_START(tutor)
+{
+	TMS9928A_configure(&tms9929a_interface);
+	return 0;
+}
+
 static MACHINE_RESET(tutor)
 {
 	cartridge_enable = 0;
@@ -546,13 +560,6 @@ static struct tms9995reset_param tutor_processor_config =
 	NULL		/* no IDLE callback */
 };
 
-static const TMS9928a_interface tms9929a_interface =
-{
-	TMS9929A,
-	0x4000,
-	/*tms9901_set_int2*/NULL
-};
-
 
 
 static MACHINE_DRIVER_START(tutor)
@@ -570,11 +577,12 @@ static MACHINE_DRIVER_START(tutor)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
+	MDRV_MACHINE_START( tutor )
 	MDRV_MACHINE_RESET( tutor )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9929a_interface )
+	MDRV_IMPORT_FROM(tms9928a)
 
 	/* sound */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
