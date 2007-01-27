@@ -262,16 +262,23 @@ Status: not supported yet.
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80gb/z80gb.h"
 #include "includes/gb.h"
 #include "devices/cartslot.h"
 #include "rendlay.h"
 #include "gb.lh"
 
 /* Initial value of the cpu registers (hacks until we get bios dumps) */
-static UINT16 sgb_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };    /* Super GameBoy                    */
-static UINT16 gbp_cpu_reset[6] = { 0xFFB0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Pocket / Super GameBoy 2 */
-static UINT16 gbc_cpu_reset[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Color  / Gameboy Advance */
-static UINT16 megaduck_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFE, 0x0000 };	/* Megaduck */
+static UINT16 sgb_cpu_regs[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };    /* Super GameBoy                    */
+static UINT16 mgb_cpu_regs[6] = { 0xFFB0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Pocket / Super GameBoy 2 */
+static UINT16 cgb_cpu_regs[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Color  / Gameboy Advance */
+static UINT16 megaduck_cpu_regs[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFE, 0x0000 };	/* Megaduck */
+
+Z80GB_CONFIG dmg_cpu_reset = { NULL, gb_timer_callback };
+Z80GB_CONFIG sgb_cpu_reset = { sgb_cpu_regs, gb_timer_callback };
+Z80GB_CONFIG mgb_cpu_reset = { mgb_cpu_regs, gb_timer_callback };
+Z80GB_CONFIG cgb_cpu_reset = { cgb_cpu_regs, gb_timer_callback };
+Z80GB_CONFIG megaduck_cpu_reset = { megaduck_cpu_regs, gb_timer_callback };
 
 static ADDRESS_MAP_START(gb_map, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
@@ -287,10 +294,7 @@ static ADDRESS_MAP_START(gb_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound registers */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
 	AM_RANGE(0xff30, 0xff3f) AM_READWRITE( gb_wave_r, gb_wave_w )		/* Wave ram */
-	AM_RANGE(0xff40, 0xff4b) AM_READWRITE( gb_video_r, gb_video_w)		/* Video controller */
-	AM_RANGE(0xff4c, 0xff4f) AM_NOP						/* Unused */
-	AM_RANGE(0xff50, 0xff50) AM_READWRITE( MRA8_NOP, gb_bios_w )		/* BIOS disable flip-flop */
-	AM_RANGE(0xff51, 0xff7f) AM_NOP						/* Unused */
+	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gb_video_r, gb_io2_w)		/* Video controller & BIOS flip-flop */
 	AM_RANGE(0xff80, 0xfffe) AM_RAM						/* High RAM */
 	AM_RANGE(0xffff, 0xffff) AM_READWRITE( gb_ie_r, gb_ie_w )		/* Interrupt enable register */
 ADDRESS_MAP_END
@@ -308,10 +312,7 @@ static ADDRESS_MAP_START(sgb_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound registers */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
 	AM_RANGE(0xff30, 0xff3f) AM_READWRITE( gb_wave_r, gb_wave_w )		/* Wave RAM */
-	AM_RANGE(0xff40, 0xff4b) AM_READWRITE( gb_video_r, gb_video_w )		/* Video controller */
-	AM_RANGE(0xff4c, 0xff4f) AM_NOP						/* Unused */
-	AM_RANGE(0xff50, 0xff50) AM_READWRITE( MRA8_NOP, gb_bios_w )		/* BIOS disable flip-flop */
-	AM_RANGE(0xff51, 0xff7f) AM_NOP						/* Unused */
+	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gb_video_r, gb_io2_w )		/* Video controller & BIOS flip-flop */
 	AM_RANGE(0xff80, 0xfffe) AM_RAM						/* High RAM */
 	AM_RANGE(0xffff, 0xffff) AM_READWRITE( gb_ie_r, gb_ie_w )		/* Interrupt enable register */
 ADDRESS_MAP_END
@@ -331,7 +332,7 @@ static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound controller */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
 	AM_RANGE(0xff30, 0xff3f) AM_READWRITE( gb_wave_r, gb_wave_w )		/* Wave RAM */
-	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gb_video_r, gbc_io2_w )		/* Other I/O and video controller */
+	AM_RANGE(0xff40, 0xff7f) AM_READWRITE( gbc_io2_r, gbc_io2_w )		/* Other I/O and video controller */
 	AM_RANGE(0xff80, 0xfffe) AM_RAM						/* high RAM */
 	AM_RANGE(0xffff, 0xffff) AM_READWRITE( gb_ie_r, gb_ie_w )		/* Interrupt enable register */
 ADDRESS_MAP_END
@@ -476,6 +477,7 @@ static MACHINE_DRIVER_START( gameboy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_map, 0)
+	MDRV_CPU_CONFIG(dmg_cpu_reset)
 	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154)	/* 1 int each scanline ! */
 
 	MDRV_SCREEN_REFRESH_RATE(DMG_FRAMES_PER_SECOND)
@@ -528,7 +530,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gbpocket )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_CONFIG(gbp_cpu_reset)
+	MDRV_CPU_CONFIG(mgb_cpu_reset)
 	MDRV_MACHINE_RESET( gbpocket )
 	MDRV_PALETTE_INIT(gbp)
 MACHINE_DRIVER_END
@@ -537,7 +539,7 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP( gbc_map, 0 )
-	MDRV_CPU_CONFIG(gbc_cpu_reset)
+	MDRV_CPU_CONFIG(cgb_cpu_reset)
 
 	MDRV_MACHINE_RESET(gbc)
 
