@@ -44,7 +44,7 @@ static void process_error(struct messdocs_state *state, const char *tag, const c
 		msg = XML_ErrorString(XML_GetErrorCode(state->parser));
 	}
 
-	fprintf(stderr, "%d:%s:%s\n", XML_GetCurrentLineNumber(state->parser), tag ? tag : "", msg);
+	fprintf(stderr, "%u:%s:%s\n", (unsigned) XML_GetCurrentLineNumber(state->parser), tag ? tag : "", msg);
 	state->error = 1;
 }
 
