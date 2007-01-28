@@ -40,6 +40,23 @@
 #include "cpu/z80gb/z80gb.h"
 #include "image.h"
 
+/* Memory bank controller types */
+enum {
+	MBC_NONE=0,		/*  32KB ROM - No memory bank controller         */
+	MBC_MBC1,		/*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
+	MBC_MBC2,		/* 256KB ROM,  32KB RAM                          */
+	MBC_MMM01,		/*    ?? ROM,    ?? RAM                          */
+	MBC_MBC3,		/*   2MB ROM,  32KB RAM, RTC                     */
+	MBC_MBC4,		/*    ?? ROM,    ?? RAM                          */
+	MBC_MBC5,		/*   8MB ROM, 128KB RAM (32KB w/ Rumble)         */
+	MBC_TAMA5,		/*    ?? ROM     ?? RAM - What is this?          */
+	MBC_HUC1,		/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+	MBC_HUC3,		/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+	MBC_MBC7,		/*    ?? ROM,    ?? RAM                          */
+	MBC_MEGADUCK,	/* MEGADUCK style banking                        */
+	MBC_UNKNOWN,	/* Unknown mapper                                */
+};
+
 #define MAX_ROMBANK 512
 #define MAX_RAMBANK 256
 
@@ -102,6 +119,8 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc3 );
 WRITE8_HANDLER( gb_mem_mode_select_mbc3 );
 WRITE8_HANDLER( gb_rom_bank_select_mbc5 );
 WRITE8_HANDLER( gb_ram_bank_select_mbc5 );
+WRITE8_HANDLER( gb_rom_bank_select_mbc7 );
+WRITE8_HANDLER( gb_rom_bank_unknown_mbc7 );
 WRITE8_HANDLER( gb_ram_tama5 );
 
 #ifdef MAME_DEBUG
@@ -134,7 +153,7 @@ static void gb_init(void)
 	ROMBank = 1;
 	RAMBank = 0;
 	memory_set_bankptr (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_dummy_rom_bank);
-	if ( MBCType != MEGADUCK ) {
+	if ( MBCType != MBC_MEGADUCK ) {
 		memory_set_bankptr (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_dummy_ram_bank);
 	} else {
 		memory_set_bankptr( 10, ROMMap[0] );
@@ -143,42 +162,47 @@ static void gb_init(void)
 	/* Set handlers based on the Memory Bank Controller in the cart */
 	switch( MBCType )
 	{
-		case NONE:
+		case MBC_NONE:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_ROM );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_ROM );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_ROM );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
-		case MBC1:
+		case MBC_MBC1:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );	/* We don't emulate RAM enable yet */
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc1 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc1 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, gb_mem_mode_select_mbc1 );
 			break;
-		case MBC2:
+		case MBC_MBC2:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_ROM );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc2 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_ROM );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
-		case MBC3:
-		case HUC1:	/* Possibly wrong */
-		case HUC3:	/* Possibly wrong */
+		case MBC_MBC3:
+		case MBC_HUC1:	/* Possibly wrong */
+		case MBC_HUC3:	/* Possibly wrong */
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );	/* We don't emulate RAM enable yet */
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc3 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc3 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, gb_mem_mode_select_mbc3 );
 			break;
-		case MBC5:
+		case MBC_MBC5:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc5 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc5 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
-		case TAMA5:
+		case MBC_MBC7:
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, 0, 0, gb_rom_bank_select_mbc7 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x7fff, 0, 0, gb_rom_bank_unknown_mbc7 );
+			break;
+		case MBC_TAMA5:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, 0, gb_ram_tama5 );
 			break;
-		case MEGADUCK:
+		case MBC_MEGADUCK:
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0001, 0x0001, 0, 0, megaduck_rom_bank_select_type1 );
 			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xB000, 0xB000, 0, 0, megaduck_rom_bank_select_type2 );
 			break;
@@ -354,6 +378,7 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc5 )
 	  Writing into 2000-2FFF sets the lower 8 bits
 	  Writing into 3000-3FFF sets the 9th bit
 	*/
+	logerror( "0x%04X: MBC5 ROM Bank select write 0x%04X <- 0x%02X\n", activecpu_get_pc(), offset, data );
 	if( offset & 0x1000 ) {
 		ROMBank = (ROMBank & 0xFF ) | ( ( data & 0x01 ) << 8 );
 	} else {
@@ -361,6 +386,30 @@ WRITE8_HANDLER( gb_rom_bank_select_mbc5 )
 	}
 	/* Switch banks */
 	memory_set_bankptr (1, ROMMap[ROMBank] );
+}
+
+WRITE8_HANDLER( gb_rom_bank_select_mbc7 ) {
+	logerror( "0x%04X: write to mbc7 rom select register: 0x%04X <- 0x%02X\n", activecpu_get_pc(), 0x2000 + offset, data );
+	/* Bit 12 must be set for writing to the mbc register */
+	if ( offset & 0x0100 ) {
+		ROMBank = data;
+		memory_set_bankptr( 1, ROMMap[ROMBank] );
+	}
+}
+
+WRITE8_HANDLER( gb_rom_bank_unknown_mbc7 ) {
+        logerror( "0x%04X: write to mbc7 rom area: 0x%04X <- 0x%02X\n", activecpu_get_pc(), 0x3000 + offset, data );
+	/* Bit 12 must be set for writing to the mbc register */
+	if ( offset & 0x0100 ) {
+		switch( offset & 0x7000 ) {
+		case 0x0000:	/* 0x3000-0x3fff */
+		case 0x1000:	/* 0x4000-0x4fff */
+		case 0x2000:	/* 0x5000-0x5fff */
+		case 0x3000:	/* 0x6000-0x6fff */
+		case 0x4000:	/* 0x7000-0x7fff */
+			break;
+		}
+	}
 }
 
 WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
@@ -395,6 +444,7 @@ WRITE8_HANDLER( gb_ram_bank_select_mbc3 )
 
 WRITE8_HANDLER( gb_ram_bank_select_mbc5 )
 {
+	logerror( "0x%04X: MBC5 RAM Bank select write 0x%04X <- 0x%02X\n", activecpu_get_pc(), offset, data );
 	data &= 0x0F;
 	if( CartType & RUMBLE ) {
 		data &= 0x7;
@@ -1164,7 +1214,7 @@ DEVICE_INIT(gb_cart)
 	}
 	ROMBanks = 0;
 	RAMBanks = 0;
-	MBCType = NONE;
+	MBCType = MBC_NONE;
 	CartType = 0;
 	ROMMask = 0;
 	RAMMask = 0;
@@ -1315,7 +1365,7 @@ DEVICE_LOAD(gb_cart)
 
 	/* Verify that the file contains 16kb blocks */
 	if ( ( filesize == 0 ) || ( ( filesize % 0x4000 ) != 0 ) ) {
-		logerror( "Error loading cartridge: Invalid rom file: %s.\n", image_filename(image) );
+		image_seterror( image, IMAGE_ERROR_UNSPECIFIED, "Invalid rom file size" );
 		return INIT_FAIL;
 	}
 
@@ -1324,120 +1374,64 @@ DEVICE_LOAD(gb_cart)
 
 	/* Read cartridge */
 	if ( image_fread( image, gb_cart, filesize ) != filesize ) {
-		logerror( "Error loading cartridge: Unable to read from file: %s.\n", image_filename(image) );
+		image_seterror( image, IMAGE_ERROR_UNSPECIFIED, "Unable to fully read from file" );
 		return INIT_FAIL;
 	}
 
 	/* Fill in our cart details */
-	switch( gb_cart[0x0147] )
-	{
-		case 0x00:
-			MBCType = NONE;
-			CartType = 0;
-			break;
-		case 0x01:
-			MBCType = MBC1;
-			CartType = 0;
-			break;
-		case 0x02:
-			MBCType = MBC1;
-			CartType = RAM;
-			break;
-		case 0x03:
-			MBCType = MBC1;
-			CartType = RAM | BATTERY;
-			break;
-		case 0x05:
-			MBCType = MBC2;
-			CartType = 0;
-			break;
-		case 0x06:
-			MBCType = MBC2;
-			CartType = BATTERY;
-			break;
-		case 0x08:
-			MBCType = NONE;
-			CartType = RAM;
-		case 0x09:
-			MBCType = NONE;
-			CartType = RAM | BATTERY;
-			break;
-		case 0x0F:
-			MBCType = MBC3;
-			CartType = TIMER | BATTERY;
-			break;
-		case 0x10:
-			MBCType = MBC3;
-			CartType = TIMER | RAM | BATTERY;
-			break;
-		case 0x11:
-			MBCType = MBC3;
-			CartType = 0;
-			break;
-		case 0x12:
-			MBCType = MBC3;
-			CartType = RAM;
-			break;
-		case 0x13:
-			MBCType = MBC3;
-			CartType = RAM | BATTERY;
-			break;
-		case 0x19:
-			MBCType = MBC5;
-			CartType = 0;
-			break;
-		case 0x1A:
-			MBCType = MBC5;
-			CartType = RAM;
-			break;
-		case 0x1B:
-			MBCType = MBC5;
-			CartType = RAM | BATTERY;
-			break;
-		case 0x1C:
-			MBCType = MBC5;
-			CartType = RUMBLE;
-			break;
-		case 0x1D:
-			MBCType = MBC5;
-			CartType = RUMBLE | SRAM;
-			break;
-		case 0x1E:
-			MBCType = MBC5;
-			CartType = RUMBLE | SRAM | BATTERY;
-			break;
-		case 0x22:
-			/* MBCType = MBC7; */
-			CartType = SRAM | BATTERY;
-			MBCType = NONE;
-			CartType = UNKNOWN;
-			break;
-		case 0xBE:	/* used in Flash2Advance GB Bridge boot program */
-			MBCType = NONE;
-			CartType = 0;
-			break;
-		case 0xFD:
-			MBCType = TAMA5;
-			CartType = 0; /* RTC | BATTERY ? */
-			break;
-		case 0xFE:
-			MBCType = HUC3;
-			CartType = 0;
-			break;
-		case 0xFF:
-			MBCType = HUC1;
-			CartType = 0;
-			break;
-		default:
-			MBCType = NONE;
-			CartType = UNKNOWN;
+	switch( gb_cart[0x0147] ) {
+	case 0x00:	MBCType = MBC_NONE;	CartType = 0;				break;
+	case 0x01:	MBCType = MBC_MBC1;	CartType = 0;				break;
+	case 0x02:	MBCType = MBC_MBC1;	CartType = RAM;				break;
+	case 0x03:	MBCType = MBC_MBC1;	CartType = RAM | BATTERY;		break;
+	case 0x05:	MBCType = MBC_MBC2;	CartType = 0;				break;
+	case 0x06:	MBCType = MBC_MBC2;	CartType = BATTERY;			break;
+	case 0x08:	MBCType = MBC_NONE;	CartType = RAM;				break;
+	case 0x09:	MBCType = MBC_NONE;	CartType = RAM | BATTERY;		break;
+	case 0x0B:	MBCType = MBC_MMM01;	CartType = 0;				break;
+	case 0x0C:	MBCType = MBC_MMM01;	CartType = RAM;				break;
+	case 0x0D:	MBCType = MBC_MMM01;	CartType = RAM | BATTERY;		break;
+	case 0x0F:	MBCType = MBC_MBC3;	CartType = TIMER | BATTERY;		break;
+	case 0x10:	MBCType = MBC_MBC3;	CartType = TIMER | RAM | BATTERY;	break;
+	case 0x11:	MBCType = MBC_MBC3;	CartType = 0;				break;
+	case 0x12:	MBCType = MBC_MBC3;	CartType = RAM;				break;
+	case 0x13:	MBCType = MBC_MBC3;	CartType = RAM | BATTERY;		break;
+	case 0x15:	MBCType = MBC_MBC4;	CartType = 0;				break;
+	case 0x16:	MBCType = MBC_MBC4;	CartType = RAM;				break;
+	case 0x17:	MBCType = MBC_MBC4;	CartType = RAM | BATTERY;		break;
+	case 0x19:	MBCType = MBC_MBC5;	CartType = 0;				break;
+	case 0x1A:	MBCType = MBC_MBC5;	CartType = RAM;				break;
+	case 0x1B:	MBCType = MBC_MBC5;	CartType = RAM | BATTERY;		break;
+	case 0x1C:	MBCType = MBC_MBC5;	CartType = RUMBLE;			break;
+	case 0x1D:	MBCType = MBC_MBC5;	CartType = RUMBLE | SRAM;		break;
+	case 0x1E:	MBCType = MBC_MBC5;	CartType = RUMBLE | SRAM | BATTERY;	break;
+	case 0x22:	MBCType = MBC_MBC7;	CartType = SRAM | BATTERY;		break;
+	case 0xBE:	MBCType = MBC_NONE;	CartType = 0;				break;	/* used in Flash2Advance GB Bridge boot program */
+	case 0xFD:	MBCType = MBC_TAMA5;	CartType = 0 /*RTC | BATTERY?*/;	break;
+	case 0xFE:	MBCType = MBC_HUC3;	CartType = 0;				break;
+	case 0xFF:	MBCType = MBC_HUC1;	CartType = 0;				break;
+	default:	MBCType = MBC_UNKNOWN;	CartType = UNKNOWN;			break;
 	}
 
-	if ( CartType & UNKNOWN )
-	{
-		logerror("Error loading cartridge: Unknown ROM type.\n");
+	if ( MBCType == MBC_UNKNOWN ) {
+		image_seterror( image, IMAGE_ERROR_UNSUPPORTED, "Unknown mapper type" );
 		return INIT_FAIL;
 	}
+	if ( MBCType == MBC_MMM01 ) {
+		image_seterror( image, IMAGE_ERROR_UNSUPPORTED, "Mapper MMM01 is not supported yet" );
+		return INIT_FAIL;
+	}
+	if ( MBCType == MBC_MBC4 ) {
+		image_seterror( image, IMAGE_ERROR_UNSUPPORTED, "Mapper MBC4 is not supported yet" );
+		return INIT_FAIL;
+	}
+	/* MBC7 support is still work-in-progress, so only enable it for debug builds */
+#ifndef MAME_DEBUG
+	if ( MBCType == MBC_MBC7 ) {
+		image_seterror( image, IMAGE_ERROR_UNSUPPORTED, "Mapper MBC7 is not supported yet" );
+		return INIT_FAIL;
+	}
+#endif
 
 	ROMBanks = filesize / 0x4000;
 	switch( gb_cart[0x0148] ) {
@@ -1535,8 +1529,12 @@ DEVICE_LOAD(gb_cart)
 	}
 
 	/* MBC2 has 512 * 4bits (8kb) internal RAM */
-	if( MBCType == MBC2 )
+	if( MBCType == MBC_MBC2 )
 		RAMBanks = 1;
+	/* MBC7 has 512 bytes(?) of internal RAM */
+	if ( MBCType == MBC_MBC7 ) {
+		RAMBanks = 1;
+	}
 
 	if (RAMBanks && MBCType)
 	{
@@ -1567,7 +1565,7 @@ DEVICE_LOAD(gb_cart)
 		MBC3RTCData = auto_malloc( 0x2000 );
 	}
 
-	if ( MBCType == TAMA5 ) {
+	if ( MBCType == MBC_TAMA5 ) {
 		MBC3RTCData = auto_malloc( 0x2000 );
 		memset( gbTama5Memory, 0xFF, sizeof(gbTama5Memory) );
 	}
@@ -1801,7 +1799,7 @@ DEVICE_LOAD(megaduck_cart)
 	ROMBanks = filesize / 0x4000;
 
 	if ( ( filesize == 0 ) || ( ( filesize % 0x4000 ) != 0 ) ) {
-		logerror( "Error loading cartridge: Invalid rom file: %s.\n", image_filename(image) );
+		image_seterror( image, IMAGE_ERROR_UNSPECIFIED, "Invalid rom file size" );
 		return INIT_FAIL;
 	}
 
@@ -1810,7 +1808,7 @@ DEVICE_LOAD(megaduck_cart)
 
 	/* Read cartridge */
 	if (image_fread (image, gb_cart, filesize) != filesize) {
-		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
+		image_seterror( image, IMAGE_ERROR_UNSPECIFIED, "Unable to fully read from file" );
 		return INIT_FAIL;
 	}
 
@@ -1834,7 +1832,7 @@ DEVICE_LOAD(megaduck_cart)
 		ROMMask = I - 1;
 	}
 
-	MBCType = MEGADUCK;
+	MBCType = MBC_MEGADUCK;
 
 	return INIT_PASS;
 }

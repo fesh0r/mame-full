@@ -19,18 +19,6 @@ void gameboy_sound_w(int offset, int data);
 #define SIO_INT               3       /* Serial I/O */
 #define EXT_INT               4       /* Joypad     */
 
-/* Memory bank controller types */
-#define NONE		0x000	/*  32KB ROM - No memory bank controller         */
-#define MBC1		0x001	/*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
-#define MBC2		0x002	/* 256KB ROM,  32KB RAM                          */
-#define MBC3		0x003	/*   2MB ROM,  32KB RAM, RTC                     */
-#define MBC5		0x004	/*   8MB ROM, 128KB RAM (32KB w/ Rumble)         */
-#define TAMA5		0x005	/*    ?? ROM     ?? RAM - What is this?          */
-#define HUC1		0x006	/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
-#define HUC3		0x007	/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
-#define MBC7		0x008	/*    ?? ROM,    ?? RAM                          */
-#define MEGADUCK	0x100	/* MEGADUCK style banking, using 0x100 to not    */
-                            /* interfere with possible GBx banking methods   */
 #ifdef TIMER
 #undef TIMER
 #endif
