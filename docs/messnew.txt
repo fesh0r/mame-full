@@ -34,7 +34,7 @@ System Driver Changes:
 
 - [IP204415] Fixed driver.  (bug #986) [Nate Woods]
 
-- [MK2] Updated to use the new artwork system.  [Justin Kirk]
+- [MK2] Updated to use the new artwork system.  [Justin Kerk]
 
 - [N64] Added the .bin file extension.  (bug #1016) [Nate Woods]
 
