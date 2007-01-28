@@ -451,11 +451,6 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool_directory *enumeration, img
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void vzdos_diskimage_closeenum(imgtool_directory *enumeration)
-{
-	free(enumeration);
-}
-
 /* TRK 0 sector 15 is used to hold the track map of the disk with one bit
    corresponding to a sector used. */
 static imgtoolerr_t vzdos_diskimage_freespace(imgtool_partition *partition, UINT64 *size)
