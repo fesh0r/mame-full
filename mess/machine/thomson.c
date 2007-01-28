@@ -33,6 +33,7 @@
 #define VERBOSE_BANK  0 
 #define VERBOSE_VIDEO 0  /* video & lightpen */
 #define VERBOSE_IO    0  /* serial & parallel I/O */
+#define VERBOSE_MIDI  0
 
 #define DISABLE_AUDIO 0
 
@@ -108,6 +109,7 @@ static void thom_irq_0  ( int state ) { thom_set_irq  ( 0, state ); }
 static void thom_irq_1  ( int state ) { thom_set_irq  ( 1, state ); }
 static void thom_irq_2  ( int state ) { thom_set_irq  ( 2, state ); }
 static void thom_irq_3  ( int state ) { thom_set_irq  ( 3, state ); }
+static void thom_irq_4  ( int state ) { thom_set_irq  ( 4, state ); }
 static void thom_firq_0 ( int state ) { thom_set_firq ( 0, state ); }
 static void thom_firq_1 ( int state ) { thom_set_firq ( 1, state ); }
 static void thom_firq_2 ( int state ) { thom_set_firq ( 2, state ); }
@@ -583,33 +585,66 @@ WRITE8_HANDLER ( to7_modem_mea8000_w )
     acia6850_0_w( offset, data );
 }
 
-/* ------------ CM 90-112 music & game extension ------------ */
+
+/* ------------ SX 90-018 (model 2) music & game extension ------------ */
 
 /* features:
    - 6821 PIA 
-   - two 8-position, 1-button game pads
+   - two 8-position, 2-button game pads
+   - 2-button mouse (exclusive with pads)
+     do not confuse with the TO9-specific mouse
    - 6-bit DAC sound
-   - usable on TO7(/70), MO5(E) only; not on TO9 and higher
 
-   TODO: aternate extensions ?
-   - CJ 90-101: game pad, no music?
-   - SX 90-018: TO8-like game pad? TO8-like mouse?
+   extends the CM 90-112 (model 1) with one extra button per pad and a mouse
 */
 
+#define TO7_GAME_POLL_PERIOD  TIME_IN_USEC( 500 )
 
-/* polling interval */
-#define TO7_GAME_POLL_PERIOD  TIME_IN_MSEC( 50 )
 
-static WRITE8_HANDLER ( to7_game_portb_out )
+/* calls to7_game_update_cb periodically */
+static mame_timer* to7_game_timer;
+
+static UINT8 to7_game_sound;
+static UINT8 to7_game_mute;
+
+
+/* The mouse is a very simple phase quadrature one.
+   Each axis provides two 1-bit signals, A and B, that are toggled by the
+   axis rotation. The two signals are not in phase, so that whether A is
+   toggled before B or B before A gives the direction of rotation.
+   This is similar Atari & Amiga mouses.
+   Returns: 0 0 0 0 0 0 YB XB YA XA 
+ */
+static UINT8 to7_get_mouse_signal( void )
+{
+  UINT8 xa, xb, ya, yb;
+  UINT16 dx = readinputport( THOM_INPUT_GAME + 2 ); /* x axis */
+  UINT16 dy = readinputport( THOM_INPUT_GAME + 3 ); /* y axis */
+  xa = ((dx + 1) & 3) <= 1;
+  xb = (dx & 3) <= 1;
+  ya = ((dy + 1) & 3) <= 1;
+  yb = (dy & 3) <= 1;
+  return xa | (ya << 1) | (xb << 2) | (yb << 3);
+}
+
+static void to7_game_sound_update ( void )
 {
 #if !DISABLE_AUDIO
-  DAC_data_w( THOM_SOUND_GAME, (data & 0x3f) << 2 ); /* bits 0-5: 6-bit DAC */
+  DAC_data_w( THOM_SOUND_GAME, to7_game_mute ? 0 : (to7_game_sound << 2) );
 #endif
 }
 
 static READ8_HANDLER ( to7_game_porta_in )
 {
-  UINT8 data = readinputport( THOM_INPUT_GAME );
+  UINT8 data;
+  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
+    /* mouse */
+    data = to7_get_mouse_signal() & 0x0c;             /* XB, YB */
+    data |= readinputport( THOM_INPUT_GAME + 4 ) & 3; /* buttons */
+  }
+  else {
+    /* joystick */
+    data = readinputport( THOM_INPUT_GAME );
   /* bit 0=0 => P1 up      bit 4=0 => P2 up
      bit 1=0 => P1 down    bit 5=0 => P2 down
      bit 2=0 => P1 left    bit 6=0 => P2 left
@@ -620,51 +655,314 @@ static READ8_HANDLER ( to7_game_porta_in )
   if ( ! ( data & 0x0c ) ) data |= 0x0c;
   if ( ! ( data & 0x30 ) ) data |= 0x30;
   if ( ! ( data & 0xc0 ) ) data |= 0xc0;
+    if ( ! ( data & 0x03 ) ) data |= 0x03;
+    if ( ! ( data & 0x0c ) ) data |= 0x0c;
+    if ( ! ( data & 0x30 ) ) data |= 0x30;
+    if ( ! ( data & 0xc0 ) ) data |= 0xc0;
+  }
   return data;
 }
 
 static READ8_HANDLER ( to7_game_portb_in )
 {
-  /* bits 6-7: action buttons (0=pressed) */
-  return readinputport( THOM_INPUT_GAME + 1 ); 
+  UINT8 data;
+  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
+    /* mouse */
+    UINT8 mouse =  to7_get_mouse_signal();
+    data = 0;
+    if ( mouse & 1 ) data |= 0x04; /* XA */
+    if ( mouse & 2 ) data |= 0x40; /* YA */
+  }
+  else {
+    /* joystick */
+    /* bits 6-7: action buttons A (0=pressed) */
+    /* bits 2-3: action buttons B (0=pressed) */
+    /* bits 4-5: unused (ouput) */
+    /* bits 0-1: unknown! */
+    data = readinputport( THOM_INPUT_GAME + 1 );
+  }
+  return data;
+}
+
+static WRITE8_HANDLER ( to7_game_portb_out )
+{
+  /* 6-bit DAC sound */
+  to7_game_sound = data & 0x3f;
+  to7_game_sound_update();
 }
 
 static const pia6821_interface to7_game = {
   to7_game_porta_in, to7_game_portb_in,
   NULL, NULL, NULL, NULL,
   NULL, to7_game_portb_out, NULL, NULL,
-  thom_firq_1, thom_firq_1
+  thom_irq_1, thom_irq_1
 };
 
 /* this should be called periodically */
 static void to7_game_update_cb ( int dummy )
 {
-  UINT8 in = readinputport( THOM_INPUT_GAME + 1 );
-  /* LOG (( "%f to7_game_update_cb\n", timer_get_time() )); */
-  pia_set_input_ca1( THOM_PIA_GAME, in & 0x40 ); /* P1 action */
-  pia_set_input_ca2( THOM_PIA_GAME, in & 0x80 ); /* P2 action */
+  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
+    UINT8 mouse = to7_get_mouse_signal();
+    pia_set_input_ca1( THOM_PIA_GAME, (mouse & 1) ? 1 : 0 ); /* XA */
+    pia_set_input_ca2( THOM_PIA_GAME, (mouse & 2) ? 1 : 0 ); /* YA */
+  }
+  else {
+    /* joystick */
+    UINT8 in = readinputport( THOM_INPUT_GAME );
+    pia_set_input_cb2( THOM_PIA_GAME, (in & 0x80) ? 1 : 0 ); /* P2 action A */
+    pia_set_input_ca2( THOM_PIA_GAME, (in & 0x40) ? 1 : 0 ); /* P1 action A */
+    pia_set_input_cb1( THOM_PIA_GAME, (in & 0x08) ? 1 : 0 ); /* P2 action B */
+    pia_set_input_ca1( THOM_PIA_GAME, (in & 0x04) ? 1 : 0 ); /* P1 action B */
+    /* TODO:
+       it seems that CM 90-112 behaves differently
+       - ca1 is P1 action A, i.e., in & 0x40
+       - ca2 is P2 action A, i.e., in & 0x80
+       - cb1, cb2 are not connected (should not be a problem)
+    */
+    /* Note: the MO6 & MO5NR have slightly different connections
+       (see mo6_game_update_cb)
+     */
+  }
 }
 
-/* calls to7_game_update_cb periodically */
-static mame_timer* to7_game_timer;
-
-static void to7_game_init( void )
+static void to7_game_init ( void )
 {
   LOG (( "to7_game_init called\n" ));
   pia_config( THOM_PIA_GAME, PIA_ALTERNATE_ORDERING, &to7_game );
-
-  /* periodically update gamepad button interrupts on PIA 6821 */
   to7_game_timer = mame_timer_alloc( to7_game_update_cb );
   timer_adjust( to7_game_timer, TO7_GAME_POLL_PERIOD, 0, TO7_GAME_POLL_PERIOD );
+  state_save_register_global( to7_game_sound );
 }
 
-static void to7_game_reset( void )
+static void to7_game_reset ( void )
 {
   LOG (( "to7_game_reset called\n" ));
-
-  /* necessary for some game to detect the pad */
   pia_set_input_ca1( THOM_PIA_GAME, 0 );
+  to7_game_sound = 0;
+  to7_game_mute = 0;
+  to7_game_sound_update();
 }
+
+
+/* ------------ MIDI extension ------------ */
+
+/* IMPORTANT NOTE:
+   The following is experimental and not compiled in by default.
+   It relies on the existence of an hypothetical "character device" API able
+   to transmit bytes between the MESS driver and the outside world
+   (using, e.g., character device special files on some UNIX).
+*/
+
+#ifdef CHARDEV
+
+#include "devices/chardev.h"
+
+/* Features an EF 6850 ACIA
+
+   MIDI protocol is a serial asynchronous protocol
+   Each 8-bit byte is transmitted as:
+   - 1 start bit
+   - 8 data bits
+   - 1 stop bits
+   320 us per transmitted byte => 31250 baud
+
+   Emulation is based on the Motorola 6850 documentation, not EF 6850.
+
+   We do not emulate the seral line but pass bytes directly between the 
+   6850 registers and the MIDI device.
+*/
+
+
+static UINT8 to7_midi_status;   /* 6850 status word */
+static UINT8 to7_midi_overrun;  /* pending overrun */
+static UINT8 to7_midi_intr;     /* enabled interrupts */
+
+static chardev* to7_midi_chardev;
+
+static void to7_midi_update_irq ( void )
+{
+  if ( (to7_midi_intr & 4) && (to7_midi_status & ACIA_6850_RDRF) )
+    to7_midi_status |= ACIA_6850_irq; /* byte received interrupt */
+
+  if ( (to7_midi_intr & 4) && (to7_midi_status & ACIA_6850_OVRN) )
+    to7_midi_status |= ACIA_6850_irq; /* overrun interrupt */
+
+  if ( (to7_midi_intr & 3) == 1 && (to7_midi_status & ACIA_6850_TDRE) )
+    to7_midi_status |= ACIA_6850_irq; /* ready to transmit interrupt */
+  
+  thom_irq_4( to7_midi_status & ACIA_6850_irq );
+}
+
+static void to7_midi_byte_received_cb( chardev_err s )
+{
+  to7_midi_status |= ACIA_6850_RDRF;
+  if ( s == CHARDEV_OVERFLOW ) to7_midi_overrun = 1;
+  to7_midi_update_irq();
+}
+
+static void to7_midi_ready_to_send_cb( void )
+{
+  to7_midi_status |= ACIA_6850_TDRE;
+  to7_midi_update_irq();  
+}
+
+READ8_HANDLER ( to7_midi_r )
+{
+  /* ACIA 6850 registers */
+
+  switch ( offset ) {
+
+  case 0: /* get status */
+    /* bit 0:     data received */
+    /* bit 1:     ready to transmit data */
+    /* bit 2:     data carrier detect (ignored) */
+    /* bit 3:     clear to send (ignored) */
+    /* bit 4:     framing error (ignored) */
+    /* bit 5:     overrun */
+    /* bit 6:     parity error (ignored) */
+    /* bit 7:     interrupt */
+#if VERBOSE_MIDI
+    logerror( "$%04x %f to7_midi_r: status $%02X (rdrf=%i, tdre=%i, ovrn=%i, irq=%i)\n", 
+	      activecpu_get_previouspc(), timer_get_time(), to7_midi_status,
+	      (to7_midi_status & ACIA_6850_RDRF) ? 1 : 0, 
+	      (to7_midi_status & ACIA_6850_TDRE) ? 1 : 0,
+	      (to7_midi_status & ACIA_6850_OVRN) ? 1 : 0, 
+	      (to7_midi_status & ACIA_6850_irq) ? 1 : 0 );
+#endif
+    return to7_midi_status;
+
+  case 1: /* get input data */
+    {
+      UINT8 data = chardev_in( to7_midi_chardev );
+      to7_midi_status &= ~(ACIA_6850_irq | ACIA_6850_RDRF);
+      if ( to7_midi_overrun ) to7_midi_status |= ACIA_6850_OVRN;
+      else to7_midi_status &= ~ACIA_6850_OVRN;
+      to7_midi_overrun = 0;
+#if VERBOSE_MIDI
+      logerror( "$%04x %f to7_midi_r: read data $%02X\n", 
+		activecpu_get_previouspc(), timer_get_time(), data );
+#endif
+      to7_midi_update_irq();
+      return data;
+    }
+
+  default: 
+    logerror( "$%04x to7_midi_r: invalid offset %i\n",
+	      activecpu_get_previouspc(),  offset );
+    return 0;
+  }
+}
+
+WRITE8_HANDLER ( to7_midi_w )
+{
+  /* ACIA 6850 registers */
+
+  switch ( offset ) {
+    
+  case 0: /* set control */
+    /* bits 0-1: clock divide (ignored) or reset */
+    if ( (data & 3) == 3 ) {
+      /* reset */
+#if VERBOSE_MIDI
+      logerror( "$%04x %f to7_midi_w: reset (data=$%02X)\n", 
+		activecpu_get_previouspc(), timer_get_time(), data );
+#endif
+      to7_midi_overrun = 0;
+      to7_midi_status = 2;
+      to7_midi_intr = 0;
+      chardev_reset( to7_midi_chardev );
+    }
+    else {
+      /* bits 2-4: parity  */
+      /* bits 5-6: interrupt on transmit */
+      /* bit 7:    interrupt on receive */
+      to7_midi_intr = data >> 5;
+#if VERBOSE_MIDI
+      {
+	static int bits[8] = { 7,7,7,7,8,8,8,8 };
+	static int stop[8] = { 2,2,1,1,2,1,1,1 };
+	static char parity[8] = { 'e','o','e','o','-','-','e','o' };
+	logerror( "$%04x %f to7_midi_w: set control to $%02X (bits=%i, stop=%i, parity=%c, intr in=%i out=%i)\n", 
+		  activecpu_get_previouspc(), timer_get_time(),
+		  data, 
+		  bits[ (data >> 2) & 7 ],
+		  stop[ (data >> 2) & 7 ],
+		  parity[ (data >> 2) & 7 ],
+		  to7_midi_intr >> 2, 
+		  (to7_midi_intr & 3) ? 1 : 0);
+      }
+#endif
+    }
+    to7_midi_update_irq();
+    break;
+    
+  case 1: /* output data */
+#if VERBOSE_MIDI
+    logerror( "$%04x %f to7_midi_w: write data $%02X\n", 
+	      activecpu_get_previouspc(), timer_get_time(), data );
+#endif
+    if ( data == 0x55 ) 
+      /* cable-detect: shortcut */
+      chardev_fake_in( to7_midi_chardev, 0x55 );
+    else {
+      /* send to MIDI */
+      to7_midi_status &= ~(ACIA_6850_irq | ACIA_6850_TDRE);
+      chardev_out( to7_midi_chardev, data ); 
+    }
+    break;
+    
+  default: 
+    logerror( "$%04x to7_midi_w: invalid offset %i (data=$%02X) \n", 
+	      activecpu_get_previouspc(), offset, data );
+  }
+}
+
+static chardev_interface to7_midi_interface = {
+  to7_midi_byte_received_cb,
+  to7_midi_ready_to_send_cb,
+};
+
+static void to7_midi_reset( void )
+{
+  LOG (( "to7_midi_reset called\n" ));
+  to7_midi_overrun = 0;
+  to7_midi_status = 0;
+  to7_midi_intr = 0;
+  chardev_reset( to7_midi_chardev );
+}
+
+static void to7_midi_init( void )
+{
+  LOG (( "to7_midi_init\n" ));
+  to7_midi_chardev = chardev_open( "/dev/snd/midiC1D0",
+				   "/dev/snd/midiC1D1",
+				   &to7_midi_interface );
+}
+
+#else
+
+READ8_HANDLER ( to7_midi_r )
+{
+  logerror( "to7_midi_r: not implemented\n" );
+  return 0;
+}
+
+WRITE8_HANDLER ( to7_midi_w )
+{
+  logerror( "to7_midi_w: not implemented\n" );
+}
+
+static void to7_midi_reset( void )
+{
+  logerror( "to7_midi_reset: not implemented\n" );
+}
+
+static void to7_midi_init( void )
+{
+  logerror( "to7_midi_init: not implemented\n" );
+}
+
+#endif
 
 
 /* ------------ init / reset ------------ */
@@ -681,6 +979,7 @@ MACHINE_RESET ( to7 )
   to7_floppy_reset();
   to7_io_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mea8000_reset();
 
@@ -716,6 +1015,7 @@ MACHINE_START ( to7 )
   to7_floppy_init( mem + 0x24000 );
   to7_io_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mea8000_config( THOM_SOUND_SPEECH, NULL );
 
@@ -867,6 +1167,7 @@ MACHINE_RESET( to770 )
   to7_floppy_reset();
   to7_io_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mea8000_reset();
 
@@ -906,6 +1207,7 @@ MACHINE_START ( to770 )
   to7_floppy_init( mem + 0x3c000 );
   to7_io_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mea8000_config( THOM_SOUND_SPEECH, NULL );
 
@@ -1073,7 +1375,7 @@ int mo5_cartridge_load ( mess_image* image )
   name[j] = 0;
   for ( i = 0; name[i]; i++)
     if ( name[i] < ' ' || name[i] >= 127 ) name[i] = '?';
-  PRINT (( "to5_cartridge_load: cartridge \"%s\" banks=%i, size=%u\n",
+  PRINT (( "mo5_cartridge_load: cartridge \"%s\" banks=%i, size=%u\n",
 	   name, thom_cart_nb_banks, (unsigned) size ));
 
   return INIT_PASS;
@@ -1152,6 +1454,7 @@ MACHINE_RESET( mo5 )
   to7_floppy_reset();
   to7_io_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mo5_init_timer();
   mea8000_reset();
@@ -1187,6 +1490,7 @@ MACHINE_START ( mo5 )
   to7_floppy_init( mem + 0x34000 );
   to7_io_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
   mea8000_config( THOM_SOUND_SPEECH, NULL );
@@ -1473,6 +1777,7 @@ static void to9_update_ram_bank ( void )
    On the 6809 side, a 6850 ACIA is used.
    We do not emulate the seral line but pass bytes directly between the 
    keyboard and the 6850 registers.
+   Note that the keyboard protocol uses the parity bit as an extra data bit.
 */
 
 /* normal mode: polling interval */
@@ -1523,16 +1828,16 @@ static int to9_kbd_ktest ( void )
 
 static void to9_kbd_update_irq ( void )
 {
-  if ( (to9_kbd_intr & 4) && (to9_kbd_status & 1) )
-    to9_kbd_status |= 0x80; /* byte received interrupt */
+  if ( (to9_kbd_intr & 4) && (to9_kbd_status & ACIA_6850_RDRF) )
+    to9_kbd_status |= ACIA_6850_irq; /* byte received interrupt */
 
-  if ( (to9_kbd_intr & 4) && (to9_kbd_status & 0x20) )
-    to9_kbd_status |= 0x80;; /* overrun interrupt */
+  if ( (to9_kbd_intr & 4) && (to9_kbd_status & ACIA_6850_OVRN) )
+    to9_kbd_status |= ACIA_6850_irq; /* overrun interrupt */
 
- if ( (to9_kbd_intr & 3) == 1 && (to9_kbd_status & 2) )
-    to9_kbd_status |= 0x80;; /* ready to transmit interrupt */
+  if ( (to9_kbd_intr & 3) == 1 && (to9_kbd_status & ACIA_6850_TDRE) )
+    to9_kbd_status |= ACIA_6850_irq; /* ready to transmit interrupt */
 
-  thom_irq_3( to9_kbd_status & 0x80 );
+  thom_irq_3( to9_kbd_status & ACIA_6850_irq );
 }
 
 READ8_HANDLER ( to9_kbd_r )
@@ -1544,23 +1849,27 @@ READ8_HANDLER ( to9_kbd_r )
   case 0: /* get status */
     /* bit 0:     data received */
     /* bit 1:     ready to transmit data (always 1) */
-    /* bits 2-4:  ignored */
+    /* bit 2:     data carrier detect (ignored) */
+    /* bit 3:     clear to send (ignored) */
+    /* bit 4:     framing error (ignored) */
     /* bit 5:     overrun */
     /* bit 6:     parity error */
     /* bit 7:     interrupt */
 #if VERBOSE_KBD
     logerror( "$%04x %f to9_kbd_r: status $%02X (rdrf=%i, tdre=%i, ovrn=%i, pe=%i, irq=%i)\n", 
 	   activecpu_get_previouspc(), timer_get_time(), to9_kbd_status,
-	   to9_kbd_status & 1, (to9_kbd_status >> 1) & 1, 
-	   (to9_kbd_status >> 5) & 1, (to9_kbd_status >> 6) & 1, 
-	   (to9_kbd_status >> 7) & 1  );
+	      (to9_kbd_status & ACIA_6850_RDRF) ? 1 : 0, 
+	      (to9_kbd_status & ACIA_6850_TDRE) ? 1 : 0,
+	      (to9_kbd_status & ACIA_6850_OVRN) ? 1 : 0, 
+	      (to9_kbd_status & ACIA_6850_PE) ? 1 : 0,
+	      (to9_kbd_status & ACIA_6850_irq) ? 1 : 0 );
 #endif
     return to9_kbd_status;
 
   case 1: /* get input data */
-    to9_kbd_status &= ~0xc0;
-    if ( to9_kbd_overrun ) to9_kbd_status |= 0x20;
-    else to9_kbd_status &= ~0x21;
+    to9_kbd_status &= ~(ACIA_6850_irq | ACIA_6850_PE);
+    if ( to9_kbd_overrun ) to9_kbd_status |= ACIA_6850_OVRN;
+    else to9_kbd_status &= ~(ACIA_6850_OVRN | ACIA_6850_RDRF);
     to9_kbd_overrun = 0;
 #if VERBOSE_KBD
     logerror( "$%04x %f to9_kbd_r: read data $%02X\n", 
@@ -1587,9 +1896,9 @@ WRITE8_HANDLER ( to9_kbd_w )
     if ( (data & 3) == 3 ) {
       /* reset */
       to9_kbd_overrun = 0;
-      to9_kbd_status = 2;
+      to9_kbd_status = ACIA_6850_TDRE;
       to9_kbd_intr = 0;
- #if VERBOSE_KBD
+#if VERBOSE_KBD
       logerror( "$%04x %f to9_kbd_w: reset (data=$%02X)\n", 
 		activecpu_get_previouspc(), timer_get_time(), data );
 #endif
@@ -1612,10 +1921,10 @@ WRITE8_HANDLER ( to9_kbd_w )
     break;
 
   case 1: /* output data */
-    to9_kbd_status &= ~0x82;
+    to9_kbd_status &= ~(ACIA_6850_irq | ACIA_6850_TDRE);
     to9_kbd_update_irq();
     /* TODO: 1 ms delay here ? */
-    to9_kbd_status |= 2; /* data transmit ready again */
+    to9_kbd_status |= ACIA_6850_TDRE; /* data transmit ready again */
     to9_kbd_update_irq();
     
     switch ( data ) {
@@ -1658,7 +1967,7 @@ WRITE8_HANDLER ( to9_kbd_w )
  */
 static void to9_kbd_send ( UINT8 data, int parity )
 {
-  if ( to9_kbd_status & 1 ) {
+  if ( to9_kbd_status & ACIA_6850_RDRF ) {
     /* overrun will be set when the current valid byte is read */
     to9_kbd_overrun = 1;
 #if VERBOSE_KBD
@@ -1670,11 +1979,11 @@ static void to9_kbd_send ( UINT8 data, int parity )
     /* valid byte */
     to9_kbd_in = data;
     parity ^= 1; /* ! */
-    to9_kbd_status |= 1; /* raise data received flag */
+    to9_kbd_status |= ACIA_6850_RDRF; /* raise data received flag */
     if ( to9_kbd_parity == 2 || to9_kbd_parity == parity )
-      to9_kbd_status &= ~0x40; /* parity OK */
+      to9_kbd_status &= ~ACIA_6850_PE; /* parity OK */
     else
-      to9_kbd_status |= 0x40;  /* parity error */
+      to9_kbd_status |= ACIA_6850_PE;  /* parity error */
 #if VERBOSE_KBD
     logerror( "%f to9_kbd_send: data=$%02X, parity=%i, status=$%02X\n", 
 	      timer_get_time(), data, parity, to9_kbd_status );
@@ -1842,7 +2151,7 @@ static void to9_kbd_reset ( void )
 {
   LOG(( "to9_kbd_reset called\n" ));
   to9_kbd_overrun = 0;  /* no byte lost */
-  to9_kbd_status = 2;   /* clear to transmit */
+  to9_kbd_status = ACIA_6850_TDRE;  /* clear to transmit */
   to9_kbd_intr = 0;     /* interrupt disabled */
   to9_kbd_caps = 1;
   to9_kbd_periph = 0;
@@ -1944,10 +2253,6 @@ static const mc6846_interface to9_timer = {
 
 /* ------------ init / reset ------------ */
 
-/* we could use to8_game_ instead of to7_game_ to get TO8-compatible mouse */
-static void to8_game_init  ( void );
-static void to8_game_reset ( void );
-
 MACHINE_RESET ( to9 )
 {
   LOG (( "to9: machine reset called\n" ));
@@ -1961,6 +2266,7 @@ MACHINE_RESET ( to9 )
   to9_kbd_reset();
   thom_centronics_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mea8000_reset();
 
@@ -1999,6 +2305,7 @@ MACHINE_START ( to9 )
   to9_kbd_init();
   to9_palette_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mea8000_config( THOM_SOUND_SPEECH, NULL );
 
@@ -2301,132 +2608,6 @@ static void to8_kbd_init ( void )
   state_save_register_global( to8_kbd_last_key );
   state_save_register_global( to8_kbd_key_count );
   state_save_register_global( to8_kbd_caps );
-}
-
-
-
-/* ------------ game 6821 PIA ------------ */
-
-/* improved version of the CM 90-112 extension:
-   - allows a two-button mouse
-   - game pads can have 2 buttons instead of one
-*/
-
-#define TO8_GAME_POLL_PERIOD  TIME_IN_USEC( 500 )
-
-#define TO8_MOUSE_PERIOD   8
-#define TO8_MOUSE_SLOT     4
-#define TO8_MOUSE_PHASE    6
-
-/* The TO8 mouse is a very simple phase quadrature one.
-   Each axis provides two 1-bit signals, A and B, that are toggled by the
-   axis rotation. The two signals are not in phase, so that whether A is
-   toggled before B or B before A gives the direction of rotation.
-   This is similar Atari & Amiga mouses.
-   Returns: 0 0 0 0 0 0 YB XB YA XA 
- */
-static UINT8 to8_get_mouse_signal( void )
-{
-  UINT8 xa, xb, ya, yb;
-  UINT16 dx = readinputport( THOM_INPUT_GAME + 2 ); /* x axis */
-  UINT16 dy = readinputport( THOM_INPUT_GAME + 3 ); /* y axis */
-  xa = (dx % TO8_MOUSE_PERIOD) <= TO8_MOUSE_SLOT;
-  xb = ((dx + TO8_MOUSE_PHASE) % TO8_MOUSE_PERIOD) <= TO8_MOUSE_SLOT;
-  ya = (dy % TO8_MOUSE_PERIOD) <= TO8_MOUSE_SLOT;
-  yb = ((dy + TO8_MOUSE_PHASE) % TO8_MOUSE_PERIOD) <= TO8_MOUSE_SLOT;
-  return xa | (ya << 1) | (xb << 2) | (yb << 3);
-}
-
-static void to8_sound_update ( void )
-{
-#if !DISABLE_AUDIO
-  int mute = mc6846_get_output_cp2() ;                 /* mute */
-  int data = pia_get_output_b( THOM_PIA_GAME ) & 0x3f; /* bits 0-5: 6-bit DAC */
-  DAC_data_w( THOM_SOUND_GAME, mute ? 0 : (data << 2) );
-#endif
-}
-
-static READ8_HANDLER ( to8_game_porta_in )
-{
-  /* joystick */
-  UINT8 data = readinputport( THOM_INPUT_GAME );
-  if ( ! ( data & 0x03 ) ) data |= 0x03;
-  if ( ! ( data & 0x0c ) ) data |= 0x0c;
-  if ( ! ( data & 0x30 ) ) data |= 0x30;
-  if ( ! ( data & 0xc0 ) ) data |= 0xc0;
-  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
-    /* mouse */
-    UINT8 mouse = to8_get_mouse_signal();
-    data &= 0xf0;
-    data |= readinputport( THOM_INPUT_GAME + 4 ) & 3; /* buttons */
-    data |= mouse & 0x0c; /* XB, YB */
-  }
-  return data;
-}
-
-static READ8_HANDLER ( to8_game_portb_in )
-{
-  /* joystick */
-  UINT8 data = readinputport( THOM_INPUT_GAME + 1 );
-  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
-    /* mouse */
-    UINT8 mouse =  to8_get_mouse_signal();
-    data &= 0x8a;
-    if ( mouse & 1 ) data |= 0x04; /* XA */
-    if ( mouse & 2 ) data |= 0x40; /* YA */
-  }
-  return data;
-}
-
-static WRITE8_HANDLER ( to8_game_cp2_out )
-{
-  to8_sound_update();
-}
-
-static WRITE8_HANDLER ( to8_game_portb_out )
-{
-  to8_sound_update();
-}
-
-static const pia6821_interface to8_game = {
-  to8_game_porta_in, to8_game_portb_in,
-  NULL, NULL, NULL, NULL,
-  NULL, to8_game_portb_out, NULL, to8_game_cp2_out,
-  thom_irq_1, thom_irq_1
-};
-
-static void to8_game_update_cb ( int dummy )
-{
-  UINT8 in = readinputport( THOM_INPUT_GAME );
-
-  pia_set_input_cb1( THOM_PIA_GAME, in & 0x80 ); /* P2 action A */
-  pia_set_input_cb2( THOM_PIA_GAME, in & 0x08 ); /* P2 action B */
-
-  if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
-    UINT8 mouse = to8_get_mouse_signal();
-    pia_set_input_ca1( THOM_PIA_GAME, mouse & 1 ); /* XA */
-    pia_set_input_ca2( THOM_PIA_GAME, mouse & 2 ); /* YA */
-  }
-  else {
-    /* joystick */
-    pia_set_input_ca1( THOM_PIA_GAME, in & 0x04 ); /* P1 action B */
-    pia_set_input_ca2( THOM_PIA_GAME, in & 0x40 ); /* P1 action A */
-  }
-}
-
-static void to8_game_init ( void )
-{
-  LOG (( "to8_game_init called\n" ));
-  pia_config( THOM_PIA_GAME, PIA_ALTERNATE_ORDERING, &to8_game );
-  to7_game_timer = mame_timer_alloc( to8_game_update_cb );
-  timer_adjust( to7_game_timer, TO8_GAME_POLL_PERIOD, 0, TO8_GAME_POLL_PERIOD );
-}
-
-static void to8_game_reset ( void )
-{
-  LOG (( "to8_game_reset called\n" ));
-  pia_set_input_ca1( THOM_PIA_GAME, 0 );
-  to8_sound_update();
 }
 
 
@@ -2758,7 +2939,9 @@ static WRITE8_HANDLER ( to8_timer_port_out )
 
 static WRITE8_HANDLER ( to8_timer_cp2_out )
 {
-  to8_sound_update();
+  /* mute */
+  to7_game_mute = data;
+  to7_game_sound_update();
 }
 
 static const mc6846_interface to8_timer = { 
@@ -2790,11 +2973,12 @@ MACHINE_RESET ( to8 )
   thom_irq_reset();
   pia_reset();
   mc6846_reset();
-  to8_game_reset();
+  to7_game_reset();
   to8_floppy_reset();
   to8_kbd_reset();
   thom_centronics_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mea8000_reset();
 
@@ -2838,11 +3022,12 @@ MACHINE_START ( to8 )
   pia_config( THOM_PIA_SYS, PIA_ALTERNATE_ORDERING, &to8_sys );
   centronics_config( 0, &to9_centronics );
   mc6846_config( &to8_timer );
-  to8_game_init();
+  to7_game_init();
   to8_floppy_init();
   to8_kbd_init();
   to9_palette_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mea8000_config( THOM_SOUND_SPEECH, NULL );
   
@@ -2932,11 +3117,12 @@ MACHINE_RESET ( to9p )
   thom_irq_reset();
   pia_reset();
   mc6846_reset();
-  to8_game_reset();
+  to7_game_reset();
   to8_floppy_reset();
   to9_kbd_reset();
   thom_centronics_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mea8000_reset();
 
@@ -2980,11 +3166,12 @@ MACHINE_START ( to9p )
   pia_config( THOM_PIA_SYS, PIA_ALTERNATE_ORDERING, &to9p_sys );
   centronics_config( 0, &to9_centronics );
   mc6846_config( &to9p_timer );
-  to8_game_init();
+  to7_game_init();
   to8_floppy_init();
   to9_kbd_init();
   to9_palette_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mea8000_config( THOM_SOUND_SPEECH, NULL );
   
@@ -3040,25 +3227,6 @@ static void mo6_update_ram_bank ( void )
       logerror( "mo6_update_ram_bank: select bank %i (new style)\n", bank );
 #endif
   }
-  else {
-    /* emulate PIA */
-    UINT8 portb = pia_get_output_b( THOM_PIA_SYS );
-    switch ( portb & 0xf8 ) {
-    case 0xf0: bank = 2; break;
-    case 0xe8: bank = 3; break;
-    case 0x18: bank = 4; break;
-    case 0x58: bank = 5; break;
-    case 0x98: bank = 6; break;
-    case 0xd8: bank = 7; break;
-    default:
-      logerror( "mo6_update_ram_bank: unknown RAM bank=$%02X\n", portb & 0xf8 );
-    }
-#if VERBOSE_BANK
-    if ( bank != to8_data_vpage )
-      logerror( "mo6_update_ram_bank: select bank %i (old style)\n", bank  );
-#endif
-  }
-
   to8_data_vpage = bank;
   memory_set_bank( TO8_DATA_LO, to8_data_vpage );
   memory_set_bank( TO8_DATA_HI, to8_data_vpage );
@@ -3156,27 +3324,14 @@ WRITE8_HANDLER ( mo6_ext_w )
 
 /* ------------ game 6821 PIA ------------ */
 
-/* similar to the TO8 one, with differences (mute, printer) */
-
-static void mo6_sound_update ( void )
-{
-#if !DISABLE_AUDIO
-  int mute = pia_get_output_a( THOM_PIA_SYS ) & 4;     /* bit 2: mute */
-  int data = pia_get_output_b( THOM_PIA_GAME ) & 0x3f; /* bits 0-5: 6-bit DAC */
-  DAC_data_w( THOM_SOUND_GAME, mute ? 0 : (data << 2) );
-#endif
-}
+/* similar to SX 90-018, but with a gew differences: mute, printer */
 
 static WRITE8_HANDLER ( mo6_game_porta_out )
 {
+  /* centronics data */
   LOG (( "$%04x %f mo6_game_porta_out: CENTRONICS set data=$%02X\n",
 	 activecpu_get_previouspc(), timer_get_time(), data ));
  centronics_write_data( 0, data );
-}
-
-static WRITE8_HANDLER ( mo6_game_portb_out )
-{
-  mo6_sound_update();
 }
 
 static READ8_HANDLER ( mo6_game_cb1_in )
@@ -3190,6 +3345,7 @@ static READ8_HANDLER ( mo6_game_cb1_in )
 
 static WRITE8_HANDLER ( mo6_game_cb2_out )
 {
+  /* centronics strobe */
   LOG (( "$%04x %f mo6_game_cb2_out: CENTRONICS set strobe=%i\n",
 	 activecpu_get_previouspc(), timer_get_time(), data ));
   centronics_write_handshake( 0, data ? CENTRONICS_STROBE : 0, 
@@ -3197,9 +3353,9 @@ static WRITE8_HANDLER ( mo6_game_cb2_out )
 }
  
 static const pia6821_interface mo6_game = {
-  to8_game_porta_in, to8_game_portb_in,
+  to7_game_porta_in, to7_game_portb_in,
   NULL, mo6_game_cb1_in, NULL, NULL,
-  mo6_game_porta_out, mo6_game_portb_out, NULL, mo6_game_cb2_out,
+  mo6_game_porta_out, to7_game_portb_out, NULL, mo6_game_cb2_out,
   thom_irq_1, thom_irq_1
 };
 
@@ -3207,7 +3363,7 @@ static void mo6_game_update_cb ( int dummy )
 {
   /* unlike the TO8, CB1 & CB2 are not connected to buttons */
   if ( readinputport( THOM_INPUT_CONFIG ) & 1 ) {
-    UINT8 mouse = to8_get_mouse_signal();
+    UINT8 mouse = to7_get_mouse_signal();
     pia_set_input_ca1( THOM_PIA_GAME, mouse & 1 ); /* XA */
     pia_set_input_ca2( THOM_PIA_GAME, mouse & 2 ); /* YA */
   }
@@ -3224,14 +3380,17 @@ static void mo6_game_init ( void )
   LOG (( "mo6_game_init called\n" ));
   pia_config( THOM_PIA_GAME, PIA_ALTERNATE_ORDERING, &mo6_game );
   to7_game_timer = mame_timer_alloc( mo6_game_update_cb );
-  timer_adjust( to7_game_timer, TO8_GAME_POLL_PERIOD, 0, TO8_GAME_POLL_PERIOD );
+  timer_adjust( to7_game_timer, TO7_GAME_POLL_PERIOD, 0, TO7_GAME_POLL_PERIOD );
+  state_save_register_global( to7_game_sound );
 }
 
 static void mo6_game_reset ( void )
 {
   LOG (( "mo6_game_reset called\n" ));
   pia_set_input_ca1( THOM_PIA_GAME, 0 );
-  mo6_sound_update();
+  to7_game_sound = 0;
+  to7_game_mute = 0;
+  to7_game_sound_update();
 }
 
 
@@ -3262,10 +3421,11 @@ static READ8_HANDLER ( mo6_sys_portb_in )
 static WRITE8_HANDLER ( mo6_sys_porta_out )
 { 
   thom_set_mode_point( data & 1 );           /* bit 0: video bank switch */
+  to7_game_mute = data & 4;                  /* bit 2: sound mute */
   thom_set_caps_led( (data & 16) ? 0 : 1 ) ; /* bit 4: keyboard led */
   mo5_set_cassette( (data & 0x40) ? 1 : 0 ); /* bit 6: cassette output */
   mo6_update_cart_bank();                    /* bit 5: rom bank */
-  mo6_sound_update();                        /* bit 2: sound mute */
+  to7_game_sound_update();
 }
 
 static WRITE8_HANDLER ( mo6_sys_portb_out )
@@ -3452,6 +3612,7 @@ MACHINE_RESET ( mo6 )
   to7_floppy_reset();
   thom_centronics_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mo5_init_timer();
   mea8000_reset();
@@ -3493,6 +3654,7 @@ MACHINE_START ( mo6 )
   to7_floppy_init( mem + 0x50000 );
   to9_palette_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
   mea8000_config( THOM_SOUND_SPEECH, NULL );
@@ -3620,9 +3782,10 @@ static WRITE8_HANDLER ( mo5nr_sys_porta_out )
 { 
   /* no keyboard LED */
   thom_set_mode_point( data & 1 );           /* bit 0: video bank switch */
+  to7_game_mute = data & 4;                  /* bit 2: sound mute */
   mo5_set_cassette( (data & 0x40) ? 1 : 0 ); /* bit 6: cassette output */
   mo6_update_cart_bank();                    /* bit 5: rom bank */
-  mo6_sound_update();                        /* bit 2: sound mute */
+  to7_game_sound_update();
 }
 
 static const pia6821_interface mo5nr_sys = {
@@ -3638,9 +3801,9 @@ static const pia6821_interface mo5nr_sys = {
 /* similar to the MO6, without the printer */
 
 static const pia6821_interface mo5nr_game = {
-  to8_game_porta_in, to8_game_portb_in,
+  to7_game_porta_in, to7_game_portb_in,
   NULL, NULL, NULL, NULL,
-  mo6_game_porta_out, mo6_game_portb_out, NULL, NULL,
+  mo6_game_porta_out, to7_game_portb_out, NULL, NULL,
   thom_irq_1, thom_irq_1
 };
 
@@ -3649,14 +3812,17 @@ static void mo5nr_game_init ( void )
   LOG (( "mo5nr_game_init called\n" ));
   pia_config( THOM_PIA_GAME, PIA_ALTERNATE_ORDERING, &mo5nr_game );
   to7_game_timer = mame_timer_alloc( mo6_game_update_cb );
-  timer_adjust( to7_game_timer, TO8_GAME_POLL_PERIOD, 0, TO8_GAME_POLL_PERIOD );
+  timer_adjust( to7_game_timer, TO7_GAME_POLL_PERIOD, 0, TO7_GAME_POLL_PERIOD );
+  state_save_register_global( to7_game_sound );
 }
 
 static void mo5nr_game_reset ( void )
 {
   LOG (( "mo5nr_game_reset called\n" ));
   pia_set_input_ca1( THOM_PIA_GAME, 0 );
-  mo6_sound_update();
+  to7_game_sound = 0;
+  to7_game_mute = 0;
+  to7_game_sound_update();
 }
 
 
@@ -3673,6 +3839,7 @@ MACHINE_RESET ( mo5nr )
   to7_floppy_reset();
   thom_centronics_reset();
   to7_modem_reset();
+  to7_midi_reset();
   to7_rf57932_reset();
   mo5_init_timer();
   mea8000_reset();
@@ -3691,9 +3858,6 @@ MACHINE_RESET ( mo5nr )
   thom_set_border_color( 0 );
   thom_set_mode_point( 0 );
 
-  /* bank selection PIA input float to 1 */
-  pia_set_input_b( THOM_PIA_SYS, 0xf8 );
-  
   /* memory */
   to8_cart_vpage = 0;
   to8_data_vpage = 0;
@@ -3717,6 +3881,7 @@ MACHINE_START ( mo5nr )
   to7_floppy_init( mem + 0x50000 );
   to9_palette_init();
   to7_modem_init();
+  to7_midi_init();
   to7_rf57932_init();
   mo5_periodic_timer = mame_timer_alloc( mo5_periodic_cb );
   mea8000_config( THOM_SOUND_SPEECH, NULL );

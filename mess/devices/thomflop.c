@@ -39,7 +39,27 @@
 /******************* 3''1/2 & 5''1/4 disk format ********************/
 
 /*
-  sector format:
+  single density sector format:
+
+               data   bytes
+
+  id field     00      6      byte synchro
+               FE      1      id field mark
+                       1      track
+                       1      side
+                       1      sector
+               00      1      log sector size (0->128, 1->256, 2->512,...)
+                       2      CRC (unemulated)
+               FF     12      spaces
+  data field   00      6      bytes synchro
+               FB      1      data field mark
+               E5    128      actual data (set to E5 when formatting)
+                       2      CRC (unemulated)
+               FF     22 ?    spaces
+
+
+
+  double density sector format:
 
                data   bytes
 
@@ -49,13 +69,13 @@
 	               1      track
 		       1      side
 		       1      sector
-		       1      log sector size (0->128, 1->256, 2->512,...)
+	       01      1      log sector size (0->128, 1->256, 2->512,...)
 		       2      CRC (unemulated)
 	      4E/F7   22      spaces
   data field   00     12      bit synchro
                A1      3      bytes synchro
                FB      1      data field mark
-               E5   128/256   actual data (set to E5 when formatting)
+               E5    256      actual data (set to E5 when formatting)
                        2      CRC (unemulated)
               4E/F7   74 ?    spaces
 
@@ -73,11 +93,24 @@
 #define THOM_SIZE_SYNCHRO     12
 
 /* build an identifier, with header & space */
-static int thom_floppy_make_addr( chrn_id id, UINT8* dst )
+static int thom_floppy_make_addr( chrn_id id, UINT8* dst, int sector_size )
 {
-  dst[ 0 ] = 0xa1; /* synchro bytes */
-  dst[ 1 ] = 0xa1;
-  dst[ 2 ] = 0xa1;
+  if ( sector_size == 128 ) {
+    /* single density */
+    memset( dst, 0x00, 6 ); /* synchro bytes */
+    dst[  7 ] = 0xfe; /* address field mark */
+    dst[  8 ] = id.C;
+    dst[  9 ] = id.H;
+    dst[ 10 ] = id.N;
+    dst[ 11 ] = id.R;
+    dst[ 12 ] = 0; /* TODO: CRC */
+    dst[ 13 ] = 0; /* TODO: CRC */
+    memset( dst + 14, 0xff, 12 ); /* end mark */
+    return 36;
+  }
+  else {
+    /* double density */
+    memset( dst, 0xa1, 3 ); /* synchro bytes */
   dst[ 3 ] = 0xfe; /* address field mark */
   dst[ 4 ] = id.C;
   dst[ 5 ] = id.H;
@@ -87,28 +120,42 @@ static int thom_floppy_make_addr( chrn_id id, UINT8* dst )
   dst[ 9 ] = 0; /* TODO: CRC */
   memset( dst + 10, 0xf7, 22 ); /* end mark */
   return 32;
+  }
 }
 
 /* build a sector, with header & space */
 static int thom_floppy_make_sector( mess_image* img, chrn_id id, 
 				    UINT8* dst, int sector_size )
 {
-  dst[ 0 ] = 0xa1; /* synchro bytes */
-  dst[ 1 ] = 0xa1;
-  dst[ 2 ] = 0xa1;
+  if ( sector_size == 128 ) {
+    /* single density */
+    memset( dst, 0x00, 6 ); /* synchro bytes */
+    dst[ 6 ] = 0xfb; /* data field mark */
+    floppy_drive_read_sector_data
+      ( img, id.H, id.R, dst + 7, sector_size );
+    dst[ sector_size + 7 ] = 0; /* TODO: CRC */
+    dst[ sector_size + 8 ] = 0; /* TODO: CRC */
+    memset( dst + sector_size + 9, 0xff, 22 ); /* end mark */
+    return sector_size + 31;
+  }
+  else {
+    /* double density */
+    memset( dst, 0xa1, 3 ); /* synchro bytes */
   dst[ 3 ] = 0xfb; /* data field mark */
   floppy_drive_read_sector_data
     ( img, id.H, id.R, dst + 4, sector_size );
   dst[ sector_size + 4 ] = 0; /* TODO: CRC */
   dst[ sector_size + 5 ] = 0; /* TODO: CRC */
-  memset( dst + sector_size + 6, 0xf7, 74 ); /* end mark */
+    memset( dst + sector_size + 6, 0xF7, 74 ); /* end mark */
   return sector_size + 80;
+  }
 }
 
 /* build a whole track */
 static int thom_floppy_make_track( mess_image* img, UINT8* dst, 
 				   int sector_size, int side )
 {
+  UINT8 space = ( sector_size == 128 ) ? 0xff : 0;
   UINT8* org = dst;
   chrn_id id;
   int nb;
@@ -119,9 +166,9 @@ static int thom_floppy_make_track( mess_image* img, UINT8* dst,
   /* for each sector... */
   for ( nb = 0; nb < 16; nb++ ) {
     if ( ! floppy_drive_get_next_id( img, side, &id ) ) break;
-    memset( dst, 0, THOM_SIZE_SYNCHRO ); dst += THOM_SIZE_SYNCHRO;
-    dst += thom_floppy_make_addr( id, dst );
-    memset( dst, 0, THOM_SIZE_SYNCHRO ); dst += THOM_SIZE_SYNCHRO;
+    memset( dst, space, THOM_SIZE_SYNCHRO ); dst += THOM_SIZE_SYNCHRO;
+    dst += thom_floppy_make_addr( id, dst, sector_size );
+    memset( dst, space, THOM_SIZE_SYNCHRO ); dst += THOM_SIZE_SYNCHRO;
     dst += thom_floppy_make_sector( img, id, dst, sector_size );
     if ( floppy_drive_get_flag_state( img, FLOPPY_DRIVE_INDEX ) ) break;
   }
@@ -293,7 +340,7 @@ static void to7_5p14_init( void )
    it is based on a MC6852 SSDA
 
    Note: the MC6852 is only partially emulated, most features are not used in 
-   the controller and are ignored. Actually, a 
+   the controller and are ignored.
  */
 
 /* MC6852 status */
@@ -399,8 +446,10 @@ static UINT8 to7_qdd_read_byte( void )
   UINT8 data;
   
   /* rebuild disk if needed */
-  if ( !to7qdd->data_size )
+  if ( !to7qdd->data_size ) {
     to7qdd->data_size = thom_qdd_make_disk( to7_qdd_image(), to7qdd->data );
+    assert( to7qdd->data_idx < sizeof( to7qdd->data ) );
+  }
   
   if ( to7qdd->data_idx >= to7qdd->data_size ) data = 0;
   else data = to7qdd->data[ to7qdd->data_idx ];
@@ -425,8 +474,10 @@ static void to7_qdd_write_byte( UINT8 data )
   int i;
 
   /* rebuild disk if needed */
-  if ( !to7qdd->data_size )
+  if ( !to7qdd->data_size ) {
     to7qdd->data_size = thom_qdd_make_disk( to7_qdd_image(), to7qdd->data );
+    assert( to7qdd->data_idx < sizeof( to7qdd->data ) );
+  }
 
   if ( ( to7qdd->start_idx != to7qdd->data_idx || /* field in construction */
 	 data==0xA5 || data==0x5A ) &&    /* first byte of tentative field */
@@ -865,6 +916,7 @@ static UINT8 to8_floppy_raw_read_byte ( void )
 	thom_floppy_make_track( to8_floppy_image(), thmfc1->data, 
 				thmfc1->sector_size, thmfc1->side );
     }
+    assert( thmfc1->data_raw_size < sizeof( thmfc1->data ) );
   }
   
   if ( thmfc1->data_raw_idx >= thmfc1->data_raw_size ) data = 0;
@@ -888,9 +940,11 @@ static void to8_floppy_qdd_write_byte ( UINT8 data )
        ( thmfc1->data_idx || data==0xA5 || data==0x5A ) &&  
        thmfc1->data_raw_idx < THOM_MAXBUF ) {
     
-    if ( ! thmfc1->data_raw_size )
+    if ( ! thmfc1->data_raw_size ) {
       thmfc1->data_raw_size = 
 	thom_qdd_make_disk ( to8_floppy_image(), thmfc1->data );
+      assert( thmfc1->data_raw_size < sizeof( thmfc1->data ) );
+    }
     
     /* accumulate bytes to form a field */
     thmfc1->data[ thmfc1->data_raw_idx ] = data;
@@ -1116,7 +1170,9 @@ WRITE8_HANDLER ( to8_floppy_w )
 	if ( qdd ) 
 	  logerror( "to8_floppy_w: smart operation 2 not supported for QDD\n" );
 	else if ( to8_floppy_find_sector( &id ) ) {
-	  thmfc1->data_size = thom_floppy_make_addr( id, thmfc1->data );
+	  thmfc1->data_size = 
+	    thom_floppy_make_addr( id, thmfc1->data, thmfc1->sector_size );
+	  assert( thmfc1->data_size < sizeof( thmfc1->data ) );
 	  thmfc1->data_finish = 10;
 	  thmfc1->data_idx = 1;
 	  thmfc1->stat0 |= THMFC1_STAT0_BYTE_READY_OP;
@@ -1131,6 +1187,7 @@ WRITE8_HANDLER ( to8_floppy_w )
 	else if ( to8_floppy_find_sector( &id ) ) {
 	  thmfc1->data_size = thom_floppy_make_sector
 	    ( to8_floppy_image(), id, thmfc1->data, thmfc1->sector_size );
+	  assert( thmfc1->data_size < sizeof( thmfc1->data ) );
 	  thmfc1->data_finish = thmfc1->sector_size + 4;
 	  thmfc1->data_idx = 1;
 	  thmfc1->stat0 |= THMFC1_STAT0_BYTE_READY_OP;

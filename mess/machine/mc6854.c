@@ -6,7 +6,7 @@
 
   The MC6854 chip is an Advanced Data-Link Controller (ADLC).
   It provides a high-level network interface that can tramsimit frames with
-  arbitrary data and address length, and is compatibl e with the following 
+  arbitrary data and address length, and is compatible with the following 
   standards:
   - ADCCP (Advanced Data Communication Control Procedure)
   - HDLC  (High-Level Data-Link Control)
@@ -187,7 +187,7 @@ static const int word_length[4] = { 5, 6, 7, 8 };
 #define RIDLE 0x04  /* receiver idle */
 #define RABT  0x08  /* receiver abort */
 #define ERR   0x10  /* invalid frame error */
-#define DCD   0x20  /* data carrier detect (ignorer) */
+#define DCD   0x20  /* data carrier detect (ignored) */
 #define OVRN  0x40  /* receiver overrun */
 #define RDA2  0x80  /* copy of RDA */
 

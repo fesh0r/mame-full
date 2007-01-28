@@ -40,8 +40,8 @@
   similar technologies, but with different cost/feature trade-offs and
   different compatibility (MO6 is MO5-compatible, TO9+ is TO9-compatible and
   TO8 and TO9+ are TO7-compatible).
-  Also note that the latest MO5NR is actually based on MO6 design,
-  not MO5 (although both MO5NR and MO6 are MO5-compatible)
+  Also note that the MO5NR is actually based on MO6 design, not MO5 
+  (although both MO5NR and MO6 are MO5-compatible)
 
   Also of interest are the Platini and Hinault versions of the MO5
   (plain MO5 inside, but with custom, signed box-case).
@@ -54,35 +54,32 @@
 /* TODO (roughly in decreasing priority order):
    ----
 
+   - test the new game extension with all software
+   - test that recent changes to 6821 port A do not break the driver
+   - add PORT_CHAR in keyboard
+   - support all cartridge bank switching methods
+   - THMFC1 support for single density
    - internal TO9 mouse port (untested)
    - better state save
+   - support for CD 90-015 floppy controller
    - floppy: 2-sided or 4-sided .fd images
-   - imgtool support for fd, sap, qd, wav, k5, k6, k7   
    - printer post-processing => postscript
    - RS232 serial port extensions: CC 90-232, RF 57-932
    - modem, teltel extension: MD 90-120 / MD 90-333 (need controller ROM?)
    - IEEE extension
-   - midi extension (@)
-   - TV overlay (IN 57-001), digitisation extension (@)
+   - TV overlay (IN 57-001) (@)
+   - digitisation extension (DI 90-011) (@)
    - barcode reader (@)
 
    (@) means MESS is lacking support for this kind of device / feature anyway
 
-
-  Modifications to other part of MESS:
-   - undocumented 6809 opcode 01 (synonymous for 00 = neg direct)
-   - patches in wd17xx (index pulse, formatting, reset)
-   - patches in flopdrv (index pulse, RPM)
-   - patches in centroni (timing, ack)
 */
-
 
 #include "driver.h"
 #include "device.h"
 #include "inputx.h"
 #include "machine/6821pia.h"
 #include "machine/mc6846.h"
-#include "machine/mc6850.h"
 #include "includes/6551.h"
 #include "machine/thomson.h"
 #include "vidhrdw/thomson.h"
@@ -116,34 +113,39 @@ static const char layout_thomson[] = "thomson";
 
 /* ------------- game port ------------- */
 
-INPUT_PORTS_START( to7_game_port )
+/*
+  Two generations of game port extensions were developped
 
-     PORT_START_TAG ( "game_port_directions" )
-     PAD ( 0x01, 1, "Up",    JOYSTICK_UP, UP, UP)
-     PAD ( 0x02, 1, "Down",  JOYSTICK_DOWN, DOWN, DOWN )
-     PAD ( 0x04, 1, "Left",  JOYSTICK_LEFT, LEFT, LEFT )
-     PAD ( 0x08, 1, "Right", JOYSTICK_RIGHT, RIGHT, RIGHT )
-     PAD ( 0x10, 2, "Up",    JOYSTICK_UP, UP, 8_PAD )
-     PAD ( 0x20, 2, "Down",  JOYSTICK_DOWN, DOWN, 2_PAD )
-     PAD ( 0x40, 2, "Left",  JOYSTICK_LEFT, LEFT, 4_PAD )
-     PAD ( 0x80, 2, "Right", JOYSTICK_RIGHT, RIGHT, 6_PAD )
+  - CM 90-112 (model 1)
+    connect up to two 8-position 1-button game pads
 
-     PORT_START_TAG ( "game_port_buttons" )
-     PAD ( 0x40, 1, "Action", BUTTON1, BUTTON1, LCONTROL )
-     PAD ( 0x80, 2, "Action", BUTTON1, BUTTON1, LALT )
-     PORT_BIT  ( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+  - SX 90-018 (model 2)
+    connect either two 8-position 2-button game pads
+    or a 2-button mouse (not both at the same time!)
 
-     /* unused */
-     PORT_START_TAG ( "mouse_x" )
-     PORT_START_TAG ( "mouse_y" )
-     PORT_START_TAG ( "mouse_button" )
+  We emulate the SX 90-018 as it is fully compatible with the CM 90-112.  
 
-INPUT_PORTS_END
+  Notes:
+  * all extensions are compatible with all Thomson computers.
+  * the SX 90-018 extension is integrated within the TO8(D)
+  * the TO9 has its own, different mouse port
+  * all extensions are based on a Motorola 6821 PIA
+  * all extensions include a 6-bit sound DAC
+  * most pre-TO8 software (including TO9) do not recognise the mouse nor the 
+  second button of each pad
+  * the mouse cannot be used at the same time as the pads: they use the same
+  6821 input ports & physical port; we use a config switch to tell MESS 
+  whether pads or a mouse is connected
+  * the mouse should not be used at the same time as the sound DAC: they use
+  the same 6821 ports, either as input or output; starting from the TO8,
+  there is a 'mute' signal to cut the DAC output and avoid producing an
+  audible buzz whenever the mouse is moved; unfortunately, mute is not 
+  available on the TO7(/70), TO9 and MO5.
+*/
 
+INPUT_PORTS_START( thom_game_port )
 
-INPUT_PORTS_START( to9_game_port )
-
-/* joysticks */
+/* joysticks, common to CM 90-112 & SX 90-018 */
      PORT_START_TAG ( "game_port_directions" )
      PAD ( 0x01, 1, "Up",    JOYSTICK_UP, UP, UP)
      PAD ( 0x02, 1, "Down",  JOYSTICK_DOWN, DOWN, DOWN )
@@ -157,22 +159,27 @@ INPUT_PORTS_START( to9_game_port )
      PORT_START_TAG ( "game_port_buttons" )
      PAD ( 0x40, 1, "Action A", BUTTON1, BUTTON1, LCONTROL )
      PAD ( 0x80, 2, "Action A", BUTTON1, BUTTON1, RCONTROL )
+ 
+/* joysticks, SX 90-018 specific */
      PAD ( 0x04, 1, "Action B", BUTTON2, BUTTON2, LALT )
      PAD ( 0x08, 2, "Action B", BUTTON2, BUTTON2, RALT )
-     PORT_BIT  ( 0x33, IP_ACTIVE_LOW, IPT_UNUSED )
+     PORT_BIT  ( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+     PORT_BIT  ( 0x03, IP_ACTIVE_LOW, IPT_UNUSED ) /* ? */
 
-/* mouse */
+/* mouse, SX 90-018 specific */
      PORT_START_TAG ( "mouse_x" )
      PORT_BIT ( 0xffff, 0x00, IPT_MOUSE_X ) 
      PORT_NAME ( "Mouse X" )
-     PORT_SENSITIVITY ( 100 )
+     PORT_SENSITIVITY ( 150 )
      PORT_CODE( MOUSECODE_1_ANALOG_X )
+     PORT_PLAYER (1)
   
      PORT_START_TAG ( "mouse_y" )
      PORT_BIT ( 0xffff, 0x00, IPT_MOUSE_Y )
      PORT_NAME ( "Mouse Y" )
-     PORT_SENSITIVITY ( 100 ) 
+     PORT_SENSITIVITY ( 150 ) 
      PORT_CODE( MOUSECODE_1_ANALOG_Y )
+     PORT_PLAYER (1)
 
      PORT_START_TAG ( "mouse_button" )
      PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -192,15 +199,15 @@ INPUT_PORTS_START( thom_lightpen )
      PORT_START_TAG ( "lightpen_x" )
      PORT_BIT ( 0xffff, THOM_TOTAL_WIDTH/2, IPT_LIGHTGUN_X )
      PORT_NAME ( "Lightpen X" )
-     PORT_MINMAX( 0, THOM_TOTAL_WIDTH * 2 )
-     PORT_SENSITIVITY( 25 )
+     PORT_MINMAX( 0, THOM_TOTAL_WIDTH )
+     PORT_SENSITIVITY( 50 )
      PORT_CODE( MOUSECODE_1_ANALOG_X )
 
      PORT_START_TAG ( "lightpen_y" )
      PORT_BIT ( 0xffff, THOM_TOTAL_HEIGHT/2, IPT_LIGHTGUN_Y )
      PORT_NAME ( "Lightpen Y" )
-     PORT_MINMAX ( 0, THOM_TOTAL_HEIGHT * 2 )
-     PORT_SENSITIVITY( 25 )
+     PORT_MINMAX ( 0, THOM_TOTAL_HEIGHT )
+     PORT_SENSITIVITY( 50 )
      PORT_CODE( MOUSECODE_1_ANALOG_Y )
 
      PORT_START_TAG ( "lightpen_button" )
@@ -247,111 +254,6 @@ static void mo5_cartridge_getinfo( const device_class *devclass,
   default: 
     cartslot_device_getinfo( devclass, state, info );
   }  
-}
-
-
-/* ------------ cassette ------------ */
-
-static void to7_cassette_getinfo( const device_class *devclass, 
-				  UINT32 state, union devinfo *info )
-{
-  switch ( state ) {
-  case DEVINFO_INT_COUNT:        
-    info->i = 1;
-    break;
-  case DEVINFO_PTR_CASSETTE_FORMATS:
-    info->p = (void *) to7_cassette_formats; 
-    break;
-  case DEVINFO_INT_CASSETTE_DEFAULT_STATE:  
-    info->i = 
-      CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED; 
-    break;
-  default: 
-    cassette_device_getinfo( devclass, state, info );
-  }
-}
-
-static void mo5_cassette_getinfo( const device_class *devclass, 
-				  UINT32 state, union devinfo *info )
-{
-  switch ( state ) {
-  case DEVINFO_INT_COUNT:        
-    info->i = 1;
-    break;
-  case DEVINFO_PTR_CASSETTE_FORMATS:
-    info->p = (void *) mo5_cassette_formats; 
-    break;
-  case DEVINFO_INT_CASSETTE_DEFAULT_STATE:  
-    info->i = 
-      CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED; 
-    break;
-  default: 
-    cassette_device_getinfo( devclass, state, info );
-  }
-}
-
-
-/* ------------ floppy drive ------------ */
-
-static void thom_floppy_getinfo( const device_class *devclass, 
-				 UINT32 state, union devinfo *info )
-{
-  switch ( state ) {
-  case DEVINFO_INT_TYPE:
-    info->i = IO_FLOPPY; 
-    break;
-  case DEVINFO_INT_READABLE:
-    info->i = 1; 
-    break;
-  case DEVINFO_INT_WRITEABLE:
-    info->i = 1;
-    break;
-  case DEVINFO_INT_CREATABLE:
-    info->i = 1;
-    break;
-  case DEVINFO_PTR_INIT:
-    info->init = thom_floppy_init;
-    break;
-  case DEVINFO_PTR_LOAD:
-    info->load = thom_floppy_load;
-    break;
-  case DEVINFO_PTR_UNLOAD:
-    info->unload = thom_floppy_unload;
-    break;
-  case DEVINFO_PTR_CREATE:
-    info->create = thom_floppy_create;
-    break;
-  case DEVINFO_INT_COUNT:
-    info->i = 4;
-    break;
-  case DEVINFO_STR_NAME+0:
-  case DEVINFO_STR_NAME+1:
-  case DEVINFO_STR_NAME+2:
-  case DEVINFO_STR_NAME+3:
-    strcpy( info->s = device_temp_str(), "floppydisk0" );
-    info->s[ strlen( info->s ) - 1 ] += state - DEVINFO_STR_NAME;
-    break;
-  case DEVINFO_STR_SHORT_NAME+0:
-  case DEVINFO_STR_SHORT_NAME+1:
-  case DEVINFO_STR_SHORT_NAME+2:
-  case DEVINFO_STR_SHORT_NAME+3:
-    strcpy( info->s = device_temp_str(), "flop0");
-    info->s[ strlen( info->s ) - 1 ] += state - DEVINFO_STR_SHORT_NAME;
-    break;
-  case DEVINFO_STR_DESCRIPTION+0:
-  case DEVINFO_STR_DESCRIPTION+1:
-  case DEVINFO_STR_DESCRIPTION+2:
-  case DEVINFO_STR_DESCRIPTION+3:
-    strcpy( info->s = device_temp_str(), "Floppy #0" );
-    info->s[ strlen( info->s ) - 1 ] += state - DEVINFO_STR_DESCRIPTION;
-    break;
-  case DEVINFO_STR_DEV_FILE:
-    strcpy( info->s = device_temp_str(), "thom_flop" );
-    break;
-  case DEVINFO_STR_FILE_EXTENSIONS:
-    strcpy( info->s = device_temp_str(), "fd,qd,sap" ); 
-    break;
-  }
 }
 
 
@@ -476,17 +378,18 @@ boot floppy.
     the MESS cassette device is named -cass
   - 1-bit internal buzzer
   - lightpen, with 8-pixel horizontal resolution, 1-pixel vertical
-  - CM 90-112 game & music extension:
+  - SX 90-018 game & music extension
     . 6-bit DAC sound
-    . two 8-position 1-button game pads
+    . two 8-position 2-button game pads
+    . 2-button mouse
     . based on a Motorola 6821 PIA
   - CC 90-232 I/O extension: 
     . CENTRONICS (printer) 
-    . RS232 (TODO)
+    . RS232 (unemulated)
     . based on a Motorola 6821 PIA
     . NOTE: you cannot use the CENTRONICS and RS232 at the same time
-  - RF 57-932: RS232 extension, based on a SY 6551 ACIA
-  - MD 90-120: MODEM, TELETEL extension
+  - RF 57-932: RS232 extension, based on a SY 6551 ACIA (unemulated)
+  - MD 90-120: MODEM, TELETEL extension (unemulated)
     . 1 Motorola 6850 ACIA
     . 1 Motorola 6821 PIA
     . 1 EFB 7513 MODEM FSK V13, full duplex
@@ -500,8 +403,8 @@ boot floppy.
        sides)
     . floppies are 40 tracks/side, 16 sectors/track, 128 or 256 bytes/sector
       = from 80 KB one-sided single-density, to 320 KB two-sided double-density
-    . MESS floppy devices are namer -flop0 to -flop3
-  - alternate 5"1/2 floppy drive extension
+    . MESS floppy devices are named -flop0 to -flop3
+  - alternate 5"1/2 floppy drive extension (unemulated)
     . CD 90-015 floppy controller (no information on this)
     . UD 90-070 5"1/4 single-sided single density floppy drive
   - alternate 3"1/2 floppy drive extension
@@ -512,6 +415,9 @@ boot floppy.
     . QD 90-028 quickdrive 2"8 (QDD), only one drive, signe side
   - speech synthesis extension: based on a Philips / Signetics MEA 8000
     (cannot be used with the MODEM)
+  - MIDIPAK MIDI extension, uses a EF 6850 ACIA
+  - NR 07-005: network extension, MC 6854 based, 2 KB ROM & 64 KB RAM
+    (build by the French Leanord company)
 
 
 T9000 (1980)
@@ -546,6 +452,7 @@ static ADDRESS_MAP_START ( to7, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7d0, 0xe7df ) AM_READWRITE ( to7_floppy_r, to7_floppy_w )
      AM_RANGE ( 0xe7e0, 0xe7e3 ) AM_READWRITE ( pia_2_r, pia_2_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
+     AM_RANGE ( 0xe7f2, 0xe7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
 						to7_modem_mea8000_w )
@@ -624,6 +531,11 @@ ROM_END
 
 INPUT_PORTS_START ( to7_config )
      PORT_START_TAG ( "config" )
+
+     PORT_CONFNAME ( 0x01, 0x00, "Game Port" )
+     PORT_CONFSETTING ( 0x00, DEF_STR( Joystick ) )
+     PORT_CONFSETTING ( 0x01, "Mouse" )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( to7_vconfig )
@@ -634,9 +546,10 @@ INPUT_PORTS_START ( to7_vconfig )
      PORT_CONFSETTING ( 0x01, "Small (16x16)" )
      PORT_CONFSETTING ( 0x02, DEF_STR ( None ) )
   
-     PORT_CONFNAME ( 0x04, 0x00, "Resolution" )
+     PORT_CONFNAME ( 0x0c, 0x08, "Resolution" )
      PORT_CONFSETTING ( 0x00, DEF_STR ( Low ) )
      PORT_CONFSETTING ( 0x04, DEF_STR ( High  ) )
+     PORT_CONFSETTING ( 0x08, "Auto"  )
 
 INPUT_PORTS_END
 
@@ -703,7 +616,7 @@ INPUT_PORTS_START ( to7_keyboard )
      PORT_START_TAG ( "keyboard_1" )
      KEY ( 0, "W", W )
      KEY ( 1, "UP", UP )
-     KEY ( 2, "C", C )
+     KEY ( 2, "C \303\247", C )
      KEY ( 3, "CLEAR", ESC )
      KEY ( 4, "ENTER", ENTER )
      KEY ( 5, "CONTROL", LCONTROL )
@@ -724,17 +637,17 @@ INPUT_PORTS_START ( to7_keyboard )
      KEY ( 2, "B", B )
      KEY ( 3, "S", S )
      KEY ( 4, "/ ?", SLASH )
-     KEY ( 5, "Z", Z)
+     KEY ( 5, "Z \305\223", Z)
      KEY ( 6, "- =", MINUS )
-     KEY ( 7, "2 \" TREMA", 2 )
+     KEY ( 7, "2 \" \302\250", 2 )
      PORT_START_TAG ( "keyboard_4" )
-     KEY ( 0, "AT UP CIRC", TILDE )
+     KEY ( 0, "@ \342\206\221", TILDE )
      KEY ( 1, "RIGHT", RIGHT )
      KEY ( 2, "M", M )
      KEY ( 3, "D", D )
      KEY ( 4, "P", P )
      KEY ( 5, "E", E )
-     KEY ( 6, "0 AGRAVE GRAVE", 0 )
+     KEY ( 6, "0 \140", 0 )
      KEY ( 7, "3 #", 3 )
      PORT_START_TAG ( "keyboard_5" )
      KEY ( 0, ". >", STOP )
@@ -743,7 +656,7 @@ INPUT_PORTS_START ( to7_keyboard )
      KEY ( 3, "F", F )
      KEY ( 4, "O", O )
      KEY ( 5, "R", R )
-     KEY ( 6, "9 ) CCEDILLA", 9 )
+     KEY ( 6, "9 )", 9 )
      KEY ( 7, "4 $", 4 )
      PORT_START_TAG ( "keyboard_6" )
      KEY ( 0, ", <", COMMA )
@@ -752,17 +665,17 @@ INPUT_PORTS_START ( to7_keyboard )
      KEY ( 3, "G", G )
      KEY ( 4, "I", I )
      KEY ( 5, "T", T )
-     KEY ( 6, "8 ( UGRAVE", 8 )
+     KEY ( 6, "8 (", 8 )
      KEY ( 7, "5 %", 5 )
      PORT_START_TAG ( "keyboard_7" )
      KEY ( 0, "N", N )
      KEY ( 1, "DELETE", DEL )
-     KEY ( 2, "J OE", J )
-     KEY ( 3, "H TREMA", H )
+     KEY ( 2, "J \305\222", J )
+     KEY ( 3, "H \302\250", H )
      KEY ( 4, "U", U )
      KEY ( 5, "Y", Y )
-     KEY ( 6, "7 ' EGRAVE ACUTE", 7 )
-     KEY ( 7, "6 & EACUTE", 6 )
+     KEY ( 6, "7 ' \302\264", 7 )
+     KEY ( 7, "6 &", 6 )
 
      /* unused */
      PORT_START_TAG ( "keyboard_8" )
@@ -772,7 +685,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START ( to7 )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to7_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( to7_keyboard )
      PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to7_fconfig )
@@ -919,6 +832,7 @@ static ADDRESS_MAP_START ( to770, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e4, 0xe7e7 ) AM_READWRITE ( to770_gatearray_r, 
                                                 to770_gatearray_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
+     AM_RANGE ( 0xe7f2, 0xe7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
 						to7_modem_mea8000_w )
@@ -958,6 +872,19 @@ ROM_END
 
 INPUT_PORTS_START ( to770 )
      PORT_INCLUDE ( to7 )
+
+     PORT_MODIFY ( "keyboard_1" )
+     KEY ( 2, "C \302\250 \303\247", C )
+     PORT_MODIFY ( "keyboard_4" )
+     KEY ( 6, "0 \303\240 \140", 0 )
+     PORT_MODIFY ( "keyboard_5" )
+     KEY ( 6, "9 ) \303\247", 9 )
+     PORT_MODIFY ( "keyboard_6" )
+     KEY ( 6, "8 ( \303\271", 8 )
+     PORT_MODIFY ( "keyboard_7" )
+     KEY ( 6, "7 ' \303\250 \302\264", 7 )
+     KEY ( 7, "6 & \303\251", 6 )
+
 INPUT_PORTS_END
 
 /* arabic version (QWERTY keyboard) */
@@ -971,20 +898,19 @@ INPUT_PORTS_START ( to770a )
      KEY ( 5, "Q", Q )
      PORT_MODIFY ( "keyboard_3" )
      KEY ( 5, "W", W)
-     KEY ( 7, "2 \" TREMA", 2 )
      PORT_MODIFY ( "keyboard_4" )
      KEY ( 0, ". >", STOP )
-     KEY ( 2, "AT CIRC", QUOTE )
-     KEY ( 6, "0 POUND ACUTE", 0 )
+     KEY ( 2, "@ \342\206\221", TILDE )
+     KEY ( 6, "0 \302\243 \302\260 \140", 0 )
      PORT_MODIFY ( "keyboard_5" )
      KEY ( 0, ", <", COMMA )
-     KEY ( 6, "9 ) NTREMA", 9 )
+     KEY ( 6, "9 ) \303\261", 9 )
      PORT_MODIFY ( "keyboard_6" )
      KEY ( 0, "M", M )
-     KEY ( 6, "8 ( UTREMA", 8 )
+     KEY ( 6, "8 ( \303\274", 8 )
      PORT_START_TAG ( "keyboard_7" )
-     KEY ( 6, "7 ' OTREMA ACUTE", 7 )
-     KEY ( 7, "6 & ATREMA", 6 )
+     KEY ( 6, "7 ' \303\266 \302\264", 7 )
+     KEY ( 7, "6 & \303\244", 6 )
 
 INPUT_PORTS_END
 
@@ -1062,10 +988,9 @@ Unlike the TO7, the BASIC 1.0 is integrated and the MO5 can be used "as-is".
     TO7-incompatible
   - optional cartridge, up to 64 KB, incompatible with TO7,
     masks the integrated BASIC ROM
-  - game & music, I/O, floppy extensions: identical to TO7
-  - NR 07-005: network extension, MC 6854 based, 2 KB ROM & 64 KB RAM
-    (build by the French Leanord company)
+  - game & music, I/O, floppy, network extensions: identical to TO7
   - speech synthesis extension: identical to TO7
+  - MIDIPAK MIDI extension: identical to TO7
 
 MO5E (1986)
 ----
@@ -1095,6 +1020,7 @@ static ADDRESS_MAP_START ( mo5, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xa7e4, 0xa7e7 ) AM_READWRITE ( mo5_gatearray_r,
 						mo5_gatearray_w )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
+     AM_RANGE ( 0xa7f2, 0xa7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_ROMBANK   ( THOM_CART_BANK )
                                  AM_WRITE     ( mo5_cartridge_w )
@@ -1137,7 +1063,7 @@ ROM_END
 /* ------------ inputs  ------------ */
 
 INPUT_PORTS_START ( mo5 )
-     PORT_INCLUDE ( to7 )
+     PORT_INCLUDE ( to770 )
 
      PORT_MODIFY ( "keyboard_0" )
      KEY ( 1, "BASIC", RCONTROL)
@@ -1147,29 +1073,12 @@ INPUT_PORTS_END
 
 /* QWERTY version */
 INPUT_PORTS_START ( mo5e )
-     PORT_INCLUDE ( mo5 )
+     PORT_INCLUDE ( to770a )
 
-     PORT_MODIFY ( "keyboard_1" )
-     KEY ( 0, "Z", Z )
-     PORT_MODIFY ( "keyboard_2" )
-     KEY ( 3, "A", A )
-     KEY ( 5, "Q", Q )
-     PORT_MODIFY ( "keyboard_3" )
-     KEY ( 5, "W", W)
-     KEY ( 7, "2 \" TREMA", 2 )
-     PORT_MODIFY ( "keyboard_4" )
-     KEY ( 0, ". >", STOP )
-     KEY ( 2, "AT CIRC", QUOTE )
-     KEY ( 6, "0 POUND ACUTE", 0 )
-     PORT_MODIFY ( "keyboard_5" )
-     KEY ( 0, ", <", COMMA )
-     KEY ( 6, "9 ) NTREMA", 9 )
-     PORT_MODIFY ( "keyboard_6" )
-     KEY ( 0, "M", M )
-     KEY ( 6, "8 ( UTREMA", 8 )
-     PORT_START_TAG ( "keyboard_7" )
-     KEY ( 6, "7 ' OTREMA ACUTE", 7 )
-     KEY ( 7, "6 & ATREMA", 6 )
+     PORT_MODIFY ( "keyboard_0" )
+     KEY ( 1, "BASIC", RCONTROL)
+     PORT_BIT  ( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
 INPUT_PORTS_END
 
 
@@ -1263,21 +1172,22 @@ It was replaced quickly with the improved TO9+.
 * devices:
   - AZERTY keyboard, 81-keys, French with accents, keypad & function keys
   - cartridge, up to 64 KB, TO7 compatible
-  - two-button mouse (connected to the keyboard)
+  - two-button mouse connected to the keyboard (not working yet)
   - lightpen, with 1-pixel vertical and horizontal resolution
   - 1-bit internal buzzer
   - cassette 900 bauds, TO7 compatible
   - integrated parallel CENTRONICS (printer emulated)
-  - CM 90-112 game extension (identical to the TO7)
+  - SX 90-018: game extension (identical to the TO7)
   - RF 57-932: RS232 extension (identical to the TO7)
   - MD 90-120: MODEM extension (identical to the TO7)
-  - IEEE extension ?
+  - IEEE extension ? (unemulated)
   - floppy:
     . integrated floppy controller, based on WD2793
     . integrated one-sided double-density 3"1/2
     . external two-sided double-density 3"1/2, 5"1/4 or QDD (extension)
     . floppies are TO7 and MO5 compatible
   - speech synthesis extension: identical to TO7
+  - MIDIPAK MIDI extension: identical to TO7
 
 **********************************************************************/
 
@@ -1299,7 +1209,8 @@ static ADDRESS_MAP_START ( to9, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e4, 0xe7e7 ) AM_READWRITE ( to9_gatearray_r, 
 						to9_gatearray_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
-     AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+/*   AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w ) */
+     AM_RANGE ( 0xe7f2, 0xe7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
 						to7_modem_mea8000_w )
@@ -1364,7 +1275,7 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 0, "F2 F7", F2 )
      KEY ( 1, "_ 6", 6 )
      KEY ( 2, "Y", Y )
-     KEY ( 3, "H", H )
+     KEY ( 3, "H \302\250", H )
      KEY ( 4, "UP", UP )
      KEY ( 5, "RIGHT", RIGHT )
      KEY ( 6, "HOME CLEAR", HOME )
@@ -1377,7 +1288,7 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 4, "= +", EQUALS )
      KEY ( 5, "LEFT", LEFT )
      KEY ( 6, "INS", INSERT )
-     KEY ( 7, "B", B )
+     KEY ( 7, "B \302\264", B )
      PORT_START_TAG ( "keyboard_2" )
      KEY ( 0, "F4 F9", F4 )
      KEY ( 1, "' 4", 4 )
@@ -1395,10 +1306,10 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 4, "7-PAD", 7_PAD )
      KEY ( 5, "4-PAD", 4_PAD )
      KEY ( 6, "0-PAD", 0_PAD )
-     KEY ( 7, "C", C )
+     KEY ( 7, "C \136", C )
      PORT_START_TAG ( "keyboard_4" )
      KEY ( 0, "F1 F6", F1 )
-     KEY ( 1, "EACUTE 2", 2 )
+     KEY ( 1, "\303\251 2", 2 )
      KEY ( 2, "Z", Z )
      KEY ( 3, "S", S )
      KEY ( 4, "8-PAD", 8_PAD )
@@ -1406,9 +1317,9 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 6, ".-PAD", DEL_PAD )
      KEY ( 7, "X", X )
      PORT_START_TAG ( "keyboard_5" )
-     KEY ( 0, "# AT", TILDE )
+     KEY ( 0, "# @", TILDE )
      KEY ( 1, "* 1", 1 )
-     KEY ( 2, "A", A )
+     KEY ( 2, "A \140", A )
      KEY ( 3, "Q", Q )
      KEY ( 4, "[ {", QUOTE )
      KEY ( 5, "5-PAD", 5_PAD )
@@ -1416,7 +1327,7 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 7, "W", W )
      PORT_START_TAG ( "keyboard_6" )
      KEY ( 0, "STOP", TAB )
-     KEY ( 1, "EGRAVE 7", 7 )
+     KEY ( 1, "\303\250 7", 7 )
      KEY ( 2, "U", U )
      KEY ( 3, "J", J )
      KEY ( 4, "SPACE", SPACE )
@@ -1434,26 +1345,22 @@ INPUT_PORTS_START ( to9_keyboard )
      KEY ( 7, "; .", STOP )
      PORT_START_TAG ( "keyboard_8" )
      KEY ( 0, "CAPS-LOCK", CAPSLOCK )
-     KEY ( 1, "CCEDILLA 9", 9 )
+     KEY ( 1, "\303\247 9", 9 )
      KEY ( 2, "O", O )
      KEY ( 3, "L", L )
      KEY ( 4, "- \\", BACKSPACE )
-     KEY ( 5, "UGRAVE %", COLON )
+     KEY ( 5, "\303\271 %", COLON )
      KEY ( 6, "ENTER", ENTER )
      KEY ( 7, ": /", SLASH )
      PORT_START_TAG ( "keyboard_9" )
      KEY ( 0, "SHIFT", LSHIFT )  PORT_CODE ( KEYCODE_RSHIFT )
-     KEY ( 1, "AGRAVE 0", 0 )
+     KEY ( 1, "\303\240 0", 0 )
      KEY ( 2, "P", P )
      KEY ( 3, "M", M )
-     KEY ( 4, ") DEGREE", MINUS )
-     KEY ( 5, "^ ITREMA", OPENBRACE )
+     KEY ( 4, ") \302\260", MINUS )
+     KEY ( 5, "\342\206\221 \302\250", OPENBRACE )
      KEY ( 6, "3-PAD", 3_PAD )
      KEY ( 7, "> <", BACKSLASH2 )
-INPUT_PORTS_END
-
-INPUT_PORTS_START ( to9_config )
-     PORT_START_TAG ( "config" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( to9_fconfig )
@@ -1462,9 +1369,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START ( to9 )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to9_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( to9_keyboard )
-     PORT_INCLUDE ( to9_config )
+     PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to9_fconfig )
      PORT_INCLUDE ( to7_vconfig )
      PORT_INCLUDE ( to7_mconfig )
@@ -1533,7 +1440,7 @@ Thomson family.
   - cartridge, up to 64 KB, TO7 compatible
   - two-button serial mouse (TO9-incompatible)
   - lightpen, with 1-pixel vertical and horizontal resolution
-  - two 8-position 2-button game pads (port is integrated)
+  - two 8-position 2-button game pads (SX 90-018 extension integrated)
   - 6-bit DAC sound (NOTE: 1-bit buzzer is gone)
   - cassette 900 bauds, TO7 compatible
   - integrated parallel CENTRONICS (printer emulated)
@@ -1546,8 +1453,7 @@ Thomson family.
    . up to two external two-sided double-density 3"1/2, 5"1/4 or QDD drives
    . floppies are TO7 and MO5 compatible
   - speech synthesis extension: identical to TO7
-
-
+  - MIDIPAK MIDI extension: identical to TO7
 
 TO8D (1987)
 ----
@@ -1580,7 +1486,8 @@ static ADDRESS_MAP_START ( to8, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e4, 0xe7e7 ) AM_READWRITE ( to8_gatearray_r, 
 						to8_gatearray_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
-     AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+/*   AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w ) */
+     AM_RANGE ( 0xe7f2, 0xe7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
 						to7_modem_mea8000_w )
@@ -1671,7 +1578,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START ( to8 )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to9_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( to9_keyboard )
      PORT_INCLUDE ( to8_config )
      PORT_INCLUDE ( to9_fconfig )
@@ -1752,7 +1659,6 @@ The differences with the TO8 are:
   - floppy: one two-sided double-density 3"1/2 floppy drive is integrated
   - RS 52-932 RS232 extension ?
   - digitisation extension
-  - speech synthesis extension: identical to TO7, but masks the internal modem
 
 **********************************************************************/
 
@@ -1780,7 +1686,8 @@ static ADDRESS_MAP_START ( to9p, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xe7e4, 0xe7e7 ) AM_READWRITE ( to8_gatearray_r, 
 						to8_gatearray_w )
      AM_RANGE ( 0xe7e8, 0xe7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
-     AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+/*   AM_RANGE ( 0xe7f0, 0xe7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w ) */
+     AM_RANGE ( 0xe7f2, 0xe7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xe7f8, 0xe7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xe7fe, 0xe7ff ) AM_READWRITE ( to7_modem_mea8000_r, 
 						to7_modem_mea8000_w )
@@ -1886,14 +1793,18 @@ The MO6 is MO5 compatible, but not compatible with the TO family.
   - MO5-compatible cartridge
   - two-button mouse (TO8-like)
   - optional lightpen
-  - 6-bit DAC sound
-  - two 8-position 2-button game pads
+  - integrated game port (similar to SX 90-018)
+    . 6-bit DAC sound
+    . two 8-position 2-button game pads
+    . two-button mouse
   - integrated cassette reader 1200 bauds (MO5 compatible) and 2400 bauds
   - parallel CENTRONICS (printer emulated)
   - RF 57-932: RS232 extension (identical to the TO7), or RF 90-932 (???)
   - IEEE extension ?
   - no integrated controller, but external TO7 floppy controllers & drives
     are possible
+  - speech synthesis extension: identical to TO7 ?
+  - MIDIPAK MIDI extension: identical to TO7 ?
 
 
 Olivetti Prodest PC 128 (1986)
@@ -1929,7 +1840,8 @@ static ADDRESS_MAP_START ( mo6, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xa7e4, 0xa7e7 ) AM_READWRITE ( mo6_gatearray_r, 
 						mo6_gatearray_w )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
-     AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+/*   AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )*/
+     AM_RANGE ( 0xa7f2, 0xa7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_ROMBANK   ( THOM_CART_BANK )
                                  AM_WRITE     ( mo6_cartridge_w )
@@ -2012,7 +1924,7 @@ INPUT_PORTS_START ( mo6_keyboard )
      KEY ( 0, "N", N )
      KEY ( 1, ", ?", COMMA )
      KEY ( 2, "; .", STOP )
-     KEY ( 3, "# AT", TILDE )
+     KEY ( 3, "# @", TILDE )
      KEY ( 4, "SPACE", SPACE )
      KEY ( 5, "X", X )
      KEY ( 6, "W", W )
@@ -2031,12 +1943,12 @@ INPUT_PORTS_START ( mo6_keyboard )
      KEY ( 1, "K", K )
      KEY ( 2, "L", L )
      KEY ( 3, "M", M )
-     KEY ( 4, "B", B )
+     KEY ( 4, "B \302\264", B )
      KEY ( 5, "V", V )
-     KEY ( 6, "C", C )
+     KEY ( 6, "C \136", C )
      KEY ( 7, "CAPS-LOCK", CAPSLOCK )
      PORT_START_TAG ( "keyboard_3" )
-     KEY ( 0, "H", H )
+     KEY ( 0, "H \302\250", H )
      KEY ( 1, "G", G )
      KEY ( 2, "F", F )
      KEY ( 3, "D", D )
@@ -2059,14 +1971,14 @@ INPUT_PORTS_START ( mo6_keyboard )
      KEY ( 2, "R", R )
      KEY ( 3, "E", E )
      KEY ( 4, "Z", Z )
-     KEY ( 5, "A", A )
+     KEY ( 5, "A \140", A )
      KEY ( 6, "CONTROL", LCONTROL  )
      KEY ( 7, "F3 F8", F3 )
      PORT_START_TAG ( "keyboard_6" )
-     KEY ( 0, "7 EACUTE", 7 )
+     KEY ( 0, "7 \303\250", 7 )
      KEY ( 1, "8 !", 8 )
-     KEY ( 2, "9 CCEDILLA", 9 )
-     KEY ( 3, "0 AGRAVE", 0 )
+     KEY ( 2, "9 \303\247", 9 )
+     KEY ( 3, "0 \303\240", 0 )
      KEY ( 4, "- \\", BACKSPACE )
      KEY ( 5, "= +", EQUALS )
      KEY ( 6, "ACCENT", END )
@@ -2076,16 +1988,16 @@ INPUT_PORTS_START ( mo6_keyboard )
      KEY ( 1, "5 (", 5 )
      KEY ( 2, "4 '", 4 )
      KEY ( 3, "3 \"", 3 )
-     KEY ( 4, "2 EACUTE", 2 )
+     KEY ( 4, "2 \303\251", 2 )
      KEY ( 5, "1 *", 1 )
      KEY ( 6, "STOP", TAB )
      KEY ( 7, "F5 F10", F5 )
      PORT_START_TAG ( "keyboard_8" )
      KEY ( 0, "[ {", QUOTE )
      KEY ( 1, "] }", BACKSLASH )
-     KEY ( 2, ") DEGREE", MINUS )
-     KEY ( 3, "^ TREMA", OPENBRACE )
-     KEY ( 4, "UGRAVE %", COLON )
+     KEY ( 2, ") \302\260", MINUS )
+     KEY ( 3, "\342\206\221 \302\250", OPENBRACE )
+     KEY ( 4, "\303\271 %", COLON )
      PORT_BIT  ( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
      /* unused */
@@ -2106,9 +2018,9 @@ INPUT_PORTS_START ( pro128_keyboard )
      PORT_MODIFY ( "keyboard_1" )
      KEY ( 2, "- _", MINUS )
      PORT_MODIFY ( "keyboard_2" )
-     KEY ( 3, "NTILDE", TILDE )
+     KEY ( 3, "\303\221", TILDE )
      PORT_MODIFY ( "keyboard_3" )
-     KEY ( 5, "A", A )
+     KEY ( 5, "A \140", A )
      PORT_MODIFY ( "keyboard_4" )
      KEY ( 4, ". :", STOP )
      KEY ( 5, "+ *", BACKSPACE )
@@ -2120,49 +2032,39 @@ INPUT_PORTS_START ( pro128_keyboard )
      KEY ( 1, "8 (", 8 )
      KEY ( 2, "9 )", 9 )
      KEY ( 3, "0 =", 0 )
-     KEY ( 4, "' POUND", CLOSEBRACE )
+     KEY ( 4, "' \302\243", CLOSEBRACE )
      KEY ( 5, "] }", BACKSLASH )
      PORT_MODIFY ( "keyboard_7" )
      KEY ( 0, "6 &", 6 )
      KEY ( 1, "5 %", 5 )
      KEY ( 2, "4 $", 4 )
-     KEY ( 3, "3 PARAGRAPH", 3 )
+     KEY ( 3, "3 \302\247", 3 )
      KEY ( 4, "2 \"", 2 )
      KEY ( 5, "1 !", 1 )
      PORT_MODIFY ( "keyboard_8" )
      KEY ( 0, "> <", BACKSLASH2 )
-     KEY ( 1, "# ^", EQUALS )
-     KEY ( 2, "CCEDILLA ?", COLON )
-     KEY ( 3, "?? AT", SLASH )
-     KEY ( 4, "!! TREMA", OPENBRACE )
-
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START ( mo6_config )
-     PORT_START_TAG ( "config" )
-
-     PORT_CONFNAME ( 0x01, 0x00, "Game Port" )
-     PORT_CONFSETTING ( 0x00, DEF_STR( Joystick ) )
-     PORT_CONFSETTING ( 0x01, "Mouse" )
+     KEY ( 1, "# \342\206\221", EQUALS )
+     KEY ( 2, "\303\247 ?", COLON )
+     KEY ( 3, "\302\277 @", SLASH )
+     KEY ( 4, "\302\241 \302\250", OPENBRACE )
 
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START ( mo6 )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to9_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( mo6_keyboard )
-     PORT_INCLUDE ( mo6_config )
+     PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to7_fconfig )
      PORT_INCLUDE ( to7_vconfig )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( pro128 )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to9_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( pro128_keyboard )
-     PORT_INCLUDE ( mo6_config )
+     PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to7_fconfig )
      PORT_INCLUDE ( to7_vconfig )
 INPUT_PORTS_END
@@ -2225,7 +2127,7 @@ Here are the differences between the MO6 and MO5NR:
 * devices:
   - AZERTY keyboard has only 58 keys, and no caps-lock led
   - CENTRONICS printer handled differently
-  - MO5-compatible network
+  - MO5-compatible network (probably identical to NR 07-005 extension)
   - extern floppy controller & drive possible, masks the network
 
 **********************************************************************/
@@ -2252,7 +2154,8 @@ static ADDRESS_MAP_START ( mo5nr, ADDRESS_SPACE_PROGRAM, 8 )
      AM_RANGE ( 0xa7e4, 0xa7e7 ) AM_READWRITE ( mo6_gatearray_r, 
 						mo6_gatearray_w )
      AM_RANGE ( 0xa7e8, 0xa7eb ) AM_READWRITE ( acia_6551_r, acia_6551_w )
-     AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w )
+/*   AM_RANGE ( 0xa7f0, 0xa7f7 ) AM_READWRITE ( to9_ieee_r, to9_ieee_w ) */
+     AM_RANGE ( 0xa7f2, 0xa7f3 ) AM_READWRITE ( to7_midi_r, to7_midi_w )
      AM_RANGE ( 0xa7f8, 0xa7fb ) AM_READWRITE ( pia_3_r, pia_3_w )
      AM_RANGE ( 0xa7fe, 0xa7ff ) AM_READWRITE ( mea8000_r, mea8000_w )
      AM_RANGE ( 0xb000, 0xefff ) AM_RAMBANK   ( THOM_CART_BANK ) /* 8 * 16 KB */
@@ -2309,7 +2212,7 @@ INPUT_PORTS_START ( mo5nr_keyboard )
      KEY ( 0, "N", N )
      KEY ( 1, ", <", COMMA )
      KEY ( 2, ". >", STOP )
-     KEY ( 3, "AT CIRC", TILDE )
+     KEY ( 3, "@ \342\206\221", TILDE )
      KEY ( 4, "SPACE CAPS-LOCK", SPACE )
      KEY ( 5, "X", X )
      KEY ( 6, "W", W )
@@ -2328,12 +2231,12 @@ INPUT_PORTS_START ( mo5nr_keyboard )
      KEY ( 1, "K", K )
      KEY ( 2, "L", L )
      KEY ( 3, "M", M )
-     KEY ( 4, "B", B )
+     KEY ( 4, "B \140", B )
      KEY ( 5, "V", V )
-     KEY ( 6, "C", C )
+     KEY ( 6, "C \136", C )
      PORT_BIT  ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
      PORT_START_TAG ( "keyboard_3" )
-     KEY ( 0, "H", H )
+     KEY ( 0, "H \302\250", H )
      KEY ( 1, "G", G )
      KEY ( 2, "F", F )
      KEY ( 3, "D", D )
@@ -2356,20 +2259,20 @@ INPUT_PORTS_START ( mo5nr_keyboard )
      KEY ( 2, "R", R )
      KEY ( 3, "E", E )
      KEY ( 4, "Z", Z )
-     KEY ( 5, "A", A )
+     KEY ( 5, "A \140", A )
      KEY ( 6, "CONTROL", LCONTROL  )
      PORT_BIT  ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
      PORT_START_TAG ( "keyboard_6" )
-     KEY ( 0, "7 '", 7 )
-     KEY ( 1, "8 (", 8 )
-     KEY ( 2, "9 )", 9 )
-     KEY ( 3, "0", 0 )
+     KEY ( 0, "7 ' \303\250", 7 )
+     KEY ( 1, "8 ( \303\271", 8 )
+     KEY ( 2, "9 ) \303\247", 9 )
+     KEY ( 3, "0 \303\240", 0 )
      KEY ( 4, "- =", MINUS )
      KEY ( 5, "+ ;", EQUALS )
      KEY ( 6, "ACCENT", END )
      PORT_BIT  ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
      PORT_START_TAG ( "keyboard_7" )
-     KEY ( 0, "6 &", 6 )
+     KEY ( 0, "6 & \303\251", 6 )
      KEY ( 1, "5 %", 5 )
      KEY ( 2, "4 $", 4 )
      KEY ( 3, "3 #", 3 )
@@ -2386,9 +2289,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START ( mo5nr )
      PORT_INCLUDE ( thom_lightpen )
-     PORT_INCLUDE ( to9_game_port )
+     PORT_INCLUDE ( thom_game_port )
      PORT_INCLUDE ( mo5nr_keyboard )
-     PORT_INCLUDE ( mo6_config )
+     PORT_INCLUDE ( to7_config )
      PORT_INCLUDE ( to7_fconfig )
      PORT_INCLUDE ( to7_vconfig )
 INPUT_PORTS_END

@@ -56,6 +56,10 @@ extern WRITE8_HANDLER ( to7_cartridge_w );
 extern READ8_HANDLER ( to7_modem_mea8000_r );
 extern WRITE8_HANDLER ( to7_modem_mea8000_w );
 
+/* MIDI extension (actually an 6850 ACIA) */
+extern READ8_HANDLER  ( to7_midi_r );
+extern WRITE8_HANDLER ( to7_midi_w );
+
 extern MACHINE_START ( to7 );
 extern MACHINE_RESET ( to7 );
 

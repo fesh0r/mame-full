@@ -32,7 +32,7 @@
 /* One GPL is what is drawn in 1 us by the video system in the active window.
    Most of the time, it corresponds to a 8-pixel wide horizontal span.
    For some TO8/9/9+/MO6 modes, it can be 4-pixel or 16-pixel wide.
-   There are always 40 GPLs in the active width, and it is always defined by
+   There are always 40 GPLs in an active row, and it is always defined by
    two bytes in video memory (0x2000 bytes appart).
 */
 
@@ -41,32 +41,47 @@
 
 /****************** dynamic screen size *****************/
 
+/* We allow choosing dynamically:
+   - the border size
+   - whether we use 640 pixels or 320 pixels in an active row
+     (now this is automatically choosen by default for each frame)
+ */
+
 static UINT16 thom_bwidth;
 static UINT16 thom_bheight;
 /* border size */
 
 static UINT8  thom_hires;
 /* 0 = low res: 320x200 active area (faster)
-   1 = hi res:  640x400 active area (can represent 640x200 video mode)
+   1 = hi res:  640x200 active area (can represent all video modes)
  */
+
+static UINT8 thom_hires_better;
+/* 1 = a 640 mode was used in the last frame */
 
 static int thom_update_screen_size( void )
 {
   UINT8 p = readinputport( THOM_INPUT_VCONFIG );
   int new_w, new_h, changed = 0;
   switch ( p & 3 ) {
-  case 0:  thom_bwidth = 56; thom_bheight = 47; break; /* as in original */
+  case 0:  thom_bwidth = 56; thom_bheight = 47; break; /* as in original (?) */
   case 1:  thom_bwidth = 16; thom_bheight = 16; break; /* small */
   default: thom_bwidth =  0; thom_bheight =  0; break; /* none */
   }
-  thom_hires = ( p & 4 ) ? 1 : 0;
+
+  switch ( p & 0xc ) {
+  case 0:  thom_hires = 0; break;                 /* low */
+  case 4:  thom_hires = 1; break;                 /* high */
+  default: thom_hires = thom_hires_better; break; /* auto */
+  }
 
   new_w = ( 320 + thom_bwidth * 2 ) * ( thom_hires + 1 ) - 1;
-  new_h = ( 200 + thom_bheight * 2 ) * (thom_hires + 1 ) - 1;
+  new_h = ( 200 + thom_bheight * 2 ) /** (thom_hires + 1 )*/ - 1;
   if ( ( Machine->screen[0].visarea.max_x != new_w ) ||
-       ( Machine->screen[0].visarea.max_y != new_h ) ) 
+       ( Machine->screen[0].visarea.max_y != new_h ) ) {
     changed = 1;
   video_screen_set_visarea( 0, 0, new_w, 0, new_h );
+  }
 
   return changed;
 }
@@ -111,14 +126,23 @@ struct thom_vsignal thom_get_vsignal ( void )
 
 /************************** lightpen *******************************/
 
+static void thom_get_lightpen_pos( int*x, int* y )
+{
+  *x = readinputport( THOM_INPUT_LIGHTPEN     );
+  *y = readinputport( THOM_INPUT_LIGHTPEN + 1 );
+  if ( *x < 0 ) *x = 0;
+  if ( *y < 0 ) *y = 0;
+  if ( *x > 2 * thom_bwidth  + 319 ) *x = 2 * thom_bwidth  + 319;
+  if ( *y > 2 * thom_bheight + 199 ) *y = 2 * thom_bheight + 199;
+}
+
 struct thom_vsignal thom_get_lightpen_vsignal ( int xdec, int ydec, int xdec2 )
 {
   struct thom_vsignal v;
-  int x = readinputport( THOM_INPUT_LIGHTPEN     );
-  int y = readinputport( THOM_INPUT_LIGHTPEN + 1 );
+  int x, y;
   int gpl;
 
-  if ( thom_hires ) { x /= 2; y /= 2; }
+  thom_get_lightpen_pos( &x, &y );
   x += xdec - thom_bwidth;
   y += ydec - thom_bheight;
 
@@ -174,10 +198,11 @@ static void thom_lightpen_step ( int step )
    video hardware, with its 16-colors chosen among 4096, 9 video modes,
    and 4 video pages. Moreover, it emulates changing the palette several times
    per frame to simulate more than 16 colors per frame (and the same for mode 
-   and page switchs).
+   and page switchs) and cooper effects (distinguishing the left and right
+   border color of each row).
 
-   TO7, TO7/70 and MO5 video harware are much simpler (8 or 16 fixed colors,
-   one mode and one video page). Although the three are different, thay can all
+   TO7, TO7/70 and MO5 video hardware are much simpler (8 or 16 fixed colors,
+   one mode and one video page). Although the three are different, they can all
    be emulated by the TO8 video hardware.
    Thus, we use the same TO8-emulation code to deal with these simpler
    hardware (although it is somewhat of an overkill).
@@ -195,12 +220,13 @@ static UINT16 thom_pal[16];        /* current palette */
 static UINT8  thom_pal_changed;    /* whether pal != old_pal */
 static UINT8  thom_border_index;   /* current border color index */
 
-/* border color at each scanline, including top and bottom border
-   (-1 means unchanged)
+/* the left and right border color for each row (including top and bottom 
+   border rows); -1 means unchanged wrt last scanline
 */
-static  INT16 thom_border[THOM_TOTAL_HEIGHT+1];
+static  INT16 thom_border_l[THOM_TOTAL_HEIGHT+1];
+static  INT16 thom_border_r[THOM_TOTAL_HEIGHT+1];
 
-/* active area, update one scan-line at a time every 64us,
+/* active area, updated one scan-line at a time every 64us,
    then blitted in VIDEO_UPDATE
  */
 static UINT16 thom_vbody[640*200];
@@ -208,7 +234,7 @@ static UINT16 thom_vbody[640*200];
 static UINT8 thom_vmode; /* current vide mode */
 static UINT8 thom_vpage; /* current video page */
 
-/* this stores the video mode & page at each GPL in the last line, to cope with
+/* this stores the video mode & page at each GPL in the current line
    (-1 means unchanged)
  */
 static INT16 thom_vmodepage[41];
@@ -222,13 +248,41 @@ static UINT8 thom_vmem_dirty[205];
 static UINT8 thom_vstate_dirty;
 static UINT8 thom_vstate_last_dirty;
 
+/* returns 1 if the mode is 640 pixel wide, 0 if it is 160 or 320 */
+static int thom_mode_is_hires( int mode )
+{
+  return ( mode == THOM_VMODE_80 ) || ( mode == THOM_VMODE_80_TO9 );
+}
 
 /* either the border index or its palette entry has changed */
 static void thom_border_changed( void )
 {
-  unsigned l = (thom_video_elapsed() + 53) >> 6;
-  if ( l > THOM_TOTAL_HEIGHT ) l = THOM_TOTAL_HEIGHT;
-  thom_border[ l ] = thom_pal[ thom_border_index ];
+  unsigned l = thom_video_elapsed();
+  unsigned y = l >> 6;
+  unsigned x = l & 63;
+  unsigned color =  thom_pal[ thom_border_index ];
+  if ( y >= THOM_TOTAL_HEIGHT ) {
+    /* end of page */
+    thom_border_r[ THOM_TOTAL_HEIGHT ] = color;
+  }
+  else if ( ! x ) {
+    /* start of line */
+    thom_border_l[ y ] = color;
+    thom_border_r[ y ] = color;
+  }
+  else if ( x <= 19 ) {
+    /* between left and right border */
+    /* NOTE: this makes the lower right part of the color picker blink
+       in the TO8/TO9/TO9+, which actually happens on the real computer!
+    */
+    thom_border_r[ y ] = color;
+    thom_border_l[ y + 1 ] = color;
+  }
+  else {
+    /* end of line */
+    thom_border_l[ y + 1 ] = color;
+    thom_border_r[ y + 1 ] = color;
+  }
 }
 
 /* the video mode or page has changed */
@@ -270,6 +324,7 @@ void thom_set_video_mode ( unsigned mode )
   if ( mode != thom_vmode ) {
     thom_vmode = mode;
     thom_gplinfo_changed();
+    thom_hires_better |= thom_mode_is_hires( mode );
   }
 }
 
@@ -372,7 +427,7 @@ UPDATE_LOW( to9 )
 }
 END_UPDATE
 
-/* 320x200, 4-colors, no constraints */
+/* 320x200, 4-colors, no constraint */
 UPDATE_HI( bitmap4 ) 
 {
   int i;
@@ -428,7 +483,7 @@ UPDATE_LOW( bitmap4alt )
 }
 END_UPDATE
 
-/* 160x200, 16-colors, no constraints */
+/* 160x200, 16-colors, no constraint */
 UPDATE_HI( bitmap16 ) 
 {
   dst[ 0] = dst[ 1] = dst[ 2] = dst[ 3] = Machine->pens[ pal[ rama >> 4 ] ];
@@ -446,7 +501,7 @@ UPDATE_LOW( bitmap16 )
 }
 END_UPDATE
 
-/* 640x200 (80 text column), 2-colors, no constraints */
+/* 640x200 (80 text column), 2-colors, no constraint */
 UPDATE_HI( mode80 ) 
 {
   int i;
@@ -461,7 +516,7 @@ UPDATE_HI( mode80 )
 END_UPDATE
 UPDATE_LOW( mode80 ) 
 {
-  /* merge pixels */
+  /* 640-pixel mode but 320 pixels emulated => we merge pixels */
   int i;
   pen_t c[4];
   c[0] = Machine->pens[ pal[ 0 ] ];
@@ -488,7 +543,6 @@ UPDATE_HI( mode80_to9 )
 END_UPDATE
 UPDATE_LOW( mode80_to9 ) 
 {
-  /* merge pixels */
   int i;
   pen_t c[4];
   c[0] = Machine->pens[ pal[ 0 ] ];
@@ -623,7 +677,8 @@ void thom_scanline_start( int y )
       do { xx++; } while ( xx < 40 && thom_vmodepage[xx] == -1 );
       thom_scandraw_funcs[ mode ][ thom_hires ]
 	( thom_vram + y * 40 + page * 0x4000,
-	  thom_vbody + y * 320 * (thom_hires+1), thom_last_pal, x, xx-x );
+	  thom_vbody + y * 320 * (thom_hires+1),
+	  thom_last_pal, x, xx-x );
       x = xx;
     }
     thom_vmem_dirty[y] = 0;
@@ -704,44 +759,58 @@ VIDEO_UPDATE ( thom )
 
   /* upper border */
   for ( y = 0; y < THOM_BORDER_HEIGHT - thom_bheight; y++ )
-    if ( thom_border[ y ] != -1 ) border = Machine->pens[ thom_border[ y ] ];
+    if ( thom_border_l[ y ] != -1 ) border = Machine->pens[ thom_border_l[ y ] ];
   ypos = 0;
   while ( y < THOM_BORDER_HEIGHT ) {
-    if ( thom_border[ y ] != -1 ) border = Machine->pens[ thom_border[ y ] ];
+    if ( thom_border_l[ y ] != -1 ) border = Machine->pens[ thom_border_l[ y ] ];
     wrect.min_y = ypos;
-    do { y++; ypos += scale; }
-    while ( y < THOM_BORDER_HEIGHT && thom_border[ y ] == -1 );
+    do { y++; ypos ++ /* += scale */; }
+    while ( y < THOM_BORDER_HEIGHT && thom_border_l[ y ] == -1 );
     wrect.max_y = ypos - 1;
     fillbitmap( bitmap,  border, &wrect );
   }
 
-  /* left and right borders */
+  /* left border */
   while ( y < yup ) {
-    if ( thom_border[ y ] != -1 ) border = Machine->pens[ thom_border[ y ] ];
-    lrect.min_y = rrect.min_y = ypos;
-    do { y++; ypos += scale; }
-    while ( y < yup &&  thom_border[ y ] == -1 );
-    lrect.max_y = rrect.max_y = ypos - 1;
+    if ( thom_border_l[ y ] != -1 ) border = Machine->pens[ thom_border_l[ y ] ];
+    lrect.min_y = ypos;
+    do { y++; ypos ++ /* += scale */; }
+    while ( y < yup && thom_border_l[ y ] == -1 );
+    lrect.max_y = ypos - 1;
     fillbitmap( bitmap, border, &lrect );
-    fillbitmap( bitmap, border, &rrect );
       }
 
   /* lower border */
   while (y < ybot ) {
-    if ( thom_border[ y ] != -1 ) border = Machine->pens[ thom_border[ y ] ];
+    if ( thom_border_l[ y ] != -1 ) border = Machine->pens[ thom_border_l[ y ] ];
     wrect.min_y = ypos;
-    do { y++; ypos += scale; }
-    while ( y < ybot && thom_border[ y ] == -1 );
+    do { y++; ypos ++ /* += scale */; }
+    while ( y < ybot && thom_border_l[ y ] == -1 );
     wrect.max_y = ypos - 1;
     fillbitmap( bitmap, border, &wrect );
   }
 
-  /* body */
-  ypos = thom_bheight * scale;
-  for ( y = 0; y < 200; v += xwidth, y++ , ypos += scale ) {
+  /* right border */
+  for ( y = 0; y < THOM_BORDER_HEIGHT; y++ )
+    if ( thom_border_r[ y ] != -1 ) border = Machine->pens[ thom_border_r[ y ] ];
+  ypos = thom_bheight /* * scale */;
+  while ( y < yup ) {
+    if ( thom_border_r[ y ] != -1 ) border = Machine->pens[ thom_border_r[ y ] ];
+    rrect.min_y = ypos;
+    do { y++; ypos ++ /* += scale */; }
+    while ( y < yup && thom_border_r[ y ] == -1 );
+    rrect.max_y = ypos - 1;
+    fillbitmap( bitmap, border, &rrect );
+  }
+
+  /* active area */
+  ypos = thom_bheight /* * scale */;
+  for ( y = 0; y < 200; v += xwidth, y++ , ypos ++ /* += scale */ ) {
     draw_scanline16( bitmap, xbleft, ypos, xwidth, v, NULL, -1 );
+#if 0
     if ( thom_hires )
       draw_scanline16( bitmap, xbleft, ypos+1, xwidth, v, NULL, -1 );
+#endif
   }
 
 	return 0;
@@ -775,7 +844,7 @@ VIDEO_EOF ( thom )
 {
   int fnew, fold = FLOP_STATE;
   int i;
-  UINT16 b = 12;
+  UINT16 b = 0;
   struct thom_vsignal l = thom_get_lightpen_vsignal( 0, -1, 0 );
   
   LOG (( "%f thom: video eof called\n", timer_get_time() ));
@@ -787,19 +856,19 @@ VIDEO_EOF ( thom )
   if ( fnew != fold ) output_set_value( "floppy", fnew );
 
   /* prepare state for next frame */
-  for ( i = 0; i <= THOM_TOTAL_HEIGHT; i++ )
-    if ( thom_border[ i ] != -1 ) {
-      b = thom_border[ i ];
-      thom_border[ i ] = -1;
+  for ( i = 0; i <= THOM_TOTAL_HEIGHT; i++ ) {
+    if ( thom_border_l[ i ] != -1 ) b = thom_border_l[ i ];
+    if ( thom_border_r[ i ] != -1 ) b = thom_border_r[ i ];
   }
-  thom_border[ 0 ] = b;
+  memset( thom_border_l, 0xff, sizeof( thom_border_l ) );
+  memset( thom_border_r, 0xff, sizeof( thom_border_r ) );
+  thom_border_l[ 0 ] = b;
+  thom_border_r[ 0 ] = b;
   thom_vstate_last_dirty = thom_vstate_dirty;
   thom_vstate_dirty = 0;
   
-
   /* schedule first init signal */
-  timer_adjust( thom_init_timer, TIME_IN_USEC( 64 * THOM_BORDER_HEIGHT + 7 ), 
-		0, 0 );
+  timer_adjust( thom_init_timer, TIME_IN_USEC( 64 * THOM_BORDER_HEIGHT + 7 ), 0, 0 );
 
   /* schedule first lightpen signal */
   l.line &= ~1; /* hack (avoid lock in MO6 palette selection) */
@@ -817,6 +886,9 @@ VIDEO_EOF ( thom )
   /* update screen size according to user options */
   if ( thom_update_screen_size() )
     thom_vstate_dirty = 1;
+
+  /* hi-res automatic */
+  thom_hires_better = thom_mode_is_hires( thom_vmode );
 }
 
 
@@ -840,10 +912,13 @@ VIDEO_START ( thom )
   /* scan-line state */
   memcpy( thom_last_pal, thom_pal_init, 32 );
   memcpy( thom_pal, thom_pal_init, 32 );
-  memset( thom_border, 0, sizeof( thom_border ) );
+  memset( thom_border_l, 0xff, sizeof( thom_border_l ) );
+  memset( thom_border_r, 0xff, sizeof( thom_border_r ) );
   memset( thom_vbody, 0, sizeof( thom_vbody ) );
   memset( thom_vmodepage, 0, sizeof( thom_vmodepage ) );
   memset( thom_vmem_dirty, 0, sizeof( thom_vmem_dirty ) );
+  thom_border_l[ 0 ] = 0;
+  thom_border_r[ 0 ] = 0;
   thom_vmode = 0;
   thom_vpage = 0;
   thom_border_index = 0;
@@ -851,7 +926,8 @@ VIDEO_START ( thom )
   thom_vstate_last_dirty = 1;
   state_save_register_global_array( thom_last_pal );
   state_save_register_global_array( thom_pal );
-  state_save_register_global_array( thom_border );
+  state_save_register_global_array( thom_border_l );
+  state_save_register_global_array( thom_border_r );
   state_save_register_global_array( thom_vbody );
   state_save_register_global_array( thom_vmodepage );
   state_save_register_global_array( thom_vmem_dirty );
@@ -888,6 +964,7 @@ VIDEO_START ( thom )
   state_save_register_global( thom_bwidth );
   state_save_register_global( thom_bheight );
   state_save_register_global( thom_hires );
+  state_save_register_global( thom_hires_better );
 
   return 0;
 }
@@ -928,9 +1005,8 @@ WRITE8_HANDLER ( to7_vram_w )
 /* bit    15:  latched INIL */
 unsigned to7_lightpen_gpl ( int decx, int decy )
 {
-  int x = readinputport( THOM_INPUT_LIGHTPEN     );
-  int y = readinputport( THOM_INPUT_LIGHTPEN + 1 );
-  if ( thom_hires ) { x /= 2; y /= 2; }
+  int x,y;
+  thom_get_lightpen_pos( &x, &y );
   x -= thom_bwidth;
   y -= thom_bheight;
   if ( x < 0 || y < 0 || x >= 320 || y >= 200 ) return 0;

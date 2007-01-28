@@ -44,6 +44,9 @@ System Driver Changes:
 - [THOMSON] Fixed device name that clashed with "cc" option on main MESS.  (bug
   #994) [Antoine Mine]
 
+- [THOMSON] Improved video and mouse emulation, and all machines now use the
+  Model 2 Game Extension.  [Antoine Mine]
+
 - [TRS80] Fixed TRS-80 drivers.  [Robbert, R. Belmont]
 
 - [VTECH1] Fixed memory leak.  (bug #1021) [Nate Woods]
