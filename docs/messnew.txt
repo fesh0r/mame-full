@@ -23,6 +23,8 @@ System Driver Changes:
 - [COCO] Fixed hi-res interface regression introduced in 0.105.  Also cleaned
   up how input devices work.  (bug #1025) [Nate Woods]
 
+- [COCO] Fixed regression in one-bit sound.  (bug #1041) [Nate Woods]
+
 - [DGNBETA] More fully implemented certain graphics modes.  [Phill
   Harvey-Smith]
   

@@ -1123,28 +1123,29 @@ static void coco_sound_update(void)
 	 * automatically mute any devices that are switched out.
 	 */
 	UINT8 dac = pia_get_output_a(1) & 0xFC;
-	UINT8 pia1_pb1 = pia_get_output_b(1) & 0x02;
+	UINT8 pia1_pb1 = (pia_get_output_b(1) & 0x02) ? 0x80 : 0x00;
 	int soundmux_status = get_soundmux_status();
 
 	if (soundmux_status & SOUNDMUX_STATUS_ENABLE)
 	{
-		switch(soundmux_status) {
-		case SOUNDMUX_STATUS_ENABLE:
-			/* DAC */
-			DAC_data_w(0, pia1_pb1 + (dac >> 1) );  /* Mixing the two sources */
-			break;
-		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
-			/* CSN */
-			DAC_data_w(0, pia1_pb1); /* Mixing happens elsewhere */
-			break;
-		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL2:
-			/* CART Sound */
-			DAC_data_w(0, pia1_pb1); /* To do: mix in cart signal */
-			break;
-		default:
-			/* This pia line is always connected to the output */
-			DAC_data_w(0, pia1_pb1);
-			break;
+		switch(soundmux_status)
+		{
+			case SOUNDMUX_STATUS_ENABLE:
+				/* DAC */
+				DAC_data_w(0, pia1_pb1 + (dac >> 1) );  /* Mixing the two sources */
+				break;
+			case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+				/* CSN */
+				DAC_data_w(0, pia1_pb1); /* Mixing happens elsewhere */
+				break;
+			case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL2:
+				/* CART Sound */
+				DAC_data_w(0, pia1_pb1); /* To do: mix in cart signal */
+				break;
+			default:
+				/* This pia line is always connected to the output */
+				DAC_data_w(0, pia1_pb1);
+				break;
 		}
 	}
 }
