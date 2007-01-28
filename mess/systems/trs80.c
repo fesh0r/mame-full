@@ -1,18 +1,28 @@
 /***************************************************************************
 TRS80 memory map
 
-0000-2fff ROM					  R   D0-D7
+0000-2fff ROM				  R   D0-D7
 3000-37ff ROM on Model III		  R   D0-D7
 		  unused on Model I
+37de      UART status			  R/W D0-D7
+37df      UART data			  R/W D0-D7
+37e0      interrupt latch address (lnw80 = for the realtime clock)
+37e1      select disk drive 0		  W
+37e2      cassette drive latch address	  W
+37e3      select disk drive 1		  W
+37e4      select which cassette unit      W   D0-D1 (D0 selects unit 1, D1 selects unit 2)
+37e5      select disk drive 2		  W
+37e7      select disk drive 3		  W
 37e0-37e3 floppy motor			  W   D0-D3
 		  or floppy head select   W   D3
-37e4-37eb printer / RS232?? 	  R/W D0-D7
+37e8      send a byte to printer          W   D0-D7
+37e8      read printer status             R   D7
 37ec-37ef FDC WD179x			  R/W D0-D7
-37ec	  command				  W   D0-D7
-37ec	  status				  R   D0-D7
-37ed	  track 				  R/W D0-D7
-37ee	  sector				  R/W D0-D7
-37ef	  data					  R/W D0-D7
+37ec	  command			  W   D0-D7
+37ec	  status			  R   D0-D7
+37ed	  track 			  R/W D0-D7
+37ee	  sector			  R/W D0-D7
+37ef	  data				  R/W D0-D7
 3800-38ff keyboard matrix		  R   D0-D7
 3900-3bff unused - kbd mirrored
 3c00-3fff video RAM 			  R/W D0-D5,D7 (or D0-D7)
@@ -21,6 +31,50 @@ TRS80 memory map
 Interrupts:
 IRQ mode 1
 NMI
+
+I/O ports
+FF:
+- bits 0 and 1 are for writing a cassette
+- bit 2 must be high to turn the cassette player on, enables cassette data paths on a system-80
+- bit 3 switches the display between 64 or 32 characters per line
+- bit 7 is for reading from a cassette
+FE:
+- bit 0 is for selecting inverse video of the whole screen on a lnw80
+- bit 2 enables colour on a lnw80
+- bit 3 is for selecting roms (low) or 16k hires area (high) on a lnw80
+- bit 4 selects internal cassette player (low) or external unit (high) on a system-80
+FD:
+- bit 7 for reading the printer status on a system-80
+- all bits for writing to a printer on a system-80 
+F9:
+- UART data (write) status (read) on a system-80
+F8:
+- UART data (read) status (write) on a system-80
+EB:
+- UART data (read and write) on a Model III/4
+EA:
+- UART status (read and write) on a Model III/4
+E9:
+- UART Configuration jumpers (read) on a Model III/4
+E8:
+- UART Modem Status register (read) on a Model III/4
+- UART Master Reset (write) on a Model III/4
+***************************************************************************
+
+Not dumped:
+ TRS80 Japanese bios
+ TRS80 Katakana Character Generator
+ TRS80 Model III and 4 Character Generators
+
+Not emulated:
+ TRS80 Japanese kana/ascii switch and alternate keyboard
+ TRS80 Model III and 4 hardware above what is in a Model I.
+ LNW80 1.77 / 4.0 mhz switch
+ LNW80 Colour board
+ LNW80 Hires graphics
+ LNW80 24x80 screen
+ LNW80 Character generator hasn't been decoded, that's why the screen is corrupt
+
 ***************************************************************************/
 
 #include "includes/trs80.h"
@@ -29,6 +83,18 @@ NMI
 
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H
+
+READ8_HANDLER (trs80_wd179x_r)
+{
+	if (readinputport(0) & 0x80)
+	{
+		return wd179x_status_r(offset);
+	}
+	else
+	{
+		return 0xff;
+	}
+}
 
 static ADDRESS_MAP_START( mem_level1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_ROM
@@ -48,7 +114,7 @@ static ADDRESS_MAP_START( mem_model1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x37e0, 0x37e3) AM_READWRITE(trs80_irq_status_r, trs80_motor_w)
 	AM_RANGE(0x37e4, 0x37e7) AM_NOP
 	AM_RANGE(0x37e8, 0x37eb) AM_READWRITE(trs80_printer_r, trs80_printer_w)
-	AM_RANGE(0x37ec, 0x37ec) AM_READWRITE(wd179x_status_r, wd179x_command_w)
+	AM_RANGE(0x37ec, 0x37ec) AM_READWRITE(trs80_wd179x_r, wd179x_command_w)
 	AM_RANGE(0x37ed, 0x37ed) AM_READWRITE(wd179x_track_r, wd179x_track_w)
 	AM_RANGE(0x37ee, 0x37ee) AM_READWRITE(wd179x_sector_r, wd179x_sector_w)
 	AM_RANGE(0x37ef, 0x37ef) AM_READWRITE(wd179x_data_r, wd179x_data_w)
@@ -74,7 +140,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( io_model3, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xe0, 0xe3) AM_READWRITE(trs80_irq_status_r, trs80_irq_mask_w)
 	AM_RANGE(0xe4, 0xe4)	AM_WRITE(trs80_motor_w)
-	AM_RANGE(0xf0, 0xf0) AM_READWRITE(wd179x_status_r, wd179x_command_w)
+	AM_RANGE(0xf0, 0xf0) AM_READWRITE(trs80_wd179x_r, wd179x_command_w)
 	AM_RANGE(0xf1, 0xf1) AM_READWRITE(wd179x_track_r, wd179x_track_w)
 	AM_RANGE(0xf2, 0xf2) AM_READWRITE(wd179x_sector_r, wd179x_sector_w)
 	AM_RANGE(0xf3, 0xf3) AM_READWRITE(wd179x_data_r, wd179x_data_w)
@@ -110,15 +176,15 @@ NB: row 7 contains some originally unused bits
 
 INPUT_PORTS_START( trs80 )
 	PORT_START /* IN0 */
-	PORT_DIPNAME(	  0x80, 0x80,	"Floppy Disc Drives")
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-	PORT_DIPNAME(	  0x40, 0x40,	"Video RAM") PORT_CODE(KEYCODE_F1)
-	PORT_DIPSETTING(	0x40, "7 bit" )
-	PORT_DIPSETTING(	0x00, "8 bit" )
-	PORT_DIPNAME(	  0x20, 0x00,	"Virtual Tape") PORT_CODE(KEYCODE_F2)
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_CONFNAME(	  0x80, 0x80,	"Floppy Disc Drives")
+	PORT_CONFSETTING(	0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(	0x80, DEF_STR( On ) )
+	PORT_CONFNAME(	  0x40, 0x40,	"Video RAM") PORT_CODE(KEYCODE_F1)
+	PORT_CONFSETTING(	0x40, "7 bit" )
+	PORT_CONFSETTING(	0x00, "8 bit" )
+	PORT_CONFNAME(	  0x20, 0x00,	"Virtual Tape") PORT_CODE(KEYCODE_F2)
+	PORT_CONFSETTING(	0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(	0x20, DEF_STR( On ) )
 	PORT_BIT(	  0x08, 0x00, IPT_KEYBOARD) PORT_NAME("NMI") PORT_CODE(KEYCODE_F4)
 	PORT_BIT(	  0x04, 0x00, IPT_KEYBOARD) PORT_NAME("Tape start") PORT_CODE(KEYCODE_F5)
 	PORT_BIT(	  0x02, 0x00, IPT_KEYBOARD) PORT_NAME("Tape stop") PORT_CODE(KEYCODE_F6)
@@ -390,6 +456,14 @@ ROM_START(trs80m3)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, CRC(0033f2b9) SHA1(0d2cd4197d54e2e872b515bbfdaa98efe502eda7))
 ROM_END
 
+ROM_START(trs80m4)
+	ROM_REGION(0x10000, REGION_CPU1,0)
+	ROM_LOAD("trs80m4.rom", 0x0000, 0x3800, CRC(1a92d54d) SHA1(752555fdd0ff23abc9f35c6e03d9d9b4c0e9677b))
+
+	ROM_REGION(0x00c00, REGION_GFX1,0)
+	/* this rom unlikely to be the correct one, but it will do for now */
+	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, CRC(0033f2b9) SHA1(0d2cd4197d54e2e872b515bbfdaa98efe502eda7))
+ROM_END
 
 static void trs80_cassette_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
 {
@@ -460,10 +534,12 @@ SYSTEM_CONFIG_START(trs8012)
 SYSTEM_CONFIG_END
 
 
-/*	  YEAR  NAME	  PARENT	 COMPAT	MACHINE   INPUT	 INIT  CONFIG	COMPANY	 FULLNAME */
-COMP( 1977, trs80,    0,		 0,		level1,   trs80, 0,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" , 0)
-COMP( 1978, trs80l2,  trs80,	 0,		model1,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" , 0)
-COMP( 1978, trs80l2a, trs80,	 0,		model1,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" , 0)
-COMP( 1980, sys80,    trs80,	 0,		model1,   trs80, 0,    trs8012,	"EACA Computers Ltd.","System-80" , 0)
-COMP( 1981, lnw80,    trs80,	 0,		model1,   trs80, 0,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
-COMP( 1980, trs80m3,  trs80,	 0,		model3,   trs80, 0,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+/*    YEAR  NAME      PARENT	 COMPAT	        MACHINE   INPUT	 INIT  CONFIG	COMPANY	 FULLNAME */
+COMP( 1977, trs80,    0,	 0,		level1,   trs80, trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" , 0)
+COMP( 1978, trs80l2,  trs80,	 0,		model1,   trs80, trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" , 0)
+COMP( 1978, trs80l2a, trs80,	 0,		model1,   trs80, trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" , 0)
+COMP( 1980, sys80,    trs80,	 0,		model1,   trs80, trs80,    trs8012,	"EACA Computers Ltd.","System-80" , 0)
+COMP( 1981, lnw80,    trs80,	 0,		model1,   trs80, trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
+COMP( 1980, trs80m3,  trs80,	 0,		model3,   trs80, trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+COMP( 1980, trs80m4,  trs80,	 0,		model3,   trs80, trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model 4", GAME_NOT_WORKING )
+								 

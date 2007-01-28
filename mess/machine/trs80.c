@@ -286,12 +286,10 @@ static void trs80_machine_reset(running_machine *machine)
 	}
 }
 
-MACHINE_START( trs80 )
+DRIVER_INIT( trs80 )
 {
 	UINT8 *FNT = memory_region(REGION_GFX1);
 	int i, y;
-
-	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
 
 	for( i = 0x000; i < 0x080; i++ )
 	{
@@ -317,7 +315,11 @@ MACHINE_START( trs80 )
 		FNT[i*FH+ 4] = FNT[i*FH+ 5] = FNT[i*FH+ 6] = FNT[i*FH+ 7] = b2 | b3;
 		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
 	}
+}
 
+MACHINE_START( trs80 )
+{
+	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
 	add_reset_callback(machine, trs80_machine_reset);
 	add_exit_callback(machine, tape_put_close);
 	return 0;

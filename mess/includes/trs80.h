@@ -24,6 +24,7 @@ VIDEO_UPDATE( trs80 );
 void trs80_sh_sound_init(const char * gamename);
 
 MACHINE_START( trs80 );
+DRIVER_INIT( trs80 );
 
 WRITE8_HANDLER ( trs80_port_ff_w );
 READ8_HANDLER ( trs80_port_ff_r );
