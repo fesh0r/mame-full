@@ -871,7 +871,6 @@ $(OBJ)/mk1.a:      \
 	$(OBJ)/mess/systems/mk1.o
 
 $(OBJ)/mk2.a:      \
-	$(OBJ)/mess/vidhrdw/mk2.o      \
 	$(OBJ)/mess/systems/mk2.o
 
 $(OBJ)/ssystem3.a: \

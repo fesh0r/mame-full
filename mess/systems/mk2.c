@@ -4,7 +4,6 @@
 
 #include "driver.h"
 
-#include "includes/mk2.h"
 #include "includes/rriot.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/dac.h"
@@ -102,9 +101,37 @@ DIPS_HELPER( 0x001, "NEW GAME", KEYCODE_F3, CODE_NONE) // seams to be direct wir
 #endif
 INPUT_PORTS_END
 
+static UINT8 mk2_led[5];
+
+static void update_leds(int dummy)
+{
+	int i;
+
+	for (i=0; i<4; i++)
+		output_set_digit_value(i, mk2_led[i]);
+	output_set_led_value(0, mk2_led[4]&8?1:0);
+	output_set_led_value(1, mk2_led[4]&0x20?1:0);
+	output_set_led_value(2, mk2_led[4]&0x10?1:0);
+	output_set_led_value(3, mk2_led[4]&0x10?0:1);
+	
+	mk2_led[0]= mk2_led[1]= mk2_led[2]= mk2_led[3]= mk2_led[4]= 0;
+}
+
+static MACHINE_START( mk2 )
+{
+	timer_pulse(TIME_IN_HZ(60), 0, update_leds);
+	return 0;
+}
+
 static MACHINE_RESET( mk2 )
 {
 	rriot_reset(0);
+}
+
+static VIDEO_UPDATE( mk2 )
+{
+	/* dummy; remove when support is added for screenless systems in core MAME */
+	return 0;
 }
 
 static MACHINE_DRIVER_START( mk2 )
@@ -115,17 +142,16 @@ static MACHINE_DRIVER_START( mk2 )
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
+	MDRV_MACHINE_START( mk2 )
 	MDRV_MACHINE_RESET( mk2 )
 
     /* video hardware */
+	MDRV_DEFAULT_LAYOUT(layout_mk2)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
-	MDRV_DEFAULT_LAYOUT(layout_mk2)
 	MDRV_SCREEN_SIZE(1, 1)
-	MDRV_PALETTE_LENGTH(242 + 32768)
-
-	MDRV_VIDEO_START( mk2 )
-	MDRV_VIDEO_UPDATE( mk2 )
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_VIDEO_UPDATE(mk2)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
