@@ -156,8 +156,8 @@ static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after re
 static int dragon_plus_reg;			/* Dragon plus control reg */
 
 /* MegaCart CTRL reg, bit 1 selects 8K or 16K banking */
-int MegaCTRL;
-int MegaBank;	// Copy of bank reg so that we can peek it
+int mega_ctrl;
+int mega_bank;	// Copy of bank reg so that we can peek it
 /* End Mega Cart */
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
@@ -1126,27 +1126,24 @@ static void coco_sound_update(void)
 	UINT8 pia1_pb1 = (pia_get_output_b(1) & 0x02) ? 0x80 : 0x00;
 	int soundmux_status = get_soundmux_status();
 
-	if (soundmux_status & SOUNDMUX_STATUS_ENABLE)
+	switch(soundmux_status)
 	{
-		switch(soundmux_status)
-		{
-			case SOUNDMUX_STATUS_ENABLE:
-				/* DAC */
-				DAC_data_w(0, pia1_pb1 + (dac >> 1) );  /* Mixing the two sources */
-				break;
-			case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
-				/* CSN */
-				DAC_data_w(0, pia1_pb1); /* Mixing happens elsewhere */
-				break;
-			case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL2:
-				/* CART Sound */
-				DAC_data_w(0, pia1_pb1); /* To do: mix in cart signal */
-				break;
-			default:
-				/* This pia line is always connected to the output */
-				DAC_data_w(0, pia1_pb1);
-				break;
-		}
+		case SOUNDMUX_STATUS_ENABLE:
+			/* DAC */
+			DAC_data_w(0, pia1_pb1 + (dac >> 1) );  /* Mixing the two sources */
+			break;
+		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+			/* CSN */
+			DAC_data_w(0, pia1_pb1); /* Mixing happens elsewhere */
+			break;
+		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL2:
+			/* CART Sound */
+			DAC_data_w(0, pia1_pb1); /* To do: mix in cart signal */
+			break;
+		default:
+			/* This pia line is always connected to the output */
+			DAC_data_w(0, pia1_pb1);
+			break;
 	}
 }
 
@@ -2486,7 +2483,7 @@ static int count_bank(void)
 			{   
 				// Select Mega cart bank size 8k or 16K
 				// Mega cart can hold up to a 512megabit rom, banks are 8k or 16K
-				cart_bank_size=(MegaCTRL & 0x02) ? 0x4000 : 0x2000; 
+				cart_bank_size=(mega_ctrl & 0x02) ? 0x4000 : 0x2000; 
 				return 0x3F;	
 				break;
 			}

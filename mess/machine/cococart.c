@@ -472,8 +472,8 @@ static READ8_HANDLER(cartridge_banks_io_r)
 	return 0;
 }
 
-extern int MegaCTRL;	// Control reg
-extern int MegaBank;	// Bank reg
+extern int mega_ctrl;	// Control reg
+extern int mega_bank;	// Bank reg
 // Mega Cart, by PHS.
 // This could possibly be merged with normal bank.
 static WRITE8_HANDLER(cartridge_banks_mega_io_w)
@@ -481,17 +481,17 @@ static WRITE8_HANDLER(cartridge_banks_mega_io_w)
 	switch (offset)
 	{
 		// Bank reg.
-		case 0x10: 	if(MegaCTRL & 2)	// 16K banks.
+		case 0x10: 	if(mega_ctrl & 2)	// 16K banks.
 					data=data>>1;
 				cartcallbacks->setbank(data);
 		
-				LOG( ("MegaBankswitch: set bank: %d\n", data ) );
+				LOG( ("mega_bankswitch: set bank: %d\n", data ) );
 				break;
 		// CTRL reg
-		case 0x12:	MegaCTRL = data;
+		case 0x12:	mega_ctrl = data;
 				break;
 
-		default : LOG( ("MegaBankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+		default : LOG( ("mega_bankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 	}
 }
 
@@ -500,13 +500,13 @@ static READ8_HANDLER(cartridge_banks_mega_io_r)
 	switch (offset)
 	{
 		// Bank reg.
-		case 0x10: 	return MegaBank;
+		case 0x10: 	return mega_bank;
 				break;
 		// CTRL reg
-		case 0x12:	return MegaCTRL;
+		case 0x12:	return mega_ctrl;
 				break;
 
-		default : LOG( ("MegaBankswitch: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+		default : LOG( ("mega_bankswitch: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 			   return 0;
 	}
 }
