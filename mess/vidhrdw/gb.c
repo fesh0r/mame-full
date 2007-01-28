@@ -921,7 +921,8 @@ void gb_video_init( void ) {
 	}
 
 	LCDSTAT = 0x80;
-	gb_lcd.current_line = CURLINE = CMPLINE = 0x00;
+	gb_lcd.current_line = CURLINE = 0x00;
+	CMPLINE = 0xF0;
 	SCROLLX = SCROLLY = 0x00;
 	WNDPOSX = WNDPOSY = 0x00;
 
@@ -1103,10 +1104,30 @@ WRITE8_HANDLER ( gb_video_w ) {
 		/* If LCD is being switched on */
 		if ( !( LCDCONT & 0x80 ) && ( data & 0x80 ) ) {
 			gb_lcd.current_line = 0;
+			/* Check for LY=LYC coincidence */
+			if ( CURLINE == CMPLINE ) {
+				LCDSTAT |= 0x04;
+				/* Generate lcd interrupt if requested */
+				if ( LCDSTAT & 0x40 )
+					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+			}
 		}
 		break;
 	case 0x01:						/* STAT - LCD Status */
 		data = 0x80 | (data & 0x78) | (LCDSTAT & 0x07);
+		/*
+		   Check for the STAT bug:
+		   Writing to STAT when the STAT mode is 1 or 0
+                   causes a STAT interrupt to be triggered.
+		 */
+		if ( LCDCONT & 0x80 ) {
+			switch ( LCDSTAT & 0x03 ) {
+			case 0x00:
+			case 0x01:
+				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+				break;
+			}
+		}
 		break;
 	case 0x04:						/* LY - LCD Y-coordinate */
 		return;
@@ -1164,7 +1185,22 @@ WRITE8_HANDLER ( gbc_video_w ) {
 		/* if LCD controller is switched off, set STAT to 00 */
 		if ( ! ( data & 0x80 ) ) {
 			LCDSTAT &= ~0x03;
+			CURLINE = 0;
 		}
+                /* If LCD is being switched on */
+                if ( !( LCDCONT & 0x80 ) && ( data & 0x80 ) ) {
+			gb_lcd.current_line = 0;
+			/* Check for LY=LYC coincidence */
+			if ( CURLINE == CMPLINE ) {
+				LCDSTAT |= 0x04;
+				/* Generate lcd interrupt if requested */
+				if ( LCDSTAT & 0x40 )
+					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+			}
+                }
+		break;
+	case 0x01:      /* STAT - LCD Status */
+		data = 0x80 | (data & 0x78) | (LCDSTAT & 0x07);
 		break;
 	case 0x07:      /* BGP - GB background palette */
 		/* Some GBC games are lazy and still call this */
