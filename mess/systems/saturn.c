@@ -412,12 +412,12 @@ CD Block / SH-1 Handling
 7e
 7f -w EXLE2/1
 */
-UINT8 IOSEL1;
-UINT8 IOSEL2;
-UINT8 EXLE1;
-UINT8 EXLE2;
-UINT8 PDR1;
-UINT8 PDR2;
+static UINT8 IOSEL1;
+static UINT8 IOSEL2;
+static UINT8 EXLE1;
+static UINT8 EXLE2;
+static UINT8 PDR1;
+static UINT8 PDR2;
 
 #define SH2_DIRECT_MODE_PORT_1 IOSEL1 = 1
 #define SH2_DIRECT_MODE_PORT_2 IOSEL2 = 1
@@ -521,14 +521,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k on\n");
-			cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 			en_68k = 1;
 		}
 		else
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k off\n");
-			cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 			en_68k = 0;
 		}
 		//if(LOG_SMPC) logerror("SMPC: ram [0x77] = %02x\n",smpc_ram[0x77]);
@@ -575,8 +574,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
 				stv_enable_slave_sh2 = 1;
-				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
-				cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 				#endif
 				break;
 			case 0x03:
@@ -584,14 +582,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x03;
 				stv_enable_slave_sh2 = 0;
 				cpu_trigger(1000);
-				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 				break;
 			case 0x06:
 				if(LOG_SMPC) logerror ("SMPC: Sound ON\n");
 				/* wrong? */
 				smpc_ram[0x5f]=0x06;
-				cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-				cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 				break;
 			case 0x07:
 				if(LOG_SMPC) logerror ("SMPC: Sound OFF\n");
@@ -2029,14 +2026,11 @@ static ADDRESS_MAP_START( saturn_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x002fffff) AM_RAM AM_MIRROR(0x100000) AM_SHARE(2) AM_BASE(&stv_workram_l)
 	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
 	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
-//  AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x00080000)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffef) AM_READNOP AM_WRITENOP	// cartridge space
-	AM_RANGE(0x04fffff0, 0x04ffffff) AM_READNOP AM_WRITENOP //WRITE(a_bus_ctrl_r,a_bus_ctrl_w)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_READNOP AM_WRITENOP	// cartridge space
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(stvcd_r, stvcd_w)
 	/* Sound */
 	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
-	//AM_RANGE(0x05a80000, 0x05afffff) AM_READ(stv_sh2_random_r)
 	AM_RANGE(0x05b00000, 0x05b00fff) AM_READWRITE(stv_scsp_regs_r32, stv_scsp_regs_w32)
 	/* VDP1 */
 	/*0x05c00000-0x05c7ffff VRAM*/
@@ -2220,12 +2214,43 @@ DRIVER_INIT ( saturn )
  	smpc_ram[0x5f] = 0x10;
 }
 
+static int scsp_last_line = 0;
+
+MACHINE_START( saturn )
+{
+	SCSP_set_ram_base(0, sound_ram);
+
+	// save states
+	state_save_register_global_pointer(smpc_ram, 0x80);
+	state_save_register_global_pointer(stv_scu, 0x100/4);
+	state_save_register_global_pointer(scsp_regs, 0x1000/2);
+	state_save_register_global(stv_vblank);
+	state_save_register_global(stv_hblank);
+	state_save_register_global(stv_enable_slave_sh2);
+	state_save_register_global(NMI_reset);
+	state_save_register_global(en_68k);
+	state_save_register_global(timer_0);
+	state_save_register_global(timer_1);
+	state_save_register_global(scanline);
+	state_save_register_global(IOSEL1);
+	state_save_register_global(IOSEL2);
+	state_save_register_global(EXLE1);
+	state_save_register_global(EXLE2);
+	state_save_register_global(PDR1);
+	state_save_register_global(PDR2);
+	state_save_register_global(port_sel);
+	state_save_register_global(mux_data);
+	state_save_register_global(scsp_last_line);
+
+	return 0;
+}
+
 MACHINE_RESET( saturn )
 {
 	// don't let the slave cpu and the 68k go anywhere
-	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	stv_enable_slave_sh2 = 0;
-	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 
 	timer_0 = 0;
 	timer_1 = 0;
@@ -2317,8 +2342,6 @@ static const gfx_decode gfxdecodeinfo[] =
 struct sh2_config sh2_conf_master = { 0 };
 struct sh2_config sh2_conf_slave  = { 1 };
 
-static int scsp_last_line = 0;
-
 static void scsp_irq(int irq)
 {
 	// don't bother the 68k if it's off
@@ -2327,10 +2350,14 @@ static void scsp_irq(int irq)
 		return;
 	}
 
-	if (irq)
+	if (irq > 0)
 	{
 		scsp_last_line = irq;
 		cpunum_set_input_line(2, irq, ASSERT_LINE);
+	}
+	else if (irq < 0)
+	{
+		cpunum_set_input_line(2, -irq, CLEAR_LINE);
 	}
 	else
 	{
@@ -2363,11 +2390,12 @@ static MACHINE_DRIVER_START( saturn )
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(192))	// guess, needed to force video update after V-Blank OUT interrupt
 
+	MDRV_MACHINE_START(saturn)
 	MDRV_MACHINE_RESET(saturn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB32)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB15)
 	MDRV_SCREEN_SIZE(1024, 1024)
 	MDRV_SCREEN_VISIBLE_AREA(0*8, 703, 0*8, 512) // we need to use a resolution as high as the max size it can change to
 	MDRV_PALETTE_LENGTH(2048+(2048*2))//standard palette + extra memory for rgb brightness.

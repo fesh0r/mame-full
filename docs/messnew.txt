@@ -35,6 +35,9 @@ System Driver Changes:
 
 - [N64] Added the .bin file extension.  (bug #1016) [Nate Woods]
 
+- [SATURN] Saturn driver back up to date so it starts up and shows the boot
+  screens properly.  [R. Belmont]
+
 - [THOMSON] Fixed device name that clashed with "cc" option on main MESS.  (bug
   #994) [Antoine Mine]
 
