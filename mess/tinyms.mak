@@ -4,7 +4,7 @@ MESS=1
 COREDEFS += -DTINY_COMPILE=1
 COREDEFS += -DTINY_NAME="driver_coleco"
 COREDEFS += -DTINY_POINTER="&driver_coleco"
-COREDEFS += -DNEOFREE -DMESS
+COREDEFS += -DMESS
 
 
 # uses these CPUs
