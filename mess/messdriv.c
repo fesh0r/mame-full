@@ -225,6 +225,7 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
 	DRIVER( apple1 )	/* Jul 1976 Apple 1 								*/
 	DRIVER( apple2 )	/* Apr 1977 Apple ][ 								*/
 	DRIVER( apple2p )	/* Jun 1979 Apple ][+ 								*/
+	DRIVER( apple2jp )	/* ??? ???? Apple ][j+ 								*/
 	DRIVER( apple2e )	/* Jan 1983 Apple //e								*/
 	DRIVER( apple2ee )	/* Mar 1985 Apple //e Enhanced						*/
 	DRIVER( apple2ep )	/* Jan 1987 Apple //e Platinum						*/

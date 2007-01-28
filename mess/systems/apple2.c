@@ -748,6 +748,20 @@ ROM_START(apple2p)
 	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6) SHA1(d4181c9f046aafc3fb326b381baac809d9e38d16)) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
+ROM_START(apple2jp)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2jp.chr", 0x0000, 0x0800, CRC(487104b5) SHA1(0a382be58db5215c4a3de53b19a72fab660d5da2))
+
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "a2p.d0", 0x1000, 0x0800, CRC(6f05f949) SHA1(0287ebcef2c1ce11dc71be15a99d2d7e0e128b1e))
+	ROM_LOAD ( "a2p.d8", 0x1800, 0x0800, CRC(1f08087c) SHA1(a75ce5aab6401355bf1ab01b04e4946a424879b5))
+	ROM_LOAD ( "a2p.e0", 0x2000, 0x0800, CRC(2b8d9a89) SHA1(8d82a1da63224859bd619005fab62c4714b25dd7))
+	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800, CRC(5719871a) SHA1(37501be96d36d041667c15d63e0c1eff2f7dd4e9))
+	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800, CRC(9a04eecf) SHA1(e6bf91ed28464f42b807f798fc6422e5948bf581))
+	ROM_LOAD ( "a2jp.f8", 0x3800, 0x0800, CRC(6ea8379b) SHA1(00a75ae3b58e1917ad640249366f654608589cf4))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6) SHA1(d4181c9f046aafc3fb326b381baac809d9e38d16)) /* Disk II ROM - DOS 3.3 version */
+ROM_END
+
 ROM_START(ace100)
 	ROM_REGION(0x0800,REGION_GFX1,0)
 	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, NO_DUMP)
@@ -916,6 +930,7 @@ SYSTEM_CONFIG_END
 /*    YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT CONFIG		COMPANY            FULLNAME */
 COMP( 1977, apple2,   0,        0,			apple2,   apple2,   0,   apple2,	"Apple Computer", "Apple ][" , 0)
 COMP( 1979, apple2p,  apple2,   0,			apple2p,  apple2p,  0,   apple2p,	"Apple Computer", "Apple ][+" , 0)
+COMP( 1979, apple2jp, apple2,   0,			apple2p,  apple2p,  0,   apple2p,	"Apple Computer", "Apple ][j+" , 0)
 COMP( 1982, ace100,   apple2,   0,			apple2,	  apple2e,  0,   apple2,	"Franklin Computer", "Franklin Ace 100" , 0)
 COMP( 1983, apple2e,  0,        apple2,		apple2e,  apple2e,  0,   apple2e,	"Apple Computer", "Apple //e" , 0)
 COMP( 1985, apple2ee, apple2e,  0,			apple2ee, apple2e,  0,   apple2e,	"Apple Computer", "Apple //e (enhanced)" , 0)
