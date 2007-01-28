@@ -775,7 +775,7 @@ case 0x76: /*      HALT */
 	Regs.w.leavingHALT--;
   } else {
 	if ( Regs.w.enable & IME ) {
-		UINT32 skip_cycles;
+/*		UINT32 skip_cycles; */
 		CheckInterrupts = 1;
 		Regs.w.enable |= HALTED;
 		Regs.w.PC--;
