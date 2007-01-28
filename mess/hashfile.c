@@ -367,8 +367,8 @@ hash_file *hashfile_open(const char *sysname, int is_preload,
 	hashfile->error_proc = error_proc;
 
 	/* open a file */
-	fname = assemble_2_strings(sysname, ".cfg");
-	filerr = mame_fopen(SEARCHPATH_HASH, sysname, OPEN_FLAG_READ, &hashfile->file);
+	fname = assemble_2_strings(sysname, ".hsi");
+	filerr = mame_fopen(SEARCHPATH_HASH, fname, OPEN_FLAG_READ, &hashfile->file);
 	free(fname);
 
 	if (filerr != FILERR_NONE)

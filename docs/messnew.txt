@@ -100,6 +100,8 @@ Source Changes:
 - Fixed various memory leaks in debug builds when the debugger is not enabled.
   (bug #1018) [Nate Woods]
 
+- Fixed hash file processing.  [MJSTY]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 - [Windows] Fixed several memory leaks in the Windows code.  [Nate woods]
