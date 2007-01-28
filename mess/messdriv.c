@@ -587,9 +587,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( las210de )  /* 1984 Sanyo Laser 210 (Germany)                   */
 	DRIVER( vz200 ) 	/* 1984 Dick Smith Electronics VZ-200               */
 	DRIVER( laser310 )	/* 1984 Laser 310 (210 with diff. keyboard and RAM)	*/
-	DRIVER( las31021 )  /* 1984? Laser 310 (Basic V2.1)                     */
 	DRIVER( vz300 ) 	/* 1984 Dick Smith Electronics VZ-300               */
-	DRIVER( vz300_21 ) 	/* 1984 Dick Smith Electronics VZ-300 (Basic V2.1)  */
 	DRIVER( laser350 )	/* 1984? Laser 350									*/
 	DRIVER( laser500 )	/* 1984? Laser 500									*/
 	DRIVER( laser700 )	/* 1984? Laser 700									*/

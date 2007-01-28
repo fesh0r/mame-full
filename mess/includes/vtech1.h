@@ -1,14 +1,14 @@
 #include "devices/snapquik.h"
 
 /* from machine/vtech1.c */
-
-extern char vtech1_frame_message[64+1];
-extern int vtech1_frame_time;
-
 extern int vtech1_latch;
 
 
-#define LASER310_MAIN_OSCILLATOR 17734000 /* 17.734MHz */
+#define VTECH1_CLK       (3579500)
+#define VZ300_XTAL1_CLK (17734470) /* verified */
+
+#define VZ_BASIC 0xf0
+#define VZ_MCODE 0xf1
 
 
 /******************************************************************************

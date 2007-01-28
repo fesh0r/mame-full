@@ -42,6 +42,10 @@ System Driver Changes:
 
 - [VTECH1] Fixed memory leak.  (bug #1021) [Nate Woods]
 
+- [VTECH1] Rewrote memory and input handling, added support for the 4MB
+  extension.  Also changed BASICV2.1 loading and corrected Laser 310 clock
+  frequency.  [Dirk Best]
+
 
 
 User Interface Changes:

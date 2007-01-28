@@ -2019,7 +2019,9 @@ LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPA
 		{ VK_UP,		UCHAR_MAMEKEY(UP) },
 		{ VK_DOWN,		UCHAR_MAMEKEY(DOWN) },
 		{ VK_LEFT,		UCHAR_MAMEKEY(LEFT) },
-		{ VK_RIGHT,		UCHAR_MAMEKEY(RIGHT) }
+		{ VK_RIGHT,		UCHAR_MAMEKEY(RIGHT) },
+		{ VK_PAUSE,		UCHAR_MAMEKEY(PAUSE) },
+		{ VK_CANCEL,	UCHAR_MAMEKEY(CANCEL) }
 	};
 
 	if (win_use_natural_keyboard && (message == WM_KEYDOWN))
