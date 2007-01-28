@@ -348,21 +348,6 @@ SYSTEM_CONFIG_START(gamegear)
 	CONFIG_DEVICE(gamegear_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
-static void gamegearo_cartslot_getinfo(const device_class *devclass, UINT32 state, union devinfo *info)
-{
-	switch(state)
-	{
-		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case DEVINFO_INT_MUST_BE_LOADED:				info->i = 0; break;
-
-		default:										gamegear_cartslot_getinfo(devclass, state, info); break;
-	}
-}
-
-SYSTEM_CONFIG_START(gamegearo)
-	CONFIG_DEVICE(gamegearo_cartslot_getinfo)
-SYSTEM_CONFIG_END
-
 /***************************************************************************
 
   Game driver(s)
