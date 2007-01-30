@@ -128,12 +128,6 @@ static MACHINE_RESET( mk2 )
 	rriot_reset(0);
 }
 
-static VIDEO_UPDATE( mk2 )
-{
-	/* dummy; remove when support is added for screenless systems in core MAME */
-	return 0;
-}
-
 static MACHINE_DRIVER_START( mk2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)        /* 6504 */
@@ -147,11 +141,6 @@ static MACHINE_DRIVER_START( mk2 )
 
     /* video hardware */
 	MDRV_DEFAULT_LAYOUT(layout_mk2)
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
-	MDRV_SCREEN_SIZE(1, 1)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_VIDEO_UPDATE(mk2)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
