@@ -268,65 +268,75 @@ static image_error_t load_zip_path(mess_image *image, const char *path)
 	zip_error ziperr;
 	const zip_file_header *header;
 	const char *zip_extension = ".zip";
-	char zip_segment[8];
-	char *s;
 	char *path_copy;
-	const char *zip_file_path;
 	const char *zip_entry;
 	void *ptr;
-	int i;
+	int pos;
 
 	/* create our own copy of the path */
-	path_copy = malloc(strlen(path) + 1);
+	path_copy = mame_strdup(path);
 	if (!path_copy)
 	{
 		err = IMAGE_ERROR_OUTOFMEMORY;
 		goto done;
 	}
-	strcpy(path_copy, path);
 
-	/* make path_copy lowercase */
-	for (i = 0; path_copy[i]; i++)
-		path_copy[i] = tolower(path_copy[i]);
-
-	/* search for a ZIP file */
-	sprintf(zip_segment, "%s%s", zip_extension, PATH_SEPARATOR);
-	s = strrchr(path_copy, '.');
-	if (!s || mame_stricmp(s, zip_extension))
-		s = strstr(path_copy, zip_segment);
-	if (s)
+	/* loop through the path and try opening zip files */
+	ziperr = ZIPERR_FILE_ERROR;
+	zip_entry = NULL;
+	pos = strlen(path_copy);
+	while(pos > strlen(zip_extension))
 	{
-		s += strlen(zip_extension);
-		if (*s)
+		/* is this a potential zip path? */
+		if ((path_copy[pos] == '\0') || !strncmp(&path_copy[pos], PATH_SEPARATOR, strlen(PATH_SEPARATOR)))
 		{
-			/* we have a ZIP subpath */
-			*(s++) = '\0';
-			zip_entry = s;
-		}
-		else
-		{
-			/* no ZIP subpath */
-			zip_entry = NULL;
-		}
-		zip_file_path = path_copy;
-
-		/* open the ZIP file */
-		ziperr = zip_file_open(zip_file_path, &zip);
-		if (ziperr == ZIPERR_NONE)
-		{
-			/* iterate through the zip file */
-			header = zip_file_first_file(zip);
-			if (zip_entry)
+			/* parse out the zip path */
+			if (path_copy[pos] == '\0')
 			{
-				/* find the entry in question */
-				while(header)
-				{
-					if (!mame_stricmp(header->filename, zip_entry))
-						break;
-					header = zip_file_next_file(zip);
-				}
+				/* no zip path */
+				zip_entry = NULL;
 			}
-			else if (header)
+			else
+			{
+				/* we are at a zip path */
+				path_copy[pos] = '\0';
+				zip_entry = &path_copy[pos + strlen(PATH_SEPARATOR)];
+			}
+
+			/* try to open the zip file */
+			ziperr = zip_file_open(path_copy, &zip);
+			if (ziperr != ZIPERR_FILE_ERROR)
+				break;
+
+			/* restore the path if we changed */
+			if (zip_entry)
+				path_copy[pos] = PATH_SEPARATOR[0];
+		}
+		pos--;
+	}
+
+	/* did we succeed in opening up a zip file? */
+	if (ziperr == ZIPERR_NONE)
+	{
+		/* iterate through the zip file */
+		header = zip_file_first_file(zip);
+
+		/* if we specified a zip partial path, find it */
+		if (zip_entry)
+		{
+			while(header)
+			{
+				if (!mame_stricmp(header->filename, zip_entry))
+					break;
+				header = zip_file_next_file(zip);
+			}
+		}
+
+		/* were we successful? */
+		if (header)
+		{
+			/* if no zip path was specified, we have to change the name */
+			if (!zip_entry)
 			{
 				/* use the first entry; tough part is we have to change the name */
 				err = set_image_filename(image, image->name, header->filename);
@@ -334,26 +344,22 @@ static image_error_t load_zip_path(mess_image *image, const char *path)
 					goto done;
 			}
 
-			/* did we find an entry? */
-			if (header)
+			/* allocate space for this zip file */
+			ptr = image_malloc(image, header->uncompressed_length);
+			if (!ptr)
 			{
-				ptr = image_malloc(image, header->uncompressed_length);
-				if (!ptr)
-				{
-					err = IMAGE_ERROR_OUTOFMEMORY;
-					goto done;
-				}
-
-				ziperr = zip_file_decompress(zip, ptr, header->uncompressed_length);
-				if (ziperr == ZIPERR_NONE)
-				{
-					/* success! */
-					err = IMAGE_ERROR_SUCCESS;
-					image->ptr = ptr;
-					image->length = header->uncompressed_length;
-				}
+				err = IMAGE_ERROR_OUTOFMEMORY;
+				goto done;
 			}
 
+			ziperr = zip_file_decompress(zip, ptr, header->uncompressed_length);
+			if (ziperr == ZIPERR_NONE)
+			{
+				/* success! */
+				err = IMAGE_ERROR_SUCCESS;
+				image->ptr = ptr;
+				image->length = header->uncompressed_length;
+			}
 		}
 	}
 
