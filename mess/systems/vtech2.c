@@ -459,7 +459,7 @@ static PALETTE_INIT( vtech2 )
 
 static INTERRUPT_GEN( vtech2_interrupt )
 {
-	cpunum_set_input_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( laser350 )
