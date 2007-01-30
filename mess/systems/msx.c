@@ -797,6 +797,12 @@ static MACHINE_DRIVER_START( msx2 )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( msx2_pal )
+	MDRV_IMPORT_FROM( msx2 )
+	MDRV_SCREEN_REFRESH_RATE(50)
+MACHINE_DRIVER_END
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -2251,20 +2257,20 @@ COMP( 1985, hotbit12, msx,		0,		msx,	 hotbit,   msx,		msx,	"Sharp / Epcom",	 "HB
 COMP( 1983, expert10, msx,		0,		msx,	 expert10, msx,		msx,	"Gradiente", "Expert (Brazil)" , 0)
 COMP( 1984, expert11, msx,		0,		msx,	 expert11, msx,		msx,	"Gradiente", "Expert Plus (Brazil)" , 0)
 COMP(1985, expertdp, msx,		0,		msx,	 expert11, msx,		msx,	"Gradiente", "Expert DDPlus (Brazil)", GAME_NOT_WORKING )
-COMP (1985, msx2,	  0,		msx,	msx2,	 msx2,	   msx2,	msx,	"ASCII & Microsoft", "MSX2", 0)
-COMP (1986, nms8220,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 1st released version", 0)
-COMP (1986, nms8220a, msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 2nd released version", 0)
-COMP (1986, vg8235,   msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "VG-8235", 0)
-COMP (1986, nms8245,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8245", 0)
-COMP (1986, nms8250,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8250", 0)
-COMP (1986, nms8255,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8255", 0)
-COMP (1986, nms8280,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8280", 0)
-COMP (1985, hbf9p,    msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F9P" , 0)
-COMP (1985, hbf500p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F500P", 0)
-COMP (1985, hbf700d,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700D (Germany)" , 0)
-COMP (1985, hbf700p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700P" , 0)
-COMP (1985, hbf700s,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700S (Spain)", 0)
-COMP(1986, hbg900p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-G900P", GAME_NOT_WORKING )
+COMP (1985, msx2,	  0,		msx,	msx2_pal,	 msx2,	   msx2,	msx,	"ASCII & Microsoft", "MSX2", 0)
+COMP (1986, nms8220,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 1st released version", 0)
+COMP (1986, nms8220a, msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 2nd released version", 0)
+COMP (1986, vg8235,   msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "VG-8235", 0)
+COMP (1986, nms8245,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8245", 0)
+COMP (1986, nms8250,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8250", 0)
+COMP (1986, nms8255,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8255", 0)
+COMP (1986, nms8280,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Philips", "NMS-8280", 0)
+COMP (1985, hbf9p,    msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-F9P" , 0)
+COMP (1985, hbf500p,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-F500P", 0)
+COMP (1985, hbf700d,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-F700D (Germany)" , 0)
+COMP (1985, hbf700p,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-F700P" , 0)
+COMP (1985, hbf700s,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-F700S (Spain)", 0)
+COMP(1986, hbg900p,  msx2,		0,		msx2_pal,	 msx2,	   msx2,	msx,	"Sony", "HB-G900P", GAME_NOT_WORKING )
 COMP(1985, fs5500,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-5500F1/F2 (Japan)", GAME_NOT_WORKING )
 COMP(1986, fs4500,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-4500 (Japan)", GAME_NOT_WORKING )
 COMP(1986, fs4700,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-4700 (Japan)", GAME_NOT_WORKING )

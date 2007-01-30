@@ -36,6 +36,8 @@ System Driver Changes:
 
 - [MK2] Updated to use the new artwork system.  [Justin Kerk]
 
+- [MSX2] Fixed MSX2 PAL framerates.  (bug #963) [MJSTY]
+
 - [N64] Added the .bin file extension.  (bug #1016) [Nate Woods]
 
 - [SATURN] Saturn driver back up to date so it starts up and shows the boot
