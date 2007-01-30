@@ -21,7 +21,7 @@ CPUS += M65SC02
 #CPUS += M65CE02
 CPUS += M6509
 CPUS += M6510
-#CPUS += M6510T
+CPUS += M6510T
 CPUS += M7501
 CPUS += M8502
 CPUS += N2A03
@@ -158,7 +158,7 @@ CPUS += F8
 CPUS += PDP1
 CPUS += SATURN
 CPUS += SC61860
-#CPUS += TX0_64KW
+CPUS += TX0_64KW
 CPUS += TX0_8KW
 CPUS += Z80GB
 #CPUS += TMS7000
@@ -168,7 +168,7 @@ CPUS += V30MZ
 CPUS += M68008
 #CPUS += TMS99000
 CPUS += TMS99010
-#CPUS += TX0
+CPUS += TX0
 CPUS += COP411
 #-------------------------------------------------
 # specify available sound cores; some of these are
