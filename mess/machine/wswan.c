@@ -1244,6 +1244,7 @@ static const char* wswan_determine_sram( UINT8 data ) {
 	return wswan_sram_str[ eeprom.mode ];
 }
 
+#ifdef MAME_DEBUG
 enum enum_romsize { ROM_4M=0, ROM_8M, ROM_16M, ROM_32M, ROM_64M, ROM_128M, ROM_UNKNOWN };
 const char* wswan_romsize_str[] = {
 	"4Mbit", "8Mbit", "16Mbit", "32Mbit", "64Mbit", "128Mbit", "Unknown"
@@ -1260,6 +1261,7 @@ static const char* wswan_determine_romsize( UINT8 data ) {
 	}
 	return wswan_romsize_str[ ROM_UNKNOWN ];
 }
+#endif
 
 DEVICE_INIT(wswan_cart)
 {
@@ -1294,7 +1296,7 @@ DEVICE_LOAD(wswan_cart)
 
 	for( ii = 0; ii < ROMBanks; ii++ )
 	{
-		if( (ROMMap[ii] = (UINT8 *)malloc( 0x10000 )) )
+		if( (ROMMap[ii] = auto_malloc( 0x10000 )) )
 		{
 			if( image_fread( image, ROMMap[ii], 0x10000 ) != 0x10000 )
 			{
