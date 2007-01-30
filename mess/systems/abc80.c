@@ -322,7 +322,7 @@ static void abc80_sound_w(UINT8 data)
 
 	SN76477_enable_w(0, ~data & 0x01);
 
-	SN76477_set_vco_voltage(0, (data & 0x02) ? 2.5 : 0);
+	SN76477_vco_voltage_w(0, (data & 0x02) ? 2.5 : 0);
 	SN76477_vco_w(0, (data & 0x04) ? 1 : 0);
 
 	SN76477_mixer_a_w(0, (data & 0x10) ? 1 : 0);

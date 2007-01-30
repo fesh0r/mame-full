@@ -53,6 +53,9 @@ X86_PPC_DRC = 1
 # X86_VOODOO_DRC = 1
 
 
+WINUI = 1
+MESS = 1
+
 
 #-------------------------------------------------
 # specify build options; see each option below 
@@ -81,6 +84,10 @@ BUILD_ZLIB = 1
 # uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
 
+# specify optimization level or leave commented to use the default
+# (default is OPTIMIZE = 3 normally, or OPTIMIZE = 0 with symbols)
+# OPTIMIZE = 3
+
 
 ###########################################################################
 ##################   END USER-CONFIGURABLE OPTIONS   ######################
@@ -95,6 +102,15 @@ BUILD_ZLIB = 1
 ifdef PTR64
 X86_MIPS3_DRC =
 X86_PPC_DRC =
+endif
+
+# specify a default optimization level if none explicitly stated
+ifndef OPTIMIZE
+ifndef SYMBOLS
+OPTIMIZE = 3
+else
+OPTIMIZE = 0
+endif
 endif
 
 
@@ -116,8 +132,6 @@ RM = @rm -f
 
 WINDOWS_PROGRAM = -mwindows
 CONSOLE_PROGRAM = -mconsole
-
-WINUI = 1
 
 #-------------------------------------------------
 # form the name of the executable
@@ -273,11 +287,10 @@ VPATH = src $(wildcard src/cpu/*)
 #-------------------------------------------------
 
 OBJDIRS = \
-	obj \
-	$(OBJ) \
 	$(OBJ)/cpu \
 	$(OBJ)/sound \
 	$(OBJ)/debug \
+	$(OBJ)/tools \
 	$(OBJ)/drivers \
 	$(OBJ)/layout \
 	$(OBJ)/machine \
@@ -361,9 +374,7 @@ all: maketree emulator extra
 # include the various .mak files
 #-------------------------------------------------
 
-include src/core.mak
-include mess/$(TARGET).mak
-
+# include OS-specific rules first
 ifeq ($(MAMEOS),windows)
 include mess/tools/imgtool/windows/wimgtool.mak
 endif
@@ -372,6 +383,9 @@ ifeq ($(MAMEOS),windows)
 include mess/$(MAMEOS)/$(MAMEOS).mak
 endif
 
+# then the various core pieces
+include src/core.mak
+include mess/$(TARGET).mak
 include src/cpu/cpu.mak
 include src/sound/sound.mak
 
@@ -388,7 +402,7 @@ emulator: maketree $(EMULATORALL)
 
 extra: $(TOOLS)
 
-maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
+maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
@@ -405,7 +419,7 @@ clean:
 #-------------------------------------------------
 
 $(sort $(OBJDIRS)):
-	$(MD) $@
+	$(MD) -p $@
 
 
 
@@ -447,19 +461,19 @@ $(EMULATORCLI):	$(OBJS) $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $
 
 endif
 
-file2str$(EXE): $(OBJ)/file2str.o $(OSDCORELIB)
+file2str$(EXE): $(OBJ)/tools/file2str.o $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
+romcmp$(EXE): $(OBJ)/tools/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
+chdman$(EXE): $(OBJ)/tools/chdman.o $(OBJ)/chd.o $(OBJ)/tools/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
+jedutil$(EXE): $(OBJ)/tools/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
@@ -513,19 +527,19 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 # generic rules
 #-------------------------------------------------
 
-$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
+$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 
-$(OBJ)/%.o: src/%.c
+$(OBJ)/%.o: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
-$(OBJ)/%.pp: src/%.c
+$(OBJ)/%.pp: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 
-$(OBJ)/%.s: src/%.c
+$(OBJ)/%.s: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 

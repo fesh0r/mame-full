@@ -174,21 +174,6 @@ int osd_is_path_separator(char c);
 
 
 /*-----------------------------------------------------------------------------
-    osd_is_absolute_path: returns whether the specified path is absolute
-
-    Parameters:
-
-		path - the path in question
-
-    Return value:
-
-        non-zero if the path is absolute, zero otherwise
-
------------------------------------------------------------------------------*/
-int osd_is_absolute_path(const char *path);
-
-
-/*-----------------------------------------------------------------------------
     osd_dirname: returns the base directory of a file path
 
     Parameters:

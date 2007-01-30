@@ -1391,7 +1391,6 @@ static void handle_save(running_machine *machine)
 	mame_private *mame = machine->mame_data;
 	mame_file_error filerr;
 	mame_file *file;
-	const char *searchpath;
 
 	/* if no name, bail */
 	if (mame->saveload_pending_file == NULL)
@@ -1412,11 +1411,8 @@ static void handle_save(running_machine *machine)
 		return;
 	}
 
-	/* choose a searchpath */
-	searchpath = osd_is_absolute_path(mame->saveload_pending_file) ? NULL : SEARCHPATH_STATE;
-
 	/* open the file */
-	filerr = mame_fopen(searchpath, mame->saveload_pending_file, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
+	filerr = mame_fopen(SEARCHPATH_STATE, mame->saveload_pending_file, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	if (filerr == FILERR_NONE)
 	{
 		int cpunum;
@@ -1480,7 +1476,6 @@ static void handle_load(running_machine *machine)
 	mame_private *mame = machine->mame_data;
 	mame_file_error filerr;
 	mame_file *file;
-	const char *searchpath;
 
 	/* if no name, bail */
 	if (mame->saveload_pending_file == NULL)
@@ -1502,11 +1497,8 @@ static void handle_load(running_machine *machine)
 		return;
 	}
 
-	/* choose a searchpath */
-	searchpath = osd_is_absolute_path(mame->saveload_pending_file) ? NULL : SEARCHPATH_STATE;
-
 	/* open the file */
-	filerr = mame_fopen(searchpath, mame->saveload_pending_file, OPEN_FLAG_READ, &file);
+	filerr = mame_fopen(SEARCHPATH_STATE, mame->saveload_pending_file, OPEN_FLAG_READ, &file);
 	if (filerr == FILERR_NONE)
 	{
 		/* start loading */

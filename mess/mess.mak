@@ -241,7 +241,7 @@ SOUNDS += ES5503
 #SOUNDS += MULTIPCM
 SOUNDS += C6280
 #SOUNDS += SP0250
-#SOUNDS += SCSP
+SOUNDS += SCSP
 #SOUNDS += YMF271
 SOUNDS += PSXSPU
 SOUNDS += CDDA
@@ -379,6 +379,7 @@ $(OBJ)/sega.a:						\
 	$(OBJ)/vidhrdw/stvvdp1.o		\
 	$(OBJ)/vidhrdw/stvvdp2.o		\
 	$(OBJ)/sound/scsp.o				\
+	$(OBJ)/sound/scspdsp.o			\
 	$(OBJ)/mess/vidhrdw/smsvdp.o	\
 	$(OBJ)/mess/machine/sms.o		\
 	$(OBJ)/mess/systems/sms.o

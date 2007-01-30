@@ -104,7 +104,11 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 					style = WS_CHILD | WS_VISIBLE | UDS_AUTOBUDDY;
 					aux_control = CreateWindow(TEXT("msctls_updown32"), NULL, style,
 							x + width - 16, *y, 16, control_height, dialog, NULL, NULL, NULL);
+#if (_WIN32_IE >= 0x0400)
 					SendMessage(aux_control, UDM_SETRANGE32, 0x80000000, 0x7FFFFFFF);
+#else // !(_WIN32_IE >= 0x0400)
+					SendMessage(aux_control, UDM_SETRANGE, 0, MAKELONG(UD_MAXVAL, UD_MINVAL));
+#endif // (_WIN32_IE >= 0x0400)
 					break;
 
 				case OPTIONTYPE_ENUM_BEGIN:

@@ -152,26 +152,6 @@ int osd_is_path_separator(char c)
 
 
 //============================================================
-//	osd_is_absolute_path
-//============================================================
-
-int osd_is_absolute_path(const char *path)
-{
-	int result;
-
-	if (osd_is_path_separator(path[0]))
-		result = TRUE;
-#ifndef UNDER_CE
-	else if (isalpha(path[0]))
-		result = (path[1] == ':');
-#endif
-	else
-		result = FALSE;
-	return result;
-}
-
-
-//============================================================
 //	osd_dirname
 //============================================================
 

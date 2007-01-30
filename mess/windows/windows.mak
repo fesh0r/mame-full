@@ -10,6 +10,8 @@
 CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
 RCFLAGS += -DMESS
 
+LIBS += -lcomdlg32
+
 OSOBJS += \
 	$(OBJ)/mess/windows/configms.o	\
 	$(OBJ)/mess/windows/dialog.o	\

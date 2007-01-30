@@ -153,6 +153,10 @@ typedef char Char;
 #define	M_SET		META('[')
 #define	ismeta(c)	(((c)&M_QUOTE) != 0)
 
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
+
 
 static int	 DECL_SPEC compare __P((const void *, const void *));
 static void	 g_Ctoc __P((const Char *, char *));
