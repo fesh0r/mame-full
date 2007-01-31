@@ -16,6 +16,8 @@ System Driver Changes:
   many floppy controller fixes.  Added Chip RAM mirroring and Extended ADF 1
   disk format.  [Ernesto Corvi]
 
+- [APPLE2] Fixed crash when ramsize was set to 4k.  (bug #1048) [Nate Woods]
+
 - [ATARI] Fixed hang on reset bug.  (bug #982) [Nate Woods]
 
 - [COCO] Fixed crash when ramsize was set to less than 32k.  (bug #993) [Nate

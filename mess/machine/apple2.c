@@ -708,7 +708,7 @@ UINT8 apple2_getfloatingbusvalue(void)
 		//CMemory::mState |= CMemory::kVBLBar; // N: VBL' is true // FIX: MESS?
 	}
 
-	return mess_ram[address]; // FIX: this seems to work, but is it right!?
+	return mess_ram[address % mess_ram_size]; // FIX: this seems to work, but is it right!?
 }
 
 
