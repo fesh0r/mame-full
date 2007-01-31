@@ -168,7 +168,7 @@ INPUT_PORTS_END
 
 static INTERRUPT_GEN( jupiter_interrupt )
 {
-	cpunum_set_input_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /* machine definition */

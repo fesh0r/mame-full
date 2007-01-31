@@ -51,7 +51,7 @@ WRITE8_HANDLER( galaxy_latch_w )
 
 INTERRUPT_GEN( galaxy_interrupt )
 {
-	cpunum_set_input_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static int galaxy_irq_callback (int cpu)

@@ -122,7 +122,7 @@ static void zx_ula_irq(int param)
 		ula_irq_active = 0;
 		if (++ula_scancode_count == 8)
 			ula_scancode_count = 0;
-		cpunum_set_input_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 		if (++ula_scanline_count == Machine->screen[0].height)
 			ula_scanline_count = 0;
 	}
