@@ -106,6 +106,8 @@ Source Changes:
 
 - Fixed hash file processing.  [MJSTY]
 
+- Fixed problem creating printer output.  (bug #1039) [Nate Woods]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 - [Windows] Fixed several memory leaks in the Windows code.  [Nate woods]

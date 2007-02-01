@@ -482,7 +482,7 @@ static void determine_open_plan(mess_image *image, int is_create, UINT32 *open_p
 		open_plan[i++] = OPEN_FLAG_WRITE;
 	if (!is_create && readable)
 		open_plan[i++] = OPEN_FLAG_READ;
-	if (readable && writeable && creatable)
+	if (writeable && creatable)
 		open_plan[i++] = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
 	open_plan[i] = 0;
 }
