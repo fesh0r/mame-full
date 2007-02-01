@@ -737,38 +737,64 @@ error:
 
 
 //============================================================
+//	copy_extension_list
+//============================================================
+
+static int copy_extension_list(char *dest, size_t dest_len, const char *extensions)
+{
+	const char *s;
+	int pos = 0;
+
+	// our extension lists are comma delimited; Win32 expects to see lists
+	// delimited by semicolons
+	s = extensions;
+	while(*s)
+	{
+		// append a semicolon if not at the beginning
+		if (s != extensions)
+			pos += snprintf(&dest[pos], dest_len - pos, ";");
+
+		// append ".*"
+		pos += snprintf(&dest[pos], dest_len - pos, "*.");
+
+		// append the file extension
+		while(*s && (*s != ','))
+		{
+			pos += snprintf(&dest[pos], dest_len - pos, "%c", *s);
+			s++;
+		}
+
+		// if we found a comma, advance
+		while(*s == ',')
+			s++;
+	}
+	return pos;
+}
+
+
+
+//============================================================
 //	add_filter_entry
 //============================================================
 
 static int add_filter_entry(char *dest, size_t dest_len, const char *description, const char *extensions)
 {
-	const char *s;
 	int pos = 0;
 
 	// add the description
-	pos += snprintf(dest + pos, dest_len - pos, "%s (", description);
+	pos += snprintf(&dest[pos], dest_len - pos, "%s (", description);
 	
 	// add the extensions to the description
-	s = extensions;
-	while(*s)
-	{
-		pos += snprintf(dest + pos, dest_len - pos, "%s*.%s", (s == extensions) ? "" : ";", s);
-		s += strlen(s) + 1;
-	}
+	pos += copy_extension_list(&dest[pos], dest_len - pos, extensions);
 
 	// add the trailing rparen and '|' character
-	pos += snprintf(dest + pos, dest_len - pos, ")|");
+	pos += snprintf(&dest[pos], dest_len - pos, ")|");
 
 	// now add the extension list itself
-	s = extensions;
-	while(*s)
-	{
-		pos += snprintf(dest + pos, dest_len - pos, "*.%s;", s);
-		s += strlen(s) + 1;
-	}
+	pos += copy_extension_list(&dest[pos], dest_len - pos, extensions);
 
 	// append a '|'
-	pos += snprintf(dest + pos, dest_len - pos, "|");
+	pos += snprintf(&dest[pos], dest_len - pos, "|");
 
 	return pos;
 }

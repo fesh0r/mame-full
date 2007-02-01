@@ -75,6 +75,9 @@ User Interface Changes:
 - [Windows] Fixed regression when saving and loading save states.  (bug #1035)
   [Nate Woods]
 
+- [Windows] Fixed device create bugs that could cause file extensions to not
+  be specified by default or crashes.  (bug #1040) [Nate Woods]
+
 
 
 Imgtool Changes:

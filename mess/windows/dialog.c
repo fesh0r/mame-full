@@ -1688,14 +1688,16 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	const char *initial_dir, char *filename, size_t filename_len)
 {
 	OPENFILENAME ofn;
-	BOOL result;
+	BOOL result = FALSE;
 	TCHAR buf[MAX_PATH];
 	TCHAR *t_filter = NULL;
 	TCHAR *t_initial_dir = NULL;
-	TCHAR *t_filename;
+	TCHAR *t_filename = NULL;
 	TCHAR *s;
-	char *u_filename;
+	LPCTSTR default_extension;
+	char *u_filename = NULL;
 
+	// set up the OPENFILENAME data structure
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = parent;
@@ -1703,17 +1705,27 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 
 	if (filter)
 	{
+		// filter specified; first convert to a TCHAR string
 		t_filter = tstring_from_utf8(filter);
+		if (!t_filter)
+			goto done;
 		ofn.lpstrFilter = t_filter;
 
 		// convert '|' characters to '\0'
 		s = t_filter;
 		while((s = _tcschr(s, '|')) != NULL)
 			*(s++) = '\0';
+
+		// specify lpstrDefExt, if we can
+		default_extension = t_filter + _tcslen(t_filter) + 1;
+		if ((default_extension[0] == '*') && (default_extension[1] == '.'))
+			ofn.lpstrDefExt = &default_extension[2];
 	}
 	if (initial_dir)
 	{
 		t_initial_dir = tstring_from_utf8(initial_dir);
+		if (!t_initial_dir)
+			goto done;
 		ofn.lpstrInitialDir = t_initial_dir;
 	}
 	if (dlgtype == FILE_DIALOG_OPEN)
@@ -1733,8 +1745,9 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	}
 
 	t_filename = tstring_from_utf8(filename);
+	if (!t_filename)
+		goto done;
 	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%s"), t_filename);
-	free(t_filename);
 
 	ofn.lpstrFile = buf;
 	ofn.nMaxFile = sizeof(buf) / sizeof(buf[0]);
@@ -1761,13 +1774,19 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 
 	// copy the result into filename
 	u_filename = utf8_from_tstring(ofn.lpstrFile);
+	if (!u_filename)
+		goto done;
 	snprintf(filename, filename_len, "%s", u_filename);
-	free(u_filename);
 
+done:
 	if (t_filter)
 		free(t_filter);
 	if (t_initial_dir)
 		free(t_initial_dir);
+	if (t_filename)
+		free(t_filename);
+	if (u_filename)
+		free(u_filename);
 	return result;
 }
 
