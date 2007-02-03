@@ -152,7 +152,7 @@ int win_parallel_init(void)
 		if (kernellib)
 		{
 			set_thread_ideal_processor = (set_thread_ideal_processor_proc)
-				GetProcAddress(kernellib, TEXT("SetThreadIdealProcessor"));
+				GetProcAddress(kernellib, "SetThreadIdealProcessor");
 			FreeLibrary(kernellib);
 		}
 		else

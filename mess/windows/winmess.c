@@ -272,7 +272,7 @@ done:
 mame_file_error osd_getcurdir(char *buffer, size_t buffer_len)
 {
 	mame_file_error filerr = FILERR_NONE;
-	TCHAR *tempstr = NULL;
+	char *tempstr = NULL;
 	TCHAR path[_MAX_PATH];
 
 	if (!GetCurrentDirectory(ARRAY_LENGTH(path), path))
