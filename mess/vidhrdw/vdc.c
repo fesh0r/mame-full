@@ -259,10 +259,12 @@ WRITE8_HANDLER ( vce_w )
 
         case 0x02: /* color table address (LSB) */
              vdc.vce_address.b.l = data;
+             vdc.vce_address.w &= 0x1FF;
              break;
 
         case 0x03: /* color table address (MSB) */
              vdc.vce_address.b.h = data;
+             vdc.vce_address.w &= 0x1FF;
              break;
 
         case 0x04: /* color table data (LSB) */
