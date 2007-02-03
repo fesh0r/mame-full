@@ -424,10 +424,10 @@ static void c16_common_driver_init (void)
 	c16_memory_2c000 = memory_region(REGION_CPU1) + 0x2c000;
 
 	/* need to recognice non available tia6523's (iec8/9) */
-	memset(mess_ram + 0xfdc0, 0xff, 0x40);
+	memset(mess_ram + (0xfdc0 % mess_ram_size), 0xff, 0x40);
 
 
-	memset(mess_ram + 0xfd40, 0xff, 0x20);
+	memset(mess_ram + (0xfd40 % mess_ram_size), 0xff, 0x20);
 
 	c16_tape_open ();
 
@@ -449,16 +449,16 @@ void c16_driver_init(void)
 
 static WRITE8_HANDLER(c16_sidcart_16k)
 {
-	mess_ram[0x1400 + offset]=data;
-	mess_ram[0x5400 + offset]=data;
-	mess_ram[0x9400 + offset]=data;
-	mess_ram[0xd400 + offset]=data;
+	mess_ram[(0x1400 + offset) % mess_ram_size] = data;
+	mess_ram[(0x5400 + offset) % mess_ram_size] = data;
+	mess_ram[(0x9400 + offset) % mess_ram_size] = data;
+	mess_ram[(0xd400 + offset) % mess_ram_size] = data;
 	sid6581_0_port_w(offset,data);
 }
 
 static WRITE8_HANDLER(c16_sidcart_64k)
 {
-	mess_ram[0xd400 + offset]=data;
+	mess_ram[(0xd400 + offset) % mess_ram_size] = data;
 	sid6581_0_port_w(offset,data);
 }
 
@@ -512,7 +512,7 @@ MACHINE_RESET( c16 )
 	else
 	{
 		memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM, 0x4000, 0xfcff, 0, 0, MWA8_BANK10);
-		memory_set_bankptr(10, mess_ram + 0x4000);
+		memory_set_bankptr(10, mess_ram + (0x4000 % mess_ram_size));
 
 		if (SIDCARD_HACK)
 			memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xd400, 0xd41f, 0, 0, c16_sidcart_64k);

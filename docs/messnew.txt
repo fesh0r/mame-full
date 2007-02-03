@@ -20,6 +20,9 @@ System Driver Changes:
 
 - [ATARI] Fixed hang on reset bug.  (bug #982) [Nate Woods]
 
+- [C16] Fixed crash when ramsize was set to less than 64k.  (bug #1049) [Nate
+  Woods]
+
 - [COCO] Fixed crash when ramsize was set to less than 32k.  (bug #993) [Nate
   Woods]
 
