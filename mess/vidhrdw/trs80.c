@@ -61,9 +61,6 @@ VIDEO_START( trs80 )
 		64, videoram_size / 64);
 
 
-	if (!dblwidth_tilemap || !normwidth_tilemap)
-		return 1;
-
 	color = -1;
 	current_tilemap = NULL;
 

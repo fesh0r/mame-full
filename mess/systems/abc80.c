@@ -157,9 +157,6 @@ VIDEO_START( abc80 )
 	bg_tilemap = tilemap_create(abc80_get_tile_info, abc80_tilemap_scan, 
 		TILEMAP_OPAQUE, 6, 10, 40, 24);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 
@@ -167,9 +164,6 @@ VIDEO_START( abc800m )
 {
 	bg_tilemap = tilemap_create(abc80_get_tile_info, tilemap_scan_rows, 
 		TILEMAP_OPAQUE, 6, 10, 80, 24);
-
-	if ( !bg_tilemap )
-		return 1;
 
 	return 0;
 }
@@ -186,9 +180,6 @@ VIDEO_START( abc800c )
 {
 	bg_tilemap = tilemap_create(abc800c_get_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 6, 10, 40, 24);
-
-	if ( !bg_tilemap )
-		return 1;
 
 	return 0;
 }

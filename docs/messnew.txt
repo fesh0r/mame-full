@@ -111,6 +111,8 @@ Source Changes:
 
 - Fixed problem creating printer output.  (bug #1039) [Nate Woods]
 
+- Removed redundant checks for tilemap allocation failute.  [Dirk Best]
+
 - [Messtest] Now displays emulation error output.  [Nate Woods]
 
 - [Windows] Fixed several memory leaks in the Windows code.  [Nate woods]

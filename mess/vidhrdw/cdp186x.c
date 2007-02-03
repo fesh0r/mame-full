@@ -198,14 +198,8 @@ VIDEO_START( cdp1869 )
 	normal_tilemap = tilemap_create(get_normal_tile_info, tilemap_scan_rows, 
 		TILEMAP_TRANSPARENT, 6, 9, 40, 24);
 
-	if ( !normal_tilemap )
-		return 1;
-
 	double_tilemap = tilemap_create(get_double_tile_info, tilemap_scan_rows, 
 		TILEMAP_TRANSPARENT, 12, 18, 20, 24);
-
-	if ( !double_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(normal_tilemap, 0);
 	tilemap_set_transparent_pen(double_tilemap, 0);

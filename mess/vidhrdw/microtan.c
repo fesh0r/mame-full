@@ -42,9 +42,6 @@ VIDEO_START( microtan )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
 		TILEMAP_OPAQUE, 8, 16, 32, 16);
 
-	if (!bg_tilemap)
-		return 1;
-
 	microtan_chunky_buffer = auto_malloc(videoram_size);
 	memset(microtan_chunky_buffer, 0, videoram_size);
 	microtan_chunky_graphics = 0;

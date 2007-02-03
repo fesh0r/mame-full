@@ -31,8 +31,6 @@ VIDEO_START( aquarius )
 		TILEMAP_OPAQUE,
 		8, 8,
 		40, 24);
-	if (!aquarius_tilemap)
-		return 1;
 
 	return 0;
 }

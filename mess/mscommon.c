@@ -68,8 +68,6 @@ struct terminal *terminal_create(
 
 	term->tm = tilemap_create(terminal_gettileinfo, tilemap_scan_rows,
 		TILEMAP_OPAQUE, char_width, char_height, num_cols, num_rows);
-	if (!term->tm)
-		return NULL;
 
 	term->gfx = gfx;
 	term->blank_char = blank_char;
