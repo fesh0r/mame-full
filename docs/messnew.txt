@@ -20,6 +20,8 @@ System Driver Changes:
 
 - [ATARI] Fixed hang on reset bug.  (bug #982) [Nate Woods]
 
+- [AVIGO] Removed redundant artwork in avigo.zip.  (bug #1043) [Nate Woods]
+
 - [C16] Fixed crash when ramsize was set to less than 64k.  (bug #1049) [Nate
   Woods]
 
