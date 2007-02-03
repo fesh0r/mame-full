@@ -51,9 +51,9 @@ void check_pause_button( void );
 DEVICE_INIT( sms_cart );
 DEVICE_LOAD( sms_cart );
 
+MACHINE_START(sms);
 MACHINE_RESET(sms);
 INTERRUPT_GEN(sms);
-NVRAM_HANDLER(sms);
 
 #define IS_NTSC											(Machine->screen[0].refresh == 60)
 #define IS_PAL											(Machine->screen[0].refresh == 50)

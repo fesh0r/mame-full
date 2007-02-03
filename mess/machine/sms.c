@@ -21,7 +21,7 @@ UINT8 *sms_banking_bios[5]; /* we are going to use 1-4, same as bank numbers */
 UINT8 *sms_banking_cart[5]; /* we are going to use 1-4, same as bank numbers */
 UINT8 *sms_banking_none[5]; /* we are going to use 1-4, same as bank numbers */
 UINT8 smsNVRam[NVRAM_SIZE];
-int smsNVRAMSaved = 0;
+int smsNVRAMSave = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
 
 WRITE8_HANDLER(sms_fm_detect_w) {
@@ -164,7 +164,7 @@ WRITE8_HANDLER(sms_mapper_w)
 		case 0: /* Control */
 			/* Is it ram or rom? */
 			if (data & 0x08) { /* it's ram */
-				smsNVRAMSaved = 1;			/* SRAM should be saved on exit. */
+				smsNVRAMSave = 1;			/* SRAM should be saved on exit. */
 				if (data & 0x04) {
 #ifdef LOG_PAGING
 					logerror("ram 1 paged.\n");
@@ -346,18 +346,10 @@ WRITE8_HANDLER(gg_psg_w) {
 	/* D0 = Tone1 Right */
 }
 
-NVRAM_HANDLER(sms) {
-	if (file) {
-		if (read_or_write) {
-			if (smsNVRAMSaved) {
-				mame_fwrite(file, smsNVRam, sizeof(UINT8) * NVRAM_SIZE);
-			}
-		} else {
-			mame_fread(file, smsNVRam, sizeof(UINT8) * NVRAM_SIZE);
-		}
-	} else {
-		/* initially zero out SRAM */
-		memset(smsNVRam, 0, sizeof(UINT8) * NVRAM_SIZE);
+static void sms_machine_stop(running_machine *machine) {
+	/* Does the cartridge have SRAM that should be saved? */
+	if (smsNVRAMSave) {
+		image_battery_save( image_from_devtype_and_index(IO_CARTSLOT, 0), smsNVRam, sizeof(UINT8) * NVRAM_SIZE );
 	}
 }
 
@@ -481,7 +473,7 @@ DEVICE_LOAD( sms_cart )
 	}
 
 	if ( ! size ) {
-		logerror("ROM image too small!\n");
+		image_seterror( image, IMAGE_ERROR_UNSPECIFIED, "Invalid ROM image: ROM image is too small" );
 		return INIT_FAIL;
 	}
 
@@ -499,6 +491,9 @@ DEVICE_LOAD( sms_cart )
 			logerror("Warning loading image: sms_verify_cart failed\n");
 		}
 	}
+
+	/* Load battery backed RAM, if available */
+	image_battery_load( image, smsNVRam, sizeof(UINT8) * NVRAM_SIZE );
 
 	return INIT_PASS;
 }
@@ -528,6 +523,12 @@ static void setup_banks( void ) {
 		sms_banking_bios[3] = BIOS + ( ( 1 < smsBiosPageCount) ? 0x4000 : 0 );
 		sms_banking_bios[4] = BIOS + ( ( 2 < smsBiosPageCount) ? 0x8000 : 0 );
 	}
+}
+
+MACHINE_START(sms) {
+	smsNVRAMSave = 0;
+	add_exit_callback(machine, sms_machine_stop);
+	return 0;
 }
 
 MACHINE_RESET(sms)
