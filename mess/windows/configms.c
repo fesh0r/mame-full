@@ -299,7 +299,7 @@ void osd_begin_final_unloading(void)
 				filename_ptr = &device_options[opt].opts[i]->filename;
 				if (*filename_ptr)
 				{
-					free(*filename_ptr);
+					pool_freeptr(&mess_options_pool, *filename_ptr);
 					*filename_ptr = NULL;
 				}
 
@@ -308,7 +308,7 @@ void osd_begin_final_unloading(void)
 
 				// place new filename, if there
 				if (image)
-					*filename_ptr = mame_strdup(image_filename(image));
+					*filename_ptr = pool_strdup(&mess_options_pool, image_filename(image));
 			}
 			opt++;
 		}

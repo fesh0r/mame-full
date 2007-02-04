@@ -21,21 +21,6 @@ typedef struct _mess_image mess_image;
 ***************************************************************************/
 
 /*-----------------------------------------------------------------------------
-    osd_rmfile: deletes a file
-
-    Parameters:
-
-        filename - path to file to delete
-
-    Return value:
-
-        a mame_file_error describing any error that occurred while deleting
-        the file, or FILERR_NONE if no error occurred
------------------------------------------------------------------------------*/
-mame_file_error osd_rmfile(const char *filename);
-
-
-/*-----------------------------------------------------------------------------
     osd_copyfile: copies a file
 
     Parameters:

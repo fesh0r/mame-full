@@ -14,6 +14,7 @@
 #include "mess.h"
 #include "messres.h"
 #include "window.h"
+#include "winutil.h"
 
 //============================================================
 //	PARAMETERS
@@ -75,7 +76,7 @@ static void CALLBACK tapedialog_timerproc(HWND dialog, UINT msg, UINT_PTR ideven
 	SendMessage(dlg->slider, TBM_SETRANGEMAX, FALSE, endpos);
 	SendMessage(dlg->slider, TBM_SETPOS, TRUE, curpos);
 
-	SetWindowText(dlg->status, tapestatus);
+	win_set_window_text_utf8(dlg->status, tapestatus);
 }
 
 //============================================================
