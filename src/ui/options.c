@@ -412,12 +412,10 @@ static const REG_OPTION global_game_options[] =
 	{"skip_warnings",           RO_BOOL,    offsetof(settings_type, skip_warnings),     "0" },
 #endif
 
+	{ "rompath",                RO_STRING,  offsetof(settings_type, romdirs),          "roms" },
 #ifdef MESS
-	{ "biospath",               RO_STRING,  offsetof(settings_type, romdirs),          "bios" },
 	{ "softwarepath",           RO_STRING,  offsetof(settings_type, mess.softwaredirs),"software" },
 	{ "hashpath",               RO_STRING,  offsetof(settings_type, mess.hashdir),     "hash" },
-#else
-	{ "rompath",                RO_STRING,  offsetof(settings_type, romdirs),          "roms" },
 #endif
 	{ "samplepath",             RO_STRING,  offsetof(settings_type, sampledirs),       "samples", },
 	{ "inipath",                RO_STRING,  offsetof(settings_type, inidir),           "ini" },
