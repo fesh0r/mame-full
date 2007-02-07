@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+[GAMEBOY] Rewrote video hardware timing. Rewrote rendering code to
+          support mid-scanline effects. [Wilbert Pol]
 
 
 

@@ -16,17 +16,17 @@
 #include "cpu/z80gb/z80gb.h"
 #include "profiler.h"
 
-#define LCDCONT		gb_vid_regs[0x0]	/* LCD control register                       */
-#define LCDSTAT		gb_vid_regs[0x1]	/* LCD status register                        */
-#define SCROLLY		gb_vid_regs[0x2]	/* Starting Y position of the background      */
-#define SCROLLX		gb_vid_regs[0x3]	/* Starting X position of the background      */
-#define CURLINE		gb_vid_regs[0x4]	/* Current screen line being scanned          */
-#define CMPLINE		gb_vid_regs[0x5]	/* Gen. int. when scan reaches this line      */
-#define BGRDPAL		gb_vid_regs[0x7]	/* Background palette                         */
-#define SPR0PAL		gb_vid_regs[0x8]	/* Sprite palette #0                          */
-#define SPR1PAL		gb_vid_regs[0x9]	/* Sprite palette #1                          */
-#define WNDPOSY		gb_vid_regs[0xA]	/* Window Y position                          */
-#define WNDPOSX		gb_vid_regs[0xB]	/* Window X position                          */
+#define LCDCONT		gb_vid_regs[0x00]	/* LCD control register                       */
+#define LCDSTAT		gb_vid_regs[0x01]	/* LCD status register                        */
+#define SCROLLY		gb_vid_regs[0x02]	/* Starting Y position of the background      */
+#define SCROLLX		gb_vid_regs[0x03]	/* Starting X position of the background      */
+#define CURLINE		gb_vid_regs[0x04]	/* Current screen line being scanned          */
+#define CMPLINE		gb_vid_regs[0x05]	/* Gen. int. when scan reaches this line      */
+#define BGRDPAL		gb_vid_regs[0x07]	/* Background palette                         */
+#define SPR0PAL		gb_vid_regs[0x08]	/* Sprite palette #0                          */
+#define SPR1PAL		gb_vid_regs[0x09]	/* Sprite palette #1                          */
+#define WNDPOSY		gb_vid_regs[0x0A]	/* Window Y position                          */
+#define WNDPOSX		gb_vid_regs[0x0B]	/* Window X position                          */
 #define KEY1		gb_vid_regs[0x0D]	/* Prepare speed switch                       */
 #define HDMA1		gb_vid_regs[0x11]	/* HDMA source high byte                      */
 #define HDMA2		gb_vid_regs[0x12]	/* HDMA source low byte                       */
@@ -65,7 +65,7 @@ struct layer_struct {
 	UINT8  xstart;
 	UINT8  xend;
 	/* GBC specific */
-	UINT16 *gbc_tiles[2];
+	UINT8 *gbc_tiles[2];
 	UINT8  *gbc_map;
 	INT16  bgline;
 };
@@ -73,16 +73,20 @@ struct layer_struct {
 struct gb_lcd_struct {
 	int	window_lines_drawn;
 
-	int	lcd_warming_up;		/* Has the video hardware just been switched on? */
-	int	lcd_on;			/* Is the video hardware on? */
-
 	/* Things used to render current line */
 	int	current_line;		/* Current line */
 	int	sprCount;		/* Number of sprites on current line */
 	int	sprite[10];		/* References to sprites to draw on current line */
+	int	previous_line;		/* Previous line we've drawn in */
+	int	start_x;		/* Pixel to start drawing from (inclusive) */
+	int	end_x;			/* Pixel to end drawing (exclusive) */
+	struct layer_struct	layer[2];
+	mame_timer	*lcd_timer;
 } gb_lcd;
 
-void (*refresh_scanline)(void);
+void (*update_scanline)(void);
+static void gb_lcd_timer_proc( int dummy );
+static void gb_lcd_switch_on( void );
 
 /*
   Select which sprites should be drawn for the current scanline and return the
@@ -208,128 +212,127 @@ INLINE void gb_update_sprites (void)
 }
 
 /* this should be recoded to become incremental */
-void gb_refresh_scanline (void)
+void gb_update_scanline (void)
 {
 	mame_bitmap *bitmap = tmpbitmap;
-	UINT8 *zbuf = bg_zbuf;
-	int l = 0, yindex = gb_lcd.current_line;
-
-	/* layer info layer[0]=background, layer[1]=window */
-	struct layer_struct layer[2];
 
 	profiler_mark(PROFILER_VIDEO);
 
-	/* Take care of some initializations */
-	if ( gb_lcd.current_line == 0x00 ) {
-		gb_lcd.window_lines_drawn = 0;
-	}
+	/* Make sure we're in mode 3 */
+	if ( ( LCDSTAT & 0x03 ) == 0x03 ) {
+		/* Calculate number of pixels to render based on time still left on the timer */
+		UINT32 cycles_to_go = MAME_TIME_TO_CYCLES( 0, mame_timer_timeleft( gb_lcd.lcd_timer ) );
+		int l = 0;
 
-	/* if background or screen disabled clear line */
-	if ((LCDCONT & 0x81) != 0x81)
-	{
-		rectangle r = Machine->screen[0].visarea;
-		r.min_y = r.max_y = yindex;
-		fillbitmap(bitmap, Machine->pens[0], &r);
-	}
+		if ( gb_lcd.start_x == 0 ) {
+			/* Window is enabled if the hardware says so AND the current scanline is
+			 * within the window AND the window X coordinate is <=166 */
+			gb_lcd.layer[1].enabled = ( ( LCDCONT & 0x20 ) && ( gb_lcd.current_line >= WNDPOSY ) && ( WNDPOSX <= 166 ) ) ? 1 : 0;
 
-	/* if lcd disabled return */
-	if (!(LCDCONT & 0x80))
-		return;
+			/* BG is enabled if the hardware says so AND (window_off OR (window_on
+ 			* AND window's X position is >=7 ) ) */
+			gb_lcd.layer[0].enabled = ( ( LCDCONT & 0x01 ) && ( ( ! gb_lcd.layer[1].enabled ) || ( gb_lcd.layer[1].enabled && ( WNDPOSX >= 7 ) ) ) ) ? 1 : 0;
 
-	/* Window is enabled if the hardware says so AND the current scanline is
-	 * within the window AND the window X coordinate is <=166 */
-	layer[1].enabled = ((LCDCONT & 0x20) && gb_lcd.current_line >= WNDPOSY && WNDPOSX <= 166) ? 1 : 0;
+			if ( gb_lcd.layer[0].enabled ) {
+				int bgline = ( SCROLLY + gb_lcd.current_line ) & 0xFF;
 
-	/* BG is enabled if the hardware says so AND (window_off OR (window_on
-	 * AND window's X position is >=7 ) ) */
-	layer[0].enabled = ((LCDCONT & 0x01) && ((!layer[1].enabled) || (layer[1].enabled && WNDPOSX >= 7))) ? 1 : 0;
-
-	if (layer[0].enabled)
-	{
-		int bgline;
-
-		bgline = (SCROLLY + gb_lcd.current_line) & 0xFF;
-
-		layer[0].bg_map = gb_bgdtab;
-		layer[0].bg_map += (bgline << 2) & 0x3E0;
-		layer[0].bg_tiles = gb_chrgen + ( (bgline & 7) << 1 );
-		layer[0].xindex = SCROLLX >> 3;
-		layer[0].xshift = SCROLLX & 7;
-		layer[0].xstart = 0;
-		layer[0].xend = 160;
-	}
-
-	if (layer[1].enabled)
-	{
-		int bgline, xpos;
-
-		bgline = gb_lcd.window_lines_drawn;
-		xpos = WNDPOSX - 7;		/* Window is offset by 7 pixels */
-		if (xpos < 0)
-			xpos = 0;
-
-		layer[1].bg_map = gb_wndtab;
-		layer[1].bg_map += (bgline << 2) & 0x3E0;
-		layer[1].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
-		layer[1].xindex = 0;
-		layer[1].xshift = 0;
-		layer[1].xstart = xpos;
-		layer[1].xend = 160 - xpos;
-		layer[0].xend = xpos;
-	}
-
-	while (l < 2)
-	{
-		/*
-		 * BG display on
-		 */
-		UINT8 *map, xidx, bit, i;
-		UINT8 *tiles;
-		UINT16 data;
-		int xindex, tile_index;
-
-		if (!layer[l].enabled)
-		{
-			l++;
-			continue;
-		}
-
-		map = layer[l].bg_map;
-		tiles = layer[l].bg_tiles;
-		xidx = layer[l].xindex;
-		bit = layer[l].xshift;
-		i = layer[l].xend;
-
-		tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
-		data = tiles[tile_index] | ( tiles[tile_index+1] << 8 ); 
-		data <<= bit;
-
-		xindex = layer[l].xstart;
-		while (i)
-		{
-			while ((bit < 8) && i)
-			{
-				register int colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
-				plot_pixel(bitmap, xindex, yindex, Machine->pens[gb_bpal[colour]]);
-				xindex++;
-				*zbuf++ = colour;
-				data <<= 1;
-				bit++;
-				i--;
+				gb_lcd.layer[0].bg_map = gb_bgdtab;
+				gb_lcd.layer[0].bg_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[0].bg_tiles = gb_chrgen + ( ( bgline & 7 ) << 1 );
+				gb_lcd.layer[0].xindex = SCROLLX >> 3;
+				gb_lcd.layer[0].xshift = SCROLLX & 7;
+				gb_lcd.layer[0].xstart = 0;
+				gb_lcd.layer[0].xend = 160;
 			}
-			xidx = (xidx + 1) & 31;
-			bit = 0;
-			tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
-			data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
+
+			if ( gb_lcd.layer[1].enabled ) {
+				int bgline, xpos;
+
+				bgline = gb_lcd.window_lines_drawn;
+				xpos = WNDPOSX - 7;             /* Window is offset by 7 pixels */
+				if ( xpos < 0 )
+					xpos = 0;
+
+				gb_lcd.layer[1].bg_map = gb_wndtab;
+				gb_lcd.layer[1].bg_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[1].bg_tiles = gb_chrgen + ( ( bgline & 7 ) << 1);
+				gb_lcd.layer[1].xindex = 0;
+				gb_lcd.layer[1].xshift = 0;
+				gb_lcd.layer[1].xstart = xpos;
+				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[0].xend = xpos;
+			}
 		}
-		l++;
-	}
 
-	if (LCDCONT & 0x02)
-		gb_update_sprites();
+		if ( cycles_to_go < 160 ) {
+			gb_lcd.end_x = 160 - cycles_to_go;
+			/* Draw empty pixels when the background is disabled */
+			if ( ! ( LCDCONT & 0x01 ) ) {
+				rectangle r;
+				r.min_y = r.max_y = gb_lcd.current_line;
+				r.min_x = gb_lcd.start_x;
+				r.max_x = gb_lcd.end_x - 1;
+				fillbitmap( bitmap, Machine->pens[0], &r );
+			}
+			while ( l < 2 ) {
+				UINT8	xindex, *map, *tiles;
+				UINT16	data;
+				int	i, tile_index;
 
-	if ( layer[1].enabled ) {
-		gb_lcd.window_lines_drawn++;
+				if ( ! gb_lcd.layer[l].enabled ) {
+					l++;
+					continue;
+				}
+				map = gb_lcd.layer[l].bg_map;
+				tiles = gb_lcd.layer[l].bg_tiles;
+				xindex = gb_lcd.start_x;
+				if ( xindex < gb_lcd.layer[l].xstart )
+					xindex = gb_lcd.layer[l].xstart;
+				i = gb_lcd.end_x;
+				if ( i > gb_lcd.layer[l].xend )
+					i = gb_lcd.layer[l].xend;
+				i = i - xindex;
+
+				tile_index = ( map[ gb_lcd.layer[l].xindex ] ^ gb_tile_no_mod ) * 16;
+				data = tiles[ tile_index ] | ( tiles[ tile_index+1 ] << 8 );
+				data <<= gb_lcd.layer[l].xshift;
+
+				while ( i > 0 ) {
+					while ( ( gb_lcd.layer[l].xshift < 8 ) && i ) {
+						register int colour = ( ( data & 0x8000 ) ? 2 : 0 ) | ( ( data & 0x0080 ) ? 1 : 0 );
+						plot_pixel( bitmap, xindex, gb_lcd.current_line, Machine->pens[ gb_bpal[ colour ] ] );
+						bg_zbuf[ xindex ] = colour;
+						xindex++;
+						data <<= 1;
+						gb_lcd.layer[l].xshift++;
+						i--;
+					}
+					if ( gb_lcd.layer[l].xshift == 8 ) {
+						gb_lcd.layer[l].xindex = ( gb_lcd.layer[l].xindex + 1 ) & 31;
+						gb_lcd.layer[l].xshift = 0;
+						tile_index = ( map[ gb_lcd.layer[l].xindex ] ^ gb_tile_no_mod ) * 16;
+						data = tiles[ tile_index ] | ( tiles[ tile_index+1 ] << 8 );
+					}
+				}
+				l++;
+			}
+			if ( gb_lcd.end_x == 160 && LCDCONT & 0x02 ) {
+				gb_update_sprites();
+			}
+			gb_lcd.start_x = gb_lcd.end_x;
+		}
+	} else {
+		if ( ! ( LCDCONT & 0x80 ) ) {
+			/* Draw an empty line when LCD is disabled */
+			if ( gb_lcd.previous_line != gb_lcd.current_line ) {
+				if ( gb_lcd.current_line < 144 ) {
+					rectangle r = Machine->screen[0].visarea;
+					r.min_y = r.max_y = gb_lcd.current_line;
+					fillbitmap( bitmap, Machine->pens[0], &r );
+				}
+				gb_lcd.previous_line = gb_lcd.current_line;
+			}
+		}
 	}
 
 	profiler_mark(PROFILER_END);
@@ -432,223 +435,51 @@ INLINE void sgb_update_sprites (void)
 	}
 }
 
-void sgb_refresh_scanline (void)
-{
-	mame_bitmap *bitmap = tmpbitmap;
-	UINT8 *zbuf = bg_zbuf;
-	int l = 0, yindex = gb_lcd.current_line;
-
-	/* layer info layer[0]=background, layer[1]=window */
-	struct layer_struct layer[2];
-
-	profiler_mark(PROFILER_VIDEO);
-
-	/* Handle SGB mask */
-	switch( sgb_window_mask )
-	{
-		case 1:	/* Freeze screen */
-			return;
-		case 2:	/* Blank screen (black) */
-			{
-				rectangle r = Machine->screen[0].visarea;
-				r.min_x = SGB_XOFFSET;
-				r.max_x -= SGB_XOFFSET;
-				r.min_y = SGB_YOFFSET;
-				r.max_y -= SGB_YOFFSET;
-				fillbitmap( bitmap, Machine->pens[0], &r );
-			} return;
-		case 3:	/* Blank screen (white - or should it be color 0?) */
-			{
-				rectangle r = Machine->screen[0].visarea;
-				r.min_x = SGB_XOFFSET;
-				r.max_x -= SGB_XOFFSET;
-				r.min_y = SGB_YOFFSET;
-				r.max_y -= SGB_YOFFSET;
-				fillbitmap( bitmap, Machine->pens[32767], &r );
-			} return;
-	}
-
-	/* Draw the "border" if we're on the first line */
-	if( gb_lcd.current_line == 0 )
-	{
-		sgb_refresh_border();
-	}
-
-	/* if background or screen disabled clear line */
-	if ((LCDCONT & 0x81) != 0x81)
-	{
-		rectangle r = Machine->screen[0].visarea;
-		r.min_x = SGB_XOFFSET;
-		r.max_x -= SGB_XOFFSET;
-		r.min_y = r.max_y = yindex + SGB_YOFFSET;
-		fillbitmap(bitmap, Machine->pens[0], &r);
-	}
-
-	/* if lcd disabled return */
-	if (!(LCDCONT & 0x80))
-		return;
-
-	/* Window is enabled if the hardware says so AND the current scanline is
-	 * within the window AND the window X coordinate is <=166 */
-	layer[1].enabled = ((LCDCONT & 0x20) && gb_lcd.current_line >= WNDPOSY && WNDPOSX <= 166) ? 1 : 0;
-
-	/* BG is enabled if the hardware says so AND (window_off OR (window_on
-	 * AND window's X position is >=7 ) ) */
-	layer[0].enabled = ((LCDCONT & 0x01) && ((!layer[1].enabled) || (layer[1].enabled && WNDPOSX >= 7))) ? 1 : 0;
-
-	if (layer[0].enabled)
-	{
-		int bgline;
-
-		bgline = (SCROLLY + gb_lcd.current_line) & 0xFF;
-
-		layer[0].bg_map = gb_bgdtab;
-		layer[0].bg_map += (bgline << 2) & 0x3E0;
-		layer[0].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
-		layer[0].xindex = SCROLLX >> 3;
-		layer[0].xshift = SCROLLX & 7;
-		layer[0].xstart = 0;
-		layer[0].xend = 160;
-	}
-
-	if (layer[1].enabled)
-	{
-		int bgline, xpos;
-
-		bgline = (gb_lcd.current_line - WNDPOSY) & 0xFF;
-		/* Window X position is offset by 7 so we'll need to adust */
-		xpos = WNDPOSX - 7;
-		if (xpos < 0)
-			xpos = 0;
-
-		layer[1].bg_map = gb_wndtab;
-		layer[1].bg_map += (bgline << 2) & 0x3E0;
-		layer[1].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
-		layer[1].xindex = 0;
-		layer[1].xshift = 0;
-		layer[1].xstart = xpos;
-		layer[1].xend = 160 - xpos;
-		layer[0].xend = xpos;
-	}
-
-	while (l < 2)
-	{
-		/*
-		 * BG display on
-		 */
-		UINT8 *map, xidx, bit, i, pal;
-		UINT8 *tiles;
-		UINT16 data;
-		int xindex, tile_index;
-
-		if (!layer[l].enabled)
-		{
-			l++;
-			continue;
-		}
-
-		map = layer[l].bg_map;
-		tiles = layer[l].bg_tiles;
-		xidx = layer[l].xindex;
-		bit = layer[l].xshift;
-		i = layer[l].xend;
-
-
-		tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
-		data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
-		data <<= bit;
-
-		xindex = layer[l].xstart;
-
-		/* Figure out which palette we're using */
-		pal = sgb_pal_map[(xindex >> 3)][(yindex >> 3)] << 2;
-
-		while (i)
-		{
-			while ((bit < 8) && i)
-			{
-				register int colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
-				plot_pixel(bitmap, xindex + SGB_XOFFSET, yindex + SGB_YOFFSET, Machine->remapped_colortable[pal + gb_bpal[colour]]);
-				xindex++;
-				*zbuf++ = colour;
-				data <<= 1;
-				bit++;
-				i--;
-			}
-			xidx = (xidx + 1) & 31;
-			pal = sgb_pal_map[(xindex >> 3)][(yindex >> 3)] << 2;
-			bit = 0;
-			tile_index = (map[xidx] ^ gb_tile_no_mod) * 16;
-			data = tiles[tile_index] | ( tiles[tile_index+1] << 8 );
-		}
-		l++;
-	}
-
-	if (LCDCONT & 0x02)
-		sgb_update_sprites();
-
-	profiler_mark(PROFILER_END);
-}
-
-void sgb_refresh_border(void)
-{
-	UINT16 *tiles, *tiles2, data, data2;
-	UINT16 *map;
+void sgb_refresh_border(void) {
+	UINT16 data, data2;
 	UINT16 yidx, xidx, xindex;
+	UINT8 *map, *tiles, *tiles2;
 	UINT8 pal, i;
 	mame_bitmap *bitmap = tmpbitmap;
 
-	map = (UINT16 *)sgb_tile_map - 32;
+	map = sgb_tile_map - 64;
 
-	for( yidx = 0; yidx < 224; yidx++ )
-	{
+	for( yidx = 0; yidx < 224; yidx++ ) {
 		xindex = 0;
-		map += (yidx % 8) ? 0 : 32;
-		for( xidx = 0; xidx < 32; xidx++ )
-		{
-			if( map[xidx] & 0x8000 ) /* Vertical flip */
-				tiles = (UINT16 *)sgb_tile_data + (7 - (yidx % 8));
+		map += (yidx % 8) ? 0 : 64;
+		for( xidx = 0; xidx < 64; xidx+=2 ) {
+			if( map[xidx+1] & 0x80 ) /* Vertical flip */
+				tiles = sgb_tile_data + ( ( 7 - ( yidx % 8 ) ) << 1 );
 			else /* No vertical flip */
-				tiles = (UINT16 *)sgb_tile_data + (yidx % 8);
-			tiles2 = tiles + 8;
+				tiles = sgb_tile_data + ( ( yidx % 8 ) << 1 );
+			tiles2 = tiles + 16;
 
-			pal = (map[xidx] & 0x1C00) >> 10;
+			pal = (map[xidx+1] & 0x1C) >> 2;
 			if( pal == 0 )
 				pal = 1;
 			pal <<= 4;
 
-			if( sgb_hack ) /* A few games do weird stuff */
-			{
-				UINT16 tileno = map[xidx] & 0xFF;
+			if( sgb_hack ) { /* A few games do weird stuff */
+				UINT8 tileno = map[xidx];
 				if( tileno >= 128 ) tileno = ((64 + tileno) % 128) + 128;
 				else tileno = (64 + tileno) % 128;
-				data = tiles[tileno * 16];
-				data2 = tiles2[tileno * 16];
-			}
-			else
-			{
-				data = tiles[(map[xidx] & 0xFF) * 16];
-				data2 = tiles2[(map[xidx] & 0xFF) * 16];
+				data = tiles[ tileno * 32 ] | ( tiles[ ( tileno * 32 ) + 1 ] << 8 );
+				data2 = tiles2[ tileno * 32 ] | ( tiles2[ ( tileno * 32 ) + 1 ] << 8 );
+			} else {
+				data = tiles[ map[xidx] * 32 ] | ( tiles[ (map[xidx] * 32 ) + 1 ] << 8 );
+				data2 = tiles2[ map[xidx] * 32 ] | ( tiles2[ (map[xidx] * 32 ) + 1 ] << 8 );
 			}
 
-			for( i = 0; i < 8; i++ )
-			{
+			for( i = 0; i < 8; i++ ) {
 				register UINT8 colour;
-				if( (map[xidx] & 0x4000) ) /* Horizontal flip */
-				{
-					colour = ((data  & 0x0001) ? 1 : 0) |
-							 ((data  & 0x0100) ? 2 : 0) |
-							 ((data2 & 0x0001) ? 4 : 0) |
-							 ((data2 & 0x0100) ? 8 : 0);
+				if( (map[xidx+1] & 0x40) ) { /* Horizontal flip */
+					colour = ((data  & 0x0001) ? 1 : 0) | ((data  & 0x0100) ? 2 : 0) |
+						 ((data2 & 0x0001) ? 4 : 0) | ((data2 & 0x0100) ? 8 : 0);
 					data >>= 1;
 					data2 >>= 1;
-				}
-				else /* No horizontal flip */
-				{
-					colour = ((data  & 0x0080) ? 1 : 0) |
-							 ((data  & 0x8000) ? 2 : 0) |
-							 ((data2 & 0x0080) ? 4 : 0) |
-							 ((data2 & 0x8000) ? 8 : 0);
+				} else { /* No horizontal flip */
+					colour = ((data  & 0x0080) ? 1 : 0) | ((data  & 0x8000) ? 2 : 0) |
+						 ((data2 & 0x0080) ? 4 : 0) | ((data2 & 0x8000) ? 8 : 0);
 					data <<= 1;
 					data2 <<= 1;
 				}
@@ -657,8 +488,7 @@ void sgb_refresh_border(void)
 				 * scanline, it can obscure the screen even when it shouldn't.
 				 */
 				if( !((yidx >= SGB_YOFFSET && yidx < SGB_YOFFSET + 144) &&
-					(xindex >= SGB_XOFFSET && xindex < SGB_XOFFSET + 160)) )
-				{
+					(xindex >= SGB_XOFFSET && xindex < SGB_XOFFSET + 160)) ) {
 					plot_pixel(bitmap, xindex, yidx, Machine->remapped_colortable[pal + colour]);
 				}
 				xindex++;
@@ -667,10 +497,175 @@ void sgb_refresh_border(void)
 	}
 }
 
+void sgb_update_scanline (void) {
+	mame_bitmap *bitmap = tmpbitmap;
+
+	profiler_mark(PROFILER_VIDEO);
+
+	if ( ( LCDSTAT & 0x03 ) == 0x03 ) {
+		/* Calcuate number of pixels to render based on time still left on the timer */
+		UINT32 cycles_to_go = MAME_TIME_TO_CYCLES( 0, mame_timer_timeleft( gb_lcd.lcd_timer ) );
+		int l = 0;
+
+		if ( gb_lcd.start_x == 0 ) {
+
+			/* Window is enabled if the hardware says so AND the current scanline is
+			 * within the window AND the window X coordinate is <=166 */
+			gb_lcd.layer[1].enabled = ((LCDCONT & 0x20) && gb_lcd.current_line >= WNDPOSY && WNDPOSX <= 166) ? 1 : 0;
+
+			/* BG is enabled if the hardware says so AND (window_off OR (window_on
+			 * AND window's X position is >=7 ) ) */
+			gb_lcd.layer[0].enabled = ((LCDCONT & 0x01) && ((!gb_lcd.layer[1].enabled) || (gb_lcd.layer[1].enabled && WNDPOSX >= 7))) ? 1 : 0;
+
+			if ( gb_lcd.layer[0].enabled ) {
+				int bgline = ( SCROLLY + gb_lcd.current_line ) & 0xFF;
+
+				gb_lcd.layer[0].bg_map = gb_bgdtab;
+				gb_lcd.layer[0].bg_map += (bgline << 2) & 0x3E0;
+				gb_lcd.layer[0].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
+				gb_lcd.layer[0].xindex = SCROLLX >> 3;
+				gb_lcd.layer[0].xshift = SCROLLX & 7;
+				gb_lcd.layer[0].xstart = 0;
+				gb_lcd.layer[0].xend = 160;
+			}
+
+			if ( gb_lcd.layer[1].enabled ) {
+				int bgline, xpos;
+
+				bgline = (gb_lcd.current_line - WNDPOSY) & 0xFF;
+				/* Window X position is offset by 7 so we'll need to adjust */
+				xpos = WNDPOSX - 7;
+				if (xpos < 0)
+					xpos = 0;
+
+				gb_lcd.layer[1].bg_map = gb_wndtab;
+				gb_lcd.layer[1].bg_map += (bgline << 2) & 0x3E0;
+				gb_lcd.layer[1].bg_tiles = gb_chrgen + ( (bgline & 7) << 1);
+				gb_lcd.layer[1].xindex = 0;
+				gb_lcd.layer[1].xshift = 0;
+				gb_lcd.layer[1].xstart = xpos;
+				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[0].xend = xpos;
+			}
+		}
+
+		if ( cycles_to_go == 0 ) {
+
+			/* Does this belong here? or should it be moved to the else block */
+			/* Handle SGB mask */
+			switch( sgb_window_mask ) {
+			case 1: /* Freeze screen */
+				return;
+			case 2: /* Blank screen (black) */
+				{
+					rectangle r = Machine->screen[0].visarea;
+					r.min_x = SGB_XOFFSET;
+					r.max_x -= SGB_XOFFSET;
+					r.min_y = SGB_YOFFSET;
+					r.max_y -= SGB_YOFFSET;
+					fillbitmap( bitmap, Machine->pens[0], &r );
+				} return;
+			case 3: /* Blank screen (white - or should it be color 0?) */
+				{
+					rectangle r = Machine->screen[0].visarea;
+					r.min_x = SGB_XOFFSET;
+					r.max_x -= SGB_XOFFSET;
+					r.min_y = SGB_YOFFSET;
+					r.max_y -= SGB_YOFFSET;
+					fillbitmap( bitmap, Machine->pens[32767], &r );
+				} return;
+			}
+
+			/* Draw the "border" if we're on the first line */
+			if ( gb_lcd.current_line == 0 ) {
+				sgb_refresh_border();
+			}
+		}
+		if ( cycles_to_go < 160 ) {
+			gb_lcd.end_x = 160 - cycles_to_go;
+
+			/* if background or screen disabled clear line */
+			if ( ! ( LCDCONT & 0x01 ) ) {
+				rectangle r = Machine->screen[0].visarea;
+				r.min_x = SGB_XOFFSET;
+				r.max_x -= SGB_XOFFSET;
+				r.min_y = r.max_y = gb_lcd.current_line + SGB_YOFFSET;
+				fillbitmap( bitmap, Machine->pens[0], &r );
+			}
+			while( l < 2 ) {
+				UINT8	xindex, sgb_pal, *map, *tiles;
+				UINT16	data;
+				int	i, tile_index;
+
+				if ( ! gb_lcd.layer[l].enabled ) {
+					l++;
+					continue;
+				}
+				map = gb_lcd.layer[l].bg_map;
+				tiles = gb_lcd.layer[l].bg_tiles;
+				xindex = gb_lcd.start_x;
+				if ( xindex < gb_lcd.layer[l].xstart )
+					xindex = gb_lcd.layer[l].xstart;
+				i = gb_lcd.end_x;
+				if ( i > gb_lcd.layer[l].xend )
+					i = gb_lcd.layer[l].xend;
+				i = i - xindex;
+
+				tile_index = (map[gb_lcd.layer[l].xindex] ^ gb_tile_no_mod) * 16;
+				data = tiles[tile_index] | ( tiles[tile_index + 1] << 8 );
+				data <<= gb_lcd.layer[l].xshift;
+
+				/* Figure out which palette we're using */
+				sgb_pal = sgb_pal_map[ ( gb_lcd.end_x - i ) >> 3 ][ gb_lcd.current_line >> 3 ] << 2;
+
+				while( i > 0 ) {
+					while( ( gb_lcd.layer[l].xshift < 8 ) && i ) {
+						register int colour = ( ( data & 0x8000 ) ? 2 : 0 ) | ( ( data & 0x0080 ) ? 1 : 0 );
+						plot_pixel( bitmap, xindex + SGB_XOFFSET, gb_lcd.current_line + SGB_YOFFSET, Machine->remapped_colortable[ sgb_pal + gb_bpal[colour]] );
+						bg_zbuf[xindex] = colour;
+						xindex++;
+						data <<= 1;
+						gb_lcd.layer[l].xshift++;
+						i--;
+					}
+					if ( gb_lcd.layer[l].xshift == 8 ) {
+						gb_lcd.layer[l].xindex = ( gb_lcd.layer[l].xindex + 1 ) & 31;
+						gb_lcd.layer[l].xshift = 0;
+						tile_index = ( map[ gb_lcd.layer[l].xindex ] ^ gb_tile_no_mod ) * 16;
+						data = tiles[ tile_index ] | ( tiles[ tile_index + 1 ] << 8 );
+						sgb_pal = sgb_pal_map[ ( gb_lcd.end_x - i ) >> 3 ][ gb_lcd.current_line >> 3 ] << 2;
+					}
+				}
+				l++;
+			}
+			if ( ( gb_lcd.end_x == 160 ) && ( LCDCONT & 0x02 ) ) {
+				sgb_update_sprites();
+			}
+			gb_lcd.start_x = gb_lcd.end_x;
+		}
+	} else {
+		if ( ! ( LCDCONT * 0x80 ) ) {
+			/* if screen disabled clear line */
+			if ( gb_lcd.previous_line != gb_lcd.current_line ) {
+				/* Also refresh border here??? */
+				if ( gb_lcd.current_line < 144 ) {
+					rectangle r = Machine->screen[0].visarea;
+					r.min_x = SGB_XOFFSET;
+					r.max_x -= SGB_XOFFSET;
+					r.min_y = r.max_y = gb_lcd.current_line + SGB_YOFFSET;
+					fillbitmap(bitmap, Machine->pens[0], &r);
+				}
+				gb_lcd.previous_line = gb_lcd.current_line;
+			}
+		}
+	}
+
+	profiler_mark(PROFILER_END);
+}
+
 /* --- Gameboy Color Specific --- */
 
-INLINE void gbc_update_sprites (void)
-{
+INLINE void cgb_update_sprites (void) {
 	mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam;
 	int i, xindex, yindex;
@@ -765,145 +760,164 @@ INLINE void gbc_update_sprites (void)
 	}
 }
 
-void gbc_refresh_scanline (void)
-{
+void cgb_update_scanline (void) {
 	mame_bitmap *bitmap = tmpbitmap;
-	UINT8 *zbuf = bg_zbuf;
-	int l = 0, yindex = gb_lcd.current_line;
-
-	/* layer info layer[0]=background, layer[1]=window */
-	struct layer_struct layer[2];
 
 	profiler_mark(PROFILER_VIDEO);
 
-	/* if background or screen disabled clear line */
-	if ((LCDCONT & 0x81) != 0x81)
-	{
-		rectangle r = Machine->screen[0].visarea;
-		r.min_y = r.max_y = yindex;
-		fillbitmap(bitmap, Machine->pens[0], &r);
-	}
+	if ( ( LCDSTAT & 0x03 ) == 0x03 ) {
+		/* Calcuate number of pixels to render based on time still left on the timer */
+		UINT32 cycles_to_go = MAME_TIME_TO_CYCLES( 0, mame_timer_timeleft( gb_lcd.lcd_timer ) );
+		int l = 0;
 
-	/* if lcd disabled return */
-	if (!(LCDCONT & 0x80))
-		return;
+		if ( gb_lcd.start_x == 0 ) {
 
-	/* Window is enabled if the hardware says so AND the current scanline is
-	 * within the window AND the window X coordinate is <=166 */
-	layer[1].enabled = ((LCDCONT & 0x20) && gb_lcd.current_line >= WNDPOSY && WNDPOSX <= 166) ? 1 : 0;
+			/* Window is enabled if the hardware says so AND the current scanline is
+			 * within the window AND the window X coordinate is <=166 */
+			gb_lcd.layer[1].enabled = ( ( LCDCONT & 0x20 ) && ( gb_lcd.current_line >= WNDPOSY ) && ( WNDPOSX <= 166 ) ) ? 1 : 0;
 
-	/* BG is enabled if the hardware says so AND (window_off OR (window_on
-	 * AND window's X position is >=7 ) ) */
-	layer[0].enabled = ((LCDCONT & 0x01) && ((!layer[1].enabled) || (layer[1].enabled && WNDPOSX >= 7))) ? 1 : 0;
+			/* BG is enabled if the hardware says so AND (window_off OR (window_on
+			 * AND window's X position is >=7 ) ) */
+			gb_lcd.layer[0].enabled = ( ( LCDCONT & 0x01 ) && ( ( ! gb_lcd.layer[1].enabled ) || ( gb_lcd.layer[1].enabled && ( WNDPOSX >= 7 ) ) ) ) ? 1 : 0;
 
-	if (layer[0].enabled)
-	{
-		int bgline;
+			if ( gb_lcd.layer[0].enabled ) {
+				int bgline = ( SCROLLY + gb_lcd.current_line ) & 0xFF;
 
-		bgline = (SCROLLY + gb_lcd.current_line) & 0xFF;
-
-		layer[0].bgline = bgline;
-		layer[0].bg_map = gb_bgdtab;
-		layer[0].bg_map += (bgline << 2) & 0x3E0;
-		layer[0].gbc_map = gbc_bgdtab;
-		layer[0].gbc_map += (bgline << 2) & 0x3E0;
-		layer[0].gbc_tiles[0] = (UINT16 *)gb_chrgen + (bgline & 7);
-		layer[0].gbc_tiles[1] = (UINT16 *)gbc_chrgen + (bgline & 7);
-		layer[0].xindex = SCROLLX >> 3;
-		layer[0].xshift = SCROLLX & 7;
-		layer[0].xstart = 0;
-		layer[0].xend = 160;
-	}
-
-	if (layer[1].enabled)
-	{
-		int bgline, xpos;
-
-		bgline = (gb_lcd.current_line - WNDPOSY) & 0xFF;
-		/* Window X position is offset by 7 so we'll need to adust */
-		xpos = WNDPOSX - 7;
-		if (xpos < 0)
-			xpos = 0;
-
-		layer[1].bgline = bgline;
-		layer[1].bg_map = gb_wndtab;
-		layer[1].bg_map += (bgline << 2) & 0x3E0;
-		layer[1].gbc_map = gbc_wndtab;
-		layer[1].gbc_map += (bgline << 2) & 0x3E0;
-		layer[1].gbc_tiles[0] = (UINT16 *)gb_chrgen + (bgline & 7);
-		layer[1].gbc_tiles[1] = (UINT16 *)gbc_chrgen + (bgline & 7);
-		layer[1].xindex = 0;
-		layer[1].xshift = 0;
-		layer[1].xstart = xpos;
-		layer[1].xend = 160 - xpos;
-		layer[0].xend = xpos;
-	}
-
-	while (l < 2)
-	{
-		/*
-		 * BG display on
-		 */
-		UINT8 *map, *gbcmap, xidx, bit, i;
-		UINT16 *tiles, data;
-		int xindex;
-
-		if (!layer[l].enabled)
-		{
-			l++;
-			continue;
-		}
-
-		map = layer[l].bg_map;
-		gbcmap = layer[l].gbc_map;
-		xidx = layer[l].xindex;
-		bit = layer[l].xshift;
-		i = layer[l].xend;
-
-		tiles = layer[l].gbc_tiles[(gbcmap[xidx] & 0x8) >> 3];
-		if( (gbcmap[xidx] & 0x40) >> 6 ) /* vertical flip */
-			tiles -= ((layer[l].bgline & 7) << 1) - 7;
-		data = (UINT16)(tiles[(map[xidx] ^ gb_tile_no_mod) * 8] << bit);
-#ifndef LSB_FIRST
-		data = (data << 8) | (data >> 8);
-#endif
-
-		xindex = layer[l].xstart;
-		while (i)
-		{
-			while ((bit < 8) && i)
-			{
-				register int colour;
-				if( ((gbcmap[xidx] & 0x20) >> 5) ) /* horizontal flip */
-				{
-					colour = ((data & 0x100) ? 2 : 0) | ((data & 0x0001) ? 1 : 0);
-					data >>= 1;
-				}
-				else /* no horizontal flip */
-				{
-					colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
-					data <<= 1;
-				}
-				plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[(((gbcmap[xidx] & 0x7) * 4) + colour)]);
-				xindex++;
-				/* If the priority bit is set then bump up the value, we'll
-				 * check this when drawing sprites */
-				*zbuf++ = colour + (gbcmap[xidx] & 0x80);
-				bit++;
-				i--;
+				gb_lcd.layer[0].bgline = bgline;
+				gb_lcd.layer[0].bg_map = gb_bgdtab;
+				gb_lcd.layer[0].bg_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[0].gbc_map = gbc_bgdtab;
+				gb_lcd.layer[0].gbc_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[0].gbc_tiles[0] = gb_chrgen;
+				gb_lcd.layer[0].gbc_tiles[1] = gbc_chrgen;
+				gb_lcd.layer[0].xindex = SCROLLX >> 3;
+				gb_lcd.layer[0].xshift = SCROLLX & 7;
+				gb_lcd.layer[0].xstart = 0;
+				gb_lcd.layer[0].xend = 160;
 			}
-			xidx = (xidx + 1) & 31;
-			bit = 0;
-			tiles = layer[l].gbc_tiles[(gbcmap[xidx] & 0x8) >> 3];
-			if( (gbcmap[xidx] & 0x40) >> 6 ) /* vertical flip */
-				tiles -= ((layer[l].bgline & 7) << 1) - 7;
-			data = (UINT16)(tiles[(map[xidx] ^ gb_tile_no_mod) * 8]);
-		}
-		l++;
-	}
 
-	if (LCDCONT & 0x02)
-		gbc_update_sprites();
+			if ( gb_lcd.layer[1].enabled ) {
+				int bgline, xpos;
+
+				bgline = gb_lcd.window_lines_drawn;
+				/* Window X position is offset by 7 so we'll need to adust */
+				xpos = WNDPOSX - 7;
+				if (xpos < 0)
+					xpos = 0;
+
+				gb_lcd.layer[1].bgline = bgline;
+				gb_lcd.layer[1].bg_map = gb_wndtab;
+				gb_lcd.layer[1].bg_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[1].gbc_map = gbc_wndtab;
+				gb_lcd.layer[1].gbc_map += ( bgline << 2 ) & 0x3E0;
+				gb_lcd.layer[1].gbc_tiles[0] = gb_chrgen;
+				gb_lcd.layer[1].gbc_tiles[1] = gbc_chrgen;
+				gb_lcd.layer[1].xindex = 0;
+				gb_lcd.layer[1].xshift = 0;
+				gb_lcd.layer[1].xstart = xpos;
+				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[0].xend = xpos;
+			}
+		}
+
+		if ( cycles_to_go < 160 ) {
+			gb_lcd.end_x = 160 - cycles_to_go;
+			/* Draw empty line when the background is disabled */
+			if ( ! ( LCDCONT & 0x01 ) ) {
+				rectangle r = Machine->screen[0].visarea;
+				r.min_y = r.max_y = gb_lcd.current_line;
+				r.min_x = gb_lcd.start_x;
+				r.max_x = gb_lcd.end_x - 1;
+				fillbitmap( bitmap, Machine->pens[0], &r );
+			}
+			while ( l < 2 ) {
+				UINT8	xindex, *map, *tiles, *gbcmap;
+				UINT16	data;
+				int	i, tile_index;
+
+				if ( ! gb_lcd.layer[l].enabled ) {
+					l++;
+					continue;
+				}
+				map = gb_lcd.layer[l].bg_map;
+				gbcmap = gb_lcd.layer[l].gbc_map;
+				tiles = ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x08 ) ? gbc_chrgen : gb_chrgen;
+
+				/* Check for vertical flip */
+				if ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x40 ) {
+					tiles += ( ( 7 - ( gb_lcd.layer[l].bgline & 0x07 ) ) << 1 );
+				} else {
+					tiles += ( ( gb_lcd.layer[l].bgline & 0x07 ) << 1 );
+				}
+				xindex = gb_lcd.start_x;
+				if ( xindex < gb_lcd.layer[l].xstart )
+					xindex = gb_lcd.layer[l].xstart;
+				i = gb_lcd.end_x;
+				if ( i > gb_lcd.layer[l].xend )
+					i = gb_lcd.layer[l].xend;
+				i = i - xindex;
+
+				tile_index = ( map[ gb_lcd.layer[l].xindex ] ^ gb_tile_no_mod ) * 16;
+				data = tiles[ tile_index ] | ( tiles[ tile_index + 1 ] << 8 );
+				/* Check for horinzontal flip */
+				if ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x20 ) {
+					data >>= gb_lcd.layer[l].xshift;
+				} else {
+					data <<= gb_lcd.layer[l].xshift;
+				}
+
+				while ( i > 0 ) {
+					while ( ( gb_lcd.layer[l].xshift < 8 ) && i ) {
+						int colour;
+						/* Check for horinzontal flip */
+						if ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x20 ) {
+							colour = ( ( data & 0x0100 ) ? 2 : 0 ) | ( ( data & 0x0001 ) ? 1 : 0 );
+							data >>= 1;
+						} else {
+							colour = ( ( data & 0x8000 ) ? 2 : 0 ) | ( ( data & 0x0080 ) ? 1 : 0 );
+							data <<= 1;
+						}
+						plot_pixel( bitmap, xindex, gb_lcd.current_line, Machine->remapped_colortable[ ( ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x07 ) * 4 ) + colour ] );
+						bg_zbuf[ xindex ] = colour + ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x80 );
+						xindex++;
+						gb_lcd.layer[l].xshift++;
+						i--;
+					}
+					if ( gb_lcd.layer[l].xshift == 8 ) {
+						gb_lcd.layer[l].xindex = ( gb_lcd.layer[l].xindex + 1 ) & 31;
+						gb_lcd.layer[l].xshift = 0;
+						tiles = ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x08 ) ? gbc_chrgen : gb_chrgen;
+
+						/* Check for vertical flip */
+						if ( gbcmap[ gb_lcd.layer[l].xindex ] & 0x40 ) {
+							tiles += ( ( 7 - ( gb_lcd.layer[l].bgline & 0x07 ) ) << 1 );
+						} else {
+							tiles += ( ( gb_lcd.layer[l].bgline & 0x07 ) << 1 );
+						}
+						tile_index = ( map[ gb_lcd.layer[l].xindex ] ^ gb_tile_no_mod ) * 16;
+						data = tiles[ tile_index ] | ( tiles[ tile_index + 1 ] << 8 );
+					}
+				}
+				l++;
+			}
+			if ( gb_lcd.end_x == 160 && ( LCDCONT & 0x02 ) ) {
+				cgb_update_sprites();
+			}
+			gb_lcd.start_x = gb_lcd.end_x;
+		}
+	} else {
+		if ( ! ( LCDCONT & 0x80 ) ) {
+			/* Draw an empty line when LCD is disabled */
+			if ( gb_lcd.previous_line != gb_lcd.current_line ) {
+				if ( gb_lcd.current_line < 144 ) {
+					rectangle r = Machine->screen[0].visarea;
+					r.min_y = r.max_y = gb_lcd.current_line;
+					fillbitmap( bitmap, Machine->pens[0], &r );
+				}
+				gb_lcd.previous_line = gb_lcd.current_line;
+			}
+		}
+	}
 
 	profiler_mark(PROFILER_END);
 }
@@ -921,9 +935,10 @@ void gb_video_init( void ) {
 	}
 
 	LCDSTAT = 0x80;
-	gb_lcd.current_line = CURLINE = 0x00;
-	CMPLINE = 0xF0;
+	LCDCONT = 0x00;
+	gb_lcd.current_line = CURLINE = CMPLINE = 0x00;
 	SCROLLX = SCROLLY = 0x00;
+	SPR0PAL = SPR1PAL = 0xFF;
 	WNDPOSX = WNDPOSY = 0x00;
 
 	/* Initialize palette arrays */
@@ -931,27 +946,67 @@ void gb_video_init( void ) {
 		gb_bpal[i] = gb_spal0[i] = gb_spal1[i] = i;
 	}
 
-	/* set the scanline refresh function */
-	refresh_scanline = gb_refresh_scanline;
+	/* initialize OAM extra area */
+	for( i = 0xa0; i < 0x100; i++ ) {
+		gb_oam[i] = 0x00;
+	}
+
+	/* set the scanline update function */
+	update_scanline = gb_update_scanline;
+
+	gb_lcd.lcd_timer = mame_timer_alloc( gb_lcd_timer_proc );
+	mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(456,0), 0, time_never );
 }
 
 void sgb_video_init( void ) {
 	gb_video_init();
 
 	/* Override the scanline refresh function */
-	refresh_scanline = sgb_refresh_scanline;
+	update_scanline = sgb_update_scanline;
 }
 
+/* The CGB seems to have some data in the FEA0-FEFF area upon booting.
+   The contents of this area are almost the same on each boot, but always
+   a couple of bits are different.
+   The data could be some kind of fingerprint for each CGB, I've just taken
+   this data from my CGB on a boot once.
+*/
+
+const UINT8 cgb_oam_extra[0x60] = {
+	0x74, 0xFF, 0x09, 0x00, 0x9D, 0x61, 0xA8, 0x28, 0x36, 0x1E, 0x58, 0xAA, 0x75, 0x74, 0xA1, 0x42,
+	0x05, 0x96, 0x40, 0x09, 0x41, 0x02, 0x60, 0x00, 0x1F, 0x11, 0x22, 0xBC, 0x31, 0x52, 0x22, 0x54,
+	0x22, 0xA9, 0xC4, 0x00, 0x1D, 0xAD, 0x80, 0x0C, 0x5D, 0xFA, 0x51, 0x92, 0x93, 0x98, 0xA4, 0x04,
+	0x22, 0xA9, 0xC4, 0x00, 0x1D, 0xAD, 0x80, 0x0C, 0x5D, 0xFA, 0x51, 0x92, 0x93, 0x98, 0xA4, 0x04,
+	0x22, 0xA9, 0xC4, 0x00, 0x1D, 0xAD, 0x80, 0x0C, 0x5D, 0xFA, 0x51, 0x92, 0x93, 0x98, 0xA4, 0x04,
+	0x22, 0xA9, 0xC4, 0x00, 0x1D, 0xAD, 0x80, 0x0C, 0x5D, 0xFA, 0x51, 0x92, 0x93, 0x98, 0xA4, 0x04
+};
+
+/*
+  For an AGB in CGB mode this data is:
+	0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+	0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
+	0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+	0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+	0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+*/
+
 void gbc_video_init( void ) {
+	int i;
+
 	gb_video_init();
+
+	for( i = 0; i < sizeof(cgb_oam_extra); i++ ) {
+		gb_oam[ 0xa0 + i] = cgb_oam_extra[i];
+	}
 
 	gb_chrgen = GBC_VRAMMap[0];
 	gbc_chrgen = GBC_VRAMMap[1];
 	gb_bgdtab = gb_wndtab = GBC_VRAMMap[0] + 0x1C00;
 	gbc_bgdtab = gbc_wndtab = GBC_VRAMMap[1] + 0x1C00;
 
-	/* Override the scanline refresh function */
-	refresh_scanline = gbc_refresh_scanline;
+	/* Override the scanline update function */
+	update_scanline = cgb_update_scanline;
 
 	/* HDMA disabled */
 	gbc_hdma_enabled = 0;
@@ -991,82 +1046,102 @@ void gb_increment_scanline( void ) {
 			LCDSTAT &= 0xFB;
 		}
 	}
-}
-
-int	gb_skip_increment_scanline = 0;
-
-/* Handle changing LY to 00 on line 153 */
-void gb_scanline_start_frame( int param ) {
-	gb_increment_scanline();	/* LY 153 -> 00 */
-	gb_skip_increment_scanline = 1;
-	/* Initialize some other internal things to start drawing a frame ? */
-	/* Initialize window state machine(?) */
-}                                                
-         
-void gb_scanline_interrupt_set_mode0 (int param) {
-	/* refresh current scanline */
-	refresh_scanline();
-
-	/* only perform mode changes when LCD controller is still on */
-	if (LCDCONT & 0x80) {
-		/* Set Mode 0 lcdstate */
-		LCDSTAT &= 0xFC;
-		/* Generate lcd interrupt if requested */
-		if( LCDSTAT & 0x08 )
-			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-
-		/* Check for HBLANK DMA */
-		if( gbc_hdma_enabled && (gb_lcd.current_line < 144) )
-			gbc_hdma(0x10);
+	if ( gb_lcd.current_line == 0 ) {
+		gb_lcd.window_lines_drawn = 0;
 	}
 }
 
-void gb_scanline_interrupt_set_mode3 (int param) {
-	int mode3_cycles = 172 /*+ gb_select_sprites() * 10*/;
-
-	/* only perform mode changes when LCD controller is still on */
-	if (LCDCONT & 0x80) {
-		/* Set Mode 3 lcdstate */
-		LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
-	}
-	/* Second lcdstate change after aprox 172+#sprites*10 clock cycles / 60 uS */
-	timer_set ( TIME_IN_CYCLES(mode3_cycles,0), 0, gb_scanline_interrupt_set_mode0 );
-}
-
-void gb_video_scanline_interrupt (void) {                                                
-	/* skip incrementing scanline when entering scanline 0 */
-	if ( ! gb_skip_increment_scanline ) {    
-		gb_increment_scanline();
-	} else {
-		gb_skip_increment_scanline = 0;
-	}
-
-	if (gb_lcd.current_line < 144) {
-		if ( LCDCONT & 0x80 ) {
+static void gb_lcd_timer_proc( int mode ) {
+	if ( LCDCONT & 0x80 ) {
+		switch( mode ) {
+		case 0:		/* Switch to mode 0 */
+			/* update current scanline */
+			update_scanline();
+			/* Increment the number of window lines drawn if enabled */
+			if ( gb_lcd.layer[1].enabled ) {
+				gb_lcd.window_lines_drawn++;
+			}
+			gb_lcd.previous_line = gb_lcd.current_line;
+			/* Set Mode 0 lcdstate */
+			LCDSTAT &= 0xFC;
+			/* Generate lcd interrupt if requested */
+			if( LCDSTAT & 0x08 ) {
+				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+			}
+			/* Check for HBLANK DMA */
+			if( gbc_hdma_enabled )
+				gbc_hdma(0x10);
+			if ( CURLINE == 143 ) {
+				mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(204,0), 1, time_never );
+			} else {
+				mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(204,0), 2, time_never );
+			}
+			break;
+		case 2:		/* Switch to mode 2 */
+			gb_increment_scanline();
+		case 5:		/* on scanline 0, don't increment the current line counter */
 			/* Set Mode 2 lcdstate */
 			LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
 			/* Generate lcd interrupt if requested */
-			if (LCDSTAT & 0x20)
+			if (LCDSTAT & 0x20) {
 				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+			}
+			/* Mode 2 last for approximately 80 clock cycles */
+			mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(80,0), 3, time_never );
+			break;
+		case 3:		/* Switch to mode 3 */
+			gb_select_sprites();
+			/* Set Mode 3 lcdstate */
+			LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
+			/* Mode 3 lasts for approximately 172+#sprites*10 clock cycles */
+			mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(172,0), 0, time_never );
+			gb_lcd.start_x = 0;
+			break;
+		case 1:		/* Switch to or stay in mode 1 */
+			gb_increment_scanline();
+			if ( CURLINE == 144 ) {
+				/* Trigger VBlank interrupt */
+				cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
+				/* Set VBlank lcdstate */
+				LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
+				/* Trigger LCD interrupt if requested */
+				if( LCDSTAT & 0x10 ) {
+					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+				}
+			}
+			if ( gb_lcd.current_line == 153 ) {
+				mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(24,0), 4, time_never );
+			} else {
+				mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(456,0), 1, time_never );
+			}
+			break;
+		case 4:		/* we stay in VBlank but current line counter should already be incremented */
+			gb_increment_scanline();
+			mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(456-24,0), 5, time_never );
+			break;
 		}
-
-		/* First  lcdstate change after aprox 80 clock cycles / 19 uS */
-		timer_set ( TIME_IN_CYCLES(80,0), 0, gb_scanline_interrupt_set_mode3);
 	} else {
-		/* Generate VBlank interrupt (if display is enabled) */
-		if (gb_lcd.current_line == 144 && ( LCDCONT & 0x80 ) ) {
-			/* Cause VBlank interrupt */
-			cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
-			/* Set VBlank lcdstate */
-			LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
-			/* Generate lcd interrupt if requested */
-			if( LCDSTAT & 0x10 )
-				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
+		gb_increment_scanline();
+		if ( gb_lcd.current_line < 144 ) {
+			update_scanline();
 		}
-		if ( gb_lcd.current_line == 153 ) {
-			timer_set( TIME_IN_CYCLES(32,0), 0, gb_scanline_start_frame );
+		mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(456,0), 0, time_never );
+	}
+}
+
+static void gb_lcd_switch_on( void ) {
+	gb_lcd.current_line = 0;
+	gb_lcd.previous_line = 153;
+	gb_lcd.window_lines_drawn = 0;
+	/* Check for LY=LYC coincidence */
+	if ( CURLINE == CMPLINE ) {
+		LCDSTAT |= 0x04;
+		/* Generate lcd interrupt if requested */
+		if ( LCDSTAT & 0x40 ) {
+			cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 		}
 	}
+	mame_timer_adjust( gb_lcd.lcd_timer, MAME_TIME_IN_CYCLES(80,0), 3, time_never );
 }
 
 READ8_HANDLER( gb_video_r ) {
@@ -1103,14 +1178,7 @@ WRITE8_HANDLER ( gb_video_w ) {
 		}
 		/* If LCD is being switched on */
 		if ( !( LCDCONT & 0x80 ) && ( data & 0x80 ) ) {
-			gb_lcd.current_line = 0;
-			/* Check for LY=LYC coincidence */
-			if ( CURLINE == CMPLINE ) {
-				LCDSTAT |= 0x04;
-				/* Generate lcd interrupt if requested */
-				if ( LCDSTAT & 0x40 )
-					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-			}
+			gb_lcd_switch_on();
 		}
 		break;
 	case 0x01:						/* STAT - LCD Status */
@@ -1140,18 +1208,21 @@ WRITE8_HANDLER ( gb_video_w ) {
 		}
 		return;
 	case 0x07:						/* BGP - Background Palette */
+		update_scanline();
 		gb_bpal[0] = data & 0x3;
 		gb_bpal[1] = (data & 0xC) >> 2;
 		gb_bpal[2] = (data & 0x30) >> 4;
 		gb_bpal[3] = (data & 0xC0) >> 6;
 		break;
 	case 0x08:						/* OBP0 - Object Palette 0 */
+//		update_scanline();
 		gb_spal0[0] = data & 0x3;
 		gb_spal0[1] = (data & 0xC) >> 2;
 		gb_spal0[2] = (data & 0x30) >> 4;
 		gb_spal0[3] = (data & 0xC0) >> 6;
 		break;
 	case 0x09:						/* OBP1 - Object Palette 1 */
+//		update_scanline();
 		gb_spal1[0] = data & 0x3;
 		gb_spal1[1] = (data & 0xC) >> 2;
 		gb_spal1[2] = (data & 0x30) >> 4;
@@ -1159,6 +1230,7 @@ WRITE8_HANDLER ( gb_video_w ) {
 		break;
 	case 0x02:						/* SCY - Scroll Y */
 	case 0x03:						/* SCX - Scroll X */
+		update_scanline();
 	case 0x05:						/* LYC - LCD Y-compare */
 	case 0x0A:						/* WY - Window Y position */
 	case 0x0B:						/* WX - Window X position */
@@ -1189,14 +1261,7 @@ WRITE8_HANDLER ( gbc_video_w ) {
 		}
                 /* If LCD is being switched on */
                 if ( !( LCDCONT & 0x80 ) && ( data & 0x80 ) ) {
-			gb_lcd.current_line = 0;
-			/* Check for LY=LYC coincidence */
-			if ( CURLINE == CMPLINE ) {
-				LCDSTAT |= 0x04;
-				/* Generate lcd interrupt if requested */
-				if ( LCDSTAT & 0x40 )
-					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
-			}
+			gb_lcd_switch_on();
                 }
 		break;
 	case 0x01:      /* STAT - LCD Status */
@@ -1205,6 +1270,7 @@ WRITE8_HANDLER ( gbc_video_w ) {
 	case 0x07:      /* BGP - GB background palette */
 		/* Some GBC games are lazy and still call this */
 		if( gbc_mode == GBC_MODE_MONO ) {
+			update_scanline();
 			Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
 			Machine->remapped_colortable[1] = gbc_to_gb_pal[(data & 0x0C) >> 2];
 			Machine->remapped_colortable[2] = gbc_to_gb_pal[(data & 0x30) >> 4];

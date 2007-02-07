@@ -63,8 +63,6 @@ int gb_video_oam_locked( void );
 int gb_video_vram_locked( void );
 VIDEO_START( gb );
 VIDEO_UPDATE( gb );
-void gb_video_scanline_interrupt( void );
-void gb_refresh_scanline( void );
 void gb_video_init( void );
 void sgb_video_init( void );
 void gbc_video_init( void );
@@ -91,9 +89,6 @@ EXTERN UINT8 sgb_hack;				/* Flag set if we're using a hack		*/
 
 extern MACHINE_RESET( sgb );
 extern WRITE8_HANDLER ( sgb_io_w );
-/* from vidhrdw/gb.c */
-void sgb_refresh_scanline(void);
-void sgb_refresh_border(void);
 
 /* -- GameBoy Color specific -- */
 #define GBC_MODE_GBC		1		/* GBC is in colour mode				*/
@@ -104,8 +99,6 @@ extern UINT8 *GBC_VRAMMap[2];		/* Addressses of GBC video RAM banks	*/
 EXTERN UINT8 gbc_mode;				/* is the GBC in mono/colour mode?		*/
 
 MACHINE_RESET( gbc );
-/* from vidhrdw/gb.c */
-void gbc_refresh_scanline(void);
 WRITE8_HANDLER ( gbc_video_w );
 
 

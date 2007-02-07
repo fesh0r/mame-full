@@ -44,6 +44,10 @@ the timer increments. This causes the first timer cycle to now always be a full 
 For instance in 1024 clock cycle mode, the first timer cycle could easily only take 400
 clock cycles. The next timer cycle will take the full 1024 clock cycles though.
 
+Writes to the DIV register seem to cause this internal clock divider/register to be
+reset in such a way that the next stimulus cause a timer increment (in any mode).
+
+
 Interrupts
 ==========
 
@@ -167,6 +171,12 @@ Some unanswered cases:
    - What rom bank appears at 4000-7FFF, bank #0 or bank #1 ?
 
 
+MBC4 Mapper
+===========
+
+Stauts: not supported yet.
+
+
 MBC5 Mapper
 ===========
 
@@ -180,10 +190,26 @@ MBC5 Mapper
             rumble motor (0 - disable motor, 1 - enable motor).
 
 
-MBC7 Mapper (Used by Kirby's Tilt n' Tumble)
+MBC7 Mapper (Used by Kirby's Tilt n' Tumble, Command Master)
 ===========
 
-Status: not supported yet.
+Status: Partial support (only ROM banking supported at the moment)
+
+The MBC7 mapper has 0x0200(?) bytes of RAM built in.
+
+0000-1FFF - Probably enable/disable RAM
+            In order to use this area bit 12 of the address be set.
+            Values written: 00, 0A
+2000-2FFF - Writing to this area selects the ROM bank to appear at
+            4000-7FFF.
+            In order to use this area bit 12 of the address be set.
+            Values written: 01, 07, 01, 1C
+3000-3FFF - Unknown
+            In order to use this area bit 12 of the address be set.
+            Values written: 00
+4000-4FFF - Unknown
+            In order to use this area bit 12 of the address be set.
+            Values written: 00, 40, 3F
 
 
 TAMA5 Mapper (Used by Tamagotchi 3)
@@ -288,8 +314,7 @@ static ADDRESS_MAP_START(gb_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)	/* 8k VRAM */
 	AM_RANGE(0xa000, 0xbfff) AM_RAMBANK(2)					/* 8k switched RAM bank (cartridge) */
 	AM_RANGE(0xc000, 0xfdff) AM_RAM						/* 8k low RAM, echo RAM */
-	AM_RANGE(0xfe00, 0xfe9f) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
-	AM_RANGE(0xfea0, 0xfeff) AM_NOP						/* Unused */
+	AM_RANGE(0xfe00, 0xfeff) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
 	AM_RANGE(0xff00, 0xff0f) AM_READWRITE( gb_io_r, gb_io_w )		/* I/O */
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound registers */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
@@ -306,8 +331,7 @@ static ADDRESS_MAP_START(sgb_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)	/* 8k VRAM */
 	AM_RANGE(0xa000, 0xbfff) AM_RAMBANK(2)					/* 8k switched RAM bank (cartridge) */
 	AM_RANGE(0xc000, 0xfdff) AM_RAM						/* 8k low RAM, echo RAM */
-	AM_RANGE(0xfe00, 0xfe9f) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
-	AM_RANGE(0xfea0, 0xfeff) AM_NOP						/* Unused */
+	AM_RANGE(0xfe00, 0xfeff) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
 	AM_RANGE(0xff00, 0xff0f) AM_READWRITE( gb_io_r, sgb_io_w )		/* I/O */
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound registers */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
@@ -326,8 +350,7 @@ static ADDRESS_MAP_START(gbc_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xc000, 0xcfff) AM_RAM						/* 4k fixed RAM bank */
 	AM_RANGE(0xd000, 0xdfff) AM_RAMBANK(3)					/* 4k switched RAM bank */
 	AM_RANGE(0xe000, 0xfdff) AM_RAM						/* echo RAM */
-	AM_RANGE(0xfe00, 0xfe9f) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
-	AM_RANGE(0xfea0, 0xfeff) AM_NOP						/* unused */
+	AM_RANGE(0xfe00, 0xfeff) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)	/* OAM RAM */
 	AM_RANGE(0xff00, 0xff0f) AM_READWRITE( gb_io_r, gb_io_w )		/* I/O */
 	AM_RANGE(0xff10, 0xff26) AM_READWRITE( gb_sound_r, gb_sound_w )		/* sound controller */
 	AM_RANGE(0xff27, 0xff2f) AM_NOP						/* unused */
@@ -344,8 +367,7 @@ static ADDRESS_MAP_START(megaduck_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x8000, 0x9fff) AM_RAM AM_WRITE( gb_vram_w ) AM_BASE(&gb_vram)		/* 8k VRAM */
 	AM_RANGE(0xa000, 0xbfff) AM_NOP							/* unused? */
 	AM_RANGE(0xc000, 0xfe9f) AM_RAM							/* 8k low RAM, echo RAM */
-	AM_RANGE(0xfe00, 0xfe9f) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)		/* OAM RAM */
-	AM_RANGE(0xfea0, 0xfeff) AM_NOP							/* unused */
+	AM_RANGE(0xfe00, 0xfeff) AM_RAM AM_WRITE( gb_oam_w ) AM_BASE(&gb_oam)		/* OAM RAM */
 	AM_RANGE(0xff00, 0xff0f) AM_READWRITE( gb_io_r, gb_io_w )			/* I/O */
 	AM_RANGE(0xff10, 0xff1f) AM_READWRITE( megaduck_video_r, megaduck_video_w )	/* video controller */
 	AM_RANGE(0xff20, 0xff2f) AM_READWRITE( megaduck_sound_r1, megaduck_sound_w1)	/* sound controller pt1 */
@@ -478,7 +500,7 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_map, 0)
 	MDRV_CPU_CONFIG(dmg_cpu_reset)
-	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154)	/* 1 int each scanline ! */
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 1)	/* 1 dummy int each frame */
 
 	MDRV_SCREEN_REFRESH_RATE(DMG_FRAMES_PER_SECOND)
 	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(0))
@@ -587,11 +609,16 @@ SYSTEM_CONFIG_START(gameboy_gb)
 	CONFIG_DEVICE(gameboy_cartslot_getinfo_gb)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(gb_cgb)
+	CONFIG_DEVICE(gameboy_cartslot_getinfo)
+	CONFIG_RAM_DEFAULT(2 * 8 * 1024 + 8 * 4 * 1024)	/* 2 pages of 8KB VRAM, 8 pages of 4KB RAM */
+SYSTEM_CONFIG_END
+
 static MACHINE_DRIVER_START( megaduck )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP( megaduck_map, 0 )
-	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154)	/* 1 int each scanline ! */
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 1)	/* 1 int each scanline ! */
 	MDRV_CPU_CONFIG(megaduck_cpu_reset)
 
 	MDRV_SCREEN_REFRESH_RATE(DMG_FRAMES_PER_SECOND)
@@ -677,7 +704,7 @@ ROM_END
 CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy_gb, "Nintendo", "GameBoy"  , 0)
 CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" , 0)
 CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" , 0)
-CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" , 0)
+CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gb_cgb, "Nintendo", "GameBoy Color" , 0)
 
 /* Sound is not 100% yet, it generates some sounds which could be ok. Since we're lacking a real
    system there's no way to verify. Same goes for the colors of the LCD. We are no using the default

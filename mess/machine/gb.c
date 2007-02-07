@@ -57,6 +57,10 @@ enum {
 	MBC_UNKNOWN,	/* Unknown mapper                                */
 };
 
+/* mess_ram layout defines */
+#define CGB_START_VRAM_BANKS	0x0000
+#define CGB_START_RAM_BANKS	( 2 * 8 * 1024 )
+
 #define MAX_ROMBANK 512
 #define MAX_RAMBANK 256
 
@@ -225,7 +229,7 @@ MACHINE_RESET( gb )
 
         /* Enable BIOS rom */
         memory_set_bankptr(5, memory_region(REGION_CPU1) );
-        memory_set_bankptr(10, ROMMap[0] ? ROMMap[0] + 0x0100 : gb_dummy_rom_bank + 0x0100);
+        memory_set_bankptr(10, ROMMap[0] + 0x0100 );
 }
 
 MACHINE_RESET( sgb )
@@ -282,7 +286,7 @@ MACHINE_RESET( gbc )
 
 	/* Allocate memory for video ram */
 	for( ii = 0; ii < 2; ii++ ) {
-		GBC_VRAMMap[ii] = auto_malloc(0x2000);
+		GBC_VRAMMap[ii] = mess_ram + CGB_START_VRAM_BANKS + ii * 0x2000;
 		memset (GBC_VRAMMap[ii], 0, 0x2000);
 	}
 	gbc_io2_w( 0x0F, 0x00 );
@@ -295,7 +299,7 @@ MACHINE_RESET( gbc )
 
 	/* Allocate memory for internal ram */
 	for( ii = 0; ii < 8; ii++ ) {
-		GBC_RAMMap[ii] = auto_malloc(0x1000);
+		GBC_RAMMap[ii] = mess_ram + CGB_START_RAM_BANKS + ii * 0x1000;
 		memset (GBC_RAMMap[ii], 0, 0x1000);
 	}
 	gbc_io2_w( 0x30, 0x00 );
@@ -580,10 +584,7 @@ WRITE8_HANDLER ( gb_io_w )
 			SIOCount = 0;
 		break;
 	case 0x04:						/* DIV - Divider register */
-		if ( gb_divcount == 0x0007 ) {
-			TIMECNT --;
-		}
-		gb_divcount = 0xFFFF;				/* The actual value here is closely tied with some implementation details of z80gb cpu core */
+		gb_divcount = 0xFFF7;				/* The actual value here is closely tied with some implementation details of the z80gb cpu core */
 		return;
 	case 0x05:						/* TIMA - Timer counter */
 		break;
@@ -652,11 +653,9 @@ WRITE8_HANDLER ( sgb_io_w )
 	static UINT8 sgb_data[112];
 	static UINT32 sgb_atf;
 
-	offset += 0xFF00;
-
 	switch( offset )
 	{
-		case 0xFF00:
+		case 0x00:
 			switch (data & 0x30)
 			{
 			case 0x00:				   /* start condition */
@@ -1130,7 +1129,7 @@ WRITE8_HANDLER ( sgb_io_w )
 			return;
 		default:
 			/* we didn't handle the write, so pass it to the GB handler */
-			gb_io_w( offset - 0xFF00, data );
+			gb_io_w( offset, data );
 			return;
 	}
 
@@ -1172,7 +1171,7 @@ READ8_HANDLER ( gb_io_r )
 }
 
 WRITE8_HANDLER( gb_oam_w ) {
-	if ( gb_video_oam_locked() ) { 
+	if ( gb_video_oam_locked() || offset >= 0xa0 ) { 
                 return;
         }
         gb_oam[offset] = data;
@@ -1579,10 +1578,7 @@ DEVICE_LOAD(gb_cart)
 	return INIT_PASS;
 }
 
-void gb_scanline_interrupt (void)
-{
-	gb_video_scanline_interrupt();
-
+void gb_scanline_interrupt (void) {
 	/* Generate serial IO interrupt */
 	if (SIOCount)
 	{
