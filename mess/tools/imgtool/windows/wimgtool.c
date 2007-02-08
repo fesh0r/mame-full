@@ -659,9 +659,10 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	
 	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
 	{
-		TCHAR *tempstr = tstring_from_utf8(statusbar_text[i]);
+		TCHAR *tempstr = statusbar_text[i] ? tstring_from_utf8(statusbar_text[i]) : NULL;
 		SendMessage(info->statusbar, SB_SETTEXT, i, (LPARAM) tempstr);
-		free(tempstr);
+		if (tempstr)
+			free(tempstr);
 	}
 
 	// set the icon
