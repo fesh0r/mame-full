@@ -74,8 +74,6 @@ static imgtoolerr_t foreach_selected_item(HWND window,
 	imgtoolerr_t err;
 	int selected_item;
 	int selected_index = -1;
-	size_t curdir_sz;
-	size_t filename_sz;
 	char *s;
 	LVITEM item;
 	struct foreach_entry *first_entry = NULL;
@@ -118,13 +116,15 @@ static imgtoolerr_t foreach_selected_item(HWND window,
 				// if we have a path, prepend the path 
 				if (info->current_directory && info->current_directory[0])
 				{
-					curdir_sz = strlen(info->current_directory);
-					filename_sz = strlen(entry->dirent.filename);
+					char path_separator = (char) imgtool_partition_get_info_int(info->partition, IMGTOOLINFO_INT_PATH_SEPARATOR);
 
-					s = (char *) alloca((curdir_sz + filename_sz + 1) * sizeof(*s));
-					strcpy(s, info->current_directory);
-					strcpy(s + curdir_sz, entry->dirent.filename);
-					snprintf(entry->dirent.filename, sizeof(entry->dirent.filename) / sizeof(entry->dirent.filename[0]), "%s", s);
+					// create a copy of entry->dirent.filename
+					s = (char *) alloca(strlen(entry->dirent.filename) + 1);
+					strcpy(s, entry->dirent.filename);
+
+					// copy the full path back in
+					snprintf(entry->dirent.filename, ARRAY_LENGTH(entry->dirent.filename),
+						"%s%c%s", info->current_directory, path_separator, s);
 				}
 
 				// append to list

@@ -8,8 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-[GAMEBOY] Rewrote video hardware timing. Rewrote rendering code to
-          support mid-scanline effects. [Wilbert Pol]
+- [GAMEBOY] Rewrote video hardware timing. Rewrote rendering code to support
+  mid-scanline effects. [Wilbert Pol]
 
 
 
@@ -21,7 +21,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [Windows] Fixed problem opening and deleting files contained within
+  directories.  (bug #1066) [Nate Woods]
 
 
 
