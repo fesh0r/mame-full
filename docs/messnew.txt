@@ -11,6 +11,7 @@ System Driver Changes:
 - [GAMEBOY] Rewrote video hardware timing. Rewrote rendering code to support
   mid-scanline effects. [Wilbert Pol]
 
+- [SMS/GG] Improved PSG, FM, and CPU clock frequencies [Andre Cotrim, Wilbert Pol]
 
 
 User Interface Changes:
