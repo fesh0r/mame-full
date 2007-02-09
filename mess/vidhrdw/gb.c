@@ -65,7 +65,6 @@ struct layer_struct {
 	UINT8  xstart;
 	UINT8  xend;
 	/* GBC specific */
-	UINT8 *gbc_tiles[2];
 	UINT8  *gbc_map;
 	INT16  bgline;
 };
@@ -211,9 +210,7 @@ INLINE void gb_update_sprites (void)
 	}
 }
 
-/* this should be recoded to become incremental */
-void gb_update_scanline (void)
-{
+void gb_update_scanline (void) {
 	mame_bitmap *bitmap = tmpbitmap;
 
 	profiler_mark(PROFILER_VIDEO);
@@ -259,7 +256,7 @@ void gb_update_scanline (void)
 				gb_lcd.layer[1].xindex = 0;
 				gb_lcd.layer[1].xshift = 0;
 				gb_lcd.layer[1].xstart = xpos;
-				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[1].xend = 160;
 				gb_lcd.layer[0].xend = xpos;
 			}
 		}
@@ -544,7 +541,7 @@ void sgb_update_scanline (void) {
 				gb_lcd.layer[1].xindex = 0;
 				gb_lcd.layer[1].xshift = 0;
 				gb_lcd.layer[1].xstart = xpos;
-				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[1].xend = 160;
 				gb_lcd.layer[0].xend = xpos;
 			}
 		}
@@ -788,8 +785,6 @@ void cgb_update_scanline (void) {
 				gb_lcd.layer[0].bg_map += ( bgline << 2 ) & 0x3E0;
 				gb_lcd.layer[0].gbc_map = gbc_bgdtab;
 				gb_lcd.layer[0].gbc_map += ( bgline << 2 ) & 0x3E0;
-				gb_lcd.layer[0].gbc_tiles[0] = gb_chrgen;
-				gb_lcd.layer[0].gbc_tiles[1] = gbc_chrgen;
 				gb_lcd.layer[0].xindex = SCROLLX >> 3;
 				gb_lcd.layer[0].xshift = SCROLLX & 7;
 				gb_lcd.layer[0].xstart = 0;
@@ -810,12 +805,10 @@ void cgb_update_scanline (void) {
 				gb_lcd.layer[1].bg_map += ( bgline << 2 ) & 0x3E0;
 				gb_lcd.layer[1].gbc_map = gbc_wndtab;
 				gb_lcd.layer[1].gbc_map += ( bgline << 2 ) & 0x3E0;
-				gb_lcd.layer[1].gbc_tiles[0] = gb_chrgen;
-				gb_lcd.layer[1].gbc_tiles[1] = gbc_chrgen;
 				gb_lcd.layer[1].xindex = 0;
 				gb_lcd.layer[1].xshift = 0;
 				gb_lcd.layer[1].xstart = xpos;
-				gb_lcd.layer[1].xend = 160 - xpos;
+				gb_lcd.layer[1].xend = 160;
 				gb_lcd.layer[0].xend = xpos;
 			}
 		}
