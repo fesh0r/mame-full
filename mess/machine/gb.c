@@ -82,7 +82,6 @@ static UINT8 *RAMMap[MAX_RAMBANK];		   /* Addresses of RAM banks                
 static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
 static UINT8 RAMBanks;				   /* Total number of RAM banks                   */
-static UINT32 SIOCount;				   /* Serial I/O counter                          */
 static UINT8 MBC1Mode;				   /* MBC1 ROM/RAM mode                           */
 static UINT8 *MBC3RTCData;			   /* MBC3 actual RTC data                        */
 static UINT8 MBC3RTCMap[5];			   /* MBC3 Real-Time-Clock banks                  */
@@ -108,11 +107,15 @@ UINT8 gbLastTama5Command;
 UINT16	gb_divcount;
 UINT8 gb_timer_count;
 UINT8 gb_timer_shift;
+/* Serial I/O related */
+static UINT32 SIOCount;			/* Serial I/O counter                          */
+mame_timer	*gb_serial_timer = NULL;
 
 /*
   Prototypes
 */
 
+static void gb_serial_timer_proc( int dummy );
 static void gb_machine_stop(running_machine *machine);
 WRITE8_HANDLER( gb_rom_bank_select_mbc1 );
 WRITE8_HANDLER( gb_ram_bank_select_mbc1 );
@@ -132,8 +135,7 @@ WRITE8_HANDLER( gb_ram_tama5 );
 /* #define V_BANK*/			/* Display bank switching debug information */
 #endif
 
-static void gb_init_regs(void)
-{
+static void gb_init_regs(void) {
 	/* Initialize the registers */
 	SIODATA = 0x00;
 	SIOCONT = 0x7E;
@@ -147,8 +149,7 @@ static void gb_init_regs(void)
 	gb_video_w( 0x9, 0xFC );	/* SPR1PAL */
 }
 
-static void gb_init(void)
-{
+static void gb_init(void) {
 	gb_vram = memory_get_read_ptr( 0, ADDRESS_SPACE_PROGRAM, 0x8000 );
 
 	/* Initialize the memory banks */
@@ -213,6 +214,13 @@ static void gb_init(void)
 	}
 
 	gb_sound_w( 0x16, 0x00 );       /* Initialize sound hardware */
+
+	/* Allocate the serial timer, and disable it */
+	if ( ! gb_serial_timer ) {
+		gb_serial_timer = mame_timer_alloc( gb_serial_timer_proc );
+	}
+	mame_timer_enable( gb_serial_timer, 0 );
+
 }
 
 MACHINE_START( gb )
@@ -575,13 +583,19 @@ WRITE8_HANDLER ( gb_io_w )
 	case 0x01:						/* SB - Serial transfer data */
 		break;
 	case 0x02:						/* SC - SIO control */
-		if ((data & 0x81) == 0x81)		/* internal clock && enable */
-		{
+		switch( data & 0x81 ) {
+		case 0x00:
+		case 0x01:
+		case 0x80:				/* enabled & external clock */
+			SIOCount = 0;
+			break;
+		case 0x81:				/* enabled & internal clock */
 			SIODATA = 0xFF;
 			SIOCount = 8;
+			mame_timer_adjust( gb_serial_timer, MAME_TIME_IN_CYCLES( 512, 0 ), 0, MAME_TIME_IN_CYCLES( 512, 0 ) );
+			mame_timer_enable( gb_serial_timer, 1 );
+			break;
 		}
-		else							/* external clock || disable */
-			SIOCount = 0;
 		break;
 	case 0x04:						/* DIV - Divider register */
 		gb_divcount = 0xFFF7;				/* The actual value here is closely tied with some implementation details of the z80gb cpu core */
@@ -1579,15 +1593,18 @@ DEVICE_LOAD(gb_cart)
 }
 
 void gb_scanline_interrupt (void) {
-	/* Generate serial IO interrupt */
-	if (SIOCount)
-	{
-		SIODATA = (SIODATA << 1) | 0x01;
-		if (!--SIOCount)
-		{
-			SIOCONT &= 0x7F;
-			cpunum_set_input_line(0, SIO_INT, HOLD_LINE);
-		}
+}
+
+void gb_serial_timer_proc( int dummy ) {
+	/* Shift in a received bit */
+	SIODATA = (SIODATA << 1) | 0x01;
+	/* Decrement number of handled bits */
+	SIOCount--;
+	/* If all bits done, stop timer and trigger interrupt */
+	if ( ! SIOCount ) {
+		SIOCONT &= 0x7F;
+		mame_timer_enable( gb_serial_timer, 0 );
+		cpunum_set_input_line(0, SIO_INT, HOLD_LINE);
 	}
 }
 
