@@ -76,41 +76,41 @@ static PDRIVE pd_list[12] = {
 
 #define IRQ_TIMER		0x80
 #define IRQ_FDC 		0x40
-static UINT8 irq_status = 0;
+static UINT8 irq_status;
 
-static UINT8 motor_drive = 0;
-static UINT8 head = 0;
+static UINT8 motor_drive;
+static UINT8 head;
 
 /* current tape file handles */
 static char tape_name[12+1];
-static mame_file *tape_get_file = 0;
+static mame_file *tape_get_file;
 
 /* tape buffer for the first eight bytes at write (to extract a filename) */
 static UINT8 tape_buffer[9];
 
 /* file offset within tape file */
-static int tape_count = 0;
+static int tape_count;
 
 /* number of sync and data bits that were written */
-static int put_bit_count = 0;
+static int put_bit_count;
 
 /* number of sync and data bits to read */
-static int get_bit_count = 0;
+static int get_bit_count;
 
 /* sync and data bits mask */
-static int tape_bits = 0;
+static int tape_bits;
 
 /* time in cycles for the next bit at read */
-static int tape_time = 0;
+static int tape_time;
 
 /* flag if writing to tape detected the sync header A5 already */
-static int in_sync = 0;
+static int in_sync;
 
 /* cycle count at last output port change */
-static int put_cycles = 0;
+static int put_cycles;
 
 /* cycle count at last input port read */
-static int get_cycles = 0;
+static int get_cycles;
 
 /* a prototype to be called from cgenie_stop_machine */
 static void tape_put_close(running_machine *machine);
@@ -298,13 +298,29 @@ static void cgenie_machine_reset(running_machine *machine)
 
 	cgenie_load_cas = 1;
 	memory_set_opbase_handler(0, opbaseoverride);
-
 }
 
 MACHINE_START( cgenie )
 {
 	UINT8 *gfx = memory_region(REGION_GFX2);
 	int i;
+
+	/* initialize static variables */
+	memset(tape_buffer, 0, sizeof(tape_buffer));
+	memset(tape_name, 0, sizeof(tape_name));
+	tape_get_file = NULL;
+	irq_status = 0;
+	motor_drive = 0;
+	head = 0;
+	tape_count = 0;
+	put_bit_count = 0;
+	get_bit_count = 0;
+	tape_bits = 0;
+	tape_time = 0;
+	in_sync = 0;
+	put_cycles = 0;
+	get_cycles = 0;
+
 	/*
 	 * Every fifth cycle is a wait cycle, so I reduced
 	 * the overlocking by one fitfth

@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [CGENIE] Changed some variables to initialize at startup.  (bug #1055) [Nate
+  Woods]
+
 - [GAMEBOY] Rewrote video hardware timing. Rewrote rendering code to support
   mid-scanline effects. [Wilbert Pol]
 
