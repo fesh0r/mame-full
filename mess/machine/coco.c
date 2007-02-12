@@ -176,7 +176,6 @@ int mega_bank;	// Copy of bank reg so that we can peek it
 #define LOG_GIME		0
 #define LOG_MMU			0
 #define LOG_TIMER       0
-#define LOG_IRQ_RECALC	0
 
 #define GIME_TYPE_1987	0
 
@@ -2204,6 +2203,9 @@ READ8_HANDLER(coco3_gime_r)
 
 WRITE8_HANDLER(coco3_gime_w)
 {
+	/* take note if timer was $0000; see $FF95 for details */
+	int timer_was_off = (coco3_gimereg[4] == 0x00) && (coco3_gimereg[5] == 0x00);
+
 	coco3_gimereg[offset] = data;
 
 	if (LOG_GIME)
@@ -2299,6 +2301,21 @@ WRITE8_HANDLER(coco3_gime_w)
 			/*	$FF95 Timer register LSB
 			*		  Bits 0-7 Low order eight bits of the timer
 			*/
+			if (timer_was_off && (coco3_gimereg[5] != 0x00))
+			{
+				/* Writes to $FF95 do not cause the timer to reset, but MESS
+				 * will invoke coco3_timer_reset() if $FF94/5 was previously
+				 * $0000.  The reason for this is because the timer is not
+				 * actually off when $FF94/5 are loaded with $0000; rather it
+				 * is continuously reloading the GIME's internal countdown
+				 * register, even if it isn't causing interrupts to be raised.
+				 *
+				 * Failure to do this was the cause of bug #1065.  Special
+				 * thanks to John Kowalski for pointing me in the right
+				 * direction
+				 */
+				coco3_timer_reset();
+			}
 			break;
 
 		case 8:
