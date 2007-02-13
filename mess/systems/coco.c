@@ -35,9 +35,24 @@
 #define JOYSTICK_SENSITIVITY	100
 
 static ADDRESS_MAP_START( coco_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x8000, 0xfeff) AM_RAMBANK(2)
-	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,				pia_0_w)
-	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0x0000, 0x0FFF) AM_RAMBANK(1)
+	AM_RANGE(0x1000, 0x1FFF) AM_RAMBANK(2)
+	AM_RANGE(0x2000, 0x2FFF) AM_RAMBANK(3)
+	AM_RANGE(0x3000, 0x3FFF) AM_RAMBANK(4)
+	AM_RANGE(0x4000, 0x4FFF) AM_RAMBANK(5)
+	AM_RANGE(0x5000, 0x5FFF) AM_RAMBANK(6)
+	AM_RANGE(0x6000, 0x6FFF) AM_RAMBANK(7)
+	AM_RANGE(0x7000, 0x7FFF) AM_RAMBANK(8)
+	AM_RANGE(0x8000, 0x8FFF) AM_RAMBANK(9)
+	AM_RANGE(0x9000, 0x9FFF) AM_RAMBANK(10)
+	AM_RANGE(0xA000, 0xAFFF) AM_RAMBANK(11)
+	AM_RANGE(0xB000, 0xBFFF) AM_RAMBANK(12)
+	AM_RANGE(0xC000, 0xCFFF) AM_RAMBANK(13)
+	AM_RANGE(0xD000, 0xDFFF) AM_RAMBANK(14)
+	AM_RANGE(0xE000, 0xEFFF) AM_RAMBANK(15)
+	AM_RANGE(0xF000, 0xFEFF) AM_RAMBANK(16)
+	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,			pia_0_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(pia_1_r,			pia_1_w)
 	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
 	AM_RANGE(0xff90, 0xffbf) AM_NOP
 	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
@@ -66,8 +81,8 @@ static ADDRESS_MAP_START( coco3_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xfdff) AM_RAMBANK(8)
 	AM_RANGE(0xfe00, 0xfeff) AM_RAMBANK(9)
 	AM_RANGE(0xff00, 0xff1f) AM_READWRITE(pia_0_r,				pia_0_w)
-	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco3_pia_1_r,		pia_1_w)
-	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(pia_1_r,				pia_1_w)
+	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,			coco_cartridge_w)
 	AM_RANGE(0xff90, 0xff9f) AM_READWRITE(coco3_gime_r,			coco3_gime_w)
 	AM_RANGE(0xffa0, 0xffaf) AM_READWRITE(coco3_mmu_r,			coco3_mmu_w)
 	AM_RANGE(0xffb0, 0xffbf) AM_READWRITE(paletteram_r,			coco3_palette_w)
@@ -79,12 +94,25 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( d64_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
-	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
-	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0x0000, 0x0FFF) AM_RAMBANK(1)
+	AM_RANGE(0x1000, 0x1FFF) AM_RAMBANK(2)
+	AM_RANGE(0x2000, 0x2FFF) AM_RAMBANK(3)
+	AM_RANGE(0x3000, 0x3FFF) AM_RAMBANK(4)
+	AM_RANGE(0x4000, 0x4FFF) AM_RAMBANK(5)
+	AM_RANGE(0x5000, 0x5FFF) AM_RAMBANK(6)
+	AM_RANGE(0x6000, 0x6FFF) AM_RAMBANK(7)
+	AM_RANGE(0x7000, 0x7FFF) AM_RAMBANK(8)
+	AM_RANGE(0x8000, 0x8FFF) AM_RAMBANK(9)
+	AM_RANGE(0x9000, 0x9FFF) AM_RAMBANK(10)
+	AM_RANGE(0xA000, 0xAFFF) AM_RAMBANK(11)
+	AM_RANGE(0xB000, 0xBFFF) AM_RAMBANK(12)
+	AM_RANGE(0xC000, 0xCFFF) AM_RAMBANK(13)
+	AM_RANGE(0xD000, 0xDFFF) AM_RAMBANK(14)
+	AM_RANGE(0xE000, 0xEFFF) AM_RAMBANK(15)
+	AM_RANGE(0xF000, 0xFEFF) AM_RAMBANK(16)
 	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,				pia_0_w)		AM_MIRROR(0x0018)
 	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,			acia_6551_w)	AM_MIRROR(0x0018)
-	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(pia_1_r,			pia_1_w)
 	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
 	AM_RANGE(0xff90, 0xffbf) AM_NOP
 	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
@@ -100,12 +128,25 @@ ADDRESS_MAP_END
 */
 
 static ADDRESS_MAP_START( d64_plus_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
-	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
-	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0x0000, 0x0FFF) AM_RAMBANK(1)
+	AM_RANGE(0x1000, 0x1FFF) AM_RAMBANK(2)
+	AM_RANGE(0x2000, 0x2FFF) AM_RAMBANK(3)
+	AM_RANGE(0x3000, 0x3FFF) AM_RAMBANK(4)
+	AM_RANGE(0x4000, 0x4FFF) AM_RAMBANK(5)
+	AM_RANGE(0x5000, 0x5FFF) AM_RAMBANK(6)
+	AM_RANGE(0x6000, 0x6FFF) AM_RAMBANK(7)
+	AM_RANGE(0x7000, 0x7FFF) AM_RAMBANK(8)
+	AM_RANGE(0x8000, 0x8FFF) AM_RAMBANK(9)
+	AM_RANGE(0x9000, 0x9FFF) AM_RAMBANK(10)
+	AM_RANGE(0xA000, 0xAFFF) AM_RAMBANK(11)
+	AM_RANGE(0xB000, 0xBFFF) AM_RAMBANK(12)
+	AM_RANGE(0xC000, 0xCFFF) AM_RAMBANK(13)
+	AM_RANGE(0xD000, 0xDFFF) AM_RAMBANK(14)
+	AM_RANGE(0xE000, 0xEFFF) AM_RAMBANK(15)
+	AM_RANGE(0xF000, 0xFEFF) AM_RAMBANK(16)
 	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,pia_0_w)		AM_MIRROR(0x0018)
 	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,acia_6551_w)	AM_MIRROR(0x0018)
-	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(coco_pia_1_r,pia_1_w)
+	AM_RANGE(0xff20, 0xff3f) AM_READWRITE(pia_1_r,pia_1_w)
 	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,	coco_cartridge_w)
 	AM_RANGE(0xff90, 0xffbf) AM_NOP
 	AM_RANGE(0xffc0, 0xffdf) AM_WRITE(sam_w)
@@ -165,12 +206,25 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( dgnalpha_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_RAMBANK(1)
-	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(2)
-	AM_RANGE(0xc000, 0xfeff) AM_RAMBANK(3)
+	AM_RANGE(0x0000, 0x0FFF) AM_RAMBANK(1)
+	AM_RANGE(0x1000, 0x1FFF) AM_RAMBANK(2)
+	AM_RANGE(0x2000, 0x2FFF) AM_RAMBANK(3)
+	AM_RANGE(0x3000, 0x3FFF) AM_RAMBANK(4)
+	AM_RANGE(0x4000, 0x4FFF) AM_RAMBANK(5)
+	AM_RANGE(0x5000, 0x5FFF) AM_RAMBANK(6)
+	AM_RANGE(0x6000, 0x6FFF) AM_RAMBANK(7)
+	AM_RANGE(0x7000, 0x7FFF) AM_RAMBANK(8)
+	AM_RANGE(0x8000, 0x8FFF) AM_RAMBANK(9)
+	AM_RANGE(0x9000, 0x9FFF) AM_RAMBANK(10)
+	AM_RANGE(0xA000, 0xAFFF) AM_RAMBANK(11)
+	AM_RANGE(0xB000, 0xBFFF) AM_RAMBANK(12)
+	AM_RANGE(0xC000, 0xCFFF) AM_RAMBANK(13)
+	AM_RANGE(0xD000, 0xDFFF) AM_RAMBANK(14)
+	AM_RANGE(0xE000, 0xEFFF) AM_RAMBANK(15)
+	AM_RANGE(0xF000, 0xFEFF) AM_RAMBANK(16)
 	AM_RANGE(0xff00, 0xff03) AM_READWRITE(pia_0_r,			pia_0_w)	
 	AM_RANGE(0xff04, 0xff07) AM_READWRITE(acia_6551_r,		acia_6551_w)	
-	AM_RANGE(0xff20, 0xff23) AM_READWRITE(coco_pia_1_r,		pia_1_w)
+	AM_RANGE(0xff20, 0xff23) AM_READWRITE(pia_1_r,			pia_1_w)
 	AM_RANGE(0xff24, 0xff27) AM_READWRITE(pia_2_r,			pia_2_w) 	/* Third PIA on Dragon Alpha */
 	AM_RANGE(0xff2c, 0xff2f) AM_READWRITE(wd2797_r,			wd2797_w)	/* Alpha onboard disk interface */
 	AM_RANGE(0xff40, 0xff8f) AM_READWRITE(coco_cartridge_r,	coco_cartridge_w)
@@ -210,7 +264,12 @@ static INPUT_PORTS_START( coco3_joystick_buttons )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Left Button 2")  PORT_CODE(KEYCODE_DEL_PAD)	PORT_CODE(JOYCODE_2_BUTTON2) PORT_CODE(MOUSECODE_2_BUTTON2) PORT_PLAYER(2)
 INPUT_PORTS_END
 
-
+INPUT_PORTS_START( cart_autostart )
+	PORT_START_TAG("CARTAUTO")
+	PORT_DIPNAME( 0x01, 0x01, "Cart Auto-Start" )
+	PORT_DIPSETTING(0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(0x01, DEF_STR( On ))
+INPUT_PORTS_END
 
 /* Dragon keyboard
 
@@ -296,6 +355,7 @@ INPUT_PORTS_START( dragon32 )
 	PORT_INCLUDE( coco_joystick_buttons )
 	PORT_INCLUDE( m6847_artifacting )
 
+	PORT_INCLUDE( cart_autostart )
 INPUT_PORTS_END
 
 /* CoCo keyboard
@@ -386,6 +446,8 @@ INPUT_PORTS_START( coco )
 	PORT_CONFNAME( 0x03, 0x00, "Real Time Clock" )
 	PORT_CONFSETTING(    0x00, "Disto" )
 	PORT_CONFSETTING(    0x01, "Cloud-9" )
+	
+	PORT_INCLUDE( cart_autostart )
 INPUT_PORTS_END
 
 /* CoCo 3 keyboard
@@ -497,6 +559,8 @@ INPUT_PORTS_START( coco3 )
 	PORT_BIT( 0x1ff, 266, IPT_LIGHTGUN_X ) PORT_NAME("Lightgun X") PORT_MINMAX(116,416) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_PLAYER(3)
 	PORT_START_TAG("dclg_y")
 	PORT_BIT( 0xff, 121, IPT_LIGHTGUN_X ) PORT_NAME("Lightgun Y") PORT_MINMAX(0,242) PORT_SENSITIVITY(100) PORT_KEYDELTA(1) PORT_PLAYER(3)
+
+	PORT_INCLUDE( cart_autostart )
 INPUT_PORTS_END
 
 /* AY-8912 for Dragon Alpha, the AY-8912 simply an AY-8910 with only one io port. */
@@ -1085,11 +1149,23 @@ SYSTEM_CONFIG_END
 
 /* ----------------------------------------------------------------------- */
 
+/* I have split up coco and cocoe, as the basic rom in the coco, cannot    */
+/* use 64K rams, and will boot with 4k, if this is selected, so I have     */
+/* split these to avoid confusion -- PHS                                   */
+
 SYSTEM_CONFIG_START( coco )
 	CONFIG_IMPORT_FROM	( generic_coco12 )
-	CONFIG_RAM			(4 * 1024)
-	CONFIG_RAM			(16 * 1024)
-	CONFIG_RAM			(32 * 1024)
+	CONFIG_RAM		(4 * 1024)
+	CONFIG_RAM_DEFAULT	(16 * 1024)
+	CONFIG_RAM		(32 * 1024)
+	CONFIG_RAM		(64 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START( cocoe )
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM		(4 * 1024)
+	CONFIG_RAM		(16 * 1024)
+	CONFIG_RAM		(32 * 1024)
 	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
@@ -1113,6 +1189,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(dragon32)
 	CONFIG_IMPORT_FROM	( generic_dragon )
 	CONFIG_RAM_DEFAULT	(32 * 1024)
+	CONFIG_RAM		(64 * 1024)		// Since a fair number of users did this upgrade - phs
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon64)
@@ -1137,7 +1214,7 @@ SYSTEM_CONFIG_END
 
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT		INIT     CONFIG	COMPANY					FULLNAME */
 COMP(  1980,	coco,		0,		0,		coco,		coco,		0,		coco,		"Tandy Radio Shack",	"Color Computer" , 0)
-COMP(  1981,	cocoe,		coco,	0,		coco,		coco,		0,		coco,		"Tandy Radio Shack",	"Color Computer (Extended BASIC 1.0)" , 0)
+COMP(  1981,	cocoe,		coco,	0,		coco,		coco,		0,		cocoe,		"Tandy Radio Shack",	"Color Computer (Extended BASIC 1.0)" , 0)
 COMP(  1983,	coco2,		coco,	0,		coco2,		coco,		0,		coco2,		"Tandy Radio Shack",	"Color Computer 2" , 0)
 COMP(  1985?,	coco2b,		coco,	0,		coco2b,		coco,		0,		coco2,		"Tandy Radio Shack",	"Color Computer 2B" , 0)
 COMP(  1986,	coco3,		coco,	0,	 	coco3,		coco3,		0,		coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC)" , 0)

@@ -59,8 +59,23 @@ Fixed Dragon Alpha NMI enable/disable, following circuit traces on a real machin
 Re-implemented Alpha NMI enable/disable, using direct PIA reads, rather than
 keeping track of it in a variable in the driver.
 	P.Harvey-Smith, 25-Sep-2006.
+	
+Radically re-wrote memory emulation code for CoCo 1/2 & Dragon machines, the 
+new code emulates the memory mapping of the SAM, dependent on what size of 
+RAM chips it is programed to use, including proper mirroring of the RAM.
 
+Replaced the kludged emulation of the cart line, with a timer based trigger 
+this is set to toggle at 1Hz, this seems to be good enough to trigger the 
+cartline, but is so slow in real terms that it should have very little 
+impact on the emulation speed.
 
+Re-factored the code common to all machines, and seperated the code different,
+into callbacks/functions unique to the machines, in preperation for splitting 
+the code for individual machine types into seperate files, I have preposed, that
+the CoCo 1/2 should stay in coco.c, and that the coco3 and dragon specifc code
+should go into coco3.c and dragon.c which should (hopefully) make the code 
+easier to manage.
+	P.Harvey-Smith, Dec 2006-Feb 2007
 ***************************************************************************/
 
 #include <math.h>
@@ -84,16 +99,9 @@ keeping track of it in a variable in the driver.
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 
-UINT8 coco3_gimereg[16];
-
+/*common vars/calls */
 static UINT8 *coco_rom;
-static int coco3_enable_64k;
-static UINT8 coco3_mmu[16];
-static UINT8 coco3_interupt_line;
-static UINT8 gime_firq, gime_irq;
-static int cart_line, cart_inserted;
 static int dclg_state;
-static UINT16 cart_bank_size;
 static UINT8 (*update_keyboard)(void);
 static mame_timer *update_keyboard_timer;
 
@@ -101,11 +109,8 @@ static WRITE8_HANDLER ( d_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_pa_w );
 static READ8_HANDLER ( d_pia1_cb1_r );
 static READ8_HANDLER ( d_pia1_pa_r );
-static READ8_HANDLER ( d_pia1_pb_r_coco );
-static READ8_HANDLER ( d_pia1_pb_r_coco2 );
 static WRITE8_HANDLER ( d_pia0_pa_w );
 static WRITE8_HANDLER ( d_pia0_pb_w );
-static WRITE8_HANDLER ( dragon64_pia1_pb_w );
 static WRITE8_HANDLER ( d_pia1_cb2_w);
 static WRITE8_HANDLER ( d_pia0_cb2_w);
 static WRITE8_HANDLER ( d_pia1_ca2_w);
@@ -114,51 +119,79 @@ static void d_pia0_irq_a(int state);
 static void d_pia0_irq_b(int state);
 static void d_pia1_firq_a(int state);
 static void d_pia1_firq_b(int state);
-static void coco3_pia0_irq_a(int state);
-static void coco3_pia0_irq_b(int state);
-static void coco3_pia1_firq_a(int state);
-static void coco3_pia1_firq_b(int state);
 static void coco_cartridge_enablesound(int enable);
 static void d_sam_set_pageonemode(int val);
 static void d_sam_set_mpurate(int val);
 static void d_sam_set_memorysize(int val);
 static void d_sam_set_maptype(int val);
-static void dragon64_sam_set_maptype(int val);
-static void coco3_sam_set_maptype(int val);
-static const UINT8 *coco3_sam_get_rambase(void);
 static void coco_setcartline(int data);
-static void coco3_setcartline(int data);
 static void coco_machine_stop(running_machine *machine);
 
-/* Are we a CoCo or a Dragon ? */
-typedef enum
-{
-	AM_COCO,
-	AM_DRAGON
-} coco_or_dragon_t;
-static coco_or_dragon_t coco_or_dragon;
+/* CoCo 1 specific */
+static READ8_HANDLER ( d_pia1_pb_r_coco );
+
+/* CoCo 2 specific */
+static READ8_HANDLER ( d_pia1_pb_r_coco2 );
+
+/* CoCo 3 specific */
+UINT8 coco3_gimereg[16];
+static int coco3_enable_64k;
+static UINT8 coco3_mmu[16];
+static UINT8 coco3_interupt_line;
+static UINT8 gime_firq, gime_irq;
+
+static void coco3_pia0_irq_a(int state);
+static void coco3_pia0_irq_b(int state);
+static void coco3_pia1_firq_a(int state);
+static void coco3_pia1_firq_b(int state);
+static void coco3_sam_set_maptype(int val);
+static const UINT8 *coco3_sam_get_rambase(void);
+static void coco3_setcartline(int data);
+static void coco3_cart_timerproc(int dummy);
+
+/* Dragon 32 specific */
+static READ8_HANDLER ( d_pia1_pb_r_dragon32 );
+
+/* Dragon 64 / 64 Plus / Tano (Alpha) specific */
+static WRITE8_HANDLER ( dragon64_pia1_pb_w );
 
 /* Dragon 64 / Alpha shared */
-static int dragon_map_type;					/* Dragonm 64/Alpha map type, used for rom paging */
-static UINT8 *dragon_rom_bank;					/* Dragon 64 / Alpha rom bank in use */
 static void dragon_page_rom(int	romswitch);
 
-/* Dragon Alpha only */
+/* Dragon Alpha specific */
 static WRITE8_HANDLER ( dgnalpha_pia2_pa_w );
 static void d_pia2_firq_a(int state);
 static void d_pia2_firq_b(int state);
-
 static int dgnalpha_just_reset;		/* Reset flag used to ignore first NMI after reset */
 
-/* End Dragon Alpha */
-
-/* Dragon Plus */
+/* Dragon Plus specific */
 static int dragon_plus_reg;			/* Dragon plus control reg */
+
+/* Cart port related */
+static int cart_line, cart_inserted;
+static UINT16 cart_bank_size;
+static int cart_autostart_enable;	 	/* Should the cart auto-start ?, set by dipswitch */
+static int cart_has_autostart;			/* Cart has autostart line, most do, but DOS does not */
+
+static int count_bank(void);
+static int is_Orch90(void);			/* Returns true if cart is orchestra 90 */
+static int is_megacart(void);			/* Returns true if cart contains megacart signature */
+static int is_doscart(void);			/* Returns true if cart contains 'DK' doscart signature */
+
+int cart_can_toggle(void);
+static void coco_cart_timerproc(int dummy);	// Note coco3 version in coc3 group above :)
+static mame_timer *cart_line_timer;
+static int cart_mem_offset;
 
 /* MegaCart CTRL reg, bit 1 selects 8K or 16K banking */
 int mega_ctrl;
-int mega_bank;	// Copy of bank reg so that we can peek it
-/* End Mega Cart */
+int mega_bank;					// Copy of bank reg so that we can peek it
+
+/* Memory map related CoCo 1/2 and Dragons only */
+static UINT8 *bas_rom_bank;			/* Dragon 64 / Alpha rom bank in use, basic rom bank on coco */
+static UINT8 *bottom_32k;			/* ram to be mapped into bottom 32K */
+static void setup_memory_map(void);
+
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
@@ -178,10 +211,6 @@ int mega_bank;	// Copy of bank reg so that we can peek it
 #define LOG_TIMER       0
 
 #define GIME_TYPE_1987	0
-
-static int count_bank(void);
-static int is_Orch90(void);
-static int is_megacart(void);
 
 #ifdef MAME_DEBUG
 static offs_t coco_dasm_override(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -289,6 +318,23 @@ static const pia6821_interface coco3_pia_intf[] =
 	}
 };
 
+static const pia6821_interface dragon32_pia_intf[] =
+{
+	/* PIA 0 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
+	},
+
+	/* PIA 1 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_dragon32, 0, d_pia1_cb1_r, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
+		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
+	}
+};
+
 static const pia6821_interface dragon64_pia_intf[] =
 {
 	/* PIA 0 */
@@ -350,16 +396,6 @@ static const sam6883_interface coco3_sam_intf =
 	d_sam_set_mpurate,
 	NULL,
 	coco3_sam_set_maptype
-};
-
-static const sam6883_interface dragon64_sam_intf =
-{
-	SAM6883_ORIGINAL,
-	NULL,
-	d_sam_set_pageonemode,
-	d_sam_set_mpurate,
-	d_sam_set_memorysize,
-	dragon64_sam_set_maptype
 };
 
 static const struct cartridge_slot *coco_cart_interface;
@@ -847,8 +883,6 @@ void coco3_field_sync_callback(int data)
 	pia_0_cb1_w(0, data);
 }
 
-
-
 void coco3_gime_field_sync_callback(void)
 {
 	/* the CoCo 3 VBORD interrupt triggers right after the display */
@@ -1052,6 +1086,9 @@ static int coco_hiresjoy_ry(void)
   01	- CSN (cassette)
   10	- SND input from cartridge (NYI because we only support the FDC)
   11	- Grounded (0)
+
+  Note on the Dragon Alpha state 11, selects the AY-3-8912, this is currently
+  un-implemented - phs.
 
   Source - Tandy Color Computer Service Manual
 ***************************************************************************/
@@ -1344,11 +1381,9 @@ static UINT8 coco3_update_keyboard(void)
 
 
 /* three functions that update the keyboard in varying ways */
-static WRITE8_HANDLER ( d_pia0_pb_w )									{ (*update_keyboard)(); }
+static WRITE8_HANDLER ( d_pia0_pb_w )						{ (*update_keyboard)(); }
 static void coco_poll_keyboard(void *param, UINT32 value, UINT32 mask)	{ (*update_keyboard)(); }
-static void coco_update_keyboard_timerproc(int dummy)					{ (*update_keyboard)(); }
-
-
+static void coco_update_keyboard_timerproc(int dummy)				{ (*update_keyboard)(); }
 
 static WRITE8_HANDLER ( d_pia0_pa_w )
 {
@@ -1356,32 +1391,49 @@ static WRITE8_HANDLER ( d_pia0_pa_w )
 		coco_hiresjoy_w(data & 0x04);
 }
 
+/*
+   This determines if a cart should toggle the CART line from Q, it is 
+   determined by several things, including the setting of the cart_autostart
+   dip switch, if the cart inserted is a DOS cart then it doesn't autostart
+   this way, as the CoCo/Dragon BIOS looks for the 'DK' signature and 
+   initialises the DOS cart if found
+*/
 
-
-/* The following hacks are necessary because a large portion of cartridges
- * tie the Q line to the CART line.  Since Q pulses with every single clock
- * cycle, this would be prohibitively slow to emulate.  Thus we are only
- * going to pulse when the PIA is read from; which seems good enough (for now)
- */
-READ8_HANDLER( coco_pia_1_r )
+int cart_can_toggle(void)
 {
-	if (cart_line == CARTLINE_Q)
+	int	result;	
+
+	if (cart_autostart_enable && cart_has_autostart && cart_inserted)
+		result=1;
+	else
+		result=0;
+
+	return result;
+}
+
+/* This is called on every clock of coco_cart_timer to toggle the cart line */
+/* This is only enabled, if an autostarting cart is inserted : if cart_can_toggle() */
+/* returns true */
+/* Since the code for these is identical, perhaps they should be mergerd ? */
+	
+static void coco_cart_timerproc(int dummy)
+{
+	if((cart_line==CARTLINE_Q) && cart_can_toggle())
 	{
 		coco_setcartline(CARTLINE_CLEAR);
 		coco_setcartline(CARTLINE_Q);
 	}
-	return pia_1_r(offset);
 }
 
-READ8_HANDLER( coco3_pia_1_r )
+static void coco3_cart_timerproc(int dummy)
 {
-	if (cart_line == CARTLINE_Q)
+	if((cart_line==CARTLINE_Q) && cart_can_toggle())
 	{
 		coco3_setcartline(CARTLINE_CLEAR);
 		coco3_setcartline(CARTLINE_Q);
 	}
-	return pia_1_r(offset);
 }
+
 
 /***************************************************************************
   PIA1 ($FF20-$FF3F) (Chip U4)
@@ -1411,6 +1463,25 @@ static  READ8_HANDLER ( d_pia1_cb1_r )
 static WRITE8_HANDLER ( d_pia1_cb2_w )
 {
 	soundmux_update();
+}
+
+/* Printer output functions used by d_pia1_pa_w */
+static void (*printer_out)(int data);
+
+/* Printer output for the CoCo, output to bitbanger port */
+void printer_out_coco(int data)
+{
+	bitbanger_output(bitbanger_image(), (data & 2) >> 1);
+}
+
+/* Printer output for the Dragon, output to Paralel port */
+void printer_out_dragon(int data)
+{
+	/* If strobe bit is high send data from pia0 port b to dragon parallel printer */
+	if (data & 0x02)
+	{
+		printer_output(printer_image(), pia_get_output_b(0));
+	}
 }
 
 static WRITE8_HANDLER ( d_pia1_pa_w )
@@ -1452,21 +1523,9 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 		cassette_output(cassette_device_image(), ((int) dac - 0x80) / 128.0);
 	}
 
-	switch(coco_or_dragon)
-	{
-		case AM_COCO:
-			/* Only the coco has a bitbanger */
-			bitbanger_output(bitbanger_image(), (data & 2) >> 1);
-			break;
+	/* Handle printer output, serial for CoCos, Paralell for Dragons */
 	
-		case AM_DRAGON:
-			/* If strobe bit is high send data from pia0 port b to dragon parallel printer */
-			if (data & 0x02)
-			{
-				printer_output(printer_image(), pia_get_output_b(0));
-			}
-			break;
-	}
+	printer_out(data);
 }
 
 /*
@@ -1490,20 +1549,13 @@ static WRITE8_HANDLER( d_pia1_pb_w )
 	coco_sound_update();
 }
 
-enum
-{
-	DRAGON64_SAMMAP = 1,
-	DRAGON64_PIAMAP = 2,
-	DRAGON64_ALL = 3
-};
-
 static WRITE8_HANDLER( dragon64_pia1_pb_w )
 {
 	d_pia1_pb_w(0, data);
 
-    /* If bit 2 of the pia1 ddra is 1 then this pin is an output so use it */
+	/* If bit 2 of the pia1 ddrb is 1 then this pin is an output so use it */
 	/* to control the paging of the 32k and 64k basic roms */
-	/* Otherwise it set as an input, with an internal pull-up so it should */
+	/* Otherwise it set as an input, with an EXTERNAL pull-up so it should */
 	/* always be high (enabling 32k basic rom) */
 	if (pia_get_ddr_b(1) & 0x04)
 	{
@@ -1563,14 +1615,14 @@ static void dragon_page_rom(int	romswitch)
 	UINT8 *bank;
 	
 	if (romswitch) 
-		bank = coco_rom;			/* This is the 32k mode basic(64)/boot rom(alpha)  */
+		bank = coco_rom;		/* This is the 32k mode basic(64)/boot rom(alpha)  */
 	else
 		bank = coco_rom + 0x8000;	/* This is the 64k mode basic(64)/basic rom(alpha) */
 	
-	dragon_rom_bank = bank;			/* Record which rom we are using so that the irq routine */
-									/* uses the vectors from the correct rom ! (alpha) */
+	bas_rom_bank = bank;			/* Record which rom we are using so that the irq routine */
+						/* uses the vectors from the correct rom ! (alpha) */
 
-	dragon64_sam_set_maptype(dragon_map_type);	/* Call to setup correct mapping */
+	setup_memory_map();			/* Setup memory map as needed */
 }
 
 /********************************************************************************************/
@@ -1676,19 +1728,43 @@ static READ8_HANDLER ( d_pia1_pa_r )
 
 static READ8_HANDLER ( d_pia1_pb_r_coco )
 {
-	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
-	 * on the CoCo serial-in (pb0). Serial-in not yet implemented.
-	 * on the Dragon pb0, is the printer /busy line.
-	 */
+	/* This handles the reading of the memory sense switch (pb2) for the CoCo 1,
+	 * and serial-in (pb0). Serial-in not yet implemented. */
 	int result;
 
-	if (mess_ram_size >= 0x8000)
+	/* For the CoCo 1, the logic has been changed to only select 64K rams 	
+	   if there is more than 16K of memory, as the Color Basic 1.0 rom 	
+	   can only configure 4K or 16K ram banks (as documented in "Color 	
+	   Basic Unreveled"), doing this allows this  allows the coco driver 	
+	   to access 32K of ram, and also allows the cocoe driver to access 	
+	   the full 64K, as this uses Color Basic 1.2, which can configure 64K rams */	
+
+	if (mess_ram_size > 0x8000)		/* 1 bank of 64K rams */
 		result = (pia_get_output_b(0) & 0x80) >> 5;
-	else if (mess_ram_size >= 0x4000)
+	else if (mess_ram_size >= 0x4000)	/* 1 or 2 banks of 16K rams */
 		result = 0x04;
 	else
-		result = 0x00;
-			
+		result = 0x00;			/* 4K Rams */
+
+	return result;
+}
+
+static READ8_HANDLER ( d_pia1_pb_r_dragon32 )
+{
+	/* This handles the reading of the memory sense switch (pb2) for the Dragon 32, 
+	 * and pb0, is the printer /busy line. */
+	 
+	int result;
+
+	/* Of the Dragon machines, Only the Dragon 32 needs the ram select bit 
+	   as both the 64 and Alpha, always have 64K rams, also the meaning of 
+	   the bit is different with respect to the CoCo 1 */
+	   
+	if (mess_ram_size > 0x8000)
+		result = 0x00;		/* 1 bank of 64K, rams */
+	else
+		result = 0x04;		/* 2 banks of 16K rams */
+		
 	return result;
 }
 
@@ -1734,9 +1810,6 @@ READ8_HANDLER ( plus_reg_r )
 */
 WRITE8_HANDLER ( plus_reg_w )
 {
-	UINT8 *readbank1;
-	write8_handler writebank1;
-	
 	int map;
 	
 	dragon_plus_reg = data;
@@ -1745,17 +1818,14 @@ WRITE8_HANDLER ( plus_reg_w )
 	
 	switch (map)
 	{
-		case 0x00	: readbank1=&mess_ram[0x00000]; break;
-		case 0x01	: readbank1=&mess_ram[0x10000]; break;
-		case 0x02	: readbank1=&mess_ram[0x18000]; break;
-		case 0x03	: readbank1=&mess_ram[0x00000]; break;
-		default	: readbank1=&mess_ram[0x00000]; break; // Just to shut the compiler up !	
+		case 0x00	: bottom_32k=&mess_ram[0x00000]; break;
+		case 0x01	: bottom_32k=&mess_ram[0x10000]; break;
+		case 0x02	: bottom_32k=&mess_ram[0x18000]; break;
+		case 0x03	: bottom_32k=&mess_ram[0x00000]; break;
+		default	: bottom_32k=&mess_ram[0x00000]; break; // Just to shut the compiler up !	
 	}	
-
-	writebank1 = MWA8_BANK1;
-	memory_set_bankptr(1, readbank1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, writebank1);
 	
+	setup_memory_map();
 }
 
 
@@ -1790,12 +1860,131 @@ static void d_sam_set_mpurate(int val)
 	 */
     cpunum_set_clockscale(0, val ? 2 : 1);
 }
+
 READ8_HANDLER(dragon_alpha_mapped_irq_r)
 {
-	return dragon_rom_bank[0x3ff0 + offset];
+	return bas_rom_bank[0x3ff0 + offset];
 }
 
+static void setup_memory_map(void)
+{
 
+	/* 
+	The following table contains the RAM block mappings for the CoCo 1/2 and Dragon computers 
+	This replicates the behavior of the SAM ram size programming bits which in ther real hardware 
+	allowed the use of various sizes of RAM chips, as follows :-
+
+	1 or 2 banks of 4K
+	1 or 2 banks of 16K
+	1 bank of 64K
+	up to 64K of static ram.
+
+	For the 4K and 16K chip sizes, if the second bank was empty it would be mapped to nothing.
+	For the 4K and 16K chip sizes, the banks would be mirrored at chip size*2 intervals.
+	
+	The following table holds the data required to implement this.
+
+	Note though it is technically possible to have 2 banks of 4K rams, for a total of 8K, I 
+	have never seen a machine with this configuration, so I have not implemented it.
+	*/
+	
+	struct coco_meminfo 
+	{
+		offs_t	start;		/* start address of bank */
+		offs_t	end;		/* End address of bank */
+		int	wbank4;		/* Bank to map when 4K rams */
+		int	wbank16_1;	/* Bank to map when one bank of 16K rams */
+		int	wbank16_2;	/* Bank to map when two banks of 16K rams */
+		int	wbank64;	/* Bank to map when 64K rams */
+	};
+
+	static const struct coco_meminfo memmap[] =
+	{
+		{ 0x0000, 0x0FFF, 1, 1, 1, 1  },
+		{ 0x1000, 0x1FFF, 0, 2, 2, 2  },
+		{ 0x2000, 0x2FFF, 1, 3, 3, 3  },
+		{ 0x3000, 0x3FFF, 0, 4, 4, 4  },
+		{ 0x4000, 0x4FFF, 1, 0, 5, 5  },
+		{ 0x5000, 0x5FFF, 0, 0, 6, 6  },
+		{ 0x6000, 0x6FFF, 1, 0, 7, 7  },
+		{ 0x7000, 0x7FFF, 0, 0, 8, 8  },
+		{ 0x8000, 0x8FFF, 1, 1, 1, 9  },
+		{ 0x9000, 0x9FFF, 0, 2, 2, 10 },
+		{ 0xA000, 0xAFFF, 1, 3, 3, 11 },
+		{ 0xB000, 0xBFFF, 0, 4, 4, 12 },
+		{ 0xC000, 0xCFFF, 1, 0, 5, 13 },
+		{ 0xD000, 0xDFFF, 0, 0, 6, 14 },
+		{ 0xE000, 0xEFFF, 1, 0, 7, 15 },
+		{ 0xF000, 0xFEFF, 0, 0, 8, 16 }
+	};
+
+	/* We need to init these vars from the sam, as this may be called from outside the sam callbacks */
+	UINT8 memsize	= get_sam_memorysize();
+	UINT8 maptype	= get_sam_maptype();
+//	UINT8 pagemode	= get_sam_pagemode();
+	int 		last_ram_block;		/* Last block that will be RAM, dependent on maptype */
+	int 		block_index;		/* Index of block being processed */
+	int	 	wbank;			/* bank no to go in this block */
+	UINT8 		*offset;		/* offset into coco rom for rom mapping */
+
+	/* Set last RAM block dependent on map type */
+	if (maptype)
+		last_ram_block=15;
+	else
+		last_ram_block=7;
+		
+	/* Map RAM blocks */
+	for(block_index=0;block_index<=last_ram_block;block_index++)
+	{
+		/* Lookup the apropreate wbank value dependent on ram size */
+		if (memsize==0)
+			wbank=memmap[block_index].wbank4;
+		else if ((memsize==1) && (mess_ram_size == 0x4000))	/* one bank of 16K rams */
+			wbank=memmap[block_index].wbank16_1;
+		else if ((memsize==1) && (mess_ram_size == 0x8000))	/* two banks of 16K rams */
+			wbank=memmap[block_index].wbank16_2;
+		else 
+			wbank=memmap[block_index].wbank64;
+
+		/* If wbank is 0 then there is no ram here so set it up to return 0, note this may change in the future */
+		/* as all unmapped addresses on the CoCo/Dragon seem to always return 126 (0x7E) */
+		/* If wbank is a positive integer, it contains the bank number to map into this block */
+		if(wbank!=0)
+		{
+			/* This deals with the bottom 32K page switch and the Dragon Plus paged ram */
+			if(block_index<8)
+				memory_set_bankptr(block_index+1,&bottom_32k[memmap[wbank-1].start]);
+			else
+				memory_set_bankptr(block_index+1,&mess_ram[memmap[wbank-1].start]);
+			
+			memory_install_read_handler(0, ADDRESS_SPACE_PROGRAM, memmap[block_index].start, memmap[block_index].end, 0, 0, block_index+1);	
+			memory_install_write_handler(0, ADDRESS_SPACE_PROGRAM, memmap[block_index].start, memmap[block_index].end, 0, 0, block_index+1);
+		}
+		else
+		{	
+			memory_install_read_handler(0, ADDRESS_SPACE_PROGRAM, memmap[block_index].start, memmap[block_index].end, 0, 0, STATIC_NOP);			
+			memory_install_write_handler(0, ADDRESS_SPACE_PROGRAM, memmap[block_index].start, memmap[block_index].end, 0, 0, STATIC_NOP);	
+		}
+	}
+
+	/* If in maptype 0 we need to map in the rom also, for now this just maps in the system and cart roms */
+	if(!maptype)
+	{
+		for(block_index=0;block_index<=7;block_index++)
+		{
+			/* If we are in the BASIC rom area $8000-$BFFF, then we map to the bas_rom_bank */
+			/* as this may be in a different block of coco_rom, in the Dragon 64 and Alpha */
+			/* as these machines have mutiple bios roms that can ocupy this area */
+			if(block_index<4)
+				offset=&bas_rom_bank[0x1000*block_index];
+			else
+				offset=&coco_rom[0x4000+(0x1000*(block_index-4))];
+								
+			memory_set_bankptr(block_index+9,offset);
+			memory_install_write_handler(0, ADDRESS_SPACE_PROGRAM, memmap[block_index+8].start, memmap[block_index+8].end, 0, 0, STATIC_ROM);
+		}
+	}
+}
 
 
 static void d_sam_set_pageonemode(int val)
@@ -1806,6 +1995,16 @@ static void d_sam_set_pageonemode(int val)
 	 * TODO:  Actually implement this.  Also find out what the CoCo 3 did with
 	 * this (it probably ignored it)
 	 */
+	
+	if (!get_sam_maptype())		// Ignored in maptype 1
+	{
+		if((mess_ram_size>0x8000) && val)
+			bottom_32k=&mess_ram[0x8000];
+		else
+			bottom_32k=mess_ram;
+
+		setup_memory_map();
+	}
 }
 
 static void d_sam_set_memorysize(int val)
@@ -1833,6 +2032,8 @@ static void d_sam_set_memorysize(int val)
 	 * TODO:  This should affect _all_ memory accesses, not just video ram
 	 * TODO:  Verify that the CoCo 3 ignored this
 	 */
+	 
+	setup_memory_map();
 }
 
 
@@ -1924,62 +2125,17 @@ static void coco3_timer_init(void)
   MMU
 ***************************************************************************/
 
+/* Dragon 64/Alpha and Tano Dragon 64 sams are now handled in exactly the same */
+/* way as the CoCo 1/2 and Dragon 32, this now has been reduced to a call to */
+/* setup_memory_map() - 2007-01-02 phs. */
+
 static void d_sam_set_maptype(int val)
 {
-	UINT8 *readbank;
-	write8_handler writebank;
+	if(val)
+		bottom_32k=mess_ram;	// Always reset, when in maptype 1
 
-	if (val && (mess_ram_size > 0x8000))
-	{
-		readbank = &mess_ram[0x8000];
-		writebank = MWA8_BANK2;
-	}
-	else
-	{
-		readbank = coco_rom;
-		writebank = MWA8_ROM;
-	}
-
-	memory_set_bankptr(2, readbank);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xfeff, 0, 0, writebank);
+	setup_memory_map();
 }
-
-/* The hack that was dragon64_set_hipage, is now included in dragon64_set_maptype */
-/* this now correctly selects between roms and ram in the 0x8000-0xFEFF reigon */
-/* these can now be changed by code in *ANY* memory loaction, this more closeley */
-/* resembles what happens on a real Dragon 64/Alpha */
-
-static void dragon64_sam_set_maptype(int val)
-{
-	UINT8 *readbank2;
-	UINT8 *readbank3;
-	write8_handler writebank2;
-	write8_handler writebank3;
-
-	dragon_map_type = val;				/* Save in global for later use by rom pager */
-
-	if (val && (mess_ram_size > 0x8000))
-	{
-		readbank2 = &mess_ram[0x8000];
-		readbank3 = &mess_ram[0xc000];
-		writebank2 = MWA8_BANK2;
-		writebank3 = MWA8_BANK3;
-	}
-	else
-	{
-		readbank2 = dragon_rom_bank;	/* Basic/Boot Rom */
-		readbank3 = coco_rom+0x4000;	/* Cartrage rom */
-		writebank2 = MWA8_ROM;
-		writebank3 = MWA8_ROM;
-	}
-
-	memory_set_bankptr(2, readbank2);
-	memory_set_bankptr(3, readbank3);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, writebank2);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xfeff, 0, 0, writebank3);
-}
-
-
 
 /*************************************
  *
@@ -2203,10 +2359,8 @@ READ8_HANDLER(coco3_gime_r)
 
 WRITE8_HANDLER(coco3_gime_w)
 {
-	/* take note if timer was $0000; see $FF95 for details */
-	int timer_was_off = (coco3_gimereg[4] == 0x00) && (coco3_gimereg[5] == 0x00);
-
-	coco3_gimereg[offset] = data;
+        /* take note if timer was $0000; see $FF95 for details */
+	int timer_was_off = (coco3_gimereg[4] == 0x00) && (coco3_gimereg[5] == 0x00);	coco3_gimereg[offset] = data;
 
 	if (LOG_GIME)
 		logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, activecpu_get_pc());
@@ -2302,20 +2456,20 @@ WRITE8_HANDLER(coco3_gime_w)
 			*		  Bits 0-7 Low order eight bits of the timer
 			*/
 			if (timer_was_off && (coco3_gimereg[5] != 0x00))
-			{
-				/* Writes to $FF95 do not cause the timer to reset, but MESS
-				 * will invoke coco3_timer_reset() if $FF94/5 was previously
-				 * $0000.  The reason for this is because the timer is not
-				 * actually off when $FF94/5 are loaded with $0000; rather it
-				 * is continuously reloading the GIME's internal countdown
-				 * register, even if it isn't causing interrupts to be raised.
-				 *
-				 * Failure to do this was the cause of bug #1065.  Special
-				 * thanks to John Kowalski for pointing me in the right
-				 * direction
-				 */
+  	                {
+  	                        /* Writes to $FF95 do not cause the timer to reset, but MESS
+  	                        * will invoke coco3_timer_reset() if $FF94/5 was previously
+  	                        * $0000.  The reason for this is because the timer is not
+  	                        * actually off when $FF94/5 are loaded with $0000; rather it
+  	                        * is continuously reloading the GIME's internal countdown
+  	                        * register, even if it isn't causing interrupts to be raised.
+  	                        *
+  	                        * Failure to do this was the cause of bug #1065.  Special
+  	                        * thanks to John Kowalski for pointing me in the right
+  	                        * direction
+				*/
 				coco3_timer_reset();
-			}
+  	                }
 			break;
 
 		case 8:
@@ -2548,6 +2702,26 @@ static int is_megacart(void)
 	return ret;
 }
 
+/* Detect a dos rom, returns true if found. 				      */
+/* CoCo and Dragon DOS roms all start with the signature bytes 'DK' dos carts */
+/* Generally don't tie the CART line to Q, as they use it for signalling, so  */
+/* instead the BASIC rom looks, for the DK signature and if found, calls the  */
+/* dos entry point at $C002 */
+
+static int is_dosrom(void)
+{
+	UINT8 *rombase;
+	
+	/* get rom base address, for CoCo 1/2 & Dragons this will be 0x4000 */
+	/* for the CoCo3 this will bx 0xc000 */
+	rombase=&coco_rom[cart_mem_offset];
+	
+	if((rombase[0]=='D') && (rombase[1]=='K'))
+		return 1;
+	else
+		return 0;
+} 
+
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
 	if (count_bank() > 0)
@@ -2583,9 +2757,49 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartbank
 };
 
-static void generic_init_machine(running_machine *machine, const pia6821_interface *piaintf, const sam6883_interface *samintf,
-	const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback,
-	void (*recalc_interrupts_)(int dummy))
+/* reset actions common to both CoCo 1/2, Dragon and to CoCo3 */
+static void common_reset(running_machine *machine)
+{
+	/* Check for cart auto-start dipswitch */
+	cart_autostart_enable=(readinputportbytag("CARTAUTO")&0x01);
+
+	/* check for 'DK' signature for dos cart, if present then don't toggle the FIRQ line */
+	if(is_dosrom())
+		cart_has_autostart=0;
+	else
+		cart_has_autostart=1;
+}
+
+/* Reset the machine */
+static void coco_dragon_reset(running_machine *machine)
+{
+	
+	/* reset megacart regs on hw reset */
+	if(is_megacart())
+	{
+		coco_cartridge_w(0x10,0);	// Zero bank
+		coco_cartridge_w(0x12,0);	// Zero control
+	}
+
+	common_reset(machine);
+}
+
+/* Struct to hold callbacks and initializers to pass to generic_init_machine */
+typedef struct 
+{
+	const pia6821_interface *piaintf;			// PIA initializer
+	const struct cartridge_slot *cartinterface;		// Cart interface functions
+	const struct cartridge_callback *cartcallback;		// Cart callback functions
+	void (*recalc_interrupts_)(int dummy);			// Recalculate inturrupts callback
+	void (*printer_out_)(int data);			// Printer output callback
+} machine_init_interface;
+
+/* New generic_init_machine, this sets up the the machine parameters common to all machines in */
+/* the CoCo and Dragon families, it has been modified to accept a single structure of type */
+/* machine_init_interface, which makes the init code a little clearer */
+/* Note sam initialization has been moved to generic_coco12_dragon_init, as it is now identical */
+/* for everything except the coco3, so it made sense not to pass it as a parameter */
+static void generic_init_machine(running_machine *machine, machine_init_interface init)
 {
 	const struct cartridge_slot *cartslottype;
 	int portnum;
@@ -2597,24 +2811,34 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 
 	/* set up function pointers */
 	update_keyboard = coco_update_keyboard;
-	recalc_interrupts = recalc_interrupts_;
+	recalc_interrupts = init.recalc_interrupts_;
 
 	/* this timer is used to schedule keyboard updating */
 	update_keyboard_timer = mame_timer_alloc(coco_update_keyboard_timerproc);
 
+	/* setup ROM */
 	coco_rom = memory_region(REGION_CPU1);
 
-	/* Setup Dragon 64/ Alpha default bank */
-	dragon_rom_bank = coco_rom;
+	/* Setup default rom bank */
+	bas_rom_bank = coco_rom;
 
+	/* Setup default Cart rom base, the coco3 driver below will overide this */
+	/* This is correct for CoCo 1/2 & Dragons */
+	cart_mem_offset=0x4000;
+
+	/* Setup default pointer for botom 32K of ram */
+	bottom_32k = mess_ram;
+
+	/* Setup cartline, and timer to handle toggling it */
 	cart_line = CARTLINE_CLEAR;
-
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
-	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
+	
+	/* Setup printer output callback */
+	printer_out=init.printer_out_;
+		
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &init.piaintf[0]);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &init.piaintf[1]);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &init.piaintf[2]); /* Dragon Alpha 3rd pia */
 	pia_reset();
-
-	sam_init(machine, samintf);
 
 	/* HACK for bankswitching carts */
 	if( is_Orch90() )
@@ -2629,7 +2853,7 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 			cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 	}
 
-	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
+	coco_cartrige_init(cart_inserted ? cartslottype : init.cartinterface, init.cartcallback);
 
 	for (portnum = 0; portnum <= 6; portnum++)
 		input_port_set_changed_callback(portnum, ~0, coco_poll_keyboard, NULL);
@@ -2641,98 +2865,164 @@ static void generic_init_machine(running_machine *machine, const pia6821_interfa
 	add_exit_callback(machine, coco_machine_stop);
 }
 
+/* Setup for hardware common to CoCo 1/2 & Dragon machines, calls genertic_init_machine, to process */
+/* the setup common with the CoCo3, and then does the init that is not common ! */
+static void generic_coco12_dragon_init(running_machine *machine, machine_init_interface init)
+{	
+	/* Set default RAM mapping */
+	memory_set_bankptr(1, &mess_ram[0]);
+	
+	/* Do generic Inits */
+	generic_init_machine(machine,init);
+	
+	/* Init SAM */
+	sam_init(machine, &coco_sam_intf);
+		
+	/* Do a reset, and setup reset callback */
+	coco_dragon_reset(machine);
+	add_reset_callback(machine, coco_dragon_reset);
+
+	/* If an auto-starting cart is inserted, start the cart_timer to toggle the */
+	/* cart line, this simulates the real toggling by Q, but slower so as not to */
+	/* steal too much CPU time */
+	timer_pulse(1,0,coco_cart_timerproc); 	// 1Hz, seems to be fast enough.
+}
+
 MACHINE_START( dragon32 )
 {
-	/* install low RAM; we might have to mirror if there is <32k of RAM */
-	offs_t ram_end = (mess_ram_size < 0x8000) ? (mess_ram_size - 1) : 0x7FFF;
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MRA8_BANK1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MWA8_BANK1);
-	memory_set_bankptr(1, &mess_ram[0]);
-
-	generic_init_machine(machine, coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
-
-	coco_or_dragon = AM_DRAGON;
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= dragon32_pia_intf;
+	init.cartinterface	= &cartridge_fdc_dragon;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_dragon;
+	
+	generic_coco12_dragon_init(machine,init);
+	
 	return 0;
 }
 
 MACHINE_START( dragon64 )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
-	acia_6551_init();
+	machine_init_interface init;
 	
-	coco_or_dragon = AM_DRAGON;
+	/* Setup machine initialization */
+	init.piaintf		= dragon64_pia_intf;
+	init.cartinterface	= &cartridge_fdc_dragon;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_dragon;
+	
+	generic_coco12_dragon_init(machine,init);
+
+	/* Init Serial port */
+	acia_6551_init();
+		
 	return 0;
 }
 
+/******* Machine Setups Dragons **********/
+
 MACHINE_START( d64plus )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= dragon64_pia_intf;
+	init.cartinterface	= &cartridge_fdc_dragon;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_dragon;
+	
+	generic_coco12_dragon_init(machine,init);
+	
+	/* Init Serial port */
 	acia_6551_init();
 	
+	/* Init Dragon plus registers */
 	dragon_plus_reg = 0;
 	plus_reg_w(0,0);
-	
-	coco_or_dragon = AM_DRAGON;
+		
 	return 0;
 }
 
 MACHINE_START( tanodr64 )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= dragon64_pia_intf;
+	init.cartinterface	= &cartridge_fdc_dragon;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_dragon;
+	
+	generic_coco12_dragon_init(machine,init);
+	
+	/* Init Serial port */
 	acia_6551_init();
 	
-	coco_or_dragon = AM_DRAGON;
-
 	return 0;
 }
 
 MACHINE_START( dgnalpha )
 {
-	memory_set_bankptr(1, &mess_ram[0]);
-	generic_init_machine(machine, dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
-    	
-	acia_6551_init();
+	machine_init_interface init;
 	
+	/* Setup machine initialization */
+	init.piaintf		= dgnalpha_pia_intf;
+	init.cartinterface	= &cartridge_fdc_dragon;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_dragon;
+	
+	generic_coco12_dragon_init(machine,init);
+	
+	/* Init Serial port */
+	acia_6551_init();
+    	
 	/* dgnalpha_just_reset, is here to flag that we should ignore the first irq generated */
 	/* by the WD2797, it is reset to 0 after the first inurrupt */
 	dgnalpha_just_reset=1;
 	
 	wd179x_init(WD_TYPE_179X, dgnalpha_fdc_callback);
-
-	coco_or_dragon = AM_DRAGON;
+	
 	return 0;
 }
 
-static void coco12_init_machine(running_machine *machine, const pia6821_interface *piaintf)
-{
-	/* install low RAM; we might have to mirror if there is <32k of RAM */
-	offs_t ram_end = (mess_ram_size < 0x8000) ? (mess_ram_size - 1) : 0x7FFF;
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MRA8_BANK1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, ram_end, 0, 0, MWA8_BANK1);
-	memory_set_bankptr(1, &mess_ram[0]);
-
-	if (ram_end < 0x7FFF)
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, ram_end + 1, 0x7FFF, 0, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, ram_end + 1, 0x7FFF, 0, 0, MWA8_NOP);
-	}
-
-	generic_init_machine(machine, piaintf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
-	coco_or_dragon = AM_COCO;
-}
+/******* Machine Setups CoCos **********/
 
 MACHINE_START( coco )
 {
-	coco12_init_machine(machine, coco_pia_intf);
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= coco_pia_intf;
+	init.cartinterface	= &cartridge_fdc_coco;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_coco;
+	
+	generic_coco12_dragon_init(machine,init);
+	
 	return 0;
 }
 
 MACHINE_START( coco2 )
 {
-	coco12_init_machine(machine, coco2_pia_intf);
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= coco2_pia_intf;
+	init.cartinterface	= &cartridge_fdc_coco;
+	init.cartcallback	= &coco_cartcallbacks;
+	init.recalc_interrupts_	= d_recalc_interrupts;
+	init.printer_out_	= printer_out_coco;
+	
+	generic_coco12_dragon_init(machine,init);
+
 	return 0;
 }
 
@@ -2750,6 +3040,17 @@ static void coco3_machine_reset(running_machine *machine)
 		coco3_gimereg[i] = 0;
 	}
 	coco3_mmu_update(0, 8);
+
+	cart_has_autostart=0;
+	common_reset(machine);
+
+	/* If an auto-starting cart is inserted, start the cart_timer to toggle the */
+	/* cart line, this simulates the real toggling by Q, but slower so as not to */
+	/* steal too much CPU time */
+	if(cart_can_toggle())
+	{
+		timer_adjust(cart_line_timer,TIME_IN_MSEC(10),0,TIME_IN_MSEC(10));
+	}
 }
 
 static void coco3_state_postload(void)
@@ -2759,7 +3060,22 @@ static void coco3_state_postload(void)
 
 MACHINE_START( coco3 )
 {
-	generic_init_machine(machine, coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
+	machine_init_interface init;
+	
+	/* Setup machine initialization */
+	init.piaintf		= coco3_pia_intf;
+	init.cartinterface	= &cartridge_fdc_coco;
+	init.cartcallback	= &coco3_cartcallbacks;
+	init.recalc_interrupts_	= coco3_recalc_interrupts;
+	init.printer_out_	= printer_out_coco;
+	
+	generic_init_machine(machine, init);
+	
+	/* Init SAM */
+	sam_init(machine, &coco3_sam_intf);
+	
+	/* CoCo 3 specific cart rom base */
+	cart_mem_offset=0xC000;
 
 	/* CoCo 3 specific function pointers */
 	update_keyboard = coco3_update_keyboard;
@@ -2769,8 +3085,6 @@ MACHINE_START( coco3 )
 
 	coco3_interupt_line = 0;
 	
-	coco_or_dragon = AM_COCO;
-
 	state_save_register_global_array(coco3_mmu);
 	state_save_register_global_array(coco3_gimereg);
 	state_save_register_global(coco3_interupt_line);
@@ -2779,6 +3093,12 @@ MACHINE_START( coco3 )
 	state_save_register_func_postload(coco3_state_postload);
 
 	add_reset_callback(machine, coco3_machine_reset);
+
+	/* If an auto-starting cart is inserted, start the cart_timer to toggle the */
+	/* cart line, this simulates the real toggling by Q, but slower so as not to */
+	/* steal too much CPU time */
+	timer_pulse(1,0,coco3_cart_timerproc); 	// 1Hz, seems to be fast enough.
+	
 	return 0;
 }
 
