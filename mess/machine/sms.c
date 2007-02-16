@@ -31,14 +31,14 @@ WRITE8_HANDLER(sms_fm_detect_w) {
 }
 
  READ8_HANDLER(sms_fm_detect_r) {
-	if (biosPort & IO_CHIP) {
-		return (0xFF);
-	}
-
 	if ( HAS_FM ) {
 		return smsFMDetect;
 	} else {
-		return readinputport(0);
+		if ( biosPort & IO_CHIP ) {
+			return 0xFF;
+		} else {
+			return readinputport(0);
+		}
 	}
 }
 
