@@ -1,9 +1,0 @@
-#undef INTERP_16_MASK_1
-#undef INTERP_16_MASK_2
-#undef INTERP_16_UNMASK_1
-#undef INTERP_16_UNMASK_2
-#undef INTERP_16_HNMASK
-#undef interp_uint16
-#undef I1
-#undef I2
-#undef I3

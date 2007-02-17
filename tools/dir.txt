@@ -1,1 +1,0 @@
-Various Tools for MESS compiled to this directory.

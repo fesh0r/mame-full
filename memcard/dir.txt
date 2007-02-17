@@ -1,1 +1,0 @@
-memcard files will be stored here.
